@@ -1,0 +1,166 @@
+{
+  "m_allParameters": [],
+  "type": "NodeCanvas.BehaviourTrees.BehaviourTree",
+  "nodes": [
+    {
+      "_position": {
+        "x": 660.0,
+        "y": 40.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
+      "$id": "0"
+    },
+    {
+      "_action": {
+        "saveTo": {
+          "_name": "MainCharacter",
+          "_targetVariableID": "e5c67d2d-d81f-4dd5-85a9-64ae722c452b"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.GetMainCharacter"
+      },
+      "additionalWidth": 215.0,
+      "_position": {
+        "x": 300.0,
+        "y": 180.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "1"
+    },
+    {
+      "_condition": {
+        "actorA": {
+          "_name": "MainCharacter",
+          "_targetVariableID": "e5c67d2d-d81f-4dd5-85a9-64ae722c452b"
+        },
+        "actorB": {},
+        "_invert": true,
+        "$type": "Beyond.Gameplay.AI.Condition.CheckEntity"
+      },
+      "additionalWidth": 106.0,
+      "_position": {
+        "x": 700.0,
+        "y": 180.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ConditionNode",
+      "$id": "2"
+    },
+    {
+      "_condition": {
+        "selectorData": {
+          "finderData": {
+            "shapeData": {
+              "_shape": 2,
+              "_radius": 5.0
+            },
+            "$type": "Beyond.Gameplay.Core.Selector+ShapeFinder+ShapeFinderData"
+          },
+          "validatorData": [
+            {
+              "$type": "Beyond.Gameplay.Core.Selector+MainCharacterValidator+Data"
+            }
+          ],
+          "postProcessorData": []
+        },
+        "_invert": true,
+        "$type": "Beyond.Gameplay.AI.Condition.IsGivenTargetExist"
+      },
+      "additionalWidth": 40.0,
+      "_position": {
+        "x": 1000.0,
+        "y": 180.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
+      "$id": "3"
+    },
+    {
+      "_action": {
+        "checkMarker": [],
+        "behavior": {
+          "tag": {
+            "tagName": "AI/Enemy/Behavior/CastSkillInRange",
+            "tagId": 1135958862
+          }
+        },
+        "target": {
+          "_name": "MainCharacter",
+          "_targetVariableID": "e5c67d2d-d81f-4dd5-85a9-64ae722c452b"
+        },
+        "skillData": {
+          "_value": {
+            "skillRange": 100.0,
+            "skillID": "eny_0039_agcanno_skill01_dungeon",
+            "cancelSkillExclusive": true
+          }
+        },
+        "seqskillData": [],
+        "targetPos": {},
+        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
+      },
+      "additionalWidth": 259.0,
+      "_position": {
+        "x": 900.0,
+        "y": 320.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "4"
+    }
+  ],
+  "connections": [
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "1"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "2"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "3"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "3"
+      },
+      "_targetNode": {
+        "$ref": "4"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    }
+  ],
+  "canvasGroups": [],
+  "localBlackboard": {
+    "_variables": {
+      "TargetActor": {
+        "_name": "TargetActor",
+        "_id": "50eabfb7-0135-4cda-87f9-94dda0569122",
+        "_isPublic": true,
+        "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.AIEntity, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+      },
+      "MainCharacter": {
+        "_name": "MainCharacter",
+        "_id": "e5c67d2d-d81f-4dd5-85a9-64ae722c452b",
+        "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.AIEntity, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+      }
+    }
+  },
+  "derivedData": {
+    "repeat": true,
+    "$type": "NodeCanvas.BehaviourTrees.BehaviourTree+DerivedSerializationData"
+  }
+}

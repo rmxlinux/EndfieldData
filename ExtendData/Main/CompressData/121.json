@@ -1,0 +1,206 @@
+{
+  "m_allParameters": [],
+  "type": "NodeCanvas.BehaviourTrees.BehaviourTree",
+  "nodes": [
+    {
+      "_position": {
+        "x": 440.0,
+        "y": -60.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
+      "$id": "0"
+    },
+    {
+      "_action": {
+        "saveAs": {
+          "_name": "Target",
+          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+        },
+        "finderData": {
+          "radius": {},
+          "angle": {},
+          "extent": {}
+        },
+        "selectorData": {
+          "finderData": {
+            "shapeList": [
+              {
+                "shapeType": 2,
+                "centerOffset": {
+                  "x": {},
+                  "y": {},
+                  "z": {}
+                },
+                "eulerAngle": {
+                  "x": {},
+                  "y": {},
+                  "z": {}
+                },
+                "size": {
+                  "x": {},
+                  "y": {},
+                  "z": {}
+                },
+                "radius": {
+                  "value": 100.0
+                },
+                "height": {},
+                "angle": {},
+                "maxHeight": {}
+              }
+            ],
+            "$type": "Beyond.Gameplay.Core.Selector+HitBoxFinder+Data"
+          },
+          "validatorData": [
+            {
+              "$type": "Beyond.Gameplay.Core.Selector+ExcludeOwnerValidator+Data"
+            },
+            {
+              "query": {
+                "tags": [
+                  {
+                    "tagName": "Skill/Enemy/eny_0116_zfydef",
+                    "tagId": -2052321696
+                  }
+                ]
+              },
+              "$type": "Beyond.Gameplay.Core.Selector+TagValidator+Data"
+            }
+          ],
+          "postProcessorData": []
+        },
+        "$type": "Beyond.Gameplay.AI.Action.GetTargetInSight"
+      },
+      "additionalWidth": 107.0,
+      "_position": {
+        "x": -80.0,
+        "y": 140.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "1"
+    },
+    {
+      "_condition": {
+        "actorA": {
+          "_name": "Target",
+          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+        },
+        "actorB": {
+          "_name": ""
+        },
+        "_invert": true,
+        "$type": "Beyond.Gameplay.AI.Condition.CheckEntity"
+      },
+      "additionalWidth": 102.0,
+      "_position": {
+        "x": 200.0,
+        "y": 140.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ConditionNode",
+      "$id": "2"
+    },
+    {
+      "_action": {
+        "checkMarker": [],
+        "behavior": {
+          "tag": {
+            "tagName": "AI/Enemy/Behavior/CastSkillInRange",
+            "tagId": 1135958862
+          }
+        },
+        "target": {
+          "_name": "Target",
+          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+        },
+        "skillData": {
+          "_value": {
+            "skillRange": 3.0,
+            "skillID": "eny_0087_wgslime_skill02_cardefend",
+            "cancelSkillExclusive": true
+          }
+        },
+        "seqskillData": [],
+        "targetPos": {},
+        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
+      },
+      "additionalWidth": 270.0,
+      "_position": {
+        "x": 460.0,
+        "y": 140.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "3"
+    },
+    {
+      "_action": {
+        "waitTime": {
+          "_value": 1.0
+        },
+        "$type": "NodeCanvas.Tasks.Actions.Wait"
+      },
+      "_position": {
+        "x": 900.0,
+        "y": 140.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "4"
+    }
+  ],
+  "connections": [
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "1"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "2"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "3"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "4"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    }
+  ],
+  "canvasGroups": [],
+  "localBlackboard": {
+    "_variables": {
+      "RandomTime": {
+        "_name": "RandomTime",
+        "_id": "112895a9-b592-481f-83be-424721b8912d",
+        "$type": "NodeCanvas.Framework.Variable`1[[System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      },
+      "Target": {
+        "_name": "Target",
+        "_id": "35948af8-c5fc-4dec-bb7a-fb20846230ec",
+        "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.AIEntity, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+      }
+    }
+  },
+  "derivedData": {
+    "repeat": true,
+    "$type": "NodeCanvas.BehaviourTrees.BehaviourTree+DerivedSerializationData"
+  }
+}
