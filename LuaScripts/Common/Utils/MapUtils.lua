@@ -87,17 +87,28 @@ function MapUtils.openMap(instId, levelId, customArgs)
     if not string.isEmpty(instId) then
         local _, markRuntimeData = GameInstance.player.mapManager:GetMarkInstRuntimeData(instId)
         levelId = markRuntimeData.levelId
-        if markRuntimeData.nodeId ~= nil and not markRuntimeData.isVisible then
-            
-            GameInstance.player.mapManager.forceShowFacMarkInRegionList:Add(instId)
-        end
+        MapUtils.forceShowFacMarkInRegionIfNeed(instId)
     end
 
     data.instId = instId
     data.levelId = levelId
     data.customArgs = customArgs
 
+    local isOpen, phase = PhaseManager:IsOpen(PhaseId.PowerPoleFastTravel)
+    if isOpen then
+        phase:SaveCurrentLogicId()
+    end
+
     PhaseManager:GoToPhase(PhaseId.Map, data)
+end
+
+function MapUtils.forceShowFacMarkInRegionIfNeed(instId)
+    local _, markRuntimeData = GameInstance.player.mapManager:GetMarkInstRuntimeData(instId)
+    if markRuntimeData.nodeId ~= nil and not markRuntimeData.isVisible then
+        
+        GameInstance.player.mapManager.forceShowFacMarkInRegionList:Add(instId)
+        Notify(MessageConst.ON_MAP_MARK_RUNTIME_DATA_MODIFY, { instId })  
+    end
 end
 
 function MapUtils.openMapByMissionId(trackId)
@@ -249,9 +260,9 @@ function MapUtils.getMapRemindTipInfo(levelId)
         end
         table.insert(markInsIds, processedId)
     end
-
-    for remindType = GEnums.MapRemindType.Default:GetHashCode(), GEnums.MapRemindType.Max:GetHashCode() do
-        local enumType = GEnums.MapRemindType.__CastFrom(remindType)
+    local values = CS.System.Enum.GetValues(typeof(GEnums.MapRemindType))
+    for i = 0, values.Length - 1 do
+        local enumType = values[i]
 
         local success, cfg = Tables.mapRemindTable:TryGetValue(enumType)
         if not success then
@@ -262,16 +273,6 @@ function MapUtils.getMapRemindTipInfo(levelId)
         if not remindData then
             logger.warn("MapRemindConfig未找到类型: " .. enumType:ToString())
             goto continue
-        end
-
-        local fatherRedDotName = cfg.tabType == GEnums.MapRemindTabType.ImportantMatters
-            and "MapImportantMatters"
-            or "MapCollectionTips"
-
-        local redDotName = string.isEmpty(remindData.redDotName) and
-            (cfg.redDotRead2Hide and "CommonMapRemindReadLike" or "CommonMapRemind") or remindData.redDotName
-        if redDotName and redDotName ~= "" then
-            RedDotManager:AddFatherSon(fatherRedDotName, redDotName)
         end
 
         if not remindData.Check then
@@ -447,7 +448,7 @@ function MapUtils.teleportToHubByHubMark(hubMarkData, overrideNodeId)
         hubMarkData:GetTeleportRotation(),
         GEnums.C2STeleportReason.ServerGotoHub,
         function()
-            GameInstance.gameplayNetwork:RestAtHub()
+            GameInstance.gameplayNetwork:RestAtHub(hubNodeId, hubMarkData.levelId)
         end,
         CS.Beyond.Gameplay.TeleportUIType.Default,
         hubNodeId
@@ -455,7 +456,7 @@ function MapUtils.teleportToHubByHubMark(hubMarkData, overrideNodeId)
 end
 
 function MapUtils.getLevelInitialOffset(levelId)
-    local success, configInfo = DataManager.uiLevelMapConfig.levelConfigInfos:TryGetValue(levelId)
+    local success, configInfo = GameInstance.player.mapManager:GetLoaderLevelBasicInfoByLevelId(levelId)
     if not success then
         return Vector2.zero
     end

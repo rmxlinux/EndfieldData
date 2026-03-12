@@ -58,6 +58,7 @@ GuestroomCluesCell._OnFirstTimeInit = HL.Override() << function(self)
         if select then
             Notify(MessageConst.ON_SPACESHIP_HEAD_NAVI_TARGET_CHANGE, self)
         end
+        self.view.hintText.gameObject:SetActive(select)
     end)
 
     self.m_genCharCells = UIUtils.genCellCache(self.view.ssCharHeadCellRound)
@@ -68,6 +69,8 @@ GuestroomCluesCell._OnFirstTimeInit = HL.Override() << function(self)
         end
         self.m_hasBeenPlaced = GameInstance.player.spaceship:ClueDataHasBeenPlaced(self.m_clueCellData.instId)
         self.view.alreadyAssembledNode.gameObject:SetActive(self.m_hasBeenPlaced)
+        local hintText = DeviceInfo.usingController and "ui_spaceshipguestroom_inventory_guestroomcluescell_hinttext_ps" or "ui_spaceshipguestroom_inventory_guestroomcluescell_hinttext"
+        self.view.hintText:SetAndResolveTextStyle(Language[hintText]);
         self:RefreshDelState()
     end)
 end
@@ -91,6 +94,8 @@ GuestroomCluesCell.InitGuestroomCluesCell = HL.Method(HL.Any, HL.Function) << fu
     self.m_hasBeenPlaced = GameInstance.player.spaceship:ClueDataHasBeenPlaced(data.instId)
     self.view.alreadyAssembledNode.gameObject:SetActive(self.m_hasBeenPlaced)
     self.view.clueNameTxt.text = clueData.name
+    local hintText = DeviceInfo.usingController and "ui_spaceshipguestroom_inventory_guestroomcluescell_hinttext_ps" or "ui_spaceshipguestroom_inventory_guestroomcluescell_hinttext"
+    self.view.hintText:SetAndResolveTextStyle(Language[hintText]);
     self.view.colorImg.color = UIUtils.getColorByString(clueData.color)
     self.view.iconImg:LoadSprite(UIConst.UI_SPRITE_SS_CLUE_ICON, clueData.icon)
     self.view.numberTxt.text = string.format("%02d", clueData.clueType)

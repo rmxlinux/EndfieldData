@@ -80,6 +80,7 @@ local ControllerMode = MapConst.LEVEL_MAP_CONTROLLER_MODE
 
 
 
+
 LevelMapController = HL.Class('LevelMapController', UIWidgetBase)
 
 local EXTRA_VIEW_VALUE = 1
@@ -339,13 +340,14 @@ LevelMapController.InitLevelMapController = HL.Method(HL.Number, HL.Opt(HL.Table
     elseif mode == ControllerMode.FOLLOW_CHARACTER then
         loaderCustomInfo = {
             needOptimizePerformance = true,
+            needExtraLowScaleRT = true,
             needShowOtherLevelTracking = true,
             needListenMarkStateChange = true,
         }
     end
     loaderCustomInfo.expectedStaticElements = customInfo.expectedStaticElements
     loaderCustomInfo.gridsMaskFollowTarget = customInfo.gridsMaskFollowTarget
-    if not self.m_levelMapConfig.levelConfigInfos:ContainsKey(initialLevelId) then
+    if not GameInstance.player.mapManager:IsLevelLoaderDataExists(initialLevelId) then
         if BEYOND_DEBUG_COMMAND and mode == ControllerMode.DEBUG then
             self.view.levelMapLoader:InitLevelMapLoader(initialLevelId, { isDebugMode = true })
         end
@@ -386,7 +388,7 @@ end
 
 LevelMapController._SetCurrentLevelId = HL.Method(HL.String) << function(self, levelId)
     self.m_currentLevelId = levelId
-    local configSuccess, levelConfig = DataManager.uiLevelMapConfig.levelConfigInfos:TryGetValue(levelId)
+    local configSuccess, levelConfig = GameInstance.player.mapManager:GetLoaderLevelBasicInfoByLevelId(levelId)
     if configSuccess then
         self.m_currentIsSingleLevel = levelConfig.isSingleLevel
     end
@@ -446,7 +448,7 @@ end
 
 
 LevelMapController._RefreshLoaderStateByLevel = HL.Method(HL.String, HL.Boolean) << function(self, levelId, moveNeedTween)
-    local success, configInfo = self.m_levelMapConfig.levelConfigInfos:TryGetValue(levelId)
+    local success, configInfo = GameInstance.player.mapManager:GetLoaderLevelBasicInfoByLevelId(levelId)
     if not success then
         return
     end
@@ -497,7 +499,7 @@ LevelMapController._RefreshLoaderStateByLevel = HL.Method(HL.String, HL.Boolean)
     }
 
     self:_SetCurrentLevelId(levelId)
-    self.m_currentMaxScale = configInfo.maxScale
+    self.m_currentMaxScale = DataManager.uiLevelMapConfig.globalLevelMaxScale
     self.m_currentMinScale = configInfo.minScale
 
     local onMoveFinish = function()
@@ -995,22 +997,13 @@ end
 
 
 
-LevelMapController.GetControllerMarkRectTransform = HL.Method(HL.String).Return(Unity.RectTransform) << function(self, markInstId)
-    local mapManager = GameInstance.player.mapManager
-    local trackingMarkInstId = mapManager.trackingMarkInstId
-    if markInstId == trackingMarkInstId then
-        local mark = self.view.levelMapLoader:GetGeneralTrackingMark()
-        return mark.rectTransform
-    end
 
-    local trackingMissionMarks = self.view.levelMapLoader:GetMissionTrackingMarks()
-    for instId, trackingMissionMark in pairs(trackingMissionMarks) do
-        if instId == markInstId then
-            return trackingMissionMark.rectTransform
-        end
+LevelMapController.GetControllerMarkRectTransform = HL.Method(HL.String, HL.Opt(HL.Boolean)).Return(Unity.RectTransform) << function(self, markInstId, ignoreTracking)
+    local mark = self:GetControllerMarkByInstId(markInstId, ignoreTracking)
+    if mark == nil then
+        return nil
     end
-
-    return self.view.levelMapLoader:GetMarkRectTransformByInstId(markInstId)
+    return mark.rectTransform
 end
 
 
@@ -1069,6 +1062,10 @@ LevelMapController.GetControllerNearbyMarkList = HL.Method(HL.String, HL.Number,
                                 end
                             end
 
+                            if not mark.gameObject.activeInHierarchy and not runtimeData.isTracking and not runtimeData.isMissionTracking then
+                                validNearby = false
+                            end
+
                             if validNearby then
                                 table.insert(tempResult, markViewData)
                             end
@@ -1094,8 +1091,30 @@ end
 
 
 
-LevelMapController.GetControllerMarkByInstId = HL.Method(HL.String).Return(HL.Any) << function(self, instId)
-    return self.view.levelMapLoader:GetLoadedMarkByInstId(instId)
+
+LevelMapController.GetControllerMarkByInstId = HL.Method(HL.String, HL.Opt(HL.Boolean)).Return(HL.Any) << function(self, instId, ignoreTracking)
+    local originalMark = self.view.levelMapLoader:GetLoadedMarkByInstId(instId)
+    if ignoreTracking then
+        return originalMark
+    end
+
+    local mapManager = GameInstance.player.mapManager
+    local trackingMarkInstId = mapManager.trackingMarkInstId
+    if instId == trackingMarkInstId then
+        local mark = self.view.levelMapLoader:GetGeneralTrackingMark()
+        if mark ~= nil and mark.gameObject.activeInHierarchy then
+            return mark
+        end
+    end
+
+    local trackingMissionMarks = self.view.levelMapLoader:GetMissionTrackingMarks()
+    for trackingMissionMarkInstId, trackingMissionMark in pairs(trackingMissionMarks) do
+        if instId == trackingMissionMarkInstId and trackingMissionMark ~= nil and trackingMissionMark.gameObject.activeInHierarchy then
+            return trackingMissionMark
+        end
+    end
+
+    return originalMark
 end
 
 
@@ -1162,6 +1181,21 @@ LevelMapController.SwitchToTargetLevel = HL.Method(HL.String) << function(self, 
     self:_RefreshLoaderStateByLevel(levelId, true)
 end
 
+
+
+LevelMapController.RecoverTrackingMarkAnimation = HL.Method() << function(self)
+    local trackingMark = self.view.levelMapLoader:GetGeneralTrackingMark()
+    if trackingMark ~= nil and trackingMark.gameObject.activeInHierarchy then
+        trackingMark:TryPlayTrackingMarkAnimation()
+    end
+
+    local trackingMissionMarks = self.view.levelMapLoader:GetMissionTrackingMarks()
+    for _, trackingMissionMark in pairs(trackingMissionMarks) do
+        if trackingMissionMark ~= nil and trackingMissionMark.gameObject.activeInHierarchy then
+            trackingMissionMark:TryPlayTrackingMarkAnimation()
+        end
+    end
+end
 
 
 

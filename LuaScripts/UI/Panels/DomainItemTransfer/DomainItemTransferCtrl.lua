@@ -104,6 +104,10 @@ DomainItemTransferCtrl.OnAnimationInFinished = HL.Override() << function(self)
     if DeviceInfo.usingController and not self.m_controllerInit then
         self:_InitControllerAbility()
     end
+
+    if DeviceInfo.usingController then
+        self:_SetFocusTargetByIndex(self.m_curFocusCellLuaIndex)
+    end
 end
 
 
@@ -184,6 +188,11 @@ DomainItemTransferCtrl._BuildRoutes = HL.Method() << function(self)
     end
     self.m_transmissionCellCache:Refresh(#buildCellTable, function(cell, index)
         self:_BuildRouteTransmissionCellView(cell, buildCellTable[index])
+
+        cell.domainItemTransferInfoCell.onGroupSetAsNaviTarget:RemoveAllListeners()
+        cell.domainItemTransferInfoCell.onGroupSetAsNaviTarget:AddListener(function()
+            self.m_curFocusCellLuaIndex = index
+        end)
     end)
     self:_RefreshAllCell()
 end
@@ -456,7 +465,6 @@ end
 
 DomainItemTransferCtrl._InitControllerAbility = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
-    self:_SetFocusTargetByIndex(1)
 
     self.m_controllerInit = true
     

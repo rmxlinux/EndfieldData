@@ -15,7 +15,6 @@ local PHASE_ID = PhaseId.WorldEnergyPointEntry
 
 
 
-
 PhaseWorldEnergyPointEntry = HL.Class('PhaseWorldEnergyPointEntry', phaseBase.PhaseBase)
 
 
@@ -32,8 +31,6 @@ PhaseWorldEnergyPointEntry.m_blendCamCfg = HL.Field(CS.Beyond.Gameplay.RelativeC
 
 PhaseWorldEnergyPointEntry.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.OPEN_WORLD_ENERGY_POINT_ENTRY] = { 'OpenWorldEnergyPointEntry', false },
-
-    [MessageConst.ON_WORLD_ENERGY_POINT_START] = { 'CloseWorldEnergyPointEntry', true}
 }
 
 
@@ -129,13 +126,6 @@ PhaseWorldEnergyPointEntry._OnDestroy = HL.Override() << function(self)
     PhaseWorldEnergyPointEntry.Super._OnDestroy(self)
 end
 
-
-
-
-
-PhaseWorldEnergyPointEntry.CloseWorldEnergyPointEntry = HL.Method() << function(self)
-    PhaseManager:PopPhase(PHASE_ID)
-end
 
 
 HL.Commit(PhaseWorldEnergyPointEntry)

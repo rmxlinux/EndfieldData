@@ -105,6 +105,7 @@ MapMarkDetailCtrl._SimpleRefreshDetailContent = HL.Method(HL.String) << function
             self.view.teleportBtn.gameObject:SetActive(true)
             self.view.trackBtn.gameObject:SetActive(false)
             self.view.teleportBtn.onClick:AddListener(function()
+                GameWorld.dialogManager:SkipCurrentDialog(true)
                 if markTemplateData.markType == MarkType.CampFire then
                     
                     Utils.teleportToPosition(markData.levelId, markData.position + Vector3(2, 0 , 0))

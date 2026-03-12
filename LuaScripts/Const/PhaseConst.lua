@@ -95,6 +95,7 @@ EXCEPT_CHANGE_DEVICE_CLOSE_PANEL = {
 
     
     "CommonTaskTrackHud",
+    "CommonTaskTrackToast",
     "CommonTaskTrackCountdown",
     "DungeonCharTutorialStepHud",
 }

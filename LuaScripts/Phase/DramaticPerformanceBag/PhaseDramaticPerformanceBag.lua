@@ -26,7 +26,7 @@ PhaseDramaticPerformanceBag.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-PhaseDramaticPerformanceBag.m_renderTexture = HL.Field(HL.Userdata)
+PhaseDramaticPerformanceBag.m_renderTextureHandle = HL.Field(HL.Userdata)
 
 
 PhaseDramaticPerformanceBag.m_bagPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
@@ -60,11 +60,11 @@ PhaseDramaticPerformanceBag._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Op
         return true
     end, coroutine.TailTick)
     
-    self.m_renderTexture = ScreenCaptureUtils.GetScreenCapture(math.floor(Screen.width), math.floor(Screen.height))
+    self.m_renderTextureHandle = ScreenCaptureUtils.GetScreenCapture(math.floor(Screen.width), math.floor(Screen.height))
     coroutine.waitForRenderDone()
     
     self.m_bagPanelItem = self:CreatePhasePanelItem(PanelId.DramaticPerformanceBag, self.arg)
-    self.m_bagPanelItem.uiCtrl:SetScreenCaptureImg(self.m_renderTexture)
+    self.m_bagPanelItem.uiCtrl:SetScreenCaptureImg(self.m_renderTextureHandle.rt)
 end
 
 
@@ -117,10 +117,10 @@ end
 
 
 PhaseDramaticPerformanceBag._ReleaseRT = HL.Method() << function(self)
-    if self.m_renderTexture then
+    if self.m_renderTextureHandle then
         self.m_bagPanelItem.uiCtrl:SetScreenCaptureImg(nil)
-        RTManager.ReleaseRenderTexture(self.m_renderTexture)
-        self.m_renderTexture = nil
+        self.m_renderTextureHandle:Release()
+        self.m_renderTextureHandle = nil
     end
 end
 

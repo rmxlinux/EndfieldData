@@ -24,6 +24,7 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 ActivityVersionGuide = HL.Class('ActivityVersionGuide', UIWidgetBase)
 
 
@@ -59,6 +60,10 @@ ActivityVersionGuide.InitVersionGuide = HL.Method(HL.Any) << function(self, args
     end)
     self.m_activityId = args.activityId
     self.view.activityCommonInfo:InitActivityCommonInfo(args)
+    local success, activityData = Tables.activityTable:TryGetValue(self.m_activityId)
+    if success then
+        self.view.descText.text = activityData.desc
+    end
     self.m_taskCells = UIUtils.genCellCache(self.view.missionCell)
 
     
@@ -128,6 +133,7 @@ ActivityVersionGuide._CollectGuideData = HL.Method() << function(self)
             stageConfig = stageData,
             index = i,
             status = nil,
+            sortId = stageData.sortId
         }
         table.insert(self.m_guideDataList, dataRef)
     end
@@ -156,7 +162,7 @@ ActivityVersionGuide._SortGuideDataList = HL.Method() << function(self)
     end
 
     
-    table.sort(self.m_guideDataList, Utils.genSortFunction({ "_sortPriority", "stageConfig.stageId" }, true))
+    table.sort(self.m_guideDataList, Utils.genSortFunction({ "_sortPriority", "sortId" }, true))
 end
 
 
@@ -415,13 +421,24 @@ end
 
 ActivityVersionGuide._OnReceiveReward = HL.Method(HL.Any) << function(self, guideData)
     ActivityUtils.setFalseNewActivityConditionalStage(guideData.stageId)
-    GameInstance.player.activitySystem:SendReceiveRewardConditionMultiStage(self.m_activityId, guideData.stageId)
+    GameInstance.player.activitySystem:SendReceiveRewardConditionMultiStage(self.m_activityId, self:GetAllCanReceiveStageIds())
     
     self.view.scrollRect.verticalNormalizedPosition = 1
     self.m_focusIndex = 1
     self:_SetAsNaviTarget(self.m_focusIndex)
 end
 
+
+
+ActivityVersionGuide.GetAllCanReceiveStageIds = HL.Method().Return(HL.Table) << function(self)
+    local stageIds = {}
+    for _, stage in ipairs(self.m_guideDataList) do
+        if stage.status == "Available" then
+            table.insert(stageIds, stage.stageId)
+        end
+    end
+    return stageIds
+end
 
 
 

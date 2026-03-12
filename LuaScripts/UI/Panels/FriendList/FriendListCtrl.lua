@@ -231,7 +231,8 @@ end
 
 FriendListCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, arg)
     self.friendSystem = GameInstance.player.friendSystem
-
+    self.m_isPsnFriend = false
+    self.view.friendList.m_isPsnTab = false
     if self.m_isPsnFriend then
         self.friendSystem:SyncPsnFriendListSimple()
     else
@@ -422,7 +423,6 @@ end
 
 
 FriendListCtrl.OnHide = HL.Override() << function(self)
-    self.m_isPsnFriend = false
 end
 
 

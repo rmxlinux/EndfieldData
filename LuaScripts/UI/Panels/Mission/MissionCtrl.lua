@@ -114,6 +114,7 @@ local MissionFilterCellConfig = {
 
 
 
+
 MissionCtrl = HL.Class('MissionCtrl', uiCtrl.UICtrl)
 
 
@@ -188,6 +189,7 @@ MissionCtrl.m_doNotPostAudio = HL.Field(HL.Boolean) << false
 
 MissionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_missionSystem = GameInstance.player.mission
+    self:_RefreshMissionFilterCellConfig()
 
     self.m_packageNode = {
         ["Hurt"] = self.view.missionInfoNode.packageList.hurtNode,
@@ -302,6 +304,44 @@ MissionCtrl._InitMissionFilter = HL.Method() << function(self)
         self.view.titleTxt.text = currentSelectConfig.typeText
     end
 end
+
+
+
+MissionCtrl._RefreshMissionFilterCellConfig = HL.Method() << function(self)
+    MissionFilterCellConfig = {
+        [1] = {
+            missionFilterType = MissionFilterType_All,
+            icon = "all_mission_icon_gray",
+            typeText = Language.ui_mis_panel_tab_all,
+        },
+        [2] = {
+            missionFilterType = MissionViewType.MissionViewMain,
+            icon = "main_mission_icon_gray",
+            typeText = Language.ui_mis_panel_tab_main_new,
+        },
+        [3] = {
+            missionFilterType = MissionViewType.MissionViewDiscovery,
+            icon = "fac_mission_icon_gray",
+            typeText = Language.ui_mis_panel_tab_discovery,
+        },
+        [4] = {
+            missionFilterType = MissionViewType.MissionViewSide,
+            icon = "char_mission_icon_gray",
+            typeText = Language.ui_mis_panel_tab_side,
+        },
+        [5] = {
+            missionFilterType = MissionViewType.MissionViewActivity,
+            icon = "activity_mission_icon_gray",
+            typeText = Language.ui_mis_panel_tab_activity,
+        },
+        [6] = {
+            missionFilterType = MissionViewType.MissionViewOther,
+            icon = "misc_mission_icon_gray",
+            typeText = Language.ui_mis_panel_tab_other,
+        },
+    }
+end
+
 
 
 
@@ -680,8 +720,8 @@ MissionCtrl._SortMissions = HL.Method(HL.Any, HL.Any).Return(HL.Boolean) << func
         return a.sortId > b.sortId  
     end
 
-    if missionA.willUnlockOtherThings ~= missionB.willUnlockOtherThings then
-        return missionA.willUnlockOtherThings 
+    if missionA.extraInfoType ~= missionB.extraInfoType then
+        return missionA.extraInfoType:GetHashCode() > missionB.extraInfoType:GetHashCode() 
     end
 
     local _, aTypeInfo = Tables.missionTypeInfoTable:TryGetValue(missionA.missionType)
@@ -813,9 +853,16 @@ MissionCtrl._SetMissionCellContent = HL.Method(HL.Any, HL.Any, HL.Any) << functi
 
     if willExpire then
         missionCell.unlockIcon.gameObject:SetActiveIfNecessary(false)
+        missionCell.narrativeIcon.gameObject:SetActiveIfNecessary(false)
+        missionCell.newRegionIcon.gameObject:SetActiveIfNecessary(false)
     else
-        local willUnlock = missionInfo.willUnlockOtherThings
-        missionCell.unlockIcon.gameObject:SetActiveIfNecessary(willUnlock)
+        local unlock = missionInfo.extraInfoType == GEnums.MissionExtraInfoType.Unlock
+        local narrative = missionInfo.extraInfoType == GEnums.MissionExtraInfoType.NarrativeImportant
+        local unlockRegion = missionInfo.extraInfoType == GEnums.MissionExtraInfoType.UnlockRegion
+
+        missionCell.unlockIcon.gameObject:SetActiveIfNecessary(unlock)
+        missionCell.narrativeIcon.gameObject:SetActiveIfNecessary(narrative)
+        missionCell.newRegionIcon.gameObject:SetActiveIfNecessary(unlockRegion)
     end
 
     missionCell.charaIconImage.gameObject:SetActiveIfNecessary(false)
@@ -886,11 +933,25 @@ MissionCtrl._RefreshMissionInfo = HL.Method() << function(self)
             missionInfoNode.timerNode.gameObject:SetActiveIfNecessary(self.m_willExpire)
             self:_UpdateExpireTime()    
 
-            local willUnlock = missionInfo.willUnlockOtherThings
-            missionInfoNode.unlockNode.gameObject:SetActiveIfNecessary(willUnlock)
-            if willUnlock then
-                local unlockText = missionInfo.missionUnlockText
-                missionInfoNode.unlockText:SetAndResolveTextStyle(unlockText)
+            missionInfoNode.unlockNode.gameObject:SetActiveIfNecessary(false)
+            missionInfoNode.narrativeNode.gameObject:SetActiveIfNecessary(false)
+            local extraInfoType = missionInfo.extraInfoType
+            local extraText = missionInfo.missionExtraInfoDesc
+
+            if extraInfoType == GEnums.MissionExtraInfoType.Unlock then
+                missionInfoNode.unlockNode.gameObject:SetActiveIfNecessary(true)
+                missionInfoNode.unlockText:SetAndResolveTextStyle(extraText)
+            end
+
+            if extraInfoType == GEnums.MissionExtraInfoType.NarrativeImportant then
+                missionInfoNode.narrativeNode.gameObject:SetActiveIfNecessary(true)
+                missionInfoNode.narrativeText:SetAndResolveTextStyle(extraText)
+            end
+
+            
+            if extraInfoType == GEnums.MissionExtraInfoType.UnlockRegion then
+                missionInfoNode.unlockNode.gameObject:SetActiveIfNecessary(true)
+                missionInfoNode.unlockText:SetAndResolveTextStyle(extraText)
             end
 
             missionInfoNode.packageList.gameObject:SetActiveIfNecessary(false)

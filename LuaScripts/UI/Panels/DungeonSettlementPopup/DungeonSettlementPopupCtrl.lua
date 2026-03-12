@@ -48,6 +48,7 @@ local RESULT_2_REWARDS_CLIP = "dungeonsettlementpopup_change"
 
 
 
+
 DungeonSettlementPopupCtrl = HL.Class('DungeonSettlementPopupCtrl', uiCtrl.UICtrl)
 
 
@@ -132,6 +133,7 @@ DungeonSettlementPopupCtrl.m_items = HL.Field(HL.Table)
 
 DungeonSettlementPopupCtrl.m_canCloseSelf = HL.Field(HL.Boolean) << false
 
+
 DungeonSettlementPopupCtrl.m_hasShowResultState = HL.Field(HL.Boolean) << false
 
 
@@ -180,14 +182,12 @@ end
 
 DungeonSettlementPopupCtrl.OnShow = HL.Override() << function(self)
     Notify(MessageConst.ON_DUNGEON_SETTLEMENT_OPENED)
-    Notify(MessageConst.TOGGLE_COMMON_ITEM_TOAST, false)
 end
 
 
 
 DungeonSettlementPopupCtrl.OnHide = HL.Override() << function(self)
     Notify(MessageConst.ON_DUNGEON_SETTLEMENT_CLOSED)
-    Notify(MessageConst.TOGGLE_COMMON_ITEM_TOAST, true)
 end
 
 
@@ -195,7 +195,6 @@ end
 DungeonSettlementPopupCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.HIDE_ITEM_TIPS)
     Notify(MessageConst.ON_DUNGEON_SETTLEMENT_CLOSED)
-    Notify(MessageConst.TOGGLE_COMMON_ITEM_TOAST, true)
 
     if self.m_leaveTick then
         self.m_leaveTick = LuaUpdate:Remove(self.m_leaveTick)
@@ -263,8 +262,6 @@ end
 
 
 DungeonSettlementPopupCtrl._UpdateRewardsState = HL.Method() << function(self)
-    self.m_items = self:_GetRewardItems()
-
     local dungeonCfg = Tables.dungeonTable[self.m_dungeonId]
     local gameCategory = dungeonCfg.dungeonCategory
     local gameMechanicCategoryCfg = Tables.gameMechanicCategoryTable[gameCategory]
@@ -322,7 +319,7 @@ end
 DungeonSettlementPopupCtrl._OnBtnRestartDungeonClick = HL.Method() << function(self)
     local restartFunc = function()
         self:PlayAnimationOutWithCallback(function()
-            GameInstance.dungeonManager:RestartDungeonWithBlackScreen()
+            GameWorld.worldInfo.subGame:SendReStart(true)
             
             self:Close()
         end)
@@ -391,7 +388,7 @@ DungeonSettlementPopupCtrl._GetRewardItems = HL.Method().Return(HL.Table) << fun
             if itemCfg then
                 table.insert(items, {id = itemBundle.id,
                                      count = itemBundle.count,
-                                     typeId = 3,
+                                     typeId = 4,
                                      typeTag = DungeonConst.DUNGEON_REWARD_TAG_STATE.First,
                                      sortId1 = itemCfg.sortId1,
                                      sortId2 = itemCfg.sortId2,})
@@ -406,7 +403,7 @@ DungeonSettlementPopupCtrl._GetRewardItems = HL.Method().Return(HL.Table) << fun
             if itemCfg then
                 table.insert(items, {id = itemBundle.id,
                                      count = itemBundle.count,
-                                     typeId = 2,
+                                     typeId = 3,
                                      typeTag = DungeonConst.DUNGEON_REWARD_TAG_STATE.Extra,
                                      sortId1 = itemCfg.sortId1,
                                      sortId2 = itemCfg.sortId2,})
@@ -419,10 +416,12 @@ DungeonSettlementPopupCtrl._GetRewardItems = HL.Method().Return(HL.Table) << fun
         for _, itemBundle in pairs(mainRewardPack.itemBundleList) do
             local _, itemCfg = Tables.itemTable:TryGetValue(itemBundle.id)
             if itemCfg then
+                local typeTag = self:_TryGetRewardTypeTag(itemBundle.id)
+                local typeId = typeTag == DungeonConst.DUNGEON_REWARD_TAG_STATE.Regular and 2 or 1
                 table.insert(items, {id = itemBundle.id,
                                      count = itemBundle.count,
-                                     typeId = 1,
-                                     typeTag = DungeonConst.DUNGEON_REWARD_TAG_STATE.Regular,
+                                     typeId = typeId,
+                                     typeTag = typeTag,
                                      sortId1 = itemCfg.sortId1,
                                      sortId2 = itemCfg.sortId2,})
             end
@@ -433,6 +432,45 @@ DungeonSettlementPopupCtrl._GetRewardItems = HL.Method().Return(HL.Table) << fun
     table.insert(sortKeys, 1, "typeId")
     table.sort(items, Utils.genSortFunction(sortKeys))
     return items
+end
+
+
+
+
+DungeonSettlementPopupCtrl._TryGetRewardTypeTag = HL.Method(HL.String).Return(HL.Opt(HL.String))
+        << function(self, itemId)
+    local dungeonCfg = Tables.dungeonTable[self.m_dungeonId]
+    
+    
+    
+    
+    local realRewardCfg
+    local hasRecord, subGameRecord = GameInstance.player.subGameSys:TryGetSubGameRecord(self.m_dungeonId)
+    if not string.isEmpty(dungeonCfg.hunterModeRewardId) then
+        realRewardCfg = Tables.rewardTable[dungeonCfg.hunterModeRewardId]
+    elseif hasRecord then
+        if subGameRecord.customRewardIndex == 0 then
+            realRewardCfg = Tables.rewardTable[dungeonCfg.rewardId]
+        elseif subGameRecord.customRewardIndex == 1 then
+            realRewardCfg = Tables.rewardTable[dungeonCfg.customRewardId]
+        end
+    end
+
+    if realRewardCfg == nil then
+        return
+    end
+
+    for _, itemBundle in pairs(realRewardCfg.itemBundles) do
+        if itemBundle.id == itemId then
+            return DungeonConst.DUNGEON_REWARD_TAG_STATE.Regular
+        end
+    end
+
+    for _, itemBundle in pairs(realRewardCfg.probItemBundles) do
+        if itemBundle.id == itemId then
+            return DungeonConst.DUNGEON_REWARD_TAG_STATE.Random
+        end
+    end
 end
 
 
@@ -517,6 +555,7 @@ end
 
 DungeonSettlementPopupCtrl.StartSettlement = HL.Method(HL.String) << function(self, dungeonId)
     self.m_dungeonId = dungeonId
+    self.m_items = self:_GetRewardItems()
 
     local needStamina = DungeonUtils.isDungeonCostStamina(self.m_dungeonId)
     if needStamina then

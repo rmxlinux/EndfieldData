@@ -48,6 +48,7 @@ local PERMANENT_GOODS_CELL_REFRESH_WAIT_TIME = 0.05
 
 
 
+
 ShopWeaponCtrl = HL.Class('ShopWeaponCtrl', uiCtrl.UICtrl)
 
 
@@ -95,6 +96,9 @@ ShopWeaponCtrl.m_currNaviCol = HL.Field(HL.Int) << 1
 
 
 ShopWeaponCtrl.m_haveSeenLines = HL.Field(HL.Table)
+
+
+ShopWeaponCtrl.m_weeklyTimer = HL.Field(HL.Any)
 
 
 
@@ -228,6 +232,10 @@ ShopWeaponCtrl.OnClose = HL.Override() << function(self)
         end
         GameInstance.player.shopSystem:SetGoodsIdSee()
     end
+
+    if self.m_weeklyTimer and self.m_weeklyTimer > 0 then
+        self:_ClearTimer(self.m_weeklyTimer)
+    end
 end
 
 
@@ -301,9 +309,10 @@ ShopWeaponCtrl.UpdateUpWeapon = HL.Method() << function(self)
         self:_UpdateSingleLimitedWeapon(singleWeaponCaseCell, boxData, false)
         
         local poolId = Tables.shopGoodsTable[boxData.goodsTemplateId].weaponGachaPoolId
-        local _, closeTimeDesc = CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId)
+        local isRealTime, closeTimeDesc= CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId)
         local poolTimeNode = singleWeaponCaseCell.view.poolTimeNode
         poolTimeNode.endTimeTxt.text = closeTimeDesc
+        poolTimeNode.endingTxt.gameObject:SetActive(isRealTime)
     end
     
     if #upBoxList >= 2 then
@@ -323,11 +332,13 @@ ShopWeaponCtrl.UpdateUpWeapon = HL.Method() << function(self)
         self:_UpdateSingleLimitedWeapon(weaponCaseCell2, boxData2, true)
         
         local poolId1 = Tables.shopGoodsTable[boxData1.goodsTemplateId].weaponGachaPoolId
-        local _, closeTimeDesc1 = CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId1)
+        local isRealTime1, closeTimeDesc1 = CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId1)
         weaponCaseCell1.view.poolTimeNode.endTimeTxt:SetAndResolveTextStyle(closeTimeDesc1)
+        weaponCaseCell1.view.poolTimeNode.endingTxt.gameObject:SetActive(isRealTime1)
         local poolId2 = Tables.shopGoodsTable[boxData2.goodsTemplateId].weaponGachaPoolId
-        local _, closeTimeDesc2 = CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId2)
+        local isRealTime2, closeTimeDesc2 = CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId2)
         weaponCaseCell2.view.poolTimeNode.endTimeTxt:SetAndResolveTextStyle(closeTimeDesc2)
+        weaponCaseCell2.view.poolTimeNode.endingTxt.gameObject:SetActive(isRealTime2)
     end
     
     if #downBoxList == 0 then
@@ -400,7 +411,9 @@ ShopWeaponCtrl._SetupViewSmallUpWeaponCell = HL.Method(HL.Any, HL.Any) << functi
     if showHardGuarantee then
         guaranteeNode.gameObject:SetActive(true)
         guaranteeNode.stateController:SetState("OnlyOne")
-        guaranteeNode.guaranteeNumTxt.text = math.ceil((gachaTypeCfg.hardGuarantee - poolInfo.hardGuaranteeProgress) / 10)
+        
+        local remainNum = math.ceil((gachaTypeCfg.hardGuarantee - poolInfo.hardGuaranteeProgress) / 10)
+        guaranteeNode.guaranteeGetTxt.text = string.format("<color=#FEF000>%d</color> ", remainNum) .. Language.ui_shop_entry_weapon_shop_numbers_1
     else
         guaranteeNode.stateController:SetState("Again")
         
@@ -421,8 +434,9 @@ ShopWeaponCtrl._SetupViewSmallUpWeaponCell = HL.Method(HL.Any, HL.Any) << functi
         end
     end
     
-    local _, closeTimeDesc = CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId)
+    local isRealTime, closeTimeDesc = CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId)
     cell.view.poolTimeNode.endTimeTxt.text = closeTimeDesc
+    cell.view.poolTimeNode.endingTxt.gameObject:SetActive(isRealTime)
     
     cell.view.weaponsBagNameTxt.text = weaponPoolCfg.name
     
@@ -486,7 +500,9 @@ ShopWeaponCtrl._UpdateSingleLimitedWeapon = HL.Method(HL.Any, HL.Any, HL.Boolean
         guaranteeNode.itemIcon:InitItemIcon(upWeaponId)
         guaranteeNode.rewardNameTxt.text = weaponItemCfg.name
         guaranteeNode.weaponTypeIcon:LoadSprite(UIConst.UI_SPRITE_WEAPON_EXHIBIT, weaponTypeIconName)
-        guaranteeNode.remainNeedPullCountTxt.text = math.ceil((gachaTypeCfg.hardGuarantee - poolInfo.hardGuaranteeProgress) / 10)
+        
+        local remainNum = math.ceil((gachaTypeCfg.hardGuarantee - poolInfo.hardGuaranteeProgress) / 10)
+        guaranteeNode.guaranteeTxt.text = string.format("<color=#FEF000>%d</color> ", remainNum) .. Language.ui_shop_entry_weapon_shop_numbers_1
         guaranteeNode.btn.onClick:RemoveAllListeners()
         guaranteeNode.btn.onClick:AddListener(function()
             CashShopUtils.ShowWikiWeaponPreview(poolId, upWeaponId)
@@ -507,7 +523,8 @@ ShopWeaponCtrl._UpdateSingleLimitedWeapon = HL.Method(HL.Any, HL.Any, HL.Boolean
             local info = loopRewardInfos[1] 
             guaranteeNode.itemIcon:InitItemIcon(info.itemId)
             guaranteeNode.rewardNameTxt.text = info.name
-            guaranteeNode.remainNeedPullCountTxt.text = info.remainNeedPullCount
+            
+            guaranteeNode.guaranteeTxt.text = string.format("%d ", info.remainNeedPullCount) .. Language.ui_shop_entry_weapon_shop_numbers_2
             guaranteeNode.btn.onClick:RemoveAllListeners()
             guaranteeNode.btn.onClick:AddListener(function()
                 
@@ -578,6 +595,31 @@ ShopWeaponCtrl.UpdateTimeLimitWeapons = HL.Method() << function(self)
         end
         weeklyTime.text = string.format(Language.LUA_SHOP_WEAPON_WEEKLY_TIME_LIMIT,
             Utils.appendUTC(Utils.timestampToDateYMDHM(weeklyEndTime + now)))
+        
+        if weeklyGoods.Count >= 1 then
+            local firstWeeklyGoodsData = weeklyGoodsInfo[1].goodsData
+            local closeTime = firstWeeklyGoodsData.closeTimeStamp
+            local remainTime = closeTime - DateTimeUtils.GetCurrentTimestampBySeconds()
+            logger.info("[ShopWeaponCtrl] 创建周刷新倒计时: " .. remainTime)
+            if self.m_weeklyTimer and self.m_weeklyTimer > 0 then
+                self:_ClearTimer(self.m_weeklyTimer)
+            end
+            self.m_weeklyTimer = self:_StartTimer(remainTime, function()
+                logger.info("[ShopWeaponCtrl] 因为周刷新倒计时手动发送 MessageConst.ON_SHOP_REFRESH")
+                Notify(MessageConst.ON_SHOP_REFRESH)
+            end, true)
+        end
+        if BEYOND_DEBUG then
+            local weeklyGoodsNames = {}
+            for _, weeklyGood in pairs(weeklyGoods) do
+                local goodsTableData = Tables.shopGoodsTable[weeklyGood.goodsTemplateId]
+                local displayItem = UIUtils.getRewardFirstItem(goodsTableData.rewardId)
+                local itemId = displayItem.id
+                local _, itemData = Tables.itemTable:TryGetValue(itemId)
+                table.insert(weeklyGoodsNames, itemData.name)
+            end
+            logger.info("[ShopWeaponCtrl] 周商品名字: " .. table.concat(weeklyGoodsNames, ", "))
+        end
     else
         weeklyCell.shopWeaponCell.gameObject:SetActive(false)
         weeklyCell.shopWeaponCell02.gameObject:SetActive(false)
@@ -609,6 +651,17 @@ ShopWeaponCtrl.UpdateTimeLimitWeapons = HL.Method() << function(self)
         local dailyEndTime = GameInstance.player.shopSystem:GetWeaponGoodsTimeLimit(dailyGoods[0]) + 1
         dailyTime.text = string.format(Language.LUA_SHOP_WEAPON_DAILY_TIME_LIMIT,
             Utils.appendUTC(Utils.timestampToDateYMDHM(dailyEndTime + now)))
+        if BEYOND_DEBUG then
+            local dailyGoodsNames = {}
+            for _, dailyGood in pairs(dailyGoods) do
+                local goodsTableData = Tables.shopGoodsTable[dailyGood.goodsTemplateId]
+                local displayItem = UIUtils.getRewardFirstItem(goodsTableData.rewardId)
+                local itemId = displayItem.id
+                local _, itemData = Tables.itemTable:TryGetValue(itemId)
+                table.insert(dailyGoodsNames, itemData.name)
+            end
+            logger.info("[ShopWeaponCtrl] 日商品名字: " .. table.concat(dailyGoodsNames, ", "))
+        end
     else
         for i = 1, 3 do
             local goodsCell = dailyCell["shopWeaponCell0" .. i]

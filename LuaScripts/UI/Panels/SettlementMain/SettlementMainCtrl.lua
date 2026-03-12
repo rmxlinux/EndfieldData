@@ -50,6 +50,7 @@ local missionSystem = GameInstance.player.mission
 
 
 
+
 SettlementMainCtrl = HL.Class('SettlementMainCtrl', uiCtrl.UICtrl)
 
 
@@ -142,6 +143,9 @@ SettlementMainCtrl.m_moneyStoreCellCache = HL.Field(HL.Forward("UIListCache"))
 SettlementMainCtrl.m_itemStoreCellCache = HL.Field(HL.Forward("UIListCache"))
 
 
+SettlementMainCtrl.m_waitTradeComplete = HL.Field(HL.Boolean) << false
+
+
 
 SettlementMainCtrl.m_moneyStoreCellAniInterval = HL.Field(HL.Thread)
 
@@ -185,7 +189,14 @@ end
 
 
 SettlementMainCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
+    local initSuccess = self:_InitData(arg)
+    if not initSuccess then
+        return
+    end
+    self:_UpdateData()
+    self:_RefreshAllUI()
     self.view.domainTopMoneyTitle.view.contentNaviGroup:ManuallyStopFocus()
+    self.view.tradeNode.centerNaviGroup:ManuallyStopFocus()
 end
 
 
@@ -1024,7 +1035,9 @@ SettlementMainCtrl._OnSellItem = HL.Method() << function(self)
         return
     end
     settlementSystem:SendSellItem(stlInfo.stlId, stlInfo.sellItemInfo.itemId, stlInfo.tradeInfo.selectCount)
-    self.view.tradeNode.tradeBtn.interactable = false
+    InputManagerInst:ToggleGroup(self.view.inputGroup.groupId, false)
+    self.view.tradeNode.numberSelector.view.slider.interactable = false
+    self.m_waitTradeComplete = true
 end
 
 
@@ -1036,7 +1049,8 @@ SettlementMainCtrl._OnTradeSuccess = HL.Method(HL.Any) << function(self, rawMsg)
     local msg = unpack(rawMsg)
     
     if msg.RealSellCount == 0 then
-        self.view.tradeNode.tradeBtn.interactable = true
+        InputManagerInst:ToggleGroup(self.view.inputGroup.groupId, true)
+        self.view.tradeNode.numberSelector.view.slider.interactable = true
         local stlInfo = self.m_stlInfoList[self.m_curSelectStlIndex]
         if not stlInfo then
             return
@@ -1054,7 +1068,6 @@ SettlementMainCtrl._OnTradeSuccess = HL.Method(HL.Any) << function(self, rawMsg)
         tradeAni = "tradenodenewmobile_done"
     end
     self.view.tradeNode.animationWrapper:Play(tradeAni, function()
-        self.view.tradeNode.tradeBtn.interactable = true
         self.view.tradeNode.animationWrapper:Play("tradenodenewmobile_default")
         self:_ShowTradeReward(rawMsg)
     end)
@@ -1098,6 +1111,13 @@ SettlementMainCtrl._ShowTradeReward = HL.Method(HL.Any) << function(self, rawMsg
         title = Language.LUA_SETTLEMENT_SELL_ITEM_REWARD_TOAST_TITLE,
         items = showItemInfos,
         icon = self.view.config.SELL_ITEM_REWARD_TOAST_ICON,
+        onComplete = function()
+            self.view.tradeNode.numberSelector.view.slider.interactable = true
+            if not GameInstance.player.guide.isInGuide then
+                InputManagerInst:ToggleGroup(self.view.inputGroup.groupId, true)
+                self.m_waitTradeComplete = false
+            end
+        end
     }
     Notify(MessageConst.SHOW_SYSTEM_REWARDS, args)
     
@@ -1115,6 +1135,9 @@ SettlementMainCtrl.m_tradeIconAniInfo = HL.Field(HL.Table)
 
 
 SettlementMainCtrl._OnSelectItemCountPlayAni = HL.Method(HL.Boolean) << function(self, isAdd)
+    if self.m_waitTradeComplete then
+        return  
+    end
     local info = self.m_tradeIconAniInfo
     info.curIsAdd = isAdd
     AudioManager.PostEvent(isAdd and "Au_UI_Event_Animate_SettlementAdd" or "Au_UI_Event_Animate_SettlementReduce")

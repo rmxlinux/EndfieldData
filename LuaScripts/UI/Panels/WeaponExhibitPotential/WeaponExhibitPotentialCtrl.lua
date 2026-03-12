@@ -188,6 +188,12 @@ WeaponExhibitPotentialCtrl._InitActionEvent = HL.Method() << function(self)
             pageType = UIConst.WEAPON_EXHIBIT_PAGE_TYPE.OVERVIEW,
         })
     end)
+    self.view.btnFullSkill.onClick:AddListener(function()
+        Notify(MessageConst.HIDE_ITEM_TIPS)
+        UIManager:Open(PanelId.WeaponSkillDetail, {
+            weaponInstId = self.m_weaponInfo.weaponInstId,
+        })
+    end)
     self.view.btnEmpty.onClick:AddListener(function()
         self:_ToggleExpandNode(false, DeviceInfo.usingController)
     end)
@@ -584,8 +590,10 @@ WeaponExhibitPotentialCtrl._ToggleExpandNode = HL.Method(HL.Boolean, HL.Opt(HL.B
     InputManagerInst:ToggleGroup(self.view.leftNodeInputGroup.groupId, not isOn)
     if DeviceInfo.usingController then
         InputManagerInst:ToggleGroup(self.view.btnLevelUp.groupId, not isOn)
+        InputManagerInst:ToggleGroup(self.view.btnFullSkill.groupId, not isOn)
     else
         InputManagerInst:ToggleGroup(self.view.btnLevelUp.groupId, true)
+        InputManagerInst:ToggleGroup(self.view.btnFullSkill.groupId, true)
     end
 end
 

@@ -125,8 +125,8 @@ MapMarkDetailCommon.InitMapMarkDetailCommon = HL.Method(HL.Table) << function(se
         needRefreshWithTier = tierIndex ~= MapConst.BASE_TIER_INDEX
     end
     if needRefreshWithTier then
-        local _, levelCfg = DataManager.uiLevelMapConfig.levelConfigInfos:TryGetValue(self.m_markDetailData.levelId)
-        local tierNames = levelCfg.tierNames
+        local _, loaderData = GameInstance.player.mapManager:GetLoaderLevelDataByLevelId(self.m_markDetailData.levelId)
+        local tierNames = loaderData.loadConfig.tierNames
         local nameText = Language[tierNames[self.m_markDetailData.tierId]]
         self.view.common.subTitle.text.text = string.format(
             Language.LUA_MAP_MARK_DETAIL_COMMON_SUB_TITLE_TIER_TEXT,

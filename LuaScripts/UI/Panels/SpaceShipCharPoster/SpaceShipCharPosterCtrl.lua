@@ -275,6 +275,9 @@ SpaceShipCharPosterCtrl.SetSingleSlotUI = HL.Method(HL.Number, HL.String) << fun
     local slot = self.m_charPosterView["slot".. CSIndex(slotIndex)]
     local potentialLevel = 0
     if GameInstance.player.spaceship.isViewingFriend then
+        if charId == Tables.globalConst.maleCharID or charId == Tables.globalConst.femaleCharID then
+            charId = Tables.globalConst.endminVirtualCharId
+        end
         local charExtraData = GameInstance.player.spaceship:GetFriendExtraCharData(charId)
         slot.potentialStar.view.gameObject:SetActive(charExtraData ~= nil)
         slot.friendshipNode.view.gameObject:SetActive(charExtraData ~= nil)

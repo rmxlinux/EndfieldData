@@ -152,7 +152,7 @@ POLE_RANGE_EFFECT_MAP = {
 }
 
 FLUID_SPRAY_RANGE_EFFECT = "Assets/Beyond/DynamicAssets/Gameplay/Effects/Prefabs/P_interactive_sprinkler_01_range_5x4.prefab"
-BATTLE_BUILDING_RANGE_EFFECT = "Assets/Beyond/DynamicAssets/Gameplay/Effects/Prefabs/P_interactive_boundary_weapontower_01.prefab"
+EFFECT_PREFAB_PATH_FORMAT = "Assets/Beyond/DynamicAssets/Gameplay/Effects/Prefabs/%s.prefab"
 
 AUTO_EXIT_FACTORY_DIST = 3
 
@@ -336,7 +336,7 @@ FAC_TOP_VIEW_BASIC_ACTION_IDS_FOR_CONTROLLER = {
     "fac_top_view_ct_scale_cam",
 }
 
-FAC_TOP_VIEW_MOVE_PADDING = 3
+FAC_TOP_VIEW_MOVE_PADDING = -17
 
 FAC_LOGISTIC_SPEED_OVERRIDE = 0.001
 FAC_PIPE_LOGISTIC_SPEED_OVERRIDE = 0.001
@@ -551,6 +551,12 @@ FAC_NON_BUILDING_NORMAL_STATE_CUSTOM_TEXT_ID = {
 FAC_SMARTALERT_PREFAB_PATH = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Factory/Widgets/MachineSmartAlertNode.prefab"
 
 FAC_BUILD_LIST_REDDOT_DATA_CATEGORY = "FacBuildListRedDot"
+
+FAC_MULTI_LIMITED_BUILDING_ORDER = {
+    "xiranite_oven_1",
+    "log_hongs_bus_source",
+    "log_hongs_bus"
+}
 
 FocusStateTable = {
     None = 0,

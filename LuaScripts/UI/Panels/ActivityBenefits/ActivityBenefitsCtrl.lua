@@ -271,6 +271,27 @@ local benefitConfigTable = {
             return success and info.rewardId or ""
         end,
     },
+    
+    newplayer_mission = {
+        activityId = Tables.activityConst.ActivityNewplayerMissionRewardActivityId,
+        getStageIdsFunc = function()
+            local ids = {}
+            for i = 1, Tables.activityLevelRewardsTable[Tables.activityConst.ActivityNewplayerMissionRewardActivityId].stageList.Count do
+                table.insert(ids, i)
+            end
+            return ids
+        end,
+        checkRewardReceivedByStageIdFunc = function(id)
+            local activity = GameInstance.player.activitySystem:GetActivity(Tables.activityConst.ActivityNewplayerMissionRewardActivityId)
+            if not activity then
+                return false
+            end
+            return activity.receiveStageList:Contains(id)
+        end,
+        getRewardIdByStageIdFunc = function(id)
+            return Tables.ActivityLevelRewardsTable[Tables.activityConst.ActivityNewplayerMissionRewardActivityId].stageList[CSIndex(id)].rewardId
+        end,
+    },
 }
 
 

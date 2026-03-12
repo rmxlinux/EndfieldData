@@ -1193,6 +1193,11 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         
         [MessageConst.ON_ITEM_COUNT_CHANGED] = 'OnItemCountChanged',
     },
+    
+    ['GeneralAbility'] = {
+        
+        [MessageConst.TRY_ENTER_WATER_DRONE_ABILITY] = '_TryEnterWaterDroneAbility',
+    },
     ['FacUnlockFormulaToast'] = {
         
         [MessageConst.SHOW_FORMULA_TOAST] = 'OnShowFormulaToast',

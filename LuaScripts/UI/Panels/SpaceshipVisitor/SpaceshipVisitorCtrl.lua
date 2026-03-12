@@ -230,12 +230,7 @@ SpaceshipVisitorCtrl._RealUpdateInfo = HL.Method() << function(self)
     local isBuild = GameInstance.player.spaceship:IsRoomBuild(Tables.spaceshipConst.guestRoomClueExtensionId)
     if isBuild then
         self.view.communicationCell.gameObject:SetActive(true)
-        local collectionData = GameInstance.player.spaceship:GetClueCollectionRoomSpecialData()
-        if collectionData ~= nil then
-            self.view.communicationCellNumTxt.text = collectionData.joinClueExchangeFriendRoleIds.Count
-        else
-            self.view.communicationCellNumTxt.text = 0
-        end
+        self.view.communicationCellNumTxt.text = self.m_visitRecord.weeklyJoinInfoExchangeCnt
     else
         self.view.communicationCell.gameObject:SetActive(false)
     end

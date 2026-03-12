@@ -293,18 +293,20 @@ end
 SNSMissionCtrl._UpdateFilterMissionRelatedDialogInfos = HL.Method(HL.Table) << function(self, selectedTags)
     local sns = GameInstance.player.sns
     local missionRelatedDialogInfos = {}
+    
+    local missionRelatedDialogInfosPart1 = {}
+    local missionRelatedDialogInfosPart2 = {}
     local missionRelatedSNSDialogIds = sns.missionRelatedSNSDialogIds
     local missionSys = GameInstance.player.mission
     local dialogInfoDic = sns.dialogInfoDic
 
     for _, dialogId in pairs(missionRelatedSNSDialogIds) do
 
-        
-        local importanceMatch = true
+        local importanceMatch = false
         local hasImportanceTag = false
-        local viewTypeMatch = true
+        local viewTypeMatch = false
         local hasViewTypeTag = false
-        local readMatch = true
+        local readMatch = false
         local hasReadTag = false
 
         local missionId = Tables.sNSDialogTable[dialogId].relatedMissionId
@@ -316,7 +318,6 @@ SNSMissionCtrl._UpdateFilterMissionRelatedDialogInfos = HL.Method(HL.Table) << f
 
         for _, tag in ipairs(selectedTags) do
             if tag.importanceType ~= nil then
-                importanceMatch = false
                 hasImportanceTag = true
             end
             if hasImportanceTag then
@@ -324,7 +325,6 @@ SNSMissionCtrl._UpdateFilterMissionRelatedDialogInfos = HL.Method(HL.Table) << f
             end
 
             if tag.viewType ~= nil then
-                viewTypeMatch = false
                 hasViewTypeTag = true
             end
             if hasViewTypeTag then
@@ -332,7 +332,6 @@ SNSMissionCtrl._UpdateFilterMissionRelatedDialogInfos = HL.Method(HL.Table) << f
             end
 
             if tag.endState ~= nil then
-                readMatch = false
                 hasReadTag = true
             end
             if hasReadTag then
@@ -340,8 +339,21 @@ SNSMissionCtrl._UpdateFilterMissionRelatedDialogInfos = HL.Method(HL.Table) << f
             end
         end
 
+        if not hasImportanceTag then
+            importanceMatch = true
+        end
+
+        if not hasViewTypeTag then
+            viewTypeMatch = true
+        end
+
+        if not hasReadTag then
+            readMatch = true
+        end
+
         if importanceMatch and viewTypeMatch and readMatch then
-            table.insert(missionRelatedDialogInfos, {
+
+            local info = {
                 dialogId = dialogId,
                 missionId = missionId,
 
@@ -350,15 +362,26 @@ SNSMissionCtrl._UpdateFilterMissionRelatedDialogInfos = HL.Method(HL.Table) << f
                 importance = importanceType:GetHashCode() * -1,
                 viewType = viewType:GetHashCode() * -1,
                 timestamp = dialogInfo.timestamp,
-            })
+                finishTimestamp = dialogInfo.finishTimestamp,
+            }
+
+            if dialogInfo.isEnd then
+                table.insert(missionRelatedDialogInfosPart2, info)
+            else
+                table.insert(missionRelatedDialogInfosPart1, info)
+            end
         end
 
     end
 
-    table.sort(missionRelatedDialogInfos,
-               Utils.genSortFunction({ "isReadSort", "isEndSort", "importance", "viewType" }))
+    
+    table.sort(missionRelatedDialogInfosPart1,
+               Utils.genSortFunction({ "isReadSort", "importance", "viewType", "timestamp" }))
+    
+    table.sort(missionRelatedDialogInfosPart2,
+               Utils.genSortFunction({ "finishTimestamp" }))
 
-    self.m_filterMissionRelatedDialogInfos = missionRelatedDialogInfos
+    self.m_filterMissionRelatedDialogInfos = lume.concat(missionRelatedDialogInfosPart1, missionRelatedDialogInfosPart2)
 end
 
 

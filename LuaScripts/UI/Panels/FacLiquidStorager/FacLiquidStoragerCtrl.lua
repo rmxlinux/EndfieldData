@@ -87,11 +87,6 @@ FacLiquidStoragerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.liquidItemSlot.view.facLiquidBg:InitFacLiquidBg()
     self.view.liquidItemSlot.view.liquidNaviGroup:NaviToThisGroup()
-    self.view.liquidItemSlot.item.view.button.onIsNaviTargetChanged = function(active)
-        if active then
-            self:_TryDisableHoverBindingOnEmptyItem()
-        end
-    end
 
     GameInstance.remoteFactoryManager:RegisterInterestedUnitId(self.m_buildingInfo.nodeId)
 end
@@ -154,8 +149,17 @@ end
 FacLiquidStoragerCtrl._RefreshLiquidItemSlot = HL.Method(HL.Boolean) << function(self, firstInit)
     local itemId = self.m_buildingInfo.fluidContainer.holdItemId
     local itemCount = self.m_buildingInfo.fluidContainer.holdItemCount
-    local isEmpty = string.isEmpty(itemId)
     local itemSlot = self.view.liquidItemSlot
+
+    local isEmpty
+    if string.isEmpty(itemId) then
+        if string.isEmpty(self.m_lastItemId) then
+            isEmpty = true
+        else
+            itemId = self.m_lastItemId
+            isEmpty = false
+        end
+    end
 
     if self.m_lastItemId ~= itemId or firstInit then
         self.m_lastItemId = itemId
@@ -170,24 +174,6 @@ FacLiquidStoragerCtrl._RefreshLiquidItemSlot = HL.Method(HL.Boolean) << function
             end)
             itemSlot.gameObject.name = "Item_" .. itemId
             itemSlot.item.view.button.clickHintTextId = "virtual_mouse_hint_item_tips"
-        end
-        itemSlot.view.dragItem.enabled = false  
-
-        self.m_dropHelper = UIUtils.initUIDropHelper(self.view.liquidItemSlot.view.dropItem, {
-            acceptTypes = UIConst.FACTORY_LIQUID_STORAGER_DROP_ACCEPT_INFO,
-            onDropItem = function(eventData, dragHelper)
-                if self:_ShouldAcceptDrop(dragHelper) then
-                    self:_OnDropItem(dragHelper)
-                end
-            end,
-            isDropArea = true,
-        })
-        self:_TryDisableHoverBindingOnEmptyItem()
-    end
-
-    local countZero = (itemCount == 0)
-    if self.m_itemCountZero ~= countZero or firstInit then
-        if not countZero then
             itemSlot.item.actionMenuArgs = {}
             itemSlot.item.customChangeActionMenuFunc = function(actionMenuInfos)
                 table.insert(actionMenuInfos, 1, {
@@ -211,21 +197,50 @@ FacLiquidStoragerCtrl._RefreshLiquidItemSlot = HL.Method(HL.Boolean) << function
                     end
                 })
             end
-            local selectFillLiquidId = itemSlot.item:AddHoverBinding("common_quick_drop", function()
-                Notify(MessageConst.ON_NAVI_INVENTORY_SELECT_FLUID, {
-                    componentId = self.m_buildingInfo.fluidContainer.componentId,
-                    fluidId = "",
-                    sourceItem = itemSlot.item
-                })
-            end)
-            InputManagerInst:SetBindingText(selectFillLiquidId, Language.LUA_ITEM_ACTION_CACHE_SELECT_FILL_LIQUID)
             InputManagerInst:SetBindingText(itemSlot.item.view.button.hoverConfirmBindingId, Language["key_hint_item_open_action_menu"])
-        else
-            local fakeGrayBinding = itemSlot.item:AddHoverBinding("common_quick_drop", function() end)
-            InputManagerInst:SetBindingText(fakeGrayBinding, Language.LUA_ITEM_ACTION_CACHE_SELECT_FILL_LIQUID)
-            InputManagerInst:ForceBindingKeyhintToGray(fakeGrayBinding, true)
+        end
+        itemSlot.view.dragItem.enabled = false  
+
+        self.m_dropHelper = UIUtils.initUIDropHelper(self.view.liquidItemSlot.view.dropItem, {
+            acceptTypes = UIConst.FACTORY_LIQUID_STORAGER_DROP_ACCEPT_INFO,
+            onDropItem = function(eventData, dragHelper)
+                if self:_ShouldAcceptDrop(dragHelper) then
+                    self:_OnDropItem(dragHelper)
+                end
+            end,
+            isDropArea = true,
+        })
+    end
+
+    local countZero = (itemCount == 0)
+    if self.m_itemCountZero ~= countZero or self.m_lastItemId ~= itemId or firstInit then
+        if not isEmpty then
+            if not countZero then
+                local selectFillLiquidId = itemSlot.item:AddHoverBinding("common_quick_drop", function()
+                    Notify(MessageConst.ON_NAVI_INVENTORY_SELECT_FLUID, {
+                        componentId = self.m_buildingInfo.fluidContainer.componentId,
+                        fluidId = "",
+                        sourceItem = itemSlot.item
+                    })
+                end)
+                InputManagerInst:SetBindingText(selectFillLiquidId, Language.LUA_ITEM_ACTION_CACHE_SELECT_FILL_LIQUID)
+            else
+                local fakeGrayBinding = itemSlot.item:AddHoverBinding("common_quick_drop", function() end)
+                InputManagerInst:SetBindingText(fakeGrayBinding, Language.LUA_ITEM_ACTION_CACHE_SELECT_FILL_LIQUID)
+                InputManagerInst:ForceBindingKeyhintToGray(fakeGrayBinding, true)
+            end
         end
         self.m_itemCountZero = countZero
+    end
+
+    if self.m_lastItemId ~= itemId or firstInit then
+        self.m_lastItemId = itemId
+        itemSlot.item.view.button.onIsNaviTargetChanged = function(active)
+            if active then
+                self:_TryDisableHoverBindingOnEmptyItem()
+            end
+        end
+        self:_TryDisableHoverBindingOnEmptyItem()
     end
 
     itemSlot.item:UpdateCountSimple(itemCount)
@@ -249,9 +264,7 @@ end
 
 
 FacLiquidStoragerCtrl._TryDisableHoverBindingOnEmptyItem = HL.Method() << function(self)
-    local itemId = self.m_buildingInfo.fluidContainer.holdItemId
-    local itemCount = self.m_buildingInfo.fluidContainer.holdItemCount
-    if string.isEmpty(itemId) or itemCount == 0 then
+    if string.isEmpty(self.m_lastItemId) then
         InputManagerInst:ToggleBinding(self.view.liquidItemSlot.item.view.button.hoverConfirmBindingId, false)
     end
 end
@@ -283,9 +296,14 @@ FacLiquidStoragerCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any)
     local isEmptyBottle, isFullBottle = self:_IsEmptyBottleDrop(itemId), self:_IsFullBottleDrop(itemId)
     local isBottle = isEmptyBottle or isFullBottle
     local isEmpty = string.isEmpty(itemBundle.id)
-    cell.view.forbiddenMask.gameObject:SetActiveIfNecessary(not isBottle and not isEmpty)
-    cell.view.dragItem.enabled = isBottle
-    cell.view.dropItem.enabled = isBottle or isEmpty
+    
+    if not isBottle and not isEmpty then
+        cell.view.forbiddenMask.gameObject:SetActiveIfNecessary(true)
+        cell.view.dropItem.enabled = false
+    end
+    if not isBottle then
+        cell.view.dragItem.enabled = false
+    end
 
     if isBottle then
         cell.item.customChangeActionMenuFunc = function(actionMenuInfos)

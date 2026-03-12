@@ -49,6 +49,10 @@ ShopCreditPointsPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         PhaseManager:OpenPhase(PhaseId.SpaceshipSalesRecords)
     end)
 
+    self.view.blackImage.onClick:AddListener(function()
+        PhaseManager:PopPhase(PhaseId.ShopCreditPointsPopUp)
+    end)
+
     self.m_spaceship = GameInstance.player.spaceship
     self.m_spaceship:QueryVisitInfo()
     self.view.listNodeDaily.text.text = 0

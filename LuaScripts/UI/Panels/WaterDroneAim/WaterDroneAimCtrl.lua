@@ -184,6 +184,7 @@ WaterDroneAimCtrl.OnShow = HL.Override() << function(self)
     
     self:_ToggleShowHideBattleAction(false)
     Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {true, "WaterDrone"})
+    Notify(MessageConst.DISABLE_BATTLE_INDICATOR_CONTROLLER, {true, "WaterDrone"})
     self:_ClearControllerTriggerSetting()
     if DeviceInfo.usingController then
         GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "WaterDrone", true)
@@ -262,6 +263,7 @@ WaterDroneAimCtrl._OnHideWaterDroneAim = HL.Method() << function(self)
     
     self:Hide()
     Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {false, "WaterDrone"})
+    Notify(MessageConst.DISABLE_BATTLE_INDICATOR_CONTROLLER, {false, "WaterDrone"})
     if DeviceInfo.usingController then
         GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "WaterDrone", false)
     end

@@ -43,6 +43,7 @@ MapMarkDetailHubCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
         commonArgs.bigBtnText = Language["ui_mapmarkdetail_button_teleport"]
         commonArgs.bigBtnIconName = UIConst.MAP_DETAIL_BTN_ICON_NAME.TELEPORT
         commonArgs.bigBtnCallback = function()
+            GameWorld.dialogManager:SkipCurrentDialog(true)
             MapUtils.teleportToHubByHubMark(markRuntimeData)
         end
     end

@@ -9,6 +9,7 @@ local CONTENT_TYPE_IMAGE = 2
 
 
 
+
 RichContent = HL.Class('RichContent', UIWidgetBase)
 
 
@@ -67,7 +68,8 @@ RichContent.SetContent = HL.Method(HL.Any) << function(self, args)
         elseif contentType == CONTENT_TYPE_IMAGE then
             contentCell.txt.gameObject:SetActive(false)
             contentCell.img.gameObject:SetActive(true)
-            local path = Utils.getImgGenderDiffPath(v.path)
+            local path = RichContent._TrimWithZWSP(v.path)
+            path = Utils.getImgGenderDiffPath(path)
             contentCell.img:LoadSprite(path)
             local layoutElement = contentCell.img.gameObject:GetComponent(typeof(Unity.UI.LayoutElement))
             
@@ -102,6 +104,15 @@ RichContent._ParseContent = HL.Method(HL.String).Return(HL.Number, HL.Any) << fu
         end
     end
     return CONTENT_TYPE_TEXT, text
+end
+
+
+
+RichContent._TrimWithZWSP = HL.StaticMethod(HL.String).Return(HL.String) << function(str)
+    
+    str = string.gsub(str, "^[ \t\n\r​]+", "")
+    str = string.gsub(str, "[ \t\n\r​]+$", "")
+    return str
 end
 
 HL.Commit(RichContent)

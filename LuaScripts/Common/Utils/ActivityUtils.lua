@@ -56,6 +56,24 @@ function ActivityUtils.setFalseNewActivityConditionalStage(stageId)
 end
 
 
+
+function ActivityUtils.isNewActivityConditionalStageByTime(activityId, stageId)
+    local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
+    local activityStartTime = activityData.startTime
+    local currTs = DateTimeUtils.GetCurrentTimestampBySeconds()
+    local _, multiStageCfg = Tables.activityConditionalMultiStageTable:TryGetValue(activityId)
+    for cfgStageId, stageCfg in pairs(multiStageCfg.stageList) do
+        if cfgStageId == stageId then
+            local stageStartTime = activityStartTime + stageCfg.timeOffset * 60 * 60
+            if currTs >= stageStartTime then
+                return not ClientDataManagerInst:GetBool(newConditionalStageText .. stageId, false)
+            end
+        end
+    end
+    return false
+end
+
+
 local newGameEntranceSeriesKeyPrefix = "new_activity_game_entrance_series"
 function ActivityUtils.isNewGameEntranceSeries(seriesId)
     return not ClientDataManagerInst:GetBool(newGameEntranceSeriesKeyPrefix .. seriesId, false)
@@ -108,6 +126,28 @@ function ActivityUtils.setFalseNewActivityDay(activityId)
 end
 
 
+function ActivityUtils.CheckMultiStageHaveCompletedStatus(activityId)
+    local haveCfg, multiStageCfg = Tables.activityConditionalMultiStageTable:TryGetValue(activityId)
+    if not haveCfg then
+        return false
+    end
+    local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
+    if not activityData then
+        return false
+    end
+    for stageId, stageCfg in pairs(multiStageCfg.stageList) do
+        
+        local csConditionalStageInfo = activityData:GetStageData(stageId)
+        if csConditionalStageInfo ~= nil then
+            local status = GEnums.ActivityConditionalStageState.__CastFrom(csConditionalStageInfo.Status)
+            if status == GEnums.ActivityConditionalStageState.Completed then
+                return true
+            end
+        end
+    end
+end
+
+
 local popUpText = "_new_activity_pop_up_"
 function ActivityUtils.notPopupToday(id,day)
     return not ClientDataManagerInst:GetBool(id .. popUpText ..tostring(day),false)
@@ -125,6 +165,17 @@ end
 function ActivityUtils.setFalseNewActivityBubble(id)
     id = ActivityUtils.getResetableActivityRealId(id)
     ClientDataManagerInst:SetBool(newBubbleText .. id, true, false, EClientDataTimeValidType.Permanent)
+end
+
+
+local newDebugBubbleText = "new_debug_activity_bubble_key"
+function ActivityUtils.getDebugActivityBubbleId()
+    local success, activityId = ClientDataManagerInst:GetString(newDebugBubbleText, false)
+    if success and not string.isEmpty(activityId) then
+        ClientDataManagerInst:SetString(newDebugBubbleText, "", false, EClientDataTimeValidType.Permanent)
+        return activityId
+    end
+    return
 end
 
 
@@ -168,6 +219,38 @@ end
 
 
 
+function ActivityUtils.GetFoodSubmitStageState(activityId, stageId)
+    local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
+    local status = GEnums.ActivityConditionalStageState.Locked
+    if not activityData then
+        return status
+    end
+    local stageData = activityData:GetStageData(stageId)
+    if stageData ~= nil then
+        status = GEnums.ActivityConditionalStageState.__CastFrom(stageData.Status)
+    end
+    return status
+end
+
+
+function ActivityUtils.GetFoodSubmitCurGoToRedDot()
+    local curTime = DateTimeUtils.GetCurrentTimestampBySeconds() + Utils.getServerTimeZoneOffsetSeconds()
+    local curDate = os.date("!*t", curTime)
+    local year = curDate.year
+    local month = curDate.month
+    local day = curDate.day
+    if curDate.hour < UIConst.COMMON_SERVER_UPDATE_TIME then
+        day = day - 1
+    end
+
+    return year * 10000 + month * 100 + day
+end
+
+
+
+
+
+
 function ActivityUtils.getPopUpIds()
     local popUpIds = {}
     
@@ -191,6 +274,9 @@ end
 
 function ActivityUtils.shouldPopup(id)
     local activity = GameInstance.player.activitySystem:GetActivity(id)
+    if not activity then
+        return
+    end
     local notPopupToday
 
     
@@ -226,6 +312,9 @@ end
 
 function ActivityUtils.recordPopup(id)
     local activity = GameInstance.player.activitySystem:GetActivity(id)
+    if not activity then
+        return
+    end
 
     
     if GEnums.ActivityType.__CastFrom(activity.type) ~= (GEnums.ActivityType.Checkin) then
@@ -342,21 +431,13 @@ function ActivityUtils.GameEventLogActivityVisit(activityId, buttonId, visitStat
 end
 
 
-function ActivityUtils.GameEventLogActivityRankView(activityId)
+function ActivityUtils.GameEventLogActivityRankView(activityId, rankRelatedId, rankInfo)
     local activity = GameInstance.player.activitySystem:GetActivity(activityId)
     if not activity then
         return
     end
     local templateId = activity.typeName
-    
-    local rankId = ""
-    local rankType = ""
-    local rankInfo = {
-        rank = 1,
-        roleId = tonumber(GameInstance.player.playerInfoSystem.roleId),
-        passTime = 0,
-    }
-    EventLogManagerInst:GameEvent_ActivityRankView(templateId, activityId, rankId, rankType, rankInfo)
+    EventLogManagerInst:GameEvent_ActivityRankView(templateId, activityId, rankRelatedId, "", rankInfo)
 end
 
 

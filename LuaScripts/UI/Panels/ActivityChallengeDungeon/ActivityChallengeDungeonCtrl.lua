@@ -10,6 +10,7 @@ local PANEL_ID = PanelId.ActivityChallengeDungeon
 
 
 
+
 ActivityChallengeDungeonCtrl = HL.Class('ActivityChallengeDungeonCtrl', uiCtrl.UICtrl)
 
 
@@ -28,6 +29,9 @@ ActivityChallengeDungeonCtrl.m_activityId = HL.Field(HL.String) << ''
 
 
 ActivityChallengeDungeonCtrl.m_info = HL.Field(HL.Table)
+
+
+ActivityChallengeDungeonCtrl.m_bgGo = HL.Field(HL.Any)
 
 
 
@@ -77,19 +81,27 @@ ActivityChallengeDungeonCtrl._UpdateData = HL.Method() << function(self)
     local seriesCfgList = {}
     for seriesId, seriesCfg in pairs(activitySeriesCfg.seriesMap) do
         local _, activityGameCfg = Tables.activityGameEntranceGameTable:TryGetValue(seriesId)
-        self.m_info.totalSeriesCount = self.m_info.totalSeriesCount + 1
-        local allPerfectComplete = true
-        for _, gameSingleCfg in pairs(activityGameCfg.gameList) do
-            local isPerfectComplete = DungeonUtils.isDungeonPerfectComplete(gameSingleCfg.gameId)
-            if not isPerfectComplete then
-                allPerfectComplete = false
-                break
+        local canShow = false
+        
+        local hasData, seriesData = activityData.seriesDataMap:TryGetValue(seriesId)
+        if seriesData then
+            canShow = seriesData.OpenTime <= DateTimeUtils.GetCurrentTimestampBySeconds()
+        end
+        if canShow then
+            self.m_info.totalSeriesCount = self.m_info.totalSeriesCount + 1
+            local allPerfectComplete = true
+            for _, gameSingleCfg in pairs(activityGameCfg.gameList) do
+                local isPerfectComplete = DungeonUtils.isDungeonPerfectComplete(gameSingleCfg.gameId)
+                if not isPerfectComplete then
+                    allPerfectComplete = false
+                    break
+                end
             end
+            if allPerfectComplete then
+                self.m_info.perfectCompleteSeriesCount = self.m_info.perfectCompleteSeriesCount + 1
+            end
+            table.insert(seriesCfgList, {seriesId = seriesId, seriesCfg = seriesCfg, sortId = seriesCfg.sortId})
         end
-        if allPerfectComplete then
-            self.m_info.perfectCompleteSeriesCount = self.m_info.perfectCompleteSeriesCount + 1
-        end
-        table.insert(seriesCfgList, {seriesId = seriesId, seriesCfg = seriesCfg, sortId = seriesCfg.sortId})
     end
     
     table.sort(seriesCfgList, function(a, b)
@@ -100,7 +112,7 @@ ActivityChallengeDungeonCtrl._UpdateData = HL.Method() << function(self)
         local isUnlock = activitySystem:IsGameEntranceSeriesUnlock(seriesInfo.seriesId)
         if isUnlock then
             local seriesCfg = seriesInfo.seriesCfg
-            self.m_info.seriesBg = seriesCfg.bgImg
+            self.m_info.seriesBg = seriesCfg.bgPrefab
             break
         end
     end
@@ -116,7 +128,15 @@ ActivityChallengeDungeonCtrl._RefreshAllUI = HL.Method() << function(self)
     self.view.completeProgressNode.gameObject:SetActive(ActivityUtils.hasIntroMissionAndComplete(self.m_activityId))
     self.view.completeNumTxt.text = self.m_info.perfectCompleteSeriesCount
     self.view.totalNumTxt.text = '/' .. self.m_info.totalSeriesCount
-    self.view.bg:LoadSprite(UIConst.UI_SPRITE_ACTIVITY, self.m_info.seriesBg)
+    
+    if self.m_bgGo then
+        CSUtils.ClearUIComponents(self.m_bgGo) 
+        GameObject.DestroyImmediate(self.m_bgGo)
+    end
+    local path = string.format(UIConst.UI_ACTIVITY_CHALLENGE_DUNGEON_BG_PREFAB_PATH, self.m_info.seriesBg)
+    local prefab = self:LoadGameObject(path)
+    self.m_bgGo = CSUtils.CreateObject(prefab, self.view.bgNode)
+    self.m_bgGo.gameObject.name = "Bg"
 end
 
 

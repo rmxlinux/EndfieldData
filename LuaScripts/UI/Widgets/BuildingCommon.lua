@@ -194,7 +194,7 @@ function(self, uiInfo, arg)
                 saObj:SetActive(false)
                 self.smartAlertDynamicNode = Utils.wrapLuaNode(saObj)
             end
-            self.smartAlertDynamicNode:InitMachineSmartAlertNode()
+            self.smartAlertDynamicNode:InitMachineSmartAlertNode(uiInfo.buildingId, uiInfo.nodeId)
             self.m_smartAlertUpdate = LuaUpdate:Add("Tick", function(deltaTime)
                 self:_UpdateSmartAlert(deltaTime)
             end)
@@ -398,12 +398,7 @@ BuildingCommon._RefreshBuildingStateDisplay = HL.Method(GEnums.FacBuildingState)
         self.m_stateGoNodeMap[self.lastState]:SetActive(false)
     end
 
-    local showState
-    if state == GEnums.FacBuildingState.Idle and not string.isEmpty(self.buildingUiInfo.formulaId) and self.lastState ~= GEnums.FacBuildingState.Invalid then
-        showState = GEnums.FacBuildingState.Normal
-    else
-        showState = state
-    end
+    local showState = state
 
     if self.m_stateGoNodeMap[showState] == nil then
         if FacConst.FAC_BUILDING_STATE_TO_PREFAB_PATH[showState] ~= nil then
@@ -462,10 +457,16 @@ BuildingCommon._DelBuilding = HL.Method() << function(self)
         return
     end
     self:Close(true)
-    local data = Tables.factoryBuildingTable:GetValue(self.buildingId)
     local hintTxt
-    if data ~= nil then
-        hintTxt = data.delConfirmText
+    local isOthersSocialBuilding = FactoryUtils.isOthersSocialBuilding(self.nodeId)
+    if isOthersSocialBuilding then
+        
+        hintTxt = Language.LUA_FAC_DEL_SOCIAL_BUILDING_CONFIRM
+    else
+        local data = Tables.factoryBuildingTable:GetValue(self.buildingId)
+        if data ~= nil then
+            hintTxt = data.delConfirmText
+        end
     end
     FactoryUtils.delBuilding(self.nodeId, nil, false, hintTxt)
 end

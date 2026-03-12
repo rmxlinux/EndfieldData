@@ -114,14 +114,15 @@ FacPumpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         hasFluidInCache = true,
     })
 
-    self:_InitFacMachineCrafterController()
-    self.view.facCacheRepository.view.repoNaviGroup:NaviToThisGroup()
-
     GameInstance.remoteFactoryManager:RegisterInterestedUnitId(self.m_buildingInfo.nodeId)
 
     self:_InitPumpSourceContainer()
     self:_InitPumpUpdateThread()
     self:_InitPumpProgressInitThread()
+
+    
+    self:_InitFacMachineCrafterController()
+    self.view.facCacheRepository.view.repoNaviGroup:NaviToThisGroup()
 end
 
 
@@ -350,9 +351,14 @@ FacPumpCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) << functi
     
     local isEmptyBottle = Tables.emptyBottleTable:ContainsKey(itemBundle.id)
     local isEmpty = string.isEmpty(itemBundle.id)
-    cell.view.forbiddenMask.gameObject:SetActiveIfNecessary(not isEmptyBottle and not isEmpty)
-    cell.view.dragItem.enabled = isEmptyBottle
-    cell.view.dropItem.enabled = isEmptyBottle or isEmpty
+    
+    if not isEmptyBottle and not isEmpty then
+        cell.view.forbiddenMask.gameObject:SetActiveIfNecessary(true)
+        cell.view.dropItem.enabled = false
+    end
+    if not isEmptyBottle then
+        cell.view.dragItem.enabled = false
+    end
 end
 
 

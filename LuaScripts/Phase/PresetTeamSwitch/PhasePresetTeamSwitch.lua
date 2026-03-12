@@ -59,7 +59,7 @@ PhasePresetTeamSwitch.ShowEnterFocusModeConfirm = HL.StaticMethod(HL.Table) << f
         title = Language.LUA_ENTER_FOCUS_MODE_POPUP_TITLE,
         subTitle = Language.LUA_ENTER_FOCUS_MODE_POPUP_SUB_TITLE,
         presetTeamId = focusModeData.presetTeamId,
-        onConfirm = onConfirm,
+        onConfirm = onConfirm
     })
 end
 
@@ -113,24 +113,23 @@ end
 
 
 PhasePresetTeamSwitch._InitAllPhaseItems = HL.Override() << function(self)
+    
+    local arg = {}
 
     if self.arg.presetTeamDungeon == true then
         self.m_currFuncState = PhaseFuncState.PresetTeamDungeon
+        arg = self:_CreatePresetTeamDungeonArg()
     elseif self:_CheckIsDungeonCharacter() then
         self.m_currFuncState = PhaseFuncState.DungeonCharacter
+        arg = self:_CreateDungeonCharArg()
+    elseif self.arg.focusModeInstId ~= nil then
+        self.m_currFuncState = PhaseFuncState.PresetTeamSwitch
+        arg = self:_CreateEnterFocusModeArg()
     else
         self.m_currFuncState = PhaseFuncState.PresetTeamSwitch
+        arg = self:_CreateTeamSwitchArg()
     end
 
-    
-    local arg = {}
-    if self.m_currFuncState == PhaseFuncState.PresetTeamSwitch then
-        arg = self:_CreateTeamSwitchArg()
-    elseif self.m_currFuncState == PhaseFuncState.DungeonCharacter then
-        arg = self:_CreateDungeonCharArg()
-    elseif self.m_currFuncState == PhaseFuncState.PresetTeamDungeon then
-        arg = self:_CreatePresetTeamDungeonArg()
-    end
     self:CreatePhasePanelItem(PanelId.PresetTeamSwitch, arg)
 end
 
@@ -245,6 +244,39 @@ PhasePresetTeamSwitch._CreateDungeonCharArg = HL.Method().Return(HL.Table) << fu
                 onCancel()
             end
             Notify(MessageConst.DIALOG_CLOSE_UI, {PanelId.PresetTeamSwitch, PHASE_ID, 0})
+        end,
+    }
+    return arg
+end
+
+
+
+PhasePresetTeamSwitch._CreateEnterFocusModeArg = HL.Method().Return(HL.Table) << function(self)
+    local focusModeInstId = self.arg.focusModeInstId
+    local _, focusModeData = GameInstance.dataManager.focusModeInstDataTable:TryGetValue(focusModeInstId)
+    if not focusModeData then
+        logger.error('Focus mode data not found for ID: %s', focusModeInstId)
+        return
+    end
+
+    local onConfirmCallback = FocusModeUtils.GetEnterFocusModeConfirmAction(focusModeInstId, "DialogOpenUI")
+
+    local arg = {
+        title = Language.LUA_ENTER_FOCUS_MODE_POPUP_TITLE,
+        subTitle = Language.LUA_ENTER_FOCUS_MODE_POPUP_SUB_TITLE,
+        presetTeamId = focusModeData.presetTeamId,
+        onConfirm = function()
+            if onConfirmCallback then
+                onConfirmCallback()
+            end
+            Notify(MessageConst.DIALOG_CLOSE_UI, {PanelId.PresetTeamSwitch, PHASE_ID, 0})
+        end,
+        onCancel = function()
+            local onCancel = self.arg.onCancel
+            if onCancel then
+                onCancel()
+            end
+            Notify(MessageConst.DIALOG_CLOSE_UI, {PanelId.PresetTeamSwitch, PHASE_ID, 1})
         end,
     }
     return arg

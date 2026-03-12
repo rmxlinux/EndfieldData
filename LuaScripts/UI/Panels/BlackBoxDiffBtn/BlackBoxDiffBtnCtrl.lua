@@ -46,6 +46,8 @@ local Phase = {
 
 
 
+
+
 BlackBoxDiffBtnCtrl = HL.Class('BlackBoxDiffBtnCtrl', uiCtrl.UICtrl)
 
 
@@ -393,10 +395,11 @@ BlackBoxDiffBtnCtrl._OnBtnResetClick = HL.Method() << function(self)
     if self.m_curPhase == Phase.Fail then
         self:_DoReset()
     else
+        local curStatus = GameWorld.worldInfo.subGame:GetCurrentCompletionStatus()
         self:Notify(MessageConst.SHOW_POP_UP, {
             content = Language.LUA_DUNGEON_RESET_BLACKBOX_CONFIRM,
             onConfirm = function()
-                self:_DoReset()
+                self:_DoReset(curStatus)
             end,
             onCancel = function()
             end
@@ -406,8 +409,13 @@ end
 
 
 
-BlackBoxDiffBtnCtrl._DoReset = HL.Method() << function(self)
-    GameWorld.worldInfo.subGame:SendReStart()
+
+BlackBoxDiffBtnCtrl._DoReset = HL.Method(HL.Any) << function(self, status)
+    if status then
+        GameWorld.worldInfo.subGame:UserSendReStartAtStatus(status)
+    else
+        GameWorld.worldInfo.subGame:SendReStart(true)
+    end
 end
 
 
@@ -441,13 +449,30 @@ end
 
 
 BlackBoxDiffBtnCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, active)
-    if not DeviceInfo.usingTouch then
-        return
+    self:_UpdateDiffBtnBinding()
+
+    if DeviceInfo.usingTouch then
+        
+        if active then
+            self:ToTop()
+        end
     end
-    
-    if active then
-        self:ToTop()
+end
+
+
+
+BlackBoxDiffBtnCtrl._UpdateDiffBtnBinding = HL.Method() << function(self)
+    if DeviceInfo.usingKeyboard and LuaSystemManager.factory.inTopView and Utils.getCommonSettingValueBool("fac_top_view_esc_exit") then
+        self.view.blackboxDiffStateBtn.onClick:StopUseBinding()
+    else
+        self.view.blackboxDiffStateBtn.onClick:ChangeBindingPlayerAction("common_task_track_stop")
     end
+end
+
+
+
+BlackBoxDiffBtnCtrl.OnShow = HL.Override() << function(self)
+    self:_UpdateDiffBtnBinding()
 end
 
 HL.Commit(BlackBoxDiffBtnCtrl)

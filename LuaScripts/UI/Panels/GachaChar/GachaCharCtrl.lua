@@ -389,17 +389,31 @@ GachaCharCtrl._ShowContent = HL.Method() << function(self)
 
     local firstItemBundle = info.items[1]
     if firstItemBundle then
+        
         self:_UpdateItemCell(self.view.wpnRewardNode, firstItemBundle.id, firstItemBundle.count)
+        
         local extraCount = #info.items - 1
         local extraRewardNode = self.view.extraRewardNode
         if extraCount > 0 then
+            
             extraRewardNode.gameObject:SetActive(true)
+            extraRewardNode.titleRewardTxt.text = Language.ui_GachaCharPanel_repeat_reward
             if not extraRewardNode.m_extraItemCells then
                 extraRewardNode.m_extraItemCells = UIUtils.genCellCache(extraRewardNode.extraItemCell)
             end
             extraRewardNode.m_extraItemCells:Refresh(extraCount, function(cell, index)
                 local bundle = info.items[index + 1]
                 self:_UpdateItemCell(cell, bundle.id, bundle.count)
+            end)
+        elseif info.firstGetExtraItem then
+            
+            extraRewardNode.gameObject:SetActive(true)
+            extraRewardNode.titleRewardTxt.text = Language.LUA_GACHA_CHAR_EXTRA_REWARD_FIRST_GET_TITLE
+            if not extraRewardNode.m_extraItemCells then
+                extraRewardNode.m_extraItemCells = UIUtils.genCellCache(extraRewardNode.extraItemCell)
+            end
+            extraRewardNode.m_extraItemCells:Refresh(1, function(cell, index)
+                self:_UpdateItemCell(cell, info.firstGetExtraItem.id, info.firstGetExtraItem.count)
             end)
         else
             extraRewardNode.gameObject:SetActive(false)
@@ -614,12 +628,24 @@ GachaCharCtrl._ShowRewardsAndExit = HL.Method() << function(self)
     end
 
     local itemMap = {}
+    local firstGetCharReward
     for _, v in ipairs(self.m_args.chars) do
         for __, bundle in ipairs(v.items) do
             if itemMap[bundle.id] then
                 itemMap[bundle.id] = itemMap[bundle.id] + bundle.count
             else
                 itemMap[bundle.id] = bundle.count
+            end
+        end
+        
+        if v.firstGetExtraItem then
+            if not firstGetCharReward then
+                firstGetCharReward = {
+                    id = v.firstGetExtraItem.id,
+                    count = v.firstGetExtraItem.count,
+                }
+            else
+                firstGetCharReward.count = firstGetCharReward.count + v.firstGetExtraItem.count
             end
         end
     end
@@ -637,15 +663,22 @@ GachaCharCtrl._ShowRewardsAndExit = HL.Method() << function(self)
     self:_Exit()
 
     if next(itemList) then
+        local rewardArg = {
+            items = itemList,
+            onComplete = function()
+                Notify(MessageConst.ON_ONE_GACHA_POOL_REWARD_FINISHED)
+            end,
+        }
+        if firstGetCharReward then
+            rewardArg.extraItem = {
+                extraTitle = Language.LUA_GACHA_FIRST_GET_CHAR_REWARD_TOAST_TITLE,
+                item = firstGetCharReward,
+            }
+        end
         Notify(MessageConst.GACHA_POOL_ADD_SHOW_REWARD, {
             queueRewardType = "GachaResultReward",
             showRewardFunc = function()
-                Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
-                    items = itemList,
-                    onComplete = function()
-                        Notify(MessageConst.ON_ONE_GACHA_POOL_REWARD_FINISHED)
-                    end,
-                })
+                Notify(MessageConst.SHOW_SYSTEM_REWARDS, rewardArg)
             end,
         })
     end

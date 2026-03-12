@@ -78,14 +78,22 @@ function AdventureBookUtils.CheckRedDotAdventureBookTabDungeon()
     end
     
     for groupId, tableData in pairs(Tables.worldEnergyPointGroupTable) do
-        local id = GameInstance.player.worldEnergyPointSystem:GetCurSubGameId(groupId)
-        local isGameUnread =
-            GameInstance.player.subGameSys:IsGameMapMarkUnlock(groupId, GEnums.MarkType.EnemySpawner) and
-            GameInstance.player.subGameSys:IsGameUnlocked(id) and
-            AdventureBookUtils.CheckEnemySpawnerCanOpenMap(groupId) and
-            GameInstance.player.subGameSys:IsGameUnread(id)
-        if isGameUnread then
-            return true
+        local groupIsActive = GameInstance.player.subGameSys:IsGameMapMarkUnlock(groupId, GEnums.MarkType.EnemySpawner) and
+            AdventureBookUtils.CheckEnemySpawnerCanOpenMap(groupId)
+
+        local succ, wepGroupCfg = Tables.worldEnergyPointGroupTable:TryGetValue(groupId)
+        if succ and groupIsActive then
+            local exist = false
+            for level = 1, GameInstance.player.adventure.currentWorldLevel do
+                local subGameId = wepGroupCfg.worldLevel2GameMechanicsIdMap[level]
+                if GameInstance.player.subGameSys:IsGameUnlocked(subGameId) and
+                    not GameInstance.player.subGameSys:IsGameUnread(subGameId) then
+                    exist = true
+                end
+            end
+            if not exist then
+                return true
+            end
         end
     end
     return false
@@ -132,10 +140,6 @@ function AdventureBookUtils.CheckRedDotAdventureBookTabBlackbox()
         end
     end
     return false
-end
-
-function AdventureBookUtils.CheckRedDotAdventureBookTabWeekRaid()
-    return RedDotManager:GetRedDotState("AdventureBookTabWeekRaid")
 end
 
 function AdventureBookUtils.CheckRedDotAdventureBookTabActivity()
@@ -288,7 +292,7 @@ function AdventureBookUtils.GetActivityDataByType(type)
             ClickFunc = function()
                 PhaseManager:OpenPhase(PhaseId.DungeonWeeklyRaid)
             end,
-            redDotName = "WeekRaidBattlePass",
+            redDotName = "WeekRaid",
         }
     elseif type == "HighDifficulty" then
         return {
@@ -306,6 +310,7 @@ function AdventureBookUtils.GetActivityDataByType(type)
             ClickFunc = function()
                 PhaseManager:OpenPhase(PhaseId.HighDifficultyMainHud,{})
             end,
+            redDotName = "AdventureBookHighDifficulty",
         }
     elseif type == "empty" then
         return {

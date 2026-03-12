@@ -24,7 +24,6 @@ local PANEL_ID = PanelId.WaterDroneBag
 
 
 
-
 WaterDroneBagCtrl = HL.Class('WaterDroneBagCtrl', uiCtrl.UICtrl)
 
 
@@ -254,21 +253,14 @@ WaterDroneBagCtrl.RefreshToggleAfterSelectedCell = HL.Method(HL.Number) << funct
 end
 
 
-WaterDroneBagCtrl.m_clearScreenKey = HL.Field(HL.Number) << -1
-
-
 
 WaterDroneBagCtrl.OnShow = HL.Override() << function(self)
-    if DeviceInfo.usingController then
-        self.m_clearScreenKey = UIManager:ClearScreen({ PANEL_ID })
-    else
-        
-        self:_ToggleShowHideGeneralAbility(false)
-        
-        self:_ToggleShowHideBattleAction(false)
-        
-        GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidJump, "WaterDroneBag", true)
-    end
+    
+    self:_ToggleShowHideGeneralAbility(false)
+    
+    self:_ToggleShowHideBattleAction(false)
+    
+    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidJump, "WaterDroneBag", true)
     self:Refresh()
 end
 
@@ -282,9 +274,6 @@ WaterDroneBagCtrl.OnClose = HL.Override() << function(self)
     self:_ToggleShowHideBattleAction(true)
     
     GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidJump, "WaterDroneBag", false)
-    if self.m_clearScreenKey > 0 then
-        self.m_clearScreenKey = UIManager:RecoverScreen(self.m_clearScreenKey)
-    end
 end
 
 
@@ -318,11 +307,12 @@ end
 
 
 
-
 WaterDroneBagCtrl._OnCloseWaterDroneBag = HL.Method() << function(self)
     
     
-    self:PlayAnimationOutAndClose()
+    if not self:IsPlayingAnimationOut() then
+        self:PlayAnimationOutAndClose()
+    end
 end
 
 
@@ -339,7 +329,9 @@ end
 WaterDroneBagCtrl._OnBack = HL.Method() << function(self)
     
     
-    self:PlayAnimationOutAndClose()
+    if not self:IsPlayingAnimationOut() then
+        self:PlayAnimationOutAndClose()
+    end
     Notify(MessageConst.HIDE_COMMON_HOVER_TIP, { noAnimation = true })
 
     

@@ -308,7 +308,7 @@ end
 ValuableDepotCtrl.OnShow = HL.Override() << function(self)
     if self.m_selectItemInfoWhenHide and self.m_selectTabInfoWhenHide then
         self:_RecollectItemBundles(self.m_selectTabInfoWhenHide.type)
-        self:_RefreshTabsInfo(self.m_selectItemInfoWhenHide.id, self.m_selectItemInfoWhenHide.instId)
+        self:_RefreshTabsInfo(self.m_selectItemInfoWhenHide.id, self.m_selectItemInfoWhenHide.instId, true)
     end
 end
 
@@ -357,7 +357,7 @@ end
 
 
 
-ValuableDepotCtrl._RefreshTabsInfo = HL.Method(HL.Opt(HL.String, HL.Any)) << function(self, itemId, instId)
+ValuableDepotCtrl._RefreshTabsInfo = HL.Method(HL.Opt(HL.String, HL.Any, HL.Boolean)) << function(self, itemId, instId, isFast)
     local tabInfos = {}
     for _, v in pairs(Tables.valuableDepot) do
         if not v.isHidden and self:_CheckIfTabUnlocked(v.type) then
@@ -407,7 +407,7 @@ ValuableDepotCtrl._RefreshTabsInfo = HL.Method(HL.Opt(HL.String, HL.Any)) << fun
             cell.redDot:InitRedDot(info.redDot)
         end
     end)
-    self:_OnClickTab(self.m_curTabIndex, itemId, instId)
+    self:_OnClickTab(self.m_curTabIndex, itemId, instId, isFast)
 end
 
 
@@ -415,7 +415,7 @@ end
 
 
 
-ValuableDepotCtrl._OnClickTab = HL.Method(HL.Number, HL.Opt(HL.String, HL.Any)) << function(self, index, itemId, instId)
+ValuableDepotCtrl._OnClickTab = HL.Method(HL.Number, HL.Opt(HL.String, HL.Any, HL.Boolean)) << function(self, index, itemId, instId, isFast)
     local info = self.m_tabsInfo[index]
     self.m_curTabIndex = index
     self.m_curContentFilterConfigs = {}
@@ -468,7 +468,7 @@ ValuableDepotCtrl._OnClickTab = HL.Method(HL.Number, HL.Opt(HL.String, HL.Any)) 
         self:_SetSelectedIndex(itemId, instId)
     end
 
-    self:_RefreshItemList(true, true)
+    self:_RefreshItemList(true, true, isFast)
 end
 
 
@@ -588,11 +588,15 @@ end
 
 
 
-ValuableDepotCtrl._RefreshItemList = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, noRead, setTop)
+ValuableDepotCtrl._RefreshItemList = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean)) << function(self, noRead, setTop, isFast)
     logger.info("_RefreshItemList")
     local count = #self.m_curShowItemList
     local isEmpty = count == 0
-    self.view.itemScrollList:UpdateCount(count, setTop == true)
+    if isFast then
+        self.view.itemScrollList:UpdateCount(count, self.m_curItemIndex, false, false, true)
+    else
+        self.view.itemScrollList:UpdateCount(count, setTop == true)
+    end
     self.view.emptyNode.gameObject:SetActive(isEmpty)
     self.view.itemScrollList.gameObject:SetActive(not isEmpty)
     self.view.itemInfoNode.gameObject:SetActive(not isEmpty)
@@ -1462,10 +1466,9 @@ ValuableDepotCtrl._GetDesEquipReturnItems = HL.Method(HL.Number).Return(HL.Table
     for _, info in pairs(destroyItemInfos) do
         local formulaId = Tables.equipFormulaReverseTable[info.id]
         local formulaData = Tables.equipFormulaTable[formulaId]
-        
-        if formulaData.costItemId.Count > 0 then
-            local itemId = formulaData.costItemId[0]
-            local itemCount = formulaData.costItemNum[0]
+        if not string.isEmpty(formulaData.costGoldId) and formulaData.costGoldNum > 0 then
+            local itemId = formulaData.costGoldId
+            local itemCount = formulaData.costGoldNum
             if itemMap[itemId] then
                 itemMap[itemId] = itemMap[itemId] + itemCount
             else

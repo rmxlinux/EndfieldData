@@ -52,6 +52,10 @@ DomainDepotDeliveryCell._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
 
+    self.view.inputBindingGroupNaviDecorator.onIsNaviTargetChanged = function(isFocused)
+        self.view.bgBtn.interactable = self.m_canReceive or (not isFocused)
+    end
+
     self.view.bgBtn.onClick:RemoveAllListeners()
     self.view.bgBtn.onClick:AddListener(function()
         if self.m_deliveryOnClick then
@@ -81,8 +85,8 @@ DomainDepotDeliveryCell.InitDomainDepotDeliveryCell = HL.Method(HL.Userdata) << 
         logger.error("InitRegionDeliveryCell: 送货已过期，deliveryId: " .. self.m_insId)
     else
         
-        local daysLeft = math.ceil(timeDiff / (60 * 60 * 24)) 
-        self.view.timeTxt.text = string.format(Language.LUA_DOMAIN_DEPOT_DELIVERY_TIME_LEFT, daysLeft)
+        local daysLeft = UIUtils.getLeftTime(timeDiff)
+        self.view.timeTxt.text = string.format(Language.LUA_DOMAIN_DEPOT_DELIVERY_NOT_COMPLETED_TIME_LEFT, daysLeft)
     end
 
     self.view.stateController:SetState(GameInstance.player.domainDepotSystem.deliverInstId == info.insId and "accepted" or "canAccept")
@@ -187,8 +191,6 @@ DomainDepotDeliveryCell._UpdateInfo = HL.Method(HL.Userdata) << function(self, i
         count = info.domainGoldRewardCount,
     }, true)
     self.view.itemSmallBlack:SetExtraInfo({ isSideTips = DeviceInfo.usingController })
-
-    self.view.bgBtn.interactable = self.m_canReceive
 
     if roleId ~= 0 then
         local success, friendInfo = GameInstance.player.friendSystem:TryGetFriendInfo(roleId)

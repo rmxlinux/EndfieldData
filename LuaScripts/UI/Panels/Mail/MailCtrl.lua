@@ -490,7 +490,7 @@ end
 MailCtrl._RefreshContentGachaPoolNode = HL.Method(CS.Beyond.Gameplay.MailSystem.Mail, HL.Any) << function(self, mail, specialParamTable)
     local gachaPoolNode = self.view.gachaPoolNode
     gachaPoolNode.jumpGachaPoolBtn.onClick:RemoveAllListeners()
-    if not specialParamTable then
+    if not specialParamTable or not specialParamTable[MailUtils.specialParamKey.GachaLTTicket] then
         gachaPoolNode.gameObject:SetActive(false)
         return
     end
@@ -549,9 +549,47 @@ end
 
 
 MailCtrl._OnClickGet = HL.Method() << function(self)
+    local canPutInItemBagAndFactoryDepot = true 
+    local canPutInValuableDepot = true 
+
     local info = self.m_curMails[self.m_curMailIndex]
-    GameInstance.player.mail:GetMailAttachment(info.id)
-    AudioAdapter.PostEvent("au_ui_g_confirm_button_get_mail")
+    local scope = Utils.getCurrentScope()
+    local inventory = GameInstance.player.inventory
+    for i, item in ipairs(info.items) do
+        local storageSpace = inventory:TryGetItemStorageSpace(item.id)
+        if storageSpace == GEnums.ItemStorageSpace.BagAndFactoryDepot then
+            if not inventory:CanItemBagAndFactoryDepotPutInItem(scope, item.id, item.count) then
+                canPutInItemBagAndFactoryDepot = false 
+            end
+        elseif storageSpace == GEnums.ItemStorageSpace.ValuableDepot then
+            if not inventory:CanValuableDepotPutInItem(scope, item.id, item.count) then
+                canPutInValuableDepot = false 
+                break
+            end
+        end
+    end
+
+    if canPutInValuableDepot then
+        
+        if canPutInItemBagAndFactoryDepot then
+            
+            GameInstance.player.mail:GetMailAttachment(info.id)
+            AudioAdapter.PostEvent("au_ui_g_confirm_button_get_mail")
+        else
+            
+            Notify(MessageConst.SHOW_POP_UP, {
+                content = Language.LUA_MAIL_HINT_GET_ITEM_FACTORY_DEPOT_FULL,
+                onConfirm = function()
+                    
+                    GameInstance.player.mail:GetMailAttachment(info.id)
+                    AudioAdapter.PostEvent("au_ui_g_confirm_button_get_mail")
+                end
+            })
+        end
+    else
+        
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_MAIL_HINT_GET_ITEM_VALUABLE_DEPOT_FULL)
+    end
 end
 
 
@@ -583,6 +621,7 @@ MailCtrl._OnClickDel = HL.Method() << function(self)
     end
     Notify(MessageConst.SHOW_POP_UP, {
         content = hint,
+        ignoreClickWhenPlayingAnimation = true,
         onConfirm = function()
             GameInstance.player.mail:DelMail(info.id)
             AudioAdapter.PostEvent("au_ui_mail_delete")
@@ -677,19 +716,27 @@ end
 
 MailCtrl.OnGetMailAttachment = HL.Method(HL.Table) << function(self, args)
     
-    local rewardPack = unpack(args)
-    local items = rewardPack.itemBundleList
-    if items.Count == 0 then
-        return
+    local hasSuccess, hasFailed, rewardPack = unpack(args)
+    if hasSuccess then
+        
+        self:_OnClickTab(self.m_curMailIndex, nil)
     end
-
-    self:_OnClickTab(self.m_curMailIndex, nil)
-    Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
-        title = Language.LUA_MAIL_GET_ITEM_SUCC_TITLE,
-        icon = "icon_mail_obtain",
-        items = items,
-        chars = rewardPack.chars,
-    })
+    if hasFailed then
+        
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_MAIL_HINT_GET_ITEM_PARTIALLY_FAILED_INVENTORY_FULL)
+    end
+    if rewardPack then
+        local items = rewardPack.itemBundleList
+        if items.Count > 0 then
+            
+            Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
+                title = Language.LUA_MAIL_GET_ITEM_SUCC_TITLE,
+                icon = "icon_mail_obtain",
+                items = items,
+                chars = rewardPack.chars,
+            })
+        end
+    end
 end
 
 

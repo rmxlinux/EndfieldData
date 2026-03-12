@@ -186,8 +186,6 @@ LostAndFoundCtrl.OnGetLostAndFound = HL.Method(HL.Table) << function(self, args)
             local empty = lostAndFound:IsEmpty()
             if empty then
                 PhaseManager:PopPhase(PhaseId.LostAndFound)
-            else
-                self:_ProcessOverflowToast()
             end
         end
     })

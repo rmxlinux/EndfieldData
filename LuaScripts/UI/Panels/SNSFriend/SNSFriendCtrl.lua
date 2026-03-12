@@ -334,7 +334,6 @@ SNSFriendCtrl._UpdateFriendScrollList = HL.Method() << function(self)
     self.m_csIndex2friendInfo = {}
     self.m_csIndex2friendCell = {}
     if not IsNull(self.view.friendScrollList) then
-        self.view.friendScrollList:UpdateCount(GameInstance.player.friendChatSystem.luaShowValidRoleIds.Count)
         self.view.friendScrollList.onGraduallyShowFinish:RemoveAllListeners()
         self.view.friendScrollList.onGraduallyShowFinish:AddListener(function()
             if GameInstance.player.friendChatSystem.luaShowValidRoleIds.Count > 0 then
@@ -380,6 +379,7 @@ SNSFriendCtrl._UpdateFriendScrollList = HL.Method() << function(self)
             end
             self:UpdateNumRedDot()
         end)
+        self.view.friendScrollList:UpdateCount(GameInstance.player.friendChatSystem.luaShowValidRoleIds.Count)
     end
 end
 
@@ -569,10 +569,12 @@ SNSFriendCtrl.OnClickLeftFriendCell = HL.Method(HL.Number) << function(self, csI
     end
 
     if DeviceInfo.usingController then
-        local selectCell = self.m_csIndex2friendCell[self.m_selectedCsIndex]
-        if selectCell then
-            self.view.rightMask.gameObject:SetActive(false)
-            InputManagerInst.controllerNaviManager:SetTarget(selectCell.view.button)
+        if not self.controllerInRightArea and not self.controllerInMessageItem then
+            local selectCell = self.m_csIndex2friendCell[self.m_selectedCsIndex]
+            if selectCell then
+                self.view.rightMask.gameObject:SetActive(false)
+                InputManagerInst.controllerNaviManager:SetTarget(selectCell.view.button)
+            end
         end
     end
 
@@ -699,7 +701,11 @@ end
 
 
 SNSFriendCtrl.OnClickOpenFriendChat = HL.Method(HL.Any) << function(self, args)
-    self.m_nextOpenRoleId = unpack(args)
+    local openRoleId = unpack(args)
+
+    if self.m_selectedRoleId ~= openRoleId then
+        self.m_nextOpenRoleId = openRoleId
+    end
 end
 
 

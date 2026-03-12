@@ -81,6 +81,8 @@ local lastTabIndexSaveKey = "FAC_BP_LAST_TAB_INDEX"
 
 
 
+
+
 FacBlueprintCtrl = HL.Class('FacBlueprintCtrl', uiCtrl.UICtrl)
 
 
@@ -93,14 +95,15 @@ FacBlueprintCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_ON_DELETE_BLUEPRINT] = 'FacOnDeleteBlueprint',
     [MessageConst.FAC_ON_MODIFY_BLUEPRINT] = 'FacOnModifyBlueprint',
     [MessageConst.FAC_ON_QUERY_SHARED_BLUEPRINT] = 'FacOnQuerySharedBlueprint',
-    [MessageConst.FAC_ON_FETCH_BLUEPRINT] = 'FacOnFetchBlueprint',
+    [MessageConst.FAC_ON_FETCH_BLUEPRINT] = 'GetGiftBlueprint',
     [MessageConst.FAC_ON_GET_GIFT_BLUEPRINT] = 'FacOnGetGiftBlueprint',
     [MessageConst.FAC_ON_MODIFY_BLUEPRINT] = 'FacOnModifyBlueprint',
-    [MessageConst.FAC_ON_REFRESH_SHARE_STATE] = 'RefreshShareState',
+    [MessageConst.FAC_ON_REVIEW_BLUEPRINT] = 'RefreshShareState',
     [MessageConst.FAC_ON_SHARE_BLUEPRINT] = 'FacOnShareBlueprint',
     [MessageConst.ON_ITEM_COUNT_CHANGED] = 'OnItemCountChanged',
     [MessageConst.FAC_ON_REFRESH_TECH_TREE_UI] = 'OnRefreshTechTree',
     [MessageConst.FAC_QUERY_BLUEPRINT_TIME_OUT] = 'OnQueryFailed',
+    [MessageConst.FAC_ON_UPDATE_FRIEND_CHAT_STATE] = 'OnUpdateFriendChatState',
 }
 
 
@@ -135,6 +138,9 @@ FacBlueprintCtrl.m_waitingForSearching = HL.Field(HL.Boolean) << false
 
 
 FacBlueprintCtrl.m_friendSharing = HL.Field(HL.Boolean) << false
+
+
+FacBlueprintCtrl.m_friendChatState = HL.Field(HL.Boolean) << false
 
 
 FacBlueprintCtrl.m_fetchingGift = HL.Field(HL.Boolean) << false
@@ -445,6 +451,7 @@ end
 
 FacBlueprintCtrl._InitInfos = HL.Method() << function(self)
     local csBPSys = GameInstance.player.remoteFactory.blueprint
+    self.m_giftBlueprintLoaded = false
 
     if Utils.isInBlackbox() then
         local sysInfo = {
@@ -483,6 +490,13 @@ FacBlueprintCtrl._InitInfos = HL.Method() << function(self)
             insts = {},
             count = 0,
         }
+
+        
+        if csBPSys:AllGiftBlueprintLoaded() then
+            shareInfo.insts, shareInfo.count = self:_ConvertCS2LuaBPMap(csBPSys.giftBlueprintHandles, true)
+            self.m_giftBlueprintLoaded = true
+        end
+
         self.m_typeInfos = { mineInfo, sysInfo, shareInfo }
     end
 end
@@ -601,13 +615,14 @@ FacBlueprintCtrl._OnClickTypeCell = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.T
         ClientDataManagerInst:SetInt(lastTabIndexSaveKey, index, false)
     end
 
-    if info.type == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintSourceType.Gift and (not self.m_giftBlueprintLoaded or forceUpdate) then
+    
+    if info.type == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintSourceType.Gift and (not self.m_giftBlueprintLoaded or forceUpdate) and (not initArg or not initArg.csBPInst) then
         if not self.m_giftBlueprintLoaded then
             
             self.m_showingInsts = {}
+            self:_RefreshList()
         end
-        self:_RefreshList()
-        self:FacOnFetchBlueprint(nil)
+        self:GetGiftBlueprint(nil)
         return
     end
 
@@ -646,7 +661,7 @@ FacBlueprintCtrl._RefreshList = HL.Method(HL.Opt(HL.Table)) << function(self, in
             end
         end
         scrollList:UpdateCount(count, index, false, false, isInit)
-        if DeviceInfo.usingController then
+        if DeviceInfo.usingController and not self.m_friendChatState then
             local cell = self.m_getCell(index)
             UIUtils.setAsNaviTarget(cell.view.button)
         end
@@ -1127,11 +1142,13 @@ FacBlueprintCtrl.m_queryFailed = HL.Field(HL.Boolean) << false
 
 
 FacBlueprintCtrl.OnQueryFailed = HL.Method() << function(self)
-    if not self:IsShow() then
-        return
-    end
-    self.m_queryFailed = true
-    self.view.loadingNode.gameObject:SetActive(true)
+    
+
+    
+    
+    
+    
+    
 end
 
 
@@ -1155,7 +1172,14 @@ end
 
 
 
-FacBlueprintCtrl.FacOnFetchBlueprint = HL.Method(HL.Any) << function(self, arg)
+FacBlueprintCtrl.OnUpdateFriendChatState = HL.Method(HL.Any) << function(self, state)
+    self.m_friendChatState = state
+end
+
+
+
+
+FacBlueprintCtrl.GetGiftBlueprint = HL.Method(HL.Any) << function(self, arg)
     self.view.loadingNode.gameObject:SetActive(true)
     local csBPSys = GameInstance.player.remoteFactory.blueprint
     csBPSys:GetGiftBlueprint()
@@ -1164,9 +1188,11 @@ end
 
 
 FacBlueprintCtrl.FacOnGetGiftBlueprint = HL.Method() << function(self)
-    if self.m_queryFailed then
-        return
-    end
+    
+    
+    
+    
+
     
     self.m_giftBlueprintLoaded = true
     local info = self.m_typeInfos[sourceTypeTable.Gift]
@@ -1214,26 +1240,41 @@ end
 
 
 FacBlueprintCtrl.RefreshShareState = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
-    local index = self.m_selectedIndex
-    local cell = self.m_getCell(index)
-    local inst = self.m_showingInsts[index].csInst
-
+    local cell, index, reviewStatus
     if arg then
-        local isInProgress = arg.isInProgress
-        cell.view.inAuditNode.gameObject:SetActive(isInProgress)
+        local bpId, status = unpack(arg)
+        reviewStatus = status
+        
+        for i, info in ipairs(self.m_showingInsts) do
+            if info.id == bpId then
+                index = i
+                break
+            end
+        end
+        if not index then
+            return
+        end
+    else
+        
+        index = self.m_selectedIndex
+        reviewStatus = self.m_showingInsts[index].csInst.reviewStatus
     end
 
-    self.view.shareBtn.gameObject:SetActive(inst.reviewStatus ~= CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.InProgress)
-    self.view.needAuditHintNode.gameObject:SetActive(inst.reviewStatus == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.InProgress)
-    self.view.shareBtn.onClick:RemoveAllListeners()
-    if inst.reviewStatus == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.Approved then
-        self.view.shareBtn.onClick:AddListener(function()
-            self:_SendToFriend()
-        end)
-    elseif inst.reviewStatus == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.Pending then
-        self.view.shareBtn.onClick:AddListener(function()
-            self.view.blueprintContent:_PendingShare()
-        end)
+    cell = self.m_getCell(index)
+    cell:RefreshCellState(reviewStatus)
+    if self.m_selectedIndex == index then
+        self.view.shareBtn.gameObject:SetActive(reviewStatus ~= CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.InProgress)
+        self.view.needAuditHintNode.gameObject:SetActive(reviewStatus == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.InProgress)
+        self.view.shareBtn.onClick:RemoveAllListeners()
+        if reviewStatus == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.Approved then
+            self.view.shareBtn.onClick:AddListener(function()
+                self:_SendToFriend()
+            end)
+        elseif reviewStatus == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.Pending then
+            self.view.shareBtn.onClick:AddListener(function()
+                self.view.blueprintContent:_PendingShare()
+            end)
+        end
     end
 end
 
@@ -1348,7 +1389,7 @@ end
 
 FacBlueprintCtrl._RefreshDelBtn = HL.Method() << function(self)
     local bpCanDelete = self.m_typeInfos[self.m_selectedTypeIndex].canDelete
-    self.view.delBtn.gameObject:SetActive(bpCanDelete and not DeviceInfo.usingController and not self.m_friendSharing and not self.m_isDeleting)
+    self.view.delBtn.gameObject:SetActive(bpCanDelete and not self.m_friendSharing and not self.m_isDeleting)
 end
 
 
@@ -1391,7 +1432,7 @@ FacBlueprintCtrl._Search = HL.Method() << function(self)
     local info = self.m_typeInfos[sourceTypeTable.Gift]
     if info.type == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintSourceType.Gift and (not self.m_giftBlueprintLoaded) and (not Utils.isInBlackbox()) then
         self.m_waitingForSearching = true
-        self:FacOnFetchBlueprint(nil)
+        self:GetGiftBlueprint(nil)
     else
         self:_OpenSearch()
     end
@@ -1429,15 +1470,6 @@ FacBlueprintCtrl._InitController = HL.Method() << function(self)
 
     
     local extraBtnInfos = {}
-    if not self.m_friendSharing then
-        table.insert(extraBtnInfos, {
-            action = function()
-                self:_ToggleDelete(true)
-            end,
-            textId = "ui_blueprint_mainpanel_delete",
-            priority = 1,
-        })
-    end
     table.insert(extraBtnInfos, {
         action = function()
             UIManager:Open(PanelId.InstructionBook, {

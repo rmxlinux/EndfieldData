@@ -19,7 +19,7 @@ ActivityBenefitsRewardCell.InitActivityBenefitsRewardCell = HL.Method(HL.Table) 
     
     local item = fromMain and self.view.itemSmall or self.view.itemBig
     item.gameObject:SetActive(true)
-    if totalNum > 1 then
+    if totalNum > 1 or Tables.itemTable[itemId].type == GEnums.ItemType.Weapon then
         item:InitItem({ id = itemId, count = totalNum }, true)
     else
         item:InitItem({ id = itemId }, true)

@@ -316,6 +316,8 @@ end
 
 BattlePassTaskCtrl._NaviToTargetIndex = HL.Method(HL.Number) << function(self, targetIndex)
     self:_OnSelectSubTab(targetIndex)
+    
+    AudioAdapter.PostEvent("Au_UI_Button_Common")
     if not self.m_subLabelFocus then
         return
     end
@@ -787,6 +789,20 @@ BattlePassTaskCtrl._RenderViews = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL.Bo
     self.view.topNode:SetState((not showTop) and "Empty" or (showSubLabel and "SubLabel" or (self.m_isLifeTimeComplete and "LifeTimeComplete" or "LifeTime")))
     self.view.receiveBtn.gameObject:SetActive(not isLabelLocked and not isForecast and #canTakeTaskIds > 0)
     self:_RenderDailyPart()
+
+    
+    if DeviceInfo.usingController and refreshTask and self.m_subLabelFocus then
+        self.view.taskScrollList:ScrollToIndex(0, true)
+        for index, viewModel in ipairs(self.m_taskViewModels) do
+            if viewModel.viewType == TASK_VIEW_TYPE.TASK then
+                local firstCell = self.m_taskCacheFunc(index)
+                if firstCell ~= nil then
+                    UIUtils.setAsNaviTarget(firstCell.naviDecorator)
+                    break
+                end
+            end
+        end
+    end
 end
 
 

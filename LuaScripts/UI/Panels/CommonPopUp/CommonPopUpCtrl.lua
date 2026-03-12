@@ -272,6 +272,7 @@ CommonPopUpCtrl.m_args = HL.Field(HL.Table)
 CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
     Notify(MessageConst.HIDE_ITEM_TIPS)
 
+    self.view.fullScreenMask.gameObject:SetActive(false)
     self.view.inputField.characterLimit = args.characterLimit or UIConst.INPUT_FIELD_CHARACTER_LIMIT
     self.view.inputFieldMore.characterLimit = args.characterLimit or UIConst.INPUT_FIELD_CHARACTER_LIMIT
 
@@ -324,13 +325,24 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
         self.view.charIconScrollList.gameObject:SetActiveIfNecessary(false)
     end
 
+    self.view.inputHintMoreText.gameObject:SetActive(string.isEmpty(self.m_args.inputHintMoreText) == false)
+    self.view.inputHintMoreText.text = self.m_args.inputHintMoreText or ""
+    self.view.inputHintText.gameObject:SetActive(string.isEmpty(self.m_args.inputHintText) == false or self.m_args.checkInputValid == true)
+    if string.isEmpty(self.m_args.inputHintText) == false then
+        self.view.textInputStateController:SetState('max')
+        if self.m_args.checkInputValid == true then
+            logger.error("CommonPopUpCtrl: 输入提示文本和输入合法性检查不能同时存在，会导致提示文本被覆盖")
+        end
+    end
+    
+    self.view.inputHintText.text = self.m_args.inputHintText
+
     if self.m_args.input then
         self.view.inputField.text = self.m_args.inputName or ""
         self.view.textInput.gameObject:SetActive(true)
         self.view.inputField.gameObject:SetActive(true)
         self.view.inputField.placeholder.text = self.m_args.inputPlaceholder or ""
         self.view.inputFieldMore.gameObject:SetActive(false)
-        self.view.inputHintText.gameObject:SetActive(self.m_args.checkInputValid == true)
         if self.m_args.inputPaste then
             self.view.pasteBtn.gameObject:SetActive(true)
             self.view.pasteBtn.onClick:AddListener(function()
@@ -349,7 +361,6 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
         self.view.inputField.gameObject:SetActive(false)
         self.view.inputFieldMore.placeholder.text = self.m_args.inputPlaceholder or ""
         self.view.inputFieldMore.gameObject:SetActive(true)
-        self.view.inputHintText.gameObject:SetActive(self.m_args.checkInputValid == true)
         if self.m_args.inputPaste then
             self.view.pasteBtn.gameObject:SetActive(true)
             self.view.pasteBtn.onClick:AddListener(function()
@@ -533,6 +544,9 @@ end
 
 CommonPopUpCtrl._OnClickConfirm = HL.Method() << function(self)
     local args = self.m_args
+    if args.ignoreClickWhenPlayingAnimation and self:IsPlayingAnimationIn() then
+        return
+    end
     local text = args.inputMore and self.view.inputFieldMore.text or self.view.inputField.text
     local function onConfirm()
         if args.onConfirm then
@@ -546,10 +560,19 @@ CommonPopUpCtrl._OnClickConfirm = HL.Method() << function(self)
     if self.m_args.closeOnConfirm == false then
         onConfirm()
     else
-        self:PlayAnimationOutWithCallback(function()
+        if self:IsPlayingAnimationOut() then
             self:Hide()
             onConfirm()
-        end)
+        else
+            self:PlayAnimationOutWithCallback(function()
+                self:Hide()
+                onConfirm()
+            end)
+        end
+
+        
+        self.view.fullScreenMask.gameObject:SetActive(true)
+        self.view.fullScreenMask.enabled = true
     end
 end
 
@@ -557,12 +580,22 @@ end
 
 CommonPopUpCtrl._OnClickCancel = HL.Method() << function(self)
     local onCancel = self.m_args.onCancel
-    self:PlayAnimationOutWithCallback(function()
+    if self.m_args.ignoreClickWhenPlayingAnimation and self:IsPlayingAnimationIn() then
+        return
+    end
+    if self:IsPlayingAnimationOut() then
         self:Hide()
         if onCancel then
             onCancel()
         end
-    end)
+    else
+        self:PlayAnimationOutWithCallback(function()
+            self:Hide()
+            if onCancel then
+                onCancel()
+            end
+        end)
+    end
 end
 
 

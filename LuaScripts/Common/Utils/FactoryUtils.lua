@@ -223,12 +223,33 @@ function FactoryUtils.canMoveBuilding(nodeId, needToast)
     return true
 end
 
-function FactoryUtils.canDelBuilding(nodeId, needToast)
-    if FactoryUtils.isPendingBuildingNode(nodeId) then
+function FactoryUtils.canDelBuilding(nodeId, needToast, chapterId)
+    if Utils.isInSpaceShip() then
+        
+        if needToast then
+            Notify(MessageConst.SHOW_TOAST, string.format(Language.LUA_FAC_DEL_BUILDING_OTHER_CHAPTER, Language.LUA_SPACESHIP_NAME))
+        end
+        return false
+    end
+
+    local currChapterId = Utils.getCurrentChapterId()
+    if chapterId == nil then
+        chapterId = currChapterId
+    elseif chapterId ~= currChapterId then
+        
+        if needToast then
+            local success, domainData = Tables.domainDataTable:TryGetValue(ScopeUtil.ChapterIdInt2Str(currChapterId))
+            local chapterName = success and domainData.domainName or ""
+            Notify(MessageConst.SHOW_TOAST, string.format(Language.LUA_FAC_DEL_BUILDING_OTHER_CHAPTER, chapterName))
+        end
+        return false
+    end
+
+    if FactoryUtils.isPendingBuildingNode(nodeId, chapterId) then
         return
     end
 
-    local node = FactoryUtils.getBuildingNodeHandler(nodeId)
+    local node = FactoryUtils.getBuildingNodeHandler(nodeId, chapterId)
     if not node then
         
         
@@ -261,10 +282,12 @@ function FactoryUtils.canDelBuilding(nodeId, needToast)
     return true
 end
 
-function FactoryUtils.delBuilding(nodeId, onComplete, noConfirm, hintText)
+function FactoryUtils.delBuilding(nodeId, onComplete, noConfirm, hintText, chapterId)
+    chapterId = chapterId or Utils.getCurrentChapterId()
+
     local clearAct
 
-    local canDelete = FactoryUtils.canDelBuilding(nodeId, true)
+    local canDelete = FactoryUtils.canDelBuilding(nodeId, true, chapterId)
     if not canDelete then
         return
     end
@@ -291,17 +314,11 @@ function FactoryUtils.delBuilding(nodeId, onComplete, noConfirm, hintText)
         if clearAct then
             clearAct()
         end
-        GameInstance.player.remoteFactory.core:Message_OpDismantle(Utils.getCurrentChapterId(), nodeId, function()
+        GameInstance.player.remoteFactory.core:Message_OpDismantle(chapterId, nodeId, function()
             if onComplete then
                 onComplete()
             end
         end)
-    end
-
-    local isOthersSocialBuilding = FactoryUtils.isOthersSocialBuilding(nodeId)
-    if isOthersSocialBuilding then
-        noConfirm = false 
-        hintText = Language.LUA_FAC_DEL_SOCIAL_BUILDING_CONFIRM
     end
 
     if noConfirm then
@@ -643,6 +660,31 @@ function FactoryUtils.getItemAsInputRecipeIds(itemId, ignoreUnlock)
             for _, craftId in pairs(manualCraftIdList) do
                 if ignoreUnlock or manualCraft:IsCraftUnlocked(craftId) then
                     table.insert(recipeIds, FactoryUtils.parseManualCraftData(craftId, true))
+                end
+            end
+        end
+    end
+
+    do
+        
+        local _, fluidConsumeItemData = Tables.factoryFluidConsumeItemTable:TryGetValue(itemId)
+        if fluidConsumeItemData then
+            for _, buildingId in pairs(fluidConsumeItemData.buildingIds) do
+                local buildingItemId = FactoryUtils.getBuildingItemId(buildingId)
+                local isBuildingUnlocked = WikiUtils.canShowWikiEntry(buildingItemId)
+                if isBuildingUnlocked or ignoreUnlock then
+                    local _, consumeData = Tables.factoryFluidConsumeTable:TryGetValue(buildingId)
+                    if consumeData then
+                        local info = {
+                            time = consumeData.msPerRound * 0.001,
+                            incomes = { { id = itemId, count = 1 } },
+                            buildingId = buildingId,
+                            craftId = itemId,
+                            useFinish = true,
+                            isUnlock = isBuildingUnlocked,
+                        }
+                        table.insert(recipeIds, info)
+                    end
                 end
             end
         end
@@ -1277,19 +1319,12 @@ function FactoryUtils.clampTopViewCamTargetPosition(worldPos, curWorldPos)
     end
     local rect
     if level.customFacTopViewRangeInWorld then
-        
-        
-        local mainCamera = CameraManager.mainCamera
-        local dist = (mainCamera.transform.position - LuaSystemManager.factory.topViewCamTarget.position).y
         rect = level.customFacTopViewRangeInWorld
-        local yPadding = math.min(dist * math.tan(mainCamera.fieldOfView / 2 * math.pi / 180), rect.height / 2)
-        local xPadding = math.min(yPadding / Screen.height * Screen.width, rect.width / 2)
-        rect = Unity.Rect(rect.x + xPadding, rect.y + yPadding, math.max(0, rect.width - xPadding * 2), math.max(0, rect.height - yPadding * 2))
     else
         rect = level.mainRegionLocalRectWithMovePadding
         if rect and (rect.width == 0 or rect.width == 0) then
             logger.critical("FactoryUtils.clampTopViewCamTargetPosition rect IS ZERO", GameWorld.worldInfo.curMapIdStr, GameWorld.worldInfo.curLevelId)
-            local inMainRegion, panelIndex = Utils.isInFacMainRegionAndGetIndex()
+            local _, panelIndex = Utils.isInFacMainRegionAndGetIndex()
             level:_UpdateCurMainRegionInfo(panelIndex)
             return curWorldPos, false
         end
@@ -1297,6 +1332,26 @@ function FactoryUtils.clampTopViewCamTargetPosition(worldPos, curWorldPos)
     if not rect then
         return curWorldPos, false
     end
+
+    
+    
+    local mainCamera = CameraManager.mainCamera
+    local dist = (mainCamera.transform.position - LuaSystemManager.factory.topViewCamTarget.position).y
+    local yPadding = math.min(dist * math.tan(mainCamera.fieldOfView / 2 * math.pi / 180), rect.height / 2)
+    local xPadding = math.min(yPadding / Screen.height * Screen.width, rect.width / 2)
+    if lume.round(LuaSystemManager.factory.topViewCamTarget.transform.eulerAngles.y / 90) % 2 ~= 0 then
+        local tmp = xPadding
+        xPadding = yPadding
+        yPadding = tmp
+    end
+    
+    
+    
+    
+    
+    
+    rect = Unity.Rect(rect.x + xPadding, rect.y + yPadding, math.max(0, rect.width - xPadding * 2), math.max(0, rect.height - yPadding * 2))
+
     local regionTransform, localPos, curLocalPos
     if not level.customFacTopViewRangeInWorld then
         regionTransform = GameInstance.remoteFactoryManager.gameWorldAgent:GetRegionRootTransform()
@@ -1699,6 +1754,7 @@ end
 function FactoryUtils.updateBlackboxCell(view, blackboxId, onClickFunc)
     local BlackboxCellState = {
         Complete = "complete",
+        ManuallyComplete = "manullycomplete",
         Lock = "lock",
         Normal = "normal",
 
@@ -1712,6 +1768,7 @@ function FactoryUtils.updateBlackboxCell(view, blackboxId, onClickFunc)
     local isComplete = DungeonUtils.isDungeonPassed(blackboxId)
     local isUnlock = DungeonUtils.isDungeonUnlock(blackboxId)
     local isActive = DungeonUtils.isDungeonActive(blackboxId)
+    local manuallyComplete = GameInstance.dungeonManager:IsDungeonManuallyPassed(blackboxId)
 
    view.nameTxtS.text = blackboxName
    view.nameTxtN.text = blackboxName
@@ -1725,7 +1782,9 @@ function FactoryUtils.updateBlackboxCell(view, blackboxId, onClickFunc)
     view.stateController:SetState(state1)
 
     local state2
-    if isComplete then
+    if manuallyComplete then
+        state2 = BlackboxCellState.ManuallyComplete
+    elseif isComplete then
         state2 = BlackboxCellState.Complete
     elseif isActive and not isUnlock then
         state2 = BlackboxCellState.Lock
@@ -2319,10 +2378,18 @@ function FactoryUtils.getItemCraft(itemId)
     local craftInfos, hasCraft = FactoryUtils.getItemCrafts(itemId, false)
     local defaultCraftId = WikiUtils.getItemDefaultCraftId(itemId)
     if craftInfos ~= nil and #craftInfos > 0 then
+        local firstFactoryCraftInfo
         for i, craftInfo in ipairs(craftInfos) do
             if craftInfo.craftId == defaultCraftId then
                 return craftInfo
             end
+            if not firstFactoryCraftInfo and craftInfo.buildingId ~= nil then
+                firstFactoryCraftInfo = craftInfo
+            end
+        end
+        
+        if firstFactoryCraftInfo then
+            return firstFactoryCraftInfo
         end
         return craftInfos[1]
     end
@@ -2369,6 +2436,31 @@ function FactoryUtils.exitFactoryRelatedMode()
     Notify(MessageConst.FAC_BUILD_EXIT_CUR_MODE, true)
     Notify(MessageConst.FAC_EXIT_DESTROY_MODE, true)
     LuaSystemManager.factory:ToggleTopView(false, true)
+end
+
+
+function FactoryUtils.getCurAndAutoTransferBlackBoxToDomainId()
+    local domainId
+    if Utils.isInBlackbox() then
+        local succ, blackboxCfg = Tables.dungeonTable:TryGetValue(GameWorld.worldInfo.curSubGameId)
+        if succ then
+            domainId = blackboxCfg.domainId
+        else
+            domainId = Utils.getCurDomainId()
+        end
+    else
+        domainId = Utils.getCurDomainId()
+    end
+    return domainId
+end
+
+function FactoryUtils.evaluateMultiBuildingLimitedPriority(templateId)
+    for i, v in ipairs(FacConst.FAC_MULTI_LIMITED_BUILDING_ORDER) do
+        if v == templateId then
+            return #FacConst.FAC_MULTI_LIMITED_BUILDING_ORDER - i + 1
+        end
+    end
+    return 0
 end
 
 

@@ -216,12 +216,17 @@ SpaceshipStationCtrl._InitFilter = HL.Method() << function(self)
         },
     }
     for t, v in pairs(Tables.spaceshipRoomTypeTable) do
+        local roomType = GEnums.SpaceshipRoomType.__CastFrom(t)
+        if roomType == GEnums.SpaceshipRoomType.GuestRoom then
+            goto continue
+        end
         table.insert(filterTagGroups[1].tags, {
             name = v.name,
             type = FilterType.Skill,
-            roomType = GEnums.SpaceshipRoomType.__CastFrom(t),
+            roomType = roomType,
             order = t,
         })
+        ::continue::
     end
     table.sort(filterTagGroups[1].tags, Utils.genSortFunction({"order"}, true))
     self.m_filterTags = nil

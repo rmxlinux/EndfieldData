@@ -1698,6 +1698,7 @@ end
 
 MissionHudCtrl._OnExclusiveModeChange = HL.Method() << function(self, args)
     self:_RefreshOpenBtn()
+    self:_TryStartSwitcherCoroutine()
 end
 
 

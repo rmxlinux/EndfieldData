@@ -30,8 +30,7 @@ CommonTitleTipsCtrl.ShowTitleTips = HL.StaticMethod(HL.Any) << function(args)
 end
 
 
-
-CommonTitleTipsCtrl.HideTitleTips = HL.StaticMethod(HL.Any) << function(args)
+CommonTitleTipsCtrl.HideTitleTips = HL.StaticMethod() << function()
     UIManager:Close(PANEL_ID)
 end
 

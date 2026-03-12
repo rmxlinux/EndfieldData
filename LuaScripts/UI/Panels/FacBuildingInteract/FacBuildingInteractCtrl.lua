@@ -110,6 +110,7 @@ local PANEL_ID = PanelId.FacBuildingInteract
 
 
 
+
 FacBuildingInteractCtrl = HL.Class('FacBuildingInteractCtrl', uiCtrl.UICtrl)
 
 local logisticInteractSampleOffsets = {
@@ -155,6 +156,7 @@ FacBuildingInteractCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_BLOCK_OTHER_HUB_UNLOADER_INTERACT] = 'FacBlockOtherHubUnloaderInteract',
 
     [MessageConst.FAC_STOP_DRAG_IN_BATCH_MODE] = 'FacStopDragInBatchMode',
+    [MessageConst.ACTIVE_BUILDING_LIKE] = 'OnActiveBuildingLike',
 }
 
 
@@ -295,7 +297,7 @@ FacBuildingInteractCtrl._TailTick = HL.Method() << function(self)
             CSFactoryUtil.SetHoverGrid(CS.UnityEngine.Vector2Int(math.floor(worldPos.x), math.floor(worldPos.z)))
         end
 
-        local curScreenWorldRect = CSFactoryUtil.GetCurScreenWorldRect()
+        local curScreenWorldRect = CSFactoryUtil.GetCurScreenWorldRect(CSFactoryUtil.Padding(0, 0, 0, 0), 6.5)
         local posXMin = math.floor(curScreenWorldRect.xMin)
         local posZMin = math.floor(curScreenWorldRect.yMin)
         local posXMax = math.ceil(curScreenWorldRect.xMax)
@@ -423,15 +425,9 @@ FacBuildingInteractCtrl._OnClickScreen = HL.Method(HL.Userdata) << function(self
     if LuaSystemManager.factory.inBatchSelectMode then
         self:_ClickScreenInBatchMode()
     else
-        
-        
-        
-        
-        
-            self:_UpdateInteractTarget(true, true)
-            self:_UpdateFakeInteractOption()
-            self:_OnClickFakeInteractOption()
-        
+        self:_UpdateInteractTarget(true, true)
+        self:_UpdateFakeInteractOption()
+        self:_OnClickFakeInteractOption()
     end
 end
 
@@ -542,6 +538,11 @@ FacBuildingInteractCtrl._OnLongPressScreen = HL.Method(HL.Userdata) << function(
             
             self.view.batchToggle.isOn = true
             GameInstance.mobileMotionManager:PostEventCommonShort()
+        elseif DeviceInfo.usingKeyboard then
+            if next(LuaSystemManager.factory.batchSelectTargets) then
+                local _, desCtrl = UIManager:IsOpen(PanelId.FacDestroyMode)
+                desCtrl:TryStartBatchMove()
+            end
         end
         return
     end
@@ -631,12 +632,23 @@ FacBuildingInteractCtrl._OnPressScreen = HL.Method(HL.Userdata) << function(self
     end
     local isLongPressToDragHint
     if LuaSystemManager.factory.inDestroyMode then
-        if not DeviceInfo.usingTouch then
+        if DeviceInfo.usingTouch then
+            
+            self:_StopPressHint()
+            isLongPressToDragHint = true
+        elseif DeviceInfo.usingKeyboard then
+            
+            local _, desCtrl = UIManager:IsOpen(PanelId.FacDestroyMode)
+            if not desCtrl:CheckBatchActionValid(true, true) then
+                return
+            end
+            if next(LuaSystemManager.factory.batchSelectTargets) == nil then
+                return
+            end
+            self:_StopPressHint()
+        else
             return
         end
-        
-        self:_StopPressHint()
-        isLongPressToDragHint = true
     else
         
         if DeviceInfo.usingTouch then 
@@ -711,6 +723,8 @@ FacBuildingInteractCtrl._OnReleaseScreen = HL.Method(HL.Userdata) << function(se
         if DeviceInfo.usingTouch then
             self:_StopPressHint()
             self.view.batchToggle.isOn = false
+        elseif DeviceInfo.usingKeyboard then
+            self:_StopPressHint()
         end
     else
         self:_StopPressHint()
@@ -822,7 +836,14 @@ FacBuildingInteractCtrl._OnInteractFactory = HL.Method(HL.Table) << function(sel
                     return
                 end
             end
-            FactoryUtils.delBuilding(buildingNodeId, nil, true)
+            local noConfirm = true
+            local hintText
+            local isOthersSocialBuilding = FactoryUtils.isOthersSocialBuilding(buildingNodeId)
+            if isOthersSocialBuilding then
+                noConfirm = false 
+                hintText = Language.LUA_FAC_DEL_SOCIAL_BUILDING_CONFIRM
+            end
+            FactoryUtils.delBuilding(buildingNodeId, nil, noConfirm, hintText)
             return
         end
         local curChapter = FactoryUtils.getCurChapterInfo()
@@ -1233,14 +1254,7 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
                         if FactoryUtils.isOthersSocialBuilding(nodeId) then
                             
                             local canLike = FactoryUtils.canLikeSocialBuilding(nodeId)
-                            GameInstance.player.generalAbilitySystem:ActivateTempAbility(GeneralAbilityType.BuildingLike, function()
-                                FactoryUtils.likeSocialBuilding(nodeId, function()
-                                    if self.m_interactFacNodeId ~= nodeId then
-                                        return 
-                                    end
-                                    FactoryUtils.updateBuildingLikeAbilityState(nodeId)
-                                end)
-                            end, canLike)
+                            GameInstance.player.generalAbilitySystem:ActivateTempAbility(GeneralAbilityType.BuildingLike, canLike, nodeId)
                             local abilityState = canLike and AbilityState.Idle or AbilityState.ForbiddenUse
                             GameInstance.player.generalAbilitySystem:SwitchAbilityStateByType(GeneralAbilityType.BuildingLike, abilityState)
                         else
@@ -1818,6 +1832,19 @@ end
 
 
 
+
+FacBuildingInteractCtrl.OnActiveBuildingLike = HL.Method(HL.Any) << function(self, args)
+    local nodeId = unpack(args)
+    FactoryUtils.likeSocialBuilding(nodeId, function()
+        if self.m_interactFacNodeId ~= nodeId then
+            return 
+        end
+        FactoryUtils.updateBuildingLikeAbilityState(nodeId)
+    end)
+end
+
+
+
 FacBuildingInteractCtrl.m_lastControllerHoverGridPos = HL.Field(HL.Any)
 
 
@@ -2255,7 +2282,7 @@ FacBuildingInteractCtrl._UpdateDragTargetsInBatchMode = HL.Method() << function(
 
     
     local excludeBelt, excludePipe = GameInstance.remoteFactoryManager:GetSimpleFigureInfo()
-    local targetNodeIds, beltInfos = CSFactoryUtil.GetFacEntityInRect(LuaSystemManager.factory.inDestroyMode, startWorldPos, endWorldPos, excludeBelt, excludePipe, true, Utils.isInBlackbox())
+    local targetNodeIds, beltInfos = CSFactoryUtil.GetFacEntityInRect(LuaSystemManager.factory.inDestroyMode, startWorldPos, endWorldPos, excludeBelt, excludePipe, true, Utils.isInBlackbox(), true)
     local targetNodeIdTbl = {}
     for _, v in pairs(targetNodeIds) do
         targetNodeIdTbl[v] = true

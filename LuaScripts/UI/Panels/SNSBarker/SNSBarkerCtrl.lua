@@ -197,18 +197,32 @@ SNSBarkerCtrl._RefreshContactNpcList = HL.Method() << function(self)
 
     local hasResult = #self.m_chatVOs > 0
     if hasResult then
-        self.view.contactNpcScrollList:UpdateCount(#self.m_chatVOs, targetNpcCSIndex)
+        self.view.contactNpcScrollList:UpdateCount(#self.m_chatVOs)
         self.view.contactNpcScrollList:FoldAll(false)
     end
-    self.view.contactNpcScrollList.gameObject:SetActive(hasResult)
-    self.view.nonResult.gameObject:SetActive(not hasResult)
+    
+    
+    
+    
+    self:_StartCoroutine(function()
+        coroutine.step()
+        coroutine.step()
+        if self.m_isClosed then
+            return
+        end
+        if hasResult and targetNpcCSIndex ~= nil then
+            self.view.contactNpcScrollList:ScrollToIndex(targetNpcCSIndex, true)
+        end
+        self.view.contactNpcScrollList.gameObject:SetActive(hasResult)
+        self.view.nonResult.gameObject:SetActive(not hasResult)
 
-    if not nonSelectSubDialog then
-        self.view.contactNpcScrollList:Toggle(targetNpcCSIndex, true)
-        
-        local npcCell = self.m_getContactNpcCellFunc(LuaIndex(targetNpcCSIndex))
-        npcCell:ToggleFoldOut()
-    end
+        if not nonSelectSubDialog then
+            self.view.contactNpcScrollList:Toggle(targetNpcCSIndex, true)
+            
+            local npcCell = self.m_getContactNpcCellFunc(LuaIndex(targetNpcCSIndex))
+            npcCell:ToggleFoldOut()
+        end
+    end)
 end
 
 

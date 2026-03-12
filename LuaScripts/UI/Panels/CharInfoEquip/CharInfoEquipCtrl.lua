@@ -462,10 +462,6 @@ CharInfoEquipCtrl.OnSelectEquipSlotChange = HL.Method(HL.Table) << function(self
     self.m_curSelectSlotIndex = slotIndex
     self.m_isInCompare = false
 
-    if skipGraduallyShow == nil then
-        skipGraduallyShow = false
-    end
-
     self.view.rightNode.gameObject:SetActive(true)
     self:Notify(MessageConst.TOGGLE_CHAR_INFO_FOCUS_MODE, true) 
     self:_RefreshTabCellCache(slotIndex)
@@ -847,7 +843,7 @@ CharInfoEquipCtrl._RefreshCommonEquipList = HL.Method(HL.Number) << function(sel
             local curCell = args.curCell
             local itemInfo = args.itemInfo
 
-            if itemInfo then
+            if itemInfo and self.m_curSelectSlotIndex >= 0 then
                 self:OnCompareEquipChange(itemInfo.instId)
             end
 
@@ -925,9 +921,6 @@ CharInfoEquipCtrl._CloseEquipDetail = HL.Method(HL.Opt(HL.Any)) << function(self
 
     self:_CleanUpCache()
 
-    self:_RefreshRightPanel({
-        charInfo = self.m_charInfo
-    })
     self:_ToggleEquipList(false)
 end
 
@@ -967,12 +960,27 @@ CharInfoEquipCtrl._ToggleEquipList = HL.Method(HL.Boolean) << function(self, isO
         self.view.tabGroup.gameObject:SetActive(isOn)
     end
 
+    local wrapper = self.animationWrapper
     if isOn and not self.view.commonItemList.view.gameObject.activeSelf then
         afterTransition()
-        self:PlayAnimationIn()
+        wrapper:PlayInAnimation()
     elseif not isOn and self.view.commonItemList.view.gameObject.activeSelf then
-        self:PlayAnimationOutWithCallback(function()
+        
+        self.view.luaPanel:BlockAllInput()
+        local equipSlotPanelPhaseItem = self.m_phase:_GetPanelPhaseItem(PanelId.CharInfoEquipSlot)
+        if equipSlotPanelPhaseItem then
+            equipSlotPanelPhaseItem.uiCtrl.view.luaPanel:BlockAllInput()
+        end
+        wrapper:PlayOutAnimation(function()
+            self.view.luaPanel:RecoverAllInput()
+            local equipSlotPanelPhaseItem = self.m_phase:_GetPanelPhaseItem(PanelId.CharInfoEquipSlot)
+            if equipSlotPanelPhaseItem then
+                equipSlotPanelPhaseItem.uiCtrl.view.luaPanel:RecoverAllInput()
+            end
             afterTransition()
+            self:_RefreshRightPanel({
+                charInfo = self.m_charInfo
+            })
         end)
     end
 end

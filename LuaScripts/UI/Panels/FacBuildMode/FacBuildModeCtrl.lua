@@ -354,13 +354,6 @@ FacBuildModeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         obj.gameObject:SetActive(false)
     end
 
-    do 
-        local prefab = self.loader:LoadGameObject(FacConst.BATTLE_BUILDING_RANGE_EFFECT)
-        local obj = self:_CreateWorldGameObject(prefab)
-        self.m_battleRange = Utils.wrapLuaNode(obj)
-        obj.gameObject:SetActive(false)
-    end
-
     self.view.hideToggle.toggle.onValueChanged:AddListener(function(isOn)
         self:_OnChangeHideToggle(isOn)
     end)
@@ -836,6 +829,15 @@ FacBuildModeCtrl._OnClickConfirm = HL.Method() << function(self)
     if not FacBuildModeCtrl.s_enableConfirmBuild then
         return
     end
+
+    local mainChar = GameInstance.mainCharPtr
+    if mainChar then
+        if mainChar.movementComponent and mainChar.movementComponent.moveMode == CS.Beyond.Gameplay.Core.MovementComponent.MoveMode.Plunge then
+            
+            return
+        end
+    end
+
     if self.m_mode == FacConst.FAC_BUILD_MODE.Building then
         self:_ConfirmBuilding()
     elseif self.m_mode == FacConst.FAC_BUILD_MODE.Logistic then
@@ -1500,32 +1502,58 @@ FacBuildModeCtrl._GetBuildingCheckResultHint = HL.Method(HL.Userdata).Return(HL.
     if not valid then
         if checkResult.busLimited then
             hint = Language.LUA_FAC_BUILD_MODE_ROAD_ATTACH
-        elseif checkResult.buildableInChapterLimit then
-            local hintSet = false
-            if self.m_buildingId and not self.m_buildingId:isEmpty() then
-                local limitChapters = CSFactoryUtil.GetLimitedChapterNames(self.m_buildingId)
-                local nameCount = limitChapters.Count
-                if nameCount == 1 then
-                    hint = string.format(Language.LUA_FAC_BUILD_MODE_CHAPTER_BUILDABLE_LIMIT_FORMAT_1, limitChapters[0])
-                    hintSet = true
-                elseif nameCount == 2 then
-                    hint = string.format(Language.LUA_FAC_BUILD_MODE_CHAPTER_BUILDABLE_LIMIT_FORMAT_2, limitChapters[0], limitChapters[1])
-                    hintSet = true
-                elseif nameCount >= 3 then
-                    hint = string.format(Language.LUA_FAC_BUILD_MODE_CHAPTER_BUILDABLE_LIMIT_FORMAT_3, limitChapters[0], limitChapters[1])
-                    hintSet = true
+        elseif checkResult.buildableInChapterLimitedTemplates and checkResult.buildableInChapterLimitedTemplates.Count > 0 then
+            local tempId = checkResult.buildableInChapterLimitedTemplates[0].Item1
+            local requireMode = checkResult.buildableInChapterLimitedTemplates[0].Item2
+            hint = Language.LUA_FAC_BUILD_MODE_CHAPTER_BUILDABLE_LIMIT_DEFAULT
+            if not string.isEmpty(tempId) then
+                local buildingData = Tables.factoryBuildingTable:GetValue(tempId)
+                if buildingData then
+                    local displayString = buildingData.name
+                    if requireMode ~= nil then
+                        local succ, modeData = Tables.FactoryMachineCraftModeTable:TryGetValue(requireMode)
+                        if succ then
+                            displayString = string.format("%s(%s)", displayString, modeData.machineModeTypeName)
+                        end
+                    end
+                    if self.m_mode == FacConst.FAC_BUILD_MODE.Blueprint then
+                        hint = string.format(Language.LUA_FAC_BUILD_MODE_CHAPTER_BUILDABLE_LIMIT_MULTI_FORMAT, displayString)
+                    elseif checkResult.domainModeLimited then
+                        hint = string.format(Language.LUA_FAC_BUILD_MODE_CHAPTER_MODE_LIMIT_FORMAT, GameInstance.remoteFactoryManager.currentChapterInfo.data.name, displayString)
+                    else
+                        local limitChapters = CSFactoryUtil.GetLimitedChapterNames(tempId)
+                        local nameCount = limitChapters.Count
+                        if nameCount == 1 then
+                            hint = string.format(Language.LUA_FAC_BUILD_MODE_CHAPTER_BUILDABLE_LIMIT_FORMAT_1, limitChapters[0])
+                        elseif nameCount == 2 then
+                            hint = string.format(Language.LUA_FAC_BUILD_MODE_CHAPTER_BUILDABLE_LIMIT_FORMAT_2, limitChapters[0], limitChapters[1])
+                        elseif nameCount >= 3 then
+                            hint = string.format(Language.LUA_FAC_BUILD_MODE_CHAPTER_BUILDABLE_LIMIT_FORMAT_3, limitChapters[0], limitChapters[1])
+                        end
+                    end
                 end
             end
-            if not hintSet then
-                hint = Language.LUA_FAC_BUILD_MODE_CHAPTER_BUILDABLE_LIMIT_DEFAULT
+        elseif checkResult.totalCountLimitedTemplates and checkResult.totalCountLimitedTemplates.Count > 0 then
+            local tempId = checkResult.totalCountLimitedTemplates[0]
+            local maxPriority = FactoryUtils.evaluateMultiBuildingLimitedPriority(tempId)
+            for i = 1, checkResult.totalCountLimitedTemplates.Count - 1 do
+                local curTempId = checkResult.totalCountLimitedTemplates[i]
+                local priority = FactoryUtils.evaluateMultiBuildingLimitedPriority(curTempId)
+                if priority > maxPriority then
+                    tempId = curTempId
+                    maxPriority = priority
+                end
             end
-        elseif checkResult.totalCountInChapterLimit then
-            if self.m_buildingId and not self.m_buildingId:isEmpty() then
-                local buildingData = Tables.factoryBuildingTable:GetValue(self.m_buildingId)
-                local buildingName = buildingData and buildingData.name or ""
-                hint = string.format(Language.LUA_FAC_BUILD_MODE_CHAPTER_BUILDING_COUNT_LIMIT_FORMAT, buildingName)
-            else
-                hint = Language.LUA_FAC_BUILD_MODE_CHAPTER_BUILDING_COUNT_LIMIT_DEFAULT
+            hint = Language.LUA_FAC_BUILD_MODE_CHAPTER_BUILDING_COUNT_LIMIT_DEFAULT
+            if not string.isEmpty(tempId) then
+                local buildingData = Tables.factoryBuildingTable:GetValue(tempId)
+                if buildingData then
+                    if self.m_mode == FacConst.FAC_BUILD_MODE.Blueprint then
+                        hint = string.format(Language.LUA_FAC_BUILD_MODE_CHAPTER_BUILDING_COUNT_LIMIT_MULTI_FORMAT, buildingData.name)
+                    else
+                        hint = string.format(Language.LUA_FAC_BUILD_MODE_CHAPTER_BUILDING_COUNT_LIMIT_FORMAT, buildingData.name)
+                    end
+                end
             end
         elseif checkResult.bandwidthLimited then
             hint = Language.LUA_FAC_BUILD_MODE_ON_BANDWIDTH_MAX
@@ -1534,14 +1562,6 @@ FacBuildModeCtrl._GetBuildingCheckResultHint = HL.Method(HL.Userdata).Return(HL.
                 hint = Language.LUA_FAC_BUILD_MODE_MAIN_REGION_LIMITED_BLUEPRINT
             else
                 hint = Language.LUA_FAC_BUILD_MODE_MAIN_REGION_LIMITED
-            end
-        elseif checkResult.freeBusCountLimit then
-            if self.m_buildingId and not self.m_buildingId:isEmpty() then
-                local buildingData = Tables.factoryBuildingTable:GetValue(self.m_buildingId)
-                local buildingName = buildingData and buildingData.name or ""
-                hint = string.format(Language.LUA_FAC_BUILD_MODE_FREE_BUS_COUNT_OVER_LIMIT, buildingName)
-            else
-                hint = Language.LUA_FAC_BUILD_MODE_FREE_BUS_COUNT_OVER_LIMIT_DEFAULT
             end
         elseif checkResult.cropAreaLimited then
             hint = Language.LUA_FAC_BUILD_MODE_ON_CROP_AREA_ONLY
@@ -1606,17 +1626,6 @@ FacBuildModeCtrl._GetBuildingCheckResultHint = HL.Method(HL.Userdata).Return(HL.
             hint = Language.LUA_FAC_BUILD_MODE_MEDIC_RANGE_OVERLAP
         elseif checkResult.overlayMineIndex and checkResult.overlayMineIndex.Count > 0 then
             hint = Language.LUA_FAC_BUILD_MODE_MINE_OVERLAP
-        elseif checkResult.domainModeLimited then
-            if self.m_buildingId and not self.m_buildingId:isEmpty() then
-                local buildingData = Tables.factoryBuildingTable:GetValue(self.m_buildingId)
-                local buildingName = buildingData and buildingData.name or ""
-                hint = string.format(
-                    Language.LUA_FAC_BUILD_MODE_CHAPTER_MODE_LIMIT_FORMAT,
-                    GameInstance.remoteFactoryManager.currentChapterInfo.data.name, buildingName
-                )
-            else
-                hint = Language.LUA_FAC_BUILD_MODE_OTHERS
-            end
         elseif checkResult.freeBusNoConnectSource then
             hint = Language.LUA_FAC_BUILD_MODE_FREE_BUS_NO_CONNECTION_TO_START
         else
@@ -1966,6 +1975,23 @@ FacBuildModeCtrl._EnterBuildingMode = HL.Method(HL.Table) << function(self, args
             obj.gameObject:SetActive(false)
         end
     end
+
+    do 
+        if self.m_battleRange then
+            if self.m_battleRange.gameObject then
+                GameObject.Destroy(self.m_battleRange.gameObject)
+            end
+            self.m_battleRange = nil
+        end
+        local battleData = GameInstance.remoteFactoryManager.staticData:QueryBattleData(self.m_buildingId)
+        if battleData then
+            local effectPath = string.format(FacConst.EFFECT_PREFAB_PATH_FORMAT, battleData.attackRangeEffect)
+            local prefab = self.loader:LoadGameObject(effectPath)
+            local obj = self:_CreateWorldGameObject(prefab)
+            self.m_battleRange = Utils.wrapLuaNode(obj)
+            obj.gameObject:SetActive(false)
+        end
+    end
     self:_UpdateBuildingFollowerState(true)
 
     local bData = Tables.factoryBuildingTable[self.m_buildingId]
@@ -1999,8 +2025,13 @@ FacBuildModeCtrl._ExitBuildingMode = HL.Method(HL.Opt(HL.Boolean)) << function(s
         end
         self.m_powerPoleRange = nil
     end
+    if self.m_battleRange then
+        if self.m_battleRange.gameObject then
+            GameObject.Destroy(self.m_battleRange.gameObject)
+        end
+        self.m_battleRange = nil
+    end
     self.m_fluidSprayRange.gameObject:SetActive(false)
-    self.m_battleRange.gameObject:SetActive(false)
     self:_ResetMoveBuildingHintState()
 
     self:_ExitMode(skipAnim)
@@ -2237,12 +2268,25 @@ FacBuildModeCtrl._UpdateBuildingFollowerState = HL.Method(HL.Boolean) << functio
     end
 
     if isInit and data.type == GEnums.FacBuildingType.Battle then
-        local battleData = Tables.factoryBattleTable[self.m_buildingId]
-        local range = battleData.attackRange
-        if range > 0 then
-            self.m_battleRange.gameObject:SetActive(true)
+        local battleData = GameInstance.remoteFactoryManager.staticData:QueryBattleData(self.m_buildingId)
+        local range0 = battleData.attackRangeSize0
+        local range1 = battleData.attackRangeSize1
+        local scaleX = 1
+        local scaleZ = 1
+        local shapeType = battleData.rangeShapeType
+        if shapeType == CS.Beyond.Gameplay.RemoteFactory.BattleShapeType.Circle then
             
-            self.m_battleRange.transform.localScale = Vector3(range / 8, 1, range / 8)
+            scaleX = range0 / 8
+            scaleZ = scaleX
+        elseif shapeType == CS.Beyond.Gameplay.RemoteFactory.BattleShapeType.Rect then
+            
+            scaleX = range1 / 2
+            
+            scaleZ = range0 / 6
+        end
+        if scaleX > 0 and scaleZ > 0 then
+            self.m_battleRange.gameObject:SetActive(true)
+            self.m_battleRange.transform.localScale = Vector3(scaleX, 1, scaleZ)
             self.m_battleRange.followerObject.getTargetPosInfo = function(pos, rot)
                 pos, rot = GameInstance.remoteFactoryManager.interact.currentBuildingMode:GetPreviewRenderInfo()
                 return pos, rot

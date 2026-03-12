@@ -397,7 +397,10 @@ AdventureDailyCtrl._ShowProgressRewardTips = HL.Method(HL.Number) << function(se
         preCell.lightCircle.gameObject:SetActive(false)
     end
     if node.gameObject.activeSelf and self.m_curShowingRewardHintIndex == index then
-        node.gameObject:SetActive(false)
+        
+        node.animationWrapper:PlayOutAnimation(function()
+            node.gameObject:SetActive(false)
+        end)
         return
     end
 
@@ -452,7 +455,6 @@ AdventureDailyCtrl._OnHintBtnClickWhenController = HL.Method(HL.Number) << funct
         preCell.lightCircle.gameObject:SetActive(false)
     end
     if node.gameObject.activeSelf and self.m_curShowingRewardHintIndex == index then
-        node.gameObject:SetActive(false)
         return
     end
 

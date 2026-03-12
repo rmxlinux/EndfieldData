@@ -12,6 +12,8 @@ local CountdownToast = "CountdownToast"
 
 
 local WorldChallengeStartToast = "WorldChallengeStartToast"
+local DEFAULT_ICON = "challenge_icon"
+
 
 
 
@@ -85,7 +87,7 @@ end
 
 
 CommonTaskTrackToastCtrl.OnShowCommonTaskFinishToast = HL.StaticMethod(HL.Any) << function(args)
-    LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackEndToastNW", function()
+    LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackEndToast", function()
         
         local ctrl = CommonTaskTrackToastCtrl.AutoOpen(PANEL_ID, nil, true)
         if ctrl == nil then
@@ -93,7 +95,7 @@ CommonTaskTrackToastCtrl.OnShowCommonTaskFinishToast = HL.StaticMethod(HL.Any) <
         end
 
         ctrl:ShowTaskFinishToast(args, function()
-            Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "TrackEndToastNW")
+            Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "TrackEndToast")
         end)
     end, function()
         UIManager:Close(PANEL_ID)
@@ -103,7 +105,7 @@ end
 
 
 CommonTaskTrackToastCtrl.OnShowCommonTaskFailToast = HL.StaticMethod(HL.Any) << function(args)
-    LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackEndToastNW", function()
+    LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackEndToast", function()
         
         local ctrl = CommonTaskTrackToastCtrl.AutoOpen(PANEL_ID, nil, true)
         if ctrl == nil then
@@ -111,7 +113,7 @@ CommonTaskTrackToastCtrl.OnShowCommonTaskFailToast = HL.StaticMethod(HL.Any) << 
         end
 
         ctrl:ShowTaskFailToast(args, function()
-            Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "TrackEndToastNW")
+            Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "TrackEndToast")
         end)
     end, function()
         UIManager:Close(PANEL_ID)
@@ -128,7 +130,7 @@ end
 
 
 CommonTaskTrackToastCtrl.OnClose = HL.Override() << function(self)
-    if self.m_countDownTickId ~= -1 then
+    if self.m_countDownTickId > 0 then
         self.m_countDownTickId = LuaUpdate:Remove(self.m_countDownTickId)
     end
 
@@ -139,65 +141,69 @@ end
 
 
 
+CommonTaskTrackToastCtrl._IsWorldFreeze = HL.Method().Return(HL.Boolean) << function(self)
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.CommonPopUp)
+    return UIWorldFreezeManager:IsUIWorldFreeze() or isOpen and ctrl.m_timeScaleHandler > 0
+end
+
+
+
 
 
 CommonTaskTrackToastCtrl.ShowCountdownToast = HL.Method(HL.Any, HL.Opt(HL.Function)) << function(self, args, endFunc)
     self:Notify(MessageConst.ON_HUD_BTN_VISIBLE_CHANGE, {false})
 
     local countdownDuration, cb = unpack(args)
-
     local toast = Utils.wrapLuaNode(self:_CreateToastGO(CountdownToast))
     toast.contentTimeStart.gameObject:SetActiveIfNecessary(false)
-    toast.contentTimeNumber.gameObject:SetActiveIfNecessary(false)
+    toast.contentTimeNumber.gameObject:SetActiveIfNecessary(true)
 
-    local freq = 1
-    local tickInterval = 1
-    local leftTime = countdownDuration
+    local tickTimes = math.ceil(countdownDuration)
+    local animFrequency = 1
+    local timer = 1
+    local endTimes = 0
     self.m_countDownTickId = LuaUpdate:Add("Tick", function(deltaTime)
-        if TimeManagerInst.timeScale == 0 then
+        if self:_IsWorldFreeze() then
+            toast.gameObject:SetActiveIfNecessary(false)
             return
         end
 
-        tickInterval = tickInterval + deltaTime
-        if tickInterval < freq then
+        local game = GameWorld.worldInfo.subGame
+        if game == nil or game.waitingSrvResume then
+            toast.gameObject:SetActiveIfNecessary(false)
             return
         end
-        tickInterval = 0
 
-        local showStart = leftTime <= 0
-        if showStart then
-            if leftTime == 0 then
-                AudioAdapter.PostEvent("Au_UI_Toast_TaskTrack_CountdownToast_Start")
-            end
-        else
-            toast.startNumberTxt.text = math.ceil(leftTime)
+        toast.gameObject:SetActiveIfNecessary(true)
+        timer = timer + deltaTime
+        if timer > animFrequency and tickTimes > endTimes then
+            toast.animationWrapper:SampleToInAnimationEnd()
+            toast.animationWrapper:PlayInAnimation()
+
+            toast.startNumberTxt.text = math.ceil(tickTimes)
             AudioAdapter.PostEvent("Au_UI_Toast_TaskTrack_CountdownToast_Number")
         end
 
-        toast.contentTimeStart.gameObject:SetActiveIfNecessary(showStart)
-        toast.contentTimeNumber.gameObject:SetActiveIfNecessary(not showStart)
-        toast.animationWrapper:SampleToInAnimationEnd()
-        toast.animationWrapper:PlayInAnimation()
-
-        
-        if leftTime <= -1 then
-            if cb ~= nil
-                    and not string.isEmpty(GameWorld.worldInfo.curSubGameId) then
-                cb()
-            end
-
-            if endFunc then
-                endFunc()
-            end
-
-            toast.animationWrapper:PlayOutAnimation(function()
-                self:Close()
-            end)
-            self.m_countDownTickId = LuaUpdate:Remove(self.m_countDownTickId)
-            self:Notify(MessageConst.ON_HUD_BTN_VISIBLE_CHANGE, {true})
+        if timer > animFrequency then
+            timer = 0
+            tickTimes = tickTimes - 1
         end
 
-        leftTime = leftTime - freq
+        if tickTimes < endTimes then
+            self:Notify(MessageConst.ON_HUD_BTN_VISIBLE_CHANGE, {true})
+            toast.animationWrapper:PlayOutAnimation(function()
+                self:Close()
+
+                if not string.isEmpty(GameWorld.worldInfo.curSubGameId) and cb ~= nil then
+                    cb()
+                end
+
+                if endFunc then
+                    endFunc()
+                end
+            end)
+            self.m_countDownTickId = LuaUpdate:Remove(self.m_countDownTickId)
+        end
     end)
 end
 
@@ -243,7 +249,7 @@ CommonTaskTrackToastCtrl._RefreshToast = HL.Method(HL.String, HL.Any, HL.Opt(HL.
         << function(self, toastType, args, endFunc)
     self:Notify(MessageConst.ON_HUD_BTN_VISIBLE_CHANGE, {false})
 
-    local instId = unpack(args)
+    local instId, isNewRecord, passTime = unpack(args)
     local taskTitle = ""
     local taskDesc = ""
     local hasTableData, gameMechanicData = Tables.gameMechanicTable:TryGetValue(instId)
@@ -277,12 +283,21 @@ CommonTaskTrackToastCtrl._RefreshToast = HL.Method(HL.String, HL.Any, HL.Opt(HL.
 
     local toastNode = self:_CreateToastWidget(toastType, instId)
     local hasGameCategory, gameCategoryCfg = Tables.gameMechanicCategoryTable:TryGetValue(gameMechanicData.gameCategory)
-    local toastIcon = hasGameCategory and gameCategoryCfg.toastIcon or ""
-    if not string.isEmpty(toastIcon) then
-        toastNode.middleIcon:LoadSprite(UIConst.UI_SPRITE_COMMON_TASK_TRACK, toastIcon)
-    end
+    local toastIcon = (hasGameCategory and not string.isEmpty(gameCategoryCfg.toastIcon)) and gameCategoryCfg.toastIcon
+            or DEFAULT_ICON
+    toastNode.middleIcon:LoadSprite(UIConst.UI_SPRITE_COMMON_TASK_TRACK, toastIcon)
     toastNode.titleTxt.text = taskTitle
     toastNode.descTxt.text = taskDesc
+
+    if toastNode.newRecordNode then
+        toastNode.newRecordNode.gameObject:SetActiveIfNecessary(isNewRecord == true)
+    end
+
+    if toastNode.passTimeTxtNode then
+        logger.warn("ranqinyuan debug:", passTime)
+        toastNode.passTimeTxtNode.gameObject:SetActiveIfNecessary(passTime ~= nil)
+        toastNode.passTimeTxt.text = UIUtils.getLeftTimeToSecond((passTime or 0) / 1000)
+    end
 
     self.m_showingToastCor = self:_StartCoroutine(function()
         local inAnimLength = toastNode.animationWrapper:GetInClipLength()

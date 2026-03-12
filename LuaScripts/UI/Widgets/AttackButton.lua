@@ -257,7 +257,7 @@ AttackButton.BindNormalAttackInputEvent = HL.Method() << function(self)
         self:ReleaseNormalAttackBtn()
     end)
 
-    if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
+    if UNITY_EDITOR then
         self.root:BindInputPlayerAction("battle_debug_attack_start", function()
             self:StartPressAttackBtn()
         end)
@@ -348,11 +348,20 @@ AttackButton._RefreshAttackIcon = HL.Method() << function(self)
     if not DeviceInfo.usingTouch then
         return
     end
+    if next(self.m_forbidAttackKeys) then
+        self.view.gameObject:SetActiveIfNecessary(false)
+        self:ReleaseNormalAttackBtn()
+    else
+        self.view.gameObject:SetActiveIfNecessary(true)
+    end
     local iconName
     local inThrowMode = GameWorld.battle.inThrowMode
     self.m_isBreakingAttack = false
     if inThrowMode then
         iconName = "ICON_THROW"
+        if GameInstance.player.forbidSystem:IsForbidden(ForbidType.ForbidAttack) and DeviceInfo.usingTouch then
+            self.view.gameObject:SetActiveIfNecessary(true)
+        end
     else
         if GameWorld.battle.lastCanBeBreakingAttackTarget ~= nil then
             iconName = "ICON_ATTACK_BREAKING"
@@ -364,6 +373,7 @@ AttackButton._RefreshAttackIcon = HL.Method() << function(self)
             iconName = weaponNumToConfigIcon[charWeaponTypeNum]
         end
     end
+    self:_RefreshShowing()
 
     local sprite = self.m_iconCache[iconName]
     if sprite == nil then
@@ -400,6 +410,7 @@ AttackButton.ToggleForbidAttack = HL.Method(HL.Table) << function(self, args)
     else
         self.m_forbidAttackKeys[reason] = nil
     end
+    
     if next(self.m_forbidAttackKeys) then
         self.view.gameObject:SetActive(false)
         self:ReleaseNormalAttackBtn()

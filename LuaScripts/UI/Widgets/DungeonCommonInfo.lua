@@ -35,6 +35,8 @@ local HunterModeInstructionId = "hunter_mode"
 
 
 
+
+
 DungeonCommonInfo = HL.Class('DungeonCommonInfo', UIWidgetBase)
 
 
@@ -42,6 +44,9 @@ DungeonCommonInfo.m_dungeonId = HL.Field(HL.String) << ""
 
 
 DungeonCommonInfo.m_customArgs = HL.Field(HL.Table)
+
+
+DungeonCommonInfo.m_detailRewardData = HL.Field(HL.Table)
 
 
 DungeonCommonInfo.m_rewardCellCache = HL.Field(HL.Forward("UIListCache"))
@@ -260,9 +265,6 @@ DungeonCommonInfo._RefreshCommonInfo = HL.Method() << function(self)
 
     
     if isUnlock then
-        self.view.lockedNode.gameObject:SetActive(false)
-        self.view.lockedSpNode.gameObject:SetActive(false)
-
         local showCostStamina = hasHunterMode and hunterModeOpen or not hasHunterMode and dungeonCfg.costStamina > 0
         local showCantGetHunterModeReward = hasHunterMode and not hunterModeOpen
 
@@ -271,34 +273,44 @@ DungeonCommonInfo._RefreshCommonInfo = HL.Method() << function(self)
 
         
         self.view.btnDungeonEntry.text = DungeonUtils.getEntryText(self.m_dungeonId)
+
+        self.view.lockedNode.gameObject:SetActive(false)
+        self.view.lockedSpNode.gameObject:SetActive(false)
     else
         
-        local uncompletedConditionId = DungeonUtils.getUncompletedConditionIds(self.m_dungeonId)
-        local multiUnComplete = #uncompletedConditionId > 1
-        local haveCanJumpCond = false
-        for _, conditionId in ipairs(uncompletedConditionId) do
-            local canJump = DungeonUtils.getConditionCanJump(self.m_dungeonId, conditionId)
-            if canJump then
-                haveCanJumpCond = true
+        if not dungeonCfg.unlockSpCond then
+            
+            
+            local uncompletedConditionId = DungeonUtils.getUncompletedConditionIds(self.m_dungeonId)
+            local multiUnComplete = #uncompletedConditionId > 1
+            local haveCanJumpCond = false
+            for _, conditionId in ipairs(uncompletedConditionId) do
+                local canJump = DungeonUtils.getConditionCanJump(self.m_dungeonId, conditionId)
+                if canJump then
+                    haveCanJumpCond = true
+                end
             end
-        end
-        
-        self.view.lockedNode.gameObject:SetActive(not multiUnComplete and not haveCanJumpCond)
-        self.view.lockedSpNode.gameObject:SetActive(multiUnComplete or haveCanJumpCond)
-        if not multiUnComplete and not haveCanJumpCond then
             
-            local conditionId = uncompletedConditionId[1]
-            local gameMechanicConditionCfg = Tables.gameMechanicConditionTable[conditionId]
-            self.view.lockedTxt.text = gameMechanicConditionCfg.desc
-        else
-            
-            if multiUnComplete then
-                self.view.lockedText.text = Language.ui_dungeon_entry_condition_many
-            else
+            self.view.lockedNode.gameObject:SetActive(not multiUnComplete and not haveCanJumpCond)
+            self.view.lockedSpNode.gameObject:SetActive(multiUnComplete or haveCanJumpCond)
+            if not multiUnComplete and not haveCanJumpCond then
+                
                 local conditionId = uncompletedConditionId[1]
                 local gameMechanicConditionCfg = Tables.gameMechanicConditionTable[conditionId]
-                self.view.lockedText.text = gameMechanicConditionCfg.desc
+                self.view.lockedTxt.text = gameMechanicConditionCfg.desc
+            else
+                
+                if multiUnComplete then
+                    self.view.lockedText.text = Language.ui_dungeon_entry_condition_many
+                else
+                    local conditionId = uncompletedConditionId[1]
+                    local gameMechanicConditionCfg = Tables.gameMechanicConditionTable[conditionId]
+                    self.view.lockedText.text = gameMechanicConditionCfg.desc
+                end
             end
+        else
+            self.view.lockedNode.gameObject:SetActive(false)
+            self.view.lockedSpNode.gameObject:SetActive(false)
         end
     end
     self.view.unlockedNode.gameObject:SetActive(isUnlock)
@@ -476,12 +488,19 @@ DungeonCommonInfo._OnBtnRewardDetailsClick = HL.Method() << function(self)
     local hasOptionReward = not string.isEmpty(dungeonCfg.customRewardId)
     local openPanelId = hasOptionReward and PanelId.DungeonRewardSelectPopup or PanelId.CommonRewardDetailsPopup
     local args = hasOptionReward and { dungeonId = self.m_dungeonId } or {
-        firstPartRewards = DungeonUtils.genFirstPartRewardsInfo(self.m_dungeonId),
+        firstPartRewards = self.m_detailRewardData or DungeonUtils.genFirstPartRewardsInfo(self.m_dungeonId),
         firstPartRewardsTitle = DungeonUtils.getRewardsDetailFirstRowTitle(self.m_dungeonId),
         secondPartRewards = DungeonUtils.genSecondPartRewardsInfo(self.m_dungeonId),
         secondPartRewardsTitle = DungeonUtils.getRewardsDetailSecondRowTitle(self.m_dungeonId),
     }
     UIManager:AutoOpen(openPanelId, args)
+end
+
+
+
+
+DungeonCommonInfo.SetRewardDetailsData = HL.Method(HL.Table) << function(self, data)
+    self.m_detailRewardData = data
 end
 
 

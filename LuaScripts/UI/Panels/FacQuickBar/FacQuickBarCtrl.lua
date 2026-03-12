@@ -70,6 +70,7 @@ local PANEL_ID = PanelId.FacQuickBar
 
 
 
+
 FacQuickBarCtrl = HL.Class('FacQuickBarCtrl', autoCalcOrderUICtrl.AutoCalcOrderUICtrl)
 
 
@@ -105,7 +106,7 @@ FacQuickBarCtrl.s_messages = HL.StaticField(HL.Table) << {
 
     [MessageConst.FAC_TOGGLE_CAN_DEACTIVE_QUICK_BAR] = 'ToggleCanDeactiveQuickBar',
 
-
+    [MessageConst.ON_CHANGE_SPACESHIP_DOMAIN_ID] = 'OnChangeSpaceshipDomainId',
 }
 
 
@@ -964,6 +965,7 @@ end
 
 
 FacQuickBarCtrl._OnConfirmSetInController = HL.Method() << function(self)
+    AudioAdapter.PostEvent("Au_UI_Item_Put_Producer")
     if self.m_isSetSlot then
         self:_OnConfirmSwitchSlot()
     else
@@ -1010,7 +1012,7 @@ FacQuickBarCtrl._OnExitSetModeInController = HL.Method(HL.Boolean) << function(s
         InputManagerInst.controllerNaviManager:TryRemoveLayer(self.naviGroup)
     end
     InputManagerInst:ToggleGroup(self.m_setBuildingBindingGroupId, false)
-    self.view.main.navigationBindingType = CS.UnityEngine.UI.NavigationBindingType.AllDirections
+    UIUtils.changeAndTrySetNaviBindingType(self.view.main, CS.UnityEngine.UI.NavigationBindingType.AllDirections)
 end
 
 
@@ -1233,7 +1235,8 @@ FacQuickBarCtrl._RefreshControllerSettingOnShow = HL.Method() << function(self)
     self.view.activeKeyHint.gameObject:SetActive(useActiveAction)
     InputManagerInst:ToggleBinding(self.m_manualFocusBindingId, useActiveAction)
     InputManagerInst:ToggleBinding(self.m_manualUnFocusBindingId, useActiveAction)
-    self.view.main.navigationBindingType = useActiveAction and CS.UnityEngine.UI.NavigationBindingType.RightJsHorizontalOnly or CS.UnityEngine.UI.NavigationBindingType.AllDirections
+    local naviType = useActiveAction and CS.UnityEngine.UI.NavigationBindingType.RightJsHorizontalOnly or CS.UnityEngine.UI.NavigationBindingType.AllDirections
+    UIUtils.changeAndTrySetNaviBindingType(self.view.main, naviType)
 end
 
 
@@ -1261,5 +1264,12 @@ FacQuickBarCtrl.NaviToFacQuickBar = HL.Method() << function(self)
 end
 
 
+
+
+
+
+FacQuickBarCtrl.OnChangeSpaceshipDomainId = HL.Method(HL.Any) << function(self, _)
+    self:OnQuickBarChanged()
+end
 
 HL.Commit(FacQuickBarCtrl)

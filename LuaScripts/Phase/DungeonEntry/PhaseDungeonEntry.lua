@@ -11,6 +11,7 @@ local Category2Panel = {
     [DungeonConst.DUNGEON_CATEGORY.Train] = PanelId.DungeonCommonEntry,
     [DungeonConst.DUNGEON_CATEGORY.WorldLevel] = PanelId.DungeonCommonEntry,
     [DungeonConst.DUNGEON_CATEGORY.HighDifficulty] = PanelId.DungeonCommonEntry,
+    [DungeonConst.DUNGEON_CATEGORY.ActMonster] = PanelId.DungeonActivityEntry,
 }
 
 
@@ -99,6 +100,7 @@ PhaseDungeonEntry._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table
         dungeonId = openPanelArgs.dungeonId,
         fromDialog = self.arg.fromDialog,
         enterDungeonCallback = self.arg.enterDungeonCallback,
+        activityId = self.arg.activityId
     })
 end
 
@@ -183,7 +185,7 @@ PhaseDungeonEntry._PrepareOpenPanelArgs = HL.Method().Return(HL.Table) << functi
     return {
         dungeonId = dungeonId,
         dungeonSeriesId = dungeonSeriesId,
-        panelId = panelId
+        panelId = panelId,
     }
 end
 

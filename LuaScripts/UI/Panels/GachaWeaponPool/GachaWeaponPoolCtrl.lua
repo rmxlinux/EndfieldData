@@ -31,7 +31,6 @@ local PANEL_ID = PanelId.GachaWeaponPool
 
 
 
-
 GachaWeaponPoolCtrl = HL.Class('GachaWeaponPoolCtrl', uiCtrl.UICtrl)
 
 
@@ -63,9 +62,6 @@ GachaWeaponPoolCtrl.m_price = HL.Field(HL.Number) << 0
 
 
 GachaWeaponPoolCtrl.m_itemNoUpCache = HL.Field(HL.Forward('UIListCache'))
-
-
-GachaWeaponPoolCtrl.m_moneyCellCache = HL.Field(HL.Forward('UIListCache'))
 
 
 GachaWeaponPoolCtrl.m_createdWeaponInsts = HL.Field(HL.Table)
@@ -123,7 +119,6 @@ GachaWeaponPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         UIManager:Open(PanelId.GachaWeaponInsufficient)
     end)
     self.m_itemNoUpCache = UIUtils.genCellCache(self.view.itemNoUp)
-    self.m_moneyCellCache = UIUtils.genCellCache(self.view.moneyCell)
 
     self.m_loopRewardItemUIList = {}
     table.insert(self.m_loopRewardItemUIList, self.view.guaranteeRewardNode.loopRewardItem1)
@@ -384,19 +379,13 @@ GachaWeaponPoolCtrl.OnWalletChanged = HL.Method(HL.Opt(HL.Any)) << function(self
     end
 
     
+    local moneyIds = {}
     if self.m_gachaWeaponGoodsCostInfo.ticketEnough then
-        self.m_moneyCellCache:Refresh(2, function(cell, tabIndex)
-            if tabIndex == 1 then
-                cell:InitMoneyCell(costTicketId)
-            else
-                cell:InitMoneyCell(Tables.globalConst.gachaWeaponItemId)
-            end
-        end)
+        moneyIds = {costTicketId, Tables.globalConst.gachaWeaponItemId}
     else
-        self.m_moneyCellCache:Refresh(1, function(cell, tabIndex)
-            cell:InitMoneyCell(Tables.globalConst.gachaWeaponItemId)
-        end)
+        moneyIds = {Tables.globalConst.gachaWeaponItemId}
     end
+    self.view.walletBarPlaceholder:InitWalletBarPlaceholder(moneyIds, false, true)
 end
 
 

@@ -22,6 +22,9 @@ local PANEL_ID = PanelId.RewardsPopUpForSystem
 
 
 
+
+
+
 RewardsPopUpForSystemCtrl = HL.Class('RewardsPopUpForSystemCtrl', uiCtrl.UICtrl)
 
 
@@ -38,6 +41,9 @@ RewardsPopUpForSystemCtrl.m_args = HL.Field(HL.Table)
 
 
 RewardsPopUpForSystemCtrl.m_items = HL.Field(HL.Table)
+
+
+RewardsPopUpForSystemCtrl.m_extraItemInfo = HL.Field(HL.Table)
 
 
 
@@ -67,17 +73,7 @@ RewardsPopUpForSystemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnUpdateCell(cell, LuaIndex(csIndex))
     end)
     self.view.rewardsScrollList.onGraduallyShowFinish:AddListener(function()
-        self.view.skipBtn.gameObject:SetActive(false)
-        self.view.controllerHintPlaceholder.gameObject:SetActive(true)
-        local firstItemGo = self.view.rewardsScrollList:Get(0)
-        if firstItemGo then
-            self.view.focusItemKeyHint.gameObject:SetActive(true)
-            self.view.focusItemKeyHint.transform.position = firstItemGo.transform.position
-            local keyHintPos = self.view.focusItemKeyHint.transform.localPosition
-            keyHintPos.x = keyHintPos.x - 50
-            keyHintPos.y = keyHintPos.y - 90
-            self.view.focusItemKeyHint.transform.localPosition = keyHintPos
-        end
+        self:_OnGraduallyShowFinish()
     end)
 
     self.view.naviGroup.getDefaultSelectableFunc = function()
@@ -148,6 +144,17 @@ end
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 RewardsPopUpForSystemCtrl.ShowSystemRewards = HL.StaticMethod(HL.Table) << function(args)
     if RewardsPopUpForSystemCtrl._TryShowCharRewards(args) then
         return
@@ -182,6 +189,7 @@ RewardsPopUpForSystemCtrl._TryShowCharRewards = HL.StaticMethod(HL.Any).Return(H
     end
     
     local chars
+    local extraRewardFirstGetChar
     if type(args.chars) == "table" then
         chars = args.chars
     else
@@ -203,6 +211,18 @@ RewardsPopUpForSystemCtrl._TryShowCharRewards = HL.StaticMethod(HL.Any).Return(H
                 UIUtils.getRewardItems(msg.ConvertedRewardId, info.items)
             end
             table.insert(chars, info)
+            
+            if not string.isEmpty(msg.FirstGotRewardId) then
+                local itemBundle = UIUtils.getRewardFirstItem(msg.FirstGotRewardId)
+                if not extraRewardFirstGetChar then
+                    extraRewardFirstGetChar = {
+                        id = itemBundle.id,
+                        count = itemBundle.count,
+                    }
+                else
+                    extraRewardFirstGetChar.count = extraRewardFirstGetChar.count + itemBundle.count
+                end
+            end
         end
     end
     
@@ -217,8 +237,10 @@ RewardsPopUpForSystemCtrl._TryShowCharRewards = HL.StaticMethod(HL.Any).Return(H
     
     local initWeaponIds = {}
     for _, charInfo in pairs(chars) do
-        local _, charPresetCfg = Tables.gachaPoolCharPresetTable:TryGetValue(charInfo.charId)
-        table.insert(initWeaponIds, charPresetCfg.initialWeaponId)
+        local _, charCfg = Tables.characterTable:TryGetValue(charInfo.charId)
+        if charCfg then
+            table.insert(initWeaponIds, charCfg.defaultWeaponId)
+        end
     end
     
     local itemCount = #items
@@ -233,6 +255,9 @@ RewardsPopUpForSystemCtrl._TryShowCharRewards = HL.StaticMethod(HL.Any).Return(H
             table.insert(finalItems, itemInfo)
             table.remove(items, i)
         elseif lume.find(initWeaponIds, itemInfo.id) then
+            
+            table.remove(items, i)
+        elseif extraRewardFirstGetChar and extraRewardFirstGetChar.id == itemInfo.id then
             
             table.remove(items, i)
         end
@@ -274,6 +299,12 @@ RewardsPopUpForSystemCtrl._TryShowCharRewards = HL.StaticMethod(HL.Any).Return(H
             })
         end
     }
+    if extraRewardFirstGetChar then
+        charRewardsArg.extraItem = {
+            extraTitle = Language.LUA_GACHA_FIRST_GET_CHAR_REWARD_TOAST_TITLE,
+            item = extraRewardFirstGetChar,
+        }
+    end
     RewardsPopUpForSystemCtrl.ShowSystemRewards(charRewardsArg)
     return true
 end
@@ -340,6 +371,21 @@ RewardsPopUpForSystemCtrl._ShowRewards = HL.Method(HL.Table) << function(self, a
     self.view.rewardsScrollList:UpdateCount(count, true)
 
     self.view.skipBtn.gameObject:SetActive(true)
+
+    self:_TryProcessInterruptMessage(true)
+
+    
+    if self.view.extraRewardNode then
+        self.m_extraItemInfo = args.extraItem
+        if self.m_extraItemInfo then
+            self.view.extraRewardNode.gameObject:SetActive(true)
+            self.view.extraRewardNode.extraRewardTitleTxt.text = self.m_extraItemInfo.extraTitle
+            self.view.extraRewardNode.item:InitItem(self.m_extraItemInfo.item, true)
+        else
+            self.view.extraRewardNode.gameObject:SetActive(false)
+        end
+    end
+    
 end
 
 
@@ -374,9 +420,11 @@ end
 
 
 RewardsPopUpForSystemCtrl._ClearData = HL.Method() << function(self)
+    self:_TryProcessInterruptMessage(false)
     self.m_args.onComplete = nil
     self.m_args = nil
     self.m_items = nil
+    self.m_extraItemInfo = nil
 end
 
 
@@ -407,12 +455,57 @@ RewardsPopUpForSystemCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << functi
     if isFullBottle then
         cell.view.name.text = string.format(Language.LUA_REWARD_FULL_BOTTLE_FORMAT, Tables.itemTable[bottleData.emptyBottleId].name, Tables.itemTable[bottleData.liquidId].name)
     end
+    cell.gameObject.name = itemBundle.id
+end
+
+
+
+
+RewardsPopUpForSystemCtrl._TryProcessInterruptMessage = HL.Method(HL.Boolean) << function(self, register)
+    local interrupt = self.m_args and self.m_args.interrupt
+    if not interrupt then
+        return
+    end
+
+    local groupKey = "RewardsPopUpForSystemInterruptMessage"
+    for _, message in ipairs(interrupt.interruptMessage) do
+        if register then
+            MessageManager:Register(message, function()
+                
+                if interrupt.onInterrupt then
+                    interrupt.onInterrupt()
+                end
+                self:Hide()
+            end, groupKey)
+        else
+            MessageManager:UnregisterAll(groupKey)
+        end
+    end
+end
+
+
+
+RewardsPopUpForSystemCtrl._OnGraduallyShowFinish = HL.Method() << function(self)
+    self.view.skipBtn.gameObject:SetActive(false)
+    self.view.controllerHintPlaceholder.gameObject:SetActive(true)
+    local firstItemGo = self.view.rewardsScrollList:Get(0)
+    if firstItemGo then
+        self.view.focusItemKeyHint.gameObject:SetActive(true)
+        self.view.focusItemKeyHint.transform.position = firstItemGo.transform.position
+        local keyHintPos = self.view.focusItemKeyHint.transform.localPosition
+        keyHintPos.x = keyHintPos.x - 50
+        keyHintPos.y = keyHintPos.y - 90
+        self.view.focusItemKeyHint.transform.localPosition = keyHintPos
+    end
+
+    if self.m_args.onGraduallyShowFinishItemList then
+        self.m_args.onGraduallyShowFinishItemList()
+    end
 end
 
 
 
 RewardsPopUpForSystemCtrl.OnShow = HL.Override() << function(self)
-    Notify(MessageConst.TOGGLE_COMMON_ITEM_TOAST, false)
     Notify(MessageConst.ON_ENTER_BLOCKED_REWARD_POP_UP_PANEL)
 
     self.view.focusItemKeyHint.gameObject:SetActive(false)
@@ -421,13 +514,11 @@ end
 
 
 RewardsPopUpForSystemCtrl.OnHide = HL.Override() << function(self)
-    Notify(MessageConst.TOGGLE_COMMON_ITEM_TOAST, true)
     Notify(MessageConst.ON_EXIT_BLOCKED_REWARD_POP_UP_PANEL)
 end
 
 
 RewardsPopUpForSystemCtrl.OnClose = HL.Override() << function(self)
-    Notify(MessageConst.TOGGLE_COMMON_ITEM_TOAST, true)
     Notify(MessageConst.ON_EXIT_BLOCKED_REWARD_POP_UP_PANEL)
 end
 

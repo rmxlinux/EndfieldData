@@ -721,7 +721,7 @@ CharInfoTalentUpgradeCtrl._ToggleSkillNextInfo = HL.Method(HL.Boolean) << functi
     self.view.btnExpand.gameObject:SetActive(not isOn)
     self.view.btnShrink.gameObject:SetActive(isOn)
     if DeviceInfo.usingController then
-        InputManagerInst:ToggleGroup(self.view.skillUpgrade.scrollInputGroup.groupId, not isOn)
+        self.view.skillUpgrade.scrollInputGroup.enabled = not isOn
     end
     self.view.skillUpgrade.scrollEnableNode.gameObject:SetActive(not isOn)
     Notify(MessageConst.ON_CHAR_INFO_TALENT_SKILL_NEXT_EXPAND, isOn)

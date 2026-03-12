@@ -112,6 +112,13 @@ local PANEL_ID = PanelId.Puzzle
 
 
 
+
+
+
+
+
+
+
 PuzzleCtrl = HL.Class('PuzzleCtrl', uiCtrl.UICtrl)
 
 
@@ -406,6 +413,8 @@ PuzzleCtrl._ShowNoticeEntry = HL.Method() << function(self)
     self.view.noticeNode.gameObject:SetActiveIfNecessary(true)
 
     AudioAdapter.PostEvent("Au_UI_Event_Piece_Notice")
+
+    self.m_hasHint = true
 end
 
 
@@ -443,6 +452,9 @@ PuzzleCtrl._OnClickNoticeBtn = HL.Method() << function(self)
     self.view.refAnswerGrid.gameObject:SetActiveIfNecessary(true)
 
     AudioAdapter.PostEvent("Au_UI_Event_Piece_Hint")
+
+    self.m_isHintUse = true
+    self.m_useHintTs = DateTimeUtils.GetCurrentTimestampBySeconds()
 end
 
 
@@ -488,14 +500,14 @@ end
 
 
 PuzzleCtrl._DoExitGame = HL.Method() << function(self)
-    self.m_succ = false
+    self.m_puzzleUnitEndTs = DateTimeUtils.GetCurrentTimestampBySeconds()
+    self:_EventLogPuzzleUnitEnd()
     PhaseManager:PopPhase(PhaseId.Puzzle)
 end
 
 
 
 PuzzleCtrl._OnClickGameSucc = HL.Method() << function(self)
-    self.m_succ = true
     PhaseManager:PopPhase(PhaseId.Puzzle)
 end
 
@@ -889,6 +901,14 @@ PuzzleCtrl._UpdatePuzzleProgress = HL.Method() << function(self)
 
     self:_RefreshContent()
     self:_UpdateNoticeTimer()
+
+    
+    self.m_hasHint = false
+    self.m_isHintUse = false
+    self.m_useHintTs = 0
+    self.m_puzzleUnitStartTs = DateTimeUtils.GetCurrentTimestampBySeconds()
+    self.m_puzzleUnitEndTs = 0
+    self.m_curPuzzleUnitComplete = false
 end
 
 
@@ -948,6 +968,14 @@ PuzzleCtrl.PuzzleUnitComplete = HL.Method(HL.Any) << function(self)
     end)
 
     AudioAdapter.PostEvent("Au_UI_Event_Piece_Success")
+
+    self.m_curPuzzleUnitComplete = true
+    self.m_puzzleUnitEndTs = DateTimeUtils.GetCurrentTimestampBySeconds()
+    if self.m_puzzleGame:IsPuzzleComplete() then
+        self.m_succ = true
+    end
+    self:_EventLogPuzzleUnitEnd()
+
     if DeviceInfo.usingController then
         UIUtils.setAsNaviTarget(nil)
         self:_ToggleAreaFocusActionId(false, false)
@@ -1563,6 +1591,54 @@ PuzzleCtrl._ResetControllerState = HL.Method() << function(self)
     InputManagerInst:ToggleGroup(self.view.leftNode.groupId, true)
     self:_ToggleAreaFocusActionId(false, true)
     self:_ToggleChessboardNaviToBlockList(true)
+end
+
+
+
+
+
+
+PuzzleCtrl.m_hasHint = HL.Field(HL.Boolean) << false
+
+
+PuzzleCtrl.m_isHintUse = HL.Field(HL.Boolean) << false
+
+
+PuzzleCtrl.m_useHintTs = HL.Field(HL.Number) << 0
+
+
+PuzzleCtrl.m_puzzleUnitStartTs = HL.Field(HL.Number) << 0
+
+
+PuzzleCtrl.m_puzzleUnitEndTs = HL.Field(HL.Number) << 0
+
+
+PuzzleCtrl.m_curPuzzleUnitComplete = HL.Field(HL.Boolean) << false
+
+
+
+PuzzleCtrl._EventLogPuzzleUnitEnd = HL.Method() << function(self)
+    if not GameWorld.gameMechManager.mainCharFixBrain then
+        logger.error("PuzzleCtrl._EventLogPuzzleUnitEnd fail, mainCharFixBrain is nil")
+        return
+    end
+
+    local curIndex = LuaIndex(self.m_puzzleGame.currentIndex)
+    local curChessboard = self.m_puzzleGame.currentChessboard
+    local eventLogInfo = GameWorld.gameMechManager.mainCharFixBrain.eventLogInfo
+    local hintUseTime = math.max(self.m_useHintTs - self.m_puzzleUnitStartTs, 0)
+    local puzzleUnitTIme = math.max(self.m_puzzleUnitEndTs - self.m_puzzleUnitStartTs, 0)
+    EventLogManagerInst:GameEvent_PuzzleEnd(tostring(eventLogInfo.lastFixLogicId),
+                                            eventLogInfo.lastEntityTemplateId,
+                                            eventLogInfo.lastEntityPos,
+                                            self.m_succ,
+                                            curIndex,
+                                            self.m_curPuzzleUnitComplete,
+                                            curChessboard.rawData.chessBoardID,
+                                            self.m_hasHint,
+                                            self.m_isHintUse,
+                                            hintUseTime,
+                                            puzzleUnitTIme)
 end
 
 

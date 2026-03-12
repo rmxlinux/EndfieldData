@@ -22,7 +22,12 @@ WeeklyRaidEnterCtrl.s_messages = HL.StaticField(HL.Table) << {
 WeeklyRaidEnterCtrl.m_closeOnToastInterrupted = HL.Field(HL.Boolean) << false
 
 
-WeeklyRaidEnterCtrl.ShowWeeklyRaidEnter = HL.StaticMethod() << function()
+
+WeeklyRaidEnterCtrl.ShowWeeklyRaidEnter = HL.StaticMethod(HL.Any) << function(arg)
+    local isReEnter = unpack(arg)
+    if isReEnter then
+        return
+    end
     LuaSystemManager.mainHudActionQueue:AddRequest('WeeklyRaidEnter', function(isResume)
         if isResume then
             local isOpen, ctrl = UIManager:IsOpen(PANEL_ID)

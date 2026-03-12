@@ -36,6 +36,11 @@ MAP_3D_NAVI_THREAD_WAIT_TIME = 0.3
 
 LOADER_POWER_LINE_MAX_COUNT = 1024  
 
+RESOURCE_RELATED_MARK_TYPE = {
+    [GEnums.MarkType.DoodadGroup] = true,
+    [GEnums.MarkType.MinePointTeam] = true,
+}
+
 
 
 
@@ -240,5 +245,6 @@ MARK_DYNAMIC_NODE_PREFAB_PATH_CONFIG = {
     TierStateNode = "TierStateNode",
     DetectorNode = "DetectorNode",
     SettlementDefenseHint = "SettlementDefenseHint",
+    ResourceStateNode = "ResourceStateNode",
 }
 

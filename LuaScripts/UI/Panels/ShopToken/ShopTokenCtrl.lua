@@ -2,11 +2,26 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopToken
 
-local VERTICAL_TAB_ICON = {
-    "item_gachabyproducts_charticket",
-    "item_gachabyproducts_weaponticket",
-    "item_gachabyproducts_potentialticket",
+local TAB_CONFIG = {
+    
+    shop_pay_green_1 = {
+        icon = "item_gachabyproducts_weaponticket",
+        checkPotentialExchangeRedDot = true,
+    },
+    
+    shop_pay_yellow_1 = {
+        icon = "item_gachabyproducts_charticket",
+    },
+    
+    shop_pay_purple_1 = {
+        icon = "item_gachabyproducts_potentialticket",
+    },
 }
+
+
+
+
+
 
 
 
@@ -52,7 +67,7 @@ ShopTokenCtrl = HL.Class('ShopTokenCtrl', uiCtrl.UICtrl)
 
 ShopTokenCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SHOP_REFRESH] = '_OnShopRefresh',
-    [MessageConst.ON_BUY_ITEM_SUCC] = 'UpdateAll',
+    [MessageConst.ON_BUY_ITEM_SUCC] = '_OnBuyItemSucc',
     [MessageConst.ON_SHOP_GOODS_CONDITION_REFRESH] = '_OnShopRefresh',
 }
 
@@ -78,7 +93,14 @@ ShopTokenCtrl.m_shopDataList = HL.Field(HL.Table)
 ShopTokenCtrl.m_currShopId = HL.Field(HL.String) << ""
 
 
-ShopTokenCtrl.m_currNaviIndex = HL.Field(HL.Int) << 1
+
+ShopTokenCtrl.m_currNaviIndex = HL.Field(HL.Int) << 0
+
+
+ShopTokenCtrl.m_isNaviLeft = HL.Field(HL.Boolean) << true
+
+
+ShopTokenCtrl.m_needSetNaviTargetGoodsId = HL.Field(HL.String) << ""
 
 
 
@@ -107,6 +129,11 @@ end
 
 
 ShopTokenCtrl.OnShow = HL.Override() << function(self)
+    if DeviceInfo.usingController then
+        InputManagerInst:ToggleGroup(self.view.verticalTabList.groupTarget.groupId, self.m_isNaviLeft)
+        InputManagerInst:ToggleGroup(self.view.scrollGroupTarget.groupId, not self.m_isNaviLeft)
+    end
+
     self:UpdateAll()
 
     if self.m_phase.m_needGameEvent then
@@ -119,6 +146,13 @@ ShopTokenCtrl.OnShow = HL.Override() << function(self)
             ""
         )
     end
+end
+
+
+
+ShopTokenCtrl.OnClose = HL.Override() << function(self)
+    self:_UpdateSeeGoods()
+    self:_SetCurrGoodsRead()
 end
 
 
@@ -182,7 +216,37 @@ ShopTokenCtrl._OnShopRefresh = HL.Method() << function(self)
 
     local shop = self.m_shopSystem:GetShopData(self.m_currShopId)
     local goodList = shop:GetOpenGoodList()
-    self:Refresh(goodList)
+
+    if DeviceInfo.usingController then
+        self:_RefreshAndRecoverNaviTarget(goodList)
+    else
+        self:Refresh(goodList)
+    end
+end
+
+
+
+
+ShopTokenCtrl._OnBuyItemSucc = HL.Method(HL.Any) << function(self, arg)
+    if DeviceInfo.usingController then
+        self:_RefreshAndRecoverNaviTarget(self.m_goodsDataList)
+    else
+        self:Refresh(self.m_goodsDataList)
+    end
+end
+
+
+
+
+
+ShopTokenCtrl._RefreshAndRecoverNaviTarget = HL.Method(HL.Any) << function(self, goodsDataList)
+    if not self.m_isNaviLeft and self.m_currNaviIndex > 0 and self.m_currNaviIndex < self.m_goodsDataList.Count then
+        local currNaviGoodsId = self.m_goodsDataList[CSIndex(self.m_currNaviIndex)].goodsId
+        self.m_needSetNaviTargetGoodsId = currNaviGoodsId
+    end
+
+    
+    self:Refresh(goodsDataList)
 end
 
 
@@ -254,7 +318,8 @@ ShopTokenCtrl._InitTabList = HL.Method() << function(self)
         cell.cellNameTxt.text = shopData.shopName
         cell.cellNameShadownTxt.text = shopData.shopName
         cell.stateController:SetState("Icon")
-        cell.iconImg:LoadSprite(UIConst.UI_SPRITE_ITEM, VERTICAL_TAB_ICON[LuaIndex(index)])
+        local tabCfg = TAB_CONFIG[shopData.shopId]
+        cell.iconImg:LoadSprite(UIConst.UI_SPRITE_ITEM, tabCfg.icon)
 
         local shop = self.m_shopSystem:GetShopData(shopData.shopId)
         self.m_currShopId = shopData.shopId
@@ -263,7 +328,11 @@ ShopTokenCtrl._InitTabList = HL.Method() << function(self)
         for _, goodsData in pairs(goodList) do
             table.insert(goodsIds, goodsData.goodsId)
         end
-        cell.redDot:InitRedDot("CashShopToken", goodsIds)
+        local redDotArg = {
+            goodsIds = goodsIds,
+            checkPotentialExchange = tabCfg.checkPotentialExchangeRedDot
+        }
+        cell.redDot:InitRedDot("CashShopToken", redDotArg)
 
         cell.toggle.onValueChanged:RemoveAllListeners()
         cell.toggle.onValueChanged:AddListener(function(isOn)
@@ -290,6 +359,7 @@ ShopTokenCtrl._InitUICallback = HL.Method() << function(self)
     exchangeMaterialBtn.onClick:AddListener(function()
         CashShopUtils.TryOpenShopTokenExchangePopUpPanel()
     end)
+    self.view.redemptionVoucherNode.redDot:InitRedDot("CashShopHaveCharPotentialExchange")
     self.view.tokensInfo.tipsButton.onClick:AddListener(function()
         UIManager:Open(PanelId.InstructionBook, "ShopToken_" .. self.m_currShopId)
     end)
@@ -312,6 +382,15 @@ ShopTokenCtrl._InitContentList = HL.Method() << function(self)
         local cell = self.m_getItemCell(obj)
         cell:InitCashShopItem(self.m_goodsDataList[(index)])
         cell.view.click.customBindingViewLabelText = Language.LUA_CASH_SHOP_TOKEN_PANEL_BUTTON_BUTTON_KEY_HINT
+
+        if not string.isEmpty(self.m_needSetNaviTargetGoodsId) and self.m_goodsDataList[(index)].goodsId == self.m_needSetNaviTargetGoodsId then
+            self.m_needSetNaviTargetGoodsId = ""
+            UIUtils.setAsNaviTarget(cell.view.inputBindingGroupNaviDecorator)
+            self.m_currNaviIndex = LuaIndex(index)
+        end
+    end)
+    self.view.scrollList.onGraduallyShowFinish:AddListener(function()
+        self.m_needSetNaviTargetGoodsId = ""
     end)
 end
 
@@ -408,6 +487,7 @@ ShopTokenCtrl._OnGoRightList = HL.Method() << function(self)
     logger.info("ShopTokenCtrl._OnGoRightList 被触发")
     InputManagerInst:ToggleGroup(self.view.verticalTabList.groupTarget.groupId, false)
     self:TargetFirstCell()
+    self.m_isNaviLeft = false
 end
 
 
@@ -431,6 +511,7 @@ ShopTokenCtrl._NaviTargetCurrTab = HL.Method() << function(self)
 
     local currTabCell = self.m_shopIdToTabCell[self.m_currShopId]
     UIUtils.setAsNaviTarget(currTabCell.toggle)
+    self.m_isNaviLeft = true
 
     InputManagerInst:ToggleGroup(self.view.verticalTabList.groupTarget.groupId, true)
 end
@@ -445,6 +526,7 @@ ShopTokenCtrl._OnGoLeft = HL.Method() << function(self)
     local countPerLine = self.view.scrollList.countPerLine
     if currIndex and currIndex % countPerLine == 1 then
         InputManagerInst:ToggleGroup(self.view.scrollGroupTarget.groupId, false)
+        self.m_currNaviIndex = 0
         self:_NaviTargetCurrTab()
         logger.info("ShopTokenCtrl: _OnGoLeft: NaviTargetCurrTab, currIndex is: " .. currIndex)
     else

@@ -76,6 +76,23 @@ GachaCharTLHelper.GachaCharTLHelper = HL.Constructor(CS.UnityEngine.Transform, H
     end
 
     self.m_exCamera = root:Find("ExternalCamera")
+    
+    
+    local charModel = self.m_actorDirector.transform:GetChild(0)
+    
+    
+    local charModelAnimator = charModel:GetComponent("Animator")
+    charModelAnimator.runtimeAnimatorController = nil
+    
+    
+    local charModelIk = charModel:GetComponent("LookAtIK")
+    charModelIk.enabled = false
+    
+    
+    local mbcList = charModel:GetComponentsInChildren(typeof(CS.MagicaCloth.MagicaBoneCloth), true)
+    for _, mbc in cs_pairs(mbcList) do
+        mbc.gameObject:SetActive(false)
+    end
 end
 
 

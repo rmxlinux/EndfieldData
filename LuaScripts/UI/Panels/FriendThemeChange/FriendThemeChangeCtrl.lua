@@ -255,7 +255,7 @@ FriendThemeChangeCtrl._UpdateObtainWay = HL.Method(HL.String) << function(self, 
         if obtainWay.phaseId then
             cell.normalNode.animationNode:PlayInAnimation()
             cell.normalNode.button.onClick:AddListener(function()
-                local isBlocked = UIManager:ShouldBlockObtainWaysJump()
+                local isBlocked = UIManager:ShouldBlockObtainWaysPhaseJump(obtainWay.phaseId)
                 if isBlocked then
                     Notify(MessageConst.SHOW_TOAST, Language.LUA_OBTAIN_WAYS_JUMP_BLOCKED)
                     return

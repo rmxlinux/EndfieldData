@@ -101,6 +101,7 @@ end
 
 
 GachaLauncherCtrl.OnClose = HL.Override() << function(self)
+    AudioAdapter.PostEvent("Au_UI_Gacha_Lever_stop")
     self.m_updateKey = LuaUpdate:Remove(self.m_updateKey)
     if self.m_controllerTriggerSettingHandlerId > 0 then
         GameInstance.audioManager.gamePad.scePad:EndTriggerEffect(self.m_controllerTriggerSettingHandlerId)

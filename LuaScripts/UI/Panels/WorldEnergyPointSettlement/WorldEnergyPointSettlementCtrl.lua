@@ -51,7 +51,6 @@ WorldEnergyPointSettlementCtrl.m_genRewardCellFunc = HL.Field(HL.Function)
 
 WorldEnergyPointSettlementCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_STAMINA_CHANGED] = 'OnStaminaChanged',
-    [MessageConst.ON_WORLD_ENERGY_POINT_START] = 'OnWorldEnergyPointStart',
 }
 
 
@@ -109,12 +108,6 @@ end
 
 
 
-WorldEnergyPointSettlementCtrl.OnWorldEnergyPointStart = HL.Method() << function(self)
-    self:_OnClickBtnEnd()
-end
-
-
-
 
 
 WorldEnergyPointSettlementCtrl._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(self, go, csIndex)
@@ -159,7 +152,7 @@ WorldEnergyPointSettlementCtrl._OnClickBtnRestart = HL.Method() << function(self
             if hasSelectTerms and not hasGemCustomItem then
                 local succ, ignoreHint = ClientDataManagerInst:GetBool(WEP_GEM_CUSTOM_ITEM_LACK_CONFIRM_HINT_KEY, false, false, SERIALIZED_CATEGORY)
                 if ignoreHint then
-                    GameInstance.player.worldEnergyPointSystem:SendReqStartWorldEnergyPoint(self.m_curLevelGameId, self.m_entityLid)
+                    self:_TryStartWorldEnergyPoint()
                 else
                     local closuresIsOn = false
                     Notify(MessageConst.SHOW_POP_UP, {
@@ -175,18 +168,18 @@ WorldEnergyPointSettlementCtrl._OnClickBtnRestart = HL.Method() << function(self
                             ClientDataManagerInst:SetBool(WEP_GEM_CUSTOM_ITEM_LACK_CONFIRM_HINT_KEY, closuresIsOn, false,
                                                           SERIALIZED_CATEGORY, true,
                                                           EClientDataTimeValidType.CurrentDay)
-                            GameInstance.player.worldEnergyPointSystem:SendReqStartWorldEnergyPoint(self.m_curLevelGameId, self.m_entityLid)
+                            self:_TryStartWorldEnergyPoint()
                         end,
                     })
                 end
             else
-                GameInstance.player.worldEnergyPointSystem:SendReqStartWorldEnergyPoint(self.m_curLevelGameId, self.m_entityLid)
+                self:_TryStartWorldEnergyPoint()
             end
         else
             
             local succ, ignoreHint = ClientDataManagerInst:GetBool(WEP_STAMINA_LACK_START_CONFIRM_HINT_KEY, false, false, SERIALIZED_CATEGORY)
             if ignoreHint then
-                GameInstance.player.worldEnergyPointSystem:SendReqStartWorldEnergyPoint(self.m_curLevelGameId, self.m_entityLid)
+                self:_TryStartWorldEnergyPoint()
             else
                 local closuresIsOn = false
                 Notify(MessageConst.SHOW_POP_UP, {
@@ -202,7 +195,7 @@ WorldEnergyPointSettlementCtrl._OnClickBtnRestart = HL.Method() << function(self
                         ClientDataManagerInst:SetBool(WEP_STAMINA_LACK_START_CONFIRM_HINT_KEY, closuresIsOn, false,
                                                       SERIALIZED_CATEGORY, true,
                                                       EClientDataTimeValidType.CurrentDay)
-                        GameInstance.player.worldEnergyPointSystem:SendReqStartWorldEnergyPoint(self.m_curLevelGameId, self.m_entityLid)
+                        self:_TryStartWorldEnergyPoint()
                     end,
                 })
             end
@@ -211,10 +204,17 @@ WorldEnergyPointSettlementCtrl._OnClickBtnRestart = HL.Method() << function(self
         Notify(MessageConst.SHOW_POP_UP, {
             content = Language.LUA_WEP_ONCE_AGAIN_BUT_NOT_FULL_HINT,
             onConfirm = function()
-                GameInstance.player.worldEnergyPointSystem:SendReqStartWorldEnergyPoint(self.m_curLevelGameId, self.m_entityLid)
+                self:_TryStartWorldEnergyPoint()
             end,
         })
     end
+end
+
+
+
+WorldEnergyPointSettlementCtrl._TryStartWorldEnergyPoint = HL.Method() << function(self)
+    GameInstance.player.worldEnergyPointSystem:SendReqStartWorldEnergyPoint(self.m_curLevelGameId, self.m_entityLid)
+    PhaseManager:PopPhase(PHASE_ID)
 end
 
 

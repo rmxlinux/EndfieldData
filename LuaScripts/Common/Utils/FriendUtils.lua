@@ -64,7 +64,7 @@ FriendUtils.FRIEND_CELL_HEAD_FUNC = {
         local arg = {
             content = Language.LUA_FRIEND_TIP_REMARK_MODIFY_CONTENT,
             input = true,
-            subContent = Language.LUA_FRIEND_TIP_REMARK_MODIFY_SUB_CONTENT,
+            inputHintText = Language.LUA_FRIEND_TIP_REMARK_MODIFY_SUB_CONTENT,
             inputPlaceholder = inputName,
             characterLimit = 15,
             checkInputValid = checkInputValid,
@@ -184,7 +184,7 @@ FriendUtils.FRIEND_CELL_HEAD_FUNC = {
                 Notify(MessageConst.SHOW_POP_UP, {
                     content = Language.LUA_SIGNATURE_MODIFY_CONTENT,
                     inputMore = true,
-                    subContent = Language.LUA_FRIEND_TIP_SIGNATURE_MODIFY_SUB_CONTENT,
+                    inputHintMoreText = Language.LUA_FRIEND_TIP_SIGNATURE_MODIFY_SUB_CONTENT,
                     inputName = GameInstance.player.friendSystem.SelfInfo.signature,
                     characterLimit = 40,
                     checkInputValid = checkInputValid,
@@ -461,15 +461,15 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
         sortOptions = {
             {
                 name = Language.LUA_FRIEND_LAST_DATE_TIME,
-                keys = { "isCurrentShip", "searchSort", "lastDateTime", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "lastDateTime", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
             },
             {
                 name = Language.LUA_FRIEND_WORLD_LEVEL,
-                keys = { "isCurrentShip", "searchSort", "adventureLevel", "lastDateTime", "addFriendTime", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "adventureLevel", "lastDateTime", "addFriendTime", "helpFlag", "roleId" },
             },
             {
                 name = Language.LUA_FRIEND_ADD_FRIEND_TIME,
-                keys = { "isCurrentShip", "searchSort", "addFriendTime", "lastDateTime", "adventureLevel", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "addFriendTime", "lastDateTime", "adventureLevel", "helpFlag", "roleId" },
             }
         },
     },
@@ -482,7 +482,7 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
         sortOptions = {
             {
                 name = Language.LUA_FRIEND_LAST_DATE_TIME,
-                keys = { "isCurrentShip", "searchSort", "lastDateTime", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "lastDateTime", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
             },
         },
     },
@@ -496,15 +496,15 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
         sortOptions = {
             {
                 name = Language.LUA_FRIEND_REQUEST_TIME,
-                keys = { "isCurrentShip", "searchSort", "addFriendTime", "adventureLevel", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "addFriendTime", "adventureLevel", "helpFlag", "roleId" },
             },
             {
                 name = Language.LUA_FRIEND_WORLD_LEVEL,
-                keys = { "isCurrentShip", "searchSort", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
             },
             {
                 name = Language.LUA_FRIEND_LAST_DATE_TIME,
-                keys = { "isCurrentShip", "searchSort", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
             },
         }
     },
@@ -517,11 +517,11 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
         sortOptions = {
             {
                 name = Language.LUA_FRIEND_LAST_DATE_TIME,
-                keys = { "isCurrentShip", "searchSort", "lastDateTime", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "lastDateTime", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
             },
             {
                 name = Language.LUA_FRIEND_WORLD_LEVEL,
-                keys = { "isCurrentShip", "searchSort", "adventureLevel", "lastDateTime", "addFriendTime", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "adventureLevel", "lastDateTime", "addFriendTime", "helpFlag", "roleId" },
             },
         }
     },
@@ -534,15 +534,15 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
         sortOptions = {
             {
                 name = Language.LUA_FRIEND_LAST_DATE_TIME,
-                keys = { "isCurrentShip", "searchSort", "lastDateTime", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "lastDateTime", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
             },
             {
                 name = Language.LUA_FRIEND_WORLD_LEVEL,
-                keys = { "isCurrentShip", "searchSort", "adventureLevel", "lastDateTime", "addFriendTime", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "adventureLevel", "lastDateTime", "addFriendTime", "helpFlag", "roleId" },
             },
             {
                 name = Language.LUA_FRIEND_ADD_FRIEND_TIME,
-                keys = { "isCurrentShip", "searchSort", "addFriendTime", "lastDateTime", "adventureLevel", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "addFriendTime", "lastDateTime", "adventureLevel", "helpFlag", "roleId" },
             }
         },
     },
@@ -557,15 +557,15 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
         sortOptions = {
             {
                 name = Language.LUA_FRIEND_LAST_DATE_TIME,
-                keys = { "isCurrentShip", "searchSort", "lastDateTime", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "lastDateTime", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
             },
             {
                 name = Language.LUA_FRIEND_WORLD_LEVEL,
-                keys = { "isCurrentShip", "searchSort", "adventureLevel", "lastDateTime", "addFriendTime", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "adventureLevel", "lastDateTime", "addFriendTime", "helpFlag", "roleId" },
             },
             {
                 name = Language.LUA_FRIEND_ADD_FRIEND_TIME,
-                keys = { "isCurrentShip", "searchSort", "addFriendTime", "lastDateTime", "adventureLevel", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "addFriendTime", "lastDateTime", "adventureLevel", "helpFlag", "roleId" },
             }
         },
     },
@@ -579,10 +579,11 @@ function FriendUtils.friendInfo2SortInfo(csFriendInfo, searchSort)
         
         addFriendTime = csFriendInfo.addOrRequestTime,
         adventureLevel = csFriendInfo.adventureLevel,
+        roleType = CS.Beyond.Gameplay.RoleType.Unknown:GetHashCode() - csFriendInfo.roleType:GetHashCode(),
         searchSort = searchSort,
         accountId = csFriendInfo.psnData ~= nil and csFriendInfo.psnData.AccountId or "",
         helpFlag = csFriendInfo.helpFlag:GetHashCode(),
-        isCurrentShip = csFriendInfo.roleId == GameInstance.player.spaceship:GetFriendRoleInfo().roleId and 1 or 0,
+        isCurrentShip = (csFriendInfo.roleId == GameInstance.player.spaceship:GetFriendRoleInfo().roleId and GameInstance.player.spaceship:GetFriendRoleInfo().roleId ~= 0) and 1 or 0,
     }
 end
 

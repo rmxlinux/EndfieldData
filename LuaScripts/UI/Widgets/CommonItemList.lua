@@ -299,6 +299,10 @@ CommonItemList.InitCommonItemList = HL.Method(HL.Table) << function(self, arg)
                     UIUtils.setAsNaviTarget(itemBtn)
                 end
             end
+
+            if arg.afterSetItemSelected then
+                arg.afterSetItemSelected(cell, selected)
+            end
         end
     end
     self.m_getItemBtn = arg.getItemBtn or function(cell)

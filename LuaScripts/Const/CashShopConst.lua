@@ -14,3 +14,5 @@ WebOrderSettleTips = {
     [GEnums.CashGoodsType.MonthlyCard] = Language.LUA_CASH_SHOP_ORDER_MONTHLY_CARD_TIPS,
     [GEnums.CashGoodsType.BattlePass] = Language.LUA_CASH_SHOP_ORDER_BATTLE_PASS_TIPS,
 }
+
+RemainOrderMainHudKey = "CashShopRemainOrder"

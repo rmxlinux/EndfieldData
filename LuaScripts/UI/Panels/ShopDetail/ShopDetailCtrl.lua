@@ -18,6 +18,7 @@ local PANEL_ID = PanelId.ShopDetail
 
 
 
+
 ShopDetailCtrl = HL.Class('ShopDetailCtrl', uiCtrl.UICtrl)
 
 
@@ -29,7 +30,7 @@ ShopDetailCtrl = HL.Class('ShopDetailCtrl', uiCtrl.UICtrl)
 ShopDetailCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_BUY_ITEM_SUCC] = 'OnBuyItemSucc',
     [MessageConst.ON_SHOP_GOODS_CONDITION_REFRESH] = '_OnCloseShopDetailPanel',
-    [MessageConst.ON_SHOP_REFRESH] = '_OnShopRefresh',
+    [MessageConst.ON_SHOP_REFRESH] = '_OnHandleShopRefresh',
     [MessageConst.ON_CLOSE_SHOP_DETAIL_PANEL] = '_OnCloseShopDetailPanel'
 }
 
@@ -167,6 +168,12 @@ end
 
 
 
+ShopDetailCtrl._OnHandleShopRefresh = HL.Method() << function(self)
+    
+    self:_OnShopRefresh()   
+end
+
+
 
 ShopDetailCtrl._OnShopRefresh = HL.Method() << function(self)
     local arg = self.m_info
@@ -263,7 +270,7 @@ ShopDetailCtrl._OnShopRefresh = HL.Method() << function(self)
     if itemData.type == GEnums.ItemType.Weapon then
         self.view.itemIconImg2.gameObject:SetActive(false)
         self.view.itemIconImg2Lock.gameObject:SetActive(false)
-        if not self.view.lock.gameObject.activeSelf and remainCount ~= 0 then
+        if not self.view.lock.gameObject.activeSelf then
             self.view.itemWeaponIcon.gameObject:SetActive(true)
             self.view.weaponIconImg:LoadSprite(UIConst.UI_SPRITE_GACHA_WEAPON, itemData.iconId)
         else

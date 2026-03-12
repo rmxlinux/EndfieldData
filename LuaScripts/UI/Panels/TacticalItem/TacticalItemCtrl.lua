@@ -35,7 +35,6 @@ local PANEL_ID = PanelId.TacticalItem
 
 
 
-
 TacticalItemCtrl = HL.Class('TacticalItemCtrl', uiCtrl.UICtrl)
 
 local CLOSE_WAIT_FX_DURATION = 0.5
@@ -49,8 +48,7 @@ local TacticalItemUtil = CS.Beyond.Gameplay.TacticalItemUtil
 
 
 TacticalItemCtrl.s_messages = HL.StaticField(HL.Table) << {
-    
-    [MessageConst.ON_ITEM_COUNT_CHANGED] = 'OnItemCountChanged',
+    [MessageConst.ON_USE_ITEM] = 'OnUseItem',
 }
 
 
@@ -134,25 +132,20 @@ end
 
 
 TacticalItemCtrl.OnUseItem = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
-    local itemId = self.m_curItemId
-    local useItemCfg = Tables.useItemTable:GetValue(itemId)
-    local cfg = USE_ITEM_CFG[useItemCfg.uiType]
-
-    if cfg.afterUseCheckFunc then
-        self[cfg.afterUseCheckFunc](self, itemId, true, CLOSE_WAIT_FX_DURATION)
+    local itemId, _ = unpack(arg)
+    if itemId ~= self.m_curItemId then
+        return
     end
-end
+    self:_StartCoroutine(function()
+        coroutine.step()
+        coroutine.step()    
+        local useItemCfg = Tables.useItemTable:GetValue(itemId)
+        local cfg = USE_ITEM_CFG[useItemCfg.uiType]
 
-
-
-
-TacticalItemCtrl.OnItemCountChanged = HL.Method(HL.Any) << function(self, args)
-    local itemId2DiffCount = unpack(args)
-    for itemId, v in pairs(itemId2DiffCount) do
-        if itemId == self.m_curItemId then
-            self:OnUseItem()
+        if cfg.afterUseCheckFunc then
+            self[cfg.afterUseCheckFunc](self, itemId, true, CLOSE_WAIT_FX_DURATION)
         end
-    end
+    end)
 end
 
 
@@ -234,6 +227,7 @@ TacticalItemCtrl._AfterUseCheckRevive = HL.Method(HL.String, HL.Opt(HL.Boolean, 
     self, itemId, inUseItemTransition, delayCloseTime)
     self:_StartCoroutine(function()
         self:_PlaySelectedCharHpRecoverFx()
+        self:_RefreshItemNode(itemId)
         if delayCloseTime then
             Notify(MessageConst.BLOCK_LUA_UI_INPUT, {true, "TacticalItem"})
             coroutine.wait(CLOSE_WAIT_FX_DURATION)
@@ -495,6 +489,7 @@ end
 TacticalItemCtrl._RefreshCharCellDefault = HL.Method(HL.Table, HL.Table, HL.Userdata, HL.Table, HL.Opt(HL.Boolean)) << function(
     self, cell, memberInfo, useItemCfg, cfg, inUseItemTransition)
     cell.stateController:SetState(memberInfo.isEmpty and 'empty' or 'normal')
+    cell.charHeadCellLongHpBar.view.button.enabled = not memberInfo.isEmpty
     cell.charHeadCellLongHpBar.view.stateCtrl:SetState(cfg.stateName)
     if not memberInfo.isEmpty then
         local slot = memberInfo.slot

@@ -21,6 +21,8 @@ local settlementSystem = GameInstance.player.settlementSystem
 
 
 
+
+
 SettlementTokenInstructionCtrl = HL.Class('SettlementTokenInstructionCtrl', uiCtrl.UICtrl)
 
 
@@ -46,6 +48,9 @@ SettlementTokenInstructionCtrl.m_info = HL.Field(HL.Table)
 
 
 SettlementTokenInstructionCtrl.m_tickTimeKey = HL.Field(HL.Number) << -1
+
+
+SettlementTokenInstructionCtrl.m_isFirstBuffNode = HL.Field(HL.Boolean) << true
 
 
 
@@ -191,12 +196,15 @@ SettlementTokenInstructionCtrl._RefreshAllUI = HL.Method() << function(self)
         local totalEnhance = self.m_info.totalEnhance
         self.view.improvePercentTxt.text = string.format("%d%%", totalEnhance)
         self.view.improveDescTxt:SetAndResolveTextStyle(string.format(Language.LUA_SETTLEMENT_MONEY_EXTRA_ENHANCE_TEXT, totalEnhance))
+        
         if self.m_info.officerEnhanceRate ~= 0 then
             self.view.officerNode.gameObject:SetActive(true)
-            self.view.officerEffectNumTxt.text = string.format("%d%%", self.m_info.officerEnhanceRate)
+            self.view.officerNode.officerEffectNumTxt.text = string.format("%d%%", self.m_info.officerEnhanceRate)
+            self:_TryHandleFirstBuffNode(self.view.officerNode)
         else
             self.view.officerNode.gameObject:SetActive(false)
         end
+        
         self:_RefreshGainEffect()
     else
         self.view.improveNode.gameObject:SetActive(false)
@@ -247,6 +255,7 @@ SettlementTokenInstructionCtrl._RefreshGainEffect = HL.Method() << function(self
             self:_UpdateDefenseGainEffect()
             self:_RefreshGainEffect()
         end, UIUtils.getLeftTimeToSecond)
+        self:_TryHandleFirstBuffNode(self.view.manualDefenseNode)
     end
 
     
@@ -254,6 +263,7 @@ SettlementTokenInstructionCtrl._RefreshGainEffect = HL.Method() << function(self
         self.view.defensivePlanNode.gameObject:SetActive(true)
         self.view.defensivePlanNode.defensivePlanTxt.text = string.format(Language.LUA_TD_LEVEL_COMPLETED_FORMAT, self.m_info.tdGainEffectLevelName)
         self.view.defensivePlanNode.buffNumTxt.text = string.format("%d%%", math.floor(self.m_info.tdGainEffect))
+        self:_TryHandleFirstBuffNode(self.view.defensivePlanNode)
     end
 end
 
@@ -290,6 +300,17 @@ SettlementTokenInstructionCtrl._GetLevelGroupName = HL.Method(HL.String).Return(
     return levelName
 end
 
+
+
+
+SettlementTokenInstructionCtrl._TryHandleFirstBuffNode = HL.Method(HL.Any) << function(self, node)
+    if not self.m_isFirstBuffNode then
+        return
+    end
+    
+    node.splitLine.gameObject:SetActive(false)
+    self.m_isFirstBuffNode = false
+end
 
 
 HL.Commit(SettlementTokenInstructionCtrl)

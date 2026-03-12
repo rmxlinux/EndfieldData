@@ -500,9 +500,14 @@ FacDumperCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) << func
     local isFullBottle = Tables.fullBottleTable:ContainsKey(itemId)
     local isBottle = isEmptyBottle or isFullBottle
     local isEmpty = string.isEmpty(itemBundle.id)
-    cell.view.forbiddenMask.gameObject:SetActiveIfNecessary(not isBottle and not isEmpty)
-    cell.view.dragItem.enabled = isBottle
-    cell.view.dropItem.enabled = isBottle or isEmpty
+    
+    if not isBottle and not isEmpty then
+        cell.view.forbiddenMask.gameObject:SetActiveIfNecessary(true)
+        cell.view.dropItem.enabled = false
+    end
+    if not isBottle then
+        cell.view.dragItem.enabled = false
+    end
 end
 
 

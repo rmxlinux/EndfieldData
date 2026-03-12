@@ -22,27 +22,27 @@ BlockGlitchTransitionCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-BlockGlitchTransitionCtrl.s_renderTexture = HL.StaticField(HL.Userdata)
+BlockGlitchTransitionCtrl.s_renderTextureHandle = HL.StaticField(HL.Userdata)
 
 
 
 BlockGlitchTransitionCtrl.PrepareBlockGlitchTransition = HL.StaticMethod() << function()
     BlockGlitchTransitionCtrl._ReleaseRT()
-    BlockGlitchTransitionCtrl.s_renderTexture = ScreenCaptureUtils.GetScreenCapture(math.floor(Screen.width), math.floor(Screen.height))
+    BlockGlitchTransitionCtrl.s_renderTextureHandle = ScreenCaptureUtils.GetScreenCapture(math.floor(Screen.width), math.floor(Screen.height))
 end
 
 
 BlockGlitchTransitionCtrl._ReleaseRT = HL.StaticMethod() << function()
-    if BlockGlitchTransitionCtrl.s_renderTexture then
-        RTManager.ReleaseRenderTexture(BlockGlitchTransitionCtrl.s_renderTexture)
-        BlockGlitchTransitionCtrl.s_renderTexture = nil
+    if BlockGlitchTransitionCtrl.s_renderTextureHandle then
+        BlockGlitchTransitionCtrl.s_renderTextureHandle:Release()
+        BlockGlitchTransitionCtrl.s_renderTextureHandle = nil
     end
 end
 
 
 BlockGlitchTransitionCtrl.ShowBlockGlitchTransition = HL.StaticMethod() << function()
-    if not BlockGlitchTransitionCtrl.s_renderTexture then
-        logger.error("No BlockGlitchTransitionCtrl.s_renderTexture")
+    if not BlockGlitchTransitionCtrl.s_renderTextureHandle then
+        logger.error("No BlockGlitchTransitionCtrl.s_renderTextureHandle")
         return
     end
 
@@ -68,7 +68,7 @@ end
 
 
 BlockGlitchTransitionCtrl.Play = HL.Method() << function(self)
-    self.view.rawImage.texture = BlockGlitchTransitionCtrl.s_renderTexture
+    self.view.rawImage.texture = BlockGlitchTransitionCtrl.s_renderTextureHandle.rt
     UIUtils.changeAlpha(self.view.rawImage, 1)
     local wrapper = self.animationWrapper
     wrapper:PlayWithTween(self.view.config.ANIMATION_IN, function()

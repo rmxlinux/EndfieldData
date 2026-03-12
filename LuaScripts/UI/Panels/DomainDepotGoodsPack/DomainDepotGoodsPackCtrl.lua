@@ -44,6 +44,8 @@ local DeliverPackType = GEnums.DeliverPackType
 
 
 
+
+
 DomainDepotGoodsPackCtrl = HL.Class('DomainDepotGoodsPackCtrl', uiCtrl.UICtrl)
 
 
@@ -128,12 +130,27 @@ DomainDepotGoodsPackCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_pack:ClearPackItemCount()
 
     self:_InitPackController()
+
+end
+
+
+
+DomainDepotGoodsPackCtrl.OnShow = HL.Override() << function(self)
+    GameInstance.player.remoteFactory.core:Message_HSFB(Utils.getCurrentChapterId(), false, {1})
+end
+
+
+
+DomainDepotGoodsPackCtrl.OnHide = HL.Override() << function(self)
+    self:_ClearFillTween()
+    GameInstance.player.remoteFactory.core:Message_HSFB(Utils.getCurrentChapterId(), true, {1})
 end
 
 
 
 DomainDepotGoodsPackCtrl.OnClose = HL.Override() << function(self)
     self:_ClearFillTween()
+    GameInstance.player.remoteFactory.core:Message_HSFB(Utils.getCurrentChapterId(), true, {1})
 end
 
 
@@ -359,7 +376,9 @@ DomainDepotGoodsPackCtrl._OnSelectItem = HL.Method(HL.Number) << function(self, 
         self.view.numberSelector.view.gameObject:SetActive(true)
         self.view.numberSelector:InitNumberSelector(1, 1, maxCount, function(newCount)
             self.m_selectedItemList[id] = math.tointeger(newCount)
-            self:_RefreshItemCellSelectNode(id, cell)
+            if cell.item.id == id then
+                self:_RefreshItemCellSelectNode(id, cell)
+            end
             self:_RefreshValueDisplayNode()
         end)
 

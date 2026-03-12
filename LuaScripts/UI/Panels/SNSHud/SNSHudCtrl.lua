@@ -1,7 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SNSHud
-
+local RED_DOT_NAME = "SNSHudEntry"
 
 
 
@@ -78,7 +78,7 @@ SNSHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnClickJumpPhaseSNS()
     end)
 
-    self.view.snsRedDot:InitRedDot("SNSHudEntry")
+    self.view.snsRedDot:InitRedDot(RED_DOT_NAME)
     self.view.noticeNode.gameObject:SetActive(false)
     self.view.entryBtn.gameObject:SetActive(self:_ShowEntryBtn())
 end
@@ -146,7 +146,7 @@ end
 
 
 SNSHudCtrl._ShowBarkerNotice = HL.Method(HL.Table) << function(self, data)
-    RedDotManager:TriggerUpdate("SNSHudEntry")
+    RedDotManager:TriggerUpdate(RED_DOT_NAME)
     local chatId = data.chatId
     local dialogId = data.dialogId
 
@@ -215,8 +215,7 @@ end
 
 
 SNSHudCtrl._ShowFriendNotice = HL.Method(HL.Table) << function(self, data)
-    RedDotManager:TriggerUpdate("SNSHudEntry")
-
+    RedDotManager:TriggerUpdate(RED_DOT_NAME)
 
     
     self.view.entryBtn.gameObject:SetActive(false)
@@ -295,7 +294,7 @@ SNSHudCtrl.OnSNSNormalDialogAdd = HL.Method(HL.Any) << function(self, args)
 
     
     if Utils.isForbidden(ForbidType.HideSNSHud) then
-        return false
+        return
     end
 
     local _, dialogId = unpack(args)
@@ -311,6 +310,7 @@ SNSHudCtrl.OnSNSNormalDialogAdd = HL.Method(HL.Any) << function(self, args)
     }
 
     LuaSystemManager.mainHudActionQueue:AddRequest("SNSNormalNotice", function()
+        
         local succ, self = UIManager:IsOpen(PANEL_ID)
         if not succ then
             return
@@ -332,7 +332,7 @@ SNSHudCtrl.OnSNSForceDialogAdd = HL.Method(HL.Any) << function(self, args)
         return
     end
 
-    RedDotManager:TriggerUpdate("SNSHudEntry")
+    RedDotManager:TriggerUpdate(RED_DOT_NAME)
 end
 
 
@@ -354,6 +354,7 @@ SNSHudCtrl.OnSNSFriendChatAdd = HL.Method(HL.Any) << function(self, args)
             return
         end
 
+        
         local succ, self = UIManager:IsOpen(PANEL_ID)
         if not succ then
             return

@@ -52,6 +52,7 @@ local PHASE_ID = PhaseId.Dialog
 
 
 
+
 PhaseDialog = HL.Class('PhaseDialog', phaseBase.PhaseBase)
 
 local clearPhases = {
@@ -67,6 +68,7 @@ local clearPhases = {
 PhaseDialog.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_DIALOG_START] = { 'OnDirectDialogStart', false },
+    [MessageConst.IS_DIALOG_PHASE_OPENED] = { 'IsDialogPhaseOpened', false },
     [MessageConst.ON_EXIT_DIALOG] = { 'OnExitDialog', true },
     [MessageConst.ON_PLAY_DIALOG_TRUNK] = { 'OnPlayDialogTrunk', true },
     [MessageConst.ON_SHOW_DIALOG_OPTION] = { 'OnShowDialogOption', true },
@@ -178,6 +180,18 @@ end
 
 
 
+PhaseDialog.IsDialogPhaseOpened = HL.StaticMethod(HL.Table) << function(arg)
+    local isOpenedContext = unpack(arg)
+    local isOpen, phase = PhaseManager:IsOpenAndValid(PHASE_ID)
+    if isOpen and not phase.doingOut then
+        isOpenedContext.isPhaseOpen = true
+    else
+        isOpenedContext.isPhaseOpen = false
+    end
+end
+
+
+
 
 PhaseDialog.OnShowDialogFullBg = HL.Method(HL.Table) << function(self, data)
     local actionData = unpack(data)
@@ -221,7 +235,6 @@ end
 PhaseDialog._InitAllPhaseItems = HL.Override() << function(self)
     PhaseDialog.Super._InitAllPhaseItems(self)
     self.m_panelItem = self:_GetPanelPhaseItem(PanelId.Dialog)
-    self.m_panelItem.uiCtrl:Hide()
 end
 
 
@@ -446,6 +459,13 @@ PhaseDialog.OpenUI = HL.Method(HL.Table) << function(self, arg)
     local phaseId = PhaseId[panelIdStr]
     local param = not string.isEmpty(paramStr) and Utils.stringJsonToTable(paramStr) or {}
     param.fromDialog = true
+    if param.blockWhitePhaseName ~= nil then
+        local exceptIds = {}
+        for _, whitePhaseName in pairs(param.blockWhitePhaseName) do
+            table.insert(exceptIds, whitePhaseName)
+        end
+        UIManager:ToggleBlockObtainWaysJump("IN_CINEMATIC", true, exceptIds)
+    end
 
     if not panelId or not phaseId then
         logger.error(("Dialog OpenUI Failed !! PanelId Not Found !! PanelIdStr is %s, Param is %s"):format(panelIdStr, paramStr))
@@ -580,6 +600,7 @@ end
 
 PhaseDialog._OpenDialogSkipPopUp = HL.Method() << function(self)
     local summaryId = GameWorld.dialogManager.summaryId
+    local curAuto = GameWorld.dialogTimelineManager.autoMode
     GameWorld.dialogManager:SetAutoMode(false)
     if string.isEmpty(summaryId) then
         local dialogId = GameWorld.dialogManager.dialogId
@@ -587,8 +608,16 @@ PhaseDialog._OpenDialogSkipPopUp = HL.Method() << function(self)
             Notify(MessageConst.SHOW_POP_UP, {
                 content = Language.LUA_CONFIRM_SKIP_DIALOG,
                 onConfirm = function()
+                    if curAuto then
+                        GameWorld.dialogManager:SetAutoMode(curAuto)
+                    end
                     GameWorld.dialogManager:SkipDialog(dialogId)
-                end
+                end,
+                onCancel = function()
+                    if curAuto then
+                        GameWorld.dialogManager:SetAutoMode(curAuto)
+                    end
+                end,
             })
         end
     else
@@ -606,6 +635,9 @@ PhaseDialog._OpenDialogSkipPopUp = HL.Method() << function(self)
 
         panelItem.uiCtrl:Show()
         panelItem.uiCtrl:RefreshSummary(summaryId)
+        if curAuto then
+            panelItem.uiCtrl:SetCloseRecoverAuto()
+        end
     end
 end
 

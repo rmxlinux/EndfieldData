@@ -250,6 +250,7 @@ FacPowerPoleTravelHintCtrl._UpdateTrackers = HL.Method() << function(self)
     local targetEntityDict = {}
     local logicIdList = {}
     local poleInfoList = {}
+    local targetIsOtherSocialTravelDict = {}
     local mainCharacterPos = GameUtil.playerPos
 
     if self.m_tempTargetInfoList ~= nil then
@@ -263,6 +264,7 @@ FacPowerPoleTravelHintCtrl._UpdateTrackers = HL.Method() << function(self)
                 table.insert(targetLineDict, poleInfo.line)
                 table.insert(logicIdList, poleInfo.logicId)
                 table.insert(poleInfoList, poleInfo)
+                table.insert(targetIsOtherSocialTravelDict, FactoryUtils.isOthersSocialBuilding(CSFactoryUtil.GetNodeIdByLogicId(poleInfo.logicId)))
             end
         end
     end
@@ -287,6 +289,7 @@ FacPowerPoleTravelHintCtrl._UpdateTrackers = HL.Method() << function(self)
             local uiPos, uiAngle, isOutBound = UIUtils.mapScreenPosToEllipseEdge(targetScrPosDict[i], self.view.config.ELLIPSE_X_RADIUS, self.view.config.ELLIPSE_Y_RADIUS)
             
             
+            item.tracker:UpdateIsOtherSocial(targetIsOtherSocialTravelDict[i])
             item.tracker:UpdatePosition(uiPos, uiAngle, isOutBound)
             item.tracker:UpdateDistance(targetDistanceDict[i])
             item.tracker:UpdateStatus(targetStatusDict[i])

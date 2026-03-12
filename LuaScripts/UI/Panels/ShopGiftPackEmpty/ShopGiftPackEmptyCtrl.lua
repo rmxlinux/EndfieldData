@@ -199,20 +199,24 @@ ShopGiftPackEmptyCtrl._InitData = HL.Method() << function(self)
         for _, goodsInfo in ipairs(groupData.goodsInfos) do
             local info = goodsInfo
             local _, goodsDataCfg = Tables.GiftpackCashShopGoodsDataTable:TryGetValue(info.goodsId)
-            info.cashShopPriority = groupData.clientShowData.priority    
-            info.isMonthlyPass = cashShopId == MONTHLY_PASS_CASHSHOPID   
-            info.priority = goodsDataCfg and goodsDataCfg.priority or 100
-            info.cashShopId = groupData.cashShopId
-            info.cashShopDynamicPriority = groupData.clientShowData.dynamicPriority  
-            info.dynamicTag = goodsDataCfg.dynamicTag
-            info.dynamicPriority = goodsDataCfg.dynamicPriority
-            local canBuy = CashShopUtils.CheckCanBuyCashShopGoods(info.goodsId)
-            info.soldOutSortValue = canBuy and 0 or 1
-            
-            table.insert(cashGoodsInfos, info)
-            table.insert(allCashGoodsInfos, info)
-            if cashShopId == MONTHLY_PASS_CASHSHOPID then
-                monthlyPassShopGoodsInfo = info
+            if goodsDataCfg == nil then
+                logger.error("[cashshop] Tables.GiftpackCashShopGoodsDataTable 缺少配置：" .. info.goodsId)
+            else
+                info.cashShopPriority = groupData.clientShowData.priority    
+                info.isMonthlyPass = cashShopId == MONTHLY_PASS_CASHSHOPID   
+                info.priority = goodsDataCfg and goodsDataCfg.priority or 100
+                info.cashShopId = groupData.cashShopId
+                info.cashShopDynamicPriority = groupData.clientShowData.dynamicPriority  
+                info.dynamicTag = goodsDataCfg.dynamicTag
+                info.dynamicPriority = goodsDataCfg.dynamicPriority
+                local canBuy = CashShopUtils.CheckCanBuyCashShopGoods(info.goodsId)
+                info.soldOutSortValue = canBuy and 0 or 1
+                
+                table.insert(cashGoodsInfos, info)
+                table.insert(allCashGoodsInfos, info)
+                if cashShopId == MONTHLY_PASS_CASHSHOPID then
+                    monthlyPassShopGoodsInfo = info
+                end
             end
         end
         
@@ -570,27 +574,36 @@ end
 
 ShopGiftPackEmptyCtrl.NaviTargetCurrTab = HL.Method() << function(self)
     logger.info("ShopGiftPackEmptyCtrl: NaviTargetCurrTab")
-    InputManagerInst:ToggleGroup(self.view.cashShopVerticalTabList.groupTarget.groupId, true)
 
-    local foundTabData = nil
-    local foundTabIndex = 0
-    for i = 1, #self.m_tabDataList do
-        local tabData = self.m_tabDataList[i]
-        if tabData.cashShopId == self.m_currTabCashShopId then
-            foundTabData = tabData
-            foundTabIndex = i
-            break
-        end
-        if foundTabData ~= nil then
-            break
-        end
-    end
+    local groupId = self.view.cashShopVerticalTabList.groupTarget.groupId
     
-    if foundTabData ~= nil then
-        local obj = self.view.cashShopVerticalTabList.scrollList:Get(CSIndex(foundTabIndex))
-        local cell = self.m_getTabCellFunc(obj)
-        UIUtils.setAsNaviTarget(cell.toggle)
-    end
+    
+    InputManagerInst:ToggleGroup(groupId, false)
+
+    self:_StartCoroutine(function()
+        coroutine.step()
+        InputManagerInst:ToggleGroup(groupId, true)
+
+        local foundTabData = nil
+        local foundTabIndex = 0
+        for i = 1, #self.m_tabDataList do
+            local tabData = self.m_tabDataList[i]
+            if tabData.cashShopId == self.m_currTabCashShopId then
+                foundTabData = tabData
+                foundTabIndex = i
+                break
+            end
+            if foundTabData ~= nil then
+                break
+            end
+        end
+        
+        if foundTabData ~= nil then
+            local obj = self.view.cashShopVerticalTabList.scrollList:Get(CSIndex(foundTabIndex))
+            local cell = self.m_getTabCellFunc(obj)
+            UIUtils.setAsNaviTarget(cell.toggle)
+        end
+    end)
 end
 
 

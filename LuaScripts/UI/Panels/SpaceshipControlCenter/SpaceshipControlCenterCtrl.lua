@@ -40,6 +40,7 @@ local HelpedStateByRoomType = {
 
 
 
+
 SpaceshipControlCenterCtrl = HL.Class('SpaceshipControlCenterCtrl', uiCtrl.UICtrl)
 
 
@@ -117,6 +118,7 @@ SpaceshipControlCenterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             end
         end)
     end
+    self:SetNaviTarget()
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
@@ -129,12 +131,19 @@ end
 
 
 SpaceshipControlCenterCtrl.OnShow = HL.Override() << function(self)
+end
+
+
+
+
+SpaceshipControlCenterCtrl.SetNaviTarget = HL.Method() << function(self)
     if not GameInstance.player.spaceship.isViewingFriend then
         InputManagerInst.controllerNaviManager:SetTarget(self.view.control_center.ownerButton)
     else
         InputManagerInst.controllerNaviManager:SetTarget(self.view.control_center.visitorsNodeInputBindingGroupNaviDecorator)
     end
 end
+
 
 
 

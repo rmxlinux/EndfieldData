@@ -127,10 +127,15 @@ FacPipeCtrl._RefreshPipeItem = HL.Method(HL.Opt(HL.Boolean)) << function(self, f
             count = self.m_buildingInfo.currentVolume,
         }, true)
         self.view.pipeItem.gameObject:SetActiveIfNecessary(true)
-        self.view.pipeItem:SetAsNaviTarget()
+        
+        if self.view.inputGroup.internalEnabled then
+            self.view.pipeItem:SetAsNaviTarget()
+        end
     else
         self.view.pipeItem.gameObject:SetActiveIfNecessary(false)
-        UIUtils.setAsNaviTarget(self.view.emptyItem)
+        if self.view.inputGroup.internalEnabled then
+            UIUtils.setAsNaviTarget(self.view.emptyItem)
+        end
     end
 
     local itemIcon = self.view.buildingCommon.view.itemIcon

@@ -151,9 +151,9 @@ DomainItemTransferSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
         self:_OnLosslessTransmissionToggleChanged(isOn)
     end)
 
-    self.view.cantSwitchMaskBtn.onClick:AddListener(function()
-        self:_OnClickCantSwitchMaskBtn()
-    end)
+    self.view.transferTabNode.checkIsValueValid = function(isOn)
+        return self:_CheckIsValueValidLosslessTransmissionToggle(isOn)
+    end
 
     if DeviceInfo.usingController then
         self:_InitControllerAbility()
@@ -196,6 +196,11 @@ end
 DomainItemTransferSelectCtrl.OnClose = HL.Override() << function(self)
     if DeviceInfo.usingController then
         Notify(MessageConst.HIDE_COMMON_HOVER_TIP)
+        
+        local isOpen, ctr = UIManager:IsOpen(PanelId.DomainItemTransfer)
+        if isOpen then
+            ctr:_SetFocusTargetByIndex(ctr.m_curFocusCellLuaIndex)
+        end
     end
 end
 
@@ -491,7 +496,9 @@ DomainItemTransferSelectCtrl._GetCurrentNeedAssignCount = HL.Method().Return(HL.
         return self.m_chosenItemCount
     end
 
-    return INIT_NUMBER_SELECTOR_CUR_VALUE
+    local factoryItemCfg = Tables.factoryItemTable[self.m_chosenItemId]
+    local value = math.floor(self.m_maxTransmissionValue / factoryItemCfg.value)
+    return value
 end
 
 
@@ -878,17 +885,22 @@ end
 
 
 
-DomainItemTransferSelectCtrl._OnClickCantSwitchMaskBtn = HL.Method() << function(self)
-    local fromDomainId = self.m_info.fromDomain
-    local domainCfg = Tables.domainDataTable[fromDomainId]
-    local domainTransmissionCfg = Tables.factoryDomainItemTransmissionTable[fromDomainId]
-    local unlockLosslessLevel = domainTransmissionCfg.unlockLosslessLevel
 
-    self:Notify(MessageConst.SHOW_TOAST,
-                string.format(Language.LUA_DOMAIN_ITEM_TRANSMISSION_CANT_SWITCH_MODE, domainCfg.domainName,
-                              unlockLosslessLevel))
+DomainItemTransferSelectCtrl._CheckIsValueValidLosslessTransmissionToggle = HL.Method(HL.Boolean).Return(HL.Boolean)
+        << function(self, isOn)
+    if not self.m_losslessTransmissionUnlocked then
+        local fromDomainId = self.m_info.fromDomain
+        local domainCfg = Tables.domainDataTable[fromDomainId]
+        local domainTransmissionCfg = Tables.factoryDomainItemTransmissionTable[fromDomainId]
+        local unlockLosslessLevel = domainTransmissionCfg.unlockLosslessLevel
 
+        self:Notify(MessageConst.SHOW_TOAST,
+                    string.format(Language.LUA_DOMAIN_ITEM_TRANSMISSION_CANT_SWITCH_MODE, domainCfg.domainName,
+                                  unlockLosslessLevel))
+    end
+    return self.m_losslessTransmissionUnlocked
 end
+
 
 
 
@@ -988,7 +1000,6 @@ DomainItemTransferSelectCtrl._InitFromDomainInfo = HL.Method() << function(self)
         refLevel = fromDomainTransCfg.unlockLevel
     end
 
-    self.m_maxTransmissionValue = fromDomainTransCfg.levelToCapacity[refLevel]
     self.m_losslessTransmissionUnlocked = allowLosslessSend
     self.m_allowSend = allowSend
 
@@ -1008,6 +1019,12 @@ DomainItemTransferSelectCtrl._InitFromDomainInfo = HL.Method() << function(self)
                               fromDomainTransCfg.unlockLevel) or
                 string.format(Language.LUA_FAC_TRANS_CUR_VERSION_NOT_ALLOW_SEND, domainCfg.domainName)
     end
+
+    local succ, capacity = fromDomainTransCfg.levelToCapacity:TryGetValue(refLevel)
+    self.m_maxTransmissionValue = succ and capacity or 0
+    if not succ then
+        logger.error("请检查配置：获取跨地区传输最大传输容量失败，出发地：", fromDomainId, "，等级：", refLevel)
+    end
 end
 
 
@@ -1016,9 +1033,6 @@ DomainItemTransferSelectCtrl._InitTransmissionMode = HL.Method() << function(sel
     self.m_losslessTransmission = self.m_info.lossless
     
     self.view.transferTabNode:SetIsOnWithoutNotify(self.m_losslessTransmission)
-
-    
-    self.view.cantSwitchMaskBtn.gameObject:SetActive(not self.m_losslessTransmissionUnlocked)
     self.view.transferTabNode.interactable = self.m_losslessTransmissionUnlocked
 
     self:_UpdateLosslessTabView(self.m_losslessTransmission)

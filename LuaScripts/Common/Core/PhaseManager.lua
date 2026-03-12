@@ -84,6 +84,7 @@ local luaLoader = require_ex('Common/Utils/LuaResourceLoader')
 
 
 
+
 PhaseManager = HL.Class("PhaseManager")
 
 
@@ -717,12 +718,17 @@ end
 
 
 
-PhaseManager.IsPhaseForbidden = HL.Method(HL.Number).Return(HL.Boolean, HL.Any) << function(self, phaseId)
+PhaseManager.IsPhaseForbidden = HL.Method(HL.Number).Return(HL.Boolean, HL.Any, HL.Any) << function(self, phaseId)
     local cfg = self.m_cfgs[phaseId]
     if cfg.cannotForbid then
-        return false, nil
+        return false, nil, nil
     end
-    return GameInstance.player.forbidSystem:IsPhaseForbidden(cfg.name)
+    local isForbidden, forbidStyle = GameInstance.player.forbidSystem:IsPhaseForbidden(cfg.name)
+    local forbidParams
+    if isForbidden then
+        forbidParams = GameInstance.player.forbidSystem:GetPhaseForbidParams(cfg.name)
+    end
+    return isForbidden, forbidStyle, forbidParams
 end
 
 
@@ -839,8 +845,13 @@ PhaseManager._RealCheckCanOpenPhase = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Boo
     if not self:IsPhaseUnlocked(phaseId) then
         return false, Language.LUA_SYSTEM_LOCK
     end
-    if self:IsPhaseForbidden(phaseId) then
-        return false, Language.LUA_SYSTEM_FORBIDDEN
+    local isForbidden, forbidStyle, forbidParams = self:IsPhaseForbidden(phaseId)
+    if isForbidden then
+        local toast = Language.LUA_SYSTEM_FORBIDDEN
+        if forbidParams and not string.isEmpty(forbidParams.toastTextId) then
+            toast = Language[forbidParams.toastTextId]
+        end
+        return false, toast
     end
     local cfg = self.m_cfgs[phaseId]
 
@@ -1286,7 +1297,6 @@ PhaseManager._OnTryChangeInputDevice = HL.Method(HL.Userdata) << function(self, 
         end,
         onCancel = function()
             logger.important(CS.Beyond.EnableLogType.DevOnly, "[InputDevice] 取消切换设备", inputType)
-            InputManagerInst:ToggleInputDeviceChangeMode(false)
         end,
     })
 end
@@ -1568,6 +1578,17 @@ PhaseManager.GetPhaseName = HL.Method(HL.Number).Return(HL.String) << function(s
     local cfg = self.m_cfgs[phaseId]
     return cfg and cfg.name or ""
 end
+
+
+
+
+PhaseManager.GetPhaseIdByName = HL.Method(HL.String).Return(HL.Number) << function(self, phaseName)
+    if self.phaseIds[phaseName] ~= nil then
+        return self.phaseIds[phaseName]
+    end
+    return -1
+end
+
 
 
 

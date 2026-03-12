@@ -17,10 +17,14 @@ local DEFAULT_FAC_TECH_PACKAGE_ID = "tech_group_tundra"
 
 
 
+
 PhaseFacTechTree = HL.Class('PhaseFacTechTree', phaseBase.PhaseBase)
 
 
 PhaseFacTechTree.m_currentPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
+
+
+PhaseFacTechTree.m_subPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
 
 
 
@@ -172,16 +176,22 @@ end
 PhaseFacTechTree.OpenTreePanel = HL.Method(HL.Any) << function(self, args)
     local arg = unpack(args)
 
-    self:RemovePhasePanelItem(self.m_currentPanelItem)
+    self:RemovePhasePanelItem(self.m_subPanelItem)
+    local subItem = self.m_currentPanelItem
+    self.m_currentPanelItem.uiCtrl:Hide()
     self.m_currentPanelItem = self:CreatePhasePanelItem(PanelId.FacTechTree, { packageId = arg })
+    self.m_subPanelItem = subItem
 end
 
 
 
 
 PhaseFacTechTree.OpenPackagePanel = HL.Method(HL.Table) << function(self, args)
-    self:RemovePhasePanelItem(self.m_currentPanelItem)
+    self:RemovePhasePanelItem(self.m_subPanelItem)
+    local subItem = self.m_currentPanelItem
+    self.m_currentPanelItem.uiCtrl:Hide()
     self.m_currentPanelItem = self:CreatePhasePanelItem(PanelId.FacTechPackage, args)
+    self.m_subPanelItem = subItem
 end
 
 HL.Commit(PhaseFacTechTree)

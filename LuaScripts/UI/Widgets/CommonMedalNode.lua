@@ -45,8 +45,12 @@ end
 
 CommonMedalNode.InitCommonMedalNode = HL.Method(HL.String) << function(self, achievementId)
     self:_FirstTimeInit()
-    self.m_achievementData = Tables.achievementTable[achievementId]
-    local isEmpty = string.isEmpty(achievementId) or self.m_achievementData == nil
+    local succ, achievementData = Tables.achievementTable:TryGetValue(achievementId)
+    if not succ then
+        logger.error(string.format("%s not found in Tables.achievementTable, 请检查配置", achievementId))
+    end
+    self.m_achievementData = achievementData
+    local isEmpty = string.isEmpty(achievementId) or not succ
     if isEmpty then
         self.view.stateCtrl:SetState("NotObtained")
         return

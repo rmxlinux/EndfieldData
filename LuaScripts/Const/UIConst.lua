@@ -6,12 +6,14 @@ local UI_PC_PANEL_PREFAB_FORMAT = "Prefabs/%s/%sPanel_PC.prefab"
 local UI_CONTROLLER_PANEL_PREFAB_FORMAT = "Prefabs/%s/%sPanel_Controller.prefab"
 
 UI_NODE_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/UINode.prefab"
+UI_RED_DOT_ANIMATION_PATH = UI_ASSETS_PATH .. "Prefabs/RedDotAnimation.prefab"
 UI_BUSINESS_CARD_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Friend/FriendBusinessCard/%s.prefab"
 UI_WATCH_BUSINESS_CARD_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Common/Widgets/BusinessCard/%s.prefab"
 UI_ACTIVITY_CHAR_GUIDE_LINE_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/CharacterGuideLine/%s.prefab"
 UI_ACTIVITY_VERSION_GUIDE_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/VersionGuide/%s.prefab"
 UI_ACTIVITY_CHECK_IN_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/Checkin/%s.prefab"
 UI_ACTIVITY_HIGH_DIFFICULTY_BG_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/HighDifficultyBg/%s.prefab"
+UI_ACTIVITY_CHALLENGE_DUNGEON_BG_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/ChallengeDungeonBg/%s.prefab"
 UI_DUMMY_NAVI_LAYER_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/UIDummyNaviLayer.prefab"
 
 UI_PANEL_PREFAB_PATH = UI_ASSETS_PATH .. UI_PANEL_PREFAB_FORMAT
@@ -570,7 +572,7 @@ LAYERS = {
     UIPP = Unity.LayerMask.GetMask("UI", "UIPP"),
     Nothing = Unity.LayerMask.GetMask("Nothing"),
     Gacha = Unity.LayerMask.GetMask("Gacha", "WorldUI", "Fog"),
-    CharFormation = Unity.LayerMask.GetMask("Default", "WorldUI", "Fog"),
+    CharFormation = Unity.LayerMask.GetMask("Default", "WorldUI", "Fog", "UltimateShow"),
 }
 DEFAULT_LAYER = Unity.LayerMask.NameToLayer("Default")
 GACHA_LAYER = Unity.LayerMask.NameToLayer("Gacha")
@@ -1252,8 +1254,8 @@ CharacterSummonSortOptions = {
     },
     {
         name = Language.LUA_SPACESHIP_SUMMON_SORT_FRIEND_LEVEL,
-        upKeys = { "upStageSort", "friendStageUpSort", "friendValueSort", "rarity", "sortOrder" },
-        downKeys = { "downAllStageSort", "friendStageDownSort", "friendValueSort", "rarity", "sortOrder" },
+        upKeys = { "upStageSort", "friendStageSpecialUpSort", "friendValueSort", "rarity", "sortOrder" },
+        downKeys = { "downAllStageSort", "friendStageSpecialDownSort", "friendValueSort", "rarity", "sortOrder" },
     },
 }
 
@@ -1303,7 +1305,7 @@ WEAPON_UPGRADE_SORT_OPTION = {
 WEAPON_GEM_SORT_OPTION = {
     {
         name = Language.LUA_DEPOT_SORT_OPTION_RARITY,
-        keys = { "matchWeaponSkillIndex", "enableOnWeaponIndex", "rarity", "sortId1", "sortId2", "id" },
+        keys = { "matchWeaponSkillIndex", "enableOnWeaponIndex", "rarity", "sortId1", "sortId2", "id", "instId" },
     },
 }
 
@@ -1568,4 +1570,23 @@ DOMAIN_DEPOT_BACKGROUND_STAGES = {
     WaitSelectBuyer = 1,
     SelectBuyer = 2,
     FinishSelectBuyer = 3,
+}
+
+HIDE_CAMERA_PANEL_STATE = {
+    In = 1,
+    Idle = 2,
+    Out = 3,
+}
+
+ITEM_BAG_QUICK_STASH_USEFUL_ITEMS = {
+    ["item_fbottle_glass_water"] = true,
+    ["item_fbottle_glass_xiranite"] = true,
+    ["item_fbottle_glassenr_water"] = true,
+    ["item_fbottle_glassenr_xiranite"] = true,
+    ["item_fbottle_iron_water"] = true,
+    ["item_fbottle_iron_xiranite"] = true,
+    ["item_fbottle_ironenr_water"] = true,
+    ["item_fbottle_ironenr_xiranite"] = true,
+    ["item_fbottle_copper_water"] = true,
+    ["item_fbottle_copper_xiranite"] = true,
 }

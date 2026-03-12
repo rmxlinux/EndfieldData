@@ -129,6 +129,8 @@ local PlaneDistance = CS.Beyond.UI.UIConst.SCREEN_SPACE_CAMERA_PANEL_DISTANCE
 
 
 
+
+
 UIManager = HL.Class('UIManager')
 
 
@@ -222,7 +224,7 @@ UIManager.m_blockInputKeys = HL.Field(HL.Table)
 UIManager.m_mainCameraClosedByUI = HL.Field(HL.Boolean) << false
 
 
-UIManager.m_showingFullScreenPanel = HL.Field(HL.Table)
+UIManager.m_showingHideCameraPanelState = HL.Field(HL.Table)
 
 
 UIManager.m_worldUICanvasScaleHelper = HL.Field(CS.Beyond.UI.UICanvasScaleHelper)
@@ -281,7 +283,7 @@ UIManager.UIManager = HL.Constructor() << function(self)
     self.m_panel2Handle = {}
     self.m_customPreloadInfos = {}
     self.m_blockInputKeys = {}
-    self.m_showingFullScreenPanel = {}
+    self.m_showingHideCameraPanelState = {}
     self.m_blockObtainWaysJumpKeys = {}
     self.m_recentClosedPanelIds = {}
     self.m_waitClearPanels = {}
@@ -341,6 +343,11 @@ UIManager.UIManager = HL.Constructor() << function(self)
     self.m_worldUICanvasScaleHelper.onScreenSizeChanged:AddListener(self.m_onScreenSizeChangedCallback)
 
     CS.TMPro.TMP_Settings.instance.dynamicFontAssetLoader = CS.Beyond.UI.DynamicFontAssetLoader()
+
+    
+    local uiRedDotAsset = self.m_resourceLoader:LoadGameObject(UIConst.UI_RED_DOT_ANIMATION_PATH)
+    local uiRedDotObj = CSUtils.CreateObject(uiRedDotAsset, self.uiRoot)
+    CS.Beyond.UI.UIRedDotAnimation.instance:Init(uiRedDotObj)
 
     
     addMetaIndex(self.cfgs, function(_, k)
@@ -502,7 +509,13 @@ UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table)).Return(HL.Opt(HL
         self.m_autoClearScreenKeys[panelId] = self:ClearScreen(exceptPanelIds)
     end
     if cfg.blockObtainWaysJump then
-        self:ToggleBlockObtainWaysJump(cfg.name, true, true)
+        local exceptIds = {}
+        if cfg.blockObtainWaysJump ~= true then
+            for _, whitePhaseName in ipairs(cfg.blockObtainWaysJump) do
+                table.insert(exceptIds, whitePhaseName)
+            end
+        end
+        self:ToggleBlockObtainWaysJump(cfg.name, true, exceptIds)
     end
     local refs = panelObj:GetComponent("LuaReference")
     refs:BindToLua(view) 
@@ -571,6 +584,9 @@ UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table)).Return(HL.Opt(HL
     cfg.ctrl = ctrl
     self.m_openedPanels[panelId] = ctrl
     Notify(MessageConst.ON_UI_PANEL_START_OPEN, cfg.name)
+    if cfg.hideCamera and not cfg.forceHideMainCam then
+        self:ChangeHideCameraPanelState(panelId, UIConst.HIDE_CAMERA_PANEL_STATE.In)
+    end
     view.luaPanel.onAnimationInFinished:AddListener(function()
         logger.info("OnAnimationInFinished", cfg.name)
 
@@ -588,7 +604,14 @@ UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table)).Return(HL.Opt(HL
         if callbacks.onAnimationInFinished then
             callbacks.onAnimationInFinished()
         end
-        self:TryToggleMainCamera(cfg, true)
+
+        
+        
+        
+        
+        if cfg.hideCamera and self.m_showingHideCameraPanelState[panelId] == UIConst.HIDE_CAMERA_PANEL_STATE.In then
+            self:ChangeHideCameraPanelState(panelId, UIConst.HIDE_CAMERA_PANEL_STATE.Idle)
+        end
     end)
 
     
@@ -792,23 +815,55 @@ end
 
 
 
-UIManager.TryToggleMainCamera = HL.Method(HL.Table, HL.Boolean) << function(self, cfg, tryCloseCamera)
+UIManager.ChangeHideCameraPanelState = HL.Method(HL.Number, HL.Any) << function(self, panelId, state)
     
-    if (not cfg) or (not cfg.hideCamera) then
-        return
-    end
+    
+    logger.info("UIManager.ChangeHideCameraPanelState", self.m_panelConfigs[panelId].name, state)
+    self.m_showingHideCameraPanelState[panelId] = state
+    self:_UpdateMainCamera()
+end
 
-    if tryCloseCamera then
-        self.m_showingFullScreenPanel[cfg] = true
+
+
+UIManager._UpdateMainCamera = HL.Method() << function(self)
+    
+    
+    
+
+    local tryCloseCamera = true
+
+    if next(self.m_showingHideCameraPanelState) == nil then
+        
+        tryCloseCamera = false
     else
-        self.m_showingFullScreenPanel[cfg] = nil
+        
+        local forceHide = false
+        for panelId, state in pairs(self.m_showingHideCameraPanelState) do
+            if self.m_panelConfigs[panelId].forceHideMainCam then
+                
+                forceHide = true
+                tryCloseCamera = true
+                break
+            end
+        end
+        
+        if not forceHide then
+            for panelId, state in pairs(self.m_showingHideCameraPanelState) do
+                if state ~= UIConst.HIDE_CAMERA_PANEL_STATE.Idle then
+                    
+                    tryCloseCamera = false
+                    break
+                end
+            end
+        end
     end
 
-    local shouldClose = next(self.m_showingFullScreenPanel) ~= nil
-    if shouldClose == self.m_mainCameraClosedByUI then
+    
+    if self.m_mainCameraClosedByUI == tryCloseCamera then
         return
     end
 
+    logger.info("UIManager._UpdateMainCamera.tryCloseCamera", tryCloseCamera, self.m_showingHideCameraPanelState)
     if tryCloseCamera then
         CameraManager:AddMainCamCullingMaskConfig("UIManager", UIConst.LAYERS.Nothing)
     else
@@ -974,7 +1029,9 @@ UIManager.Close = HL.Method(HL.Number) << function(self, panelId)
     self:_TryDetachNaviDummyLayer(panelId)
 
     self:_SendEventUISwitch(cfg, false)
-    self:TryToggleMainCamera(cfg, false)
+    if cfg.hideCamera then
+        self:ChangeHideCameraPanelState(panelId, nil)
+    end
 
     LuaProfilerUtils.EndSample()
 end
@@ -1013,6 +1070,7 @@ UIManager._InternalShow = HL.Method(HL.Number) << function(self, panelId)
     if ctrl.panelCfg.useCanvasHide then
         ctrl.view.gameObject:SetLayerRecursive(UIConst.UI_LAYER)
         ctrl.view.panelCanvas.enabled = true
+        ctrl.view.luaPanel.enabled = true
         if ctrl.animationWrapper then
             ctrl.animationWrapper.enabled = true
             if ctrl.animationWrapper.autoPlay then
@@ -1032,10 +1090,22 @@ UIManager._InternalShow = HL.Method(HL.Number) << function(self, panelId)
     self:CalcOtherSystemPropertyByPanelOrder()
 
     if ctrl.panelCfg.blockObtainWaysJump then
-        self:ToggleBlockObtainWaysJump(ctrl.panelCfg.name, true, true)
+        local exceptIds = {}
+        if ctrl.panelCfg.blockObtainWaysJump ~= true then
+            for _, whitePhaseName in ipairs(ctrl.panelCfg.blockObtainWaysJump) do
+                table.insert(exceptIds, whitePhaseName)
+            end
+        end
+        self:ToggleBlockObtainWaysJump(ctrl.panelCfg.name, true, exceptIds)
     end
 
-    ctrl.view.luaPanel:RecoverAllInput() 
+    local luaPanel = ctrl.view.luaPanel
+    
+    
+    if not luaPanel.blockWhileAnim or luaPanel.animationInFinished then
+        luaPanel:RecoverAllInput() 
+    end
+
     ctrl:SetGameObjectVisible(true)
 
     ctrl:OnShow()
@@ -1154,6 +1224,7 @@ UIManager._InternalHide = HL.Method(HL.Number) << function(self, panelId)
         ctrl.view.gameObject:SetLayerRecursive(UIConst.HIDE_LAYER)
         ctrl.view.panelCanvas.enabled = false
         ctrl.view.luaPanel:BlockAllInput() 
+        ctrl.view.luaPanel.enabled = false
         if ctrl.animationWrapper then
             ctrl.animationWrapper.enabled = false
         end
@@ -1174,7 +1245,9 @@ UIManager._InternalHide = HL.Method(HL.Number) << function(self, panelId)
         self:ToggleBlockObtainWaysJump(cfg.name, false)
     end
     self:_SendEventUISwitch(ctrl.panelCfg, false)
-    self:TryToggleMainCamera(cfg, false)
+    if ctrl.panelCfg.hideCamera then
+        self:ChangeHideCameraPanelState(panelId, nil)
+    end
     CS.Beyond.Gameplay.Conditions.OnUIPanelClose.Trigger(cfg.name)
 end
 
@@ -1852,6 +1925,7 @@ UIManager.Dispose = HL.Method() << function(self)
         GameObject.DestroyImmediate(self.worldObjectRoot.gameObject)
         self.worldObjectRoot = nil
     end
+    CS.Beyond.UI.UIRedDotAnimation.instance:UnInit()
     self.m_resourceLoader:DisposeAllHandles()
     if CS.TMPro.TMP_Settings.instance.dynamicFontAssetLoader ~= nil then
         CS.TMPro.TMP_Settings.instance.dynamicFontAssetLoader:Dispose()
@@ -1865,6 +1939,11 @@ end
 
 
 UIManager._ToggleUIInputBinding = HL.Method(HL.Boolean, HL.String) << function(self, active, key)
+    if not active and key == "AirWall" and (self:IsOpen(PanelId.ShopMonthlyPassPopUp) or PhaseManager:IsOpen(PhaseId.ActivityPopup)) then
+        logger.error("防止卡死，取消 UIManager._ToggleUIInputBinding", key)
+        return
+    end
+
     if active then
         self.m_blockInputKeys[key] = nil
     else
@@ -1929,12 +2008,37 @@ UIManager.m_blockObtainWaysJumpKeys = HL.Field(HL.Table)
 
 
 
-UIManager.ToggleBlockObtainWaysJump = HL.Method(HL.String, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, name, shouldBlock, blockAllPhase)
+UIManager.ToggleBlockObtainWaysJump = HL.Method(HL.String, HL.Boolean, HL.Opt(HL.Table)) << function(self, name, shouldBlock, blockPhaseWhiteMap)
     if shouldBlock then
-        self.m_blockObtainWaysJumpKeys[name] = blockAllPhase == true
+        if blockPhaseWhiteMap == nil then
+            blockPhaseWhiteMap = {}
+        end
+        self.m_blockObtainWaysJumpKeys[name] = blockPhaseWhiteMap
     else
         self.m_blockObtainWaysJumpKeys[name] = nil
     end
+end
+
+
+
+
+UIManager.ShouldBlockObtainWaysPhaseJump = HL.Method(HL.Any).Return(HL.Boolean) << function(self, phaseId)
+    if phaseId == nil then
+        phaseId = -1
+    end
+
+    for _, whiteMap in pairs(self.m_blockObtainWaysJumpKeys) do
+        local subRes = true
+        for _, whitePhaseName in pairs(whiteMap) do
+            if PhaseManager:GetPhaseIdByName(whitePhaseName) == phaseId then
+                subRes = false
+            end
+        end
+        if subRes then
+            return true
+        end
+    end
+    return false
 end
 
 
@@ -1947,7 +2051,7 @@ end
 
 UIManager.ShouldBlockAllObtainWaysJump = HL.Method().Return(HL.Boolean) << function(self)
     for _, v in pairs(self.m_blockObtainWaysJumpKeys) do
-        if v == true then
+        if v ~= nil and #v == 0 then
             return true
         end
     end

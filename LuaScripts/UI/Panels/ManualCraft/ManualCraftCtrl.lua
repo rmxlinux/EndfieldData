@@ -20,6 +20,16 @@ local filterList = {
     },
 }
 
+local ShowStatus = {
+    Locked = 0,
+    Unlocked = 1,
+    Completed = 2,
+    Rewarded = 3,
+}
+
+
+
+
 
 
 
@@ -113,6 +123,7 @@ ManualCraftCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_MANUAL_WORK_MODIFY] = 'OnManualWorkModify',
     [MessageConst.ON_MANUAL_WORK_CANCEL] = 'OnManualWorkCancel',
     [MessageConst.ON_ITEM_COUNT_CHANGED] = 'OnItemCountChanged',
+    [MessageConst.ON_MANUAL_CRAFT_POPUP_PANEL_CLOSE] = 'OnManualCraftPopupPanelClose',
 }
 
 
@@ -179,6 +190,9 @@ ManualCraftCtrl.m_manualCount = HL.Field(HL.Number) << 0
 ManualCraftCtrl.m_manufactureListCache = HL.Field(HL.Forward("UIListCache"))
 
 
+ManualCraftCtrl.m_itemDescNodeId = HL.Field(HL.Any) << ""
+
+
 ManualCraftCtrl.m_readCraftIds = HL.Field(HL.Table)
 
 
@@ -192,6 +206,9 @@ ManualCraftCtrl.m_tabPlayingOutAnim = HL.Field(HL.Boolean) << false
 
 
 ManualCraftCtrl.m_fabricateSoundKey = HL.Field(HL.Number) << 0
+
+
+ManualCraftCtrl.m_tipActivityManualCraft = HL.Field(HL.Table)
 
 
 ManualCraftCtrl.m_filterSetting = HL.Field(HL.Table)
@@ -228,6 +245,7 @@ ManualCraftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.m_inventorySystem = GameInstance.player.inventory
     self.m_facManualCraftSystem = GameInstance.player.facManualCraft
+    self:_InitSubmitActivityInfo()
 
     self.m_readCraftIds = {}
 
@@ -264,8 +282,9 @@ ManualCraftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     for index, info in ipairs(self.m_filterSetting) do
-        local keyName = "ManualCraft.Filter.Tab." .. index
-        self.m_filterSetting[index].isOn = Unity.PlayerPrefs.GetInt(keyName, info.defaultIsOn and 1 or 0) == 1
+        local keyName = GameInstance.player.roleId.."ManualCraft.Filter.Tab." .. index
+        local _, value = ClientDataManagerInst:GetInt(keyName, false, info.defaultIsOn and 1 or 0)
+        self.m_filterSetting[index].isOn = value == 1
     end
 
 
@@ -322,6 +341,86 @@ end
 
 
 
+ManualCraftCtrl._InitSubmitActivityInfo = HL.Method() << function(self)
+    self.m_tipActivityManualCraft = {}
+    for activityId, data in pairs(Tables.ActivitySubmitTextTable) do
+        local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+        local _, activityData = Tables.activityTable:TryGetValue(activityId)
+        local finish = false
+        if activityData and not string.isEmpty(activityData.introMissionQuestId) then
+            local questState = GameInstance.player.mission:GetQuestState(activityData.introMissionQuestId)
+            if questState == CS.Beyond.Gameplay.MissionSystem.QuestState.Completed then
+                finish = true
+            end
+        end
+
+        if activity and finish then
+            for key, value in pairs(Tables.FoodSubmitStageIdTable) do
+                if value.activityId == activityId then
+                    local info = {
+                        stageId = key,
+                        sortId = value.sortId,
+                    }
+                    local showStage = false
+                    local stageState = self:GetStageShowState(activityId, info.stageId)
+
+                    if stageState ~= ShowStatus.Locked then
+                        showStage = true
+                    end
+
+                    local hasUiCfg, uiCfg = Tables.ActivitySubmitFoodTable:TryGetValue(info.stageId)
+                    if hasUiCfg then
+                        if uiCfg.unlockShow then
+                            showStage = true
+                        end
+                        if showStage and stageState == ShowStatus.Unlocked then
+                            self.m_tipActivityManualCraft[uiCfg.tipManualCraftId] = true
+                        end
+
+                    else
+                        showStage = false
+                    end
+                end
+            end
+        end
+    end
+
+end
+
+
+
+
+
+
+ManualCraftCtrl.GetStageShowState = HL.Method(HL.Any, HL.Any).Return(HL.Any) << function(self, activityId, stageId)
+    local showStatus = ShowStatus.Locked
+    local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
+    if not activityData then
+        return showStatus
+    end
+
+    local stageData = activityData:GetStageData(stageId)
+    local status = GEnums.ActivityConditionalStageState.Locked
+    if stageData ~= nil then
+        status = GEnums.ActivityConditionalStageState.__CastFrom(stageData.Status)
+    end
+
+    if status == GEnums.ActivityConditionalStageState.Locked then
+        showStatus = ShowStatus.Locked
+    elseif status == GEnums.ActivityConditionalStageState.Unlocked then
+        showStatus = ShowStatus.Unlocked
+    elseif status == GEnums.ActivityConditionalStageState.Completed then
+        showStatus = ShowStatus.Completed
+    elseif status == GEnums.ActivityConditionalStageState.Rewarded then
+        showStatus = ShowStatus.Rewarded
+    end
+
+    return showStatus
+end
+
+
+
+
 
 ManualCraftCtrl._FilterBtnConfirm = HL.Method(HL.Any) << function(self, tags)
     if self.m_nowCraftCell then
@@ -331,17 +430,17 @@ ManualCraftCtrl._FilterBtnConfirm = HL.Method(HL.Any) << function(self, tags)
     end
     for i = 1, #self.m_filterSetting do
         self.m_filterSetting[i].isOn = false
-        local keyName = "ManualCraft.Filter.Tab." .. i
-        Unity.PlayerPrefs.SetInt(keyName, 0)
+        local keyName = GameInstance.player.roleId.."ManualCraft.Filter.Tab." .. i
+        ClientDataManagerInst:SetInt(keyName, 0, false)
     end
 
     if tags ~= nil then
         for i = 1,#tags do
             for j = 1,#self.m_filterSetting do
                 if self.m_filterSetting[j].id == tags[i].id then
-                    local keyName = "ManualCraft.Filter.Tab." .. j
+                    local keyName = GameInstance.player.roleId.."ManualCraft.Filter.Tab." .. j
                     self.m_filterSetting[j].isOn = true
-                    Unity.PlayerPrefs.SetInt(keyName, 1)
+                    ClientDataManagerInst:SetInt(keyName, 1, false)
                 end
             end
         end
@@ -577,6 +676,7 @@ ManualCraftCtrl._ClickTab = HL.Method(HL.Any) << function(self, tabIndex)
     end
 
     self.itemNaviFlag = true
+    self.m_initSelectCsIndex = 0
 
     local filterType = filterList[tabIndex].type
     if self.m_selectedCraftTabType == filterType then
@@ -861,6 +961,12 @@ ManualCraftCtrl._UpdateCell = HL.Method(GameObject, HL.Number) << function(self,
         self.m_allIngredientsForDisplayCraft[craftInfo.ingredients[i-1].id] = true
     end
 
+    if self.m_tipActivityManualCraft[craftInfo.id] then
+        craftItemCell.markImage.gameObject:SetActive(true)
+    else
+        craftItemCell.markImage.gameObject:SetActive(false)
+    end
+
     self:_RefreshCraftCellAvailable(craftItemCell, true)
 end
 
@@ -1026,6 +1132,7 @@ ManualCraftCtrl._RefreshCraftNode = HL.Method(HL.Opt(HL.Boolean)) << function(se
         end
 
         self.view.currentIcon:LoadSprite(UIConst.UI_SPRITE_ITEM, item.iconId)
+        self.m_itemDescNodeId = item.id
         self.view.itemDescNode:InitItemDescNode(item.id)
         
         self.view.mainTitle.text = item.name
@@ -1045,6 +1152,16 @@ ManualCraftCtrl._RefreshCraftNode = HL.Method(HL.Opt(HL.Boolean)) << function(se
 
     UIUtils.setItemRarityImage(self.view.qualityLight, Tables.itemTable:GetValue(craftInfo.outcomes[0].id).rarity)
 end
+
+
+
+ManualCraftCtrl.OnManualCraftPopupPanelClose = HL.Method() << function(self)
+    if string.isEmpty(self.m_itemDescNodeId) then
+        return
+    end
+    self.view.itemDescNode:InitItemDescNode(self.m_itemDescNodeId)
+end
+
 
 
 
@@ -1373,6 +1490,7 @@ ManualCraftCtrl._OnGetNewManualFormula = HL.Method(HL.Any) << function(self, arg
         for i, k in pairs(filterList) do
             if self.m_cntFilterTypeShow[k.type] then
                 self:_SetFilterType(k.type)
+                self.m_selectedCraftTabType = k.type
                 break
             end
         end
@@ -1380,6 +1498,7 @@ ManualCraftCtrl._OnGetNewManualFormula = HL.Method(HL.Any) << function(self, arg
         for i, k in pairs(filterList) do
             if k.type == self.m_cntFilterType then
                 self:_SetFilterType(self.m_cntFilterType)
+                self.m_selectedCraftTabType = self.m_cntFilterType
                 break
             end
         end
@@ -1445,6 +1564,7 @@ ManualCraftCtrl.OnClose = HL.Override() << function(self)
     self.m_facManualCraftSystem:ReadCrafts(craftIds)
     self:_ToggleFabricateSound(false)
     self:Notify(MessageConst.ON_ENABLE_COMMON_TOAST)
+    Notify(MessageConst.ON_MANUAL_CRAFT_PANEL_CLOSE)
 end
 
 

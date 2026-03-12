@@ -154,10 +154,12 @@ PhaseWatch._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) 
     local usingBT = UIUtils.usingBlockTransition()
     local nextPhaseId = args.anotherPhaseId
     local toCommonMoneyExchange = nextPhaseId == PhaseId.CommonMoneyExchange
-    if not usingBT and not toCommonMoneyExchange then
-        self.m_watchPanel.uiCtrl.animationWrapper:ClearTween(true)
+    if not toCommonMoneyExchange then
+        if not usingBT then
+            self.m_watchPanel.uiCtrl.animationWrapper:ClearTween(true)
+            self:_ChangeBlurSetting(false)
+        end
         self.m_watchPanel.uiCtrl.view.content.gameObject:SetActive(false)
-        self:_ChangeBlurSetting(false)
     end
 end
 

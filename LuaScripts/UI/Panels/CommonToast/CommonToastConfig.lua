@@ -16,6 +16,18 @@ function processFacNodeLimit(text, paramList, codeId)
     return string.format(text, curNum, limitNum)
 end
 
+function processFacOpDismantleBuildingOtherChapter(text, paramList, codeId)
+    local chapterName
+    local chapterId = paramList[0]
+    if chapterId == "spaceship" then
+        chapterName = Language.LUA_SPACESHIP_NAME
+    else
+        local success, domainData = Tables.domainDataTable:TryGetValue(chapterId)
+        chapterName = success and domainData.domainName or ""
+    end
+    return string.format(text, chapterName)
+end
+
 local cfg = {
     [CS.Proto.CODE.ErrItemBagBagOverflowToFactoryDepot] = processItemOverflow,
     [CS.Proto.CODE.ErrItemBagDestroyOverflowItems] = processItemOverflow,
@@ -34,5 +46,8 @@ local cfg = {
     [CS.Proto.CODE.ErrFactoryPlaceBuildingLimit] = processFacNodeLimit,
     [CS.Proto.CODE.ErrFactoryPlaceFluidRouterLimit] = processFacNodeLimit,
     [CS.Proto.CODE.ErrFactoryPlaceFluidConveyorLimit] = processFacNodeLimit,
+
+    
+    [CS.Proto.CODE.ErrFactoryOpDismantleBuildingOtherChapter] = processFacOpDismantleBuildingOtherChapter,
 }
 return cfg

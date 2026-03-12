@@ -325,16 +325,20 @@ end
 
 
 SubmitItemCtrl._Submit = HL.Method(HL.Table, HL.Table).Return(HL.Boolean) << function(self, selectInstIds, selectItemIds)
-    if self.m_info.fromDialog and GameWorld.dialogManager.isPlaying then
-        GameWorld.dialogManager:RegisterPendingSubmission(CS.Beyond.Gameplay.InventoryItemSubmitter(
-            Utils.getCurrentScope(),
-            Utils.getCurrentChapterId(),
-            self.m_info.submitId,
-            self.m_info.questId,
-            self.m_info.objId,
-            selectInstIds,
-            selectItemIds
-        ))
+    if self.m_info.fromDialog then
+        if GameWorld.dialogManager.isPlaying then
+            GameWorld.dialogManager:RegisterPendingSubmission(CS.Beyond.Gameplay.InventoryItemSubmitter(
+                Utils.getCurrentScope(),
+                Utils.getCurrentChapterId(),
+                self.m_info.submitId,
+                self.m_info.questId,
+                self.m_info.objId,
+                selectInstIds,
+                selectItemIds
+            ))
+        else
+            Notify(MessageConst.SHOW_TOAST, Language["ui_msc_submit_fail"])
+        end
         return false
     else
         GameInstance.player.inventory:SubmitItem(

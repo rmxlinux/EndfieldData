@@ -77,6 +77,9 @@ RaidRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 
     self.m_system = GameInstance.player.weekRaidSystem
+
+    
+    self.m_system:SetBattlePassVersionRead()
 end
 
 

@@ -42,7 +42,7 @@ DomainTopMoneyTitle._OnFirstTimeInit = HL.Override() << function(self)
     end
     self.m_timeFormatFunc = function(leftTime)
         local curMoney = Utils.getItemCount(self.m_moneyId)
-        if curMoney < self.m_moneyLimit then
+        if curMoney <= self.m_moneyLimit then
             self.view.timeNode.gameObject:SetActive(false)
         else
             self.view.timeNode.gameObject:SetActive(true)

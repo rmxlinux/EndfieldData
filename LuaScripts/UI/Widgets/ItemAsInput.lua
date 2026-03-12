@@ -232,6 +232,7 @@ ItemAsInput._UpdateCraftCellExpand = HL.Method(HL.Table, HL.Table) << function(s
         else
             craftCell.outcomePower.gameObject:SetActiveIfNecessary(false)
         end
+        craftCell.outcomeFinish.gameObject:SetActiveIfNecessary(craftInfo.useFinish == true)
 
         craftCell.line.gameObject:SetActive(craftIndex ~= craftCount)
         if craftCell.pinBtn then

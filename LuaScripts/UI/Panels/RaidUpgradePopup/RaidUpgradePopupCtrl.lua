@@ -39,6 +39,9 @@ RaidUpgradePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.bgBtn.onClick:AddListener(function()
         self:PlayAnimationOutAndClose()
     end)
+    self:BindInputPlayerAction("common_pop_up_cancel", function()
+        self:PlayAnimationOutAndClose()
+    end)
 
     
 

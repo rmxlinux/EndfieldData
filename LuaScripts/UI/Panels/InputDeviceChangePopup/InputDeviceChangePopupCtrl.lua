@@ -9,6 +9,7 @@ local PANEL_ID = PanelId.InputDeviceChangePopup
 
 
 
+
 InputDeviceChangePopupCtrl = HL.Class('InputDeviceChangePopupCtrl', uiCtrl.UICtrl)
 
 
@@ -27,6 +28,9 @@ InputDeviceChangePopupCtrl.m_args = HL.Field(HL.Any)
 
 
 InputDeviceChangePopupCtrl.m_hasExecuted = HL.Field(HL.Boolean) << false
+
+
+InputDeviceChangePopupCtrl.m_isCanceled = HL.Field(HL.Boolean) << false
 
 
 
@@ -61,6 +65,7 @@ InputDeviceChangePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
         end
         InputManagerInst:ToggleForceShowRealCursor(false)
         self.m_hasExecuted = true
+        self.m_isCanceled = true
         args.onCancel()
         self:PlayAnimationOutAndClose()
     end)
@@ -81,9 +86,15 @@ end
 
 
 InputDeviceChangePopupCtrl.OnClose = HL.Override() << function(self)
+    if self.m_isCanceled then
+        InputManagerInst:ToggleInputDeviceChangeMode(false)
+        self.m_isCanceled = false
+    end
+
     if not self.m_hasExecuted then
         
         InputManagerInst:ToggleForceShowRealCursor(false)
+        InputManagerInst:ToggleInputDeviceChangeMode(false)
         self.m_args.onCancel()
     end
 end

@@ -203,8 +203,9 @@ local Config = {
             local ids = nil
             local insId = nil
             local finalPOIType = nil
-            for i = 1, GEnums.DomainPoiType.Max:GetHashCode() - 1 do
-                local poiType = GEnums.DomainPoiType.__CastFrom(i)
+            local values = CS.System.Enum.GetValues(typeof(GEnums.DomainPoiType))
+            for i = 0, values.Length - 1 do
+                local poiType = values[i]
                 if DomainPOIUtils.POICanUnlock[poiType] ~= nil then
                     ids = DomainPOIUtils.POICanUnlock[poiType](levelId)
                     if ids then
@@ -231,14 +232,16 @@ local Config = {
             local _,markId = GameInstance.player.mapManager:GetMapMarkInstId(DomainPOIUtils.MarkTypeMap[finalPOIType], insId)
             return { markId }
         end,
+        useMarkIcon = true,
     },
     [GEnums.MapRemindType.AnyPOICanUpgrade] = {
         Check = function(levelId)
             local ids = nil
             local insId = nil
             local finalPOIType = nil
-            for i = 1, GEnums.DomainPoiType.Max:GetHashCode() - 1 do
-                local poiType = GEnums.DomainPoiType.__CastFrom(i)
+            local values = CS.System.Enum.GetValues(typeof(GEnums.DomainPoiType))
+            for i = 0, values.Length - 1 do
+                local poiType = values[i]
                 if DomainPOIUtils.POICanUpgrade[poiType] ~= nil then
                     ids = DomainPOIUtils.POICanUpgrade[poiType](levelId)
                     if ids then
@@ -265,6 +268,7 @@ local Config = {
             local _,markId = GameInstance.player.mapManager:GetMapMarkInstId(DomainPOIUtils.MarkTypeMap[finalPOIType], insId)
             return { markId }
         end,
+        useMarkIcon = true,
     },
     [GEnums.MapRemindType.SSGuestRoomBaseClueCanRecv] = {
         Check = function(levelId)

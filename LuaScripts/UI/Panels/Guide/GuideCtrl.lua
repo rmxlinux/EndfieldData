@@ -917,12 +917,9 @@ GuideCtrl._RefreshHelperVisibleStateByPanelOrPhaseState = HL.Method(HL.String, H
         if invisibleName == name then
             isInvisible = isOpened
             if not isInvisible then
-                self.view.helperNode.animationWrapper:PlayInAnimation()
                 self.view.helperNode.controlNode.gameObject:SetActiveIfNecessary(true)
             else
-                self.view.helperNode.animationWrapper:PlayOutAnimation(function()
-                    self.view.helperNode.controlNode.gameObject:SetActiveIfNecessary(false)
-                end)
+                self.view.helperNode.controlNode.gameObject:SetActiveIfNecessary(false)
             end
             break
         end
@@ -974,7 +971,7 @@ end
 
 
 
-GuideCtrl._HighlightUITarget = HL.Method(HL.Table, CS.Beyond.Gameplay.GuideUIHighlightInfo, HL.Boolean)
+GuideCtrl._HighlightUITarget = HL.Method(HL.Table, HL.Userdata, HL.Boolean)
         << function(self, cell, info, needMask)
     local path = info.path
     local trans, is3DUI = self:_GetHighlightTarget(path)

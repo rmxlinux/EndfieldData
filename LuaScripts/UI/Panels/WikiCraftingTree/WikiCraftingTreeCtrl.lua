@@ -575,8 +575,13 @@ WikiCraftingTreeCtrl._CreateLeftCraft = HL.Method(HL.String, HL.Number, Vector2,
             end
         end
         if defaultCraftIndex == nil then
-            defaultCraftIndex = 1
-            defaultCraftId = craftInfoList[1].craftId
+            
+            for i, craftInfo in ipairs(craftInfoList) do
+                if not Tables.factoryManualCraftTable:ContainsKey(craftInfo.craftId) then
+                    defaultCraftIndex = i
+                    break
+                end
+            end
         end
 
         local firstIndex = 1
@@ -584,7 +589,7 @@ WikiCraftingTreeCtrl._CreateLeftCraft = HL.Method(HL.String, HL.Number, Vector2,
             firstIndex = jumpCraftIndex
         elseif pinnedCraftIndex then
             firstIndex = pinnedCraftIndex
-        else
+        elseif defaultCraftIndex then
             firstIndex = defaultCraftIndex
         end
 
@@ -643,6 +648,7 @@ WikiCraftingTreeCtrl._CreateLeftCraft = HL.Method(HL.String, HL.Number, Vector2,
                     playInAnimation = playInAnimation,
                     isShowDefaultToggle = true,
                     craftIndex = i,
+                    defaultCraftIndex = defaultCraftIndex,
                     moreCraftCell = moreCraftCell,
                 })
 
@@ -741,6 +747,7 @@ end
 
 
 
+
 WikiCraftingTreeCtrl._CreateLeftItemOneCraft = HL.Method(HL.Table).Return(HL.Userdata) << function(self, arg)
     
     
@@ -755,6 +762,7 @@ WikiCraftingTreeCtrl._CreateLeftItemOneCraft = HL.Method(HL.Table).Return(HL.Use
         craftInfo = arg.craftInfo,
         isShowDefaultNode = arg.isShowDefaultToggle,
         craftIndex = arg.craftIndex,
+        defaultCraftIndex = arg.defaultCraftIndex,
         moreCraftCell = arg.moreCraftCell,
         onClicked = function(id, cell)
             self:_OnCraftBuildingClicked(id, cell)
@@ -1118,7 +1126,7 @@ WikiCraftingTreeCtrl._RefreshBottom = HL.Method(HL.String) << function(self, ite
     local hasBlackBox = false
     if jumpData and not string.isEmpty(jumpData.blackboxId) and
         Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacTechTree) and
-        GameInstance.dungeonManager:IsDungeonActive(jumpData.blackboxId) and not Utils.isInBlackbox() then
+        GameInstance.dungeonManager:IsDungeonActive(jumpData.blackboxId) and not Utils.isInDungeon() then
         local packageId = self:_GetBlackboxPackageId(jumpData.blackboxId)
         if not string.isEmpty(packageId) and not GameInstance.player.facTechTreeSystem:PackageIsLocked(packageId) and
             not GameInstance.player.facTechTreeSystem:PackageIsHidden(packageId) then
@@ -1134,7 +1142,7 @@ WikiCraftingTreeCtrl._RefreshBottom = HL.Method(HL.String) << function(self, ite
         end)
     end
     local hasBlueprint = false
-    if Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacBlueprint) and not Utils.isInBlackbox() and
+    if Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacBlueprint) and not Utils.isInDungeon() and
         jumpData and not string.isEmpty(jumpData.blueprintId) then
         hasBlueprint = true
     end

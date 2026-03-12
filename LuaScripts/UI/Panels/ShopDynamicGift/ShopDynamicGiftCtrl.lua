@@ -50,7 +50,7 @@ ShopDynamicGiftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     if endDate then
         self.view.detailHorizontal01:SetState("haveTime")
         self.view.endDateTxt:SetAndResolveTextStyle(endDate)
-        self.view.endTimeTxt:SetAndResolveTextStyle(endTime)
+        self.view.endTimeTxt:SetAndResolveTextStyle(Utils.appendUTC(endTime))
     else
         self.view.detailHorizontal01:SetState("noTime")
     end

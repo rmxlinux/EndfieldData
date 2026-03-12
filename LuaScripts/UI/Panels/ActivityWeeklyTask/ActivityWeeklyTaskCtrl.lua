@@ -125,8 +125,9 @@ ActivityWeeklyTaskCtrl._GetTaskInfo = HL.Method() << function(self)
     local tasks = {}
     for id, task in pairs(self.m_activity.taskInfo) do
         local success, taskInfo = Tables.activityWeeklyTaskTable:TryGetValue(id)
-        local progress = lume.round(task.Item2 * taskInfo.displayFactor)
-        local progressToCompare = lume.round(taskInfo.progressToCompare * taskInfo.displayFactor)
+        
+        local progress = math.floor(task.Item2 * taskInfo.displayFactor + 1e-6)
+        local progressToCompare = math.floor(taskInfo.progressToCompare * taskInfo.displayFactor + 1e-6)
         if success then
             local statusSortId = task.Item1 == 2 and -1 or task.Item1
             table.insert(tasks, {

@@ -35,6 +35,13 @@ local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
 
 
 
+
+
+
+
+
+
+
 MainHudActionQueueSystem = HL.Class('MainHudActionQueueSystem', LuaSystemBase.LuaSystemBase)
 
 
@@ -111,6 +118,7 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
             needWait = true,
             ignoreCinematicInterrupt = true,
             ignoreMainHudInterrupt = true,
+            finishWhenInterrupt = true,
         },
         
         LoginCheck_MonthlypassPopup = {
@@ -171,10 +179,17 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
         },
 
         
+        CashShopOrderSettleInterrupt = {
+            order = -0.1,
+            needWait = true,
+            checkGuideOnStart = true,
+            ignoreMainHudInterrupt = true,
+        },
+
+        
         CashShopOrderSettle = {
             order = 0,
             needWait = true,
-            finishWhenInterrupt = true,
             checkGuideOnStart = true,
             ignoreMainHudInterrupt = true,
         },
@@ -252,7 +267,6 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
             ignoreCinematicInterrupt = true,
             preloadPanelId = PanelId.ImportantRewardPopup,
             checkGuideOnStart = true,
-            ignoreMainHudInterrupt = true,
         },
 
         
@@ -465,6 +479,10 @@ MainHudActionQueueSystem.MainHudActionQueueSystem = HL.Constructor() << function
     self:RegisterMessage(MessageConst.ON_SWITCH_LANGUAGE, function()
         self:Interrupt()
     end)
+
+    if BEYOND_DEBUG_COMMAND then
+        self:_StartDebugCheck()
+    end
 end
 
 
@@ -644,6 +662,7 @@ MainHudActionQueueSystem.m_nextPreloadId = HL.Field(HL.Number) << 1
 
 MainHudActionQueueSystem._StartFirstAction = HL.Method() << function(self)
     self.m_isShowing = true
+    self.m_curActionStartTime = Time.unscaledTime
     local request = self.m_pendingRequests[1]
     request.order = self.m_curShowingActionOrder 
     local cfg = self.configs[request.type]
@@ -674,6 +693,14 @@ MainHudActionQueueSystem._StartFirstAction = HL.Method() << function(self)
         self.m_curPreloadId = nil
         request.action(isResume)
         if not cfg.needWait then
+            if not self.m_isShowing then
+                
+                
+                if self.m_pendingRequests[1] == request then
+                    table.remove(self.m_pendingRequests, 1)
+                end
+                return
+            end
             self:OnOneMainHudActionFinish(request.type)
         end
     end
@@ -716,6 +743,7 @@ MainHudActionQueueSystem.OnOneMainHudActionFinish = HL.Method(HL.String) << func
         end
     end
     self.m_isShowing = false
+    self.m_curActionStartTime = -1
     self.m_lastFinishShowingFrameCount = Time.frameCount
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem showing finished")
     self:_CheckAllMainHudActionFinish()
@@ -727,8 +755,10 @@ end
 
 
 MainHudActionQueueSystem.Interrupt = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, includeCinematic, forceNotFinish)
+    logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.Interrupt TRY", includeCinematic, forceNotFinish)
     if not includeCinematic then
         if not self.m_isShowing and self.m_tryStartActionCor == nil then
+            self.m_curPreloadId = nil
             return
         end
         local request = self.m_pendingRequests[1]
@@ -738,12 +768,14 @@ MainHudActionQueueSystem.Interrupt = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) <
     end
     self.m_tryStartActionCor = self:_ClearCoroutine(self.m_tryStartActionCor)
     if not self.m_isShowing then
+        self.m_curPreloadId = nil
         return
     end
     local request = self.m_pendingRequests[1]
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.Interrupt", includeCinematic, request.type)
     self.m_curPreloadId = nil
     self.m_isShowing = false
+    self.m_curActionStartTime = -1
     Notify(MessageConst.INTERRUPT_MAIN_HUD_ACTION_QUEUE)
     if request.finishWhenInterrupt and not forceNotFinish then
         table.remove(self.m_pendingRequests, 1) 
@@ -969,6 +1001,133 @@ end
 MainHudActionQueueSystem.IsInLoginCheck = HL.Method().Return(HL.Boolean) << function(self)
     return self:HasRequest("LoginCheck_StartGuide") 
 end
+
+
+
+
+
+
+MainHudActionQueueSystem.m_curActionStartTime = HL.Field(HL.Number) << -1
+
+
+
+
+MainHudActionQueueSystem.GetDebugInfos = HL.Method(HL.Opt(HL.Boolean)).Return(HL.String) << function(self, shouldPrint)
+    local infos = {"<mark>--------------- MainHudActionQueueSystem DebugInfos ---------------\n"}
+    table.insert(infos, string.format("--------------- 当前Time.unscaledTime：%s ---------------\n", Time.unscaledTime))
+
+    
+    table.insert(infos, "isShowing=")
+    table.insert(infos, tostring(self.m_isShowing))
+    if self.m_isShowing then
+        table.insert(infos, "\t")
+        table.insert(infos, Time.unscaledTime - self.m_curActionStartTime)
+        local asyncCount, syncCount = self:_GetPendingActionCount()
+        table.insert(infos, string.format("\nGuide: asyncCount=%d, syncCount=%d\n", asyncCount, syncCount))
+    end
+
+    
+    table.insert(infos, "\n--------------- 当前队列 m_pendingRequests ---------------\n")
+    table.insert(infos, "序号\t类型\t\tID\tstartImmediately\t优先级\n")
+    for k, v in ipairs(self.m_pendingRequests) do
+        table.insert(infos, string.format("%d\t%s\t\t%d\t%s\t%f\n", k, v.type, v.id, v.startImmediately, v.getOrder and v.getOrder() or v.order))
+    end
+
+    
+    table.insert(infos, "\n--------------- m_playIgnoreMainHudActionTypes ---------------\n")
+    for k, _ in pairs(self.m_playIgnoreMainHudActionTypes) do
+        table.insert(infos, k)
+        table.insert(infos, ", ")
+    end
+
+    
+    table.insert(infos, "\n--------------- 其他相关信息 ---------------\n")
+    table.insert(infos, string.format("Guide: preCheckFinished=%s, isInForceGuide=%s, isInBlackbox=%s\n",
+            GameInstance.player.guide.preCheckFinished,
+            GameInstance.player.guide.isInForceGuide,
+            Utils.isInBlackbox()
+    ))
+    table.insert(infos, string.format("isProcessingRewardToastData=%s, MissionCompletePopPanel=%s, commonTaskTrackSystem:HasRequest=%s, isInSettlementDefense=%s\n",
+            GameInstance.player.inventory.isProcessingRewardToastData,
+            UIManager:IsShow(PanelId.MissionCompletePop),
+            LuaSystemManager.commonTaskTrackSystem:HasRequest(),
+            Utils.isInSettlementDefense()
+    ))
+
+    table.insert(infos, "</mark>")
+
+    local rst = table.concat(infos)
+    if shouldPrint then
+        logger.info(rst)
+    end
+    return rst
+end
+
+
+
+MainHudActionQueueSystem._GetPendingActionCount = HL.Method().Return(HL.Number, HL.Number) << function(self)
+    local asyncCount, syncCount = 0, 0
+    for _, request in ipairs(self.m_pendingRequests) do
+        if request.needWait then
+            if BEYOND_DEBUG_COMMAND and request.type == "ImportantReward" then
+                
+            else
+                asyncCount = asyncCount + 1
+            end
+        else
+            syncCount = syncCount + 1
+        end
+    end
+    return asyncCount, syncCount
+end
+
+
+MainHudActionQueueSystem.m_lastCheckPendingAsyncActionCount = HL.Field(HL.Number) << 0
+
+
+MainHudActionQueueSystem.m_firstIsGrowingCheckTime = HL.Field(HL.Number) << 0
+
+local AbnormalWaitingAsyncMinCount = 15
+local AbnormalWaitingTime = 60 * 2
+
+
+
+MainHudActionQueueSystem._DebugCheckState = HL.Method() << function(self)
+    local curAsyncCount = self:_GetPendingActionCount()
+    if curAsyncCount >= AbnormalWaitingAsyncMinCount and curAsyncCount >= self.m_lastCheckPendingAsyncActionCount then
+        
+        if self.m_firstIsGrowingCheckTime == 0 then
+            self.m_firstIsGrowingCheckTime = Time.unscaledTime
+        else
+            if Time.unscaledTime - self.m_firstIsGrowingCheckTime > AbnormalWaitingTime then
+                local str = string.format("MainHudActionQueueSystem._DebugCheckState 发现主界面队列中有 %d 个异步行为，数量异常，可能是队列卡死了", curAsyncCount)
+                logger.critical(str)
+                Notify(MessageConst.SHOW_TOAST, str)
+                logger.critical(self:GetDebugInfos(true))
+                self.m_firstIsGrowingCheckTime = 0
+                
+            end
+        end
+    else
+        self.m_firstIsGrowingCheckTime = 0
+    end
+    self.m_lastCheckPendingAsyncActionCount = curAsyncCount
+end
+
+
+
+MainHudActionQueueSystem._StartDebugCheck = HL.Method() << function(self)
+    self:_StartCoroutine(function()
+        while true do
+            coroutine.wait(1)
+            self:_DebugCheckState()
+        end
+    end)
+end
+
+
+
+
 
 HL.Commit(MainHudActionQueueSystem)
 return MainHudActionQueueSystem

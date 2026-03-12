@@ -39,6 +39,7 @@ local PANEL_ID = PanelId.CharInfoPotential
 
 
 
+
 CharInfoPotentialCtrl = HL.Class('CharInfoPotentialCtrl', uiCtrl.UICtrl)
 
 
@@ -73,6 +74,9 @@ CharInfoPotentialCtrl.m_potentialList= HL.Field(HL.Userdata)
 
 
 CharInfoPotentialCtrl.m_isTrailChar = HL.Field(HL.Boolean) << false
+
+
+CharInfoPotentialCtrl.m_isChangingChar = HL.Field(HL.Boolean) << false
 
 
 
@@ -126,7 +130,9 @@ CharInfoPotentialCtrl._OnCharPotentialUnlock = HL.Method(HL.Table) << function(s
         end
     end
 
+    self:_BlockUIInput(true)
     UIUtils.PlayAnimationAndToggleActive(self.view.rightNode.animWrapper, false, function()
+        self:_BlockUIInput(false)
         GameInstance.mobileMotionManager:PostEventCommonOperateSuccess()
 
 
@@ -194,7 +200,9 @@ end
 
 
 CharInfoPotentialCtrl._OnSelectCharChange = HL.Method(HL.Table) << function(self, charInfo)
+    self.m_isChangingChar = true
     self.view.animWrapper:PlayOutAnimation(function()
+        self.m_isChangingChar = false
         self.m_charInstId = charInfo.instId
         self.m_charTemplateId = charInfo.templateId
         self:RefreshAll()
@@ -665,6 +673,9 @@ end
 
 
 CharInfoPotentialCtrl.ShowPhotoByLevel = HL.Method(HL.Number) << function(self, potentialLevel)
+    if self.m_isChangingChar then
+        return
+    end
     if potentialLevel <= 0 and potentialLevel > #self.m_potentialList.potentialUnlockBundle then
         return
     end

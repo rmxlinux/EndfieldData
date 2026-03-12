@@ -36,6 +36,7 @@ local WEP_NOT_GEM_CUSTOM_CONFIRM_HINT_KEY = "wep_not_gem_custom_confirm_hint"
 
 
 
+
 WorldEnergyPointEntryCtrl = HL.Class('WorldEnergyPointEntryCtrl', uiCtrl.UICtrl)
 
 
@@ -437,8 +438,15 @@ WorldEnergyPointEntryCtrl._OnClickBtnGameStartBtn = HL.Method() << function(self
             self:_ShowNotGemCustomPopup()
         end
     else
-        GameInstance.player.worldEnergyPointSystem:SendReqStartWorldEnergyPoint(self.m_gameId, self.m_entityLid)
+        self:_TryStartWorldEnergyPoint()
     end
+end
+
+
+
+WorldEnergyPointEntryCtrl._TryStartWorldEnergyPoint = HL.Method() << function(self)
+    GameInstance.player.worldEnergyPointSystem:SendReqStartWorldEnergyPoint(self.m_gameId, self.m_entityLid)
+    PhaseManager:PopPhase(PHASE_ID)
 end
 
 
@@ -449,14 +457,13 @@ WorldEnergyPointEntryCtrl._StartStaminaCheck = HL.Method() << function(self)
     local realCost = ActivityUtils.getRealStaminaCost(wepGameCfg.costStamina)
     if curStamina >= realCost then
         
-        GameInstance.player.worldEnergyPointSystem:SendReqStartWorldEnergyPoint(self.m_gameId, self.m_entityLid)
+        self:_TryStartWorldEnergyPoint()
     else
         local firstPassRewardGained = GameInstance.player.worldEnergyPointSystem:IsGameGroupFirstPassRewardGained(self.m_gameGroupId)
         local hint = firstPassRewardGained and Language.LUA_WEP_STAMINA_LACK_START_WITHOUT_FIRST_PASS_REWARD_CONFIRM_HINT or
                 Language.LUA_WEP_STAMINA_LACK_START_CONFIRM_HINT
         self:_TryShowSerializedPopup(hint, WEP_STAMINA_LACK_START_CONFIRM_HINT_KEY, function()
-            GameInstance.player.worldEnergyPointSystem:SendReqStartWorldEnergyPoint(self.m_gameId,
-                                                                                    self.m_entityLid)
+            self:_TryStartWorldEnergyPoint()
         end)
     end
 end

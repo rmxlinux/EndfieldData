@@ -369,9 +369,12 @@ PhaseCashShop._AddMainHudActionQuest = HL.StaticMethod() << function()
                 Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "CashShopOrderSettle")
                 return
             end
+            local interrupt = {
+                interruptMessage = { MessageConst.INTERRUPT_MAIN_HUD_ACTION_QUEUE },
+            }
             CashShopUtils.showWebOrderSettles(PhaseCashShop.s_webOrderList, function()
                 showWebOrderSettles()
-            end)
+            end, interrupt)
         end
 
         

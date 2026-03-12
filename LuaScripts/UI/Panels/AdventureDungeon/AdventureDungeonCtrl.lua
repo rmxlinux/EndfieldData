@@ -182,6 +182,7 @@ AdventureDungeonCtrl._OnChangeTab = HL.Method(HL.Any) << function(self, arg)
     self.m_curTabIndex = math.min(index, #self.m_dungeonCategoryInfos)
     local cell = self.m_genTabCells:Get(self.m_curTabIndex)
     cell.toggle:SetIsOnWithoutNotify(true)
+    InputManagerInst.controllerNaviManager:SetTarget(cell.toggle)
     self:_OnClickTabToggle(self.m_curTabIndex, true)
 end
 
@@ -270,6 +271,12 @@ end
 AdventureDungeonCtrl.OnShow = HL.Override() << function(self)
     self.m_forbidResetTabIndex = false
 
+    if not string.isEmpty(self.m_phase.m_dungeonTab) then
+        local dungeonTab = self.m_phase.m_dungeonTab
+        self.m_phase.m_dungeonTab = ""
+        self:_OnChangeTab(dungeonTab)
+    end
+
     if DeviceInfo.usingController then
         local cell = self.m_genTabCells:Get(self.m_curTabIndex)
         if cell then
@@ -278,12 +285,6 @@ AdventureDungeonCtrl.OnShow = HL.Override() << function(self)
             InputManagerInst:ToggleGroup(self.view.tabTogMonoTarget.groupId, self.m_naviOnLeft)
             InputManagerInst.controllerNaviManager:SetTarget(cell.toggle)
         end
-    end
-
-    if not string.isEmpty(self.m_phase.m_dungeonTab) then
-        local dungeonTab = self.m_phase.m_dungeonTab
-        self.m_phase.m_dungeonTab = ""
-        self:_OnChangeTab(dungeonTab)
     end
 
     Notify(MessageConst.HIDE_ITEM_TIPS)
@@ -513,7 +514,7 @@ AdventureDungeonCtrl._HandleAndCreateSeriesInfo = HL.Method(HL.Any,  HL.Table).R
         
         local count = #info.subGameIds
         if count <= 0 or maxStaminaCost <= 0 then
-            info.staminaTxt = ""
+            info.staminaTxt = "0"
         elseif count == 1 then
             info.staminaTxt = tostring(maxStaminaCost)
             info.staminaMin = maxStaminaCost
@@ -552,7 +553,9 @@ AdventureDungeonCtrl._InitDataMonsterSpawnPoint = HL.Method() << function(self)
         tabJumpName = "EnemySpawner",
         dungeonInfosList = {},
         subGameIds = {},
+        redDotArg = {},
         showRelief = GameInstance.player.worldEnergyPointSystem.isFull,
+        redDotName = "AdventureDungeonTabMonsterSpawnPoint",
     }
     
     local infosBundle = {
@@ -587,6 +590,8 @@ AdventureDungeonCtrl._InitDataMonsterSpawnPoint = HL.Method() << function(self)
                     isActive = true,
                     rewardInfos = AdventureDungeonCtrl._ProcessMonsterSpawnRewards(groupId, id),
                     subGameIds = { id },
+                    redDotArg = groupId,
+                    redDotName = "AdventureDungeonCellMonsterSpawnPoint",
                     onGotoDungeon = self.m_onGotoDungeon,
                 }
                 local gemRandId = tableData.gemRandId
@@ -594,6 +599,7 @@ AdventureDungeonCtrl._InitDataMonsterSpawnPoint = HL.Method() << function(self)
                 info.domainId = domainId
                 table.insert(infosBundle.infos, info)
                 table.insert(newCategoryInfo.subGameIds, id)
+                table.insert(newCategoryInfo.redDotArg, groupId)
                 
                 if (lume.find(self.m_dropdownDomainIds, domainId)) == nil then
                     table.insert(self.m_dropdownDomainIds, domainId)
@@ -651,7 +657,11 @@ AdventureDungeonCtrl._RefreshUITabCell = HL.Method(HL.Table, HL.Number) << funct
         end
     end
     
-    cell.redDot:InitRedDot("AdventureDungeonTab", tabInfo.subGameIds)
+    if not string.isEmpty(tabInfo.redDotName) then
+        cell.redDot:InitRedDot(tabInfo.redDotName, tabInfo.redDotArg)
+    else
+        cell.redDot:InitRedDot("AdventureDungeonTab", tabInfo.subGameIds)
+    end
     
     cell.reliefTab.gameObject:SetActive(ActivityUtils.hasStaminaReduceCount() and tabInfo.showRelief)
 end
@@ -920,22 +930,24 @@ AdventureDungeonCtrl._ProcessDungeonRewards = HL.Method(HL.String, HL.Table, HL.
 
     
     if hasExtraReward then
-        local rewardsCfg = Tables.rewardTable[gameMechanicCfg.extraRewardId]
-        for _, itemBundle in pairs(rewardsCfg.itemBundles) do
-            local itemId = itemBundle.id
-            local reward = rewards[itemId]
-            if not reward then
-                local itemCfg = Tables.itemTable[itemId]
-                reward = {
-                    id = itemId,
-                    rarity = itemCfg.rarity,
-                    type = itemCfg.type:ToInt(),
-                    
-                    gainedSortId = 1,
-                    rewardTypeSortId = 2,
-                    gained = false,
-                }
-                rewards[itemId] = reward
+        local _, rewardsCfg = Tables.rewardTable:TryGetValue(gameMechanicCfg.extraRewardId)
+        if rewardsCfg then
+            for _, itemBundle in pairs(rewardsCfg.itemBundles) do
+                local itemId = itemBundle.id
+                local reward = rewards[itemId]
+                if not reward then
+                    local itemCfg = Tables.itemTable[itemId]
+                    reward = {
+                        id = itemId,
+                        rarity = itemCfg.rarity,
+                        type = itemCfg.type:ToInt(),
+                        
+                        gainedSortId = 1,
+                        rewardTypeSortId = 2,
+                        gained = false,
+                    }
+                    rewards[itemId] = reward
+                end
             end
         end
     end
@@ -958,51 +970,31 @@ AdventureDungeonCtrl._ProcessDungeonRewardsNoMerge = HL.Method(HL.String, HL.Tab
         local firstRewardGained = dungeonMgr:IsDungeonFirstPassRewardGained(dungeonId)
         local hideFirstReward = firstRewardGained and hasRecycleReward
         if not hideFirstReward then
-            local rewardsCfg = Tables.rewardTable[gameMechanicCfg.firstPassRewardId]
-            for _, itemBundle in pairs(rewardsCfg.itemBundles) do
-                local itemCfg = Tables.itemTable[itemBundle.id]
-                local reward = {
-                    id = itemBundle.id,
-                    rarity = itemCfg.rarity,
-                    type = itemCfg.type:ToInt(),
-                    
-                    isFirst = true,
-                    isExtra = false,
-                    gainedSortId = firstRewardGained and 1 or 2,
-                    rewardTypeSortId = 3,
-                    gained = firstRewardGained,
-                }
-                table.insert(rewards, reward)
+            local _, rewardsCfg = Tables.rewardTable:TryGetValue(gameMechanicCfg.firstPassRewardId)
+            if rewardsCfg then
+                for _, itemBundle in pairs(rewardsCfg.itemBundles) do
+                    local itemCfg = Tables.itemTable[itemBundle.id]
+                    local reward = {
+                        id = itemBundle.id,
+                        rarity = itemCfg.rarity,
+                        type = itemCfg.type:ToInt(),
+                        
+                        isFirst = true,
+                        isExtra = false,
+                        gainedSortId = firstRewardGained and 1 or 2,
+                        rewardTypeSortId = 3,
+                        gained = firstRewardGained,
+                    }
+                    table.insert(rewards, reward)
+                end
             end
         end
     end
 
     
     if hasRecycleReward then
-        local rewardsCfg = Tables.rewardTable[gameMechanicCfg.rewardId]
-        for _, itemBundle in pairs(rewardsCfg.itemBundles) do
-            local itemCfg = Tables.itemTable[itemBundle.id]
-            local reward = {
-                id = itemBundle.id,
-                rarity = itemCfg.rarity,
-                type = itemCfg.type:ToInt(),
-                
-                isFirst = false,
-                isExtra = false,
-                gainedSortId = 1,
-                rewardTypeSortId = 1,
-                gained = false,
-            }
-            table.insert(rewards, reward)
-        end
-    end
-
-    
-    if hasExtraReward then
-        local extraRewardGained = dungeonMgr:IsDungeonExtraRewardGained(dungeonId)
-        local hideExtraReward = extraRewardGained and hasRecycleReward
-        if not hideExtraReward then
-            local rewardsCfg = Tables.rewardTable[gameMechanicCfg.extraRewardId]
+        local _, rewardsCfg = Tables.rewardTable:TryGetValue(gameMechanicCfg.rewardId)
+        if rewardsCfg then
             for _, itemBundle in pairs(rewardsCfg.itemBundles) do
                 local itemCfg = Tables.itemTable[itemBundle.id]
                 local reward = {
@@ -1011,12 +1003,38 @@ AdventureDungeonCtrl._ProcessDungeonRewardsNoMerge = HL.Method(HL.String, HL.Tab
                     type = itemCfg.type:ToInt(),
                     
                     isFirst = false,
-                    isExtra = true,
-                    gainedSortId = extraRewardGained and 1 or 2,
-                    rewardTypeSortId = 2,
-                    gained = extraRewardGained,
+                    isExtra = false,
+                    gainedSortId = 1,
+                    rewardTypeSortId = 1,
+                    gained = false,
                 }
                 table.insert(rewards, reward)
+            end
+        end
+    end
+
+    
+    if hasExtraReward then
+        local extraRewardGained = dungeonMgr:IsDungeonExtraRewardGained(dungeonId)
+        local hideExtraReward = extraRewardGained and hasRecycleReward
+        if not hideExtraReward then
+            local _, rewardsCfg = Tables.rewardTable:TryGetValue(gameMechanicCfg.extraRewardId)
+            if rewardsCfg then
+                for _, itemBundle in pairs(rewardsCfg.itemBundles) do
+                    local itemCfg = Tables.itemTable[itemBundle.id]
+                    local reward = {
+                        id = itemBundle.id,
+                        rarity = itemCfg.rarity,
+                        type = itemCfg.type:ToInt(),
+                        
+                        isFirst = false,
+                        isExtra = true,
+                        gainedSortId = extraRewardGained and 1 or 2,
+                        rewardTypeSortId = 2,
+                        gained = extraRewardGained,
+                    }
+                    table.insert(rewards, reward)
+                end
             end
         end
     end
@@ -1053,50 +1071,34 @@ AdventureDungeonCtrl._ProcessDungeonRewardsBoss = HL.Method(HL.Table, HL.Table) 
 
         local notShow = isHunterModeUnlocked and hasHunterReward and firstRewardGained
         if not notShow then
-            local rewardsCfg = Tables.rewardTable[gameMechanicCfg.firstPassRewardId]
-            for _, itemBundle in pairs(rewardsCfg.itemBundles) do
-                local itemCfg = Tables.itemTable[itemBundle.id]
-                local reward = {
-                    id = itemBundle.id,
-                    rarity = itemCfg.rarity,
-                    type = itemCfg.type:ToInt(),
-                    
-                    isFirst = true,
-                    isExtra = false,
-                    gainedSortId = firstRewardGained and 1 or 2,
-                    rewardTypeSortId = 3,
-                    gained = firstRewardGained,
-                }
-                table.insert(rewards, reward)
+            local _, rewardsCfg = Tables.rewardTable:TryGetValue(gameMechanicCfg.firstPassRewardId)
+            if rewardsCfg then
+                for _, itemBundle in pairs(rewardsCfg.itemBundles) do
+                    local itemCfg = Tables.itemTable[itemBundle.id]
+                    local reward = {
+                        id = itemBundle.id,
+                        rarity = itemCfg.rarity,
+                        type = itemCfg.type:ToInt(),
+                        
+                        isFirst = true,
+                        isExtra = false,
+                        gainedSortId = firstRewardGained and 1 or 2,
+                        rewardTypeSortId = 3,
+                        gained = firstRewardGained,
+                    }
+                    table.insert(rewards, reward)
+                end
             end
         end
     end
 
     
     if hasHunterReward then
-        local rewardCfg = Tables.rewardTable[dungeonCfg.hunterModeRewardId]
-        
-        for _, itemBundle in pairs(rewardCfg.itemBundles) do
-            local itemCfg = Tables.itemTable[itemBundle.id]
-            local reward = {
-                id = itemCfg.id,
-                rarity = itemCfg.rarity,
-                type = itemCfg.type:ToInt(),
-                
-                isFirst = false,
-                isExtra = false,
-                gainedSortId = 1,
-                rewardTypeSortId = 1,
-                gained = false,
-            }
-            table.insert(rewards, reward)
-        end
-
-        
-        for _, itemBundle in pairs(rewardCfg.probItemBundles) do
-            local itemId = itemBundle.id
-            local succ, itemCfg = Tables.itemTable:TryGetValue(itemId)
-            if succ then
+        local _, rewardCfg = Tables.rewardTable:TryGetValue(dungeonCfg.hunterModeRewardId)
+        if rewardCfg then
+            
+            for _, itemBundle in pairs(rewardCfg.itemBundles) do
+                local itemCfg = Tables.itemTable[itemBundle.id]
                 local reward = {
                     id = itemCfg.id,
                     rarity = itemCfg.rarity,
@@ -1105,10 +1107,30 @@ AdventureDungeonCtrl._ProcessDungeonRewardsBoss = HL.Method(HL.Table, HL.Table) 
                     isFirst = false,
                     isExtra = false,
                     gainedSortId = 1,
-                    rewardTypeSortId = 1,
+                    rewardTypeSortId = 2,
                     gained = false,
                 }
                 table.insert(rewards, reward)
+            end
+
+            
+            for _, itemBundle in pairs(rewardCfg.probItemBundles) do
+                local itemId = itemBundle.id
+                local succ, itemCfg = Tables.itemTable:TryGetValue(itemId)
+                if succ then
+                    local reward = {
+                        id = itemCfg.id,
+                        rarity = itemCfg.rarity,
+                        type = itemCfg.type:ToInt(),
+                        
+                        isFirst = false,
+                        isExtra = false,
+                        gainedSortId = 1,
+                        rewardTypeSortId = 1,
+                        gained = false,
+                    }
+                    table.insert(rewards, reward)
+                end
             end
         end
     end
@@ -1174,16 +1196,18 @@ AdventureDungeonCtrl._ProcessMonsterSpawnRewards = HL.StaticMethod(HL.String, HL
     local firstRewardGained = GameInstance.player.worldEnergyPointSystem:IsGameGroupFirstPassRewardGained(groupId)
     if not firstRewardGained or not isFull then
         local firstPartRewards = {}
-        local rewardCfg = Tables.rewardTable[wepGroupCfg.firstPassRewardId]
-        for _, itemBundle in pairs(rewardCfg.itemBundles) do
-            local reward = AdventureDungeonCtrl._GenRewardInfo(DungeonConst.DUNGEON_REWARD_TAG_STATE.First, -1, firstRewardGained,
-                itemBundle.id, itemBundle.count)
-            table.insert(firstPartRewards, reward)
-        end
-        table.sort(firstPartRewards, Utils.genSortFunction(UIConst.COMMON_ITEM_SORT_KEYS))
-        for _, item in pairs(firstPartRewards) do
-            item.isFirst = true,
-            table.insert(rewardList, item)
+        local _, rewardCfg = Tables.rewardTable:TryGetValue(wepGroupCfg.firstPassRewardId)
+        if rewardCfg then
+            for _, itemBundle in pairs(rewardCfg.itemBundles) do
+                local reward = AdventureDungeonCtrl._GenRewardInfo(DungeonConst.DUNGEON_REWARD_TAG_STATE.First, -1, firstRewardGained,
+                    itemBundle.id, itemBundle.count)
+                table.insert(firstPartRewards, reward)
+            end
+            table.sort(firstPartRewards, Utils.genSortFunction(UIConst.COMMON_ITEM_SORT_KEYS))
+            for _, item in pairs(firstPartRewards) do
+                item.isFirst = true,
+                table.insert(rewardList, item)
+            end
         end
     end
     
@@ -1267,9 +1291,10 @@ AdventureDungeonCtrl.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) <
         return 0
     end
 
-    local subGameIds = cellInfo.subGameIds
+    local redDotName = string.isEmpty(cellInfo.redDotName) and "AdventureDungeonCell" or cellInfo.redDotName
+    local redDotArg = string.isEmpty(cellInfo.redDotArg) and cellInfo.subGameIds or cellInfo.redDotArg
     local hasRedDot, redDotType = RedDotManager:GetRedDotState(
-        "AdventureDungeonCell", subGameIds)
+        redDotName, redDotArg)
     if hasRedDot then
         return redDotType or UIConst.RED_DOT_TYPE.Normal
     else

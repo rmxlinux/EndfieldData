@@ -32,10 +32,15 @@ local MarkType = GEnums.MarkType
 
 
 
+
+
+
+
 PhaseMap = HL.Class('PhaseMap', phaseBase.PhaseBase)
 
 local MAP_PANEL_ID = PanelId.Map
 local MAP_MASK_PANEL_ID = PanelId.MapTransitionMask
+
 
 
 
@@ -71,6 +76,8 @@ local DETAIL_PANEL_MAP = {
     [MarkType.WeekRaid] = PanelId.MapMarkDetailWeekRaid,
     [MarkType.SSReceptionTeleport] = PanelId.MapMarkDetailCampFire,
     [MarkType.SnapshotActivity] = PanelId.MapMarkDetailActivitySnapShot,
+    [MarkType.ActivityCleaning] = PanelId.MapMarkDetailActivityCleaning,
+    [MarkType.DungeonActmonsterActivity] = PanelId.MapMarkDetailActivityActmonsterCtrl,
 
     
     [MarkType.DungeonPuzzle] = PanelId.MapMarkDetailDungeon,

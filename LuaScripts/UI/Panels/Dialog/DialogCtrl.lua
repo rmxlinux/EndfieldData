@@ -45,6 +45,7 @@ local PANEL_ID = PanelId.Dialog
 
 
 
+
 DialogCtrl = HL.Class('DialogCtrl', dialogCtrlBase.DialogCtrlBase)
 
 
@@ -81,6 +82,9 @@ DialogCtrl.m_radioName = HL.Field(HL.String) << ""
 
 
 DialogCtrl.m_curTrunkId = HL.Field(HL.String) << ""
+
+
+DialogCtrl.m_hasShowedTrunkText = HL.Field(HL.Boolean) << false
 
 
 DialogCtrl.m_clickCount = HL.Field(HL.Number) << 0
@@ -128,11 +132,18 @@ end
 
 DialogCtrl.OnDialogShow = HL.Override() << function(self)
     DialogCtrl.Super.OnDialogShow(self)
-    self:_RefreshAutoMode(GameWorld.dialogManager.autoMode)
     self:_RefreshCanSkip()
 
     if self.m_curTrunkId == "" then
         self:OnDialogTextFade({ 0, 0 })
+    end
+
+    if not self.m_hasShowedTrunkText then
+        self.view.bottomMask.gameObject:SetActive(false)
+        self.view.buttonLog.gameObject:SetActive(false)
+        self.view.buttonAuto.gameObject:SetActive(false)
+
+        self.view.textAuto.gameObject:SetActive(false)
     end
 end
 
@@ -175,10 +186,19 @@ DialogCtrl.OnDialogTextFade = HL.Method(HL.Table) << function(self, arg)
     self.m_curTrunkId = GameWorld.dialogManager.trunkId
 
     self.view.bottomLayout:DOKill()
-    self.view.bottomLayout:DOFade(alpha, duration)
+    if duration == 0 then
+        self.view.bottomLayout.alpha = alpha
+    else
+        self.view.bottomLayout:DOFade(alpha, duration)
+    end
+
     if self.view.textTalkCenterNode.gameObject.activeSelf then
         self.view.textTalkCenterNode:DOKill()
-        self.view.textTalkCenterNode:DOFade(alpha, duration)
+        if duration == 0 then
+            self.view.textTalkCenterNode.alpha = alpha
+        else
+            self.view.textTalkCenterNode:DOFade(alpha, duration)
+        end
     end
 end
 
@@ -344,6 +364,18 @@ DialogCtrl.SetTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean, HL.Any, HL.Any))
     self.view.textTalkCenterNode.gameObject:SetActive(singleTrunk)
     self.view.bottomLayout.gameObject:SetActive(not singleTrunk)
     self.view.imageBG.gameObject:SetActive(not hideBg)
+
+    if not self.m_hasShowedTrunkText then
+        self.m_hasShowedTrunkText = true
+        self.view.buttonLog.gameObject:SetActive(true)
+        self.view.buttonAuto.gameObject:SetActive(true)
+        self.view.bottomMask.gameObject:SetActive(true)
+
+        self:_RefreshAutoMode(GameWorld.dialogManager.autoMode)
+        if not self:IsPlayingAnimationIn() then
+            self:PlayAnimation("dialog_bottom_in")
+        end
+    end
 
     if singleTrunk then
         self.view.textTalkCenter:SetText(text)

@@ -131,6 +131,12 @@ local ControllerDynamicTopBtnBaseOrder = 100000
 
 
 
+
+
+
+
+
+
 MainHudCtrl = HL.Class('MainHudCtrl', uiCtrl.UICtrl)
 
 local PhaseForbidStyle = CS.Beyond.Gameplay.PhaseForbidStyle
@@ -152,8 +158,12 @@ MainHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SYSTEM_UNLOCK_CHANGED] = 'OnSystemUnlock',
     [MessageConst.GAME_MODE_ENABLE] = 'OnGameModeChange',
     [MessageConst.ON_CHANGE_THROW_MODE] = 'OnThrowModeChange',
+    [MessageConst.SHOW_WATER_DRONE_AIM] = 'OnShowWaterDroneAim',
+    [MessageConst.HIDE_WATER_DRONE_AIM] = 'OnHideWaterDroneAim',
+
     [MessageConst.FAC_TOGGLE_TOP_VIEW] = 'FacToggleTopView',
     [MessageConst.ON_TOGGLE_FAC_TOP_VIEW] = 'OnToggleFacTopView',
+    [MessageConst.DISABLE_BATTLE_INDICATOR_CONTROLLER] = 'OnDisableBattleIndicatorController',
     [MessageConst.ON_EXIT_FACTORY_MODE] = 'OnExitFactoryMode',
     [MessageConst.ON_TOGGLE_SPRINT] = 'OnToggleSprint',
     [MessageConst.ON_APPLICATION_FOCUS] = 'OnApplicationFocus',
@@ -194,6 +204,9 @@ MainHudCtrl.s_messages = HL.StaticField(HL.Table) << {
 MainHudCtrl.m_indicatorControllerGroupId = HL.Field(HL.Number) << 1
 
 
+MainHudCtrl.m_indicatorControllerDisableKeys = HL.Field(HL.Table)
+
+
 MainHudCtrl.m_characterFootBar = HL.Field(HL.Table)
 
 
@@ -205,6 +218,7 @@ MainHudCtrl.m_quickMenuBindingId = HL.Field(HL.Number) << -1
 
 MainHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_hideJumpKeys = {}
+    self.m_indicatorControllerDisableKeys = {}
 
     self:_InitOneTopNodeExpand(self.view.topRightBtns)
     self:_InitOneTopNodeExpand(self.view.topLeftBtns)
@@ -256,6 +270,7 @@ MainHudCtrl.OnShow = HL.Override() << function(self)
     self:_InitActivityBubbles()
     self.m_characterFootBar.mainCharFootBar:SetUIDisable("MainHudActive", false)
     self:OnToggleSprint({ GameInstance.playerController.isMainCharacterSprinting })
+    self:_UpdateWatchBtnBinding()
 end
 
 
@@ -482,6 +497,14 @@ MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
             phaseId = PhaseId.SimpleSystem,
             checkVisible = function()
                 return not Utils.isSystemUnlocked(GEnums.UnlockSystemType.Watch)
+            end,
+        },
+        simpleMenuForForbidden = { 
+            button = self.view.simpleMenuBtnForForbidden,
+            phaseId = PhaseId.SimpleSystem,
+            checkVisible = function()
+                local forbidParams = Utils.getForbiddenReason(ForbidType.ForbidMainHudTopBtns)
+                return forbidParams and forbidParams.showSettingBtn
             end,
         },
         inventory = { 
@@ -1059,9 +1082,7 @@ MainHudCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, act
     self:_UpdateSprintInfo(active)
     
     if active then
-        if self:IsShow() and not Utils.isInFactoryMode() and InputManagerInst:GetControllerIndicatorState() then
-            self:_ToggleControllerIndicator(true)
-        end
+        self:_CheckControllerIndicatorEnabled()
     else
         self:_ToggleControllerIndicator(false)
     end
@@ -1091,11 +1112,8 @@ end
 
 
 MainHudCtrl.CheckNormalAttackBtn = HL.Method(HL.Boolean) << function(self, active)
-    if active then
-        if not DeviceInfo.usingTouch and ((InputManagerInst:GetKey(CS.Beyond.Input.KeyboardKeyCode.Mouse0) and not InputManagerInst:GetKeyUp(CS.Beyond.Input.KeyboardKeyCode.Mouse0))
-                or (InputManagerInst:GetKey(CS.Beyond.Input.GamepadKeyCode.X)
-                    and not InputManagerInst:GetKeyUp(CS.Beyond.Input.GamepadKeyCode.X)
-                    and not InputManagerInst:GetControllerIndicatorState())) then
+    if active and InputManagerInst:IsGroupEnabled(self.view.attackButton.view.button.groupId) then
+        if InputManagerInst:CheckNormalAttackBtn() then
             self.view.attackButton:StartPressAttackBtn()
         end
     else
@@ -1342,15 +1360,16 @@ MainHudCtrl.OnFacModeChange = HL.Method(HL.Boolean) << function(self, inFacMode)
                 CS.Beyond.Gameplay.Core.GameplayTag(CS.Beyond.GlobalTagConsts.TAG_FAC_MODE))
         end
         self.view.topLeftBtns.animationWrapper:PlayInAnimation()
-        self:_ToggleControllerIndicator(false)
+        self.m_indicatorControllerDisableKeys["inFacMode"] = true
     else
         if self.m_inFacModeTagHandle then
             self.m_inFacModeTagHandle:RemoveTag()
             self.m_inFacModeTagHandle = nil
         end
         self.view.topLeftBtns.animationWrapper:PlayOutAnimation()
+        self.m_indicatorControllerDisableKeys["inFacMode"] = nil
     end
-    InputManagerInst:ToggleGroup(self.m_indicatorControllerGroupId, not inFacMode)
+    self:_CheckControllerIndicatorEnabled()
 end
 
 
@@ -1371,6 +1390,7 @@ MainHudCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, active)
     
     
     self.m_characterFootBar.mainCharFootBar:SetUIDisable("facTopView", active)
+    self:_UpdateWatchBtnBinding()
 end
 
 
@@ -1395,6 +1415,19 @@ end
 MainHudCtrl.ForbidCharFootBar = HL.Method(HL.Any) << function(self, arg)
     local key, isForbid = unpack(arg)
     self.m_characterFootBar.mainCharFootBar:SetUIDisable(key, isForbid)
+end
+
+
+
+
+MainHudCtrl.OnDisableBattleIndicatorController = HL.Method(HL.Table) << function(self, arg)
+    local disable, key = unpack(arg)
+    if disable then
+        self.m_indicatorControllerDisableKeys[key] = true
+    else
+        self.m_indicatorControllerDisableKeys[key] = nil
+    end
+    self:_CheckControllerIndicatorEnabled()
 end
 
 
@@ -1694,12 +1727,27 @@ MainHudCtrl._UpdateSprintInfo = HL.Method(HL.Boolean) << function(self, inputEna
         if self.view.sprintBtn.groupEnabled then
             
             
-            if InputManagerInst:GetKey(CS.Beyond.Input.KeyboardKeyCode.LeftShift) then
+            if DeviceInfo.usingKeyboard and InputManagerInst:GetKey(CS.Beyond.Input.KeyboardKeyCode.LeftShift) then
                 self:_OnPressSprint()
             end
         end
     else
         self:_OnReleaseSprint()
+    end
+end
+
+
+
+MainHudCtrl._CheckControllerIndicatorEnabled = HL.Method() << function(self)
+    if next(self.m_indicatorControllerDisableKeys) ~= nil then
+        InputManagerInst:ToggleGroup(self.m_indicatorControllerGroupId, false)
+        self:_ToggleControllerIndicator(false)
+    else
+        InputManagerInst:ToggleGroup(self.m_indicatorControllerGroupId, true)
+        
+        if InputManagerInst:IsGroupEnabled(self.m_indicatorControllerGroupId) and InputManagerInst:GetControllerIndicatorState() then
+            self:_ToggleControllerIndicator(true)
+        end
     end
 end
 
@@ -2008,12 +2056,35 @@ MainHudCtrl.OnThrowModeChange = HL.Method(HL.Any) << function(self, args)
 
     self:TogglePlayerJump({"throw_mode", inThrowMode})
     if inThrowMode then
+        self.m_indicatorControllerDisableKeys["inThrowMode"] = true
+        self:_CheckControllerIndicatorEnabled()
+
         self.view.attackButton:ReleaseNormalAttackBtn()
+    else
+        self.m_indicatorControllerDisableKeys["inThrowMode"] = nil
+        self:_CheckControllerIndicatorEnabled()
     end
 end
 
 
 
+
+
+
+
+MainHudCtrl.OnShowWaterDroneAim = HL.Method() << function(self)
+    self.m_indicatorControllerDisableKeys["inWaterDroneAim"] = true
+    self:_CheckControllerIndicatorEnabled()
+
+    self.view.attackButton:ReleaseNormalAttackBtn()
+end
+
+
+
+MainHudCtrl.OnHideWaterDroneAim = HL.Method() << function(self)
+    self.m_indicatorControllerDisableKeys["inWaterDroneAim"] = nil
+    self:_CheckControllerIndicatorEnabled()
+end
 
 
 
@@ -2172,6 +2243,29 @@ MainHudCtrl._InitActivityBubbles = HL.Method() << function(self)
     if not node then
         return
     end
+
+    
+    if BEYOND_DEBUG_COMMAND then
+        local debugActivityId = ActivityUtils.getDebugActivityBubbleId()
+        if not string.isEmpty(debugActivityId) then
+            local success, activity = Tables.activityTable:TryGetValue(debugActivityId)
+            if success then
+                self.m_activityBubbleIndex = -1
+                node.gameObject:SetActive(true)
+                node.stateController:SetState(activity.bubbleType)
+                node.reminderContentTxt.text = activity.bubbleText
+                self:_StartCoroutine(function()
+                    coroutine.wait(self.view.config.ACTIVITY_BUBBLE_DISAPPEAR_TIME)
+                    if self.m_activityBubbleIndex == -1 then
+                        self.view.topRightBtns.activityStartReminderNode.gameObject:SetActive(false)
+                    end
+                end)
+                return
+            end
+        end
+    end
+
+    
     for index = 1,#allActivities do
         local activity = allActivities[index]
         if ActivityUtils.isNewActivityBubble(activity.id) and activity.isUnlocked and not string.isEmpty(activity.bubbleText) then
@@ -2194,6 +2288,17 @@ MainHudCtrl._InitActivityBubbles = HL.Method() << function(self)
     self.view.topRightBtns.activityStartReminderNode.gameObject:SetActive(false)
 end
 
+
+
+
+
+MainHudCtrl._UpdateWatchBtnBinding = HL.Method() << function(self)
+    if DeviceInfo.usingKeyboard and LuaSystemManager.factory.inTopView and Utils.getCommonSettingValueBool("fac_top_view_esc_exit") then
+        self.view.topRightBtns.watchBtn.onClick:StopUseBinding()
+    else
+        self.view.topRightBtns.watchBtn.onClick:ChangeBindingPlayerAction("common_open_watch")
+    end
+end
 
 
 HL.Commit(MainHudCtrl)

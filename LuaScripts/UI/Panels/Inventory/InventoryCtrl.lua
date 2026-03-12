@@ -678,36 +678,52 @@ InventoryCtrl._InitQuickStash = HL.Method() << function(self)
 
     self.m_quickStashSettingInfo = {
         {
-            name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_ORE,
+            index = 1, 
+            name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_ORE_AND_PRODUCT,
+            icon = "icon_item_type_ore_and_product",
             showingType = GEnums.ItemShowingType.Ore,
+            showingType2 = GEnums.ItemShowingType.Product, 
+            extraCheckFunc = function(itemId)
+                return not UIConst.ITEM_BAG_QUICK_STASH_USEFUL_ITEMS[itemId]
+            end,
             defaultIsOn = true,
         },
         {
+            index = 2, 
             name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_PLANT,
             showingType = GEnums.ItemShowingType.Plant,
             defaultIsOn = true,
         },
         {
-            name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_PRODUCT,
+            index = 8, 
+            name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_USEFUL_ITEMS,
+            icon = "icon_item_type_useful_items",
             showingType = GEnums.ItemShowingType.Product,
-            defaultIsOn = true,
+            extraCheckFunc = function(itemId)
+                return UIConst.ITEM_BAG_QUICK_STASH_USEFUL_ITEMS[itemId]
+            end,
+            defaultIsOn = false,
         },
         {
+            index = 3, 
             name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_DOODAD,
             showingType = GEnums.ItemShowingType.Doodad,
             defaultIsOn = true,
         },
         {
+            index = 4, 
             name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_NURTURANCE,
             showingType = GEnums.ItemShowingType.Nurturance,
             defaultIsOn = true,
         },
         {
+            index = 5, 
             name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_USABLE,
             showingType = GEnums.ItemShowingType.Usable,
             defaultIsOn = false,
         },
         {
+            index = 6, 
             name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_PRODUCER,
             showingType = GEnums.ItemShowingType.Producer,
             extraCheckFunc = function(itemId)
@@ -717,6 +733,7 @@ InventoryCtrl._InitQuickStash = HL.Method() << function(self)
             defaultIsOn = true,
         },
         {
+            index = 7, 
             name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_FUNC_BUILDING,
             showingType = GEnums.ItemShowingType.Producer,
             extraCheckFunc = function(itemId)
@@ -730,15 +747,12 @@ InventoryCtrl._InitQuickStash = HL.Method() << function(self)
 
     local settingValue = GameInstance.player.inventory.itemBagBatchMoveFlag
     local useDefault = settingValue == 0
-    for index, info in ipairs(self.m_quickStashSettingInfo) do
-        local keyName = "Inventory.QuickStash.Tab." .. index
+    for _, info in ipairs(self.m_quickStashSettingInfo) do
+        local index = info.index
         if useDefault then
-            self.m_quickStashSettingInfo[index].isOn = info.defaultIsOn
+            info.isOn = info.defaultIsOn
         else
-            
-            
-            settingValue = math.floor(settingValue / 2)
-            self.m_quickStashSettingInfo[index].isOn = (settingValue % 2) == 1
+            info.isOn = ((settingValue >> index) & 1) == 1
         end
     end
 
@@ -795,19 +809,24 @@ InventoryCtrl._QuickStash = HL.Method() << function(self)
     local stashItemIndexList = {}
     local validTypes = {}
     local typeList = {}
+    local processAct = function(info, showingType)
+        if not info.extraCheckFunc then
+            validTypes[showingType] = true
+        else
+            if not validTypes[showingType] then
+                validTypes[showingType] = { info.extraCheckFunc }
+            else
+                table.insert(validTypes[showingType], info.extraCheckFunc)
+            end
+        end
+        table.insert(typeList, tostring(info.showingType))
+    end
     for _, info in ipairs(self.m_quickStashSettingInfo) do
         if info.isOn then
-            local showingType = info.showingType
-            if not info.extraCheckFunc then
-                validTypes[showingType] = true
-            else
-                if not validTypes[showingType] then
-                    validTypes[showingType] = { info.extraCheckFunc }
-                else
-                    table.insert(validTypes[showingType], info.extraCheckFunc)
-                end
+            processAct(info, info.showingType)
+            if info.showingType2 then
+                processAct(info, info.showingType2)
             end
-            table.insert(typeList, tostring(info.showingType))
         end
     end
     for index, itemBundle in pairs(GameInstance.player.inventory.itemBag:GetOrFallback(Utils.getCurrentScope()).slots) do
@@ -899,8 +918,8 @@ end
 
 InventoryCtrl._SaveCurQuickStashSetting = HL.Method() << function(self)
     local value = 1
-    for k, info in ipairs(self.m_quickStashSettingInfo) do
-        value = value + (info.isOn and (1 << k) or 0)
+    for _, info in ipairs(self.m_quickStashSettingInfo) do
+        value = value + (info.isOn and (1 << info.index) or 0)
     end
     GameInstance.player.inventory:SetItemBagBatchMoveFlag(value)
 end
@@ -1144,6 +1163,8 @@ end
 
 
 InventoryCtrl._CustomOnUpdateItemBagCell = HL.Method(HL.Forward("ItemSlot"), HL.Opt(HL.Userdata, HL.Number)) << function(self, cell, itemBundle, csIndex)
+    cell.view.cachedCommonQuickDropBindingId = nil 
+
     if DeviceInfo.usingController then  
         if csIndex == 0 then
             if self.m_waitInitNaviTarget then
@@ -1161,6 +1182,9 @@ InventoryCtrl._CustomOnUpdateItemBagCell = HL.Method(HL.Forward("ItemSlot"), HL.
     cell.item.view.button.onIsNaviTargetChanged = function(active)
         if active then
             self:_RefreshNaviTargetItemState(csIndex, cell, itemBundle)
+        end
+        if active and cell.view.cachedCommonQuickDropBindingId then
+            InputManagerInst:ToggleBinding(cell.view.cachedCommonQuickDropBindingId, cell:IsQuickDropTargetValid())
         end
     end
     self:_TryDisableHoverBindingOnEmptyItem(cell, itemBundle)
@@ -1197,10 +1221,11 @@ InventoryCtrl._CustomOnUpdateItemBagCell = HL.Method(HL.Forward("ItemSlot"), HL.
 
     self:_UpdateItemBlockMask(cell, csIndex)
     if not self.m_inDestroyMode then
-        if itemBundle.count and itemBundle.count > 0 and cell:IsQuickDropTargetValid() then
-            cell.item:AddHoverBinding("common_quick_drop", function()
+        if itemBundle.count and itemBundle.count > 0 then
+            cell.view.cachedCommonQuickDropBindingId = cell.item:AddHoverBinding("common_quick_drop", function()
                 cell:QuickDrop()
             end)
+            InputManagerInst:ToggleBinding(cell.view.cachedCommonQuickDropBindingId, cell:IsQuickDropTargetValid())
         end
         return
     end

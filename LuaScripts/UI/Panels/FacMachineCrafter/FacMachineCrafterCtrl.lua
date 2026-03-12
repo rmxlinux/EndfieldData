@@ -51,6 +51,11 @@ local PANEL_ID = PanelId.FacMachineCrafter
 
 
 
+
+
+
+
+
 FacMachineCrafterCtrl = HL.Class('FacMachineCrafterCtrl', uiCtrl.UICtrl)
 
 local SWITCH_LIQUID_MODE_POPUP_TITLE_TEXT_ID = "ui_fac_pipe_mode_close_info_title"
@@ -91,7 +96,7 @@ local SMART_ALERT_FUNCTION_NAME_LIST = {
 
 
 FacMachineCrafterCtrl.s_messages = HL.StaticField(HL.Table) << {
-    
+    [MessageConst.ON_FAC_MACHINE_MODE_CHANGE_SYNC_PORT] = '_OnModeChangeSyncPort',
 }
 
 
@@ -126,6 +131,9 @@ FacMachineCrafterCtrl.m_smartAlertTargetTransformCache = HL.Field(HL.Table)
 
 
 FacMachineCrafterCtrl.m_smartAlertConditionDataCache = HL.Field(HL.Table)
+
+
+FacMachineCrafterCtrl.m_needRefreshPortState = HL.Field(HL.Boolean) << false
 
 
 
@@ -232,6 +240,22 @@ FacMachineCrafterCtrl.OnClose = HL.Override() << function(self)
     self.view.buildingCommon:ClearSmartAlertUpdate()
     self.m_uiInfo.onFormulaChanged:RemoveListener(self.m_onBuildingFormulaChanged)
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_nodeId)
+end
+
+
+
+FacMachineCrafterCtrl.OnShow = HL.Override() << function(self)
+    if self.m_needRefreshPortState then
+        self.m_needRefreshPortState = false
+        self.view.cacheBelt:RefreshBeltCellsState()
+        self.view.cachePipe:RefreshPipeCellsState()
+    end
+end
+
+
+
+FacMachineCrafterCtrl.OnHide = HL.Override() << function(self)
+    self.m_needRefreshPortState = true
 end
 
 
@@ -495,10 +519,43 @@ FacMachineCrafterCtrl._InitModeSwitchNode = HL.Method() << function(self)
     if needModeNode then
         if
             nodePredefinedParam ~= nil and
-            nodePredefinedParam.producer ~= nil and
-            nodePredefinedParam.producer.modeMethod ~= CS.Beyond.GEnums.FCProducerPredefineModeMethod.InheritDomain
+            nodePredefinedParam.producer ~= nil
         then
-            needModeNode = nodePredefinedParam.producer.modeMethod == CS.Beyond.GEnums.FCProducerPredefineModeMethod.NormalAndLiquid
+            if nodePredefinedParam.producer.modeMethod == CS.Beyond.GEnums.FCProducerPredefineModeMethod.InheritDomain then
+                local domainMatched = false
+                local buildingMatched = false
+                local curDungeonId = GameInstance.dungeonManager.curDungeonId
+                local existDungionData, dungeonData = Tables.dungeonFactoryTable:TryGetValue(curDungeonId)
+                if existDungionData then
+                    local relatedDomainId = dungeonData.domainId
+                    if relatedDomainId and not relatedDomainId:isEmpty() then
+                        local existDomainData, domainData = Tables.domainDataTable:TryGetValue(relatedDomainId)
+                        if existDomainData then
+                            for idx = 0, domainData.machineModeTypeGroup.Count - 1 do
+                                if domainData.machineModeTypeGroup[idx] == FacConst.FAC_FORMULA_MODE_MAP.LIQUID then
+                                    domainMatched = true
+                                    break
+                                end
+                            end
+                        end
+                    end
+                end
+                if domainMatched then
+                    local buildingData = Tables.factoryMachineCrafterTable:GetValue(self.m_uiInfo.nodeHandler.templateId)
+                    if buildingData.modeMap.Count > 1 then
+                        for index = 0, buildingData.modeMap.Count - 1 do
+                            local mapData = buildingData.modeMap[index]
+                            if mapData ~= nil and mapData.modeName == FacConst.FAC_FORMULA_MODE_MAP.LIQUID then
+                                buildingMatched = true
+                                break
+                            end
+                        end
+                    end
+                end
+                needModeNode = domainMatched and buildingMatched
+            else
+                needModeNode = nodePredefinedParam.producer.modeMethod == CS.Beyond.GEnums.FCProducerPredefineModeMethod.NormalAndLiquid
+            end
         else
             needModeNode = FactoryUtils.checkBuildingHasModeSwitch(self.m_uiInfo.nodeHandler.templateId)
         end
@@ -532,7 +589,7 @@ FacMachineCrafterCtrl._OnModeSwitchButtonClicked = HL.Method() << function(self)
     else
         
         local _, hidePopUp = ClientDataManagerInst:GetBool(SWITCH_LIQUID_MODE_POPUP_LOCAL_DATA_KEY, false)
-        if hidePopUp then
+        if hidePopUp or Utils.isInBlackbox() then  
             self:_SwitchMode(FacConst.FAC_FORMULA_MODE_MAP.NORMAL)
         else
             Notify(MessageConst.SHOW_POP_UP, {
@@ -561,28 +618,46 @@ end
 FacMachineCrafterCtrl._SwitchMode = HL.Method(HL.String) << function(self, targetMode)
     self.view.buildingCommon.smartAlertChangeCachePauseUpdate = true
     GameInstance.player.remoteFactory.core:Message_OpChangeProducerMode(Utils.getCurrentChapterId(), self.m_nodeId, targetMode, function(message, result)
-        self.m_uiInfo:Update(true)
-        self.m_uiInfo:ClearProducerLastValidFormulaId()
-        self.view.cacheArea:RefreshCacheArea()
+        self:_PostSwitchMode()
+    end)
+end
+
+
+
+
+FacMachineCrafterCtrl._OnModeChangeSyncPort = HL.Method(HL.Any) << function(self, args)
+    local nodeId = unpack(args)
+    if nodeId == self.m_nodeId then
+        
         self.view.cacheBelt:RefreshCacheBelt()
         self.view.cachePipe:RefreshCachePipe()
-        self.view.formulaNode:RefreshRedDot()
-        self.view.modeToggle:SetIsOnWithoutNotify(self.m_uiInfo.formulaMan.currentMode == FacConst.FAC_FORMULA_MODE_MAP.NORMAL)
-        self:_UpdateSmartAlertCache()
-        self.view.inventoryArea:SetBuildingHasFluidCache(self.m_smartAlertConditionDataCache.hasFluidCache)
-        if self.view.buildingCommon.smartAlertDynamicNode ~= nil then
-            self.view.buildingCommon.smartAlertDynamicNode:ForceUpdateAlertPosition()
-        end
-        if self.view.cacheArea:CheckRepoNaviTargetTopLayer(true) or self.view.cacheArea:CheckRepoNaviTargetTopLayer(false) then
-            self.view.cacheArea:InitAreaNaviTarget()
-        end
+    end
+end
 
-        if self.m_hideModeSwitchPopUp then
-            
-            ClientDataManagerInst:SetBool(SWITCH_LIQUID_MODE_POPUP_LOCAL_DATA_KEY, true, false)
-            self.m_hideModeSwitchPopUp = false 
-        end
-    end)
+
+
+FacMachineCrafterCtrl._PostSwitchMode = HL.Method() << function(self)
+    self.m_uiInfo:Update(true)
+    self.m_uiInfo:ClearProducerLastValidFormulaId()
+    self.view.cacheArea:RefreshCacheArea()
+    self.view.cacheBelt:RefreshCacheBelt()
+    self.view.cachePipe:RefreshCachePipe()
+    self.view.formulaNode:RefreshRedDot()
+    self.view.modeToggle:SetIsOnWithoutNotify(self.m_uiInfo.formulaMan.currentMode == FacConst.FAC_FORMULA_MODE_MAP.NORMAL)
+    self:_UpdateSmartAlertCache()
+    self.view.inventoryArea:SetBuildingHasFluidCache(self.m_smartAlertConditionDataCache.hasFluidCache)
+    if self.view.buildingCommon.smartAlertDynamicNode ~= nil then
+        self.view.buildingCommon.smartAlertDynamicNode:ForceUpdateAlertPosition()
+    end
+    if self.view.cacheArea:CheckRepoNaviTargetTopLayer(true) or self.view.cacheArea:CheckRepoNaviTargetTopLayer(false) then
+        self.view.cacheArea:InitAreaNaviTarget()
+    end
+
+    if self.m_hideModeSwitchPopUp then
+        
+        ClientDataManagerInst:SetBool(SWITCH_LIQUID_MODE_POPUP_LOCAL_DATA_KEY, true, false)
+        self.m_hideModeSwitchPopUp = false 
+    end
 end
 
 

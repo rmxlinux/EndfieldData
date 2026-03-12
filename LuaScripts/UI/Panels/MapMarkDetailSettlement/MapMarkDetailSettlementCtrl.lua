@@ -60,6 +60,7 @@ MapMarkDetailSettlementCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
         commonArgs.rightBtnText = Language["ui_mapmarkdetail_button_teleport"]
         commonArgs.rightBtnIconName = UIConst.MAP_DETAIL_BTN_ICON_NAME.TELEPORT
         commonArgs.rightBtnCallback = function()
+            GameWorld.dialogManager:SkipCurrentDialog(true)
             self:_Teleport()
         end
     end

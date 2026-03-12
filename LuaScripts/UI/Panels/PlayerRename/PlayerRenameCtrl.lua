@@ -117,6 +117,10 @@ PlayerRenameCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end)
     end
 
+    if self.view.renameTipsTextKeyBoard ~= nil then
+        local isPCController = DeviceInfo.usingController and DeviceInfo.isPC
+        self.view.renameTipsTextKeyBoard.gameObject:SetActive(isPCController)
+    end
 
     self.view.sureBtn.onClick:AddListener(function()
         self:_OnSureBtnClicked()

@@ -15,8 +15,6 @@ local PANEL_ID = PanelId.SettlementDefenseTransit
 
 SettlementDefenseTransitCtrl = HL.Class('SettlementDefenseTransitCtrl', uiCtrl.UICtrl)
 
-local DEFENSE_MAIN_CHAR_EFFECT_NAME = "P_fxfac_interactive_holocast_2101"
-
 
 SettlementDefenseTransitCtrl.m_time = HL.Field(HL.Number) << 0
 
@@ -97,18 +95,8 @@ SettlementDefenseTransitCtrl._TryPopPhase = HL.Method() << function(self)
     end
 
     local isOpen, phaseLevel = PhaseManager:IsOpen(PhaseId.Level)
-    local _, towerDefenseData = Tables.towerDefenseTable:TryGetValue(GameInstance.player.towerDefenseSystem.activeTdId)
-    if isOpen and towerDefenseData and towerDefenseData.tdType == GEnums.TowerDefenseLevelType.Auto then
-        local mainModel
-        if GameInstance.playerController.mainCharacter ~= nil and GameInstance.playerController.mainCharacter.modelCom ~= nil then
-            mainModel = GameInstance.playerController.mainCharacter.modelCom.model
-        end
-        local entityRenderHelper = mainModel and mainModel:GetComponent(typeof(CS.Beyond.Gameplay.View.EntityRenderHelper))
-        if entityRenderHelper then
-            phaseLevel.m_defenseMainCharEffect = GameInstance.effectManager:CreateVFXEffectOnTransform(
-                DEFENSE_MAIN_CHAR_EFFECT_NAME, entityRenderHelper)
-            phaseLevel.m_defenseMainCharEffect:LoadImmediately()
-        end
+    if isOpen then
+        phaseLevel:PlayTowerDefenseMainCharEffect()
     end
 
     self:PlayAnimation(self.m_isNormal and "defensetransit_out_manualdefense" or "defensetransit_out_defense", function()

@@ -329,8 +329,8 @@ CashShopItem._UpdateGuarantee = HL.Method() << function(self)
     local goodsTableData = Tables.shopGoodsTable[self.m_info.goodsTemplateId]
     local remainMustUp = CashShopUtils.GetRemainPoolGotCount(goodsTableData.weaponGachaPoolId)
     if self.view.guaranteeTextLayout then
-        self.view.guaranteeTextLayout.guaranteeNumTxt.text = remainMustUp
-        self.view.guaranteeTextLayout.guaranteeNumTxt.gameObject:SetActive(remainMustUp > 0)
+        local text = string.format("<color=#FEF000>%d</color> ", remainMustUp) .. Language.ui_shop_entry_weapon_shop_numbers_1
+        self.view.guaranteeTextLayout.guaranteeTxt.text = text
         self.view.guaranteeTextLayout.guaranteeTxt.gameObject:SetActive(remainMustUp > 0)
         self.view.guaranteeTextLayout.restrictNode.gameObject:SetActive(remainMustUp > 0)
     end

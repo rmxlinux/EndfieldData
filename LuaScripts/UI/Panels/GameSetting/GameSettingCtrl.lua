@@ -238,6 +238,13 @@ local STANDARD_VERTICAL_RESOLUTION = CS.Beyond.UI.UIConst.STANDARD_VERTICAL_RESO
 
 
 
+
+
+
+
+
+
+
 GameSettingCtrl = HL.Class('GameSettingCtrl', uiCtrl.UICtrl)
 
 local KEYICON_PATH = "Assets/Beyond/InitialAssets/UI/Sprites/KeyIcon/"
@@ -516,6 +523,7 @@ GameSettingCtrl.OnClose = HL.Override() << function(self)
     if self.m_settingChanged then
         Notify(MessageConst.ON_GAME_SETTING_CHANGED)
         GameInstance.player.gameSettingSystem:SaveSetting()
+        GameSetting.SyncAudioForSDK() 
     end
 end
 
@@ -533,7 +541,12 @@ end
 
 
 GameSettingCtrl._OnResetBtnClick = HL.Method() << function(self)
-    self:_KeyResetActions()
+    local tabData = self.m_tabDataList[self.m_tabIndex]
+    if tabData.tabId == VIDEO_TAB_ID then
+        self:_ResetQualitySetting()
+    elseif tabData.tabId == KEY_HINT_TAB_ID then
+        self:_KeyResetActions()
+    end
 end
 
 
@@ -833,13 +846,18 @@ GameSettingCtrl._RefreshSettingTab = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.
     UIUtils.setSizeDeltaY(self.view.viewContent, self.m_contentHeight)
 
     
-    local isKeyHintTab = tabData.tabId == KEY_HINT_TAB_ID
-    self.view.bottomNode.gameObject:SetActive(isKeyHintTab)
-    if isKeyHintTab then
+    if tabData.tabId == VIDEO_TAB_ID and not DeviceInfo.isConsole then
+        self.view.bottomNode.gameObject:SetActive(true)
+        self.view.bottomNodeStateCtrl:SetState("Video")
+    elseif tabData.tabId == KEY_HINT_TAB_ID then
+        self.view.bottomNode.gameObject:SetActive(true)
+        self.view.bottomNodeStateCtrl:SetState("Key")
         local isAnyDirty = self:_IsAnyKeyActionStateDirty()
         self.view.saveBtn.interactable = isAnyDirty
         local saveBtnStateName = isAnyDirty and "NormalState" or "DisableState"
         self.view.saveBtnStateCtrl:SetState(saveBtnStateName)
+    else
+        self.view.bottomNode.gameObject:SetActive(false)
     end
 
     
@@ -1362,6 +1380,12 @@ GameSettingCtrl._InitToggleSettingItem = HL.Method(HL.Table, HL.Any) << function
         end
     end
 
+    local onText, offText
+    if string.isEmpty(itemData.toggleOnText) and string.isEmpty(itemData.toggleOffText) then
+        onText, offText = Language["ui_fac_common_machine_open"], Language["ui_fac_common_machine_close"]
+    else
+        onText, offText = itemData.toggleOnText, itemData.toggleOffText
+    end
     itemCell.toggle:InitCommonToggle(function(isOn)
         if GameSettingHelper.IsQualitySubSetting(settingId) then
             initialValue = self:_ToggleSetQualitySubSettingValue(settingId, isOn)
@@ -1372,7 +1396,7 @@ GameSettingCtrl._InitToggleSettingItem = HL.Method(HL.Table, HL.Any) << function
                 self.m_settingChanged = true
             end
         end
-    end, initialValue, true)
+    end, initialValue, true, { onText, offText })
 end
 
 
@@ -1591,6 +1615,13 @@ end
 
 
 
+GameSettingCtrl._ValidateIsKeyboard = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
+    return DeviceInfo.usingKeyboard
+end
+
+
+
+
 GameSettingCtrl._ValidateWebView = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
     return not GameInstance.player.gameSettingSystem.forbiddenWebView
 end
@@ -1750,11 +1781,7 @@ GameSettingCtrl._DropdownGetVideoResolutionTextList = HL.Method(HL.Any).Return(H
     local resolutionTextList = {}
     for i = 0, resolutionList.Count - 1 do
         local resolution = resolutionList[i]
-        if resolution.isFullScreen then
-            table.insert(resolutionTextList, string.format(Language[DROPDOWN_FULL_SCREEN_RESOLUTION_TEXT_ID], resolution.width, resolution.height))
-        else
-            table.insert(resolutionTextList, string.format(Language[DROPDOWN_WINDOWED_RESOLUTION_TEXT_ID], resolution.width, resolution.height))
-        end
+        table.insert(resolutionTextList, string.format(Language.LUA_GAME_SETTING_RESOLUTION, resolution.width, resolution.height))
     end
     return resolutionTextList
 end
@@ -2130,6 +2157,13 @@ end
 
 
 
+GameSettingCtrl._SliderGetCameraDistanceLevel = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
+    return GameSetting.cameraDistanceLevel
+end
+
+
+
+
 GameSettingCtrl._SliderGetNotchPadding = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
     return GameSettingHelper.GetGameSettingCanvasPaddingFromNotchPadding(self:_SliderGetValue(settingId), self.m_rootCanvasWidth)
 end
@@ -2200,6 +2234,14 @@ end
 
 GameSettingCtrl._SliderSetWalkRunRatio = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
     GameSettingSetter.controllerWalkRunRatio:Set(value)
+end
+
+
+
+
+
+GameSettingCtrl._SliderSetCameraDistanceLevel = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
+    GameSettingSetter.cameraDistanceLevel:Set(value)
 end
 
 
@@ -2454,13 +2496,6 @@ end
 
 
 
-GameSettingCtrl._ToggleGetEnableCameraFar = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
-end
-
-
-
-
 GameSettingCtrl._ToggleGetEnableAutoAttackTouch = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
     return self:_ToggleGetValue(settingId)
 end
@@ -2517,6 +2552,13 @@ end
 
 
 
+GameSettingCtrl._ToggleGetVideoFullScreen = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
+    return GameSetting.videoFullScreen
+end
+
+
+
+
 
 GameSettingCtrl._ToggleSetSuspendUnfocused = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
     GameSettingSetter.audioSuspendUnfocused:Set(value)
@@ -2560,14 +2602,6 @@ end
 
 GameSettingCtrl._ToggleSetCameraReverseY = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
     GameSettingSetter.controllerCameraReverseY:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._ToggleSetEnableCameraFar = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSettingSetter.enableCameraFar:Set(value)
 end
 
 
@@ -2633,6 +2667,29 @@ end
 
 GameSettingCtrl._ToggleSetPSNOnly = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
     GameInstance.player.friendSystem:SetPsnOnly(value)
+end
+
+
+
+
+
+GameSettingCtrl._ToggleSetVideoFullScreen = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
+    GameSettingSetter.graphicsFullScreen:Set(value)
+end
+
+
+
+
+GameSettingCtrl._ToggleGetFacTopViewEscExit = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
+    return Utils.getCommonSettingValueBool(settingId)
+end
+
+
+
+
+
+GameSettingCtrl._ToggleSetFacTopViewEscExit = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
+    GameSetting.GameSettingSetBool(settingId, value)
 end
 
 
@@ -2760,7 +2817,9 @@ GameSettingCtrl._KeyCheckActionsConflictAndDelete = HL.Method(HL.Userdata, HL.Us
                 return true 
             end
             anyConflict = true
-            self:_KeyDeleteActions(itemData, checkActionIds, isPrimary)
+            if GameInstance.player.gameSettingSystem:CheckKeySettingMutable(itemData.settingId, isPrimary, false) then
+                self:_KeyDeleteActions(itemData, checkActionIds, isPrimary)
+            end
         end
     end
     return anyConflict
@@ -2784,17 +2843,13 @@ end
 
 GameSettingCtrl._KeyChangeActions = HL.Method(HL.Userdata, HL.Userdata, HL.Userdata, HL.Boolean).Return(HL.Boolean)
     << function(self, itemData, actionIds, keyCode, isPrimary)
-    local actionId = actionIds[0]
-    local currKeyCode = InputManagerInst:GetActionKeyboardKeyCode(actionId, false, isPrimary)
-    if currKeyCode == keyCode then
-        return false 
+    
+    local dirty = GameInstance.player.gameSettingSystem:SetKeySetting(itemData.settingId, keyCode, isPrimary)
+    if dirty then
+        
+        self:_SetKeyActionState(itemData.settingId, KEY_ACTION_STATE.Dirty, isPrimary)
     end
-
-    
-    GameInstance.player.gameSettingSystem:SetKeySetting(itemData.settingId, keyCode, isPrimary)
-    
-    self:_SetKeyActionState(itemData.settingId, KEY_ACTION_STATE.Dirty, isPrimary)
-    return true 
+    return dirty 
 end
 
 
@@ -2806,10 +2861,11 @@ GameSettingCtrl._KeyResetActions = HL.Method() << function(self)
             
             GameInstance.player.gameSettingSystem:ResetAllKeySettings(InputDeviceFlags.Keyboard)
             
-            GameInstance.player.gameSettingSystem:SaveSetting()
-            
-            self:_ClearAllKeyActionStates()
-            self:_RefreshCurrentSettingTab()
+            GameInstance.player.gameSettingSystem:SaveSetting(function()
+                
+                self:_ClearAllKeyActionStates()
+                self:_RefreshCurrentSettingTab()
+            end)
         end,
     })
 end
@@ -2822,12 +2878,13 @@ GameSettingCtrl._KeySaveActions = HL.Method() << function(self)
     if HasKeyActionState(stateLevel, KEY_ACTION_STATE.Warning) then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_GAME_SETTING_KEY_SAVE_FAILED_WARNING)
     elseif HasKeyActionState(stateLevel, KEY_ACTION_STATE.Dirty) then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_GAME_SETTING_KEY_SAVE_SUCCESS)
         
-        GameInstance.player.gameSettingSystem:SaveSetting()
-        
-        self:_ClearAllKeyActionStates()
-        self:_RefreshCurrentSettingTab()
+        GameInstance.player.gameSettingSystem:SaveSetting(function()
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_GAME_SETTING_KEY_SAVE_SUCCESS)
+            
+            self:_ClearAllKeyActionStates()
+            self:_RefreshCurrentSettingTab()
+        end)
     end
 end
 
@@ -3147,6 +3204,7 @@ GameSettingCtrl._DoSelectVideoQuality = HL.Method(HL.Number, HL.Number, HL.Userd
         GameSettingHelper.SetQualityCustomState(false)
         GameSettingSetter.graphicsQuality:Set(qualityIndex, true)
         self:_UpdateAndRefreshQualitySubSettingsState() 
+        self:_RefreshCurrentSettingTab(true)
 
         
         self:_RefreshLoad(true)
@@ -3194,7 +3252,7 @@ end
 GameSettingCtrl._UpdateAndRefreshQualitySubSettingsState = HL.Method() << function(self)
     for settingId, subSettingData in pairs(self.m_qualitySubSettingDataMap) do
         if not subSettingData.itemData.ignoreMainChange then
-            GameSetting.RemoveGameSettingSaveValue(settingId)
+            GameSettingHelper.RemoveQualitySubSettingSaveValue(settingId)
 
             local itemCell = subSettingData.itemCell
             local itemType = subSettingData.itemData.settingItemType
@@ -3373,6 +3431,76 @@ GameSettingCtrl._ShowRebootTips = HL.Method() << function(self)
         freezeWorld = true,
         hideBlur = true,
         hideCancel = true,
+    })
+end
+
+
+
+GameSettingCtrl._IsQualitySettingDefault = HL.Method().Return(HL.Boolean) << function(self)
+    
+    if GameSettingHelper.GetQualityCustomState() then
+        return false
+    end
+    local currentIndex = GameSettingHelper.GetQualityIndex()
+    local defaultIndex = GameSettingHelper.GetDefaultVideoQualityIndex()
+    if currentIndex ~= defaultIndex then
+        return false
+    end
+    
+    local resolution = GameSetting.videoResolution
+    local displayWidth, displayHeight = DeviceInfo.GetDisplaySize()
+    if resolution.width ~= displayWidth or resolution.height ~= displayHeight then
+        return false
+    end
+    
+    for settingId, v in pairs(self.m_qualitySubSettingDataMap) do
+        local success, itemConfig = GameSettingHelper.GetQualitySubSettingConfigBySettingId(settingId)
+        if success then
+            local currentTier = GameSettingHelper.GetQualitySubSettingTierBySettingId(settingId)
+            local defaultTier = QualityManagerInst:GetQualityComponentDefaultTier(itemConfig.qualityComponentType)
+            if currentTier ~= LuaIndex(defaultTier) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+
+
+GameSettingCtrl._ResetQualitySetting = HL.Method() << function(self)
+    if self:_IsQualitySettingDefault() then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_GAME_SETTING_RESET_QUALITY_SETTING_SUCCESS)
+        return 
+    end
+
+    Notify(MessageConst.SHOW_POP_UP, {
+        content = Language.LUA_GAME_SETTING_RESET_QUALITY_SETTING_CONTENT,
+        subContent = Language.LUA_GAME_SETTING_RESET_QUALITY_SETTING_SUB_CONTENT,
+        onConfirm = function()
+            
+            for settingId, v in pairs(Tables.qualitySubSettingTable) do
+                if GameSetting.IsSettingItemValid(settingId) then
+                    local success, itemConfig = GameSettingHelper.GetQualitySubSettingConfigBySettingId(settingId)
+                    if success then
+                        local defaultTier = QualityManagerInst:GetQualityComponentDefaultTier(itemConfig.qualityComponentType)
+                        GameSettingHelper.SetQualitySubSettingTierBySettingId(settingId, LuaIndex(defaultTier))
+                    end
+                end
+            end
+            
+            local displayWidth, displayHeight = DeviceInfo.GetDisplaySize()
+            GameSettingSetter.graphicsResolution:Set(displayWidth, displayHeight)
+            
+            local defaultIndex = GameSettingHelper.GetDefaultVideoQualityIndex()
+            GameSettingHelper.SetQualityCustomState(false)
+            GameSettingSetter.graphicsQuality:Set(defaultIndex, true)
+            
+            GameSettingHelper.RemoveAllQualitySubSettingSaveValues()
+
+            
+            self:_RefreshCurrentSettingTab(true)
+        end
     })
 end
 
@@ -3584,10 +3712,6 @@ GameSettingCtrl.OnSystemDisplaySizeChanged = HL.StaticMethod() << function()
             CS.Beyond.Scripts.Entry.GameSettingSetter.graphicsNotchPadding:Set(defaultPadding)
         else
             CS.Beyond.Scripts.Entry.GameSettingSetter.graphicsNotchPadding:Set(CS.Beyond.GameSetting.videoNotchPadding)
-        end
-
-        if PhaseManager:IsOpen(PhaseId.GameSetting) then
-            PhaseManager:ExitPhaseFast(PhaseId.GameSetting)
         end
 
         local rootCanvasHelper = UIManager.m_uiCanvasScaleHelper

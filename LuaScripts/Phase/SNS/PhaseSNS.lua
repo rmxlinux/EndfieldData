@@ -22,6 +22,10 @@ local PHASE_ID = PhaseId.SNS
 
 PhaseSNS = HL.Class('PhaseSNS', phaseBase.PhaseBase)
 
+local NeedClosePanelIds = {
+    PanelId.FacMarkerManagePopup,
+}
+
 local SNS_BASIC_PANEL_ID = PanelId.SNSBasic
 local SNS_BARKER_PANEL_ID = PanelId.SNSBarker
 local SNS_MISSION_PANEL_ID = PanelId.SNSMission
@@ -104,6 +108,11 @@ end
 
 
 PhaseSNS._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    for _, panelId in pairs(NeedClosePanelIds) do
+        if UIManager:IsOpen(panelId) then
+            UIManager:Close(panelId)
+        end
+    end
 end
 
 

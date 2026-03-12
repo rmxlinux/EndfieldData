@@ -348,6 +348,12 @@ function WikiUtils.getItemDefaultCraftId(itemId)
     else
         defaultCraftId = userDefaultCraftId
     end
+
+    
+    if defaultCraftId and Tables.factoryManualCraftTable:ContainsKey(defaultCraftId) then
+        defaultCraftId = nil
+    end
+
     return defaultCraftId
 end
 

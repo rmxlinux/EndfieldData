@@ -13,6 +13,8 @@ local PHASE_ID = PhaseId.PowerPoleFastTravel
 
 
 
+
+
 PhasePowerPoleFastTravel = HL.Class('PhasePowerPoleFastTravel', phaseBase.PhaseBase)
 
 local ReservePanelIds = {  
@@ -20,10 +22,14 @@ local ReservePanelIds = {
     PanelId.LevelCamera,
     PanelId.GeneralTracker,
     PanelId.WeeklyRaidTaskTrackHud,
+    PanelId.MiniMap,
 }
 
 
 PhasePowerPoleFastTravel.m_fastTravelPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
+
+
+PhasePowerPoleFastTravel.m_currentLogicId = HL.Field(HL.Any) << 0
 
 
 
@@ -94,6 +100,9 @@ PhasePowerPoleFastTravel._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, H
 
 
 PhasePowerPoleFastTravel._OnActivated = HL.Override() << function(self)
+    if GameWorld.gameMechManager.travelPoleBrain:CanOpenMiniMap() then
+        self.arg[1] = self.m_currentLogicId or self.arg[1]  
+    end
    self.m_fastTravelPanelItem = self:CreatePhasePanelItem(PanelId.PowerPoleFastTravel, self.arg)
    GameWorld.gameMechManager.travelPoleBrain:OnPanelOpened(self.arg[1])
 end
@@ -120,6 +129,16 @@ PhasePowerPoleFastTravel._OnEnterPowerPoleFastTravelMode = HL.StaticMethod(HL.Ta
     local openSuccess = PhaseManager:OpenPhase(PhaseId.PowerPoleFastTravel, args)
     if not openSuccess then
         openFailedCallback()
+    end
+end
+
+
+
+PhasePowerPoleFastTravel.SaveCurrentLogicId = HL.Method() << function(self)
+    if self.m_fastTravelPanelItem and self.m_fastTravelPanelItem.uiCtrl then
+        self.m_currentLogicId = self.m_fastTravelPanelItem.uiCtrl.m_currentLogicId
+    else
+        self.m_currentLogicId = nil
     end
 end
 

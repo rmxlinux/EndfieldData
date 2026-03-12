@@ -58,6 +58,7 @@ MapMarkDetailCampFireCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
             commonArgs.bigBtnText = Language["ui_mapmarkdetail_button_teleport"]
             commonArgs.bigBtnIconName = UIConst.MAP_DETAIL_BTN_ICON_NAME.TELEPORT
             commonArgs.bigBtnCallback = function()
+                GameWorld.dialogManager:SkipCurrentDialog(true)
                 self:_Teleport()
             end
         else
@@ -72,7 +73,7 @@ end
 MapMarkDetailCampFireCtrl._Teleport = HL.Method() << function(self)
     Utils.teleportToEntity(self.m_teleportValidationId, function()
         GameAction.SaveCheckpointToCampfire(self.m_logicIdGlobal)
-        GameInstance.gameplayNetwork:RestAtCampfire()
+        GameInstance.gameplayNetwork:RestAtCampfire(self.m_logicIdGlobal)
         end)
 end
 

@@ -76,6 +76,7 @@ local PHASE_ID = PhaseId.EquipTech
 
 
 
+
 EquipTechCtrl = HL.Class('EquipTechCtrl', uiCtrl.UICtrl)
 
 
@@ -357,6 +358,7 @@ EquipTechCtrl.m_jumpFormulaCell = HL.Field(HL.Any)
 
 
 EquipTechCtrl._EnterSuitProduce = HL.Method() << function(self)
+    self:_RemoveEnhanceTargetNaviGroup()
     self:_SendFormulaRead()
     self.view.stateController:SetState(STATE_NAME.PRODUCE)
     self.m_equipPackDataList = EquipTechUtils.getUnlockedEquipPackList(true)
@@ -368,6 +370,7 @@ end
 
 
 EquipTechCtrl._EnterPartsProduce = HL.Method() << function(self)
+    self:_RemoveEnhanceTargetNaviGroup()
     self:_SendFormulaRead()
     self.view.stateController:SetState(STATE_NAME.PRODUCE)
     self.m_equipPackDataList = EquipTechUtils.getUnlockedEquipPackList(false)
@@ -664,6 +667,9 @@ EquipTechCtrl._ClearProduceEquipSelection = HL.Method() << function(self)
         self.m_selectedProduceItemCell:SetSelected(false)
         self.m_selectedProduceItemCell = nil
     end
+    if DeviceInfo.usingController then
+        UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.leftBarProduce.itemListScrollRect.naviGroup, nil)
+    end
     self:_RefreshProduceEquipInfo(nil)
 end
 
@@ -676,6 +682,7 @@ EquipTechCtrl._RefreshProduceEquipInfo = HL.Method(HL.Table) << function(self, i
     self.view.middleBar.centerItem.gameObject:SetActive(not isEmpty)
     self.view.middleBar.produceContent.equipInfo.gameObject:SetActive(not isEmpty)
     self.view.middleBar.produceContent.formulaNode.gameObject:SetActive(not isEmpty)
+    self.view.middleBar.centerItem.imgEquip.gameObject:SetActive(not isEmpty)
     self.view.rightProduceNode.emptyNode.gameObject:SetActive(isEmpty)
     self.view.rightProduceNode.equipDetails.gameObject:SetActive(not isEmpty)
     self.view.rightProduceNode.bottomNode.gameObject:SetActive(not isEmpty)
@@ -691,11 +698,23 @@ EquipTechCtrl._RefreshProduceEquipInfo = HL.Method(HL.Table) << function(self, i
     if not self.m_costItemCellCache then
         self.m_costItemCellCache = UIUtils.genCellCache(self.view.middleBar.produceContent.formulaNode.costItemCell)
     end
-    local costItemCount = itemInfo.isUnlocked and #itemInfo.equipFormulaData.costItemId or 0
+    local costItemCount = 0
+    local costItemTable
+    if itemInfo.isUnlocked then
+        costItemTable = {}
+        if not string.isEmpty(itemInfo.equipFormulaData.costGoldId) and itemInfo.equipFormulaData.costGoldNum > 0 then
+            table.insert(costItemTable, { id = itemInfo.equipFormulaData.costGoldId, count = itemInfo.equipFormulaData.costGoldNum })
+        end
+        for i = 0, #itemInfo.equipFormulaData.costItemId - 1 do
+            local costItemId = itemInfo.equipFormulaData.costItemId[i]
+            local costItemNum = itemInfo.equipFormulaData.costItemNum[i]
+            table.insert(costItemTable, { id = costItemId, count = costItemNum })
+        end
+        costItemCount = #costItemTable
+    end
     self.m_costItemCellCache:Refresh(costItemCount, function(cell, luaIndex)
-        local csIndex = CSIndex(luaIndex)
-        local costItemId = itemInfo.equipFormulaData.costItemId[csIndex]
-        local costItemNum = itemInfo.equipFormulaData.costItemNum[csIndex]
+        local costItemId = costItemTable[luaIndex].id
+        local costItemNum = costItemTable[luaIndex].count
         cell.gameObject.name = costItemId
         cell.item:InitItem({ id = costItemId, count = costItemNum }, true)
         cell.item:SetExtraInfo({
@@ -734,7 +753,7 @@ EquipTechCtrl._RefreshProduceEquipInfo = HL.Method(HL.Table) << function(self, i
             bottomNodeView.levelTip.txtCurrentLv.text = string.format(Language.LUA_EQUIP_PRODUCE_ADVENTURE_LEVEL_FORMAT,
                 GameInstance.player.adventure.adventureLevelData.lv)
         elseif GO_TO_TEXT_KEY[itemInfo.equipFormulaData.unlockType] then
-            bottomNodeView.gotoNode.textName.text = Language[GO_TO_TEXT_KEY[itemInfo.equipFormulaData.unlockType]]
+            bottomNodeView.gotoNode.buttonGoto.text = Language[GO_TO_TEXT_KEY[itemInfo.equipFormulaData.unlockType]]
             bottomNodeView.gotoNode.gameObject:SetActive(true)
         end
     end
@@ -839,6 +858,14 @@ EquipTechCtrl._EnterEnhanceTarget = HL.Method() << function(self)
         self:_RefreshEnhanceTargetList()
     else
         firstSlotTabToggle.isOn = true
+    end
+end
+
+
+
+EquipTechCtrl._RemoveEnhanceTargetNaviGroup = HL.Method() << function(self)
+    if DeviceInfo.usingController then
+        InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.leftBarEnhance.commonItemList.view.scrollRect.naviGroup)
     end
 end
 
@@ -1053,6 +1080,7 @@ EquipTechCtrl.m_closeEnhanceMaterialItemTipsBindingId = HL.Field(HL.Number) << 0
 EquipTechCtrl._BackToEnhanceTarget = HL.Method() << function(self)
     self.view.stateController:SetState(STATE_NAME.ENHANCE_TARGET)
     self.view.leftBarEnhance.layoutElement.ignoreLayout = false
+    InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.selectMaterials.commonItemList.view.scrollRect.naviGroup)
     self.view.rightBarEnhanceAttr.naviGroup:ManuallyFocus()
     if self.m_lastEnhanceAttrCell then
         local naviTarget
@@ -1169,6 +1197,11 @@ EquipTechCtrl._ShowEnhanceMaterialItemTips = HL.Method(HL.Table) << function(sel
         transform = self.view.selectMaterials.itemTipsPos,
         posType = UIConst.UI_TIPS_POS_TYPE.RightTop,
         isSideTips = DeviceInfo.usingController,
+        onBeforeJump = function()
+            self.m_isEnhanceMaterialItemTipsMode = false
+            self:DeleteInputBinding(self.m_closeEnhanceMaterialItemTipsBindingId)
+            Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.selectMaterials.itemListInputGroup.groupId)
+        end
     })
 end
 

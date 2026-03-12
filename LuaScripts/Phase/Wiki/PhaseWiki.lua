@@ -330,8 +330,14 @@ PhaseWiki._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) <
         
         coroutine.wait(1)
 
+        local needCameraPhaseIds = {
+            [PhaseId.FacBuildListSelect] = true,
+            [PhaseId.PRTSStoryCollDetail] = true,
+            [PhaseId.ManualCraftPopups] = true,
+        }
+
         
-        if args == nil or args.anotherPhaseId ~= PhaseId.FacBuildListSelect then
+        if args == nil or needCameraPhaseIds[args.anotherPhaseId] == nil then
             self.m_cameraGroup:SetActive(false)
             self.m_lightGroup:SetActive(false)
         end

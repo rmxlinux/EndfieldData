@@ -40,13 +40,14 @@ PhaseDungeonWeeklyRaid._OnInteractWeekRaidEntry = HL.StaticMethod() << function(
 end
 
 
-PhaseDungeonWeeklyRaid._OnWeekRaidGameEntry = HL.StaticMethod() << function()
-    UIManager:ToggleBlockObtainWaysJump("WeeklyRaidGame", true, true)
+
+PhaseDungeonWeeklyRaid._OnWeekRaidGameEntry = HL.StaticMethod(HL.Any) << function(arg)
+    UIManager:ToggleBlockObtainWaysJump("WeeklyRaidGame", true, {})
 end
 
 
 PhaseDungeonWeeklyRaid._OnWeekRaidGameQuit = HL.StaticMethod() << function()
-    UIManager:ToggleBlockObtainWaysJump("WeeklyRaidGame", false, true)
+    UIManager:ToggleBlockObtainWaysJump("WeeklyRaidGame", false)
 end
 
 

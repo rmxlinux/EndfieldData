@@ -262,7 +262,7 @@ HeadLabelCtrl._RefreshNpcHeadLabel = HL.Method(HL.Table, HL.String, HL.Any) << f
         logger.warn("_RefreshNpcInfo warn, data nil, npcId: " .. npcId)
         
         local csHeadLabel = headLabel.headLabel
-        csHeadLabel:SetSubRootVisible(HeadLabelType.Txt, VisibleSource.System, false, true)
+        csHeadLabel:SetSubRootVisible(HeadLabelType.Text, VisibleSource.System, false, true)
     end
 end
 

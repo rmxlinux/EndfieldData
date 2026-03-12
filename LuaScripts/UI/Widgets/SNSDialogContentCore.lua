@@ -145,6 +145,9 @@ local ContentType2CanNavi = {
 
 
 
+
+
+
 SNSDialogContentCore = HL.Class('SNSDialogContentCore', UIWidgetBase)
 
 
@@ -246,6 +249,11 @@ SNSDialogContentCore._OnFirstTimeInit = HL.Override() << function(self)
         self:OnSNSContentCoreCellSizeChange(args)
     end)
 
+    self:RegisterMessage(MessageConst.ON_SNS_CONTENT_WIDGET_CLICK, function(args)
+        args = args or {}
+        self:_OnSNSContentWidgetClick(args)
+    end)
+
     
     
     
@@ -302,12 +310,6 @@ end
 
 
 SNSDialogContentCore._OnDisable = HL.Override() << function(self)
-    
-    
-    if self.m_isFocusingContentCore then
-        self:_ManuallyStopFocusContent()
-        self:_ManuallyStopFocusContentCore()
-    end
 end
 
 
@@ -1247,7 +1249,6 @@ end
 
 
 
-
 SNSDialogContentCore.ClearAsyncHandler = HL.Method() << function(self)
     self.m_cellLoadingCor = self:_ClearCoroutine(self.m_cellLoadingCor)
 
@@ -1419,6 +1420,77 @@ SNSDialogContentCore._ResetAccelerating = HL.Method() << function(self)
     end)
 end
 
+
+
+
+
+local MissionState = CS.Beyond.Gameplay.MissionSystem.MissionState
+local MissionType = CS.Beyond.Gameplay.MissionSystem.MissionType
+
+
+
+
+SNSDialogContentCore._OnSNSContentWidgetClick = HL.Method(HL.Table) << function(self, args)
+    
+    
+    if not self.gameObject.activeInHierarchy then
+        return
+    end
+
+    
+    
+    
+    if GameInstance.player.spaceship.isViewingFriend then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_OBTAIN_WAYS_JUMP_BLOCKED)
+        return
+    end
+
+    
+    
+    if self.m_isFocusingContentCore then
+        self:_ManuallyStopFocusContent()
+        self:_ManuallyStopFocusContentCore()
+    end
+
+    local missionId = args.missionId
+    local prtsJumpArgs = args.prtsJumpArgs
+    if not string.isEmpty(missionId) then
+        self:_OnClickSNSContentTask(missionId)
+    elseif not string.isEmpty(prtsJumpArgs) then
+        self:_OnClickSNSContentPRTS(prtsJumpArgs)
+    end
+end
+
+
+
+
+SNSDialogContentCore._OnClickSNSContentTask = HL.Method(HL.String) << function(self, missionId)
+    local missionState = GameInstance.player.mission:GetMissionState(missionId)
+    
+    local missionRuntimeAsset = GameInstance.player.mission:GetMissionInfo(missionId)
+    local otherCaseHintText = missionRuntimeAsset.missionType == MissionType.Misc and
+            Language["ui_sns_toast_mission_misc_failed"] or Language["ui_mis_empty_default"]
+    if missionState == MissionState.Processing then
+        PhaseManager:OpenPhase(PhaseId.Mission, { autoSelect = missionId, useBlackMask = true })
+    elseif isComplete then
+        Notify(MessageConst.SHOW_TOAST, Language["ui_sns_toast_mission_completed"])
+    else
+        Notify(MessageConst.SHOW_TOAST, otherCaseHintText)
+    end
+end
+
+
+
+
+SNSDialogContentCore._OnClickSNSContentPRTS = HL.Method(HL.Table) << function(self, prtsJumpArgs)
+    local prts = GameInstance.player.prts
+    local unlock = prtsJumpArgs.isFirstLvId and prts:IsFirstLvUnlock(prtsJumpArgs.id) or prts:IsPrtsUnlocked(prtsJumpArgs.id)
+    if unlock then
+        PhaseManager:GoToPhase(PhaseId[prtsJumpArgs.phaseId], prtsJumpArgs)
+    else
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_SNS_DONT_HAVE_PRTS_DATA)
+    end
+end
 
 
 

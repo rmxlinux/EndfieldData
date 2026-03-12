@@ -36,8 +36,8 @@ local EquipTechConst = {
     },
 
     EQUIP_PRODUCE_PACK_RED_DOT_TYPE = {
-        AllNew = 3,
-        PartialNew = 4,
+        AllNew = 103,
+        PartialNew = 104,
     }
 }
 

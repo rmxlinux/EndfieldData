@@ -103,6 +103,7 @@ CharInfoProfileShowCtrl.m_rotateTickKey = HL.Field(HL.Number) << -1
 CharInfoProfileShowCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.btnBack.onClick:RemoveAllListeners()
     self.view.btnBack.onClick:AddListener(function()
+        self:_ClearRegisters()
         self:Notify(MessageConst.CHAR_INFO_PROFILE_CLOSE)
         self:Notify(MessageConst.CHAR_INFO_PAGE_CHANGE, {
             pageType = self.m_lastMainControlTab,

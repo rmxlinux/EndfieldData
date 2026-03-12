@@ -266,10 +266,12 @@ InteractOptionCtrl._Register = HL.Method() << function(self)
     end
     touchPanel.onScroll:AddListener(self.m_onScroll)
 
+    self.m_optionClickedThisTick = false
     self.m_updateCor = self:_StartCoroutine(function()
         while true do
             coroutine.step()
             self:_TryUpdateListTick()
+            self.m_optionClickedThisTick = false
         end
     end)
 end
@@ -848,10 +850,17 @@ InteractOptionCtrl._SortInteractOptionList = HL.Method() << function(self)
     table.sort(self.m_curShowingOptInfoList, self.m_sortFunc)
 end
 
+InteractOptionCtrl.m_optionClickedThisTick = HL.Field(HL.Boolean) << false
+
 
 
 
 InteractOptionCtrl._OnClickOption = HL.Method(HL.String) << function(self, identifier)
+    if self.m_optionClickedThisTick then
+        logger.warn("InteractOptionCtrl._OnClickOption FAIL: self.m_optionClickedThisTick==true")
+        return
+    end
+
     local info = self.m_optionInfoMap[identifier]
     if not info then
         return
@@ -893,6 +902,7 @@ InteractOptionCtrl._OnClickOption = HL.Method(HL.String) << function(self, ident
     end
 
     info.action()
+    self.m_optionClickedThisTick = true
 end
 
 

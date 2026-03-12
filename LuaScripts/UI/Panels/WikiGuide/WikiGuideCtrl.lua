@@ -46,6 +46,8 @@ local PANEL_ID = PanelId.WikiGuide
 
 
 
+
+
 WikiGuideCtrl = HL.Class('WikiGuideCtrl', uiCtrl.UICtrl)
 
 
@@ -161,6 +163,10 @@ WikiGuideCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
         local cell = self.m_entryListCache(obj)
         local luaIndex = LuaIndex(csIndex)
 
+        local entryId = self.m_showingEntryList[luaIndex].wikiEntryData.id
+        if WikiUtils.isWikiEntryUnread(entryId) then
+            self.m_readWikiEntries[entryId] = true
+        end
         cell.wikiTutorialTab:InitWikiTutorialTab(self.m_showingEntryList[luaIndex], function()
             self:SetSelectedEntryIndex(luaIndex)
         end)
@@ -246,11 +252,13 @@ WikiGuideCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
 
     self.m_selectedIndex = 0
     self.m_toShowDetail = args
+    self.m_readWikiEntries = {}
 end
 
 
 
 WikiGuideCtrl.OnClose = HL.Override() << function(self)
+    self:_MarkWikiEntryRead()
     UIManager:Close(PanelId.WikiGuideTips)
     self:GameEventLogExit()
 end
@@ -269,6 +277,7 @@ end
 
 
 WikiGuideCtrl.OnHide = HL.Override() << function(self)
+    self:_MarkWikiEntryRead()
     self:GameEventLogExit()
 end
 
@@ -277,6 +286,22 @@ end
 WikiGuideCtrl._OnPlayAnimationOut = HL.Override() << function(self)
     WikiGuideCtrl.Super._OnPlayAnimationOut(self)
     self:_PlayDecoAnim(false)
+end
+
+
+WikiGuideCtrl.m_readWikiEntries = HL.Field(HL.Table)
+
+
+
+WikiGuideCtrl._MarkWikiEntryRead = HL.Method() << function(self)
+    if self.m_readWikiEntries then
+        local entryIdList = {}
+        for entryId, _ in pairs(self.m_readWikiEntries) do
+            table.insert(entryIdList, entryId)
+        end
+        GameInstance.player.wikiSystem:MarkWikiEntryRead(entryIdList)
+        self.m_readWikiEntries = {}
+    end
 end
 
 
@@ -505,6 +530,7 @@ WikiGuideCtrl.SwitchPage = HL.Method(HL.Number) << function(self, pageCsIndex)
     mediaNode.mediaList:ScrollToIndex(pageCsIndex)
     self.view.centerAnimWrapper:ClearTween(false)
     self.view.centerAnimWrapper:PlayInAnimation()
+    self:_MarkWikiEntryRead()
 end
 
 

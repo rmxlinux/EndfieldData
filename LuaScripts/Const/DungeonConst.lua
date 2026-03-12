@@ -18,6 +18,7 @@ DUNGEON_CATEGORY = {
     SS = "dungeon_ss",
     WorldLevel = "dungeon_worldlevel",
     HighDifficulty = "dungeon_highdifficulty",
+    ActMonster = "dungeon_actmonster",
 }
 
 DUNGEON_REWARD_TAG_STATE = {

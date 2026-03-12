@@ -488,6 +488,10 @@ end
 
 
 FacCachePipe.RefreshPipeCellsState = HL.Method() << function(self)
+    if not self.m_isInPipeMode then
+        return
+    end
+
     for index, inPipeInfo in ipairs(self.m_inPipeInfoList) do
         local inPipe = self.m_inPipeList[index]
         self:_RefreshPipeCellState(inPipe, inPipeInfo)

@@ -138,7 +138,9 @@ MapMarkDetailMinePointTeamCtrl._FillSingleMinePoint = HL.Method(HL.Any, HL.Numbe
         minePoint.purityHigh.gameObject:SetActive(state == self.HIGH_PURITY)
         minePoint.minerDeployed.gameObject:SetActive(miner ~= nil)
         if miner ~= nil then
-            minePoint.unlockedRoot:SetState(miner.inPower and "PowerOn" or "NoPower")
+            local minerState = GameInstance.remoteFactoryManager:QueryBuildingState(miner.belongChapter.chapterId, miner.nodeId, false)
+            local activeState = minerState == GEnums.FacBuildingState.Normal or minerState == GEnums.FacBuildingState.Blocked
+            minePoint.unlockedRoot:SetState(activeState and "Active" or "Inactive")
         end
     end
 end

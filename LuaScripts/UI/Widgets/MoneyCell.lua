@@ -370,14 +370,22 @@ MoneyCell._OnClickAddItem = HL.Method() << function(self)
             sourceId = Tables.globalConst.originiumItemId,
             targetId = Tables.globalConst.diamondItemId,
             onClose = function()
-                UIUtils.setAsNaviTarget(self.view.button)
+                local ctrl = self:GetUICtrl()
+                if DeviceInfo.usingController and not ctrl.m_isClosed and ctrl.view.contentNaviGroup then
+                    ctrl.view.contentNaviGroup:ManuallyFocus()
+                end
             end,})
     elseif self:_IsWeaponGacha() then
         PhaseManager:OpenPhase(PhaseId.CommonMoneyExchange, {
             sourceId = Tables.globalConst.originiumItemId,
             targetId = Tables.globalConst.gachaWeaponItemId,
             onClose = function()
-                UIUtils.setAsNaviTarget(self.view.button)
+                if DeviceInfo.usingController then
+                    local naviGroup = self:GetUICtrl().view.contentNaviGroup
+                    if naviGroup then
+                        naviGroup:ManuallyFocus()
+                    end
+                end
             end,})
     elseif self:_IsOriginium() then
         CashShopUtils.GotoCashShopRechargeTab()

@@ -277,6 +277,7 @@ PhaseDomainDepotPackage._AsyncPlayBackAnimationOutByStageAndRemovePhaseItem = HL
             self:RemovePhasePanelItem(self.m_backPanel)
             onComplete()
         end)
+        UIManager:ChangeHideCameraPanelState(self.m_backPanel.uiCtrl.panelId, UIConst.HIDE_CAMERA_PANEL_STATE.Out)
     end)
 end
 

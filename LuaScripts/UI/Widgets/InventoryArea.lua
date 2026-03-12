@@ -422,7 +422,7 @@ InventoryArea._InitData = HL.Method() << function(self)
                             InputManagerInst:SetBindingText(quickDropBindingId, quickDropText)
                         end
                     else
-                        local quickDropBindingText = self.m_args.itemBagQuickDropBindingText
+                        local quickDropBindingText = self.m_args.depotQuickDropBindingText
                         if not string.isEmpty(quickDropBindingText) then
                             InputManagerInst:SetBindingText(quickDropBindingId, quickDropBindingText)
                         end

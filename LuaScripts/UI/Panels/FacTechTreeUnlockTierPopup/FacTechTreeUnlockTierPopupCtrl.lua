@@ -17,6 +17,7 @@ local PANEL_ID = PanelId.FacTechTreeUnlockTierPopup
 
 
 
+
 FacTechTreeUnlockTierPopupCtrl = HL.Class('FacTechTreeUnlockTierPopupCtrl', uiCtrl.UICtrl)
 
 
@@ -221,11 +222,17 @@ FacTechTreeUnlockTierPopupCtrl._InitController = HL.Method() << function(self)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 
-    self.view.downNode.onIsFocusedChange:AddListener(function(isFocused)
-        if not isFocused then
-            Notify(MessageConst.HIDE_ITEM_TIPS)
-        end
+    self.view.downNode.onIsFocusedChange:AddListener(function(isFocus)
+        self:_OnIsFocusedChange(isFocus)
     end)
+end
+
+
+
+
+FacTechTreeUnlockTierPopupCtrl._OnIsFocusedChange = HL.Method(HL.Boolean) << function(self, isFocus)
+    self.view.preBtn.gameObject:SetActive(not isFocus)
+    self.view.nextBtn.gameObject:SetActive(not isFocus)
 end
 
 HL.Commit(FacTechTreeUnlockTierPopupCtrl)

@@ -1,7 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local json = require("Common/Tools/json")
 local PANEL_ID = PanelId.CommonShare
-local waterMarkScale = 0.074
+local waterMarkScale = 0.096
 
 
 
@@ -93,8 +93,9 @@ CommonShareCtrl.ScreenCaptureAndShare = HL.StaticMethod(HL.Any) << function(arg)
         end
         CoroutineManager:StartCoroutine(function()
             
-            local rt = CS.Beyond.UI.ScreenCaptureUtils.GetScreenCapture()
-            arg.rt = rt
+            local rtHandle = CS.Beyond.UI.ScreenCaptureUtils.GetScreenCapture()
+            arg.rt = rtHandle.rt
+            arg.rtHandle = rtHandle
 
             
             local realScale = math.floor(Screen.height * waterMarkScale) / Screen.height
@@ -105,9 +106,11 @@ CommonShareCtrl.ScreenCaptureAndShare = HL.StaticMethod(HL.Any) << function(arg)
             local scale = waterMarkScale + 1
             local ratio = 1
             if this.view.rectTransform.rect.height > 0 then
+                this.view.stateController:SetState("Show")
                 ratio = this.view.rectTransform.rect.width / this.view.rectTransform.rect.height
                 this.view.hideRoot.aspectRatio = ratio
                 LayoutRebuilder.ForceRebuildLayoutImmediate(this.view.hideRoot.transform)
+                this.view.stateController:SetState(arg.needEdge == false and "HideAll" or "Hide")
             end
             local photoRealHeight = this.view.photoImgWithWaterMark.rectTransform.rect.width / ratio
             local offset = photoRealHeight * waterMarkScale / 2
@@ -117,8 +120,10 @@ CommonShareCtrl.ScreenCaptureAndShare = HL.StaticMethod(HL.Any) << function(arg)
             this.view.bottomNodeWaterMarkUIForPos.rectTransform.sizeDelta = Vector2(0, photoRealHeight * waterMarkScale)
             coroutine.step()
             coroutine.step()
-            local waterRt = CS.Beyond.UI.ScreenCaptureUtils.GetWaterMarkRT(scale, rt)
-            arg.waterRt = waterRt
+            local waterRtHandle, watermarkHandle = CS.Beyond.UI.ScreenCaptureUtils.GetWaterMarkRT(scale, rtHandle)
+            arg.watermarkHandle = watermarkHandle
+            arg.waterRt = waterRtHandle.rt
+            arg.waterRtHandle = waterRtHandle
             coroutine.waitForRenderDone()
             coroutine.step()
             coroutine.step()
@@ -185,6 +190,12 @@ CommonShareCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.saveBtn.onClick:RemoveAllListeners()
     self.view.saveBtn.onClick:AddListener(function()
+        local currentPlatform = CS.UnityEngine.Application.platform
+        if currentPlatform == CS.UnityEngine.RuntimePlatform.PS5 and CS.Beyond.PS5ContentManager.instance.isSavingFile then
+            
+            return
+        end
+
         logger.info("CommonShareCtrl.OnCreate: Save button clicked")
         EventLogManagerInst:GameEvent_CommonShareAction(self.m_type, self.m_channelIdList, "save","")
         if self.m_type == "PhotoShot" then
@@ -198,22 +209,21 @@ CommonShareCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             Notify(MessageConst.SHOW_TOAST, Language.LUA_COMMON_SHARE_SAVED)
             return
         end
-        local currentPlatform = CS.UnityEngine.Application.platform
         local savePath = ""
-        local isMob = DeviceInfo.isMobile
-        local fileName = isMob and "ENDFIELD_SHARE_TEMP.png" or string.format("ENDFIELD_SHARE_%s.png", CS.Beyond.DateTimeUtils.GetCurrentTimestampBySeconds())
+        local usingTempPath = DeviceInfo.isMobile or currentPlatform == CS.UnityEngine.RuntimePlatform.PS5
+        local fileName = usingTempPath and "ENDFIELD_SHARE_TEMP.png" or string.format("ENDFIELD_SHARE_%s.png", CS.Beyond.DateTimeUtils.GetCurrentTimestampBySeconds())
         if UNITY_STANDALONE_WIN or UNITY_EDITOR_WIN then
             savePath = CS.System.IO.Path.Combine(CS.System.Environment.GetFolderPath(CS.System.Environment.SpecialFolder.MyPictures),"ENDFIELD", fileName)
         else
-            savePath = isMob and CS.System.IO.Path.Combine(CS.UnityEngine.Application.temporaryCachePath, fileName) or CS.System.IO.Path.Combine(CS.UnityEngine.Application.persistentDataPath, fileName)
+            savePath = usingTempPath and CS.System.IO.Path.Combine(CS.UnityEngine.Application.temporaryCachePath, fileName) or CS.System.IO.Path.Combine(CS.UnityEngine.Application.persistentDataPath, fileName)
         end
 
         local isSave = 0
         
         isSave = CS.Beyond.UI.ScreenCaptureUtils.SaveScreenCapture(self.m_showPlayerInfo and self.m_arg.waterRt or self.m_arg.rt, savePath)
-        if not UNITY_EDITOR and currentPlatform == CS.UnityEngine.RuntimePlatform.PS5 then
+        if currentPlatform == CS.UnityEngine.RuntimePlatform.PS5 then
             
-            CS.Beyond.PS5ContentManager.instance:ExportContentFromFile(savePath, fileName)
+            CS.Beyond.PS5ContentManager.instance:ExportContentFromFile(savePath)
             
             return
         end
@@ -226,7 +236,7 @@ CommonShareCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
                 self.m_isSaved = true
             end
             
-            if isMob then
+            if usingTempPath then
                 local dataStr = Json.encode({
                     shareChannel = 0, 
                     imgPath = savePath,
@@ -416,7 +426,9 @@ CommonShareCtrl.OnClose = HL.Override() << function(self)
     UIManager:Show(PanelId.UIDPanel)
     if self.m_arg and self.m_arg.rt then
         
-        CS.Beyond.UI.ScreenCaptureUtils.Release()
+        CS.Beyond.UI.ScreenCaptureUtils.ReleaseWaterMarkHandle(self.m_arg.watermarkHandle)
+        self.m_arg.rtHandle:Release()
+        self.m_arg.waterRtHandle:Release()
     end
     if self.m_onClose then
         self.m_onClose()

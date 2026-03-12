@@ -45,9 +45,9 @@ ShopChoicenessGiftBagCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     if startDate and endDate then
         self.view.allottedTimeNode.gameObject:SetActive(true)
         self.view.startDateTxt:SetAndResolveTextStyle(startDate)
-        self.view.startTimeTxt:SetAndResolveTextStyle(startTime)
+        self.view.startTimeTxt:SetAndResolveTextStyle(Utils.appendUTC(startTime))
         self.view.endDateTxt:SetAndResolveTextStyle(endDate)
-        self.view.endTimeTxt:SetAndResolveTextStyle(endTime)
+        self.view.endTimeTxt:SetAndResolveTextStyle(Utils.appendUTC(endTime))
     else
         self.view.allottedTimeNode.gameObject:SetActive(false)
     end

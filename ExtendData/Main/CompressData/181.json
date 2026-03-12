@@ -4,10 +4,10 @@
   "nodes": [
     {
       "_position": {
-        "x": 20.0,
-        "y": 220.0
+        "x": 170.3871,
+        "y": 289.9475
       },
-      "_comment": "行为循环1——基础工作",
+      "_comment": "行为循环2——四处查看",
       "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "0"
     },
@@ -29,42 +29,37 @@
     },
     {
       "_position": {
-        "x": -480.0,
-        "y": 360.0
+        "x": -436.8,
+        "y": 411.2
       },
-      "_comment": "步骤一",
+      "_comment": "步骤一\n使用pad",
       "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "2"
     },
     {
       "_action": {
-        "animType": 1,
-        "detailAnimType": "MS_Workstation",
-        "loopCount": {
-          "x": 2,
-          "y": 4
-        },
+        "animType": 2,
         "duration": {
-          "x": 8.0,
-          "y": 15.0
+          "x": 10.0,
+          "y": 20.0
         },
         "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
       },
-      "additionalWidth": 148.0,
+      "additionalWidth": 116.0,
       "_position": {
-        "x": -577.3332,
-        "y": 828.8
+        "x": -495.6,
+        "y": 877.2
       },
-      "_comment": "操作工位",
+      "_comment": "使用pad",
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "3"
     },
     {
       "_position": {
-        "x": 20.0,
-        "y": 360.0
+        "x": 139.2,
+        "y": 397.6
       },
-      "_comment": "步骤二",
+      "_comment": "步骤二\n四处查看",
       "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "4"
     },
@@ -84,8 +79,8 @@
       },
       "additionalWidth": 146.0,
       "_position": {
-        "x": -260.0,
-        "y": 480.0
+        "x": -140.8,
+        "y": 517.6001
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "5"
@@ -94,7 +89,8 @@
       "failureRemap": 1,
       "additionalWidth": 48.0,
       "_position": {
-        "y": 480.0
+        "x": 119.2,
+        "y": 517.6001
       },
       "$type": "NodeCanvas.BehaviourTrees.Remapper",
       "$id": "6"
@@ -106,8 +102,8 @@
       },
       "additionalWidth": 66.0,
       "_position": {
-        "x": -20.0,
-        "y": 580.0
+        "x": 99.20001,
+        "y": 617.5999
       },
       "$type": "NodeCanvas.BehaviourTrees.Repeater",
       "$id": "7"
@@ -124,8 +120,8 @@
               "_name": "weight2-1",
               "_targetVariableID": "c396f37b-2e29-4b77-93f4-b38ec0559bf9"
             },
-            "weight": 25,
-            "detailAnimType": "MS_Machine",
+            "weight": 10,
+            "detailAnimType": "GC_Wall",
             "latestChangeWeight": {
               "_name": "最近使用过权重修改值",
               "_targetVariableID": "5107911a-65ee-4794-a435-4afb1cf4ae93"
@@ -144,28 +140,7 @@
               "_targetVariableID": "2318a10f-fa4a-4459-89d1-b4e800bbaf58"
             },
             "weight": 10,
-            "animType": 6,
-            "detailAnimType": "MS_Box",
-            "latestChangeWeight": {
-              "_name": "最近使用过权重修改值",
-              "_targetVariableID": "5107911a-65ee-4794-a435-4afb1cf4ae93"
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.NpcChangeAttractPointWeight"
-          }
-        },
-        {
-          "weight": {
-            "_name": "weight2-3",
-            "_targetVariableID": "47338250-6663-457c-82b7-f9bea11f328f"
-          },
-          "condition": {
-            "result": {
-              "_name": "weight2-3",
-              "_targetVariableID": "47338250-6663-457c-82b7-f9bea11f328f"
-            },
-            "weight": 10,
-            "animType": 1,
-            "detailAnimType": "all",
+            "detailAnimType": "GC_Incubator",
             "latestChangeWeight": {
               "_name": "最近使用过权重修改值",
               "_targetVariableID": "5107911a-65ee-4794-a435-4afb1cf4ae93"
@@ -175,8 +150,8 @@
         }
       ],
       "_position": {
-        "x": 20.0,
-        "y": 700.0
+        "x": 139.2,
+        "y": 737.5999
       },
       "$type": "Beyond.Gameplay.AI.Nodes.ConditionalProbabilitySelector",
       "$id": "8"
@@ -184,17 +159,17 @@
     {
       "_action": {
         "duration": {
-          "x": 15.0,
-          "y": 30.0
+          "x": 10.0,
+          "y": 20.0
         },
         "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
       },
       "additionalWidth": 101.0,
       "_position": {
-        "x": -282.4,
-        "y": 841.8667
+        "x": -160.7999,
+        "y": 877.5999
       },
-      "_comment": "查看机器",
+      "_comment": "在植被墙旁查看",
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "9"
     },
@@ -202,69 +177,52 @@
       "_action": {
         "animType": 6,
         "duration": {
-          "x": 10.0,
-          "y": 20.0
+          "x": 20.0,
+          "y": 30.0
         },
         "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
       },
-      "additionalWidth": 102.0,
+      "additionalWidth": 105.0,
       "_position": {
-        "x": -19.73338,
-        "y": 838.1333
+        "x": 99.19995,
+        "y": 876.7999
       },
       "_comment": "思考",
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "10"
     },
     {
+      "_color": {
+        "r": 0.7490196,
+        "g": 0.4980392,
+        "b": 1.0,
+        "a": 1.0
+      },
+      "_position": {
+        "x": 505.6555,
+        "y": 417.3266
+      },
+      "_comment": "步骤三\n使用pad",
+      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
+      "$id": "11"
+    },
+    {
       "_action": {
-        "animType": 2,
+        "detailAnimType": "GC_Incubator",
         "duration": {
           "x": 10.0,
           "y": 20.0
         },
         "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
       },
-      "additionalWidth": 60.0,
+      "additionalWidth": 116.0,
       "_position": {
-        "x": 246.8665,
-        "y": 831.8
+        "x": 445.9624,
+        "y": 867.0174
       },
-      "_comment": "使用pad",
+      "_comment": "查看培养箱",
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "11"
-    },
-    {
-      "_position": {
-        "x": 580.0,
-        "y": 380.0
-      },
-      "_comment": "步骤三",
-      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "12"
-    },
-    {
-      "_action": {
-        "animType": 1,
-        "detailAnimType": "MS_Workstation",
-        "loopCount": {
-          "x": 3,
-          "y": 4
-        },
-        "duration": {
-          "x": 8.0,
-          "y": 15.0
-        },
-        "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
-      },
-      "additionalWidth": 148.0,
-      "_position": {
-        "x": 507.6002,
-        "y": 833.2
-      },
-      "_comment": "操作工位",
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "13"
     },
     {
       "_action": {
@@ -275,7 +233,7 @@
         "y": 360.0
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "14"
+      "$id": "13"
     }
   ],
   "connections": [
@@ -311,7 +269,7 @@
         "$ref": "0"
       },
       "_targetNode": {
-        "$ref": "12"
+        "$ref": "11"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     },
@@ -320,7 +278,7 @@
         "$ref": "0"
       },
       "_targetNode": {
-        "$ref": "14"
+        "$ref": "13"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     },
@@ -389,19 +347,10 @@
     },
     {
       "_sourceNode": {
-        "$ref": "8"
-      },
-      "_targetNode": {
         "$ref": "11"
       },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "12"
-      },
       "_targetNode": {
-        "$ref": "13"
+        "$ref": "12"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     }
@@ -436,11 +385,6 @@
       "weight2-2": {
         "_name": "weight2-2",
         "_id": "2318a10f-fa4a-4459-89d1-b4e800bbaf58",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
-      },
-      "weight2-3": {
-        "_name": "weight2-3",
-        "_id": "47338250-6663-457c-82b7-f9bea11f328f",
         "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
       },
       "weight3-1": {

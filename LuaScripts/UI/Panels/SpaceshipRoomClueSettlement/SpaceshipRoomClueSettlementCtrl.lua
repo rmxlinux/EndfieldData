@@ -26,6 +26,9 @@ local PHASE_ID = PhaseId.SpaceshipRoomClueSettlement
 
 
 
+
+
+
 SpaceshipRoomClueSettlementCtrl = HL.Class('SpaceshipRoomClueSettlementCtrl', uiCtrl.UICtrl)
 
 
@@ -48,7 +51,13 @@ SpaceshipRoomClueSettlementCtrl.m_requestHandle = HL.Field(HL.Number) << -1
 SpaceshipRoomClueSettlementCtrl.m_requestTime = HL.Field(HL.Number) << 1
 
 
-SpaceshipRoomClueSettlementCtrl.m_requestIds = HL.Field(HL.Table)
+SpaceshipRoomClueSettlementCtrl.m_requestIdList = HL.Field(HL.Table)
+
+
+SpaceshipRoomClueSettlementCtrl.m_needRequestIdDict = HL.Field(HL.Table)
+
+
+SpaceshipRoomClueSettlementCtrl.m_alreadyRequestIdDict = HL.Field(HL.Table)
 
 
 SpaceshipRoomClueSettlementCtrl.m_requestLuaIndex = HL.Field(HL.Number) << 1
@@ -92,6 +101,10 @@ end
 
 SpaceshipRoomClueSettlementCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
+
+    self.m_requestIdList = {}
+    self.m_needRequestIdDict = {}
+    self.m_alreadyRequestIdDict = {}
 
     self.view.confirmBtn.enabled = true
     self.view.confirmBtn.onClick:AddListener(function()
@@ -190,12 +203,12 @@ end
 
 
 SpaceshipRoomClueSettlementCtrl._HandleFriendInfo = HL.Method() << function(self)
-    self.m_requestIds = {}
 
     for _, roleId in pairs(self.m_showFriendIds) do
         local success, friendInfo = GameInstance.player.friendSystem:TryGetFriendInfo(roleId)
         if not success or not friendInfo.init then
-            table.insert(self.m_requestIds, roleId)
+            table.insert(self.m_requestIdList, roleId)
+            self.m_needRequestIdDict[roleId] = true
         end
     end
 
@@ -230,8 +243,10 @@ end
 SpaceshipRoomClueSettlementCtrl._GetNextPageNotInitIds = HL.Method().Return(HL.Table) << function(self)
     local ids = {}
     for i = 1, RequestBatchNum do
-        if self.m_requestLuaIndex <= #self.m_requestIds then
-            table.insert(ids, self.m_requestIds[self.m_requestLuaIndex])
+        if self.m_requestLuaIndex <= #self.m_requestIdList then
+            local roleId = self.m_requestIdList[self.m_requestLuaIndex]
+            table.insert(ids, roleId)
+            self.m_alreadyRequestIdDict[roleId] = true
             self.m_requestLuaIndex = self.m_requestLuaIndex + 1
         end
     end
@@ -256,7 +271,34 @@ SpaceshipRoomClueSettlementCtrl._RequestTick = HL.Method(HL.Number) << function(
         end
         return
     end
-    GameInstance.player.friendSystem:SyncSocialFriendInfo(ids)
+
+    GameInstance.player.friendSystem:SyncSocialFriendInfo(ids, function()
+        self:_SyncSocialFriendInfoPost()
+    end)
+end
+
+
+
+SpaceshipRoomClueSettlementCtrl._SyncSocialFriendInfoPost = HL.Method() << function(self)
+    local res = self.view.scrollList:GetShowRange()
+    for csIndex = res.x, res.y do
+        local cell = self.m_csIndex2Cell[csIndex]
+        if cell ~= nil and cell.m_showInfo ~= nil and cell.m_showInfo.type == "FriendCells" then
+            if cell.contactFriendCell1.view.state == "Loading" then
+                local roleId = cell.m_showInfo.roleId1
+                if self.m_alreadyRequestIdDict[roleId] then
+                    self:_UpdateFriendCell(cell, csIndex, 1, cell.m_showInfo)
+                end
+            end
+
+            if cell.contactFriendCell2.view.state == "Loading" then
+                local roleId = cell.m_showInfo.roleId2
+                if self.m_alreadyRequestIdDict[roleId] then
+                    self:_UpdateFriendCell(cell, csIndex, 2, cell.m_showInfo)
+                end
+            end
+        end
+    end
 end
 
 
@@ -319,7 +361,10 @@ SpaceshipRoomClueSettlementCtrl._UpdateScrollCell = HL.Method(HL.Any, HL.Number)
     cell.titleNodeFriend.gameObject:SetActive(false)
     cell.friendCells.gameObject:SetActive(false)
     cell.contactFriendCell1.gameObject:SetActive(false)
+    cell.contactFriendCell1.view.state = "None"
     cell.contactFriendCell2.gameObject:SetActive(false)
+    cell.contactFriendCell2.view.state = "None"
+    cell.m_showInfo = m_showInfo
 
     if m_showInfo.type == "FriendCells" then
         cell.friendCells.gameObject:SetActive(true)
@@ -384,7 +429,7 @@ SpaceshipRoomClueSettlementCtrl._UpdateFriendCell = HL.Method(HL.Any, HL.Number,
             end
             FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD(roleId).action()
         end
-
+        friendCell.view.state = "Normal"
         friendCell:InitContactFriendCell(roleId, friendInfo, csIndex, clickFun, clickFun)
     else
         local clickFun = function(clickIndex)
@@ -394,7 +439,13 @@ SpaceshipRoomClueSettlementCtrl._UpdateFriendCell = HL.Method(HL.Any, HL.Number,
             end
         end
 
-        friendCell:InitEmptyFriendCell(roleId, csIndex, clickFun)
+        if self.m_needRequestIdDict[roleId] and not self.m_alreadyRequestIdDict[roleId] then
+            friendCell.view.state = "Loading"
+            friendCell:InitLoadingFriendCell(roleId, csIndex, clickFun)
+        else
+            friendCell.view.state = "Empty"
+            friendCell:InitEmptyFriendCell(roleId, csIndex, clickFun)
+        end
     end
 end
 

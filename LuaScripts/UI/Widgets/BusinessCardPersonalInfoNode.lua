@@ -62,6 +62,7 @@ BusinessCardPersonalInfoNode.InitBusinessCardPersonalInfoNodeByRoleId = HL.Metho
         UIManager:Open(PanelId.FriendHeadSelectedPopUp)
     end or false
 
+    self.view.commonPlayerHead:UpdateHideLevelTxt(true)
     self.view.commonPlayerHead:InitCommonPlayerHeadByRoleId(roleId, click)
 
     

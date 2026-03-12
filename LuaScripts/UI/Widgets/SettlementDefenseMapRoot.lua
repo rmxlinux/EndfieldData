@@ -54,6 +54,8 @@ local LuaNodeCache = require_ex('Common/Utils/LuaNodeCache')
 
 
 
+
+
 SettlementDefenseMapRoot = HL.Class('SettlementDefenseMapRoot', UIWidgetBase)
 
 local ENEMY_UPDATE_THREAD_INTERVAL = 0.1
@@ -82,6 +84,12 @@ SettlementDefenseMapRoot.m_rightUpPos = HL.Field(Vector2)
 
 
 SettlementDefenseMapRoot.m_centerPos = HL.Field(Vector2)
+
+
+SettlementDefenseMapRoot.m_realLeftBottomPos = HL.Field(Vector2)
+
+
+SettlementDefenseMapRoot.m_realRightUpPos = HL.Field(Vector2)
 
 
 SettlementDefenseMapRoot.m_mapRectWidth = HL.Field(HL.Number) << -1
@@ -248,6 +256,14 @@ SettlementDefenseMapRoot._InitMapRect = HL.Method() << function(self)
 
     self.m_viewRectWidth = self.view.viewRect.rect.width
     self.m_viewRectHeight = self.view.viewRect.rect.height
+
+    local realCenterPos = self.m_centerPos + Vector2(
+        self.config.REAL_AREA_OFFSET.x * self.m_mapWidth / self.m_mapRectWidth,
+        self.config.REAL_AREA_OFFSET.y * self.m_mapHeight / self.m_mapRectHeight
+    )
+    self.m_realLeftBottomPos = realCenterPos - direction * 0.5 * self.config.REAL_AREA_SCALE
+    self.m_realRightUpPos = realCenterPos + direction * 0.5 * self.config.REAL_AREA_SCALE
+
 end
 
 
@@ -409,7 +425,7 @@ SettlementDefenseMapRoot._UpdateEnemyDataMap = HL.Method() << function(self)
     local enemies = self.m_towerDefenseGame.enemies
     for enemyIndex = 0, enemies.Count - 1 do
         local enemyEntity = enemies[enemyIndex]:Lock()
-        if enemyEntity ~= nil then
+        if enemyEntity ~= nil and enemyEntity.enemy ~= nil then
             local serverId = enemyEntity.serverId
             local enemyData = self.m_enemyDataMap[serverId]
             if enemyData == nil then
@@ -601,10 +617,13 @@ SettlementDefenseMapRoot._BuildBuildingData = HL.Method(HL.Number) << function(s
     end
 
     local buildingWorldPos = nodeHandler.transform.worldPosition
-    if buildingWorldPos.x < self.m_leftBottomPos.x or buildingWorldPos.x > self.m_rightUpPos.x then
+    if buildingWorldPos.x < self.m_realLeftBottomPos.x or buildingWorldPos.x > self.m_realRightUpPos.x then
         return
     end
-    if buildingWorldPos.z < self.m_leftBottomPos.y or buildingWorldPos.z > self.m_rightUpPos.y then
+    if buildingWorldPos.z < self.m_realLeftBottomPos.y or buildingWorldPos.z > self.m_realRightUpPos.y then
+        return
+    end
+    if GameInstance.remoteFactoryManager:IsWorldPositionInMainRegion(buildingWorldPos) then
         return
     end
 

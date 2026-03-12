@@ -200,15 +200,28 @@ end
 
 PhaseDialogTimeline._OpenDialogSkipPopUp = HL.Method() << function(self)
     local summaryId = GameWorld.dialogTimelineManager.summaryId
+    local curAuto = GameWorld.dialogTimelineManager.autoMode
     GameWorld.dialogTimelineManager:SetAutoMode(false)
-    if string.isEmpty(summaryId) then
+    if summaryId == nil or string.isEmpty(summaryId) then
+        summaryId = GameWorld.dialogManager.summaryId
+    end
+
+    if summaryId == nil or string.isEmpty(summaryId) then
         local dialogId = GameWorld.dialogTimelineManager.dialogId
         if not string.isEmpty(dialogId) then
             Notify(MessageConst.SHOW_POP_UP, {
                 content = Language.LUA_CONFIRM_SKIP_DIALOG,
                 onConfirm = function()
+                    if curAuto then
+                        GameWorld.dialogManager:SetAutoMode(curAuto)
+                    end
                     GameWorld.dialogTimelineManager:SkipDialog()
-                end
+                end,
+                onCancel = function()
+                    if curAuto then
+                        GameWorld.dialogManager:SetAutoMode(curAuto)
+                    end
+                end,
             })
         end
     else
@@ -221,6 +234,9 @@ PhaseDialogTimeline._OpenDialogSkipPopUp = HL.Method() << function(self)
         end
         panelItem.uiCtrl:Show()
         panelItem.uiCtrl:RefreshSummary(summaryId)
+        if curAuto then
+            panelItem.uiCtrl:SetCloseRecoverAuto()
+        end
     end
 end
 

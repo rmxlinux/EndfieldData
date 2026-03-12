@@ -53,7 +53,7 @@ end
 
 
 
-CommonToggle.InitCommonToggle = HL.Method(HL.Function, HL.Boolean, HL.Opt(HL.Boolean, HL.String)) <<
+CommonToggle.InitCommonToggle = HL.Method(HL.Function, HL.Boolean, HL.Opt(HL.Boolean, HL.Table)) <<
 function(self, action, value, notCall, labels)
     self:_FirstTimeInit()
 

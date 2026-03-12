@@ -62,7 +62,7 @@ FacTravelPoleCtrl._InitMapNode = HL.Method() << function(self)
     self.view.emptyNode.gameObject:SetActive(true)
 
     GameInstance.player.mapManager.forceShowFacMarkInRegion = true
-    if DataManager.uiLevelMapConfig.levelConfigInfos:ContainsKey(self.m_uiInfo.nodeHandler.belongScene.sceneIdStr) then
+    if GameInstance.player.mapManager:IsLevelLoaderDataExists(self.m_uiInfo.nodeHandler.belongScene.sceneIdStr) then
         local success, markInstId = GameInstance.player.mapManager:GetFacMarkInstIdByNodeId(self.m_uiInfo.chapterId, self.m_uiInfo.nodeId)
         if success then
             self.m_currPoleMarkInstId = markInstId
@@ -79,6 +79,9 @@ FacTravelPoleCtrl._InitMapNode = HL.Method() << function(self)
         end
     end
     GameInstance.player.mapManager.forceShowFacMarkInRegion = false
+
+    
+    self.view.levelMapController.view.levelMapLoader.view.element.lineRoot.udPipeLine.gameObject:SetActive(false)
 end
 
 
@@ -160,7 +163,7 @@ FacTravelPoleCtrl._RefreshTravelPoleMapMark = HL.Method(HL.Table) << function(se
         markViewData.filterType == GEnums.MarkInfoType.HUB:GetHashCode()
     isVisible = isVisible and not FactoryUtils.isPendingBuildingNode(markViewData.runtimeData.nodeId)
     if isVisible then
-        markViewData.markObj:ToggleForceShowMark(isVisible)
+        markViewData.markObj:ToggleForceShowMark("TravelPoleForceShow", isVisible)
     else
         markViewData.markObj:ToggleMarkHiddenState("TravelPoleHide", true)
     end

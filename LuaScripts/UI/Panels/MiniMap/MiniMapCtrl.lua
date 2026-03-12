@@ -18,6 +18,10 @@ local PANEL_ID = PanelId.MiniMap
 
 
 
+
+
+
+
 MiniMapCtrl = HL.Class('MiniMapCtrl', uiCtrl.UICtrl)
 
 
@@ -39,10 +43,15 @@ MiniMapCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_TOGGLE_PHASE_FORBID] = '_RefreshMaskState',
 
     [MessageConst.ON_SETTLEMENT_UPGRADE] = '_OnSettlementUpgrade',
+    [MessageConst.TRAVEL_POLE_ENTER_TRAVEL_MODE] = '_HideMainButtonInTravelMode',
+    [MessageConst.TRAVEL_POLE_TRIGGER_CLOSE_PANEL] = '_ShowMainButtonInTravelMode',
 }
 
 
 MiniMapCtrl.m_isControllerInitialized = HL.Field(HL.Boolean) << false
+
+
+MiniMapCtrl.m_isInTravelMode = HL.Field(HL.Boolean) << false
 
 
 
@@ -52,6 +61,10 @@ MiniMapCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.mainButton.onClick:AddListener(function()
         if self:_IsInFocusState() then
             Notify(MessageConst.SHOW_TOAST, Language.LUA_FOCUS_MODE_FORBID_OPEN_MAP)
+            return
+        end
+        if UIManager:IsOpen(PanelId.PowerPoleFastTravel) and not GameWorld.gameMechManager.travelPoleBrain:CanOpenMiniMap() then
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_TRAVEL_MODE_FORBID_OPEN_MAP)
             return
         end
         MapUtils.openMap()
@@ -78,6 +91,7 @@ end
 MiniMapCtrl.OnShow = HL.Override() << function(self)
     self:_InitMapControllerIfNeed()
     self:_RefreshMaskState()
+    self:_RecoverTrackingMarAnimation()
 end
 
 
@@ -119,6 +133,27 @@ MiniMapCtrl._InitMapControllerIfNeed = HL.Method() << function(self)
         })
         self.m_isControllerInitialized = true
     end
+end
+
+
+
+
+MiniMapCtrl._HideMainButtonInTravelMode = HL.Method(HL.Any) << function(self, arg)
+    self.m_isInTravelMode = true
+    UIManager:ToggleBlockObtainWaysJump("PowerPoleFastTravel", true)
+end
+
+
+
+MiniMapCtrl._ShowMainButtonInTravelMode = HL.Method() << function(self)
+    self.m_isInTravelMode = false
+    UIManager:ToggleBlockObtainWaysJump("PowerPoleFastTravel", false)
+end
+
+
+
+MiniMapCtrl._RecoverTrackingMarAnimation = HL.Method() << function(self)
+    self.view.levelMapController:RecoverTrackingMarkAnimation()
 end
 
 

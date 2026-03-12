@@ -57,6 +57,8 @@ local MainState = {
 
 
 
+
+
 FacBuildListSelectCtrl = HL.Class('FacBuildListSelectCtrl', uiCtrl.UICtrl)
 
 
@@ -269,6 +271,26 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitSortAndFilterNode()
     self:_InitTypeData()
     self:_RefreshTypeList()
+end
+
+
+
+
+FacBuildListSelectCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, isActive)
+    if DeviceInfo.usingController then
+        self.view.numberReduceKeyhint.gameObject:SetActive(isActive)
+        self.view.numberAddKeyhint.gameObject:SetActive(isActive)
+    end
+end
+
+
+
+
+FacBuildListSelectCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, args)
+    
+    if DeviceInfo.usingController then
+        self.view.craftNode.incomeNode:ManuallyStopFocus()
+    end
 end
 
 
@@ -585,7 +607,7 @@ FacBuildListSelectCtrl._InitTypeData = HL.Method() << function(self)
         end
     end
 
-    local domainId = Utils.getCurDomainId()
+    local domainId = FactoryUtils.getCurAndAutoTransferBlackBoxToDomainId()
     do 
         local infos = {}
         if not self.m_onlyCraftNode then
@@ -953,11 +975,6 @@ FacBuildListSelectCtrl._RefreshSelectedCraftNode = HL.Method(HL.Opt(HL.Boolean))
     self.view.craftNode.nameTxt.text = data.name
 
     local isBuilding = item.type == QuickBarItemType.Building
-    if isBuilding then
-        self.view.craftNode.CannotTxt.text = Language.LUA_FAC_BUILD_LIST_NOT_IN_FAC
-    else
-        self.view.craftNode.CannotTxt.text = Language.LUA_FAC_BUILD_LIST_CANNOT_CRAFT
-    end
     self.view.craftNode.countNode.gameObject:SetActiveIfNecessary(isBuilding)
     self.view.craftNode.numberSelector.gameObject:SetActiveIfNecessary(isBuilding)
     self.view.craftNode.incomeNode.gameObject:SetActiveIfNecessary(isBuilding)
@@ -965,9 +982,8 @@ FacBuildListSelectCtrl._RefreshSelectedCraftNode = HL.Method(HL.Opt(HL.Boolean))
     self.view.craftNode.buildBtn.gameObject:SetActiveIfNecessary(false)
     self.view.craftNode.materialLackNode.gameObject:SetActiveIfNecessary(false)
     self.view.craftNode.bpNode.gameObject:SetActiveIfNecessary(false)
-    self.view.craftNode.CannotNode.gameObject:SetActiveIfNecessary(true)
+    self.view.craftNode.CannotNode.gameObject:SetActiveIfNecessary(not isBuilding)
     if isBuilding then
-        local inFac = Utils.isInFacMainRegion()
         local bagCount = Utils.getBagItemCount(id)
         local depotCount
         if self.m_bluePrintMode then
@@ -993,9 +1009,8 @@ FacBuildListSelectCtrl._RefreshSelectedCraftNode = HL.Method(HL.Opt(HL.Boolean))
         numSelector:InitNumberSelector(numSelector.curNumber, 1, math.max(maxMakeCount, 1), function()
             self:_OnCurCountChange()
         end)
-        self.view.craftNode.buildBtn.gameObject:SetActiveIfNecessary(maxMakeCount > 0 and inFac)
-        self.view.craftNode.materialLackNode.gameObject:SetActiveIfNecessary(maxMakeCount <= 0 and inFac)
-        self.view.craftNode.CannotNode.gameObject:SetActiveIfNecessary(not inFac)
+        self.view.craftNode.buildBtn.gameObject:SetActiveIfNecessary(maxMakeCount > 0)
+        self.view.craftNode.materialLackNode.gameObject:SetActiveIfNecessary(maxMakeCount <= 0)
 
         for index = 1, FacConst.FAC_HUB_CRAFT_MAX_INCOME_NUM do
             local cell = self.view.craftNode["incomeCell" .. index]
@@ -1011,7 +1026,7 @@ FacBuildListSelectCtrl._RefreshSelectedCraftNode = HL.Method(HL.Opt(HL.Boolean))
                 if DeviceInfo.usingController then
                     cell.item:SetExtraInfo({
                         tipsPosType = UIConst.UI_TIPS_POS_TYPE.LeftTop,
-                        tipsPosTransform = self.view.craftNode.incomeNode,
+                        tipsPosTransform = self.view.craftNode.incomeNode.transform,
                         isSideTips = true,
                     })
                 end
@@ -1021,8 +1036,8 @@ FacBuildListSelectCtrl._RefreshSelectedCraftNode = HL.Method(HL.Opt(HL.Boolean))
             end
         end
         local showBpCount = self.m_bluePrintData[item.id] and self.m_bluePrintData[item.id] > 0
-        self.view.craftNode.bpNode.gameObject:SetActiveIfNecessary(showBpCount and inFac)
-        if showBpCount and inFac then
+        self.view.craftNode.bpNode.gameObject:SetActiveIfNecessary(showBpCount)
+        if showBpCount then
             local bpCount = math.max(self.m_bluePrintData[item.id] - depotCount, 0)
             self.view.craftNode.bpCountTxt.text = bpCount
             numSelector:RefreshNumber(bpCount)
@@ -1064,15 +1079,9 @@ FacBuildListSelectCtrl._OnClickBuild = HL.Method() << function(self)
     if string.isEmpty(id) or count == 0 then
         return
     end
-    local data = Tables.factoryHubCraftTable:GetValue(item.id)
-    local nodeId = FactoryUtils.getCurHubNodeId()
-    for i = 1, data.ingredients.Count do
-        local itemBundle = data.ingredients[CSIndex(i)]
-        FactoryUtils.gameEventFactoryItemPush(nodeId, itemBundle.id, itemBundle.count * count, { })
-    end
     self.m_waitingForCraftData.id = item.id
     self.m_waitingForCraftData.count = count
-    GameInstance.player.facSpMachineSystem:StartHubCraft(nodeId, item.id, count)
+    GameInstance.player.facSpMachineSystem:StartHubCraft(item.id, count)
 end
 
 

@@ -76,6 +76,49 @@ local function I18nGetText(id, text)
     elseif id == 0 then
         return ''
     else
+        local hotfixText = CS.Beyond.I18n.I18nHotfixManager.instance:GetHotFixText(id)
+        if hotfixText ~= '' then
+            if BEYOND_DEBUG_COMMAND then
+                Notify(MessageConst.SHOW_TOAST, string.format("使用了RemoteConfig里的热更文本 id(%d)text(%s)", id, hotfixText))
+            end
+            return hotfixText
+        end
+
+        local foundPatch, i18NHotfixDataList = Tables.i18nHotFix:TryGetValue(id)
+        if foundPatch then
+            local patchText = ''
+            for i = 1, #i18NHotfixDataList.list do
+                local data = i18NHotfixDataList.list[CSIndex(i)]
+                if data.type:GetHashCode() == hg.curEnvLang and data.platform == GEnums.I18nPlatform.DF then
+                    patchText = data.text
+                    break
+                end
+            end
+            if DeviceInfo.inputType == DeviceInfo.InputType.Touch then
+                for i = 1, #i18NHotfixDataList.list do
+                    local data = i18NHotfixDataList.list[CSIndex(i)]
+                    if data.type:GetHashCode() == hg.curEnvLang and data.platform == GEnums.I18nPlatform.MB then
+                        patchText = data.text
+                        break
+                    end
+                end
+            elseif DeviceInfo.inputType == DeviceInfo.InputType.Controller then
+                for i = 1, #i18NHotfixDataList.list do
+                    local data = i18NHotfixDataList.list[CSIndex(i)]
+                    if data.type:GetHashCode() == hg.curEnvLang and data.platform == GEnums.I18nPlatform.CT then
+                        patchText = data.text
+                        break
+                    end
+                end
+            end
+            if patchText ~= '' then
+                if BEYOND_DEBUG_COMMAND then
+                    Notify(MessageConst.SHOW_TOAST, string.format("使用了文本热更表里的热更文本 id(%d)text(%s)", id, patchText))
+                end
+                return patchText
+            end
+        end
+
         local found, i18nText = LuaCfg.GetTextTable(hg.curEnvLang):TryGetValue(id)
         if not found or i18nText == nil or i18nText == '' then
             if BEYOND_DEBUG_COMMAND then

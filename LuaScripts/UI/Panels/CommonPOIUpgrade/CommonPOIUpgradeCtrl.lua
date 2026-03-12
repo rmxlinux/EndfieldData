@@ -856,10 +856,12 @@ end
 CommonPOIUpgradeCtrl._CloseSelf = HL.Method(HL.Opt(HL.Boolean)) << function(self, isFast)
     local isOpen, _ = PhaseManager:IsOpen(PhaseId.Dialog)
     if isOpen then
+        Notify(MessageConst.HIDE_ITEM_TIPS)
         AudioManager.PostEvent("Au_UI_Popup_DetailsPanel_Close")
         Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
     else
         if isFast then
+            Notify(MessageConst.HIDE_ITEM_TIPS)
             PhaseManager:ExitPhaseFast(PHASE_ID)
         else
             PhaseManager:PopPhase(PHASE_ID)

@@ -369,6 +369,7 @@ end
 
 
 
+
 ShopCtrl._RefreshContentCell = HL.Virtual(HL.Any, HL.Number, HL.String) << function(self, cell, luaIndex, refreshTag)
     local goodsId = self.m_goodsInfos[luaIndex].id
     local goodsData = shopSystem:GetShopGoodsData(self.m_shopId, goodsId)
@@ -601,7 +602,6 @@ end
 
 
 ShopCtrl.OnClose = HL.Override() << function(self)
-    LuaSystemManager.gachaSystem:UpdateGachaWeaponSettingState()
     UIManager:ToggleBlockObtainWaysJump("common_shop", false)
     shopSystem:SetGoodsIdSee()
 end

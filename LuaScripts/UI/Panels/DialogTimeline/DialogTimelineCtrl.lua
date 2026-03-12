@@ -103,14 +103,6 @@ end
 
 
 DialogTimelineCtrl.OnCreated = HL.Override(HL.Any) << function(self, arg)
-    
-    self.view.dialogTimelineText:UpdateAlpha(0)
-
-    
-    self.view.topLeft.gameObject:SetActive(false)
-    self.view.topRight.gameObject:SetActive(false)
-    self.view.imageBG.gameObject:SetActive(false)
-
     self.m_fmvNodeMap = {}
     self.m_dialogTextStopped = true
     self.m_timelineHandle = unpack(arg)
@@ -135,10 +127,14 @@ end
 DialogTimelineCtrl.OnDialogTimelineStartTrunk = HL.Method(HL.Table) << function(self, arg)
     if not self.m_hasShowedDialogText then
         self.view.dialogTimelineText:UpdateAlpha(1)
+
+        self.view.buttonLog.gameObject:SetActive(true)
+        self.view.buttonAuto.gameObject:SetActive(true)
+
+        self:_RefreshAutoMode(GameWorld.dialogTimelineManager.autoMode)
+
         
-        self.view.topLeft.gameObject:SetActive(true)
-        self.view.topRight.gameObject:SetActive(true)
-        self.view.imageBG.gameObject:SetActive(true)
+        self.view.bottomMask.gameObject:SetActive(true)
         self.m_hasShowedDialogText = true
     end
     self.m_dialogTextStopped = false
@@ -158,6 +154,9 @@ DialogTimelineCtrl._TryShowDialogTextWithAnimation = HL.Method() << function(sel
     if not self.m_isDialogTextShowing then
         self.m_isDialogTextShowing = true
         self:PlayAnimation(DIALOG_BOTTOM_IN_ANIMATION)
+
+        self.view.dialogTimelineText.gameObject:SetActive(true)
+        self.view.bottomMask.gameObject:SetActive(true)
     end
 end
 
@@ -197,7 +196,13 @@ DialogTimelineCtrl._TryHideDialogTextWithAnimation = HL.Method() << function(sel
         self.m_dialogTextHideTimer = self:_StartTimer(DIALOG_TEXT_HIDE_DELAY_TIME, function()
             if not self:IsPlayingAnimationOut() then
                 self.m_isDialogTextShowing = false
-                self:PlayAnimation(DIALOG_BOTTOM_OUT_ANIMATION)
+                self:PlayAnimation(DIALOG_BOTTOM_OUT_ANIMATION, function()
+                    if self.m_isClosed then
+                        return
+                    end
+                    self.view.dialogTimelineText.gameObject:SetActive(false)
+                    self.view.bottomMask.gameObject:SetActive(false)
+                end)
             end
         end)
     end
@@ -214,7 +219,6 @@ end
 
 DialogTimelineCtrl.OnDialogShow = HL.Override() << function(self)
     DialogTimelineCtrl.Super.OnDialogShow(self)
-    self:_RefreshAutoMode(GameWorld.dialogTimelineManager.autoMode)
     self:_RefreshCanSkip()
     local dialogTimelineManager = GameWorld.dialogTimelineManager
 
@@ -235,6 +239,20 @@ DialogTimelineCtrl.OnDialogShow = HL.Override() << function(self)
     else
         self.view.fmvGroup.gameObject:SetActive(false)
     end
+
+    
+    self.view.dialogTimelineText:UpdateAlpha(0)
+
+    
+    if GameWorld.dialogManager.records.Count == 0 then
+        self.view.buttonLog.gameObject:SetActive(false)
+        self.view.buttonAuto.gameObject:SetActive(false)
+
+        self.view.textAuto.gameObject:SetActive(false)
+    end
+
+    
+    self.view.bottomMask.gameObject:SetActive(false)
 end
 
 

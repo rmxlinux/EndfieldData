@@ -17,6 +17,7 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 MachineSmartAlertNode = HL.Class('MachineSmartAlertNode', UIWidgetBase)
 
 
@@ -47,6 +48,9 @@ MachineSmartAlertNode.m_activeAnimState = HL.Field(HL.Boolean) << false
 MachineSmartAlertNode.m_playingAnimation = HL.Field(HL.Boolean) << false
 
 
+MachineSmartAlertNode.m_buildingData = HL.Field(HL.Table)
+
+
 
 
 MachineSmartAlertNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -66,12 +70,19 @@ end
 
 
 
-MachineSmartAlertNode.InitMachineSmartAlertNode = HL.Method() << function(self)
+
+
+MachineSmartAlertNode.InitMachineSmartAlertNode = HL.Method(HL.String, HL.Number) << function(self, buildingId, nodeId)
     self:_FirstTimeInit()
 
     self.m_curCondition = GEnums.FacSmartAlertType.DoNotShow
     self.m_cacheCondition = GEnums.FacSmartAlertType.DoNotShow
     self:_ShowDetailInfo(false)
+
+    self.m_buildingData = {}
+    self.m_buildingData.tid = buildingId
+    self.m_buildingData.nid = nodeId
+    self.m_buildingData.domain = Utils.getCurDomainId()
 end
 
 
@@ -139,6 +150,15 @@ MachineSmartAlertNode._CheckToRefreshState = HL.Method(HL.Table, HL.Number).Retu
             alertText = Tables.factorySmartAlertTable:GetValue(self.m_curCondition)
             if type(newArgs) == "table" and #newArgs > 0 then
                 alertText = string.format(alertText, unpack(newArgs))
+            end
+
+            if self.m_buildingData ~= nil then
+                EventLogManagerInst:GameEvent_FactorySmartAlertPopUp(
+                    self.m_buildingData.tid,
+                    self.m_buildingData.nid,
+                    self.m_buildingData.domain,
+                    self.m_curCondition:ToString()
+                )
             end
         end
     end

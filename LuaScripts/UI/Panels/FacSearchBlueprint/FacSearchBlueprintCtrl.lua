@@ -84,8 +84,14 @@ FacSearchBlueprintCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_CHECK_SENSITIVE_SUCCESS] = '_OnCheckSensitiveSuccess',
     [MessageConst.FAC_ON_MODIFY_BLUEPRINT] = 'FacOnModifyBlueprint',
-    [MessageConst.FAC_ON_REFRESH_SHARE_STATE] = 'RefreshShareState',
+    [MessageConst.FAC_ON_REVIEW_BLUEPRINT] = 'RefreshShareState',
     [MessageConst.FAC_ON_SHARE_BLUEPRINT] = 'FacOnShareBlueprint',
+}
+
+local sourceTypeTable = {
+    Mine = 1,
+    Sys = 2,
+    Gift = 3,
 }
 
 
@@ -442,25 +448,42 @@ end
 
 
 FacSearchBlueprintCtrl.RefreshShareState = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
-    local cell = self.m_typeCells:Get(self.m_selectedTypeIndex).m_cells:Get(self.m_selectedIndex)
-    local inst = self.m_searchResults[self.m_selectedTypeIndex].validInsts[self.m_selectedIndex].csInst
-
+    local cell, index, reviewStatus
     if arg then
-        local isInProgress = arg.isInProgress
-        cell.view.inAuditNode.gameObject:SetActive(isInProgress)
+        local bpId, status = unpack(arg)
+        reviewStatus = status
+        
+        for i, info in ipairs(self.m_searchResults[sourceTypeTable.Mine].validInsts) do
+            if info.id == bpId then
+                index = i
+                break
+            end
+        end
+        if not index then
+            return
+        end
+        cell = self.m_typeCells:Get(sourceTypeTable.Mine).m_cells:Get(index)
+    else
+        
+        index = self.m_selectedIndex
+        reviewStatus = self.m_searchResults[self.m_selectedTypeIndex].validInsts[index].csInst.reviewStatus
+        cell = self.m_typeCells:Get(self.m_selectedTypeIndex).m_cells:Get(index)
     end
 
-    self.view.shareBtn.gameObject:SetActive(inst.reviewStatus ~=  CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.InProgress)
-    self.view.needAuditHintNode.gameObject:SetActive(inst.reviewStatus ==  CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.InProgress)
-    self.view.shareBtn.onClick:RemoveAllListeners()
-    if inst.reviewStatus ==  CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.Approved then
-        self.view.shareBtn.onClick:AddListener(function()
-            self:_SendToFriend()
-        end)
-    elseif inst.reviewStatus ==  CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.Pending then
-        self.view.shareBtn.onClick:AddListener(function()
-            self.view.blueprintContent:_PendingShare()
-        end)
+    cell:RefreshCellState(reviewStatus)
+    if self.m_selectedIndex == index then
+        self.view.shareBtn.gameObject:SetActive(reviewStatus ~= CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.InProgress)
+        self.view.needAuditHintNode.gameObject:SetActive(reviewStatus == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.InProgress)
+        self.view.shareBtn.onClick:RemoveAllListeners()
+        if reviewStatus == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.Approved then
+            self.view.shareBtn.onClick:AddListener(function()
+                self:_SendToFriend()
+            end)
+        elseif reviewStatus == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.Pending then
+            self.view.shareBtn.onClick:AddListener(function()
+                self.view.blueprintContent:_PendingShare()
+            end)
+        end
     end
 end
 

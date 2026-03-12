@@ -50,6 +50,12 @@ DungeonCustomRewardCtrl.TryStartSettlement = HL.StaticMethod() << function()
         return
     end
 
+    
+    if DungeonUtils.dungeonTypeValidate(dungeonId, "dungeon_actmonster") then
+        dungeonMgr:LeaveDungeon()  
+        return
+    end
+
     if isCostStamina then
         local hasBpDoubleRewardEver = GameInstance.player.inventory:IsItemGot(Tables.dungeonConst.doubleStaminaTicketItemId)
         if hasBpDoubleRewardEver then
@@ -116,6 +122,9 @@ end
 
 
 DungeonCustomRewardCtrl.OnAnimationInFinished = HL.Override() << function(self)
+    if ActivityUtils.hasStaminaReduceCount() then
+        return
+    end
     self.view.customRewardRadioComp:SetDefaultTarget()
 end
 
@@ -138,6 +147,12 @@ end
 DungeonCustomRewardCtrl._InitData = HL.Method(HL.Table) << function(self, args)
     self.m_dungeonId = args.dungeonId
     self.m_costStamina = args.costStamina
+
+    local hasBpDoubleRewardItemEver = GameInstance.player.inventory:IsItemGot(Tables.dungeonConst.doubleStaminaTicketItemId)
+    
+    if not hasBpDoubleRewardItemEver or ActivityUtils.hasStaminaReduceCount() then
+        self.m_curSelectRadio = 1
+    end
 end
 
 
@@ -159,6 +174,8 @@ DungeonCustomRewardCtrl._InitView = HL.Method() << function(self)
     self.view.customRewardRadioComp:InitCustomRewardRadioComp(self.m_costStamina, function(radioIndex)
         self:_OnRewardRadioChanged(radioIndex)
     end)
+
+    self:_RefreshState()
 end
 
 

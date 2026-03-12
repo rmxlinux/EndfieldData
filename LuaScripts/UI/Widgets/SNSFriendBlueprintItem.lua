@@ -57,6 +57,7 @@ SNSFriendBlueprintItem.InitSNSFriendBlueprintItem = HL.Method(HL.Any, HL.Any) <<
     self:RegisterMessage(MessageConst.FAC_ON_QUERY_SHARED_BLUEPRINT,function(arg)
         if self.m_isQueryingBP then
             self.m_isQueryingBP = false
+            Notify(MessageConst.FAC_ON_UPDATE_FRIEND_CHAT_STATE, true)
             UIManager:Open(PanelId.FacSaveBlueprint, {
                 bpInst = unpack(arg),
                 isSharing = false,
@@ -107,17 +108,8 @@ SNSFriendBlueprintItem.UpdateBluePrintShow = HL.Method(HL.Any) << function(self,
 
     self.m_bpSharedCode = self.m_message.bpSharedCode
     if self.m_message.bpIcon ~= nil then
-        local iconPath = FacConst.FAC_BLUEPRINT_DEFAULT_ICON
         if #self.m_message.bpIcon > 0 then
-            iconPath = self.m_message.bpIcon
-        end
-        self.view.bluePrintImg:LoadSprite(ICON_PATH..iconPath)
-    end
-
-    if self.m_message.bpBaseColor ~= nil then
-        local hasColor, colorData = Tables.factoryBlueprintIconBGColorTable:TryGetValue(self.m_message.bpBaseColor)
-        if hasColor then
-            self.view.bgIcon:LoadSprite(UIConst.UI_SPRITE_BLUEPRINT, colorData.imgName)
+            self.view.blueprintIcon:InitBlueprintIcon(self.m_message.bpIcon, self.m_message.bpBaseColor)
         end
     end
 

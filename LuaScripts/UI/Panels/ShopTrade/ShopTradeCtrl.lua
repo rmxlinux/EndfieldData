@@ -89,6 +89,12 @@ local shopSystem = GameInstance.player.shopSystem
 
 
 
+
+
+
+
+
+
 ShopTradeCtrl = HL.Class('ShopTradeCtrl', uiCtrl.UICtrl)
 
 
@@ -140,6 +146,9 @@ ShopTradeCtrl.m_bindIdNextTab = HL.Field(HL.Number) << 0
 
 
 ShopTradeCtrl.m_waitAutoScrollTagListTime = HL.Field(HL.Number) << -1
+
+
+ShopTradeCtrl.m_getCellSizeHelperInfo = HL.Field(HL.Table)
 
 
 
@@ -300,6 +309,7 @@ ShopTradeCtrl.OnClose = HL.Override() << function(self)
         Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
     end
     self._updateLimitCountTimeKey = LuaUpdate:Remove(self._updateLimitCountTimeKey)
+    UIManager:ToggleBlockObtainWaysJump("VISIT_SPACESHIP", false)
 end
 
 
@@ -397,6 +407,10 @@ ShopTradeCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     
     
     self.m_myPositionGoodsSortFunc = Utils.genSortFunction({ "sortId", "raritySort", "profitRatioSort", "goodsId" }, true)
+
+    if GameInstance.player.spaceship.isViewingFriend then
+        UIManager:ToggleBlockObtainWaysJump("VISIT_SPACESHIP", true)
+    end
 end
 
 
@@ -820,6 +834,10 @@ ShopTradeCtrl._InitUI = HL.Method() << function(self)
         local cell = self.m_getGoodsGroupCellFunc(obj)
         self:_OnRefreshGoodsGroupCell(cell, LuaIndex(csIndex))
     end)
+    self.view.goodsNode.goodsGroupList.getCellSize = function(csIndex)
+        return self:_GetGoodsGroupCellSize(csIndex)
+    end
+    self:m_InitGetCellSizeHelperInfo()
     
     local preActionId = self.view.tabNode.previousKeyHint.actionId
     local nextActionId = self.view.tabNode.nextKeyHint.actionId
@@ -897,6 +915,53 @@ end
 
 
 
+ShopTradeCtrl.m_InitGetCellSizeHelperInfo = HL.Method() << function(self)
+    local goodsNode = self.view.goodsNode
+    local groupCell = goodsNode.goodsGroupCell.view
+    
+    local goodsListGrid = groupCell.goodsListGridLayout
+    
+    local titleHeight = groupCell.shopItemTitle.transform.rect.height
+    local titleHeightHasPosition = titleHeight + groupCell.myPositionDetail.transform.rect.height
+    local titleHeightEmptyPosition = titleHeight + groupCell.myPositionEmpty.transform.rect.height
+    
+    local goodsSize = goodsListGrid.cellSize
+    local goodsSpacing = goodsListGrid.spacing
+    local goodsPadding = goodsListGrid.padding
+    LayoutRebuilder.ForceRebuildLayoutImmediate(goodsNode.goodsGroupList.transform)
+    LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.goodsNode.scrollContainer)
+    local lineWidth = goodsNode.goodsGroupList.transform.rect.width - goodsPadding.left - goodsPadding.right
+    local maxCountOneLine = math.floor((lineWidth + goodsSpacing.x) / (goodsSize.x + goodsSpacing.x))
+    
+    self.m_getCellSizeHelperInfo = {
+        titleHeight = titleHeight,
+        titleHeightHasPosition = titleHeightHasPosition,
+        titleHeightEmptyPosition = titleHeightEmptyPosition,
+        
+        goodsSize = goodsSize,
+        goodsSpacing = goodsSpacing,
+        goodsPadding = goodsPadding,
+        lineWidth = lineWidth,
+        maxCountOneLine = maxCountOneLine,
+        
+        getContentHeightFunc = function(cellCount)
+            if cellCount == 0 then
+                return 0
+            end
+            local uiInfo = self.m_getCellSizeHelperInfo
+            local lineCount = math.floor(cellCount / uiInfo.maxCountOneLine)
+            if cellCount % uiInfo.maxCountOneLine > 0 then
+                lineCount = lineCount + 1
+            end
+            local contentHeight = uiInfo.goodsSize.y * lineCount + uiInfo.goodsSpacing.y * (lineCount - 1) +
+                uiInfo.goodsPadding.top + uiInfo.goodsPadding.bottom
+            return math.max(contentHeight, 0)
+        end
+    }
+end
+
+
+
 ShopTradeCtrl._BindingControllerOperate = HL.Method() << function(self)
     
     if not self.m_isLocalShop then
@@ -934,8 +999,11 @@ ShopTradeCtrl._BindingControllerOperate = HL.Method() << function(self)
                             return
                         end
                         local indexInThisLine = (self.m_curNaviLocalGoodsIndex - 1) % lineMaxCellCount + 1
-                        local preGroupListLineCount = math.floor(preGroupTotalCellCount / lineMaxCellCount) + 1
+                        local preGroupListLineCount = math.floor((preGroupTotalCellCount - 1) / lineMaxCellCount) + 1
                         local preGroupLastLineCellCount = preGroupTotalCellCount % lineMaxCellCount
+                        if preGroupLastLineCellCount == 0 then
+                            preGroupLastLineCellCount = lineMaxCellCount
+                        end
                         local preGroupPreLastLineTotalCellCount = (preGroupListLineCount - 1) * lineMaxCellCount
                         newIndex = math.min(preGroupPreLastLineTotalCellCount + indexInThisLine, preGroupPreLastLineTotalCellCount + preGroupLastLineCellCount)
                         self:_OnChangeSelectTagUI(newTagIndex)
@@ -972,7 +1040,11 @@ ShopTradeCtrl._BindingControllerOperate = HL.Method() << function(self)
                 local lineMaxCellCount = self:_GetGridLayoutGroupHorizontalMaxCellCount(gridLayout)
                 local newIndex = self.m_curNaviLocalGoodsIndex + lineMaxCellCount 
                 local curGroupTotalCellCount = goodsGroupCell.m_goodsCellCache:GetCount()
-                if newIndex > curGroupTotalCellCount then
+                local lastLineCellCount = curGroupTotalCellCount % lineMaxCellCount
+                if lastLineCellCount == 0 then
+                    lastLineCellCount = curGroupTotalCellCount
+                end
+                if self.m_curNaviLocalGoodsIndex <= (curGroupTotalCellCount - lastLineCellCount) and newIndex > curGroupTotalCellCount then
                     
                     local curGroupLastLineCellCount = curGroupTotalCellCount % lineMaxCellCount
                     local isNotLastLine = (self.m_curNaviLocalGoodsIndex + curGroupLastLineCellCount) <= curGroupTotalCellCount
@@ -980,7 +1052,7 @@ ShopTradeCtrl._BindingControllerOperate = HL.Method() << function(self)
                         newIndex = curGroupTotalCellCount
                     end
                 end
-                if newIndex > goodsGroupCell.m_goodsCellCache:GetCount() then
+                if newIndex > curGroupTotalCellCount then
                     
                     if curTagIndex < self.m_goodsTagCellCache:GetCount() then
                         local newTagIndex = curTagIndex + 1
@@ -1201,6 +1273,24 @@ end
 
 
 
+ShopTradeCtrl._GetGoodsGroupCellSize = HL.Method(HL.Number).Return(HL.Number) << function(self, csIndex)
+    local luaIndex = LuaIndex(csIndex)
+    local height = self.m_getCellSizeHelperInfo.titleHeight
+    if self.m_isLocalShop then
+        if self.m_isSelectCommonShop then
+            height = self:_GetGoodsGroupCellSizeCommonMode(luaIndex)
+        else
+            height = self:_GetGoodsGroupCellSizeRandomMode(luaIndex)
+        end
+    else
+        height = self:_GetGoodsGroupCellSizeFriendMode(luaIndex)
+    end
+    return height
+end
+
+
+
+
 
 ShopTradeCtrl._OnRefreshGoodsTagCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local groupInfo
@@ -1331,6 +1421,17 @@ end
 
 
 
+ShopTradeCtrl._GetGoodsGroupCellSizeCommonMode = HL.Method(HL.Number).Return(HL.Number) << function(self, luaIndex)
+    local groupInfo = self.m_localShopInfo.commonShopInfo.goodsGroupList[luaIndex]
+    local count = #groupInfo.goodsList
+    local titleHeight = self.m_getCellSizeHelperInfo.titleHeight
+    local contentHeight = self.m_getCellSizeHelperInfo.getContentHeightFunc(count)
+    return titleHeight + contentHeight
+end
+
+
+
+
 
 
 
@@ -1373,6 +1474,30 @@ ShopTradeCtrl._RefreshGoodsGroupCellRandomMode = HL.Method(HL.Forward("ShopTrade
             goodsCell.gameObject.name = "GoodsCell_" .. index
         end)
     end
+end
+
+
+
+
+ShopTradeCtrl._GetGoodsGroupCellSizeRandomMode = HL.Method(HL.Number).Return(HL.Number) << function(self, luaIndex)
+    local titleHeight = 0
+    local contentHeight = 0
+    if luaIndex == 1 then
+        local groupInfo = self.m_localShopInfo.myPositionGoodsGroup
+        local goodsCount = #groupInfo.goodsList
+        if goodsCount <= 0 then
+            titleHeight = self.m_getCellSizeHelperInfo.titleHeightEmptyPosition
+        else
+            titleHeight = self.m_getCellSizeHelperInfo.titleHeightHasPosition
+            contentHeight = self.m_getCellSizeHelperInfo.getContentHeightFunc(goodsCount)
+        end
+    else
+        local groupInfo = self.m_localShopInfo.randomShopInfo.goodsGroupList[luaIndex - 1]
+        local goodsCount = #groupInfo.goodsList
+        titleHeight = self.m_getCellSizeHelperInfo.titleHeight
+        contentHeight = self.m_getCellSizeHelperInfo.getContentHeightFunc(goodsCount)
+    end
+    return titleHeight + contentHeight
 end
 
 
@@ -1472,6 +1597,18 @@ ShopTradeCtrl._RefreshGoodsGroupCellFriendMode = HL.Method(HL.Forward("ShopTrade
         goodsCell:InitShopTradeGoodsCellFriendMode(goodsInfo)
         goodsCell.gameObject.name = "GoodsCell_" .. index
     end)
+end
+
+
+
+
+ShopTradeCtrl._GetGoodsGroupCellSizeFriendMode = HL.Method(HL.Number).Return(HL.Number) << function(self, luaIndex)
+    local shopInfo = self.m_friendShopInfoList[self.m_curSelectFriendShopIndex]
+    local groupInfo = shopInfo.goodsGroupList[luaIndex]
+    local count = #groupInfo.goodsList
+    local titleHeight = self.m_getCellSizeHelperInfo.titleHeightHasPosition
+    local contentHeight = self.m_getCellSizeHelperInfo.getContentHeightFunc(count)
+    return titleHeight + contentHeight
 end
 
 
@@ -1739,8 +1876,14 @@ ShopTradeCtrl._RefreshSingleGoods = HL.Method(HL.Any) << function(self, msg)
     local goodsId = unpackMsg.GoodsId
     
     local searchInfo = self.m_commonShopRefreshGoodsSearchMap[goodsId]
+    if not searchInfo then
+        return
+    end
     local goodsInfo = searchInfo.goodsInfo
     local _, goodsCfg = Tables.shopGoodsTable:TryGetValue(goodsId)
+    if not goodsCfg then
+        return
+    end
     local itemBundle = UIUtils.getRewardFirstItem(goodsCfg.rewardId)
     local itemId = itemBundle.id
     goodsInfo.remainLimitCount = shopSystem:GetRemainCountByGoodsId(unpackMsg.ShopId, goodsId)
@@ -1806,8 +1949,19 @@ end
 ShopTradeCtrl._OnFriendShopRefresh = HL.Method() << function(self)
     if not self.m_isLocalShop then
         shopSystem:SetGoodsIdSee()
-        self:_UpdateData()
-        self:_RefreshAllUI()
+        
+        local shopData = shopSystem:GetFriendShopData(self.m_friendRoleId)
+        if shopData then
+            self:_UpdateData()
+            self:_RefreshAllUI()
+        else
+            
+            PhaseManager:PopPhase(PHASE_ID)
+            if self.m_onCloseCallBack then
+                self.m_onCloseCallBack()
+                self.m_onCloseCallBack = nil
+            end
+        end
     end
 end
 

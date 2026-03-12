@@ -40,8 +40,10 @@ MapMarkDetailUndergroundPipeCtrl.OnCreate = HL.Override(HL.Any) << function(self
     local getRuntimeDataSuccess, markRuntimeData = GameInstance.player.mapManager:GetMarkInstRuntimeData(self.m_markInstId)
 
     if getRuntimeDataSuccess then
-        local nodeHandler = FactoryUtils.getBuildingNodeHandler(markRuntimeData.nodeId)
-        local component = FactoryUtils.getBuildingComponentHandlerAtPos(nodeHandler, GEnums.FCComponentPos.FluidUdPipe)
+        local nodeHandler = FactoryUtils.getBuildingNodeHandler(markRuntimeData.nodeId, markRuntimeData.chapterId)
+        local cpt = nodeHandler:GetComponentInPosition(GEnums.FCComponentPos.FluidUdPipe:GetHashCode())
+        local chapterInfo = GameInstance.remoteFactoryManager.system.core:GetChapterInfoById(markRuntimeData.chapterId)
+        local component = chapterInfo:GetComponent(cpt.componentId)
         local isLoader = FacConst.UDPIPE_PORT_LOAD_TYPE_MAP[nodeHandler.templateId]
         self.m_connectHandler = component.udPipe.connectComponent
         if self.m_connectHandler == nil then

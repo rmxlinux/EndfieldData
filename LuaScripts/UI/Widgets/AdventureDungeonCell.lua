@@ -129,26 +129,50 @@ AdventureDungeonCell.InitAdventureDungeonCell = HL.Method(HL.Any, HL.Opt(HL.Bool
     end
     
     self.view.dungeonNameTxt.text = info.dungeonName
-    if string.isEmpty(info.staminaTxt) or not info.isActive then
-        self.view.staminaState:SetState("HideStamina")
-        if info.dungeonCategory == GEnums.DungeonCategoryType.BasicResource or
-            info.dungeonCategory == GEnums.DungeonCategoryType.CharResource or
-            info.dungeonCategory == GEnums.DungeonCategoryType.SpecialResource then
+
+    
+    if info.dungeonCategory == GEnums.DungeonCategoryType.SpecialResource then
+        if not info.isActive then
+            self.view.staminaState:SetState("HideStamina")
             self.view.expandState:SetState("NotActivated")  
         else
-            self.view.expandState:SetState("Hide")  
-            self.view.staminaCostTxt.gameObject:SetActive(false)
+            if string.isEmpty(info.staminaTxt) then
+                self.view.expandState:SetState("Hide")  
+                self.view.staminaCostTxt.gameObject:SetActive(false)
+            else
+                self.view.staminaState:SetState("ShowStamina")
+                self.view.staminaCostTxt.text = info.staminaTxt
+                self.view.staminaCostTxt.text = info.staminaTxt
+                if ActivityUtils.hasStaminaReduceCount() then
+                    self.view.staminaCostTxt.gameObject:SetActive(false)
+                    self.view.expandState:SetState("Relief")
+                    self.view.expandState.gameObject:GetComponent("UIAnimationWrapper"):PlayInAnimation()
+                else
+                    self.view.expandState:SetState("Normal")
+                end
+            end
         end
     else
-        self.view.staminaState:SetState("ShowStamina")
-        self.view.staminaCostTxt.text = info.staminaTxt
-        self.view.staminaCostTxt.text = info.staminaTxt
-        if ActivityUtils.hasStaminaReduceCount() then
-            self.view.staminaCostTxt.gameObject:SetActive(false)
-            self.view.expandState:SetState("Relief")
-            self.view.expandState.gameObject:GetComponent("UIAnimationWrapper"):PlayInAnimation()
+        if string.isEmpty(info.staminaTxt) or not info.isActive then
+            self.view.staminaState:SetState("HideStamina")
+            if info.dungeonCategory == GEnums.DungeonCategoryType.BasicResource or
+                info.dungeonCategory == GEnums.DungeonCategoryType.CharResource then
+                self.view.expandState:SetState("NotActivated")  
+            else
+                self.view.expandState:SetState("Hide")  
+                self.view.staminaCostTxt.gameObject:SetActive(false)
+            end
         else
-            self.view.expandState:SetState("Normal")
+            self.view.staminaState:SetState("ShowStamina")
+            self.view.staminaCostTxt.text = info.staminaTxt
+            self.view.staminaCostTxt.text = info.staminaTxt
+            if ActivityUtils.hasStaminaReduceCount() then
+                self.view.staminaCostTxt.gameObject:SetActive(false)
+                self.view.expandState:SetState("Relief")
+                self.view.expandState.gameObject:GetComponent("UIAnimationWrapper"):PlayInAnimation()
+            else
+                self.view.expandState:SetState("Normal")
+            end
         end
     end
 
@@ -167,13 +191,24 @@ AdventureDungeonCell.InitAdventureDungeonCell = HL.Method(HL.Any, HL.Opt(HL.Bool
         self.view.btnNodeState:SetState("ShowGoToBtn") 
     end
     
-    self.view.redDot:InitRedDot(
-        "AdventureDungeonCell",
-        self.m_subGameIds,
-        nil,
-        isScrollRect and
-            self:GetUICtrl().view.dungeonCategoryListReddot or
-            self:GetUICtrl().view.singleCategoryListReddot)
+    if string.isEmpty(self.m_info.redDotName) then
+        self.view.redDot:InitRedDot(
+            "AdventureDungeonCell",
+            self.m_subGameIds,
+            nil,
+            isScrollRect and
+                self:GetUICtrl().view.dungeonCategoryListReddot or
+                self:GetUICtrl().view.singleCategoryListReddot)
+    else
+        self.view.redDot:InitRedDot(
+            self.m_info.redDotName,
+            self.m_info.redDotArg,
+            nil,
+            isScrollRect and
+                self:GetUICtrl().view.dungeonCategoryListReddot or
+                self:GetUICtrl().view.singleCategoryListReddot)
+    end
+
 end
 
 

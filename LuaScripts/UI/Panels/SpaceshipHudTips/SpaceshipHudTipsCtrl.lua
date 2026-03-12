@@ -15,7 +15,6 @@ local PANEL_ID = PanelId.SpaceshipHudTips
 
 
 
-
 SpaceshipHudTipsCtrl = HL.Class('SpaceshipHudTipsCtrl', uiCtrl.UICtrl)
 
 
@@ -35,11 +34,6 @@ SpaceshipHudTipsCtrl.m_getCellFunc = HL.Field(HL.Function)
 
 
 SpaceshipHudTipsCtrl.m_charFavDatas = HL.Field(HL.Table)
-
-
-SpaceshipHudTipsCtrl.m_isFirstTime = HL.Field(HL.Boolean) << true
-
-
 
 
 
@@ -98,7 +92,7 @@ SpaceshipHudTipsCtrl._TryShowFavToast = HL.Method() << function(self)
 
     if self.view.friendshipNode.toastList.inAnimation then
         logger.info("self.view.friendshipNode.toastList.inAnimation")
-        Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "SpaceshipHudTips")
+        self:_Exit()
         return
     end
 
@@ -117,34 +111,15 @@ SpaceshipHudTipsCtrl._TryShowFavToast = HL.Method() << function(self)
             end
         end
     end
+
     local count = #self.m_charFavDatas
-    logger.info("SpaceshipHudTipsCtrl._TryShowFavToast", count, self.m_isFirstTime)
+    logger.info("SpaceshipHudTipsCtrl._TryShowFavToast", count)
 
-    if self.m_isFirstTime then
-        self.view.main.gameObject:SetActive(true)
-        if count > 0 then
-            self.view.friendshipNode.gameObject:SetActive(true)
-            AudioAdapter.PostEvent("Au_UI_Popup_SpaceshipHudTipsPanel_Open")
-
-            self.view.productNode.gameObject:SetActive(false)
-            self.view.friendshipNode.toastList:AddToast(count)
-        else
-            self.view.friendshipNode.gameObject:SetActive(false)
-            self.view.friendshipNode.toastList:ClearAllToast()
-            self:_TryShowProductHint()
-            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "SpaceshipHudTips")
-        end
+    self.view.main.gameObject:SetActive(true)
+    if count > 0 then
+        self:TryAddFriendshipToast(count)
     else
-        if count > 0 then
-            self.view.main.gameObject:SetActive(true)
-            self.view.friendshipNode.gameObject:SetActive(true)
-            AudioAdapter.PostEvent("Au_UI_Popup_SpaceshipHudTipsPanel_Open")
-
-            self.view.productNode.gameObject:SetActive(false)
-            self.view.friendshipNode.toastList:AddToast(count)
-        else
-            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "SpaceshipHudTips")
-        end
+        self:_Exit()
     end
 end
 
@@ -166,33 +141,6 @@ end
 SpaceshipHudTipsCtrl._OnAllToastFinished = HL.Method() << function(self)
     AudioAdapter.PostEvent("Au_UI_Popup_SpaceshipHudTipsPanel_Close")
     self.view.friendshipNode.animationWrapper:PlayOutAnimation(function()
-        self.view.friendshipNode.gameObject:SetActive(false)
-        self.view.friendshipNode.toastList:ClearAllToast()
-        self:_TryShowProductHint()
-    end)
-end
-
-
-
-SpaceshipHudTipsCtrl._TryShowProductHint = HL.Method() << function(self)
-    do
-        self.view.main.gameObject:SetActive(false)
-        return
-    end
-
-    if not self.m_isFirstTime then
-        self:_Exit()
-        return
-    end
-    self.m_isFirstTime = false
-    if not GameInstance.player.spaceship:HasAnyProductToCollect() then
-        logger.info("SpaceshipHudTipsCtrl._TryShowProductHint Fail")
-        self:_Exit()
-        return
-    end
-    logger.info("SpaceshipHudTipsCtrl._TryShowProductHint Succ")
-    self.view.productNode.gameObject:SetActive(true)
-    self.view.productNode.animation:PlayInAnimation(function()
         self:_Exit()
     end)
 end
@@ -200,8 +148,15 @@ end
 
 
 SpaceshipHudTipsCtrl._Exit = HL.Method() << function(self)
-    self.view.main.gameObject:SetActive(false)
-    Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "SpaceshipHudTips")
+    local mainHudActionQueue = LuaSystemManager.mainHudActionQueue
+    if mainHudActionQueue:GetCurQueueFirstRequestType() == "SpaceshipHudTips" then
+        self.view.friendshipNode.toastList:ClearAllToast()
+        self.view.friendshipNode.gameObject:SetActive(false)
+        self.view.main.gameObject:SetActive(false)
+        if mainHudActionQueue:IsShowing() then
+            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "SpaceshipHudTips")
+        end
+    end
 end
 
 
@@ -209,6 +164,20 @@ end
 SpaceshipHudTipsCtrl.InterruptMainHudActionQueue = HL.Method() << function(self)
     self.view.productNode.animation:ClearTween(false)
     self.view.main.gameObject:SetActive(false)
+end
+
+
+
+
+SpaceshipHudTipsCtrl.TryAddFriendshipToast = HL.Method(HL.Number) << function(self, count)
+    self.view.friendshipNode.gameObject:SetActive(true)
+    if self.view.friendshipNode.toastList.gameObject.activeInHierarchy then
+        AudioAdapter.PostEvent("Au_UI_Popup_SpaceshipHudTipsPanel_Open")
+        self.view.productNode.gameObject:SetActive(false)
+        self.view.friendshipNode.toastList:AddToast(count)
+    else
+        self:_Exit()
+    end
 end
 
 HL.Commit(SpaceshipHudTipsCtrl)

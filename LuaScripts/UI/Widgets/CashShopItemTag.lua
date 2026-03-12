@@ -95,7 +95,7 @@ CashShopItemTag._SetupUIShopGoods = HL.Method(HL.Any, HL.Opt(HL.Boolean)) << fun
 
     local limitBuy = GameInstance.player.shopSystem:GetRemainCountByGoodsId(goodsData.shopId, goodsTemplateId)
     self.view.tagRestriction.shopRestrictionText.text = Language.ui_shop_token_stock
-    if limitBuy > 0 then
+    if limitBuy >= 0 then
         self.view.tagRestriction.gameObject:SetActive(true)
         self.view.tagRestriction.shopRestrictionNumText.text = limitBuy
     elseif limitBuy ==-1 then

@@ -111,7 +111,7 @@ DungeonCharTutorialStepHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHAR_TUTORIAL_STEP_STATE_CHANGE] = 'OnTutorialStepStateChangeV2',
 
     [MessageConst.ON_SUB_GAME_FINISH_STATE_CHANGE] = "OnSubGameFinishStateChange", 
-    [MessageConst.ON_SUB_GAME_STAGE_CHANGE] = "OnSubGameStageChange", 
+    [MessageConst.ON_SUB_GAME_STAGE_FINISH] = "OnSubGameStageFinish",
     [MessageConst.ON_SUB_GAME_STAGE_CHANGE_FINISH] = "OnSubGameStageChangeFinish",
 
     [MessageConst.LEVEL_SCRIPT_PUSH_STAGE] = "OnLevelScriptPushStage",
@@ -225,9 +225,7 @@ end
 
 
 
-DungeonCharTutorialStepHudCtrl.OnSubGameStageChange = HL.Method() << function(self)
-    
-    
+DungeonCharTutorialStepHudCtrl.OnSubGameStageFinish = HL.Method() << function(self)
     self.view.finishNode.gameObject:SetActive(true)
     self.view.stepDescNode.gameObject:SetActive(false)
 end

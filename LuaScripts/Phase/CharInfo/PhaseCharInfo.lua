@@ -919,6 +919,12 @@ PhaseCharInfo._RefreshCharModelAddon = HL.Method(HL.Userdata, HL.Table) << funct
             if volumeGroup then
                 self.m_templateId2VolumeGroup[templateId] = volumeGroup
             end
+
+            local _, fitAspectRatioByFOV = cameraGroup.view.cameraGroup.vcam_overview.gameObject:TryGetComponent(typeof(CS.Beyond.UI.FitAspectRatioByFOV))
+            if fitAspectRatioByFOV and fitAspectRatioByFOV.maxFov <= 0 then
+                local sceneObject = self.m_gameObject2Item[PHASE_CHAR_INFO_GAME_OBJECT]
+                fitAspectRatioByFOV.maxFov = sceneObject.view.config.OVERVIEW_CAM_MAX_FOV
+            end
         end
     end
 
@@ -1122,6 +1128,9 @@ PhaseCharInfo.OnPageChange = HL.Method(HL.Any) << function(self, arg)
         if pageType == UIConst.CHAR_INFO_PAGE_TYPE.POTENTIAL then
             self:_InitPotentialScene()
         end
+        if pageType == UIConst.CHAR_INFO_PAGE_TYPE.PROFILE_SHOW then
+            AudioAdapter.PostEvent("au_global_ui_magnifier_panel_enter")
+        end
         self:_ShowPanel(neededPanels, pageType, extraArg)
     end)
 
@@ -1156,7 +1165,7 @@ PhaseCharInfo.OnPageChange = HL.Method(HL.Any) << function(self, arg)
             local maskData = CS.Beyond.Gameplay.UICommonMaskData()
             maskData.notHideCursor = true
             maskData.fadeInTime = sceneObject.view.config.BLEND_BLACK_SCREEN_TIME
-            maskData.fadeBeforeTime = 0
+            maskData.fadeWaitTime = 0.01
             maskData.fadeOutTime = sceneObject.view.config.BLEND_BLACK_SCREEN_TIME
             maskData.fadeInCallback = function()
                 if self.m_blendPotentialTween then
@@ -1245,9 +1254,19 @@ PhaseCharInfo.OnPageChange = HL.Method(HL.Any) << function(self, arg)
                 sceneObject.view.config.POTENTIAL_BLEND_CAM_DELTA_POS, sceneObject.view.config.BLEND_BLACK_SCREEN_TIME)
         end
 
+        self.m_charItem.uiModelMono.jumpWeaponAnimHideToHide = false
+        self.m_charItem.uiModelMono.jumpStaticWeaponAnimHideToHide = false
         if pageType == UIConst.CHAR_INFO_PAGE_TYPE.UPGRADE or pageType == UIConst.CHAR_INFO_PAGE_TYPE.TALENT then
-            coroutine.wait(0.1)
-            self.m_charItem.uiModelMono:JumpWeaponAnimHideToHide()
+            self.m_charItem.uiModelMono.jumpWeaponAnimHideToHide = true
+            self.m_charItem.uiModelMono.jumpStaticWeaponAnimHideToHide = true
+        end
+
+        if beforePage == UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW and pageType == UIConst.CHAR_INFO_PAGE_TYPE.WEAPON then
+            local weaponState = CS.Beyond.Gameplay.View.CharUIModelMono.WeaponState.HIDE
+            self.m_charItem.uiModelMono.jumpWeaponAnimHideToHide = true
+            self.m_charItem.uiModelMono.jumpStaticWeaponAnimHideToHide = true
+            self.m_charItem.uiModelMono:SwitchWeaponState(weaponState, true)
+            self.m_charItem.uiModelMono:SwitchStaticWeaponState(weaponState)
         end
     end)
 end
@@ -1373,9 +1392,7 @@ PhaseCharInfo._ToggleChrSPMotionCor = HL.Method(HL.Boolean) << function(self, is
     local animator = phaseItem.go:GetComponent("Animator")
     self.m_charItem.uiModelMono:ActiveRotationRootMotion(isOn)
 
-    local lastSPWaitTime = 0
-    local lastTickSpLoopTime = -1
-    local isLastFrameSP = false
+    local idleWaitTime = 0
     local isTriggerRelax = false
 
     if self.m_spMotionUpdateKey then
@@ -1397,17 +1414,8 @@ PhaseCharInfo._ToggleChrSPMotionCor = HL.Method(HL.Boolean) << function(self, is
             local isInRelaxIdle = animator:GetCurrentAnimatorStateInfo():IsName("RelaxIdle")
             local isInTransition = animator:IsInTransition(0)
             local isEnableSwitch = animator:GetBool(UIConst.PHASE_CHAR_ITEM_ENABLE_SWITCH)
-            if isEnableSwitch then
+            if isEnableSwitch or not isInRelaxIdle then
                 return
-            end
-            if not isInRelaxIdle then
-                isLastFrameSP = true
-                return
-            end
-
-            if isLastFrameSP then
-                isLastFrameSP = false
-                lastSPWaitTime = 0
             end
 
             
@@ -1427,33 +1435,23 @@ PhaseCharInfo._ToggleChrSPMotionCor = HL.Method(HL.Boolean) << function(self, is
                 if isAngleInRange and isZoomInRange then
                     local fromIndex = UIConst.CHAR_INFO_PAGE_2_ANIMATOR_INDEX_DICT[self.m_curPage]
                     local toIndex = UIConst.PHASE_CHAR_ITEM_ANIMATOR_INDEX_DICT.SP_RELAX
-                    self:_SwitchCharacterControllerState(phaseItem, fromIndex, toIndex)
+                    self:_SwitchCharacterControllerState(phaseItem, fromIndex, toIndex, nil, true)
                     isTriggerRelax = true
                     return
                 end
             end
 
-            lastSPWaitTime = lastSPWaitTime + deltaTime
-            if lastSPWaitTime < minIdleTime then
+            idleWaitTime = idleWaitTime + deltaTime
+            if idleWaitTime < minIdleTime then
                 return
             end
 
-            local normalizedTime = animator:GetCurrentAnimatorStateInfo().normalizedTime
-            local idleLoopTime = math.floor(normalizedTime)
-            
-            if (normalizedTime - idleLoopTime) < 0.8 then
-                return
-            end
-
-            if lastTickSpLoopTime == idleLoopTime then
-                return
-            end
-
-            lastTickSpLoopTime = idleLoopTime
             local fromIndex = UIConst.CHAR_INFO_PAGE_2_ANIMATOR_INDEX_DICT[self.m_curPage]
             local toIndex = lume.weightedchoice(spWeight)
-            self:_SwitchCharacterControllerState(phaseItem, fromIndex, toIndex)
+            
+            self:_SwitchCharacterControllerState(phaseItem, fromIndex, toIndex, nil, true)
             isTriggerRelax = false
+            idleWaitTime = 0
         end)
     end
 end
@@ -1473,11 +1471,15 @@ end
 
 
 
-PhaseCharInfo._SwitchCharacterControllerState = HL.Method(HL.Any, HL.Number, HL.Number, HL.Opt(HL.Boolean)) << function(self, charItem, fromIndex, toIndex, skipIn)
-    charItem.uiModelMono:ResetAllEntityRenderHelper()
-    if charItem.uiModelMono.animatorPlayEffectHelper then
-        charItem.uiModelMono.animatorPlayEffectHelper:ClearAllEffects()
+PhaseCharInfo._SwitchCharacterControllerState = HL.Method(HL.Any, HL.Number, HL.Number, HL.Opt(HL.Boolean, HL.Boolean)) << function(
+    self, charItem, fromIndex, toIndex, skipIn, ignoreResetEffect)
+    if not ignoreResetEffect then
+        charItem.uiModelMono:ResetAllEntityRenderHelper()
+        if charItem.uiModelMono.animatorPlayEffectHelper then
+            charItem.uiModelMono.animatorPlayEffectHelper:ClearAllEffects()
+        end
     end
+
     charItem:SetInteger(UIConst.PHASE_CHAR_ITEM_FROM_INDEX, fromIndex)
     charItem:SetInteger(UIConst.PHASE_CHAR_ITEM_TO_INDEX, toIndex)
     charItem:SetTrigger(UIConst.PHASE_CHAR_ITEM_ENABLE_SWITCH)

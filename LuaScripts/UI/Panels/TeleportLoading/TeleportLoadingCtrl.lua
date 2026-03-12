@@ -32,6 +32,12 @@ TeleportLoadingCtrl.m_isClosing = HL.Field(HL.Boolean) << false
 
 
 TeleportLoadingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    if UNITY_EDITOR then
+        if CS.Beyond.GameApp.instance.quickStart then
+            
+            CameraManager.uiCamera.enabled = true
+        end
+    end
 end
 
 
@@ -103,7 +109,7 @@ end
 
 TeleportLoadingCtrl.StartCameraRenderInLoading = HL.Method() << function(self)
     logger.info("TeleportLoadingCtrl.StartCameraRenderInLoading")
-    UIManager:TryToggleMainCamera(self.panelCfg, false)
+    UIManager:ChangeHideCameraPanelState(self.panelId, UIConst.HIDE_CAMERA_PANEL_STATE.In) 
 end
 
 HL.Commit(TeleportLoadingCtrl)

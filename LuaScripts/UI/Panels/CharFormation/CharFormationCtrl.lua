@@ -696,9 +696,6 @@ CharFormationCtrl._Init = HL.Method() << function(self)
             self.m_phase:OnCommonBackClicked()
         end
     end)
-    self:BindInputPlayerAction("common_close_team_panel", function()
-        PhaseManager:PopPhase(PhaseId.CharFormation)
-    end)
 
     self.view.btnBack.onClick:RemoveAllListeners()
     self.view.btnBack.onClick:AddListener(function()
@@ -934,6 +931,9 @@ end
 CharFormationCtrl._OnActiveSquadChange = HL.Method(HL.Table) << function(self, args)
     local curTeamIndex = unpack(args)
     self:UpdateTeamSet()
+    if not string.isEmpty(self.m_dungeonId) or self.m_weekRaidArg then
+        return
+    end
     self:_StartCoroutine(function()
         self.view.bannerMidNode.gameObject:SetActive(true)
         self.view.bannerMidNode.numTxt.text = string.format("0%d", LuaIndex(curTeamIndex))

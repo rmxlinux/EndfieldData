@@ -72,6 +72,8 @@ PhaseActivityCenter.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Op
             local panelId = Tables.activityTable[activityId].panelId
             UIManager:PreloadPanelAsset(PanelId[panelId], PHASE_ID)
         end
+    elseif transitionType == PhaseConst.EPhaseState.TransitionBackToTop then
+        Notify(MessageConst.ON_ACTIVITY_PREPARE_TRANSITION_BACK_TO_TOP)
     end
 end
 
@@ -118,7 +120,7 @@ PhaseActivityCenter.ShowActivity = HL.Method(HL.Any) << function(self, arg)
     UIManager:SetTopOrder(ROOT_PANEL_ID)
 
     
-    if panel.uiCtrl.view.bg then
+    if panel.uiCtrl.view.bg and not string.isEmpty(activityData.bgImg) then
         local path = UIConst.UI_SPRITE_ACTIVITY
         local name = activityData.bgImg
         panel.uiCtrl.view.bg:LoadSprite(path,name)

@@ -265,11 +265,12 @@ end
 
 
 
-PhaseBattlePass.ChangePanel = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Any)) << function(self, panelId, isRight, arg)
+PhaseBattlePass.ChangePanel = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Any)).Return(HL.Boolean) << function(self, panelId, isRight, arg)
     if self.m_isChanging then
-        return
+        return false
     end
     self:_OpenPanel(panelId, isRight, arg)
+    return true
 end
 
 

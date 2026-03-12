@@ -282,6 +282,7 @@ FriendDialogueSendArea.CloseAllSelectPanel = HL.Method(HL.Opt(HL.Boolean)) << fu
     self.view.btnTextMessageStateController:SetState(PanelBtnState.Normal)
     self.view.btnEmotionStateController:SetState(PanelBtnState.Normal)
     self.view.btnShareStateController:SetState(PanelBtnState.Normal)
+    Notify(MessageConst.FAC_ON_UPDATE_FRIEND_CHAT_STATE, false)
 end
 
 

@@ -16,6 +16,9 @@ local domainSystem = GameInstance.player.domainDevelopmentSystem
 
 
 
+
+
+
 DomainVersionInfoPopupCtrl = HL.Class('DomainVersionInfoPopupCtrl', uiCtrl.UICtrl)
 
 
@@ -33,6 +36,12 @@ DomainVersionInfoPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 DomainVersionInfoPopupCtrl.m_info = HL.Field(HL.Table)
 
 
+DomainVersionInfoPopupCtrl.m_focusItemKeyHintHasInit = HL.Field(HL.Boolean) << false
+
+
+DomainVersionInfoPopupCtrl.m_closeCallback = HL.Field(HL.Function)
+
+
 
 
 
@@ -48,6 +57,7 @@ DomainVersionInfoPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     else
         domainId = arg.domainId
         gmForceShowVersion = arg.gmForceShowVersion
+        self.m_closeCallback = arg.onClose
     end
     if string.isEmpty(domainId) then
         logger.error("参数错误！domainId为空")
@@ -60,6 +70,15 @@ DomainVersionInfoPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
     
     self:_RefreshAllUI()
+end
+
+
+
+DomainVersionInfoPopupCtrl.OnClose = HL.Override() << function(self)
+    if self.m_closeCallback then
+        self.m_closeCallback()
+        self.m_closeCallback = nil
+    end
 end
 
 
@@ -79,6 +98,7 @@ DomainVersionInfoPopupCtrl._InitUI = HL.Method() << function(self)
     contentParent.versionPOITitleCell.gameObject:SetActive(false)
     contentParent.versionTextCell.gameObject:SetActive(false)
     contentParent.versionRewardListCell.gameObject:SetActive(false)
+    self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
 
@@ -157,9 +177,25 @@ DomainVersionInfoPopupCtrl._RefreshVersionRewardListCell = HL.Method(HL.Table) <
     
     info.rewardCellCached:Refresh(#info.rewardList, function(rewardCell, luaIndex)
         local itemBundle = info.rewardList[luaIndex]
-        rewardCell:InitItem(itemBundle, true)
+        rewardCell:InitItem(itemBundle, function()
+            UIUtils.showItemSideTips(rewardCell)
+        end)
         rewardCell.view.count.gameObject:SetActive(false)
     end)
+    local focusItemKeyHintTrans = cell.focusItemKeyHint
+    if self.m_focusItemKeyHintHasInit or #info.rewardList <= 0 then
+        focusItemKeyHintTrans.gameObject:SetActive(false)
+    else
+        self.m_focusItemKeyHintHasInit = true
+        focusItemKeyHintTrans.gameObject:SetActive(true)
+        local firstItemCell = info.rewardCellCached:Get(1)
+        if firstItemCell then
+            focusItemKeyHintTrans:SetParent(firstItemCell.transform)
+            
+            local keyHintPos = Vector3(-cell.focusItemKeyHint.transform.rect.width, 0, 0)
+            focusItemKeyHintTrans.transform.localPosition = keyHintPos
+        end
+    end
 end
 
 

@@ -33,7 +33,6 @@ local PHASE_ID = PhaseId.ChallengeDungeon
 
 
 
-
 ChallengeDungeonCtrl = HL.Class('ChallengeDungeonCtrl', uiCtrl.UICtrl)
 
 
@@ -80,12 +79,6 @@ ChallengeDungeonCtrl.m_updateTimeCor = HL.Field(HL.Thread)
 ChallengeDungeonCtrl.m_readRedDotDungeonTempList = HL.Field(HL.Table)
 
 
-ChallengeDungeonCtrl.m_viewedDungeonIds = HL.Field(HL.Table)
-
-
-ChallengeDungeonCtrl.m_curRedDotDungeonIds = HL.Field(HL.Table)
-
-
 ChallengeDungeonCtrl.m_naviCellIndex = HL.Field(HL.Number) << 0
 
 
@@ -116,15 +109,7 @@ end
 
 
 ChallengeDungeonCtrl.OnAnimationInFinished = HL.Override() << function(self)
-    
-    local seriesInfo = self.m_info.seriesInfos[self.m_info.curSelectSeriesIndex]
-    if seriesInfo and seriesInfo.isUnlock then
-        local obj = self.view.dungeonList:Get(self.m_naviCellIndex)
-        local firstCell = self.m_getDungeonCellFunc(obj)
-        if firstCell then
-            InputManagerInst.controllerNaviManager:SetTarget(firstCell.naviDecorator)
-        end
-    end
+    self:_AutoNavi()
 end
 
 
@@ -133,17 +118,19 @@ end
 
 
 ChallengeDungeonCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
-    local activityId = ""
-    if type(arg) == "string" then
-        activityId = arg
-    else
-        activityId = arg.activityId
-    end
     self.m_info = {
-        activityId = activityId,
-        curSelectSeriesIndex = 1,
+        activityId = "",
+        curSelectSeriesIndex = -1,
         seriesInfos = {},
     }
+    if type(arg) == "string" then
+        self.m_info.activityId = arg
+    else
+        self.m_info.activityId = arg.activityId
+        self.m_info.curSelectSeriesIndex = arg.defaultSeriesIndex or 0
+        self.m_naviCellIndex = arg.defaultDungeonIndex or 0
+    end
+
     self.m_readRedDotDungeonTempList = {}
     
     self:_InitSeriesInfo()
@@ -169,29 +156,41 @@ end
 ChallengeDungeonCtrl._InitSeriesInfo = HL.Method() << function(self)
     local _, seriesCfg = Tables.activityGameEntranceSeriesTable:TryGetValue(self.m_info.activityId)
     for seriesId, seriesSingleCfg in pairs(seriesCfg.seriesMap) do
-        local seriesInfo = {
-            seriesId = seriesId,
-            seriesName = seriesSingleCfg.name,
-            sortId = seriesSingleCfg.sortId,
-            allDungeonInfos = {
-                
-            },
-            dungeonBatchInfos = {
-                
-            },
-            totalDungeonCount = 0,
-            achievementId = seriesSingleCfg.achieveId,
-            
-            isUnlock = false,
-            openTime = "",
-            perfectCompleteCount = 0,
-            hasBatchIsLock = false,
-            lockBatchIndex = 0,
-        }
-        table.insert(self.m_info.seriesInfos, seriesInfo)
+        local canShow = false
         
-        self:_InitAllDungeonInfo(seriesInfo)
-        self:_InitDungeonBatchInfo(seriesInfo)
+        local activityData = activitySystem:GetActivity(self.m_info.activityId)
+        if activityData ~= nil then
+            
+            local hasData, seriesData = activityData.seriesDataMap:TryGetValue(seriesId)
+            if seriesData then
+                canShow = seriesData.OpenTime <= DateTimeUtils.GetCurrentTimestampBySeconds()
+            end
+        end
+        if canShow then
+            local seriesInfo = {
+                seriesId = seriesId,
+                seriesName = seriesSingleCfg.name,
+                sortId = seriesSingleCfg.sortId,
+                allDungeonInfos = {
+                    
+                },
+                dungeonBatchInfos = {
+                    
+                },
+                totalDungeonCount = 0,
+                achievementId = seriesSingleCfg.achieveId,
+                
+                isUnlock = false,
+                openTime = "",
+                perfectCompleteCount = 0,
+                hasBatchIsLock = false,
+                lockBatchIndex = 0,
+            }
+            table.insert(self.m_info.seriesInfos, seriesInfo)
+            
+            self:_InitAllDungeonInfo(seriesInfo)
+            self:_InitDungeonBatchInfo(seriesInfo)
+        end
     end
     table.sort(self.m_info.seriesInfos, Utils.genSortFunction({ "sortId" }, true))
 end
@@ -322,8 +321,15 @@ end
 
 
 ChallengeDungeonCtrl._UpdateData = HL.Method() << function(self)
-    for _, seriesInfo in pairs(self.m_info.seriesInfos) do
+    local latestUnlockSeriesIndex = 0
+    for index, seriesInfo in pairs(self.m_info.seriesInfos) do
         self:_UpdateSeriesInfo(seriesInfo)
+        if seriesInfo.isUnlock then
+            latestUnlockSeriesIndex = index
+        end
+    end
+    if self.m_info.curSelectSeriesIndex < 1 then
+        self.m_info.curSelectSeriesIndex = math.max(1, latestUnlockSeriesIndex)
     end
 end
 
@@ -444,6 +450,9 @@ ChallengeDungeonCtrl._InitUI = HL.Method() << function(self)
         self:_RefreshDungeonCell(cell, LuaIndex(csIndex))
     end)
     self.m_batchMarkListCache = UIUtils.genCellCache(self.view.overviewNode.batchMark)
+    self.view.redDotScrollRect.getRedDotStateAt = function(csIndex)
+        return self:_GetRedDotStateAt(csIndex)
+    end
     
     local preActionId = self.view.keyHintLeft.actionId
     local nextActionId = self.view.keyHintRight.actionId
@@ -452,6 +461,7 @@ ChallengeDungeonCtrl._InitUI = HL.Method() << function(self)
         local newIndex = (self.m_info.curSelectSeriesIndex + count - 2) % count + 1
         if newIndex ~= self.m_info.curSelectSeriesIndex then
             self:_OnChangeSeriesTab(newIndex)
+            AudioAdapter.PostEvent("Au_UI_Toggle_Tab_On")
             self.view.tabList:ScrollToIndex(CSIndex(newIndex))
         end
     end)
@@ -460,6 +470,7 @@ ChallengeDungeonCtrl._InitUI = HL.Method() << function(self)
         local newIndex = self.m_info.curSelectSeriesIndex % count + 1
         if newIndex ~= self.m_info.curSelectSeriesIndex then
             self:_OnChangeSeriesTab(newIndex)
+            AudioAdapter.PostEvent("Au_UI_Toggle_Tab_On")
             self.view.tabList:ScrollToIndex(CSIndex(newIndex))
         end
     end)
@@ -499,13 +510,6 @@ ChallengeDungeonCtrl._RefreshContentUI = HL.Method(HL.Number) << function(self, 
     
     overviewNode.dungeonMedal:InitCommonMedalNode(seriesInfo.achievementId)
     
-    self.m_curRedDotDungeonIds = {}
-    for _, dungeonInfo in pairs(seriesInfo.allDungeonInfos) do
-        if RedDotManager:GetRedDotState("AdventureDungeonCell", { dungeonInfo.dungeonId }) then
-            table.insert(self.m_curRedDotDungeonIds, dungeonInfo.dungeonId)
-        end
-    end
-    
     self.m_updateTimeCor = self:_ClearCoroutine(self.m_updateTimeCor)
     if seriesInfo.isUnlock then
         self.view.mainStateCtrl:SetState("Unlock")
@@ -517,8 +521,7 @@ ChallengeDungeonCtrl._RefreshContentUI = HL.Method(HL.Number) << function(self, 
         else
             count = seriesInfo.totalDungeonCount
         end
-        self.m_viewedDungeonIds = {}
-        self.view.dungeonList:UpdateCount(count, true)
+        self.view.dungeonList:UpdateCount(count, self.m_naviCellIndex)
     else
         self.view.mainStateCtrl:SetState("Lock")
     end
@@ -558,7 +561,12 @@ ChallengeDungeonCtrl._RefreshTabCell = HL.Method(HL.Any, HL.Number) << function(
         self:_OnChangeSeriesTab(luaIndex)
     end)
     
-    cell.stateCtrl:SetState(self.m_info.curSelectSeriesIndex ~= luaIndex and "UnSelect" or "Select")
+    local isSelect = self.m_info.curSelectSeriesIndex == luaIndex
+    if isSelect then
+        cell.animationWrapper:SampleClipAtPercent("challengedungeonselected_in", 1)
+    else
+        cell.animationWrapper:SampleClipAtPercent("challengedungeonselected_out", 1)
+    end
     
     cell.redDot:InitRedDot("ActivityNormalChallengeSeries", seriesInfo.seriesId)
 end
@@ -568,8 +576,9 @@ end
 
 
 ChallengeDungeonCtrl._RefreshDungeonCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
+    local seriesIndex = self.m_info.curSelectSeriesIndex
     
-    local seriesInfo = self.m_info.seriesInfos[self.m_info.curSelectSeriesIndex]
+    local seriesInfo = self.m_info.seriesInfos[seriesIndex]
     
     local dungeonInfo = seriesInfo.allDungeonInfos[luaIndex]
     local dungeonId = dungeonInfo.dungeonId
@@ -634,12 +643,11 @@ ChallengeDungeonCtrl._RefreshDungeonCell = HL.Method(HL.Any, HL.Number) << funct
         local firstCell = cell.getRewardCellFunc:Get(1)
         cell.keyHintContent:SetParent(firstCell.view.transform)
         cell.keyHintContent.anchoredPosition = Vector2(-74, 0)
-        cell.rewardListNaviGroup.onIsFocusedChange:RemoveAllListeners()
-        cell.rewardListNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
-            if isFocused then
+        cell.naviDecorator.onIsNaviTargetChanged = function(isTarget)
+            if isTarget then
                 self.m_naviCellIndex = CSIndex(luaIndex)
             end
-        end)
+        end
         
         if dungeonInfo.maxChestNum > 0 then
             cell.chestNumNode.gameObject:SetActive(true)
@@ -652,7 +660,11 @@ ChallengeDungeonCtrl._RefreshDungeonCell = HL.Method(HL.Any, HL.Number) << funct
         cell.gotoBtn.onClick:AddListener(function()
             local enterDungeonCallback = function(enterDungeonId)
                 LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId, function()
-                    PhaseManager:OpenPhaseFast(PhaseId.ChallengeDungeon, self.m_info.activityId)
+                    PhaseManager:OpenPhaseFast(PhaseId.ChallengeDungeon, {
+                        activityId = self.m_info.activityId,
+                        defaultSeriesIndex = seriesIndex,
+                        defaultDungeonIndex = self.m_naviCellIndex,
+                    })
                 end)
             end
             Notify(MessageConst.ON_OPEN_DUNGEON_ENTRY_PANEL, { dungeonId, enterDungeonCallback })
@@ -662,30 +674,12 @@ ChallengeDungeonCtrl._RefreshDungeonCell = HL.Method(HL.Any, HL.Number) << funct
         end)
     end
     
-    cell.redDot:InitRedDot("AdventureDungeonCell", { dungeonId })
+    cell.redDot:InitRedDot("AdventureDungeonCell", { dungeonId }, nil, self.view.redDotScrollRect)
     if isUnread then
         table.insert(self.m_readRedDotDungeonTempList, dungeonId)
     end
-    self.m_viewedDungeonIds[dungeonId] = true
-    self:_RefreshBottomRedDot()
     
     cell.animationWrapper:Play("challengedungeoncell_in")
-end
-
-
-
-ChallengeDungeonCtrl._RefreshBottomRedDot = HL.Method() << function(self)
-    if self.m_curRedDotDungeonIds == nil or self.m_viewedDungeonIds == nil then
-        self.view.listOutsideRedDot.gameObject:SetActive(false)
-        return
-    end
-    for _, id in pairs(self.m_curRedDotDungeonIds) do
-        if self.m_viewedDungeonIds[id] == nil then
-            self.view.listOutsideRedDot.gameObject:SetActive(true)
-            return
-        end
-    end
-    self.view.listOutsideRedDot.gameObject:SetActive(false)
 end
 
 
@@ -739,6 +733,7 @@ ChallengeDungeonCtrl._OnChangeSeriesTab = HL.Method(HL.Number) << function(self,
         if ActivityUtils.isNewGameEntranceSeries(seriesInfo.seriesId) then
             ActivityUtils.setFalseNewGameEntranceSeries(seriesInfo.seriesId)
         end
+        self:_AutoNavi()
     end
 end
 
@@ -755,6 +750,44 @@ end
 
 ChallengeDungeonCtrl._OnDisplaySizeChanged = HL.Method() << function(self)
     self:_RefreshAllUI()
+end
+
+
+
+ChallengeDungeonCtrl._AutoNavi = HL.Method() << function(self)
+    local seriesInfo = self.m_info.seriesInfos[self.m_info.curSelectSeriesIndex]
+    if seriesInfo and seriesInfo.isUnlock then
+        local obj = self.view.dungeonList:Get(self.m_naviCellIndex)
+        local firstCell = self.m_getDungeonCellFunc(obj)
+        if firstCell then
+            InputManagerInst.controllerNaviManager:SetTarget(firstCell.naviDecorator)
+        end
+    end
+end
+
+
+
+
+ChallengeDungeonCtrl._GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, csIndex)
+    local luaIndex = CSIndex(csIndex)
+    local seriesInfo = self.m_info.seriesInfos[self.m_info.curSelectSeriesIndex]
+    if not seriesInfo then
+        return 0
+    end
+    
+    if luaIndex < 1 or luaIndex > #seriesInfo.allDungeonInfos then
+        return 0
+    end
+    local dungeonInfo = seriesInfo.allDungeonInfos[luaIndex]
+    if not dungeonInfo then
+        return 0
+    end
+    local hasRedDot, redDotType = RedDotManager:GetRedDotState("AdventureDungeonCell", { dungeonInfo.dungeonId })
+    if hasRedDot then
+        return redDotType
+    else
+        return 0
+    end
 end
 
 

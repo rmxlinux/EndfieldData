@@ -38,6 +38,13 @@ LoadingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local enableDebug = (BEYOND_DEBUG or BEYOND_DEBUG_COMMAND) and CS.Beyond.Cfg.RemoteGameCfg.instance.data.enableDebugInfo
     self.view.debugNode.gameObject:SetActiveIfNecessary(enableDebug)
     self.view.logoImage:LoadSprite("Loading/deco_loading_txtlo")
+
+    if UNITY_EDITOR then
+        if CS.Beyond.GameApp.instance.quickStart then
+            
+            CameraManager.uiCamera.enabled = true
+        end
+    end
 end
 
 
@@ -51,6 +58,7 @@ end
 
 LoadingCtrl.OpenLoadingPanel = HL.StaticMethod(HL.Opt(HL.Table)) << function(args)
     local isShowing = UIManager:IsShow(PANEL_ID)
+    
     local self = UIManager:AutoOpen(PANEL_ID)
     Notify(MessageConst.ON_LOADING_PANEL_OPENED)
     self.m_isClosing = false
@@ -77,14 +85,9 @@ LoadingCtrl._Init = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     self.m_extraLoadingSystems = {}
 
     local tipKey, bgName = unpack(args)
-    local tipCfg = Tables.loadingTipsTable[tipKey]
-    local succ, typeTagCfg = Tables.loadingTypeTagTable:TryGetValue(tipCfg.typeTag)
-    local titleText = succ and typeTagCfg.tipsTitle or tipKey
+    local succ, tipCfg = Tables.loadingTipsTable:TryGetValue(tipKey)
     local tipsText = succ and tipCfg.text or tipKey
-    if not succ then
-        logger.error("Loading配置表里面找不到对应的typeTag配置:", tostring(tipCfg.typeTag))
-    end
-
+    local titleText = succ and tipCfg.tipsTitle or tipKey
     self.view.debugTxt.text = tipKey
 
     self.view.titleTxt.text = titleText
@@ -161,7 +164,7 @@ end
 
 LoadingCtrl.StartCameraRenderInLoading = HL.Method() << function(self)
     logger.info("LoadingCtrl.StartCameraRenderInLoading")
-    UIManager:TryToggleMainCamera(self.panelCfg, false)
+    UIManager:ChangeHideCameraPanelState(self.panelId, UIConst.HIDE_CAMERA_PANEL_STATE.In) 
 end
 
 HL.Commit(LoadingCtrl)

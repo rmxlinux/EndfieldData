@@ -20,6 +20,10 @@ local PANEL_ID = PanelId.MapMarkDetailSocialBuilding
 
 
 
+
+
+
+
 MapMarkDetailSocialBuildingCtrl = HL.Class('MapMarkDetailSocialBuildingCtrl', uiCtrl.UICtrl)
 
 
@@ -72,6 +76,24 @@ MapMarkDetailSocialBuildingCtrl.OnCreate = HL.Override(HL.Any) << function(self,
         self.m_social = social
         self.m_isOthersSocialBuilding = source == SocialBuildingSource.Others
         self.m_ownerId = source == SocialBuildingSource.Mine and GameInstance.player.roleId or social.ownerId
+        
+        if self.m_isOthersSocialBuilding then
+            local canDel = true
+            local node = FactoryUtils.getBuildingNodeHandler(nodeId, self.m_markRuntimeData.chapterId)
+            if node then
+                canDel = not CSFactoryUtil.CheckIsBuildingMoveAndDelLocked(node.templateId, node.instKey, false)
+            end
+            if canDel then
+                self.view.deleteBtn.gameObject:SetActive(true)
+                self.view.deleteBtn.onClick:AddListener(function()
+                    self:_DeleteSocialBuilding()
+                end)
+            else
+                self.view.deleteBtn.gameObject:SetActive(false)
+            end
+        else
+            self.view.deleteBtn.gameObject:SetActive(false)
+        end
     else
         
         self.m_isOthersSocialBuilding = true
@@ -82,6 +104,8 @@ MapMarkDetailSocialBuildingCtrl.OnCreate = HL.Override(HL.Any) << function(self,
         end
         commonArgs.bigBtnText = Language.LUA_MAP_MARK_DETAIL_SOCIAL_BUILDING_RECEIVE_BTN_TEXT
         commonArgs.bigBtnIconName = UIConst.MAP_DETAIL_BTN_ICON_NAME.TELEPORT
+        
+        self.view.deleteBtn.gameObject:SetActive(false)
     end
 
     self.view.mapMarkDetailCommon:InitMapMarkDetailCommon(commonArgs)
@@ -125,25 +149,16 @@ MapMarkDetailSocialBuildingCtrl._UpdateSocialBuildingView = HL.Method() << funct
 
         self.view.npcCell.playerHead:InitCommonPlayerHead(npcData.avatarPath, npcData.avatarFramePath,
             false, 0, npcData.name, nil)
-    else
+    elseif not self:_UpdateOwnerView_Player(ownerId) then
         
         GameInstance.player.friendSystem:SyncSocialFriendInfo({ ownerId }, function()
             if self.m_isClosed then
                 return
             end
-            local success, ownerInfo = GameInstance.player.friendSystem:TryGetFriendInfo(ownerId)
-            if not success then
+            if not self:_UpdateOwnerView_Player(ownerId) then
                 logger.info("[MapMarkDetail] SocialBuilding: Owner info not found, roleId: " .. tostring(ownerId))
                 return 
             end
-
-            self.view.sourceNode.gameObject:SetActive(true)
-            self.view.npcCell.gameObject:SetActive(false)
-            self.view.contactFriendCell.gameObject:SetActive(true)
-
-            self.view.contactFriendCell:InitContactFriendCell(ownerId, ownerInfo, 0, nil)
-            local onClickAvatar = FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_PHASE(ownerId).action
-            self.view.contactFriendCell.view.playerHead:SetClick(onClickAvatar)
         end)
     end
 
@@ -154,17 +169,42 @@ MapMarkDetailSocialBuildingCtrl._UpdateSocialBuildingView = HL.Method() << funct
         self.view.stabilityValueText.text = string.format("%.0f%%", stabilityValue * 100)
     else
         
-        local remoteFactorySystem = GameInstance.player.remoteFactory
-        self.view.stabilityTitleText.text = Language.LUA_MAP_MARK_DETAIL_SOCIAL_BUILDING_RECEPTION_TITLE
-        local buildingCount = remoteFactorySystem.receivedSocialBuildingCount
-        local buildingMaxCount = remoteFactorySystem.receivedSocialBuildingMaxCount
-        local isBuildingReceivable = buildingCount < buildingMaxCount
-        local receptionValueTextFormat = isBuildingReceivable
-            and "%s/%s"
-            or Language.LUA_MAP_MARK_DETAIL_SOCIAL_BUILDING_RECEPTION_VALUE_LIMIT
-        self.view.stabilityValueText.text = string.format(receptionValueTextFormat, buildingCount, buildingMaxCount)
-        self.view.receiveSocialBuildingTips.gameObject:SetActive(not isBuildingReceivable)
+        self:_UpdateReceivedSocialBuildingCount()
     end
+end
+
+
+
+
+MapMarkDetailSocialBuildingCtrl._UpdateOwnerView_Player = HL.Method(HL.Number).Return(HL.Boolean) << function(self, ownerId)
+    local success, ownerInfo = GameInstance.player.friendSystem:TryGetFriendInfo(ownerId)
+    if not success or not ownerInfo.init then
+        return false
+    end
+
+    self.view.sourceNode.gameObject:SetActive(true)
+    self.view.npcCell.gameObject:SetActive(false)
+    self.view.contactFriendCell.gameObject:SetActive(true)
+
+    self.view.contactFriendCell:InitContactFriendCell(ownerId, ownerInfo, 0, nil)
+    local onClickAvatar = FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_PHASE(ownerId).action
+    self.view.contactFriendCell.view.playerHead:SetClick(onClickAvatar)
+    return true
+end
+
+
+
+MapMarkDetailSocialBuildingCtrl._UpdateReceivedSocialBuildingCount = HL.Method() << function(self)
+    local remoteFactorySystem = GameInstance.player.remoteFactory
+    self.view.stabilityTitleText.text = Language.LUA_MAP_MARK_DETAIL_SOCIAL_BUILDING_RECEPTION_TITLE
+    local buildingCount = remoteFactorySystem.receivedSocialBuildingCount
+    local buildingMaxCount = remoteFactorySystem.receivedSocialBuildingMaxCount
+    local isBuildingReceivable = buildingCount < buildingMaxCount
+    local receptionValueTextFormat = isBuildingReceivable
+        and "%s/%s"
+        or Language.LUA_MAP_MARK_DETAIL_SOCIAL_BUILDING_RECEPTION_VALUE_LIMIT
+    self.view.stabilityValueText.text = string.format(receptionValueTextFormat, buildingCount, buildingMaxCount)
+    self.view.receiveSocialBuildingTips.gameObject:SetActive(not isBuildingReceivable)
 end
 
 
@@ -207,14 +247,61 @@ end
 
 
 
-MapMarkDetailSocialBuildingCtrl._OnFacSocialBuildingReceived = HL.Method() << function(self)
-    Notify(MessageConst.SHOW_TOAST, Language.LUA_FRIEND_RECEIVE_SOCIAL_BUILDING_SUCCESS)
+MapMarkDetailSocialBuildingCtrl._DeleteSocialBuilding = HL.Method() << function(self)
+
+    if GameWorld.gameMechManager.travelPoleBrain:CanOpenMiniMap() then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_SYSTEM_FORBIDDEN)
+        return
+    end
+
+    FactoryUtils.delBuilding(self.m_nodeId, function()
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_DEL_BUILDING_SUCCESS)
+        if self.m_isClosed then
+            return
+        end
+        self:PlayAnimationOutAndClose()
+    end, true, nil, self.m_markRuntimeData.chapterId)
+end
+
+
+
+
+
+
+
+
+
+
+
+
+MapMarkDetailSocialBuildingCtrl._OnFacSocialBuildingReceived = HL.Method(HL.Table) << function(self, args)
+    local isAdd = unpack(args)
+    if isAdd then
+        
+        self:_UpdateSocialBuildingState()
+    else
+        
+        
+        
+        
+        
+        if not self.m_existing then
+            self:_UpdateReceivedSocialBuildingCount()
+        end
+    end
 end
 
 
 
 
 MapMarkDetailSocialBuildingCtrl._OnFacReceivedSocialBuildingDataUpdated = HL.Method(HL.Table) << function(self, args)
+    
+    self:_UpdateSocialBuildingState()
+end
+
+
+
+MapMarkDetailSocialBuildingCtrl._UpdateSocialBuildingState = HL.Method() << function(self)
     
     
     
@@ -237,13 +324,15 @@ MapMarkDetailSocialBuildingCtrl._OnFacReceivedSocialBuildingDataUpdated = HL.Met
     local nodeId = socialBuildingInfo.nodeId
     local success, markInstId = GameInstance.player.mapManager:GetFacMarkInstIdByNodeId(chapterId, nodeId)
     if not success then
-        logger.error("[SocialBuilding] Fac mark inst id not found, nodeId: " .. tostring(nodeId))
-        return
+        return 
     end
 
     
     GameInstance.player.mapManager:RemoveSocialBuildingMarks()
     MapUtils.openMap(markInstId, levelId)
+
+    
+    Notify(MessageConst.SHOW_TOAST, Language.LUA_FRIEND_RECEIVE_SOCIAL_BUILDING_SUCCESS)
 end
 
 

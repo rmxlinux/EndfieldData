@@ -32,6 +32,8 @@ local ITEM_SLOT_UNSELECTED = 3
 
 
 
+
+
 UsableItemChestCtrl = HL.Class('UsableItemChestCtrl', uiCtrl.UICtrl)
 
 
@@ -42,6 +44,7 @@ UsableItemChestCtrl = HL.Class('UsableItemChestCtrl', uiCtrl.UICtrl)
 
 UsableItemChestCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SC_OPEN_USABLE_ITEM_CHEST] = '_OnSCOpenInventoryChest',
+    [MessageConst.ON_BLOCK_KEYBOARD_EVENT_PANEL_ORDER_CHANGED] = '_OnBlockKeyboardEventPanelOrderChanged',
 }
 
 
@@ -70,6 +73,9 @@ UsableItemChestCtrl.m_chooseItemPageBuild = HL.Field(HL.Boolean) << false
 
 
 UsableItemChestCtrl.m_firstRandomItemId = HL.Field(HL.String) << ""
+
+
+UsableItemChestCtrl.m_currNaviRandomIndex = HL.Field(HL.Number) << 0
 
 
 
@@ -106,7 +112,6 @@ UsableItemChestCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     elseif type == GEnums.ItemCaseType.Random then
         self.view.titleText.text = Language.LUA_USABLE_ITEM_CHEST_TITLE_RANDOM
         self:_OpenRandomChestPanel()
-        
     end
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder(
@@ -214,16 +219,48 @@ UsableItemChestCtrl._OpenRandomChestPanel = HL.Method() << function(self)
         local infoPack = itemInitInfoList[index]
         local initItemInfo = {id = infoPack.id}
         itemCell.item:InitItem(initItemInfo, true)
+        itemCell.item:SetExtraInfo({
+            tipsPosTransform = itemCell.transform,
+            tipsPosType = UIConst.UI_TIPS_POS_TYPE.LeftMid,
+        })
         itemCell.numberText.text = tostring(infoPack.count)
         itemCell.itemNameText.text = infoPack.name
         if index == 1 then
             self.m_firstRandomItemId = infoPack.id
         end
+
+        
+        local naviDecorator = itemCell.inputBindingGroupNaviDecorator
+        naviDecorator.onGroupSetAsNaviTarget:AddListener(function(isNavi)
+            if isNavi then
+                if self.m_currNaviRandomIndex == index then
+                    return
+                end
+                self.m_currNaviRandomIndex = index
+                
+                Notify(MessageConst.HIDE_ITEM_TIPS)
+                Notify(MessageConst.SHOW_ITEM_TIPS, {
+                    itemId = infoPack.id,
+                    transform = itemCell.transform,
+                    isSideTips = true,
+                    posType = UIConst.UI_TIPS_POS_TYPE.LeftMid,
+                    onClose = function()
+                        itemCell.item.view.selectedBG.gameObject:SetActive(false)
+                    end,
+                })
+                itemCell.item.view.selectedBG.gameObject:SetActive(true)
+            end
+        end)
     end)
 
-    
-    self.view.btnConfirmX.gameObject:SetActive(count == 1)
-    self.view.btnConfirm.gameObject:SetActive(count ~= 1)
+    panel.randomChestPageSelectableNaviGroup.onIsTopLayerChanged:AddListener(function(isTop)
+        if not isTop then
+            self.m_currNaviRandomIndex = 0
+        end
+    end)
+
+    self.view.btnConfirmX.gameObject:SetActive(true)
+    self.view.btnConfirm.gameObject:SetActive(false)
 end
 
 
@@ -279,6 +316,16 @@ UsableItemChestCtrl._BuildChooseItemPage = HL.Method() << function(self)
         itemCell.item:InitItem(initItemTable, true)
         local itemCount = Utils.getItemCount(itemId, true, true)
         local isGold = itemData and itemData.type == GEnums.ItemType.Gold
+
+        
+        local hideHaveCount = false
+        for _, cfgId in pairs(Tables.globalConst.hideHaveCountItemIdInUsableItemChestPanel) do
+            if cfgId == itemChestData.id then
+                hideHaveCount = true
+            end
+        end
+        itemCell.haveCountText.transform.parent.gameObject:SetActive(not hideHaveCount)
+
         itemCell.haveCountText.text = UIUtils.getNumString(itemCount, isGold)
         itemCell.numberText.text = tostring(rewardTable[1].count)
         local _, insideItemData = Tables.itemTable:TryGetValue(itemId)
@@ -546,6 +593,21 @@ UsableItemChestCtrl._FillLeftBigItem = HL.Method() << function(self)
     self.view.chestNameText.text = itemData.name
     local chestCount = Utils.getItemCount(self.m_itemId, true, true)
     self.view.chestCountText.text = tostring(chestCount)
+end
+
+
+
+UsableItemChestCtrl._OnBlockKeyboardEventPanelOrderChanged = HL.Method() << function(self)
+    if not DeviceInfo.usingController then
+        return
+    end
+
+    local isEnabled = InputManagerInst:IsGroupEnabled(self.view.inputGroup.groupId)
+    
+    local state = isEnabled and CS.Beyond.UI.CustomUIStyle.OverrideValidState.None
+        or CS.Beyond.UI.CustomUIStyle.OverrideValidState.ForceNotValid
+    self.view.numberSelector.view.reduceBtnKeyHint.transform:GetComponent("CustomUIStyle").overrideValidState = state
+    self.view.numberSelector.view.addBtnKeyHint.transform:GetComponent("CustomUIStyle").overrideValidState = state
 end
 
 HL.Commit(UsableItemChestCtrl)

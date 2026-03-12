@@ -38,6 +38,7 @@ end
 
 PlayInfoCell.RefreshAdventureInfo = HL.Method() << function(self)
     
+    self.view.commonPlayerHead:UpdateHideLevelTxt(true)
     self.view.commonPlayerHead:InitCommonPlayerHeadByRoleId(GameInstance.player.roleId, function()
         PhaseManager:OpenPhase(PhaseId.Friend)
     end)

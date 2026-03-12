@@ -1187,12 +1187,11 @@ end
 
 
 BlueprintContent.FacOnReviewBlueprint = HL.Method(HL.Table) << function(self, arg)
-    local status = unpack(arg)
+    local _, status = unpack(arg)
     if status == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.InProgress then
         Notify(MessageConst.SHOW_TOAST,Language.LUA_FAC_BLUEPRINT_SHARE_STATEMENT_TIP)
     end
     self:_RefreshShareState()
-    Notify(MessageConst.FAC_ON_REFRESH_SHARE_STATE, { isInProgress = true })
 end
 
 

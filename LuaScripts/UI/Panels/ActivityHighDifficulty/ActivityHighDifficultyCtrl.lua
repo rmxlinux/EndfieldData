@@ -24,6 +24,7 @@ local PANEL_ID = PanelId.ActivityHighDifficulty
 
 
 
+
 ActivityHighDifficultyCtrl = HL.Class('ActivityHighDifficultyCtrl', uiCtrl.UICtrl)
 
 
@@ -205,6 +206,18 @@ end
 
 
 
+ActivityHighDifficultyCtrl.GetAllCanReceiveStageIds = HL.Method().Return(HL.Table) << function(self)
+    local stageIds = {}
+    for _, task in ipairs(self.m_curShowingTasks) do
+        if task.isComplete and not task.isReceived then
+            table.insert(stageIds, task.stageId)
+        end
+    end
+    return stageIds
+end
+
+
+
 
 
 ActivityHighDifficultyCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
@@ -253,7 +266,7 @@ ActivityHighDifficultyCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << fun
     cell.clickNode.onClick:RemoveAllListeners()
     if isComplete and not isReceived then
         cell.clickNode.onClick:AddListener(function()
-            GameInstance.player.activitySystem:SendReceiveRewardConditionMultiStage(self.m_activityId, task.stageId)
+            GameInstance.player.activitySystem:SendReceiveRewardConditionMultiStage(self.m_activityId, self:GetAllCanReceiveStageIds())
         end)
     end
 end

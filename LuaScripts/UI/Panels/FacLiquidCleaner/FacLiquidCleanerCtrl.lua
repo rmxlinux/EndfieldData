@@ -45,7 +45,6 @@ local InfoState = {
 
 
 
-
 FacLiquidCleanerCtrl = HL.Class('FacLiquidCleanerCtrl', uiCtrl.UICtrl)
 
 
@@ -106,9 +105,8 @@ FacLiquidCleanerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         customSetActionMenuArgs = function(actionMenuArgs)
             actionMenuArgs.cacheRepo = self.view.facCacheRepository
         end,
-        onStateChange = function(state)
+        onStateChange = function()
             self:_RefreshNaviGroupSwitcherInfos()
-            self:_RefreshChangeState(state)
         end,
         hasFluidInCache = true,
     })
@@ -131,10 +129,12 @@ FacLiquidCleanerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.buildingCommon:InitBuildingCommon(self.m_buildingInfo, {
         onStateChanged = function(state)
-            self:_RefreshCleanerTargetFormula()
+            self:_RefreshCleanerTargetFormula(state)
+            self:_RefreshChangeState(state)
             if state == GEnums.FacBuildingState.Idle then
                 self:_ClearCleanerItemData()
             end
+            self:_RefreshCleanerTipsVisibleState(state)
         end
     })
 
@@ -230,9 +230,18 @@ end
 
 
 
-FacLiquidCleanerCtrl._RefreshCleanerTipsVisibleState = HL.Method() << function(self)
+
+FacLiquidCleanerCtrl._RefreshCleanerTipsVisibleState = HL.Method(HL.Opt(HL.Userdata)) << function(self, state)
     local cacheItemId = self:_GetCleanerCacheItemData()
-    local needShowTips = self.m_isPipeBlocked and string.isEmpty(self.m_buildingInfo.consumeItemId) and not self.m_validLiquidIds[cacheItemId]
+    state = state and state or self.view.buildingCommon.lastState
+    local isValidState = state and
+        state ~= GEnums.FacBuildingState.Closed and
+        state ~= GEnums.FacBuildingState.NotInPowerNet and
+        state ~= GEnums.FacBuildingState.NoPower
+    local needShowTips = self.m_isPipeBlocked and
+        isValidState and
+        string.isEmpty(self.m_buildingInfo.consumeItemId) and
+        not self.m_validLiquidIds[cacheItemId]
     UIUtils.PlayAnimationAndToggleActive(self.view.tipsTextNode.animationWrapper, needShowTips)
 end
 
@@ -272,7 +281,7 @@ FacLiquidCleanerCtrl._RefreshCleanerInfo = HL.Method() << function(self)
         if isValidItem then
             state = cacheItemCount > 0 and InfoState.Paused or InfoState.Empty
         else
-            state = InfoState.Paused
+            state = string.isEmpty(cacheItemId) and InfoState.Empty or InfoState.Paused
         end
     else
         if self.m_sewageItemData.count == 0 then
@@ -305,9 +314,10 @@ end
 
 
 
-FacLiquidCleanerCtrl._RefreshCleanerTargetFormula = HL.Method() << function(self)
+FacLiquidCleanerCtrl._RefreshCleanerTargetFormula = HL.Method(HL.Opt(HL.Userdata)) << function(self, state)
     local targetCraftInfo = FactoryUtils.getBuildingProcessingCraft(self.m_buildingInfo)
-    if self.view.buildingCommon.lastState ~= GEnums.FacBuildingState.Normal then
+    state = state and state or self.view.buildingCommon.lastState
+    if state ~= GEnums.FacBuildingState.Normal then
         targetCraftInfo = nil
     end
     self.view.formulaNode:RefreshDisplayFormula(targetCraftInfo)
@@ -440,9 +450,14 @@ FacLiquidCleanerCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) 
         local liquidItemId = fullBottleData.liquidId
         needMask = needMask or not self.m_validLiquidIds[liquidItemId]
     end
-    cell.view.forbiddenMask.gameObject:SetActiveIfNecessary(needMask)
-    cell.view.dragItem.enabled = not needMask and not isEmpty
-    cell.view.dropItem.enabled = not needMask
+    
+    if needMask then
+        cell.view.forbiddenMask.gameObject:SetActiveIfNecessary(true)
+        cell.view.dropItem.enabled = false
+    end
+    if needMask or isEmpty then
+        cell.view.dragItem.enabled = false
+    end
 end
 
 

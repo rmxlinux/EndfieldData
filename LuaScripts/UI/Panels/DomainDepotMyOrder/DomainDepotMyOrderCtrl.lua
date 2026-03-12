@@ -113,6 +113,7 @@ end
 
 DomainDepotMyOrderCtrl.OnShow = HL.Override() << function(self)
     self.view.selectableNaviGroup:NaviToThisGroup()
+    self.view.scrollList:UpdateCount(GameInstance.player.domainDepotSystem.myDelegateDeliverList.Count)
 end
 
 

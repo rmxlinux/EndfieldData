@@ -481,10 +481,7 @@ function Utils.triggerVoice(triggerKey, speakerId)
     return VoiceManager:Response(triggerKey, nil, speakerId, GEnums.VoSpeakerType.Characters)
 end
 function Utils.stopDefaultChannelVoice()
-    
-    
-    
-    VoiceManager:StopVoiceOnEntity(nil)
+    VoiceManager:StopDefaultChannel()
 end
 
 
@@ -720,10 +717,11 @@ function Utils.teleportToPosition(sceneId, position, rotation, teleportReason, c
     teleportReason = teleportReason or GEnums.C2STeleportReason.ServerTpGM
     uiType = uiType or CS.Beyond.Gameplay.TeleportUIType.Default
     hubNodeId = hubNodeId or 0
+    local tpOptions = CS.Beyond.Gameplay.TeleportOptions.None
     if rotation ~= nil then
-        GameAction.TeleportToPosition(teleportReason, sceneId, position, rotation, uiType, callback,hubNodeId)
+        GameAction.TeleportToPosition(teleportReason, sceneId, position, rotation, uiType, tpOptions, callback,hubNodeId)
     else
-        GameAction.TeleportToPosition(teleportReason, sceneId, position, Vector3.zero, uiType, callback,hubNodeId)
+        GameAction.TeleportToPosition(teleportReason, sceneId, position, Vector3.zero, uiType, tpOptions, callback,hubNodeId)
     end
 
     logger.important(CS.Beyond.EnableLogType.DevOnly, "[LuaTeleport] teleportToPosition", sceneId, position, teleportReason, uiType)
@@ -1322,6 +1320,14 @@ function Utils.reportPlacementEvent(eventType)
         return
     end
     GameInstance.player.gameDataReportSystem:ReportPlacementEvent(eventType)
+end
+
+function Utils.getCommonSettingValueBool(settingId)
+    local hasValue, value = CS.Beyond.GameSetting.GameSettingGetBool(settingId)
+    if hasValue then
+        return value
+    end
+    return CS.Beyond.GameSetting.GetGameSettingDefaultValueFromTableBool(settingId)
 end
 
 

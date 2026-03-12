@@ -48,11 +48,21 @@ ACTIVITY_TABLE = {
     [ActivityType.WeeklyTask] = {
         redDot = "ActivityWeeklyTask",
     },
+    [ActivityType.GraffitiCleaning] = {
+        redDot = "ActivityGraffitiCleaning",
+    },
+    [ActivityType.DungeonFighting] = {
+        redDot = "ActivityDungeon",
+    },
+    [ActivityType.NewbieBonus] = {
+        redDot = "ActivityBaseMultiStage",
+    },
     
 }
 ACTIVITY_COMMON_SONS = {
     ActivityBasic = false,
     ActivityBaseMultiStage = false,
+    ActivityDaily = false,
     ActivityGachaBeginner = false,
     ActivityCheckIn = false,
     ActivityGlobalEffect = false,
@@ -65,7 +75,8 @@ ACTIVITY_COMMON_SONS = {
     ActivityRandomReward = false,
     ActivityRewardOverview = false,
     ActivityWeeklyTask = false,
-    ActivityDaily = false,
+    ActivityGraffitiCleaning = false,
+    ActivityDungeon = false,
     
 }
 ACTIVITY_REMINDER_DRAW_MODE = {

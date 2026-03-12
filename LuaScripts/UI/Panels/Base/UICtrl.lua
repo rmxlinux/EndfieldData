@@ -77,6 +77,7 @@
 
 
 
+
 UICtrl = HL.Class("UICtrl")
 
 
@@ -406,16 +407,20 @@ UICtrl.PlayAnimationOutWithCallback = HL.Virtual(HL.Opt(HL.Function)) << functio
             outCompleteAction()
         end
     end)
+
+    
+    self:_OnPlayAnimationOut()
     self.m_outAnimAsyncActionHelper:Start()
 
-    self:_OnPlayAnimationOut()
 end
 
 
 
 UICtrl._OnPlayAnimationOut = HL.Virtual() << function(self)
     
-    UIManager:TryToggleMainCamera(self.panelCfg, false)
+    if self.panelCfg.hideCamera then
+        UIManager:ChangeHideCameraPanelState(self.panelId, UIConst.HIDE_CAMERA_PANEL_STATE.Out) 
+    end
 end
 
 

@@ -125,6 +125,10 @@ end
 
 
 QuickMenuCtrl.ActivateQuickMenu = HL.StaticMethod() << function()
+    if not GameInstance.player.systemActionConflictManager:TryStartSystemAction(Const.QuickMenuSystemActionConflictName) then
+        return
+    end
+
     UIManager:ClearScreenWithOutAnimation(function(clearScreenKey)
         QuickMenuCtrl.s_clearScreenKey = clearScreenKey
         local isOpen = UIManager:IsOpen(PANEL_ID)
@@ -136,6 +140,8 @@ end
 
 
 QuickMenuCtrl.DeactivateQuickMenu = HL.StaticMethod() << function()
+    GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.QuickMenuSystemActionConflictName)
+
     if QuickMenuCtrl.s_clearScreenKey <= 0 then
         return
     end

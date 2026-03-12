@@ -33,6 +33,15 @@ SNSContentTask._OnSNSContentInit = HL.Override() << function(self)
     self.view.btnClick.onClick:RemoveAllListeners()
     self.view.btnClick.onClick:AddListener(function()
         
+        
+        
+        if GameInstance.player.spaceship.isViewingFriend then
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_OBTAIN_WAYS_JUMP_BLOCKED)
+            return
+        end
+
+        Notify(MessageConst.ON_SNS_CONTENT_WIDGET_CLICK)
+        
         local missionState = GameInstance.player.mission:GetMissionState(missionId)
         local otherCaseHintText = missionRuntimeAsset.missionType == MissionType.Misc and
                 Language["ui_sns_toast_mission_misc_failed"] or Language["ui_mis_empty_default"]

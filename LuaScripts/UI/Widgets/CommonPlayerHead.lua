@@ -13,6 +13,8 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
 CommonPlayerHead = HL.Class('CommonPlayerHead', UIWidgetBase)
 
 
@@ -29,6 +31,9 @@ CommonPlayerHead.m_hideSignature = HL.Field(HL.Any) << nil
 
 
 CommonPlayerHead.m_hideLevelTxt = HL.Field(HL.Any) << nil
+
+
+CommonPlayerHead.m_hidePlatformNode = HL.Field(HL.Boolean) << false
 
 
 
@@ -103,6 +108,13 @@ end
 
 
 
+CommonPlayerHead.UpdateHidePlatformNode = HL.Method(HL.Boolean) << function(self, hidePlatformNode)
+    self.m_hidePlatformNode = hidePlatformNode
+end
+
+
+
+
 CommonPlayerHead.UpdateHideSignature = HL.Method(HL.Any) << function(self, hideSignature)
     self.m_hideSignature = hideSignature
 end
@@ -124,7 +136,8 @@ end
 
 
 
-CommonPlayerHead.InitCommonPlayerHead = HL.Method(HL.String, HL.String, HL.Any, HL.Opt(HL.Number, HL.String, HL.String, HL.String)) << function(self, avatarPath, avatarFramePath, click, adventureLevel, name, signature, psName)
+CommonPlayerHead.InitCommonPlayerHead = HL.Method(HL.String, HL.String, HL.Any, HL.Opt(HL.Number, HL.String, HL.String, HL.String))
+        << function(self, avatarPath, avatarFramePath, click, adventureLevel, name, signature, psName)
     self:_FirstTimeInit()
 
     if name == nil then
@@ -142,8 +155,8 @@ CommonPlayerHead.InitCommonPlayerHead = HL.Method(HL.String, HL.String, HL.Any, 
     end
 
     if FriendUtils.isPsnPlatform() then
-        self.view.pcNode.gameObject:SetActiveIfNecessary(string.isEmpty(psName))
-        self.view.psRoot.gameObject:SetActiveIfNecessary(not string.isEmpty(psName))
+        self.view.pcNode.gameObject:SetActiveIfNecessary(not self.m_hidePlatformNode and string.isEmpty(psName))
+        self.view.psRoot.gameObject:SetActiveIfNecessary(not self.m_hidePlatformNode and not string.isEmpty(psName))
         self.view.psNameTxt.text = psName
     else
         self.view.pcNode.gameObject:SetActiveIfNecessary(false)
@@ -154,6 +167,9 @@ CommonPlayerHead.InitCommonPlayerHead = HL.Method(HL.String, HL.String, HL.Any, 
 
     if self.m_hideLevelTxt then
         adventureLevel = ""
+        self.view.levelInfo.gameObject:SetActiveIfNecessary(false)
+    else
+        self.view.levelInfo.gameObject:SetActiveIfNecessary(true)
     end
     self.view.levelTxt.text = adventureLevel
 

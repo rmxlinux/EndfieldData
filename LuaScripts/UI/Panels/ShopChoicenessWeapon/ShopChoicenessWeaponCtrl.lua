@@ -102,8 +102,9 @@ ShopChoicenessWeaponCtrl._RefreshAllUI = HL.Method() << function(self)
 
     
     local poolTimeNode = self.view.poolTimeNode
-    local _, closeTimeDesc = CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId)
+    local isRealTime, closeTimeDesc = CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId)
     poolTimeNode.endTimeTxt.text = closeTimeDesc
+    poolTimeNode.endingTxt.gameObject:SetActive(isRealTime)
 
     
     local weaponPoolCfg = Tables.gachaWeaponPoolTable[poolId]
@@ -136,7 +137,8 @@ ShopChoicenessWeaponCtrl._RefreshAllUI = HL.Method() << function(self)
         guaranteeNode.itemIcon:InitItemIcon(upWeaponId)
         guaranteeNode.rewardNameTxt.text = weaponItemCfg.name
         guaranteeNode.weaponTypeIcon:LoadSprite(UIConst.UI_SPRITE_WEAPON_EXHIBIT, weaponTypeIconName)
-        guaranteeNode.remainNeedPullCountTxt.text = math.ceil((gachaTypeCfg.hardGuarantee - poolInfo.hardGuaranteeProgress) / 10)
+        local remainNum = math.ceil((gachaTypeCfg.hardGuarantee - poolInfo.hardGuaranteeProgress) / 10)
+        guaranteeNode.guaranteeTxt.text = string.format("<color=#FEF000>%d</color> ", remainNum) .. Language.ui_shop_entry_weapon_shop_numbers_1
         guaranteeNode.btn.onClick:RemoveAllListeners()
         guaranteeNode.btn.onClick:AddListener(function()
             CashShopUtils.ShowWikiWeaponPreview(poolId, upWeaponId)
@@ -154,8 +156,8 @@ ShopChoicenessWeaponCtrl._RefreshAllUI = HL.Method() << function(self)
         local info = loopRewardInfos[1] 
         guaranteeNode.itemIcon:InitItemIcon(info.itemId)
         guaranteeNode.rewardNameTxt.text = info.name
-        guaranteeNode.remainNeedPullCountTxt.text = info.remainNeedPullCount
         guaranteeNode.stateController:SetState("LoopReward")
+        guaranteeNode.guaranteeTxt.text = string.format("%d ", info.remainNeedPullCount) .. Language.ui_shop_entry_weapon_shop_numbers_2
         guaranteeNode.btn.onClick:RemoveAllListeners()
         guaranteeNode.btn.onClick:AddListener(function()
             

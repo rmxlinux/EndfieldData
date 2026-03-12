@@ -133,6 +133,12 @@ WeaponExhibitGemCtrl._InitActionEvent = HL.Method() << function(self)
         })
     end)
 
+    self.view.btnFullSkill.onClick:AddListener(function()
+        UIManager:Open(PanelId.WeaponSkillDetail, {
+            weaponInstId = self.m_weaponInfo.weaponInstId,
+        })
+    end)
+
     self.view.btnReplace.onClick:AddListener(function()
         self:_OnClickReplace()
     end)

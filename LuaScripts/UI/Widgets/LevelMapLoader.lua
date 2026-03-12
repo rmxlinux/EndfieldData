@@ -230,6 +230,9 @@ local Stack = require_ex("Common/Utils/DataStructure/Stack")
 
 
 
+
+
+
 LevelMapLoader = HL.Class('LevelMapLoader', UIWidgetBase)
 
 local LOADER_DEFAULT_UPDATE_INTERVAL = 0.2
@@ -240,6 +243,10 @@ local DISPOSE_COROUTINE_INTERVAL = 0.3
 
 local CHUNK_DRAWER_KEY_FORMAT = "chunk_%d"
 local MIST_DRAWER_KEY_FORMAT = "mist_%d"
+
+local EXTRA_LOW_RT_DRAW_SCALE_MOBILE = 0.3
+local EXTRA_LOW_RT_DRAW_SCALE_DEFAULT = 0.5
+local EXTRA_RT_SIZE_SCALE_DEFAULT = 1
 
 local MIN_MARK_ORDER = 1
 local MAX_MARK_ORDER = 6
@@ -325,6 +332,9 @@ LevelMapLoader.m_needUpdate = HL.Field(HL.Boolean) << true
 
 
 LevelMapLoader.m_needOptimizePerformance = HL.Field(HL.Boolean) << false
+
+
+LevelMapLoader.m_needExtraLowScaleRT = HL.Field(HL.Boolean) << false
 
 
 LevelMapLoader.m_extraView = HL.Field(HL.Number) << 0
@@ -560,6 +570,7 @@ LevelMapLoader.InitLevelMapLoader = HL.Method(HL.String, HL.Opt(HL.Table)) << fu
     self.m_mistSystem = GameInstance.player.mistMapSystem
     self.m_regionManager = GameWorld.mapRegionManager
     self.m_isLowMemoryDevice = CS.Beyond.BeyondMemoryUtility.IsLowMemoryDevice()
+    EXTRA_RT_SIZE_SCALE_DEFAULT = self.m_isLowMemoryDevice and 2 or 1;
     local success, levelConfig = DataManager.levelConfigTable:TryGetData(levelId)
     self.m_mapId = success and levelConfig.mapIdStr or ""
     self.m_levelId = levelId
@@ -620,6 +631,7 @@ LevelMapLoader._InitCustomInfo = HL.Method(HL.Table) << function(self, customInf
     customInfo = customInfo or {}
     self.m_extraView = customInfo.extraView or 0
     self.m_needOptimizePerformance = customInfo.needOptimizePerformance or false
+    self.m_needExtraLowScaleRT = customInfo.needExtraLowScaleRT or false
     self.m_needShowOtherLevelTracking = customInfo.needShowOtherLevelTracking or false
     self.m_onMarkInstDataChangedCallback = customInfo.onMarkInstDataChangedCallback or nil
     self.m_expectedStaticElementTypes = customInfo.expectedStaticElements or {}
@@ -1557,6 +1569,7 @@ end
 
 
 
+
 LevelMapLoader._GetRTDrawerDataFromPool = HL.Method(HL.Any, HL.Table).Return(HL.Table) << function(
     self, drawerKey, drawerInfo
 )
@@ -1570,10 +1583,11 @@ LevelMapLoader._GetRTDrawerDataFromPool = HL.Method(HL.Any, HL.Table).Return(HL.
             drawMaterial = self.loader:LoadMaterial(drawerInfo.drawMaterialPath),
             drawResourcePathGetFunc = drawerInfo.drawResourcePathGetFunc,
             drawResourceSortFunc = drawerInfo.drawResourceSortFunc,
+            extraScale = drawerInfo.extraDrawScale,  
 
             
             lodType = nil,
-            lodScale = Vector3.one,
+            nativeScale = Vector3.one,  
             drawList = {},  
 
             
@@ -1679,7 +1693,7 @@ LevelMapLoader._DrawRT = HL.Method(HL.Table) << function(self, drawerData)
         end
     end
     local center = Vector2((left + right) / 2, (top + bottom) / 2)
-    local scale = drawerData.lodScale
+    local scale = drawerData.nativeScale / drawerData.extraScale
     local size = Vector2((right - left) / scale.x, (top - bottom) / scale.x)
     drawerData.transformData = {
         left = left,
@@ -1728,15 +1742,15 @@ LevelMapLoader._RefreshRTBasicState = HL.Method(HL.Table) << function(self, draw
     width = math.ceil(width)
     height = math.ceil(height)
 
-    local needRefreshState = rt == nil or rt.width < width or rt.height < height
+    local needRefreshState = rt == nil or rt.width * EXTRA_RT_SIZE_SCALE_DEFAULT < width or rt.height * EXTRA_RT_SIZE_SCALE_DEFAULT < height
     
     if needRefreshState then
-        if rt ~= nil then
+        if not IsNull(rt) then
             
             self:_ReleaseRT(rt)
         end
-        rt = CustomDrawRTManager.Instance:AllocateRenderTexture(width, height)
-        rt.name = drawerData.key
+        rt = CustomDrawRTManager.Instance:AllocateRenderTexture(math.ceil(width / EXTRA_RT_SIZE_SCALE_DEFAULT), math.ceil(height / EXTRA_RT_SIZE_SCALE_DEFAULT))  
+        rt.name = drawerData.key.."_"..rt.width.."_"..rt.height
         drawNode.rectTransform.sizeDelta = transformData.size
         drawNode.rectTransform.localScale = transformData.scale
         drawNode.image.texture = rt
@@ -1778,21 +1792,24 @@ LevelMapLoader._RefreshRTDrawState = HL.Method(HL.String, HL.Table) << function(
     local transformData = drawerData.transformData
     local loaderData = drawerData.drawList[loadId]
     local texture = self:_GetChunkResourceByLoadKey(loadId)
-    local scaleRatio = 1 / transformData.scale.x
+    local totalScaleRatio = 1 / transformData.scale.x
+    local extraScaleRatio = drawerData.extraScale
     local targetRect = Rect(
-        scaleRatio * (loaderData.rectLeftBottom.x - transformData.left),
-        scaleRatio * (transformData.top - loaderData.rectRightTop.y),
-        texture.width,
-        texture.height
+        totalScaleRatio * (loaderData.rectLeftBottom.x - transformData.left),
+        totalScaleRatio * (transformData.top - loaderData.rectRightTop.y),
+        extraScaleRatio * texture.width,  
+        extraScaleRatio * texture.height
     )
 
     
-    if targetRect.x + targetRect.width > drawerData.rt.width then
-        targetRect.width = drawerData.rt.width - targetRect.x
+    if targetRect.x + targetRect.width > drawerData.rt.width * EXTRA_RT_SIZE_SCALE_DEFAULT then
+        targetRect.width = drawerData.rt.width * EXTRA_RT_SIZE_SCALE_DEFAULT - targetRect.x
     end
-    if targetRect.y + targetRect.height > drawerData.rt.height then
-        targetRect.height = drawerData.rt.height - targetRect.y
+    if targetRect.y + targetRect.height > drawerData.rt.height * EXTRA_RT_SIZE_SCALE_DEFAULT then
+        targetRect.height = drawerData.rt.height * EXTRA_RT_SIZE_SCALE_DEFAULT - targetRect.y
     end
+
+    targetRect = Rect(targetRect.x / EXTRA_RT_SIZE_SCALE_DEFAULT,targetRect.y / EXTRA_RT_SIZE_SCALE_DEFAULT,targetRect.width / EXTRA_RT_SIZE_SCALE_DEFAULT,targetRect.height / EXTRA_RT_SIZE_SCALE_DEFAULT)  
 
     CustomDrawRTManager.Instance:DrawTexture(drawerData.rt, targetRect, texture, drawerData.drawMaterial)
 
@@ -1908,7 +1925,7 @@ end
 
 
 
-LevelMapLoader._GetLocalScaleByLODType = HL.Method(ChunkLODType, HL.Opt(HL.Boolean)).Return(Vector3) << function(self, lodType, isMist)
+LevelMapLoader._GetNativeScaleByLODType = HL.Method(ChunkLODType, HL.Opt(HL.Boolean)).Return(Vector3) << function(self, lodType, isMist)
     local cache = isMist and self.m_mistLODScaleCache or self.m_lodScaleCache
     if cache[lodType] == nil then
         local scale = 1 / self.m_levelMapConfig:GetChunkGridsCountByLODType(lodType)
@@ -1918,6 +1935,16 @@ LevelMapLoader._GetLocalScaleByLODType = HL.Method(ChunkLODType, HL.Opt(HL.Boole
         cache[lodType] = Vector3.one / scale
     end
     return cache[lodType]
+end
+
+
+
+LevelMapLoader._GetExtraLowScale = HL.Method().Return(HL.Number) << function(self)
+    if self.m_needExtraLowScaleRT then
+        return DeviceInfo.isMobile and EXTRA_LOW_RT_DRAW_SCALE_MOBILE or EXTRA_LOW_RT_DRAW_SCALE_DEFAULT
+    else
+        return 1
+    end
 end
 
 
@@ -1956,7 +1983,8 @@ LevelMapLoader._InitChunkDrawer = HL.Method() << function(self)
                         table.insert(sortedDrawList, sortTempData.loadId)
                     end
                     return sortedDrawList
-                end
+                end,
+                extraDrawScale = self:_GetExtraLowScale()
             }
         )
         drawNode.gameObject:SetActive(false)
@@ -1979,7 +2007,7 @@ LevelMapLoader._RefreshLoadedChunks = HL.Method(HL.Userdata, ChunkLODType, HL.Op
     local drawerData = self.m_chunkDrawers[lodType]
     self:_ClearDrawerLoadState(drawerData)
     drawerData.lodType = lodType
-    drawerData.lodScale = self:_GetLocalScaleByLODType(lodType)
+    drawerData.nativeScale = self:_GetNativeScaleByLODType(lodType)
     for loaderData in cs_pairs(chunks) do
         drawerData.drawList[loaderData.chunkId] = loaderData
     end
@@ -2053,7 +2081,7 @@ LevelMapLoader._RefreshLoadedChunksTiers = HL.Method() << function(self)
             self:_LoadChunkResource(tierLoadId, tierSpritePath, false, function(tierSprite)
                 tierCell.image.sprite = tierSprite
                 tierCell.image:SetNativeSize()
-                tierCell.rectTransform.localScale = self:_GetLocalScaleByLODType(lodType)
+                tierCell.rectTransform.localScale = self:_GetNativeScaleByLODType(lodType)
             end, true)
 
             self.m_loadedTierViewDataMap[tierLoadId] = {
@@ -2099,6 +2127,7 @@ LevelMapLoader._InitMistDrawer = HL.Method() << function(self)
                 drawResourcePathGetFunc = function(loaderData)
                     return self:_GetMistResourcePath(loaderData)
                 end,
+                extraDrawScale = self:_GetExtraLowScale()
             }
         )
         drawNode.gameObject:SetActive(false)
@@ -2149,7 +2178,7 @@ LevelMapLoader._RefreshLoadedChunksMists = HL.Method(HL.Number, HL.Opt(HL.Table,
                     drawerData.drawList[mistLoadId] = mistLoaderData
                     if drawerData.lodType == nil then
                         drawerData.lodType = chunkLoaderData.lodType
-                        drawerData.lodScale = self:_GetLocalScaleByLODType(drawerData.lodType, true)
+                        drawerData.nativeScale = self:_GetNativeScaleByLODType(drawerData.lodType, true)
                     end
                 end
             end
@@ -2230,11 +2259,21 @@ end
 
 
 
+LevelMapLoader._GetIsCustomMarkByViewData = HL.Method(HL.Table).Return(HL.Boolean) << function(self, markViewData)
+    if markViewData == nil then
+        return false
+    end
+    return markViewData.sortOrder == CUSTOM_MARK_ORDER
+end
+
+
+
+
 LevelMapLoader._GetMarkSourceObj = HL.Method(HL.Table).Return(HL.Any) << function(self, markViewData)
     local sourceObj
     local markSource = self.view.source.marks
     if self.m_needInteractableMark then
-        local isCustom = markViewData.sortOrder == CUSTOM_MARK_ORDER
+        local isCustom = self:_GetIsCustomMarkByViewData(markViewData)
         sourceObj = isCustom and markSource.levelMapCustomMark or markSource.levelMapInteractableMark
     else
         sourceObj = markSource.levelMapMark
@@ -2258,6 +2297,11 @@ LevelMapLoader._GetMarkFromCache = HL.Method(HL.Table).Return(HL.Any) << functio
         markObj.transform:SetParent(orderRoot)
     end
     markObj.gameObject:SetActive(true)
+
+    if self.m_needInteractableMark then
+        markObj.needTryLoadResourceStateNode = not self:_GetIsCustomMarkByViewData(markViewData)
+    end
+
     return markObj
 end
 
@@ -2289,6 +2333,11 @@ LevelMapLoader._GetTrackingMarkFromCache = HL.Method(HL.Boolean).Return(HL.Any) 
         trackingMarkObj.transform:SetParent(root)
     end
     trackingMarkObj.gameObject:SetActive(true)
+
+    if not isMissionTracking and self.m_needInteractableMark then
+        trackingMarkObj.needTryLoadResourceStateNode = true
+    end
+
     return trackingMarkObj
 end
 
@@ -2554,11 +2603,18 @@ LevelMapLoader._RefreshWaitVisibleInMistMarksState = HL.Method() << function(sel
     if self.m_waitVisibleInMistMarks == nil or next(self.m_waitVisibleInMistMarks) == nil then
         return
     end
+    local visibleMarks = {}
     for markInstId, _ in pairs(self.m_waitVisibleInMistMarks) do
         local success, markRuntimeData = self.m_mapManager:GetMarkInstRuntimeData(markInstId)
         if success then
             self:_RefreshGridMark(markInstId, markRuntimeData, true)
+            if self.m_loadedMarkViewDataMap[markInstId] ~= nil then
+                table.insert(visibleMarks, markInstId)  
+            end
         end
+    end
+    for _, markInstId in ipairs(visibleMarks) do
+        self.m_waitVisibleInMistMarks[markInstId] = nil
     end
 end
 
@@ -2952,6 +3008,9 @@ LevelMapLoader.SetGeneralTrackingMarkState = HL.Method(HL.String) << function(se
     self.m_loadedGeneralTrackingMarkId = markInstId
 
     local internalToggleTracking = function(isTracking)
+        if not isTracking then
+            generalTrackingMarkObj:ClearLevelMapMark()
+        end
         generalTrackingMarkObj.gameObject:SetActive(isTracking)
         generalTrackingMarkObj:RefreshTrackingMarkState(isTracking)
         if not isTracking then
@@ -2980,7 +3039,6 @@ LevelMapLoader.SetGeneralTrackingMarkState = HL.Method(HL.String) << function(se
         return
     end
 
-    generalTrackingMarkObj:ClearLevelMapMark()
     generalTrackingMarkObj:InitLevelMapMark(self:_GetRectPosByWorldPos(markRuntimeData.position), markRuntimeData)
     internalToggleTracking(true)
 
@@ -3031,12 +3089,26 @@ LevelMapLoader.SetMissionTrackingMarkState = HL.Method(HL.Table) << function(sel
                     local centerPos = self:_GetRectPosByWorldPos(markRuntimeData.position)
                     missionTrackingArea.rectTransform.anchoredPosition = centerPos
                 end
+
+                if not missionTrackingArea.levelMapMissionArea.coexistWithMissionTrack then
+                    if missionTrackingArea.levelMapMissionArea.notNeedCheckCoexistBecauseOfRadius then
+                        missionTrackingMarkObj:ToggleMarkHiddenState("EnterMissionArea", not markRuntimeData.trackingInfo.showPoint)
+                    end
+                end
             end
         end
     end
 
     self:_RefreshMissionTrackingMarksLevelState()
     self:_RefreshMissionTrackingMarksWithTier()
+
+    
+    for _, missionTrackingArea in pairs(self.m_loadedMissionTrackingAreas) do
+        if not missionTrackingArea.levelMapMissionArea.coexistWithMissionTrack and
+            not missionTrackingArea.levelMapMissionArea.notNeedCheckCoexistBecauseOfRadius then
+            missionTrackingArea.levelMapMissionArea:ForceRefreshDisappearIfOutRect()
+        end
+    end
 end
 
 
@@ -3119,6 +3191,13 @@ end
 
 LevelMapLoader.ToggleLoaderGeneralTrackingVisibleState = HL.Method(HL.Boolean) << function(self, visible)
     self.view.element.trackingMarkRoot.general.gameObject:SetActive(visible)
+
+    if not string.isEmpty(self.m_loadedGeneralTrackingMarkId) then
+        local markViewData = self.m_loadedMarkViewDataMap[self.m_loadedGeneralTrackingMarkId]
+        if markViewData ~= nil then
+            markViewData.markObj:ToggleMarkHiddenState("TrackingRelated", visible)
+        end
+    end
 end
 
 
@@ -3234,6 +3313,10 @@ end
 
 LevelMapLoader.GetMissionTrackingMarks = HL.Method().Return(HL.Any) << function(self)
     local marks = {}
+    if self.m_loadedMissionTrackingMarks == nil then
+        return marks
+    end
+    
     for instId, loadedMark in pairs(self.m_loadedMissionTrackingMarks) do
         
         marks[instId] = loadedMark
@@ -3274,13 +3357,13 @@ LevelMapLoader.RefreshElementsHiddenStateInOtherLevel = HL.Method() << function(
         local staticElements = loaderData.staticElements
         local marks = loaderData.marks
         local lines = loaderData.lines
-        local gridInCurrOtherLevel = loaderData.levelId == self.m_levelId
+        local gridInCurrLevel = loaderData.levelId == self.m_levelId
         
         if staticElements ~= nil and staticElements.Count > 0 then
             for staticElementId, _ in pairs(staticElements) do
                 local elementViewData = self.m_loadedStaticElementViewDataMap[staticElementId]
                 if elementViewData ~= nil then
-                    self:_RefreshStaticElementVisibleState(elementViewData, "LoaderOtherLevelHide", gridInCurrOtherLevel)
+                    self:_RefreshStaticElementVisibleState(elementViewData, "LoaderOtherLevelHide", gridInCurrLevel)
                 end
             end
         end
@@ -3290,7 +3373,7 @@ LevelMapLoader.RefreshElementsHiddenStateInOtherLevel = HL.Method() << function(
                 local markViewData = self.m_loadedMarkViewDataMap[markInstId]
                 if markViewData ~= nil then
                     local markObj = markViewData.markObj
-                    local needHide = not gridInCurrOtherLevel
+                    local needHide = not gridInCurrLevel
                     local markRuntimeData = markViewData.runtimeData
                     if markRuntimeData.connectFromNodeIdList ~= nil then  
                         if needHide then
@@ -3321,6 +3404,11 @@ LevelMapLoader.RefreshElementsHiddenStateInOtherLevel = HL.Method() << function(
                     end
 
                     markObj:ToggleMarkHiddenState("LoaderOtherLevelHide", needHide)
+                    if not gridInCurrLevel then
+                        markObj:ToggleForceShowMark("LoaderOtherLevelForceShow", not needHide)
+                    else
+                        markObj:ToggleForceShowMark("LoaderOtherLevelForceShow", false)
+                    end
                 end
             end
         end
@@ -3328,7 +3416,7 @@ LevelMapLoader.RefreshElementsHiddenStateInOtherLevel = HL.Method() << function(
         for lineId, _ in pairs(lines) do
             local lineViewData = self.m_loadedLineViewDataMap[lineId]
             if lineViewData ~= nil then
-                local needHide = not gridInCurrOtherLevel
+                local needHide = not gridInCurrLevel
                 if needHide then
                     local lineData = lineViewData.lineData
                     if lineData.startBelongGrid.gridId ~= lineData.endBelongGrid.gridId then
@@ -3345,7 +3433,7 @@ end
 
 
 LevelMapLoader.RefreshLevelSwitchMaskState = HL.Method(HL.String) << function(self, levelId)
-    local success, cfg = self.m_levelMapConfig.levelConfigInfos:TryGetValue(levelId)
+    local success, cfg = self.m_mapManager:GetLoaderLevelDataByLevelId(levelId)
     if not success then
         return
     end
@@ -3355,7 +3443,7 @@ LevelMapLoader.RefreshLevelSwitchMaskState = HL.Method(HL.String) << function(se
     end
 
     local maskDataList = {}
-    for _, staticElementData in pairs(cfg.staticElements) do
+    for _, staticElementData in pairs(cfg.loadConfig.staticElements) do
         if staticElementData.type == ElementType.SwitchMask then
             table.insert(maskDataList, {
                 position = staticElementData.position,

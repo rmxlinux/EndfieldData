@@ -47,19 +47,6 @@ CommonTaskTrackSystem.CommonTaskTrackSystem = HL.Constructor() << function(self)
         self:OnOneCommonTaskPanelFinish(type)
     end)
 
-    
-    
-
-    
-    
-    
-    
-    
-    
-    
-    
-    
-
     self:RegisterMessage(MessageConst.ON_PHASE_LEVEL_ON_TOP, function()
         self:_TryAddStartPanelTimer()
     end)
@@ -72,6 +59,9 @@ CommonTaskTrackSystem.CommonTaskTrackSystem = HL.Constructor() << function(self)
         self:_TryAddStartPanelTimer()
     end)
 
+    self:RegisterMessage(MessageConst.ON_DO_CLOSE_MAP, function()
+        self:_ForceClearRequest()
+    end)
 
     
     self:RegisterMessage(MessageConst.ON_ENTER_DUNGEON, function()
@@ -102,53 +92,48 @@ CommonTaskTrackSystem._InitConfigs = HL.Method() << function(self)
         },
 
         
+        TrackStartCountdown = {
+            needWait = false,
+            order = 5,
+        },
+
+        
         
         
         ForceClearTrackHud = {
             needWait = false,
-            order = 1,
+            order = 5,
             forceClear = true,
         },
 
         
         TrackHud = {
             needWait = false,
-            order = 1,
-        },
-        
-        TrackHudShowEndEffect = {
-            needWait = true,
-            order = 1,
+            order = 5,
         },
 
         
         TrackStartToast = {
             needWait = true,
-            order = 1,
+            order = 5,
         },
 
         
-        TrackStartCountdown = {
-            needWait = false,
-            order = 1,
+        TrackHudShowEndEffect = {
+            needWait = true,
+            order = 5,
         },
 
-        
         
         TrackEndToast = {
-            needWait = false,
-            order = 1,
-        },
-        
-        TrackEndToastNW = {
             needWait = true,
-            order = 1,
+            order = 5,
         },
 
         
         DungeonSettlement = {
             needWait = false,
-            order = 1,
+            order = 6,
         },
 
         
@@ -198,6 +183,7 @@ CommonTaskTrackSystem.AddRequest = HL.Method(HL.String, HL.Function, HL.Opt(HL.F
     }
     table.insert(self.m_pendingRequests, request)
     table.sort(self.m_pendingRequests, Utils.genSortFunction({ "order", "id" }, true))
+    logger.info("CommonTaskTrackSystem.AddRequest type:", type)
     self:_TryAddStartPanelTimer()
 end
 
@@ -322,7 +308,7 @@ CommonTaskTrackSystem.NeedPendingManiHudToast = HL.Method().Return(HL.Boolean) <
     end
 
     
-    if self.m_pendingRequests[1].type == "TrackEndToastNW" then
+    if self.m_pendingRequests[1].type == "TrackEndToast" then
         return false
     end
 

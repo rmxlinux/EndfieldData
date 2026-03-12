@@ -60,6 +60,7 @@ MapDetectPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local itemId = arg
     self:_InitItemTableData(itemId)
     self:_RefreshUI()
+    self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
 

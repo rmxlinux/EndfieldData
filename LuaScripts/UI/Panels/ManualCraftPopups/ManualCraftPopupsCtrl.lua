@@ -59,6 +59,7 @@ local PHASE_ID = PhaseId.ManualCraftPopups
 
 
 
+
 ManualCraftPopupsCtrl = HL.Class('ManualCraftPopupsCtrl', uiCtrl.UICtrl)
 
 
@@ -153,6 +154,9 @@ ManualCraftPopupsCtrl.m_luaIndex2ItemCell = HL.Field(HL.Table)
 
 
 ManualCraftPopupsCtrl.m_mainCellInAnim = HL.Field(HL.Boolean) << false
+
+
+ManualCraftPopupsCtrl.m_tickValidTime = HL.Field(HL.Number) << 0
 
 
 ManualCraftPopupsCtrl.m_scrollToIndexFlag = HL.Field(HL.Boolean) << false
@@ -403,7 +407,7 @@ ManualCraftPopupsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_listRedDotHandle = LuaUpdate:Add("TailTick", function(deltaTime)
         self:_TickUpdate(deltaTime)
     end)
-
+    self.m_tickValidTime = 0
 end
 
 
@@ -424,6 +428,13 @@ end
 
 
 ManualCraftPopupsCtrl._TickUpdate = HL.Method(HL.Number) << function(self, deltaTime)
+    if self.m_tickValidTime > 0 then
+        self.m_tickValidTime = self.m_tickValidTime - deltaTime
+        self:_SetListUpRedDotVisible(false)
+        self:_SetListDownRedDotVisible(false)
+        return
+    end
+
     self:_UpdateListUpRedDot()
     self:_UpdateListDownRedDot()
 end
@@ -495,11 +506,13 @@ ManualCraftPopupsCtrl._UpdateListDownRedDot = HL.Method() << function(self)
         end
     end
 
-    local checkLuaIndex = showRangeY + 2    
-    if #self.m_unlockItemList >= checkLuaIndex then
-        if self.m_redDotDownCache[checkLuaIndex] ~= nil and self.m_redDotDownCache[checkLuaIndex] > 0 then
-            self:_SetListDownRedDotVisible(true)
-            return
+    if showRangeY >= 8 then     
+        local checkLuaIndex = showRangeY + 2    
+        if #self.m_unlockItemList >= checkLuaIndex then
+            if self.m_redDotDownCache[checkLuaIndex] ~= nil and self.m_redDotDownCache[checkLuaIndex] > 0 then
+                self:_SetListDownRedDotVisible(true)
+                return
+            end
         end
     end
 
@@ -685,6 +698,7 @@ end
 
 
 ManualCraftPopupsCtrl._UpdateDefaultView = HL.Method(HL.Boolean) << function(self, needSortAndFilter)
+    self.m_tickValidTime = 0.1
     self.view.selectPanel:GetComponent(typeof(CS.Beyond.UI.UIAnimationWrapper)):Play("manualcraftpopups_select_out", function()
         self.view.selectPanel.gameObject:SetActive(false)
     end)
@@ -1240,7 +1254,7 @@ ManualCraftPopupsCtrl.OnClose = HL.Override() << function(self)
     if self.m_listRedDotHandle > 0 then
         self.m_listRedDotHandle = LuaUpdate:Remove(self.m_listRedDotHandle)
     end
-
+    Notify(MessageConst.ON_MANUAL_CRAFT_POPUP_PANEL_CLOSE)
 end
 
 

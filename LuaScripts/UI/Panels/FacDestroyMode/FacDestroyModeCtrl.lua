@@ -37,6 +37,9 @@ local FAC_DESTROY_MODE_STATE_KEY = "FacDestroyModeCtrl"
 
 
 
+
+
+
 FacDestroyModeCtrl = HL.Class('FacDestroyModeCtrl', uiCtrl.UICtrl)
 
 
@@ -616,24 +619,37 @@ FacDestroyModeCtrl._InitBatchNode = HL.Method() << function(self)
         end)
     end
     node.moveBtn.onClick:AddListener(function()
-        if self:_CheckBatchActionValid(true) then
-            self:_EnterBPMode(true)
-        end
+        self:TryStartBatchMove()
     end)
     node.copyBtn.onClick:AddListener(function()
-        if self:_CheckBatchActionValid() then
+        if self:CheckBatchActionValid() then
             self:_EnterBPMode(false)
         end
     end)
     node.delBtn.onClick:AddListener(function()
         self:_OnClickDel(false)
     end)
+    node.togglePowerBtn.onClick:AddListener(function()
+        self:_OnClickTogglePower()
+    end)
 end
 
 
 
+FacDestroyModeCtrl.TryStartBatchMove = HL.Method() << function(self)
+    if not self.view.inputGroup.groupEnabled then
+        return
+    end
+    if self:CheckBatchActionValid(true) then
+        self:_EnterBPMode(true)
+    end
+end
+
+
+
+
 FacDestroyModeCtrl._SaveBlueprint = HL.Method() << function(self)
-    if not self:_CheckBatchActionValid() then
+    if not self:CheckBatchActionValid() then
         return
     end
 
@@ -651,31 +667,37 @@ end
 
 
 
-FacDestroyModeCtrl._CheckBatchActionValid = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Boolean) << function(self, isMoveAct)
+
+FacDestroyModeCtrl.CheckBatchActionValid = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)).Return(HL.Boolean) << function(self, isMoveAct, noToast)
+    local rst, toast = self:_CheckBatchActionValid(isMoveAct)
+    if toast and not noToast then
+        Notify(MessageConst.SHOW_TOAST, toast)
+    end
+    return rst
+end
+
+
+
+
+FacDestroyModeCtrl._CheckBatchActionValid = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Boolean, HL.Opt(HL.String)) << function(self, isMoveAct)
     local range = GameInstance.remoteFactoryManager.batchSelect.selectedRange
     if range.width > Tables.facBlueprintConst.BluePrintXLenMax or range.height > Tables.facBlueprintConst.BluePrintZLenMax then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BLUEPRINT_RANGE_OVER_MAX_HINT)
-        return false
+        return false, Language.LUA_FAC_BLUEPRINT_RANGE_OVER_MAX_HINT
     end
     if not isMoveAct and GameInstance.remoteFactoryManager.batchSelect.hasPendingTargets then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BLUEPRINT_HAS_PENDING_HINT)
-        return false
+        return false, Language.LUA_FAC_BLUEPRINT_HAS_PENDING_HINT
     end
     if GameInstance.remoteFactoryManager.batchSelect.hasSocialTargets then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BLUEPRINT_HAS_SOCIAL_HINT)
-        return false
+        return false, Language.LUA_FAC_BLUEPRINT_HAS_SOCIAL_HINT
     end
     if not GameInstance.remoteFactoryManager.batchSelect.allTargetsInSamePosY then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BATCH_MODE_ERROR_NOT_IN_SAME_HEIGHT)
-        return false
+        return false, Language.LUA_FAC_BATCH_MODE_ERROR_NOT_IN_SAME_HEIGHT
     end
     if GameInstance.remoteFactoryManager.batchSelect.autoAdjustPipeAndFluidValveFailed then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_BLUEPRINT_FAILED_TO_ADJUST_PIPE_SLOPE)
-        return false
+        return false, Language.LUA_BLUEPRINT_FAILED_TO_ADJUST_PIPE_SLOPE
     end
     if isMoveAct and GameInstance.remoteFactoryManager.batchSelect.hasAdjustedPipe then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_BLUEPRINT_CANNOT_BATCH_MOVE_SINCE_ADJUST_PIPE_SLOPE_ERROR)
-        return false
+        return false, Language.LUA_BLUEPRINT_CANNOT_BATCH_MOVE_SINCE_ADJUST_PIPE_SLOPE_ERROR
     end
     return true
 end
@@ -772,5 +794,41 @@ end
 
 
 
+
+
+FacDestroyModeCtrl._OnClickTogglePower = HL.Method() << function(self)
+    local targets = LuaSystemManager.factory.batchSelectTargets
+    local count = 0
+    local nodeIds = {}
+    for id, _ in pairs(targets) do
+        if not FactoryUtils.isPendingBuildingNode(id) then
+            local node = FactoryUtils.getBuildingNodeHandler(id)
+            local buildingId = node.templateId
+            local succ, bData = Tables.factoryBuildingTable:TryGetValue(buildingId)
+            if succ and bData.canBatchModeTogglePower then
+                table.insert(nodeIds, id)
+                count = count + 1
+            end
+        end
+    end
+    if count == 0 then
+        return
+    end
+    if count > Tables.facBlueprintConst.BlueprintNodeCountLimit then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BATCH_MODE_TOGGLE_POWER_OVER_MAX_COUNT)
+        return
+    end
+    GameInstance.player.remoteFactory.core:Message_OpEnableNodes(Utils.getCurrentChapterId(), nodeIds, function(op, opRet)
+        if opRet.RetCode == CS.Proto.FACTORY_OP_RET_CODE.Ok then
+            if opRet.EnableNode.ToEnable then
+                Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BATCH_MODE_TOGGLE_POWER_ON)
+                AudioAdapter.PostEvent("Au_UI_Toggle_FacPower_Switch_On")
+            else
+                Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BATCH_MODE_TOGGLE_POWER_OFF)
+                AudioAdapter.PostEvent("Au_UI_Toggle_FacPower_Switch_Off")
+            end
+        end
+    end)
+end
 
 HL.Commit(FacDestroyModeCtrl)

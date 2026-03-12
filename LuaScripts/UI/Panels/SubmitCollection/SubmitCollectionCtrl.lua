@@ -201,7 +201,9 @@ SubmitCollectionCtrl.OnAnimationInFinished = HL.Override() << function(self)
         local csIndex = self.m_curLevelCellIndex
         local obj = self.view.lvScrollList:Get(csIndex)
         local cell = self.m_getLvCellFunc(obj)
-        InputManagerInst.controllerNaviManager:SetTarget(cell.view.submitCollectionLevelCell)
+        if cell ~= nil then
+            InputManagerInst.controllerNaviManager:SetTarget(cell.view.submitCollectionLevelCell)
+        end
     end
 end
 

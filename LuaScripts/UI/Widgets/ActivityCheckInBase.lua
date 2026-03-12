@@ -745,12 +745,7 @@ ActivityCheckInBase._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(s
 
     
     if DeviceInfo.usingController then
-        
-        if state == stateTable.Complete then
-            cell.button:ChangeActionOnSetNaviTarget(CS.Beyond.Input.ActionOnSetNaviTarget.PressConfirmTriggerOnClick)
-        else
-            cell.button:ChangeActionOnSetNaviTarget(CS.Beyond.Input.ActionOnSetNaviTarget.None)
-        end
+        cell.button:ChangeActionOnSetNaviTarget(CS.Beyond.Input.ActionOnSetNaviTarget.None)
         cell.getRewardKeyHint.gameObject:SetActive(false)
 
         

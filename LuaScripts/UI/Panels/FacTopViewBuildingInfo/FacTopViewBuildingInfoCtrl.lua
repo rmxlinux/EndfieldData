@@ -110,6 +110,9 @@ end
 
 
 FacTopViewBuildingInfoCtrl.OnShow = HL.Override() << function(self)
+    if UIManager:IsOpen(PanelId.GeneralTracker) then
+        UIManager:SetTopOrder(PanelId.GeneralTracker)
+    end
     if self.m_isShowing then 
         self:_UpdateInfos()
     end

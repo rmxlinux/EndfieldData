@@ -17,6 +17,7 @@ local PANEL_ID = PanelId.FriendRequest
 
 
 
+
 FriendRequestCtrl = HL.Class('FriendRequestCtrl', uiCtrl.UICtrl)
 
 
@@ -27,6 +28,9 @@ FriendRequestCtrl.m_arg = HL.Field(HL.Any)
 
 
 FriendRequestCtrl.m_friendInitArg = HL.Field(HL.Table)
+
+
+FriendRequestCtrl.m_emptyTipString = HL.Field(HL.String) << ""
 
 
 
@@ -88,6 +92,7 @@ FriendRequestCtrl._InitFriendRequest = HL.Method() << function(self)
         local _,friendCtrl = UIManager:IsOpen(PanelId.FriendList)
         friendCtrl:TryRefresh()
     end)
+    self.m_emptyTipString = Language.LUA_FRIEND_REQUEST_EMPTY
 end
 
 
@@ -114,6 +119,7 @@ FriendRequestCtrl._InitFriendShare = HL.Method() << function(self)
     end)
     self.view.friendList:InitFriendListCtrl(initArg)
     self.view.titleContentText.text = Language.LUA_FRIEND_POPUP_VIEW
+    self.m_emptyTipString = Language.LUA_FRIEND_NO_FRIEND
 end
 
 
@@ -170,7 +176,7 @@ FriendRequestCtrl._Refresh = HL.Method(HL.Opt(HL.Boolean,HL.Boolean)) << functio
     if stayTop == true and self.m_friendList ~= nil and #self.m_friendList > 0 then
         self.view.friendList:RefreshInfoStayPos(self.m_friendList)
     else
-        self.view.friendList:RefreshInfo(self.m_friendList, true, nil, loading)
+        self.view.friendList:RefreshInfo(self.m_friendList, true, self.m_emptyTipString, loading)
     end
 end
 

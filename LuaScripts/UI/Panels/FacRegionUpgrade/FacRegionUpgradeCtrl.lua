@@ -295,7 +295,10 @@ end
 
 FacRegionUpgradeCtrl._OnTechTreeStateChanged = HL.Method() << function(self)
     self:_RefreshBusNodeState()
-    self:_SelectUpgradeItemCell()
+
+    if not DeviceInfo.usingController then
+        self:_SelectUpgradeItemCell()
+    end
 end
 
 
@@ -749,7 +752,10 @@ FacRegionUpgradeCtrl._SelectUpgradeItemCell = HL.Method(HL.Opt(HL.String)) << fu
     self:_RefreshActionAndConditionInfo()
     if string.isEmpty(self.m_selectItemId) then
         self:BlendOutCameraFromSelectItemTarget(false)
-        UIUtils.setAsNaviTarget(nil)
+
+        if self.naviGroup.IsTopLayer then
+            UIUtils.setAsNaviTarget(nil)
+        end
     else
         self:BlendInCameraToSelectItemTarget()
     end

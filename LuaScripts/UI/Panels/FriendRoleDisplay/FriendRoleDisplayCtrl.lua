@@ -41,6 +41,7 @@ FriendRoleDisplayCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 FriendRoleDisplayCtrl.OnChange = HL.Method() << function(self)
     self:PlayAnimationOutAndClose()
+    Notify(MessageConst.HIDE_COMMON_HOVER_TIP)
 end
 
 
@@ -56,7 +57,6 @@ FriendRoleDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.applyBtn.onClick:RemoveAllListeners()
     self.view.applyBtn.onClick:AddListener(function()
-
         local array = {}
         for _,insId in ipairs(self.m_selectCharInsIdList) do
             table.insert(array, insId.instId)

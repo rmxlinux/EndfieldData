@@ -69,6 +69,7 @@ end
 
 
 
+
 WikiCraftingTreeBuilding.InitWikiCraftingTreeBuilding = HL.Method(HL.Table) << function(self, args)
     self.m_args = args
     self:_FirstTimeInit()
@@ -117,7 +118,7 @@ WikiCraftingTreeBuilding.InitWikiCraftingTreeBuilding = HL.Method(HL.Table) << f
         pinnedCraftId = CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryUtil.GetPinBoardStrId(chapterInfo.pinBoard, GEnums.FCPinPosition.Formula:GetHashCode())
     end
     self.m_isPinnedCraft = pinnedCraftId ~= nil and pinnedCraftId == self.m_args.craftInfo.craftId
-    local isShowDefaultNode = args.isShowDefaultNode == true or (self.m_isPinnedCraft and not args.ignorePinCraft)
+    local isShowDefaultNode = (args.isShowDefaultNode == true or (self.m_isPinnedCraft and not args.ignorePinCraft)) and buildingId ~= nil
     self.view.setDefaultNode.gameObject:SetActive(isShowDefaultNode)
     if isShowDefaultNode then
         self:RefreshDefaultNode()
@@ -141,7 +142,7 @@ end
 WikiCraftingTreeBuilding.RefreshDefaultNode = HL.Method() << function(self)
     local defaultCraftId = WikiUtils.getItemDefaultCraftId(self.m_args.itemId)
     if string.isEmpty(defaultCraftId) then
-        self.m_isDefaultCraft = self.m_args.craftIndex == 1
+        self.m_isDefaultCraft = self.m_args.craftIndex == self.m_args.defaultCraftIndex
     else
         self.m_isDefaultCraft = defaultCraftId == self.m_args.craftInfo.craftId
     end

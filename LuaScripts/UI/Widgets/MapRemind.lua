@@ -90,12 +90,7 @@ MapRemind._OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function))
     local cell = self:_GetCellByIndex(index)
     cell.gameObject.name = "MapRemindInfo_" .. index
     local cfg = Tables.mapRemindTable:GetValue(info.key)
-    local redDotName = info.value.redDotName
-    if string.isEmpty(redDotName) then
-        redDotName = cfg.redDotRead2Hide and "CommonMapRemindReadLike" or "CommonMapRemind"
-    end
     local instId = info.value.insId
-    cell.redDot:InitRedDot(redDotName, {levelId = self.m_levelId, mapRemindType = cfg.remindType, instId = instId})
 
     local success, markRuntimeData = GameInstance.player.mapManager:GetMarkInstRuntimeData(instId)
 
@@ -122,13 +117,6 @@ MapRemind._OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function))
     cell.mattersIconImg:LoadSprite(UIConst.UI_SPRITE_MAP_MARK_ICON_SMALL, icon)
     cell.btn.onClick:RemoveAllListeners()
     cell.btn.onClick:AddListener(function()
-        if cfg.read2Hide then
-            GameInstance.player.mapManager:AddRemindReadInfo(info.key, instId)
-        end
-        if cfg.redDotRead2Hide or cfg.read2Hide then
-            GameInstance.player.mapManager:AddRemindReadRedDotInfo(info.key, instId)
-            Notify(MessageConst.ON_MAP_REMIND_UPDATE)
-        end
         MapUtils.openMap(instId)
         self.m_onClose()
     end)
@@ -220,9 +208,6 @@ MapRemind._InitTabInfos = HL.Method(HL.Number) << function(self, index)
     self.m_genTabCells:Refresh(#self.m_tabInfos, function(cell, luaIndex)
         local info = self.m_tabInfos[luaIndex]
         cell.gameObject.name = "MapRemindTab_" .. luaIndex
-        if not string.isEmpty(info.redDot) then
-            cell.redDot:InitRedDot(info.redDot, {levelId = self.m_levelId , tabType = info.tabType})
-        end
         cell.mattersText.text = info.text
         cell.toggle.onValueChanged:RemoveAllListeners()
         cell.toggle.onValueChanged:AddListener(function(isOn)

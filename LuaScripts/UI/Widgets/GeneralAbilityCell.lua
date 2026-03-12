@@ -34,9 +34,14 @@ local AbilityState = CS.Beyond.Gameplay.GeneralAbilitySystem.AbilityState
 
 
 
+
+
 GeneralAbilityCell = HL.Class('GeneralAbilityCell', UIWidgetBase)
 
 local ITEM_COUNT_UPDATE_INTERVAL = 0.2
+
+
+GeneralAbilityCell.ignoreStateChangeEvent = HL.Field(HL.Boolean) << false
 
 
 GeneralAbilityCell.m_abilityRuntimeData = HL.Field(CS.Beyond.Gameplay.GeneralAbilitySystem.AbilityRuntimeData)
@@ -69,6 +74,9 @@ GeneralAbilityCell.m_itemId = HL.Field(HL.String) << ""
 GeneralAbilityCell.m_itemCount = HL.Field(HL.Number) << -1
 
 
+GeneralAbilityCell.m_abilityType = HL.Field(HL.Number) << -1
+
+
 GeneralAbilityCell.m_customCDFillImage = HL.Field(HL.Userdata)
 
 
@@ -76,6 +84,9 @@ GeneralAbilityCell.m_customCDFillImage = HL.Field(HL.Userdata)
 
 GeneralAbilityCell._OnFirstTimeInit = HL.Override() << function(self)
     self:RegisterMessage(MessageConst.ON_GENERAL_ABILITY_STATE_CHANGE, function(args)
+        if self.ignoreStateChangeEvent then
+            return
+        end
         if self.m_abilityRuntimeData == nil then
             return
         end
@@ -103,6 +114,7 @@ GeneralAbilityCell.InitGeneralAbilityCell = HL.Method(HL.Opt(HL.Number, HL.Boole
         self:_OnEnterLockedState()  
         return
     end
+    self.m_abilityType = abilityType
     self.m_isLeft = isLeft
     self.m_forceCloseNum = forceCloseNum
     self:_RefreshUseItem()
@@ -373,14 +385,27 @@ GeneralAbilityCell._RefreshUseItem = HL.Method() << function(self)
     self.view.itemCount.gameObject:SetActive(true)
 
     local itemCount = GameInstance.player.inventory:GetItemCountInBag(Utils.getCurrentScope(), self.m_itemId)
-    if itemCount == self.m_itemCount then
+    local needIgnore = GameInstance.player.generalAbilitySystem:IsIgnoreItemCheck(self.m_abilityType)
+
+    if needIgnore and self.m_itemCount == math.huge then
         return
     end
 
-    self.m_itemCount = itemCount
-    self.view.itemCount.text = string.format("%d", itemCount)
+    if not needIgnore and itemCount == self.m_itemCount then
+        return
+    end
 
-    self.view.itemCount.color = itemCount > 0 and self.view.config.NORMAL_COLOR or self.view.config.ITEM_LACK_COUNT_COLOR
+    if needIgnore then
+        self.view.itemCount.text = Language.LUA_ITEM_INFINITE_COUNT
+        self.m_itemCount = math.huge
+        self.view.itemCount.color = self.view.config.NORMAL_COLOR
+
+    else
+        self.m_itemCount = itemCount
+        self.view.itemCount.text = string.format("%d", itemCount)
+
+        self.view.itemCount.color = itemCount > 0 and self.view.config.NORMAL_COLOR or self.view.config.ITEM_LACK_COUNT_COLOR
+    end
 end
 
 

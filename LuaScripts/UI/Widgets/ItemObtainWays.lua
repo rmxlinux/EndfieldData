@@ -388,7 +388,12 @@ ItemObtainWays._RefreshObtainCell = HL.Method(HL.Any, HL.Table, HL.Number) << fu
             if jumpBlockWhiteMap[info.phaseId] then
                 isBlocked = UIManager:ShouldBlockAllObtainWaysJump()
             else
-                isBlocked = UIManager:ShouldBlockObtainWaysJump()
+                if info.phaseId then
+                    
+                    isBlocked = UIManager:ShouldBlockObtainWaysPhaseJump(info.phaseId)
+                else
+                    isBlocked = UIManager:ShouldBlockObtainWaysPhaseJump(PhaseId.Wiki)
+                end
             end
             if isBlocked then
                 Notify(MessageConst.SHOW_TOAST, Language.LUA_OBTAIN_WAYS_JUMP_BLOCKED)
@@ -407,7 +412,7 @@ ItemObtainWays._RefreshObtainCell = HL.Method(HL.Any, HL.Table, HL.Number) << fu
                 PhaseManager:GoToPhase(info.phaseId, info.phaseArgs)
             else
                 local firstCraft = info.crafts and info.crafts[1] or nil
-                if firstCraft then
+                if firstCraft and WikiUtils.canShowWikiEntry(self.m_itemId) then
                     PhaseManager:GoToPhase(PhaseId.Wiki, {
                         isItemCraft = true,
                         itemId = self.m_itemId,

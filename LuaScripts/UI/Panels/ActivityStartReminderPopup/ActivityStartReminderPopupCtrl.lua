@@ -173,9 +173,10 @@ ActivityStartReminderPopupCtrl._OnUpdateCell = HL.Method(HL.Any,HL.Number) << fu
 
     
     if DeviceInfo.usingController then
-        cell.btnGoto.interactable = false
+        cell.btnGoto.enabled = false
+        cell.keyHint.gameObject:SetActive(false)
         cell.button.onIsNaviTargetChanged = function(active)
-            cell.btnGoto.interactable = active
+            cell.btnGoto.enabled = active
             cell.keyHint.gameObject:SetActive(active)
         end
     end

@@ -24,6 +24,10 @@ function DungeonUtils.isDungeonPassed(dungeonId)
     return GameInstance.dungeonManager:IsDungeonPassed(dungeonId)
 end
 
+function DungeonUtils.isDungeonExtraRewardGained(dungeonId)
+    return GameInstance.dungeonManager:IsDungeonExtraRewardGained(dungeonId)
+end
+
 
 function DungeonUtils.isDungeonActive(dungeonId)
     return GameInstance.dungeonManager:IsDungeonActive(dungeonId)

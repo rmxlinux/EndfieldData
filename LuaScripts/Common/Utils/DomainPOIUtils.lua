@@ -536,7 +536,7 @@ function DomainPOIUtils.getSettlementLevelNewVersionInfo(levelId, nowVersion)
                     itemIdSet[itemId] = true
                     table.insert(rewardList, {
                         id = itemId,
-                        count = 0,
+                        count = 1,
                         
                         rarity = itemCfg.rarity,
                         sortId1 = itemCfg.sortId1,
@@ -582,7 +582,7 @@ function DomainPOIUtils.getDomainShopLevelNewVersionInfo(levelId, nowVersion)
     end
     
     local curMaxLv = #channelCfg.channelLevelMap
-    local lastVersion = channelCfg.channelLevelMap[CSIndex(curMaxLv)].versionStart
+    local lastVersion = channelCfg.channelLevelMap[curMaxLv].versionStart
     local hasMaxLvDiff = lastVersion == nowVersion
     if not hasMaxLvDiff then
         return nil
@@ -596,20 +596,26 @@ function DomainPOIUtils.getDomainShopLevelNewVersionInfo(levelId, nowVersion)
 end
 
 function DomainPOIUtils.getKiteStationLevelNewVersionInfo(levelId, nowVersion)
-    local _, kiteStationLevelCfg = Tables.kiteStationLevelTable:TryGetValue(levelId)
+    local kiteStationLevelCfg
+    for _, cfg in pairs(Tables.kiteStationLevelTable) do
+        if cfg.levelId == levelId then
+            kiteStationLevelCfg = cfg
+            break
+        end
+    end
     if not kiteStationLevelCfg then
         return nil
     end
     
     local curMaxLv = #kiteStationLevelCfg.list
-    local lastVersion = kiteStationLevelCfg.list[CSIndex(curMaxLv)].versionStart
+    local lastVersion = kiteStationLevelCfg.list[curMaxLv].versionStart
     local hasMaxLvDiff = lastVersion == nowVersion
     if not hasMaxLvDiff then
         return nil
     end
     
     local info = {
-        levelPoiName = kiteStationLevelCfg.list[CSIndex(curMaxLv)].name,
+        levelPoiName = kiteStationLevelCfg.list[curMaxLv].name,
         poiCurVersionMaxLv = curMaxLv,
     }
     return info
@@ -633,7 +639,7 @@ function DomainPOIUtils.getDomainDepotLevelNewVersionInfo(levelId, nowVersion)
     end
     domainDepotLevelList = domainDepotLevelList.levelList
     local currMaxLevel = #domainDepotLevelList
-    local currMaxLevelCfg = domainDepotLevelList[CSIndex(currMaxLevel)]
+    local currMaxLevelCfg = domainDepotLevelList[currMaxLevel]
     if currMaxLevelCfg.versionStart ~= nowVersion then
         return nil
     end

@@ -347,7 +347,7 @@ config = {
     
     SNS = {
         panels = { },
-        redDotName = "SNSHudEntry",
+        redDotName = "SNSWatchEntry",
         isSimpleUIPhase = false,
         unlockSystemType = GEnums.UnlockSystemType.SNS,
         checkCanOpen = function(arg)
@@ -497,7 +497,7 @@ config = {
             PanelId.SpaceshipControlCenter,
         },
         fov = 15.3818,
-        isSimpleUIPhase = true,
+        isSimpleUIPhase = false,
         unlockSystemType = GEnums.UnlockSystemType.SpaceshipControlCenter,
         redDotName = "SSControlCenter",
     },
@@ -547,11 +547,27 @@ config = {
         },
         isSimpleUIPhase = true,
     },
+    ActivityFoodSubmit = {
+        panels = {
+            PanelId.ActivityFoodSubmit,
+        },
+        isSimpleUIPhase = true,
+    },
+    ActivityFoodSubmitNotes = {
+        panels = {
+            PanelId.ActivityFoodSubmitNotes,
+        },
+        isSimpleUIPhase = true,
+    },
     
     SpaceshipSalesRecords = {
         panels = {
             PanelId.SpaceshipSalesRecords,
         },
+        checkCanOpen = function(arg)
+            local guestRoomBuild = GameInstance.player.spaceship:IsRoomBuild(Tables.spaceshipConst.guestRoomId)
+            return guestRoomBuild, Language.LUA_SPACESHIP_LOCKED_TOAST
+        end,
         isSimpleUIPhase = true,
     },
     
@@ -703,7 +719,6 @@ config = {
     GachaChar = {
         panels = {}, 
         isSimpleUIPhase = false,
-        unlockSystemType = GEnums.UnlockSystemType.Gacha,
         disableEffectLodControl = true,
         fov = 15.3818,
         haveSceneCamera = true,
@@ -870,7 +885,7 @@ config = {
         panels = {
             PanelId.SubmitCollection,
         },
-        isSimpleUIPhase = true,
+        isSimpleUIPhase = false,
     },
     
     CharacterSummon = {
@@ -1242,6 +1257,18 @@ config = {
             PanelId.BattlePassAdvancedPlanBuy,
         },
         isSimpleUIPhase = false,
+    },
+    ActivityCleaningDetails = {
+        panels = {
+           PanelId.ActivityCleaningDetails,
+        },
+        isSimpleUIPhase = true,
+    },
+    ActivityRanking = {
+        panels = {
+           PanelId.ActivityRanking,
+        },
+        isSimpleUIPhase = true,
     },
     
 }

@@ -111,7 +111,7 @@ DomainDepotInstCell._OnClickConfirmBtn = HL.Method() << function(self)
     elseif self.m_instCellState == InstCellState.Trading then
         Notify(MessageConst.ON_OPEN_DOMAIN_DEPOT_PACK_SELL_PANEL, { domainDepotId = self.m_depotId, simpleOpen = true })
     elseif self.m_instCellState == InstCellState.Delivering then
-        PhaseManager:OpenPhase(PhaseId.Mission, { autoSelect = Tables.domainDepotConst.depotDeliverMissionId })
+        PhaseManager:GoToPhase(PhaseId.Mission, { autoSelect = Tables.domainDepotConst.depotDeliverMissionId })
     end
 end
 

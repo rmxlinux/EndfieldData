@@ -118,6 +118,7 @@ CommonTaskGoalCell.InitCommonTaskGoalCell = HL.Method(HL.Number, CS.Beyond.Gamep
     end
 
     if hasTrackPoint then
+        self.m_updateDistanceTick = LuaUpdate:Remove(self.m_updateDistanceTick)
         self.m_updateDistanceTick = LuaUpdate:Add("TailTick", function()
             self:_UpdateDistance()
         end, true)

@@ -186,7 +186,7 @@ SnapshotJoystickCtrl._UpdateMove = HL.Method() << function(self)
     end
     if self.m_isPlayerMoveMode then
         local isForbidMoveFromSys = GameInstance.player.forbidSystem:IsForbidden(ForbidType.ForbidMove)
-        if self.m_isForbidPlayerMoveFromSnapshot and isForbidMoveFromSys then
+        if self.m_isForbidPlayerMoveFromSnapshot or isForbidMoveFromSys then
             if self.m_forbidToastColdDown < Time.time then
                 Notify(MessageConst.SHOW_TOAST, { Language.LUA_SNAPSHOT_FORBID_PLAYER_MOVE, forbidToastColdDownTime })
                 self.m_forbidToastColdDown = Time.time + forbidToastColdDownTime
@@ -218,6 +218,9 @@ end
 
 SnapshotJoystickCtrl._OnPressSprint = HL.Method() << function(self)
     if snapshotSystem.isFirstPersonMode then
+        return
+    end
+    if Utils.isForbidden(ForbidType.ForbidMove) or self.m_isForbidPlayerMoveFromSnapshot then
         return
     end
     GameInstance.playerController:OnSprintPressed()

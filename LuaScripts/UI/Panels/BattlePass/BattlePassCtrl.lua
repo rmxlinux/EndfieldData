@@ -506,12 +506,19 @@ BattlePassCtrl._ChangeTab = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function
         arg.panelArgs = self.m_arg.panelArgs
         arg.popupPlanBuy = self.m_arg.popupPlanBuy
     end
-    self.m_phase:ChangePanel(tabInfo.panelId, isRight, arg)
-
-    if luaIndex == 1 then
-        self.m_phase:ShowPsStore()
+    local ret = self.m_phase:ChangePanel(tabInfo.panelId, isRight, arg)
+    if not ret then
+        
+        self.m_curTabIndex = 3 - luaIndex
+        local cell = self.m_genTabCells:GetItem(self.m_curTabIndex)
+        cell.toggle:SetIsOnWithoutNotify(true)
     else
-        self.m_phase:HidePsStore()
+        
+        if luaIndex == 1 then
+            self.m_phase:ShowPsStore()
+        else
+            self.m_phase:HidePsStore()
+        end
     end
 end
 

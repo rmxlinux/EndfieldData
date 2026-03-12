@@ -561,8 +561,11 @@ GachaWeaponCtrl._LoadModelAsync = HL.Method(HL.Number, HL.String, HL.Function) <
     local pathHash = CS.Beyond.Resource.StringPathHash(hash)
     self.m_modelRequestList[loadKey] = modelManager:LoadAsync(pathHash, function(requestId, path, activeModelGo)
         self.m_modelRequestList[loadKey] = nil
-        if activeModelGo and callback then
-            callback(activeModelGo)
+        if activeModelGo then
+            GameInstance.player.gacha:SetWeaponModelTextureMipmapLevel(activeModelGo, true)
+            if callback then
+                callback(activeModelGo)
+            end
         end
     end)
 end
@@ -610,6 +613,7 @@ GachaWeaponCtrl._ClearCurAsset = HL.Method() << function(self)
     local modelManager = GameInstance.modelManager
     
     for key, obj in pairs(self.m_curWeaponObjList) do
+        GameInstance.player.gacha:SetWeaponModelTextureMipmapLevel(obj, false)
         modelManager:Unload(obj)
         self.m_curWeaponObjList[key] = nil
     end

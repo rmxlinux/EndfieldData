@@ -136,21 +136,30 @@ FormulaCtrl._ShowFormula = HL.Method(HL.Number) << function(self, nodeId)
         return
     end
 
-    self.m_crafts = crafts
     
-    local highlightIndex = 1
-    local index = 1
-    repeat
-        local craftInfo = self.m_crafts[index]
+    self.m_crafts = {}
+    local blockCrafts = {}
+    local normalCrafts = {}
+    for _, craftInfo in ipairs(crafts) do
         local isHighlighted = self:_IsFormulaHighlighted(craftInfo.craftId)
-        if isHighlighted and highlightIndex ~= index then
-            local temp = self.m_crafts[highlightIndex]
-            self.m_crafts[highlightIndex] = craftInfo
-            self.m_crafts[index] = temp
-            highlightIndex = highlightIndex + 1
+        if isHighlighted then
+            table.insert(self.m_crafts, craftInfo)
+        else
+            local isBlocked = self:_IsFormulaBlocked(craftInfo.craftId)
+            if isBlocked then
+                table.insert(blockCrafts, craftInfo)
+            else
+                table.insert(normalCrafts, craftInfo)
+            end
         end
-        index = index + 1
-    until index > #self.m_crafts
+    end
+    for _, craftInfo in ipairs(blockCrafts) do
+        table.insert(self.m_crafts, craftInfo)
+    end
+    for _, craftInfo in ipairs(normalCrafts) do
+        table.insert(self.m_crafts, craftInfo)
+    end
+
     self.view.scrollList:UpdateCount(#crafts)
 end
 

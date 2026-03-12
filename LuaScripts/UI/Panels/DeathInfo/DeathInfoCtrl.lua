@@ -73,7 +73,8 @@ end
 
 DeathInfoCtrl._TryShowInDungeonMode = HL.Method(CS.Beyond.Gameplay.DeathInfo).Return(HL.Boolean) << function(self, deathInfo)
     
-    if not deathInfo.dungeonId then
+    local dungeonId = deathInfo.dungeonId
+    if not dungeonId then
         self.view.exitDungeonBtn.gameObject:SetActive(false)
         self.view.reviveBtnText.text = I18nUtils.GetText(NORMAL_REVIVE_BTN_TEXT_KEY)
         return false
@@ -84,7 +85,7 @@ DeathInfoCtrl._TryShowInDungeonMode = HL.Method(CS.Beyond.Gameplay.DeathInfo).Re
     self.view.exitDungeonBtn.onClick:AddListener(function()
         GameInstance.dungeonManager:LeaveDungeon()
     end)
-    local dungeonData = Tables.GameMechanicTable[deathInfo.dungeonId]
+    local dungeonData = Tables.GameMechanicTable[dungeonId]
     local dungeonCategory = nil
     local dungeonCategoryData = nil
     if dungeonData then
@@ -95,7 +96,7 @@ DeathInfoCtrl._TryShowInDungeonMode = HL.Method(CS.Beyond.Gameplay.DeathInfo).Re
     end
     if dungeonCategoryData and dungeonCategoryData.canReChallengeAfterFail then
         self.view.retryBattleBtn.onClick:AddListener(function()
-            GameInstance.dungeonManager:RestartDungeonWithBlackScreen()
+            GameWorld.worldInfo.subGame:SendReStart(true)
         end)
     else
         self.view.retryBattleBtn.gameObject:SetActive(false)
@@ -105,7 +106,7 @@ DeathInfoCtrl._TryShowInDungeonMode = HL.Method(CS.Beyond.Gameplay.DeathInfo).Re
     end)
 
     
-    local _, tipGroupBean = Tables.dungeonDeathTips:TryGetValue(deathInfo.dungeonId)
+    local _, tipGroupBean = Tables.dungeonDeathTips:TryGetValue(dungeonId)
     if not tipGroupBean then
         return false;
     end

@@ -24,6 +24,9 @@ local GROUP_NAME_TEXT_ID_FORMAT = "LUA_RECOMMENDED_TIPS_PANEL_GROUP_NAME_%s"
 
 
 
+
+
+
 RecommendedTipsCtrl = HL.Class('RecommendedTipsCtrl', uiCtrl.UICtrl)
 
 
@@ -53,6 +56,7 @@ RecommendedTipsCtrl.m_curWeaponInfo = HL.Field(HL.Any)
 
 RecommendedTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SHOW_WIKI_ENTRY] = '_OnShowWikiEntry',
+    [MessageConst.CHAR_INFO_WEAPON_LIST_SELECT_ITEM] = '_OnWeaponListSelectItem',
 }
 
 
@@ -166,7 +170,7 @@ end
 
 RecommendedTipsCtrl._BindUI = HL.Method() << function(self)
     self.view.btnClose.onClick:AddListener(function()
-        self:PlayAnimationOut()
+        self:_TryClose()
     end)
 
     self.m_groupCells = UIUtils.genCellCache(self.view.weaponsListCell)
@@ -175,7 +179,7 @@ RecommendedTipsCtrl._BindUI = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 
     self.view.autoCloseArea.onTriggerAutoClose:AddListener(function()
-        self:PlayAnimationOut()
+        self:_TryClose()
     end)
 end
 
@@ -190,11 +194,17 @@ RecommendedTipsCtrl._RefreshUI = HL.Method() << function(self)
 
     if self.m_haveInitTarget == false and #self.m_infos > 0 then
         self.m_haveInitTarget = true
-        local firstWeaponCells = self.m_weaponCellsDict[1]
-        if firstWeaponCells:GetCount() > 0 then
-            local firstWeaponCell = firstWeaponCells:Get(1)
-            UIUtils.setAsNaviTarget(firstWeaponCell.inputBindingGroupNaviDecorator)
-        end
+        self:_SetFirstNavi()
+    end
+end
+
+
+
+RecommendedTipsCtrl._SetFirstNavi = HL.Method() << function(self)
+    local firstWeaponCells = self.m_weaponCellsDict[1]
+    if firstWeaponCells:GetCount() > 0 then
+        local firstWeaponCell = firstWeaponCells:Get(1)
+        UIUtils.setAsNaviTarget(firstWeaponCell.inputBindingGroupNaviDecorator)
     end
 end
 
@@ -271,7 +281,7 @@ RecommendedTipsCtrl._SetupWeaponCell = HL.Method(HL.Any, HL.String) << function(
                 self.m_curWeaponInfo.weaponInstId,
                 3
             )
-            self:PlayAnimationOut()
+            self:_TryClose()
         end)
     elseif isInBag then
         stateCtrl:SetState("Owned")
@@ -286,7 +296,7 @@ RecommendedTipsCtrl._SetupWeaponCell = HL.Method(HL.Any, HL.String) << function(
                 self.m_curWeaponInfo.weaponInstId,
                 1
             )
-            self:PlayAnimationOut()
+            self:_TryClose()
         end)
     elseif isInShop then
         stateCtrl:SetState("NotOwnedBtn")
@@ -310,6 +320,22 @@ end
 RecommendedTipsCtrl._OnShowWikiEntry = HL.Method() << function(self)
     
     self:Close()
+end
+
+
+
+
+RecommendedTipsCtrl._OnWeaponListSelectItem = HL.Method(HL.Any) << function(self, arg)
+    
+    self:_TryClose()
+end
+
+
+
+RecommendedTipsCtrl._TryClose = HL.Method() << function(self)
+    if not self:IsPlayingAnimationOut() then
+        self:PlayAnimationOut()
+    end
 end
 
 HL.Commit(RecommendedTipsCtrl)

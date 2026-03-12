@@ -81,6 +81,12 @@ CONTINUE_RADIO_PRIORITY = -1000
 
 
 
+
+
+
+
+
+
 RadioSystem.s_radioIndexCache = HL.StaticField(HL.Table) << {}
 
 
@@ -205,7 +211,7 @@ RadioSystem.RadioSystem = HL.Constructor() << function(self)
                     local errorLog = string.format("RadioSystem forcePlayRadio changed to FALSE but CheckCanPlay FALSE, CutCurRadio: %s!!!!", self.m_curShow.radioId)
                     logger.warn(errorLog)
                     if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
-                        local toast = string.format("强制播Radio退出, %s正在播放, 但已经不满足播放条件，打断!!!!", self.m_curShow.radioId)
+                        local toast = string.format("【EditorOnly】Radio:【%s】 被UI打断，目前效果可以找负责策划反馈是否符合预期!!!", self.m_curShow.radioId)
                         Notify(MessageConst.SHOW_TOAST, toast)
                     end
                 end
@@ -441,6 +447,10 @@ RadioSystem._TryPlayRadio = HL.Method(CS.Beyond.Gameplay.Actions.GameAction.Radi
     local callback = data.callback
     local entity = data.entity
     local interruptFinish = data.interruptFinish
+    local enableAdvancedOptions = data.enableAdvancedOptions
+    local voOffset = data.voOffset
+    local reverbOffset = data.reverbOffset
+    local attenuationType = data.attenuationType
 
     local res, radioData = Tables.radioTable:TryGetValue(radioId)
     if not res then
@@ -451,7 +461,11 @@ RadioSystem._TryPlayRadio = HL.Method(CS.Beyond.Gameplay.Actions.GameAction.Radi
     local extraData = {
         callback = callback,
         entity = entity,
-        interruptFinish = interruptFinish
+        interruptFinish = interruptFinish,
+        enableAdvancedOptions = enableAdvancedOptions,
+        voOffset = voOffset,
+        reverbOffset = reverbOffset,
+        attenuationType = attenuationType,
     }
     local tmpIndex
     index = index == nil and 0 or index
@@ -588,10 +602,15 @@ RadioSystem._TryShowNextRadio = HL.Method().Return(HL.Boolean) << function(self)
     if continueRadioData then
         self:_DoShowRadio(continueRadioData)
         
-        self.m_curShow.interruptedVoiceId = self.m_waitingQueue[1].interruptedVoiceId
-        self.m_waitingQueue[1].interruptedVoiceId = nil
-        self.m_waitingQueue[1].continuedRadio = continueRadioData.radioId
-        return true
+        if self.m_curShow then
+            
+            self.m_curShow.interruptedVoiceId = self.m_waitingQueue[1].interruptedVoiceId
+            self.m_waitingQueue[1].interruptedVoiceId = nil
+            self.m_waitingQueue[1].continuedRadio = continueRadioData.radioId
+            return true
+        else
+            return false
+        end
     end
 
     
@@ -769,16 +788,21 @@ RadioSystem._DoShowRadio = HL.Method(HL.Table) << function(self, data)
                 resumeTime = -1,
                 isContinueExRadio = isContinueExRadio,
                 interruptFinish = data.interruptFinish,
+                enableAdvancedOptions = data.enableAdvancedOptions,
+                voOffset = data.voOffset,
+                reverbOffset = data.reverbOffset,
+                interruptFinish = data.interruptFinish,
+                attenuationType = data.attenuationType,
             }
             self:_UpdateVoiceInfo()
             self:_ShowSingleRadio()
             NarrativeUtils.SetRadioId(self.m_curShow.radioId)
         else
-            logger.error("_DoShowRadio radioType error, only wireless supported, radioId: %s!!!", radioId)
+            logger.error("_DoShowRadio radioType error, only wireless supported, radioId: " .. radioId .. "!!!")
         end
 
     else
-        logger.error("_DoShowRadio data error, radioId: %s!!!", radioId)
+        logger.error("_DoShowRadio data error, radioId: " .. radioId .. "!!!")
     end
 end
 
@@ -834,10 +858,16 @@ RadioSystem._ShowSingleRadio = HL.Method() << function(self)
             local entity = self.m_curShow.entity
             local cfg = CS.Beyond.Gameplay.Audio.NarrativeVoiceConfig(audioEffect, 1)
 
+            if self.m_curShow.enableAdvancedOptions then
+                cfg.voOffset = self.m_curShow.voOffset
+                cfg.reverbOffset = self.m_curShow.reverbOffset
+                cfg.attenuationType = self.m_curShow.attenuationType
+            end
+
             if not string.isEmpty(voiceId) then
                 local voiceHandleId
 
-                if is3D and entity then
+                if is3D and entity and not entity.markReleased then
                     voiceHandleId = VoiceManager:SpeakNarrative(voiceId, entity, cfg)
                 else
                     voiceHandleId = VoiceManager:SpeakNarrative(voiceId, nil, cfg)

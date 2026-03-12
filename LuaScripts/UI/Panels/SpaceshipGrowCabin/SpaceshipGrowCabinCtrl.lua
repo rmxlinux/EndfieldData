@@ -76,6 +76,8 @@ local CLIENT_DATA_MANAGER_CATEGORY = "spaceship"
 
 
 
+
+
 SpaceshipGrowCabinCtrl = HL.Class('SpaceshipGrowCabinCtrl', uiCtrl.UICtrl)
 
 
@@ -163,6 +165,12 @@ SpaceshipGrowCabinCtrl.m_isInDetailNaviState = HL.Field(HL.Boolean) << false
 
 
 SpaceshipGrowCabinCtrl.m_tempCancelBindingId = HL.Field(HL.Number) << -1
+
+
+
+SpaceshipGrowCabinCtrl.OnShow = HL.Override() << function(self)
+    self:_ResetPanel()
+end
 
 
 
@@ -431,6 +439,20 @@ end
 
 
 
+SpaceshipGrowCabinCtrl._ResetPanel = HL.Method() << function(self)
+    local peekPanel = self.m_panelStack:Peek()
+    if peekPanel == PanelType.Overview then
+        self.m_animationWrapper:Play("spaceshipgrowcabin_in")
+    elseif peekPanel == PanelType.Sow then
+        self.m_animationWrapper:SampleClipAtPercent("spaceshipgrowcabin_change", 1)
+    elseif peekPanel == PanelType.Breed then
+        self.m_animationWrapper:SampleClipAtPercent("spaceshipgrowcabin_extract", 1)
+    end
+end
+
+
+
+
 
 SpaceshipGrowCabinCtrl._PushPanel = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(self, panelType, args)
     if self.m_panelStack:Contains(panelType) then
@@ -443,6 +465,7 @@ SpaceshipGrowCabinCtrl._PushPanel = HL.Method(HL.Number, HL.Opt(HL.Table)) << fu
         self.view.plantingWarehouse.gameObject:SetActiveIfNecessary(true)
         self.view.cultivationObject.gameObject:SetActiveIfNecessary(false)
         self.view.extractionWarehouse.gameObject:SetActiveIfNecessary(false)
+        self.m_animationWrapper:Play("spaceshipgrowcabin_in")
     elseif panelType == PanelType.Sow then
         self.m_selectBoxId = args.boxId
 

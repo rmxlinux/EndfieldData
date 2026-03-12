@@ -213,6 +213,11 @@ FriendListCell.RefreshFriendListCell = HL.Method(HL.Number, HL.Table, HL.String)
 
     self.info = showInfo
     self:_RefreshFriendCellInfo()
+    
+    if FriendUtils.isPsnPlatform() and self.info.lastLoginType ~= CS.Proto.HG_THIRD_ACCOUNT_TYPE.AccountTypePsn then
+        self.view.commonPlayerHead.view.pcNode.gameObject:SetActiveIfNecessary(true)
+        self.view.commonPlayerHead.view.psRoot.gameObject:SetActiveIfNecessary(false)
+    end
     if self.view.msgBtn.gameObject.activeSelf then
         self.view.msgBtn.gameObject:SetActive(not GameInstance.player.spaceship.isViewingFriend and GameInstance.player.friendSystem:PlayerInBlackList(self.info.roleId) == false)
     end
@@ -233,7 +238,7 @@ FriendListCell.RefreshFriendListCellByPsnId = HL.Method(HL.String, HL.Table, HL.
     local success, info = GameInstance.player.friendSystem:GetPsnDictByIndex(self.arg.infoDicIndex):TryGetValue(id)
 
     if not success then
-        logger.error(CS.Beyond.ELogChannel.Friend,"未找到好友数据 " .. id)
+        logger.error(CS.Beyond.ELogChannel.Friend, "未找到好友数据 " .. id)
         self.view.emptyStateCtrl:SetState("NoData")
         return
     end
@@ -258,9 +263,12 @@ FriendListCell.RefreshFriendListCellByPsnId = HL.Method(HL.String, HL.Table, HL.
         end
     elseif stateName == "BlackList" and info.roleId == 0 then
         self:_UpdateUnRegisterPlayer(info)
+        self.view.playerHeadBtnForNoGameUser.enabled = false
+        self.view.psnInfoBtnForBlackUser.gameObject:SetActiveIfNecessary(false)
+        self.view.psnInfoBtnForNoGameUser.gameObject:SetActiveIfNecessary(false)
         return
     end
-    self.view.psnInfoBtnForBlackUser.gameObject:SetActiveIfNecessary(true)
+    self.view.psnInfoBtnForBlackUser.gameObject:SetActiveIfNecessary(false)
     self.view.stateController:SetState(stateName)
     self.info = info
     self:_RefreshFriendCellInfo()
@@ -281,8 +289,14 @@ FriendListCell._UpdateUnRegisterPlayer = HL.Method(HL.Any) << function(self, inf
     self.view.emptyStateCtrl:SetState("NonGameUser")
     self.view.sonyNameTxt.text = info.psName
     self.info = info
+    self.view.playerHeadBtnForNoGameUser.enabled = true
     self.view.playerHeadBtnForNoGameUser.onClick:RemoveAllListeners()
     self.view.playerHeadBtnForNoGameUser.onClick:AddListener(function()
+        
+        if GameInstance.player.friendSystem.psnBlackListFriendList:ContainsKey(self.info.psnData.AccountId) then
+            return
+        end
+
         local args = {
             transform = self.view.headRectTransform,
             cellHeight = FriendUtils.CELL_HEIGHT,
@@ -443,7 +457,6 @@ FriendListCell._RefreshFriendCellInfo = HL.Method() << function(self)
         logger.error("好友名片主题ID为空 " .. self.info.roleId)
     end
 
-
     if self.arg.stateName == "SpaceshipClueGift" then
         self:_UpdateClueCells()
     end
@@ -481,7 +494,6 @@ FriendListCell._UpdateClueCells = HL.Method() << function(self)
         cell.clueNumTxt.text = luaIndex
     end)
 end
-
 
 
 

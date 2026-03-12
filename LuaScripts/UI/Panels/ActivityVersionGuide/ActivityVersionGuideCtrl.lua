@@ -7,6 +7,8 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 
 
 
+
+
 ActivityVersionGuideCtrl = HL.Class('ActivityVersionGuideCtrl', uiCtrl.UICtrl)
 
 
@@ -46,6 +48,20 @@ end
 
 ActivityVersionGuideCtrl.OnActivityCenterNaviFailed = HL.Method() << function(self)
     self.m_versionGuide:OnActivityCenterNaviFailed()
+end
+
+
+
+
+ActivityVersionGuideCtrl.PlayAnimationOut = HL.Override(HL.Opt(HL.Number)) << function(self, outCompleteActionType)
+    outCompleteActionType = outCompleteActionType or UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Close
+    self.m_versionGuide.view.animationWrapper:PlayOutAnimation(function()
+        if outCompleteActionType == UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Close then
+            self:Close()
+        elseif outCompleteActionType == UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Hide then
+            self:Hide()
+        end
+    end)
 end
 
 

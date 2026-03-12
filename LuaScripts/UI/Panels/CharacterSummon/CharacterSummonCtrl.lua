@@ -212,7 +212,7 @@ CharacterSummonCtrl._InitCharInfos = HL.Method() << function(self)
             local isShow = true
             local succ, level = GameUtil.SpaceshipUtils.TryGetSpaceshipLevel()
             if succ then
-                isShow = level:CheckCharCondIndexIsDefault(charInfo.id)
+                isShow = not level:CheckCharIsOccupation(charInfo.id)
             end
 
             local tempInfo = charTempDict[charInfo.id]
@@ -238,7 +238,10 @@ CharacterSummonCtrl._InitCharInfos = HL.Method() << function(self)
             end
 
             item.friendLevel = CSPlayerDataUtil.GetFriendshipLevelByChar(item.templateId)
-            local favorability = CSPlayerDataUtil.GetCharFriendship(item.templateId)
+            local favorabilityValue = CSPlayerDataUtil.GetCharFriendship(item.templateId)
+            local favorability = CSPlayerDataUtil.GetFriendshipPercent(favorabilityValue) * 100
+
+
             item.favorability = favorability
             local stageNum = 0
             for checkLevel, stage in ipairs(FriendStageSetting) do
@@ -246,9 +249,15 @@ CharacterSummonCtrl._InitCharInfos = HL.Method() << function(self)
                     stageNum = checkLevel
                 end
             end
-
             item.friendStageUpSort = stageNum
             item.friendStageDownSort = 1000 - stageNum
+
+            item.friendStageSpecialUpSort = stageNum
+            if stageNum == 3 then
+                item.friendStageSpecialDownSort = 0
+            else
+                item.friendStageSpecialDownSort = stageNum
+            end
             item.friendValueSort = favorability
 
             self:_UpdateAllStageSort(item)

@@ -15,6 +15,7 @@ local PANEL_ID = PanelId.BuildingSharePop
 
 
 
+
 BuildingSharePopCtrl = HL.Class('BuildingSharePopCtrl', uiCtrl.UICtrl)
 
 
@@ -192,21 +193,43 @@ BuildingSharePopCtrl._SyncPlayerInfos = HL.Method() << function(self)
         return
     end
 
+    local roleCount = 0
     local roleIds = {}
+    local seenRoleIds = {}
     for i = 0, buildingCount - 1 do
         local buildingInfo = remoteFactorySystem:GetReceivedSocialBuildingInfo(i)
-        roleIds[buildingInfo.ownerId] = true
-        roleIds[buildingInfo.sharedRoleId] = true
+        if not seenRoleIds[buildingInfo.ownerId] then
+            roleCount = roleCount + 1
+            roleIds[roleCount] = buildingInfo.ownerId
+            seenRoleIds[buildingInfo.ownerId] = true
+        end
+        if not seenRoleIds[buildingInfo.sharedRoleId] then
+            roleCount = roleCount + 1
+            roleIds[roleCount] = buildingInfo.sharedRoleId
+            seenRoleIds[buildingInfo.sharedRoleId] = true
+        end
+        
+        if roleCount == 10 then
+            self:_SyncPlayerInfos_Internal(roleIds)
+            roleCount = 0
+            lume.clear(roleIds)
+        end
     end
-    roleIds = lume.keys(roleIds)
-    if #roleIds > 0 then
-        GameInstance.player.friendSystem:SyncSocialFriendInfo(roleIds, function()
-            if self.m_isClosed then
-                return
-            end
-            self:_UpdatePlayerNames()
-        end)
+    if roleCount > 0 then
+        self:_SyncPlayerInfos_Internal(roleIds)
     end
+end
+
+
+
+
+BuildingSharePopCtrl._SyncPlayerInfos_Internal = HL.Method(HL.Table) << function(self, roleIds)
+    GameInstance.player.friendSystem:SyncSocialFriendInfo(roleIds, function()
+        if self.m_isClosed then
+            return
+        end
+        self:_UpdatePlayerNames()
+    end)
 end
 
 

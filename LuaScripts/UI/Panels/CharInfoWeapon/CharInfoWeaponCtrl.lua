@@ -301,6 +301,9 @@ CharInfoWeaponCtrl._RefreshWeaponList = HL.Method(HL.Opt(HL.Any)) << function(se
         end,
         filter_weaponType = weaponType,
         enableKeyboardNavi = true,
+        afterSetItemSelected = function(cell, selected)
+            Notify(MessageConst.CHAR_INFO_WEAPON_LIST_SELECT_ITEM, cell)
+        end,
     })
 end
 

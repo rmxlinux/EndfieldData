@@ -33,6 +33,14 @@ SNSContentPRTS._OnSNSContentInit = HL.Override() << function(self)
 
     self.view.button.onClick:RemoveAllListeners()
     self.view.button.onClick:AddListener(function()
+        
+        
+        
+        if GameInstance.player.spaceship.isViewingFriend then
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_OBTAIN_WAYS_JUMP_BLOCKED)
+            return
+        end
+
         local prts = GameInstance.player.prts
         local unlock = jumpArgs.isFirstLvId and prts:IsFirstLvUnlock(jumpArgs.id) or prts:IsPrtsUnlocked(jumpArgs.id)
         if unlock then

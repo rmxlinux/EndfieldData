@@ -23,6 +23,7 @@ local PHASE_ID = PhaseId.WorldEnergyPointCustomReward
 
 
 
+
 WorldEnergyPointCustomRewardCtrl = HL.Class('WorldEnergyPointCustomRewardCtrl', uiCtrl.UICtrl)
 
 
@@ -127,6 +128,15 @@ WorldEnergyPointCustomRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self
     self:_InitData(arg)
     self:_InitView()
     self:_InitController()
+end
+
+
+
+WorldEnergyPointCustomRewardCtrl.OnAnimationInFinished = HL.Override() << function(self)
+    if ActivityUtils.hasStaminaReduceCount() then
+        return
+    end
+    self.view.customRewardRadioComp:SetDefaultTarget()
 end
 
 
@@ -335,7 +345,6 @@ WorldEnergyPointCustomRewardCtrl._InitController = HL.Method() << function(self)
     end
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
-    self.view.customRewardRadioComp:SetDefaultTarget()
 end
 
 HL.Commit(WorldEnergyPointCustomRewardCtrl)

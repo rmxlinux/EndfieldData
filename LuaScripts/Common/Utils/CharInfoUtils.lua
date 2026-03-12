@@ -60,22 +60,7 @@ end
 
 local REACH_SHOW_VALUE = 100
 function CharInfoUtils.getCharRelationShowValue(relation)
-    
-    local reachCount = 0
-    for i = 2, #Tables.SpaceshipCharRelationLevelTable do
-        local relationCfg = Tables.SpaceshipCharRelationLevelTable:GetValue(i) 
-        if relation >= relationCfg.favorability then
-            reachCount = reachCount + 1
-        else
-            local lastRelationCfg = Tables.SpaceshipCharRelationLevelTable:GetValue(i - 1)
-            local gap = relationCfg.favorability - lastRelationCfg.favorability
-            local rate = math.floor((relation - lastRelationCfg.favorability) / gap * REACH_SHOW_VALUE)
-
-            return reachCount * REACH_SHOW_VALUE + rate
-        end
-    end
-
-    return reachCount * REACH_SHOW_VALUE
+    return math.floor(CSPlayerDataUtil.GetFriendshipPercent(relation) * REACH_SHOW_VALUE)
 end
 
 
@@ -2060,6 +2045,9 @@ end
 function CharInfoUtils.getCharInfoSkillGroupBgColor(skillGroupCfg, isBattle)
     local firstSkillId = skillGroupCfg.skillIdList[0] 
     local firstSkillCfg = CharInfoUtils.getSkillCfg(firstSkillId, 1)
+    if firstSkillCfg == nil then
+        return Color(0.373, 0.373, 0.373)
+    end
     local iconBgType = firstSkillCfg.iconBgType
     
     if iconBgType == CS.Beyond.GEnums.DamageType.Fire then

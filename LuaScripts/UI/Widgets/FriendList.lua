@@ -101,6 +101,14 @@ FriendList.InitFriendListCtrl = HL.Method(HL.Any) << function(self, arg)
         self.m_clueGiftBindCache = {}
     end
 
+    if self.m_isPsnTab then
+        self.view.operationTabAnim:Play("common_sonytabtoggle_to_right")
+        self.view.psnFriendTab.isOn = true
+    else
+        self.view.operationTabAnim:Play("common_sonytabtoggle_to_left")
+        self.view.gameFriendTab.isOn = true
+    end
+
     self.view.sonyTabNode.gameObject:SetActiveIfNecessary(FriendUtils.isPsnPlatform() and self.m_arg.onSonyTabChange ~= nil)
     self.UpdateFunc = function(index, forceLoading)
         local cell = self:_GetCellByIndex(index)
@@ -453,7 +461,7 @@ FriendList._GetNextPageNotInitIds = HL.Method(HL.Number).Return(HL.Table, HL.Num
                 success, info = GameInstance.player.friendSystem:GetDictInfo(self.m_arg.infoDicIndex):TryGetValue(self.m_friendList[i].roleId)
             end
             if not success then
-                logger.error(CS.Beyond.ELogChannel.Friend, "未找到好友数据 " .. self.m_friendList[i].roleId)
+                logger.error(CS.Beyond.ELogChannel.Friend, "未找到好友数据 " .. self.m_friendList[i].roleId .. "isPsnTab:" .. tostring(self.m_isPsnTab))
                 return ids, i
             end
 
@@ -615,7 +623,6 @@ end
 
 
 FriendList._OnDisable = HL.Override() << function(self)
-    self.m_isPsnTab = false
 end
 
 HL.Commit(FriendList)

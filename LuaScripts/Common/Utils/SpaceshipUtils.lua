@@ -743,17 +743,7 @@ end
 
 
 function SpaceshipUtils.getRoomSerialNum(number)
-    if not number then
-        return ""
-    end
-    local RoomShowNumDict = {
-        [1] = Language.LUA_SPACESHIP_VISIT_NUM_SHOW_1,
-        [2] = Language.LUA_SPACESHIP_VISIT_NUM_SHOW_2,
-        [3] = Language.LUA_SPACESHIP_VISIT_NUM_SHOW_3,
-        [4] = Language.LUA_SPACESHIP_VISIT_NUM_SHOW_4,
-        [5] = Language.LUA_SPACESHIP_VISIT_NUM_SHOW_5,
-    }
-    return RoomShowNumDict[number] or ""
+    return UIUtils.getSerialNum(number)
 end
 
 

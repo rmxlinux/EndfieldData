@@ -280,8 +280,7 @@ ShopTradeItemCtrl._InitData = HL.Method() << function(self)
 
     
     if self.m_domainGoodsData.quantity > 0 then
-        local rate = curPrice / self.m_domainGoodsData.avgPrice
-        local percentage = (rate * 100) - 100
+        local percentage = curPrice * 100 / self.m_domainGoodsData.avgPrice - 100
         self.view.profitRatioTxtLayout.gameObject:SetActive(percentage ~= 0)
         self.view.profitArrow.gameObject:SetActive(percentage ~= 0)
         percentage = lume.round(percentage,0.1)
@@ -363,14 +362,13 @@ ShopTradeItemCtrl._SwitchPurchaseState = HL.Method() << function(self)
     end)
 
     
-    local priceRate = self.m_hisPrice[CSIndex(1)] / self.m_standardPrice
-    local percentage = (priceRate * 100) - 100
+    local percentage = self.m_hisPrice[CSIndex(1)] *100 / self.m_standardPrice - 100
     self.view.priceArrow:SetState(DomainShopUtils.getProfitArrowStateName(percentage))
     local suggestPrice = math.abs(self.m_hisPrice[CSIndex(1)] - self.m_standardPrice)
     self.view.compareSuggestPriceTxt.text = suggestPrice
     self.view.compareSuggestPrice.gameObject:SetActive(true)
     percentage = lume.round(percentage,0.1)
-    local format = percentage >= 0 and string.format("(+%.1f%%)", percentage or string.format("(%.1f%%)", percentage))
+    local format = percentage >= 0 and string.format("(+%.1f%%)", percentage) or string.format("(%.1f%%)", percentage)
     self.view.priceFluctuationTxt.text = format
     self:_RefreshLimitCount()
 end
@@ -458,8 +456,7 @@ ShopTradeItemCtrl._SwitchSellState = HL.Method() << function(self)
     end)
 
     
-    local priceRate = self.m_hisPrice[CSIndex(1)] / self.m_domainGoodsData.avgPrice
-    local percentage = (priceRate * 100) - 100
+    local percentage = self.m_hisPrice[CSIndex(1)] * 100 / self.m_domainGoodsData.avgPrice - 100
     self.view.priceArrow:SetState(DomainShopUtils.getProfitArrowStateName(percentage))
     local suggestPrice = math.abs(self.m_hisPrice[CSIndex(1)] - self.m_domainGoodsData.avgPrice)
     self.view.compareSuggestPriceTxt.text = suggestPrice
@@ -607,16 +604,16 @@ ShopTradeItemCtrl._InitSingleFriendItem = HL.Method(HL.Table, HL.Number) << func
 
     local curPrice = self.m_domainGoodsData.historyPrice[CSIndex(1)]
     local friendCurPrice = fiendData.curPrice
-    local localPriceRate = (friendCurPrice - curPrice) / curPrice
-    local localPercentage = math.abs(localPriceRate * 100)
-    localPercentage = lume.round(localPercentage,0.1)
+    local localPriceRate = (friendCurPrice  - curPrice) * 100 / curPrice
+    local localPercentage = math.abs(localPriceRate)
+    localPercentage = lume.round(localPercentage, 0.1)
     cell.compareLocalTxt.text = string.format("%.1f%%", localPercentage)
     cell.compareLocalArrowLayout.gameObject:SetActive(localPercentage ~= 0)
     cell.compareLocalArrow:SetState(DomainShopUtils.getProfitArrowStateName(localPriceRate))
 
     local itemCount = self.m_domainGoodsData.quantity
-    local holdingPriceRate = (friendCurPrice - self.m_domainGoodsData.avgPrice) / self.m_domainGoodsData.avgPrice
-    local holdingPercentage = math.abs(holdingPriceRate * 100)
+    local holdingPriceRate = (friendCurPrice - self.m_domainGoodsData.avgPrice) * 100 / self.m_domainGoodsData.avgPrice
+    local holdingPercentage = math.abs(holdingPriceRate )
     holdingPercentage = lume.round(holdingPercentage,0.1)
     if itemCount == 0 then
         cell.compareHoldingsTxt.text = NULL_SYMBOL
@@ -793,7 +790,7 @@ end
 
 
 ShopTradeItemCtrl._NormalizePriceValues = HL.Method(HL.Number, HL.Any)
-    .Return(HL.Table, HL.Number, HL.Number)
+                                            .Return(HL.Table, HL.Number, HL.Number)
     << function(self, base, numbers)
     local minValue = math.huge
     local maxValue = -math.huge

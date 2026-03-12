@@ -73,6 +73,8 @@ local PANEL_ID = PanelId.FacTopView
 
 
 
+
+
 FacTopViewCtrl = HL.Class('FacTopViewCtrl', uiCtrl.UICtrl)
 
 
@@ -105,6 +107,10 @@ FacTopViewCtrl.m_getItemCell = HL.Field(HL.Function)
 
 
 FacTopViewCtrl.m_isCollapsed = HL.Field(HL.Boolean) << false
+
+
+FacTopViewCtrl.m_escExitBindingId = HL.Field(HL.Number) << -1
+
 
 
 
@@ -155,6 +161,12 @@ FacTopViewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         UIUtils.bindInputPlayerAction("fac_open_blueprint", function()
             PhaseManager:OpenPhase(PhaseId.FacBlueprint)
         end, self.view.main.groupId)
+        self.m_escExitBindingId = UIUtils.bindInputPlayerAction("fac_exit_top_view_mode_pc_esc", function()
+            
+            if Utils.getCommonSettingValueBool("fac_top_view_esc_exit") and InputManagerInst:IsBindingEnabled(self.view.topViewToggle.toggleBindingId) then
+                Notify(MessageConst.FAC_TOGGLE_TOP_VIEW, false)
+            end
+        end, self.view.main.groupId)
     elseif DeviceInfo.usingController then
         UIUtils.bindInputPlayerAction("fac_top_view_enter_batch_mode_ct", function()
             Notify(MessageConst.FAC_ENTER_DESTROY_MODE)
@@ -179,6 +191,9 @@ FacTopViewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         UIUtils.bindInputPlayerAction("fac_top_view_open_building_panel", function()
             self:_ControllerOpenCurBuildingPanel()
         end, self.view.main.groupId)
+        UIUtils.bindInputPlayerAction("fac_top_view_move_building", function()
+            self:_ControllerMoveCurBuilding()
+        end, self.view.main.groupId)
     end
 
     
@@ -187,7 +202,7 @@ FacTopViewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.topViewToggle.isOn = true
     self.view.topViewToggle.checkIsValueValid = function(isOn)
         if not isOn then
-            Notify(MessageConst.FAC_TOGGLE_TOP_VIEW, isOn)
+            Notify(MessageConst.FAC_TOGGLE_TOP_VIEW, false)
             return false 
         end
         return true
@@ -379,6 +394,10 @@ end
 FacTopViewCtrl.BeforeEnterBuildMode = HL.Method(HL.Boolean) << function(self, skipMainHudAnim)
     self:_RecordControllerNaviInfo()
     self:PlayAnimationOutWithCallback()
+
+    
+    
+    self.view.controllerMouseHoverHint.gameObject:SetActive(false)
 end
 
 
@@ -446,6 +465,7 @@ FacTopViewCtrl._ClearScreen = HL.Method() << function(self)
         PanelId.MiniMap,
         PanelId.MissionHud,
         PanelId.MissionHudMini,
+        PanelId.SNSHud,
         PanelId.CommonTaskTrackHud,
         PanelId.BlackBoxDiffBtn,
         PanelId.FacTopViewBuildingInfo,
@@ -589,7 +609,7 @@ FacTopViewCtrl._InitInfos = HL.Method() << function(self)
     table.insert(typeInfos, self:_GenCustomTypeInfo())
 
     local inventory = GameInstance.player.inventory
-    local curDomainId = Utils.getCurDomainId()
+    local curDomainId = FactoryUtils.getCurAndAutoTransferBlackBoxToDomainId()
     local tInfosDic = {
         ["logistic"] = self:_GetLogisticInfos()
     }
@@ -1384,7 +1404,8 @@ local MouseHints = {
 }
 
 local ControllerMouseHints = {
-    normal = { "fac_top_view_open_building_menu", "fac_top_view_open_building_panel" },
+    normal = { "fac_top_view_open_building_menu", "fac_top_view_move_building", "fac_top_view_open_building_panel" },
+    normalNoMove = { "fac_top_view_open_building_menu", "fac_top_view_open_building_panel" },
 
     
     batchSelect = { "fac_batch_select", },
@@ -1510,7 +1531,11 @@ FacTopViewCtrl._UpdateControllerMouseHintStates = HL.Method() << function(self)
         else
             
             if ctrl.m_interactFacNodeId or ctrl.m_interactLogisticPos or ctrl.m_interactPipeNodeId then
-                actionIds = ControllerMouseHints.normal
+                if ctrl.m_interactFacNodeIdIsBuilding and FactoryUtils.canMoveBuilding(ctrl.m_interactFacNodeId) then
+                    actionIds = ControllerMouseHints.normal
+                else
+                    actionIds = ControllerMouseHints.normalNoMove
+                end
             end
         end
     end
@@ -1704,6 +1729,16 @@ FacTopViewCtrl._ControllerOpenCurBuildingMenu = HL.Method() << function(self)
         noMask = false,
         
     })
+end
+
+
+
+FacTopViewCtrl._ControllerMoveCurBuilding = HL.Method() << function(self)
+    local _, facInteract = UIManager:IsOpen(PanelId.FacBuildingInteract)
+    if not facInteract.m_interactFacNodeIdIsBuilding or not FactoryUtils.canMoveBuilding(facInteract.m_interactFacNodeId, true) then
+        return
+    end
+    Notify(MessageConst.FAC_ENTER_BUILDING_MODE, { nodeId = facInteract.m_interactFacNodeId })
 end
 
 

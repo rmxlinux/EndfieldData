@@ -12,6 +12,8 @@ local PANEL_ID = PanelId.Radio
 
 
 
+
+
 RadioCtrl = HL.Class('RadioCtrl', uiCtrl.UICtrl)
 
 
@@ -30,6 +32,9 @@ RadioCtrl.m_spriteName = HL.Field(HL.String) << ""
 
 
 RadioCtrl.m_needHide = HL.Field(HL.Boolean) << false
+
+
+RadioCtrl.m_isHiding = HL.Field(HL.Boolean) << false
 
 
 RadioCtrl.m_curShow = HL.Field(HL.Any)
@@ -131,6 +136,12 @@ end
 
 
 
+RadioCtrl.OnHide = HL.Override() << function(self)
+    self.m_isHiding = false
+end
+
+
+
 RadioCtrl.TryPlayInfoNodeOut = HL.Method() << function(self)
     if self.view.infoNode.gameObject.activeSelf then
         self.view.infoNode:PlayOutAnimation()
@@ -155,8 +166,13 @@ RadioCtrl.HideSelf = HL.Method(HL.Opt(HL.Boolean)) << function(self, useAnim)
         return
     end
 
+    if self.m_isHiding then
+        return
+    end
+
     if useAnim then
         self.m_needHide = true
+        self.m_isHiding = true
         self:PlayAnimationOutWithCallback(function()
             if self.m_needHide then
                 self:Hide()

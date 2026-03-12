@@ -117,12 +117,12 @@ CommonMoneyExchangeCtrl.Success = HL.Method(HL.Any) << function(self, msg)
     }
     table.insert(items, item)
 
+    PhaseManager:ExitPhaseFast(PHASE_ID) 
     Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
         title = Language.LUA_BUY_ITEM_SUCC_TITLE,
         icon = "icon_mail_obtain",
         items = items,
     })
-    PhaseManager:PopPhase(PHASE_ID)
 end
 
 
@@ -181,6 +181,14 @@ CommonMoneyExchangeCtrl.Refresh = HL.Method(HL.Opt(HL.Any)) << function(self, ar
         end
     end)
 
+    
+    if targetId == Tables.globalConst.gachaWeaponItemId then
+        self.view.numberSelector.view.maxButton.transform:GetComponent("CustomUIStyle").overrideValidState = CS.Beyond.UI.CustomUIStyle.OverrideValidState.ForceNotValid
+        self.view.numberSelector.view.minButton.transform:GetComponent("CustomUIStyle").overrideValidState = CS.Beyond.UI.CustomUIStyle.OverrideValidState.ForceNotValid
+    else
+        self.view.numberSelector.view.maxButton.transform:GetComponent("CustomUIStyle").overrideValidState = CS.Beyond.UI.CustomUIStyle.OverrideValidState.None
+        self.view.numberSelector.view.minButton.transform:GetComponent("CustomUIStyle").overrideValidState = CS.Beyond.UI.CustomUIStyle.OverrideValidState.None
+    end
 end
 
 

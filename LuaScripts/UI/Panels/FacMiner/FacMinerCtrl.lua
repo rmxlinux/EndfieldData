@@ -379,9 +379,19 @@ FacMinerCtrl._InitInventoryArea = HL.Method() << function(self)
     local customOnUpdateCell = function(cell, itemBundle)
         self:_RefreshInventoryItemCell(cell, itemBundle)
     end
-    self.view.inventoryArea:InitInventoryArea({
-        customOnUpdateCell = customOnUpdateCell
-    })
+    if self.m_uiInfo.isFluidCollector then
+        self.view.inventoryArea:InitInventoryArea({
+            customOnUpdateCell = customOnUpdateCell,
+            customSetActionMenuArgs = function(actionMenuArgs)
+                actionMenuArgs.cacheRepo = self.view.fluidCacheRepository
+            end,
+            hasFluidInCache = true,
+        })
+    else
+        self.view.inventoryArea:InitInventoryArea({
+            customOnUpdateCell = customOnUpdateCell,
+        })
+    end
 end
 
 
@@ -401,9 +411,14 @@ FacMinerCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) << funct
     local isBottle = isEmptyBottle or isFullBottle
     local canDrag = self.m_uiInfo.isFluidCollector and isBottle
     local isEmpty = string.isEmpty(itemBundle.id)
-    cell.view.forbiddenMask.gameObject:SetActiveIfNecessary(not canDrag and not isEmpty)
-    cell.view.dragItem.enabled = canDrag
-    cell.view.dropItem.enabled = canDrag or isEmpty
+    
+    if not canDrag and not isEmpty then
+        cell.view.forbiddenMask.gameObject:SetActiveIfNecessary(true)
+        cell.view.dropItem.enabled = false
+    end
+    if not canDrag then
+        cell.view.dragItem.enabled = false
+    end
 end
 
 

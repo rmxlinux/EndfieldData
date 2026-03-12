@@ -22,6 +22,7 @@ local PANEL_ID = PanelId.ActivityLevelRewards
 
 
 
+
 ActivityLevelRewardsCtrl = HL.Class('ActivityLevelRewardsCtrl', uiCtrl.UICtrl)
 
 
@@ -58,7 +59,7 @@ ActivityLevelRewardsCtrl.m_completeStageList = HL.Field(HL.Table)
 ActivityLevelRewardsCtrl.m_receiveStageList = HL.Field(HL.Table)
 
 
-ActivityLevelRewardsCtrl.m_focusIndex = HL.Field(HL.Number) << 0
+ActivityLevelRewardsCtrl.m_gainRewardIndex = HL.Field(HL.Number) << 0
 
 
 ActivityLevelRewardsCtrl.MAX_REWARD_COUNT = HL.Field(HL.Number) << 2
@@ -97,8 +98,9 @@ ActivityLevelRewardsCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     
     if DeviceInfo.usingController then
         self.view.rightNaviGroup.onIsTopLayerChanged:AddListener(function(isTopLayer)
-            if isTopLayer then
-                self:_SetAsNaviTarget(1)
+            if isTopLayer and self.m_gainRewardIndex > 0 then
+                self:_SetAsNaviTarget(self.m_gainRewardIndex)
+                self.m_gainRewardIndex = 0
             end
         end)
         local viewBindingId = self:BindInputPlayerAction("common_view_item", function()
@@ -113,12 +115,15 @@ end
 
 
 ActivityLevelRewardsCtrl._SetAsNaviTarget = HL.Method(HL.Number) << function(self, index)
-    self:_StartCoroutine(function()
-        coroutine.step()
-        local csIndex = CSIndex(index)
-        self.m_genCellFunc = self.m_genCellFunc or UIUtils.genCachedCellFunction(self.view.rewardNode)
-        UIUtils.setAsNaviTarget(self.m_genCellFunc(self.view.rewardList:Get(self.view.config.REVERSE_REWARDS and CSIndex(self.m_rewardCount) - csIndex or csIndex)).focusRect)
-    end)
+    local csIndex = CSIndex(index)
+    self.m_genCellFunc = self.m_genCellFunc or UIUtils.genCachedCellFunction(self.view.rewardNode)
+    UIUtils.setAsNaviTarget(self.m_genCellFunc(self.view.rewardList:Get(self.view.config.REVERSE_REWARDS and CSIndex(self.m_rewardCount) - csIndex or csIndex)).focusRect)
+end
+
+
+
+ActivityLevelRewardsCtrl.OnActivityCenterNaviFailed = HL.Method() << function(self)
+    self:_SetAsNaviTarget(1)
 end
 
 
@@ -196,23 +201,6 @@ ActivityLevelRewardsCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << funct
             cell.keyHintTrans1:SetSiblingIndex(self.MAX_REWARD_COUNT + 1);
             cell.keyHintTrans2:SetSiblingIndex(self.MAX_REWARD_COUNT + 1);
         end
-
-        cell.normalRewards.onIsFocusedChange:AddListener(function(isFocused)
-            if isFocused then
-                self.m_focusIndex = index
-            else
-                self:_SetAsNaviTarget(self.m_focusIndex)
-                Notify(MessageConst.HIDE_ITEM_TIPS)
-            end
-        end)
-        cell.highRewards.onIsFocusedChange:AddListener(function(isFocused)
-            if isFocused then
-                self.m_focusIndex = index
-            else
-                self:_SetAsNaviTarget(self.m_focusIndex)
-                Notify(MessageConst.HIDE_ITEM_TIPS)
-            end
-        end)
     end
 end
 
@@ -257,6 +245,7 @@ end
 ActivityLevelRewardsCtrl._LevelReward = HL.Method(HL.Number) << function(self,level)
     activityLevelRewardsCS = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     activityLevelRewardsCS:GainReward(level)
+    self.m_gainRewardIndex = level
 end
 
 HL.Commit(ActivityLevelRewardsCtrl)

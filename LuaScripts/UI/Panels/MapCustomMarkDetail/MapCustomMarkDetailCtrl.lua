@@ -90,6 +90,7 @@ MapCustomMarkDetailCtrl.OnClose = HL.Override() << function(self)
             Notify(MessageConst.SHOW_TOAST, Language.LUA_MAP_CUSTOM_MARK_ILLEGAL_CHARACTERS)
             return
         end
+        GameInstance.player.mapManager:ModifyCustomMarkTemplateIdToServer(self.m_markInstId, self.m_selectMarkTempId)
         GameInstance.player.mapManager:ModifyCustomNoteToServer(self.m_markInstId, self.view.reNameInputField.text)
     end
 end
@@ -115,7 +116,7 @@ MapCustomMarkDetailCtrl._InitCustomMark = HL.Method() << function(self)
             end
             self.m_selectMarkTempCell = cell
             cell.select.gameObject:SetActive(true)
-            GameInstance.player.mapManager:ModifyCustomMarkTemplateIdToServer(self.m_markInstId, self.m_selectMarkTempId)
+            GameInstance.player.mapManager:ModifyCustomMarkTemplateId(self.m_markInstId, self.m_selectMarkTempId)
             GameInstance.player.mapManager:ModifySelectCustomMarkTemplateId(self.m_selectMarkTempId)
         end)
 

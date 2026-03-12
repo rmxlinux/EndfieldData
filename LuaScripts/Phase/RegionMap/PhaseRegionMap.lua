@@ -203,7 +203,7 @@ end
 
 
 PhaseRegionMap._InitCameraCfg = HL.Method() << function(self)
-    UIManager:TryToggleMainCamera(self.m_RegionMap3DPanel.uiCtrl.panelCfg, true)
+    UIManager:ChangeHideCameraPanelState(self.m_RegionMap3DPanel.uiCtrl.panelId, UIConst.HIDE_CAMERA_PANEL_STATE.In) 
     CameraManager:SetUICameraPostProcess(true)
     CameraManager:AddUICamCullingMaskConfig("RegionMap", UIConst.LAYERS.UIPP)
 end

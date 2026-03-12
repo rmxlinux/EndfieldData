@@ -44,6 +44,9 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
+
 FacCacheBelt = HL.Class('FacCacheBelt', UIWidgetBase)
 
 local MAX_VIEW_PORT_COUNT = 6
@@ -760,6 +763,23 @@ FacCacheBelt.SetCacheBeltSingleState = HL.Method(HL.Boolean) << function(self, u
     end
 
     self.m_isInSingleState = useSingleState
+end
+
+
+
+
+FacCacheBelt.RefreshBeltCellsState = HL.Method() << function(self)
+    local inBeltCount = self.m_inBeltList:GetCount()
+    for index = 1, inBeltCount do
+        local cell = self.m_inBeltList:GetItem(index)
+        self:_RefreshBeltCellState(cell, self.m_inBeltInfoList[index])
+    end
+
+    local outBeltCount = self.m_outBeltList:GetCount()
+    for index = 1, outBeltCount do
+        local cell = self.m_outBeltList:GetItem(index)
+        self:_RefreshBeltCellState(cell, self.m_outBeltInfoList[index])
+    end
 end
 
 

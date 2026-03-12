@@ -453,17 +453,14 @@ CommonMaskCtrl._RefreshMaskType = HL.Method().Return(HL.Any) << function(self)
     local maskType = self.m_curMaskData.maskType
     local maskCanvas
     local maskWhite = maskType == UIConst.UI_COMMON_MASK_TYPE.WhiteScreen
-    local maskBlack = maskType == UIConst.UI_COMMON_MASK_TYPE.BlackScreen
     local maskAlphaBlock = maskType == UIConst.UI_COMMON_MASK_TYPE.AlphaBlock
+    local maskBlack = (not maskWhite) and (not maskAlphaBlock)
     if maskWhite then
         maskCanvas = self.view.maskWhite
-    elseif maskBlack then
-        maskCanvas = self.view.mask
     elseif maskAlphaBlock then
         maskCanvas = self.view.maskAlphaBlock
     else
         maskCanvas = self.view.mask
-        logger.error("CommonMask maskType error: None, replace to BlackScreen")
     end
 
     self.view.mask.gameObject:SetActive(maskBlack)

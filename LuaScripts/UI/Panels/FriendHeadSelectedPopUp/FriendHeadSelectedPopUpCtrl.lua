@@ -114,6 +114,7 @@ FriendHeadSelectedPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
         self:PlayAnimationOutAndClose()
     end)
 
+    self.view.commonPlayerHead:UpdateHideLevelTxt(true)
     self.view.commonPlayerHead:InitCommonPlayerHeadByRoleId(GameInstance.player.roleId, false)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 
@@ -299,7 +300,7 @@ FriendHeadSelectedPopUpCtrl._UpdateObtainWay = HL.Method(HL.String) << function(
         if obtainWay.phaseId then
             cell.normalNode.animationNode:PlayInAnimation()
             cell.normalNode.button.onClick:AddListener(function()
-                local isBlocked = UIManager:ShouldBlockObtainWaysJump()
+                local isBlocked = UIManager:ShouldBlockObtainWaysPhaseJump(obtainWay.phaseId)
                 if isBlocked then
                     Notify(MessageConst.SHOW_TOAST, Language.LUA_OBTAIN_WAYS_JUMP_BLOCKED)
                     return

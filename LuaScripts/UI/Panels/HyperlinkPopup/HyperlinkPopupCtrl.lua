@@ -593,7 +593,7 @@ HyperlinkPopupCtrl._OnRefreshTermCell = HL.Method(HL.Any, HL.Number) << function
         and not UIManager:IsShow(PanelId.GuideMedia)
     if canJumpWiki then
         cell.jumpWikiBtn.onClick:AddListener(function()
-            if UIManager:ShouldBlockObtainWaysJump() then
+            if UIManager:ShouldBlockObtainWaysPhaseJump(PhaseId.Wiki) then
                 Notify(MessageConst.SHOW_TOAST, Language.LUA_OBTAIN_WAYS_JUMP_BLOCKED)
                 return
             end
@@ -1064,14 +1064,20 @@ HyperlinkPopupCtrl._OnJumpToWiki = HL.Method(HL.String) << function(self, jumpWi
             wikiEntryId = jumpWikiId,
         })
     else
-        
         UIManager:Hide(PANEL_ID)
         PhaseManager:GoToPhase(PhaseId.Wiki, {
             wikiEntryId = jumpWikiId,
             restoreHyperlinkPopupCallback = function()
-                if UIManager:IsOpen(PANEL_ID) then
-                    HyperlinkPopupCtrl.IsRestore = true
-                    UIManager:Show(PANEL_ID)
+                
+                if PhaseManager:IsOpen(PhaseId.Wiki) then
+                    if UIManager:IsOpen(PANEL_ID) then
+                        HyperlinkPopupCtrl.IsRestore = true
+                        UIManager:Show(PANEL_ID)
+                    end
+                else
+                    
+                    
+                    UIManager:Close(PANEL_ID)
                 end
             end
         })

@@ -38,16 +38,10 @@ FriendBlackListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     self.view.btnClose.onClick:AddListener(function()
         self:PlayAnimationOutAndClose()
-        
     end)
     self.view.bgBtn.onClick:AddListener(function()
         self:PlayAnimationOutAndClose()
-        
     end)
-    
-    
-    
-    
     self.m_friendList = {}
     GameInstance.player.friendSystem:SyncBlackList()
     local initArg = lume.deepCopy(FriendUtils.FRIEND_CELL_INIT_CONFIG.Black)
@@ -59,6 +53,7 @@ FriendBlackListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self:_Refresh()
         else
             GameInstance.player.friendSystem:SyncBlackList()
+            self.m_friendList = {}
             self:_Refresh(false, true)
         end
     end

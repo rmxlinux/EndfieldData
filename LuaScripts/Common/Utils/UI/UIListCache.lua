@@ -36,6 +36,8 @@
 
 
 
+
+
 UIListCache = HL.Class("UIListCache")
 
 do
@@ -61,7 +63,15 @@ do
 
     
     UIListCache._coroutine = HL.Field(HL.Thread)
+
+    
+    
+    UIListCache.m_debugParentPath = HL.Field(HL.String) << ""
+    
+    UIListCache.m_debugTemplatePath = HL.Field(HL.String) << ""
 end
+
+
 
 
 
@@ -75,6 +85,19 @@ UIListCache.UIListCache = HL.Constructor(HL.Any, HL.Opt(HL.Function, HL.Any)) <<
     self.m_itemTemplate = itemTemplate
     self.m_wrapFunction = wrapFunction
     self.m_parent = parent and parent.transform or itemTemplate.transform.parent
+
+    
+    if self.m_itemTemplate then
+        self.m_debugTemplatePath = self.m_itemTemplate.transform:PathFromRoot()
+    else
+        logger.error("UIListCache Init Error #2: itemTemplate is nil in Lua!")
+    end
+
+    if self.m_parent then
+        self.m_debugParentPath = self.m_parent:PathFromRoot()
+    else
+        logger.error("UIListCache Init Error #4: parent is nil in Lua!")
+    end
 
     self.m_itemTemplate.gameObject:SetActive(false)
 end
@@ -193,6 +216,26 @@ end
 UIListCache._GenItem = HL.Method(HL.Number).Return(HL.Any) << function(self, index)
     local item = self.m_items[index]
     if not item then
+        
+        if IsNull(self.m_parent.gameObject) then
+            local errorMsg = string.format(
+                "[UIListCache Parent NULL] Error#5 during _GenItem at index %d\n" ..
+                    "Parent: %s is NULL, (Path: %s)",
+                index,
+                tostring(self.m_parent), self.m_debugParentPath
+            )
+            logger.error(errorMsg)
+        end
+        if IsNull(self.m_itemTemplate.gameObject) then
+            local errorMsg = string.format(
+                "[UIListCache ItemTemplate NULL] Error#6 during _GenItem at index %d\n" ..
+                    "Template: %s is NULL, (Path: %s)",
+                index,
+                tostring(self.m_itemTemplate), self.m_debugTemplatePath
+            )
+            logger.error(errorMsg)
+        end
+
         local child = UIUtils.addChild(self.m_parent, self.m_itemTemplate, true)
         item = {
             gameObject = child.gameObject,

@@ -626,10 +626,20 @@ end
 
 DomainMainCtrl._TryShowDomainVersionDiff = HL.Method() << function(self)
     logger.info("尝试显示版本差异信息：", self.m_curDomainId)
+    if UIManager:IsOpen(PanelId.DomainVersionInfoPopup) then
+        return
+    end
     local domainMaxLvHasDiff = domainDevelopmentSystem:DomainMaxLevelHasVersionDiff(self.m_curDomainId)
     if domainMaxLvHasDiff then
-        UIManager:Open(PanelId.DomainVersionInfoPopup, self.m_curDomainId)
+        UIManager:Open(PanelId.DomainVersionInfoPopup, {
+            domainId = self.m_curDomainId,
+            onClose = function()
+                CS.Beyond.Gameplay.Conditions.CheckIsOpenDomainMain.Trigger()
+            end
+        })
         domainDevelopmentSystem:SendRecordCurVersionInfo(self.m_curDomainId)
+    else
+        CS.Beyond.Gameplay.Conditions.CheckIsOpenDomainMain.Trigger()
     end
 end
 

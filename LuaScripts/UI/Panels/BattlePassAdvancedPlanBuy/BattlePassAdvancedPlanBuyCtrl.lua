@@ -99,7 +99,9 @@ BattlePassAdvancedPlanBuyCtrl._InitViews = HL.Method() << function(self)
     self.view.bpNumTxt2.text = string.format("+%d%%", bpExpUpRatioPro / 10)
 
     
-    self.view.countDownText:InitCountDownText(self.m_bpSystem.seasonData.closeTime)
+    self.view.countDownText:InitCountDownText(self.m_bpSystem.seasonData.closeTime, nil, function(leftSec)
+        return string.format(Language.LUA_BATTLEPASS_PLAN_END_TIME_HINT, UIUtils.getLeftTime(leftSec))
+    end)
 
     
     self.m_topCells = UIUtils.genCellCache(self.view.topPreviewCell)

@@ -1180,11 +1180,15 @@ end
 
 
 ItemTipsCtrl._ShowWiki = HL.Method() << function(self)
-    if UIManager:ShouldBlockObtainWaysJump() then
+    if UIManager:ShouldBlockObtainWaysPhaseJump(PhaseId.Wiki) then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_OBTAIN_WAYS_JUMP_BLOCKED)
         return
     end
-    Notify(MessageConst.SHOW_WIKI_ENTRY, { itemId = self:_GetShowWikiItemId() })
+    local itemId = self:_GetShowWikiItemId()
+    if self.m_args.onBeforeJump then
+        self.m_args.onBeforeJump()
+    end
+    Notify(MessageConst.SHOW_WIKI_ENTRY, { itemId = itemId })
     self:_CloseTips(true)
 end
 

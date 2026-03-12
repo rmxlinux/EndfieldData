@@ -16,6 +16,9 @@ local PANEL_ID = PanelId.StaminaPotion
 
 
 
+
+
+
 StaminaPotionCtrl = HL.Class('StaminaPotionCtrl', uiCtrl.UICtrl)
 
 
@@ -27,6 +30,8 @@ StaminaPotionCtrl = HL.Class('StaminaPotionCtrl', uiCtrl.UICtrl)
 StaminaPotionCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_STAMINA_CHANGED] = '_Refresh',
     [MessageConst.ON_DUNGEON_RESTORE_AP] = 'OnDungeonRestoreUp',
+    [MessageConst.ON_UI_PANEL_START_OPEN] = 'OnPanelOpened',
+    [MessageConst.ON_UI_PANEL_CLOSED] = 'OnPanelClosed',
 }
 
 
@@ -100,6 +105,12 @@ end
 
 
 
+StaminaPotionCtrl.OnShow = HL.Override() << function(self)
+    logger.info("StaminaPopUpCtrl OnShow")
+end
+
+
+
 
 StaminaPotionCtrl._ChangeFillCount = HL.Method(HL.Number) << function(self, curNumber)
     self.m_fillCount = curNumber
@@ -117,7 +128,7 @@ StaminaPotionCtrl._Refresh = HL.Method() << function(self)
 
     
     self.m_currentStamina = GameInstance.player.inventory.curStamina
-    local staminaEnough = self.m_currentStamina > self.m_lunchBoxCapacity
+    local staminaEnough = self.m_currentStamina >= self.m_lunchBoxCapacity
 
     
     local state = fullLunchBoxCount >= Tables.dungeonConst.maxFullLunchBoxCount and "Upper" or (staminaEnough and "Normal" or "Insufficient")
@@ -180,5 +191,30 @@ StaminaPotionCtrl.OnDungeonRestoreUp = HL.Method(HL.Any) << function(self,arg)
         self:Close()
     end
 end
+
+
+
+
+
+
+StaminaPotionCtrl.OnPanelOpened = HL.Method(HL.String) << function(self, panelName)
+    logger.info("StaminaPopUpCtrl OnPanelOpened")
+    if panelName ~= "StaminaPotion" then
+        self.view.numberSelector.view.addBtnKeyHint.gameObject:SetActive(false)
+        self.view.numberSelector.view.reduceBtnKeyHint.gameObject:SetActive(false)
+    end
+end
+
+
+
+
+StaminaPotionCtrl.OnPanelClosed = HL.Method(HL.String) << function(self, panelName)
+    logger.info("StaminaPopUpCtrl OnPanelClosed")
+    if panelName ~= "StaminaPotion" then
+        self.view.numberSelector.view.addBtnKeyHint.gameObject:SetActive(true)
+        self.view.numberSelector.view.reduceBtnKeyHint.gameObject:SetActive(true)
+    end
+end
+
 
 HL.Commit(StaminaPotionCtrl)

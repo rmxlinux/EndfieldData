@@ -119,6 +119,9 @@ ShopRechargeCtrl._InitAction = HL.Method() << function(self)
         self.view.jP_SCTA.functionBtn.onClick:AddListener(function()
             Utils.openURL(Tables.cashShopConst.urlSpecifiedCommercialTransactionsAct)
         end)
+        self.view.btnNodeJP.onIsFocusedChange:AddListener(function(isFocused)
+            self.view.controllerFocusHintNode.gameObject:SetActive(not isFocused)
+        end)
     end
     if isKR then
         self.view.kR_CP.functionBtn.onClick:AddListener(function()
@@ -137,7 +140,7 @@ ShopRechargeCtrl._Refresh = HL.Method() << function(self)
         return
     end
     
-    local goodsList = csShopData:GetGoodsList()
+    local goodsList = GameInstance.player.cashShopSystem:GetGoodsList(csShopData)
     
     local goodsTable = {}
     for i = 0, goodsList.Count - 1 do

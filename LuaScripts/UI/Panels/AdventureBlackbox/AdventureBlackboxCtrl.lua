@@ -17,6 +17,7 @@ local PANEL_ID = PanelId.AdventureBlackbox
 
 
 
+
 AdventureBlackboxCtrl = HL.Class('AdventureBlackboxCtrl', uiCtrl.UICtrl)
 
 
@@ -26,7 +27,7 @@ AdventureBlackboxCtrl = HL.Class('AdventureBlackboxCtrl', uiCtrl.UICtrl)
 
 
 AdventureBlackboxCtrl.s_messages = HL.StaticField(HL.Table) << {
-    
+    [MessageConst.ON_BLACKBOX_DIRECTLY_GET_REWARD] = 'OnBlackboxDirectlyGetReward',
 }
 
 
@@ -54,6 +55,14 @@ AdventureBlackboxCtrl.OnShow = HL.Override() << function(self)
     if firstCell then
         InputManagerInst.controllerNaviManager:SetTarget(firstCell.view.naviDecorator)
     end
+end
+
+
+
+
+AdventureBlackboxCtrl.OnBlackboxDirectlyGetReward = HL.Method(HL.Table) << function(self, arg)
+    self:_UpdateData()
+    self:_RefreshAllUI()
 end
 
 

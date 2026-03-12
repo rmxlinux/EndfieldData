@@ -176,6 +176,7 @@ local SelectingMidState = {
 
 
 
+
 GeneralAbilityCtrl = HL.Class('GeneralAbilityCtrl', uiCtrl.UICtrl)
 
 local SELECTED_ABILITY_TYPE_CLIENT_LOCAL_DATA_KEY = "selected_general_ability"
@@ -384,6 +385,8 @@ GeneralAbilityCtrl.m_changeKeyBinding = HL.Field(HL.Table)
 GeneralAbilityCtrl.startPress = HL.Field(HL.Boolean) << false
 
 
+GeneralAbilityCtrl.m_delayUpdateSelectorFlag = HL.Field(HL.Boolean) << false
+
 
 
 
@@ -391,6 +394,7 @@ GeneralAbilityCtrl.startPress = HL.Field(HL.Boolean) << false
 
 GeneralAbilityCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.GENERAL_ABILITY_SYSTEM_CHANGED] = '_OnSystemChanged',
+    [MessageConst.GENERAL_ABILITY_FORBID_SELECT_CHANGED] = '_OnForbidSelectChanged',
     [MessageConst.TEMP_ABILITY_SYSTEM_CHANGED] = '_OnTempAbilityChanged',
     [MessageConst.GENERAL_ABILITY_SYSTEM_FORCE_SELECT] = '_OnForceSelectAbility',
     [MessageConst.ON_ENTER_LIQUID_POOL_NEARBY_AREA] = '_OnEnterLiquidPoolNearbyArea',
@@ -405,6 +409,7 @@ GeneralAbilityCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SWITCH_GENERAL_ABILITY_DEBUG_TYPE] = 'SwitchDebugTempAbility',
     [MessageConst.CLEAR_GENERAL_ABILITY_DEBUG_TYPE] = 'ClearDebugTempAbility',
     [MessageConst.ON_TOGGLE_UI_ACTION] = 'OnToggleUiAction',
+    [MessageConst.ACTIVE_BUILDING_LIKE] = 'OnActiveBuildingLike',
 
     [MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING] = 'GeneralAbilityChangeKeyBinding',
 }
@@ -425,11 +430,22 @@ GeneralAbilityCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     InputManagerInst:ToggleBinding(self.m_selectorClickBinding, false)
 
     self.view.selectedAbilityButton.onPressStart:AddListener(function()
+        if Utils.isCurSquadAllDead() then
+            
+            return
+        end
         self.startPress = true      
         self:_StartPress()
     end)
 
     self.view.selectedAbilityButton.onPressEnd:AddListener(function()
+        if Utils.isCurSquadAllDead() then
+            
+            self:_ClearRPress()
+            self:_RefreshWheelShownState(false)
+            self.startPress = false
+            return
+        end
         if self.startPress then
             self:_StopPress()
             self.startPress = false
@@ -446,7 +462,6 @@ GeneralAbilityCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_openStartTime = self.view.config.ABILITY_USE_PRESS_DURATION
     self.m_openSelectorTime = self.view.config.ABILITY_SWITCH_PRESS_DURATION
 
-    self:_BuildAbilityRegisterConfig()
     self.m_abilityDataList = {}
     self:_InitAll()
     self:_InitMobileNodes()
@@ -527,6 +542,20 @@ end
 
 
 
+GeneralAbilityCtrl._OnForbidSelectChanged = HL.Method() << function(self)
+    local selectedType = self:_GetSelectedType()
+    local abilityData = self.m_abilityDataMap[selectedType]
+    if abilityData and abilityData.isForbidSelect then
+        self:_ResetSelectedType()
+    end
+
+    if not self.m_isSelectorShown then
+        self.m_delayUpdateSelectorFlag = true
+    end
+end
+
+
+
 GeneralAbilityCtrl._UpdateSelectedType = HL.Method() << function(self)
     self:_InitSelectedType()
 end
@@ -569,7 +598,7 @@ end
 
 
 GeneralAbilityCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
-    if not active and self.m_isSelectorShown then
+    if not active then
         self:_RefreshWheelShownState(false)
     end
 end
@@ -595,10 +624,11 @@ end
 
 
 
-GeneralAbilityCtrl._OnGeneralAbilityUse = HL.Method(HL.Any) << function(self, args)
-    local abilityType = unpack(args)
-    local config = self.m_abilityRegisterConfig[abilityType]
-    if config == nil then
+GeneralAbilityCtrl._OnGeneralAbilityUse = HL.Method(HL.Opt(HL.Any)) << function(self, args)
+    local abilityType, eventArgs = unpack(args)
+    local generalAbilitySystem = GameInstance.player.generalAbilitySystem
+    local haveCallBack = generalAbilitySystem:HaveAbilityUseFunc(abilityType)
+    if haveCallBack == nil then
         return
     end
 
@@ -607,13 +637,10 @@ GeneralAbilityCtrl._OnGeneralAbilityUse = HL.Method(HL.Any) << function(self, ar
         return
     end
 
-    if not string.isEmpty(tableData.useItem) then
+    if not string.isEmpty(tableData.useItem) and not generalAbilitySystem:IsIgnoreItemCheck(abilityType)  then
         self:_UseAbilityItem(tableData.useItem)
     else
-        local onUseCallback = config.onUseCallback
-        if onUseCallback ~= nil then
-            onUseCallback()
-        end
+        generalAbilitySystem:UseAbilityCallBack(abilityType, eventArgs)
     end
 end
 
@@ -621,13 +648,17 @@ end
 
 
 GeneralAbilityCtrl._OnGeneralAbilityStateChange = HL.Method(HL.Table) << function(self, args)
-    local abilityType = unpack(args)
+    local abilityType, fromState, toState = unpack(args)
     local currData = self.m_abilityDataMap[abilityType:GetHashCode()]
     if currData ~= nil then
+        currData.isForbidSelect = toState == AbilityState.ForbiddenSelect
         local currDeco = self.m_decoCells:GetItem(currData.index)
         if currDeco ~= nil then
             local selected = abilityType:GetHashCode() == self.m_selectedAbilityType
             self:_RefreshDecoVisible(currData.index, currDeco, selected)
+        end
+        if self.m_isSelectorShown then
+            self:_UpdateSelectorCellInfo(self.m_abilityCells:Get(currData.index), currData.index)
         end
     end
 end
@@ -666,35 +697,6 @@ end
 
 
 
-
-
-GeneralAbilityCtrl._BuildAbilityRegisterConfig = HL.Method() << function(self)
-    
-    self.m_abilityRegisterConfig = {
-        [GeneralAbilityType.Scan] = {
-            onUseCallback = function()
-                GameWorld.battle:ScanInteractive()
-            end
-        },
-        [GeneralAbilityType.Bomb] = {
-        },
-        [GeneralAbilityType.FluidInteract] = {
-            onUseCallback = function()
-                GameWorld.waterSensorSystem:OnWaterInteract()
-            end
-        },
-        [GeneralAbilityType.WaterGun] = {
-            onUseCallback = GeneralAbilityCtrl._TryEnterWaterDroneAbility,
-        },
-        [GeneralAbilityType.Snapshot] = {
-            onUseCallback = function()
-                Notify(MessageConst.ON_SHOW_SNAPSHOT)
-            end,
-        },
-    }
-end
-
-
 GeneralAbilityCtrl._TryEnterWaterDroneAbility = HL.StaticMethod() << function()
     local mainCharacter = GameUtil.mainCharacter
     if mainCharacter == nil then
@@ -709,44 +711,12 @@ end
 
 
 
-GeneralAbilityCtrl._InitAbilityRegisters = HL.Method() << function(self)
-    local generalAbilitySystem = GameInstance.player.generalAbilitySystem
-    for type, configInfo in pairs(self.m_abilityRegisterConfig) do
-        local typeValue = type:GetHashCode()
-        if self.m_abilityDataMap[typeValue] ~= nil then  
-            
-            local stateRegisters = configInfo.stateRegisters
-            if stateRegisters ~= nil then
-                for toState, message in pairs(stateRegisters) do
-                    local toStateValue = toState:GetHashCode()
-                    MessageManager:Register(message, function(msgArg)
-                        self:_OnStateSwitchMessageDispatched(typeValue, toStateValue)
-                    end, self)
-                end
-            end
-
-            
-            
-            local initialStateGetter = configInfo.initialStateGetter
-            if initialStateGetter ~= nil then
-                local initialState = initialStateGetter()
-                if initialState ~= nil then
-                    generalAbilitySystem:SwitchAbilityStateByType(type, initialState)
-                end
-            end
-        end
-    end
-end
-
-
-
-GeneralAbilityCtrl._InitAll = HL.Method() << function(self)
+GeneralAbilityCtrl._InitAll = HL.Method(HL.Opt(HL.Boolean)) << function(self)
     self.m_selectedAbilityType = INVALID_ABILITY_TYPE
     GameInstance.player.generalAbilitySystem.selectGeneralAbility = INVALID_ABILITY_TYPE
 
     self:_InitAbilityData()
     if next(self.m_abilityDataList) then
-        self:_InitAbilityRegisters()
         self:_InitSelectorCells()
         self:_InitDecoCells()
         self:_InitSelectedType()
@@ -876,7 +846,9 @@ GeneralAbilityCtrl._UpdateSelectorCellInfo = HL.Method(HL.Any, HL.Number) << fun
     if abilityData ~= nil then
         abilityData.cell = cell
         cell.ability:InitGeneralAbilityCell(abilityData.type, false, true)
+        cell.ability.ignoreStateChangeEvent = true
         cell.shadowAbility:InitGeneralAbilityCell(abilityData.type, true, true)
+        cell.shadowAbility.ignoreStateChangeEvent = true
         cell.shadowAbility.view.gameObject:SetActive(true)
         cell.gameObject.name = "Ability_".."Type"..abilityData.type
 
@@ -897,6 +869,7 @@ GeneralAbilityCtrl._UpdateSelectorCellInfo = HL.Method(HL.Any, HL.Number) << fun
         end
     else
         cell.ability:InitGeneralAbilityCell()
+        cell.ability.ignoreStateChangeEvent = true
         cell.shadowAbility.view.gameObject:SetActive(false)
         cell.gameObject.name = "Ability_".."None"..luaIndex
         if luaIndex == MAX_SELECTED_LUA_ID then
@@ -1024,14 +997,7 @@ GeneralAbilityCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.Boole
             if FactoryUtils.isOthersSocialBuilding(nodeId) then
                 
                 local canLike = FactoryUtils.canLikeSocialBuilding(nodeId)
-                GameInstance.player.generalAbilitySystem:ActivateTempAbility(GeneralAbilityType.BuildingLike, function()
-                    FactoryUtils.likeSocialBuilding(nodeId, function()
-                        if self.m_interactFacNodeId ~= nodeId then
-                            return 
-                        end
-                        FactoryUtils.updateBuildingLikeAbilityState(nodeId)
-                    end)
-                end, canLike)
+                GameInstance.player.generalAbilitySystem:ActivateTempAbility(GeneralAbilityType.BuildingLike, canLike, nodeId)
                 local abilityState = canLike and AbilityState.Idle or AbilityState.ForbiddenUse
                 GameInstance.player.generalAbilitySystem:SwitchAbilityStateByType(GeneralAbilityType.BuildingLike, abilityState)
             else
@@ -1113,6 +1079,10 @@ end
 
 
 GeneralAbilityCtrl._OnSelectorClicked = HL.Method(HL.Number) << function(self, luaIndex)
+    if Utils.isCurSquadAllDead() then
+        
+        return
+    end
     if not self.m_clickEnabled then
         return
     end
@@ -1255,7 +1225,7 @@ GeneralAbilityCtrl._RefreshMidHoverInfo = HL.Method(HL.Number) << function(self,
             self.m_triggerTable["OnGeneralAbilityHover"] = abilityData.type
             self.view.hoverAbilityNameTxt.text = abilityData.name
             if self.m_mobileHoverCancelFlag then
-                self.view.middleStateCtrl:SetState(SelectingMidState.HideSelectedNode)
+                self.view.middleStateCtrl:SetState(SelectingMidState.CancelState)
             else
                 if abilityData.isForbidSelect then
                     AudioAdapter.PostEvent("Au_UI_Hover_DisableGeneralAbility")
@@ -1273,6 +1243,12 @@ end
 
 
 GeneralAbilityCtrl._RefreshWheelShownState = HL.Method(HL.Boolean) << function(self, isShown)
+    if isShown and self.m_delayUpdateSelectorFlag then
+        self.m_delayUpdateSelectorFlag = false
+        for i = 1, self.m_abilityCells:GetCount() do
+            self:_UpdateSelectorCellInfo(self.m_abilityCells:Get(i), i)
+        end
+    end
     if self:IsHide() then
         if self.startPress then
             self.startPress = false
@@ -1280,6 +1256,7 @@ GeneralAbilityCtrl._RefreshWheelShownState = HL.Method(HL.Boolean) << function(s
             self.view.selectorAnim.gameObject:SetActive(false)
             self:_RefreshMidPanelShowInfo(false)
             self:_CheckRecoverScreen(false)
+            self:_MobileOnSelectorShownStateChanged(false)
             if not DeviceInfo.usingTouch then
                 self.view.selectedCanvasGroup.alpha = 1
             end
@@ -1768,7 +1745,6 @@ GeneralAbilityCtrl._StopPress = HL.Method() << function(self)
     if self.m_canReleaseCloseSelector and self.m_isSelectorShown then
         local lastType = self.m_hoverSelectorType
         self:_RefreshWheelShownState(false)
-
         if DeviceInfo.usingTouch then
             if self.m_mobileUseAbilityFlag then
                 if lastType ~= INVALID_ABILITY_TYPE then
@@ -1947,11 +1923,10 @@ GeneralAbilityCtrl._MobileTick = HL.Method() << function(self)
         local cancelAnimName = isInCancelCircle and MOBILE_CANCEL_PANEL_VALID_ANIMATION_NAME or MOBILE_CANCEL_PANEL_INVALID_ANIMATION_NAME
         self.view.mobileCancelPanel.animationWrapper:PlayWithTween(cancelAnimName)
         local selectorAnimName = isInCancelCircle and MOBILE_CANCEL_SELECTOR_VALID_ANIMATION_NAME or MOBILE_CANCEL_SELECTOR_INVALID_ANIMATION_NAME
-        self.view.selectorListAnim:PlayWithTween(selectorAnimName)
         if isInCancelCircle then
+            self.view.selectorListAnim:PlayWithTween(selectorAnimName)
             AudioAdapter.PostEvent("Au_UI_Hover_MoGeneralAbilityCancel")
         end
-
         for index = 1, self.view.config.CELL_MAX_COUNT do
             local cell = self.m_abilityCells:GetItem(index)
             if cell ~= nil then
@@ -2088,6 +2063,20 @@ end
 
 
 
+GeneralAbilityCtrl.OnActiveBuildingLike = HL.Method(HL.Any) << function(self, args)
+    local nodeId = unpack(args)
+    FactoryUtils.likeSocialBuilding(nodeId, function()
+        if self.m_interactFacNodeId ~= nodeId then
+            return 
+        end
+        FactoryUtils.updateBuildingLikeAbilityState(nodeId)
+    end)
+end
+
+
+
+
+
 
 
 if BEYOND_DEBUG then
@@ -2123,7 +2112,7 @@ if BEYOND_DEBUG then
     
     GeneralAbilityCtrl._SwitchToDebugTempAbility = HL.Method(HL.Number) << function(self, abilityType)
         local callback = DEBUG_TEMP_ABILITY_ON_USE_CALLBACK_MAP[abilityType]
-        GameInstance.player.generalAbilitySystem:ActivateTempAbility(abilityType, callback)
+        GameInstance.player.generalAbilitySystem:ActivateTempAbilityLegacy(abilityType, callback)
         self:_SetSelectedType(abilityType, false)
     end
 

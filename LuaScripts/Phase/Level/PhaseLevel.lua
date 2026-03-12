@@ -88,6 +88,9 @@ local PhaseLevelConfig = require_ex("Phase/Level/PhaseLevelConfig")
 
 
 
+
+
+
 PhaseLevel = HL.Class('PhaseLevel', phaseBase.PhaseBase)
 
 
@@ -135,7 +138,8 @@ PhaseLevel.s_messages = HL.StaticField(HL.Table) << {
 
     [MessageConst.TOGGLE_IN_MAIN_HUD_STATE] = { 'OnToggleInMainHudMessageNotified', true },
 
-    [MessageConst.ON_INPUT_DEVICE_TYPE_CHANGED] = { 'OnInputDeviceTypeChanged', true }
+    [MessageConst.ON_INPUT_DEVICE_TYPE_CHANGED] = { 'OnInputDeviceTypeChanged', true },
+    [MessageConst.ON_REPATRIATE] = { 'OnRepatriate', true },
 }
 
 
@@ -345,7 +349,11 @@ PhaseLevel.m_waitInitFacMode = HL.Field(HL.Boolean) << true
 
 
 PhaseLevel._UpdateFactoryMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
-    local inMainRegion, panelIndex = Utils.isInFacMainRegionAndGetIndex()
+    local inMainRegion, panel = GameInstance.remoteFactoryManager:IsPlayerPositionInMainRegionAndGetIndex()
+    local panelIndex = -1
+    if inMainRegion and panel then
+        panelIndex = panel.index
+    end
     local curLevelIdNum = GameWorld.worldInfo.curLevelIdNum
     if isInit then
         self.m_waitInitFacMode = false
@@ -380,7 +388,7 @@ PhaseLevel._UpdateFactoryMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, 
         UIManager:AutoOpen(PanelId.FacMiniPowerHud)
 
         if inMainRegion then
-            Notify(MessageConst.ON_ENTER_FAC_MAIN_REGION, panelIndex)
+            Notify(MessageConst.ON_ENTER_FAC_MAIN_REGION, panel)
             Notify(MessageConst.ON_IN_FAC_MAIN_REGION_CHANGE, inMainRegion)
 
             
@@ -418,7 +426,7 @@ PhaseLevel._UpdateFactoryMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, 
             self:_TryAutoToggleFacMode(inMainRegion)
         end
         if inMainRegion then
-            Notify(MessageConst.ON_ENTER_FAC_MAIN_REGION, panelIndex)
+            Notify(MessageConst.ON_ENTER_FAC_MAIN_REGION, panel)
             if not self.m_enterFacMainRegionCamState then
                 self.m_enterFacMainRegionCamState = FactoryUtils.enterFacCamera(FacConst.MAIN_REGION_CAM_STATE)
             end
@@ -562,6 +570,13 @@ end
 
 
 PhaseLevel._OnDestroy = HL.Override() << function(self)
+    for _, panelId in pairs(Const.FACTORY_MODE_ONLY_PANELS) do
+        UIManager:Close(panelId)
+    end
+    for _, panelId in pairs(Const.BATTLE_MODE_ONLY_PANELS) do
+        UIManager:Close(panelId)
+    end
+
     if self.m_hidePanelKey > 0 then
         self.m_hidePanelKey = UIManager:RecoverScreen(self.m_hidePanelKey)
     end
@@ -727,6 +742,7 @@ local defenseFinishExpectedPanels = {
 
 local DEFENSE_TASK_TRACK_HUD_OFFSET = Vector2(0, -120)
 local DEFENSE_CLEAR_DELAY_TIMER = 1.5
+local DEFENSE_MAIN_CHAR_EFFECT_NAME = "P_fxfac_interactive_holocast_2101"
 
 
 PhaseLevel.m_defensePrepareCtrl = HL.Field(HL.Forward("SettlementDefensePrepareHudCtrl"))
@@ -858,10 +874,7 @@ PhaseLevel.OnLeaveTowerDefenseDefendingPhase = HL.Method() << function(self)
         taskTrackHudCtrl:ClearPositionOffset()  
     end
 
-    if self.m_defenseMainCharEffect then
-        self.m_defenseMainCharEffect:Finish()
-        self.m_defenseMainCharEffect = nil
-    end
+    self:ClearTowerDefenseMainCharEffect()
 end
 
 
@@ -872,6 +885,46 @@ PhaseLevel.OnTowerDefenseDefendingRewardsFinished = HL.Method() << function(self
     if Utils.needMissionHud() then
         UIManager:AutoOpen(PanelId.MissionHud)
     end
+end
+
+
+
+PhaseLevel.PlayTowerDefenseMainCharEffect = HL.Method() << function(self)
+    local activeTdId = GameInstance.player.towerDefenseSystem.activeTdId
+    if string.isEmpty(activeTdId) then
+        return
+    end
+    local _, towerDefenseData = Tables.towerDefenseTable:TryGetValue(activeTdId)
+    if not towerDefenseData or towerDefenseData.tdType ~= GEnums.TowerDefenseLevelType.Auto then
+        return
+    end
+    self:ClearTowerDefenseMainCharEffect()
+    local mainModel
+    if GameInstance.playerController.mainCharacter ~= nil and GameInstance.playerController.mainCharacter.modelCom ~= nil then
+        mainModel = GameInstance.playerController.mainCharacter.modelCom.model
+    end
+    local entityRenderHelper = mainModel and mainModel:GetComponent(typeof(CS.Beyond.Gameplay.View.EntityRenderHelper))
+    if entityRenderHelper then
+        self.m_defenseMainCharEffect = GameInstance.effectManager:CreateVFXEffectOnTransform(
+            DEFENSE_MAIN_CHAR_EFFECT_NAME, entityRenderHelper)
+        self.m_defenseMainCharEffect:LoadImmediately()
+    end
+end
+
+
+
+PhaseLevel.ClearTowerDefenseMainCharEffect = HL.Method() << function(self)
+    if self.m_defenseMainCharEffect then
+        self.m_defenseMainCharEffect:Finish()
+        self.m_defenseMainCharEffect = nil
+    end
+end
+
+
+
+PhaseLevel.OnRepatriate = HL.Method() << function(self)
+    
+    self:PlayTowerDefenseMainCharEffect()
 end
 
 
@@ -1256,9 +1309,28 @@ PhaseLevel.PerformLoginCheck = HL.Method() << function(self)
             and GameInstance.player.mission:IsMissionCompleted("e0m0")  then
         PhaseLevel.s_LoginCheckFinishedInfo[Name_LoginCheck_CashShopOrderSettle] = true 
         LuaSystemManager.mainHudActionQueue:AddRequest(Name_LoginCheck_CashShopOrderSettle, function(_)
+            local interrupt = {
+                interruptMessage = { MessageConst.INTERRUPT_MAIN_HUD_ACTION_QUEUE },
+                onInterrupt = function()
+                    Notify(MessageConst.TOGGLE_IN_MAIN_HUD_STATE, { key = CashShopConst.RemainOrderMainHudKey, isInMainHud = true })
+                    CoroutineManager:StartCoroutine(function()
+                        
+                        coroutine.step()
+                        local requestKey = "CashShopOrderSettleInterrupt"
+                        if LuaSystemManager.mainHudActionQueue:HasRequest(requestKey) then
+                            return
+                        end
+                        LuaSystemManager.mainHudActionQueue:AddRequest(requestKey, function(_)
+                            CashShopUtils.tryShowRemainOrderList(function()
+                                Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, requestKey)
+                            end)
+                        end)
+                    end)
+                end
+            }
             CashShopUtils.tryShowRemainOrderList(function()
                 Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, Name_LoginCheck_CashShopOrderSettle)
-            end)
+            end, interrupt)
         end, nil, true)
     end
 

@@ -174,10 +174,14 @@ AdventureRewardCtrl._InitView = HL.Method() << function(self)
     local relativeExp = adventureLevelData.relativeExp
     local relativeLevelUpExp = adventureLevelData.relativeLevelUpExp
 
-    self.view.expProgress.fillAmount = (relativeLevelUpExp > 0) and (relativeExp / relativeLevelUpExp) or 0
-    self.view.expTxt.text = string.format(Language.LUA_ADVENTURE_REWARD_EXP_PROGRESS_FORMAT, relativeExp,
-        relativeLevelUpExp)
+    self.view.expProgress.fillAmount = (relativeLevelUpExp > 0) and (relativeExp / relativeLevelUpExp) or 1
     self.view.curLevelTxt.text = adventureLevelData.lv
+    if relativeLevelUpExp == 0 then
+        self.view.expNode:SetState("MaxLevel")
+    else
+        self.view.expTxt.text = string.format(Language.LUA_ADVENTURE_REWARD_EXP_PROGRESS_FORMAT, relativeExp,
+            relativeLevelUpExp)
+    end
 end
 
 
@@ -239,6 +243,7 @@ AdventureRewardCtrl._UpdateCurrIndex = HL.Method(HL.Number) << function(self, cu
     local clampedIndex = math.max(math.min(curIndex, #self.m_levelRewardData), 1)
     local levelInfo = self.m_levelRewardData[clampedIndex]
     if levelInfo ~= nil then
+        self.view.levelArrowNode:SetState(curIndex == 1 and "IsMax" or "NotMax")
         self:_RefreshRewardPanel(levelInfo)
         local docCount = self.view.config.LEVEL_DOC_EXPAND_COUNT * 2 + 1
         self.m_docCellCache:Refresh(docCount, function(cell, luaIndex)

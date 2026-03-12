@@ -47,6 +47,7 @@ local PANEL_ID = PanelId.CharUpgrade
 
 
 
+
 CharUpgradeCtrl = HL.Class('CharUpgradeCtrl', uiCtrl.UICtrl)
 
 
@@ -148,6 +149,13 @@ CharUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
+
+
+
+CharUpgradeCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
+    self.view.upgradeNode.addKeyHint.gameObject:SetActive(active)
+    self.view.upgradeNode.subKeyHint.gameObject:SetActive(active)
+end
 
 
 
@@ -733,6 +741,8 @@ CharUpgradeCtrl._InitActionEvent = HL.Method() << function(self)
             
             Notify(MessageConst.HIDE_ITEM_TIPS)
         end
+        self.view.upgradeNode.addKeyHint.gameObject:SetActive(not isFocused)
+        self.view.upgradeNode.subKeyHint.gameObject:SetActive(not isFocused)
     end)
 
     self.view.upgradeNode.addBtn.onClick:AddListener(function()

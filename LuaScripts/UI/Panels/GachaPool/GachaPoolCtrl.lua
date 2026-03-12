@@ -57,6 +57,7 @@ GachaPoolCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.GACHA_POOL_ADD_SHOW_REWARD] = 'AddQueueReward',
     [MessageConst.ON_ONE_GACHA_POOL_REWARD_FINISHED] = 'OnOneQueueRewardFinished',
     [MessageConst.ON_SYSTEM_DISPLAY_SIZE_CHANGED] = '_OnDisplaySizeChanged',
+    [MessageConst.ON_SYSTEM_SCREEN_SIZE_CHANGED] = '_OnDisplaySizeChanged',
 }
 
 
@@ -224,7 +225,7 @@ GachaPoolCtrl._InitUI = HL.Method() << function(self)
     self.view.poolList.onCenterIndexChanged:AddListener(function(oldIndex, newIndex)
         self:_OnCenterIndexChanged(LuaIndex(newIndex))
     end)
-    self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
+    self.view.controllerHintBar:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
     self:_InitMoneyNode()
     self.m_showRewardFuncQueue = require_ex("Common/Utils/DataStructure/Queue")()
     
@@ -526,8 +527,10 @@ GachaPoolCtrl._InitMoneyNode = HL.Method() << function(self)
     moneyNode.originiumConvertedDiamond.button.onClick:AddListener(function()
         local curIsShow = moneyNode.originiumConvertedDiamond.selected.gameObject.activeSelf
         if curIsShow then
-            moneyNode.originiumConvertedDiamond.selected.gameObject:SetActive(false)
-            Notify(MessageConst.HIDE_ITEM_TIPS)
+            if not DeviceInfo.usingController then
+                moneyNode.originiumConvertedDiamond.selected.gameObject:SetActive(false)
+                Notify(MessageConst.HIDE_ITEM_TIPS)
+            end
             return
         end
         moneyNode.originiumConvertedDiamond.selected.gameObject:SetActive(true)
@@ -603,21 +606,38 @@ GachaPoolCtrl._OnTestimonialConvert = HL.Method() << function(self)
         local name1 = Tables.itemTable[ntf.TestimonialItemId].name
         local name2 = Tables.itemTable[ntf.ConvertToItemId].name
         local tips = string.format(Language.LUA_GACHA_ITEM_CONVERT_TIP, name1, name2)
-        local arg = {
-            queueRewardType = "TestimonialConvert",
-            showRewardFunc = function()
-                UIManager:Open(PanelId.GachaItemConvert, {
-                    title = Language.LUA_GACHA_ITEM_CONVERT_TITLE_TESTIMONIAL,
-                    tipsText = tips,
-                    originalItemId = ntf.TestimonialItemId,
-                    convertItemId= ntf.ConvertToItemId,
-                    onComplete = function()
-                        csGachaSystem:SetTestimonialConvertNtfIsCheck(0)
-                        Notify(MessageConst.ON_ONE_GACHA_POOL_REWARD_FINISHED)
-                    end
-                })
-            end
-        }
+        local poolId = ntf.CharGachaPoolId
+        
+        local hasData, poolData = csGachaSystem.poolInfos:TryGetValue(poolId)
+        local arg
+        if not hasData or not poolData.isOpenValid then
+            
+            arg = {
+                queueRewardType = "TestimonialConvert",
+                showRewardFunc = function()
+                    Notify(MessageConst.SHOW_TOAST, string.format(Language.LUA_GACHA_TESTIMONIAL_CONVERT_BUT_EXPIRE_TOAST, name2))
+                    csGachaSystem:SetTestimonialConvertNtfIsCheck(0)
+                    Notify(MessageConst.ON_ONE_GACHA_POOL_REWARD_FINISHED)
+                end
+            }
+        else
+            
+            arg = {
+                queueRewardType = "TestimonialConvert",
+                showRewardFunc = function()
+                    UIManager:Open(PanelId.GachaItemConvert, {
+                        title = Language.LUA_GACHA_ITEM_CONVERT_TITLE_TESTIMONIAL,
+                        tipsText = tips,
+                        originalItemId = ntf.TestimonialItemId,
+                        convertItemId = ntf.ConvertToItemId,
+                        onComplete = function()
+                            csGachaSystem:SetTestimonialConvertNtfIsCheck(0)
+                            Notify(MessageConst.ON_ONE_GACHA_POOL_REWARD_FINISHED)
+                        end
+                    })
+                end
+            }
+        end
         Notify(MessageConst.GACHA_POOL_ADD_SHOW_REWARD, arg)
     end
 end
@@ -637,6 +657,7 @@ GachaPoolCtrl.OnGachaSucc = HL.Method(HL.Table) << function(self, arg)
     local maxRarity = 4
     local chars = {}
     for k = 0, msg.FinalResults.Count - 1 do
+        
         local v = msg.FinalResults[k]
         local charId = msg.OriResultIds[k]
         local isNew = not string.isEmpty(v.ItemId)
@@ -651,10 +672,17 @@ GachaPoolCtrl.OnGachaSucc = HL.Method(HL.Table) << function(self, arg)
         end
         local rarity = Tables.characterTable[charId].rarity
         maxRarity = math.max(maxRarity, rarity)
+        
+        local firstGetExtraItem
+        if not string.isEmpty(v.FirstGotRewardId) then
+            firstGetExtraItem = UIUtils.getRewardFirstItem(v.FirstGotRewardId)
+        end
+        
         table.insert(chars, {
             charId = charId,
             isNew = isNew,
             items = items, 
+            firstGetExtraItem = firstGetExtraItem,
             rarity = rarity,
         })
     end
@@ -788,7 +816,7 @@ GachaPoolCtrl._ReportPlacementEvent = HL.Method(HL.Any) << function(self, msg)
     local totalPrevGachaCharCount = 0
     for _, csInfo in pairs(csGacha.poolInfos) do
         if csInfo.isChar then
-            totalPrevGachaCharCount = totalPrevGachaCharCount + csInfo.totalPullCount
+            totalPrevGachaCharCount = totalPrevGachaCharCount + csInfo.totalPullCountNoShare
         end
     end
     if totalPrevGachaCharCount < 30 and (totalPrevGachaCharCount + curCount) >= 30 then
@@ -799,14 +827,11 @@ end
 
 
 
-GachaPoolCtrl._OnDisplaySizeChanged = HL.Method() << function(self)
-    self:_StartCoroutine(function()
-        coroutine.waitForRenderDone()
-        coroutine.step()
-        coroutine.step()
-        self.view.poolList:TryRecalculateSize()
-        self.view.poolList:ScrollToIndex(CSIndex(self.m_curIndex), true)
-    end)
+
+
+GachaPoolCtrl._OnDisplaySizeChanged = HL.Method(HL.Opt(HL.Any, HL.Any)) << function(self, _, _)
+    self.view.poolList:TryRecalculateSize()
+    self.view.poolList:ScrollToIndex(CSIndex(self.m_curIndex))
 end
 
 

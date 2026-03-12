@@ -251,7 +251,7 @@ FacLuaSystem._InternalToggleTopView = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) 
 
     GameInstance.playerController:OnToggleFactoryTopView(active)
     GameInstance.remoteFactoryManager:ChangeTopViewState(active)
-    CS.Beyond.NPC.NPCCrowdModuleManager.PauseModule(active)
+    
 
     
     local _, panel = UIManager:IsOpen(PanelId.LevelCamera)
@@ -372,7 +372,7 @@ FacLuaSystem.MoveTopViewCamTarget = HL.Method(Vector2) << function(self, dir)
     local settingSpeed = DataManager.gameplayCameraSetting.cameraSettingTopViewControlSpeedCurve:Evaluate(
         CS.Beyond.GameSetting.controllerCachedCameraTopViewSpeed
     )
-    local zoomScale = 1 + (0.5 - self.m_topViewCamCtrl.curZoomPercent) * 0.8 
+    local zoomScale = 1 + (1 - self.m_topViewCamCtrl.curZoomPercent) 
     dir = dir * settingSpeed * zoomScale
     local camTrans = CameraManager.mainCamera.transform
     local realDir = dir.x * camTrans.right + dir.y * camTrans.up

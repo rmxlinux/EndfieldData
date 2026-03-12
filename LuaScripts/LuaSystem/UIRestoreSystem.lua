@@ -59,6 +59,9 @@ UIRestoreSystem.TryRestore = HL.Method() << function(self)
         self.m_restoreRestoreData = nil
         if restoreData.checkFunc() then
             restoreData.action()
+            
+            
+            GameInstance.player.forbidSystem:SetPhaseForbid("CharFormation", "MainCharInAir", false, nil)
         end
     end
 end

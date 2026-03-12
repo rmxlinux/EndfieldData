@@ -133,7 +133,7 @@ BattleActionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             GameWorld.battle:OnClickScreen(eventData)
         end
         UIManager.commonTouchPanel.onClick:AddListener(self.m_onClickScreen)
-        self.view.skillShowNode.gameObject:SetActive(isNormalSkillUnlock)
+        self.view.skillShowNode.gameObject:SetActive(isNormalSkillUnlock and GameWorld.battle.skillButtonActive)
         self.view.skillShowBtn.onClick:AddListener(function(args)
             self:OnClickSkillShowBtn(args)
         end)
@@ -327,7 +327,7 @@ do
         self.view.skillNode.gameObject:SetActive(not data.valid)
         if self.isDefaultPanel then
             local isNormalSkillUnlock = Utils.isSystemUnlocked(GEnums.UnlockSystemType.NormalSkill)
-            self.view.skillShowNode.gameObject:SetActive(not data.valid and isNormalSkillUnlock)
+            self.view.skillShowNode.gameObject:SetActive(not data.valid and isNormalSkillUnlock and GameWorld.battle.skillButtonActive)
         end
         self:RefreshSkills()
     end
@@ -603,7 +603,7 @@ do
             self.view.skillNode.gameObject:SetActive(true)
             self.view.atbNode.gameObject:SetActive(true)
             if self.isDefaultPanel then
-                self.view.skillShowNode.gameObject:SetActive(true)
+                self.view.skillShowNode.gameObject:SetActive(self.m_isNormalSkillUnlock and GameWorld.battle.skillButtonActive)
             end
         end
 
@@ -630,6 +630,9 @@ do
     BattleActionCtrl.OnSkillButtonActiveConfigChanged = HL.Method() << function(self)
         if self.isControllerPanel then
             self.view.skillBgNode.gameObject:SetActive(GameWorld.battle.skillButtonActive)
+        end
+        if self.isDefaultPanel then
+            self.view.skillShowNode.gameObject:SetActive(self.m_isNormalSkillUnlock and GameWorld.battle.skillButtonActive)
         end
     end
 end

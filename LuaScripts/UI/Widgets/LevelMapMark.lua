@@ -62,6 +62,14 @@ local MARK_GAME_OBJECT_NAME_FORMAT = "MarkInst_%s"
 
 
 
+
+
+
+
+
+
+
+
 LevelMapMark = HL.Class('LevelMapMark', UIWidgetBase)
 
 
@@ -71,6 +79,9 @@ LevelMapMark.markRuntimeData = HL.Field(HL.Userdata)
 LevelMapMark.rectPosition = HL.Field(Vector2)
 
 
+LevelMapMark.m_loadArgs = HL.Field(HL.Table)
+
+
 LevelMapMark.m_needLoadAsync = HL.Field(HL.Boolean) << false
 
 
@@ -78,6 +89,9 @@ LevelMapMark.m_isTrackingMark = HL.Field(HL.Boolean) << false
 
 
 LevelMapMark.m_isTracking = HL.Field(HL.Boolean) << false
+
+
+LevelMapMark.m_waitingPlayTrackingAnim = HL.Field(HL.Boolean) << false
 
 
 LevelMapMark.m_isCustomMark = HL.Field(HL.Boolean) << false
@@ -95,10 +109,17 @@ LevelMapMark.m_extraDynamicNodeHideKeyList = HL.Field(HL.Table)
 LevelMapMark.m_hideKeyList = HL.Field(HL.Table)
 
 
-LevelMapMark.m_forceShow = HL.Field(HL.Boolean) << false
+LevelMapMark.m_forceShowKeyList = HL.Field(HL.Table)
 
 
 LevelMapMark.m_initialized = HL.Field(HL.Boolean) << false
+
+
+
+
+LevelMapMark.needTryLoadResourceStateNode = HL.Field(HL.Boolean) << false
+
+
 
 
 
@@ -122,6 +143,7 @@ LevelMapMark.InitLevelMapMark = HL.Method(Vector2, HL.Userdata, HL.Opt(HL.Boolea
 )
     self:_FirstTimeInit()
 
+    self:ClearLevelMapMark()
     self.m_initialized = true
 
     self.markRuntimeData = markRuntimeData
@@ -138,7 +160,7 @@ LevelMapMark.InitLevelMapMark = HL.Method(Vector2, HL.Userdata, HL.Opt(HL.Boolea
     
     if not ignoreVisible then
         self.m_hideKeyList = {}
-        self.m_forceShow = false
+        self.m_forceShowKeyList = {}
         self:_RefreshMarkVisibleState()
     end
 
@@ -187,8 +209,8 @@ LevelMapMark.ClearLevelMapMark = HL.Method(HL.Opt(HL.Boolean)) << function(self,
 
     self.markRuntimeData = nil
     self.m_hideKeyList = {}
+    self.m_forceShowKeyList = {}
     self.m_extraDynamicNodeHideKeyList = {}
-    self.m_forceShow = false
     self.m_extraDynamicNodes = {}
 
     self.m_initialized = false
@@ -201,6 +223,7 @@ LevelMapMark._RefreshDynamicPrefabs = HL.Method() << function(self)
     self:_RefreshSocialBuildingHint()
     self:_RefreshSettlementLevelNode()
     self:_RefreshSettlementDefense()
+    self:_RefreshResourceStateNode()
 end
 
 
@@ -208,6 +231,7 @@ end
 LevelMapMark._ClearDynamicPrefabs = HL.Method() << function(self)
     self:_ClearSettlementLevel()
     self:_ClearSettlementDefense()
+    self:_ClearResourceStateNode()
 end
 
 
@@ -313,7 +337,7 @@ end
 LevelMapMark._RefreshMarkVisibleState = HL.Method() << function(self)
     
     
-    local isVisible = (self.m_forceShow or not self:GetIsMarkHidden()) and self.m_initialized
+    local isVisible = (self:GetIsMarkForceShowing() or not self:GetIsMarkHidden()) and self.m_initialized
     self.view.gameObject:SetActive(isVisible)
 end
 
@@ -337,7 +361,7 @@ end
 
 LevelMapMark._RefreshTrackingMarkCircleAndArrowImage = HL.Method() << function(self)
     local circleName, arrowName = "icon_mission_diffusion_white", "icon_track_arrow_white"
-    if self.markRuntimeData.missionInfo ~= nil then
+    if self.markRuntimeData.missionInfo ~= nil and self.markRuntimeData.isMissionTracking then
         if self.markRuntimeData.missionInfo.missionImportance == GEnums.MissionImportance.High then
             circleName = "icon_mission_diffusion_yellow"
             arrowName = "icon_track_arrow_yellow"
@@ -415,16 +439,33 @@ end
 LevelMapMark.RefreshTrackingMarkState = HL.Method(HL.Boolean) << function(self, isTracking)
     self.view.trackingImg.gameObject:SetActive(isTracking)
     if isTracking and not self.m_isTracking then
-        self.view.trackingImgAnim:PlayInAnimation(function()
-            self.view.trackingImgAnim:PlayLoopAnimation()
-        end)
+        if not self:GetUICtrl():IsHide() then
+            self.view.trackingImgAnim:PlayInAnimation()
+        else
+            self.m_waitingPlayTrackingAnim = true
+        end
         self:_StartLimitMarkInRect()
         self:_RefreshTrackingMarkCircleAndArrowImage()
     elseif not isTracking and self.m_isTracking then
         self:_StopLimitMarkInRect()
+        self.m_waitingPlayTrackingAnim = false
     end
     self.m_isTracking = isTracking
     self.m_isTrackingMark = true
+end
+
+
+
+LevelMapMark.TryPlayTrackingMarkAnimation = HL.Method() << function(self)
+    if not self.m_isTracking or not self.m_isTrackingMark then
+        return
+    end
+    if self.m_waitingPlayTrackingAnim then
+        self.view.trackingImgAnim:PlayInAnimation()
+    else
+        self.view.trackingImgAnim:PlayLoopAnimation()
+    end
+    self.m_waitingPlayTrackingAnim = false
 end
 
 
@@ -644,6 +685,85 @@ end
 
 
 
+LevelMapMark._RefreshResourceStateNode = HL.Method() << function(self)
+    if not self.needTryLoadResourceStateNode or not MapConst.RESOURCE_RELATED_MARK_TYPE[self.markRuntimeData.type] then
+        return
+    end
+    self:RegisterMessage(MessageConst.ON_DOODAD_GROUP_DATA_CHANGE, function(args)
+        local instId = unpack(args)
+        if instId == self.markRuntimeData.instId then
+            self:_RefreshResourceStateNodeContent()
+        end
+    end)
+    self:_RefreshResourceStateNodeContent()
+end
+
+
+
+LevelMapMark._RefreshResourceStateNodeContent = HL.Method() << function(self)
+    if IsNull(self.view.resourceStateNode) then
+        self.view.resourceStateNode = self:_CreatePrefabObj("ResourceStateNode")
+    end
+    local resourceStateNode = self.view.resourceStateNode
+    if self.markRuntimeData.type == GEnums.MarkType.DoodadGroup then
+        local doodadGroupData = GameInstance.player.doodadSystem:GetDoodadSystemDataByMarkInst(self.markRuntimeData.instId)
+        resourceStateNode.countTxt.text = tostring(doodadGroupData.curCount)
+        if doodadGroupData.curCount == 0 then
+            resourceStateNode.contentStateController:SetState("Hidden")
+        else
+            resourceStateNode.contentStateController:SetState(doodadGroupData.curCount == doodadGroupData.maxCount and "Max" or "Normal")
+        end
+    elseif self.markRuntimeData.type == GEnums.MarkType.MinePointTeam then
+        if self.markRuntimeData.mapId ~= GameWorld.worldInfo.curMapIdStr then
+            resourceStateNode.contentStateController:SetState("Hidden")
+        else
+            local minePointIdList = {}
+            for index = 0, self.markRuntimeData.detail.count - 1 do
+                table.insert(minePointIdList, self.markRuntimeData.detail.coreLogicId[index])
+            end
+            local minerList = GameInstance.player.mapManager:GetMinerList(minePointIdList, self.markRuntimeData.levelId)
+            if minerList.Count ~= self.markRuntimeData.detail.count then
+                resourceStateNode.contentStateController:SetState("Warning")
+            else
+                local allMinerNormal = true
+                local _, levelBasicInfo = DataManager.levelBasicInfoTable:TryGetValue(self.markRuntimeData.levelId)
+                local developmentLv = GameInstance.player.domainDevelopmentSystem:GetDomainDevelopmentLv(levelBasicInfo.domainName)
+                for index = 0, minerList.Count - 1 do
+                    local miner = minerList[index]
+                    if miner ~= nil then
+                        local minerState = GameInstance.remoteFactoryManager:QueryBuildingState(miner.belongChapter.chapterId, miner.nodeId, false)
+                        local activeState = minerState == GEnums.FacBuildingState.Normal or minerState == GEnums.FacBuildingState.Blocked
+                        if not activeState then
+                            allMinerNormal = false
+                            break
+                        end
+                    else
+                        local lowLevel = self.markRuntimeData.detail.lowPurityLevel[index]
+                        if developmentLv >= lowLevel then
+                            
+                            allMinerNormal = false
+                            break
+                        end
+                    end
+                end
+                resourceStateNode.contentStateController:SetState(allMinerNormal and "Hidden" or "Warning")
+            end
+        end
+    end
+end
+
+
+
+LevelMapMark._ClearResourceStateNode = HL.Method() << function(self)
+    self.view.resourceStateNode = nil
+end
+
+
+
+
+
+
+
 
 
 
@@ -741,8 +861,13 @@ end
 
 
 
-LevelMapMark.ToggleForceShowMark = HL.Method(HL.Boolean) << function(self, forceShow)
-    self.m_forceShow = forceShow
+
+LevelMapMark.ToggleForceShowMark = HL.Method(HL.String, HL.Boolean) << function(self, forceShowKey, forceShow)
+    if forceShow then
+        self.m_forceShowKeyList[forceShowKey] = true
+    else
+        self.m_forceShowKeyList[forceShowKey] = nil
+    end
     self:_RefreshMarkVisibleState()
 end
 
@@ -750,6 +875,12 @@ end
 
 LevelMapMark.GetIsMarkHidden = HL.Method().Return(HL.Boolean) << function(self)
     return next(self.m_hideKeyList) ~= nil
+end
+
+
+
+LevelMapMark.GetIsMarkForceShowing = HL.Method().Return(HL.Boolean) << function(self)
+    return next(self.m_forceShowKeyList) ~= nil
 end
 
 

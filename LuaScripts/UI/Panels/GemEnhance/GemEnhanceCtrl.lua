@@ -421,7 +421,7 @@ GemEnhanceCtrl._RefreshMaterialGemList = HL.Method(HL.Opt(HL.Boolean)) << functi
             self:_RefreshEnhanceBtn()
         end,
         defaultSelectedIndex = isFirstSelected and 1 or nil,
-        sortKeys = { "matchWeaponSkillIndex", "enableOnWeaponIndex", "trashIndex", "rarity", "sortId1", "sortId2", "id" }
+        sortKeys = { "matchWeaponSkillIndex", "enableOnWeaponIndex", "trashIndex", "rarity", "sortId1", "sortId2", "id", "instId" }
     })
 end
 

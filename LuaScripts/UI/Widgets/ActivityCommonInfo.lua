@@ -10,6 +10,9 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
+
 ActivityCommonInfo = HL.Class('ActivityCommonInfo', UIWidgetBase)
 
 
@@ -20,6 +23,12 @@ ActivityCommonInfo.m_activityId = HL.Field(HL.String) << ""
 
 
 ActivityCommonInfo.m_rewardCells = HL.Field(HL.Any)
+
+
+ActivityCommonInfo.m_goToBtnDetailCallBack = HL.Field(HL.Any)
+
+
+ActivityCommonInfo.m_jumpBtnCallBack = HL.Field(HL.Any)
 
 
 
@@ -34,6 +43,7 @@ end
 ActivityCommonInfo.InitActivityCommonInfo = HL.Method(HL.Table) << function(self, args)
     self:_FirstTimeInit()
     self.m_activityId = args.activityId
+    self.m_jumpBtnCallBack = args.jumpBtnCallBack
     local activitySystem = GameInstance.player.activitySystem
 
     local _, activityData = Tables.activityTable:TryGetValue(self.m_activityId)
@@ -46,7 +56,7 @@ ActivityCommonInfo.InitActivityCommonInfo = HL.Method(HL.Table) << function(self
 
     
     self.view.infoNode.txtName.text = activityData.name
-    self.view.infoNode.detailsTxt.text = activityData.desc
+    self.view.infoNode.detailsTxt:SetAndResolveTextStyle(activityData.desc)
     if activity.endTime == 0 then
         self.view.infoNode.countDownText.text = Language.LUA_ACTIVITY_PERMANENT_TEXT
     else
@@ -97,22 +107,27 @@ ActivityCommonInfo.InitActivityCommonInfo = HL.Method(HL.Table) << function(self
     elseif state == "Detail" then
         if activityData.detailJumpId then
             self.view.gotoNode.btnDetail.onClick:AddListener(function()
+                if self.m_goToBtnDetailCallBack then
+                    self.m_goToBtnDetailCallBack()
+                end
                 ActivityUtils.GameEventLogActivityVisit(self.m_activityId, "gotoActivityHudButton", "visit_activity")
                 local normalJump = Tables.systemJumpTable:TryGetValue(activityData.detailJumpId)
                 
                 if normalJump then
-                    Utils.jumpToSystem(activityData.detailJumpId)
+                    if self.m_jumpBtnCallBack then
+                        self.m_jumpBtnCallBack()
+                    else
+                        Utils.jumpToSystem(activityData.detailJumpId)
+                    end
                 else
                     
                     local webJump, webJumpInfo = Tables.activityWebTable:TryGetValue(activityData.id)
                     if webJump then
-                        CS.Beyond.SDK.SDKUtils.OpenHGWebPortalSDK(webJumpInfo.jumpId,"",function()
-                            if webJumpInfo.disableAudio then
-                                CS.Beyond.Gameplay.Audio.Utils.AudioControlUtil.Webview.SetMute(false)
-                            end
-                        end)
                         if webJumpInfo.disableAudio then
                             CS.Beyond.Gameplay.Audio.Utils.AudioControlUtil.Webview.SetMute(true)
+                            CS.Beyond.SDK.SDKUtils.OpenHGWebPortalSDK(webJumpInfo.jumpId,"","ON_ACTIVITY_WEB_UNMUTE")
+                        else
+                            CS.Beyond.SDK.SDKUtils.OpenHGWebPortalSDK(webJumpInfo.jumpId,"",nil)
                         end
                     end
                 end
@@ -148,10 +163,21 @@ ActivityCommonInfo.InitActivityCommonInfo = HL.Method(HL.Table) << function(self
             self:_Refresh()
         end
     end)
+
+    
+    self:RegisterMessage(MessageConst.ON_ACTIVITY_WEB_UNMUTE, function(_)
+        CS.Beyond.Gameplay.Audio.Utils.AudioControlUtil.Webview.SetMute(false)
+    end)
 end
 
 
 ActivityCommonInfo.m_rewardId = HL.Field(HL.String) << ""
+
+
+
+ActivityCommonInfo.UpdateGoToBtnDetailCallBack = HL.Method(HL.Any) << function(self, callback)
+    self.m_goToBtnDetailCallBack = callback
+end
 
 
 
@@ -196,7 +222,7 @@ end
 
 
 ActivityCommonInfo.UpdateDescTxt = HL.Method(HL.String) << function(self, desc)
-    self.view.infoNode.detailsTxt.text = desc
+    self.view.infoNode.detailsTxt:SetAndResolveTextStyle(desc)
 end
 
 

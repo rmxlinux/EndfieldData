@@ -34,8 +34,6 @@ local PHASE_ID = PhaseId.ActivityCenter
 
 
 
-
-
 ActivityCenterCtrl = HL.Class('ActivityCenterCtrl', uiCtrl.UICtrl)
 
 
@@ -88,29 +86,7 @@ ActivityCenterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitInfoAndButtons(arg)
     self:_RefreshTabList()
     self:_InitController()
-    self:_Debug()
     self:GoToActivity(self.m_initialActivityId)
-    self:_InitDecoArrow()
-end
-
-
-
-ActivityCenterCtrl._InitDecoArrow = HL.Method() << function(self)
-    self:_StartCoroutine(function()
-        while true do
-            coroutine.step()
-            
-            local _,final = self:_GetShowingCellStartEnd()
-            self.view.decoArrow.gameObject:SetActive(final < #self.m_allActivities)
-
-            
-            local moreActivityData = {}
-            for i = final + 1, #self.m_allActivities do
-                table.insert(moreActivityData, self.m_allActivities[i].activityData)
-            end
-            self.view.redDotArrow:InitRedDot("ActivityTableMore", moreActivityData)
-        end
-    end)
 end
 
 
@@ -120,7 +96,7 @@ ActivityCenterCtrl._InitInfoAndButtons = HL.Method(HL.Table) << function(self, a
     self.view.btnClose.onClick:AddListener(function()
         self:_Close()
     end)
-    self.view.doubleF7CloseBtn.onClick:AddListener(function()
+    self:BindInputPlayerAction("activity_center_f7_close", function()
         self:_Close()
     end)
     self.m_tabCells = UIUtils.genCellCache(self.view.tabCell)
@@ -146,50 +122,6 @@ ActivityCenterCtrl.OnActivityNaviFailed = HL.Method(HL.Userdata) << function(sel
         self:_SetNaviTarget(1)
     elseif dir == Unity.UI.NaviDirection.Up then
         self:_SetNaviTarget(#self.m_allActivities)
-    end
-end
-
-
-
-ActivityCenterCtrl._Debug = HL.Method() << function(self)
-    if BEYOND_DEBUG_COMMAND then
-        
-        UIUtils.bindInputEvent(CS.Beyond.Input.KeyboardKeyCode.Z, function()
-            UIManager:Open(PanelId.StaminaPotion,"item_ap_feed_in")
-        end, nil, nil, self.view.inputGroup.groupId)
-        
-        UIUtils.bindInputEvent(CS.Beyond.Input.KeyboardKeyCode.X, function()
-            PhaseManager:OpenPhaseFast(PhaseId.ActivityPopup)
-        end, nil, nil, self.view.inputGroup.groupId)
-        
-        UIUtils.bindInputEvent(CS.Beyond.Input.KeyboardKeyCode.C, function()
-            PhaseManager:OpenPhase(PhaseId.HighDifficultyMainHud,{})
-        end, nil, nil, self.view.inputGroup.groupId)
-
-        
-        UIUtils.bindInputEvent(CS.Beyond.Input.KeyboardKeyCode.Y, function()
-            UIManager:Open(PanelId.ActivityRewardRegistrationPopup,{})
-        end, nil, nil, self.view.inputGroup.groupId)
-        UIUtils.bindInputEvent(CS.Beyond.Input.KeyboardKeyCode.U, function()
-            UIManager:Open(PanelId.ActivityCharSignCommonPopUp,{
-                activityId = "activity_checkin_agline",
-            })
-        end, nil, nil, self.view.inputGroup.groupId)
-        UIUtils.bindInputEvent(CS.Beyond.Input.KeyboardKeyCode.I, function()
-            UIManager:Open(PanelId.ActivityCharSignCommonPopUp,{
-                activityId = "activity_checkin_yvonne",
-            })
-        end, nil, nil, self.view.inputGroup.groupId)
-        UIUtils.bindInputEvent(CS.Beyond.Input.KeyboardKeyCode.O, function()
-            UIManager:Open(PanelId.ActivityCharSignCommonPopUp,{
-                activityId = "activity_checkin_laevat",
-            })
-        end, nil, nil, self.view.inputGroup.groupId)
-        UIUtils.bindInputEvent(CS.Beyond.Input.KeyboardKeyCode.P, function()
-            UIManager:Open(PanelId.ActivityCharSignCommonPopUp,{
-                activityId = "activity_checkin_v1d0_end",
-            })
-        end, nil, nil, self.view.inputGroup.groupId)
     end
 end
 
@@ -222,7 +154,7 @@ ActivityCenterCtrl._RefreshTabList = HL.Method() << function(self)
                 sortId = -activityData.sortId,
                 activity = activity,
                 activityData = activityData,
-                completed = activity.isCompleted and 1 or 0,
+                completed = activity:GetCompleteSortId(),
                 type = activityData.type,
                 status = activity.status,
             })
@@ -299,14 +231,14 @@ ActivityCenterCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self
 
         
         local redDotName = ActivityUtils.getActivityRedDotName(activityData.id)
-        if not string.isEmpty(redDotName) then
-            innerCell.redDot:InitRedDot(redDotName,activityData.id)
+        local activity = GameInstance.player.activitySystem:GetActivity(activityData.id)
+        if not activity.isCompleted and not string.isEmpty(redDotName) then
+            innerCell.redDot:InitRedDot(redDotName, activityData.id, nil, self.view.redDotScrollRect)
         else
             innerCell.redDot.gameObject:SetActive(false)
         end
 
         
-        local activity = GameInstance.player.activitySystem:GetActivity(activityData.id)
         innerCell.completedIconNode.gameObject:SetActive(activity.isCompleted)
     end
 end
@@ -504,8 +436,10 @@ ActivityCenterCtrl._RefreshTabCompleteState = HL.Method() << function(self)
     self.m_tabCells:Refresh(#self.m_allActivities, function(cell, index)
         local activityData = self.m_allActivities[index].activityData
         local activity = GameInstance.player.activitySystem:GetActivity(activityData.id)
-        cell.selectNode.completedIconNode.gameObject:SetActive(activity.isCompleted)
-        cell.normalNode.completedIconNode.gameObject:SetActive(activity.isCompleted)
+        if activity then
+            cell.selectNode.completedIconNode.gameObject:SetActive(activity.isCompleted)
+            cell.normalNode.completedIconNode.gameObject:SetActive(activity.isCompleted)
+        end
     end)
 end
 

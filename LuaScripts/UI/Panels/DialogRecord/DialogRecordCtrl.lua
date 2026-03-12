@@ -297,6 +297,7 @@ DialogRecordCtrl._TryPlayAudio = HL.Method(HL.String, HL.Number) << function(sel
         self:_RefreshPlayingCell(-1)
         self:_StopAudio()
     end)
+    GameWorld.dialogManager:SetCurRecordVoicePlaying(true)
 end
 
 
@@ -311,6 +312,7 @@ DialogRecordCtrl._StopAudio = HL.Method() << function(self)
         self:_ClearTimer(self.m_timer)
     end
     self.m_timer = -1
+    GameWorld.dialogManager:SetCurRecordVoicePlaying(false)
 end
 
 

@@ -498,6 +498,9 @@ end
 
 
 PhaseFacMachine._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    if args.anotherPhaseId == PhaseId.FacBuildListSelect and self.curPanelItem ~= nil and self.curPanelId ~= PanelId.FacHUB then
+        self.curPanelItem.uiCtrl:Hide()
+    end
 end
 
 
@@ -505,6 +508,9 @@ end
 
 
 PhaseFacMachine._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    if args.anotherPhaseId == PhaseId.FacBuildListSelect and self.curPanelItem ~= nil and self.curPanelId ~= PanelId.FacHUB then
+        self.curPanelItem.uiCtrl:Show()
+    end
     if self.curPanelId == PanelId.FacPendingBuilding then
         
         self.curPanelItem.uiCtrl:RefreshList(true)

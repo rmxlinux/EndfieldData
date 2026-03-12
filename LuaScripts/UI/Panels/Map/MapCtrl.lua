@@ -175,6 +175,7 @@ local STANDARD_SCREEN_HEIGHT = CS.Beyond.UI.UIConst.STANDARD_VERTICAL_RESOLUTION
 
 
 
+
 MapCtrl = HL.Class('MapCtrl', uiCtrl.UICtrl)
 
 local COLLECTIONS_CONFIG = {
@@ -290,7 +291,7 @@ MapCtrl.m_selectNodeTick = HL.Field(HL.Number) << -1
 MapCtrl.m_doingSelectNodeHide = HL.Field(HL.Boolean) << false
 
 
-MapCtrl.m_waitShowInitDetail = HL.Field(HL.Boolean) << false
+MapCtrl.m_waitInitShowDetailMarkInstId = HL.Field(HL.String) << ""
 
 
 MapCtrl.m_selectOptionMarkIdList = HL.Field(HL.Table)
@@ -362,7 +363,7 @@ MapCtrl.m_nodeOnInitFocused = HL.Field(HL.Boolean) << false
 MapCtrl.m_trySwitchTierOnFocusMark = HL.Field(HL.Any)
 
 
-MapCtrl.m_waitAutoSwitchTier = HL.Field(HL.Boolean) << false
+MapCtrl.m_waitAutoSwitchTierId = HL.Field(HL.Number) << -1
 
 
 MapCtrl.m_markClickLockThread = HL.Field(HL.Thread)
@@ -418,12 +419,12 @@ MapCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     local needShowDetail = not string.isEmpty(markInstId)
     if needShowDetail then
         levelId = GameInstance.player.mapManager:GetMarkInstRuntimeDataLevelId(markInstId)
+        self.m_waitInitShowDetailMarkInstId = markInstId
     end
 
-    self.m_waitShowInitDetail = needShowDetail
     self.m_initialLevelId = not string.isEmpty(levelId) and levelId or GameWorld.worldInfo.curLevelId
     if BEYOND_DEBUG_COMMAND then
-        if not DataManager.uiLevelMapConfig.levelConfigInfos:ContainsKey(self.m_initialLevelId) then
+        if not GameInstance.player.mapManager:IsLevelLoaderDataExists(self.m_initialLevelId) then
             self:_InitDebugMode()
             self:_InitTierSwitcherNode()
             self:_RefreshTitle(levelId)
@@ -438,7 +439,6 @@ MapCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self:_InitBigRectHelper()
     self:_InitZoomNode()  
     self:_InitRegionMapButton()
-    self:_InitCustomMark()
     self:_InitSelectOptionList()
     self:_InitWalletBar()
 
@@ -459,7 +459,7 @@ MapCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
 
     self:_InitPlayerIcon()
 
-    self.m_waitShowInitDetail = false
+    self.m_waitInitShowDetailMarkInstId = ""
 
     if args.needTransit == nil then
         args.needTransit = false
@@ -468,11 +468,12 @@ MapCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
 
     self:_InitMapController()
 
+    self:_TryPlayMistUnlockedAnimation()
+    self:_InitCustomMark()
+
     if BEYOND_DEBUG_COMMAND then
         self:_InitDebugTeleport()
     end
-
-    self:_TryPlayMistUnlockedAnimation()
 end
 
 
@@ -660,12 +661,12 @@ MapCtrl._OnLevelSwitchBtnClicked = HL.Method(HL.Any) << function(self, args)
         targetLevelId = unpack(args)
     end
 
-    local currConfigSuccess, currLevelConfig = DataManager.uiLevelMapConfig.levelConfigInfos:TryGetValue(self.m_currLevelId)
+    local currConfigSuccess, currLevelConfig = GameInstance.player.mapManager:GetLoaderLevelBasicInfoByLevelId(self.m_currLevelId)
     if not currConfigSuccess then
         return
     end
 
-    local targetConfigSuccess, targetLevelConfig = DataManager.uiLevelMapConfig.levelConfigInfos:TryGetValue(targetLevelId)
+    local targetConfigSuccess, targetLevelConfig = GameInstance.player.mapManager:GetLoaderLevelBasicInfoByLevelId(targetLevelId)
     if not targetConfigSuccess then
         return
     end
@@ -721,7 +722,7 @@ MapCtrl._RefreshTitle = HL.Method(HL.String) << function(self, levelId)
     self.view.titleNode.levelTitleTxt.text = levelDesc.showName
     self.view.titleNode.domainTitleTxt.gameObject:SetActive(false)
 
-    local configSuccess, levelConfig = DataManager.uiLevelMapConfig.levelConfigInfos:TryGetValue(levelId)
+    local configSuccess, levelConfig = GameInstance.player.mapManager:GetLoaderLevelBasicInfoByLevelId(levelId)
     if not configSuccess then
         return
     end
@@ -1005,18 +1006,27 @@ end
 
 
 
+MapCtrl._IsWaitingInitShowMarkDetail = HL.Method().Return(HL.Boolean) << function(self)
+    return not string.isEmpty(self.m_waitInitShowDetailMarkInstId)
+end
+
+
+
 
 
 
 
 MapCtrl._ShowMarkDetail = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean)) << function(self, markInstId, needFocus, needFocusTween, isInit)
-    local mark = self.view.levelMapController:GetControllerMarkByInstId(markInstId)
-    local markRectTransform = self.view.levelMapController:GetControllerMarkRectTransform(markInstId)
-    if not mark or not markRectTransform then
+    local mark = self.view.levelMapController:GetControllerMarkByInstId(markInstId, true)
+    if not mark then
+        return
+    end
+    local markRectTransform = mark.rectTransform
+    if not markRectTransform then
         return
     end
     if not GameInstance.player.mapManager:IsTrackingRelatedMark(markInstId) then
-        mark:ToggleForceShowMark(true)  
+        mark:ToggleForceShowMark("ShowDetail", true)  
     end
 
     needFocusTween = needFocusTween == true
@@ -1045,7 +1055,7 @@ MapCtrl._ShowMarkDetail = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean, HL
                 self:_SetDetectorState(markInstId, false)
                 self.m_selectMarkInstId = ""
                 self.m_isMarkDetailShowing = false
-                mark:ToggleForceShowMark(false)
+                mark:ToggleForceShowMark("ShowDetail", false)
                 self:_ToggleControllerMoveAndZoom(true)
             end
         })
@@ -1116,7 +1126,7 @@ MapCtrl._SetDetectorState = HL.Method(HL.Any, HL.Boolean, HL.Opt(HL.Number)) << 
     if markType == GEnums.MarkType.TreasureChest or markType == GEnums.MarkType.Coin then
         isDetector = true
     end
-    local mark = self.view.levelMapController:GetControllerMarkByInstId(instId)
+    local mark = self.view.levelMapController:GetControllerMarkByInstId(instId, true)
     if not mark then
         return
     end
@@ -1221,7 +1231,31 @@ MapCtrl._InitCustomMark = HL.Method() << function(self)
     if self.m_noCustomMark then
         return
     end
+    
+    local mapManager = GameInstance.player.mapManager
+    local ids = {}
+    local levelInst = mapManager:GetQuickSearchCustomMarksByLevel(self.m_initialLevelId)
+    if levelInst then
+        for markInstId, mapMarkRuntimeData in pairs(levelInst) do
+            local pos = mapMarkRuntimeData.rectPosition
+            local viewRectSize = self.view.levelMapController.view.levelMapLoader.view.viewRect.sizeDelta
+            local viewRectPos = self.view.levelMapController.view.levelMapLoader.view.viewRect.anchoredPosition
 
+            if viewRectSize.x / 2 - (math.abs(pos.x - viewRectPos.x)) < 0
+                or viewRectSize.y / 2 - (math.abs(pos.y - viewRectPos.y)) < 0 then
+                if markInstId == GameInstance.player.mapManager.trackingMarkInstId then
+                    mapManager:TrackMark(markInstId, false)
+                end
+                table.insert(ids, markInstId)
+            end
+        end
+    end
+
+    if #ids > 0 then
+        mapManager:RemoveCustomMarkToServer(ids)
+    end
+
+    self.view.touchPanel.onClick:RemoveAllListeners()
     self.view.touchPanel.onClick:AddListener(function(eventData)
         if self:_IsMarkClickLocked() then
             return
@@ -1246,6 +1280,11 @@ MapCtrl._InitCustomMark = HL.Method() << function(self)
         end
 
         
+        if not UIUtils.isScreenPosInRectTransform(eventData.position, self.view.levelMapController.gameObject.transform, self.uiCamera) then
+            self:Notify(MessageConst.SHOW_TOAST, Language.LUA_CUSTOM_MARK_OUT_EDGE_TOAST)
+            return
+        end
+        
         if self.m_multiDeletePanelShow then
             return
         end
@@ -1255,7 +1294,7 @@ MapCtrl._InitCustomMark = HL.Method() << function(self)
             self.view.levelMapController.view.levelMapLoader.view.rectTransform
         )
         local tempPos = Vector2.zero
-        local success, levelConfig = DataManager.uiLevelMapConfig.levelConfigInfos:TryGetValue(self.m_currLevelId)
+        local success, levelConfig = GameInstance.player.mapManager:GetLoaderLevelBasicInfoByLevelId(self.m_currLevelId)
         if not success then
             return
         end
@@ -1271,6 +1310,9 @@ MapCtrl._InitCustomMark = HL.Method() << function(self)
             return
         end
         if not string.isEmpty(self.m_selectMarkInstId) then
+            return
+        end
+        if not string.isEmpty(self.m_phase.m_detailPanelShownId)then
             return
         end
         AudioAdapter.PostEvent("Au_UI_Button_MapIcon")
@@ -1296,7 +1338,6 @@ MapCtrl._InitMapRemindTip = HL.Method() << function(self)
     
     local remandInfo = MapUtils.getMapRemindTipInfo(self.m_currLevelId)
     
-    self.view.mapRemindBtnRedDot:InitRedDot("MapRemind", { levelId = self.m_currLevelId })
     self.view.mapRemindBtn.onClick:RemoveAllListeners()
     self.view.mapRemindBtn.onClick:AddListener(function()
         self.view.mapRemindBtn.gameObject:SetActiveIfNecessary(false)
@@ -1384,12 +1425,7 @@ MapCtrl._RefreshSelectOptionList = HL.Method(HL.String, HL.Table) << function(se
         local icon = markRuntimeData.isActive and templateData.activeIcon or templateData.inActiveIcon  
         cell.icon:LoadSprite(UIConst.UI_SPRITE_MAP_MARK_ICON_SMALL, icon)
 
-        if markRuntimeData.missionInfo ~= nil and markRuntimeData.isMissionTracking then
-            
-            cell.icon.color = GameInstance.player.mission:GetMissionColor(markRuntimeData.missionInfo.missionId)
-        else
-            cell.icon.color = Color.white
-        end
+        cell.icon.color = Color.white
 
         
         if templateData.markType == GEnums.MarkType.CustomMark then
@@ -1621,16 +1657,24 @@ MapCtrl._InitZoomNode = HL.Method() << function(self)
 
     if not self.m_ignoreOpenFocus then
         local initZoomScaleRatio = 0
-        if self.m_waitShowInitDetail then
+        if self:_IsWaitingInitShowMarkDetail() then
             initZoomScaleRatio = 1  
+            local mark = self.view.levelMapController:GetControllerMarkByInstId(self.m_waitInitShowDetailMarkInstId, true)
+            if mark ~= nil then
+                local _, targetTierId = mark:GetMarkTierState()
+                if targetTierId > 0 then
+                    self.m_waitAutoSwitchTierId = targetTierId
+                end
+            end
         else
             if self.m_initialLevelId == GameWorld.worldInfo.curLevelId then
                 local playerNode = self.view.levelMapController.view.levelMapLoader.view.element.player
                 if playerNode.gameObject.activeSelf then
-                    if GameWorld.mapRegionManager:GetCurrentCharInTierContainerId() > 0 and not GameInstance.player.guide.isInGuide then
+                    local currTierId = GameWorld.mapRegionManager:GetCurrentCharInTierId()
+                    if currTierId > 0 and not GameInstance.player.guide.isInGuide then
                         
                         initZoomScaleRatio = DataManager.uiLevelMapConfig.tierZoomSliderPercent
-                        self.m_waitAutoSwitchTier = true
+                        self.m_waitAutoSwitchTierId = currTierId
                     end
                 end
             end
@@ -1718,7 +1762,7 @@ end
 MapCtrl._OnZoomValueChanged = HL.Method(HL.Number) << function(self, value)
     self.view.bigRectHelper:ResetPivotPositionToScreenCenter()
     local isPlayAnimationIn = self:IsPlayingAnimationIn()
-    self.view.bigRectHelper:SyncZoomValue(value, not self.m_waitShowInitDetail and not isPlayAnimationIn)  
+    self.view.bigRectHelper:SyncZoomValue(value, not self:_IsWaitingInitShowMarkDetail() and not isPlayAnimationIn)  
     self:_RefreshZoomButtonInteractableState()
     self:_RefreshZoomVisibleLayer(value)
 end
@@ -2242,8 +2286,10 @@ end
 
 MapCtrl._RefreshTierSwitcherCells = HL.Method() << function(self)
     if self.m_tierSwitchersShowing then
-        local _, levelConfig = DataManager.uiLevelMapConfig.levelConfigInfos:TryGetValue(self.m_currLevelId)
+        local _, levelConfig = GameInstance.player.mapManager:GetLoaderLevelDataByLevelId(self.m_currLevelId)
         self.m_currTierIndex = 0
+
+        
         local currTierId = GameWorld.mapRegionManager:GetCurrentCharInTierId()
         local currContainerId = GameWorld.mapRegionManager:GetCurrentCharInTierContainerId()
         local currTierInContainer = currContainerId == self.m_currTierContainerId
@@ -2253,6 +2299,15 @@ MapCtrl._RefreshTierSwitcherCells = HL.Method() << function(self)
                 break
             end
         end
+        
+        local waitAutoSwitchTierInContainer = false
+        for _, tierId in pairs(self.m_currTierIdList) do
+            if tierId == self.m_waitAutoSwitchTierId then
+                waitAutoSwitchTierInContainer = true
+                break
+            end
+        end
+
         self.view.levelMapController:SetLoaderTierStateWithNeedShowMarkTier(true)
         local firstSelectIndex = 0
         self.m_tierSwitcherCells:Refresh(#self.m_currTierIdList, function(cell, index)
@@ -2267,13 +2322,9 @@ MapCtrl._RefreshTierSwitcherCells = HL.Method() << function(self)
             else
                 isCurrTier = isBase  
             end
-            if currTierId > 0 and self.m_waitAutoSwitchTier then
-                if self.m_waitAutoSwitchTier then
-                    
-                    isSelected = isCurrTier
-                else
-                    isSelected = isBase
-                end
+            if self.m_waitAutoSwitchTierId > 0 and waitAutoSwitchTierInContainer then
+                
+                isSelected = self.m_waitAutoSwitchTierId == tierId
             else
                 isSelected = isBase
             end
@@ -2294,7 +2345,7 @@ MapCtrl._RefreshTierSwitcherCells = HL.Method() << function(self)
             end)
             cell.selectBtn.interactable = not isSelected
 
-            local nameSuccess, nameTextId = levelConfig.tierNames:TryGetValue(tierId)
+            local nameSuccess, nameTextId = levelConfig.loadConfig.tierNames:TryGetValue(tierId)
             cell.tierNameTxt.gameObject:SetActive(false)
             if isBase then
                 cell.tierNameTxt.text = Tables.levelDescTable[self.m_currLevelId].showName
@@ -2310,7 +2361,8 @@ MapCtrl._RefreshTierSwitcherCells = HL.Method() << function(self)
         end)
 
         self:_OnSelectTier(firstSelectIndex)
-        self.m_waitAutoSwitchTier = false
+
+        self.m_waitAutoSwitchTierId = -1
     else
         self.view.levelMapController:SetLoaderTierStateWithNeedShowMarkTier(false)
 
@@ -2405,7 +2457,7 @@ end
 
 MapCtrl._StartCheckSwitchTierOnFocus = HL.Method(HL.String) << function(self, markInstId)
     self:_StopCheckSwitchTierOnFocus()
-    self.m_trySwitchTierOnFocusMark = self.view.levelMapController:GetControllerMarkByInstId(markInstId)
+    self.m_trySwitchTierOnFocusMark = self.view.levelMapController:GetControllerMarkByInstId(markInstId, true)
 end
 
 
@@ -2466,7 +2518,7 @@ end
 
 
 MapCtrl._TryPlayMapMaskAnimation = HL.Method() << function(self)
-    if self.m_waitShowInitDetail then
+    if self:_IsWaitingInitShowMarkDetail() then
         return  
     end
     self.view.mapMaskAnimWrapper:PlayWithTween("map_masklevelmapcontroller_in")
@@ -2595,8 +2647,8 @@ MapCtrl.ResetMapStateToTargetLevel = HL.Method(HL.Table) << function(self, args)
     local needShowDetail = not string.isEmpty(instId)
     if needShowDetail then
         levelId = GameInstance.player.mapManager:GetMarkInstRuntimeDataLevelId(instId)
+        self.m_waitInitShowDetailMarkInstId = instId
     end
-    self.m_waitShowInitDetail = needShowDetail
 
     if self.m_isMarkDetailShowing then
         Notify(MessageConst.HIDE_LEVEL_MAP_MARK_DETAIL)
@@ -2620,7 +2672,7 @@ MapCtrl.ResetMapStateToTargetLevel = HL.Method(HL.Table) << function(self, args)
 
         if needShowDetail then
             self:_ShowMarkDetail(instId, true)
-            self.m_waitShowInitDetail = false
+            self.m_waitInitShowDetailMarkInstId = ""
             self:_StartCheckSwitchTierOnFocus(instId)
         end
 
@@ -2635,11 +2687,14 @@ MapCtrl.ResetMapStateToTargetLevel = HL.Method(HL.Table) << function(self, args)
             args.onComplete()
         end
 
-        local configSuccess, levelConfig = DataManager.uiLevelMapConfig.levelConfigInfos:TryGetValue(levelId)
+        local configSuccess, levelConfig = GameInstance.player.mapManager:GetLoaderLevelBasicInfoByLevelId(levelId)
         if configSuccess then
             local audioKey = levelConfig.isSingleLevel and "Au_UI_Menu_MapPanel_Open" or "Au_UI_Menu_MapPanel_Close"
             AudioAdapter.PostEvent(audioKey)
         end
+
+        self:_CheckAndRefreshNeedPlayMistUnlockedAnimationState()
+        self:_TryPlayMistUnlockedAnimation()
     end)
 end
 
@@ -2876,7 +2931,7 @@ if BEYOND_DEBUG_COMMAND or BEYOND_DEBUG then
         else
             worldPos = CS.Beyond.Gameplay.UILevelMapUtils.GetDebugTeleportWorldPosition(Vector2(worldPos.x, worldPos.z))
         end
-        local configSuccess, levelConfig = DataManager.uiLevelMapConfig.levelConfigInfos:TryGetValue(self.m_currLevelId)
+        local configSuccess, levelConfig = GameInstance.player.mapManager:GetLoaderLevelBasicInfoByLevelId(self.m_currLevelId)
         if configSuccess then
             if levelConfig.needInverseXZ then
                 local temp = worldPos.x

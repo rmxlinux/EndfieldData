@@ -64,6 +64,7 @@ WeeklyRaidDelegateListCell.InitWeeklyRaidDelegateListCell = HL.Method(HL.String,
     if string.isEmpty(gameId) or string.isEmpty(missionId) then
         self.view.uiState:SetState('Empty')
         self.view.uiState:SetState(selected and 'AddSelect' or 'AddNormal')
+        self.view.redDot.gameObject:SetActive(false)
         return
     end
 

@@ -127,9 +127,10 @@ PRTSStoryCollGalleryCtrl._OnStoryCollReadStateChange = HL.Method(HL.Table) << fu
         local firstLvCfg = Utils.tryGetTableCfg(Tables.prtsFirstLv, itemCfg.firstLvId)
         local curCategoryInfo = self.m_info.categoryInfos[self.m_curTabIndex]
         if firstLvCfg and firstLvCfg.categoryId == curCategoryInfo.id then
+            local preIsOnlyShowUnread = self.m_isOnlyShowUnread
             PRTSStoryCollGalleryCtrl._UpdateCategoryInfo(curCategoryInfo)
             self:_RefreshUnreadTog()
-            if self.m_isOnlyShowUnread then
+            if preIsOnlyShowUnread then
                 self:_RefreshItemList(false)
                 if self.m_isCurFocusItemList then
                     local itemCell = self.m_getItemCellFunc(1)

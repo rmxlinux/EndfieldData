@@ -287,6 +287,12 @@ GachaPoolCellBase._InitBaseUI = HL.Method() << function(self)
             Utils.jumpToSystem(poolCfg.trialActivityJumpId)
         end)
     end
+
+    if self.view.controllerFocusHintRoot and self.view.jumpBtnNaviGroup then
+        self.view.jumpBtnNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
+            self.view.controllerFocusHintRoot.gameObject:SetActive(not isFocused)
+        end)
+    end
 end
 
 
