@@ -130,6 +130,8 @@ DomainVersionInfoPopupCtrl._RefreshVersionContentUI = HL.Method() << function(se
             end
         end
     end
+    
+    InputManagerInst:ToggleBinding(self.view.poiVersionList.FocusBindingId, self.m_focusItemKeyHintHasInit)
 end
 
 

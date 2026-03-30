@@ -1098,6 +1098,12 @@ ManualCraftPopupsCtrl._UpdateSelectCell = HL.Method(GameObject, HL.Number) << fu
 
     cell.button.onClick:RemoveAllListeners()
     cell.button.onClick:AddListener(function()
+        if self.m_mainCellInAnim then
+            return
+        end
+        if self.m_inMainPanel then
+            return
+        end
         if self.m_selectIndex == index then
             return
         end

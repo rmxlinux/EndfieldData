@@ -1305,7 +1305,7 @@ WEAPON_UPGRADE_SORT_OPTION = {
 WEAPON_GEM_SORT_OPTION = {
     {
         name = Language.LUA_DEPOT_SORT_OPTION_RARITY,
-        keys = { "matchWeaponSkillIndex", "enableOnWeaponIndex", "rarity", "sortId1", "sortId2", "id", "instId" },
+        keys = { "matchWeaponSkillCount", "matchWeaponSkillIndex", "rarity", "lockedIndex", "trashIndexReverse", "equippedWeaponInstIdReverse", "sortId1", "sortId2", "id", "instId" },
     },
 }
 

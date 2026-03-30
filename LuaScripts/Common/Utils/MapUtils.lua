@@ -94,8 +94,9 @@ function MapUtils.openMap(instId, levelId, customArgs)
     data.levelId = levelId
     data.customArgs = customArgs
 
+    
     local isOpen, phase = PhaseManager:IsOpen(PhaseId.PowerPoleFastTravel)
-    if isOpen then
+    if isOpen and UIManager:IsShow(PanelId.PowerPoleFastTravel) then
         phase:SaveCurrentLogicId()
     end
 

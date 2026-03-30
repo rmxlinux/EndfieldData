@@ -113,12 +113,21 @@ DungeonCommonEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.m_curSelectedDungeonId = arg.dungeonId
     end
 
+    local needRecover = false
     if lume.find(DungeonConst.UI_RESTORE_DUNGEON_CATEGORY, Tables.dungeonSeriesTable[self.m_dungeonSeriesId].gameCategory) ~= nil then
-        if self.m_arg.enterDungeonCallback == nil then
-            self.m_arg.enterDungeonCallback = function(enterDungeonId)
+        needRecover = true
+    end
+
+    if self.m_arg.enterDungeonCallback == nil then
+        self.m_arg.enterDungeonCallback = function(enterDungeonId)
+            if needRecover then
                 LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId, function()
                     PhaseManager:OpenPhaseFast(PhaseId.DungeonEntry, { dungeonId = enterDungeonId })
                 end)
+            end
+
+            if self.m_fromDialog then
+                self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 1 })
             end
         end
     end

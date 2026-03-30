@@ -357,6 +357,7 @@ end
 
 
 
+
 ValuableDepotCtrl._RefreshTabsInfo = HL.Method(HL.Opt(HL.String, HL.Any, HL.Boolean)) << function(self, itemId, instId, isFast)
     local tabInfos = {}
     for _, v in pairs(Tables.valuableDepot) do
@@ -409,6 +410,7 @@ ValuableDepotCtrl._RefreshTabsInfo = HL.Method(HL.Opt(HL.String, HL.Any, HL.Bool
     end)
     self:_OnClickTab(self.m_curTabIndex, itemId, instId, isFast)
 end
+
 
 
 
@@ -588,6 +590,7 @@ end
 
 
 
+
 ValuableDepotCtrl._RefreshItemList = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean)) << function(self, noRead, setTop, isFast)
     logger.info("_RefreshItemList")
     local count = #self.m_curShowItemList
@@ -736,7 +739,7 @@ ValuableDepotCtrl._OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Bool
         if cell then
             cell:SetSelected(true and not DeviceInfo.usingController)
             if DeviceInfo.usingController then
-                InputManagerInst.controllerNaviManager:SetTarget(cell.view.button)
+                UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.itemListNaviGroup, cell.view.button)
             end
         end
         if self.m_inDestroyMode then

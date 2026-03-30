@@ -86,6 +86,11 @@ MapMarkDetailDomainShopCtrl._UpdateData = HL.Method() << function(self)
     end
     local isUnlock = curLv > 0
     local maxLv = #shopChannelCfg.channelLevelMap
+    local _, maxLvChannelCfg = shopChannelCfg.channelLevelMap:TryGetValue(maxLv)
+    local isFinalMax = false
+    if maxLvChannelCfg then
+        isFinalMax = maxLvChannelCfg.isFinalMaxLevel
+    end
     
     local desc = ""
     local descList = {}
@@ -114,7 +119,7 @@ MapMarkDetailDomainShopCtrl._UpdateData = HL.Method() << function(self)
     self.m_info = {
         curLv = curLv,
         isUnlock = isUnlock,
-        isMaxLv = curLv >= maxLv,
+        isMaxLv = isFinalMax and curLv >= maxLv,
         
         questState = questState,
         upgradeQuestId = upgradeQuestId,

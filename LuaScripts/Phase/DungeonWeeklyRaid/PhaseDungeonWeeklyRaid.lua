@@ -127,7 +127,9 @@ PhaseDungeonWeeklyRaid.TryCloseTopPanel = HL.Method() << function(self)
     if self.m_panelStack:Count() == 1 then
         PhaseManager:PopPhase(PHASE_ID)
         local panelId = self.m_panelStack:Pop()
-        Notify(MessageConst.DIALOG_CLOSE_UI, {panelId, PHASE_ID, 0})
+        if type(self.arg) == "table" and self.arg.fromDialog then
+            Notify(MessageConst.DIALOG_CLOSE_UI, {panelId, PHASE_ID, 0})
+        end
         return
     end
 

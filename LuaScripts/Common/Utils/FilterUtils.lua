@@ -73,6 +73,13 @@ FilterUtils.EQUIP_PART_FILTER_TYPE = {
 
 
 
+
+
+
+
+
+
+
 function FilterUtils.processItemDefault(itemId, instId)
     local _, itemData = Tables.itemTable:TryGetValue(itemId)
     if not itemData then
@@ -180,10 +187,15 @@ function FilterUtils.processWeaponGem(templateId, instId, extraArgs)
         return infoDefault
     end
     infoDefault.trashIndex = gemInst.isTrash and 1 or 0
+    infoDefault.trashIndexReverse = -infoDefault.trashIndex
+    infoDefault.lockedIndex = gemInst.isLocked and 1 or 0
+    infoDefault.lockedIndexReverse = -infoDefault.lockedIndex
+    infoDefault.equippedWeaponInstId = gemInst.weaponInstId
+    infoDefault.equippedWeaponInstIdReverse = -infoDefault.equippedWeaponInstId
 
     
     infoDefault.enableOnWeapon = false
-    infoDefault.enableOnWeaponIndex = -1
+    infoDefault.matchWeaponSkillCount = 0
     infoDefault.matchWeaponSkillIndex = 0
     local skillMap = {}
     for _, skillTerm in pairs(gemInst.termList) do
@@ -195,7 +207,7 @@ function FilterUtils.processWeaponGem(templateId, instId, extraArgs)
                 local skillCfg = CharInfoUtils.getSkillCfg(weaponSkill.skillId, weaponSkill.level)
                 if skillCfg.tagId == termCfg.tagId then
                     infoDefault.enableOnWeapon = true
-                    infoDefault.enableOnWeaponIndex = 1
+                    infoDefault.matchWeaponSkillCount = infoDefault.matchWeaponSkillCount + 1
                     infoDefault.matchWeaponSkillIndex = infoDefault.matchWeaponSkillIndex + skillTerm.cost
                 end
             end
@@ -232,6 +244,7 @@ function FilterUtils.processEquip(templateId, instId, extraArgs)
             local canEquip = maxWearLimit == nil or infoDefault.rarity <= maxWearLimit
             infoDefault.num_canEquip = canEquip and 1 or 0
             infoDefault.equipEnhanceLevel = equipInst:GetEnhanceLevel()
+            infoDefault.equippedCharInstId = equipInst.equippedCharServerId
         end
     end
 
@@ -273,6 +286,7 @@ function FilterUtils.processEquipEnhance(templateId, instId)
     end
     infoDefault.equipInstData = CharInfoUtils.getEquipByInstId(instId)
     infoDefault.equipEnhanceLevel = infoDefault.equipInstData:IsMaxEnhanced() and -1 or infoDefault.equipInstData:GetEnhanceLevel()
+    infoDefault.equipEnhanceTotalFailedTimes = FilterUtils._getEquipTotalFailedTimes(infoDefault.equipInstData)
     return infoDefault
 end
 
@@ -289,7 +303,26 @@ function FilterUtils.processEquipEnhanceMaterial(templateId, instId, extraArgs)
     infoDefault.equipInstData = CharInfoUtils.getEquipByInstId(instId)
     infoDefault.equipEnhanceSuccessProb = EquipTechUtils.getEquipEnhanceSuccessProbability(infoDefault.equipInstData, extraArgs.attrShowInfo)
     infoDefault.equipEnhanceLevelReverse = -infoDefault.equipInstData:GetEnhanceLevel()
+    infoDefault.equipEnhanceTotalFailedTimesReverse = -FilterUtils._getEquipTotalFailedTimes(infoDefault.equipInstData)
+    infoDefault.equippedCharInstIdReverse = -infoDefault.equippedCharInstId
     return infoDefault
+end
+
+function FilterUtils._getEquipTotalFailedTimes(equipInstData)
+    local totalFailedTimes = 0
+    local enhanceFailedTimes = equipInstData.enhanceFailedTimes
+    if enhanceFailedTimes == nil then
+        return 0
+    end
+    for attrIndex, levelFailedTimes in pairs(enhanceFailedTimes) do
+        if not equipInstData:IsAttrMaxEnhanced(attrIndex) then
+            local found, failedTimes = levelFailedTimes:TryGetValue(equipInstData:GetAttrEnhanceLevel(attrIndex) + 1)
+            if found then
+                totalFailedTimes = totalFailedTimes + failedTimes
+            end
+        end
+    end
+    return totalFailedTimes
 end
 
 

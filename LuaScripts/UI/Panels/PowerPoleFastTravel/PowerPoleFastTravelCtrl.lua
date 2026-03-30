@@ -233,7 +233,7 @@ PowerPoleFastTravelCtrl.OnShow = HL.Override() << function(self)
     self:_SetButtonState(self.view.buttonConfirm, isOnTravel)
 
     self.view.hintBar.gameObject:SetActive(isOnTravel)
-    self.view.nodeSetDefaultNext.gameObject:SetActive(isOnTravel)
+    self.view.nodeSetDefaultNext.gameObject:SetActive(false)
     self.m_allowLeave = GameWorld.gameMechManager.travelPoleBrain:GetTravelPoleAllowLeave(self.m_currentLogicId)
     self.view.nodeLeave.gameObject:SetActive(isOnTravel and self.m_allowLeave)
     self:_SetButtonState(self.view.buttonLeave, isOnTravel and self.m_allowLeave)
@@ -248,6 +248,7 @@ PowerPoleFastTravelCtrl.OnClose = HL.Override() << function(self)
     if DeviceInfo.isPC then
         UIManager.commonTouchPanel.onClick:RemoveListener(self.m_onClickScreen)
     end
+    GameInstance.player.systemActionConflictManager:OnSystemActionEnd(ConflictName)
     self:_ToggleControllerTriggerSetting(false)
     LuaUpdate:Remove(self.m_lateTickKey)
     self:Notify(MessageConst.ON_EXIT_TRAVEL_MODE)
@@ -600,6 +601,21 @@ end
 
 
 
+PowerPoleFastTravelCtrl._GetFreshLinkInfoByLogicId = HL.Method(HL.Any).Return(HL.Any) << function(self, nextLogicId)
+    if self.m_targetLogicIdList == nil then
+        return nil
+    end
+    for _, linkInfo in pairs(self.m_targetLogicIdList) do
+        if linkInfo.entity.isValid and linkInfo.logicId == nextLogicId then
+            return linkInfo
+        end
+    end
+    return nil
+end
+
+
+
+
 PowerPoleFastTravelCtrl._BeginTravel = HL.Method(HL.Any) << function(self, nextLogicId)
     if not GameWorld.gameMechManager.travelPoleBrain.allowBeginTravel then
         return
@@ -610,6 +626,12 @@ PowerPoleFastTravelCtrl._BeginTravel = HL.Method(HL.Any) << function(self, nextL
             self:Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_FAST_TRAVEL_NO_TARGET_TOAST)
         end
         return
+    end
+
+    self.m_targetLogicIdList = GameWorld.gameMechManager.travelPoleBrain:GetLinkedTravelPoleInfoList(self.m_currentLogicId)
+    local freshLinkInfo = self:_GetFreshLinkInfoByLogicId(nextLogicId)
+    if freshLinkInfo ~= nil and freshLinkInfo.line ~= nil and not freshLinkInfo.line.markInvalid then
+        freshLinkInfo.line:DoBlockTest()
     end
 
     if not GameWorld.gameMechManager.travelPoleBrain:BeginTravelToStuckTest(self.m_currentLogicId, nextLogicId) then

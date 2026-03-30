@@ -196,6 +196,8 @@ end
 
 
 
+
+
 function EquipTechUtils.getUnlockedEquipPackList(isSuit)
     
     local equipPackDataList = {}
@@ -204,9 +206,23 @@ function EquipTechUtils.getUnlockedEquipPackList(isSuit)
         local _, equipPackData = Tables.equipPackTable:TryGetValue(packId)
         if equipPackData and isSuit == equipPackData.isSuit then
             local equipList = {}
+            local costMatSortId = 0
             for _, packFormulaData in pairs(packFormulaDataList.itemList) do
                 if EquipTechUtils.isEquipFormulaVisible(packFormulaData.formulaId) then
-                    table.insert(equipList, FilterUtils.processEquipProduce(Tables.equipFormulaTable[packFormulaData.formulaId]))
+                    local _, formulaData = Tables.equipFormulaTable:TryGetValue(packFormulaData.formulaId)
+                    if formulaData then
+                        local costMatId
+                        if #formulaData.costItemId > 0 then
+                            costMatId = formulaData.costItemId[0]
+                        end
+                        if costMatId then
+                            local _, costMatData = Tables.itemTable:TryGetValue(costMatId)
+                            if costMatData then
+                                costMatSortId = math.max(costMatSortId, costMatData.sortId2)
+                            end
+                        end
+                        table.insert(equipList, FilterUtils.processEquipProduce(formulaData))
+                    end
                 end
             end
             if #equipList > 0 then
@@ -216,6 +232,7 @@ function EquipTechUtils.getUnlockedEquipPackList(isSuit)
                     sortId = equipPackData.sortId,
                     isExpanded = true,
                     equipList = equipList,
+                    costMatSortId = costMatSortId,
                 }
                 table.sort(packData.equipList, sortFunc)
                 table.insert(equipPackDataList, packData)

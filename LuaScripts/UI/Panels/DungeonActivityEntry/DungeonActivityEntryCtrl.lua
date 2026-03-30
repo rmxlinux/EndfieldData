@@ -52,8 +52,9 @@ DungeonActivityEntryCtrl.m_cellRefreshFunc = HL.Field(HL.Function)
 
 DungeonActivityEntryCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SC_MULTI_STAGE_ACTIVITY_GAIN_REWARD] = 'OnGainMultiStageActivityReward',
-    [MessageConst.ON_ACTIVITY_NEW_DAY] = 'OnNewDay',
+    
     [MessageConst.ON_ACTIVITY_UPDATED] = 'OnActivityUpdated',
+    [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = 'OnActivityUpdated',
 }
 
 
@@ -194,6 +195,10 @@ DungeonActivityEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
                 activityId = self.m_activityId,
                 enterDungeonCallback = enterDungeonCallback })
         end)
+
+        if self.m_fromDialog then
+            self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 1 })
+        end
     end
     self.view.dungeonCommonInfo:InitDungeonCommonInfo({
         enterDungeonCallback = enterDungeonCallback,
@@ -295,6 +300,10 @@ DungeonActivityEntryCtrl.OnActivityUpdated = HL.Method(HL.Any) << function(self,
         else
             PhaseManager:PopPhase(PHASE_ID)
         end
+    else
+        local dungeonSeriesData = Tables.dungeonSeriesTable:GetValue(self.m_dungeonSeriesId)
+        self.m_genCells:Refresh(dungeonSeriesData.includeDungeonIds.Count, self.m_cellRefreshFunc)
+        self:UpdateInfo()
     end
 end
 
@@ -328,6 +337,24 @@ DungeonActivityEntryCtrl.UpdateInfo = HL.Method() << function(self)
         local deltaTime = unlockTime - curTime
         if deltaTime > 0 then
             self.view.timeTxt.text = UIUtils.getLeftTime(deltaTime)
+            return
+        end
+        
+        local conditionCfg = Tables.activityConditionalMultiStageConditionTable:GetValue(activityDungeonStateCfg.activityStage)
+        local flags = stageData.Conditions.Flags
+        local hasUncompleted = false
+        if conditionCfg and conditionCfg.conditionList then
+            for i = 0, conditionCfg.conditionList.Count - 1 do
+                local condition = conditionCfg.conditionList[i]
+                local conditionSuccess ,isComplete = flags:TryGetValue(condition.conditionId)
+                if not (conditionSuccess and isComplete) then
+                    hasUncompleted = true
+                    break
+                end
+            end
+        end
+        if not hasUncompleted then
+            self.view.timeTxt.text = UIUtils.getLeftTime(0)
             return
         end
     end

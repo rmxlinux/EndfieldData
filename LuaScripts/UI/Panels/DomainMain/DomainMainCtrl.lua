@@ -318,20 +318,18 @@ DomainMainCtrl.InitUI = HL.Method() << function(self)
             return
         end
         self:_ShowBulletin(false)
+        self.m_phase.hasJumpedToOtherPhase = false
         PhaseManager:OpenPhase(PhaseId.SettlementSwitchRegionPopup, {
             curDomainId = self.m_curDomainId,
             unlockedDomainIds = self.m_unlockDomainIds,
             regionRedDot = "DomainSingleMap",
             onConfirm = function(newDomainId)
                 if self.m_curDomainId ~= newDomainId then
+                    self.m_phase.hasJumpedToOtherPhase = true
                     self.m_curDomainId = newDomainId
                     self:UpdateData()
                     self:RefreshAllUI()
                     self:_RequireBulletinData()
-                    local wrapper = self.animationWrapper
-                    wrapper:PlayInAnimation(function()
-                        self:_TryShowDomainVersionDiff()
-                    end)
                 end
             end
         })

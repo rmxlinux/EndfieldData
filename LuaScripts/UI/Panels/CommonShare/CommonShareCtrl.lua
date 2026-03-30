@@ -241,7 +241,8 @@ CommonShareCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
                     shareChannel = 0, 
                     imgPath = savePath,
                     title = self.m_type == "Blueprint" and string.format(Language.LUA_SHARE_BLUEPRINT_TITLE, self.m_arg.codeId) or Language.LUA_SHARE_PHOTO_TITLE,
-                    desc = self.m_type == "Blueprint" and string.format(Language.LUA_SHARE_BLUEPRINT_DESC, self.m_arg.codeId) or Language.LUA_SHARE_PHOTO_DESC,
+                    
+                    desc = self.m_type == "Blueprint" and self.m_arg.codeId or Language.LUA_SHARE_PHOTO_DESC,
                     extraData = "{}",
                 })
                 CS.U8.SDK.U8SDKInterface.Instance:SetData(CS.Beyond.SDK.SDKDataType.SET_DATA_SHARE, dataStr)

@@ -101,27 +101,55 @@ DungeonActivityCommonInfo.RefreshDungeonActivityCommonInfo = HL.Method(HL.String
     self.view.lockedNode.gameObject:SetActive(false)
     
     if stageData.Status == GEnums.ActivityConditionalStageState.Locked:GetHashCode() then
-        local list = GameInstance.player.activitySystem:GetActivityStageConditions(activityDungeonStateCfg.activityStage)
-        local anyOtherCondition = false
-        
-        for _, condition in pairs(list) do
-            if not condition.Item2 and condition.Item3 ~= nil then
-                
-                if condition.Item3.conditionType == GEnums.ConditionType.MissionStateEqual or
-                    condition.Item3.conditionType == GEnums.ConditionType.QuestStateEqual
-                    then
-                    local questId = condition.Item3.parameters[0]:GetString()
-                    self.m_missionId = GameInstance.player.mission:GetMissionIdByQuestId(questId)
-                    self.view.jumpTxt.text = condition.Item1
+        local stageId = activityDungeonStateCfg.activityStage
+        local conditionCfg = Tables.activityConditionalMultiStageConditionTable:GetValue(stageId)
+        local flags = stageData.Conditions.Flags
+        local desc, conditionType, questId = nil, 0, nil
+        local missionQuestFallbackDesc, missionQuestFallbackType, missionQuestFallbackQuestId = nil, 0, nil
+
+        if conditionCfg and conditionCfg.conditionList then
+            for i = 0, conditionCfg.conditionList.Count - 1 do
+                local condition = conditionCfg.conditionList[i]
+                local conditionSuccess ,isComplete = flags:TryGetValue(condition.conditionId)
+                if conditionSuccess and isComplete then
+                    
                 else
-                    self.view.lockedTxt.text = condition.Item1
-                    anyOtherCondition = true
-                    break
+                    local ct = condition.conditionType
+                    local isMissionOrQuest = (ct == GEnums.ConditionType.MissionStateEqual or ct == GEnums.ConditionType.QuestStateEqual)
+                    if isMissionOrQuest then
+                        if missionQuestFallbackDesc == nil then
+                            missionQuestFallbackDesc = condition.desc
+                            missionQuestFallbackType = ct
+                            if condition.parameters and condition.parameters.Count > 0 then
+                                local p0 = condition.parameters[0]
+                                missionQuestFallbackQuestId = (p0.valueStringList and p0.valueStringList.Count > 0) and p0.valueStringList[0] or ''
+                            else
+                                missionQuestFallbackQuestId = ''
+                            end
+                        end
+                    else
+                        desc = condition.desc
+                        conditionType = ct
+                        questId = ''
+                        break
+                    end
                 end
             end
+            if desc == nil and missionQuestFallbackDesc ~= nil then
+                desc = missionQuestFallbackDesc
+                conditionType = missionQuestFallbackType
+                questId = missionQuestFallbackQuestId or ''
+            end
         end
-        if anyOtherCondition then
-            self.m_missionId = ''
+
+        if not string.isEmpty(desc) then
+            if conditionType == GEnums.ConditionType.MissionStateEqual or conditionType == GEnums.ConditionType.QuestStateEqual then
+                self.m_missionId = GameInstance.player.mission:GetMissionIdByQuestId(questId or '')
+                self.view.jumpTxt.text = desc
+            else
+                self.view.lockedTxt.text = desc
+                self.m_missionId = ''
+            end
         end
         self.view.jumpBtn.gameObject:SetActive(string.isEmpty(self.m_missionId) == false)
         self.view.lockedNode.gameObject:SetActive(string.isEmpty(self.m_missionId))

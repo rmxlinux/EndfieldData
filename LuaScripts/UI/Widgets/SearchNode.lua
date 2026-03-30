@@ -20,11 +20,6 @@ SearchNode = HL.Class('SearchNode', UIWidgetBase)
 
 
 
-
-
-
-
-
 SearchNode.m_lastInput = HL.Field(HL.String) << ""
 
 
@@ -126,4 +121,3 @@ end
 
 HL.Commit(SearchNode)
 return SearchNode
-

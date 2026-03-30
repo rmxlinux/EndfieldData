@@ -55,8 +55,10 @@ BattlePassPlanCell.InitBattlePassPlanCell = HL.Method(HL.Any, HL.Opt(HL.Any, HL.
                 cell.itemBlack:InitItem(itemInfo, function(itemBundle)
                     onTakeReward(itemInfo.trackId, levelInfo.level)
                 end)
+                cell.itemBlack.view.button:ChangeActionOnSetNaviTarget(CS.Beyond.Input.ActionOnSetNaviTarget.PressConfirmTriggerOnClick)
             else
                 cell.itemBlack:InitItem(itemInfo, true)
+                cell.itemBlack.view.button:ChangeActionOnSetNaviTarget(CS.Beyond.Input.ActionOnSetNaviTarget.None)
             end
             if DeviceInfo.usingController then
                 cell.itemBlack.view.button.customBindingViewLabelText = (not isObtained and canObtain)

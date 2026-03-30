@@ -381,8 +381,12 @@ AchievementDepotCtrl._IsFilteredBySearchKey = HL.Method(HL.String).Return(HL.Boo
     if string.isEmpty(name) then
         return false, name
     end
-    local rep = string.format(Language.LUA_ACHIEVEMENT_NAME_SEARCH_REPLACE, self.m_searchKey)
-    local nameStr, repCount = string.gsub(name, self.m_searchKey, rep)
+
+    local key = self.m_searchKey
+    local rep = string.format(Language.LUA_ACHIEVEMENT_NAME_SEARCH_REPLACE, key) 
+    rep = rep:gsub("%%", "%%%%")
+    local pattern = key:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
+    local nameStr, repCount = string.gsub(name, pattern, rep)
     if repCount > 0 then
         return true, nameStr
     end

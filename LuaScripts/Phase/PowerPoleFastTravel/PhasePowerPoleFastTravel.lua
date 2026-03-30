@@ -14,7 +14,6 @@ local PHASE_ID = PhaseId.PowerPoleFastTravel
 
 
 
-
 PhasePowerPoleFastTravel = HL.Class('PhasePowerPoleFastTravel', phaseBase.PhaseBase)
 
 local ReservePanelIds = {  
@@ -126,6 +125,11 @@ end
 
 PhasePowerPoleFastTravel._OnEnterPowerPoleFastTravelMode = HL.StaticMethod(HL.Table) << function(args)
     local logicId, openFailedCallback = unpack(args)
+    if PhaseManager:GetTopPhaseId() ~= PhaseId.Level then
+        openFailedCallback()
+        return
+    end
+
     local openSuccess = PhaseManager:OpenPhase(PhaseId.PowerPoleFastTravel, args)
     if not openSuccess then
         openFailedCallback()

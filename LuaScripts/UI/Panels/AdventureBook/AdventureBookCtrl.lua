@@ -305,6 +305,8 @@ AdventureBookCtrl._OnTabClick = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << func
     if prevTabInfo.panelId == PanelId.AdventureDaily then
         
         self:Notify(MessageConst.P_ON_ADVENTURE_DAILY_CLOSE_REWARD_TIPS)
+        
+        Notify(MessageConst.HIDE_COMMON_TITLE_TIPS)
     end
     self.m_curTabIndex = luaIndex
     local curTabInfo = self.m_tabInfos[luaIndex]

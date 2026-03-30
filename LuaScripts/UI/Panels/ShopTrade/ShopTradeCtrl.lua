@@ -1379,6 +1379,12 @@ ShopTradeCtrl._RefreshLocalShopGoodsUI = HL.Method(HL.Boolean) << function(self,
     self.view.goodsNode.bulkSellBtnNode.gameObject:SetActive(not isCommonShop and hasPosition)
     self.view.goodsNode.goodsGroupList:UpdateCount(count, isChangeTab)
     if isChangeTab then
+        self.view.goodsNode.goodsGroupList:UpdateShowingCells(function(csIndex, obj)
+            local cell = self.m_getGoodsGroupCellFunc(obj)
+            self:_OnRefreshGoodsGroupCell(cell, LuaIndex(csIndex))
+        end)
+    end
+    if isChangeTab then
         self.m_curSelectTagIndex = 1
     end
     

@@ -6,8 +6,11 @@ local PANEL_ID = PanelId.WorldLevelPreview
 
 
 
+
 WorldLevelPreviewCtrl = HL.Class('WorldLevelPreviewCtrl', uiCtrl.UICtrl)
 
+
+WorldLevelPreviewCtrl.m_fromMainHudActionQueue = HL.Field(HL.Boolean) << false
 
 
 
@@ -23,23 +26,28 @@ WorldLevelPreviewCtrl.s_messages = HL.StaticField(HL.Table) << {
 WorldLevelPreviewCtrl.ShowPreview = HL.StaticMethod(HL.Any) << function(args)
     
     local lastLevel, currentWorldLevel, isActiveChange = unpack(args)
-    local action = function()
-        if lastLevel == nil or lastLevel == 0 then
-            return
-        end
-        UIManager:Open(PANEL_ID, {
-            isUp = currentWorldLevel > lastLevel,
-            lastLevel = lastLevel,
-            currentWorldLevel = currentWorldLevel,
-        })
+    local openArg = {
+        isUp = currentWorldLevel > lastLevel,
+        lastLevel = lastLevel,
+        currentWorldLevel = currentWorldLevel,
+    }
+    
+    local actionDirect = function()
+        openArg.fromMainHudActionQueue = false
+        UIManager:Open(PANEL_ID, openArg)
+    end
+    
+    local actionFromQueue = function()
+        openArg.fromMainHudActionQueue = true
+        UIManager:Open(PANEL_ID, openArg)
     end
     if isActiveChange then
         PhaseManager:PopPhase(PhaseId.Watch)
-        action()
+        actionDirect()
     else
         
         if LuaSystemManager.mainHudActionQueue ~= nil and (not LuaSystemManager.mainHudActionQueue:HasRequest('WorldLevelPreview')) and GameInstance.player.adventure.needShowWorldLevelUpToast then
-            LuaSystemManager.mainHudActionQueue:AddRequest('WorldLevelPreview', action)
+            LuaSystemManager.mainHudActionQueue:AddRequest('WorldLevelPreview', actionFromQueue)
         end
     end
 
@@ -50,15 +58,21 @@ end
 
 
 WorldLevelPreviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    
+    self.m_fromMainHudActionQueue = arg and arg.fromMainHudActionQueue == true
     self.view.closeBtn.onClick:RemoveAllListeners()
     self.view.closeBtn.onClick:AddListener(function()
         self:PlayAnimationOutAndClose()
-        Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "WorldLevelPreview")
+        if self.m_fromMainHudActionQueue then
+            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "WorldLevelPreview")
+        end
     end)
 
     self:BindInputPlayerAction("common_cancel_no_hint", function()
         self:PlayAnimationOutAndClose()
-        Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "WorldLevelPreview")
+        if self.m_fromMainHudActionQueue then
+            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "WorldLevelPreview")
+        end
     end)
 
     if arg then

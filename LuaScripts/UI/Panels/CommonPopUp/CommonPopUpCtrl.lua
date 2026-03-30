@@ -31,6 +31,7 @@ EToggleStyle = {
 
 
 
+
 CommonPopUpCtrl = HL.Class('CommonPopUpCtrl', uiCtrl.UICtrl)
 
 
@@ -53,6 +54,9 @@ CommonPopUpCtrl.m_getCharIconCell = HL.Field(HL.Function)
 
 
 CommonPopUpCtrl.m_timeScaleHandler = HL.Field(HL.Number) << 0
+
+
+CommonPopUpCtrl.m_isInterrupted = HL.Field(HL.Boolean) << false
 
 
 
@@ -277,6 +281,7 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
     self.view.inputFieldMore.characterLimit = args.characterLimit or UIConst.INPUT_FIELD_CHARACTER_LIMIT
 
     self.m_args = args
+    self.m_isInterrupted = false
 
     self.view.contentText:SetAndResolveTextStyle(args.content)
 
@@ -549,6 +554,10 @@ CommonPopUpCtrl._OnClickConfirm = HL.Method() << function(self)
     end
     local text = args.inputMore and self.view.inputFieldMore.text or self.view.inputField.text
     local function onConfirm()
+        if self.m_isInterrupted then
+            
+            return
+        end
         if args.onConfirm then
             if args.input then
                 args.onConfirm(text)
@@ -677,6 +686,7 @@ CommonPopUpCtrl._TryProcessInterruptMessage = HL.Method(HL.Boolean) << function(
     for _, message in ipairs(interrupt.interruptMessage) do
         if register then
             MessageManager:Register(message, function()
+                self.m_isInterrupted = true
                 
                 if interrupt.onInterrupt then
                     interrupt.onInterrupt()

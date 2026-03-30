@@ -373,12 +373,13 @@ AchievementListCtrl._IsFilteredBySearchKey = HL.Method(HL.String).Return(HL.Bool
     if string.isEmpty(name) then
         return false, name
     end
-    if string.find(string.lower(name), string.lower(self.m_searchKey), 1, true) then
-        local rep = string.format(Language.LUA_ACHIEVEMENT_NAME_SEARCH_REPLACE, self.m_searchKey)
-        local nameStr, repCount = string.gsub(name, self.m_searchKey, rep)
-        if repCount > 0 then
-            return true, nameStr
-        end
+    local key = self.m_searchKey
+    local rep = string.format(Language.LUA_ACHIEVEMENT_NAME_SEARCH_REPLACE, key) 
+    rep = rep:gsub("%%", "%%%%")
+    local pattern = key:gsub("([%(%)%.%%%+%-%*%?%[%]%^%$])", "%%%1")
+    local nameStr, repCount = string.gsub(name, pattern, rep)
+    if repCount > 0 then
+        return true, nameStr
     end
     return false, name
 end

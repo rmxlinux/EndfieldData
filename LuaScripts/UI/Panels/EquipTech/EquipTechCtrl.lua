@@ -1080,6 +1080,7 @@ EquipTechCtrl.m_closeEnhanceMaterialItemTipsBindingId = HL.Field(HL.Number) << 0
 EquipTechCtrl._BackToEnhanceTarget = HL.Method() << function(self)
     self.view.stateController:SetState(STATE_NAME.ENHANCE_TARGET)
     self.view.leftBarEnhance.layoutElement.ignoreLayout = false
+    self.view.leftBarEnhance.inputGroup.enabled = true
     InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.selectMaterials.commonItemList.view.scrollRect.naviGroup)
     self.view.rightBarEnhanceAttr.naviGroup:ManuallyFocus()
     if self.m_lastEnhanceAttrCell then
@@ -1101,6 +1102,7 @@ EquipTechCtrl._EnterEnhanceMaterial = HL.Method() << function(self)
     self.view.leftBarEnhance.gameObject:SetActive(true)
     self.view.leftBarEnhance.layoutElement.ignoreLayout = true
     self.view.leftBarEnhance.animationWrapper:SampleToInAnimationEnd()
+    self.view.leftBarEnhance.inputGroup.enabled = false
     self:_RefreshEnhanceMaterial(nil)
     self:_RefreshEnhanceMaterialList()
     self.view.middleBar.bottomNode.btnMake.onClick:RemoveAllListeners()

@@ -55,16 +55,19 @@ BusinessCardProcessNode.InitBusinessCardProcessNode = HL.Method(HL.Table) << fun
         local chapterId = GameInstance.player.mission:GetChapterIdByMissionId(info.mainMissionId);
         currentChapter = GameInstance.player.mission:GetChapterInfo(chapterId)
     else
-        local missionList = GameInstance.player.mission:GetMissionListLayout(GEnums.MissionType.Main:GetHashCode())
+        local missionList = GameInstance.player.mission:GetMissionListLayout_CBT3(GEnums.MissionViewType.MissionViewMain:GetHashCode())
         
         local minChapterId = math.maxinteger
-        for _, chapter in pairs(missionList.chapters) do
-            local chapter = GameInstance.player.mission:GetChapterInfo(chapter.chapterId)
-            if chapter.priority < minChapterId then
-                minChapterId = chapter.priority
-                currentChapter = chapter
+        for _,listLayout in pairs(missionList.importance) do
+            for _, chapter in pairs(listLayout.chapters) do
+                local chapterInfo = GameInstance.player.mission:GetChapterInfo(chapter.chapterId)
+                if chapterInfo.priority < minChapterId then
+                    minChapterId = chapterInfo.priority
+                    currentChapter = chapterInfo
+                end
             end
         end
+
     end
 
     if currentChapter == nil then

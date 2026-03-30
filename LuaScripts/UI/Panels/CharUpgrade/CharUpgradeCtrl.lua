@@ -282,6 +282,7 @@ CharUpgradeCtrl._RefreshUpgradePanel = HL.Method(HL.Table, HL.Opt(HL.Boolean)) <
     local curExp, levelUpExp, curLevel, stageLevel, expCards = CharInfoUtils.getCharExpInfo(charInstId)
     local isUpgrade = curLevel < stageLevel
     if isUpgradeTransition then
+        self.view.luaPanel:BlockAllInput()
         if isUpgrade then
             
             AudioAdapter.PostEvent("Au_UI_Event_CharLevelUp")
@@ -303,6 +304,7 @@ CharUpgradeCtrl._RefreshUpgradePanel = HL.Method(HL.Table, HL.Opt(HL.Boolean)) <
             AudioAdapter.PostEvent("Au_UI_Event_CharLevelLimit")
 
         end
+        self.view.luaPanel:RecoverAllInput()
     end
 
     self.view.upgradeNode.gameObject:SetActive(isUpgrade)

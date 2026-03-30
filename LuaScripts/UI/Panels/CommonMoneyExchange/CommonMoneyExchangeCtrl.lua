@@ -11,8 +11,14 @@ local PHASE_ID = PhaseId.CommonMoneyExchange
 
 
 
-CommonMoneyExchangeCtrl = HL.Class('CommonMoneyExchangeCtrl', uiCtrl.UICtrl)
 
+
+
+
+
+
+
+CommonMoneyExchangeCtrl = HL.Class('CommonMoneyExchangeCtrl', uiCtrl.UICtrl)
 
 
 
@@ -27,8 +33,16 @@ CommonMoneyExchangeCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 CommonMoneyExchangeCtrl.m_arg = HL.Field(HL.Table)
+
+
+CommonMoneyExchangeCtrl.m_weaponGachaMoneyCount = HL.Field(HL.Number) << 0
+
+
+CommonMoneyExchangeCtrl.m_weaponDecreaseNumber = HL.Field(HL.Number) << 0
+
+
+CommonMoneyExchangeCtrl.m_weaponIncreaseNumber = HL.Field(HL.Number) << 0
 
 
 
@@ -93,12 +107,24 @@ CommonMoneyExchangeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     
+    self.view.numWeaponNode.minButton.onClick:AddListener(function()
+        self:_OnClickWeaponDecreaseBtn()
+    end)
+    self.view.numWeaponNode.maxButton.onClick:AddListener(function()
+        self:_OnClickWeaponIncreaseBtn()
+    end)
+
+    
     self.view.exchangeNodeSelectableNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
         local state = isFocused and CS.Beyond.UI.CustomUIStyle.OverrideValidState.ForceNotValid
             or CS.Beyond.UI.CustomUIStyle.OverrideValidState.None
         self.view.numberSelector.view.addButton.transform:Find("KeyHint"):GetComponent("CustomUIStyle").overrideValidState = state
         self.view.numberSelector.view.reduceButton.transform:Find("KeyHint"):GetComponent("CustomUIStyle").overrideValidState = state
     end)
+
+    if self.m_arg.targetId == Tables.globalConst.gachaWeaponItemId then
+        self:_InitWeaponGachaMoneyCount()
+    end
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 
@@ -170,14 +196,19 @@ CommonMoneyExchangeCtrl.Refresh = HL.Method(HL.Opt(HL.Any)) << function(self, ar
     end
     local curNum = self.view.numberSelector.curNumber
     self.view.numberSelector:InitNumberSelector(curNum, 1, max, function(newNum)
-        self.view.costNumTxt1.text = math.floor(newNum * config.sourceMoneyMinSwap)
-        self.view.costNumTxt2.text = math.floor((newNum * config.sourceMoneyMinSwap / config.sourceMoneyCost) * config.targetMoneyGet)
-        self.view.numberSelector.view.numberText.text = math.floor(newNum )
+        local costOriginNum = math.floor(newNum * config.sourceMoneyMinSwap)
+        local getTargetNum = math.floor((newNum * config.sourceMoneyMinSwap / config.sourceMoneyCost) * config.targetMoneyGet)
+        self.view.costNumTxt1.text = costOriginNum
+        self.view.costNumTxt2.text = getTargetNum
+        self.view.numberSelector.view.numberText.text = math.floor(newNum)
         if canGotoRecharge then
             self.view.confirmTxt.text = string.format(Language.LUA_COMMON_MONEY_EXCHANGE_GOTO_RECHARGE_CONFIRMTXT)
         else
             self.view.confirmTxt.text = string.format(Language.LUA_SHOP_MONEY_EXCHANGE_TIPS, item1.name .. "×" .. math.floor(newNum * config.sourceMoneyMinSwap), item2.name .. "×" ..
                 math.floor((newNum * config.sourceMoneyMinSwap / config.sourceMoneyCost) * config.targetMoneyGet))
+        end
+        if targetId == Tables.globalConst.gachaWeaponItemId then
+            self:_RefreshWeaponNode(newNum)
         end
     end)
 
@@ -188,6 +219,13 @@ CommonMoneyExchangeCtrl.Refresh = HL.Method(HL.Opt(HL.Any)) << function(self, ar
     else
         self.view.numberSelector.view.maxButton.transform:GetComponent("CustomUIStyle").overrideValidState = CS.Beyond.UI.CustomUIStyle.OverrideValidState.None
         self.view.numberSelector.view.minButton.transform:GetComponent("CustomUIStyle").overrideValidState = CS.Beyond.UI.CustomUIStyle.OverrideValidState.None
+    end
+
+    
+    if targetId == Tables.globalConst.gachaWeaponItemId then
+        self.view.numWeaponNode.gameObject:SetActive(true)
+    else
+        self.view.numWeaponNode.gameObject:SetActive(false)
     end
 end
 
@@ -200,11 +238,148 @@ end
 
 
 
+CommonMoneyExchangeCtrl._InitWeaponGachaMoneyCount = HL.Method() << function(self)
+    local _, box, goods = GameInstance.player.shopSystem:GetNowUpWeaponData()
+    local count = box == nil and 0 or box.Count
+    if count > 0 then
+        local goodsData = box[0]
+        local costInfo = CashShopUtils.TryGetBuyGachaWeaponGoodsCostInfo(goodsData.shopId, goodsData.goodsId)
+        self.m_weaponGachaMoneyCount = costInfo.costMoneyCount
+    else
+        self.m_weaponGachaMoneyCount = 1980
+    end
+end
+
+
+
+
+CommonMoneyExchangeCtrl._RefreshWeaponNode = HL.Method(HL.Number)
+    << function(self, selectorNum)
+    local sourceId = self.m_arg.sourceId
+    local targetId = self.m_arg.targetId
+    local existCfg, config = CS.Beyond.Gameplay.ShopSystem.GetExchangeData(sourceId, targetId)
+    if not existCfg then
+        logger.error("can not find money exchange data")
+        return
+    end
+    
+    local sourceNum = Utils.getItemCount(sourceId)
+    
+    local targetNum = Utils.getItemCount(targetId)
+    
+    local costOriginNum = math.floor(selectorNum * config.sourceMoneyMinSwap)
+    
+    local getTargetNum = math.floor((selectorNum * config.sourceMoneyMinSwap / config.sourceMoneyCost) * config.targetMoneyGet)
+    
+    local weaponNumStep = math.floor((1 * config.sourceMoneyMinSwap / config.sourceMoneyCost) * config.targetMoneyGet)
+    
+    local minWeaponNum = targetNum + weaponNumStep
+    
+    local minWeaponGachaCount = math.floor(minWeaponNum / self.m_weaponGachaMoneyCount)
+    
+    local firstBiggerWeaponNum = (minWeaponGachaCount + 1) * self.m_weaponGachaMoneyCount
+    local firstStepCount = math.ceil((firstBiggerWeaponNum - minWeaponNum) / weaponNumStep)
+    local firstNumberSelectorNumThreshold = firstStepCount + 1
+    
+    local afterCurrSelectSourceNum = sourceNum - costOriginNum
+    
+    local afterCurrSelectWeaponNum = targetNum + getTargetNum
+    
+    local currSelectWeaponGachaCount = math.floor(afterCurrSelectWeaponNum / self.m_weaponGachaMoneyCount)
+    
+    local nextBiggerWeaponNum = (currSelectWeaponGachaCount + 1) * self.m_weaponGachaMoneyCount
+    local nextStepCount = math.ceil((nextBiggerWeaponNum - afterCurrSelectWeaponNum) / weaponNumStep)
+    local nextNumberSelectorNumThreshold = nextStepCount + selectorNum
+    
+    
+    
+    
+    
+    
+    if selectorNum < firstNumberSelectorNumThreshold then
+        self.view.numWeaponNode.minButton.gameObject:SetActive(false)
+        self.view.numWeaponNode.maxButton.gameObject:SetActive(true)
+        self.m_weaponDecreaseNumber = selectorNum - 1
+        self.m_weaponIncreaseNumber = firstNumberSelectorNumThreshold - selectorNum
+    elseif selectorNum == firstNumberSelectorNumThreshold then
+        self.view.numWeaponNode.minButton.gameObject:SetActive(true)
+        self.view.numWeaponNode.maxButton.gameObject:SetActive(true)
+        self.m_weaponDecreaseNumber = selectorNum - 1
+        self.m_weaponIncreaseNumber = nextStepCount
+    else
+        self.view.numWeaponNode.minButton.gameObject:SetActive(true)
+        self.view.numWeaponNode.maxButton.gameObject:SetActive(true)
+        
+        local afterDecreaseOneWeaponNum = afterCurrSelectWeaponNum - weaponNumStep
+        local afterDecreaseOneGachaCount = math.floor(afterDecreaseOneWeaponNum / self.m_weaponGachaMoneyCount)
+        local isPerfect = afterDecreaseOneGachaCount < currSelectWeaponGachaCount
+        if isPerfect then
+            
+            local prevSmallerWeaponNum = (currSelectWeaponGachaCount - 1) * self.m_weaponGachaMoneyCount
+            local prevStepCount = math.floor((afterCurrSelectWeaponNum - prevSmallerWeaponNum) / weaponNumStep)
+            self.m_weaponDecreaseNumber = prevStepCount
+        else
+            
+            local currGachaWeaponNum = currSelectWeaponGachaCount * self.m_weaponGachaMoneyCount
+            local diff = afterCurrSelectWeaponNum - currGachaWeaponNum
+            local currStepCount = math.floor(diff / weaponNumStep)
+            self.m_weaponDecreaseNumber = currStepCount
+        end
+        self.m_weaponIncreaseNumber = nextStepCount
+    end
+    self.view.numWeaponNode.minButtonText.text = "-" .. self.m_weaponDecreaseNumber
+    self.view.numWeaponNode.maxButtonText.text = "+" .. self.m_weaponIncreaseNumber
+    if math.floor((selectorNum + self.m_weaponIncreaseNumber) * config.sourceMoneyMinSwap) > sourceNum then
+        self.view.numWeaponNode.maxButtonStateController:SetState("MaxRed")
+    else
+        self.view.numWeaponNode.maxButtonStateController:SetState("Normal")
+    end
+
+    
+    if sourceNum < config.sourceMoneyMinSwap then
+        self.view.confirmTxt2.gameObject:SetActive(false)
+    else
+        self.view.confirmTxt2.gameObject:SetActive(true)
+        local rightText = string.format(Language.LUA_COMMON_MONEY_EXCHANGE_WEAPON_CONFIRM_RIGHT, afterCurrSelectWeaponNum, currSelectWeaponGachaCount)
+        self.view.confirmTxt2.text = rightText
+    end
+end
+
+
+
+CommonMoneyExchangeCtrl._OnClickWeaponDecreaseBtn = HL.Method() << function(self)
+    local curNum = self.view.numberSelector.curNumber
+    local targetNum = curNum - self.m_weaponDecreaseNumber
+    self.view.numberSelector:RefreshNumber(targetNum)
+end
+
+
+
+CommonMoneyExchangeCtrl._OnClickWeaponIncreaseBtn = HL.Method() << function(self)
+    local sourceId = self.m_arg.sourceId
+    local targetId = self.m_arg.targetId
+    local existCfg, config = CS.Beyond.Gameplay.ShopSystem.GetExchangeData(sourceId, targetId)
+    if not existCfg then
+        logger.error("can not find money exchange data")
+        return
+    end
+    local curNum = self.view.numberSelector.curNumber
+    local targetNum = curNum + self.m_weaponIncreaseNumber
+    
+    local sourceNum = Utils.getItemCount(sourceId)
+    if math.floor(targetNum * config.sourceMoneyMinSwap) > sourceNum then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_COMMON_MONEY_EXCHANGE_NEXT_WEAPON_GACHA_NOT_ENOUGH)
+        return
+    end
+    self.view.numberSelector:RefreshNumber(targetNum)
+end
+
+
+
 CommonMoneyExchangeCtrl._OnGoToRechargeBtnClick = HL.Method() << function(self)
     PhaseManager:ExitPhaseFast(PHASE_ID)
     CashShopUtils.GotoCashShopRechargeTab()
 end
-
 
 
 

@@ -114,7 +114,7 @@ SpaceshipControlCenterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.m_visitorHelpBindingId = self:BindInputPlayerAction("ss_help_friend_room", function()
             if self.m_nowNaviRoomCell then
                 AudioManager.PostEvent("Au_UI_Button_Produce")
-                self.m_nowNaviRoomCell.visitorsNode.helpBtn.onClick:Invoke()
+                GameInstance.player.spaceship:SpaceshipHelpRoom(self.m_nowNaviRoomCell.roomId)
             end
         end)
     end

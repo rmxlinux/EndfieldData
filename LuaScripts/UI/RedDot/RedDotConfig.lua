@@ -2113,7 +2113,10 @@ local Config = {
             
             local activityId = HighDifficultyUtils.getHighDifficultyActivityId()
             if activityId and ActivityUtils.isNewUnlockActivity(activityId) then
-                return true, UIConst.RED_DOT_TYPE.Normal
+                local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+                if activity and activity.status ~= GEnums.ActivityStatus.Completed then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
             end
             return false
         end
@@ -3982,6 +3985,9 @@ local Config = {
         },
         needArg = true,
         Check = function(roomIndex)
+            if GameInstance.player.spaceship.isViewingFriend then
+                return false
+            end
             local state = true
             for id, index in pairs(roomIndex) do
                 local succ, roomInfo = GameInstance.player.spaceship:TryGetRoom(id)

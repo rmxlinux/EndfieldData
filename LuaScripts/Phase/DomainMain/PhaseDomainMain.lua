@@ -87,7 +87,6 @@ end
 
 PhaseDomainMain._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if self.hasJumpedToOtherPhase and not fastMode and self.panels[1] ~= nil then
-        self.hasJumpedToOtherPhase = false
         local panelId = self.panels[1]
         if self.m_panel2Item[panelId] ~= nil then
             local uiCtrl = self.m_panel2Item[panelId].uiCtrl

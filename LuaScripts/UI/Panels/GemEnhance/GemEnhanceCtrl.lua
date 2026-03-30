@@ -176,7 +176,8 @@ GemEnhanceCtrl._RefreshLeftGemList = HL.Method() << function(self)
             self.m_selectedGemInstId = -1
             self.view.stateController:SetState("empty")
             self:_UpdateSelectedGemSkillInfo()
-        end
+        end,
+        sortKeys = { "equippedWeaponInstId", "lockedIndex", "trashIndexReverse", "rarity", "sortId1", "sortId2", "id", "instId" }
     })
 
     
@@ -421,7 +422,7 @@ GemEnhanceCtrl._RefreshMaterialGemList = HL.Method(HL.Opt(HL.Boolean)) << functi
             self:_RefreshEnhanceBtn()
         end,
         defaultSelectedIndex = isFirstSelected and 1 or nil,
-        sortKeys = { "matchWeaponSkillIndex", "enableOnWeaponIndex", "trashIndex", "rarity", "sortId1", "sortId2", "id", "instId" }
+        sortKeys = { "trashIndex", "lockedIndexReverse", "equippedWeaponInstIdReverse", "rarity", "sortId1", "sortId2", "id", "instId" }
     })
 end
 

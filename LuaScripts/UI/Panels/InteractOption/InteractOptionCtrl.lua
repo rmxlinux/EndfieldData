@@ -182,7 +182,6 @@ InteractOptionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         return obj
     end)
     self.view.optionItem.gameObject:SetActive(false)
-    self:_CacheCell(self.view.optionItem)
     self.m_obj2CellMap = {}
     self.m_playingOutInfoTimers = {}
 

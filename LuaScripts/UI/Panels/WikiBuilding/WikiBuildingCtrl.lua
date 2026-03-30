@@ -175,6 +175,8 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
     self.m_obtainCellCache:Refresh(modeInfoCount, function(obtainCell, index)
         local modeInfo = modeInfos[index]
         obtainCell.titleNode.gameObject:SetActive(modeInfoCount > 1)
+        obtainCell.titleNodeToggle:SetIsOnWithoutNotify(true)
+        obtainCell.content.gameObject:SetActive(true)
         if modeInfoCount > 1 then
             local _, modeData = Tables.factoryMachineCraftModeTable:TryGetValue(modeInfo.modeType)
             if modeData then
@@ -220,6 +222,19 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
                     InputManagerInst:ToggleBinding(craftCell.view.pinBtn.view.pinToggle.toggleBindingId, false)
                 end
             end
+
+            local preToggleIsOn = false
+            local preObtainCell = self.m_obtainCellCache:Get(index - 1)
+            if preObtainCell then
+                preToggleIsOn = preObtainCell.titleNodeToggle.isOn
+            end
+            obtainCell.titleNodeToggle.banExplicitOnUp = not preToggleIsOn
+
+            local nextObtainCell = self.m_obtainCellCache:Get(index + 1)
+            if nextObtainCell then
+                nextObtainCell.titleNodeToggle.banExplicitOnUp = not isOn
+            end
+            obtainCell.titleNodeToggle.banExplicitOnDown = not isOn
         end)
 
         if not obtainCell.m_craftCellCache then

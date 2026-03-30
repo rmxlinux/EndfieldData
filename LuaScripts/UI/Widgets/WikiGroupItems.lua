@@ -7,6 +7,8 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
 WikiGroupItems = HL.Class('WikiGroupItems', UIWidgetBase)
 
 
@@ -14,6 +16,15 @@ WikiGroupItems.m_entryIds = HL.Field(HL.Table)
 
 
 WikiGroupItems.m_rootNode = HL.Field(HL.Userdata)
+
+
+WikiGroupItems.m_itemCellCache = HL.Field(HL.Forward("UIListCache"))
+
+
+WikiGroupItems.m_monsterCellCache = HL.Field(HL.Forward("UIListCache"))
+
+
+WikiGroupItems.m_curCellCache = HL.Field(HL.Forward("UIListCache"))
 
 
 
@@ -68,19 +79,21 @@ WikiGroupItems.InitWikiGroupItems = HL.Method(HL.Table, HL.Number, HL.Number, HL
         getInitParamFunc = function(wikiEntryShowData)
             return wikiEntryShowData.wikiEntryData.refMonsterTemplateId
         end
+        self.m_monsterCellCache = self.m_monsterCellCache or UIUtils.genCellCache(self.view.monster)
+        self.m_curCellCache = self.m_monsterCellCache
     else
         rootNode = self.view.itemNode
         initFuncName = "InitItem"
         getInitParamFunc = function(wikiEntryShowData)
             return { id = wikiEntryShowData.wikiEntryData.refItemId }
         end
+        self.m_itemCellCache = self.m_itemCellCache or UIUtils.genCellCache(self.view.item)
+        self.m_curCellCache = self.m_itemCellCache
     end
     self.m_rootNode = rootNode
     self.m_entryIds = {}
-    CSUtils.UIContainerResize(rootNode, itemCount)
-    for i = 1, itemCount do
-        local cell = self:_WrapUIWidget(rootNode:GetChild(i - 1))
-        local wikiEntryShowData = wikiGroupShowData.wikiEntryShowDataList[startIndex + i - 1]
+    self.m_curCellCache:Refresh(itemCount, function(cell, index)
+        local wikiEntryShowData = wikiGroupShowData.wikiEntryShowDataList[startIndex + index - 1]
         cell[initFuncName](cell, getInitParamFunc(wikiEntryShowData), function()
             onItemClicked(cell, wikiEntryShowData)
         end)
@@ -114,7 +127,7 @@ WikiGroupItems.InitWikiGroupItems = HL.Method(HL.Table, HL.Number, HL.Number, HL
             end
             table.insert(self.m_entryIds, entryId)
         end
-    end
+    end)
 
     return selectedCell
 end
@@ -125,26 +138,8 @@ end
 WikiGroupItems.GetCellByEntryId = HL.Method(HL.String).Return(HL.Any) << function(self, targetEntryId)
     for i, entryId in ipairs(self.m_entryIds) do
         if entryId == targetEntryId then
-            return self:_WrapUIWidget(self.m_rootNode:GetChild(i - 1))
+            return self.m_curCellCache:Get(i)
         end
-    end
-end
-
-
-
-
-WikiGroupItems._WrapUIWidget = HL.Method(HL.Userdata).Return(HL.Any) << function(self, transform)
-    if IsNull(transform) then
-        return nil
-    end
-    local luaWidget = transform:GetComponent("LuaUIWidget")
-    if not luaWidget then
-        return nil
-    end
-    if luaWidget.table then
-        return luaWidget.table[1]
-    else
-        return UIWidgetManager:Wrap(luaWidget)
     end
 end
 

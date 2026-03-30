@@ -776,9 +776,12 @@ MainHudActionQueueSystem.Interrupt = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) <
     self.m_curPreloadId = nil
     self.m_isShowing = false
     self.m_curActionStartTime = -1
+    local needRemove = request.finishWhenInterrupt and not forceNotFinish
+    if needRemove then
+        table.remove(self.m_pendingRequests, 1)
+    end
     Notify(MessageConst.INTERRUPT_MAIN_HUD_ACTION_QUEUE)
-    if request.finishWhenInterrupt and not forceNotFinish then
-        table.remove(self.m_pendingRequests, 1) 
+    if needRemove then
         self:_CheckAllMainHudActionFinish()
     else
         request.haveBeenInterrupted = true

@@ -51,6 +51,8 @@ local missionSystem = GameInstance.player.mission
 
 
 
+
+
 SettlementMainCtrl = HL.Class('SettlementMainCtrl', uiCtrl.UICtrl)
 
 
@@ -146,6 +148,9 @@ SettlementMainCtrl.m_itemStoreCellCache = HL.Field(HL.Forward("UIListCache"))
 SettlementMainCtrl.m_waitTradeComplete = HL.Field(HL.Boolean) << false
 
 
+SettlementMainCtrl.m_fromDialog = HL.Field(HL.Boolean) << false
+
+
 
 SettlementMainCtrl.m_moneyStoreCellAniInterval = HL.Field(HL.Thread)
 
@@ -164,6 +169,9 @@ SettlementMainCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     if not initSuccess then
         return
     end
+    if type(arg) == "table" and arg.fromDialog == true then
+        self.m_fromDialog = true
+    end
     self:_UpdateData()
     self:_RefreshAllUI()
 end
@@ -180,7 +188,7 @@ SettlementMainCtrl.OnClose = HL.Override() << function(self)
     settlementSystem:RemoveSettlementSyncRequest(self.view.transform.name)
     self.m_moneyStoreCellAniInterval = self:_ClearCoroutine(self.m_moneyStoreCellAniInterval)
     local isOpen, _ = PhaseManager:IsOpen(PhaseId.Dialog)
-    if isOpen then
+    if isOpen and self.m_fromDialog then
         Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
     end
 end
@@ -882,6 +890,7 @@ SettlementMainCtrl._OnChangeSelectStl = HL.Method(HL.Number) << function(self, n
         logger.error("select settlement index out of range: " .. newLuaIndex)
         return
     end
+    self:_ResetTradeIconAni()
     local cell = self.m_genStlCellFunc(oldIndex)
     if cell then
         cell.animationWrapper:Play("settlementmainscrollcell_normal")
@@ -1148,6 +1157,25 @@ SettlementMainCtrl._OnSelectItemCountPlayAni = HL.Method(HL.Boolean) << function
     end
     
     info.lastUpdateAniTime = Time.time
+end
+
+
+
+SettlementMainCtrl._ResetTradeIconAni = HL.Method() << function(self)
+    local info = self.m_tradeIconAniInfo
+    if not info then
+        return
+    end
+    local aniNode = self.view.tradeNode.aniNode
+    info.stage = TradeIconAniStage.None
+    info.curIsAdd = false
+    info.lastUpdateAniTime = 0
+    aniNode.stlIconInAniWrapper:ClearTween(false)
+    aniNode.depotIconInAniWrapper:ClearTween(false)
+    aniNode.stlIconOutAniWrapper:ClearTween(false)
+    aniNode.depotIconOutAniWrapper:ClearTween(false)
+    aniNode.stlIconHideAniWrapper:ClearTween(false)
+    aniNode.depotIconHideAniWrapper:ClearTween(false)
 end
 
 

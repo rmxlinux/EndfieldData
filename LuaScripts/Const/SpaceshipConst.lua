@@ -75,5 +75,5 @@ SPACESHIP_CLUE_INDEX_2_ATTR_TYPE =
     [4] = GEnums.SpaceshipRoomAttrType.GuestRoomClue4ProbabilityIncrease,
     [5] = GEnums.SpaceshipRoomAttrType.GuestRoomClue5ProbabilityIncrease,
     [6] = GEnums.SpaceshipRoomAttrType.GuestRoomClue6ProbabilityIncrease,
-    [7] = GEnums.SpaceshipRoomAttrType.GuestRoomClue6ProbabilityIncrease,
+    [7] = GEnums.SpaceshipRoomAttrType.GuestRoomClue7ProbabilityIncrease,
 }

@@ -609,7 +609,8 @@ UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table)).Return(HL.Opt(HL
         
         
         
-        if cfg.hideCamera and self.m_showingHideCameraPanelState[panelId] == UIConst.HIDE_CAMERA_PANEL_STATE.In then
+        local hideCamState = self.m_showingHideCameraPanelState[panelId] 
+        if cfg.hideCamera and (not hideCamState or hideCamState == UIConst.HIDE_CAMERA_PANEL_STATE.In) then
             self:ChangeHideCameraPanelState(panelId, UIConst.HIDE_CAMERA_PANEL_STATE.Idle)
         end
     end)
@@ -2225,7 +2226,7 @@ UIManager.OnToggleUiAction = HL.Method(HL.Table) << function(self, arg)
         self:_ToggleUIInputBinding(false, "TOGGLE_UI_ACTION")
     end
 
-    Notify(MessageConst.AFTER_TOGGLE_UI_ACTION, { isShow })
+    Notify(MessageConst.AFTER_TOGGLE_UI_ACTION, arg)
 end
 
 

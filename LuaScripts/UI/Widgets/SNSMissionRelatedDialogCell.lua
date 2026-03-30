@@ -10,6 +10,7 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 SNSMissionRelatedDialogCell = HL.Class('SNSMissionRelatedDialogCell', UIWidgetBase)
 
 
@@ -23,10 +24,10 @@ SNSMissionRelatedDialogCell.m_onClickDialogCellFunc = HL.Field(HL.Function)
 
 SNSMissionRelatedDialogCell._OnFirstTimeInit = HL.Override() << function(self)
     
-    
-    
-    
-    
+    self:RegisterMessage(MessageConst.ON_SNS_DIALOG_MODIFY, function(args)
+        local _, dialogId = unpack(args)
+        self:_OnSNSDialogModify(dialogId)
+    end)
 
     self.view.btnClick.onClick:AddListener(function()
         self:_OnClickDialogCell()
@@ -46,6 +47,7 @@ SNSMissionRelatedDialogCell.InitSNSMissionRelatedDialogCell = HL.Method(HL.Strin
 
     self:_InitInfo()
     self:_RefreshDialogInfo()
+    self:_RefreshDialogInfoEndState()
 
     self.view.redDot:InitRedDot("SNSMissionDialogCell", dialogId)
 end
@@ -84,7 +86,8 @@ SNSMissionRelatedDialogCell._OnSNSDialogModify = HL.Method(HL.String) << functio
         return
     end
 
-    self:_RefreshDialogInfo()
+    
+    self:_RefreshDialogInfoEndState()
 end
 
 
@@ -94,7 +97,11 @@ SNSMissionRelatedDialogCell._RefreshDialogInfo = HL.Method() << function(self)
     local richStyleContent = SNSUtils.resolveTextStyleWithPlayerName(latestContent)
     self.view.descTxtN:SetAndResolveTextStyle(richStyleContent)
     self.view.descTxtS:SetAndResolveTextStyle(richStyleContent)
+end
 
+
+
+SNSMissionRelatedDialogCell._RefreshDialogInfoEndState = HL.Method() << function(self)
     local isEnd = GameInstance.player.sns:DialogHasEnd(self.m_dialogId)
     self.view.canvasGroup.alpha = isEnd and 0.6 or 1
 end

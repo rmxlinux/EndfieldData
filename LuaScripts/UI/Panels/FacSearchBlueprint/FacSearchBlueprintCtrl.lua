@@ -137,12 +137,8 @@ FacSearchBlueprintCtrl.OnCreate = HL.Override(HL.Any) << function(self, searchIn
             self.view.mainStateController:SetState("Share")
             self.m_friendSharing = true
             self.m_friendRoleId = searchInfos.friendRoleId
-            self.view.searchNode:Clear()
-            self:_TrySearch(true)
         else
             self.view.mainStateController:SetState("Normal")
-            self.view.searchNode:Clear()
-            self:_TrySearch(true)
         end
         if searchInfos.keyword and searchInfos.csBPInst then
             self.view.inputField.text = searchInfos.keyword
@@ -161,6 +157,11 @@ FacSearchBlueprintCtrl.OnCreate = HL.Override(HL.Any) << function(self, searchIn
                     break
                 end
             end
+        else
+            
+            
+            self.view.searchNode:Clear()
+            self:_TrySearch(true)
         end
     else
         self.view.mainStateController:SetState("Normal")
