@@ -627,8 +627,17 @@ DomainMainCtrl._TryShowDomainVersionDiff = HL.Method() << function(self)
     if UIManager:IsOpen(PanelId.DomainVersionInfoPopup) then
         return
     end
+    
+    
+
+
+
+
+
+    local _, hasBeenShow, _ = ClientDataManagerInst:GetBool("DOMAIN_VERSION_POPUP_HAS_BEEN_SHOW_V1D1", false, false)
+
     local domainMaxLvHasDiff = domainDevelopmentSystem:DomainMaxLevelHasVersionDiff(self.m_curDomainId)
-    if domainMaxLvHasDiff then
+    if domainMaxLvHasDiff and not hasBeenShow then
         UIManager:Open(PanelId.DomainVersionInfoPopup, {
             domainId = self.m_curDomainId,
             onClose = function()
@@ -636,6 +645,7 @@ DomainMainCtrl._TryShowDomainVersionDiff = HL.Method() << function(self)
             end
         })
         domainDevelopmentSystem:SendRecordCurVersionInfo(self.m_curDomainId)
+        ClientDataManagerInst:SetBool("DOMAIN_VERSION_POPUP_HAS_BEEN_SHOW_V1D1", true, false)
     else
         CS.Beyond.Gameplay.Conditions.CheckIsOpenDomainMain.Trigger()
     end
