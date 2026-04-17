@@ -7,4 +7,4 @@ This repository is a data backup for Arknights: Endfield.
 
 TableCfg Lua ExtendData
 
-Last Updated: 2026/03/29
+Last Updated: 04/17/2026
