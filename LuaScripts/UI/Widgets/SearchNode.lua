@@ -77,6 +77,13 @@ SearchNode.InitSearchNode = HL.Method(HL.Table) << function(self, initInfo)
         initInfo.onSearchClick()
     end)
 
+    self.view.inputField.onIsNaviTargetChanged = function(isTarget, isGroupChanged, isOnNaviTargetEnabledAgain)
+        if DeviceInfo.usingController and isTarget and isOnNaviTargetEnabledAgain then
+            
+            self.view.inputField:ActivateInputField()
+        end
+    end
+
     
     self.view.navigroup.onIsFocusedChange:AddListener(function(active)
         if active then

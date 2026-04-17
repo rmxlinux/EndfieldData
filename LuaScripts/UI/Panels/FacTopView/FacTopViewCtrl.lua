@@ -1018,6 +1018,17 @@ FacTopViewCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, 
                 end
             end)
         end
+    elseif FactoryUtils.isDecoBuildingItem(itemId) then
+        InputManagerInst:CreateBindingByActionId("fac_quick_bar_controller_craft", function()
+            if Utils.getItemCount(itemId) == 0 then
+                Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_DECO_BUILDING_ZERO_NO_CRAFT)
+            end
+        end, cell.button.hoverBindingGroupId)
+        cell.button.onDoubleClick:AddListener(function()
+            if Utils.getItemCount(itemId) == 0 then
+                Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_DECO_BUILDING_ZERO_NO_CRAFT)
+            end
+        end)
     end
     if DeviceInfo.usingController then
         cell.controllerKeyHint:SetActionId((hasCraft and count == 0) and "fac_quick_bar_controller_craft" or "fac_quick_bar_controller_build_top_view")

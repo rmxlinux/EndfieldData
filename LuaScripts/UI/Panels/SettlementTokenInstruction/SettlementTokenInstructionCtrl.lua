@@ -132,17 +132,25 @@ SettlementTokenInstructionCtrl._InitData = HL.Method(HL.Any) << function(self, a
         
         tdGainEffectLevelName = "",
         tdGainEffect = 0,
+        
+        activityEnhanceRate = 0,
+        activityName = "",
     }
     
     self:_UpdateDefenseGainEffect()
     
-    self.m_info.speedHasEnhance = self.m_info.officerEnhanceRate > 0 or
-        self.m_info.hasTimeLimitTdGainEffect or
-        self.m_info.tdGainEffect > 0
-    self.m_info.totalEnhance = self.m_info.officerEnhanceRate + self.m_info.tdGainEffect + self.m_info.timeLimitTdGainEffect
-    self.m_info.totalProduceSpeed = math.floor(basicProduceSpeed * (100 + self.m_info.totalEnhance) / 100)
+    local activityEnhanceRate, activityId = DomainPOIUtils.getSettlementMoneyActivityEffectInfo(self.m_stlId)
+    local _, activityCfg = Tables.activityTable:TryGetValue(activityId)
+    if activityCfg then
+        self.m_info.activityEnhanceRate = activityEnhanceRate
+        self.m_info.activityName = activityCfg.name
+    end
     
+    self.m_info.totalEnhance = self.m_info.officerEnhanceRate + self.m_info.tdGainEffect + self.m_info.timeLimitTdGainEffect + self.m_info.activityEnhanceRate
+    self.m_info.speedHasEnhance = self.m_info.totalEnhance ~= 0
+    self.m_info.totalProduceSpeed = math.floor(basicProduceSpeed * (100 + self.m_info.totalEnhance) / 100)
     self.m_info.filledMoneyTime = self:_GetFilledMoneyTime()
+    
 end
 
 
@@ -193,7 +201,7 @@ SettlementTokenInstructionCtrl._RefreshAllUI = HL.Method() << function(self)
     
     if self.m_info.speedHasEnhance then
         self.view.improveNode.gameObject:SetActive(true)
-        local totalEnhance = self.m_info.totalEnhance
+        local totalEnhance = math.floor(self.m_info.totalEnhance)
         self.view.improvePercentTxt.text = string.format("%d%%", totalEnhance)
         self.view.improveDescTxt:SetAndResolveTextStyle(string.format(Language.LUA_SETTLEMENT_MONEY_EXTRA_ENHANCE_TEXT, totalEnhance))
         
@@ -206,6 +214,15 @@ SettlementTokenInstructionCtrl._RefreshAllUI = HL.Method() << function(self)
         end
         
         self:_RefreshGainEffect()
+        
+        if self.m_info.activityEnhanceRate ~= 0 then
+            self.view.activityNode.gameObject:SetActive(true)
+            self.view.activityNode.activityTitleTxt.text = string.format(Language.LUA_SETTLEMENT_ACTIVITY_EFFECT_INSTRUCTION, self.m_info.activityName)
+            self.view.activityNode.activityEffectNumTxt.text = string.format("%d%%", self.m_info.activityEnhanceRate)
+            self:_TryHandleFirstBuffNode(self.view.activityNode)
+        else
+            self.view.activityNode.gameObject:SetActive(false)
+        end
     else
         self.view.improveNode.gameObject:SetActive(false)
     end

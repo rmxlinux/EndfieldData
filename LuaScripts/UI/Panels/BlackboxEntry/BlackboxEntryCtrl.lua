@@ -89,7 +89,7 @@ BlackboxEntryCtrl.m_filterArgs = HL.Field(HL.Table)
 
 
 BlackboxEntryCtrl.s_messages = HL.StaticField(HL.Table) << {
-    [MessageConst.ON_BLACKBOX_DIRECTLY_GET_REWARD] = 'OnBlackboxDirectlyGetReward',
+    [MessageConst.ON_DUNGEON_DIRECTLY_GET_REWARD] = 'OnBlackboxDirectlyGetReward',
 }
 
 
@@ -492,7 +492,7 @@ BlackboxEntryCtrl._OnClickDirectlyGetRewardBtn = HL.Method() << function(self)
     self:Notify(MessageConst.SHOW_POP_UP, {
         content = hintText,
         onConfirm = function()
-            GameInstance.dungeonManager:SendReqBlackboxDirectlyGetReward(self.m_curSelectedBlackboxId)
+            GameInstance.dungeonManager:SendReqDirectlyGetReward(self.m_curSelectedBlackboxId)
         end,
     })
 end
@@ -567,7 +567,9 @@ end
 
 BlackboxEntryCtrl._OnBlackboxCellClick = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local blackboxInfo = self.m_curBlackboxInfos[luaIndex]
-    if self.m_curSelectedBlackboxId == blackboxInfo.blackboxId then
+    
+    
+    if not blackboxInfo or blackboxInfo.blackboxId == self.m_curSelectedBlackboxId then
         return
     end
 
@@ -634,6 +636,14 @@ BlackboxEntryCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, selec
     local percent = hasFilterResult and 1 or 0
     local wrapper = self.animationWrapper
     wrapper:SampleClipAtPercent("blackboxentry_change", percent)
+    if not hasFilterResult then
+        
+        
+        local canvsGroup = self.view.filterResultEmpty.gameObject:GetComponent("CanvasGroup")
+        if canvsGroup then
+            canvsGroup.alpha = 1
+        end
+    end
 
     if not string.isEmpty(self.m_curSelectedBlackboxId) then
         self:_RefreshDetails()

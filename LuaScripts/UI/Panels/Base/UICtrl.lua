@@ -160,6 +160,11 @@ end
 
 
 
+UICtrl.GetCurPhaseStateArg = HL.Virtual().Return(HL.Opt(HL.Any)) << function(self)
+end
+
+
+
 
 UICtrl.OnClose = HL.Virtual() << function(self)
 end

@@ -275,7 +275,12 @@ end
 
 
 BuildingCommon.UpdateBasicInfo = HL.Method(HL.Any) << function(self, data)
-    self.view.machineName.text = data.name
+    local machineName = data.name
+    if self.m_arg.nameIndex ~= nil then
+        self.view.machineName:CombineStringWithLanguageSpilt(machineName, string.format("%d", self.m_arg.nameIndex))
+    else
+        self.view.machineName.text = machineName
+    end
     self.view.machineIcon:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, data.iconOnPanel)
 
     if self.m_showPower then
@@ -400,35 +405,37 @@ BuildingCommon._RefreshBuildingStateDisplay = HL.Method(GEnums.FacBuildingState)
 
     local showState = state
 
-    if self.m_stateGoNodeMap[showState] == nil then
-        if FacConst.FAC_BUILDING_STATE_TO_PREFAB_PATH[showState] ~= nil then
-            local statePrefab = self:LoadGameObject(FacConst.FAC_BUILDING_STATE_TO_PREFAB_PATH[showState])
-            local stateObj = CSUtils.CreateObject(statePrefab, self.view.stateNode)
-            self.m_stateGoNodeMap[showState] = stateObj
+    if not self.config.HIDE_STATE_NODE then
+        if self.m_stateGoNodeMap[showState] == nil then
+            if FacConst.FAC_BUILDING_STATE_TO_PREFAB_PATH[showState] ~= nil then
+                local statePrefab = self:LoadGameObject(FacConst.FAC_BUILDING_STATE_TO_PREFAB_PATH[showState])
+                local stateObj = CSUtils.CreateObject(statePrefab, self.view.stateNode)
+                self.m_stateGoNodeMap[showState] = stateObj
 
-            if showState == GEnums.FacBuildingState.Normal then
-                local _, data, customTextKey
-                if string.isEmpty(self.buildingId) then
-                    local buildingId = FactoryUtils.getItemBuildingId(self.buildingItemId)
-                    if buildingId ~= nil then
-                        _, data = Tables.factoryBuildingTable:TryGetValue(buildingId)
+                if showState == GEnums.FacBuildingState.Normal then
+                    local _, data, customTextKey
+                    if string.isEmpty(self.buildingId) then
+                        local buildingId = FactoryUtils.getItemBuildingId(self.buildingItemId)
+                        if buildingId ~= nil then
+                            _, data = Tables.factoryBuildingTable:TryGetValue(buildingId)
+                        end
+                    else
+                        _, data = Tables.factoryBuildingTable:TryGetValue(self.buildingId)
                     end
-                else
-                    _, data = Tables.factoryBuildingTable:TryGetValue(self.buildingId)
-                end
-                if data ~= nil then
-                    customTextKey = FacConst.FAC_BUILDING_NORMAL_STATE_CUSTOM_TEXT_ID[data.type]
-                else
-                    customTextKey = FacConst.FAC_NON_BUILDING_NORMAL_STATE_CUSTOM_TEXT_ID[self.buildingItemId]
-                end
-                if customTextKey ~= nil then
-                    local text = stateObj.transform:Find("Info/Text"):GetComponent("UIText")
-                    text.text = Language[customTextKey]
+                    if data ~= nil then
+                        customTextKey = FacConst.FAC_BUILDING_NORMAL_STATE_CUSTOM_TEXT_ID[data.type]
+                    else
+                        customTextKey = FacConst.FAC_NON_BUILDING_NORMAL_STATE_CUSTOM_TEXT_ID[self.buildingItemId]
+                    end
+                    if customTextKey ~= nil then
+                        local text = stateObj.transform:Find("Info/Text"):GetComponent("UIText")
+                        text.text = Language[customTextKey]
+                    end
                 end
             end
+        else
+            self.m_stateGoNodeMap[showState]:SetActive(true)
         end
-    else
-        self.m_stateGoNodeMap[showState]:SetActive(true)
     end
 
     if self.m_arg.onStateChanged then
@@ -614,14 +621,14 @@ end
 BuildingCommon._InitBuildingDescription = HL.Method() << function(self)
     if self.config.SHOW_BUILDING_DESCRIPTION then
         self.view.machineDescNode.gameObject:SetActiveIfNecessary(true)
-        local itemData
         if string.isEmpty(self.buildingId) then
-            itemData = Tables.itemTable:GetValue(self.buildingItemId)
+            local itemData = Tables.itemTable:GetValue(self.buildingItemId)
+            if itemData ~= nil then
+                self.view.descText.text = itemData.desc
+            end
         else
-            itemData = FactoryUtils.getBuildingItemData(self.buildingId)
-        end
-        if itemData ~= nil then
-            self.view.descText.text = itemData.desc
+            local buildingData = Tables.factoryBuildingTable[self.buildingId]
+            self.view.descText.text = buildingData.desc
         end
     else
         self.view.machineDescNode.gameObject:SetActiveIfNecessary(false)

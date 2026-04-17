@@ -1602,7 +1602,8 @@ CharInfoTalentCtrl._NaviToBestTarget = HL.Method(HL.Userdata, HL.Opt(HL.Boolean)
     local curTransform = useParent and curTarget.transform.parent or curTarget.transform
     local curPos = self.view.transform:InverseTransformPoint(curTransform.position)
     for _, sel in pairs(self.m_nodeNaviTargetList) do
-        if sel ~= curTarget and sel.isActiveAndEnabled  then
+        if sel ~= curTarget and sel.isActiveAndEnabled and
+            (sel.image == nil or sel.image.canvasRenderer:GetInheritedAlpha() > 0) then
             local transform = sel.transform.parent
             local score = 0
             local selRect = transform.rect

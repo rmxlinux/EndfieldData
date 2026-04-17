@@ -115,6 +115,7 @@ local MODEL_ROOT_ANIM_NAME = {
 local SCENE_ITEM_NAME = "WikiModelShow"
 local CAMERA_GROUP_NAME = "WikiCameraGroup"
 local LIGHT_GROUP_NAME = "WikiLightGroup"
+local SCENE_POS = Vector3(0, 600, 0)
 
 local WIKI_ENY_POSE_CONTROLLER_PATH = "Assets/Beyond/DynamicAssets/Gameplay/Prefabs/UIModels/WikiEnyPose/%s.overrideController"
 
@@ -516,6 +517,7 @@ PhaseWiki.m_currentModelCategory = HL.Field(HL.String) << ''
 PhaseWiki._InitSceneRoot = HL.Method() << function(self)
     if self.m_sceneRoot == nil then
         self.m_sceneRoot = self:CreatePhaseGOItem(SCENE_ITEM_NAME)
+        self.m_sceneRoot.view.transform.position = SCENE_POS
         self.m_cameraGroup = self:CreatePhaseGOItem(CAMERA_GROUP_NAME, self.m_sceneRoot.view.sceneCamera)
         self.m_lightGroup = self:CreatePhaseGOItem(LIGHT_GROUP_NAME, self.m_sceneRoot.view.sceneLight)
         if UNITY_EDITOR then

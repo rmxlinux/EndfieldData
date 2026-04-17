@@ -23,6 +23,7 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 ShopTradeGoodsCell = HL.Class('ShopTradeGoodsCell', UIWidgetBase)
 
 
@@ -227,7 +228,7 @@ ShopTradeGoodsCell.InitCommonShopGoodsCellCommonMode = HL.Method(HL.Table) << fu
     self:SetSelectState(false)
     
     self:_RefreshNextRefreshTime(leftSec)
-    self:_RefreshRemainLimitCount(info.remainLimitCount)
+    self:_RefreshCommonShopRemainLimitCount(info.remainLimitCount)
     self:_RefreshItemUI(info)
     self:SetNameBgVisible(false)
     local discountTxt = string.format("-%.0f", info.discount * 100)
@@ -239,7 +240,8 @@ ShopTradeGoodsCell.InitCommonShopGoodsCellCommonMode = HL.Method(HL.Table) << fu
     self.view.selectBtn.onClick:RemoveAllListeners()
     self.view.selectBtn.onClick:AddListener(function()
         local goodsData = GameInstance.player.shopSystem:GetShopGoodsData(info.shopId, info.goodsId)
-        CashShopUtils.OpenShopDetailPanel(goodsData)
+        local uiCtrl = self:GetUICtrl()
+        CashShopUtils.OpenShopDetailPanel(goodsData, uiCtrl)
     end)
     InputManagerInst:SetBindingText(self.view.selectBtn.hoverConfirmBindingId, Language.LUA_SHOP_SELECT_ITEM)
     if info.refreshTag == "normal" then
@@ -288,6 +290,34 @@ ShopTradeGoodsCell._RefreshNextRefreshTime = HL.Method(HL.Number) << function(se
         self.view.refreshTimeStateCtrl:SetState("Normal")
     end
 end
+
+
+
+
+ShopTradeGoodsCell._RefreshCommonShopRemainLimitCount = HL.Method(HL.Number) << function(self, remainLimitCount)
+    if remainLimitCount < 0 then
+        if remainLimitCount == -1 then  
+            self.view.limitNumberNode.gameObject:SetActive(true)
+            self.view.limitCountTxt.text = "∞"
+            self.view.limitCountTxt.color = self.view.config.INVENTORY_NORMAL_COLOR
+            self.view.sellOutStateCtrl:SetState("NotSellOut")
+        else
+            self.view.limitNumberNode.gameObject:SetActive(false)
+            self.view.sellOutStateCtrl:SetState("SellOut")
+        end
+    else
+        self.view.limitNumberNode.gameObject:SetActive(true)
+        self.view.limitCountTxt.text = remainLimitCount
+        if remainLimitCount == 0 then
+            self.view.limitCountTxt.color = self.view.config.INVENTORY_RED_COLOR
+        else
+            self.view.limitCountTxt.color = self.view.config.INVENTORY_NORMAL_COLOR
+        end
+
+        self.view.sellOutStateCtrl:SetState(remainLimitCount == 0 and "SellOut" or "NotSellOut")
+    end
+end
+
 
 
 

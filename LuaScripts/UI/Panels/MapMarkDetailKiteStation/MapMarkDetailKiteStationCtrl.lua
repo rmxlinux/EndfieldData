@@ -40,11 +40,14 @@ MapMarkDetailKiteStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
                 end,
                 jumpText = kiteStationCfg.upgradeQuestDesc,
             }
-        else
+        elseif not string.isEmpty(kiteStationCfg.upgradeQuestId) then
             commonArgs.hintInfo = {
                 hintText = Language.LUA_KITE_STATION_MAP_MARK_DETAIL_HINT_TEXT,
                 importantHint = true,
             }
+            commonArgs.descText = ""
+        else
+            commonArgs.bigBtnActive = true
         end
         self.view.levelStateNode.gameObject:SetActive(false)
     else

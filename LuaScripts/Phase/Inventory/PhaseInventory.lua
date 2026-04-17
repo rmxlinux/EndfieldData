@@ -1,6 +1,7 @@
-
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.Inventory
+
+
 
 
 
@@ -33,6 +34,10 @@ PhaseInventory.m_invPanel = HL.Field(HL.Forward('InventoryCtrl'))
 
 PhaseInventory.m_inHalfScreen = HL.Field(HL.Boolean) << false
 
+
+PhaseInventory.m_radioTagHandle = HL.Field(HL.Any)
+
+
 local ReservePanelIds = {
     PanelId.Inventory,
     PanelId.LevelCamera,
@@ -41,8 +46,17 @@ local ReservePanelIds = {
 }
 
 
+
 PhaseInventory.OpenInventoryPanel = HL.StaticMethod() << function()
     PhaseManager:OpenPhase(PhaseId.Inventory)
+end
+
+
+
+PhaseInventory._OnInit = HL.Override() << function(self)
+    PhaseInventory.Super._OnInit(self)
+    
+    self.m_radioTagHandle = GameInstance.player.globalTagsSystem:AddGlobalTag(CS.Beyond.Gameplay.GlobalTagDefine.notStopRadioTags)
 end
 
 
@@ -90,11 +104,22 @@ end
 
 
 PhaseInventory._OnActivated = HL.Override() << function(self)
+    if not self.m_radioTagHandle then
+        self.m_radioTagHandle = GameInstance.player.globalTagsSystem:AddGlobalTag(CS.Beyond.Gameplay.GlobalTagDefine.notStopRadioTags)
+    end
 end
 
 
 
 PhaseInventory._OnDeActivated = HL.Override() << function(self)
+    if self.m_radioTagHandle then
+        
+        
+        TimerManager:StartFrameTimer(2, function()
+            self.m_radioTagHandle:RemoveTag()
+            self.m_radioTagHandle = nil
+        end)
+    end
 end
 
 

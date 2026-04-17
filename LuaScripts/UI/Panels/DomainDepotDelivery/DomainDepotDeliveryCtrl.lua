@@ -8,10 +8,23 @@ local PANEL_ID = PanelId.DomainDepotDelivery
 
 
 
+
+
+
+
 DomainDepotDeliveryCtrl = HL.Class('DomainDepotDeliveryCtrl', uiCtrl.UICtrl)
 
 
 DomainDepotDeliveryCtrl.m_getCellFunc = HL.Field(HL.Function)
+
+
+DomainDepotDeliveryCtrl.m_filterDomainIdList = HL.Field(HL.String) << ""
+
+
+DomainDepotDeliveryCtrl.m_domainDropDownInfo = HL.Field(HL.Table)
+
+
+DomainDepotDeliveryCtrl.m_curDomainIndex = HL.Field(HL.Number) << 1
 
 
 
@@ -27,20 +40,11 @@ DomainDepotDeliveryCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 DomainDepotDeliveryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    local inited = false
     self.view.refreshBtn.onClick:RemoveAllListeners()
     self.view.refreshBtn.onClick:AddListener(function()
-        GameInstance.player.domainDepotSystem:SendSyncDomainDepotDeliverDelegate()
-        self.view.refreshBtn.gameObject:SetActive(false)
-        self.view.countTimeNode.gameObject:SetActive(true)
-        self.view.countDownText:InitCountDownText(5 + DateTimeUtils.GetCurrentTimestampBySeconds(), function()
-            self.view.refreshBtn.gameObject:SetActive(true)
-            self.view.countTimeNode.gameObject:SetActive(false)
-        end, function(sec)
-            return UIUtils.getSecondsLeftTime(sec) .. Language.LUA_DOMAIN_DEPOT_DELIVERY_REFRESH_COUNTDOWN
-        end)
+        self:_OnRefreshBtnClick()
     end)
-
-    GameInstance.player.domainDepotSystem:SendSyncDomainDepotDeliverDelegate()
 
     self.m_getCellFunc = UIUtils.genCachedCellFunction(self.view.scrollList)
     self.view.scrollList.onUpdateCell:RemoveAllListeners()
@@ -62,7 +66,59 @@ DomainDepotDeliveryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         UIManager:Open(PanelId.InstructionBook, "domain_depot_delivery")
     end)
 
-    
+    self.m_domainDropDownInfo = {
+        [1] = {
+            domainId = "",
+            name = Language.LUA_DOMAIN_DEPOT_DELIVERY_FILTER_ALL,
+            icon = "domain_all",
+        }
+    }
+    local curDomainId = Utils.getCurDomainId()
+    for domainId, domainData in pairs(Tables.domainDataTable) do
+        if GameInstance.player.domainDevelopmentSystem.domainDevDataDic:ContainsKey(domainId) then
+            table.insert(self.m_domainDropDownInfo, {
+                domainId = domainId,
+                name = domainData.domainName,
+                icon = domainData.domainIcon,
+            })
+            if domainId == curDomainId then
+                self.m_curDomainIndex = #self.m_domainDropDownInfo
+                self.m_filterDomainIdList = domainId
+            end
+        end
+
+    end
+
+    self.view.dropDownListUp:Init(function(index, option, isSelected)
+        local info = self.m_domainDropDownInfo[LuaIndex(index)]
+        option:SetText(info.name)
+        option.icon:LoadSprite(UIConst.UI_SPRITE_DOMAIN_ICON, "icon_depot_filter_" .. info.icon)
+    end, function(index)
+        if inited then 
+            self.m_filterDomainIdList = self.m_domainDropDownInfo[LuaIndex(index)].domainId
+            GameInstance.player.domainDepotSystem:SendSyncDomainDepotDeliverDelegate(self.m_filterDomainIdList)
+        end
+    end)
+    self.view.dropDownListUp:Refresh(#self.m_domainDropDownInfo, CSIndex(self.m_curDomainIndex))
+    self.view.dropDownListUp.captionIcon:LoadSprite(UIConst.UI_SPRITE_DOMAIN_ICON, "icon_depot_filter_" .. self.m_domainDropDownInfo[self.m_curDomainIndex].icon)
+
+    GameInstance.player.domainDepotSystem:SendSyncDomainDepotDeliverDelegate(self.m_filterDomainIdList)
+
+    inited = true
+end
+
+
+
+DomainDepotDeliveryCtrl._OnRefreshBtnClick = HL.Method() << function(self)
+    GameInstance.player.domainDepotSystem:SendSyncDomainDepotDeliverDelegate(self.m_filterDomainIdList)
+    self.view.refreshBtn.gameObject:SetActive(false)
+    self.view.countTimeNode.gameObject:SetActive(true)
+    self.view.countDownText:InitCountDownText(5 + DateTimeUtils.GetCurrentTimestampBySeconds(), function()
+        self.view.refreshBtn.gameObject:SetActive(true)
+        self.view.countTimeNode.gameObject:SetActive(false)
+    end, function(sec)
+        return UIUtils.getSecondsLeftTime(sec) .. Language.LUA_DOMAIN_DEPOT_DELIVERY_REFRESH_COUNTDOWN
+    end)
 end
 
 

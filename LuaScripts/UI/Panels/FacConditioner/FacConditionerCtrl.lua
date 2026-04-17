@@ -238,17 +238,26 @@ FacConditionerCtrl._InitAllItemData = HL.Method() << function(self)
 
     for _, itemId in pairs(itemIdList) do
         if not Tables.liquidTable:ContainsKey(itemId) and GameInstance.player.inventory:IsItemFound(itemId) then
-            local itemData = Tables.itemTable[itemId]
-            local _, _, itemCount = Utils.getItemCount(itemId, true)
-            materialMap[itemId] = {
-                id = itemId,
-                count = itemCount,
-                data = itemData,
-                showingType = itemData.showingType:GetHashCode(),
-                sortId1 = -itemData.sortId1,
-                sortId2 = itemData.sortId2,
-                rarity = itemData.rarity
-            }
+            local showItem = false 
+            if FactoryUtils.isTimeLimitedItem(itemId) then
+                local craftInfoList, canCraft = FactoryUtils.getItemCrafts(itemId)
+                showItem = next(craftInfoList) ~= nil
+            else
+                showItem = true
+            end
+            if showItem then
+                local itemData = Tables.itemTable[itemId]
+                local _, _, itemCount = Utils.getItemCount(itemId, true)
+                materialMap[itemId] = {
+                    id = itemId,
+                    count = itemCount,
+                    data = itemData,
+                    showingType = itemData.showingType:GetHashCode(),
+                    sortId1 = -itemData.sortId1,
+                    sortId2 = itemData.sortId2,
+                    rarity = itemData.rarity
+                }
+            end
         end
     end
 

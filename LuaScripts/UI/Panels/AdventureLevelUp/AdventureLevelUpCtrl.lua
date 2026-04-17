@@ -708,7 +708,7 @@ end
 
 
 AdventureLevelUpCtrl._CompleteCloseSelf = HL.Method(HL.Opt(HL.Boolean)) << function(self, fastMode)
-    if self.m_isClosed then
+    if self:IsPlayingAnimationOut() then
         return
     end
     if fastMode then
@@ -718,7 +718,7 @@ AdventureLevelUpCtrl._CompleteCloseSelf = HL.Method(HL.Opt(HL.Boolean)) << funct
         return
     end
     self:PlayAnimationOutWithCallback(function()
-        if self.m_isClosed then
+        if self:IsPlayingAnimationOut() then
             return
         end
         self:_ClearCache()

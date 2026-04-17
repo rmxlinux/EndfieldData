@@ -53,6 +53,10 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_PRELOAD_DIALOG_TIMELINE_PANEL] = 'OnPreloadDialogTimelinePanel',
     },
     
+    ['DialogSign'] = {
+        [MessageConst.ON_SHOW_DIALOG_SIGN_OPTION] = 'OnShowDialogSignOption',
+    },
+    
     ['CharJoinToast'] = {
         
         [MessageConst.ON_CHAR_JOIN_BY_MAINLINE] = 'ShowCharJoinToast',
@@ -672,6 +676,13 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.SHOW_BLOCK_INPUT_PANEL] = 'OnShowBlockInputPanel',
     },
     
+    ['BlockInputWhenPhaseLevel'] = {
+        
+        [MessageConst.TOGGLE_BLOCK_INPUT_WHEN_PHASE_LEVEL] = 'ToggleBlockInputWhenPhaseLevel',
+        
+        [MessageConst.UPDATE_BLOCK_INPUT_WHEN_PHASE_LEVEL] = 'UpdateState',
+    },
+    
     ['UIDPanel'] = {
         
         [MessageConst.ENTER_MAIN_GAME] = 'OnEnterMainGame',
@@ -922,6 +933,11 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.CHAR_INFO_SHOW_SC_ATTR_HINT] = 'CharInfoShowSCAttrHint',
     },
     
+    ['CharInfoProfileShow'] = {
+        
+        [MessageConst.ON_CHAR_MAX_POTENTIAL_EFFECT_TOGGLED] = 'OnCharMaxPotentialEffectToggled',
+    },
+    
     ['LiquidPoolScanUI'] = {
         
         [MessageConst.ON_ADD_LIQUID_POOL] = '_OnAddLiquidPoolUI',
@@ -1053,6 +1069,10 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_COMMON_POI_UNLOCKED] = 'OnCommonPOIUnlocked',
         
         [MessageConst.ON_COMMON_POI_LEVEL_UP] = 'OnCommonPOILevelUp',
+        
+        [MessageConst.SHOW_SEWAGE_TREAT_PLANT_UNLOCK_TOAST] = 'OnSewageTreatPlantUnlock',
+        
+        [MessageConst.SHOW_SEWAGE_TREAT_PLANT_LEVEL_UP_TOAST] = 'OnSewageTreatPlantLevelUp',
     },
     
     ['RecycleBinNoticeToast'] = {

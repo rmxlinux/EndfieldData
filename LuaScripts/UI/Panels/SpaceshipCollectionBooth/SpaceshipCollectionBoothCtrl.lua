@@ -481,13 +481,22 @@ SpaceshipCollectionBoothCtrl._UpdateTagNode = HL.Method(HL.Table, HL.Opt(HL.Stri
         return
     end
     local data = Tables.spaceshipShowcaseItemTable[itemId]
-    tagNode.m_tagCells:Refresh(#data.tagIds, function(cell, index)
-        local tagId = data.tagIds[CSIndex(index)]
-        cell.stateController:SetState("Normal")
+
+    local tagShowData = {}
+    for i, tagId in pairs(data.tagIds) do
         local tagData = Tables.tagDataTable[tagId]
-        if tagData then
-            cell.nameTxt.text = tagData.tagName
+        if tagData and not tagData.hideTag then
+            table.insert(tagShowData,
+                {
+                    tagId = tagId,
+                    tagName = tagData.tagName
+                })
         end
+    end
+    tagNode.m_tagCells:Refresh(#tagShowData, function(cell, index)
+        local tagData = tagShowData[index]
+        cell.stateController:SetState("Normal")
+        cell.nameTxt.text = tagData.tagName
     end)
 end
 

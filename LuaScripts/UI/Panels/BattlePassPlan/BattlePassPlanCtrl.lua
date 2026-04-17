@@ -955,20 +955,28 @@ end
 BattlePassPlanCtrl._ProcessRewardGain = HL.Method(HL.Any) << function(self, itemBundles)
     local weaponBoxId = self.m_seasonData.weaponBoxId
     local hasWeaponBox = false
-    local itemCount = 0
+    local merged = {}
+    local mergedItems = {}
     for _, itemBundle in pairs(itemBundles) do
-        if itemBundle ~= nil then
-            if not string.isEmpty(itemBundle.id) and itemBundle.id == weaponBoxId then
+        if itemBundle ~= nil and not string.isEmpty(itemBundle.id) then
+            if itemBundle.id == weaponBoxId then
                 hasWeaponBox = true
             end
+            local existing = merged[itemBundle.id]
+            if existing then
+                existing.count = existing.count + (itemBundle.count or 0)
+            else
+                local newItem = { id = itemBundle.id, count = itemBundle.count or 0 }
+                merged[itemBundle.id] = newItem
+                table.insert(mergedItems, newItem)
+            end
         end
-        itemCount = itemCount + 1
     end
-    if itemCount <= 0 then
+    if #mergedItems <= 0 then
         return
     end
     local rewardPanelArg = {
-        items = itemBundles,
+        items = mergedItems,
     }
     if self.m_isGainAll and self.m_isGainMilestone then
         local buyHintType = self.m_buyHintType

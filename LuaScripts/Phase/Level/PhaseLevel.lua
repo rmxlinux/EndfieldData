@@ -91,6 +91,8 @@ local PhaseLevelConfig = require_ex("Phase/Level/PhaseLevelConfig")
 
 
 
+
+
 PhaseLevel = HL.Class('PhaseLevel', phaseBase.PhaseBase)
 
 
@@ -101,7 +103,7 @@ PhaseLevel = HL.Class('PhaseLevel', phaseBase.PhaseBase)
 
 
 PhaseLevel.s_messages = HL.StaticField(HL.Table) << {
-    [MessageConst.OPEN_LEVEL_PHASE] = { 'OnOpenLevelPhase', false },
+    [MessageConst.OPEN_LEVEL_PHASE] = { 'OpenLevelPhase', false },
     [MessageConst.ON_SCENE_LOAD_START] = { 'onSceneLoadStart', true },
     [MessageConst.ON_SQUAD_INFIGHT_CHANGED] = {'OnSquadInfightChanged', true },
 
@@ -144,11 +146,15 @@ PhaseLevel.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-PhaseLevel.OnOpenLevelPhase = HL.StaticMethod() << function()
-    if not PhaseManager:IsOpen(PHASE_ID) then
-        PhaseManager:OpenPhaseFast(PHASE_ID) 
-        if LuaSystemManager.uiRestoreSystem:HasValidAction() then
-            LuaSystemManager.uiRestoreSystem:TryRestore()
+PhaseLevel.OpenLevelPhase = HL.StaticMethod() << function()
+    if LuaSystemManager.uiRestoreSystem:HasValidAction() then
+        if not PhaseManager:IsOpen(PHASE_ID) and not DeviceInfo.switchInputDeviceWithRecover then
+            PhaseManager:OpenPhaseFast(PHASE_ID) 
+        end
+        LuaSystemManager.uiRestoreSystem:TryRestore()
+    else
+        if not PhaseManager:IsOpen(PHASE_ID) then
+            PhaseManager:OpenPhaseFast(PHASE_ID) 
         end
     end
 end
@@ -625,6 +631,17 @@ PhaseLevel._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << f
     if not Utils.isInDungeon() then
         Notify(MessageConst.ON_WORLD_LEVEL_CHANGED, {GameInstance.player.adventure.currentMaxWorldLevel - 1, GameInstance.player.adventure.currentMaxWorldLevel, false})
     end
+
+    if self.arg then
+        if self.arg.inFacMode ~= nil then
+            LuaSystemManager.factory:AddFactoryModeRequest({ self.arg.inFacMode, "Player" })
+        end
+        if self.arg.isInTopView then
+            LuaSystemManager.factory:ToggleTopView(true, true)
+            LuaSystemManager.factory.topViewCamTarget.transform.position = self.arg.topViewArg.targetPos
+            LuaSystemManager.factory.topViewCamTarget.transform.eulerAngles = self.arg.topViewArg.targetRot
+        end
+    end
 end
 
 
@@ -648,6 +665,17 @@ PhaseLevel._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table
     self:_OnInternalInMainHudStateChanged(true)
 end
 
+
+
+
+
+
+PhaseLevel.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
+    if transitionType == PhaseConst.EPhaseState.TransitionBehind then
+        
+        self:_OnInternalInMainHudStateChanged(false)
+    end
+end
 
 
 PhaseLevel.m_transitionReservePanelIds = HL.Field(HL.Table)
@@ -707,6 +735,7 @@ PhaseLevel._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << 
     logger.info("ON_PHASE_LEVEL_NOT_ON_TOP")
     Notify(MessageConst.ON_PHASE_LEVEL_NOT_ON_TOP)
 end
+
 
 
 
@@ -816,6 +845,7 @@ end
 
 PhaseLevel.OnEnterTowerDefenseDefendingPhase = HL.Method(HL.Opt(HL.Boolean)) << function(self, isRestore)
     self.m_defenseInGameClearScreenKey = UIManager:ClearScreen(lume.concat(defenseExpectedPanels, Const.BATTLE_MODE_ONLY_PANELS))
+    Notify(MessageConst.TOGGLE_HIDE_INTERACT_OPTION_LIST, { "TowerDefense", true })
     GameInstance.player.towerDefenseSystem.systemInDefense = true
 
     local isOpen, taskTrackHudCtrl = UIManager:IsOpen(PanelId.CommonTaskTrackHud)
@@ -880,6 +910,7 @@ end
 
 
 PhaseLevel.OnTowerDefenseDefendingRewardsFinished = HL.Method() << function(self)
+    Notify(MessageConst.TOGGLE_HIDE_INTERACT_OPTION_LIST, { "TowerDefense", false })
     self.m_defenseInGameClearScreenKey = UIManager:RecoverScreen(self.m_defenseInGameClearScreenKey)
     self.m_defenseFinishClearScreenKey = UIManager:RecoverScreen(self.m_defenseFinishClearScreenKey)
     if Utils.needMissionHud() then
@@ -1031,6 +1062,7 @@ PhaseLevel.OnGameModeEnable = HL.Method(HL.Table) << function(self, args)
     GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidSprint, GameModeHideUIKey, mode.forbidSprint)
     GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidLockTarget, GameModeHideUIKey, mode.forbidLockTarget)
 end
+
 
 
 
@@ -1236,6 +1268,7 @@ end
 
 
 
+
 PhaseLevel.m_forceEnableUISceneBlurKeys = HL.Field(HL.Table)
 
 
@@ -1423,5 +1456,20 @@ end
 
 
 
+
+
+
+PhaseLevel.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    arg.isInTopView = FactoryUtils.isInTopView()
+    arg.inFacMode = GameWorld.worldInfo.inFactoryMode
+    if arg.isInTopView then
+        arg.topViewArg = {
+            targetPos = LuaSystemManager.factory.topViewCamTarget.transform.position,
+            targetRot = LuaSystemManager.factory.topViewCamTarget.transform.eulerAngles,
+        }
+    end
+    return arg
+end
 
 HL.Commit(PhaseLevel)

@@ -289,10 +289,6 @@ FacCacheRepository._InsertEmptyItemFromCache = HL.Method(HL.Table) << function(s
         return
     end
 
-    if self.m_cacheIndex > #craftItemDataList then
-        return
-    end
-
     for _, itemData in pairs(craftItemDataList) do
         local id = itemData.id
         local isFluid = FactoryUtils.isFactoryItemFluid(id)
@@ -391,6 +387,18 @@ FacCacheRepository._RefreshRepositoryItemInfoList = HL.Method(HL.Boolean) << fun
             end
             self.m_itemInfoList[currentIndex] = info
             dirtyItemIdList[id] = true
+        end
+    end
+    
+    if self.m_forceUpdateOutRepoWithFormula and self.m_lastFormulaId:isEmpty() and self.m_currFormulaId:isEmpty() then
+        local toRemoveKey = {}
+        for k, v in pairs(self.m_itemInfoList) do
+            if v.count == 0 then
+                table.insert(toRemoveKey, k)
+            end
+        end
+        for _, v in ipairs(toRemoveKey) do
+            self.m_itemInfoList[v] = nil
         end
     end
     

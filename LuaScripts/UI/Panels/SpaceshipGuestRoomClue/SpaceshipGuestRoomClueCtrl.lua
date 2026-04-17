@@ -389,13 +389,13 @@ SpaceshipGuestRoomClueCtrl.OnUpdateData = HL.Method(HL.Opt(HL.Any)) << function(
     self.view.collect.redDot.gameObject:SetActive(canCollect)
     local receiveData = {}
     for _,value in cs_pairs(clueData.preReceiveClues) do
-        for _, data in cs_pairs(value) do
-            if not (data.expireTs > 0 and data.expireTs < DateTimeUtils.GetCurrentTimestampBySeconds()) then
-                table.insert(receiveData, data)
+        for _, clueData in cs_pairs(value) do
+            if not (clueData.expireTs > 0 and clueData.expireTs < DateTimeUtils.GetCurrentTimestampBySeconds()) then
+                table.insert(receiveData, clueData)
             end
         end
     end
-    local canReceive = #receiveData > 0 and not self.m_spaceship:IsReadAllPreReceiveClues()
+    local canReceive = #receiveData > 0
     self.view.receive.redDot.gameObject:SetActive(canReceive)
     if self.m_focusTabNode ~= nil then
        return

@@ -8,11 +8,13 @@ local Category2Panel = {
     [DungeonConst.DUNGEON_CATEGORY.CharTutorial] = PanelId.DungeonCommonEntry,
     [DungeonConst.DUNGEON_CATEGORY.Challenge] = PanelId.DungeonCommonEntry,
     [DungeonConst.DUNGEON_CATEGORY.Resource] = PanelId.DungeonCommonEntry,
-    [DungeonConst.DUNGEON_CATEGORY.Train] = PanelId.DungeonCommonEntry,
     [DungeonConst.DUNGEON_CATEGORY.WorldLevel] = PanelId.DungeonCommonEntry,
+
+    [DungeonConst.DUNGEON_CATEGORY.Train] = PanelId.DungeonTrainEntry,
     [DungeonConst.DUNGEON_CATEGORY.HighDifficulty] = PanelId.DungeonCommonEntry,
     [DungeonConst.DUNGEON_CATEGORY.ActMonster] = PanelId.DungeonActivityEntry,
 }
+
 
 
 
@@ -41,6 +43,7 @@ PhaseDungeonEntry.m_currentPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
 
 PhaseDungeonEntry.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_OPEN_DUNGEON_ENTRY_PANEL] = { 'OnOpenDungeonEntryPanel', false },
+    [MessageConst.ENTER_DUNGEON_SKIP_PANEL] = { 'EnterDungeonSkipPanel', false },
 }
 
 
@@ -69,6 +72,31 @@ PhaseDungeonEntry.OnOpenDungeonEntryPanel = HL.StaticMethod(HL.Any) << function(
         dungeonId = dungeonId,
         enterDungeonCallback = enterDungeonCallback,
     })
+end
+
+
+
+PhaseDungeonEntry.EnterDungeonSkipPanel = HL.StaticMethod(HL.Any) << function(args)
+    local dungeonId = unpack(args)
+    local _, dungeonCfg = Tables.DungeonTable:TryGetValue(dungeonId)
+    local teamId = dungeonCfg.previewCharTeamId
+    local charInfo = CharInfoUtils.getLockedFormationData(teamId, true)
+
+    if charInfo then
+        local charInfos = {}
+        for _, char in ipairs(charInfo.chars) do
+            local presetCharInfo = CharInfoUtils.getPlayerCharInfoByInstId(char.charInstId)
+            table.insert(charInfos, presetCharInfo)
+        end
+        if GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId, charInfos) then
+            Utils.reportPlacementEvent(GEnums.ClientPlacementEventType.DungeonBattleFirst)
+        end
+        GameInstance.player.charBag:ClearAllClientCharAndItemData()
+    else
+        if GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId) then
+            Utils.reportPlacementEvent(GEnums.ClientPlacementEventType.DungeonBattleFirst)
+        end
+    end
 end
 
 
@@ -175,9 +203,7 @@ PhaseDungeonEntry._PrepareOpenPanelArgs = HL.Method().Return(HL.Table) << functi
     end
     local dungeonSeriesCfg = Tables.dungeonSeriesTable[dungeonSeriesId]
 
-    
-    
-    local panelId = PanelId.DungeonEntry
+    local panelId = PanelId.DungeonCommonEntry
     if Category2Panel[dungeonSeriesCfg.gameCategory] then
         panelId = Category2Panel[dungeonSeriesCfg.gameCategory]
     end

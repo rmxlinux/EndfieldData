@@ -84,7 +84,8 @@ end
 ReadingCtrl.OnClose = HL.Override() << function(self)
     local oldData = self.m_readingDataList[self.m_selectIndex]
     if oldData then
-        EventLogManagerInst:GameEvent_CloseNarrativeContent(oldData.contentId)
+        local stayTime = GameInstance.player.readingSystem:GetReadNarrativeContentTime(oldData.contentId)
+        EventLogManagerInst:GameEvent_CloseNarrativeContent(oldData.contentId, stayTime)
     end
 end
 
@@ -111,11 +112,13 @@ ReadingCtrl._OnTabClick = HL.Method(HL.Number) << function(self, index)
 
         local oldData = self.m_readingDataList[self.m_selectIndex]
         if oldData then
-            EventLogManagerInst:GameEvent_CloseNarrativeContent(oldData.contentId)
+            local stayTime = GameInstance.player.readingSystem:GetReadNarrativeContentTime(oldData.contentId)
+            EventLogManagerInst:GameEvent_CloseNarrativeContent(oldData.contentId, stayTime)
         end
         local newData = self.m_readingDataList[index]
         if newData then
             EventLogManagerInst:GameEvent_ReadNarrativeContent(newData.contentId)
+            GameInstance.player.readingSystem:SaveReadNarrativeContentTime(newData.contentId)
         end
         self.m_selectIndex = index
         self:_RefreshContent()

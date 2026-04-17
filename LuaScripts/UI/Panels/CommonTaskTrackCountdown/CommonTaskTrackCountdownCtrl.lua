@@ -4,21 +4,25 @@ local PANEL_ID = PanelId.CommonTaskTrackCountdown
 local Component = {
     countdownTopBig = 1,
     countdownTopLeftSmall = 2,
-    counting = 3,
+    countingTopBig = 3,
+    countingTopLeftSmall = 4,
 }
 
 local countDownTypeTable = {
     [GEnums.GameMechanicCountDownComponentType.TopBig] = {
-        component = Component.countdownTopBig,
+        countDownType = Component.countdownTopBig,
+        countingType = Component.countingTopBig,
         prepareAction = "_TopBigCountdownPrepareAction",
         tickAction = "_TopBigCountdownTickAction",
     },
     [GEnums.GameMechanicCountDownComponentType.TopLeftSmall] = {
-        component = Component.countdownTopLeftSmall,
+        countDownType = Component.countdownTopLeftSmall,
+        countingType = Component.countingTopLeftSmall,
         prepareAction = "_TopLeftSmallCountdownPrepareAction",
         tickAction = "_TopLeftSmallCountdownTickAction",
     },
 }
+
 
 
 
@@ -111,7 +115,19 @@ end
 CommonTaskTrackCountdownCtrl._ToggleComponentOn = HL.Method(HL.Number) << function(self, component)
     self.view.countdown.gameObject:SetActiveIfNecessary(component == Component.countdownTopBig)
     self.view.countdownTopLeftSmall.gameObject:SetActiveIfNecessary(component == Component.countdownTopLeftSmall)
-    self.view.counting.gameObject:SetActiveIfNecessary(component == Component.counting)
+    self.view.countingTopLeftSmall.gameObject:SetActiveIfNecessary(component == Component.countingTopLeftSmall)
+    self.view.counting.gameObject:SetActiveIfNecessary(component == Component.countingTopBig)
+end
+
+
+
+
+CommonTaskTrackCountdownCtrl._GetCountingComponentNode = HL.Method(HL.Number).Return(HL.Any) << function(self, componentType)
+    if componentType == Component.countingTopLeftSmall then
+        return self.view.countingTopLeftSmall
+    else
+        return self.view.counting
+    end
 end
 
 
@@ -139,7 +155,9 @@ end
 
 
 
-CommonTaskTrackCountdownCtrl._TopBigCountdownTickAction = HL.Method(HL.Number, HL.Number) << function(self, leftTime, duration)
+
+CommonTaskTrackCountdownCtrl._TopBigCountdownTickAction = HL.Method(HL.Number, HL.Number, HL.Boolean)
+        << function(self, leftTime, duration, needAlterAudio)
     local node = self.view.countdown
     node.countDownTxt.text = UIUtils.getLeftTimeToSecond(math.max(0, leftTime))
     node.fill.fillAmount = leftTime / duration
@@ -147,7 +165,11 @@ CommonTaskTrackCountdownCtrl._TopBigCountdownTickAction = HL.Method(HL.Number, H
     if not self.m_isInAlter and leftTime <= self.view.config.COUNTDOWN_ALERT_TIME_THRESHOLD then
         self.m_isInAlter = true
         node.stateController:SetState("Alert")
-        AudioAdapter.PostEvent("Au_UI_Toast_TickDown")
+        self.animationWrapper:Play("tasktrackcountdown_loop")
+    end
+
+    if needAlterAudio then
+        AudioAdapter.PostEvent("Au_UI_Toast_TickDown_OS")
     end
 end
 
@@ -155,7 +177,9 @@ end
 
 
 
-CommonTaskTrackCountdownCtrl._TopLeftSmallCountdownTickAction = HL.Method(HL.Number, HL.Number) << function(self, leftTime, duration)
+
+CommonTaskTrackCountdownCtrl._TopLeftSmallCountdownTickAction = HL.Method(HL.Number, HL.Number, HL.Boolean)
+        << function(self, leftTime, duration, needAlterAudio)
     local node = self.view.countdownTopLeftSmall
     node.countDownTxt.text = UIUtils.getLeftTimeToSecond(math.max(0, leftTime))
 
@@ -163,12 +187,16 @@ CommonTaskTrackCountdownCtrl._TopLeftSmallCountdownTickAction = HL.Method(HL.Num
         self.m_isInAlter = true
         node.stateController:SetState("Alert")
         node.animationWrapper:Play("tasktrackcountdown_topleft_red")
+    end
 
-        AudioAdapter.PostEvent("Au_UI_Toast_DungeonNormalTick")
+    if needAlterAudio then
+        AudioAdapter.PostEvent("Au_UI_Toast_DungeonNormalTick_OS")
+        logger.warn("ranqinyuan")
     end
 
     local success, mainHudCtrl = UIManager:IsOpen(PanelId.MainHud)
     if success then
+        mainHudCtrl.view.topLeftBtns.topLeftBtnFollowerPositionNode.gameObject:SetActiveIfNecessary(true)
         local targetPos = mainHudCtrl.view.topLeftBtns.topLeftBtnFollowerPositionNode.anchoredPosition
         node.transform.anchoredPosition = targetPos
     end
@@ -180,11 +208,12 @@ end
 CommonTaskTrackCountdownCtrl.ShowCountdown = HL.Method(HL.Any) << function(self, arg)
     local countDownType, countdownDurationMilli, expireTimestampMilli, cb = unpack(arg)
     local countDownCfg = countDownTypeTable[countDownType]
-    self:_ToggleComponentOn(countDownCfg.component)
+    self:_ToggleComponentOn(countDownCfg.countDownType)
     self[countDownCfg.prepareAction](self)
 
     local countdownDuration = countdownDurationMilli / 1000
     local lastLeftTime = countdownDuration
+    self.m_countDownTickId = LuaUpdate:Remove(self.m_countDownTickId)
     self.m_countDownTickId = LuaUpdate:Add("Tick", function(deltaTime)
         local game = GameWorld.worldInfo.subGame
         if game == nil or game.waitingSrvResume then
@@ -197,9 +226,10 @@ CommonTaskTrackCountdownCtrl.ShowCountdown = HL.Method(HL.Any) << function(self,
             
             leftTime = lastLeftTime
         end
-        lastLeftTime = leftTime
 
-        self[countDownCfg.tickAction](self, leftTime, countdownDuration)
+        local needAlterAudio = leftTime <= self.view.config.COUNTDOWN_ALERT_TIME_THRESHOLD and lastLeftTime ~= leftTime
+        lastLeftTime = leftTime
+        self[countDownCfg.tickAction](self, leftTime, countdownDuration, needAlterAudio)
 
         if leftTime <= 0 then
             if cb then
@@ -219,10 +249,13 @@ end
 
 
 CommonTaskTrackCountdownCtrl.StartCounting = HL.Method(HL.Any) << function(self, arg)
-    self:_ToggleComponentOn(Component.counting)
+    local countDownType, startCountingTimestampMilli, startFreezeOffset = unpack(arg)
+    local countDownCfg = countDownTypeTable[countDownType]
+    self:_ToggleComponentOn(countDownCfg.countingType)
+    local countingNode = self:_GetCountingComponentNode(countDownCfg.countingType)
 
-    local startCountingTimestampMilli, startFreezeOffset = unpack(arg)
     local startTs = startCountingTimestampMilli / 1000
+    self.m_countingTickId = LuaUpdate:Remove(self.m_countingTickId)
     self.m_countingTickId = LuaUpdate:Add("Tick", function(deltaTime)
         if self:_IsWorldFreeze() then
             return
@@ -236,7 +269,17 @@ CommonTaskTrackCountdownCtrl.StartCounting = HL.Method(HL.Any) << function(self,
         local curTs = DateTimeUtils.GetCurrentTimestampBySeconds()
         local freezeOffset = GameWorld.worldInfo.subGame:GetRealEndGameTimestampForLua() - startFreezeOffset
         local curDuration = curTs - startTs - freezeOffset
-        self.view.counting.countingTxt.text = UIUtils.getLeftTimeToSecond(curDuration)
+        countingNode.countingTxt.text = UIUtils.getLeftTimeToSecond(curDuration)
+
+        
+        if countDownType == GEnums.GameMechanicCountDownComponentType.TopLeftSmall then
+            local success, mainHudCtrl = UIManager:IsOpen(PanelId.MainHud)
+            if success then
+                mainHudCtrl.view.topLeftBtns.topLeftBtnFollowerPositionNode.gameObject:SetActiveIfNecessary(true)
+                local targetPos = mainHudCtrl.view.topLeftBtns.topLeftBtnFollowerPositionNode.anchoredPosition
+                countingNode.transform.anchoredPosition = targetPos
+            end
+        end
     end)
 end
 

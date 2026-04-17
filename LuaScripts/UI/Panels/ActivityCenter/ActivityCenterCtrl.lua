@@ -47,6 +47,9 @@ ActivityCenterCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
+ActivityCenterCtrl.s_debugDelay = HL.StaticField(HL.Number) << -1
+
+
 ActivityCenterCtrl.m_selectedPanel = HL.Field(HL.Any)
 
 
@@ -198,7 +201,7 @@ ActivityCenterCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self
     
     cell.button.onClick:RemoveAllListeners()
     cell.button.onClick:AddListener(function()
-        self:_OnTabClicked(index)
+        self:_OnTabClicked(index, nil, DeviceInfo.usingController)
     end)
     self:_SetTabCellSelected(cell, index == self.m_selectedTabIndex)
     local activityData = self.m_allActivities[index].activityData
@@ -247,10 +250,11 @@ end
 
 
 
-ActivityCenterCtrl._OnTabClicked = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, index, forceRefresh)
+
+ActivityCenterCtrl._OnTabClicked = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Boolean)) << function(self, index, forceRefresh, isFromNavi)
     
     if #self.m_allActivities == 0 then
-        self:_OnActivityDisabled()
+        ActivityUtils.backToMainHud(true)
         return
     end
 
@@ -293,7 +297,8 @@ ActivityCenterCtrl._OnTabClicked = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << f
 
     
     self.m_activityId = id
-    Notify(MessageConst.SHOW_ACTIVITY_PANEL, {
+    local msg = isFromNavi and MessageConst.SHOW_ACTIVITY_PANEL_FROM_NAVI or MessageConst.SHOW_ACTIVITY_PANEL
+    Notify(msg, {
         activityId = id,
         controllerHintPlaceholder = self.view.controllerHintPlaceholder,
         groupId = self.view.inputBindingGroupMonoTarget.groupId,
@@ -302,6 +307,7 @@ ActivityCenterCtrl._OnTabClicked = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << f
             return self:_GetCell(self.m_activityDict[id].index).button
         end,
         btnClose = self.view.btnClose,
+        delay = ActivityCenterCtrl.s_debugDelay >= 0 and ActivityCenterCtrl.s_debugDelay or self.view.config.SHOW_ACTIVITY_FROM_NAVI_DELAY,
     })
 end
 
@@ -317,6 +323,9 @@ ActivityCenterCtrl.GoToActivity = HL.Method(HL.Any, HL.Opt(HL.Boolean)) << funct
         index = self.m_activityDict[activityId].index or 1
     else
         index = 1
+    end
+    if DeviceInfo.usingController then
+        InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.tabScrollRectSelectableNaviGroup)
     end
     self:_OnTabClicked(index, forceRefresh)
     local cell = self:_GetCell(index)
@@ -384,7 +393,7 @@ end
 
 ActivityCenterCtrl._SetNaviTarget = HL.Method(HL.Number) << function(self, index)
     local cell = self:_GetCell(index)
-    if DeviceInfo.usingController and cell then
+    if DeviceInfo.usingController and cell and not IsNull(cell.button) then
         self.view.tabScrollRect:ScrollToNaviTarget(cell.button)
         UIUtils.setAsNaviTarget(cell.button)
     end
@@ -413,7 +422,7 @@ ActivityCenterCtrl.OnActivityUpdated = HL.Method(HL.Any) << function(self, arg)
 
     
     if not activity then
-        self:_OnActivityDisabled()
+        ActivityUtils.backToMainHud(true)
         return
     end
 
@@ -463,19 +472,6 @@ ActivityCenterCtrl._IsActivityChanged = HL.Method().Return(HL.Boolean) << functi
         end
     end
     return false
-end
-
-
-
-ActivityCenterCtrl._OnActivityDisabled = HL.Method() << function(self)
-    GameInstance.player.guide:OnActivityDisabled()
-    Notify(MessageConst.SHOW_POP_UP,{
-        content = Language.LUA_ACTIVITY_MODIFY_QUIT_TO_MENU,
-        hideCancel = true,
-        onConfirm = function()
-            PhaseManager:ExitPhaseFastTo(PhaseId.Level, true)
-        end
-    })
 end
 
 

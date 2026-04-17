@@ -384,6 +384,7 @@ SpaceshipRoomClueSettlementCtrl._UpdateScrollCell = HL.Method(HL.Any, HL.Number)
         cell.warningNode.gameObject:SetActive(false)     
     elseif m_showInfo.type == "titleNodeFriend" then
         cell.titleNodeFriend.gameObject:SetActive(true)
+        cell.friendParticipateText.text = string.format(Language.LUA_SPACESHIP_CLUE_SETTLEMENT_FRIEND_NUM, #self.m_showFriendIds )
     end
 
     LayoutRebuilder.ForceRebuildLayoutImmediate(cell.rectTransform)

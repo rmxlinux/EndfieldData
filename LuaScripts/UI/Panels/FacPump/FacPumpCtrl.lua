@@ -27,6 +27,7 @@ local PANEL_ID = PanelId.FacPump
 
 
 
+
 FacPumpCtrl = HL.Class('FacPumpCtrl', uiCtrl.UICtrl)
 
 local NORMAL_DESC_TEXT_ID = "ui_fac_liquid_pump_last"
@@ -44,6 +45,9 @@ FacPumpCtrl.m_sourceContainer = HL.Field(HL.Userdata)
 
 
 FacPumpCtrl.m_lastSourceItemCount = HL.Field(HL.Number) << -1
+
+
+FacPumpCtrl.m_lastSourceItemId = HL.Field(HL.String) << ""
 
 
 FacPumpCtrl.m_updateThread = HL.Field(HL.Thread)
@@ -74,6 +78,7 @@ FacPumpCtrl.s_messages = HL.StaticField(HL.Table) << {
 FacPumpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_buildingInfo = arg.uiInfo
 
+    self:_InitPumpSourceContainer()
     self.view.buildingCommon:InitBuildingCommon(self.m_buildingInfo, {
         onStateChanged = function(state)
             self:_RefreshPumpTargetFormula()
@@ -116,7 +121,6 @@ FacPumpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     GameInstance.remoteFactoryManager:RegisterInterestedUnitId(self.m_buildingInfo.nodeId)
 
-    self:_InitPumpSourceContainer()
     self:_InitPumpUpdateThread()
     self:_InitPumpProgressInitThread()
 
@@ -211,6 +215,15 @@ FacPumpCtrl._RefreshPumpSourceContainerItemCount = HL.Method() << function(self)
     self.view.itemCountNodeShadow.currentCountText.text = string.format("%d", currentCount)
     self.view.itemCountNodeShadow.maxCountText.text = string.format("%d", maxCount)
 
+    if self.m_lastSourceItemId ~= self.m_sourceContainer.holdItem.id then
+        local success, sourceItemData = Tables.itemTable:TryGetValue(self.m_sourceContainer.holdItem.id)
+        if success then
+            self.view.itemNameText.text = sourceItemData.name
+        end
+        self.m_lastSourceItemId = self.m_sourceContainer.holdItem.id
+        self:_RefreshChangeState(self.view.buildingCommon.lastState)
+    end
+
     if self.m_lastSourceItemCount > 0 and currentCount == 0 then
         
         self.view.descText.text = Language[EMPTY_DESC_TEXT_ID]
@@ -238,25 +251,15 @@ end
 
 
 FacPumpCtrl._RefreshChangeState = HL.Method(HL.Userdata) << function(self, state)
-    local stateText
-    if state == GEnums.FacBuildingState.NoPower then
-        stateText = Language.LUA_FAC_CRAFTER_STATE_NOPOWER_TIPS
-    elseif state == GEnums.FacBuildingState.NotInPowerNet then
-        stateText = Language.LUA_FAC_CRAFTER_STATE_NOTINPOWERNET_TIPS
-    elseif state == GEnums.FacBuildingState.Closed then
-        stateText = Language.LUA_FAC_CRAFTER_STATE_CLOSE_TIPS
+    local sourceItemId = self.m_sourceContainer.holdItem.id
+    local postProcessText
+    if not string.isEmpty(sourceItemId) then
+        local fluidPumpInData = Tables.factoryFluidPumpInTable:GetValue(self.m_buildingInfo.buildingId)
+        if lume.find(fluidPumpInData.enableLiquidIds, sourceItemId) == nil then
+            postProcessText = Language.LUA_FAC_CANT_PUMP_FLUID_STATE_TEXT
+        end
     end
-
-    self.view.facProgressNode.gameObject:SetActiveIfNecessary(stateText == nil)
-
-    if stateText == nil then
-        self.view.facStateNode.animationWrapper:PlayOutAnimation(function()
-            self.view.facStateNode.gameObject:SetActiveIfNecessary(false)
-        end)
-    else
-        self.view.facStateNode.gameObject:SetActiveIfNecessary(true)
-        self.view.facStateNode.stateTxt.text = stateText
-    end
+    FactoryUtils.refreshStateNodeByState(self.view.facStateNode, self.view.facProgressNode, state, postProcessText)
 end
 
 

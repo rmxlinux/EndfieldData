@@ -95,6 +95,7 @@ local shopSystem = GameInstance.player.shopSystem
 
 
 
+
 ShopTradeCtrl = HL.Class('ShopTradeCtrl', uiCtrl.UICtrl)
 
 
@@ -264,12 +265,20 @@ ShopTradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_StartUpdate(function(deltaTime)
         
-        if not self.m_isLocalShop then
-            local curTs = DateTimeUtils.GetCurrentTimestampBySeconds()
-            if curTs >= self.m_nextRefreshTs then
-                self.m_nextRefreshTs = Utils.getNextCommonServerRefreshTime()
+        local curTs = DateTimeUtils.GetCurrentTimestampBySeconds()
+        if curTs >= self.m_nextRefreshTs then
+            self.m_nextRefreshTs = Utils.getNextCommonServerRefreshTime()
+            if not self.m_isLocalShop then
+                
                 GameInstance.player.shopSystem:SendQueryFriendShop(self.m_friendRoleId, DomainShopUtils.getAllLocalUnlockRandomShopIds())
                 UIManager:Close(PanelId.ShopTradeItem)
+            else
+                
+                
+                local isOpen, ctrl = UIManager:IsOpen(PanelId.ShopDetail)
+                if isOpen then
+                    ctrl:TryClose()
+                end
             end
         end
         
@@ -310,6 +319,12 @@ ShopTradeCtrl.OnClose = HL.Override() << function(self)
     end
     self._updateLimitCountTimeKey = LuaUpdate:Remove(self._updateLimitCountTimeKey)
     UIManager:ToggleBlockObtainWaysJump("VISIT_SPACESHIP", false)
+end
+
+
+
+ShopTradeCtrl.OnHide = HL.Override() << function(self)
+    self:_ShowBulkSellNode(false)
 end
 
 
@@ -1242,9 +1257,7 @@ end
 
 ShopTradeCtrl._RefreshTitleMoneyUI = HL.Method(HL.String, HL.String) << function(self, domainId, moneyId)
     local hasCfg, domainCfg = Tables.domainDataTable:TryGetValue(domainId)
-    local _, domainDevData = GameInstance.player.domainDevelopmentSystem.domainDevDataDic:TryGetValue(domainId)
-    local maxCount = domainDevData.curLevelData.moneyLimit
-    self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(moneyId, maxCount)
+    self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(domainId)
     if self.m_isLocalShop then
         self.view.domainTopMoneyTitle.view.titleTxt.text = string.format(Language.LUA_DOMAIN_SHOP_TITLE, domainCfg.domainName)
     else
@@ -1379,13 +1392,11 @@ ShopTradeCtrl._RefreshLocalShopGoodsUI = HL.Method(HL.Boolean) << function(self,
     self.view.goodsNode.bulkSellBtnNode.gameObject:SetActive(not isCommonShop and hasPosition)
     self.view.goodsNode.goodsGroupList:UpdateCount(count, isChangeTab)
     if isChangeTab then
+        self.m_curSelectTagIndex = 1
         self.view.goodsNode.goodsGroupList:UpdateShowingCells(function(csIndex, obj)
             local cell = self.m_getGoodsGroupCellFunc(obj)
             self:_OnRefreshGoodsGroupCell(cell, LuaIndex(csIndex))
         end)
-    end
-    if isChangeTab then
-        self.m_curSelectTagIndex = 1
     end
     
     self.m_goodsTagCellCache:Refresh(count, function(cell, luaIndex)

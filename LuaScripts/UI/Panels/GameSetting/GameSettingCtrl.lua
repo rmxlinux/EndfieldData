@@ -5,6 +5,7 @@ local GameSettingSetter = CS.Beyond.Scripts.Entry.GameSettingSetter
 local GameSettingHelper = CS.Beyond.Gameplay.GameSettingHelper
 local GameSetting = CS.Beyond.GameSetting
 local GameSettingVideoQuality = CS.Beyond.GameSetting.GameSettingVideoQuality
+local GameSettingSubQualityToggleWarningType = CS.Beyond.Gameplay.GameSettingSubQualityToggleWarningType
 local GameSettingSubQualityOptionState = CS.Beyond.Gameplay.GameSettingSubQualityOptionState
 local QualityManager = CS.Beyond.Scripts.Quality.QualityManager
 local QualityManagerInst = QualityManager.instance 
@@ -12,9 +13,11 @@ local DeviceControllerType = CS.Beyond.DeviceInfo.ControllerType
 local InputDeviceFlags = CS.Beyond.Input.InputDeviceFlags 
 local KeyboardKeyCode = CS.Beyond.Input.KeyboardKeyCode 
 local GamepadKeyCode = CS.Beyond.Input.GamepadKeyCode 
-local QUALITY_SETTING_ID = GameSetting.ID_VIDEO_QUALITY
 local STANDARD_HORIZONTAL_RESOLUTION = CS.Beyond.UI.UIConst.STANDARD_HORIZONTAL_RESOLUTION
 local STANDARD_VERTICAL_RESOLUTION = CS.Beyond.UI.UIConst.STANDARD_VERTICAL_RESOLUTION
+
+
+
 
 
 
@@ -291,19 +294,6 @@ local LANGUAGE_TAB_ID = "gameSetting_language"
 local KEY_HINT_TAB_ID = "gameSetting_key_hint"
 local GAMEPAD_TAB_ID = "gameSetting_gamepad"
 
-local GAMEPAD_ACTION_DROPDOWN_SETTINGS = {
-    "gamepad_sprint_jump",
-    "gamepad_skill_combo",
-}
-
-local ITEM_TYPE_LIST = {
-    GEnums.SettingItemType.Toggle,
-    GEnums.SettingItemType.Dropdown,
-    GEnums.SettingItemType.Slider,
-    GEnums.SettingItemType.Button,
-    GEnums.SettingItemType.Key,
-}
-
 
 local KEY_ACTION_STATE = {
     None = 0,
@@ -333,9 +323,6 @@ GameSettingCtrl.m_tabDataList = HL.Field(HL.Table)
 GameSettingCtrl.m_itemCells = HL.Field(HL.Forward('UIListCache'))
 
 
-GameSettingCtrl.m_itemCacheMap = HL.Field(HL.Table)
-
-
 GameSettingCtrl.m_itemDataMap = HL.Field(HL.Table)
 
 
@@ -357,7 +344,10 @@ GameSettingCtrl.m_itemCellHeight = HL.Field(HL.Number) << -1
 GameSettingCtrl.m_itemCellHeightWithoutTitle = HL.Field(HL.Number) << -1
 
 
-GameSettingCtrl.m_originalPadding = HL.Field(HL.Number) << -1
+GameSettingCtrl.m_itemControlConfigs = HL.Field(HL.Table)
+
+
+GameSettingCtrl.m_itemCellExtraArgs = HL.Field(HL.Table)
 
 
 GameSettingCtrl.m_originalAudioSlide = HL.Field(HL.String) << ""
@@ -374,7 +364,7 @@ GameSettingCtrl.m_keyActionStateMap = HL.Field(HL.Table)
 
 
 
-GameSettingCtrl.m_qualitySubSettingDataMap = HL.Field(HL.Table)  
+GameSettingCtrl.m_qualitySubSettingItemCellMap = HL.Field(HL.Table)  
 
 
 
@@ -412,6 +402,7 @@ GameSettingCtrl.m_isNotchPaddingChanged = HL.Field(HL.Boolean) << false
 GameSettingCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_TRY_CHANGE_INPUT_DEVICE_TYPE] = "_OnTryChangeInputDeviceType",
     [MessageConst.ON_CONTROLLER_TYPE_CHANGED] = "_OnControllerTypeChanged",
+    [MessageConst.ON_GAME_SETTING_CHANGED] = "_OnGameSettingChanged",
     [MessageConst.ON_CLOSE_CUSTOMER_SERVICE] = "_OnCloseCustomerService",
     [MessageConst.GAME_SETTING_VOICE_RESOURCE_STATE_CHANGED] = "_OnVoiceResourceStateChanged",
 }
@@ -441,14 +432,49 @@ GameSettingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.view.deviceModeToggle:SetValue(false)
     end)
 
+    self.view.customizeGamepadBtn.onClick:AddListener(function()
+         self.m_phase:CreatePhasePanelItem(PanelId.GameSettingGamepad)
+    end)
+
     self.m_tabCells = UIUtils.genCellCache(self.view.tabs.tabCell)
-    self.m_itemCells = UIUtils.genCellCache(self.view.settingItemCell)
 
-    self.m_itemCellHeight = self.view.settingItemCell.transform.rect.height
-    self.m_itemCellHeightWithoutTitle = self.m_itemCellHeight - self.view.settingItemCell.titleNode.rect.height
+    local itemCell = self.view.settingItemCell
+    self.m_itemCells = UIUtils.genCellCache(itemCell)
+    self.m_itemCellHeight = itemCell.transform.rect.height
+    self.m_itemCellHeightWithoutTitle = self.m_itemCellHeight - itemCell.view.titleNode.rect.height
 
-    self.m_originalPadding = self.view.sourceItem.dropDownSetting.dropDownListMask.padding.w
-    self.m_originalAudioSlide = self.view.sourceItem.sliderSetting.slider.audioSlide
+    local settingItemControls = self.view.settingItemControls
+    self.m_itemControlConfigs = {
+        [GEnums.SettingItemType.Dropdown] = {
+            template = settingItemControls.dropDownSetting.gameObject,
+            initializer = function(...) self:_InitSettingItemControlDropdown(...) end,
+        },
+        [GEnums.SettingItemType.Slider] = {
+            template = settingItemControls.sliderSetting.gameObject,
+            initializer = function(...) self:_InitSettingItemControlSlider(...) end,
+        },
+        [GEnums.SettingItemType.Button] = {
+            template = settingItemControls.buttonSetting.gameObject,
+            initializer = function(...) self:_InitSettingItemControlButton(...) end,
+        },
+        [GEnums.SettingItemType.Toggle] = {
+            template = settingItemControls.toggleSetting.gameObject,
+            initializer = function(...) self:_InitSettingItemControlToggle(...) end,
+        },
+        [GEnums.SettingItemType.Key] = {
+            template = settingItemControls.keySetting.gameObject,
+            initializer = function(...) self:_InitSettingItemControlKey(...) end,
+        },
+    }
+    self.m_itemCellExtraArgs = {
+        itemStateGetter = function(settingId)
+            return self:_GetSettingItemState(settingId)
+        end,
+        onDisabledItemClicked = function(settingId)
+            self:_OnDisabledItemClicked(settingId)
+        end,
+    }
+    self.m_originalAudioSlide = settingItemControls.sliderSetting.slider.audioSlide
 
     self.m_tabDataList = {}
     self.m_itemDataList = {}
@@ -457,8 +483,7 @@ GameSettingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_sliderValueDataMap = {}
     self.m_keyActionScope2ItemDataList = {}
     self.m_keyActionStateMap = {}
-    self.m_qualitySubSettingDataMap = {}
-    self.m_itemCacheMap = {}
+    self.m_qualitySubSettingItemCellMap = {}
 
     self.m_rootCanvasHelper = UIManager.m_uiCanvasScaleHelper
     self.m_worldRootCanvasHelper = UIManager.m_worldUICanvasScaleHelper
@@ -521,7 +546,7 @@ GameSettingCtrl.OnClose = HL.Override() << function(self)
     end
 
     if self.m_settingChanged then
-        Notify(MessageConst.ON_GAME_SETTING_CHANGED)
+        Notify(MessageConst.ON_GAME_SETTING_CHANGED, UIConst.GameSettingChangeReason.Default)
         GameInstance.player.gameSettingSystem:SaveSetting()
         GameSetting.SyncAudioForSDK() 
     end
@@ -606,48 +631,6 @@ GameSettingCtrl._BuildSettingTabData = HL.Method(HL.Userdata).Return(HL.Table) <
     end)
 
     return itemDataList
-end
-
-
-
-
-
-GameSettingCtrl._GetCachedItem = HL.Method(HL.Userdata, HL.Userdata).Return(HL.Table) << function(self, transform, itemType)
-    if self.m_itemCacheMap[transform] == nil then
-        self.m_itemCacheMap[transform] = {}
-    end
-    local cachedItem = self.m_itemCacheMap[transform]
-    local sourceNode = self.view.sourceItem
-
-    if cachedItem[itemType] == nil then
-        local sourceItem
-        if itemType == GEnums.SettingItemType.Dropdown then
-            sourceItem = sourceNode.dropDownSetting
-        elseif itemType == GEnums.SettingItemType.Slider then
-            sourceItem = sourceNode.sliderSetting
-        elseif itemType == GEnums.SettingItemType.Button then
-            sourceItem = sourceNode.buttonSetting
-        elseif itemType == GEnums.SettingItemType.Toggle then
-            sourceItem = sourceNode.toggleSetting
-        elseif itemType == GEnums.SettingItemType.Key then
-            sourceItem = sourceNode.keySetting
-        end
-        local object = CSUtils.CreateObject(sourceItem.gameObject, transform)
-        cachedItem[itemType] = Utils.wrapLuaNode(object)
-    end
-
-    local item = cachedItem[itemType]
-    for _, type in pairs(ITEM_TYPE_LIST) do
-        if type ~= itemType then
-            if cachedItem[type] ~= nil then
-                cachedItem[type].gameObject:SetActive(false)
-            end
-        end
-    end
-    item.gameObject:SetActive(true)
-    item.rectTransform.anchoredPosition = Vector2.zero
-
-    return item
 end
 
 
@@ -838,7 +821,7 @@ GameSettingCtrl._RefreshSettingTab = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.
         self.m_contentHeight = self.m_contentHeight + self.view.deviceNode.rect.height
     end
     self.m_itemCellMap = {}
-    self.m_qualitySubSettingDataMap = {}
+    self.m_qualitySubSettingItemCellMap = {}
     self.m_itemCells:Refresh(#itemDataList, function(itemCell, itemIndex)
         self:_RefreshSettingItemCell(itemCell, itemIndex, tabIndex)
     end)
@@ -913,7 +896,10 @@ end
 
 
 GameSettingCtrl._ValidateLanguage = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return not CS.Beyond.GlobalOptions.instance.auditing 
+    if DeviceInfo.isIOS and CS.Beyond.GlobalOptions.instance.auditing then
+        return false 
+    end
+    return true
 end
 
 
@@ -963,24 +949,25 @@ end
 
 
 GameSettingCtrl._SwitchDeviceMode = HL.Method(HL.Boolean) << function(self, isOn)
-    self:_ApplyGamepadSettingsToDevice()
+    self:_ApplyGamepadSettingsToDevice(isOn)
     local deviceMode = isOn and "Battle" or "Factory"
     self.m_currentDeviceNode.stateCtrl:SetState(deviceMode)
 end
 
 
 
-GameSettingCtrl._ApplyGamepadSettingsToDevice = HL.Method() << function(self)
-    self:_ApplyGamepadActionSettingsToDevice()
+
+GameSettingCtrl._ApplyGamepadSettingsToDevice = HL.Method(HL.Boolean) << function(self, isBattleMode)
+    self:_ApplyGamepadActionSettingsToDevice(isBattleMode)
     self:_ApplyGamepadEnableUltimateMode2SettingToDevice()
 end
 
 
 
-GameSettingCtrl._ApplyGamepadActionSettingsToDevice = HL.Method() << function(self)
-    for i = 1, #GAMEPAD_ACTION_DROPDOWN_SETTINGS do
-        local settingId = GAMEPAD_ACTION_DROPDOWN_SETTINGS[i]
-        local optionGroupData = Tables.gamepadSettingOptionTable:GetValue(settingId)
+
+GameSettingCtrl._ApplyGamepadActionSettingsToDevice = HL.Method(HL.Boolean) << function(self, isBattleMode)
+    
+    for settingId, optionGroupData in pairs(Tables.gamepadSettingOptionTable) do
         local optionIndex = self:_DropdownGetIndexGamepadSetting(settingId)
         local optionData = optionGroupData.options[optionIndex - 1]
         local actionKeys = optionData.actionKeys
@@ -998,6 +985,38 @@ GameSettingCtrl._ApplyGamepadActionSettingsToDevice = HL.Method() << function(se
     end
 
     
+    local actionKeyHintTextBuilder = {}
+    for settingId, itemData in pairs(Tables.gamepadSettingItemTable) do
+        local keyCode = GameInstance.player.gameSettingSystem:GetKeySettingGamepadKeyCode(settingId)
+        local keyStr = keyCode:ToString()
+
+        local actionKeyHintTextIds = isBattleMode
+            and itemData.actionKeyHintTextIds
+            or itemData.actionFactoryKeyHintTextIds
+        local showKeyHint = actionKeyHintTextIds.Count > 0
+
+        local decoLine = self.m_currentDeviceNode["decoLine_" .. keyStr]
+        if decoLine then
+            decoLine.gameObject:SetActive(showKeyHint)
+        end
+        local keyHintIcon = self.m_currentDeviceNode["keyHintIcon_" .. keyStr]
+        if keyHintIcon then
+            keyHintIcon.gameObject:SetActive(showKeyHint)
+        end
+        local keyHintText = self.m_currentDeviceNode["keyHintText_" .. keyStr]
+        if keyHintText then
+            keyHintText.gameObject:SetActive(showKeyHint)
+            if showKeyHint then
+                lume.clear(actionKeyHintTextBuilder)
+                for i = 0, actionKeyHintTextIds.Count - 1 do
+                    table.insert(actionKeyHintTextBuilder, Language[actionKeyHintTextIds[i]])
+                end
+                keyHintText:SetAndResolveTextStyle(table.concat(actionKeyHintTextBuilder, "\n"))
+            end
+        end
+    end
+
+    
     
     local indicatorActionInfo = InputManagerInst:GetPlayerActionInfo("common_indicator_start")
     local indicatorKeyIconPath = InputManager.GetKeyIconPath(indicatorActionInfo.primaryGamepadInput, false, true)
@@ -1010,7 +1029,7 @@ end
 
 
 GameSettingCtrl._ApplyGamepadEnableUltimateMode2SettingToDevice = HL.Method() << function(self)
-    local enableUltimateMode2 = self:_ToggleGetEnableUltimateMode2(GameSetting.ID_GAMEPAD_ENABLE_ULTIMATE_MODE_2)
+    local enableUltimateMode2 = GameSetting.gamepadCacheEnableUltimateMode2
     self.m_currentDeviceNode.useUltimateMode2StateCtrl:SetState(enableUltimateMode2 and "Enabled" or "Disabled")
 end
 
@@ -1050,7 +1069,7 @@ end
 
 
 
-GameSettingCtrl._RefreshSettingItemCell = HL.Method(HL.Table, HL.Number, HL.Number) << function(self, itemCell, itemIndex, tabIndex)
+GameSettingCtrl._RefreshSettingItemCell = HL.Method(HL.Userdata, HL.Number, HL.Number) << function(self, itemCell, itemIndex, tabIndex)
     local itemDataList = self.m_itemDataList[tabIndex]
     if itemDataList == nil then
         return
@@ -1061,57 +1080,18 @@ GameSettingCtrl._RefreshSettingItemCell = HL.Method(HL.Table, HL.Number, HL.Numb
         return
     end
 
-    local itemType = itemData.settingItemType
+    local settingId = itemData.settingId
+    self.m_itemCellMap[settingId] = itemCell
 
-    itemCell.gameObject.name = string.format("GameSettingItem_%s", itemData.settingId)
-    itemCell.settingItemText.text = itemData.settingText
+    itemCell:InitGameSettingItemCell(itemData, self.m_itemControlConfigs, self.m_itemCellExtraArgs)
 
     
-    itemCell.naviDecorator.onIsNaviTargetChanged = itemIndex == 1 and function(isTarget)
-        if isTarget then
-            self.view.scrollView:ScrollTo(Vector2(0, 0), false)
-        end
-    end or nil
+    if GameSettingHelper.IsQualitySubSetting(settingId) then
+        self.m_qualitySubSettingItemCellMap[settingId] = itemCell
+    end
 
     
     local showTitle = not string.isEmpty(itemData.settingGroupTitle)
-    itemCell.titleNode.gameObject:SetActive(showTitle)
-    if showTitle then
-        itemCell.itemTitleText.text = itemData.settingGroupTitle
-        itemCell.itemTitleKey.gameObject:SetActive(itemType == GEnums.SettingItemType.Key)
-    end
-
-    
-    if string.isEmpty(itemData.settingRedDot) then
-        itemCell.redDot.gameObject:SetActive(false)
-    else
-        itemCell.redDot.gameObject:SetActive(true)
-        itemCell.redDot:InitRedDot(itemData.settingRedDot)
-    end
-
-    local item = self:_GetCachedItem(itemCell.cacheTransform, itemType)
-
-    
-    if GameSettingHelper.IsQualitySubSetting(itemData.settingId) then
-        self.m_qualitySubSettingDataMap[itemData.settingId] = {
-            itemCell = item,
-            itemData = itemData,
-        }
-    end
-
-    if itemType == GEnums.SettingItemType.Dropdown then
-        self:_InitDropdownSettingItem(item, itemData, itemCell)
-    elseif itemType == GEnums.SettingItemType.Slider then
-        self:_InitSliderSettingItem(item, itemData, itemCell)
-    elseif itemType == GEnums.SettingItemType.Button then
-        self:_InitButtonSettingItem(item, itemData)
-    elseif itemType == GEnums.SettingItemType.Toggle then
-        self:_InitToggleSettingItem(item, itemData)
-    elseif itemType == GEnums.SettingItemType.Key then
-        self:_InitKeySettingItem(item, itemData)
-    end
-
-    
     local cellHeight = showTitle and self.m_itemCellHeight or self.m_itemCellHeightWithoutTitle
     UIUtils.setSizeDeltaY(itemCell.rectTransform, cellHeight)
     
@@ -1131,23 +1111,21 @@ GameSettingCtrl._RefreshSettingItemCell = HL.Method(HL.Table, HL.Number, HL.Numb
         position.x,
         -self.m_contentHeight
     )
-
-    self.m_itemCellMap[itemData.settingId] = item
 end
 
 
 
 
-
-
-GameSettingCtrl._InitDropdownSettingItem = HL.Method(HL.Table, HL.Any, HL.Table) << function(self, itemCell, itemData, originalCell)
+GameSettingCtrl._InitSettingItemControlDropdown = HL.Method(HL.Userdata) << function(self, itemCell)
+    local itemData = itemCell.itemData
+    local itemControl = itemCell.itemControl
     local settingId = itemData.settingId
 
     local optionTextList = {}
     local optionStateList
 
-    itemCell.dropdown:ClearComponent()
-    itemCell.dropdown:Init(function(csIndex, option, isSelected)
+    itemControl.dropdown:ClearComponent()
+    itemControl.dropdown:Init(function(csIndex, option, isSelected)
         local index = LuaIndex(csIndex)
         option:SetText(optionTextList[index])
         option:SetState(optionStateList and optionStateList[index] or DROPDOWN_OPTION_STATE_NORMAL)
@@ -1175,13 +1153,13 @@ GameSettingCtrl._InitDropdownSettingItem = HL.Method(HL.Table, HL.Any, HL.Table)
             end
         end
     end)
-    itemCell.dropdown.onToggleOptList:AddListener(function(active)
+    itemControl.dropdown.onToggleOptList:AddListener(function(active)
         if active then
-            self:_DropdownAdjustExpandDirection(itemCell, originalCell)
-            itemCell.dropdown:ScrollToSelected()
+            self:_DropdownAdjustExpandDirection(itemCell)
+            itemControl.dropdown:ScrollToSelected()
         end
     end)
-    itemCell.dropdown.onValidateSelectCell = function(csFromIndex, csToIndex)
+    itemControl.dropdown.onValidateSelectCell = function(csFromIndex, csToIndex)
         local valid = true
         local validateSelectFunction = self:_GetSettingFunctionName(itemData.dropdownOptionValidateSelectFunction)
         if not string.isEmpty(validateSelectFunction) then
@@ -1192,7 +1170,7 @@ GameSettingCtrl._InitDropdownSettingItem = HL.Method(HL.Table, HL.Any, HL.Table)
 
     
     local isGamepad = itemData.settingTabId == GAMEPAD_TAB_ID
-    itemCell.sizeStateCtrl:SetState(isGamepad and "Large" or "Normal")
+    itemControl.sizeStateCtrl:SetState(isGamepad and "Large" or "Normal")
 
     local initIndex = 1
     if GameSettingHelper.IsQualitySubSetting(settingId) then
@@ -1226,16 +1204,16 @@ GameSettingCtrl._InitDropdownSettingItem = HL.Method(HL.Table, HL.Any, HL.Table)
             end
         end
 
-        itemCell.dropdown:Refresh(#optionTextList, CSIndex(initIndex), false)
+        itemControl.dropdown:Refresh(#optionTextList, CSIndex(initIndex), false)
     end)
 end
 
 
 
 
-
-
-GameSettingCtrl._InitSliderSettingItem = HL.Method(HL.Table, HL.Any, HL.Table) << function(self, itemCell, itemData, originalCell)
+GameSettingCtrl._InitSettingItemControlSlider = HL.Method(HL.Userdata) << function(self, itemCell)
+    local itemData = itemCell.itemData
+    local itemControl = itemCell.itemControl
     local settingId = itemData.settingId
 
     local getFunctionName = self:_GetSettingFunctionName(itemData.sliderValueGetFunction)
@@ -1244,36 +1222,36 @@ GameSettingCtrl._InitSliderSettingItem = HL.Method(HL.Table, HL.Any, HL.Table) <
     local iconOnClickFunction = itemData.sliderIconOnClickFunction
 
     local iconListLength = itemData.sliderIconList and #itemData.sliderIconList or 0
-    itemCell.sliderIconNode.gameObject:SetActive(iconListLength > 0)
-    itemCell.sliderFillArea.gameObject:SetActive(itemData.sliderUseFill)
+    itemControl.sliderIconNode.gameObject:SetActive(iconListLength > 0)
+    itemControl.sliderFillArea.gameObject:SetActive(itemData.sliderUseFill)
 
-    itemCell.slider:ClearComponent()
-    itemCell.sliderIconButton.onClick:RemoveAllListeners()
-    itemCell.slider.audioSlide = ""
-    itemCell.slider.wholeNumbers = itemData.sliderWholeNumbers
-    itemCell.slider.minValue = itemData.sliderMinValue
-    itemCell.slider.snapStep = true
-    itemCell.slider.stepValue = itemData.sliderStepValue
+    itemControl.slider:ClearComponent()
+    itemControl.sliderIconButton.onClick:RemoveAllListeners()
+    itemControl.slider.audioSlide = ""
+    itemControl.slider.wholeNumbers = itemData.sliderWholeNumbers
+    itemControl.slider.minValue = itemData.sliderMinValue
+    itemControl.slider.snapStep = true
+    itemControl.slider.stepValue = itemData.sliderStepValue
     if string.isEmpty(maxValueGetFunctionName) then
-        itemCell.slider.maxValue = itemData.sliderMaxValue
+        itemControl.slider.maxValue = itemData.sliderMaxValue
     else
         maxValueGetFunctionName = self:_GetSettingFunctionName(maxValueGetFunctionName)
         local maxValue = self[maxValueGetFunctionName](self, settingId)
         if itemData.sliderMinValue >= maxValue then
-            originalCell.gameObject:SetActive(false)
+            itemCell.gameObject:SetActive(false)
             return
         end
-        itemCell.slider.maxValue = maxValue
+        itemControl.slider.maxValue = maxValue
     end
     
-    local wholeNumbersText = itemCell.slider.minValue < 0 or itemCell.slider.maxValue > 1
+    local wholeNumbersText = itemControl.slider.minValue < 0 or itemControl.slider.maxValue > 1
 
     self.m_sliderValueDataMap[settingId] = {
         minValue = itemData.sliderMinValue,
         maxValue = itemData.sliderMaxValue
     }
 
-    itemCell.slider.onValueChanged:AddListener(function(value)
+    itemControl.slider.onValueChanged:AddListener(function(value)
         if not string.isEmpty(setFunctionName) then
             local currValue
             if string.isEmpty(getFunctionName) then
@@ -1291,59 +1269,61 @@ GameSettingCtrl._InitSliderSettingItem = HL.Method(HL.Table, HL.Any, HL.Table) <
         if iconListLength > 0 then
             local icon = self:_SliderGetIcon(value, itemData.sliderIconList, itemData.sliderIconRangeList)
             if icon ~= nil then
-                itemCell.sliderIcon.sprite = icon
-                itemCell.sliderIcon.gameObject:SetActive(true)
+                itemControl.sliderIcon.sprite = icon
+                itemControl.sliderIcon.gameObject:SetActive(true)
             else
-                itemCell.sliderIcon.gameObject:SetActive(false)
+                itemControl.sliderIcon.gameObject:SetActive(false)
             end
         end
 
-        self:_SliderRefreshText(itemCell, value, wholeNumbersText)
+        self:_SliderRefreshText(itemControl, value, wholeNumbersText)
     end)
 
     if not string.isEmpty(getFunctionName) then
         local initValue = self[getFunctionName](self, settingId)
-        itemCell.slider:SetValueWithoutNotify(initValue, false)
-        self:_SliderRefreshText(itemCell, initValue, wholeNumbersText)
+        itemControl.slider:SetValueWithoutNotify(initValue, false)
+        self:_SliderRefreshText(itemControl, initValue, wholeNumbersText)
         self:_SliderRecordValue(settingId, initValue)
 
-        if itemCell.slider.value == 0.0 then
+        if itemControl.slider.value == 0.0 then
             
-            itemCell.slider.onValueChanged:Invoke(initValue)
+            itemControl.slider.onValueChanged:Invoke(initValue)
         end
     end
 
     if not string.isEmpty(iconOnClickFunction) and iconListLength > 0 then
         iconOnClickFunction = self:_GetSettingFunctionName(iconOnClickFunction)
-        itemCell.sliderIconButton.onClick:AddListener(function()
+        itemControl.sliderIconButton.onClick:AddListener(function()
             self[iconOnClickFunction](self, settingId)
         end)
     end
 
-    itemCell.slider.audioSlide = self.m_originalAudioSlide  
+    itemControl.slider.audioSlide = self.m_originalAudioSlide  
 end
 
 
 
 
+GameSettingCtrl._InitSettingItemControlButton = HL.Method(HL.Userdata) << function(self, itemCell)
+    local itemData = itemCell.itemData
+    local itemControl = itemCell.itemControl
 
-GameSettingCtrl._InitButtonSettingItem = HL.Method(HL.Table, HL.Any) << function(self, itemCell, itemData)
     local getStateFunction = itemData.buttonGetStateFunction
     if string.isEmpty(getStateFunction) then
-        itemCell.buttonText.text = itemData.buttonText
-        itemCell.buttonIcon.gameObject:SetActive(true)
-        itemCell.stateCtrl:SetState("NormalState")
+        itemControl.buttonText.text = itemData.buttonText
+        itemControl.buttonIcon.gameObject:SetActive(true)
+        itemControl.stateCtrl:SetState("NormalState")
     else
         getStateFunction = self[self:_GetSettingFunctionName(getStateFunction)]
         local success, result = xpcall(getStateFunction, debug.traceback, self, itemData)
         if success then
-            itemCell.buttonText.text = result.currentText
+            itemControl.buttonText.text = result.currentText
             if string.isEmpty(result.currentIcon) then
-                itemCell.buttonIcon.gameObject:SetActive(false)
+                itemControl.buttonIcon.gameObject:SetActive(false)
             else
-                itemCell.buttonIcon.gameObject:SetActive(true)
+                itemControl.buttonIcon.gameObject:SetActive(true)
             end
-            itemCell.stateCtrl:SetState(result.currentState)
+            itemControl.stateCtrl:SetState(result.currentState)
         else
             logger.error(ELogChannel.GameSetting, "Setting item button get state function error, message: " .. tostring(result))
         end
@@ -1351,8 +1331,8 @@ GameSettingCtrl._InitButtonSettingItem = HL.Method(HL.Table, HL.Any) << function
 
     local clickFunctionName = self:_GetSettingFunctionName(itemData.buttonOnClickFunction)
     if not string.isEmpty(clickFunctionName) then
-        itemCell.button.onClick:RemoveAllListeners()
-        itemCell.button.onClick:AddListener(function()
+        itemControl.button.onClick:RemoveAllListeners()
+        itemControl.button.onClick:AddListener(function()
             self[clickFunctionName](self)
         end)
     end
@@ -1361,16 +1341,21 @@ end
 
 
 
-
-GameSettingCtrl._InitToggleSettingItem = HL.Method(HL.Table, HL.Any) << function(self, itemCell, itemData)
+GameSettingCtrl._InitSettingItemControlToggle = HL.Method(HL.Userdata) << function(self, itemCell)
+    local itemData = itemCell.itemData
+    local itemControl = itemCell.itemControl
     local settingId = itemData.settingId
 
     local getFunctionName
     local setFunctionName
 
     local initialValue = false
+    local validateSetFunction
     if GameSettingHelper.IsQualitySubSetting(settingId) then
         initialValue = self:_ToggleGetQualitySubSettingValue(settingId)
+        validateSetFunction = function(value)
+            return self:_ToggleValidateSetQualitySubSettingValue(settingId, value)
+        end
     else
         getFunctionName = self:_GetSettingFunctionName(itemData.toggleValueGetFunction)
         setFunctionName = self:_GetSettingFunctionName(itemData.toggleValueSetFunction)
@@ -1379,6 +1364,7 @@ GameSettingCtrl._InitToggleSettingItem = HL.Method(HL.Table, HL.Any) << function
             initialValue = self[getFunctionName](self, settingId)
         end
     end
+    itemControl.toggle.view.toggle.checkIsValueValid = validateSetFunction
 
     local onText, offText
     if string.isEmpty(itemData.toggleOnText) and string.isEmpty(itemData.toggleOffText) then
@@ -1386,7 +1372,7 @@ GameSettingCtrl._InitToggleSettingItem = HL.Method(HL.Table, HL.Any) << function
     else
         onText, offText = itemData.toggleOnText, itemData.toggleOffText
     end
-    itemCell.toggle:InitCommonToggle(function(isOn)
+    itemControl.toggle:InitCommonToggle(function(isOn)
         if GameSettingHelper.IsQualitySubSetting(settingId) then
             initialValue = self:_ToggleSetQualitySubSettingValue(settingId, isOn)
             self.m_settingChanged = true
@@ -1402,8 +1388,10 @@ end
 
 
 
+GameSettingCtrl._InitSettingItemControlKey = HL.Method(HL.Userdata) << function(self, itemCell)
+    local itemData = itemCell.itemData
+    local itemControl = itemCell.itemControl
 
-GameSettingCtrl._InitKeySettingItem = HL.Method(HL.Table, HL.Userdata) << function(self, itemCell, itemData)
     
     
     
@@ -1414,18 +1402,18 @@ GameSettingCtrl._InitKeySettingItem = HL.Method(HL.Table, HL.Userdata) << functi
     
     local fallbackSecondary = useActionIds2
 
-    local isSet1 = self:_InitKeySettingItem_KeyAction(itemCell.keyAction1, true,
+    local isSet1 = self:_InitSettingItemControlKeyAction(itemControl.keyAction1, true,
         itemData, itemData.keyActionIds1, nil, itemData.keyIcon1, itemData.keyIsMutable1, itemData.keyIsLongPress1, fallbackSecondary)
-    local isSet2 = self:_InitKeySettingItem_KeyAction(itemCell.keyAction2, useActionIds2,
+    local isSet2 = self:_InitSettingItemControlKeyAction(itemControl.keyAction2, useActionIds2,
         itemData, actionIds2, nil, itemData.keyIcon2, itemData.keyIsMutable2, itemData.keyIsLongPress2, fallbackSecondary)
 
     
     local allUnset = not isSet1 and not isSet2
     
     if allUnset then
-        itemCell.keyAction1.stateCtrl:SetState("Warning")
+        itemControl.keyAction1.stateCtrl:SetState("Warning")
         self:_AddKeyActionState(itemData.settingId, KEY_ACTION_STATE.Warning, true)
-        itemCell.keyAction2.stateCtrl:SetState("Warning")
+        itemControl.keyAction2.stateCtrl:SetState("Warning")
         self:_AddKeyActionState(itemData.settingId, KEY_ACTION_STATE.Warning, false)
     else
         self:_RemoveKeyActionState(itemData.settingId, KEY_ACTION_STATE.Warning, true)
@@ -1444,7 +1432,7 @@ end
 
 
 
-GameSettingCtrl._InitKeySettingItem_KeyAction = HL.Method(HL.Table, HL.Boolean, HL.Userdata, HL.Userdata, HL.Any, HL.Any, HL.Boolean, HL.Boolean, HL.Boolean)
+GameSettingCtrl._InitSettingItemControlKeyAction = HL.Method(HL.Table, HL.Boolean, HL.Userdata, HL.Userdata, HL.Any, HL.Any, HL.Boolean, HL.Boolean, HL.Boolean)
                                                   .Return(HL.Boolean)
     << function(self, view, isPrimary, itemData, actionIds, modifyIconPath, iconPath, isMutable, isLongPress, fallbackSecondary)
     local isSet = false 
@@ -1630,8 +1618,31 @@ end
 
 
 GameSettingCtrl._ValidateCDK = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return not CS.Beyond.GlobalOptions.instance.auditing 
-        and not GameInstance.player.gameSettingSystem.forbiddenCDK 
+    if GameInstance.player.gameSettingSystem.forbiddenCDK then
+        return false
+    end
+    return true
+end
+
+
+
+
+GameSettingCtrl._GetSettingItemState = HL.Method(HL.String).Return(HL.String) << function(self, settingId)
+    if settingId == GameSetting.ID_GAMEPAD_ENABLE_ULTIMATE_MODE_2 then
+        if not GameSetting.isGamepadEnableUltimateMode2Available then
+            return UIConst.GameSettingItemState.Disabled 
+        end
+    end
+    return UIConst.GameSettingItemState.Normal
+end
+
+
+
+
+GameSettingCtrl._OnDisabledItemClicked = HL.Method(HL.String) << function(self, settingId)
+    if settingId == GameSetting.ID_GAMEPAD_ENABLE_ULTIMATE_MODE_2 then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_GAME_SETTING_DISABLED_TOAST_CONTENT_KEY_SETTING_CONFLICT)
+    end
 end
 
 
@@ -1642,35 +1653,35 @@ end
 
 
 
+GameSettingCtrl._DropdownAdjustExpandDirection = HL.Method(HL.Userdata) << function(self, itemCell)
+    local itemControl = itemCell.itemControl
 
-GameSettingCtrl._DropdownAdjustExpandDirection = HL.Method(HL.Any, HL.Any) << function(self, cell, originalCell)
     
-    originalCell.rectTransform:SetSiblingIndex(originalCell.rectTransform.parent.childCount - 1)
+    itemCell.rectTransform:SetSiblingIndex(itemCell.rectTransform.parent.childCount - 1)
 
     
     local viewRect = self.view.scrollView.transform
-    local cellRect = cell.rectTransform
-    local listRect = cell.dropDownListRectTransform
-    local listMask = cell.dropDownListMask
+    local cellRect = itemControl.rectTransform
+    local listRect = itemControl.dropDownListRectTransform
+    local listMask = itemControl.dropDownListMask
     
     local cellRectMax = cellRect.rect.max
     local cellRectMaxWorldPos = cellRect:TransformPoint(Vector3(cellRectMax.x, cellRectMax.y, 0))
     local cellRectMaxLocalPos = viewRect:InverseTransformPoint(cellRectMaxWorldPos)
-    local isInUpperHalf = (cellRectMaxLocalPos.y - listRect.rect.height) >= viewRect.rect.yMin
+    local isDownward = (cellRectMaxLocalPos.y - listRect.rect.height) >= viewRect.rect.yMin
     
-    listRect.pivot = isInUpperHalf and Vector2(0.5, 1.0) or Vector2(0.5, 0)
-    listRect.anchorMin = isInUpperHalf and Vector2(0, 1.0) or Vector2(0, 0)
-    listRect.anchorMax = isInUpperHalf and Vector2(1.0, 1.0) or Vector2(1.0, 0)
+    listRect.pivot = isDownward and Vector2(0.5, 1.0) or Vector2(0.5, 0)
+    listRect.anchorMin = isDownward and Vector2(0, 1.0) or Vector2(0, 0)
+    listRect.anchorMax = isDownward and Vector2(1.0, 1.0) or Vector2(1.0, 0)
     listRect.anchoredPosition = Vector2.zero
     
-    local maskPadding = listMask.padding
-    maskPadding.w = isInUpperHalf and self.m_originalPadding or 0
-    maskPadding.y = isInUpperHalf and 0 or self.m_originalPadding
-    listMask.padding = maskPadding
-    cell.topMask.gameObject:SetActive(not isInUpperHalf)
-    cell.bottomMask.gameObject:SetActive(isInUpperHalf)
+    listMask.padding = isDownward
+        and self.view.config.DROPDOWN_LIST_MASK_PADDING_DOWNWARD
+        or self.view.config.DROPDOWN_LIST_MASK_PADDING_UPWARD
+    itemControl.topMask.gameObject:SetActive(not isDownward)
+    itemControl.bottomMask.gameObject:SetActive(isDownward)
     
-    cell.layoutStateCtrl:SetState(isInUpperHalf and "Downward" or "Upward")
+    itemControl.layoutStateCtrl:SetState(isDownward and "Downward" or "Upward")
 end
 
 
@@ -1814,7 +1825,7 @@ end
 
 GameSettingCtrl._DropdownOnSelectLanguageText = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
     local lastIndex = CSIndex(self:_DropdownGetIndexLanguageText(settingId))
-    local dropdown = self.m_itemCellMap[settingId].dropdown
+    local dropdown = self.m_itemCellMap[settingId].itemControl.dropdown
     Notify(MessageConst.SHOW_POP_UP, {
         content = Language[LANGUAGE_TEXT_POP_UP_CONTENT_TEXT_ID],
         freezeWorld = true,
@@ -2075,7 +2086,7 @@ GameSettingCtrl._SliderOnAudioIconClicked = HL.Method(HL.String) << function(sel
     if valueData == nil then
         return
     end
-    local slider = self.m_itemCellMap[settingId].slider
+    local slider = self.m_itemCellMap[settingId].itemControl.slider
     if valueData.currValue > valueData.minValue then
         slider.value = valueData.minValue
     else
@@ -3142,8 +3153,8 @@ GameSettingCtrl._DropdownOnValidateSelectVideoQuality = HL.Method(HL.Userdata, H
             content = string.format(Language.LUA_GAME_SETTING_QUALITY_SELECT_CONFIRM, itemData.settingText),
             warningContent = Language.LUA_GAME_SETTING_QUALITY_SELECT_CONFIRM_WARNING,
             onForceConfirm = function()
-                local itemCell = self.m_itemCellMap[itemData.settingId]
-                itemCell.dropdown:SetSelected(csToIndex, false, true)
+                local dropdown = self.m_itemCellMap[itemData.settingId].itemControl.dropdown
+                dropdown:SetSelected(csToIndex, false, true)
             end,
         })
         return false
@@ -3170,7 +3181,7 @@ end
 
 GameSettingCtrl._DropdownOnSelectPSVideoQuality = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
     local lastIndex = self:_DropdownGetIndexPSVideoQuality(settingId)
-    local dropdown = self.m_itemCellMap[settingId].dropdown
+    local dropdown = self.m_itemCellMap[settingId].itemControl.dropdown
     
     self:_DoSelectVideoQuality(index + 1, lastIndex + 1, dropdown)
 end
@@ -3181,7 +3192,7 @@ end
 
 GameSettingCtrl._DropdownOnSelectVideoQuality = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
     local lastIndex = self:_DropdownGetIndexVideoQuality(settingId)
-    local dropdown = self.m_itemCellMap[settingId].dropdown
+    local dropdown = self.m_itemCellMap[settingId].itemControl.dropdown
 
     if index == CUSTOM_QUALITY_SETTING_INDEX then
         GameSettingHelper.SetQualityCustomState(true)
@@ -3250,21 +3261,22 @@ end
 
 
 GameSettingCtrl._UpdateAndRefreshQualitySubSettingsState = HL.Method() << function(self)
-    for settingId, subSettingData in pairs(self.m_qualitySubSettingDataMap) do
-        if not subSettingData.itemData.ignoreMainChange then
+    for settingId, itemCell in pairs(self.m_qualitySubSettingItemCellMap) do
+        local itemData = itemCell.itemData
+        if not itemData.ignoreMainChange then
             GameSettingHelper.RemoveQualitySubSettingSaveValue(settingId)
 
-            local itemCell = subSettingData.itemCell
-            local itemType = subSettingData.itemData.settingItemType
+            local itemControl = itemCell.itemControl
+            local itemType = itemData.settingItemType
             if itemType == GEnums.SettingItemType.Dropdown then
                 local index = self:_DropdownGetQualitySubSettingOptionIndex(settingId)
-                itemCell.dropdown:SetSelected(CSIndex(index), false, false)
+                itemControl.dropdown:SetSelected(CSIndex(index), false, false)
             elseif itemType == GEnums.SettingItemType.Toggle then
                 local value = self:_ToggleGetQualitySubSettingValue(settingId)
-                itemCell.toggle:SetValue(value, true)
+                itemControl.toggle:SetValue(value, true)
             elseif itemType == GEnums.SettingItemType.Slider then
                 local value = self:_SliderGetQualitySubSettingValue(settingId)
-                itemCell.slider:SetValueWithoutNotify(value)
+                itemControl.slider:SetValueWithoutNotify(value)
             end
         end
     end
@@ -3297,8 +3309,8 @@ GameSettingCtrl._DropdownValidateSetQualitySubSettingOptionIndex = HL.Method(HL.
             content = string.format(Language.LUA_GAME_SETTING_QUALITY_SELECT_CONFIRM, itemData.settingText),
             warningContent = Language.LUA_GAME_SETTING_QUALITY_SELECT_CONFIRM_WARNING,
             onForceConfirm = function()
-                local itemCell = self.m_itemCellMap[itemData.settingId]
-                itemCell.dropdown:SetSelected(csToIndex, false, true)
+                local dropdown = self.m_itemCellMap[itemData.settingId].itemControl.dropdown
+                dropdown:SetSelected(csToIndex, false, true)
             end,
         })
     end
@@ -3335,6 +3347,35 @@ end
 
 GameSettingCtrl._ToggleGetQualitySubSettingValue = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
     return GameSettingHelper.GetQualitySubSettingTierBySettingId(settingId) > 0
+end
+
+
+
+
+
+GameSettingCtrl._ToggleValidateSetQualitySubSettingValue = HL.Method(HL.String, HL.Boolean).Return(HL.Boolean) << function(self, settingId, value)
+    local success, itemConfig = GameSettingHelper.GetQualitySubSettingConfigBySettingId(settingId)
+    if not success then
+        return false
+    end
+
+    local showWarningPopup = (itemConfig.toggleWarningType == GameSettingSubQualityToggleWarningType.On and value) 
+        or (itemConfig.toggleWarningType == GameSettingSubQualityToggleWarningType.Off and not value) 
+    if not showWarningPopup then
+        return true
+    end
+
+    local itemCell = self.m_qualitySubSettingItemCellMap[settingId]
+    local itemData = itemCell.itemData
+    UIManager:Open(PanelId.GameSettingWarningPopUp, {
+        content = string.format(Language.LUA_GAME_SETTING_QUALITY_SELECT_CONFIRM, itemData.settingText),
+        warningContent = Language.LUA_GAME_SETTING_QUALITY_SELECT_CONFIRM_WARNING,
+        onForceConfirm = function()
+            itemCell.itemControl.toggle:SetValue(value)
+        end,
+    })
+
+    return false
 end
 
 
@@ -3383,21 +3424,20 @@ end
 
 
 GameSettingCtrl._SetQualitySubSettingTier = HL.Method(HL.String, HL.Any) << function(self, settingId, tier)
-    
-    local qualitySubSettingData = self.m_qualitySubSettingDataMap[settingId]
-    if qualitySubSettingData == nil then
+    local itemCell = self.m_itemCellMap[settingId]
+    if itemCell == nil then
         logger.error("[GameSetting] QualitySubSetting not found, settingId: " .. tostring(settingId))
         return
     end
 
-    local itemData = qualitySubSettingData.itemData
+    
+    local itemData = itemCell.itemData
     if not itemData.ignoreMainChange then
-        local qualityCell = self.m_itemCellMap[QUALITY_SETTING_ID]
-        if qualityCell ~= nil and qualityCell.dropdown ~= nil then
-            qualityCell.dropdown:SetSelected(0, false, false)
-            GameSettingHelper.SetQualityCustomState(true)
-        end
+        local dropdown = self.m_itemCellMap[GameSetting.ID_VIDEO_QUALITY].itemControl.dropdown
+        dropdown:SetSelected(0, false, false)
+        GameSettingHelper.SetQualityCustomState(true)
     end
+
     
     GameSettingHelper.SetQualitySubSettingTierBySettingId(settingId, tier)
     self:_OnQualitySubSettingTierChanged(itemData)
@@ -3453,13 +3493,15 @@ GameSettingCtrl._IsQualitySettingDefault = HL.Method().Return(HL.Boolean) << fun
         return false
     end
     
-    for settingId, v in pairs(self.m_qualitySubSettingDataMap) do
-        local success, itemConfig = GameSettingHelper.GetQualitySubSettingConfigBySettingId(settingId)
-        if success then
-            local currentTier = GameSettingHelper.GetQualitySubSettingTierBySettingId(settingId)
-            local defaultTier = QualityManagerInst:GetQualityComponentDefaultTier(itemConfig.qualityComponentType)
-            if currentTier ~= LuaIndex(defaultTier) then
-                return false
+    for settingId, v in pairs(Tables.qualitySubSettingTable) do
+        if GameSetting.IsSettingItemValid(settingId) then
+            local success, itemConfig = GameSettingHelper.GetQualitySubSettingConfigBySettingId(settingId)
+            if success then
+                local currentTier = GameSettingHelper.GetQualitySubSettingTierBySettingId(settingId)
+                local defaultTier = QualityManagerInst:GetQualityComponentDefaultTier(itemConfig.qualityComponentType)
+                if currentTier ~= LuaIndex(defaultTier) then
+                    return false
+                end
             end
         end
     end
@@ -3625,10 +3667,15 @@ GameSettingCtrl._SetSettingItemControllerNaviTarget = HL.Method() << function(se
 
     InputManagerInst.controllerNaviManager:SetTarget(nil)
 
-    local itemCount = #itemDataList
-    if itemCount > 0 then
-        local firstCell = self.m_itemCells:Get(1)
-        InputManagerInst.controllerNaviManager:SetTarget(firstCell.naviDecorator)
+    
+    if self.view.deviceNode.gameObject.activeInHierarchy then
+        InputManagerInst.controllerNaviManager:SetTarget(self.view.deviceNodeNaviDecorator)
+    else
+        local itemCount = #itemDataList
+        if itemCount > 0 then
+            local firstCell = self.m_itemCells:Get(1)
+            InputManagerInst.controllerNaviManager:SetTarget(firstCell.view.naviDecorator)
+        end
     end
 end
 
@@ -3663,6 +3710,21 @@ end
 
 
 
+
+
+
+
+GameSettingCtrl._OnGameSettingChanged = HL.Method(HL.Number) << function(self, reason)
+    if reason == UIConst.GameSettingChangeReason.Gamepad then
+        
+        local tabData = self.m_tabDataList[self.m_tabIndex]
+        local isGamepadTab = tabData.tabId == GAMEPAD_TAB_ID
+        if not isGamepadTab then
+            return 
+        end
+        self:_RefreshCurrentSettingTab()
+    end
+end
 
 
 

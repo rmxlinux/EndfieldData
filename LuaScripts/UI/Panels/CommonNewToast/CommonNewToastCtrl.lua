@@ -271,6 +271,7 @@ CommonNewToastCtrl._OnPlayNewItemFinished = HL.Method() << function(self)
         node.gameObject:SetActive(false)
     else
         local data = self.m_curNewItemDatas:Pop()
+        self:_ClearAllAni()
         self:_StartPlayNewItem(data)
     end
 end

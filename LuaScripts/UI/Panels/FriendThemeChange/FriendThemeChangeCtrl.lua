@@ -1,5 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FriendThemeChange
+local PHASE_ID = PhaseId.FriendThemeChange
+
 
 
 
@@ -59,30 +61,18 @@ FriendThemeChangeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_closeCallback = arg and arg.onClose or nil
     self.view.btnBack.onClick:RemoveAllListeners()
     self.view.btnBack.onClick:AddListener(function()
-        self:PlayAnimationOutAndClose()
-        self:_TryInvokeCloseCallback()
-        if PhaseManager:IsOpen(PhaseId.Friend) then
-            PhaseManager:GoToPhase(PhaseId.Friend)
-        end
+        self:_Close()
     end)
 
     self.view.confirmBtn.onClick:RemoveAllListeners()
     self.view.confirmBtn.onClick:AddListener(function()
         GameInstance.player.friendSystem:BusinessCardTopicModify(self.m_selectId)
-        self:PlayAnimationOutAndClose()
-        self:_TryInvokeCloseCallback()
-        if PhaseManager:IsOpen(PhaseId.Friend) then
-            PhaseManager:GoToPhase(PhaseId.Friend)
-        end
+        self:_Close()
     end)
 
     self.view.cancelBtn.onClick:RemoveAllListeners()
     self.view.cancelBtn.onClick:AddListener(function()
-        self:PlayAnimationOutAndClose()
-        self:_TryInvokeCloseCallback()
-        if PhaseManager:IsOpen(PhaseId.Friend) then
-            PhaseManager:GoToPhase(PhaseId.Friend)
-        end
+        self:_Close()
     end)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
@@ -276,6 +266,22 @@ end
 FriendThemeChangeCtrl._TryInvokeCloseCallback = HL.Method() << function(self)
     if self.m_closeCallback then
         self.m_closeCallback()
+    end
+end
+
+
+
+FriendThemeChangeCtrl._Close = HL.Method() << function(self)
+    self:_TryInvokeCloseCallback()
+    if PhaseManager:IsOpen(PHASE_ID) then
+        PhaseManager:PopPhase(PHASE_ID)
+    else
+        
+        logger.error("FriendThemeChangeCtrl:Close - Phase not found, fallback to PlayAnimationOutAndClose")
+        self:PlayAnimationOutAndClose()
+        if PhaseManager:IsOpen(PhaseId.Friend) then
+            PhaseManager:GoToPhase(PhaseId.Friend)
+        end
     end
 end
 

@@ -4,277 +4,106 @@
   "nodes": [
     {
       "_position": {
-        "x": 20.0,
-        "y": 220.0
+        "x": 520.0,
+        "y": -100.0
       },
-      "_comment": "去看攀岩",
       "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "0"
     },
     {
-      "_action": {
-        "seqActionId": {
-          "_name": "行为循环id",
-          "_targetVariableID": "510cf188-ca67-4e3f-816d-7440ff6ce584"
+      "dynamic": true,
+      "_condition": {
+        "marker": {
+          "tagName": "AI/Marker/agshield/skill05hit",
+          "tagId": 552063939
         },
-        "$type": "Beyond.Gameplay.AI.Action.NpcHoldSeqAction"
+        "$type": "Beyond.Gameplay.AI.Condition.CheckAIMarker"
       },
-      "additionalWidth": 79.0,
+      "additionalWidth": 224.0,
       "_position": {
-        "x": -760.0,
-        "y": 340.0
+        "x": 200.0
       },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$type": "NodeCanvas.BehaviourTrees.BinarySelector",
       "$id": "1"
     },
     {
       "_position": {
-        "x": -200.0,
-        "y": 360.0
+        "x": -120.0,
+        "y": 220.0
       },
-      "_comment": "步骤一",
       "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "2"
     },
     {
-      "failureRemap": 1,
-      "additionalWidth": 48.0,
-      "_position": {
-        "x": -440.0,
-        "y": 480.0
+      "_action": {
+        "$type": "Beyond.Gameplay.AI.Action.InterruptCurrentSkill"
       },
-      "$type": "NodeCanvas.BehaviourTrees.Remapper",
+      "additionalWidth": 52.0,
+      "_position": {
+        "x": -240.0,
+        "y": 340.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "3"
     },
     {
-      "childConditions": [
-        {
-          "weight": {
-            "_name": "weight1-1",
-            "_targetVariableID": "c396f37b-2e29-4b77-93f4-b38ec0559bf9"
-          },
-          "condition": {
-            "result": {
-              "_name": "weight1-1",
-              "_targetVariableID": "c396f37b-2e29-4b77-93f4-b38ec0559bf9"
-            },
-            "weight": 15,
-            "animType": 3,
-            "detailAnimType": "CH_ClimbArea",
-            "latestChangeWeight": {
-              "_name": "最近使用过权重修改值",
-              "_targetVariableID": "5107911a-65ee-4794-a435-4afb1cf4ae93"
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.NpcChangeAttractPointWeight"
-          }
+      "_action": {
+        "skillData": {
+          "_name": "技能6-拽回"
         },
-        {
-          "weight": {
-            "_name": "weight1-2",
-            "_targetVariableID": "2318a10f-fa4a-4459-89d1-b4e800bbaf58"
-          },
-          "condition": {
-            "result": {
-              "_name": "weight1-2",
-              "_targetVariableID": "2318a10f-fa4a-4459-89d1-b4e800bbaf58"
-            },
-            "weight": 10,
-            "animType": 6,
-            "detailAnimType": "CH_ClimbArea",
-            "latestChangeWeight": {
-              "_name": "最近使用过权重修改值",
-              "_targetVariableID": "5107911a-65ee-4794-a435-4afb1cf4ae93"
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.NpcChangeAttractPointWeight"
-          }
-        }
-      ],
-      "_position": {
-        "x": -420.0,
-        "y": 600.0
+        "target": {
+          "_name": "G_Target"
+        },
+        "targetPos": {},
+        "$type": "Beyond.Gameplay.AI.Action.CastSeqSkill"
       },
-      "$type": "Beyond.Gameplay.AI.Nodes.ConditionalProbabilitySelector",
+      "additionalWidth": 52.0,
+      "_position": {
+        "x": -20.0,
+        "y": 460.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "4"
     },
     {
-      "_action": {
-        "animType": 3,
-        "detailAnimType": "CH_ClimbArea",
-        "duration": {
-          "x": 20.0,
-          "y": 30.0
-        },
-        "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
-      },
-      "additionalWidth": 209.0,
       "_position": {
-        "x": -902.1334,
-        "y": 739.2
+        "x": 540.0,
+        "y": 200.0
       },
-      "_comment": "在攀岩区坐",
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "5"
     },
     {
       "_action": {
-        "animType": 6,
-        "detailAnimType": "CH_ClimbArea",
-        "duration": {
-          "x": 10.0,
-          "y": 20.0
+        "skillData": {
+          "_name": "技能5-掀翻"
         },
-        "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
+        "target": {
+          "_name": "G_Target"
+        },
+        "targetPos": {},
+        "$type": "Beyond.Gameplay.AI.Action.CastSeqSkill"
       },
-      "additionalWidth": 227.0,
+      "additionalWidth": 80.0,
       "_position": {
-        "x": -450.6667,
-        "y": 739.2
+        "x": 600.0,
+        "y": 320.0
       },
-      "_comment": "在攀岩区思考",
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "6"
     },
     {
-      "_position": {
-        "x": 20.53598,
-        "y": 371.4668
-      },
-      "_comment": "步骤二",
-      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
-      "$id": "7"
-    },
-    {
-      "failureRemap": 1,
-      "additionalWidth": 48.0,
-      "_position": {
-        "x": 48.13687,
-        "y": 479.3336
-      },
-      "$type": "NodeCanvas.BehaviourTrees.Remapper",
-      "$id": "8"
-    },
-    {
-      "childConditions": [
-        {
-          "weight": {
-            "_name": "weight2-1",
-            "_targetVariableID": "f5d0050d-7057-42d1-b34a-61c1a4806807"
-          },
-          "condition": {
-            "result": {
-              "_name": "weight2-1",
-              "_targetVariableID": "f5d0050d-7057-42d1-b34a-61c1a4806807"
-            },
-            "weight": 10,
-            "detailAnimType": "CH_RestArea",
-            "latestChangeWeight": {
-              "_name": "最近使用过权重修改值",
-              "_targetVariableID": "5107911a-65ee-4794-a435-4afb1cf4ae93"
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.NpcChangeAttractPointWeight"
-          }
-        },
-        {
-          "weight": {
-            "_name": "weight2-2",
-            "_targetVariableID": "506256b3-0ddc-49c3-9a61-bd1b4dfe2c82"
-          },
-          "condition": {
-            "result": {
-              "_name": "weight2-2",
-              "_targetVariableID": "506256b3-0ddc-49c3-9a61-bd1b4dfe2c82"
-            },
-            "weight": 10,
-            "detailAnimType": "CH_LogisticsCenter",
-            "latestChangeWeight": {
-              "_name": "最近使用过权重修改值",
-              "_targetVariableID": "5107911a-65ee-4794-a435-4afb1cf4ae93"
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.NpcChangeAttractPointWeight"
-          }
-        }
-      ],
-      "_position": {
-        "x": 185.9486,
-        "y": 566.7464
-      },
-      "$type": "Beyond.Gameplay.AI.Nodes.ConditionalProbabilitySelector",
-      "$id": "9"
-    },
-    {
       "_action": {
-        "detailAnimType": "CH_Plant",
-        "duration": {
-          "x": 10.0,
-          "y": 20.0
-        },
-        "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
+        "isFinish": true,
+        "$type": "Beyond.Gameplay.AI.Action.FinishCurBehavior"
       },
-      "additionalWidth": 209.0,
-      "_position": {
-        "x": -55.46239,
-        "y": 741.6003
-      },
-      "_comment": "查看绿植",
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "10"
-    },
-    {
-      "_action": {
-        "detailAnimType": "CH_LogisticsCenter",
-        "duration": {
-          "x": 20.0,
-          "y": 30.0
-        },
-        "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
-      },
-      "additionalWidth": 209.0,
-      "_position": {
-        "x": 316.6169,
-        "y": 733.7335
-      },
-      "_comment": "查看中心管道",
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "11"
-    },
-    {
-      "_position": {
-        "x": 469.8625,
-        "y": 398.3996
-      },
-      "_comment": "步骤三",
-      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
-      "$id": "12"
-    },
-    {
-      "_action": {
-        "animType": 6,
-        "detailAnimType": "CH_ClimbArea",
-        "duration": {
-          "x": 15.0,
-          "y": 25.0
-        },
-        "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
-      },
-      "additionalWidth": 227.0,
-      "_position": {
-        "x": 784.1389,
-        "y": 735.4667
-      },
-      "_comment": "在攀岩区思考\n",
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "13"
-    },
-    {
-      "_action": {
-        "$type": "Beyond.Gameplay.AI.Action.NpcFinishSeqAction"
-      },
+      "additionalWidth": 158.0,
       "_position": {
         "x": 720.0,
-        "y": 360.0
+        "y": 80.0
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "14"
+      "$id": "7"
     }
   ],
   "connections": [
@@ -292,58 +121,22 @@
         "$ref": "0"
       },
       "_targetNode": {
-        "$ref": "2"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "0"
-      },
-      "_targetNode": {
         "$ref": "7"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     },
     {
       "_sourceNode": {
-        "$ref": "0"
+        "$ref": "1"
       },
       "_targetNode": {
-        "$ref": "12"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "0"
-      },
-      "_targetNode": {
-        "$ref": "14"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
         "$ref": "2"
       },
-      "_targetNode": {
-        "$ref": "3"
-      },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     },
     {
       "_sourceNode": {
-        "$ref": "3"
-      },
-      "_targetNode": {
-        "$ref": "4"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "4"
+        "$ref": "1"
       },
       "_targetNode": {
         "$ref": "5"
@@ -352,55 +145,28 @@
     },
     {
       "_sourceNode": {
+        "$ref": "2"
+      },
+      "_targetNode": {
+        "$ref": "3"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "2"
+      },
+      "_targetNode": {
         "$ref": "4"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "5"
       },
       "_targetNode": {
         "$ref": "6"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "7"
-      },
-      "_targetNode": {
-        "$ref": "8"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "8"
-      },
-      "_targetNode": {
-        "$ref": "9"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "9"
-      },
-      "_targetNode": {
-        "$ref": "10"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "9"
-      },
-      "_targetNode": {
-        "$ref": "11"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "12"
-      },
-      "_targetNode": {
-        "$ref": "13"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     }
@@ -408,38 +174,15 @@
   "canvasGroups": [],
   "localBlackboard": {
     "_variables": {
-      "行为循环id": {
-        "_value": 1,
-        "_name": "行为循环id",
-        "_id": "510cf188-ca67-4e3f-816d-7440ff6ce584",
-        "_isPublic": true,
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "target": {
+        "_name": "target",
+        "_id": "0a277fb7-ca95-4322-82ef-b3e9ea7cfe6c",
+        "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.AIEntity, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
       },
-      "最近使用过权重修改值": {
-        "_value": -5,
-        "_name": "最近使用过权重修改值",
-        "_id": "5107911a-65ee-4794-a435-4afb1cf4ae93",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
-      },
-      "weight1-1": {
-        "_name": "weight1-1",
-        "_id": "c396f37b-2e29-4b77-93f4-b38ec0559bf9",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
-      },
-      "weight1-2": {
-        "_name": "weight1-2",
-        "_id": "2318a10f-fa4a-4459-89d1-b4e800bbaf58",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
-      },
-      "weight2-1": {
-        "_name": "weight2-1",
-        "_id": "f5d0050d-7057-42d1-b34a-61c1a4806807",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
-      },
-      "weight2-2": {
-        "_name": "weight2-2",
-        "_id": "506256b3-0ddc-49c3-9a61-bd1b4dfe2c82",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "目标": {
+        "_name": "目标",
+        "_id": "4af724d5-8d76-48fe-acc1-281f40b7d3a1",
+        "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.AIEntity, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
       }
     }
   },

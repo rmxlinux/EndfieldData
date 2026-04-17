@@ -100,7 +100,7 @@ local Config = {
                 
                 local machineCrafterData = FactoryUtils.getMachineCraftGroupData(buildingId, modeName)
                 for _, craftId in pairs(machineCrafterData.craftList) do
-                    if core:IsFormulaUnread(craftId) then
+                    if core:IsFormulaUnread(craftId) and not FactoryUtils.isExpiredTimeLimitedFormula(craftId) then
                         return true, UIConst.RED_DOT_TYPE.Normal
                     end
                 end
@@ -217,6 +217,10 @@ local Config = {
             end
 
             if techTreeSystem:LayerIsLocked(nodeData.layer) then
+                return false
+            end
+
+            if techTreeSystem:NodeIsHidden(techId) then
                 return false
             end
 
@@ -431,6 +435,7 @@ local Config = {
             MessageConst.ON_GACHA_POOL_ROLE_DATA_CHANGED,
             MessageConst.ON_ACTIVITY_GACHA_BEGINNER_STAGE_MODIFY,
             MessageConst.ON_GACHA_POOL_NEW_OPENED_READ,
+            MessageConst.ON_VALUABLE_DEPOT_CHANGED,
         },
         needArg = false,
         Check = function()
@@ -448,10 +453,35 @@ local Config = {
             MessageConst.ON_GACHA_POOL_ROLE_DATA_CHANGED,
             MessageConst.ON_ACTIVITY_GACHA_BEGINNER_STAGE_MODIFY,
             MessageConst.ON_GACHA_POOL_NEW_OPENED_READ,
+            MessageConst.ON_VALUABLE_DEPOT_CHANGED,
         },
         needArg = true,
         Check = function(poolId)
             return RedDotUtils.hasGachaSinglePoolRedDot(poolId)
+        end,
+        readLike = false,
+    },
+
+    GachaCharTenLtTicket = {
+        msgs = {
+            MessageConst.ON_VALUABLE_DEPOT_CHANGED,
+        },
+        needArg = true,
+        Check = function(poolId)
+            return RedDotUtils.hasGachaTenLtTicketRedDot(poolId)
+        end,
+        readLike = false,
+    },
+    
+
+    
+    GachaWeaponCharTenLtTicket = {
+        msgs = {
+            MessageConst.ON_VALUABLE_DEPOT_CHANGED,
+        },
+        needArg = true,
+        Check = function(poolId)
+            return RedDotUtils.hasGachaWeaponTenLtTicketRedDot(poolId)
         end,
         readLike = false,
     },
@@ -2109,15 +2139,6 @@ local Config = {
                     end
                 end
             end
-
-            
-            local activityId = HighDifficultyUtils.getHighDifficultyActivityId()
-            if activityId and ActivityUtils.isNewUnlockActivity(activityId) then
-                local activity = GameInstance.player.activitySystem:GetActivity(activityId)
-                if activity and activity.status ~= GEnums.ActivityStatus.Completed then
-                    return true, UIConst.RED_DOT_TYPE.Normal
-                end
-            end
             return false
         end
     },
@@ -2250,6 +2271,21 @@ local Config = {
         },
     },
 
+    ActivityCalendarCheckin = {
+        readLike = false,
+        needArg = true,
+        Check = function(id)
+            local _, haveGotReward, allGetReward = ActivityUtils.CalendarCheckInGetCurDayNumber(id)
+            return not haveGotReward and not allGetReward
+        end,
+        msgs = {
+            MessageConst.ON_READ_ACTIVITY_CONDITION_STAGE,
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+            MessageConst.ON_ACTIVITY_CALENDAR_CHECK_IN_UPDATE,
+        }
+    },
+
     MapUnreadLevel = {
         msgs = {
             MessageConst.ON_READ_LEVEL,
@@ -2331,6 +2367,7 @@ local Config = {
     WikiEntry = {
         msgs = {
             MessageConst.ON_WIKI_ENTRY_UNLOCKED,
+            MessageConst.ON_WIKI_ENTRY_LOCKED,
             MessageConst.ON_WIKI_ENTRY_READ,
         },
         readLike = true,
@@ -2345,6 +2382,7 @@ local Config = {
     WikiGuideEntry = {
         msgs = {
             MessageConst.ON_WIKI_ENTRY_UNLOCKED,
+            MessageConst.ON_WIKI_ENTRY_LOCKED,
             MessageConst.ON_WIKI_ENTRY_READ,
         },
         readLike = true,
@@ -2715,6 +2753,7 @@ local Config = {
         msgs = {
             MessageConst.ON_QUEST_STATE_CHANGE,
             MessageConst.ON_QUEST_OBJECTIVE_UPDATE,
+            MessageConst.ON_WEEK_RAID_MISSION_REFRESH,
         },
         readLike = false,
         needArg = true,
@@ -2930,14 +2969,27 @@ local Config = {
             MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
             MessageConst.ON_ACTIVITY_UPDATED,
             MessageConst.ON_ACTIVITY_NEW_DAY,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
         },
         readLike = false,
         needArg = true,
         Check = function(id)
-            local suc,type = ActivityUtils.checkActivityRedDot(id)
+            local activity = GameInstance.player.activitySystem:GetActivity(id)
+            if not activity then
+                return false
+            end
+            if activity.stageDataDict then
+                for stageId, stageData in pairs(activity.stageDataDict) do
+                    local unlocked = stageData.Status ~= GEnums.ActivityConditionalStageState.Locked:GetHashCode()
+                    if unlocked and RedDotManager:GetRedDotState("ActivityStaminaDiscountTask", {id, stageId}) then
+                        return true, UIConst.RED_DOT_TYPE.Normal
+                    end
+                end
+            end
+            local suc, type = ActivityUtils.checkActivityRedDot(id)
             if suc then
                 return suc, type
-            elseif ActivityUtils.isNewActivityDay(id) then
+            elseif ActivityUtils.isNewActivityDayUnread(id) then
                 return true, UIConst.RED_DOT_TYPE.Normal
             end
             return false
@@ -3123,11 +3175,25 @@ local Config = {
                 return false
             end
 
-            local record = GameInstance.player.activitySystem:GetFoodSubmitGoToRedDotRecord(id)
-            local timeVal = ActivityUtils.GetFoodSubmitCurGoToRedDot()
-            if record < timeVal then
-                return true, UIConst.RED_DOT_TYPE.Normal
+            local checkGoTo = false
+            for stageId, value in pairs(Tables.FoodSubmitStageIdTable) do
+                if value.activityId == id then
+                    local stageState = ActivityUtils.GetFoodSubmitStageState(id, stageId)
+                    if stageState == GEnums.ActivityConditionalStageState.Unlocked then
+                        checkGoTo = true
+                        break
+                    end
+                end
             end
+
+            if checkGoTo then
+                local record = GameInstance.player.activitySystem:GetFoodSubmitGoToRedDotRecord(id)
+                local timeVal = ActivityUtils.GetFoodSubmitCurGoToRedDot()
+                if record < timeVal then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
+            end
+
             return false
         end
     },
@@ -3246,6 +3312,100 @@ local Config = {
             return false
         end
     },
+    ActivityCharGrowthRebate = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(id)
+            local activity = GameInstance.player.activitySystem:GetActivity(id)
+            if not activity then
+                return false
+            end
+            
+            for stageId, stageData in pairs(activity.stageDataDict) do
+                local unlocked = stageData.Status ~= GEnums.ActivityConditionalStageState.Locked:GetHashCode()
+                if unlocked and RedDotManager:GetRedDotState("ActivityDevelopReturnTask", {id, stageId}) then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
+            end
+            return ActivityUtils.checkActivityRedDot(id)
+        end
+    },
+    ActivityDevelopReturnTask = {
+        msgs = {
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(args)
+            local activityId, curStageId = unpack(args)
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity then
+                return false
+            end
+
+            local suc, stageData = activity.stageDataDict:TryGetValue(curStageId)
+            local isComplete = stageData.Status >= GEnums.ActivityConditionalStageState.Completed:GetHashCode()
+            local isReceived = stageData.Status >= GEnums.ActivityConditionalStageState.Rewarded:GetHashCode()
+
+            
+            if isComplete and not isReceived then
+                return true, UIConst.RED_DOT_TYPE.Normal
+            end
+            return false
+        end
+    },
+    ActivityStaminaDiscountTask = {
+        msgs = {
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(args)
+            local activityId, curStageId = unpack(args)
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity then
+                return false
+            end
+
+            local suc, stageData = activity.stageDataDict:TryGetValue(curStageId)
+            if not suc then
+                return false
+            end
+            local isComplete = stageData.Status >= GEnums.ActivityConditionalStageState.Completed:GetHashCode()
+            local isReceived = stageData.Status >= GEnums.ActivityConditionalStageState.Rewarded:GetHashCode()
+
+            if isComplete and not isReceived then
+                return true, UIConst.RED_DOT_TYPE.Normal
+            end
+            if not isReceived and ActivityUtils.isNewActivityDayUnread(activityId) then
+                return true, UIConst.RED_DOT_TYPE.New
+            end
+            return false
+        end
+    },
+    ActivityDevelopReturnTaskSeries = {
+        msgs = {
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+            MessageConst.ACTIVITY_HIGH_DIFFICULTY_NEW_TASK_SET_FALSE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(args)
+            local activityId = args[1]
+            local tasks = args[2]
+            for _, stageData in ipairs(tasks) do
+                if RedDotManager:GetRedDotState("ActivityDevelopReturnTask", {activityId, stageData.stageId}) then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
+            end
+            return false
+        end
+    },
     HighDifficultyMainHudGotoBtn = {
         msgs = {
             MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
@@ -3254,6 +3414,9 @@ local Config = {
         needArg = false,
         Check = function()
             local activityId = HighDifficultyUtils.getHighDifficultyActivityId()
+            if not activityId then
+                return false
+            end
             
             local activity = GameInstance.player.activitySystem:GetActivity(activityId)
             for stageId,_ in pairs(activity.stageDataDict) do
@@ -3327,7 +3490,7 @@ local Config = {
             local suc,type = ActivityUtils.checkActivityRedDot(id)
             if suc then
                 return suc, type
-            elseif ActivityUtils.isNewActivityDay(activity.id, Tables.activityConst.WebReflowRedDotDays) then
+            elseif ActivityUtils.isNewActivityDayUnread(activity.id, Tables.activityConst.WebReflowRedDotDays) then
                 return true, UIConst.RED_DOT_TYPE.Normal
             end
             return false
@@ -3345,7 +3508,7 @@ local Config = {
             local suc,type = ActivityUtils.checkActivityRedDot(id)
             if suc then
                 return suc, type
-            elseif ActivityUtils.isNewActivityDay(id,Tables.activityConst.SpringFestivalRedDotDays) then
+            elseif ActivityUtils.isNewActivityDayUnread(id,Tables.activityConst.SpringFestivalRedDotDays) then
                 return true, UIConst.RED_DOT_TYPE.Normal
             end
             return false
@@ -3626,8 +3789,127 @@ local Config = {
             return ActivityUtils.checkActivityRedDot(activityId)
         end
     },
-    
-
+    ActivityLimitedFormula = {
+        msgs = {
+            MessageConst.ON_READ_ACTIVITY_CONDITION_STAGE,
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            
+            
+            local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
+            local activityCfgData = Tables.activityLimitedFormulaTable:GetValue(activityId)
+            if not activityData or not activityCfgData then
+                return false
+            end
+            
+            if activityData.status == GEnums.ActivityStatus.InProgress then
+                
+                local endStageInfo = activityData:GetStageData(activityCfgData.endStageId)
+                if endStageInfo then
+                    local engStageStatus = GEnums.ActivityConditionalStageState.__CastFrom(endStageInfo.Status)
+                    if engStageStatus ~= GEnums.ActivityConditionalStageState.Locked then
+                        return false
+                    end
+                end
+                
+                for stageId, stageData in cs_pairs(activityData.stageDataDict) do
+                    local status = GEnums.ActivityConditionalStageState.__CastFrom(stageData.Status)
+                    if status == GEnums.ActivityConditionalStageState.Unlocked
+                        and ActivityUtils.isNewActivityConditionalStage(stageId) then
+                        
+                        return true, UIConst.RED_DOT_TYPE.Normal
+                    end
+                end
+            end
+            
+            return ActivityUtils.checkActivityRedDot(activityId)
+        end
+    },
+    ActivityArknightsBirthStage1 = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+            MessageConst.ON_READ_ACTIVITY_CONDITION_STAGE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(args)
+            local ok, clicked, removed = ClientDataManagerInst:GetBool(args.activityId .. "_stage_1", false)
+            return not clicked
+        end
+    },
+    ActivityArknightsBirthStage2 = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+            MessageConst.ON_READ_ACTIVITY_CONDITION_STAGE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(args)
+            local ok, clicked, removed = ClientDataManagerInst:GetBool(args.activityId .. "_stage_2", false)
+            return not clicked
+        end
+    },
+    ActivityArknightsBirthStageButton = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+            MessageConst.ON_READ_ACTIVITY_CONDITION_STAGE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(args)
+            local ok, clicked, removed = ClientDataManagerInst:GetBool(args.activityId .. "_stage_" .. args.curStagePage, false)
+            return not clicked
+        end
+    },
+    ActivityArknightsBirth = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+            MessageConst.ON_READ_ACTIVITY_CONDITION_STAGE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            local curStage = 0
+            local suc, multiStageCfg = Tables.activityConditionalMultiStageTable:TryGetValue(activityId)
+            local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
+            if suc then
+                for stageId, stageCfg in pairs(multiStageCfg.stageList) do
+                    
+                    if not Tables.activityArknightsBirthMultiStageTable[stageId].isVisible then
+                        goto continue
+                    end
+                    local csConditionalStageInfo = activityData:GetStageData(stageId)
+                    if csConditionalStageInfo ~= nil then
+                        local status = GEnums.ActivityConditionalStageState.__CastFrom(csConditionalStageInfo.Status)
+                        if status ~= GEnums.ActivityConditionalStageState.Locked then
+                            curStage = curStage + 1
+                        end
+                    end
+                    :: continue ::
+                end
+            end
+            if curStage == 1 then
+                local ok, clicked, removed = ClientDataManagerInst:GetBool(activityId .. "_stage_1", false)
+                return not clicked
+            else
+                local okStage1, clickedStage1, removedStage1 = ClientDataManagerInst:GetBool(activityId .. "_stage_1", false)
+                local okStage2, clickedStage2, removedStage2 = ClientDataManagerInst:GetBool(activityId .. "_stage_2", false)
+                return not clickedStage1 or not clickedStage2
+            end
+        end
+    },
 
     ActivityDungeonState = {
         msgs = {
@@ -3908,6 +4190,7 @@ local Config = {
         msgs = {
             MessageConst.ON_SPACESHIP_GUEST_ROOM_RECV_VISIT_LIST_REWARD,
             MessageConst.ON_SPACESHIP_RECV_QUERY_VISIT_INFO,
+            MessageConst.ON_ITEM_COUNT_CHANGED,
         },
         needArg = false,
         Check = function()
@@ -3988,26 +4271,18 @@ local Config = {
             if GameInstance.player.spaceship.isViewingFriend then
                 return false
             end
-            local state = true
+            
             for id, index in pairs(roomIndex) do
                 local succ, roomInfo = GameInstance.player.spaceship:TryGetRoom(id)
                 if succ then
                     if roomInfo.type == GEnums.SpaceshipRoomType.GrowCabin then
-                        if not RedDotManager:GetRedDotState("SSGrowCabin", id) then
-                            return false
-                        end
-                    elseif roomInfo.type == GEnums.SpaceshipRoomType.ManufacturingStation then
-                        if not RedDotManager:GetRedDotState("SSManufacturingStation", id) then
-                            return false
-                        end
-                    elseif roomInfo.type == GEnums.SpaceshipRoomType.GuestRoomClueExtension then
-                        if not RedDotManager:GetRedDotState("SSGuestRoomClue") then
-                            return false
+                        if RedDotManager:GetRedDotState("SSGrowCabin", id) then
+                            return true
                         end
                     end
                 end
             end
-            return state
+            return false
         end,
         sons = {
             SSGrowCabin = false,

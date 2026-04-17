@@ -290,7 +290,6 @@ end
 
 
 AIBarkCtrl._CheckHeight = HL.Method().Return(HL.Boolean) << function(self)
-    LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.content.transform)
     return self.view.content.transform.rect.height <= self.view.mask.rect.height
 end
 
@@ -343,7 +342,6 @@ AIBarkCtrl._TryShowSingleBark = HL.Method(CS.Beyond.Gameplay.AIBarkManager.AIBar
         local spriteName = UIConst.UI_AI_BARK_CHAR_HEAD_PREFIX .. "_" .. charTemplateId
         cell.chrIcon:LoadSprite(UIConst.UI_SPRITE_AI_BARK_CHAR_HEAD, spriteName)
 
-        LayoutRebuilder.ForceRebuildLayoutImmediate(cell.transform)
         LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.content.transform)
 
         
@@ -352,6 +350,7 @@ AIBarkCtrl._TryShowSingleBark = HL.Method(CS.Beyond.Gameplay.AIBarkManager.AIBar
                 break
             end
             self:_DoStopSingleAIBarkByUniqueId(self.m_curPlayingBarks[1].uniqueId, true)
+            LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.content.transform)
         end
         if isLastSentence then
             bark.timerId = self:_StartStopTimer(duration, bark.uniqueId)
@@ -464,12 +463,6 @@ end
 AIBarkCtrl._CacheAllWaiting = HL.Method() << function(self)
     if #self.m_waitingTable > 0 then
         for _, cell in pairs(self.m_waitingTable) do
-            for i = 1, #self.m_cellCache do
-                if self.m_cellCache[i] == cell then
-                    
-                end
-            end
-
             cell.transform:SetParent(self.view.cacheRoot)
             cell.gameObject:SetActive(false)
             table.insert(self.m_cellCache, cell)

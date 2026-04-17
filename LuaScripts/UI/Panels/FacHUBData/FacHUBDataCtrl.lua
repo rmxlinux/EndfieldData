@@ -39,6 +39,7 @@ local PANEL_ID = PanelId.FacHUBData
 
 
 
+
 FacHUBDataCtrl = HL.Class('FacHUBDataCtrl', uiCtrl.UICtrl)
 
 
@@ -51,6 +52,7 @@ FacHUBDataCtrl = HL.Class('FacHUBDataCtrl', uiCtrl.UICtrl)
 FacHUBDataCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SYNC_POWER_DATA] = 'OnSyncPowerData',
     [MessageConst.ON_SYNC_PRODUCT_DATA] = 'OnSyncProductData',
+    [MessageConst.FAC_ON_DEL_TIME_LIMITED_FORMULA] = "_OnFormulaDelete",
 }
 
 
@@ -188,11 +190,13 @@ FacHUBDataCtrl._OnClickTab = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << functio
         info.updateAct()
     else
         logger.info("info.animations", info.animations)
+        InputManagerInst:ToggleGroup(self.view.inputGroup.groupId, false)
         self:PlayAnimation(info.animations[1], function()
             self.view.main:SetState(info.name)
             info.updateAct()
             self:PlayAnimation(info.animations[2], function()
                 self:PlayAnimation(info.animations[3])
+                InputManagerInst:ToggleGroup(self.view.inputGroup.groupId, true)
             end)
         end)
     end
@@ -505,23 +509,33 @@ FacHUBDataCtrl._InitItemData = HL.Method() << function(self)
     local remoteFactory = GameInstance.player.remoteFactory
     for _, itemId in pairs(showingItemsData.list) do
         if GameInstance.player.inventory:IsItemFound(itemId) then
-            local itemData = Tables.itemTable[itemId]
-            local isBookmark = remoteFactory:IsBookmarkItem(scope, itemId)
-            local order = isBookmark and 0 or 1
-            if isBookmark then
-                order = 0
+            local showItem = false 
+            if FactoryUtils.isTimeLimitedItem(itemId) then
+                local craftInfoList, canCraft = FactoryUtils.getItemCrafts(itemId)
+                showItem = next(craftInfoList) ~= nil
+            else
+                showItem = true
             end
-            table.insert(self.m_items, {
-                itemId = itemId,
-                data = itemData,
-                isBookmark = isBookmark,
-                order = order,
-                reverseOrder = -order,
-                showingType = itemData.showingType,
-                sortId1 = -itemData.sortId1,
-                sortId2 = itemData.sortId2,
-                rarity = itemData.rarity
-            })
+
+            if showItem then
+                local itemData = Tables.itemTable[itemId]
+                local isBookmark = remoteFactory:IsBookmarkItem(scope, itemId)
+                local order = isBookmark and 0 or 1
+                if isBookmark then
+                    order = 0
+                end
+                table.insert(self.m_items, {
+                    itemId = itemId,
+                    data = itemData,
+                    isBookmark = isBookmark,
+                    order = order,
+                    reverseOrder = -order,
+                    showingType = itemData.showingType,
+                    sortId1 = -itemData.sortId1,
+                    sortId2 = itemData.sortId2,
+                    rarity = itemData.rarity
+                })
+            end
         end
     end
 end
@@ -573,6 +587,13 @@ end
 FacHUBDataCtrl._RefreshItemList = HL.Method() << function(self)
     local node = self.view.productivityNode
     node.itemList:UpdateCount(#self.m_showingItems)
+    if DeviceInfo.usingController then
+        local firstIndex = node.itemList:GetShowingCellsIndexRange()
+        local cell = node.m_getCell(LuaIndex(firstIndex))
+        if cell ~= nil then
+            InputManagerInst.controllerNaviManager:SetTarget(cell.naviDecorator)
+        end
+    end
 end
 
 
@@ -808,13 +829,21 @@ end
 
 
 
+FacHUBDataCtrl._OnFormulaDelete = HL.Method(HL.Any) << function(self, args)
+    if self.m_curTabIndex == 1 then
+        self:_UpdateProductivityNode()
+    end
+end
+
+
+
+
 
 
 
 
 
 FacHUBDataCtrl._InitHUBDataController = HL.Method() << function(self)
-    self.view.productivityNode.itemListNaviGroup:NaviToThisGroup()
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 

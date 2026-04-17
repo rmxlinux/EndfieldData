@@ -58,6 +58,8 @@ local ChatTypeFilter = {
 
 
 
+
+
 SNSBarkerCtrl = HL.Class('SNSBarkerCtrl', uiCtrl.UICtrl)
 
 
@@ -107,9 +109,8 @@ SNSBarkerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_GenContactNpcVOs({})
     self:_RefreshContactNpcList()
-
     self:_RefreshContent()
-    self:_RefreshNaviTarget()
+    
     self:_InitController()
 end
 
@@ -169,6 +170,21 @@ SNSBarkerCtrl._InitData = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     if not string.isEmpty(dialogId) and Tables.sNSDialogTable:ContainsKey(dialogId) then
         self.m_curSelectedSubDialogId = dialogId
     end
+
+    self.m_cachedSelectedTags = {}
+end
+
+
+
+SNSBarkerCtrl._RefreshContactNpcListAfterFilter = HL.Method() << function(self)
+    local hasResult = #self.m_chatVOs > 0
+    self.view.contactNpcScrollList.gameObject:SetActive(hasResult)
+    self.view.nonResult.gameObject:SetActive(not hasResult)
+    if hasResult then
+        self.view.contactNpcScrollList:UpdateCount(#self.m_chatVOs, true)
+        self.view.contactNpcScrollList:FoldAll(false)
+        self:_RefreshNaviTarget()
+    end
 end
 
 
@@ -187,18 +203,17 @@ SNSBarkerCtrl._RefreshContactNpcList = HL.Method() << function(self)
                 break
             end
         end
+    end
 
-        
-        if targetNpcCSIndex == nil then
-            targetNpcCSIndex = 0
-            self.m_curSelectedSubDialogId = ""
-        end
+    
+    if targetNpcCSIndex == nil then
+        targetNpcCSIndex = 0
+        self.m_curSelectedSubDialogId = ""
     end
 
     local hasResult = #self.m_chatVOs > 0
     if hasResult then
         self.view.contactNpcScrollList:UpdateCount(#self.m_chatVOs)
-        self.view.contactNpcScrollList:FoldAll(false)
     end
     
     
@@ -206,6 +221,9 @@ SNSBarkerCtrl._RefreshContactNpcList = HL.Method() << function(self)
     
     self:_StartCoroutine(function()
         coroutine.step()
+        if hasResult then
+            self.view.contactNpcScrollList:FoldAll(false)
+        end
         coroutine.step()
         if self.m_isClosed then
             return
@@ -222,6 +240,9 @@ SNSBarkerCtrl._RefreshContactNpcList = HL.Method() << function(self)
             local npcCell = self.m_getContactNpcCellFunc(LuaIndex(targetNpcCSIndex))
             npcCell:ToggleFoldOut()
         end
+
+        coroutine.step()
+        self:_RefreshNaviTarget()
     end)
 end
 
@@ -233,7 +254,7 @@ SNSBarkerCtrl._OnUpdateContactNpcCell = HL.Method(GameObject, HL.Number) << func
     local npcVO = self.m_chatVOs[LuaIndex(csIndex)]
     
     local content = self.m_getContactNpcCellFunc(go)
-    content:InitSNSContactNpcCell(npcVO, false, function()
+    content:InitSNSContactNpcCell(npcVO, function()
         self:OnClickContactNpcCell(csIndex)
     end, function(cell, chatId, dialogId, luaIndex)
         self:_RefreshSubCell(cell, chatId, dialogId, luaIndex)
@@ -370,6 +391,8 @@ SNSBarkerCtrl._GenContactNpcVOs = HL.Method(HL.Table) << function(self, selected
                     sortId2 = sortId2,
                     dialogIds = dialogIds,
                     hasTopic = hasTopic,
+                    
+                    isFoldOut = false,
                 })
             end
         end
@@ -428,8 +451,34 @@ end
 
 
 
+SNSBarkerCtrl._IsFilterChange = HL.Method(HL.Table).Return(HL.Boolean) << function(self, selectedTags)
+    if #self.m_cachedSelectedTags ~= #selectedTags then
+        return true
+    end
+
+    if #selectedTags == 0 then
+        return false
+    end
+
+    local changed = false
+    for _, selectedTag in ipairs(selectedTags) do
+        if not lume.find(self.m_cachedSelectedTags, selectedTag) then
+            changed = true
+            break
+        end
+    end
+
+    return changed
+end
+
+
+
+
 SNSBarkerCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, selectedTags)
     selectedTags = selectedTags or {}
+    if not self:_IsFilterChange(selectedTags) then
+        return
+    end
     self.m_cachedSelectedTags = selectedTags
     self.m_curSelectedSubDialogId = ""
 
@@ -439,11 +488,11 @@ SNSBarkerCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, selectedT
     self.view.snsDialogContentCore:ClearAsyncHandler()
 
     self:_GenContactNpcVOs(selectedTags)
-    self:_RefreshContactNpcList()
+    
+    self:_RefreshContactNpcListAfterFilter()
     self:_RefreshContent()
-
+    
     self:_ManuallyResetControllerState()
-    self:_RefreshNaviTarget()
 end
 
 

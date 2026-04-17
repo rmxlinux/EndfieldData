@@ -62,12 +62,7 @@ SpaceshipGuestroomReceiveClues._OnFirstTimeInit = HL.Override() << function(self
     end)
 
     self:RegisterMessage(MessageConst.ON_SPACESHIP_CLUE_INFO_CHANGE, function()
-        local spaceShip = GameInstance.player.spaceship
         self:_UpdateRecvNumber()
-        if self.m_isOpen then
-            
-            spaceShip:GuestRoomReadClue(spaceShip:GetUnreadList())
-        end
     end)
 
     self:RegisterMessage(MessageConst.ON_SPACESHIP_GUEST_ROOM_CLUE_REWARD_ITEM, function(args)

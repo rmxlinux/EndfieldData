@@ -15,12 +15,14 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 FacProgressNode = HL.Class('FacProgressNode', UIWidgetBase)
 
 local INVALID_PERCENT = -1
 local INVALID_TIME_TEXT_NUMBER = -1
 local MAX_PROGRESS_PERCENTAGE = 1.0
 local APPROXIMATE_TOLERANCE = 0.1
+local ZERO_PERCENTAGE_TOLERANCE = 0.1
 
 
 
@@ -54,6 +56,9 @@ FacProgressNode.m_onProgressStarted = HL.Field(HL.Function)
 FacProgressNode.m_needNotifyStarted = HL.Field(HL.Boolean) << false
 
 
+FacProgressNode.m_showOriProgressNumber = HL.Field(HL.Boolean) << false
+
+
 
 FacProgressNode._OnDestroy = HL.Override() << function(self)
     
@@ -69,8 +74,9 @@ end
 
 
 
-FacProgressNode.InitFacProgressNode = HL.Method(HL.Number, HL.Number, HL.Opt(HL.String, HL.Function, HL.Function, HL.Number)) << function(
-    self, productionTime, totalProgress, textColor, onProgressFinished, onProgressStarted, initialProgress)
+
+FacProgressNode.InitFacProgressNode = HL.Method(HL.Number, HL.Number, HL.Opt(HL.String, HL.Function, HL.Function, HL.Number, HL.Boolean)) << function(
+    self, productionTime, totalProgress, textColor, onProgressFinished, onProgressStarted, initialProgress, showOriProgressNumber)
     if not initialProgress then
         initialProgress = 0
     end
@@ -84,8 +90,9 @@ FacProgressNode.InitFacProgressNode = HL.Method(HL.Number, HL.Number, HL.Opt(HL.
     self.m_onProgressFinished = onProgressFinished
     self.m_onProgressStarted = onProgressStarted
     self.m_lastPercent = INVALID_PERCENT
+    self.m_showOriProgressNumber = showOriProgressNumber or false
 
-    local roundingTime = math.floor(productionTime)
+    local roundingTime = math.ceil(productionTime)
     self.m_roundingTime = roundingTime
     if productionTime <= 0 or totalProgress <= 0 or isInvalidNumber(roundingTime) then
         
@@ -105,10 +112,14 @@ FacProgressNode._RefreshProgressText = HL.Method(HL.Number) << function(self, te
         return
     end
 
-    if string.isEmpty(self.m_textColor) then
-        self.view.progressText.text = string.format(Language["LUA_FAC_PROGRESS_TEXT"], math.floor(textNumber))
+    if self.m_roundingTime <= 1 and self.m_showOriProgressNumber then
+        self.view.progressText.text = string.format(Language["LUA_FAC_PROGRESS_DECIMAL_TEXT"], textNumber)
     else
-        self.view.progressText.text = string.format(Language["LUA_FAC_PROGRESS_COLOR_TEXT"], self.m_textColor, math.floor(textNumber))
+        if string.isEmpty(self.m_textColor) then
+            self.view.progressText.text = string.format(Language["LUA_FAC_PROGRESS_TEXT"], math.floor(textNumber))
+        else
+            self.view.progressText.text = string.format(Language["LUA_FAC_PROGRESS_COLOR_TEXT"], self.m_textColor, math.floor(textNumber))
+        end
     end
 end
 
@@ -155,7 +166,10 @@ FacProgressNode.UpdateProgress = HL.Method(HL.Number,HL.Opt(HL.Table)) << functi
     end
 
     local textNumber = (1 - percent) * self.m_roundingTime
-    self:_RefreshProgressText(math.ceil(textNumber))
+    if self.m_roundingTime > 1 or not self.m_showOriProgressNumber then
+        textNumber = math.ceil(textNumber)
+    end
+    self:_RefreshProgressText(textNumber)
 
     self.m_lastPercent = percent
 end

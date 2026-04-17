@@ -221,6 +221,7 @@ BattleActionCtrl.OnShow = HL.Override() << function(self)
     if self.isControllerPanel then
         self.view.hudFadeController:OnShow()
     end
+    self.view.hpNode:OnShow()
 end
 
 
@@ -232,6 +233,7 @@ BattleActionCtrl.OnHide = HL.Override() << function(self)
     for _, skillCell in ipairs(self.m_skillCellList) do
         skillCell.enabled = false
     end
+    self.view.hpNode:OnHide()
 end
 
 

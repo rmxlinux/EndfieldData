@@ -160,6 +160,7 @@ FMVUtils = CS.Beyond.Gameplay.Core.FMVUtils
 
 PreloadManagerIns = CS.Beyond.Resource.Runtime.PreloadManager.instance
 
+HGRenderBridgeStatics = CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics
 
 GameConditionUtils = CS.Beyond.Gameplay.GameConditionUtils
 
@@ -349,6 +350,10 @@ end
 LuaSystemManager = require_ex("LuaSystem/LuaSystemManager")()
 
 LuaProfilerUtils = require_ex("Common/Core/LuaProfilerUtils")
+LuaHotFix = require_ex("Common/Core/LuaHotFix")
+HotFixLua = function(luaCode)
+    return LuaHotFix.Apply(luaCode)
+end
 
 logger.info("Lua init finished.")
 

@@ -34,6 +34,13 @@ local ITEM_SLOT_UNSELECTED = 3
 
 
 
+
+
+
+
+
+
+
 UsableItemChestCtrl = HL.Class('UsableItemChestCtrl', uiCtrl.UICtrl)
 
 
@@ -49,6 +56,9 @@ UsableItemChestCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 UsableItemChestCtrl.m_itemId = HL.Field(HL.String) << ""
+
+
+UsableItemChestCtrl.m_selectedRewardId = HL.Field(HL.String) << ""
 
 
 UsableItemChestCtrl.m_chestData = HL.Field(HL.Any)
@@ -70,6 +80,12 @@ UsableItemChestCtrl.m_maxChosenRewardCount = HL.Field(HL.Number) << 0
 
 
 UsableItemChestCtrl.m_chooseItemPageBuild = HL.Field(HL.Boolean) << false
+
+
+UsableItemChestCtrl.m_charCellInfos = HL.Field(HL.Table)
+
+
+UsableItemChestCtrl.m_curSelectCharIndex = HL.Field(HL.Number) << 0
 
 
 UsableItemChestCtrl.m_firstRandomItemId = HL.Field(HL.String) << ""
@@ -94,6 +110,10 @@ UsableItemChestCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end
     self.m_chestData = usableItemChestData
 
+    if args.selectedRewardId then
+        self.m_selectedRewardId = args.selectedRewardId
+    end
+
     self.m_chosenRewardIds = {}
     self.m_itemSlotConditions = {}
 
@@ -109,13 +129,25 @@ UsableItemChestCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
         self.view.titleText.text = Language.LUA_USABLE_ITEM_CHEST_TITLE_SELECT
         self:_OpenChooseItemPage()
         self.view.chooseItemPageRoot.naviGroup:NaviToThisGroup()
+        self:_ProcessExpectedRewardItem(args.expectedRewardItemId, args.expectedRewardItemCount, chestCount)
     elseif type == GEnums.ItemCaseType.Random then
         self.view.titleText.text = Language.LUA_USABLE_ITEM_CHEST_TITLE_RANDOM
         self:_OpenRandomChestPanel()
+    elseif type == GEnums.ItemCaseType.SelfSelectedCharPotential then
+        self.view.titleText.text = Language.LUA_USABLE_ITEM_CHEST_CHAR_TITLE
+        self:_OpenChooseCharPotentialPage()
+        self.view.chooseCharPotentialPageRoot.naviGroup:NaviToThisGroup()
     end
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder(
         { self.view.inputGroup.groupId })
+end
+
+
+
+
+UsableItemChestCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
+    self.view.chooseChestCountPageRoot.popNode:ManuallyStopFocus()
 end
 
 
@@ -170,10 +202,8 @@ end
 
 
 UsableItemChestCtrl._OpenRandomChestPanel = HL.Method() << function(self)
+    self.view.main:SetState("RandomPage")
     self.view.randomChestPageRoot.youWillGetOneItemText:SetAndResolveTextStyle(Language.ui_usableitemchestpanel_random_info)
-    self.view.randomChestPageRoot.gameObject:SetActive(true)
-    self.view.chooseChestCountPageRoot.gameObject:SetActive(false)
-    self.view.chooseItemPageRoot.gameObject:SetActive(false)
     self.view.numberSelectorRoot.gameObject:SetActive(true)
 
     self.view.btnBack.gameObject:SetActive(false)
@@ -266,9 +296,7 @@ end
 
 
 UsableItemChestCtrl._OpenChooseItemPage = HL.Method() << function(self)
-    self.view.randomChestPageRoot.gameObject:SetActive(false)
-    self.view.chooseChestCountPageRoot.gameObject:SetActive(false)
-    self.view.chooseItemPageRoot.gameObject:SetActive(true)
+    self.view.main:SetState("NormalPage")
     if self.m_chooseItemPageBuild == false then
         self:_BuildChooseItemPage()
     end
@@ -288,9 +316,184 @@ end
 
 
 
+UsableItemChestCtrl._OpenChooseCharPotentialPage = HL.Method() << function(self)
+    self.view.main:SetState("CharPotentialPage")
+    
+    self.m_charCellInfos = {}
+    for i, rewardId in pairs(self.m_chestData.rewardIdList) do
+        local rewardItems = UIUtils.getRewardItems(rewardId)
+        local potentialItemId = rewardItems[1].id
+        local potentialItemCount = rewardItems[1].count
+        local hasCount = Utils.getItemCount(potentialItemId)
+        local charId = potentialItemId:gsub("item_charpotentialup_", "")
+        
+        local CharBag = GameInstance.player.charBag
+        
+        local bagCharInfo = CharBag:GetCharInfoByTemplateId(charId, GEnums.CharType.Default)
+        local isOwned = bagCharInfo ~= nil
+        local potentialLevel = 0
+        local isPotentialMax = false
+        local isPotentialOverflow = false
+        if isOwned then
+            potentialLevel = bagCharInfo.potentialLevel
+            isPotentialMax = potentialLevel >= UIConst.CHAR_MAX_POTENTIAL
+            isPotentialOverflow = hasCount + potentialLevel >= UIConst.CHAR_MAX_POTENTIAL
+        end
+        local charCfg = Tables.characterTable[charId]
+        local potentialItemCfg = Tables.itemTable[potentialItemId]
+        local info = {
+            rewardId = rewardId,
+            charId = charId,
+            potentialItemName = potentialItemCfg.name,
+            potentialItemId = potentialItemId,
+            potentialItemCount = potentialItemCount,
+            potentialItemHasCount = hasCount,
+            professionIcon = CharInfoUtils.getCharProfessionIconName(charCfg.profession),
+            roleImg = string.format("gachapool_role_selected_%s", charId),
+
+            isOwned = isOwned,
+            isSelected = false,
+            potentialLevel = potentialLevel,
+            isPotentialMax = isPotentialMax,
+            isPotentialOverflow = isPotentialOverflow,
+        }
+        table.insert(self.m_charCellInfos, info)
+    end
+    
+
+    
+    local rootNode = self.view.chooseCharPotentialPageRoot
+    rootNode.m_cellCache = UIUtils.genCellCache(rootNode.charCell)
+    
+    rootNode.m_cellCache:Refresh(#self.m_charCellInfos, function(cell, luaIndex)
+        self:_RefreshCharCell(cell, luaIndex)
+    end)
+    
+
+    
+    self.view.btnConfirmText.text = Language.LUA_USABLE_ITEM_CHEST_CONFIRM_OPEN
+    self.view.btnConfirm.onClick:RemoveAllListeners()
+    self.view.btnConfirm.onClick:AddListener(function()
+        local charCellInfo = self.m_charCellInfos[self.m_curSelectCharIndex]
+        if charCellInfo.isOwned then
+            local chestItemName = Tables.itemTable[self.m_itemId].name
+            local content = string.format(Language.LUA_USABLE_ITEM_CHEST_CHAR_POTENTIAL_POPUP_CONTENT, chestItemName, charCellInfo.potentialItemName)
+            local warningContent
+            if charCellInfo.isPotentialMax then
+                warningContent = Language.LUA_GACHA_CHAR_POPUP_WARNING_CONTENT_POTENTIAL_MAX
+            elseif charCellInfo.isPotentialOverflow then
+                warningContent = Language.LUA_USABLE_ITEM_CHEST_CHAR_POTENTIAL_POPUP_WARNING_CONTENT
+            end
+            Notify(MessageConst.SHOW_POP_UP, {
+                content = content,
+                warningContent = warningContent,
+                onConfirm = function()
+                    local rewardIdList = {
+                        [1] = charCellInfo.rewardId,
+                    }
+                    GameInstance.player.inventory:OpenUsableItemChest(self.m_itemId, 1, rewardIdList)
+                end,
+            })
+        else
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_USABLE_ITEM_CHEST_CHAR_NOT_OWN_CHAR_TIPS)
+        end
+    end)
+    
+end
+
+
+
+
+
+UsableItemChestCtrl._RefreshCharCell = HL.Method(HL.Any, HL.Number) << function(self, inCell, luaIndex)
+    
+    local cell = inCell
+    local info = self.m_charCellInfos[luaIndex]
+    cell.item:InitItem({ id = info.potentialItemId, count = info.potentialItemCount }, true)
+    cell.roleImg:LoadSprite(UIConst.UI_SPRITE_GACHA_POOL, info.roleImg)
+    cell.potentialStar:InitCharPotentialStarByLevel(info.potentialLevel, false)
+    cell.storageNode:InitStorageNode(info.potentialItemHasCount, nil, true)
+    if info.isOwned then
+        if info.isSelected then
+            cell.stateController:SetState("Select")
+            if info.isPotentialMax then
+                self.view.warningNode.gameObject:SetActive(true)
+                self.view.warningTxt.text = Language.LUA_GACHA_CHAR_POPUP_WARNING_CONTENT_POTENTIAL_MAX
+            elseif info.isPotentialOverflow then
+                self.view.warningNode.gameObject:SetActive(true)
+                self.view.warningTxt.text = Language.LUA_USABLE_ITEM_CHEST_CHAR_POTENTIAL_POPUP_WARNING_CONTENT
+            else
+                self.view.warningNode.gameObject:SetActive(false)
+            end
+            self.view.emptyButtonNotChooseEnough.gameObject:SetActive(false)
+            self.view.btnConfirm.gameObject:SetActive(true)
+        else
+            cell.stateController:SetState("Owned")
+            self.view.warningNode.gameObject:SetActive(false)
+            self.view.emptyButtonNotChooseEnough.gameObject:SetActive(true)
+            self.view.btnConfirm.gameObject:SetActive(false)
+        end
+    else
+        cell.stateController:SetState("NotOwned")
+        self.view.warningNode.gameObject:SetActive(false)
+        self.view.emptyButtonNotChooseEnough.gameObject:SetActive(true)
+        self.view.btnConfirm.gameObject:SetActive(false)
+    end
+    if DeviceInfo.usingController then
+        cell.item.view.button.interactable = false
+        cell.button.onIsNaviTargetChanged = function(isTarget)
+            cell.item.view.button.interactable = isTarget
+        end
+    end
+    
+    cell.button.onClick:RemoveAllListeners()
+    cell.button.onClick:AddListener(function()
+        if not info.isOwned then
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_USABLE_ITEM_CHEST_CHAR_NOT_OWN_CHAR_TIPS)
+            return
+        end
+        
+        if self.m_curSelectCharIndex > 0 then
+            local oldCell = self.view.chooseCharPotentialPageRoot.m_cellCache:Get(self.m_curSelectCharIndex)
+            local oldInfo = self.m_charCellInfos[self.m_curSelectCharIndex]
+            oldInfo.isSelected = false
+            self.view.warningNode.gameObject:SetActive(false)
+            self.view.emptyButtonNotChooseEnough.gameObject:SetActive(true)
+            self.view.btnConfirm.gameObject:SetActive(false)
+            oldCell.stateController:SetState(oldInfo.isOwned and "Owned" or "NotOwned")
+        end
+        
+        if self.m_curSelectCharIndex == luaIndex then
+            self.m_curSelectCharIndex = 0
+            return
+        end
+        
+        self.m_curSelectCharIndex = luaIndex
+        cell.stateController:SetState("Select")
+        if info.isPotentialMax then
+            self.view.warningNode.gameObject:SetActive(true)
+            self.view.warningTxt.text = Language.LUA_GACHA_CHAR_POPUP_WARNING_CONTENT_POTENTIAL_MAX
+        elseif info.isPotentialOverflow then
+            self.view.warningNode.gameObject:SetActive(true)
+            self.view.warningTxt.text = Language.LUA_USABLE_ITEM_CHEST_CHAR_POTENTIAL_POPUP_WARNING_CONTENT
+        else
+            self.view.warningNode.gameObject:SetActive(false)
+        end
+        self.view.emptyButtonNotChooseEnough.gameObject:SetActive(false)
+        self.view.btnConfirm.gameObject:SetActive(true)
+    end)
+    
+end
+
+
+
 UsableItemChestCtrl._BuildChooseItemPage = HL.Method() << function(self)
     self.m_chooseItemPageBuild = true
     self.m_chosenRewardIds = {}
+    if not string.isEmpty(self.m_selectedRewardId) then
+        self.m_chosenRewardIds[self.m_selectedRewardId] = true
+        self.m_chosenRewardsCount = self.m_chosenRewardsCount + 1
+    end
     local panel = self.view.chooseItemPageRoot
     panel.m_cellCache = UIUtils.genCellCache(panel.singleItem)
 
@@ -415,9 +618,7 @@ UsableItemChestCtrl._OpenChooseChestCountPage = HL.Method() << function(self)
         logger.error("没选满，但是进入了选箱子界面，寄")
     end
 
-    self.view.randomChestPageRoot.gameObject:SetActive(false)
-    self.view.chooseItemPageRoot.gameObject:SetActive(false)
-    self.view.chooseChestCountPageRoot.gameObject:SetActive(true)
+    self.view.main:SetState("ChestCountPage")
     self.view.numberSelectorRoot.gameObject:SetActive(true)
     self.view.emptyButtonNotChooseEnough.gameObject:SetActive(false)
 
@@ -608,6 +809,33 @@ UsableItemChestCtrl._OnBlockKeyboardEventPanelOrderChanged = HL.Method() << func
         or CS.Beyond.UI.CustomUIStyle.OverrideValidState.ForceNotValid
     self.view.numberSelector.view.reduceBtnKeyHint.transform:GetComponent("CustomUIStyle").overrideValidState = state
     self.view.numberSelector.view.addBtnKeyHint.transform:GetComponent("CustomUIStyle").overrideValidState = state
+end
+
+
+
+
+
+
+UsableItemChestCtrl._ProcessExpectedRewardItem = HL.Method(HL.Any, HL.Any, HL.Number) << function(self, itemId, itemCount, chestCount)
+    if string.isEmpty(self.m_selectedRewardId) or  string.isEmpty(itemId) or itemCount == nil or itemCount < 0 then
+        return
+    end
+    local needChestCount = 0
+    local itemInfoTable = self:_GetItemInfoFromRewardId(self.m_selectedRewardId)
+    for _, itemInfo in pairs(itemInfoTable) do
+        if itemInfo.id == itemId then
+            needChestCount = math.ceil(itemCount / itemInfo.count)
+
+        end
+    end
+    if needChestCount <= 0 then
+        return
+    end
+    if needChestCount > chestCount then
+        needChestCount = chestCount
+    end
+    self:_OpenChooseChestCountPage()
+    self.view.numberSelector:RefreshNumber(needChestCount)
 end
 
 HL.Commit(UsableItemChestCtrl)

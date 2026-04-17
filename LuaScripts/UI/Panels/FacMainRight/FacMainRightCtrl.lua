@@ -279,7 +279,8 @@ FacMainRightCtrl._OnIsTopLayerChanged = HL.Method(HL.Boolean) << function(self, 
     if isTopLayer then
         
         
-        if not InputManagerInst:GetKey(CS.Beyond.Input.GamepadKeyCode.ArrowLeft) then
+        local keyCode = InputManagerInst:GetActionGamepadKeyCode("fac_main_right_active", false, true);
+        if not InputManagerInst:GetKey(keyCode) then
             self:_StartTimer(0, function()
                 self.view.animationSelectableNaviGroup:ManuallyStopFocus()
             end)
@@ -294,7 +295,7 @@ FacMainRightCtrl._OnIsTopLayerChanged = HL.Method(HL.Boolean) << function(self, 
         UIManager:ShowWithKey(PanelId.GeneralAbility, "FacMainRightPanel")
     end
 
-    InputManagerInst:ToggleGroup(self.m_zoomCamGroupId, isTopLayer and UIUtils.isBattleControllerModifyKeyChanged())
+    
 
     
     local isOpen, mainCtrl = UIManager:IsOpen(PanelId.FacMain)

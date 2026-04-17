@@ -97,6 +97,7 @@ local SMART_ALERT_FUNCTION_NAME_LIST = {
 
 FacMachineCrafterCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FAC_MACHINE_MODE_CHANGE_SYNC_PORT] = '_OnModeChangeSyncPort',
+    [MessageConst.FAC_ON_DEL_TIME_LIMITED_FORMULA] = "_OnFormulaDelete",
 }
 
 
@@ -127,13 +128,16 @@ FacMachineCrafterCtrl.m_skipFirstRefreshFormula = HL.Field(HL.Boolean) << true
 FacMachineCrafterCtrl.m_isInventoryLocked = HL.Field(HL.Boolean) << false
 
 
+FacMachineCrafterCtrl.m_noNormalOutputCache = HL.Field(HL.Boolean) << false
+
+
+FacMachineCrafterCtrl.m_needInversePipe = HL.Field(HL.Boolean) << false
+
+
 FacMachineCrafterCtrl.m_smartAlertTargetTransformCache = HL.Field(HL.Table)
 
 
 FacMachineCrafterCtrl.m_smartAlertConditionDataCache = HL.Field(HL.Table)
-
-
-FacMachineCrafterCtrl.m_needRefreshPortState = HL.Field(HL.Boolean) << false
 
 
 
@@ -147,6 +151,8 @@ FacMachineCrafterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     
     local layoutData = FactoryUtils.getMachineCraftCacheLayoutData(self.m_nodeId)
+    self.m_noNormalOutputCache = next(layoutData.normalOutcomeCaches) == nil
+    self.m_needInversePipe = #layoutData.fluidIncomeCaches >= 2 or #layoutData.fluidOutcomeCaches >= 2
     self.view.inventoryArea:InitInventoryArea({
         onStateChange = function()
             self:_RefreshNaviGroupSwitcherInfos()
@@ -154,12 +160,14 @@ FacMachineCrafterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         customSetActionMenuArgs = function(actionMenuArgs)
             actionMenuArgs.cacheArea = self.view.cacheArea
         end,
-        hasFluidInCache = layoutData and #layoutData.fluidIncomeCaches > 0,
+        hasFluidInCache = layoutData and (next(layoutData.fluidIncomeCaches) ~= nil),
+        noNormalCache = next(layoutData.normalIncomeCaches) == nil and self.m_noNormalOutputCache,
         lockFormulaId = FactoryUtils.getMachineCraftLockFormulaId(self.m_uiInfo.nodeId),
     })
     self.m_isInventoryLocked = FactoryUtils.isBuildingInventoryLocked(nodeId)
     self.view.inventoryArea:LockInventoryArea(self.m_isInventoryLocked)
 
+    self.view.functionBtn.gameObject:SetActiveIfNecessary(not self.m_noNormalOutputCache)
     
     self:_StartCoroutine(function()
         while true do
@@ -168,7 +176,9 @@ FacMachineCrafterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             end
             coroutine.step()
             self.view.facProgressNode:UpdateProgress(self.m_uiInfo.producer.currentProgress)
-            self:_UpdateGainButtonState()
+            if not self.m_noNormalOutputCache then
+                self:_UpdateGainButtonState()
+            end
         end
     end)
 
@@ -190,7 +200,10 @@ FacMachineCrafterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshCrafterWidth()
 
     
-    self.view.cachePipe:InitFacCachePipe(self.m_uiInfo, { needModeSwitch = true })
+    self.view.cachePipe:InitFacCachePipe(self.m_uiInfo, {
+        needModeSwitch = true,
+        needInversePipe = self.m_needInversePipe,
+    })
     self:_ChangePipeSpacingWithCacheSlotCount()
 
     
@@ -244,22 +257,6 @@ end
 
 
 
-FacMachineCrafterCtrl.OnShow = HL.Override() << function(self)
-    if self.m_needRefreshPortState then
-        self.m_needRefreshPortState = false
-        self.view.cacheBelt:RefreshBeltCellsState()
-        self.view.cachePipe:RefreshPipeCellsState()
-    end
-end
-
-
-
-FacMachineCrafterCtrl.OnHide = HL.Override() << function(self)
-    self.m_needRefreshPortState = true
-end
-
-
-
 FacMachineCrafterCtrl.OnAnimationInFinished = HL.Override() << function(self)
 end
 
@@ -293,6 +290,11 @@ end
 
 
 FacMachineCrafterCtrl._RefreshFormulaInfo = HL.Method() << function(self)
+    if self.m_lastProgressFormulaId and (not self.m_lastProgressFormulaId:isEmpty()) then
+        if not GameInstance.player.remoteFactory.core:IsFormulaVisible(self.m_lastProgressFormulaId) then
+            self.m_lastProgressFormulaId = ""
+        end
+    end
     local id = self:_GetMachineFormulaId()
     local isFormulaMissing = string.isEmpty(id)
 
@@ -301,6 +303,7 @@ FacMachineCrafterCtrl._RefreshFormulaInfo = HL.Method() << function(self)
         self.view.facProgressNode:InitFacProgressNode(-1, -1)
         self.view.facProgressNode:SwitchAudioPlayingState(false)
         self.m_lastProgressFormulaId = id
+        self.view.cacheArea:ChangedFormula(id, self.m_uiInfo.lastFormulaId)
         return
     end
 
@@ -388,26 +391,10 @@ end
 
 
 FacMachineCrafterCtrl._RefreshChangeState = HL.Method(HL.Userdata) << function(self, state)
-    local stateText
-    if state == GEnums.FacBuildingState.NoPower then
-        stateText = Language.LUA_FAC_CRAFTER_STATE_NOPOWER_TIPS
-    elseif state == GEnums.FacBuildingState.NotInPowerNet then
-        stateText = Language.LUA_FAC_CRAFTER_STATE_NOTINPOWERNET_TIPS
-    elseif state == GEnums.FacBuildingState.Closed then
-        stateText = Language.LUA_FAC_CRAFTER_STATE_CLOSE_TIPS
-    end
-
+    local useStateText = FactoryUtils.refreshStateNodeByState(self.view.facStateNode, self.view.facProgressNode, state)
     self.view.cacheArea:RefreshAreaBlockState(state == GEnums.FacBuildingState.Blocked)
-    self.view.facProgressNode.gameObject:SetActiveIfNecessary(stateText == nil)
-
-    if stateText == nil then
+    if not useStateText then
         self.view.facProgressNode:SwitchAudioPlayingState(state == GEnums.FacBuildingState.Normal)
-        self.view.facStateNode.animationWrapper:PlayOutAnimation(function()
-            self.view.facStateNode.gameObject:SetActiveIfNecessary(false)
-        end)
-    else
-        self.view.facStateNode.gameObject:SetActiveIfNecessary(true)
-        self.view.facStateNode.stateTxt.text = stateText
     end
 end
 
@@ -636,6 +623,13 @@ end
 
 
 
+
+FacMachineCrafterCtrl._OnFormulaDelete = HL.Method(HL.Any) << function(self, args)
+    self:_RefreshFormulaInfo()
+end
+
+
+
 FacMachineCrafterCtrl._PostSwitchMode = HL.Method() << function(self)
     self.m_uiInfo:Update(true)
     self.m_uiInfo:ClearProducerLastValidFormulaId()
@@ -669,6 +663,12 @@ FacMachineCrafterCtrl._ChangePipeSpacingWithCacheSlotCount = HL.Method() << func
     end
     if #layoutData.normalOutcomeCaches <= 0 and #layoutData.fluidOutcomeCaches <= 1 then
         self.view.cachePipe:ChangePipeSpacingY(SINGLE_LIQUID_CACHE_SLOT_SPACING_Y, false)
+    end
+    if #layoutData.fluidIncomeCaches >= 2 then
+        self.view.cachePipe:ChangePipeLineColor(true)
+    end
+    if #layoutData.fluidOutcomeCaches >= 2 then
+        self.view.cachePipe:ChangePipeLineColor(false)
     end
 end
 
@@ -735,50 +735,51 @@ FacMachineCrafterCtrl._UpdateSmartAlertCache = HL.Method() << function(self)
         self.m_smartAlertTargetTransformCache.lastOutBelt = self.m_smartAlertTargetTransformCache.outBelt[tempCount]
     end
     self.m_smartAlertTargetTransformCache.inPipe = {}
-    if self.view.cachePipe.m_inPipeList then
-        tempCount = #self.view.cachePipe.m_inPipeList
-        for i = 1, tempCount do
-            local pipe = self.view.cachePipe.m_inPipeList[i]
-            self.m_smartAlertTargetTransformCache.inPipe[i] = pipe.transform
-        end
+    if self.m_needInversePipe then
+        self.m_smartAlertTargetTransformCache.inPipe[1] = self.view.cachePipe.view.pipeCell2.smartAlertNode.transform
+        self.m_smartAlertTargetTransformCache.inPipe[2] = self.view.cachePipe.view.pipeCell1.smartAlertNode.transform
+    else
+        self.m_smartAlertTargetTransformCache.inPipe[1] = self.view.cachePipe.view.pipeCell1.smartAlertNode.transform
+        self.m_smartAlertTargetTransformCache.inPipe[2] = self.view.cachePipe.view.pipeCell2.smartAlertNode.transform
     end
     self.m_smartAlertTargetTransformCache.outPipe = {}
-    if self.view.cachePipe.m_outPipeList then
-        for i = 1, #self.view.cachePipe.m_outPipeList do
-            local pipe = self.view.cachePipe.m_outPipeList[i]
-            self.m_smartAlertTargetTransformCache.outPipe[i] = pipe.transform
-        end
+    if self.m_needInversePipe then
+        self.m_smartAlertTargetTransformCache.outPipe[1] = self.view.cachePipe.view.pipeCell4.smartAlertNode.transform
+        self.m_smartAlertTargetTransformCache.outPipe[2] = self.view.cachePipe.view.pipeCell3.smartAlertNode.transform
+    else
+        self.m_smartAlertTargetTransformCache.outPipe[1] = self.view.cachePipe.view.pipeCell3.smartAlertNode.transform
+        self.m_smartAlertTargetTransformCache.outPipe[2] = self.view.cachePipe.view.pipeCell4.smartAlertNode.transform
     end
     self.m_smartAlertTargetTransformCache.normalInput = {}
-    if self.view.cacheArea.view.inRepositoryList.repository1.m_slotList then
-        tempCount = self.view.cacheArea.view.inRepositoryList.repository1.m_slotList:GetCount()
-        for i = 1, tempCount do
-            local cell = self.view.cacheArea.view.inRepositoryList.repository1.m_slotList:GetItem(i)
-            self.m_smartAlertTargetTransformCache.normalInput[i] = cell.transform
+    local repoList = self.view.cacheArea:GetAreaInRepositoryNormalSlotGroup()
+    for repoIndex, slotList in ipairs(repoList) do
+        self.m_smartAlertTargetTransformCache.normalInput[repoIndex] = {}
+        for _, slot in ipairs(slotList) do
+            table.insert(self.m_smartAlertTargetTransformCache.normalInput[repoIndex], slot.transform)
         end
     end
     self.m_smartAlertTargetTransformCache.fluidInput = {}
-    if self.view.cacheArea.view.inRepositoryList.repository2.m_slotList then
-        tempCount = self.view.cacheArea.view.inRepositoryList.repository2.m_slotList:GetCount()
-        for i = 1, tempCount do
-            local cell = self.view.cacheArea.view.inRepositoryList.repository2.m_slotList:GetItem(i)
-            self.m_smartAlertTargetTransformCache.fluidInput[i] = cell.transform
+    repoList = self.view.cacheArea:GetAreaInRepositoryFluidSlotGroup()
+    for repoIndex, slotList in ipairs(repoList) do
+        self.m_smartAlertTargetTransformCache.fluidInput[repoIndex] = {}
+        for _, slot in ipairs(slotList) do
+            table.insert(self.m_smartAlertTargetTransformCache.fluidInput[repoIndex], slot.transform)
         end
     end
     self.m_smartAlertTargetTransformCache.normalOutput = {}
-    if self.view.cacheArea.view.outRepositoryList.repository1.m_slotList then
-        tempCount = self.view.cacheArea.view.outRepositoryList.repository1.m_slotList:GetCount()
-        for i = 1, tempCount do
-            local cell = self.view.cacheArea.view.outRepositoryList.repository1.m_slotList:GetItem(i)
-            self.m_smartAlertTargetTransformCache.normalOutput[i] = cell.transform
+    repoList = self.view.cacheArea:GetAreaOutRepositoryNormalSlotGroup()
+    for repoIndex, slotList in ipairs(repoList) do
+        self.m_smartAlertTargetTransformCache.normalOutput[repoIndex] = {}
+        for _, slot in ipairs(slotList) do
+            table.insert(self.m_smartAlertTargetTransformCache.normalOutput[repoIndex], slot.transform)
         end
     end
     self.m_smartAlertTargetTransformCache.fluidOutput = {}
-    if self.view.cacheArea.view.outRepositoryList.repository2.m_slotList then
-        tempCount = self.view.cacheArea.view.outRepositoryList.repository2.m_slotList:GetCount()
-        for i = 1, tempCount do
-            local cell = self.view.cacheArea.view.outRepositoryList.repository2.m_slotList:GetItem(i)
-            self.m_smartAlertTargetTransformCache.fluidOutput[i] = cell.transform
+    repoList = self.view.cacheArea:GetAreaOutRepositoryFluidSlotGroup()
+    for repoIndex, slotList in ipairs(repoList) do
+        self.m_smartAlertTargetTransformCache.fluidOutput[repoIndex] = {}
+        for _, slot in ipairs(slotList) do
+            table.insert(self.m_smartAlertTargetTransformCache.fluidOutput[repoIndex], slot.transform)
         end
     end
     self.m_smartAlertTargetTransformCache.state = self.view.buildingCommon.view.stateNode.transform
@@ -797,8 +798,8 @@ FacMachineCrafterCtrl._UpdateSmartAlertCache = HL.Method() << function(self)
     end
     local layoutData = FactoryUtils.getMachineCraftCacheLayoutData(self.m_nodeId)
     if layoutData then
-        self.m_smartAlertConditionDataCache.hasItemCache = #layoutData.normalIncomeCaches > 0
-        self.m_smartAlertConditionDataCache.hasFluidCache = #layoutData.fluidIncomeCaches > 0
+        self.m_smartAlertConditionDataCache.hasItemCache = next(layoutData.normalIncomeCaches) ~= nil
+        self.m_smartAlertConditionDataCache.hasFluidCache = next(layoutData.fluidIncomeCaches) ~= nil
     end
     self.m_smartAlertConditionDataCache.machineName = Tables.factoryBuildingTable:GetValue(self.m_uiInfo.buildingId).name
     self.m_smartAlertConditionDataCache.hasBelt = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedBelt and
@@ -1047,26 +1048,28 @@ FacMachineCrafterCtrl._CheckAlertInputCacheFullCondition = HL.Method(HL.Userdata
     local inBeltInfoList = FactoryUtils.getBuildingPortState(self.m_nodeId, false)
     local inPipeInfoList = FactoryUtils.getBuildingPortState(self.m_nodeId, true)
     if inBeltInfoList then
-        for i = 1, #inBeltInfoList do
-            if inBeltInfoList[i].isBlock then
-                local normalCache = self.m_uiInfo:GetCache(1, true, false)
-                if normalCache and normalCache.items.Count > 0 then
-                    for itemId, itemCount in cs_pairs(normalCache.items) do
-                        local facItemSuccess, facItemData = Tables.factoryItemTable:TryGetValue(itemId)
-                        if facItemSuccess then
-                            
-                            if itemCount >= facItemData.buildingBufferStackLimit - 1 then
-                                local _, csIndex = normalCache.itemOrderMap:TryGetValue(itemId)
-                                local checkOpen = DeviceInfo.usingController and
-                                    self.view.cacheArea:CheckRepoNaviTargetTopLayer(true) and
-                                    self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
-                                local alertInfo = {
-                                    condition = GEnums.FacSmartAlertType.InputCacheFull,
-                                    targetTransform = self.m_smartAlertTargetTransformCache.normalInput[LuaIndex(csIndex)],
-                                    checkRefresh = "normal" .. tostring(csIndex),
-                                    defaultOpen = checkOpen
-                                }
-                                return true, alertInfo
+        for beltIndex, beltInfo in ipairs(inBeltInfoList) do
+            if beltInfo.isBlock then
+                for i = START_CACHE_COUNT, MAX_CACHE_COUNT do
+                    local normalCache = self.m_uiInfo:GetCache(i, true, false)
+                    if normalCache and normalCache.items.Count > 0 then
+                        for itemId, itemCount in cs_pairs(normalCache.items) do
+                            local facItemSuccess, facItemData = Tables.factoryItemTable:TryGetValue(itemId)
+                            if facItemSuccess then
+                                
+                                if itemCount >= facItemData.buildingBufferStackLimit - 1 then
+                                    local _, csIndex = normalCache.itemOrderMap:TryGetValue(itemId)
+                                    local checkOpen = DeviceInfo.usingController and
+                                        self.view.cacheArea:CheckRepoNaviTargetTopLayer(true) and
+                                        self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
+                                    local alertInfo = {
+                                        condition = GEnums.FacSmartAlertType.InputCacheFull,
+                                        targetTransform = self.m_smartAlertTargetTransformCache.normalInput[i][LuaIndex(csIndex)],
+                                        checkRefresh = "normal" .. tostring(i) .. tostring(csIndex),
+                                        defaultOpen = checkOpen
+                                    }
+                                    return true, alertInfo
+                                end
                             end
                         end
                     end
@@ -1076,26 +1079,28 @@ FacMachineCrafterCtrl._CheckAlertInputCacheFullCondition = HL.Method(HL.Userdata
         end
     end
     if inPipeInfoList then
-        for i = 1, #inPipeInfoList do
-            if inPipeInfoList[i].isBlock then
-                local liquidCache = self.m_uiInfo:GetCache(1, true, true)
-                if liquidCache and liquidCache.items.Count > 0 then
-                    for itemId, itemCount in cs_pairs(liquidCache.items) do
-                        local facItemSuccess, facItemData = Tables.factoryItemTable:TryGetValue(itemId)
-                        if facItemSuccess then
-                            
-                            if itemCount >= facItemData.buildingBufferStackLimit - 1 then
-                                local _, csIndex = liquidCache.itemOrderMap:TryGetValue(itemId)
-                                local checkOpen = DeviceInfo.usingController and
-                                    self.view.cacheArea:CheckRepoNaviTargetTopLayer(true) and
-                                    self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
-                                local alertInfo = {
-                                    condition = GEnums.FacSmartAlertType.InputCacheFull,
-                                    targetTransform = self.m_smartAlertTargetTransformCache.fluidInput[LuaIndex(csIndex)],
-                                    checkRefresh = "fluid" .. tostring(csIndex),
-                                    defaultOpen = checkOpen
-                                }
-                                return true, alertInfo
+        for pipeIndex, pipeInfo in ipairs(inPipeInfoList) do
+            if pipeInfo.isBlock then
+                for i = START_CACHE_COUNT, MAX_CACHE_COUNT do
+                    local liquidCache = self.m_uiInfo:GetCache(i, true, true)
+                    if liquidCache and liquidCache.items.Count > 0 then
+                        for itemId, itemCount in cs_pairs(liquidCache.items) do
+                            local facItemSuccess, facItemData = Tables.factoryItemTable:TryGetValue(itemId)
+                            if facItemSuccess then
+                                
+                                if itemCount >= facItemData.buildingBufferStackLimit - 1 then
+                                    local _, csIndex = liquidCache.itemOrderMap:TryGetValue(itemId)
+                                    local checkOpen = DeviceInfo.usingController and
+                                        self.view.cacheArea:CheckRepoNaviTargetTopLayer(true) and
+                                        self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
+                                    local alertInfo = {
+                                        condition = GEnums.FacSmartAlertType.InputCacheFull,
+                                        targetTransform = self.m_smartAlertTargetTransformCache.fluidInput[i][LuaIndex(csIndex)],
+                                        checkRefresh = "fluid" .. tostring(i) .. tostring(csIndex),
+                                        defaultOpen = checkOpen
+                                    }
+                                    return true, alertInfo
+                                end
                             end
                         end
                     end
@@ -1131,9 +1136,9 @@ FacMachineCrafterCtrl._CheckAlertOutputCacheFullWithoutBeltCondition = HL.Method
                         
                         local alertInfo = {
                             condition = GEnums.FacSmartAlertType.OutputCacheFullWithoutBelt,
-                            targetTransform = self.m_smartAlertTargetTransformCache.normalOutput[LuaIndex(csIndex)],
+                            targetTransform = self.m_smartAlertTargetTransformCache.normalOutput[i][LuaIndex(csIndex)],
                             args = {},
-                            checkRefresh = itemId .. tostring(csIndex),
+                            checkRefresh = itemId .. tostring(i) .. tostring(csIndex),
                             defaultOpen = checkOpen
                         }
                         table.insert(alertInfo.args, UIUtils.getItemName(itemId))
@@ -1211,9 +1216,9 @@ FacMachineCrafterCtrl._CheckAlertOutputCacheFullWithoutPipeCondition = HL.Method
                         
                         local alertInfo = {
                             condition = GEnums.FacSmartAlertType.OutputCacheFullWithoutPipe,
-                            targetTransform = self.m_smartAlertTargetTransformCache.fluidOutput[LuaIndex(csIndex)],
+                            targetTransform = self.m_smartAlertTargetTransformCache.fluidOutput[i][LuaIndex(csIndex)],
                             args = {},
-                            checkRefresh = itemId .. tostring(csIndex),
+                            checkRefresh = itemId .. tostring(i) .. tostring(csIndex),
                             defaultOpen = checkOpen
                         }
                         table.insert(alertInfo.args, UIUtils.getItemName(itemId))
@@ -1244,17 +1249,17 @@ FacMachineCrafterCtrl._CheckAlertOutputCacheFullWithPipeCondition = HL.Method(HL
                 local facItemSuccess, facItemData = Tables.factoryItemTable:TryGetValue(itemId)
                 if facItemSuccess then
                     if itemCount >= facItemData.buildingBufferStackLimit then
-                        local hasPipe = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipe
                         local _, csIndex = liquidCache.itemOrderMap:TryGetValue(itemId)
+                        local pipeIndex = math.min(i + csIndex, 2)
                         local checkOpen = DeviceInfo.usingController and
                             self.view.cacheArea:CheckRepoNaviTargetTopLayer(false) and
                             self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
                         
                         local alertInfo = {
                             condition = GEnums.FacSmartAlertType.OutputCacheFullWithPipe,
-                            targetTransform = self.m_smartAlertTargetTransformCache.outPipe[LuaIndex(csIndex)],
+                            targetTransform = self.m_smartAlertTargetTransformCache.outPipe[pipeIndex],
                             args = {},
-                            checkRefresh = itemId .. tostring(csIndex),
+                            checkRefresh = itemId .. tostring(pipeIndex),
                             defaultOpen = checkOpen
                         }
                         table.insert(alertInfo.args, UIUtils.getItemName(itemId))
@@ -1287,8 +1292,8 @@ FacMachineCrafterCtrl._CheckAlertInputInvalidFormulaCondition = HL.Method(HL.Use
                         self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
                     local alertInfo = {
                         condition = GEnums.FacSmartAlertType.InputInvalidFormula,
-                        targetTransform = self.m_smartAlertTargetTransformCache.normalInput[LuaIndex(csIndex)],
-                        checkRefresh = "normal" .. csIndex,
+                        targetTransform = self.m_smartAlertTargetTransformCache.normalInput[i][LuaIndex(csIndex)],
+                        checkRefresh = "normal" .. tostring(i) .. tostring(csIndex),
                         defaultOpen = checkOpen
                     }
                     return true, alertInfo
@@ -1305,8 +1310,8 @@ FacMachineCrafterCtrl._CheckAlertInputInvalidFormulaCondition = HL.Method(HL.Use
                         self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
                     local alertInfo = {
                         condition = GEnums.FacSmartAlertType.InputInvalidFormula,
-                        targetTransform = self.m_smartAlertTargetTransformCache.fluidInput[LuaIndex(csIndex)],
-                        checkRefresh = "fluid" .. csIndex,
+                        targetTransform = self.m_smartAlertTargetTransformCache.fluidInput[i][LuaIndex(csIndex)],
+                        checkRefresh = "fluid" .. tostring(i) .. tostring(csIndex),
                         defaultOpen = checkOpen
                     }
                     return true, alertInfo
@@ -1341,7 +1346,7 @@ FacMachineCrafterCtrl._CheckAlertNormalInputEmptyCondition = HL.Method(HL.Userda
             self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
         local alertInfo = {
             condition = GEnums.FacSmartAlertType.NormalInputEmpty,
-            targetTransform = self.m_smartAlertTargetTransformCache.normalInput[1],
+            targetTransform = self.m_smartAlertTargetTransformCache.normalInput[1][1],
             defaultOpen = checkOpen
         }
         return true, alertInfo
@@ -1373,7 +1378,7 @@ FacMachineCrafterCtrl._CheckAlertFluidInputEmptyCondition = HL.Method(HL.Userdat
             self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
         local alertInfo = {
             condition = GEnums.FacSmartAlertType.FluidInputEmpty,
-            targetTransform = self.m_smartAlertTargetTransformCache.fluidInput[1],
+            targetTransform = self.m_smartAlertTargetTransformCache.fluidInput[1][1],
             defaultOpen = checkOpen
         }
         return true, alertInfo

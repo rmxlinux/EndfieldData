@@ -36,6 +36,10 @@ local PHASE_ID = PhaseId.CommonPOIUpgrade
 
 
 
+
+
+
+
 CommonPOIUpgradeCtrl = HL.Class('CommonPOIUpgradeCtrl', uiCtrl.UICtrl)
 
 
@@ -47,6 +51,7 @@ CommonPOIUpgradeCtrl = HL.Class('CommonPOIUpgradeCtrl', uiCtrl.UICtrl)
 CommonPOIUpgradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_DOMAIN_SHOP_CHANNEL_UNLOCK] = 'OnDomainShopChannelUnlock',
     [MessageConst.ON_DOMAIN_SHOP_CHANNEL_LEVEL_UP] = 'OnDomainShopChannelLevelUp',
+    [MessageConst.ON_SEWAGE_TREAT_PLANT_LEVEL_CHANGE] = 'OnSewageTreatPlantLevelChange',
     [MessageConst.ON_SQUAD_INFIGHT_CHANGED] = 'OnSquadInFightChanged',
 }
 
@@ -58,6 +63,7 @@ local GetDataFunc = {
     [GEnums.DomainPoiType.RecycleBin] = "_GetDataRecycleBin",
     [GEnums.DomainPoiType.KiteStation] = "_GetDataKiteStation",
     [GEnums.DomainPoiType.DomainDepot] = "_GetDataDomainDepot",
+    [GEnums.DomainPoiType.SewageTreatPlant] = "_GetDataSewageTreatPlant",
 }
 
 
@@ -66,6 +72,7 @@ local InitEventFunc = {
     [GEnums.DomainPoiType.RecycleBin] = "_InitEventRecycleBin",
     [GEnums.DomainPoiType.KiteStation] = "_InitEventKiteStation",
     [GEnums.DomainPoiType.DomainDepot] = "_InitEventDomainDepot",
+    [GEnums.DomainPoiType.SewageTreatPlant] = "_InitEventSewageTreatPlant",
 }
 
 
@@ -75,6 +82,7 @@ local RefreshContentUIFunc = {
     [DomainPOIUtils.contentTypeEnum.TextImgText] = "_RefreshContentUITextImgText",
     [DomainPOIUtils.contentTypeEnum.RewardList] = "_RefreshContentUIRewardList",
     [DomainPOIUtils.contentTypeEnum.TitleWithText] = "_RefreshContentUITitleWithText",
+    [DomainPOIUtils.contentTypeEnum.SewageTreatInfo] = "_RefreshContentUISewageTreatInfo",
 }
 
 
@@ -214,6 +222,19 @@ end
 
 
 
+CommonPOIUpgradeCtrl._InitEventSewageTreatPlant = HL.Method() << function(self)
+    self.m_onClickUnlockBtn = function()
+        GameInstance.player.remoteFactory.core:Message_SewageTreatPlantLevelUp(self.m_instId, 1)
+    end
+
+    self.m_onClickUpgradeBtn = function()
+        local currLevel = FactoryUtils.getSewageTreatPlantLevel(self.m_instId)
+        GameInstance.player.remoteFactory.core:Message_SewageTreatPlantLevelUp(self.m_instId, currLevel + 1)
+    end
+end
+
+
+
 
 
 
@@ -238,6 +259,18 @@ CommonPOIUpgradeCtrl.OnDomainShopChannelLevelUp = HL.Method() << function(self)
         PhaseManager:PopPhase(PHASE_ID)
     end
 end
+
+
+
+CommonPOIUpgradeCtrl.OnSewageTreatPlantLevelChange = HL.Method() << function(self)
+    local isOpen, _ = PhaseManager:IsOpen(PhaseId.Dialog)
+    if isOpen then
+        Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 1 })
+    else
+        PhaseManager:PopPhase(PHASE_ID)
+    end
+end
+
 
 
 
@@ -302,6 +335,19 @@ CommonPOIUpgradeCtrl._GetDataRecycleBin = HL.Method().Return(HL.Any) << function
             })
         end
         return rewardItems
+    end
+
+    
+    if isUnlock then
+        if recycleBinData.lv >= recycleBinData.remoteCollectLv - 1 then
+            local isNew = recycleBinData.lv == recycleBinData.remoteCollectLv - 1
+            DomainPOIUtils.insertContentCommonTitle(info, "POI/icon_claim_resources", Language.LUA_RECYCLE_BIN_POI_REMOTE_COLLECT_TITLE, isNew)
+            
+            local _, domainCfg = Tables.domainDataTable:TryGetValue(domainId)
+            local domainName = domainCfg.domainName
+            local remoteCollectContentText = string.format(Language.LUA_RECYCLE_BIN_POI_REMOTE_COLLECT_CONTENT, domainName, recycleBinData.remoteCollectLv, domainName, recycleBinData.remoteCollectLv)
+            DomainPOIUtils.insertContentTextImgText(info, remoteCollectContentText, nil, 2, true)
+        end
     end
 
     
@@ -385,7 +431,7 @@ CommonPOIUpgradeCtrl._GetDataKiteStation = HL.Method().Return(HL.Any) << functio
 
     info.curLevel = currentLevel
     info.targetLevel = currentLevel + 1
-    info.maxLevel = #cfg.list
+    info.maxLevel = DomainPOIUtils.GetKiteStationMaxLevel(kiteStationId)
     info.isFinalMaxLevel = Tables.GlobalConst.kiteStationMaxLevel == info.maxLevel
 
     DomainPOIUtils.insertContentTitleWithText(info, currentLevelConfig.levelTitle, currentLevelConfig.levelDesc)
@@ -410,7 +456,7 @@ CommonPOIUpgradeCtrl._GetDataDomainDepot = HL.Method().Return(HL.Any) << functio
 
     domainDepotLevelList = domainDepotLevelList.levelList
     local curLevel = domainDepotData.level
-    local curMaxLevel = #domainDepotLevelList
+    local curMaxLevel = DomainPOIUtils.GetDomainDepotMaxLevel(domainDepotId)
     local targetLevel = math.min(curLevel + 1, curMaxLevel)
     local isCurMaxLevel = curLevel == curMaxLevel
     info.curLevel = curLevel
@@ -552,6 +598,45 @@ end
 
 
 
+CommonPOIUpgradeCtrl._GetDataSewageTreatPlant = HL.Method().Return(HL.Any) << function(self)
+    local info = DomainPOIUtils.getUpgradeCtrlArgsTemplate()
+    local domainData = FactoryUtils.getSewageTreatPlantData(self.m_instId)
+
+    info.domainId = domainData.domainId
+    info.levelId = domainData.levelId
+    info.curLevel = domainData.currLevel
+    info.targetLevel = domainData.nextLevel
+    info.maxLevel = domainData.maxLevel
+    info.isFinalMaxLevel = domainData.isFinalMaxLevel
+    info.upgradeCostMoney = domainData.levelCost
+    if info.curLevel == 0 then
+        info.descList = { Language.LUA_FAC_SEWAGE_TREAT_LOCK_DESC_TEXT }
+    else
+        info.descList = string.split(domainData.currLevelDesc, "\n")
+    end
+
+    DomainPOIUtils.insertContentCommonTitle(info, "POI/icon_recycle", domainData.nextLevelTitle)
+
+    if domainData.currImportCount > 0 or domainData.nextImportCount > 0 then
+        local isImportMax = domainData.currImportCount == domainData.maxImportCount
+        DomainPOIUtils.insertContentSewageTreatInfo(info, true, isImportMax, domainData.currImportCount, domainData.nextImportCount)
+    end
+    if domainData.currExportCount > 0 or domainData.nextExportCount > 0 then
+        local isExportMax = domainData.currExportCount == domainData.maxExportCount
+        DomainPOIUtils.insertContentSewageTreatInfo(info, false, isExportMax, domainData.currExportCount, domainData.nextExportCount)
+    end
+    if domainData.currImportCount > 0 or domainData.nextImportCount > 0 then
+        DomainPOIUtils.insertContentTitleWithText(info, domainData.importerDesc)
+    end
+    if domainData.currExportCount > 0 or domainData.nextExportCount > 0 then
+        DomainPOIUtils.insertContentTitleWithText(info, domainData.exporterDesc)
+    end
+
+    return info
+end
+
+
+
 
 
 
@@ -616,6 +701,9 @@ CommonPOIUpgradeCtrl._RefreshBasicUI = HL.Method() << function(self)
     
     local titleNode = self.view.titleNode
     titleNode.mapNameTxt.text = Tables.levelDescTable[info.levelId].showName
+    if string.isEmpty(info.titleName) then
+        info.titleName = Tables.domainPoiTable[self.m_domainPOIType].name  
+    end
     titleNode.titleTxt.text = info.titleName
     titleNode.curLvTxt.text = info.curLevel
     titleNode.maxLvTxt.text = info.maxLevel
@@ -671,13 +759,7 @@ CommonPOIUpgradeCtrl._RefreshBasicUI = HL.Method() << function(self)
         end
     end
     
-    local hasData, domainDevData = GameInstance.player.domainDevelopmentSystem.domainDevDataDic:TryGetValue(info.domainId)
-    if hasData then
-        local maxCount = domainDevData.curLevelData.moneyLimit
-        self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(moneyId, maxCount)
-    else
-        logger.error("地区发展数据不存在！可能是还没解锁这个地区的地区发展，domainId:", info.domainId)
-    end
+    self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(info.domainId)
 end
 
 
@@ -714,6 +796,7 @@ CommonPOIUpgradeCtrl._RefreshContentUICommonTitle = HL.Method(HL.Table) << funct
     local cell = CommonPOIUpgradeCtrl._GenCacheContent(self.view.contentParent.poiUpgradeContentCommonTitle.gameObject, self.view.contentParent.gameObject)
     cell.titleIconImg:LoadSprite(info.icon)
     cell.titleTxt.text = info.titleName
+    cell.stateController:SetState(info.isNew and "New" or "Normal")
 end
 
 
@@ -751,6 +834,8 @@ CommonPOIUpgradeCtrl._RefreshContentUITextImgText = HL.Method(HL.Table) << funct
     else
         cell.typesetStateCtrl:SetState("IndentLevel1")
     end
+    cell.typesetStateCtrl:SetState(info.noDeco and "NoDeco" or "Deco")
+
     
     local cellCached = UIUtils.genCellCache(cell.contentCell)
     
@@ -830,6 +915,20 @@ end
 
 
 
+CommonPOIUpgradeCtrl._RefreshContentUISewageTreatInfo = HL.Method(HL.Table) << function(self, info)
+    local cell = CommonPOIUpgradeCtrl._GenCacheContent(self.view.contentParent.poiUpgradeSewageTreatLevelInfo.gameObject, self.view.contentParent.gameObject)
+    cell.nodeTypeCtrl:SetState(info.isImporter and "Import" or "Export")
+    cell.maxStateCtrl:SetState(info.isMaxLv and "Max" or "Normal")
+    cell.currLevelNumTxt.text = string.format("%d", info.currCount)
+    if not info.isMaxLv then
+        cell.upLevelNumTxt.text = string.format("%d", info.nextCount)
+    end
+end
+
+
+
+
+
 
 
 
@@ -854,9 +953,9 @@ end
 
 
 CommonPOIUpgradeCtrl._CloseSelf = HL.Method(HL.Opt(HL.Boolean)) << function(self, isFast)
+    Notify(MessageConst.HIDE_ITEM_TIPS)
     local isOpen, _ = PhaseManager:IsOpen(PhaseId.Dialog)
     if isOpen then
-        Notify(MessageConst.HIDE_ITEM_TIPS)
         AudioManager.PostEvent("Au_UI_Popup_DetailsPanel_Close")
         Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
     else

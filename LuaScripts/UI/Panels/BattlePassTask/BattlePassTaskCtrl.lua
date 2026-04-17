@@ -996,6 +996,10 @@ BattlePassTaskCtrl._RenderTaskCell = HL.Method(HL.Any, HL.Any) << function(self,
                 Notify(MessageConst.SHOW_TOAST, Language.LUA_SYSTEM_FORBIDDEN)
                 return
             end
+            if not Utils.canJumpToSystem(taskInfo.jumpId) then
+                Notify(MessageConst.SHOW_TOAST, Language.LUA_SYSTEM_LOCK)
+                return
+            end
             Utils.jumpToSystem(taskInfo.jumpId)
         end)
     end

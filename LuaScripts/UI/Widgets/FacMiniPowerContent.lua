@@ -43,6 +43,7 @@ local BUILDING_ICON_MAP = {
     [GEnums.FacBuildingType.BusFree] = "building_icon_bus_basaband",
     [GEnums.FacBuildingType.BusStart] = "building_icon_bus_sourcepillar",
     [GEnums.FacBuildingType.MachineCrafter] = "building_icon_xirong_machine",
+    [GEnums.FacBuildingType.Decorate] = "building_icon_decorate",
 }
 
 
@@ -404,12 +405,12 @@ FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function
         end
     end
 
-    local buildingCoundNodeActive = false
+    local buildingCountNodeActive = false
     local max = 0
     local cur = 0
     local delta = 0
     if data.type == GEnums.FacBuildingType.TravelPole and not inFacMain then
-        buildingCoundNodeActive = true
+        buildingCountNodeActive = true
         if bandwidth then
             max = bandwidth.travelPoleMax
             cur = bandwidth.travelPoleCurrent
@@ -418,7 +419,7 @@ FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function
             delta = buildingMode.deltaTravelPoleCount
         end
     elseif data.type == GEnums.FacBuildingType.Battle and not inFacMain then
-        buildingCoundNodeActive = true
+        buildingCountNodeActive = true
         if bandwidth then
             max = bandwidth.battleMax
             cur = bandwidth.battleCurrent
@@ -427,7 +428,7 @@ FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function
             delta = buildingMode.deltaBattleCount
         end
     elseif data.type == GEnums.FacBuildingType.Sign and not inFacMain then
-        buildingCoundNodeActive = true
+        buildingCountNodeActive = true
         max = Tables.factoryConst.signNodeCountLimit
         cur = FactoryUtils.getPlayerAllMarkerBuildingNodeInfo()
         if buildingMode then
@@ -437,7 +438,7 @@ FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function
         end
     
     elseif data.type == GEnums.FacBuildingType.BusFree then
-        buildingCoundNodeActive = true
+        buildingCountNodeActive = true
         local bus, source = GameInstance.remoteFactoryManager:GetFreeBusLimitsInfoInCoreZone()
         max = bus
         cur = GameInstance.remoteFactoryManager:GetBuildingCountInCurCoreZone(data.id)
@@ -447,7 +448,7 @@ FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function
             delta = 0
         end
     elseif data.type == GEnums.FacBuildingType.BusStart then
-        buildingCoundNodeActive = true
+        buildingCountNodeActive = true
         local bus, source = GameInstance.remoteFactoryManager:GetFreeBusLimitsInfoInCoreZone()
         max = source
         cur = GameInstance.remoteFactoryManager:GetBuildingCountInCurCoreZone(data.id)
@@ -456,10 +457,15 @@ FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function
         else
             delta = 0
         end
+    elseif data.type == GEnums.FacBuildingType.Decorate then
+        buildingCountNodeActive = true
+        max = GameInstance.remoteFactoryManager.currentChapterInfo.data.domainDecorateCount
+        cur = buildingMode.currentDecorateCount
+        delta = buildingMode.isMoving and 0 or 1
     elseif data.type == GEnums.FacBuildingType.MachineCrafter and data.id == XIRANITE_BUILDINGID then
         max = GameInstance.remoteFactoryManager:GetBuildingLimitsInChapter(data.id)
         if max > 0 then
-            buildingCoundNodeActive = true
+            buildingCountNodeActive = true
             cur = GameInstance.remoteFactoryManager:GetBuildingCountInCurMap(data.id)
             if buildingMode then
                 delta = buildingMode.isMoving and 0 or 1
@@ -472,10 +478,10 @@ FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function
     node.curBuildingCountTxt.text = newCur
     node.curBuildingCountTxt.color = newCur > max and self.view.config.COUNT_NOT_ENOUGH_COLOR or self.view.config.COUNT_ENOUGH_COLOR
     node.maxBuildingCountTxt.text = string.format("/%d", max)
-    if buildingCoundNodeActive then
+    if buildingCountNodeActive then
         self.view.buildingIcon:LoadSprite(UIConst.UI_SPRITE_MINI_POWER, BUILDING_ICON_MAP[data.type])
     end
-    node.buildingCountNode.gameObject:SetActive(buildingCoundNodeActive)
+    node.buildingCountNode.gameObject:SetActive(buildingCountNodeActive)
 
     if not inFacMain and data.bandwidth > 0 then
         node.bandwidthNode.gameObject:SetActive(true)

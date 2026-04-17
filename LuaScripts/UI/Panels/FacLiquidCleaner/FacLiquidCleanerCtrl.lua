@@ -403,25 +403,7 @@ end
 
 
 FacLiquidCleanerCtrl._RefreshChangeState = HL.Method(HL.Userdata) << function(self, state)
-    local stateText
-    if state == GEnums.FacBuildingState.NoPower then
-        stateText = Language.LUA_FAC_CRAFTER_STATE_NOPOWER_TIPS
-    elseif state == GEnums.FacBuildingState.NotInPowerNet then
-        stateText = Language.LUA_FAC_CRAFTER_STATE_NOTINPOWERNET_TIPS
-    elseif state == GEnums.FacBuildingState.Closed then
-        stateText = Language.LUA_FAC_CRAFTER_STATE_CLOSE_TIPS
-    end
-
-    self.view.facProgressNode.gameObject:SetActiveIfNecessary(stateText == nil)
-
-    if stateText == nil then
-        self.view.facStateNode.animationWrapper:PlayOutAnimation(function()
-            self.view.facStateNode.gameObject:SetActiveIfNecessary(false)
-        end)
-    else
-        self.view.facStateNode.gameObject:SetActiveIfNecessary(true)
-        self.view.facStateNode.stateTxt.text = stateText
-    end
+    FactoryUtils.refreshStateNodeByState(self.view.facStateNode, self.view.facProgressNode, state)
 end
 
 

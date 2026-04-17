@@ -31,6 +31,7 @@ local SHOW_TRSBTN_CHECK_DOMAIN_ID = "domain_1"
 
 
 
+
 FacHUBCtrl = HL.Class('FacHUBCtrl', uiCtrl.UICtrl)
 
 
@@ -44,6 +45,7 @@ FacHUBCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SYNC_PRODUCT_DATA] = 'OnSyncProductData',
     [MessageConst.ON_SYNC_BOOKMARK_ITEM] = 'OnSyncBookmarkItem',
     [MessageConst.ON_SYNC_POWER_DATA] = 'OnSyncPowerData',
+    [MessageConst.FAC_ON_DEL_TIME_LIMITED_FORMULA] = "_OnFormulaDelete",
 }
 
 
@@ -326,27 +328,37 @@ FacHUBCtrl._InitFacDataNode = HL.Method() << function(self)
     local scopeInfo = GameInstance.player.remoteFactory.core:GetCurrentScopeInfo()
     for _, itemId in pairs(itemIdList) do
         if GameInstance.player.inventory:IsItemFound(itemId) then
-            local itemData = Tables.itemTable[itemId]
-            local facSucc, facData = Tables.factoryItemTable:TryGetValue(itemId)
-            local showCount = false
-            if facSucc then
-                showCount = not facData.itemState
+            local showItem = false 
+            if FactoryUtils.isTimeLimitedItem(itemId) then
+                local craftInfoList, canCraft = FactoryUtils.getItemCrafts(itemId)
+                showItem = next(craftInfoList) ~= nil
+            else
+                showItem = true
             end
-            local isBookmark = scopeInfo:IsBookmarkItem(itemId)
-            local order = 1
-            if isBookmark then
-                order = 0
+
+            if showItem then
+                local itemData = Tables.itemTable[itemId]
+                local facSucc, facData = Tables.factoryItemTable:TryGetValue(itemId)
+                local showCount = false
+                if facSucc then
+                    showCount = not facData.itemState
+                end
+                local isBookmark = scopeInfo:IsBookmarkItem(itemId)
+                local order = 1
+                if isBookmark then
+                    order = 0
+                end
+                table.insert(materialList, {
+                    itemId = itemId,
+                    showCount = showCount,
+                    isBookmark = isBookmark,
+                    order = order,
+                    showingType = itemData.showingType:GetHashCode(),
+                    sortId1 = -itemData.sortId1,
+                    sortId2 = itemData.sortId2,
+                    rarity = itemData.rarity
+                })
             end
-            table.insert(materialList, {
-                itemId = itemId,
-                showCount = showCount,
-                isBookmark = isBookmark,
-                order = order,
-                showingType = itemData.showingType:GetHashCode(),
-                sortId1 = -itemData.sortId1,
-                sortId2 = itemData.sortId2,
-                rarity = itemData.rarity
-            })
         end
     end
     local keys = { "order", "sortId1", "sortId2", "id" }
@@ -463,6 +475,13 @@ end
 
 FacHUBCtrl._ReqOneData = HL.Method(HL.String) << function(self, itemId)
     GameInstance.player.facSpMachineSystem:ReqOneProductData(GEnums.FacStatisticRank_Productivity.Minute10, itemId)
+end
+
+
+
+
+FacHUBCtrl._OnFormulaDelete = HL.Method(HL.Any) << function(self, args)
+    self:_InitFacDataNode()
 end
 
 

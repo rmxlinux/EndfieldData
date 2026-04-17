@@ -41,6 +41,7 @@ local PANEL_ID = PanelId.Mail
 
 
 
+
 MailCtrl = HL.Class('MailCtrl', uiCtrl.UICtrl)
 
 local ASYNC_TEXTINFO_LINKINFO = 0.1
@@ -474,6 +475,7 @@ MailCtrl._ShowContent = HL.Method(HL.Number) << function(self, index)
     
     self.view.monthlyPassBtnNode.gameObject:SetActive(info.mail.subType == GEnums.MailSubType.MonthlyPassExpired)
     self:_RefreshContentGachaPoolNode(info.mail, analyzedContentInfo.specialParamTable)
+    self:_RefreshContentGachaWeaponPoolNode(info.mail, analyzedContentInfo.specialParamTable)
     
     if not info.isRead then
         GameInstance.player.mail:ReadMail(info.id)
@@ -535,6 +537,55 @@ MailCtrl._RefreshContentGachaPoolNode = HL.Method(CS.Beyond.Gameplay.MailSystem.
         local hasInfo, poolInfo = GameInstance.player.gacha.poolInfos:TryGetValue(targetPoolId)
         if hasInfo and poolInfo.isOpenValid then
             PhaseManager:OpenPhase(PhaseId.GachaPool, { poolId = targetPoolId })
+        else
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_GACHA_MAIL_JUMP_FAIL)
+        end
+    end)
+end
+
+
+
+
+
+MailCtrl._RefreshContentGachaWeaponPoolNode = HL.Method(CS.Beyond.Gameplay.MailSystem.Mail, HL.Any) << function(self, mail, specialParamTable)
+    local gachaPoolNode = self.view.gachaWeaponPoolNode
+    gachaPoolNode.jumpGachaPoolBtn.onClick:RemoveAllListeners()
+    if not specialParamTable then
+        gachaPoolNode.gameObject:SetActive(false)
+        return
+    end
+    local isGachaLTTicket = mail.subType == GEnums.MailSubType.GachaWeaponLTTicket
+    if not isGachaLTTicket then
+        gachaPoolNode.gameObject:SetActive(false)
+        return
+    end
+    
+    local info = specialParamTable[MailUtils.specialParamKey.GachaWeaponLTTicket][1]  
+    local ticketId = info.itemId
+    local hasCfg, cfg = Tables.gachaWeaponLtTicket2PoolTable:TryGetValue(ticketId)
+    if not hasCfg then
+        logger.error(string.format("邮件类型为【%s】但卡池表中找不到itemId为【%s】的限时抽卡券", GEnums.MailSubType.GachaWeaponLTTicket, ticketId))
+        gachaPoolNode.gameObject:SetActive(false)
+        return
+    end
+    
+    gachaPoolNode.gameObject:SetActive(true)
+    gachaPoolNode.itemIcon:InitItemIcon(ticketId)
+    local targetPoolId
+    local targetJumpId
+    for i, singlePoolCfg in pairs(cfg.poolDataList) do
+        local hasInfo, poolInfo = GameInstance.player.gacha.poolInfos:TryGetValue(singlePoolCfg.gachaPoolId)
+        if hasInfo and poolInfo.isOpenValid then
+            targetPoolId = singlePoolCfg.gachaPoolId
+            targetJumpId = singlePoolCfg.mailJumpId
+            break
+        end
+    end
+    
+    gachaPoolNode.jumpGachaPoolBtn.onClick:AddListener(function()
+        local hasInfo, poolInfo = GameInstance.player.gacha.poolInfos:TryGetValue(targetPoolId)
+        if hasInfo and poolInfo.isOpenValid then
+            Utils.jumpToSystem(targetJumpId)
         else
             Notify(MessageConst.SHOW_TOAST, Language.LUA_GACHA_MAIL_JUMP_FAIL)
         end

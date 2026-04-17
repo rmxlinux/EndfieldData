@@ -176,6 +176,7 @@ local STANDARD_SCREEN_HEIGHT = CS.Beyond.UI.UIConst.STANDARD_VERTICAL_RESOLUTION
 
 
 
+
 MapCtrl = HL.Class('MapCtrl', uiCtrl.UICtrl)
 
 local COLLECTIONS_CONFIG = {
@@ -367,6 +368,9 @@ MapCtrl.m_waitAutoSwitchTierId = HL.Field(HL.Number) << -1
 
 
 MapCtrl.m_markClickLockThread = HL.Field(HL.Thread)
+
+
+MapCtrl.m_isResettingToTargetLevel = HL.Field(HL.Boolean) << false
 
 
 MapCtrl.s_messages = HL.StaticField(HL.Table) << {
@@ -656,6 +660,10 @@ end
 
 
 MapCtrl._OnLevelSwitchBtnClicked = HL.Method(HL.Any) << function(self, args)
+    if self.m_isResettingToTargetLevel then
+        return
+    end
+
     local targetLevelId = args
     if type(args) == "table" then
         targetLevelId = unpack(args)
@@ -857,7 +865,7 @@ MapCtrl._RefreshLevelMapContent = HL.Method() << function(self)
     self.m_currLevelId = currLevelId
     self:_InitMapRemindTip()
 
-    local success, levelConfig = DataManager.levelConfigTable:TryGetData(self.m_currLevelId)
+    local success, levelConfig = Utils.getLevelConfig(self.m_currLevelId)
     if success then
         self.m_currMapId = levelConfig.mapIdStr
     end
@@ -1305,7 +1313,7 @@ MapCtrl._InitCustomMark = HL.Method() << function(self)
             tempPos = rectPos
         end
         local worldPos = self.view.levelMapController.view.levelMapLoader:GetWorldPositionByRectPosition(tempPos)
-        success, levelConfig = DataManager.levelConfigTable:TryGetData(self.m_currLevelId)
+        success, levelConfig = Utils.getLevelConfig(self.m_currLevelId)
         if not success then
             return
         end
@@ -2662,6 +2670,7 @@ MapCtrl.ResetMapStateToTargetLevel = HL.Method(HL.Table) << function(self, args)
 
     self:_ToggleControllerMoveAndZoom(false)
 
+    self.m_isResettingToTargetLevel = true
     self:_PlayMapResetAnimation(false, function()
         self.view.fullScreenMask.gameObject:SetActive(false)
         self.view.levelMapController:ResetSwitchModeToTargetLevelState(levelId)
@@ -2679,6 +2688,7 @@ MapCtrl.ResetMapStateToTargetLevel = HL.Method(HL.Table) << function(self, args)
         self:_PlayMapResetAnimation(true)
         self:_PlayAndSetMainNodeVisibleState(true, function(isIn)
             self:_StopCheckSwitchTierOnFocus()
+            self.m_isResettingToTargetLevel = false
         end)
 
         self:_ToggleControllerMoveAndZoom(not needShowDetail)
@@ -2758,7 +2768,7 @@ end
 MapCtrl._ControllerResetToPlayer = HL.Method() << function(self)
     local playerNode = self.view.levelMapController.view.levelMapLoader.view.element.player
     UIUtils.PlayAnimationAndToggleActive(self.view.controllerFocusAnim, false, function()
-        if playerNode.gameObject.activeSelf then
+        if GameWorld.worldInfo.curLevelId == self.m_currLevelId then
             self.view.bigRectHelper:FocusNode(playerNode.rectTransform, true, function()
                 UIUtils.PlayAnimationAndToggleActive(self.view.controllerFocusAnim, true)
                 self.view.focusArrowNode.position = playerNode.rectTransform.position

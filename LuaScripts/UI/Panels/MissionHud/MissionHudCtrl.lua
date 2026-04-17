@@ -105,6 +105,12 @@ local LEFT_HASH_OBJ_BTN = 3
 
 
 
+
+
+
+
+
+
 MissionHudCtrl = HL.Class('MissionHudCtrl', uiCtrl.UICtrl)
 
 
@@ -120,6 +126,7 @@ MissionHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_MISSION_STATE_CHANGE] = '_OnMissionStateChange',
     [MessageConst.ON_HUD_ORDER_ENQUEUE] = 'OnMissionHudOrderEnqueue',
     [MessageConst.ON_TRACKING_SNS] = '_OnTrackingSns',
+    [MessageConst.CHANGE_SKIP_BOSS_BATTLE_BUTTON_STATE] = '_ChangeSkipBossBattleButtonState',
     [MessageConst.ON_TOGGLE_FAC_TOP_VIEW] = '_OnFacTopViewChange',
     [MessageConst.ON_TRACKING_TO_UI] = '_OnTrackingToUI',
     [MessageConst.ON_MISSION_HUD_EXCLUSIVE_MODE_CHANGE] = "_OnExclusiveModeChange",
@@ -167,6 +174,9 @@ MissionHudCtrl.m_canFold = HL.Field(HL.Boolean) << false
 MissionHudCtrl.m_isFold = HL.Field(HL.Boolean) << true
 
 
+MissionHudCtrl.m_skipBossBattleButtonVisible = HL.StaticField(HL.Boolean) << false
+
+
 MissionHudCtrl.m_scrollState = HL.Field(HL.Number) << -1
 
 
@@ -180,6 +190,9 @@ MissionHudCtrl.m_tween = HL.Field(HL.Any)
 
 
 MissionHudCtrl.m_isOrderPlaying = HL.Field(HL.Boolean) << false
+
+
+MissionHudCtrl.m_customLevelScriptBtnClearScreenKey = HL.Field(HL.Number) << -1
 
 
 MissionHudCtrl.m_switcherCoroutine = HL.Field(HL.Thread)
@@ -273,7 +286,7 @@ MissionHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     self:_ModifyBtnStateByFacTopView()
-
+    self:_HandleSkipBossBattleButton(MissionHudCtrl.m_skipBossBattleButtonVisible)
     local lastGetDistanceTime = 0
     self.m_updateDistanceTimerHandler = LuaUpdate:Add("Tick", function()
         if not self:IsShow() then
@@ -514,7 +527,6 @@ MissionHudCtrl._StartSwitcherCoroutine = HL.Method() << function(self)
                             logger.info(ELogChannel.Mission, string.format("[MissionHud] 移除自己阻塞器，MissionHud恢复工作"))
                             local missionHudOpen, missionHud = UIManager:IsOpen(PanelId.MissionHud)
                             if (not missionHudOpen) then
-                                Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "MissionHudResumeInfo")
                                 return
                             end
                             missionHud.m_blockedByMainHudActionQueueSys = false
@@ -1516,11 +1528,63 @@ MissionHudCtrl._UpdateObjectiveCellProgress = HL.Method(HL.Any, HL.Any) << funct
         objectiveCell.missionAnimState ~= MissionAnimType.New then
 
         objectiveCell.progress.gameObject:SetActive(true)
-        objectiveCell.progress.text = string.format("%d/%d", objectiveShowData.progress, objectiveShowData.progressToCompare)
+        local left = self:_ProgNumToText(objectiveShowData.progress)
+        local right = self:_ProgNumToText(objectiveShowData.progressToCompare)
+        objectiveCell.progress.text = string.format("%s/%s", left, right)
     else
         objectiveCell.progress.gameObject:SetActive(false)
     end
+end
 
+
+
+
+MissionHudCtrl._ProgNumToText = HL.Method(HL.Any).Return(HL.Any) << function(self, num)
+    if num < 10000 then
+        return string.format("%d", num)
+    end
+    local curLang = CS.Beyond.I18n.I18nUtils.curEnvLang
+    local isChineseStyleLang = curLang == GEnums.EnvLang.CN
+    if isChineseStyleLang then
+        local wan = num / 10000 
+        if wan < 1 then
+            return string.format("%d", num)
+        end
+        if wan < 10000 then
+            return self:_CombineProgToText(wan, Language.LUA_NUM_UNIT_WAN)
+        end
+        local yi = wan / 10000 
+        return self:_CombineProgToText(yi, Language.LUA_NUM_UNIT_YI)
+    else
+        local m = num / 1000 / 1000
+        local k = num / 1000
+        if m >= 1 then
+            return self:_CombineProgToText(m, Language.LUA_NUM_UNIT_MILLION)
+        elseif k >= 1 then
+            return self:_CombineProgToText(k, Language.LUA_NUM_UNIT_THOUSAND)
+        else
+            return string.format("%d", num)
+        end
+    end
+end
+
+
+
+
+
+MissionHudCtrl._CombineProgToText = HL.Method(HL.Any, HL.Any).Return(HL.Any) << function(self, num, text)
+    local carryFunc = function(x)
+        
+        return math.floor(x + 1e-10)
+    end
+    
+    if num < 100 then
+        if carryFunc(num * 10) % 10 > 0 then
+            return string.format("%.1f%s", carryFunc(num * 10) / 10, text)
+        end
+    end
+    
+    return string.format("%d%s", carryFunc(num), text)
 end
 
 
@@ -1645,6 +1709,63 @@ end
 MissionHudCtrl._OnFacTopViewChange = HL.Method(HL.Boolean) << function(self, useless)
     self:_ModifyBtnStateByFacTopView()
     self:_RefreshCloseBtn()
+end
+
+
+
+
+MissionHudCtrl._ChangeSkipBossBattleButtonState = HL.Method(HL.Table) << function(self, args)
+    local show = unpack(args)
+    MissionHudCtrl.m_skipBossBattleButtonVisible = show
+    self:_HandleSkipBossBattleButton(show)
+end
+
+
+
+
+MissionHudCtrl._HandleSkipBossBattleButton = HL.Method(HL.Boolean) << function(self, show)
+    if show then
+        self.view.customLevelScriptNode.gameObject:SetActive(true)
+        self.view.customLevelScriptNodeAnimationWrapper:PlayInAnimation()
+        self.view.customLevelScriptBtn.onClick:RemoveAllListeners()
+        self.view.customLevelScriptBtn.onClick:AddListener(function()
+            self.m_customLevelScriptBtnClearScreenKey = UIManager:ClearScreen()
+            Notify(MessageConst.SHOW_POP_UP, {
+                content = Language.LUA_SKIP_BOSS_BATTLE_POPUP_TITLE,
+                subContent = "",
+                onConfirm = function()
+                    if self.m_customLevelScriptBtnClearScreenKey ~= -1 then
+                        UIManager:RecoverScreen(self.m_customLevelScriptBtnClearScreenKey)
+                        self.m_customLevelScriptBtnClearScreenKey = -1
+                    end
+
+                    GameWorld.eventManager:RaiseLevelEvent(GameLevelEvent.ON_SKIP_BATTLE_POPUP_CONFIRM)
+                    local battleId = GameWorld.battle.inFightBattleId
+                    local curUtcTms = DateTimeUtils.GetCurrentTimestampByMilliseconds()
+                    local disTime = 0
+                    if curUtcTms >= battleId then
+                        disTime = curUtcTms - battleId
+                    end
+                    EventLogManagerInst:GameEvent_SkipBossBattle(battleId, disTime)
+                end,
+                onCancel = function()
+                    if self.m_customLevelScriptBtnClearScreenKey ~= -1 then
+                        UIManager:RecoverScreen(self.m_customLevelScriptBtnClearScreenKey)
+                        self.m_customLevelScriptBtnClearScreenKey = -1
+                    end
+                end,
+                confirmText = Language.LUA_SKIP_BOSS_BATTLE_POPUP_CONFIRM_TEXT,
+                cancelText = Language.LUA_SKIP_BOSS_BATTLE_POPUP_CANCEL_TEXT,
+                freezeWorld = true,
+                pauseGame = true,
+            })
+        end)
+    else
+        self.view.customLevelScriptBtn.onClick:RemoveAllListeners()
+        self.view.customLevelScriptNodeAnimationWrapper:PlayOutAnimation(function()
+            self.view.customLevelScriptNode.gameObject:SetActive(false)
+        end)
+    end
 end
 
 

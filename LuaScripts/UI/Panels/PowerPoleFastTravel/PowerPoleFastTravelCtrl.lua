@@ -60,8 +60,6 @@ local ConflictName = "PowerPoleFastTravelCtrl"
 
 
 
-
-
 PowerPoleFastTravelCtrl = HL.Class('PowerPoleFastTravelCtrl', uiCtrl.UICtrl)
 
 
@@ -86,7 +84,7 @@ PowerPoleFastTravelCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-PowerPoleFastTravelCtrl.m_targetLogicIdList = HL.Field(HL.Userdata)
+PowerPoleFastTravelCtrl.m_linkInfoList = HL.Field(HL.Userdata)
 
 
 PowerPoleFastTravelCtrl.m_trackers = HL.Field(HL.Table)
@@ -108,9 +106,6 @@ PowerPoleFastTravelCtrl.m_lateTickKey = HL.Field(HL.Number) << -1
 
 
 PowerPoleFastTravelCtrl.m_isMoving = HL.Field(HL.Boolean) << false
-
-
-PowerPoleFastTravelCtrl.m_beforeMiniMapOpen = HL.Field(HL.Boolean) << false
 
 
 PowerPoleFastTravelCtrl.m_nextDestinationLogicId = HL.Field(HL.Any) << 0
@@ -143,9 +138,6 @@ PowerPoleFastTravelCtrl.m_onClickLeave = HL.Field(HL.Boolean) << false
 PowerPoleFastTravelCtrl.m_args = HL.Field(HL.Any)
 
 
-PowerPoleFastTravelCtrl.m_needPlayAudio = HL.Field(HL.Boolean) << true
-
-
 PowerPoleFastTravelCtrl.m_onClickScreen = HL.Field(HL.Function)
 
 
@@ -153,10 +145,11 @@ PowerPoleFastTravelCtrl.m_onClickScreen = HL.Field(HL.Function)
 
 
 PowerPoleFastTravelCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_needPlayAudio = not GameWorld.gameMechManager.travelPoleBrain:CanOpenMiniMap()
     self.m_args = arg
-    
+    self.view.nodeConfirm.gameObject:SetActive(false)
+    self:_SetButtonState(self.view.buttonConfirm, false)
     self.view.buttonConfirm.onClick:AddListener(function()
+        AudioAdapter.PostEvent("Au_UI_Button_PoleForwardDirectly")
         self:_OnConfirmButton()
     end)
 
@@ -179,6 +172,7 @@ PowerPoleFastTravelCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     self.view.buttonQte.onClick:AddListener(function()
+        AudioAdapter.PostEvent("Au_UI_Button_PoleForwardDirectly")
         self:_OnButtonQte()
     end)
 
@@ -190,20 +184,26 @@ PowerPoleFastTravelCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.view.qteAnimationWrapper:Play("powerpolefasttravel_qte_release")
     end)
 
-    self.view.tracker.gameObject:SetActive(false)
+    self.view.hintBar.gameObject:SetActive(false)
     self.view.qteNode.gameObject:SetActive(false)
+    self.view.nodeSetDefaultNext.gameObject:SetActive(false)
+    self.view.nodeLeave.gameObject:SetActive(false)
+    self:_SetButtonState(self.view.buttonLeave, false)
 
     self.m_enterFinished = false
     self.m_trackers = {}
     self.m_trackersCache = {}
-    self.m_targetLogicIdList = nil
+    self.m_linkInfoList = nil
 
+    self.view.tracker.gameObject:SetActive(false)
     self.m_lateTickKey = LuaUpdate:Add("LateTick", function(deltaTime)
         self:_UpdateTrackers()
     end)
 
     
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId},{"fac_fast_travel_cam_orbit"})
+
+    self:_InitFastTravelPanel(self.m_args)
 
     if DeviceInfo.isPC then
         self.m_onClickScreen = function(eventData)
@@ -226,20 +226,6 @@ end
 
 
 PowerPoleFastTravelCtrl.OnShow = HL.Override() << function(self)
-    local isOnTravel = GameWorld.gameMechManager.travelPoleBrain:CanOpenMiniMap()
-    
-    self.m_enterFinished = isOnTravel
-    self.view.nodeConfirm.gameObject:SetActive(isOnTravel)
-    self:_SetButtonState(self.view.buttonConfirm, isOnTravel)
-
-    self.view.hintBar.gameObject:SetActive(isOnTravel)
-    self.view.nodeSetDefaultNext.gameObject:SetActive(false)
-    self.m_allowLeave = GameWorld.gameMechManager.travelPoleBrain:GetTravelPoleAllowLeave(self.m_currentLogicId)
-    self.view.nodeLeave.gameObject:SetActive(isOnTravel and self.m_allowLeave)
-    self:_SetButtonState(self.view.buttonLeave, isOnTravel and self.m_allowLeave)
-
-    self:_InitFastTravelPanel(self.m_args)
-    self.m_needPlayAudio = false
 end
 
 
@@ -303,12 +289,9 @@ PowerPoleFastTravelCtrl.OnReach = HL.Method(HL.Any) << function(self, args)
     self.m_allowLeave = GameWorld.gameMechManager.travelPoleBrain:GetTravelPoleAllowLeave(self.m_currentLogicId)
     self.view.nodeLeave.gameObject:SetActive(self.m_allowLeave)
 
-    self.m_targetLogicIdList = GameWorld.gameMechManager.travelPoleBrain:GetLinkedTravelPoleInfoList(self.m_currentLogicId)
+    self.m_linkInfoList = GameWorld.gameMechManager.travelPoleBrain:GetLinkedTravelPoleInfoList(self.m_currentLogicId)
 
     self:_RefreshQteToggled(qteTriggered)
-    if not self.m_qteToggled then
-        UIManager:ShowWithKey(PanelId.MiniMap, PowerPoleFastTravelKey)
-    end
     GameInstance.player.systemActionConflictManager:OnSystemActionEnd(ConflictName)
 end
 
@@ -322,12 +305,15 @@ PowerPoleFastTravelCtrl._RefreshQteToggled = HL.Method(HL.Boolean) << function(s
     self.m_confirmEnabled = confirmEnabled
     self.view.hintBar.gameObject:SetActive(confirmEnabled)
     self.view.nodeConfirm.gameObject:SetActive(confirmEnabled)
+    if not self.m_qteToggled then
+        UIManager:ShowWithKey(PanelId.MiniMap, PowerPoleFastTravelKey)
+    end
 end
 
 
 
 PowerPoleFastTravelCtrl.OnReachRefresh = HL.Method() << function(self)
-    self.m_targetLogicIdList = GameWorld.gameMechManager.travelPoleBrain:GetLinkedTravelPoleInfoList(self.m_currentLogicId)
+    self.m_linkInfoList = GameWorld.gameMechManager.travelPoleBrain:GetLinkedTravelPoleInfoList(self.m_currentLogicId)
 end
 
 
@@ -343,6 +329,7 @@ end
 
 PowerPoleFastTravelCtrl.ShowQte = HL.Method() << function(self)
     self.view.qteNode.gameObject:SetActive(true)
+    AudioAdapter.PostEvent("Au_UI_Popup_PoleButtonAppear")
     UIUtils.PlayAnimationAndToggleActive(self.view.qteAnimationWrapper, true)
     self.m_isQteClickAnimPlaying = false
     self.m_waitHideQte = false
@@ -354,6 +341,7 @@ PowerPoleFastTravelCtrl.HideQte = HL.Method() << function(self)
     if self.m_isQteClickAnimPlaying then
         self.m_waitHideQte = true
     else
+        AudioAdapter.PostEvent("Au_UI_Popup_PoleButtonDisappear")
         UIUtils.PlayAnimationAndToggleActive(self.view.qteAnimationWrapper, false)
     end
 end
@@ -385,18 +373,16 @@ PowerPoleFastTravelCtrl._InitFastTravelPanel = HL.Method(HL.Table) << function(s
     self.m_currentIsUpgraded = GameWorld.gameMechManager.travelPoleBrain:CheckTravelPoleIsUpgradedByLid(self.m_currentLogicId)
 
     
-    if self.m_needPlayAudio then
-        AudioAdapter.PostEvent("au_ui_travel_pole_transfer")
-    end
+    AudioAdapter.PostEvent("au_ui_travel_pole_transfer")
 
     
-    self.m_targetLogicIdList = GameWorld.gameMechManager.travelPoleBrain:GetLinkedTravelPoleInfoList(self.m_currentLogicId)
+    self.m_linkInfoList = GameWorld.gameMechManager.travelPoleBrain:GetLinkedTravelPoleInfoList(self.m_currentLogicId)
 end
 
 
 
 PowerPoleFastTravelCtrl._UpdateTrackers = HL.Method() << function(self)
-    if self.m_targetLogicIdList == nil then
+    if self.m_linkInfoList == nil then
         return
     end
 
@@ -416,8 +402,8 @@ PowerPoleFastTravelCtrl._UpdateTrackers = HL.Method() << function(self)
     local mainCharacterPos = GameWorld.gameMechManager.travelPoleBrain.handRailPos
     local mainCharacterForwardVector = GameWorld.gameMechManager.travelPoleBrain.handRailForwardVector
 
-    for _, linkInfo in pairs(self.m_targetLogicIdList) do
-        if linkInfo.entity.isValid then
+    for _, linkInfo in pairs(self.m_linkInfoList) do
+        if linkInfo.targetEntity.isValid then
             local screenPos, isInside = UIUtils.objectPosToUI(linkInfo.targetPos, self.uiCamera)
             table.insert(targetScrPosDict, screenPos)
             local targetVector = linkInfo.targetPos - mainCharacterPos
@@ -426,6 +412,7 @@ PowerPoleFastTravelCtrl._UpdateTrackers = HL.Method() << function(self)
             table.insert(targetIconStatusDict, GameWorld.gameMechManager.travelPoleBrain:GetTravelPoleIcon(self.m_currentLogicId, linkInfo.logicId))
             table.insert(targetStatusDict, GameWorld.gameMechManager.travelPoleBrain:GetTravelPoleStatus(self.m_currentLogicId, linkInfo.logicId))
             table.insert(targetIsHighlightedDict, false)
+            linkInfo:RefreshLine()
             if linkInfo.line == nil or linkInfo.line.markInvalid then
                 table.insert(targetLineDict, 0)
             else
@@ -467,12 +454,20 @@ PowerPoleFastTravelCtrl._UpdateTrackers = HL.Method() << function(self)
     local newFocus = false
     if self.m_isMoving then
         self.view.nodeConfirm.gameObject:SetActive(false)
+        local lastIsEnabled = self:_GetButtonState(self.view.buttonConfirm)
         self:_SetButtonState(self.view.buttonConfirm, false)
+        if lastIsEnabled then
+            AudioAdapter.PostEvent("Au_UI_Popup_PoleButtonDisappear")
+        end
         self.m_currentAimingLogicId = 0
     else
         if self.m_enterFinished then
             self.view.nodeConfirm.gameObject:SetActive(self.m_confirmEnabled)
+            local lastIsDisabled = not self:_GetButtonState(self.view.buttonConfirm)
             self:_SetButtonState(self.view.buttonConfirm, true)
+            if lastIsDisabled then
+                AudioAdapter.PostEvent("Au_UI_Popup_PoleButtonAppear")
+            end
         end
         if nearestIndex > 0 and nearestDistance < 600000 then
             targetIsHighlightedDict[nearestIndex] = true
@@ -601,21 +596,6 @@ end
 
 
 
-PowerPoleFastTravelCtrl._GetFreshLinkInfoByLogicId = HL.Method(HL.Any).Return(HL.Any) << function(self, nextLogicId)
-    if self.m_targetLogicIdList == nil then
-        return nil
-    end
-    for _, linkInfo in pairs(self.m_targetLogicIdList) do
-        if linkInfo.entity.isValid and linkInfo.logicId == nextLogicId then
-            return linkInfo
-        end
-    end
-    return nil
-end
-
-
-
-
 PowerPoleFastTravelCtrl._BeginTravel = HL.Method(HL.Any) << function(self, nextLogicId)
     if not GameWorld.gameMechManager.travelPoleBrain.allowBeginTravel then
         return
@@ -626,12 +606,6 @@ PowerPoleFastTravelCtrl._BeginTravel = HL.Method(HL.Any) << function(self, nextL
             self:Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_FAST_TRAVEL_NO_TARGET_TOAST)
         end
         return
-    end
-
-    self.m_targetLogicIdList = GameWorld.gameMechManager.travelPoleBrain:GetLinkedTravelPoleInfoList(self.m_currentLogicId)
-    local freshLinkInfo = self:_GetFreshLinkInfoByLogicId(nextLogicId)
-    if freshLinkInfo ~= nil and freshLinkInfo.line ~= nil and not freshLinkInfo.line.markInvalid then
-        freshLinkInfo.line:DoBlockTest()
     end
 
     if not GameWorld.gameMechManager.travelPoleBrain:BeginTravelToStuckTest(self.m_currentLogicId, nextLogicId) then
@@ -652,11 +626,11 @@ PowerPoleFastTravelCtrl._BeginTravel = HL.Method(HL.Any) << function(self, nextL
     end
 
     if nextLogicId ~= 0 then
-        for iCs, linkInfo in pairs(self.m_targetLogicIdList) do
+        for iCs, linkInfo in pairs(self.m_linkInfoList) do
             local i = iCs + 1
             local item = self.m_trackers[i]
             if item ~= nil then
-                if linkInfo.entity.isValid then
+                if linkInfo.targetEntity.isValid then
                     if linkInfo.logicId ~= nextLogicId then
                         item.tracker:UpdateIsHighlighted(false)
                         if linkInfo.line ~= nil and not linkInfo.line.markInvalid then
@@ -676,10 +650,9 @@ PowerPoleFastTravelCtrl._BeginTravel = HL.Method(HL.Any) << function(self, nextL
         self.view.hintBar.gameObject:SetActive(false)
 
         GameWorld.gameMechManager.travelPoleBrain:BeginTravelTo(nextLogicId)
-        self.m_targetLogicIdList = GameWorld.gameMechManager.travelPoleBrain:GetLinkedTravelPoleInfoList(self.m_currentLogicId)
+        self.m_linkInfoList = GameWorld.gameMechManager.travelPoleBrain:GetLinkedTravelPoleInfoList(self.m_currentLogicId)
         self.m_nextDestinationLogicId = nextLogicId
         self.m_isMoving = true
-        self.m_beforeMiniMapOpen = UIManager:IsShow(PanelId.MiniMap)
         UIManager:HideWithKey(PanelId.MiniMap, PowerPoleFastTravelKey)
         self.m_qteToggled = false
 
@@ -715,10 +688,12 @@ PowerPoleFastTravelCtrl._OnButtonQte = HL.Method() << function(self)
 
     GameWorld.gameMechManager.travelPoleBrain:TriggerQte(self.m_nextDestinationLogicId)
     self.m_isQteClickAnimPlaying = true
+    AudioAdapter.PostEvent("Au_UI_Popup_PoleButtonAppear")
     self.view.qteAnimationWrapper:PlayWithTween("polefasttravelbuttonqte_in", function()
         self.m_isQteClickAnimPlaying = false
         if self.m_waitHideQte then
             UIUtils.PlayAnimationAndToggleActive(self.view.qteAnimationWrapper, false)
+            AudioAdapter.PostEvent("Au_UI_Popup_PoleButtonDisappear")
             self.m_waitHideQte = false
         end
     end)
@@ -734,9 +709,9 @@ PowerPoleFastTravelCtrl._OnButtonLeave = HL.Method() << function(self)
         return
     end
 
-    if self.m_currentAimingLogicId ~= 0 and self.m_targetLogicIdList ~= nil then
-        for iCs, linkInfo in pairs(self.m_targetLogicIdList) do
-            if linkInfo.entity.isValid then
+    if self.m_currentAimingLogicId ~= 0 and self.m_linkInfoList ~= nil then
+        for iCs, linkInfo in pairs(self.m_linkInfoList) do
+            if linkInfo.targetEntity.isValid then
                 local item = self.m_trackers[iCs + 1]
                 item.tracker:UpdateIsHighlighted(false)
                 if linkInfo.line ~= nil and not linkInfo.line.markInvalid then
@@ -771,12 +746,12 @@ PowerPoleFastTravelCtrl.TriggerClosePanel = HL.Method() << function(self)
     GameInstance.player.systemActionConflictManager:OnSystemActionEnd(ConflictName)
 
     if PhaseManager:IsOpen(PhaseId.PowerPoleFastTravel) and PhaseManager:GetTopPhaseId() == PhaseId.PowerPoleFastTravel then
+        GameWorld.gameMechManager.travelPoleBrain:OnClosePanelNormal()
         PhaseManager:PopPhase(PhaseId.PowerPoleFastTravel, function()
             GameWorld.gameMechManager.travelPoleBrain:RemoveRadioTag()
         end)
     end
 end
-
 
 
 

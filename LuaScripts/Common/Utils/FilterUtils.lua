@@ -79,7 +79,6 @@ FilterUtils.EQUIP_PART_FILTER_TYPE = {
 
 
 
-
 function FilterUtils.processItemDefault(itemId, instId)
     local _, itemData = Tables.itemTable:TryGetValue(itemId)
     if not itemData then
@@ -261,17 +260,6 @@ function FilterUtils.processEquipProduce(equipFormulaData)
     end
     infoDefault.isUnlocked = FactoryUtils.isEquipFormulaUnlocked(equipFormulaData.formulaId)
     infoDefault.equipFormulaData = equipFormulaData
-    local isCostEnough = true
-    for i = 0, equipFormulaData.costItemId.Count - 1 do
-        local itemId = equipFormulaData.costItemId[i]
-        if not string.isEmpty(itemId) and
-            i < equipFormulaData.costItemNum.Count and
-            equipFormulaData.costItemNum[i] > Utils.getItemCount(itemId, true, true) then
-            isCostEnough = false
-            break
-        end
-    end
-    infoDefault.isCostEnough = isCostEnough
     return infoDefault
 end
 
@@ -286,7 +274,7 @@ function FilterUtils.processEquipEnhance(templateId, instId)
     end
     infoDefault.equipInstData = CharInfoUtils.getEquipByInstId(instId)
     infoDefault.equipEnhanceLevel = infoDefault.equipInstData:IsMaxEnhanced() and -1 or infoDefault.equipInstData:GetEnhanceLevel()
-    infoDefault.equipEnhanceTotalFailedTimes = FilterUtils._getEquipTotalFailedTimes(infoDefault.equipInstData)
+    infoDefault.equipEnhanceTotalFailedTimes = infoDefault.equipInstData:GetTotalFailedTimes()
     return infoDefault
 end
 
@@ -303,26 +291,9 @@ function FilterUtils.processEquipEnhanceMaterial(templateId, instId, extraArgs)
     infoDefault.equipInstData = CharInfoUtils.getEquipByInstId(instId)
     infoDefault.equipEnhanceSuccessProb = EquipTechUtils.getEquipEnhanceSuccessProbability(infoDefault.equipInstData, extraArgs.attrShowInfo)
     infoDefault.equipEnhanceLevelReverse = -infoDefault.equipInstData:GetEnhanceLevel()
-    infoDefault.equipEnhanceTotalFailedTimesReverse = -FilterUtils._getEquipTotalFailedTimes(infoDefault.equipInstData)
+    infoDefault.equipEnhanceTotalFailedTimesReverse = -infoDefault.equipInstData:GetTotalFailedTimes()
     infoDefault.equippedCharInstIdReverse = -infoDefault.equippedCharInstId
     return infoDefault
-end
-
-function FilterUtils._getEquipTotalFailedTimes(equipInstData)
-    local totalFailedTimes = 0
-    local enhanceFailedTimes = equipInstData.enhanceFailedTimes
-    if enhanceFailedTimes == nil then
-        return 0
-    end
-    for attrIndex, levelFailedTimes in pairs(enhanceFailedTimes) do
-        if not equipInstData:IsAttrMaxEnhanced(attrIndex) then
-            local found, failedTimes = levelFailedTimes:TryGetValue(equipInstData:GetAttrEnhanceLevel(attrIndex) + 1)
-            if found then
-                totalFailedTimes = totalFailedTimes + failedTimes
-            end
-        end
-    end
-    return totalFailedTimes
 end
 
 
@@ -644,12 +615,6 @@ function FilterUtils.generateConfig_DEPOT_GEM_DESTROY()
             tags = {
                 {
                     groupType = "Rarity",
-                    name = Tables.itemTable["item_gem_rarity_1"].name,
-                    funcName = "_filterByRarity",
-                    param = 1,
-                },
-                {
-                    groupType = "Rarity",
                     name = Tables.itemTable["item_gem_rarity_2"].name,
                     funcName = "_filterByRarity",
                     param = 2,
@@ -792,7 +757,7 @@ end
 function FilterUtils._generateEquipMainAttrFilterGroup()
     return FilterUtils._generateAttrTypeFilterGroup(
         "EquipMainAttrType",
-        FilterUtils.getEquipMainAttrFilterList())
+        FilterUtils.getEquipMainAttrFilterList(), nil, CALC_TYPE.AND)
 end
 
 
@@ -813,7 +778,7 @@ end
 
 
 
-function FilterUtils._generateAttrTypeFilterGroup(groupType, attrFilterList, tagGroupTitle)
+function FilterUtils._generateAttrTypeFilterGroup(groupType, attrFilterList, tagGroupTitle, calcType)
     
     local tags = {}
     for _, attrFilterData in pairs(attrFilterList) do
@@ -830,6 +795,7 @@ function FilterUtils._generateAttrTypeFilterGroup(groupType, attrFilterList, tag
                 name = attrShowCfg.name,
                 funcName = "_filterByAttrType",
                 param = attrFilterData,
+                calcType = calcType
             }
             table.insert(tags, tag)
         end
@@ -1110,14 +1076,6 @@ function FilterUtils._filterByGemEnableOnWeapon(info, param)
 end
 
 
-
-
-
-
-
-function FilterUtils._filterByEquipProduceSufficiency(info, sufficient)
-    return info.isUnlocked and info.isCostEnough == sufficient
-end
 
 
 

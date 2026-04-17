@@ -109,6 +109,10 @@ local ShowStatus = {
 
 
 
+
+
+
+
 ManualCraftCtrl = HL.Class('ManualCraftCtrl', uiCtrl.UICtrl)
 
 
@@ -314,13 +318,21 @@ ManualCraftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     self.view.itemContentSelectableNaviGroup.onIsFocusedChange:AddListener(function(isFocus)
-        self.view.rightBottomDecorationIcon.gameObject:SetActive(isFocus)
-        self.view.promptBox.gameObject:SetActive(not isFocus)
+        self:_useItemNodesNaviGroupShowInfo(isFocus)
     end)
 
     self:Notify(MessageConst.ON_DISABLE_COMMON_TOAST)
 end
 
+
+
+
+
+ManualCraftCtrl._useItemNodesNaviGroupShowInfo = HL.Method(HL.Boolean) << function(self, isFocus)
+    self.view.rightBottomDecorationIcon.gameObject:SetActive(isFocus)
+    self.view.promptBox.gameObject:SetActive(not isFocus)
+    self.view.numberSelector_New:UpdateKeyHintVisible(not isFocus)
+end
 
 
 
@@ -338,6 +350,23 @@ ManualCraftCtrl._ApplySort = HL.Method(HL.Table, HL.Boolean) << function(self, o
         self.m_facManualCraftSystem:ReadSingleCraft(k)
     end
 end
+
+
+
+
+ManualCraftCtrl.PhaseRefresh = HL.Method(HL.Any) << function(self, jumpId)
+    if string.isEmpty(jumpId) then
+        return
+    end
+    self:_useItemNodesNaviGroupShowInfo(false)
+    self.m_jumpId = jumpId
+    local lastSelectedCraftId = self.m_selectedCraftTabType
+    self:_UpdateClickTab()
+    if lastSelectedCraftId == self.m_selectedCraftTabType then
+        self:_RefreshCraftList()
+    end
+end
+
 
 
 
@@ -421,7 +450,6 @@ end
 
 
 
-
 ManualCraftCtrl._FilterBtnConfirm = HL.Method(HL.Any) << function(self, tags)
     if self.m_nowCraftCell then
         self.m_nowCraftCell.defalut.gameObject:SetActive(true)
@@ -430,21 +458,25 @@ ManualCraftCtrl._FilterBtnConfirm = HL.Method(HL.Any) << function(self, tags)
     end
     for i = 1, #self.m_filterSetting do
         self.m_filterSetting[i].isOn = false
-        local keyName = GameInstance.player.roleId.."ManualCraft.Filter.Tab." .. i
-        ClientDataManagerInst:SetInt(keyName, 0, false)
     end
 
     if tags ~= nil then
         for i = 1,#tags do
             for j = 1,#self.m_filterSetting do
                 if self.m_filterSetting[j].id == tags[i].id then
-                    local keyName = GameInstance.player.roleId.."ManualCraft.Filter.Tab." .. j
                     self.m_filterSetting[j].isOn = true
-                    ClientDataManagerInst:SetInt(keyName, 1, false)
                 end
             end
         end
     end
+
+    for i = 1, #self.m_filterSetting do
+        local value = self.m_filterSetting[i].isOn and 1 or 0
+        local needSave = i == #self.m_filterSetting
+        local keyName = GameInstance.player.roleId.."ManualCraft.Filter.Tab." .. i
+        ClientDataManagerInst:SetInt(keyName, value, false, EClientDataTimeValidType.Permanent, needSave)
+    end
+
     self:_RefreshCraftList()
 end
 
@@ -538,7 +570,12 @@ ManualCraftCtrl._InitFilterTypeTab = HL.Method() << function(self)
     end)
 
     self:_UpdateTabKeyHint()
+    self:_UpdateClickTab()
+end
 
+
+
+ManualCraftCtrl._UpdateClickTab = HL.Method() << function(self)
     local isAllHide = true
     if not string.isEmpty(self.m_jumpId) then
         local craftData = Tables.factoryManualCraftTable:GetValue(self.m_jumpId)
@@ -566,12 +603,10 @@ ManualCraftCtrl._InitFilterTypeTab = HL.Method() << function(self)
             end
         end
     end
-
     if isAllHide then
         self:_SetEmpty()
     end
 end
-
 
 
 
@@ -938,6 +973,11 @@ ManualCraftCtrl._UpdateCell = HL.Method(GameObject, HL.Number) << function(self,
         craftItemCell.defalut.gameObject:SetActive(true)
     end
 
+    craftItemCell.button.onClick:RemoveAllListeners()
+    craftItemCell.button.onClick:AddListener(function()
+        self:_SelectCraftItem(index)
+    end)
+
     if self.itemNaviFlag then
         if luaIdx == self.m_initSelectCsIndex + 1 then
             self.itemNaviFlag = false
@@ -948,12 +988,6 @@ ManualCraftCtrl._UpdateCell = HL.Method(GameObject, HL.Number) << function(self,
             InputManagerInst.controllerNaviManager:SetTarget(craftItemCell.button)
         end
     end
-
-
-    craftItemCell.button.onClick:RemoveAllListeners()
-    craftItemCell.button.onClick:AddListener(function()
-        self:_SelectCraftItem(index)
-    end)
 
     craftItemCell.defalut.redDot:InitRedDot("ManualCraftItem", craftInfo.id)
 

@@ -61,10 +61,16 @@ end
 
 
 
-CommonPlayerHead.InitCommonPlayerHeadByRoleId = HL.Method(HL.Number, HL.Any, HL.Opt(HL.String)) << function(self, roleId, click, searchKey)
+
+CommonPlayerHead.InitCommonPlayerHeadByRoleId = HL.Method(HL.Number, HL.Any, HL.Opt(HL.String, HL.Boolean)) << function(self, roleId, click, searchKey, needRemoveZeroRoleID)
     self:_FirstTimeInit()
     self.m_roleId = roleId
     local success, playerInfo = GameInstance.player.friendSystem:TryGetFriendInfo(roleId)
+
+    
+    if roleId == 0 and needRemoveZeroRoleID ~= false and success then
+        success = false
+    end
 
     if success then
         local nameStr = ""

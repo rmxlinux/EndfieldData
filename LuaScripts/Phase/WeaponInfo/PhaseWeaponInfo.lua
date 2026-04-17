@@ -110,6 +110,8 @@ PhaseWeaponInfo.m_hideCamCor = HL.Field(HL.Thread)
 PhaseWeaponInfo.m_isBlendExit = HL.Field(HL.Boolean) << false
 
 
+PhaseWeaponInfo.m_isPanelsInit = HL.Field(HL.Boolean) << false
+
 
 PhaseWeaponInfo.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.WEAPON_EXHIBIT_PAGE_CHANGE] = { 'OnSelectPageChange', true },
@@ -440,7 +442,7 @@ PhaseWeaponInfo._OnActivated = HL.Override() << function(self)
 
     local lastPageType = self.m_curPageType
     local pageType
-    if arg.pageType and arg.pageType > 0 then
+    if not self.m_isPanelsInit and arg.pageType and arg.pageType > 0 then
         pageType = arg.pageType
     elseif self.m_curPageType > 0 then
         pageType = self.m_curPageType
@@ -471,6 +473,7 @@ PhaseWeaponInfo._OnActivated = HL.Override() << function(self)
         pageType = pageType,
         isFocusJump = arg.isFocusJump  
     })
+    self.m_isPanelsInit = true
 
     if self.m_isBlendExit then
         self.m_isBlendExit = false

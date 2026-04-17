@@ -50,20 +50,13 @@ DomainVersionInfoPopupCtrl.m_closeCallback = HL.Field(HL.Function)
 DomainVersionInfoPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitUI()
     
-    local domainId
-    local gmForceShowVersion
-    if type(arg) == "string" then
-        domainId = arg
-    else
-        domainId = arg.domainId
-        gmForceShowVersion = arg.gmForceShowVersion
-        self.m_closeCallback = arg.onClose
-    end
+    local domainId = arg.domainId
+    self.m_closeCallback = arg.onClose
     if string.isEmpty(domainId) then
         logger.error("参数错误！domainId为空")
         return
     end
-    self.m_info = DomainPOIUtils.tryGetDomainNewVersionInfo(domainId, gmForceShowVersion)
+    self.m_info = DomainPOIUtils.tryGetDomainNewVersionInfo(domainId, arg.startVersionData, arg.endVersionData)
     if self.m_info == nil then
         logger.error("info为空!!")
         return
@@ -161,6 +154,9 @@ end
 
 
 DomainVersionInfoPopupCtrl._RefreshVersionTextCell = HL.Method(HL.Table) << function(self, info)
+    if info.poiCurVersionMaxLv < 0 then
+        return
+    end
     local contentParent = self.view.content
     
     local cell = DomainVersionInfoPopupCtrl._GenCacheContent(contentParent.versionTextCell.gameObject, contentParent.gameObject)
@@ -171,6 +167,9 @@ end
 
 
 DomainVersionInfoPopupCtrl._RefreshVersionRewardListCell = HL.Method(HL.Table) << function(self, info)
+    if #info.rewardList <= 0 then
+        return
+    end
     local contentParent = self.view.content
     
     local cell = DomainVersionInfoPopupCtrl._GenCacheContent(contentParent.versionRewardListCell.gameObject, contentParent.gameObject)

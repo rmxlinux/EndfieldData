@@ -200,7 +200,7 @@ CommonTaskGoalCell._UpdateDistance = HL.Method() << function(self)
     end
 
     local succ, isOutGuidingArea, distance = self.m_commonTrackingSystem:GetTrackingPointInfo(self.m_taskTrackPointId)
-    self.view.distanceTxt.text = isOutGuidingArea and string.format("%.0fM", distance) or Language.IN_OBJECTIVE_AREA_TIPS
+    self.view.distanceTxt.text = isOutGuidingArea and string.format("%.0f m", distance) or Language.IN_OBJECTIVE_AREA_TIPS
     self.view.distanceNode.gameObject:SetActiveIfNecessary(succ)
 end
 

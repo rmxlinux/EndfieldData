@@ -65,7 +65,7 @@ end
 
 
 CharacterFootBarUpgradeCtrl.OnShow = HL.Override() << function(self)
-    GameInstance.playerController.dashCountChangeAnimShowing = true
+    Notify(MessageConst.TOGGLE_FORBID_CHAR_FOOT_BAR, {"footBarUpgradeCtrl", true} )
 end
 
 
@@ -145,7 +145,7 @@ end
 
 CharacterFootBarUpgradeCtrl.OnClose = HL.Override() << function(self)
     self.m_coroutine = nil
-    GameInstance.playerController.dashCountChangeAnimShowing = false
+    Notify(MessageConst.TOGGLE_FORBID_CHAR_FOOT_BAR, {"footBarUpgradeCtrl", false} )
 end
 
 

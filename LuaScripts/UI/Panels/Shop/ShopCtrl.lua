@@ -40,6 +40,9 @@ local shopSystem = GameInstance.player.shopSystem
 
 
 
+
+
+
 ShopCtrl = HL.Class('ShopCtrl', uiCtrl.UICtrl)
 
 
@@ -86,6 +89,14 @@ ShopCtrl.m_tabCells = HL.Field(HL.Forward("UIListCache"))
 
 
 ShopCtrl.m_moneyInfo = HL.Field(HL.Table)
+
+
+ShopCtrl.m_unlockToastFunc = HL.Field(HL.Any)
+
+
+
+ShopCtrl.m_activityEndTime = HL.Field(HL.Any)
+
 
 
 local DEFAULT_DOMAIN = "domain_1"
@@ -135,16 +146,34 @@ ShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             PhaseManager:PopPhase(PHASE_ID)
         end
     end)
+    self.view.topMoneyTitle.closeBtn.onClick:AddListener(function()
+        AudioAdapter.PostEvent("Au_UI_Menu_ShopPanel_Close")
+        local isOpen, phase = PhaseManager:IsOpen(PhaseId.Dialog)
+        if isOpen then
+            self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
+        else
+            
+            PhaseManager:ExitPhaseFast(PHASE_ID)
+        end
+    end)
     UIManager:ToggleBlockObtainWaysJump("common_shop", true)
 
     self.m_needPlaySoldOut = {}
     self.m_needPlayUnlock = {}
     self.m_lastBuyGoods = {}
 
-    local shopGroupId, shopId
+    local shopGroupId, shopId, activityMoneyId
     if type(arg) == "table" then
         shopGroupId = arg.shopGroupId
         shopId = arg.shopId
+        activityMoneyId = arg.activityMoneyId
+        self.m_unlockToastFunc = arg.unlockToastFunc
+        
+        if arg.activityBannerImage ~= nil then
+            self.view.bgBanner:LoadSprite(arg.activityBannerImage)
+        end
+        self.m_activityEndTime = arg.activityEndTime
+        
     else
         shopGroupId = arg
     end
@@ -156,16 +185,16 @@ ShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.m_shopGroupId = shopGroupId
     local shopGroupData = shopSystem:GetShopGroupData(self.m_shopGroupId)
-    
-    local shopGroupTableData = Tables.shopGroupTable[self.m_shopGroupId]
     self.m_shopId = shopId or shopGroupData.shopIdList[0] 
-
-    self.view.domainTopMoneyTitle:SetTitleText(shopGroupTableData.shopGroupName)
 
     local groupUnlock = shopSystem:CheckShopGroupUnlocked(shopGroupId)
     local shopUnlock = shopSystem:CheckShopUnlocked(self.m_shopId)
 
-    self:_RefreshDomainTopMoneyTitle()
+    if activityMoneyId ~= nil then
+        self:_RefreshTopMoneyTitle(activityMoneyId)
+    else
+        self:_RefreshDomainTopMoneyTitle()
+    end
 
     if not groupUnlock or not shopUnlock then
         Notify(MessageConst.SHOW_POP_UP,{content = Language.LUA_SHOP_NOT_UNLOCK,hideCancel = true, onConfirm = function()
@@ -183,6 +212,12 @@ ShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.scrollList.onUpdateCell:AddListener(function(obj, index)
         self:_RefreshContentCell(self.m_getCellFunc(obj), LuaIndex(index), "normal")
     end)
+
+    self.view.scrollList.onGraduallyShowFinish:RemoveAllListeners()
+    self.view.scrollList.onGraduallyShowFinish:AddListener(function()
+        self.view.sortNode:SetEnableFilterBtn(true)
+    end)
+
 
     local sortOptions = {
         {
@@ -236,6 +271,16 @@ ShopCtrl.InitShopTabs = HL.Method(HL.String, HL.String) << function(self, shopGr
         local shopId = self.unlockedShopSheets[index]
         cell.toggle.onValueChanged:RemoveAllListeners()
         cell.toggle.onValueChanged:AddListener(function(isOn)
+            
+            
+            if self.m_unlockToastFunc ~= nil then
+                local isUnlocked = shopSystem:CheckShopUnlocked(shopId)
+                if not isUnlocked then
+                    self.m_unlockToastFunc(shopId)
+                    self:SelectTab(1)
+                    return
+                end
+            end
             if isOn and curShopId ~= shopId then
                 AudioAdapter.PostEvent("Au_UI_Toggle_Tab_On")
                 shopSystem:SetGoodsIdSee()
@@ -251,6 +296,11 @@ ShopCtrl.InitShopTabs = HL.Method(HL.String, HL.String) << function(self, shopGr
         cell.tabIconDecoImg:LoadSprite(UIConst.UI_SPRITE_INVENTORY,shopData.iconId)
         cell.button.onClick:RemoveAllListeners()
         cell.button.onClick:AddListener(function()
+            local isUnlocked = shopSystem:CheckShopUnlocked(shopId)
+            if not isUnlocked and self.m_unlockToastFunc ~= nil then
+                self.m_unlockToastFunc(shopId)
+                return
+            end
             self:SelectTab(index)
         end)
     end)
@@ -272,6 +322,27 @@ end
 
 
 
+ShopCtrl._RefreshTopMoneyTitle = HL.Method(HL.String) << function(self, moneyId)
+    self.view.domainTopMoneyTitle.gameObject:SetActive(false)
+    self.view.topMoneyTitle.gameObject:SetActive(true)
+    local shopGroupTableData = Tables.shopGroupTable[self.m_shopGroupId]
+    self.view.topMoneyTitle.titleTxt.text = shopGroupTableData.shopGroupName
+    local moneyInfos = {}
+    table.insert(moneyInfos, {
+        moneyId = moneyId,
+        showLimit = false,
+        clearRuleType = GEnums.MoneyClearRuleType.None,
+    })
+    self.view.topMoneyTitle.walletBarPlaceholder:InitWalletBarPlaceholderDetailed(moneyInfos)
+
+    local moneyItemCfg = Utils.tryGetTableCfg(Tables.itemTable, moneyId)
+    self.m_moneyInfo = {
+        moneyId = moneyId,
+        moneyIcon = moneyItemCfg and moneyItemCfg.iconId or "",
+    }
+end
+
+
 
 ShopCtrl._RefreshDomainTopMoneyTitle = HL.Method() << function(self)
     local success, levelBasicInfo = DataManager.levelBasicInfoTable:TryGetValue(GameWorld.worldInfo.curLevelId)
@@ -281,10 +352,14 @@ ShopCtrl._RefreshDomainTopMoneyTitle = HL.Method() << function(self)
         return
     end
 
+    
+    local shopGroupTableData = Tables.shopGroupTable[self.m_shopGroupId]
+    self.view.domainTopMoneyTitle:SetTitleText(shopGroupTableData.shopGroupName)
+
     local goldItemId = domainDevData.domainDataCfg.domainGoldItemId
-    local maxCount = domainDevData.curLevelData.moneyLimit
     self.view.domainTopMoneyTitle.gameObject:SetActive(true)
-    self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(goldItemId, maxCount)
+    self.view.topMoneyTitle.gameObject:SetActive(false)
+    self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(levelBasicInfo.domainName)
 
     local moneyItemCfg = Utils.tryGetTableCfg(Tables.itemTable, goldItemId)
     self.m_moneyInfo = {
@@ -325,10 +400,15 @@ ShopCtrl._RefreshSheetTabs = HL.Virtual(HL.String) << function(self, curShopId)
                 price = goodsTableData.price * goodsData.discount,
                 sortId = goodsTableData.sortId,
             }
-            if shopSystem:GetRemainCountByGoodsId(self.m_shopId, goodsId) > 0 then
+            local remainCount = shopSystem:GetRemainCountByGoodsId(self.m_shopId, goodsId)
+            if remainCount > 0 then
                 table.insert(self.m_goods, info)
             else
-                table.insert(self.m_soldOut, info)
+                if remainCount == -1 then   
+                    table.insert(self.m_goods, info)
+                else
+                    table.insert(self.m_soldOut, info)
+                end
             end
         end
     end
@@ -362,6 +442,7 @@ end
 
 ShopCtrl._RefreshContent = HL.Method() << function(self)
     self.m_haveControllerTarget = false
+    self.view.sortNode:SetEnableFilterBtn(false)
     self.view.scrollList:UpdateCount(#self.m_goodsInfos)
 end
 
@@ -381,8 +462,6 @@ ShopCtrl._RefreshContentCell = HL.Virtual(HL.Any, HL.Number, HL.String) << funct
     if luaIndex == #self.m_goodsInfos and not self.m_haveControllerTarget then
         local firstCell = self.m_getCellFunc(1)
         if firstCell then
-            local position = firstCell.gameObject.transform.anchoredPosition
-            self.view.sortNode.gameObject.transform.anchoredPosition = position
             self.view.sortNode.gameObject:SetActive(true)
             InputManagerInst.controllerNaviManager:SetTarget(firstCell.view.selectBtn)
             self.m_haveControllerTarget = true
@@ -407,6 +486,7 @@ ShopCtrl._RefreshContentCell = HL.Virtual(HL.Any, HL.Number, HL.String) << funct
         curPrice = lume.round(goodsCfg.price * discountedRatio, 1),
         remainLimitCount = remainLimitCount,
         refreshType = goodsCfg.limitCountRefreshType,
+        orgLimitCount = goodsCfg.limitCount,
         
         itemId = itemId,
         itemName = itemCfg.name,
@@ -438,6 +518,18 @@ end
 
 
 ShopCtrl._RefreshTimeCountDown = HL.Virtual() << function(self)
+    
+    if self.m_activityEndTime ~= nil then
+        self.view.timeNode.gameObject:SetActiveIfNecessary(true)
+        self.view.titleTxt.text = Language.LUA_LIMITED_FORMULA_SHOP_END_TIME_TITLE
+        self.view.countDownText:InitCountDownText(self.m_activityEndTime, nil, function(leftTime)
+            local timeText = UIUtils.getLeftTime(leftTime)
+            return I18nUtils.CombineStringWithLanguageSpilt("", timeText)
+        end)
+        return
+    end
+    
+
     
     local shopTableData = Tables.shopTable[self.m_shopId]
     if shopTableData.shopRefreshCycleType == GEnums.ShopRefreshCycleType.None then

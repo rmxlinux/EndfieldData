@@ -238,6 +238,8 @@ function RedDotUtils.hasGachaSinglePoolRedDot(poolId)
         return RedDotUtils.hasGachaSpecialPoolRedDot(poolId)
     elseif poolInfo.type == GEnums.CharacterGachaPoolType.Standard then
         return RedDotUtils.hasGachaStandardPoolRedDot(poolId)
+    elseif poolInfo.type == GEnums.CharacterGachaPoolType.Joint then
+        return RedDotUtils.hasGachaJointPoolRedDot(poolId)
     end
     return false
 end
@@ -313,6 +315,10 @@ function RedDotUtils.hasGachaStarterActivityStageRedDot(stageId)
 end
 
 function RedDotUtils.hasGachaSpecialPoolRedDot(poolId)
+    local hasRedDot, redDotType = RedDotUtils.hasGachaTenLtTicketRedDot(poolId)
+    if hasRedDot then
+        return true, redDotType
+    end
     local _, poolInfo = GameInstance.player.gacha.poolInfos:TryGetValue(poolId)
     return poolInfo.freeTenPullCount > 0, UIConst.RED_DOT_TYPE.Normal
 end
@@ -320,6 +326,39 @@ end
 function RedDotUtils.hasGachaStandardPoolRedDot(poolId)
     local _, poolInfo = GameInstance.player.gacha.poolInfos:TryGetValue(poolId)
     return poolInfo.choicePackCount > 0, UIConst.RED_DOT_TYPE.Normal
+end
+
+function RedDotUtils.hasGachaJointPoolRedDot(poolId)
+    local hasRedDot, redDotType = RedDotUtils.hasGachaTenLtTicketRedDot(poolId)
+    if hasRedDot then
+        return true, redDotType
+    end
+    local _, poolInfo = GameInstance.player.gacha.poolInfos:TryGetValue(poolId)
+    return poolInfo.freeTenPullCount > 0, UIConst.RED_DOT_TYPE.Normal
+end
+
+function RedDotUtils.hasGachaTenLtTicketRedDot(poolId)
+    local poolCfg = Tables.gachaCharPoolTable[poolId]
+    if Utils.getItemCount(poolCfg.ticketGachaTenLt) > 0 then
+        return true, UIConst.RED_DOT_TYPE.Normal
+    end
+    if Utils.getItemCount(poolCfg.ticketGachaSingleLt) >= 10 then
+        return true, UIConst.RED_DOT_TYPE.Normal
+    end
+    return false
+end
+
+
+
+function RedDotUtils.hasGachaWeaponTenLtTicketRedDot(poolId)
+    local poolCfg = Tables.GachaWeaponPoolTable[poolId]
+    if string.isEmpty(poolCfg.ticketGachaTenLt) then
+        return false
+    end
+    if Utils.getItemCount(poolCfg.ticketGachaTenLt) > 0 then
+        return true, UIConst.RED_DOT_TYPE.Normal
+    end
+    return false
 end
 
 

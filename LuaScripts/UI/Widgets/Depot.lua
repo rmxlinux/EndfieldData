@@ -529,7 +529,9 @@ Depot.ToggleDestroyMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(
                 noHighlight = true,
             })
 
-            self:SetAsNaviTarget()
+            if not self.depotContent.view.itemListSelectableNaviGroup.IsTopLayer then
+                self:SetAsNaviTarget()
+            end
         end
     end
 

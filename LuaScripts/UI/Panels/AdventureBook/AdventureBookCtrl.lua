@@ -89,7 +89,10 @@ AdventureBookCtrl.ChangeTab = HL.Method(HL.Any) << function(self, arg)
     self:_OnTabClick(self.m_curTabIndex, true)
     if arg.dungeonTab and panelId == PanelId.AdventureDungeon then
         if self.m_phase.m_panel2Item[PanelId.AdventureDungeon] ~= nil then
-            Notify(MessageConst.ON_CHANGE_ADVENTURE_DUNGEON_TAB, arg.dungeonTab)
+            Notify(MessageConst.ON_CHANGE_ADVENTURE_DUNGEON_TAB, {
+                dungeonTab = arg.dungeonTab,
+                filterIndex = arg.filterIndex
+            })
         else
             
             self.m_phase.m_dungeonTab = arg.dungeonTab
@@ -107,7 +110,7 @@ AdventureBookCtrl._OnReceiveSelectTab = HL.Method(HL.Any) << function(self, arg)
     cell.toggle.isOn = true
     self:_OnTabClick(self.m_curTabIndex, true)
     if arg.dungeonTab and panelId == PanelId.AdventureDungeon then
-        Notify(MessageConst.ON_CHANGE_ADVENTURE_DUNGEON_TAB, arg.dungeonTab)
+        Notify(MessageConst.ON_CHANGE_ADVENTURE_DUNGEON_TAB, { dungeonTab = arg.dungeonTab })
     end
 end
 

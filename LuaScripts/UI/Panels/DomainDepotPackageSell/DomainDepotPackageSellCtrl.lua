@@ -68,9 +68,12 @@ DomainDepotPackageSellCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_domainDepotId = arg.domainDepotId
 
     local moneyId, maxCount = DomainDepotUtils.GetMoneyId(self.m_domainDepotId)
-    self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(moneyId, maxCount)
     local moneyData = Tables.itemTable:GetValue(moneyId)
     self.view.iconMoney:LoadSprite(UIConst.UI_SPRITE_WALLET, moneyData.iconId)
+    local success, cfg = Tables.domainDepotTable:TryGetValue(self.m_domainDepotId)
+    if success then
+        self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(cfg.domainId)
+    end
 
     self.m_buyerInfos = DomainDepotUtils.GetBuyerInfo(self.m_domainDepotId)
     
@@ -80,7 +83,7 @@ DomainDepotPackageSellCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     local packConfig = Tables.domainDepotDeliverPackTypeTable:GetValue(deliverInfo.deliverPackType)
     local itemConfig = Tables.domainDepotDeliverItemTypeTable:GetValue(deliverInfo.itemType)
-    self.view.titleTxt:CombineStringWithLanguageSpilt(packConfig.deliveryDesc, itemConfig.deliveryDesc)
+    self.view.titleTxt:CombineStringReverseForIndonesianAndVietnamese(packConfig.deliveryDesc, itemConfig.deliveryDesc)
 
     self.view.valueTxt.text = deliverInfo.originalPrice
 

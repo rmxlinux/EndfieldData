@@ -4,6 +4,10 @@ local ActivityUtils = {}
 
 local newHintText = "new_activity_key_"
 function ActivityUtils.isNewActivity(id)
+    
+    
+    
+    
     return not ClientDataManagerInst:GetBool(newHintText .. id,false)
 end
 function ActivityUtils.setFalseNewActivity(id)
@@ -94,15 +98,18 @@ function ActivityUtils.setFalseNewUnlockCharacterGuideLine(activityId)
 end
 
 
-local newActivityDayText = "new_activity_day_"
-function ActivityUtils.isNewActivityDay(activityId, totalDays)
+
+
+local newActivityDayText = "new_activity_day_bool_"
+local newActivityDayCountText = "new_activity_day_"
+function ActivityUtils.isNewActivityDayUnread(activityId, totalDays)
     activityId = ActivityUtils.getResetableActivityRealId(activityId)
-    local date = DateTimeUtils.GetNextCrossDayTime(DateTimeUtils.GetServerDateTime())
-    local id = newActivityDayText .. activityId .. tostring(date)
+    local id = newActivityDayText .. activityId
     if totalDays then
-        local _,days = ClientDataManagerInst:GetInt(newActivityDayText .. activityId, false)
+        local countId = newActivityDayCountText .. activityId
+        local _, days = ClientDataManagerInst:GetInt(countId, false)
         if days < 0 then
-             ClientDataManagerInst:SetInt(newActivityDayText .. activityId, 0, false, EClientDataTimeValidType.Permanent)
+            ClientDataManagerInst:SetInt(countId, 0, false, EClientDataTimeValidType.Permanent)
         end
         if days >= totalDays then
             return false
@@ -110,17 +117,19 @@ function ActivityUtils.isNewActivityDay(activityId, totalDays)
     end
     return not ClientDataManagerInst:GetBool(id, false)
 end
-function ActivityUtils.setFalseNewActivityDay(activityId)
+function ActivityUtils.setActivityDayAsRead(activityId)
     activityId = ActivityUtils.getResetableActivityRealId(activityId)
-    if not ActivityUtils.isNewActivityDay(activityId) then
+    if not ActivityUtils.isNewActivityDayUnread(activityId) then
         return
     end
-    local date = DateTimeUtils.GetNextCrossDayTime(DateTimeUtils.GetServerDateTime())
-    local id = newActivityDayText .. activityId .. tostring(date)
-    ClientDataManagerInst:SetBool(id, true, false, EClientDataTimeValidType.Permanent)
-    local _,days = ClientDataManagerInst:GetInt(newActivityDayText .. activityId, false)
+    local id = newActivityDayText .. activityId
+    
+    ClientDataManagerInst:SetBool(id, true, false, EClientDataTimeValidType.CurrentDayUntil4AM)
+    
+    local countId = newActivityDayCountText .. activityId
+    local _, days = ClientDataManagerInst:GetInt(countId, false)
     if days then
-        ClientDataManagerInst:SetInt(newActivityDayText .. activityId, days + 1, false, EClientDataTimeValidType.Permanent)
+        ClientDataManagerInst:SetInt(countId, days + 1, false, EClientDataTimeValidType.Permanent)
     end
     Notify(MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE)
 end
@@ -150,7 +159,7 @@ end
 
 local popUpText = "_new_activity_pop_up_"
 function ActivityUtils.notPopupToday(id,day)
-    return not ClientDataManagerInst:GetBool(id .. popUpText ..tostring(day),false)
+    return not ClientDataManagerInst:GetBool(id .. popUpText ..tostring(day), false)
 end
 function ActivityUtils.setFalsePopupToday(id,day)
     ClientDataManagerInst:SetBool(id .. popUpText ..tostring(day) , true, false, EClientDataTimeValidType.Permanent)
@@ -214,6 +223,57 @@ function ActivityUtils.getNaviConfig(panel, type)
         forbidCommonNavi = panel.uiCtrl.m_versionGuide.view.activityCommonInfo.view.config.FORBID_COMMON_NAVI
     end
     return { rightNaviGroup, forbidCommonNavi}
+end
+
+function ActivityUtils.actionWhenActivityClosed(action, ctrl, activityId)
+    MessageManager:Register(MessageConst.ON_ACTIVITY_UPDATED, function(args)
+        local id = unpack(args)
+        if id ~= activityId then
+            return
+        end
+        local activity = GameInstance.player.activitySystem:GetActivity(id)
+        if not activity then
+            action(true)
+        end
+    end, ctrl)
+end
+
+
+function ActivityUtils.backToMainHud(noToast)
+    GameInstance.player.guide:OnActivityDisabled()
+    UIManager:Close(PanelId.ActivityStartReminderPopup)
+    UIManager:Close(PanelId.InstructionBook)
+    if not noToast then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_ACTIVITY_FORBIDDEN)
+    end
+    Notify(MessageConst.SHOW_POP_UP, {
+        content = Language.LUA_ACTIVITY_MODIFY_QUIT_TO_MENU,
+        hideCancel = true,
+        onConfirm = function()
+            PhaseManager:ExitPhaseFastTo(PhaseId.Level, true)
+        end
+    })
+end
+
+
+function ActivityUtils.backToMainHudWhenActivityClosed(ctrl, activityId)
+    ActivityUtils.actionWhenActivityClosed(ActivityUtils.backToMainHud, ctrl, activityId)
+end
+
+
+
+
+function ActivityUtils.isFinalStageMultiConditionStageActivity(activityData, finalStageId)
+    
+    local stageData = activityData:GetStageData(finalStageId)
+    local isFinalStage = false
+    if stageData then
+        local status = GEnums.ActivityConditionalStageState.__CastFrom(stageData.Status)
+        if status ~= GEnums.ActivityConditionalStageState.Locked then
+            isFinalStage = true
+        end
+    end
+    return isFinalStage
 end
 
 
@@ -280,6 +340,72 @@ function ActivityUtils.shouldPopup(id)
     local notPopupToday
 
     
+    if GEnums.ActivityType.__CastFrom(activity.type) == (GEnums.ActivityType.ArknightsXEndfieldLightWeight) then
+        local haveCfg, multiStageCfg = Tables.activityConditionalMultiStageTable:TryGetValue(id)
+        if not haveCfg then
+            return false
+        end
+        local activityData = GameInstance.player.activitySystem:GetActivity(id)
+        local res = false
+        local arkNightsBirthText = "activity_arknights_birth_"
+        
+        local maskStageId = ''
+        for stageId, _ in pairs(multiStageCfg.stageList) do
+            local hasBirthCfg, birthStageCfg = Tables.activityArknightsBirthMultiStageTable:TryGetValue(stageId)
+            if hasBirthCfg and not birthStageCfg.isVisible then
+                maskStageId = stageId
+            end
+        end
+        for stageId, _ in pairs(multiStageCfg.stageList) do
+            local hasBirthCfg, birthStageCfg = Tables.activityArknightsBirthMultiStageTable:TryGetValue(stageId)
+            if not hasBirthCfg then
+                goto continue
+            end
+            
+            if not birthStageCfg.isVisible then
+                goto continue
+            end
+            
+            local csConditionalStageInfo = activityData:GetStageData(stageId)
+            if csConditionalStageInfo ~= nil then
+                local status = GEnums.ActivityConditionalStageState.__CastFrom(csConditionalStageInfo.Status)
+                local popupPanelId = birthStageCfg.popupPanelId
+                
+                if status ~= GEnums.ActivityConditionalStageState.Locked then
+                    local ok, popped, removed = ClientDataManagerInst:GetBool(arkNightsBirthText .. popupPanelId, false)
+
+                    
+                    if not popped then
+                        res = true
+                    end
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                    
+                end
+            end
+            :: continue ::
+        end
+        return res
+    end
+
+    
+    if GEnums.ActivityType.__CastFrom(activity.type) == (GEnums.ActivityType.CalendarCheckin) then
+        local activityData = GameInstance.player.activitySystem:GetActivity(id)
+        if activityData == nil then
+            return false
+        end
+        local _, haveGotReward, allGetReward = ActivityUtils.CalendarCheckInGetCurDayNumber(id)
+        return not haveGotReward and not allGetReward
+    end
+
+    
     if GEnums.ActivityType.__CastFrom(activity.type) ~= (GEnums.ActivityType.Checkin) then
         if Tables.activityTable[id].popUpOnlyOnce then
             
@@ -287,7 +413,7 @@ function ActivityUtils.shouldPopup(id)
             return notPopupToday
         else
             
-            notPopupToday = ActivityUtils.isNewActivityDay(id)
+            notPopupToday = ActivityUtils.isNewActivityDayUnread(id)
             return notPopupToday
         end
     end
@@ -317,13 +443,51 @@ function ActivityUtils.recordPopup(id)
     end
 
     
+    if GEnums.ActivityType.__CastFrom(activity.type) == (GEnums.ActivityType.ArknightsXEndfieldLightWeight) then
+        local haveCfg, multiStageCfg = Tables.activityConditionalMultiStageTable:TryGetValue(id)
+        if not haveCfg then
+            return false
+        end
+        local activityData = GameInstance.player.activitySystem:GetActivity(id)
+        local res = false
+        local arkNightsBirthText = "activity_arknights_birth_"
+        for stageId, _ in pairs(multiStageCfg.stageList) do
+            local hasBirthCfg, birthStageCfg = Tables.activityArknightsBirthMultiStageTable:TryGetValue(stageId)
+            if not hasBirthCfg then
+                goto continue
+            end
+            
+            if not birthStageCfg.isVisible then
+                goto continue
+            end
+            
+            local csConditionalStageInfo = activityData:GetStageData(stageId)
+            if csConditionalStageInfo ~= nil then
+                local status = GEnums.ActivityConditionalStageState.__CastFrom(csConditionalStageInfo.Status)
+                local popupPanelId = birthStageCfg.popupPanelId
+                
+                if status == GEnums.ActivityConditionalStageState.Locked then
+                    ClientDataManagerInst:SetBool(arkNightsBirthText .. popupPanelId, false, false, EClientDataTimeValidType.Permanent)
+                else 
+                    local ok, popped, removed = ClientDataManagerInst:GetBool(arkNightsBirthText .. popupPanelId, false)
+                    if not popped then 
+                        ClientDataManagerInst:SetBool(arkNightsBirthText .. popupPanelId, true, false, EClientDataTimeValidType.Permanent)
+                    end
+                end
+            end
+            :: continue ::
+        end
+        return
+    end
+
+    
     if GEnums.ActivityType.__CastFrom(activity.type) ~= (GEnums.ActivityType.Checkin) then
         if Tables.activityTable[id].popUpOnlyOnce then
             
             ActivityUtils.setFalsePopupToday(id, 1)
         else
             
-            ActivityUtils.setFalseNewActivityDay(id)
+            ActivityUtils.setActivityDayAsRead(id)
         end
         return
     end
@@ -357,6 +521,81 @@ function ActivityUtils.getActivityRedDotName(id)
     end
     return nil
 end
+
+
+
+
+
+function ActivityUtils.CalendarCheckInGetGetMaxDayNumber(activityId)
+    local _, cfgData = Tables.checkInInfoTable:TryGetValue(activityId)
+    if cfgData == nil then
+        return 0
+    end
+    return cfgData.maxRewardCnt
+end
+
+
+
+function ActivityUtils.CalendarCheckInGetCurDayNumber(activityId)
+    local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
+    if activityData == nil then
+        return 0, false, false
+    end
+    local rewardDays = activityData.rewardDays
+    local curDayRewarded = activityData.curDayRewarded
+    local maxDays = ActivityUtils.CalendarCheckInGetGetMaxDayNumber(activityId)
+    
+    if rewardDays >= maxDays then
+        
+        return maxDays, curDayRewarded, true
+    end
+    if curDayRewarded then
+        return rewardDays, true, false
+    else
+        return rewardDays + 1, false, false
+    end
+end
+
+function ActivityUtils.CalendarCheckInGetDailyReward(activityId)
+    local stageList = Tables.CheckInRewardTable[activityId].stageList
+    local curDayNumber = ActivityUtils.CalendarCheckInGetCurDayNumber(activityId)
+    local rewardId = stageList[CSIndex(curDayNumber)].rewardId
+    local rewardBundles = UIUtils.getRewardItems(rewardId)
+    local rewardInfoList = {}
+    for i, v in ipairs(rewardBundles) do
+        table.insert(rewardInfoList, {
+            rewardId = v.id,
+            number = v.count,
+        })
+    end
+    return rewardInfoList
+end
+
+function ActivityUtils.CalendarCheckInGetAllReward(activityId)
+    local rewardInfoList = {}
+    local stageList = Tables.CheckInRewardTable[activityId].stageList
+    local maxDays = ActivityUtils.CalendarCheckInGetGetMaxDayNumber(activityId)
+    for i = 1, maxDays do
+        local rewardId = stageList[CSIndex(i)].rewardId
+        local rewardBundles = UIUtils.getRewardItems(rewardId)
+        for _, v in ipairs(rewardBundles) do
+            local id = v.id
+            local found = lume.match(rewardInfoList, function(info)
+                return info.rewardId == id
+            end)
+            if found then
+                found.number = found.number + v.count
+            else
+                table.insert(rewardInfoList, {
+                    rewardId = v.id,
+                    number = v.count,
+                })
+            end
+        end
+    end
+    return rewardInfoList
+end
+
 
 
 
@@ -441,6 +680,15 @@ function ActivityUtils.GameEventLogActivityRankView(activityId, rankRelatedId, r
 end
 
 
+
+
+
+function ActivityUtils.GetSnapshotChallengeMainNodePath(activityId)
+    local _, cfg = Tables.activitySnapshotChallengeMainTable:TryGetValue(activityId)
+    local mainPrefabName = cfg.mainPrefabName
+    local path = string.format("Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Activity/SnapshotChallenge/%s.prefab", mainPrefabName)
+    return path
+end
 
 
 

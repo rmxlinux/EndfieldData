@@ -171,7 +171,6 @@ CharInfoPhotoCtrl._InitAction = HL.Method() << function(self)
         local pictureId = self.m_pictureIds[self.m_curPicIndex]
         GameInstance.player.charBag:SetCharPotentialPicture(self.m_arg.charInstId, self.m_arg.potentialLevel, pictureId)
     end)
-    self.view.gyroscopeEffect.enableDetect = not DeviceInfo.usingController
     self:_InitController()
 end
 

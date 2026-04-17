@@ -107,6 +107,11 @@ MapMarkDetailDungeonCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     if DeviceInfo.usingController then
         self.view.naviGroup.onIsFocusedChange:AddListener(function(isFocused)
             if not isFocused then
+                local rewardScrollRect = self.view.scrollView:GetComponent(typeof(CS.Beyond.UI.UIScrollRect))
+                if rewardScrollRect ~= nil then
+                    rewardScrollRect.verticalNormalizedPosition = 1
+                end
+                self.view.naviGroup:ClearLastFocusNaviTarget()
                 Notify(MessageConst.HIDE_ITEM_TIPS)
             end
         end)

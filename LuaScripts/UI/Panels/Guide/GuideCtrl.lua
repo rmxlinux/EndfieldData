@@ -79,7 +79,6 @@ local PANEL_ID = PanelId.Guide
 
 
 
-
 GuideCtrl = HL.Class('GuideCtrl', uiCtrl.UICtrl)
 
 
@@ -256,7 +255,9 @@ GuideCtrl._LateTick = HL.Method() << function(self)
                     v.cell.button.targetToggle = toggle
                     v.cell.button.targetDropdown = dropdown
                     v.cell.button.targetKeyHintActionId = keyHint and keyHint:GetActionId() or nil
-                    v.cell.button:CopyTargetBinding()
+                    if isForce then
+                        v.cell.button:CopyTargetBinding()
+                    end
                 end
             end
 

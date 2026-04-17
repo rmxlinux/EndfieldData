@@ -19,6 +19,7 @@ local PANEL_ID = PanelId.StaminaPotion
 
 
 
+
 StaminaPotionCtrl = HL.Class('StaminaPotionCtrl', uiCtrl.UICtrl)
 
 
@@ -107,6 +108,14 @@ end
 
 StaminaPotionCtrl.OnShow = HL.Override() << function(self)
     logger.info("StaminaPopUpCtrl OnShow")
+end
+
+
+
+
+StaminaPotionCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
+    self.view.numberSelector.view.keyHintLeft.gameObject:SetActive(active)
+    self.view.numberSelector.view.keyHintRight.gameObject:SetActive(active)
 end
 
 

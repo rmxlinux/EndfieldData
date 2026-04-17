@@ -246,6 +246,10 @@ FacTopViewBuildingInfoCtrl._OnAddInfo = HL.Method(CS.Beyond.Gameplay.Factory.Fac
 
     logger.info("FacTopViewBuildingInfoCtrl._OnAddInfo", nodeId, isBuilding, info.dataId)
 
+    if FactoryUtils.isDecoBuilding(info.dataId) then 
+        return
+    end
+
     local cell
     if isBuilding then
         cell = self.m_cellCache:Get()
@@ -260,7 +264,7 @@ FacTopViewBuildingInfoCtrl._OnAddInfo = HL.Method(CS.Beyond.Gameplay.Factory.Fac
             cell.iconShadow:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, data.iconOnPanel)
             cell.name.text = data.name
             cell.nameNodeContentSizeFitter.horizontalFit = self.m_useMinNameSize and Unity.UI.ContentSizeFitter.FitMode.MinSize or Unity.UI.ContentSizeFitter.FitMode.PreferredSize
-            cell.ignoreState = FacConst.FAC_TOP_VIEW_IGNORE_STATE_BUILDING_IDS[info.dataId]
+            cell.ignoreState = FacConst.FAC_TOP_VIEW_IGNORE_STATE_BUILDING_IDS[info.dataId] or FacConst.FAC_TOP_VIEW_IGNORE_STATE_BUILDING_TYPES[data.type]
             if not cell.ignoreState then
                 cell.stateController:SetState("Normal")
             end
@@ -297,6 +301,11 @@ end
 
 FacTopViewBuildingInfoCtrl._OnUpdateInfo = HL.Method(CS.Beyond.Gameplay.Factory.FactoryUtil.TopViewBuildingInfo, HL.Opt(HL.Any)) << function(self, info, cell)
     local nodeId = info.nodeId
+
+    if FactoryUtils.isDecoBuilding(info.dataId) then 
+        return
+    end
+
     if not cell then
         cell = self.m_cells[nodeId]
     end

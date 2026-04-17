@@ -46,7 +46,7 @@ CraftCell._OnFirstTimeInit = HL.Override() << function(self)
     end
 
     if self.config.ALWAYS_SHOW_ARROW then
-        self.view.arrow.gameObject:SetActiveIfNecessary(true)
+        self.view.arrow.gameObject:SetActive(true)
     end
 
     self:RegisterMessage(MessageConst.ON_PIN_CRAFT_RESP, function()
@@ -99,10 +99,10 @@ CraftCell._RefreshCraftCell = HL.Method() << function(self)
         self.incomeCache:Refresh(0)
     end
     if craftInfo.incomeText then
-        self.view.incomeText.gameObject:SetActiveIfNecessary(true)
+        self.view.incomeText.gameObject:SetActive(true)
         self.view.incomeText.text = craftInfo.incomeText
     else
-        self.view.incomeText.gameObject:SetActiveIfNecessary(false)
+        self.view.incomeText.gameObject:SetActive(false)
     end
     if self.inAddCache then
         local incomesCount = craftInfo.incomes and #craftInfo.incomes or 0
@@ -117,33 +117,33 @@ CraftCell._RefreshCraftCell = HL.Method() << function(self)
 
     
     if craftInfo.time then
-        self.view.time.gameObject:SetActiveIfNecessary(true)
+        self.view.time.gameObject:SetActive(true)
         if not self.config.ALWAYS_SHOW_ARROW then
-            self.view.arrow.gameObject:SetActiveIfNecessary(false)
+            self.view.arrow.gameObject:SetActive(false)
         end
         self.view.time.text = string.format(Language["LUA_CRAFT_CELL_STANDARD_TIME"], FactoryUtils.getCraftTimeStr(craftInfo.time, true))
     else
-        self.view.time.gameObject:SetActiveIfNecessary(false)
+        self.view.time.gameObject:SetActive(false)
         if not self.config.ALWAYS_SHOW_ARROW then
-            self.view.arrow.gameObject:SetActiveIfNecessary(true)
+            self.view.arrow.gameObject:SetActive(true)
         end
     end
     if craftInfo.buildingId then
-        self.view.buildingItem.gameObject:SetActiveIfNecessary(true)
+        self.view.buildingItem.gameObject:SetActive(true)
         local itemId = FactoryUtils.getBuildingItemData(craftInfo.buildingId).id
         self.view.buildingItem:InitItem({ id = itemId }, true)
         if self.m_itemTipsPosInfo then
             self.view.buildingItem:SetExtraInfo(self.m_itemTipsPosInfo)
         end
     else
-        self.view.buildingItem.gameObject:SetActiveIfNecessary(false)
+        self.view.buildingItem.gameObject:SetActive(false)
     end
 
     
     
     
     if craftInfo.outcomes then
-        self.view.outcomeItems.gameObject:SetActiveIfNecessary(true)
+        self.view.outcomeItems.gameObject:SetActive(true)
         self.outcomeItemsCache:Refresh(#craftInfo.outcomes, function(cell, index)
             local bundle = craftInfo.outcomes[index]
             if self.m_onClickItem then
@@ -159,15 +159,15 @@ CraftCell._RefreshCraftCell = HL.Method() << function(self)
             cell.gameObject.name = "Outcome_" .. bundle.id
         end)
     else
-        self.view.outcomeItems.gameObject:SetActiveIfNecessary(false)
+        self.view.outcomeItems.gameObject:SetActive(false)
     end
     if craftInfo.outcomeText then
-        self.view.outcomePower.gameObject:SetActiveIfNecessary(true)
+        self.view.outcomePower.gameObject:SetActive(true)
         self.view.powerText.text = craftInfo.outcomeText
     else
-        self.view.outcomePower.gameObject:SetActiveIfNecessary(false)
+        self.view.outcomePower.gameObject:SetActive(false)
     end
-    self.view.outcomeFinish.gameObject:SetActiveIfNecessary(craftInfo.useFinish)
+    self.view.outcomeFinish.gameObject:SetActive(craftInfo.useFinish)
     if self.outAddCache then
         local outcomesCount = craftInfo.outcomes and #craftInfo.outcomes or 0
         if outcomesCount > 1 then
@@ -190,9 +190,9 @@ CraftCell._RefreshCraftCell = HL.Method() << function(self)
     
     if self.config.SHOW_RED_DOT then
         local hasRedDot = RedDotUtils.hasCraftRedDot(craftInfo.craftId)
-        self.view.redDot.gameObject:SetActiveIfNecessary(hasRedDot)
+        self.view.redDot.gameObject:SetActive(hasRedDot)
     else
-        self.view.redDot.gameObject:SetActiveIfNecessary(false)
+        self.view.redDot.gameObject:SetActive(false)
     end
 
     
@@ -203,6 +203,10 @@ CraftCell._RefreshCraftCell = HL.Method() << function(self)
     else
         self.view.craftDescNode.gameObject:SetActive(false)
     end
+
+    
+    self.view.sewageNode.gameObject:SetActive(craftInfo.isSewageCraft == true)
+    self.view.timeNode.gameObject:SetActive(craftInfo.isSewageCraft ~= true)
 end
 
 
@@ -210,12 +214,12 @@ end
 
 
 CraftCell.SetSelectedState = HL.Method(HL.Boolean, HL.Boolean) << function(self, isSelected, isBlocked)
-    self.view.normalNode.gameObject:SetActiveIfNecessary(not isSelected)
-    self.view.selectNode.gameObject:SetActiveIfNecessary(isSelected)
+    self.view.normalNode.gameObject:SetActive(not isSelected)
+    self.view.selectNode.gameObject:SetActive(isSelected)
 
     if isSelected then
-        self.view.selectTitleNode.gameObject:SetActiveIfNecessary(not isBlocked)
-        self.view.blockTitleNode.gameObject:SetActiveIfNecessary(isBlocked)
+        self.view.selectTitleNode.gameObject:SetActive(not isBlocked)
+        self.view.blockTitleNode.gameObject:SetActive(isBlocked)
     end
 
     local color = isSelected and self.config.COLOR_HIGHLIGHT_MIDDLE or self.config.COLOR_NORMAL_MIDDLE

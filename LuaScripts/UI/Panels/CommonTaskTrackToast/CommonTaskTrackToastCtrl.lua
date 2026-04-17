@@ -294,9 +294,8 @@ CommonTaskTrackToastCtrl._RefreshToast = HL.Method(HL.String, HL.Any, HL.Opt(HL.
     end
 
     if toastNode.passTimeTxtNode then
-        logger.warn("ranqinyuan debug:", passTime)
         toastNode.passTimeTxtNode.gameObject:SetActiveIfNecessary(passTime ~= nil)
-        toastNode.passTimeTxt.text = UIUtils.getLeftTimeToSecond((passTime or 0) / 1000)
+        toastNode.passTimeTxt.text = UIUtils.getLeftTimeToSecond(math.floor((passTime or 0) / 1000))
     end
 
     self.m_showingToastCor = self:_StartCoroutine(function()

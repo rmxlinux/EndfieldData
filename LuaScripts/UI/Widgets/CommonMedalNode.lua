@@ -44,6 +44,10 @@ end
 
 
 CommonMedalNode.InitCommonMedalNode = HL.Method(HL.String) << function(self, achievementId)
+    if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.Achievement) then
+        self.view.stateCtrl:SetState("NotUnlocked")
+        return
+    end
     self:_FirstTimeInit()
     local succ, achievementData = Tables.achievementTable:TryGetValue(achievementId)
     if not succ then

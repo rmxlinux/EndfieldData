@@ -41,6 +41,7 @@ GachaItemConvertCtrl.m_info = HL.Field(HL.Table)
 
 
 
+
 GachaItemConvertCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitUI()
     self.m_info = arg
@@ -81,7 +82,7 @@ GachaItemConvertCtrl._InitUI = HL.Method() << function(self)
     end)
     self.view.convertItem.tipsBtn.onClick:AddListener(function()
         Notify(MessageConst.SHOW_ITEM_TIPS, {
-            itemId = self.m_info.convertItemId,
+            itemId = self.m_info.convertItemBundle.id,
             isSideTips = true,
             transform = self.view.convertItem.tipsBtn.transform,
             posType = UIConst.UI_TIPS_POS_TYPE.RightDown,
@@ -97,7 +98,8 @@ end
 
 GachaItemConvertCtrl._RefreshAllUI = HL.Method() << function(self)
     self.view.originalItem.itemIcon:InitItemIcon(self.m_info.originalItemId, true)
-    self.view.convertItem.itemIcon:InitItemIcon(self.m_info.convertItemId, true)
+    self.view.convertItem.itemIcon:InitItemIcon(self.m_info.convertItemBundle.id, true)
+    self.view.convertItem.itemNumTxt.text = string.format(Language.LUA_COMMON_X_COUNT, self.m_info.convertItemBundle.count)
     self.view.titleTxt.text = self.m_info.title
     self.view.tipsTxt.text = self.m_info.tipsText
 end

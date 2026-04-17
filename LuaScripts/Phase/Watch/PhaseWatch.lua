@@ -41,6 +41,8 @@ PhaseWatch.m_clearScreenKey = HL.Field(HL.Number) << -1
 
 PhaseWatch._OnInit = HL.Override() << function(self)
     PhaseWatch.Super._OnInit(self)
+    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
+    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 end
 
 
@@ -48,7 +50,12 @@ end
 
 PhaseWatch._InitAllPhaseItems = HL.Override() << function(self)
     PhaseWatch.Super._InitAllPhaseItems(self)
-    self.m_watchBlurCtrl = UIManager:Open(PanelId.WatchBlur)
+    local isOpen, cachedBlurPanel = UIManager:IsOpen(PanelId.WatchBlur)
+    if isOpen then
+        self.m_watchBlurCtrl = cachedBlurPanel
+    else
+        self.m_watchBlurCtrl = UIManager:Open(PanelId.WatchBlur)
+    end
     self.m_watchPanel = self:_GetPanelPhaseItem(PanelId.Watch)
 end
 
@@ -100,7 +107,9 @@ PhaseWatch._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << f
     ctrl.view.content.gameObject:SetActive(true)
 
     ctrl.view.animationWrapper:SampleToInAnimationBegin()   
-    coroutine.waitForRenderDone()
+    if not fastMode then
+        coroutine.waitForRenderDone()
+    end
 
     ctrl:PlayAnimationIn()
     
@@ -112,13 +121,17 @@ end
 
 
 PhaseWatch._OnActivated = HL.Override() << function(self)
+    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
+    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 end
 
 
 
 
 PhaseWatch._OnDeActivated = HL.Override() << function(self)
-    self.m_watchBlurCtrl:Hide()
+    if not InputManagerInst.inChangingInputDevice then
+        self.m_watchBlurCtrl:Hide()
+    end
 end
 
 
@@ -140,7 +153,9 @@ end
 PhaseWatch._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self.m_watchPanel.uiCtrl:ChangePanelCfg("clearedPanel", false)
     self.m_clearScreenKey = UIManager:RecoverScreen(self.m_clearScreenKey)
-    self.m_watchBlurCtrl.view.fullScreenBlurScene.gameObject:SetActive(false)
+    if not InputManagerInst.inChangingInputDevice then
+        self.m_watchBlurCtrl.view.fullScreenBlurScene.gameObject:SetActive(false)
+    end
     
     self.m_watchPanel.uiCtrl.view.animationWrapper.autoPlay = false
 end
@@ -181,9 +196,10 @@ PhaseWatch._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table
     local _, blurPanel = UIManager:IsOpen(PanelId.FullScreenSceneBlur)
     if blurPanel then
         
-        local src = self.m_watchBlurCtrl.view.blurBG.rawImage.texture
-        local dst = blurPanel.view.blurBG.rawImage.texture
-        CS.UnityEngine.Graphics.Blit(src, dst)
+        
+        
+        
+        blurPanel.view.blurBG:SetCustomBlurImg(self.m_watchBlurCtrl.view.blurBG.rawImage.texture)
     end
 end
 
@@ -191,7 +207,11 @@ end
 
 
 PhaseWatch._OnDestroy = HL.Override() << function(self)
-    self.m_watchBlurCtrl:PlayAnimationOutAndClose()
+    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterNormal()
+    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(true)
+    if not InputManagerInst.inChangingInputDevice then
+        self.m_watchBlurCtrl:PlayAnimationOutAndClose()
+    end
     self:_ChangeBlurSetting(false)
     self.m_watchPanel.uiCtrl.view.scrollViewScrollRect.verticalNormalizedPosition = 1
 end

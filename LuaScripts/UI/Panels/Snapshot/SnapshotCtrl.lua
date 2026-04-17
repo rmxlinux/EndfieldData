@@ -1654,6 +1654,7 @@ SnapshotCtrl._ClickShutter = HL.Method() << function(self)
             end
         end,
     })
+    GameInstance.player.statisticValueSystem:IncrementClientStatisticValueByType(GEnums.StatType.CltTakePhoto)
 end
 
 
@@ -1907,7 +1908,15 @@ SnapshotCtrl._ChangeTeamFormation = HL.Method(HL.Number) << function(self, csInd
     if csIndex < 0 then
         formationManager:ExitPhotoFormation()
     else
-        formationManager:EnterPhotoFormation(formationManager.formationUIData[csIndex].Item1);
+        local resultId = formationManager:EnterPhotoFormation(formationManager.formationUIData[csIndex].Item1);
+        if resultId < 0 then
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_SNAPSHOT_FORBID_COMMON_TOAST)
+            self:_StartCoroutine(function()
+                coroutine.step()
+                
+                self.view.menuContentNode.menuFormationNode.formationDropDown:SetSelected(0)
+            end)
+        end
     end
 end
 
@@ -1999,10 +2008,10 @@ SnapshotCtrl._ChangeSticker = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << functi
         self:_EnableStickerEditMode(false, isInit)
     else
         self.view.stickerTouchPlate.gameObject:SetActive(true)
-        
         self:_EnableStickerEditMode(true, isInit)
-        
-        self.view.stickerMoveHint.gameObject:SetActive(false)
+        if not DeviceInfo.usingController then
+            self.view.stickerMoveHint.gameObject:SetActive(false)
+        end
         stickerImg.gameObject:SetActive(true)
         self.view.stickerImgAnimationWrapper:Play("stickertouchimg_in")
         stickerImg:LoadSprite(UIConst.UI_SPRITE_SNAPSHOT_STICKER, info.icon)

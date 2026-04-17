@@ -471,6 +471,7 @@ FacCacheSlot._OnDropItem = HL.Method(HL.Forward('UIDragHelper'), HL.Opt(CS.Proto
         if self:_IsFluidModeBottleDrop(dragInfo.itemId) then
             if self:_CheckIsValidBottleInLockFormula(dragInfo.itemId) then
                 core:Message_OpFillingFluidComWithDepot(Utils.getCurrentChapterId(), componentId, dragInfo.itemId)
+                FactoryUtils.playAudioWhenFillingItem(dragInfo.itemId, self.m_itemInfo.id, self.m_itemInfo.count)
             end
         else
             if self:_CheckIsValidItemInLockFormula(dragInfo.itemId) then
@@ -487,6 +488,7 @@ FacCacheSlot._OnDropItem = HL.Method(HL.Forward('UIDragHelper'), HL.Opt(CS.Proto
         if self:_IsFluidModeBottleDrop(dragInfo.itemId) then
             if self:_CheckIsValidBottleInLockFormula(dragInfo.itemId) then
                 core:Message_OpFillingFluidComWithBag(Utils.getCurrentChapterId(), componentId, dragInfo.csIndex)
+                FactoryUtils.playAudioWhenFillingItem(dragInfo.itemId, self.m_itemInfo.id, self.m_itemInfo.count)
             end
         else
             if self:_CheckIsValidItemInLockFormula(dragInfo.itemId) then

@@ -144,6 +144,24 @@ CommonPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     })
 
+    self.view.toggle.tipsBtn.onClick:AddListener(function()
+        local toggleArg = self.m_args.toggle
+        if toggleArg and not string.isEmpty(toggleArg.toggleTips) then
+            if self.view.toggle.tipsInfoNode.gameObject.activeSelf then
+                self.view.toggle.tipsInfoNode:CloseSelf()
+            else
+                self.view.toggle.tipsInfoNode:OpenSelf()
+                if DeviceInfo.usingController then
+                    self.view.toggle.tipsInfoNaviGroup:ManuallyFocus()
+                end
+            end
+        end
+    end)
+    self.view.toggle.tipsInfoNaviGroup.onIsFocusedChange:AddListener(function(isFocus)
+        if not isFocus then
+            self.view.toggle.tipsInfoNode:CloseSelf()
+        end
+    end)
 end
 
 
@@ -174,10 +192,10 @@ end
 
 CommonPopUpCtrl._FreezeWorld = HL.Method() << function(self)
     self:_ResumeWorld()
-    self.m_timeScaleHandler = TimeManagerInst:StartChangeTimeScale(0, CS.Beyond.TimeManager.ChangeTimeScaleReason.UIPanel)
-
+    self.m_timeScaleHandler = Utils.FreezeWorldByUI()
+    AudioAdapter.PostEvent("au_global_contr_fullscreen_menu_pause")
     if self.m_args.pauseGame == true then
-        GameWorld.worldInfo:TryPauseSubGame(GEnums.GameTimeFreezeReason.UI)
+        GameWorld.worldInfo:TryPauseGameTime(GEnums.GameTimeFreezeReason.UI)
     end
 end
 
@@ -185,11 +203,11 @@ end
 
 CommonPopUpCtrl._ResumeWorld = HL.Method() << function(self)
     if self.m_timeScaleHandler > 0 then
-        TimeManagerInst:StopChangeTimeScale(self.m_timeScaleHandler)
+        Utils.ResumeWorldByUI(self.m_timeScaleHandler)
         self.m_timeScaleHandler = 0
-
+        AudioAdapter.PostEvent("au_global_contr_fullscreen_menu_resume")
         if self.m_args.pauseGame == true then
-            GameWorld.worldInfo:TryResumeSubGame(GEnums.GameTimeFreezeReason.UI)
+            GameWorld.worldInfo:TryResumeGameTime(GEnums.GameTimeFreezeReason.UI)
         end
     end
 end
@@ -413,23 +431,32 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
         Notify(MessageConst.TOGGLE_IN_MAIN_HUD_STATE, { key = "commonPopUp", isInMainHud = false })
     end
 
-    if self.m_args.toggle ~= nil then
+    local toggleArg = self.m_args.toggle
+    if toggleArg ~= nil then
         
         self.view.toggle.toggle.onValueChanged:RemoveAllListeners()
         self.view.toggle.toggle.onValueChanged:AddListener(function(isOn)
-            local onValueChanged = self.m_args.toggle.onValueChanged
+            local onValueChanged = toggleArg.onValueChanged
             if onValueChanged ~= nil then
                 onValueChanged(isOn)
             end
         end)
         
-        local styleType = self.m_args.toggle.styleType or EToggleStyle.Square
+        local styleType = toggleArg.styleType or EToggleStyle.Square
         self:_SetToggleStyle(styleType)
         
         self.view.toggle.gameObject:SetActive(true)
         
-        self.view.toggle.toggleText.text = self.m_args.toggle.toggleText
-        self.view.toggle.toggle.isOn = self.m_args.toggle.isOn
+        self.view.toggle.toggleText.text = toggleArg.toggleText
+        self.view.toggle.toggle.isOn = toggleArg.isOn
+        
+        if string.isEmpty(toggleArg.toggleTips) then
+            self.view.toggle.tipsNode.gameObject:SetActive(false)
+        else
+            self.view.toggle.tipsInfoNode.gameObject:SetActive(false)
+            self.view.toggle.tipsNode.gameObject:SetActive(true)
+            self.view.toggle.tipsInfoTxt:SetAndResolveTextStyle(toggleArg.toggleTips)
+        end
     else
         
         self.view.toggle.gameObject:SetActive(false)
@@ -559,10 +586,10 @@ CommonPopUpCtrl._OnClickConfirm = HL.Method() << function(self)
             return
         end
         if args.onConfirm then
-            if args.input then
+            if args.input or args.inputMore then
                 args.onConfirm(text)
             else
-                args.onConfirm(text)
+                args.onConfirm()
             end
         end
     end
@@ -700,4 +727,3 @@ CommonPopUpCtrl._TryProcessInterruptMessage = HL.Method(HL.Boolean) << function(
 end
 
 HL.Commit(CommonPopUpCtrl)
-

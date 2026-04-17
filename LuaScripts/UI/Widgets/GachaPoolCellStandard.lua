@@ -60,24 +60,9 @@ GachaPoolCellStandard._InitData = HL.Method() << function(self)
     self.m_choicePackJumpArg = {
         poolId = self.m_poolId,
         remainChoicePackProgress = self.m_baseInfo.cumulateChoicePackInfo.remainNeedPullCount,
-        charIds = nil,
-        charInfoInstIds = nil,
-        previewCharInstIdList = nil,
-        previewMaxCharInstIdList = nil,
+        charIds = self.m_baseInfo.previewCharList,
     }
     
-    
-    local ids = {}
-    for k = 1, 5 do
-        local btnNode = self.view["showCharInfoBtn" .. k]
-        if btnNode then
-            if btnNode.config then
-                table.insert(ids, btnNode.config.CHAR_ID)
-            end
-        end
-    end
-    
-    self.m_choicePackJumpArg.charIds = ids
     self.m_choicePackJumpArg.onSuccess = function()
         GachaPoolCellStandard.Super._UpdateBaseData(self)
         self:_RefreshAllUI()

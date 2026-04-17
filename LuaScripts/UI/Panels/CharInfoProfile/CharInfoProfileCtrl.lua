@@ -47,6 +47,8 @@ local PANEL_ID = PanelId.CharInfoProfile
 
 
 
+
+
 CharInfoProfileCtrl = HL.Class('CharInfoProfileCtrl', uiCtrl.UICtrl)
 
 
@@ -133,6 +135,15 @@ CharInfoProfileCtrl.m_dungeonId = HL.Field(HL.String) << ""
 
 
 
+CharInfoProfileCtrl.m_viewStartTs = HL.Field(HL.Number) << 0
+
+
+CharInfoProfileCtrl.m_viewEndTs = HL.Field(HL.Number) << 0
+
+
+
+
+
 
 CharInfoProfileCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_charTemplateId = args.initCharInfo.templateId
@@ -180,12 +191,18 @@ CharInfoProfileCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end)
     if success then
         self.view.messageBtn.onClick:AddListener(function()
-            PhaseManager:OpenPhase(PhaseId.DungeonEntry, { dungeonId = self.m_dungeonId })
+            PhaseManager:GoToPhase(PhaseId.DungeonEntry, { dungeonId = self.m_dungeonId })
         end)
     else
         self.m_dungeonId = ""
         self.view.messageBtn.gameObject:SetActive(false)
     end
+
+    self.m_viewStartTs = DateTimeUtils.GetCurrentTimestampBySeconds()
+    EventLogManagerInst:GameEvent_CharInfoProfileView(
+        self.m_charTemplateId,
+       "enter",
+        0)
 end
 
 
@@ -193,6 +210,13 @@ end
 CharInfoProfileCtrl.OnClose = HL.Override() << function(self)
     self:_SendProfileRead()
     self:_ClearVoice()
+
+    self.m_viewEndTs = DateTimeUtils.GetCurrentTimestampBySeconds()
+    local viewTime = math.max(self.m_viewEndTs - self.m_viewStartTs, 0)
+    EventLogManagerInst:GameEvent_CharInfoProfileView(
+        self.m_charTemplateId,
+        "exit",
+        viewTime)
 end
 
 
@@ -412,6 +436,7 @@ CharInfoProfileCtrl._GetTagShowData = HL.Method(HL.String).Return(HL.Table) << f
     local tagData = Tables.tagDataTable[tagId]
     
     local tagGroupData = Tables.tagGroupDataTable[tagData.tagGroupId]
+    tagShowData.id = tagId
     tagShowData.tageType = tagGroupData.tagGroupName
     tagShowData.tageName = tagData.tagName
     if self.m_charTagDescData then
@@ -469,6 +494,10 @@ CharInfoProfileCtrl._RefreshMessage = HL.Method() << function(self)
             end
             if isOn then
                 cell.simpleStateController:SetState(MESSAGE_STATE_NAME.EXPANDED)
+                EventLogManagerInst:GameEvent_CharInfoProfileRead(
+                    self.m_charTemplateId,
+                    "char_info",
+                    data.id)
             else
                 cell.simpleStateController:SetState(MESSAGE_STATE_NAME.COLLAPSED)
             end
@@ -538,6 +567,11 @@ CharInfoProfileCtrl._RefreshRecord = HL.Method() << function(self)
                 if self.m_charBagSystem:IsCharDocUnread(data.id) then
                     self.m_charBagSystem:SetCharDocRead({ data.id })
                 end
+
+                EventLogManagerInst:GameEvent_CharInfoProfileRead(
+                    self.m_charTemplateId,
+                    "char_profile",
+                    data.id)
             end)
             cell.btnPackUp.onClick:RemoveAllListeners()
             cell.btnPackUp.onClick:AddListener(function()
@@ -611,6 +645,11 @@ CharInfoProfileCtrl._VoiceOnUpdateCell = HL.Method(HL.Table, HL.Number) << funct
             if self.m_charBagSystem:IsCharVoiceUnread(data.id) then
                 self.m_charBagSystem:SetCharVoiceRead({ data.id })
             end
+
+            EventLogManagerInst:GameEvent_CharInfoProfileRead(
+                self.m_charTemplateId,
+                "char_voice",
+                data.id)
         end)
         if self.m_charBagSystem:IsCharVoiceUnread(data.id) then
             self.m_readVoices = self.m_readVoices or {}

@@ -80,13 +80,6 @@ end
 
 DungeonSettlementPopupCtrl.OnShowDungeonResult = HL.StaticMethod(HL.Any) << function(args)
     local dungeonId, leaveTimeDuration, useStaminaReduce = unpack(args)
-
-    
-    if DungeonUtils.dungeonTypeValidate(dungeonId, DungeonConst.DUNGEON_CATEGORY.WorldLevel) then
-        GameInstance.dungeonManager:LeaveDungeon()
-        return
-    end
-
     LuaSystemManager.commonTaskTrackSystem:AddRequest("DungeonSettlement", function()
         if not Utils.isInDungeon() then
             
@@ -487,7 +480,7 @@ DungeonSettlementPopupCtrl._UpdateResultState = HL.Method() << function(self)
         local curGameTimeRecord = DungeonSettlementPopupCtrl.s_cachedCompleteResult.curGameTimeRecord
         local isNewTimeRecord = DungeonSettlementPopupCtrl.s_cachedCompleteResult.isNewTimeRecord
 
-        self.view.curGameTimeTxt.text = UIUtils.getLeftTimeToSecond(curGameTimeRecord / 1000)
+        self.view.curGameTimeTxt.text = UIUtils.getLeftTimeToSecond(math.floor(curGameTimeRecord / 1000))
         self.view.newTimeRecord.gameObject:SetActiveIfNecessary(isNewTimeRecord)
     end
     self.view.timeInfoNode.gameObject:SetActiveIfNecessary(showTimeInfo)

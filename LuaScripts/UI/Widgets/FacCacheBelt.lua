@@ -47,6 +47,9 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
+
 FacCacheBelt = HL.Class('FacCacheBelt', UIWidgetBase)
 
 local MAX_VIEW_PORT_COUNT = 6
@@ -91,6 +94,9 @@ FacCacheBelt.m_isInSingleState = HL.Field(HL.Boolean) << false
 FacCacheBelt.m_onInitializeFinished = HL.Field(HL.Function)
 
 
+FacCacheBelt.m_needRefreshPortState = HL.Field(HL.Boolean) << false
+
+
 
 
 FacCacheBelt._OnFirstTimeInit = HL.Override() << function(self)
@@ -114,6 +120,21 @@ end
 FacCacheBelt._OnDestroy = HL.Override() << function(self)
     self:_UnRegisterInterested()
     self.m_cachedSprite = nil
+end
+
+
+
+FacCacheBelt._OnEnable = HL.Override() << function(self)
+    if self.m_needRefreshPortState then
+        self.m_needRefreshPortState = false
+        self:RefreshBeltCellsState()
+    end
+end
+
+
+
+FacCacheBelt._OnDisable = HL.Override() << function(self)
+    self.m_needRefreshPortState = true
 end
 
 

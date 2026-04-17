@@ -37,7 +37,7 @@ GiftFeatureTagsNode.InitGiftFeatureTagsNode = HL.Method(HL.Any).Return(HL.Boolea
         self.view.areaImg:LoadSprite(UIConst.UI_SPRITE_SHIP, tagConfig.iconName)
     end
 
-    local isPopular = giftData.isPopular and (string.isEmpty(giftData.finishPopularTimeId) or Utils.isCurTimeInTimeIdRange(giftData.finishPopularTimeId))
+    local isPopular = giftData.isPopular and Utils.isCurTimeInTimeIdRange(giftData.finishPopularTimeId)
     self.view.hotNode.gameObject:SetActive(isPopular)
     if isPopular then
         local isShowLeftTime = giftData.isShowPopularFinishTime and not string.isEmpty(giftData.finishPopularTimeId)

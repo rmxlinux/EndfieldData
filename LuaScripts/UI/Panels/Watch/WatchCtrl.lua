@@ -674,7 +674,7 @@ WatchCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             hideBlur = true,
             onConfirm = function()
                 logger.info("click quit btn on watch")
-                GameInstance.instance:ReturnToLogin()
+                GameInstance.instance:ReturnToLoginWithDelay()
             end,
         })
     end)

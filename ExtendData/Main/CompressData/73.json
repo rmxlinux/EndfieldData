@@ -1255,6 +1255,24 @@
       "childConditions": [
         {
           "weight": {
+            "_value": 16.0
+          },
+          "condition": {
+            "buffId": {
+              "_value": "buff_eny_0054_hsmino_consume_fire"
+            },
+            "buffOwner": {
+              "_name": ""
+            },
+            "compareType": 3,
+            "layerCnt": {
+              "_value": 1
+            },
+            "$type": "Beyond.Gameplay.AI.Condition.CheckBuffStackNum"
+          }
+        },
+        {
+          "weight": {
             "_value": 12.0
           },
           "condition": {
@@ -1270,24 +1288,6 @@
             "skipCheckDistance": {},
             "skipCheckAngle": {},
             "$type": "Beyond.Gameplay.AI.Condition.CheckCanCastSkill"
-          }
-        },
-        {
-          "weight": {
-            "_value": 16.0
-          },
-          "condition": {
-            "buffId": {
-              "_value": "buff_eny_0054_hsmino_consume_fire"
-            },
-            "buffOwner": {
-              "_name": ""
-            },
-            "compareType": 3,
-            "layerCnt": {
-              "_value": 1
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.CheckBuffStackNum"
           }
         },
         {
@@ -1345,111 +1345,11 @@
     },
     {
       "_position": {
-        "x": 2506.612,
-        "y": 369.173
-      },
-      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
-      "$id": "50"
-    },
-    {
-      "_action": {
-        "checkMarker": [],
-        "behavior": {
-          "tag": {
-            "tagName": "AI/Enemy/Behavior/CastSkillInRange",
-            "tagId": 1135958862
-          }
-        },
-        "target": {
-          "_name": "MainCharacter",
-          "_targetVariableID": "d6da9459-a0bd-4efb-8a8d-77d47b501b0e"
-        },
-        "skillData": {
-          "_value": {
-            "skillRange": 25.0,
-            "skillID": "eny_0054_hsmino_skill05_hard",
-            "cancelSkillExclusive": true
-          }
-        },
-        "seqskillData": [],
-        "targetPos": {},
-        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
-      },
-      "additionalWidth": 270.0,
-      "_position": {
-        "x": 2177.808,
-        "y": 615.9506
-      },
-      "_comment": "三连烟花",
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "51"
-    },
-    {
-      "_condition": {
-        "buffId": {
-          "_value": "buff_eny_0054_hsmino_fullfire"
-        },
-        "buffOwner": {
-          "_name": ""
-        },
-        "layerCnt": {
-          "_value": 1
-        },
-        "$type": "Beyond.Gameplay.AI.Condition.CheckBuffStackNum"
-      },
-      "additionalWidth": 451.0,
-      "_position": {
-        "x": 2647.443,
-        "y": 509.6756
-      },
-      "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
-      "$id": "52"
-    },
-    {
-      "_action": {
-        "checkMarker": [],
-        "behavior": {
-          "tag": {
-            "tagName": "AI/Enemy/Behavior/Idle",
-            "tagId": 1556550670
-          }
-        },
-        "target": {
-          "_name": "Target",
-          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-        },
-        "skillData": {
-          "_value": {
-            "skillRange": 6.0,
-            "skillID": "eny_0054_hsmino_skill01_hard",
-            "cancelSkillExclusive": true
-          }
-        },
-        "seqskillData": [],
-        "targetPos": {},
-        "idleWaitTime": {
-          "x": 0.5,
-          "y": 1.0
-        },
-        "idleFaceToTarget": true,
-        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
-      },
-      "additionalWidth": 270.0,
-      "_position": {
-        "x": 2739.527,
-        "y": 619.6337
-      },
-      "_comment": "fadai",
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "53"
-    },
-    {
-      "_position": {
         "x": 2398.324,
         "y": 1068.04
       },
       "$type": "NodeCanvas.BehaviourTrees.Sequencer",
-      "$id": "54"
+      "$id": "50"
     },
     {
       "failureRemap": 1,
@@ -1459,7 +1359,7 @@
         "y": 1208.986
       },
       "$type": "NodeCanvas.BehaviourTrees.Remapper",
-      "$id": "55"
+      "$id": "51"
     },
     {
       "_condition": {
@@ -1493,7 +1393,7 @@
         "y": 1344.493
       },
       "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
-      "$id": "56"
+      "$id": "52"
     },
     {
       "_subTree": {
@@ -1514,7 +1414,7 @@
         "y": 1509.069
       },
       "$type": "NodeCanvas.BehaviourTrees.SubTree",
-      "$id": "57"
+      "$id": "53"
     },
     {
       "_action": {
@@ -1547,7 +1447,7 @@
       },
       "_comment": "三连烟花",
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "58"
+      "$id": "54"
     },
     {
       "_condition": {
@@ -1566,6 +1466,106 @@
       "_position": {
         "x": 2933.694,
         "y": 1388.653
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
+      "$id": "55"
+    },
+    {
+      "_action": {
+        "checkMarker": [],
+        "behavior": {
+          "tag": {
+            "tagName": "AI/Enemy/Behavior/Idle",
+            "tagId": 1556550670
+          }
+        },
+        "target": {
+          "_name": "Target",
+          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+        },
+        "skillData": {
+          "_value": {
+            "skillRange": 6.0,
+            "skillID": "eny_0054_hsmino_skill01_hard",
+            "cancelSkillExclusive": true
+          }
+        },
+        "seqskillData": [],
+        "targetPos": {},
+        "idleWaitTime": {
+          "x": 0.5,
+          "y": 1.0
+        },
+        "idleFaceToTarget": true,
+        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
+      },
+      "additionalWidth": 270.0,
+      "_position": {
+        "x": 2994.701,
+        "y": 1496.443
+      },
+      "_comment": "fadai",
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "56"
+    },
+    {
+      "_position": {
+        "x": 2506.612,
+        "y": 369.173
+      },
+      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
+      "$id": "57"
+    },
+    {
+      "_action": {
+        "checkMarker": [],
+        "behavior": {
+          "tag": {
+            "tagName": "AI/Enemy/Behavior/CastSkillInRange",
+            "tagId": 1135958862
+          }
+        },
+        "target": {
+          "_name": "MainCharacter",
+          "_targetVariableID": "d6da9459-a0bd-4efb-8a8d-77d47b501b0e"
+        },
+        "skillData": {
+          "_value": {
+            "skillRange": 25.0,
+            "skillID": "eny_0054_hsmino_skill05_hard",
+            "cancelSkillExclusive": true
+          }
+        },
+        "seqskillData": [],
+        "targetPos": {},
+        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
+      },
+      "additionalWidth": 270.0,
+      "_position": {
+        "x": 2177.808,
+        "y": 615.9506
+      },
+      "_comment": "三连烟花",
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "58"
+    },
+    {
+      "_condition": {
+        "buffId": {
+          "_value": "buff_eny_0054_hsmino_fullfire"
+        },
+        "buffOwner": {
+          "_name": ""
+        },
+        "layerCnt": {
+          "_value": 1
+        },
+        "$type": "Beyond.Gameplay.AI.Condition.CheckBuffStackNum"
+      },
+      "additionalWidth": 451.0,
+      "_position": {
+        "x": 2647.443,
+        "y": 509.6756
       },
       "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
       "$id": "59"
@@ -1601,8 +1601,8 @@
       },
       "additionalWidth": 270.0,
       "_position": {
-        "x": 2994.701,
-        "y": 1496.443
+        "x": 2739.527,
+        "y": 619.6337
       },
       "_comment": "fadai",
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
@@ -4406,7 +4406,7 @@
         "$ref": "49"
       },
       "_targetNode": {
-        "$ref": "54"
+        "$ref": "57"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     },
@@ -4442,6 +4442,24 @@
         "$ref": "50"
       },
       "_targetNode": {
+        "$ref": "54"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "50"
+      },
+      "_targetNode": {
+        "$ref": "55"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "51"
+      },
+      "_targetNode": {
         "$ref": "52"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
@@ -4457,16 +4475,16 @@
     },
     {
       "_sourceNode": {
-        "$ref": "54"
+        "$ref": "55"
       },
       "_targetNode": {
-        "$ref": "55"
+        "$ref": "56"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     },
     {
       "_sourceNode": {
-        "$ref": "54"
+        "$ref": "57"
       },
       "_targetNode": {
         "$ref": "58"
@@ -4475,28 +4493,10 @@
     },
     {
       "_sourceNode": {
-        "$ref": "54"
+        "$ref": "57"
       },
       "_targetNode": {
         "$ref": "59"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "55"
-      },
-      "_targetNode": {
-        "$ref": "56"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "56"
-      },
-      "_targetNode": {
-        "$ref": "57"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     },

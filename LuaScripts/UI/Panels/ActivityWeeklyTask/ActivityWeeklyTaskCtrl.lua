@@ -24,6 +24,7 @@ local PANEL_ID = PanelId.ActivityWeeklyTask
 
 
 
+
 ActivityWeeklyTaskCtrl = HL.Class('ActivityWeeklyTaskCtrl', uiCtrl.UICtrl)
 
 
@@ -240,6 +241,12 @@ end
 
 ActivityWeeklyTaskCtrl.OnClose = HL.Override() << function(self)
     self.m_taskCells:OnClose()
+end
+
+
+
+ActivityWeeklyTaskCtrl.OnActivityCenterNaviFailed = HL.Method() << function(self)
+    self:_SetNaviTarget(1)
 end
 
 

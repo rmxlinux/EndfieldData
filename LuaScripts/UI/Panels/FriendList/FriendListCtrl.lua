@@ -30,6 +30,7 @@ local PANEL_ID = PanelId.FriendList
 
 
 
+
 FriendListCtrl = HL.Class('FriendListCtrl', uiCtrl.UICtrl)
 
 
@@ -141,7 +142,14 @@ FriendListCtrl.OnCellChange = HL.Method() << function(self)
     end
 
     self:_UpdateCache()
-    self:_Refresh(false, true)
+    local inputText = self.view.inputField.text
+    if string.isEmpty(inputText) then
+        self:_Refresh(false, true)
+        return
+    end
+
+    self:_RefreshListHeader()
+    self.view.friendList:OnChangeInputField(inputText)
 end
 
 
@@ -372,10 +380,7 @@ end
 
 
 
-
-
-FriendListCtrl._Refresh = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, loading, stayPos)
-    
+FriendListCtrl._RefreshListHeader = HL.Method() << function(self)
     if self.m_isVisit or self.m_isPsnFriend then
         self.view.friendCountTxt.text = string.format("%d", #self.m_friendList)
     else
@@ -386,6 +391,14 @@ FriendListCtrl._Refresh = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(
 
     local hasValue, _ = GameInstance.player.spaceship:TryGetRoom(Tables.spaceshipConst.guestRoomId)
     self.view.shipRoot.gameObject:SetActiveIfNecessary(hasValue)
+end
+
+
+
+
+
+FriendListCtrl._Refresh = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, loading, stayPos)
+    self:_RefreshListHeader()
 
     if stayPos then
         self.view.friendList:RefreshInfoStayPos(self.m_friendList)

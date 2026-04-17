@@ -38,6 +38,9 @@ GachaImportantRewardPopupCtrl.m_info = HL.Field(HL.Table)
 
 
 
+
+
+
 GachaImportantRewardPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitUI()
     self.m_info = arg
@@ -70,9 +73,19 @@ end
 GachaImportantRewardPopupCtrl._RefreshAllUI = HL.Method() << function(self)
     local itemId = self.m_info.itemId
     self.view.itemIcon:InitItemIcon(itemId, true)
+    
     local itemData = Tables.itemTable[itemId]
-    self.view.itemNameTxt.text = itemData.name
-    self.view.descTxt:SetAndResolveTextStyle(Language.LUA_GACHA_GOT_TESTIMONIAL_IMPORTANT_DESC)
+    local itemName = itemData.name
+    if self.m_info.itemCount then
+        itemName = string.format(Language.LUA_COMMON_NAME_X_COUNT, itemData.name, self.m_info.itemCount)
+    end
+    self.view.itemNameTxt.text = itemName
+    
+    if self.m_info.desc then
+        self.view.descTxt:SetAndResolveTextStyle(self.m_info.desc)
+    else
+        self.view.descTxt:SetAndResolveTextStyle(Language.LUA_GACHA_GOT_TESTIMONIAL_IMPORTANT_DESC)
+    end
 
     self.view.tipsBtn.onClick:RemoveAllListeners()
     self.view.tipsBtn.onClick:AddListener(function()

@@ -82,7 +82,7 @@ end
 
 RegionMapCtrl._OnClickLevelBtn = HL.Method() << function(self)
     self:ChangePanelCfg("gyroscopeEffect", Types.EPanelGyroscopeEffect.Disable)
-    self.view.luaPanel.animationWrapper:PlayOutAnimation()
+    self:PlayAnimationOutWithCallback()
 end
 
 

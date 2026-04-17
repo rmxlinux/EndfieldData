@@ -197,8 +197,13 @@ FormulaCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cel
     local isSpecialFormula = string.isEmpty(craftInfo.craftId) or not Tables.factoryMachineCraftTable:ContainsKey(craftInfo.craftId)
 
     
-    craftInfo.time = craftInfo.time * self.m_extraFormulaSpeed
-    formulaCell.time.text = string.format(Language["LUA_CRAFT_CELL_STANDARD_TIME"], FactoryUtils.getCraftTimeStr(craftInfo.time, true))
+    if craftInfo.time ~= nil then
+        craftInfo.time = craftInfo.time * self.m_extraFormulaSpeed
+        formulaCell.time.text = string.format(Language["LUA_CRAFT_CELL_STANDARD_TIME"], FactoryUtils.getCraftTimeStr(craftInfo.time, true))
+        formulaCell.timeNode.gameObject:SetActive(true)
+    else
+        formulaCell.timeNode.gameObject:SetActive(false)
+    end
 
     
     local descSuccess, formulaTableData = Tables.factoryMachineCraftTable:TryGetValue(craftInfo.craftId)
@@ -207,6 +212,17 @@ FormulaCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cel
     end
     formulaCell.craftDescTxt.gameObject:SetActive(descSuccess)
     formulaCell.titleIcon.gameObject:SetActive(descSuccess)
+
+    
+    if formulaCell.timeLimitFormulaNode then
+        if craftInfo.craftId ~= nil then
+            formulaCell.timeLimitFormulaNode.gameObject:SetActive(FactoryUtils.isTimeLimitedFormula(craftInfo.craftId))
+            FactoryUtils.setTimeLimitedFormulaTagColor(formulaCell.timeLimitedColorTag1, craftInfo.craftId)
+            FactoryUtils.setTimeLimitedFormulaTagColor(formulaCell.timeLimitedColorTag2, craftInfo.craftId)
+        else
+            formulaCell.timeLimitFormulaNode.gameObject:SetActive(false)
+        end
+    end
 
     
     local isHighlighted = self:_IsFormulaHighlighted(craftInfo.craftId)
@@ -309,6 +325,9 @@ FormulaCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cel
         local hasRedDot = RedDotUtils.hasCraftRedDot(craftInfo.craftId)
         cell.redDot.gameObject:SetActive(hasRedDot)
     end
+
+    
+    formulaCell.sewageNode.gameObject:SetActive(craftInfo.isSewageCraft == true)
 
     cell.gameObject.name = craftInfo.craftId
 

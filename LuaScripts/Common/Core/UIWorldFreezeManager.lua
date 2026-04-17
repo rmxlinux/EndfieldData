@@ -152,7 +152,7 @@ do
     
     UIWorldFreezeManager._FreezeWorld = HL.Method(HL.Boolean) << function(self, isFrozen)
         if isFrozen then
-            self.m_timeScaleHandle = TimeManagerInst:StartChangeTimeScale(0, CS.Beyond.TimeManager.ChangeTimeScaleReason.UIPanel)
+            self.m_timeScaleHandle = Utils.FreezeWorldByUI()
             AudioAdapter.PostEvent("au_global_contr_fullscreen_menu_pause")
             
             if UIManager.uiCamera.cullingMask == UIConst.LAYERS.Nothing then
@@ -162,17 +162,10 @@ do
             end
         else
             if self.m_timeScaleHandle ~= -1 then
-                TimeManagerInst:StopChangeTimeScale(self.m_timeScaleHandle)
+                Utils.ResumeWorldByUI(self.m_timeScaleHandle)
                 self.m_timeScaleHandle = -1
                 AudioAdapter.PostEvent("au_global_contr_fullscreen_menu_resume")
             end
-        end
-        
-        
-        if GameWorld.isInited then
-            GameWorld.cutsceneManager:PauseTimelineByUI(isFrozen)
-            GameWorld.levelSeqManager:PauseTimelineByUI(isFrozen)
-            GameWorld.dialogTimelineManager:PauseTimelineByUI(isFrozen)
         end
     end
 
@@ -184,9 +177,9 @@ do
             return
         end
         if isPaused then
-            GameWorld.worldInfo:TryPauseSubGame(GEnums.GameTimeFreezeReason.UI)
+            GameWorld.worldInfo:TryPauseGameTime(GEnums.GameTimeFreezeReason.UI)
         else
-            GameWorld.worldInfo:TryResumeSubGame(GEnums.GameTimeFreezeReason.UI)
+            GameWorld.worldInfo:TryResumeGameTime(GEnums.GameTimeFreezeReason.UI)
         end
     end
 end

@@ -136,11 +136,6 @@
       "childConditions": [
         {
           "weight": {
-            "_value": 1.0
-          }
-        },
-        {
-          "weight": {
             "_value": 10.0
           },
           "condition": {
@@ -163,6 +158,11 @@
             },
             "$type": "Beyond.Gameplay.AI.Condition.CheckCanCastSkill"
           }
+        },
+        {
+          "weight": {
+            "_value": 1.0
+          }
         }
       ],
       "_position": {
@@ -171,32 +171,6 @@
       },
       "$type": "Beyond.Gameplay.AI.Nodes.ConditionalProbabilitySelector",
       "$id": "10"
-    },
-    {
-      "_action": {
-        "checkMarker": [],
-        "behavior": {
-          "tag": {
-            "tagName": "AI/Enemy/Behavior/FormationMove",
-            "tagId": -776112348
-          }
-        },
-        "target": {
-          "_name": "Target",
-          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
-        },
-        "skillData": {},
-        "seqskillData": [],
-        "targetPos": {},
-        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
-      },
-      "additionalWidth": 248.0,
-      "_position": {
-        "x": -137.4,
-        "y": 1195.8
-      },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "11"
     },
     {
       "_action": {
@@ -223,6 +197,32 @@
       "_position": {
         "x": -554.2121,
         "y": 1179.716
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "11"
+    },
+    {
+      "_action": {
+        "checkMarker": [],
+        "behavior": {
+          "tag": {
+            "tagName": "AI/Enemy/Behavior/FormationMove",
+            "tagId": -776112348
+          }
+        },
+        "target": {
+          "_name": "Target",
+          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+        },
+        "skillData": {},
+        "seqskillData": [],
+        "targetPos": {},
+        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
+      },
+      "additionalWidth": 248.0,
+      "_position": {
+        "x": -137.4,
+        "y": 1195.8
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "12"

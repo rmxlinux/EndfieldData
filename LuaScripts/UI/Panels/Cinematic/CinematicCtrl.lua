@@ -94,6 +94,7 @@ CinematicCtrl.OnShow = HL.Override() << function(self)
         local curCutsceneData = GameWorld.cutsceneManager.curMainTimelineData
         self.view.debugNode.gameObject:SetActive(true)
         self.view.textCutsceneId.text = curCutsceneData.cutsceneName
+        GameWorld.cutsceneManager:BindFrameDebugTextMarker(self.view.frameDebugText)
     end
 
     if UNITY_EDITOR and BEYOND_DEBUG then

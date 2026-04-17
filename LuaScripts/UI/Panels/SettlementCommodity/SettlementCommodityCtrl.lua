@@ -22,6 +22,8 @@ local PHASE_ID = PhaseId.SettlementCommodity
 
 
 
+
+
 SettlementCommodityCtrl = HL.Class('SettlementCommodityCtrl', uiCtrl.UICtrl)
 
 
@@ -32,6 +34,7 @@ SettlementCommodityCtrl = HL.Class('SettlementCommodityCtrl', uiCtrl.UICtrl)
 
 SettlementCommodityCtrl.s_messages = HL.StaticField(HL.Table) << {
     
+    [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = '_OnActivityStageUpdate',
 }
 
 
@@ -62,6 +65,12 @@ SettlementCommodityCtrl.m_onConfirmChangedCallback = HL.Field(HL.Function)
 
 
 
+SettlementCommodityCtrl.m_activityInfo = HL.Field(HL.Table)
+
+
+
+
+
 
 
 
@@ -84,7 +93,7 @@ end
 
 
 SettlementCommodityCtrl.OnAnimationInFinished = HL.Override() << function(self)
-    local firstCell = self.m_genTradeItemCellFunc(1)
+    local firstCell = self.m_genTradeItemCellFunc(self.m_curSelectedItemIndex)
     if firstCell then
         InputManagerInst.controllerNaviManager:SetTarget(firstCell.cellBtn)
     end
@@ -117,39 +126,74 @@ end
 
 SettlementCommodityCtrl._UpdateData = HL.Method() << function(self)
     self.m_itemDataList = {}
-    local hasCfg, basicData = Tables.settlementBasicDataTable:TryGetValue(self.m_stlId)
+    local hasCfg, stlCfg = Tables.settlementBasicDataTable:TryGetValue(self.m_stlId)
     if not hasCfg then
         logger.error("not exist table cfg, id: " .. self.m_stlId)
         return
     end
-    local domainId = basicData.domainId
+    local stlId = self.m_stlId
+    local domainId = stlCfg.domainId
     local domainCfg = Tables.domainDataTable[domainId]
     local moneyId = domainCfg.domainGoldItemId
     local moneyItemData = Tables.itemTable[moneyId]
     local moneyIcon = moneyItemData.iconId
+    local stlData = GameInstance.player.settlementSystem:GetUnlockSettlementData(stlId)
+    local stlLevelCfg = stlCfg.settlementLevelMap[stlData.level]
     
-    local levelData = basicData.settlementLevelMap[self.m_stlLevel]
+    self.m_activityInfo = DomainPOIUtils.getSettlementTradeActivityInfo()
+    local hasActivity = self.m_activityInfo.hasActivity and
+        self.m_activityInfo.domainActivityInfos[domainId] ~= nil and
+        self.m_activityInfo.domainActivityInfos[domainId][stlId] ~= nil
+    local stlActivityInfo
+    if hasActivity then
+        stlActivityInfo = self.m_activityInfo.domainActivityInfos[domainId][stlId]
+    end
+    
+    
+    local levelData = stlCfg.settlementLevelMap[self.m_stlLevel]
     for itemId, tradeItemData in pairs(levelData.settlementTradeItemMap) do
         local isCurSell = itemId == self.m_curSellItemId
         local isRecommend = itemId == self.m_curRecommendItemId
+        local stlItemTradeCfg = stlLevelCfg.settlementTradeItemMap[itemId]
         local itemData = Tables.itemTable[itemId]
         local localCount = Utils.getDepotItemCount(itemId, Utils.getCurrentScope(), domainId)
         
-        local tradeItemBundle = {
-            itemId = itemId,
-            itemName = itemData.name,
-            itemIcon = itemData.iconId,
-            rarity = itemData.rarity,
-            localCount = localCount,
-            price = tradeItemData.rewardMoneyCount,
-            moneyIcon = moneyIcon,
-            isCurSell = isCurSell,
-            isRecommend = isRecommend,
+        local rewardActivityMoneyCount = 0
+        
+        
+        
+        local isActivityItem = not string.isEmpty(stlItemTradeCfg.activityId)
+        local isHide = false
+        if isActivityItem then
+            isHide = not hasActivity or not GameInstance.player.inventory:IsItemFound(itemId)
+        else
+            isHide = not Utils.isCurTimeInTimeIdRange(stlItemTradeCfg.timeId, true)
+        end
+        if stlActivityInfo and stlActivityInfo[itemId] ~= nil then
+            rewardActivityMoneyCount = stlActivityInfo[itemId]
+        end
+        
+        
+        if not isHide then
+            local tradeItemBundle = {
+                itemId = itemId,
+                itemName = itemData.name,
+                itemIcon = itemData.iconId,
+                rarity = itemData.rarity,
+                localCount = localCount,
+                price = tradeItemData.rewardMoneyCount,
+                moneyIcon = moneyIcon,
+                isCurSell = isCurSell,
+                isActivityItem = isActivityItem,
+                isRecommend = isRecommend,
+                rewardActivityMoneyCount = rewardActivityMoneyCount,
 
-            recommendOrder = isRecommend and 1 or 0,
-            isCurSellOrder = isCurSell and 1 or 0,
-        }
-        table.insert(self.m_itemDataList, tradeItemBundle)
+                recommendOrder = isRecommend and 1 or 0,
+                isCurSellOrder = isCurSell and 1 or 0,
+                activityOrder = isActivityItem and 1 or 0,
+            }
+            table.insert(self.m_itemDataList, tradeItemBundle)
+        end
     end
     
     
@@ -157,7 +201,8 @@ SettlementCommodityCtrl._UpdateData = HL.Method() << function(self)
     
     
     
-    table.sort(self.m_itemDataList, Utils.genSortFunction({"isCurSellOrder", "recommendOrder", "price", "localCount", "itemId" }))
+    
+    table.sort(self.m_itemDataList, Utils.genSortFunction({ "isCurSellOrder", "activityOrder", "recommendOrder", "price", "localCount", "itemId" }))
 end
 
 
@@ -166,7 +211,7 @@ end
 
 
 SettlementCommodityCtrl._InitUI = HL.Method() << function(self)
-    self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+    self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
     
     self.view.closeBtn.onClick:AddListener(function()
         self:_CloseSelf()
@@ -213,16 +258,18 @@ SettlementCommodityCtrl._RefreshTradeItemCell = HL.Method(HL.Any, HL.Number) << 
     cell.cellBtn.onLongPress:RemoveAllListeners()
     local totalCount = #self.m_itemDataList
     if luaIndex > totalCount then
-        cell.gameObject.name = "Empty_"..luaIndex
+        cell.gameObject.name = "Empty_" .. luaIndex
         cell.nodeStateCtrl:SetState("EmptyState")
         cell.curSellStateCtrl:SetState("notCurSell")
-        cell.recommendStateCtrl:SetState("notRecommend")
+        cell.markStateCtrl:SetState("notRecommend")
+        cell.markStateCtrl:SetState("notActivity")
         cell.cellBtn.interactable = false
         return
     end
     
     local tradeItemBundle = self.m_itemDataList[luaIndex]
     local itemId = tradeItemBundle.itemId
+    local activityMoneyId = self.m_activityInfo.activityMoneyId
     cell.gameObject.name = itemId
     cell.itemIconImg:LoadSprite(UIConst.UI_SPRITE_ITEM, tradeItemBundle.itemIcon)
     cell.moneyImg:LoadSprite(UIConst.UI_SPRITE_WALLET, tradeItemBundle.moneyIcon)
@@ -231,6 +278,11 @@ SettlementCommodityCtrl._RefreshTradeItemCell = HL.Method(HL.Any, HL.Number) << 
     cell.localItemNumTxt.color = tradeItemBundle.localCount <= 0 and self.view.config.NUM_COLOR_NOT_ENOUGH or self.view.config.NUM_COLOR_ENOUGH
     cell.priceTxt.text = tradeItemBundle.price
     cell.rarityImg.color = UIUtils.getItemRarityColor(tradeItemBundle.rarity)
+    if tradeItemBundle.isActivityItem then
+        cell.activityMoneyImg:LoadSprite(UIConst.UI_SPRITE_WALLET, activityMoneyId)
+        cell.activityPriceTxt.text = tradeItemBundle.rewardActivityMoneyCount
+        cell.activityMarkImg.color = self.m_activityInfo.activityColor
+    end
     
     if self.m_curSelectedItemIndex ~= luaIndex then
         cell.nodeStateCtrl:SetState("NormalState")
@@ -243,10 +295,11 @@ SettlementCommodityCtrl._RefreshTradeItemCell = HL.Method(HL.Any, HL.Number) << 
         cell.curSellStateCtrl:SetState("notCurSell")
     end
     if tradeItemBundle.isRecommend then
-        cell.recommendStateCtrl:SetState("isRecommend")
+        cell.markStateCtrl:SetState("isRecommend")
     else
-        cell.recommendStateCtrl:SetState("notRecommend")
+        cell.markStateCtrl:SetState("notRecommend")
     end
+    cell.markStateCtrl:SetState(tradeItemBundle.isActivityItem and "isActivity" or "notActivity")
     
     cell.cellBtn.interactable = true
     cell.tipsBtn.onClick:AddListener(function()
@@ -327,6 +380,18 @@ SettlementCommodityCtrl._ChangeCurSelectedItem = HL.Method(HL.Number) << functio
         cell.nodeStateCtrl:SetState("SelectState")
     end
     self.m_curSelectedItemIndex = luaIndex
+end
+
+
+
+
+SettlementCommodityCtrl._OnActivityStageUpdate = HL.Method(HL.Any) << function(self, arg)
+    local activityId = unpack(arg)
+    if self.m_activityInfo == nil or self.m_activityInfo.activityId ~= activityId then
+        return
+    end
+    self:_UpdateData()
+    self:_RefreshAllUI()
 end
 
 

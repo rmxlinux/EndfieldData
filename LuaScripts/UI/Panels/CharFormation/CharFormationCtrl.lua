@@ -82,6 +82,7 @@ local CHAR_FORMATION_BLOCK_OBTAIN_WAYS_JUMP = "CharFormationBlockObtainWaysJump"
 
 
 
+
 CharFormationCtrl = HL.Class('CharFormationCtrl', uiCtrl.UICtrl)
 
 
@@ -147,10 +148,6 @@ CharFormationCtrl.m_weekRaidArg = HL.Field(HL.Table)
 CharFormationCtrl.m_curSelectTakeItemCount = HL.Field(HL.Number) << 0
 
 
-CharFormationCtrl.m_fromDialog = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -159,9 +156,6 @@ CharFormationCtrl.m_fromDialog = HL.Field(HL.Boolean) << false
 
 
 CharFormationCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
-    if type(args) == "table" and args.fromDialog == true then
-        self.m_fromDialog = true
-    end
     self:_ProcessArgs(args)
     self:_InitController()
     self:_UpdateWeekRaid()
@@ -184,13 +178,12 @@ CharFormationCtrl.OnShow = HL.Override() << function(self)
         self:RefreshCharInformation(self.m_singleCharInfo)
     end
 
+    if self.view.charList.gameObject.activeSelf then
+        self.view.charList.view.naviGroup:NaviToThisGroup()
+    end
+
     if self.m_isCharInfoNaviGroupFocused then
         self.view.charInfoNaviGroup:ManuallyFocus(false)
-        self:_StartCoroutine(function()
-            
-            coroutine.wait(0.3)
-            UIUtils.setAsNaviTarget(self.view.charInformation.charFormationTacticalItem.view.btnItem)
-        end)
     end
 end
 
@@ -476,6 +469,8 @@ CharFormationCtrl.SetState = HL.Method(HL.Number) << function(self, state)
     
     self.view.btnBackTouch.gameObject:SetActive(showMixConfirm)
 
+    self:_RefreshWeekRaidCarryExplosivesVisible(showFormation)
+
     self.preState = self.state
     self.state = state
 end
@@ -697,8 +692,8 @@ CharFormationCtrl._Init = HL.Method() << function(self)
     self.view.btnClose.onClick:RemoveAllListeners()
     self.view.btnClose.onClick:AddListener(function()
         local isOpen, phase = PhaseManager:IsOpen(PhaseId.Dialog)
-        if isOpen and self.m_fromDialog then
-            Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PhaseId.CharFormation, 0 })
+        if isOpen then
+            Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PhaseId.CharFormation, 1 })
         else
             self.m_phase:OnCommonBackClicked()
         end
@@ -962,9 +957,7 @@ CharFormationCtrl._EnterDungeon = HL.Method(HL.String, HL.Opt(HL.Table)) << func
     end
     if entered then
         
-        if self.m_fromDialog then
-            self:Notify(MessageConst.DIALOG_CLOSE_UI, { nil, nil, 0 })
-        end
+        self:Notify(MessageConst.DIALOG_CLOSE_UI, { nil, nil, 0 })
         if self.m_enterDungeonCallback then
             self.m_enterDungeonCallback(dungeonId)
         end
@@ -1015,6 +1008,7 @@ end
 CharFormationCtrl.CloseCharList = HL.Method() << function(self)
     UIUtils.PlayAnimationAndToggleActive(self.view.charList.view.animationWrapper, false)
     self:_ActiveTeamInfo(true)
+    InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.charList.view.naviGroup)
 end
 
 
@@ -1023,6 +1017,7 @@ end
 CharFormationCtrl._ActiveTeamInfo = HL.Method(HL.Boolean) << function(self, active)
     self.view.charTittleNode.gameObject:SetActive(active)
     self.view.infoNoe.gameObject:SetActive(active and not self.m_isFormationLocked)
+    self:_RefreshWeekRaidCarryExplosivesVisible(active)
 end
 
 
@@ -1195,13 +1190,28 @@ end
 
 
 
+
+CharFormationCtrl._RefreshWeekRaidCarryExplosivesVisible = HL.Method(HL.Boolean) << function(self, showTeamInfo)
+    
+    local isWeekRaid = self.m_weekRaidArg ~= nil
+    local success, maxCount = GameInstance.player.weekRaidSystem.techTypeValue:TryGetValue(GEnums.WeekRaidTechType.BombLimit)
+    self.view.carryingExplosives.gameObject:SetActive(isWeekRaid and success and maxCount > 0 and showTeamInfo)
+end
+
+
+
 CharFormationCtrl._UpdateWeekRaid = HL.Method() << function(self)
     local isWeekRaid = self.m_weekRaidArg ~= nil
-    
-    local success, maxCount = GameInstance.player.weekRaidSystem.techTypeValue:TryGetValue(GEnums.WeekRaidTechType.BombLimit)
-    self.view.carryingExplosives.gameObject:SetActive(isWeekRaid and success and maxCount > 0)
+    self:_RefreshWeekRaidCarryExplosivesVisible(self.state == UIConst.UI_CHAR_FORMATION_STATE.TeamWaitSet or
+        self.state == UIConst.UI_CHAR_FORMATION_STATE.TeamHasSet)
 
     if isWeekRaid then
+        local lastCount = GameInstance.player.weekRaidSystem.lastBombCount
+        local allCount = Utils.getItemCount(Tables.weekRaidConst.takeItemId, true, true)
+        self.m_curSelectTakeItemCount = math.min(lastCount, allCount)
+        if self.m_curSelectTakeItemCount ~= GameInstance.player.weekRaidSystem.lastBombCount then
+            GameInstance.player.weekRaidSystem:SetBombCount(self.m_curSelectTakeItemCount)
+        end
         CS.Beyond.Gameplay.Conditions.OnWeekRaidIntroCharFormationOpen.Trigger()
         self.view.carryingExplosives.addBtn.onClick:RemoveAllListeners()
         self.view.carryingExplosives.addBtn.onClick:AddListener(function()
@@ -1218,12 +1228,14 @@ CharFormationCtrl._AdjustSelectTakeItemCount = HL.Method() << function(self)
     UIManager:Open(PanelId.CommonItemNumSelect,{
         id = Tables.weekRaidConst.takeItemId,
         count = self.m_curSelectTakeItemCount,
-        maxCount = math.min(Utils.getItemCount(Tables.weekRaidConst.takeItemId, false, true), maxCount),
+        maxCount = math.min(Utils.getItemCount(Tables.weekRaidConst.takeItemId, true, true), maxCount),
         showItemInfoBtn = true,
         useSlider = true,
+        forceIncludeCurDepot = true,
         onComplete = function(num)
             if num ~= nil then
                 self.m_curSelectTakeItemCount = num
+                GameInstance.player.weekRaidSystem:SetBombCount(num)
             end
             self:_UpdateTakeItemInfo()
         end

@@ -14,6 +14,7 @@
 config = {
     
     CharInfo = {
+
         panels = {}, 
         systemId = "system_character",
         fov = 15.3818,
@@ -24,6 +25,7 @@ config = {
     },
     
     CharFormation = {
+
         panels = {},
         fov = 15.3818,
         systemId = "system_char_formation",
@@ -39,6 +41,7 @@ config = {
     },
     
     Level = {
+
         panels = {},
         fov = 15.3818,
         cannotForbid = true,
@@ -46,6 +49,7 @@ config = {
     },
     
     Dialog = {
+
         panels = {
             PanelId.DialogMask,
             PanelId.Dialog, 
@@ -55,6 +59,7 @@ config = {
     },
     
     DialogTimeline = {
+
         panels = {
             PanelId.DialogTimelineMask,
             PanelId.BigLogo,
@@ -65,6 +70,7 @@ config = {
     },
     
     Watch = {
+
         panels = {
             PanelId.Watch,
         },
@@ -77,6 +83,7 @@ config = {
     },
     
     SimpleSystem = {
+
         panels = {
             PanelId.SimpleSystem
         },
@@ -84,11 +91,12 @@ config = {
     },
     
     ManualCraft = {
+
         panels = {
             PanelId.ManualCraft
         },
         unlockSystemType = GEnums.UnlockSystemType.ManualCraft,
-        isSimpleUIPhase = true,
+        isSimpleUIPhase = false,
         checkCanOpen = function(arg)
             if arg and arg.showPopup and arg.itemId and GameInstance.player.facManualCraft:GetItemAccumulateCount(arg.itemId) <= 0 then
                 return false, Language.LUA_MANUAL_CRAFT_JUMP_FAIL_ITEM_LOCKED
@@ -98,6 +106,7 @@ config = {
     },
     
     ManualCraftPopups = {
+
         panels = {
             PanelId.ManualCraftPopups
         },
@@ -106,6 +115,7 @@ config = {
     },
     
     ManualcraftUpgradePopup = {
+
         panels = {
             PanelId.ManualcraftUpgradePopup,
         },
@@ -113,6 +123,7 @@ config = {
     },
     
     Mission = {
+
         panels = {
             PanelId.Mission,
         },
@@ -121,6 +132,7 @@ config = {
     },
     
     Cinematic = {
+
         panels = {
             PanelId.Cinematic,
             PanelId.BigLogo,
@@ -129,6 +141,7 @@ config = {
     },
     
     WeaponInfo = {
+
         panels = {},
         fov = 15.3818,
         unlockSystemType = GEnums.UnlockSystemType.Weapon,
@@ -137,6 +150,7 @@ config = {
     },
     
     Map = {
+
         panels = {},
         unlockSystemType = GEnums.UnlockSystemType.Map,
         checkCanOpen = function(arg)
@@ -145,6 +159,7 @@ config = {
     },
     
     RegionMap = {
+
         panels = {},
         fov = 40,
         unlockSystemType = GEnums.UnlockSystemType.Map,
@@ -158,6 +173,7 @@ config = {
     },
     
     ValuableDepot = {
+
         panels = {
             PanelId.ValuableDepot,
         },
@@ -167,6 +183,7 @@ config = {
     },
     
     Mail = {
+
         panels = {
             PanelId.Mail,
         },
@@ -175,6 +192,7 @@ config = {
     },
     
     RepairInteractive = {
+
         panels = {
             PanelId.RepairInteractive,
         },
@@ -182,6 +200,7 @@ config = {
     },
     
     Puzzle = {
+
         panels = {
             PanelId.Puzzle,
         },
@@ -189,6 +208,7 @@ config = {
     },
     
     PuzzleTrackPopup = {
+
         panels = {
             PanelId.PuzzleTrackPopup,
         },
@@ -196,6 +216,7 @@ config = {
     },
     
     Inventory = {
+
         panels = {},
         systemId = "system_inventory",
         checkCanOpen = function(arg)
@@ -210,6 +231,7 @@ config = {
     },
     
     Wiki = {
+
         panels = {},
         systemId = "system_wiki",
         disableEffectLodControl = true,
@@ -217,6 +239,7 @@ config = {
     },
     
     Shop = {
+
         panels = {
             PanelId.Shop,
         },
@@ -224,22 +247,29 @@ config = {
     },
     
     ShopTrade = {
+
         panels = {
             PanelId.ShopTrade,
         },
         unlockSystemType = GEnums.UnlockSystemType.DomainShop,
         checkCanOpen = function(arg)
+            
+            if Utils.isInBlackbox() then
+                return false
+            end
+
             if string.isEmpty(arg.domainId) then
                 return arg.friendRoleId ~= nil
             end
             
             local domainId = arg.domainId
-            return DomainPOIUtils.checkCanOpenDomainShop(domainId)
+            return DomainPOIUtils.checkCanOpenDomainShop(domainId), Language.LUA_DOMAIN_DEVELOPMENT_POI_UNLOCK_CLICK_TOAST
         end,
         isSimpleUIPhase = true,
     },
     
     ShopCreditPointsPopUp = {
+
         panels = {
             PanelId.ShopCreditPointsPopUp,
         },
@@ -247,6 +277,7 @@ config = {
     },
     
     GameSetting = {
+
         panels = {
             PanelId.GameSetting,
         },
@@ -254,10 +285,12 @@ config = {
     },
     
     FacMachine = {
+
         panels = {},
     },
     
     FacHUBData = {
+
         panels = {
             PanelId.FacHUBData,
         },
@@ -266,6 +299,7 @@ config = {
     },
     
     FacDepotSwitching = {
+
         panels = {
             PanelId.FacDepotSwitching,
         },
@@ -273,11 +307,13 @@ config = {
     },
     
     FacRegionUpgrade = {
+
         panels = {},
         isSimpleUIPhase = false,
     },
     
     FacBuildListSelect = {
+
         panels = {
             PanelId.FacBuildListSelect,
         },
@@ -300,6 +336,7 @@ config = {
     },
     
     FacTechTree = {
+
         checkCanOpen = function(arg)
             return FactoryUtils.checkCanOpenPhaseFacTechTree(arg)
         end,
@@ -308,6 +345,7 @@ config = {
     },
     
     FacFertilization = {
+
         panels = {
             PanelId.FacFertilization,
         },
@@ -315,6 +353,7 @@ config = {
     },
     
     FacBlueprint = {
+
         panels = {
             PanelId.FacBlueprint,
         },
@@ -330,6 +369,7 @@ config = {
     },
     
     RemoteComm = {
+
         panels = {
             PanelId.RemoteCommBG,
             PanelId.RemoteComm,
@@ -339,6 +379,7 @@ config = {
     },
     
     LostAndFound = {
+
         panels = {
             PanelId.LostAndFound,
         },
@@ -346,25 +387,28 @@ config = {
     },
     
     SNS = {
+
         panels = { },
         redDotName = "SNSWatchEntry",
         isSimpleUIPhase = false,
         unlockSystemType = GEnums.UnlockSystemType.SNS,
         checkCanOpen = function(arg)
             if Utils.isForbidden(ForbidType.HideSNSHud) then
-                return false
+                return false, Language.LUA_OBTAIN_WAYS_JUMP_BLOCKED
             end
 
-            local dialogId = unpack(arg or {})
-            if string.isEmpty(dialogId) then
-                return true
+            if arg and arg.dialogId and
+                    not GameInstance.player.sns.dialogInfoDic:ContainsKey(arg.dialogId) then
+                return false, Language.LUA_SNS_OPEN_PANEL_WITH_INVALID_ID_DESC
             end
-            return GameInstance.player.sns.dialogInfoDic:ContainsKey(dialogId)
+
+            return true
         end,
         systemId = "system_sns",
     },
     
     SNSBarkerSide = {
+
         panels = {
             PanelId.SNSBarkerSide,
         },
@@ -372,6 +416,7 @@ config = {
     },
     
     CharJoinToast = {
+
         panels = {
             PanelId.CharJoinToast,
         },
@@ -379,6 +424,7 @@ config = {
     },
     
     SettlementMain = {
+
         panels = {
             PanelId.SettlementMain,
         },
@@ -392,7 +438,7 @@ config = {
             local hasData = domainDevelopmentSystem.domainDevDataDic:TryGetValue(domainId)
             local hasCfg, domainCfg = Tables.domainDataTable:TryGetValue(domainId)
             if not hasCfg or not hasData then
-                return false
+                return false, Language.LUA_DOMAIN_DEVELOPMENT_POI_UNLOCK_CLICK_TOAST
             end
             
             for _, stlId in pairs(domainCfg.settlementGroup) do
@@ -400,11 +446,12 @@ config = {
                     return true
                 end
             end
-            return false
+            return false, Language.LUA_DOMAIN_DEVELOPMENT_POI_UNLOCK_CLICK_TOAST
         end,
     },
     
     SettlementChar = {
+
         panels = {
             PanelId.SettlementChar,
         },
@@ -413,6 +460,7 @@ config = {
     },
     
     SettlementSwitchRegionPopup = {
+
         panels = {
             PanelId.SettlementSwitchRegionPopup,
         },
@@ -421,6 +469,7 @@ config = {
     },
     
     SettlementCommodity = {
+
         panels = {
             PanelId.SettlementCommodity,
         },
@@ -429,6 +478,7 @@ config = {
     },
     
     SettlementDefenseRewardsInfo = {
+
         panels = {
             PanelId.SettlementDefenseRewardsInfo,
         },
@@ -436,6 +486,7 @@ config = {
     },
     
     SettlementDefenseTransit = {
+
         panels = {
             PanelId.SettlementDefenseTransit,
         },
@@ -443,6 +494,7 @@ config = {
     },
     
     SettlementDefenseMainMap = {
+
         panels = {
             PanelId.SettlementDefenseMainMap,
         },
@@ -450,6 +502,7 @@ config = {
     },
     
     SettlementDefenseTerminal = {
+
         panels = {
             PanelId.SettlementDefenseTerminal,
         },
@@ -457,6 +510,7 @@ config = {
     },
     
     SettlementDefenseFinish = {
+
         panels = {
             PanelId.SettlementDefenseFinish,
         },
@@ -464,6 +518,7 @@ config = {
     },
     
     SettlementDefenseFinishFail = {
+
         panels = {
             PanelId.SettlementDefenseFinishFail,
         },
@@ -471,6 +526,7 @@ config = {
     },
     
     SpaceshipStation = {
+
         panels = {
             PanelId.SpaceshipStation,
         },
@@ -478,6 +534,7 @@ config = {
     },
     
     SpaceshipManufacturingStation = {
+
         panels = {
             PanelId.SpaceshipManufacturingStation,
         },
@@ -485,6 +542,7 @@ config = {
     },
     
     SpaceshipRoomUpgrade = {
+
         panels = {
             PanelId.SpaceshipRoomUpgrade,
         },
@@ -492,6 +550,7 @@ config = {
     },
     
     SpaceshipControlCenter = {
+
         panels = {
             PanelId.SpaceshipControlCenterRoom,
             PanelId.SpaceshipControlCenter,
@@ -503,6 +562,7 @@ config = {
     },
     
     SpaceshipCollectHintInfo = {
+
         panels = {
             PanelId.SpaceshipCollectHintInfo,
         },
@@ -510,6 +570,7 @@ config = {
     },
     
     SpaceshipGrowCabin = {
+
         panels = {
             PanelId.SpaceshipGrowCabin,
         },
@@ -517,6 +578,7 @@ config = {
     },
     
     SpaceshipShop = {
+
         panels = {
             PanelId.SpaceshipShop,
         },
@@ -524,36 +586,42 @@ config = {
     },
     
     SpaceshipVisitor = {
+
         panels = {
             PanelId.SpaceshipVisitor,
         },
         isSimpleUIPhase = true,
     },
     SpaceshipRoomClueSchedule = {
+
         panels = {
             PanelId.SpaceshipRoomClueSchedule,
         },
         isSimpleUIPhase = true,
     },
     SpaceshipRoomClueSettlement = {
+
         panels = {
             PanelId.SpaceshipRoomClueSettlement,
         },
         isSimpleUIPhase = true,
     },
     SpaceshipRoomClueGift = {
+
         panels = {
             PanelId.SpaceshipRoomClueGift,
         },
         isSimpleUIPhase = true,
     },
     ActivityFoodSubmit = {
+
         panels = {
             PanelId.ActivityFoodSubmit,
         },
         isSimpleUIPhase = true,
     },
     ActivityFoodSubmitNotes = {
+
         panels = {
             PanelId.ActivityFoodSubmitNotes,
         },
@@ -561,6 +629,7 @@ config = {
     },
     
     SpaceshipSalesRecords = {
+
         panels = {
             PanelId.SpaceshipSalesRecords,
         },
@@ -572,6 +641,7 @@ config = {
     },
     
     SpaceshipDailyReport = {
+
         panels = {
             PanelId.SpaceshipDailyReport,
         },
@@ -579,6 +649,7 @@ config = {
     },
     
     SpaceshipCollectionBooth = {
+
         panels = {
             PanelId.SpaceshipCollectionBooth,
         },
@@ -586,6 +657,7 @@ config = {
     },
     
     SpaceshipReceptionDisplay = {
+
         panels = {
             PanelId.SpaceshipReceptionDisplay,
         },
@@ -593,6 +665,7 @@ config = {
     },
     
     SSReceptionRoomCharPoster = {
+
         panels = {
             PanelId.SSReceptionRoomCharPoster,
         },
@@ -600,6 +673,7 @@ config = {
     },
     
     SSReceptionRoomWeaponPoster = {
+
         panels = {
             PanelId.SSReceptionRoomWeaponPoster,
         },
@@ -607,6 +681,7 @@ config = {
     },
     
     LiquidPool = {
+
         panels = {
             PanelId.LiquidPool,
         },
@@ -614,12 +689,14 @@ config = {
     },
     
     PowerPoleFastTravel = {
+
         panels = {
         },
         isSimpleUIPhase = false,
     },
     
     SubmitItem = {
+
         panels = {
             PanelId.SubmitItem,
         },
@@ -627,6 +704,7 @@ config = {
     },
     
     FriendShipPresent = {
+
         panels = {
             PanelId.FriendShipPresent,
         },
@@ -634,6 +712,7 @@ config = {
     },
     
     RacingDungeonEntry = {
+
         panels = {
             PanelId.RacingDungeonEntry,
         },
@@ -641,6 +720,7 @@ config = {
     },
     
     RacingDungeonEffect = {
+
         panels = {
             PanelId.RacingDungeonEffect,
         },
@@ -649,6 +729,7 @@ config = {
     },
     
     AdventureReward = {
+
         panels = {
             PanelId.AdventureReward,
         },
@@ -657,6 +738,7 @@ config = {
     },
     
     AdventureBook = {
+
         panels = {},
         redDotName = "AdventureBook",
         isSimpleUIPhase = false,
@@ -665,6 +747,7 @@ config = {
     },
     
     Reading = {
+
         panels = {
             PanelId.Reading,
         },
@@ -672,11 +755,13 @@ config = {
     },
     
     ReadingPopUp = {
+
         panels = {},
         isSimpleUIPhase = false,
     },
     
     BlackboxEntry = {
+
         panels = {
             PanelId.BlackboxEntry,
         },
@@ -684,12 +769,14 @@ config = {
     },
     
     GenderSelect = {
+
         isSimpleUIPhase = false,
         fov = 15.3818,
         
     },
     
     DungeonEntry = {
+
         panels = {},
         checkCanOpen = function(args)
             return DungeonUtils.checkCanOpenPhase(args)
@@ -698,6 +785,7 @@ config = {
     },
     
     DungeonTrainOverview = {
+
         panels = {
             PanelId.DungeonTrainOverview,
         },
@@ -705,6 +793,7 @@ config = {
     },
     
     GachaPool = {
+
         panels = {
             PanelId.GachaPool,
         },
@@ -717,6 +806,7 @@ config = {
     },
     
     GachaChar = {
+
         panels = {}, 
         isSimpleUIPhase = false,
         disableEffectLodControl = true,
@@ -725,6 +815,7 @@ config = {
     },
     
     GachaDropBin = {
+
         panels = {}, 
         isSimpleUIPhase = false,
         unlockSystemType = GEnums.UnlockSystemType.Gacha,
@@ -733,6 +824,7 @@ config = {
     },
     
     GachaWeaponPreheat = {
+
         panels = {}, 
         isSimpleUIPhase = false,
         disableEffectLodControl = true,
@@ -740,6 +832,7 @@ config = {
     },
     
     GachaWeapon = {
+
         panels = {}, 
         isSimpleUIPhase = false,
         disableEffectLodControl = true,
@@ -747,6 +840,7 @@ config = {
     },
     
     GachaWeaponResult = {
+
         panels = {
             PanelId.GachaWeaponResult,
         },
@@ -755,6 +849,7 @@ config = {
     },
     
     GachaWeaponPool = {
+
         panels = {
             PanelId.GachaWeaponPool,
         },
@@ -765,6 +860,7 @@ config = {
     },
     
     DeathInfo = {
+
         panels = {
            PanelId.DeathInfo,
         },
@@ -772,6 +868,7 @@ config = {
     },
     
     PlayerRename = {
+
         panels = {
            PanelId.PlayerRename,
         },
@@ -779,6 +876,7 @@ config = {
     },
     
     PRTS = {
+
         panels = {
             PanelId.PRTSMain,
         },
@@ -788,6 +886,7 @@ config = {
     },
     
     PRTSInvestigateGallery = {
+
         panels = {
             PanelId.PRTSInvestigateGallery,
         },
@@ -795,6 +894,7 @@ config = {
     },
     
     PRTSInvestigateDetail = {
+
         panels = {
             PanelId.PRTSInvestigateDetail,
         },
@@ -809,6 +909,7 @@ config = {
     },
     
     PRTSStoryCollGallery = {
+
         panels = {
            PanelId.PRTSStoryCollGallery,
         },
@@ -819,6 +920,7 @@ config = {
     },
     
     PRTSStoryCollDetail = {
+
         panels = {
             PanelId.PRTSStoryCollDetail,
         },
@@ -834,6 +936,7 @@ config = {
     },
     
     PRTSInvestigateReport = {
+
         panels = {
             PanelId.PRTSInvestigateReport,
         },
@@ -846,6 +949,7 @@ config = {
     },
     
     SceneGradeDifferenceItemPopUp = {
+
         panels = {
            PanelId.SceneGradeDifferenceItemPopUp,
         },
@@ -853,6 +957,7 @@ config = {
     },
     
     UsableItemChest = {
+
         panels = {
            PanelId.UsableItemChest,
         },
@@ -860,6 +965,7 @@ config = {
     },
     
     GemRecast = {
+
         panels = {
               PanelId.GemRecast,
         },
@@ -867,6 +973,7 @@ config = {
     },
     
     GemEnhance = {
+
         panels = {
             PanelId.GemEnhance,
         },
@@ -875,6 +982,7 @@ config = {
     },
     
     GemCustomization = {
+
         panels = {
             PanelId.GemCustomization,
         },
@@ -882,6 +990,7 @@ config = {
     },
     
     SubmitCollection = {
+
         panels = {
             PanelId.SubmitCollection,
         },
@@ -889,6 +998,7 @@ config = {
     },
     
     CharacterSummon = {
+
         panels = {
             PanelId.CharacterSummon,
         },
@@ -896,6 +1006,7 @@ config = {
     },
     
     AreaBuffPopup = {
+
         panels = {
             PanelId.AreaBuffPopup,
         },
@@ -903,6 +1014,7 @@ config = {
     },
     
     CommonMoneyExchange = {
+
         panels = {
             PanelId.CommonMoneyExchange,
         },
@@ -910,6 +1022,7 @@ config = {
     },
     
     EndingToast = {
+
         panels = {
            PanelId.EndingToast,
         },
@@ -917,6 +1030,7 @@ config = {
     },
     
     LeadingCharacter = {
+
         panels = {
            PanelId.LeadingCharacter,
         },
@@ -924,6 +1038,7 @@ config = {
     },
     
     FriendlyTips = {
+
         panels = {
            PanelId.FriendlyTips,
         },
@@ -931,11 +1046,13 @@ config = {
     },
     
     Snapshot = {
+
         panels = {},
         isSimpleUIPhase = false,
     },
     
     Friend = {
+
         panels = {},
         isSimpleUIPhase = false,
         systemId = 'system_friend',
@@ -943,13 +1060,23 @@ config = {
     },
     
     FriendBusinessCardPreview = {
+
         panels = {
             PanelId.FriendBusinessCardPreview,
         },
         isSimpleUIPhase = true,
     },
     
+    FriendThemeChange = {
+
+        panels = {
+            PanelId.FriendThemeChange,
+        },
+        isSimpleUIPhase = true,
+    },
+    
     DomainMain = {
+
         panels = {
             PanelId.DomainMain,
         },
@@ -966,6 +1093,7 @@ config = {
     },
     
     DomainItemTransfer = {
+
         panels = {
             PanelId.DomainItemTransfer,
         },
@@ -976,6 +1104,7 @@ config = {
     },
     
     DomainGrade = {
+
         panels = {
            PanelId.DomainGrade,
         },
@@ -983,6 +1112,7 @@ config = {
     },
     
     DomainDepotPackage = {
+
         panels = {},
         isSimpleUIPhase = false,
         unlockSystemType = GEnums.UnlockSystemType.DomainDevelopmentDomainDepot,
@@ -992,16 +1122,19 @@ config = {
     },
     
     DramaticPerformanceBag = {
+
         panels = {},
         isSimpleUIPhase = false,
     },
     
     GenderChange = {
+
         panels = {},
         isSimpleUIPhase = false,
     },
     
     CommonPOIUpgrade = {
+
         panels = {
            PanelId.CommonPOIUpgrade,
         },
@@ -1009,6 +1142,7 @@ config = {
     },
     
     EquipTech = {
+
         panels = {
            PanelId.EquipTech,
         },
@@ -1026,6 +1160,7 @@ config = {
     },
     
     KiteStation = {
+
         panels = {
            PanelId.KiteStation,
         },
@@ -1034,6 +1169,7 @@ config = {
     },
     
     WorldLevelPopup = {
+
         panels = {
            PanelId.WorldLevelTipsPopup,
         },
@@ -1041,10 +1177,12 @@ config = {
     },
     
     ActivityCenter = {
+
         panels = {
             PanelId.ActivityCenterEmptyBottom,
             PanelId.ActivityCenter,
         },
+        fov = 40,
         isSimpleUIPhase = false,
         redDotName = "ActivityCenter",
         systemId = "system_activity_center",
@@ -1065,6 +1203,7 @@ config = {
     },
     
     ActivityPopup = {
+
         panels = {
         },
         isSimpleUIPhase = false,
@@ -1084,10 +1223,11 @@ config = {
     },
     
     SnapshotChallenge = {
+
         panels = {
             PanelId.SnapshotChallenge,
         },
-        isSimpleUIPhase = true,
+        isSimpleUIPhase = false,
         checkCanOpen = function(arg)
             
             if arg and arg.activityId then
@@ -1100,6 +1240,7 @@ config = {
     },
     
     ChallengeDungeon = {
+
         panels = {
             PanelId.ChallengeDungeon,
         },
@@ -1116,6 +1257,7 @@ config = {
     },
     
     AchievementMain = {
+
         panels = {
            PanelId.AchievementMain,
         },
@@ -1124,6 +1266,7 @@ config = {
     },
     
     DungeonWeeklyRaid = {
+
         panels = {
 
         },
@@ -1132,6 +1275,7 @@ config = {
     },
     
     PresetTeamSwitch = {
+
         panels = {
            PanelId.PresetTeamSwitch,
         },
@@ -1139,6 +1283,7 @@ config = {
     },
     
     ShopEntry = {
+
         panels = {
             PanelId.ShopEntry,
         },
@@ -1146,9 +1291,11 @@ config = {
     },
     
     CashShop = {
+
         panels = {},
         isSimpleUIPhase = false,
         systemId = "system_cash_shop",
+        fov = 40,
         checkCanOpen = function(arg)
             if GameInstance.player.gameSettingSystem.forbiddenCashShop then
                 return false, Language.LUA_SWITCH_TYPE_FORBIDDEN_TOAST
@@ -1159,6 +1306,7 @@ config = {
     },
     
     ShopMonthlyPassPopUp = {
+
         panels = {
            
            
@@ -1167,6 +1315,7 @@ config = {
     },
     
     DramaticPerformanceEmpty = {
+
         panels = {
            PanelId.DramaticPerformanceEmpty,
         },
@@ -1174,6 +1323,7 @@ config = {
     },
     
     WorldEnergyPointEntry = {
+
         panels = {
             PanelId.WorldEnergyPointEntry,
         },
@@ -1181,6 +1331,7 @@ config = {
     },
     
     WorldEnergyPointCustomReward = {
+
         panels = {
             PanelId.WorldEnergyPointCustomReward,
         },
@@ -1188,6 +1339,7 @@ config = {
     },
     
     WorldEnergyPointSettlement = {
+
         panels = {
             PanelId.WorldEnergyPointSettlement,
         },
@@ -1195,6 +1347,7 @@ config = {
     },
     
     DungeonCustomReward = {
+
         panels = {
            PanelId.DungeonCustomReward,
         },
@@ -1202,6 +1355,7 @@ config = {
     },
     
     BattlePass = {
+
         panels = {
         },
         isSimpleUIPhase = false,
@@ -1216,6 +1370,7 @@ config = {
     },
     
     HighDifficultyMainHud = {
+
         panels = {
             PanelId.HighDifficultyMainHud,
         },
@@ -1225,6 +1380,7 @@ config = {
         end,
     },
     GachaLauncher = {
+
         panels = {}, 
         isSimpleUIPhase = false,
         unlockSystemType = GEnums.UnlockSystemType.Gacha,
@@ -1232,6 +1388,7 @@ config = {
         haveSceneCamera = true,
     },
     SpaceshipGuestRoomClue = {
+
         panels = {
            PanelId.SpaceshipGuestRoomClue,
         },
@@ -1239,6 +1396,7 @@ config = {
     },
     
     BattlePassBuyLevel = {
+
         panels = {
             PanelId.BattlePassBuyLevel,
         },
@@ -1246,6 +1404,7 @@ config = {
     },
     
     BattlePassBuyPlan = {
+
         panels = {
             PanelId.BattlePassBuyPlan,
         },
@@ -1253,20 +1412,30 @@ config = {
     },
     
     BattlePassAdvancedPlanBuy = {
+
         panels = {
             PanelId.BattlePassAdvancedPlanBuy,
         },
         isSimpleUIPhase = false,
     },
     ActivityCleaningDetails = {
+
         panels = {
            PanelId.ActivityCleaningDetails,
         },
         isSimpleUIPhase = true,
     },
     ActivityRanking = {
+
         panels = {
            PanelId.ActivityRanking,
+        },
+        isSimpleUIPhase = true,
+    },
+    DialogSign = {
+
+        panels = {
+           PanelId.DialogSign,
         },
         isSimpleUIPhase = true,
     },

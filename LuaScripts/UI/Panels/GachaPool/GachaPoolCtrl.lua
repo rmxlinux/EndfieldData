@@ -1,7 +1,11 @@
-local MAX_SHOW_CHAR_INFO_COUNT = 5
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaPool
+local PHASE_ID = PhaseId.GachaPool
+
+
+
+
 
 
 
@@ -53,11 +57,14 @@ GachaPoolCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_GACHA_POOL_INFO_CHANGED] = 'OnGachaPoolInfoChanged',
     [MessageConst.ON_GACHA_POOL_ROLE_DATA_CHANGED] = 'OnGachaPoolRoleDataChanged',
     [MessageConst.ON_WALLET_CHANGED] = 'OnWalletChanged',
-    [MessageConst.ON_ITEM_COUNT_CHANGED] = 'OnItemChanged',
+    [MessageConst.ON_VALUABLE_DEPOT_CHANGED] = 'OnItemChanged',
     [MessageConst.GACHA_POOL_ADD_SHOW_REWARD] = 'AddQueueReward',
     [MessageConst.ON_ONE_GACHA_POOL_REWARD_FINISHED] = 'OnOneQueueRewardFinished',
     [MessageConst.ON_SYSTEM_DISPLAY_SIZE_CHANGED] = '_OnDisplaySizeChanged',
     [MessageConst.ON_SYSTEM_SCREEN_SIZE_CHANGED] = '_OnDisplaySizeChanged',
+    
+    [MessageConst.ON_UI_PHASE_OPENED] = '_OnPhaseChange',
+    [MessageConst.ON_UI_PHASE_EXITED] = '_OnPhaseChange',
 }
 
 
@@ -85,6 +92,18 @@ GachaPoolCtrl.m_queueRewardConfigs = HL.Field(HL.Table)
 
 
 GachaPoolCtrl.m_curIsShowReward = HL.Field(HL.Boolean) << false
+
+
+GachaPoolCtrl.m_needTryPlayChangeTabInAni = HL.Field(HL.Boolean) << true
+
+
+GachaPoolCtrl.m_isPlayingChangeTabInAni = HL.Field(HL.Boolean) << false
+
+
+GachaPoolCtrl.m_onPlayChangeTabInAniComplete = HL.Field(HL.Function)
+
+
+GachaPoolCtrl.m_jumpToPoolLuaIndex = HL.Field(HL.Number) << 0
 
 
 
@@ -131,17 +150,15 @@ GachaPoolCtrl.OnShow = HL.Override() << function(self)
             InputManagerInst:ToggleGroup(cell.node.inputGroup.groupId, self.m_curIndex == i)
         end
     end
-    self:_TryShowQueueReward()
+    
+    if not self.m_isPlayingChangeTabInAni then
+        self:_TryShowQueueReward()
+    end
 
     local cell = self.m_poolTabCache:Get(self.m_curIndex)
     if cell then
         UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.poolTabNodeNaviGroup, cell.toggle)
     end
-    local poolCell = self.m_getCell(self.m_curIndex)
-    if poolCell then
-        poolCell.cellWidget:PlayGachaScrollInAni()
-    end
-    self:OnItemChanged()    
 end
 
 
@@ -169,8 +186,9 @@ end
 
 
 GachaPoolCtrl._InitData = HL.Method(HL.Opt(HL.String)) << function(self, poolId)
+    self:_InitRewardQueueConfigs()
     self.m_curIndex = 1
-    local targetIndex = 1
+    self.m_jumpToPoolLuaIndex = 1
     self.m_pools = {}
     
     local csGacha = GameInstance.player.gacha
@@ -189,14 +207,16 @@ GachaPoolCtrl._InitData = HL.Method(HL.Opt(HL.String)) << function(self, poolId)
     local count = #self.m_pools
     self.m_poolTabCache:Refresh(count, function(cell, index)
         if poolId and self.m_pools[index].id == poolId then
-            targetIndex = index
+            self.m_jumpToPoolLuaIndex = index
         end
         self:_UpdateTabCell(cell, index)
     end)
     self.view.poolList:UpdateCount(count)
-    self.view.poolList:ScrollToIndex(CSIndex(targetIndex), true)
-
-    self:_InitRewardQueueConfigs()
+    if self.m_jumpToPoolLuaIndex ~= 1 then
+        self.m_needTryPlayChangeTabInAni = true
+        self.view.poolList:ScrollToIndex(CSIndex(self.m_jumpToPoolLuaIndex), true)
+    end
+    self.m_jumpToPoolLuaIndex = -1
 end
 
 
@@ -217,6 +237,19 @@ GachaPoolCtrl._InitUI = HL.Method() << function(self)
         Utils.jumpToSystem("jump_payshop_weapon")
     end)
 
+    self.m_onPlayChangeTabInAniComplete = function(sucPlayAni)
+        InputManagerInst:ToggleGroup(self.view.inputGroup.groupId, true)
+        
+        local aniWrapper = self.animationWrapper
+        if sucPlayAni then
+            aniWrapper:PlayInAnimation()
+        else
+            aniWrapper:SampleClipAtPercent(aniWrapper.animationIn.name, 1)
+        end
+        self.m_isPlayingChangeTabInAni = false
+        self:_TryShowQueueReward()
+    end
+
     self.m_poolTabCache = UIUtils.genCellCache(self.view.poolTabCell)
     self.m_getCell = UIUtils.genCachedCellFunction(self.view.poolList)
     self.view.poolList.onUpdateCell:AddListener(function(obj, csIndex)
@@ -225,7 +258,7 @@ GachaPoolCtrl._InitUI = HL.Method() << function(self)
     self.view.poolList.onCenterIndexChanged:AddListener(function(oldIndex, newIndex)
         self:_OnCenterIndexChanged(LuaIndex(newIndex))
     end)
-    self.view.controllerHintBar:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
+    
     self:_InitMoneyNode()
     self.m_showRewardFuncQueue = require_ex("Common/Utils/DataStructure/Queue")()
     
@@ -257,12 +290,8 @@ GachaPoolCtrl._UpdateTabCell = HL.Method(HL.Table, HL.Number) << function(self, 
             return
         end
         if isOn then
+            self.m_needTryPlayChangeTabInAni = true
             self.view.poolList:ScrollToIndex(CSIndex(index), true)
-            
-            local poolNodeCell = self.m_getCell(index)
-            if poolNodeCell then
-                poolNodeCell.cellWidget:PlayGachaChangeTabInAni()
-            end
         end
     end)
     
@@ -305,11 +334,48 @@ GachaPoolCtrl._OnCenterIndexChanged = HL.Method(HL.Number) << function(self, ind
         self:_OnUpdateCell(cell, self.m_curIndex)
         cell.cellWidget:UpdateMoneyNode(self.view.moneyNode)
         RedDotUtils.setGachaSinglePoolRead(self.m_curPoolId)
-        cell.cellWidget:PlayGachaScrollInAni()
+        if self.m_needTryPlayChangeTabInAni then
+            if self.m_jumpToPoolLuaIndex <= 0 or self.m_jumpToPoolLuaIndex == index then
+                self:_PlayChangeTabInAni(cell.cellWidget)
+            end
+            self.m_needTryPlayChangeTabInAni = false
+        else
+            cell.cellWidget:PlayGachaScrollInAni()
+            if PhaseManager:GetTopPhaseId() == PHASE_ID and (self.m_jumpToPoolLuaIndex <= 0 or self.m_jumpToPoolLuaIndex == index) then
+                self:_TryShowQueueReward()
+            end
+        end
         InputManagerInst:ToggleGroup(cell.node.inputGroup.groupId, true)
+        
+        local naviGroup = cell.node.jumpBtnNaviGroup
+        if naviGroup and naviGroup.relatedInputBindingGroups.Count > 0 then
+            local cellInputGroup = naviGroup.relatedInputBindingGroups[0]
+            self.view.controllerHintBar:InitControllerHintPlaceholder({ self.view.inputGroup.groupId, cellInputGroup.groupId })
+        else
+            self.view.controllerHintBar:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
+        end
     end
     if self.view.poolList.centerIndex ~= CSIndex(index) then
         self.view.poolList:ScrollToIndex(CSIndex(index))
+    end
+end
+
+
+
+
+GachaPoolCtrl._PlayChangeTabInAni = HL.Method(HL.Any) << function(self, poolCellWidget)
+    if poolCellWidget:CheckCanPlayChangeTabInAni() then
+        
+        local aniWrapper = self.animationWrapper
+        aniWrapper:SampleClipAtPercent(aniWrapper.animationIn.name, 0)
+        InputManagerInst:ToggleGroup(self.view.inputGroup.groupId, false)
+        self.m_isPlayingChangeTabInAni = true
+        poolCellWidget:PlayGachaChangeTabInAni(self.m_onPlayChangeTabInAniComplete)
+    else
+        poolCellWidget:PlayGachaScrollInAni()
+        if PhaseManager:GetTopPhaseId() == PHASE_ID then
+            self:_TryShowQueueReward()
+        end
     end
 end
 
@@ -374,27 +440,6 @@ GachaPoolCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, c
         node.endTimeTxt.text = Utils.appendUTC(Utils.timestampToDateMDHM(endTime))
     end
     self:_UpdateRemainingTime(node, index)
-
-    
-    local upCharIdsCS = poolData.upCharIds
-    for k = 1, MAX_SHOW_CHAR_INFO_COUNT do
-        local btnNode = node["showCharInfoBtn" .. k]
-        if btnNode then
-            if btnNode.config then
-                self:_UpdateShowCharInfoBtn(btnNode, btnNode.config.CHAR_ID)
-            else
-                self:_UpdateShowCharInfoBtn(btnNode, upCharIdsCS[CSIndex(k)])
-            end
-        end
-    end
-
-    
-    if node.previewRoleBtn then
-        node.previewRoleBtn.onClick:RemoveAllListeners()
-        node.previewRoleBtn.onClick:AddListener(function()
-            self:_ShowUpCharInfo()
-        end)
-    end
 end
 
 
@@ -409,105 +454,6 @@ GachaPoolCtrl._UpdateRemainingTime = HL.Method(HL.Table, HL.Number) << function(
         local diffTime = math.max(0, endTime - curServerTime)
         node.remainingTimeTxt.text = string.format(Language.LUA_GACHA_REMAINING_TIME, UIUtils.getShortLeftTime(diffTime))
     end
-end
-
-
-
-
-
-GachaPoolCtrl._UpdateShowCharInfoBtn = HL.Method(HL.Table, HL.String) << function(self, node, charId)
-    if node.button then
-        node.button.onClick:RemoveAllListeners()
-        node.button.onClick:AddListener(function()
-            self:_ShowUpCharInfo(charId)
-        end)
-    end
-    local charCfg = Tables.characterTable[charId]
-    if node.nameTxt then
-        node.nameTxt.text = charCfg.name
-    end
-    if node.professionIcon then
-        node.professionIcon:LoadSprite(UIConst.UI_SPRITE_CHAR_PROFESSION, CharInfoUtils.getCharProfessionIconName(charCfg.profession))
-    end
-    if node.starGroup then
-        node.starGroup:InitStarGroup(charCfg.rarity)
-    end
-    if node.headIcon then
-        node.headIcon:LoadSprite(UIConst.UI_SPRITE_ROUND_CHAR_HEAD, UIConst.UI_ROUND_CHAR_HEAD_PREFIX .. charCfg.charId)
-    end
-end
-
-
-
-
-GachaPoolCtrl._ShowUpCharInfo = HL.Method(HL.Opt(HL.String)) << function(self, charId)
-    if PhaseManager:IsOpen(PhaseId.CharInfo) then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_GACHA_RESULT_OPEN_CHAR_INFO_FAIL)
-        return
-    end
-
-    local poolData = Tables.gachaCharPoolTable[self.m_curPoolId]
-    local idsCS = poolData.upCharIds
-    local ids = {}
-    if idsCS.Count == 0 then
-        
-        local contentData = Tables.gachaCharPoolContentTable[self.m_curPoolId]
-        for _, v in pairs(contentData.list) do
-            local id = v.charId
-            local charData = Tables.characterTable[id]
-            if charData.rarity == UIConst.CHAR_MAX_RARITY then
-                table.insert(ids, id)
-            end
-        end
-        table.sort(ids)
-    else
-        for _, v in pairs(idsCS) do
-            table.insert(ids, v)
-        end
-    end
-    if string.isEmpty(charId) then
-        charId = ids[1]
-    end
-    local curCharInfo
-    local charInstIdList = {}
-    for _, id in ipairs(ids) do
-        local info = GameInstance.player.charBag:CreateClientInitialGachaPoolChar(id)
-        if id == charId then
-            curCharInfo = info
-        end
-        table.insert(charInstIdList, info.instId)
-    end
-    if not curCharInfo then
-        return
-    end
-    logger.info("charInstIdList", charInstIdList)
-
-    local curMaxCharInfo
-    local maxCharInstIdList = {}
-    for _, id in ipairs(ids) do
-        local info = GameInstance.player.charBag:CreateClientPerfectGachaPoolCharInfo(id)
-        if id == charId then
-            curMaxCharInfo = info
-        end
-        table.insert(maxCharInstIdList, info.instId)
-    end
-    if not curMaxCharInfo then
-        return
-    end
-
-    
-    PhaseManager:OpenPhase(PhaseId.CharInfo, {
-        initCharInfo = {
-            instId = curCharInfo.instId,
-            templateId = charId,
-            charInstIdList = charInstIdList,
-            maxCharInstIdList = maxCharInstIdList,
-            isShowPreview = true,
-        },
-        onClose = function()
-            GameInstance.player.charBag:ClearAllClientCharAndItemData()
-        end,
-    })
 end
 
 
@@ -605,7 +551,7 @@ GachaPoolCtrl._OnTestimonialConvert = HL.Method() << function(self)
         local ntf = csGachaSystem.testimonialConvertNtfs[0]
         local name1 = Tables.itemTable[ntf.TestimonialItemId].name
         local name2 = Tables.itemTable[ntf.ConvertToItemId].name
-        local tips = string.format(Language.LUA_GACHA_ITEM_CONVERT_TIP, name1, name2)
+        local tips = string.format(Language.LUA_GACHA_ITEM_CONVERT_TIP, name1, string.format(Language.LUA_COMMON_NAME_X_COUNT, name2, ntf.ConvertCount))
         local poolId = ntf.CharGachaPoolId
         
         local hasData, poolData = csGachaSystem.poolInfos:TryGetValue(poolId)
@@ -630,6 +576,10 @@ GachaPoolCtrl._OnTestimonialConvert = HL.Method() << function(self)
                         tipsText = tips,
                         originalItemId = ntf.TestimonialItemId,
                         convertItemId = ntf.ConvertToItemId,
+                        convertItemBundle = {
+                            id = ntf.ConvertToItemId,
+                            count = ntf.ConvertCount,
+                        },
                         onComplete = function()
                             csGachaSystem:SetTestimonialConvertNtfIsCheck(0)
                             Notify(MessageConst.ON_ONE_GACHA_POOL_REWARD_FINISHED)
@@ -639,6 +589,48 @@ GachaPoolCtrl._OnTestimonialConvert = HL.Method() << function(self)
             }
         end
         Notify(MessageConst.GACHA_POOL_ADD_SHOW_REWARD, arg)
+    end
+end
+
+
+
+
+
+GachaPoolCtrl._OnDisplaySizeChanged = HL.Method(HL.Opt(HL.Any, HL.Any)) << function(self, _, _)
+    self.view.poolList:TryRecalculateSize()
+    self.view.poolList:ScrollToIndex(CSIndex(self.m_curIndex))
+end
+
+
+
+
+GachaPoolCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, arg)
+    if not arg or not arg.poolId then
+        return
+    end
+    local count = #self.m_pools
+    for index = 1, count do
+        if self.m_pools[index].id == arg.poolId then
+            self.view.poolList:ScrollToIndex(CSIndex(index), true)
+            return
+        end
+    end
+end
+
+
+
+GachaPoolCtrl._OnPhaseChange = HL.Method(HL.Opt(HL.Any)) << function(self)
+    
+    
+    if not PhaseManager:IsOpenAndValid(PhaseId.GachaPool) then
+        return
+    end
+    local needShowParticle = PhaseId.GachaPool == PhaseManager:GetTopPhaseId()
+    local cell = self.m_getCell(self.m_curIndex)
+    if cell and cell.cellWidget.view.particleEffectNode then
+        if cell.cellWidget.view.particleEffectNode.gameObject.activeSelf ~= needShowParticle then
+            cell.cellWidget.view.particleEffectNode.gameObject:SetActive(needShowParticle)
+        end
     end
 end
 
@@ -719,28 +711,34 @@ GachaPoolCtrl.OnGachaSucc = HL.Method(HL.Table) << function(self, arg)
     LuaSystemManager.gachaSystem:UpdateGachaSettingState()
     local isOpen = PhaseManager:OpenPhaseFast(PhaseId.GachaLauncher, {
         chars = chars,
-        onComplete = function()
-            PhaseManager:OpenPhaseFast(PhaseId.GachaDropBin, {
+        onComplete = function(isAllowSkip)
+            local openGachaCharArg = {
+                fromGacha = true,
+                poolId = self.m_curPoolId,
                 chars = chars,
                 onComplete = function()
-                    PhaseManager:OpenPhaseFast(PhaseId.GachaChar, {
-                        fromGacha = true,
-                        chars = chars,
-                        onComplete = function()
-                            if self.m_pools[self.m_curIndex].csInfo.isClosed then
-                                self:_InitData()
-                            else
-                                if not IsNull(self.view.poolList) then
-                                    local cell = self.m_getCell(self.m_curIndex)
-                                    if cell then
-                                        self:_OnUpdateCell(cell, self.m_curIndex)
-                                    end
-                                end
+                    if self.m_pools[self.m_curIndex].csInfo.isClosed then
+                        self:_InitData()
+                    else
+                        if not IsNull(self.view.poolList) then
+                            local cell = self.m_getCell(self.m_curIndex)
+                            if cell then
+                                self:_OnUpdateCell(cell, self.m_curIndex)
                             end
                         end
-                    })
+                    end
                 end
-            })
+            }
+            if isAllowSkip then
+                PhaseManager:OpenPhaseFast(PhaseId.GachaChar, openGachaCharArg)
+            else
+                PhaseManager:OpenPhaseFast(PhaseId.GachaDropBin, {
+                    chars = chars,
+                    onComplete = function()
+                        PhaseManager:OpenPhaseFast(PhaseId.GachaChar, openGachaCharArg)
+                    end
+                })
+            end
         end
     })
     if isOpen then
@@ -761,6 +759,9 @@ GachaPoolCtrl._InitRewardQueueConfigs = HL.Method() << function(self)
         },
         PotentialReward = {
             order = 0,
+        },
+        SelCharTicReward = {
+            order = 1,
         },
         TestimonialReward = {
             order = 10,
@@ -824,30 +825,5 @@ GachaPoolCtrl._ReportPlacementEvent = HL.Method(HL.Any) << function(self, msg)
     end
 end
 
-
-
-
-
-
-GachaPoolCtrl._OnDisplaySizeChanged = HL.Method(HL.Opt(HL.Any, HL.Any)) << function(self, _, _)
-    self.view.poolList:TryRecalculateSize()
-    self.view.poolList:ScrollToIndex(CSIndex(self.m_curIndex))
-end
-
-
-
-
-GachaPoolCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, arg)
-    if not arg or not arg.poolId then
-        return
-    end
-    local count = #self.m_pools
-    for index = 1, count do
-        if self.m_pools[index].id == arg.poolId then
-            self.view.poolList:ScrollToIndex(CSIndex(index), true)
-            return
-        end
-    end
-end
 
 HL.Commit(GachaPoolCtrl)

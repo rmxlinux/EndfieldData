@@ -438,6 +438,7 @@ FacBuildingInteractCtrl._ClickScreenInBatchMode = HL.Method() << function(self)
     local nodeId = self.m_interactPipeNodeId or self.m_interactFacNodeId
     if nodeId then
         if Utils.isInBlackbox() and CSFactoryUtil.IsPreplacedBuilding(nodeId) then
+            
             Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BATCH_MODE_CLICK_BLACKBOX_NODE)
             return
         end
@@ -467,17 +468,12 @@ FacBuildingInteractCtrl._ClickScreenInBatchMode = HL.Method() << function(self)
     local slotId = FactoryUtils.getPendingBuildingNodeSlotId(nodeId)
     if slotId then
         unitIndex = nil
-    else
-        if not FactoryUtils.canDelBuilding(nodeId, true) then
-            return
-        end
     end
     if not unitIndex then
         local isAdd = LuaSystemManager.factory.batchSelectTargets[nodeId] ~= true
         if slotId then
             
             CSFactoryUtil.AddAllSlotNodes(slotId)
-            
             for _, v in pairs(CSFactoryUtil.s_tmpNodeIdList) do
                 self:_SelectBatchTarget(v, isAdd, nil)
             end

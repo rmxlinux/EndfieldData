@@ -160,6 +160,10 @@ local OVERRIDE_CAMERA_PATH = "OverrideCameras/"
 
 
 
+
+
+
+
 PhaseCharInfo = HL.Class('PhaseCharInfo', phaseBase.PhaseBase)
 local PHASE_CHAR_INFO_GAME_OBJECT = "CharInfoChar"
 local PHASE_CHAR_INFO_CAM_ATTACHMENT = "CharInfoCamAttachment"
@@ -252,6 +256,8 @@ local PANEL_PRELOAD_ORDER = {
     PanelId.WeaponExhibitGem,
 }
 
+local SCENE_POS = Vector3(-300, 300, -300)
+
 
 
 
@@ -283,6 +289,7 @@ PhaseCharInfo.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.DEBUG_CHAR_INFO_SHOW_CHAR_SP] = { '_DebugShowCharSPMotion', true },
     [MessageConst.ON_WEAPON_REFINE] = { 'OnWeaponRefine', true },
     [MessageConst.ON_CHAR_POTENTIAL_UNLOCK] = { 'OnCharPotentialUnlock', true },
+    [MessageConst.ON_CHAR_MAX_POTENTIAL_EFFECT_TOGGLED] = { 'OnCharMaxPotentialEffectToggled', true },
 }
 
 do
@@ -565,6 +572,7 @@ PhaseCharInfo._OnActivated = HL.Override() << function(self)
 
     if extraArg.slotType then
         Notify(MessageConst.ON_SELECT_SLOT_CHANGE, extraArg.slotType)
+        extraArg.slotType = nil
     end
 
     
@@ -676,12 +684,15 @@ PhaseCharInfo._InitPanels = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean)) <
     local initPanels = PAGE_TYPE_2_PANEL_ID[pageType]
     if initPanels then
         for _, panelId in ipairs(initPanels) do
-            self:CreatePhasePanelItem(panelId, {
+            local phasePanelItem = self:CreatePhasePanelItem(panelId, {
                 initCharInfo = initCharInfo,
                 pageType = pageType,
                 phase = self,
                 forceSkipIn = forceSkipIn,
             })
+
+            self:_ProcessPanelInScene(phasePanelItem)
+            self:_TryShowFinal(phasePanelItem, pageType)
         end
     end
 end
@@ -704,9 +715,15 @@ PhaseCharInfo._InitGo = HL.Method(HL.Table, HL.Number) << function(self, charInf
     self.m_curPage = tabType
 
     local sceneObject = self.m_gameObject2Item[PHASE_CHAR_INFO_GAME_OBJECT]
+    sceneObject.view.transform.position = SCENE_POS
     local weaponDecoNode = sceneObject.view.weaponDecoNode
     weaponDecoNode.gameObject:SetActive(false)
     sceneObject.view.charUpgradeEffect.gameObject:SetActive(false)
+
+    if self.m_curPage == UIConst.CHAR_INFO_PAGE_TYPE.POTENTIAL then
+        self:_InitPotentialScene()
+        self:_SetActivePotentialItems(true)
+    end
 end
 
 
@@ -725,6 +742,9 @@ PhaseCharInfo._InitCharacter = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean)
     self:_RefreshCamGroup(sceneObject, true, templateId, pageType)
     self:_RefreshAddonLight(sceneObject, true, templateId, pageType)
     self:_RefreshWeaponDeco({
+        pageType = pageType,
+    })
+    self:_RefreshProfileShowCam({
         pageType = pageType,
     })
     self:_RefreshVoiceTriggerVo(pageType)
@@ -1232,7 +1252,6 @@ PhaseCharInfo.OnPageChange = HL.Method(HL.Any) << function(self, arg)
         self:_RefreshShowCamTargetGroup()
         self:_RefreshProfileShowCam({
             pageType = pageType,
-            onlyShow = pageType == UIConst.CHAR_INFO_PAGE_TYPE.PROFILE_SHOW
         })
         self:_SetActivePotentialItems(pageType == UIConst.CHAR_INFO_PAGE_TYPE.POTENTIAL)
 
@@ -1305,18 +1324,27 @@ PhaseCharInfo._ShowPanel = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Table)) << f
             self:_CreateCharInfoPanel(panelId, pageType, extraArg)
         else
             local panelItem = self.m_panel2Item[panelId]
-            if HL.TryGet(panelItem.uiCtrl, "PhaseCharInfoPanelShowFinal") then
-                panelItem.uiCtrl:PhaseCharInfoPanelShowFinal({
-                    initCharInfo = self.m_charInfo,
-                    pageType = pageType,
-                    phase = self,
-                    lastMainControlTab = self.m_beforePage,
-                    extraArg = extraArg, 
-                })
-            else
-                panelItem.uiCtrl:Show()
-            end
+            self:_TryShowFinal(panelItem, pageType, extraArg)
         end
+    end
+end
+
+
+
+
+
+
+PhaseCharInfo._TryShowFinal = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Table)) << function(self, panelItem, pageType, extraArg)
+    if HL.TryGet(panelItem.uiCtrl, "PhaseCharInfoPanelShowFinal") then
+        panelItem.uiCtrl:PhaseCharInfoPanelShowFinal({
+            initCharInfo = self.m_charInfo,
+            pageType = pageType,
+            phase = self,
+            lastMainControlTab = self.m_beforePage,
+            extraArg = extraArg, 
+        })
+    else
+        panelItem.uiCtrl:Show()
     end
 end
 
@@ -1338,13 +1366,20 @@ PhaseCharInfo._CreateCharInfoPanel = HL.Method(HL.Number, HL.Number, HL.Opt(HL.A
         extraArg = extraArg, 
     })
 
-    if PANEL_IN_SCENE[panelId] == true then
+    self:_ProcessPanelInScene(phasePanelItem)
+end
+
+
+
+
+PhaseCharInfo._ProcessPanelInScene = HL.Method(HL.Userdata) << function(self, panelItem)
+    if PANEL_IN_SCENE[panelItem.uiCtrl.panelId] == true then
         local sceneObject = self.m_gameObject2Item[PHASE_CHAR_INFO_GAME_OBJECT]
         local panelRoot = sceneObject.view.panelRoot
         
-        phasePanelItem.uiCtrl.view.transform:SetParent(panelRoot)
-        phasePanelItem.uiCtrl.view.transform:Reset()
-        phasePanelItem.uiCtrl.view.canvas.worldCamera = CameraManager.mainCamera
+        panelItem.uiCtrl.view.transform:SetParent(panelRoot)
+        panelItem.uiCtrl.view.transform:Reset()
+        panelItem.uiCtrl.view.canvas.worldCamera = CameraManager.mainCamera
     end
 end
 
@@ -1471,6 +1506,7 @@ end
 
 
 
+
 PhaseCharInfo._SwitchCharacterControllerState = HL.Method(HL.Any, HL.Number, HL.Number, HL.Opt(HL.Boolean, HL.Boolean)) << function(
     self, charItem, fromIndex, toIndex, skipIn, ignoreResetEffect)
     if not ignoreResetEffect then
@@ -1542,7 +1578,14 @@ PhaseCharInfo._HandleLookAtIK = HL.Method(HL.Any, HL.Number, HL.Opt(HL.Boolean))
                     return
                 end
                 local state = animator:GetCurrentAnimatorStateInfo()
-                if (not state:IsName("OverviewIdle")) and (state.normalizedTime > sceneObject.view.config.LOOK_AT_CROSS_FADE_STATE_NORMALIZED_TIME) then
+                local isToOverviewState = false
+                for _, stateName in pairs(UIConst.CHAR_INFO_TO_OVERVIEW_STATE_NAME) do
+                    if state:IsName(stateName) then
+                        isToOverviewState = true
+                        break
+                    end
+                end
+                if isToOverviewState and (state.normalizedTime > sceneObject.view.config.LOOK_AT_CROSS_FADE_STATE_NORMALIZED_TIME) then
                     self.m_lookAtTween = DOTween.To(function()
                         return lookAtIk.solver.IKPositionWeight
                     end, function(value)
@@ -2294,6 +2337,29 @@ end
 
 
 
+PhaseCharInfo.OnCharMaxPotentialEffectToggled = HL.Method(HL.Table) << function(self, args)
+    local charId, isEnabled = unpack(args)
+    local charInfo = CharInfoUtils.getPlayerCharInfoByTemplateId(charId, GEnums.CharType.Default)
+    if not charInfo then
+        return
+    end
+
+    local charPhaseItem = self:_GetCharPhaseItem(charInfo.instId)
+    if not charPhaseItem then
+        return
+    end
+    if isEnabled then
+        if charInfo.potentialLevel >= UIConst.CHAR_MAX_POTENTIAL then
+            charPhaseItem:LoadPotentialEffects()
+        end
+    else
+        charPhaseItem:UnloadPotentialEffects()
+    end
+end
+
+
+
+
 PhaseCharInfo.ToggleWeaponFocusMode = HL.Method(HL.Boolean) << function(self, isOn)
     if self.m_curPage ~= UIConst.CHAR_INFO_PAGE_TYPE.WEAPON then
         return
@@ -2472,6 +2538,51 @@ PhaseCharInfo._InitPotentialScene = HL.Method() << function(self)
     local sceneObject = self.m_gameObject2Item[PHASE_CHAR_INFO_POTENTIAL_SCENE]
     sceneObject.view.camera.root.gameObject:SetAllChildrenActiveIfNecessary(false)
     sceneObject.view.light.root.gameObject:SetActive(false)
+
+    
+    local sceneRoot = sceneObject.view.scene.transform
+    
+    local decoCfg
+    for _, cfg in pairs(Tables.charPotentialDecoTable) do
+        if not string.isEmpty(cfg.missionId) and GameInstance.player.mission:GetMissionState(cfg.missionId) ==
+            CS.Beyond.Gameplay.MissionSystem.MissionState.Processing then
+            decoCfg = cfg
+            break
+        end
+    end
+    if decoCfg then
+        for _, replaceCfg in ipairs(CharPotentialConst.DecoItemReplaceCfg) do
+            local newDecoName = decoCfg[replaceCfg.cfgName]
+            local newAsset = self.m_resourceLoader:LoadGameObject(string.format(CharPotentialConst.DecoItemPathFormat, newDecoName))
+            if newAsset then
+                local newItem = CSUtils.CreateObject(newAsset, sceneRoot)
+                newItem.name = newDecoName
+                local oldItem = sceneRoot:Find(replaceCfg.decoName)
+                if oldItem then
+                    local posOffset = Vector3.zero
+                    if replaceCfg.posOffset and replaceCfg.posOffset[newDecoName] then
+                        posOffset = replaceCfg.posOffset[newDecoName]
+                    end
+                    newItem.transform.localPosition = oldItem.localPosition + posOffset
+                    if not replaceCfg.ignoreRotate then
+                        newItem.transform.localRotation = oldItem.localRotation
+                    end
+                    newItem.transform.localScale = oldItem.localScale
+                    GameObject.Destroy(oldItem.gameObject)
+                end
+            end
+        end
+        local newAC = self.m_resourceLoader:LoadAnimatorController(string.format(CharPotentialConst.DecoACPathFormat, decoCfg.animatorId))
+        if newAC then
+            sceneObject.view.scene.animator.runtimeAnimatorController = newAC
+        end
+        
+        
+        
+        
+        
+    end
+
     local sceneDeco = sceneObject.view.deco
     sceneDeco.canvas.worldCamera = CameraManager.mainCamera
     for _, level in ipairs(UIConst.CHAR_PHOTO_POTENTIAL_LEVELS) do
@@ -3055,6 +3166,20 @@ PhaseCharInfo._ActiveWeaponPageNavi = HL.Method(HL.Userdata, HL.Boolean) << func
     weaponCtrl.view.focusMasteryNaviGroup:TryChangeNaviPartnerOnRight(charInfoCtrl.view.menuListNodeNaviGroup, isActive)
 end
 
+
+
+
+
+PhaseCharInfo.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    arg.pageType = self.m_curPage
+    arg.initCharInfo = {
+        instId = self.m_charInfo.instId,
+        templateId = self.m_charInfo.templateId,
+    }
+    arg.forceSkipIn = true
+    return arg
+end
 
 
 HL.Commit(PhaseCharInfo)

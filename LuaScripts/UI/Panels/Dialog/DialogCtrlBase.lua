@@ -29,7 +29,6 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 
 
 
-
 DialogCtrlBase = HL.Class('DialogCtrlBase', uiCtrl.UICtrl)
 
 

@@ -288,6 +288,11 @@ WikiTop.InitWikiTop = HL.Method(HL.Table) << function(self, args)
                 end
             end)
         end
+        if DeviceInfo.usingController then
+            local action = isCurrent and CS.Beyond.Input.ActionOnSetNaviTarget.None or
+                CS.Beyond.Input.ActionOnSetNaviTarget.PressConfirmTriggerOnClick
+            folderCell.btn:ChangeActionOnSetNaviTarget(action)
+        end
     end)
 end
 

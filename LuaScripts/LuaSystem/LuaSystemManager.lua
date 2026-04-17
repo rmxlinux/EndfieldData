@@ -29,6 +29,7 @@
 
 
 
+
 LuaSystemManager = HL.Class('LuaSystemManager')
 
 
@@ -77,6 +78,9 @@ LuaSystemManager.uiRestoreSystem = HL.Field(HL.Forward('UIRestoreSystem'))
 LuaSystemManager.dummyNaviLayerSystem = HL.Field(HL.Forward('DummyNaviLayerSystem'))
 
 
+LuaSystemManager.appStoreSystem = HL.Field(HL.Forward('AppStoreSystem'))
+
+
 
 
 
@@ -97,6 +101,7 @@ LuaSystemManager.InitSystems = HL.Method() << function(self)
     self.radioSystem = self:_AddSystem("RadioSystem")
     self.uiRestoreSystem = self:_AddSystem("UIRestoreSystem")
     self.dummyNaviLayerSystem = self:_AddSystem("DummyNaviLayerSystem")
+    self.appStoreSystem = self:_AddSystem("AppStoreSystem")
 end
 
 

@@ -150,7 +150,25 @@ ItemAsInput._InsertCrafts = HL.Method(HL.Table, HL.Table) << function(self, obta
         })
     end
 
+    local buildingSortFunc = Utils.genSortFunction({"sortId1", "sortId2"}, true)
+    local buildingSortList = {}
     for buildingId, crafts in pairs(craftsByBuilding) do
+        local buildingItemId = FactoryUtils.getBuildingItemId(buildingId)
+        local _, itemData = Tables.itemTable:TryGetValue(buildingItemId)
+        if itemData then
+            table.insert(buildingSortList, {
+                sortId1 = itemData.sortId1,
+                sortId2 = itemData.sortId2,
+                buildingId = buildingId,
+                crafts = crafts,
+            })
+        end
+    end
+    table.sort(buildingSortList, buildingSortFunc)
+
+    for sortIdx, sortData in ipairs(buildingSortList) do
+        local buildingId = sortData.buildingId
+        local crafts = sortData.crafts
         local buildingData = Tables.factoryBuildingTable:GetValue(buildingId)
         if buildingData.type == GEnums.FacBuildingType.Miner then
             table.insert(obtainInfos, {
@@ -267,6 +285,19 @@ ItemAsInput._UpdateCraftCellExpand = HL.Method(HL.Table, HL.Table) << function(s
                 craftCell.timeTxt.gameObject:SetActive(true)
             else
                 craftCell.timeTxt.gameObject:SetActive(false)
+            end
+        end
+
+        
+        if craftCell.limitedFormulaCtrl then
+            if craftInfo.craftId ~= nil then
+                local timeLimited = FactoryUtils.isTimeLimitedFormula(craftInfo.craftId)
+                craftCell.limitedFormulaCtrl:SetState(timeLimited and "LimitedTimeEvent" or "Normal")
+                FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag1, craftInfo.craftId)
+                FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag2, craftInfo.craftId)
+                FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag3, craftInfo.craftId)
+            else
+                craftCell.limitedFormulaCtrl:SetState("Normal")
             end
         end
 

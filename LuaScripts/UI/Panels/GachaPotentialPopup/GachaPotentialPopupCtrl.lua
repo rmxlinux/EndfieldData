@@ -69,11 +69,16 @@ end
 
 GachaPotentialPopupCtrl._RefreshAllUI = HL.Method() << function(self)
     self.view.itemIcon:InitItemIcon(self.m_info.potentialItemId, true)
-    local _, gachaCharInfoCfg = Tables.gachaCharInfoTable:TryGetValue(self.m_info.charId)
-    self.view.roleImg:LoadSprite(UIConst.UI_SPRITE_GACHA_POOL, gachaCharInfoCfg.potentialPopupCharImg)
-    local color = UIUtils.getColorByString(gachaCharInfoCfg.potentialPopupColor)
-    self.view.colorImg1.color = color
-    self.view.colorImg2.color = color
+    if self.m_info.isPotentialBox then
+        self.view.stateController:SetState("PotentialBox")
+    else
+        self.view.stateController:SetState("Normal")
+        local _, gachaCharInfoCfg = Tables.gachaCharInfoTable:TryGetValue(self.m_info.charId)
+        self.view.roleImg:LoadSprite(UIConst.UI_SPRITE_GACHA_POOL, gachaCharInfoCfg.potentialPopupCharImg)
+        local color = UIUtils.getColorByString(gachaCharInfoCfg.potentialPopupColor)
+        self.view.colorImg1.color = color
+        self.view.colorImg2.color = color
+    end
 end
 
 

@@ -52,8 +52,10 @@ AchievementToastCtrl.RequestAchievementToasts = HL.StaticMethod(HL.Any) << funct
         return
     end
     local bundles = unpack(arg)
-    local ctrl = AchievementToastCtrl.AutoOpen(PANEL_ID, nil, false)
-    ctrl:_RequestToasts(bundles)
+    UIManager:PreloadPersistentPanelAsset(PANEL_ID, function()
+        local ctrl = AchievementToastCtrl.AutoOpen(PANEL_ID, nil, false)
+        ctrl:_RequestToasts(bundles)
+    end)
 end
 
 

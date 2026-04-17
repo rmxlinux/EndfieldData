@@ -209,6 +209,7 @@ FILTER_TYPE_TO_LINE_TYPE = {
 LINE_TYPE_TO_VISIBLE_LAYER_FIELD_NAME = {
     [CS.Beyond.Gameplay.MarkLineType.Travel] = "travelLineVisibleLayer",
     [CS.Beyond.Gameplay.MarkLineType.Power] = "powerLineVisibleLayer",
+    [CS.Beyond.Gameplay.MarkLineType.UdPipe] = "udPipeLineVisibleLayer",
 }
 
 FAC_LINE_TYPES = {

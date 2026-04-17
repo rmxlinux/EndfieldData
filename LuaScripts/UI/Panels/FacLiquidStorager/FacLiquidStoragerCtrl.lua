@@ -424,8 +424,10 @@ FacLiquidStoragerCtrl._OnDropItem = HL.Method(HL.Forward('UIDragHelper')) << fun
     local componentId = self.m_buildingInfo.fluidContainer.componentId
     if source == UIConst.UI_DRAG_DROP_SOURCE_TYPE.ItemBag then
         core:Message_OpFillingFluidComWithBag(Utils.getCurrentChapterId(), componentId, dragInfo.csIndex)
+        FactoryUtils.playAudioWhenFillingItem(dragInfo.itemId, self.m_buildingInfo.fluidContainer.holdItemId, self.m_buildingInfo.fluidContainer.holdItemCount)
     elseif source == UIConst.UI_DRAG_DROP_SOURCE_TYPE.FactoryDepot then
         core:Message_OpFillingFluidComWithDepot(Utils.getCurrentChapterId(), componentId, dragInfo.itemId)
+        FactoryUtils.playAudioWhenFillingItem(dragInfo.itemId, self.m_buildingInfo.fluidContainer.holdItemId, self.m_buildingInfo.fluidContainer.holdItemCount)
     end
 end
 

@@ -300,7 +300,7 @@ FacSearchBlueprintCtrl._OnUpdateCell = HL.Method(HL.Forward('BlueprintCell'), HL
         onClick = function()
             self:_OnClickCell(typeIndex, index)
         end,
-        showStatus = true,
+        showStatus = not Utils.isInBlackbox(),
     })
     cell.view.selected.gameObject:SetActive(self.m_selectedTypeIndex == typeIndex and self.m_selectedIndex == index)
 end

@@ -10,6 +10,9 @@ local PHASE_ID = PhaseId.ActivityCenter
 
 
 
+
+
+
 PhaseActivityCenter = HL.Class('PhaseActivityCenter', phaseBase.PhaseBase)
 
 local ROOT_PANEL_ID = PanelId.ActivityCenter
@@ -21,6 +24,7 @@ local ROOT_PANEL_ID = PanelId.ActivityCenter
 
 PhaseActivityCenter.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SHOW_ACTIVITY_PANEL] = { 'ShowActivity', true },
+    [MessageConst.SHOW_ACTIVITY_PANEL_FROM_NAVI] = { 'ShowActivityFromNavi', true },
 }
 
 
@@ -174,5 +178,34 @@ PhaseActivityCenter.ShowActivity = HL.Method(HL.Any) << function(self, arg)
 end
 
 
-HL.Commit(PhaseActivityCenter)
+PhaseActivityCenter.m_delayShowActivityCo = HL.Field(HL.Thread)
 
+
+
+
+PhaseActivityCenter.ShowActivityFromNavi = HL.Method(HL.Table) << function(self, arg)
+    self:_ClearCoroutine(self.m_delayShowActivityCo)
+    self.m_delayShowActivityCo = self:_StartCoroutine(function()
+        local panelItem = self:_GetPanelPhaseItem(self.m_activityPanelId)
+        if panelItem then
+            panelItem.uiCtrl.view.luaPanel:BlockAllInput()
+        end
+        coroutine.wait(arg.delay)
+        if panelItem then
+            panelItem.uiCtrl.view.luaPanel:RecoverAllInput()
+        end
+        self:ShowActivity(arg)
+    end)
+end
+
+
+
+PhaseActivityCenter.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    arg.activityId = self.m_panel2Item[PanelId.ActivityCenter].uiCtrl.m_activityId
+    arg.gotoCenter = true
+    return arg
+end
+
+
+HL.Commit(PhaseActivityCenter)

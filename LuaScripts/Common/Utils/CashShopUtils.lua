@@ -1030,6 +1030,7 @@ function CashShopUtils.GetGachaWeaponPoolCloseTimeInfo(poolId)
 
     
     local curIndex = 0
+    local curIndexIsTop = false
     local _, box, _ = GameInstance.player.shopSystem:GetNowUpWeaponData()
     local count = box == nil and 0 or box.Count
     for i = 0, count - 1 do
@@ -1038,7 +1039,11 @@ function CashShopUtils.GetGachaWeaponPoolCloseTimeInfo(poolId)
         local goodsId = goodsData.goodsTemplateId
         local _, goodsCfg = Tables.shopGoodsTable:TryGetValue(goodsId)
         local _, weaponGachaCfg = Tables.gachaWeaponPoolTable:TryGetValue(goodsCfg.weaponGachaPoolId)
-        curIndex = math.max(curIndex, weaponGachaCfg.index)
+        if weaponGachaCfg.index > curIndex then
+            curIndex = weaponGachaCfg.index
+            local clientTopTimeId = weaponGachaCfg.clientTopTimeId
+            curIndexIsTop = Utils.isCurTimeInTimeIdRange(clientTopTimeId)
+        end
     end
 
     
@@ -1047,7 +1052,11 @@ function CashShopUtils.GetGachaWeaponPoolCloseTimeInfo(poolId)
     local remainIndex = math.max(0, gachaWeaponCfg.finalIndex - curIndex + 1)
 
     
-    if index > 0 and remainIndex > 1 then
+    if index > 0 and not curIndexIsTop then
+        
+        isRealTime = false
+        resultValue = remainIndex - 1
+    elseif index > 0 and remainIndex > 1 then
         
         isRealTime = false
         resultValue = remainIndex
@@ -1064,6 +1073,16 @@ function CashShopUtils.GetGachaWeaponPoolCloseTimeInfo(poolId)
     return isRealTime, resultValue
 end
 
+
+
+function CashShopUtils.HasGachaWeaponTokenGiftGoodsCanBuy()
+    for goodsId, cfg in pairs(Tables.cashShopHasWeaponGoldPackTable) do
+        if CashShopUtils.CheckCashShopGoodsIsOpen(goodsId) and CashShopUtils.CheckCanBuyCashShopGoods(goodsId) then
+            return true
+        end
+    end
+    return false
+end
 
 
 
@@ -1259,34 +1278,31 @@ function CashShopUtils.InitCategoryTypeList()
     local ret = nil
 
     
+    
+    
     if CS.Beyond.GlobalOptions.instance.auditing then
-        if not GameInstance.player.mission:IsMissionCompleted("e0m0") then
-            
-            ret = {
-                
-                CashShopConst.CashShopCategoryType.Recharge,
-                
-                
-                
-                
-            }
-        else
-            
-            ret = {
-                
-                CashShopConst.CashShopCategoryType.Recharge,
-                CashShopConst.CashShopCategoryType.Pack,
-                
-                
-                
-            }
-        end
-
-        
         if CashShopUtils.IsPS() then
-            table.insert(ret, CashShopConst.CashShopCategoryType.Weapon)
-            table.insert(ret, CashShopConst.CashShopCategoryType.Token)
-            table.insert(ret, CashShopConst.CashShopCategoryType.Credit)
+            
+            if not GameInstance.player.mission:IsMissionCompleted("e0m2") then
+                ret = {
+                    CashShopConst.CashShopCategoryType.Recharge,
+                    CashShopConst.CashShopCategoryType.Weapon,
+                    CashShopConst.CashShopCategoryType.Token,
+                    CashShopConst.CashShopCategoryType.Credit,
+                }
+            else
+                ret = {
+                    CashShopConst.CashShopCategoryType.Recharge,
+                    CashShopConst.CashShopCategoryType.Pack,
+                    CashShopConst.CashShopCategoryType.Weapon,
+                    CashShopConst.CashShopCategoryType.Token,
+                    CashShopConst.CashShopCategoryType.Credit,
+                }
+            end
+        else
+            ret = {
+                CashShopConst.CashShopCategoryType.Recharge,
+            }
         end
     end
 

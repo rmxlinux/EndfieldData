@@ -20,42 +20,19 @@
       },
       "additionalWidth": 220.0,
       "_position": {
-        "x": -360.0,
-        "y": 160.0
+        "x": 80.0,
+        "y": 140.0
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "1"
     },
     {
       "_action": {
-        "key": {
-          "_value": "rotate_center"
-        },
-        "success": {
-          "_name": "IsVaild",
-          "_targetVariableID": "e140d181-cb86-418c-b842-ca3569630606"
-        },
-        "result": {
-          "_name": "center",
-          "_targetVariableID": "b34ede06-97ea-4c22-8089-cb98198b4c6f"
-        },
-        "$type": "Beyond.Gameplay.AI.Action.GetAITransData"
-      },
-      "additionalWidth": 294.0,
-      "_position": {
-        "x": 100.0,
-        "y": 160.0
-      },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "2"
-    },
-    {
-      "_action": {
         "checkMarker": [],
         "behavior": {
           "tag": {
-            "tagName": "AI/Enemy/Behavior/CastSkillToPosition",
-            "tagId": 1468304506
+            "tagName": "AI/Enemy/Behavior/CastSkillInRange",
+            "tagId": 1135958862
           }
         },
         "target": {
@@ -65,24 +42,21 @@
         "skillData": {
           "_value": {
             "skillRange": 99.0,
-            "skillID": "eny_0058_agdisk_dash_around",
+            "skillID": "eny_0058_agdisk_dash_around_withline",
             "finishWaitTime": 1.0
           }
         },
         "seqskillData": [],
-        "targetPos": {
-          "_name": "center",
-          "_targetVariableID": "b34ede06-97ea-4c22-8089-cb98198b4c6f"
-        },
+        "targetPos": {},
         "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
       },
-      "additionalWidth": 282.0,
+      "additionalWidth": 272.0,
       "_position": {
-        "x": 620.0,
-        "y": 160.0
+        "x": 500.0,
+        "y": 140.0
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "3"
+      "$id": "2"
     }
   ],
   "connections": [
@@ -101,15 +75,6 @@
       },
       "_targetNode": {
         "$ref": "2"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "0"
-      },
-      "_targetNode": {
-        "$ref": "3"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     }

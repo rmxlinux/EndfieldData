@@ -412,6 +412,17 @@ ShopTokenCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
         local goodList = shop:GetOpenGoodList()
         self:Refresh(goodList)
     end
+    if arg and not string.isEmpty(arg.goodsId) then
+        local goodsId = arg.goodsId
+        arg.goodsId = nil
+        for i = 0, self.m_goodsDataList.Count - 1 do
+            if self.m_goodsDataList[i].goodsId == goodsId then
+                self:_StartCoroutine(function()
+                    CashShopUtils.OpenShopDetailPanel(self.m_goodsDataList[i], self)
+                end)
+            end
+        end
+    end
 end
 
 

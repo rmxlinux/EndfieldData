@@ -245,18 +245,18 @@ function BattlePassUtils.CheckLabelRedDot(labelId)
         end
     end
     local hasRedDot = false
-    local redDotType = UIConst.RED_DOT_TYPE.Normal
+    local redDotType = UIConst.RED_DOT_TYPE.New
     local hasSubLabel, subLabelData = Tables.battlePassTaskLabelMapTable:TryGetValue(labelId)
     if hasSubLabel then
         for _, subLabelInfo in pairs(subLabelData.subLabels) do
             local hasSubRedDot, subRedDotType = BattlePassUtils.CheckLabelRedDot(subLabelInfo.taskLabelID)
             if hasSubRedDot and subRedDotType == UIConst.RED_DOT_TYPE.New then
                 hasRedDot = true
-                redDotType = UIConst.RED_DOT_TYPE.New
+                redDotType = (redDotType == UIConst.RED_DOT_TYPE.Normal) and UIConst.RED_DOT_TYPE.Normal or UIConst.RED_DOT_TYPE.New
             end
             if hasSubRedDot and subRedDotType == UIConst.RED_DOT_TYPE.Normal then
                 hasRedDot = true
-                redDotType = (redDotType == UIConst.RED_DOT_TYPE.New) and UIConst.RED_DOT_TYPE.New or UIConst.RED_DOT_TYPE.Normal
+                redDotType = UIConst.RED_DOT_TYPE.Normal
             end
         end
     else
@@ -267,11 +267,11 @@ function BattlePassUtils.CheckLabelRedDot(labelId)
                 local hasGroupRedDot, groupRedDotType = BattlePassUtils.CheckGroupRedDot(groupId)
                 if hasGroupRedDot and groupRedDotType == UIConst.RED_DOT_TYPE.New then
                     hasRedDot = true
-                    redDotType = UIConst.RED_DOT_TYPE.New
+                    redDotType = (redDotType == UIConst.RED_DOT_TYPE.Normal) and UIConst.RED_DOT_TYPE.Normal or UIConst.RED_DOT_TYPE.New
                 end
                 if hasGroupRedDot and groupRedDotType == UIConst.RED_DOT_TYPE.Normal then
                     hasRedDot = true
-                    redDotType = (redDotType == UIConst.RED_DOT_TYPE.New) and UIConst.RED_DOT_TYPE.New or UIConst.RED_DOT_TYPE.Normal
+                    redDotType = UIConst.RED_DOT_TYPE.Normal
                 end
             end
         end
@@ -333,16 +333,16 @@ function BattlePassUtils.CheckGroupRedDot(groupId)
     local bpSystem = GameInstance.player.battlePassSystem
     local hasGroup, groupInfo = bpSystem.taskData.taskGroups:TryGetValue(groupId)
     local hasRedDot = false
-    local redDotType = UIConst.RED_DOT_TYPE.Normal
+    local redDotType = UIConst.RED_DOT_TYPE.New
     if hasGroup then
         for _, taskId in pairs(groupInfo.taskIds) do
             if BattlePassUtils.CheckTaskUnread(taskId) then
                 hasRedDot = true
-                redDotType = UIConst.RED_DOT_TYPE.New
+                redDotType = (redDotType == UIConst.RED_DOT_TYPE.Normal) and UIConst.RED_DOT_TYPE.Normal or UIConst.RED_DOT_TYPE.New
             end
             if BattlePassUtils.CheckTaskCompleted(taskId) then
                 hasRedDot = true
-                redDotType = (redDotType == UIConst.RED_DOT_TYPE.New) and UIConst.RED_DOT_TYPE.New or UIConst.RED_DOT_TYPE.Normal
+                redDotType = UIConst.RED_DOT_TYPE.Normal
             end
         end
     end

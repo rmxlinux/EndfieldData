@@ -133,9 +133,11 @@ end
 
 
 CharInfoEquipCtrl.OnShow = HL.Override() << function(self)
-    self:_RefreshRightPanel({
-        charInfo = self.m_charInfo,
-    })
+    if self.state == UIConst.CHAR_INFO_EQUIP_STATE.Normal then
+        self:_RefreshRightPanel({
+            charInfo = self.m_charInfo,
+        })
+    end
 end
 
 
@@ -740,6 +742,14 @@ CharInfoEquipCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.btnEmpty.onClick:AddListener(function()
         self:OnCommonEmptyButtonClick()
     end)
+    self.view.commonNode.manufactureBtn.gameObject:SetActive(Utils.isSystemUnlocked(GEnums.UnlockSystemType.EquipProduce) and not isTrailCard)
+    self.view.commonNode.produceBtn.onClick:AddListener(function()
+        local equipSlotPanelPhaseItem = self.m_phase:_GetPanelPhaseItem(PanelId.CharInfoEquipSlot)
+        if equipSlotPanelPhaseItem and equipSlotPanelPhaseItem.uiCtrl:IsPlayingAnimationIn() then
+            equipSlotPanelPhaseItem.uiCtrl.animationWrapper:SkipInAnimation()
+        end
+        PhaseManager:GoToPhase(PhaseId.EquipTech)
+    end)
 end
 
 
@@ -983,6 +993,9 @@ CharInfoEquipCtrl._ToggleEquipList = HL.Method(HL.Boolean) << function(self, isO
             })
         end)
     end
+    if DeviceInfo.usingController and not isOn then
+        InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.commonItemList.view.scrollRect.naviGroup)
+    end
 end
 
 
@@ -1088,6 +1101,8 @@ CharInfoEquipCtrl._ShowCompare = HL.Method(HL.Boolean) << function(self, inCompa
     end
 
     self.view.btnEmpty.gameObject:SetActive(inCompare)
+    self.view.keyHintTabLeft.gameObject:SetActive(not inCompare)
+    self.view.keyHintTabRight.gameObject:SetActive(not inCompare)
 end
 
 

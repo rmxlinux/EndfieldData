@@ -90,3 +90,20 @@ StarEffectConfig = {
         }
     }
 }
+
+DecoItemPathFormat = "Assets/Beyond/DynamicAssets/Gameplay/Prefabs/CharInfo/PotentialDeco/%s.prefab"
+DecoACPathFormat = "Assets/Beyond/DynamicAssets/Gameplay/Prefabs/CharInfo/PotentialDeco/%s.overrideController"
+DecoItemReplaceCfg = {
+    {
+        cfgName = "rabbitModelId",
+        decoName = "P_prop_charinfo_zmdlife_01",
+        ignoreRotate = true,
+    },
+    {
+        cfgName = "carModelId",
+        decoName = "P_prop_charinfo_zmdlife_07",
+        posOffset = {
+            ["P_prop_charinfo_zmdlife_11"] = Vector3(-0.005, 0, 0),
+        }
+    }
+}

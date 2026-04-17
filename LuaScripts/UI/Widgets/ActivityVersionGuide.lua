@@ -95,6 +95,7 @@ ActivityVersionGuide.InitVersionGuide = HL.Method(HL.Any) << function(self, args
             end)
             self.view.rightNaviGroup.onIsTopLayerChanged:AddListener(function(active)
                 InputManagerInst:ToggleBinding(viewBindingId, not active)
+                InputManagerInst:ToggleGroup(self.view.enterNode.groupId, not active)
             end)
         end
         self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })

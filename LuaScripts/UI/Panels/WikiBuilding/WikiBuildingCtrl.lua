@@ -14,6 +14,7 @@ local PANEL_ID = PanelId.WikiBuilding
 
 
 
+
 WikiBuildingCtrl = HL.Class('WikiBuildingCtrl', wikiDetailBaseCtrl.WikiDetailBaseCtrl)
 
 
@@ -39,6 +40,14 @@ local HIDE_CRAFT_TREE_GROUP_TABLE =
 
 
 
+WikiBuildingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    WikiBuildingCtrl.Super.OnCreate(self, arg)
+    
+    GameAction.FacToggleSystemEnabled(true, CS.Beyond.Gameplay.Factory.FacSystemTickSkipSource.UI)
+end
+
+
+
 WikiBuildingCtrl.OnShow = HL.Override() << function(self)
     WikiBuildingCtrl.Super.OnShow(self)
     self:_RefreshModel()
@@ -52,6 +61,9 @@ WikiBuildingCtrl.OnClose = HL.Override() << function(self)
     if self.m_phase then
         self.m_phase:ActiveModelRotateRoot(false)
     end
+
+    
+    GameAction.FacToggleSystemEnabled(false, CS.Beyond.Gameplay.Factory.FacSystemTickSkipSource.UI)
 end
 
 
@@ -156,7 +168,20 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
                 local craftInfos = FactoryUtils.getBuildingCrafts(buildingData.id, nil, nil, modeData.modeName)
                 local _, modeTypeData = Tables.factoryMachineCraftModeTable:TryGetValue(modeData.modeName)
                 if modeTypeData and craftInfos and next(craftInfos) then
-                    table.insert(modeInfos, { modeType = modeData.modeName, craftInfos = craftInfos, sortId = modeTypeData.sortId })
+                    
+                    local tempTL = {}
+                    local temp = {}
+                    for _, craftInfo in ipairs(craftInfos) do
+                        if FactoryUtils.isTimeLimitedFormula(craftInfo.craftId) then
+                            table.insert(tempTL, craftInfo)
+                        else
+                            table.insert(temp, craftInfo)
+                        end
+                    end
+                    for _, craftInfo in ipairs(temp) do
+                        table.insert(tempTL, craftInfo)
+                    end
+                    table.insert(modeInfos, { modeType = modeData.modeName, craftInfos = tempTL, sortId = modeTypeData.sortId })
                 end
             end
             table.sort(modeInfos, Utils.genSortFunction({ "sortId" }, true))
@@ -250,6 +275,18 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
                 self:_OnClickRightItemCell(cell, craftCell.view)
             end)
 
+            
+            if craftCell.view.stateController then
+                if craftInfo.craftId ~= nil then
+                    local timeLimited = FactoryUtils.isTimeLimitedFormula(craftInfo.craftId)
+                    craftCell.view.stateController:SetState(timeLimited and "LimitedTimeEvent" or "Normal")
+                    FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.view.timeLimitedColorTag1, craftInfo.craftId)
+                    FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.view.timeLimitedColorTag2, craftInfo.craftId)
+                    FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.view.timeLimitedColorTag3, craftInfo.craftId)
+                else
+                    craftCell.view.stateController:SetState("Normal")
+                end
+            end
 
             if DeviceInfo.usingController then
                 InputManagerInst:ToggleBinding(craftCell.view.pinBtn.view.pinToggle.toggleBindingId, false)

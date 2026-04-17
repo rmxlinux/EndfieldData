@@ -240,6 +240,9 @@ DepotContent._OnFirstTimeInit = HL.Override() << function(self)
     self:RegisterMessage(MessageConst.ON_FAC_MOVE_ITEM_GRID_BOX_TO_DEPOT, function(args)
         self:_PlayDropAnimation(args)
     end)
+    self:RegisterMessage(MessageConst.ON_FAC_MOVE_ALL_CACHE_OUT_ITEM_TO_DEPOT, function(args)
+        self:_PlayDropAnimation(args)
+    end)
 end
 
 

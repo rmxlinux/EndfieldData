@@ -178,7 +178,7 @@ WeaponExhibitGemCtrl._InitActionEvent = HL.Method() << function(self)
                 selectedTermIdMap[tagInfo.param] = true
             end
         end
-        PhaseManager:OpenPhase(PhaseId.GemEnhance, {
+        PhaseManager:GoToPhase(PhaseId.GemEnhance, {
         gemInstId = self.m_curSelectGemInstId,
             selectedTermIdMap = selectedTermIdMap,
         })

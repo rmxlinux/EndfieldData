@@ -31,7 +31,6 @@ ShopDetailCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_BUY_ITEM_SUCC] = 'OnBuyItemSucc',
     [MessageConst.ON_SHOP_GOODS_CONDITION_REFRESH] = '_OnCloseShopDetailPanel',
     [MessageConst.ON_SHOP_REFRESH] = '_OnHandleShopRefresh',
-    [MessageConst.ON_CLOSE_SHOP_DETAIL_PANEL] = '_OnCloseShopDetailPanel'
 }
 
 
@@ -169,8 +168,9 @@ end
 
 
 ShopDetailCtrl._OnHandleShopRefresh = HL.Method() << function(self)
-    
-    self:_OnShopRefresh()   
+    GameInstance.player.guide:OnShopRefreshItemInfo()
+    Notify(MessageConst.SHOW_TOAST, Language.LUA_REFRESH_CLOSE_SHOP_TOAST)
+    self:TryClose()
 end
 
 
@@ -381,7 +381,11 @@ ShopDetailCtrl._OnClickConfirm = HL.Method() << function(self)
         end
     end
 
-    GameInstance.player.shopSystem:BuyGoods(info.shopId, info.goodsId, buyCount)
+    if self.m_moneyId == Tables.globalConst.gachaWeaponItemId then
+        GameInstance.player.shopSystem:ByGoodsGachaWeapon(info.shopId, info.goodsId)
+    else
+        GameInstance.player.shopSystem:BuyGoods(info.shopId, info.goodsId, buyCount)
+    end
 end
 
 

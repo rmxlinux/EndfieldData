@@ -60,6 +60,7 @@ ReadingPopUpCtrl._ShowContent = HL.Virtual() << function(self)
     local hasCfg = Tables.richContentTable:TryGetValue(self.m_readId)
     if hasCfg then
         EventLogManagerInst:GameEvent_ReadNarrativeContent(self.m_readId)
+        GameInstance.player.readingSystem:SaveReadNarrativeContentTime(self.m_readId)
         self.view.richContent:SetContentById(self.m_readId)
     else
         logger.error("图文id不存在：【" .. tostring(self.m_readId) .. "】")
@@ -78,7 +79,8 @@ ReadingPopUpCtrl.OnClose = HL.Override() << function(self)
     if not string.isEmpty(self.m_readId) then
         local hasRichContentCfg, _ = Tables.richContentTable:TryGetValue(self.m_readId)
         if hasRichContentCfg then
-            EventLogManagerInst:GameEvent_CloseNarrativeContent(self.m_readId)
+            local stayTime = GameInstance.player.readingSystem:GetReadNarrativeContentTime(self.m_readId)
+            EventLogManagerInst:GameEvent_CloseNarrativeContent(self.m_readId, stayTime)
         end
     end
     if not string.isEmpty(self.m_arg.readingPopId) then

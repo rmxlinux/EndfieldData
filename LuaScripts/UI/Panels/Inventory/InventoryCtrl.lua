@@ -529,7 +529,7 @@ InventoryCtrl._InitDepot = HL.Method() << function(self)
 
         itemMoveTarget = UIConst.ITEM_MOVE_TARGET.ItemBag,
         onToggleDestroyMode = function(active)
-            self.m_naviGroupSwitcher:ToggleActive(not active)
+            self.m_naviGroupSwitcher:ToggleActive(not active and not self.m_weekRaidConvertRate)
         end,
         customOnUpdateCell = function(cell, itemBundle, luaIndex)
             if itemBundle.count and itemBundle.count > 0 and cell:IsQuickDropTargetValid() then
@@ -1076,7 +1076,7 @@ InventoryCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << 
         end
     end
 
-    self.m_naviGroupSwitcher:ToggleActive(not active)
+    self.m_naviGroupSwitcher:ToggleActive(not active and not self.m_weekRaidConvertRate)
     self:_UpdateMouseHint()
 end
 
@@ -1512,17 +1512,17 @@ InventoryCtrl.m_timeScaleHandler = HL.Field(HL.Number) << 0
 
 InventoryCtrl._FreezeWorld = HL.Method() << function(self)
     self:_ResumeWorld()
-    self.m_timeScaleHandler = TimeManagerInst:StartChangeTimeScale(0, CS.Beyond.TimeManager.ChangeTimeScaleReason.UIPanel)
-    GameWorld.worldInfo:TryPauseSubGame(GEnums.GameTimeFreezeReason.UI)
+    self.m_timeScaleHandler = Utils.FreezeWorldByUI()
+    GameWorld.worldInfo:TryPauseGameTime(GEnums.GameTimeFreezeReason.UI)
 end
 
 
 
 InventoryCtrl._ResumeWorld = HL.Method() << function(self)
     if self.m_timeScaleHandler > 0 then
-        TimeManagerInst:StopChangeTimeScale(self.m_timeScaleHandler)
+        Utils.ResumeWorldByUI(self.m_timeScaleHandler)
         self.m_timeScaleHandler = 0
-        GameWorld.worldInfo:TryResumeSubGame(GEnums.GameTimeFreezeReason.UI)
+        GameWorld.worldInfo:TryResumeGameTime(GEnums.GameTimeFreezeReason.UI)
     end
 end
 

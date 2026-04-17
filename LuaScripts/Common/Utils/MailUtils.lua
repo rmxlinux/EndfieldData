@@ -48,6 +48,7 @@ MailUtils.specialParamKey = {
     Time = "#__time__#",
     Testimonial = "#__testimonial__#",
     GachaLTTicket = "#__gachaLTTicket__#",
+    GachaWeaponLTTicket = "#__gachaWeaponLTTicket__#",
     LTItems = "#__ltItems__#",
 }
 
@@ -56,6 +57,7 @@ MailUtils._specialParamAnalyzeFunc = {
     ["#__time__#"] = "_GetSpecialParamInfo_Time",
     ["#__testimonial__#"] = "_GetSpecialParamInfo_Testimonial",
     ["#__gachaLTTicket__#"] = "_GetSpecialParamInfo_GachaLTTicket",
+    ["#__gachaWeaponLTTicket__#"] = "_GetSpecialParamInfo_GachaWeaponLTTicket",
     ["#__ltItems__#"] = "_GetSpecialParamInfo_LTItems",
 }
 
@@ -128,9 +130,9 @@ function MailUtils._GetSpecialParamInfo_GachaLTTicket(mail)
                 count = value,
             }
             if string.isEmpty(resultStr) then
-                resultStr = itemCfg.name
+                resultStr = string.format(Language.LUA_COMMON_NAME_X_COUNT, itemCfg.name, value)
             else
-                resultStr = resultStr .. "\n" .. itemCfg.name
+                resultStr = resultStr .. "\n" .. string.format(Language.LUA_COMMON_NAME_X_COUNT, itemCfg.name, value)
             end
             table.insert(resultInfos, info)
         end
@@ -166,6 +168,35 @@ function MailUtils._GetSpecialParamInfo_LTItems(mail)
         return resultStr, resultInfos
     end
     logger.error(string.format("[邮件解析] key 【%s】 对应param不存在，可能是服务端没下发", MailUtils.specialParamKey.LTItems))
+    return nil, nil
+end
+
+
+
+
+
+function MailUtils._GetSpecialParamInfo_GachaWeaponLTTicket(mail)
+    local resultStr = ""
+    local resultInfos = {}
+    for key, value in pairs(mail.paramDic) do
+        local hasCfg, itemCfg = Tables.itemTable:TryGetValue(key)
+        if hasCfg and itemCfg.type == GEnums.ItemType.TicketWeaponBoxLTItem then
+            local info = {
+                itemId = key,
+                count = value,
+            }
+            if string.isEmpty(resultStr) then
+                resultStr = itemCfg.name
+            else
+                resultStr = resultStr .. "\n" .. itemCfg.name
+            end
+            table.insert(resultInfos, info)
+        end
+    end
+    if not string.isEmpty(resultStr) then
+        return resultStr, resultInfos
+    end
+    logger.error(string.format("[邮件解析] key 【%s】 对应param不存在，可能是服务端没下发", MailUtils.specialParamKey.GachaWeaponLTTicket))
     return nil, nil
 end
 

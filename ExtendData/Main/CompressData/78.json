@@ -11,37 +11,6 @@
       "$id": "0"
     },
     {
-      "filterMode": 0,
-      "maxCount": {
-        "_value": 1
-      },
-      "coolDownTime": {
-        "_value": 5.0
-      },
-      "additionalWidth": 56.0,
-      "_position": {
-        "x": -160.0,
-        "y": 40.0
-      },
-      "$type": "NodeCanvas.BehaviourTrees.Filter",
-      "$id": "1"
-    },
-    {
-      "_action": {
-        "waitTime": {
-          "_value": 0.5
-        },
-        "$type": "Beyond.Gameplay.AI.Action.WaitSec"
-      },
-      "additionalWidth": 5.0,
-      "_position": {
-        "x": -140.0,
-        "y": 140.0
-      },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "2"
-    },
-    {
       "_action": {
         "saveTo": {
           "_name": "Target",
@@ -51,8 +20,43 @@
       },
       "additionalWidth": 105.0,
       "_position": {
-        "x": 60.0,
-        "y": 20.0
+        "x": -280.0,
+        "y": 40.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "1"
+    },
+    {
+      "_condition": {
+        "buffId": {
+          "_value": "buff_eny_0055_hscrane_settlement"
+        },
+        "buffOwner": {
+          "_name": ""
+        },
+        "compareType": 2,
+        "layerCnt": {},
+        "$type": "Beyond.Gameplay.AI.Condition.CheckBuffStackNum"
+      },
+      "additionalWidth": 395.0,
+      "_position": {
+        "x": -20.0,
+        "y": 40.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ConditionNode",
+      "$id": "2"
+    },
+    {
+      "_action": {
+        "waitTime": {
+          "_value": 0.5
+        },
+        "$type": "NodeCanvas.Tasks.Actions.Wait"
+      },
+      "additionalWidth": 17.0,
+      "_position": {
+        "x": 540.0,
+        "y": 40.0
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "3"
@@ -79,7 +83,7 @@
       },
       "additionalWidth": 264.0,
       "_position": {
-        "x": 300.0,
+        "x": 840.0,
         "y": 40.0
       },
       "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
@@ -90,7 +94,7 @@
         "skillData": {
           "_value": {
             "skillRange": 100.0,
-            "skillID": "eny_0055_hscrane_settlement_sp"
+            "skillID": "eny_0055_hscrane_settlement"
           }
         },
         "target": {
@@ -102,7 +106,7 @@
       },
       "additionalWidth": 192.0,
       "_position": {
-        "x": 340.0,
+        "x": 880.0,
         "y": 180.0
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
@@ -138,7 +142,7 @@
         "$ref": "0"
       },
       "_targetNode": {
-        "$ref": "3"
+        "$ref": "2"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     },
@@ -147,16 +151,7 @@
         "$ref": "0"
       },
       "_targetNode": {
-        "$ref": "4"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "1"
-      },
-      "_targetNode": {
-        "$ref": "2"
+        "$ref": "3"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     },

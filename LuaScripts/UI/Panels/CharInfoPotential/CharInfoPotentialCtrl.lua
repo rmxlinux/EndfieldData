@@ -536,6 +536,7 @@ CharInfoPotentialCtrl.m_curShowPotentialLevel = HL.Field(HL.Number) << 0
 
 
 CharInfoPotentialCtrl._RefreshRightNode = HL.Method(HL.Number) << function(self, potentialLevel)
+    Notify(MessageConst.HIDE_HYPERLINK_TIPS)
     self.m_curShowPotentialLevel = potentialLevel
     local potentialDataCount = self.m_potentialList.potentialUnlockBundle.Count
     if potentialLevel < 1 or potentialLevel > potentialDataCount then
@@ -621,7 +622,7 @@ CharInfoPotentialCtrl._RefreshRightNode = HL.Method(HL.Number) << function(self,
             cardNodeView.btnCheckCard.onClick:AddListener(function()
                 if isUnlocked then
                     self.view.rightNode.autoCloseArea.enabled = false
-                    UIManager:Open(PanelId.FriendThemeChange, {
+                    PhaseManager:GoToPhase(PhaseId.FriendThemeChange, {
                         selectId = cardId,
                         onClose = function()
                             self.view.rightNode.autoCloseArea.enabled = true

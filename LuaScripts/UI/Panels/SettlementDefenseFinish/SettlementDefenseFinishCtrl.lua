@@ -264,7 +264,7 @@ SettlementDefenseFinishCtrl._RefreshTips = HL.Method(HL.String, HL.Boolean, HL.B
         self.view.tipsLayout.gainNode.gameObject:SetActive(showGainBuff)
         if showGainBuff then
             local gainEffect = math.floor(settlementData.tdGainEffect)
-            self.view.tipsLayout.gainSpeedTxt.text = string.format(Language.LUA_TD_FINISH_GAIN_EFFECT_TIPS_FORMAT, gainEffect)
+            self.view.tipsLayout.gainSpeedTxt.text = string.format(Language.LUA_TD_FINISH_GAIN_EFFECT_TIPS_FORMAT, math.floor(gainEffect))
         end
         local defenseState = GameInstance.player.towerDefenseSystem:GetSettlementDefenseState(tdCfg.settlementId)
         self.view.tipsLayout.safeNode.gameObject:SetActive(defenseState == DefenseState.LongSafety)
@@ -277,7 +277,7 @@ SettlementDefenseFinishCtrl._RefreshTips = HL.Method(HL.String, HL.Boolean, HL.B
         if hasGotEffect then
             self.view.tipsLayout.gainCountDown:InitCountDownText(settlementData.tdGainEffectExpirationTs, nil, UIUtils.getLeftTimeToSecond)
             self.view.tipsLayout.safeCountDown:InitCountDownText(settlementData.tdGainEffectExpirationTs, nil, UIUtils.getLeftTimeToSecond)
-            self.view.tipsLayout.gainSpeedTxt.text = string.format(Language.LUA_TD_FINISH_GAIN_EFFECT_TIPS_FORMAT, settlementData.timeLimitTdGainEffect)
+            self.view.tipsLayout.gainSpeedTxt.text = string.format(Language.LUA_TD_FINISH_GAIN_EFFECT_TIPS_FORMAT, math.floor(settlementData.timeLimitTdGainEffect))
         end
     end
 

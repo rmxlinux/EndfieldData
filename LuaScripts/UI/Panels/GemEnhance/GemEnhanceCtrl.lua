@@ -394,7 +394,7 @@ end
 GemEnhanceCtrl._RefreshMaterialGemList = HL.Method(HL.Opt(HL.Boolean)) << function(self, isFirstSelected)
     self:_OnSelectMaterialGem(nil)
     self.view.bottomEnhancedNode.commonGemHorizontalList:InitCommonItemList({
-        listType = UIConst.COMMON_ITEM_LIST_TYPE.WEAPON_EXHIBIT_GEM,
+        listType = UIConst.COMMON_ITEM_LIST_TYPE.WEAPON_GEM_MATERIAL,
         onClickItem = function(args)
             local itemInfo = args.itemInfo
             if not itemInfo then
@@ -571,6 +571,11 @@ GemEnhanceCtrl._InitController = HL.Method() << function(self)
         local selectedCell = self.view.commonItemList:GetCurSelectedItemCell()
         if selectedCell then
             self.view.commonItemList:SetSelectedAppearance(selectedCell, not isTopLayer)
+        end
+    end)
+    self.view.enhancedNode.gemCard.view.naviGroup.onIsFocusedChange:AddListener(function(isFocused)
+        if UIManager:IsShow(PanelId.CommonFilter) then
+            self.view.enhancedNode.gemCard.view.naviGroup:ManuallyStopFocus()
         end
     end)
 end

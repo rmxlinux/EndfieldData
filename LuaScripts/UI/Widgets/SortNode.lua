@@ -21,6 +21,8 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
 SortNode = HL.Class('SortNode', UIWidgetBase)
 
 
@@ -46,6 +48,9 @@ SortNode.m_onToggleOptList = HL.Field(HL.Function)
 
 
 SortNode.m_changeIncrementalBindingId = HL.Field(HL.Number) << -1
+
+
+SortNode.m_enableFilterBtn = HL.Field(HL.Boolean) << true
 
 
 
@@ -160,6 +165,9 @@ function(self, sortOptions, onSortChanged, curCSOptionIndex, curIsIncremental, n
     self.m_tmpNoCallback = false
     self.view.mobilePCNode.dropDown:SetSelected(curCSOptionIndex, true, false)
     self.view.controllerNode.filterBtn.onClick:AddListener(function()
+        if not self.m_enableFilterBtn then
+            return
+        end
         if self.m_filterBtn and not self.m_filterBtn.m_args then
             logger.error("SortNode的初始化需要在FilterBtn之后，否则会导致CommonFilterPanel表现不正确")
         end
@@ -173,6 +181,14 @@ function(self, sortOptions, onSortChanged, curCSOptionIndex, curIsIncremental, n
     end)
     self:UpdateDeviceState()
 end
+
+
+
+
+SortNode.SetEnableFilterBtn = HL.Method(HL.Boolean) << function(self, enable)
+    self.m_enableFilterBtn = enable
+end
+
 
 
 

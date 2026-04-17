@@ -40,6 +40,7 @@ local FAC_DESTROY_MODE_STATE_KEY = "FacDestroyModeCtrl"
 
 
 
+
 FacDestroyModeCtrl = HL.Class('FacDestroyModeCtrl', uiCtrl.UICtrl)
 
 
@@ -129,6 +130,9 @@ FacDestroyModeCtrl.EnterMode = HL.StaticMethod(HL.Opt(HL.Table)) << function(arg
         return
     end
 
+    
+    FacDestroyModeCtrl.s_radioTagHandle = GameInstance.player.globalTagsSystem:AddGlobalTag(CS.Beyond.Gameplay.GlobalTagDefine.notStopRadioTags)
+
     Notify(MessageConst.BEFORE_ENTER_DESTROY_MODE)
     PhaseManager:ExitPhaseFastTo(PhaseId.Level, true)
 
@@ -187,6 +191,11 @@ FacDestroyModeCtrl.EnterMode = HL.StaticMethod(HL.Opt(HL.Table)) << function(arg
             UIManager:RecoverScreen(key)
             Notify(MessageConst.BEFORE_EXIT_DESTROY_MODE)
             Notify(MessageConst.ON_FAC_DESTROY_MODE_CHANGE, false)
+
+            if FacDestroyModeCtrl.s_radioTagHandle then
+                FacDestroyModeCtrl.s_radioTagHandle:RemoveTag()
+                FacDestroyModeCtrl.s_radioTagHandle = nil
+            end
             return
         end
         
@@ -206,6 +215,9 @@ end
 FacDestroyModeCtrl.m_args = HL.Field(HL.Table)
 
 
+FacDestroyModeCtrl.s_radioTagHandle = HL.StaticField(HL.Any)
+
+
 
 
 FacDestroyModeCtrl._OnEnterMode = HL.Method(HL.Table) << function(self, args)
@@ -223,7 +235,7 @@ FacDestroyModeCtrl._OnEnterMode = HL.Method(HL.Table) << function(self, args)
     self.view.hidePipeToggle.gameObject:SetActive(showHidePipe)
     self.view.hidePipeToggle.toggle:SetIsOnWithoutNotify(false)
     self.view.errorHint.gameObject:SetActive(false)
-    self.view.pendingHint.gameObject:SetActive(false)
+    self.view.warningHint.gameObject:SetActive(false)
     self:_OnChangeHideToggle(false)
 
     self.m_args = args
@@ -327,6 +339,12 @@ FacDestroyModeCtrl._RealExitMode = HL.Method() << function(self)
     self:_ClearOnExit()
 
     Notify(MessageConst.TOGGLE_IN_MAIN_HUD_STATE, { FAC_DESTROY_MODE_STATE_KEY, true })
+    if FacDestroyModeCtrl.s_radioTagHandle then
+        
+        FacDestroyModeCtrl.s_radioTagHandle:RemoveTag()
+        FacDestroyModeCtrl.s_radioTagHandle = nil
+    end
+
     Notify(MessageConst.ON_FAC_DESTROY_MODE_CHANGE, false)
     Notify(MessageConst.TOGGLE_FORBID_ATTACK, { FAC_DESTROY_MODE_STATE_KEY, false })
 end
@@ -378,6 +396,10 @@ end
 
 
 FacDestroyModeCtrl._ConfirmBatchDel = HL.Method() << function(self)
+    if GameInstance.remoteFactoryManager.batchSelect.hasHub then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BATCH_ACTION_WARNING_HUB)
+        return
+    end
     local targets = LuaSystemManager.factory.batchSelectTargets
     if not next(targets) then
         return
@@ -684,8 +706,16 @@ FacDestroyModeCtrl._CheckBatchActionValid = HL.Method(HL.Opt(HL.Boolean)).Return
     if range.width > Tables.facBlueprintConst.BluePrintXLenMax or range.height > Tables.facBlueprintConst.BluePrintZLenMax then
         return false, Language.LUA_FAC_BLUEPRINT_RANGE_OVER_MAX_HINT
     end
-    if not isMoveAct and GameInstance.remoteFactoryManager.batchSelect.hasPendingTargets then
-        return false, Language.LUA_FAC_BLUEPRINT_HAS_PENDING_HINT
+    if not isMoveAct then
+        if GameInstance.remoteFactoryManager.batchSelect.hasHub then
+            return false, Language.LUA_FAC_BATCH_ACTION_WARNING_HUB
+        end
+        if GameInstance.remoteFactoryManager.batchSelect.hasDecoTargets then
+            return false, Language.LUA_FAC_BATCH_ACTION_WARNING_DECO
+        end
+        if GameInstance.remoteFactoryManager.batchSelect.hasPendingTargets then
+            return false, Language.LUA_FAC_BATCH_ACTION_WARNING_PENDING
+        end
     end
     if GameInstance.remoteFactoryManager.batchSelect.hasSocialTargets then
         return false, Language.LUA_FAC_BLUEPRINT_HAS_SOCIAL_HINT
@@ -709,16 +739,19 @@ FacDestroyModeCtrl._UpdateBatchActionInteractable = HL.Method() << function(self
     local noPendingNode = not batch.hasPendingTargets
     local allNodesInSameHeight = batch.allTargetsInSamePosY
     local hasAdjustedPipe = batch.hasAdjustedPipe
+    local hasDecoTargets = batch.hasDecoTargets
+    local hasHub = batch.hasHub
     local autoAdjustPipeAndFluidValveFailed = batch.autoAdjustPipeAndFluidValveFailed
     local range = batch.selectedRange
     local notOverSize = range.width <= Tables.facBlueprintConst.BluePrintXLenMax and range.height <= Tables.facBlueprintConst.BluePrintZLenMax
-    local valid = noPendingNode and allNodesInSameHeight and notOverSize and not batch.hasSocialTargets
+    local bpValid = noPendingNode and allNodesInSameHeight and notOverSize and not batch.hasSocialTargets and not hasDecoTargets and not hasHub
 
-    self.view.batchNode.saveBtnStateController:SetState(valid and "Valid" or "NotValid")
-    self.view.batchNode.copyBtnStateController:SetState(valid and "Valid" or "NotValid")
+    self.view.batchNode.saveBtnStateController:SetState(bpValid and "Valid" or "NotValid")
+    self.view.batchNode.copyBtnStateController:SetState(bpValid and "Valid" or "NotValid")
     self.view.batchNode.moveBtnStateController:SetState((allNodesInSameHeight and not batch.hasSocialTargets and not hasAdjustedPipe and notOverSize) and "Valid" or "NotValid")
+    self.view.batchNode.delBtnStateController:SetState(hasHub and "NotValid" or "Valid")
 
-    local hasError, hasPendingHint
+    local hasError, warningHintTxt
     if not allNodesInSameHeight then
         self.view.errorHintText.text = Language.LUA_FAC_BATCH_MODE_ERROR_NOT_IN_SAME_HEIGHT
         hasError = true
@@ -731,11 +764,18 @@ FacDestroyModeCtrl._UpdateBatchActionInteractable = HL.Method() << function(self
     elseif batch.hasSocialTargets then
         self.view.errorHintText.text = Language.LUA_FAC_BLUEPRINT_HAS_SOCIAL_HINT
         hasError = true
+    elseif hasHub then
+        warningHintTxt = Language.LUA_FAC_BATCH_ACTION_WARNING_HUB
+    elseif hasDecoTargets then
+        warningHintTxt = Language.LUA_FAC_BATCH_ACTION_WARNING_DECO
     elseif not noPendingNode then
-        hasPendingHint = true
+        warningHintTxt = Language.LUA_FAC_BATCH_ACTION_WARNING_PENDING
     end
     self.view.errorHint.gameObject:SetActive(hasError == true)
-    self.view.pendingHint.gameObject:SetActive(hasPendingHint == true)
+    self.view.warningHint.gameObject:SetActive(warningHintTxt ~= nil)
+    if warningHintTxt then
+        self.view.warningHintTxt.text = warningHintTxt
+    end
 end
 
 

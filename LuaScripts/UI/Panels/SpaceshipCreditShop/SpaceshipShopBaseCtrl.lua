@@ -103,8 +103,6 @@ SpaceshipShopBaseCtrl._OnShopRefresh = HL.Virtual() << function(self)
     self.view.scrollList:SkipGraduallyShow()
     self:_RefreshSheetTabs(self.m_shopId)
     self.view.scrollList:SkipGraduallyShow()
-
-    Notify(MessageConst.ON_CLOSE_SHOP_DETAIL_PANEL)
 end
 
 

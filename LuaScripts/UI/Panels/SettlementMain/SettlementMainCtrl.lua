@@ -53,6 +53,11 @@ local missionSystem = GameInstance.player.mission
 
 
 
+
+
+
+
+
 SettlementMainCtrl = HL.Class('SettlementMainCtrl', uiCtrl.UICtrl)
 
 
@@ -72,6 +77,8 @@ SettlementMainCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SETTLEMENT_TRADE_SUCCESS] = '_OnTradeSuccess',
     
     [MessageConst.ON_FACTORY_DEPOT_CHANGED] = '_TryUpdateItemDepot',
+    
+    [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = '_OnActivityStageUpdate',
 }
 
 
@@ -148,12 +155,20 @@ SettlementMainCtrl.m_itemStoreCellCache = HL.Field(HL.Forward("UIListCache"))
 SettlementMainCtrl.m_waitTradeComplete = HL.Field(HL.Boolean) << false
 
 
-SettlementMainCtrl.m_fromDialog = HL.Field(HL.Boolean) << false
+SettlementMainCtrl.m_hasActivityUpdateMsgWaitTradeComplete = HL.Field(HL.Boolean) << false
 
 
 
 SettlementMainCtrl.m_moneyStoreCellAniInterval = HL.Field(HL.Thread)
 
+
+
+
+
+SettlementMainCtrl.m_activityInfo = HL.Field(HL.Table)
+
+
+SettlementMainCtrl.m_remindExcessTrade = HL.Field(HL.Boolean) << false
 
 
 
@@ -169,10 +184,7 @@ SettlementMainCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     if not initSuccess then
         return
     end
-    if type(arg) == "table" and arg.fromDialog == true then
-        self.m_fromDialog = true
-    end
-    self:_UpdateData()
+    self:_UpdateData(true)
     self:_RefreshAllUI()
 end
 
@@ -188,7 +200,7 @@ SettlementMainCtrl.OnClose = HL.Override() << function(self)
     settlementSystem:RemoveSettlementSyncRequest(self.view.transform.name)
     self.m_moneyStoreCellAniInterval = self:_ClearCoroutine(self.m_moneyStoreCellAniInterval)
     local isOpen, _ = PhaseManager:IsOpen(PhaseId.Dialog)
-    if isOpen and self.m_fromDialog then
+    if isOpen then
         Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
     end
 end
@@ -201,10 +213,14 @@ SettlementMainCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self
     if not initSuccess then
         return
     end
-    self:_UpdateData()
+    self:_UpdateData(true)
     self:_RefreshAllUI()
-    self.view.domainTopMoneyTitle.view.contentNaviGroup:ManuallyStopFocus()
-    self.view.tradeNode.centerNaviGroup:ManuallyStopFocus()
+    
+    local isOpen, walletBarCtrl = UIManager:IsOpen(PanelId.WalletBar)
+    if isOpen then
+        walletBarCtrl.view.contentNaviGroup:ManuallyStopFocus()
+    end
+	self.view.tradeNode.centerNaviGroup:ManuallyStopFocus()
 end
 
 
@@ -233,10 +249,12 @@ SettlementMainCtrl._InitData = HL.Method(HL.Any).Return(HL.Boolean) << function(
     
     self.m_tradeIconAniInfo = {
         stage = TradeIconAniStage.None,
-        moneyAniStage = TradeIconAniStage.None,
-        itemAniStage = TradeIconAniStage.None,
+        onlyActivityAni = false,
         curIsAdd = false,
+        
         lastUpdateAniTime = 0,
+        curIsPlayActivityAni = false,
+        curPlayNormalAni = 0,
     }
     
     return true
@@ -244,7 +262,12 @@ end
 
 
 
-SettlementMainCtrl._UpdateData = HL.Method() << function(self)
+
+SettlementMainCtrl._UpdateData = HL.Method(HL.Boolean) << function(self, isInit)
+    
+    self.m_activityInfo = DomainPOIUtils.getSettlementTradeActivityInfo()
+    
+
     self.m_stlInfoList = {}
     local defaultIndex = 1
     for index, stlId in pairs(self.m_domainInfo.stlIdList) do
@@ -283,7 +306,7 @@ SettlementMainCtrl._UpdateData = HL.Method() << function(self)
                 stlId = stlId,
                 stlName = stlCfg.settlementName,
                 levelName = domainLevelCfg.showName,
-                maxLevel = SettlementMainCtrl._GetSettlementMaxLevel(stlCfg),
+                maxLevel = DomainPOIUtils.GetSettlementMaxLevel(stlId),
                 stlColor = UIUtils.getColorByString(stlCfg.settlementColor),
                 moneyId = moneyId,
                 moneyIcon = moneyIcon,
@@ -294,12 +317,14 @@ SettlementMainCtrl._UpdateData = HL.Method() << function(self)
                 sellItemInfo = {},
                 tradeInfo = {},
             }
-            self:_UpdateStlRuntimeInfo(stlInfo)
             table.insert(self.m_stlInfoList, stlInfo)
+            self:_UpdateStlRuntimeInfo(stlInfo)
         end
     end
     
-    self.m_curSelectStlIndex = defaultIndex
+    if isInit then
+        self.m_curSelectStlIndex = defaultIndex
+    end
     if #self.m_stlInfoList <= 0 then
         local msg = string.format("据点stlInfoList为空！domainId: %s; defaultStlId: %s", self.m_domainInfo.id, self.m_domainInfo.defaultStlId or "Non")
         logger.error(msg)
@@ -340,6 +365,20 @@ SettlementMainCtrl._UpdateStlRuntimeInfo = HL.Method(HL.Table) << function(self,
     self:_UpdateOfficerInfo(stlInfo, officerId)
     
     local sellItemId = settlementSystem:GetCurSellItem(stlId)
+    
+    local isActivityItem = not string.isEmpty(sellItemId) and
+        not string.isEmpty(stlLevelCfg.settlementTradeItemMap[sellItemId].activityId)
+    local hasActivity = self.m_activityInfo.hasActivity and
+        self.m_activityInfo.domainActivityInfos[self.m_domainInfo.id] ~= nil and
+        self.m_activityInfo.domainActivityInfos[self.m_domainInfo.id][stlId] ~= nil
+    local isHide = false
+    if isActivityItem then
+        isHide = not hasActivity or not GameInstance.player.inventory:IsItemFound(sellItemId)
+    end
+    if isHide then
+        sellItemId = ""
+        settlementSystem:SetCurSellItem(stlId, sellItemId)
+    end
     self:_UpdateSellItemInfo(stlInfo, sellItemId)
 end
 
@@ -414,6 +453,18 @@ SettlementMainCtrl._UpdateSellItemInfo = HL.Method(HL.Table, HL.String) << funct
         sellItemInfo.localCount = Utils.getDepotItemCount(itemId, Utils.getCurrentScope(), self.m_domainInfo.id)
         sellItemInfo.rewardMoneyCount = tradeItemCfg.rewardMoneyCount
         sellItemInfo.rewardExpCount = tradeItemCfg.stmExp
+
+        
+        local domainId = self.m_domainInfo.id
+        local stlId = stlInfo.stlId
+        local hasActivity = self.m_activityInfo.hasActivity and
+            self.m_activityInfo.domainActivityInfos[domainId] ~= nil and
+            self.m_activityInfo.domainActivityInfos[domainId][stlId] ~= nil
+        local isActivityItem = hasActivity and self.m_activityInfo.domainActivityInfos[domainId][stlId][itemId] ~= nil
+        local activityItemRewardMoneyCount = isActivityItem and (self.m_activityInfo.domainActivityInfos[domainId][stlId][itemId]) or 0
+        sellItemInfo.isActivityItem = isActivityItem
+        sellItemInfo.rewardActivityMoneyCount = activityItemRewardMoneyCount
+        
     else
         sellItemInfo.itemId = ""
     end
@@ -428,7 +479,16 @@ SettlementMainCtrl._UpdateTradeInfo = HL.Method(HL.Table, HL.Opt(HL.Number)) << 
     local tradeInfo = stlInfo.tradeInfo
     local sellItemInfo = stlInfo.sellItemInfo
     if not string.isEmpty(sellItemInfo.itemId) then
-        local maxSelectCount = math.min(sellItemInfo.localCount, math.floor(stlInfo.curMoney / sellItemInfo.rewardMoneyCount))
+        local maxSelectCountBaseStlMoney = math.min(sellItemInfo.localCount, math.floor(stlInfo.curMoney / sellItemInfo.rewardMoneyCount))
+        local maxSelectCount = maxSelectCountBaseStlMoney
+
+        
+        local isTradeActivityItem = sellItemInfo.isActivityItem
+        if isTradeActivityItem then
+            maxSelectCount = sellItemInfo.localCount
+        end
+        
+
         local minCount = math.min(1, maxSelectCount)
         if not curCount then
             curCount = tradeInfo.selectCount
@@ -436,24 +496,26 @@ SettlementMainCtrl._UpdateTradeInfo = HL.Method(HL.Table, HL.Opt(HL.Number)) << 
         curCount = lume.clamp(curCount, minCount, maxSelectCount)
         tradeInfo.selectCount = curCount
         tradeInfo.maxSelectCount = maxSelectCount
-        tradeInfo.totalRewardMoney = curCount * sellItemInfo.rewardMoneyCount
-        tradeInfo.totalRewardExp = curCount * sellItemInfo.rewardExpCount
+        tradeInfo.maxSelectCountBaseStlMoney = maxSelectCountBaseStlMoney
+        tradeInfo.curCountBaseStlMoney = math.min(curCount, maxSelectCountBaseStlMoney)
+        tradeInfo.totalRewardMoney = tradeInfo.curCountBaseStlMoney * sellItemInfo.rewardMoneyCount
+        tradeInfo.totalRewardExp = tradeInfo.curCountBaseStlMoney * sellItemInfo.rewardExpCount
+
+        
+        tradeInfo.totalRewardActivityMoney = curCount * sellItemInfo.rewardActivityMoneyCount
+        
     else
-        tradeInfo.maxSelectCount = 0
         tradeInfo.selectCount = 0
+        tradeInfo.maxSelectCount = 0
+        tradeInfo.maxSelectCountBaseStlMoney = 0
+        tradeInfo.curCountBaseStlMoney = 0
         tradeInfo.totalRewardMoney = 0
         tradeInfo.totalRewardExp = 0
+
+        
+        tradeInfo.totalRewardActivityMoney = 0
+        
     end
-end
-
-
-
-SettlementMainCtrl._GetSettlementMaxLevel = HL.StaticMethod(Cfg.Tables.SettlementBasicData).Return(HL.Number) << function(stlTableCfg)
-    local maxLv = 0
-    for level, _ in pairs(stlTableCfg.settlementLevelMap) do
-        maxLv = math.max(maxLv, level)
-    end
-    return maxLv
 end
 
 
@@ -489,8 +551,18 @@ SettlementMainCtrl._InitUI = HL.Method() << function(self)
             onConfirmChanged = function(itemId)
                 local curInfo = self.m_stlInfoList[self.m_curSelectStlIndex]
                 settlementSystem:SetCurSellItem(curInfo.stlId, itemId)
+                local preItemIsActivityItem = curInfo.sellItemInfo.isActivityItem or false
                 self:_UpdateSellItemInfo(curInfo, itemId)
+                local nowItemIsActivityItem = curInfo.sellItemInfo.isActivityItem or false
                 self:_RefreshTradeNodeUI()
+                
+                if preItemIsActivityItem ~= nowItemIsActivityItem then
+                    if nowItemIsActivityItem then
+                        self.view.tradeNode.stlStore.activityMoneyAniWrapper:PlayInAnimation()
+                    else
+                        self.view.tradeNode.stlStore.activityMoneyAniWrapper:PlayOutAnimation()
+                    end
+                end
             end
         })
     end)
@@ -552,12 +624,20 @@ SettlementMainCtrl._InitUI = HL.Method() << function(self)
         if not stlInfo then
             return
         end
-        local preCount = stlInfo.tradeInfo.selectCount
+        local tradeInfo = stlInfo.tradeInfo
+        local preCount = tradeInfo.selectCount
+        local preCountBaseStlMoney = tradeInfo.curCountBaseStlMoney
         self:_UpdateTradeInfo(stlInfo, curNumber)
         self:_RefreshTradeNodeUI()
         
-        if preCount ~= curNumber then
-            self:_OnSelectItemCountPlayAni(preCount < curNumber)
+        if not self.m_domainInfo.isChangingStl then
+            local curCount = tradeInfo.selectCount
+            local curCountBaseStlMoney = tradeInfo.curCountBaseStlMoney
+            if preCountBaseStlMoney ~= curCountBaseStlMoney then
+                self:_OnSelectItemCountPlayAni(preCountBaseStlMoney < curCountBaseStlMoney, false)
+            elseif preCount ~= curCount then
+                self:_OnSelectItemCountPlayAni(preCount < curCount, true)
+            end
         end
     end
     self.view.tradeNode.numberSelector:InitNumberSelector(1, 1, 1, self.m_onSelectorNumberChanged)
@@ -584,6 +664,9 @@ SettlementMainCtrl._InitUI = HL.Method() << function(self)
         tradeNode.reduceBtnKeyHint.gameObject:SetActive(not isFocused)
         tradeNode.addBtnKeyHint.gameObject:SetActive(not isFocused)
     end)
+    self.view.tradeNode.centerNaviGroup.getDefaultSelectableFunc = function()
+        return self.view.tradeNode.stlStore.moneyItemTipsBtn
+    end
     
 end
 
@@ -593,8 +676,23 @@ SettlementMainCtrl._RefreshAllUI = HL.Method() << function(self)
     self.view.settlementList:UpdateCount(#self.m_stlInfoList, true)
     self.view.keyHintContent.gameObject:SetActive(#self.m_stlInfoList > 1)
     self:_RefreshDomainUI()
-    self:_RefreshTitleMoneyUI()
     self:_RefreshCurSettlementUI()
+
+    
+    
+    local hasActivity = self:_CurStlHasActivity()
+    if hasActivity then
+        local tradeNode = self.view.tradeNode
+        local activityColor = self.m_activityInfo.activityColor
+        local moneyItemName = UIUtils.getItemName(self.m_activityInfo.activityMoneyId)
+        tradeNode.aniNode.activityWalletIconImage.color = activityColor
+        tradeNode.stlStore.activityBgImg.color = activityColor
+        tradeNode.stlStore.activityIconImg.color = activityColor
+        tradeNode.stlStore.activityTipsTxt.text = string.format(Language.LUA_SETTLEMENT_TRADE_ACTIVITY_ITEM_TIPS, moneyItemName)
+        tradeNode.playerDepotStore.activityBgImg.color = activityColor
+        tradeNode.playerDepotStore.activityIconImg.color = activityColor
+    end
+    
 end
 
 
@@ -662,13 +760,11 @@ end
 
 
 SettlementMainCtrl._RefreshTitleMoneyUI = HL.Method() << function(self)
-    local domainInfo = self.m_domainInfo
-    local hasData, domainDevData = GameInstance.player.domainDevelopmentSystem.domainDevDataDic:TryGetValue(domainInfo.id)
-    if hasData then
-        local maxCount = domainDevData.curLevelData.moneyLimit
-        self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(domainInfo.moneyId, maxCount)
+    local hasActivity = self:_CurStlHasActivity()
+    if hasActivity then
+        self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(self.m_domainInfo.id, { self.m_activityInfo.activityMoneyId })
     else
-        logger.error("地区发展数据不存在！可能是还没解锁这个地区的地区发展，domainId:", domainInfo.id)
+        self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(self.m_domainInfo.id)
     end
 end
 
@@ -698,6 +794,7 @@ SettlementMainCtrl._RefreshCurSettlementUI = HL.Method() << function(self)
     self.view.domainIconBgImg.color = Color(stlInfo.stlColor.r, stlInfo.stlColor.g, stlInfo.stlColor.b, self.view.domainIconBgImg.color.a)
     self.view.bottomMaskImg.color = Color(stlInfo.stlColor.r, stlInfo.stlColor.g, stlInfo.stlColor.b, self.view.bottomMaskImg.color.a)
     self.view.colorBgImage.color = Color(stlInfo.stlColor.r, stlInfo.stlColor.g, stlInfo.stlColor.b, self.view.colorBgImage.color.a)
+    self:_RefreshTitleMoneyUI()
     
     local missionInfo = stlInfo.upgradeMissionInfo
     self.view.missionTipsTxt.text = missionInfo.upgradeMissionTips
@@ -710,6 +807,29 @@ SettlementMainCtrl._RefreshCurSettlementUI = HL.Method() << function(self)
     self:_RefreshOfficerUI()
     
     self:_RefreshTradeNodeUI()
+
+    
+    local hasActivity = self:_CurStlHasActivity()
+    if hasActivity then
+        self.view.mainStateCtrl:SetState("Activity")
+        local stlStore = self.view.tradeNode.stlStore
+        local activityMoneyId = self.m_activityInfo.activityMoneyId
+        stlStore.activityMoneyBigIcon:LoadSprite(UIConst.UI_SPRITE_ITEM_BIG, activityMoneyId)
+        stlStore.activityMoneySmallIcon:LoadSprite(UIConst.UI_SPRITE_WALLET, activityMoneyId)
+        stlStore.activityMoneyTipsBtn.onClick:RemoveAllListeners()
+        stlStore.activityMoneyTipsBtn.onClick:AddListener(function()
+            Notify(MessageConst.SHOW_ITEM_TIPS, {
+                itemId = activityMoneyId,
+                
+                transform = stlStore.activityMoneyBigIcon.transform,
+                posType = UIConst.UI_TIPS_POS_TYPE.RightDown,
+                isSideTips = DeviceInfo.usingController,
+            })
+        end)
+    else
+        self.view.mainStateCtrl:SetState("Normal")
+    end
+    
 end
 
 
@@ -771,10 +891,11 @@ SettlementMainCtrl._RefreshTradeNodeUI = HL.Method(HL.Opt(HL.Boolean)) << functi
     local sellItemInfo = stlInfo.sellItemInfo
     
     if not string.isEmpty(sellItemInfo.itemId) then
-        if stlInfo.curMoney < sellItemInfo.rewardMoneyCount then
-            tradeNode.tradeStateCtrl:SetState("OutOfMoneyState")
-        else
+        
+        if sellItemInfo.isActivityItem or stlInfo.curMoney >= sellItemInfo.rewardMoneyCount then
             tradeNode.tradeStateCtrl:SetState("CanTradeState")
+        else
+            tradeNode.tradeStateCtrl:SetState("OutOfMoneyState")
         end
         if not onlyUpdateCount then
             local hasCfg, itemCfg = Tables.itemTable:TryGetValue(sellItemInfo.itemId)
@@ -851,11 +972,26 @@ SettlementMainCtrl._RefreshTradeNodeUI = HL.Method(HL.Opt(HL.Boolean)) << functi
     
 
     
+    local isTradeActivityItem = self.m_activityInfo.hasActivity and sellItemInfo.isActivityItem
+    if isTradeActivityItem then
+        tradeNode.tradeStateCtrl:SetState("TradeActivityItem")
+        self.view.tradeNode.stlStore.activityMoneyAniWrapper:SampleToInAnimationEnd()
+        stlStore.activityTradeMoneyNumTxt.text = string.format("+%d", tradeInfo.totalRewardActivityMoney)
+    else
+        tradeNode.tradeStateCtrl:SetState("NotTradeActivityItem")
+        self.view.tradeNode.stlStore.activityMoneyAniWrapper:SampleToOutAnimationEnd()
+    end
+    
+
+    
     tradeNode.numberSelector:RefreshNumber(
         tradeInfo.selectCount,
         math.min(1, tradeInfo.maxSelectCount),
         tradeInfo.maxSelectCount
     )
+
+    
+    Notify(MessageConst.REFRESH_CONTROLLER_HINT)
 end
 
 
@@ -884,6 +1020,7 @@ end
 
 
 SettlementMainCtrl._OnChangeSelectStl = HL.Method(HL.Number) << function(self, newLuaIndex)
+    self.m_domainInfo.isChangingStl = true
     local oldIndex = self.m_curSelectStlIndex
     self.m_curSelectStlIndex = newLuaIndex
     if newLuaIndex <= 0 or newLuaIndex > #self.m_stlInfoList then
@@ -904,6 +1041,7 @@ SettlementMainCtrl._OnChangeSelectStl = HL.Method(HL.Number) << function(self, n
     self:_RefreshCurSettlementUI()
     
     self.view.stlNodeAniWrapper:Play(newLuaIndex > oldIndex and "settlementmainnew_change" or "settlementmainnew_changeleft")
+    self.m_domainInfo.isChangingStl = false
 end
 
 
@@ -1019,7 +1157,7 @@ end
 
 SettlementMainCtrl._TryUpdateItemDepot = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     for _, stlInfo in pairs(self.m_stlInfoList) do
-        local sellItemId = settlementSystem:GetCurSellItem(stlInfo.stlId)
+        local sellItemId = stlInfo.sellItemInfo.itemId
         if not string.isEmpty(sellItemId) then
             local sellItemInfo = stlInfo.sellItemInfo
             local nowCount = Utils.getDepotItemCount(sellItemId, Utils.getCurrentScope(), self.m_domainInfo.id)
@@ -1043,6 +1181,35 @@ SettlementMainCtrl._OnSellItem = HL.Method() << function(self)
         Notify(MessageConst.SHOW_TOAST, Language.LUA_SETTLEMENT_SELL_ITEM_NOT_ENOUGH)
         return
     end
+    
+    self.m_remindExcessTrade = GameInstance.player.commonBitsetSystem:IsBitEnable(GEnums.BitsetType.CltDailyCommon, GEnums.CltDailyCommonTypeInBitset.IgnoreStlExcessTradeTips:GetHashCode())
+    if not self.m_remindExcessTrade and stlInfo.tradeInfo.selectCount > stlInfo.tradeInfo.maxSelectCountBaseStlMoney then
+        local toggleArg = {
+            toggleText = Language.LUA_WEP_NO_HINT_TODAY_HINT,
+            isOn = false,
+            onValueChanged = function(value)
+                self.m_remindExcessTrade = value
+            end,
+        }
+        Notify(MessageConst.SHOW_POP_UP, {
+            content = Language.LUA_SETTLEMENT_EXCESS_TRADE_CONFIRM_TITLE,
+            toggle = toggleArg,
+            onConfirm = function()
+                if self.m_remindExcessTrade then
+                    GameInstance.player.commonBitsetSystem:EnableBit(GEnums.BitsetType.CltDailyCommon, GEnums.CltDailyCommonTypeInBitset.IgnoreStlExcessTradeTips:GetHashCode())
+                end
+                self:_ExecuteSellItem(stlInfo)
+            end,
+        })
+    else
+        self:_ExecuteSellItem(stlInfo)
+    end
+end
+
+
+
+
+SettlementMainCtrl._ExecuteSellItem = HL.Method(HL.Table) << function(self, stlInfo)
     settlementSystem:SendSellItem(stlInfo.stlId, stlInfo.sellItemInfo.itemId, stlInfo.tradeInfo.selectCount)
     InputManagerInst:ToggleGroup(self.view.inputGroup.groupId, false)
     self.view.tradeNode.numberSelector.view.slider.interactable = false
@@ -1068,17 +1235,25 @@ SettlementMainCtrl._OnTradeSuccess = HL.Method(HL.Any) << function(self, rawMsg)
         self:_UpdateTradeInfo(stlInfo)
         self:_RefreshTradeNodeUI(true)
         Notify(MessageConst.SHOW_TOAST, Language.LUA_SETTLEMENT_TRADE_NOT_ENOUGH_ZERO)
+        if self.m_hasActivityUpdateMsgWaitTradeComplete then
+            self:_OnActivityStageUpdate({ self.m_activityInfo.activityI })
+        end
         return
     end
     
     local tradeAni = "tradenodenewpc_done"
+    local tradeAniReset = "tradenodenewpc_default"
     local isMobileAni = DeviceInfo.isMobile and ((Screen.width / Screen.height) >= (16/9))
     if isMobileAni then
         tradeAni = "tradenodenewmobile_done"
+        tradeAniReset = "tradenodenewmobile_default"
     end
     self.view.tradeNode.animationWrapper:Play(tradeAni, function()
-        self.view.tradeNode.animationWrapper:Play("tradenodenewmobile_default")
+        self.view.tradeNode.animationWrapper:Play(tradeAniReset)
         self:_ShowTradeReward(rawMsg)
+        if self.m_hasActivityUpdateMsgWaitTradeComplete then
+            self:_OnActivityStageUpdate({ self.m_activityInfo.activityI })
+        end
     end)
 end
 
@@ -1137,21 +1312,55 @@ end
 
 
 
+SettlementMainCtrl._CurStlHasActivity = HL.Method().Return(HL.Boolean) << function(self)
+    local info = self.m_activityInfo
+    if not info.hasActivity then
+        return false
+    end
+    
+    local domainActivityInfo = info.domainActivityInfos[self.m_domainInfo.id]
+    if domainActivityInfo == nil then
+        return false
+    end
+    
+    return domainActivityInfo[self.m_stlInfoList[self.m_curSelectStlIndex].stlId] ~= nil
+end
+
+
+
+
+SettlementMainCtrl._OnActivityStageUpdate = HL.Method(HL.Any) << function(self, arg)
+    local activityId = unpack(arg)
+    if self.m_activityInfo == nil or self.m_activityInfo.activityId ~= activityId then
+        return
+    end
+    if self.m_waitTradeComplete then
+        self.m_hasActivityUpdateMsgWaitTradeComplete = true
+        return
+    end
+    self:_UpdateData(false)
+    self:_RefreshAllUI()
+    self.m_hasActivityUpdateMsgWaitTradeComplete = false
+end
+
+
+
 
 SettlementMainCtrl.m_tradeIconAniInfo = HL.Field(HL.Table)
 
 
 
 
-SettlementMainCtrl._OnSelectItemCountPlayAni = HL.Method(HL.Boolean) << function(self, isAdd)
+
+SettlementMainCtrl._OnSelectItemCountPlayAni = HL.Method(HL.Boolean, HL.Boolean) << function(self, isAdd, onlyActivity)
     if self.m_waitTradeComplete then
         return  
     end
     local info = self.m_tradeIconAniInfo
     info.curIsAdd = isAdd
     AudioManager.PostEvent(isAdd and "Au_UI_Event_Animate_SettlementAdd" or "Au_UI_Event_Animate_SettlementReduce")
-    
     local curStage = info.stage
+    info.onlyActivityAni = onlyActivity
     if curStage == TradeIconAniStage.None then
         self:_PlayTradeIconAni(isAdd)
     end
@@ -1176,6 +1385,7 @@ SettlementMainCtrl._ResetTradeIconAni = HL.Method() << function(self)
     aniNode.depotIconOutAniWrapper:ClearTween(false)
     aniNode.stlIconHideAniWrapper:ClearTween(false)
     aniNode.depotIconHideAniWrapper:ClearTween(false)
+    aniNode.activityWalletAniWrapper:ClearTween(false)
 end
 
 
@@ -1188,36 +1398,55 @@ SettlementMainCtrl._PlayTradeIconAni = HL.Method(HL.Boolean) << function(self, i
     local continueIntervalTime = self.view.config.TRADE_ICON_ANI_CONTINUE_INTERVAL_TIME
     local curInterval = Time.time - info.lastUpdateAniTime
     local curStage = info.stage
+    local onlyActivity = info.onlyActivityAni
+    if onlyActivity and info.curPlayNormalAni ~= 0 then
+        if info.curPlayNormalAni == 1 then
+            aniNode.stlIconHideAniWrapper:Play("tradenodeiconleftup_out")
+        else
+            aniNode.stlIconHideAniWrapper:Play("tradenodeiconleftdown_out")
+        end
+        info.curPlayNormalAni = 0
+    end
     if curStage == TradeIconAniStage.None then
         
         info.stage = TradeIconAniStage.In
         if isAdd then
-            aniNode.stlIconInAniWrapper:Play("tradenodenewiconleft_in", function()
+            if not onlyActivity then
+                info.curPlayNormalAni = 1
+                aniNode.stlIconInAniWrapper:Play("tradenodenewiconleft_in")
+            end
+            aniNode.depotIconInAniWrapper:Play("tradenodenewiconright_in", function()
                 self:_PlayTradeIconAni(isAdd)
             end)
-            aniNode.depotIconInAniWrapper:Play("tradenodenewiconright_in")
         else
-            aniNode.stlIconOutAniWrapper:Play("tradenodenewiconleft_out", function()
+            if not onlyActivity then
+                info.curPlayNormalAni = -1
+                aniNode.stlIconOutAniWrapper:Play("tradenodenewiconleft_out")
+            end
+            aniNode.depotIconOutAniWrapper:Play("tradenodenewiconright_out", function()
                 self:_PlayTradeIconAni(isAdd)
             end)
-            aniNode.depotIconOutAniWrapper:Play("tradenodenewiconright_out")
         end
     elseif isAdd ~= info.curIsAdd then
         
         aniNode.stlIconHideAniWrapper:ClearTween(true)
         aniNode.depotIconHideAniWrapper:ClearTween(false)
         if isAdd then
-            aniNode.stlIconHideAniWrapper:Play("tradenodeiconleftup_out", function()
+            if not onlyActivity then
+                aniNode.stlIconHideAniWrapper:Play("tradenodeiconleftup_out")
+            end
+            aniNode.depotIconHideAniWrapper:Play("tradenodeiconrightup_out", function()
                 aniNode.stlIconInAniWrapper:ClearTween(false)
                 aniNode.depotIconInAniWrapper:ClearTween(false)
             end)
-            aniNode.depotIconHideAniWrapper:Play("tradenodeiconrightup_out")
         else
-            aniNode.stlIconHideAniWrapper:Play("tradenodeiconleftdown_out", function()
+            if not onlyActivity then
+                aniNode.stlIconHideAniWrapper:Play("tradenodeiconleftdown_out")
+            end
+            aniNode.depotIconHideAniWrapper:Play("tradenodeiconrightdown_out", function()
                 aniNode.stlIconOutAniWrapper:ClearTween(false)
                 aniNode.depotIconOutAniWrapper:ClearTween(false)
             end)
-            aniNode.depotIconHideAniWrapper:Play("tradenodeiconrightdown_out")
         end
         info.stage = TradeIconAniStage.None
         self:_PlayTradeIconAni(info.curIsAdd)
@@ -1226,15 +1455,29 @@ SettlementMainCtrl._PlayTradeIconAni = HL.Method(HL.Boolean) << function(self, i
         if curStage == TradeIconAniStage.In then
             info.stage = TradeIconAniStage.Loop
             if isAdd then
-                aniNode.stlIconInAniWrapper:Play("tradenodenewiconleft_loop", function()
+                if not onlyActivity then
+                    info.curPlayNormalAni = 1
+                    aniNode.stlIconInAniWrapper:Play("tradenodenewiconleft_loop")
+                else
+                    if not info.curIsPlayActivityAni then
+                        info.curIsPlayActivityAni = true
+                        aniNode.activityWalletAniWrapper:ClearTween(false)
+                        aniNode.activityWalletAniWrapper:PlayInAnimation(function()
+                            self:_PlayActivityIconAni()
+                        end)
+                    end
+                end
+                aniNode.depotIconInAniWrapper:Play("tradenodenewiconright_loop", function()
                     self:_PlayTradeIconAni(isAdd)
                 end)
-                aniNode.depotIconInAniWrapper:Play("tradenodenewiconright_loop")
             else
-                aniNode.stlIconOutAniWrapper:Play("tradenodenewiconleft_outloop", function()
+                if not onlyActivity then
+                    info.curPlayNormalAni = -1
+                    aniNode.stlIconOutAniWrapper:Play("tradenodenewiconleft_outloop")
+                end
+                aniNode.depotIconOutAniWrapper:Play("tradenodenewiconright_outloop", function()
                     self:_PlayTradeIconAni(isAdd)
                 end)
-                aniNode.depotIconOutAniWrapper:Play("tradenodenewiconright_outloop")
             end
         elseif curStage == TradeIconAniStage.Loop then
             if curInterval <= continueIntervalTime then
@@ -1243,15 +1486,19 @@ SettlementMainCtrl._PlayTradeIconAni = HL.Method(HL.Boolean) << function(self, i
             else
                 info.stage = TradeIconAniStage.Done
                 if isAdd then
-                    aniNode.stlIconInAniWrapper:Play("tradenodenewiconleft_done", function()
+                    if not onlyActivity then
+                        aniNode.stlIconInAniWrapper:Play("tradenodenewiconleft_done")
+                    end
+                    aniNode.depotIconInAniWrapper:Play("tradenodenewiconright_done", function()
                         self:_PlayTradeIconAni(isAdd)
                     end)
-                    aniNode.depotIconInAniWrapper:Play("tradenodenewiconright_done")
                 else
-                    aniNode.stlIconOutAniWrapper:Play("tradenodenewiconleft_outdone", function()
+                    if not onlyActivity then
+                        aniNode.stlIconOutAniWrapper:Play("tradenodenewiconleft_outdone")
+                    end
+                    aniNode.depotIconOutAniWrapper:Play("tradenodenewiconright_outdone", function()
                         self:_PlayTradeIconAni(isAdd)
                     end)
-                    aniNode.depotIconOutAniWrapper:Play("tradenodenewiconright_outdone")
                 end
             end
         elseif curStage == TradeIconAniStage.Done then
@@ -1262,6 +1509,27 @@ SettlementMainCtrl._PlayTradeIconAni = HL.Method(HL.Boolean) << function(self, i
         end
     end
     
+end
+
+
+
+SettlementMainCtrl._PlayActivityIconAni = HL.Method() << function(self)
+    local nowAniInfo = self.m_tradeIconAniInfo
+    nowAniInfo.curIsPlayActivityAni = false
+    if self.m_waitTradeComplete then
+        return  
+    end
+    local aniNode = self.view.tradeNode.aniNode
+    if not nowAniInfo.onlyActivityAni or not nowAniInfo.curIsAdd then
+        return
+    end
+    if nowAniInfo.stage ~= TradeIconAniStage.In and nowAniInfo.stage ~= TradeIconAniStage.Loop then
+        return
+    end
+    nowAniInfo.curIsPlayActivityAni = true
+    aniNode.activityWalletAniWrapper:PlayInAnimation(function()
+        self:_PlayActivityIconAni()
+    end)
 end
 
 

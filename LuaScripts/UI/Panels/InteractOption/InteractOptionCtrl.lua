@@ -329,8 +329,7 @@ end
 
 
 InteractOptionCtrl.RefreshActiveState = HL.Method(HL.Opt(HL.Any)) << function(self, _)
-    local shouldHide = next(self.m_hideListKeys) or
-        Utils.isInSettlementDefenseDefending()  
+    local shouldHide = next(self.m_hideListKeys)
     
     if shouldHide then
         UIManager:HideWithKey(PANEL_ID, "ToggleHideInteractOptionList")

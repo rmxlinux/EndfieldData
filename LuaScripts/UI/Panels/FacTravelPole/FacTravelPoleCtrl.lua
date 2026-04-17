@@ -81,7 +81,7 @@ FacTravelPoleCtrl._InitMapNode = HL.Method() << function(self)
     GameInstance.player.mapManager.forceShowFacMarkInRegion = false
 
     
-    self.view.levelMapController.view.levelMapLoader.view.element.lineRoot.udPipeLine.gameObject:SetActive(false)
+    self.view.levelMapController.view.levelMapLoader.view.element.frontLineRoot.udPipeLine.gameObject:SetActive(false)
 end
 
 

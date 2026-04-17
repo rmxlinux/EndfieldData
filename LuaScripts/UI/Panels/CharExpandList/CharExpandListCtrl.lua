@@ -136,9 +136,13 @@ CharExpandListCtrl._RefreshCharList = HL.Method() << function(self)
                 end
             end
         end
+        if DeviceInfo.usingController then
+            UIUtils.setAsNaviTarget(nil)
+            self.m_naviTargetInitialized = false
+        end
         self.view.charScrollList:UpdateCount(#self.m_charInfoList, fastScrollToIndex, false, false, self.m_skipGraduallyShow)
     end
-
+    self.m_skipGraduallyShow = false
 end
 
 

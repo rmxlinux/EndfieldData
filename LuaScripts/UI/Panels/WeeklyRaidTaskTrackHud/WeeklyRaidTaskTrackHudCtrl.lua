@@ -33,6 +33,8 @@ local OPTIONAL_TEXT_COLOR = "C7EC59"
 
 
 
+
+
 WeeklyRaidTaskTrackHudCtrl = HL.Class('WeeklyRaidTaskTrackHudCtrl', uiCtrl.UICtrl)
 
 
@@ -82,6 +84,9 @@ WeeklyRaidTaskTrackHudCtrl.m_deltaTime = HL.Field(HL.Number) << 0
 
 
 WeeklyRaidTaskTrackHudCtrl.m_frozenBias = HL.Field(HL.Number) << 0
+
+
+WeeklyRaidTaskTrackHudCtrl.m_freezeRefCount = HL.Field(HL.Number) << 0
 
 
 
@@ -153,7 +158,7 @@ WeeklyRaidTaskTrackHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
                     if self.m_playAnimCount == 0 and animInfo.onComplete ~= nil then
                         animInfo.onComplete()
                     end
-                end)
+    end)
                 self.m_playAnimCount = self.m_playAnimCount + 1
             end
         end
@@ -233,7 +238,7 @@ WeeklyRaidTaskTrackHudCtrl.UpdateWeekRaidTaskTrackHudObjectiveInfo = HL.Method(H
         local missionInfo = GameInstance.player.mission:GetMissionInfo(pinMissionId)
         self.view.titleText.text = missionInfo.missionName:GetText()
     else
-        self.view.titleText.text = cfg.name
+    self.view.titleText.text = cfg.name
     end
 
     local questId = ""
@@ -350,7 +355,7 @@ WeeklyRaidTaskTrackHudCtrl.OnQuestStateChange = HL.Method(HL.Any) << function(se
     
     
     self:UpdateWeekRaidTaskTrackHudObjectiveInfo()
-end
+    end
 
 
 
@@ -452,7 +457,7 @@ WeeklyRaidTaskTrackHudCtrl._UpdateCells = HL.Method(HL.Boolean) << function(self
             if allComplete then
                 self.view.titleFinish.gameObject:SetActiveIfNecessary(true)
                 
-            end
+end
             
             
         end
@@ -504,7 +509,7 @@ WeeklyRaidTaskTrackHudCtrl.CountDownTime = HL.Method(HL.Number) << function(self
     self.m_countDown = countDown
 
     self.view.countdownNode.gameObject:SetActive(true)
-    self.view.countDownText.view.text.text = tostring(math.max(self.m_countDown - DateTimeUtils.GetCurrentTimestampBySeconds()  + self.m_frozenBias, 0))
+    self.view.countDownText.view.text.text = tostring(math.floor(math.max(self.m_countDown - DateTimeUtils.GetCurrentTimestampBySeconds() + self.m_frozenBias, 0)))
     self.view.countdownNodeAnim.gameObject:SetActiveIfNecessary(true)
     self.view.countdownNodeAnimationWrapper:Play("weeklyraidtask_changenumb")
     self.view.countdownNodeAnimationWrapper:PlayOpenAudio()
@@ -512,21 +517,18 @@ WeeklyRaidTaskTrackHudCtrl.CountDownTime = HL.Method(HL.Number) << function(self
         if self.m_isFrozen or self.m_deltaTime < 1 then
             if not self.m_isFrozen then
                 self.m_deltaTime = self.m_deltaTime + Time.deltaTime
-            else
+            elseif self.m_countDown - DateTimeUtils.GetCurrentTimestampBySeconds() + self.m_frozenBias > 0 then
                 self.m_frozenBias = self.m_frozenBias + Time.deltaTime
             end
             return
         end
         self.m_deltaTime = self.m_deltaTime - 1
-        self.view.countDownText.view.text.text = tostring(math.max(self.m_countDown - DateTimeUtils.GetCurrentTimestampBySeconds() + self.m_frozenBias , 0))
+        local dispVal = math.floor(math.max(self.m_countDown - DateTimeUtils.GetCurrentTimestampBySeconds() + self.m_frozenBias, 0))
+        self.view.countDownText.view.text.text = tostring(dispVal)
         self.view.countdownNodeAnim.gameObject:SetActiveIfNecessary(true)
         self.view.countdownNodeAnimationWrapper:Play("weeklyraidtask_changenumb")
         self.view.countdownNodeAnimationWrapper:PlayOpenAudio()
     end)
-    
-    
-    
-    
 end
 
 
@@ -551,16 +553,29 @@ end
 
 WeeklyRaidTaskTrackHudCtrl.OnFreezeWorld = HL.Method(HL.Any) << function(self, args)
     local isFrozen, reason = unpack(args)
-    self.m_isFrozen = isFrozen
-    if self.m_isFrozen then
+    if isFrozen then
+        self.m_freezeRefCount = self.m_freezeRefCount + 1
+    else
+        self.m_freezeRefCount = math.max(self.m_freezeRefCount - 1, 0)
+    end
+    local wasFrozen = self.m_isFrozen
+    self.m_isFrozen = self.m_freezeRefCount > 0
+    if self.m_isFrozen and not wasFrozen then
         self.m_frozenBias = 0
     end
 end
 
 
 
-
-
+WeeklyRaidTaskTrackHudCtrl.OnShow = HL.Override() << function(self)
+    self.m_freezeRefCount = 0
+    self.m_isFrozen = false
+    self.m_frozenBias = 0
+    if self.m_startCountDown then
+        local dispVal = math.floor(math.max(self.m_countDown - DateTimeUtils.GetCurrentTimestampBySeconds() + self.m_frozenBias, 0))
+        self.view.countDownText.view.text.text = tostring(dispVal)
+    end
+end
 
 
 WeeklyRaidTaskTrackHudCtrl.OnClose = HL.Override() << function(self)

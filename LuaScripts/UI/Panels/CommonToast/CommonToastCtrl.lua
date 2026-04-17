@@ -1,8 +1,10 @@
-
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonToast
 
 local CommonToastConfig = require_ex('UI/Panels/CommonToast/CommonToastConfig')
+
+
+
 
 
 
@@ -36,10 +38,13 @@ CommonToastCtrl.s_messages = HL.StaticField(HL.Table) << {
 CommonToastCtrl.m_showingToasts = HL.Field(HL.Forward("Queue"))
 
 
+CommonToastCtrl.m_pendingToasts = HL.Field(HL.Forward("Queue"))
+
+
 CommonToastCtrl.m_cacheToasts = HL.Field(HL.Forward("Stack"))
 
 
-CommonToastCtrl.m_maxCount = HL.Field(HL.Number) << 0
+CommonToastCtrl.m_maxCount = HL.Field(HL.Number) << 5
 
 
 CommonToastCtrl.OnShowToast = HL.StaticField(HL.Any) << function (arg)
@@ -54,6 +59,7 @@ end
 
 CommonToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_showingToasts = require_ex("Common/Utils/DataStructure/Queue")()
+    self.m_pendingToasts = require_ex("Common/Utils/DataStructure/Queue")()
     self.m_cacheToasts = require_ex("Common/Utils/DataStructure/Stack")()
     self.view.toastCell.gameObject:SetActive(false)
     self:_InitMaxCount()
@@ -63,15 +69,15 @@ end
 
 
 
+CommonToastCtrl.OnShow = HL.Override() << function(self)
+    self:_InitMaxCount()
+    self:_TryShowPendingToast()
+end
+
+
+
 CommonToastCtrl._InitMaxCount = HL.Method() << function (self)
-    local spacing = self.view.list.spacing
-    local cellHeight = self.view.toastCell.rectTransform.rect.height
-    local rect = self.view.list:RectTransform().rect
-    local maxCount = math.floor((rect.height + spacing) / cellHeight)
-    if maxCount < 0 then
-        maxCount = 0
-    end
-    self.m_maxCount = maxCount
+    self.m_maxCount = self.view.config.MAX_TOAST_COUNT or 10
 end
 
 
@@ -88,6 +94,15 @@ CommonToastCtrl._GetCurTextToast = HL.Method(HL.String).Return(HL.Table, HL.Numb
         end
     end
     return nil, -1
+end
+
+
+
+CommonToastCtrl._TryShowPendingToast = HL.Method() << function (self)
+    while not self.m_pendingToasts:Empty() and self.m_showingToasts:Size() < self.m_maxCount do
+        local arg = self.m_pendingToasts:Pop()
+        self:ShowToast(arg)
+    end
 end
 
 
@@ -118,10 +133,8 @@ CommonToastCtrl.ShowToast = HL.Method(HL.Any) << function (self, arg)
             oldestToast.animation:ClearTween(false) 
             self:_CacheToast(oldestToast)
         elseif showingToasts:Size() >= self.m_maxCount then
-            oldestToast = showingToasts:Pop()
-            self:_ClearTimer(oldestToast.timerId)
-            oldestToast.animation:ClearTween(false) 
-            self:_CacheToast(oldestToast)
+            self.m_pendingToasts:Push(arg)
+            return
         end
 
         local toast = self:_GetToast()
@@ -153,7 +166,11 @@ end
 CommonToastCtrl._HideToast = HL.Method(HL.Table) << function(self, toast)
     toast.animation:PlayOutAnimation(function()
         self:_CacheToast(toast)
-        self.m_showingToasts:Pop()
+        local index = self.m_showingToasts:IndexOf(toast)
+        if index ~= nil then
+            self.m_showingToasts:RemoveAt(index)
+        end
+        self:_TryShowPendingToast()
     end)
 end
 
@@ -214,8 +231,6 @@ CommonToastCtrl.ShowSystemToast = HL.Method(HL.Any) << function (self, arg)
     systemToast.view.systemToastText.text = systemToastText
     systemToast:ShowToast()
 end
-
-
 
 
 

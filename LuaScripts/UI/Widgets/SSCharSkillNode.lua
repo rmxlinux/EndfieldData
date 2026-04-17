@@ -99,8 +99,13 @@ SSCharSkillNode.InitSSCharSkillNode = HL.Method(HL.String, HL.Opt(HL.String, HL.
             local skillData = Tables.spaceshipSkillTable[skillId]
             cell.icon:LoadSprite(UIConst.UI_SPRITE_SS_SKILL_ICON, skillData.icon)
             cell.nameTxt.text = skillData.name
+            local isValid = skillData.roomType == roomType
+            if self.view.config.SHOW_NOT_MATCH_SKILL_DESC and not isValid then
+                cell.stateController:SetState("Mismatching")
+            else
+                cell.stateController:SetState("Normal")
+            end
             cell.desc.text = skillData.desc
-
             local isActive = true
             if roomType then
                 isActive = skillData.roomType == roomType
@@ -111,7 +116,14 @@ SSCharSkillNode.InitSSCharSkillNode = HL.Method(HL.String, HL.Opt(HL.String, HL.
             local skillData = Tables.spaceshipSkillTable[nextSkillId]
             cell.icon:LoadSprite(UIConst.UI_SPRITE_SS_SKILL_ICON, skillData.icon)
             cell.nameTxt.text = skillData.name
-            cell.desc.text = unlockHint
+            if self.view.config.SHOW_LOCKED_SKILL_DESC then
+                cell.stateController:SetState("NotUnlocked")
+                cell.desc.text = skillData.desc
+                cell.status.text = unlockHint
+            else
+                cell.stateController:SetState("Normal")
+                cell.desc.text = unlockHint
+            end
             cell.upgradeHint.gameObject:SetActive(false)
             cell.upgradeNode:SetState("NotClicked")
             cell.upgradeNode.gameObject:SetActive(false)

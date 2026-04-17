@@ -150,9 +150,6 @@ GachaCharResultCtrl._ShowCharInfo = HL.Method(HL.String) << function(self, charI
             templateId = charId,
             charInstIdList = { curCharInfo.instId },
         },
-        onClose = function()
-            GameInstance.player.charBag:ClearAllClientCharAndItemData()
-        end,
     })
 end
 

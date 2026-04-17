@@ -11,6 +11,8 @@ local PANEL_ID = PanelId.MapMarkDetailRecycleBin
 
 
 
+
+
 MapMarkDetailRecycleBinCtrl = HL.Class('MapMarkDetailRecycleBinCtrl', uiCtrl.UICtrl)
 
 
@@ -23,6 +25,9 @@ MapMarkDetailRecycleBinCtrl.m_markInstId = HL.Field(HL.String) << ""
 MapMarkDetailRecycleBinCtrl.m_recycleBinData = HL.Field(CS.Beyond.Gameplay.RecycleBinData)
 
 
+MapMarkDetailRecycleBinCtrl.m_domainId = HL.Field(HL.String) << ""
+
+
 MapMarkDetailRecycleBinCtrl.m_recyclingCor = HL.Field(HL.Thread)
 
 
@@ -31,7 +36,7 @@ MapMarkDetailRecycleBinCtrl.m_recyclingCor = HL.Field(HL.Thread)
 
 
 MapMarkDetailRecycleBinCtrl.s_messages = HL.StaticField(HL.Table) << {
-    
+    [MessageConst.ON_RECYCLE_BIN_REMOTE_COLLECTED] = '_UpdateCanPickUp',
 }
 
 
@@ -72,13 +77,15 @@ MapMarkDetailRecycleBinCtrl._InitRecycleBinInfo = HL.Method() << function(self)
     local recycleBinId = detail.systemInstId
 
     local recycleBinCfg = Tables.recycleBinTable[recycleBinId]
-    local isUnlock, recycleBinData = GameInstance.player.recycleBinSystem.recycleBins:TryGetValue(recycleBinId)
+    local recycleBinSystem = GameInstance.player.recycleBinSystem
+    local isUnlock, recycleBinData = recycleBinSystem.recycleBins:TryGetValue(recycleBinId)
     local curLv = isUnlock and recycleBinData.lv or 0
     local levelData = recycleBinCfg.levelData
     local descRawText = isUnlock and levelData[curLv].desc or recycleBinCfg.unlockDesc
 
     self.view.mapMarkDetailCommonStateController:SetState(isUnlock and "Unlocked" or "Locked")
     self.m_recycleBinData = recycleBinData
+    self.m_domainId = recycleBinCfg.domainId
 
     if isUnlock then
         local isMaxLv = recycleBinData.isMaxLv
@@ -104,6 +111,21 @@ MapMarkDetailRecycleBinCtrl._InitRecycleBinInfo = HL.Method() << function(self)
         end)
     end
 
+    
+    self.view.pickupNode.remoteCollectBtn.onClick:AddListener(function()
+        
+        local _, domainCfg = Tables.domainDataTable:TryGetValue(self.m_domainId)
+        local domainName = domainCfg.domainName
+        local availableCollectCount = recycleBinSystem:GetAllCanPickUpInstIdsByDomain(self.m_domainId)
+        local remoteCollectLv = self.m_recycleBinData.remoteCollectLv
+        Notify(MessageConst.SHOW_POP_UP, {
+            content = string.format(Language.LUA_RECYCLE_BIN_MAP_REMOTE_COLLECT_CONFIRM_POP_UP, domainName, availableCollectCount, remoteCollectLv, domainName),
+            onConfirm = function()
+                recycleBinSystem:RecycleBinRemoteCollect(self.m_domainId)
+            end
+        })
+    end)
+
     local commonArgs = {}
     commonArgs.bigBtnActive = true
     commonArgs.markInstId = self.m_markInstId
@@ -125,6 +147,21 @@ MapMarkDetailRecycleBinCtrl._UpdateCanPickUp = HL.Method() << function(self)
 
     if not canPick then
         self.view.timeTxt.text = UIUtils.getLeftTimeToSecond(cd)
+    end
+
+    
+    if self.m_recycleBinData.lv == self.m_recycleBinData.remoteCollectLv then
+        
+        local recycleBinSystem = GameInstance.player.recycleBinSystem
+        if recycleBinSystem:GetAllCanPickUpInstIdsByDomain(self.m_domainId)>0 then
+            self.view.pickupNode.stateController:SetState("CanRemote")
+        else
+            self.view.pickupNode.stateController:SetState("NoRemote")
+            self.view.pickupNode.noRemotePickupText.text = Language.LUA_RECYCLE_BIN_MAP_NOTHING_TO_REMOTE_COLLECT
+        end
+    else
+        self.view.pickupNode.stateController:SetState("NoRemote")
+        self.view.pickupNode.noRemotePickupText.text = string.format(Language.LUA_RECYCLE_BIN_MAP_NEED_UNLOCK_REMOTE_COLLECT, self.m_recycleBinData.remoteCollectLv)
     end
 end
 

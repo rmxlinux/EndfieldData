@@ -10,6 +10,7 @@ local GetDescFunc = {
     [GEnums.DomainPoiType.DomainShop] = "_GetDescDomainShop",
     [GEnums.DomainPoiType.KiteStation] = "_GetDescKiteStation",
     [GEnums.DomainPoiType.DomainDepot] = "_GetDescDomainDepot",
+    [GEnums.DomainPoiType.SewageTreatPlant] = "_GetDescSewageTreatPlant",
 }
 
 
@@ -23,6 +24,9 @@ local GetArgsFunc = {
         return args
     end
 }
+
+
+
 
 
 
@@ -115,6 +119,31 @@ end
 
 
 
+
+
+
+
+
+
+CommonPOIUpgradeToastCtrl.OnSewageTreatPlantUnlock = HL.StaticMethod(HL.Table) << function(arg)
+    local instId = unpack(arg)
+    UIManager:Open(PANEL_ID, { GEnums.DomainPoiType.SewageTreatPlant, instId, 0, 1})
+end
+
+
+
+CommonPOIUpgradeToastCtrl.OnSewageTreatPlantLevelUp = HL.StaticMethod(HL.Table) << function(arg)
+    local instId = unpack(arg)
+    local currLevel = FactoryUtils.getSewageTreatPlantLevel(instId)
+    UIManager:Open(PANEL_ID, { GEnums.DomainPoiType.SewageTreatPlant, instId, currLevel - 1, currLevel})
+end
+
+
+
+
+
+
+
 CommonPOIUpgradeToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_domainPOIType, self.m_instId, self.m_preLv, self.m_lv, self.m_args = unpack(arg)
     self.m_args = self.m_args or {}
@@ -174,7 +203,9 @@ CommonPOIUpgradeToastCtrl._StartToastShowingProcess = HL.Method() << function(se
     end
     self:Close()
 
-    Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, MAIN_HUD_TOAST_TYPE)
+    if LuaSystemManager.mainHudActionQueue:HasRequest(MAIN_HUD_TOAST_TYPE) then
+        Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, MAIN_HUD_TOAST_TYPE)
+    end
 end
 
 
@@ -208,7 +239,13 @@ CommonPOIUpgradeToastCtrl._InitDesc = HL.Method() << function(self)
 
     local descList = self[funcName](self)
     self.m_descTxtCellCache:RefreshCoroutine(#descList, 0.1, function(cell, index)
-        cell.infoTxt.text = descList[index]
+        if type(descList[index])=="table" then
+            cell.infoTxt.text = descList[index][1]
+            cell.stateController:SetState(descList[index][2])
+        else
+            cell.infoTxt.text = descList[index]
+            cell.stateController:SetState("Normal")
+        end
     end)
 end
 
@@ -219,6 +256,11 @@ CommonPOIUpgradeToastCtrl._GetDescRecycleBin = HL.Method().Return(HL.Table) << f
     if self.m_state == PANEL_STATE.Unlock then
         table.insert(descList, Language["ui_recycling_upgradtoast_unlock_effect"])
     elseif self.m_state == PANEL_STATE.LevelUp then
+        
+        local _, recycleBinData = GameInstance.player.recycleBinSystem.recycleBins:TryGetValue(self.m_instId)
+        if self.m_lv == recycleBinData.remoteCollectLv then
+            table.insert(descList, {Language.LUA_RECYCLE_BIN_POI_REMOTE_COLLECT_UPGRADE_TOAST, "Special"})
+        end
         table.insert(descList, Language["ui_recycling_upgradtoast_levelup_effect"])
     end
 
@@ -304,6 +346,22 @@ CommonPOIUpgradeToastCtrl._GetDescDomainDepot = HL.Method().Return(HL.Table) << 
 
     if lastDeliverPackTypeCount < currDeliverPackTypeCount then
         table.insert(descList, Language.LUA_DOMAIN_DEPOT_TOAST_DELIVER_PACK_TYPE)
+    end
+
+    return descList
+end
+
+
+
+CommonPOIUpgradeToastCtrl._GetDescSewageTreatPlant = HL.Method().Return(HL.Table) << function(self)
+    local descList = {}
+
+    local plantCfg = Tables.factorySewageTreatPlantStoreTable[self.m_instId]
+    for index = 0, plantCfg.levelList.Count - 1 do
+        if plantCfg.levelList[index].level == self.m_lv then
+            table.insert(descList, plantCfg.levelList[index].levelDesc)
+            break
+        end
     end
 
     return descList

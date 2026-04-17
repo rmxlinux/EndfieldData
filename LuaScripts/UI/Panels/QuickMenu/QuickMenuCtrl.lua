@@ -15,12 +15,14 @@ local CLEAR_SCREEN_EXPECTED_PANEL_LIST = {
     PanelId.MiniMap,
     PanelId.WeeklyRaidTaskTrackHud,
     PanelId.CommonTaskTrackHud,
+    PanelId.CommonPOIUpgradeToast,
 }
 
 local DEFAULT_DELAY_RECOVER_SCREEN_FRAME_COUNT = 1
 local EXTRA_DELAY_RECOVER_SCREEN_FRAME_COUNT = 5
 
 local QUICK_MENU_INVALID_ITEM_ID = QuickMenuConst.QUICK_MENU_ITEM_ID_GETTER.none
+
 
 
 
@@ -121,6 +123,12 @@ QuickMenuCtrl.OnClose = HL.Override() << function(self)
     self.m_quickMenuUpdateThread = self:_ClearCoroutine(self.m_quickMenuUpdateThread)
     AudioManager.PostEvent("au_ui_menu_dial_close")
     QuickMenuCtrl.DeactivateQuickMenu()
+end
+
+
+
+QuickMenuCtrl.OnAnimationInFinished = HL.Override() << function(self)
+    GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.QuickMenuSystemActionConflictName)
 end
 
 

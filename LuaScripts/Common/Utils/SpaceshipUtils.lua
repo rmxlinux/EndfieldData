@@ -857,6 +857,12 @@ function SpaceshipUtils.ShowClueOutcomePopup(csItems, source, creditCell, infoTo
         })
     end
     if source == CS.Beyond.GEnums.RewardSourceType.OpenInfoExchangeReward then
+        if GameInstance.player.spaceship:IsWaitingForHandleOneKeyHarvest() then
+            for i, v in ipairs(items) do
+                GameInstance.player.spaceship:AddHarvestItem(v.id, v.count)
+            end
+            return
+        end
         Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
             title = Language.LUA_DEFAULT_SYSTEM_REWARD_POP_UP_TITLE,
             items = items,

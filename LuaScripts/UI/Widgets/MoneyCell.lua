@@ -253,6 +253,7 @@ MoneyCell._RefreshUI = HL.Method() << function(self)
         self:_StartCoroutine(function()
             
             coroutine.step()
+            coroutine.step()
             self.view.hotArea.sizeDelta = Vector2( -(self.view.addBtn.transform.rect.width + HOT_AREA_ADJUST_POSITION_X), self.view.hotArea.sizeDelta.y)
         end)
     end

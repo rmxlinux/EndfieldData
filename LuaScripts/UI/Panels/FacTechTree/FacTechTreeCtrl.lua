@@ -111,6 +111,10 @@ local UnhiddenClipName = {
 
 
 
+
+
+
+
 FacTechTreeCtrl = HL.Class('FacTechTreeCtrl', uiCtrl.UICtrl)
 
 
@@ -124,12 +128,12 @@ FacTechTreeCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.FAC_ON_REFRESH_TECH_TREE_UI] = 'OnRefreshUI',
     [MessageConst.FOCUS_TECH_TREE_NODE] = 'FocusTechTreeNode',
+    [MessageConst.FOCUS_TECH_TREE_CATEGORY] = 'FocusTechTreeCategory',
+    [MessageConst.FOCUS_TECH_TREE_LAYER] = 'FocusTechTreeLayer',
     [MessageConst.ZOOM_TO_FULL_TECH_TREE] = 'ZoomToFullTechTree',
 
     [MessageConst.FAC_ON_UNLOCK_TECH_TREE_UI] = 'OnUnlockNode',
     [MessageConst.FAC_ON_UNLOCK_TECH_TIER_UI] = 'OnUnlockTier',
-
-    [MessageConst.ON_UNHIDDEN_CATEGORY_GUIDE_FINISHED] = 'OnUnhiddenCategoryGuideFinished'
 }
 
 local facSTTGroupTable = Tables.facSTTGroupTable
@@ -256,6 +260,9 @@ FacTechTreeCtrl.m_needOpenLayerId = HL.Field(HL.String) << ""
 
 
 FacTechTreeCtrl.m_externalFocusNode = HL.Field(HL.Boolean) << false
+
+
+FacTechTreeCtrl.m_externalFocusId = HL.Field(HL.String) << ""
 
 
 
@@ -507,12 +514,65 @@ end
 
 
 FacTechTreeCtrl.FocusTechTreeNode = HL.Method(HL.Table) << function(self, args)
-    self.m_externalFocusNode = true
     local techId = unpack(args)
+    local succ, techCfg = Tables.facSTTNodeTable:TryGetValue(techId)
+    if not succ then
+        return
+    end
+
+    if not self.m_isAllOpenProgressFinished then
+        self.m_externalFocusId = techId
+        return
+    end
+
+
     local luaIndex = self.m_techId2CellLuaIndex[techId]
     local nodeCell = self.m_nodeCells:Get(luaIndex)
-
     self:_OnClickNode(nodeCell, false)
+end
+
+
+
+
+FacTechTreeCtrl.FocusTechTreeCategory = HL.Method(HL.Table) << function(self, args)
+    local categoryId = unpack(args)
+    local succ, categoryCfg = Tables.facSTTCategoryTable:TryGetValue(categoryId)
+    if not succ then
+        return
+    end
+
+    if not self.m_isAllOpenProgressFinished then
+        self.m_externalFocusId = categoryId
+        return
+    end
+
+    local categoryTab = self.m_categoryTabCells:Get(categoryCfg.order)
+    
+    
+    
+    self.view.bigRectHelper:FocusNode(categoryTab.rectTransform)
+end
+
+
+
+
+FacTechTreeCtrl.FocusTechTreeLayer = HL.Method(HL.Table) << function(self, args)
+    local layerId = unpack(args)
+    local succ, layerCfg = Tables.facSTTLayerTable:TryGetValue(layerId)
+    if not succ then
+        return
+    end
+
+    if not self.m_isAllOpenProgressFinished then
+        self.m_externalFocusId = layerId
+        return
+    end
+
+    local layerCell = self.m_layerCells:Get(layerCfg.order)
+    
+    
+    
+    self.view.bigRectHelper:FocusNode(layerCell.view.craft)
 end
 
 
@@ -532,21 +592,6 @@ FacTechTreeCtrl.AutoSelect = HL.Method(HL.Opt(HL.String)) << function(self, tech
     local luaIndex = self.m_techId2CellLuaIndex[techId]
     local nodeCell = self.m_nodeCells:Get(luaIndex)
     self:_OnClickNode(nodeCell)
-end
-
-
-
-
-FacTechTreeCtrl.OnUnhiddenCategoryGuideFinished = HL.Method(HL.Table) << function(self, arg)
-    local categoryId = unpack(arg)
-    local succ, categoryCfg = Tables.facSTTCategoryTable:TryGetValue(categoryId)
-    if succ and categoryCfg.guideAfterUnhiddenShow then
-        local unhiddenCategoryIds = {}
-        table.insert(unhiddenCategoryIds, categoryId)
-        GameInstance.player.facTechTreeSystem:ReadUnhiddenCategory(unhiddenCategoryIds)
-    end
-
-    self:_NextUnhiddenCategoryShow()
 end
 
 
@@ -973,7 +1018,9 @@ FacTechTreeCtrl._RefreshLine = HL.Method(HL.Opt(HL.Boolean)) << function(self, i
         local lineVO = lineList[index]
         self.m_techId2LineCellLuaIndex[lineVO.techId] = index
         cell:InitFacTechTreeLineCell(lineVO)
-        cell.gameObject:SetActiveIfNecessary(not lineVO.isFirstUnhidden)
+        if isInit then
+            cell.gameObject:SetActiveIfNecessary(not lineVO.isFirstUnhidden)
+        end
     end)
 end
 
@@ -1486,34 +1533,12 @@ end
 
 
 FacTechTreeCtrl._OnOpenTweenFinished = HL.Method() << function(self)
-    if #self.m_showUnhiddenCategoryQueue > 0 then
-        local unhiddenCategoryIds = {}
-        for _, actionInfo in ipairs(self.m_showUnhiddenCategoryQueue) do
-            local categoryId = actionInfo.categoryId
-            local categoryCfg = Tables.facSTTCategoryTable[categoryId]
-            
-            if not categoryCfg.guideAfterUnhiddenShow then
-                table.insert(unhiddenCategoryIds, categoryId)
-            end
-        end
-
-        if #unhiddenCategoryIds > 0 then
-            GameInstance.player.facTechTreeSystem:ReadUnhiddenCategory(unhiddenCategoryIds)
-        end
-    end
-
-    if #self.m_showUnhiddenTechQueue > 0 then
-        local unhiddenTechIds = {}
-        for _, actionInfo in ipairs(self.m_showUnhiddenTechQueue) do
-            table.insert(unhiddenTechIds, actionInfo.techId)
-        end
-        
-        GameInstance.player.facTechTreeSystem:ReadUnhiddenTech(unhiddenTechIds)
-    end
-
     self:_StartUnhiddenCategoryShow()
 
-    if DeviceInfo.usingController and not self.m_externalFocusNode then
+    
+    
+    local succ, _ = Tables.facSTTNodeTable:TryGetValue(self.m_externalFocusId)
+    if DeviceInfo.usingController and not succ then
         local focusTechId
         if not string.isEmpty(self.m_curSelectTechId) then
             focusTechId = self.m_curSelectTechId
@@ -1552,6 +1577,9 @@ FacTechTreeCtrl._AllOpenProgressFinished = HL.Method() << function(self)
                                                              lockedLayerIds = self.m_lockedLayerIds })
     end
     self.m_needOpenLayerId = ""
+    self.m_isAllOpenProgressFinished = true
+    self:_ProcessCacheAfterAllOpenProgress()
+    CS.Beyond.Gameplay.Conditions.OnSTTAllOpenProgressFinished.Trigger()
 
     self:_StartCoroutine(function()
         coroutine.wait(0.3)
@@ -1573,6 +1601,29 @@ FacTechTreeCtrl._FocusTechNode = HL.Method(Transform, HL.Opt(HL.Boolean, HL.Func
         end
         self.m_isFocus = false
     end)
+end
+
+
+
+FacTechTreeCtrl._ProcessCacheAfterAllOpenProgress = HL.Method() << function(self)
+    if string.isEmpty(self.m_externalFocusId) then
+        return
+    end
+
+    local id = self.m_externalFocusId
+    
+    self.m_curSelectTechId = id
+    self.m_externalFocusId = ""
+    local isTech, techCfg = Tables.facSTTNodeTable:TryGetValue(id)
+    local isLayer, layerCfg = Tables.facSTTLayerTable:TryGetValue(id)
+    local isCategory, categoryCfg = Tables.facSTTCategoryTable:TryGetValue(id)
+    if isTech then
+        self:FocusTechTreeNode({ id })
+    elseif isCategory then
+        self:FocusTechTreeCategory({ id })
+    elseif isLayer then
+        self:FocusTechTreeLayer({ id })
+    end
 end
 
 
@@ -1606,6 +1657,7 @@ FacTechTreeCtrl._NextUnhiddenCategoryShow = HL.Method() << function(self)
         self.m_unhiddenShowCor = self:_ClearCoroutine(self.m_unhiddenShowCor)
         self.m_unhiddenShowCor = self:_StartCoroutine(function()
             self.view.bigRectHelper:FocusNode(unhiddenCategoryBgCell.rectTransform)
+            
             coroutine.wait(0.5)
 
             local tabClipLength = categoryTabCell.animationWrapper:GetClipLength(UnhiddenClipName.CategoryTab)
@@ -1616,14 +1668,9 @@ FacTechTreeCtrl._NextUnhiddenCategoryShow = HL.Method() << function(self)
             unhiddenCategoryBgCell.animationWrapper:Play(UnhiddenClipName.CategoryBg)
             AudioAdapter.PostEvent("Au_UI_Event_FacTechTree_NewTypeUnlock")
             coroutine.wait(math.max(tabClipLength, bgClipLength))
+            GameInstance.player.facTechTreeSystem:ReadUnhiddenCategory({ actionInfo.categoryId })
 
-            local categoryId = actionInfo.categoryId
-            if Tables.facSTTCategoryTable[categoryId].guideAfterUnhiddenShow then
-                
-                CS.Beyond.Gameplay.Conditions.OnSTTShowUnhiddenCategoryFinished.Trigger(categoryId)
-            else
-                self:_NextUnhiddenCategoryShow()
-            end
+            self:_NextUnhiddenCategoryShow()
         end)
     end
 end
@@ -1660,10 +1707,14 @@ FacTechTreeCtrl._NextUnhiddenTechShow = HL.Method() << function(self)
             lineCell = self.m_lineCells:Get(lineCellIndex)
         end
 
+        local isFullInScreen = self:_IsElementFullInScreen(nodeCell.rectTransform)
         self.m_unhiddenShowCor = self:_ClearCoroutine(self.m_unhiddenShowCor)
         self.m_unhiddenShowCor = self:_StartCoroutine(function()
-            self.view.bigRectHelper:FocusNode(nodeCell.rectTransform)
-            coroutine.wait(0.5)
+            
+            if not isFullInScreen then
+                self.view.bigRectHelper:FocusNode(nodeCell.rectTransform)
+                coroutine.wait(0.5)
+            end
 
             local lineClipLength = 0
             if lineCell then
@@ -1676,12 +1727,27 @@ FacTechTreeCtrl._NextUnhiddenTechShow = HL.Method() << function(self)
             nodeCell.view.gameObject:SetActiveIfNecessary(true)
             nodeCell.view.animationWrapper:Play(UnhiddenClipName.TechNode)
             coroutine.wait(math.max(nodeClipLength, lineClipLength))
+            GameInstance.player.facTechTreeSystem:ReadUnhiddenTech({ actionInfo.techId })
 
             self:_NextUnhiddenTechShow()
         end)
     end
 end
 
+
+
+
+FacTechTreeCtrl._IsElementFullInScreen = HL.Method(RectTransform).Return(HL.Boolean) << function(self, trans)
+    local vectorArray = CS.System.Array.CreateInstance(typeof(Vector3), 4)
+    trans:GetWorldCorners(vectorArray)
+    for i = 0, vectorArray.Length - 1 do
+        local vec = vectorArray[i]
+        if not UIUtils.isPosInScreen(vec) then
+            return false
+        end
+    end
+    return true
+end
 
 
 

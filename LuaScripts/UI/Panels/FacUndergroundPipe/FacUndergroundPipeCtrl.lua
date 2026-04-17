@@ -45,6 +45,8 @@ local PANEL_ID = PanelId.FacUndergroundPipe
 
 
 
+
+
 FacUndergroundPipeCtrl = HL.Class('FacUndergroundPipeCtrl', uiCtrl.UICtrl)
 
 local UDPIPE_CONTROLLER_STATE_MAP = {
@@ -105,6 +107,9 @@ FacUndergroundPipeCtrl.m_itemCountZero = HL.Field(HL.Boolean) << false
 FacUndergroundPipeCtrl.m_cachedSprite = HL.Field(HL.Table)
 
 
+FacUndergroundPipeCtrl.m_needRefreshPortState = HL.Field(HL.Boolean) << false
+
+
 
 
 
@@ -112,7 +117,7 @@ FacUndergroundPipeCtrl.m_cachedSprite = HL.Field(HL.Table)
 FacUndergroundPipeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_START_UI_DRAG] = '_OnStartUiDrag',
     [MessageConst.ON_END_UI_DRAG] = '_OnEndUiDrag',
-    [MessageConst.ON_PORT_BLOCK_STATE_CHANGE] = '_OnPortBlockStateChange',
+    
     [MessageConst.ON_CONVEYOR_CHANGE] = '_OnConveyorChange',
 }
 
@@ -134,19 +139,16 @@ FacUndergroundPipeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_curConnectNode.disconnectBtn.onClick:AddListener(function()
         self:_OnClickDisconnectBtn()
     end)
-    if not self.m_isLoader then
-        self.view.buildingCommon:InitBuildingCommon(self.m_buildingInfo, {
-            onStateChanged = function(state)
-                self:_UpdateUdPipeConnectNode()
-            end,
-        })
-    else
-        self.view.buildingCommon:InitBuildingCommon(self.m_buildingInfo)
-        self:_UpdateUdPipeConnectNode()
-    end
+    self.view.buildingCommon:InitBuildingCommon(self.m_buildingInfo, {
+        onStateChanged = function(state)
+            self:_UpdateUdPipeConnectNode()
+        end,
+    })
+    self:_UpdateUdPipeConnectNode()
 
     self.view.facCachePipe:InitFacCachePipe(self.m_buildingInfo, {
         useSinglePipe = FacConst.UDPIPE_PORT_LAYOUT_STATE_MAP[self.m_templateId],
+        needInversePipe = true,
     })
     self.view.inventoryArea:InitInventoryArea({
         customOnUpdateCell = function(cell, itemBundle)
@@ -164,14 +166,27 @@ FacUndergroundPipeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.liquidItemSlot.view.liquidNaviGroup:NaviToThisGroup()
 
     GameInstance.remoteFactoryManager:RegisterInterestedUnitId(self.m_buildingInfo.nodeId)
-    self:_TryChangeConnectionInterested(true)
 end
 
 
 
 FacUndergroundPipeCtrl.OnClose = HL.Override() << function(self)
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_buildingInfo.nodeId)
-    self:_TryChangeConnectionInterested(false)
+end
+
+
+
+FacUndergroundPipeCtrl.OnShow = HL.Override() << function(self)
+    if self.m_needRefreshPortState then
+        self.m_needRefreshPortState = false
+        self:_UpdateUdPipeConnectNode()
+    end
+end
+
+
+
+FacUndergroundPipeCtrl.OnHide = HL.Override() << function(self)
+    self.m_needRefreshPortState = true
 end
 
 
@@ -202,7 +217,6 @@ FacUndergroundPipeCtrl._OnClickDisconnectBtn = HL.Method() << function(self)
             GameInstance.player.remoteFactory.core:Message_OpDelUpPipeConnection(self.m_buildingInfo.chapterId, fromId, toId, function()
                 self.m_buildingInfo:Update()
                 self:_UpdateUdPipeConnectNode()
-                self:_TryChangeConnectionInterested(false)
 
                 if DeviceInfo.usingController then
                     self.m_curConnectNode.btnNaviGroup:ManuallyStopFocus()
@@ -212,22 +226,6 @@ FacUndergroundPipeCtrl._OnClickDisconnectBtn = HL.Method() << function(self)
             end)
         end
     })
-end
-
-
-
-
-FacUndergroundPipeCtrl._TryChangeConnectionInterested = HL.Method(HL.Boolean) << function(self, register)
-    local connect = self.m_buildingInfo.udPipe.connectComponent
-    local isLoader = FacConst.UDPIPE_PORT_LOAD_TYPE_MAP[self.m_templateId]
-    if isLoader and connect ~= nil then
-        local nodeId = connect.belongNode.nodeId
-        if register then
-            GameInstance.remoteFactoryManager:RegisterInterestedUnitId(nodeId)
-        else
-            GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(nodeId)
-        end
-    end
 end
 
 
@@ -325,13 +323,12 @@ FacUndergroundPipeCtrl._UpdateUdPipeConnectNode = HL.Method() << function(self)
             },
         }
     })
-    local bdata = Tables.factoryBuildingTable:GetValue(connect.belongNode.templateId)
-    self.m_curConnectNode.titleText.text = bdata.name
-    self.m_curConnectNode.btnNaviGroup:SetFocusBindingText(bdata.name)
+    local bData = Tables.factoryBuildingTable:GetValue(connect.belongNode.templateId)
+    self.m_curConnectNode.titleText.text = bData.name
+    self.m_curConnectNode.titleIcon:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, bData.iconOnPanel)
+    self.m_curConnectNode.btnNaviGroup:SetFocusBindingText(bData.name)
     self.m_isSpeedLimited = FacConst.UDPIPE_PORT_LAYOUT_STATE_MAP[connect.belongNode.templateId] and not FacConst.UDPIPE_PORT_LAYOUT_STATE_MAP[self.m_templateId]
-    local dstState = self.m_isLoader and
-        FactoryUtils.getBuildingStateType(connect.belongNode.nodeId) or
-        FactoryUtils.getBuildingStateType(self.m_buildingInfo.nodeId)
+    local dstState = FactoryUtils.getBuildingStateType(self.m_buildingInfo.nodeId)
     local targetState
     if dstState == GEnums.FacBuildingState.Blocked then
         targetState = UDPIPE_NODE_STATE.Block
@@ -412,7 +409,7 @@ FacUndergroundPipeCtrl._RefreshLiquidItemSlot = HL.Method(HL.Boolean) << functio
 
     
     if string.isEmpty(itemId) then
-        itemId = self.m_lastConveyorItemId
+        itemId = self.m_buildingInfo.udPipe.lastPassItemId
     end
 
     local isEmpty
@@ -638,8 +635,10 @@ FacUndergroundPipeCtrl._OnDropItem = HL.Method(HL.Forward('UIDragHelper')) << fu
     local componentId = self.m_buildingInfo.fluidContainer.componentId
     if source == UIConst.UI_DRAG_DROP_SOURCE_TYPE.ItemBag then
         core:Message_OpFillingFluidComWithBag(Utils.getCurrentChapterId(), componentId, dragInfo.csIndex)
+        FactoryUtils.playAudioWhenFillingItem(dragInfo.itemId, self.m_buildingInfo.fluidContainer.holdItemId, self.m_buildingInfo.fluidContainer.holdItemCount)
     elseif source == UIConst.UI_DRAG_DROP_SOURCE_TYPE.FactoryDepot then
         core:Message_OpFillingFluidComWithDepot(Utils.getCurrentChapterId(), componentId, dragInfo.itemId)
+        FactoryUtils.playAudioWhenFillingItem(dragInfo.itemId, self.m_buildingInfo.fluidContainer.holdItemId, self.m_buildingInfo.fluidContainer.holdItemCount)
     end
 end
 
@@ -676,14 +675,6 @@ FacUndergroundPipeCtrl._OnEndUiDrag = HL.Method(HL.Forward('UIDragHelper')) << f
         self.view.liquidItemSlot.view.dropHintImg.gameObject:SetActiveIfNecessary(false)
     end
 end
-
-
-
-
-
-
-
-
 
 
 

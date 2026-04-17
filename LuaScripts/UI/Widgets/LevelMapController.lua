@@ -448,8 +448,13 @@ end
 
 
 LevelMapController._RefreshLoaderStateByLevel = HL.Method(HL.String, HL.Boolean) << function(self, levelId, moveNeedTween)
-    local success, configInfo = GameInstance.player.mapManager:GetLoaderLevelBasicInfoByLevelId(levelId)
-    if not success then
+    local basicInfoSuccess, configInfo = GameInstance.player.mapManager:GetLoaderLevelBasicInfoByLevelId(levelId)
+    if not basicInfoSuccess then
+        return
+    end
+
+    local levelConfigSuccess, levelConfig = Utils.getLevelConfig(levelId)
+    if not levelConfigSuccess then
         return
     end
 
@@ -465,7 +470,7 @@ LevelMapController._RefreshLoaderStateByLevel = HL.Method(HL.String, HL.Boolean)
     local levelMapLoader = self.view.levelMapLoader
     levelMapLoader:SetLoaderLevel(levelId)
     levelMapLoader:RefreshLevelSwitchMaskState(levelId)
-    local inCurrentLevel = GameWorld.worldInfo.curLevelId == levelId
+    local inCurrentMap = GameWorld.worldInfo.curMapIdStr == levelConfig.mapIdStr
 
     if moveNeedTween then
         levelMapLoader:ForceDisposeAllTextureResources()
@@ -505,7 +510,7 @@ LevelMapController._RefreshLoaderStateByLevel = HL.Method(HL.String, HL.Boolean)
     local onMoveFinish = function()
         self:_RefreshGeneralTrackingMarkInSwitchMode()
         self:_RefreshMissionTrackingMarks()
-        levelMapLoader:SetLoaderPlayerVisibleState(inCurrentLevel)
+        levelMapLoader:SetLoaderPlayerVisibleState(inCurrentMap)
     end
 
     
@@ -1143,12 +1148,12 @@ end
 
 
 LevelMapController.ResetSwitchModeToTargetLevelState = HL.Method(HL.String) << function(self, levelId)
-    local targetSuccess, targetLevelConfig = DataManager.levelConfigTable:TryGetData(levelId)
+    local targetSuccess, targetLevelConfig = Utils.getLevelConfig(levelId)
     if not targetSuccess then
         return
     end
 
-    local currSuccess, currLevelConfig = DataManager.levelConfigTable:TryGetData(self.m_currentLevelId)
+    local currSuccess, currLevelConfig = Utils.getLevelConfig(self.m_currentLevelId)
     if not currSuccess then
         return
     end

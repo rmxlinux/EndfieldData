@@ -23,6 +23,7 @@ local UNOPENED_LV = 99999
 
 
 
+
 DomainGradeCtrl = HL.Class('DomainGradeCtrl', uiCtrl.UICtrl)
 
 
@@ -100,6 +101,13 @@ end
 
 
 
+
+DomainGradeCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
+    self:_UpdateContentList(true)
+end
+
+
+
 DomainGradeCtrl._OnClickBtnBack = HL.Method() << function(self)
     PhaseManager:PopPhase(PHASE_ID)
 end
@@ -125,15 +133,7 @@ end
 
 
 DomainGradeCtrl._UpdateMoneyCell = HL.Method() << function(self)
-    local dataSucc, domainDevData = GameInstance.player.domainDevelopmentSystem.domainDevDataDic:TryGetValue(self.m_domainId)
-    if not dataSucc then
-        logger.error("DomainGradeCtrl._UpdateMoneyCell cant find domainDevData: ", self.m_domainId)
-        return
-    end
-
-    local goldItemId = domainDevData.domainDataCfg.domainGoldItemId
-    local maxCount = domainDevData.curLevelData.moneyLimit
-    self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(goldItemId, maxCount)
+    self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(self.m_domainId)
 end
 
 
@@ -150,7 +150,7 @@ DomainGradeCtrl._UpdateContentList = HL.Method(HL.Boolean) << function(self, isI
     
     local domainDevCfg = domainDevData.domainDataCfg
     local domainLevelData = domainDevCfg.domainDevelopmentLevel
-    local curMaxLv = domainLevelData.Count
+    local curMaxLv = DomainPOIUtils.GetDomainMaxLevel(self.m_domainId)
     local isFinalMaxLv = domainLevelData[curMaxLv - 1].isFinalMaxLevel
 
 

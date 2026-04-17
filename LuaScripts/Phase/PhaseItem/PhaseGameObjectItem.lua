@@ -2,7 +2,7 @@
 
 
 
-local phaseItemBase = require_ex('Phase/Core/PhaseItemBase')
+local phaseSubItem = require_ex('Phase/Core/PhaseSubItem')
 
 
 
@@ -16,7 +16,7 @@ local phaseItemBase = require_ex('Phase/Core/PhaseItemBase')
 
 
 
-PhaseGameObjectItem = HL.Class("PhaseGameObjectItem", phaseItemBase.PhaseItemBase)
+PhaseGameObjectItem = HL.Class("PhaseGameObjectItem", phaseSubItem.PhaseSubItem)
 
 do
     

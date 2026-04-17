@@ -100,7 +100,7 @@ WeeklyRaidUtils.GetWeeklyRaidMissionText = function(missionId)
         local missionInfo = GameInstance.player.mission:GetMissionInfo(missionId)
         return {
             name = missionInfo.missionName:GetText(),
-            desc = missionInfo.missionDescription:GetText(),
+            desc = missionInfo:GetMissionDesc():GetText(),
         }
     else
         return {

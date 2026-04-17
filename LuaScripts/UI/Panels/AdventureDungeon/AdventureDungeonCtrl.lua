@@ -80,6 +80,9 @@ local TabDataList = {
 
 
 
+
+
+
 AdventureDungeonCtrl = HL.Class('AdventureDungeonCtrl', uiCtrl.UICtrl)
 
 
@@ -167,7 +170,8 @@ end
 
 
 AdventureDungeonCtrl._OnChangeTab = HL.Method(HL.Any) << function(self, arg)
-    local dungeonTab = arg
+    local dungeonTab = arg.dungeonTab
+    self.m_currSelectDropdownIndex = (arg.filterIndex ~= nil and arg.filterIndex > 0) and arg.filterIndex or 0
     local index = 1
     for _, categoryInfo in pairs(self.m_dungeonCategoryInfos) do
         if categoryInfo.tabJumpName == dungeonTab then
@@ -183,7 +187,19 @@ AdventureDungeonCtrl._OnChangeTab = HL.Method(HL.Any) << function(self, arg)
     local cell = self.m_genTabCells:Get(self.m_curTabIndex)
     cell.toggle:SetIsOnWithoutNotify(true)
     InputManagerInst.controllerNaviManager:SetTarget(cell.toggle)
+    if DeviceInfo.usingController then
+        self.m_naviOnLeft = true
+        InputManagerInst:ToggleGroup(self.view.slideNodeMonoTarget.groupId, not self.m_naviOnLeft)
+        InputManagerInst:ToggleGroup(self.view.tabTogMonoTarget.groupId, self.m_naviOnLeft)
+    end
     self:_OnClickTabToggle(self.m_curTabIndex, true)
+end
+
+
+
+AdventureDungeonCtrl.GetCurTabName = HL.Method().Return(HL.String) << function(self)
+    local curInfo = self.m_dungeonCategoryInfos[self.m_curTabIndex]
+    return curInfo.tabJumpName
 end
 
 
@@ -361,6 +377,16 @@ AdventureDungeonCtrl._InitShortCut = HL.Method() << function(self)
         else
             self.view.singleCategoryNode.naviGroup:NaviToThisGroup(true)
         end
+        
+        
+        
+        
+        local rightNaviGroup = self.m_useDungeonList and self.view.dungeonCategoryListNaviGroup or self.view.singleCategoryNode.naviGroup
+        if not rightNaviGroup.IsTopLayer then
+            self.m_naviOnLeft = true
+            InputManagerInst:ToggleGroup(self.view.slideNodeMonoTarget.groupId, false)
+            InputManagerInst:ToggleGroup(self.view.tabTogMonoTarget.groupId, true)
+        end
     end, self.view.tabTogMonoTarget.groupId)
     self:BindInputPlayerAction("adventure_dungeon_right_hint", function()
         logger.info("adventure_dungeon_right")
@@ -371,6 +397,12 @@ AdventureDungeonCtrl._InitShortCut = HL.Method() << function(self)
             self.view.dungeonCategoryListNaviGroup:NaviToThisGroup(true)
         else
             self.view.singleCategoryNode.naviGroup:NaviToThisGroup(true)
+        end
+        local rightNaviGroup = self.m_useDungeonList and self.view.dungeonCategoryListNaviGroup or self.view.singleCategoryNode.naviGroup
+        if not rightNaviGroup.IsTopLayer then
+            self.m_naviOnLeft = true
+            InputManagerInst:ToggleGroup(self.view.slideNodeMonoTarget.groupId, false)
+            InputManagerInst:ToggleGroup(self.view.tabTogMonoTarget.groupId, true)
         end
     end, self.view.tabTogMonoTarget.groupId)
 
@@ -738,27 +770,14 @@ AdventureDungeonCtrl._OnClickTabToggle = HL.Method(HL.Number, HL.Opt(HL.Boolean)
             end,
             
             function(csIndex)
-                logger.info("[adventure] dropdown csIndex: " .. tostring(csIndex))
-                if csIndex == self.m_currSelectDropdownIndex then
-                    return
-                end
-                self.m_currSelectDropdownIndex = csIndex
-                self.view.singleCategoryNode.singleCategoryList:ScrollToIndex(0, true)
-                local infos = self.m_dungeonCategoryInfos[self.m_curTabIndex].dungeonInfosList[1].infos
-                local selectDomainId = self.m_dropdownDomainIds[csIndex + 1]
-                local filtered = lume.filter(infos, function(x)
-                    if selectDomainId == "All" then
-                        return true
-                    end
-                    return x.domainId == selectDomainId
-                end)
-                self.m_filterdInfos = filtered
-                self.m_needResetSingleListTarget = true
-                self.view.singleCategoryNode.singleCategoryList:UpdateCount(#filtered)
+                self:_OnSelectFilter(LuaIndex(csIndex))
             end
         )
-        self.m_currSelectDropdownIndex = 0
-        self.view.dropDown:Refresh(#self.m_dropdownDomainIds, 0, false)
+        local dropdownCsIdx = self.m_currSelectDropdownIndex > 0 and CSIndex(self.m_currSelectDropdownIndex) or 0
+        self.view.dropDown:Refresh(#self.m_dropdownDomainIds, dropdownCsIdx, false)
+        if self.m_currSelectDropdownIndex > 0 then
+            self:_OnSelectFilter(self.m_currSelectDropdownIndex, true)
+        end
     else
         self.view.siltationPoint.gameObject:SetActive(false)
     end
@@ -767,6 +786,30 @@ AdventureDungeonCtrl._OnClickTabToggle = HL.Method(HL.Number, HL.Opt(HL.Boolean)
         local aniWrapper = self.animationWrapper
         aniWrapper:Play("adventuredungeonnode_change")
     end
+end
+
+
+
+
+
+AdventureDungeonCtrl._OnSelectFilter = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, index, forceSelect)
+    logger.info("[adventure] dropdown csIndex: " .. tostring(csIndex))
+    if index == self.m_currSelectDropdownIndex and not forceSelect then
+        return
+    end
+    self.m_currSelectDropdownIndex = index
+    self.view.singleCategoryNode.singleCategoryList:ScrollToIndex(0, true)
+    local infos = self.m_dungeonCategoryInfos[self.m_curTabIndex].dungeonInfosList[1].infos
+    local selectDomainId = self.m_dropdownDomainIds[index]
+    local filtered = lume.filter(infos, function(x)
+        if selectDomainId == "All" then
+            return true
+        end
+        return x.domainId == selectDomainId
+    end)
+    self.m_filterdInfos = filtered
+    self.m_needResetSingleListTarget = true
+    self.view.singleCategoryNode.singleCategoryList:UpdateCount(#filtered)
 end
 
 
@@ -794,6 +837,13 @@ AdventureDungeonCtrl._ReadTabRedDot = HL.Method(HL.Number) << function(self, lua
         GameInstance.player.subGameSys:SendSubGameListRead(subGameIds)
     end
 end
+
+
+
+AdventureDungeonCtrl.GetCurEnemySpawnerFilterIndex = HL.Method().Return(HL.Number) << function(self)
+    return self.m_currSelectDropdownIndex
+end
+
 
 
 

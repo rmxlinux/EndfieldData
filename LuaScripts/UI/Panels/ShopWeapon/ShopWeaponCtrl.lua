@@ -49,6 +49,8 @@ local PERMANENT_GOODS_CELL_REFRESH_WAIT_TIME = 0.05
 
 
 
+
+
 ShopWeaponCtrl = HL.Class('ShopWeaponCtrl', uiCtrl.UICtrl)
 
 
@@ -96,6 +98,10 @@ ShopWeaponCtrl.m_currNaviCol = HL.Field(HL.Int) << 1
 
 
 ShopWeaponCtrl.m_haveSeenLines = HL.Field(HL.Table)
+
+
+
+ShopWeaponCtrl.m_pendingNaviGoodsId = HL.Field(HL.Any)
 
 
 ShopWeaponCtrl.m_weeklyTimer = HL.Field(HL.Any)
@@ -261,6 +267,7 @@ ShopWeaponCtrl.UpdateUpWeapon = HL.Method() << function(self)
         local hasGachaCfg, weaponGachaCfg = Tables.gachaWeaponPoolTable:TryGetValue(goodsCfg.weaponGachaPoolId)
         local clientTopTimeId = weaponGachaCfg.clientTopTimeId
         local isTop = Utils.isCurTimeInTimeIdRange(clientTopTimeId)
+        logger.info(string.format("[Shop]%s, isTop: %s", goodsId, tostring(isTop)))
         local tmpData = {
             goodsData = goodsData,
             isTop = isTop,  
@@ -269,7 +276,7 @@ ShopWeaponCtrl.UpdateUpWeapon = HL.Method() << function(self)
         }
         table.insert(tmpBoxList, tmpData)
     end
-    table.sort(tmpBoxList, Utils.genSortFunction({ "index", "sortId" }, false))  
+    table.sort(tmpBoxList, Utils.genSortFunction({ "sortId", "index" }, false))  
     for idx, tmpData in ipairs(tmpBoxList) do
         if tmpData.isTop then
             table.insert(upBoxList, tmpData)
@@ -281,18 +288,10 @@ ShopWeaponCtrl.UpdateUpWeapon = HL.Method() << function(self)
     local singleWeaponCase = self.view.randomWeaponsCase
     local singleWeaponCaseCell = singleWeaponCase.shopWeaponCaseCell
     local doubleWeaponCase = self.view.doubleRandomWeaponsCase
-    if #upBoxList == 0 then
-        
-        doubleWeaponCase.gameObject:SetActive(false)
-        singleWeaponCase.gameObject:SetActive(true)
-        singleWeaponCase.stayTunedNode.gameObject:SetActive(true)
-        singleWeaponCaseCell.gameObject:SetActive(false)
-        local data = { length = 6, cell = singleWeaponCase.inputBindingGroupNaviDecorator, naviNode = singleWeaponCase.naviNode }
-        self.m_firstNaviData = data
-        table.insert(self.m_naviCellTable, { data })
-    end
+    local upBoxCount = #upBoxList
+    local upBoxIsEmpty = upBoxCount == 0
     
-    if #upBoxList == 1 then
+    if upBoxCount == 1 then
         
         local boxData = upBoxList[1].goodsData
         singleWeaponCase.gameObject:SetActive(true)
@@ -306,16 +305,18 @@ ShopWeaponCtrl.UpdateUpWeapon = HL.Method() << function(self)
         self.m_firstNaviData = data
         table.insert(self.m_naviCellTable, { data })
         
-        self:_UpdateSingleLimitedWeapon(singleWeaponCaseCell, boxData, false)
-        
-        local poolId = Tables.shopGoodsTable[boxData.goodsTemplateId].weaponGachaPoolId
-        local isRealTime, closeTimeDesc= CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId)
-        local poolTimeNode = singleWeaponCaseCell.view.poolTimeNode
-        poolTimeNode.endTimeTxt.text = closeTimeDesc
-        poolTimeNode.endingTxt.gameObject:SetActive(isRealTime)
-    end
-    
-    if #upBoxList >= 2 then
+        local suc = self:_UpdateSingleLimitedWeapon(singleWeaponCaseCell, boxData, false)
+        if not suc then
+            upBoxIsEmpty = true
+        else
+            
+            local poolId = Tables.shopGoodsTable[boxData.goodsTemplateId].weaponGachaPoolId
+            local isRealTime, closeTimeDesc= CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId)
+            local poolTimeNode = singleWeaponCaseCell.view.poolTimeNode
+            poolTimeNode.endTimeTxt.text = closeTimeDesc
+            poolTimeNode.endingTxt.gameObject:SetActive(isRealTime)
+        end
+    elseif upBoxCount >= 2 then
         local boxData1 = upBoxList[1].goodsData
         local boxData2 = upBoxList[2].goodsData
         
@@ -328,17 +329,32 @@ ShopWeaponCtrl.UpdateUpWeapon = HL.Method() << function(self)
         self.m_firstNaviData = data1
         table.insert(self.m_naviCellTable, { data1, data2 })
         
-        self:_UpdateSingleLimitedWeapon(weaponCaseCell1, boxData1, true)
-        self:_UpdateSingleLimitedWeapon(weaponCaseCell2, boxData2, true)
+        local suc1 = self:_UpdateSingleLimitedWeapon(weaponCaseCell1, boxData1, true)
+        local suc2 = self:_UpdateSingleLimitedWeapon(weaponCaseCell2, boxData2, true)
+        if not (suc1 and suc2) then
+            upBoxIsEmpty = true
+        else
+            
+            local poolId1 = Tables.shopGoodsTable[boxData1.goodsTemplateId].weaponGachaPoolId
+            local isRealTime1, closeTimeDesc1 = CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId1)
+            weaponCaseCell1.view.poolTimeNode.endTimeTxt:SetAndResolveTextStyle(closeTimeDesc1)
+            weaponCaseCell1.view.poolTimeNode.endingTxt.gameObject:SetActive(isRealTime1)
+            local poolId2 = Tables.shopGoodsTable[boxData2.goodsTemplateId].weaponGachaPoolId
+            local isRealTime2, closeTimeDesc2 = CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId2)
+            weaponCaseCell2.view.poolTimeNode.endTimeTxt:SetAndResolveTextStyle(closeTimeDesc2)
+            weaponCaseCell2.view.poolTimeNode.endingTxt.gameObject:SetActive(isRealTime2)
+        end
+    end
+    
+    if upBoxIsEmpty then
         
-        local poolId1 = Tables.shopGoodsTable[boxData1.goodsTemplateId].weaponGachaPoolId
-        local isRealTime1, closeTimeDesc1 = CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId1)
-        weaponCaseCell1.view.poolTimeNode.endTimeTxt:SetAndResolveTextStyle(closeTimeDesc1)
-        weaponCaseCell1.view.poolTimeNode.endingTxt.gameObject:SetActive(isRealTime1)
-        local poolId2 = Tables.shopGoodsTable[boxData2.goodsTemplateId].weaponGachaPoolId
-        local isRealTime2, closeTimeDesc2 = CashShopUtils.GetGachaWeaponPoolCloseTimeShowDesc(poolId2)
-        weaponCaseCell2.view.poolTimeNode.endTimeTxt:SetAndResolveTextStyle(closeTimeDesc2)
-        weaponCaseCell2.view.poolTimeNode.endingTxt.gameObject:SetActive(isRealTime2)
+        doubleWeaponCase.gameObject:SetActive(false)
+        singleWeaponCase.gameObject:SetActive(true)
+        singleWeaponCase.stayTunedNode.gameObject:SetActive(true)
+        singleWeaponCaseCell.gameObject:SetActive(false)
+        local data = { length = 6, cell = singleWeaponCase.inputBindingGroupNaviDecorator, naviNode = singleWeaponCase.naviNode }
+        self.m_firstNaviData = data
+        table.insert(self.m_naviCellTable, { data })
     end
     
     if #downBoxList == 0 then
@@ -358,9 +374,11 @@ ShopWeaponCtrl.UpdateUpWeapon = HL.Method() << function(self)
             if index == downBoxShowCount and lastIsEmpty then
                 cell.view.activateNode.gameObject:SetActive(false)
                 cell.view.nullNode.gameObject:SetActive(true)
+                cell.view.redDot.gameObject:SetActive(false)
             else
                 cell.view.activateNode.gameObject:SetActive(true)
                 cell.view.nullNode.gameObject:SetActive(false)
+                cell.view.redDot.gameObject:SetActive(true)
                 local goodsData = downBoxList[index].goodsData
                 self:_SetupViewSmallUpWeaponCell(cell, goodsData)
                 goodsId = goodsData.goodsId
@@ -449,6 +467,8 @@ ShopWeaponCtrl._SetupViewSmallUpWeaponCell = HL.Method(HL.Any, HL.Any) << functi
         cell.view.iconWeaponBagFar.gameObject:SetActive(true)
         cell.view.iconWeaponBagFar:LoadSprite(UIConst.UI_SPRITE_SHOP_WEAPON_BOX, iconFar)
     end
+    
+    cell.view.redDot:InitRedDot("GachaWeaponCharTenLtTicket", poolId)
 end
 
 
@@ -456,7 +476,7 @@ end
 
 
 
-ShopWeaponCtrl._UpdateSingleLimitedWeapon = HL.Method(HL.Any, HL.Any, HL.Boolean) << function(self, weaponCaseCell, boxData, isDoublePool)
+ShopWeaponCtrl._UpdateSingleLimitedWeapon = HL.Method(HL.Any, HL.Any, HL.Boolean).Return(HL.Boolean) << function(self, weaponCaseCell, boxData, isDoublePool)
     
     local csGachaSys = GameInstance.player.gacha
     local goodsCfg = Tables.shopGoodsTable[boxData.goodsTemplateId]
@@ -469,12 +489,13 @@ ShopWeaponCtrl._UpdateSingleLimitedWeapon = HL.Method(HL.Any, HL.Any, HL.Boolean
     local _, poolInfo = csGachaSys.poolInfos:TryGetValue(poolId)
     if poolInfo == nil then
         logger.error("卡池信息不存在！卡池id：" .. poolId)
-        return
+        return false
     end
     
     local weaponPoolCfg = Tables.gachaWeaponPoolTable[poolId]
     local gachaTypeCfg = Tables.gachaWeaponPoolTypeTable[weaponPoolCfg.type]
     weaponCaseCell.view.poolNameTxt.text = weaponPoolCfg.name
+    weaponCaseCell.view.gachaBtnRedDot:InitRedDot("GachaWeaponCharTenLtTicket", poolId)
     local uiPrefabName = isDoublePool and weaponPoolCfg.doublePoolNodeUIPrefab or weaponPoolCfg.poolNodeUIPrefab
     if weaponCaseCell.view.uiPrefabName ~= uiPrefabName then
         if weaponCaseCell.view.node then
@@ -482,6 +503,10 @@ ShopWeaponCtrl._UpdateSingleLimitedWeapon = HL.Method(HL.Any, HL.Any, HL.Boolean
         end
         local path = string.format("Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/CashShop/Widgets/WeaponPoolNode/%s.prefab", uiPrefabName)
         local prefab = self.loader:LoadGameObject(path)
+        if not prefab then
+            logger.error("武器卡池prefab加载失败！uiPrefabName：", uiPrefabName)
+            return false
+        end
         local obj = CSUtils.CreateObject(prefab, weaponCaseCell.view.weaponPoolNodeRoot)
 
         obj.name = weaponPoolCfg.id
@@ -513,7 +538,7 @@ ShopWeaponCtrl._UpdateSingleLimitedWeapon = HL.Method(HL.Any, HL.Any, HL.Boolean
         local loopRewardInfos = CashShopUtils.GetGachaWeaponLoopRewardInfo(poolId)
         if not loopRewardInfos then
             guaranteeNode.gameObject:SetActive(false)
-            return
+            return true
         else
             guaranteeNode.gameObject:SetActive(true)
             table.sort(loopRewardInfos, function(a, b)
@@ -537,6 +562,7 @@ ShopWeaponCtrl._UpdateSingleLimitedWeapon = HL.Method(HL.Any, HL.Any, HL.Boolean
             end)
         end
     end
+    return true
 end
 
 
@@ -718,6 +744,7 @@ ShopWeaponCtrl.UpdatePermanentWeapon = HL.Method() << function(self)
                     if index % countPerLine == 0 or index == #goodsList - useGoodsNumber then
                         
                         table.insert(self.m_naviCellTable, naviDataLine)
+                        self:_TrySetNaviFocusByGoodsId(self.m_pendingNaviGoodsId)
                         naviDataLine = {}
                     end
                 end)
@@ -784,6 +811,7 @@ ShopWeaponCtrl._SetupPermanentBoxCell = HL.Method(HL.Any, HL.Number, HL.Number, 
         local setupGoodsFunc = function()
             local rowEndCallback = function()
                 table.insert(self.m_naviCellTable, naviDataLine)
+                self:_TrySetNaviFocusByGoodsId(self.m_pendingNaviGoodsId)
 
                 
                 local nextRowIndex = index + 1
@@ -907,6 +935,7 @@ end
 
 ShopWeaponCtrl.UpdateAll = HL.Method() << function(self)
     self.m_naviCellTable = {}
+    self.m_pendingNaviGoodsId = nil
 
     self:UpdateUpWeapon()
     self:UpdateTimeLimitWeapons()
@@ -968,6 +997,10 @@ ShopWeaponCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
     if goodsData == nil then
         logger.error(ELogChannel.UI, "商店商品数据为空")
         return
+    end
+
+    if not self:_TrySetNaviFocusByGoodsId(goodsData.goodsId) then
+        self.m_pendingNaviGoodsId = goodsData.goodsId
     end
 
     local isBox = string.isEmpty(goods.rewardId)
@@ -1034,6 +1067,14 @@ end
 
 ShopWeaponCtrl._OnGoLeft = HL.Method() << function(self)
     if self.m_currNaviCol == 1 then
+        if self.m_currNaviRow == 1 then
+            return
+        end
+        local prevRow = self.m_naviCellTable[self.m_currNaviRow - 1]
+        local data = prevRow[#prevRow]
+        self:_CustomNaviTarget(data)
+        self.m_currNaviRow = self.m_currNaviRow - 1
+        self.m_currNaviCol = #prevRow
         return
     end
 
@@ -1064,6 +1105,14 @@ ShopWeaponCtrl._OnGoRight = HL.Method() << function(self)
     local currRow = self.m_naviCellTable[self.m_currNaviRow]
 
     if self.m_currNaviCol == #currRow then
+        if self.m_currNaviRow == #self.m_naviCellTable then
+            return
+        end
+        local nextRow = self.m_naviCellTable[self.m_currNaviRow + 1]
+        local data = nextRow[1]
+        self:_CustomNaviTarget(data)
+        self.m_currNaviRow = self.m_currNaviRow + 1
+        self.m_currNaviCol = 1
         return
     end
 
@@ -1107,6 +1156,27 @@ ShopWeaponCtrl._CustomNaviTarget = HL.Method(HL.Any) << function(self, data)
         data.naviNode.gameObject:SetActive(true)
     end
     self.m_currNaviData = data
+end
+
+
+
+
+ShopWeaponCtrl._TrySetNaviFocusByGoodsId = HL.Method(HL.Any).Return(HL.Boolean) << function(self, goodsId)
+    if goodsId == nil then
+        return false
+    end
+    for row, rowData in ipairs(self.m_naviCellTable) do
+        for col, data in ipairs(rowData) do
+            if data.goodsId == goodsId then
+                self:_CustomNaviTarget(data)
+                self.m_currNaviRow = row
+                self.m_currNaviCol = col
+                self.m_pendingNaviGoodsId = nil
+                return true
+            end
+        end
+    end
+    return false
 end
 
 

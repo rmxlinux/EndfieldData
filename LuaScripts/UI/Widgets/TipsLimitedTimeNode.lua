@@ -48,7 +48,6 @@ TipsLimitedTimeNode.m_isExpireWarningState = HL.Field(HL.Boolean) << false
 
 
 TipsLimitedTimeNode._OnFirstTimeInit = HL.Override() << function(self)
-    
 end
 
 
@@ -114,6 +113,7 @@ TipsLimitedTimeNode._ToggleTickTime = HL.Method(HL.Boolean) << function(self, is
         end
     else
         self.m_luaUpdateKey = LuaUpdate:Remove(self.m_luaUpdateKey)
+        self.view.gameObject:SetActive(false)
     end
 end
 

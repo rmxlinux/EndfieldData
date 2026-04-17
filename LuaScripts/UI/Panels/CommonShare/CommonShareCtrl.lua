@@ -22,6 +22,7 @@ local waterMarkScale = 0.096
 
 
 
+
 CommonShareCtrl = HL.Class('CommonShareCtrl', uiCtrl.UICtrl)
 
 local CLEAR_PANEL_ON_SHUTTER = {
@@ -55,6 +56,9 @@ CommonShareCtrl.m_channelIdList = HL.Field(HL.Table) << nil
 
 
 CommonShareCtrl.m_clickSaveBtn = HL.Field(HL.Boolean) << false
+
+
+CommonShareCtrl.m_maskClipAmount = HL.Field(HL.Any) << nil
 
 
 
@@ -93,16 +97,9 @@ CommonShareCtrl.ScreenCaptureAndShare = HL.StaticMethod(HL.Any) << function(arg)
         end
         CoroutineManager:StartCoroutine(function()
             
-            local rtHandle = CS.Beyond.UI.ScreenCaptureUtils.GetScreenCapture()
-            arg.rt = rtHandle.rt
-            arg.rtHandle = rtHandle
-
-            
             local realScale = math.floor(Screen.height * waterMarkScale) / Screen.height
             waterMarkScale = realScale
             
-            coroutine.waitForRenderDone()
-            coroutine.step()
             local scale = waterMarkScale + 1
             local ratio = 1
             if this.view.rectTransform.rect.height > 0 then
@@ -114,14 +111,12 @@ CommonShareCtrl.ScreenCaptureAndShare = HL.StaticMethod(HL.Any) << function(arg)
             end
             local photoRealHeight = this.view.photoImgWithWaterMark.rectTransform.rect.width / ratio
             local offset = photoRealHeight * waterMarkScale / 2
-            this.view.photoImgWithWaterMark.rectTransform.offsetMin = Vector2(this.view.photoImgWithWaterMark.rectTransform.offsetMin.x, -offset)
-            this.view.photoImgWithWaterMark.rectTransform.offsetMax = Vector2(this.view.photoImgWithWaterMark.rectTransform.offsetMax.x, offset)
+            this.view.mask2D.rectTransform.offsetMin = Vector2(this.view.photoImgWithWaterMark.rectTransform.offsetMin.x, -offset )
+            this.view.mask2D.rectTransform.offsetMax = Vector2(this.view.photoImgWithWaterMark.rectTransform.offsetMax.x, offset )
             this.view.bottomNodeWaterMarkForCamera.rectTransform.sizeDelta = Vector2(0, math.floor(this.view.rectTransform.rect.height * waterMarkScale + 3))
             this.view.bottomNodeWaterMarkUIForPos.rectTransform.sizeDelta = Vector2(0, photoRealHeight * waterMarkScale)
-            coroutine.step()
-            coroutine.step()
-            local waterRtHandle, watermarkHandle = CS.Beyond.UI.ScreenCaptureUtils.GetWaterMarkRT(scale, rtHandle)
-            arg.watermarkHandle = watermarkHandle
+            LayoutRebuilder.ForceRebuildLayoutImmediate(this.view.mask2D.transform)
+            local waterRtHandle = CS.Beyond.UI.ScreenCaptureUtils.GetWaterMarkRT(scale)
             arg.waterRt = waterRtHandle.rt
             arg.waterRtHandle = waterRtHandle
             coroutine.waitForRenderDone()
@@ -159,11 +154,7 @@ CommonShareCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.copyBtn.onClick:RemoveAllListeners()
     self.view.copyBtn.onClick:AddListener(function()
         logger.info("CommonShareCtrl.OnCreate: Copy button clicked")
-        if self.m_type == "Blueprint" then
-            Unity.GUIUtility.systemCopyBuffer = string.format(Language.LUA_BLUEPRINT_SHARE_COPY_TIPS, arg.codeId)
-        else
-            Unity.GUIUtility.systemCopyBuffer = arg.codeId
-        end
+        Unity.GUIUtility.systemCopyBuffer = arg.copyStr or arg.codeId
         EventLogManagerInst:GameEvent_CommonShareAction(self.m_type, self.m_channelIdList, "copy","")
         Notify(MessageConst.SHOW_TOAST, Language.LUA_SHARE_COPY_TIP)
     end)
@@ -220,7 +211,11 @@ CommonShareCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
         local isSave = 0
         
-        isSave = CS.Beyond.UI.ScreenCaptureUtils.SaveScreenCapture(self.m_showPlayerInfo and self.m_arg.waterRt or self.m_arg.rt, savePath)
+        local cropBottom = 0
+        if not self.m_showPlayerInfo and self.m_arg.waterRt then
+            cropBottom = math.floor(self.m_arg.waterRt.height * waterMarkScale / (1 + waterMarkScale))
+        end
+        isSave = CS.Beyond.UI.ScreenCaptureUtils.SaveScreenCapture(self.m_arg.waterRt, savePath, cropBottom)
         if currentPlatform == CS.UnityEngine.RuntimePlatform.PS5 then
             
             CS.Beyond.PS5ContentManager.instance:ExportContentFromFile(savePath)
@@ -241,8 +236,7 @@ CommonShareCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
                     shareChannel = 0, 
                     imgPath = savePath,
                     title = self.m_type == "Blueprint" and string.format(Language.LUA_SHARE_BLUEPRINT_TITLE, self.m_arg.codeId) or Language.LUA_SHARE_PHOTO_TITLE,
-                    
-                    desc = self.m_type == "Blueprint" and self.m_arg.codeId or Language.LUA_SHARE_PHOTO_DESC,
+                    desc = self.m_type == "Blueprint" and string.format(Language.LUA_SHARE_BLUEPRINT_DESC, self.m_arg.codeId) or Language.LUA_SHARE_PHOTO_DESC,
                     extraData = "{}",
                 })
                 CS.U8.SDK.U8SDKInterface.Instance:SetData(CS.Beyond.SDK.SDKDataType.SET_DATA_SHARE, dataStr)
@@ -283,8 +277,14 @@ CommonShareCtrl.OnCaptureEnd = HL.Method() << function(self)
         self.m_arg.onCaptureEnd()
     end
 
-    self.view.photoImg.texture = self.m_arg.rt
+    
+    self.view.photoImg.gameObject:SetActiveIfNecessary(false)
     self.view.photoImgWithWaterMark.texture = self.m_arg.waterRt
+    self.view.photoImgWithWaterMark.gameObject:SetActiveIfNecessary(true)
+
+    
+    local maskRt = self.view.mask2D.rectTransform
+    self.m_maskClipAmount = maskRt.rect.height * waterMarkScale / (1 + waterMarkScale)
 
     self.view.stateController:SetState("Show")
     if self.m_arg.type then
@@ -305,18 +305,19 @@ end
 
 
 CommonShareCtrl._ChangePlayerInfo = HL.Method() << function(self)
-    if self.m_arg.rt == nil then
+    if self.m_arg == nil or self.m_arg.waterRt == nil then
         return
     end
-    if self.m_showPlayerInfo then
-        self.view.photoImg.gameObject:SetActiveIfNecessary(false)
-        self.view.photoImgWithWaterMark.gameObject:SetActiveIfNecessary(true)
-        self.view.copyBtn.gameObject:SetActiveIfNecessary(true)
-    else
-        self.view.photoImg.gameObject:SetActiveIfNecessary(true)
-        self.view.photoImgWithWaterMark.gameObject:SetActiveIfNecessary(false)
-        self.view.copyBtn.gameObject:SetActiveIfNecessary(false)
+    
+    self.view.photoImgWithWaterMark.gameObject:SetActiveIfNecessary(true)
+    self.view.copyBtn.gameObject:SetActiveIfNecessary(self.m_showPlayerInfo)
+    if self.m_maskClipAmount == nil then
+        return
     end
+    local mask = self.view.mask2D
+    local pad = mask.padding
+    local bottom = self.m_showPlayerInfo and 0 or self.m_maskClipAmount
+    mask.padding = CS.UnityEngine.Vector4(pad.x, bottom, pad.z, pad.w)
 end
 
 
@@ -375,7 +376,11 @@ CommonShareCtrl._OnFadeInEnd = HL.Method() << function(self)
             cell.shareBtn.onClick:RemoveAllListeners()
             cell.shareBtn.onClick:AddListener(function()
                 local savePath = CS.System.IO.Path.Combine(CS.UnityEngine.Application.temporaryCachePath, fileName)
-                CS.Beyond.UI.ScreenCaptureUtils.SaveScreenCapture(self.m_showPlayerInfo and self.m_arg.waterRt or self.m_arg.rt, savePath)
+                local cropBottom = 0
+                if not self.m_showPlayerInfo and self.m_arg.waterRt then
+                    cropBottom = math.floor(self.m_arg.waterRt.height * waterMarkScale / (1 + waterMarkScale))
+                end
+                CS.Beyond.UI.ScreenCaptureUtils.SaveScreenCapture(self.m_arg.waterRt, savePath, cropBottom)
                 local dataStr = Json.encode({
                     shareChannel = info.id,
                     imgPath = savePath,
@@ -425,10 +430,8 @@ end
 
 CommonShareCtrl.OnClose = HL.Override() << function(self)
     UIManager:Show(PanelId.UIDPanel)
-    if self.m_arg and self.m_arg.rt then
+    if self.m_arg then
         
-        CS.Beyond.UI.ScreenCaptureUtils.ReleaseWaterMarkHandle(self.m_arg.watermarkHandle)
-        self.m_arg.rtHandle:Release()
         self.m_arg.waterRtHandle:Release()
     end
     if self.m_onClose then

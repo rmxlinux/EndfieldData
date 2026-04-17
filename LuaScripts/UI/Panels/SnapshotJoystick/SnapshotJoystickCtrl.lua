@@ -310,8 +310,11 @@ end
 
 
 
-SnapshotJoystickCtrl.OnGameSettingChanged = HL.Method() << function(self)
-    self:_UpdateWalkRunRation()
+
+SnapshotJoystickCtrl.OnGameSettingChanged = HL.Method(HL.Number) << function(self, reason)
+    if reason == UIConst.GameSettingChangeReason.Default then
+        self:_UpdateWalkRunRation()
+    end
 end
 
 

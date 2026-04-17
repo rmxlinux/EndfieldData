@@ -57,10 +57,6 @@ DomainDepotTabCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 DomainDepotTabCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.view.domainTopMoneyTitle.view.closeBtn.onClick:AddListener(function()
-        Notify(MessageConst.ON_CLOSE_DOMAIN_DEPOT_TAB)
-    end)
-
     if arg == nil then
         logger.error('DomainDepotTabCtrl.OnCreate: arg is nil')
         return
@@ -112,10 +108,6 @@ DomainDepotTabCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         return
     end
 
-    local goldItemId = domainDevData.domainDataCfg.domainGoldItemId
-    local maxCount = domainDevData.curLevelData.moneyLimit
-    self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(goldItemId, maxCount)
-
     self.view.tabToggleGroup.enabled = isDeliverUnlocked
 end
 
@@ -164,8 +156,6 @@ end
 
 
 DomainDepotTabCtrl.ForceResetTab = HL.Method() << function(self)
-    self.view.domainTopMoneyTitle.view.contentNaviGroup:ManuallyStopFocus()
-
     self.m_index = 1
     self.view['tab1'].toggle:SetIsOnWithoutNotify(true)
     local tabInfo = tabConfig[1]

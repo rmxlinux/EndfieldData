@@ -36,6 +36,8 @@ local AbilityState = CS.Beyond.Gameplay.GeneralAbilitySystem.AbilityState
 
 
 
+
+
 GeneralAbilityCell = HL.Class('GeneralAbilityCell', UIWidgetBase)
 
 local ITEM_COUNT_UPDATE_INTERVAL = 0.2
@@ -69,6 +71,9 @@ GeneralAbilityCell.m_itemUpdateThread = HL.Field(HL.Thread)
 
 
 GeneralAbilityCell.m_itemId = HL.Field(HL.String) << ""
+
+
+GeneralAbilityCell.m_overrideIcon = HL.Field(HL.Any) << ""
 
 
 GeneralAbilityCell.m_itemCount = HL.Field(HL.Number) << -1
@@ -109,7 +114,8 @@ end
 
 
 
-GeneralAbilityCell.InitGeneralAbilityCell = HL.Method(HL.Opt(HL.Number, HL.Boolean, HL.Boolean, HL.Function)) << function(self, abilityType, forceCloseNum, isLeft, onValidStateChanged)
+GeneralAbilityCell.InitGeneralAbilityCell = HL.Method(HL.Opt(HL.Number, HL.Boolean, HL.Boolean, HL.Function)) << function(
+    self, abilityType, forceCloseNum, isLeft, onValidStateChanged)
     if abilityType == nil then
         self:_OnEnterLockedState()  
         return
@@ -140,7 +146,11 @@ GeneralAbilityCell._InitCellState = HL.Method(HL.Number) << function(self, abili
 
     local success, tableData = Tables.generalAbilityTable:TryGetValue(abilityType)
     if success then
-        self.view.icon:LoadSprite(UIConst.UI_SPRITE_GENERAL_ABILITY, tableData.iconId)
+        if self.m_overrideIcon ~= nil and not string.isEmpty(self.m_overrideIcon) then
+            self.view.icon:LoadSprite(UIConst.UI_SPRITE_GENERAL_ABILITY, self.m_overrideIcon)
+        else
+            self.view.icon:LoadSprite(UIConst.UI_SPRITE_GENERAL_ABILITY, tableData.iconId)
+        end
 
         self.m_itemId = tableData.useItem
         local needRefreshItemCount = self.view.config.NEED_SHOW_ITEM_COUNT and not string.isEmpty(self.m_itemId)
@@ -410,6 +420,13 @@ end
 
 
 
+
+
+
+
+GeneralAbilityCell.SetOverrideIcon = HL.Method(HL.Any) << function(self, image)
+    self.m_overrideIcon = image
+end
 
 
 

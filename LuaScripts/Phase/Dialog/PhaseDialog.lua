@@ -53,6 +53,9 @@ local PHASE_ID = PhaseId.Dialog
 
 
 
+
+
+
 PhaseDialog = HL.Class('PhaseDialog', phaseBase.PhaseBase)
 
 local clearPhases = {
@@ -114,6 +117,11 @@ PhaseDialog.m_hasListened = HL.Field(HL.Boolean) << false
 
 PhaseDialog.s_nextDialog = HL.StaticField(HL.String) << ""
 
+
+PhaseDialog.m_dialogOpenedPhase = HL.Field(HL.Number) << -1
+
+
+PhaseDialog.m_dialogOpenedPanel = HL.Field(HL.Number) << -1
 
 
 
@@ -467,19 +475,20 @@ PhaseDialog.OpenUI = HL.Method(HL.Table) << function(self, arg)
         UIManager:ToggleBlockObtainWaysJump("IN_CINEMATIC", true, exceptIds)
     end
 
-    if not panelId or not phaseId then
+    if not panelId and not phaseId then
         logger.error(("Dialog OpenUI Failed !! PanelId Not Found !! PanelIdStr is %s, Param is %s"):format(panelIdStr, paramStr))
         self:Next()
         return
     end
 
     self.m_panelItem.uiCtrl:PlayAnimationOutWithCallback(function()
-        if Utils.isInclude(UIConst.DIALOG_OPEN_UI_USE_PANEL, panelId) then
+        if panelId and Utils.isInclude(UIConst.DIALOG_OPEN_UI_USE_PANEL, panelId) then
             self:CreatePhasePanelItem(panelId, param)
+            self.m_dialogOpenedPanel = panelId
         else
             if phaseId == PhaseId.ReadingPopUp then
                 local closeCallback = function()
-                    Notify(MessageConst.DIALOG_CLOSE_UI, { nil, nil, 0 })
+                    Notify(MessageConst.DIALOG_CLOSE_UI, { nil, PhaseId.ReadingPopUp, 0 })
                 end
                 param = {param.id, closeCallback}
             end
@@ -488,6 +497,8 @@ PhaseDialog.OpenUI = HL.Method(HL.Table) << function(self, arg)
             if not res then
                 logger.error("Dialog OpenUI fail!!!", panelIdStr)
                 GameWorld.dialogManager:Next()
+            else
+                self.m_dialogOpenedPhase = phaseId
             end
         end
         
@@ -523,15 +534,33 @@ PhaseDialog.CloseUI = HL.StaticMethod(HL.Table) << function(arg)
         return
     end
 
-    if isOpen then
+    if isOpen and phaseDialog:IsDialogOpenedPhaseOrPanel(phaseId, panelId) then
         
         GameWorld.dialogManager:TryPauseVoiceManager()
+        phaseDialog.m_dialogOpenedPanel = -1
+        phaseDialog.m_dialogOpenedPhase = -1
 
         phaseDialog.m_panelItem.uiCtrl:PlayAnimationIn()
         if nextIndex then
             phaseDialog:Next(nextIndex)
         end
     end
+end
+
+
+
+
+
+PhaseDialog.IsDialogOpenedPhaseOrPanel = HL.Method(HL.Any, HL.Any).Return(HL.Boolean) << function(self, phaseId, panelId)
+    if phaseId ~= nil and phaseId == self.m_dialogOpenedPhase then
+        return true
+    end
+
+    if panelId ~= nil and panelId == self.m_dialogOpenedPanel then
+        return true
+    end
+
+    return false
 end
 
 
@@ -577,12 +606,12 @@ end
 
 
 PhaseDialog._OpenDialogRecord = HL.Method() << function(self)
+    GameWorld.dialogManager:SetAutoMode(false)
     local panelItem = self:_GetPanelPhaseItem(PanelId.DialogRecord)
     if not panelItem then
         panelItem = self:CreatePhasePanelItem(PanelId.DialogRecord)
     end
     panelItem.uiCtrl:Show()
-    GameWorld.dialogManager:SetAutoMode(false)
 end
 
 

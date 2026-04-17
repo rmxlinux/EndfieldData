@@ -10,9 +10,7 @@ local CustomGenDungeonSeriesTabInfoFunc = {
 
 local CustomFindFirstSelectDungeonFunc = {
     [DungeonConst.DUNGEON_CATEGORY.CharTutorial] = '_FindFirstSelectCharTutorial',
-    [DungeonConst.DUNGEON_CATEGORY.Train] = '_FindFirstSelectTrain',
 }
-
 
 
 
@@ -63,16 +61,6 @@ DungeonCommonEntryCtrl.m_curSelectedDungeonId = HL.Field(HL.String) << ""
 DungeonCommonEntryCtrl.m_dungeonTabCellCache = HL.Field(HL.Forward("UIListCache"))
 
 
-DungeonCommonEntryCtrl.m_dungeonTabGroupCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
-DungeonCommonEntryCtrl.m_isUseGroup = HL.Field(HL.Boolean) << false
-
-
-DungeonCommonEntryCtrl.m_tabGroups = HL.Field(HL.Table)
-
-
 DungeonCommonEntryCtrl.m_curSelectedCell = HL.Field(HL.Any)
 
 
@@ -93,6 +81,7 @@ DungeonCommonEntryCtrl.m_arg = HL.Field(HL.Table)
 
 
 DungeonCommonEntryCtrl.s_messages = HL.StaticField(HL.Table) << {
+    [MessageConst.ON_DUNGEON_DIRECTLY_GET_REWARD] = 'OnDirectlyGetReward',
 }
 
 
@@ -133,13 +122,16 @@ DungeonCommonEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     self.m_dungeonTabCellCache = UIUtils.genCellCache(self.view.dungeonSelectionCell)
-    self.m_dungeonTabGroupCellCache = UIUtils.genCellCache(self.view.dungeonSelectionGroupCell)
 
     self:_InitDungeonSeriesInfo()
     self:_InitDungeonTabs()
     self:_RefreshCommonInfo(true)
 
     self:_InitController()
+
+    self.view.dungeonCommonInfo.view.directlyGetRewardBtn.onClick:AddListener(function()
+        self:_OnClickDirectlyGetRewardBtn()
+    end)
 
     CS.Beyond.Gameplay.Conditions.OnDungeonCommonEntryPanelOpen.Trigger(self.m_dungeonSeriesId, false)
 end
@@ -149,21 +141,13 @@ end
 DungeonCommonEntryCtrl.OnAnimationInFinished = HL.Override() << function(self)
     CS.Beyond.Gameplay.Conditions.OnDungeonCommonEntryPanelOpen.Trigger(self.m_dungeonSeriesId, true)
 
-    if not DeviceInfo.usingController then
-        return
-    end
-
-    if self.m_dungeonTabCellCache:GetCount() > 1 or self.m_dungeonTabGroupCellCache:GetCount() > 1 then
-        if InputManagerInst.controllerNaviManager:IsLayerInStack(self.view.selectableNaviGroup) then
-            self.view.selectableNaviGroup:SetLayerSelectedTarget(self.m_curSelectedCell.view.clickBtn)
-        else
-            UIUtils.setAsNaviTarget(self.m_curSelectedCell.view.clickBtn)
-        end
-    end
+    self:_UpdateNaviTarget()
 end
 
 
 
+DungeonCommonEntryCtrl.OnShow = HL.Override() << function(self)
+end
 
 
 
@@ -251,8 +235,8 @@ DungeonCommonEntryCtrl._InitAchievement = HL.Method() << function(self)
 
     if achievementId then
         self.view.dungeonMedalCell:InitCommonMedalNode(achievementId)
-        self.view.etchedSealNode.gameObject:SetActive(true)
     end
+    self.view.etchedSealNode.gameObject:SetActive(not string.isEmpty(achievementId))
 end
 
 
@@ -261,48 +245,23 @@ DungeonCommonEntryCtrl._InitDungeonTabs = HL.Method() << function(self)
     
     self:_GenDungeonTabInfos()
 
-    local haveGroup, tabGroups = DungeonUtils.groupDungeonsByCondition(self.m_tabDungeonIds)
-    self.m_isUseGroup = haveGroup
-    self.m_tabGroups = tabGroups
-
     
     self:_FindFirstSelectDungeonTab()
 
-    self.view.dungeonSelectionNode.gameObject:SetActive(not haveGroup)
-    self.view.dungeonSelectionGroupNode.gameObject:SetActive(haveGroup)
-    if haveGroup then  
-        local isUsingController = (DeviceInfo.inputType == DeviceInfo.InputType.Controller)
-        self.m_dungeonTabGroupCellCache:Refresh(#self.m_tabGroups, function(cell, luaIndex)
-            local tabGroup = self.m_tabGroups[luaIndex]
-            cell:InitDungeonCommonSelectionGroupCell(tabGroup, function(selectCell, selectDungeonId)
-                self:_OnDungeonTabClick(selectCell, selectDungeonId)
-            end)
-            cell.gameObject.name = "DungeonGroup-"..luaIndex
-            local found = cell:TryGetSubCell(self.m_curSelectedDungeonId)
-            if found ~= nil then
-                self.m_curSelectedCell = found
-                self.m_curSelectedCell:SetSelected(true)
-                cell:SetToggle(true)
-            else
-                cell:SetToggle(false or isUsingController)
-            end
+    local tabCount = #self.m_tabDungeonIds
+    local dungeonCfg = Tables.dungeonTable[self.m_tabDungeonIds[tabCount]]
+    local charRelated = not string.isEmpty(dungeonCfg.relatedCharId)
+    local showSelectionNode = charRelated or tabCount > 1
+    if showSelectionNode then
+        self.m_dungeonTabCellCache:Refresh(tabCount, function(cell, luaIndex)
+            local dungeonId = self.m_tabDungeonIds[luaIndex]
+            self:_UpdateTabCell(cell, dungeonId, luaIndex)
         end)
-    else  
-        local tabCount = #self.m_tabDungeonIds
-        local dungeonCfg = Tables.dungeonTable[self.m_tabDungeonIds[tabCount]]
-        local charRelated = not string.isEmpty(dungeonCfg.relatedCharId)
-        local showSelectionNode = charRelated or tabCount > 1
-        if showSelectionNode then
-            self.m_dungeonTabCellCache:Refresh(tabCount, function(cell, luaIndex)
-                local dungeonId = self.m_tabDungeonIds[luaIndex]
-                self:_UpdateTabCell(cell, dungeonId, luaIndex)
-            end)
-            self.m_curSelectedCell:SetSelected(true)
-            LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.dungeonSelectionNode.transform)
-            self.view.dungeonSelectionNode:AutoScrollToRectTransform(self.m_curSelectedCell.gameObject.transform, true)
-        end
-        self.view.dungeonSelectionNode.gameObject:SetActiveIfNecessary(showSelectionNode)
+        self.m_curSelectedCell:SetSelected(true)
+        LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.dungeonSelectionNode.transform)
+        self.view.dungeonSelectionNode:AutoScrollToRectTransform(self.m_curSelectedCell.gameObject.transform, true)
     end
+    self.view.dungeonSelectionNode.gameObject:SetActiveIfNecessary(showSelectionNode)
 end
 
 
@@ -404,38 +363,6 @@ end
 
 
 
-DungeonCommonEntryCtrl._FindFirstSelectTrain = HL.Method() << function(self)
-    
-    for _, tab in ipairs(self.m_tabGroups) do
-        for _, dungeonId in ipairs(tab) do
-            local isUnlock = DungeonUtils.isDungeonUnlock(dungeonId)
-            local isComplete = DungeonUtils.isDungeonPassed(dungeonId)
-            if isUnlock and not isComplete then
-                self.m_curSelectedDungeonId = dungeonId
-                return
-            end
-        end
-    end
-    
-    for i = #self.m_tabGroups, 1, -1 do
-        local tab = self.m_tabGroups[i]
-        for j = #tab, 1, -1 do
-            local dungeonId = tab[j]
-            local isComplete = DungeonUtils.isDungeonPassed(dungeonId)
-            if isComplete then
-                self.m_curSelectedDungeonId = dungeonId
-                return
-            end
-        end
-    end
-    
-    if #self.m_tabGroups >= 1 and #(self.m_tabGroups[1]) >= 1 then
-        self.m_curSelectedDungeonId = self.m_tabGroups[1][1]
-    end
-end
-
-
-
 
 
 
@@ -485,6 +412,10 @@ end
 DungeonCommonEntryCtrl._OnDungeonTabClick = HL.Method(HL.Any, HL.String)
         << function(self, cell, dungeonId)
     if self.m_curSelectedDungeonId == dungeonId then
+        return
+    end
+    if Tables.dungeonRaidTable:ContainsKey(self.m_curSelectedDungeonId) and
+        Tables.dungeonRaidTable[self.m_curSelectedDungeonId].RelatedLevel == dungeonId then
         return
     end
 
@@ -543,6 +474,32 @@ DungeonCommonEntryCtrl._RefreshCommonInfo = HL.Method(HL.Boolean) << function(se
         self.view.dungeonBG:LoadSprite(UIConst.UI_SPRITE_DUNGEON, path)
         self.view.maskImg:LoadSprite(UIConst.UI_SPRITE_DUNGEON, path.."_bg")
     end
+    
+    local dungeonSeriesCfg = Tables.dungeonSeriesTable[self.m_dungeonSeriesId]
+    local canShowDirectlyGetReward = dungeonSeriesCfg.gameCategory == DungeonConst.DUNGEON_CATEGORY.CharTutorial
+    if canShowDirectlyGetReward then
+        local canDirectlyGetReward = true 
+        local dungeonMgr = GameInstance.dungeonManager
+        local manuallyPassed = dungeonMgr:IsDungeonManuallyPassed(self.m_curSelectedDungeonId)
+        local hasFirstPassReward = not string.isEmpty(dungeonCfg.firstPassRewardId)
+        local hasExtraPassReward = not string.isEmpty(dungeonCfg.extraRewardId)
+        local firstRewardGained = dungeonMgr:IsDungeonFirstPassRewardGained(self.m_curSelectedDungeonId)
+        local extraRewardGained = dungeonMgr:IsDungeonExtraRewardGained(self.m_curSelectedDungeonId)
+        local isUnlock = DungeonUtils.isDungeonUnlock(self.m_curSelectedDungeonId)
+
+        local state = "HideNode"
+        if isUnlock and not manuallyPassed then
+            if not canDirectlyGetReward then
+                state = "NeedManual"
+            elseif hasFirstPassReward and not firstRewardGained or
+                hasExtraPassReward and not extraRewardGained then
+                state = "CanDirectlyGetReward"
+            end
+        end
+        self.view.dungeonCommonInfo.view.directlyGetRewardNode:SetState(state)
+    else
+        self.view.dungeonCommonInfo.view.directlyGetRewardNode:SetState("HideNode")
+    end
 end
 
 
@@ -552,7 +509,110 @@ DungeonCommonEntryCtrl._InitController = HL.Method() << function(self)
         return
     end
 
+    self:_UpdateNaviTarget()
+
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
+
+
+DungeonCommonEntryCtrl._UpdateNaviTarget = HL.Method() << function(self)
+    if not DeviceInfo.usingController then
+        return
+    end
+
+    if self.m_dungeonTabCellCache:GetCount() > 1 then
+        UIUtils.setAsNaviTarget(self.m_curSelectedCell.view.clickBtn)
+    end
+end
+
+
+
+DungeonCommonEntryCtrl._OnClickDirectlyGetRewardBtn = HL.Method() << function(self)
+    
+    if not string.isEmpty(GameWorld.worldInfo.curSubGameId) then
+        self:Notify(MessageConst.SHOW_TOAST, Language.LUA_INVALID_SYSTEM_COMMON_DESCRIPTION)
+        return
+    end
+
+    local dungeonCfg = Tables.dungeonTable[self.m_curSelectedDungeonId]
+    local hintText = string.format(Language["ui_fac_tech_tree_blackbox_complete_confirm"], dungeonCfg.dungeonName)
+
+    self:Notify(MessageConst.SHOW_POP_UP, {
+        content = hintText,
+        onConfirm = function()
+            GameInstance.dungeonManager:SendReqDirectlyGetReward(self.m_curSelectedDungeonId)
+        end,
+    })
+end
+
+
+
+
+DungeonCommonEntryCtrl.OnDirectlyGetReward = HL.Method(HL.Any) << function(self, arg)
+    self.m_dungeonTabCellCache:Refresh(#self.m_tabDungeonIds, function(cell, luaIndex)
+        local dungeonId = self.m_tabDungeonIds[luaIndex]
+        self:_UpdateTabCell(cell, dungeonId, luaIndex)
+    end)
+    self.m_curSelectedCell:SetSelected(true)
+    self:_RefreshCommonInfo(false)
+    UIUtils.setAsNaviTarget(self.m_curSelectedCell.view.clickBtn)
+    
+    local RewardSourceType = CS.Beyond.GEnums.RewardSourceType
+    local firstPassRewardPack = GameInstance.player.inventory:ConsumeLatestRewardPackOfType(RewardSourceType.DungeonFirstPass)
+    local items = {}
+    if firstPassRewardPack and firstPassRewardPack.rewardSourceType == RewardSourceType.DungeonFirstPass then
+        for _, itemBundle in pairs(firstPassRewardPack.itemBundleList) do
+            local _, itemCfg = Tables.itemTable:TryGetValue(itemBundle.id)
+            if itemCfg then
+                table.insert(items, { id = itemBundle.id,
+                                      count = itemBundle.count,
+                                      sortId1 = itemCfg.sortId1,
+                                      sortId2 = itemCfg.sortId2 })
+            end
+        end
+    end
+
+    local extraRewardPack = GameInstance.player.inventory:ConsumeLatestRewardPackOfType(RewardSourceType.DungeonExtraReward)
+    if extraRewardPack and extraRewardPack.rewardSourceType == RewardSourceType.DungeonExtraReward then
+        for _, itemBundle in pairs(extraRewardPack.itemBundleList) do
+            local _, itemCfg = Tables.itemTable:TryGetValue(itemBundle.id)
+            if itemCfg then
+                if #items > 0 then
+                    local cacheExitItem
+                    for _, exitItem in ipairs(items) do
+                        if exitItem.id == itemBundle.id then
+                            cacheExitItem = exitItem
+                            break
+                        end
+                    end
+
+                    if cacheExitItem ~= nil then
+                        local curCount = cacheExitItem.count
+                        cacheExitItem.count = curCount + itemBundle.count
+                    else
+                        table.insert(items, { id = itemBundle.id,
+                                              count = itemBundle.count,
+                                              sortId1 = itemCfg.sortId1,
+                                              sortId2 = itemCfg.sortId2, })
+                    end
+                else
+                    table.insert(items, { id = itemBundle.id,
+                                          count = itemBundle.count,
+                                          sortId1 = itemCfg.sortId1,
+                                          sortId2 = itemCfg.sortId2, })
+                end
+            end
+        end
+    end
+    table.sort(items, Utils.genSortFunction(UIConst.COMMON_ITEM_SORT_KEYS))
+    Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
+        
+        items = items,
+    })
+end
+
 HL.Commit(DungeonCommonEntryCtrl)
+
+
+

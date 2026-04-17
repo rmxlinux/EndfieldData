@@ -9,7 +9,8 @@ ActivityCharSignCommon = HL.Class('ActivityCharSignCommon', ActivityCheckInBase)
 
 
 
-ActivityCharSignCommon.Init = HL.Method(HL.Table) << function(self, args)
+ActivityCharSignCommon.Init = HL.Virtual(HL.Table) << function(self, args)
+    self.view.cell.gameObject:SetActive(false)
     self:_InitAnim({
         startAnimTime = 0.3,
     })

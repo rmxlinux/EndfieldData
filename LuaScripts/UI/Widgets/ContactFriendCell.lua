@@ -55,7 +55,7 @@ ContactFriendCell.InitContactFriendCell = HL.Method(HL.Number, HL.Any, HL.Number
     self.view.playerHead:UpdateHideSignature(true)
     self.view.playerHead:InitCommonPlayerHeadByRoleId(roleId, headClickFun)
     self.view.pcIcon.gameObject:SetActive(false)
-    self.view.psIcon.gameObject:SetActive(not string.isEmpty(friendInfo.psName))
+    self.view.psIcon.gameObject:SetActive(not string.isEmpty(friendInfo.psName) and FriendUtils.isPsnPlatform())
 
     self:UpdateThemeBg()
     self:UpdateRedDot()

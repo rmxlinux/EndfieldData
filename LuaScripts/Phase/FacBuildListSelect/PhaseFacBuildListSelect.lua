@@ -12,6 +12,7 @@ local PHASE_ID = PhaseId.FacBuildListSelect
 
 
 
+
 PhaseFacBuildListSelect = HL.Class('PhaseFacBuildListSelect', phaseBase.PhaseBase)
 
 local ReservePanelIds = {  
@@ -31,9 +32,16 @@ PhaseFacBuildListSelect.s_messages = HL.StaticField(HL.Table) << {
 
 
 
+PhaseFacBuildListSelect.m_radioTagHandle = HL.Field(HL.Any)
+
+
+
+
 
 PhaseFacBuildListSelect._OnInit = HL.Override() << function(self)
     PhaseFacBuildListSelect.Super._OnInit(self)
+    
+    self.m_radioTagHandle = GameInstance.player.globalTagsSystem:AddGlobalTag(CS.Beyond.Gameplay.GlobalTagDefine.notStopRadioTags)
 end
 
 
@@ -87,11 +95,22 @@ PhaseFacBuildListSelect._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL
 
 
 PhaseFacBuildListSelect._OnActivated = HL.Override() << function(self)
+    if not self.m_radioTagHandle then
+        self.m_radioTagHandle = GameInstance.player.globalTagsSystem:AddGlobalTag(CS.Beyond.Gameplay.GlobalTagDefine.notStopRadioTags)
+    end
 end
 
 
 
 PhaseFacBuildListSelect._OnDeActivated = HL.Override() << function(self)
+    if self.m_radioTagHandle then
+        
+        
+        TimerManager:StartFrameTimer(2, function()
+            self.m_radioTagHandle:RemoveTag()
+            self.m_radioTagHandle = nil
+        end)
+    end
 end
 
 

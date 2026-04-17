@@ -103,9 +103,6 @@ end
 DomainItemTransferCtrl.OnAnimationInFinished = HL.Override() << function(self)
     if DeviceInfo.usingController and not self.m_controllerInit then
         self:_InitControllerAbility()
-    end
-
-    if DeviceInfo.usingController then
         self:_SetFocusTargetByIndex(self.m_curFocusCellLuaIndex)
     end
 end

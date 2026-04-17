@@ -26,7 +26,7 @@ ActivityWEBReflowCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.activityCommonInfo.view.gotoNode.btnDetail.onClick:AddListener(function()
         local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
         if activity then
-            ActivityUtils.setFalseNewActivityDay(self.m_activityId)
+            ActivityUtils.setActivityDayAsRead(self.m_activityId)
         end
     end)
 end

@@ -28,6 +28,7 @@ local PhaseFuncState = {
 
 
 
+
 PhasePresetTeamSwitch = HL.Class('PhasePresetTeamSwitch', phaseBase.PhaseBase)
 
 
@@ -70,23 +71,26 @@ PhasePresetTeamSwitch.ShowEnterPresetTeamDungeonConfirm = HL.StaticMethod(HL.Tab
     local dunSeriesId = dungeonSeriesId
     local dunSeriesData = Tables.DungeonSeriesTable[dunSeriesId]
     local dungeonId = dunSeriesData.includeDungeonIds[0]
-    local _, dungeonCfg = Tables.DungeonTable:TryGetValue(dungeonId)
-    local teamId = dungeonCfg.previewCharTeamId
-    if teamId == nil then
-        logger.error('试图通过【副本入口 - 预设编队Only】交互物，进入一个没配预设编队的副本 %s', dungeonSeriesId)
+    local _, subGameData = DataManager.subGameInstDataTable:TryGetValue(dungeonId)
+    local teamId = subGameData.teamConfigId
+    if string.isEmpty(teamId) then
+        logger.error('试图通过【副本入口 - 预设编队Only】交互物，进入一个没配预设编队的副本，dungeonSeriesId: ', dungeonSeriesId)
         return
     end
-    local charInfo = CharInfoUtils.getLockedFormationData(teamId, true)
 
+    local charInfo = CharInfoUtils.getLockedFormationData(teamId, true)
     if charInfo == nil then
-        logger.error('试图通过【副本入口 - 预设编队Only】交互物，无法获取预设编队的副本 %s   %s', dungeonSeriesId, teamId)
+        logger.error('试图通过【副本入口 - 预设编队Only】交互物，无法获取预设编队的副本，dungeonSeriesId: ', dungeonSeriesId,"，teamConfigId: ", teamId)
         return
     end
 
     local allPresetTeam = charInfo.lockedTeamMemberCount >= charInfo.maxTeamMemberCount
-
     if not allPresetTeam then
-        logger.error('试图通过【副本入口 - 预设编队Only】交互物，进入一个非纯预设编队副本 %s   %s', dungeonSeriesId, teamId)
+        
+        
+        PhaseManager:GoToPhase(PhaseId.CharFormation, {
+            dungeonId = dungeonId,
+        })
         return
     end
 
@@ -236,6 +240,7 @@ PhasePresetTeamSwitch._CreateDungeonCharArg = HL.Method().Return(HL.Table) << fu
                 GameInstance.player.charBag:ClearAllClientCharAndItemData()
                 PhaseManager:ExitPhaseFast(PHASE_ID)
                 PhaseManager:GoToPhase(PhaseId.CharFormation, { dungeonId = dungeonId })
+                Notify(MessageConst.DIALOG_CLOSE_UI, {PanelId.PresetTeamSwitch, PHASE_ID, 0})
             end
         end,
         onCancel = function()

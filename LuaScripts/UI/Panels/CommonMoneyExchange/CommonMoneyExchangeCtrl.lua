@@ -18,6 +18,7 @@ local PHASE_ID = PhaseId.CommonMoneyExchange
 
 
 
+
 CommonMoneyExchangeCtrl = HL.Class('CommonMoneyExchangeCtrl', uiCtrl.UICtrl)
 
 
@@ -387,10 +388,20 @@ end
 
 
 
+
 CommonMoneyExchangeCtrl.OnClose = HL.Override() << function(self)
     if self.m_arg ~= nil and self.m_arg.onClose ~= nil then
         self.m_arg.onClose()
     end
+end
+
+
+
+CommonMoneyExchangeCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    if self.m_arg ~= nil then
+        self.m_arg.onClose = nil 
+    end
+    return self.m_arg
 end
 
 

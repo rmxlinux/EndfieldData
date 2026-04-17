@@ -37,6 +37,8 @@ FacTechTreeLineCell.InitFacTechTreeLineCell = HL.Method(HL.Table) << function(se
     self.view.lineHorizonCell.rectTransform.sizeDelta = Vector2(math.abs(upX - downX) + lineWeight, lineWeight)
     self.view.lineHorizonCell.transform.localPosition = Vector3((downX + upX) / 2, upY - yDis / 2)
     self:Refresh()
+
+    self.view.gameObject.name = "Line-"..lineInfo.techId
 end
 
 

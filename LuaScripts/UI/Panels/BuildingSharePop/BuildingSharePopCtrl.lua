@@ -185,6 +185,9 @@ BuildingSharePopCtrl._UpdatePlayerName_Internal = HL.Method(HL.Number, HL.Userda
 end
 
 
+local SYNC_BATCH_SIZE = 10
+
+
 
 BuildingSharePopCtrl._SyncPlayerInfos = HL.Method() << function(self)
     local remoteFactorySystem = GameInstance.player.remoteFactory
@@ -208,27 +211,36 @@ BuildingSharePopCtrl._SyncPlayerInfos = HL.Method() << function(self)
             roleIds[roleCount] = buildingInfo.sharedRoleId
             seenRoleIds[buildingInfo.sharedRoleId] = true
         end
-        
-        if roleCount == 10 then
-            self:_SyncPlayerInfos_Internal(roleIds)
-            roleCount = 0
-            lume.clear(roleIds)
-        end
     end
+
+    
+    
     if roleCount > 0 then
-        self:_SyncPlayerInfos_Internal(roleIds)
+        self:_SyncPlayerInfos_Internal(roleIds, 1)
     end
 end
 
 
 
 
-BuildingSharePopCtrl._SyncPlayerInfos_Internal = HL.Method(HL.Table) << function(self, roleIds)
-    GameInstance.player.friendSystem:SyncSocialFriendInfo(roleIds, function()
+
+BuildingSharePopCtrl._SyncPlayerInfos_Internal = HL.Method(HL.Table, HL.Number) << function(self, roleIds, fromIndex)
+    if fromIndex > #roleIds then
+        return
+    end
+
+    local toIndex = math.min(fromIndex + SYNC_BATCH_SIZE - 1, #roleIds)
+    local batch = {}
+    for i = fromIndex, toIndex do
+        batch[i - fromIndex + 1] = roleIds[i]
+    end
+
+    GameInstance.player.friendSystem:SyncSocialFriendInfo(batch, function()
         if self.m_isClosed then
             return
         end
         self:_UpdatePlayerNames()
+        self:_SyncPlayerInfos_Internal(roleIds, toIndex + 1)
     end)
 end
 

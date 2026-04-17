@@ -200,6 +200,25 @@ local tabDataPrototypeList = {
             return ret
         end,
     },
+    CustomGift = {
+        Panel = PanelId.ShopRecommendEmptyGiftPack,
+        CheckShowFunc = function(tabData)
+            local goodsIds = tabData.cashGoodsIds
+            
+            local haveCanBuy = false
+            for _, goodsId in ipairs(goodsIds) do
+                local canBuy = CashShopUtils.CheckCanBuyCashShopGoods(goodsId) and
+                    CashShopUtils.CheckCashShopGoodsIsOpen(goodsId)
+                if canBuy then
+                    haveCanBuy = true
+                    break
+                end
+            end
+            return haveCanBuy
+        end,
+        ShowPsStore = true,
+        isCashGoods = true,
+    },
 }
 
 

@@ -64,7 +64,7 @@ function UIUtils.initLuaCustomConfig(self)
                         return enumValue
                     end
                 end
-                logger.error("无法获取 LuaCustomConfig 配置项", key)
+                logger.error("无法获取 LuaCustomConfig 配置项", key, self.luaCustomConfig.transform:PathFromRoot())
             end
         })
     else
@@ -79,13 +79,13 @@ function UIUtils.initLuaCustomConfig(self)
                     return componentValue
                 end
 
-                logger.error("无法获取 LuaCustomConfig 配置项", key)
+                logger.error("无法获取 LuaCustomConfig 配置项", key, self.luaCustomConfig.transform:PathFromRoot())
             end
         })
     end
 
     getmetatable(self.config).__newindex = function()
-        logger.error("请在面板上配置 LuaCustomConfig，勿在代码中修改 view.config 中的值！")
+        logger.error("请在面板上配置 LuaCustomConfig，勿在代码中修改 view.config 中的值！", self.luaCustomConfig.transform:PathFromRoot())
     end
 end
 
@@ -190,6 +190,17 @@ end
 
 function UIUtils.bindInputEvent(key, action, modifyKeys, timing, groupId)
     return InputManagerInst:CreateBinding(key, modifyKeys or "", timing or InputTimingType.OnClick, action, groupId or UIManager.persistentInputBindingKey)
+end
+
+
+function UIUtils.getGamepadKeyImageText(keyCode, isLongPress, scale, color)
+    local keyStr = InputManager.GetStringByGamepadKeyCode(keyCode)
+    local keyIconPath = InputManager.GetGamepadKeyIconPath(keyStr, isLongPress, false)
+    if color then
+        local colorStr = UIUtils.getStringByColor(color)
+        return string.format("<image=\"%s\" scale=%.2f color=%s>", keyIconPath, scale, colorStr)
+    end
+    return string.format("<image=\"%s\" scale=%.2f>", keyIconPath, scale)
 end
 
 
@@ -926,6 +937,14 @@ function UIUtils.getColorByString(strColor, a)
     return color
 end
 
+function UIUtils.getStringByColor(color)
+    local r = math.floor(color.r * 255 + 0.5)
+    local g = math.floor(color.g * 255 + 0.5)
+    local b = math.floor(color.b * 255 + 0.5)
+    local a = math.floor(color.a * 255 + 0.5)
+    return string.format("#%02X%02X%02X%02X", r, g, b, a)
+end
+
 function UIUtils.setSpecialFillAmount(img, percent, minMaxVector2)
     img.fillAmount = percent * (minMaxVector2.y - minMaxVector2.x) + minMaxVector2.x
 end
@@ -1171,6 +1190,12 @@ function UIUtils.getItemTypeName(itemId)
         return equipTypeName
     end
 
+    if itemCfg.type == GEnums.ItemType.NormalBuilding or itemCfg.type == GEnums.ItemType.FuncBuilding then
+        if FactoryUtils.isDecoBuildingItem(itemId) then
+            return Language.LUA_FAC_DECO_BUILDING_NAME
+        end
+    end
+
     return defaultTypeName
 end
 
@@ -1306,6 +1331,9 @@ function UIUtils.displayWeaponGemInfo(view, loader, itemId, instId)
             view.equippedNode:InitEquippedNodeByGemInstId(instId)
         else
             view.equippedNode.gameObject:SetActive(false)
+        end
+        if view.equippedSpace then
+            view.equippedSpace.gameObject:SetActive(view.equippedNode.gameObject.activeSelf)
         end
     end
     if view.domainTagNode then
@@ -1917,7 +1945,7 @@ function UIUtils.isItemTypeForbidden(dungeonId, itemType)
         return false
     end
 
-    local _, gameModeData = DataManager.gameModeTable:TryGetData(subGameInstData.modeId)
+    local _, gameModeData = DataManager.gameModeTable:TryGetValue(subGameInstData.modeId)
     if not gameModeData then
         return false
     end
@@ -2201,11 +2229,6 @@ function UIUtils.waitMsgExecute(msg, msgGroupKey, callback)
         end
     end, msgGroupKey)
     return registerKey
-end
-
-
-function UIUtils.isBattleControllerModifyKeyChanged()
-    return CS.Beyond.GameSetting.gamepadCacheSkillCombo
 end
 
 

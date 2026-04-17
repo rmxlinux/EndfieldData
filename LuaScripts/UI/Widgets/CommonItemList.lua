@@ -18,6 +18,16 @@ local LIST_CONFIG = {
         end,
         getDepotFunc = "_GetWeaponGemDepot",
     },
+    [UIConst.COMMON_ITEM_LIST_TYPE.WEAPON_GEM_MATERIAL] = {
+        infoProcessFunc = "processWeaponGem",
+        filterTagGroupFunc = "generateConfig_WEAPON_EXHIBIT_GEM",
+        getSortOption = function()
+            return UIConst.WEAPON_GEM_SORT_OPTION
+        end,
+        getDepotFunc = "_GetWeaponGemMaterialDepot",
+        applyFilterFunc = "_ApplyFilterGem",
+        hideSort = true,
+    },
     [UIConst.COMMON_ITEM_LIST_TYPE.WEAPON_EXHIBIT_UPGRADE] = {
         infoProcessFunc = "processWeaponUpgradeIngredient",
         getSortOption = function()
@@ -78,6 +88,7 @@ local LIST_CONFIG = {
         getDepotFunc = "_GetEquipEnhanceMaterialsDepot"
     },
 }
+
 
 
 
@@ -952,6 +963,30 @@ CommonItemList._GetWeaponGemDepot = HL.Method(HL.Table).Return(HL.Table) << func
             local passRarityFilter = ((not filter_rarity) or (gemCfg.rarity == filter_rarity)) and
                                       ((not exclusiveInstId) or (gemInst.instId ~= exclusiveInstId))
             if passRarityFilter then
+                table.insert(filteredInstItems, gemInst)
+            end
+        end
+    end
+
+    return filteredInstItems
+end
+
+
+
+
+CommonItemList._GetWeaponGemMaterialDepot = HL.Method(HL.Table).Return(HL.Table) << function(self, arg)
+    local filteredInstItems = {}
+    local gemDepot = GameInstance.player.inventory.valuableDepots[GEnums.ItemValuableDepotType.WeaponGem]:GetOrFallback(Utils.getCurrentScope())
+
+    local filter_rarity = arg.filter_rarity
+    local exclusiveInstId = arg.exclusiveInstId
+
+    for _, gemInst in cs_pairs(gemDepot.instItems) do
+        local gemCfg = Tables.itemTable:GetValue(gemInst.id)
+        if gemCfg then
+            local passFilter = ((not filter_rarity) or (gemCfg.rarity == filter_rarity)) and
+                ((not exclusiveInstId) or (gemInst.instId ~= exclusiveInstId))
+            if passFilter then
                 table.insert(filteredInstItems, gemInst)
             end
         end

@@ -35,6 +35,11 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
+
+
+
 FacCachePipe = HL.Class('FacCachePipe', UIWidgetBase)
 
 local ARROW_ANIMATION_NAME_DEFAULT = "pipecell_decoarrow_defult%d"
@@ -50,6 +55,9 @@ local ITEM_CHANGED_ANIMATION_OVERRIDE_NAME = "OVERRIDE_PIPE_ITEM_CHANGED%d"
 local MESSAGE_ITEM_INDEX = 0
 local SINGLE_ANIM_INDEX_OFFSET = 4
 
+local MULTI_REPO_PIPE_COLOR_1 = "B1773D"
+local MULTI_REPO_PIPE_COLOR_2 = "A29D3E"
+
 
 FacCachePipe.m_buildingInfo = HL.Field(HL.Userdata)
 
@@ -61,6 +69,10 @@ FacCachePipe.m_inPipeInfoList = HL.Field(HL.Table)
 
 
 FacCachePipe.m_outPipeInfoList = HL.Field(HL.Table)
+
+
+
+FacCachePipe.m_needInversePipe = HL.Field(HL.Boolean) << false
 
 
 FacCachePipe.m_inBindingPipeDataMap = HL.Field(HL.Table)
@@ -93,6 +105,9 @@ FacCachePipe.m_isInSingleState = HL.Field(HL.Boolean) << false
 FacCachePipe.m_stateRefreshCallback = HL.Field(HL.Function)
 
 
+FacCachePipe.m_needRefreshPortState = HL.Field(HL.Boolean) << false
+
+
 
 
 FacCachePipe._OnFirstTimeInit = HL.Override() << function(self)
@@ -113,6 +128,21 @@ end
 FacCachePipe._OnDestroy = HL.Override() << function(self)
     self:_UnRegisterInterested()
     self.m_cachedSprite = nil
+end
+
+
+
+FacCachePipe._OnEnable = HL.Override() << function(self)
+    if self.m_needRefreshPortState then
+        self.m_needRefreshPortState = false
+        self:RefreshPipeCellsState()
+    end
+end
+
+
+
+FacCachePipe._OnDisable = HL.Override() << function(self)
+    self.m_needRefreshPortState = true
 end
 
 
@@ -144,6 +174,7 @@ FacCachePipe._ParseCustomInfo = HL.Method(HL.Table) << function(self, customInfo
         return
     end
 
+    self.m_needInversePipe = customInfo.needInversePipe or false
     self.m_useSinglePipe = customInfo.useSinglePipe or false
     self.m_needModeSwitch = customInfo.needModeSwitch or false
     self.m_stateRefreshCallback = customInfo.stateRefreshCallback or function()end
@@ -185,12 +216,12 @@ FacCachePipe._GetPipeInfoList = HL.Method() << function(self)
     self.m_inPipeInfoList, self.m_outPipeInfoList = FactoryUtils.getBuildingPortState(self.m_buildingNodeId, true)
 
     
-    if self.view.config.NEED_INVERSE_INDEX and self.m_inPipeInfoList ~= nil and #self.m_inPipeInfoList > 1 then
+    if self.m_needInversePipe and self.m_inPipeInfoList ~= nil and #self.m_inPipeInfoList > 1 then
         local temp = self.m_inPipeInfoList[1]
         self.m_inPipeInfoList[1] = self.m_inPipeInfoList[2]
         self.m_inPipeInfoList[2] = temp
     end
-    if self.view.config.NEED_INVERSE_INDEX and self.m_outPipeInfoList ~= nil and #self.m_outPipeInfoList > 1 then
+    if self.m_needInversePipe and self.m_outPipeInfoList ~= nil and #self.m_outPipeInfoList > 1 then
         local temp = self.m_outPipeInfoList[1]
         self.m_outPipeInfoList[1] = self.m_outPipeInfoList[2]
         self.m_outPipeInfoList[2] = temp
@@ -515,6 +546,22 @@ FacCachePipe.ChangePipeSpacingY = HL.Method(HL.Number, HL.Boolean) << function(s
     else
         self.view.pipeCell3.transform.anchoredPosition = Vector2(self.view.pipeCell3.transform.anchoredPosition.x, halfSpacing)
         self.view.pipeCell4.transform.anchoredPosition = Vector2(self.view.pipeCell4.transform.anchoredPosition.x, -halfSpacing)
+    end
+end
+
+
+
+
+
+
+
+FacCachePipe.ChangePipeLineColor = HL.Method(HL.Boolean) << function(self, isIn)
+    if isIn then
+        self.view.pipeCell1.decoLine.color = UIUtils.getColorByString(MULTI_REPO_PIPE_COLOR_1)
+        self.view.pipeCell2.decoLine.color = UIUtils.getColorByString(MULTI_REPO_PIPE_COLOR_2)
+    else
+        self.view.pipeCell3.decoLine.color = UIUtils.getColorByString(MULTI_REPO_PIPE_COLOR_1)
+        self.view.pipeCell4.decoLine.color = UIUtils.getColorByString(MULTI_REPO_PIPE_COLOR_2)
     end
 end
 

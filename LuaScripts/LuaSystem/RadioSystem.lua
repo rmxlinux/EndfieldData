@@ -43,10 +43,13 @@ local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
 
 
 
+
 RadioSystem = HL.Class('RadioSystem', LuaSystemBase.LuaSystemBase)
 
 RADIO_DATA_SORT_KEYS = { "priorityKey", "needResumeKey", "addTimeKey" }
 CONTINUE_RADIO_PRIORITY = -1000
+
+
 
 
 
@@ -102,7 +105,7 @@ RadioSystem.m_queueSortFunc = HL.Field(HL.Function)
 RadioSystem.m_pauseRefCount = HL.Field(HL.Number) << 0
 
 
-RadioSystem.inMainHud = HL.Field(HL.Boolean) << true
+RadioSystem.inMainHud = HL.Field(HL.Boolean) << false
 
 
 RadioSystem.m_forcePlayRadio = HL.Field(HL.Boolean) << false
@@ -122,6 +125,7 @@ RadioSystem.m_globalTagHandle = HL.Field(CS.Beyond.Gameplay.Core.GlobalTagHandle
 
 
 RadioSystem.RadioSystem = HL.Constructor() << function(self)
+    self.inMainHud = GameWorld.worldInfo.inMainHud
     
     
     self:RegisterMessage(MessageConst.ON_SCENE_LOAD_START, function(arg)
@@ -132,7 +136,13 @@ RadioSystem.RadioSystem = HL.Constructor() << function(self)
         self:_FlushAll()
     end)
     
-    self:RegisterMessage(MessageConst.ON_TELEPORT_SQUAD, function(arg)
+    self:RegisterMessage(MessageConst.ON_LOADING_START, function(arg)
+        self:_TryFlushAllWhenLoading()
+    end)
+    self:RegisterMessage(MessageConst.OPEN_LOADING_PANEL, function(arg)
+        self:_FlushAll()
+    end)
+    self:RegisterMessage(MessageConst.OPEN_TELEPORT_LOADING_PANEL, function(arg)
         self:_FlushAll()
     end)
     
@@ -216,6 +226,7 @@ RadioSystem.RadioSystem = HL.Constructor() << function(self)
                     end
                 end
                 self:_CutCurRadio(true)
+                self:_Exit()
             end
         end
     end)
@@ -451,6 +462,7 @@ RadioSystem._TryPlayRadio = HL.Method(CS.Beyond.Gameplay.Actions.GameAction.Radi
     local voOffset = data.voOffset
     local reverbOffset = data.reverbOffset
     local attenuationType = data.attenuationType
+    local noFlushAfterLoading = data.noFlushAfterLoading
 
     local res, radioData = Tables.radioTable:TryGetValue(radioId)
     if not res then
@@ -466,6 +478,7 @@ RadioSystem._TryPlayRadio = HL.Method(CS.Beyond.Gameplay.Actions.GameAction.Radi
         voOffset = voOffset,
         reverbOffset = reverbOffset,
         attenuationType = attenuationType,
+        noFlushAfterLoading = noFlushAfterLoading,
     }
     local tmpIndex
     index = index == nil and 0 or index
@@ -496,7 +509,23 @@ RadioSystem._TryPlayRadio = HL.Method(CS.Beyond.Gameplay.Actions.GameAction.Radi
             needResume = true,
         }
 
-        if self.m_curShow.priority > radioData.priority then
+        
+        if self.m_curShow.isContinueExRadio then
+            local continueSourceRadioId = self.m_curShow.continueSourceRadioId
+            if #self.m_waitingQueue > 0 and self.m_waitingQueue[1].radioId == continueSourceRadioId then
+                local res, continueSourceRadioData = Tables.radioTable:TryGetValue(continueSourceRadioId)
+                
+                if res and not continueSourceRadioData.continueAfterRadio then
+                    table.remove(self.m_waitingQueue, 1)
+                end
+            end
+
+            self:_TryAddRadio2Queue(radioId, extraData)
+            self:_CutCurRadio(true)
+            if not self.m_curShow then
+                self:_TryShowNextRadio()
+            end
+        elseif self.m_curShow.priority > radioData.priority then
             
             if radioData.continueAfterRadio then
                 self:_TryAddRadio2Queue(radioId, extraData)
@@ -600,6 +629,7 @@ RadioSystem._TryShowNextRadio = HL.Method().Return(HL.Boolean) << function(self)
     
     local continueRadioData = self:_TryGetContinueExRadio(data)
     if continueRadioData then
+        continueRadioData.continueSourceRadioId  = data.radioId
         self:_DoShowRadio(continueRadioData)
         
         if self.m_curShow then
@@ -762,6 +792,7 @@ RadioSystem._DoShowRadio = HL.Method(HL.Table) << function(self, data)
     local callback = data.callback
     local entity = data.entity
     local isContinueExRadio = data.isContinueExRadio
+    local continueSourceRadioId = data.continueSourceRadioId
     local res, radioData = Tables.radioTable:TryGetValue(radioId)
     if res then
         local canStop = false
@@ -787,12 +818,14 @@ RadioSystem._DoShowRadio = HL.Method(HL.Table) << function(self, data)
                 cacheCallbackVoiceHandleId = -1,
                 resumeTime = -1,
                 isContinueExRadio = isContinueExRadio,
+                continueSourceRadioId = continueSourceRadioId,
                 interruptFinish = data.interruptFinish,
                 enableAdvancedOptions = data.enableAdvancedOptions,
                 voOffset = data.voOffset,
                 reverbOffset = data.reverbOffset,
                 interruptFinish = data.interruptFinish,
                 attenuationType = data.attenuationType,
+                noFlushAfterLoading = data.noFlushAfterLoading,
             }
             self:_UpdateVoiceInfo()
             self:_ShowSingleRadio()
@@ -886,7 +919,9 @@ RadioSystem._ShowSingleRadio = HL.Method() << function(self)
                 local nameId = DialogUtils.GetRealActorNameId(nextSingleData.actorNameId)
                 local emotionType = nextSingleData.emotionType
                 local voiceHandleId = -1
-                local getRes, emotionVoiceId = VoiceUtils.TryGetCommonEmotionVoiceId(nameId, emotionType, {self.m_lastPlayedEmotionVoiceId})
+                local getRes, emotionVoiceId = VoiceUtils.TryGetCommonEmotionVoiceId(
+                    nameId, emotionType, CSUtils.GetStringHash(nextSingleData.id), {self.m_lastPlayedEmotionVoiceId}
+                )
                 if getRes then
                     if is3D and entity then
                         voiceHandleId = VoiceManager:SpeakNarrative(emotionVoiceId, entity, cfg)
@@ -1064,6 +1099,18 @@ end
 
 
 
+
+
+
+
+RadioSystem._TryFlushAllWhenLoading = HL.Method(HL.Opt(HL.Any)) << function(self, _)
+    
+    if self.m_curShow and self.m_curShow.noFlushAfterLoading then
+        return
+    end
+
+    self:_FlushAll()
+end
 
 
 

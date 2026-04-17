@@ -659,6 +659,12 @@ SNSFriendCtrl.OnSwitchOn = HL.Method(HL.Boolean) << function(self, isOn)
                 InputManagerInst.controllerNaviManager:SetTarget(selectCell.view.button)
             end
         end
+
+        if isOn then
+            
+            local phase = self.m_phase
+            phase:ToggleBasicPanelCloseBtn(true)
+        end
     end
 end
 

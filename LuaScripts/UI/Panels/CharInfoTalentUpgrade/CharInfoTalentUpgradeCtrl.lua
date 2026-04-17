@@ -762,6 +762,12 @@ CharInfoTalentUpgradeCtrl._RefreshItemCell = HL.Method(HL.Userdata, HL.String, H
 
     local storageCount = Utils.getItemCount(itemId, true)
     cell.view.storageNode:InitStorageNode(storageCount, needCount, true)
+    if storageCount < needCount then
+        cell:SetItemTipsJumpExtraArgs({
+            expectedRewardItemId = itemId,
+            expectedRewardItemCount = needCount - storageCount,
+        })
+    end
 end
 
 

@@ -52,7 +52,7 @@ DungeonCommonSelectionGroupSubCell.InitDungeonCommonSelectionGroupSubCell = HL.M
     self:SetSelected(false)
     self:_UpdateState()
 
-    self.view.redDot:InitRedDot("DungeonReadNormal", {dungeonId}, nil, self:GetUICtrl().view.redDotScrollRectGroup)
+    self.view.redDot:InitRedDot("DungeonReadNormal", {dungeonId}, nil, self:GetUICtrl().view.redDotScrollRect)
 end
 
 

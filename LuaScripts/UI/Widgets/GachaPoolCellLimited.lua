@@ -7,7 +7,6 @@ local GachaPoolCellBase = require_ex('UI/Widgets/GachaPoolCellBase')
 
 
 
-
 GachaPoolCellLimited = HL.Class('GachaPoolCellLimited', GachaPoolCellBase)
 
 
@@ -26,6 +25,7 @@ end
 
 GachaPoolCellLimited._InnerInitGachaPoolCell = HL.Override() << function(self)
     logger.info("初始化 GachaPoolCellLimited")
+    self.view.gachaTenBtn.redDot:InitRedDot("GachaCharTenLtTicket", self.m_poolId)
 end
 
 
@@ -33,53 +33,6 @@ end
 GachaPoolCellLimited._InnerUpdateGachaPoolCell = HL.Override() << function(self)
     logger.info("更新 GachaPoolCellLimited")
     self:_RefreshAllUI()
-end
-
-
-
-
-GachaPoolCellLimited.UpdateMoneyNodeOnlyGachaTicket = HL.Override(HL.Any) << function(self, moneyNode)
-    
-    moneyNode.gachaItem1.view.gameObject:SetActiveIfNecessary(true)
-    local singlePullItemId = Tables.charGachaConst.gachaTicketSpecialSingleItemId
-    moneyNode.gachaItem1:InitMoneyCell(singlePullItemId)
-    
-    local poolCfg = Tables.gachaCharPoolTable[self.m_poolId]
-    local inventory = GameInstance.player.inventory
-    local valuableDepotType = GEnums.ItemValuableDepotType.CommercialItem;
-    local contains = inventory.valuableDepots:ContainsKey(valuableDepotType)
-    local depot
-    if contains then
-        
-        depot = inventory.valuableDepots[valuableDepotType]:GetOrFallback(CS.Beyond.Gameplay.Scope.Create(GEnums.ScopeName.Main))
-    end
-    if string.isEmpty(poolCfg.ticketGachaSingleLt) then
-        moneyNode.gachaItem2.view.gameObject:SetActiveIfNecessary(false)
-    else
-        moneyNode.gachaItem2.view.gameObject:SetActiveIfNecessary(true)
-        moneyNode.gachaItem2:InitMoneyCell(poolCfg.ticketGachaSingleLt)
-        if depot then
-            for instId, itemBundle in pairs(depot.instItems) do
-                if itemBundle.id == poolCfg.ticketGachaSingleLt then
-                    moneyNode.gachaItem2:SetItemInstId(instId)
-                end
-            end
-        end
-    end
-    
-    if string.isEmpty(poolCfg.ticketGachaTenLt) then
-        moneyNode.gachaItem3.view.gameObject:SetActiveIfNecessary(false)
-    else
-        moneyNode.gachaItem3.view.gameObject:SetActiveIfNecessary(true)
-        moneyNode.gachaItem3:InitMoneyCell(poolCfg.ticketGachaTenLt)
-        if depot then
-            for instId, itemBundle in pairs(depot.instItems) do
-                if itemBundle.id == poolCfg.ticketGachaTenLt then
-                    moneyNode.gachaItem3:SetItemInstId(instId)
-                end
-            end
-        end
-    end
 end
 
 
@@ -97,12 +50,9 @@ GachaPoolCellLimited._InitUI = HL.Method() << function(self)
         local testimonialInfo = self.m_baseInfo.cumulateTestimonialInfo
         local itemId = testimonialInfo.testimonialItemId
         local itemName = Tables.itemTable[itemId].name
-        
-        local finalDescStr = string.gsub(Language.LUA_GACHA_ITEM_INSTRUCTION_DESC_TESTIMONIAL, "%%1%$d", testimonialInfo.needPullCount, 1)
-        finalDescStr = string.gsub(finalDescStr, "%%2%$s", itemName, 1)
         local arg = {
             title = Language.LUA_GACHA_ITEM_INSTRUCTION_TITLE_TESTIMONIAL,
-            desc = finalDescStr,
+            desc = string.format(Language.LUA_GACHA_ITEM_INSTRUCTION_DESC_TESTIMONIAL, testimonialInfo.needPullCount, itemName),
             tips = string.format(Language.LUA_GACHA_ITEM_INSTRUCTION_TIPS, testimonialInfo.remainNeedPullCount, itemName),
             itemId = itemId,
         }
@@ -112,12 +62,9 @@ GachaPoolCellLimited._InitUI = HL.Method() << function(self)
         local loopRewardInfo = self.m_baseInfo.loopCumulateRewardInfo
         local itemId = loopRewardInfo.rewardItemInfo[1].id
         local itemName = Tables.itemTable[itemId].name
-        
-        local finalDescStr = string.gsub(Language.LUA_GACHA_ITEM_INSTRUCTION_DESC_POTENTIAL, "%%1%$d", loopRewardInfo.needPullCount, 1)
-        finalDescStr = string.gsub(finalDescStr, "%%2%$s", itemName, 1)
         local arg = {
             title = Language.LUA_GACHA_ITEM_INSTRUCTION_TITLE_POTENTIAL,
-            desc = finalDescStr,
+            desc = string.format(Language.LUA_GACHA_ITEM_INSTRUCTION_DESC_POTENTIAL, loopRewardInfo.needPullCount, itemName),
             tips = string.format(Language.LUA_GACHA_ITEM_INSTRUCTION_TIPS, loopRewardInfo.remainNeedPullCount, itemName),
             itemId = itemId,
         }

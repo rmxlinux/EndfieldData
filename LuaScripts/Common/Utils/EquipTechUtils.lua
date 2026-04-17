@@ -94,7 +94,8 @@ function EquipTechUtils.getEquipEnhanceSuccessProbability(equipInstData, attrSho
         if attrModifier.modifierType == attrShowInfo.attrModifier and
             ((attrShowInfo.isCompositeAttr and attrShowInfo.attributeType == attrModifier.compositeAttr) or
                 (not attrShowInfo.isCompositeAttr and attrShowInfo.attributeType == attrModifier.attrType)) then
-            local attrValue = AttributeUtils.modifyAttributeValue(attrModifier.attrType, attrModifier.attrValue, attrShowInfo.attrShowCfg.showPercent)
+            local attrValue = AttributeUtils.modifyAttributeValue(attrModifier.attrType, attrModifier.attrValue,
+                attrShowInfo.attrShowCfg.showPercent, attrShowInfo.attrShowCfg.showDiffFromDefault)
             if attrValue > attrShowInfo.modifiedValue then
                 return EquipTechConst.EEquipEnhanceSuccessProb.High
             elseif attrValue == attrShowInfo.modifiedValue then

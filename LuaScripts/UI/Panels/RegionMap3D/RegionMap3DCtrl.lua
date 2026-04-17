@@ -27,6 +27,8 @@ local PANEL_ID = PanelId.RegionMap3D
 
 
 
+
+
 RegionMap3DCtrl = HL.Class('RegionMap3DCtrl', uiCtrl.UICtrl)
 
 local SWITCH_ANIMATION_IN_FORMAT = "regionmap3d_%s_in"
@@ -61,6 +63,12 @@ RegionMap3DCtrl.m_loadedRegionMapTransform = HL.Field(HL.Table)
 
 
 RegionMap3DCtrl.m_initNaviThread = HL.Field(HL.Thread)
+
+
+RegionMap3DCtrl.m_lastSwitchDomainId = HL.Field(HL.String) << ""
+
+
+RegionMap3DCtrl.m_nextSwitchDomainId = HL.Field(HL.String) << ""
 
 
 
@@ -125,10 +133,12 @@ RegionMap3DCtrl._PlayMapSwitchAnimation = HL.Method(HL.String, HL.String, HL.Fun
     end
 
     local lastAnimationData = getAnimationData(lastDomainId)
-    local currAnimationData = getAnimationData(nextDomainId)
+    self.m_lastSwitchDomainId = lastDomainId
+    self.m_nextSwitchDomainId = nextDomainId
     lastAnimationData.animationWrapper:ClearTween(false)
     lastAnimationData.animationWrapper:PlayWithTween(lastAnimationData.animationOut, function()
         onComplete()
+        local currAnimationData = getAnimationData(self.m_nextSwitchDomainId)
         currAnimationData.animationWrapper:ClearTween(false)
         currAnimationData.animationWrapper:PlayWithTween(currAnimationData.animationIn)
     end)
@@ -283,28 +293,20 @@ end
 RegionMap3DCtrl._InitNaviTarget = HL.Method() << function(self)
     local _, initialLevelId = DataManager.uiLevelMapConfig.controllerInitialSelectLevel:TryGetValue(self.m_domainId)
     local currDomainId = Utils.getCurDomainId()
-    if not string.isEmpty(self.m_args.levelId) then
-        initialLevelId = self.m_args.levelId
-    else
-        if currDomainId == self.m_domainId then
-            initialLevelId = GameWorld.worldInfo.curLevelId
-        end
-    end
-    local firstLevelId, findInitialLevel
-    for levelId, _ in pairs(self.m_levelDataList) do
-        if GameInstance.player.mapManager:IsLevelUnlocked(levelId) then
-            if levelId == initialLevelId then
-                findInitialLevel = true
-                break  
+    if currDomainId == self.m_domainId then
+        
+        if not string.isEmpty(self.m_args.levelId) then
+            
+            if self.m_levelDataList[self.m_args.levelId] ~= nil then
+                initialLevelId = self.m_args.levelId
             end
-            if string.isEmpty(firstLevelId) then
-                firstLevelId = levelId
+        else
+            
+            local currLevelId = GameWorld.worldInfo.curLevelId
+            if self.m_levelDataList[currLevelId] then
+                initialLevelId = currLevelId
             end
         end
-    end
-
-    if not findInitialLevel then
-        initialLevelId = firstLevelId
     end
 
     self:_SetNaviTarget(initialLevelId, true)

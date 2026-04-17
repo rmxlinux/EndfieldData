@@ -8,6 +8,7 @@ local PANEL_ID = PanelId.BattlePassSeasonDisplay
 
 
 
+
 BattlePassSeasonDisplayCtrl = HL.Class('BattlePassSeasonDisplayCtrl', uiCtrl.UICtrl)
 
 
@@ -25,6 +26,9 @@ BattlePassSeasonDisplayCtrl.m_isVideoReady = HL.Field(HL.Boolean) << false
 
 
 BattlePassSeasonDisplayCtrl.m_videoDelayTimer = HL.Field(HL.Number) << 0
+
+
+BattlePassSeasonDisplayCtrl.m_preloadVideoTime = HL.Field(HL.Number) << -1
 
 
 
@@ -47,6 +51,16 @@ BattlePassSeasonDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
             return
         end
         if not self.m_isVideoReady then
+            
+            local currTime = Time.unscaledTime
+            if currTime - self.m_preloadVideoTime >= 3.0 then
+                logger.error(ELogChannel.UI, "超过3s没有preload成功, 进入保底流程")
+                self:Close()
+                if arg ~= nil and arg.onClose ~= nil then
+                    arg.onClose()
+                end
+                return
+            end
             return
         end
         self.m_videoDelayTimer = TimerManager:StartTimer(self.view.config.VIDEO_PLAY_DELAY, function()
@@ -69,6 +83,8 @@ BattlePassSeasonDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self.view.videoPlayer:PreloadVideo(videoPath, function()
         self.m_isVideoReady = true
     end)
+
+    self.m_preloadVideoTime = Time.unscaledTime
 end
 
 

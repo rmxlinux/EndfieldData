@@ -20,6 +20,7 @@ local PHASE_ID = PhaseId.DeathInfo
 
 
 
+
 DeathInfoCtrl = HL.Class('DeathInfoCtrl', uiCtrl.UICtrl)
 
 
@@ -43,6 +44,9 @@ local NORMAL_REVIVE_BTN_TEXT_KEY = "ui_common_deathinfo_revive"
 local DUNGEON_REVIVE_BTN_TEXT_KEY = "ui_dungeon_reward_popup_try_again"
 
 
+DeathInfoCtrl.s_waitStartCoroutine = HL.StaticField(HL.Thread)
+
+
 
 
 
@@ -53,7 +57,23 @@ DeathInfoCtrl.ShowDeathInfo = HL.StaticMethod(HL.Any) << function(args)
     if WeeklyRaidUtils.IsInWeeklyRaid() or WeeklyRaidUtils.IsInWeeklyRaidIntro() then
         return
     end
-    PhaseManager:OpenPhase(PHASE_ID, args, nil, true)
+    if not string.isEmpty(GameInstance.player.systemActionConflictManager.curProcessingSystemAction) then
+        if DeathInfoCtrl.s_waitStartCoroutine == nil then
+            DeathInfoCtrl.s_waitStartCoroutine = CoroutineManager:StartCoroutine(function()
+                while true do
+                    coroutine.step()
+                    if string.isEmpty(GameInstance.player.systemActionConflictManager.curProcessingSystemAction) then
+                        CoroutineManager:ClearCoroutine(DeathInfoCtrl.s_waitStartCoroutine)
+                        DeathInfoCtrl.s_waitStartCoroutine = nil
+                        PhaseManager:OpenPhase(PHASE_ID, args, nil, true)
+                        break
+                    end
+                end
+            end)
+        end
+    else
+        PhaseManager:OpenPhase(PHASE_ID, args, nil, true)
+    end
 end
 
 

@@ -376,7 +376,7 @@ SNSMissionCtrl._UpdateFilterMissionRelatedDialogInfos = HL.Method(HL.Table) << f
 
     
     table.sort(missionRelatedDialogInfosPart1,
-               Utils.genSortFunction({ "isReadSort", "importance", "viewType", "timestamp" }))
+               Utils.genSortFunction({ "isReadSort", "importance", "timestamp" }))
     
     table.sort(missionRelatedDialogInfosPart2,
                Utils.genSortFunction({ "finishTimestamp" }))

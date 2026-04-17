@@ -1,4 +1,7 @@
-local phaseStateBehaviour = require_ex('Phase/Core/PhaseStateBehaviour')
+
+
+
+local stateBehaviour = require_ex('Phase/Core/StateBehaviour')
 local luaLoader = require_ex('Common/Utils/LuaResourceLoader')
 
 
@@ -54,9 +57,26 @@ local luaLoader = require_ex('Common/Utils/LuaResourceLoader')
 
 
 
-PhaseBase = HL.Class("PhaseBase", phaseStateBehaviour.PhaseStateBehaviour)
+
+PhaseBase = HL.Class("PhaseBase", stateBehaviour.StateBehaviour)
 
 
+
+
+
+PhaseBase.phaseId = HL.Field(HL.Number) << -1
+
+
+PhaseBase.cfg = HL.Field(HL.Table)
+
+
+PhaseBase.systemId = HL.Field(HL.String) << ''
+
+
+PhaseBase.unlockSystemType = HL.Field(GEnums.UnlockSystemType)
+
+
+PhaseBase.redDotName = HL.Field(HL.String) << ''
 
 
 
@@ -78,11 +98,6 @@ PhaseBase.m_charInstId2LoadCoroutine = HL.Field(HL.Table)
 PhaseBase.m_charInstId2Item = HL.Field(HL.Table)
 
 
-PhaseBase.cfg = HL.Field(HL.Table)
-
-
-PhaseBase.phaseId = HL.Field(HL.Number) << -1
-
 
 
 PhaseBase.m_inTransition = HL.Field(HL.Boolean) << false
@@ -92,15 +107,6 @@ PhaseBase.m_resourceLoader = HL.Field(HL.Forward("LuaResourceLoader"))
 
 
 PhaseBase.panels = HL.Field(HL.Table)
-
-
-PhaseBase.systemId = HL.Field(HL.String) << ''
-
-
-PhaseBase.unlockSystemType = HL.Field(GEnums.UnlockSystemType)
-
-
-PhaseBase.redDotName = HL.Field(HL.String) << ''
 
 
 PhaseBase.modelLoader = HL.Field(CS.Beyond.UI.UIModelLoader)
@@ -349,6 +355,22 @@ end
 
 
 
+PhaseBase.GetCurStateArg = HL.Virtual().Return(HL.Opt(HL.Any)) << function(self)
+    if self.cfg.isSimpleUIPhase then
+        for _, item in pairs(self.m_panel2Item) do
+            local overrideArg = item.uiCtrl:GetCurPhaseStateArg()
+            if overrideArg ~= nil then
+                return lume.deepCopy(overrideArg)
+            end
+        end
+    end
+    if self.arg ~= nil then
+        return lume.deepCopy(self.arg)
+    end
+end
+
+
+
 
 
 
@@ -528,7 +550,8 @@ PhaseBase.CreatePhaseCharItem = HL.Method(HL.Table, HL.Any, HL.Function, HL.Opt(
 
         if data.charInstId then
             local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(data.charInstId)
-            if charInfo and charInfo.potentialLevel >= UIConst.CHAR_MAX_POTENTIAL then
+            if charInfo and charInfo.potentialLevel >= UIConst.CHAR_MAX_POTENTIAL and
+                GameInstance.player.charBag:IsCharMaxPotentialEffectEnabled(charId) then
                 phaseItem:LoadPotentialEffects()
             end
         end

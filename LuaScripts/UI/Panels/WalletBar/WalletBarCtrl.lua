@@ -22,6 +22,12 @@ local PANEL_ID = PanelId.WalletBar
 
 
 
+
+
+
+
+
+
 WalletBarCtrl = HL.Class('WalletBarCtrl', autoCalcOrderUICtrl.AutoCalcOrderUICtrl)
 
 
@@ -44,6 +50,7 @@ WalletBarCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
+
 WalletBarCtrl.m_moneyCells = HL.Field(HL.Forward('UIListCache'))
 
 
@@ -57,6 +64,20 @@ WalletBarCtrl.m_baseNotchPaddingPixel = HL.Field(HL.Number) << -1
 
 
 WalletBarCtrl.m_deltaNotchPaddingPixel = HL.Field(HL.Number) << -1
+
+
+WalletBarCtrl.m_countDownMoneyIndex = HL.Field(HL.Number) << -1
+
+
+WalletBarCtrl.m_moneyClearRule = HL.Field(GEnums.MoneyClearRuleType)
+
+
+WalletBarCtrl.m_resetMoneyCountDownCompleteFunc = HL.Field(HL.Function)
+
+
+WalletBarCtrl.m_timeFormatFunc = HL.Field(HL.Function)
+
+
 
 
 
@@ -79,6 +100,32 @@ WalletBarCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         local cell = self.m_moneyCells:GetItem(self.m_moneyCells:GetCount())
         return cell.view.button
     end
+
+    
+    self.m_resetMoneyCountDownCompleteFunc = function()
+        self:_OnCountDownComplete()
+    end
+    self.m_timeFormatFunc = function(leftTime)
+        if self.m_curArgs == nil then
+            return ""
+        end
+        
+        local moneyInfo = self.m_curArgs.moneyInfos[self.m_countDownMoneyIndex]
+        local curMoney = Utils.getItemCount(moneyInfo.moneyId)
+        if curMoney <= moneyInfo.limitNumber then
+            self.view.timeNode.gameObject:SetActive(false)
+        else
+            self.view.timeNode.gameObject:SetActive(true)
+        end
+        
+        local isEnough = leftTime >= Const.SEC_PER_DAY
+        local colorState = "insufficientTime"
+        if isEnough then
+            colorState = self.m_curArgs.useLightTextColor and "EnoughTime" or "EnoughTimeDark"
+        end
+        self.view.resetMoneyTimeTxt.view.textStateCtrl:SetState(colorState)
+        return UIUtils.getShortLeftTime(leftTime)
+    end
 end
 
 
@@ -90,6 +137,9 @@ WalletBarCtrl.OnShow = HL.Override() << function(self)
     self.m_deltaNotchPaddingPixel = 0
 
     self.view.contentNaviGroup:ManuallyRefreshRelatedBindingGroups()
+    if self.m_countDownMoneyIndex > -1 then
+        self:_OnCountDownComplete()
+    end
 end
 
 
@@ -101,6 +151,8 @@ WalletBarCtrl.OnHide = HL.Override() << function(self)
     end
     self.view.contentNaviGroup:ManuallyRefreshRelatedBindingGroups()
     Notify(MessageConst.HIDE_ITEM_TIPS)
+
+    self.view.resetMoneyTimeTxt:StopCountDown()
 end
 
 
@@ -115,6 +167,14 @@ WalletBarCtrl.OnAnimationInFinished = HL.Override() << function(self)
         end
     end
 end
+
+
+
+
+
+
+
+
 
 
 
@@ -202,22 +262,27 @@ WalletBarCtrl._RefreshContent = HL.Method() << function(self)
         end
     end
 
-    local moneyIds = self.m_curArgs.moneyIds
+    self.m_countDownMoneyIndex = -1
+    local moneyInfos = self.m_curArgs.moneyInfos
     local cellPreferredWidths = self.m_curArgs.cellPreferredWidths or {}
-    if moneyIds ~= nil then
+    if moneyInfos ~= nil then
         
-        self.m_moneyCells:Refresh(#moneyIds, function(cell, index)
-            local itemId = moneyIds[index]
+        self.m_moneyCells:Refresh(#moneyInfos, function(cell, index)
+            local moneyInfo = moneyInfos[index]
+            local itemId = moneyInfo.moneyId
             local cellPreferredWidth = cellPreferredWidths[itemId]
-            cell:InitMoneyCell(itemId, self.m_curArgs.useMoneyCellAction, self.m_curArgs.useItemIcon, self.m_curArgs.showLimit, nil, cellPreferredWidth)
+            cell:InitMoneyCell(itemId, self.m_curArgs.useMoneyCellAction, self.m_curArgs.useItemIcon, moneyInfo.showLimit, moneyInfo.limitNumber, cellPreferredWidth)
             if cell:IsStamina() then
                 cell:SetStaminaCloseFun(staminaCloseFun)
                 cell:SetStaminaClickFun(staminaClickFunc)
                 
                 
-                cell:SetStaminaShowItemTips(#moneyIds > 1 and DeviceInfo.usingController)
+                cell:SetStaminaShowItemTips(#moneyInfos > 1 and DeviceInfo.usingController)
             end
-            
+            if moneyInfo.clearRuleType ~= GEnums.MoneyClearRuleType.None then
+                self.m_countDownMoneyIndex = index
+            end
+			
             if cell:IsOriginium() then
                 cell:SetAddBtnKeyHintText(Language.key_hint_cashshop_originium_buy)
             else
@@ -225,7 +290,20 @@ WalletBarCtrl._RefreshContent = HL.Method() << function(self)
             end
         end)
 
-        self.view.contentNaviGroup.focusHighlightNormalFrame = #moneyIds > 1
+        self.view.contentNaviGroup.focusHighlightNormalFrame = #moneyInfos > 1
+    end
+
+    
+    if self.m_countDownMoneyIndex > -1 then
+        local moneyInfo = self.m_curArgs.moneyInfos[self.m_countDownMoneyIndex]
+        local textKey = moneyInfo.clearTipsTextKey
+        self.m_moneyClearRule = moneyInfo.clearRuleType
+        self.view.timeText.text = Language[textKey]
+        self.view.timeNodeStateController:SetState(self.m_curArgs.useLightTextColor and "LightColor" or "DarkColor")
+        self:_OnCountDownComplete()
+    else
+        self.view.resetMoneyTimeTxt:StopCountDown()
+        self.view.timeNode.gameObject:SetActive(false)
     end
 end
 
@@ -243,6 +321,31 @@ WalletBarCtrl._OnScreenSizeChanged = HL.Method() << function(self)
 
     self.m_deltaNotchPaddingPixel = deltaPaddingPixel
     self:_RefreshContent()
+end
+
+
+
+WalletBarCtrl._GetTargetTime = HL.Method().Return(HL.Number) << function(self)
+    local targetTime = 0
+    if self.m_moneyClearRule == GEnums.MoneyClearRuleType.Weekly then
+        targetTime = Utils.getNextWeeklyServerRefreshTime()
+    elseif self.m_moneyClearRule == GEnums.MoneyClearRuleType.Daily then
+        targetTime = Utils.getNextCommonServerRefreshTime()
+    elseif self.m_moneyClearRule == GEnums.MoneyClearRuleType.Monthly then
+        targetTime = Utils.getNextMonthlyServerRefreshTime()
+    end
+    return targetTime
+end
+
+
+
+WalletBarCtrl._OnCountDownComplete = HL.Method() << function(self)
+    local targetTime = self:_GetTargetTime()
+    self.view.resetMoneyTimeTxt:InitCountDownText(
+        targetTime,
+        self.m_resetMoneyCountDownCompleteFunc,
+        self.m_timeFormatFunc
+    )
 end
 
 HL.Commit(WalletBarCtrl)

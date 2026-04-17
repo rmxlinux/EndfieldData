@@ -12,6 +12,7 @@ local PHASE_ID = PhaseId.GachaPool
 
 
 
+
 PhaseGachaPool = HL.Class('PhaseGachaPool', phaseBase.PhaseBase)
 
 
@@ -41,12 +42,12 @@ end
 
 PhaseGachaPool.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
     AudioAdapter.LoadAndPinEventsAsync({ UIConst.GACHA_MUSIC_UI, UIConst.GACHA_MUSIC_DROP_BIN })
+    if not self.arg or type(self.arg) ~= "table" then
+        self.arg = {}
+    end
+    self.arg.phase = self
     
     if transitionType == PhaseConst.EPhaseState.TransitionIn and not fastMode then
-        if not self.arg or type(self.arg) ~= "table" then
-            self.arg = {}
-        end
-        self.arg.phase = self
         
         local pools = {}
         
@@ -141,5 +142,12 @@ end
 
 
 
+
+
+PhaseGachaPool.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    arg.phase = nil
+    return arg
+end
 
 HL.Commit(PhaseGachaPool)

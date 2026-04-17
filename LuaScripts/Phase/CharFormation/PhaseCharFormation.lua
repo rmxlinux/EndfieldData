@@ -135,6 +135,7 @@ local PHASE_CHAR_FORMATION_GAME_OBJECT = "CharFormation"
 
 
 
+
 PhaseCharFormation = HL.Class('PhaseCharFormation', phaseBase.PhaseBase)
 local Panels = { PanelId.CharFormation, }
 
@@ -174,7 +175,6 @@ PhaseCharFormation.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.PRE_LEVEL_START] = { 'OnPreLevelStart', false },
     [MessageConst.ON_SCENE_LOAD_START] = { 'OnSceneLoadStart', false },
     [MessageConst.ON_SWITCH_LANGUAGE] = { '_OnSwitchLanguage', false },
-
     [MessageConst.ON_CAMPFIRE_OPEN_FORMATION] = { 'OnCampfireOpenFormation', false }, 
 
     
@@ -195,6 +195,7 @@ PhaseCharFormation.s_messages = HL.StaticField(HL.Table) << {
 
     [MessageConst.ON_CHAR_FORMATION_CHANGE_HOVER_INDEX] = { 'OnChangeSlotHoverIndex', true }, 
     [MessageConst.ON_CHAR_FORMATION_CONFIRM_HOVER] = { 'OnConfirmSelectedSlotHover', true }, 
+    [MessageConst.ON_CHAR_MAX_POTENTIAL_EFFECT_TOGGLED] = { 'OnCharMaxPotentialEffectToggled', true },
 }
 
 
@@ -369,6 +370,7 @@ PhaseCharFormation.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt
         
         Notify(MessageConst.PREPARE_BLOCK_GLITCH_TRANSITION)
         coroutine.waitForRenderDone()
+        coroutine.step()
     end
 
     if transitionType == PhaseConst.EPhaseState.TransitionBackToTop then
@@ -1476,7 +1478,7 @@ PhaseCharFormation._RefreshTeamChars = HL.Method() << function(self)
         teamInfo = self:_LockedTeamDataToTeamInfo(self.m_lockedTeamData)
     else
         local teamIndex = CSIndex(self.m_curTeamIndex)
-        local squad = GameInstance.player.charBag:GetMainTeam(teamIndex)
+        local squad = GameInstance.player.charBag:GetCurrentMainTeamByIndex(teamIndex)
         teamInfo = self:_SquadToTeamInfo(squad)
     end
 
@@ -1709,7 +1711,7 @@ PhaseCharFormation._OnSquadChange = HL.Method(HL.Table) << function(self, args)
     local teamIndex = LuaIndex(teamIndex)
     if self.m_curTeamIndex == teamIndex then
         if self.m_charFormation then
-            local squad = GameInstance.player.charBag:GetMainTeam(CSIndex(teamIndex))
+            local squad = GameInstance.player.charBag:GetCurrentMainTeamByIndex(CSIndex(teamIndex))
             local teamInfo = self:_SquadToTeamInfo(squad)
             self.m_charFormation.uiCtrl:RefreshTeamCharInfo(teamInfo)
         end
@@ -1796,6 +1798,29 @@ PhaseCharFormation.OnCharPotentialUnlock = HL.Method(HL.Table) << function(self,
     local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
     if charPhaseItem and charInfo and charInfo.potentialLevel >= UIConst.CHAR_MAX_POTENTIAL then
         charPhaseItem:LoadPotentialEffects()
+    end
+end
+
+
+
+
+PhaseCharFormation.OnCharMaxPotentialEffectToggled = HL.Method(HL.Table) << function(self, args)
+    local charId, isEnabled = unpack(args)
+    local charInfo = CharInfoUtils.getPlayerCharInfoByTemplateId(charId, GEnums.CharType.Default)
+    if not charInfo then
+        return
+    end
+
+    local charPhaseItem = self:_GetCharPhaseItem(charInfo.instId)
+    if not charPhaseItem then
+        return
+    end
+    if isEnabled then
+        if charInfo.potentialLevel >= UIConst.CHAR_MAX_POTENTIAL then
+            charPhaseItem:LoadPotentialEffects()
+        end
+    else
+        charPhaseItem:UnloadPotentialEffects()
     end
 end
 

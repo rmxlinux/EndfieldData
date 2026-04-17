@@ -346,8 +346,9 @@ BlueprintContent.Refresh = HL.Method() << function(self)
 
         
         
-        local hasAbnormal = false
-        local hasUnknowItem = false
+        local hasUnknowItem = false 
+        local hasAbnormal = false 
+        local hasExpired = false
         local inBlackbox = Utils.isInBlackbox()
         for _, entry in pairs(self.m_csBP.buildingNodes) do
             local buildingId = entry.templateId
@@ -361,12 +362,20 @@ BlueprintContent.Refresh = HL.Method() << function(self)
                 
                 deviceMap[buildingId] = 0
             end
-            if not inBlackbox and not hasUnknowItem and not hasAbnormal and not string.isEmpty(entry.productIcon) then
+            if not self.isSharing and not self.isEditing and not inBlackbox and not string.isEmpty(entry.productIcon) then
                 if not GameInstance.player.inventory:IsItemFound(entry.productIcon) then
                     hasUnknowItem = true
                     hasAbnormal = true
                 else
-                    hasAbnormal = self.m_bpAbnormalIconHelper and self.m_bpAbnormalIconHelper.IsAbnormal(buildingId, entry.productIcon)
+                    if self.m_bpAbnormalIconHelper then
+                        local iconAbnormalType = self.m_bpAbnormalIconHelper.GetAbnormalType(buildingId, entry.productIcon)
+                        if iconAbnormalType == FacConst.FAC_BP_ABNORMAL_ICON_TYPE.TimeLimitedExpired then
+                            hasExpired = true
+                        end
+                        if iconAbnormalType == FacConst.FAC_BP_ABNORMAL_ICON_TYPE.Locked then
+                            hasAbnormal = true
+                        end
+                    end
                 end
             end
         end
@@ -409,6 +418,7 @@ BlueprintContent.Refresh = HL.Method() << function(self)
         if hasAbnormal then
             self.view.lackWarnTxt.text = hasUnknowItem and Language.LUA_FAC_BLUEPRINT_LACK_ITEM or Language.LUA_FAC_BLUEPRINT_LACK_FORMULA
         end
+        self.view.expiredNode.gameObject:SetActive(hasExpired)
     else
         
         local batchSelect = GameInstance.remoteFactoryManager.batchSelect
@@ -942,6 +952,11 @@ end
 
 
 BlueprintContent._RefreshLackTech = HL.Method() << function(self)
+    if self.isSharing then
+        self.view.lackInfoNode.gameObject:SetActive(false)
+        return
+    end
+
     self:_InitLackTechIdInfos()
     if not self.m_techCells then
         self:_InitLackTechNode()
@@ -971,11 +986,7 @@ BlueprintContent._RefreshLackTech = HL.Method() << function(self)
             cell.icon:LoadSprite(UIConst.UI_SPRITE_FAC_TECH_ICON, info.icon)
             cell.selectedBG.gameObject:SetActive(false)
         end)
-        if self.isSharing then
-            self.view.lackInfoNode.gameObject:SetActive(false)
-        else
-            self.view.lackInfoNode.gameObject:SetActive(true)
-        end
+        self.view.lackInfoNode.gameObject:SetActive(true)
     else
         self.haveLackTechs = false
         self.view.lackInfoNode.gameObject:SetActive(false)

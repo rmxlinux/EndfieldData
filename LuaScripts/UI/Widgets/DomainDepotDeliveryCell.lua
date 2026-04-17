@@ -58,6 +58,9 @@ DomainDepotDeliveryCell._OnFirstTimeInit = HL.Override() << function(self)
 
     self.view.bgBtn.onClick:RemoveAllListeners()
     self.view.bgBtn.onClick:AddListener(function()
+        if not self.m_canReceive then
+            return
+        end
         if self.m_deliveryOnClick then
             self.m_deliveryOnClick(self.m_insId)
         end
@@ -172,7 +175,7 @@ DomainDepotDeliveryCell._UpdateInfo = HL.Method(HL.Userdata) << function(self, i
     local packConfig = Tables.domainDepotDeliverPackTypeTable:GetValue(info.deliverPackType)
     local itemConfig = Tables.domainDepotDeliverItemTypeTable:GetValue(info.itemType)
 
-    local str = I18nUtils.CombineStringWithLanguageSpilt(packConfig.deliveryDesc, itemConfig.deliveryDesc)
+    local str = I18nUtils.CombineStringReverseForIndonesianAndVietnamese(packConfig.deliveryDesc, itemConfig.deliveryDesc)
 
     self.view.largeBagTxt.text = str
 

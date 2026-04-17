@@ -177,6 +177,9 @@ local SelectingMidState = {
 
 
 
+
+
+
 GeneralAbilityCtrl = HL.Class('GeneralAbilityCtrl', uiCtrl.UICtrl)
 
 local SELECTED_ABILITY_TYPE_CLIENT_LOCAL_DATA_KEY = "selected_general_ability"
@@ -351,6 +354,8 @@ GeneralAbilityCtrl.m_currentArrowAngle = HL.Field(HL.Number) << 0
 GeneralAbilityCtrl.m_controllerHoverIndex = HL.Field(HL.Number) << -1
 
 
+GeneralAbilityCtrl.m_iconOverrideTable = HL.Field(HL.Table) << nil
+
 
 GeneralAbilityCtrl.m_pcTick = HL.Field(HL.Number) << -1
 
@@ -408,6 +413,7 @@ GeneralAbilityCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SET_GENERAL_ABILITY_RELEASE_CLOSE] = '_ToggleGeneralAbilityClick',
     [MessageConst.SWITCH_GENERAL_ABILITY_DEBUG_TYPE] = 'SwitchDebugTempAbility',
     [MessageConst.CLEAR_GENERAL_ABILITY_DEBUG_TYPE] = 'ClearDebugTempAbility',
+    [MessageConst.GENERAL_ABILITY_OVERRIDE_ICON] = 'GeneralAbilityOverrideIcon',
     [MessageConst.ON_TOGGLE_UI_ACTION] = 'OnToggleUiAction',
     [MessageConst.ACTIVE_BUILDING_LIKE] = 'OnActiveBuildingLike',
 
@@ -462,6 +468,7 @@ GeneralAbilityCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_openStartTime = self.view.config.ABILITY_USE_PRESS_DURATION
     self.m_openSelectorTime = self.view.config.ABILITY_SWITCH_PRESS_DURATION
 
+    self.m_iconOverrideTable = {}
     self.m_abilityDataList = {}
     self:_InitAll()
     self:_InitMobileNodes()
@@ -712,8 +719,10 @@ end
 
 
 GeneralAbilityCtrl._InitAll = HL.Method(HL.Opt(HL.Boolean)) << function(self)
-    self.m_selectedAbilityType = INVALID_ABILITY_TYPE
-    GameInstance.player.generalAbilitySystem.selectGeneralAbility = INVALID_ABILITY_TYPE
+    if self:_ShouldResetTempSelect() then
+        self.m_selectedAbilityType = INVALID_ABILITY_TYPE
+        GameInstance.player.generalAbilitySystem.selectGeneralAbility = INVALID_ABILITY_TYPE
+    end
 
     self:_InitAbilityData()
     if next(self.m_abilityDataList) then
@@ -738,6 +747,20 @@ GeneralAbilityCtrl._InitAbilityData = HL.Method() << function(self)
     self.m_isInPool = GameWorld.waterSensorSystem.isNearbyFactoryWater
     self:_UpdateFluidInteractState()
 end
+
+
+
+GeneralAbilityCtrl._ShouldResetTempSelect = HL.Method().Return(HL.Boolean)  << function(self)
+    local shouldResetSelect = true
+    if self.m_selectedAbilityType ~= INVALID_ABILITY_TYPE
+        and GameInstance.player.generalAbilitySystem:IsTempAbility(self.m_selectedAbilityType)
+        and self.m_abilityDataMap[self.m_selectedAbilityType] ~= nil
+        and self.m_abilityDataMap[self.m_selectedAbilityType].abilityRuntimeData.isTempActive then
+        shouldResetSelect = false
+    end
+    return shouldResetSelect
+end
+
 
 
 
@@ -845,8 +868,10 @@ GeneralAbilityCtrl._UpdateSelectorCellInfo = HL.Method(HL.Any, HL.Number) << fun
     local abilityData = self.m_abilityDataList[luaIndex]
     if abilityData ~= nil then
         abilityData.cell = cell
+        cell.ability:SetOverrideIcon(self.m_iconOverrideTable[abilityData.type])
         cell.ability:InitGeneralAbilityCell(abilityData.type, false, true)
         cell.ability.ignoreStateChangeEvent = true
+        cell.shadowAbility:SetOverrideIcon(self.m_iconOverrideTable[abilityData.type])
         cell.shadowAbility:InitGeneralAbilityCell(abilityData.type, true, true)
         cell.shadowAbility.ignoreStateChangeEvent = true
         cell.shadowAbility.view.gameObject:SetActive(true)
@@ -868,6 +893,7 @@ GeneralAbilityCtrl._UpdateSelectorCellInfo = HL.Method(HL.Any, HL.Number) << fun
             cell.uiStateCtrl:SetState(SelectingNodeState.HighLightNormalColor)
         end
     else
+        cell.ability:SetOverrideIcon(nil)
         cell.ability:InitGeneralAbilityCell()
         cell.ability.ignoreStateChangeEvent = true
         cell.shadowAbility.view.gameObject:SetActive(false)
@@ -886,6 +912,10 @@ end
 
 
 GeneralAbilityCtrl._InitSelectedType = HL.Method() << function(self)
+    if not self:_ShouldResetTempSelect() then
+        return
+    end
+
     local selectedType = self:_GetSelectedType()
     if selectedType == INVALID_ABILITY_TYPE then
         
@@ -1133,6 +1163,25 @@ end
 
 
 
+
+
+
+
+GeneralAbilityCtrl.GeneralAbilityOverrideIcon = HL.Method(HL.Any) << function(self, info)
+    if self.m_iconOverrideTable == nil then
+        return
+    end
+
+    local type, iconKey = unpack(info)
+    if iconKey ~= nil and not string.isEmpty(iconKey) then
+        local success, tableData = Tables.BattleBossOverrideIconTable:TryGetValue(iconKey)
+        if success then
+            self.m_iconOverrideTable[type:GetHashCode()] = tableData.iconId
+        end
+    else
+        self.m_iconOverrideTable[type:GetHashCode()] = nil
+    end
+end
 
 
 
@@ -1616,7 +1665,8 @@ GeneralAbilityCtrl._SetSelectedType = HL.Method(HL.Number, HL.Boolean) << functi
     if self.m_lastSelectedAbilityType ~= type then
         self.m_lastSelectedAbilityType = type
     end
-    
+
+    self.view.selectedAbility:SetOverrideIcon(self.m_iconOverrideTable[type])
     self.view.selectedAbility:InitGeneralAbilityCell(type, false, false, function(isValid, fromState)
         local abilityRuntimeData = GameInstance.player.generalAbilitySystem:GetAbilityRuntimeDataByType(type)
         if abilityRuntimeData ~= nil then
@@ -1667,7 +1717,13 @@ end
 GeneralAbilityCtrl._StartPress = HL.Method() << function(self)
     self:_ClearRPress()
     self.m_pressRTime = 0
-    self.m_pressStartPos = self.view.selectedAbilityButton.curPressPos
+
+    local isOpen, guideCtrl = UIManager:IsOpen(PanelId.Guide)
+    if isOpen then
+        self.m_pressStartPos = nil
+    else
+        self.m_pressStartPos = self.view.selectedAbilityButton.curPressPos
+    end
 
     if not self:_IsAllowedInPlayerController() then
         return

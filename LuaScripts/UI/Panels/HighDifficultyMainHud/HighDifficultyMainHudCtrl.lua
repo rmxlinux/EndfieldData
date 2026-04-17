@@ -125,7 +125,7 @@ HighDifficultyMainHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
             self:_UpdateCell(cellNode.itemChallengeCell, index)
         end)
     end)
-    self.view.levelsScrollList.horizontalNormalizedPosition = 1
+    self.view.levelsScrollList.horizontalNormalizedPosition = 0
 
     
     if DeviceInfo.usingController then
@@ -191,6 +191,7 @@ HighDifficultyMainHudCtrl._UpdateCell = HL.Method(HL.Any,HL.Number) << function(
 
     
     local dungeonInfo = HighDifficultyUtils.GetSeriesInfo(seriesId)
+    cell.levelCountNode:SetState("TotalLevel_" .. tostring(#dungeonInfo))
     local allPassed = true
     for i = 1,#dungeonInfo do
         local raidUnlocked = dungeonInfo[i].raidUnlocked

@@ -261,12 +261,12 @@ end
 
 
 PhaseDialogTimeline._OpenDialogRecord = HL.Method() << function(self)
+    GameWorld.dialogTimelineManager:SetAutoMode(false)
     local panelItem = self:_GetPanelPhaseItem(PanelId.DialogRecord)
     if not panelItem then
         panelItem = self:CreatePhasePanelItem(PanelId.DialogRecord)
     end
     panelItem.uiCtrl:Show()
-    GameWorld.dialogTimelineManager:SetAutoMode(false)
 end
 
 

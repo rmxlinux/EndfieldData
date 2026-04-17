@@ -25,6 +25,8 @@ local PANEL_ID = PanelId.ActivityHighDifficulty
 
 
 
+
+
 ActivityHighDifficultyCtrl = HL.Class('ActivityHighDifficultyCtrl', uiCtrl.UICtrl)
 
 
@@ -65,6 +67,9 @@ ActivityHighDifficultyCtrl.m_curShowingTasks = HL.Field(HL.Table)
 ActivityHighDifficultyCtrl.m_BgNode = HL.Field(HL.Any)
 
 
+ActivityHighDifficultyCtrl.m_shownNewTaskIds = HL.Field(HL.Table)
+
+
 
 
 
@@ -72,6 +77,7 @@ ActivityHighDifficultyCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
     
     self.m_activityId = args.activityId
     self.m_curShowingTasks = {}
+    self.m_shownNewTaskIds = {}
     self.view.activityCommonInfo:InitActivityCommonInfo(args)
     self:_RefreshInfo()
 
@@ -229,7 +235,9 @@ ActivityHighDifficultyCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << fun
     cell.progressTxt.text = task.curProgress .. "/" .. task.total
     cell.fgSlider.fillAmount = task.curProgress / task.total
     cell.redDot:InitRedDot("ActivityHighDifficultyTask", {self.m_activityId, task.stageId}, nil, self.view.redDotScrollRect)
-    HighDifficultyUtils.setFalseNewHighDifficultyTask(self.m_activityId, task.stageId)
+    if HighDifficultyUtils.isNewHighDifficultyTask(self.m_activityId, task.stageId) then
+        self.m_shownNewTaskIds[task.stageId] = true
+    end
     cell.gameObject.name = "Cell" .. index
 
     
@@ -383,6 +391,16 @@ end
 ActivityHighDifficultyCtrl.OnActivityCenterNaviFailed = HL.Method() << function(self)
     local firstCell = self.view.scrollList:GetRangeInView().x
     self:_SetNaviTarget(LuaIndex(firstCell))
+end
+
+
+
+ActivityHighDifficultyCtrl.OnClose = HL.Override() << function(self)
+    local taskIds = {}
+    for taskId,_ in pairs(self.m_shownNewTaskIds) do
+        table.insert(taskIds, taskId)
+    end
+    HighDifficultyUtils.setFalseNewHighDifficultyTask(self.m_activityId, taskIds)
 end
 
 HL.Commit(ActivityHighDifficultyCtrl)

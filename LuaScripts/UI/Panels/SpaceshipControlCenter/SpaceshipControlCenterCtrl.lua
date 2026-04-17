@@ -41,6 +41,10 @@ local HelpedStateByRoomType = {
 
 
 
+
+
+
+
 SpaceshipControlCenterCtrl = HL.Class('SpaceshipControlCenterCtrl', uiCtrl.UICtrl)
 
 
@@ -73,6 +77,8 @@ SpaceshipControlCenterCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SPACESHIP_JOIN_FRIEND_INFO_EXCHANGE] = "OnRefreshFriendData",
     [MessageConst.ON_SPACESHIP_GUEST_ROOM_CLUE_REWARD_ITEM] = 'OnSpaceshipGuestRoomClueRewardItem',
     [MessageConst.ON_SPACESHIP_CLUE_INFO_SYNC] = 'OnRefreshFriendData',
+    [MessageConst.ON_SPACESHIP_MANUFACTURING_STATION_COLLECT] = "OnSpaceshipManufacturingStationCollectOneKeyHarvest",
+    [MessageConst.ON_SPACESHIP_ONE_KEY_HARVEST_FINISH] = "OnSpaceshipOneKeyHarvestFinish",
 }
 
 
@@ -87,6 +93,7 @@ end
 SpaceshipControlCenterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.closeBtn.onClick:AddListener(function()
         PhaseManager:PopPhase(PhaseId.SpaceshipControlCenter)
+        self.view.ssBacklogNode:PlayOutAnimation()
     end)
     if not GameInstance.player.spaceship.isViewingFriend then
         self:BindInputPlayerAction("ss_open_control_center", function()
@@ -256,8 +263,47 @@ end
 
 
 SpaceshipControlCenterCtrl.OnSpaceshipGuestRoomClueRewardItem = HL.Method(HL.Any) << function(self, args)
+    if GameInstance.player.spaceship:IsWaitingForHandleOneKeyHarvest() then
+        self:OnSpaceshipGrowCabinOneKeyHarvest(args)
+        return
+    end
     local items, sources = unpack(args)
     SpaceshipUtils.ShowClueOutcomePopup(items, sources, self.view.moneyCell, nil)
+end
+
+
+
+
+SpaceshipControlCenterCtrl.OnSpaceshipOneKeyHarvestFinish = HL.Method(HL.Any) << function(self, args)
+    local items = unpack(args)
+    if not items or items.Count == 0 then
+        return
+    end
+    self:_ShowOutcomePopupForOneKeyHarvest("", items)
+end
+
+
+
+
+
+SpaceshipControlCenterCtrl._ShowOutcomePopupForOneKeyHarvest = HL.Method(HL.String, HL.Any) << function(self, title, csItems)
+    local items = {}
+    for i = 0, csItems.Count - 1 do
+        local item = csItems[i]
+        local needShowHelp = Tables.spaceshipGrowCabinOutCome2MaterialTable:ContainsKey(item.id)
+        table.insert(items, {
+            id = item.id,
+            count = (item.Count or 0) + (item.count or 0),
+            needShowHelp = needShowHelp,
+        })
+    end
+    if #items == 0 then
+        return
+    end
+    Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
+        title = title,
+        items = items,
+    })
 end
 
 
@@ -483,6 +529,7 @@ end
 
 SpaceshipControlCenterCtrl.OnSpaceshipGrowCabinHelped = HL.Method(HL.Any) << function(self, args)
     if not GameInstance.player.spaceship.isViewingFriend then
+        self:OnSpaceshipGrowCabinOneKeyHarvest(args)
         return
     end
     local title = Language.LUA_SPACESHIP_ROOM_GROW_CABIN_HELP_OUTCOME_POPUP_TITLE
@@ -497,18 +544,19 @@ end
 
 SpaceshipControlCenterCtrl._ShowOutcomePopup = HL.Method(HL.String, HL.Any) << function(self, title, csItems)
     local itemMap = {}
+    local isWaitingHandle = GameInstance.player.spaceship:IsWaitingForHandleOneKeyHarvest()
     for i = 0, csItems.Count - 1 do
         local item = csItems[i]
         
-        if item.id == Tables.spaceshipConst.creditItemId then
+        if item.id == Tables.spaceshipConst.creditItemId and not isWaitingHandle then
             goto continue
         end
         
         if itemMap[item.id or item.Id] then
             local accCount = itemMap[item.id or item.Id]
-            itemMap[item.id or item.Id] = accCount + item.Count or 0 + item.count or 0
+            itemMap[item.id or item.Id] = accCount + (item.Count or 0) + (item.count or 0)
         else
-            itemMap[item.id or item.Id] = item.Count or 0 + item.count or 0
+            itemMap[item.id or item.Id] = (item.Count or 0) + (item.count or 0)
         end
         ::continue::
     end
@@ -524,6 +572,12 @@ SpaceshipControlCenterCtrl._ShowOutcomePopup = HL.Method(HL.String, HL.Any) << f
         })
     end
     if #items == 0 then
+        return
+    end
+    if isWaitingHandle then
+        for i, v in ipairs(items) do
+            GameInstance.player.spaceship:AddHarvestItem(v.id, v.count)
+        end
         return
     end
     Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
@@ -564,5 +618,27 @@ SpaceshipControlCenterCtrl._UpdateRoomCellStation = HL.Method(HL.Table, CS.Beyon
     node.countTxt.text = string.format("%d/%d", curCount, curMaxCount)
 end
 
+
+
+
+
+SpaceshipControlCenterCtrl.OnSpaceshipManufacturingStationCollectOneKeyHarvest = HL.Method(HL.Any) << function(self, args)
+    local _, itemId, count = unpack(args)
+    if GameInstance.player.spaceship:IsWaitingForHandleOneKeyHarvest() then
+        GameInstance.player.spaceship:AddHarvestItem(itemId, count)
+    end
+end
+
+
+
+
+SpaceshipControlCenterCtrl.OnSpaceshipGrowCabinOneKeyHarvest = HL.Method(HL.Any) << function(self, args)
+    if not GameInstance.player.spaceship:IsWaitingForHandleOneKeyHarvest() then
+        return
+    end
+    local title = Language.LUA_SPACESHIP_ROOM_GROW_CABIN_SOW_OUTCOME_POPUP_TITLE
+    local items = unpack(args)
+    self:_ShowOutcomePopup(title, items)
+end
 
 HL.Commit(SpaceshipControlCenterCtrl)

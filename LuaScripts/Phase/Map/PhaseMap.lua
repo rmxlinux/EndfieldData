@@ -86,6 +86,8 @@ local DETAIL_PANEL_MAP = {
     [MarkType.BossRush] = PanelId.MapMarkDetailBossRush,
     [MarkType.DungeonSS] = PanelId.MapMarkDetailDungeonSS,
     
+
+    [MarkType.SewageTreatPlant] = PanelId.MapMarkDetailSewageTreatPlant,
 }
 
 local FILTER_PANEL_ID = PanelId.MapMarkFilter

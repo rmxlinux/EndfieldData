@@ -72,6 +72,8 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
 Item = HL.Class('Item', UIWidgetBase)
 local LT_ITEM_TICK_TIME_INTERVAL = 30
 
@@ -159,6 +161,9 @@ Item.m_needShowDeco1 = HL.Field(HL.Boolean) << false
 Item.m_limitTimeInfo = HL.Field(HL.Table)
 
 
+Item.m_itemTipsJumpExtraArgs = HL.Field(HL.Table)
+
+
 Item.customShowTipsFunc = HL.Field(HL.Function)
 
 
@@ -198,6 +203,7 @@ Item._ResetOnInit = HL.Method() << function(self)
     self.customChangeActionMenuFunc = nil
     self.customShowTipsFunc = nil
     self.customHideTipsFunc = nil
+    self.m_itemTipsJumpExtraArgs = nil
 
     
     self.m_needShowDeco1 = self.view.deco1.gameObject.activeSelf
@@ -728,6 +734,7 @@ Item.ShowTips = HL.Method(HL.Opt(HL.Table, HL.Function)) << function(self, posIn
         padding = posInfo.padding,
         isSideTips = posInfo.isSideTips,
         moveVirtualMouse = posInfo.moveVirtualMouse,
+        onBeforeJump = posInfo.onBeforeJump,
 
         notPenetrate = self.config.NOT_PENETRATE_ITEM_TIPS_PANEL,
         forceShowOwnCount = self.config.ITEM_TIPS_FORCE_SHOW_OWN_COUNT,
@@ -746,6 +753,8 @@ Item.ShowTips = HL.Method(HL.Opt(HL.Table, HL.Function)) << function(self, posIn
         canSplit = self.canSplit,
         canUse = self.canUse,
         canClear = self.canClear,
+
+        jumpExtraArgs = self.m_itemTipsJumpExtraArgs,
 
         onClose = function()
             self:_OnTipsClosed(onClose)
@@ -996,6 +1005,12 @@ Item.SetAsNaviTarget = HL.Method() << function(self)
     InputManagerInst.controllerNaviManager:SetTarget(self.view.button)
 end
 
+
+
+
+Item.SetItemTipsJumpExtraArgs = HL.Method(HL.Table) << function(self, args)
+    self.m_itemTipsJumpExtraArgs = args
+end
 
 
 
@@ -1388,7 +1403,7 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
                         fromDepot = isFacDepot,
                     })
                 elseif isLogistic then
-                    Notify(MessageConst.FAC_ENTER_LOGISTIC_MODE, {itemId = item.itemId})
+                    Notify(MessageConst.FAC_ENTER_LOGISTIC_MODE, { itemId = id })
                 end
             end
         })

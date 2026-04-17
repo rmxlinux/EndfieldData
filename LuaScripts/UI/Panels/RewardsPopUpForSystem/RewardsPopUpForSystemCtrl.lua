@@ -25,6 +25,8 @@ local PANEL_ID = PanelId.RewardsPopUpForSystem
 
 
 
+
+
 RewardsPopUpForSystemCtrl = HL.Class('RewardsPopUpForSystemCtrl', uiCtrl.UICtrl)
 
 
@@ -43,7 +45,13 @@ RewardsPopUpForSystemCtrl.m_args = HL.Field(HL.Table)
 RewardsPopUpForSystemCtrl.m_items = HL.Field(HL.Table)
 
 
-RewardsPopUpForSystemCtrl.m_extraItemInfo = HL.Field(HL.Table)
+RewardsPopUpForSystemCtrl.m_extraItemInfos = HL.Field(HL.Table)
+
+
+RewardsPopUpForSystemCtrl.m_extraItemCellCache = HL.Field(HL.Forward("UIListCache"))
+
+
+RewardsPopUpForSystemCtrl.m_extraItemTitleCellCache = HL.Field(HL.Forward("UIListCache"))
 
 
 
@@ -66,6 +74,11 @@ RewardsPopUpForSystemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.skipBtn.onClick:AddListener(function()
         self:_OnClickSkip()
     end)
+
+    if self.view.extraRewardNode then
+        self.m_extraItemCellCache = UIUtils.genCellCache(self.view.extraRewardNode.itemCell)
+        self.m_extraItemTitleCellCache = UIUtils.genCellCache(self.view.extraRewardNode.titleTxtCell)
+    end
 
     local getItemCells = UIUtils.genCachedCellFunction(self.view.rewardsScrollList)
     self.view.rewardsScrollList.onUpdateCell:AddListener(function(object, csIndex)
@@ -113,6 +126,14 @@ end
 RewardsPopUpForSystemCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.TOGGLE_IN_MAIN_HUD_STATE, { key = "systemRewards", isInMainHud = true })
 end
+
+
+
+
+
+
+
+
 
 
 
@@ -300,9 +321,12 @@ RewardsPopUpForSystemCtrl._TryShowCharRewards = HL.StaticMethod(HL.Any).Return(H
         end
     }
     if extraRewardFirstGetChar then
-        charRewardsArg.extraItem = {
-            extraTitle = Language.LUA_GACHA_FIRST_GET_CHAR_REWARD_TOAST_TITLE,
-            item = extraRewardFirstGetChar,
+        charRewardsArg.extraItems = {
+            {
+                extraTitle = Language.LUA_GACHA_FIRST_GET_CHAR_REWARD_TOAST_TITLE,
+                titleColorState = "Yellow",
+                item = extraRewardFirstGetChar,
+            },
         }
     end
     RewardsPopUpForSystemCtrl.ShowSystemRewards(charRewardsArg)
@@ -376,11 +400,22 @@ RewardsPopUpForSystemCtrl._ShowRewards = HL.Method(HL.Table) << function(self, a
 
     
     if self.view.extraRewardNode then
-        self.m_extraItemInfo = args.extraItem
-        if self.m_extraItemInfo then
+        self.m_extraItemInfos = args.extraItems
+        if self.m_extraItemInfos then
             self.view.extraRewardNode.gameObject:SetActive(true)
-            self.view.extraRewardNode.extraRewardTitleTxt.text = self.m_extraItemInfo.extraTitle
-            self.view.extraRewardNode.item:InitItem(self.m_extraItemInfo.item, true)
+            local itemCount = #self.m_extraItemInfos
+            self.m_extraItemCellCache:Refresh(itemCount, function(cell, luaIndex)
+                local info = self.m_extraItemInfos[luaIndex]
+                cell:InitItem(info.item, true)
+                cell:SetExtraInfo({
+                    isSideTips = DeviceInfo.usingController,
+                })
+            end)
+            self.m_extraItemTitleCellCache:Refresh(itemCount, function(cell, luaIndex)
+                local info = self.m_extraItemInfos[luaIndex]
+                cell.rewardTitleTxt.text = info.extraTitle
+                cell.stateController:SetState(string.isEmpty(info.titleColorState) and "Yellow" or info.titleColorState)
+            end)
         else
             self.view.extraRewardNode.gameObject:SetActive(false)
         end
@@ -424,7 +459,7 @@ RewardsPopUpForSystemCtrl._ClearData = HL.Method() << function(self)
     self.m_args.onComplete = nil
     self.m_args = nil
     self.m_items = nil
-    self.m_extraItemInfo = nil
+    self.m_extraItemInfos = nil
 end
 
 

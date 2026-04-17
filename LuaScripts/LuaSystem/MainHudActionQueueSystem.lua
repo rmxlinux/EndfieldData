@@ -153,7 +153,7 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
 
         
         Cinematic = {
-            order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST,
+            order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST, 
             needWait = true,
             isCinematic = true,
             dropWhenChangeScene = true,
@@ -328,6 +328,13 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
             needWait = true,
             finishWhenInterrupt = true,
             preloadPanelId = PanelId.DomainUpgrade,
+        },
+
+        
+        AppStoreRatingPopup = {
+            order = 11, 
+            needWait = false,
+            finishWhenInterrupt = true,
         },
 
         

@@ -1,5 +1,10 @@
+
+
+
 local phaseConfig = require_ex("Phase/PhaseConfig")
 local luaLoader = require_ex('Common/Utils/LuaResourceLoader')
+
+
 
 
 
@@ -207,6 +212,7 @@ PhaseManager._OnTopPhaseChanged = HL.Method() << function(self)
     else
         EventLogManagerInst.curTopUIPhaseName = ""
     end
+    Notify(MessageConst.UPDATE_BLOCK_INPUT_WHEN_PHASE_LEVEL)
 end
 
 
@@ -1170,6 +1176,21 @@ end
 
 
 
+PhaseManager._UpdateIsUsingSystemSceneCamera = HL.Method() << function(self)
+    for _ = self.m_phaseStack:Count(), 1, -1 do
+        local phase = self.m_phaseStack:Peek()
+        if phase.cfg.haveSceneCamera then
+            CameraManager.isUsingSystemSceneCamera = true
+            logger.info("CameraManager.isUsingSystemSceneCamera = true")
+            return
+        end
+    end
+    CameraManager.isUsingSystemSceneCamera = false
+    logger.info("CameraManager.isUsingSystemSceneCamera = false")
+end
+
+
+
 
 
 
@@ -1213,7 +1234,9 @@ PhaseManager._CheckCanChangeInputDevice = HL.Method(HL.Opt(HL.Boolean)).Return(H
         
         local _, mainHud = UIManager:IsOpen(PanelId.MainHud)
         if mainHud and not mainHud.view.inputGroup.internalEnabled then
-            return false
+            if not FactoryUtils.isInTopView() then 
+                return false
+            end
         end
     end
 
@@ -1279,6 +1302,19 @@ PhaseManager._OnTryChangeInputDevice = HL.Method(HL.Userdata) << function(self, 
         return
     end
 
+    if DeviceInfo.switchInputDeviceWithRecover then
+        local needConfirm = self:GetTopPhaseId() ~= PhaseId.Level
+        if not needConfirm then
+            
+            InputManagerInst:ToggleInputDeviceChangeMode(true)
+            logger.important(CS.Beyond.EnableLogType.DevOnly, "[InputDevice] 确认切换设备", inputType)
+            self.m_isRealChangingInput = true
+            Notify(MessageConst.HIDE_ITEM_TIPS)
+            self:_RealChangeInputDevice(inputType)
+            return
+        end
+    end
+
     Notify(MessageConst.SHOW_INPUT_DEVICE_CHANGE_POPUP, {
         inputType = inputType,
         onConfirm = function()
@@ -1320,7 +1356,8 @@ end
 
 PhaseManager._GetChangeInMaskData = HL.Method(HL.Function).Return(HL.Userdata) << function(self, fadeInCallback)
     local inputDeviceChangeMaskInData = CS.Beyond.Gameplay.UICommonMaskData()
-    inputDeviceChangeMaskInData.fadeInTime = UIConst.INPUT_DEVICE_CHANGE_MASK_TIME
+    local fadeTime = DeviceInfo.switchInputDeviceWithRecover and UIConst.INPUT_DEVICE_CHANGE_WITH_RECOVER_MASK_TIME or UIConst.INPUT_DEVICE_CHANGE_MASK_TIME
+    inputDeviceChangeMaskInData.fadeInTime = fadeTime
     inputDeviceChangeMaskInData.waitHide = true
     inputDeviceChangeMaskInData.fadeType = UIConst.UI_COMMON_MASK_FADE_TYPE.FadeIn
     inputDeviceChangeMaskInData.fadeInCallback = function()
@@ -1339,6 +1376,8 @@ end
 
 
 PhaseManager._RealChangeInputDevice = HL.Method(HL.Userdata) << function(self, inputType)
+    local phaseArgs = self:CollectCurPhaseArgs()
+
     
     Notify(MessageConst.ON_CONFIRM_CHANGE_INPUT_DEVICE_TYPE, { inputType = inputType })
 
@@ -1357,7 +1396,11 @@ PhaseManager._RealChangeInputDevice = HL.Method(HL.Userdata) << function(self, i
     GameInstance.player.guide:OnInputDeviceChanged()
 
     
-    self:OpenPhase(PhaseId.Level)
+    if DeviceInfo.switchInputDeviceWithRecover then
+        self:RecoverPhaseByArgs(phaseArgs)
+    else
+        self:OpenPhase(PhaseId.Level)
+    end
 end
 
 
@@ -1366,7 +1409,8 @@ end
 PhaseManager._GetChangeOutMaskData = HL.Method(HL.Function).Return(HL.Userdata) << function(self, fadeOutCallback)
     local inputDeviceChangeMaskOutData = CS.Beyond.Gameplay.UICommonMaskData()
     inputDeviceChangeMaskOutData.fadeInTime = 0
-    inputDeviceChangeMaskOutData.fadeOutTime = UIConst.INPUT_DEVICE_CHANGE_MASK_TIME
+    local fadeTime = DeviceInfo.switchInputDeviceWithRecover and UIConst.INPUT_DEVICE_CHANGE_WITH_RECOVER_MASK_TIME or UIConst.INPUT_DEVICE_CHANGE_MASK_TIME
+    inputDeviceChangeMaskOutData.fadeOutTime = fadeTime
     inputDeviceChangeMaskOutData.fadeType = UIConst.UI_COMMON_MASK_FADE_TYPE.FadeOut
     inputDeviceChangeMaskOutData.callback = function()
         fadeOutCallback()
@@ -1412,8 +1456,7 @@ PhaseManager._DoPopTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("P
         popPhase:TransitionOut(fastMode, {
             anotherPhaseId = newTopPhaseId
         })
-        if not fastMode then
-            
+        if not fastMode and popPhase.state == PhaseConst.EPhaseState.TransitionOut then
             
             coroutine.waitCondition(function()
                 return popPhase.state ~= PhaseConst.EPhaseState.TransitionOut
@@ -1452,7 +1495,7 @@ PhaseManager._DoPopTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("P
             anotherPhaseId = popPhaseId
         })
 
-        if not fastMode then
+        if not fastMode and newTopPhase.state == PhaseConst.EPhaseState.TransitionBackToTop then
             
             coroutine.waitCondition(function()
                 return newTopPhase.state ~= PhaseConst.EPhaseState.TransitionBackToTop
@@ -1492,7 +1535,7 @@ PhaseManager._DoPushTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("
         oldTopPhase:TransitionBehind(fastMode, {
             anotherPhaseId = pushPhaseId
         })
-        if not fastMode then
+        if not fastMode and oldTopPhase.state == PhaseConst.EPhaseState.TransitionBehind then
             
             coroutine.waitCondition(function()
                 return oldTopPhase.state ~= PhaseConst.EPhaseState.TransitionBehind
@@ -1520,7 +1563,7 @@ PhaseManager._DoPushTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("
             anotherPhaseId = oldTopPhaseId
         })
 
-        if not fastMode then
+        if not fastMode and pushPhase.state == PhaseConst.EPhaseState.TransitionIn then
             
             coroutine.waitCondition(function()
                 return pushPhase.state ~= PhaseConst.EPhaseState.TransitionIn
@@ -1532,6 +1575,7 @@ PhaseManager._DoPushTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("
         self.m_transCor = nil
     end
 end
+
 
 
 
@@ -1555,6 +1599,7 @@ PhaseManager.ResumeEffectLodByPhase = HL.Method(HL.Number) << function(self, pha
         GameInstance.effectManager:SetIsCheckDistanceLod(true)
     end
 end
+
 
 
 
@@ -1595,18 +1640,37 @@ end
 
 
 
-PhaseManager._UpdateIsUsingSystemSceneCamera = HL.Method() << function(self)
-    for _ = self.m_phaseStack:Count(), 1, -1 do
-        local phase = self.m_phaseStack:Peek()
-        if phase.cfg.haveSceneCamera then
-            CameraManager.isUsingSystemSceneCamera = true
-            logger.info("CameraManager.isUsingSystemSceneCamera = true")
-            return
+
+
+PhaseManager.CollectCurPhaseArgs = HL.Method().Return(HL.Table) << function(self)
+    local args = {}
+    for k = 1, self.m_phaseStack:Count() do
+        local phase = self.m_phaseStack:Get(k)
+        local arg = phase:GetCurStateArg()
+        if arg ~= nil and arg == phase.arg and type(arg) == "table" then
+            logger.error("PhaseBase.GetCurStateArg Override后返回的arg是该Phase本身持有的arg 需要深拷贝返回一份独立的arg", phase.cfg.name)
         end
+        args[k] = {
+            id = phase.phaseId,
+            name = phase.cfg.name,
+            arg = arg,
+        }
     end
-    CameraManager.isUsingSystemSceneCamera = false
-    logger.info("CameraManager.isUsingSystemSceneCamera = false")
+    logger.info("PhaseManager.CollectCurPhaseArgs", args)
+    return args
 end
+
+
+
+
+PhaseManager.RecoverPhaseByArgs = HL.Method(HL.Table) << function(self, args)
+    logger.info("PhaseManager.RecoverPhaseByArgs", args)
+    for _, v in ipairs(args) do
+        self:OpenPhaseFast(v.id, v.arg)
+    end
+end
+
+
 
 
 HL.Commit(PhaseManager)

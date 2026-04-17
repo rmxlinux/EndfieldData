@@ -22,10 +22,12 @@ StoryModeToastCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 StoryModeToastCtrl.OnGameModeEnable = HL.StaticMethod(HL.Table) << function(args)
-    local modeType = unpack(args)
+    local modeType, mode = unpack(args)
     if modeType == GEnums.GameModeType.Story then
         UIManager:Close(PANEL_ID)
-        UIManager:AutoOpen(PANEL_ID, true)
+        if mode.showEnterToast then
+            UIManager:AutoOpen(PANEL_ID, true)
+        end
     end
 end
 

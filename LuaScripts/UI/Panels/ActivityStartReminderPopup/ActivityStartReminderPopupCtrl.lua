@@ -56,7 +56,16 @@ local ClientActivityConditionHandleInfoTable = {
         IsComplete = function(condition)
             return GameInstance.player.mission:GetMissionState(condition.parameters[0].valueStringList[0]) == CS.Beyond.Gameplay.MissionSystem.MissionState.Completed
         end
-    }
+    },
+    [GEnums.ConditionType.QuestStateEqual] = {
+        GetProgress = function()
+            local _,desc = Utils.getCurMissionIdAndDesc("activity")
+            return desc
+        end,
+        IsComplete = function(condition)
+            return GameInstance.player.mission:GetMissionState(condition.parameters[0].valueStringList[0]) == CS.Beyond.Gameplay.MissionSystem.MissionState.Completed
+        end
+    },
 }
 
 

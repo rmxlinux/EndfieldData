@@ -15,6 +15,7 @@ local PANEL_ID = PanelId.ShopMonthlyDetail
 
 
 
+
 ShopMonthlyDetailCtrl = HL.Class('ShopMonthlyDetailCtrl', uiCtrl.UICtrl)
 
 
@@ -35,6 +36,7 @@ ShopMonthlyDetailCtrl.m_getCellFunc = HL.Field(HL.Function)
 ShopMonthlyDetailCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CASH_SHOP_PACK_SET_TOP] = '_OnSetTop',
     [MessageConst.ON_CASH_SHOP_OPEN_CATEGORY] = '_OnCashShopOpenCategory',
+    [MessageConst.ON_CASH_SHOP_RECEIVE_REFRESH_MSG] = '_OnCashShopReceiveRefreshMsg',
 }
 
 
@@ -177,6 +179,14 @@ end
 
 
 ShopMonthlyDetailCtrl._OnCashShopOpenCategory = HL.Method() << function(self)
+    self:Close()
+end
+
+
+
+ShopMonthlyDetailCtrl._OnCashShopReceiveRefreshMsg = HL.Method() << function(self)
+    GameInstance.player.guide:OnShopRefreshItemInfo()
+    Notify(MessageConst.SHOW_TOAST, Language.LUA_REFRESH_CLOSE_SHOP_TOAST)
     self:Close()
 end
 

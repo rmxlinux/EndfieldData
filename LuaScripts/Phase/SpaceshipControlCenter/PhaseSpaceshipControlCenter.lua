@@ -18,11 +18,11 @@ PhaseSpaceshipControlCenter.s_messages = HL.StaticField(HL.Table) << {
 
 
 PhaseSpaceshipControlCenter._OnActivated = HL.Override() << function(self)
-    if InputManagerInst.controllerNaviManager.curTarget then
-        return
-    end
     local controllerPanel = self.m_panel2Item[PanelId.SpaceshipControlCenter].uiCtrl
-    controllerPanel:SetNaviTarget()
+    controllerPanel.view.ssBacklogNode:InitSSBacklogNode()
+    if not InputManagerInst.controllerNaviManager.curTarget then
+        controllerPanel:SetNaviTarget()
+    end
 end
 
 

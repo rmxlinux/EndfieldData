@@ -41,6 +41,7 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 FacCacheArea = HL.Class('FacCacheArea', UIWidgetBase)
 
 
@@ -433,6 +434,13 @@ end
 FacCacheArea.GetAreaInRepositoryFluidSlotGroup = HL.Method().Return(HL.Table) << function(self)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.inRepositoryList.rectTransform)
     return self:_GetAreaRepositorySlotGroup(true, self.m_inRepositoryList)
+end
+
+
+
+FacCacheArea.GetAreaOutRepositoryFluidSlotGroup = HL.Method().Return(HL.Table) << function(self)
+    LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.inRepositoryList.rectTransform)
+    return self:_GetAreaRepositorySlotGroup(true, self.m_outRepositoryList)
 end
 
 

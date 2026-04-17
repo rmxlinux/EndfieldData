@@ -185,6 +185,10 @@ InventoryArea.InitInventoryArea = HL.Method(HL.Opt(HL.Table)) << function(self, 
     self.view.depotNode.gameObject:SetActive(true)
     self:_Show(true, true)
 
+    if self.m_args.noNormalCache then
+        
+        self.view.moveItemMouseHintNode.gameObject:SetActive(false)
+    end
     self:_InitDepotLockInBlackbox()
 end
 
@@ -533,12 +537,14 @@ InventoryArea._OnClickItem = HL.Method(HL.String, HL.Forward('ItemSlot'), HL.Opt
                     local core = GameInstance.player.remoteFactory.core
                     local chapterId = Utils.getCurrentChapterId()
                     if facCacheArea then
-                        local cptId = facCacheArea:GetDropToComponentId(dragHelper)
-                        if self:_CheckIsValidItemInLockFormula(itemId) then
-                            if self.m_isItemBag then
-                                core:Message_OpMoveItemBagToCache(chapterId, csIndex, cptId, 0, mode)
-                            else
-                                core:Message_OpMoveItemDepotToCache(chapterId, itemId, cptId, 0, mode)
+                        if not self.m_args.noNormalCache then
+                            local cptId = facCacheArea:GetDropToComponentId(dragHelper)
+                            if self:_CheckIsValidItemInLockFormula(itemId) then
+                                if self.m_isItemBag then
+                                    core:Message_OpMoveItemBagToCache(chapterId, csIndex, cptId, 0, mode)
+                                else
+                                    core:Message_OpMoveItemDepotToCache(chapterId, itemId, cptId, 0, mode)
+                                end
                             end
                         end
                         return
@@ -771,6 +777,9 @@ InventoryArea._OnNaviTargetToSelectFluidConfirm = HL.Method() << function(self)
         if csIndex ~= -1 and self:_CheckBottleDrop(slot.item.id) then
             local core = GameInstance.player.remoteFactory.core
             core:Message_OpFillingFluidComWithBag(Utils.getCurrentChapterId(), self.m_curNaviSelectComponentId, csIndex)
+            if self.m_curNaviSourceItem ~= nil then
+                FactoryUtils.playAudioWhenFillingItem(slot.item.id, self.m_curNaviSourceItem.id, self.m_curNaviSourceItem.count)
+            end
             self:_ClearSelectFluidBinding()
             return
         end
@@ -779,6 +788,9 @@ InventoryArea._OnNaviTargetToSelectFluidConfirm = HL.Method() << function(self)
         if csIndex ~= -1 and self:_CheckBottleDrop(slot.item.id) then
             local core = GameInstance.player.remoteFactory.core
             core:Message_OpFillingFluidComWithDepot(Utils.getCurrentChapterId(), self.m_curNaviSelectComponentId, slot.item.id)
+            if self.m_curNaviSourceItem ~= nil then
+                FactoryUtils.playAudioWhenFillingItem(slot.item.id, self.m_curNaviSourceItem.id, self.m_curNaviSourceItem.count)
+            end
             self:_ClearSelectFluidBinding()
             return
         end

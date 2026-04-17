@@ -136,9 +136,18 @@ FacUnloaderSelectCtrl._InitUnloaderSelect = HL.Method() << function(self)
             local result = {}
             for _, info in ipairs(allItemInfoList) do
                 local id = info.id
-                local facSuccess, facItemData = Tables.factoryItemTable:TryGetValue(id)
-                if facSuccess and facItemData.showInUnloader then
-                    table.insert(result, info)
+                local showItem = false 
+                if FactoryUtils.isTimeLimitedItem(id) then
+                    local craftInfoList, canCraft = FactoryUtils.getItemCrafts(id)
+                    showItem = next(craftInfoList) ~= nil
+                else
+                    showItem = true
+                end
+                if showItem then
+                    local facSuccess, facItemData = Tables.factoryItemTable:TryGetValue(id)
+                    if facSuccess and facItemData.showInUnloader then
+                        table.insert(result, info)
+                    end
                 end
             end
             return result

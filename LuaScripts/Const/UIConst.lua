@@ -14,6 +14,7 @@ UI_ACTIVITY_VERSION_GUIDE_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/Vers
 UI_ACTIVITY_CHECK_IN_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/Checkin/%s.prefab"
 UI_ACTIVITY_HIGH_DIFFICULTY_BG_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/HighDifficultyBg/%s.prefab"
 UI_ACTIVITY_CHALLENGE_DUNGEON_BG_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/ChallengeDungeonBg/%s.prefab"
+UI_ACTIVITY_ARKNIGHTS_BIRTH_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/ArknightsBirth/%s.prefab"
 UI_DUMMY_NAVI_LAYER_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/UIDummyNaviLayer.prefab"
 
 UI_PANEL_PREFAB_PATH = UI_ASSETS_PATH .. UI_PANEL_PREFAB_FORMAT
@@ -35,6 +36,7 @@ UI_SNS_FRIEND_CHAT_WIDGETS_PATH = UI_ASSETS_PATH .. "Prefabs/SNS/Widgets/%s.pref
 UI_DEFAULT_I18N_FONT_ASSET_PATH = UI_INIT_ASSETS_PATH .. "Fonts/DefaultFont_I18N.asset"
 UI_COMMON_TASK_TRACK_TOAST_WIDGETS_PATH = UI_ASSETS_PATH .. "Prefabs/CommonTaskTrack/Widgets/%s.prefab"
 UI_CASH_SHOP_DYNAMIC_GIFT_PANEL_WIDGETS_PATH = UI_ASSETS_PATH .. "Prefabs/CashShop/Widgets/SeasonalGiftpackNode/%s.prefab"
+UI_CASH_SHOP_CUSTOM_GIFT_PANEL_WIDGETS_PATH = UI_ASSETS_PATH .. "Prefabs/CashShop/Widgets/UniversalGiftpackNode/%s.prefab"
 
 
 CANVAS_DEFAULT_WIDTH = CS.Beyond.UI.CUR_STANDARD_HORIZONTAL_RESOLUTION
@@ -42,6 +44,7 @@ CANVAS_DEFAULT_HEIGHT = CS.Beyond.UI.CUR_STANDARD_VERTICAL_RESOLUTION
 
 UI_SPRITE_PATH = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/%s.png"
 UI_SPRITE_DEV_PATH = "Assets/BeyondDev/DynamicAssets/Gameplay/UI/Sprites/%s.png"
+UI_SPRITE_DEVELOP_RETURN_TAB_PATH = "Activity/DevelopReturn"
 UI_SPRITE_COMMON = "Common"
 UI_SPRITE_ITEM = "ItemIcon"
 UI_SPRITE_ITEM_BIG = "ItemIconBig"
@@ -459,6 +462,7 @@ UI_SPRITE_CASH_SHOP_CATEGORY = "Shop/CashShopCategory"
 UI_SPRITE_CASH_SHOP_GEM = "Shop/CashShopGem"
 UI_SPRITE_SHOP_GROUP_BAG = "Shop/ShopGroupBag"
 UI_SPRITE_SHOP_MONTHLY_PASS = "Shop/ShopMonthlyPass"
+UI_SPRITE_DOMAIN_ICON = "DomainDepot"
 
 COMMON_UI_TIME_UPDATE_INTERVAL = 1
 FAC_COMMON_UI_UPDATE_INTERVAL = 0.1
@@ -542,6 +546,7 @@ UI_GUIDE_OUT_OF_SCREEN_DISTANCE = 10000
 
 UI_COMMON_MASK_TYPE = CS.Beyond.Gameplay.CommonMaskType
 UI_COMMON_MASK_FADE_TYPE = CS.Beyond.Gameplay.CommonMaskFadeType
+UI_COMMON_MASK_LAYER_TYPE = CS.Beyond.Gameplay.CommonMaskLayerType
 
 UI_CHAR_FORMATION_STATE = {
     TeamWaitSet = 1, 
@@ -784,6 +789,14 @@ CHAR_INFO_ANIMATOR_INDEX_2_WEAPON_STATE = {
     [PHASE_CHAR_ITEM_ANIMATOR_INDEX_DICT.DOCUMENT] = CS.Beyond.Gameplay.View.CharUIModelMono.WeaponState.HIDE,
     [PHASE_CHAR_ITEM_ANIMATOR_INDEX_DICT.UPGRADE] = CS.Beyond.Gameplay.View.CharUIModelMono.WeaponState.HIDE,
     [PHASE_CHAR_ITEM_ANIMATOR_INDEX_DICT.PROFILE_SHOW] = CS.Beyond.Gameplay.View.CharUIModelMono.WeaponState.HIDE,
+}
+CHAR_INFO_TO_OVERVIEW_STATE_NAME = {
+    "FromOveview",
+    "FromWeapon",
+    "FromSkill",
+    "FromUpgrade",
+    "FromBreak",
+    "FromEquip",
 }
 
 
@@ -1093,12 +1106,6 @@ CHAR_SKILL_MODE = {
 
 TALENT_COLUMN_NUM = 2
 
-CHAR_INFO_PROFILE_TAB_ENUM = {
-    Files = 1,
-    Voice = 2,
-    TotalNum = 2,
-}
-
 RED_DOT_TYPE = {
     New = 1,
     Normal = 2,
@@ -1334,6 +1341,7 @@ COMMON_ITEM_LIST_TYPE = {
     CHAR_INFO_TACTICAL_ITEM = "CharInfoTactical",
     EQUIP_TECH_EQUIP_ENHANCE = "EquipTechEquipEnhance",
     EQUIP_TECH_EQUIP_ENHANCE_MATERIALS = "EquipTechEquipEnhanceMaterials",
+    WEAPON_GEM_MATERIAL = "WeaponGemMaterial",
 }
 
 ITEM_BG_TYPE_COLORS = {
@@ -1545,6 +1553,7 @@ SPACESHIP_SUMMON_MASK_FADE_WAIT = 2
 
 COMMON_UI_DRAG_MIN_SQR_DIST = 0.1
 CHAR_PHOTO_POTENTIAL_LEVELS = { 1, 3, 5 }
+CHAR_POTENTIAL_EFFECT_RARITY = 6
 
 
 INVENTORY_AREA_ITEM_MOVE_TYPE = {
@@ -1558,7 +1567,24 @@ INVENTORY_AREA_LAYOUT_STYLE = {
     SPLIT = 2, 
 }
 
+
+
+
+GameSettingItemState = {
+    Normal = "Normal",
+    Disabled = "Disabled",
+}
+
+GameSettingChangeReason = {
+    Default = 1,
+    Gamepad = 2,
+}
+
+
+
+
 INPUT_DEVICE_CHANGE_MASK_TIME = 0.3
+INPUT_DEVICE_CHANGE_WITH_RECOVER_MASK_TIME = 0
 
 
 DISABLED_USE_ITEM_ID_IN_TOP_VIEW = {
@@ -1589,4 +1615,22 @@ ITEM_BAG_QUICK_STASH_USEFUL_ITEMS = {
     ["item_fbottle_ironenr_xiranite"] = true,
     ["item_fbottle_copper_water"] = true,
     ["item_fbottle_copper_xiranite"] = true,
+
+    
+    ["item_fbottle_glass_xiranite_enr"] = true,
+    ["item_fbottle_glassenr_xiranite_enr"] = true,
+    ["item_fbottle_iron_xiranite_enr"] = true,
+    ["item_fbottle_ironenr_xiranite_enr"] = true,
+    ["item_fbottle_copper_xiranite_enr"] = true,
+    ["item_fbottle_copperenr_water"] = true,
+    ["item_fbottle_copperenr_xiranite"] = true,
+    ["item_fbottle_copperenr_xiranite_enr"] = true,
+}
+
+UI_RESTORE_PHASE_BLACKLIST = {
+    ["CharFormation"] = true,
+    ["Map"] = true,
+    ["RegionMap"] = true,
+    ["Watch"] = true,
+    ["Dialog"] = true,
 }

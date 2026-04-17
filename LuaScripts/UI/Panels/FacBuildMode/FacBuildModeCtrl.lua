@@ -212,6 +212,8 @@ FacBuildModeCtrl.m_rpgBuildBindingGroupId = HL.Field(HL.Number) << -1
 
 FacBuildModeCtrl.m_topViewBuildBindingGroupId = HL.Field(HL.Number) << -1
 
+FacBuildModeCtrl.s_radioTagHandle = HL.StaticField(HL.Any)
+
 
 
 
@@ -664,6 +666,8 @@ FacBuildModeCtrl._EnterMode = HL.StaticMethod(HL.Table, HL.Number) << function(a
         return
     end
 
+    
+    FacBuildModeCtrl.s_radioTagHandle = GameInstance.player.globalTagsSystem:AddGlobalTag(CS.Beyond.Gameplay.GlobalTagDefine.notStopRadioTags)
     Notify(MessageConst.TOGGLE_IN_MAIN_HUD_STATE, { key = "facBuildMode", isInMainHud = false })
 
     FacBuildModeCtrl._BeforeEnterBuildMode(args.skipMainHudAnim or false)
@@ -672,7 +676,14 @@ FacBuildModeCtrl._EnterMode = HL.StaticMethod(HL.Table, HL.Number) << function(a
         if GameInstance.player.systemActionConflictManager.curProcessingSystemAction ~= Const.FacBuildSystemActionConflictName then
             
             UIManager:RecoverScreen(key)
+
             Notify(MessageConst.TOGGLE_IN_MAIN_HUD_STATE, { key = "facBuildMode", isInMainHud = true })
+            if FacBuildModeCtrl.s_radioTagHandle then
+                
+                FacBuildModeCtrl.s_radioTagHandle:RemoveTag()
+                FacBuildModeCtrl.s_radioTagHandle = nil
+            end
+
             Notify(MessageConst.ON_BUILD_MODE_CHANGE, FacConst.FAC_BUILD_MODE.Normal)
             return
         end
@@ -723,6 +734,10 @@ end
 
 
 FacBuildModeCtrl.EnterBuildingMode = HL.StaticMethod(HL.Table) << function(args)
+    if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacMode) then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_PLACE_BUILDING_LOCKED)
+        return
+    end
     FacBuildModeCtrl._EnterMode(args, FacConst.FAC_BUILD_MODE.Building)
 end
 
@@ -1236,7 +1251,13 @@ FacBuildModeCtrl._ExitMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, ski
     local exitAct = function()
         self:Hide()
         self.m_hideKey = UIManager:RecoverScreen(self.m_hideKey)
+
         Notify(MessageConst.TOGGLE_IN_MAIN_HUD_STATE, { key = "facBuildMode", isInMainHud = true })
+        if FacBuildModeCtrl.s_radioTagHandle then
+            
+            FacBuildModeCtrl.s_radioTagHandle:RemoveTag()
+            FacBuildModeCtrl.s_radioTagHandle = nil
+        end
 
         if onExit then
             onExit()
@@ -1555,6 +1576,13 @@ FacBuildModeCtrl._GetBuildingCheckResultHint = HL.Method(HL.Userdata).Return(HL.
                     end
                 end
             end
+        elseif checkResult.totalCountLimitedBuildingTypes and checkResult.totalCountLimitedBuildingTypes.Count > 0 then
+            local buildingType = checkResult.totalCountLimitedBuildingTypes[0]
+            local buildingTypeText = Language.LUA_FAC_BATCH_MODE_BUILDING_TYPE_TEXT_DEFAULT
+            if buildingType == GEnums.FacBuildingType.Decorate:GetHashCode() then
+                buildingTypeText = Language.LUA_FAC_BATCH_MODE_BUILDING_TYPE_TEXT_DECORATE
+            end
+            hint = string.format(Language.LUA_FAC_BUILD_MODE_BUILDING_TYPE_COUNT_LIMITED_FORMAT, buildingTypeText)
         elseif checkResult.bandwidthLimited then
             hint = Language.LUA_FAC_BUILD_MODE_ON_BANDWIDTH_MAX
         elseif checkResult.mainRegionLimited then
@@ -1603,6 +1631,20 @@ FacBuildModeCtrl._GetBuildingCheckResultHint = HL.Method(HL.Userdata).Return(HL.
             hint = Language.LUA_FAC_BUILD_MODE_BLOCK_WITH_EROSION
         elseif checkResult.pumpReachLiquidLimited then
             hint = Language.LUA_FAC_BUILD_MODE_PUMP_MUST_REACH_LIQUID
+        elseif checkResult.pumpLiquidTypeNotMatched then
+            local currentBuildingMode = GameInstance.remoteFactoryManager.interact.currentBuildingMode
+            local liquidItemId = currentBuildingMode and currentBuildingMode.pumpingLiquidItemId or nil
+            if self.m_buildingId and not self.m_buildingId:isEmpty() and liquidItemId and not string.isEmpty(liquidItemId) then
+                local buildingData = GameInstance.remoteFactoryManager.staticData:QueryBuildingData(self.m_buildingId)
+                local itemData = Tables.itemTable[liquidItemId]
+                if buildingData and itemData then
+                    hint = string.format(Language.LUA_FAC_BUILD_MODE_PUMP_LIQUID_TYPE_NOT_MATCH_FORMAT, buildingData.name, itemData.name)
+                else
+                    hint = Language.LUA_FAC_BUILD_MODE_PUMP_LIQUID_TYPE_NOT_MATCH_DEFAULT
+                end
+            else
+                hint = Language.LUA_FAC_BUILD_MODE_PUMP_LIQUID_TYPE_NOT_MATCH_DEFAULT
+            end
         elseif checkResult.dumpReachLiquidLimited then
             hint = Language.LUA_FAC_BUILD_MODE_DUMP_MUST_REACH_LIQUID
         elseif checkResult.noSoilForWaterSpray then

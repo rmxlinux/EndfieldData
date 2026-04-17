@@ -16,6 +16,9 @@ local PANEL_ID = PanelId.GachaOptional
 
 
 
+
+
+
 GachaOptionalCtrl = HL.Class('GachaOptionalCtrl', uiCtrl.UICtrl)
 
 
@@ -28,8 +31,12 @@ local csGachaSystem = GameInstance.player.gacha
 
 GachaOptionalCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_GACHA_POOL_ROLE_DATA_CHANGED] = 'OnGachaPoolRoleDataChanged',
+    [MessageConst.ON_SC_OPEN_USABLE_ITEM_CHEST] = 'OnSCOpenInventoryChest',
 }
 
+
+
+local CharBag = GameInstance.player.charBag
 
 
 GachaOptionalCtrl.m_info = HL.Field(HL.Table)
@@ -72,14 +79,15 @@ end
 
 GachaOptionalCtrl._InitData = HL.Method(HL.Table) << function(self, arg)
     self.m_info = arg
+    if self.m_info.isFromChest then
+        self:_InitSelCharChestData()
+    end
     
     local charInfos = {}
-    
-    local charBag = GameInstance.player.charBag
     self.m_info.charInfos = charInfos
     for _, charId in pairs(self.m_info.charIds) do
         
-        local bagCharInfo = charBag:GetCharInfoByTemplateId(charId, GEnums.CharType.Default)
+        local bagCharInfo = CharBag:GetCharInfoByTemplateId(charId, GEnums.CharType.Default)
         local isOwned = bagCharInfo ~= nil
         local potentialLevel = 0
         local isPotentialMax = false
@@ -118,6 +126,28 @@ end
 
 
 
+GachaOptionalCtrl._InitSelCharChestData = HL.Method() << function(self)
+    local localChestItemId = self.m_info.chestItemId
+    local getUsableItemChestInfo, usableItemChestCfg = Tables.usableItemChestTable:TryGetValue(localChestItemId)
+    if not getUsableItemChestInfo then
+        logger.error("未成功获取到可使用物品箱数据" .. self.m_itemId)
+        return
+    end
+    
+    local charIds = {}
+    local chestRewardIdMap = {}
+    for i, rewardId in pairs(usableItemChestCfg.rewardIdList) do
+        local rewardItems = UIUtils.getRewardItems(rewardId)
+        local charId = rewardItems[1].id
+        table.insert(charIds, charId)
+        chestRewardIdMap[charId] = rewardId
+    end
+    self.m_info.charIds = charIds
+    self.m_info.chestRewardIdMap = chestRewardIdMap
+end
+
+
+
 
 
 GachaOptionalCtrl._InitUI = HL.Method() << function(self)
@@ -130,8 +160,16 @@ GachaOptionalCtrl._InitUI = HL.Method() << function(self)
         local content = string.format(Language.LUA_GACHA_STANDARD_CHOICE_PACK_CONFIRM_INVITE, charInfo.name)
         Notify(MessageConst.SHOW_POP_UP, {
             content = content,
+            warningContent = charInfo.isPotentialMax and Language.LUA_GACHA_CHAR_POPUP_WARNING_CONTENT_POTENTIAL_MAX or nil,
             onConfirm = function()
-                csGachaSystem:SendSelectChoicePackReq(self.m_info.poolId, charId)
+                if self.m_info.isFromChest then
+                    local rewardIdList = {
+                        [1] = self.m_info.chestRewardIdMap[charId],
+                    }
+                    GameInstance.player.inventory:OpenUsableItemChest(self.m_info.chestItemId, 1, rewardIdList)
+                else
+                    csGachaSystem:SendSelectChoicePackReq(self.m_info.poolId, charId)
+                end
                 self.m_waitResult = true
             end,
         })
@@ -146,8 +184,12 @@ GachaOptionalCtrl._RefreshAllUI = HL.Method() << function(self)
     self.m_optionalCellListCache:Refresh(#self.m_info.charInfos, function(cell, luaIndex)
         self:_RefreshOptionalCell(cell, luaIndex)
     end)
-    self.view.remainInvitableNumTxt.text = self.m_info.remainChoicePackProgress
-    self.view.invitableStateCtrl:SetState(self.m_info.remainChoicePackProgress <= 0 and "Invitable" or "NotInvitable")
+    if self.m_info.isFromChest then
+        self.view.invitableStateCtrl:SetState("Invitable")
+    else
+        self.view.remainInvitableNumTxt.text = self.m_info.remainChoicePackProgress
+        self.view.invitableStateCtrl:SetState(self.m_info.remainChoicePackProgress <= 0 and "Invitable" or "NotInvitable")
+    end
 end
 
 
@@ -186,13 +228,13 @@ GachaOptionalCtrl._RefreshOptionalCell = HL.Method(HL.Any, HL.Number) << functio
         
         local charInstIdList = {}
         for _, id in ipairs(ids) do
-            local info = GameInstance.player.charBag:CreateClientInitialGachaPoolChar(id)
+            local info = CharBag:CreateClientInitialGachaPoolChar(id)
             table.insert(charInstIdList, info.instId)
         end
         
         local maxCharInstIdList = {}
         for _, id in ipairs(ids) do
-            local info = GameInstance.player.charBag:CreateClientPerfectGachaPoolCharInfo(id)
+            local info = CharBag:CreateClientPerfectGachaPoolCharInfo(id)
             table.insert(maxCharInstIdList, info.instId)
         end
         CharInfoUtils.openCharInfoBestWay({
@@ -204,7 +246,7 @@ GachaOptionalCtrl._RefreshOptionalCell = HL.Method(HL.Any, HL.Number) << functio
                 isShowPreview = true,
             },
             onClose = function()
-                GameInstance.player.charBag:ClearAllClientCharAndItemData()
+                CharBag:ClearAllClientCharAndItemData()
             end,
         })
     end)
@@ -230,6 +272,54 @@ end
 
 
 GachaOptionalCtrl.OnGachaPoolRoleDataChanged = HL.Method() << function(self)
+    self:_ReceiveRewardComplete()
+end
+
+
+
+
+GachaOptionalCtrl.OnSCOpenInventoryChest = HL.Method(HL.Table) << function(self, args)
+    local rewardPack = GameInstance.player.inventory:ConsumeLatestRewardPackOfType(CS.Beyond.GEnums.RewardSourceType.ItemCase)
+    local items = {}
+    local chars
+    if rewardPack and rewardPack.rewardSourceType == CS.Beyond.GEnums.RewardSourceType.ItemCase then
+        for _, itemBundle in pairs(rewardPack.itemBundleList) do
+            local _, itemData = Tables.itemTable:TryGetValue(itemBundle.id)
+            if itemData then
+                local putInside = false
+                for i = 1, #items do
+                    if items[i].id == itemData.id and itemBundle.instId == 0 then
+                        items[i].count = items[i].count + itemBundle.count
+                        putInside = true
+                        break
+                    end
+                end
+
+                if not putInside then
+                    table.insert(items, {id = itemBundle.id,
+                                         count = itemBundle.count,
+                                         instData = itemBundle.instData,
+                                         instId = itemBundle.instId,
+                                         rarity = itemData.rarity,
+                                         type = itemData.type:ToInt()})
+                end
+            end
+        end
+        table.sort(items, Utils.genSortFunction({"rarity", "type", "id"}, false))
+        
+        chars = rewardPack.chars
+    end
+    local rewardPanelArgs = {}
+    rewardPanelArgs.items = items
+    rewardPanelArgs.chars = chars
+    Notify(MessageConst.SHOW_SYSTEM_REWARDS, rewardPanelArgs)
+    
+    self:_ReceiveRewardComplete()
+end
+
+
+
+GachaOptionalCtrl._ReceiveRewardComplete = HL.Method() << function(self)
     if self.m_waitResult then
         self:Close()
         if self.m_info.onSuccess then

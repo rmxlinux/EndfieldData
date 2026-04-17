@@ -19,8 +19,6 @@ local PHASE_ID = PhaseId.RegionMap
 
 
 
-
-
 PhaseRegionMap = HL.Class('PhaseRegionMap', phaseBase.PhaseBase)
 local Panels = { PanelId.RegionMap, PanelId.RegionMap3D }
 
@@ -121,6 +119,24 @@ end
 
 PhaseRegionMap._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if not fastMode then
+        if self.m_RegionMap3DPanel and self.m_RegionMap3DPanel.uiCtrl then
+            local wrapper = self.m_RegionMap3DPanel.uiCtrl.animationWrapper
+            if wrapper and wrapper.curState == CS.Beyond.UI.UIConst.AnimationState.In then
+                
+                
+                
+                
+                
+                
+
+                
+                
+                
+                
+                
+                wrapper:ClearTween(false)
+            end
+        end
         Notify(MessageConst.SHOW_BLOCK_GLITCH_TRANSITION)
     end
     Notify(MessageConst.HIDE_COMMON_HOVER_TIP)

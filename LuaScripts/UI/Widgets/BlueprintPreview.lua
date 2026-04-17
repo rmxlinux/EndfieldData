@@ -50,6 +50,7 @@ local CommonCache = require_ex('Common/Utils/CommonCache')
 
 
 
+
 BlueprintPreview = HL.Class('BlueprintPreview', UIWidgetBase)
 
 
@@ -584,6 +585,8 @@ BlueprintPreview._InitChangeIconNode = HL.Method() << function(self)
     node.autoCloseArea.onTriggerAutoClose:AddListener(function()
         self:_HideChangeIconNode()
     end)
+    local ctrl = self:GetUICtrl()
+    node.transform:SetParent(ctrl.view.transform.transform) 
 end
 
 
@@ -676,6 +679,8 @@ BlueprintPreview._ShowChangeIconNode = HL.Method(HL.Number) << function(self, ta
             iconCell.rarityLine.color = color
             iconCell.rarityLight.color = color
         end
+        self:_UpdateAbnormalType(iconCell, templateId, iconInfo.itemId)
+
         iconCell.button.onClick:RemoveAllListeners()
         iconCell.button.onClick:AddListener(function()
             self:_OnClickIcon(index)
@@ -686,6 +691,8 @@ BlueprintPreview._ShowChangeIconNode = HL.Method(HL.Number) << function(self, ta
             selectedCell = iconCell
         end
         iconCell.stateController:SetState(isSelected and "Selected" or "Normal")
+
+        iconCell.gameObject.name = "Icon_" .. iconInfo.itemId
     end)
     cell.selectedNode.gameObject:SetActive(true)
 
@@ -699,15 +706,20 @@ BlueprintPreview._ShowChangeIconNode = HL.Method(HL.Number) << function(self, ta
             })
     node.autoCloseArea.tmpSafeArea = cell.transform
 
+    LayoutRebuilder.ForceRebuildLayoutImmediate(node.scorllRect.content)
 
     if DeviceInfo.usingController then
+        self.mouseShow = false
+        self.view.leftBottomNode.gameObject:SetActive(false)
+        self:_CancelHover()
+
+        node.selectableNaviGroup.useDefaultTargetOnFocus = false
+        node.selectableNaviGroup:SetLayerSelectedTarget(selectedCell.button, false)
         node.selectableNaviGroup:ManuallyFocus()
-        if selectedCell then
-            self.mouseShow = false
-            self.view.leftBottomNode.gameObject:SetActive(false)
-            self:_CancelHover()
-            UIUtils.setAsNaviTarget(selectedCell.button)
-        end
+
+        node.scorllRect:AutoScrollToRectTransform(selectedCell.gameObject.transform, true)
+    else
+        node.scorllRect:AutoScrollToRectTransform(selectedCell.gameObject.transform, true)
     end
 end
 
@@ -800,15 +812,29 @@ BlueprintPreview._UpdateTargetIcon = HL.Method(HL.Number) << function(self, targ
         node.itemIcon:InitItemIcon(itemId)
         local color = UIUtils.getItemRarityColor(rarity)
         node.rarityIcon.color = color
-        local isAbnormal
-        if Utils.isInBlackbox() then
-            isAbnormal = false
-        else
-            isAbnormal = self.m_bpAbnormalIconHelper and self.m_bpAbnormalIconHelper.IsAbnormal(info.entry.templateId, itemId)
-        end
-        node.abnormalNode.gameObject:SetActive(isAbnormal)
+        self:_UpdateAbnormalType(node, info.entry.templateId, itemId)
     end
     node.changeHint.gameObject:SetActive(info.canChangeIcon)
+end
+
+
+
+
+
+
+BlueprintPreview._UpdateAbnormalType = HL.Method(HL.Any, HL.String, HL.Opt(HL.String)) << function(self, node, machineId, itemId)
+    local iconAbnormalType
+    if Utils.isInBlackbox() or not self.m_bpAbnormalIconHelper then
+        iconAbnormalType = FacConst.FAC_BP_ABNORMAL_ICON_TYPE.Normal
+    elseif string.isEmpty(itemId) then
+        iconAbnormalType = FacConst.FAC_BP_ABNORMAL_ICON_TYPE.Normal
+    else
+        iconAbnormalType = self.m_bpAbnormalIconHelper.GetAbnormalType(machineId, itemId)
+    end
+    node.lockedNode.gameObject:SetActive(iconAbnormalType == FacConst.FAC_BP_ABNORMAL_ICON_TYPE.Locked)
+    node.timeLimitedExpiredNode.gameObject:SetActive(iconAbnormalType == FacConst.FAC_BP_ABNORMAL_ICON_TYPE.TimeLimitedExpired)
+    node.timeLimitedActiveNode.gameObject:SetActive(iconAbnormalType == FacConst.FAC_BP_ABNORMAL_ICON_TYPE.TimeLimitedActive)
+    FactoryUtils.setTimeLimitedItemTagColor(node.timeLimitedColorTag, itemId)
 end
 
 

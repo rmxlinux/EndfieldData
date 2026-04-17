@@ -81,6 +81,8 @@ local PANEL_ID = PanelId.ItemTips
 
 
 
+
+
 ItemTipsCtrl = HL.Class('ItemTipsCtrl', uiCtrl.UICtrl)
 
 local LIQUID_EMPTY_CAPACITY_TEXT_ID = "LUA_ITEM_TIPS_LIQUID_INFO_EMPTY_CAPACITY"
@@ -102,7 +104,8 @@ ItemTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.HIDE_ITEM_TIPS] = 'HideItemTips',
     [MessageConst.TOGGLE_ITEM_TIPS_AUTO_CLOSE] = 'ToggleItemTipsAutoClose',
     [MessageConst.ON_ITEM_COUNT_CHANGED] = 'OnItemCountChanged',
-    [MessageConst.ON_SYSTEM_DISPLAY_SIZE_CHANGED] = 'OnSystemSizeChange'
+    [MessageConst.ON_SYSTEM_DISPLAY_SIZE_CHANGED] = 'OnSystemSizeChange',
+    [MessageConst.REFRESH_CONTROLLER_HINT] = 'RefreshControllerHint',
 }
 
 
@@ -152,6 +155,9 @@ ItemTipsCtrl.m_controllerSyncPosCor = HL.Field(HL.Thread)
 
 
 ItemTipsCtrl.m_lockToggleBindingId = HL.Field(HL.Number) << -1
+
+
+ItemTipsCtrl.m_isControllerHintBarInit = HL.Field(HL.Boolean) << false
 
 
 
@@ -226,9 +232,13 @@ ItemTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.view.lockToggle.view.toggle.isOn = not self.view.lockToggle.view.toggle.isOn
     end)
     self.view.itemFlagNavGroup.onIsFocusedChange:AddListener(function(isTopLayer)
+        if isTopLayer then
+            self.view.detailScroll.verticalNormalizedPosition = 1
+        end
         self.view.itemFlagControllerFocusHintNode.gameObject:SetActive(not isTopLayer)
     end)
 end
+
 
 
 
@@ -318,6 +328,16 @@ ItemTipsCtrl.HideItemTips = HL.Method() << function(self)
     if cachedOnClose then
         cachedOnClose()
     end
+end
+
+
+
+ItemTipsCtrl.RefreshControllerHint = HL.Method() << function(self)
+    if not DeviceInfo.usingController or not self.m_isControllerHintBarInit or UIManager:IsHide(PANEL_ID) or self.m_isTipsClosing then
+        return
+    end
+
+    self.view.controllerHintBarCell:RefreshContentOnly()
 end
 
 
@@ -429,6 +449,7 @@ ItemTipsCtrl._RefreshControllerKeyHint = HL.Method() << function(self)
         end
     end
     self.view.controllerHintBarCell:InitControllerHintBarCell({ groupIds = groupIds, }, true)
+    self.m_isControllerHintBarInit = true
 end
 
 
@@ -511,7 +532,8 @@ ItemTipsCtrl._RefreshContent = HL.Method(HL.String, HL.Number) << function(self,
     self.view.iconImageBlur:OnChangeSprite()
 
     self.view.itemObtainWays.gameObject:SetActive(true)
-    self.view.itemObtainWays:InitItemObtainWays(itemId, instId, nil, nil, self.m_args.onBeforeJump)
+    self.view.itemObtainWays:InitItemObtainWays(itemId, instId, nil, nil,
+        self.m_args.onBeforeJump, self.m_args.jumpExtraArgs)
 
     self.view.stateCtrl:SetState("default")
     self.view.itemDescNode:InitItemDescNode(itemId)
@@ -1315,7 +1337,7 @@ ItemTipsCtrl._JumpToBusinessCardTopic = HL.Method(HL.String, HL.Number) << funct
     
     for topicId , topicCfg in pairs(Tables.businessCardTopicTable) do
         if topicCfg.itemId == itemId then
-            UIManager:Open(PanelId.FriendThemeChange, { selectId = topicId })
+            PhaseManager:GoToPhase(PhaseId.FriendThemeChange, { selectId = topicId })
             return
         end
     end
@@ -1411,7 +1433,7 @@ end
 
 
 
-if BEYOND_DEBUG then
+if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
     
     
     ItemTipsCtrl._InitTipsDebugBtn = HL.Method() << function(self)
@@ -1420,37 +1442,46 @@ if BEYOND_DEBUG then
             Unity.GUIUtility.systemCopyBuffer = self.m_itemId
             Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 已复制ID %s", self.m_itemId))
         end)
-        self.view.countNode.debugAddButton.gameObject:SetActive(true)
-        self.view.countNode.debugAddButton.onClick:AddListener(function()
-            local itemData = Tables.itemTable[self.m_itemId]
-            local isMoney = GameInstance.player.inventory:IsMoneyType(itemData.type)
-            if isMoney then
-                local msg = CS.Proto.CS_GM_COMMAND()
-                msg.Command = "AddMoney " .. self.m_itemId .. " 1000000"
-                CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
-                Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 支付宝到账 一百万%s", self.m_data.name))
-            else
-                local msg = CS.Proto.CS_GM_COMMAND()
-                msg.Command = "AddItemToItemBagSystem " .. self.m_itemId .. " 50"
-                CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
-                Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 已添加道具 %s 50个", self.m_data.name))
+        self.view.debugIDButton.onLongPress:AddListener(function()
+            if self.m_instId <= 0 then
+                return
             end
+            Unity.GUIUtility.systemCopyBuffer = tostring(self.m_instId)
+            Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 已复制InstID %s", tostring(self.m_instId)))
         end)
-        self.view.countNode.debugAddButton.onLongPress:AddListener(function()
-            local itemData = Tables.itemTable[self.m_itemId]
-            local isMoney = GameInstance.player.inventory:IsMoneyType(itemData.type)
-            if isMoney then
-                local msg = CS.Proto.CS_GM_COMMAND()
-                msg.Command = "AddMoney " .. self.m_itemId .. " 1"
-                CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
-                Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 支付宝到账 1 %s", self.m_data.name))
-            else
-                local msg = CS.Proto.CS_GM_COMMAND()
-                msg.Command = "AddItemToItemBagSystem " .. self.m_itemId .. " 1"
-                CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
-                Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 已添加道具 %s 1", self.m_data.name))
-            end
-        end)
+        if BEYOND_DEBUG then
+            self.view.countNode.debugAddButton.gameObject:SetActive(true)
+            self.view.countNode.debugAddButton.onClick:AddListener(function()
+                local itemData = Tables.itemTable[self.m_itemId]
+                local isMoney = GameInstance.player.inventory:IsMoneyType(itemData.type)
+                if isMoney then
+                    local msg = CS.Proto.CS_GM_COMMAND()
+                    msg.Command = "AddMoney " .. self.m_itemId .. " 1000000"
+                    CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
+                    Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 支付宝到账 一百万%s", self.m_data.name))
+                else
+                    local msg = CS.Proto.CS_GM_COMMAND()
+                    msg.Command = "AddItemToItemBagSystem " .. self.m_itemId .. " 50"
+                    CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
+                    Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 已添加道具 %s 50个", self.m_data.name))
+                end
+            end)
+            self.view.countNode.debugAddButton.onLongPress:AddListener(function()
+                local itemData = Tables.itemTable[self.m_itemId]
+                local isMoney = GameInstance.player.inventory:IsMoneyType(itemData.type)
+                if isMoney then
+                    local msg = CS.Proto.CS_GM_COMMAND()
+                    msg.Command = "AddMoney " .. self.m_itemId .. " 1"
+                    CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
+                    Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 支付宝到账 1 %s", self.m_data.name))
+                else
+                    local msg = CS.Proto.CS_GM_COMMAND()
+                    msg.Command = "AddItemToItemBagSystem " .. self.m_itemId .. " 1"
+                    CS.Beyond.Network.NetBus.instance.defaultSender:Send(msg)
+                    Notify(MessageConst.SHOW_TOAST, string.format("DEBUG: 已添加道具 %s 1", self.m_data.name))
+                end
+            end)
+        end
     end
 
     

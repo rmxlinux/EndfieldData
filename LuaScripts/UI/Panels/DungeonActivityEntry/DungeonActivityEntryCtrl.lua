@@ -100,6 +100,31 @@ DungeonActivityEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_activityId = arg.activityId
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 
+    local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
+    if not activity then
+        
+        self:_StartCoroutine(function()
+            coroutine.step()
+            coroutine.step()
+            coroutine.yield()
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_ACTIVITY_FORBIDDEN)
+            Notify(MessageConst.SHOW_POP_UP, {
+                content = Language.LUA_ACTIVITY_MODIFY_QUIT_TO_MENU,
+                hideCancel = true,
+                onConfirm = function()
+                    PhaseManager:ExitPhaseFastTo(PhaseId.Level, true)
+                end
+            })
+            local isOpen = self.m_fromDialog
+            if isOpen then
+                self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 1 })
+            else
+                PhaseManager:PopPhase(PHASE_ID)
+            end
+        end)
+        return
+    end
+
     self.m_genCells = UIUtils.genCellCache(self.view.dungeonSurvivalSelectCell)
     self.m_rewardCellCache = UIUtils.genCellCache(self.view.rewardCell)
 
@@ -339,21 +364,7 @@ DungeonActivityEntryCtrl.UpdateInfo = HL.Method() << function(self)
             self.view.timeTxt.text = UIUtils.getLeftTime(deltaTime)
             return
         end
-        
-        local conditionCfg = Tables.activityConditionalMultiStageConditionTable:GetValue(activityDungeonStateCfg.activityStage)
-        local flags = stageData.Conditions.Flags
-        local hasUncompleted = false
-        if conditionCfg and conditionCfg.conditionList then
-            for i = 0, conditionCfg.conditionList.Count - 1 do
-                local condition = conditionCfg.conditionList[i]
-                local conditionSuccess ,isComplete = flags:TryGetValue(condition.conditionId)
-                if not (conditionSuccess and isComplete) then
-                    hasUncompleted = true
-                    break
-                end
-            end
-        end
-        if not hasUncompleted then
+        if not GameInstance.player.activitySystem:HasUncompletedNonTimeConditions(activityDungeonStateCfg.activityStage) then
             self.view.timeTxt.text = UIUtils.getLeftTime(0)
             return
         end

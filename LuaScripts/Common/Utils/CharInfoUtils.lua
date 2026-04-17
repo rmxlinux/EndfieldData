@@ -800,8 +800,7 @@ function CharInfoUtils.getAllCharInfoList()
     local playerChars = charBag.charInfos
 
     for _, charInfo in cs_pairs(playerChars) do
-        local isClientOnly = GameUtil.IsRuntimeClientId(charInfo.instId)
-        if not isClientOnly then
+        if CharInfoUtils.IsServerDefaultChar(charInfo) then
             local templateId = charInfo.templateId
             local charData = CharInfoUtils.getCharTableData(templateId)
 
@@ -856,8 +855,7 @@ function CharInfoUtils.getCurScopeCharInfoList(csTeamIndex)
         
         local charInfo = scopeCharList[CSIndex(i)]
         local instId = charInfo.instId
-        local isClientOnly = GameUtil.IsRuntimeClientId(instId)
-        if (not isClientOnly) and (CharInfoUtils.checkCharInTeam(instId, LuaIndex(csTeamIndex)) <= 0) then
+        if CharInfoUtils.IsServerDefaultChar(charInfo) and (CharInfoUtils.checkCharInTeam(instId, LuaIndex(csTeamIndex)) <= 0) then
             local templateId = charInfo.templateId
             local charCfg = Tables.characterTable:GetValue(templateId)
 
@@ -915,8 +913,7 @@ function CharInfoUtils.getCharInfoList(csTeamIndex)
     end
 
     for instId, charInfo in pairs(playerChars) do
-        local isClientOnly = GameUtil.IsRuntimeClientId(instId)
-        if (not isClientOnly) and (CharInfoUtils.checkCharInTeam(instId, LuaIndex(csTeamIndex)) <= 0) then
+        if CharInfoUtils.IsServerDefaultChar(charInfo) and (CharInfoUtils.checkCharInTeam(instId, LuaIndex(csTeamIndex)) <= 0) then
             local templateId = charInfo.templateId
             local charCfg = Tables.characterTable:GetValue(templateId)
 
@@ -1028,9 +1025,8 @@ function CharInfoUtils.getCharInfoListWithLockedTeamData(lockedTeamData)
 
 
     for instId, charInfo in pairs(playerChars) do
-        local isClientOnly = GameUtil.IsRuntimeClientId(instId)
         local isInLockedTeam, isLock, isReplaceable = CharInfoUtils.checkCharInLockedTeam(charInfo, lockedTeamData)
-        if not isInLockedTeam and not isClientOnly then
+        if not isInLockedTeam and CharInfoUtils.IsServerDefaultChar(charInfo) then
             local templateId = charInfo.templateId
             local charData = CharInfoUtils.getCharTableData(templateId)
 
@@ -1121,8 +1117,7 @@ function CharInfoUtils.getServerEndmin()
     local charBag = GameInstance.player.charBag
     local playerChars = charBag.charInfos
     for instId, charInfo in pairs(playerChars) do
-        local isClientOnly = GameUtil.IsRuntimeClientId(instId)
-        if (not isClientOnly) and CharInfoUtils.isEndmin(charInfo.templateId) then
+        if CharInfoUtils.IsServerDefaultChar(charInfo) and CharInfoUtils.isEndmin(charInfo.templateId) then
             return{
                 instId = instId,
                 templateId = charInfo.templateId
@@ -1236,6 +1231,17 @@ end
 
 
 
+function CharInfoUtils.IsServerDefaultChar(csCharInfo)
+    local isClientOnly = GameUtil.IsRuntimeClientId(csCharInfo.instId)
+    if not isClientOnly and csCharInfo.charType == GEnums.CharType.Default then
+        return true
+    end
+    return false
+end
+
+
+
+
 
 function CharInfoUtils.getCharProfessionIconName(profession, isSmall)
     local iconName = ''
@@ -1247,6 +1253,14 @@ function CharInfoUtils.getCharProfessionIconName(profession, isSmall)
         end
     end
     return iconName
+end
+
+function CharInfoUtils.isCharMaxPotential(charInstId)
+    local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
+    if charInfo and charInfo.potentialLevel >= UIConst.CHAR_MAX_POTENTIAL then
+        return true
+    end
+    return false
 end
 
 

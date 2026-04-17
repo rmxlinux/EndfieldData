@@ -40,6 +40,7 @@ local PANEL_ID = PanelId.StaminaPopUp
 
 
 
+
 StaminaPopUpCtrl = HL.Class('StaminaPopUpCtrl', uiCtrl.UICtrl)
 
 
@@ -444,8 +445,15 @@ StaminaPopUpCtrl._DoClose = HL.Method() << function(self)
         return
     end
     self.m_isClosing = true
-    Notify(MessageConst.HIDE_COMMON_HOVER_TIP)
+    Notify(MessageConst.HIDE_COMMON_HOVER_TIP, { noAnimation = true })
     self:PlayAnimationOutWithCallback(function()
+        
+        
+        local cell = self.m_genItemCells:Get(self.m_curSelItemIndex)
+        if cell then
+            cell.view.item.view.button.interactable = false
+        end
+        
         if self.m_staminaCloseFun ~= nil then
             self.m_staminaCloseFun()
         end
@@ -679,7 +687,9 @@ StaminaPopUpCtrl._RefreshUIExchangeCostItem = HL.Method() << function(self)
     
     self:_InitItemScrollController()
     
-    InputManagerInst.controllerNaviManager:SetTarget(nil)   
+    if #self.m_invItemInfoList ~= 0 then
+        InputManagerInst.controllerNaviManager:SetTarget(nil)   
+    end
     self.m_genItemCells:Refresh(#self.m_invItemInfoList, function(cell, luaIndex)
         local info = self.m_invItemInfoList[luaIndex]
         local args = {
@@ -689,7 +699,10 @@ StaminaPopUpCtrl._RefreshUIExchangeCostItem = HL.Method() << function(self)
             bindInputChangeNum = true,
             onNumChanged = function(curNum)
                 self.m_invItemInfoList[luaIndex].selectCount = curNum
-                self:_RefreshUIExchangeCostItem()
+                cell:_UpdateCount(curNum)
+                self:_CalculateExchangeStaminaOfItemList()
+                self:_RefreshUIExchangeCostItemStaminaState()
+                self:_RefreshUICurrentAndTargetStamina()
             end,
         }
         cell:InitItemCellForSelect(args)
@@ -706,6 +719,13 @@ StaminaPopUpCtrl._RefreshUIExchangeCostItem = HL.Method() << function(self)
         end
     end)
     
+    self:_RefreshUIExchangeCostItemStaminaState()
+    self:_RefreshUICurrentAndTargetStamina()
+end
+
+
+
+StaminaPopUpCtrl._RefreshUIExchangeCostItemStaminaState = HL.Method() << function(self)
     if self.m_totalExchangeStamina <= 0 then
         self.view.buttonOperateState:SetState("NotSelectItemState")
     else
@@ -713,8 +733,6 @@ StaminaPopUpCtrl._RefreshUIExchangeCostItem = HL.Method() << function(self)
         local formatString = Language.LUA_STAMINA_POPUP_EXCHANGE_COST_ITEM_TIP
         self.view.costItemTipTxt:SetAndResolveTextStyle(string.format(formatString, self.m_totalExchangeStamina))
     end
-    self:_RefreshUICurrentAndTargetStamina()
-
 end
 
 

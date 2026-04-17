@@ -32,6 +32,9 @@ FACTORY_BUILDING_UI_MAP = {
     [GEnums.FacBuildingType.Sign] = { "FacMarker", false },
     [GEnums.FacBuildingType.BusStart] = { "FacHongsBusSource", false },
     [GEnums.FacBuildingType.BusFree] = { "FacHongsBusSource", false },
+    [GEnums.FacBuildingType.SewageTreatPlantImport] = { "FacSewageTreatImporter", false },
+    [GEnums.FacBuildingType.SewageTreatPlantExport] = { "FacSewageTreatExporter", false },
+    [GEnums.FacBuildingType.Decorate] = { "FacDecorate", false },
 }
 
 
@@ -370,15 +373,15 @@ FLUID_LOGISTIC_ITEMS = {
 SMARTALERT_TRASNFORM_OFFSET = {
     [GEnums.FacSmartAlertType.NormalInputSingleBlocked] = { x = 0, y = -14 },
     [GEnums.FacSmartAlertType.NormalInputMultiBlocked] = { x = 0, y = -14 },
-    [GEnums.FacSmartAlertType.FluidInputSingleBlocked] = { x = 0, y = -14 },
-    [GEnums.FacSmartAlertType.FluidInputMultiBlocked] = { x = 0, y = -14 },
+    [GEnums.FacSmartAlertType.FluidInputSingleBlocked] = { x = 0, y = 0 },
+    [GEnums.FacSmartAlertType.FluidInputMultiBlocked] = { x = 0, y = 0 },
     [GEnums.FacSmartAlertType.NormalOutputMultiBlocked] = { x = 0, y = -14 },
-    [GEnums.FacSmartAlertType.FluidOutputMultiBlocked] = { x = 0, y = -14 },
+    [GEnums.FacSmartAlertType.FluidOutputMultiBlocked] = { x = 0, y = 0 },
     [GEnums.FacSmartAlertType.InputCacheFull] = { x = 0, y = -14 },
     [GEnums.FacSmartAlertType.OutputCacheFullWithoutBelt] = { x = 0, y = -14 },
     [GEnums.FacSmartAlertType.OutputCacheFullWithBelt] = { x = -110, y = -14 },
     [GEnums.FacSmartAlertType.OutputCacheFullWithoutPipe] = { x = 0, y = -14 },
-    [GEnums.FacSmartAlertType.OutputCacheFullWithPipe] = { x = -160, y = -74 },
+    [GEnums.FacSmartAlertType.OutputCacheFullWithPipe] = { x = 0, y = 0 },
     [GEnums.FacSmartAlertType.InputInvalidFormula] = { x = 0, y = -14 },
     [GEnums.FacSmartAlertType.NormalInputEmpty] = { x = 0, y = -14 },
     [GEnums.FacSmartAlertType.FluidInputEmpty] = { x = 0, y = -14 },
@@ -484,6 +487,10 @@ FAC_TOP_VIEW_IGNORE_STATE_BUILDING_IDS = {
     ["unloader_1"] = true,
 }
 
+FAC_TOP_VIEW_IGNORE_STATE_BUILDING_TYPES = {
+    [GEnums.FacBuildingType.Decorate] = true,
+}
+
 FAC_VALVE_NODE_INT_TYPES = {
     [GEnums.FCNodeType.BoxValve:GetHashCode()] = true,
     [GEnums.FCNodeType.FluidValve:GetHashCode()] = true,
@@ -533,6 +540,7 @@ FAC_BUILDING_NORMAL_STATE_CUSTOM_TEXT_ID = {
     [GEnums.FacBuildingType.FluidConsume] = "ui_fac_common_running_cleaner",            
     [GEnums.FacBuildingType.FluidPumpOut] = "ui_fac_common_running_dumper",             
     [GEnums.FacBuildingType.Battle] = "ui_fac_battle_building_on_alert",                
+    [GEnums.FacBuildingType.SewageTreatPlantImport] = "ui_fac_common_running_cleaner",  
 }
 
 FAC_NON_BUILDING_NORMAL_STATE_CUSTOM_TEXT_ID = {
@@ -565,3 +573,13 @@ FocusStateTable = {
 }
 
 FAC_BLUEPRINT_IMPORT_INPUTFIELD_MAX_LENGTH = 40
+
+FAC_BP_ABNORMAL_ICON_TYPE = {
+    Normal = 1,
+    Locked = 2,
+    TimeLimitedActive = 3,
+    TimeLimitedExpired = 4,
+}
+
+FAC_SEWAGE_TREAT_IMPORTER_BUILDING_ID = "liquid_clean_gate_1"
+FAC_SEWAGE_TREAT_EXPORTER_BUILDING_ID = "liquid_recycle_gate_1"

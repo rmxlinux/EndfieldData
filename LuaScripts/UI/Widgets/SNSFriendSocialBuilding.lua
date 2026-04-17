@@ -189,7 +189,7 @@ SNSFriendSocialBuilding._OnClickBtn = HL.Method() << function(self)
                 return 
             end
             
-            local levelConfigExisted, levelConfig = DataManager.levelConfigTable:TryGetData(levelId)
+            local levelConfigExisted, levelConfig = Utils.getLevelConfig(levelId)
             if not levelConfigExisted or not GameWorld.mapRegionManager:CheckPosInActiveMistMap(levelConfig.mapIdStr, message.sbPos) then
                 Notify(MessageConst.SHOW_TOAST, Language.LUA_FRIEND_RECEIVE_SOCIAL_BUILDING_FAILED_IN_MIST)
                 return 

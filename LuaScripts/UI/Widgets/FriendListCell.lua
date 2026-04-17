@@ -352,7 +352,7 @@ FriendListCell._RefreshFriendCellInfo = HL.Method() << function(self)
         end
     end or false
 
-    self.view.commonPlayerHead:InitCommonPlayerHeadByRoleId(self.info.roleId, onPlayerHeadClick, self.searchKey)
+    self.view.commonPlayerHead:InitCommonPlayerHeadByRoleId(self.info.roleId, onPlayerHeadClick, self.searchKey, false)
 
     if self.arg.showVisitorTimeText then
         self.view.visitorState.gameObject:SetActive(true)

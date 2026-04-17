@@ -89,7 +89,7 @@ FriendBusinessCard._OnFirstTimeInit = HL.Override() << function(self)
 
     self.view.themeChangeBtn.onClick:RemoveAllListeners()
     self.view.themeChangeBtn.onClick:AddListener(function()
-        UIManager:Open(PanelId.FriendThemeChange)
+        PhaseManager:GoToPhase(PhaseId.FriendThemeChange)
     end)
     self.view.themeChangeRedDot:InitRedDot("NewBusinessCard", "")
 

@@ -251,9 +251,6 @@ function FactoryUtils.canDelBuilding(nodeId, needToast, chapterId)
 
     local node = FactoryUtils.getBuildingNodeHandler(nodeId, chapterId)
     if not node then
-        
-        
-        
         return false
     end
 
@@ -573,9 +570,22 @@ function FactoryUtils.getItemOutputItemIds(itemId, ignoreUnlock)
         return
     end
 
-    local outcomeIdList = {}
+    local outcomeSortList = {}
     for id, _ in pairs(outcomeIds) do
-        table.insert(outcomeIdList, id)
+        local _, itemData = Tables.itemTable:TryGetValue(id)
+        if itemData then
+            table.insert(outcomeSortList, {
+                sortId1 = itemData.sortId1,
+                sortId2 = itemData.sortId2,
+                itemId = id,
+            })
+        end
+    end
+    table.sort(outcomeSortList, Utils.genSortFunction({"sortId1", "sortId2"}, true))
+
+    local outcomeIdList = {}
+    for sortIdx, sortData in pairs(outcomeSortList) do
+        table.insert(outcomeIdList, sortData.itemId)
     end
     return outcomeIdList
 end
@@ -647,19 +657,22 @@ function FactoryUtils.getItemAsInputRecipeIds(itemId, ignoreUnlock)
         
         for craftId, v in pairs(Tables.factoryManualCraftTable) do
             for i = 0, v.ingredients.Count - 1 do
-                local ingredientItemId = v.ingredients[i].id
                 if v.ingredients[i].id == itemId then
-                    table.insert(manualCraftIdList, craftId)
+                    table.insert(manualCraftIdList, {
+                        sortId = v.sortId,
+                        craftId = craftId,
+                    })
                     break
                 end
             end
         end
         if #manualCraftIdList > 0 then
+            table.sort(manualCraftIdList, Utils.genSortFunction({"sortId"}, true))
             local manualCraft = GameInstance.player.facManualCraft
             canCraft = true
-            for _, craftId in pairs(manualCraftIdList) do
-                if ignoreUnlock or manualCraft:IsCraftUnlocked(craftId) then
-                    table.insert(recipeIds, FactoryUtils.parseManualCraftData(craftId, true))
+            for _, craftData in ipairs(manualCraftIdList) do
+                if ignoreUnlock or manualCraft:IsCraftUnlocked(craftData.craftId) then
+                    table.insert(recipeIds, FactoryUtils.parseManualCraftData(craftData.craftId, true))
                 end
             end
         end
@@ -776,12 +789,12 @@ function FactoryUtils.getBuildingCrafts(buildingId, ignoreUnlock, justId, produc
         local fluidPumpInDataSuccess, fluidPumpInData = Tables.factoryFluidPumpInTable:TryGetValue(buildingId)
         if fluidPumpInDataSuccess then
             local time = fluidPumpInData.msPerRound * 0.001
-            for liquidItemId, _ in pairs(Tables.liquidTable) do
+            for i = 0, fluidPumpInData.enableLiquidIds.Count - 1 do
+                local liquidItemId = fluidPumpInData.enableLiquidIds[i]
                 local liquidPreFix = "liquid"
                 local liquidItemSubString = string.sub(liquidItemId, string.find(liquidItemId, liquidPreFix) + #liquidPreFix)
                 local liquidPointItemId = string.format("item_liquidpoint%s", liquidItemSubString)
                 local liquidPointSuccess, liquidPointItemData = Tables.itemTable:TryGetValue(liquidPointItemId)
-                
                 if liquidPointSuccess then
                     if justId then
                         table.insert(crafts, liquidItemId)
@@ -805,8 +818,6 @@ function FactoryUtils.getBuildingCrafts(buildingId, ignoreUnlock, justId, produc
             local time = consumeData.msPerRound * 0.001
             for index = 0, consumeData.liquidable.Count - 1 do
                 local liquidItemId = consumeData.liquidable[index]
-                
-                
                 if justId then
                     table.insert(crafts, liquidItemId)
                 else
@@ -821,6 +832,46 @@ function FactoryUtils.getBuildingCrafts(buildingId, ignoreUnlock, justId, produc
                     table.insert(crafts, info)
                 end
             end
+        end
+    elseif bType == GEnums.FacBuildingType.SewageTreatPlantImport then
+        local consumeSuccess, consumeData = Tables.factorySewageTreatImportTable:TryGetValue(buildingId)
+        if consumeSuccess then
+            local time = consumeData.msPerRound * 0.001
+            for index = 0, consumeData.liquidable.Count - 1 do
+                local liquidItemId = consumeData.liquidable[index]
+                if justId then
+                    table.insert(crafts, liquidItemId)
+                else
+                    local count = 1
+                    if time < 1 then
+                        count = math.ceil(1 / time)
+                        time = 1
+                    end
+                    local incomesId = liquidItemId
+                    local info = {
+                        time = time,
+                        incomes = { { id = incomesId, count = count } },
+                        buildingId = buildingId,
+                        craftId = liquidItemId,
+                        useFinish = true,
+                    }
+                    table.insert(crafts, info)
+                end
+            end
+        end
+    elseif bType == GEnums.FacBuildingType.SewageTreatPlantExport then
+        local consumeSuccess, consumeData = Tables.factorySewageTreatImportTable:TryGetValue(FacConst.FAC_SEWAGE_TREAT_IMPORTER_BUILDING_ID)
+        local produceSuccess, produceData = Tables.factorySewageTreatExportTable:TryGetValue(buildingId)
+        if consumeSuccess and produceSuccess then
+            local consumeItemId = consumeData.liquidable[0]  
+            local productItemId = produceData.productItemId
+            table.insert(crafts, {
+                incomes = { { id = consumeItemId, count = produceData.countCost } },
+                outcomes = { { id = productItemId, count = produceData.countProduce } },
+                buildingId = buildingId,
+                craftId = productItemId,
+                isSewageCraft = true,
+            })
         end
     end
     return crafts, bType
@@ -927,6 +978,8 @@ function FactoryUtils.getItemCrafts(itemId, ignoreUnlock, includeMiner, includeF
     local facCore = GameInstance.player.remoteFactory.core
     local inventory = GameInstance.player.inventory
 
+    local buildingSortFunc = Utils.genSortFunction({"sortId1", "sortId2"}, true)
+
     do
         
         local hasCraft, craftIds = Tables.factoryItemAsMachineCrafterOutcomeTable:TryGetValue(itemId)
@@ -971,18 +1024,31 @@ function FactoryUtils.getItemCrafts(itemId, ignoreUnlock, includeMiner, includeF
     do
         
         if includeMiner then
+            local minerSortData = {}
             for buildingId, minerData in pairs(Tables.factoryMinerTable) do
                 local buildingItemId = FactoryUtils.getBuildingItemId(buildingId)
                 local isUnlock = inventory:IsItemFound(buildingItemId)
-                for idx = 0, minerData.mineable.Count - 1 do
-                    local mineable = minerData.mineable[idx]
-                    if mineable.miningItemId == itemId then
-                        if ignoreUnlock or isUnlock then
-                            canCraft = true
-                            table.insert(crafts, FactoryUtils.parseMinerCraftData(buildingId, mineable))
+                local _, itemData = Tables.itemTable:TryGetValue(buildingItemId)
+                if itemData then
+                    for idx = 0, minerData.mineable.Count - 1 do
+                        local mineable = minerData.mineable[idx]
+                        if mineable.miningItemId == itemId then
+                            if ignoreUnlock or isUnlock then
+                                canCraft = true
+                                table.insert(minerSortData, {
+                                    sortId1 = itemData.sortId1,
+                                    sortId2 = itemData.sortId2,
+                                    data = FactoryUtils.parseMinerCraftData(buildingId, mineable),
+                                })
+                                break
+                            end
                         end
                     end
                 end
+            end
+            table.sort(minerSortData, buildingSortFunc)
+            for sortIdx, sortData in ipairs(minerSortData) do
+                table.insert(crafts, sortData.data)
             end
         end
     end
@@ -992,12 +1058,25 @@ function FactoryUtils.getItemCrafts(itemId, ignoreUnlock, includeMiner, includeF
         if includeFluidPumpIn then
             local _, liquidData = Tables.liquidTable:TryGetValue(itemId)
             if liquidData then
-                for buildingId, _ in pairs(Tables.factoryFluidPumpInTable) do
-                    local info = FactoryUtils.parseLiquidCraftData(buildingId, itemId)
-                    if info then
-                        canCraft = true
-                        table.insert(crafts, info)
+                local pumpInSortData = {}
+                for buildingId, fluidPumpInData in pairs(Tables.factoryFluidPumpInTable) do
+                    local buildingItemId = FactoryUtils.getBuildingItemId(buildingId)
+                    local _, itemData = Tables.itemTable:TryGetValue(buildingItemId)
+                    if itemData and lume.find(fluidPumpInData.enableLiquidIds, itemId) then
+                        local info = FactoryUtils.parseLiquidCraftData(buildingId, itemId)
+                        if info then
+                            canCraft = true
+                            table.insert(pumpInSortData, {
+                                sortId1 = itemData.sortId1,
+                                sortId2 = itemData.sortId2,
+                                data = info,
+                            })
+                        end
                     end
+                end
+                table.sort(pumpInSortData, buildingSortFunc)
+                for sortIdx, sortData in ipairs(pumpInSortData) do
+                    table.insert(crafts, sortData.data)
                 end
             end
         end
@@ -1208,7 +1287,7 @@ function FactoryUtils.parseLiquidCraftData(buildingId, liquidItemId)
         incomes = { { id = liquidPointItemId, count = 1 } },
         outcomes = { { id = liquidItemId, count = 1 } },
         buildingId = buildingId,
-        craftId = liquidItemId,
+        craftId = string.format("%s_%s", liquidItemId, buildingId),
     }
     return info
 end
@@ -1476,6 +1555,18 @@ function FactoryUtils.getBuildingProcessingCraft(buildingInfo)
         for _, craftInfo in pairs(crafts) do
             if craftInfo.incomes ~= nil and craftInfo.incomes[1].id == consumeId then
                 return craftInfo
+            end
+        end
+    elseif buildingType == GEnums.FacBuildingType.SewageTreatPlantImport then
+        for _, craftInfo in pairs(crafts) do
+            if craftInfo.incomes ~= nil then
+                return craftInfo  
+            end
+        end
+    elseif buildingType == GEnums.FacBuildingType.SewageTreatPlantExport then
+        for _, craftInfo in pairs(crafts) do
+            if craftInfo.outcomes ~= nil then
+                return craftInfo  
             end
         end
     else
@@ -2070,7 +2161,7 @@ function FactoryUtils.getMatchedFormulaIdByItemList(buildingId, mode, itemList)
     end
 
     for formulaId, formulaData in pairs(Tables.factoryMachineCraftTable) do
-        if formulaData.formulaGroupId == groupId then
+        if formulaData.formulaGroupId == groupId and GameInstance.player.remoteFactory.core:IsFormulaVisible(formulaId) then
             local searchMap = {}
             local totalSearchCount = 0
             for _, itemId in ipairs(itemList) do
@@ -2188,14 +2279,26 @@ end
 
 function FactoryUtils.createBPAbnormalIconHelper()
     local helper = {
-        cachedResults = {}, 
+        
+
+
+
+
+
+
+
+
+
+        cachedResults = {},
     }
-    helper.IsAbnormal = function(machineId, itemId)
+    
+    helper.GetAbnormalType = function(machineId, itemId, needCraftId)
         if not GameInstance.player.inventory:IsItemFound(itemId) then
-            return true
+            return FacConst.FAC_BP_ABNORMAL_ICON_TYPE.Locked
         end
         if not Tables.factoryBuildingTable:ContainsKey(machineId) then
-            return false
+            
+            return FacConst.FAC_BP_ABNORMAL_ICON_TYPE.Normal
         end
         local canProduceItems = helper.cachedResults[machineId]
         if not canProduceItems then
@@ -2207,8 +2310,10 @@ function FactoryUtils.createBPAbnormalIconHelper()
                 canProduceItems = {}
                 for _, cInfo in ipairs(craftInfos) do
                     if cInfo.outcomes then
+                        local isTimeLimited = FactoryUtils.isTimeLimitedFormula(cInfo.craftId)
+                        local t = isTimeLimited and FacConst.FAC_BP_ABNORMAL_ICON_TYPE.TimeLimitedActive or FacConst.FAC_BP_ABNORMAL_ICON_TYPE.Normal
                         for _, v in ipairs(cInfo.outcomes) do
-                            canProduceItems[v.id] = true
+                            canProduceItems[v.id] = { t, cInfo.craftId }
                         end
                     end
                 end
@@ -2216,9 +2321,47 @@ function FactoryUtils.createBPAbnormalIconHelper()
             helper.cachedResults[machineId] = canProduceItems
         end
         if canProduceItems == true then
-            return false
+            if FactoryUtils.isTimeLimitedItem(itemId) then
+                
+                local hasCraft, craftIds = Tables.factoryItemAsMachineCrafterOutcomeTable:TryGetValue(itemId)
+                if hasCraft then
+                    for _, craftId in pairs(craftIds.list) do
+                        if FactoryUtils.isExpiredTimeLimitedFormula(craftId) then
+                            return FacConst.FAC_BP_ABNORMAL_ICON_TYPE.TimeLimitedExpired
+                        end
+                    end
+                end
+                return FacConst.FAC_BP_ABNORMAL_ICON_TYPE.TimeLimitedActive
+            else
+                return FacConst.FAC_BP_ABNORMAL_ICON_TYPE.Normal
+            end
         else
-            return not canProduceItems[itemId]
+            local abnormalInfo = canProduceItems[itemId]
+            if not abnormalInfo then
+                
+                
+                if FactoryUtils.isTimeLimitedItem(itemId) then
+                    
+                    local hasCraft, craftIds = Tables.factoryItemAsMachineCrafterOutcomeTable:TryGetValue(itemId)
+                    if hasCraft then
+                        for _, craftId in pairs(craftIds.list) do
+                            if FactoryUtils.isExpiredTimeLimitedFormula(craftId) then
+                                abnormalInfo = { FacConst.FAC_BP_ABNORMAL_ICON_TYPE.TimeLimitedExpired, craftId }
+                            end
+                        end
+                    end
+                end
+                
+                if not abnormalInfo then
+                    abnormalInfo = { FacConst.FAC_BP_ABNORMAL_ICON_TYPE.Locked }
+                end
+                canProduceItems[itemId] = abnormalInfo 
+            end
+            if needCraftId then
+                return abnormalInfo[1], abnormalInfo[2]
+            else
+                return abnormalInfo[1]
+            end
         end
     end
     return helper
@@ -2454,6 +2597,219 @@ function FactoryUtils.getCurAndAutoTransferBlackBoxToDomainId()
     return domainId
 end
 
+
+function FactoryUtils.isTimeLimitedFormula(formulaId)
+    return Tables.limitedFormulaCraftIdReverseTable:ContainsKey(formulaId)
+end
+
+
+function FactoryUtils.isExpiredTimeLimitedFormula(formulaId)
+    return GameInstance.player.remoteFactory.core:IsLimitedFormulaUnlockedBefore(formulaId)
+end
+
+
+function FactoryUtils.isTimeLimitedItem(itemId)
+    return Tables.limitedFormulaItemIdReverseTable:ContainsKey(itemId)
+end
+
+
+function FactoryUtils.setTimeLimitedFormulaTagColor(image, formulaId)
+    if image ~= nil and Tables.limitedFormulaCraftIdReverseTable:ContainsKey(formulaId) then
+        local activityId = Tables.limitedFormulaCraftIdReverseTable:GetValue(formulaId)
+        local activityCfg = Tables.activityTable:GetValue(activityId)
+        if not string.isEmpty(activityCfg.themeColor) then
+            image.color = UIUtils.getColorByString(activityCfg.themeColor)
+        end
+    end
+end
+
+
+function FactoryUtils.setTimeLimitedItemTagColor(image, itemId)
+    if image ~= nil and Tables.limitedFormulaItemIdReverseTable:ContainsKey(itemId) then
+        local activityId = Tables.limitedFormulaItemIdReverseTable:GetValue(itemId)
+        local activityCfg = Tables.activityTable:GetValue(activityId)
+        if not string.isEmpty(activityCfg.themeColor) then
+            image.color = UIUtils.getColorByString(activityCfg.themeColor)
+        end
+    end
+end
+
+
+function FactoryUtils.getActivityIdByBluePrintId(blueprintId)
+    local blueprintSystem = GameInstance.player.remoteFactory.blueprint
+    local blueprintInst = blueprintSystem:GetMyBlueprint(blueprintId);
+    if blueprintInst == nil then
+        return ""
+    end
+
+    local blueprint = blueprintInst.info.bp;
+    if blueprint == nil or blueprint.timeLimitedFormulas == nil or blueprint.timeLimitedFormulas.Count == 0 then
+        return ""
+    end
+
+    
+    local formulaId = blueprint.timeLimitedFormulas[0]
+    local formulaIdStr = CS.Beyond.Cfg.Tables.formulaIdToStr:GetValue(formulaId)
+    if Tables.limitedFormulaCraftIdReverseTable:ContainsKey(formulaIdStr) then
+        local activityId = Tables.limitedFormulaCraftIdReverseTable:GetValue(formulaIdStr)
+        return activityId
+    end
+
+    return ""
+end
+
+
+function FactoryUtils.refreshStateNodeByState(stateNode, progressNode, state, postProcessText)
+    local stateText
+    if state == GEnums.FacBuildingState.NoPower then
+        stateText = Language.LUA_FAC_CRAFTER_STATE_NOPOWER_TIPS
+    elseif state == GEnums.FacBuildingState.NotInPowerNet then
+        stateText = Language.LUA_FAC_CRAFTER_STATE_NOTINPOWERNET_TIPS
+    elseif state == GEnums.FacBuildingState.Closed then
+        stateText = Language.LUA_FAC_CRAFTER_STATE_CLOSE_TIPS
+    end
+
+    if stateText == nil and postProcessText ~= nil then
+        stateText = postProcessText
+    end
+
+    progressNode.gameObject:SetActiveIfNecessary(stateText == nil)
+
+    if stateText == nil then
+        stateNode.animationWrapper:PlayOutAnimation(function()
+            stateNode.gameObject:SetActiveIfNecessary(false)
+        end)
+    else
+        stateNode.gameObject:SetActiveIfNecessary(true)
+        stateNode.stateTxt.text = stateText
+    end
+
+    return stateText ~= nil
+end
+
+
+
+function FactoryUtils.getSewageTreatPlantLevel(plantId)
+    local success, plantCfg = Tables.factorySewageTreatPlantStoreTable:TryGetValue(plantId)
+    if not success then
+        return 0
+    end
+    local chapterId = ScopeUtil.GetChapterId(plantCfg.levelId)
+    return GameInstance.player.remoteFactory.core.progressStatus:QuerySewageTreatPlantLevel(chapterId)
+end
+
+function FactoryUtils.getSewageTreatPlantCanLevelUpIdListInTargetLevel(levelId)
+    local targetPlantId
+    for plantId, plantCfg in pairs(Tables.factorySewageTreatPlantStoreTable) do
+        if plantCfg.levelId == levelId then
+            targetPlantId = plantId  
+            break
+        end
+    end
+    if targetPlantId == nil then
+        return {}
+    end
+
+    local plantData = FactoryUtils.getSewageTreatPlantData(targetPlantId)
+    if plantData.currLevel == 0 or plantData.isMaxLevel then
+        return {}
+    end
+
+    local cost = plantData.levelCost
+    local _, domainCfg = Tables.domainDataTable:TryGetValue(plantData.domainId)
+    local moneyId = domainCfg.domainGoldItemId
+    local money = Utils.getItemCount(moneyId)
+    if money < cost then
+        return {}
+    end
+
+    return { targetPlantId }
+end
+
+function FactoryUtils.getSewageTreatPlantData(plantId)
+    local plantCfgSuccess, plantCfg = Tables.factorySewageTreatPlantStoreTable:TryGetValue(plantId)
+    if not plantCfgSuccess then
+        return
+    end
+
+    local domainId = plantCfg.domainId
+    local chapterId = ScopeUtil.GetChapterId(plantCfg.levelId)
+    local currLevel = GameInstance.player.remoteFactory.core.progressStatus:QuerySewageTreatPlantLevel(chapterId)
+    local nextLevel = currLevel + 1
+
+    local chapterInfo = GameInstance.remoteFactoryManager.system.core:GetChapterInfoById(chapterId)
+    if chapterInfo == nil then
+        return
+    end
+
+    local domainData = {}
+    domainData.domainId = domainId
+    domainData.levelId = plantCfg.levelId
+    domainData.currLevel = currLevel
+    domainData.nextLevel = nextLevel
+    local currImportCount, currExportCount = 0, 0
+    local nextImportCount, nextExportCount = 0, 0
+    local maxImportCount, maxExportCount = 0, 0
+
+    local maxLevel = plantCfg.levelList.Count
+    local isMaxLevel = maxLevel == currLevel
+    domainData.maxLevel = maxLevel
+    domainData.isMaxLevel = isMaxLevel
+    domainData.isFinalMaxLevel = isMaxLevel  
+
+    for levelIndex = 0, plantCfg.levelList.Count - 1 do
+        local levelData = plantCfg.levelList[levelIndex]
+        local cfgLevel = levelData.level
+
+        if currLevel == cfgLevel then
+            domainData.currLevelDesc = levelData.levelDesc
+        end
+
+        if nextLevel == cfgLevel or (nextLevel > maxLevel and maxLevel == cfgLevel) then
+            domainData.nextLevelTitle = levelData.levelTitle
+            domainData.levelCost = levelData.cost
+            domainData.nextLevelBuildingInstKey = levelData.actionParams[1]
+        end
+
+        local isLevelImport = levelData.isImportLevel
+        if cfgLevel <= nextLevel then
+            if cfgLevel <= currLevel then
+                if isLevelImport then
+                    currImportCount = currImportCount + 1
+                else
+                    currExportCount = currExportCount + 1
+                end
+            end
+
+            if isLevelImport then
+                nextImportCount = nextImportCount + 1
+            else
+                nextExportCount = nextExportCount + 1
+            end
+        end
+
+        if isLevelImport then
+            maxImportCount = maxImportCount + 1
+        else
+            maxExportCount = maxExportCount + 1
+        end
+    end
+
+    domainData.currImportCount = currImportCount
+    domainData.nextImportCount = nextImportCount
+    domainData.currExportCount = currExportCount
+    domainData.nextExportCount = nextExportCount
+    domainData.maxImportCount = maxImportCount
+    domainData.maxExportCount = maxExportCount
+
+    local importerCfgData = Tables.factoryBuildingTable:GetValue(FacConst.FAC_SEWAGE_TREAT_IMPORTER_BUILDING_ID)
+    local exporterCfgData = Tables.factoryBuildingTable:GetValue(FacConst.FAC_SEWAGE_TREAT_EXPORTER_BUILDING_ID)
+    domainData.importerDesc = importerCfgData.desc
+    domainData.exporterDesc = exporterCfgData.desc
+
+    return domainData
+end
+
 function FactoryUtils.evaluateMultiBuildingLimitedPriority(templateId)
     for i, v in ipairs(FacConst.FAC_MULTI_LIMITED_BUILDING_ORDER) do
         if v == templateId then
@@ -2461,6 +2817,45 @@ function FactoryUtils.evaluateMultiBuildingLimitedPriority(templateId)
         end
     end
     return 0
+end
+
+
+
+function FactoryUtils.isDecoBuilding(templateId)
+    if not templateId then
+        return false
+    end
+    local bData = Tables.factoryBuildingTable[templateId]
+    return bData.type == GEnums.FacBuildingType.Decorate
+end
+
+function FactoryUtils.isDecoBuildingItem(itemId)
+    local bId = FactoryUtils.getItemBuildingId(itemId)
+    if bId then
+        return FactoryUtils.isDecoBuilding(bId)
+    end
+    return false
+end
+
+function FactoryUtils.playAudioWhenFillingItem(fillingItemId, targetItemId, targetItemCount)
+    if Tables.emptyBottleTable:ContainsKey(fillingItemId) then
+        if targetItemCount > 0 then
+            AudioAdapter.PostEvent("Au_UI_Event_WaterDown_Small")
+        end
+        return
+    end
+
+    if Tables.fullBottleTable:ContainsKey(fillingItemId) then
+        if string.isEmpty(targetItemId) then
+            AudioAdapter.PostEvent("Au_UI_Event_WaterUp_Small")
+        else
+            local success, data = Tables.factoryItemTable:TryGetValue(targetItemId)
+            if success and targetItemCount < data.buildingBufferStackLimit then
+                AudioAdapter.PostEvent("Au_UI_Event_WaterUp_Small")
+            end
+        end
+        return
+    end
 end
 
 

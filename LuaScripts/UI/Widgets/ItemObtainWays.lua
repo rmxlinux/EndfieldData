@@ -37,6 +37,8 @@ local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
 
 
 
+
+
 ItemObtainWays = HL.Class('ItemObtainWays', UIWidgetBase)
 
 
@@ -59,6 +61,9 @@ ItemObtainWays.m_onClickItem = HL.Field(HL.Function)
 
 
 ItemObtainWays.m_onBeforeJump = HL.Field(HL.Function)
+
+
+ItemObtainWays.m_jumpExtraArgs = HL.Field(HL.Table)
 
 
 
@@ -95,14 +100,16 @@ end
 
 
 
-ItemObtainWays.InitItemObtainWays = HL.Method(HL.String, HL.Opt(HL.Number, HL.Table, HL.Function, HL.Function)) << function(
-    self, itemId, instId, itemTipsPosInfo, onClickItem, onBeforeJump)
+
+ItemObtainWays.InitItemObtainWays = HL.Method(HL.String, HL.Opt(HL.Number, HL.Table, HL.Function, HL.Function, HL.Table)) << function(
+    self, itemId, instId, itemTipsPosInfo, onClickItem, onBeforeJump, jumpExtraArgs)
     self:_FirstTimeInit()
 
     self.m_itemTipsPosInfo = itemTipsPosInfo
     self.m_itemId = itemId
     self.m_onClickItem = onClickItem
     self.m_onBeforeJump = onBeforeJump
+    self.m_jumpExtraArgs = jumpExtraArgs
 
     local itemCfg = Tables.itemTable:GetValue(itemId)
 
@@ -173,22 +180,38 @@ ItemObtainWays._FindShowNoObtainWayId = HL.Method(HL.Any).Return(HL.Boolean, HL.
             return true, itemCfg.noObtainWayId[csIndex]
         end
         local conditionId = itemCfg.noObtainWayConditionId[csIndex]
-        local succ, conditionCfg = Tables.noObtainWayCondTable:TryGetValue(conditionId)
-        if not succ then
-            return true, itemCfg.noObtainWayId[csIndex]
-        end
-        local unlockTag = false
-        if conditionCfg.conditionType == GEnums.ConditionType.CheckWikiUnlocked then
-            unlockTag = WikiUtils.isWikiEntryUnlock(conditionCfg.checkId)
-        elseif conditionCfg.conditionType == GEnums.ConditionType.CheckFacTechTreeUnlocked then
-            unlockTag = not GameInstance.player.facTechTreeSystem:NodeIsLocked(conditionCfg.checkId)
-        end
+        local unlockTag = self:_CheckObtainWayCondition(conditionId)
         if not unlockTag then
             return true, itemCfg.noObtainWayId[csIndex]
         end
     end
 
     return false, ""
+end
+
+
+
+
+
+ItemObtainWays._CheckObtainWayCondition = HL.Method(HL.String).Return(HL.Boolean) << function(self, conditionId)
+    local succ, conditionCfg = Tables.noObtainWayCondTable:TryGetValue(conditionId)
+    if not succ then
+        return false
+    end
+
+    local unlockTag = false
+    if conditionCfg.conditionType == GEnums.ConditionType.CheckWikiUnlocked then
+        unlockTag = WikiUtils.isWikiEntryUnlock(conditionCfg.checkId)
+    elseif conditionCfg.conditionType == GEnums.ConditionType.CheckFacTechTreeUnlocked then
+        unlockTag = not GameInstance.player.facTechTreeSystem:NodeIsLocked(conditionCfg.checkId)
+    elseif conditionCfg.conditionType == GEnums.ConditionType.CheckPlayerOwnItem then
+        local count = Utils.getItemCount(conditionCfg.checkId)
+        unlockTag = count > 0
+    elseif conditionCfg.conditionType == GEnums.ConditionType.CheckPlayerDungeonUnlocked then
+        unlockTag = GameInstance.dungeonManager:IsDungeonUnlocked(conditionCfg.checkId)
+    end
+
+    return unlockTag
 end
 
 
@@ -206,12 +229,20 @@ ItemObtainWays._GenerateObtainInfoList = HL.Method(HL.String).Return(HL.Table) <
         for k, obtainWayId in pairs(itemCfg.obtainWayIds) do
             local _, obtainWayCfg = Tables.systemJumpTable:TryGetValue(obtainWayId)
             if obtainWayCfg then
+                local isShowOrNoCondition = true
+                local showSucc, showCondition = Tables.obtainWayShowCondTable:TryGetValue(obtainWayId)
+                if showSucc then
+                    isShowOrNoCondition = self:_CheckObtainWayCondition(showCondition)
+                end
                 local isUnlock = Utils.isSystemUnlocked(obtainWayCfg.bindSystem)
-                if isUnlock then
+                if isShowOrNoCondition and isUnlock then
                     local phaseId = PhaseId[obtainWayCfg.phaseId]
                     local phaseArgs
                     if not string.isEmpty(obtainWayCfg.phaseArgs) then
                         phaseArgs = Json.decode(obtainWayCfg.phaseArgs)
+                    end
+                    if self.m_jumpExtraArgs then
+                        phaseArgs = lume.merge(phaseArgs or {}, self.m_jumpExtraArgs)
                     end
                     local blockJumpToast = ""
                     if phaseId ~= nil and not PhaseManager:CheckCanOpenPhase(phaseId, phaseArgs) then
@@ -311,7 +342,25 @@ ItemObtainWays._InsertCrafts = HL.Method(HL.Table, HL.Table) << function(self, o
         end
     end
 
+    local buildingSortFunc = Utils.genSortFunction({"sortId1", "sortId2"}, true)
+    local buildingSortList = {}
     for buildingId, crafts in pairs(craftsByBuilding) do
+        local buildingItemId = FactoryUtils.getBuildingItemId(buildingId)
+        local _, itemData = Tables.itemTable:TryGetValue(buildingItemId)
+        if itemData then
+            table.insert(buildingSortList, {
+                sortId1 = itemData.sortId1,
+                sortId2 = itemData.sortId2,
+                buildingId = buildingId,
+                crafts = crafts,
+            })
+        end
+    end
+    table.sort(buildingSortList, buildingSortFunc)
+
+    for sortIdx, sortData in ipairs(buildingSortList) do
+        local buildingId = sortData.buildingId
+        local crafts = sortData.crafts
         local buildingData = Tables.factoryBuildingTable:GetValue(buildingId)
         local groupInfo = {
             buildingId = buildingId,
@@ -499,6 +548,30 @@ ItemObtainWays._UpdateCraftCell = HL.Method(HL.Table, HL.Table) << function(self
         end
 
         craftCell.gameObject.name = "Craft-" .. craftInfo.craftId
+
+        
+        if craftCell.limitedFormulaNode then
+            if craftInfo.craftId ~= nil then
+                craftCell.limitedFormulaNode.gameObject:SetActiveIfNecessary(FactoryUtils.isTimeLimitedFormula(craftInfo.craftId))
+                FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag1, craftInfo.craftId)
+                FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag2, craftInfo.craftId)
+            else
+                craftCell.limitedFormulaNode.gameObject:SetActiveIfNecessary(false)
+            end
+        end
+
+        
+        if craftCell.limitedFormulaCtrl then
+            if craftInfo.craftId ~= nil then
+                local timeLimited = FactoryUtils.isTimeLimitedFormula(craftInfo.craftId)
+                craftCell.limitedFormulaCtrl:SetState(timeLimited and "LimitedTimeEvent" or "Normal")
+                FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag1, craftInfo.craftId)
+                FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag2, craftInfo.craftId)
+                FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag3, craftInfo.craftId)
+            else
+                craftCell.limitedFormulaCtrl:SetState("Normal")
+            end
+        end
 
         if craftCell.pinBtn then
             local showPin = not string.isEmpty(craftInfo.craftId) and

@@ -85,7 +85,7 @@ MapMarkDetailDomainShopCtrl._UpdateData = HL.Method() << function(self)
         curLv = hasLv and curLv or 0
     end
     local isUnlock = curLv > 0
-    local maxLv = #shopChannelCfg.channelLevelMap
+    local maxLv = DomainPOIUtils.GetDomainShopChannelMaxLevel(shopChannelId)
     local _, maxLvChannelCfg = shopChannelCfg.channelLevelMap:TryGetValue(maxLv)
     local isFinalMax = false
     if maxLvChannelCfg then

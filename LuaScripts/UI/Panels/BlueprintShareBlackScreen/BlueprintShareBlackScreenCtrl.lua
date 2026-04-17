@@ -148,7 +148,19 @@ BlueprintShareBlackScreenCtrl.FacOnShareBlueprint = HL.Method(HL.Table) << funct
         for _,device in ipairs(self.m_deviceInfo) do
             devices[device.buildingId] = device.count
         end
-        EventLogManagerInst:GameEvent_ShareBlueprint(self.m_sharingOutside and "Outside" or "Friend", shareCode, self.m_csBPInst.param.bpGiftUid, self.m_csBPInst.creatorUserId, self.m_csBPInst.param.shareIdx, self.m_csBPInst.info.name, self.m_csBPInst.info.bp.sourceRect.width, self.m_csBPInst.info.bp.sourceRect.height, self.m_csBPInst.info.tags, self.m_csBPInst.info.desc, devices)
+        local activityId = FactoryUtils.getActivityIdByBluePrintId(self.m_csBPInst.param.bpGiftUid)
+        EventLogManagerInst:GameEvent_ShareBlueprint(self.m_sharingOutside and "Outside" or "Friend",
+            shareCode,
+            self.m_csBPInst.param.bpGiftUid,
+            self.m_csBPInst.creatorUserId,
+            self.m_csBPInst.param.shareIdx,
+            self.m_csBPInst.info.name,
+            self.m_csBPInst.info.bp.sourceRect.width,
+            self.m_csBPInst.info.bp.sourceRect.height,
+            self.m_csBPInst.info.tags,
+            self.m_csBPInst.info.desc,
+            devices,
+            activityId)
         if self.m_sharingOutside then
             UIManager:Open(PanelId.FacSaveBlueprint, {
                 bpInst = self.m_csBPInst,
@@ -160,6 +172,7 @@ BlueprintShareBlackScreenCtrl.FacOnShareBlueprint = HL.Method(HL.Table) << funct
             Notify(MessageConst.SHOW_COMMON_SHARE_PANEL,{
                 type = "Blueprint",
                 codeId = shareCode,
+                copyStr = string.format(Language.LUA_BLUEPRINT_SHARE_COPY_TIPS, self.m_csBPInst.info.name, shareCode),
                 showPlayerInfo = true,
                 showPlayerInfoToggle = false,
                 onCaptureEnd = function()

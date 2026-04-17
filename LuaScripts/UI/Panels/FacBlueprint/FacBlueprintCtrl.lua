@@ -437,8 +437,9 @@ end
 
 FacBlueprintCtrl._SortData = HL.Method(HL.Table, HL.Boolean) << function(self, sortData, isIncremental)
     
+    local keys = lume.copy(sortData.keys)
     if Utils.isInBlackbox() or self.m_selectedTypeIndex == sourceTypeTable.Sys then
-        sortData.keys[#sortData.keys + 1] = "idForSort"
+        keys[#keys + 1] = "idForSort"
     end
     table.sort(self.m_showingInsts, Utils.genSortFunction(sortData.keys, isIncremental))
 end
@@ -1336,7 +1337,7 @@ FacBlueprintCtrl.m_cellOnHide = HL.Field(HL.Any)
 
 
 FacBlueprintCtrl.OnHide = HL.Override() << function(self)
-    if DeviceInfo.usingController then
+    if DeviceInfo.usingController and self.view.containerSelectableNaviGroup.IsTopLayer then
         self.m_cellOnHide = self.view.containerSelectableNaviGroup.LayerSelectedTarget
     end
 end
@@ -1347,6 +1348,7 @@ FacBlueprintCtrl.OnShow = HL.Override() << function(self)
     if DeviceInfo.usingController then
         if self.m_cellOnHide then
             UIUtils.setAsNaviTarget(self.m_cellOnHide)
+            self.m_cellOnHide = nil
         end
         if Utils.isInBlackbox() then
             InputManagerInst:ToggleGroup(self.view.blueprintContent.view.topBinding.groupId, false)

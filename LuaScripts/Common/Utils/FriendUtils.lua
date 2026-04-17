@@ -200,7 +200,7 @@ FriendUtils.FRIEND_CELL_HEAD_FUNC = {
         return {
             text = Language.LUA_FRIEND_TIP_BUSINESS_CARD_THEME,
             action = function()
-                UIManager:Open(PanelId.FriendThemeChange)
+                PhaseManager:GoToPhase(PhaseId.FriendThemeChange)
             end
         }
     end,
@@ -496,15 +496,15 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
         sortOptions = {
             {
                 name = Language.LUA_FRIEND_REQUEST_TIME,
-                keys = { "isCurrentShip", "roleType", "searchSort", "addFriendTime", "adventureLevel", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "addFriendTime", "adventureLevel", "lastDateTime","helpFlag", "roleId" },
             },
             {
                 name = Language.LUA_FRIEND_WORLD_LEVEL,
-                keys = { "isCurrentShip", "roleType", "searchSort", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "adventureLevel", "addFriendTime", "lastDateTime","helpFlag", "roleId" },
             },
             {
                 name = Language.LUA_FRIEND_LAST_DATE_TIME,
-                keys = { "isCurrentShip", "roleType", "searchSort", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
+                keys = { "isCurrentShip", "roleType", "searchSort", "lastDateTime", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
             },
         }
     },

@@ -546,10 +546,6 @@ FriendShipPresentCtrl._GetIsPopularGift = HL.Method(HL.String).Return(HL.Boolean
         return false
     end
 
-    if string.isEmpty(giftData.finishPopularTimeId) then
-        return true
-    end
-
     return Utils.isCurTimeInTimeIdRange(giftData.finishPopularTimeId)
 end
 

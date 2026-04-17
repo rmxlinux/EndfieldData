@@ -26,10 +26,14 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
+
 GachaPoolCellBase = HL.Class('GachaPoolCellBase', UIWidgetBase)
 
 
 local csGachaSystem = GameInstance.player.gacha
+local MAX_SHOW_CHAR_INFO_COUNT = 5
 
 
 
@@ -38,6 +42,9 @@ GachaPoolCellBase.m_poolId = HL.Field(HL.String) << ""
 
 
 GachaPoolCellBase.m_baseInfo = HL.Field(HL.Table)
+
+
+GachaPoolCellBase.m_isAutoExchangeMoney = HL.Field(HL.Boolean) << false
 
 
 
@@ -109,6 +116,26 @@ GachaPoolCellBase._InitBaseData = HL.Method() << function(self)
         
         cumulateRewardItemInfo = {},
         
+        onceAutoRewardItemInfo = {
+            itemId = "",
+            itemCount = 0,
+            needPullCount = poolTypeCfg.onceRewardIdPullCount,
+            remainNeedPullCount = 0,
+            maxReceivedCount = poolTypeCfg.onceRewardIdPullCount > 0 and 1 or 0, 
+            remainReceivedCount = 0,
+            isCheck = false,
+        },
+        
+        onceAutoRewardItemInfo2 = {
+            itemId = "",
+            itemCount = 0,
+            needPullCount = poolTypeCfg.onceRewardId2PullCount,
+            remainNeedPullCount = 0,
+            maxReceivedCount = poolTypeCfg.onceRewardId2PullCount > 0 and 1 or 0, 
+            remainReceivedCount = 0,
+            isCheck = false,
+        },
+        
         cumulateFreeTenGachaInfo = {
             needPullCount = poolTypeCfg.freeTenPullRewardPullCount,
             remainNeedPullCount = 0,
@@ -137,6 +164,7 @@ GachaPoolCellBase._InitBaseData = HL.Method() << function(self)
         loopCumulateRewardInfo = {
             rewardItemInfo = {},
             needPullCount = poolTypeCfg.intervalAutoRewardPerPullCount,
+            needStartPullCount = poolTypeCfg.intervalAutoRewardStartPullCount,
             curRounds = 0,
             remainNeedPullCount = 0,
             receivedRounds = 0, 
@@ -156,6 +184,7 @@ GachaPoolCellBase._InitBaseData = HL.Method() << function(self)
             tenPullCostInfos = nil, 
         }
     }
+
     
     
     for index, cumulateRewardId in pairs(poolCfg.cumulativeRewardIds) do
@@ -170,6 +199,20 @@ GachaPoolCellBase._InitBaseData = HL.Method() << function(self)
         table.insert(self.m_baseInfo.cumulateRewardItemInfo, info)
     end
     
+    if not string.isEmpty(poolCfg.onceRewardId) then
+        local onceRewardItems = UIUtils.getRewardItems(poolCfg.onceRewardId)
+        self.m_baseInfo.onceAutoRewardItemInfo.itemId = onceRewardItems[1].id
+        self.m_baseInfo.onceAutoRewardItemInfo.itemCount = onceRewardItems[1].count
+    end
+    
+    if not string.isEmpty(poolCfg.onceRewardId2) then
+        local onceRewardItems = UIUtils.getRewardItems(poolCfg.onceRewardId2)
+        self.m_baseInfo.onceAutoRewardItemInfo2.itemId = onceRewardItems[1].id
+        self.m_baseInfo.onceAutoRewardItemInfo2.itemCount = onceRewardItems[1].count
+    end
+    
+
+    
     for _, loopCumulateRewardId in pairs(poolCfg.intervalAutoRewardIds) do
         local rewardItems = UIUtils.getRewardItems(loopCumulateRewardId)
         local info = {
@@ -178,6 +221,8 @@ GachaPoolCellBase._InitBaseData = HL.Method() << function(self)
         }
         table.insert(self.m_baseInfo.loopCumulateRewardInfo.rewardItemInfo, info)
     end
+    
+
     
     
     local gachaCostInfo = self.m_baseInfo.gachaCostInfos
@@ -208,6 +253,29 @@ GachaPoolCellBase._InitBaseData = HL.Method() << function(self)
             needCount = needCount,
         })
     end
+    
+
+    
+    for k = 1, MAX_SHOW_CHAR_INFO_COUNT do
+        local btnNode = self.view["showCharInfoBtn" .. k]
+        if btnNode then
+            if btnNode.config then
+                table.insert(self.m_baseInfo.previewCharList, btnNode.config.CHAR_ID)
+            end
+        end
+    end
+    if #self.m_baseInfo.previewCharList <= 0 then
+        local upCharIdsCS = poolCfg.upCharIds
+        if upCharIdsCS.Count > 0 then
+            for _, v in pairs(upCharIdsCS) do
+                table.insert(self.m_baseInfo.previewCharList, v)
+            end
+        else
+            local msg = string.format("【卡池报错】卡池[%s]没有up角色，且UI里showCharInfoBtn也没有预览角色数据，无法生成预览数据！", self.m_poolId)
+            logger.error(msg)
+        end
+    end
+    
 end
 
 
@@ -242,6 +310,16 @@ GachaPoolCellBase._UpdateBaseData = HL.Method() << function(self)
         end
     end
     
+    local onceAutoRewardItemInfo = baseInfo.onceAutoRewardItemInfo
+    onceAutoRewardItemInfo.remainNeedPullCount = onceAutoRewardItemInfo.needPullCount - poolInfo.totalPullCountNoShare
+    onceAutoRewardItemInfo.remainReceivedCount = poolInfo.onceRewardIsGot and 0 or onceAutoRewardItemInfo.maxReceivedCount
+    onceAutoRewardItemInfo.isCheck = poolInfo.onceRewardIsCheck
+    
+    local onceAutoRewardItemInfo2 = baseInfo.onceAutoRewardItemInfo2
+    onceAutoRewardItemInfo2.remainNeedPullCount = onceAutoRewardItemInfo2.needPullCount - poolInfo.totalPullCountNoShare
+    onceAutoRewardItemInfo2.remainReceivedCount = poolInfo.onceReward2IsGot and 0 or onceAutoRewardItemInfo2.maxReceivedCount
+    onceAutoRewardItemInfo2.isCheck = poolInfo.onceReward2IsCheck
+    
     local freeTenGachaInfo = baseInfo.cumulateFreeTenGachaInfo
     freeTenGachaInfo.curCanUseCount = poolInfo.freeTenPullCount
     freeTenGachaInfo.remainFreeCount = poolInfo.freeTenPullUsed and 0 or freeTenGachaInfo.maxFreeCount
@@ -259,10 +337,28 @@ GachaPoolCellBase._UpdateBaseData = HL.Method() << function(self)
     
     local loopRewardInfo = baseInfo.loopCumulateRewardInfo
     if loopRewardInfo.needPullCount > 0 then
-        loopRewardInfo.receivedRounds = poolInfo.loopCumulateRewardReceivedRounds
-        loopRewardInfo.curRounds = math.floor(poolInfo.totalPullCountNoShare / loopRewardInfo.needPullCount)
-        loopRewardInfo.remainNeedPullCount = (loopRewardInfo.curRounds + 1) * loopRewardInfo.needPullCount - poolInfo.totalPullCountNoShare
+        local perPullCount = loopRewardInfo.needPullCount
+        local startPullCount = loopRewardInfo.needStartPullCount
+        local loopRewardInfoCount = #loopRewardInfo.rewardItemInfo
+
+        local curRound = poolInfo.loopCumulateRewardReceivedRounds
+        local curPullCount = poolInfo.totalPullCountNoShare
+        local curRoundRemoveLoop = curRound % loopRewardInfoCount
+
+        local curPullCountRemoveLoop = curPullCount <= startPullCount and
+            curPullCount or
+            (curPullCount - startPullCount) % (loopRewardInfoCount * perPullCount) + startPullCount
+        local needCount = 0
+        if curRoundRemoveLoop >= 1 then
+            needCount = startPullCount + (1 + loopRewardInfoCount) * perPullCount - curPullCountRemoveLoop
+        else
+            needCount = startPullCount + 1 * perPullCount - curPullCountRemoveLoop
+        end
+        
+        loopRewardInfo.receivedRounds = curRound
+        loopRewardInfo.curRounds = curRound
         loopRewardInfo.allIsCheck = poolInfo.allLoopCumulateRewardIsCheck
+        loopRewardInfo.remainNeedPullCount = needCount
     end
 end
 
@@ -285,6 +381,14 @@ GachaPoolCellBase._InitBaseUI = HL.Method() << function(self)
         self.view.roleTrialBtn.onClick:AddListener(function()
             local poolCfg = Tables.gachaCharPoolTable[self.m_poolId]
             Utils.jumpToSystem(poolCfg.trialActivityJumpId)
+        end)
+    end
+
+    
+    if self.view.previewRoleBtn then
+        self.view.previewRoleBtn.onClick:RemoveAllListeners()
+        self.view.previewRoleBtn.onClick:AddListener(function()
+            self:ShowPreviewCharInfo()
         end)
     end
 
@@ -322,6 +426,35 @@ GachaPoolCellBase._RefreshBaseUI = HL.Method() << function(self)
     if self.view.star5SoftGuaranteeTxt then
         self.view.star5SoftGuaranteeTxt.text = baseInfo.remainStar5SoftGuaranteeProgress
     end
+    
+
+    
+    local preViewCharList = self.m_baseInfo.previewCharList
+    for index, charId in pairs(preViewCharList) do
+        local node = self.view["showCharInfoBtn" .. index]
+        if node then
+            if node.button then
+                node.button.onClick:RemoveAllListeners()
+                node.button.onClick:AddListener(function()
+                    self:ShowPreviewCharInfo(charId)
+                end)
+            end
+            local charCfg = Tables.characterTable[charId]
+            if node.nameTxt then
+                node.nameTxt.text = charCfg.name
+            end
+            if node.professionIcon then
+                node.professionIcon:LoadSprite(UIConst.UI_SPRITE_CHAR_PROFESSION, CharInfoUtils.getCharProfessionIconName(charCfg.profession))
+            end
+            if node.starGroup then
+                node.starGroup:InitStarGroup(charCfg.rarity)
+            end
+            if node.headIcon then
+                node.headIcon:LoadSprite(UIConst.UI_SPRITE_ROUND_CHAR_HEAD, UIConst.UI_ROUND_CHAR_HEAD_PREFIX .. charCfg.charId)
+            end
+        end
+    end
+    
 end
 
 
@@ -372,9 +505,35 @@ end
 
 GachaPoolCellBase.UpdateMoneyNodeOnlyGachaTicket = HL.Virtual(HL.Any) << function(self, moneyNode)
     
-    moneyNode.gachaItem1.view.gameObject:SetActiveIfNecessary(false)
-    moneyNode.gachaItem2.view.gameObject:SetActiveIfNecessary(false)
+    
+    moneyNode.gachaItem1.view.gameObject:SetActiveIfNecessary(true)
+    local singlePullItemId = Tables.charGachaConst.gachaTicketSpecialSingleItemId
+    moneyNode.gachaItem1:InitMoneyCell(singlePullItemId)
+    
+    local poolCfg = Tables.gachaCharPoolTable[self.m_poolId]
+    local inventory = GameInstance.player.inventory
+    local valuableDepotType = GEnums.ItemValuableDepotType.CommercialItem
+    local contains = inventory.valuableDepots:ContainsKey(valuableDepotType)
+    local depot 
+    if contains then
+        
+        depot = inventory.valuableDepots[valuableDepotType]:GetOrFallback(CS.Beyond.Gameplay.Scope.Create(GEnums.ScopeName.Main))
+    end
+    if string.isEmpty(poolCfg.ticketGachaSingleLt) then
+        moneyNode.gachaItem2.view.gameObject:SetActiveIfNecessary(false)
+    else
+        moneyNode.gachaItem2.view.gameObject:SetActiveIfNecessary(true)
+        moneyNode.gachaItem2:InitMoneyCell(poolCfg.ticketGachaSingleLt)
+        if depot then
+            for instId, itemBundle in pairs(depot.instItems) do
+                if itemBundle.id == poolCfg.ticketGachaSingleLt then
+                    moneyNode.gachaItem2:SetItemInstId(instId)
+                end
+            end
+        end
+    end
     moneyNode.gachaItem3.view.gameObject:SetActiveIfNecessary(false)
+    
 end
 
 
@@ -521,9 +680,13 @@ GachaPoolCellBase._Gacha = HL.Method(HL.Boolean) << function(self, isTen)
         return
     end
     
+    
+    local commonBitsetSys = GameInstance.player.commonBitsetSystem
+    self.m_isAutoExchangeMoney = commonBitsetSys:IsBitEnable(GEnums.BitsetType.CltDailyCommon, GEnums.CltDailyCommonTypeInBitset.IgnoreGachaExchangeTips:GetHashCode())
     Notify(MessageConst.SHOW_POP_UP, {
         content = content,
         costItems = costItems,
+        subContent = self.m_isAutoExchangeMoney and Language.LUA_GACHA_CHAR_POPUP_AUTO_EXCHANGE_SUB_TITLE or nil,
         onConfirm = function()
             
             local diffCount = diamondNeedCount - curDiamondCount
@@ -531,30 +694,65 @@ GachaPoolCellBase._Gacha = HL.Method(HL.Boolean) << function(self, isTen)
             local oriNeedCount = math.ceil(diffCount / convertRate)
             local originiumItemId = Tables.globalConst.originiumItemId
             local curOriCount = Utils.getItemCount(originiumItemId)
-            Notify(MessageConst.SHOW_POP_UP, {
-                content = string.format(Language.LUA_GACHA_CONFIRM_CONVERT_ORI, oriNeedCount, oriNeedCount * convertRate),
-                costItems = {
-                    { id = originiumItemId, count = oriNeedCount, ownCount = curOriCount, },
-                    { id = diamondId, count = oriNeedCount * convertRate, ownCount = curDiamondCount, },
-                },
-                convertArrowIndex = 1,
-                onConfirm = function()
-                    if curOriCount >= oriNeedCount then
-                        
-                        finalCostDic[diamondId] = curDiamondCount
-                        finalCostDic[originiumItemId] = oriNeedCount
-                        self:_ExecuteGacha(finalCostDic, isTen)
-                    else
-                        
-                        Notify(MessageConst.SHOW_POP_UP, {
-                            content = Language.LUA_GACHA_CONFIRM_CONVERT_ORI_FAIL,
-                            onConfirm = function()
-                                CashShopUtils.GotoCashShopRechargeTab()
+            if self.m_isAutoExchangeMoney then
+                if curOriCount >= oriNeedCount then
+                    
+                    finalCostDic[diamondId] = curDiamondCount
+                    finalCostDic[originiumItemId] = oriNeedCount
+                    self:_ExecuteGacha(finalCostDic, isTen)
+                    local toastStr = string.format(Language.LUA_GACHA_CHAR_POPUP_AUTO_EXCHANGE_TOAST_TEXT, oriNeedCount, oriNeedCount * convertRate)
+                    Notify(MessageConst.SHOW_TOAST, toastStr)
+                else
+                    
+                    Notify(MessageConst.SHOW_POP_UP, {
+                        content = Language.LUA_GACHA_CONFIRM_CONVERT_ORI_FAIL,
+                        onConfirm = function()
+                            CashShopUtils.GotoCashShopRechargeTab()
+                        end
+                    })
+                end
+            else
+                local toggleArg = {
+                    toggleText = Language.LUA_GACHA_CHAR_POPUP_AUTO_EXCHANGE_TOGGLE_TEXT,
+                    isOn = false,
+                    toggleTips = Language.LUA_GACHA_CHAR_POPUP_AUTO_EXCHANGE_DETAIL_TEXT,
+                    onValueChanged = function(value)
+                        self.m_isAutoExchangeMoney = value
+                    end,
+                }
+                Notify(MessageConst.SHOW_POP_UP, {
+                    content = string.format(Language.LUA_GACHA_CONFIRM_CONVERT_ORI, oriNeedCount, oriNeedCount * convertRate),
+                    costItems = {
+                        { id = originiumItemId, count = oriNeedCount, ownCount = curOriCount, },
+                        { id = diamondId, count = oriNeedCount * convertRate, ownCount = curDiamondCount, },
+                    },
+                    convertArrowIndex = 1,
+                    toggle = toggleArg,
+                    onConfirm = function()
+                        if self.m_isAutoExchangeMoney then
+                            commonBitsetSys:EnableBit(GEnums.BitsetType.CltDailyCommon, GEnums.CltDailyCommonTypeInBitset.IgnoreGachaExchangeTips:GetHashCode())
+                        end
+                        if curOriCount >= oriNeedCount then
+                            
+                            finalCostDic[diamondId] = curDiamondCount
+                            finalCostDic[originiumItemId] = oriNeedCount
+                            self:_ExecuteGacha(finalCostDic, isTen)
+                            if self.m_isAutoExchangeMoney then
+                                local toastStr = string.format(Language.LUA_GACHA_CHAR_POPUP_AUTO_EXCHANGE_TOAST_TEXT, oriNeedCount, oriNeedCount * convertRate)
+                                Notify(MessageConst.SHOW_TOAST, toastStr)
                             end
-                        })
-                    end
-                end,
-            })
+                        else
+                            
+                            Notify(MessageConst.SHOW_POP_UP, {
+                                content = Language.LUA_GACHA_CONFIRM_CONVERT_ORI_FAIL,
+                                onConfirm = function()
+                                    CashShopUtils.GotoCashShopRechargeTab()
+                                end
+                            })
+                        end
+                    end,
+                })
+            end
         end,
     })
 end
@@ -608,18 +806,99 @@ end
 
 
 
-
-GachaPoolCellBase.PlayGachaChangeTabInAni = HL.Method() << function(self)
+GachaPoolCellBase.ShowPreviewCharInfo = HL.Method(HL.Opt(HL.String)) << function(self, charId)
+    if PhaseManager:IsOpen(PhaseId.CharInfo) then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_GACHA_RESULT_OPEN_CHAR_INFO_FAIL)
+        return
+    end
     
-    local aniWrapper = self.view.animationWrapper
-    if aniWrapper.animationIn then
-        aniWrapper:ClearTween()
-        aniWrapper:Play(aniWrapper.animationIn)
-    else
-        logger.error("[卡池动效缺失：ChangeTabInAni] 卡池id：" .. self.m_poolId)
+    local ids = self.m_baseInfo.previewCharList
+    if string.isEmpty(charId) then
+        charId = ids[1]
+    end
+    local curCharInfo
+    local charInstIdList = {}
+    for _, id in ipairs(ids) do
+        local info = GameInstance.player.charBag:CreateClientInitialGachaPoolChar(id)
+        if id == charId then
+            curCharInfo = info
+        end
+        table.insert(charInstIdList, info.instId)
+    end
+    if not curCharInfo then
+        return
+    end
+    logger.info("charInstIdList", charInstIdList)
+
+    local curMaxCharInfo
+    local maxCharInstIdList = {}
+    for _, id in ipairs(ids) do
+        local info = GameInstance.player.charBag:CreateClientPerfectGachaPoolCharInfo(id)
+        if id == charId then
+            curMaxCharInfo = info
+        end
+        table.insert(maxCharInstIdList, info.instId)
+    end
+    if not curMaxCharInfo then
+        return
     end
     
     
+    PhaseManager:OpenPhase(PhaseId.CharInfo, {
+        initCharInfo = {
+            instId = curCharInfo.instId,
+            templateId = charId,
+            charInstIdList = charInstIdList,
+            maxCharInstIdList = maxCharInstIdList,
+            isShowPreview = true,
+        },
+        onClose = function()
+            GameInstance.player.charBag:ClearAllClientCharAndItemData()
+        end,
+    })
+end
+
+
+
+local CLIENT_IS_PLAY_CHANGE_TAB_IN_ANI = "clientIsPlayChangeTabInAni_"
+
+
+
+GachaPoolCellBase.CheckCanPlayChangeTabInAni = HL.Method().Return(HL.Boolean) << function(self)
+    local aniName = self.view.config.CHANGE_TAB_IN_ANI
+    if string.isEmpty(aniName) then
+        return false
+    end
+    
+    local suc, isPlay, removed = ClientDataManagerInst:GetBool(CLIENT_IS_PLAY_CHANGE_TAB_IN_ANI .. self.m_poolId, false)
+    return not isPlay
+end
+
+
+
+
+GachaPoolCellBase.PlayGachaChangeTabInAni = HL.Method(HL.Function) << function(self, callback)
+    
+    local aniWrapper = self.view.animationWrapper
+    local aniName = self.view.config.CHANGE_TAB_IN_ANI
+    if not string.isEmpty(aniName) then
+        aniWrapper:ClearTween(false)
+        aniWrapper:Play(aniName, function()
+            if callback then
+                callback(true)
+            end
+        end)
+        local audioName = self.view.config.CHANGE_TAB_IN_AUDIO
+        if not string.isEmpty(audioName) then
+            AudioManager.PostEvent(audioName)
+        end
+        ClientDataManagerInst:SetBool(CLIENT_IS_PLAY_CHANGE_TAB_IN_ANI .. self.m_poolId, true, false)
+    else
+        logger.error("[卡池动效缺失：ChangeTabInAni] 卡池id：" .. self.m_poolId)
+        if callback then
+            callback(false)
+        end
+    end
 end
 
 
@@ -659,7 +938,7 @@ end
 GachaPoolCellBase.PlayGachaOutAni = HL.Method() << function(self)
     
     local aniWrapper = self.view.animationWrapper
-    if aniWrapper.animationOut then
+    if not IsNull(aniWrapper.animationOut) then
         aniWrapper:ClearTween()
         aniWrapper:Play(aniWrapper.animationOut)
     else

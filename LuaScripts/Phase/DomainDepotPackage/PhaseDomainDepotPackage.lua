@@ -130,6 +130,11 @@ PhaseDomainDepotPackage.OnTabChange = HL.Method(HL.Number) << function(self, pan
     if HL.TryGet(panelItem.uiCtrl, "Sync") then
         panelItem.uiCtrl:Sync()
     end
+    panelItem.uiCtrl.view.domainTopMoneyTitle.view.closeBtn.onClick:RemoveAllListeners()
+    panelItem.uiCtrl.view.domainTopMoneyTitle.view.closeBtn.onClick:AddListener(function()
+        Notify(MessageConst.ON_CLOSE_DOMAIN_DEPOT_TAB)
+    end)
+
     self.m_curPanelItem = panelItem
     self:_BindPlaceHolder()
 end
@@ -305,9 +310,8 @@ PhaseDomainDepotPackage._BindPlaceHolder = HL.Method() << function(self)
             tabCtrl.view.inputGroup.groupId,
             self.m_curPanelItem.uiCtrl.view.inputGroup.groupId,
         })
-        tabCtrl.view.domainTopMoneyTitle.view.contentNaviGroup.focusPanelSortingOrder = self.m_curPanelItem.uiCtrl:GetSortingOrder() +
-            DOMAIN_MONEY_TITLE_NAVI_GROUP_ORDER_OFFSET
     end
+    self.m_curPanelItem.uiCtrl.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(self.arg.domainId)
 end
 
 

@@ -15,6 +15,7 @@ local PANEL_ID = PanelId.ActivityBenefits
 
 
 
+
 ActivityBenefitsCtrl = HL.Class('ActivityBenefitsCtrl', uiCtrl.UICtrl)
 
 
@@ -34,6 +35,7 @@ ActivityBenefitsCtrl.m_getCell = HL.Field(HL.Function)
 ActivityBenefitsCtrl.m_benefits = HL.Field(HL.Table)
 
 local GACHA_BIG_REWARD = "gachaBigReward"
+local PREPARE_ACTIVITY_ID = "activity_newplayer_benefits_display"
 
 
 
@@ -298,6 +300,7 @@ local benefitConfigTable = {
 
 
 ActivityBenefitsCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
+    ActivityBenefitsCtrl.PrepareBenefits()
     self.m_activityId = args.activityId
     self.view.activityCommonInfo:InitActivityCommonInfo(args)
     self:_RefreshInfo()
@@ -363,6 +366,7 @@ end
 
 
 ActivityBenefitsCtrl._RefreshInfo = HL.Method() << function(self)
+    local isPreparedActivity = self.m_activityId == PREPARE_ACTIVITY_ID
     self.m_benefits = {}
     local data = Tables.activityBenefitsTable[self.m_activityId].stageList
     for dataIndex = 1, data.Count do
@@ -386,21 +390,34 @@ ActivityBenefitsCtrl._RefreshInfo = HL.Method() << function(self)
         local isUnlocked = self:_IsBenefitUnlocked(info.benefitId)
         local isComplete = true
         if config then
-            local ids = config.getStageIdsFunc()
+            local ids
+            if isPreparedActivity and config.preparedStageIds then
+                
+                ids = config.preparedStageIds
+            else
+                
+                ids = config.getStageIdsFunc()
+            end
             for _, id in ipairs(ids) do
                 
                 local rewardBundles
-                if config.getRewardBundleByStageIdFunc then
-                    rewardBundles = config.getRewardBundleByStageIdFunc(id)
-                end
-                if not rewardBundles then
-                    local rewardId = config.getRewardIdByStageIdFunc(id)
-                    if not string.isEmpty(rewardId) then
-                        rewardBundles = UIUtils.getRewardItems(rewardId)
-                    else
-                        logger.error(info.benefitId .. "无奖励信息:" .. id)
+                if isPreparedActivity and config.rewardBundleDic and config.rewardBundleDic[id] then
+                    
+                    rewardBundles = config.rewardBundleDic[id]
+                else
+                    if config.getRewardBundleByStageIdFunc then
+                        rewardBundles = config.getRewardBundleByStageIdFunc(id)
+                    end
+                    if not rewardBundles then
+                        local rewardId = config.getRewardIdByStageIdFunc(id)
+                        if not string.isEmpty(rewardId) then
+                            rewardBundles = UIUtils.getRewardItems(rewardId)
+                        else
+                            logger.error(info.benefitId .. "无奖励信息:" .. id)
+                        end
                     end
                 end
+
                 
                 if rewardBundles then
                     for _,reward in ipairs(rewardBundles) do
@@ -552,6 +569,43 @@ ActivityBenefitsCtrl._IsBenefitUnlocked = HL.Method(HL.String).Return(HL.Boolean
         return true
     end
     return unlockFunc()
+end
+
+
+ActivityBenefitsCtrl.PrepareBenefits = HL.StaticMethod() << function()
+    
+    if not Tables.activityBenefitsTable:ContainsKey(PREPARE_ACTIVITY_ID) or benefitConfigTable.isPrepared then
+        return
+    end
+    local data = Tables.activityBenefitsTable[PREPARE_ACTIVITY_ID].stageList
+    for dataIndex = 1, data.Count do
+        local info = data[CSIndex(dataIndex)]
+        local config = benefitConfigTable[info.benefitId]
+        if config then
+            config.rewardBundleDic = {}
+            local ids = config.getStageIdsFunc()
+            config.preparedStageIds = ids
+            for _, id in ipairs(ids) do
+                
+                local rewardBundles
+                if config.getRewardBundleByStageIdFunc then
+                    rewardBundles = config.getRewardBundleByStageIdFunc(id)
+                end
+                if not rewardBundles then
+                    local rewardId = config.getRewardIdByStageIdFunc(id)
+                    if not string.isEmpty(rewardId) then
+                        rewardBundles = UIUtils.getRewardItems(rewardId)
+                    else
+                        logger.error(info.benefitId .. "无奖励信息:" .. id)
+                    end
+                end
+                if rewardBundles then
+                    config.rewardBundleDic[id] = rewardBundles
+                end
+            end
+        end
+    end
+    benefitConfigTable.isPrepared = true
 end
 
 HL.Commit(ActivityBenefitsCtrl)

@@ -121,7 +121,9 @@ ShopGiftPackEmptyCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitData()
     self:_RefreshUI()
 
-    if arg ~= nil and arg.cashShopId ~= nil then
+    if arg ~= nil and arg.goodsId ~= nil then
+        self:ChooseTabByGoodsId(arg.goodsId, true, true)
+    elseif arg ~= nil and arg.cashShopId ~= nil then
         self:ChooseTabByCashShopId(arg.cashShopId, nil, true)
     else
         if string.isEmpty(self.m_currTabCashShopId) then
@@ -447,8 +449,9 @@ end
 
 
 
-ShopGiftPackEmptyCtrl.ChooseTabByGoodsId = HL.Method(HL.String, HL.Boolean).Return(HL.String)
-    << function(self, goodsId, openDetailPanel)
+
+ShopGiftPackEmptyCtrl.ChooseTabByGoodsId = HL.Method(HL.String, HL.Boolean, HL.Opt(HL.Boolean)).Return(HL.String)
+    << function(self, goodsId, openDetailPanel, onCreate)
     
     local foundTabData = nil
     local foundTabIndex = 0
@@ -477,10 +480,19 @@ ShopGiftPackEmptyCtrl.ChooseTabByGoodsId = HL.Method(HL.String, HL.Boolean).Retu
                 local foundInfo = lume.match(foundTabData.cashGoodsInfos, function(info)
                     return info.goodsId == goodsId
                 end)
-                UIManager:Open(PanelId.ShopGiftPackDetails, {
-                    goodsId = goodsId,
-                    goodsInfo = foundInfo,
-                })
+                if onCreate then
+                    self:_StartCoroutine(function()
+                        UIManager:Open(PanelId.ShopGiftPackDetails, {
+                            goodsId = goodsId,
+                            cashShopId = foundInfo.cashShopId,
+                        })
+                    end)
+                else
+                    UIManager:Open(PanelId.ShopGiftPackDetails, {
+                        goodsId = goodsId,
+                        cashShopId = foundInfo.cashShopId,
+                    })
+                end
             end
         end
         return foundTabData.cashShopId
@@ -552,6 +564,8 @@ ShopGiftPackEmptyCtrl._OnReceiveRefreshMsg = HL.Method() << function(self)
     if string.isEmpty(self.m_currTabCashShopId) then
         self:_SetTabByIndex(1)
     end
+
+    Notify(MessageConst.ON_CASH_SHOP_RECEIVE_REFRESH_MSG)
 end
 
 

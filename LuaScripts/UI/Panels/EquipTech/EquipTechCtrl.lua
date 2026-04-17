@@ -77,6 +77,12 @@ local PHASE_ID = PhaseId.EquipTech
 
 
 
+
+
+
+
+
+
 EquipTechCtrl = HL.Class('EquipTechCtrl', uiCtrl.UICtrl)
 
 
@@ -118,7 +124,7 @@ EquipTechCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_EQUIP_PRODUCE] = '_OnEquipProduce',
     [MessageConst.ON_EQUIP_ENHANCE] = '_OnEquipEnhance',
     [MessageConst.ON_ITEM_COUNT_CHANGED] = '_OnItemChanged',
-    [MessageConst.ON_WALLET_CHANGED] = '_OnItemChanged',
+    [MessageConst.ON_WALLET_CHANGED] = '_OnWalletChanged',
     [MessageConst.GUIDE_EQUIP_PRODUCE_SCROLL_TO_ITEM] = '_OnGuideEquipProduceScrollToItem',
 }
 
@@ -136,6 +142,9 @@ EquipTechCtrl.m_jumpFormulaId = HL.Field(HL.String) << ""
 
 
 EquipTechCtrl.m_jumpMaterialEquipId = HL.Field(HL.String) << ""
+
+
+EquipTechCtrl.m_costItemIds = HL.Field(HL.Table)
 
 
 
@@ -182,7 +191,19 @@ end
 
 EquipTechCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
     
+    if self.view.stateController.currentStateName == STATE_NAME.ENHANCE_MATERIAL then
+        self:_BackToEnhanceTarget()
+    end
+    
     self:_EnterProduce()
+end
+
+
+
+
+EquipTechCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
+    self.view.rightProduceNode.bottomNode.numberSelector.view.keyHintLeft.gameObject:SetActive(active)
+    self.view.rightProduceNode.bottomNode.numberSelector.view.keyHintRight.gameObject:SetActive(active)
 end
 
 
@@ -236,7 +257,8 @@ EquipTechCtrl._InitAction = HL.Method() << function(self)
     end)
 
     self.view.rightProduceNode.bottomNode.btnMake.onClick:AddListener(function()
-        self.m_equipTechSystem:ProduceEquip(self.m_selectedProduceItemInfo.equipFormulaData.formulaId)
+        logger.info("[EquipTech] produceCount", self.m_produceCount)
+        self.m_equipTechSystem:ProduceEquip(self.m_selectedProduceItemInfo.equipFormulaData.formulaId, self.m_produceCount)
     end)
     self.view.rightProduceNode.bottomNode.gotoNode.buttonGoto.onClick:AddListener(function()
         if not self.m_selectedProduceItemInfo or not self.m_selectedProduceItemInfo.equipFormulaData then
@@ -347,6 +369,9 @@ EquipTechCtrl.m_selectedProduceItemCell = HL.Field(HL.Userdata)
 EquipTechCtrl.m_costItemCellCache = HL.Field(HL.Forward("UIListCache"))
 
 
+EquipTechCtrl.m_costItemCountUpdateFunctions = HL.Field(HL.Table)
+
+
 EquipTechCtrl.m_playAnimProduceList = HL.Field(HL.Boolean) << false
 
 
@@ -354,6 +379,9 @@ EquipTechCtrl.m_isInitClickProduceEquip = HL.Field(HL.Boolean) << false
 
 
 EquipTechCtrl.m_jumpFormulaCell = HL.Field(HL.Any)
+
+
+EquipTechCtrl.m_produceCount = HL.Field(HL.Number) << 0
 
 
 
@@ -562,6 +590,7 @@ EquipTechCtrl._UpdateProducePackCell = HL.Method(HL.Table, HL.Table, HL.Number) 
         end
     end)
     cell.toggle.isOn = packData.isExpanded
+    self.view.leftBarProduce.itemList:ToggleByState(packCsIndex, packData.isExpanded, true)
     local packId = packData.equipPackData.packId
     cell.redDot:InitRedDot("EquipPack", packId, function(redDot, active, rdType)
         redDot.view.allNew.gameObject:SetActive(active and rdType == EquipTechConst.EQUIP_PRODUCE_PACK_RED_DOT_TYPE.AllNew)
@@ -676,8 +705,11 @@ end
 
 
 
-EquipTechCtrl._RefreshProduceEquipInfo = HL.Method(HL.Table) << function(self, itemInfo)
+
+EquipTechCtrl._RefreshProduceEquipInfo = HL.Method(HL.Table, HL.Opt(HL.Boolean)) << function(self, itemInfo, isCostItemCountChanged)
     self.m_selectedProduceItemInfo = itemInfo
+    self.m_costItemIds = {}
+    self.m_costItemCountUpdateFunctions = {}
     local isEmpty = itemInfo == nil
     self.view.middleBar.centerItem.gameObject:SetActive(not isEmpty)
     self.view.middleBar.produceContent.equipInfo.gameObject:SetActive(not isEmpty)
@@ -699,16 +731,19 @@ EquipTechCtrl._RefreshProduceEquipInfo = HL.Method(HL.Table) << function(self, i
         self.m_costItemCellCache = UIUtils.genCellCache(self.view.middleBar.produceContent.formulaNode.costItemCell)
     end
     local costItemCount = 0
+    local maxProduceCount = Tables.equipTechConst.equipProduceMaxCount
     local costItemTable
     if itemInfo.isUnlocked then
         costItemTable = {}
         if not string.isEmpty(itemInfo.equipFormulaData.costGoldId) and itemInfo.equipFormulaData.costGoldNum > 0 then
             table.insert(costItemTable, { id = itemInfo.equipFormulaData.costGoldId, count = itemInfo.equipFormulaData.costGoldNum })
+            table.insert(self.m_costItemIds, itemInfo.equipFormulaData.costGoldId)
         end
         for i = 0, #itemInfo.equipFormulaData.costItemId - 1 do
             local costItemId = itemInfo.equipFormulaData.costItemId[i]
             local costItemNum = itemInfo.equipFormulaData.costItemNum[i]
             table.insert(costItemTable, { id = costItemId, count = costItemNum })
+            table.insert(self.m_costItemIds, costItemId)
         end
         costItemCount = #costItemTable
     end
@@ -726,9 +761,17 @@ EquipTechCtrl._RefreshProduceEquipInfo = HL.Method(HL.Table) << function(self, i
         local ownItemNum = Utils.getItemCount(costItemId, true, true)
         local isLack = ownItemNum < costItemNum
         cell.item:UpdateCountSimple(costItemNum, isLack)
+        local updateCountFunc = function()
+            local costNum = costItemNum * self.m_produceCount
+            local ownNum = Utils.getItemCount(costItemId, true, true)
+            cell.item:UpdateCountSimple(costNum, ownNum < costNum)
+        end
+        table.insert(self.m_costItemCountUpdateFunctions, updateCountFunc)
         cell.ownCountTxt.text = UIUtils.setCountColor(tostring(ownItemNum), isLack)
         if isLack then
             isCostEnough = false
+        else
+            maxProduceCount = math.min(maxProduceCount, math.floor(ownItemNum / costItemNum))
         end
     end)
     self.view.middleBar.produceContent.formulaNode.naviGroup.enabled = itemInfo.isUnlocked
@@ -741,11 +784,23 @@ EquipTechCtrl._RefreshProduceEquipInfo = HL.Method(HL.Table) << function(self, i
     bottomNodeView.gameObject:SetAllChildrenActiveIfNecessary(false)
     if itemInfo.isUnlocked then
         if isCostEnough then
-            bottomNodeView.btnMake.gameObject:SetActive(true)
+            bottomNodeView.makeNode.gameObject:SetActive(true)
+            local curProduceCount= 1
+            if isCostItemCountChanged then
+                curProduceCount = math.min(self.m_produceCount, maxProduceCount)
+            end
+            bottomNodeView.numberSelector:InitNumberSelector(curProduceCount, 1, maxProduceCount, function(count)
+                self.m_produceCount = count
+                for _, updateFunc in pairs(self.m_costItemCountUpdateFunctions) do
+                    updateFunc()
+                end
+            end)
         else
+            self.m_produceCount = 0
             bottomNodeView.shortageTip.gameObject:SetActive(true)
         end
     else
+        self.m_produceCount = 0
         if itemInfo.equipFormulaData.unlockType == GEnums.EquipFormulaUnlockType.AdventureLevel then
             bottomNodeView.levelTip.gameObject:SetActive(true)
             bottomNodeView.levelTip.txtTargetLv.text = string.format(Language.LUA_EQUIP_PRODUCE_ADVENTURE_LEVEL_LOCKED_FORMAT,
@@ -763,12 +818,17 @@ end
 
 
 EquipTechCtrl._OnEquipProduce = HL.Method(HL.Table) << function(self, args)
-    local formulaId, equipInstId = unpack(args)
+    local formulaId, equipInstIdList = unpack(args)
     
     local equipFormulaData = Tables.equipFormulaTable[formulaId]
+    local produceCount = equipInstIdList.Count
+    local items = {}
+    for i = 1, produceCount do
+        table.insert(items, { id = equipFormulaData.outcomeEquipId, count = 1 })
+    end
     Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
         title = Language.LUA_EQUIP_PRODUCE_SUCCESS_TITLE,
-        items = { { id = equipFormulaData.outcomeEquipId, count = 1 } },
+        items = items,
     })
     self:_RefreshProduceEquipInfo(self.m_selectedProduceItemInfo)
 end
@@ -777,8 +837,43 @@ end
 
 
 EquipTechCtrl._OnItemChanged = HL.Method(HL.Table) << function(self, args)
+    local changedItemId2DiffCount = unpack(args)
+    local needRefresh = false
+    for _, itemId in pairs(self.m_costItemIds) do
+        if changedItemId2DiffCount:ContainsKey(itemId) then
+            needRefresh = true
+            break
+        end
+    end
+    if not needRefresh then
+        return
+    end
+    self:_ItemCountChangRefresh()
+end
+
+
+
+
+EquipTechCtrl._OnWalletChanged = HL.Method(HL.Table) << function(self, args)
+    local itemId = unpack(args)
+    local needRefresh = false
+    for _, costItemId in pairs(self.m_costItemIds) do
+        if costItemId == itemId then
+            needRefresh = true
+            break
+        end
+    end
+    if not needRefresh then
+        return
+    end
+    self:_ItemCountChangRefresh()
+end
+
+
+
+EquipTechCtrl._ItemCountChangRefresh = HL.Method() << function(self)
     if self.m_selectedProduceItemInfo then
-        self:_RefreshProduceEquipInfo(self.m_selectedProduceItemInfo)
+        self:_RefreshProduceEquipInfo(self.m_selectedProduceItemInfo, true)
     end
     if self.view.stateController.currentStateName == STATE_NAME.ENHANCE_MATERIAL then
         self:_RefreshEnhanceCostItem()
@@ -898,7 +993,8 @@ end
 
 
 
-EquipTechCtrl._RefreshEnhanceTargetList = HL.Method() << function(self)
+
+EquipTechCtrl._RefreshEnhanceTargetList = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGraduallyShow)
     local jumpEquipId = self.m_jumpEquipId
     self.m_jumpEquipId = ""
     
@@ -955,6 +1051,7 @@ EquipTechCtrl._RefreshEnhanceTargetList = HL.Method() << function(self)
         defaultSelectedIndex = 1,
         selectedIndexId = self.m_selectedEnhanceEquipInstId,
         selectedItemId = jumpEquipId,
+        skipGraduallyShow = skipGraduallyShow,
     }
     self.view.leftBarEnhance.commonItemList:InitCommonItemList(itemListArgs)
 end
@@ -1151,7 +1248,7 @@ EquipTechCtrl._RefreshEnhanceMaterialList = HL.Method() << function(self)
             })
             cell.btnSymbol.onClick:RemoveAllListeners()
             cell.btnSymbol.onClick:AddListener(function()
-                if DeviceInfo.usingController then
+                if DeviceInfo.usingController and not self.m_isEnhanceMaterialItemTipsMode then
                     self.m_isEnhanceMaterialItemTipsMode = true
                     self.m_closeEnhanceMaterialItemTipsBindingId = self:BindInputPlayerAction(
                         "common_cancel_no_hint", function()
@@ -1284,12 +1381,14 @@ end
 EquipTechCtrl._RefreshEnhanceCostItem = HL.Method() << function(self)
     self.view.middleBar.bottomNode.btnIcon.onClick:RemoveAllListeners()
     self.m_isCostItemCountEnough = false
+    self.m_costItemIds = {}
     local itemCount = 0
     local costItemCount = 0
     local _, costData = Tables.equipEnhanceCostTable:TryGetValue(self.m_selectedEnhanceEquipItemInfo.equipData.domainId)
     if costData then
         local _, costItemData = Tables.itemTable:TryGetValue(costData.consumeItemId)
         if costItemData then
+            table.insert(self.m_costItemIds, costItemData.id)
             itemCount = Utils.getItemCount(costItemData.id)
             costItemCount = costData.consumeItemCnt
             self.m_isCostItemCountEnough = itemCount >= costItemCount
@@ -1377,7 +1476,7 @@ EquipTechCtrl._OnEquipEnhance = HL.Method(HL.Table) << function(self, args)
         nextLevelAttrShowValue = self.m_nextLevelAttrShowValue,
         closeCallback = function()
             self:_RefreshEnhancedEquip()
-            self:_RefreshEnhanceTargetList()
+            self:_RefreshEnhanceTargetList(true)
             self:_RefreshEnhanceMaterialList()
             if not DeviceInfo.usingController then
                 self:_RefreshEnhanceMaterial(nil)

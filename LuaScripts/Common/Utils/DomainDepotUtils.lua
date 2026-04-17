@@ -54,7 +54,7 @@ function DomainDepotUtils.GetDepotInfo(depotId)
     local depotRuntimeData = GameInstance.player.domainDepotSystem:GetDomainDepotDataById(depotId)
     local depotTableConfig = Tables.domainDepotTable[depotId]
     local depotLevelList = Tables.domainDepotLevelTable[depotId].levelList
-    local currLevel, maxLevel = depotRuntimeData.level, #depotLevelList
+    local currLevel, maxLevel = depotRuntimeData.level, DomainPOIUtils.GetDomainDepotMaxLevel(depotId)
     local currLevelConfig, maxLevelConfig
     if currLevel > 0 then
         currLevelConfig = depotLevelList[currLevel]
@@ -81,9 +81,7 @@ function DomainDepotUtils.InitTopMoneyTitle(topMoneyTitle, domainId, onClose)
         return
     end
 
-    local goldItemId = domainDevData.domainDataCfg.domainGoldItemId
-    local maxCount = domainDevData.curLevelData.moneyLimit
-    topMoneyTitle:InitDomainTopMoneyTitle(goldItemId, maxCount)
+    topMoneyTitle:InitDomainTopMoneyTitle(domainId)
     topMoneyTitle.view.closeBtn.onClick:AddListener(function()
         onClose()
     end)

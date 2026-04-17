@@ -101,7 +101,7 @@ CommonHoverTipCtrl._ShowTip = HL.Method(HL.Table) << function(self, args)
         
         local itemTypeData = Tables.itemTypeTable[itemData.type]
         mainText = itemData.name
-        subText = itemTypeData.name
+        subText = UIUtils.getItemTypeName(itemId)
 
         UIUtils.setItemRarityImage(self.view.rarityLine, itemData.rarity)
 

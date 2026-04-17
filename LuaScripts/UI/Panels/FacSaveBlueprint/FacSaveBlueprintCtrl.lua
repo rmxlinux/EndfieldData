@@ -27,6 +27,7 @@ local PANEL_ID = PanelId.FacSaveBlueprint
 
 
 
+
 FacSaveBlueprintCtrl = HL.Class('FacSaveBlueprintCtrl', uiCtrl.UICtrl)
 
 
@@ -103,15 +104,14 @@ FacSaveBlueprintCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         if arg.shareCode then
             self.m_shareCode = arg.shareCode
         end
-
-        if not self.m_isEditing then
-            bpAbnormalIconHelper = FactoryUtils.createBPAbnormalIconHelper()
-        end
     else
         
         self.m_csBP = LuaSystemManager.factory:GetBlueprintFromBatchSelectTargets()
         self.m_isCreate = true
         self.m_isEditing = true
+    end
+    if not self.m_isSharing then
+        bpAbnormalIconHelper = FactoryUtils.createBPAbnormalIconHelper()
     end
 
     if self.m_isSharing then
@@ -228,7 +228,7 @@ end
 
 
 FacSaveBlueprintCtrl._OnClickSave = HL.Method() << function(self)
-    self:_CheckIsChangedAndDo(function(name, desc, icon, colorId, tagIds)
+    self:_CheckIsChangedAndDo(function(name, desc, icon, colorId, tagIds, timeLimitedFormulas)
         if self.m_isCreate then
             local csBPSys = GameInstance.player.remoteFactory.blueprint
             if csBPSys.myBlueprints.Count >= Tables.facBlueprintConst.MyBluePrintNumMax then
@@ -237,14 +237,14 @@ FacSaveBlueprintCtrl._OnClickSave = HL.Method() << function(self)
                 return
             end
             self.view.blueprintPreview:ApplyIconChanges()
-            GameInstance.player.remoteFactory.blueprint:SendSaveBlueprint(self.m_csBP, name, desc, icon, colorId, tagIds)
+            GameInstance.player.remoteFactory.blueprint:SendSaveBlueprint(self.m_csBP, name, desc, icon, colorId, tagIds, timeLimitedFormulas)
         elseif self.m_isEditing then
             Notify(MessageConst.SHOW_POP_UP, {
                 content = Language.LUA_FAC_BLUEPRINT_SAVE_CHANGE_HINT,
                 warningContent = Language.LUA_FAC_BLUEPRINT_SAVE_CHANGE_WARNING_HINT,
                 onConfirm = function()
                     local changedProdIconDic = self.view.blueprintPreview:GetChangedIcons()
-                    GameInstance.player.remoteFactory.blueprint:SendModifyBlueprint(self.m_bpInst.param.myBpUid, name, desc, icon, colorId, tagIds, changedProdIconDic)
+                    GameInstance.player.remoteFactory.blueprint:SendModifyBlueprint(self.m_bpInst.param.myBpUid, name, desc, icon, colorId, tagIds, changedProdIconDic, timeLimitedFormulas)
                 end
             })
         end
@@ -280,6 +280,7 @@ FacSaveBlueprintCtrl._CheckIsChangedAndDo = HL.Method(HL.Function, HL.Opt(HL.Fun
     local icon = self.view.blueprintContent.curIcon
     local colorId = self.view.blueprintContent.curColorId
     local tagIds = self.view.blueprintContent:GetSortedTagIds()
+    local timeLimitedFormulas = self:_GetTimeLimitedFormulas()
     local isChanged
     if self.m_isCreate then
         isChanged = true 
@@ -311,7 +312,7 @@ FacSaveBlueprintCtrl._CheckIsChangedAndDo = HL.Method(HL.Function, HL.Opt(HL.Fun
         end
     end
     if isChanged then
-        actionOnChange(name, desc, icon, colorId, tagIds)
+        actionOnChange(name, desc, icon, colorId, tagIds, timeLimitedFormulas)
     elseif actionOnNotChange then
         actionOnNotChange()
     end
@@ -459,6 +460,32 @@ FacSaveBlueprintCtrl.OnRefreshTechTree = HL.Method(HL.Opt(HL.Any)) << function(s
             self:_RefreshController()
         end
     end
+end
+
+
+
+FacSaveBlueprintCtrl._GetTimeLimitedFormulas = HL.Method().Return(HL.Table) << function(self)
+    local helper = self.view.blueprintPreview.m_bpAbnormalIconHelper
+    local timeLimitedFormulas = {}
+    local changedProdIconDic = self.view.blueprintPreview:GetChangedIcons() or {}
+    for _, entry in pairs(self.m_csBP.buildingNodes) do
+        local buildingId = entry.templateId
+        if Tables.factoryBuildingTable:ContainsKey(buildingId) then
+            local itemId = changedProdIconDic[entry.nodeId] or entry.productIcon
+            if not string.isEmpty(itemId) then
+                local _, craftId = helper.GetAbnormalType(buildingId, itemId, true)
+                if craftId and FactoryUtils.isTimeLimitedFormula(craftId) then
+                    timeLimitedFormulas[craftId] = true
+                end
+            end
+        end
+    end
+    local intIds = {}
+    for craftId, _ in pairs(timeLimitedFormulas) do
+        table.insert(intIds, CS.Beyond.Cfg.Tables.formulaIdToNum:GetValue(craftId))
+    end
+    logger.info("FacSaveBlueprintCtrl._GetTimeLimitedFormulas", timeLimitedFormulas, intIds)
+    return intIds
 end
 
 HL.Commit(FacSaveBlueprintCtrl)

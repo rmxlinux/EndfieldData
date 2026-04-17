@@ -80,6 +80,7 @@ local DEPOT_SLOT_TRANSMISSION_STYLE = "HideStorageTag"
 
 
 
+
 DomainItemTransferSelectCtrl = HL.Class('DomainItemTransferSelectCtrl', uiCtrl.UICtrl)
 
 
@@ -179,6 +180,13 @@ DomainItemTransferSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
             self.view.depotExtraRoot.timeRemainingTxt.text = self:_GetTimeText()
         end
     end)
+end
+
+
+
+
+DomainItemTransferSelectCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
+    self.view.depotExtraRoot.numberSelector:UpdateKeyHintVisible(active)
 end
 
 

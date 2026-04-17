@@ -24,7 +24,7 @@ ActivitySpringFestivalCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
     self.view.activityCommonInfo:InitActivityCommonInfo(args)
     self.view.activityCommonInfo.view.gotoNode.btnDetailRedDot:InitRedDot("ActivitySpringFest",args.activityId)
     self.view.activityCommonInfo.view.gotoNode.btnDetail.onClick:AddListener(function()
-        ActivityUtils.setFalseNewActivityDay(self.m_activityId)
+        ActivityUtils.setActivityDayAsRead(self.m_activityId)
     end)
 end
 

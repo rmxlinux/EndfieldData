@@ -25,7 +25,6 @@ SocializeVisitMissionCtrl.m_listCells = HL.Field(HL.Forward("UIListCache"))
 SocializeVisitMissionCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SPACESHIP_ASSIST_DATA_MODIFY] = '_UpdateQuestCell',
     [MessageConst.ON_SPACESHIP_JOIN_FRIEND_INFO_EXCHANGE] = '_UpdateQuestCell',
-    [MessageConst.ON_SPACESHIP_CLUE_INFO_CHANGE] = '_UpdateQuestCell',
     [MessageConst.ON_SPACESHIP_CLUE_INFO_SYNC] = '_UpdateQuestCell',
 }
 

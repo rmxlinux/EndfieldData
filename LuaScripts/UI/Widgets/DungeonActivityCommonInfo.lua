@@ -101,49 +101,10 @@ DungeonActivityCommonInfo.RefreshDungeonActivityCommonInfo = HL.Method(HL.String
     self.view.lockedNode.gameObject:SetActive(false)
     
     if stageData.Status == GEnums.ActivityConditionalStageState.Locked:GetHashCode() then
-        local stageId = activityDungeonStateCfg.activityStage
-        local conditionCfg = Tables.activityConditionalMultiStageConditionTable:GetValue(stageId)
-        local flags = stageData.Conditions.Flags
-        local desc, conditionType, questId = nil, 0, nil
-        local missionQuestFallbackDesc, missionQuestFallbackType, missionQuestFallbackQuestId = nil, 0, nil
-
-        if conditionCfg and conditionCfg.conditionList then
-            for i = 0, conditionCfg.conditionList.Count - 1 do
-                local condition = conditionCfg.conditionList[i]
-                local conditionSuccess ,isComplete = flags:TryGetValue(condition.conditionId)
-                if conditionSuccess and isComplete then
-                    
-                else
-                    local ct = condition.conditionType
-                    local isMissionOrQuest = (ct == GEnums.ConditionType.MissionStateEqual or ct == GEnums.ConditionType.QuestStateEqual)
-                    if isMissionOrQuest then
-                        if missionQuestFallbackDesc == nil then
-                            missionQuestFallbackDesc = condition.desc
-                            missionQuestFallbackType = ct
-                            if condition.parameters and condition.parameters.Count > 0 then
-                                local p0 = condition.parameters[0]
-                                missionQuestFallbackQuestId = (p0.valueStringList and p0.valueStringList.Count > 0) and p0.valueStringList[0] or ''
-                            else
-                                missionQuestFallbackQuestId = ''
-                            end
-                        end
-                    else
-                        desc = condition.desc
-                        conditionType = ct
-                        questId = ''
-                        break
-                    end
-                end
-            end
-            if desc == nil and missionQuestFallbackDesc ~= nil then
-                desc = missionQuestFallbackDesc
-                conditionType = missionQuestFallbackType
-                questId = missionQuestFallbackQuestId or ''
-            end
-        end
-
+        local tuple = GameInstance.player.activitySystem:GetStageLockDisplayConditionInfo(activityDungeonStateCfg.activityStage)
+        local desc, conditionType, questId = tuple.Item1, tuple.Item2, tuple.Item3
         if not string.isEmpty(desc) then
-            if conditionType == GEnums.ConditionType.MissionStateEqual or conditionType == GEnums.ConditionType.QuestStateEqual then
+            if conditionType == GEnums.ConditionType.MissionStateEqual:GetHashCode() or conditionType == GEnums.ConditionType.QuestStateEqual:GetHashCode() then
                 self.m_missionId = GameInstance.player.mission:GetMissionIdByQuestId(questId or '')
                 self.view.jumpTxt.text = desc
             else

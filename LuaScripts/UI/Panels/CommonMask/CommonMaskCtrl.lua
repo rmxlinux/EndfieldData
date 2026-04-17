@@ -46,6 +46,9 @@ local PANEL_ID = PanelId.CommonMask
 
 
 
+
+
+
 CommonMaskCtrl = HL.Class('CommonMaskCtrl', uiCtrl.UICtrl)
 
 
@@ -110,6 +113,12 @@ CommonMaskCtrl.m_showingText = HL.Field(HL.Boolean) << false
 
 
 CommonMaskCtrl.m_handles = HL.Field(HL.Table)
+
+
+CommonMaskCtrl.m_entitySyncLoadModeEnabled = HL.Field(HL.Boolean) << false
+
+
+CommonMaskCtrl.m_burstModeEnabled = HL.Field(HL.Boolean) << false
 
 
 
@@ -696,10 +705,27 @@ end
 
 
 CommonMaskCtrl._SetBurstMode = HL.Method(HL.Boolean) << function(self, enable)
+    if enable == self.m_burstModeEnabled then
+        return
+    end
+
     if CS.Beyond.Cfg.RemoteGameCfg.instance.data.commonMaskEnableBurstMode then
         GameInstance.SetBurstMode(enable, GameInstance.EBurstModeReason.CommonMask)
         logger.important(CS.Beyond.EnableLogType.LevelLoader, string.format("CommonMask SetBurstMode %s", enable))
+        self.m_burstModeEnabled = enable
     end
+end
+
+
+
+
+CommonMaskCtrl._SetEntitySyncLoadMode = HL.Method(HL.Boolean) << function(self, enable)
+    if enable == self.m_entitySyncLoadModeEnabled then
+        return
+    end
+    logger.important(CS.Beyond.EnableLogType.LevelLoader, string.format("CommonMask SetEntitySyncLoadMode %s", enable))
+    GameWorld.narrativeManager:SetEntitySyncLoadModeByCommonMask(enable)
+    self.m_entitySyncLoadModeEnabled = enable
 end
 
 
@@ -779,6 +805,9 @@ CommonMaskCtrl._DoCommonMaskASync = HL.Method() << function(self)
                 local maskBlack = maskType == UIConst.UI_COMMON_MASK_TYPE.BlackScreen
                 if maskWhite or maskBlack then
                     self:_SetBurstMode(true)
+                    if self.m_curMaskData.enableEntitySyncLoadMode then
+                        self:_SetEntitySyncLoadMode(true)
+                    end
                 end
 
                 if self.m_extraData.enableTimeOutWhenWaitHide then
@@ -838,7 +867,6 @@ CommonMaskCtrl._DoCommonMaskASync = HL.Method() << function(self)
 
         
         if not fadeIn or not self.m_extraData or not self.m_extraData.waitHide then
-            self:_SetBurstMode(false)
             if CoroutineManager:IsCorCleared(corKey) then
                 return
             end
@@ -862,6 +890,13 @@ CommonMaskCtrl._DoCommonMaskASync = HL.Method() << function(self)
                 self:_ClearTween()
                 return
             end
+
+            if CoroutineManager:IsCorCleared(corKey) then
+                return
+            end
+            
+            self:_SetBurstMode(false)
+            self:_SetEntitySyncLoadMode(false)
 
             
             local maskCanvas = self:_RefreshMaskType()
@@ -977,6 +1012,7 @@ end
 CommonMaskCtrl._Clear = HL.Method() << function(self)
     logger.info("CommonMaskCtrl _Clear")
     self:_SetBurstMode(false)
+    self:_SetEntitySyncLoadMode(false)
     self:_ClearTween()
     self.m_showingText = false
     if self.m_curMaskData then

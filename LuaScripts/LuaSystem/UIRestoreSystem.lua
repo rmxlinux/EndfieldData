@@ -46,24 +46,38 @@ UIRestoreSystem.AddRequest = HL.Method(HL.String, HL.Function, HL.Opt(HL.Functio
     local restoreData = {
         dungeonId = dungeonId,
         action = action,
+        phaseArgs = {},
         checkFunc = checkFunc or function() return self:_DefaultCheck() end,
     }
+    local phaseArgs = PhaseManager:CollectCurPhaseArgs()
+    for _, v in ipairs(phaseArgs) do
+        if not UIConst.UI_RESTORE_PHASE_BLACKLIST[v.name] then
+            table.insert(restoreData.phaseArgs, v)
+        end
+    end
     self.m_restoreRequestMap[dungeonId] = restoreData
 end
 
 
 
-UIRestoreSystem.TryRestore = HL.Method() << function(self)
+UIRestoreSystem.TryRestore = HL.Method().Return(HL.Boolean) << function(self)
     if self.m_restoreRestoreData then
         local restoreData = self.m_restoreRestoreData
         self.m_restoreRestoreData = nil
         if restoreData.checkFunc() then
-            restoreData.action()
+            if DeviceInfo.switchInputDeviceWithRecover then
+                PhaseManager:RecoverPhaseByArgs(restoreData.phaseArgs)
+            else
+                restoreData.action()
+            end
+
             
             
             GameInstance.player.forbidSystem:SetPhaseForbid("CharFormation", "MainCharInAir", false, nil)
+            return true
         end
     end
+    return false
 end
 
 

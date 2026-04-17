@@ -152,6 +152,7 @@ end
 
 RadioCtrl.ShowSelf = HL.Method() << function(self)
     self.m_needHide = false
+    self.m_isHiding = false
     if self:IsShow() then
         return
     end

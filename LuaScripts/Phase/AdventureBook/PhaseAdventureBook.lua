@@ -20,6 +20,8 @@ local PHASE_ID = PhaseId.AdventureStage
 
 
 
+
+
 PhaseAdventureBook = HL.Class('PhaseAdventureBook', phaseBase.PhaseBase)
 
 
@@ -36,6 +38,9 @@ PhaseAdventureBook.m_waitOpenCoroutine = HL.Field(HL.Thread)
 
 
 PhaseAdventureBook.m_dungeonTab = HL.Field(HL.String) << ""
+
+
+PhaseAdventureBook.m_needRestoreNaviOnActivated = HL.Field(HL.Boolean) << false
 
 
 
@@ -92,6 +97,7 @@ end
 
 PhaseAdventureBook._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     Notify(MessageConst.ON_PHASE_ADVENTURE_BOOK_BEHIND)
+    self.m_needRestoreNaviOnActivated = true
 end
 
 
@@ -109,6 +115,13 @@ end
 
 
 PhaseAdventureBook._OnActivated = HL.Override() << function(self)
+    if self.m_needRestoreNaviOnActivated then
+        self.m_needRestoreNaviOnActivated = false
+        if DeviceInfo.usingController and self.m_curPanelItem and self.m_curPanelItem.uiCtrl
+            and self.m_curPanelItem.uiCtrl.panelId == PanelId.AdventureTraining then
+            self.m_curPanelItem.uiCtrl:OnShow()
+        end
+    end
 end
 
 
@@ -213,5 +226,17 @@ PhaseAdventureBook._BindControllerHintPlaceHolder = HL.Method() << function(self
     end
 end
 
-HL.Commit(PhaseAdventureBook)
 
+
+PhaseAdventureBook.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    arg.panelId = self.m_curPanelItem.uiCtrl.panelCfg.name
+    if arg.panelId == "AdventureDungeon" then
+        arg.dungeonTab = self.m_curPanelItem.uiCtrl:GetCurTabName()
+        arg.filterIndex = self.m_curPanelItem.uiCtrl:GetCurEnemySpawnerFilterIndex()
+    end
+    arg.phase = nil
+    return arg
+end
+
+HL.Commit(PhaseAdventureBook)

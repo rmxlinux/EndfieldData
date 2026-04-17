@@ -189,6 +189,19 @@ ActivityCheckInBase._InitActivityInfo = HL.Method(HL.Table) << function(self, ar
         self:_OnUpdateCell(self.m_getRewardCell(obj), LuaIndex(csIndex))
     end)
     self.m_scrollList:UpdateCount(self.m_totalDays)
+    
+    if self.m_isPopup then
+        
+        ActivityUtils.actionWhenActivityClosed(function()
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_ACTIVITY_FORBIDDEN)
+            if args.closeCallback then
+                args.closeCallback()
+            end
+        end, self, self.m_activityId)
+    else
+        
+        ActivityUtils.backToMainHudWhenActivityClosed(self, self.m_activityId)
+    end
 end
 
 
@@ -678,6 +691,11 @@ ActivityCheckInBase._OnActivityCheckIn = HL.Method(HL.Any) << function(self, arg
         self.m_listCells:Refresh(self.m_totalDays, function(cell, index)
             self:_RefreshDots(cell,index)
         end)
+    end
+
+    
+    if DeviceInfo.usingController and self.m_focusIndex > 0 then
+        self:_SetNaviTarget(self.m_focusIndex)
     end
 end
 

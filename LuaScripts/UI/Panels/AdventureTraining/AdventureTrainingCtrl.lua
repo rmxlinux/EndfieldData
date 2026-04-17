@@ -12,6 +12,7 @@ local PANEL_ID = PanelId.AdventureTraining
 
 
 
+
 AdventureTrainingCtrl = HL.Class('AdventureTrainingCtrl', uiCtrl.UICtrl)
 
 
@@ -23,6 +24,7 @@ AdventureTrainingCtrl = HL.Class('AdventureTrainingCtrl', uiCtrl.UICtrl)
 AdventureTrainingCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     
+    [MessageConst.ON_DUNGEON_DIRECTLY_GET_REWARD] = 'OnDirectlyGetReward',
 }
 
 
@@ -49,7 +51,7 @@ end
 AdventureTrainingCtrl.OnShow = HL.Override() << function(self)
     local firstCell = self.m_genLevelCells:Get(1)
     if firstCell then
-        InputManagerInst.controllerNaviManager:SetTarget(firstCell.view.naviDecorator)
+        UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.listNaviGroup, firstCell.view.naviDecorator)
     end
 end
 
@@ -82,7 +84,7 @@ AdventureTrainingCtrl._RefreshAllUI = HL.Method() << function(self)
 
     local firstCell = self.m_genLevelCells:Get(1)
     if firstCell then
-        InputManagerInst.controllerNaviManager:SetTarget(firstCell.view.naviDecorator)
+        UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.listNaviGroup, firstCell.view.naviDecorator)
     end
 end
 
@@ -96,6 +98,13 @@ AdventureTrainingCtrl._OnRefreshLevelCell = HL.Method(HL.Any, HL.Number) << func
     else
         cell:InitTrainingEntryTab(false, self.m_tableDataList[luaIndex].id, luaIndex)
     end
+end
+
+
+
+
+AdventureTrainingCtrl.OnDirectlyGetReward = HL.Method(HL.Table) << function(self, arg)
+    self:_RefreshAllUI()
 end
 
 HL.Commit(AdventureTrainingCtrl)

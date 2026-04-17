@@ -571,7 +571,7 @@ LevelMapLoader.InitLevelMapLoader = HL.Method(HL.String, HL.Opt(HL.Table)) << fu
     self.m_regionManager = GameWorld.mapRegionManager
     self.m_isLowMemoryDevice = CS.Beyond.BeyondMemoryUtility.IsLowMemoryDevice()
     EXTRA_RT_SIZE_SCALE_DEFAULT = self.m_isLowMemoryDevice and 2 or 1;
-    local success, levelConfig = DataManager.levelConfigTable:TryGetData(levelId)
+    local success, levelConfig = Utils.getLevelConfig(levelId)
     self.m_mapId = success and levelConfig.mapIdStr or ""
     self.m_levelId = levelId
     self.m_tierId = MapConst.BASE_TIER_ID
@@ -732,18 +732,19 @@ LevelMapLoader._InitLoaderCache = HL.Method() << function(self)
     )
 
     local lineRoot = element.lineRoot
+    local frontLineRoot = element.frontLineRoot
     local lines = source.lines
     self.m_lineCaches = {
         [LineType.Power] = LuaNodeCache(lines.powerLine, lineRoot.powerLine),
         [LineType.Travel] = LuaNodeCache(lines.travelLine, lineRoot.travelLine),
         [LineType.DomainDepotDeliver] = LuaNodeCache(lines.deliverLine, lineRoot.domainDepotDeliverLine),
-        [LineType.UdPipe] = LuaNodeCache(lines.udPipeLine, lineRoot.udPipeLine),
+        [LineType.UdPipe] = LuaNodeCache(lines.udPipeLine, frontLineRoot.udPipeLine),
     }
     self.m_lineRoots = {
         [LineType.Power] = lineRoot.powerLine,
         [LineType.Travel] = lineRoot.travelLine,
         [LineType.DomainDepotDeliver] = lineRoot.domainDepotDeliverLine,
-        [LineType.UdPipe] = lineRoot.udPipeLine,
+        [LineType.UdPipe] = frontLineRoot.udPipeLine,
     }
     self.m_loadedPowerLineCount = 0
 
@@ -1250,6 +1251,9 @@ LevelMapLoader._RefreshLoadedStaticElementsStateWithTier = HL.Method() << functi
     for _, elementViewData in pairs(self.m_loadedStaticElementViewDataMap) do
         self:_RefreshLoadedStaticElementStateWithTier(elementViewData)
     end
+
+    local isInTier = self:_GetIsInTier()
+    self.view.element.staticElementBottomRoot.switchMask.gameObject:SetActive(not isInTier)
 end
 
 
@@ -2985,9 +2989,10 @@ LevelMapLoader.SetLoaderElementsShownState = HL.Method(HL.Boolean) << function(s
     element.staticElementBackRoot.gameObject:SetActive(isShown)
     element.staticElementFrontRoot.gameObject:SetActive(isShown)
     element.lineRoot.gameObject:SetActive(isShown)
+    element.frontLineRoot.gameObject:SetActive(isShown)
     element.markRoot.gameObject:SetActive(isShown)
     element.trackingMarkRoot.gameObject:SetActive(isShown)
-    element.staticElementGridRoot.switchMask.gameObject:SetActive(isShown)
+    element.staticElementBottomRoot.switchMask.gameObject:SetActive(isShown)
     element.player.gameObject:SetActive(isShown)
 end
 
@@ -3211,7 +3216,7 @@ end
 
 
 LevelMapLoader.ToggleLoaderSwitchMaskVisibleState = HL.Method(HL.Boolean) << function(self, visible)
-    self.view.element.staticElementGridRoot.switchMask.gameObject:SetActive(visible)
+    self.view.element.staticElementBottomRoot.switchMask.gameObject:SetActive(visible)
     self.view.element.staticElementBackRoot.switchButton.gameObject:SetActive(visible)
 end
 
@@ -3220,6 +3225,7 @@ end
 
 LevelMapLoader.ToggleLoaderLineRootVisibleState = HL.Method(HL.Boolean) << function(self, visible)
     self.view.element.lineRoot.gameObject:SetActive(visible)
+    self.view.element.frontLineRoot.gameObject:SetActive(visible)
 end
 
 
@@ -3316,7 +3322,7 @@ LevelMapLoader.GetMissionTrackingMarks = HL.Method().Return(HL.Any) << function(
     if self.m_loadedMissionTrackingMarks == nil then
         return marks
     end
-    
+
     for instId, loadedMark in pairs(self.m_loadedMissionTrackingMarks) do
         
         marks[instId] = loadedMark
@@ -3439,7 +3445,7 @@ LevelMapLoader.RefreshLevelSwitchMaskState = HL.Method(HL.String) << function(se
     end
 
     if self.m_switchMaskCells == nil then
-        self.m_switchMaskCells = UIUtils.genCellCache(self.view.element.staticElementGridRoot.switchMask.maskCell)
+        self.m_switchMaskCells = UIUtils.genCellCache(self.view.element.staticElementBottomRoot.switchMask.maskCell)
     end
 
     local maskDataList = {}
@@ -3569,7 +3575,7 @@ end
 
 
 LevelMapLoader.ResetToTargetMapAndLevel = HL.Method(HL.String) << function(self, levelId)
-    local success, levelConfig = DataManager.levelConfigTable:TryGetData(levelId)
+    local success, levelConfig = Utils.getLevelConfig(levelId)
     if not success then
         return
     end
@@ -3602,7 +3608,7 @@ if BEYOND_DEBUG_COMMAND then
     
     
     LevelMapLoader._InitDebugMode = HL.Method(HL.String) << function(self, levelId)
-        local success, levelConfig = DataManager.levelConfigTable:TryGetData(levelId)
+        local success, levelConfig = Utils.getLevelConfig(levelId)
         if not success then
             return
         end

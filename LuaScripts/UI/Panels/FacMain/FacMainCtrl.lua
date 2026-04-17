@@ -49,6 +49,7 @@ local PANEL_ID = PanelId.FacMain
 
 
 
+
 FacMainCtrl = HL.Class('FacMainCtrl', uiCtrl.UICtrl)
 
 local FORMULA_PIN_TOAST_TEXT_ID = "LUA_FORMULA_PIN_TOAST"
@@ -98,6 +99,7 @@ FacMainCtrl.s_messages = HL.StaticField(HL.Table) << {
 
     [MessageConst.ON_TOGGLE_FAC_TOP_VIEW] = 'OnToggleFacTopView',
     [MessageConst.ON_FAC_TOP_VIEW_HIDE_UI_MODE_CHANGE] = 'OnFacTopViewHideUIModeChange',
+    [MessageConst.FAC_ON_DEL_TIME_LIMITED_FORMULA] = "_OnFormulaDelete",
 }
 
 
@@ -223,6 +225,29 @@ FacMainCtrl.OnFacMainRightActiveChange = HL.Method(HL.Boolean) << function(self,
     if isActive then
         node.controllerHintBarCell:RefreshAll(false)
         CS.Beyond.Gameplay.Conditions.OnFacMainPinHintShow.Trigger()
+    end
+end
+
+
+
+
+FacMainCtrl._OnFormulaDelete = HL.Method(HL.Any) << function(self, args)
+    local chapterInfo = FactoryUtils.getCurChapterInfo()
+    if chapterInfo == nil then
+        return
+    end
+    local pinId = CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryUtil.GetPinBoardStrId(chapterInfo.pinBoard, GEnums.FCPinPosition.Formula:GetHashCode())
+    if string.isEmpty(pinId) then
+        return
+    end
+    if FactoryUtils.isExpiredTimeLimitedFormula(pinId) then
+        local curScopeIndex = ScopeUtil.GetCurrentScope():GetHashCode()
+        if curScopeIndex ~= 0 then
+            
+            
+
+            GameInstance.player.remoteFactory.core:Message_PinSet(curScopeIndex, GEnums.FCPinPosition.Formula:GetHashCode(), "", 0, true)
+        end
     end
 end
 
@@ -473,6 +498,17 @@ FacMainCtrl._RefreshPinFormulaNode = HL.Method() << function(self)
         pinFormulaNode.iconMode.gameObject:SetActive(hasMode)
         if hasMode then
             pinFormulaNode.iconMode:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, modeData.iconId)
+        end
+    end
+
+    
+    if pinFormulaNode.limitedTimeEventNode then
+        if formulaData.craftId ~= nil then
+            pinFormulaNode.limitedTimeEventNode.gameObject:SetActiveIfNecessary(FactoryUtils.isTimeLimitedFormula(formulaData.craftId))
+            FactoryUtils.setTimeLimitedFormulaTagColor(pinFormulaNode.timeLimitedColorTag1, formulaData.craftId)
+            FactoryUtils.setTimeLimitedFormulaTagColor(pinFormulaNode.timeLimitedColorTag2, formulaData.craftId)
+        else
+            pinFormulaNode.limitedTimeEventNode.gameObject:SetActiveIfNecessary(false)
         end
     end
 

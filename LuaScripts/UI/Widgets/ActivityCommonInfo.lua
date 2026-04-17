@@ -57,10 +57,12 @@ ActivityCommonInfo.InitActivityCommonInfo = HL.Method(HL.Table) << function(self
     
     self.view.infoNode.txtName.text = activityData.name
     self.view.infoNode.detailsTxt:SetAndResolveTextStyle(activityData.desc)
-    if activity.endTime == 0 then
-        self.view.infoNode.countDownText.text = Language.LUA_ACTIVITY_PERMANENT_TEXT
-    else
-        self.view.infoNode.countDownWidget:InitCountDownText(activity.endTime)
+    if not args.skipTimeCountDown then
+        if activity.endTime == 0 then
+            self.view.infoNode.countDownText.text = Language.LUA_ACTIVITY_PERMANENT_TEXT
+        else
+            self.view.infoNode.countDownWidget:InitCountDownText(activity.endTime, args.timeOnComplete, args.timeFormatFunc)
+        end
     end
 
     
@@ -206,6 +208,11 @@ ActivityCommonInfo.UpdateRewardInfo = HL.Method(HL.Opt(HL.String)) << function(s
                 tipsPosType = UIConst.UI_TIPS_POS_TYPE.LeftMid,
                 tipsPosTransform = self.view.scrollViewRewards,
                 isSideTips = true,
+                onBeforeJump = function()
+                    if DeviceInfo.usingController then
+                        self.view.gotoNode.scrollViewRewards:ManuallyStopFocus()
+                    end
+                end
             })
             cell.view.countNode.gameObject:SetActive(activityData.showRewardCnt)
         end)

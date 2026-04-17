@@ -12,6 +12,7 @@ local PANEL_ID = PanelId.SettlementSwitchRegionPopup
 
 
 
+
 SettlementSwitchRegionPopupCtrl = HL.Class('SettlementSwitchRegionPopupCtrl', uiCtrl.UICtrl)
 
 
@@ -28,6 +29,9 @@ SettlementSwitchRegionPopupCtrl.m_regionCells = HL.Field(HL.Forward("UIListCache
 
 
 SettlementSwitchRegionPopupCtrl.m_curSelectIndex = HL.Field(HL.Number) << 0
+
+
+SettlementSwitchRegionPopupCtrl.m_activityInfo = HL.Field(HL.Table)
 
 
 
@@ -69,6 +73,10 @@ SettlementSwitchRegionPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self,
             end
         end
     end
+
+    
+    self.m_activityInfo = DomainPOIUtils.getSettlementTradeActivityInfo()
+    
 
     table.sort(self.m_unlockedDomainIds, function(a, b)
         local _, domainDataA = Tables.domainDataTable:TryGetValue(a)
@@ -127,6 +135,17 @@ SettlementSwitchRegionPopupCtrl._RefreshRegionCells = HL.Method() << function(se
         if domainId == self.m_curSelectDomainId then
             self.m_curSelectIndex = index
         end
+
+        
+        local hasActivity = self.m_activityInfo.hasActivity and self.m_activityInfo.domainActivityInfos[domainId] ~= nil
+        if hasActivity then
+            cell.activityMarkNode.gameObject:SetActive(true)
+            cell.activityMarkNode.bgImage.color = self.m_activityInfo.activityColor
+            cell.redDot.gameObject:SetActive(false) 
+        else
+            cell.activityMarkNode.gameObject:SetActive(false)
+        end
+        
     end)
 end
 

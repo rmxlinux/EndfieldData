@@ -247,6 +247,7 @@ CharInfoWeaponCtrl._ToggleWeaponItemList = HL.Method(HL.Boolean) << function(sel
         self:_RefreshWeaponList(curWeaponInstId)
         self:Notify(MessageConst.CHAR_INFO_WEAPON_SECOND_OPEN)
     else
+        InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.commonItemList.view.scrollRect.naviGroup)
         self:Notify(MessageConst.CHAR_INFO_WEAPON_SECOND_CLOSE)
     end
 end

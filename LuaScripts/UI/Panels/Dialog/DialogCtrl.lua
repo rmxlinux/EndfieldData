@@ -46,6 +46,7 @@ local PANEL_ID = PanelId.Dialog
 
 
 
+
 DialogCtrl = HL.Class('DialogCtrl', dialogCtrlBase.DialogCtrlBase)
 
 
@@ -125,7 +126,7 @@ end
 
 
 DialogCtrl.GetCurDialogId = HL.Override().Return(HL.String) << function(self)
-    return GameWorld.dialogManager.dialogId
+    return GameWorld.dialogManager.dialogId or ""
 end
 
 
@@ -304,6 +305,17 @@ end
 DialogCtrl.OnBtnAutoClick = HL.Override() << function(self)
     local auto = not GameWorld.dialogManager.autoMode
     GameWorld.dialogManager:SetAutoMode(auto)
+end
+
+
+
+
+DialogCtrl._RefreshAutoMode = HL.Override(HL.Boolean) << function(self, autoMode)
+    if not self.m_hasShowedTrunkText then
+        return
+    end
+
+    DialogCtrl.Super._RefreshAutoMode(self, autoMode)
 end
 
 

@@ -490,7 +490,11 @@ end
 function Utils.checkCGCanSkip(cgId)
     local res, data = DataManager.cgConfig.data:TryGetValue(cgId)
     if not res then
-        return false
+        local rawId = NarrativeUtils.GetRawNarrativeId(cgId)
+        res, data = DataManager.cgConfig.data:TryGetValue(rawId)
+        if not res then
+            return false
+        end
     end
 
     local skipType = data.skipType
@@ -700,6 +704,15 @@ function Utils.csList2Table(list)
         t[v] = true
     end
     return t
+end
+
+function Utils.teleportToPositionByValidationId(teleportValidationId, callback)
+    if string.isEmpty(teleportValidationId) then
+        logger.error("teleportToPosition failed, invalid teleportValidationId")
+        return
+    end
+    GameAction.TeleportToPositionByValidationId(teleportValidationId, callback)
+    logger.important(CS.Beyond.EnableLogType.DevOnly, "[LuaTeleport] teleportToPositionByValidationId", teleportValidationId)
 end
 
 function Utils.teleportToPosition(sceneId, position, rotation, teleportReason, callback, uiType,hubNodeId)
@@ -914,14 +927,20 @@ function Utils.timeStr2TimeStamp(timeStr, timeZoneSeconds)
     
     
     
-    local localTimeZoneOffset = os.difftime(os.time(), os.time(os.date("!*t")))
+    local utcTable = os.date("!*t")
+    utcTable.isdst = nil
+    local localTimeZoneOffset = os.difftime(os.time(), os.time(utcTable))
     local timestamp = localTimestamp - timeZoneSeconds + localTimeZoneOffset
 
     return math.floor(timestamp)
 end
 
 
-function Utils.isCurTimeInTimeIdRange(timeId)
+function Utils.isCurTimeInTimeIdRange(timeId, ignoreCloseTime)
+    if string.isEmpty(timeId) then
+        return true
+    end
+    
     local hasCfg, timeCfg = Tables.timeRangeTable:TryGetValue(timeId)
     if not hasCfg then
         logger.error("时间区间表不存在该timeId：" .. timeId)
@@ -933,7 +952,7 @@ function Utils.isCurTimeInTimeIdRange(timeId)
     local timeZoneSeconds = Utils.getServerTimeZoneOffsetSeconds()
     local openTs = Utils.timeStr2TimeStamp(timeRange.openTime, timeZoneSeconds)
     local closeTs = nil
-    if not string.isEmpty(timeRange.closeTime) then
+    if not ignoreCloseTime and not string.isEmpty(timeRange.closeTime) then
         closeTs = Utils.timeStr2TimeStamp(timeRange.closeTime, timeZoneSeconds)
     end
 
@@ -941,7 +960,7 @@ function Utils.isCurTimeInTimeIdRange(timeId)
     if closeTs == nil then
         return curTs >= openTs
     else
-        return curTs >= openTs and curTs <= closeTs
+        return curTs >= openTs and curTs < closeTs
     end
 end
 
@@ -1328,6 +1347,33 @@ function Utils.getCommonSettingValueBool(settingId)
         return value
     end
     return CS.Beyond.GameSetting.GetGameSettingDefaultValueFromTableBool(settingId)
+end
+
+function Utils.getLevelConfig(levelId)
+    return DataManager:TryGetLevelConfig(levelId)
+end
+
+function Utils.FreezeWorldByUI()
+    local handle = TimeManagerInst:StartChangeTimeScale(0, CS.Beyond.TimeManager.ChangeTimeScaleReason.UIPanel)
+    if GameWorld.isInited then
+        GameWorld.cutsceneManager:PauseTimelineByUI(true)
+        GameWorld.levelSeqManager:PauseTimelineByUI(true)
+        GameWorld.dialogTimelineManager:PauseTimelineByUI(true)
+    end
+    return handle
+end
+
+function Utils.ResumeWorldByUI(handle)
+    if handle <= 0 then
+        return
+    end
+
+    TimeManagerInst:StopChangeTimeScale(handle)
+    if GameWorld.isInited then
+        GameWorld.cutsceneManager:PauseTimelineByUI(false)
+        GameWorld.levelSeqManager:PauseTimelineByUI(false)
+        GameWorld.dialogTimelineManager:PauseTimelineByUI(false)
+    end
 end
 
 

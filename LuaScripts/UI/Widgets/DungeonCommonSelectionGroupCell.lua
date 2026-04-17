@@ -53,7 +53,7 @@ DungeonCommonSelectionGroupCell.InitDungeonCommonSelectionGroupCell = HL.Method(
 
     self.view.maxNode.gameObject:SetActive(completeNum >= maxNum)
 
-    self.view.redDot:InitRedDot("DungeonReadNormal", dungeonIds, nil, self:GetUICtrl().view.redDotScrollRectGroup)
+    self.view.redDot:InitRedDot("DungeonReadNormal", dungeonIds, nil, self:GetUICtrl().view.redDotScrollRect)
 end
 
 

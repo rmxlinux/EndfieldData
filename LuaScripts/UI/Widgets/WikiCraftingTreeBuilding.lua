@@ -13,6 +13,7 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 WikiCraftingTreeBuilding = HL.Class('WikiCraftingTreeBuilding', UIWidgetBase)
 
 local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
@@ -28,6 +29,9 @@ WikiCraftingTreeBuilding.m_isPinnedCraft = HL.Field(HL.Boolean) << false
 
 
 WikiCraftingTreeBuilding.m_hasWiki = HL.Field(HL.Boolean) << false
+
+
+WikiCraftingTreeBuilding.m_isTimeLimitedFormula = HL.Field(HL.Boolean) << false
 
 
 
@@ -132,6 +136,19 @@ WikiCraftingTreeBuilding.InitWikiCraftingTreeBuilding = HL.Method(HL.Table) << f
         end)
     end
 
+    
+    if self.view.limitedTimeEventNode then
+        if self.m_args.craftInfo.craftId ~= nil then
+            self.m_isTimeLimitedFormula = FactoryUtils.isTimeLimitedFormula(self.m_args.craftInfo.craftId)
+            self.view.stateController:SetState(self.m_isTimeLimitedFormula and "LimitedTime" or "Normal")
+            FactoryUtils.setTimeLimitedFormulaTagColor(self.view.timeLimitedColorTag1, self.m_args.craftInfo.craftId)
+            FactoryUtils.setTimeLimitedFormulaTagColor(self.view.timeLimitedColorTag2, self.m_args.craftInfo.craftId)
+            self.view.selectBgImage.gameObject:SetActiveIfNecessary(self.m_isTimeLimitedFormula)
+        else
+            self.view.stateController:SetState("Normal")
+        end
+    end
+
     self:_InitController()
 
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.transform)
@@ -166,6 +183,9 @@ end
 
 WikiCraftingTreeBuilding.SetSelected = HL.Method(HL.Boolean) << function(self, isSelected)
     self.view.selectNode.gameObject:SetActive(isSelected)
+    if not self.m_isTimeLimitedFormula then
+        self.view.selectBgImage.gameObject:SetActiveIfNecessary(isSelected)
+    end
 end
 
 

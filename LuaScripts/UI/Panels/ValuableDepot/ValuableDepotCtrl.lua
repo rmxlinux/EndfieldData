@@ -179,6 +179,7 @@ local PANEL_ID = PanelId.ValuableDepot
 
 
 
+
 ValuableDepotCtrl = HL.Class('ValuableDepotCtrl', uiCtrl.UICtrl)
 
 
@@ -334,6 +335,14 @@ end
 
 ValuableDepotCtrl.OnClose = HL.Override() << function(self)
     self:_ReadCurShowingItems()
+end
+
+
+
+
+ValuableDepotCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
+    self.view.destroyNode.numberSelector.view.keyHintLeft.gameObject:SetActive(active)
+    self.view.destroyNode.numberSelector.view.keyHintRight.gameObject:SetActive(active)
 end
 
 
@@ -497,11 +506,7 @@ ValuableDepotCtrl._SetSelectedIndex = HL.Method(HL.Opt(HL.Any, HL.Any)) << funct
             end
         end
     else
-        if InputManagerInst.virtualMouseIconVisible then
-            self.m_curItemIndex = -1
-        else
-            self.m_curItemIndex = math.min(1, self.m_curShowCount)
-        end
+        self.m_curItemIndex = math.min(1, self.m_curShowCount)
     end
 end
 
@@ -869,7 +874,11 @@ ValuableDepotCtrl._RefreshItemInfo = HL.Method(HL.Boolean) << function(self, noA
     self.view.itemInfoNode.jumpBtn.onClick:AddListener(function()
         jumpFunction(self, info.id, info.instId or 0)
     end)
-    node.itemObtainWays:InitItemObtainWays(info.id, info.instId)
+    node.itemObtainWays:InitItemObtainWays(info.id, info.instId, nil, nil, function()
+        if DeviceInfo.usingController then
+            node.itemObtainWays.view.selectableNaviGroup:ManuallyStopFocus()
+        end
+    end)
     local isLockToggleVisible = self.view.itemInfoNode.lockToggle:InitLockToggle(info.id, info.instId or 0)
     local isTrashToggleVisible = self.view.itemInfoNode.trashToggle:InitTrashToggle(info.id, info.instId or 0)
     local isItemFlagNaviGroupVisible = isLockToggleVisible and isTrashToggleVisible
@@ -1903,13 +1912,20 @@ ValuableDepotCtrl._CheckIfCanUse = HL.Method(HL.String, HL.Int).Return(HL.Boolea
     
     if itemType == GEnums.ItemType.ItemCase then
         local useFunc = function()
-            local isBPChest = false
             local _, chestData = Tables.usableItemChestTable:TryGetValue(itemId)
-            if chestData and chestData.type == GEnums.ItemCaseType.SelfSelectedBP then
-                isBPChest = true
+            local caseType = GEnums.ItemCaseType.SelfSelected
+            if chestData then
+                caseType = chestData.type
             end
-            if isBPChest then
+            
+            if caseType == GEnums.ItemCaseType.SelfSelectedBP then
                 UIManager:Open(PanelId.BattlePassWeaponCase, { itemId = itemId })
+            elseif caseType == GEnums.ItemCaseType.SelfSelectedChar then
+                local arg = {
+                    chestItemId = itemId,
+                    isFromChest = true,
+                }
+                UIManager:Open(PanelId.GachaOptional, arg)
             else
                 PhaseManager:OpenPhase(PhaseId.UsableItemChest, { itemId = itemId })
             end

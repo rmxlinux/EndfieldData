@@ -86,15 +86,21 @@ end
 
 
 PhaseDomainMain._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
-    if self.hasJumpedToOtherPhase and not fastMode and self.panels[1] ~= nil then
+    if self.hasJumpedToOtherPhase and self.panels[1] ~= nil then
         local panelId = self.panels[1]
         if self.m_panel2Item[panelId] ~= nil then
             local uiCtrl = self.m_panel2Item[panelId].uiCtrl
-            uiCtrl:SetNavi(false)
-            local wrapper = uiCtrl.animationWrapper
-            wrapper:PlayInAnimation(function()
+            if fastMode then
+                
+                uiCtrl.animationWrapper:SampleClipAtPercent("domainmain_in_part_1", 1)
                 uiCtrl:SetNavi(true)
-            end)
+            else
+                uiCtrl:SetNavi(false)
+                local wrapper = uiCtrl.animationWrapper
+                wrapper:PlayInAnimation(function()
+                    uiCtrl:SetNavi(true)
+                end)
+            end
         end
     end
 end

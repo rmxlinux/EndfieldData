@@ -52,6 +52,7 @@ WikiItemInfo.m_onDetailBtnClicked = HL.Field(HL.Function)
 
 
 WikiItemInfo._OnFirstTimeInit = HL.Override() << function(self)
+    self.view.tglExpand.toggle.isOn = false
     self.m_tagListCache = UIUtils.genCellCache(self.view.tagCell)
     self.m_starListCache = UIUtils.genCellCache(self.view.starCell)
     self.m_descListCache = UIUtils.genCellCache(self.view.descCell)
@@ -291,8 +292,7 @@ WikiItemInfo._InitItemInfo = HL.Method(HL.Table) << function(self, args)
                 self.m_expandGoTable = {}
                 table.insert(self.m_expandGoTable, tacticalView.descNode.gameObject)
                 table.insert(self.m_expandGoTable, tacticalView.storageNode.gameObject)
-                self:_ExpandItemInfo(false)
-                self.view.tglExpand.isOn = false
+                self:_ExpandItemInfo(self.view.tglExpand.toggle.isOn)
             else
                 self.m_expandGoTable = nil
                 tacticalView.descNode.gameObject:SetActive(true)

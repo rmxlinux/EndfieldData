@@ -83,6 +83,7 @@ local PANEL_ID = PanelId.WeaponExhibitUpgrade
 
 
 
+
 WeaponExhibitUpgradeCtrl = HL.Class('WeaponExhibitUpgradeCtrl', uiCtrl.UICtrl)
 
 
@@ -115,6 +116,7 @@ WeaponExhibitUpgradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SHOW_CACHED_REFUND_POPUP] = 'ShowRewardsPopup',
     [MessageConst.ON_ITEM_LOCKED_STATE_CHANGED] = '_OnItemLockedStateChanged',
     [MessageConst.ON_GEM_DETACH] = 'OnGemDetach',
+    [MessageConst.ON_ITEM_COUNT_CHANGED] = '_OnItemCountChanged',
 }
 
 
@@ -745,6 +747,12 @@ WeaponExhibitUpgradeCtrl._RefreshBreakCostItemCell = HL.Method(HL.Userdata, HL.N
     if DeviceInfo.usingController then
         cell.itemBlack:SetExtraInfo({
             isSideTips = true
+        })
+    end
+    if inventoryCount < itemInfo.count then
+        cell.itemBlack:SetItemTipsJumpExtraArgs({
+            expectedRewardItemId = itemId,
+            expectedRewardItemCount = itemInfo.count - inventoryCount,
         })
     end
 
@@ -1615,6 +1623,16 @@ WeaponExhibitUpgradeCtrl._ResetItemInfoCount = HL.Method(HL.Table) << function(s
     for _, itemInfo in ipairs(itemInfoList) do
         itemInfo.count = 0
         itemInfo.addCount = 0
+    end
+end
+
+
+
+
+WeaponExhibitUpgradeCtrl._OnItemCountChanged = HL.Method(HL.Table) << function(self, args)
+    if self.m_isBreakthrough and
+        (self.m_upgradeEffectCor == nil or coroutine.status(self.m_upgradeEffectCor) == "dead") then
+        self:_RefreshBreakPanel(self.m_weaponInfo.weaponInstId, self.m_weaponInfo.weaponTemplateId)
     end
 end
 

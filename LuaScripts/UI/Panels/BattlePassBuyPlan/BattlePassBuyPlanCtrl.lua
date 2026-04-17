@@ -131,7 +131,7 @@ end
 
 
 
-BattlePassBuyPlanCtrl._AfterBuy = HL.Method(HL.Any) << function(self, arg)
+BattlePassBuyPlanCtrl._AfterBuy = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     local buyingPro = not self.m_buyProtocalTrack and BattlePassUtils.CheckPayTrackActive()
 
     if buyingPro then

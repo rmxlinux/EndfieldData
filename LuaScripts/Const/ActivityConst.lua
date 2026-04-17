@@ -6,17 +6,26 @@ ACTIVITY_TABLE = {
     [ActivityType.LevelRewards] = {
         redDot = "ActivityBaseMultiStage",
     },
+    [ActivityType.NewbieBonus] = {
+        redDot = "ActivityBaseMultiStage",
+	},
     [ActivityType.BeginnerGachaPool] = {
         redDot = "ActivityGachaBeginner",
     },
     [ActivityType.Checkin] = {
         redDot = "ActivityCheckIn",
     },
+    [ActivityType.DailyTask] = {
+        redDot = "ActivityGlobalEffect",
+    },
     [ActivityType.GlobalEffect] = {
         redDot = "ActivityGlobalEffect",
     },
     [ActivityType.NormalChallenge] = {
         redDot = "ActivityNormalChallenge",
+    },
+    [ActivityType.CharGrowthRebate] = {
+        redDot = "ActivityCharGrowthRebate",
     },
     [ActivityType.CharacterTrial] = {
         redDot = "ActivityCharTrial",
@@ -53,9 +62,15 @@ ACTIVITY_TABLE = {
     },
     [ActivityType.DungeonFighting] = {
         redDot = "ActivityDungeon",
+	},
+    [ActivityType.LimitedFormula] = {
+        redDot = "ActivityLimitedFormula",
     },
-    [ActivityType.NewbieBonus] = {
-        redDot = "ActivityBaseMultiStage",
+    [ActivityType.ArknightsXEndfieldLightWeight] = {
+        redDot = "ActivityArknightsBirth",
+    },
+    [ActivityType.CalendarCheckin] = {
+        redDot = "ActivityCalendarCheckin",
     },
     
 }
@@ -77,6 +92,9 @@ ACTIVITY_COMMON_SONS = {
     ActivityWeeklyTask = false,
     ActivityGraffitiCleaning = false,
     ActivityDungeon = false,
+    ActivityLimitedFormula = false,
+    ActivityArknightsBirth = false,
+    ActivityCalendarCheckin = false,
     
 }
 ACTIVITY_REMINDER_DRAW_MODE = {

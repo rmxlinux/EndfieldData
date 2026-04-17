@@ -669,12 +669,37 @@ GachaCharCtrl._ShowRewardsAndExit = HL.Method() << function(self)
                 Notify(MessageConst.ON_ONE_GACHA_POOL_REWARD_FINISHED)
             end,
         }
-        if firstGetCharReward then
-            rewardArg.extraItem = {
-                extraTitle = Language.LUA_GACHA_FIRST_GET_CHAR_REWARD_TOAST_TITLE,
-                item = firstGetCharReward,
-            }
+        
+        local extraItems = {}
+        
+        if not string.isEmpty(self.m_args.poolId) then
+            local poolCfg = Tables.gachaCharPoolTable[self.m_args.poolId]
+            if not string.isEmpty(poolCfg.bonusRewardIdEveryPull) then
+                local rewardEveryPull = UIUtils.getRewardItems(poolCfg.bonusRewardIdEveryPull)
+                table.insert(extraItems, {
+                    extraTitle = Language.LUA_GACHA_JOINT_POOL_EVERY_PULL_REWARD_TOAST_TITLE,
+                    titleColorState = "Red",
+                    item = {
+                        id = rewardEveryPull[1].id,
+                        count = rewardEveryPull[1].count * self.m_charCount,
+                    },
+                })
+            end
         end
+        
+        if firstGetCharReward then
+            table.insert(extraItems, {
+                extraTitle = Language.LUA_GACHA_FIRST_GET_CHAR_REWARD_TOAST_TITLE,
+                titleColorState = "Yellow",
+                item = firstGetCharReward,
+            })
+        end
+        
+        if #extraItems > 0 then
+            rewardArg.extraItems = extraItems
+        end
+        
+        
         Notify(MessageConst.GACHA_POOL_ADD_SHOW_REWARD, {
             queueRewardType = "GachaResultReward",
             showRewardFunc = function()

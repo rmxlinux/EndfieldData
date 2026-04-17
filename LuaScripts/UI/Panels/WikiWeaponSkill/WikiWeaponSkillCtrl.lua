@@ -181,6 +181,7 @@ WikiWeaponSkillCtrl._RefreshCenter = HL.Method() << function(self)
             local _, _, desc = CS.Beyond.Gameplay.WeaponUtil.GetSkillNameAndDescriptionFromSkillId(self.m_curWeaponSkillShowData.skillId, skillLv)
             cell.txtNumber.text = string.format("%02d", skillLv)
             cell.txtDec:SetAndResolveTextStyle(desc)
+            cell.animationWrapper:PlayInAnimation()
         end)
     end
     self.view.center.scrollListSkillEffect:UpdateCount(skillPatchDataCount, true)

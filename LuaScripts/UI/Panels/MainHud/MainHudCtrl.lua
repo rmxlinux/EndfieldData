@@ -277,6 +277,7 @@ end
 
 MainHudCtrl.OnHide = HL.Override() << function(self)
     self:_ToggleControllerIndicator(false)
+    self:CheckNormalAttackBtn(false)
     self.view.topLeftBtns.expandNode:SetExpanded(false, true)
     self.view.topRightBtns.expandNode:SetExpanded(false, true)
     self.view.attackButton:OnHide()
@@ -553,6 +554,9 @@ MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
             posType = TopBtnPosType.AlwaysInside,
             controllerPosType = ControllerTopBtnPosTypes.Dynamic,
             controllerPosOrder = 10,
+            checkVisible = function()
+                return not Utils.isForbidden(ForbidType.ForbidSetSquad)
+            end,
             onClick = function()
                 if Utils.isForbidden(ForbidType.ForbidSetSquad) then
                     Notify(MessageConst.SHOW_TOAST, Language.LUA_SYSTEM_FORBIDDEN)
@@ -1093,18 +1097,26 @@ end
 
 
 MainHudCtrl.AfterToggleUiAction = HL.Method(HL.Table) << function(self, arg)
-    self:_OnPanelInputBlocked(self.view.inputGroup.groupEnabled)
     local isShow, isUltimate = unpack(arg)
-    if not isUltimate then
-        return
-    end
+    
+    self:_UpdateSprintInfo(isShow)
     if isShow then
-        InputManagerInst:ChangeParent(true, self.view.attackButton.view.button.groupId, self.view.inputGroup.groupId)
-        
-        
+        self:_CheckControllerIndicatorEnabled()
+        if isUltimate then
+            InputManagerInst:ChangeParent(true, self.view.attackButton.view.button.groupId, self.view.inputGroup.groupId)
+        end
+        self:CheckNormalAttackBtn(true)
     else
-        InputManagerInst:ChangeParent(true, self.view.attackButton.view.button.groupId, InputManagerInst.rootGroupId)
-        
+        if isUltimate then
+            InputManagerInst:ChangeParent(true, self.view.attackButton.view.button.groupId, InputManagerInst.rootGroupId)
+            if not DeviceInfo.usingTouch then
+                
+                self:CheckNormalAttackBtn(false)
+            end
+        else
+            self:CheckNormalAttackBtn(false)
+        end
+        self:_ToggleControllerIndicator(false)
     end
 end
 
@@ -1115,6 +1127,11 @@ MainHudCtrl.CheckNormalAttackBtn = HL.Method(HL.Boolean) << function(self, activ
     if active and InputManagerInst:IsGroupEnabled(self.view.attackButton.view.button.groupId) then
         if InputManagerInst:CheckNormalAttackBtn() then
             self.view.attackButton:StartPressAttackBtn()
+        else
+            if not DeviceInfo.usingTouch then
+                
+                self.view.attackButton:ReleaseNormalAttackBtn()
+            end
         end
     else
         self.view.attackButton:ReleaseNormalAttackBtn()
@@ -1267,18 +1284,18 @@ MainHudCtrl._OnClearScreenOnExceptSomePanel = HL.StaticMethod(HL.Table) << funct
         return
     end
 
-    if not LuaSystemManager.mainHudActionQueue:IsInLoginCheck() then
-        
-        MainHudCtrl._PerformClearScreenExceptSomePanel()
-        return
-    end
-
     MainHudCtrl.s_waitingToClearScreenExceptPanels = {}
     local panels = unpack(arg)
 
     
     for _, panelId in pairs(panels) do
         table.insert(MainHudCtrl.s_waitingToClearScreenExceptPanels, PanelId[panelId])
+    end
+
+    if not LuaSystemManager.mainHudActionQueue:IsInLoginCheck() then
+        
+        MainHudCtrl._PerformClearScreenExceptSomePanel()
+        return
     end
 
     
@@ -1421,6 +1438,9 @@ end
 
 
 MainHudCtrl.OnDisableBattleIndicatorController = HL.Method(HL.Table) << function(self, arg)
+    if not DeviceInfo.usingController then
+        return
+    end
     local disable, key = unpack(arg)
     if disable then
         self.m_indicatorControllerDisableKeys[key] = true
@@ -1739,6 +1759,9 @@ end
 
 
 MainHudCtrl._CheckControllerIndicatorEnabled = HL.Method() << function(self)
+    if not DeviceInfo.usingController then
+        return
+    end
     if next(self.m_indicatorControllerDisableKeys) ~= nil then
         InputManagerInst:ToggleGroup(self.m_indicatorControllerGroupId, false)
         self:_ToggleControllerIndicator(false)
@@ -1755,6 +1778,9 @@ end
 
 
 MainHudCtrl._ToggleControllerIndicator = HL.Method(HL.Boolean) << function(self, active)
+    if not DeviceInfo.usingController then
+        return
+    end
     Notify(MessageConst.ON_CONTROLLER_INDICATOR_CHANGE, active)
     Notify(MessageConst.TOGGLE_HIDE_INTERACT_OPTION_LIST, { "CONTROLLER_INDICATOR", active })
     self.view.attackButton:ToggleControllerIndicator(active)
@@ -1806,6 +1832,7 @@ MainHudCtrl.OnApplicationFocus = HL.Method(HL.Table) << function(self, arg)
     local hasFocus = unpack(arg)
     if not hasFocus then
         self:_ToggleControllerIndicator(false)
+        self:CheckNormalAttackBtn(false)
     end
 end
 

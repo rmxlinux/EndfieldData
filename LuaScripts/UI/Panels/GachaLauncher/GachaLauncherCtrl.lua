@@ -174,7 +174,7 @@ end
 
 GachaLauncherCtrl._InitUI = HL.Method() << function(self)
     self.view.skipBtn.onClick:AddListener(function()
-        self:_CloseSelf()
+        self:_CloseSelf(true)
     end)
     
     
@@ -248,11 +248,13 @@ end
 
 
 
-GachaLauncherCtrl._CloseSelf = HL.Method() << function(self)
+
+GachaLauncherCtrl._CloseSelf = HL.Method(HL.Boolean) << function(self, isSkip)
     self.m_updateKey = LuaUpdate:Remove(self.m_updateKey)
     local onComplete = self.m_phase.arg.onComplete
     if onComplete then
-        onComplete()
+        local isAllowSkip = isSkip and not GameInstance.player.gacha.hasSuperSurprise
+        onComplete(isAllowSkip)
     end
     PhaseManager:ExitPhaseFast(PHASE_ID)
 end
@@ -368,7 +370,7 @@ GachaLauncherCtrl._CheckUpdateStage = HL.Method() << function(self)
     end
     
     if curDirTime >= dirPlayInfo.endPoint then
-        self:_CloseSelf()
+        self:_CloseSelf(false)
         return
     end
     

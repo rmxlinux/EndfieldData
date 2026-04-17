@@ -17,6 +17,7 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 NumberSelector = HL.Class('NumberSelector', UIWidgetBase)
 
 
@@ -226,6 +227,14 @@ NumberSelector.RefreshNumber = HL.Method(HL.Number, HL.Opt(HL.Number, HL.Number)
     self:_UpdateMinMax()
 
     self:_Refresh(curNumber)
+end
+
+
+
+
+NumberSelector.UpdateKeyHintVisible = HL.Method(HL.Boolean) << function(self, show)
+    self.view.keyHintLeft.gameObject:SetActive(show)
+    self.view.keyHintRight.gameObject:SetActive(show)
 end
 
 

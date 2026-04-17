@@ -50,12 +50,6 @@ DungeonCustomRewardCtrl.TryStartSettlement = HL.StaticMethod() << function()
         return
     end
 
-    
-    if DungeonUtils.dungeonTypeValidate(dungeonId, "dungeon_actmonster") then
-        dungeonMgr:LeaveDungeon()  
-        return
-    end
-
     if isCostStamina then
         local hasBpDoubleRewardEver = GameInstance.player.inventory:IsItemGot(Tables.dungeonConst.doubleStaminaTicketItemId)
         if hasBpDoubleRewardEver then
@@ -174,6 +168,12 @@ DungeonCustomRewardCtrl._InitView = HL.Method() << function(self)
     self.view.customRewardRadioComp:InitCustomRewardRadioComp(self.m_costStamina, function(radioIndex)
         self:_OnRewardRadioChanged(radioIndex)
     end)
+
+    local dungeonCfg = Tables.dungeonTable[self.m_dungeonId]
+    local hasFirstPassReward = not string.isEmpty(dungeonCfg.firstPassRewardId)
+    local firstPassRewardGained = GameInstance.dungeonManager:IsDungeonFirstPassRewardGained(self.m_dungeonId)
+    local canGetFirstPassReward = hasFirstPassReward and not firstPassRewardGained
+    self.view.cancelTips.gameObject:SetActive(canGetFirstPassReward)
 
     self:_RefreshState()
 end

@@ -138,9 +138,8 @@ SNSSubDialogCell._RefreshDialogInfo = HL.Method(HL.Opt(HL.Number)) << function(s
         
         local latestContent = SNSUtils.findLatestContent(dialogId)
         if not string.isEmpty(latestContent) then
-            local richStyleContent = SNSUtils.resolveTextStyleWithPlayerName(latestContent)
-            self.view.normalTxt:SetAndResolveTextStyle(richStyleContent)
-            self.view.selectTxt:SetAndResolveTextStyle(richStyleContent)
+            self.view.normalTxt:SetAndResolveTextStyle(latestContent)
+            self.view.selectTxt:SetAndResolveTextStyle(latestContent)
         end
     elseif not string.isEmpty(content) then
         

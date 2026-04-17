@@ -121,6 +121,7 @@ BlueprintChangeIconNode.InitBlueprintChangeIconNode = HL.Method(CS.Beyond.Gamepl
     self.m_csBP = csBP
     self.curIconId = icon
     self.onChangeIconOrColor = onChangeIconOrColor
+    self.m_selectedIconCell = nil
 
     self:_InitIconGroupInfos()
     self:_RefreshColorNode(colorId)
@@ -141,6 +142,9 @@ BlueprintChangeIconNode.ScrollToIcon = HL.Method(HL.String) << function(self, ic
     
     
     local csIndex = self:_GetGroupCellIndexOfIcon(iconId)
+    if not csIndex then
+        return
+    end
     self.view.scrollList:UpdateCount(self:_GetScrollListCellCount(), math.max(0, csIndex - 2)) 
 end
 
@@ -478,6 +482,9 @@ end
 
 BlueprintChangeIconNode._GetCellAndInfoOfIcon = HL.Method(HL.String).Return(HL.Opt(HL.Any, HL.Any)) << function(self, iconId)
     local posInfo = self.m_icon2PosInfo[iconId]
+    if not posInfo then
+        return
+    end
     local groupIndex = posInfo[1]
     local indexInGroup = posInfo[2]
 
@@ -501,6 +508,9 @@ end
 
 BlueprintChangeIconNode._GetGroupCellIndexOfIcon = HL.Method(HL.String).Return(HL.Opt(HL.Number)) << function(self, iconId)
     local posInfo = self.m_icon2PosInfo[iconId]
+    if not posInfo then
+        return
+    end
     local groupIndex = posInfo[1]
     local indexInGroup = posInfo[2]
 
@@ -631,8 +641,20 @@ BlueprintChangeIconNode.RefreshController = HL.Method() << function(self)
     end
     self.view.changeIconNodeMain:ManuallyFocus(true)
     self:_ChangeState(true)
-    self:ScrollToIcon(self.m_selectedIconCell.m_id)
-    UIUtils.setAsNaviTarget(self.m_selectedIconCell.button)
+    local targetIconId = self.curIconId
+    if self.m_selectedIconCell and self.m_selectedIconCell.m_id == self.curIconId and self.m_selectedIconCell.gameObject.activeInHierarchy then
+        UIUtils.setAsNaviTarget(self.m_selectedIconCell.button)
+        Notify(MessageConst.HIDE_ITEM_TIPS)
+        return
+    end
+
+    self:ScrollToIcon(targetIconId)
+
+    local targetCell = self:_GetCellAndInfoOfIcon(targetIconId)
+    if targetCell then
+        self.m_selectedIconCell = targetCell
+        UIUtils.setAsNaviTarget(targetCell.button)
+    end
     Notify(MessageConst.HIDE_ITEM_TIPS)
 end
 

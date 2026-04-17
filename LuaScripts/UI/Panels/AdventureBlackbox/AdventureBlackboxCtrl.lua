@@ -27,7 +27,7 @@ AdventureBlackboxCtrl = HL.Class('AdventureBlackboxCtrl', uiCtrl.UICtrl)
 
 
 AdventureBlackboxCtrl.s_messages = HL.StaticField(HL.Table) << {
-    [MessageConst.ON_BLACKBOX_DIRECTLY_GET_REWARD] = 'OnBlackboxDirectlyGetReward',
+    [MessageConst.ON_DUNGEON_DIRECTLY_GET_REWARD] = 'OnBlackboxDirectlyGetReward',
 }
 
 

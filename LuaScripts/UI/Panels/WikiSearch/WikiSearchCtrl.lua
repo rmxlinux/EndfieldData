@@ -94,6 +94,8 @@ WikiSearchCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             if isPsController then
                 self:_OnSearchBtnClicked()
             end
+            self.view.inputField:DeactivateInputField(true)
+            self.view.searchNodeNaviGroup:ManuallyStopFocus()
         end,
         onClearClick = function()
             self:_ClearSearch(false, false, true)
@@ -183,6 +185,7 @@ WikiSearchCtrl._Search = HL.Method(HL.String) << function(self, keyword)
     self:_RefreshResult(resultItems, resultTutorials)
     AudioAdapter.PostEvent("Au_UI_Popup_Common_Large_Open")
 end
+
 
 
 

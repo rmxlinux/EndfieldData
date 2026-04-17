@@ -31,6 +31,8 @@ local Status = CS.CriWare.CriMana.Player.Status
 
 
 
+
+
 CGCtrl = HL.Class('CGCtrl', uiCtrl.UICtrl)
 
 do
@@ -71,6 +73,11 @@ CGCtrl.m_shouldClose = HL.Field(HL.Boolean) << false
 CGCtrl.m_afterMaskData = HL.Field(HL.Any) << nil
 
 
+CGCtrl.m_stopCoroutine = HL.Field(HL.Thread)
+
+CGCtrl.m_isInAfterMask = HL.Field(HL.Boolean) << false
+
+
 CGCtrl.m_volume = HL.Field(HL.Number) << 1.0
 
 
@@ -105,6 +112,15 @@ CGCtrl.OnClose = HL.Override() << function(self)
     if self.m_onCanvasChangedClosure then
         UIManager.m_uiCanvasScaleHelper.onCanvasChanged:RemoveListener(self.m_onCanvasChangedClosure)
         self.m_onCanvasChangedClosure = nil
+    end
+
+    if self.m_stopCoroutine then
+        self.m_stopCoroutine = self:_ClearCoroutine(self.m_stopCoroutine)
+    end
+
+    if self.m_isInAfterMask then
+        GameAction.ShutdownBlackScreen(UIConst.UI_COMMON_MASK_LAYER_TYPE.High)
+        self.m_isInAfterMask = false
     end
 
     if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
@@ -272,32 +288,55 @@ CGCtrl.OnVideoEnd = HL.Method(HL.Opt(HL.Boolean)) << function(self, isSkip)
     end
     self.view.subtitleController:Stop()
 
-    local function realClose()
-        self:Close()
-        VideoManager:OnPlayCGEnd(isSkip)
-    end
-
     if self.m_afterMaskData then
         local maskData = self.m_afterMaskData
-        local dynamicMaskData = UIUtils.genDynamicBlackScreenMaskData("FMV-END", maskData.fadeInDuration, maskData.fadeOutDuration)
-        dynamicMaskData.fadeType = UIConst.UI_COMMON_MASK_FADE_TYPE.FadeIn
-        dynamicMaskData.waitHide = maskData.fadeOutWaitHide
-        dynamicMaskData.maskType = maskData.maskType
-        dynamicMaskData.callback = maskData.endCallback
-        dynamicMaskData.audioBlackScreenBehaviour = maskData.audioBlackScreenBehaviour
-        dynamicMaskData:RegisterMaskEndCallback(realClose)
-
-        GameAction.ShowBlackScreen(dynamicMaskData)
+        self.m_stopCoroutine = self:_StartCoroutine(function() self:AsyncStop(maskData, isSkip) end)
     else
-        realClose()
+        self:Close()
+        VideoManager:OnPlayCGEnd(isSkip, true)
     end
+end
+
+
+
+
+CGCtrl.AsyncStop = HL.Method(HL.Any, HL.Boolean) << function(self, maskData, isSkip)
+    local dynamicMaskData = UIUtils.genDynamicBlackScreenMaskData(
+        "FMV-END", maskData.fadeInDuration, maskData.fadeOutDuration
+    )
+    dynamicMaskData.fadeType = UIConst.UI_COMMON_MASK_FADE_TYPE.FadeIn
+    dynamicMaskData.maskType = maskData.maskType
+    dynamicMaskData.callback = maskData.endCallback
+    dynamicMaskData.audioBlackScreenBehaviour = maskData.audioBlackScreenBehaviour
+
+    dynamicMaskData.waitHide = true
+    dynamicMaskData.enableEntitySyncLoadMode = true
+    GameAction.ShowBlackScreen(dynamicMaskData)
+    self.m_isInAfterMask = true
     
+    coroutine.wait(maskData.fadeInDuration)
+
+    VideoManager:SendFMVWatchedAndFlushSync()
     
-    
-    
-    
-    
-    
+    local waitStartTime = Time.unscaledTime
+    coroutine.waitCondition(function()
+        return VideoManager.isFlushSyncDone or Time.unscaledTime - waitStartTime > 5.0
+    end)
+
+    if not maskData.fadeOutWaitHide then
+        
+        local shotDownMaskData = UIUtils.genDynamicBlackScreenMaskData(
+            "FMV-END", maskData.fadeInDuration, maskData.fadeOutDuration
+        )
+        shotDownMaskData.fadeType = UIConst.UI_COMMON_MASK_FADE_TYPE.FadeOut
+        shotDownMaskData.maskType = maskData.maskType
+        shotDownMaskData.audioBlackScreenBehaviour = maskData.audioBlackScreenBehaviour
+        GameAction.ShowBlackScreen(shotDownMaskData)
+    end
+
+    self.m_isInAfterMask = false
+    self:Close()
+    VideoManager:OnPlayCGEnd(isSkip, false)
 end
 
 

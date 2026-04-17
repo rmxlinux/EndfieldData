@@ -72,7 +72,7 @@ CommonItemNumSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     if useSlider then
         self.view.numberSelector:InitNumberSelector(self.m_curCount, 0, maxCount, function(newNum)
             self:_OnNumChanged(newNum)
-        end, true, Utils.getItemCount(self.m_itemId, false, true), nil, true)
+        end, true, Utils.getItemCount(self.m_itemId, args.forceIncludeCurDepot or false, true), nil, true)
     else
         self.view.numberSelector:InitNumberSelector(self.m_curCount, 0, maxCount, function(newNum)
             self:_OnNumChanged(newNum)

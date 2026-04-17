@@ -23,8 +23,13 @@ setmetatable(Tables, {
 
         rawset(t, k, root)
         return root
-    end
+    end,
 })
+
+_G.unloadSparkTable = function(name)
+    LuaSpark.UnloadRoot(name)
+    Tables[name] = nil
+end
 
 LuaCfg.Tables = Tables
 
@@ -119,7 +124,7 @@ local function I18nGetText(id, text)
             end
         end
 
-        local found, i18nText = LuaCfg.GetTextTable(hg.curEnvLang):TryGetValue(id)
+        local found, i18nText = Tables.i18nTextTable:TryGetValue(id)
         if not found or i18nText == nil or i18nText == '' then
             if BEYOND_DEBUG_COMMAND then
                 local outText = ''
@@ -145,20 +150,6 @@ LuaSpark.SetI18nGetTextFunc(I18nGetText, Types.I18nText)
 
 function LuaCfg.intToEnum(enumType, value)
     return CS.System.Enum.ToObject(enumType, value)
-end
-
-function LuaCfg.InitTextTable()
-    local textTables = {}
-    for i = 1, CS.Beyond.GEnums.EnvLang.MAX:GetHashCode() do
-        textTables[CSIndex(i)] = Tables["i18nTextTable_" .. LuaCfg.intToEnum(typeof(GEnums.EnvLang), CSIndex(i)):ToString()]
-    end
-    return textTables
-end
-
-local textTables = LuaCfg.InitTextTable()
-
-function LuaCfg.GetTextTable(type)
-    return textTables[type]
 end
 
 

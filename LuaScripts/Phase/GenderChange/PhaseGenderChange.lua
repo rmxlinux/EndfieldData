@@ -33,6 +33,7 @@ local Stage = {
 
 
 
+
 PhaseGenderChange = HL.Class('PhaseGenderChange', phaseBase.PhaseBase)
 
 
@@ -54,6 +55,10 @@ PhaseGenderChange.m_transportPos = HL.Field(HL.Userdata)
 PhaseGenderChange.m_transportRot = HL.Field(HL.Userdata)
 
 
+PhaseGenderChange.m_transportId = HL.Field(HL.String) << ""
+
+
+
 
 
 
@@ -70,6 +75,7 @@ PhaseGenderChange._OnInit = HL.Override() << function(self)
     PhaseGenderChange.Super._OnInit(self)
     self.m_transportPos = self.arg[1]
     self.m_transportRot = self.arg[2]
+    self.m_transportId = self.arg[3]
 end
 
 
@@ -161,15 +167,9 @@ PhaseGenderChange.ChangeStage = HL.Method(HL.Number) << function(self, stage)
         end
         self.m_waitCharLoadTick = LuaUpdate:Add("Tick", function(deltaTime)
             if GameInstance.playerController.mainCharacter.hasStarted then
-                Utils.teleportToPosition(
-                    GameWorld.worldInfo.curLevelId,
-                    self.m_transportPos, self.m_transportRot,
-                    GEnums.C2STeleportReason.ClientCutsceneTp,
-                    function()
-                        GameAction.BlackScreenFadeOut(1, true,false)
-                    end,
-                    CS.Beyond.Gameplay.TeleportUIType.White
-                )
+                Utils.teleportToPositionByValidationId(self.m_transportId, function()
+                    GameAction.BlackScreenFadeOut(1, true, false)
+                end)
                 self:ChangeStage(Stage.DONE)
                 self.m_waitCharLoadTick = LuaUpdate:Remove(self.m_waitCharLoadTick)
             end

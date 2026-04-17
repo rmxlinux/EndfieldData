@@ -44,7 +44,7 @@ ShopChoicenessBattlePassCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
         UIManager:Open(PanelId.BattlePassWeaponCase, { itemId = BattlePassUtils.GetSeasonData().weaponBoxId, isPreview = true })
     end)
     self.view.businessCardBtn.onClick:AddListener(function()
-        UIManager:Open(PanelId.FriendThemeChange, { selectId = BattlePassUtils.GetSeasonData().bussinessCardId })
+        PhaseManager:GoToPhase(PhaseId.FriendThemeChange, { selectId = BattlePassUtils.GetSeasonData().bussinessCardId })
     end)
 
     

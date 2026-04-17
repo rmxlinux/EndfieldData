@@ -131,6 +131,7 @@ local PlaneDistance = CS.Beyond.UI.UIConst.SCREEN_SPACE_CAMERA_PANEL_DISTANCE
 
 
 
+
 UIManager = HL.Class('UIManager')
 
 
@@ -231,6 +232,9 @@ UIManager.m_worldUICanvasScaleHelper = HL.Field(CS.Beyond.UI.UICanvasScaleHelper
 
 
 UIManager.m_onScreenSizeChangedCallback = HL.Field(HL.Function)
+
+
+UIManager.m_pauseMobileFrameGen = HL.Field(HL.Boolean) << false
 
 
 UIManager.m_currentStandardFOV = HL.Field(HL.Number) << 0
@@ -1285,7 +1289,7 @@ end
 UIManager.ClearScreen = HL.Method(HL.Opt(HL.Table)).Return(HL.Opt(HL.Number)) << function(self, exceptPanelIds)
     if self.m_inClearScreen then
         logger.error("清屏中，不能额外操作")
-        return
+        return -1
     end
 
     local clearScreenKey, panelIds = self:_GetClearScreenTargets(exceptPanelIds)
@@ -1348,7 +1352,7 @@ UIManager.m_waitClearPanels = HL.Field(HL.Table)
 UIManager.ClearScreenWithOutAnimation = HL.Method(HL.Function, HL.Opt(HL.Table)) << function(self, callback, exceptPanelIds)
     if self.m_inClearScreen then
         logger.error("清屏中，不能额外操作")
-        callback()
+        callback(-1)
         return
     end
 
@@ -1423,7 +1427,7 @@ end
 
 
 
-UIManager.RecoverScreen = HL.Method(HL.Number).Return(HL.Opt(HL.Number)) << function(self, clearScreenKey)
+UIManager.RecoverScreen = HL.Method(HL.Number).Return(HL.Number) << function(self, clearScreenKey)
     if self.m_inClearScreen then
         if clearScreenKey == self.m_curClearScreenKey then
             logger.error("清屏中，不能RecoverScreen自己，应该是时序有问题")
@@ -1634,13 +1638,25 @@ UIManager.CalcOtherSystemPropertyByPanelOrder = HL.Method() << function(self)
     
     local gyroscopeEffectType = self:_FindTopPanelProperty(function(cfg, ctrl)
         local t = ctrl:GetCurPanelCfg("gyroscopeEffect")
-        if t and t ~= Types.EPanelGyroscopeEffect.Both then
+        local isWorldUI = ctrl:GetCurPanelCfg("isWorldUI")
+        if isWorldUI and t and t ~= Types.EPanelGyroscopeEffect.Both then
             return t
         end
-    end) or Types.EPanelGyroscopeEffect.Enable
+    end) or Types.EPanelGyroscopeEffect.Disable
     if gyroscopeEffectType ~= Types.EPanelGyroscopeEffect.Both then
         local enable = gyroscopeEffectType == Types.EPanelGyroscopeEffect.Enable
         self.gyroscopeEffect.enableDetect = enable
+    end
+
+    
+    local pauseMobileFrameGen = self:_FindTopPanelProperty(function(cfg, ctrl)
+        if ctrl:GetCurPanelCfg("pauseMobileFrameGen") then
+            return true
+        end
+    end) or false
+    if pauseMobileFrameGen ~= self.m_pauseMobileFrameGen then
+        self.m_pauseMobileFrameGen = pauseMobileFrameGen
+        HGRenderBridgeStatics.PauseMobileFrameGenTemporarily(pauseMobileFrameGen)
     end
 
     Notify(MessageConst.ON_BLOCK_KEYBOARD_EVENT_PANEL_ORDER_CHANGED)
@@ -1940,11 +1956,6 @@ end
 
 
 UIManager._ToggleUIInputBinding = HL.Method(HL.Boolean, HL.String) << function(self, active, key)
-    if not active and key == "AirWall" and (self:IsOpen(PanelId.ShopMonthlyPassPopUp) or PhaseManager:IsOpen(PhaseId.ActivityPopup)) then
-        logger.error("防止卡死，取消 UIManager._ToggleUIInputBinding", key)
-        return
-    end
-
     if active then
         self.m_blockInputKeys[key] = nil
     else

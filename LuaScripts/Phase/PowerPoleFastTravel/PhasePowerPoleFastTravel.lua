@@ -14,6 +14,8 @@ local PHASE_ID = PhaseId.PowerPoleFastTravel
 
 
 
+
+
 PhasePowerPoleFastTravel = HL.Class('PhasePowerPoleFastTravel', phaseBase.PhaseBase)
 
 local ReservePanelIds = {  
@@ -38,6 +40,7 @@ PhasePowerPoleFastTravel.m_currentLogicId = HL.Field(HL.Any) << 0
 PhasePowerPoleFastTravel.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.TRAVEL_POLE_ENTER_TRAVEL_MODE] = { '_OnEnterPowerPoleFastTravelMode', false },
+    [MessageConst.TRAVEL_POLE_TRIGGER_FORCE_CLOSE_PANEL] = { 'TriggerForceClosePanel', true },
 }
 
 
@@ -47,6 +50,14 @@ PhasePowerPoleFastTravel._OnInit = HL.Override() << function(self)
     PhasePowerPoleFastTravel.Super._OnInit(self)
 end
 
+
+
+PhasePowerPoleFastTravel.TriggerForceClosePanel = HL.Method(HL.Opt(HL.Any)) << function(self)
+    if PhaseManager:IsOpen(PhaseId.PowerPoleFastTravel) then
+        GameWorld.gameMechManager.travelPoleBrain:OnClosePanelFast()
+        PhaseManager:ExitPhaseFast(PhaseId.PowerPoleFastTravel)
+    end
+end
 
 
 
@@ -99,24 +110,28 @@ PhasePowerPoleFastTravel._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, H
 
 
 PhasePowerPoleFastTravel._OnActivated = HL.Override() << function(self)
-    if GameWorld.gameMechManager.travelPoleBrain:CanOpenMiniMap() then
-        self.arg[1] = self.m_currentLogicId or self.arg[1]  
+    if self.m_fastTravelPanelItem == nil then
+        self.m_fastTravelPanelItem = self:CreatePhasePanelItem(PanelId.PowerPoleFastTravel, self.arg)
+        GameWorld.gameMechManager.travelPoleBrain:OnPanelOpened(self.arg[1])
+    elseif self.m_fastTravelPanelItem ~= nil and self.m_fastTravelPanelItem.uiCtrl ~= nil then
+        self.m_fastTravelPanelItem.uiCtrl:Show()
     end
-   self.m_fastTravelPanelItem = self:CreatePhasePanelItem(PanelId.PowerPoleFastTravel, self.arg)
-   GameWorld.gameMechManager.travelPoleBrain:OnPanelOpened(self.arg[1])
 end
 
 
 
 PhasePowerPoleFastTravel._OnDeActivated = HL.Override() << function(self)
-    self:RemovePhasePanelItem(self.m_fastTravelPanelItem)
-    self.m_fastTravelPanelItem = nil
+    if self.m_fastTravelPanelItem and self.m_fastTravelPanelItem.uiCtrl then
+        self.m_fastTravelPanelItem.uiCtrl:Hide()
+    end
 end
 
 
 
 PhasePowerPoleFastTravel._OnDestroy = HL.Override() << function(self)
     PhasePowerPoleFastTravel.Super._OnDestroy(self)
+    self:RemovePhasePanelItem(self.m_fastTravelPanelItem)
+    self.m_fastTravelPanelItem = nil
 end
 
 

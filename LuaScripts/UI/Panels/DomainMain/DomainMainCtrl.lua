@@ -40,6 +40,10 @@ local PHASE_ID = PhaseId.DomainMain
 
 
 
+
+
+
+
 DomainMainCtrl = HL.Class('DomainMainCtrl', uiCtrl.UICtrl)
 
 
@@ -66,6 +70,8 @@ DomainMainCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SYNC_DAILY_SOURCE_MONEY_RECORD] = '_OnSyncBulletinData',
     
     [MessageConst.ON_SETTLEMENT_MODIFY] = '_OnSettlementModify',
+    
+    [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = '_OnActivityStageUpdate',
 }
 
 
@@ -114,6 +120,12 @@ DomainMainCtrl.m_interactiveLock = HL.Field(HL.Boolean) << false
 
 
 
+DomainMainCtrl.m_stlActivityInfo = HL.Field(HL.Table)
+
+
+
+
+
 
 
 
@@ -130,14 +142,26 @@ end
 
 
 
-DomainMainCtrl.OnAnimationInFinished = HL.Override() << function(self)
-    self:SetNavi(true)
+DomainMainCtrl.OnShow = HL.Override() << function(self)
     self:_TryShowDomainVersionDiff()
 end
 
 
 
+DomainMainCtrl.OnAnimationInFinished = HL.Override() << function(self)
+    self:SetNavi(true)
+end
+
+
+
 DomainMainCtrl.OnHide = HL.Override() << function(self)
+    self:_ShowBulletin(false)
+end
+
+
+
+
+DomainMainCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
     self:_ShowBulletin(false)
 end
 
@@ -221,6 +245,10 @@ DomainMainCtrl.UpdateData = HL.Method() << function(self)
         end
     end
     self:_UpdateSettlementInfo()
+
+    
+    self.m_stlActivityInfo = DomainPOIUtils.getSettlementTradeActivityInfo()
+    
 end
 
 
@@ -325,11 +353,13 @@ DomainMainCtrl.InitUI = HL.Method() << function(self)
             regionRedDot = "DomainSingleMap",
             onConfirm = function(newDomainId)
                 if self.m_curDomainId ~= newDomainId then
+                    self.view.domainTopMoneyTitle.view.walletBarPlaceholder.view.gameObject:SetActive(false)
                     self.m_phase.hasJumpedToOtherPhase = true
                     self.m_curDomainId = newDomainId
                     self:UpdateData()
                     self:RefreshAllUI()
                     self:_RequireBulletinData()
+                    self:_TryShowDomainVersionDiff()
                 end
             end
         })
@@ -355,6 +385,7 @@ DomainMainCtrl.InitUI = HL.Method() << function(self)
         self.view.animationWrapper:ClearTween(false)
         self:SetNavi(false)
         AudioManager.PostEvent("Au_UI_Menu_RegionDevelopPanel_BlackShadow_Open")
+        self.view.domainTopMoneyTitle.view.walletBarPlaceholder.view.gameObject:SetActive(false)
         self.view.decoflyAniWrapper:Play("domainmainfly_in", function()
             PhaseManager:OpenPhase(PhaseId.DomainGrade, self.m_curDomainId)
         end)
@@ -368,6 +399,7 @@ DomainMainCtrl.InitUI = HL.Method() << function(self)
             self.view.animationWrapper:ClearTween(false)
             self:SetNavi(false)
             AudioManager.PostEvent("Au_UI_Menu_RegionDevelopPanel_BlackShadow_Open")
+            self.view.domainTopMoneyTitle.view.walletBarPlaceholder.view.gameObject:SetActive(false)
             self.view.decoflyAniWrapper:Play("domainmainfly_in", function()
                 PhaseManager:OpenPhase(PhaseId.SettlementMain, self.m_curDomainId)
             end)
@@ -432,16 +464,26 @@ end
 
 
 DomainMainCtrl._RefreshTitleMoneyUI = HL.Method() << function(self)
-    local moneyId = self.m_curDomainInfo.moneyId
-    local maxCount = self.m_curDomainInfo.maxMoneyCount
-    self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(moneyId, maxCount)
+    self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(self.m_curDomainId)
 end
 
 
 
 DomainMainCtrl._RefreshSettlementCell = HL.Method() << function(self)
-    self.view.settlementPOICell.lockState:SetState(self.m_curDomainInfo.isStlUnlocked and "UnlockState" or "LockState")
-    self.view.settlementPOICell.upgradeState:SetState(self.m_curDomainInfo.hasStlCanUpgrade and "CanUpgrade" or "NoneUpgrade")
+    local stlPOICell = self.view.settlementPOICell
+    stlPOICell.lockState:SetState(self.m_curDomainInfo.isStlUnlocked and "UnlockState" or "LockState")
+    stlPOICell.upgradeState:SetState(self.m_curDomainInfo.hasStlCanUpgrade and "CanUpgrade" or "NoneUpgrade")
+    
+    local hasActivity = self.m_stlActivityInfo.hasActivity and self.m_stlActivityInfo.domainActivityInfos[self.m_curDomainId] ~= nil
+    if hasActivity then
+        stlPOICell.activityNode.gameObject:SetActive(true)
+        local color = self.m_stlActivityInfo.activityColor
+        stlPOICell.activityNode.activityBgImg.color = color
+        stlPOICell.activityNode.activityIconImg.color = color
+    else
+        stlPOICell.activityNode.gameObject:SetActive(false)
+    end
+    
 end
 
 
@@ -466,6 +508,7 @@ DomainMainCtrl._OnRefreshPoiCell = HL.Method(HL.Any, HL.Number) << function(self
         self.view.animationWrapper:ClearTween(false)
         self:SetNavi(false)
         AudioManager.PostEvent("Au_UI_Menu_RegionDevelopPanel_BlackShadow_Open")
+        self.view.domainTopMoneyTitle.view.walletBarPlaceholder.view.gameObject:SetActive(false)
         self.view.decoflyAniWrapper:Play("domainmainfly_in", function()
             PhaseManager:OpenPhase(PhaseId[poiInfo.openPhaseId], {domainId = self.m_curDomainId, onCloseCB = function()
                 self.view.decoflyAniWrapper:SampleClipAtPercent("domainmainfly_in", 1)
@@ -627,27 +670,21 @@ DomainMainCtrl._TryShowDomainVersionDiff = HL.Method() << function(self)
     if UIManager:IsOpen(PanelId.DomainVersionInfoPopup) then
         return
     end
-    
-    
-
-
-
-
-
-    local _, hasBeenShow, _ = ClientDataManagerInst:GetBool("DOMAIN_VERSION_POPUP_HAS_BEEN_SHOW_V1D1", false, false)
-
-    local domainMaxLvHasDiff = domainDevelopmentSystem:DomainMaxLevelHasVersionDiff(self.m_curDomainId)
-    if domainMaxLvHasDiff and not hasBeenShow then
+    local startVersionData, endVersionData = DomainPOIUtils.DomainMaxLevelHasVersionDiff(self.m_curDomainId)
+    if not startVersionData then
+        if PhaseManager:GetTopPhaseId() == PHASE_ID then
+            CS.Beyond.Gameplay.Conditions.CheckIsOpenDomainMain.Trigger(self.m_curDomainId)
+        end
+    else
         UIManager:Open(PanelId.DomainVersionInfoPopup, {
             domainId = self.m_curDomainId,
+            startVersionData = startVersionData,
+            endVersionData = endVersionData,
             onClose = function()
-                CS.Beyond.Gameplay.Conditions.CheckIsOpenDomainMain.Trigger()
+                CS.Beyond.Gameplay.Conditions.CheckIsOpenDomainMain.Trigger(self.m_curDomainId)
             end
         })
         domainDevelopmentSystem:SendRecordCurVersionInfo(self.m_curDomainId)
-        ClientDataManagerInst:SetBool("DOMAIN_VERSION_POPUP_HAS_BEEN_SHOW_V1D1", true, false)
-    else
-        CS.Beyond.Gameplay.Conditions.CheckIsOpenDomainMain.Trigger()
     end
 end
 
@@ -748,6 +785,18 @@ DomainMainCtrl.SetNavi = HL.Method(HL.Boolean) << function(self, enable)
     else
         UIUtils.setAsNaviTarget(nil)
     end
+end
+
+
+
+
+DomainMainCtrl._OnActivityStageUpdate = HL.Method(HL.Any) << function(self, arg)
+    local activityId = unpack(arg)
+    if self.m_stlActivityInfo == nil or self.m_stlActivityInfo.activityId ~= activityId then
+        return
+    end
+    self:UpdateData()
+    self:RefreshAllUI()
 end
 
 

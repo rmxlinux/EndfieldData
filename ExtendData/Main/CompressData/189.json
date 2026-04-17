@@ -4,308 +4,106 @@
   "nodes": [
     {
       "_position": {
-        "x": 20.0,
-        "y": 220.0
+        "x": 520.0,
+        "y": -100.0
       },
-      "_comment": "去看陈列品再去休息区",
       "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "0"
     },
     {
-      "_action": {
-        "seqActionId": {
-          "_name": "行为循环id",
-          "_targetVariableID": "510cf188-ca67-4e3f-816d-7440ff6ce584"
+      "dynamic": true,
+      "_condition": {
+        "marker": {
+          "tagName": "AI/Marker/agshield/skill06shield",
+          "tagId": -223160774
         },
-        "$type": "Beyond.Gameplay.AI.Action.NpcHoldSeqAction"
+        "$type": "Beyond.Gameplay.AI.Condition.CheckAIMarker"
       },
-      "additionalWidth": 79.0,
+      "additionalWidth": 224.0,
       "_position": {
-        "x": -760.0,
-        "y": 340.0
+        "x": 200.0
       },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$type": "NodeCanvas.BehaviourTrees.BinarySelector",
       "$id": "1"
     },
     {
       "_position": {
-        "x": -98.66505,
-        "y": 341.8669
+        "x": -120.0,
+        "y": 220.0
       },
-      "_comment": "步骤一",
       "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "2"
     },
     {
       "_action": {
-        "minValue": {
-          "_value": 2
-        },
-        "maxValue": {
-          "_value": 4
-        },
-        "intVariable": {
-          "_name": "步骤1重复次数",
-          "_targetVariableID": "c94ec382-e84f-4a0d-8a2f-bc9dca011d6f"
-        },
-        "$type": "NodeCanvas.Tasks.Actions.SetIntRandom"
+        "$type": "Beyond.Gameplay.AI.Action.InterruptCurrentSkill"
       },
-      "additionalWidth": 146.0,
+      "additionalWidth": 52.0,
       "_position": {
-        "x": -472.2219,
-        "y": 458.2153
+        "x": -240.0,
+        "y": 340.0
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "3"
     },
     {
-      "repeatTimes": {
-        "_name": "步骤1重复次数",
-        "_targetVariableID": "c94ec382-e84f-4a0d-8a2f-bc9dca011d6f"
+      "_action": {
+        "skillData": {
+          "_name": "技能1-举盾"
+        },
+        "target": {
+          "_name": "G_Target"
+        },
+        "targetPos": {},
+        "$type": "Beyond.Gameplay.AI.Action.CastSeqSkill"
       },
-      "additionalWidth": 66.0,
+      "additionalWidth": 65.0,
       "_position": {
-        "x": -255.6882,
-        "y": 598.2154
+        "x": -20.0,
+        "y": 460.0
       },
-      "$type": "NodeCanvas.BehaviourTrees.Repeater",
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "4"
     },
     {
-      "_action": {
-        "detailAnimType": "CH_Display",
-        "duration": {
-          "x": 10.0,
-          "y": 15.0
-        },
-        "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
-      },
-      "additionalWidth": 227.0,
       "_position": {
-        "x": -435.4657,
-        "y": 795.4664
+        "x": 540.0,
+        "y": 200.0
       },
-      "_comment": "查看陈列品\n",
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "5"
     },
     {
-      "_position": {
-        "x": 103.335,
-        "y": 346.2669
+      "_action": {
+        "skillData": {
+          "_name": "技能6-拽回"
+        },
+        "target": {
+          "_name": "G_Target"
+        },
+        "targetPos": {},
+        "$type": "Beyond.Gameplay.AI.Action.CastSeqSkill"
       },
-      "_comment": "步骤二",
-      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
+      "additionalWidth": 80.0,
+      "_position": {
+        "x": 600.0,
+        "y": 320.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "6"
     },
     {
       "_action": {
-        "animType": 7,
-        "detailAnimType": "CH_RestArea",
-        "duration": {
-          "x": 30.0,
-          "y": 40.0
-        },
-        "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
+        "isFinish": true,
+        "$type": "Beyond.Gameplay.AI.Action.FinishCurBehavior"
       },
-      "additionalWidth": 209.0,
-      "_position": {
-        "x": -16.39984,
-        "y": 799.6
-      },
-      "_comment": "在休息区坐",
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "7"
-    },
-    {
-      "_position": {
-        "x": 363.2,
-        "y": 365.6
-      },
-      "_comment": "步骤三",
-      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
-      "$id": "8"
-    },
-    {
-      "_action": {
-        "minValue": {
-          "_value": 2
-        },
-        "maxValue": {
-          "_value": 3
-        },
-        "intVariable": {
-          "_name": "步骤3重复次数",
-          "_targetVariableID": "2a365c9d-b796-48c3-a6f0-e44f270ef879"
-        },
-        "$type": "NodeCanvas.Tasks.Actions.SetIntRandom"
-      },
-      "additionalWidth": 146.0,
-      "_position": {
-        "x": 176.1781,
-        "y": 485.8153
-      },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "9"
-    },
-    {
-      "repeatTimes": {
-        "_name": "步骤3重复次数",
-        "_targetVariableID": "2a365c9d-b796-48c3-a6f0-e44f270ef879"
-      },
-      "additionalWidth": 66.0,
-      "_position": {
-        "x": 436.7117,
-        "y": 477.0154
-      },
-      "$type": "NodeCanvas.BehaviourTrees.Repeater",
-      "$id": "10"
-    },
-    {
-      "failureRemap": 1,
-      "additionalWidth": 48.0,
-      "_position": {
-        "x": 442.8,
-        "y": 570.8
-      },
-      "$type": "NodeCanvas.BehaviourTrees.Remapper",
-      "$id": "11"
-    },
-    {
-      "childConditions": [
-        {
-          "weight": {
-            "_name": "weight3-1",
-            "_targetVariableID": "c396f37b-2e29-4b77-93f4-b38ec0559bf9"
-          },
-          "condition": {
-            "result": {
-              "_name": "weight3-1",
-              "_targetVariableID": "c396f37b-2e29-4b77-93f4-b38ec0559bf9"
-            },
-            "weight": 10,
-            "animType": 6,
-            "detailAnimType": "CH_Plant",
-            "latestChangeWeight": {
-              "_name": "最近使用过权重修改值",
-              "_targetVariableID": "5107911a-65ee-4794-a435-4afb1cf4ae93"
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.NpcChangeAttractPointWeight"
-          }
-        },
-        {
-          "weight": {
-            "_name": "weight3-2",
-            "_targetVariableID": "2318a10f-fa4a-4459-89d1-b4e800bbaf58"
-          },
-          "condition": {
-            "result": {
-              "_name": "weight3-2",
-              "_targetVariableID": "2318a10f-fa4a-4459-89d1-b4e800bbaf58"
-            },
-            "weight": 15,
-            "detailAnimType": "CH_LogisticsCenter",
-            "latestChangeWeight": {
-              "_name": "最近使用过权重修改值",
-              "_targetVariableID": "5107911a-65ee-4794-a435-4afb1cf4ae93"
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.NpcChangeAttractPointWeight"
-          }
-        },
-        {
-          "weight": {
-            "_name": "weight3-3",
-            "_targetVariableID": "112c2a28-77dc-4e8e-8323-7104d10c7dad"
-          },
-          "condition": {
-            "result": {
-              "_name": "weight3-3",
-              "_targetVariableID": "112c2a28-77dc-4e8e-8323-7104d10c7dad"
-            },
-            "weight": 10,
-            "animType": 6,
-            "detailAnimType": "CH_Screen",
-            "latestChangeWeight": {
-              "_name": "weight3-3",
-              "_targetVariableID": "112c2a28-77dc-4e8e-8323-7104d10c7dad"
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.NpcChangeAttractPointWeight"
-          }
-        }
-      ],
-      "_position": {
-        "x": 482.8,
-        "y": 673.2
-      },
-      "$type": "Beyond.Gameplay.AI.Nodes.ConditionalProbabilitySelector",
-      "$id": "12"
-    },
-    {
-      "_action": {
-        "animType": 6,
-        "detailAnimType": "CH_Plant",
-        "duration": {
-          "x": 10.0,
-          "y": 20.0
-        },
-        "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
-      },
-      "additionalWidth": 209.0,
-      "_position": {
-        "x": 372.312,
-        "y": 801.0184
-      },
-      "_comment": "在绿植旁思考",
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "13"
-    },
-    {
-      "_action": {
-        "detailAnimType": "CH_Statue",
-        "duration": {
-          "x": 20.0,
-          "y": 30.0
-        },
-        "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
-      },
-      "additionalWidth": 209.0,
-      "_position": {
-        "x": 740.4,
-        "y": 798.0001
-      },
-      "_comment": "查看雕像",
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "14"
-    },
-    {
-      "_action": {
-        "animType": 6,
-        "detailAnimType": "CH_Screen",
-        "duration": {
-          "x": 10.0,
-          "y": 20.0
-        },
-        "$type": "Beyond.Gameplay.AI.Action.NpcDoAttractPoint"
-      },
-      "additionalWidth": 209.0,
-      "_position": {
-        "x": 1144.0,
-        "y": 790.4001
-      },
-      "_comment": "屏幕思考",
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "15"
-    },
-    {
-      "_action": {
-        "$type": "Beyond.Gameplay.AI.Action.NpcFinishSeqAction"
-      },
+      "additionalWidth": 158.0,
       "_position": {
         "x": 720.0,
-        "y": 360.0
+        "y": 80.0
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "16"
+      "$id": "7"
     }
   ],
   "connections": [
@@ -323,34 +121,25 @@
         "$ref": "0"
       },
       "_targetNode": {
+        "$ref": "7"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "1"
+      },
+      "_targetNode": {
         "$ref": "2"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     },
     {
       "_sourceNode": {
-        "$ref": "0"
+        "$ref": "1"
       },
       "_targetNode": {
-        "$ref": "6"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "0"
-      },
-      "_targetNode": {
-        "$ref": "8"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "0"
-      },
-      "_targetNode": {
-        "$ref": "16"
+        "$ref": "5"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     },
@@ -374,82 +163,10 @@
     },
     {
       "_sourceNode": {
-        "$ref": "4"
-      },
-      "_targetNode": {
         "$ref": "5"
       },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
+      "_targetNode": {
         "$ref": "6"
-      },
-      "_targetNode": {
-        "$ref": "7"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "8"
-      },
-      "_targetNode": {
-        "$ref": "9"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "8"
-      },
-      "_targetNode": {
-        "$ref": "10"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "10"
-      },
-      "_targetNode": {
-        "$ref": "11"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "11"
-      },
-      "_targetNode": {
-        "$ref": "12"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "12"
-      },
-      "_targetNode": {
-        "$ref": "13"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "12"
-      },
-      "_targetNode": {
-        "$ref": "14"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "12"
-      },
-      "_targetNode": {
-        "$ref": "15"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     }
@@ -457,45 +174,15 @@
   "canvasGroups": [],
   "localBlackboard": {
     "_variables": {
-      "行为循环id": {
-        "_value": 1,
-        "_name": "行为循环id",
-        "_id": "510cf188-ca67-4e3f-816d-7440ff6ce584",
-        "_isPublic": true,
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "target": {
+        "_name": "target",
+        "_id": "0a277fb7-ca95-4322-82ef-b3e9ea7cfe6c",
+        "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.AIEntity, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
       },
-      "最近使用过权重修改值": {
-        "_value": -5,
-        "_name": "最近使用过权重修改值",
-        "_id": "5107911a-65ee-4794-a435-4afb1cf4ae93",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
-      },
-      "步骤1重复次数": {
-        "_value": 3,
-        "_name": "步骤1重复次数",
-        "_id": "c94ec382-e84f-4a0d-8a2f-bc9dca011d6f",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
-      },
-      "weight3-1": {
-        "_name": "weight3-1",
-        "_id": "c396f37b-2e29-4b77-93f4-b38ec0559bf9",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
-      },
-      "weight3-2": {
-        "_name": "weight3-2",
-        "_id": "2318a10f-fa4a-4459-89d1-b4e800bbaf58",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
-      },
-      "weight3-3": {
-        "_name": "weight3-3",
-        "_id": "112c2a28-77dc-4e8e-8323-7104d10c7dad",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
-      },
-      "步骤3重复次数": {
-        "_value": 2,
-        "_name": "步骤3重复次数",
-        "_id": "2a365c9d-b796-48c3-a6f0-e44f270ef879",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "目标": {
+        "_name": "目标",
+        "_id": "4af724d5-8d76-48fe-acc1-281f40b7d3a1",
+        "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.AIEntity, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
       }
     }
   },

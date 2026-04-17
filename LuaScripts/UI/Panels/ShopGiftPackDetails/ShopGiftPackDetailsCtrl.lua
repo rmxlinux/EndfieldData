@@ -19,13 +19,14 @@ local PANEL_ID = PanelId.ShopGiftPackDetails
 
 
 
+
 ShopGiftPackDetailsCtrl = HL.Class('ShopGiftPackDetailsCtrl', uiCtrl.UICtrl)
 
 
 ShopGiftPackDetailsCtrl.m_goodsId = HL.Field(HL.String) << ""
 
 
-ShopGiftPackDetailsCtrl.m_goodsInfo = HL.Field(HL.Any)
+ShopGiftPackDetailsCtrl.m_cashShopId = HL.Field(HL.String) << ""
 
 
 ShopGiftPackDetailsCtrl.m_getCellFunc = HL.Field(HL.Function)
@@ -44,6 +45,7 @@ ShopGiftPackDetailsCtrl.m_targetTime = HL.Field(HL.Number) << 0
 ShopGiftPackDetailsCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CASH_SHOP_PACK_SET_TOP] = '_OnSetTop',
     [MessageConst.ON_CASH_SHOP_OPEN_CATEGORY] = '_OnCashShopOpenCategory',
+    [MessageConst.ON_CASH_SHOP_RECEIVE_REFRESH_MSG] = '_OnCashShopReceiveRefreshMsg',
 }
 
 
@@ -52,7 +54,7 @@ ShopGiftPackDetailsCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 ShopGiftPackDetailsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_goodsId = arg.goodsId
-    self.m_goodsInfo = arg.goodsInfo
+    self.m_cashShopId = arg.cashShopId
 
     self:_BindUICallback()
     self:_InitRewardData()
@@ -227,7 +229,7 @@ end
 ShopGiftPackDetailsCtrl._TryBuyShop = HL.Method() << function(self)
     EventLogManagerInst:GameEvent_GoodsViewClick(
         "2",  
-        self.m_goodsInfo.cashShopId,
+        self.m_cashShopId,
         CashShopConst.CashShopCategoryType.Pack,
         self.m_goodsId
     )
@@ -252,5 +254,14 @@ end
 ShopGiftPackDetailsCtrl._OnCashShopOpenCategory = HL.Method() << function(self)
     self:Close()
 end
+
+
+
+ShopGiftPackDetailsCtrl._OnCashShopReceiveRefreshMsg = HL.Method() << function(self)
+    GameInstance.player.guide:OnShopRefreshItemInfo()
+    Notify(MessageConst.SHOW_TOAST, Language.LUA_REFRESH_CLOSE_SHOP_TOAST)
+    self:Close()
+end
+
 
 HL.Commit(ShopGiftPackDetailsCtrl)

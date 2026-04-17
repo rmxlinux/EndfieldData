@@ -274,7 +274,7 @@ ShopPackageCtrl._SetupCellView = HL.Method(HL.Table, HL.Table) << function(self,
         else
             UIManager:Open(PanelId.ShopGiftPackDetails, {
                 goodsId = shopGoodsId,
-                goodsInfo = shopGoodsInfo,
+                cashShopId = shopGoodsInfo.cashShopId,
             })
         end
     end)

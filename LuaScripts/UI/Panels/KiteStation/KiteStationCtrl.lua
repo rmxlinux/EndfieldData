@@ -15,6 +15,7 @@ local PANEL_ID = PanelId.KiteStation
 
 
 
+
 KiteStationCtrl = HL.Class('KiteStationCtrl', uiCtrl.UICtrl)
 
 
@@ -123,6 +124,8 @@ KiteStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self.view.settlementList:UpdateCount(kiteStationMapList.Count)
             self.m_id = kiteStationMapList[index].Item1
             self:_OnKiteStationClick()
+            
+            self.view.redDot:InitRedDot("KiteStationCollectionReward", self.m_id)
         end)
         cell.redDot:InitRedDot("KiteStationCollectionReward", kiteStationMapList[index].Item1)
         local levelCfg = Tables.kiteStationLevelTable:GetValue(kiteStationMapList[index].Item1).list[kiteStationMapList[index].Item2]
@@ -130,14 +133,7 @@ KiteStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         cell.lvNumberTxt.text = string.format(Language.LUA_KITE_STATION_TITLE_LEVEL, levelCfg.level, #Tables.kiteStationLevelTable:GetValue(kiteStationMapList[index].Item1).list)
         cell.stateController:SetState(self.m_selectKiteStationIndex == LuaIndex(index) and "Select" or "Unselect")
         if self.m_selectKiteStationIndex == LuaIndex(index) then
-            local success, domainDevData = GameInstance.player.domainDevelopmentSystem.domainDevDataDic:TryGetValue(levelCfg.domainId)
-            if not success then
-                return
-            end
-
-            local goldItemId = domainDevData.domainDataCfg.domainGoldItemId
-            local maxCount = domainDevData.curLevelData.moneyLimit
-            self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(goldItemId, maxCount)
+            self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(levelCfg.domainId)
         end
     end)
 
@@ -176,6 +172,16 @@ KiteStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             break
         end
     end
+end
+
+
+
+
+KiteStationCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
+    local kiteStationMapList = GameInstance.player.kiteStationSystem:GetKiteStationMapList()
+    self.view.settlementList:UpdateCount(kiteStationMapList.Count)
+    self:_OnKiteStationClick()
+    self.view.redDot:InitRedDot("KiteStationCollectionReward", self.m_id)
 end
 
 
@@ -264,7 +270,7 @@ KiteStationCtrl._UpdateKiteStationDelegationCell = HL.Method(HL.Number) << funct
 
         local isCollection = GameInstance.player.kiteStationSystem:IsKiteStationHasCollection(self.m_id, self.m_kiteStationEntrustIds[CSIndex(index)])
         cell.newMissionNode:SetState(isCollection and 'Normal' or 'New')
-        if missionLevel < #cfg.rewardIdLv then
+        if missionLevel <= #cfg.rewardIdLv then
             local rewardID = cfg.rewardIdLv[missionLevel - 1]
             local rewardValid, rewardCfg = Tables.rewardTable:TryGetValue(rewardID)
             if rewardValid and rewardCfg then

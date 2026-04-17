@@ -154,6 +154,7 @@ FacQuickBarCtrl.OnHide = HL.Override() << function(self)
         else
             InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.main)
         end
+        self:_ToggleCellActionOnSetNaviTarget(true)
     end
 end
 
@@ -358,8 +359,11 @@ FacQuickBarCtrl._UpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cel
             if not string.isEmpty(self.m_curSettingBuildingItemId) then
                 self.view.setBuildingHint.gameObject:SetActive(true)
             end
-            if self.m_useActiveAction and not InputManagerInst:GetKey(CS.Beyond.Input.GamepadKeyCode.LB) then
-                self.view.main:ManuallyStopFocus()
+            if self.m_useActiveAction then
+                local keyCode = InputManagerInst:GetActionGamepadKeyCode("fac_activate_quick_bar", false, true);
+                if not InputManagerInst:GetKey(keyCode) then
+                    self.view.main:ManuallyStopFocus()
+                end
             end
         end
     end
@@ -398,6 +402,12 @@ FacQuickBarCtrl._UpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cel
             cell.item.view.button.onDoubleClick:AddListener(function()
                 if count == 0 then
                     Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { selectedId = itemId })
+                end
+            end)
+        elseif FactoryUtils.isDecoBuildingItem(itemId) then
+            cell.item.view.button.onDoubleClick:AddListener(function()
+                if count == 0 then
+                    Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_DECO_BUILDING_ZERO_NO_CRAFT)
                 end
             end)
         end
@@ -560,8 +570,7 @@ FacQuickBarCtrl._BuildItem = HL.Method(HL.Number, HL.Opt(Vector2)) << function(s
 
     if isBuilding then
         local itemId = item.itemId
-        local count, backpackCount = Utils.getItemCount(itemId)
-        local cell = self.m_itemCells:GetItem(index)
+        local count = Utils.getItemCount(itemId)
         if count > 0 then
             local args = {
                 itemId = itemId,
@@ -1151,6 +1160,9 @@ FacQuickBarCtrl.m_currentNaviIndex = HL.Field(HL.Number) << -1
 FacQuickBarCtrl.m_zoomCamGroupId = HL.Field(HL.Number) << 0
 
 
+FacQuickBarCtrl.m_lastCellsActionOnSetNaviTarget = HL.Field(HL.Table)
+
+
 
 FacQuickBarCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -1169,6 +1181,7 @@ FacQuickBarCtrl._InitController = HL.Method() << function(self)
     self.view.main.focusPanelSortingOrder = UIManager:GetBaseOrder(Types.EPanelOrderTypes.PopUp) - 1
 
     self.m_manualFocusBindingId = self:BindInputPlayerAction("fac_activate_quick_bar", function()
+        self:_ToggleCellActionOnSetNaviTarget(false)
         local curTarget = self.view.main.lastFocusNaviTarget
         if curTarget and not curTarget.gameObject.activeInHierarchy then
             self.view.main:ClearLastFocusNaviTarget()
@@ -1176,6 +1189,7 @@ FacQuickBarCtrl._InitController = HL.Method() << function(self)
         self.view.main:ManuallyFocus()
     end, self.view.mainInputBindingGroupMonoTarget.groupId)
     self.m_manualUnFocusBindingId = self:BindInputPlayerAction("fac_deactivate_quick_bar", function()
+        self:_ToggleCellActionOnSetNaviTarget(true)
         self.view.main:ManuallyStopFocus()
     end, self.view.mainInputBindingGroupMonoTarget.groupId)
 
@@ -1189,8 +1203,27 @@ end
 
 
 
+FacQuickBarCtrl._ToggleCellActionOnSetNaviTarget = HL.Method(HL.Boolean) << function(self, active)
+    if not active or self.m_lastCellsActionOnSetNaviTarget == nil or next(self.m_lastCellsActionOnSetNaviTarget) == nil then
+        self.m_lastCellsActionOnSetNaviTarget = {}
+        for index = 1, self.m_itemCells:GetCount() do
+            local cell = self.m_itemCells:GetItem(index)
+            self.m_lastCellsActionOnSetNaviTarget[index] = cell.item.view.button.actionOnSetNaviTarget
+        end
+    end
+
+    for index = 1, self.m_itemCells:GetCount() do
+        local cell = self.m_itemCells:GetItem(index)
+        local action = active and self.m_lastCellsActionOnSetNaviTarget[index] or CS.Beyond.Input.ActionOnSetNaviTarget.None
+        cell.item.view.button:ChangeActionOnSetNaviTarget(action)
+    end
+end
+
+
+
+
 FacQuickBarCtrl._OnIsTopLayerChanged = HL.Method(HL.Boolean) << function(self, isTopLayer)
-    InputManagerInst:ToggleGroup(self.m_zoomCamGroupId, isTopLayer and self.m_useActiveAction and not UIUtils.isBattleControllerModifyKeyChanged())
+    InputManagerInst:ToggleGroup(self.m_zoomCamGroupId, isTopLayer and self.m_useActiveAction)
     if not self.m_useActiveAction then
         return
     end
@@ -1198,7 +1231,8 @@ FacQuickBarCtrl._OnIsTopLayerChanged = HL.Method(HL.Boolean) << function(self, i
     if isTopLayer then
         
         
-        if not InputManagerInst:GetKey(CS.Beyond.Input.GamepadKeyCode.LB) then
+        local keyCode = InputManagerInst:GetActionGamepadKeyCode("fac_activate_quick_bar", false, true);
+        if not InputManagerInst:GetKey(keyCode) then
             self:_StartTimer(0, function()
                 self.view.main:ManuallyStopFocus()
             end)

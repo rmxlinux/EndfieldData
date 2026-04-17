@@ -5,6 +5,7 @@ local PANEL_ID = PanelId.WatchBlur
 
 
 
+
 WatchBlurCtrl = HL.Class('WatchBlurCtrl', uiCtrl.UICtrl)
 
 
@@ -43,5 +44,15 @@ end
 
 
 
+
+
+
+
+WatchBlurCtrl.OnClose = HL.Override() << function(self)
+    local _, blurPanel = UIManager:IsOpen(PanelId.FullScreenSceneBlur)
+    if blurPanel then
+        blurPanel.view.blurBG:SetCustomBlurImg(nil)
+    end
+end
 
 HL.Commit(WatchBlurCtrl)

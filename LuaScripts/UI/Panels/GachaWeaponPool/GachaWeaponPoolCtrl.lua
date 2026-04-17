@@ -31,6 +31,9 @@ local PANEL_ID = PanelId.GachaWeaponPool
 
 
 
+
+
+
 GachaWeaponPoolCtrl = HL.Class('GachaWeaponPoolCtrl', uiCtrl.UICtrl)
 
 
@@ -50,6 +53,9 @@ GachaWeaponPoolCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ONE_GACHA_WEAPON_POOL_REWARD_FINISHED] = 'OnOneQueueRewardFinished',
 }
 
+
+
+local commonBitsetSys = GameInstance.player.commonBitsetSystem
 
 
 GachaWeaponPoolCtrl.m_goodsData = HL.Field(CS.Beyond.Gameplay.ShopSystem.GoodsData)
@@ -77,6 +83,9 @@ GachaWeaponPoolCtrl.m_loopRewardItemUIList = HL.Field(HL.Table)
 
 
 GachaWeaponPoolCtrl.m_gachaWeaponGoodsCostInfo = HL.Field(HL.Table)
+
+
+GachaWeaponPoolCtrl.m_isAutoExchangeMoney = HL.Field(HL.Boolean) << false
 
 
 
@@ -116,7 +125,7 @@ GachaWeaponPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         CS.Beyond.SDK.SDKUtils.OpenHGWebPortalSDK("gacha_weapon", string.format("{\"pool_id\":\"%s\"}", self.m_poolId), nil)
     end)
     self.view.noMoneyBtn.onClick:AddListener(function()
-        UIManager:Open(PanelId.GachaWeaponInsufficient)
+        self:_OnNoMoneyBtnClick()
     end)
     self.m_itemNoUpCache = UIUtils.genCellCache(self.view.itemNoUp)
 
@@ -318,13 +327,87 @@ GachaWeaponPoolCtrl._OnGachaBtnClick = HL.Method() << function(self)
         return
     end
     if self.m_gachaWeaponGoodsCostInfo.ticketEnough then
-        GameInstance.player.shopSystem:BuyGoods(self.m_goodsData.shopId, self.m_goodsData.goodsId, 1, true)
+        GameInstance.player.shopSystem:ByGoodsGachaWeaponUseTicket(self.m_goodsData.shopId, self.m_goodsData.goodsId)
     elseif self.m_gachaWeaponGoodsCostInfo.moneyEnough then
-        GameInstance.player.shopSystem:BuyGoods(self.m_goodsData.shopId, self.m_goodsData.goodsId, 1)
+        GameInstance.player.shopSystem:ByGoodsGachaWeapon(self.m_goodsData.shopId, self.m_goodsData.goodsId)
+    elseif self.m_isAutoExchangeMoney then
+        local convertInfo = self:_GetOriginiumConvertWeaponGoldInfo()
+        if convertInfo.curOriCount >= convertInfo.oriNeedCount then
+            
+            local extraCostItems = {}
+            extraCostItems[convertInfo.originiumItemId] = convertInfo.oriNeedCount
+            GameInstance.player.shopSystem:ByGoodsGachaWeapon(self.m_goodsData.shopId, self.m_goodsData.goodsId, extraCostItems)
+            if self.m_isAutoExchangeMoney then
+                local toastStr = string.format(Language.LUA_GACHA_WEAPON_POPUP_AUTO_EXCHANGE_TOAST_TEXT, convertInfo.oriNeedCount, convertInfo.convertGoldCount)
+                Notify(MessageConst.SHOW_TOAST, toastStr)
+            end
+        else
+            
+            Notify(MessageConst.SHOW_POP_UP, {
+                content = Language.LUA_GACHA_CONFIRM_CONVERT_ORI_FAIL,
+                onConfirm = function()
+                    CashShopUtils.GotoCashShopRechargeTab()
+                end
+            })
+        end
+        return
     else
         return
     end
     self.m_isRequesting = true
+end
+
+
+
+GachaWeaponPoolCtrl._OnNoMoneyBtnClick = HL.Method() << function(self)
+    UIManager:Open(PanelId.GachaWeaponInsufficient, {
+        onClickOriginiumExchange = function()
+            logger.info("onClickOriginiumExchange")
+            
+            local convertInfo = self:_GetOriginiumConvertWeaponGoldInfo()
+            
+            local toggleArg = {
+                toggleText = Language.LUA_GACHA_WEAPON_POPUP_AUTO_EXCHANGE_TOGGLE_TEXT,
+                isOn = false,
+                toggleTips = Language.LUA_GACHA_WEAPON_POPUP_AUTO_EXCHANGE_DETAIL_TEXT,
+                onValueChanged = function(value)
+                    self.m_isAutoExchangeMoney = value
+                end,
+            }
+            Notify(MessageConst.SHOW_POP_UP, {
+                content = string.format(Language.LUA_GACHA_WEAPON_CONFIRM_CONVERT_ORI, convertInfo.oriNeedCount, convertInfo.convertGoldCount),
+                costItems = {
+                    { id = convertInfo.originiumItemId, count = convertInfo.oriNeedCount, ownCount = convertInfo.curOriCount, },
+                    { id = convertInfo.weaponGoldId, count = convertInfo.convertGoldCount, ownCount = convertInfo.curGoldCount, },
+                },
+                convertArrowIndex = 1,
+                toggle = toggleArg,
+                onConfirm = function()
+                    if self.m_isAutoExchangeMoney then
+                        commonBitsetSys:EnableBit(GEnums.BitsetType.CltDailyCommon, GEnums.CltDailyCommonTypeInBitset.IgnoreGachaWeaponExchangeTips:GetHashCode())
+                    end
+                    if convertInfo.curOriCount >= convertInfo.oriNeedCount then
+                        
+                        local extraCostItems = {}
+                        extraCostItems[convertInfo.originiumItemId] = convertInfo.oriNeedCount
+                        GameInstance.player.shopSystem:ByGoodsGachaWeapon(self.m_goodsData.shopId, self.m_goodsData.goodsId, extraCostItems)
+                        if self.m_isAutoExchangeMoney then
+                            local toastStr = string.format(Language.LUA_GACHA_WEAPON_POPUP_AUTO_EXCHANGE_TOAST_TEXT, convertInfo.oriNeedCount, convertInfo.convertGoldCount)
+                            Notify(MessageConst.SHOW_TOAST, toastStr)
+                        end
+                    else
+                        
+                        Notify(MessageConst.SHOW_POP_UP, {
+                            content = Language.LUA_GACHA_CONFIRM_CONVERT_ORI_FAIL,
+                            onConfirm = function()
+                                CashShopUtils.GotoCashShopRechargeTab()
+                            end
+                        })
+                    end
+                end,
+            })
+        end
+    })
 end
 
 
@@ -336,32 +419,48 @@ GachaWeaponPoolCtrl.OnWalletChanged = HL.Method(HL.Opt(HL.Any)) << function(self
     local costTicketCount = self.m_gachaWeaponGoodsCostInfo.costTicketCount
     local costMoneyId = self.m_gachaWeaponGoodsCostInfo.costMoneyId
     local costMoneyCount = self.m_gachaWeaponGoodsCostInfo.costMoneyCount
+    self.m_isAutoExchangeMoney = commonBitsetSys:IsBitEnable(GEnums.BitsetType.CltDailyCommon, GEnums.CltDailyCommonTypeInBitset.IgnoreGachaWeaponExchangeTips:GetHashCode())
     if self.m_gachaWeaponGoodsCostInfo.ticketEnough then
         self.view.normalType.gameObject:SetActive(true)
         self.view.disableType.gameObject:SetActive(false)
         self.view.ticketNode.gameObject:SetActive(true)
         self.view.originalCostTxt.gameObject:SetActive(true)
         self.view.priceNumTxt.gameObject:SetActive(false)
+        self.view.explainType.gameObject:SetActive(true)
         self.view.normalNumTxt.text = 1
         self.view.normalCostIconImg:LoadSprite(UIConst.UI_SPRITE_WALLET, costTicketId)
         self.view.normalCostTxt.text = costTicketCount
         self.view.normalMultiplyTxt.gameObject:SetActive(true)
+        self.view.exchangeNode.gameObject:SetActive(false)
 
         self.view.gachaBtn.gameObject:SetActive(true)
         self.view.noMoneyType.gameObject:SetActive(false)
-    elseif self.m_gachaWeaponGoodsCostInfo.moneyEnough then
+        self.view.noMoneyTxt.gameObject:SetActive(false)
+    elseif self.m_gachaWeaponGoodsCostInfo.moneyEnough or self.m_isAutoExchangeMoney then
         self.view.normalType.gameObject:SetActive(true)
         self.view.disableType.gameObject:SetActive(false)
         self.view.ticketNode.gameObject:SetActive(false)
         self.view.originalCostTxt.gameObject:SetActive(false)
         self.view.priceNumTxt.gameObject:SetActive(true)
         self.view.normalMultiplyTxt.gameObject:SetActive(false)
+        self.view.explainType.gameObject:SetActive(true)
         self.view.normalNumTxt.text = 1
         self.view.normalCostIconImg:LoadSprite(UIConst.UI_SPRITE_WALLET, costMoneyId)
         self.view.normalCostTxt.text = costMoneyCount
 
         self.view.gachaBtn.gameObject:SetActive(true)
         self.view.noMoneyType.gameObject:SetActive(false)
+        local convertInfo = self:_GetOriginiumConvertWeaponGoldInfo()
+        local goldEnough = convertInfo.curGoldCount >= self.m_gachaWeaponGoodsCostInfo.costMoneyCount
+        if not goldEnough and self.m_isAutoExchangeMoney then
+            self.view.exchangeNode.gameObject:SetActive(true)
+            self.view.exchangeNode.originiumNumTxt.text = convertInfo.oriNeedCount
+            self.view.exchangeNode.weaponGoldNumTxt.text = convertInfo.convertGoldCount
+            self.view.exchangeNode.stateController:SetState(convertInfo.curOriCount >= convertInfo.oriNeedCount and "Enough" or "NotEnough")
+        else
+            self.view.exchangeNode.gameObject:SetActive(false)
+        end
+        self.view.noMoneyTxt.gameObject:SetActive(false)
     else
         self.view.normalType.gameObject:SetActive(false)
         self.view.disableType.gameObject:SetActive(true)
@@ -374,7 +473,9 @@ GachaWeaponPoolCtrl.OnWalletChanged = HL.Method(HL.Opt(HL.Any)) << function(self
         self.view.disableCostTxt.text = costMoneyCount
 
         self.view.gachaBtn.gameObject:SetActive(false)
+        self.view.explainType.gameObject:SetActive(false)
         self.view.noMoneyType.gameObject:SetActive(true)
+        self.view.noMoneyTxt.gameObject:SetActive(true)
         self.view.noMoneyTxt.text = string.format(Language.LUA_GACHA_WEAPON_POOL_NO_MONEY, UIConst.UI_SPRITE_WALLET, costMoneyId)
     end
 
@@ -383,7 +484,11 @@ GachaWeaponPoolCtrl.OnWalletChanged = HL.Method(HL.Opt(HL.Any)) << function(self
     if self.m_gachaWeaponGoodsCostInfo.ticketEnough then
         moneyIds = {costTicketId, Tables.globalConst.gachaWeaponItemId}
     else
-        moneyIds = {Tables.globalConst.gachaWeaponItemId}
+        if self.m_isAutoExchangeMoney then
+            moneyIds = { Tables.globalConst.originiumItemId, Tables.globalConst.gachaWeaponItemId }
+        else
+            moneyIds = { Tables.globalConst.gachaWeaponItemId }
+        end
     end
     self.view.walletBarPlaceholder:InitWalletBarPlaceholder(moneyIds, false, true)
 end
@@ -396,6 +501,7 @@ GachaWeaponPoolCtrl.OnGachaSucc = HL.Method(HL.Table) << function(self, arg)
     
     local msg = unpack(arg)
     if msg.GachaPoolId ~= self.m_poolId then
+        self.m_isRequesting = false
         return
     end
 
@@ -421,6 +527,7 @@ GachaWeaponPoolCtrl.OnGachaSucc = HL.Method(HL.Table) << function(self, arg)
 
     Notify(MessageConst.ON_DISABLE_ACHIEVEMENT_TOAST, UIConst.ACHIEVEMENT_TOAST_DISABLE_KEY.GachaWeapon)
     
+    self.m_isRequesting = true  
     self.m_gachaFlowCoroutine = self:_ClearCoroutine(self.m_gachaFlowCoroutine)
     self.m_gachaFlowCoroutine = self:_StartCoroutine(function()
         
@@ -541,6 +648,33 @@ GachaWeaponPoolCtrl._ShowPerfectWeaponPreview = HL.Method(HL.String) << function
         })
     end)
     GameAction.ShowBlackScreen(dynamicFadeData)
+end
+
+
+
+GachaWeaponPoolCtrl._GetOriginiumConvertWeaponGoldInfo = HL.Method().Return(HL.Table) << function(self)
+    local weaponGoldId = self.m_gachaWeaponGoodsCostInfo.costMoneyId
+    local curGoldCount = Utils.getItemCount(self.m_gachaWeaponGoodsCostInfo.costMoneyId)
+    local originiumItemId = Tables.globalConst.originiumItemId
+    local curOriCount = Utils.getItemCount(originiumItemId)
+    local costDiamondCount = self.m_gachaWeaponGoodsCostInfo.costMoneyCount
+    local diffCount = costDiamondCount - curGoldCount
+    
+    
+    local _, cfg = CS.Beyond.Gameplay.ShopSystem.GetExchangeData(originiumItemId, weaponGoldId)
+    local convertRate = cfg.targetMoneyGet
+    local oriNeedCount = math.ceil(diffCount / convertRate)
+    
+    local convertInfo = {
+        convertRate = convertRate,
+        originiumItemId = originiumItemId,
+        weaponGoldId = weaponGoldId,
+        oriNeedCount = oriNeedCount,
+        curOriCount = curOriCount,
+        curGoldCount = curGoldCount,
+        convertGoldCount = oriNeedCount * convertRate,
+    }
+    return convertInfo
 end
 
 

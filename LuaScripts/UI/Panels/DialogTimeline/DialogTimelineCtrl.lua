@@ -38,6 +38,9 @@ local PANEL_ID = PanelId.DialogTimeline
 
 
 
+
+
+
 DialogTimelineCtrl = HL.Class('DialogTimelineCtrl', dialogCtrlBase.DialogCtrlBase)
 
 
@@ -88,6 +91,9 @@ DialogTimelineCtrl.m_dialogTextHideTimer = HL.Field(HL.Number) << -1
 DialogTimelineCtrl.m_fmvNodeMap = HL.Field(HL.Table)
 
 
+DialogTimelineCtrl.m_timelineHasBound = HL.Field(HL.Boolean) << false
+
+
 
 DialogTimelineCtrl.OnPreloadDialogTimelinePanel = HL.StaticMethod(HL.Table) << function(arg)
     local preloadFinishCallback = unpack(arg)
@@ -106,14 +112,34 @@ DialogTimelineCtrl.OnCreated = HL.Override(HL.Any) << function(self, arg)
     self.m_fmvNodeMap = {}
     self.m_dialogTextStopped = true
     self.m_timelineHandle = unpack(arg)
+    self.m_timelineHasBound = false
     GameWorld.dialogTimelineManager:BindUIDialogTimelineText(self.m_timelineHandle, self.view.dialogTimelineText)
     GameWorld.dialogTimelineManager:BindSubtitle(self.m_timelineHandle, self.view.subtitlePanel)
 end
 
 
 
+DialogTimelineCtrl.OnShow = HL.Override() << function(self)
+    self:OnDialogShow()
+    self.view.debugNode.gameObject:SetActive(false)
+    if NarrativeUtils.ShouldShowNarrativeDebugNode() then
+        self.view.debugNode.gameObject:SetActive(true)
+        GameWorld.dialogTimelineManager:BindFrameDebugTextMarker(self.view.frameDebugText)
+        local desc = ""
+        if GameWorld.dialogManager.dialogTree then
+            desc = "\nT2/T3"
+            if GameWorld.dialogManager.dialogTree.dialogTreeData.qualityLevel == CS.Beyond.Gameplay.DialogEnums.DialogQualityLevel.High then
+                desc = "\nTO/T1"
+            end
+        end
+        self.view.textDialogId.text = self:GetCurDialogId() .. desc
+    end
+end
+
+
+
 DialogTimelineCtrl.GetCurDialogId = HL.Override().Return(HL.String) << function(self)
-    return GameWorld.dialogTimelineManager.dialogId
+    return GameWorld.dialogTimelineManager.dialogId or ""
 end
 
 
@@ -126,6 +152,7 @@ end
 
 DialogTimelineCtrl.OnDialogTimelineStartTrunk = HL.Method(HL.Table) << function(self, arg)
     if not self.m_hasShowedDialogText then
+        self.m_hasShowedDialogText = true
         self.view.dialogTimelineText:UpdateAlpha(1)
 
         self.view.buttonLog.gameObject:SetActive(true)
@@ -135,7 +162,6 @@ DialogTimelineCtrl.OnDialogTimelineStartTrunk = HL.Method(HL.Table) << function(
 
         
         self.view.bottomMask.gameObject:SetActive(true)
-        self.m_hasShowedDialogText = true
     end
     self.m_dialogTextStopped = false
     self.m_showingTrunkId = unpack(arg)
@@ -220,8 +246,13 @@ end
 DialogTimelineCtrl.OnDialogShow = HL.Override() << function(self)
     DialogTimelineCtrl.Super.OnDialogShow(self)
     self:_RefreshCanSkip()
-    local dialogTimelineManager = GameWorld.dialogTimelineManager
 
+    if self.m_timelineHasBound then
+        return
+    end
+
+    
+    local dialogTimelineManager = GameWorld.dialogTimelineManager
     local hasMask = dialogTimelineManager:BindDialogMask(self.view.mask)
     self.view.mask.gameObject:SetActive(hasMask)
     dialogTimelineManager:BindLeftSubtitle(self.m_timelineHandle, self.view.leftSubtitlePanel)
@@ -253,6 +284,7 @@ DialogTimelineCtrl.OnDialogShow = HL.Override() << function(self)
 
     
     self.view.bottomMask.gameObject:SetActive(false)
+    self.m_timelineHasBound = true
 end
 
 
@@ -276,6 +308,18 @@ DialogTimelineCtrl.OnBtnAutoClick = HL.Override() << function(self)
     local auto = not GameWorld.dialogTimelineManager.autoMode
     GameWorld.dialogTimelineManager:SetAutoMode(auto)
 end
+
+
+
+
+DialogTimelineCtrl._RefreshAutoMode = HL.Override(HL.Boolean) << function(self, autoMode)
+    if not self.m_hasShowedDialogText then
+        return
+    end
+
+    DialogTimelineCtrl.Super._RefreshAutoMode(self, autoMode)
+end
+
 
 
 

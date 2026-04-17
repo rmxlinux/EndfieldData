@@ -71,8 +71,6 @@ MapMarkDetailCommon._OnFirstTimeInit = HL.Override() << function(self)
     self.view.bigBtn.onClick:AddListener(function()
         self:_OnBigBtnClick()
     end)
-
-    self:_InitDetailCommonController()
 end
 
 
@@ -185,6 +183,8 @@ MapMarkDetailCommon.InitMapMarkDetailCommon = HL.Method(HL.Table) << function(se
     end
 
     self:_RefreshHeadIconSprite()
+
+    self:_InitDetailCommonController()
 end
 
 
@@ -377,9 +377,6 @@ end
 
 
 MapMarkDetailCommon.ToggleEmptyMaskVisibleState = HL.Method(HL.Boolean) << function(self, visible)
-    if IsNull(self.view.emptyMask) then
-        return
-    end
     self.view.emptyMask.gameObject:SetActive(visible)
 end
 

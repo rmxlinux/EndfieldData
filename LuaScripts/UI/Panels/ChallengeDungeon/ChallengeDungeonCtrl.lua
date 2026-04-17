@@ -92,6 +92,8 @@ ChallengeDungeonCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitData(arg)
     self:_UpdateData()
     self:_RefreshAllUI()
+    
+    ActivityUtils.backToMainHudWhenActivityClosed(self, self.m_info.activityId)
 end
 
 
@@ -528,6 +530,10 @@ ChallengeDungeonCtrl._RefreshContentUI = HL.Method(HL.Number) << function(self, 
     
     self.m_updateTimeCor = self:_ClearCoroutine(self.m_updateTimeCor)   
     self.view.keyHintContent.gameObject:SetActive(#self.m_info.seriesInfos > 1)
+    
+    if ActivityUtils.isNewGameEntranceSeries(seriesInfo.seriesId) then
+        ActivityUtils.setFalseNewGameEntranceSeries(seriesInfo.seriesId)
+    end
 end
 
 
@@ -725,14 +731,11 @@ ChallengeDungeonCtrl._OnChangeSeriesTab = HL.Method(HL.Number) << function(self,
         if newCell then
             newCell.animationWrapper:Play("challengedungeonselected_in")
         end
+        self.m_naviCellIndex = 0
         self:_RefreshContentUI(luaIndex)
         self.view.dungeonNodeAniWrapper:Play("challengedungeonlist_change")
         
         self:_TryClearReadDungeon()
-        local seriesInfo = self.m_info.seriesInfos[luaIndex]
-        if ActivityUtils.isNewGameEntranceSeries(seriesInfo.seriesId) then
-            ActivityUtils.setFalseNewGameEntranceSeries(seriesInfo.seriesId)
-        end
         self:_AutoNavi()
     end
 end

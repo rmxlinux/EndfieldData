@@ -25,6 +25,7 @@ local shopSystem = GameInstance.player.shopSystem
 
 
 
+
 SpaceshipCreditShopCtrl = HL.Class('SpaceshipCreditShopCtrl', SpaceshipShopBaseCtrl.SpaceshipShopBaseCtrl)
 
 
@@ -79,6 +80,8 @@ SpaceshipCreditShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     self.m_phase:HidePsStore()
+
+    self:_ProcessArg(arg)
 end
 
 
@@ -342,6 +345,22 @@ end
 
 SpaceshipCreditShopCtrl._OnGetCredit = HL.Override(HL.Table) << function(self, args)
     GameInstance.player.spaceship:QueryVisitInfo()
+end
+
+
+
+
+SpaceshipCreditShopCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
+    if arg and not string.isEmpty(arg.goodsId) then
+        for _, v in ipairs(self.m_goodsInfos) do
+            if v.id == arg.goodsId then
+                local goodsData = shopSystem:GetShopGoodsData(self.m_shopId, arg.goodsId)
+                self:_StartCoroutine(function()
+                    CashShopUtils.OpenShopDetailPanel(goodsData, self)
+                end)
+            end
+        end
+    end
 end
 
 HL.Commit(SpaceshipCreditShopCtrl)
