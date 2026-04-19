@@ -945,7 +945,9 @@ ShopTradeCtrl.m_InitGetCellSizeHelperInfo = HL.Method() << function(self)
     local goodsPadding = goodsListGrid.padding
     LayoutRebuilder.ForceRebuildLayoutImmediate(goodsNode.goodsGroupList.transform)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.goodsNode.scrollContainer)
-    local lineWidth = goodsNode.goodsGroupList.transform.rect.width - goodsPadding.left - goodsPadding.right
+    local notchAdapter = self.view.transform:GetComponent(typeof(CS.Beyond.UI.NotchAdapter))
+    local notchMarginX = notchAdapter and notchAdapter.selfMarginSize.x or 0    
+    local lineWidth = goodsNode.goodsGroupList.transform.rect.width - goodsPadding.left - goodsPadding.right - notchMarginX * 2
     local maxCountOneLine = math.floor((lineWidth + goodsSpacing.x) / (goodsSize.x + goodsSpacing.x))
     
     self.m_getCellSizeHelperInfo = {

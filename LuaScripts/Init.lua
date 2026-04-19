@@ -358,3 +358,5 @@ end
 logger.info("Lua init finished.")
 
 Notify(MessageConst.ON_LUA_INIT_FINISHED)
+xlua.private_accessible(CS.XLua.LuaDeadLoopCheck)
+CS.XLua.LuaDeadLoopCheck.s_isCheck = false
