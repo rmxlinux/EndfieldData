@@ -253,6 +253,9 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_SHOW_COMMON_TASK_TOAST_FINISH] = "OnShowCommonTaskFinishToast",
         
         [MessageConst.ON_SHOW_COMMON_TASK_TOAST_FAIL] = "OnShowCommonTaskFailToast",
+
+        
+        [MessageConst.ON_DUNGEON_COMPLETE] = "OnDungeonComplete",
     },
     
     ['CommonTaskTrackCountdown'] = {

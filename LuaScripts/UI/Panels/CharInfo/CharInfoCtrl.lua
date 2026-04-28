@@ -381,6 +381,10 @@ CharInfoCtrl._InitActionEvent = HL.Method() << function(self)
     if self.m_charInfo.charInstIdList ~= nil and #self.m_charInfo.charInstIdList == 1 then
         self.view.expandListButton.gameObject:SetActive(false)
     end
+
+    self:BindInputPlayerAction("common_open_char_panel", function()
+        PhaseManager:PopPhase(PhaseId.CharInfo)
+    end)
 end
 
 

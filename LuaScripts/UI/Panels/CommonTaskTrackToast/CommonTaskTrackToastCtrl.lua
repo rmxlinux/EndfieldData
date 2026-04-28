@@ -10,9 +10,15 @@ local ToastType = {
 }
 local CountdownToast = "CountdownToast"
 
+local showTimeRecordCategoryList = {
+    DungeonConst.DUNGEON_CATEGORY.BossRush,
+}
+
 
 local WorldChallengeStartToast = "WorldChallengeStartToast"
 local DEFAULT_ICON = "challenge_icon"
+
+
 
 
 
@@ -39,6 +45,23 @@ CommonTaskTrackToastCtrl.m_countDownTickId = HL.Field(HL.Number) << -1
 
 
 CommonTaskTrackToastCtrl.m_showingToastCor = HL.Field(HL.Thread)
+
+
+
+CommonTaskTrackToastCtrl.s_cachedCompleteResult = HL.StaticField(HL.Table)
+
+
+
+CommonTaskTrackToastCtrl.OnDungeonComplete = HL.StaticMethod(HL.Any) << function(args)
+    local isNewTimeRecord, curGameTimeRecord = unpack(args)
+    if CommonTaskTrackToastCtrl.s_cachedCompleteResult == nil then
+        CommonTaskTrackToastCtrl.s_cachedCompleteResult = {}
+    end
+
+    CommonTaskTrackToastCtrl.s_cachedCompleteResult.isNewTimeRecord = isNewTimeRecord
+    CommonTaskTrackToastCtrl.s_cachedCompleteResult.curGameTimeRecord = curGameTimeRecord
+end
+
 
 
 
@@ -137,6 +160,8 @@ CommonTaskTrackToastCtrl.OnClose = HL.Override() << function(self)
     if self.m_showingToastCor then
         self.m_showingToastCor = self:_ClearCoroutine(self.m_showingToastCor)
     end
+
+    CommonTaskTrackToastCtrl.s_cachedCompleteResult = nil
 end
 
 
@@ -288,6 +313,13 @@ CommonTaskTrackToastCtrl._RefreshToast = HL.Method(HL.String, HL.Any, HL.Opt(HL.
     toastNode.middleIcon:LoadSprite(UIConst.UI_SPRITE_COMMON_TASK_TRACK, toastIcon)
     toastNode.titleTxt.text = taskTitle
     toastNode.descTxt.text = taskDesc
+
+    
+    if lume.find(showTimeRecordCategoryList, gameMechanicData.gameCategory) ~= nil and
+            CommonTaskTrackToastCtrl.s_cachedCompleteResult then
+        passTime = CommonTaskTrackToastCtrl.s_cachedCompleteResult.curGameTimeRecord
+    end
+    
 
     if toastNode.newRecordNode then
         toastNode.newRecordNode.gameObject:SetActiveIfNecessary(isNewRecord == true)
