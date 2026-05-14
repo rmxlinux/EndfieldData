@@ -1295,7 +1295,6 @@ config = {
         panels = {},
         isSimpleUIPhase = false,
         systemId = "system_cash_shop",
-        fov = 40,
         checkCanOpen = function(arg)
             if GameInstance.player.gameSettingSystem.forbiddenCashShop then
                 return false, Language.LUA_SWITCH_TYPE_FORBIDDEN_TOAST

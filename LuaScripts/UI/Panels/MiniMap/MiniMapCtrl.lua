@@ -45,7 +45,6 @@ MiniMapCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SETTLEMENT_UPGRADE] = '_OnSettlementUpgrade',
     [MessageConst.TRAVEL_POLE_ENTER_TRAVEL_MODE] = '_HideMainButtonInTravelMode',
     [MessageConst.TRAVEL_POLE_TRIGGER_CLOSE_PANEL] = '_ShowMainButtonInTravelMode',
-    [MessageConst.TRAVEL_POLE_TRIGGER_FORCE_CLOSE_PANEL] = '_ShowMainButtonInTravelMode',
 }
 
 

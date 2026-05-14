@@ -985,7 +985,8 @@ CommonItemList._GetWeaponGemMaterialDepot = HL.Method(HL.Table).Return(HL.Table)
         local gemCfg = Tables.itemTable:GetValue(gemInst.id)
         if gemCfg then
             local passFilter = ((not filter_rarity) or (gemCfg.rarity == filter_rarity)) and
-                ((not exclusiveInstId) or (gemInst.instId ~= exclusiveInstId))
+                ((not exclusiveInstId) or (gemInst.instId ~= exclusiveInstId)) and
+                not gemInst.instData.isLocked
             if passFilter then
                 table.insert(filteredInstItems, gemInst)
             end

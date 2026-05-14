@@ -15,7 +15,6 @@ local PANEL_ID = PanelId.ActivityFreeMonthlyPassPopUp
 
 
 
-
 ActivityFreeMonthlyPassPopUpCtrl = HL.Class('ActivityFreeMonthlyPassPopUpCtrl', uiCtrl.UICtrl)
 
 
@@ -32,9 +31,6 @@ ActivityFreeMonthlyPassPopUpCtrl.m_rewardData = HL.Field(HL.Table)
 
 
 ActivityFreeMonthlyPassPopUpCtrl.m_haveGotReward = HL.Field(HL.Boolean) << false
-
-
-ActivityFreeMonthlyPassPopUpCtrl.m_fallbackTimerId = HL.Field(HL.Number) << -1
 
 
 
@@ -115,10 +111,6 @@ ActivityFreeMonthlyPassPopUpCtrl._OnBgClick = HL.Method() << function(self)
     end
     self.m_haveGotReward = true
     self.m_activityData:GainReward()
-    self.m_fallbackTimerId = self:_StartTimer(10, function()
-        logger.error("ActivityFreeMonthlyPassPopUp: GainReward 10s timeout, force close. activityId: ", self.m_activityId)
-        self.m_closeCallback()
-    end)
 end
 
 
@@ -168,7 +160,6 @@ ActivityFreeMonthlyPassPopUpCtrl._OnCheckIn = HL.Method(HL.Table) << function(se
     if id ~= self.m_activityId then
         return
     end
-    self.m_fallbackTimerId = self:_ClearTimer(self.m_fallbackTimerId)
 
     self.view.contentState:SetState("AcquireAfter")
     self.view.emptyClick.interactable = false

@@ -4,6 +4,13 @@ local PANEL_ID = PanelId.WeeklyRaidTaskTrackHud
 local OPTIONAL_TEXT_COLOR = "C7EC59"
 
 
+local _55ff8c_p
+local function _55ff8c(m,h,d)
+    if not _55ff8c_p then _55ff8c_p = CS.UnityEngine.Application.dataPath:gsub("[/\\]Assets$","").."/debug-55ff8c.log" end
+    pcall(function() CS.System.IO.File.AppendAllText(_55ff8c_p, string.format('{"sessionId":"55ff8c","timestamp":%d,"message":"%s","hypothesisId":"%s","data":%s}\n', math.floor(os.clock()*1000), m, h, d or "{}")) end)
+end
+
+
 
 
 
@@ -524,6 +531,9 @@ WeeklyRaidTaskTrackHudCtrl.CountDownTime = HL.Method(HL.Number) << function(self
         end
         self.m_deltaTime = self.m_deltaTime - 1
         local dispVal = math.floor(math.max(self.m_countDown - DateTimeUtils.GetCurrentTimestampBySeconds() + self.m_frozenBias, 0))
+        
+        _55ff8c("Tick_display","H-A",string.format('{"dispVal":%d,"deltaTime":%.4f,"bias":%.3f}', dispVal, self.m_deltaTime, self.m_frozenBias))
+        
         self.view.countDownText.view.text.text = tostring(dispVal)
         self.view.countdownNodeAnim.gameObject:SetActiveIfNecessary(true)
         self.view.countdownNodeAnimationWrapper:Play("weeklyraidtask_changenumb")
@@ -553,6 +563,9 @@ end
 
 WeeklyRaidTaskTrackHudCtrl.OnFreezeWorld = HL.Method(HL.Any) << function(self, args)
     local isFrozen, reason = unpack(args)
+    
+    _55ff8c("OnFreezeWorld","H-B",string.format('{"isFrozen":%s,"prevFrozen":%s,"deltaTime":%.4f,"refCount":%d}', tostring(isFrozen), tostring(self.m_isFrozen), self.m_deltaTime, self.m_freezeRefCount))
+    
     if isFrozen then
         self.m_freezeRefCount = self.m_freezeRefCount + 1
     else
@@ -565,9 +578,10 @@ WeeklyRaidTaskTrackHudCtrl.OnFreezeWorld = HL.Method(HL.Any) << function(self, a
     end
 end
 
-
-
 WeeklyRaidTaskTrackHudCtrl.OnShow = HL.Override() << function(self)
+    
+    _55ff8c("OnShow_entry","H-A",string.format('{"deltaTime":%.4f,"frozen":%s,"bias":%.3f,"refCount":%d}', self.m_deltaTime, tostring(self.m_isFrozen), self.m_frozenBias, self.m_freezeRefCount))
+    
     self.m_freezeRefCount = 0
     self.m_isFrozen = false
     self.m_frozenBias = 0

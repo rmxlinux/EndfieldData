@@ -1,10 +1,5 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.KiteStationCollectionReward
-xlua.private_accessible(typeof(CS.Beyond.Gameplay.KiteStationSystem))
-
-
-
-
 
 
 
@@ -30,12 +25,6 @@ KiteStationCollectionRewardCtrl.m_activeIndex = HL.Field(HL.Number) << 0
 KiteStationCollectionRewardCtrl.m_collectionCount = HL.Field(HL.Number) << 0
 
 
-KiteStationCollectionRewardCtrl.m_collectionReward = HL.Field(HL.Number) << 0
-
-
-KiteStationCollectionRewardCtrl.m_collectionRecords = HL.Field(HL.Number) << 0
-
-
 
 
 
@@ -45,39 +34,6 @@ KiteStationCollectionRewardCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_KITE_STATION_COLLECTION_REWARD] = '_OnCollectionReward'
     
 }
-
-local function _HasCollectionFlag(mask, flag)
-    return (mask & flag) == flag
-end
-
-local function _GetRewardFlag(rewardIndex)
-    return 1 << rewardIndex
-end
-
-
-
-KiteStationCollectionRewardCtrl._RefreshCollectionData = HL.Method() << function(self)
-    local _, kiteStationData = GameInstance.player.kiteStationSystem.m_kiteStationData:TryGetValue(self.m_insId)
-    self.m_collectionCount = GameInstance.player.kiteStationSystem:GetKiteStationCollectionCount(self.m_insId)
-    self.m_collectionReward = kiteStationData and kiteStationData.CollectionReward or 0
-    self.m_collectionRecords = kiteStationData and kiteStationData.CollectionRecords or 0
-end
-
-
-
-
-KiteStationCollectionRewardCtrl._HasAnyRewardCanReceive = HL.Method(HL.Any).Return(HL.Boolean) << function(self, cfg)
-    for rewardIndex = 0, cfg.rewardList.Count - 1 do
-        local data = cfg.rewardList[rewardIndex]
-        local rewardFlag = _GetRewardFlag(rewardIndex)
-        local isAlreadyReceived = _HasCollectionFlag(self.m_collectionReward, rewardFlag)
-        local canReceiveReward = self.m_collectionCount >= data.collectionCnt
-        if not isAlreadyReceived and canReceiveReward then
-            return true
-        end
-    end
-    return false
-end
 
 
 
@@ -98,7 +54,8 @@ KiteStationCollectionRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 
     self.m_activeIndex = LuaIndex(GameInstance.player.kiteStationSystem:GetKiteStationRewardIndex(self.m_insId))
-    self:_RefreshCollectionData()
+
+    self.m_collectionCount = GameInstance.player.kiteStationSystem:GetKiteStationCollectionCount(self.m_insId)
 
     self.m_getCellFunc = UIUtils.genCachedCellFunction(self.view.scrollList)
 
@@ -112,16 +69,14 @@ KiteStationCollectionRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     self.view.scrollList.onUpdateCell:RemoveAllListeners()
     self.view.scrollList.onUpdateCell:AddListener(function(object, csIndex)
         local data = cfg.rewardList[csIndex]
+
         local cell = self.m_getCellFunc(object)
-        local rewardFlag = _GetRewardFlag(csIndex)
-        local canReceiveReward = self.m_collectionCount >= data.collectionCnt
-        local isAlreadyReceived = _HasCollectionFlag(self.m_collectionReward, rewardFlag)
 
         
         if LuaIndex(csIndex) == cfg.rewardList.Count then
             cell.bgImage.gameObject:SetActiveIfNecessary(false)
             cell.sliderImage.gameObject:SetActiveIfNecessary(false)
-            if lastCell and canReceiveReward then
+            if lastCell and data.collectionCnt == self.m_collectionCount then
                 lastCell.sliderImage.fillAmount = 1.0
             end
         else
@@ -145,7 +100,7 @@ KiteStationCollectionRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self,
             lastCell = cell
         end
 
-        local stateName = isAlreadyReceived and "AlreadyReceived" or (canReceiveReward and "CanReceive" or "NotAvailable")
+        local stateName = LuaIndex(csIndex) <= self.m_activeIndex and "AlreadyReceived" or (data.collectionCnt <= self.m_collectionCount and "CanReceive" or "NotAvailable")
         cell.stateController:SetState(stateName)
         cell.numberTxt.text = data.collectionCnt
 
@@ -168,7 +123,7 @@ KiteStationCollectionRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     naviGroup:NaviToThisGroup()
     self.view.numberTxt.text = self.m_collectionCount
 
-    local canReward = self:_HasAnyRewardCanReceive(cfg)
+    local canReward = GameInstance.player.kiteStationSystem:CheckKiteStationCollectionReward(self.m_insId)
     self.view.confirmBtn.gameObject:SetActiveIfNecessary(canReward)
 
     self.view.confirmBtn.onClick:RemoveAllListeners()
@@ -176,11 +131,8 @@ KiteStationCollectionRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self,
         local cnts = {}
         for rewardIndex = 0, cfg.rewardList.Count - 1 do
             local data = cfg.rewardList[rewardIndex]
-            local rewardFlag = _GetRewardFlag(rewardIndex)
-            local canReceiveReward = self.m_collectionCount >= data.collectionCnt
-            local isAlreadyReceived = _HasCollectionFlag(self.m_collectionReward, rewardFlag)
             
-            if not isAlreadyReceived and canReceiveReward then
+            if rewardIndex >= self.m_activeIndex and self.m_collectionCount >= data.collectionCnt then
                 table.insert(cnts, data.collectionCnt)
             end
         end
@@ -200,10 +152,9 @@ KiteStationCollectionRewardCtrl._OnCollectionReward = HL.Method(HL.Any) << funct
     end
 
     self.m_activeIndex = LuaIndex(GameInstance.player.kiteStationSystem:GetKiteStationRewardIndex(self.m_insId))
-    self:_RefreshCollectionData()
-    self.view.scrollList:UpdateCount(cfg.rewardList.Count)
-    self.view.numberTxt.text = self.m_collectionCount
-    local canReward = self:_HasAnyRewardCanReceive(cfg)
+    self.m_collectionCount = GameInstance.player.kiteStationSystem:GetKiteStationCollectionCount(self.m_insId)
+    self.view.scrollList:UpdateCount(#cfg.rewardList)
+    local canReward = GameInstance.player.kiteStationSystem:CheckKiteStationCollectionReward(self.m_insId)
     self.view.confirmBtn.gameObject:SetActiveIfNecessary(canReward)
 
     if rewardPack == nil or rewardPack.itemBundleList == nil or rewardPack.itemBundleList.Count == 0 then

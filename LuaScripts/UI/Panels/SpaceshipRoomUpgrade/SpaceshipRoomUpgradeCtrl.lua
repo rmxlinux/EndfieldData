@@ -269,16 +269,6 @@ end
 
 
 
-SpaceshipRoomUpgradeCtrl.OnShow = HL.Override() << function(self)
-    if self.m_state == States.Upgrade then
-        self:_RefreshUpgradeInfo()
-    elseif self.m_state == States.Build then
-        self:_RefreshBuildInfo(self.m_roomType)
-    end
-end
-
-
-
 SpaceshipRoomUpgradeCtrl.OnClose = HL.Override() << function(self)
     
     if self.m_moveCam then

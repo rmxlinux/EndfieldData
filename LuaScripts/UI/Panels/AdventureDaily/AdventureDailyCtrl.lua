@@ -190,14 +190,16 @@ AdventureDailyCtrl.OnDailyActivationReward = HL.Method(HL.Any) << function(self,
     local itemBundles = {}
     local hasDouble = BattlePassUtils.CheckBattlePassSeasonValid()
     local boostPercent = 1
+    local trackBoostPercent = 1
     if hasDouble then
         boostPercent = (Tables.battlePassConst.absentFlagBpExpRate / 1000)
+        trackBoostPercent = (BattlePassUtils.GetBattlePassExpBoost() / 1000) + 1
     end
     for _, argBundle in pairs(argBundles) do
         local isDouble = hasDouble and (argBundle.id == Tables.battlePassConst.bpExpItem)
         local count = argBundle.count
         if isDouble then
-            count = argBundle.count * boostPercent
+            count = argBundle.count * boostPercent * trackBoostPercent
         end
         table.insert(itemBundles, {
             id = argBundle.id,

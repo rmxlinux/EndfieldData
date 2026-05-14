@@ -247,9 +247,6 @@ function SNSUtils.findLatestContent(dialogId)
         content = Language.LUA_SNS_SUB_DIALOG_CELL_SHOW_CONTENT_COMPONENT_TBD
     end
 
-    
-    
-    content = SNSUtils.resolveTextStyleWithPlayerName(content)
     if isGroup and curContentType ~= GEnums.SNSDialogContentType.System
             and curContentType ~= GEnums.SNSDialogContentType.Task
     then
