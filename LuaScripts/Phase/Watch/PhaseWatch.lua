@@ -41,6 +41,8 @@ PhaseWatch.m_clearScreenKey = HL.Field(HL.Number) << -1
 
 PhaseWatch._OnInit = HL.Override() << function(self)
     PhaseWatch.Super._OnInit(self)
+    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
+    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 end
 
 
@@ -119,6 +121,8 @@ end
 
 
 PhaseWatch._OnActivated = HL.Override() << function(self)
+    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
+    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 end
 
 
@@ -203,6 +207,8 @@ end
 
 
 PhaseWatch._OnDestroy = HL.Override() << function(self)
+    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterNormal()
+    CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(true)
     if not InputManagerInst.inChangingInputDevice then
         self.m_watchBlurCtrl:PlayAnimationOutAndClose()
     end

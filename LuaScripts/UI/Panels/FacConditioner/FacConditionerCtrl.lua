@@ -177,6 +177,9 @@ FacConditionerCtrl._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(
     for index, item in ipairs(self.m_showItemList) do
         self.m_showItemMap[item.id] = index
     end
+    if self.m_waitingNaviState == NAVI_STATE.SELECTED and self.m_showItemMap[self.m_selectItemId] == nil then
+        self.m_waitingNaviState = NAVI_STATE.FIRST
+    end
     self.view.itemList:UpdateCount(#self.m_showItemList)
     if self.m_selectItemId ~= nil and self.m_showItemMap[self.m_selectItemId] ~= nil then
         local targetIndex = self.m_showItemMap[self.m_selectItemId]

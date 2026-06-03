@@ -515,13 +515,6 @@ DepotContent.RefreshAll = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGr
     for id, bundle in pairs(depot.normalItems) do
         processItem(id, bundle.count, nil, self:_IsInfiniteItemInDepot(id, depot))
     end
-    if self.m_isFactoryDepot and self.m_itemIndexMap then
-        for id in pairs(self.m_itemIndexMap) do
-            if type(id) == 'string' and id ~= '' and not depot.normalItems:ContainsKey(id) then
-                processItem(id, 0, nil, false)
-            end
-        end
-    end
     for instId, bundle in pairs(depot.instItems) do
         processItem(bundle.id, bundle.count, instId)
     end

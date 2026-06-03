@@ -536,6 +536,7 @@ CharInfoPotentialCtrl.m_curShowPotentialLevel = HL.Field(HL.Number) << 0
 
 
 CharInfoPotentialCtrl._RefreshRightNode = HL.Method(HL.Number) << function(self, potentialLevel)
+    Notify(MessageConst.HIDE_HYPERLINK_TIPS)
     self.m_curShowPotentialLevel = potentialLevel
     local potentialDataCount = self.m_potentialList.potentialUnlockBundle.Count
     if potentialLevel < 1 or potentialLevel > potentialDataCount then

@@ -1611,6 +1611,8 @@ FacTechTreeCtrl._ProcessCacheAfterAllOpenProgress = HL.Method() << function(self
     end
 
     local id = self.m_externalFocusId
+    
+    self.m_curSelectTechId = id
     self.m_externalFocusId = ""
     local isTech, techCfg = Tables.facSTTNodeTable:TryGetValue(id)
     local isLayer, layerCfg = Tables.facSTTLayerTable:TryGetValue(id)

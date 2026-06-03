@@ -1484,6 +1484,10 @@ end
 
 GeneralAbilityCtrl._CheckRecoverScreen = HL.Method(HL.Boolean) << function(self, isShown)
     if isShown and not self.m_screenOutFlag then
+        if not GameInstance.player.systemActionConflictManager:TryStartSystemAction(Const.PowerPoleFastTravelActionConflictName) then
+            return
+        end
+
         self.m_needLateRecoverScreen = false
         self.m_screenOutFlag = true
         UIManager:ClearScreenWithOutAnimation(function(clearScreenKey)
@@ -1491,6 +1495,7 @@ GeneralAbilityCtrl._CheckRecoverScreen = HL.Method(HL.Boolean) << function(self,
             if self.m_needLateRecoverScreen then
                 self:_RecoverScreen()
             end
+            GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.PowerPoleFastTravelActionConflictName)
         end, { PANEL_ID, PanelId.Joystick })
     end
 

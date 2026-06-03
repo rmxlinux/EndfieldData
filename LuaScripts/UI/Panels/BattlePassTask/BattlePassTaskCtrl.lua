@@ -67,6 +67,8 @@ local PANEL_ID = PanelId.BattlePassTask
 
 
 
+
+
 BattlePassTaskCtrl = HL.Class('BattlePassTaskCtrl', uiCtrl.UICtrl)
 
 
@@ -144,6 +146,9 @@ BattlePassTaskCtrl.m_subLabelFocus = HL.Field(HL.Boolean) << false
 
 
 BattlePassTaskCtrl.m_naviTaskTarget = HL.Field(HL.Any) << nil
+
+
+BattlePassTaskCtrl.m_naviTaskId = HL.Field(HL.String) << ""
 
 
 
@@ -280,13 +285,11 @@ BattlePassTaskCtrl._InitSubLabelNavi = HL.Method() << function(self)
     InputManagerInst:ToggleGroup(self.m_subLabelNaviGroupId, true)
     self.view.taskScrollListSelectableNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
         self.m_subLabelFocus = isFocused
-        if not isFocused then
-            self.m_naviTaskTarget = nil
-        end
     end)
     self.view.taskScrollListSelectableNaviGroup.onSetLayerSelectedTarget:AddListener(function(target)
         self.m_subLabelFocus = true
         self.m_naviTaskTarget = target
+        self.m_naviTaskId = self:_FindTaskIdByNaviTarget(target) or ""
     end)
     self.view.taskScrollListSelectableNaviGroup.getDefaultSelectableFunc = function()
         self.view.taskScrollList:ScrollToIndex(0, true)
@@ -302,12 +305,22 @@ BattlePassTaskCtrl._InitSubLabelNavi = HL.Method() << function(self)
     self.view.labelScrollListSelectableNaviGroup.onSetLayerSelectedTarget:AddListener(function(target)
         self.m_subLabelFocus = false
         self.m_naviTaskTarget = nil
+        self.m_naviTaskId = ""
     end)
     self:BindInputPlayerAction("common_horizontal_focus_right", function()
         self.view.taskScrollListSelectableNaviGroup:ManuallyFocus()
     end)
     self:BindInputPlayerAction("common_horizontal_stop_focus_left", function()
         self.view.taskScrollListSelectableNaviGroup:ManuallyStopFocus()
+        if DeviceInfo.usingController then
+            local curTarget = InputManagerInst.controllerNaviManager.curTarget
+            if curTarget == nil or curTarget.naviGroup ~= self.view.labelScrollListSelectableNaviGroup then
+                local selectedLabelCell = self.m_labelCacheFunc(self.m_selectedLabelIndex)
+                if selectedLabelCell ~= nil and selectedLabelCell.button ~= nil and selectedLabelCell.button.gameObject.activeInHierarchy then
+                    UIUtils.setAsNaviTarget(selectedLabelCell.button)
+                end
+            end
+        end
     end, self.view.taskScrollListInputBindingGroupMonoTarget.groupId)
 end
 
@@ -344,12 +357,73 @@ end
 
 BattlePassTaskCtrl._NaviResume = HL.Method() << function(self)
     local lastNaviTarget = self.m_naviTaskTarget
+    local lastNaviTaskId = self.m_naviTaskId
     self.view.labelScrollList:UpdateShowingCells(function(csIndex, obj)
-        self:_RenderLabel(self.m_labelCacheFunc(obj), LuaIndex(csIndex), false)
+        self:_RenderLabel(self.m_labelCacheFunc(obj), LuaIndex(csIndex), true)
     end)
+    
+    if not string.isEmpty(lastNaviTaskId) and self.m_taskViewModels ~= nil then
+        local targetIndex = nil
+        for index, viewModel in ipairs(self.m_taskViewModels) do
+            if viewModel.viewType == TASK_VIEW_TYPE.TASK
+                and viewModel.taskInfo ~= nil
+                and viewModel.taskInfo.taskId == lastNaviTaskId then
+                targetIndex = index
+                break
+            end
+        end
+        if targetIndex ~= nil then
+            self.view.taskScrollList:ScrollToIndex(CSIndex(targetIndex), true)
+            local cell = self.m_taskCacheFunc(targetIndex)
+            if cell ~= nil and cell.naviDecorator ~= nil then
+                UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.taskScrollListSelectableNaviGroup, cell.naviDecorator)
+                self.m_naviTaskTarget = cell.naviDecorator
+                return
+            end
+        end
+    end
+    
     if lastNaviTarget ~= nil then
         UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.taskScrollListSelectableNaviGroup, lastNaviTarget)
+        return
     end
+    
+    
+    
+    if DeviceInfo.usingController and self.m_selectedLabelIndex > 0 then
+        local selectedLabelCell = self.m_labelCacheFunc(self.m_selectedLabelIndex)
+        if selectedLabelCell ~= nil
+            and selectedLabelCell.button ~= nil
+            and selectedLabelCell.button.gameObject.activeInHierarchy then
+            UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.labelScrollListSelectableNaviGroup, selectedLabelCell.button)
+        end
+    end
+end
+
+
+
+
+BattlePassTaskCtrl._FindTaskIdByNaviTarget = HL.Method(HL.Any).Return(HL.String) << function(self, target)
+    if target == nil or self.m_taskViewModels == nil then
+        return ""
+    end
+    local foundTaskId = ""
+    self.view.taskScrollList:UpdateShowingCells(function(csIndex, obj)
+        if not string.isEmpty(foundTaskId) then
+            return
+        end
+        local cell = self.m_taskCacheFunc(obj)
+        if cell == nil or cell.naviDecorator ~= target then
+            return
+        end
+        local viewModel = self.m_taskViewModels[LuaIndex(csIndex)]
+        if viewModel ~= nil
+            and viewModel.viewType == TASK_VIEW_TYPE.TASK
+            and viewModel.taskInfo ~= nil then
+            foundTaskId = viewModel.taskInfo.taskId
+        end
+    end)
+    return foundTaskId
 end
 
 
@@ -792,6 +866,9 @@ BattlePassTaskCtrl._RenderViews = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL.Bo
 
     
     if DeviceInfo.usingController and refreshTask and self.m_subLabelFocus then
+        if PhaseManager:GetTopPhaseId() ~= PhaseId.BattlePass or not self:IsShow() then
+            return
+        end
         self.view.taskScrollList:ScrollToIndex(0, true)
         for index, viewModel in ipairs(self.m_taskViewModels) do
             if viewModel.viewType == TASK_VIEW_TYPE.TASK then

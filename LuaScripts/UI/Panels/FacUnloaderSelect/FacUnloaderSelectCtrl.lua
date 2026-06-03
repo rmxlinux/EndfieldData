@@ -215,7 +215,17 @@ FacUnloaderSelectCtrl._InitController = HL.Method() << function(self)
     if string.isEmpty(id) then
         content.view.itemList:SetSelectedIndex(0, true, true, true)
     else
-        content.view.itemList:SetSelectedIndex(CSIndex(content:GetItemIndex(id)), true, true, true)
+        if content:GetItemIndex(id) == nil then
+            content.view.itemList:SetSelectedIndex(0, true, true, true)
+            if self.m_waitInitNaviTarget then
+                local slot = content:GetCell(1)
+                if slot then
+                    slot:SetAsNaviTarget()
+                end
+            end
+        else
+            content.view.itemList:SetSelectedIndex(CSIndex(content:GetItemIndex(id)), true, true, true)
+        end
     end
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})

@@ -71,8 +71,6 @@ MapMarkDetailCommon._OnFirstTimeInit = HL.Override() << function(self)
     self.view.bigBtn.onClick:AddListener(function()
         self:_OnBigBtnClick()
     end)
-
-    self:_InitDetailCommonController()
 end
 
 
@@ -185,6 +183,8 @@ MapMarkDetailCommon.InitMapMarkDetailCommon = HL.Method(HL.Table) << function(se
     end
 
     self:_RefreshHeadIconSprite()
+
+    self:_InitDetailCommonController()
 end
 
 

@@ -214,6 +214,7 @@ end
 
 
 CharInfoCtrl.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInfo)
+    Notify(MessageConst.HIDE_HYPERLINK_TIPS)
     local aimWrapper= self.view.charInfoBasicNodeRight.view.gameObject.activeSelf and
                         self.view.charInfoBasicNodeRight.view.animationWrapper or self.view.gyroscopeRoot
     aimWrapper:ClearTween()
@@ -380,6 +381,10 @@ CharInfoCtrl._InitActionEvent = HL.Method() << function(self)
     if self.m_charInfo.charInstIdList ~= nil and #self.m_charInfo.charInstIdList == 1 then
         self.view.expandListButton.gameObject:SetActive(false)
     end
+
+    self:BindInputPlayerAction("common_open_char_panel", function()
+        PhaseManager:PopPhase(PhaseId.CharInfo)
+    end)
 end
 
 

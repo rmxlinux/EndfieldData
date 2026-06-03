@@ -23,6 +23,14 @@ local countDownTypeTable = {
     },
 }
 
+local maintainPanelCategoryList = {
+    DungeonConst.DUNGEON_CATEGORY.BossRush,
+}
+
+
+
+
+
 
 
 
@@ -58,6 +66,9 @@ CommonTaskTrackCountdownCtrl.m_isInAlter = HL.Field(HL.Boolean) << false
 CommonTaskTrackCountdownCtrl.m_countingTickId = HL.Field(HL.Number) << -1
 
 
+CommonTaskTrackCountdownCtrl.m_countingFollowTickId = HL.Field(HL.Number) << -1
+
+
 CommonTaskTrackCountdownCtrl.m_originalAnchoredPos = HL.Field(Vector2)
 
 
@@ -68,6 +79,9 @@ CommonTaskTrackCountdownCtrl.m_originalAnchoredPos = HL.Field(Vector2)
 CommonTaskTrackCountdownCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CLOSE_COMMON_TASK_COUNTDOWN] = "OnCloseCommonTaskCountdown",
     [MessageConst.ON_FINISH_COMMON_TASK_COUNTING] = "OnFinishCommonTaskCounting",
+
+    [MessageConst.ON_DUNGEON_COMPLETE] = "OnDungeonComplete",
+    [MessageConst.ON_SUB_GAME_RESET] = "OnSubGameReset",
 
     
     
@@ -107,6 +121,10 @@ CommonTaskTrackCountdownCtrl.OnClose = HL.Override() << function(self)
     if self.m_countingTickId > 0 then
         self.m_countingTickId = LuaUpdate:Remove(self.m_countingTickId)
     end
+
+    if self.m_countingFollowTickId > 0 then
+        self.m_countingFollowTickId = LuaUpdate:Remove(self.m_countingFollowTickId)
+    end
 end
 
 
@@ -133,8 +151,8 @@ end
 
 
 CommonTaskTrackCountdownCtrl._IsWorldFreeze = HL.Method().Return(HL.Boolean) << function(self)
-    local isOpen, ctrl = UIManager:IsOpen(PanelId.CommonPopUp)
-    return UIWorldFreezeManager:IsUIWorldFreeze() or isOpen and ctrl.m_timeScaleHandler > 0
+    local game = GameWorld.worldInfo.subGame
+    return game ~= nil and game.clientPaused
 end
 
 
@@ -191,7 +209,6 @@ CommonTaskTrackCountdownCtrl._TopLeftSmallCountdownTickAction = HL.Method(HL.Num
 
     if needAlterAudio then
         AudioAdapter.PostEvent("Au_UI_Toast_DungeonNormalTick_OS")
-        logger.warn("ranqinyuan")
     end
 
     local success, mainHudCtrl = UIManager:IsOpen(PanelId.MainHud)
@@ -254,7 +271,8 @@ CommonTaskTrackCountdownCtrl.StartCounting = HL.Method(HL.Any) << function(self,
     self:_ToggleComponentOn(countDownCfg.countingType)
     local countingNode = self:_GetCountingComponentNode(countDownCfg.countingType)
 
-    local startTs = startCountingTimestampMilli / 1000
+    local startTs = startCountingTimestampMilli
+    local lastCounting = 0
     self.m_countingTickId = LuaUpdate:Remove(self.m_countingTickId)
     self.m_countingTickId = LuaUpdate:Add("Tick", function(deltaTime)
         if self:_IsWorldFreeze() then
@@ -266,11 +284,23 @@ CommonTaskTrackCountdownCtrl.StartCounting = HL.Method(HL.Any) << function(self,
             return
         end
 
-        local curTs = DateTimeUtils.GetCurrentTimestampBySeconds()
-        local freezeOffset = GameWorld.worldInfo.subGame:GetRealEndGameTimestampForLua() - startFreezeOffset
+        local curTs = DateTimeUtils.GetCurrentTimestampByMilliseconds()
+        local succ, curFreezeTime = GameWorld.worldInfo.subGame.freezeTimeLut:TryGetValue(GEnums.GameInstTimeFreezeKey.ChallengeTime)
+        local freezeOffset = (succ and curFreezeTime or startFreezeOffset) - startFreezeOffset
         local curDuration = curTs - startTs - freezeOffset
-        countingNode.countingTxt.text = UIUtils.getLeftTimeToSecond(curDuration)
+        
+        curDuration = curDuration < 0 and 0 or curDuration
+        
+        if curDuration < lastCounting then
+            return
+        end
 
+        lastCounting = curDuration
+        countingNode.countingTxt.text = UIUtils.getLeftTimeToSecond(math.floor(curDuration / 1000))
+    end)
+
+    self.m_countingFollowTickId = LuaUpdate:Remove(self.m_countingFollowTickId)
+    self.m_countingFollowTickId = LuaUpdate:Add("Tick", function(deltaTime)
         
         if countDownType == GEnums.GameMechanicCountDownComponentType.TopLeftSmall then
             local success, mainHudCtrl = UIManager:IsOpen(PanelId.MainHud)
@@ -285,15 +315,71 @@ end
 
 
 
+
 CommonTaskTrackCountdownCtrl.OnCloseCommonTaskCountdown = HL.Method() << function(self)
+    self.m_countDownTickId = LuaUpdate:Remove(self.m_countDownTickId)
+    if self:_MaintainPanel() then
+        return
+    end
     self:Close()
 end
 
 
 
 CommonTaskTrackCountdownCtrl.OnFinishCommonTaskCounting = HL.Method() << function(self)
+    self.m_countingTickId = LuaUpdate:Remove(self.m_countingTickId)
+    if self:_MaintainPanel() then
+        return
+    end
     self:Close()
 end
+
+
+
+CommonTaskTrackCountdownCtrl._MaintainPanel = HL.Method().Return(HL.Boolean) << function(self)
+    local subGameId = GameWorld.worldInfo.curSubGameId
+    if string.isEmpty(subGameId) then
+        return false
+    end
+
+    local succ, gameMechanicsCfg = Tables.gameMechanicTable:TryGetValue(subGameId)
+    if not succ then
+        return false
+    end
+
+    return lume.find(maintainPanelCategoryList, gameMechanicsCfg.gameCategory) ~= nil
+end
+
+
+
+
+CommonTaskTrackCountdownCtrl.OnDungeonComplete = HL.Method(HL.Table) << function(self, args)
+    local subGameId = GameWorld.worldInfo.curSubGameId
+    if string.isEmpty(subGameId) then
+        return
+    end
+
+    local succ, subGameData = DataManager.subGameInstDataTable:TryGetValue(subGameId)
+    if not succ then
+        return
+    end
+
+    local countDownType = subGameData.countDownType
+    local countDownCfg = countDownTypeTable[countDownType]
+    local countingNode = self:_GetCountingComponentNode(countDownCfg.countingType)
+
+    
+    local isNewTimeRecord, curGameTimeRecord = unpack(args)
+    countingNode.countingTxt.text = UIUtils.getLeftTimeToSecond(math.floor(curGameTimeRecord / 1000))
+end
+
+
+
+CommonTaskTrackCountdownCtrl.OnSubGameReset = HL.Method() << function(self)
+    self:Hide()
+end
+
+
 
 
 

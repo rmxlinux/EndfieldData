@@ -326,10 +326,9 @@ ActivityArknightsBirthCtrl.RefreshReward = HL.Method() << function(self)
         end
         local keyHint = self.m_arknightsBirthCenter.content.activityTab1.leftNode.keyHint
         keyHint.gameObject:SetActive(false)
-        local fakePanel = self.m_arknightsBirthCenter.content.activityTab1.leftNode.detailNode.fakeControllerSmallMenuPanel
         Notify(MessageConst.SHOW_ITEM_TIPS, {
             itemId = self.m_rewardBundles[1][1].id,
-            transform = fakePanel.transform,
+            transform = self.m_arknightsBirthCenter.content.activityTab1.leftNode.detailNode.stamp01.transform,
             posType = UIConst.UI_TIPS_POS_TYPE.LeftTop,
             isSideTips = true,
             onClose = function()
@@ -354,10 +353,9 @@ ActivityArknightsBirthCtrl.RefreshReward = HL.Method() << function(self)
         end
         local keyHint = self.m_arknightsBirthCenter.content.activityTab1.leftNode.keyHint
         keyHint.gameObject:SetActive(false)
-        local fakePanel = self.m_arknightsBirthCenter.content.activityTab1.leftNode.detailNode.fakeControllerSmallMenuPanel
         Notify(MessageConst.SHOW_ITEM_TIPS, {
             itemId = self.m_rewardBundles[1][2].id,
-            transform = fakePanel.transform,
+            transform = self.m_arknightsBirthCenter.content.activityTab1.leftNode.detailNode.stamp01.transform,
             posType = UIConst.UI_TIPS_POS_TYPE.LeftTop,
             isSideTips = true,
             onClose = function()
@@ -381,10 +379,9 @@ ActivityArknightsBirthCtrl.RefreshReward = HL.Method() << function(self)
             end
             local keyHint = self.m_arknightsBirthCenter.content.activityTab2.rightNode.keyHint
             keyHint.gameObject:SetActive(false)
-            local fakePanel = self.m_arknightsBirthCenter.content.activityTab2.rightNode.detailNode.fakeControllerSmallMenuPanel
             Notify(MessageConst.SHOW_ITEM_TIPS, {
                 itemId = self.m_rewardBundles[2][1].id,
-                transform = fakePanel.transform,
+                transform = self.m_arknightsBirthCenter.content.activityTab2.rightNode.detailNode.stamp01.transform,
                 posType = UIConst.UI_TIPS_POS_TYPE.RightTop,
                 isSideTips = true,
                 onClose = function()

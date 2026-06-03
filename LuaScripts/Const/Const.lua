@@ -92,6 +92,7 @@ LevelScriptClearScreenQueueType = "LoginCheck_PreventedClearScreenForLevelScript
 
 PhasePushSystemActionConflictName = "LUA_PHASE_PUSH"
 FacBuildSystemActionConflictName = "FAC_BUILD"
+PowerPoleFastTravelActionConflictName = "POWER_POLE_FAST_TRAVEL"
 FacDestroySystemActionConflictName = "FAC_DESTROY"
 InteractOptionSystemActionConflictName = "INTERACT_OPTION"
 TowerDefenseSystemActionConflictName = "TOWER_DEFENSE"

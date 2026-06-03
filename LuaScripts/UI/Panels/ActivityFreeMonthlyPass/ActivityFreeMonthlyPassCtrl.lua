@@ -20,6 +20,7 @@ local PANEL_ID = PanelId.ActivityFreeMonthlyPass
 
 
 
+
 ActivityFreeMonthlyPassCtrl = HL.Class('ActivityFreeMonthlyPassCtrl', uiCtrl.UICtrl)
 
 
@@ -98,6 +99,16 @@ ActivityFreeMonthlyPassCtrl.PlayAnimationOut = HL.Override(HL.Opt(HL.Number)) <<
     local isOpen, ctrl = UIManager:IsOpen(PanelId.ActivityFreeMonthlyPass3D)
     if isOpen then
         ctrl:PlayAnimationOut()
+    end
+end
+
+
+
+
+ActivityFreeMonthlyPassCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
+    if DeviceInfo.usingController then
+        local keyHint = self.view.activityCommonInfo.transform:Find("GotoNode/BtnReceive/Root/KeyHint")
+        keyHint.gameObject:SetActive(active)
     end
 end
 

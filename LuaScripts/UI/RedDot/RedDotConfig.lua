@@ -4190,6 +4190,7 @@ local Config = {
         msgs = {
             MessageConst.ON_SPACESHIP_GUEST_ROOM_RECV_VISIT_LIST_REWARD,
             MessageConst.ON_SPACESHIP_RECV_QUERY_VISIT_INFO,
+            MessageConst.ON_ITEM_COUNT_CHANGED,
         },
         needArg = false,
         Check = function()

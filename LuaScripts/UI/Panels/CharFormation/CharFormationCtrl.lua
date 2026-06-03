@@ -760,6 +760,10 @@ CharFormationCtrl._Init = HL.Method() << function(self)
         self:_OnCharInfoClicked(self.m_singleCharInfo)
     end)
 
+    self:BindInputPlayerAction("common_open_team_panel", function()
+        PhaseManager:PopPhase(PhaseId.CharFormation)
+    end)
+
     self.m_teamCells = self.m_teamCells or UIUtils.genCellCache(self.view.team)
     local totalSquadNum = Tables.globalConst.totalSquadNum
     self.m_teamCells:Refresh(totalSquadNum, function(cell, luaIndex)

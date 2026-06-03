@@ -27,3 +27,9 @@ if BEYOND_DEBUG_COMMAND then
         InputManagerInst:DeleteBinding(bindingId)
     end)
 end
+
+do 
+    xlua.private_accessible(typeof(CS.Beyond.Gameplay.Factory.FactoryUtil))
+    local newArr = CS.System.Array.CreateInstance(typeof(CS.UnityEngine.RaycastHit), 50)
+    CS.Beyond.Gameplay.Factory.FactoryUtil.s_raycastResults = newArr
+end
