@@ -221,7 +221,9 @@ GachaLauncherCtrl._InitUI = HL.Method() << function(self)
 
     
     local _, isFirstGacha = ClientDataManagerInst:GetBool("IS_FIRST_GACHA", false, true)
-    ClientDataManagerInst:SetBool("IS_FIRST_GACHA", false, false)
+    if isFirstGacha then
+        ClientDataManagerInst:SetBool("IS_FIRST_GACHA", false, false)
+    end
     self.view.guideNode.gameObject:SetActive(isFirstGacha)
     self.m_nextShowGuideTime = Time.time + self.view.config.SHOW_GUIDE_WAIT_SECONDS
 end

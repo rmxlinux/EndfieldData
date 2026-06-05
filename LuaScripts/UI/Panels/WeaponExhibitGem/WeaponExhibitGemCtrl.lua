@@ -30,6 +30,8 @@ local PANEL_ID = PanelId.WeaponExhibitGem
 
 
 
+
+
 WeaponExhibitGemCtrl = HL.Class('WeaponExhibitGemCtrl', uiCtrl.UICtrl)
 
 
@@ -46,6 +48,9 @@ WeaponExhibitGemCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_GEM_ENHANCE] = "_OnGemChanged",
 
 }
+
+
+WeaponExhibitGemCtrl.m_arg = HL.Field(HL.Table)
 
 
 WeaponExhibitGemCtrl.m_weaponInfo = HL.Field(HL.Table)
@@ -96,10 +101,8 @@ end
 
 
 WeaponExhibitGemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg
     local weaponInfo = arg.weaponInfo
-    if arg.phase then
-        self.m_phase = arg.phase
-    end
 
     self.m_weaponInfo = weaponInfo
     self.m_isCompareOn = false
@@ -199,6 +202,13 @@ WeaponExhibitGemCtrl.OnShow = HL.Override() << function(self)
 
     self.view.weaponIntroduction:InitWeaponIntroduction(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)
     self:_RefreshGemPanel(weaponExhibitInfo)
+
+    if self.m_arg.stateArg and self.m_arg.stateArg.curSelectedIndex then
+        self.view.commonGemHorizontalList:SetSelectedIndex(self.m_arg.stateArg.curSelectedIndex, true)
+    end
+    if self.m_arg.stateArg and self.m_arg.stateArg.isBtnFullSkillClicked then
+        self.view.btnFullSkill.onClick:Invoke()
+    end
 end
 
 
@@ -251,8 +261,23 @@ WeaponExhibitGemCtrl._RefreshGemList = HL.Method(HL.Boolean, HL.Opt(HL.Number)) 
 
             cell.curEquipped.gameObject:SetActive(attachedWeaponInstId and attachedWeaponInstId > 0 and attachedWeaponInstId == self.m_weaponInfo.weaponInstId)
             cell.disableMask.gameObject:SetActive(not itemInfo.enableOnWeapon)
+
+            local isPerfectMatch, matchList = UIUtils.getGemWishListPerfectMatch(gemInst.instId)
+            local matchesCurWeapon = false
+            if isPerfectMatch and matchList then
+                local curWeaponTemplateId = self.m_weaponInfo.weaponTemplateId
+                for _, weaponTemplateId in ipairs(matchList) do
+                    if weaponTemplateId == curWeaponTemplateId then
+                        matchesCurWeapon = true
+                        break
+                    end
+                end
+            end
+            local showPerfect = itemInfo.enableOnWeapon and matchesCurWeapon
+            cell.item:ShowGemPerfectIcon(showPerfect == true)
         end,
         defaultSelectedIndex = DeviceInfo.usingController and 1 or nil,
+        selectedTags = self.m_arg.stateArg and self.m_arg.stateArg.selectedTags,
     })
 
     if curSelectGemInstId and curSelectGemInstId > 0 then
@@ -496,6 +521,20 @@ WeaponExhibitGemCtrl._OnSelectNewGem = HL.Method(HL.Table) << function(self, ite
     end
     self.m_curSelectGemInstId = selectedGemInstId
 
+    
+    if itemInfo and itemInfo.enableOnWeapon and itemInfo.itemInst then
+        local _, matchList = UIUtils.getGemWishListPerfectMatch(itemInfo.itemInst.instId)
+        if matchList then
+            local curWeaponTemplateId = self.m_weaponInfo.weaponTemplateId
+            for _, weaponTemplateId in ipairs(matchList) do
+                if weaponTemplateId == curWeaponTemplateId then
+                    AudioAdapter.PostEvent("Au_UI_Toast_PerfectEssence")
+                    break
+                end
+            end
+        end
+    end
+
     self:_RefreshGemCompareNode(self.m_weaponExhibitInfo, selectedGemInstId)
 end
 
@@ -584,6 +623,17 @@ end
 WeaponExhibitGemCtrl.ToggleFocusInputGroup = HL.Method(HL.Boolean) << function(self, active)
     InputManagerInst:ToggleGroup(self.view.bottomInputGroup.groupId, active)
     InputManagerInst:ToggleGroup(self.view.rightInputGroup.groupId, active)
+end
+
+
+
+WeaponExhibitGemCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local arg = {
+        curSelectedIndex = self.view.commonGemHorizontalList:IsAnyItemSelecting() and self.view.commonGemHorizontalList:GetCurSelectIndex() or nil,
+        selectedTags = self.view.commonGemHorizontalList.m_selectedTags,
+        isBtnFullSkillClicked = UIManager:IsShow(PanelId.WeaponSkillDetail),
+    }
+    return arg
 end
 
 

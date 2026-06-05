@@ -164,18 +164,16 @@ end
 
 
 FriendShipPresentCtrl._OnCharSendPresentSuccess = HL.Method(HL.Table) << function(self, data)
-    self:PlayAnimationOutWithCallback(function()
-        local level = CSPlayerDataUtil.GetFriendshipLevelByChar(self.m_charId)
-        local deltaFav = unpack(data)
-        self:Notify(MessageConst.DIALOG_SEND_PRESENT_END, {
-            success = true,
-            nextIndex = 0,
-            deltaFav = deltaFav,
-            selectedItems = self.m_selected,
-            levelChanged = level ~= self.m_level
-        })
-        self.m_level = level
-    end)
+    local level = CSPlayerDataUtil.GetFriendshipLevelByChar(self.m_charId)
+    local deltaFav = unpack(data)
+    self:Notify(MessageConst.DIALOG_SEND_PRESENT_END, {
+        success = true,
+        nextIndex = 0,
+        deltaFav = deltaFav,
+        selectedItems = self.m_selected,
+        levelChanged = level ~= self.m_level
+    })
+    self.m_level = level
 end
 
 
@@ -215,16 +213,10 @@ FriendShipPresentCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     
     self.view.closeBtn.onClick:AddListener(function()
-        if not PhaseManager:CanPopPhase(PHASE_ID) then
-            
-            return
-        end
-        self:PlayAnimationOutWithCallback(function()
-            self:Notify(MessageConst.DIALOG_SEND_PRESENT_END, {
-                success = false,
-                nextIndex = 1,
-            })
-        end)
+        self:Notify(MessageConst.DIALOG_SEND_PRESENT_END, {
+            success = false,
+            nextIndex = 1,
+        })
     end)
 
     

@@ -77,7 +77,6 @@
 
 
 
-
 UICtrl = HL.Class("UICtrl")
 
 
@@ -143,6 +142,12 @@ UICtrl.m_updateKeys = HL.Field(HL.Table)
 UICtrl.m_isClosed = HL.Field(HL.Boolean) << false
 
 
+UICtrl.m_inputBindingIds = HL.Field(HL.Table)
+
+
+UICtrl.m_inputGroupIds = HL.Field(HL.Table)
+
+
 
 
 
@@ -182,6 +187,18 @@ end
 
 
 UICtrl.OnAnimationInFinished = HL.Virtual() << function(self)
+end
+
+
+
+UICtrl.ExtractHotSwitchRuntimeState = HL.Virtual().Return(HL.Opt(HL.Any)) << function(self)
+    return nil
+end
+
+
+
+
+UICtrl.RestoreHotSwitchRuntimeState = HL.Virtual(HL.Opt(HL.Any)) << function(self, state)
 end
 
 
@@ -580,7 +597,49 @@ end
 
 UICtrl.BindInputPlayerAction = HL.Method(HL.String, HL.Function, HL.Opt(HL.Number)).Return(HL.Number) << function(self, actionId, callback, groupId)
     groupId = groupId or self.view.inputGroup.groupId
-    return UIUtils.bindInputPlayerAction(actionId, callback, groupId)
+    local bindingId = UIUtils.bindInputPlayerAction(actionId, callback, groupId)
+    if bindingId and bindingId > 0 then
+        if not self.m_inputBindingIds then
+            self.m_inputBindingIds = {}
+        end
+        self.m_inputBindingIds[bindingId] = true
+    end
+    return bindingId
+end
+
+
+
+
+
+UICtrl.CreateInputGroup = HL.Method(HL.Opt(HL.Number)).Return(HL.Number) << function(self, parentGroupId)
+    parentGroupId = parentGroupId or self.view.inputGroup.groupId
+    local groupId = InputManagerInst:CreateGroup(parentGroupId)
+    if groupId and groupId > 0 then
+        if not self.m_inputGroupIds then
+            self.m_inputGroupIds = {}
+        end
+        self.m_inputGroupIds[groupId] = true
+    end
+    return groupId
+end
+
+
+
+
+UICtrl._CleanupInputForHotSwitch = HL.Method() << function(self)
+    
+    if self.m_inputGroupIds then
+        for groupId, _ in pairs(self.m_inputGroupIds) do
+            InputManagerInst:DeleteGroup(groupId)
+        end
+        self.m_inputGroupIds = nil
+    end
+    if self.m_inputBindingIds then
+        for bindingId, _ in pairs(self.m_inputBindingIds) do
+            InputManagerInst:DeleteBinding(bindingId)
+        end
+        self.m_inputBindingIds = nil
+    end
 end
 
 
@@ -596,7 +655,14 @@ end
 UICtrl.BindInputEvent = HL.Method(HL.Userdata, HL.Function, HL.Opt(HL.String, HL.Any)).Return(HL.Number)
         << function(self, key, action, modifyKeys, timing)
     local groupId = self.view.inputGroup.groupId
-    return UIUtils.bindInputEvent(key, action, modifyKeys, timing, groupId)
+    local bindingId = UIUtils.bindInputEvent(key, action, modifyKeys, timing, groupId)
+    if bindingId and bindingId > 0 then
+        if not self.m_inputBindingIds then
+            self.m_inputBindingIds = {}
+        end
+        self.m_inputBindingIds[bindingId] = true
+    end
+    return bindingId
 end
 
 
@@ -711,17 +777,12 @@ UICtrl.SetPhaseItem = HL.Method(HL.Forward("PhasePanelItem")) << function(self, 
     if phaseItem then
         self.m_phaseItem = phaseItem
         self.m_phase = phaseItem.phase
-        self:_OnPhaseItemBind()
     else
         self.m_phaseItem = nil
         self.m_phase = nil
     end
 end
 
-
-
-UICtrl._OnPhaseItemBind = HL.Virtual() << function(self)
-end
 
 
 
@@ -844,6 +905,38 @@ UICtrl.TogglePanelUseBlackOut = HL.StaticMethod(HL.Number, HL.Boolean) << functi
     end
 end
 
+
+
+
+
+
+
+
+
+
+
+UICtrl.SetAsNaviTargetInSilentModeIfNecessary = HL.Method(HL.Userdata, HL.Userdata, HL.Opt(HL.String)) << function(self, targetNaviGroup, targetSelectable, needTopDummyLayerKey)
+    if needTopDummyLayerKey == nil then
+        if self.panelCfg.needNaviDummyLayer then
+            needTopDummyLayerKey = self.panelCfg.name
+        else
+            local phase = self.m_phase
+            if phase ~= nil then
+                if not phase.cfg.notCreateDummyNaviLayer then
+                    needTopDummyLayerKey = PhaseManager:GetPhaseDummyNaviLayerName(phase.phaseId)
+                    if string.isEmpty(needTopDummyLayerKey) then
+                        logger.error("[UICtrl] SetAsNaviTargetInSilentModeIfNecessary", self.panelCfg.name, "无法找到当前面板所属Phase的DummyNaviLayer")
+                    end
+                else
+                    logger.error("[UICtrl] SetAsNaviTargetInSilentModeIfNecessary", self.panelCfg.name, "当前面板所属Phase无DummyNaviLayer")
+                end
+            else
+                logger.error("[UICtrl] SetAsNaviTargetInSilentModeIfNecessary", self.panelCfg.name, "无法找到当前面板所属Phase")
+            end
+        end
+    end
+    UIUtils.setAsNaviTargetInSilentModeIfNecessary(targetNaviGroup, targetSelectable, needTopDummyLayerKey)
+end
 
 
 

@@ -132,6 +132,10 @@ local PlaneDistance = CS.Beyond.UI.UIConst.SCREEN_SPACE_CAMERA_PANEL_DISTANCE
 
 
 
+
+
+
+
 UIManager = HL.Class('UIManager')
 
 
@@ -247,6 +251,12 @@ UIManager.uiDummyNaviLayerRoot = HL.Field(Unity.Transform)
 
 
 UIManager.uiDummyNaviLayerAsset = HL.Field(HL.Userdata)
+
+
+
+UIManager.m_isHotSwitching = HL.Field(HL.Boolean) << false
+
+UIManager.m_hotSwitchCache = HL.Field(HL.Table)
 
 
 
@@ -458,8 +468,9 @@ end
 
 
 
-UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table)).Return(HL.Opt(HL.Forward("UICtrl")))
-        << function(self, panelId, arg, callbacks)
+
+UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table, HL.Forward("PhasePanelItem"))).Return(HL.Opt(HL.Forward("UICtrl")))
+    << function(self, panelId, arg, callbacks, bindPhaseItem)
     if self:IsOpen(panelId) then
         logger.error("Panel Already Opened", self.m_names[panelId])
         return
@@ -482,9 +493,42 @@ UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table)).Return(HL.Opt(HL
     self:_TryAttachNaviDummyLayer(panelId)
 
     
-    local asset, assetType = self:_LoadPanelAsset(panelId)
+    local cachedInfo = self.m_hotSwitchCache and self.m_hotSwitchCache[panelId]
+    local asset, assetType, panelObj
+    local isReusingHotSwitchCache = false
+
+    if cachedInfo then
+        local _, expectedAssetType = self:_GetPanelAssetPathAndType(panelId)
+
+        if cachedInfo.assetType == expectedAssetType then
+            
+            panelObj = cachedInfo.go
+            assetType = cachedInfo.assetType
+            isReusingHotSwitchCache = true
+            self.m_hotSwitchCache[panelId] = nil
+        else
+            
+            if cachedInfo.worldRoot then
+                GameObject.DestroyImmediate(cachedInfo.worldRoot.gameObject)
+            end
+            if cachedInfo.worldAutoRoot then
+                GameObject.DestroyImmediate(cachedInfo.worldAutoRoot.gameObject)
+            end
+            cachedInfo.runtimeState = nil
+            cachedInfo.loader:DisposeAllHandles()
+            GameObject.DestroyImmediate(cachedInfo.go)
+            self.m_hotSwitchCache[panelId] = nil
+            cachedInfo = nil
+        end
+    end
+
+    if not cachedInfo then
+        
+        asset, assetType = self:_LoadPanelAsset(panelId)
+    end
+
     local parent = self:_GetPanelParentTransform(cfg)
-    local panelObj
+    if not cachedInfo then
     if UNITY_EDITOR then
         
         
@@ -494,6 +538,9 @@ UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table)).Return(HL.Opt(HL
     else
         asset.gameObject:SetActive(false)
         panelObj = CSUtils.CreateObject(asset, parent)
+    end
+    else
+        panelObj.transform:SetParent(parent)
     end
 
     panelObj.name = string.format("%sPanel", cfg.name)
@@ -576,7 +623,7 @@ UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table)).Return(HL.Opt(HL
     ctrl.panelCfg = cfg
     ctrl.model = cfg.modelClass()
     ctrl.view = view
-    ctrl.loader = luaLoader.LuaResourceLoader()
+    ctrl.loader = cachedInfo and cachedInfo.loader or luaLoader.LuaResourceLoader()
     ctrl.animationWrapper = view.luaPanel.animationWrapper
     ctrl.naviGroup = view.transform:GetComponent("UISelectableNaviGroup")
     ctrl.uiCamera = uiCamera
@@ -584,6 +631,11 @@ UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table)).Return(HL.Opt(HL
     ctrl.isControllerPanel = assetType == UIConst.PANEL_ASSET_TYPES.Controller
     ctrl.isPCPanel = assetType == UIConst.PANEL_ASSET_TYPES.PC
     ctrl.isDefaultPanel = assetType == UIConst.PANEL_ASSET_TYPES.Default
+    if cachedInfo then
+        ctrl.m_worldRoot = cachedInfo.worldRoot
+        ctrl.m_worldAutoRoot = cachedInfo.worldAutoRoot
+        ctrl:RestoreHotSwitchRuntimeState(cachedInfo.runtimeState)
+    end
     ctrl.m_updateKeys = {}
     cfg.ctrl = ctrl
     self.m_openedPanels[panelId] = ctrl
@@ -591,13 +643,14 @@ UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table)).Return(HL.Opt(HL
     if cfg.hideCamera and not cfg.forceHideMainCam then
         self:ChangeHideCameraPanelState(panelId, UIConst.HIDE_CAMERA_PANEL_STATE.In)
     end
+    local animationWrapper = view.luaPanel.animationWrapper
     view.luaPanel.onAnimationInFinished:AddListener(function()
         logger.info("OnAnimationInFinished", cfg.name)
 
         ctrl:OnAnimationInFinished()
         Notify(MessageConst.ON_UI_PANEL_OPENED, cfg.name)
 
-        local needTrigger = view.luaPanel.animationWrapper == nil or view.luaPanel.animationWrapper.curState ~= CS.Beyond.UI.UIConst.AnimationState.Out
+        local needTrigger = animationWrapper == nil or animationWrapper.curState ~= CS.Beyond.UI.UIConst.AnimationState.Out
         if needTrigger then
             CS.Beyond.Gameplay.Conditions.OnUIPanelOpen.Trigger(cfg.name, true, PhaseManager:GetTopPhaseName())
             if GameInstance.player then
@@ -614,10 +667,23 @@ UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table)).Return(HL.Opt(HL
         
         
         local hideCamState = self.m_showingHideCameraPanelState[panelId] 
-        if cfg.hideCamera and (not hideCamState or hideCamState == UIConst.HIDE_CAMERA_PANEL_STATE.In) then
+        
+        
+        if cfg.hideCamera and (animationWrapper == nil or animationWrapper.animationIn == nil) and
+            (not hideCamState or hideCamState == UIConst.HIDE_CAMERA_PANEL_STATE.In) then
             self:ChangeHideCameraPanelState(panelId, UIConst.HIDE_CAMERA_PANEL_STATE.Idle)
         end
     end)
+    if cfg.hideCamera and animationWrapper and animationWrapper.animationIn ~= nil then
+        animationWrapper.onAnimationInEasingFinished:AddListener(function()
+            
+            
+            local hideCamState = self.m_showingHideCameraPanelState[panelId]
+            if not hideCamState or hideCamState == UIConst.HIDE_CAMERA_PANEL_STATE.In then
+                self:ChangeHideCameraPanelState(panelId, UIConst.HIDE_CAMERA_PANEL_STATE.Idle)
+            end
+        end)
+    end
 
     
     if cfg.selfMaintainOrder then
@@ -626,7 +692,13 @@ UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table)).Return(HL.Opt(HL
         self:_AutoSetPanelOrder(cfg, true)
     end
 
-    panelObj.gameObject:SetActive(true)
+    
+    if not isReusingHotSwitchCache then
+        if HL.TryGet(ctrl, "OnBeforePanelActive") then
+            ctrl:OnBeforePanelActive(arg)
+        end
+        panelObj.gameObject:SetActive(true)
+    end
 
     
     for msg, funcName in pairs(cfg.ctrlClass.s_messages) do
@@ -642,6 +714,11 @@ UIManager.Open = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Table)).Return(HL.Opt(HL
                 ctrl[funcName](ctrl, msgArg)
             end
         end, ctrl)
+    end
+
+    
+    if bindPhaseItem ~= nil then
+        bindPhaseItem:BindUICtrl(ctrl)
     end
 
     
@@ -730,19 +807,14 @@ end
 
 
 
-
-UIManager._LoadPanelAsset = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Function)).Return(HL.Opt(GameObject, HL.Number)) << function(self, panelId, isPreload, onPreloadComplete)
-    logger.info("UIManager._LoadPanelAsset", panelId, self.m_names[panelId], isPreload)
-    self:_UpdatePanelAssetLRU(panelId, true)
-
-    local asset
+UIManager._GetPanelAssetPathAndTypeByInputType = HL.Method(HL.Number, HL.Userdata).Return(HL.String, HL.Number) << function(self, panelId, inputType)
+    local cfg = self.m_panelConfigs[panelId]
+    local path
     local assetType = UIConst.PANEL_ASSET_TYPES.Default
+    local usingController = inputType == DeviceInfo.InputType.Controller
+    local usingKeyboardOrController = inputType == DeviceInfo.InputType.Keyboard or usingController
 
-    local assetInfo = self.m_panel2Handle[panelId]
-    if not assetInfo then
-        local cfg = self.m_panelConfigs[panelId]
-        local path
-        if DeviceInfo.usingController then
+    if usingController then
             local ctPath = string.format(UIConst.UI_CONTROLLER_PANEL_PREFAB_PATH, cfg.folder, cfg.name)
             if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
                 if not ResourceManager.CheckExists(ctPath) then
@@ -754,7 +826,8 @@ UIManager._LoadPanelAsset = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Function)
                 path = ctPath
             end
         end
-        if not path and (DeviceInfo.isPCorConsole or DeviceInfo.usingController) then
+
+    if not path and usingKeyboardOrController then
             local pcPath = string.format(UIConst.UI_PC_PANEL_PREFAB_PATH, cfg.folder, cfg.name)
             if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
                 if not ResourceManager.CheckExists(pcPath) then
@@ -766,6 +839,7 @@ UIManager._LoadPanelAsset = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Function)
                 path = pcPath
             end
         end
+
         if not path then
             path = string.format(UIConst.UI_PANEL_PREFAB_PATH, cfg.folder, cfg.name)
             if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
@@ -775,6 +849,49 @@ UIManager._LoadPanelAsset = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Function)
             end
         end
 
+    return path, assetType
+end
+
+
+
+
+UIManager._GetPanelAssetPathAndType = HL.Method(HL.Number).Return(HL.String, HL.Number) << function(self, panelId)
+    return self:_GetPanelAssetPathAndTypeByInputType(panelId, DeviceInfo.inputType)
+end
+
+
+
+
+
+
+UIManager._IsUsingSamePanelAssetOnInputTypeChange = HL.Method(HL.Number, HL.Userdata, HL.Userdata).Return(HL.Boolean) << function(self, panelId, oldInputType, newInputType)
+    local oldPath, oldAssetType = self:_GetPanelAssetPathAndTypeByInputType(panelId, oldInputType)
+    local newPath, newAssetType = self:_GetPanelAssetPathAndTypeByInputType(panelId, newInputType)
+    return oldAssetType == newAssetType and oldPath == newPath
+end
+
+
+
+
+
+
+UIManager._LoadPanelAsset = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Function)).Return(HL.Opt(GameObject, HL.Number)) << function(self, panelId, isPreload, onPreloadComplete)
+    logger.info("UIManager._LoadPanelAsset", panelId, self.m_names[panelId], isPreload)
+    self:_UpdatePanelAssetLRU(panelId, true)
+
+    local asset
+    local path
+    local assetType
+    path, assetType = self:_GetPanelAssetPathAndType(panelId)
+
+    local assetInfo = self.m_panel2Handle[panelId]
+    if assetInfo and assetInfo[2] ~= assetType then
+        self.m_panel2Handle[panelId] = nil
+        self.m_resourceLoader:DisposeHandleByKey(assetInfo[1])
+        logger.info("UIManager._LoadPanelAsset DisposeHandleByKey due to assetType changed", panelId, self.m_names[panelId], assetInfo[2], assetType)
+        assetInfo = nil
+    end
+    if not assetInfo then
         if not isPreload then
             local assetKey
             
@@ -815,6 +932,7 @@ UIManager._LoadPanelAsset = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Function)
     end
     return asset, assetType
 end
+
 
 
 
@@ -916,7 +1034,7 @@ end
 
 
 UIManager.AutoOpen = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Boolean, HL.Function)).Return(HL.Opt(HL.Forward("UICtrl")))
-        << function(self, panelId, arg, forceShow, onShowCallback)
+    << function(self, panelId, arg, forceShow, onShowCallback)
     local isOpen, ctrl = self:IsOpen(panelId)
     if not isOpen then
         return self:Open(panelId, arg)
@@ -926,6 +1044,25 @@ UIManager.AutoOpen = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Boolean, HL.Function
         end
         if onShowCallback then
             onShowCallback(ctrl)
+        end
+        return ctrl
+    end
+end
+
+
+
+
+
+
+UIManager.AutoOpenWithPhaseItem = HL.Method(HL.Number, HL.Forward("PhasePanelItem"), HL.Opt(HL.Any)).Return(HL.Opt(HL.Forward("UICtrl")))
+    << function(self, panelId, phaseItem, arg)
+    local isOpen, ctrl = self:IsOpen(panelId)
+    if not isOpen then
+        return self:Open(panelId, arg, nil, phaseItem)
+    else
+        phaseItem:BindUICtrl(ctrl)  
+        if self:IsHide(panelId) then
+            self:Show(panelId)
         end
         return ctrl
     end
@@ -986,8 +1123,34 @@ UIManager.Close = HL.Method(HL.Number) << function(self, panelId)
     
     MessageManager:UnregisterAll(ctrl)
 
+    local shouldCacheGoOnInputChange = self.m_isHotSwitching and PhaseConst.SUPPORT_REUSE_GO_ON_INPUT_CHANGE_PANELS[cfg.name]
+    local cachedInfo
     local succ, log = xpcall(function()
         ctrl:OnClose()
+        if shouldCacheGoOnInputChange then
+            cachedInfo = {
+                go = ctrl.view.gameObject,
+                loader = ctrl.loader,
+                worldRoot = ctrl.m_worldRoot,
+                worldAutoRoot = ctrl.m_worldAutoRoot,
+                runtimeState = ctrl:ExtractHotSwitchRuntimeState(),
+            }
+
+            
+            ctrl:_CleanupInputForHotSwitch()
+
+            
+            ctrl.m_worldRoot = nil
+            ctrl.m_worldAutoRoot = nil
+
+            if ctrl.isControllerPanel then
+                cachedInfo.assetType = UIConst.PANEL_ASSET_TYPES.Controller
+            elseif ctrl.isPCPanel then
+                cachedInfo.assetType = UIConst.PANEL_ASSET_TYPES.PC
+            else
+                cachedInfo.assetType = UIConst.PANEL_ASSET_TYPES.Default
+            end
+        end
         ctrl:Clear()
         ctrl.model:OnClose()
     end, debug.traceback)
@@ -999,6 +1162,13 @@ UIManager.Close = HL.Method(HL.Number) << function(self, panelId)
     local loader = ctrl.loader
     CSUtils.ClearUIComponents(gameObject) 
     ctrl.view.luaPanel.onAnimationInFinished:RemoveAllListeners()
+
+    if cachedInfo then
+        
+        self.m_hotSwitchCache[panelId] = cachedInfo
+    else
+        
+
     
     
     
@@ -1006,13 +1176,11 @@ UIManager.Close = HL.Method(HL.Number) << function(self, panelId)
     
     ctrl.view.inputGroup:DeleteGroup()
     GameObject.DestroyImmediate(gameObject)
-
     if ENABLE_LUA_LEAK_CHECK then
         LuaObjectMemoryLeakChecker:AddDetectLuaObject(ctrl)
     end
-
-    
     loader:DisposeAllHandles() 
+    end
 
     
     
@@ -1058,9 +1226,32 @@ UIManager.Show = HL.Method(HL.Number) << function(self, panelId)
     local hideByOthers = self.m_clearedPanelReverseInfos[panelId] ~= nil
     self.m_hidedPanels[panelId] = nil
     if not hideByOthers then
+        
+        self:_TryAttachNaviDummyLayer(panelId)
         self:_InternalShow(panelId)
     end
     LuaProfilerUtils.EndSample()
+end
+
+
+
+
+
+UIManager._RestorePanelVisibleComponents = HL.Method(HL.Forward("UICtrl"), HL.Boolean) << function(self, ctrl, playAnimation)
+    if ctrl.panelCfg.useCanvasHide then
+        ctrl.view.gameObject:SetLayerRecursive(UIConst.UI_LAYER)
+        ctrl.view.panelCanvas.enabled = true
+        ctrl.view.luaPanel.enabled = true
+        if ctrl.animationWrapper then
+            ctrl.animationWrapper.enabled = true
+            if playAnimation and ctrl.animationWrapper.autoPlay then
+                ctrl.animationWrapper:PlayInAnimation()
+            end
+        end
+    else
+        ctrl.view.gameObject:SetActive(true)
+    end
+    ctrl:SetGameObjectVisible(true)
 end
 
 
@@ -1072,25 +1263,15 @@ UIManager._InternalShow = HL.Method(HL.Number) << function(self, panelId)
         return
     end
 
-    if ctrl.panelCfg.useCanvasHide then
-        ctrl.view.gameObject:SetLayerRecursive(UIConst.UI_LAYER)
-        ctrl.view.panelCanvas.enabled = true
-        ctrl.view.luaPanel.enabled = true
-        if ctrl.animationWrapper then
-            ctrl.animationWrapper.enabled = true
-            if ctrl.animationWrapper.autoPlay then
-                ctrl.animationWrapper:PlayInAnimation()
-            end
-        end
-    else
-        ctrl.view.gameObject:SetActive(true)
-    end
+    self:_RestorePanelVisibleComponents(ctrl, true)
     if IsNull(ctrl.view.gameObject) then
         logger.error("UIManager._InternalShow 面板GO已被错误销毁", ctrl.panelCfg.name)
         return
     end
 
-    self:_TryAttachNaviDummyLayer(panelId)
+    
+    
+    
 
     self:CalcOtherSystemPropertyByPanelOrder()
 
@@ -1110,8 +1291,6 @@ UIManager._InternalShow = HL.Method(HL.Number) << function(self, panelId)
     if not luaPanel.blockWhileAnim or luaPanel.animationInFinished then
         luaPanel:RecoverAllInput() 
     end
-
-    ctrl:SetGameObjectVisible(true)
 
     ctrl:OnShow()
     
@@ -1143,6 +1322,8 @@ UIManager.Hide = HL.Method(HL.Number) << function(self, panelId)
     self.m_hidedPanels[panelId] = true
 
     if not self.m_clearedPanelReverseInfos[panelId] then
+        
+        self:_TryDetachNaviDummyLayer(panelId)
         self:_InternalHide(panelId)
     end
 end
@@ -1243,7 +1424,8 @@ UIManager._InternalHide = HL.Method(HL.Number) << function(self, panelId)
 
     
     
-    self:_TryDetachNaviDummyLayer(panelId)
+    
+    
 
     self:CalcOtherSystemPropertyByPanelOrder()
     if cfg.blockObtainWaysJump then
@@ -1625,7 +1807,7 @@ UIManager.CalcOtherSystemPropertyByPanelOrder = HL.Method() << function(self)
             return mode
         end
     end) or Types.EPanelMouseMode.NotNeedShow
-    InputManagerInst:ToggleCursorInHideCursorMode("blocked", cursorMode == Types.EPanelMouseMode.NeedShow)
+    InputManagerInst:SetCursorShowRequest("blocked", cursorMode == Types.EPanelMouseMode.NeedShow)
     self:_ToggleAutoShowCursor(cursorMode == Types.EPanelMouseMode.AutoShow)
     if InputManagerInst.virtualMouse then
         if cursorMode == Types.EPanelMouseMode.NotNeedShow then
@@ -1806,7 +1988,9 @@ UIManager._RealCloseAllUI = HL.Method(HL.Function) << function(self, checkCanClo
     self:EndCacheRecoverScreen()
 
     
+    if not self.m_isHotSwitching then
     self:ReleaseCachedPanelAsset()
+end
 end
 
 
@@ -1854,6 +2038,37 @@ UIManager.GetUICameraFOV = HL.Method().Return(HL.Number) << function(self)
         return self.uiCamera.fieldOfView
     else
         return -1
+    end
+end
+
+
+
+
+UIManager.RestoreShownPanelVisibilityIfNeeded = HL.Method(HL.Number) << function(self, panelId)
+    local ctrl = self.m_openedPanels[panelId]
+    if ctrl == nil or not self:IsShow(panelId) then
+        return
+    end
+
+    local cfg = ctrl.panelCfg
+    local needRestore = false
+    if cfg.useCanvasHide then
+        needRestore = not ctrl.view.gameObject.activeSelf or
+            not ctrl.view.panelCanvas.enabled or
+            not ctrl.view.luaPanel.enabled
+    else
+        needRestore = not ctrl.view.gameObject.activeSelf
+    end
+
+    if not needRestore then
+        return
+    end
+
+    self:_RestorePanelVisibleComponents(ctrl, false)
+
+    local luaPanel = ctrl.view.luaPanel
+    if not luaPanel.blockWhileAnim or luaPanel.animationInFinished then
+        luaPanel:RecoverAllInput()
     end
 end
 
@@ -1934,6 +2149,9 @@ UIManager.Dispose = HL.Method() << function(self)
     self:_CloseAllUI(false)
     self:OnToggleUiAction({ true })
     InputManagerInst:DeleteGroup(self.persistentInputBindingKey)
+    
+    
+    InputManagerInst.controllerNaviManager:ResetStateForUIDispose()
     if self.uiNode ~= nil then
         GameObject.DestroyImmediate(self.uiNode.gameObject)
         self.uiNode = nil
@@ -1979,7 +2197,7 @@ UIManager._ToggleAutoShowCursor = HL.Method(HL.Boolean) << function(self, active
     if not active then
         if self.m_autoShowCursorCor then
             logger.info("UIManager._ToggleAutoShowCursor AutoShowCursor", false)
-            InputManagerInst:ToggleCursorInHideCursorMode("AutoShowCursor", false)
+            InputManagerInst:SetCursorShowRequest("AutoShowCursor", false)
             CoroutineManager:ClearCoroutine(self.m_autoShowCursorCor)
             self.m_autoShowCursorCor = nil
         end
@@ -1996,12 +2214,12 @@ UIManager._ToggleAutoShowCursor = HL.Method(HL.Boolean) << function(self, active
             local needShow = Input.anyKeyDown
             if needShow then
                 logger.info("UIManager._ToggleAutoShowCursor AutoShowCursor", true)
-                InputManagerInst:ToggleCursorInHideCursorMode("AutoShowCursor", true)
+                InputManagerInst:SetCursorShowRequest("AutoShowCursor", true)
                 nextHideTime = Time.unscaledTime + 5
             else
                 if nextHideTime and Time.unscaledTime >= nextHideTime then
                     logger.info("UIManager._ToggleAutoShowCursor AutoShowCursor", false)
-                    InputManagerInst:ToggleCursorInHideCursorMode("AutoShowCursor", false)
+                    InputManagerInst:SetCursorShowRequest("AutoShowCursor", false)
                     nextHideTime = nil
                 end
             end
@@ -2272,11 +2490,11 @@ UIManager.GetCurPanelDebugInfo = HL.Method(HL.Opt(HL.Table)).Return(HL.String) <
                 end
 
                 table.insert(infos, string.format("%d\t%s\t%d\t%s\t%s",
-                        id,
-                        self:IsShow(id),
-                        ctrl:GetSortingOrder(),
-                        extraField,
-                        cfg.name
+                    id,
+                    self:IsShow(id),
+                    ctrl:GetSortingOrder(),
+                    extraField,
+                    cfg.name
                 ))
             end
         end
@@ -2295,8 +2513,8 @@ UIManager.GetCurPanelDebugInfoForBlockOtherInput = HL.Method().Return(HL.String)
             local normalFormat = "<color=white>%s</color>"
             local blockKeyboardEvent = ctrl:GetBlockKeyboardEvent()
             return (blockKeyboardEvent and isShow) and
-                    string.format(warningFormat, blockKeyboardEvent) or
-                    string.format(normalFormat, blockKeyboardEvent)
+                string.format(warningFormat, blockKeyboardEvent) or
+                string.format(normalFormat, blockKeyboardEvent)
         end
     })
 end

@@ -56,14 +56,22 @@ local ItemType2DepotConfig = {
             return UIConst.WEAPON_SORT_OPTION
         end,
         contentFilterOptionFuncName = "generateConfig_DEPOT_WEAPON",
+        destroyFilterOptionFuncName = "generateConfig_DEPOT_WEAPON_DESTROY",
         extraDisplayInfoFuncName = "displayWeaponInfo",
         infoStateName = "weapon",
+        isWeaponDestroy = true,
     },
     [GEnums.ItemValuableDepotType.WeaponGem] = {
         infoProcessFuncName = "processWeaponGem",
         systemUnlockType = GEnums.UnlockSystemType.Weapon,
         getSortOptions = function()
-            return UIConst.WEAPON_GEM_SORT_OPTION
+            
+            return {
+                {
+                    name = Language.LUA_DEPOT_SORT_OPTION_RARITY,
+                    keys = { "gemPerfectMatchSort", "isEquippedSort", "lockedIndex", "rarity", "sortId1", "sortId2", "id", "instId" },
+                },
+            }
         end,
         contentFilterOptionFuncName = "generateConfig_DEPOT_GEM",
         extraDisplayInfoFuncName = "displayWeaponGemInfo",
@@ -93,98 +101,10 @@ local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ValuableDepot
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ValuableDepotCtrl = HL.Class('ValuableDepotCtrl', uiCtrl.UICtrl)
 
 
 local inventorySystem = GameInstance.player.inventory
-
 
 
 
@@ -197,65 +117,69 @@ ValuableDepotCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ITEM_LOCKED_STATE_CHANGED] = 'OnItemLockedStateChanged',
     [MessageConst.ON_EQUIP_RECYCLE] = 'OnEquipRecycle',
     [MessageConst.ON_GEM_DISMANTLE] = 'OnGemDismantle',
+    [MessageConst.ON_WEAPON_GEM_WISH_LIST_CHANGED] = 'OnWeaponGemWishListChanged',
+    [MessageConst.ON_WEAPON_RECYCLE] = 'OnWeaponRecycle',
+    [MessageConst.ON_WEAPON_BATCH_LOCK] = 'OnWeaponBatchLock',
     [MessageConst.ON_LT_ITEM_EXPIRE] = 'OnLTItemExpire',
     [MessageConst.ON_LT_ITEM_EXPIRE_CONFIRM_RSP] = 'ShowLTItemExpirePopup',
     [MessageConst.ON_USE_ITEM] = 'OnUseItem',
     [MessageConst.ON_BATTLE_PASS_TICKET_REWARD] = 'OnBPTicketReward',
 }
 
-
 ValuableDepotCtrl.m_curTabIndex = HL.Field(HL.Number) << 1
 
-
 ValuableDepotCtrl.m_curItemIndex = HL.Field(HL.Number) << 1
-
 
 ValuableDepotCtrl.m_inDestroyMode = HL.Field(HL.Boolean) << false
 
 
-ValuableDepotCtrl.m_tabCells = HL.Field(HL.Forward('UIListCache'))
 
+ValuableDepotCtrl.m_suppressSelectedCell = HL.Field(HL.Boolean) << false
+
+ValuableDepotCtrl.m_tabCells = HL.Field(HL.Forward('UIListCache'))
 
 ValuableDepotCtrl.m_tabsInfo = HL.Field(HL.Table)
 
+ValuableDepotCtrl.m_initDepotType = HL.Field(HL.Any)
+
+ValuableDepotCtrl.m_clearScreenKeyOnClose = HL.Field(HL.Number) << -1
+
+ValuableDepotCtrl.m_shouldClearScreenOnOpen = HL.Field(HL.Boolean) << false
 
 ValuableDepotCtrl.m_curTabAllItemList = HL.Field(HL.Table) 
 
-
 ValuableDepotCtrl.m_curShowItemList = HL.Field(HL.Table) 
-
 
 ValuableDepotCtrl.m_curShowCount = HL.Field(HL.Number) << 0
 
-
 ValuableDepotCtrl.m_curContentFilterConfigs = HL.Field(HL.Table)
-
 
 ValuableDepotCtrl.m_curDestroyFilterConfigs = HL.Field(HL.Table)
 
-
 ValuableDepotCtrl.m_getItemCell = HL.Field(HL.Function)
-
 
 ValuableDepotCtrl.m_selectItemInfoWhenHide = HL.Field(HL.Table)
 
-
 ValuableDepotCtrl.m_selectTabInfoWhenHide = HL.Field(HL.Table)
-
 
 ValuableDepotCtrl.m_oriPaddingBottom = HL.Field(HL.Number) << 0
 
-
 ValuableDepotCtrl.m_getPreviewItemCell = HL.Field(HL.Function)
 
+ValuableDepotCtrl.m_recoverState = HL.Field(HL.Table)
+
+ValuableDepotCtrl.m_recoverSelectIndex = HL.Field(HL.Number) << -1
 
 
 
 
 
-
-
-ValuableDepotCtrl.OnCreate = HL.Override(HL.Any) << function(self, itemId)
+ValuableDepotCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    local itemId, instId, subPanelArg = self:_ProcessCreateArg(arg)
+    if self.m_shouldClearScreenOnOpen then
+        self.m_clearScreenKeyOnClose = UIManager:ClearScreen({ PANEL_ID })
+    end
+    local ltItemExpirePopupArg = arg and arg.ltItemExpirePopupArg or nil
     self.view.btnClose.onClick:AddListener(function()
         PhaseManager:PopPhase(PhaseId.ValuableDepot)
     end)
@@ -285,8 +209,12 @@ ValuableDepotCtrl.OnCreate = HL.Override(HL.Any) << function(self, itemId)
     self.view.bottomNode.btnGemEnhance.onClick:AddListener(function()
         PhaseManager:OpenPhase(PhaseId.GemEnhance)
     end)
+    self.view.bottomNode.btnGemWishlist.onClick:AddListener(function()
+        PhaseManager:OpenPhase(PhaseId.GemWishlist)
+    end)
     self.view.bottomNode.btnEquipTech.onClick:AddListener(function()
-        PhaseManager:OpenPhase(PhaseId.EquipTech, { isEnhance = true })
+        local equipInstId = self.m_curItemIndex > 0 and self.m_curShowItemList[self.m_curItemIndex].instId or nil
+        PhaseManager:OpenPhase(PhaseId.EquipTech, { isEnhance = true, equipInstId = equipInstId })
     end)
 
     self.m_tabCells = UIUtils.genCellCache(self.view.tabs.tabCell)
@@ -295,16 +223,14 @@ ValuableDepotCtrl.OnCreate = HL.Override(HL.Any) << function(self, itemId)
     self:_InitDepotConfigs()
     self:_InitDestroyNode()
 
-    self:_RefreshTabsInfo(itemId)
+    self:_RefreshTabsInfo(itemId, instId)
+    self:_ProcessSubPanelArg(subPanelArg)
+    self:_TryRecoverLTItemExpirePopup(ltItemExpirePopupArg)
 end
-
-
 
 ValuableDepotCtrl.OnAnimationInFinished = HL.Override() << function(self)
     self:CheckLTItemExpire()
 end
-
-
 
 ValuableDepotCtrl.OnShow = HL.Override() << function(self)
     if self.m_selectItemInfoWhenHide and self.m_selectTabInfoWhenHide then
@@ -312,8 +238,6 @@ ValuableDepotCtrl.OnShow = HL.Override() << function(self)
         self:_RefreshTabsInfo(self.m_selectItemInfoWhenHide.id, self.m_selectItemInfoWhenHide.instId, true)
     end
 end
-
-
 
 ValuableDepotCtrl.OnHide = HL.Override() << function(self)
     local curSelectItemInfo = self.m_curShowItemList[self.m_curItemIndex]
@@ -331,21 +255,199 @@ ValuableDepotCtrl.OnHide = HL.Override() << function(self)
     end
 end
 
-
-
 ValuableDepotCtrl.OnClose = HL.Override() << function(self)
     self:_ReadCurShowingItems()
+    if self.m_clearScreenKeyOnClose and self.m_clearScreenKeyOnClose >= 0 then
+        UIManager:RecoverScreen(self.m_clearScreenKeyOnClose)
+        self.m_clearScreenKeyOnClose = -1
+    end
 end
-
-
-
 
 ValuableDepotCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     self.view.destroyNode.numberSelector.view.keyHintLeft.gameObject:SetActive(active)
     self.view.destroyNode.numberSelector.view.keyHintRight.gameObject:SetActive(active)
 end
 
+ValuableDepotCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local sortSelectedIndex
+    local sortIsIncremental
+    local currentSelectedItem = self.m_curShowItemList and self.m_curShowItemList[self.m_curItemIndex] or nil
+    local destroyState = self:_BuildDestroyRecoverState()
+    local ltItemExpirePopupArg = self:_GetLTItemExpirePopupRecoverState()
+    if self.view and self.view.bottomNode and self.view.bottomNode.sortNode then
+        sortSelectedIndex = self.view.bottomNode.sortNode:GetCurSelectedIndex()
+        sortIsIncremental = self.view.bottomNode.sortNode.isIncremental
+    end
+    return {
+        tabIndex = self.m_curTabIndex,
+        filterSelectedTags = lume.deepCopy(self.m_curContentFilterConfigs or {}),
+        sortSelectedIndex = sortSelectedIndex,
+        sortIsIncremental = sortIsIncremental,
+        itemId = currentSelectedItem and currentSelectedItem.id or nil,
+        instId = currentSelectedItem and currentSelectedItem.instId or nil,
+        inDestroyMode = self.m_inDestroyMode,
+        destroyState = destroyState,
+        subPanelArg = self:_GetSubPanelArg(),
+        ltItemExpirePopupArg = ltItemExpirePopupArg,
+        waitRecoverSelectIndex = self.m_curItemIndex,
+        shouldClearScreenOnOpen = self.m_shouldClearScreenOnOpen,
+    }
+end
 
+ValuableDepotCtrl._BuildDestroyRecoverState = HL.Method().Return(HL.Table) << function(self)
+    if not self.m_inDestroyMode then
+        return {}
+    end
+    local destroyState = {
+        selectedTags = lume.deepCopy(self.m_curDestroyFilterConfigs or {}),
+        selectedItems = {},
+        isExpandOpen = self.view.destroyNode.expandToggle.isOn == true,
+        expandSelectedRealId = self.m_destroyCountItemRealId,
+        filterPopupState = self:_BuildDestroyFilterPopupRecoverState(),
+    }
+    for tabIndex, infos in ipairs(self.m_destroyInfo or {}) do
+        for _, info in pairs(infos) do
+            table.insert(destroyState.selectedItems, {
+                tabIndex = tabIndex,
+                realId = info.realId,
+                id = info.id,
+                instId = info.instId,
+                count = info.count,
+                selectCount = info.selectCount,
+            })
+        end
+    end
+    table.sort(destroyState.selectedItems, Utils.genSortFunction({ "tabIndex", "realId" }, true))
+    return destroyState
+end
+
+ValuableDepotCtrl._BuildDestroyFilterPopupRecoverState = HL.Method().Return(HL.Table) << function(self)
+    if not self.m_inDestroyMode then
+        return {}
+    end
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.CommonFilter)
+    if not isOpen then
+        return {}
+    end
+    return {
+        isOpen = true,
+        selectedTags = lume.deepCopy(ctrl.m_filterSelectedTags or {}),
+    }
+end
+
+ValuableDepotCtrl._GetLTItemExpirePopupRecoverState = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    if PhaseManager:GetTopPhaseId() ~= PhaseId.ValuableDepot then
+        return
+    end
+    local isOpen, commonPopUpCtrl = UIManager:IsOpen(PanelId.CommonPopUp)
+    if not isOpen or not commonPopUpCtrl:IsShow() then
+        return
+    end
+    local recoverArg = commonPopUpCtrl:GetCurPhaseStateArg()
+    if not self:_IsLTItemExpirePopupArg(recoverArg) then
+        return
+    end
+    return recoverArg
+end
+
+ValuableDepotCtrl._IsLTItemExpirePopupArg = HL.Method(HL.Opt(HL.Any)).Return(HL.Boolean) << function(self, arg)
+    if arg == nil or type(arg) ~= "table" or string.isEmpty(arg.content) then
+        return false
+    end
+    return arg.content == Language.LUA_LIMIT_ITEM_EXPIRE_POPUP_TITLE
+end
+
+ValuableDepotCtrl._ProcessCreateArg = HL.Method(HL.Any).Return(HL.Opt(HL.String, HL.Any, HL.Any)) << function(self, arg)
+    local itemId
+    local instId
+    local subPanelArg
+    self.m_initDepotType = nil
+    self.m_clearScreenKeyOnClose = -1
+    self.m_shouldClearScreenOnOpen = false
+    if type(arg) == "table" then
+        local recoverTabIndex = arg.tabIndex
+        self.m_curTabIndex = recoverTabIndex or 0
+        self.m_initDepotType = arg.depotType
+        self.m_clearScreenKeyOnClose = arg.clearScreenKey or -1
+        self.m_shouldClearScreenOnOpen = arg.shouldClearScreenOnOpen == true
+        subPanelArg = arg.subPanelArg
+        self.m_recoverState = {
+            tabIndex = recoverTabIndex,
+            filterSelectedTags = lume.deepCopy(arg.filterSelectedTags or {}),
+            sortSelectedIndex = arg.sortSelectedIndex,
+            sortIsIncremental = arg.sortIsIncremental,
+            itemId = arg.itemId,
+            instId = arg.instId,
+            inDestroyMode = arg.inDestroyMode == true,
+            destroyState = lume.deepCopy(arg.destroyState or {}),
+            waitRecoverSelectIndex = arg.waitRecoverSelectIndex or -1
+        }
+    else
+        itemId = arg
+        self.m_recoverState = nil
+    end
+    return itemId, instId, subPanelArg
+end
+
+ValuableDepotCtrl._GetSubPanelArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.CommonBatchLock)
+    if isOpen then
+        local subPanelArg = ctrl:GetCurPhaseStateArg()
+        if not subPanelArg then
+            return
+        end
+        subPanelArg.isCommonBatchLock = true
+        return subPanelArg
+    end
+    isOpen, ctrl = UIManager:IsOpen(PanelId.BattlePassWeaponCase)
+    if isOpen then
+        local subPanelArg = ctrl:GetCurPhaseStateArg()
+        if not subPanelArg then
+            return
+        end
+        subPanelArg.isBattlePassWeaponCase = true
+        return subPanelArg
+    end
+    isOpen, ctrl = UIManager:IsOpen(PanelId.StaminaPotion)
+    if isOpen then
+        local subPanelArg = ctrl:GetCurPhaseStateArg()
+        if not subPanelArg then
+            return
+        end
+        subPanelArg.isStaminaPotion = true
+        return subPanelArg
+    end
+end
+
+ValuableDepotCtrl._ProcessSubPanelArg = HL.Method(HL.Opt(HL.Any)) << function(self, subPanelArg)
+    if not subPanelArg then
+        return
+    end
+    if subPanelArg.isCommonBatchLock then
+        UIManager:Open(PanelId.CommonBatchLock, subPanelArg)
+    elseif subPanelArg.isBattlePassWeaponCase then
+        UIManager:Open(PanelId.BattlePassWeaponCase, subPanelArg)
+    elseif subPanelArg.isStaminaPotion then
+        UIManager:Open(PanelId.StaminaPotion, subPanelArg)
+    end
+end
+
+ValuableDepotCtrl._TryRecoverLTItemExpirePopup = HL.Method(HL.Opt(HL.Any)) << function(self, ltItemExpirePopupArg)
+    if ltItemExpirePopupArg == nil then
+        return
+    end
+    if PhaseManager:GetTopPhaseId() ~= PhaseId.ValuableDepot then
+        return
+    end
+    if not self:_IsLTItemExpirePopupArg(ltItemExpirePopupArg) then
+        return
+    end
+    local isOpen, commonPopUpCtrl = UIManager:IsOpen(PanelId.CommonPopUp)
+    if isOpen and commonPopUpCtrl:IsShow() then
+        return
+    end
+    self:Notify(MessageConst.SHOW_POP_UP, ltItemExpirePopupArg)
+end
 
 
 
@@ -361,11 +463,6 @@ ValuableDepotCtrl._InitDepotConfigs = HL.Method() << function(self)
         end
     end
 end
-
-
-
-
-
 
 ValuableDepotCtrl._RefreshTabsInfo = HL.Method(HL.Opt(HL.String, HL.Any, HL.Boolean)) << function(self, itemId, instId, isFast)
     local tabInfos = {}
@@ -393,6 +490,24 @@ ValuableDepotCtrl._RefreshTabsInfo = HL.Method(HL.Opt(HL.String, HL.Any, HL.Bool
                 break
             end
         end
+    elseif self.m_initDepotType then
+        for k, v in ipairs(tabInfos) do
+            if v.type == self.m_initDepotType then
+                self.m_curTabIndex = k
+                if self.m_recoverState then
+                    self.m_recoverState.tabIndex = k
+                end
+                break
+            end
+        end
+        self.m_initDepotType = nil
+    end
+
+    if #tabInfos <= 0 then
+        return
+    end
+    if self.m_curTabIndex < 1 or self.m_curTabIndex > #tabInfos then
+        self.m_curTabIndex = 1
     end
 
     self.m_tabCells:Refresh(#tabInfos, function(cell, index)
@@ -420,17 +535,22 @@ ValuableDepotCtrl._RefreshTabsInfo = HL.Method(HL.Opt(HL.String, HL.Any, HL.Bool
     self:_OnClickTab(self.m_curTabIndex, itemId, instId, isFast)
 end
 
-
-
-
-
-
-
 ValuableDepotCtrl._OnClickTab = HL.Method(HL.Number, HL.Opt(HL.String, HL.Any, HL.Boolean)) << function(self, index, itemId, instId, isFast)
     local info = self.m_tabsInfo[index]
+    if info == nil then
+        return
+    end
     self.m_curTabIndex = index
-    self.m_curContentFilterConfigs = {}
-    self.m_curDestroyFilterConfigs = {}
+    local recoverState
+    if self.m_recoverState and self.m_recoverState.tabIndex == index then
+        recoverState = self.m_recoverState
+        self.m_recoverSelectIndex = self.m_recoverState.waitRecoverSelectIndex or -1
+        self.m_recoverState = nil
+    else
+        self.m_recoverSelectIndex = -1
+    end
+    self.m_curContentFilterConfigs = recoverState and recoverState.filterSelectedTags or {}
+    self.m_curDestroyFilterConfigs = recoverState and recoverState.destroyState and recoverState.destroyState.selectedTags or {}
 
     local depotConfig = ItemType2DepotConfig[info.type]
     self.view.bottomNode.filterBtn.gameObject:SetActive(
@@ -451,39 +571,56 @@ ValuableDepotCtrl._OnClickTab = HL.Method(HL.Number, HL.Opt(HL.String, HL.Any, H
         end,
         sortNodeWidget = self.view.bottomNode.sortNode,
     })
+    local sortSelectedCsIndex = 0
+    if recoverState and type(recoverState.sortSelectedIndex) == "number" then
+        sortSelectedCsIndex = CSIndex(recoverState.sortSelectedIndex)
+    end
+    local sortIsIncremental = recoverState and recoverState.sortIsIncremental or nil
     self.view.bottomNode.sortNode:InitSortNode(depotConfig.getSortOptions(), function(optData, isIncremental)
         self:_ApplySort(optData, isIncremental)
         self:_SetSelectedIndex()
         self:_RefreshItemList(true)
-    end, 0, nil, true, self.view.bottomNode.filterBtn)
+    end, sortSelectedCsIndex, sortIsIncremental, true, self.view.bottomNode.filterBtn)
 
-    local isGemEnhanceBtnVisible = info.type == GEnums.ItemValuableDepotType.WeaponGem and
-        Utils.isSystemUnlocked(GEnums.UnlockSystemType.GemEnhance)
+    local isGemTab = info.type == GEnums.ItemValuableDepotType.WeaponGem
+    local isGemEnhanceBtnVisible = isGemTab and Utils.isSystemUnlocked(GEnums.UnlockSystemType.GemEnhance)
     self.view.bottomNode.btnGemEnhance.gameObject:SetActive(isGemEnhanceBtnVisible)
+    self.view.bottomNode.btnGemWishlist.gameObject:SetActive(isGemTab and PhaseManager:IsPhaseUnlocked(PhaseId.GemWishlist))
     local isEquipTechBtnVisible = info.type == GEnums.ItemValuableDepotType.Equip and
         Utils.isSystemUnlocked(GEnums.UnlockSystemType.EquipProduce) and
         Utils.isSystemUnlocked(GEnums.UnlockSystemType.EquipEnhance)
     self.view.bottomNode.btnEquipTech.gameObject:SetActive(isEquipTechBtnVisible)
-    local isRecycleBtnVisible = depotConfig.isEquipDestroy or depotConfig.isGemDestroy
+    local isRecycleBtnVisible = depotConfig.isEquipDestroy or depotConfig.isGemDestroy or depotConfig.isWeaponDestroy
     self.view.bottomNode.desEquipBtn.gameObject:SetActive(isRecycleBtnVisible)
     self.view.bottomNode.destroyBtn.gameObject:SetActive(depotConfig.isNormalDestroy)
 
     self:_RecollectItemBundles(info.type)
+    if self.m_inDestroyMode and (depotConfig.isWeaponDestroy or depotConfig.isGemDestroy) then
+        self:_ApplyDestroySelectableFilter()
+        self.m_pendingDestroyNaviFirst = DeviceInfo.usingController and self.m_curShowCount > 0
+    end
 
     self.view.tabTitleTxt.text = info.name
     self.view.capacityTxt.text = string.format(Language.LUA_DEPOT_CAPACITY, #self.m_curTabAllItemList, info.data.gridLimit)
 
+    local recoverScrollIndex = 0
     if self.m_inDestroyMode then
         self.m_curItemIndex = -1
     else
-        self:_SetSelectedIndex(itemId, instId)
+        if recoverState then
+            self.m_curItemIndex = -1  
+            self:_RefreshItemInfo(true)  
+            self:_SetSelectedIndex(recoverState.itemId, recoverState.instId)  
+            recoverScrollIndex = self.m_curItemIndex
+        else
+            self:_SetSelectedIndex(itemId, instId)
+        end
     end
 
     self:_RefreshItemList(true, true, isFast)
+    self:_TryRecoverScrollToSelectedItem(recoverScrollIndex)
+    self:_TryRecoverDestroyState(recoverState)
 end
-
-
-
 
 ValuableDepotCtrl._RecollectItemBundles = HL.Method(HL.Any) << function(self, itemType)
     local allItems = self:_GetAllItemBundlesInDepot(itemType)
@@ -493,11 +630,8 @@ ValuableDepotCtrl._RecollectItemBundles = HL.Method(HL.Any) << function(self, it
     self:_ApplySort(self.view.bottomNode.sortNode:GetCurSortData(), self.view.bottomNode.sortNode.isIncremental)
 end
 
-
-
-
-
 ValuableDepotCtrl._SetSelectedIndex = HL.Method(HL.Opt(HL.Any, HL.Any)) << function(self, itemId, instId)
+    self.m_curItemIndex = math.min(1, self.m_curShowCount)
     if itemId then
         for k, v in ipairs(self.m_curShowItemList) do
             if v.id == itemId and (not instId or v.instId == instId) then
@@ -505,14 +639,8 @@ ValuableDepotCtrl._SetSelectedIndex = HL.Method(HL.Opt(HL.Any, HL.Any)) << funct
                 break
             end
         end
-    else
-        self.m_curItemIndex = math.min(1, self.m_curShowCount)
     end
 end
-
-
-
-
 
 ValuableDepotCtrl._GetAllItemBundlesInDepot = HL.Method(HL.Opt(HL.Userdata, HL.Table)).Return(HL.Table) << function(self, depotType, rst)
     rst = rst or {}
@@ -537,10 +665,6 @@ ValuableDepotCtrl._GetAllItemBundlesInDepot = HL.Method(HL.Opt(HL.Userdata, HL.T
     return rst
 end
 
-
-
-
-
 ValuableDepotCtrl._ApplySort = HL.Method(HL.Table, HL.Boolean) << function(self, option, isIncremental)
     local curSelectItemInfo = self.m_curShowItemList[self.m_curItemIndex]
     table.sort(self.m_curTabAllItemList, Utils.genSortFunction(option.keys, isIncremental))
@@ -552,8 +676,6 @@ ValuableDepotCtrl._ApplySort = HL.Method(HL.Table, HL.Boolean) << function(self,
         end
     end
 end
-
-
 
 ValuableDepotCtrl._ApplyFilter = HL.Method() << function(self)
     local curTabAllItemList = self.m_curTabAllItemList
@@ -575,8 +697,59 @@ ValuableDepotCtrl._ApplyFilter = HL.Method() << function(self)
     self.m_curShowCount = #filteredItemList
 end
 
+ValuableDepotCtrl._ApplyDestroySelectableFilter = HL.Method() << function(self)
+    local filteredItemList = {}
+    
+    for _, itemInfo in ipairs(self.m_curShowItemList) do
+        if self:_ShouldShowInDestroyMode(itemInfo) then
+            table.insert(filteredItemList, itemInfo)
+        end
+    end
+    self.m_curShowItemList = filteredItemList
+    self.m_curShowCount = #filteredItemList
+end
 
+ValuableDepotCtrl._ShouldShowInDestroyMode = HL.Method(HL.Table).Return(HL.Boolean) << function(self, itemInfo)
+    local depotConfig = ItemType2DepotConfig[self.m_tabsInfo[self.m_curTabIndex].type]
+    if depotConfig and depotConfig.isWeaponDestroy and itemInfo.data.type == GEnums.ItemType.Weapon then
+        local inventory = GameInstance.player.inventory
+        local scope = Utils.getCurrentScope()
+        if inventory:IsEquipped(scope, itemInfo.id, itemInfo.instId) then
+            return false
+        end
 
+        local weaponInst = itemInfo.instId and itemInfo.instId > 0 and CharInfoUtils.getWeaponByInstId(itemInfo.instId) or nil
+        if not weaponInst then
+            return false
+        end
+        
+        local hasFedExp = (weaponInst.exp and weaponInst.exp > 0) or (weaponInst.weaponLv and weaponInst.weaponLv > 1)
+        local hasGem = weaponInst.attachedGemInstId and weaponInst.attachedGemInstId > 0
+        local hasPotentialUpgrade = weaponInst.refineLv and weaponInst.refineLv > 0
+        local isSixStar = itemInfo.rarity and itemInfo.rarity >= 6
+        return not (hasFedExp or hasGem or hasPotentialUpgrade or isSixStar)
+    end
+    if depotConfig and depotConfig.isGemDestroy and itemInfo.data.type == GEnums.ItemType.WeaponGem then
+        local inventory = GameInstance.player.inventory
+        local scope = Utils.getCurrentScope()
+        if not inventory:CanDestroyItem(scope, itemInfo.id) or inventory:IsEquipped(scope, itemInfo.id, itemInfo.instId) then
+            return false
+        end
+
+        local isMaxRarityGem = itemInfo.rarity and itemInfo.rarity >= 5
+        if isMaxRarityGem then
+            return false
+        end
+
+        local isPerfectMatch = UIUtils.getGemWishListPerfectMatch(itemInfo.instId)
+        local isLocked = inventory:IsItemLocked(scope, itemInfo.id, itemInfo.instId)
+        
+        return not (isLocked and isPerfectMatch)
+    end
+
+    local isBlocked = self:_GetDestroyBlockToast(itemInfo)
+    return not isBlocked
+end
 
 ValuableDepotCtrl._GetContentFilterResultCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tags)
     if not tags or not next(tags) then
@@ -591,15 +764,11 @@ ValuableDepotCtrl._GetContentFilterResultCount = HL.Method(HL.Table).Return(HL.N
     return count
 end
 
-
-
-
-
-
 ValuableDepotCtrl._RefreshItemList = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean)) << function(self, noRead, setTop, isFast)
     logger.info("_RefreshItemList")
     local count = #self.m_curShowItemList
     local isEmpty = count == 0
+    local pendingDestroyNaviFirst = self.m_pendingDestroyNaviFirst
     if isFast then
         self.view.itemScrollList:UpdateCount(count, self.m_curItemIndex, false, false, true)
     else
@@ -615,7 +784,11 @@ ValuableDepotCtrl._RefreshItemList = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL
     end
     if not isEmpty then
         if self.m_inDestroyMode then
-            self:_OnClickItem(-1)
+            if pendingDestroyNaviFirst then
+                self:_OnClickItem(1, true, true)
+            else
+                self:_OnClickItem(-1, true)
+            end
         else
             self:_OnClickItem(self.m_curItemIndex, noRead)
         end
@@ -625,24 +798,147 @@ ValuableDepotCtrl._RefreshItemList = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL
     end
 end
 
+ValuableDepotCtrl._TryRecoverScrollToSelectedItem = HL.Method(HL.Number) << function(self, recoverScrollIndex)
+    if recoverScrollIndex <= 0 then
+        return
+    end
+    local csIndex = CSIndex(recoverScrollIndex)
+    self.view.itemScrollList:ScrollToIndex(csIndex, true, CS.Beyond.UI.UIScrollList.ScrollAlignType.Center, true)
+end
 
+ValuableDepotCtrl._TryRecoverDestroyState = HL.Method(HL.Opt(HL.Table)) << function(self, recoverState)
+    if not recoverState or not recoverState.inDestroyMode then
+        return
+    end
 
+    local destroyState = recoverState.destroyState or {}
+    local recoverDestroyTargetRealId = destroyState.expandSelectedRealId or ""
+    self:_ToggleDestroyMode(true, false)
 
+    self.m_destroyInfo = {}
+    for tabIndex = 1, #self.m_tabsInfo do
+        self.m_destroyInfo[tabIndex] = {}
+    end
+
+    self.m_destroyCount = 0
+    for _, info in ipairs(destroyState.selectedItems or {}) do
+        local tabDestroyInfo = self.m_destroyInfo[info.tabIndex]
+        if tabDestroyInfo then
+            tabDestroyInfo[info.realId] = {
+                realId = info.realId,
+                id = info.id,
+                instId = info.instId,
+                count = info.count,
+                selectCount = info.selectCount,
+            }
+            self.m_destroyCount = self.m_destroyCount + 1
+        end
+    end
+
+    self:_UpdateDestroySelectTotalCount(true)
+    for index = 1, self.view.itemScrollList.count do
+        local cell = self.m_getItemCell(index)
+        local info = cell and self.m_curShowItemList[index] or nil
+        if cell and info then
+            self:_UpdateItemBlockMask(cell, info)
+            self:_UpdateItemCellDestroySelectPart(index, cell)
+        end
+    end
+
+    self:_TryRecoverDestroySelectExpandState(destroyState)
+    self:_TryRecoverDestroyFilterPopupState(destroyState)
+
+    if not string.isEmpty(recoverDestroyTargetRealId) then
+        self:_SetDestroyCountTarget(recoverDestroyTargetRealId)
+    end
+end
+
+ValuableDepotCtrl._TryRecoverDestroySelectExpandState = HL.Method(HL.Opt(HL.Table)) << function(self, destroyState)
+    local node = self.view.destroyNode
+    local selectedItems = destroyState and destroyState.selectedItems or {}
+    local shouldExpand = destroyState and destroyState.isExpandOpen == true and #selectedItems > 0
+    self:_ToggleDestroySelectExpand(shouldExpand, true)
+    node.expandToggle.isOn = shouldExpand
+    if not shouldExpand then
+        return
+    end
+
+    local targetIndex = 1
+    
+    local targetRealId = destroyState.expandSelectedRealId
+    if not string.isEmpty(targetRealId) then
+        for index, info in ipairs(self.m_destroyExpandItemList) do
+            if info.realId == targetRealId then
+                targetIndex = index
+                break
+            end
+        end
+    end
+
+    local targetInfo = self.m_destroyExpandItemList[targetIndex]
+    if not targetInfo then
+        return
+    end
+
+    node.selectScrollList:ScrollToIndex(targetIndex, true)
+    self:_SetDestroyCountTarget(targetInfo.realId)
+    local cell = self.m_getExpandItemCell(targetIndex)
+    if DeviceInfo.usingController and cell then
+        InputManagerInst.controllerNaviManager:SetTarget(cell.view.button)
+    end
+end
+
+ValuableDepotCtrl._TryRecoverDestroyFilterPopupState = HL.Method(HL.Opt(HL.Table)) << function(self, destroyState)
+    local filterPopupState = destroyState and destroyState.filterPopupState or nil
+    if not filterPopupState or not filterPopupState.isOpen then
+        return
+    end
+    local info = self.m_tabsInfo[self.m_curTabIndex]
+    local depotConfig = info and ItemType2DepotConfig[info.type] or nil
+    if not depotConfig or not depotConfig.destroyFilterOptions then
+        return
+    end
+    self:_OpenDestroyFilterPanel(depotConfig, filterPopupState.selectedTags)
+end
 
 ValuableDepotCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local info = self.m_curShowItemList[index]
     local isEquip = info.data.type == GEnums.ItemType.Equip
     cell:InitItem(info, function()
+        if self.m_suppressSelectedCell then
+            return
+        end
         self:_OnClickItem(index)
     end)
     if DeviceInfo.usingController then
         cell:SetEnableHoverTips(false)
     end
 
+    local isGem = info.data.type == GEnums.ItemType.WeaponGem
+    if isGem and info.instId and info.instId > 0 then
+        local isPerfectMatch = UIUtils.getGemWishListPerfectMatch(info.instId)
+        cell:ShowGemPerfectIcon(isPerfectMatch)
+    end
+
     local isSelected = index == self.m_curItemIndex
-    cell:SetSelected(isSelected and not DeviceInfo.usingController)
-    if isSelected and cell.view.button ~= InputManagerInst.controllerNaviManager.curTarget then
-        UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.itemListNaviGroup, cell.view.button)
+    if self.m_recoverSelectIndex > 0 then  
+        cell:SetSelected(isSelected)
+        if index == self.m_recoverSelectIndex then
+            if DeviceInfo.usingController then
+                self:SetAsNaviTargetInSilentModeIfNecessary(self.view.itemListNaviGroup, cell.view.button)
+            end
+            self:_RefreshItemInfo(false)
+            self.m_recoverSelectIndex = -1
+        end
+    else
+        cell:SetSelected(isSelected and not DeviceInfo.usingController)
+        if isSelected and cell.view.button ~= InputManagerInst.controllerNaviManager.curTarget then
+            if DeviceInfo.usingController then
+                self.m_suppressSelectedCell = true
+                self:SetAsNaviTargetInSilentModeIfNecessary(self.view.itemListNaviGroup, cell.view.button)
+                self.m_suppressSelectedCell = false
+            end
+        end
     end
 
     cell.view.imageCharMask.gameObject:SetActive(isEquip)
@@ -698,6 +994,10 @@ ValuableDepotCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self,
     end
     self:_UpdateItemBlockMask(cell, info)
     cell.view.button:ChangeActionOnSetNaviTarget(self.m_inDestroyMode and ActionOnSetNaviTarget.PressConfirmTriggerOnClick or ActionOnSetNaviTarget.AutoTriggerOnClick)
+    if self.m_pendingDestroyNaviFirst and index == 1 then
+        self.m_pendingDestroyNaviFirst = false
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.itemListNaviGroup, cell.view.button)
+    end
     cell.view.button.onHoverChange:RemoveAllListeners()
     cell.view.button.onHoverChange:AddListener(function(isHover)
         if isHover and DeviceInfo.usingController and self.m_inDestroyMode then
@@ -721,12 +1021,11 @@ ValuableDepotCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self,
     self:_UpdateItemCellDestroySelectPart(index, cell)
 end
 
-
-
-
-
-
 ValuableDepotCtrl._OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Boolean)) << function(self, index, noRead, justNavi)
+    if self.m_recoverSelectIndex > 0 then
+        return  
+    end
+
     if not noRead then
         self:_ReadItem(self.m_curItemIndex)
     end
@@ -744,7 +1043,7 @@ ValuableDepotCtrl._OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Bool
         if cell then
             cell:SetSelected(true and not DeviceInfo.usingController)
             if DeviceInfo.usingController then
-                UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.itemListNaviGroup, cell.view.button)
+                self:SetAsNaviTargetInSilentModeIfNecessary(self.view.itemListNaviGroup, cell.view.button)
             end
         end
         if self.m_inDestroyMode then
@@ -770,9 +1069,6 @@ ValuableDepotCtrl._OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Bool
     end
 end
 
-
-
-
 ValuableDepotCtrl._AutoFillDestroyList = HL.Method(HL.Number) << function(self, tabIndex)
     self.m_destroyInfo[tabIndex] = {}
     self.m_destroyCount = 0
@@ -783,11 +1079,9 @@ ValuableDepotCtrl._AutoFillDestroyList = HL.Method(HL.Number) << function(self, 
     end
 
     local showItemList = self.m_curShowItemList
-    local inventory = GameInstance.player.inventory
-    local scope = Utils.getCurrentScope()
     local isLack = false
     for itemIndex, itemInfo in pairs(showItemList) do
-        if self.m_destroyCount >= UIConst.DEPOT_DESTROY_MAX_COUNT then
+        if self.m_destroyCount >= Tables.GlobalConst.depotDestroyMaxCount then
             Notify(MessageConst.SHOW_TOAST, Language.LUA_DEPOT_DES_AUTO_FILL_REACH_MAX)
             if isLack then
                 Notify(MessageConst.SHOW_TOAST, Language.LUA_DEPOT_DES_AUTO_FILL_HAS_LACK)
@@ -795,7 +1089,8 @@ ValuableDepotCtrl._AutoFillDestroyList = HL.Method(HL.Number) << function(self, 
             return
         end
         if FilterUtils.checkIfPassFilter(itemInfo, curFilterConfigs) then
-            if not inventory:CanDestroyItem(scope, itemInfo.id) or inventory:IsEquipped(scope, itemInfo.id, itemInfo.instId) or inventory:IsItemLocked(scope, itemInfo.id, itemInfo.instId) then
+            local isBlocked = self:_GetDestroyBlockToast(itemInfo)
+            if isBlocked then
                 isLack = true
             else
                 self:_MarkItemDestroy(itemIndex)
@@ -806,9 +1101,6 @@ ValuableDepotCtrl._AutoFillDestroyList = HL.Method(HL.Number) << function(self, 
         Notify(MessageConst.SHOW_TOAST, Language.LUA_DEPOT_DES_AUTO_FILL_HAS_LACK)
     end
 end
-
-
-
 
 ValuableDepotCtrl._GetAutoFillDestroyResultCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tags)
     if not tags or not next(tags) then
@@ -826,9 +1118,6 @@ ValuableDepotCtrl._GetAutoFillDestroyResultCount = HL.Method(HL.Table).Return(HL
     return count
 end
 
-
-
-
 ValuableDepotCtrl._RefreshItemInfo = HL.Method(HL.Boolean) << function(self, noAnimation)
     local node = self.view.itemInfoNode
     if self.m_curItemIndex < 0 then
@@ -836,10 +1125,12 @@ ValuableDepotCtrl._RefreshItemInfo = HL.Method(HL.Boolean) << function(self, noA
             node.animation:SampleToOutAnimationEnd()
             node.content.gameObject:SetActive(false)
             node.emptyNode.gameObject:SetActive(true)
+            node.stateCtrl:SetState("default")
         else
             node.animation:PlayOutAnimation(function()
                 node.content.gameObject:SetActive(false)
                 node.emptyNode.gameObject:SetActive(true)
+                node.stateCtrl:SetState("default")
             end)
         end
         return
@@ -857,6 +1148,9 @@ ValuableDepotCtrl._RefreshItemInfo = HL.Method(HL.Boolean) << function(self, noA
         node.animation:PlayInAnimation()
     end
     local info = self.m_curShowItemList[self.m_curItemIndex]
+    if node.weaponCompatibleNode then
+        node.weaponCompatibleNode.gameObject:SetActive(false)
+    end
     UIUtils.displayItemBasicInfos(node, self.loader, info.id, info.instId)
     node.itemDescNode:InitItemDescNode(info.id)
 
@@ -913,9 +1207,6 @@ ValuableDepotCtrl._RefreshItemInfo = HL.Method(HL.Boolean) << function(self, noA
     self.view.itemInfoNode.giftFeatureTagsNode:InitGiftFeatureTagsNode(info.id)
 end
 
-
-
-
 ValuableDepotCtrl._CheckIfTabUnlocked = HL.Method(HL.Userdata).Return(HL.Boolean) << function(self, itemType)
     local depotConfig = ItemType2DepotConfig[itemType]
     if depotConfig.isUnlocked ~= nil then
@@ -929,15 +1220,7 @@ ValuableDepotCtrl._CheckIfTabUnlocked = HL.Method(HL.Userdata).Return(HL.Boolean
     return false
 end
 
-
-
-
-ValuableDepotCtrl.OnValuableDepotChanged = HL.Method(HL.Table) << function(self, args)
-    local depotType = unpack(args)
-    if depotType ~= self.m_tabsInfo[self.m_curTabIndex].type then
-        return
-    end
-
+ValuableDepotCtrl._RefreshCurrentTabKeepingSelection = HL.Method() << function(self)
     
     local currentSelectedItem = nil
     if self.m_curItemIndex > 0 and self.m_curShowItemList[self.m_curItemIndex] then
@@ -969,7 +1252,23 @@ ValuableDepotCtrl.OnValuableDepotChanged = HL.Method(HL.Table) << function(self,
     end
 end
 
+ValuableDepotCtrl.OnValuableDepotChanged = HL.Method(HL.Table) << function(self, args)
+    local depotType = unpack(args)
+    if depotType ~= self.m_tabsInfo[self.m_curTabIndex].type then
+        return
+    end
 
+    self:_RefreshCurrentTabKeepingSelection()
+end
+
+ValuableDepotCtrl.OnWeaponGemWishListChanged = HL.Method() << function(self)
+    local curTabInfo = self.m_tabsInfo[self.m_curTabIndex]
+    if not curTabInfo or curTabInfo.type ~= GEnums.ItemValuableDepotType.WeaponGem then
+        return
+    end
+
+    self:_RefreshCurrentTabKeepingSelection()
+end
 
 ValuableDepotCtrl._ShowWiki = HL.Method() << function(self)
     local itemInfo = self.m_curShowItemList[self.m_curItemIndex]
@@ -982,23 +1281,17 @@ end
 
 
 
-
 ValuableDepotCtrl.m_destroyCount = HL.Field(HL.Number) << 0
-
 
 ValuableDepotCtrl.m_destroyInfo = HL.Field(HL.Table) 
 
-
 ValuableDepotCtrl.m_getExpandItemCell = HL.Field(HL.Function)
-
 
 ValuableDepotCtrl.m_destroyExpandItemList = HL.Field(HL.Table)
 
-
 ValuableDepotCtrl.m_destroyCountItemRealId = HL.Field(HL.String) << ""
 
-
-
+ValuableDepotCtrl.m_pendingDestroyNaviFirst = HL.Field(HL.Boolean) << false
 
 ValuableDepotCtrl._InitDestroyNode = HL.Method() << function(self)
     self.view.bottomNode.destroyBtn.onClick:AddListener(function()
@@ -1028,6 +1321,9 @@ ValuableDepotCtrl._InitDestroyNode = HL.Method() << function(self)
     node.closeExpandBtn.onClick:AddListener(function()
         node.expandToggle.isOn = false
     end)
+    node.lockManageBtn.onClick:AddListener(function()
+        self:_EnterWeaponLockManageMode()
+    end)
 
     self.m_getExpandItemCell = UIUtils.genCachedCellFunction(node.selectScrollList)
     node.selectScrollList.onUpdateCell:AddListener(function(obj, csIndex)
@@ -1037,9 +1333,46 @@ ValuableDepotCtrl._InitDestroyNode = HL.Method() << function(self)
     self.m_destroyInfo = {}
 end
 
+ValuableDepotCtrl._GetDestroyBlockToast = HL.Method(HL.Table).Return(HL.Boolean, HL.Opt(HL.String)) << function(self, itemInfo)
+    local inventory = GameInstance.player.inventory
+    local scope = Utils.getCurrentScope()
+    local depotConfig = ItemType2DepotConfig[self.m_tabsInfo[self.m_curTabIndex].type]
+    local isWeaponDestroy = depotConfig and depotConfig.isWeaponDestroy == true
+    local isGemDestroy = depotConfig and depotConfig.isGemDestroy == true
+    if not isWeaponDestroy and not inventory:CanDestroyItem(scope, itemInfo.id) then
+        return true, Language.LUA_ITEM_CANT_DESTROY_BECAUSE_TYPE
+    end
+    if inventory:IsEquipped(scope, itemInfo.id, itemInfo.instId) then
+        return true, Language.LUA_ITEM_CANT_DESTROY_BECAUSE_USING
+    end
+    if inventory:IsItemLocked(scope, itemInfo.id, itemInfo.instId) then
+        return true, Language.LUA_ITEM_CANT_DESTROY_BECAUSE_LOCK
+    end
 
+    if isWeaponDestroy and itemInfo.data.type == GEnums.ItemType.Weapon then
+        local weaponInst = itemInfo.instId and itemInfo.instId > 0 and CharInfoUtils.getWeaponByInstId(itemInfo.instId) or nil
+        if not weaponInst then
+            return true, Language.LUA_ITEM_CANT_DESTROY_BECAUSE_TYPE
+        end
+        
+        local hasFedExp = (weaponInst.exp and weaponInst.exp > 0) or (weaponInst.weaponLv and weaponInst.weaponLv > 1)
+        local hasGem = weaponInst.attachedGemInstId and weaponInst.attachedGemInstId > 0
+        local hasPotentialUpgrade = weaponInst.refineLv and weaponInst.refineLv > 0
+        local isSixStar = itemInfo.rarity and itemInfo.rarity >= 6
+        if hasFedExp or hasGem or hasPotentialUpgrade or isSixStar then
+            return true, Language.LUA_ITEM_CANT_DESTROY_BECAUSE_TYPE
+        end
+    end
+    if isGemDestroy and itemInfo.data.type == GEnums.ItemType.WeaponGem then
+        
+        local isMaxRarityGem = itemInfo.rarity and itemInfo.rarity >= 5
+        if isMaxRarityGem then
+            return true, Language.LUA_ITEM_CANT_DESTROY_BECAUSE_TYPE
+        end
+    end
 
-
+    return false
+end
 
 ValuableDepotCtrl._UpdateItemBlockMask = HL.Method(HL.Any, HL.Table) << function(self, cell, info)
     local showMask = false
@@ -1054,7 +1387,13 @@ ValuableDepotCtrl._UpdateItemBlockMask = HL.Method(HL.Any, HL.Table) << function
         
         if info.data.type == GEnums.ItemType.WeaponGem then
             showMask = not inventory:CanDestroyItem(Utils.getCurrentScope(), info.id) or
-                inventory:IsEquipped(Utils.getCurrentScope(), info.id, info.instId)
+                inventory:IsEquipped(Utils.getCurrentScope(), info.id, info.instId) or
+                inventory:IsItemLocked(Utils.getCurrentScope(), info.id, info.instId)
+        end
+
+        
+        if info.data.type == GEnums.ItemType.Weapon then
+            showMask = self:_GetDestroyBlockToast(info)
         end
 
         local desInfo = self.m_destroyInfo[self.m_curTabIndex][info.realId]
@@ -1066,14 +1405,11 @@ ValuableDepotCtrl._UpdateItemBlockMask = HL.Method(HL.Any, HL.Table) << function
     cell.view.blockMask.gameObject:SetActiveIfNecessary(showMask)
 end
 
-
-
-
-
 ValuableDepotCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Boolean) << function(self, active, noAnimation)
     local node = self.view.destroyNode
     local infos = self.m_tabsInfo[self.m_curTabIndex]
     local depotConfig = ItemType2DepotConfig[infos.type]
+    local shouldFilterDestroyList = depotConfig.isWeaponDestroy or depotConfig.isGemDestroy
 
     self.view.topNode.tabsPCInputBindingGroup.enabled = not active
     if DeviceInfo.usingController then
@@ -1085,19 +1421,7 @@ ValuableDepotCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Boolean) << func
         if depotConfig.destroyFilterOptions then
             node.quickInputBtn.gameObject:SetActive(true)
             node.quickInputBtn.onClick:AddListener(function()
-                Notify(MessageConst.SHOW_COMMON_FILTER, {
-                    tagGroups = depotConfig.destroyFilterOptions,
-                    selectedTags = self.m_curDestroyFilterConfigs,
-                    onConfirm = function(tags)
-                        self.m_curDestroyFilterConfigs = tags
-                        self:_AutoFillDestroyList(self.m_curTabIndex)
-                        self:_RefreshItemList(true)
-                        self:_UpdateDestroySelectTotalCount()
-                    end,
-                    getResultCount = function(tags)
-                        return self:_GetAutoFillDestroyResultCount(tags)
-                    end,
-                })
+                self:_OpenDestroyFilterPanel(depotConfig)
             end)
         else
             node.quickInputBtn.gameObject:SetActive(false)
@@ -1111,7 +1435,12 @@ ValuableDepotCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Boolean) << func
         elseif depotConfig.isGemDestroy then
             node.simpleStateController:SetState("Gem")
             node.rightNode = node.equipRightNode
+        elseif depotConfig.isWeaponDestroy then
+            node.simpleStateController:SetState("Weapon")
+            node.rightNode = node.equipRightNode
         end
+
+        node.lockManageBtn.gameObject:SetActive(depotConfig.isWeaponDestroy == true)
 
         if noAnimation then
             self.view.animation:SampleToInAnimationEnd()
@@ -1134,6 +1463,13 @@ ValuableDepotCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Boolean) << func
     self.m_inDestroyMode = active
 
     if not active then
+        self.m_pendingDestroyNaviFirst = false
+        if shouldFilterDestroyList then
+            self:_ApplyFilter()
+            self:_ApplySort(self.view.bottomNode.sortNode:GetCurSortData(), self.view.bottomNode.sortNode.isIncremental)
+            self:_SetSelectedIndex()
+            self:_RefreshItemList(true, true)
+        end
         local desInfos = self.m_destroyInfo[self.m_curTabIndex]
         self.m_destroyInfo = {}
         for realId, info in pairs(desInfos) do
@@ -1154,6 +1490,11 @@ ValuableDepotCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Boolean) << func
         end
         self.m_destroyCount = 0
         self:_UpdateDestroySelectTotalCount(true)
+        if shouldFilterDestroyList then
+            self:_ApplyDestroySelectableFilter()
+            self.m_pendingDestroyNaviFirst = DeviceInfo.usingController and self.m_curShowCount > 0
+            self:_RefreshItemList(true, true)
+        end
         if not DeviceInfo.usingController then
             self:_OnClickItem(-1)
         end
@@ -1175,9 +1516,21 @@ ValuableDepotCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Boolean) << func
     self.view.itemScrollList:SetPaddingBottom(active and self.m_oriPaddingBottom + 150 or self.m_oriPaddingBottom)
 end
 
-
-
-
+ValuableDepotCtrl._OpenDestroyFilterPanel = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(self, depotConfig, selectedTags)
+    Notify(MessageConst.SHOW_COMMON_FILTER, {
+        tagGroups = depotConfig.destroyFilterOptions,
+        selectedTags = lume.deepCopy(selectedTags or self.m_curDestroyFilterConfigs or {}),
+        onConfirm = function(tags)
+            self.m_curDestroyFilterConfigs = tags
+            self:_AutoFillDestroyList(self.m_curTabIndex)
+            self:_RefreshItemList(true)
+            self:_UpdateDestroySelectTotalCount()
+        end,
+        getResultCount = function(tags)
+            return self:_GetAutoFillDestroyResultCount(tags)
+        end,
+    })
+end
 
 ValuableDepotCtrl._ClickItemInDestroyMode = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, index, fromNavigation)
     local node = self.view.destroyNode
@@ -1197,18 +1550,11 @@ ValuableDepotCtrl._ClickItemInDestroyMode = HL.Method(HL.Number, HL.Opt(HL.Boole
         end
     else
         if not fromNavigation then
-            local inventory = GameInstance.player.inventory
-            local scope = Utils.getCurrentScope()
-            if not inventory:CanDestroyItem(scope, itemInfo.id) then
-                Notify(MessageConst.SHOW_TOAST, Language.LUA_ITEM_CANT_DESTROY_BECAUSE_TYPE)
+            local isBlocked, toast = self:_GetDestroyBlockToast(itemInfo)
+            if isBlocked then
+                Notify(MessageConst.SHOW_TOAST, toast)
                 self:_SetDestroyCountTarget("")
-            elseif inventory:IsEquipped(scope, itemInfo.id, itemInfo.instId) then
-                Notify(MessageConst.SHOW_TOAST, Language.LUA_ITEM_CANT_DESTROY_BECAUSE_USING)
-                self:_SetDestroyCountTarget("")
-            elseif inventory:IsItemLocked(scope, itemInfo.id, itemInfo.instId) then
-                Notify(MessageConst.SHOW_TOAST, Language.LUA_ITEM_CANT_DESTROY_BECAUSE_LOCK)
-                self:_SetDestroyCountTarget("")
-            elseif self.m_destroyCount >= UIConst.DEPOT_DESTROY_MAX_COUNT then
+            elseif self.m_destroyCount >= Tables.GlobalConst.depotDestroyMaxCount then
                 Notify(MessageConst.SHOW_TOAST, Language.LUA_ITEM_CANT_DESTROY_BECAUSE_SELECTED_MAX)
                 self:_SetDestroyCountTarget("")
             else
@@ -1235,26 +1581,16 @@ ValuableDepotCtrl._ClickItemInDestroyMode = HL.Method(HL.Number, HL.Opt(HL.Boole
     end
 end
 
-
-
-
 ValuableDepotCtrl._MarkItemDestroy = HL.Method(HL.Number) << function(self, index)
     local node = self.view.destroyNode
     local itemInfo = self.m_curShowItemList[index]
     local realId = itemInfo.realId
 
-    local inventory = GameInstance.player.inventory
-    local scope = Utils.getCurrentScope()
-    if not inventory:CanDestroyItem(scope, itemInfo.id) then
+    local isBlocked = self:_GetDestroyBlockToast(itemInfo)
+    if isBlocked then
         return
     end
-    if inventory:IsEquipped(scope, itemInfo.id, itemInfo.instId) then
-        return
-    end
-    if inventory:IsItemLocked(scope, itemInfo.id, itemInfo.instId) then
-        return
-    end
-    if self.m_destroyCount >= UIConst.DEPOT_DESTROY_MAX_COUNT then
+    if self.m_destroyCount >= Tables.GlobalConst.depotDestroyMaxCount then
         return
     end
 
@@ -1267,9 +1603,6 @@ ValuableDepotCtrl._MarkItemDestroy = HL.Method(HL.Number) << function(self, inde
     }
     self.m_destroyCount = self.m_destroyCount + 1
 end
-
-
-
 
 ValuableDepotCtrl._SetDestroyCountTarget = HL.Method(HL.String) << function(self, realId)
     local desInfo
@@ -1313,9 +1646,6 @@ ValuableDepotCtrl._SetDestroyCountTarget = HL.Method(HL.String) << function(self
     end
 end
 
-
-
-
 ValuableDepotCtrl._GetIndexFromRealId = HL.Method(HL.String).Return(HL.Opt(HL.Number, HL.Table)) << function(self, realId)
     for k, v in ipairs(self.m_curShowItemList) do
         if v.realId == realId then
@@ -1323,11 +1653,6 @@ ValuableDepotCtrl._GetIndexFromRealId = HL.Method(HL.String).Return(HL.Opt(HL.Nu
         end
     end
 end
-
-
-
-
-
 
 ValuableDepotCtrl._UpdateItemCellDestroySelectPart = HL.Method(HL.Opt(HL.Number, HL.Userdata, HL.Table)) << function(self, index, cell, desExpandInfo)
     if not cell then
@@ -1340,6 +1665,11 @@ ValuableDepotCtrl._UpdateItemCellDestroySelectPart = HL.Method(HL.Opt(HL.Number,
     local desInfo, itemInfo
     if index then
         itemInfo = self.m_curShowItemList[index]
+        if not itemInfo then
+            cell.view.multiSelectMark.gameObject:SetActive(false)
+            cell.view.redMultiSelectMark.gameObject:SetActive(false)
+            return
+        end
         desInfo = self.m_inDestroyMode and self.m_destroyInfo[self.m_curTabIndex][itemInfo.realId]
     elseif desExpandInfo then
         desInfo = self.m_destroyInfo[desExpandInfo.tabIndex][desExpandInfo.realId]
@@ -1364,7 +1694,7 @@ ValuableDepotCtrl._UpdateItemCellDestroySelectPart = HL.Method(HL.Opt(HL.Number,
 
     if itemInfo then
         local depotConfig = ItemType2DepotConfig[self.m_tabsInfo[self.m_curTabIndex].type]
-        local mark = (depotConfig.isEquipDestroy or depotConfig.isGemDestroy) and cell.view.multiSelectMark or cell.view.redMultiSelectMark
+        local mark = (depotConfig.isEquipDestroy or depotConfig.isGemDestroy or depotConfig.isWeaponDestroy) and cell.view.multiSelectMark or cell.view.redMultiSelectMark
         if desInfo then
             mark.gameObject:SetActive(true)
         else
@@ -1372,10 +1702,6 @@ ValuableDepotCtrl._UpdateItemCellDestroySelectPart = HL.Method(HL.Opt(HL.Number,
         end
     end 
 end
-
-
-
-
 
 ValuableDepotCtrl._OnChangeItemDestroyCount = HL.Method(HL.String, HL.Number) << function(self, realId, newCount)
     for _, infos in ipairs(self.m_destroyInfo) do
@@ -1392,9 +1718,6 @@ ValuableDepotCtrl._OnChangeItemDestroyCount = HL.Method(HL.String, HL.Number) <<
     self:_UpdateItemCountInExpandList(realId) 
 end
 
-
-
-
 ValuableDepotCtrl._UpdateItemCountInExpandList = HL.Method(HL.String) << function(self, realId)
     if not self.view.destroyNode.expandToggle.isOn then
         return
@@ -1410,12 +1733,9 @@ ValuableDepotCtrl._UpdateItemCountInExpandList = HL.Method(HL.String) << functio
     end
 end
 
-
-
-
 ValuableDepotCtrl._UpdateDestroySelectTotalCount = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     local node = self.view.destroyNode
-    node.selectCountTxt.text = string.format(Language.LUA_DEPOT_DESTROY_COUNT, self.m_destroyCount, UIConst.DEPOT_DESTROY_MAX_COUNT)
+    node.selectCountTxt.text = string.format(Language.LUA_DEPOT_DESTROY_COUNT, self.m_destroyCount, Tables.globalConst.depotDestroyMaxCount)
     local showBtn = self.m_destroyCount > 0
     local rightNode = node.rightNode
     if not rightNode.animationWrapper then
@@ -1450,6 +1770,8 @@ ValuableDepotCtrl._UpdateDestroySelectTotalCount = HL.Method(HL.Opt(HL.Boolean))
                 previewItems = self:_GetDesEquipReturnItems(self.m_curTabIndex)
             elseif depotConfig.isGemDestroy then
                 previewItems = self:_GetDesGemReturnItems(self.m_curTabIndex)
+            elseif depotConfig.isWeaponDestroy then
+                previewItems = self:_GetDesWeaponReturnItems(self.m_curTabIndex)
             end
             rightNode.previewItemScrollList.onUpdateCell:RemoveAllListeners()
             rightNode.previewItemScrollList.onUpdateCell:AddListener(function(obj, csIndex)
@@ -1467,9 +1789,6 @@ ValuableDepotCtrl._UpdateDestroySelectTotalCount = HL.Method(HL.Opt(HL.Boolean))
         end
     end
 end
-
-
-
 
 ValuableDepotCtrl._GetDesEquipReturnItems = HL.Method(HL.Number).Return(HL.Table) << function(self, tabIndex)
     local itemMap = {}
@@ -1497,9 +1816,6 @@ ValuableDepotCtrl._GetDesEquipReturnItems = HL.Method(HL.Number).Return(HL.Table
     end
     return items
 end
-
-
-
 
 ValuableDepotCtrl._GetDesGemReturnItems = HL.Method(HL.Number).Return(HL.Table) << function(self, tabIndex)
     local itemMap = {}
@@ -1539,6 +1855,47 @@ end
 
 
 
+
+
+
+ValuableDepotCtrl._GetDesWeaponReturnItems = HL.Method(HL.Number).Return(HL.Table) << function(self, tabIndex)
+    local destroyItemInfos = self.m_destroyInfo[tabIndex]
+
+    local totalExp = 0
+    for _, info in pairs(destroyItemInfos) do
+        local _, itemCfg = Tables.itemTable:TryGetValue(info.id)
+        local weaponInst = info.instId and info.instId > 0 and CharInfoUtils.getWeaponByInstId(info.instId) or nil
+        if itemCfg and weaponInst then
+            totalExp = totalExp + WeaponUtils.CalcItemExp(itemCfg, weaponInst)
+        end
+    end
+    totalExp = math.floor(totalExp)
+
+    local expItems = {}
+    for i = 1, Tables.characterConst.weaponExpItem.Count do
+        local itemId = Tables.characterConst.weaponExpItem[CSIndex(i)]
+        local _, expItemCfg = Tables.itemTable:TryGetValue(itemId)
+        if expItemCfg then
+            local _, rarityCfg = Tables.weaponExpItemTable:TryGetValue(expItemCfg.rarity)
+            if rarityCfg and rarityCfg.itemExp > 0 then
+                table.insert(expItems, { id = itemId, itemExp = rarityCfg.itemExp })
+            end
+        end
+    end
+    table.sort(expItems, function(a, b) return a.itemExp > b.itemExp end)
+
+    local items = {}
+    local remaining = totalExp
+    for _, expItem in ipairs(expItems) do
+        if remaining >= expItem.itemExp then
+            local count = math.floor(remaining / expItem.itemExp)
+            remaining = remaining - count * expItem.itemExp
+            table.insert(items, { id = expItem.id, count = count })
+        end
+    end
+    return items
+end
+
 ValuableDepotCtrl._ToggleDestroySelectExpand = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, fastMode)
     self.view.walletBarPlaceholder.gameObject:SetActive(not active)
 
@@ -1548,6 +1905,7 @@ ValuableDepotCtrl._ToggleDestroySelectExpand = HL.Method(HL.Boolean, HL.Opt(HL.B
 
     node.backBtn.gameObject:SetActive(not active)
     node.hintTxtNode.gameObject:SetActive(not active)
+    node.lockManageBtn.gameObject:SetActive(not active and depotConfig.isWeaponDestroy == true)
     node.quickInputBtn.gameObject:SetActive(depotConfig.destroyFilterOptions and not active)
 
     if active then
@@ -1584,9 +1942,6 @@ ValuableDepotCtrl._ToggleDestroySelectExpand = HL.Method(HL.Boolean, HL.Opt(HL.B
     end
 end
 
-
-
-
 ValuableDepotCtrl._RefreshDestroySelectExpandList = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAnim)
     local node = self.view.destroyNode
     self.m_destroyExpandItemList = {}
@@ -1615,14 +1970,16 @@ ValuableDepotCtrl._RefreshDestroySelectExpandList = HL.Method(HL.Opt(HL.Boolean)
     self:_SetDestroyCountTarget("")
 end
 
-
-
-
-
 ValuableDepotCtrl._OnUpdateExpandCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local info = self.m_destroyExpandItemList[index]
+    if not info then
+        return
+    end
     local realId = info.realId
-    local desInfo = self.m_destroyInfo[info.tabIndex][info.realId]
+    local desInfo = self.m_destroyInfo[info.tabIndex] and self.m_destroyInfo[info.tabIndex][info.realId]
+    if not desInfo then
+        return
+    end
     cell:InitItem(desInfo, function()
         self:_SetDestroyCountTarget(realId)
         if not DeviceInfo.usingController then
@@ -1652,9 +2009,6 @@ ValuableDepotCtrl._OnUpdateExpandCell = HL.Method(HL.Any, HL.Number) << function
     cell.view.button.clickHintTextId = "virtual_mouse_hint_item_tips"
     cell.view.deleteBtn.gameObject:SetActive(true)
 end
-
-
-
 
 ValuableDepotCtrl._OnClickExpandItemDelBtn = HL.Method(HL.Number) << function(self, index)
     local info = self.m_destroyExpandItemList[index]
@@ -1688,15 +2042,9 @@ ValuableDepotCtrl._OnClickExpandItemDelBtn = HL.Method(HL.Number) << function(se
     end
 end
 
-
-
-
 ValuableDepotCtrl.OnEquipRecycle = HL.Method(HL.Table) << function(self, arg)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_EQUIP_RECYCLE_SUCC)
 end
-
-
-
 
 ValuableDepotCtrl.OnGemDismantle = HL.Method(HL.Table) << function(self, args)
     local refundItems, refundMoney = unpack(args)
@@ -1721,7 +2069,35 @@ ValuableDepotCtrl.OnGemDismantle = HL.Method(HL.Table) << function(self, args)
     })
 end
 
+ValuableDepotCtrl.OnWeaponRecycle = HL.Method(HL.Table) << function(self, args)
+    local itemList = unpack(args)
+    local items = {}
+    if itemList then
+        for id, count in cs_pairs(itemList) do
+            table.insert(items, {
+                id = id,
+                count = count,
+            })
+        end
+    end
 
+    if #items > 0 then
+        Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
+            icon = "icon_recycle_rewards",
+            title = Language.LUA_GEM_DISMANTLE_RESULT_TITLE,
+            items = items,
+        })
+    else
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_EQUIP_RECYCLE_SUCC)
+    end
+end
+
+ValuableDepotCtrl.OnWeaponBatchLock = HL.Method(HL.Table) << function(self, args)
+    
+    if self.m_curTabIndex and self.m_curTabIndex > 0 then
+        self:_OnClickTab(self.m_curTabIndex)
+    end
+end
 
 ValuableDepotCtrl._ConfirmDestroy = HL.Method() << function(self)
     local items = {}
@@ -1764,6 +2140,15 @@ ValuableDepotCtrl._ConfirmDestroy = HL.Method() << function(self)
                 self:_ToggleDestroyMode(false, false)
             end,
         })
+    elseif depotConfig.isWeaponDestroy then
+        UIManager:Open(PanelId.DesEquipPopUp, {
+            items = items,
+            returnItems = self:_GetDesWeaponReturnItems(self.m_curTabIndex),
+            onConfirm = function()
+                GameInstance.player.inventory:RecycleWeapon(instDelInfo[self.m_curTabIndex])
+                self:_ToggleDestroyMode(false, false)
+            end,
+        })
     else
         Notify(MessageConst.SHOW_POP_UP, {
             content = Language.LUA_DESTROY_ITEM_CONFIRM_TEXT,
@@ -1786,6 +2171,55 @@ end
 
 
 
+ValuableDepotCtrl._EnterWeaponLockManageMode = HL.Method() << function(self)
+    UIManager:Open(PanelId.CommonBatchLock, {
+        unlockHintText = Language.ui_valuabledepot_weapon_unlock_hint,
+        unlockActions = {
+            {
+                id = CS.Proto.WEAPON_BATCH_LOCK_MODE.UnlockAllFiveStar,
+                labelText = Language.ui_valuabledepot_weapon_unlock_all_fivestar,
+            },
+            {
+                id = CS.Proto.WEAPON_BATCH_LOCK_MODE.UnlockFiveStarBeyondPotentialCap,
+                labelText = Language.ui_valuabledepot_weapon_unlock_maxpotential,
+            },
+        },
+        lockActions = {
+            {
+                id = CS.Proto.WEAPON_BATCH_LOCK_MODE.LockAllFiveStar,
+                labelText = Language.ui_valuabledepot_weapon_lock_all_fivestar,
+            },
+        },
+        onConfirm = function(mode)
+            GameInstance.player.inventory:WeaponBatchLock(mode)
+        end,
+    })
+end
+
+ValuableDepotCtrl.EnterWeaponDestroyMode = HL.Method() << function(self)
+    local weaponTabIndex = -1
+    for index, info in ipairs(self.m_tabsInfo or {}) do
+        if info.type == GEnums.ItemValuableDepotType.Weapon then
+            weaponTabIndex = index
+            break
+        end
+    end
+    if weaponTabIndex <= 0 then
+        return
+    end
+    if self.m_curTabIndex ~= weaponTabIndex then
+        self:_ReadCurShowingItems()
+        local weaponTabCell = self.m_tabCells and self.m_tabCells:GetItem(weaponTabIndex)
+        if weaponTabCell and weaponTabCell.toggle then
+            weaponTabCell.toggle.isOn = true
+        end
+        self:_OnClickTab(weaponTabIndex)
+    end
+    if not self.m_inDestroyMode then
+        self:_ToggleDestroyMode(true, false)
+    end
+end
+
 ValuableDepotCtrl.OnItemLockedStateChanged = HL.Method(HL.Table) << function(self, args)
     if not self.m_inDestroyMode then
         return
@@ -1800,10 +2234,6 @@ ValuableDepotCtrl.OnItemLockedStateChanged = HL.Method(HL.Table) << function(sel
         self:_ClickItemInDestroyMode(self.m_curItemIndex)
     end
 end
-
-
-
-
 
 
 
@@ -1837,10 +2267,6 @@ ValuableDepotCtrl._JumpToWeaponGem = HL.Method(HL.String, HL.Number) << function
     GameAction.ShowBlackScreen(dynamicFadeData)
 end
 
-
-
-
-
 ValuableDepotCtrl._JumpToWeapon = HL.Method(HL.String, HL.Number) << function(self, weaponTemplateId, weaponInstId)
     local fadeTimeBoth = UIConst.CHAR_INFO_TRANSITION_BLACK_SCREEN_DURATION
     local dynamicFadeData = UIUtils.genDynamicBlackScreenMaskData("ValuableDepot->WeaponInfo", fadeTimeBoth, fadeTimeBoth, function()
@@ -1856,11 +2282,6 @@ ValuableDepotCtrl._JumpToWeapon = HL.Method(HL.String, HL.Number) << function(se
     dynamicFadeData.notHideCursor = true
     GameAction.ShowBlackScreen(dynamicFadeData)
 end
-
-
-
-
-
 
 ValuableDepotCtrl._CheckIfCanJump = HL.Method(HL.String, HL.Userdata, HL.Opt(HL.Number)).Return(HL.Boolean, HL.Opt(HL.Function)) << function(self, itemId, itemType, instId)
     if not instId or instId <= 0 then
@@ -1890,17 +2311,13 @@ ValuableDepotCtrl._CheckIfCanJump = HL.Method(HL.String, HL.Userdata, HL.Opt(HL.
     return true, self._JumpToWeaponGem
 end
 
-
-
-
-
 ValuableDepotCtrl._CheckIfCanUse = HL.Method(HL.String, HL.Int).Return(HL.Boolean, HL.Opt(HL.Function)) << function(self, itemId, instId)
     local _, itemData = Tables.itemTable:TryGetValue(itemId)
     local itemType = itemData.type
     
     if itemType == GEnums.ItemType.APItem or itemType == GEnums.ItemType.APLimitItem then
         return true, function()
-            UIManager:Open(PanelId.StaminaPopUp, { itemId = itemId, instId = instId })
+            PhaseManager:OpenPhase(PhaseId.StaminaPopUp, { itemId = itemId, instId = instId, isQuickExchange = true })
         end
     end
     
@@ -1974,9 +2391,6 @@ ValuableDepotCtrl._CheckIfCanUse = HL.Method(HL.String, HL.Int).Return(HL.Boolea
     return false
 end
 
-
-
-
 ValuableDepotCtrl._CheckIfShowTips = HL.Method(HL.String).Return(HL.Boolean, HL.Opt(HL.String)) << function(self, itemId)
     local _, itemData = Tables.itemTable:TryGetValue(itemId)
     if itemData.type == GEnums.ItemType.MapDetector then
@@ -1999,9 +2413,6 @@ ValuableDepotCtrl._CheckIfShowTips = HL.Method(HL.String).Return(HL.Boolean, HL.
     return false
 end
 
-
-
-
 ValuableDepotCtrl._UpdateDecoIcons = HL.Method(HL.Opt(HL.String)) << function(self, id)
     if not id or string.isEmpty(id) then
         return
@@ -2015,14 +2426,14 @@ end
 
 
 
-
-
-
 ValuableDepotCtrl._ReadItem = HL.Method(HL.Number) << function(self, index)
     if index <= 0 then
         return
     end
     local info = self.m_curShowItemList[index]
+    if not info then
+        return
+    end
     if info.instId then
         GameInstance.player.inventory:ReadNewItem(info.id, info.instId)
     else
@@ -2030,13 +2441,9 @@ ValuableDepotCtrl._ReadItem = HL.Method(HL.Number) << function(self, index)
     end
 end
 
-
 ValuableDepotCtrl.m_readItemIds = HL.Field(HL.Table)
 
-
 ValuableDepotCtrl.m_readItemInstIds = HL.Field(HL.Table)
-
-
 
 ValuableDepotCtrl._ReadCurShowingItems = HL.Method() << function(self)
     local tabInfo = self.m_tabsInfo[self.m_curTabIndex]
@@ -2064,8 +2471,6 @@ ValuableDepotCtrl._ReadCurShowingItems = HL.Method() << function(self)
 end
 
 
-
-
 ValuableDepotCtrl.CheckLTItemExpire = HL.Method() << function(self)
     if inventorySystem.waitConfirmExpireLTItemDict.Count <= 0 then
         return
@@ -2078,16 +2483,10 @@ ValuableDepotCtrl.CheckLTItemExpire = HL.Method() << function(self)
     inventorySystem:SendConfirmLTItemsExpireReq(recordIds)
 end
 
-
-
-
 ValuableDepotCtrl.OnLTItemExpire = HL.Method(HL.Any) << function(self, arg)
     local recordId = unpack(arg)
     inventorySystem:SendConfirmLTItemsExpireReq({ recordId })
 end
-
-
-
 
 ValuableDepotCtrl.OnUseItem = HL.Method(HL.Any) << function(self, arg)
     local itemId, result = unpack(arg)
@@ -2107,11 +2506,7 @@ end
 
 
 
-
 ValuableDepotCtrl.m_bpTicketItemId = HL.Field(HL.String) << ''
-
-
-
 
 ValuableDepotCtrl.OnBPTicketReward = HL.Method(HL.Any) << function(self, args)
     local bundles = unpack(args)
@@ -2127,9 +2522,6 @@ ValuableDepotCtrl.OnBPTicketReward = HL.Method(HL.Any) << function(self, args)
     }
     Notify(MessageConst.SHOW_SYSTEM_REWARDS, rewardPanelArg)
 end
-
-
-
 
 ValuableDepotCtrl.TryPopupBp = HL.Method(HL.String) << function(self, itemId)
     local hasTrack, trackType = BattlePassUtils.GetBattlePassTicketTrackType(itemId)
@@ -2148,9 +2540,6 @@ ValuableDepotCtrl.TryPopupBp = HL.Method(HL.String) << function(self, itemId)
         PhaseManager:GoToPhase(PhaseId.BattlePass, phaseArg)
     end)
 end
-
-
-
 
 
 ValuableDepotCtrl.ShowLTItemExpirePopup = HL.Method(HL.Any) << function(self, arg)
@@ -2201,10 +2590,7 @@ end
 
 
 
-
 ValuableDepotCtrl.m_lockToggleBindingId = HL.Field(HL.Number) << -1
-
-
 
 ValuableDepotCtrl._InitController = HL.Method() << function(self)
     self.view.walletBarPlaceholder:InitWalletBarPlaceholder(JsonConst.VALUABLE_DEPOT_MONEY_IDS)
@@ -2230,8 +2616,6 @@ ValuableDepotCtrl._InitController = HL.Method() << function(self)
     end)
     UIUtils.bindHyperlinkPopup(self, "ValuableDepot", self.view.inputGroup.groupId)
 end
-
-
 
 
 

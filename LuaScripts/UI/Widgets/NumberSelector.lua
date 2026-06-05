@@ -77,6 +77,10 @@ NumberSelector._OnFirstTimeInit = HL.Override() << function(self)
             while true do
                 local refreshInterval, refreshAmount, isFastAmount = self:_GetPressBtnRefreshParam(refreshCount)
                 coroutine.wait(refreshInterval)
+                if not self.view.addButton.groupEnabled then
+                    self.m_addBtnPressCoroutine = nil
+                    return
+                end
                 local nextAmountStep = (math.floor(self.curNumber / refreshAmount) + 1) * refreshAmount
                 local nextAmount = isFastAmount and (self.curNumber % refreshAmount + nextAmountStep) or nextAmountStep
                 local nextNumber = math.min(nextAmount, self.m_max)
@@ -106,6 +110,10 @@ NumberSelector._OnFirstTimeInit = HL.Override() << function(self)
             while true do
                 local refreshInterval, refreshAmount, isFastAmount = self:_GetPressBtnRefreshParam(refreshCount)
                 coroutine.wait(refreshInterval)
+                if not self.view.reduceButton.groupEnabled then
+                    self.m_reduceBtnPressCoroutine = nil
+                    return
+                end
                 local nextAmountStepDiv = isFastAmount and (math.floor(self.curNumber / refreshAmount) - 1) or (math.ceil(self.curNumber / refreshAmount) - 1)
                 local nextAmountStep = nextAmountStepDiv * refreshAmount
                 local nextAmount = isFastAmount and (self.curNumber % refreshAmount + nextAmountStep) or nextAmountStep

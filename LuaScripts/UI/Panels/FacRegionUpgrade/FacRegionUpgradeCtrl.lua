@@ -77,6 +77,8 @@ local RegionBoundEffectType = {
 
 
 
+
+
 FacRegionUpgradeCtrl = HL.Class('FacRegionUpgradeCtrl', uiCtrl.UICtrl)
 
 local WALLET_ICON_NAME_FORMAT = "%s_black"
@@ -201,8 +203,11 @@ FacRegionUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_InitCurrencyItem()
     self:_InitItemDetailList()
-
     self:_InitRegionSceneData()
+
+    
+    local recoverState = arg and arg.recoverState
+    self:_TryRecoverState(recoverState)
 end
 
 
@@ -259,6 +264,22 @@ FacRegionUpgradeCtrl._InitItemDetailList = HL.Method() << function(self)
     self:_UpdateAndRefreshAllUpgradeItems()
     self:_RefreshBtnNodeState()
     self:_RefreshBusNodeState()
+end
+
+
+
+
+FacRegionUpgradeCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState and not string.isEmpty(recoverState.selectedItemId) then
+        self:_StartCoroutine(function()
+            coroutine.step()
+            
+            local itemData = self.m_itemDataGetter[recoverState.selectedItemId]
+            if itemData ~= nil and not itemData.isPurchased then
+                self:_SelectUpgradeItemCell(recoverState.selectedItemId)
+            end
+        end)
+    end
 end
 
 
@@ -875,6 +896,17 @@ end
 
 
 
+FacRegionUpgradeCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Table)) << function(self)
+    if string.isEmpty(self.m_selectItemId) then
+        return nil
+    end
+    return {
+        selectedItemId = self.m_selectItemId,
+    }
+end
+
+
+
 
 
 
@@ -928,6 +960,7 @@ FacRegionUpgradeCtrl.InitRegionEffects = HL.Method(HL.Table) << function(self, e
     self:_ResetRegionEffects()
 
     self.m_regionEffectInitialized = true
+    self:_OnRegionLevelUpItemSelectedStateChange(self.m_selectItemId, true)
 end
 
 
@@ -967,6 +1000,7 @@ FacRegionUpgradeCtrl.InitBusEffects = HL.Method(HL.Table) << function(self, effe
     self:_ResetBusEffects()
 
     self.m_busEffectInitialized = true
+    self:_OnBusPlaceItemSelectedStateChange(self.m_selectItemId, true)
 end
 
 
@@ -1161,6 +1195,12 @@ end
 
 
 FacRegionUpgradeCtrl._FindFirstItemCellToSelectInController = HL.Method() << function(self)
+    local selectedItemData = self.m_itemDataGetter[self.m_selectItemId]
+    if selectedItemData ~= nil and selectedItemData.cell ~= nil then
+        UIUtils.setAsNaviTarget(selectedItemData.cell.button)
+        return
+    end
+
     
     local findList = { self.m_regionItemDataList, self.m_busItemDataList }
     for _, dataList in ipairs(findList) do

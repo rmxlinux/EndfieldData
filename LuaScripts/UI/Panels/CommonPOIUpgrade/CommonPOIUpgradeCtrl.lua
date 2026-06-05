@@ -40,6 +40,8 @@ local PHASE_ID = PhaseId.CommonPOIUpgrade
 
 
 
+
+
 CommonPOIUpgradeCtrl = HL.Class('CommonPOIUpgradeCtrl', uiCtrl.UICtrl)
 
 
@@ -51,6 +53,7 @@ CommonPOIUpgradeCtrl = HL.Class('CommonPOIUpgradeCtrl', uiCtrl.UICtrl)
 CommonPOIUpgradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_DOMAIN_SHOP_CHANNEL_UNLOCK] = 'OnDomainShopChannelUnlock',
     [MessageConst.ON_DOMAIN_SHOP_CHANNEL_LEVEL_UP] = 'OnDomainShopChannelLevelUp',
+    [MessageConst.ON_SIMULATION_TRAINING_LEVEL_UP] = 'OnSimulationTrainingLevelChange',
     [MessageConst.ON_SEWAGE_TREAT_PLANT_LEVEL_CHANGE] = 'OnSewageTreatPlantLevelChange',
     [MessageConst.ON_SQUAD_INFIGHT_CHANGED] = 'OnSquadInFightChanged',
 }
@@ -64,6 +67,7 @@ local GetDataFunc = {
     [GEnums.DomainPoiType.KiteStation] = "_GetDataKiteStation",
     [GEnums.DomainPoiType.DomainDepot] = "_GetDataDomainDepot",
     [GEnums.DomainPoiType.SewageTreatPlant] = "_GetDataSewageTreatPlant",
+    [GEnums.DomainPoiType.SimulationTraining] = "_GetDataSimulationTraining",
 }
 
 
@@ -73,6 +77,7 @@ local InitEventFunc = {
     [GEnums.DomainPoiType.KiteStation] = "_InitEventKiteStation",
     [GEnums.DomainPoiType.DomainDepot] = "_InitEventDomainDepot",
     [GEnums.DomainPoiType.SewageTreatPlant] = "_InitEventSewageTreatPlant",
+    [GEnums.DomainPoiType.SimulationTraining] = "_InitEventSimulationTraining",
 }
 
 
@@ -228,8 +233,21 @@ CommonPOIUpgradeCtrl._InitEventSewageTreatPlant = HL.Method() << function(self)
     end
 
     self.m_onClickUpgradeBtn = function()
-        local currLevel = FactoryUtils.getSewageTreatPlantLevel(self.m_instId)
-        GameInstance.player.remoteFactory.core:Message_SewageTreatPlantLevelUp(self.m_instId, currLevel + 1)
+        local plantData = FactoryUtils.getSewageTreatPlantData(self.m_instId)
+        GameInstance.player.remoteFactory.core:Message_SewageTreatPlantLevelUp(self.m_instId, plantData.currLevel + 1)
+    end
+end
+
+
+
+
+CommonPOIUpgradeCtrl._InitEventSimulationTraining = HL.Method() << function(self)
+    self.m_onClickUnlockBtn = function()
+        GameInstance.player.simulationTrainingSystem:SimulationTrainingLevelUp()
+    end
+
+    self.m_onClickUpgradeBtn = function()
+        GameInstance.player.simulationTrainingSystem:SimulationTrainingLevelUp()
     end
 end
 
@@ -241,34 +259,26 @@ end
 
 
 CommonPOIUpgradeCtrl.OnDomainShopChannelUnlock = HL.Method() << function(self)
-    local isOpen, _ = PhaseManager:IsOpen(PhaseId.Dialog)
-    if isOpen then
-        Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 1 })
-    else
-        PhaseManager:PopPhase(PHASE_ID)
-    end
+    PhaseManager:ExitPhaseFast(PHASE_ID)
 end
 
 
 
 CommonPOIUpgradeCtrl.OnDomainShopChannelLevelUp = HL.Method() << function(self)
-    local isOpen, _ = PhaseManager:IsOpen(PhaseId.Dialog)
-    if isOpen then
-        Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 1 })
-    else
-        PhaseManager:PopPhase(PHASE_ID)
-    end
+    PhaseManager:ExitPhaseFast(PHASE_ID)
 end
 
 
 
 CommonPOIUpgradeCtrl.OnSewageTreatPlantLevelChange = HL.Method() << function(self)
-    local isOpen, _ = PhaseManager:IsOpen(PhaseId.Dialog)
-    if isOpen then
-        Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 1 })
-    else
-        PhaseManager:PopPhase(PHASE_ID)
-    end
+    PhaseManager:ExitPhaseFast(PHASE_ID)
+end
+
+
+
+
+CommonPOIUpgradeCtrl.OnSimulationTrainingLevelChange = HL.Method() << function(self)
+    PhaseManager:ExitPhaseFast(PHASE_ID)
 end
 
 
@@ -637,6 +647,188 @@ end
 
 
 
+CommonPOIUpgradeCtrl._GetDataSimulationTraining = HL.Method().Return(HL.Any) << function(self)
+    local simulationTrainingSystem = GameInstance.player.simulationTrainingSystem
+    local curLevel = simulationTrainingSystem.curLevel
+    local hasCfg, curLevelData
+    if curLevel == 0 then
+        hasCfg = true
+        curLevelData = {}
+    else
+        hasCfg, curLevelData = Tables.simulationTrainingLevelTable:TryGetValue(curLevel)
+    end
+
+    local info = DomainPOIUtils.getUpgradeCtrlArgsTemplate()
+    if not simulationTrainingSystem or not hasCfg then
+        return info
+    end
+
+    info.domainId = Tables.simulationTrainingConst.domainId 
+    info.levelId = Tables.simulationTrainingConst.simulationTrainingRefLevelId
+    info.titleName = Language.LUA_SIMULATION_TRAINING_TITLE
+
+    local curMaxLevel = simulationTrainingSystem.maxLevel
+    local targetLevel = math.min(curLevel + 1, curMaxLevel)
+    local isCurMaxLevel = curLevel == curMaxLevel
+    info.curLevel = curLevel
+    info.targetLevel = targetLevel
+    info.maxLevel = curMaxLevel
+    if curLevel == 0 then
+        info.isFinalMaxLevel = false
+    else
+        info.isFinalMaxLevel = curLevel == curMaxLevel
+    end
+
+    local arrowPath = UIConst.UI_SPRITE_COMMON .. "/deco_common_arrow"
+
+    local curMaxPointAward = 0
+    local curDoubleLimit = 0
+    if curLevel == 0 then
+        info.descList = string.split(Language.LUA_SIMULATION_TRAINING_ZERO_LEVEL_DESC, "\n")
+    else
+        curDoubleLimit = curLevelData.doubleLimit
+        info.descList = string.split(curLevelData.desc, "\n")
+        if curLevelData.pointAward.Count > 0 then
+            curMaxPointAward = curLevelData.pointAward[curLevelData.pointAward.Count - 1]
+        else
+            curMaxPointAward = 0
+        end
+
+    end
+    local hasTargetLevelCfg, targetLevelData = Tables.simulationTrainingLevelTable:TryGetValue(targetLevel)
+    local targetMaxPointAward = 0
+    local targetDoubleLimit = targetLevelData.doubleLimit
+    if targetLevelData.pointAward.Count > 0 then
+        targetMaxPointAward = targetLevelData.pointAward[targetLevelData.pointAward.Count - 1]
+    end
+
+    info.upgradeCostMoney = targetLevelData.costDomainMoney
+
+    local pointAwardTitleIcon = UIConst.UI_SPRITE_DOMAIN_DEPOT_UPGRADE .. "/" .. "simulation_training_bonus_icon"
+    local doubleTitleIcon = UIConst.UI_SPRITE_DOMAIN_DEPOT_UPGRADE .. "/" .. "simulation_training_num_icon"
+    local unlimitedModeTitleIcon = UIConst.UI_SPRITE_DOMAIN_DEPOT_UPGRADE .. "/" .. "simulation_training_unlock_icon"
+    local tipColor = "fffc00"
+    local baseColor = "ffffff"
+
+    if isCurMaxLevel then
+        local rewardTitleText = Language.LUA_SIMULATION_TRAINING_TIP_REWARD_CONTENT_NORMAL
+        local rewardContentList = {
+            text1 = curMaxPointAward,
+            text1Color = UIUtils.getColorByString(tipColor),
+        }
+        DomainPOIUtils.insertContentCommonTitle(
+            info,
+            pointAwardTitleIcon,
+            Language.LUA_SIMULATION_TRAINING_LEVEL_UP_TIP_REWARD_TITLE
+        )
+        DomainPOIUtils.insertContentTextImgText(info, rewardTitleText, { rewardContentList }, 2)
+
+        local doubleTitleText = Language.LUA_SIMULATION_TRAINING_TIP_DOUBLE_CONTENT_NORMAL
+        local doubleContentList = {
+            text1 = curDoubleLimit,
+            text1Color = UIUtils.getColorByString(tipColor),
+        }
+        DomainPOIUtils.insertContentCommonTitle(
+            info,
+            doubleTitleIcon,
+            Language.LUA_SIMULATION_TRAINING_LEVEL_UP_TIP_DOUBLE_TITLE
+        )
+        DomainPOIUtils.insertContentTextImgText(info, doubleTitleText, { doubleContentList }, 2)
+    else
+        local showPointAward = false
+        local rewardTitleText = ""
+        local rewardContentList = {}
+        if curMaxPointAward == targetMaxPointAward then
+            if curMaxPointAward ~= 0 then
+                showPointAward = true
+                rewardTitleText = Language.LUA_SIMULATION_TRAINING_TIP_REWARD_CONTENT_NORMAL
+                rewardContentList = {
+                    text1 = curMaxPointAward,
+                    text1Color = UIUtils.getColorByString(tipColor),
+                }
+            end
+        else
+            showPointAward = true
+            rewardTitleText = Language.LUA_SIMULATION_TRAINING_TIP_REWARD_CONTENT_LEVEL_UP
+            rewardContentList = {
+                text1 = curMaxPointAward,
+                text1Color = UIUtils.getColorByString(baseColor),
+                icon = arrowPath,
+                iconColor = UIUtils.getColorByString(tipColor),
+                text2 = targetMaxPointAward,
+                text2Color = UIUtils.getColorByString(tipColor),
+            }
+        end
+
+        if showPointAward then
+            DomainPOIUtils.insertContentCommonTitle(
+                info,
+                pointAwardTitleIcon,
+                Language.LUA_SIMULATION_TRAINING_LEVEL_UP_TIP_REWARD_TITLE
+            )
+            DomainPOIUtils.insertContentTextImgText(info, rewardTitleText, { rewardContentList }, 2)
+        end
+
+        local showDouble = false
+        local doubleTitleText = ""
+        local doubleContentList = {}
+        if curDoubleLimit == targetDoubleLimit then
+            if curDoubleLimit ~= 0 then
+                showDouble = true
+                doubleTitleText = Language.LUA_SIMULATION_TRAINING_TIP_DOUBLE_CONTENT_NORMAL
+                doubleContentList = {
+                    text1 = curDoubleLimit,
+                    text1Color = UIUtils.getColorByString(tipColor),
+                }
+            end
+        else
+            showDouble = true
+            doubleTitleText = Language.LUA_SIMULATION_TRAINING_TIP_DOUBLE_CONTENT_LEVEL_UP
+            doubleContentList = {
+                text1 = curDoubleLimit,
+                text1Color = UIUtils.getColorByString(baseColor),
+                icon = arrowPath,
+                iconColor = UIUtils.getColorByString(tipColor),
+                text2 = targetDoubleLimit,
+                text2Color = UIUtils.getColorByString(tipColor),
+            }
+        end
+
+        if showDouble then
+            DomainPOIUtils.insertContentCommonTitle(
+                info,
+                doubleTitleIcon,
+                Language.LUA_SIMULATION_TRAINING_LEVEL_UP_TIP_DOUBLE_TITLE
+            )
+            DomainPOIUtils.insertContentTextImgText(info, doubleTitleText, { doubleContentList }, 2)
+        end
+    end
+
+    
+    if curLevel == 0 then
+        local questId = Tables.simulationTrainingConst.unlockQuestId
+        if not GameInstance.player.mission:IsQuestCompleted(questId) then
+            info.showJumpToTask = true
+            info.upgradeQuestId = questId
+            info.upgradeQuestDesc = Language.LUA_SIMULATION_TRAINING_QUEST_UNLOCK_DESC
+            info.jumpTaskToast = Language.LUA_SIMULATION_TRAINING_QUEST_UNLOCK_TOAST
+        end
+    elseif curLevel == 1 then
+        local questId = Tables.simulationTrainingConst.unlockLevel2QuestId
+        if not GameInstance.player.mission:IsQuestCompleted(questId) then
+            info.showJumpToTask = true
+            info.upgradeQuestId = questId
+            info.upgradeQuestDesc = Language.LUA_SIMULATION_TRAINING_UNLOCK_LEVEL_DESC_1_2
+            info.jumpTaskToast = Language.LUA_SIMULATION_TRAINING_UNLOCK_LEVEL_TOAST_1_2
+        end
+    end
+
+    return info
+
+end
+
+
+
 
 
 
@@ -667,7 +859,11 @@ CommonPOIUpgradeCtrl._InitUI = HL.Method() << function(self)
                 autoSelect = self.m_info.upgradeMissionId
             })
         else
-            Notify(MessageConst.SHOW_TOAST, Language.LUA_POI_UPGRADE_NEED_COMPLETE_TASK)
+            if not string.isEmpty(self.m_info.jumpTaskToast) then
+                Notify(MessageConst.SHOW_TOAST, self.m_info.jumpTaskToast)
+            else
+                Notify(MessageConst.SHOW_TOAST, Language.LUA_POI_UPGRADE_NEED_COMPLETE_TASK)
+            end
         end
     end)
     
@@ -855,18 +1051,27 @@ CommonPOIUpgradeCtrl._RefreshContentUITextImgText = HL.Method(HL.Table) << funct
         else
             contentCell.txt1.gameObject:SetActive(true)
             contentCell.txt1.text = contentInfo.text1
+            if contentInfo.text1Color ~= nil and not string.isEmpty(contentInfo.text1Color) then
+                contentCell.txt1.color = contentInfo.text1Color
+            end
         end
         if string.isEmpty(contentInfo.icon) then
             contentCell.iconImg.gameObject:SetActive(false)
         else
             contentCell.iconImg.gameObject:SetActive(true)
             contentCell.iconImg:LoadSprite(contentInfo.icon)
+            if contentInfo.iconColor ~= nil and not string.isEmpty(contentInfo.iconColor) then
+                contentCell.iconImg.color = contentInfo.iconColor
+            end
         end
         if string.isEmpty(contentInfo.text2) then
             contentCell.txt2.gameObject:SetActive(false)
         else
             contentCell.txt2.gameObject:SetActive(true)
             contentCell.txt2.text = contentInfo.text2
+            if contentInfo.text2Color ~= nil and not string.isEmpty(contentInfo.text2Color) then
+                contentCell.txt2.color = contentInfo.text2Color
+            end
         end
     end)
 end
@@ -953,18 +1158,13 @@ end
 
 
 CommonPOIUpgradeCtrl._CloseSelf = HL.Method(HL.Opt(HL.Boolean)) << function(self, isFast)
-    Notify(MessageConst.HIDE_ITEM_TIPS)
-    local isOpen, _ = PhaseManager:IsOpen(PhaseId.Dialog)
-    if isOpen then
-        AudioManager.PostEvent("Au_UI_Popup_DetailsPanel_Close")
-        Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
+    AudioManager.PostEvent("Au_UI_Popup_DetailsPanel_Close")
+    Notify(MessageConst.DIALOG_CHANGE_NEXT_INDEX, { phaseId = PHASE_ID, nextIndex = 0, })
+    if isFast then
+        Notify(MessageConst.HIDE_ITEM_TIPS)
+        PhaseManager:ExitPhaseFast(PHASE_ID)
     else
-        if isFast then
-            Notify(MessageConst.HIDE_ITEM_TIPS)
-            PhaseManager:ExitPhaseFast(PHASE_ID)
-        else
-            PhaseManager:PopPhase(PHASE_ID)
-        end
+        PhaseManager:PopPhase(PHASE_ID)
     end
 end
 

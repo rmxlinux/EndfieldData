@@ -37,6 +37,8 @@ local PANEL_ID = PanelId.FacSearchBlueprint
 
 
 
+
+
 FacSearchBlueprintCtrl = HL.Class('FacSearchBlueprintCtrl', uiCtrl.UICtrl)
 
 
@@ -106,8 +108,8 @@ FacSearchBlueprintCtrl.OnCreate = HL.Override(HL.Any) << function(self, searchIn
     
     local _, bpCtrl = UIManager:IsOpen(PanelId.FacBlueprint)
     self.m_bpCtrl = bpCtrl
-    self.m_typeInfos = bpCtrl.m_typeInfos
-    self.m_bpAbnormalIconHelper = bpCtrl.m_bpAbnormalIconHelper
+    self.m_typeInfos = bpCtrl:GetTypeInfos()
+    self.m_bpAbnormalIconHelper = bpCtrl:GetBPAbnormalIconHelper()
 
     self.m_typeCells = UIUtils.genCellCache(self.view.blueprintTypeCell)
 
@@ -140,28 +142,23 @@ FacSearchBlueprintCtrl.OnCreate = HL.Override(HL.Any) << function(self, searchIn
         else
             self.view.mainStateController:SetState("Normal")
         end
-        if searchInfos.keyword and searchInfos.csBPInst then
-            self.view.inputField.text = searchInfos.keyword
+        if searchInfos.normalizedPosition ~= nil then
+            self.m_normalizedPosition = searchInfos.normalizedPosition
+        end
+        local inputText = searchInfos.keyword
+        if string.isEmpty(inputText) then
+            inputText = searchInfos.inputText
+        end
+        if not string.isEmpty(inputText) then
+            self.view.inputField.text = inputText
+        end
+        if searchInfos.keyword ~= nil then
             self.m_curKeyWord = searchInfos.keyword
             self:_RealSearch(true)
-            local found
-            for k, v in ipairs(self.m_searchResults) do
-                for kk, vv in ipairs(v.validInsts) do
-                    if vv.csInst == searchInfos.csBPInst then
-                        self:_OnClickCell(k, kk)
-                        found = true
-                        break
-                    end
-                end
-                if found then
-                    break
-                end
-            end
+            self:_TryRecoverSelectedCell(searchInfos)
         else
-            
-            
-            self.view.searchNode:Clear()
-            self:_TrySearch(true)
+            self.m_curKeyWord = ''
+            self:_RealSearch(true)
         end
     else
         self.view.mainStateController:SetState("Normal")
@@ -174,6 +171,56 @@ end
 
 
 FacSearchBlueprintCtrl.m_curKeyWord = HL.Field(HL.String) << ''
+
+
+
+FacSearchBlueprintCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
+    local searchInfos = {
+        inputText = self.view.inputField.text,
+        keyword = self.m_curKeyWord,
+        normalizedPosition = self.view.scrollView.verticalNormalizedPosition,
+    }
+    if self.m_friendSharing and self.m_friendRoleId then
+        searchInfos.setStateShare = true
+        searchInfos.friendRoleId = self.m_friendRoleId
+    end
+    if self.m_selectedTypeIndex > 0 and self.m_selectedIndex > 0 then
+        local searchGroup = self.m_searchResults and self.m_searchResults[self.m_selectedTypeIndex]
+        local selectedInst = searchGroup and searchGroup.validInsts and searchGroup.validInsts[self.m_selectedIndex]
+        if selectedInst then
+            searchInfos.selectedBlueprintType = selectedInst.type:ToString()
+            searchInfos.selectedBlueprintId = selectedInst.id
+        end
+    end
+    return searchInfos
+end
+
+
+
+
+FacSearchBlueprintCtrl._TryRecoverSelectedCell = HL.Method(HL.Opt(HL.Any)).Return(HL.Boolean) << function(self, searchInfos)
+    if not searchInfos or not self.m_searchResults or #self.m_searchResults == 0 then
+        return false
+    end
+    local selectedBlueprintType = searchInfos.selectedBlueprintType
+    local selectedBlueprintId = searchInfos.selectedBlueprintId
+    local selectedBlueprintInst = searchInfos.csBPInst
+    for typeIndex, searchGroup in ipairs(self.m_searchResults) do
+        for index, inst in ipairs(searchGroup.validInsts) do
+            if selectedBlueprintInst and inst.csInst == selectedBlueprintInst then
+                self:_OnClickCell(typeIndex, index)
+                return true
+            end
+            if selectedBlueprintId ~= nil and inst.id == selectedBlueprintId then
+                if string.isEmpty(selectedBlueprintType) or searchGroup.typeInfo.type:ToString() == selectedBlueprintType then
+                    self:_OnClickCell(typeIndex, index)
+                    return true
+                end
+            end
+        end
+    end
+    return false
+end
 
 
 

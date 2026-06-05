@@ -152,9 +152,12 @@ do
 
     
     
-    PhaseCharItem.ReloadWeapon = HL.Method() << function(self)
+    PhaseCharItem.ReloadWeapon = HL.Method(HL.Opt(HL.Boolean)) << function(self, forceReload)
         if self.uiModelMono then
-            self.uiModelMono:ReloadWeapon(self.charInstId)
+            if forceReload == nil then
+                forceReload = true
+            end
+            self.uiModelMono:ReloadWeapon(self.charInstId, forceReload)
         end
     end
 

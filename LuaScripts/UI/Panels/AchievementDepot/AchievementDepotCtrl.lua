@@ -45,6 +45,12 @@ local PANEL_ID = PanelId.AchievementDepot
 
 
 
+
+
+
+
+
+
 AchievementDepotCtrl = HL.Class('AchievementDepotCtrl', uiCtrl.UICtrl)
 
 
@@ -121,9 +127,11 @@ AchievementDepotCtrl.m_isFold = HL.Field(HL.Boolean) << false
 
 
 AchievementDepotCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
+    local recoverState = args and args.recoverState or nil
     self.m_args = args
     self:_InitViews()
-    self:_LoadData(args.depot)
+    self:_LoadData(args and args.depot)
+    self:_TryRecoverState(recoverState)
     self:_RenderViews(true)
 end
 
@@ -663,6 +671,90 @@ AchievementDepotCtrl._GetFilteredCount = HL.Method(HL.Table).Return(HL.Number) <
         end
     end
     return count
+end
+
+
+
+AchievementDepotCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    return {
+        selectedAchievementIds = self:_GetSelectedAchievementRecoverState(),
+        selectCategoryIndex = self.m_selectCategoryIndex,
+        selectGroupIndex = self.m_selectGroupIndex,
+        searchKey = self.m_searchKey,
+        selectedFilterTags = lume.deepCopy(self.m_selectedFilterTags),
+    }
+end
+
+
+
+AchievementDepotCtrl._GetSelectedAchievementRecoverState = HL.Method().Return(HL.Table) << function(self)
+    local selectedAchievementIds = {}
+    for achievementId, flag in pairs(self.m_editSelected) do
+        if flag == true then
+            table.insert(selectedAchievementIds, achievementId)
+        end
+    end
+    return selectedAchievementIds
+end
+
+
+
+
+AchievementDepotCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+    self:_TryRecoverEditSelected(recoverState.selectedAchievementIds)
+    self:_TryRecoverFilterState(recoverState)
+    self:_TryRecoverSelectIndex(recoverState)
+end
+
+
+
+
+AchievementDepotCtrl._TryRecoverEditSelected = HL.Method(HL.Opt(HL.Any)) << function(self, selectedAchievementIds)
+    if selectedAchievementIds == nil then
+        return
+    end
+    self.m_editSelected = {}
+    self.m_selectCount = 0
+    for _, achievementId in ipairs(selectedAchievementIds) do
+        if not string.isEmpty(achievementId) and self.m_editSelected[achievementId] == nil then
+            self.m_editSelected[achievementId] = true
+            self.m_selectCount = self.m_selectCount + 1
+        end
+    end
+    self:_UpdateEditSelectCountInfo()
+end
+
+
+
+
+AchievementDepotCtrl._TryRecoverFilterState = HL.Method(HL.Any) << function(self, recoverState)
+    self.m_searchKey = recoverState.searchKey or ''
+    self.view.inputField.text = self.m_searchKey
+    self.m_selectedFilterTags = lume.deepCopy(recoverState.selectedFilterTags or {})
+    self.m_filterArgs.selectedTags = self.m_selectedFilterTags
+    self:_LoadFilteredData()
+end
+
+
+
+
+AchievementDepotCtrl._TryRecoverSelectIndex = HL.Method(HL.Any) << function(self, recoverState)
+    local categoryCount = #self.m_categoryFilteredData
+    if categoryCount <= 0 then
+        self:_ResetSelectIndex()
+        return
+    end
+    self.m_selectCategoryIndex = math.min(math.max(recoverState.selectCategoryIndex or 1, 1), categoryCount)
+    local categoryInfo = self.m_categoryFilteredData[self.m_selectCategoryIndex]
+    local groupCount = categoryInfo ~= nil and #categoryInfo.filteredGroups or 0
+    if groupCount <= 0 then
+        self.m_selectGroupIndex = 1
+        return
+    end
+    self.m_selectGroupIndex = math.min(math.max(recoverState.selectGroupIndex or 1, 1), groupCount)
 end
 
 

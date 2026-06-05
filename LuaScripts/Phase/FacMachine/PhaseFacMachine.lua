@@ -1,5 +1,17 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
+local FormulaCtrl = require_ex('UI/Panels/Formula/FormulaCtrl')
 local PHASE_ID = PhaseId.FacMachine
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -333,6 +345,11 @@ PhaseFacMachine._OnInit = HL.Override() << function(self)
         self.m_panelArg = self:_ParseNonBuildingPanelArgs(self.arg)
     end
 
+    if self.curPanelId == PanelId.FacMixPool and self.arg and self.arg.facMixPoolRecoverState ~= nil then
+        self.m_panelArg = self.m_panelArg or {}
+        self.m_panelArg.recoverState = self.arg.facMixPoolRecoverState
+    end
+
     self:_StartFbAndTickUpdate()
 end
 
@@ -457,6 +474,11 @@ PhaseFacMachine._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table))
 
     CS.Beyond.Gameplay.Audio.AudioRemoteFactoryBridge.OnUnitUiOpened(self.curNodeId, self.m_panelBuildingDataId)
     self.curPanelItem = self:CreatePhasePanelItem(self.curPanelId, self.m_panelArg)
+    self:_TryRecoverInventoryArea()
+    self:_TryRecoverFacSourceDetails()
+    self:_TryRecoverFriendRequest()
+    self:_TryRecoverFormula()
+    self:_TryRecoverInstructionBook()
 
     if self.m_isHalfPanel then
         Notify(MessageConst.ENTER_LEVEL_HALF_SCREEN_PANEL_MODE)
@@ -515,6 +537,207 @@ PhaseFacMachine._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.
         
         self.curPanelItem.uiCtrl:RefreshList(true)
     end
+end
+
+
+
+PhaseFacMachine.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    arg.inventoryAreaState = self:_GetInventoryAreaRecoverStateArg()
+    arg.facMixPoolRecoverState = self:_GetFacMixPoolRecoverStateArg()
+    arg.needRecoverFriendRequest = self:_ShouldRecoverFriendRequest()
+    arg.needRecoverFacSourceDetails = self:_ShouldRecoverFacSourceDetails()
+    arg.formulaArg = self:_GetFormulaRecoverArg()
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if self.curPanelId == PanelId.FacHUB and isOpen and instructionCtrl:IsShow() and instructionCtrl.id == "fac_hub_offline" and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        arg.instructionBookArg = {
+            id = instructionCtrl.id,
+        }
+    else
+        arg.instructionBookArg = nil
+    end
+    return arg
+end
+
+
+
+PhaseFacMachine._GetFormulaRecoverArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return nil
+    end
+    local isOpen, formulaCtrl = UIManager:IsOpen(PanelId.Formula)
+    if not isOpen or not formulaCtrl:IsShow() then
+        return nil
+    end
+    return formulaCtrl:GetRecoverStateArg(self.curNodeId, self.m_panelBuildingDataId)
+end
+
+
+
+PhaseFacMachine._GetBuildingCommon = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local uiCtrl = self.curPanelItem and self.curPanelItem.uiCtrl
+    local buildingCommon = uiCtrl and uiCtrl.view and uiCtrl.view.buildingCommon
+    if buildingCommon == nil or buildingCommon.nodeId ~= self.curNodeId then
+        return nil
+    end
+    return buildingCommon
+end
+
+
+
+PhaseFacMachine._ShouldRecoverFriendRequest = HL.Method().Return(HL.Boolean) << function(self)
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return false
+    end
+    local buildingCommon = self:_GetBuildingCommon()
+    if buildingCommon == nil then
+        return false
+    end
+    local isOpen, friendRequestCtrl = UIManager:IsOpen(PanelId.FriendRequest)
+    if not isOpen or not friendRequestCtrl:IsShow() then
+        return false
+    end
+    return friendRequestCtrl:IsShareMode()
+end
+
+
+
+PhaseFacMachine._TryRecoverFriendRequest = HL.Method() << function(self)
+    if self.arg == nil or self.arg.needRecoverFriendRequest ~= true then
+        return
+    end
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return
+    end
+    local isOpen, friendRequestCtrl = UIManager:IsOpen(PanelId.FriendRequest)
+    if isOpen and friendRequestCtrl:IsShow() then
+        self.arg.needRecoverFriendRequest = nil
+        return
+    end
+    local buildingCommon = self:_GetBuildingCommon()
+    if buildingCommon ~= nil then
+        buildingCommon:ShareBuilding()
+    end
+    self.arg.needRecoverFriendRequest = nil
+end
+
+
+
+PhaseFacMachine._ShouldRecoverFacSourceDetails = HL.Method().Return(HL.Boolean) << function(self)
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return false
+    end
+    local buildingCommon = self:_GetBuildingCommon()
+    if buildingCommon == nil then
+        return false
+    end
+    local isOpen, facSourceDetailsCtrl = UIManager:IsOpen(PanelId.FacSourceDetails)
+    if not isOpen or not facSourceDetailsCtrl:IsShow() then
+        return false
+    end
+    return facSourceDetailsCtrl:GetTargetNodeId() == self.curNodeId
+end
+
+
+
+PhaseFacMachine._TryRecoverFacSourceDetails = HL.Method() << function(self)
+    if self.arg == nil or self.arg.needRecoverFacSourceDetails ~= true then
+        return
+    end
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return
+    end
+    local isOpen, facSourceDetailsCtrl = UIManager:IsOpen(PanelId.FacSourceDetails)
+    if isOpen and facSourceDetailsCtrl:IsShow() and facSourceDetailsCtrl:GetTargetNodeId() == self.curNodeId then
+        self.arg.needRecoverFacSourceDetails = nil
+        return
+    end
+    local buildingCommon = self:_GetBuildingCommon()
+    if buildingCommon ~= nil then
+        buildingCommon:ShowBuildingSource()
+    end
+    self.arg.needRecoverFacSourceDetails = nil
+end
+
+
+
+PhaseFacMachine._GetInventoryAreaRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local uiCtrl = self.curPanelItem and self.curPanelItem.uiCtrl
+    local inventoryArea = uiCtrl and uiCtrl.view and uiCtrl.view.inventoryArea
+    if inventoryArea == nil then
+        return nil
+    end
+    return inventoryArea:GetRecoverStateArg()
+end
+
+
+
+PhaseFacMachine._GetFacMixPoolRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    if self.curPanelId ~= PanelId.FacMixPool then
+        return nil
+    end
+    local uiCtrl = self.curPanelItem and self.curPanelItem.uiCtrl
+    if uiCtrl == nil or not HL.TryGet(uiCtrl, "GetRecoverStateArg") then
+        return nil
+    end
+    return uiCtrl:GetRecoverStateArg()
+end
+
+
+
+PhaseFacMachine._TryRecoverInventoryArea = HL.Method() << function(self)
+    local recoverState = self.arg and self.arg.inventoryAreaState
+    if recoverState == nil then
+        return
+    end
+    local uiCtrl = self.curPanelItem and self.curPanelItem.uiCtrl
+    local inventoryArea = uiCtrl and uiCtrl.view and uiCtrl.view.inventoryArea
+    if inventoryArea == nil then
+        self.arg.inventoryAreaState = nil
+        return
+    end
+    inventoryArea:TryRecoverState(recoverState)
+    self.arg.inventoryAreaState = nil
+end
+
+
+
+PhaseFacMachine._TryRecoverFormula = HL.Method() << function(self)
+    local formulaArg = self.arg and self.arg.formulaArg
+    if formulaArg == nil then
+        return
+    end
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return
+    end
+    local isOpen, formulaCtrl = UIManager:IsOpen(PanelId.Formula)
+    if isOpen and formulaCtrl:IsShow() then
+        self.arg.formulaArg = nil
+        return
+    end
+    local uiCtrl = self.curPanelItem and self.curPanelItem.uiCtrl
+    if uiCtrl and uiCtrl.view then
+        formulaArg.belongingCanvasGroup = uiCtrl.view.canvasGroup
+    end
+    Notify(MessageConst.FAC_SHOW_FORMULA, formulaArg)
+    self.arg.formulaArg = nil
+end
+
+
+
+PhaseFacMachine._TryRecoverInstructionBook = HL.Method() << function(self)
+    if self.curPanelId ~= PanelId.FacHUB or self.arg == nil or self.arg.instructionBookArg == nil then
+        return
+    end
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return
+    end
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and instructionCtrl:IsShow() then
+        return
+    end
+    UIManager:Open(PanelId.InstructionBook, self.arg.instructionBookArg)
+    self.arg.instructionBookArg = nil
 end
 
 

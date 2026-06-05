@@ -36,6 +36,9 @@ WikiMonsterCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_distributionListCache = UIUtils.genCellCache(self.view.right.distributionNode)
     self.m_dropListCache = UIUtils.genCellCache(self.view.right.itemSmallBlack)
     WikiMonsterCtrl.Super.OnCreate(self, args)
+
+    self:_RefreshModel(true)
+    self:_PlayDecoAnim()
 end
 
 
@@ -50,15 +53,6 @@ end
 
 WikiMonsterCtrl.GetPanelId = HL.Override().Return(HL.Number) << function(self)
     return PANEL_ID
-end
-
-
-
-WikiMonsterCtrl._OnPhaseItemBind = HL.Override() << function(self)
-    WikiMonsterCtrl.Super._OnPhaseItemBind(self)
-    
-    self:_RefreshModel(true)
-    self:_PlayDecoAnim()
 end
 
 

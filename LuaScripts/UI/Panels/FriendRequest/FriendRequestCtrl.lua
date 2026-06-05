@@ -18,6 +18,10 @@ local PANEL_ID = PanelId.FriendRequest
 
 
 
+
+
+
+
 FriendRequestCtrl = HL.Class('FriendRequestCtrl', uiCtrl.UICtrl)
 
 
@@ -31,6 +35,9 @@ FriendRequestCtrl.m_friendInitArg = HL.Field(HL.Table)
 
 
 FriendRequestCtrl.m_emptyTipString = HL.Field(HL.String) << ""
+
+
+FriendRequestCtrl.m_recoverState = HL.Field(HL.Table)
 
 
 
@@ -57,6 +64,7 @@ FriendRequestCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
     
     self.m_arg = arg
+    self.m_recoverState = arg and arg.friendRequestState or nil
     self:_ChooseInitMethod()
 end
 
@@ -82,17 +90,22 @@ FriendRequestCtrl._InitFriendRequest = HL.Method() << function(self)
 
     self.view.titleContentText.text = Language.LUA_FRIEND_POPUP_REQUEST
     self.view.friendList:InitFriendListCtrl(initArg)
-    self.view.btnClose.onClick:AddListener(function()
-        self:PlayAnimationOutAndClose()
-        local _,friendCtrl = UIManager:IsOpen(PanelId.FriendList)
-        friendCtrl:TryRefresh()
-    end)
-    self.view.bgImage.onClick:AddListener(function()
-        self:PlayAnimationOutAndClose()
-        local _,friendCtrl = UIManager:IsOpen(PanelId.FriendList)
-        friendCtrl:TryRefresh()
-    end)
+    
+    
+    
+    local function _onCloseAndRefresh()
+        self:PlayAnimationOutWithCallback(function()
+            self:Close()
+            local _, friendCtrl = UIManager:IsOpen(PanelId.FriendList)
+            if friendCtrl then
+                friendCtrl:TryRefresh()
+            end
+        end)
+    end
+    self.view.btnClose.onClick:AddListener(_onCloseAndRefresh)
+    self.view.bgImage.onClick:AddListener(_onCloseAndRefresh)
     self.m_emptyTipString = Language.LUA_FRIEND_REQUEST_EMPTY
+    self:_ApplyRecoverState()
 end
 
 
@@ -120,6 +133,23 @@ FriendRequestCtrl._InitFriendShare = HL.Method() << function(self)
     self.view.friendList:InitFriendListCtrl(initArg)
     self.view.titleContentText.text = Language.LUA_FRIEND_POPUP_VIEW
     self.m_emptyTipString = Language.LUA_FRIEND_NO_FRIEND
+    self:_ApplyRecoverState()
+end
+
+
+
+FriendRequestCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
+    local sortNode = self.view and self.view.friendList and self.view.friendList.view and self.view.friendList.view.sortNode
+    local friendRequestState = {}
+    if sortNode then
+        friendRequestState.sortState = {
+            selectedIndex = sortNode:GetCurSelectedIndex(),
+            isIncremental = sortNode.isIncremental == true,
+        }
+    end
+    arg.friendRequestState = friendRequestState
+    return arg
 end
 
 
@@ -178,6 +208,32 @@ FriendRequestCtrl._Refresh = HL.Method(HL.Opt(HL.Boolean,HL.Boolean)) << functio
     else
         self.view.friendList:RefreshInfo(self.m_friendList, true, self.m_emptyTipString, loading)
     end
+end
+
+
+
+FriendRequestCtrl._ApplyRecoverState = HL.Method() << function(self)
+    local sortState = self.m_recoverState and self.m_recoverState.sortState or nil
+    local sortNode = self.view and self.view.friendList and self.view.friendList.view and self.view.friendList.view.sortNode
+    if sortState and sortNode and sortNode.view and sortNode.view.mobilePCNode and sortNode.view.mobilePCNode.dropDown then
+        local optionCount = #self.view.friendList.m_sortOptions
+        if optionCount > 0 then
+            local optionIndex = math.max(1, math.min(sortState.selectedIndex or 1, optionCount))
+            sortNode.isIncremental = sortState.isIncremental == true
+            sortNode:RefreshIncremental()
+            sortNode.view.mobilePCNode.dropDown:SetSelected(CSIndex(optionIndex), true, false)
+            sortNode:OnSortChanged()
+        end
+    end
+    if sortNode then
+        sortNode:UpdateDeviceState()
+    end
+end
+
+
+
+FriendRequestCtrl.IsShareMode = HL.Method().Return(HL.Boolean) << function(self)
+    return self.m_arg ~= nil and self.m_arg.onShareClick ~= nil
 end
 
 

@@ -33,6 +33,10 @@ local PANEL_ID = PanelId.GemEnhance
 
 
 
+
+
+
+
 GemEnhanceCtrl = HL.Class('GemEnhanceCtrl', uiCtrl.UICtrl)
 
 local ENHANCE_NODE_STATE_NAME = {
@@ -73,6 +77,11 @@ GemEnhanceCtrl.m_selectedTermEnhanceData = HL.Field(HL.Any)
 
 
 GemEnhanceCtrl.m_isCostEnough = HL.Field(HL.Boolean) << false
+
+
+
+
+
 
 
 
@@ -130,8 +139,31 @@ GemEnhanceCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.entriesPanNode.nextBtn.onClick:AddListener(function()
         self:_OnNextTermClicked()
     end)
+    self:_SetInfoGemSelected(false)
+    self.view.infoNode.btnExplain.onClick:AddListener(function()
+        self:_SetInfoGemSelected(true)
+        local gemInst = CharInfoUtils.getGemByInstId(self.m_selectedGemInstId)
+        Notify(MessageConst.SHOW_ITEM_TIPS, {
+            itemId = gemInst.templateId,
+            instId = self.m_selectedGemInstId,
+            transform = self.view.infoNode.itemIcon.view.transform,
+            posType = UIConst.UI_TIPS_POS_TYPE.LeftTop,
+            onClose = function()
+                if self.m_isClosed then
+                    return
+                end
+                self:_SetInfoGemSelected(false)
+            end
+        })
+    end)
 
-    self:_EnterSelectionMode()
+    if self.m_args.resumeCurMode == "enhance" then
+        self:_EnterSelectionMode(true)
+        self:_EnterEnhanceMode()
+    else
+        self:_EnterSelectionMode()
+    end
+    self.m_args.resumeCurMode = nil
 end
 
 
@@ -140,16 +172,18 @@ end
 
 
 
-GemEnhanceCtrl._EnterSelectionMode = HL.Method() << function(self)
+GemEnhanceCtrl._EnterSelectionMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGraduallyShow)
     self.view.lockNaviGroup.enabled = true
     self.view.controllerFocusHintNode.gameObject:SetActive(true)
     self.view.stateController:SetState("selection")
-    self:_RefreshLeftGemList()
+    self:_RefreshLeftGemList(skipGraduallyShow)
 end
 
 
 
-GemEnhanceCtrl._RefreshLeftGemList = HL.Method() << function(self)
+GemEnhanceCtrl._RefreshLeftGemList = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGraduallyShow)
+    local selectedTermIdMap = self.m_args.selectedTermIdMap
+    local selectedGemInstId = self.m_args.gemInstId or self.m_selectedGemInstId
     self.view.commonItemList:InitCommonItemList({
         listType = UIConst.COMMON_ITEM_LIST_TYPE.WEAPON_EXHIBIT_GEM,
         onClickItem = function(args)
@@ -168,16 +202,22 @@ GemEnhanceCtrl._RefreshLeftGemList = HL.Method() << function(self)
 
             cell.curEquipped.gameObject:SetActive(false)
             cell.disableMask.gameObject:SetActive(false)
+
+            local isPerfectMatch = UIUtils.getGemWishListPerfectMatch(gemInst.instId)
+            cell.item:ShowGemPerfectIcon(isPerfectMatch)
         end,
         filter_rarity = Tables.gemConst.enhanceCostGemRarity,
         defaultSelectedIndex = 1,
-        selectedIndexId = self.m_args.gemInstId or self.m_selectedGemInstId,
+        selectedTagArgs = selectedTermIdMap,
+        selectedIndexId = selectedGemInstId > 0 and selectedGemInstId or nil,
         onFilterNone = function()
             self.m_selectedGemInstId = -1
             self.view.stateController:SetState("empty")
             self:_UpdateSelectedGemSkillInfo()
         end,
-        sortKeys = { "equippedWeaponInstId", "lockedIndex", "trashIndexReverse", "rarity", "sortId1", "sortId2", "id", "instId" }
+        skipGraduallyShow = skipGraduallyShow,
+        
+        sortKeys = { "gemPerfectMatchSort", "isEquippedSort", "lockedIndex", "rarity", "sortId1", "sortId2", "id", "instId" }
     })
 
     
@@ -215,6 +255,11 @@ GemEnhanceCtrl._UpdateSelectedGemBasicInfo = HL.Method(HL.Table) << function(sel
     self.view.infoNode.domainNode:InitDomainTagNode(gemInst.domainId)
     CSUtils.UIContainerResize(self.view.infoNode.starInfoNode, itemInfo.rarity)
     UIUtils.setItemRarityImage(self.view.infoNode.imgQuality, itemInfo.rarity)
+
+    if self.view.infoNode.gemNode then
+        local isPerfectMatch = UIUtils.getGemWishListPerfectMatch(itemInfo.instId)
+        self.view.infoNode.gemNode.gameObject:SetActive(isPerfectMatch)
+    end
 end
 
 
@@ -253,6 +298,39 @@ end
 
 
 
+GemEnhanceCtrl._RefreshSelectedGemInfoByInstId = HL.Method() << function(self)
+    local gemInstId = self.m_selectedGemInstId
+    if gemInstId == nil or gemInstId <= 0 then
+        return
+    end
+    local gemInst = CharInfoUtils.getGemByInstId(gemInstId)
+    if not gemInst then
+        logger.error("GemEnhanceCtrl->Can't get gemInst by instId: " .. tostring(gemInstId))
+        return
+    end
+    local itemCfg = Tables.itemTable[gemInst.templateId]
+    if not itemCfg then
+        logger.error("GemEnhanceCtrl->Can't get itemCfg by templateId: " .. tostring(gemInst.templateId))
+        return
+    end
+    self:_UpdateSelectedGemBasicInfo({
+        id = gemInst.templateId,
+        instId = gemInst.instId,
+        rarity = itemCfg.rarity,
+    })
+    self:_UpdateSelectedGemSkillInfo()
+end
+
+
+
+
+GemEnhanceCtrl._SetInfoGemSelected = HL.Method(HL.Boolean) << function(self, isSelected)
+    self.view.infoNode.btnExplain.gameObject:SetActive(not isSelected)
+    self.view.infoNode.selectedBG.gameObject:SetActive(isSelected)
+end
+
+
+
 
 
 
@@ -270,11 +348,34 @@ GemEnhanceCtrl._EnterEnhanceMode = HL.Method() << function(self)
     self.view.lockNaviGroup.enabled = false
     self.view.controllerFocusHintNode.gameObject:SetActive(false)
     self.view.stateController:SetState("enhance")
+    if self.m_args.gemInstId and self.m_args.gemInstId > 0 then
+        self.m_selectedGemInstId = self.m_args.gemInstId
+    end
+    self:_RefreshSelectedGemInfoByInstId()
+    if self.m_args.resumeSelectedTermIndex ~= nil and self.m_args.resumeSelectedTermIndex >= 0 then
+        self.m_selectedTermIndex = self.m_args.resumeSelectedTermIndex
+    end
+    self.m_args.resumeSelectedTermIndex = nil
+    local targetIsCostGem = self.m_args.resumeEnhanceIsCostGem
+    if targetIsCostGem == nil then
+        targetIsCostGem = true
+    end
+    self.m_args.resumeEnhanceIsCostGem = nil
     local isOn = self.view.enhancedNode.commonToggle.toggle.isOn
-    self.view.enhancedNode.commonToggle:SetValue(true)
+    self.view.enhancedNode.commonToggle:SetValue(targetIsCostGem)
     
-    if isOn then
-        self:_RefreshMaterialGemList(DeviceInfo.usingController)
+    if isOn == targetIsCostGem then
+        if targetIsCostGem then
+            self.view.enhancedNode.stateController:SetState(ENHANCE_NODE_STATE_NAME.GEM)
+            self:_RefreshMaterialGemList(DeviceInfo.usingController)
+            self:_RefreshProb()
+            self:_RefreshEnhanceBtn()
+        else
+            self.view.enhancedNode.stateController:SetState(ENHANCE_NODE_STATE_NAME.MATERIAL)
+            self:_RefreshEnhanceMaterial()
+            self:_RefreshProb()
+            self:_RefreshEnhanceBtn()
+        end
     end
     self:_RefreshEnhanceTerm()
 end
@@ -392,6 +493,10 @@ end
 
 
 GemEnhanceCtrl._RefreshMaterialGemList = HL.Method(HL.Opt(HL.Boolean)) << function(self, isFirstSelected)
+    local selectedMaterialGemTermIdMap = self.m_args.resumeMaterialSelectedTermIdMap
+    local selectedMaterialGemInstId = self.m_args.resumeSelectedMaterialGemInstId or self.m_selectedMaterialGemInstId
+    self.m_args.resumeMaterialSelectedTermIdMap = nil
+    self.m_args.resumeSelectedMaterialGemInstId = nil
     self:_OnSelectMaterialGem(nil)
     self.view.bottomEnhancedNode.commonGemHorizontalList:InitCommonItemList({
         listType = UIConst.COMMON_ITEM_LIST_TYPE.WEAPON_GEM_MATERIAL,
@@ -411,8 +516,13 @@ GemEnhanceCtrl._RefreshMaterialGemList = HL.Method(HL.Opt(HL.Boolean)) << functi
 
             cell.curEquipped.gameObject:SetActive(false)
             cell.disableMask.gameObject:SetActive(false)
+
+            local isPerfectMatch = UIUtils.getGemWishListPerfectMatch(gemInst.instId)
+            cell.item:ShowGemPerfectIcon(isPerfectMatch)
         end,
         filter_rarity = Tables.gemConst.enhanceCostGemRarity,
+        selectedTagArgs = selectedMaterialGemTermIdMap,
+        selectedIndexId = selectedMaterialGemInstId > 0 and selectedMaterialGemInstId or nil,
         exclusiveInstId = self.m_selectedGemInstId,
         onFilterNone = function()
             self.m_selectedMaterialGemInstId = -1
@@ -421,8 +531,8 @@ GemEnhanceCtrl._RefreshMaterialGemList = HL.Method(HL.Opt(HL.Boolean)) << functi
             self:_RefreshProb()
             self:_RefreshEnhanceBtn()
         end,
-        defaultSelectedIndex = isFirstSelected and 1 or nil,
-        sortKeys = { "trashIndex", "lockedIndexReverse", "equippedWeaponInstIdReverse", "rarity", "sortId1", "sortId2", "id", "instId" }
+        defaultSelectedIndex = selectedMaterialGemInstId > 0 and nil or (isFirstSelected and 1 or nil),
+        sortKeys = { "gemPerfectMatchSortReverse", "trashIndex", "lockedIndexReverse", "equippedWeaponInstIdReverse", "rarity", "sortId1", "sortId2", "id", "instId" }
     })
 end
 
@@ -581,5 +691,45 @@ GemEnhanceCtrl._InitController = HL.Method() << function(self)
 end
 
 
+
+
+
+
+GemEnhanceCtrl._GetSelectedTagArgMap = HL.Method(HL.Any).Return(HL.Opt(HL.Any)) << function(self, commonItemList)
+    if not commonItemList or commonItemList.m_selectedTags == nil then
+        return nil
+    end
+    local selectedTagArgMap = {}
+    for _, tagInfo in ipairs(commonItemList.m_selectedTags) do
+        if tagInfo.param ~= nil then
+            selectedTagArgMap[tagInfo.param] = true
+        end
+    end
+    return selectedTagArgMap
+end
+
+
+
+GemEnhanceCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = lume.deepCopy(self.m_args)
+    local selectedTermIdMap = self:_GetSelectedTagArgMap(self.view.commonItemList)
+    if selectedTermIdMap then
+        arg.selectedTermIdMap = selectedTermIdMap
+    end
+    if self.m_selectedGemInstId > 0 then
+        arg.gemInstId = self.m_selectedGemInstId
+    end
+    arg.resumeCurMode = self.view.stateController.currentStateName
+    if arg.resumeCurMode == "enhance" then
+        arg.resumeSelectedTermIndex = self.m_selectedTermIndex
+        arg.resumeEnhanceIsCostGem = self.view.enhancedNode.commonToggle.toggle.isOn
+        arg.resumeSelectedMaterialGemInstId = self.m_selectedMaterialGemInstId > 0 and self.m_selectedMaterialGemInstId or nil
+        local materialSelectedTermIdMap = self:_GetSelectedTagArgMap(self.view.bottomEnhancedNode.commonGemHorizontalList)
+        if materialSelectedTermIdMap then
+            arg.resumeMaterialSelectedTermIdMap = materialSelectedTermIdMap
+        end
+    end
+    return arg
+end
 
 HL.Commit(GemEnhanceCtrl)

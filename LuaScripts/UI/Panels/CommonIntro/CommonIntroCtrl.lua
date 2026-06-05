@@ -10,6 +10,8 @@ local PANEL_ID = PanelId.CommonIntro
 
 
 
+
+
 CommonIntroCtrl = HL.Class('CommonIntroCtrl', uiCtrl.UICtrl)
 
 
@@ -25,6 +27,9 @@ CommonIntroCtrl.s_messages = HL.StaticField(HL.Table) << {
 CommonIntroCtrl.m_pageIndex = HL.Field(HL.Number) << -1
 
 
+CommonIntroCtrl.m_introId = HL.Field(HL.String) << ''
+
+
 CommonIntroCtrl.m_pageInfos = HL.Field(HL.Userdata)
 
 
@@ -37,17 +42,22 @@ CommonIntroCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
+    if type(arg) == "table" and not string.isEmpty(arg.introId) then
+        self:_ShowIntro(arg.introId, arg.pageIndex)
+    end
 end
 
 
 
 
-CommonIntroCtrl._ShowIntro = HL.Method(HL.String) << function(self, args)
+
+CommonIntroCtrl._ShowIntro = HL.Method(HL.String, HL.Opt(HL.Number)) << function(self, args, pageIndex)
+    self.m_introId = args
     self.m_pageInfos = Tables.introTable:GetValue(args).dataArray
 
     self.view.pageController:InitPageController(#self.m_pageInfos, function(pageIndex)
         self:_OnMovePage(pageIndex)
-    end)
+    end, pageIndex)
 end
 
 
@@ -83,6 +93,18 @@ end
 CommonIntroCtrl._CheckArgs = HL.StaticMethod(HL.String).Return(HL.Boolean) << function(args)
     local valid = Tables.introTable:ContainsKey(args)
     return valid
+end
+
+
+
+CommonIntroCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    if string.isEmpty(self.m_introId) then
+        return
+    end
+    return {
+        introId = self.m_introId,
+        pageIndex = self.m_pageIndex > 0 and self.m_pageIndex or 1,
+    }
 end
 
 HL.Commit(CommonIntroCtrl)

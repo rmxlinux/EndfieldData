@@ -20,6 +20,8 @@ local PANEL_ID = PanelId.StaminaPotion
 
 
 
+
+
 StaminaPotionCtrl = HL.Class('StaminaPotionCtrl', uiCtrl.UICtrl)
 
 
@@ -61,13 +63,20 @@ StaminaPotionCtrl.m_itemId = HL.Field(HL.String) << ""
 
 
 StaminaPotionCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
+    local recoverFillCount
+    if type(args) == "table" then
+        self.m_itemId = args.itemId
+        recoverFillCount = args.fillCount
+    else
+        self.m_itemId = args
+    end
+
     
     self.view.closeBtn.onClick:AddListener(function()
         self.view.animationWrapper:PlayOutAnimation(function()
             self:Close()
         end)
     end)
-    self.m_itemId = args
 
     
     self.view.confirmBtn.onClick:AddListener(function()
@@ -102,6 +111,9 @@ StaminaPotionCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
 
     
     self:_Refresh()
+    if recoverFillCount ~= nil then
+        self:_RecoverState(recoverFillCount)
+    end
 end
 
 
@@ -116,6 +128,25 @@ end
 StaminaPotionCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     self.view.numberSelector.view.keyHintLeft.gameObject:SetActive(active)
     self.view.numberSelector.view.keyHintRight.gameObject:SetActive(active)
+end
+
+
+
+StaminaPotionCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    return {
+        itemId = self.m_itemId,
+        fillCount = self.m_fillCount,
+        isStaminaPotion = true,
+    }
+end
+
+
+
+
+StaminaPotionCtrl._RecoverState = HL.Method(HL.Number) << function(self, fillCount)
+    local maxFillCount = self.view.numberSelector.m_max
+    local recoverFillCount = math.min(math.max(fillCount, 1), maxFillCount)
+    self.view.numberSelector:RefreshNumber(recoverFillCount, 1, maxFillCount)
 end
 
 
@@ -151,7 +182,8 @@ StaminaPotionCtrl._Refresh = HL.Method() << function(self)
     local emptyLimit = Utils.getItemCount(self.m_itemId,false)
     local fullLimit = Tables.dungeonConst.maxFullLunchBoxCount - Utils.getItemCount(Tables.dungeonConst.fullLunchBoxItemId,false)
     local staminaLimit = self.m_currentStamina//self.m_lunchBoxCapacity
-    self.view.numberSelector:InitNumberSelector(1, 1, math.max(math.min(emptyLimit, fullLimit, staminaLimit), 1) , function(curNumber)
+    local maxFillCount = math.max(math.min(emptyLimit, fullLimit, staminaLimit), 1)
+    self.view.numberSelector:InitNumberSelector(1, 1, maxFillCount, function(curNumber)
         self:_ChangeFillCount(curNumber)
     end)
 

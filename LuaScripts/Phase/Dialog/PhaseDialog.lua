@@ -56,6 +56,13 @@ local PHASE_ID = PhaseId.Dialog
 
 
 
+
+
+
+
+
+
+
 PhaseDialog = HL.Class('PhaseDialog', phaseBase.PhaseBase)
 
 local clearPhases = {
@@ -82,7 +89,9 @@ PhaseDialog.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_DIALOG_ENV_TALK_CHANGED] = { 'OnDialogEnvTalkChanged', true },
     [MessageConst.ON_COMMON_BACK_CLICKED] = { 'OnCommonBackClicked', true },
     [MessageConst.DIALOG_OPEN_UI] = { "OpenUI", true },
-    [MessageConst.DIALOG_CLOSE_UI] = { 'CloseUI', false },
+    [MessageConst.ON_DIALOG_PHASE_BACK_TO_TOP] = { "OnDialogPhaseTransitionBackToTop", true },
+
+    [MessageConst.DIALOG_CHANGE_NEXT_INDEX] = { "ChangeNextIndex", true },
     [MessageConst.DIALOG_SEND_PRESENT_END] = { "OnSendPresentEnd", true },
 
     [MessageConst.OPEN_DIALOG_RECORD] = { '_OpenDialogRecord', true },
@@ -118,10 +127,19 @@ PhaseDialog.m_hasListened = HL.Field(HL.Boolean) << false
 PhaseDialog.s_nextDialog = HL.StaticField(HL.String) << ""
 
 
-PhaseDialog.m_dialogOpenedPhase = HL.Field(HL.Number) << -1
+PhaseDialog.s_nextIndexConfig = HL.StaticField(HL.Table)
 
 
-PhaseDialog.m_dialogOpenedPanel = HL.Field(HL.Number) << -1
+PhaseDialog.m_tempNextIndex = HL.Field(HL.Number) << -1
+
+
+PhaseDialog.m_openedPhaseId = HL.Field(HL.Number) << -1
+
+
+PhaseDialog.m_pendingExitDialogArg = HL.Field(HL.Any)
+
+
+PhaseDialog.m_hasPendingExitDialog = HL.Field(HL.Boolean) << false
 
 
 
@@ -129,6 +147,45 @@ PhaseDialog.m_dialogOpenedPanel = HL.Field(HL.Number) << -1
 PhaseDialog._OnInit = HL.Override() << function(self)
     PhaseDialog.Super._OnInit(self)
     UIManager:ToggleBlockObtainWaysJump("IN_CINEMATIC", true)
+end
+
+
+PhaseDialog._InitNextIndex = HL.StaticMethod() << function()
+    PhaseDialog.s_nextIndexConfig = {}
+    for phaseName, nextIndex in pairs(DialogConst.DIALOG_PHASE_2_NEXT_INDEX) do
+        PhaseDialog.s_nextIndexConfig[PhaseId[phaseName]] = nextIndex
+    end
+end
+
+
+
+PhaseDialog.GetOpenedPhaseId = HL.Method().Return(HL.Number) << function(self)
+    return self.m_openedPhaseId
+end
+
+
+
+
+PhaseDialog.ChangeNextIndex = HL.Method(HL.Table) << function(self, args)
+    if args.phaseId == self.m_openedPhaseId then
+        self.m_tempNextIndex = args.nextIndex
+    end
+end
+
+
+
+PhaseDialog.GetNextIndex = HL.StaticMethod(HL.Number).Return(HL.Number) << function(phaseId)
+    local suc, phaseDialog = PhaseManager:IsOpen(PHASE_ID)
+    if not suc then
+        return 0
+    end
+    if phaseDialog.m_tempNextIndex >= 0 then
+        return phaseDialog.m_tempNextIndex
+    end
+    if not PhaseDialog.s_nextIndexConfig then
+        PhaseDialog._InitNextIndex()
+    end
+    return PhaseDialog.s_nextIndexConfig[phaseId] or 0
 end
 
 
@@ -254,6 +311,14 @@ end
 
 
 PhaseDialog.OnExitDialog = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
+    
+    
+    if self.state == PhaseConst.EPhaseState.TransitionBackToTop then
+        self.m_pendingExitDialogArg = arg
+        self.m_hasPendingExitDialog = true
+        return
+    end
+
     local fast = false
     if arg then
         fast = unpack(arg)
@@ -411,6 +476,15 @@ end
 
 
 PhaseDialog._OnActivated = HL.Override() << function(self)
+    
+    if self.m_hasPendingExitDialog then
+        local arg = self.m_pendingExitDialogArg
+        self.m_pendingExitDialogArg = nil
+        self.m_hasPendingExitDialog = false
+        self:OnExitDialog(arg)
+        return
+    end
+
     PhaseDialog.ClearPhasesWithCam() 
     self:_TryShowTrunk()
     self:_TryShowOptions()
@@ -463,7 +537,6 @@ end
 
 PhaseDialog.OpenUI = HL.Method(HL.Table) << function(self, arg)
     local panelIdStr, paramStr = unpack(arg)
-    local panelId = PanelId[panelIdStr]
     local phaseId = PhaseId[panelIdStr]
     local param = not string.isEmpty(paramStr) and Utils.stringJsonToTable(paramStr) or {}
     param.fromDialog = true
@@ -475,31 +548,24 @@ PhaseDialog.OpenUI = HL.Method(HL.Table) << function(self, arg)
         UIManager:ToggleBlockObtainWaysJump("IN_CINEMATIC", true, exceptIds)
     end
 
-    if not panelId and not phaseId then
+    if not phaseId then
         logger.error(("Dialog OpenUI Failed !! PanelId Not Found !! PanelIdStr is %s, Param is %s"):format(panelIdStr, paramStr))
         self:Next()
         return
     end
 
     self.m_panelItem.uiCtrl:PlayAnimationOutWithCallback(function()
-        if panelId and Utils.isInclude(UIConst.DIALOG_OPEN_UI_USE_PANEL, panelId) then
-            self:CreatePhasePanelItem(panelId, param)
-            self.m_dialogOpenedPanel = panelId
-        else
-            if phaseId == PhaseId.ReadingPopUp then
-                local closeCallback = function()
-                    Notify(MessageConst.DIALOG_CLOSE_UI, { nil, PhaseId.ReadingPopUp, 0 })
-                end
-                param = {param.id, closeCallback}
-            end
+        if phaseId == PhaseId.ReadingPopUp then
+            local closeCallback = function() end
+            param = {param.id, closeCallback}
+        end
 
-            local res = PhaseManager:OpenPhase(phaseId, param)
-            if not res then
-                logger.error("Dialog OpenUI fail!!!", panelIdStr)
-                GameWorld.dialogManager:Next()
-            else
-                self.m_dialogOpenedPhase = phaseId
-            end
+        local res = PhaseManager:OpenPhase(phaseId, param, nil, true)
+        if res then
+            self.m_openedPhaseId = phaseId
+        else
+            logger.error("Dialog OpenUI fail!!!", panelIdStr)
+            GameWorld.dialogManager:Next()
         end
         
         GameWorld.dialogManager:TryRecoverVoiceManager()
@@ -508,59 +574,57 @@ end
 
 
 
-PhaseDialog.CloseUI = HL.StaticMethod(HL.Table) << function(arg)
-    local isOpen, phaseDialog = PhaseManager:IsOpen(PHASE_ID)
 
-    
-    local panelId, phaseId, nextIndex, notFastMode = unpack(arg)
-    local panelItem = (phaseDialog and panelId) and phaseDialog:_GetPanelPhaseItem(panelId) or nil
-    if panelItem and Utils.isInclude(UIConst.DIALOG_OPEN_UI_USE_PANEL, panelId) then
-        phaseDialog:RemovePhasePanelItem(panelItem)
-    elseif phaseId and PhaseManager:IsOpenAndValid(phaseId) then
-        if PhaseManager.m_curState == Const.PhaseState.Push or PhaseManager.m_curState == Const.PhaseState.Pop then
-            
-            
-            logger.critical("PhaseDialog.CloseUI出错，当前PhaseManager正在pop状态中！", PhaseManager:GetPhaseName(phaseId))
-            return
-        end
-        if notFastMode then
-            PhaseManager:PopPhase(phaseId)
-        else
-            PhaseManager:ExitPhaseFast(phaseId)
-        end
-    end
 
-    if phaseDialog and phaseDialog.doingOut then
-        return
-    end
-
-    if isOpen and phaseDialog:IsDialogOpenedPhaseOrPanel(phaseId, panelId) then
-        
-        GameWorld.dialogManager:TryPauseVoiceManager()
-        phaseDialog.m_dialogOpenedPanel = -1
-        phaseDialog.m_dialogOpenedPhase = -1
-
-        phaseDialog.m_panelItem.uiCtrl:PlayAnimationIn()
-        if nextIndex then
-            phaseDialog:Next(nextIndex)
-        end
-    end
+PhaseDialog._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    self:OnDialogPhaseTransitionBackToTop()
 end
 
 
 
-
-
-PhaseDialog.IsDialogOpenedPhaseOrPanel = HL.Method(HL.Any, HL.Any).Return(HL.Boolean) << function(self, phaseId, panelId)
-    if phaseId ~= nil and phaseId == self.m_dialogOpenedPhase then
-        return true
+PhaseDialog.OnDialogPhaseTransitionBackToTop = HL.Method() << function(self)
+    if self.doingOut or self.m_openedPhaseId == -1 then
+        return
     end
 
-    if panelId ~= nil and panelId == self.m_dialogOpenedPanel then
-        return true
+    local nextIndex = PhaseDialog.GetNextIndex(self.m_openedPhaseId)
+    self:ChangeNextIndex({
+        phaseId = self.m_openedPhaseId,
+        nextIndex = -1,
+    })
+
+    self.m_openedPhaseId = -1
+
+    
+    GameWorld.dialogManager:TryPauseVoiceManager()
+
+    
+    
+    if nextIndex then
+        self:Next(nextIndex)
     end
 
-    return false
+    
+    if self.m_destroyed then
+        return
+    end
+
+    
+    local needForceCompleteTransition = self.m_hasPendingExitDialog or PhaseManager:IsInWaitingQueue(PhaseId.DialogTimeline)
+
+    if needForceCompleteTransition then
+        for phaseItem, _ in pairs(self.m_phaseItems) do
+            local uiCtrl = phaseItem.uiCtrl
+            if uiCtrl and uiCtrl.animationWrapper then
+                local curState = uiCtrl.animationWrapper.curState
+                if curState == CS.Beyond.UI.UIConst.AnimationState.In or curState == CS.Beyond.UI.UIConst.AnimationState.Out then
+                    uiCtrl.animationWrapper:ClearTween(false)
+                end
+            end
+        end
+    else
+        self.m_panelItem.uiCtrl:PlayAnimationIn()
+    end
 end
 
 
@@ -572,11 +636,8 @@ PhaseDialog.OnSendPresentEnd = HL.Method(HL.Table) << function(self, data)
     local selectedItems = data.selectedItems
     local nextIndex = data.nextIndex
     local levelChanged = data.levelChanged
-    Notify(MessageConst.DIALOG_CLOSE_UI, {
-        PanelId.FriendShipPresent,
-        PhaseId.FriendShipPresent,
-        nextIndex,
-    })
+    Notify(MessageConst.DIALOG_CHANGE_NEXT_INDEX, { phaseId = PhaseId.FriendShipPresent, nextIndex = nextIndex, })
+    PhaseManager:PopPhase(PhaseId.FriendShipPresent)
     if success then
         self.m_panelItem.uiCtrl:ShowPresentSuccess(levelChanged, deltaFav, selectedItems)
     end

@@ -1,5 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FriendHeadSelectedPopUp
+local PHASE_ID = PhaseId.FriendHeadSelectedPopUp
 
 local tabConfig = {
     avatar = {
@@ -58,6 +59,17 @@ local tabInfo = {
 
 
 
+
+
+
+
+
+
+
+
+
+
+
 FriendHeadSelectedPopUpCtrl = HL.Class('FriendHeadSelectedPopUpCtrl', uiCtrl.UICtrl)
 
 
@@ -85,6 +97,14 @@ FriendHeadSelectedPopUpCtrl.m_genTabCells = HL.Field(HL.Forward("UIListCache"))
 
 FriendHeadSelectedPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FRIEND_BUSINESS_INFO_CHANGE] = 'OnFriendBusinessInfoChange',
+    
+    [MessageConst.ON_AVATAR_UNLOCK] = 'OnAvatarUnlock',
+    [MessageConst.ON_AVATAR_FRAME_UNLOCK] = 'OnAvatarFrameUnlock',
+    
+    [MessageConst.ON_SYSTEM_UNLOCK_CHANGED] = 'OnSystemUnlockChanged',
+    [MessageConst.ON_ALL_SYSTEM_UNLOCK_SYNC] = 'OnSystemUnlockChanged',
+    
+    [MessageConst.ON_ACTIVITY_UPDATED] = 'OnActivityUpdated',
 }
 
 
@@ -94,12 +114,12 @@ FriendHeadSelectedPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
 FriendHeadSelectedPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.closeBtn.onClick:RemoveAllListeners()
     self.view.closeBtn.onClick:AddListener(function()
-        self:PlayAnimationOutAndClose()
+        self:_CancelAndClose()
     end)
 
     self.view.cancelBtn.onClick:RemoveAllListeners()
     self.view.cancelBtn.onClick:AddListener(function()
-        self:PlayAnimationOutAndClose()
+        self:_CancelAndClose()
     end)
 
     self.view.confirmBtn.onClick:RemoveAllListeners()
@@ -111,15 +131,20 @@ FriendHeadSelectedPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
         if tabConfig.avatarFrame.currentSelectId ~= tabConfig.avatarFrame.GetCurrentId() and not string.isEmpty(tabConfig.avatarFrame.currentSelectId) then
             tabConfig.avatarFrame.SendMsg(tabConfig.avatarFrame.currentSelectId)
         end
-        self:PlayAnimationOutAndClose()
+        self:_Close()
     end)
 
     self.view.commonPlayerHead:UpdateHideLevelTxt(true)
     self.view.commonPlayerHead:InitCommonPlayerHeadByRoleId(GameInstance.player.roleId, false)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 
-    
-    self.m_tabConfig = tabConfig.avatar
+    if arg and arg.tabIndex then
+        self.m_tabConfig = tabInfo[arg.tabIndex]
+        tabConfig.avatar.currentSelectId = arg.avatarSelectId or ""
+        tabConfig.avatarFrame.currentSelectId = arg.avatarFrameSelectId or ""
+    else
+        self.m_tabConfig = tabConfig.avatar
+    end
 
     self.m_getCell = UIUtils.genCachedCellFunction(self.view.goodsScrollView)
     self.view.headScrollList.onUpdateCell:RemoveAllListeners();
@@ -144,7 +169,9 @@ FriendHeadSelectedPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
                 self.m_inTabChange = true
 
                 
-                if self.m_tabConfig ~= nil and not string.isEmpty(self.m_tabConfig.currentSelectId) then
+                if not InputManagerInst.inChangingInputDevice
+                    and self.m_tabConfig ~= nil
+                    and not string.isEmpty(self.m_tabConfig.currentSelectId) then
                     local hasCurrent = false
                     for id, cfg in pairs(self.m_tabConfig.GetTable()) do
                         if cfg.id == self.m_tabConfig.currentSelectId and GameInstance.player.friendSystem:IsBusinessCardUnlock(self.m_tabConfig.type, cfg.id) then
@@ -158,29 +185,8 @@ FriendHeadSelectedPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
                 end
 
                 self.m_tabConfig = info
-                self.m_cfgTable = {}
-                for id, cfg in pairs(self.m_tabConfig.GetTable()) do
-                    local success, itemCfg = Tables.itemTable:TryGetValue(cfg.itemId)
-                    if success then
-                        local canShow = GameInstance.player.friendSystem:IsBusinessCardUnlock(self.m_tabConfig.type, cfg.id) or Utils.isNotObtainCanShow(itemCfg.notObtainShow, itemCfg.notObtainShowTimeId)
-                        if canShow then
-                            table.insert(self.m_cfgTable, cfg)
-                        end
-                    else
-                        logger.error("FriendHeadSelectedPopUpCtrl:OnCreate itemCfg not found for id:", cfg.itemId)
-                    end
-                end
+                self:_RebuildCfgTableForCurrentTab()
 
-                table.sort(self.m_cfgTable, function(a, b)
-                    return a.sort < b.sort
-                end)
-                if string.isEmpty(self.m_tabConfig.currentSelectId) then
-                    self.m_tabConfig.currentSelectId = info.GetCurrentId()
-                    
-                    if string.isEmpty(self.m_tabConfig.currentSelectId) then
-                        self.m_tabConfig.currentSelectId = self.m_cfgTable[1].id
-                    end
-                end
                 
                 local currentIndex = 1
                 for index, cfg in ipairs(self.m_cfgTable) do
@@ -191,10 +197,9 @@ FriendHeadSelectedPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
                 end
                 self.view.headScrollList:UpdateCount(#self.m_cfgTable, CSIndex(currentIndex))
                 self:_OnSelectChange()
-                self.m_inTabChange = true
             end
         end)
-
+        cell.toggle.isOn = false
         cell.toggle.isOn = self.m_tabConfig == info
     end)
     self.m_inTabChange = true
@@ -208,6 +213,32 @@ FriendHeadSelectedPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     end
     self.view.headScrollList:UpdateCount(#self.m_cfgTable, CSIndex(currentIndex))
     
+end
+
+
+
+FriendHeadSelectedPopUpCtrl._ResetSelectToCurrent = HL.Method() << function(self)
+    tabConfig.avatar.currentSelectId = tabConfig.avatar.GetCurrentId()
+    tabConfig.avatarFrame.currentSelectId = tabConfig.avatarFrame.GetCurrentId()
+end
+
+
+
+FriendHeadSelectedPopUpCtrl._CancelAndClose = HL.Method() << function(self)
+    if not InputManagerInst.inChangingInputDevice then
+        self:_ResetSelectToCurrent()
+    end
+    self:_Close()
+end
+
+
+
+FriendHeadSelectedPopUpCtrl._Close = HL.Method() << function(self)
+    if PhaseManager:IsOpen(PHASE_ID) then
+        PhaseManager:PopPhase(PHASE_ID)
+    else
+        self:PlayAnimationOutAndClose()
+    end
 end
 
 
@@ -238,7 +269,12 @@ FriendHeadSelectedPopUpCtrl._UpdateCell = HL.Method(HL.Userdata, HL.Number) << f
     end
 
     
+    
+    
+    
+    
     if DeviceInfo.usingController and self.m_inTabChange and self.m_tabConfig.currentSelectId == cfg.id then
+        self.m_inTabChange = false
         InputManagerInst.controllerNaviManager:SetTarget(itemCell.itemBig.view.button)
     end
 end
@@ -266,7 +302,6 @@ FriendHeadSelectedPopUpCtrl._OnSelectChange = HL.Method() << function(self)
         self:_UpdateObtainWay(currentSelectItemId)
     end
     self.view.titleTxt.text = self.m_tabConfig.title
-    self.m_inTabChange = false
     self.view.headScrollList:UpdateShowingCells(function(csIndex, object)
         self:_UpdateCell(object, LuaIndex(csIndex))
     end)
@@ -318,6 +353,67 @@ end
 
 
 
+FriendHeadSelectedPopUpCtrl._RebuildCfgTableForCurrentTab = HL.Method() << function(self)
+    if self.m_tabConfig == nil then
+        return
+    end
+    self.m_cfgTable = {}
+    for id, cfg in pairs(self.m_tabConfig.GetTable()) do
+        local success, itemCfg = Tables.itemTable:TryGetValue(cfg.itemId)
+        if success then
+            local canShow = GameInstance.player.friendSystem:IsBusinessCardUnlock(self.m_tabConfig.type, cfg.id) or Utils.isNotObtainCanShow(itemCfg.notObtainShow, itemCfg.notObtainShowTimeId)
+            if canShow then
+                table.insert(self.m_cfgTable, cfg)
+            end
+        else
+            logger.error("FriendHeadSelectedPopUpCtrl:_RebuildCfgTableForCurrentTab itemCfg not found for id:", cfg.itemId)
+        end
+    end
+
+    table.sort(self.m_cfgTable, function(a, b)
+        return a.sort < b.sort
+    end)
+
+    
+    if string.isEmpty(self.m_tabConfig.currentSelectId) then
+        self.m_tabConfig.currentSelectId = self.m_tabConfig.GetCurrentId()
+        if string.isEmpty(self.m_tabConfig.currentSelectId) and #self.m_cfgTable > 0 then
+            self.m_tabConfig.currentSelectId = self.m_cfgTable[1].id
+        end
+    else
+        
+        local stillExist = false
+        for _, cfg in ipairs(self.m_cfgTable) do
+            if cfg.id == self.m_tabConfig.currentSelectId then
+                stillExist = true
+                break
+            end
+        end
+        if not stillExist then
+            self.m_tabConfig.currentSelectId = self.m_tabConfig.GetCurrentId()
+            if string.isEmpty(self.m_tabConfig.currentSelectId) and #self.m_cfgTable > 0 then
+                self.m_tabConfig.currentSelectId = self.m_cfgTable[1].id
+            end
+        end
+    end
+end
+
+
+
+FriendHeadSelectedPopUpCtrl._Refresh = HL.Method() << function(self)
+    if self.m_tabConfig == nil then
+        return
+    end
+    
+    self:_RebuildCfgTableForCurrentTab()
+    
+    self.view.headScrollList:UpdateCount(#self.m_cfgTable)
+    
+    self:_OnSelectChange()
+end
+
+
+
 FriendHeadSelectedPopUpCtrl.OnFriendBusinessInfoChange = HL.Method() << function(self)
     
     if self.m_tabConfig.currentSelectId == "" then
@@ -326,16 +422,66 @@ FriendHeadSelectedPopUpCtrl.OnFriendBusinessInfoChange = HL.Method() << function
 
     Notify(MessageConst.SHOW_TOAST, self.m_tabConfig.successNotify)
 
+    
+    self:_Refresh()
+end
+
+
+
+FriendHeadSelectedPopUpCtrl.OnAvatarUnlock = HL.Method() << function(self)
+    self:_Refresh()
+end
+
+
+
+FriendHeadSelectedPopUpCtrl.OnAvatarFrameUnlock = HL.Method() << function(self)
+    self:_Refresh()
+end
+
+
+
+FriendHeadSelectedPopUpCtrl.OnSystemUnlockChanged = HL.Method() << function(self)
+    
+    
+    self:_Refresh()
+end
+
+
+
+FriendHeadSelectedPopUpCtrl.OnActivityUpdated = HL.Method() << function(self)
+    
+    self:_Refresh()
 end
 
 
 
 
 
+FriendHeadSelectedPopUpCtrl.OnShow = HL.Override() << function(self)
+    if self.m_tabConfig == nil then
+        return
+    end
+    
+    
+    self.m_inTabChange = true
+    self:_Refresh()
+end
 
 
 
-
-
+FriendHeadSelectedPopUpCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local tabIndex = 1
+    for i, info in ipairs(tabInfo) do
+        if self.m_tabConfig == info then
+            tabIndex = i
+            break
+        end
+    end
+    return {
+        tabIndex = tabIndex,
+        avatarSelectId = tabConfig.avatar.currentSelectId,
+        avatarFrameSelectId = tabConfig.avatarFrame.currentSelectId,
+    }
+end
 
 HL.Commit(FriendHeadSelectedPopUpCtrl)

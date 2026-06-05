@@ -26,6 +26,8 @@ BigLogoCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 BigLogoCtrl.m_timelineHandle = HL.Field(HL.Userdata)
 
+BigLogoCtrl.m_onCanvasChangedClosure = HL.Field(HL.Function)
+
 
 
 
@@ -35,6 +37,13 @@ BigLogoCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_timelineHandle = unpack(args)
 end
 
+BigLogoCtrl.OnClose = HL.Override() << function(self)
+    if self.m_onCanvasChangedClosure then
+        UIManager.m_uiCanvasScaleHelper.onCanvasChanged:RemoveListener(self.m_onCanvasChangedClosure)
+        self.m_onCanvasChangedClosure = nil
+    end
+end
+
 
 
 
@@ -42,22 +51,72 @@ end
 
 
 BigLogoCtrl._OnShowBigLogo = HL.Method(HL.Table) << function(self, args)
-    local sprite, useStretchImage, showOnTop, hideBackground, useOriginalImage = unpack(args)
+    local playParam = unpack(args)
+    local sprite = playParam.sprite
+    local useStretchImage = playParam.useStretchImage
+    local showOnTop = playParam.showOnTop
+    local hideBackground = playParam.hideBackground
+    local useOriginalImage = playParam.useOriginalImage
+    local useFitImage = playParam.useFitImage
 
     self.view.bg.gameObject:SetActive(not hideBackground)
 
     if useOriginalImage then
         self.view.originImageNode.sprite = sprite
     elseif useStretchImage then
+        local imageAspectRatio = sprite.rect.width / sprite.rect.height
         if showOnTop then
+            if math.abs(self.view.stretchImageTopAspectRatioFitter.aspectRatio - imageAspectRatio) > 0.01 then
+                self.view.stretchImageTopAspectRatioFitter.aspectRatio = imageAspectRatio
+            end
             self.view.stretchImageTop.sprite = sprite
         else
+            if math.abs(self.view.stretchImageBottomAspectRatioFitter.aspectRatio - imageAspectRatio) > 0.01 then
+                self.view.stretchImageBottomAspectRatioFitter.aspectRatio = imageAspectRatio
+            end
             self.view.stretchImageBottom.sprite = sprite
+        end
+    elseif useFitImage then
+        if showOnTop then
+            self.view.fitImageTop.sprite = sprite
+        else
+            self.view.fitImageBottom.sprite = sprite
+        end
+
+        self:_RefreshFitImageSize()
+        if self.m_onCanvasChangedClosure == nil then
+            self.m_onCanvasChangedClosure = function() self:_RefreshFitImageSize() end
+            UIManager.m_uiCanvasScaleHelper.onCanvasChanged:AddListener(self.m_onCanvasChangedClosure)
         end
     else
         self.view.nameImg.sprite = sprite
     end
+end
 
+BigLogoCtrl._RefreshFitImageSize = HL.Method() << function(self)
+    local sprite
+    if NotNull(self.view.fitImageTop.sprite) then
+        sprite = self.view.fitImageTop.sprite
+    end
+
+    if NotNull(self.view.fitImageBottom.sprite) then
+        sprite = self.view.fitImageBottom.sprite
+    end
+
+    if sprite == nil then
+        return
+    end
+
+    local screenWidth = self.view.fitImageMain.transform.rect.width
+    local screenHeight = self.view.fitImageMain.transform.rect.height
+    local w = sprite.rect.width
+    local h = sprite.rect.height
+
+    local offsetMin, offsetMax = NarrativeUtils.GetFitImageOffset(screenWidth, screenHeight, w, h)
+    self.view.fitImageTop.transform.offsetMin = offsetMin
+    self.view.fitImageTop.transform.offsetMax = offsetMax
+    self.view.fitImageBottom.transform.offsetMin = offsetMin
+    self.view.fitImageBottom.transform.offsetMax = offsetMax
 end
 
 

@@ -1,7 +1,13 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local json = require("Common/Tools/json")
+local CloudGame = CS.Beyond.CloudGame
 local PANEL_ID = PanelId.CommonShare
 local waterMarkScale = 0.096
+
+
+
+
+
 
 
 
@@ -33,6 +39,17 @@ local CLEAR_PANEL_ON_SHUTTER = {
     PanelId.Marquee,
 }
 
+local ShareIds = {
+    Official = 0, 
+    Bilibili = 1, 
+    CloudGame = 2, 
+}
+
+
+local SKLandId = 9
+
+local OverseaSKLandId = 19
+
 
 CommonShareCtrl.m_showPlayerInfo = HL.Field(HL.Boolean) << true
 
@@ -61,6 +78,15 @@ CommonShareCtrl.m_clickSaveBtn = HL.Field(HL.Boolean) << false
 CommonShareCtrl.m_maskClipAmount = HL.Field(HL.Any) << nil
 
 
+CommonShareCtrl.m_lastShareChannelId = HL.Field(HL.Number) << 0
+
+
+CommonShareCtrl.m_lastShareSklandTopicId = HL.Field(HL.String) << ""
+
+
+CommonShareCtrl.m_ratio = HL.Field(HL.Number) << 1
+
+
 
 
 
@@ -77,6 +103,8 @@ CommonShareCtrl.ScreenCaptureAndShare = HL.StaticMethod(HL.Any) << function(arg)
         return
     end
 
+    
+    
     
     
     
@@ -105,9 +133,30 @@ CommonShareCtrl.ScreenCaptureAndShare = HL.StaticMethod(HL.Any) << function(arg)
             if this.view.rectTransform.rect.height > 0 then
                 this.view.stateController:SetState("Show")
                 ratio = this.view.rectTransform.rect.width / this.view.rectTransform.rect.height
+                this.m_ratio = ratio
                 this.view.hideRoot.aspectRatio = ratio
                 LayoutRebuilder.ForceRebuildLayoutImmediate(this.view.hideRoot.transform)
                 this.view.stateController:SetState(arg.needEdge == false and "HideAll" or "Hide")
+                coroutine.waitForRenderDone()
+                
+                
+                local isBlurShowing = false
+                for _ = 1, 30 do
+                    local isOpen, blurCtrl = UIManager:IsOpen(PanelId.FullScreenSceneBlur)
+                    isBlurShowing = isOpen and blurCtrl ~= nil and blurCtrl.view ~= nil and blurCtrl.view.blurBG ~= nil and blurCtrl.view.blurBG.gameObject.activeSelf
+                    if not isBlurShowing then
+                        break
+                    end
+                    coroutine.step()
+                end
+
+                local isOpen, blurCtrl = UIManager:IsOpen(PanelId.FullScreenSceneBlur)
+                isBlurShowing = isOpen and blurCtrl ~= nil and blurCtrl.view ~= nil and blurCtrl.view.blurBG ~= nil and blurCtrl.view.blurBG.gameObject.activeSelf
+                if isBlurShowing then
+                    logger.error("CommonShareCtrl.ScreenCaptureAndShare: wait FullScreenSceneBlur exit timeout")
+                end
+
+                coroutine.waitForRenderDone()
             end
             local photoRealHeight = this.view.photoImgWithWaterMark.rectTransform.rect.width / ratio
             local offset = photoRealHeight * waterMarkScale / 2
@@ -151,6 +200,8 @@ CommonShareCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_arg = arg
     self.m_onClose = arg.onClose
     self.m_type = arg.type
+    self.m_lastShareChannelId = 0
+    self.m_lastShareSklandTopicId = ""
     self.view.copyBtn.onClick:RemoveAllListeners()
     self.view.copyBtn.onClick:AddListener(function()
         logger.info("CommonShareCtrl.OnCreate: Copy button clicked")
@@ -215,7 +266,7 @@ CommonShareCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         if not self.m_showPlayerInfo and self.m_arg.waterRt then
             cropBottom = math.floor(self.m_arg.waterRt.height * waterMarkScale / (1 + waterMarkScale))
         end
-        isSave = CS.Beyond.UI.ScreenCaptureUtils.SaveScreenCapture(self.m_arg.waterRt, savePath, cropBottom)
+        isSave = CS.Beyond.UI.ScreenCaptureUtils.SaveScreenCapture(self.m_arg.waterRt, savePath, cropBottom, 20)
         if currentPlatform == CS.UnityEngine.RuntimePlatform.PS5 then
             
             CS.Beyond.PS5ContentManager.instance:ExportContentFromFile(savePath)
@@ -231,7 +282,8 @@ CommonShareCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
                 self.m_isSaved = true
             end
             
-            if usingTempPath then
+            
+            if usingTempPath or CloudGame.enabled then
                 local dataStr = Json.encode({
                     shareChannel = 0, 
                     imgPath = savePath,
@@ -268,12 +320,19 @@ CommonShareCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     
     self:_UpdateWaterInfo()
+    if arg.isRestoreFromChangeInputDevice and arg.waterRt then
+        
+        
+        
+        self:_ApplyPhotoLayout(arg.ratio)
+        self:OnCaptureEnd()
+    end
 end
 
 
 
 CommonShareCtrl.OnCaptureEnd = HL.Method() << function(self)
-    if self.m_arg.onCaptureEnd then
+    if self.m_arg.onCaptureEnd and not self.m_arg.isRestoreFromChangeInputDevice then
         self.m_arg.onCaptureEnd()
     end
 
@@ -293,6 +352,28 @@ CommonShareCtrl.OnCaptureEnd = HL.Method() << function(self)
     self:_ChangePlayerInfo()
     
     self:_OnFadeInEnd()
+end
+
+
+
+
+
+
+
+CommonShareCtrl._ApplyPhotoLayout = HL.Method(HL.Number) << function(self, ratio)
+    if ratio == nil or ratio <= 0 then
+        return
+    end
+    self.m_ratio = ratio
+    self.view.hideRoot.aspectRatio = ratio
+    LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.hideRoot.transform)
+    local photoRealHeight = self.view.photoImgWithWaterMark.rectTransform.rect.width / ratio
+    local offset = photoRealHeight * waterMarkScale / 2
+    self.view.mask2D.rectTransform.offsetMin = Vector2(self.view.photoImgWithWaterMark.rectTransform.offsetMin.x, -offset)
+    self.view.mask2D.rectTransform.offsetMax = Vector2(self.view.photoImgWithWaterMark.rectTransform.offsetMax.x, offset)
+    self.view.bottomNodeWaterMarkForCamera.rectTransform.sizeDelta = Vector2(0, math.floor(self.view.rectTransform.rect.height * waterMarkScale + 3))
+    self.view.bottomNodeWaterMarkUIForPos.rectTransform.sizeDelta = Vector2(0, photoRealHeight * waterMarkScale)
+    LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.mask2D.transform)
 end
 
 
@@ -340,6 +421,7 @@ CommonShareCtrl._OnFadeInEnd = HL.Method() << function(self)
     local sdkInfo = {}
     self.m_channelIdList = {}
     local canShare = DeviceInfo.isMobile
+        or (CloudGame.enabled and CloudGame.isMobilePlatform and CloudGame.isAppClient) 
     if canShare then
         local list = {}
         if CS.Beyond.SDK.SDKConsts.IsOverseaVersion() then
@@ -347,14 +429,25 @@ CommonShareCtrl._OnFadeInEnd = HL.Method() << function(self)
             list = Tables.overseaShareTable:GetValue(CS.Beyond.GameSetting.languageText).shareChannelIdList
         else
             
-            list = Tables.shareTable:GetValue(CS.Beyond.SDK.SDKConsts.IsBilibiliVersion() and 1 or 0).shareChannelIdList
+            local shareId
+            if CloudGame.enabled then
+                shareId = ShareIds.CloudGame
+            else
+                if CS.Beyond.SDK.SDKConsts.IsBilibiliVersion() then
+                    shareId = ShareIds.Bilibili
+                else
+                    shareId = ShareIds.Official
+                end
+            end
+            list = Tables.shareTable:GetValue(shareId).shareChannelIdList
         end
 
         for i = 0, list.Count - 1 do
             
             local success, cfg = Tables.shareChannelTable:TryGetValue(list[i])
 
-            if success and list[i] ~= 0 and (GameInstance.player.friendSystem.ShareControl & (1 << list[i])) == 0 then
+            if success and list[i] ~= 0 and (GameInstance.player.friendSystem.ShareControl & (1 << list[i])) == 0
+            then
                 table.insert(sdkInfo, {
                     icon = cfg.icon,
                     id = cfg.shareChannelId,
@@ -375,19 +468,40 @@ CommonShareCtrl._OnFadeInEnd = HL.Method() << function(self)
             cell.shareImg:LoadSprite(UIConst.UI_SPRITE_SHARE_ICON, info.icon)
             cell.shareBtn.onClick:RemoveAllListeners()
             cell.shareBtn.onClick:AddListener(function()
+                
+                if CloudGame.enabled then
+                    fileName = string.format("ENDFIELD_SHARE_%s.png", CS.Beyond.DateTimeUtils.GetCurrentTimestampBySeconds())
+                end
                 local savePath = CS.System.IO.Path.Combine(CS.UnityEngine.Application.temporaryCachePath, fileName)
                 local cropBottom = 0
                 if not self.m_showPlayerInfo and self.m_arg.waterRt then
                     cropBottom = math.floor(self.m_arg.waterRt.height * waterMarkScale / (1 + waterMarkScale))
                 end
-                CS.Beyond.UI.ScreenCaptureUtils.SaveScreenCapture(self.m_arg.waterRt, savePath, cropBottom)
-                local dataStr = Json.encode({
+                CS.Beyond.UI.ScreenCaptureUtils.SaveScreenCapture(self.m_arg.waterRt, savePath, cropBottom, 5)
+                self.m_lastShareChannelId = info.id
+                self.m_lastShareSklandTopicId = ""
+                local data = {
                     shareChannel = info.id,
                     imgPath = savePath,
-                    title = self.m_type == "Blueprint" and string.format(Language.LUA_SHARE_BLUEPRINT_TITLE, self.m_arg.codeId) or Language.LUA_SHARE_PHOTO_TITLE,
-                    desc = self.m_type == "Blueprint" and string.format(Language.LUA_SHARE_BLUEPRINT_DESC, self.m_arg.codeId) or Language.LUA_SHARE_PHOTO_DESC,
+                    title = (self.m_type == "Blueprint" or self.m_type == "ContingencyContractSettlement") and string.format(Language.LUA_SHARE_BLUEPRINT_TITLE, self.m_arg.codeId) or Language.LUA_SHARE_PHOTO_TITLE,
+                    desc = (self.m_type == "Blueprint" or self.m_type == "ContingencyContractSettlement") and string.format(Language.LUA_SHARE_BLUEPRINT_DESC, self.m_arg.codeId) or Language.LUA_SHARE_PHOTO_DESC,
                     extraData = "{}",
-                })
+                }
+                if info.id == SKLandId or info.id == OverseaSKLandId then
+                    local sklKey = info.id == OverseaSKLandId and ("Oversea" .. self.m_arg.type) or self.m_arg.type
+                    local success, sklData = Tables.sKLandShareTable:TryGetValue(sklKey)
+                    if success then
+                        data.extraData = {}
+                        data.extraData.boardId = sklData.boardId
+                        data.extraData.tagList = {}
+                        table.insert(data.extraData.tagList, {id = tostring(sklData.tagList), name = sklData.name})
+                        data.title = sklData.name
+                        self.m_lastShareSklandTopicId = tostring(sklData.boardId)
+                        local extraDataStr = Json.encode(data.extraData)
+                        data.extraData = extraDataStr
+                    end
+                end
+                local dataStr = Json.encode(data)
                 CS.U8.SDK.U8SDKInterface.Instance:SetData(CS.Beyond.SDK.SDKDataType.SET_DATA_SHARE, dataStr)
                 if self.m_type == "PhotoShot" then
                     EventLogManagerInst:GameEvent_Snapshot(4)
@@ -406,18 +520,37 @@ end
 
 
 
+CommonShareCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    if self.m_arg == nil or self.m_arg.waterRt == nil then
+        return nil
+    end
+    local arg = {}
+    for k, v in pairs(self.m_arg) do
+        arg[k] = v
+    end
+    arg.showPlayerInfo = self.m_showPlayerInfo
+    arg.isRestoreFromChangeInputDevice = true
+    arg.ratio = self.m_ratio
+    return arg
+end
+
+
+
 CommonShareCtrl.OnShareEnd = HL.Method() << function(self, args)
     local code = unpack(args)
     if self.m_clickSaveBtn then
         self.m_clickSaveBtn = false
         logger.info("CommonShareCtrl.OnShareEnd: Share ended with code " .. tostring(code))
         Notify(MessageConst.SHOW_TOAST, code == 0 and Language.LUA_COMMON_SHARE_SAVE_SUCCESS or Language.LUA_COMMON_SHARE_SAVE_PERMISSION_DENIED)
-        EventLogManagerInst:GameEvent_CommonShareEnd(self.m_type, self.m_channelIdList, tostring(code), "")
+        EventLogManagerInst:GameEvent_CommonShareEnd(self.m_type, self.m_channelIdList, tostring(code), "", "")
         return
     end
     logger.info("CommonShareCtrl.OnShareEnd: Share ended with code " .. tostring(code))
     Notify(MessageConst.SHOW_TOAST, code == 0 and Language.LUA_COMMON_SHARE_SUCCESS or Language.LUA_COMMON_SHARE_FAIL)
-    EventLogManagerInst:GameEvent_CommonShareEnd(self.m_type, self.m_channelIdList, tostring(code), "")
+    local sklandTopicId = (self.m_lastShareChannelId == SKLandId or self.m_lastShareChannelId == OverseaSKLandId) and code == 0 and self.m_lastShareSklandTopicId or ""
+    EventLogManagerInst:GameEvent_CommonShareEnd(self.m_type, self.m_channelIdList, tostring(code), "", sklandTopicId)
+    self.m_lastShareChannelId = 0
+    self.m_lastShareSklandTopicId = ""
 end
 
 
@@ -431,8 +564,10 @@ end
 CommonShareCtrl.OnClose = HL.Override() << function(self)
     UIManager:Show(PanelId.UIDPanel)
     if self.m_arg then
-        
-        self.m_arg.waterRtHandle:Release()
+        local skipRelease = InputManagerInst.inChangingInputDevice and self.m_arg.waterRt ~= nil
+        if self.m_arg.waterRtHandle and not skipRelease then
+            self.m_arg.waterRtHandle:Release()
+        end
     end
     if self.m_onClose then
         self.m_onClose()

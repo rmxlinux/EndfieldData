@@ -4,38 +4,13 @@ local PANEL_ID = PanelId.SpaceShipCharPoster
 local SLOT_NAME = "receptionRoomCharPosterSlot"
 local MAX_SLOT = Tables.spaceshipConst.charExhibitionMaxCount
 local EMPTY_CHAR_ID = "chr_empty"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceShipCharPosterCtrl = HL.Class('SpaceShipCharPosterCtrl', uiCtrl.UICtrl)
-
 
 SpaceShipCharPosterCtrl.m_charPosterView = HL.Field(HL.Table)
 
-
 SpaceShipCharPosterCtrl.m_slot2charId = HL.Field(HL.Table)
 
-
 SpaceShipCharPosterCtrl.m_charId2slot = HL.Field(HL.Table)
-
 
 
 
@@ -45,12 +20,13 @@ SpaceShipCharPosterCtrl.m_charId2slot = HL.Field(HL.Table)
 SpaceShipCharPosterCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SET_SPACESHIP_CHAR_POSTER] = 'SetSingleCharPoster',
     [MessageConst.ON_CHAR_FRIENDSHIP_CHANGED] = 'FriendshipSlotRefresh',
+    [MessageConst.ON_CHAR_FRIENDSHIP_SEND_CHAR_GIFT_SUCCESS] = 'FriendshipSlotRefresh',
+
     [MessageConst.ON_CHAR_POTENTIAL_UNLOCK] = 'OnCharPotentialUnlock',
     [MessageConst.SET_SPACESHIP_CHAR_POSTER_SERIAL_NUMBER] = 'SetSerialNumberNode',
     [MessageConst.ON_CONFIRM_GENDER] = 'ResetCharPoster',
     [MessageConst.ON_CHAR_POTENTIAL_UNLOCK] = 'ResetCharPosterUI',
 }
-
 
 SpaceShipCharPosterCtrl.OpenSpaceshipCharPoster = HL.StaticMethod() << function()
     if not Utils.isInSpaceShip() or UIManager:IsOpen(PANEL_ID) then
@@ -60,30 +36,19 @@ SpaceShipCharPosterCtrl.OpenSpaceshipCharPoster = HL.StaticMethod() << function(
 end
 
 
-
-
-
 SpaceShipCharPosterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitCharPoster()
 end
 
-
-
 SpaceShipCharPosterCtrl.OnShow = HL.Override() << function(self)
 
 end
-
-
 SpaceShipCharPosterCtrl.OnHide = HL.Override() << function(self)
 
 end
-
-
 SpaceShipCharPosterCtrl.OnClose = HL.Override() << function(self)
 
 end
-
-
 
 SpaceShipCharPosterCtrl._InitCharPoster = HL.Method() << function(self)
     local charPosterPrefab = self:LoadGameObject(string.format(SpaceshipConst.SCENE_UI_PREFAB_PATH, SpaceshipConst.CHAR_POSTER_UI_NAME))
@@ -120,15 +85,9 @@ SpaceShipCharPosterCtrl._InitCharPoster = HL.Method() << function(self)
         end
     end
 end
-
-
-
 SpaceShipCharPosterCtrl.SetSerialNumberNode = HL.Method(HL.Boolean) << function(self, visible)
     self.m_charPosterView.serialNumberNode.gameObject:SetActive(visible)
 end
-
-
-
 
 SpaceShipCharPosterCtrl.ResetCharPosterUI = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     local charTemplateIds = GameInstance.player.spaceship:GetCharWallCharTemplateIds()
@@ -142,9 +101,6 @@ SpaceShipCharPosterCtrl.ResetCharPosterUI = HL.Method(HL.Opt(HL.Any)) << functio
         end
     end
 end
-
-
-
 
 SpaceShipCharPosterCtrl.ResetCharPoster = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     local idInfos = {}
@@ -170,9 +126,6 @@ SpaceShipCharPosterCtrl.ResetCharPoster = HL.Method(HL.Opt(HL.Any)) << function(
         GameInstance.player.spaceship:ChangeGuestRoomCharWallChars(ids)
     end
 end
-
-
-
 
 SpaceShipCharPosterCtrl.SetSingleCharPoster = HL.Method(HL.Opt(HL.Table))
     << function(self, args)
@@ -205,11 +158,6 @@ SpaceShipCharPosterCtrl.SetSingleCharPoster = HL.Method(HL.Opt(HL.Table))
         return
     end
 end
-
-
-
-
-
 
 SpaceShipCharPosterCtrl._EnqueueSingleCharPoster = HL.Method(HL.Number, HL.String, HL.Boolean)
     << function(self, slotIndex, charId, playPeekAnim)
@@ -255,9 +203,6 @@ SpaceShipCharPosterCtrl._EnqueueSingleCharPoster = HL.Method(HL.Number, HL.Strin
     end
 end
 
-
-
-
 SpaceShipCharPosterCtrl._DequeueSingleCharPoster = HL.Method(HL.Number) << function(self, slotIndex)
     if not self.m_slot2charId[slotIndex] then
         return
@@ -266,10 +211,6 @@ SpaceShipCharPosterCtrl._DequeueSingleCharPoster = HL.Method(HL.Number) << funct
     slotIndex = CSIndex(slotIndex)
     self.m_charPosterView.receptionRoomCharPosterMesh[SLOT_NAME .. slotIndex].receptionRoomCharPosterHelper:Dequeue()
 end
-
-
-
-
 
 SpaceShipCharPosterCtrl.SetSingleSlotUI = HL.Method(HL.Number, HL.String) << function(self, slotIndex, charId)
     local slot = self.m_charPosterView["slot".. CSIndex(slotIndex)]
@@ -300,9 +241,7 @@ SpaceShipCharPosterCtrl.SetSingleSlotUI = HL.Method(HL.Number, HL.String) << fun
     end
 end
 
-
-
-SpaceShipCharPosterCtrl.FriendshipSlotRefresh = HL.Method() << function(self)
+SpaceShipCharPosterCtrl.FriendshipSlotRefresh = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     for slotIndex = 1, MAX_SLOT do
         local charId = self.m_slot2charId[slotIndex]
         if charId then
@@ -312,9 +251,6 @@ SpaceShipCharPosterCtrl.FriendshipSlotRefresh = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 SpaceShipCharPosterCtrl.OnCharPotentialUnlock = HL.Method(HL.Table) << function(self, args)
     local charInstId, level = unpack(args)
@@ -333,8 +269,6 @@ SpaceShipCharPosterCtrl.OnCharPotentialUnlock = HL.Method(HL.Table) << function(
         end
     end
 end
-
-
 SpaceShipCharPosterCtrl.OnClose = HL.Override() << function(self)
     CSUtils.ClearUIComponents(self.m_charPosterView.gameObject) 
     GameObject.DestroyImmediate(self.m_charPosterView.gameObject)

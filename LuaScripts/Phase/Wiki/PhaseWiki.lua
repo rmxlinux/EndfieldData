@@ -67,6 +67,13 @@ local PHASE_ID = PhaseId.Wiki
 
 
 
+
+
+
+
+
+
+
 PhaseWiki = HL.Class('PhaseWiki', phaseBase.PhaseBase)
 
 
@@ -218,6 +225,9 @@ PhaseWiki._OnInit = HL.Override() << function(self)
 
     
     self.m_isShowBackBtn = self.arg == nil
+    if self.arg and self.arg.resumeState then
+        self.m_isShowBackBtn = self.arg.resumeState.isShowBackBtn
+    end
 
     
     self.arg = self.arg or {}
@@ -269,6 +279,11 @@ end
 
 PhaseWiki._OpenByArgs = HL.Method() << function(self)
     self:CreateOrShowPhasePanelItem(PanelId.WikiEmpty)
+    if self.arg and self.arg.resumeState then
+        self:_RestoreByResumeState(self.arg.resumeState)
+        self.arg.resumeState = nil
+        return
+    end
     if self.arg and self.arg.isWeaponPreview then
         self:CreatePhasePanelItem(PanelId.WikiWeaponPreview, self.arg)
     elseif self.arg and self.arg.isItemCraft then
@@ -277,6 +292,172 @@ PhaseWiki._OpenByArgs = HL.Method() << function(self)
     else
         self:OpenCategoryByPhaseArgs()
     end
+end
+
+
+
+PhaseWiki.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = lume.deepCopy(self.arg or {})
+    arg.resumeState = self:_CollectResumeState()
+    return arg
+end
+
+
+
+PhaseWiki._CollectResumeState = HL.Method().Return(HL.Table) << function(self)
+    return {
+        panelStates = self:_CollectVisiblePanelStates(),
+        isShowBackBtn = self.m_isShowBackBtn,
+    }
+end
+
+
+
+PhaseWiki._CollectVisiblePanelStates = HL.Method().Return(HL.Table) << function(self)
+    local panelStates = {}
+    local addedPanelIdMap = {}
+    local function tryAddPanel(panelId, arg, needShow)
+        if not panelId or addedPanelIdMap[panelId] then
+            return
+        end
+        local panelItem = self:_GetPanelPhaseItem(panelId)
+        if not panelItem or not panelItem.uiCtrl then
+            return
+        end
+        if needShow == true and not panelItem.uiCtrl:IsShow(true) then
+            return
+        end
+        table.insert(panelStates, {
+            panelId = panelId,
+            arg = arg or panelItem.uiCtrl:GetCurPhaseStateArg(),
+        })
+        addedPanelIdMap[panelId] = true
+    end
+
+    local currentDetailArgs = self.m_currentWikiDetailArgs
+    local currentGroupArgs = self.m_currentWikiGroupArgs
+    local currentCategoryType = currentDetailArgs and currentDetailArgs.categoryType or
+        (currentGroupArgs and currentGroupArgs.categoryType or nil)
+    local panelCfg = currentCategoryType and WIKI_CATEGORY_TO_PANEL_CFG[currentCategoryType] or nil
+    local wikiPanelItem = self:_GetPanelPhaseItem(PanelId.Wiki)
+    if wikiPanelItem and wikiPanelItem.uiCtrl then
+        tryAddPanel(PanelId.Wiki)
+        if panelCfg and panelCfg.groupPanelId then
+            local groupPanelItem = self:_GetPanelPhaseItem(panelCfg.groupPanelId)
+            if groupPanelItem and groupPanelItem.uiCtrl then
+                tryAddPanel(panelCfg.groupPanelId)
+            elseif currentDetailArgs then
+                local groupArg = lume.deepCopy(currentGroupArgs or {})
+                groupArg.categoryType = currentCategoryType
+                groupArg.detailPanelId = panelCfg.detailPanelId
+                groupArg.includeLocked = panelCfg.includeLocked
+                groupArg.wikiEntryShowData = nil
+                groupArg.resumeState = groupArg.resumeState or {}
+                groupArg.resumeState.selectedGroupId = currentDetailArgs.wikiEntryShowData and
+                    currentDetailArgs.wikiEntryShowData.wikiGroupData.groupId or groupArg.resumeState.selectedGroupId
+                groupArg.resumeState.focusTab = true
+                table.insert(panelStates, {
+                    panelId = panelCfg.groupPanelId,
+                    arg = groupArg,
+                })
+                addedPanelIdMap[panelCfg.groupPanelId] = true
+            end
+        end
+        if panelCfg and panelCfg.detailPanelId then
+            tryAddPanel(panelCfg.detailPanelId)
+        end
+    else
+        if panelCfg and panelCfg.groupPanelId then
+            tryAddPanel(panelCfg.groupPanelId)
+        end
+        if panelCfg and panelCfg.detailPanelId then
+            tryAddPanel(panelCfg.detailPanelId)
+        end
+    end
+
+    for _, panelId in ipairs(self.panels) do
+        if panelId ~= PanelId.WikiEmpty and not addedPanelIdMap[panelId] then
+            local panelItem = self:_GetPanelPhaseItem(panelId)
+            if panelItem and panelItem.uiCtrl and panelItem.uiCtrl:IsShow(true) then
+                tryAddPanel(panelId, nil, true)
+            end
+        end
+    end
+    return panelStates
+end
+
+
+
+
+PhaseWiki._RestoreByResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    local panelIds = {}
+    for _, panelId in ipairs(self.panels) do
+        if panelId ~= PanelId.WikiEmpty then
+            table.insert(panelIds, panelId)
+        end
+    end
+    for _, panelId in ipairs(panelIds) do
+        self:RemovePhasePanelItemById(panelId)
+    end
+
+    self.m_currentWikiGroupArgs = nil
+    self.m_currentWikiDetailArgs = nil
+    self.curSearchKeyword = ""
+
+    local panelStates = resumeState and resumeState.panelStates or nil
+    if not panelStates or #panelStates <= 0 then
+        self:CreateOrShowPhasePanelItem(PanelId.Wiki)
+        return
+    end
+    for _, panelState in ipairs(panelStates) do
+        self:_RestorePanelState(panelState)
+    end
+end
+
+
+
+
+PhaseWiki._RestorePanelState = HL.Method(HL.Table) << function(self, panelState)
+    if not panelState or not panelState.panelId then
+        return
+    end
+    local panelId = panelState.panelId
+    local arg = panelState.arg
+    arg.phase = self
+    self:_SyncWikiStateByPanel(panelId, arg)
+    self:CreatePhasePanelItem(panelId, arg)
+    if panelId == PanelId.WikiSearch then
+        UIManager:SetTopOrder(panelId)
+    end
+end
+
+
+
+
+
+PhaseWiki._SyncWikiStateByPanel = HL.Method(HL.Number, HL.Opt(HL.Any)) << function(self, panelId, arg)
+    if panelId == PanelId.WikiGroup or panelId == PanelId.WikiEquipSuit then
+        self.m_currentWikiGroupArgs = arg
+        return
+    end
+    if self:_IsDetailPanelId(panelId) then
+        self.m_currentWikiDetailArgs = arg
+    end
+end
+
+
+
+
+PhaseWiki._IsDetailPanelId = HL.Method(HL.Number).Return(HL.Boolean) << function(self, panelId)
+    if panelId == PanelId.WikiWeaponPreview then
+        return false
+    end
+    for _, panelCfg in pairs(WIKI_CATEGORY_TO_PANEL_CFG) do
+        if panelCfg.detailPanelId == panelId then
+            return true
+        end
+    end
+    return false
 end
 
 
@@ -316,7 +497,7 @@ PhaseWiki._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << f
         self.m_restoreHyperlinkPopupCallback()
     end
     self.m_sceneRoot.view.decoAnim:PlayOutAnimation(function()
-        if self.m_sceneRoot then
+        if self.m_sceneRoot and not PhaseManager:IsPhaseHaveSceneCamera(args and args.anotherPhaseId) then
             self.m_sceneRoot:SetActive(false)
         end
     end)
@@ -327,9 +508,12 @@ end
 
 
 PhaseWiki._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    local isRecovering = PhaseManager.isRecovering
     self.m_hideCamCor = self:_StartCoroutine(function()
-        
-        coroutine.wait(1)
+        if not isRecovering then
+            
+            coroutine.wait(1)
+        end
 
         local needCameraPhaseIds = {
             [PhaseId.FacBuildListSelect] = true,
@@ -823,8 +1007,11 @@ end
 
 
 PhaseWiki._LoadModelAsync = HL.Method(HL.String, HL.Function) << function(self, modelPath, callback)
-    local m_modelRequestId = self.modelLoader:LoadModelAsync(modelPath, self.m_sceneRoot.view.modelRoot, function(activeModelGo)
-        self.m_modelRequestIdLut[modelPath] = nil
+    local m_modelRequestId
+    m_modelRequestId = self.modelLoader:LoadModelAsync(modelPath, self.m_sceneRoot.view.modelRoot, function(activeModelGo)
+        if m_modelRequestId then
+            self.m_modelRequestIdLut[m_modelRequestId] = nil
+        end
         if activeModelGo and callback then
             
             
@@ -848,7 +1035,9 @@ PhaseWiki._LoadModelAsync = HL.Method(HL.String, HL.Function) << function(self, 
             end
         end
     end)
-    self.m_modelRequestIdLut[modelPath] = m_modelRequestId
+    if m_modelRequestId then
+        self.m_modelRequestIdLut[m_modelRequestId] = true
+    end
 end
 
 
@@ -871,7 +1060,7 @@ PhaseWiki.DestroyModel = HL.Method() << function(self)
     self.m_currentModelCategory = ''
     if self.m_weaponDecoBundleList then
         for _, bundle in ipairs(self.m_weaponDecoBundleList) do
-            bundle:Dispose()
+            bundle:Dispose(true)
         end
         self.m_weaponDecoBundleList = nil
     end
@@ -883,9 +1072,9 @@ PhaseWiki.DestroyModel = HL.Method() << function(self)
         self.m_monsterEffectList = nil
     end
 
-    for path, requestId in pairs(self.m_modelRequestIdLut) do
+    for requestId, _ in pairs(self.m_modelRequestIdLut) do
         self.modelLoader:Cancel(requestId)
-        self.m_modelRequestIdLut[path] = nil
+        self.m_modelRequestIdLut[requestId] = nil
     end
 
     for index, activeModelInfo in pairs(self.m_activeModelGos) do

@@ -49,6 +49,8 @@ local PANEL_ID = PanelId.CharInfoProfile
 
 
 
+
+
 CharInfoProfileCtrl = HL.Class('CharInfoProfileCtrl', uiCtrl.UICtrl)
 
 
@@ -203,6 +205,8 @@ CharInfoProfileCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
         self.m_charTemplateId,
        "enter",
         0)
+    self:_ProcessStateArg(args.stateArg)
+    args.stateArg = nil
 end
 
 
@@ -838,5 +842,27 @@ CharInfoProfileCtrl._SendProfileRead = HL.Method() << function(self)
 end
 
 
+
+
+
+CharInfoProfileCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local arg = {
+        tabSelectedIndex = self.m_tabSelectedIndex,
+    }
+    return arg
+end
+
+
+
+
+CharInfoProfileCtrl._ProcessStateArg = HL.Method(HL.Table) << function(self, arg)
+    if not arg then
+        return
+    end
+    local tabSelectedIndex = arg.tabSelectedIndex
+    if tabSelectedIndex and type(tabSelectedIndex) == "number" then
+        self:_ChangeTab(tabSelectedIndex)
+    end
+end
 
 HL.Commit(CharInfoProfileCtrl)

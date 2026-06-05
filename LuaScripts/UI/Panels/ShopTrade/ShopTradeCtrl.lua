@@ -96,6 +96,13 @@ local shopSystem = GameInstance.player.shopSystem
 
 
 
+
+
+
+
+
+
+
 ShopTradeCtrl = HL.Class('ShopTradeCtrl', uiCtrl.UICtrl)
 
 
@@ -109,6 +116,7 @@ ShopTradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SELL_ITEM_SUCC] = '_OnSellItemSuccess',
     [MessageConst.ON_SHOP_REFRESH] = '_OnShopRefresh',
     [MessageConst.ON_FRIEND_SHOP_INFO_SYNC] = '_OnFriendShopRefresh',
+    [MessageConst.ON_SCREEN_SIZE_CHANGED] = '_OnScreenSizeChanged',
 }
 
 
@@ -228,6 +236,12 @@ ShopTradeCtrl.m_waitBulkSellResp = HL.Field(HL.Boolean) << false
 
 
 
+ShopTradeCtrl.m_resumeArg = HL.Field(HL.Table)
+
+
+ShopTradeCtrl.m_resumeOpenPanel = HL.Field(HL.Table)
+
+
 
 
 
@@ -260,6 +274,10 @@ ShopTradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitUI()
     self:_InitData(arg)
     self:_UpdateData()
+    if arg and type(arg) == "table" then
+        self.m_resumeArg = arg.resumeState
+        self.m_resumeOpenPanel = arg.resumeOpenPanel
+    end
     self:_RefreshAllUI()
     self:_BindingControllerOperate()
 
@@ -302,6 +320,13 @@ ShopTradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
     
     self.m_nextRefreshTs = Utils.getNextCommonServerRefreshTime()
+    if self.m_resumeOpenPanel then
+        for _, panelInfo in ipairs(self.m_resumeOpenPanel) do
+            self:_RestorePopupByResumeState(panelInfo)
+        end
+    end
+    self.m_resumeArg = nil
+    self.m_resumeOpenPanel = nil
 end
 
 
@@ -313,18 +338,8 @@ ShopTradeCtrl.OnClose = HL.Override() << function(self)
     end
     shopSystem:SetGoodsIdSee()
     
-    local isOpen, _ = PhaseManager:IsOpen(PhaseId.Dialog)
-    if isOpen then
-        Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
-    end
     self._updateLimitCountTimeKey = LuaUpdate:Remove(self._updateLimitCountTimeKey)
     UIManager:ToggleBlockObtainWaysJump("VISIT_SPACESHIP", false)
-end
-
-
-
-ShopTradeCtrl.OnHide = HL.Override() << function(self)
-    self:_ShowBulkSellNode(false)
 end
 
 
@@ -825,6 +840,94 @@ end
 
 
 
+ShopTradeCtrl._CollectBulkSellResumeState = HL.Method().Return(HL.Opt(HL.Table)) << function(self)
+    if not self.view.bulkSellNode.gameObject.activeSelf or self.m_bulkSellInfo == nil then
+        return nil
+    end
+    local bulkSellState = {
+        selectedGoodsList = {},
+    }
+    
+    for index, goodsInfo in ipairs(self.m_bulkSellInfo.goodsList) do
+        local selectCount = self.m_bulkSellInfo.selectCountList[index]
+        if goodsInfo and selectCount and selectCount > 0 then
+            table.insert(bulkSellState.selectedGoodsList, {
+                goodsId = goodsInfo.goodsId,
+                count = selectCount,
+            })
+        end
+    end
+    local curFocusGoodsInfo = self.m_bulkSellInfo.goodsList[self.m_bulkSellInfo.curFocusGoodsIndex]
+    bulkSellState.curFocusGoodsId = curFocusGoodsInfo and curFocusGoodsInfo.goodsId or nil
+    return bulkSellState
+end
+
+
+
+
+ShopTradeCtrl._GetBulkSellGoodsIndexByGoodsId = HL.Method(HL.String).Return(HL.Number) << function(self, goodsId)
+    if self.m_bulkSellInfo == nil or string.isEmpty(goodsId) then
+        return 0
+    end
+    for index, goodsInfo in ipairs(self.m_bulkSellInfo.goodsList) do
+        if goodsInfo.goodsId == goodsId then
+            return index
+        end
+    end
+    return 0
+end
+
+
+
+
+ShopTradeCtrl._RestoreBulkSellByResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, bulkSellState)
+    if bulkSellState == nil then
+        return
+    end
+    self:_ShowBulkSellNode(true)
+    self:_UpdateBulkSellData()
+    local bulkInfo = self.m_bulkSellInfo
+    if #bulkInfo.goodsList <= 0 then
+        self:_ShowBulkSellNode(false)
+        return
+    end
+    
+    for _, selectedGoodsInfo in ipairs(bulkSellState.selectedGoodsList or {}) do
+        local goodsIndex = self:_GetBulkSellGoodsIndexByGoodsId(selectedGoodsInfo.goodsId)
+        if goodsIndex > 0 then
+            local goodsInfo = bulkInfo.goodsList[goodsIndex]
+            local selectCount = lume.clamp(selectedGoodsInfo.count or 1, 1, goodsInfo.itemCount)
+            bulkInfo.selectCountList[goodsIndex] = selectCount
+            bulkInfo.totalReward = bulkInfo.totalReward + goodsInfo.todayPrice * selectCount
+        end
+    end
+    local focusIndex = self:_GetBulkSellGoodsIndexByGoodsId(bulkSellState.curFocusGoodsId)
+    if focusIndex > 0 and bulkInfo.selectCountList[focusIndex] == nil then
+        focusIndex = 0
+    end
+    if focusIndex == 0 then
+        
+        for index, _ in ipairs(bulkInfo.goodsList) do
+            if bulkInfo.selectCountList[index] ~= nil then
+                focusIndex = index
+                break
+            end
+        end
+    end
+    bulkInfo.curFocusGoodsIndex = focusIndex
+    self:_RefreshBulkSellUI()
+    if focusIndex > 0 then
+        self.view.bulkSellNode.goodsList:ScrollToIndex(CSIndex(focusIndex))
+        local focusObj = self.view.bulkSellNode.goodsList:Get(CSIndex(focusIndex))
+        local focusCell = self.m_getBulkSellGoodsCellFunc(focusObj)
+        if focusCell then
+            InputManagerInst.controllerNaviManager:SetTarget(focusCell.view.selectBtn)
+        end
+    end
+end
+
+
+
 
 
 
@@ -943,11 +1046,8 @@ ShopTradeCtrl.m_InitGetCellSizeHelperInfo = HL.Method() << function(self)
     local goodsSize = goodsListGrid.cellSize
     local goodsSpacing = goodsListGrid.spacing
     local goodsPadding = goodsListGrid.padding
-    LayoutRebuilder.ForceRebuildLayoutImmediate(goodsNode.goodsGroupList.transform)
-    LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.goodsNode.scrollContainer)
-    local notchAdapter = self.view.transform:GetComponent(typeof(CS.Beyond.UI.NotchAdapter))
-    local notchMarginX = notchAdapter and notchAdapter.selfMarginSize.x or 0    
-    local lineWidth = goodsNode.goodsGroupList.transform.rect.width - goodsPadding.left - goodsPadding.right - notchMarginX * 2
+    LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.goodsNode.scrollContainer.transform)
+    local lineWidth = goodsNode.goodsGroupList.transform.rect.width - goodsNode.goodsTagList.transform.rect.width - self.view.goodsNode.scrollContainer.spacing - goodsPadding.left - goodsPadding.right
     local maxCountOneLine = math.floor((lineWidth + goodsSpacing.x) / (goodsSize.x + goodsSpacing.x))
     
     self.m_getCellSizeHelperInfo = {
@@ -1215,11 +1315,66 @@ end
 
 
 
+ShopTradeCtrl._CollectPopupResumeState = HL.Method().Return(HL.Table) << function(self)
+    local resumeOpenPanel = {}
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return resumeOpenPanel
+    end
+
+    local isTradeItemOpen, tradeItemCtrl = UIManager:IsOpen(PanelId.ShopTradeItem)
+    if isTradeItemOpen then
+        local popupArg = tradeItemCtrl:GetCurPhaseStateArg()
+        if popupArg then
+            table.insert(resumeOpenPanel, {
+                panelId = PanelId.ShopTradeItem,
+                arg = popupArg,
+            })
+        end
+        return resumeOpenPanel
+    end
+
+    local isDetailOpen, openedDetailCtrl = UIManager:IsOpen(PanelId.ShopDetail)
+    if isDetailOpen then
+        local popupArg = openedDetailCtrl:GetCurPhaseStateArg()
+        if popupArg then
+            table.insert(resumeOpenPanel, {
+                panelId = PanelId.ShopDetail,
+                arg = popupArg,
+            })
+        end
+    end
+    return resumeOpenPanel
+end
+
+
+
+
+ShopTradeCtrl._RestorePopupByResumeState = HL.Method(HL.Table) << function(self, panelInfo)
+    if not panelInfo or panelInfo.panelId == nil then
+        return
+    end
+    
+    if panelInfo.panelId == PanelId.ShopDetail and self.m_phase then
+        self.m_phase:CreatePhasePanelItem(panelInfo.panelId, panelInfo.arg)
+        return
+    end
+    UIManager:Open(panelInfo.panelId, panelInfo.arg)
+end
+
+
+
 ShopTradeCtrl._RefreshAllUI = HL.Method() << function(self)
+    local resumeState = self.m_resumeArg
     if self.m_isLocalShop then
         self.view.shopStateCtrl:SetState("LocalShop")
         self:_RefreshLocalShopTabUI()
-        self:_OnChangeSelectLocalShop(true, true)
+        local hasRandomTab = #self.m_localShopInfo.randomShopInfo.goodsGroupList > 0
+        local isCommonShop = resumeState == nil or resumeState.isSelectCommonShop ~= false
+        if not hasRandomTab then
+            isCommonShop = true
+        end
+        
+        self:_OnChangeSelectLocalShop(isCommonShop, true)
         local tabNode = self.view.tabNode
         tabNode.titleBgImg:LoadSprite(UIConst.UI_SPRITE_SHOP_TRADE_AREA_BG, self.m_localShopInfo.bgImg)
         if not string.isEmpty(self.m_localShopInfo.icon) and #self.m_localShopInfo.icon > 0 and not self.m_showFriendRecord then
@@ -1249,7 +1404,16 @@ ShopTradeCtrl._RefreshAllUI = HL.Method() << function(self)
         self.view.tabNode.friendPreviousKeyHint.gameObject:SetActive(shopCount > 1)
         self.view.tabNode.friendNextKeyHint.gameObject:SetActive(shopCount > 1)
         
-        self:_OnChangeSelectFriendShop(1)
+        local targetIndex = 1
+        if shopCount > 0 and resumeState then
+            targetIndex = lume.clamp(resumeState.selectedFriendShopIndex or 1, 1, shopCount)
+        end
+        
+        self:_OnChangeSelectFriendShop(targetIndex)
+    end
+    
+    if resumeState and resumeState.bulkSellState then
+        self:_RestoreBulkSellByResumeState(resumeState.bulkSellState)
     end
 end
 
@@ -1394,7 +1558,12 @@ ShopTradeCtrl._RefreshLocalShopGoodsUI = HL.Method(HL.Boolean) << function(self,
     self.view.goodsNode.bulkSellBtnNode.gameObject:SetActive(not isCommonShop and hasPosition)
     self.view.goodsNode.goodsGroupList:UpdateCount(count, isChangeTab)
     if isChangeTab then
-        self.m_curSelectTagIndex = 1
+        if self.m_resumeArg and self.m_resumeArg.curSelectTagIndex then
+            self.m_curSelectTagIndex = self.m_resumeArg.curSelectTagIndex
+            self.view.goodsNode.goodsGroupList:ScrollToIndex(CSIndex(self.m_curSelectTagIndex), true)
+        else
+            self.m_curSelectTagIndex = 1
+        end
         self.view.goodsNode.goodsGroupList:UpdateShowingCells(function(csIndex, obj)
             local cell = self.m_getGoodsGroupCellFunc(obj)
             self:_OnRefreshGoodsGroupCell(cell, LuaIndex(csIndex))
@@ -1643,7 +1812,11 @@ ShopTradeCtrl._RefreshBulkSellUI = HL.Method() << function(self)
     bulkSellNode.goodsList:UpdateCount(goodsCount, true)
     
     self:_RefreshBulkSellSelectState()
-    local obj = bulkSellNode.goodsList:Get(0)
+    local targetIndex = self.m_bulkSellInfo.curFocusGoodsIndex
+    if targetIndex <= 0 then
+        targetIndex = 1
+    end
+    local obj = bulkSellNode.goodsList:Get(CSIndex(targetIndex))
     local cell = self.m_getBulkSellGoodsCellFunc(obj)
     if cell then
         InputManagerInst.controllerNaviManager:SetTarget(cell.view.selectBtn)
@@ -1730,6 +1903,8 @@ end
 ShopTradeCtrl._OnRefreshBulkSellGoodsCell = HL.Method(HL.Forward("ShopTradeGoodsCell"), HL.Number) << function(self, cell, luaIndex)
     local info = self.m_bulkSellInfo.goodsList[luaIndex]
     cell:InitShopTradeGoodsCellBulkSellMode(info, luaIndex, self.m_onClickBulkSellGoods)
+    cell:SetSelectCount(self.m_bulkSellInfo.selectCountList[luaIndex] or 0)
+    cell:SetSelectState(self.m_bulkSellInfo.curFocusGoodsIndex == luaIndex)
     cell.gameObject.name = "GoodsCell_" .. luaIndex
 end
 
@@ -1986,6 +2161,27 @@ end
 
 
 
+ShopTradeCtrl._OnScreenSizeChanged = HL.Method() << function(self)
+    self:m_InitGetCellSizeHelperInfo()
+    local count = 0
+    if self.m_isLocalShop then
+        if self.m_isSelectCommonShop then
+            count = #self.m_localShopInfo.commonShopInfo.goodsGroupList
+        else
+            count = #self.m_localShopInfo.randomShopInfo.goodsGroupList + 1
+        end
+    else
+        local shopInfo = self.m_friendShopInfoList[self.m_curSelectFriendShopIndex]
+        if shopInfo == nil then
+            return
+        end
+        count = #shopInfo.goodsGroupList
+    end
+    self.view.goodsNode.goodsGroupList:UpdateCount(count, false)
+end
+
+
+
 
 ShopTradeCtrl._ShowBulkSellNode = HL.Method(HL.Boolean) << function(self, isShow)
     self.view.bulkSellNode.gameObject:SetActive(isShow)
@@ -2005,6 +2201,25 @@ end
 ShopTradeCtrl._NotifyClientCondition = HL.Method() << function(self)
     local hasSoldOutGroup = self.m_isLocalShop and self.m_isSelectCommonShop and #self.m_localShopInfo.soldOutGoodsGroup.goodsList > 0
     CS.Beyond.Gameplay.Conditions.CheckDomainShopPanelHasSoldOutGroup.Trigger(hasSoldOutGroup)
+end
+
+
+
+ShopTradeCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    return {
+        domainId = self.m_domainId,
+        friendRoleId = self.m_friendRoleId,
+        showFriendRecord = self.m_showFriendRecord,
+        resumeState = {
+            
+            isSelectCommonShop = self.m_isSelectCommonShop,
+            selectedFriendShopIndex = self.m_curSelectFriendShopIndex,
+            curSelectTagIndex = self.m_isLocalShop and self.m_curSelectTagIndex or nil,
+            
+            bulkSellState = self:_CollectBulkSellResumeState(),
+        },
+        resumeOpenPanel = self:_CollectPopupResumeState(),
+    }
 end
 
 

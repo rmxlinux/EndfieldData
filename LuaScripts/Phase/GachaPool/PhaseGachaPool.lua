@@ -146,6 +146,13 @@ end
 
 PhaseGachaPool.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}
+    
+    local gachaPoolPanelItem = self.m_panel2Item[PanelId.GachaPool]
+    if gachaPoolPanelItem then
+        arg.poolId = gachaPoolPanelItem.uiCtrl.m_curPoolId
+        arg.subPanelArg = gachaPoolPanelItem.uiCtrl:GetSubPanelArg()
+        arg.rewardQueueRestoreInfo = gachaPoolPanelItem.uiCtrl:GetRewardQueueRestoreInfo()
+    end
     arg.phase = nil
     return arg
 end

@@ -24,6 +24,9 @@ local PANEL_ID = PanelId.WikiWeaponPreview
 
 
 
+
+
+
 WikiWeaponPreviewCtrl = HL.Class('WikiWeaponPreviewCtrl', uiCtrl.UICtrl)
 
 local WeaponState = {
@@ -45,6 +48,9 @@ WikiWeaponPreviewCtrl.s_messages = HL.StaticField(HL.Table) << {
 WikiWeaponPreviewCtrl.m_wikiEntryShowData = HL.Field(HL.Table)
 
 
+WikiWeaponPreviewCtrl.m_arg = HL.Field(HL.Table)
+
+
 WikiWeaponPreviewCtrl.m_wikiGroupShowDataList = HL.Field(HL.Table)
 
 
@@ -55,11 +61,20 @@ WikiWeaponPreviewCtrl.m_curWeaponState = HL.Field(HL.Number) << 0
 
 
 WikiWeaponPreviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg or {}
     self:_ProcessArg(arg)
     self:_InitAction()
     self:_InitController()
     self:_RefreshLeft()
     self:_RefreshCenter()
+    self:_ApplyResumeState(self.m_arg and self.m_arg.resumeState or nil)
+    if self.m_arg then
+        self.m_arg.resumeState = nil
+    end
+
+    self:_RefreshModel(true)
+    self.m_phase:PlayBgAnim("wiki_plane_toweapon_in")
+    self:_PlayDecoAnim()
 end
 
 
@@ -83,15 +98,6 @@ WikiWeaponPreviewCtrl.OnClose = HL.Override() << function (self)
     if self.m_phase then
         self.m_phase:DestroyModel()
     end
-end
-
-
-
-WikiWeaponPreviewCtrl._OnPhaseItemBind = HL.Override() << function(self)
-    
-    self:_RefreshModel(true)
-    self.m_phase:PlayBgAnim("wiki_plane_toweapon_in")
-    self:_PlayDecoAnim()
 end
 
 
@@ -145,7 +151,20 @@ end
 
 
 
+WikiWeaponPreviewCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
+    arg.weaponId = self.m_wikiEntryShowData and self.m_wikiEntryShowData.wikiEntryData.refItemId or arg.weaponId
+    arg.resumeState = {
+        weaponState = self.m_curWeaponState,
+        groupItemList = self.view.left and self.view.left.GetResumeState and self.view.left:GetResumeState() or nil,
+    }
+    return arg
+end
+
+
+
 WikiWeaponPreviewCtrl._InitAction = HL.Method() << function(self)
+    local defaultWeaponStateIndex = self.m_arg.resumeState and self.m_arg.resumeState.weaponState or WeaponState.Gem
     self.view.topNode.btnClose.onClick:AddListener(function()
         local fadeTimeBoth = UIConst.CHAR_INFO_TRANSITION_BLACK_SCREEN_DURATION
         local dynamicFadeData = UIUtils.genDynamicBlackScreenMaskData("closeWeaponPreview", fadeTimeBoth, fadeTimeBoth, function()
@@ -162,10 +181,22 @@ WikiWeaponPreviewCtrl._InitAction = HL.Method() << function(self)
         onToggleIsOn = function(index)
             self:_RefreshWeaponState(index, true)
         end,
-        defaultIndex = 3,
+        defaultIndex = defaultWeaponStateIndex,
         defaultNotCall = true,
     })
-    self:_RefreshWeaponState(WeaponState.Gem, false)
+    self:_RefreshWeaponState(defaultWeaponStateIndex, false)
+end
+
+
+
+
+WikiWeaponPreviewCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState then
+        return
+    end
+    if self.view.left and self.view.left.ApplyResumeState then
+        self.view.left:ApplyResumeState(resumeState.groupItemList)
+    end
 end
 
 

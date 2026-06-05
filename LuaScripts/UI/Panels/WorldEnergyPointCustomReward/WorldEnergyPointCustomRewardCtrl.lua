@@ -91,14 +91,7 @@ WorldEnergyPointCustomRewardCtrl.TryStartSettlement = HL.StaticMethod(HL.Table) 
                         GameInstance.player.worldEnergyPointSystem:SendReqObtainReward(groupId, false, ActivityUtils.hasStaminaReduceCount(), 1)
                     else
                         
-                        
-                        local uiCtrl = UIManager:AutoOpen(PanelId.StaminaPopUp)
-                        uiCtrl:SetStaminaCloseFun(function()
-                            
-                            
-                            
-                            
-                        end)
+                        PhaseManager:OpenPhase(PhaseId.StaminaPopUp)
                     end
 
                 end,
@@ -128,11 +121,7 @@ WorldEnergyPointCustomRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self
     self:_InitData(arg)
     self:_InitView()
     self:_InitController()
-end
 
-
-
-WorldEnergyPointCustomRewardCtrl.OnAnimationInFinished = HL.Override() << function(self)
     if ActivityUtils.hasStaminaReduceCount() then
         return
     end
@@ -202,7 +191,8 @@ WorldEnergyPointCustomRewardCtrl._InitData = HL.Method(HL.Table) << function(sel
     self.m_attrInfos = attrInfos
 
     local hasGemCustomItem = Utils.getItemCount(gemCustomItemId) > 0
-    self.m_gemCustomToggleOn = self.m_hasSelectTerms and hasGemCustomItem
+    local gemCustomizationManuallyOff = GameInstance.player.worldEnergyPointSystem:IsWorldEnergyPointGemCustomizationOff(groupId)
+    self.m_gemCustomToggleOn = self.m_hasSelectTerms and hasGemCustomItem and not gemCustomizationManuallyOff
 end
 
 
@@ -218,7 +208,7 @@ WorldEnergyPointCustomRewardCtrl._InitView = HL.Method() << function(self)
 
         self.view.orbitToggle:InitCommonToggle(function(isOn)
             self:_OnGemCustomToggleChanged(isOn)
-        end, self.m_gemCustomToggleOn)
+        end, self.m_gemCustomToggleOn, true)
         local gemCustomItemCount = Utils.getItemCount(self.m_gemCustomItemId)
         if gemCustomItemCount > 0 then
             self.view.orbitEntryState:SetState(self.m_gemCustomToggleOn and "Use" or "NonUse")
@@ -267,7 +257,7 @@ WorldEnergyPointCustomRewardCtrl._OnClickBtnAward = HL.Method() << function(self
         GameInstance.player.worldEnergyPointSystem:SendReqObtainReward(self.m_groupId, self.m_gemCustomToggleOn, ActivityUtils.hasStaminaReduceCount(), self.m_curSelectRadio)
     else
         
-        UIManager:AutoOpen(PanelId.StaminaPopUp)
+        PhaseManager:OpenPhase(PhaseId.StaminaPopUp)
     end
 end
 
@@ -335,6 +325,12 @@ WorldEnergyPointCustomRewardCtrl._OnGemCustomToggleChanged = HL.Method(HL.Boolea
     self.m_gemCustomToggleOn = isOn
     self.view.orbitEntryState:SetState(self.m_gemCustomToggleOn and "Use" or "NonUse")
     self:_RefreshState()
+
+    if isOn then
+        GameInstance.player.worldEnergyPointSystem:SendReqRemoveGemCustomizationOff(self.m_groupId)
+    else
+        GameInstance.player.worldEnergyPointSystem:SendReqAddGemCustomizationOff(self.m_groupId)
+    end
 end
 
 

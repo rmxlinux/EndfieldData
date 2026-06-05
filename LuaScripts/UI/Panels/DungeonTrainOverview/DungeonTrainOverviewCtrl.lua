@@ -78,8 +78,7 @@ DungeonTrainOverviewCtrl._UpdateTabCell = HL.Method(HL.Forward("TrainingEntryTab
     else
         local dungeonSeriesId = self.m_dungeonSeriesIds[luaIndex]
         cell:InitTrainingEntryTab(false, dungeonSeriesId, luaIndex, function()
-            
-            self:Notify(MessageConst.DIALOG_CLOSE_UI, {nil, nil, 0})
+            GameWorld.dialogManager:Next(0)
         end)
     end
 end
@@ -87,11 +86,8 @@ end
 
 
 DungeonTrainOverviewCtrl._OnClickBtnClose = HL.Method() << function(self)
-    PhaseManager:PopPhase(PHASE_ID, function()
-        if PhaseManager:IsOpen(PhaseId.Dialog) then
-            self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 1 })
-        end
-    end)
+    Notify(MessageConst.DIALOG_CHANGE_NEXT_INDEX, { phaseId = PHASE_ID, nextIndex = 1, })
+    PhaseManager:PopPhase(PHASE_ID)
 end
 
 HL.Commit(DungeonTrainOverviewCtrl)

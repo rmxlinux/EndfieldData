@@ -40,6 +40,11 @@ local PANEL_ID = PanelId.FacHUBData
 
 
 
+
+
+
+
+
 FacHUBDataCtrl = HL.Class('FacHUBDataCtrl', uiCtrl.UICtrl)
 
 
@@ -81,7 +86,7 @@ FacHUBDataCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.closeBtn.onClick:AddListener(function()
         PhaseManager:PopPhase(PhaseId.FacHUBData)
     end)
-    self:BindInputPlayerAction("fac_open_capacity_panel", function()
+    self:BindInputPlayerAction("fac_open_hub_data_panel", function()
         PhaseManager:PopPhase(PhaseId.FacHUBData)
     end)
 
@@ -103,14 +108,19 @@ FacHUBDataCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             end
         end
     end
+    local recoverState = self:_ProcessRecoverStateArg(arg)
+    if recoverState and recoverState.domainIndex then
+        self.m_curDomainIndex = self:_ClampRecoverIndex(recoverState.domainIndex, #self.m_domainDropDownInfo, self.m_curDomainIndex)
+    end
 
-    self:_InitProductivityNode()
-    self:_InitElectricNode()
+    self:_InitProductivityNode(recoverState)
+    self:_InitElectricNode(recoverState)
 
     local tabIndex = arg and arg.tabIndex or 1
     self:_InitTabs(tabIndex)
 
     self:_InitHUBDataController()
+    self:_TryRecoverInstructionBook(recoverState)
 
     self:_StartCoroutine(function()
         while true do
@@ -123,6 +133,78 @@ FacHUBDataCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             end
         end
     end)
+end
+
+
+
+FacHUBDataCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local recoverState = {
+        tabIndex = self.m_curTabIndex,
+        domainIndex = self.m_curDomainIndex,
+        electricDurationIndex = LuaIndex(self.view.electricNode.durationDropDown.selectedIndex),
+        productivityDurationIndex = LuaIndex(self.view.productivityNode.dropDown.selectedIndex),
+        sortSelectedIndex = self.view.productivityNode.sortNode:GetCurSelectedIndex(),
+        sortIsIncremental = self.view.productivityNode.sortNode.isIncremental,
+    }
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and instructionCtrl:IsShow() and instructionCtrl.id == "hub_data" and PhaseManager:GetTopPhaseId() == PhaseId.FacHUBData then
+        recoverState.instructionBookArg = {
+            id = instructionCtrl.id,
+        }
+    end
+    if self.m_filterTags and next(self.m_filterTags) then
+        recoverState.filterShowingTypes = {}
+        for showingType, _ in pairs(self.m_filterTags) do
+            table.insert(recoverState.filterShowingTypes, showingType)
+        end
+    end
+    return recoverState
+end
+
+
+
+
+FacHUBDataCtrl._ProcessRecoverStateArg = HL.Method(HL.Opt(HL.Any)).Return(HL.Opt(HL.Any)) << function(self, arg)
+    if not arg then
+        return nil
+    end
+    return arg
+end
+
+
+
+
+
+
+FacHUBDataCtrl._ClampRecoverIndex = HL.Method(HL.Number, HL.Number, HL.Number).Return(HL.Number) << function(self, index, maxCount, defaultIndex)
+    if maxCount <= 0 or type(index) ~= "number" then
+        return defaultIndex
+    end
+    if index < 1 then
+        return 1
+    end
+    if index > maxCount then
+        return maxCount
+    end
+    return index
+end
+
+
+
+
+FacHUBDataCtrl._TryRecoverInstructionBook = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil or recoverState.instructionBookArg == nil then
+        return
+    end
+    if PhaseManager:GetTopPhaseId() ~= PhaseId.FacHUBData then
+        return
+    end
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and instructionCtrl:IsShow() then
+        return
+    end
+    UIManager:Open(PanelId.InstructionBook, recoverState.instructionBookArg)
+    recoverState.instructionBookArg = nil
 end
 
 
@@ -213,7 +295,8 @@ FacHUBDataCtrl.m_powerDurationDropDownInfo = HL.Field(HL.Table)
 
 
 
-FacHUBDataCtrl._InitElectricNode = HL.Method() << function(self)
+
+FacHUBDataCtrl._InitElectricNode = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     local inited = false
 
     local node = self.view.electricNode
@@ -238,6 +321,8 @@ FacHUBDataCtrl._InitElectricNode = HL.Method() << function(self)
         })
     end
     table.sort(self.m_powerDurationDropDownInfo, Utils.genSortFunction({ "sortId" }, true))
+    local durationIndex = recoverState and recoverState.electricDurationIndex or 1
+    durationIndex = self:_ClampRecoverIndex(durationIndex, #self.m_powerDurationDropDownInfo, 1)
     node.durationDropDown:Init(function(csIndex, option, isSelected)
         option:SetText(self.m_powerDurationDropDownInfo[LuaIndex(csIndex)].name)
     end, function(csIndex)
@@ -245,7 +330,7 @@ FacHUBDataCtrl._InitElectricNode = HL.Method() << function(self)
             self:_ReqPowerData()
         end
     end)
-    node.durationDropDown:Refresh(#self.m_powerDurationDropDownInfo, 0)
+    node.durationDropDown:Refresh(#self.m_powerDurationDropDownInfo, CSIndex(durationIndex))
 
     
     self:_InitPowersByLocalData()
@@ -387,7 +472,8 @@ FacHUBDataCtrl.m_showingItems = HL.Field(HL.Table)
 
 
 
-FacHUBDataCtrl._InitProductivityNode = HL.Method() << function(self)
+
+FacHUBDataCtrl._InitProductivityNode = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     local node = self.view.productivityNode
     local inited = false
 
@@ -396,7 +482,7 @@ FacHUBDataCtrl._InitProductivityNode = HL.Method() << function(self)
         self:_OnUpdateCell(node.m_getCell(obj), LuaIndex(csIndex))
     end)
 
-    node.sortNode:InitSortNode({
+    local sortOptions = {
         {
             name = Language.LUA_FAC_CRAFT_SORT_1,
             keys = {"order", "sortId1", "sortId2", "id"},
@@ -413,13 +499,20 @@ FacHUBDataCtrl._InitProductivityNode = HL.Method() << function(self)
             keys = {"order", "rarity", "sortId1", "sortId2", "id"},
             reverseKeys = {"reverseOrder", "rarity", "sortId1", "sortId2", "id"},
         },
-    }, function(optData, isIncremental)
+    }
+    local sortSelectedIndex = recoverState and recoverState.sortSelectedIndex or 1
+    sortSelectedIndex = self:_ClampRecoverIndex(sortSelectedIndex, #sortOptions, 1)
+    local sortIsIncremental = recoverState and recoverState.sortIsIncremental
+    if sortIsIncremental == nil then
+        sortIsIncremental = true
+    end
+    node.sortNode:InitSortNode(sortOptions, function(optData, isIncremental)
         if not inited then
             return
         end
         self:_SortData(optData, isIncremental)
         self:_RefreshItemList()
-    end, nil, true, true, node.filterBtn)
+    end, CSIndex(sortSelectedIndex), sortIsIncremental, true, node.filterBtn)
 
     local filterTagGroups = {}
     for _, v in ipairs(FacConst.HUB_ITEM_PRODUCTIVITY_SHOWING_TYPES) do
@@ -430,10 +523,18 @@ FacHUBDataCtrl._InitProductivityNode = HL.Method() << function(self)
         }
         table.insert(filterTagGroups, info)
     end
+    local recoverFilterTags = self:_GetRecoverFilterTags(filterTagGroups, recoverState)
+    if #recoverFilterTags > 0 then
+        self.m_filterTags = {}
+        for _, tagInfo in ipairs(recoverFilterTags) do
+            self.m_filterTags[tagInfo.type] = true
+        end
+    end
     node.filterBtn:InitFilterBtn({
         tagGroups = {
             { tags = filterTagGroups }
         },
+        selectedTags = recoverFilterTags,
         onConfirm = function(tags)
             if not inited then
                 return
@@ -465,6 +566,8 @@ FacHUBDataCtrl._InitProductivityNode = HL.Method() << function(self)
         })
     end
     table.sort(self.m_itemDurationDropDownInfo, Utils.genSortFunction({ "sortId" }, true))
+    local itemDurationIndex = recoverState and recoverState.productivityDurationIndex or 1
+    itemDurationIndex = self:_ClampRecoverIndex(itemDurationIndex, #self.m_itemDurationDropDownInfo, 1)
     node.dropDown:Init(function(csIndex, option, isSelected)
         option:SetText(self.m_itemDurationDropDownInfo[LuaIndex(csIndex)].name)
     end, function(csIndex)
@@ -473,7 +576,7 @@ FacHUBDataCtrl._InitProductivityNode = HL.Method() << function(self)
         end
         self:_ReqProductData()
     end)
-    node.dropDown:Refresh(#self.m_itemDurationDropDownInfo, 0)
+    node.dropDown:Refresh(#self.m_itemDurationDropDownInfo, CSIndex(itemDurationIndex))
 
     node.domainDropDown:Init(function(index, option, isSelected)
         local info = self.m_domainDropDownInfo[LuaIndex(index)]
@@ -486,6 +589,27 @@ FacHUBDataCtrl._InitProductivityNode = HL.Method() << function(self)
     node.domainDropDown:Refresh(#self.m_domainDropDownInfo, CSIndex(self.m_curDomainIndex))
 
     inited = true
+end
+
+
+
+
+
+FacHUBDataCtrl._GetRecoverFilterTags = HL.Method(HL.Table, HL.Opt(HL.Any)).Return(HL.Table) << function(self, filterTagGroups, recoverState)
+    if not recoverState or not recoverState.filterShowingTypes or #recoverState.filterShowingTypes == 0 then
+        return {}
+    end
+    local recoverTypeMap = {}
+    for _, showingType in ipairs(recoverState.filterShowingTypes) do
+        recoverTypeMap[showingType] = true
+    end
+    local recoverFilterTags = {}
+    for _, tagInfo in ipairs(filterTagGroups) do
+        if recoverTypeMap[tagInfo.type] then
+            table.insert(recoverFilterTags, tagInfo)
+        end
+    end
+    return recoverFilterTags
 end
 
 
@@ -519,7 +643,7 @@ FacHUBDataCtrl._InitItemData = HL.Method() << function(self)
 
             if showItem then
                 local itemData = Tables.itemTable[itemId]
-                local isBookmark = remoteFactory:IsBookmarkItem(scope, itemId)
+                local isBookmark = remoteFactory:IsBookmarkItem(scope, itemId, domainId)
                 local order = isBookmark and 0 or 1
                 if isBookmark then
                     order = 0
@@ -647,7 +771,7 @@ FacHUBDataCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, ce
             return true
         end
         
-        local curBookmarkCount = GameInstance.player.remoteFactory:GetBookmarkItemCount(Utils.getCurrentScope())
+        local curBookmarkCount = GameInstance.player.remoteFactory:GetBookmarkItemCount(Utils.getCurrentScope(), self:_GetCurDomainId())
         local maxCount = Tables.factoryConst.maxStatisticBookmarkNum
         if curBookmarkCount >= maxCount then
             Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_HUB_BOOKMARK_MAX_COUNT)
@@ -700,10 +824,11 @@ FacHUBDataCtrl._MarkProductItem = HL.Method(HL.Number) << function(self, index)
     local itemId = itemInfo.itemId
     local remoteFactory = GameInstance.player.remoteFactory
     local scope = Utils.getCurrentScope()
+    local domainId = self:_GetCurDomainId()
     if itemInfo.isBookmark then
-        remoteFactory:RemoveBookmarkItem(scope, itemId)
+        remoteFactory:RemoveBookmarkItem(scope, domainId, itemId)
     else
-        remoteFactory:AddBookmarkItem(scope, itemId)
+        remoteFactory:AddBookmarkItem(scope, domainId, itemId)
     end
     itemInfo.isBookmark = not itemInfo.isBookmark
     itemInfo.order = itemInfo.isBookmark and 0 or 1

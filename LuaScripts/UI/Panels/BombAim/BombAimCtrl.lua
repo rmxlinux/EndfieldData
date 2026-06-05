@@ -16,6 +16,7 @@ local PANEL_ID = PanelId.BombAim
 
 
 
+
 BombAimCtrl = HL.Class('BombAimCtrl', uiCtrl.UICtrl)
 
 
@@ -39,6 +40,7 @@ BombAimCtrl.m_isControllerTriggerUsingVibration = HL.Field(HL.Boolean) << false
 BombAimCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SYNC_AIM_POS] = '_OnSyncAimPos',
     [MessageConst.HIDE_BOMB_AIM] = '_OnHideBombAim',
+    [MessageConst.ON_CHANGE_INPUT_DEVICE_TYPE_FINISHED] = '_OnChangeInputDeviceTypeFinished',
 }
 
 
@@ -155,6 +157,27 @@ BombAimCtrl._ToggleControllerTriggerSetting = HL.Method(HL.Boolean, HL.Opt(HL.Bo
     
     if oldHandlerId >= 0 then
         GameInstance.audioManager.gamePad.scePad:EndTriggerEffect(oldHandlerId)
+    end
+end
+
+
+
+
+BombAimCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Table) << function(self, args)
+    if not self:IsShow() then
+        return
+    end
+
+    local inputType = args.inputType
+    Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {true, "Bomb"})
+    if inputType == DeviceInfo.InputType.Controller then
+        self:_ToggleControllerTriggerSetting(true)
+        UIManager:HideWithKey(PanelId.BattleAction, "Bomb")
+        GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "Bomb", true)
+    else
+        self:_ToggleControllerTriggerSetting(false)
+        UIManager:ShowWithKey(PanelId.BattleAction, "Bomb")
+        GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "Bomb", false)
     end
 end
 

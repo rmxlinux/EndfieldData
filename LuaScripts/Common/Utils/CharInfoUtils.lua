@@ -855,7 +855,8 @@ function CharInfoUtils.getCurScopeCharInfoList(csTeamIndex)
         
         local charInfo = scopeCharList[CSIndex(i)]
         local instId = charInfo.instId
-        if CharInfoUtils.IsServerDefaultChar(charInfo) and (CharInfoUtils.checkCharInTeam(instId, LuaIndex(csTeamIndex)) <= 0) then
+        local isClientOnly = GameUtil.IsRuntimeClientId(instId)
+        if (not isClientOnly) and (CharInfoUtils.checkCharInTeam(instId, LuaIndex(csTeamIndex)) <= 0) then
             local templateId = charInfo.templateId
             local charCfg = Tables.characterTable:GetValue(templateId)
 
@@ -881,7 +882,7 @@ end
 
 
 
-function CharInfoUtils.getCharInfoList(csTeamIndex)
+function CharInfoUtils.getCharInfoList(csTeamIndex, ignoreNotServerDefaultChar)
     local charBag = GameInstance.player.charBag
     local charInfoList = {}
     local playerChars = charBag.charInfos
@@ -913,7 +914,11 @@ function CharInfoUtils.getCharInfoList(csTeamIndex)
     end
 
     for instId, charInfo in pairs(playerChars) do
-        if CharInfoUtils.IsServerDefaultChar(charInfo) and (CharInfoUtils.checkCharInTeam(instId, LuaIndex(csTeamIndex)) <= 0) then
+        local passFilter = not GameUtil.IsRuntimeClientId(instId)
+        if ignoreNotServerDefaultChar == true then
+            passFilter = passFilter and CharInfoUtils.IsServerDefaultChar(charInfo)
+        end
+        if passFilter and (CharInfoUtils.checkCharInTeam(instId, LuaIndex(csTeamIndex)) <= 0) then
             local templateId = charInfo.templateId
             local charCfg = Tables.characterTable:GetValue(templateId)
 
@@ -1147,10 +1152,6 @@ end
 
 function CharInfoUtils.getCharHeadSpriteName(templateId)
     return UIConst.UI_SPRITE_CHAR_HEAD, UIConst.UI_CHAR_HEAD_PREFIX .. templateId
-end
-
-function CharInfoUtils.getCharHeadSquareSpriteName(templateId)
-    return UIConst.UI_SPRITE_CHAR_HEAD_SQUARE, UIConst.UI_CHAR_HEAD_PREFIX .. templateId
 end
 
 function CharInfoUtils.getCharPaperAttributes(templateId, level, breakStage)

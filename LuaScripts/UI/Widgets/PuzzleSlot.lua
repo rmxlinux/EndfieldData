@@ -53,6 +53,9 @@ local PuzzleState = {
 
 
 
+
+
+
 PuzzleSlot = HL.Class('PuzzleSlot', UIWidgetBase)
 
 
@@ -620,6 +623,60 @@ end
 
 PuzzleSlot.ToggleCanDrag = HL.Method(HL.Boolean) << function(self, isOn)
     self.m_canDrag = isOn
+end
+
+
+
+
+PuzzleSlot.RecoverToChessboard = HL.Method(Transform) << function(self, gridCellTransform)
+    local _, block = self.m_puzzleGame.currentChessboard.blocks:TryGetValue(self.m_puzzleData.id)
+
+    self.m_puzzleCtrl:SetBlockOutScrollRect(self.transform)
+
+    self.view.viewRect.pivot = self.m_dragPivot
+    self.view.viewRect.localPosition = Vector3.zero
+    self.view.viewImage:SetNativeSize()
+    self.view.viewRect.localRotation = Quaternion.Euler(0, 0, -90 * (block.rotateCount % 4))
+
+    self.transform.position = gridCellTransform.position
+    block.forceLocation = gridCellTransform.position
+
+    self.m_currentState = PuzzleState.Normal
+    self.view.canvasGroup.alpha = self.config.PUZZLE_COLOR_NORMAL_ALPHA
+    self.view.viewSelected.gameObject:SetActiveIfNecessary(false)
+    self:_ToggleCellsOrViewRaycast(true)
+    self:_RebuildDragCell()
+end
+
+
+
+
+PuzzleSlot.RecoverToChessboardAsFloat = HL.Method(Transform) << function(self, gridCellTransform)
+    local _, block = self.m_puzzleGame.currentChessboard.blocks:TryGetValue(self.m_puzzleData.id)
+
+    self.m_puzzleCtrl:SetBlockOutScrollRect(self.transform)
+
+    self.view.viewRect.pivot = self.m_dragPivot
+    self.view.viewRect.localPosition = Vector3.zero
+    self.view.viewImage:SetNativeSize()
+    self.view.viewRect.localRotation = Quaternion.Euler(0, 0, -90 * (block.rotateCount % 4))
+
+    self.transform.position = gridCellTransform.position
+    block.forceLocation = gridCellTransform.position
+
+    self.m_currentState = PuzzleState.Float
+    self.view.canvasGroup.alpha = self.config.PUZZLE_COLOR_NORMAL_ALPHA
+    self.view.viewSelected.gameObject:SetActiveIfNecessary(true)
+    self.transform:SetAsLastSibling()
+    self:_ToggleCellsOrViewRaycast(true)
+    self:_RebuildDragCell()
+end
+
+
+
+
+PuzzleSlot.RecoverRotation = HL.Method(HL.Number) << function(self, rotateCount)
+    self.view.viewRect.localRotation = Quaternion.Euler(0, 0, -90 * (rotateCount % 4))
 end
 
 HL.Commit(PuzzleSlot)

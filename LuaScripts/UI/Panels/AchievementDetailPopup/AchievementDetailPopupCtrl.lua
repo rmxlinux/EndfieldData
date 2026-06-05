@@ -15,6 +15,7 @@ local PANEL_ID = PanelId.AchievementDetailPopup
 
 
 
+
 AchievementDetailPopupCtrl = HL.Class('AchievementDetailPopupCtrl', uiCtrl.UICtrl)
 
 
@@ -131,6 +132,7 @@ AchievementDetailPopupCtrl._LoadData = HL.Method(HL.String) << function(self, ac
         initLevel = achievementData.initLevel,
         maxLevel = maxLevel,
         isPlated = achievementPlated,
+        isSpecialProgress = achievementData.specialProgress,
     }
     if hasInitLevelInfo then
         self:_LoadInitLevel(playerAchievement, initLevelInfo)
@@ -246,16 +248,21 @@ AchievementDetailPopupCtrl._GetConditionDesc = HL.Method(HL.Any, HL.Any, HL.Bool
     end
     local progress = 0
     local target = 0
-    for _, condition in pairs(conditions) do
-        if playerAchievement ~= nil and playerAchievement.condition ~= nil then
-            local suc, playerConditionVal = playerAchievement.condition.conditionVals:TryGetValue(condition.conditionId)
-            if suc then
-                progress = progress + playerConditionVal
+    if self.m_viewModel.isSpecialProgress then
+        progress = 0
+        target = 1
+    else
+        for _, condition in pairs(conditions) do
+            if playerAchievement ~= nil and playerAchievement.condition ~= nil then
+                local suc, playerConditionVal = playerAchievement.condition.conditionVals:TryGetValue(condition.conditionId)
+                if suc then
+                    progress = progress + playerConditionVal
+                end
             end
+            target = target + condition.progressToCompare
         end
-        target = target + condition.progressToCompare
     end
-    if overrideProgress ~= nil then
+    if overrideProgress ~= nil and not self.m_viewModel.isSpecialProgress then
         progress = overrideProgress
     end
     local resultDesc = conditionDesc .. string.format(Language.LUA_ACHIEVEMENT_CONDITION_TARGET,
@@ -340,6 +347,17 @@ AchievementDetailPopupCtrl._RenderLevel = HL.Method(HL.Any, HL.Number) << functi
     end
     cell.stateCtrl:SetState(self.m_viewModel.isGained and (levelInfo.isFinished and "Finish" or "UnFinished") or "Unattained")
     cell.title.text = levelInfo.title
+end
+
+
+
+AchievementDetailPopupCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    if self.m_viewModel == nil or string.isEmpty(self.m_viewModel.achievementId) then
+        return
+    end
+    return {
+        achievementId = self.m_viewModel.achievementId,
+    }
 end
 
 HL.Commit(AchievementDetailPopupCtrl)

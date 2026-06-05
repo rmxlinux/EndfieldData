@@ -41,6 +41,8 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
 BuildingCommon = HL.Class('BuildingCommon', UIWidgetBase)
 
 local BUILDING_BOTTOM_BG_NAME = "bg_machine_base_%d"
@@ -741,6 +743,18 @@ BuildingCommon.ChangeBuildingStateDisplay = HL.Method(GEnums.FacBuildingState) <
     self:_RefreshBuildingStateDisplay(state)
 
     self.lastState = state
+end
+
+
+
+BuildingCommon.ShareBuilding = HL.Method() << function(self)
+    self:_ShareBuilding()
+end
+
+
+
+BuildingCommon.ShowBuildingSource = HL.Method() << function(self)
+    self:_ShowBuildingSource()
 end
 
 HL.Commit(BuildingCommon)

@@ -30,6 +30,9 @@ local settlementSystem = GameInstance.player.settlementSystem
 
 
 
+
+
+
 SettlementCharCtrl = HL.Class('SettlementCharCtrl', uiCtrl.UICtrl)
 
 
@@ -84,15 +87,22 @@ SettlementCharCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitUI()
     self:_InitData(arg)
     self:_UpdateData()
+    self:_ApplyResumeState(type(arg) == "table" and arg.resumeState or nil)
     self:_RefreshAllUI(true)
 end
 
 
 
 SettlementCharCtrl.OnShow = HL.Override() << function(self)
-    local firstCell = self.m_getCharCellFunc(1)
-    if firstCell then
-        InputManagerInst.controllerNaviManager:SetTarget(firstCell.btn)
+end
+
+
+
+SettlementCharCtrl.OnAnimationInFinished = HL.Override() << function(self)
+    
+    local selectedCell = self.m_getCharCellFunc(self.m_curSelectedCharIndex)
+    if selectedCell then
+        InputManagerInst.controllerNaviManager:SetTarget(selectedCell.btn)
     end
 end
 
@@ -102,7 +112,11 @@ end
 
 
 SettlementCharCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
-    self.m_settlementId = arg
+    if type(arg) == "table" then
+        self.m_settlementId = arg.settlementId
+    else
+        self.m_settlementId = arg
+    end
     self.m_curOfficerId = settlementSystem:GetSettlementOfficerId(self.m_settlementId)
     self.m_curSelectedCharIndex = 1
     self.m_stlWantTagInfoList = {}
@@ -239,10 +253,14 @@ end
 
 
 SettlementCharCtrl._RefreshAllUI = HL.Method(HL.Boolean) << function(self, isInit)
-    if isInit then
+    
+    local needRecover = self.m_curSelectedCharIndex <= 0 or self.m_curSelectedCharIndex > #self.m_charInfoList
+    if isInit and needRecover then
         self.m_curSelectedCharIndex = 1
+        self.view.charScrollList:UpdateCount(#self.m_charInfoList, isInit)
+    else
+        self.view.charScrollList:UpdateCount(#self.m_charInfoList, self.m_curSelectedCharIndex)
     end
-    self.view.charScrollList:UpdateCount(#self.m_charInfoList, isInit)
     self:_RefreshFeatureInfo()
     self:_RefreshOfficerInfo()
 end
@@ -365,6 +383,11 @@ SettlementCharCtrl._RefreshCharCell = HL.Method(HL.Table, HL.Number, HL.Boolean)
     cell.btn.onClick:AddListener(function()
         self:_OnSelectCharChange(luaIndex)
     end)
+    cell.btn.onIsNaviTargetChanged = function(isNaviTarget)
+        if DeviceInfo.usingController and isNaviTarget then
+            self:_OnSelectCharChange(luaIndex)
+        end
+    end
 end
 
 
@@ -468,6 +491,29 @@ end
 
 
 
+SettlementCharCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState then
+        return
+    end
+    
+    if resumeState.selectedCharId ~= nil then
+        for luaIndex, charInfo in ipairs(self.m_charInfoList) do
+            if charInfo.templateId == resumeState.selectedCharId then
+                self.m_curSelectedCharIndex = luaIndex
+                return
+            end
+        end
+    end
+    
+    local selectedIndex = resumeState.selectedIndex
+    if selectedIndex and selectedIndex > 0 and selectedIndex <= #self.m_charInfoList then
+        self.m_curSelectedCharIndex = selectedIndex
+    end
+end
+
+
+
+
 SettlementCharCtrl._WrapCharTagInfo = HL.Method(HL.String).Return(HL.Table) << function(self, charTagId)
     local matchStlTagInfo = self.m_stlWantCharTagIdSet[charTagId]
     local hasData, tagData = Tables.tagDataTable:TryGetValue(charTagId)
@@ -479,6 +525,19 @@ SettlementCharCtrl._WrapCharTagInfo = HL.Method(HL.String).Return(HL.Table) << f
         isMatch = matchStlTagInfo ~= nil,
     }
     return tagInfo
+end
+
+
+
+SettlementCharCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local curSelectedChar = self.m_charInfoList and self.m_charInfoList[self.m_curSelectedCharIndex] or nil
+    return {
+        settlementId = self.m_settlementId,
+        resumeState = {
+            selectedIndex = self.m_curSelectedCharIndex,
+            selectedCharId = curSelectedChar and curSelectedChar.templateId or nil,
+        }
+    }
 end
 
 

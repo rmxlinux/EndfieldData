@@ -44,18 +44,7 @@ RaidRewardCtrl.m_system = HL.Field(CS.Beyond.Gameplay.WeekRaidSystem)
 
 RaidRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.btnBack.onClick:AddListener(function()
-        if not PhaseManager:CanPopPhase(PhaseId.DungeonWeeklyRaid) then
-            
-            return
-        end
-        local isOpen, phase = PhaseManager:IsOpen(PhaseId.Dialog)
-        if isOpen then
-            self:PlayAnimationOutWithCallback(function()
-                Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PhaseId.DungeonWeeklyRaid, 0 })
-            end)
-        else
-            self.m_phase:TryCloseTopPanel()
-        end
+        self.m_phase:TryCloseTopPanel()
     end)
 
     self.view.helpBtn.onClick:AddListener(function()

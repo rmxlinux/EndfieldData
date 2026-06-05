@@ -14,6 +14,9 @@ local PANEL_ID = PanelId.MapMarkDetailEnemySpawner
 
 
 
+
+
+
 MapMarkDetailEnemySpawnerCtrl = HL.Class('MapMarkDetailEnemySpawnerCtrl', uiCtrl.UICtrl)
 
 
@@ -74,12 +77,61 @@ end
 
 
 MapMarkDetailEnemySpawnerCtrl._OnClickEnemyDetailBtn = HL.Method() << function(self)
+    self:OpenEnemyDetailPopup()
+end
+
+
+
+
+MapMarkDetailEnemySpawnerCtrl.OpenEnemyDetailPopup = HL.Method(HL.Opt(HL.Number)) << function(self, initSelectEnemyLuaIndex)
     local worldEnergyPointCfg = Tables.worldEnergyPointTable[self.m_gameId]
-    UIManager:AutoOpen(PanelId.CommonEnemyPopup, { title = Language.LUA_WEP_ENEMY_INFO_TITLE,
-                                                   enemyListTitle = Language["ui_dungeon_enemy_popup_info_list"],
-                                                   enemyInfoTitle = Language["ui_dungeon_enemy_popup_info_desc"],
-                                                   enemyIds = worldEnergyPointCfg.enemyIds,
-                                                   enemyLevels = worldEnergyPointCfg.enemyLevels })
+    local enemyPopupArg = {
+        title = Language.LUA_WEP_ENEMY_INFO_TITLE,
+        enemyListTitle = Language["ui_dungeon_enemy_popup_info_list"],
+        enemyInfoTitle = Language["ui_dungeon_enemy_popup_info_desc"],
+        enemyIds = worldEnergyPointCfg.enemyIds,
+        enemyLevels = worldEnergyPointCfg.enemyLevels,
+    }
+    if initSelectEnemyLuaIndex ~= nil then
+        enemyPopupArg.initSelectEnemyLuaIndex = initSelectEnemyLuaIndex
+    end
+    UIManager:AutoOpen(PanelId.CommonEnemyPopup, enemyPopupArg)
+end
+
+
+
+MapMarkDetailEnemySpawnerCtrl.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local isOpen, enemyPopupCtrl = UIManager:IsOpen(PanelId.CommonEnemyPopup)
+    if not isOpen then
+        return
+    end
+    local popupState = {
+        popupType = "EnemyDetails",
+    }
+    if HL.TryGet(enemyPopupCtrl, "GetCurSelectEnemyLuaIndex") then
+        local selectedEnemyLuaIndex = enemyPopupCtrl:GetCurSelectEnemyLuaIndex()
+        if selectedEnemyLuaIndex > 0 then
+            popupState.selectedEnemyLuaIndex = selectedEnemyLuaIndex
+        end
+    end
+    return popupState
+end
+
+
+
+
+MapMarkDetailEnemySpawnerCtrl.TryRecoverPopupState = HL.Method(HL.Any) << function(self, popupState)
+    if popupState == nil or string.isEmpty(popupState.popupType) then
+        return
+    end
+    if popupState.popupType ~= "EnemyDetails" then
+        return
+    end
+    local isOpen = UIManager:IsOpen(PanelId.CommonEnemyPopup)
+    if isOpen then
+        return
+    end
+    self:OpenEnemyDetailPopup(popupState.selectedEnemyLuaIndex)
 end
 
 

@@ -665,13 +665,7 @@ ChallengeDungeonCtrl._RefreshDungeonCell = HL.Method(HL.Any, HL.Number) << funct
         cell.gotoBtn.onClick:RemoveAllListeners()
         cell.gotoBtn.onClick:AddListener(function()
             local enterDungeonCallback = function(enterDungeonId)
-                LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId, function()
-                    PhaseManager:OpenPhaseFast(PhaseId.ChallengeDungeon, {
-                        activityId = self.m_info.activityId,
-                        defaultSeriesIndex = seriesIndex,
-                        defaultDungeonIndex = self.m_naviCellIndex,
-                    })
-                end)
+                LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId)
             end
             Notify(MessageConst.ON_OPEN_DUNGEON_ENTRY_PANEL, { dungeonId, enterDungeonCallback })
             if isUnread then

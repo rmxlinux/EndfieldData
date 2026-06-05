@@ -27,6 +27,8 @@ local PANEL_ID = PanelId.SquadIcon
 
 
 
+
+
 SquadIconCtrl = HL.Class('SquadIconCtrl', uiCtrl.UICtrl)
 
 
@@ -49,6 +51,7 @@ SquadIconCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SWITCH_CENTER_BTN_CLICK] = 'OnSwitchCenterBtnClick',
     [MessageConst.ON_SWITCH_MAIN_CHAR_ENABLE_CONFIG_CHANGED] = 'OnSwitchMainCharEnableConfigChanged',
     [MessageConst.ON_SQUAD_ICON_ACTIVE_CONFIG_CHANGED] = 'OnSquadIconActiveConfigChanged',
+    [MessageConst.ON_SQUAD_DISABLE_TIPS_CHANGED] = 'OnDisableTipsChanged',
 }
 
 
@@ -62,6 +65,9 @@ SquadIconCtrl.m_teamSwitchUnlocked = HL.Field(HL.Boolean) << false
 
 
 SquadIconCtrl.m_teamSwitchEnabled = HL.Field(HL.Boolean) << false
+
+
+SquadIconCtrl.m_disableTipList = HL.Field(HL.Forward("UIListCache"))
 
 
 
@@ -103,6 +109,8 @@ SquadIconCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     self.view.main.gameObject:SetActive(GameWorld.battle.squadIconActive)
+
+    self:OnDisableTipsChanged({GameWorld.battle.squadDisableTips})
 end
 
 
@@ -365,6 +373,26 @@ end
 
 SquadIconCtrl._ShowNextBtn = HL.Method().Return(HL.Boolean) << function(self)
     return self:_GetCount() > 1 and self.m_teamSwitchUnlocked and self.m_teamSwitchEnabled
+end
+
+
+
+
+SquadIconCtrl.OnDisableTipsChanged = HL.Method(HL.Table) << function(self, arg)
+    if DeviceInfo.isMobile or self.view.disableTipTemp == nil then
+        
+        return
+    end
+    if self.m_disableTipList == nil then
+        self.m_disableTipList = UIUtils.genCellCache(self.view.disableTipTemp)
+    end
+
+    local tipList = unpack(arg)
+    self.m_disableTipList:Refresh(tipList.Count, function(cell, index)
+        local tipTextId = tipList[CSIndex(index)]
+        cell.disableTxt.text = I18nUtils.GetText(tipTextId)
+        cell.transform:SetAsFirstSibling()
+    end)
 end
 
 HL.Commit(SquadIconCtrl)

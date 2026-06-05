@@ -497,6 +497,9 @@ LevelMapLoader.m_gridWorldLength = HL.Field(HL.Number) << -1
 
 
 LevelMapLoader._OnFirstTimeInit = HL.Override() << function(self)
+    self:RegisterMessage(MessageConst.ON_BACKUP_STATE_CHANGED, function(args)
+        self:_OnMarkLineInstDataChanged(LineType.Power)
+    end)
     self:RegisterMessage(MessageConst.ON_MAP_POWER_LINE_CHANGED, function()
         self:_OnMarkLineInstDataChanged(LineType.Power)
     end)
@@ -1128,7 +1131,7 @@ LevelMapLoader._ShowGridLine = HL.Method(HL.Userdata) << function(self, lineData
 
         
         if lineType == LineType.Power then
-            line.image.color = lineData.hasPower and
+            line.image.color = (lineData.hasPower or FactoryUtils.getIsInBackupPower()) and
                 self.view.config.POWER_LINE_VALID_COLOR or
                 self.view.config.POWER_LINE_INVALID_COLOR
             self.m_loadedPowerLineCount = self.m_loadedPowerLineCount + 1
@@ -3410,10 +3413,14 @@ LevelMapLoader.RefreshElementsHiddenStateInOtherLevel = HL.Method() << function(
                     end
 
                     markObj:ToggleMarkHiddenState("LoaderOtherLevelHide", needHide)
-                    if not gridInCurrLevel then
-                        markObj:ToggleForceShowMark("LoaderOtherLevelForceShow", not needHide)
-                    else
-                        markObj:ToggleForceShowMark("LoaderOtherLevelForceShow", false)
+                    if markRuntimeData.isTracking then
+                        
+                        
+                        if not needHide and not gridInCurrLevel then
+                            markObj:ToggleMarkHiddenState("TrackingRelated", false)
+                        else
+                            markObj:ToggleMarkHiddenState("TrackingRelated", true)
+                        end
                     end
                 end
             end
@@ -3593,7 +3600,7 @@ LevelMapLoader.ResetToTargetMapAndLevel = HL.Method(HL.String) << function(self,
     
     self.view.loader:ClearLoaderCheckState()
     self.view.loader:ChangeLoaderCheckLevels(self.m_levelId)
-    self.view.loader:DoLoaderHitCheck(true)
+    
 
     self:_InitPermanentElementsInCurrentMap()
 end

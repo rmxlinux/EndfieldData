@@ -24,6 +24,8 @@ local PHASE_ID = PhaseId.SettlementCommodity
 
 
 
+
+
 SettlementCommodityCtrl = HL.Class('SettlementCommodityCtrl', uiCtrl.UICtrl)
 
 
@@ -87,6 +89,7 @@ SettlementCommodityCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitUI()
     self:_InitData(arg)
     self:_UpdateData()
+    self:_ApplyResumeState(arg and arg.resumeState or nil)
     self:_RefreshAllUI()
 end
 
@@ -385,6 +388,29 @@ end
 
 
 
+SettlementCommodityCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState then
+        return
+    end
+    
+    if not string.isEmpty(resumeState.selectedItemId) then
+        for luaIndex, itemData in ipairs(self.m_itemDataList) do
+            if itemData.itemId == resumeState.selectedItemId then
+                self.m_curSelectedItemIndex = luaIndex
+                return
+            end
+        end
+    end
+    
+    local selectedIndex = resumeState.selectedIndex
+    if selectedIndex and selectedIndex > 0 and selectedIndex <= #self.m_itemDataList then
+        self.m_curSelectedItemIndex = selectedIndex
+    end
+end
+
+
+
+
 SettlementCommodityCtrl._OnActivityStageUpdate = HL.Method(HL.Any) << function(self, arg)
     local activityId = unpack(arg)
     if self.m_activityInfo == nil or self.m_activityInfo.activityId ~= activityId then
@@ -392,6 +418,22 @@ SettlementCommodityCtrl._OnActivityStageUpdate = HL.Method(HL.Any) << function(s
     end
     self:_UpdateData()
     self:_RefreshAllUI()
+end
+
+
+
+SettlementCommodityCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local curSelectedItem = self.m_itemDataList and self.m_itemDataList[self.m_curSelectedItemIndex] or nil
+    return {
+        settlementId = self.m_stlId,
+        settlementLevel = self.m_stlLevel,
+        curSellItem = self.m_curSellItemId,
+        onConfirmChanged = self.m_onConfirmChangedCallback,
+        resumeState = {
+            selectedIndex = self.m_curSelectedItemIndex,
+            selectedItemId = curSelectedItem and curSelectedItem.itemId or "",
+        }
+    }
 end
 
 

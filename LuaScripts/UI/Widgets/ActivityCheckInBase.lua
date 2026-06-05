@@ -64,6 +64,7 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 ActivityCheckInBase = HL.Class('ActivityCheckInBase', UIWidgetBase)
 
 local FIRST_CELL_POSITION_CAL_FINE_TUNE = 1
@@ -631,16 +632,18 @@ ActivityCheckInBase._Search = HL.Method() << function(self)
     
     local info = self.m_searchInfo
     if info.isChar then
-        local previewCharInfo = GameInstance.player.charBag:CreateClientInitialGachaPoolChar(info.charId)
-        local perfectCharInfo = GameInstance.player.charBag:CreateClientPerfectGachaPoolCharInfo(info.charId)
         CharInfoUtils.openCharInfoBestWay({
-            initCharInfo = {
-                instId = previewCharInfo.instId,
-                templateId = previewCharInfo.templateId,
-                charInstIdList = { previewCharInfo.instId  },
-                maxCharInstIdList = { perfectCharInfo.instId },
-                isShowPreview = true,
-            },
+            initCharInfoCreator = function(initCharTemplateId)
+                local previewCharInfo = GameInstance.player.charBag:CreateClientInitialGachaPoolChar(info.charId)
+                local perfectCharInfo = GameInstance.player.charBag:CreateClientPerfectGachaPoolCharInfo(info.charId)
+                return {
+                    instId = previewCharInfo.instId,
+                    templateId = previewCharInfo.templateId,
+                    charInstIdList = { previewCharInfo.instId  },
+                    maxCharInstIdList = { perfectCharInfo.instId },
+                    isShowPreview = true,
+                }
+            end,
             onClose = function()
                 GameInstance.player.charBag:ClearAllClientCharAndItemData()
             end,
@@ -709,11 +712,18 @@ ActivityCheckInBase._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(s
     
     local state = self:_GetState(index)
 
-    
-    if self.m_Force2digits then
-        cell.levelTxt.text = string.format("%02d", index)
+    if Tables.CheckInRewardTable[self.m_activityId].stageList[CSIndex(index)].dateImg ~= "" then
+        
+        local path = UIConst.UI_SPRITE_CHECK_IN_DATE_IMAGE_PATH
+        local name = Tables.CheckInRewardTable[self.m_activityId].stageList[CSIndex(index)].dateImg
+        cell.nameImage:LoadSprite(path, name)
     else
-        cell.levelTxt.text = index
+        
+        if self.m_Force2digits then
+            cell.levelTxt.text = string.format("%02d", index)
+        else
+            cell.levelTxt.text = index
+        end
     end
     cell.gameObject.name = "Cell" .. tostring(index)
 
@@ -816,6 +826,26 @@ ActivityCheckInBase._ToggleCell = HL.Method(HL.Number, HL.Boolean) << function(s
             self.m_focusIndex = index
         end
     end
+end
+
+
+
+
+ActivityCheckInBase.OnPanelInputBlocked = HL.Method(HL.Boolean) << function(self, active)
+    
+    
+    
+    if not DeviceInfo.usingController then
+        return
+    end
+    if self.m_focusIndex == 0 then
+        return
+    end
+    local cell = self:_GetCell(self.m_focusIndex)
+    if not cell then
+        return
+    end
+    cell.getRewardKeyHint.gameObject:SetActive(active)
 end
 
 

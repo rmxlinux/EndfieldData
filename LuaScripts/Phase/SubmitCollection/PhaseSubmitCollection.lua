@@ -14,7 +14,6 @@ local PHASE_ID = PhaseId.SNS
 
 
 
-
 PhaseSubmitCollection = HL.Class('PhaseSubmitCollection', phaseBase.PhaseBase)
 
 
@@ -51,6 +50,10 @@ end
 
 
 PhaseSubmitCollection._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    if self.arg and self.arg.isCollectionSubmitInstruction then
+        UIManager:Open(PanelId.InstructionBook, "collection_submit")
+        self.arg.isCollectionSubmitInstruction = nil
+    end
 end
 
 
@@ -98,12 +101,24 @@ end
 
 
 
-
 PhaseSubmitCollection._OnRefresh = HL.Override() << function(self)
     local item = self.m_panel2Item[PanelId.SubmitCollection]
 end
 
 
+
+
+
+PhaseSubmitCollection.GetCurStateArg = HL.Override().Return(HL.Any) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and instructionCtrl:IsShow() and instructionCtrl.id == "collection_submit" then
+        arg.isCollectionSubmitInstruction = true
+    else
+        arg.isCollectionSubmitInstruction = nil
+    end
+    return arg
+end
 
 HL.Commit(PhaseSubmitCollection)
 

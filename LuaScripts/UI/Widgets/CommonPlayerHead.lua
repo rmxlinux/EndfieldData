@@ -15,6 +15,7 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 CommonPlayerHead = HL.Class('CommonPlayerHead', UIWidgetBase)
 
 
@@ -54,6 +55,7 @@ CommonPlayerHead._OnFirstTimeInit = HL.Override() << function(self)
             end
         end
     end)
+    self.view.levelTag.gameObject:SetActiveIfNecessary(false)
 end
 
 
@@ -215,6 +217,40 @@ end
 CommonPlayerHead.OnClick = HL.Method() << function(self)
     if self.m_canClick and self.m_onClick then
         self.m_onClick()
+    end
+end
+
+
+
+CommonPlayerHead.UpdateContingencyContractActivityState = HL.Method() << function(self)
+    if self.m_roleId == 0 then
+        self.view.levelTag.gameObject:SetActiveIfNecessary(false)
+        return
+    end
+
+    local success, playerInfo = GameInstance.player.friendSystem:TryGetFriendInfo(self.m_roleId)
+    if success and playerInfo and playerInfo.contingencyContractBestRecord.Item1 ~= nil and playerInfo.contingencyContractBestRecord.Item2 > 0 then
+        local activityData = GameInstance.player.activitySystem:GetActivity(playerInfo.contingencyContractBestRecord.Item1)
+        if activityData == nil then
+            self.view.levelTag.gameObject:SetActiveIfNecessary(false)
+            return
+        end
+        local currentTime = DateTimeUtils.GetCurrentTimestampBySeconds()
+        local isOpen = activityData.gameplayEndTime - currentTime > 0
+        self.view.levelTag.gameObject:SetActiveIfNecessary(isOpen)
+        self.view.activityLevelTxt.text = tostring(playerInfo.contingencyContractBestRecord.Item2)
+        local rangeArray = Tables.activityContingencyContractTable:GetValue(playerInfo.contingencyContractBestRecord.Item1).rangeArray
+
+        
+        self.view.levelTagNode:SetState(tostring(1))
+        for i = 1, #rangeArray do
+            local range = rangeArray[CSIndex(i)]
+            if playerInfo.contingencyContractBestRecord.Item2 >= range then
+                self.view.levelTagNode:SetState(tostring(i + 1))
+            end
+        end
+    else
+        self.view.levelTag.gameObject:SetActiveIfNecessary(false)
     end
 end
 

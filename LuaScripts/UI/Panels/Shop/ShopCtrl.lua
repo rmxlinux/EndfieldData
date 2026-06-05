@@ -2,105 +2,43 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Shop
 local PHASE_ID = PhaseId.Shop
 local shopSystem = GameInstance.player.shopSystem
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopCtrl = HL.Class('ShopCtrl', uiCtrl.UICtrl)
-
 
 ShopCtrl.m_shopGroupId = HL.Field(HL.String) << ""
 
+ShopCtrl.m_activityShopInfo = HL.Field(HL.Any)
 
 ShopCtrl.m_shopId = HL.Field(HL.String) << ""
 
-
 ShopCtrl.m_goodsInfos = HL.Field(HL.Table)
-
 
 ShopCtrl.m_goods = HL.Field(HL.Table)
 
-
 ShopCtrl.m_soldOut = HL.Field(HL.Table)
-
 
 ShopCtrl.m_needPlaySoldOut = HL.Field(HL.Table)
 
-
 ShopCtrl.m_needPlayUnlock = HL.Field(HL.Table)
-
 
 ShopCtrl.m_waitAnimation = HL.Field(HL.Boolean) << false
 
-
 ShopCtrl.m_getCellFunc = HL.Field(HL.Function)
-
 
 ShopCtrl.m_haveControllerTarget = HL.Field(HL.Boolean) << false
 
-
 ShopCtrl.m_lastBuyGoods = HL.Field(HL.Table)
 
+ShopCtrl.m_conditionSyncGoods = HL.Field(HL.Table)
 
 ShopCtrl.unlockedShopSheets = HL.Field(HL.Table)
 
-
 ShopCtrl.index2TabCell = HL.Field(HL.Table)
-
 
 ShopCtrl.m_tabCells = HL.Field(HL.Forward("UIListCache"))
 
-
 ShopCtrl.m_moneyInfo = HL.Field(HL.Table)
 
-
 ShopCtrl.m_unlockToastFunc = HL.Field(HL.Any)
-
-
-
-ShopCtrl.m_activityEndTime = HL.Field(HL.Any)
-
-
-
-local DEFAULT_DOMAIN = "domain_1"
-
 
 
 
@@ -115,11 +53,10 @@ ShopCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.SHOP_WAIT_ANIMATION] = 'WaitAnimation',
     [MessageConst.SHOW_SHOP_ITEM_POP_UP] = 'SetMoneyCell',
-    [MessageConst.ON_SHOP_GOODS_CONDITION_REFRESH] = '_OnShopRefresh',
+    
+    [MessageConst.ON_SHOP_GOODS_CONDITION_SYNC] = 'OnGoodsConditionSync',
     [MessageConst.ON_SHOP_GOODS_MANUAL_REFRESH] = '_OnShopGoodsManualRefresh',
 }
-
-
 
 ShopCtrl._OnShopRefresh = HL.Virtual() << function(self)
     if self.m_waitAnimation then
@@ -132,48 +69,28 @@ end
 
 
 
-
-
-
 ShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.domainTopMoneyTitle.view.closeBtn.onClick:AddListener(function()
         Notify(MessageConst.HIDE_ITEM_TIPS)
         AudioAdapter.PostEvent("Au_UI_Menu_ShopPanel_Close")
-        local isOpen, phase = PhaseManager:IsOpen(PhaseId.Dialog)
-        if isOpen then
-            self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
-        else
-            PhaseManager:PopPhase(PHASE_ID)
-        end
+        PhaseManager:PopPhase(PHASE_ID)
     end)
     self.view.topMoneyTitle.closeBtn.onClick:AddListener(function()
         AudioAdapter.PostEvent("Au_UI_Menu_ShopPanel_Close")
-        local isOpen, phase = PhaseManager:IsOpen(PhaseId.Dialog)
-        if isOpen then
-            self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
-        else
-            
-            PhaseManager:ExitPhaseFast(PHASE_ID)
-        end
+        PhaseManager:PopPhase(PHASE_ID)
     end)
     UIManager:ToggleBlockObtainWaysJump("common_shop", true)
 
     self.m_needPlaySoldOut = {}
     self.m_needPlayUnlock = {}
     self.m_lastBuyGoods = {}
+    self.m_conditionSyncGoods = {}
 
-    local shopGroupId, shopId, activityMoneyId
+    local shopGroupId, shopId
     if type(arg) == "table" then
         shopGroupId = arg.shopGroupId
         shopId = arg.shopId
-        activityMoneyId = arg.activityMoneyId
         self.m_unlockToastFunc = arg.unlockToastFunc
-        
-        if arg.activityBannerImage ~= nil then
-            self.view.bgBanner:LoadSprite(arg.activityBannerImage)
-        end
-        self.m_activityEndTime = arg.activityEndTime
-        
     else
         shopGroupId = arg
     end
@@ -186,24 +103,37 @@ ShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_shopGroupId = shopGroupId
     local shopGroupData = shopSystem:GetShopGroupData(self.m_shopGroupId)
     self.m_shopId = shopId or shopGroupData.shopIdList[0] 
+    local _, activityShopInfo = Tables.ActivityShopAdditionalTable:TryGetValue(self.m_shopGroupId)
+    self.m_activityShopInfo = activityShopInfo or nil
 
     local groupUnlock = shopSystem:CheckShopGroupUnlocked(shopGroupId)
     local shopUnlock = shopSystem:CheckShopUnlocked(self.m_shopId)
 
-    if activityMoneyId ~= nil then
-        self:_RefreshTopMoneyTitle(activityMoneyId)
+    if self.m_activityShopInfo ~= nil then
+        
+        local activityId = self.m_activityShopInfo.activityId
+        self.view.domainTopMoneyTitle.gameObject:SetActive(false)
+        if self.m_activityShopInfo.hasHelpComponent then
+            self.view.topMoneyTitle.helpNode.gameObject:SetActive(true)
+            self.view.topMoneyTitle.helpBtn.onClick:AddListener(function()
+                local activityConfig = Tables.activityTable[activityId]
+                local instructionId = activityConfig.instructionId
+                UIManager:Open(PanelId.InstructionBook, instructionId)
+            end)
+        else
+            self.view.topMoneyTitle.helpNode.gameObject:SetActive(false)
+        end
+        self:_RefreshTopMoneyTitle(self.m_activityShopInfo.activityMoneyId)
+        self.view.bgBanner:LoadSprite(UIConst.UI_SPRITE_SHOP_COMMON, self.m_activityShopInfo.banner)
+
     else
+        self.view.topMoneyTitle.gameObject:SetActive(false)
         self:_RefreshDomainTopMoneyTitle()
     end
 
     if not groupUnlock or not shopUnlock then
         Notify(MessageConst.SHOW_POP_UP,{content = Language.LUA_SHOP_NOT_UNLOCK,hideCancel = true, onConfirm = function()
-            local isOpen, phase = PhaseManager:IsOpen(PhaseId.Dialog)
-            if isOpen then
-                self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
-            else
-                PhaseManager:PopPhase(PHASE_ID)
-            end
+            PhaseManager:PopPhase(PHASE_ID)
         end})
 
         return
@@ -238,13 +168,17 @@ ShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end, #sortOptions - 1, false, true)
 
     self:_RefreshSheetTabs(self.m_shopId)
+    self.view.sortNode.gameObject:SetActive(false)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+    local resumeOpenPanel = type(arg) == "table" and arg.resumeOpenPanel or nil
+    if resumeOpenPanel then
+        
+        for _, panelInfo in ipairs(resumeOpenPanel) do
+            self:_RestorePopupByResumeState(panelInfo)
+        end
+    end
 end
-
-
-
-
 
 ShopCtrl.InitShopTabs = HL.Method(HL.String, HL.String) << function(self, shopGroupId, curShopId)
     local shopGroupData = GameInstance.player.shopSystem:GetShopGroupData(shopGroupId)
@@ -307,9 +241,6 @@ ShopCtrl.InitShopTabs = HL.Method(HL.String, HL.String) << function(self, shopGr
 end
 
 
-
-
-
 ShopCtrl.SelectTab = HL.Method(HL.Number) << function(self, index)
     for searchIndex, cell in ipairs(self.index2TabCell) do
         cell.toggle.isOn = false
@@ -319,20 +250,24 @@ ShopCtrl.SelectTab = HL.Method(HL.Number) << function(self, index)
     end
 end
 
-
-
-
 ShopCtrl._RefreshTopMoneyTitle = HL.Method(HL.String) << function(self, moneyId)
-    self.view.domainTopMoneyTitle.gameObject:SetActive(false)
     self.view.topMoneyTitle.gameObject:SetActive(true)
     local shopGroupTableData = Tables.shopGroupTable[self.m_shopGroupId]
     self.view.topMoneyTitle.titleTxt.text = shopGroupTableData.shopGroupName
+    
+    if self.m_activityShopInfo ~= nil then
+        local titleColor = UIUtils.getColorByString(self.m_activityShopInfo.titleColor)
+        self.view.topMoneyTitle.titleTxt.color = titleColor
+        self.view.topMoneyTitle.txtSolidus1.color = titleColor
+        self.view.topMoneyTitle.txtSolidus2.color = titleColor
+    end
     local moneyInfos = {}
     table.insert(moneyInfos, {
         moneyId = moneyId,
         showLimit = false,
         clearRuleType = GEnums.MoneyClearRuleType.None,
     })
+    LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.topMoneyTitle.topBar)
     self.view.topMoneyTitle.walletBarPlaceholder:InitWalletBarPlaceholderDetailed(moneyInfos)
 
     local moneyItemCfg = Utils.tryGetTableCfg(Tables.itemTable, moneyId)
@@ -341,8 +276,6 @@ ShopCtrl._RefreshTopMoneyTitle = HL.Method(HL.String) << function(self, moneyId)
         moneyIcon = moneyItemCfg and moneyItemCfg.iconId or "",
     }
 end
-
-
 
 ShopCtrl._RefreshDomainTopMoneyTitle = HL.Method() << function(self)
     local success, levelBasicInfo = DataManager.levelBasicInfoTable:TryGetValue(GameWorld.worldInfo.curLevelId)
@@ -358,7 +291,6 @@ ShopCtrl._RefreshDomainTopMoneyTitle = HL.Method() << function(self)
 
     local goldItemId = domainDevData.domainDataCfg.domainGoldItemId
     self.view.domainTopMoneyTitle.gameObject:SetActive(true)
-    self.view.topMoneyTitle.gameObject:SetActive(false)
     self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(levelBasicInfo.domainName)
 
     local moneyItemCfg = Utils.tryGetTableCfg(Tables.itemTable, goldItemId)
@@ -367,9 +299,6 @@ ShopCtrl._RefreshDomainTopMoneyTitle = HL.Method() << function(self)
         moneyIcon = moneyItemCfg and moneyItemCfg.iconId or "",
     }
 end
-
-
-
 
 ShopCtrl._RefreshSheetTabs = HL.Virtual(HL.String) << function(self, curShopId)
     self.m_shopId = curShopId
@@ -416,10 +345,6 @@ ShopCtrl._RefreshSheetTabs = HL.Virtual(HL.String) << function(self, curShopId)
     self:_ApplySortOption()
 end
 
-
-
-
-
 ShopCtrl._ApplySortOption = HL.Method(HL.Opt(HL.Table, HL.Boolean)) << function(self, sortData, isIncremental)
     sortData = sortData or self.view.sortNode:GetCurSortData()
     if isIncremental == nil then
@@ -438,18 +363,11 @@ ShopCtrl._ApplySortOption = HL.Method(HL.Opt(HL.Table, HL.Boolean)) << function(
     self:_RefreshContent()
 end
 
-
-
 ShopCtrl._RefreshContent = HL.Method() << function(self)
     self.m_haveControllerTarget = false
     self.view.sortNode:SetEnableFilterBtn(false)
     self.view.scrollList:UpdateCount(#self.m_goodsInfos)
 end
-
-
-
-
-
 
 ShopCtrl._RefreshContentCell = HL.Virtual(HL.Any, HL.Number, HL.String) << function(self, cell, luaIndex, refreshTag)
     local goodsId = self.m_goodsInfos[luaIndex].id
@@ -462,7 +380,8 @@ ShopCtrl._RefreshContentCell = HL.Virtual(HL.Any, HL.Number, HL.String) << funct
     if luaIndex == #self.m_goodsInfos and not self.m_haveControllerTarget then
         local firstCell = self.m_getCellFunc(1)
         if firstCell then
-            self.view.sortNode.gameObject:SetActive(true)
+            local hasSortNode = self.m_activityShopInfo==nil or self.m_activityShopInfo.hasSortComponent
+            self.view.sortNode.gameObject:SetActive(hasSortNode)
             InputManagerInst.controllerNaviManager:SetTarget(firstCell.view.selectBtn)
             self.m_haveControllerTarget = true
         end
@@ -507,43 +426,51 @@ ShopCtrl._RefreshContentCell = HL.Virtual(HL.Any, HL.Number, HL.String) << funct
     cell:InitCommonShopGoodsCellCommonMode(goodsInfo)
 end
 
-
-
-
 ShopCtrl.CheckGoodsUnlocked = HL.Virtual(HL.String).Return(HL.Boolean) << function(self, goodsId)
     return not shopSystem:CheckGoodsUnlocked(goodsId)
 end
 
 
-
-
 ShopCtrl._RefreshTimeCountDown = HL.Virtual() << function(self)
     
-    if self.m_activityEndTime ~= nil then
-        self.view.timeNode.gameObject:SetActiveIfNecessary(true)
-        self.view.titleTxt.text = Language.LUA_LIMITED_FORMULA_SHOP_END_TIME_TITLE
-        self.view.countDownText:InitCountDownText(self.m_activityEndTime, nil, function(leftTime)
+    local shopTableData = Tables.shopTable[self.m_shopId]
+    local state
+    if shopTableData.shopRefreshCycleType == GEnums.ShopRefreshCycleType.None then
+        if self.m_activityShopInfo and self.m_activityShopInfo.showCloseCd then
+            local activityId = self.m_activityShopInfo.activityId
+            local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
+            
+            if not activityData then
+                self.view.timeNode.gameObject:SetActiveIfNecessary(false)
+                return
+            end
+            local shopEndTime = activityData.endTime
+            if shopEndTime then
+                state = "CloseCd"
+                self.view.titleStateText.text = self.m_activityShopInfo.closeCdText
+                self.view.countDownText:InitCountDownText(shopEndTime, nil, function(leftTime)
+                    local timeText = UIUtils.getLeftTime(leftTime)
+                    return I18nUtils.CombineStringWithLanguageSpilt("", timeText)
+                end)
+            end
+        end
+    else
+        state = "RefreshCd"
+        self.view.countDownText:InitCountDownText(self:_CalculateTargetTime(shopTableData.shopRefreshCycleType), function()
+            self:_RefreshTimeCountDown()
+        end, function(leftTime)
             local timeText = UIUtils.getLeftTime(leftTime)
             return I18nUtils.CombineStringWithLanguageSpilt("", timeText)
         end)
-        return
     end
-    
 
-    
-    local shopTableData = Tables.shopTable[self.m_shopId]
-    if shopTableData.shopRefreshCycleType == GEnums.ShopRefreshCycleType.None then
-        self.view.timeNode.gameObject:SetActiveIfNecessary(false)
-    else
+    if state then
         self.view.timeNode.gameObject:SetActiveIfNecessary(true)
-        self.view.countDownText:InitCountDownText(self:_CalculateTargetTime(shopTableData.shopRefreshCycleType), function()
-            self:_RefreshTimeCountDown()
-        end)
+        self.view.timeStateController:SetState(state)
+    else
+        self.view.timeNode.gameObject:SetActiveIfNecessary(false)
     end
 end
-
-
-
 
 
 
@@ -551,9 +478,6 @@ ShopCtrl._CalculateTargetTime = HL.Method(GEnums.ShopRefreshCycleType).Return(HL
     local time = self:_CalculateServerTargetTime(refreshCycleType)
     return time
 end
-
-
-
 
 ShopCtrl._CalculateServerTargetTime = HL.Method(GEnums.ShopRefreshCycleType).Return(HL.Number) << function(self, refreshCycleType)
     if refreshCycleType == GEnums.ShopRefreshCycleType.Daily then
@@ -564,9 +488,6 @@ ShopCtrl._CalculateServerTargetTime = HL.Method(GEnums.ShopRefreshCycleType).Ret
         return Utils.getNextMonthlyServerRefreshTime()
     end
 end
-
-
-
 
 ShopCtrl.OnLimitChange = HL.Method(HL.Any) << function(self, data)
     local goods, left
@@ -582,9 +503,6 @@ ShopCtrl.OnLimitChange = HL.Method(HL.Any) << function(self, data)
         end
     end
 end
-
-
-
 
 ShopCtrl.OnConditionChange = HL.Method(HL.Any) << function(self, data)
     local goods, unlock
@@ -602,15 +520,10 @@ ShopCtrl.OnConditionChange = HL.Method(HL.Any) << function(self, data)
     end
 end
 
-
-
-
 ShopCtrl.OnBuyItemSucc = HL.Virtual(HL.Any) << function(self, arg)
     local goodsId = arg[1].GoodsId
     table.insert(self.m_lastBuyGoods, goodsId)
 end
-
-
 
 ShopCtrl.OnAfterBuyItemSucc = HL.Virtual() << function(self)
     for i, v in ipairs(self.m_goodsInfos) do
@@ -624,15 +537,6 @@ ShopCtrl.OnAfterBuyItemSucc = HL.Virtual() << function(self)
             end
         end
 
-        for j, id in ipairs(self.m_needPlayUnlock) do
-            if v.id == id then
-                local cell = self.m_getCellFunc(i)
-                if cell then
-                    cell:PlayUnlockAnimation()
-                end
-            end
-            break
-        end
     end
 
     for i, v in ipairs(self.m_needPlaySoldOut) do
@@ -671,27 +575,83 @@ ShopCtrl.OnAfterBuyItemSucc = HL.Virtual() << function(self)
     self.m_lastBuyGoods = {}
 end
 
-
-
+ShopCtrl.OnGoodsConditionSync = HL.Method(HL.Any) << function(self, goodsId)
+    table.insert(self.m_conditionSyncGoods, goodsId)
+    for i, v in ipairs(self.m_conditionSyncGoods) do
+        for j, data in ipairs(self.m_goodsInfos) do
+            if v == data.id then
+                local cell = self.m_getCellFunc(j)
+                if cell then
+                    self:_RefreshContentCell(cell, j, "ConditionSync")
+                end
+            end
+        end
+    end
+    self.m_conditionSyncGoods = {}
+end
 
 ShopCtrl.WaitAnimation = HL.Method(HL.Boolean) << function(self, state)
     self.m_waitAnimation = state
 end
 
-
-
-
 ShopCtrl.SetMoneyCell = HL.Virtual(HL.Boolean) << function(self, arg)
 
 end
 
+ShopCtrl._CollectPopupResumeState = HL.Method().Return(HL.Table) << function(self)
+    local resumeOpenPanel = {}
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return resumeOpenPanel
+    end
 
+    
+    local isInstructionOpen, instructionBookCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isInstructionOpen and instructionBookCtrl then
+        table.insert(resumeOpenPanel, {
+            panelId = PanelId.InstructionBook,
+            arg = instructionBookCtrl.id,
+        })
+    end
+
+    
+    local isDetailOpen, shopDetailCtrl = UIManager:IsOpen(PanelId.ShopDetail)
+    if isDetailOpen and shopDetailCtrl then
+        local popupArg = shopDetailCtrl:GetCurPhaseStateArg()
+        if popupArg then
+            table.insert(resumeOpenPanel, {
+                panelId = PanelId.ShopDetail,
+                arg = popupArg,
+            })
+        end
+    end
+    return resumeOpenPanel
+end
+
+ShopCtrl._RestorePopupByResumeState = HL.Method(HL.Table) << function(self, panelInfo)
+    if not panelInfo or panelInfo.panelId == nil then
+        return
+    end
+    
+    if panelInfo.panelId == PanelId.ShopDetail and self.m_phase then
+        self.m_phase:CreatePhasePanelItem(panelInfo.panelId, panelInfo.arg)
+        return
+    end
+    UIManager:Open(panelInfo.panelId, panelInfo.arg)
+end
 
 ShopCtrl._OnShopGoodsManualRefresh = HL.Virtual() << function(self)
 
 end
 
-
+ShopCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    
+    return {
+        shopGroupId = self.m_shopGroupId,
+        shopId = self.m_shopId,
+        unlockToastFunc = self.m_unlockToastFunc,
+        resumeOpenPanel = self:_CollectPopupResumeState(),
+    }
+end
 
 ShopCtrl.OnClose = HL.Override() << function(self)
     UIManager:ToggleBlockObtainWaysJump("common_shop", false)

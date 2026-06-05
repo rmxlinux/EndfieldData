@@ -17,6 +17,7 @@ local PANEL_ID = PanelId.ActivityGachaBeginner
 
 
 
+
 ActivityGachaBeginnerCtrl = HL.Class('ActivityGachaBeginnerCtrl', uiCtrl.UICtrl)
 
 
@@ -50,6 +51,9 @@ ActivityGachaBeginnerCtrl.m_confirmFocusBindId = HL.Field(HL.Number) << -1
 
 
 ActivityGachaBeginnerCtrl.m_cancelFocusBindId = HL.Field(HL.Number) << -1
+
+
+ActivityGachaBeginnerCtrl.m_rewardList = HL.Field(HL.Table)
 
 
 
@@ -135,6 +139,7 @@ end
 
 
 ActivityGachaBeginnerCtrl._UpdateData = HL.Method() << function(self)
+    self.m_rewardList = {}
     local activityData = activitySystem:GetActivity(Tables.charGachaConst.gachaBeginnerActivityId)
     self.m_info.activityData = activityData
     
@@ -148,6 +153,7 @@ ActivityGachaBeginnerCtrl._UpdateData = HL.Method() << function(self)
             stageInfo.state = GEnums.ActivityConditionalStageState.Rewarded
         elseif isComplete then
             stageInfo.state = GEnums.ActivityConditionalStageState.Completed
+            table.insert(self.m_rewardList, stageId)
         else
             stageInfo.state = GEnums.ActivityConditionalStageState.Unlocked
         end
@@ -262,7 +268,7 @@ ActivityGachaBeginnerCtrl._RefreshStageMissionUI = HL.Method() << function(self)
         
         cell.getRewardBtn.onClick:RemoveAllListeners()
         cell.getRewardBtn.onClick:AddListener(function()
-            self.m_info.activityData:GainReward(info.stageId)
+            self.m_info.activityData:GainReward(self.m_rewardList)
         end)
         
         cell.toastBtn.onClick:RemoveAllListeners()

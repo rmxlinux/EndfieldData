@@ -93,6 +93,9 @@ local PhaseLevelConfig = require_ex("Phase/Level/PhaseLevelConfig")
 
 
 
+
+
+
 PhaseLevel = HL.Class('PhaseLevel', phaseBase.PhaseBase)
 
 
@@ -142,15 +145,14 @@ PhaseLevel.s_messages = HL.StaticField(HL.Table) << {
 
     [MessageConst.ON_INPUT_DEVICE_TYPE_CHANGED] = { 'OnInputDeviceTypeChanged', true },
     [MessageConst.ON_REPATRIATE] = { 'OnRepatriate', true },
+
+    [MessageConst.CURRENT_LEVEL_CHANGE] = { 'OnCurrentLevelChanged', true },
 }
 
 
 
 PhaseLevel.OpenLevelPhase = HL.StaticMethod() << function()
     if LuaSystemManager.uiRestoreSystem:HasValidAction() then
-        if not PhaseManager:IsOpen(PHASE_ID) and not DeviceInfo.switchInputDeviceWithRecover then
-            PhaseManager:OpenPhaseFast(PHASE_ID) 
-        end
         LuaSystemManager.uiRestoreSystem:TryRestore()
     else
         if not PhaseManager:IsOpen(PHASE_ID) then
@@ -205,7 +207,8 @@ PhaseLevel.OpenLevelPanels = HL.Method() << function(self)
     local config = PhaseLevelConfig.GetCurrentConfig()
 
     for _, panelId in ipairs(config.open) do
-        if panelId == PanelId.MissionHud and UIManager:IsShow(PanelId.CommonTaskTrackHud) then
+        if panelId == PanelId.MissionHud and (GameInstance.mode.hideMissionHud or
+                UIManager:IsShow(PanelId.CommonTaskTrackHud) or UIManager:IsShow(PanelId.SimulationTrainingTrackHud)) then
             
             
         else
@@ -238,13 +241,19 @@ PhaseLevel.OpenLevelPanels = HL.Method() << function(self)
     self:OnGameModeEnable({ GameInstance.mode.modeType, GameInstance.mode })
     self:_RefreshUIForbidState()
 
-    if config.preOpen then
+    if config.preOpen and not InputManagerInst.inChangingInputDevice then
+        
         for _, panelId in ipairs(config.preOpen) do
             if not UIManager:IsOpen(panelId) then
                 UIManager:Open(panelId)
                 UIManager:Hide(panelId)
             end
         end
+    end
+
+    
+    if Utils.isSystemUnlocked(GEnums.UnlockSystemType.Activity) then
+        UIManager:AutoOpen(PanelId.ActivityStartReminder)
     end
 end
 
@@ -355,13 +364,13 @@ PhaseLevel.m_waitInitFacMode = HL.Field(HL.Boolean) << true
 
 
 PhaseLevel._UpdateFactoryMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
-    local inMainRegion, panel = GameInstance.remoteFactoryManager:IsPlayerPositionInMainRegionAndGetIndex()
-    local panelIndex = -1
-    if inMainRegion and panel then
-        panelIndex = panel.index
-    end
-    local curLevelIdNum = GameWorld.worldInfo.curLevelIdNum
     if isInit then
+        local inMainRegion, panel = GameInstance.remoteFactoryManager:IsPlayerPositionInMainRegionAndGetIndex()
+        local panelIndex = -1
+        if inMainRegion and panel then
+            panelIndex = panel.index
+        end
+        local curLevelIdNum = GameWorld.worldInfo.curLevelIdNum
         self.m_waitInitFacMode = false
 
         self:_UpdateCurMainRegionInfo(panelIndex)
@@ -403,7 +412,9 @@ PhaseLevel._UpdateFactoryMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, 
             self.m_enterFacMainRegionCamState = FactoryUtils.enterFacCamera(FacConst.MAIN_REGION_CAM_STATE)
         else
             Notify(MessageConst.ON_EXIT_FAC_MAIN_REGION)
-            UIManager:Hide(PanelId.FacMiniPowerHud)
+            if not inFacMode then
+                UIManager:Hide(PanelId.FacMiniPowerHud)
+            end
         end
 
         
@@ -422,34 +433,68 @@ PhaseLevel._UpdateFactoryMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, 
 
     self:_UpdatePlayerPosFacInfo()
 
-    if self.m_lastInFacMainRegion ~= inMainRegion or self.mainRegionPanelIndex ~= panelIndex or self.m_lastLevelIdNum ~= curLevelIdNum then
-        self.m_lastLevelIdNum = curLevelIdNum
-        self.m_lastInFacMainRegion = inMainRegion
-        self:_UpdateCurMainRegionInfo(panelIndex)
+    
+    self:_RefreshFacModeAndMainRegion(nil)
+end
 
-        
-        if not GameWorld.gameMechManager.travelPoleBrain.inFastTravelMode and not Utils.isSwitchModeDisabled() then
-            self:_TryAutoToggleFacMode(inMainRegion)
-        end
-        if inMainRegion then
-            Notify(MessageConst.ON_ENTER_FAC_MAIN_REGION, panel)
-            if not self.m_enterFacMainRegionCamState then
-                self.m_enterFacMainRegionCamState = FactoryUtils.enterFacCamera(FacConst.MAIN_REGION_CAM_STATE)
-            end
-        else
-            Notify(MessageConst.ON_EXIT_FAC_MAIN_REGION)
-            if self.m_enterFacMainRegionCamState then
-                self.m_enterFacMainRegionCamState = FactoryUtils.exitFacCamera(self.m_enterFacMainRegionCamState)
-            end
-        end
-        
-        GameAction.SetInSafeZone(0, inMainRegion)
 
-        Notify(MessageConst.ON_IN_FAC_MAIN_REGION_CHANGE, inMainRegion)
 
-        
-        GameWorld.worldInfo.inFacMainRegion = inMainRegion
+
+PhaseLevel._RefreshFacModeAndMainRegion = HL.Method(HL.Opt(HL.Any)) << function(self, reason)
+    local inMainRegion, panel = GameInstance.remoteFactoryManager:IsPlayerPositionInMainRegionAndGetIndex()
+    local panelIndex = -1
+    if inMainRegion and panel then
+        panelIndex = panel.index
     end
+    local curLevelIdNum = GameWorld.worldInfo.curLevelIdNum
+
+    local levelChanged = self.m_lastLevelIdNum ~= curLevelIdNum
+    local mainRegionChanged = self.m_lastInFacMainRegion ~= inMainRegion or self.mainRegionPanelIndex ~= panelIndex
+    if not levelChanged and not mainRegionChanged then
+        return
+    end
+
+    self.m_lastLevelIdNum = curLevelIdNum
+    self.m_lastInFacMainRegion = inMainRegion
+    self:_UpdateCurMainRegionInfo(panelIndex)
+
+    
+    local isMovement = reason == CS.Beyond.Gameplay.Core.LevelChangeReason.Movement
+    
+    if not GameWorld.gameMechManager.travelPoleBrain.inFastTravelMode
+        and not Utils.isSwitchModeDisabled()
+        and not isMovement then
+        self:_TryAutoToggleFacMode(inMainRegion)
+    end
+    if inMainRegion then
+        Notify(MessageConst.ON_ENTER_FAC_MAIN_REGION, panel)
+        if not self.m_enterFacMainRegionCamState then
+            self.m_enterFacMainRegionCamState = FactoryUtils.enterFacCamera(FacConst.MAIN_REGION_CAM_STATE)
+        end
+    else
+        Notify(MessageConst.ON_EXIT_FAC_MAIN_REGION)
+        if self.m_enterFacMainRegionCamState then
+            self.m_enterFacMainRegionCamState = FactoryUtils.exitFacCamera(self.m_enterFacMainRegionCamState)
+        end
+    end
+    
+    GameAction.SetInSafeZone(0, inMainRegion)
+
+    Notify(MessageConst.ON_IN_FAC_MAIN_REGION_CHANGE, inMainRegion)
+
+    
+    GameWorld.worldInfo.inFacMainRegion = inMainRegion
+end
+
+
+
+
+PhaseLevel.OnCurrentLevelChanged = HL.Method(HL.Any) << function(self, arg)
+    if self.m_waitInitFacMode then
+        return
+    end
+    local reason = unpack(arg)
+    self:_RefreshFacModeAndMainRegion(reason)
 end
 
 
@@ -576,15 +621,23 @@ end
 
 
 PhaseLevel._OnDestroy = HL.Override() << function(self)
-    for _, panelId in pairs(Const.FACTORY_MODE_ONLY_PANELS) do
-        UIManager:Close(panelId)
-    end
-    for _, panelId in pairs(Const.BATTLE_MODE_ONLY_PANELS) do
-        UIManager:Close(panelId)
+    if not InputManagerInst.inChangingInputDevice then 
+        for _, panelId in pairs(Const.FACTORY_MODE_ONLY_PANELS) do
+            UIManager:Close(panelId)
+        end
+        for _, panelId in pairs(Const.BATTLE_MODE_ONLY_PANELS) do
+            UIManager:Close(panelId)
+        end
     end
 
     if self.m_hidePanelKey > 0 then
         self.m_hidePanelKey = UIManager:RecoverScreen(self.m_hidePanelKey)
+    end
+    if self.m_defenseInGameClearScreenKey > 0 then
+        self.m_defenseInGameClearScreenKey = UIManager:RecoverScreen(self.m_defenseInGameClearScreenKey)
+    end
+    if self.m_defenseFinishClearScreenKey > 0 then
+        self.m_defenseFinishClearScreenKey = UIManager:RecoverScreen(self.m_defenseFinishClearScreenKey)
     end
     self:_ClearRegisters()
     self:_ClearInMainHudMessageList()
@@ -607,12 +660,12 @@ end
 
 
 
-PhaseLevel._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+PhaseLevel._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, transArgs)
     Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = self, enabled = false})
     if DeviceInfo.isMobile then
         Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = "MobileController", enabled = DeviceInfo.usingController})
     end
-
+    self:TryRestoreSimulationTrainingTrackHud()
     self:OpenLevelPanels()
 
     
@@ -628,21 +681,52 @@ PhaseLevel._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << f
     
     self:TryRestoreTowerDefense()
     
+    
     if not Utils.isInDungeon() then
         Notify(MessageConst.ON_WORLD_LEVEL_CHANGED, {GameInstance.player.adventure.currentMaxWorldLevel - 1, GameInstance.player.adventure.currentMaxWorldLevel, false})
     end
 
     if self.arg then
+        local buildModeInfos = self.arg.buildModeInfos
+        local mode, buildArgs, buildRecoverState
+        if buildModeInfos then
+            mode, buildArgs, buildRecoverState = unpack(buildModeInfos)
+        end
+
         if self.arg.inFacMode ~= nil then
             LuaSystemManager.factory:AddFactoryModeRequest({ self.arg.inFacMode, "Player" })
         end
         if self.arg.isInTopView then
+            local topViewArg = self.arg.topViewArg
             LuaSystemManager.factory:ToggleTopView(true, true)
-            LuaSystemManager.factory.topViewCamTarget.transform.position = self.arg.topViewArg.targetPos
-            LuaSystemManager.factory.topViewCamTarget.transform.eulerAngles = self.arg.topViewArg.targetRot
+            local succ, topViewCtrl = UIManager:IsOpen(PanelId.FacTopView)
+            if succ then 
+                LuaSystemManager.factory.topViewCamTarget.transform.position = topViewArg.targetPos
+                LuaSystemManager.factory.topViewCamTarget.transform.eulerAngles = topViewArg.targetRot
+                LuaSystemManager.factory:SetTopViewCamZoomValue(topViewArg.zoomValue)
+                topViewCtrl:RecoverStateOnChangeDevice(topViewArg.selectedTypeIndex, topViewArg.selectedFilters)
+                if buildRecoverState and buildRecoverState.controllerMouseWorldPos and DeviceInfo.usingController then
+                    topViewCtrl:RecoverControllerMouseOnChangeDevice(buildRecoverState.controllerMouseWorldPos)
+                    buildArgs.initMousePos = InputManager.mousePosition
+                end
+            end
+        end
+        if buildModeInfos or self.arg.inDestroyMode then
+            local hideKey = UIManager:ClearScreen() 
+            TimerManager:StartTimer(0, function() 
+                if buildModeInfos then
+                    buildArgs.isFromChangeInputDevice = true
+                    buildArgs.initDir = buildRecoverState and buildRecoverState.initDir or nil
+                    Notify(FacConst.FAC_BUILD_MODE_MSG_MAP[mode], buildArgs)
+                else
+                    Notify(MessageConst.FAC_ENTER_DESTROY_MODE, { isFromChangeInputDevice = true, openSaveBP = self.arg.isSavingBP })
+                end
+                UIManager:RecoverScreen(hideKey)
+            end)
         end
     end
 end
+
 
 
 PhaseLevel.m_hidePanelKey = HL.Field(HL.Number) << -1
@@ -812,6 +896,26 @@ PhaseLevel.TryRestoreTowerDefense = HL.Method() << function(self)
         self:OnEnterTowerDefenseDefendingPhase(true)
         self:OnTowerDefenseDefendingTransitFinished()
     end
+end
+
+
+
+
+PhaseLevel.TryRestoreSimulationTrainingTrackHud = HL.Method() << function(self)
+    
+    if not GameInstance.player.simulationTrainingSystem.inSubGame then
+        return
+    end
+    
+    if UIManager:IsOpen(PanelId.SimulationTrainingTrackHud) then
+        return
+    end
+    
+    local SIMULATION_TRAINING_SUB_GAME_ID = "world_poi_simulation_training_01"
+    
+    local SIMULATION_TRAINING_PHASE_NORMAL = 1
+
+    Notify(MessageConst.ON_OPEN_SUB_GAME_SIMULATION_TRAINING, { SIMULATION_TRAINING_SUB_GAME_ID, SIMULATION_TRAINING_PHASE_NORMAL })
 end
 
 
@@ -1442,6 +1546,12 @@ PhaseLevel._PerformLoginActivityCheck = HL.Method() << function(self)
 
     
     LuaSystemManager.mainHudActionQueue:AddRequest(Name_LoginCheck_ActivityCheckIn, function(_)
+        
+        
+        if #ActivityUtils.getPopUpIds() == 0 then
+            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, Name_LoginCheck_ActivityCheckIn)
+            return
+        end
         local success = PhaseManager:OpenPhaseFast(PhaseId.ActivityPopup, {
             closeCallback = function()
                 Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, Name_LoginCheck_ActivityCheckIn)
@@ -1461,14 +1571,32 @@ end
 
 PhaseLevel.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}
+
+    local opened, buildCtrl = UIManager:IsOpen(PanelId.FacBuildMode)
+    if opened and buildCtrl.m_mode ~= FacConst.FAC_BUILD_MODE.Normal then
+        arg.buildModeInfos = { buildCtrl.m_mode, buildCtrl.m_buildArgs, buildCtrl:GetRecoverBuildStateOnChangeDevice() }
+    else
+        arg.buildModeInfos = nil 
+    end
+
+    arg.inDestroyMode = LuaSystemManager.factory.inDestroyMode
+    arg.isSavingBP = arg.inDestroyMode and UIManager:IsShow(PanelId.FacSaveBlueprint)
+
     arg.isInTopView = FactoryUtils.isInTopView()
     arg.inFacMode = GameWorld.worldInfo.inFactoryMode
     if arg.isInTopView then
         arg.topViewArg = {
             targetPos = LuaSystemManager.factory.topViewCamTarget.transform.position,
             targetRot = LuaSystemManager.factory.topViewCamTarget.transform.eulerAngles,
+            zoomValue = LuaSystemManager.factory:GetTopViewCamZoomValue(),
         }
+        local _, topViewCtrl = UIManager:IsOpen(PanelId.FacTopView)
+        arg.topViewArg.selectedTypeIndex = topViewCtrl.m_selectedTypeIndex
+        arg.topViewArg.selectedFilters = topViewCtrl.m_selectedFilters
+    else
+        arg.topViewArg = nil 
     end
+
     return arg
 end
 

@@ -78,8 +78,6 @@ AdventureDailyCtrl.m_getAllActionGroupId = HL.Field(HL.Number) << 0
 
 
 AdventureDailyCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_phase = arg.phase
-
     self.view.getAllBtn.onClick:AddListener(function()
         self:_OnClickGetAllBtn()
     end)
@@ -162,7 +160,7 @@ AdventureDailyCtrl.OnShow = HL.Override() << function(self)
 
     local firstCell = self.m_getTaskCell(1)
     if firstCell then
-        InputManagerInst.controllerNaviManager:SetTarget(firstCell.naviDecorator)
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.taskListNaviGroup, firstCell.naviDecorator)
     end
 end
 

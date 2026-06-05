@@ -14,6 +14,11 @@ local PHASE_ID = PhaseId.FriendBusinessCardPreview
 
 
 
+
+
+
+
+
 FriendBusinessCardPreviewCtrl = HL.Class('FriendBusinessCardPreviewCtrl', uiCtrl.UICtrl)
 
 
@@ -81,10 +86,19 @@ FriendBusinessCardPreviewCtrl.m_businessCard = HL.Field(HL.Forward('FriendBusine
 FriendBusinessCardPreviewCtrl.m_forceShare = HL.Field(HL.Boolean) << false
 
 
+FriendBusinessCardPreviewCtrl.m_arg = HL.Field(HL.Table)
+
+
+
+FriendBusinessCardPreviewCtrl.m_desiredExpanded = HL.Field(HL.Boolean) << false
+
+
 
 
 
 FriendBusinessCardPreviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg or {}
+    local hasDesiredExpandedArg = arg ~= nil and arg.isExpanded ~= nil
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 
@@ -194,18 +208,29 @@ FriendBusinessCardPreviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
     self.m_forceShare = arg.forceShare == true
     self.m_businessCard:InitFriendBusinessCard(self.m_roleId, true ,self.m_forceShare)
     self.m_businessCard.m_bId = arg.bId
+    
+    
+    
+    if hasDesiredExpandedArg then
+        self.m_desiredExpanded = arg.isExpanded == true
+    else
+        self:_CaptureDesiredExpanded()
+    end
     if arg.forceShare == true then
         self.animationWrapper:SampleClip(self.animationWrapper.animationIn.name, self.animationWrapper.animationIn.length);
         self.view.shareBtn.onClick:Invoke(nil)
     else
         self.m_businessCard.view.animationWrapper:PlayInAnimation()
+        self:_SyncExpandToWidget()
     end
 end
 
 
 
 FriendBusinessCardPreviewCtrl.OnFriendBusinessInfoChange = HL.Method() << function(self)
+    self:_CaptureDesiredExpanded()
     self.m_businessCard:InitFriendBusinessCard(self.m_roleId, true ,self.m_forceShare)
+    self:_SyncExpandToWidget()
 end
 
 
@@ -220,8 +245,49 @@ end
 
 
 
+
+
+FriendBusinessCardPreviewCtrl._CaptureDesiredExpanded = HL.Method() << function(self)
+    if self.m_businessCard == nil then
+        return
+    end
+    self.m_desiredExpanded = self.m_businessCard.m_isExpanded == true
+end
+
+
+
+
+
+FriendBusinessCardPreviewCtrl._SyncExpandToWidget = HL.Method() << function(self)
+    if self.m_businessCard == nil or self.m_forceShare then
+        return
+    end
+    local isExpanded = self.m_desiredExpanded == true
+    self.m_businessCard.m_isExpanded = isExpanded
+    self.m_businessCard.view.businessCardState:SetState(isExpanded and 'Expand' or 'Close')
+    self.m_businessCard.view.bgCloseBtn.gameObject:SetActiveIfNecessary(isExpanded or self.m_businessCard.m_hideUI)
+end
+
+
+
 FriendBusinessCardPreviewCtrl.OnShow = HL.Override() << function(self)
+    self:_CaptureDesiredExpanded()
     self.m_businessCard:InitFriendBusinessCard(self.m_roleId, true ,self.m_forceShare)
+    self:_SyncExpandToWidget()
+end
+
+
+
+FriendBusinessCardPreviewCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    if self.m_arg == nil then
+        return nil
+    end
+    local arg = lume.deepCopy(self.m_arg)
+    arg.isRestoreFromChangeInputDevice = true
+    
+    
+    arg.isExpanded = self.m_businessCard ~= nil and self.m_businessCard.m_isExpanded == true
+    return arg
 end
 
 

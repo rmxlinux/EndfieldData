@@ -17,6 +17,7 @@ local PANEL_ID = PanelId.MapCustomMarkDetail
 
 
 
+
 MapCustomMarkDetailCtrl = HL.Class('MapCustomMarkDetailCtrl', uiCtrl.UICtrl)
 
 
@@ -39,6 +40,9 @@ MapCustomMarkDetailCtrl.m_markInstRuntimeData = HL.Field(HL.Userdata)
 
 
 MapCustomMarkDetailCtrl.m_noteIsChange = HL.Field(HL.Boolean) << false
+
+
+MapCustomMarkDetailCtrl.m_markTypeIsChange = HL.Field(HL.Boolean) << false
 
 
 
@@ -84,14 +88,18 @@ end
 
 MapCustomMarkDetailCtrl.OnClose = HL.Override() << function(self)
     GameInstance.player.mapManager:RemoveSelectCustomMark()
-    if self.m_noteIsChange and self.m_markInstRuntimeData.templateId ~= MapConst.CUSTOM_MARK_SELECT_TEMPLAT then
+    if not self.m_markInstRuntimeData.isSelect and (self.m_noteIsChange or self.m_markTypeIsChange) then
         local isValid = UIUtils.checkInputValid(self.view.reNameInputField.text)
         if not isValid then
             Notify(MessageConst.SHOW_TOAST, Language.LUA_MAP_CUSTOM_MARK_ILLEGAL_CHARACTERS)
             return
         end
-        GameInstance.player.mapManager:ModifyCustomMarkTemplateIdToServer(self.m_markInstId, self.m_selectMarkTempId)
-        GameInstance.player.mapManager:ModifyCustomNoteToServer(self.m_markInstId, self.view.reNameInputField.text)
+        if self.m_markTypeIsChange then
+            GameInstance.player.mapManager:ModifyCustomMarkTemplateIdToServer(self.m_markInstId, self.m_selectMarkTempId)
+        end
+        if self.m_noteIsChange then
+            GameInstance.player.mapManager:ModifyCustomNoteToServer(self.m_markInstId, self.view.reNameInputField.text)
+        end
     end
 end
 
@@ -111,6 +119,7 @@ MapCustomMarkDetailCtrl._InitCustomMark = HL.Method() << function(self)
         cell.img:LoadSprite(UIConst.UI_SPRITE_MAP_MARK_ICON_CUSTOM, self.m_tempTypeList[CSIndex(index)].activeIcon)
         cell.button.onClick:AddListener(function()
             self.m_selectMarkTempId = self.m_tempTypeList[CSIndex(index)].markInfoId
+            self.m_markTypeIsChange = self.m_markTypeIsChange or self.m_selectMarkTempId ~= self.m_markInstRuntimeData.templateId
             if self.m_selectMarkTempCell then
                 self.m_selectMarkTempCell.select.gameObject:SetActive(false)
             end

@@ -48,13 +48,13 @@ InputDeviceChangePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
     
     
     InputManagerInst:ToggleInputDeviceChangeMode(true)
-    InputManagerInst:ToggleForceShowRealCursor(true)
+    InputManagerInst:SetCursorOverrideForDeviceChange(true)
 
     self.view.confirmButton.onClick:AddListener(function()
         if self:IsPlayingAnimationIn() then
             return
         end
-        InputManagerInst:ToggleForceShowRealCursor(false)
+        InputManagerInst:SetCursorOverrideForDeviceChange(false)
         self.m_hasExecuted = true
         args.onConfirm()
     end)
@@ -63,7 +63,7 @@ InputDeviceChangePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
         if self:IsPlayingAnimationIn() or self:IsPlayingAnimationOut() then
             return
         end
-        InputManagerInst:ToggleForceShowRealCursor(false)
+        InputManagerInst:SetCursorOverrideForDeviceChange(false)
         self.m_hasExecuted = true
         self.m_isCanceled = true
         args.onCancel()
@@ -71,10 +71,6 @@ InputDeviceChangePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
     end)
 
     InputManagerInst:MoveMouseTo(self.view.rectTransform, self.uiCamera)
-
-    if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
-        self.view.debugHintText.gameObject:SetActive(true)
-    end
 end
 
 
@@ -93,7 +89,7 @@ InputDeviceChangePopupCtrl.OnClose = HL.Override() << function(self)
 
     if not self.m_hasExecuted then
         
-        InputManagerInst:ToggleForceShowRealCursor(false)
+        InputManagerInst:SetCursorOverrideForDeviceChange(false)
         InputManagerInst:ToggleInputDeviceChangeMode(false)
         self.m_args.onCancel()
     end

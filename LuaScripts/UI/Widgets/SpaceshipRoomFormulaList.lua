@@ -72,7 +72,7 @@ SpaceshipRoomFormulaList.m_onSortChanged = HL.Field(HL.Function)
 SpaceshipRoomFormulaList.m_setDefaultInfo = HL.Field(HL.Table)
 
 
-SpaceshipRoomFormulaList.m_isScrollInit = HL.Field(HL.Boolean) << true
+SpaceshipRoomFormulaList.m_isIniting = HL.Field(HL.Boolean) << false
 
 
 
@@ -81,6 +81,14 @@ SpaceshipRoomFormulaList.m_isScrollInit = HL.Field(HL.Boolean) << true
 SpaceshipRoomFormulaList._OnFirstTimeInit = HL.Override() << function(self)
     self.m_tabCellCache = UIUtils.genCellCache(self.view.tabs.tabCell)
     self.m_getFormulaCellFunc = UIUtils.genCachedCellFunction(self.view.formulaScrollList)
+    self.view.formulaScrollListSelectableNaviGroup.getDefaultSelectableFunc = function()
+        local targetCell = self.m_curSelectCell
+        if targetCell and targetCell.view and targetCell.view.button then
+            return targetCell.view.button
+        end
+        local firstCell = self.m_getFormulaCellFunc(1)
+        return firstCell and firstCell.view and firstCell.view.button or nil
+    end
 
     self.view.formulaScrollList.onUpdateCell:AddListener(function(gameObject, csIndex)
         self:_OnFormulaCellUpdate(gameObject, csIndex)
@@ -91,7 +99,7 @@ SpaceshipRoomFormulaList._OnFirstTimeInit = HL.Override() << function(self)
         if self.m_setDefaultInfo then
             local id = self.m_setDefaultInfo.id
             self.m_setDefaultInfo = nil
-            if id ~= nil  then
+            if id ~= nil then
                 self:_SetDefaultSelect(id)
             end
         end
@@ -133,14 +141,20 @@ end
 
 
 
+
+
 SpaceshipRoomFormulaList.InitSpaceshipRoomFormulaList = HL.Method(HL.Table) << function(self, args)
     self:_FirstTimeInit()
 
-    self.m_curTabIndex = 1
+    local defaultTabIndex = args.defaultTabIndex
+    if defaultTabIndex and defaultTabIndex >= 1 and defaultTabIndex <= #args.formulas then
+        self.m_curTabIndex = defaultTabIndex
+    else
+        self.m_curTabIndex = 1
+    end
 
     self.m_formulaTabInfos = args.formulas
     self.m_sortOptions = args.sortOptions
-    
     self.m_onCellClick = args.onCellClick
     self.m_onSortChanged = args.onSortChanged
     self.m_tabCellCache:Refresh(#self.m_formulaTabInfos, function(cell, luaIndex)
@@ -148,14 +162,27 @@ SpaceshipRoomFormulaList.InitSpaceshipRoomFormulaList = HL.Method(HL.Table) << f
     end)
     self:_OnClickTab(self.m_curTabIndex, true)
 
+    self.m_isIniting = true
     self.view.sortNode:InitSortNode(self.m_sortOptions, function(optionData, isIncremental)
         self:_OnSortChanged(optionData, isIncremental)
         self:RefreshFormulaList()
     end, args.selectedSortOptionCsIndex, args.isIncremental)
-    
     self.view.sortNode:SortCurData()
-    self:_SetDefaultSelect(args.defaultSelectFormulaId or '', true)
-    self.view.formulaScrollListSelectableNaviGroup:NaviToThisGroup()
+    self.m_isIniting = false
+
+    local defaultId = args.defaultSelectFormulaId or ''
+    local isRecovery = not string.isEmpty(defaultId)
+    self:RefreshFormulaList(isRecovery, isRecovery and defaultId or nil)
+
+    if not isRecovery then
+        self:_SetDefaultSelect('', true)
+    end
+
+    if isRecovery and self.m_curSelectCell and self.m_curSelectCell.view and self.m_curSelectCell.view.button then
+        InputManagerInst.controllerNaviManager:SetTarget(self.m_curSelectCell.view.button)
+    else
+        self.view.formulaScrollListSelectableNaviGroup:NaviToThisGroup()
+    end
 end
 
 
@@ -270,12 +297,38 @@ end
 
 
 
-SpaceshipRoomFormulaList.RefreshFormulaList = HL.Method() << function(self)
-    self.m_isScrollInit = true
-    self.view.formulaScrollList:UpdateCount(#self.m_curFormulaList)
-    self.m_setDefaultInfo = {}
-    self.m_setDefaultInfo.needWaitGraduallyShow = true
-    self:_SetDefaultSelect('')
+
+
+SpaceshipRoomFormulaList.RefreshFormulaList = HL.Method(HL.Opt(HL.Boolean, HL.String)) << function(self, skipGraduallyShow, defaultSelectFormulaId)
+    if self.m_isIniting then
+        return
+    end
+    if skipGraduallyShow and not string.isEmpty(defaultSelectFormulaId) then
+        if self.m_curSelectCell then
+            self.m_curSelectCell:SetSelected(false, false)
+        end
+        self.m_curSelectId = defaultSelectFormulaId
+        self.m_curSelectCell = nil
+        self.m_setDefaultInfo = nil
+        local fastScrollToIndex = 0
+        local targetInfo = nil
+        for luaIndex, info in ipairs(self.m_curFormulaList) do
+            if info.formulaId == defaultSelectFormulaId then
+                fastScrollToIndex = CSIndex(luaIndex)
+                targetInfo = info
+                break
+            end
+        end
+        self.view.formulaScrollList:UpdateCount(#self.m_curFormulaList, fastScrollToIndex, false, false, true)
+        if targetInfo and self.m_onCellClick then
+            self.m_onCellClick(targetInfo)
+        end
+    else
+        self.view.formulaScrollList:UpdateCount(#self.m_curFormulaList)
+        self.m_setDefaultInfo = {}
+        self.m_setDefaultInfo.needWaitGraduallyShow = true
+        self:_SetDefaultSelect('', false)
+    end
 end
 
 

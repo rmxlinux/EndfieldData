@@ -41,6 +41,10 @@ local MissionViewTypeCfg = {
 
 
 
+
+
+
+
 SNSMissionCtrl = HL.Class('SNSMissionCtrl', uiCtrl.UICtrl)
 
 
@@ -88,7 +92,8 @@ SNSMissionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitData(arg)
     self:_InitFilterArgs()
 
-    self:_UpdateFilterMissionRelatedDialogInfos({})
+    self:_RefreshFilterBtnState()
+    self:_UpdateFilterMissionRelatedDialogInfos(self.m_cachedSelectedTags)
     self:_RefreshMissionRelatedDialogList()
 
     self:_RefreshContent()
@@ -110,6 +115,8 @@ SNSMissionCtrl._InitData = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     if not string.isEmpty(dialogId) and Tables.sNSDialogTable:ContainsKey(dialogId) then
         self.m_curSelectDialogId = dialogId
     end
+
+    self.m_cachedSelectedTags = arg and arg.selectedTags and lume.deepCopy(arg.selectedTags) or {}
 end
 
 
@@ -174,6 +181,9 @@ SNSMissionCtrl._RefreshMissionRelatedDialogList = HL.Method() << function(self)
     self.m_dialogId2LuaIndex = {}
     local count = #self.m_filterMissionRelatedDialogInfos
     self.view.missionDialogCellScrollList:UpdateCount(count, CSIndex(findTargetLuaIndex))
+    if hasResult and findTargetLuaIndex > 1 then
+        self:_TryRecoverScrollToDialogCell(findTargetLuaIndex)
+    end
 end
 
 
@@ -268,18 +278,55 @@ end
 
 
 
+SNSMissionCtrl._RefreshFilterBtnState = HL.Method() << function(self)
+    local hasFilter = #self.m_cachedSelectedTags > 0
+    self.view.btnCommonFilter.normalNode.gameObject:SetActiveIfNecessary(not hasFilter)
+    self.view.btnCommonFilter.existNode.gameObject:SetActiveIfNecessary(hasFilter)
+end
+
+
+
+
+SNSMissionCtrl._IsFilterChange = HL.Method(HL.Table).Return(HL.Boolean) << function(self, selectedTags)
+    if #self.m_cachedSelectedTags ~= #selectedTags then
+        return true
+    end
+
+    if #selectedTags == 0 then
+        return false
+    end
+
+    for _, selectedTag in ipairs(selectedTags) do
+        local hasSameTag = false
+        for _, cachedSelectedTag in ipairs(self.m_cachedSelectedTags) do
+            if FilterUtils.isSameTagInfo(cachedSelectedTag, selectedTag) then
+                hasSameTag = true
+                break
+            end
+        end
+        if not hasSameTag then
+            return true
+        end
+    end
+
+    return false
+end
+
+
+
 
 SNSMissionCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, selectedTags)
     selectedTags = selectedTags or {}
-    self.m_cachedSelectedTags = selectedTags
+    if not self:_IsFilterChange(selectedTags) then
+        return
+    end
+    self.m_cachedSelectedTags = lume.deepCopy(selectedTags)
     self.m_curSelectDialogId = ""
 
-    local hasFilter = #selectedTags > 0
-    self.view.btnCommonFilter.normalNode.gameObject:SetActiveIfNecessary(not hasFilter)
-    self.view.btnCommonFilter.existNode.gameObject:SetActiveIfNecessary(hasFilter)
+    self:_RefreshFilterBtnState()
     self.view.snsDialogContentCore:ClearAsyncHandler()
 
-    self:_UpdateFilterMissionRelatedDialogInfos(selectedTags)
+    self:_UpdateFilterMissionRelatedDialogInfos(self.m_cachedSelectedTags)
     self:_RefreshMissionRelatedDialogList()
     self:_RefreshContent()
 
@@ -310,7 +357,12 @@ SNSMissionCtrl._UpdateFilterMissionRelatedDialogInfos = HL.Method(HL.Table) << f
         local hasReadTag = false
 
         local missionId = Tables.sNSDialogTable[dialogId].relatedMissionId
+        
+        
         local missionMetaAsset = missionSys:GetMissionMetaAsset(missionId)
+        if not missionMetaAsset then
+            goto continue
+        end
         local dialogInfo = dialogInfoDic:get_Item(dialogId)
 
         local importanceType = missionMetaAsset.missionImportance
@@ -372,6 +424,7 @@ SNSMissionCtrl._UpdateFilterMissionRelatedDialogInfos = HL.Method(HL.Table) << f
             end
         end
 
+        ::continue::
     end
 
     
@@ -386,9 +439,37 @@ end
 
 
 
+
+SNSMissionCtrl._TryRecoverScrollToDialogCell = HL.Method(HL.Number) << function(self, targetLuaIndex)
+    local targetCSIndex = CSIndex(targetLuaIndex)
+    self:_StartCoroutine(function()
+        for _ = 1, 3 do
+            if self.m_isClosed then
+                return
+            end
+            self.view.missionDialogCellScrollList:ScrollToIndex(targetCSIndex, true)
+            coroutine.step()
+            if self.m_genMissionDialogCellFunc(targetLuaIndex) ~= nil then
+                return
+            end
+        end
+    end)
+end
+
+
+
 SNSMissionCtrl._OnBtnFilterClick = HL.Method() << function(self)
     self.m_filterArgs.selectedTags = self.m_cachedSelectedTags
     self:Notify(MessageConst.SHOW_COMMON_FILTER, self.m_filterArgs)
+end
+
+
+
+SNSMissionCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    return {
+        dialogId = self.m_curSelectDialogId,
+        selectedTags = lume.deepCopy(self.m_cachedSelectedTags),
+    }
 end
 
 

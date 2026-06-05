@@ -21,6 +21,7 @@ local PANEL_ID = PanelId.Formula
 
 
 
+
 FormulaCtrl = HL.Class('FormulaCtrl', uiCtrl.UICtrl)
 
 local ALPHA_BELONGING_CANVAS_GROUP_CLOSE = 0.3
@@ -367,6 +368,21 @@ FormulaCtrl._ReadFormulas = HL.Method() << function(self)
     self.m_readFormulaIds = {}
 
     GameInstance.player.remoteFactory.core:ReadFormula(formulaIds)
+end
+
+
+
+
+
+FormulaCtrl.GetRecoverStateArg = HL.Method(HL.Number, HL.String).Return(HL.Table) << function(self, nodeId, buildingId)
+    return {
+        nodeId = nodeId,
+        buildingId = buildingId,
+        extraSpeed = self.m_extraFormulaSpeed,
+        isMachineCrafterFormula = self.m_isMachineCrafterFormula,
+        highlightFormulaIdList = self.m_highlightFormulaIdList and lume.deepCopy(self.m_highlightFormulaIdList) or {},
+        blockFormulaIdList = self.m_blockFormulaIdList and lume.deepCopy(self.m_blockFormulaIdList) or {},
+    }
 end
 
 

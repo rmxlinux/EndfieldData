@@ -112,8 +112,9 @@ ActivityArknightsBirthCtrl.RefreshInfo = HL.Method() << function(self)
             local csConditionalStageInfo = self.m_activityData:GetStageData(stageId)
             if csConditionalStageInfo ~= nil then
                 
-                if stageCfg.timeOffset > self.m_timeOffset then
-                    self.m_timeOffset = stageCfg.timeOffset
+                local openTimeStamp = Utils.getTimeIdOpenTimeStamp(stageCfg.timeId)
+                if openTimeStamp > self.m_timeOffset then
+                    self.m_timeOffset = openTimeStamp
                 end
                 local status = GEnums.ActivityConditionalStageState.__CastFrom(csConditionalStageInfo.Status)
                 

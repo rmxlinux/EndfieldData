@@ -40,6 +40,7 @@ local PANEL_ID = PanelId.WikiGroup
 
 
 
+
 WikiGroupCtrl = HL.Class('WikiGroupCtrl', uiCtrl.UICtrl)
 
 
@@ -96,6 +97,10 @@ WikiGroupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         return self:_GetItemRedDotStateAt(index)
     end
     self:Refresh(arg)
+
+    self:_RefreshTop()
+    self.m_phase:ActiveCommonSceneItem(true)
+    self:_PlayDecoAnim(true)
 end
 
 
@@ -131,14 +136,6 @@ end
 
 
 
-WikiGroupCtrl._OnPhaseItemBind = HL.Override() << function(self)
-    self:_RefreshTop()
-    self.m_phase:ActiveCommonSceneItem(true)
-    self:_PlayDecoAnim(true)
-end
-
-
-
 
 
 
@@ -149,6 +146,19 @@ WikiGroupCtrl.Refresh = HL.Method(HL.Table) << function(self, args)
 
     self.m_wikiGroupShowDataList = WikiUtils.getWikiGroupShowDataList(args.categoryType, nil, args.includeLocked)
     self:_RefreshTab()
+end
+
+
+
+WikiGroupCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.m_args and lume.deepCopy(self.m_args) or {}
+    local selectedGroupData = self.m_wikiGroupShowDataList and self.m_wikiGroupShowDataList[self.m_selectedIndex] or nil
+    arg.wikiEntryShowData = nil
+    arg.resumeState = {
+        selectedGroupId = selectedGroupData and selectedGroupData.wikiGroupData.groupId or nil,
+        focusTab = true,
+    }
+    return arg
 end
 
 
@@ -238,7 +248,7 @@ WikiGroupCtrl._RefreshTab = HL.Method() << function(self)
             local selectedTabCell = self.m_getTabCell(self.view.scrollListLeft:Get(CSIndex(self.m_selectedIndex)))
             if selectedTabCell then
                 if self.m_args.wikiEntryShowData then
-                    UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.leftNaviGroup, selectedTabCell.btn)
+                    self:SetAsNaviTargetInSilentModeIfNecessary(self.view.leftNaviGroup, selectedTabCell.btn)
                 else
                     UIUtils.setAsNaviTarget(selectedTabCell.btn)
                 end
@@ -247,7 +257,15 @@ WikiGroupCtrl._RefreshTab = HL.Method() << function(self)
     end
 
     local selectedIndex = 1
-    if self.m_args.wikiEntryShowData then
+    local resumeState = self.m_args and self.m_args.resumeState or nil
+    if resumeState and not string.isEmpty(resumeState.selectedGroupId) then
+        for i, groupShowData in ipairs(self.m_wikiGroupShowDataList) do
+            if resumeState.selectedGroupId == groupShowData.wikiGroupData.groupId then
+                selectedIndex = i
+                break
+            end
+        end
+    elseif self.m_args.wikiEntryShowData then
         for i, groupShowData in ipairs(self.m_wikiGroupShowDataList) do
             if self.m_args.wikiEntryShowData.wikiGroupData.groupId == groupShowData.wikiGroupData.groupId then
                 selectedIndex = i
@@ -255,13 +273,22 @@ WikiGroupCtrl._RefreshTab = HL.Method() << function(self)
             end
         end
     end
-    self.view.scrollListLeft:UpdateCount(#self.m_wikiGroupShowDataList, CSIndex(selectedIndex))
+    self.view.scrollListLeft:UpdateCount(#self.m_wikiGroupShowDataList, CSIndex(selectedIndex), false, false, PhaseManager.isRecovering)
     if self.m_args.wikiEntryShowData then
         
         self.view.leftNaviGroup:NaviToThisGroup()
         self.view.centerNaviGroup:ManuallyFocus()
     end
     self:_SetSelectedIndex(selectedIndex)
+    if DeviceInfo.usingController and resumeState and resumeState.focusTab == true then
+        local selectedTabCell = self.m_getTabCell(self.view.scrollListLeft:Get(CSIndex(selectedIndex)))
+        if selectedTabCell then
+            UIUtils.setAsNaviTarget(selectedTabCell.btn)
+        end
+    end
+    if self.m_args then
+        self.m_args.resumeState = nil
+    end
 end
 
 

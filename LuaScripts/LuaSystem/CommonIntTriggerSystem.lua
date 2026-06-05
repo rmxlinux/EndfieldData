@@ -1,15 +1,5 @@
 local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
-
-
-
-
-
-
-
-
 CommonIntTriggerSystem = HL.Class('CommonIntTriggerSystem', LuaSystemBase.LuaSystemBase)
-
-
 
 
 
@@ -22,14 +12,8 @@ CommonIntTriggerSystem.OnInit = HL.Override() << function(self)
     end)
 end
 
-
-
 CommonIntTriggerSystem.OnRelease = HL.Override() << function(self)
 end
-
-
-
-
 
 CommonIntTriggerSystem.CallLuaUI = HL.Method(HL.Table, HL.Boolean) << function(self, args, isOn)
     local argList, camConfigsCSCS = unpack(args)
@@ -66,15 +50,9 @@ end
 
 
 
-
 CommonIntTriggerSystem.m_curSpaceshipRoomCamConfigs = HL.Field(HL.Table)
 
-
 CommonIntTriggerSystem.m_curSpaceshipRoomCamStack = HL.Field(HL.Table)
-
-
-
-
 
 
 CommonIntTriggerSystem.SpaceshipRoom_ON = HL.Method(HL.String, HL.Opt(HL.Any)) << function(self, roomId, camConfigsCS)
@@ -96,10 +74,31 @@ CommonIntTriggerSystem.SpaceshipRoom_ON = HL.Method(HL.String, HL.Opt(HL.Any)) <
         sourceId = sourceId,
         text = roomTypeData.viewOptName,
         action = function()
+            local phaseArgs = {
+                roomId = roomId,
+                moveCam = true,
+            }
+            if not PhaseManager:CheckCanOpenPhaseAndToast(phaseId, phaseArgs) or PhaseManager:CheckIsInTransition() then
+                return
+            end
+
+            local startPhaseId = PhaseManager:GetTopPhaseId()
             GameInstance.player.spaceship:SetCurSpaceshipRoomCamConfig(roomId, camConfigsCS[0])
             GameInstance.player.spaceship:MoveCamToSpaceshipRoom(roomId)
+
+            local clearScreenKey = UIManager:ClearScreen()
+            phaseArgs.clearScreenKey = clearScreenKey
             TimerManager:StartTimer(0.5, function()
-                PhaseManager:OpenPhase(phaseId, { roomId = roomId, moveCam = true, })
+                local canOpenPhase = PhaseManager:GetTopPhaseId() == startPhaseId and not PhaseManager:CheckIsInTransition()
+                    and PhaseManager:CheckCanOpenPhase(phaseId, phaseArgs, true)
+                if not canOpenPhase then
+                    GameInstance.player.spaceship:UndoMoveCamToSpaceshipRoom(roomId)
+                    if clearScreenKey and clearScreenKey ~= -1 then
+                        UIManager:RecoverScreen(clearScreenKey)
+                    end
+                    return
+                end
+                PhaseManager:OpenPhase(phaseId, phaseArgs)
             end)
         end,
         icon = roomTypeData.icon,
@@ -127,10 +126,6 @@ CommonIntTriggerSystem.SpaceshipRoom_ON = HL.Method(HL.String, HL.Opt(HL.Any)) <
     }
     Notify(MessageConst.ADD_INTERACT_OPTION, upgradeInteractOptArgs)
 end
-
-
-
-
 
 CommonIntTriggerSystem.SpaceshipRoom_OFF = HL.Method(HL.String, HL.Opt(HL.Any)) << function(self, roomId, camConfigsCS)
     local unlocked, room = GameInstance.player.spaceship:TryGetRoom(roomId)

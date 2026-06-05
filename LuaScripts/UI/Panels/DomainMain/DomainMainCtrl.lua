@@ -44,6 +44,12 @@ local PHASE_ID = PhaseId.DomainMain
 
 
 
+
+
+
+
+
+
 DomainMainCtrl = HL.Class('DomainMainCtrl', uiCtrl.UICtrl)
 
 
@@ -124,6 +130,9 @@ DomainMainCtrl.m_stlActivityInfo = HL.Field(HL.Table)
 
 
 
+DomainMainCtrl.m_resumeArg = HL.Field(HL.Table)
+
+
 
 
 
@@ -137,12 +146,17 @@ DomainMainCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:InitData(arg)
     self:UpdateData()
     self:RefreshAllUI()
-    self:_RequireBulletinData()
+    if arg and arg.resumeState then
+        self.m_resumeArg = arg.resumeState
+    end
 end
 
 
 
 DomainMainCtrl.OnShow = HL.Override() << function(self)
+    if self.m_resumeArg then
+        return
+    end
     self:_TryShowDomainVersionDiff()
 end
 
@@ -150,6 +164,13 @@ end
 
 DomainMainCtrl.OnAnimationInFinished = HL.Override() << function(self)
     self:SetNavi(true)
+    if self.m_resumeArg then
+        self:_ApplyResumeState(self.m_resumeArg)
+        if not (self.m_resumeArg and self.m_resumeArg.isBulletinShown == true) then
+            self:_RequireBulletinData()
+        end
+        self.m_resumeArg = nil
+    end
 end
 
 
@@ -181,6 +202,7 @@ DomainMainCtrl.InitData = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     self.m_genIncomeDetailCells = UIUtils.genCellCache(self.view.bulletinNode.incomeDetailCell)
     self.m_genExpendDetailCells = UIUtils.genCellCache(self.view.bulletinNode.expendBulletinCell)
     self.m_unlockDomainIds = {}
+    self.m_bulletinInfoList = {}
     local curDomainIsLock = true
     for domainId, _ in cs_pairs(domainDevelopmentSystem.domainDevDataDic) do
         if domainId == self.m_curDomainId then
@@ -342,27 +364,10 @@ DomainMainCtrl.InitUI = HL.Method() << function(self)
     end, self.view.domainTopMoneyTitle.view.closeBtn.groupId)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     self.view.changeDomainBtn.onClick:AddListener(function()
-        if self.m_interactiveLock then
+        if self.m_interactiveLock or self.view.bulletinNode.gameObject.activeSelf then
             return
         end
-        self:_ShowBulletin(false)
-        self.m_phase.hasJumpedToOtherPhase = false
-        PhaseManager:OpenPhase(PhaseId.SettlementSwitchRegionPopup, {
-            curDomainId = self.m_curDomainId,
-            unlockedDomainIds = self.m_unlockDomainIds,
-            regionRedDot = "DomainSingleMap",
-            onConfirm = function(newDomainId)
-                if self.m_curDomainId ~= newDomainId then
-                    self.view.domainTopMoneyTitle.view.walletBarPlaceholder.view.gameObject:SetActive(false)
-                    self.m_phase.hasJumpedToOtherPhase = true
-                    self.m_curDomainId = newDomainId
-                    self:UpdateData()
-                    self:RefreshAllUI()
-                    self:_RequireBulletinData()
-                    self:_TryShowDomainVersionDiff()
-                end
-            end
-        })
+        self:_OpenSwitchRegionPopup()
     end)
     self.view.bulletinBtn.onClick:AddListener(function()
         if self.m_interactiveLock then
@@ -407,6 +412,21 @@ DomainMainCtrl.InitUI = HL.Method() << function(self)
             Notify(MessageConst.SHOW_TOAST, Language.LUA_DOMAIN_DEVELOPMENT_POI_UNLOCK_CLICK_TOAST)
         end
     end)
+    self.view.poiOverviewBtn.onClick:AddListener(function()
+        if self.m_interactiveLock or self.view.bulletinNode.gameObject.activeSelf then
+            return
+        end
+        self.m_phase.hasJumpedToOtherPhase = true
+        self.view.animationWrapper:ClearTween(false)
+        self:SetNavi(false)
+        AudioManager.PostEvent("Au_UI_Menu_RegionDevelopPanel_BlackShadow_Open")
+        self.view.domainTopMoneyTitle.view.walletBarPlaceholder.view.gameObject:SetActive(false)
+        self.view.decoflyAniWrapper:Play("domainmainfly_in", function()
+            PhaseManager:OpenPhase(PhaseId.DomainPOIOverview, {
+                domainId = self.m_curDomainId,
+            })
+        end)
+    end)
     
     local preActionId = self.view.bulletinNode.keyHintPre.actionId
     local nextActionId = self.view.bulletinNode.keyHintNext.actionId
@@ -430,6 +450,46 @@ DomainMainCtrl.InitUI = HL.Method() << function(self)
             self:_OnChangeSelectBulletinDate(newIndex)
         end
     end)
+end
+
+
+
+
+DomainMainCtrl._OpenSwitchRegionPopup = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if UIManager:IsOpen(PanelId.SettlementSwitchRegionPopup) then
+        return
+    end
+    self:_ShowBulletin(false)
+    UIManager:Open(PanelId.SettlementSwitchRegionPopup, {
+        curDomainId = self.m_curDomainId,
+        unlockedDomainIds = self.m_unlockDomainIds,
+        regionRedDot = "DomainSingleMap",
+        resumeState = resumeState,
+        onConfirm = function(newDomainId)
+            self:_OnChangeDomainConfirm(newDomainId)
+        end
+    })
+end
+
+
+
+
+DomainMainCtrl._OnChangeDomainConfirm = HL.Method(HL.String) << function(self, newDomainId)
+    if self.m_curDomainId ~= newDomainId then
+        self.view.domainTopMoneyTitle.view.walletBarPlaceholder.view.gameObject:SetActive(false)
+        self.m_curDomainId = newDomainId
+        self:UpdateData()
+        self:RefreshAllUI()
+        self:_RequireBulletinData()
+        self:_TryShowDomainVersionDiff()
+        
+        self:SetNavi(false)
+        self.animationWrapper:SampleClipAtPercent("domainmain_in_part_0", 1)
+        self.animationWrapper:PlayInAnimation(function()
+            self.m_interactiveLock = false
+            UIUtils.setAsNaviTarget(self.view.settlementPOICell.btn)    
+        end)
+    end
 end
 
 
@@ -459,6 +519,7 @@ DomainMainCtrl.RefreshAllUI = HL.Method() << function(self)
     
     self.view.domainGradeRedDot:InitRedDot("DomainGradeReward", self.m_curDomainId)
     self.view.changeDomainRedDot:InitRedDot("DomainOtherMap", self.m_curDomainId)
+    self.view.poiOverviewRedDot:InitRedDot("DomainPOIOverview", self.m_curDomainId)
 end
 
 
@@ -500,6 +561,9 @@ DomainMainCtrl._OnRefreshPoiCell = HL.Method(HL.Any, HL.Number) << function(self
     
     cell.btn.onClick:RemoveAllListeners()
     cell.btn.onClick:AddListener(function()
+        if self.m_interactiveLock then
+            return
+        end
         if isLocked or isNotCanOpen then
             Notify(MessageConst.SHOW_TOAST, Language.LUA_DOMAIN_DEVELOPMENT_POI_UNLOCK_CLICK_TOAST)
             return
@@ -692,50 +756,81 @@ end
 
 
 
+DomainMainCtrl._ShowBulletinDirect = HL.Method() << function(self)
+    self.view.bulletinNode.gameObject:SetActive(true)
+    InputManagerInst:ToggleBinding(self.m_bindIdPreDate, true)
+    InputManagerInst:ToggleBinding(self.m_bindIdNextDate, true)
+    if DeviceInfo.usingController then
+        self.view.domainGradeBtn.enabled = false
+        self.view.poiOverviewBtn.enabled = false
+        self.view.bulletinBtn.enabled = false
+        self.view.changeDomainBtn.interactable = false
+        self.view.domainGradeKeyHint.gameObject:SetActive(false)
+        self.view.changeDomainKeyHint.gameObject:SetActive(false)
+        self.view.poiOverviewKeyHint.gameObject:SetActive(false)
+        
+        
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.selectableNaviGroup, self.view.bulletinNode.dateCell.normalBtn)
+    end
+end
 
-DomainMainCtrl._ShowBulletin = HL.Method(HL.Boolean) << function(self, isShow)
+
+
+
+
+DomainMainCtrl._ShowBulletin = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isShow, forceSkipRequire)
     
-    local oldShow = self.m_waitShowBulletin
-    self.m_waitShowBulletin = isShow
     if isShow then
+        if forceSkipRequire == true then
+            self:_ShowBulletinDirect()
+            return
+        end
+        self.m_waitShowBulletin = true
         local lastTime = DomainMainCtrl.s_lastBulletinSyncTimestamp
         local nowTime = DateTimeUtils.GetCurrentTimestampBySeconds()
         if lastTime + bulletinRequireTimeInterval >= nowTime then
             
-            self.view.bulletinNode.gameObject:SetActive(true)
-            InputManagerInst:ToggleBinding(self.m_bindIdPreDate, true)
-            InputManagerInst:ToggleBinding(self.m_bindIdNextDate, true)
-            if DeviceInfo.usingController then
-                self.view.domainGradeBtn.enabled = false
-                self.view.changeDomainBtn.enabled = false
-                self.view.bulletinBtn.enabled = false
-                self.view.domainGradeKeyHint.gameObject:SetActive(false)
-                self.view.changeDomainKeyHint.gameObject:SetActive(false)
-                
-                
-                UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.selectableNaviGroup, self.view.bulletinNode.dateCell.normalBtn)
-            end
+            self:_ShowBulletinDirect()
         else
             
             self:_RequireBulletinData()
             self.m_waitShowBulletin = true
         end
-    else
-        if oldShow ~= isShow then
-            self.view.bulletinNode.aniWrapper:ClearTween(true)
-            self.view.bulletinNode.aniWrapper:PlayOutAnimation(function()
-                self.view.bulletinNode.gameObject:SetActive(false)
-                InputManagerInst:ToggleBinding(self.m_bindIdPreDate, false)
-                InputManagerInst:ToggleBinding(self.m_bindIdNextDate, false)
-                if DeviceInfo.usingController then
-                    self.view.domainGradeBtn.enabled = true
-                    self.view.changeDomainBtn.enabled = true
-                    self.view.bulletinBtn.enabled = true
-                    self.view.domainGradeKeyHint.gameObject:SetActive(true)
-                    self.view.changeDomainKeyHint.gameObject:SetActive(true)
-                end
-            end)
-        end
+    elseif self.view.bulletinNode.gameObject.activeSelf then
+        self.m_waitShowBulletin = false
+        self.view.bulletinNode.aniWrapper:ClearTween(true)
+        self.view.bulletinNode.aniWrapper:PlayOutAnimation(function()
+            self.view.bulletinNode.gameObject:SetActive(false)
+            InputManagerInst:ToggleBinding(self.m_bindIdPreDate, false)
+            InputManagerInst:ToggleBinding(self.m_bindIdNextDate, false)
+            if DeviceInfo.usingController then
+                self.view.domainGradeBtn.enabled = true
+                self.view.poiOverviewBtn.enabled = true
+                self.view.bulletinBtn.enabled = true
+                self.view.changeDomainBtn.interactable = true
+                self.view.domainGradeKeyHint.gameObject:SetActive(true)
+                self.view.changeDomainKeyHint.gameObject:SetActive(true)
+                self.view.poiOverviewKeyHint.gameObject:SetActive(true)
+            end
+        end)
+    end
+end
+
+
+
+
+DomainMainCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState then
+        return
+    end
+    if resumeState.isBulletinShown == true then
+        self:_UpdateBulletinInfo()
+        self.m_curSelectBulletinIndex = resumeState.selectedBulletinIndex or self.m_curSelectBulletinIndex
+        self:_RefreshBulletinUI()
+        self:_ShowBulletin(true, true)
+    end
+    if resumeState.switchRegionPopupState then
+        self:_OpenSwitchRegionPopup(resumeState.switchRegionPopupState)
     end
 end
 
@@ -781,7 +876,7 @@ end
 DomainMainCtrl.SetNavi = HL.Method(HL.Boolean) << function(self, enable)
     self.m_interactiveLock = not enable
     if enable then
-        UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.selectableNaviGroup, self.view.settlementPOICell.btn)
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.selectableNaviGroup, self.view.settlementPOICell.btn)
     else
         UIUtils.setAsNaviTarget(nil)
     end
@@ -797,6 +892,22 @@ DomainMainCtrl._OnActivityStageUpdate = HL.Method(HL.Any) << function(self, arg)
     end
     self:UpdateData()
     self:RefreshAllUI()
+end
+
+
+
+DomainMainCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = {}
+    arg.domainId = self.m_curDomainId
+    arg.resumeState = {
+        isBulletinShown = self.view.bulletinNode.gameObject.activeSelf,
+        selectedBulletinIndex = self.m_curSelectBulletinIndex,
+    }
+    local isSwitchPopupOpen, switchPopupCtrl = UIManager:IsOpen(PanelId.SettlementSwitchRegionPopup)
+    if isSwitchPopupOpen then
+        arg.resumeState.switchRegionPopupState = switchPopupCtrl:GetCurPhaseStateArg()
+    end
+    return arg
 end
 
 

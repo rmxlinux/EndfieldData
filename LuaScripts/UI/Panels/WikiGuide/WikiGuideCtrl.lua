@@ -1,55 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WikiGuide
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiGuideCtrl = HL.Class('WikiGuideCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -69,21 +21,15 @@ local WIKI_GUIDE_ENTRY_CELL_PART_HEIGHT = {
 }
 
 
-
 WikiGuideCtrl.m_typeTabCache = HL.Field(HL.Forward("UIListCache"))
-
 
 WikiGuideCtrl.m_entryListCache = HL.Field(HL.Function)
 
-
 WikiGuideCtrl.m_getMediaCell = HL.Field(HL.Function)
-
 
 WikiGuideCtrl.m_pageIndexToggleCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WikiGuideCtrl.m_refBtnCache = HL.Field(HL.Forward("UIListCache"))
-
 
 
 
@@ -93,36 +39,32 @@ WikiGuideCtrl.m_refBtnCache = HL.Field(HL.Forward("UIListCache"))
 WikiGuideCtrl.m_latestUnlockCnt = HL.Field(HL.Number) << 0
 
 
-
 WikiGuideCtrl.m_showingLatestUnlock = HL.Field(HL.Boolean) << false
-
 
 
 WikiGuideCtrl.m_wikiGroupShowDataList = HL.Field(HL.Table)
 
+WikiGuideCtrl.m_arg = HL.Field(HL.Table)
 
 
 WikiGuideCtrl.m_allGroupEntryList = HL.Field(HL.Table)
 
 
-
 WikiGuideCtrl.m_entryListByGroup = HL.Field(HL.Table)
-
 
 
 WikiGuideCtrl.m_showingEntryList = HL.Field(HL.Table)
 
-
 WikiGuideCtrl.m_showingEntryCnt = HL.Field(HL.Number) << 0
 
 
-
 WikiGuideCtrl.m_showingEntryData = HL.Field(HL.Table)
-
+WikiGuideCtrl.m_currentGroupId = HL.Field(HL.String) << ""
 
 
 WikiGuideCtrl.m_selectedIndex = HL.Field(HL.Number) << 0
 
+WikiGuideCtrl.m_pendingNaviTargetIndex = HL.Field(HL.Number) << 0
 
 
 WikiGuideCtrl.m_toShowDetail = HL.Field(HL.Table)
@@ -134,24 +76,18 @@ WikiGuideCtrl.m_toShowDetail = HL.Field(HL.Table)
 
 
 
-
 WikiGuideCtrl.m_pagesByEntryId = HL.Field(HL.Table)
-
 
 WikiGuideCtrl.m_showingPageList = HL.Field(HL.Table)
 
-
 WikiGuideCtrl.m_isShowingLastPage = HL.Field(HL.Boolean) << false
-
 
 WikiGuideCtrl.m_isShowingFirstPage = HL.Field(HL.Boolean) << false
 
 
 
-
-
-
 WikiGuideCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
+    self.m_arg = args or {}
     self:_InitController()
     
     self.m_typeTabCache = UIUtils.genCellCache(self.view.typeCellTemplate)
@@ -172,13 +108,13 @@ WikiGuideCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
         end)
         local isSelected = luaIndex == self.m_selectedIndex
         cell.wikiTutorialTab:SetSelected(isSelected)
-        if isSelected then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.wikiTutorialTab.view.btn)
-        end
 
         cell.lockTipsNode.gameObject:SetActive(self.m_showingLatestUnlock and csIndex == 0)
         cell.cutOffRuleNode.gameObject:SetActive(self.m_showingLatestUnlock and csIndex + 1 == self.m_latestUnlockCnt)
         cell.redDot:InitRedDot("WikiGuideEntry", self.m_showingEntryList[LuaIndex(csIndex)].wikiEntryData.id, nil, self.view.redDotScrollRect)
+    end)
+    entryList.onGraduallyShowFinish:AddListener(function()
+        self:_TryNaviToSelectedEntry()
     end)
     entryList.getCellSize = function(csIndex)
         local showLockTip = self.m_showingLatestUnlock and csIndex == 0
@@ -253,9 +189,12 @@ WikiGuideCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_selectedIndex = 0
     self.m_toShowDetail = args
     self.m_readWikiEntries = {}
+
+    self:InitView()
+    self:RefreshTop()
+    self.m_phase:ActiveCommonSceneItem(true)
+    self:_PlayDecoAnim(true)
 end
-
-
 
 WikiGuideCtrl.OnClose = HL.Override() << function(self)
     self:_MarkWikiEntryRead()
@@ -263,9 +202,8 @@ WikiGuideCtrl.OnClose = HL.Override() << function(self)
     self:GameEventLogExit()
 end
 
-
-
 WikiGuideCtrl.OnShow = HL.Override() << function(self)
+    self.m_toShowDetail = self:GetCurPhaseStateArg()
     self:InitView()
     if self.m_phase then
         self.m_phase:ActiveCommonSceneItem(true)
@@ -274,24 +212,17 @@ WikiGuideCtrl.OnShow = HL.Override() << function(self)
     self:GameEventLogEnter()
 end
 
-
-
 WikiGuideCtrl.OnHide = HL.Override() << function(self)
     self:_MarkWikiEntryRead()
     self:GameEventLogExit()
 end
-
-
 
 WikiGuideCtrl._OnPlayAnimationOut = HL.Override() << function(self)
     WikiGuideCtrl.Super._OnPlayAnimationOut(self)
     self:_PlayDecoAnim(false)
 end
 
-
 WikiGuideCtrl.m_readWikiEntries = HL.Field(HL.Table)
-
-
 
 WikiGuideCtrl._MarkWikiEntryRead = HL.Method() << function(self)
     if self.m_readWikiEntries then
@@ -303,8 +234,6 @@ WikiGuideCtrl._MarkWikiEntryRead = HL.Method() << function(self)
         self.m_readWikiEntries = {}
     end
 end
-
-
 
 WikiGuideCtrl.InitView = HL.Method() << function(self)
     self.m_wikiGroupShowDataList = WikiUtils.getWikiGroupShowDataList(WikiConst.EWikiCategoryType.Tutorial)
@@ -324,7 +253,7 @@ WikiGuideCtrl.InitView = HL.Method() << function(self)
     local lut = {}
     
     for i = 1, realCnt do
-        lut[latestUnlockEntryIds[CSIndex(i)]] = i
+        lut[latestUnlockEntryIds[CSIndex(i)]] = realCnt - i + 1
     end
 
     
@@ -370,9 +299,6 @@ WikiGuideCtrl.InitView = HL.Method() << function(self)
    self:Refresh(self.m_toShowDetail)
 end
 
-
-
-
 WikiGuideCtrl._RefreshTypeCellLineImg = HL.Method(HL.Number) << function(self, selectedIndex)
     local typeTabCnt = self.m_typeTabCache:GetCount()
     for i = 1, typeTabCnt do
@@ -383,10 +309,8 @@ WikiGuideCtrl._RefreshTypeCellLineImg = HL.Method(HL.Number) << function(self, s
 end
 
 
-
-
-
 WikiGuideCtrl.Refresh = HL.Method(HL.Table) << function(self, args)
+    self.m_arg = args or {}
     
     if args then
         self.m_showingEntryData = args.wikiEntryShowData
@@ -394,17 +318,85 @@ WikiGuideCtrl.Refresh = HL.Method(HL.Table) << function(self, args)
         self.m_showingEntryData = self.m_allGroupEntryList[1]
     end
 
-    
-    self.view.typeCellAll.toggle:SetIsOnWithoutNotify(true)
-    self:SwitchToGroup()
+    local resumeState = args and args.resumeState or nil
+    if resumeState then
+        self:_ApplyResumeState(resumeState)
+    else
+        
+        self.view.typeCellAll.toggle:SetIsOnWithoutNotify(true)
+        self:SwitchToGroup()
+    end
+    if self.m_arg then
+        self.m_arg.resumeState = nil
+    end
 end
 
 
+WikiGuideCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
+    arg.categoryType = WikiConst.EWikiCategoryType.Tutorial
+    arg.wikiEntryShowData = self.m_showingEntryData
+    arg.wikiGroupShowDataList = self.m_wikiGroupShowDataList
+    arg.resumeState = {
+        groupId = self:_GetCurrentGroupId(),
+        selectedEntryId = self.m_showingEntryData and self.m_showingEntryData.wikiEntryData.id or nil,
+        pageIndex = self.view.guideMediaNode.mediaList.centerIndex,
+    }
+    return arg
+end
 
+WikiGuideCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState then
+        return
+    end
+    local groupRestored = false
+    if not string.isEmpty(resumeState.groupId) then
+        for luaIndex = 1, self.m_typeTabCache:GetCount() do
+            local groupData = self.m_wikiGroupShowDataList[luaIndex]
+            if groupData and groupData.wikiGroupData.groupId == resumeState.groupId then
+                local cell = self.m_typeTabCache:GetItem(luaIndex)
+                if cell then
+                    cell.toggle:SetIsOnWithoutNotify(true)
+                end
+                self:SwitchToGroup(resumeState.groupId, false)
+                self:_RefreshTypeCellLineImg(luaIndex)
+                groupRestored = true
+                break
+            end
+        end
+    end
+    if not groupRestored then
+        self.view.typeCellAll.toggle:SetIsOnWithoutNotify(true)
+        self:SwitchToGroup(nil, false)
+    end
+    local entryRestored = false
+    if not string.isEmpty(resumeState.selectedEntryId) and self.m_showingEntryList then
+        for luaIndex, entryShowData in ipairs(self.m_showingEntryList) do
+            if entryShowData.wikiEntryData.id == resumeState.selectedEntryId then
+                self:SetSelectedEntryIndex(luaIndex, true, true)
+                entryRestored = true
+                break
+            end
+        end
+    end
+    if not entryRestored and self.m_selectedIndex > 0 then
+        self:SetSelectedEntryIndex(self.m_selectedIndex, true, true)
+    end
+    local pageIndex = resumeState.pageIndex or 0
+    if self.m_showingPageList and #self.m_showingPageList > 0 then
+        pageIndex = lume.clamp(pageIndex, 0, #self.m_showingPageList - 1)
+        self:SwitchPage(pageIndex)
+    end
+end
 
+WikiGuideCtrl._GetCurrentGroupId = HL.Method().Return(HL.String) << function(self)
+    return self.m_currentGroupId or ""
+end
 
-WikiGuideCtrl.SwitchToGroup = HL.Method(HL.Opt(HL.String)) << function(self, groupId)
+WikiGuideCtrl.SwitchToGroup = HL.Method(HL.Opt(HL.String, HL.Boolean)) << function(self, groupId, setNaviTarget)
+    self:_MarkWikiEntryRead()
     self.m_selectedIndex = -1
+    self.m_currentGroupId = groupId or ""
     
     self.m_showingLatestUnlock = not groupId and self.m_latestUnlockCnt > 0
 
@@ -421,12 +413,8 @@ WikiGuideCtrl.SwitchToGroup = HL.Method(HL.Opt(HL.String)) << function(self, gro
     end
 
     self:RefreshEntryList(entryListToShow, CSIndex(selectIndex))
-    self:SetSelectedEntryIndex(selectIndex, nil, true)
+    self:SetSelectedEntryIndex(selectIndex, nil, setNaviTarget ~= false)
 end
-
-
-
-
 
 
 WikiGuideCtrl.RefreshEntryList = HL.Method(HL.Table, HL.Opt(HL.Number)) << function(self, targetList, selectCsIndex)
@@ -439,14 +427,47 @@ WikiGuideCtrl.RefreshEntryList = HL.Method(HL.Table, HL.Opt(HL.Number)) << funct
     end
 end
 
-
-
-
-
+WikiGuideCtrl._TryNaviToSelectedEntry = HL.Method(HL.Opt(HL.Number)).Return(HL.Boolean) << function(self, luaIndex)
+    if not DeviceInfo.usingController then
+        return false
+    end
+    local targetIndex = luaIndex
+    if not targetIndex or targetIndex <= 0 then
+        targetIndex = self.m_pendingNaviTargetIndex
+    end
+    if not targetIndex or targetIndex <= 0 then
+        targetIndex = self.m_selectedIndex
+    end
+    if not targetIndex or targetIndex <= 0 then
+        return false
+    end
+    local entryGo = self.view.entryList:Get(CSIndex(targetIndex))
+    local entryCell = entryGo and self.m_entryListCache(entryGo) or nil
+    if not entryCell then
+        self.m_pendingNaviTargetIndex = targetIndex
+        return false
+    end
+    self.m_pendingNaviTargetIndex = 0
+    InputManagerInst.controllerNaviManager:SetTarget(entryCell.wikiTutorialTab.view.btn)
+    return true
+end
 
 
 WikiGuideCtrl.SetSelectedEntryIndex = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Boolean)) << function(self, luaIndex, scrollToEntry, setNaviTarget)
     if self.m_selectedIndex == luaIndex then
+        local entryGo = self.view.entryList:Get(CSIndex(luaIndex))
+        local entryCell = entryGo and self.m_entryListCache(entryGo) or nil
+        if scrollToEntry == true then
+            if not entryCell then
+                self.view.entryList:ScrollToIndex(CSIndex(luaIndex))
+            else
+                self.view.entryListScrollRect:AutoScrollToRectTransform(entryGo.transform)
+            end
+        end
+        if setNaviTarget == true then
+            self.m_pendingNaviTargetIndex = luaIndex
+            self:_TryNaviToSelectedEntry(luaIndex)
+        end
         return
     end
     if self.m_selectedIndex > 0 then
@@ -464,8 +485,9 @@ WikiGuideCtrl.SetSelectedEntryIndex = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL
             self.view.entryListScrollRect:AutoScrollToRectTransform(entryGo.transform)
         end
     end
-    if setNaviTarget == true and entryCell then
-        InputManagerInst.controllerNaviManager:SetTarget(entryCell.wikiTutorialTab.view.btn)
+    if setNaviTarget == true then
+        self.m_pendingNaviTargetIndex = luaIndex
+        self:_TryNaviToSelectedEntry(luaIndex)
     end
 
     local entryId = self.m_showingEntryList[luaIndex].wikiEntryData.id
@@ -479,19 +501,12 @@ WikiGuideCtrl.SetSelectedEntryIndex = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL
 end
 
 
-
-
-
-
 WikiGuideCtrl.SetEntryCellSelected = HL.Method(HL.Table, HL.Boolean) << function(self, cell, selected)
     if not cell then
         return
     end
     cell.wikiTutorialTab:SetSelected(selected, true)
 end
-
-
-
 
 
 
@@ -522,20 +537,12 @@ WikiGuideCtrl.RefreshContent = HL.Method(HL.Table) << function(self, entryShowDa
 end
 
 
-
-
-
 WikiGuideCtrl.SwitchPage = HL.Method(HL.Number) << function(self, pageCsIndex)
     local mediaNode = self.view.guideMediaNode
     mediaNode.mediaList:ScrollToIndex(pageCsIndex)
     self.view.centerAnimWrapper:ClearTween(false)
     self.view.centerAnimWrapper:PlayInAnimation()
-    self:_MarkWikiEntryRead()
 end
-
-
-
-
 
 
 WikiGuideCtrl._OnUpdateMediaCell = HL.Method(GameObject, HL.Number) << function(self, obj, csIndex)
@@ -543,9 +550,6 @@ WikiGuideCtrl._OnUpdateMediaCell = HL.Method(GameObject, HL.Number) << function(
     local cell = self.m_getMediaCell(obj)
     cell:InitWikiGuideMediaCell(pageData.id)
 end
-
-
-
 
 
 WikiGuideCtrl._OnUpdateCurrentPageIndex = HL.Method(HL.Number) << function(self, csIndex)
@@ -586,16 +590,6 @@ WikiGuideCtrl._OnUpdateCurrentPageIndex = HL.Method(HL.Number) << function(self,
 end
 
 
-
-
-WikiGuideCtrl._OnPhaseItemBind = HL.Override() << function(self)
-    self:RefreshTop()
-    self.m_phase:ActiveCommonSceneItem(true)
-    self:_PlayDecoAnim(true)
-end
-
-
-
 WikiGuideCtrl.RefreshTop = HL.Method() << function(self)
     if not self.m_phase then
         return
@@ -609,17 +603,11 @@ WikiGuideCtrl.RefreshTop = HL.Method() << function(self)
     self.view.top:InitWikiTop(wikiTopArgs)
 end
 
-
-
-
 WikiGuideCtrl._PlayDecoAnim = HL.Method(HL.Boolean) << function(self, isIn)
     if self.m_phase then
         self.m_phase:PlayDecoAnim(isIn and "wiki_uideco_grouppanel_in" or "wiki_uideco_grouppanel_out")
     end
 end
-
-
-
 
 WikiGuideCtrl._GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
     local luaIndex = LuaIndex(index)
@@ -638,8 +626,6 @@ WikiGuideCtrl._GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << func
     end
 end
 
-
-
 WikiGuideCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     self.view.wikiRefNaviGroup.onIsFocusedChange:AddListener(function(isTopLayer)
@@ -654,17 +640,12 @@ end
 
 
 
-
 WikiGuideCtrl.m_enterTime = HL.Field(HL.Number) << -1
-
-
 
 WikiGuideCtrl.GameEventLogEnter = HL.Method() << function(self)
     self.m_enterTime = Time.realtimeSinceStartup
     EventLogManagerInst:GameEvent_WikiCategory(true, WikiConst.EWikiCategoryType.Tutorial, 0)
 end
-
-
 
 WikiGuideCtrl.GameEventLogExit = HL.Method() << function(self)
     if self.m_enterTime < 0 then

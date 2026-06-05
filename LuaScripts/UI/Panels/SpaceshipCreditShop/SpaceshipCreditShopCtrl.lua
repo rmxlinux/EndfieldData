@@ -26,10 +26,23 @@ local shopSystem = GameInstance.player.shopSystem
 
 
 
+
+
+
 SpaceshipCreditShopCtrl = HL.Class('SpaceshipCreditShopCtrl', SpaceshipShopBaseCtrl.SpaceshipShopBaseCtrl)
 
 
 SpaceshipCreditShopCtrl.m_moneyId = HL.Field(HL.String) << ""
+
+
+SpaceshipCreditShopCtrl.m_haveOpenRefreshPopup = HL.Field(HL.Boolean) << false
+
+
+SpaceshipCreditShopCtrl.m_refreshBtnCallback = HL.Field(HL.Function)
+
+
+
+SpaceshipCreditShopCtrl.m_pendingAfterTopOrdered = HL.Field(HL.Table)
 
 
 SpaceshipCreditShopCtrl.OpenSpaceshipCreditShopPanel = HL.StaticMethod() << function()
@@ -41,8 +54,6 @@ end
 
 
 SpaceshipCreditShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_phase = arg.phase
-
     self.view.tipsBtn.onClick:AddListener(function()
         PhaseManager:OpenPhase(PhaseId.ShopCreditPointsPopUp)
     end)
@@ -269,6 +280,7 @@ end
 
 SpaceshipCreditShopCtrl._ManualRefreshGoods = HL.Method(HL.Number, HL.Userdata) << function(self, remainCount, tableData)
     local costItemData = Tables.itemTable:GetValue(tableData.costItemId1)
+    self.m_haveOpenRefreshPopup = true
     Notify(MessageConst.SHOW_POP_UP, {
         content = string.format(Language.LUA_SHOP_MANUAL_REFRESH_TITLE, tableData.costItemCount1),
         subContent = string.format(Language.LUA_SHOP_MANUAL_REFRESH_SUB_TITLE, remainCount),
@@ -280,6 +292,10 @@ SpaceshipCreditShopCtrl._ManualRefreshGoods = HL.Method(HL.Number, HL.Userdata) 
                 return
             end
             shopSystem:SendShopManualRefresh(self.m_shopId)
+            self.m_haveOpenRefreshPopup = false
+        end,
+        onCancel = function()
+            self.m_haveOpenRefreshPopup = false
         end,
         moneyInfo = {
             moneyIds = {Tables.CashShopConst.CreditTabMoneyId},
@@ -304,9 +320,10 @@ SpaceshipCreditShopCtrl._OnShopGoodsManualRefresh = HL.Override() << function(se
             remainCount, limitCount)
         local refreshTable = manualRefreshTable.list[useCount]
         self.view.refreshBtn.functionBtn.onClick:RemoveAllListeners()
-        self.view.refreshBtn.functionBtn.onClick:AddListener(function()
+        self.m_refreshBtnCallback = function()
             self:_ManualRefreshGoods(remainCount, refreshTable)
-        end)
+        end
+        self.view.refreshBtn.functionBtn.onClick:AddListener(self.m_refreshBtnCallback)
 
         local costCount, haveCount = self:_GetRefreshCost(refreshTable)
         self.view.refreshBtn.functionTxt.text = costCount
@@ -355,11 +372,45 @@ SpaceshipCreditShopCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
         for _, v in ipairs(self.m_goodsInfos) do
             if v.id == arg.goodsId then
                 local goodsData = shopSystem:GetShopGoodsData(self.m_shopId, arg.goodsId)
-                self:_StartCoroutine(function()
-                    CashShopUtils.OpenShopDetailPanel(goodsData, self)
+                self.m_pendingAfterTopOrdered = self.m_pendingAfterTopOrdered or {}
+                table.insert(self.m_pendingAfterTopOrdered, function()
+                    self.m_phase:CreatePhasePanelItem(PanelId.ShopDetail, goodsData)
                 end)
             end
         end
+    end
+
+    if arg and arg.spaceshipCreditShopRefreshPopup then
+        arg.spaceshipCreditShopRefreshPopup = nil
+        self.m_refreshBtnCallback()
+    end
+end
+
+
+SpaceshipCreditShopCtrl.OnAfterCategoryTopOrdered = HL.Method() << function(self)
+    if not self.m_pendingAfterTopOrdered then
+        return
+    end
+    local list = self.m_pendingAfterTopOrdered
+    self.m_pendingAfterTopOrdered = nil
+    for _, action in ipairs(list) do
+        action()
+    end
+end
+
+
+
+
+SpaceshipCreditShopCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, arg)
+    
+    local isOpen, shopDetailCtrl = UIManager:IsOpen(PanelId.ShopDetail)
+    if isOpen then
+        local info = shopDetailCtrl:GetInfo()
+        arg.goodsId = info.goodsId
+    end
+    
+    if self.m_haveOpenRefreshPopup then
+        arg.spaceshipCreditShopRefreshPopup = true
     end
 end
 

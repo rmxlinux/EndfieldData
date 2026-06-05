@@ -82,6 +82,8 @@ local PANEL_ID = PanelId.CharInfoTalent
 
 
 
+
+
 CharInfoTalentCtrl = HL.Class('CharInfoTalentCtrl', uiCtrl.UICtrl)
 
 local LAYER_SCORE = 100
@@ -265,14 +267,16 @@ CharInfoTalentCtrl.PhaseCharInfoPanelShowFinal = HL.Method(HL.Any) << function(s
         end
     end
 
-    if isFastEnter then
-        return
+    if arg.stateArg then
+        self:_ProcessStateArg(charInfo, arg.stateArg)
+        arg.stateArg = nil
     end
 
-    
+    if not isFastEnter then
+        local enterAnimName = self:_GetEnterAnimName()
+        self.view.animation:Play(enterAnimName)
+    end
 
-    local enterAnimName = self:_GetEnterAnimName()
-    self.view.animation:Play(enterAnimName)
     InputManagerInst:ToggleBinding(self.m_detailBindingId, not self.m_isExpanding)
     InputManagerInst:ToggleBinding(self.m_detailSkillBindingId, not self.m_isExpanding)
 end
@@ -286,6 +290,9 @@ CharInfoTalentCtrl._CheckIsPanelFastEnter = HL.Method(HL.Table, HL.Table).Return
         return false
     end
 
+    if arg.stateArg then
+        return true
+    end
 
     local extraArg = arg.extraArg
     if not extraArg then
@@ -434,11 +441,15 @@ end
 
 
 
-CharInfoTalentCtrl._SelectAttributeSkillNodeId = HL.Method(HL.Table, HL.String) << function(self, charInfo, nodeId)
+
+CharInfoTalentCtrl._SelectAttributeSkillNodeId = HL.Method(HL.Table, HL.String, HL.Opt(HL.Boolean)) << function(self, charInfo, nodeId, isFast)
     for i = 1, self.m_attributeCellCache:GetCount() do
         local cell = self.m_attributeCellCache:Get(i)
         if cell.nodeCfg.nodeId == nodeId then
-            self:_OnClickCellDefault(cell.selected, cell)
+            self:_OnClickCellDefault(cell.selected, cell, isFast)
+            if DeviceInfo.usingController and isFast then
+                UIUtils.setAsNaviTarget(cell.button)
+            end
         end
     end
 
@@ -454,18 +465,25 @@ end
 
 
 
-CharInfoTalentCtrl._SelectShipSkillNodeId = HL.Method(HL.Table, HL.String) << function(self, charInfo, nodeId)
+
+CharInfoTalentCtrl._SelectShipSkillNodeId = HL.Method(HL.Table, HL.String, HL.Opt(HL.Boolean)) << function(self, charInfo, nodeId, isFast)
     for i = 1, self.m_shipCellCacheA:GetCount() do
         local cell = self.m_shipCellCacheA:Get(i)
         if cell.nodeCfg.nodeId == nodeId then
-            self:_OnClickCellDefault(cell.selected, cell)
+            self:_OnClickCellDefault(cell.selected, cell, isFast)
+            if DeviceInfo.usingController and isFast then
+                UIUtils.setAsNaviTarget(cell.button)
+            end
         end
     end
 
     for i = 1, self.m_shipCellCacheB:GetCount() do
         local cell = self.m_shipCellCacheB:Get(i)
         if cell.nodeCfg.nodeId == nodeId then
-            self:_OnClickCellDefault(cell.selected, cell)
+            self:_OnClickCellDefault(cell.selected, cell, isFast)
+            if DeviceInfo.usingController and isFast then
+                UIUtils.setAsNaviTarget(cell.button)
+            end
         end
     end
 
@@ -1674,6 +1692,63 @@ CharInfoTalentCtrl._SetNaviWhenExchangeToSkill = HL.Method(HL.Boolean) << functi
     end
     if naviTarget then
         InputManagerInst.controllerNaviManager:SetTarget(naviTarget)
+    end
+end
+
+
+
+CharInfoTalentCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local arg = {}
+    if self.m_isExpanding and self.m_curSelectedCell then
+        arg.isShowSkill = self.m_isShowSkill
+        arg.skillGroupType = self.m_curSelectedCell.skillGroupType
+        arg.nodeCfg = self.m_curSelectedCell.nodeCfg
+        if not arg.nodeCfg then
+            if self.m_curSelectedCell.elite and self.m_curSelectedCell.elite.nodeCfg then
+                arg.nodeCfg = self.m_curSelectedCell.elite.nodeCfg
+            elseif self.m_curSelectedCell.equip and self.m_curSelectedCell.equip.nodeCfg then
+                arg.nodeCfg = self.m_curSelectedCell.equip.nodeCfg
+            end
+        end
+        local isOpened, upgradeCtrl = UIManager:IsOpen(PanelId.SkillUpgradePopUp)
+        if isOpened then
+            arg.upgradeArg = upgradeCtrl.m_arg
+            arg.isSkillUpgrade = upgradeCtrl.view.skillUpgradeNode.gameObject.activeSelf
+        end
+    end
+    return arg
+end
+
+
+
+
+
+CharInfoTalentCtrl._ProcessStateArg = HL.Method(HL.Any, HL.Table) << function(self, charInfo, arg)
+    self.m_isShowSkill = arg.isShowSkill or false
+    if arg.skillGroupType ~= nil then
+        self:_SelectSkillGroupType(charInfo, arg.skillGroupType, true)
+        local panelItem = self.m_phase:_GetPanelPhaseItem(PanelId.CharInfoTalentUpgrade)
+        if panelItem and arg.isSkillExpanding then
+            panelItem.uiCtrl:_ToggleSkillNextInfo(true)
+        end
+    elseif arg.nodeCfg then
+        local nodeType = arg.nodeCfg.nodeType
+        if nodeType == GEnums.TalentNodeType.Attr then
+            self:_SelectAttributeSkillNodeId(charInfo, arg.nodeCfg.nodeId, true)
+        elseif nodeType == GEnums.TalentNodeType.PassiveSkill then
+            self:_SelectPassiveSkillNodeId(charInfo, arg.nodeCfg.nodeId, true)
+        elseif nodeType == GEnums.TalentNodeType.FactorySkill then
+            self:_SelectShipSkillNodeId(charInfo, arg.nodeCfg.nodeId, true)
+        elseif nodeType == GEnums.TalentNodeType.CharBreak or nodeType == GEnums.TalentNodeType.EquipBreak then
+            self:_SelectCharBreakNodeId(charInfo, arg.nodeCfg.nodeId, true)
+        end
+    end
+    if arg.upgradeArg then
+        if arg.isSkillUpgrade then
+            Notify(MessageConst.ON_SKILL_UPGRADE_SUCCESS, arg.upgradeArg)
+        else
+            Notify(MessageConst.ON_CHAR_TALENT_UPGRADE, arg.upgradeArg)
+        end
     end
 end
 

@@ -41,7 +41,7 @@ end
 DungeonCommonToastCtrl.OnSceneCollectionModify = HL.StaticMethod(HL.Any) << function(arg)
     local prefabId, sceneId = unpack(arg)
     
-    local dungeonId = GameWorld.worldInfo.subGame.id
+    local dungeonId = GameInstance.dungeonManager.curDungeonId
     if not DungeonUtils.isDungeonChallenge(dungeonId) then
         return
     end

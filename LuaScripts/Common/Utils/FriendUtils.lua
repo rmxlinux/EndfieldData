@@ -172,7 +172,7 @@ FriendUtils.FRIEND_CELL_HEAD_FUNC = {
         return {
             text = Language.LUA_FRIEND_TIP_SWITCH_AVATAR,
             action = function()
-                UIManager:Open(PanelId.FriendHeadSelectedPopUp)
+                PhaseManager:OpenPhase(PhaseId.FriendHeadSelectedPopUp)
             end
         }
     end,
@@ -472,6 +472,7 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
                 keys = { "isCurrentShip", "roleType", "searchSort", "addFriendTime", "lastDateTime", "adventureLevel", "helpFlag", "roleId" },
             }
         },
+        showContingencyContractActivityState = true,
     },
     Black = {
         stateName = "BlackList",
@@ -506,7 +507,8 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
                 name = Language.LUA_FRIEND_LAST_DATE_TIME,
                 keys = { "isCurrentShip", "roleType", "searchSort", "lastDateTime", "adventureLevel", "addFriendTime", "helpFlag", "roleId" },
             },
-        }
+        },
+        showContingencyContractActivityState = true,
     },
     Stranger = {
         stateName = "Stranger",
@@ -523,7 +525,8 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
                 name = Language.LUA_FRIEND_WORLD_LEVEL,
                 keys = { "isCurrentShip", "roleType", "searchSort", "adventureLevel", "lastDateTime", "addFriendTime", "helpFlag", "roleId" },
             },
-        }
+        },
+        showContingencyContractActivityState = true,
     },
     NewFriendSearch = {
         stateName = "Stranger",
@@ -545,6 +548,7 @@ FriendUtils.FRIEND_CELL_INIT_CONFIG = {
                 keys = { "isCurrentShip", "roleType", "searchSort", "addFriendTime", "lastDateTime", "adventureLevel", "helpFlag", "roleId" },
             }
         },
+        showContingencyContractActivityState = true,
     },
     Share = {
         stateName = "share",

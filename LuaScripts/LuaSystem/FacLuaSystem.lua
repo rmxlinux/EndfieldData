@@ -1,70 +1,13 @@
 local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacLuaSystem = HL.Class('FacLuaSystem', LuaSystemBase.LuaSystemBase)
-
 
 
 
 FacLuaSystem.inDestroyMode = HL.Field(HL.Boolean) << false
 
-
 FacLuaSystem.interactPanelCtrl = HL.Field(HL.Forward('FacBuildingInteractCtrl'))
 
-
 FacLuaSystem.m_disableSwitchModeParams = HL.Field(HL.Userdata)
-
-
 
 FacLuaSystem.FacLuaSystem = HL.Constructor() << function(self)
     self:RegisterMessage(MessageConst.FAC_TOGGLE_TOP_VIEW, function(arg)
@@ -129,18 +72,15 @@ FacLuaSystem.FacLuaSystem = HL.Constructor() << function(self)
     end)
 
     self:_InitFactoryMode()
+    self:_InitFacBackupViewedState()
 
     self.batchSelectTargets = {}
 
     self.m_disableSwitchModeParams = CS.Beyond.Gameplay.DisableSwitchModeForbidParams(CS.Beyond.Gameplay.DisableSwitchModeForbidParams.ForbidStyle.ShowEmptyBtn)
 end
 
-
-
 FacLuaSystem.OnInit = HL.Override() << function(self)
 end
-
-
 
 FacLuaSystem.OnRelease = HL.Override() << function(self)
     self:ToggleTopView(false, true)
@@ -163,27 +103,17 @@ end
 
 
 
-
 FacLuaSystem.inTopView = HL.Field(HL.Boolean) << false
-
 
 FacLuaSystem.isTopViewHideUIMode = HL.Field(HL.Boolean) << false
 
-
 FacLuaSystem.topViewCamTarget = HL.Field(Transform)
-
 
 FacLuaSystem.topViewControllerMouseMoveTarget = HL.Field(Transform)
 
-
 FacLuaSystem.m_topViewCamCtrl = HL.Field(CS.Beyond.Gameplay.View.FacTopViewCameraController)
 
-
 FacLuaSystem.m_topViewCor = HL.Field(HL.Thread)
-
-
-
-
 
 
 FacLuaSystem.ToggleTopView = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, fastMode)
@@ -222,10 +152,6 @@ FacLuaSystem.ToggleTopView = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << functi
 
     self:_InternalToggleTopView(active, fastMode)
 end
-
-
-
-
 
 FacLuaSystem._InternalToggleTopView = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, fastMode)
     logger.info("FacLuaSystem._InternalToggleTopView", active, fastMode)
@@ -324,9 +250,6 @@ FacLuaSystem._InternalToggleTopView = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) 
     EventLogManagerInst:GameEvent_FactoryTopViewSwitch(active)
 end
 
-
-
-
 FacLuaSystem.ToggleTopViewHideUIMode = HL.Method(HL.Boolean) << function(self, active)
     self.isTopViewHideUIMode = active
     Notify(MessageConst.ON_FAC_TOP_VIEW_HIDE_UI_MODE_CHANGE, active)
@@ -340,14 +263,9 @@ end
 
 
 
-
 FacLuaSystem.canMoveCamTarget = HL.Field(HL.Boolean) << true
 
-
 FacLuaSystem.topViewControllerMouseMoveTargetChanged = HL.Field(HL.Boolean) << false
-
-
-
 
 FacLuaSystem.MoveTopViewCamTarget = HL.Method(Vector2) << function(self, dir)
     if dir == Vector2.zero then
@@ -393,7 +311,7 @@ FacLuaSystem.MoveTopViewCamTarget = HL.Method(Vector2) << function(self, dir)
         local newPos = oldPos + moveDif * 0.8 
         self.topViewControllerMouseMoveTarget.position = newPos
         self.topViewControllerMouseMoveTargetChanged = true
-        local curScreenWorldRect = CSFactoryUtil.GetCurScreenWorldRect(CSFactoryUtil.Padding(250, 300, 300, 250)) 
+        local curScreenWorldRect = CSFactoryUtil.GetCurScreenWorldRect(FacConst.FAC_TOP_VIEW_CAM_DRAG_PADDING)
         if not curScreenWorldRect:Contains(newPos:XZ()) then
             local rectForTarget = Unity.Rect(newPos.x - curScreenWorldRect.width / 2, newPos.z - curScreenWorldRect.height / 2, curScreenWorldRect.width, curScreenWorldRect.height)
             local targetNewPos = target.position
@@ -417,21 +335,13 @@ FacLuaSystem.MoveTopViewCamTarget = HL.Method(Vector2) << function(self, dir)
     end
 end
 
-
 FacLuaSystem.m_autoMoveTopViewCamRelatedSize = HL.Field(HL.Any)
-
 
 FacLuaSystem.m_autoMoveTopViewCamPadding = HL.Field(HL.Any)
 
-
 FacLuaSystem.m_stopAutoMoveTopViewCamOnce = HL.Field(HL.Boolean) << false
 
-
 FacLuaSystem.m_autoMoveTopViewCamUpdateKey = HL.Field(HL.Any)
-
-
-
-
 
 FacLuaSystem.ToggleAutoMoveTopViewCam = HL.Method(HL.Opt(Vector2, Vector4)) << function(self, size, extraPadding)
     self.m_autoMoveTopViewCamRelatedSize = size
@@ -458,8 +368,6 @@ FacLuaSystem.ToggleAutoMoveTopViewCam = HL.Method(HL.Opt(Vector2, Vector4)) << f
         self.m_autoMoveTopViewCamUpdateKey = nil
     end
 end
-
-
 
 FacLuaSystem._CalcAutoMoveTopViewCam = HL.Method() << function(self)
     if self.m_stopAutoMoveTopViewCamOnce then
@@ -495,8 +403,6 @@ FacLuaSystem._CalcAutoMoveTopViewCam = HL.Method() << function(self)
     end
 end
 
-
-
 FacLuaSystem.RotateTopViewCam = HL.Method() << function(self)
     if not self.m_topViewCamCtrl then
         return
@@ -506,8 +412,6 @@ FacLuaSystem.RotateTopViewCam = HL.Method() << function(self)
     AudioAdapter.PostEvent("Au_UI_Button_Building_Turn")
 end
 
-
-
 FacLuaSystem.GetTopViewCamZoomValue = HL.Method().Return(HL.Number) << function(self)
     if not self.m_topViewCamCtrl then
         return -1
@@ -515,6 +419,12 @@ FacLuaSystem.GetTopViewCamZoomValue = HL.Method().Return(HL.Number) << function(
     return self.m_topViewCamCtrl.curZoom
 end
 
+FacLuaSystem.SetTopViewCamZoomValue = HL.Method(HL.Number) << function(self, zoomValue)
+    if not self.m_topViewCamCtrl then
+        return
+    end
+    self.m_topViewCamCtrl:SetZoomImmediately(zoomValue)
+end
 
 
 
@@ -527,14 +437,9 @@ end
 FacLuaSystem.inBatchSelectMode = HL.Field(HL.Boolean) << false
 
 
-
 FacLuaSystem.inDragSelectBatchMode = HL.Field(HL.Boolean) << false
 
-
 FacLuaSystem.isReverseBatchSelect = HL.Field(HL.Boolean) << false
-
-
-
 
 FacLuaSystem.ChangeIsReverseSelect = HL.Method(HL.Boolean) << function(self, isReverse)
     self.isReverseBatchSelect = isReverse
@@ -550,10 +455,7 @@ end
 
 
 
-
 FacLuaSystem.batchSelectTargets = HL.Field(HL.Table)
-
-
 
 FacLuaSystem.GetBlueprintFromBatchSelectTargets = HL.Method().Return(HL.Opt(CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprint)) << function(self)
     local targets = self.batchSelectTargets
@@ -576,8 +478,6 @@ FacLuaSystem.GetBlueprintFromBatchSelectTargets = HL.Method().Return(HL.Opt(CS.B
     return builder:Build()
 end
 
-
-
 FacLuaSystem.GetCurBatchSelectTargetCount = HL.Method().Return(HL.Number) << function(self)
     local count = 0
     if self.batchSelectTargets then
@@ -594,10 +494,7 @@ end
 
 
 
-
 FacLuaSystem.m_checkPowerNotEnoughAudioTimerId = HL.Field(HL.Number) << -1
-
-
 FacLuaSystem.StartCheckPowerNotEnoughAudio = HL.Method() << function(self)
     self.m_checkPowerNotEnoughAudioTimerId = self:_StartTimer(Tables.factoryConst.checkPowerNotEnoughAudioDelay, function()
         local powerInfo = FactoryUtils.getCurRegionPowerInfo()
@@ -610,8 +507,6 @@ FacLuaSystem.StartCheckPowerNotEnoughAudio = HL.Method() << function(self)
         end
     end)
 end
-
-
 FacLuaSystem.StopCheckPowerNotEnoughAudio = HL.Method() << function(self)
     self.m_checkPowerNotEnoughAudioTimerId = self:_ClearTimer(self.m_checkPowerNotEnoughAudioTimerId)
 end
@@ -621,22 +516,15 @@ end
 
 
 
-
 FacLuaSystem.m_facModeRequestStack = HL.Field(HL.Forward('Stack'))
-
 
 FacLuaSystem.m_facModeRequestMap = HL.Field(HL.Table)
 
-
 FacLuaSystem.m_disableFacModeChangeToast = HL.Field(HL.Boolean) << false
-
 
 FacLuaSystem.inFacModeBeforeEnterDungeon = HL.Field(HL.Any)
 
-
 FacLuaSystem.lastMapIsDungeon = HL.Field(HL.Boolean) << false 
-
-
 
 
 
@@ -651,9 +539,6 @@ FacLuaSystem._InitFactoryMode = HL.Method() << function(self)
 end
 
 
-
-
-
 FacLuaSystem.AddFactoryModeRequest = HL.Method(HL.Table) << function(self, args)
     local toFacMode, requestName, forceUpdate = unpack(args)
     local oldValue = self.m_facModeRequestMap[requestName]
@@ -663,9 +548,6 @@ FacLuaSystem.AddFactoryModeRequest = HL.Method(HL.Table) << function(self, args)
     self.m_facModeRequestMap[requestName] = toFacMode
     self:_UpdateFactoryMode(forceUpdate)
 end
-
-
-
 
 FacLuaSystem.RemoveFactoryModeRequest = HL.Method(HL.String) << function(self, requestName)
     local oldValue = self.m_facModeRequestMap[requestName]
@@ -677,16 +559,9 @@ FacLuaSystem.RemoveFactoryModeRequest = HL.Method(HL.String) << function(self, r
     self:_UpdateFactoryMode()
 end
 
-
-
-
 FacLuaSystem.GetFactoryModeOfRequest = HL.Method(HL.String).Return(HL.Opt(HL.Boolean)) << function(self, requestName)
     return self.m_facModeRequestMap[requestName]
 end
-
-
-
-
 
 FacLuaSystem.ClearAndSetFactoryMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, toFacMode, noToast)
     self.m_facModeRequestStack:Clear()
@@ -695,9 +570,6 @@ FacLuaSystem.ClearAndSetFactoryMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) 
     self:AddFactoryModeRequest({ toFacMode, "Player", true })
     self.m_disableFacModeChangeToast = false
 end
-
-
-
 
 FacLuaSystem._UpdateFactoryMode = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Boolean) << function(self, forceUpdate)
     local inFacMode
@@ -714,9 +586,6 @@ FacLuaSystem._UpdateFactoryMode = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Boolea
     self:_SetFactoryMode(inFacMode)
     return true
 end
-
-
-
 
 FacLuaSystem._SetFactoryMode = HL.Method(HL.Boolean) << function(self, inFacMode)
     Notify(MessageConst.FAC_EXIT_DESTROY_MODE, true)
@@ -777,10 +646,7 @@ end
 
 
 
-
 FacLuaSystem.commonClearScreenKeyForMode = HL.Field(HL.Number) << -1
-
-
 
 FacLuaSystem._CheckCommonClearScreenForMode = HL.Method() << function(self)
     
@@ -788,8 +654,6 @@ FacLuaSystem._CheckCommonClearScreenForMode = HL.Method() << function(self)
         self:_UpdateCommonClearScreenForMode()
     end)
 end
-
-
 
 FacLuaSystem._UpdateCommonClearScreenForMode = HL.Method() << function(self)
     local needClearScreen = self.inTopView and (self.inDestroyMode or FactoryUtils.isInBuildMode())
@@ -807,6 +671,135 @@ FacLuaSystem._UpdateCommonClearScreenForMode = HL.Method() << function(self)
 end
 
 
+
+
+
+local BACKUP_POWER_TOAST_MAIN_HUD_QUEUE_TYPE = "BackupPowerCheck"
+
+FacLuaSystem.m_backupPowerViewed = HL.Field(HL.Table)
+
+FacLuaSystem.m_backupPowerInUseToasted = HL.Field(HL.Table)
+FacLuaSystem.m_backupPowerPendingToast = HL.Field(HL.Table)
+FacLuaSystem.m_loginBackupChecked = HL.Field(HL.Table)
+
+FacLuaSystem._InitFacBackupViewedState = HL.Method() << function(self)
+    self.m_backupPowerViewed = {}
+    self.m_backupPowerInUseToasted = {}
+    self.m_backupPowerPendingToast = {}
+    self.m_loginBackupChecked = {}
+
+    self:RegisterMessage(MessageConst.ON_BACKUP_STATE_CHANGED, function(arg)
+        local chapterId = unpack(arg)
+        local isInUse
+        if FactoryUtils.getIsInBackupPower(chapterId) then
+            isInUse = true
+        elseif FactoryUtils.getIsBackupPowerUnderRecovery(chapterId) then
+            isInUse = false
+        else
+            return
+        end
+
+        if not self.m_backupPowerPendingToast[chapterId] then
+            self.m_backupPowerPendingToast[chapterId] = {}
+        end
+        self.m_backupPowerPendingToast[chapterId] = {isInUse}
+
+        LuaSystemManager.mainHudActionQueue:AddRequest(BACKUP_POWER_TOAST_MAIN_HUD_QUEUE_TYPE, function(_)
+            self:CheckBackupPowerAndToast()
+        end)
+    end)
+
+    self:RegisterMessage(MessageConst.ON_PHASE_LEVEL_ON_TOP, function(arg)
+        LuaSystemManager.mainHudActionQueue:AddRequest(BACKUP_POWER_TOAST_MAIN_HUD_QUEUE_TYPE, function(_)
+            self:CheckBackupPowerAndToast()
+        end)
+    end)
+end
+
+FacLuaSystem.CheckBackupPowerAndToast = HL.Method() << function(self)
+      local top = PhaseManager:GetTopPhaseId()
+      if top ~= PhaseId.Level or Utils.isInDungeon() then
+          return
+      end
+
+      local chapterId = Utils.getCurrentChapterId()
+      local inUse
+      
+      if not self.m_loginBackupChecked[chapterId] then
+        if FactoryUtils.getIsInBackupPower(chapterId) then
+             inUse = true
+         else
+             return
+         end
+      else
+          local pendingToast = self.m_backupPowerPendingToast[chapterId]
+          if pendingToast == nil then
+              return
+          end
+          inUse = unpack(pendingToast)
+      end
+
+      local domainId = ScopeUtil.ChapterIdInt2Str(chapterId)
+      local _, domainCfg = Tables.domainDataTable:TryGetValue(domainId)
+      local domainName = domainCfg.domainName
+      if inUse then
+          if not self:IsBackupPowerToasted(chapterId, true) then
+              Notify(MessageConst.SHOW_TOAST, string.format(Language.LUA_FAC_BACKUP_POWER_IN_USE_TOAST,domainName))
+             self:SetBackupPowerToasted(chapterId, true)
+          end
+      else
+          if not self:IsBackupPowerToasted(chapterId, false) then
+              Notify(MessageConst.SHOW_TOAST, string.format(Language.LUA_FAC_BACKUP_POWER_USE_UP_TOAST,domainName))
+              self:SetBackupPowerToasted(chapterId, false)
+          end
+      end
+
+      self.m_loginBackupChecked[chapterId] = true
+      self.m_backupPowerPendingToast[chapterId] = nil
+end
+
+FacLuaSystem.IsBackupPowerViewed = HL.Method(HL.Number).Return(HL.Boolean) << function(self, chapterId)
+    local lastStartTs = FactoryUtils.getRegionPowerInfoByChapterId(chapterId).backupLastStartTs
+    local id = chapterId .. "_" .. lastStartTs
+    return self.m_backupPowerViewed[id] ~= nil and self.m_backupPowerViewed[id] or false
+end
+
+FacLuaSystem.SetBackupPowerViewed = HL.Method(HL.Number) << function(self, chapterId)
+    if self:IsBackupPowerViewed(chapterId) then
+        return
+    end
+    local lastStartTs = FactoryUtils.getRegionPowerInfoByChapterId(chapterId).backupLastStartTs
+    local id = chapterId .. "_" .. lastStartTs
+    self.m_backupPowerViewed[id] = true
+    Notify(MessageConst.FAC_BACKUP_POWER_VIEWED)
+end
+
+FacLuaSystem.IsBackupPowerToasted = HL.Method(HL.Number, HL.Boolean).Return(HL.Boolean) << function(self, chapterId, isInUse)
+    local lastStartTs = FactoryUtils.getRegionPowerInfoByChapterId(chapterId).backupLastStartTs
+    local lastStopTs = FactoryUtils.getRegionPowerInfoByChapterId(chapterId).backupLastStopTs
+    local id
+    if isInUse then
+        id = chapterId .. "_" .. lastStartTs
+    else
+        id = chapterId .. "_" .. lastStopTs
+    end
+    return self.m_backupPowerInUseToasted[id] ~= nil and self.m_backupPowerInUseToasted[id] or false
+end
+
+FacLuaSystem.SetBackupPowerToasted = HL.Method(HL.Number, HL.Boolean) << function(self, chapterId, isInUse)
+    if self:IsBackupPowerToasted(chapterId, isInUse) then
+        return
+    end
+    local lastStartTs = FactoryUtils.getRegionPowerInfoByChapterId(chapterId).backupLastStartTs
+    local lastStopTs = FactoryUtils.getRegionPowerInfoByChapterId(chapterId).backupLastStopTs
+    local id
+    if isInUse then
+        id = chapterId .. "_" .. lastStartTs
+    else
+        id = chapterId .. "_" .. lastStopTs
+    end
+    self.m_backupPowerInUseToasted[id] = true
+end
 
 
 

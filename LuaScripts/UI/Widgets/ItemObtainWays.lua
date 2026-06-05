@@ -209,6 +209,10 @@ ItemObtainWays._CheckObtainWayCondition = HL.Method(HL.String).Return(HL.Boolean
         unlockTag = count > 0
     elseif conditionCfg.conditionType == GEnums.ConditionType.CheckPlayerDungeonUnlocked then
         unlockTag = GameInstance.dungeonManager:IsDungeonUnlocked(conditionCfg.checkId)
+    elseif conditionCfg.conditionType == GEnums.ConditionType.CheckDungeonEntryTouched then
+        unlockTag = GameInstance.dungeonManager:IsDungeonInteractiveActive(conditionCfg.checkId)
+    elseif conditionCfg.conditionType == GEnums.ConditionType.CheckDungeonEntryNotTouched then
+        unlockTag = not GameInstance.dungeonManager:IsDungeonInteractiveActive(conditionCfg.checkId)
     end
 
     return unlockTag
@@ -478,9 +482,7 @@ ItemObtainWays._RefreshObtainCell = HL.Method(HL.Any, HL.Table, HL.Number) << fu
         cell.normalNode.button:ChangeActionOnSetNaviTarget(ActionOnSetNaviTarget.None)
         cell.normalNode.animationNode:PlayOutAnimation()
         
-        if not DeviceInfo.usingController then
-            cell.normalNode.button.interactable = false
-        end
+        cell.normalNode.button.interactable = DeviceInfo.usingController
     end
 
     LayoutRebuilder.ForceRebuildLayoutImmediate(cell.transform)

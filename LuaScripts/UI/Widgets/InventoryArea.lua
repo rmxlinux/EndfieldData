@@ -52,6 +52,11 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
+
+
+
 InventoryArea = HL.Class('InventoryArea', UIWidgetBase)
 
 
@@ -365,85 +370,108 @@ InventoryArea._InitData = HL.Method() << function(self)
     })
 
     if self.inSafeZone then
-        self.view.depot:InitDepot(GEnums.ItemValuableDepotType.Factory, function(itemId, cell)
-            self:_OnClickItem(itemId, cell)
-        end, {
-            
-            canClear = true,
-
-            
-
-            itemMoveTarget = UIConst.ITEM_MOVE_TARGET.FacMachine,
-
-            customItemInfoListPostProcess = function(allItemInfoList)
-                
-                for _, info in ipairs(allItemInfoList) do
-                    
-                    local isValid = self:_IsItemValid(info.id)
-                    if not isValid then
-                        info.missionSortId = info.missionSortId + 100
-                        info.missionReverseSortId = -info.missionSortId
-                    end
-                end
-                return allItemInfoList
-            end,
-
-            customOnUpdateCell = function(cell, itemBundle, luaIndex)
-                
-                self:_RefreshItemSlotCellValidState(cell, itemBundle)
-                if self.m_args.customOnUpdateCell ~= nil then
-                    self.m_args.customOnUpdateCell(cell, itemBundle, luaIndex, false) 
-                end
-
-                
-                cell.item.view.button.onIsNaviTargetChanged = function(active)
-                    if active then
-                        self:_TryDisableHoverBindingOnEmptyItem(cell, itemBundle)
-                        
-                        if self.m_curNaviSelectComponentId ~= -1 then
-                            InputManagerInst:ToggleBinding(self.m_confirmSelectFluidBindingId, self:_CheckBottleDrop(itemBundle.id))
-                        end
-                    end
-                end
-                self:_TryDisableHoverBindingOnEmptyItem(cell, itemBundle)
-                if self:_GetIsValidControllerNaviTarget(cell, itemBundle, true) then
-                    local quickDropBindingId = cell.item:AddHoverBinding("common_quick_drop", function()
-                        cell:QuickDrop()
-                    end)
-                    if self.m_args.adaptForceQuickDropKeyhintToGray then
-                        self.m_cacheAllQuickDropBindingIds["DEPOT_" .. itemBundle.id] = quickDropBindingId
-                        if self.m_allQuickDropBindingSetGray then
-                            InputManagerInst:ForceBindingKeyhintToGray(quickDropBindingId, true)
-                        end
-                    end
-                    if self.m_args.hasFluidInCache then
-                        local itemId = itemBundle.id
-                        local isEmptyBottle = Tables.emptyBottleTable:ContainsKey(itemId)
-                        local isFullBottle = Tables.fullBottleTable:ContainsKey(itemId)
-                        local isBottle = isEmptyBottle or isFullBottle
-                        if isBottle then
-                            local quickDropText = isEmptyBottle and Language.LUA_ITEM_ACTION_FILL_LIQUID or Language.LUA_ITEM_ACTION_DUMP_LIQUID
-                            InputManagerInst:SetBindingText(quickDropBindingId, quickDropText)
-                        end
-                    else
-                        local quickDropBindingText = self.m_args.depotQuickDropBindingText
-                        if not string.isEmpty(quickDropBindingText) then
-                            InputManagerInst:SetBindingText(quickDropBindingId, quickDropBindingText)
-                        end
-                    end
-                else
-                    if self.m_args.adaptForceQuickDropKeyhintToGray and self.m_cacheAllQuickDropBindingIds["DEPOT_" .. itemBundle.id] then
-                        self.m_cacheAllQuickDropBindingIds["DEPOT_" .. itemBundle.id] = nil
-                    end
-                end
-                self:_RefreshForbiddenItemActionMenuArgs(cell, itemBundle)
-            end,
-
-            customSetActionMenuArgs = self.m_args.customSetActionMenuArgs
-        })
+        self:_InitDepot()
     end
 
     self.m_dataInited = true
+end
+
+
+
+InventoryArea._GetRecoverDepotState = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local recoverState = self.m_args and self.m_args.recoverState
+    if recoverState == nil then
+        return nil
+    end
+    return recoverState.depotState
+end
+
+
+
+InventoryArea._GetDepotInitArgs = HL.Method().Return(HL.Table) << function(self)
+    return {
+        
+        canClear = true,
+
+        
+
+        itemMoveTarget = UIConst.ITEM_MOVE_TARGET.FacMachine,
+        recoverState = self:_GetRecoverDepotState(),
+
+        customItemInfoListPostProcess = function(allItemInfoList)
+            
+            for _, info in ipairs(allItemInfoList) do
+                
+                local isValid = self:_IsItemValid(info.id)
+                if not isValid then
+                    info.missionSortId = info.missionSortId + 100
+                    info.missionReverseSortId = -info.missionSortId
+                end
+            end
+            return allItemInfoList
+        end,
+
+        customOnUpdateCell = function(cell, itemBundle, luaIndex)
+            
+            self:_RefreshItemSlotCellValidState(cell, itemBundle)
+            if self.m_args.customOnUpdateCell ~= nil then
+                self.m_args.customOnUpdateCell(cell, itemBundle, luaIndex, false) 
+            end
+
+            
+            cell.item.view.button.onIsNaviTargetChanged = function(active)
+                if active then
+                    self:_TryDisableHoverBindingOnEmptyItem(cell, itemBundle)
+                    
+                    if self.m_curNaviSelectComponentId ~= -1 then
+                        InputManagerInst:ToggleBinding(self.m_confirmSelectFluidBindingId, self:_CheckBottleDrop(itemBundle.id))
+                    end
+                end
+            end
+            self:_TryDisableHoverBindingOnEmptyItem(cell, itemBundle)
+            if self:_GetIsValidControllerNaviTarget(cell, itemBundle, true) then
+                local quickDropBindingId = cell.item:AddHoverBinding("common_quick_drop", function()
+                    cell:QuickDrop()
+                end)
+                if self.m_args.adaptForceQuickDropKeyhintToGray then
+                    self.m_cacheAllQuickDropBindingIds["DEPOT_" .. itemBundle.id] = quickDropBindingId
+                    if self.m_allQuickDropBindingSetGray then
+                        InputManagerInst:ForceBindingKeyhintToGray(quickDropBindingId, true)
+                    end
+                end
+                if self.m_args.hasFluidInCache then
+                    local itemId = itemBundle.id
+                    local isEmptyBottle = Tables.emptyBottleTable:ContainsKey(itemId)
+                    local isFullBottle = Tables.fullBottleTable:ContainsKey(itemId)
+                    local isBottle = isEmptyBottle or isFullBottle
+                    if isBottle then
+                        local quickDropText = isEmptyBottle and Language.LUA_ITEM_ACTION_FILL_LIQUID or Language.LUA_ITEM_ACTION_DUMP_LIQUID
+                        InputManagerInst:SetBindingText(quickDropBindingId, quickDropText)
+                    end
+                else
+                    local quickDropBindingText = self.m_args.depotQuickDropBindingText
+                    if not string.isEmpty(quickDropBindingText) then
+                        InputManagerInst:SetBindingText(quickDropBindingId, quickDropBindingText)
+                    end
+                end
+            else
+                if self.m_args.adaptForceQuickDropKeyhintToGray and self.m_cacheAllQuickDropBindingIds["DEPOT_" .. itemBundle.id] then
+                    self.m_cacheAllQuickDropBindingIds["DEPOT_" .. itemBundle.id] = nil
+                end
+            end
+            self:_RefreshForbiddenItemActionMenuArgs(cell, itemBundle)
+        end,
+
+        customSetActionMenuArgs = self.m_args.customSetActionMenuArgs
+    }
+end
+
+
+
+InventoryArea._InitDepot = HL.Method() << function(self)
+    self.view.depot:InitDepot(GEnums.ItemValuableDepotType.Factory, function(itemId, cell)
+        self:_OnClickItem(itemId, cell)
+    end, self:_GetDepotInitArgs())
 end
 
 
@@ -911,6 +939,47 @@ InventoryArea.GetDepotNaviGroupSwitchInfo = HL.Method().Return(HL.Table) << func
             self:_Show(false)
         end
     }
+end
+
+
+
+InventoryArea.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local recoverState = {
+        isItemBag = self.m_isItemBag,
+    }
+    if self.inSafeZone then
+        recoverState.depotState = self.view.depot:GetRecoverStateArg()
+    end
+    return recoverState
+end
+
+
+
+
+InventoryArea.TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+
+    local recoverIsItemBag = recoverState.isItemBag
+    if type(recoverIsItemBag) ~= "boolean" then
+        recoverIsItemBag = true
+    end
+    if not recoverIsItemBag and not self.inSafeZone then
+        recoverIsItemBag = true
+    end
+
+    if self.inSafeZone and recoverState.depotState ~= nil then
+        self.view.depot:TryRecoverState(recoverState.depotState)
+    end
+
+    local stateCtrl = self.view.stateCtrl
+    if stateCtrl ~= nil and stateCtrl.currentStateName == "Disabled" then
+        self.m_isItemBag = recoverIsItemBag
+        return
+    end
+
+    self:_Show(recoverIsItemBag, true)
 end
 
 

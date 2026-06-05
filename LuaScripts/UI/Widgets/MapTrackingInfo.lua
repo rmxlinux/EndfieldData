@@ -90,7 +90,7 @@ MapTrackingInfo.InitMapTrackingInfo = HL.Method(HL.Table) << function(self, args
                 local showText = markTempData.name
                 if markTempData.markType == GEnums.MarkType.CustomMark then
                     showText = markData.note
-                elseif markTempData.markType == GEnums.MarkType.SnapshotActivity then
+                elseif markTempData.markType == GEnums.MarkType.SnapshotActivity or markTempData.markType == GEnums.MarkType.SnapshotActivityNew then
                     showText = MapUtils.getActivitySnapShotMarkTitle(markData)
                 end
                 if hasValue then

@@ -37,6 +37,8 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
 VideoPlayer = HL.Class('VideoPlayer', UIWidgetBase)
 
 local PlayerStatus = CS.CriWare.CriMana.Player.Status
@@ -165,13 +167,13 @@ VideoPlayer.PreloadVideo = HL.Method(HL.String, HL.Opt(HL.Function)) << function
 
     self:_ClearStateChangeListener()
     self:_AddStateChangeListener(PlayerStatus.Ready, function()
-        
         if onPlayerReady then
             onPlayerReady(self.view.movieController)
         end
         self.m_preparedVideo = path
         self.m_preparingVideo = nil
         self:_StopManualUpdate()
+
     end)
 
     
@@ -313,6 +315,43 @@ end
 
 
 
+VideoPlayer.GetVideoTotalTime = HL.Method().Return(HL.Number) << function(self)
+    local player = self.view.movieController.player
+    if player == nil then
+        return -1
+    end
+
+    local movieInfo = player.movieInfo
+    if movieInfo == nil then
+        return -1
+    end
+
+    if movieInfo.framerateD == 0 or movieInfo.framerateN == 0 then
+        return -1
+    end
+
+    local totalFrame = movieInfo.totalFrames
+    local frameRate = movieInfo.framerateN / movieInfo.framerateD
+
+    return totalFrame / frameRate
+end
+
+
+
+VideoPlayer.GetTime = HL.Method().Return(HL.Number) << function(self)
+    local player = self.view.movieController.player
+    if player == nil then
+        return -1
+    end
+    local frameInfo = player.frameInfo
+    if frameInfo == nil then
+        return -1
+    end
+    return frameInfo.time / frameInfo.tunit
+end
+
+
+
 VideoPlayer.Dispose = HL.Method() << function(self)
     
     self:StopAutoKeepAspectRatio()
@@ -335,11 +374,21 @@ end
 VideoPlayer.OnPlayerStateChange = HL.Method(HL.Any) << function(self, state)
     local listenerList = self.m_stateChangeListener[state]
     if listenerList then
+        self.m_stateChangeListener[state] = nil
         for _, listener in ipairs(listenerList) do
             listener(state, self.view.movieController)
         end
     end
-    self.m_stateChangeListener[state] = nil
+
+    
+    
+    listenerList = self.m_stateChangeListener[state]
+    if listenerList then
+        self.m_stateChangeListener[state] = nil
+        for _, listener in ipairs(listenerList) do
+            listener(state, self.view.movieController)
+        end
+    end
 end
 
 

@@ -78,6 +78,18 @@ end
 
 
 FakeControllerSmallMenuCtrl.OnClose = HL.Override() << function(self)
+    
+    
+    
+    
+    
+    
+    
+    
+    if self.m_menuDataStack and not self.m_menuDataStack:Empty() then
+        self:_Close(self.m_menuDataStack:Peek())
+        self.m_menuDataStack:Clear()
+    end
     self:_Clear()
 end
 

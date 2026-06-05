@@ -37,8 +37,6 @@ AdventureRacingDungeonCtrl.m_rewardInfos = HL.Field(HL.Table)
 
 
 AdventureRacingDungeonCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_phase = arg.phase
-
     self.m_genRewardCells = UIUtils.genCellCache(self.view.rewardCell)
 
     self.view.gotoBtn.onClick:RemoveAllListeners()

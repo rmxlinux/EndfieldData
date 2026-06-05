@@ -14,6 +14,7 @@ local PANEL_ID = PanelId.FacSourceDetails
 
 
 
+
 FacSourceDetailsCtrl = HL.Class('FacSourceDetailsCtrl', uiCtrl.UICtrl)
 
 
@@ -73,6 +74,12 @@ end
 
 FacSourceDetailsCtrl.OnClose = HL.Override() << function(self)
     self:_StopStabilityAnimation()
+end
+
+
+
+FacSourceDetailsCtrl.GetTargetNodeId = HL.Method().Return(HL.Number) << function(self)
+    return self.m_nodeId
 end
 
 

@@ -24,10 +24,16 @@ local UNOPENED_LV = 99999
 
 
 
+
+
+
 DomainGradeCtrl = HL.Class('DomainGradeCtrl', uiCtrl.UICtrl)
 
 
 DomainGradeCtrl.m_domainId = HL.Field(HL.String) << ""
+
+
+DomainGradeCtrl.m_arg = HL.Field(HL.Table)
 
 
 DomainGradeCtrl.m_domainLevelData = HL.Field(HL.Table)
@@ -52,6 +58,8 @@ DomainGradeCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 DomainGradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    
+    self.m_arg = type(arg) == "table" and arg or { domainId = arg }
     local domainId
     if arg then
         local value
@@ -97,13 +105,86 @@ DomainGradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_UpdateDomainDevLv()
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+    local resumeOpenPanel = self.m_arg and self.m_arg.resumeOpenPanel or nil
+    if resumeOpenPanel then
+        
+        for _, panelInfo in ipairs(resumeOpenPanel) do
+            UIManager:Open(panelInfo.panelId, panelInfo.arg)
+        end
+    end
+    if self.m_arg then
+        
+        self.m_arg.resumeState = nil
+        self.m_arg.resumeOpenPanel = nil
+    end
+end
+
+
+
+DomainGradeCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
+    arg.domainId = self.m_domainId
+    arg.resumeState = {
+        popupLv = nil,
+    }
+    local resumeOpenPanel = {}
+    if PhaseManager:GetTopPhaseId() == PHASE_ID then
+        if UIManager:IsShow(PanelId.DomainGradeSourceInstruction) then
+            table.insert(resumeOpenPanel, {
+                panelId = PanelId.DomainGradeSourceInstruction,
+                arg = self.m_domainId,
+            })
+        end
+        local isPopupOpen, popupCtrl = UIManager:IsOpen(PanelId.DomainGradePopup)
+        if isPopupOpen and UIManager:IsShow(PanelId.DomainGradePopup) and popupCtrl then
+            arg.resumeState.popupLv = popupCtrl.m_lv
+            table.insert(resumeOpenPanel, {
+                panelId = PanelId.DomainGradePopup,
+                arg = {
+                    domainId = popupCtrl.m_domainId,
+                    lv = popupCtrl.m_lv,
+                }
+            })
+        end
+    end
+    arg.resumeOpenPanel = resumeOpenPanel
+    return arg
 end
 
 
 
 
-DomainGradeCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
-    self:_UpdateContentList(true)
+DomainGradeCtrl._GetGradeLuaIndexByLevel = HL.Method(HL.Number).Return(HL.Number) << function(self, lv)
+    if not self.m_domainLevelData then
+        return 0
+    end
+    for luaIndex, levelData in ipairs(self.m_domainLevelData) do
+        if levelData and not levelData.isUnopenedLevel and levelData.lv == lv then
+            return luaIndex
+        end
+    end
+    return 0
+end
+
+
+
+
+DomainGradeCtrl._FocusGradeByLevel = HL.Method(HL.Number).Return(HL.Boolean) << function(self, lv)
+    local luaIndex = self:_GetGradeLuaIndexByLevel(lv)
+    if luaIndex <= 0 then
+        return false
+    end
+    
+    local cellGo = self.view.listScrollView:Get(CSIndex(luaIndex))
+    if not cellGo then
+        return false
+    end
+    local cell = self.m_genGradeListCellFunc(cellGo)
+    if not cell then
+        return false
+    end
+    InputManagerInst.controllerNaviManager:SetTarget(cell.view.naviDeco)
+    return true
 end
 
 
@@ -180,17 +261,32 @@ DomainGradeCtrl._UpdateContentList = HL.Method(HL.Boolean) << function(self, isI
     if not isFinalMaxLv then
         cellIndex = cellIndex + 1   
     end
+    local focusIndex = cellIndex
+    local resumeState = self.m_arg and self.m_arg.resumeState or nil
+    if isInit and resumeState and resumeState.popupLv then
+        
+        local popupIndex = self:_GetGradeLuaIndexByLevel(resumeState.popupLv)
+        if popupIndex > 0 then
+            focusIndex = popupIndex
+        end
+    end
     if isInit then
-        self.view.listScrollView:UpdateCount(#self.m_domainLevelData, CSIndex(cellIndex))
+        self.view.listScrollView:UpdateCount(#self.m_domainLevelData, CSIndex(focusIndex))
     else
         self.view.listScrollView:UpdateCount(#self.m_domainLevelData, false)
     end
-    self.m_defaultNaviIndex = cellIndex
+    self.m_defaultNaviIndex = focusIndex
     
     self:_StartCoroutine(function()
         coroutine.step()
         if DeviceInfo.usingController then
-            local cell = self.m_genGradeListCellFunc(self.m_defaultNaviIndex)
+            if resumeState and resumeState.popupLv then
+                if self:_FocusGradeByLevel(resumeState.popupLv) then
+                    return
+                end
+            end
+            local cellGo = self.view.listScrollView:Get(CSIndex(self.m_defaultNaviIndex))
+            local cell = cellGo and self.m_genGradeListCellFunc(cellGo) or nil
             if cell then
                 InputManagerInst.controllerNaviManager:SetTarget(cell.view.naviDeco)
             end

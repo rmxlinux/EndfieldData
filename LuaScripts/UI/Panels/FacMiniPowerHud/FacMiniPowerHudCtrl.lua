@@ -1,23 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacMiniPowerHud
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacMiniPowerHudCtrl = HL.Class('FacMiniPowerHudCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -29,36 +13,31 @@ FacMiniPowerHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_IN_FAC_MAIN_REGION_CHANGE] = 'OnInFacMainRegionChange',
     [MessageConst.ON_FAC_BUILDING_PREVIEW_POSITION_ROTATION_CHANGED] = 'OnFacBuildingPreviewPositionRotationChanged',
     [MessageConst.ON_FAC_CHAPTER_RESET] = 'OnFacChapterReset',
+    [MessageConst.ON_BUILD_MODE_CHANGE] = 'OnBuildModeChange',
 }
 
-
 FacMiniPowerHudCtrl.m_miniPowerContent = HL.Field(HL.Userdata)
-
-
-
 
 
 FacMiniPowerHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_miniPowerContent = self.view.defaultNode.facMiniPowerContent
     self.m_miniPowerContent:InitFacMiniPowerContent()
+    self.m_miniPowerContent.shouldShowBackupPower = true
     self.m_miniPowerContent.isMonitorPower = true
     self.m_miniPowerContent.gameObject:SetActive(false)
+    
+    self.view.defaultNode.animationWrapper:SampleToOutAnimationEnd()
 
     UIManager:SetTopOrder(PanelId.MainHud) 
 end
-
-
 
 FacMiniPowerHudCtrl.OnShow = HL.Override() << function(self)
     self.m_miniPowerContent:ToggleCoroutine(true)
 end
 
-
-
 FacMiniPowerHudCtrl.OnHide = HL.Override() << function(self)
     self.m_miniPowerContent:ToggleCoroutine(false)
 end
-
 
 FacMiniPowerHudCtrl.OnEnterFactoryMode = HL.StaticMethod() << function()
     if FactoryUtils.isInBuildMode() then
@@ -77,8 +56,6 @@ FacMiniPowerHudCtrl.OnEnterFactoryMode = HL.StaticMethod() << function()
     self:_OnBuildModeChange("")
 end
 
-
-
 FacMiniPowerHudCtrl.OnExitFactoryMode = HL.Method() << function(self)
     if FactoryUtils.isInBuildMode() then
         return
@@ -88,16 +65,12 @@ FacMiniPowerHudCtrl.OnExitFactoryMode = HL.Method() << function(self)
     end)
 end
 
-
-
 FacMiniPowerHudCtrl.OnEnterBuildingMode = HL.StaticMethod(HL.String) << function(itemId)
     local self = UIManager:AutoOpen(PANEL_ID)
     self.view.defaultNode.animationWrapper:SampleToInAnimationEnd()
     self.view.defaultNode.animationWrapper:PlayWithTween("fac_mini_bar_enter_fac_mode_change")
     self:_OnBuildModeChange(itemId)
 end
-
-
 
 FacMiniPowerHudCtrl.OnExitBuildingMode = HL.Method() << function(self)
     if Utils.isInFactoryMode() and self:IsShow() then
@@ -110,20 +83,13 @@ FacMiniPowerHudCtrl.OnExitBuildingMode = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacMiniPowerHudCtrl.OnInFacMainRegionChange = HL.Method(HL.Boolean) << function(self, _)
     if not string.isEmpty(self.m_curBuildBuildingItemId) then
         self:_OnBuildModeChange(self.m_curBuildBuildingItemId)
     end
 end
 
-
 FacMiniPowerHudCtrl.m_curBuildBuildingItemId = HL.Field(HL.String) << ''
-
-
-
 
 FacMiniPowerHudCtrl._OnBuildModeChange = HL.Method(HL.String) << function(self, buildingItemId)
     self.m_curBuildBuildingItemId = buildingItemId
@@ -140,8 +106,6 @@ FacMiniPowerHudCtrl._OnBuildModeChange = HL.Method(HL.String) << function(self, 
     node.buildPreviewTxt.text = string.format(Language.LUA_BUILD_PREVIEW_TITLE, data.name)
 end
 
-
-
 FacMiniPowerHudCtrl.OnFacBuildingPreviewPositionRotationChanged = HL.Method() << function(self)
     local node = self.view.defaultNode
     if string.isEmpty(self.m_curBuildBuildingItemId) then
@@ -150,7 +114,12 @@ FacMiniPowerHudCtrl.OnFacBuildingPreviewPositionRotationChanged = HL.Method() <<
     node.facMiniPowerContent:SwitchFacMiniPowerContent(self.m_curBuildBuildingItemId)
 end
 
-
+FacMiniPowerHudCtrl.OnBuildModeChange = HL.Method(HL.Number) << function(self, mode)
+    
+    local node = self.view.defaultNode
+    local hideBackupPower = mode ~= FacConst.FAC_BUILD_MODE.Normal
+    self.m_miniPowerContent:ToggleBackupPowerShow(not hideBackupPower)
+end
 
 FacMiniPowerHudCtrl.OnFacChapterReset = HL.Method() << function(self)
     local node = self.view.defaultNode

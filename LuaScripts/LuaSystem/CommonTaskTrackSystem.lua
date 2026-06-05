@@ -18,6 +18,7 @@ local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
 
 
 
+
 CommonTaskTrackSystem = HL.Class('CommonTaskTrackSystem', LuaSystemBase.LuaSystemBase)
 
 
@@ -119,6 +120,18 @@ CommonTaskTrackSystem._InitConfigs = HL.Method() << function(self)
         },
 
         
+        TrackStateFinish = {
+            needWait = true,
+            order = 5,
+        },
+
+        
+        TrackStateChange = {
+            needWait = false,
+            order = 5,
+        },
+
+        
         TrackHudShowEndEffect = {
             needWait = true,
             order = 5,
@@ -131,21 +144,44 @@ CommonTaskTrackSystem._InitConfigs = HL.Method() << function(self)
         },
 
         
+        ContingencyContractHudTimer = {
+            needWait = false,
+            order = 10,
+        },
+
+        
+        
         DungeonSettlement = {
             needWait = false,
-            order = 6,
+            order = 20,
+        },
+
+        
+        ContingencyContractSettlement = {
+            needWait = false,
+            order = 20,
         },
 
         
         DeathInfo = {
             needWait = false,
-            order = 100,
+            order = 20,
         },
+        
 
+        
+        
         BlackboxDiff = {
             needWait = false,
             order = 100,
         },
+
+        
+        ContingencyContractHud = {
+            needWait = false,
+            order = 100,
+        }
+        
     }
 
     for k, v in pairs(self.configs) do
@@ -238,8 +274,10 @@ end
 CommonTaskTrackSystem._StartFirstRequest = HL.Method() << function(self)
     local request = self.m_pendingRequests[1]
     request.order = 0 
-    local cfg = self.configs[request.type]
-    logger.info("CommonTaskTrackSystem._StartFirstRequest", request.type, request)
+    local type = request.type
+    local cfg = self.configs[type]
+    logger.info("CommonTaskTrackSystem._StartFirstRequest", type, request)
+    Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_START, type)
     request.action()
     if not cfg.needWait then
         self:OnOneCommonTaskPanelFinish(request.type)
@@ -319,6 +357,18 @@ end
 
 CommonTaskTrackSystem.HasRequest = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_pendingRequests[1] ~= nil and self.configs[self.m_pendingRequests[1].type].needWait == true
+end
+
+
+
+
+CommonTaskTrackSystem.HasRequestType = HL.Method(HL.String).Return(HL.Boolean) << function(self, actionType)
+    for _, request in ipairs(self.m_pendingRequests) do
+        if request.type == actionType then
+            return true
+        end
+    end
+    return false
 end
 
 HL.Commit(CommonTaskTrackSystem)

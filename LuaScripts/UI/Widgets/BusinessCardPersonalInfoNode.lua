@@ -5,6 +5,7 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 BusinessCardPersonalInfoNode = HL.Class('BusinessCardPersonalInfoNode', UIWidgetBase)
 
 
@@ -59,12 +60,13 @@ BusinessCardPersonalInfoNode.InitBusinessCardPersonalInfoNodeByRoleId = HL.Metho
 
     local click = not preview and function()
         
-        UIManager:Open(PanelId.FriendHeadSelectedPopUp)
+        PhaseManager:OpenPhase(PhaseId.FriendHeadSelectedPopUp)
     end or false
 
     self.view.commonPlayerHead:UpdateHideLevelTxt(true)
     self.view.commonPlayerHead:InitCommonPlayerHeadByRoleId(roleId, click)
-
+    self:UpdateContingencyContractActivityState(string.isEmpty(playerInfo.remakeName) and "Name" or "Remark")
+    self.view["levelTag" .. (string.isEmpty(playerInfo.remakeName) and "Remark" or "Name")].gameObject:SetActiveIfNecessary(false)
     
 
     local stateName = string.isEmpty(playerInfo.remakeName) and "NoRemarks" or "Remarks"
@@ -88,6 +90,41 @@ BusinessCardPersonalInfoNode.InitBusinessCardPersonalInfoNodeByRoleId = HL.Metho
 
     self.view.playerUidTxt.text = playerInfo.platformRoleId
     self.view.timeText.text = os.date(Language.LUA_BUSINESS_CARD_TIME, playerInfo.createTime)
+end
+
+
+
+
+BusinessCardPersonalInfoNode.UpdateContingencyContractActivityState = HL.Method(HL.String) << function(self, postfix)
+    if self.m_id == 0 then
+        self.view["levelTag" .. postfix].gameObject:SetActiveIfNecessary(false)
+        return
+    end
+
+    local success, playerInfo = GameInstance.player.friendSystem:TryGetFriendInfo(self.m_id)
+    if success and playerInfo and playerInfo.contingencyContractBestRecord.Item1 ~= nil and playerInfo.contingencyContractBestRecord.Item2 > 0 then
+        local activityData = GameInstance.player.activitySystem:GetActivity(playerInfo.contingencyContractBestRecord.Item1)
+        if activityData == nil then
+            self.view["levelTag" .. postfix].gameObject:SetActiveIfNecessary(false)
+            return
+        end
+        local currentTime = DateTimeUtils.GetCurrentTimestampBySeconds()
+        local isOpen = activityData.gameplayEndTime - currentTime > 0
+        self.view["levelTag" .. postfix].gameObject:SetActiveIfNecessary(isOpen)
+        self.view["activityLevelTxt" .. postfix].text = tostring(playerInfo.contingencyContractBestRecord.Item2)
+        local rangeArray = Tables.activityContingencyContractTable:GetValue(playerInfo.contingencyContractBestRecord.Item1).rangeArray
+
+        
+        self.view["levelTagNode" .. postfix]:SetState(tostring(1))
+        for i = 1, #rangeArray do
+            local range = rangeArray[CSIndex(i)]
+            if playerInfo.contingencyContractBestRecord.Item2 >= range then
+                self.view["levelTagNode" .. postfix]:SetState(tostring(i + 1))
+            end
+        end
+    else
+        self.view["levelTag" .. postfix].gameObject:SetActiveIfNecessary(false)
+    end
 end
 
 HL.Commit(BusinessCardPersonalInfoNode)

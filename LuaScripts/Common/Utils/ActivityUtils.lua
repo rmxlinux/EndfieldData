@@ -8,20 +8,32 @@ function ActivityUtils.isNewActivity(id)
     
     
     
-    return not ClientDataManagerInst:GetBool(newHintText .. id,false)
+    return not ClientDataManagerInst:GetBool(newHintText .. id, false)
 end
-function ActivityUtils.setFalseNewActivity(id)
-    ClientDataManagerInst:SetBool(newHintText .. id, true, false, EClientDataTimeValidType.Permanent)
+function ActivityUtils.setFalseNewActivity(id, noSave)
+    if noSave then
+        
+        ClientDataManagerInst:SetBool(newHintText .. id, true, false, ClientDataManagerInst.defaultCategory)
+    else
+        
+        ClientDataManagerInst:SetBool(newHintText .. id, true, false)
+    end
     Notify(MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE)
 end
 
 
 local newActivityUnlockText = "new_activity_unlock_key_"
 function ActivityUtils.isNewUnlockActivity(id)
-    return ActivityUtils.isActivityUnlocked(id) and not ClientDataManagerInst:GetBool(newActivityUnlockText .. id,false)
+    return ActivityUtils.isActivityUnlocked(id) and not ClientDataManagerInst:GetBool(newActivityUnlockText .. id, false)
 end
-function ActivityUtils.setFalseNewUnlockActivity(id)
-    ClientDataManagerInst:SetBool(newActivityUnlockText .. id, true, false, EClientDataTimeValidType.Permanent)
+function ActivityUtils.setFalseNewUnlockActivity(id, noSave)
+    if noSave then
+        
+        ClientDataManagerInst:SetBool(newActivityUnlockText .. id, true, false, ClientDataManagerInst.defaultCategory)
+    else
+        
+        ClientDataManagerInst:SetBool(newActivityUnlockText .. id, true, false)
+    end
     Notify(MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE)
 end
 
@@ -30,8 +42,14 @@ local newIntroText = "new_activity_intro_mission_key_"
 function ActivityUtils.isNewIntroMissionActivity(id)
     return GameInstance.player.activitySystem:GetActivityStatus(id) == GEnums.ActivityStatus.IntroMission and not ClientDataManagerInst:GetBool(newIntroText .. id, false)
 end
-function ActivityUtils.setFalseIntroMissionActivity(id)
-    ClientDataManagerInst:SetBool(newIntroText .. id, true, false, EClientDataTimeValidType.Permanent)
+function ActivityUtils.setFalseIntroMissionActivity(id, noSave)
+    if noSave then
+        
+        ClientDataManagerInst:SetBool(newIntroText .. id, true, false, ClientDataManagerInst.defaultCategory)
+    else
+        
+        ClientDataManagerInst:SetBool(newIntroText .. id, true, false)
+    end
     Notify(MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE)
 end
 
@@ -54,8 +72,14 @@ local newConditionalStageText = "new_activity_conditional_stage_key_"
 function ActivityUtils.isNewActivityConditionalStage(stageId)
     return not ClientDataManagerInst:GetBool(newConditionalStageText .. stageId, false)
 end
-function ActivityUtils.setFalseNewActivityConditionalStage(stageId)
-    ClientDataManagerInst:SetBool(newConditionalStageText .. stageId, false, false, EClientDataTimeValidType.Permanent)
+function ActivityUtils.setFalseNewActivityConditionalStage(stageId, noSave)
+    if noSave then
+        
+        ClientDataManagerInst:SetBool(newConditionalStageText .. stageId, false, false, ClientDataManagerInst.defaultCategory)
+    else
+        
+        ClientDataManagerInst:SetBool(newConditionalStageText .. stageId, false, false)
+    end
     Notify(MessageConst.ON_READ_ACTIVITY_CONDITION_STAGE, stageId)
 end
 
@@ -68,8 +92,8 @@ function ActivityUtils.isNewActivityConditionalStageByTime(activityId, stageId)
     local _, multiStageCfg = Tables.activityConditionalMultiStageTable:TryGetValue(activityId)
     for cfgStageId, stageCfg in pairs(multiStageCfg.stageList) do
         if cfgStageId == stageId then
-            local stageStartTime = activityStartTime + stageCfg.timeOffset * 60 * 60
-            if currTs >= stageStartTime then
+            local timeId = stageCfg.timeId
+            if Utils.isCurTimeInTimeIdRange(timeId) then
                 return not ClientDataManagerInst:GetBool(newConditionalStageText .. stageId, false)
             end
         end
@@ -117,19 +141,23 @@ function ActivityUtils.isNewActivityDayUnread(activityId, totalDays)
     end
     return not ClientDataManagerInst:GetBool(id, false)
 end
-function ActivityUtils.setActivityDayAsRead(activityId)
+function ActivityUtils.setActivityDayAsRead(activityId, noSave)
     activityId = ActivityUtils.getResetableActivityRealId(activityId)
     if not ActivityUtils.isNewActivityDayUnread(activityId) then
         return
     end
     local id = newActivityDayText .. activityId
     
-    ClientDataManagerInst:SetBool(id, true, false, EClientDataTimeValidType.CurrentDayUntil4AM)
+    if noSave then
+        ClientDataManagerInst:SetBool(id, true, false, ClientDataManagerInst.defaultCategory, false, EClientDataTimeValidType.CurrentDayUntil4AM)
+    else
+        ClientDataManagerInst:SetBool(id, true, false, EClientDataTimeValidType.CurrentDayUntil4AM)
+    end
     
     local countId = newActivityDayCountText .. activityId
     local _, days = ClientDataManagerInst:GetInt(countId, false)
     if days then
-        ClientDataManagerInst:SetInt(countId, days + 1, false, EClientDataTimeValidType.Permanent)
+        ClientDataManagerInst:SetInt(countId, days + 1, false, EClientDataTimeValidType.Permanent, false) 
     end
     Notify(MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE)
 end
@@ -158,22 +186,60 @@ end
 
 
 local popUpText = "_new_activity_pop_up_"
-function ActivityUtils.notPopupToday(id,day)
-    return not ClientDataManagerInst:GetBool(id .. popUpText ..tostring(day), false)
+function ActivityUtils.shouldPopupToday(id, day)
+    return not ClientDataManagerInst:GetBool(id .. popUpText .. tostring(day), false)
 end
-function ActivityUtils.setFalsePopupToday(id,day)
-    ClientDataManagerInst:SetBool(id .. popUpText ..tostring(day) , true, false, EClientDataTimeValidType.Permanent)
+function ActivityUtils.setPopedupToday(id, day)
+    ClientDataManagerInst:SetBool(id .. popUpText .. tostring(day), true, false, EClientDataTimeValidType.Permanent)
 end
 
 
 local newBubbleText = "new_activity_bubble_key_"
 function ActivityUtils.isNewActivityBubble(id)
     id = ActivityUtils.getResetableActivityRealId(id)
-    return not ClientDataManagerInst:GetBool(newBubbleText .. id,false)
+    return not ClientDataManagerInst:GetBool(newBubbleText .. id, false)
 end
-function ActivityUtils.setFalseNewActivityBubble(id)
+function ActivityUtils.setFalseNewActivityBubble(id, noSave)
     id = ActivityUtils.getResetableActivityRealId(id)
-    ClientDataManagerInst:SetBool(newBubbleText .. id, true, false, EClientDataTimeValidType.Permanent)
+    if noSave then
+        ClientDataManagerInst:SetBool(newBubbleText .. id, true, false, ClientDataManagerInst.defaultCategory)
+    else
+        ClientDataManagerInst:SetBool(newBubbleText .. id, true, false)
+    end
+end
+
+
+
+
+
+
+
+local activityEndTabRedDotSeenText = "activity_end_tab_seen_key_"
+function ActivityUtils.isActivityEndTabRedDotSeen(pushID)
+    if string.isEmpty(pushID) then
+        return true
+    end
+    return ClientDataManagerInst:GetBool(activityEndTabRedDotSeenText .. pushID, false)
+end
+function ActivityUtils.setActivityEndTabRedDotSeen(pushID, noSave)
+    if string.isEmpty(pushID) then
+        return
+    end
+    if noSave then
+        ClientDataManagerInst:SetBool(activityEndTabRedDotSeenText .. pushID, true, false, ClientDataManagerInst.defaultCategory)
+    else
+        ClientDataManagerInst:SetBool(activityEndTabRedDotSeenText .. pushID, true, false)
+    end
+end
+function ActivityUtils.clearActivityEndTabRedDotSeen(pushID, noSave)
+    if string.isEmpty(pushID) then
+        return
+    end
+    if noSave then
+        ClientDataManagerInst:SetBool(activityEndTabRedDotSeenText .. pushID, false, false, ClientDataManagerInst.defaultCategory)
+    else
+        ClientDataManagerInst:SetBool(activityEndTabRedDotSeenText .. pushID, false, false)
+    end
 end
 
 
@@ -222,7 +288,7 @@ function ActivityUtils.getNaviConfig(panel, type)
         rightNaviGroup = panel.uiCtrl.m_versionGuide.view.selectableNaviGroup
         forbidCommonNavi = panel.uiCtrl.m_versionGuide.view.activityCommonInfo.view.config.FORBID_COMMON_NAVI
     end
-    return { rightNaviGroup, forbidCommonNavi}
+    return { rightNaviGroup, forbidCommonNavi }
 end
 
 function ActivityUtils.actionWhenActivityClosed(action, ctrl, activityId)
@@ -279,6 +345,21 @@ end
 
 
 
+function ActivityUtils.isStageUnlockMultiConditionStageActivity(activityData, stageId)
+    
+    local stageData = activityData:GetStageData(stageId)
+    if stageData then
+        local status = GEnums.ActivityConditionalStageState.__CastFrom(stageData.Status)
+        if status ~= GEnums.ActivityConditionalStageState.Locked then
+            return true
+        end
+    end
+    return false
+end
+
+
+
+
 function ActivityUtils.GetFoodSubmitStageState(activityId, stageId)
     local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
     local status = GEnums.ActivityConditionalStageState.Locked
@@ -291,7 +372,6 @@ function ActivityUtils.GetFoodSubmitStageState(activityId, stageId)
     end
     return status
 end
-
 
 function ActivityUtils.GetFoodSubmitCurGoToRedDot()
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds() + Utils.getServerTimeZoneOffsetSeconds()
@@ -310,6 +390,16 @@ end
 
 
 
+function ActivityUtils.IsSimulationTrainingGotoDetailRead()
+    return ClientDataManagerInst:GetBool("activity_simulation_training_goto_detail", false)
+end
+function ActivityUtils.SetSimulationTrainingGotoDetailRead()
+    ClientDataManagerInst:SetBool("activity_simulation_training_goto_detail", true, false, EClientDataTimeValidType.Permanent)
+    Notify(MessageConst.ON_ACTIVITY_SIMULATION_TRAINING_GOTO)
+end
+
+
+
 
 function ActivityUtils.getPopUpIds()
     local popUpIds = {}
@@ -320,7 +410,7 @@ function ActivityUtils.getPopUpIds()
         local id = activity.id
         local _, activityData = Tables.activityTable:TryGetValue(id)
         if activityData ~= nil and activityData.popUpSortId > 0 and ActivityUtils.shouldPopup(id) then
-            table.insert(popUpIds,id)
+            table.insert(popUpIds, id)
             str = str .. id .. " "
         end
     end
@@ -337,7 +427,7 @@ function ActivityUtils.shouldPopup(id)
     if not activity then
         return
     end
-    local notPopupToday
+    local shouldPopupToday
 
     
     if GEnums.ActivityType.__CastFrom(activity.type) == (GEnums.ActivityType.ArknightsXEndfieldLightWeight) then
@@ -373,21 +463,16 @@ function ActivityUtils.shouldPopup(id)
                 
                 if status ~= GEnums.ActivityConditionalStageState.Locked then
                     local ok, popped, removed = ClientDataManagerInst:GetBool(arkNightsBirthText .. popupPanelId, false)
-
-                    
-                    if not popped then
-                        res = true
+                    if maskStageId ~= '' then
+                        local maskCsConditionalStageInfo = activityData:GetStageData(maskStageId)
+                        if maskCsConditionalStageInfo ~= nil then
+                            local maskStatus = GEnums.ActivityConditionalStageState.__CastFrom(maskCsConditionalStageInfo.Status)
+                            
+                            if not popped or maskStatus ~= GEnums.ActivityConditionalStageState.Rewarded then
+                                res = true
+                            end
+                        end
                     end
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
-                    
                 end
             end
             :: continue ::
@@ -409,18 +494,18 @@ function ActivityUtils.shouldPopup(id)
     if GEnums.ActivityType.__CastFrom(activity.type) ~= (GEnums.ActivityType.Checkin) then
         if Tables.activityTable[id].popUpOnlyOnce then
             
-            notPopupToday = ActivityUtils.notPopupToday(id, 1)
-            return notPopupToday
+            shouldPopupToday = ActivityUtils.shouldPopupToday(id, 1)
+            return shouldPopupToday
         else
             
-            notPopupToday = ActivityUtils.isNewActivityDayUnread(id)
-            return notPopupToday
+            shouldPopupToday = ActivityUtils.isNewActivityDayUnread(id)
+            return shouldPopupToday
         end
     end
 
     
-    notPopupToday = ActivityUtils.notPopupToday(id, activity.loginDays)
-    if notPopupToday and activity.loginDays ~= activity.rewardDays.Count then
+    shouldPopupToday = ActivityUtils.shouldPopupToday(id, activity.loginDays)
+    if shouldPopupToday and activity.loginDays ~= activity.rewardDays.Count then
         local rewardDaysSet = {}
         for i = 1, activity.rewardDays.Count do
             rewardDaysSet[activity.rewardDays[CSIndex(i)]] = true
@@ -484,7 +569,7 @@ function ActivityUtils.recordPopup(id)
     if GEnums.ActivityType.__CastFrom(activity.type) ~= (GEnums.ActivityType.Checkin) then
         if Tables.activityTable[id].popUpOnlyOnce then
             
-            ActivityUtils.setFalsePopupToday(id, 1)
+            ActivityUtils.setPopedupToday(id, 1)
         else
             
             ActivityUtils.setActivityDayAsRead(id)
@@ -501,7 +586,7 @@ function ActivityUtils.recordPopup(id)
 
         for day = 1, activity.loginDays do
             if Tables.checkInRewardTable[id].stageList[CSIndex(day)].isPopup and not rewardDaysSet[day] then
-                ActivityUtils.setFalsePopupToday(id, activity.loginDays)
+                ActivityUtils.setPopedupToday(id, activity.loginDays)
                 return
             end
         end
@@ -688,6 +773,95 @@ function ActivityUtils.GetSnapshotChallengeMainNodePath(activityId)
     local mainPrefabName = cfg.mainPrefabName
     local path = string.format("Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Activity/SnapshotChallenge/%s.prefab", mainPrefabName)
     return path
+end
+
+
+
+
+local newCCTagRead = "IS_CC_NEW_TAG_READ_"
+function ActivityUtils.setCcTagRead(tagId, noSave)
+    local _, isRead = ActivityUtils.isCcTagRead(tagId)
+    if isRead then
+        return
+    end
+    if noSave then
+        
+        ClientDataManagerInst:SetBool(newCCTagRead .. tagId, true, false, ClientDataManagerInst.defaultCategory)
+    else
+        
+        ClientDataManagerInst:SetBool(newCCTagRead .. tagId, true, false)
+    end
+    Notify(MessageConst.ON_CC_NEW_TAG_READ, tagId)
+end
+
+function ActivityUtils.isCcTagRead(tagId)
+    local _, isRead = ClientDataManagerInst:GetBool(newCCTagRead .. tagId, false)
+    return isRead
+end
+
+
+local firstCcEnterSelectAfterUpdate = "IS_CC_FIRST_ENTER_"
+function ActivityUtils.setCcFirstEnterSelectAfterUpdate(stageId, noSave)
+    if noSave then
+        
+        ClientDataManagerInst:SetBool(firstCcEnterSelectAfterUpdate .. stageId, true, false, ClientDataManagerInst.defaultCategory)
+    else
+        
+        ClientDataManagerInst:SetBool(firstCcEnterSelectAfterUpdate .. stageId, true, false)
+    end
+    Notify(MessageConst.ON_CC_FIRST_ENTER_SELECT_AFTER_UPDATE, stageId)
+end
+
+function ActivityUtils.isCcFirstEnterSelectAfterUpdate(stageId)
+    return ClientDataManagerInst:GetBool(firstCcEnterSelectAfterUpdate .. stageId, false)
+end
+
+
+local newCCTaskText = "IS_CC_NEW_TASK_READ"
+function ActivityUtils.setCcNewTaskRead(activityId, taskId, noSave)
+    if not ActivityUtils.isCcNewTask(activityId, taskId) then
+        return
+    end
+    if noSave then
+        
+        ClientDataManagerInst:SetBool(newCCTaskText .. taskId, true, false, ClientDataManagerInst.defaultCategory)
+    else
+        
+        ClientDataManagerInst:SetBool(newCCTaskText .. taskId, true, false)
+    end
+    Notify(MessageConst.ON_CC_NEW_TASK_READ, taskId)
+end
+
+function ActivityUtils.isCcNewTask(activityId, taskId)
+    local unlockTime = Tables.activityConditionalMultiStageTaskConfigTable[activityId].TaskConfigMap[taskId].unlockTimeId
+    
+    if string.isEmpty(unlockTime) then
+        return false
+    end
+    return not ClientDataManagerInst:GetBool(newCCTaskText .. taskId, false)
+end
+
+
+
+local newSimulationTrainingTaskText = "IS_SIMULATION_TRAINING_NEW_TASK_READ"
+function ActivityUtils.setSimulationTrainingTaskRead(activityId, taskId, noSave)
+    if not ActivityUtils.isSimulationTrainingNewTask(activityId, taskId) then
+        return
+    end
+    local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
+    if not activityData or activityData.status == GEnums.ActivityStatus.Locked then
+        return
+    end
+    if noSave then
+        ClientDataManagerInst:SetBool(newSimulationTrainingTaskText .. taskId, true, false, ClientDataManagerInst.defaultCategory)
+    else
+        ClientDataManagerInst:SetBool(newSimulationTrainingTaskText .. taskId, true, false)
+    end
+    Notify(MessageConst.ON_SIMULATION_TRAINING_TASK_READ, taskId)
+end
+
+function ActivityUtils.isSimulationTrainingNewTask(activityId, taskId)
+    return not ClientDataManagerInst:GetBool(newSimulationTrainingTaskText .. taskId, false)
 end
 
 

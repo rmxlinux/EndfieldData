@@ -15,7 +15,6 @@ local PHASE_ID = PhaseId.Watch
 
 
 
-
 PhaseWatch = HL.Class('PhaseWatch', phaseBase.PhaseBase)
 
 
@@ -115,6 +114,28 @@ PhaseWatch._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << f
     
     ctrl.view.animationWrapper.autoPlay = true
     ctrl:_SetCameraCfg()
+
+    local recoverArg = self.arg
+    local tipsState = recoverArg and recoverArg.worldLevelTipsPopupState
+    if tipsState and tipsState.isOpen then
+        local isTipsPopupOpen = UIManager:IsOpen(PanelId.WorldLevelTipsPopup)
+        if not isTipsPopupOpen then
+            UIManager:Open(PanelId.WorldLevelTipsPopup, {
+                isTipsMode = tipsState.isTipsMode,
+            })
+        end
+    end
+
+    local popupState = recoverArg and recoverArg.worldLevelPopupState
+    if popupState and popupState.isOpen then
+        local isPopupOpen = UIManager:IsOpen(PanelId.WorldLevelPopup)
+        if not isPopupOpen then
+            UIManager:Open(PanelId.WorldLevelPopup, {
+                isUp = popupState.isUp,
+                targetWorldLevel = popupState.targetWorldLevel,
+            })
+        end
+    end
 end
 
 
@@ -129,7 +150,8 @@ end
 
 
 PhaseWatch._OnDeActivated = HL.Override() << function(self)
-    if not InputManagerInst.inChangingInputDevice then
+    local needIgnoreHide = not PhaseManager.isRecovering and InputManagerInst.inChangingInputDevice
+    if not needIgnoreHide then
         self.m_watchBlurCtrl:Hide()
     end
 end
@@ -168,7 +190,7 @@ end
 PhaseWatch._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local usingBT = UIUtils.usingBlockTransition()
     local nextPhaseId = args.anotherPhaseId
-    local toCommonMoneyExchange = nextPhaseId == PhaseId.CommonMoneyExchange
+    local toCommonMoneyExchange = nextPhaseId == PhaseId.CommonMoneyExchange or nextPhaseId == PhaseId.StaminaPopUp
     if not toCommonMoneyExchange then
         if not usingBT then
             self.m_watchPanel.uiCtrl.animationWrapper:ClearTween(true)
@@ -184,7 +206,7 @@ end
 
 PhaseWatch._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local nextPhaseId = args.anotherPhaseId
-    local toCommonMoneyExchange = tonumber(nextPhaseId) == PhaseId.CommonMoneyExchange
+    local toCommonMoneyExchange = tonumber(nextPhaseId) == PhaseId.CommonMoneyExchange or nextPhaseId == PhaseId.StaminaPopUp
     if not toCommonMoneyExchange then
         self.m_watchPanel.uiCtrl.animationWrapper:PlayInAnimation()
         self.m_watchPanel.uiCtrl.view.content.gameObject:SetActive(true)
@@ -201,6 +223,38 @@ PhaseWatch._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table
         
         blurPanel.view.blurBG:SetCustomBlurImg(self.m_watchBlurCtrl.view.blurBG.rawImage.texture)
     end
+end
+
+
+
+PhaseWatch.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local ret = self.arg and lume.deepCopy(self.arg) or {}
+    local isTipsPopupOpen, tipsPopupCtrl = UIManager:IsOpen(PanelId.WorldLevelTipsPopup)
+    if isTipsPopupOpen and tipsPopupCtrl then
+        ret.worldLevelTipsPopupState = {
+            isOpen = true,
+            isTipsMode = tipsPopupCtrl.isTipsMode,
+        }
+    else
+        ret.worldLevelTipsPopupState = nil
+    end
+
+    local isPopupOpen, popupCtrl = UIManager:IsOpen(PanelId.WorldLevelPopup)
+    if isPopupOpen and popupCtrl then
+        local popupState = popupCtrl:GetPopupState()
+        ret.worldLevelPopupState = {
+            isOpen = true,
+            isUp = popupState.isUp,
+            targetWorldLevel = popupState.targetWorldLevel,
+        }
+    else
+        ret.worldLevelPopupState = nil
+    end
+
+    if next(ret) ~= nil then
+        return ret
+    end
+    return nil
 end
 
 

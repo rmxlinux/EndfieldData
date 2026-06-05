@@ -5,6 +5,7 @@ local PANEL_ID = PanelId.WorldLevelTipsPopup
 
 
 
+
 WorldLevelTipsPopupCtrl = HL.Class('WorldLevelTipsPopupCtrl', uiCtrl.UICtrl)
 
 
@@ -18,11 +19,16 @@ WorldLevelTipsPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
+WorldLevelTipsPopupCtrl.isTipsMode = HL.Field(HL.Boolean) << false
+
+
 
 
 
 WorldLevelTipsPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    local isTipsMode = arg and arg.isTipsMode
+    arg = arg or {}
+    self.isTipsMode = arg.isTipsMode == true
+    local isTipsMode = self.isTipsMode
     self.view.closeBtn.onClick:RemoveAllListeners()
     self.view.closeBtn.onClick:AddListener(function()
         if isTipsMode then

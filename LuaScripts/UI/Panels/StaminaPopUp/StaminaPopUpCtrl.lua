@@ -1,6 +1,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local CommonPopUpCtrl = require_ex('UI/Panels/CommonPopUp/CommonPopUpCtrl')
 local PANEL_ID = PanelId.StaminaPopUp
+local PHASE_ID = PhaseId.StaminaPopUp
+
+
 
 
 
@@ -64,6 +67,10 @@ local ExchangeStateEnum = {
 }
 
 
+StaminaPopUpCtrl.m_arg = HL.Field(HL.Table)
+
+
+
 StaminaPopUpCtrl.m_exchangeState = HL.Field(HL.Number) << 0
 
 
@@ -101,6 +108,12 @@ StaminaPopUpCtrl.m_isClosing = HL.Field(HL.Boolean) << false
 
 StaminaPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
+    if not arg then
+        self.m_arg = {}
+    else
+        self.m_arg = arg
+    end
+    self.m_staminaCloseFun = self.m_arg.closeFun
     
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     self.m_isClosing = false
@@ -143,8 +156,8 @@ StaminaPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_genItemCells = UIUtils.genCellCache(self.view.exchangeNode.costItemCell)
     self:_InitBasicUI()
     
-    if arg then
-        self:_InitQuickExchange(arg)
+    if self.m_arg.isQuickExchange then
+        self:_InitQuickExchange(self.m_arg)
     else
         self:_InitNormalExchange()
     end
@@ -444,22 +457,21 @@ StaminaPopUpCtrl._DoClose = HL.Method() << function(self)
     if self.m_isClosing then
         return
     end
-    self.m_isClosing = true
     Notify(MessageConst.HIDE_COMMON_HOVER_TIP, { noAnimation = true })
-    self:PlayAnimationOutWithCallback(function()
+    self.m_isClosing = PhaseManager:PopPhase(PHASE_ID, function()
         
         
         local cell = self.m_genItemCells:Get(self.m_curSelItemIndex)
-        if cell then
+        if cell and not IsNull(cell.view.item.view.button) then
             cell.view.item.view.button.interactable = false
         end
         
         if self.m_staminaCloseFun ~= nil then
             self.m_staminaCloseFun()
         end
-        self:Close()
         self.m_isClosing = false
     end)
+
     AudioManager.PostEvent("au_ui_menu_side_close")
 end
 
@@ -487,7 +499,16 @@ StaminaPopUpCtrl._InitNormalExchange = HL.Method() << function(self)
     self.view.exchangeState:SetState("ExchangeState")
     self:_UpdateItemData()
     
-    if self:_HasItemForExchange() then
+    local isExchangeItem = true
+    if self.m_arg.exchangeState then
+        isExchangeItem = self.m_arg.exchangeState == ExchangeStateEnum.ExchangeOfItem
+        self.m_arg.exchangeState = nil
+    else
+        
+        isExchangeItem = self:_HasItemForExchange()
+    end
+    
+    if isExchangeItem then
         self.view.exchangeNode.costItemTabTog.isOn = true
         self:_RefreshUIExchangeCostItem()
     else
@@ -551,13 +572,17 @@ StaminaPopUpCtrl._UpdateItemData = HL.Method() << function(self)
         if isNormalItem and itemData.count > 0 then
             
             if itemData.count > 0 then
+                local selCount = 0
+                if self.m_arg.selItemCountMap and self.m_arg.selItemCountMap[tableInfo.itemId] then
+                    selCount = self.m_arg.selItemCountMap[tableInfo.itemId]
+                end
                 table.insert(self.m_invItemInfoList, {
                     itemId = tableInfo.itemId,
                     instId = 0,
                     recoverValue = tableInfo.recoverValue,
                     itemTableData = tableInfo.itemTableData,
                     invCount = itemData.count,
-                    selectCount = 0,
+                    selectCount = selCount,
                     expireTs = 0,
                     
                     isLTItem = false,
@@ -567,22 +592,28 @@ StaminaPopUpCtrl._UpdateItemData = HL.Method() << function(self)
     end
     
     for instId, instItemBundle in pairs(depot.instItems) do
-        local tableInfo =self.m_allItemTableInfoList[instItemBundle.id]
+        local tableInfo = self.m_allItemTableInfoList[instItemBundle.id]
         if tableInfo then
             if instItemBundle.count > 0 then
+                local selCount = 0
+                if self.m_arg.selInstItemCountMap and self.m_arg.selInstItemCountMap[instId] then
+                    selCount = self.m_arg.selInstItemCountMap[instId]
+                end
                 table.insert(self.m_invItemInfoList, {
                     itemId = tableInfo.itemId,
                     instId = instId,
                     recoverValue = tableInfo.recoverValue,
                     itemTableData = tableInfo.itemTableData,
                     invCount = instItemBundle.count,
-                    selectCount = 0,
+                    selectCount = selCount,
                     expireTs = instItemBundle.instData.expireTs,
                     isLTItem = true,
                 })
             end
         end
     end
+    self.m_arg.selItemCountMap = nil
+    self.m_arg.selInstItemCountMap = nil
     
     
     
@@ -651,7 +682,8 @@ StaminaPopUpCtrl._UpdateQuickExchangeItemData = HL.Method() << function(self)
     info.imgPath = tableInfo.itemTableData.iconId
     info.recoverValue = tableInfo.recoverValue
     info.count = count
-    info.selectCount = 1
+    info.selectCount = self.m_arg.quickExchangeSelectCount or 1
+    self.m_arg.quickExchangeSelectCount = nil
 end
 
 
@@ -685,7 +717,9 @@ StaminaPopUpCtrl._RefreshUIExchangeCostItem = HL.Method() << function(self)
     self:_CalculateExchangeStaminaOfItemList()
     
     
-    self:_InitItemScrollController()
+    if DeviceInfo.usingController then
+        self:_InitItemScrollController()
+    end
     
     if #self.m_invItemInfoList ~= 0 then
         InputManagerInst.controllerNaviManager:SetTarget(nil)   
@@ -718,6 +752,14 @@ StaminaPopUpCtrl._RefreshUIExchangeCostItem = HL.Method() << function(self)
             end
         end
     end)
+    local scrollRect = self.view.exchangeNode.costItemScrollRect
+    if scrollRect and scrollRect.content and self.m_curSelItemIndex == 1 then
+        
+        
+        
+        CS.UnityEngine.UI.LayoutRebuilder.ForceRebuildLayoutImmediate(scrollRect.content)
+        scrollRect.horizontalNormalizedPosition = 0
+    end
     
     self:_RefreshUIExchangeCostItemStaminaState()
     self:_RefreshUICurrentAndTargetStamina()
@@ -972,16 +1014,39 @@ StaminaPopUpCtrl._InitItemScrollController = HL.Method() << function(self)
     
     local scrollRect = self.view.exchangeNode.costItemScrollRect
     
-    scrollRect.controllerScrollEnabled = true
+    
 
     
     if scrollRect.naviGroup then
+        scrollRect.naviGroup.onSetLayerSelectedTarget:RemoveAllListeners()
         scrollRect.naviGroup.onSetLayerSelectedTarget:AddListener(function(target)
             if target and target.transform and DeviceInfo.usingController then
                 scrollRect:AutoScrollToRectTransform(target.transform, false)
             end
         end)
     end
+end
+
+
+
+StaminaPopUpCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    self.m_arg.exchangeState = self.m_exchangeState
+    if self.m_quickExchangeItemInfo then
+        self.m_arg.quickExchangeSelectCount = self.m_quickExchangeItemInfo.selectCount
+    else
+        if self.m_invItemInfoList then
+            self.m_arg.selItemCountMap = {}
+            self.m_arg.selInstItemCountMap = {}
+            for i, itemInfo in pairs(self.m_invItemInfoList) do
+                if itemInfo.isLTItem then
+                    self.m_arg.selInstItemCountMap[itemInfo.instId] = itemInfo.selectCount
+                else
+                    self.m_arg.selItemCountMap[itemInfo.itemId] = itemInfo.selectCount
+                end
+            end
+        end
+    end
+    return self.m_arg
 end
 
 HL.Commit(StaminaPopUpCtrl)

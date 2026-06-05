@@ -38,6 +38,7 @@
 
 
 
+
 UIListCache = HL.Class("UIListCache")
 
 do
@@ -112,8 +113,7 @@ UIListCache.Refresh = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Boolean, HL.Fu
     self.m_count = count
     self:ClearAllTween(true)
     for index = 1, count do
-        local item = self:_GenItem(index)
-        item.gameObject:SetActive(not shouldHide)
+        self:_GenItem(index, shouldHide)
     end
 
     for index = count + 1, #self.m_items do
@@ -129,7 +129,7 @@ UIListCache.Refresh = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Boolean, HL.Fu
     
 
     for index = 1, count do
-        local item = self:_GenItem(index)
+        local item = self:_GenItem(index, shouldHide)
         if refreshFunction then
             refreshFunction(item, index)
         end
@@ -213,7 +213,8 @@ end
 
 
 
-UIListCache._GenItem = HL.Method(HL.Number).Return(HL.Any) << function(self, index)
+
+UIListCache._GenItem = HL.Method(HL.Number, HL.Opt(HL.Boolean)).Return(HL.Any) << function(self, index, shouldHide)
     local item = self.m_items[index]
     if not item then
         
@@ -254,7 +255,7 @@ UIListCache._GenItem = HL.Method(HL.Number).Return(HL.Any) << function(self, ind
         end
         self.m_items[index] = item
     end
-    item.gameObject:SetActive(true)
+    item.gameObject:SetActive(not shouldHide)
     return item
 end
 
@@ -327,6 +328,20 @@ UIListCache.ClearAllTween = HL.Method(HL.Boolean) << function(self, executeCallb
         end
     end
     self.m_isPlayingAllOut = false
+end
+
+
+
+UIListCache.ClearAll = HL.Method() << function(self)
+    self._coroutine = CoroutineManager:ClearCoroutine(self._coroutine)
+    self:ClearAllTween(true)
+    for _, item in pairs(self.m_items) do
+        if item and item.gameObject and not IsNull(item.gameObject) then
+            GameObject.Destroy(item.gameObject)
+        end
+    end
+    self.m_items = {}
+    self.m_count = 0
 end
 
 

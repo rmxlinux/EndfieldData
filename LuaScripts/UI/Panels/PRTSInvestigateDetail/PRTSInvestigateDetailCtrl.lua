@@ -33,6 +33,14 @@ local PHASE_ID = PhaseId.PRTSInvestigateDetail
 
 
 
+
+
+
+
+
+
+
+
 PRTSInvestigateDetailCtrl = HL.Class('PRTSInvestigateDetailCtrl', uiCtrl.UICtrl)
 
 
@@ -68,10 +76,16 @@ PRTSInvestigateDetailCtrl.m_genNotFoundCells = HL.Field(HL.Forward("UIListCache"
 PRTSInvestigateDetailCtrl.m_investId = HL.Field(HL.String) << ""
 
 
+PRTSInvestigateDetailCtrl.m_arg = HL.Field(HL.Table)
+
+
 PRTSInvestigateDetailCtrl.m_info = HL.Field(HL.Table)
 
 
 PRTSInvestigateDetailCtrl.m_isNoteShown = HL.Field(HL.Boolean) << false
+
+
+PRTSInvestigateDetailCtrl.m_selectedCollId = HL.Field(HL.String) << ""
 
 
 PRTSInvestigateDetailCtrl.m_scrollToCategoryCor = HL.Field(HL.Thread)
@@ -85,10 +99,18 @@ PRTSInvestigateDetailCtrl.m_logNoteTimeTemp = HL.Field(HL.Number) << -1
 
 
 PRTSInvestigateDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg
     self:_InitUI()
     self:_InitData(arg)
     self:_UpdateData()
+    self:_ApplyResumeState(arg and arg.resumeState or nil)
     self:_RefreshAllUI()
+    if self.m_isNoteShown then
+        self:_RefreshUINoteShowState(true)
+    end
+    if self.m_arg then
+        self.m_arg.resumeState = nil
+    end
 end
 
 
@@ -107,15 +129,7 @@ end
 
 
 PRTSInvestigateDetailCtrl.OnShow = HL.Override() << function(self)
-    
-    local categoryObj = self.view.categoryList:Get(0)
-    local firstCategoryCell = self.m_getCategoryCellFunc(categoryObj)
-    if firstCategoryCell then
-        local collCell = firstCategoryCell.m_genCollCell:Get(1)
-        if collCell then
-            InputManagerInst.controllerNaviManager:SetTarget(collCell.gotoBtn)
-        end
-    end
+    self:_TryRestoreCollSelection()
 end
 
 
@@ -172,7 +186,7 @@ PRTSInvestigateDetailCtrl._OnInvestigateFinished = HL.Method(HL.Table) << functi
         PhaseManager:OpenPhase(PhaseId.PRTSInvestigateReport, {
             investId = self.m_info.investId,
             storyCollId = self.m_info.unlockPrts,
-            showSubmitAni = true,
+            isNewReport = true,
         })
     end
 end
@@ -186,6 +200,24 @@ end
 
 
 
+PRTSInvestigateDetailCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
+    arg.id = self.m_investId
+    arg.resumeState = self:_CollectResumeState()
+    return arg
+end
+
+
+
+
+
+PRTSInvestigateDetailCtrl._CollectResumeState = HL.Method().Return(HL.Table) << function(self)
+    return {
+        isNoteShown = self.m_isNoteShown,
+        selectedCollId = self.m_selectedCollId,
+    }
+end
+
 
 
 
@@ -196,6 +228,8 @@ PRTSInvestigateDetailCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     end
     
     self.m_investId = arg.id
+    self.m_isNoteShown = false
+    self.m_selectedCollId = ""
 end
 
 
@@ -219,6 +253,44 @@ PRTSInvestigateDetailCtrl._UpdateData = HL.Method() << function(self)
         rewardList = investCfg.rewardItemList,
         categoryInfoBundles = PRTSInvestigateDetailCtrl._GetCategoryInfoBundles(investCfg.categoryDataList),
     }
+end
+
+
+
+
+PRTSInvestigateDetailCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState then
+        return
+    end
+    self.m_isNoteShown = resumeState.isNoteShown == true
+    self.m_selectedCollId = resumeState.selectedCollId or ""
+    for _, infoBundle in pairs(self.m_info.categoryInfoBundles) do
+        infoBundle.showNote = self.m_isNoteShown
+    end
+end
+
+
+
+
+PRTSInvestigateDetailCtrl._GetCollLocationById = HL.Method(HL.String).Return(HL.Number, HL.Number) << function(self, collId)
+    if string.isEmpty(collId) then
+        return -1, -1
+    end
+    for categoryIndex, infoBundle in ipairs(self.m_info.categoryInfoBundles) do
+        for collIndex, collInfo in ipairs(infoBundle.collInfos) do
+            if collInfo.collId == collId then
+                return categoryIndex, collIndex
+            end
+        end
+    end
+    return -1, -1
+end
+
+
+
+
+PRTSInvestigateDetailCtrl._OnCollFocusChanged = HL.Method(HL.String) << function(self, collId)
+    self.m_selectedCollId = collId
 end
 
 
@@ -389,6 +461,34 @@ end
 
 
 
+PRTSInvestigateDetailCtrl._TryRestoreCollSelection = HL.Method().Return(HL.Boolean) << function(self)
+    if not self.m_info or #self.m_info.categoryInfoBundles <= 0 then
+        return false
+    end
+    local categoryIndex, collIndex = self:_GetCollLocationById(self.m_selectedCollId)
+    if categoryIndex < 1 or collIndex < 1 then
+        categoryIndex = 1
+        collIndex = 1
+    end
+    local categoryInfo = self.m_info.categoryInfoBundles[categoryIndex]
+    local collInfo = categoryInfo and categoryInfo.collInfos[collIndex] or nil
+    if not collInfo then
+        return false
+    end
+    self.m_selectedCollId = collInfo.collId
+    self.view.categoryList:ScrollToIndex(CSIndex(categoryIndex), true)
+    local categoryObj = self.view.categoryList:Get(CSIndex(categoryIndex))
+    local categoryCell = self.m_getCategoryCellFunc(categoryObj)
+    local collCell = categoryCell and categoryCell.m_genCollCell:Get(collIndex) or nil
+    if not collCell then
+        return false
+    end
+    InputManagerInst.controllerNaviManager:SetTarget(collCell.gotoBtn)
+    return true
+end
+
+
+
 
 
 PRTSInvestigateDetailCtrl._OnRefreshRewardCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
@@ -407,7 +507,9 @@ end
 PRTSInvestigateDetailCtrl._OnRefreshCategoryCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     cell.gameObject.name = "CategoryCell_" .. luaIndex
     local infoBundle = self.m_info.categoryInfoBundles[luaIndex]
-    cell:InitPRTSInvestigateCategoryCell(infoBundle, self.m_investId)
+    cell:InitPRTSInvestigateCategoryCell(infoBundle, self.m_investId, function(collId)
+        self:_OnCollFocusChanged(collId)
+    end)
     infoBundle.isPlayNoteAni = false    
 end
 

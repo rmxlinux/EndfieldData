@@ -51,6 +51,7 @@ Const.RESERVE_PANEL_IDS_FOR_FAC_DESTROY_MODE = {
     PanelId.HeadLabel,
     PanelId.FacTopView,
     PanelId.FacTopViewBuildingInfo,
+    PanelId.FacSaveBlueprint,
 }
 
 do

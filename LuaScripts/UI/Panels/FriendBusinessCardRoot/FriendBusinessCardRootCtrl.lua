@@ -14,6 +14,8 @@ local PANEL_ID = PanelId.FriendBusinessCardRoot
 
 
 
+
+
 FriendBusinessCardRootCtrl = HL.Class('FriendBusinessCardRootCtrl', uiCtrl.UICtrl)
 
 
@@ -80,6 +82,7 @@ FriendBusinessCardRootCtrl._UpdateCardInfo = HL.Method() << function(self)
     if self.m_businessCardId == businessCardId then
         
         self.m_businessCard:InitFriendBusinessCard(self.m_roleId)
+        self:_TrySetDefaultNaviTarget()
         return
     end
 
@@ -120,6 +123,41 @@ FriendBusinessCardRootCtrl._UpdateCardInfo = HL.Method() << function(self)
     if self.m_phase then
         self.m_phase:_BindControllerHintPlaceHolder()
     end
+    self:_TrySetDefaultNaviTarget()
+end
+
+
+
+FriendBusinessCardRootCtrl._TrySetDefaultNaviTarget = HL.Method() << function(self)
+    if self.m_businessCard == nil or self.m_businessCard.view == nil then
+        return
+    end
+    if self.view == nil or self.view.inputGroup == nil then
+        return
+    end
+    
+    if not self.view.inputGroup.groupEnabled then
+        return
+    end
+
+    
+    if self.m_businessCard.m_isExpanded then
+        self.m_businessCard.view.businessCardRoleNode:NaviToFirstChar()
+    end
+end
+
+
+
+FriendBusinessCardRootCtrl.RefreshTabBlockState = HL.Method() << function(self)
+    if self.m_phase == nil then
+        return
+    end
+
+    local shouldBlock = false
+    if self.m_businessCard ~= nil and self.m_businessCard.view ~= nil and self.m_businessCard.view.rightBottomBtn ~= nil then
+        shouldBlock = InputManagerInst.controllerNaviManager:IsTopLayer(self.m_businessCard.view.rightBottomBtn)
+    end
+    self.m_phase:SetTabBlockState(shouldBlock)
 end
 
 
@@ -132,6 +170,8 @@ end
 
 FriendBusinessCardRootCtrl.OnShow = HL.Override() << function(self)
     self.m_businessCard:InitFriendBusinessCard(self.m_roleId)
+    self:_TrySetDefaultNaviTarget()
+    self:RefreshTabBlockState()
     if not self.m_isPlayInAnimationInFrame then
         self.m_businessCard.view.animationWrapper:PlayInAnimation()
         self.m_isPlayInAnimationInFrame = true

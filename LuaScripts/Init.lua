@@ -249,6 +249,7 @@ LoadConst = function(reload)
     ActivityConst = require_ex("Const/ActivityConst", reload)
     CashShopConst = require_ex("Const/CashShopConst", reload)
     CharPotentialConst = require_ex("Const/CharPotentialConst", reload)
+    DialogConst = require_ex("Const/DialogConst", reload)
 end
 LoadConst(false)
 
@@ -273,6 +274,7 @@ FactoryUtils = require_ex("Common/Utils/FactoryUtils")
 SpaceshipUtils = require_ex("Common/Utils/SpaceshipUtils")
 SNSUtils = require_ex("Common/Utils/SNSUtils")
 DungeonUtils = require_ex("Common/Utils/DungeonUtils")
+GameMechanicsUtils = require_ex("Common/Utils/GameMechanicsUtils")
 Json = require_ex("Common/Tools/json")
 RedDotUtils = require_ex("Common/Utils/RedDotUtils")
 EquipTechUtils = require_ex("Common/Utils/EquipTechUtils")
@@ -290,6 +292,7 @@ CashShopUtils = require_ex("Common/Utils/CashShopUtils")
 BattlePassUtils = require_ex("Common/Utils/BattlePassUtils")
 MailUtils = require_ex("Common/Utils/MailUtils")
 HighDifficultyUtils = require_ex("Common/Utils/HighDifficultyUtils")
+ContingencyContractUtils = require_ex("Common/Utils/ContingencyContractUtils")
 
 
 LuaObjectMemoryLeakChecker = require_ex("Common/Core/LuaObjectMemoryLeakChecker")()
@@ -358,5 +361,3 @@ end
 logger.info("Lua init finished.")
 
 Notify(MessageConst.ON_LUA_INIT_FINISHED)
-xlua.private_accessible(CS.XLua.LuaDeadLoopCheck)
-CS.XLua.LuaDeadLoopCheck.s_isCheck = false

@@ -19,6 +19,7 @@ DUNGEON_CATEGORY = {
     WorldLevel = "dungeon_worldlevel",
     HighDifficulty = "dungeon_highdifficulty",
     ActMonster = "dungeon_actmonster",
+    ContingencyContract = "dungeon_contract",
 }
 
 DUNGEON_REWARD_TAG_STATE = {
@@ -36,6 +37,10 @@ UI_RESTORE_DUNGEON_CATEGORY = {
     DUNGEON_CATEGORY.Resource,
     DUNGEON_CATEGORY.SS,
     DUNGEON_CATEGORY.CharTutorial,
+}
+
+GameMechanicsTypeToFormationTitleIcon = {
+    [GEnums.GameMechanicsType.DungeonContingencyContract] = "icon_formation_contingency"
 }
 
 

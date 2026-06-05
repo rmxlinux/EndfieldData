@@ -91,17 +91,22 @@ WikiModelShowCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             end
         end)
     end)
-end
 
-
-
-WikiModelShowCtrl._OnPhaseItemBind = HL.Override() << function(self)
-    
     self.m_phase:ActiveModelRotateRoot(true)
     self.m_phase:ActiveShowVirtualCamera(true)
     self:_SampleBgAnim()
     self:_PlayBgAnim(true)
     self:_PlayDecoAnim()
+
+    if self.m_phase.m_sceneRoot.view.buildingECSModel.gameObject.activeSelf then
+        self.m_phase.m_sceneRoot.view.buildingECSModel:Cutoff(true, 0, 1)
+    end
+end
+
+
+
+WikiModelShowCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    return self.m_wikiEntryShowData
 end
 
 

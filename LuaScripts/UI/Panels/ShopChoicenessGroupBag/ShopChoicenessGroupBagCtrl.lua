@@ -108,6 +108,14 @@ ShopChoicenessGroupBagCtrl._RefreshUI = HL.Method() << function(self)
         self:_RefreshUIOne(canBuyGoodsIds)
     end
 
+    
+    if canBuyCount > 0 then
+        self.view.cashShopKrTips.gameObject:SetActive(true)
+        self.view.cashShopKrTips:InitCashShopKrTips()
+    else
+        self.view.cashShopKrTips.gameObject:SetActive(false)
+    end
+
     GameInstance.player.cashShopSystem:ReadCashGoods(canBuyGoodsIds)
 end
 
@@ -240,20 +248,20 @@ ShopChoicenessGroupBagCtrl._InitShortCut = HL.Method() << function(self)
 
     if self:CheckRecommendSetNaviTarget() then
         self:BindInputPlayerAction("cashshop_giftpack_goto_left", function()
-            InputManagerInst:ToggleGroup(self.view.main.groupId, false)
+            InputManagerInst:ToggleGroup(self.view.contentStateInputBindingGroupMonoTarget.groupId, false)
             local leftCtrl = self.m_phase.m_panel2Item[PanelId.ShopRecommend].uiCtrl
             leftCtrl:NaviTargetCurrTab()
-        end, self.view.main.groupId)
+        end, self.view.contentStateInputBindingGroupMonoTarget.groupId)
 
         self:BindInputPlayerAction("cashshop_navigation_4_dir_left", function()
             self:_OnGoLeft()
-        end, self.view.main.groupId)
+        end, self.view.contentStateInputBindingGroupMonoTarget.groupId)
 
         self:BindInputPlayerAction("cashshop_navigation_4_dir_right", function()
             self:_OnGoRight()
-        end, self.view.main.groupId)
+        end, self.view.contentStateInputBindingGroupMonoTarget.groupId)
 
-        InputManagerInst:ToggleGroup(self.view.main.groupId, false)
+        InputManagerInst:ToggleGroup(self.view.contentStateInputBindingGroupMonoTarget.groupId, false)
     end
 end
 
@@ -263,7 +271,7 @@ ShopChoicenessGroupBagCtrl._OnGoLeft = HL.Method() << function(self)
     local currIndex = self.m_currNaviIndex
 
     if currIndex and currIndex == 1 then
-        InputManagerInst:ToggleGroup(self.view.main.groupId, false)
+        InputManagerInst:ToggleGroup(self.view.contentStateInputBindingGroupMonoTarget.groupId, false)
         local leftCtrl = self.m_phase.m_panel2Item[PanelId.ShopRecommend].uiCtrl
         leftCtrl:NaviTargetCurrTab()
     else
@@ -293,7 +301,7 @@ ShopChoicenessGroupBagCtrl.OnRecommendSetNaviTarget = HL.Method().Return(HL.Bool
         return false
     end
 
-    InputManagerInst:ToggleGroup(self.view.main.groupId, true)
+    InputManagerInst:ToggleGroup(self.view.contentStateInputBindingGroupMonoTarget.groupId, true)
     local firstCell = self.m_getTabCellFunc(self.m_scroll:Get(0))
     UIUtils.setAsNaviTarget(firstCell.inputBindingGroupNaviDecorator)
     self.m_currNaviIndex = 1

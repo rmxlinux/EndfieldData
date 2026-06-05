@@ -177,6 +177,20 @@ local STANDARD_SCREEN_HEIGHT = CS.Beyond.UI.UIConst.STANDARD_VERTICAL_RESOLUTION
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 MapCtrl = HL.Class('MapCtrl', uiCtrl.UICtrl)
 
 local COLLECTIONS_CONFIG = {
@@ -346,6 +360,9 @@ MapCtrl.m_tierSwitcherCells = HL.Field(HL.Forward('UIListCache'))
 MapCtrl.m_tierSwitchersShowing = HL.Field(HL.Boolean) << false
 
 
+MapCtrl.m_waitRecoverTierId = HL.Field(HL.Number) << -1
+
+
 MapCtrl.m_controllerHoverMark = HL.Field(HL.Boolean) << false
 
 
@@ -371,6 +388,12 @@ MapCtrl.m_markClickLockThread = HL.Field(HL.Thread)
 
 
 MapCtrl.m_isResettingToTargetLevel = HL.Field(HL.Boolean) << false
+
+
+MapCtrl.m_remindTipInfo = HL.Field(HL.Any)
+
+
+MapCtrl.m_isRemindTipShowing = HL.Field(HL.Boolean) << false
 
 
 MapCtrl.s_messages = HL.StaticField(HL.Table) << {
@@ -403,6 +426,7 @@ MapCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.blockMask.gameObject:SetActive(false)
     self.view.controllerFocusAnim.gameObject:SetActive(DeviceInfo.usingController)
     self.m_controllerRect = self.view.levelMapController.view.rectTransform
+    self.m_waitRecoverTierId = args.tierId or -1
     self:_ParseCustomArgs(args.customArgs)
     self:_RefreshMapRectMask()
 
@@ -449,7 +473,6 @@ MapCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self:_RefreshLevelMapContent()
     self:_TryPlayMapMaskAnimation()
 
-    
     self:_InitMapRemindTip()
 
     self:_InitTierSwitcherNode()
@@ -474,6 +497,8 @@ MapCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
 
     self:_TryPlayMistUnlockedAnimation()
     self:_InitCustomMark()
+
+    self:_TryRecoverBigRectState(args)
 
     if BEYOND_DEBUG_COMMAND then
         self:_InitDebugTeleport()
@@ -641,9 +666,13 @@ MapCtrl.OnSelectMark = HL.StaticMethod(HL.Any) << function(arg)
         return
     end
 
-    local isOpen, mapCtrl = UIManager:IsOpen(PANEL_ID)
+    local isOpen, self = UIManager:IsOpen(PANEL_ID)
     if isOpen then
-        mapCtrl:ResetMapStateToTargetLevel({ instId = markInstId })
+        if self.m_isResettingToTargetLevel then
+            self.m_waitInitShowDetailMarkInstId = markInstId
+        else
+            self:ResetMapStateToTargetLevel({ instId = markInstId })
+        end
     else
         MapCtrl.s_initialSelectMarkInstId = markInstId
     end
@@ -660,6 +689,10 @@ end
 
 
 MapCtrl._OnLevelSwitchBtnClicked = HL.Method(HL.Any) << function(self, args)
+    if self:IsPlayingAnimationIn() then
+        return
+    end
+
     if self.m_isResettingToTargetLevel then
         return
     end
@@ -861,9 +894,9 @@ MapCtrl._RefreshLevelMapContent = HL.Method() << function(self)
     self:_RefreshTrackingInfo(currLevelId)
     self:_RefreshSpaceshipNode(currLevelId)
     self:_RefreshSpaceshipLevelNode(currLevelId)
+    self:_RefreshRemindTipInfo(currLevelId)
 
     self.m_currLevelId = currLevelId
-    self:_InitMapRemindTip()
 
     local success, levelConfig = Utils.getLevelConfig(self.m_currLevelId)
     if success then
@@ -1344,40 +1377,75 @@ end
 
 MapCtrl._InitMapRemindTip = HL.Method() << function(self)
     
-    local remandInfo = MapUtils.getMapRemindTipInfo(self.m_currLevelId)
-    
     self.view.mapRemindBtn.onClick:RemoveAllListeners()
     self.view.mapRemindBtn.onClick:AddListener(function()
-        self.view.mapRemindBtn.gameObject:SetActiveIfNecessary(false)
-        self.view.mapTrackingInfo.gameObject:SetActiveIfNecessary(false)
-        self.view.mapTransactionReminderPopUp.gameObject:SetActiveIfNecessary(true)
+        self:_OnRemindTipBtnClick()
+    end)
+end
 
+
+
+
+MapCtrl._RefreshRemindTipInfo = HL.Method(HL.String) << function(self, levelId)
+    self.m_remindTipInfo = MapUtils.getMapRemindTipInfo(levelId)
+end
+
+
+
+
+MapCtrl._OnRemindTipBtnClick = HL.Method(HL.Opt(HL.Number)) << function(self, initIndex)
+    self.view.mapRemindBtn.gameObject:SetActiveIfNecessary(false)
+    self.view.mapTrackingInfo.gameObject:SetActiveIfNecessary(false)
+    self.view.mapTransactionReminderPopUp.gameObject:SetActiveIfNecessary(true)
+    self.m_isRemindTipShowing = true
+
+    if DeviceInfo.usingController then
+        self:_ToggleControllerMoveAndZoom(false)
+        Notify(MessageConst.SHOW_AS_CONTROLLER_SMALL_MENU, {
+            panelId = PANEL_ID,
+            isGroup = true,
+            id = self.view.mapTransactionReminderPopUp.view.inputGroup.groupId,
+            hintPlaceholder = self.view.controllerHintPlaceholder,
+            rectTransform = self.view.mapTransactionReminderPopUp.view.rectTransform,
+            panelOffset = MAP_BLOCK_ORDER_OFFSET,
+            noHighlight = true,
+        })
+    end
+
+    self.view.mapTransactionReminderPopUp:InitMapRemind(self.m_currLevelId, self.m_remindTipInfo, function()
         if DeviceInfo.usingController then
-            self:_ToggleControllerMoveAndZoom(false)
-            Notify(MessageConst.SHOW_AS_CONTROLLER_SMALL_MENU, {
-                panelId = PANEL_ID,
-                isGroup = true,
-                id = self.view.mapTransactionReminderPopUp.view.inputGroup.groupId,
-                hintPlaceholder = self.view.controllerHintPlaceholder,
-                rectTransform = self.view.mapTransactionReminderPopUp.view.rectTransform,
-                panelOffset = MAP_BLOCK_ORDER_OFFSET,
-                noHighlight = true,
-            })
+            self:_ToggleControllerMoveAndZoom(true)
+            Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.mapTransactionReminderPopUp.view.inputGroup.groupId)
         end
 
-        self.view.mapTransactionReminderPopUp:InitMapRemind(self.m_currLevelId, remandInfo, function()
-            if DeviceInfo.usingController then
-                self:_ToggleControllerMoveAndZoom(true)
-                Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.mapTransactionReminderPopUp.view.inputGroup.groupId)
-            end
-
-            self.view.mapTransactionReminderPopUp.view.wrapper:PlayOutAnimation(function()
-                self.view.mapRemindBtn.gameObject:SetActiveIfNecessary(true)
-                self.view.mapTrackingInfo.gameObject:SetActiveIfNecessary(true)
-                self.view.mapTransactionReminderPopUp.gameObject:SetActiveIfNecessary(false)
-            end)
+        self.view.mapTransactionReminderPopUp.view.wrapper:PlayOutAnimation(function()
+            self.view.mapRemindBtn.gameObject:SetActiveIfNecessary(true)
+            self.view.mapTrackingInfo.gameObject:SetActiveIfNecessary(true)
+            self.view.mapTransactionReminderPopUp.gameObject:SetActiveIfNecessary(false)
         end)
-    end)
+
+        self.m_isRemindTipShowing = false
+    end, initIndex)
+end
+
+
+
+MapCtrl.GetRemindTipState = HL.Method().Return(HL.Table) << function(self)
+    local tabIndex
+    if self.m_isRemindTipShowing then
+        tabIndex = self.view.mapTransactionReminderPopUp:GetCurTabIndex()
+    end
+    return {
+        isShowing = self.m_isRemindTipShowing,
+        tabIndex = tabIndex,
+    }
+end
+
+
+
+
+MapCtrl.RecoverRemindTip = HL.Method(HL.Number) << function(self, initIndex)
+    self:_OnRemindTipBtnClick(initIndex)
 end
 
 
@@ -1438,7 +1506,7 @@ MapCtrl._RefreshSelectOptionList = HL.Method(HL.String, HL.Table) << function(se
         
         if templateData.markType == GEnums.MarkType.CustomMark then
             cell.name.text = markRuntimeData.note
-        elseif templateData.markType == GEnums.MarkType.SnapshotActivity then
+        elseif templateData.markType == GEnums.MarkType.SnapshotActivity or templateData.markType == GEnums.MarkType.SnapshotActivityNew then
             cell.name.text = MapUtils.getActivitySnapShotMarkTitle(markRuntimeData)
         else
             cell.name.text = templateData.name
@@ -1687,6 +1755,12 @@ MapCtrl._InitZoomNode = HL.Method() << function(self)
                 end
             end
         end
+
+        if self.m_waitAutoSwitchTierId < 0 and self.m_waitRecoverTierId > 0 then
+            self.m_waitAutoSwitchTierId = self.m_waitRecoverTierId
+        end
+        self.m_waitRecoverTierId = -1
+
         local zoomSlider = zoomNode.zoomSlider
         zoomSlider.value = zoomSlider.minValue + initZoomScaleRatio * (zoomSlider.maxValue - zoomSlider.minValue)
     end
@@ -1821,6 +1895,18 @@ end
 
 
 
+MapCtrl._TryRecoverBigRectState = HL.Method(HL.Opt(HL.Any)) << function(self, args)
+    if args == nil or args.bigRectState == nil then
+        return
+    end
+    self.view.bigRectHelper:RecoverContainerState(args.bigRectState)
+    self:_RefreshZoomValue()
+    args.bigRectState = nil
+end
+
+
+
+
 
 
 
@@ -1876,7 +1962,7 @@ end
 
 
 MapCtrl._OnInfoPopupBtnClick = HL.Method() << function(self)
-    UIManager:Open(PanelId.MapInfoPopup, { self.m_buildingInfo, self.m_collectionInfo })
+    UIManager:Open(PanelId.MapInfoPopup, self:GetPopupInfoState())
 end
 
 
@@ -2093,14 +2179,20 @@ end
 
 MapCtrl._InitFilterButton = HL.Method() << function(self)
     self.view.filterBtn.button.onClick:AddListener(function()
-        self:_ToggleControllerMoveAndZoom(false)
-        Notify(MessageConst.SHOW_LEVEL_MAP_FILTER, {
-            onCloseCallback = function()
-                self:_ToggleControllerMoveAndZoom(true)
-            end
-        })
+        self:_OnFilterBtnClick()
     end)
     self:_RefreshFilterBtnState()
+end
+
+
+
+MapCtrl._OnFilterBtnClick = HL.Method() << function(self)
+    self:_ToggleControllerMoveAndZoom(false)
+    Notify(MessageConst.SHOW_LEVEL_MAP_FILTER, {
+        onCloseCallback = function()
+            self:_ToggleControllerMoveAndZoom(true)
+        end
+    })
 end
 
 
@@ -2115,7 +2207,8 @@ end
 
 MapCtrl._ResetFilterState = HL.Method() << function(self)
     local useServerFilterState = GameInstance.player.mapManager.useServerFilterState
-    if not useServerFilterState then
+    
+    if not InputManagerInst.inChangingInputDevice and not useServerFilterState then
         GameInstance.player.mapManager:ResetFilterState()
     end
 end
@@ -2649,8 +2742,52 @@ end
 
 
 
+MapCtrl.GetBigRectRecoverStateArg = HL.Method().Return(HL.Any) << function(self)
+    return self.view.bigRectHelper:GetRecoverState()
+end
+
+
+
+MapCtrl.GetTierRecoverId = HL.Method().Return(HL.Number) << function(self)
+    if self.m_currTierIdList == nil or next(self.m_currTierIdList) == nil then
+        return -1
+    end
+    return self.m_currTierIdList[self.m_currTierIndex]
+end
+
+
+
+MapCtrl.GetPopupInfoState = HL.Method().Return(HL.Table) << function(self)
+    return {
+        self.m_buildingInfo,
+        self.m_collectionInfo
+    }
+end
+
+
+
+MapCtrl.GetCurrState = HL.Method().Return(HL.Table) << function(self)
+    return {
+        currLevelId = self.m_currLevelId,
+        currMapId = self.m_currMapId,
+        selectedMarkInstId = self.m_selectMarkInstId,
+    }
+end
+
+
+
+MapCtrl.OpenFilterPanel = HL.Method() << function(self)
+    self:_OnFilterBtnClick()
+end
+
+
+
 
 MapCtrl.ResetMapStateToTargetLevel = HL.Method(HL.Table) << function(self, args)
+    if self.m_isResettingToTargetLevel then
+        return
+    end
+
     local instId, levelId = args.instId, args.levelId
     local needShowDetail = not string.isEmpty(instId)
     if needShowDetail then
@@ -2662,6 +2799,7 @@ MapCtrl.ResetMapStateToTargetLevel = HL.Method(HL.Table) << function(self, args)
         Notify(MessageConst.HIDE_LEVEL_MAP_MARK_DETAIL)
     end
 
+    self.view.bigRectHelper:ClearAllTween()
     self.view.bigRectHelper.enabled = false
     self.view.touchPanel.enabled = false
     self.view.fullScreenMask.gameObject:SetActive(true)
@@ -2679,10 +2817,10 @@ MapCtrl.ResetMapStateToTargetLevel = HL.Method(HL.Table) << function(self, args)
         self:_RefreshLevelMapContent()
         self:_ResetZoomSliderValue(needShowDetail)
 
-        if needShowDetail then
-            self:_ShowMarkDetail(instId, true)
+        if not string.isEmpty(self.m_waitInitShowDetailMarkInstId) then
+            self:_ShowMarkDetail(self.m_waitInitShowDetailMarkInstId, true)
+            self:_StartCheckSwitchTierOnFocus(self.m_waitInitShowDetailMarkInstId)
             self.m_waitInitShowDetailMarkInstId = ""
-            self:_StartCheckSwitchTierOnFocus(instId)
         end
 
         self:_PlayMapResetAnimation(true)

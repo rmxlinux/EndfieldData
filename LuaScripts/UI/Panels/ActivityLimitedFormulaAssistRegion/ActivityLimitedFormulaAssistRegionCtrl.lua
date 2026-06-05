@@ -89,10 +89,11 @@ ActivityLimitedFormulaAssistRegionCtrl.OnCreate = HL.Override(HL.Any) << functio
     local stageData = Tables.activityConditionalMultiStageTable:GetValue(self.m_activityId)
     self.m_stageList = {}
     for id, data in pairs(stageData.stageList) do
+        local _, stageInfo = self.m_activityData.stageDataDict:TryGetValue(id)
         table.insert(self.m_stageList, {
             id = id,
             sort = data.sortId,
-            startTime = self.m_activityData.startTime + data.timeOffset * Const.SEC_PER_HOUR
+            startTime = stageInfo.OpenTimeTs
         })
     end
     table.sort(self.m_stageList, Utils.genSortFunction({ "sort" }, true))
@@ -126,12 +127,12 @@ ActivityLimitedFormulaAssistRegionCtrl.OnCreate = HL.Override(HL.Any) << functio
         end
         return prefix .. UIUtils.getLeftTime(leftTime)
     end
-    local endStageTime = self.m_activityData.startTime + stageData.stageList[self.m_activityCfgData.endStageId].timeOffset * Const.SEC_PER_HOUR
-    if self.m_isEndStage then
-        endStageTime = self.m_activityData.endTime
-    else
-        endStageTime = self.m_activityData.startTime + stageData.stageList[self.m_activityCfgData.endStageId].timeOffset * Const.SEC_PER_HOUR
-    end
+    local endStageTime = self.m_activityData.endTime
+    
+    
+    
+    
+    
     self.view.activityCommonInfo.view.infoNode.countDownWidget:InitCountDownText(endStageTime, args.timeOnComplete, timeFormatFunc)
     self.view.activityCommonInfo.view.gotoNode.btnDetailRedDot:InitRedDot("ActivityLimitedFormula", self.m_activityId)
 
@@ -245,13 +246,6 @@ end
 
 
 ActivityLimitedFormulaAssistRegionCtrl._UpdateActivityData = HL.Method() << function(self)
-    
-    if self.m_activityData.unlockAtEndStage then
-        self.m_curStageIndex = 0
-        self.m_isEndStage = true
-        return
-    end
-
     for i = #self.m_stageList, 1, -1 do
         if self.m_stageList[i].id ~= self.m_activityCfgData.endStageId then
             local csStageInfo = self.m_activityData:GetStageData(self.m_stageList[i].id)

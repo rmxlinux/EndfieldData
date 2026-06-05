@@ -28,6 +28,9 @@ local PANEL_ID = PanelId.FacSaveBlueprint
 
 
 
+
+
+
 FacSaveBlueprintCtrl = HL.Class('FacSaveBlueprintCtrl', uiCtrl.UICtrl)
 
 
@@ -81,6 +84,7 @@ FacSaveBlueprintCtrl.m_fromFriend = HL.Field(HL.Boolean) << false
 
 
 FacSaveBlueprintCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    local recoverState = arg and arg.recoverState or nil
     self.view.cancelBtn.onClick:AddListener(function()
         self:_OnClickClose()
     end)
@@ -142,6 +146,41 @@ FacSaveBlueprintCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_RefreshController()
     end
 
+    self:_TryRecoverState(recoverState)
+end
+
+
+
+FacSaveBlueprintCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    if not self.m_bpInst then
+        return
+    end
+    local content = self.view.blueprintContent
+    return {
+        bpInst = self.m_bpInst,
+        id = self.m_blueprintID,
+        isSharing = self.m_isSharing,
+        isImporting = self.m_isImporting,
+        shareCode = self.m_shareCode,
+        fromFriend = self.m_fromFriend,
+        recoverState = content:GetRecoverStateArg(),
+    }
+end
+
+
+
+FacSaveBlueprintCtrl.GetIsCreating = HL.Method().Return(HL.Boolean) << function(self)
+    return self.m_isCreate
+end
+
+
+
+
+FacSaveBlueprintCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if not recoverState then
+        return
+    end
+    self.view.blueprintContent:RecoverState(recoverState)
 end
 
 

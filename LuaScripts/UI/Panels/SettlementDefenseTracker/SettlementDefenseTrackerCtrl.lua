@@ -126,7 +126,7 @@ SettlementDefenseTrackerCtrl._InitTrackerTargets = HL.Method() << function(self)
             local coreTracker = self.m_coreTrackerCache:Get()
             table.insert(self.m_coreTrackerDataList, self:_BuildTrackerData(coreWorldPos, coreTracker))
 
-            local callback = function(entity, changedHp)
+            local callback = function(entity, changedHp, isMaxHpChanged)
                 if changedHp < 0 then
                     coreTracker.animationWrapper:ClearTween()
                     coreTracker.animationWrapper:PlayWithTween(TRACKER_CORE_ATTACKED_IN_ANIMATION_NAME)

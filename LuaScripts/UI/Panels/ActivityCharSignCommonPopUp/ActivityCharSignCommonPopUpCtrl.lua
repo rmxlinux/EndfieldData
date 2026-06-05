@@ -14,6 +14,7 @@ local PANEL_ID = PanelId.ActivityCharSignCommonPopUp
 
 
 
+
 ActivityCharSignCommonPopUpCtrl = HL.Class('ActivityCharSignCommonPopUpCtrl', uiCtrl.UICtrl)
 
 
@@ -99,10 +100,21 @@ ActivityCharSignCommonPopUpCtrl._Close = HL.Method() << function(self)
     if UIManager:IsOpen(PanelId.RewardsPopUpForSystem) then
         UIManager:Close(PanelId.RewardsPopUpForSystem)
     end
+    Notify(MessageConst.HIDE_ITEM_TIPS)
     self.view.btnClose.gameObject:SetActive(false)
     self.m_checkInWidget.view.info.view.animationWrapper:PlayOutAnimation(function()
         self.m_closeCallback()
     end)
+end
+
+
+
+
+ActivityCharSignCommonPopUpCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
+    
+    if self.m_checkInWidget and self.m_checkInWidget.view and self.m_checkInWidget.view.info then
+        self.m_checkInWidget.view.info:OnPanelInputBlocked(active)
+    end
 end
 
 

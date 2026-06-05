@@ -37,6 +37,8 @@ local HunterModeInstructionId = "hunter_mode"
 
 
 
+
+
 DungeonCommonInfo = HL.Class('DungeonCommonInfo', UIWidgetBase)
 
 
@@ -505,14 +507,116 @@ end
 
 
 
-DungeonCommonInfo._OnBtnEnemyDetailsClick = HL.Method() << function(self)
+
+DungeonCommonInfo._OnBtnEnemyDetailsClick = HL.Method(HL.Opt(HL.Number)) << function(self, initSelectEnemyLuaIndex)
     local dungeonCfg = Tables.dungeonTable[self.m_dungeonId]
     local dungeonTypeCfg = Tables.dungeonTypeTable[dungeonCfg.dungeonCategory]
-    UIManager:AutoOpen(PanelId.CommonEnemyPopup, { title = dungeonTypeCfg.enemyInfoTitle,
-                                                   enemyListTitle = Language["ui_dungeon_enemy_popup_info_list"],
-                                                   enemyInfoTitle = Language["ui_dungeon_enemy_popup_info_desc"],
-                                                   enemyIds = dungeonCfg.enemyIds,
-                                                   enemyLevels = dungeonCfg.enemyLevels })
+    local enemyPopupArg = {
+        title = dungeonTypeCfg.enemyInfoTitle,
+        enemyListTitle = Language["ui_dungeon_enemy_popup_info_list"],
+        enemyInfoTitle = Language["ui_dungeon_enemy_popup_info_desc"],
+        enemyIds = dungeonCfg.enemyIds,
+        enemyLevels = dungeonCfg.enemyLevels,
+    }
+    if initSelectEnemyLuaIndex ~= nil then
+        enemyPopupArg.initSelectEnemyLuaIndex = initSelectEnemyLuaIndex
+    end
+    UIManager:AutoOpen(PanelId.CommonEnemyPopup, enemyPopupArg)
+end
+
+
+
+DungeonCommonInfo.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and instructionCtrl.id == HunterModeInstructionId then
+        return {
+            popupType = "HunterModeInstructionBook",
+        }
+    end
+
+    local isRewardSelectOpen, rewardSelectCtrl = UIManager:IsOpen(PanelId.DungeonRewardSelectPopup)
+    if isRewardSelectOpen then
+        return {
+            popupType = "RewardDetails",
+        }
+    end
+
+    local isRewardDetailsOpen, rewardDetailsCtrl = UIManager:IsOpen(PanelId.CommonRewardDetailsPopup)
+    if isRewardDetailsOpen then
+        return {
+            popupType = "RewardDetails",
+        }
+    end
+
+    local isEnemyPopupOpen, enemyPopupCtrl = UIManager:IsOpen(PanelId.CommonEnemyPopup)
+    if isEnemyPopupOpen then
+        local popupState = {
+            popupType = "EnemyDetails",
+        }
+        if HL.TryGet(enemyPopupCtrl, "GetCurSelectEnemyLuaIndex") then
+            local selectedEnemyLuaIndex = enemyPopupCtrl:GetCurSelectEnemyLuaIndex()
+            if selectedEnemyLuaIndex > 0 then
+                popupState.selectedEnemyLuaIndex = selectedEnemyLuaIndex
+            end
+        end
+        return popupState
+    end
+
+    local isUnlockPopupOpen, unlockPopupCtrl = UIManager:IsOpen(PanelId.DungeonUnlockConditionPopup)
+    if isUnlockPopupOpen then
+        return {
+            popupType = "UnlockCondition",
+        }
+    end
+end
+
+
+
+
+DungeonCommonInfo.TryRecoverPopupState = HL.Method(HL.Any) << function(self, popupState)
+    if popupState == nil or string.isEmpty(popupState.popupType) then
+        return
+    end
+
+    if popupState.popupType == "HunterModeInstructionBook" then
+        local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+        if isOpen and instructionCtrl.id == HunterModeInstructionId then
+            return
+        end
+        self:_OnTipsBtnClick()
+        return
+    end
+
+    if popupState.popupType == "RewardDetails" then
+        local isRewardSelectOpen, rewardSelectCtrl = UIManager:IsOpen(PanelId.DungeonRewardSelectPopup)
+        if isRewardSelectOpen then
+            return
+        end
+        local isRewardDetailsOpen, rewardDetailsCtrl = UIManager:IsOpen(PanelId.CommonRewardDetailsPopup)
+        if isRewardDetailsOpen then
+            return
+        end
+        self:_OnBtnRewardDetailsClick()
+        return
+    end
+
+    if popupState.popupType == "EnemyDetails" then
+        local isOpen, enemyPopupCtrl = UIManager:IsOpen(PanelId.CommonEnemyPopup)
+        if isOpen then
+            return
+        end
+        local initSelectEnemyLuaIndex = popupState.selectedEnemyLuaIndex
+        self:_OnBtnEnemyDetailsClick(initSelectEnemyLuaIndex)
+        return
+    end
+
+    if popupState.popupType == "UnlockCondition" then
+        local isOpen, unlockPopupCtrl = UIManager:IsOpen(PanelId.DungeonUnlockConditionPopup)
+        if isOpen then
+            return
+        end
+        self:_OnBtnUnlockConditionClick()
+    end
 end
 
 

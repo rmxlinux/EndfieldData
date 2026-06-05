@@ -50,7 +50,7 @@ end
 AdventureActivityCtrl.OnShow = HL.Override() << function(self)
     local firstCell = self.m_getCellFunc(self.view.itemScrollList:Get(0))
     if firstCell then
-        UIUtils.setAsNaviTarget(firstCell.normalNode)
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.naviGroup, firstCell.normalNode)
     end
 
     

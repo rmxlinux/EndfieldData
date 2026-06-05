@@ -64,11 +64,7 @@ ActivityFreeMonthlyPassCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
 
     
     ActivityUtils.backToMainHudWhenActivityClosed(self, self.m_activityId)
-end
 
-
-
-ActivityFreeMonthlyPassCtrl._OnPhaseItemBind = HL.Override() << function(self)
     
     UIManager:Open(PanelId.ActivityFreeMonthlyPass3D, {
         activityId = self.m_activityId,

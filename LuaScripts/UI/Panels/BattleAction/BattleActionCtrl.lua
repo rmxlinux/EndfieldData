@@ -51,6 +51,10 @@ local PlayerController = CS.Beyond.Gameplay.Core.PlayerController
 
 
 
+
+
+
+
 BattleActionCtrl = HL.Class('BattleActionCtrl', uiCtrl.UICtrl)
 
 
@@ -69,7 +73,7 @@ BattleActionCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CONTROLLER_INDICATOR_CHANGE] = 'OnToggleControllerSkillIndicator',
     [MessageConst.ON_LOCK_TARGET_CHANGED] = 'OnLockTargetChanged',
     [MessageConst.ON_SQUAD_INFIGHT_CHANGED] = 'OnInFightChanged',
-    [MessageConst.ON_TOGGLE_UI_ACTION] = 'OnToggleUiAction',
+    [MessageConst.AFTER_TOGGLE_UI_ACTION] = 'AfterToggleUiAction',
     [MessageConst.ON_SKILL_BUTTON_ACTIVE_CONFIG_CHANGED] = 'OnSkillButtonActiveConfigChanged',
     [MessageConst.FORBID_SYSTEM_CHANGED] = 'OnForbidSystemChanged',
 }
@@ -116,10 +120,19 @@ do
 
     
     BattleActionCtrl.m_forbidLockTargetKeys = HL.Field(HL.Table)
+
+    
+    BattleActionCtrl.m_hideSkillNodeKeys = HL.Field(HL.Table)
+
+    
+    BattleActionCtrl.m_hideSkillShowNodeKeys = HL.Field(HL.Table)
 end
 
-local SYSTEM_UNLOCK_LOCK_TARGET_KEY = "system_unlock"
-local FORBID_SYSTEM_LOCK_TARGET_KEY = "forbid_system"
+local SYSTEM_UNLOCK_KEY = "system_unlock"
+local FORBID_SYSTEM_KEY = "forbid_system"
+local THROW_MODE_KEY = "throw_mode"
+local WATER_DRONE_MODE_KEY = "water_drone_mode"
+local SKILL_BUTTON_INACTIVE_KEY = "skill_button_inactive"
 
 
 
@@ -133,7 +146,6 @@ BattleActionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             GameWorld.battle:OnClickScreen(eventData)
         end
         UIManager.commonTouchPanel.onClick:AddListener(self.m_onClickScreen)
-        self.view.skillShowNode.gameObject:SetActive(isNormalSkillUnlock and GameWorld.battle.skillButtonActive)
         self.view.skillShowBtn.onClick:AddListener(function(args)
             self:OnClickSkillShowBtn(args)
         end)
@@ -157,6 +169,8 @@ BattleActionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     self.m_forbidLockTargetKeys = {}
+    self.m_hideSkillNodeKeys = {}
+    self.m_hideSkillShowNodeKeys = {}
 
     self:_CreateWorldObjectRoot(true )
     self:_InitEnemyFootBar()
@@ -167,13 +181,23 @@ BattleActionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.atbNode:OnCreate()
 
-    self.view.skillNode.gameObject:SetActive(isNormalSkillUnlock)
+    if not isNormalSkillUnlock then
+        self.m_hideSkillNodeKeys[SYSTEM_UNLOCK_KEY] = true
+        self.m_hideSkillShowNodeKeys[SYSTEM_UNLOCK_KEY] = true
+    end
+    if not GameWorld.battle.skillButtonActive then
+        self.m_hideSkillShowNodeKeys[SKILL_BUTTON_INACTIVE_KEY] = true
+    end
+    self:_RefreshSkillNodeState()
+    if self.isDefaultPanel then
+        self:_RefreshSkillShowNodeState()
+    end
     self.view.atbNode.gameObject:SetActive(isNormalSkillUnlock)
     if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.LockTarget) then
-        self.m_forbidLockTargetKeys[SYSTEM_UNLOCK_LOCK_TARGET_KEY] = true
+        self.m_forbidLockTargetKeys[SYSTEM_UNLOCK_KEY] = true
     end
     if Utils.isForbidden(ForbidType.ForbidLockTarget) then
-        self.m_forbidLockTargetKeys[FORBID_SYSTEM_LOCK_TARGET_KEY] = true
+        self.m_forbidLockTargetKeys[FORBID_SYSTEM_KEY] = true
     end
     self:_RefreshLockTargetState()
 
@@ -222,6 +246,34 @@ BattleActionCtrl.OnShow = HL.Override() << function(self)
         self.view.hudFadeController:OnShow()
     end
     self.view.hpNode:OnShow()
+
+    
+    local isInThrowMode = GameWorld.battle.inThrowMode
+    if isInThrowMode then
+        self.m_forbidLockTargetKeys[THROW_MODE_KEY] = true
+        self.m_hideSkillNodeKeys[THROW_MODE_KEY] = true
+        self.m_hideSkillShowNodeKeys[THROW_MODE_KEY] = true
+    else
+        self.m_forbidLockTargetKeys[THROW_MODE_KEY] = nil
+        self.m_hideSkillNodeKeys[THROW_MODE_KEY] = nil
+        self.m_hideSkillShowNodeKeys[THROW_MODE_KEY] = nil
+    end
+
+    
+    local isInWaterDroneMode = GameWorld.battle.inWaterDroneMode
+    if isInWaterDroneMode then
+        self.m_forbidLockTargetKeys[WATER_DRONE_MODE_KEY] = true
+        self.m_hideSkillNodeKeys[WATER_DRONE_MODE_KEY] = true
+    else
+        self.m_forbidLockTargetKeys[WATER_DRONE_MODE_KEY] = nil
+        self.m_hideSkillNodeKeys[WATER_DRONE_MODE_KEY] = nil
+    end
+
+    self:_RefreshLockTargetState()
+    self:_RefreshSkillNodeState()
+    if self.isDefaultPanel then
+        self:_RefreshSkillShowNodeState()
+    end
 end
 
 
@@ -325,11 +377,19 @@ do
         
         local data = unpack(args)
         GameWorld.battle:ForceResetLockTarget()
-        self.view.aimBtn.gameObject:SetActive(not data.valid)
-        self.view.skillNode.gameObject:SetActive(not data.valid)
+        if data.valid then
+            self.m_forbidLockTargetKeys[THROW_MODE_KEY] = true
+            self.m_hideSkillNodeKeys[THROW_MODE_KEY] = true
+            self.m_hideSkillShowNodeKeys[THROW_MODE_KEY] = true
+        else
+            self.m_forbidLockTargetKeys[THROW_MODE_KEY] = nil
+            self.m_hideSkillNodeKeys[THROW_MODE_KEY] = nil
+            self.m_hideSkillShowNodeKeys[THROW_MODE_KEY] = nil
+        end
+        self:_RefreshLockTargetState()
+        self:_RefreshSkillNodeState()
         if self.isDefaultPanel then
-            local isNormalSkillUnlock = Utils.isSystemUnlocked(GEnums.UnlockSystemType.NormalSkill)
-            self.view.skillShowNode.gameObject:SetActive(not data.valid and isNormalSkillUnlock and GameWorld.battle.skillButtonActive)
+            self:_RefreshSkillShowNodeState()
         end
         self:RefreshSkills()
     end
@@ -388,8 +448,15 @@ do
     
     BattleActionCtrl._ChangeWaterDroneMode = HL.Method(HL.Boolean) << function(self, isEnter)
         GameWorld.battle:ForceResetLockTarget()
-        self.view.aimBtn.gameObject:SetActive(not isEnter)
-        self.view.skillNode.gameObject:SetActive(not isEnter)
+        if isEnter then
+            self.m_forbidLockTargetKeys[WATER_DRONE_MODE_KEY] = true
+            self.m_hideSkillNodeKeys[WATER_DRONE_MODE_KEY] = true
+        else
+            self.m_forbidLockTargetKeys[WATER_DRONE_MODE_KEY] = nil
+            self.m_hideSkillNodeKeys[WATER_DRONE_MODE_KEY] = nil
+        end
+        self:_RefreshLockTargetState()
+        self:_RefreshSkillNodeState()
         self:RefreshSkills()
     end
 end
@@ -438,7 +505,7 @@ do
     
     
     
-    BattleActionCtrl.OnToggleUiAction = HL.Method(HL.Table) << function(self, arg)
+    BattleActionCtrl.AfterToggleUiAction = HL.Method(HL.Table) << function(self, arg)
         self:_OnPanelInputBlocked(self.view.inputGroup.groupEnabled)
         local isShow, isUltimate = unpack(arg)
         if not isUltimate then
@@ -461,11 +528,14 @@ do
     
     
     BattleActionCtrl.OnPressAndReleaseSkillButton = HL.Method(HL.Table) << function(self, arg)
-        if not self.m_isNormalSkillUnlock then
+        if not self:IsShow() or not self.m_isNormalSkillUnlock then
             return
         end
         local luaIndex = LuaIndex(unpack(arg))
         local skillCell = self.m_skillCellList[luaIndex]
+        if not skillCell.gameObject.activeSelf then
+            return
+        end
         skillCell:OnPressSkillStart()
         skillCell:OnPressSkillEnd()
     end
@@ -538,7 +608,10 @@ do
                 if self.m_isNormalSkillUnlock then
                     local charIndex = InputManagerInst:TryPressControllerIndicatorWhenSkillButtonJustPressed()
                     if charIndex >= 0 then
-                        self.m_skillCellList[LuaIndex(charIndex)]:OnPressSkillStart()
+                        local skillCell = self.m_skillCellList[LuaIndex(charIndex)]
+                        if skillCell.gameObject.activeSelf then
+                            skillCell:OnPressSkillStart()
+                        end
                     end
                 end
             end
@@ -574,9 +647,9 @@ do
         local forbidType, isForbidden = unpack(args)
         if forbidType == ForbidType.ForbidLockTarget then
             if isForbidden then
-                self.m_forbidLockTargetKeys[FORBID_SYSTEM_LOCK_TARGET_KEY] = true
+                self.m_forbidLockTargetKeys[FORBID_SYSTEM_KEY] = true
             else
-                self.m_forbidLockTargetKeys[FORBID_SYSTEM_LOCK_TARGET_KEY] = nil
+                self.m_forbidLockTargetKeys[FORBID_SYSTEM_KEY] = nil
             end
             self:_RefreshLockTargetState()
         end
@@ -591,6 +664,20 @@ do
             GameWorld.battle:ToggleLockTargetEnd()
         end
     end
+
+    
+    
+    BattleActionCtrl._RefreshSkillNodeState = HL.Method() << function(self)
+        local isHidden = next(self.m_hideSkillNodeKeys) ~= nil
+        self.view.skillNode.gameObject:SetActive(not isHidden)
+    end
+
+    
+    
+    BattleActionCtrl._RefreshSkillShowNodeState = HL.Method() << function(self)
+        local isHidden = next(self.m_hideSkillShowNodeKeys) ~= nil
+        self.view.skillShowNode.gameObject:SetActive(not isHidden)
+    end
 end
 
 do 
@@ -602,10 +689,12 @@ do
         
         if systemIndex == GEnums.UnlockSystemType.NormalSkill:GetHashCode() then
             self.m_isNormalSkillUnlock = true
-            self.view.skillNode.gameObject:SetActive(true)
+            self.m_hideSkillNodeKeys[SYSTEM_UNLOCK_KEY] = nil
+            self:_RefreshSkillNodeState()
             self.view.atbNode.gameObject:SetActive(true)
             if self.isDefaultPanel then
-                self.view.skillShowNode.gameObject:SetActive(self.m_isNormalSkillUnlock and GameWorld.battle.skillButtonActive)
+                self.m_hideSkillShowNodeKeys[SYSTEM_UNLOCK_KEY] = nil
+                self:_RefreshSkillShowNodeState()
             end
         end
 
@@ -622,7 +711,7 @@ do
 
         
         if systemIndex == GEnums.UnlockSystemType.LockTarget:GetHashCode() then
-            self.m_forbidLockTargetKeys[SYSTEM_UNLOCK_LOCK_TARGET_KEY] = nil
+            self.m_forbidLockTargetKeys[SYSTEM_UNLOCK_KEY] = nil
             self:_RefreshLockTargetState()
         end
     end
@@ -634,7 +723,12 @@ do
             self.view.skillBgNode.gameObject:SetActive(GameWorld.battle.skillButtonActive)
         end
         if self.isDefaultPanel then
-            self.view.skillShowNode.gameObject:SetActive(self.m_isNormalSkillUnlock and GameWorld.battle.skillButtonActive)
+            if GameWorld.battle.skillButtonActive then
+                self.m_hideSkillShowNodeKeys[SKILL_BUTTON_INACTIVE_KEY] = nil
+            else
+                self.m_hideSkillShowNodeKeys[SKILL_BUTTON_INACTIVE_KEY] = true
+            end
+            self:_RefreshSkillShowNodeState()
         end
     end
 end

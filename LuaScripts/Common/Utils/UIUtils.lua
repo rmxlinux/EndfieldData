@@ -210,8 +210,24 @@ end
 
 
 
-function UIUtils.setAsNaviTargetInSilentModeIfNecessary(targetNaviGroup, targetSelectable)
-    InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetNaviGroup, targetSelectable)
+
+function UIUtils.setAsNaviTargetInSilentModeIfPhaseIsTop(targetNaviGroup, targetSelectable, needTopPhaseId)
+    UIUtils.setAsNaviTargetInSilentModeIfNecessary(targetNaviGroup, targetSelectable, PhaseManager:GetPhaseDummyNaviLayerName(needTopPhaseId))
+end
+
+
+
+
+function UIUtils.setAsNaviTargetInSilentModeIfNecessary(targetNaviGroup, targetSelectable, needTopDummyLayerKey)
+    if string.isEmpty(needTopDummyLayerKey) then
+        InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetNaviGroup, targetSelectable)
+        return
+    end
+    local needTopDummyLayer = LuaSystemManager.dummyNaviLayerSystem:GetDummyNaviLayerByKey(needTopDummyLayerKey)
+    if needTopDummyLayer ~= nil then
+        
+        InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetNaviGroup, targetSelectable, needTopDummyLayer)
+    end
 end
 
 
@@ -1101,6 +1117,10 @@ function UIUtils.resolveTextGender(text)
     return CS.Beyond.Gameplay.GameplayUIUtils.ResolveTextGender(text)
 end
 
+function UIUtils.resolveTextGenderWithNpcGender(text, gender)
+    return CS.Beyond.Gameplay.GameplayUIUtils.ResolveTextGenderWithGender(text, gender:ToInt())
+end
+
 function UIUtils.genDynamicBlackScreenMaskData(systemName, fadeInTime, fadeOutTime, fadeInCallback)
     local maskData = CS.Beyond.Gameplay.UICommonMaskData()
     maskData.fadeInTime = fadeInTime
@@ -1324,6 +1344,7 @@ function UIUtils.displayEquipInfo(view, loader, itemId, instId)
     end
 end
 
+
 function UIUtils.displayWeaponGemInfo(view, loader, itemId, instId)
     view.gemSkillNode:InitGemSkillNode(instId)
     if view.equippedNode then
@@ -1346,6 +1367,31 @@ function UIUtils.displayWeaponGemInfo(view, loader, itemId, instId)
             end
         end
         view.domainTagNode:InitDomainTagNode(domainId)
+    end
+
+    local hasGemInst = instId and instId > 0
+    local isPerfectMatch = false
+    if hasGemInst then
+        isPerfectMatch = UIUtils.getGemWishListPerfectMatch(instId)
+    end
+    if view.gemNode then
+        view.gemNode.gameObject:SetActive(isPerfectMatch)
+        
+        local showEmptyNode = not isPerfectMatch
+        if view.emptyInfoNode then
+            
+            view.emptyInfoNode.gameObject:SetActive(showEmptyNode)
+        else
+            
+            view.emptyNode.gameObject:SetActive(showEmptyNode)
+        end
+    end
+    if view.weaponCompatibleNode then
+        if hasGemInst then
+            view.weaponCompatibleNode:InitWeaponCompatibleNode(instId)
+        else
+            view.weaponCompatibleNode.gameObject:SetActive(false)
+        end
     end
 end
 
@@ -1439,9 +1485,9 @@ end
 
 
 
-function UIUtils.getLeftTimeToSecond(leftSec)
+function UIUtils.getLeftTimeToSecond(leftSec, forceLong)
     leftSec = lume.round(leftSec)
-    if leftSec <= Const.SEC_PER_HOUR then
+    if leftSec <= Const.SEC_PER_HOUR and not forceLong then
         local format = Language.TIME_FORMAT_ONE_COLON
         return string.format(format, math.floor(leftSec / Const.SEC_PER_MIN), math.fmod(leftSec, Const.SEC_PER_MIN))
     else
@@ -2396,6 +2442,93 @@ function UIUtils.getSerialNum(intNum)
         end
     end
     return result
+end
+
+
+
+
+function UIUtils.isGemPerfectMatchWeapon(gemInstId, weaponTemplateId)
+    local gemInst = CharInfoUtils.getGemByInstId(gemInstId)
+    if not gemInst or gemInst.termList.Count < 3 then
+        return false
+    end
+
+    local weaponCfg = Tables.weaponBasicTable[weaponTemplateId]
+    if not weaponCfg or #weaponCfg.weaponSkillList < 3 then
+        return false
+    end
+
+    local gemTagSet = {}
+    for i = 0, gemInst.termList.Count - 1 do
+        local termId = gemInst.termList[i].termId
+        local _, termCfg = Tables.gemTable:TryGetValue(termId)
+        if termCfg then
+            gemTagSet[termCfg.tagId] = true
+        end
+    end
+
+    for _, skillId in pairs(weaponCfg.weaponSkillList) do
+        local _, skillCfg = Tables.skillPatchTable:TryGetValue(skillId)
+        if not skillCfg then
+            return false
+        end
+        local skillPatchData = skillCfg.SkillPatchDataBundle[0]
+        if not gemTagSet[skillPatchData.tagId] then
+            return false
+        end
+    end
+
+    return true
+end
+
+
+
+function UIUtils.getGemWishListPerfectMatch(gemInstId)
+    local gemInst = CharInfoUtils.getGemByInstId(gemInstId)
+    if not gemInst or gemInst.termList.Count < 3 then
+        return false, {}
+    end
+
+    
+    local _, gemItemCfg = Tables.itemTable:TryGetValue(gemInst.templateId)
+    if gemItemCfg and gemItemCfg.rarity <= 4 then
+        return false, {}
+    end
+
+    local tagInfos = {}
+    for i = 0, gemInst.termList.Count - 1 do
+        local termId = gemInst.termList[i].termId
+        local _, termCfg = Tables.gemTable:TryGetValue(termId)
+        if not termCfg then
+            return false, {}
+        end
+        table.insert(tagInfos, { termType = termCfg.termType, tagId = termCfg.tagId })
+    end
+
+    table.sort(tagInfos, function(a, b)
+        if a.termType ~= b.termType then
+            local cmp = a.termType:CompareTo(b.termType)
+            return cmp < 0
+        end
+        return a.tagId < b.tagId
+    end)
+
+    local key = tagInfos[1].tagId .. "+" .. tagInfos[2].tagId .. "+" .. tagInfos[3].tagId
+
+    local _, weaponList = Tables.gemTagKeyToWeaponTable:TryGetValue(key)
+    if not weaponList then
+        return false, {}
+    end
+
+    local matchList = {}
+    local wishList = GameInstance.player.inventory.weaponGemWishList
+    for i = 0, weaponList.list.Count - 1 do
+        local weaponId = weaponList.list[i]
+        if wishList:Contains(weaponId) then
+            table.insert(matchList, weaponId)
+        end
+    end
+    return #matchList > 0, matchList
 end
 
 

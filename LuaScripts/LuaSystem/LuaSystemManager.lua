@@ -81,9 +81,6 @@ LuaSystemManager.dummyNaviLayerSystem = HL.Field(HL.Forward('DummyNaviLayerSyste
 LuaSystemManager.appStoreSystem = HL.Field(HL.Forward('AppStoreSystem'))
 
 
-LuaSystemManager.psoCacheCorruptCheckSystem = HL.Field(HL.Forward('PsoCacheCorruptCheckSystem'))
-
-
 
 
 
@@ -105,7 +102,6 @@ LuaSystemManager.InitSystems = HL.Method() << function(self)
     self.uiRestoreSystem = self:_AddSystem("UIRestoreSystem")
     self.dummyNaviLayerSystem = self:_AddSystem("DummyNaviLayerSystem")
     self.appStoreSystem = self:_AddSystem("AppStoreSystem")
-    self.psoCacheCorruptCheckSystem = self:_AddSystem("PsoCacheCorruptCheckSystem")
 end
 
 

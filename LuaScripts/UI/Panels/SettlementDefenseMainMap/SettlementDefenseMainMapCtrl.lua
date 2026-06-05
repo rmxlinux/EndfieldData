@@ -127,7 +127,7 @@ SettlementDefenseMainMapCtrl._InitCoreInfos = HL.Method() << function(self)
                 maxHp = coreAbilitySystem.maxHp,
             }
 
-            local callback = function(entity, changedHp)
+            local callback = function(entity, changedHp, isMaxHpChanged)
                 self:_OnCoreHpChanged(luaIndex, changedHp)
             end
             self.m_hpChangeCallbackList[index] = callback

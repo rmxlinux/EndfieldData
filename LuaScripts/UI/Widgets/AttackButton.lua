@@ -74,13 +74,13 @@ AttackButton._OnFirstTimeInit = HL.Override() << function(self)
     end)
     self:RegisterMessage(MessageConst.TOGGLE_FORBID_ATTACK, function(args)
         self:ToggleForbidAttack(args)
-    end)
+    end, true)
     self:RegisterMessage(MessageConst.ON_APPLICATION_FOCUS, function(args)
         self:OnApplicationFocus(args)
     end)
     self:RegisterMessage(MessageConst.ON_SYSTEM_UNLOCK_CHANGED, function(args)
         self:OnSystemUnlock(args)
-    end)
+    end, true)
     self:RegisterMessage(MessageConst.ON_MAIN_CHARACTER_CHANGE, function(args)
         self:_RefreshAttackIcon()
     end)
@@ -98,7 +98,7 @@ AttackButton._OnFirstTimeInit = HL.Override() << function(self)
         if forbidType == ForbidType.ForbidAttack then
             self:ToggleForbidAttack({"ForbidSystem", isForbid})
         end
-    end)
+    end, true)
 
     if DeviceInfo.usingTouch then
         self.view.button.onPressStart:AddListener(function()
@@ -133,6 +133,9 @@ end
 AttackButton.OnShow = HL.Method() << function(self)
     self:_RefreshShowing()
     self:_RefreshAttackIcon()
+
+    self.view.anim:SampleClipAtPercent("mobile_attackbtn_pressed", 0)
+    self.view.attackPressedRing:SampleClipAtPercent("mobile_attackbtn_pressedring", 0)
 end
 
 
@@ -140,6 +143,10 @@ end
 AttackButton.OnHide = HL.Method() << function(self)
     self:_RefreshShowing()
     self:ReleaseNormalAttackBtn()
+    if self.m_isBreakingAttackPressPlaying then
+        self.view.finishKillAttackNodeAnimationWrapper:SampleClipAtPercent("mobile_finshkillattack_pressed", 0)
+        self.m_isBreakingAttackPressPlaying = false
+    end
 end
 
 
@@ -167,7 +174,7 @@ AttackButton._RefreshShowing = HL.Method() << function(self)
         local touchPanel = UIManager.commonTouchPanel
         self.m_pressScreen = function()
             if not DeviceInfo.usingTouch then
-                if InputManagerInst.inHideCursorMode then
+                if InputManagerInst.isDebugForceShow then
                     
                     
                     return
@@ -180,7 +187,7 @@ AttackButton._RefreshShowing = HL.Method() << function(self)
         end
         self.m_releaseScreen = function()
             if not DeviceInfo.usingTouch then
-                if InputManagerInst.inHideCursorMode then
+                if InputManagerInst.isDebugForceShow then
                     
                     
                     return
@@ -190,7 +197,7 @@ AttackButton._RefreshShowing = HL.Method() << function(self)
                 
                 
                 else
-                    if InputManagerInst.inHideCursorMode then
+                    if InputManagerInst.isDebugForceShow then
                         return
                     end
                     self:ReleaseNormalAttackBtn()

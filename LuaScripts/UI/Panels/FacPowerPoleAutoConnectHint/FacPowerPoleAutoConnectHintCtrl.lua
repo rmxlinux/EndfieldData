@@ -61,7 +61,7 @@ FacPowerPoleAutoConnectHintCtrl._UpdateTrackers = HL.Method() << function(self)
     end
     for i = 0, infos.Count - 1 do
         local info = infos[i]
-        local screenPos, isInside = UIUtils.objectPosToUI(info.Item3, self.uiCamera)
+        local screenPos, isInside = UIUtils.objectPosToUI(info.to, self.uiCamera)
         local uiPos, uiAngle, isOutBound = UIUtils.mapScreenPosToEllipseEdge(screenPos, self.view.config.ELLIPSE_X_RADIUS, self.view.config.ELLIPSE_Y_RADIUS)
         local trackKey = i + 1
         if not self.m_trackerPool[trackKey] then
@@ -70,9 +70,9 @@ FacPowerPoleAutoConnectHintCtrl._UpdateTrackers = HL.Method() << function(self)
         local item = self.m_trackerPool[trackKey]
         item.obj:SetActive(true)
         item.tracker:UpdatePosition(uiPos, uiAngle, isOutBound)
-        item.tracker:UpdateDistance(info.Item4)
-        item.tracker:UpdateNodeType(info.Item1.nodeType)
-        item.tracker:UpdateStatus(info.Item5)
+        item.tracker:UpdateDistance(info.dist)
+        item.tracker:UpdateNodeType(info.targetNode.nodeType)
+        item.tracker:UpdateStatus(info.status)
     end
     for i = infos.Count + 1, #self.m_trackerPool do
         self.m_trackerPool[i].obj:SetActive(false)

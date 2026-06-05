@@ -119,6 +119,11 @@ local PANEL_ID = PanelId.Puzzle
 
 
 
+
+
+
+
+
 PuzzleCtrl = HL.Class('PuzzleCtrl', uiCtrl.UICtrl)
 
 
@@ -234,8 +239,15 @@ PuzzleCtrl.m_componentsInteractable = HL.Field(HL.Boolean) << false
 PuzzleCtrl.m_succ = HL.Field(HL.Boolean) << false
 
 
+PuzzleCtrl.m_isHotSwitch = HL.Field(HL.Boolean) << false
+
+
+PuzzleCtrl.m_shouldCloseAfterRecover = HL.Field(HL.Boolean) << false
+
+
 PuzzleCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.PUZZLE_UNIT_COMPLETE] = 'PuzzleUnitComplete',
+    [MessageConst.ON_CHANGE_INPUT_DEVICE_TYPE_FINISHED] = '_OnChangeInputDeviceTypeFinished',
 }
 
 
@@ -315,7 +327,19 @@ PuzzleCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
 
     self:_InitController()
 
+    local recoverState = args and args.recoverState or nil
+    if recoverState and recoverState.conditionStyleRectangle ~= nil then
+        self.m_conditionStyleRectangle = recoverState.conditionStyleRectangle
+    end
+
     self:_UpdatePuzzleProgress()
+
+    if recoverState then
+        self:_TryRecoverState(recoverState)
+        args.recoverState = nil
+    end
+
+    self:_ResetControllerState()
 end
 
 
@@ -324,17 +348,13 @@ PuzzleCtrl.OnClose = HL.Override() << function(self)
     self.m_puzzleGame.onChessboardStateChange:RemoveAllListeners()
     self.m_puzzleGame.onBlockStateChange:RemoveAllListeners()
 
-    GameInstance.player.miniGame:FinishPuzzleGame()
-    if self.m_info ~= nil and self.m_info.callback ~= nil then
-        self.m_info.callback(self.m_succ)
-        self.m_info = nil
+    if not self.m_isHotSwitch then
+        GameInstance.player.miniGame:FinishPuzzleGame()
+        if self.m_info ~= nil and self.m_info.callback ~= nil then
+            self.m_info.callback(self.m_succ)
+        end
     end
-end
-
-
-
-PuzzleCtrl.OnAnimationInFinished = HL.Override() << function(self)
-    self:_ResetControllerState()
+    self.m_isHotSwitch = false
 end
 
 
@@ -1591,6 +1611,128 @@ PuzzleCtrl._ResetControllerState = HL.Method() << function(self)
     InputManagerInst:ToggleGroup(self.view.leftNode.groupId, true)
     self:_ToggleAreaFocusActionId(false, true)
     self:_ToggleChessboardNaviToBlockList(true)
+end
+
+
+
+
+
+
+
+PuzzleCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    self.m_isHotSwitch = true
+
+    local arg = self.m_info and lume.deepCopy(self.m_info) or {}
+    arg.recoverState = {
+        conditionStyleRectangle = self.m_conditionStyleRectangle,
+        noticeNodeVisible = self.view.noticeNode.gameObject.activeSelf,
+        noticeClicked = self.view.noticeNode.m_noticeClicked,
+        refAnswerGridVisible = self.view.refAnswerGrid.gameObject.activeSelf,
+        curPuzzleUnitComplete = self.m_curPuzzleUnitComplete,
+        hasHint = self.m_hasHint,
+        isHintUse = self.m_isHintUse,
+        useHintTs = self.m_useHintTs,
+        puzzleUnitStartTs = self.m_puzzleUnitStartTs,
+    }
+    return arg
+end
+
+
+
+
+PuzzleCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
+    if recoverState.conditionStyleRectangle ~= nil then
+        self.view.conditionStyleToggle:SetValue(recoverState.conditionStyleRectangle, true)
+    end
+
+    if recoverState.noticeNodeVisible then
+        self:_ClearNoticeTimer()
+        self.view.noticeNode.gameObject:SetActiveIfNecessary(true)
+    end
+
+    if recoverState.noticeClicked then
+        self.view.noticeNode.m_noticeClicked = true
+        self.view.noticeNode:ShowTips()
+    end
+
+    if recoverState.refAnswerGridVisible then
+        self.view.refAnswerGrid.gameObject:SetActiveIfNecessary(true)
+    end
+
+    if recoverState.hasHint ~= nil then
+        self.m_hasHint = recoverState.hasHint
+    end
+    if recoverState.isHintUse ~= nil then
+        self.m_isHintUse = recoverState.isHintUse
+    end
+    if recoverState.useHintTs then
+        self.m_useHintTs = recoverState.useHintTs
+    end
+    if recoverState.puzzleUnitStartTs then
+        self.m_puzzleUnitStartTs = recoverState.puzzleUnitStartTs
+    end
+
+    self:_RecoverBlockPositions()
+    self:RecoverComponentsInteractable()
+
+    if recoverState.curPuzzleUnitComplete then
+        if self.m_puzzleGame:IsPuzzleComplete() then
+            self.m_succ = true
+            self.m_shouldCloseAfterRecover = true
+        else
+            self.m_puzzleGame:NextPuzzle()
+            self:_UpdatePuzzleProgress()
+            self:_ResetControllerState()
+        end
+    end
+end
+
+
+
+PuzzleCtrl._RecoverBlockPositions = HL.Method() << function(self)
+    LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.grid)
+
+    local blocks = self.m_puzzleGame.currentChessboard.blocks
+
+    for luaIndex, data in ipairs(self.m_attachPuzzleData) do
+        local succ, block = blocks:TryGetValue(data.id)
+        if succ then
+            
+            local slot = self.m_puzzleRootCells:Get(luaIndex)
+
+            if block.locationOnChessboard and not block.isIllegalLocate then
+                local gridLuaIndex = block.location.y * self.m_chessboardWidthGridNum + block.location.x + 1
+                local gridCell = self.m_chessboardGridCells:Get(gridLuaIndex)
+                slot:RecoverToChessboard(gridCell.transform)
+            elseif block.locationOnChessboard and block.isIllegalLocate then
+                local gridLuaIndex = block.location.y * self.m_chessboardWidthGridNum + block.location.x + 1
+                local gridCell = self.m_chessboardGridCells:Get(gridLuaIndex)
+                slot:RecoverToChessboardAsFloat(gridCell.transform)
+                self:SetCurActionBlock(data.id, slot)
+                self:SetOtherBlocksFading(data.id, true)
+                self:ToggleRotateBtnState(true, true)
+            else
+                if block.rotateCount % 4 ~= data.rawRotationCount % 4 then
+                    slot:RecoverRotation(block.rotateCount)
+                end
+            end
+
+            if block.rotateCount % 4 ~= data.rawRotationCount % 4 then
+                local shadowIndex = self.m_id2BlockShadowIndex[data.id]
+                local shadowCell = self.m_puzzleBlockShadowCells:GetItem(shadowIndex)
+                shadowCell:RecoverRotation(block.rotateCount)
+            end
+        end
+    end
+end
+
+
+
+PuzzleCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Any) << function(self)
+    if self.m_shouldCloseAfterRecover then
+        self.m_shouldCloseAfterRecover = false
+        PhaseManager:PopPhase(PhaseId.Puzzle)
+    end
 end
 
 

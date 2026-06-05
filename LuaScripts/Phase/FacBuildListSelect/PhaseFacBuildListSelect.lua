@@ -13,6 +13,7 @@ local PHASE_ID = PhaseId.FacBuildListSelect
 
 
 
+
 PhaseFacBuildListSelect = HL.Class('PhaseFacBuildListSelect', phaseBase.PhaseBase)
 
 local ReservePanelIds = {  
@@ -120,6 +121,17 @@ PhaseFacBuildListSelect._OnDestroy = HL.Override() << function(self)
 end
 
 
+
+
+
+PhaseFacBuildListSelect.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    local item = self.m_panel2Item[PanelId.FacBuildListSelect]
+    if item and item.uiCtrl then
+        arg.recoverState = item.uiCtrl:GetRecoverStateArg()
+    end
+    return arg
+end
 
 
 

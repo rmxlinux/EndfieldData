@@ -45,7 +45,20 @@ local HelpedStateByRoomType = {
 
 
 
+
+
+
+
 SpaceshipControlCenterCtrl = HL.Class('SpaceshipControlCenterCtrl', uiCtrl.UICtrl)
+
+
+SpaceshipControlCenterCtrl.m_roomId = HL.Field(HL.String) << ""
+
+
+SpaceshipControlCenterCtrl.m_moveCam = HL.Field(HL.Boolean) << false
+
+
+SpaceshipControlCenterCtrl.m_clearScreenKey = HL.Field(HL.Number) << -1
 
 
 SpaceshipControlCenterCtrl.m_roomCells = HL.Field(HL.Forward('UIListCache'))
@@ -91,6 +104,10 @@ end
 
 
 SpaceshipControlCenterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_roomId = arg and arg.roomId or Tables.spaceshipConst.controlCenterRoomId
+    self.m_moveCam = arg and arg.moveCam == true or false
+    self.m_clearScreenKey = arg and arg.clearScreenKey or -1
+
     self.view.closeBtn.onClick:AddListener(function()
         PhaseManager:PopPhase(PhaseId.SpaceshipControlCenter)
         self.view.ssBacklogNode:PlayOutAnimation()
@@ -127,17 +144,46 @@ SpaceshipControlCenterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
     self:SetNaviTarget()
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+    self:_TryRecoverFriendHelpPopup(arg and arg.friendHelpPopupState or nil)
 end
 
 
 
 SpaceshipControlCenterCtrl.OnClose = HL.Override() << function(self)
-
+    local clearScreenKey
+    if self.m_moveCam then
+        clearScreenKey = GameInstance.player.spaceship:UndoMoveCamToSpaceshipRoom(self.m_roomId)
+        if clearScreenKey and clearScreenKey ~= -1 then
+            UIManager:RecoverScreen(clearScreenKey)
+        end
+    end
+    if self.m_clearScreenKey ~= -1 then
+        if self.m_clearScreenKey ~= clearScreenKey then
+            UIManager:RecoverScreen(self.m_clearScreenKey)
+        end
+        self.m_clearScreenKey = -1
+    end
 end
 
 
 
 SpaceshipControlCenterCtrl.OnShow = HL.Override() << function(self)
+end
+
+
+
+
+SpaceshipControlCenterCtrl._TryRecoverFriendHelpPopup = HL.Method(HL.Opt(HL.Any)) << function(self, popupState)
+    if popupState == nil or string.isEmpty(popupState.roomId) then
+        return
+    end
+    local isOpen, popupCtrl = UIManager:IsOpen(PanelId.SpaceShipFriendHelpList)
+    if isOpen and popupCtrl and popupCtrl:IsShow() and popupCtrl.m_roomId == popupState.roomId then
+        return
+    end
+    UIManager:AutoOpen(PanelId.SpaceShipFriendHelpList, {
+        roomId = popupState.roomId,
+    })
 end
 
 

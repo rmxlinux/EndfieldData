@@ -15,6 +15,7 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 PRTSInvestigateCategoryCell = HL.Class('PRTSInvestigateCategoryCell', UIWidgetBase)
 
 
@@ -33,6 +34,9 @@ PRTSInvestigateCategoryCell.m_isNoteShown = HL.Field(HL.Boolean) << false
 
 
 PRTSInvestigateCategoryCell.m_clientHasReadTrick = HL.Field(HL.Boolean) << false
+
+
+PRTSInvestigateCategoryCell.m_onCollFocusChanged = HL.Field(HL.Function)
 
 
 
@@ -57,12 +61,14 @@ end
 
 
 
-PRTSInvestigateCategoryCell.InitPRTSInvestigateCategoryCell = HL.Method(HL.Table, HL.String) << function(self, infoBundle, investId)
+
+PRTSInvestigateCategoryCell.InitPRTSInvestigateCategoryCell = HL.Method(HL.Table, HL.String, HL.Opt(HL.Function)) << function(self, infoBundle, investId, onCollFocusChanged)
     self:_FirstTimeInit()
 
     
     self.m_infoBundle = infoBundle
     self.m_infoBundle.investId = investId
+    self.m_onCollFocusChanged = onCollFocusChanged
     local viewRef = self.view
     
     
@@ -101,9 +107,12 @@ PRTSInvestigateCategoryCell._OnRefreshCollCell = HL.Method(HL.Any, HL.Number) <<
     cell.gameObject.name = "CollCell" .. luaIndex
     local info = self.m_infoBundle.collInfos[luaIndex]
     cell.iconImg:LoadSprite(UIConst.UI_SPRITE_PRTS_ICON, info.imgPath)
-    cell.nameTxt.text = info.name
+    cell.nameTxt:SetAndResolveTextStyle(info.name)
     cell.gotoBtn.onClick:RemoveAllListeners()
     cell.gotoBtn.onClick:AddListener(function()
+        if self.m_onCollFocusChanged then
+            self.m_onCollFocusChanged(info.collId)
+        end
         local ids = {}
         for _, collInfo in pairs(self.m_infoBundle.collInfos) do
             table.insert(ids, collInfo.collId)
@@ -123,6 +132,9 @@ PRTSInvestigateCategoryCell._OnRefreshCollCell = HL.Method(HL.Any, HL.Number) <<
     if DeviceInfo.usingController then
         cell.gotoBtn.onIsNaviTargetChanged = function(isTarget)
             self:_ForbidTitleInputGroupController("Navi", not isTarget)
+            if isTarget and self.m_onCollFocusChanged then
+                self.m_onCollFocusChanged(info.collId)
+            end
         end
     end
     info.hasRead = true

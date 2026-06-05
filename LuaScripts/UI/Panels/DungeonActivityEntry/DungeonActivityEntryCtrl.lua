@@ -19,6 +19,9 @@ local PHASE_ID = PhaseId.DungeonEntry
 
 
 
+
+
+
 DungeonActivityEntryCtrl = HL.Class('DungeonActivityEntryCtrl', uiCtrl.UICtrl)
 
 
@@ -68,12 +71,7 @@ DungeonActivityEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.btnClose.onClick:RemoveAllListeners()
     self.view.btnClose.onClick:AddListener(function()
-        local isOpen = self.m_fromDialog
-        if isOpen then
-            self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 1 })
-        else
-            PhaseManager:PopPhase(PHASE_ID)
-        end
+        PhaseManager:PopPhase(PHASE_ID)
     end)
 
     self.view.btnEnemyDetails.onClick:RemoveAllListeners()
@@ -214,16 +212,7 @@ DungeonActivityEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
     local enterDungeonCallback
     enterDungeonCallback = function(enterDungeonId)
-        LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId, function()
-            PhaseManager:OpenPhaseFast(PhaseId.DungeonEntry, {
-                dungeonId = enterDungeonId,
-                activityId = self.m_activityId,
-                enterDungeonCallback = enterDungeonCallback })
-        end)
-
-        if self.m_fromDialog then
-            self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 1 })
-        end
+        LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId)
     end
     self.view.dungeonCommonInfo:InitDungeonCommonInfo({
         enterDungeonCallback = enterDungeonCallback,
@@ -319,12 +308,7 @@ DungeonActivityEntryCtrl.OnActivityUpdated = HL.Method(HL.Any) << function(self,
                 PhaseManager:ExitPhaseFastTo(PhaseId.Level, true)
             end
         })
-        local isOpen = self.m_fromDialog
-        if isOpen then
-            self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 1 })
-        else
-            PhaseManager:PopPhase(PHASE_ID)
-        end
+        PhaseManager:PopPhase(PHASE_ID)
     else
         local dungeonSeriesData = Tables.dungeonSeriesTable:GetValue(self.m_dungeonSeriesId)
         self.m_genCells:Refresh(dungeonSeriesData.includeDungeonIds.Count, self.m_cellRefreshFunc)
@@ -354,8 +338,7 @@ DungeonActivityEntryCtrl.UpdateInfo = HL.Method() << function(self)
 
     if success and stageData.Status == GEnums.ActivityConditionalStageState.Locked:GetHashCode() then
         self.view.lockNode.gameObject:SetActiveIfNecessary(true)
-        local hour = stageCfg.stageList[activityDungeonStateCfg.activityStage].timeOffset
-        local unlockTime = activityData.startTime + hour * Const.SEC_PER_HOUR
+        local unlockTime = stageData.OpenTimeTs
         self.view.dungeonCommonInfo.gameObject:SetActive(false)
         
         local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()
@@ -408,12 +391,67 @@ end
 
 
 
+DungeonActivityEntryCtrl.GetCurSelectDungeonId = HL.Method().Return(HL.String) << function(self)
+    return self.m_selectedDungeonId
+end
+
+
+
+DungeonActivityEntryCtrl.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local popupState = self.view.dungeonCommonInfo:GetRecoverPopupStateArg()
+    if popupState ~= nil then
+        return popupState
+    end
+
+    local isOpen, introCtrl = UIManager:IsOpen(PanelId.CommonIntro)
+    if isOpen then
+        return {
+            popupType = "ActivityIntro",
+            introState = introCtrl:GetRecoverStateArg(),
+        }
+    end
+
+    local isInstructionBookOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isInstructionBookOpen and instructionCtrl.id == "activity_dungeon_actmonster" then
+        return {
+            popupType = "ActivityInstructionBook",
+        }
+    end
+end
 
 
 
 
+DungeonActivityEntryCtrl.TryRecoverPopupState = HL.Method(HL.Any) << function(self, popupState)
+    if popupState == nil or string.isEmpty(popupState.popupType) then
+        return
+    end
 
+    if popupState.popupType == "ActivityIntro" then
+        local isOpen, introCtrl = UIManager:IsOpen(PanelId.CommonIntro)
+        if isOpen then
+            return
+        end
+        local introState = popupState.introState
+        if introState ~= nil and not string.isEmpty(introState.introId) then
+            UIManager:Open(PanelId.CommonIntro, introState)
+        else
+            
+            Notify(MessageConst.SHOW_INTRO, self.m_selectedDungeonId)
+        end
+        return
+    end
 
+    if popupState.popupType == "ActivityInstructionBook" then
+        local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+        if isOpen and instructionCtrl.id == "activity_dungeon_actmonster" then
+            return
+        end
+        UIManager:Open(PanelId.InstructionBook, "activity_dungeon_actmonster")
+        return
+    end
 
+    self.view.dungeonCommonInfo:TryRecoverPopupState(popupState)
+end
 
 HL.Commit(DungeonActivityEntryCtrl)

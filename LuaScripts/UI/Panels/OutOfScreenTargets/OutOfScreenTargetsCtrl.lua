@@ -66,6 +66,7 @@ end
 OutOfScreenTargetsCtrl.OnClose = HL.Override() << function(self)
     
     
+    self.view.outOfScreenTargetsCtrl:OnClose()
 end
 
 

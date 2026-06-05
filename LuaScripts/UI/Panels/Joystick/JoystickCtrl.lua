@@ -26,7 +26,6 @@ local PANEL_ID = PanelId.Joystick
 
 
 
-
 JoystickCtrl = HL.Class('JoystickCtrl', uiCtrl.UICtrl)
 
 
@@ -54,18 +53,18 @@ JoystickCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     if BEYOND_DEBUG then
         
         self:BindInputEvent(CS.Beyond.Input.KeyboardKeyCode.F5, function()
-            self:_ToggleHideCursor()
+            InputManagerInst:ToggleDebugCursorMode()
         end, "a")
 
         if CS.Beyond.DebugDefines.disableF5Mode then
-            if InputManagerInst.inHideCursorMode then
-                self:_ToggleHideCursor()
+            if InputManagerInst.isDebugForceShow then
+                InputManagerInst:ToggleDebugCursorMode()
             end
         end
 
         if DeviceInfo.usingTouch then
-            if InputManagerInst.inHideCursorMode then
-                self:_ToggleHideCursor()
+            if InputManagerInst.isDebugForceShow then
+                InputManagerInst:ToggleDebugCursorMode()
             end
         end
     end
@@ -162,17 +161,6 @@ JoystickCtrl._ClearRegisters = HL.Method() << function(self)
     if InputManagerInst.afterCheckInput then
         InputManagerInst.afterCheckInput = InputManagerInst.afterCheckInput - self.m_update
     end
-end
-
-
-
-
-
-
-
-
-JoystickCtrl._ToggleHideCursor = HL.Method() << function(self)
-    InputManagerInst:ToggleHideCursor()
 end
 
 

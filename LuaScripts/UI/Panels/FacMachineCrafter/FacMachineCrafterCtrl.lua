@@ -592,6 +592,8 @@ FacMachineCrafterCtrl._OnModeSwitchButtonClicked = HL.Method() << function(self)
                         self.m_hideModeSwitchPopUp = isOn
                     end,
                     toggleText = Language[SWITCH_LIQUID_MODE_POPUP_TOGGLE_TEXT_ID],
+                    onHintTextId = SWITCH_LIQUID_MODE_POPUP_TOGGLE_TEXT_ID,
+                    offHintTextId = SWITCH_LIQUID_MODE_POPUP_TOGGLE_TEXT_ID,
                     isOn = false,
                 }
             })

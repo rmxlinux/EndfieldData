@@ -5,6 +5,7 @@ local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
 
 
 
+
 DummyNaviLayerSystem = HL.Class('DummyNaviLayerSystem', LuaSystemBase.LuaSystemBase)
 
 
@@ -35,6 +36,7 @@ DummyNaviLayerSystem._AttachNaviDummyLayer = HL.Method(HL.String) << function(se
     local dummyLayer = dummyLayerObj.transform:GetComponent("UISelectableNaviGroup")
     self.m_dummyNaviLayers[key] = dummyLayer
     dummyLayerObj.name = key
+    dummyLayer.isDummy = true
     dummyLayer:NaviToThisGroup()
 end
 
@@ -48,6 +50,13 @@ DummyNaviLayerSystem._DetachNaviDummyLayer = HL.Method(HL.String) << function(se
     local dummyLayer = self.m_dummyNaviLayers[key]
     GameObject.DestroyImmediate(dummyLayer.gameObject)
     self.m_dummyNaviLayers[key] = nil
+end
+
+
+
+
+DummyNaviLayerSystem.GetDummyNaviLayerByKey = HL.Method(HL.String).Return(HL.Userdata) << function(self, key)
+    return self.m_dummyNaviLayers[key]
 end
 
 HL.Commit(DummyNaviLayerSystem)

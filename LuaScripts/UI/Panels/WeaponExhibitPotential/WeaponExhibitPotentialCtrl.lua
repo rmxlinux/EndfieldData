@@ -36,6 +36,8 @@ local PANEL_ID = PanelId.WeaponExhibitPotential
 
 
 
+
+
 WeaponExhibitPotentialCtrl = HL.Class('WeaponExhibitPotentialCtrl', uiCtrl.UICtrl)
 
 
@@ -53,6 +55,8 @@ WeaponExhibitPotentialCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
+
+WeaponExhibitPotentialCtrl.m_arg = HL.Field(HL.Table)
 
 
 WeaponExhibitPotentialCtrl.m_weaponInfo = HL.Field(HL.Table)
@@ -159,6 +163,7 @@ end
 
 
 WeaponExhibitPotentialCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg
     self:_InitActionEvent()
 
     self.m_weaponInfo = arg.weaponInfo
@@ -234,10 +239,39 @@ WeaponExhibitPotentialCtrl.OnShow =  HL.Override() << function(self)
     local weaponInfo = self.m_weaponInfo
     local weaponExhibitInfo = CharInfoUtils.getWeaponExhibitBasicInfo(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)
 
-    self.m_costItemInfoDict = {}
+    local costItemInfoDict
+    local isExpand = false
+    if self.m_arg.stateArg and self.m_arg.stateArg.costItemInfoDict then
+        costItemInfoDict = self.m_arg.stateArg.costItemInfoDict
+        isExpand = self.m_arg.stateArg.isExpand
+    end
+    self.m_costItemInfoDict = costItemInfoDict or {}
 
     self:_RefreshPotentialPanelBasic(weaponExhibitInfo, true)
     self:_RefreshWeaponPotentialStar(weaponExhibitInfo.weaponInst.templateId, weaponExhibitInfo.weaponInst.instId)
+    if costItemInfoDict then
+        local itemInfoList = self.view.commonWeaponList.m_itemInfoList
+        for indexId, costItemInfo in pairs(costItemInfoDict) do
+            for _, upgradeItemInfo in pairs(itemInfoList) do
+                if upgradeItemInfo.indexId == indexId then
+                    upgradeItemInfo.count = costItemInfo.count
+                    costItemInfoDict[indexId] = upgradeItemInfo
+                    break
+                end
+            end
+        end
+        self.view.commonWeaponList:RefreshAllCells()
+        if isExpand then
+            self:_ToggleExpandNode(true, true)
+            if self.m_arg.stateArg and self.m_arg.stateArg.curSelectedIndex and DeviceInfo.usingController then
+                self.view.commonWeaponList:SetSelectedIndex(self.m_arg.stateArg.curSelectedIndex, false)
+            end
+        end
+    end
+    if self.m_arg.stateArg and self.m_arg.stateArg.isBtnFullSkillClicked then
+        self.view.btnFullSkill.onClick:Invoke()
+    end
+    self.m_arg.stateArg = nil
 end
 
 
@@ -351,6 +385,9 @@ end
 
 
 WeaponExhibitPotentialCtrl._OnItemIsNaviTargetChanged = HL.Method(HL.Any, HL.Table, HL.Boolean) << function(self, cell, itemInfo, isTarget)
+    if self.m_arg.stateArg and not self.m_arg.stateArg.isShow then
+        return
+    end
     if isTarget and cell.gameObject.activeSelf then
         InputManagerInst:ToggleBinding(self.m_materialsDecreaseCountInputBindingId, itemInfo.count and itemInfo.count > 0)
         self.m_naviMaterialCell = cell
@@ -420,8 +457,9 @@ WeaponExhibitPotentialCtrl._RemoveFromCostItemDict = HL.Method(HL.Table, HL.Opt(
     local costItemInfoDict = self.m_costItemInfoDict
     local weaponInfo = self.m_weaponInfo
 
+    count = count or 1
     local id = itemInfo.indexId
-    itemInfo.count = 0
+    itemInfo.count = math.max(0, itemInfo.count - count)
 
     if costItemInfoDict[id] and itemInfo.count <= 0 then
         costItemInfoDict[id] = nil
@@ -663,6 +701,19 @@ WeaponExhibitPotentialCtrl._CollectCostItemInfoList = HL.Method().Return(HL.Tabl
     end
 
     return costItemList
+end
+
+
+
+WeaponExhibitPotentialCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local arg = {
+        isBtnFullSkillClicked = UIManager:IsShow(PanelId.WeaponSkillDetail),
+        costItemInfoDict = self.m_costItemInfoDict,
+        isExpand = self.view.expandNode.gameObject.activeSelf,
+        curSelectedIndex = self.view.commonWeaponList:IsAnyItemSelecting() and self.view.commonWeaponList:GetCurSelectIndex(),
+        isShow = self:IsShow()
+    }
+    return arg
 end
 
 HL.Commit(WeaponExhibitPotentialCtrl)

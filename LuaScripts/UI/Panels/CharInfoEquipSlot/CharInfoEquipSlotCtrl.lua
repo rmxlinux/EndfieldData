@@ -103,7 +103,6 @@ CharInfoEquipSlotCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_charInfo = initCharInfo
     self.m_curMainControlTab = mainControlTab
     self.m_tryAttributes = CS.Beyond.Gameplay.Core.Attributes:CreateDirectly()
-    self.m_phase = arg.phase
 
     self:_ToggleSlotNode(true)
     self:_RefreshEquipSlotGroup(self.m_curSelectSlotIndex)

@@ -84,6 +84,8 @@ local PANEL_ID = PanelId.WeaponExhibitUpgrade
 
 
 
+
+
 WeaponExhibitUpgradeCtrl = HL.Class('WeaponExhibitUpgradeCtrl', uiCtrl.UICtrl)
 
 
@@ -118,6 +120,9 @@ WeaponExhibitUpgradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_GEM_DETACH] = 'OnGemDetach',
     [MessageConst.ON_ITEM_COUNT_CHANGED] = '_OnItemCountChanged',
 }
+
+
+WeaponExhibitUpgradeCtrl.m_arg = HL.Field(HL.Table)
 
 
 WeaponExhibitUpgradeCtrl.m_level2RequireExpDict = HL.Field(HL.Table)
@@ -350,6 +355,7 @@ end
 
 
 WeaponExhibitUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg
     self:_InitController()
     self:_InitActionEvent()
 
@@ -393,7 +399,30 @@ WeaponExhibitUpgradeCtrl.OnShow = HL.Override() << function(self)
     if isBreakthrough then
         self:_RefreshBreakPanel(weaponInstId, weaponTemplateId)
     else
-        self:_RefreshUpgradePanel(weaponInstId, weaponTemplateId)
+        local costItemInfoDict
+        local isExpand = false
+        if self.m_arg.stateArg and self.m_arg.stateArg.costItemInfoDict then
+            costItemInfoDict = self.m_arg.stateArg.costItemInfoDict
+            isExpand = self.m_arg.stateArg.isExpand
+        end
+        self:_RefreshUpgradePanel(weaponInstId, weaponTemplateId, costItemInfoDict)
+        if costItemInfoDict then
+            for indexId, costItemInfo in pairs(costItemInfoDict) do
+                for _, upgradeItemInfo in pairs(self.m_upgradeItemInfoList) do
+                    if upgradeItemInfo.indexId == indexId then
+                        upgradeItemInfo.count = costItemInfo.count
+                        upgradeItemInfo.addCount = costItemInfo.addCount
+                        costItemInfoDict[indexId] = upgradeItemInfo
+                        break
+                    end
+                end
+            end
+            self.view.expandNode.commonItemList:RefreshAllCells()
+            if isExpand then
+                self:_ToggleExpandNode(true)
+            end
+        end
+        self.m_arg.stateArg = nil
     end
 end
 
@@ -581,6 +610,9 @@ WeaponExhibitUpgradeCtrl._RefreshBreakPanel = HL.Method(HL.Number, HL.String) <<
 
     local weaponInst = weaponExhibitInfo.weaponInst
     local fromBreakthroughCfg = CharInfoUtils.getWeaponBreakthroughInfo(weaponInstId, weaponInst.breakthroughLv + 1)
+    if fromBreakthroughCfg == nil then
+        return
+    end
     self:_RefreshBreakItemList(fromBreakthroughCfg)
     self:_RefreshBreakthroughButton(fromBreakthroughCfg.breakthroughGold)
 end
@@ -589,10 +621,11 @@ end
 
 
 
-WeaponExhibitUpgradeCtrl._RefreshUpgradePanel = HL.Method(HL.Number, HL.String) << function(self, weaponInstId, weaponTemplateId)
-    self.m_costItemInfoDict = {}
+
+WeaponExhibitUpgradeCtrl._RefreshUpgradePanel = HL.Method(HL.Number, HL.String, HL.Opt(HL.Table)) << function(self, weaponInstId, weaponTemplateId, costItemInfoDict)
+    self.m_costItemInfoDict = costItemInfoDict or {}
     self:_RefreshBottomCostItem()
-    self:_ResetCostItem()
+    self:_ResetCostItem(costItemInfoDict)
     self:_RefreshUpgradeInformation(weaponInstId, weaponTemplateId)
 end
 
@@ -864,7 +897,7 @@ WeaponExhibitUpgradeCtrl._ToggleExpandNode = HL.Method(HL.Boolean, HL.Opt(HL.Boo
     self.m_lastClickItemId = nil
     self.m_lastClickItemInfo = nil
 
-    if UIManager:IsShow(PanelId.ItemTips) then
+    if not isExpand and UIManager:IsShow(PanelId.ItemTips) then
         Notify(MessageConst.HIDE_ITEM_TIPS)
         if not closeAll and not DeviceInfo.usingController then
             return
@@ -875,7 +908,11 @@ WeaponExhibitUpgradeCtrl._ToggleExpandNode = HL.Method(HL.Boolean, HL.Opt(HL.Boo
         self.view.expandNode.gameObject:SetActive(true)
         UIUtils.PlayAnimationAndToggleActive(self.view.expandNode.commonItemList.view.animationWrapper, true)
         if DeviceInfo.usingController then
-            self.view.expandNode.commonItemList:PlayGraduallyShow(1, false)
+            local selectedIndex = 1
+            if self.m_arg.stateArg and self.m_arg.stateArg.curSelectedIndex then
+                selectedIndex = self.m_arg.stateArg.curSelectedIndex
+            end
+            self.view.expandNode.commonItemList:PlayGraduallyShow(selectedIndex, false)
         else
             self.view.expandNode.commonItemList:PlayGraduallyShow()
         end
@@ -1309,8 +1346,9 @@ end
 
 
 
-WeaponExhibitUpgradeCtrl._ResetCostItem = HL.Method() << function(self)
-    self.m_costItemInfoDict = {}
+
+WeaponExhibitUpgradeCtrl._ResetCostItem = HL.Method(HL.Opt(HL.Table)) << function(self, costItemInfoDict)
+    self.m_costItemInfoDict = costItemInfoDict or {}
     self.view.expandNode.commonItemList:InitCommonItemList({
         listType = UIConst.COMMON_ITEM_LIST_TYPE.WEAPON_EXHIBIT_UPGRADE,
         onlyGenerateData = self.view.expandNode.commonItemList.view.activeInHierarchy,
@@ -1344,7 +1382,13 @@ WeaponExhibitUpgradeCtrl._ResetCostItem = HL.Method() << function(self)
         end,
         clickItemControllerHintText = Language.ui_weapon_controller_Increase_materials,
         skipGraduallyShow = true,
+        curSortCSIndex = self.m_arg.stateArg and self.m_arg.stateArg.curSortCSIndex,
+        curSortIsIncremental = self.m_arg.stateArg and self.m_arg.stateArg.curSortIsIncremental,
+        selectedTags = self.m_arg.stateArg and self.m_arg.stateArg.selectedTags,
     })
+    if self.m_arg.stateArg and self.m_arg.stateArg.curSelectedIndex and DeviceInfo.usingController then
+        self.view.expandNode.commonItemList:SetSelectedIndex(self.m_arg.stateArg.curSelectedIndex, false)
+    end
 
     self.m_upgradeItemInfoList = self.view.expandNode.commonItemList.m_itemInfoList
 
@@ -1498,6 +1542,19 @@ WeaponExhibitUpgradeCtrl._ClickWeaponBreakButton = HL.Method() << function(self)
 
     local weaponInfo = self.m_weaponInfo
     GameInstance.player.charBag:BreakthroughWeapon(weaponInfo.weaponInstId)
+end
+
+
+
+WeaponExhibitUpgradeCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local arg = {}
+    arg.costItemInfoDict = self.m_costItemInfoDict
+    arg.isExpand = self.view.expandNode.gameObject.activeSelf
+    arg.selectedTags = self.view.expandNode.commonItemList.m_selectedTags
+    arg.curSortCSIndex = self.view.expandNode.commonItemList.view.sortNode:GetCurSelectedIndex() - 1
+    arg.curSortIsIncremental = self.view.expandNode.commonItemList.view.sortNode.isIncremental
+    arg.curSelectedIndex = self.view.expandNode.commonItemList:IsAnyItemSelecting() and self.view.expandNode.commonItemList:GetCurSelectIndex() or nil
+    return arg
 end
 
 

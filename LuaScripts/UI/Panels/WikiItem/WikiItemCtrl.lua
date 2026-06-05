@@ -45,13 +45,6 @@ end
 
 
 
-WikiItemCtrl._OnPhaseItemBind = HL.Override() << function(self)
-    WikiItemCtrl.Super._OnPhaseItemBind(self)
-    self:_PlayBgDecoAnim()
-end
-
-
-
 WikiItemCtrl._RefreshCenter = HL.Override() << function(self)
     WikiItemCtrl.Super._RefreshCenter(self)
     local _, itemData = Tables.itemTable:TryGetValue(self.m_wikiEntryShowData.wikiEntryData.refItemId)

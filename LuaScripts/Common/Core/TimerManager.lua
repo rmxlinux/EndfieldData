@@ -84,6 +84,7 @@ end
 
 
 TimerManager._UpdateTimers = HL.Method(HL.Forward("MinHeap"), HL.Number) << function(self, heap, time)
+    local reachedTimers = {} 
     while heap:Size() > 0 do
         local request, triggerTime = heap:Min()
         if self.m_removedTimerKeys[request.key] then
@@ -96,28 +97,38 @@ TimerManager._UpdateTimers = HL.Method(HL.Forward("MinHeap"), HL.Number) << func
         else
             if time >= triggerTime then
                 heap:Pop()
-                if ENABLE_PROFILER then
-                    local label = self.m_timerStackTraces[request.key]
-                    if label and unity_sample and unity_sample.begin_unity_sample then
-                        unity_sample.begin_unity_sample(label)
-                    end
-                end
-                local succ, log = xpcall(request.action, debug.traceback)
-                if not succ then
-                    logger.critical("Timer Action Fail\n", log)
-                end
-                if ENABLE_PROFILER then
-                    if unity_sample and unity_sample.end_unity_sample then
-                        unity_sample.end_unity_sample()
-                    end
-                    self.m_timerStackTraces[request.key] = nil
-                end
-                self:_CacheRequest(request)
+                table.insert(reachedTimers, request)
             else
                 break
             end
         end
     end
+    for _, request in pairs(reachedTimers) do
+        self:_ExecuteTimer(request)
+    end
+end
+
+
+
+
+TimerManager._ExecuteTimer = HL.Method(HL.Table) << function(self, request)
+    if ENABLE_PROFILER then
+        local label = self.m_timerStackTraces[request.key]
+        if label and unity_sample and unity_sample.begin_unity_sample then
+            unity_sample.begin_unity_sample(label)
+        end
+    end
+    local succ, log = xpcall(request.action, debug.traceback)
+    if not succ then
+        logger.critical("Timer Action Fail\n", log)
+    end
+    if ENABLE_PROFILER then
+        if unity_sample and unity_sample.end_unity_sample then
+            unity_sample.end_unity_sample()
+        end
+        self.m_timerStackTraces[request.key] = nil
+    end
+    self:_CacheRequest(request)
 end
 
 

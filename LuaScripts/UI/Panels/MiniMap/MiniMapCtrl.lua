@@ -22,6 +22,8 @@ local PANEL_ID = PanelId.MiniMap
 
 
 
+
+
 MiniMapCtrl = HL.Class('MiniMapCtrl', uiCtrl.UICtrl)
 
 
@@ -41,6 +43,7 @@ MiniMapCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_TOGGLE_FAC_TOP_VIEW] = '_RefreshMaskState',
     [MessageConst.ON_TOGGLE_PHASE_FORBID] = '_RefreshMaskState',
+    [MessageConst.FORBID_SYSTEM_CHANGED] = '_OnForbidSystemChanged',
 
     [MessageConst.ON_SETTLEMENT_UPGRADE] = '_OnSettlementUpgrade',
     [MessageConst.TRAVEL_POLE_ENTER_TRAVEL_MODE] = '_HideMainButtonInTravelMode',
@@ -180,6 +183,12 @@ end
 
 
 
+MiniMapCtrl._IsForbidTypeHideMiniMap = HL.Method().Return(HL.Boolean) << function(self)
+    return Utils.isForbidden(ForbidType.HideMiniMap)
+end
+
+
+
 
 MiniMapCtrl._RefreshMiniMapShownState = HL.Method(HL.Boolean) << function(self, isShow)
     local isMapUnlocked = Utils.isSystemUnlocked(GEnums.UnlockSystemType.Map)
@@ -191,6 +200,12 @@ end
 
 MiniMapCtrl._RefreshMaskState = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     self.view.settlementDefenseNode.gameObject:SetActive(false)
+    if self:_IsForbidTypeHideMiniMap() then
+        UIManager:Hide(PANEL_ID)
+    else
+        UIManager:Show(PANEL_ID)
+    end
+
     if self:_IsInForbiddenState() then
         self.view.stateController:SetState("Forbidden")
         return
@@ -208,6 +223,18 @@ MiniMapCtrl._RefreshMaskState = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     else
         self:_ClearCoroutine(self.m_settlementDefenseNoticeCo)
     end
+end
+
+
+
+
+MiniMapCtrl._OnForbidSystemChanged = HL.Method(HL.Table) << function(self, args)
+    local forbidType, isForbidden = unpack(args)
+    if forbidType ~= ForbidType.HideMiniMap then
+        return
+    end
+
+    self:_RefreshMaskState()
 end
 
 

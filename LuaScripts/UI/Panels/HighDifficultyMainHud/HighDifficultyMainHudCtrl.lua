@@ -62,11 +62,7 @@ local CELL_GRADUALLY_SHOW_TIME = 0.1
 HighDifficultyMainHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     
     self.view.btnClose.onClick:AddListener(function()
-        if self.m_fromDialog then
-        Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
-        else
-            PhaseManager:PopPhase(PHASE_ID)
-        end
+        PhaseManager:PopPhase(PHASE_ID)
     end)
     self.m_fromDialog = args and args.fromDialog or false
 
@@ -142,7 +138,7 @@ HighDifficultyMainHudCtrl._UpdateCell = HL.Method(HL.Any,HL.Number) << function(
     
     if string.isEmpty(self.m_initSeriesId) and index == 1 and not self.m_firstCell then
         self.m_firstCell = cell
-        UIUtils.setAsNaviTarget(cell.cellNaviDeco)
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.levelsScrollListNaviGroup, cell.cellNaviDeco)
     end
     cell.cellNaviDeco.onIsNaviTargetChanged = function(isTarget)
         if isTarget then
@@ -160,7 +156,7 @@ HighDifficultyMainHudCtrl._UpdateCell = HL.Method(HL.Any,HL.Number) << function(
     local seriesId = self.m_allSeries[index].seriesId
     if seriesId == self.m_initSeriesId then
         self.m_firstCell = cell
-        UIUtils.setAsNaviTarget(cell.cellNaviDeco)
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.levelsScrollListNaviGroup, cell.cellNaviDeco)
     end
     local unlocked = GameInstance.player.highDifficultySystem:IsHighDiffilcultySeriesUnlock(seriesId)
     if unlocked and index <= self.m_seriesCount then
@@ -214,13 +210,7 @@ HighDifficultyMainHudCtrl._UpdateCell = HL.Method(HL.Any,HL.Number) << function(
         local dungeonSeriesId = seriesId
         local enterDungeonCallback
         enterDungeonCallback = function(enterDungeonId)
-            LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId, function()
-                PhaseManager:OpenPhaseFast(PhaseId.HighDifficultyMainHud, { seriesId = seriesId })
-                PhaseManager:OpenPhaseFast(PhaseId.DungeonEntry, {
-                    dungeonId = enterDungeonId,
-                    enterDungeonCallback = enterDungeonCallback
-                })
-            end)
+            LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId)
         end
         Notify(MessageConst.ON_OPEN_DUNGEON_ENTRY_PANEL, {
             dungeonSeriesId,
@@ -238,7 +228,7 @@ end
 
 HighDifficultyMainHudCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     if active and DeviceInfo.usingController then
-        UIUtils.setAsNaviTarget(self.m_focusCell and self.m_focusCell.cellNaviDeco or self.m_firstCell.cellNaviDeco)
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.levelsScrollListNaviGroup, self.m_focusCell and self.m_focusCell.cellNaviDeco or self.m_firstCell.cellNaviDeco)
     end
 end
 

@@ -1,38 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacMiniPowerContent = HL.Class('FacMiniPowerContent', UIWidgetBase)
 
 local XIRANITE_BUILDINGID = "xiranite_oven_1"
@@ -45,55 +12,47 @@ local BUILDING_ICON_MAP = {
     [GEnums.FacBuildingType.MachineCrafter] = "building_icon_xirong_machine",
     [GEnums.FacBuildingType.Decorate] = "building_icon_decorate",
 }
-
+local USE_DURATION = Tables.factoryConst.facBackUpPowerDuration
+local RECOVERY_DURATION = Tables.factoryConst.facBackUpPowerCooldownTime
 
 FacMiniPowerContent.isMonitorPower = HL.Field(HL.Boolean) << false
 
-
 FacMiniPowerContent.m_chapterId = HL.Field(HL.Number) << -1
-
 
 FacMiniPowerContent.m_powerInfo = HL.Field(HL.Userdata)
 
-
 FacMiniPowerContent.m_buildingData = HL.Field(Cfg.Types.FactoryBuildingData)
-
 
 FacMiniPowerContent.m_refreshCoroutine = HL.Field(HL.Thread)
 
-
 FacMiniPowerContent.m_lastIsConsuming = HL.Field(HL.Boolean) << false
-
 
 FacMiniPowerContent.m_lastPowerSavePercent = HL.Field(HL.Number) << -1
 
-
 FacMiniPowerContent.m_lastPowerEnoughAnimName = HL.Field(HL.String) << ""
-
 
 FacMiniPowerContent.m_lastPowerSaveAnimName = HL.Field(HL.String) << ""
 
-
 FacMiniPowerContent.m_lackOfPowerAudioBaseTime = HL.Field(HL.Number) << -1
-
 
 FacMiniPowerContent.m_isDirty = HL.Field(HL.Boolean) << false
 
-
 FacMiniPowerContent.m_powerData = HL.Field(HL.Table)
-
 
 FacMiniPowerContent.m_isSaveMaxBecameValid = HL.Field(HL.Boolean) << false
 
-
 FacMiniPowerContent.m_showToastTimer = HL.Field(HL.Number) << -1
 
+FacMiniPowerContent.shouldShowBackupPower = HL.Field(HL.Boolean) << false
 
+FacMiniPowerContent.m_canShowBackupPower = HL.Field(HL.Boolean) << false
+
+FacMiniPowerContent.m_backupUseEndTs = HL.Field(HL.Number) << -1
+
+FacMiniPowerContent.m_backupRecoveryEndTs = HL.Field(HL.Number) << -1
 
 FacMiniPowerContent._OnCreate = HL.Override() << function(self)
 end
-
-
 
 FacMiniPowerContent._OnEnable = HL.Override() << function(self)
     self:RefreshFacMiniPowerContent()
@@ -101,22 +60,15 @@ FacMiniPowerContent._OnEnable = HL.Override() << function(self)
     self:ToggleCoroutine(true)
 end
 
-
-
 FacMiniPowerContent._OnDisable = HL.Override() << function(self)
     self:ToggleCoroutine(false)
 end
-
-
 
 FacMiniPowerContent._OnDestroy = HL.Override() << function(self)
     self:ToggleCoroutine(false)
     self:_ClearShowToastTimer()
     self.m_powerInfo = nil
 end
-
-
-
 
 FacMiniPowerContent.ToggleCoroutine = HL.Method(HL.Boolean) << function(self, active)
     if active then
@@ -130,18 +82,14 @@ FacMiniPowerContent.ToggleCoroutine = HL.Method(HL.Boolean) << function(self, ac
         end
     else
         self.m_refreshCoroutine = self:_ClearCoroutine(self.m_refreshCoroutine)
+        self.m_softMaskResetCoroutine = self:_ClearCoroutine(self.m_softMaskResetCoroutine)
     end
 end
 
 
 
-
-
 FacMiniPowerContent._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
 
 FacMiniPowerContent._UpdateAndRefreshAll = HL.Method(HL.Boolean) << function(self, forceRefresh)
     self:_UpdateMiniPowerData()
@@ -150,9 +98,9 @@ FacMiniPowerContent._UpdateAndRefreshAll = HL.Method(HL.Boolean) << function(sel
         self:UpdateLackOfPowerAudio()
         self.m_isDirty = false
     end
+    
+    self:_UpdateBackupPowerState()
 end
-
-
 
 FacMiniPowerContent._ClearShowToastTimer = HL.Method() << function(self)
     if self.m_showToastTimer < 0 then
@@ -161,8 +109,6 @@ FacMiniPowerContent._ClearShowToastTimer = HL.Method() << function(self)
     self.m_showToastTimer = self:_ClearTimer(self.m_showToastTimer)
 end
 
-
-
 FacMiniPowerContent._GetPowerInfo = HL.Method().Return(HL.Opt(HL.Userdata)) << function(self)
     if self.m_chapterId < 0 then
         return FactoryUtils.getCurRegionPowerInfo()
@@ -170,8 +116,6 @@ FacMiniPowerContent._GetPowerInfo = HL.Method().Return(HL.Opt(HL.Userdata)) << f
         return FactoryUtils.getRegionPowerInfoByChapterId(self.m_chapterId)
     end
 end
-
-
 
 FacMiniPowerContent._UpdateMiniPowerData = HL.Method() << function(self)
     if not self.m_powerInfo then
@@ -208,10 +152,18 @@ FacMiniPowerContent._UpdateMiniPowerData = HL.Method() << function(self)
             self.m_powerData.powerSaveMax = powerInfo.powerSaveMax
             self.m_isDirty = true
         end
+
+        
+        if self.m_powerData.backupPowerLastStartTs == nil or self.m_powerData.backupPowerLastStartTs ~= powerInfo.backupLastStartTs then
+            self.m_powerData.backupPowerLastStartTs = powerInfo.backupLastStartTs
+            self.m_isDirty = true
+        end
+        if self.m_powerData.backupLastStopTs == nil or self.m_powerData.backupLastStopTs ~= powerInfo.backupLastStopTs then
+            self.m_powerData.backupLastStopTs = powerInfo.backupLastStopTs
+            self.m_isDirty = true
+        end
     end
 end
-
-
 
 FacMiniPowerContent._RefreshContent = HL.Method() << function(self)
     if not self.m_powerInfo then
@@ -279,9 +231,135 @@ FacMiniPowerContent._RefreshContent = HL.Method() << function(self)
             node.powerSaveAnim:PlayWithTween(self.m_lastPowerSaveAnimName)
         end
     end
+
+    
+    if self.shouldShowBackupPower then
+        local chapterId = self.m_chapterId < 0 and Utils.getCurrentChapterId() or self.m_chapterId
+        local reserveNode = node.reserveNode
+        local lastStartUseTs = data.backupPowerLastStartTs
+        local currentTimeTs = DateTimeUtils.GetCurrentTimestampBySeconds()
+        self.m_backupUseEndTs = lastStartUseTs + USE_DURATION
+        self.m_backupRecoveryEndTs = self.m_backupUseEndTs + RECOVERY_DURATION
+
+        local inUse = currentTimeTs < self.m_backupUseEndTs
+        
+        local canShowPre = self.m_canShowBackupPower
+        local canShowNow = (inUse or (isConsuming and restPower == 0)) and not Utils.isInBlackbox()
+        self.m_canShowBackupPower = canShowNow
+
+        
+        
+        if not canShowPre and canShowNow then
+            reserveNode.button.onClick:RemoveAllListeners()
+            reserveNode.button.onClick:AddListener(function()
+                PhaseManager:OpenPhase(PhaseId.FacReservePowerPopup, {
+                    chapterId = chapterId,
+                    useEndTime = self.m_backupUseEndTs,
+                    recoveryEndTime = self.m_backupRecoveryEndTs,
+                    isRealPowerEnough = not isConsuming, 
+                    isAutoUse = GameInstance.player.remoteFactory.core.IsBackPowerAutoStartupEnabled, 
+                })
+            end)
+        end
+
+        if canShowPre and not canShowNow then
+            self:_HideBackupPower()
+        end
+    end
+
 end
 
+FacMiniPowerContent.ToggleBackupPowerShow = HL.Method(HL.Boolean) << function(self, shouldShow)
+    self.shouldShowBackupPower = shouldShow
+    if not shouldShow then
+        self:_HideBackupPower()
+    else
+        self.m_isDirty = true 
+    end
+end
 
+FacMiniPowerContent._HideBackupPower = HL.Method() << function(self)
+    local reserveNode = self.view.reserveNode
+    reserveNode.stateController:SetState("Hide")
+    reserveNode.gameObject:SetActive(false)
+end
+
+FacMiniPowerContent.m_softMaskResetCoroutine = HL.Field(HL.Thread)
+
+FacMiniPowerContent._UpdateBackupPowerState = HL.Method() << function(self)
+    if not (self.shouldShowBackupPower and self.m_canShowBackupPower) then
+        return
+    end
+
+    local reserveNode = self.view.reserveNode
+    local currentTimeTs = DateTimeUtils.GetCurrentTimestampBySeconds()
+    local inUse = currentTimeTs < self.m_backupUseEndTs
+    local underRecovery = not inUse and currentTimeTs < self.m_backupRecoveryEndTs
+    local isAvailable = not inUse and not underRecovery
+    local lastState = reserveNode.stateController.currentStateName
+    reserveNode.stateController:SetState(inUse and "InUse" or (underRecovery and "UnderRecovery" or "Available"))
+    local currentState = reserveNode.stateController.currentStateName
+    local chapterId = self.m_chapterId < 0 and Utils.getCurrentChapterId() or self.m_chapterId
+    
+    local domainId = ScopeUtil.ChapterIdInt2Str(chapterId)
+    local _, domainCfg = Tables.domainDataTable:TryGetValue(domainId)
+    local domainName = domainCfg.domainName
+
+    
+    if not reserveNode.gameObject.activeSelf or lastState ~= currentState then
+        local isPopup = not reserveNode.gameObject.activeSelf
+        reserveNode.gameObject:SetActive(true)
+        self.view.reserveNode.redDot:InitRedDot("FacBackupPower", {
+            chapterId = chapterId,
+        })
+        CS.Beyond.Gameplay.Conditions.OnFacShowBackupPower.Trigger()
+        
+        if not isPopup then
+            if lastState == "InUse" and currentState == "UnderRecovery" then
+                reserveNode.animationWrapper:Play(self.view.config.BACKUP_CHANGE_FROM_USE_TO_RECOVERY) 
+                AudioAdapter.PostEvent("Au_UI_Event_TempowerSupplyShortage")
+            elseif lastState == "UnderRecovery" and currentState ~= "UnderRecovery" then
+                reserveNode.animationWrapper:Play(self.view.config.BACKUP_CHANGE_FROM_RECOVERY_TO_AVAILABLE) 
+            end
+        end
+        
+        if not underRecovery then
+            reserveNode.animationWrapper:Play(self.view.config.BACKUP_COMMON_IN_USE)
+        end
+        
+        if isAvailable then
+            reserveNode.fgBar.fillAmount = 1
+            reserveNode.iconAnimationWrapper:Play(self.view.config.BACKUP_AVAILABLE)
+            return
+        end
+        reserveNode.iconAnimationWrapper:Play(self.view.config.BACKUP_DEFAULT)
+        
+        if inUse then
+            reserveNode.lineAnimationWrapper:Play(self.view.config.BACKUP_IN_USE)
+            
+            self:_ClearCoroutine(self.m_softMaskResetCoroutine)
+            self.m_softMaskResetCoroutine = self:_StartCoroutine(function()
+                coroutine.wait(0.2)
+                local currentPos = reserveNode.bgUseLineMask.anchoredPosition
+                reserveNode.bgUseLineMask.anchoredPosition = CS.UnityEngine.Vector2(currentPos.x, currentPos.y + 0.00001)
+                reserveNode.bgUseLineMask.anchoredPosition = CS.UnityEngine.Vector2(currentPos.x, currentPos.y)
+            end)
+        end
+    end
+
+    
+    local leftTime = 0
+    if inUse then
+        leftTime = self.m_backupUseEndTs - currentTimeTs
+        reserveNode.fgBar.fillAmount = leftTime / USE_DURATION
+    elseif underRecovery then
+        leftTime = self.m_backupRecoveryEndTs - currentTimeTs
+        reserveNode.fgBar.fillAmount = (RECOVERY_DURATION - leftTime) / RECOVERY_DURATION
+    end
+    
+    reserveNode.timeTxt:SetAndResolveTextStyle(leftTime < 3600 and UIUtils.getLeftTimeToSecond(leftTime) or UIUtils.getShortLeftTime(leftTime))
+
+end
 
 FacMiniPowerContent._MonitorPower = HL.Method() << function(self)
     local data = self.m_powerData
@@ -341,8 +419,6 @@ FacMiniPowerContent._MonitorPower = HL.Method() << function(self)
     self.m_lastPowerSavePercent = restPercent
 end
 
-
-
 FacMiniPowerContent._RefreshAnimState = HL.Method() << function(self)
     if not string.isEmpty(self.m_lastPowerEnoughAnimName) then
         self.view.powerEnoughAnim:PlayWithTween(self.m_lastPowerEnoughAnimName)
@@ -352,9 +428,6 @@ FacMiniPowerContent._RefreshAnimState = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacMiniPowerContent.InitFacMiniPowerContent = HL.Method(HL.Opt(HL.Number)) << function(self, chapterId)
     self.m_chapterId = chapterId ~= nil and chapterId or -1
     self.m_powerInfo = nil
@@ -363,14 +436,12 @@ FacMiniPowerContent.InitFacMiniPowerContent = HL.Method(HL.Opt(HL.Number)) << fu
     self.view.powerSaveNode.gameObject:SetActive(true)
     self.view.bandwidthNode.gameObject:SetActive(false)
     self.view.buildingCountNode.gameObject:SetActive(false)
+    self:ToggleBackupPowerShow(self.shouldShowBackupPower)
 
     self:_UpdateAndRefreshAll(true)
 
     self:_FirstTimeInit()
 end
-
-
-
 
 FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function(self, buildingItemId)
     local data = FactoryUtils.getItemBuildingData(buildingItemId)
@@ -386,6 +457,9 @@ FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function
         node.bandwidthNode.gameObject:SetActive(false)
         self:RefreshFacMiniPowerContent()
         self:_RefreshAnimState()
+        if self.view.reserveNode.gameObject.activeSelf then
+            CS.Beyond.Gameplay.Conditions.OnFacShowBackupPower.Trigger()
+        end
         return
     end
 
@@ -508,8 +582,6 @@ FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function
     self:_RefreshAnimState()
 end
 
-
-
 FacMiniPowerContent.RefreshFacMiniPowerContent = HL.Method() << function(self)
     if not self.m_powerData or not self.m_powerInfo then
         return
@@ -523,13 +595,9 @@ FacMiniPowerContent.RefreshFacMiniPowerContent = HL.Method() << function(self)
         self:_MonitorPower()
     end
 end
-
-
 FacMiniPowerContent.ClearMemorizedPowerInfo = HL.Method() << function(self)
     self.m_powerInfo = nil
 end
-
-
 
 FacMiniPowerContent.UpdateLackOfPowerAudio = HL.Method() << function(self)
     if self.m_lackOfPowerAudioBaseTime < -0.01 then

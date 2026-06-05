@@ -157,7 +157,11 @@ SpaceshipGuestroomInventory._OnFirstTimeInit = HL.Override() << function(self)
     self.view.scrollView.onGraduallyShowFinish:AddListener(function()
         if DeviceInfo.usingController and self.m_loadingFinish and self.m_isOpen then
             self.view.selectableNaviGroup:NaviToThisGroup()
-            self:NaviToFirstCell()
+            if self.m_lastNaviTargetIndex > 1 then
+                self:Navi2LastNaviTarget()
+            else
+                self:NaviToFirstCell()
+            end
         end
     end)
 
@@ -274,7 +278,16 @@ SpaceshipGuestroomInventory._OnAllBatchesCompleted = HL.Method() << function(sel
     self.m_currentBatchIndex = 0
     self.m_loadingFinish = true
     self:_UpdateView(true)
-    self.view.scrollView:SetTop()
+    if self.m_lastNaviTargetIndex > 1 and #self.m_cacheData > 0 then
+        local scrollIndex = math.min(self.m_lastNaviTargetIndex, #self.m_cacheData)
+        self.m_lastNaviTargetIndex = scrollIndex
+        self.view.scrollView:ScrollToIndex(CSIndex(scrollIndex), true)
+        if DeviceInfo.usingController then
+            self:Navi2LastNaviTarget()
+        end
+    else
+        self.view.scrollView:SetTop()
+    end
 end
 
 

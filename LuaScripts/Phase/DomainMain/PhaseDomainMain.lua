@@ -14,6 +14,7 @@ local PHASE_ID = PhaseId.DomainMain
 
 
 
+
 PhaseDomainMain = HL.Class('PhaseDomainMain', phaseBase.PhaseBase)
 
 
@@ -35,6 +36,10 @@ PhaseDomainMain.hasJumpedToOtherPhase = HL.Field(HL.Boolean) << false
 
 PhaseDomainMain._OnInit = HL.Override() << function(self)
     PhaseDomainMain.Super._OnInit(self)
+    if self.arg and self.arg.hasJumpedToOtherPhase then
+        self.hasJumpedToOtherPhase = self.arg.hasJumpedToOtherPhase
+        self.arg.hasJumpedToOtherPhase = nil
+    end
 end
 
 
@@ -103,6 +108,24 @@ PhaseDomainMain._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.
             end
         end
     end
+end
+
+
+
+PhaseDomainMain.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    if self.panels[1] ~= nil then
+        local panelId = self.panels[1]
+        if self.m_panel2Item[panelId] ~= nil then
+            
+            local uiCtrl = self.m_panel2Item[panelId].uiCtrl
+            local arg = uiCtrl:GetCurPhaseStateArg()
+            if arg then
+                arg.hasJumpedToOtherPhase = self.hasJumpedToOtherPhase
+            end
+            return arg
+        end
+    end
+    return nil
 end
 
 

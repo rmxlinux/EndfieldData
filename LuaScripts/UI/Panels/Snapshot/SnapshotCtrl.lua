@@ -114,6 +114,24 @@ local PHASE_ID = PhaseId.Snapshot
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 SnapshotCtrl = HL.Class('SnapshotCtrl', uiCtrl.UICtrl)
 
 
@@ -196,6 +214,9 @@ local controllerExitHideUIAnyKeyDown = {
 
 
 
+SnapshotCtrl.m_arg = HL.Field(HL.Table)
+
+
 SnapshotCtrl.m_cameraCtrl = HL.Field(HL.Forward("SnapshotCameraCtrl"))
 
 
@@ -245,6 +266,9 @@ SnapshotCtrl.m_addFocalLengthCoroutine = HL.Field(HL.Thread)
 SnapshotCtrl.m_minusFocalLengthCoroutine = HL.Field(HL.Thread)
 
 
+SnapshotCtrl.m_isMenuNodeFocused = HL.Field(HL.Boolean) << false
+
+
 
 
 
@@ -262,6 +286,12 @@ SnapshotCtrl.m_onChangeContentFuncList = HL.Field(HL.Table)
 
 
 SnapshotCtrl.m_isMenuExpand = HL.Field(HL.Boolean) << false
+
+
+SnapshotCtrl.m_resumeMenuControllerFocusType = HL.Field(HL.Any)
+
+
+SnapshotCtrl.m_resumeMenuControllerFocusIndex = HL.Field(HL.Number) << 0
 
 
 
@@ -372,31 +402,26 @@ SnapshotCtrl.m_eventLogInfo = HL.Field(HL.Table)
 
 
 SnapshotCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg
     snapshotSystem:ToggleSnapshotMode(true, true)
     self:_InitUI()
     self:_InitData(arg)
     self:_RefreshAllUI()
-    
-    self:OnSquadInFightChanged()
-    if arg.forbidFirstPerson then
-        self:_SetForbid(self.m_forbidRecords.firstPersonPerspective, true, "InitArg")
-    end
-    if arg.forbidMoveOrRotateCam then
-        self:_SetForbid(self.m_forbidRecords.controlCam, true, "InitArg")
-    end
-    if arg.onOpenCallBack then
-        arg.onOpenCallBack()
-    end
-    
-    EventLogManagerInst:GameEvent_Snapshot(1)
-    if self.m_eventLogInfo.isFromActivity then
-        EventLogManagerInst:GameEvent_SnapshotActivityStart(
-            self.m_eventLogInfo.activityId,
-            self.m_eventLogInfo.stageId,
-            self.m_eventLogInfo.isFromInteractive and 1 or 2
-        )
-    end
+    self:_ResumePanel()
     self:_AddRegisters()
+
+    
+    if not PhaseManager.isRecovering then
+        EventLogManagerInst:GameEvent_Snapshot(1)
+        if self.m_eventLogInfo.isFromActivity then
+            EventLogManagerInst:GameEvent_SnapshotActivityStart(
+                self.m_eventLogInfo.activityId,
+                self.m_eventLogInfo.stageId,
+                self.m_eventLogInfo.isFromInteractive and 1 or 2
+            )
+        end
+    end
+    
 end
 
 
@@ -613,7 +638,7 @@ end
 
 SnapshotCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     
-    self.m_cameraCtrl = arg.cameCtrl
+    self.m_cameraCtrl = self.m_phase.snapshotCameraPanel.uiCtrl
     self.m_autoFocusDistanceTime = self.view.config.AUTO_FOCUS_DISTANCE_TIME
     self.m_keepCamPosWhenClose = true
     
@@ -646,8 +671,10 @@ SnapshotCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     local _, isCameraMoveMode, _ = ClientDataManagerInst:GetBool(DATA_KEY_MOVE_MODE, true, false)
     isCameraMoveMode = isCameraMoveMode and not GameWorld.battle.isSquadInFight and not DeviceInfo.usingController  
     self:_SwitchMoveMode(isCameraMoveMode, false)
-    self:_SwitchSnapshotUIVisible(true, true)
-    self:_SwitchPersonPerspectiveMode(arg.thirdPerson == false, false)
+
+    if not self.m_arg.resumeState then
+        self:_SwitchSnapshotUIVisible(true, true)
+    end
     if Utils.isForbidden(ForbidType.ForbidMove) then
         self:_SetForbid(self.m_forbidRecords.playerMoveMode, true, "ForbidSystem")
     end
@@ -784,12 +811,6 @@ SnapshotCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
         end
     end
     self:_UpdateIdentifyInfo()
-    
-
-    
-    if arg.camInitRotate then
-        snapshotSystem.camController:SetCameraRotation(arg.camInitRotate)
-    end
     
 end
 
@@ -1018,6 +1039,7 @@ SnapshotCtrl._InitUI = HL.Method() << function(self)
         self:_SwitchMenuContentExpand(not self.m_isMenuExpand)
     end)
     self.view.menuNodeNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
+        self.m_isMenuNodeFocused = isFocused
         Notify(MessageConst.SNAPSHOT_INNER_FORBID_JOYSTICK, { isForbid = isFocused, key = "focusMenu" })
         self.view.hintNode.gameObject:SetActive(not isFocused)
         self.view.menuTabNode.focusMenuKeyHintNode.gameObject:SetActive(not isFocused)
@@ -1314,7 +1336,13 @@ SnapshotCtrl._InitUIMenuContentChangeFunc = HL.Method() << function(self)
                 self:_ShowFilterName(true)
             end,
             naviFunc = function()
-                local obj = self.view.menuContentNode.menuFilterNode.menuFilterList:Get(CSIndex(self.m_curSelectFilterIndex))
+                local focusIndex = self.m_curSelectFilterIndex
+                if self.m_resumeMenuControllerFocusType == "filter" and self.m_resumeMenuControllerFocusIndex > 0 then
+                    focusIndex = self.m_resumeMenuControllerFocusIndex
+                    self.m_resumeMenuControllerFocusType = nil
+                    self.m_resumeMenuControllerFocusIndex = 0
+                end
+                local obj = self.view.menuContentNode.menuFilterNode.menuFilterList:Get(CSIndex(focusIndex))
                 local cell = self.m_getFilterCellFunc(obj)
                 if cell then
                     InputManagerInst.controllerNaviManager:SetTarget(cell.btn)
@@ -1334,7 +1362,13 @@ SnapshotCtrl._InitUIMenuContentChangeFunc = HL.Method() << function(self)
                 end
             end,
             naviFunc = function()
-                local obj = self.view.menuContentNode.menuStickerNode.stickerList:Get(CSIndex(self.m_curSelectStickerIndex))
+                local focusIndex = self.m_curSelectStickerIndex
+                if self.m_resumeMenuControllerFocusType == "sticker" and self.m_resumeMenuControllerFocusIndex > 0 then
+                    focusIndex = self.m_resumeMenuControllerFocusIndex
+                    self.m_resumeMenuControllerFocusType = nil
+                    self.m_resumeMenuControllerFocusIndex = 0
+                end
+                local obj = self.view.menuContentNode.menuStickerNode.stickerList:Get(CSIndex(focusIndex))
                 local cell = self.m_getStickerCellFunc(obj)
                 if cell then
                     InputManagerInst.controllerNaviManager:SetTarget(cell.btn)
@@ -1354,9 +1388,6 @@ end
 SnapshotCtrl._RefreshAllUI = HL.Method() << function(self)
     
     self.view.switchMoveModeTog:SetIsOnWithoutNotify(snapshotSystem.isCameraMoveMode)
-    local value = math.max(math.min(self.view.config.MAX_FOCAL_LENGTH, self.m_defaultFocus), self.view.config.MIN_FOCAL_LENGTH)
-    self:_ChangeFocalLength(value)
-    self.view.focalLengthNode.focalLengthSlider:SetValueWithoutNotify(value)
     self.view.shutterBtnHighLight.gameObject:SetActive(false)
     
     local menuContentNode = self.view.menuContentNode
@@ -1621,40 +1652,58 @@ SnapshotCtrl._ClickShutter = HL.Method() << function(self)
     
     local curShowSticker = self.view.stickerImg.gameObject.activeSelf
     Notify(MessageConst.SNAPSHOT_INNER_FORBID_JOYSTICK, { isForbid = true, key = "Shutter" })
+    Notify(MessageConst.HIDE_ITEM_TIPS)
     
     local needCloseSelfFast = atLeastOneSuccess or self.m_cinematicInQueueWaitCloseSnapshot 
-    Notify(MessageConst.SHOW_COMMON_SHARE_PANEL, {
+    Notify(MessageConst.SHOW_COMMON_SHARE_PANEL, self:_BuildCommonShareArg({
         type = "PhotoShot",
         aperture = self.view.menuContentNode.menuBasicNode.apertureValueTxt.text,
         focus = self.view.focalLengthNode.sliderValueTxt.text,
         showPlayerInfo = true,
         success = atLeastOneSuccess,
         isCloseFast = needCloseSelfFast,
-        onCaptureEnd = function()
-            if not UIManager:IsOpen(PANEL_ID) or not PhaseManager:IsOpenAndValid(PHASE_ID) then
-                return  
-            end
-            if curShowSticker then
-                self.view.stickerImg.gameObject:SetActive(false)
-            end
-        end,
-        onClose = function()
-            if not UIManager:IsOpen(PANEL_ID) or not PhaseManager:IsOpenAndValid(PHASE_ID) then
-                return  
-            end
-            self.m_isInCapture = false
-            if curShowSticker then
-                self.view.stickerImg.gameObject:SetActive(true)
-            end
-            self.view.touchPlate.gameObject:SetActive(true)
-            self.view.captureInvisibleRoot.gameObject:SetActive(true)
-            Notify(MessageConst.SNAPSHOT_INNER_FORBID_JOYSTICK, { isForbid = false, key = "Shutter" })
-            if needCloseSelfFast then
-                self:_CloseSelf(true, true)
-            end
-        end,
-    })
+    }, curShowSticker, needCloseSelfFast))
     GameInstance.player.statisticValueSystem:IncrementClientStatisticValueByType(GEnums.StatType.CltTakePhoto)
+end
+
+
+
+
+
+
+SnapshotCtrl._BuildCommonShareArg = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.Boolean)).Return(HL.Table) << function(self, commonShareArg, curShowSticker, needCloseSelfFast)
+    commonShareArg.snapshotCurShowSticker = curShowSticker ~= nil and curShowSticker or commonShareArg.snapshotCurShowSticker == true
+    commonShareArg.snapshotNeedCloseSelfFast = needCloseSelfFast ~= nil and needCloseSelfFast or commonShareArg.snapshotNeedCloseSelfFast == true
+    local shouldRestoreSticker = commonShareArg.snapshotCurShowSticker == true
+    local shouldCloseSelfFast = commonShareArg.snapshotNeedCloseSelfFast == true
+    commonShareArg.onCaptureEnd = function()
+        if not UIManager:IsOpen(PANEL_ID) or not PhaseManager:IsOpenAndValid(PHASE_ID) then
+            return  
+        end
+        if shouldRestoreSticker and not IsNull(self.view.stickerImg) then
+            self.view.stickerImg.gameObject:SetActive(false)
+        end
+    end
+    commonShareArg.onClose = function()
+        if not UIManager:IsOpen(PANEL_ID) or not PhaseManager:IsOpenAndValid(PHASE_ID) then
+            return  
+        end
+        self.m_isInCapture = false
+        if shouldRestoreSticker and not IsNull(self.view.stickerImg) then
+            self.view.stickerImg.gameObject:SetActive(true)
+        end
+        if not IsNull(self.view.touchPlate) then
+            self.view.touchPlate.gameObject:SetActive(true)
+        end
+        if not IsNull(self.view.captureInvisibleRoot) then
+            self.view.captureInvisibleRoot.gameObject:SetActive(true)
+        end
+        Notify(MessageConst.SNAPSHOT_INNER_FORBID_JOYSTICK, { isForbid = false, key = "Shutter" })
+        if shouldCloseSelfFast then
+            self:_CloseSelf(true, true)
+        end
+    end
+    return commonShareArg
 end
 
 
@@ -1713,7 +1762,6 @@ end
 
 SnapshotCtrl._SwitchMoveMode = HL.Method(HL.Boolean, HL.Boolean) << function(self, isCameraMoveMode, showTip)
     if DeviceInfo.usingController and isCameraMoveMode then
-        logger.error("[拍照模式] 手柄模式下，禁止切换到相机移动模式！因为手柄模式下相机移动模式和玩家移动模式是共存的")
         return
     end
     if showTip then
@@ -1730,7 +1778,9 @@ SnapshotCtrl._SwitchMoveMode = HL.Method(HL.Boolean, HL.Boolean) << function(sel
         self.view.hintNode.pcMoveNodeStateCtrl:SetState("PlayerMove")
         Notify(MessageConst.SNAPSHOT_PLAYER_MOVE_MODE)
     end
-    ClientDataManagerInst:SetBool(DATA_KEY_MOVE_MODE, isCameraMoveMode, true)
+    if not DeviceInfo.usingController then
+        ClientDataManagerInst:SetBool(DATA_KEY_MOVE_MODE, isCameraMoveMode, true)
+    end
 end
 
 
@@ -1747,6 +1797,9 @@ SnapshotCtrl._SwitchSnapshotUIVisible = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)
     end
     if not isInit then
         AudioAdapter.PostEvent(isShow and "Au_UI_Popup_Common_Large_Open" or "Au_UI_Popup_Common_Large_Close")
+    end
+    if not isShow then
+        Notify(MessageConst.HIDE_ITEM_TIPS)
     end
 end
 
@@ -2008,7 +2061,9 @@ SnapshotCtrl._ChangeSticker = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << functi
         self:_EnableStickerEditMode(false, isInit)
     else
         self.view.stickerTouchPlate.gameObject:SetActive(true)
-        self:_EnableStickerEditMode(true, isInit)
+        if not isInit then
+            self:_EnableStickerEditMode(true, false)
+        end
         if not DeviceInfo.usingController then
             self.view.stickerMoveHint.gameObject:SetActive(false)
         end
@@ -2040,7 +2095,7 @@ SnapshotCtrl._EnableStickerEditMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) 
             self.m_editStickerCtrl:Show()
         end
     else
-        if not self.m_editStickerCtrl == nil then
+        if self.m_editStickerCtrl ~= nil then
             self.m_editStickerCtrl:Hide()
         end
     end
@@ -2119,7 +2174,6 @@ end
 
 SnapshotCtrl._SwitchAllWorldUIActive = HL.Method(HL.Boolean) << function(self, isActive)
     UIManager.worldObjectRoot.gameObject:SetActive(isActive)
-    
 end
 
 
@@ -2132,6 +2186,7 @@ SnapshotCtrl._ShowTip = HL.Method(HL.Opt(HL.String)) << function(self, content)
         end)
         return
     end
+    self.view.tipNodeAnimationWrapper:ClearTween(false)
     self.view.tipNode.gameObject:SetActive(true)
     self.view.tipNodeAnimationWrapper:Play("tipnode_in")
     self.view.tipTxt.text = content
@@ -2390,6 +2445,312 @@ SnapshotCtrl.OnFirstGotItem = HL.Method(HL.Opt(HL.Any)) << function(self, args)
             end
         end
     end
+end
+
+
+
+
+
+
+SnapshotCtrl._CollectResumeState = HL.Method().Return(HL.Table) << function(self)
+    local filterInfo = self.m_filterInfos[self.m_curSelectFilterIndex]
+    local stickerInfo = self.m_stickerInfos[self.m_curSelectStickerIndex]
+    local controllerFocusType, controllerFocusIndex = self:_GetMenuControllerFocusKey()
+    local formationNode = self.view.menuContentNode.menuFormationNode
+    local resumeState = {
+        ui = {
+            isShowSnapshotUI = self.m_isShowSnapshotUI,
+        },
+        camera = {
+            isFirstPerson = snapshotSystem.isFirstPersonMode,
+            focalLength = self.m_cameraCtrl:GetFocalLen(),
+            aperture = self.m_cameraCtrl:GetAperture(),
+            thirdPersonParamFullSnapshot = snapshotSystem.isFirstPersonMode and nil or self.m_cameraCtrl:GetCameraParamFullSnapshot(),
+            rotation = self.m_cameraCtrl:GetCameraRotationState(),
+            zoomScale = self.m_cameraCtrl:GetZoomScale(),
+            offset = self.m_cameraCtrl:GetCameraOffset(),
+        },
+        menu = {
+            curSelectMenuIndex = self.m_curSelectMenuIndex,
+            isMenuExpand = self.m_isMenuExpand,
+            controllerFocusType = controllerFocusType,
+            controllerFocusIndex = controllerFocusIndex,
+            basic = {
+                showCharMode = self:_GetCurrentShowCharMode(),
+                isShowNpc = self.m_isShowNpc,
+                isShowDropItem = self.m_isShowDropItem,
+                isShowFactoryBuilding = self.m_isShowFactoryBuilding,
+                aperture = self.m_cameraCtrl:GetAperture(),
+            },
+            formation = {
+                isTogOn = formationNode.formationTog.isOn,
+                formationIndex = self.m_curTeamFormationIndex,
+            },
+            filter = {
+                selectedId = filterInfo and (not filterInfo.isEmpty) and filterInfo.id or nil,
+            },
+            sticker = {
+                selectedId = stickerInfo and (not stickerInfo.isEmpty) and stickerInfo.id or nil,
+                anchoredPos = self.view.stickerImg.rectTransform.anchoredPosition,
+                isEditMode = self.m_inStickerEditMode,
+            },
+        },
+    }
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.CommonShare)
+    if isOpen and UIManager:IsShow(PanelId.CommonShare) and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        local commonShareArg = ctrl:GetCurPhaseStateArg()
+        if commonShareArg then
+            resumeState.commonShareArg = commonShareArg
+        end
+    end
+    return resumeState
+end
+
+
+
+SnapshotCtrl._ApplyInitialArgState = HL.Method() << function(self)
+    
+    self:_SwitchPersonPerspectiveMode(self.m_arg.thirdPerson == false, false)
+    local value = math.max(math.min(self.view.config.MAX_FOCAL_LENGTH, self.m_defaultFocus), self.view.config.MIN_FOCAL_LENGTH)
+    self:_ChangeFocalLength(value)
+    self.view.focalLengthNode.focalLengthSlider:SetValueWithoutNotify(value)
+    if self.m_arg.camInitRotate then
+        self.m_cameraCtrl:SetCameraRotationState(self.m_arg.camInitRotate, false)
+    end
+end
+
+
+
+
+SnapshotCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState then
+        return
+    end
+    self:_ApplyResumeCameraState(resumeState.camera)
+    self:_ApplyResumeMenuState(resumeState.menu)
+    self:_ApplyResumeUIViewState(resumeState.ui, resumeState.menu and resumeState.menu.sticker or nil)
+    if resumeState.commonShareArg then
+        UIManager:Open(PanelId.CommonShare, self:_BuildCommonShareArg(resumeState.commonShareArg))
+        resumeState.commonShareArg = nil
+    end
+end
+
+
+
+
+SnapshotCtrl._ApplyResumeCameraState = HL.Method(HL.Opt(HL.Any)) << function(self, cameraState)
+    if not cameraState then
+        return
+    end
+    local isFirstPerson = cameraState.isFirstPerson == true
+    self:_SwitchPersonPerspectiveMode(isFirstPerson, false)
+    if not isFirstPerson and cameraState.thirdPersonParamFullSnapshot then
+        self.m_cameraCtrl:RestoreCameraParamFullSnapshot(cameraState.thirdPersonParamFullSnapshot)
+    end
+    if cameraState.focalLength then
+        local focalLength = math.max(math.min(self.view.config.MAX_FOCAL_LENGTH, cameraState.focalLength), self.view.config.MIN_FOCAL_LENGTH)
+        self:_ChangeFocalLength(focalLength)
+        self.view.focalLengthNode.focalLengthSlider:SetValueWithoutNotify(focalLength)
+    end
+    
+    
+    
+    
+    
+    if isFirstPerson and cameraState.zoomScale then
+        self.m_cameraCtrl:SetZoomScale(cameraState.zoomScale)
+    end
+    if cameraState.offset then
+        self.m_cameraCtrl:SetCameraOffset(cameraState.offset)
+    end
+    if isFirstPerson and cameraState.rotation then
+        self.m_cameraCtrl:SetCameraRotationState(cameraState.rotation, not isFirstPerson)
+    end
+end
+
+
+
+
+SnapshotCtrl._ApplyResumeMenuState = HL.Method(HL.Opt(HL.Any)) << function(self, menuState)
+    if not menuState then
+        return
+    end
+    local menuContentNode = self.view.menuContentNode
+    local basicState = menuState.basic
+    if basicState then
+        local basicNode = menuContentNode.menuBasicNode
+        local showCharMode = lume.clamp(basicState.showCharMode or 1, 1, #showCharConfig)
+        basicNode.showCharDropDown:SetSelected(showCharMode - 1)
+        basicNode.showNpcTog:SetIsOnWithoutNotify(basicState.isShowNpc == true)
+        self:_SwitchShowNpc(basicState.isShowNpc == true)
+        basicNode.showDropItemTog:SetIsOnWithoutNotify(basicState.isShowDropItem == true)
+        self:_SwitchShowDropItem(basicState.isShowDropItem == true)
+        basicNode.showFactoryBuildingTog:SetIsOnWithoutNotify(basicState.isShowFactoryBuilding == true)
+        self:_SwitchShowFactoryBuilding(basicState.isShowFactoryBuilding == true)
+        if basicState.aperture then
+            basicNode.apertureSlider:SetValueWithoutNotify(basicState.aperture)
+            self:_ChangeAperture(basicState.aperture)
+        end
+    end
+
+    local formationState = menuState.formation
+    if formationState then
+        local formationNode = menuContentNode.menuFormationNode
+        local formationIndex = formationState.formationIndex or -1
+        local isFormationTogOn = formationState.isTogOn
+        if isFormationTogOn == nil then
+            isFormationTogOn = formationIndex >= 0
+        end
+        formationNode.formationTog.isOn = isFormationTogOn
+        local dropDownIndex = lume.clamp(formationIndex + 1, 0, formationManager.formationUIData.Count)
+        formationNode.formationDropDown:SetSelected(dropDownIndex)
+    end
+
+    local filterState = menuState.filter
+    if filterState then
+        local filterIndex = self:_FindFilterIndexById(filterState.selectedId)
+        self:_ChangeFilter(filterIndex)
+        menuContentNode.menuFilterNode.menuFilterList:UpdateCount(#self.m_filterInfos, true)
+    end
+
+    local stickerState = menuState.sticker
+    if stickerState then
+        
+        
+        self.m_curSelectStickerIndex = self:_FindStickerIndexById(stickerState.selectedId)
+    end
+
+    local targetMenuIndex = lume.clamp(menuState.curSelectMenuIndex or 1, 1, #self.m_menuTabCellList)
+    self.m_resumeMenuControllerFocusType = menuState.controllerFocusType
+    self.m_resumeMenuControllerFocusIndex = menuState.controllerFocusIndex or 0
+    self:_ChangeMenuTab(targetMenuIndex, false, true)
+    self:_SwitchMenuContentExpand(menuState.isMenuExpand == true, true)
+    if menuState.isMenuExpand == true then
+        if DeviceInfo.usingController then
+            self.view.menuNodeNaviGroup:ManuallyFocus()
+        elseif targetMenuIndex == 4 and self.m_onChangeContentFuncList[targetMenuIndex]
+            and self.m_onChangeContentFuncList[targetMenuIndex].entryFunc then
+            self.m_onChangeContentFuncList[targetMenuIndex].entryFunc()
+        end
+    else
+        self.m_resumeMenuControllerFocusType = nil
+        self.m_resumeMenuControllerFocusIndex = 0
+    end
+    if not (targetMenuIndex == 3) then
+        self:_ShowFilterName(false)
+    end
+
+    local stickerState = menuState.sticker
+    if stickerState then
+        local stickerIndex = self:_FindStickerIndexById(stickerState.selectedId)
+        self:_ChangeSticker(stickerIndex, true)
+        if stickerState.anchoredPos and stickerIndex > 1 then
+            self:_SetStickerNewPos(stickerState.anchoredPos)
+        end
+        self:_EnableStickerEditMode(stickerState.isEditMode == true, true)
+    end
+end
+
+
+
+
+
+SnapshotCtrl._ApplyResumeUIViewState = HL.Method(HL.Opt(HL.Any, HL.Any)) << function(self, uiState, stickerState)
+    if stickerState and stickerState.isEditMode then
+        return
+    end
+    if uiState and uiState.isShowSnapshotUI == false then
+        self:_SwitchSnapshotUIVisible(false, true)
+    end
+end
+
+
+
+SnapshotCtrl._ApplyForbidState = HL.Method() << function(self)
+    self:OnSquadInFightChanged()
+    if self.m_arg.forbidFirstPerson then
+        self:_SetForbid(self.m_forbidRecords.firstPersonPerspective, true, "InitArg")
+    end
+    if self.m_arg.forbidMoveOrRotateCam then
+        self:_SetForbid(self.m_forbidRecords.controlCam, true, "InitArg")
+    end
+end
+
+
+
+SnapshotCtrl._SyncJoystickForbidState = HL.Method() << function(self)
+    Notify(MessageConst.SNAPSHOT_INNER_FORBID_JOYSTICK, { isForbid = self.m_isMenuNodeFocused, key = "focusMenu" })
+    Notify(MessageConst.SNAPSHOT_INNER_FORBID_JOYSTICK, { isForbid = self.m_inStickerEditMode, key = "stickerMode" })
+    Notify(MessageConst.SNAPSHOT_INNER_FORBID_JOYSTICK, { isForbid = snapshotSystem.isFirstPersonMode, key = "IsFirstPersonMode" })
+end
+
+
+
+SnapshotCtrl._GetMenuControllerFocusKey = HL.Method().Return(HL.Any, HL.Number) << function(self)
+    if self.m_curSelectMenuIndex == 3 then
+        return "filter", 1
+    elseif self.m_curSelectMenuIndex == 4 then
+        return "sticker", 1
+    end
+    return "", 0
+end
+
+
+
+SnapshotCtrl._GetCurrentShowCharMode = HL.Method().Return(HL.Number) << function(self)
+    local selectedIndex = self.view.menuContentNode.menuBasicNode.showCharDropDown.selectedIndex
+    local luaIndex = LuaIndex(selectedIndex)
+    if luaIndex <= 0 then
+        return 1
+    end
+    return luaIndex
+end
+
+
+
+
+SnapshotCtrl._FindFilterIndexById = HL.Method(HL.Opt(HL.Any)).Return(HL.Number) << function(self, filterId)
+    if filterId == nil or filterId == "" then
+        return 1
+    end
+    for luaIndex, info in ipairs(self.m_filterInfos) do
+        if info.id == filterId then
+            return luaIndex
+        end
+    end
+    return 1
+end
+
+
+
+
+SnapshotCtrl._FindStickerIndexById = HL.Method(HL.Opt(HL.Any)).Return(HL.Number) << function(self, stickerId)
+    if stickerId == nil or stickerId == "" then
+        return 1
+    end
+    for luaIndex, info in ipairs(self.m_stickerInfos) do
+        if info.id == stickerId then
+            return luaIndex
+        end
+    end
+    return 1
+end
+
+
+
+SnapshotCtrl._ResumePanel = HL.Method() << function(self)
+    self:_ApplyInitialArgState()
+    self:_ApplyResumeState(self.m_arg.resumeState)
+
+    
+    self:_ApplyForbidState()
+    
+
+    if self.m_arg.onOpenCallBack then
+        self.m_arg.onOpenCallBack()
+    end
+
+    self.m_arg.resumeState = nil 
 end
 
 

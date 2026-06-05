@@ -13,6 +13,7 @@ local PHASE_ID = PhaseId.BattlePassAdvancedPlanBuy
 
 
 
+
 PhaseBattlePassAdvancedPlanBuy = HL.Class('PhaseBattlePassAdvancedPlanBuy', phaseBase.PhaseBase)
 
 
@@ -34,6 +35,11 @@ PhaseBattlePassAdvancedPlanBuy.s_messages = HL.StaticField(HL.Table) << {
 
 PhaseBattlePassAdvancedPlanBuy._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self:ShowPsStore()
+    local weaponCaseArg = self.arg and self.arg.weaponCaseArg
+    if weaponCaseArg then
+        UIManager:Open(PanelId.BattlePassWeaponCase, weaponCaseArg)
+        self.arg.weaponCaseArg = nil
+    end
 end
 
 
@@ -61,6 +67,24 @@ PhaseBattlePassAdvancedPlanBuy._DoPhaseTransitionBackToTop = HL.Override(HL.Bool
         self.m_storeShowPsStoreLogo = false
         self:ShowPsStore()
     end
+end
+
+
+
+PhaseBattlePassAdvancedPlanBuy.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or nil
+    if arg then
+        arg.weaponCaseArg = nil
+    end
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return arg
+    end
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.BattlePassWeaponCase)
+    if isOpen and ctrl ~= nil and ctrl:IsShow(false) then
+        arg = arg or {}
+        arg.weaponCaseArg = ctrl:GetCurPhaseStateArg()
+    end
+    return arg
 end
 
 

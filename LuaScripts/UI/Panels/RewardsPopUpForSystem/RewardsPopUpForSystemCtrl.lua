@@ -485,6 +485,7 @@ RewardsPopUpForSystemCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << functi
     if cell.view.doubleNode ~= nil then
         cell.view.doubleNode.gameObject:SetActive(itemBundle.isDouble == true)
     end
+    cell:ShowGemPerfectIcon(itemBundle.showGemPerfectIcon == true)
     UIUtils.setRewardItemRarityGlow(cell, UIUtils.getItemRarity(itemBundle.id))
     local isFullBottle, bottleData = Tables.fullBottleTable:TryGetValue(itemBundle.id)
     if isFullBottle then

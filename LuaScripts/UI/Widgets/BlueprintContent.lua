@@ -58,6 +58,8 @@ local BLUEPRINT_SHARE_STATEMENT_KEY = "blueprint_share_statement_key"
 
 
 
+
+
 BlueprintContent = HL.Class('BlueprintContent', UIWidgetBase)
 
 
@@ -798,6 +800,61 @@ BlueprintContent.GetSortedTagIds = HL.Method().Return(HL.Table) << function(self
     end
     table.sort(tagList)
     return tagList
+end
+
+
+
+BlueprintContent.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
+    return {
+        nameInputText = self.view.nameInputField.text,
+        descInputText = self.view.descInputField.text,
+        icon = self.curIcon,
+        colorId = self.curColorId,
+        tagIds = self:GetSortedTagIds(),
+        isSelectTagOpen = self.view.selectTagNode.gameObject.activeSelf,
+        isChangeIconOpen = self.view.changeIconNode.gameObject.activeSelf,
+        isChangeIconTab = self.view.changeIconNode:IsIconTabSelected(),
+    }
+end
+
+
+
+
+BlueprintContent.RecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if not recoverState then
+        return
+    end
+    if recoverState.nameInputText ~= nil then
+        self.view.nameInputField.text = recoverState.nameInputText
+    end
+    if recoverState.descInputText ~= nil then
+        self.view.descInputField.text = recoverState.descInputText
+    end
+    if not string.isEmpty(recoverState.icon) then
+        self:_OnChangeIcon(recoverState.icon, recoverState.colorId or self.curColorId)
+    end
+    if recoverState.tagIds then
+        self.curSelectedTags = {}
+        for _, tagId in ipairs(recoverState.tagIds) do
+            self.curSelectedTags[tagId] = true
+        end
+        self:_RefreshContentTagCells()
+    end
+
+    local needRecoverController = recoverState.isChangeIconOpen or recoverState.isSelectTagOpen
+    if needRecoverController and DeviceInfo.usingController then
+        self.view.topContainer:ManuallyFocus()
+        self:SetActiveControllerNode(FacConst.FocusStateTable.Focused)
+    end
+
+    if recoverState.isChangeIconOpen then
+        self:_ToggleChangeIcon(true, true)
+        if recoverState.isChangeIconTab == false then
+            self.view.changeIconNode:SetTabState(false)
+        end
+    elseif recoverState.isSelectTagOpen then
+        self:_ToggleSelectTag(true, true)
+    end
 end
 
 

@@ -176,7 +176,7 @@ ActivityCleaningDetailsCtrl._InitData = HL.Method() << function(self)
                 name = stageCfg.name,
                 sortId = stageCfg.sortId,
                 missionId = stageCfg.missionId,
-                mapJumpId = stageCfg.mapJumpId,
+                mapJumpId = stageCfg.jumpId,
                 rewardId = stageCfg.rewardId,
                 rewardItems = UIUtils.getRewardItems(stageCfg.rewardId),
                 desc = stageCfg.desc,
@@ -186,8 +186,8 @@ ActivityCleaningDetailsCtrl._InitData = HL.Method() << function(self)
                 canShowStage = canShowStage,
                 lockDesc = lockDesc,
                 img = cfg and cfg.img or "",
-                startTime = self.m_activityData.startTime + stageCfg.timeOffset * 60 * 60,
-                timeLock = currTs < self.m_activityData.startTime + stageCfg.timeOffset * 60 * 60,
+                startTime = Utils.getTimeIdOpenTimeStamp(stageCfg.timeId),
+                timeLock = not Utils.isCurTimeInTimeIdRange(stageCfg.timeId),
             }
             if canShowStage then
                 table.insert(self.m_stageInfoList, stageInfo)

@@ -8,6 +8,7 @@ local PANEL_ID = PanelId.GachaItemInstructionPopup
 
 
 
+
 GachaItemInstructionPopupCtrl = HL.Class('GachaItemInstructionPopupCtrl', uiCtrl.UICtrl)
 
 
@@ -43,6 +44,12 @@ GachaItemInstructionPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
     self:_InitUI()
     self.m_info = arg
     self:_RefreshAllUI()
+end
+
+
+
+GachaItemInstructionPopupCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    return self.m_info
 end
 
 

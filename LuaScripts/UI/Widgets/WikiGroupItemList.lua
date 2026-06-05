@@ -26,6 +26,8 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
 WikiGroupItemList = HL.Class('WikiGroupItemList', UIWidgetBase)
 
 local CELL_COUNT_PER_ROW = 3
@@ -167,6 +169,31 @@ WikiGroupItemList.InitWikiGroupItemList = HL.Method(HL.Table) << function(self, 
         self:_Refresh()
     end
     self.m_isClosing = false
+end
+
+
+
+WikiGroupItemList.GetResumeState = HL.Method().Return(HL.Table) << function(self)
+    local selectedEntryShowData = self.m_onGetSelectedEntryShowData and self.m_onGetSelectedEntryShowData() or nil
+    return {
+        isExpanded = self.view.gameObject.activeSelf,
+        selectedEntryId = selectedEntryShowData and selectedEntryShowData.wikiEntryData.id or self.m_lastSelectedEntryId,
+    }
+end
+
+
+
+
+WikiGroupItemList.ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState or resumeState.isExpanded ~= true or not self.m_btnExpandList then
+        return
+    end
+    self.view.gameObject:SetActive(true)
+    self.m_btnExpandList.gameObject:SetActive(false)
+    self:_Refresh()
+    if self.m_wikiItemInfo then
+        self.m_wikiItemInfo.view.animationWrapper:PlayInAnimation()
+    end
 end
 
 

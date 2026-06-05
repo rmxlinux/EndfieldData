@@ -177,9 +177,9 @@ do
             return
         end
         if isPaused then
-            GameWorld.worldInfo:TryPauseGameTime(GEnums.GameTimeFreezeReason.UI)
+            GameWorld.subGameManager:TryPauseGameTime(GEnums.GameTimeFreezeReason.UI)
         else
-            GameWorld.worldInfo:TryResumeGameTime(GEnums.GameTimeFreezeReason.UI)
+            GameWorld.subGameManager:TryResumeGameTime(GEnums.GameTimeFreezeReason.UI)
         end
     end
 end

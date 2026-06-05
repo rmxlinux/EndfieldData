@@ -73,6 +73,12 @@ local TOP_BAR_STATE = {
 
 
 
+
+
+
+
+
+
 SSReceptionRoomPosterCtrl = HL.Class('SSReceptionRoomPosterCtrl', uiCtrl.UICtrl)
 
 
@@ -119,7 +125,13 @@ SSReceptionRoomPosterCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 SSReceptionRoomPosterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_curWeaponType = arg
+    local recoverState
+    if type(arg) == "table" and (arg.recoverState ~= nil or arg.weaponType ~= nil) then
+        self.m_curWeaponType = arg.weaponType
+        recoverState = arg.recoverState
+    else
+        self.m_curWeaponType = arg
+    end
     self.view.btnClose.onClick:AddListener(function()
         if not self.m_isSave then
             Notify(MessageConst.SHOW_POP_UP,{
@@ -163,7 +175,41 @@ SSReceptionRoomPosterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     self:_SetMainState()
+    if recoverState then
+        self:_TryRecoverState(recoverState)
+    end
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
+end
+
+
+
+SSReceptionRoomPosterCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local listWidget = self.m_curState == PANEL_STATE.WEAPON and self.view.weaponScrollList or self.view.charScrollList
+    local sortNode = listWidget and listWidget.view and listWidget.view.sortNode or nil
+    local filterBtn = listWidget and listWidget.view and listWidget.view.filterBtn or nil
+    local recoverState = {
+        selectedInstIdList = {},
+        isSave = self.m_isSave,
+    }
+    for _, item in ipairs(self.m_selectInsIdList or {}) do
+        if item and item.instId ~= nil then
+            table.insert(recoverState.selectedInstIdList, item.instId)
+        end
+    end
+    if sortNode then
+        recoverState.sortSelectedIndex = sortNode:GetCurSelectedIndex()
+        recoverState.sortIsIncremental = sortNode.isIncremental
+    end
+    if filterBtn and filterBtn.m_args then
+        recoverState.filterTags = lume.deepCopy(filterBtn.m_args.selectedTags)
+    end
+    if self.m_curState == PANEL_STATE.WEAPON then
+        recoverState.weaponType = self.m_curWeaponType
+    end
+    return {
+        weaponType = self.m_curWeaponType,
+        recoverState = recoverState,
+    }
 end
 
 
@@ -588,6 +634,108 @@ SSReceptionRoomPosterCtrl._OnClickResetBtn = HL.Method() << function(self)
         self.view.weaponScrollList:ShowSelectItems(self.m_selectInsIdList)
     end
     self:SetSaveState(false)
+end
+
+
+
+
+SSReceptionRoomPosterCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
+    if self.m_curState == PANEL_STATE.WEAPON and recoverState.weaponType ~= nil and recoverState.weaponType ~= self.m_curWeaponType then
+        self.m_curWeaponType = recoverState.weaponType
+        self.m_curSlotIndex = WEAPON_INDEX[self.m_curWeaponType] or self.m_curSlotIndex
+        self:_RefreshArrowState()
+    end
+
+    if self.m_curState == PANEL_STATE.WEAPON then
+        self:_RecoverWeaponPosterState(recoverState)
+    else
+        self:_RecoverCharPosterState(recoverState)
+    end
+    if recoverState.isSave == false then
+        self:SetSaveState(false)
+    else
+        self:SetSaveState(true)
+    end
+end
+
+
+
+
+
+SSReceptionRoomPosterCtrl._BuildRecoverSelectedItemList = HL.Method(HL.Opt(HL.Table, HL.Table)).Return(HL.Table) << function(self, sourceItems, selectedInstIdList)
+    local selectedItems = {}
+    if not sourceItems or not selectedInstIdList then
+        return selectedItems
+    end
+    local itemLookup = {}
+    for _, item in ipairs(sourceItems) do
+        if item and item.instId ~= nil then
+            itemLookup[item.instId] = item
+        end
+    end
+    for _, instId in ipairs(selectedInstIdList) do
+        local item = itemLookup[instId]
+        if item then
+            table.insert(selectedItems, item)
+        end
+    end
+    return selectedItems
+end
+
+
+
+
+
+SSReceptionRoomPosterCtrl._RestoreListSortFilterState = HL.Method(HL.Any, HL.Table) << function(self, listWidget, recoverState)
+    if not listWidget or not listWidget.view then
+        return
+    end
+    local sortNode = listWidget.view.sortNode
+    local filterBtn = listWidget.view.filterBtn
+    local sortSelectedIndex = recoverState.sortSelectedIndex
+    if sortSelectedIndex and sortNode and sortNode.m_sortOptions and sortNode.view and sortNode.view.mobilePCNode and sortNode.view.mobilePCNode.dropDown then
+        local optionCount = #sortNode.m_sortOptions
+        if optionCount > 0 then
+            sortSelectedIndex = math.max(1, math.min(sortSelectedIndex, optionCount))
+            sortNode.isIncremental = recoverState.sortIsIncremental == true
+            sortNode:RefreshIncremental()
+            sortNode.view.mobilePCNode.dropDown:SetSelected(CSIndex(sortSelectedIndex), true, false)
+        end
+    end
+    local filterTags = recoverState.filterTags and lume.deepCopy(recoverState.filterTags) or {}
+    listWidget.m_selectedTags = filterTags
+    if filterBtn and filterBtn.m_args then
+        filterBtn.m_args.selectedTags = lume.deepCopy(filterTags)
+    end
+    if sortNode then
+        sortNode:UpdateDeviceState()
+    end
+end
+
+
+
+
+SSReceptionRoomPosterCtrl._RecoverWeaponPosterState = HL.Method(HL.Table) << function(self, recoverState)
+    local listWidget = self.view.weaponScrollList
+    local selectedItems = self:_BuildRecoverSelectedItemList(listWidget and listWidget.m_itemInfoList or nil, recoverState.selectedInstIdList)
+    self.m_selectInsIdList = selectedItems
+    self:_SetWeaponPoster(selectedItems)
+    self:_RestoreListSortFilterState(listWidget, recoverState)
+    listWidget.m_curSelectItemInfos = selectedItems
+    listWidget:_OnFilterConfirm(listWidget.m_selectedTags)
+    listWidget:ShowSelectItems(selectedItems)
+end
+
+
+
+
+SSReceptionRoomPosterCtrl._RecoverCharPosterState = HL.Method(HL.Table) << function(self, recoverState)
+    local listWidget = self.view.charScrollList
+    local selectedItems = self:_BuildRecoverSelectedItemList(listWidget and listWidget.m_charItems or nil, recoverState.selectedInstIdList)
+    self.m_selectInsIdList = selectedItems
+    self:_SetCharPoster(selectedItems)
+    self:_RestoreListSortFilterState(listWidget, recoverState)
+    listWidget:ShowSelectChars(selectedItems, false, true)
 end
 
 HL.Commit(SSReceptionRoomPosterCtrl)

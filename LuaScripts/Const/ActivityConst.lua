@@ -48,9 +48,6 @@ ACTIVITY_TABLE = {
     [ActivityType.VersionGuide] = {
         redDot = "ActivityVersionGuide",
     },
-    [ActivityType.RandomReward] = {
-        redDot = "ActivityRandomReward",
-    },
     [ActivityType.RewardOverview] = {
         redDot = "ActivityRewardOverview",
     },
@@ -68,9 +65,15 @@ ACTIVITY_TABLE = {
     },
     [ActivityType.ArknightsXEndfieldLightWeight] = {
         redDot = "ActivityArknightsBirth",
+	},
+    [ActivityType.ContingencyContract] = {
+        redDot = "ActivityContingencyContract",
     },
     [ActivityType.CalendarCheckin] = {
         redDot = "ActivityCalendarCheckin",
+    },
+    [ActivityType.GamblingBattle] = {
+        redDot = "ActivitySimulationTrainingTask",
     },
     
 }
@@ -95,6 +98,8 @@ ACTIVITY_COMMON_SONS = {
     ActivityLimitedFormula = false,
     ActivityArknightsBirth = false,
     ActivityCalendarCheckin = false,
+    ActivityContingencyContract = false,
+    ActivitySimulationTrainingTask = false,
     
 }
 ACTIVITY_REMINDER_DRAW_MODE = {

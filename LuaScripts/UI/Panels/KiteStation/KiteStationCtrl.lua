@@ -1,5 +1,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.KiteStation
+local INSTRUCTION_BOOK_ID = "kite_station"
+
+
+
 
 
 
@@ -67,7 +71,7 @@ KiteStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         PhaseManager:PopPhase(PhaseId.KiteStation)
     end)
 
-    self.m_id = arg.kiteStationId or ""
+    self.m_id = arg.kiteStationId or arg.poiId or ""
     local sort = math.maxinteger
     if string.isEmpty(self.m_id) then
         if arg.domainId ~= nil then
@@ -104,7 +108,7 @@ KiteStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.helpBtn.onClick:RemoveAllListeners()
     self.view.helpBtn.onClick:AddListener(function()
-        UIManager:Open(PanelId.InstructionBook, "kite_station")
+        UIManager:Open(PanelId.InstructionBook, INSTRUCTION_BOOK_ID)
     end)
 
     self.view.rewardBtn.onClick:RemoveAllListeners()
@@ -172,6 +176,9 @@ KiteStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             break
         end
     end
+
+    self:_TryRecoverInstructionBook(arg)
+    self:_TryRecoverCollectionReward(arg)
 end
 
 
@@ -185,8 +192,68 @@ KiteStationCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, a
 end
 
 
+
+KiteStationCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local recoverState = {
+        kiteStationId = self.m_id,
+    }
+
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and instructionCtrl:IsShow() and instructionCtrl.id == INSTRUCTION_BOOK_ID and PhaseManager:GetTopPhaseId() == PhaseId.KiteStation then
+        recoverState.instructionBookArg = {
+            id = instructionCtrl.id,
+        }
+    end
+
+    local isRewardOpen, rewardCtrl = UIManager:IsOpen(PanelId.KiteStationCollectionReward)
+    if isRewardOpen and rewardCtrl:IsShow() and PhaseManager:GetTopPhaseId() == PhaseId.KiteStation then
+        recoverState.collectionRewardArg = {
+            insId = self.m_id,
+        }
+    end
+
+    return recoverState
+end
+
+
 KiteStationCtrl.ShowRefreshToast = HL.Method() << function()
     Notify(MessageConst.SHOW_TOAST, Language.LUA_KITE_STATION_WEEKLY_RESET)
+end
+
+
+
+
+KiteStationCtrl._TryRecoverInstructionBook = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil or recoverState.instructionBookArg == nil then
+        return
+    end
+    if PhaseManager:GetTopPhaseId() ~= PhaseId.KiteStation then
+        return
+    end
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and instructionCtrl:IsShow() then
+        return
+    end
+    UIManager:Open(PanelId.InstructionBook, recoverState.instructionBookArg)
+    recoverState.instructionBookArg = nil
+end
+
+
+
+
+KiteStationCtrl._TryRecoverCollectionReward = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil or recoverState.collectionRewardArg == nil then
+        return
+    end
+    if PhaseManager:GetTopPhaseId() ~= PhaseId.KiteStation then
+        return
+    end
+    local isOpen, rewardCtrl = UIManager:IsOpen(PanelId.KiteStationCollectionReward)
+    if isOpen and rewardCtrl:IsShow() then
+        return
+    end
+    UIManager:Open(PanelId.KiteStationCollectionReward, recoverState.collectionRewardArg)
+    recoverState.collectionRewardArg = nil
 end
 
 

@@ -320,7 +320,7 @@ SettlementDefenseMapRoot._InitMapCores = HL.Method() << function(self)
         self:_RefreshIconRectPos(coreWorldPos, coreIcon)
         coreIcon.indexText.text = string.format("%d", LuaIndex(coreAbilityIndex))
 
-        local callback = function(entity, changedHp)
+        local callback = function(entity, changedHp, isMaxHpChanged)
             if changedHp < 0 then
                 coreIcon.animationWrapper:ClearTween()
                 coreIcon.animationWrapper:PlayWithTween(coreIcon.config.ATTACKED_ANIMATION_NAME)

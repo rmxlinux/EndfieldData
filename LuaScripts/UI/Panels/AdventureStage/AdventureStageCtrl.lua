@@ -58,7 +58,6 @@ AdventureStageCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 AdventureStageCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_phase = arg.phase
     local adventure = self.view
     adventure.incBtn.onClick:AddListener(function()
         self:_OnIncBtnClick()
@@ -88,6 +87,12 @@ AdventureStageCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
     
     self:_ResetAdventureStage()
+    if arg.adventureStageViewIndex ~= nil then
+        local v = math.max(1, math.min(arg.adventureStageViewIndex, self.m_adventureMaxStage))
+        self.m_curAdventureStage = v
+        self:_SetStageText(self.m_curAdventureStage)
+        arg.adventureStageViewIndex = nil
+    end
     self:_RefreshAdventurePage(true)
 end
 

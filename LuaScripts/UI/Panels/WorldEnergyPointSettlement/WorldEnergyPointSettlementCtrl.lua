@@ -116,6 +116,14 @@ WorldEnergyPointSettlementCtrl._OnUpdateCell = HL.Method(GameObject, HL.Number) 
     local cell = self.m_genRewardCellFunc(go)
     cell:InitItem(rewardInfo, true)
     cell:SetExtraInfo({isSideTips = DeviceInfo.usingController})
+
+    local _, itemData = Tables.itemTable:TryGetValue(rewardInfo.id)
+    local isGem = itemData and itemData.type == GEnums.ItemType.WeaponGem
+    if isGem and rewardInfo.instId and rewardInfo.instId > 0 then
+        local isPerfectMatch = UIUtils.getGemWishListPerfectMatch(rewardInfo.instId)
+        cell:ShowGemPerfectIcon(isPerfectMatch)
+    end
+
     go.name = rewardInfo.id
 end
 

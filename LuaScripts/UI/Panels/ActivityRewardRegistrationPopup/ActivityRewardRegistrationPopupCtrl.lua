@@ -10,6 +10,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 
 
 
+
 ActivityRewardRegistrationPopupCtrl = HL.Class('ActivityRewardRegistrationPopupCtrl', uiCtrl.UICtrl)
 
 
@@ -79,6 +80,16 @@ ActivityRewardRegistrationPopupCtrl._Close = HL.Method() << function(self)
     self.view.animationWrapper:PlayOutAnimation(function()
         self.m_closeCallback()
     end)
+end
+
+
+
+
+ActivityRewardRegistrationPopupCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
+    
+    if self.view.activityRewardRegistrationInfo then
+        self.view.activityRewardRegistrationInfo:OnPanelInputBlocked(active)
+    end
 end
 
 

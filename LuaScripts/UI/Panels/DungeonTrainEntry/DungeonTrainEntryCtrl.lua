@@ -29,6 +29,9 @@ local PHASE_ID = PhaseId.DungeonEntry
 
 
 
+
+
+
 DungeonTrainEntryCtrl = HL.Class('DungeonTrainEntryCtrl', uiCtrl.UICtrl)
 
 
@@ -108,7 +111,7 @@ DungeonTrainEntryCtrl.OnAnimationInFinished = HL.Override() << function(self)
         return
     end
 
-    UIUtils.setAsNaviTarget(self.m_curSelectedCell.view.clickBtn)
+    self:SetAsNaviTargetInSilentModeIfNecessary(self.view.naviGroup, self.m_curSelectedCell.view.clickBtn)
 end
 
 
@@ -117,8 +120,6 @@ DungeonTrainEntryCtrl._InitDungeonSeriesInfo = HL.Method() << function(self)
     
     local dungeonSeriesCfg = Tables.dungeonSeriesTable[self.m_dungeonSeriesId]
     self.view.titleTxt.text = dungeonSeriesCfg.name
-    
-    self.view.dungeonBG:LoadSprite(UIConst.UI_SPRITE_DUNGEON, dungeonSeriesCfg.dungeonPicPath)
 end
 
 
@@ -155,7 +156,7 @@ DungeonTrainEntryCtrl._OnRefreshTabGroupCell = HL.Method(HL.Any, HL.Number, HL.B
         self.m_curSelectedCell:SetSelected(true)
         cell:SetToggle(true)
     else
-        if isInit then
+        if isInit and not PhaseManager.isRecovering then
             local isUsingController = (DeviceInfo.inputType == DeviceInfo.InputType.Controller)
             cell:SetToggle(false or isUsingController)
         end
@@ -175,6 +176,9 @@ end
 
 
 DungeonTrainEntryCtrl._FindFirstSelectTrain = HL.Method() << function(self)
+    if not string.isEmpty(self.m_curSelectedDungeonId) then
+        return
+    end
     
     for _, tab in ipairs(self.m_tabGroups) do
         for _, dungeonId in ipairs(tab) do
@@ -231,12 +235,7 @@ end
 
 
 DungeonTrainEntryCtrl._OnBtnCloseClick = HL.Method() << function(self)
-    local isOpen = self.m_fromDialog
-    if isOpen then
-        self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 1 })
-    else
-        PhaseManager:PopPhase(PHASE_ID)
-    end
+    PhaseManager:PopPhase(PHASE_ID)
 end
 
 
@@ -333,7 +332,7 @@ DungeonTrainEntryCtrl.OnDirectlyGetReward = HL.Method(HL.Any) << function(self, 
         self:_OnRefreshTabGroupCell(cell, luaIndex, false)
     end)
     self:_RefreshCommonInfo(false)
-    UIUtils.setAsNaviTarget(self.m_curSelectedCell.view.clickBtn)
+    self:SetAsNaviTargetInSilentModeIfNecessary(self.view.naviGroup, self.m_curSelectedCell.view.clickBtn)
     
     local RewardSourceType = CS.Beyond.GEnums.RewardSourceType
     local firstPassRewardPack = GameInstance.player.inventory:ConsumeLatestRewardPackOfType(RewardSourceType.DungeonFirstPass)
@@ -387,6 +386,67 @@ DungeonTrainEntryCtrl.OnDirectlyGetReward = HL.Method(HL.Any) << function(self, 
         
         items = items,
     })
+end
+
+
+
+DungeonTrainEntryCtrl.GetCurSelectDungeonId = HL.Method().Return(HL.String) << function(self)
+    return self.m_curSelectedDungeonId
+end
+
+
+
+DungeonTrainEntryCtrl.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local popupState = self.view.dungeonCommonInfo:GetRecoverPopupStateArg()
+    if popupState ~= nil then
+        return popupState
+    end
+
+    local isOpen, commonPopUpCtrl = UIManager:IsOpen(PanelId.CommonPopUp)
+    if not isOpen or not commonPopUpCtrl:IsShow() then
+        return
+    end
+
+    local recoverArg = commonPopUpCtrl:GetCurPhaseStateArg()
+    if recoverArg == nil or string.isEmpty(recoverArg.content) then
+        return
+    end
+
+    local dungeonCfg = Tables.dungeonTable[self.m_curSelectedDungeonId]
+    if dungeonCfg == nil then
+        return
+    end
+
+    
+    
+    local expectContent = string.format(Language["ui_fac_tech_tree_blackbox_complete_confirm"], dungeonCfg.dungeonName)
+    if recoverArg.content == expectContent then
+        return {
+            popupType = "DirectlyGetRewardConfirm",
+        }
+    end
+end
+
+
+
+
+DungeonTrainEntryCtrl.TryRecoverPopupState = HL.Method(HL.Any) << function(self, popupState)
+    if popupState == nil or string.isEmpty(popupState.popupType) then
+        return
+    end
+
+    if popupState.popupType == "DirectlyGetRewardConfirm" then
+        local isOpen, commonPopUpCtrl = UIManager:IsOpen(PanelId.CommonPopUp)
+        if isOpen and commonPopUpCtrl:IsShow() then
+            return
+        end
+
+        
+        self:_OnClickDirectlyGetRewardBtn()
+        return
+    end
+
+    self.view.dungeonCommonInfo:TryRecoverPopupState(popupState)
 end
 
 HL.Commit(DungeonTrainEntryCtrl)

@@ -1,8 +1,5 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.KiteStationCollectionReward
-xlua.private_accessible(typeof(CS.Beyond.Gameplay.KiteStationSystem))
-
-
 
 
 
@@ -23,17 +20,10 @@ KiteStationCollectionRewardCtrl.m_insId = HL.Field(HL.String) << ""
 KiteStationCollectionRewardCtrl.m_getCellFunc = HL.Field(HL.Function)
 
 
-
-KiteStationCollectionRewardCtrl.m_activeIndex = HL.Field(HL.Number) << 0
-
-
 KiteStationCollectionRewardCtrl.m_collectionCount = HL.Field(HL.Number) << 0
 
 
 KiteStationCollectionRewardCtrl.m_collectionReward = HL.Field(HL.Number) << 0
-
-
-KiteStationCollectionRewardCtrl.m_collectionRecords = HL.Field(HL.Number) << 0
 
 
 
@@ -57,10 +47,8 @@ end
 
 
 KiteStationCollectionRewardCtrl._RefreshCollectionData = HL.Method() << function(self)
-    local _, kiteStationData = GameInstance.player.kiteStationSystem.m_kiteStationData:TryGetValue(self.m_insId)
     self.m_collectionCount = GameInstance.player.kiteStationSystem:GetKiteStationCollectionCount(self.m_insId)
-    self.m_collectionReward = kiteStationData and kiteStationData.CollectionReward or 0
-    self.m_collectionRecords = kiteStationData and kiteStationData.CollectionRecords or 0
+    self.m_collectionReward = GameInstance.player.kiteStationSystem:GetKiteStationCollectionReward(self.m_insId)
 end
 
 
@@ -97,7 +85,6 @@ KiteStationCollectionRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self,
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 
-    self.m_activeIndex = LuaIndex(GameInstance.player.kiteStationSystem:GetKiteStationRewardIndex(self.m_insId))
     self:_RefreshCollectionData()
 
     self.m_getCellFunc = UIUtils.genCachedCellFunction(self.view.scrollList)
@@ -179,7 +166,6 @@ KiteStationCollectionRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self,
             local rewardFlag = _GetRewardFlag(rewardIndex)
             local canReceiveReward = self.m_collectionCount >= data.collectionCnt
             local isAlreadyReceived = _HasCollectionFlag(self.m_collectionReward, rewardFlag)
-            
             if not isAlreadyReceived and canReceiveReward then
                 table.insert(cnts, data.collectionCnt)
             end
@@ -199,7 +185,6 @@ KiteStationCollectionRewardCtrl._OnCollectionReward = HL.Method(HL.Any) << funct
         return
     end
 
-    self.m_activeIndex = LuaIndex(GameInstance.player.kiteStationSystem:GetKiteStationRewardIndex(self.m_insId))
     self:_RefreshCollectionData()
     self.view.scrollList:UpdateCount(cfg.rewardList.Count)
     self.view.numberTxt.text = self.m_collectionCount

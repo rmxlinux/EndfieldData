@@ -26,9 +26,15 @@ ActivityWEBReflowCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.activityCommonInfo.view.gotoNode.btnDetail.onClick:AddListener(function()
         local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
         if activity then
-            ActivityUtils.setActivityDayAsRead(self.m_activityId)
+            
+            ActivityUtils.setActivityDayAsRead(self.m_activityId, true)
         end
     end)
+    
+    local _, ctrl = UIManager:IsOpen(PanelId.ActivityCenter)
+    if ctrl then
+        ctrl:UpdateNeedSave()
+    end
 end
 
 

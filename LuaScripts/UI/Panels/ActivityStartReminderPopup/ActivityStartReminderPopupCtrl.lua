@@ -14,6 +14,7 @@ local PANEL_ID = PanelId.ActivityStartReminderPopup
 
 
 
+
 ActivityStartReminderPopupCtrl = HL.Class('ActivityStartReminderPopupCtrl', uiCtrl.UICtrl)
 
 
@@ -25,6 +26,9 @@ ActivityStartReminderPopupCtrl = HL.Class('ActivityStartReminderPopupCtrl', uiCt
 ActivityStartReminderPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
+
+
+ActivityStartReminderPopupCtrl.arg = HL.Field(HL.Any)
 
 
 ActivityStartReminderPopupCtrl.m_id = HL.Field(HL.String) << ""
@@ -73,6 +77,8 @@ local ClientActivityConditionHandleInfoTable = {
 
 
 ActivityStartReminderPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.arg = arg
+
     self.view.btnClose.onClick:AddListener(function()
         self:_Close()
     end)

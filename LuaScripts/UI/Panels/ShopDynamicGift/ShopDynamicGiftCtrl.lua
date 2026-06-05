@@ -61,6 +61,8 @@ ShopDynamicGiftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     if not string.isEmpty(self.m_tabData.prefabName) then
         self.m_go = self:_CreateGO(self.m_tabData.prefabName)
     end
+
+    self.view.cashShopKrTips:InitCashShopKrTips()
 end
 
 

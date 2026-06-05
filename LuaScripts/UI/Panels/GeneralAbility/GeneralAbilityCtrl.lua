@@ -336,6 +336,10 @@ GeneralAbilityCtrl.m_clearScreenKey = HL.Field(HL.Number) << -1
 GeneralAbilityCtrl.m_screenOutFlag = HL.Field(HL.Boolean) << false
 
 
+GeneralAbilityCtrl.m_screenOutVersion = HL.Field(HL.Number) << 0
+GeneralAbilityCtrl.m_screenOutCallbackVersion = HL.Field(HL.Number) << 0
+
+
 GeneralAbilityCtrl.m_needLateRecoverScreen = HL.Field(HL.Boolean) << false
 
 
@@ -418,6 +422,7 @@ GeneralAbilityCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ACTIVE_BUILDING_LIKE] = 'OnActiveBuildingLike',
 
     [MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING] = 'GeneralAbilityChangeKeyBinding',
+    [MessageConst.ON_CHANGE_INPUT_DEVICE_TYPE_FINISHED] = '_OnChangeInputDeviceTypeFinished',
 }
 
 
@@ -475,11 +480,7 @@ GeneralAbilityCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.selectorAnim.gameObject:SetActive(false)  
 
-    if DeviceInfo.usingKeyboard then
-        self.view.mainStateController:SetState(MainState.PC)
-    elseif DeviceInfo.usingController then
-        self.view.mainStateController:SetState(MainState.Controller)
-    end
+    self:_RefreshMainInputState()
 
     self.m_triggerTable = {}
     self.m_triggerTickHandle = LuaUpdate:Add("Tick", function(deltaTime)
@@ -704,6 +705,26 @@ end
 
 
 
+
+GeneralAbilityCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Any) << function(self, args)
+    self:_RefreshMainInputState()
+end
+
+
+
+GeneralAbilityCtrl._RefreshMainInputState = HL.Method() << function(self)
+    if DeviceInfo.usingKeyboard then
+        self.view.mainStateController:SetState(MainState.PC)
+    elseif DeviceInfo.usingController then
+        self.view.mainStateController:SetState(MainState.Controller)
+    end
+end
+
+
+
+
+
+
 GeneralAbilityCtrl._TryEnterWaterDroneAbility = HL.StaticMethod() << function()
     local mainCharacter = GameUtil.mainCharacter
     if mainCharacter == nil then
@@ -776,6 +797,16 @@ GeneralAbilityCtrl._UpdateNormalAbilityData = HL.Method() << function(self)
         if abilityTableData.unlockSystemType ~= UnlockSystemType.None then
             local abilityRuntimeData = GameInstance.player.generalAbilitySystem:GetAbilityRuntimeDataByType(abilityType)
             local abilityState = abilityRuntimeData.state
+            local blackbox = GameWorld.worldInfo.curLevel.levelData.blackbox
+            if blackbox and blackbox.generalAbility then
+                for idx = 0, blackbox.generalAbility.customAbilityStates.Count - 1 do
+                    local customEntry = blackbox.generalAbility.customAbilityStates[idx]
+                    if customEntry.abilityType == abilityTableData.generalAbilityType then
+                        abilityState = customEntry.customState
+                        break
+                    end
+                end
+            end
             local data = {  
                 abilityRuntimeData = abilityRuntimeData,
                 type = abilityType,
@@ -1129,6 +1160,11 @@ end
 
 
 GeneralAbilityCtrl._OnSelectByType = HL.Method(HL.Number) << function(self, type)
+    if self.m_screenOutCallbackVersion ~= self.m_screenOutVersion then
+        self.m_screenOutCallbackVersion = self.m_screenOutVersion
+        return
+    end
+
     local data = self.m_abilityDataMap[type]
     if data ~= nil then
         if data.isForbidSelect then
@@ -1318,7 +1354,9 @@ GeneralAbilityCtrl._RefreshWheelShownState = HL.Method(HL.Boolean) << function(s
     end
 
     UIUtils.PlayAnimationAndToggleActive(self.view.middleAnim, isShown)
-    UIUtils.PlayAnimationAndToggleActive(self.view.selectorAnim, isShown)
+    UIUtils.PlayAnimationAndToggleActive(self.view.selectorAnim, isShown, function()
+        GameInstance.player.generalAbilitySystem.isInSelectMode = isShown
+    end)
     self:_TempAbilityAnim(isShown)
 
     local abilityData = self.m_abilityDataMap[self:_GetSelectedType()]
@@ -1337,7 +1375,7 @@ GeneralAbilityCtrl._RefreshWheelShownState = HL.Method(HL.Boolean) << function(s
             self:ChangePanelCfg("realMouseMode", Types.EPanelMouseMode.NotNeedShow)
         end
     end
-    GameInstance.player.generalAbilitySystem.isInSelectMode = isShown
+
     InputManagerInst:ToggleBinding(self.m_selectorCancelBinding, isShown)
     InputManagerInst:ToggleBinding(self.m_selectorClickBinding, isShown)
     local isOpen, panel = UIManager:IsOpen(PanelId.MainHud)
@@ -1490,13 +1528,19 @@ GeneralAbilityCtrl._CheckRecoverScreen = HL.Method(HL.Boolean) << function(self,
 
         self.m_needLateRecoverScreen = false
         self.m_screenOutFlag = true
+        self.m_screenOutVersion = self.m_screenOutVersion + 1
         UIManager:ClearScreenWithOutAnimation(function(clearScreenKey)
+            self.m_screenOutCallbackVersion = self.m_screenOutCallbackVersion + 1
             self.m_clearScreenKey = clearScreenKey
             if self.m_needLateRecoverScreen then
                 self:_RecoverScreen()
             end
             GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.PowerPoleFastTravelActionConflictName)
         end, { PANEL_ID, PanelId.Joystick })
+
+        TimerManager:StartTimer(1,function()
+            self.m_screenOutCallbackVersion = self.m_screenOutVersion
+        end)
     end
 
     if not isShown and self.m_screenOutFlag then
@@ -1721,6 +1765,7 @@ end
 
 GeneralAbilityCtrl._StartPress = HL.Method() << function(self)
     self:_ClearRPress()
+    GameInstance.player.generalAbilitySystem.isRPressed = true
     self.m_pressRTime = 0
 
     local isOpen, guideCtrl = UIManager:IsOpen(PanelId.Guide)
@@ -1832,6 +1877,7 @@ end
 
 
 GeneralAbilityCtrl._ClearRPress = HL.Method() << function(self)
+    GameInstance.player.generalAbilitySystem.isRPressed = false
     if self.m_selectedAbilityPressTick ~= -1 then
         self.m_selectedAbilityPressTick = LuaUpdate:Remove(self.m_selectedAbilityPressTick)
     end

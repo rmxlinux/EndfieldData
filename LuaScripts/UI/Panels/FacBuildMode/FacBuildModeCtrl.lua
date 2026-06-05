@@ -119,6 +119,9 @@ local PANEL_ID = PanelId.FacBuildMode
 
 
 
+
+
+
 FacBuildModeCtrl = HL.Class('FacBuildModeCtrl', uiCtrl.UICtrl)
 
 
@@ -262,7 +265,7 @@ FacBuildModeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     
-    self.m_rpgBuildBindingGroupId = InputManagerInst:CreateGroup(self.view.inputGroup.groupId)
+    self.m_rpgBuildBindingGroupId = self:CreateInputGroup(self.view.inputGroup.groupId)
     self:BindInputPlayerAction("fac_build_confirm", function()
         if DeviceInfo.usingController then
             
@@ -274,7 +277,7 @@ FacBuildModeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end, self.m_rpgBuildBindingGroupId)
 
     
-    self.m_topViewBuildBindingGroupId = InputManagerInst:CreateGroup(self.view.inputGroup.groupId)
+    self.m_topViewBuildBindingGroupId = self:CreateInputGroup(self.view.inputGroup.groupId)
     self:BindInputPlayerAction("fac_build_confirm_in_top_view", function()
         if DeviceInfo.usingController then
             
@@ -310,50 +313,58 @@ FacBuildModeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.moveBuildingHint.gameObject:SetActive(false)
 
     do 
-        local prefab = self.loader:LoadGameObject(FacConst.BUILDING_SIZE_INDICATOR_PATH)
-        local obj = self:_CreateWorldGameObject(prefab)
-        self.m_sizeIndicator = Utils.wrapLuaNode(obj)
-        obj.gameObject:SetActive(false)
+        if not self.m_sizeIndicator then
+            local prefab = self.loader:LoadGameObject(FacConst.BUILDING_SIZE_INDICATOR_PATH)
+            local obj = self:_CreateWorldGameObject(prefab)
+            self.m_sizeIndicator = Utils.wrapLuaNode(obj)
+            obj.gameObject:SetActive(false)
+        end
     end
 
     do 
-        local prefab = self.loader:LoadGameObject(FacConst.BELT_START_PREVIEW_MARK_PREFAB_PATH)
-        local obj = self:_CreateWorldGameObject(prefab)
-        local mark = Utils.wrapLuaNode(obj)
-        mark.gameObject:SetActive(false)
-        mark.mesh.sharedMaterial = mark.mesh:GetInstantiatedMaterial()
-        local cornerMeshMat = mark.cornerMesh1:GetInstantiatedMaterial()
-        mark.cornerMesh1.sharedMaterial = cornerMeshMat
-        mark.cornerMesh2.sharedMaterial = cornerMeshMat
-        mark.cornerMesh3.sharedMaterial = cornerMeshMat
-        mark.cornerMesh4.sharedMaterial = cornerMeshMat
-        mark.mats = { mark.mesh.sharedMaterial, cornerMeshMat }
-        self.m_beltStartPreviewMark = mark
+        if not self.m_beltStartPreviewMark then
+            local prefab = self.loader:LoadGameObject(FacConst.BELT_START_PREVIEW_MARK_PREFAB_PATH)
+            local obj = self:_CreateWorldGameObject(prefab)
+            local mark = Utils.wrapLuaNode(obj)
+            mark.gameObject:SetActive(false)
+            mark.mesh.sharedMaterial = mark.mesh:GetInstantiatedMaterial()
+            local cornerMeshMat = mark.cornerMesh1:GetInstantiatedMaterial()
+            mark.cornerMesh1.sharedMaterial = cornerMeshMat
+            mark.cornerMesh2.sharedMaterial = cornerMeshMat
+            mark.cornerMesh3.sharedMaterial = cornerMeshMat
+            mark.cornerMesh4.sharedMaterial = cornerMeshMat
+            mark.mats = { mark.mesh.sharedMaterial, cornerMeshMat }
+            self.m_beltStartPreviewMark = mark
+        end
     end
 
     do 
-        local prefab = self.loader:LoadGameObject(FacConst.PIPE_PREVIEW_MARK_PREFAB_PATH)
-        local obj = self:_CreateWorldGameObject(prefab)
-        local mark = Utils.wrapLuaNode(obj)
-        mark.gameObject:SetActive(false)
-        
-        mark.mesh1.sharedMaterial = mark.mesh1:GetInstantiatedMaterial()
-        mark.mesh2.sharedMaterial = mark.mesh2:GetInstantiatedMaterial()
-        mark.mesh3.sharedMaterial = mark.mesh3:GetInstantiatedMaterial()
-        local cornerMeshMat = mark.cornerMesh1:GetInstantiatedMaterial()
-        mark.cornerMesh1.sharedMaterial = cornerMeshMat
-        mark.cornerMesh2.sharedMaterial = cornerMeshMat
-        mark.cornerMesh3.sharedMaterial = cornerMeshMat
-        mark.cornerMesh4.sharedMaterial = cornerMeshMat
-        mark.mats = { mark.mesh1.sharedMaterial, mark.mesh2.sharedMaterial, mark.mesh3.sharedMaterial, cornerMeshMat }
-        self.m_pipePreviewMark = mark
+        if not self.m_pipePreviewMark then
+            local prefab = self.loader:LoadGameObject(FacConst.PIPE_PREVIEW_MARK_PREFAB_PATH)
+            local obj = self:_CreateWorldGameObject(prefab)
+            local mark = Utils.wrapLuaNode(obj)
+            mark.gameObject:SetActive(false)
+            
+            mark.mesh1.sharedMaterial = mark.mesh1:GetInstantiatedMaterial()
+            mark.mesh2.sharedMaterial = mark.mesh2:GetInstantiatedMaterial()
+            mark.mesh3.sharedMaterial = mark.mesh3:GetInstantiatedMaterial()
+            local cornerMeshMat = mark.cornerMesh1:GetInstantiatedMaterial()
+            mark.cornerMesh1.sharedMaterial = cornerMeshMat
+            mark.cornerMesh2.sharedMaterial = cornerMeshMat
+            mark.cornerMesh3.sharedMaterial = cornerMeshMat
+            mark.cornerMesh4.sharedMaterial = cornerMeshMat
+            mark.mats = { mark.mesh1.sharedMaterial, mark.mesh2.sharedMaterial, mark.mesh3.sharedMaterial, cornerMeshMat }
+            self.m_pipePreviewMark = mark
+        end
     end
 
     do 
-        local prefab = self.loader:LoadGameObject(FacConst.FLUID_SPRAY_RANGE_EFFECT)
-        local obj = self:_CreateWorldGameObject(prefab)
-        self.m_fluidSprayRange = Utils.wrapLuaNode(obj)
-        obj.gameObject:SetActive(false)
+        if not self.m_fluidSprayRange then
+            local prefab = self.loader:LoadGameObject(FacConst.FLUID_SPRAY_RANGE_EFFECT)
+            local obj = self:_CreateWorldGameObject(prefab)
+            self.m_fluidSprayRange = Utils.wrapLuaNode(obj)
+            obj.gameObject:SetActive(false)
+        end
     end
 
     self.view.hideToggle.toggle.onValueChanged:AddListener(function(isOn)
@@ -367,9 +378,9 @@ FacBuildModeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitKeyHint()
 
     if BEYOND_DEBUG_COMMAND then
-        UIUtils.bindInputEvent(CS.Beyond.Input.KeyboardKeyCode.C, function()
+        self:BindInputEvent(CS.Beyond.Input.KeyboardKeyCode.C, function()
             self:DebugOutputPrepareBuildingPosInfo()
-        end, nil, nil, self.view.inputGroup.groupId)
+        end)
     end
 end
 
@@ -617,6 +628,42 @@ FacBuildModeCtrl.OnClose = HL.Override() << function(self)
     })
 
     GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.FacBuildSystemActionConflictName)
+end
+
+
+
+FacBuildModeCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    if self.m_keyHintCells == nil and self.m_sizeIndicator == nil and self.m_beltStartPreviewMark == nil and self.m_pipePreviewMark == nil and self.m_fluidSprayRange == nil then
+        return nil
+    end
+
+    local state = {
+        keyHintCells = self.m_keyHintCells,
+        sizeIndicator = self.m_sizeIndicator,
+        beltStartPreviewMark = self.m_beltStartPreviewMark,
+        pipePreviewMark = self.m_pipePreviewMark,
+        fluidSprayRange = self.m_fluidSprayRange,
+    }
+    self.m_keyHintCells = nil
+    self.m_sizeIndicator = nil
+    self.m_beltStartPreviewMark = nil
+    self.m_pipePreviewMark = nil
+    self.m_fluidSprayRange = nil
+    return state
+end
+
+
+
+
+FacBuildModeCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function(self, state)
+    if not state then
+        return
+    end
+    self.m_keyHintCells = state.keyHintCells
+    self.m_sizeIndicator = state.sizeIndicator
+    self.m_beltStartPreviewMark = state.beltStartPreviewMark
+    self.m_pipePreviewMark = state.pipePreviewMark
+    self.m_fluidSprayRange = state.fluidSprayRange
 end
 
 
@@ -1186,6 +1233,11 @@ FacBuildModeCtrl._ExitCurMode = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL.Bool
     elseif self.m_mode == FacConst.FAC_BUILD_MODE.Belt then
         self:_ExitBeltMode(skipAnim)
     elseif self.m_mode == FacConst.FAC_BUILD_MODE.Blueprint then
+        if InputManagerInst.inChangingInputDevice then
+            self:_ExitBlueprintMode(true)
+            return
+        end
+
         local targets = self.m_buildArgs.batchSelectTargets
         local showCreateHint = self.m_buildArgs.showCreateHint
         if fromClick and targets then
@@ -1310,8 +1362,13 @@ FacBuildModeCtrl._UpdateCommonNodesOnEnterMode = HL.Method() << function(self)
 
     local showHideToggle = inTopView and isBelt and FactoryUtils.canShowPipe()
     self.view.hideToggle.gameObject:SetActive(showHideToggle)
-    self.view.hideToggle.toggle:SetIsOnWithoutNotify(showHideToggle)
-    self:_OnChangeHideToggle(showHideToggle)
+    if self.m_buildArgs.isFromChangeInputDevice then 
+        local isToggleOn = isPipe and FactoryUtils.isBeltInSimpleFigure() or FactoryUtils.isPipeInSimpleFigure()
+        self.view.hideToggle.toggle:SetIsOnWithoutNotify(isToggleOn)
+    else
+        self.view.hideToggle.toggle:SetIsOnWithoutNotify(showHideToggle)
+        self:_OnChangeHideToggle(showHideToggle)
+    end
     self.view.hideToggle.beltIcon.gameObject:SetActive(isPipe)
     self.view.hideToggle.pipeIcon.gameObject:SetActive(not isPipe)
 
@@ -1458,7 +1515,7 @@ FacBuildModeCtrl.m_keyHintCells = HL.Field(HL.Forward('UIListCache'))
 
 
 FacBuildModeCtrl._InitKeyHint = HL.Method() << function(self)
-    self.m_keyHintCells = UIUtils.genCellCache(self.view.keyHintCell)
+    self.m_keyHintCells = self.m_keyHintCells or UIUtils.genCellCache(self.view.keyHintCell)
 end
 
 
@@ -1627,6 +1684,8 @@ FacBuildModeCtrl._GetBuildingCheckResultHint = HL.Method(HL.Userdata).Return(HL.
             hint = Language.LUA_FAC_BUILD_MODE_SPACE_HEIGHT_NOT_ENOUGH
         elseif checkResult.blockedByInter then
             hint = Language.LUA_FAC_BUILD_MODE_BLOCK_BY_DYNAMIC_ENTITY
+        elseif checkResult.blockedByLoot then
+            hint = Language.LUA_FAC_BUILD_MODE_BLOCK_BY_LOOT
         elseif checkResult.blockedByErosion then
             hint = Language.LUA_FAC_BUILD_MODE_BLOCK_WITH_EROSION
         elseif checkResult.pumpReachLiquidLimited then
@@ -1753,7 +1812,17 @@ FacBuildModeCtrl._UpdateValidResult = HL.Method() << function(self)
             local autoConnect = buildingMode.autoConnectCandidateList
             local inFac = buildingMode.inMainRegion or false
             if autoConnect ~= nil and autoConnect.Count > 0 then
-                actionHint = inFac and Language.LUA_POWER_AUTOCONNECT_INFAC_HINT or Language.LUA_POWER_AUTOCONNECT_BUILD_MODE_HINT
+                local buildingData
+                if self.m_buildingId and not string.isEmpty(self.m_buildingId) then
+                    buildingData = GameInstance.remoteFactoryManager.staticData:QueryBuildingData(buildingMode.buildingId)
+                end
+                if
+                    buildingData and
+                    buildingData.type ~= GEnums.FacBuildingType.Hub:GetHashCode() and
+                    buildingData.type ~= GEnums.FacBuildingType.SubHub:GetHashCode()
+                then
+                    actionHint = inFac and Language.LUA_POWER_AUTOCONNECT_INFAC_HINT or Language.LUA_POWER_AUTOCONNECT_BUILD_MODE_HINT
+                end
             elseif FacConst.POLE_RANGE_EFFECT_MAP[self.m_buildingId] and inFac then
                 actionHint = Language.LUA_POWER_AUTOCONNECT_INFAC_HINT
             end
@@ -1892,6 +1961,9 @@ FacBuildModeCtrl._UpdateAutoConnectExtraHint = HL.Method() << function(self)
     if not buildingMode then
         return
     end
+    if FacConst.NEED_AUTO_CONNECT_EXTRA_HINT_BUILDING[self.m_buildingId] == nil then
+        return
+    end
     local autoConnect = buildingMode.autoConnectCandidateList
     if not autoConnect then
         return
@@ -1922,6 +1994,35 @@ end
 
 
 
+FacBuildModeCtrl.GetRecoverBuildStateOnChangeDevice = HL.Method().Return(HL.Opt(HL.Table)) << function(self)
+    local interact = GameInstance.remoteFactoryManager and GameInstance.remoteFactoryManager.interact
+    if not interact then
+        return nil
+    end
+    if self.m_mode == FacConst.FAC_BUILD_MODE.Building or self.m_mode == FacConst.FAC_BUILD_MODE.Logistic then
+        local curMode = interact.currentBuildingMode
+        if not curMode then
+            return nil
+        end
+        return {
+            initDir = curMode.finalBuildingDirection,
+            controllerMouseWorldPos = curMode:GetPreviewRenderInfo(),
+        }
+    elseif self.m_mode == FacConst.FAC_BUILD_MODE.Blueprint then
+        local curMode = interact.currentBlueprintMode
+        if not curMode then
+            return nil
+        end
+        return {
+            initDir = curMode.preparedDirection,
+            controllerMouseWorldPos = Vector3(curMode.preparedPosition.x, curMode.preparedPosition.y, curMode.preparedPosition.z),
+        }
+    end
+    return nil
+end
+
+
+
 
 FacBuildModeCtrl._EnterBuildingMode = HL.Method(HL.Table) << function(self, args)
     if self.m_mode == FacConst.FAC_BUILD_MODE.Building then
@@ -1945,17 +2046,22 @@ FacBuildModeCtrl._EnterBuildingMode = HL.Method(HL.Table) << function(self, args
     local buildingId, itemData
     local nodeId = args.nodeId
 
-    local mousePos
-    if args.initMousePos then
-        mousePos = Vector3(args.initMousePos.x, args.initMousePos.y, 0)
+    local initGridPos = args.initGridPos
+    if initGridPos then
+        initGridPos = Unity.Vector3Int(math.floor(initGridPos.x), math.floor(initGridPos.y), math.floor(initGridPos.z))
     else
-        mousePos = self:_InDragMode() and Vector3(Screen.width / 2, Screen.height / 2, 0) or self:_GetCurPointerPressPos()
-    end
+        local mousePos
+        if args.initMousePos then
+            mousePos = Vector3(args.initMousePos.x, args.initMousePos.y, 0)
+        else
+            mousePos = self:_InDragMode() and Vector3(Screen.width / 2, Screen.height / 2, 0) or self:_GetCurPointerPressPos()
+        end
 
-    local camRay = CameraManager.mainCamera:ScreenPointToRay(mousePos)
-    local _, initWorldPos = CSFactoryUtil.SampleLevelRegionPointWithRay(camRay)
-    local initGridPos = GameInstance.remoteFactoryManager.visual:WorldToVoxel(initWorldPos)
-    initGridPos = Unity.Vector3Int(math.floor(initGridPos.x), math.floor(initGridPos.y), math.floor(initGridPos.z))
+        local camRay = CameraManager.mainCamera:ScreenPointToRay(mousePos)
+        local _, initWorldPos = CSFactoryUtil.SampleLevelRegionPointWithRay(camRay)
+        initGridPos = GameInstance.remoteFactoryManager.visual:WorldToVoxel(initWorldPos)
+        initGridPos = Unity.Vector3Int(math.floor(initGridPos.x), math.floor(initGridPos.y), math.floor(initGridPos.z))
+    end
 
     if nodeId then
         
@@ -1964,7 +2070,7 @@ FacBuildModeCtrl._EnterBuildingMode = HL.Method(HL.Table) << function(self, args
         buildingId = node.templateId
         itemData = FactoryUtils.getBuildingItemData(buildingId)
         self:_RefreshKeyHint(KeyHints.oldBuilding)
-        local face = lume.round(node.transform.direction.y / 90)
+        local face = args.initDir or lume.round(node.transform.direction.y / 90)
         if not args.initMousePos and DeviceInfo.usingTouch and LuaSystemManager.factory.inTopView then
             
             
@@ -1983,9 +2089,12 @@ FacBuildModeCtrl._EnterBuildingMode = HL.Method(HL.Table) << function(self, args
         local buildingItemData = Tables.factoryBuildingItemTable[itemId]
         buildingId = buildingItemData.buildingId
         self:_RefreshKeyHint(LuaSystemManager.factory.inTopView and KeyHints.newBuildingInTopView or KeyHints.newBuilding)
-        local initDir = math.floor(((CameraManager.mainCamera.transform.eulerAngles.y + 45) % 360) / 90) % 4
+        local initDir = args.initDir
+        if initDir == nil then
+            initDir = math.floor(((CameraManager.mainCamera.transform.eulerAngles.y + 45) % 360) / 90) % 4
+        end
         
-        if FacConst.SIGN_BUILDING_EXTRA_SETTING_PANEL[buildingId] then
+        if args.initDir == nil and FacConst.SIGN_BUILDING_EXTRA_SETTING_PANEL[buildingId] then
             initDir = (initDir + 1) % 4
         end
         GameInstance.remoteFactoryManager.interact:SwitchToBuildingMode(buildingId, initGridPos, initDir)
@@ -2060,19 +2169,24 @@ FacBuildModeCtrl._ExitBuildingMode = HL.Method(HL.Opt(HL.Boolean)) << function(s
     if self.m_mode ~= FacConst.FAC_BUILD_MODE.Building then
         return
     end
+    
+    self.m_sizeIndicator.followerObject.getTargetPosInfo = nil
     self.m_sizeIndicator.gameObject:SetActiveIfNecessary(false)
     if self.m_powerPoleRange then
+        self.m_powerPoleRange.followerObject.getTargetPosInfo = nil
         if self.m_powerPoleRange.gameObject then
             GameObject.Destroy(self.m_powerPoleRange.gameObject)
         end
         self.m_powerPoleRange = nil
     end
     if self.m_battleRange then
+        self.m_battleRange.followerObject.getTargetPosInfo = nil
         if self.m_battleRange.gameObject then
             GameObject.Destroy(self.m_battleRange.gameObject)
         end
         self.m_battleRange = nil
     end
+    self.m_fluidSprayRange.followerObject.getTargetPosInfo = nil
     self.m_fluidSprayRange.gameObject:SetActive(false)
     self:_ResetMoveBuildingHintState()
 
@@ -2481,13 +2595,14 @@ FacBuildModeCtrl._EnterBlueprintMode = HL.Method(HL.Table) << function(self, arg
     self:_RefreshKeyHint(KeyHints.blueprint)
 
     local interact = GameInstance.remoteFactoryManager.interact
+    local initDir = args.initDir or 0
     if args.blueprint then
         
-        interact:SwitchToBlueprintMode(args.blueprint, initGridPos, 0, args.isMove)
+        interact:SwitchToBlueprintMode(args.blueprint, initGridPos, initDir, args.isMove)
         Notify(MessageConst.FAC_TOP_VIEW_SET_BLUEPRINT_ICONS, args.blueprint)
     elseif args.csBPInst then
         
-        interact:SwitchToBlueprintModeWidthServerBlueprint(args.csBPInst, initGridPos, 0)
+        interact:SwitchToBlueprintModeWidthServerBlueprint(args.csBPInst, initGridPos, initDir)
         if args.csBPInst.sourceType == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintSourceType.Sys then
             self.m_buildArgs.isSystemBP = true
             self.m_buildArgs.sysBpKey = args.csBPInst.param.sysBpKey
@@ -2498,7 +2613,7 @@ FacBuildModeCtrl._EnterBlueprintMode = HL.Method(HL.Table) << function(self, arg
         Notify(MessageConst.FAC_TOP_VIEW_SET_BLUEPRINT_ICONS, args.csBPInst.info.bp)
     elseif args[1] then 
         
-        interact:SwitchToBlueprintModeWidthServerBlueprint(args[1], initGridPos, 0)
+        interact:SwitchToBlueprintModeWidthServerBlueprint(args[1], initGridPos, initDir)
     end
     local mode = interact.currentBlueprintMode
     if mode.onPlaceBlueprint then
@@ -2643,19 +2758,24 @@ FacBuildModeCtrl._EnterLogisticMode = HL.Method(HL.Table) << function(self, args
     local itemData = Tables.itemTable[itemId]
     local logisticId = Tables.factoryItem2LogisticIdTable[itemId].logisticId
 
-    local mousePos
-    if args.initMousePos then
-        mousePos = Vector3(args.initMousePos.x, args.initMousePos.y, 0)
+    local initGridPos = args.initGridPos
+    if initGridPos then
+        initGridPos = Unity.Vector3Int(lume.round(initGridPos.x), lume.round(initGridPos.y), lume.round(initGridPos.z))
     else
-        mousePos = self:_InDragMode() and Vector3(Screen.width / 2, Screen.height / 2, 0) or self:_GetCurPointerPressPos()
+        local mousePos
+        if args.initMousePos then
+            mousePos = Vector3(args.initMousePos.x, args.initMousePos.y, 0)
+        else
+            mousePos = self:_InDragMode() and Vector3(Screen.width / 2, Screen.height / 2, 0) or self:_GetCurPointerPressPos()
+        end
+
+        local camRay = CameraManager.mainCamera:ScreenPointToRay(mousePos)
+        local _, initWorldPos = CSFactoryUtil.SampleLevelRegionPointWithRay(camRay)
+        initGridPos = GameInstance.remoteFactoryManager.visual:WorldToVoxel(initWorldPos)
+        initGridPos = Unity.Vector3Int(lume.round(initGridPos.x), lume.round(initGridPos.y), lume.round(initGridPos.z))
     end
 
-    local camRay = CameraManager.mainCamera:ScreenPointToRay(mousePos)
-    local _, initWorldPos = CSFactoryUtil.SampleLevelRegionPointWithRay(camRay)
-    local initGridPos = GameInstance.remoteFactoryManager.visual:WorldToVoxel(initWorldPos)
-    initGridPos = Unity.Vector3Int(lume.round(initGridPos.x), lume.round(initGridPos.y), lume.round(initGridPos.z))
-
-    GameInstance.remoteFactoryManager.interact:SwitchToBuildingMode(logisticId, initGridPos, 0)
+    GameInstance.remoteFactoryManager.interact:SwitchToBuildingMode(logisticId, initGridPos, args.initDir or 0)
     local mode = GameInstance.remoteFactoryManager.interact.buildingMode
     mode.onPlaceBuilding = mode.onPlaceBuilding - self.m_onPlaceFinish
     mode.onPlaceBuilding = mode.onPlaceBuilding + self.m_onPlaceFinish
@@ -2798,7 +2918,9 @@ FacBuildModeCtrl._ExitBeltMode = HL.Method(HL.Opt(HL.Boolean)) << function(self,
     mark.transform:DOKill()
     mark.gameObject:SetActive(false)
 
-    FactoryUtils.stopLogisticFigureRenderer()
+    if not InputManagerInst.inChangingInputDevice then
+        FactoryUtils.stopLogisticFigureRenderer()
+    end
 
     if DeviceInfo.usingTouch then
         LuaSystemManager.factory.canMoveCamTarget = true

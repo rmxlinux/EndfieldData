@@ -260,7 +260,7 @@ end
 
 RewardsPopUpForBlackBoxCtrl._OnClickRestartDungeonBtn = HL.Method() << function(self)
     self:PlayAnimationOutWithCallback(function()
-        GameWorld.worldInfo.subGame:SendReStart(true)
+        GameInstance.dungeonManager.curDungeonLikeSubGame:SendReStart(true)
         self:Close()
     end)
 end

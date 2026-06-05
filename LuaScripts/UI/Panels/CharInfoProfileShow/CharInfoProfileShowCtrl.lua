@@ -19,6 +19,7 @@ local PANEL_ID = PanelId.CharInfoProfileShow
 
 
 
+
 CharInfoProfileShowCtrl = HL.Class('CharInfoProfileShowCtrl', uiCtrl.UICtrl)
 
 
@@ -198,6 +199,14 @@ CharInfoProfileShowCtrl._ZoomCamera = HL.Method(HL.Number, HL.Opt(HL.Boolean)) <
     else
         CameraManager:Zoom(delta * 2, true)
     end
+end
+
+
+
+CharInfoProfileShowCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local arg = {}
+    
+    return arg
 end
 
 HL.Commit(CharInfoProfileShowCtrl)

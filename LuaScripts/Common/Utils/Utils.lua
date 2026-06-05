@@ -548,7 +548,12 @@ function Utils.isInThrowMode()
 end
 
 function Utils.isInCustomAbility()
-    return GameInstance.playerController.mainCharacter.customAbilityCom:IsInCustomAbility()
+    local com = GameInstance.playerController.mainCharacter.customAbilityCom
+    if com ~= nil then
+        return com:IsInCustomAbility()
+    else
+        return false
+    end
 end
 
 function Utils.isInNarrative()
@@ -865,6 +870,29 @@ function Utils.getNextWeeklyServerRefreshTime()
     return os.time(today4AM) + timePerDay * deltaDays + Utils._getTimeZoneDiffOfClientAndServer()
 end
 
+
+
+
+
+
+function Utils.getServerWeekdayISOAt4AM()
+    local curTime = DateTimeUtils.GetCurrentTimestampBySeconds() + Utils.getServerTimeZoneOffsetSeconds()
+    local curDate = os.date("!*t", curTime)
+    
+    local weekDay = curDate.wday - 1
+    if weekDay == 0 then
+        weekDay = 7
+    end
+    
+    if curDate.hour < UIConst.COMMON_SERVER_UPDATE_TIME then
+        weekDay = weekDay - 1
+        if weekDay == 0 then
+            weekDay = 7
+        end
+    end
+    return weekDay
+end
+
 function Utils._getTimeZoneDiffOfClientAndServer()
     return CS.System.TimeZoneInfo.Local:GetUtcOffset(CS.System.DateTime.Now).TotalSeconds - Utils.getServerTimeZoneOffsetSeconds()
 end
@@ -947,8 +975,12 @@ function Utils.isCurTimeInTimeIdRange(timeId, ignoreCloseTime)
         return false
     end
     
-    local serverAreaTypeInt = Utils.getServerAreaType():GetHashCode()
-    local timeRange = timeCfg.timeRangeList[CSIndex(serverAreaTypeInt)]
+    local serverAreaTypeIndex = CSIndex(Utils.getServerAreaType():GetHashCode())
+    if serverAreaTypeIndex < 0 or serverAreaTypeIndex >= timeCfg.timeRangeList.Count then
+        logger.info("serverAreaType超出timeRangeList范围，serverAreaType={0}, timeId={1}", serverAreaTypeIndex, timeId)
+        return false
+    end
+    local timeRange = timeCfg.timeRangeList[serverAreaTypeIndex]
     local timeZoneSeconds = Utils.getServerTimeZoneOffsetSeconds()
     local openTs = Utils.timeStr2TimeStamp(timeRange.openTime, timeZoneSeconds)
     local closeTs = nil
@@ -962,6 +994,23 @@ function Utils.isCurTimeInTimeIdRange(timeId, ignoreCloseTime)
     else
         return curTs >= openTs and curTs < closeTs
     end
+end
+
+
+
+function Utils.getTimeIdOpenTimeStamp(timeId)
+    if string.isEmpty(timeId) then
+        return nil
+    end
+    local hasCfg, timeCfg = Tables.timeRangeTable:TryGetValue(timeId)
+    if not hasCfg then
+        logger.error("时间区间表不存在该timeId：" .. timeId)
+        return nil
+    end
+    local serverAreaTypeInt = Utils.getServerAreaType():GetHashCode()
+    local timeRange = timeCfg.timeRangeList[CSIndex(serverAreaTypeInt)]
+    local timeZoneSeconds = Utils.getServerTimeZoneOffsetSeconds()
+    return Utils.timeStr2TimeStamp(timeRange.openTime, timeZoneSeconds)
 end
 
 
@@ -1277,12 +1326,12 @@ end
 
 function Utils.getCurMissionIdAndDesc(descType)
     local missionSystem = GameInstance.player.mission
-    local csMissionType = CS.Beyond.Gameplay.MissionSystem.MissionType
+    local csMissionViewType = GEnums.MissionViewType
     local curMissionId = ""
     local curMissionDesc = Language.LUA_GACHA_STARTER_ALL_MISSION_COMPLETE
     for missionId, _ in pairs(missionSystem.missions) do
         local missionInfo = missionSystem:GetMissionInfo(missionId)
-        if missionInfo.missionType == csMissionType.Main then
+        if missionInfo.viewType == csMissionViewType.MissionViewMain then
             local curMissionState = missionSystem:GetMissionState(missionId)
             if curMissionState == CS.Beyond.Gameplay.MissionSystem.MissionState.Processing then
                 curMissionId = missionId

@@ -47,8 +47,6 @@ local PANEL_ID = PanelId.CharInfo
 
 
 
-
-
 CharInfoCtrl = HL.Class('CharInfoCtrl', uiCtrl.UICtrl)
 
 local CONTROL_TAB_FUNC_DICT = {
@@ -146,16 +144,19 @@ do
 
     
     CharInfoCtrl.m_isCharListInited = HL.Field(HL.Boolean) << false
+
+    
+    CharInfoCtrl.m_arg = HL.Field(HL.Table)
 end
 
 
 
 
 CharInfoCtrl.OnCreate = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
+    self.m_arg = arg
     local initCharInfo = arg.initCharInfo or CharInfoUtils.getLeaderCharInfo()
     local pageType = arg.pageType or UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
 
-    self.m_phase = arg.phase
     self.m_curPageType = pageType
     self.m_charInfo = initCharInfo
     self.m_charInfoList = arg.phase.m_charInfoList
@@ -377,6 +378,9 @@ CharInfoCtrl._InitActionEvent = HL.Method() << function(self)
             self.m_charInfoList = self.m_phase.m_charInfoList
             self:_RefreshCharInfo(self.m_charInfo, self.m_charInfoList)
         end, false, true)
+        if self.m_arg.stateArg and self.m_arg.stateArg.isInitPreview then
+            self.view.commonToggle:SetValue(true)
+        end
     end
     if self.m_charInfo.charInstIdList ~= nil and #self.m_charInfo.charInstIdList == 1 then
         self.view.expandListButton.gameObject:SetActive(false)
@@ -472,7 +476,8 @@ CharInfoCtrl._ToggleExpandNode = HL.Method(HL.Boolean) << function(self, isOn)
                 charInfoList = self.m_charInfoList,
                 refreshAddon = function(cell, charInfo)
                     cell.view.selectedBG.gameObject:SetActive(charInfo.instId == self.m_charInfo.instId)
-                end
+                end,
+                stateArg = self.m_arg.stateArg,
             }
             self.m_phase:ShowCharExpandList(args)
         else
@@ -491,7 +496,9 @@ CharInfoCtrl._ToggleExpandNode = HL.Method(HL.Boolean) << function(self, isOn)
         self.view.bottomMenuCover:PlayOutAnimation()
         self.view.rightBottomNode.animationWrapper:PlayOutAnimation()
         self.view.gyroscopeRoot:ClearTween(false)
+        self.view.luaPanel:BlockAllInput()
         self.view.gyroscopeRoot:PlayOutAnimation(function()
+            self.view.luaPanel:RecoverAllInput()
             self.view.menuListNode.gameObject:SetActive(false)
             UIUtils.PlayAnimationAndToggleActive(self.view.charInfoBasicNodeRight.view.animationWrapper, true)
 
@@ -505,7 +512,8 @@ CharInfoCtrl._ToggleExpandNode = HL.Method(HL.Boolean) << function(self, isOn)
                 refreshAddon = function(cell, charInfo)
                     local showSelectedBG = charInfo.instId == self.m_charInfo.instId and not DeviceInfo.usingController
                     cell.view.selectedBG.gameObject:SetActive(showSelectedBG)
-                end
+                end,
+                stateArg = self.m_arg.stateArg,
             }
             self.m_phase:ShowCharExpandList(args)
         end)

@@ -12,6 +12,10 @@ local PANEL_ID = PanelId.DomainDepotPackageSell
 
 
 
+
+
+
+
 DomainDepotPackageSellCtrl = HL.Class('DomainDepotPackageSellCtrl', uiCtrl.UICtrl)
 
 
@@ -27,12 +31,14 @@ DomainDepotPackageSellCtrl.m_selectId = HL.Field(HL.String) << ""
 DomainDepotPackageSellCtrl.m_domainDepotId = HL.Field(HL.String) << ""
 
 
+DomainDepotPackageSellCtrl.m_resumeState = HL.Field(HL.Table)
+
+
 
 
 
 
 DomainDepotPackageSellCtrl.s_messages = HL.StaticField(HL.Table) << {
-    
 }
 
 
@@ -40,6 +46,8 @@ DomainDepotPackageSellCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 DomainDepotPackageSellCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    
+    self.m_resumeState = arg.resumeState
     self.view.closeBtn.onClick:RemoveAllListeners()
     self.view.closeBtn.onClick:AddListener(function()
         Notify(MessageConst.ON_CLOSE_DOMAIN_DEPOT_PACK_SELL_PANEL)
@@ -88,6 +96,12 @@ DomainDepotPackageSellCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.valueTxt.text = deliverInfo.originalPrice
 
     self.GetCell = UIUtils.genCachedCellFunction(self.view.goodsScrollView)
+    self.view.goodsScrollViewSelectableNaviGroup.getDefaultSelectableFunc = function()
+        local targetIndex = self:_GetSelectedBuyerIndex()
+        local targetCell = self:_GetCellByIndex(targetIndex)
+        local targetSelectable = targetCell and targetCell.view.inputBindingGroupNaviDecorator or nil
+        return targetSelectable
+    end
 
     self.view.goodsScrollView.onUpdateCell:RemoveAllListeners()
     self.view.goodsScrollView.onUpdateCell:AddListener(function(object, index)
@@ -102,7 +116,6 @@ DomainDepotPackageSellCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.goodsScrollView:UpdateCount(4, true)
 
-    self.view.goodsScrollViewSelectableNaviGroup:NaviToThisGroup()
     self:OnCellChange()
 
     if GameInstance.player.domainDepotSystem.deliverInstId ~= 0 then
@@ -114,6 +127,19 @@ DomainDepotPackageSellCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.view.taskRoot.gameObject:SetActiveIfNecessary(true)
         self.view.confirmBtn.gameObject:SetActiveIfNecessary(true)
     end
+end
+
+
+
+
+DomainDepotPackageSellCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    return {
+        domainDepotId = self.m_domainDepotId,
+        simpleOpen = true,
+        resumeState = {
+            selectedBuyerId = self.m_selectId,
+        }
+    }
 end
 
 
@@ -155,7 +181,25 @@ end
 
 
 
+DomainDepotPackageSellCtrl._GetSelectedBuyerIndex = HL.Method().Return(HL.Number) << function(self)
+    if string.isEmpty(self.m_selectId) then
+        return 1
+    end
+    for index, buyerInfo in ipairs(self.m_buyerInfos) do
+        if buyerInfo.id == self.m_selectId then
+            return index
+        end
+    end
+    return 1
+end
+
+
+
 DomainDepotPackageSellCtrl.OnShow = HL.Override() << function(self)
+    if self.m_resumeState then
+        self:_ApplyResumeState(self.m_resumeState)
+        self.m_resumeState = nil
+    end
     self.view.goodsScrollViewSelectableNaviGroup:NaviToThisGroup()
 end
 
@@ -163,7 +207,17 @@ end
 
 
 
-
-
+DomainDepotPackageSellCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    local selectedBuyerId = resumeState and resumeState.selectedBuyerId or nil
+    if not string.isEmpty(selectedBuyerId) then
+        for index, buyerInfo in ipairs(self.m_buyerInfos) do
+            if buyerInfo.id == selectedBuyerId then
+                self.m_selectId = selectedBuyerId
+                break
+            end
+        end
+        self:OnCellChange()
+    end
+end
 
 HL.Commit(DomainDepotPackageSellCtrl)

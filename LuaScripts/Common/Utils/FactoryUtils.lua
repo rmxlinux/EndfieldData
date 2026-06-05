@@ -1340,6 +1340,32 @@ function FactoryUtils.getCurRegionPowerInfo()
     end
 end
 
+function FactoryUtils.getIsInBackupPower(chapterId)
+    local powerInfo
+    if chapterId then
+        powerInfo = FactoryUtils.getRegionPowerInfoByChapterId(chapterId)
+    else
+        powerInfo = FactoryUtils.getCurRegionPowerInfo()
+    end
+    if powerInfo == nil then
+        return false
+    end
+    return DateTimeUtils.GetCurrentTimestampBySeconds() < powerInfo.backupLastStartTs + Tables.factoryConst.facBackUpPowerDuration
+end
+
+function FactoryUtils.getIsBackupPowerUnderRecovery(chapterId)
+    local powerInfo
+    if chapterId then
+        powerInfo = FactoryUtils.getRegionPowerInfoByChapterId(chapterId)
+    else
+        powerInfo = FactoryUtils.getCurRegionPowerInfo()
+    end
+    if powerInfo == nil then
+        return false
+    end
+    return DateTimeUtils.GetCurrentTimestampBySeconds() < powerInfo.backupLastStopTs + Tables.factoryConst.facBackUpPowerCooldownTime
+end
+
 function FactoryUtils.getRegionPowerInfoByChapterId(chapterId)
     local chapterInfo = GameInstance.remoteFactoryManager.system.core:GetChapterInfoById(chapterId)
     if chapterInfo == nil then
@@ -2042,7 +2068,11 @@ end
 
 function FactoryUtils.checkCanOpenPhaseFacTechTree(arg)
     local facTechTreeSystem = GameInstance.player.facTechTreeSystem
-    if arg == nil then
+    if arg == nil or next(arg) == nil then
+        
+        return true
+    end
+    if arg.inPackage then
         
         return true
     end
@@ -2585,7 +2615,7 @@ end
 function FactoryUtils.getCurAndAutoTransferBlackBoxToDomainId()
     local domainId
     if Utils.isInBlackbox() then
-        local succ, blackboxCfg = Tables.dungeonTable:TryGetValue(GameWorld.worldInfo.curSubGameId)
+        local succ, blackboxCfg = Tables.dungeonTable:TryGetValue(GameInstance.dungeonManager.curDungeonId)
         if succ then
             domainId = blackboxCfg.domainId
         else
@@ -2698,14 +2728,17 @@ function FactoryUtils.getSewageTreatPlantLevel(plantId)
     return GameInstance.player.remoteFactory.core.progressStatus:QuerySewageTreatPlantLevel(chapterId)
 end
 
-function FactoryUtils.getSewageTreatPlantCanLevelUpIdListInTargetLevel(levelId)
-    local targetPlantId
+function FactoryUtils.getSewageTreatPlantIdByLevelId(levelId)
     for plantId, plantCfg in pairs(Tables.factorySewageTreatPlantStoreTable) do
         if plantCfg.levelId == levelId then
-            targetPlantId = plantId  
-            break
+            return plantId  
         end
     end
+    return nil
+end
+
+function FactoryUtils.getSewageTreatPlantCanLevelUpIdListInTargetLevel(levelId)
+    local targetPlantId = FactoryUtils.getSewageTreatPlantIdByLevelId(levelId)
     if targetPlantId == nil then
         return {}
     end
@@ -2742,33 +2775,33 @@ function FactoryUtils.getSewageTreatPlantData(plantId)
         return
     end
 
-    local domainData = {}
-    domainData.domainId = domainId
-    domainData.levelId = plantCfg.levelId
-    domainData.currLevel = currLevel
-    domainData.nextLevel = nextLevel
+    local plantData = {}
+    plantData.domainId = domainId
+    plantData.levelId = plantCfg.levelId
+    plantData.currLevel = currLevel
+    plantData.nextLevel = nextLevel
     local currImportCount, currExportCount = 0, 0
     local nextImportCount, nextExportCount = 0, 0
     local maxImportCount, maxExportCount = 0, 0
 
     local maxLevel = plantCfg.levelList.Count
     local isMaxLevel = maxLevel == currLevel
-    domainData.maxLevel = maxLevel
-    domainData.isMaxLevel = isMaxLevel
-    domainData.isFinalMaxLevel = isMaxLevel  
+    plantData.maxLevel = maxLevel
+    plantData.isMaxLevel = isMaxLevel
+    plantData.isFinalMaxLevel = isMaxLevel  
 
     for levelIndex = 0, plantCfg.levelList.Count - 1 do
         local levelData = plantCfg.levelList[levelIndex]
         local cfgLevel = levelData.level
 
         if currLevel == cfgLevel then
-            domainData.currLevelDesc = levelData.levelDesc
+            plantData.currLevelDesc = levelData.levelDesc
         end
 
         if nextLevel == cfgLevel or (nextLevel > maxLevel and maxLevel == cfgLevel) then
-            domainData.nextLevelTitle = levelData.levelTitle
-            domainData.levelCost = levelData.cost
-            domainData.nextLevelBuildingInstKey = levelData.actionParams[1]
+            plantData.nextLevelTitle = levelData.levelTitle
+            plantData.levelCost = levelData.cost
+            plantData.nextLevelBuildingInstKey = levelData.actionParams[1]
         end
 
         local isLevelImport = levelData.isImportLevel
@@ -2795,19 +2828,19 @@ function FactoryUtils.getSewageTreatPlantData(plantId)
         end
     end
 
-    domainData.currImportCount = currImportCount
-    domainData.nextImportCount = nextImportCount
-    domainData.currExportCount = currExportCount
-    domainData.nextExportCount = nextExportCount
-    domainData.maxImportCount = maxImportCount
-    domainData.maxExportCount = maxExportCount
+    plantData.currImportCount = currImportCount
+    plantData.nextImportCount = nextImportCount
+    plantData.currExportCount = currExportCount
+    plantData.nextExportCount = nextExportCount
+    plantData.maxImportCount = maxImportCount
+    plantData.maxExportCount = maxExportCount
 
     local importerCfgData = Tables.factoryBuildingTable:GetValue(FacConst.FAC_SEWAGE_TREAT_IMPORTER_BUILDING_ID)
     local exporterCfgData = Tables.factoryBuildingTable:GetValue(FacConst.FAC_SEWAGE_TREAT_EXPORTER_BUILDING_ID)
-    domainData.importerDesc = importerCfgData.desc
-    domainData.exporterDesc = exporterCfgData.desc
+    plantData.importerDesc = importerCfgData.desc
+    plantData.exporterDesc = exporterCfgData.desc
 
-    return domainData
+    return plantData
 end
 
 function FactoryUtils.evaluateMultiBuildingLimitedPriority(templateId)
@@ -2856,6 +2889,14 @@ function FactoryUtils.playAudioWhenFillingItem(fillingItemId, targetItemId, targ
         end
         return
     end
+end
+
+function FactoryUtils.isCreatingBlueprint()
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.FacSaveBlueprint)
+    if not isOpen then
+        return false
+    end
+    return ctrl:GetIsCreating()
 end
 
 

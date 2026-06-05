@@ -16,6 +16,7 @@ local PHASE_ID = PhaseId.ManualCraft
 
 
 
+
 PhaseManualCraft = HL.Class('PhaseManualCraft', phaseBase.PhaseBase)
 
 
@@ -106,6 +107,17 @@ PhaseManualCraft._OnRefresh = HL.Override() << function(self)
         item.uiCtrl:PhaseRefresh(self.arg.jumpId)
     end
 
+end
+
+
+
+PhaseManualCraft.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    local item = self.m_panel2Item[PanelId.ManualCraft]
+    if item and item.uiCtrl then
+        arg.recoverState = item.uiCtrl:GetRecoverStateArg()
+    end
+    return arg
 end
 
 

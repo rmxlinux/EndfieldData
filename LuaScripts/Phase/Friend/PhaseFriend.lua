@@ -23,6 +23,8 @@ local PHASE_ID = PhaseId.Friend
 
 
 
+
+
 PhaseFriend = HL.Class('PhaseFriend', phaseBase.PhaseBase)
 
 
@@ -91,6 +93,61 @@ PhaseFriend._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << 
     end
 
     self:_BindControllerHintPlaceHolder()
+
+    if self.arg and self.arg.friendRoleDisplayArg then
+        UIManager:Open(PanelId.FriendRoleDisplay, self.arg.friendRoleDisplayArg)
+        self.arg.friendRoleDisplayArg = nil
+    end
+
+    if self.arg and self.arg.friendThemeChangeArg then
+        UIManager:Open(PanelId.FriendThemeChange, self.arg.friendThemeChangeArg)
+        self.arg.friendThemeChangeArg = nil
+    end
+
+    if self.arg and self.arg.friendBusinessCardPreviewArg then
+        UIManager:Open(PanelId.FriendBusinessCardPreview, self.arg.friendBusinessCardPreviewArg)
+        self.arg.friendBusinessCardPreviewArg = nil
+    end
+
+    if self.arg and self.arg.naviTargetActionMenuArg then
+        Notify(MessageConst.SHOW_NAVI_TARGET_ACTION_MENU, self.arg.naviTargetActionMenuArg)
+        self.arg.naviTargetActionMenuArg = nil
+    end
+
+    if self.arg and self.arg.commonPopUpArg then
+        Notify(MessageConst.SHOW_POP_UP, self.arg.commonPopUpArg)
+        self.arg.commonPopUpArg = nil
+    end
+
+    if self.arg and self.arg.commonShareArg then
+        UIManager:Open(PanelId.CommonShare, self.arg.commonShareArg)
+        self.arg.commonShareArg = nil
+    end
+
+    if self.arg and self.arg.instructionBookArg then
+        UIManager:Open(PanelId.InstructionBook, self.arg.instructionBookArg)
+        self.arg.instructionBookArg = nil
+    end
+
+    if self.arg and self.arg.friendBlackListArg then
+        UIManager:Open(PanelId.FriendBlackList, self.arg.friendBlackListArg)
+        self.arg.friendBlackListArg = nil
+    end
+
+    if self.arg and self.arg.friendRequestArg then
+        UIManager:Open(PanelId.FriendRequest, self.arg.friendRequestArg)
+        self.arg.friendRequestArg = nil
+    end
+
+    if self.arg and self.arg.searchNewFriendListArg then
+        UIManager:Open(PanelId.SearchNewFriendList, self.arg.searchNewFriendListArg)
+        self.arg.searchNewFriendListArg = nil
+    end
+
+    if self.arg and self.arg.friendHeadSelectedPopUpArg then
+        UIManager:Open(PanelId.FriendHeadSelectedPopUp, self.arg.friendHeadSelectedPopUpArg)
+        self.arg.friendHeadSelectedPopUpArg = nil
+    end
 end
 
 
@@ -112,6 +169,7 @@ end
 
 
 PhaseFriend._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    self:_RefreshCurPanelTabBlockState()
 end
 
 
@@ -192,6 +250,9 @@ PhaseFriend.OnTabChange = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(sel
         return
     end
 
+    self.arg = self.arg or {}
+    self.arg.panelId = panelId
+
     if self.m_curPanelItem then
         self.m_curPanelItem.uiCtrl:Hide()
     end
@@ -211,6 +272,108 @@ end
 
 
 
+PhaseFriend.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    if self.m_curPanelItem and self.m_curPanelItem.uiCtrl then
+        local overrideArg = self.m_curPanelItem.uiCtrl:GetCurPhaseStateArg()
+        if overrideArg ~= nil then
+            arg = overrideArg
+        end
+    end
+    arg.friendRoleDisplayArg = nil
+    arg.friendThemeChangeArg = nil
+    arg.friendBusinessCardPreviewArg = nil
+    arg.naviTargetActionMenuArg = nil
+    arg.commonPopUpArg = nil
+    arg.commonShareArg = nil
+    arg.instructionBookArg = nil
+    arg.friendBlackListArg = nil
+    arg.friendRequestArg = nil
+    arg.searchNewFriendListArg = nil
+    arg.friendHeadSelectedPopUpArg = nil
+    if self.m_curPanelItem and self.m_curPanelItem.uiCtrl then
+        arg.panelId = self.m_curPanelItem.uiCtrl.panelId
+    end
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.FriendRoleDisplay)
+    if isOpen and UIManager:IsShow(PanelId.FriendRoleDisplay) and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        local friendRoleDisplayArg = ctrl:GetCurPhaseStateArg()
+        if friendRoleDisplayArg then
+            arg.friendRoleDisplayArg = friendRoleDisplayArg
+        end
+    end
+    isOpen, ctrl = UIManager:IsOpen(PanelId.FriendThemeChange)
+    if isOpen and UIManager:IsShow(PanelId.FriendThemeChange) and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        local friendThemeChangeArg = ctrl:GetCurPhaseStateArg()
+        if friendThemeChangeArg then
+            arg.friendThemeChangeArg = friendThemeChangeArg
+        end
+    end
+    isOpen, ctrl = UIManager:IsOpen(PanelId.FriendBusinessCardPreview)
+    if isOpen and UIManager:IsShow(PanelId.FriendBusinessCardPreview) and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        local friendBusinessCardPreviewArg = ctrl:GetCurPhaseStateArg()
+        if friendBusinessCardPreviewArg then
+            arg.friendBusinessCardPreviewArg = friendBusinessCardPreviewArg
+        end
+    end
+    isOpen, ctrl = UIManager:IsOpen(PanelId.NaviTargetActionMenu)
+    if isOpen and UIManager:IsShow(PanelId.NaviTargetActionMenu) and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        local naviTargetActionMenuArg = ctrl:GetCurPhaseStateArg()
+        if naviTargetActionMenuArg then
+            arg.naviTargetActionMenuArg = naviTargetActionMenuArg
+        end
+    end
+    isOpen, ctrl = UIManager:IsOpen(PanelId.CommonPopUp)
+    if isOpen and UIManager:IsShow(PanelId.CommonPopUp) and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        local commonPopUpArg = ctrl:GetCurPhaseStateArg()
+        if commonPopUpArg then
+            arg.commonPopUpArg = commonPopUpArg
+        end
+    end
+    isOpen, ctrl = UIManager:IsOpen(PanelId.CommonShare)
+    if isOpen and UIManager:IsShow(PanelId.CommonShare) and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        local commonShareArg = ctrl:GetCurPhaseStateArg()
+        if commonShareArg then
+            arg.commonShareArg = commonShareArg
+        end
+    end
+    isOpen, ctrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and UIManager:IsShow(PanelId.InstructionBook) and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        arg.instructionBookArg = ctrl.id
+    end
+    isOpen, ctrl = UIManager:IsOpen(PanelId.FriendBlackList)
+    if isOpen and UIManager:IsShow(PanelId.FriendBlackList) and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        local friendBlackListArg = ctrl:GetCurPhaseStateArg()
+        if friendBlackListArg then
+            arg.friendBlackListArg = friendBlackListArg
+        end
+    end
+    isOpen, ctrl = UIManager:IsOpen(PanelId.FriendRequest)
+    if isOpen and UIManager:IsShow(PanelId.FriendRequest) and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        local friendRequestArg = ctrl:GetCurPhaseStateArg()
+        if friendRequestArg then
+            arg.friendRequestArg = friendRequestArg
+        end
+    end
+    isOpen, ctrl = UIManager:IsOpen(PanelId.SearchNewFriendList)
+    if isOpen and UIManager:IsShow(PanelId.SearchNewFriendList) and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        local searchNewFriendListArg = ctrl:GetCurPhaseStateArg()
+        if searchNewFriendListArg then
+            arg.searchNewFriendListArg = searchNewFriendListArg
+        end
+    end
+    isOpen, ctrl = UIManager:IsOpen(PanelId.FriendHeadSelectedPopUp)
+    if isOpen and UIManager:IsShow(PanelId.FriendHeadSelectedPopUp) and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        local friendHeadSelectedPopUpArg = ctrl:GetCurPhaseStateArg()
+        if friendHeadSelectedPopUpArg then
+            arg.friendHeadSelectedPopUpArg = friendHeadSelectedPopUpArg
+        end
+    end
+    arg.phase = nil
+    return arg
+end
+
+
+
 
 PhaseFriend.SetTabBlockState = HL.Method(HL.Boolean) << function(self, isBlock)
     if self.m_tabPanel and self.m_tabPanel.uiCtrl then
@@ -220,16 +383,32 @@ end
 
 
 
-PhaseFriend._BindControllerHintPlaceHolder = HL.Method() << function(self)
-    if not self.m_tabPanel then
+PhaseFriend._RefreshCurPanelTabBlockState = HL.Method() << function(self)
+    if self.m_curPanelItem == nil or self.m_curPanelItem.uiCtrl == nil then
         return
     end
 
+    local curCtrl = self.m_curPanelItem.uiCtrl
+    if curCtrl.panelId == PanelId.FriendBusinessCardRoot then
+        curCtrl:RefreshTabBlockState()
+    else
+        self:SetTabBlockState(false)
+    end
+end
+
+
+
+PhaseFriend._BindControllerHintPlaceHolder = HL.Method() << function(self)
+    if not self.m_tabPanel or not self.m_curPanelItem then
+        return
+    end
+ 
     local friendCtrl = self.m_tabPanel.uiCtrl
-    if friendCtrl and DeviceInfo.inputType == DeviceInfo.InputType.Controller then
-        self.m_curPanelItem.uiCtrl.view.controllerHintPlaceholder:InitControllerHintPlaceholder({
+    local curCtrl = self.m_curPanelItem.uiCtrl
+    if friendCtrl and curCtrl and curCtrl.view and DeviceInfo.inputType == DeviceInfo.InputType.Controller then
+        curCtrl.view.controllerHintPlaceholder:InitControllerHintPlaceholder({
             friendCtrl.view.inputGroup.groupId,
-            self.m_curPanelItem.uiCtrl.view.inputGroup.groupId,
+            curCtrl.view.inputGroup.groupId,
         })
     end
 end
@@ -246,27 +425,33 @@ PhaseFriend._OnFriendCharQuery = HL.StaticMethod(HL.Table) << function(args)
         return
     end
 
-    local charInstIdList = {}
-    local mainCharInfo
-    for i = 0, charData.Count - 1 do
-        local charInfo = GameInstance.player.charBag:CreateClientFriendCharInfo(charData[i], ScopeUtil.GetCurrentScope())
-        if charInfo then
-            table.insert(charInstIdList, charInfo.instId)
-            if charInfo.templateId == PhaseFriend.s_mainFriendCharTemplateId  then
-                mainCharInfo = charInfo
-            end
-        else
-            logger.error("PhaseFriend._OnFriendCharQuery: CreateClientFriendCharInfo failed for roleId: " .. tostring(roleId))
-        end
-    end
-
     CharInfoUtils.openCharInfoBestWay({
-        initCharInfo = {
-            instId = mainCharInfo.instId,
-            templateId = mainCharInfo.templateId,
-            isTrail = false,
-            charInstIdList = charInstIdList,
-        },
+        initCharInfoCreator = function(initCharTemplateId)
+            local charInstIdList = {}
+            local mainCharInfo
+            initCharTemplateId = initCharTemplateId or PhaseFriend.s_mainFriendCharTemplateId
+            for i = 0, charData.Count - 1 do
+                local charInfo = GameInstance.player.charBag:CreateClientFriendCharInfo(charData[i], ScopeUtil.GetCurrentScope())
+                if charInfo then
+                    table.insert(charInstIdList, charInfo.instId)
+                    
+                    if mainCharInfo == nil then
+                        mainCharInfo = charInfo
+                    end
+                    if charInfo.templateId == initCharTemplateId  then
+                        mainCharInfo = charInfo
+                    end
+                else
+                    logger.error("PhaseFriend._OnFriendCharQuery: CreateClientFriendCharInfo failed for roleId: " .. tostring(roleId))
+                end
+            end
+            return {
+                instId = mainCharInfo.instId,
+                templateId = mainCharInfo.templateId,
+                isTrail = false,
+                charInstIdList = charInstIdList,
+            }
+        end,
         onClose = function()
             GameInstance.player.charBag:ClearAllClientCharAndItemData()
         end,

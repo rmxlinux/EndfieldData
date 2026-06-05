@@ -196,6 +196,10 @@ CommonMoneyExchangeCtrl.Refresh = HL.Method(HL.Opt(HL.Any)) << function(self, ar
         end
     end
     local curNum = self.view.numberSelector.curNumber
+    if self.m_arg.initExchangeCount then
+        curNum = self.m_arg.initExchangeCount
+        self.m_arg.initExchangeCount = nil
+    end
     self.view.numberSelector:InitNumberSelector(curNum, 1, max, function(newNum)
         local costOriginNum = math.floor(newNum * config.sourceMoneyMinSwap)
         local getTargetNum = math.floor((newNum * config.sourceMoneyMinSwap / config.sourceMoneyCost) * config.targetMoneyGet)
@@ -400,6 +404,7 @@ end
 CommonMoneyExchangeCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     if self.m_arg ~= nil then
         self.m_arg.onClose = nil 
+        self.m_arg.initExchangeCount = self.view.numberSelector.curNumber
     end
     return self.m_arg
 end

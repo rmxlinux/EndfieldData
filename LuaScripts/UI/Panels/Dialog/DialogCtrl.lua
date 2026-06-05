@@ -156,6 +156,10 @@ DialogCtrl.OnBtnNextClick = HL.Override() << function(self)
         self.view.textTalk:SeekToEnd()
         self.view.textTalkCenter:SeekToEnd()
     else
+        local dialogTimelineManager = GameWorld.dialogTimelineManager
+        if dialogTimelineManager ~= nil and dialogTimelineManager.isDialogTimelinePlaying then
+            return
+        end
         self:_UpdateClickRecord()
         GameWorld.dialogManager:Next()
     end
@@ -367,6 +371,12 @@ DialogCtrl.SetTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean, HL.Any, HL.Any))
         dialogText = trunkTbData.dialogText
     end
 
+    if BEYOND_DEBUG then
+        if trunkNodeData.mfTrunkActionData.useCustomText then
+            dialogText = string.format("<color=red>[Dev Only] Debug Custom Text:</color> %s", trunkNodeData.mfTrunkActionData.customText)
+        end
+    end
+
     local text = UIUtils.resolveTextCinematic(dialogText)
     local singleTrunk = string.isEmpty(name)
     self.view.bottomLayout:DOKill()
@@ -421,23 +431,29 @@ DialogCtrl.SetTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean, HL.Any, HL.Any))
     
     local useRadio = trunkNodeData.useRadio
     local radioNode = self.view.radioNode
+
     if useRadio then
         radioNode.gameObject:SetActive(useRadio)
 
-        local charSpriteName
+        local charSpriteName = ""
         if not string.isEmpty(trunkNodeData.radioIcon) then
             charSpriteName = trunkNodeData.radioIcon
         else
             local entity = GameWorld.dialogManager:GetEntity(trunkNodeData.actorIndex)
-            local charId = entity.templateData.id
-            charSpriteName = UIConst.UI_CHAR_HEAD_SQUARE_PREFIX .. charId
+            if entity and entity.templateData then
+                local charId = entity.templateData.id
+                charSpriteName = UIConst.UI_CHAR_HEAD_SQUARE_PREFIX .. charId
+            end
         end
-        self.view.charImage:LoadSprite(UIConst.UI_SPRITE_CHAR_HEAD_RECTANGLE, charSpriteName)
-        self.view.blueMask:LoadSprite(UIConst.UI_SPRITE_CHAR_HEAD_RECTANGLE, charSpriteName)
+
+        if not string.isEmpty(charSpriteName) then
+            self.view.charImage:LoadSprite(UIConst.UI_SPRITE_CHAR_HEAD_RECTANGLE, charSpriteName)
+            self.view.blueMask:LoadSprite(UIConst.UI_SPRITE_CHAR_HEAD_RECTANGLE, charSpriteName)
+        end
 
         local radioName
         if not string.isEmpty(trunkNodeData.radioNameId) then
-            radioName = Language.trunkNodeData.radioNameId
+            radioName = Language[trunkNodeData.radioNameId]
         else
             radioName = name
         end

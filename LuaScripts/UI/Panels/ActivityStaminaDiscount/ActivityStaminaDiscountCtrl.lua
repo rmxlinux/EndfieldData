@@ -20,6 +20,9 @@ local PANEL_ID = PanelId.ActivityStaminaDiscount
 
 
 
+
+
+
 ActivityStaminaDiscountCtrl = HL.Class('ActivityStaminaDiscountCtrl', uiCtrl.UICtrl)
 
 
@@ -31,6 +34,7 @@ ActivityStaminaDiscountCtrl = HL.Class('ActivityStaminaDiscountCtrl', uiCtrl.UIC
 ActivityStaminaDiscountCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = 'OnStageChange',
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_PROGRESS_CHANGE] = 'OnStageChange',
+    [MessageConst.ON_ACTIVITY_UPDATED] = 'OnStageChange',
 }
 
 
@@ -58,13 +62,23 @@ ActivityStaminaDiscountCtrl.m_receiveAllBindingId = HL.Field(HL.Number) << -1
 ActivityStaminaDiscountCtrl.m_refreshDirty = HL.Field(HL.Boolean) << false
 
 
-ActivityStaminaDiscountCtrl.m_shownNewDay = HL.Field(HL.Boolean) << false
+
+
+ActivityStaminaDiscountCtrl.OnBeforePanelActive = HL.Method(HL.Any) << function(self, args)
+    self:_ApplyAudioOnOpen(args.activityId)
+end
 
 
 
 
 ActivityStaminaDiscountCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_activityId = args.activityId
+
+    self:_ApplyAudioOnOpen(self.m_activityId)
+    local bgStateData = Tables.activityStaminaRefundBgStateTable and Tables.activityStaminaRefundBgStateTable[self.m_activityId]
+    if bgStateData and not string.isEmpty(bgStateData.bgStateName) then
+        self.view.bgLayout:SetState(bgStateData.bgStateName)
+    end
 
     
     self.m_receiveAllBindingId = self:BindInputPlayerAction("activity_stamina_receive_all", function()
@@ -96,6 +110,24 @@ end
 
 
 
+
+ActivityStaminaDiscountCtrl._ApplyAudioOnOpen = HL.Method(HL.String) << function(self, activityId)
+    local audioOnOpen = self:_GetAudioOnOpen(activityId)
+    if not string.isEmpty(audioOnOpen) and self.animationWrapper then
+        self.animationWrapper:SetAudioOnOpen(audioOnOpen)
+    end
+end
+
+
+
+
+ActivityStaminaDiscountCtrl._GetAudioOnOpen = HL.Method(HL.String).Return(HL.String) << function(self, activityId)
+    local bgStateData = Tables.activityStaminaRefundBgStateTable and Tables.activityStaminaRefundBgStateTable[activityId]
+    return bgStateData and bgStateData.audioOnOpen or ""
+end
+
+
+
 ActivityStaminaDiscountCtrl.OnShow = HL.Override() << function(self)
     self:_RefreshInfo()
 end
@@ -103,9 +135,12 @@ end
 
 
 ActivityStaminaDiscountCtrl.OnClose = HL.Override() << function(self)
-    if self.m_shownNewDay then
-        ActivityUtils.setActivityDayAsRead(self.m_activityId)
-    end
+    
+    
+    
+    
+    
+    ActivityUtils.setActivityDayAsRead(self.m_activityId)
 end
 
 
@@ -115,6 +150,10 @@ ActivityStaminaDiscountCtrl._RefreshInfo = HL.Method() << function(self)
     self.m_tasks = {}
     self.m_rewardStageIds = {}
     self.m_canReward = false
+
+    if not self.m_activity then
+        return
+    end
 
     
     local nextRefreshTime = Utils.getNextCommonServerRefreshTime()
@@ -130,46 +169,51 @@ ActivityStaminaDiscountCtrl._RefreshInfo = HL.Method() << function(self)
         end)
     end
 
-    for stageId, stageInfo in pairs(Tables.activityConditionalMultiStageTable[self.m_activityId].stageList) do
-        local total = Tables.activityConditionalMultiStageCompleteConditionTable[stageId].conditionList[0].progressToCompare
+    local hasMultiStageCfg, multiStageCfg = Tables.activityConditionalMultiStageTable:TryGetValue(self.m_activityId)
+    if hasMultiStageCfg and multiStageCfg and multiStageCfg.stageList then
+        for stageId, stageInfo in pairs(multiStageCfg.stageList) do
+            local total = Tables.activityConditionalMultiStageCompleteConditionTable[stageId].conditionList[0].progressToCompare
 
-        local curProgress = 0
-        local isComplete = false
-        local isReceived = false
+            local curProgress = 0
+            local isComplete = false
+            local isReceived = false
 
-        local suc, stageData = self.m_activity.stageDataDict:TryGetValue(stageId)
+            local suc, stageData = self.m_activity.stageDataDict:TryGetValue(stageId)
 
-        if suc then
-            if stageData.Conditions then
-                for _, info in pairs(stageData.Conditions.Values) do
-                    curProgress = info
+            if suc then
+                if stageData.Conditions then
+                    for _, info in pairs(stageData.Conditions.Values) do
+                        curProgress = info
+                    end
+                else
+                    curProgress = total
                 end
-            else
-                curProgress = total
+                isComplete = stageData.Status >= GEnums.ActivityConditionalStageState.Completed:GetHashCode()
+                isReceived = stageData.Status >= GEnums.ActivityConditionalStageState.Rewarded:GetHashCode()
             end
-            isComplete = stageData.Status >= GEnums.ActivityConditionalStageState.Completed:GetHashCode()
-            isReceived = stageData.Status >= GEnums.ActivityConditionalStageState.Rewarded:GetHashCode()
+
+            local task = {
+                stageId = stageId,
+                desc = stageInfo.desc,
+                sortId = stageInfo.sortId,
+                rewardId = stageInfo.rewardId,
+                mapJumpId = stageInfo.jumpId,
+                isComplete = isComplete,
+                isReceived = isReceived,
+                curProgress = curProgress,
+                total = total,
+            }
+            task.statusSortId = task.isReceived and 3 or (task.isComplete and 1 or 2)
+
+            if task.isComplete and not task.isReceived then
+                self.m_canReward = true
+                table.insert(self.m_rewardStageIds, task.stageId)
+            end
+
+            table.insert(self.m_tasks, task)
         end
-
-        local task = {
-            stageId = stageId,
-            desc = stageInfo.desc,
-            sortId = stageInfo.sortId,
-            rewardId = stageInfo.rewardId,
-            mapJumpId = stageInfo.mapJumpId,
-            isComplete = isComplete,
-            isReceived = isReceived,
-            curProgress = curProgress,
-            total = total,
-        }
-        task.statusSortId = task.isReceived and 3 or (task.isComplete and 1 or 2)
-
-        if task.isComplete and not task.isReceived then
-            self.m_canReward = true
-            table.insert(self.m_rewardStageIds, task.stageId)
-        end
-
-        table.insert(self.m_tasks, task)
+    else
+        logger.warn("ActivityStaminaDiscountCtrl._RefreshInfo: multi stage cfg not found", self.m_activityId)
     end
 
     table.sort(self.m_tasks, Utils.genSortFunction({"statusSortId", "sortId"}, true))
@@ -187,36 +231,61 @@ end
 
 
 
+
+ActivityStaminaDiscountCtrl._OnUpdateRewardCell = HL.Method(HL.Table, HL.Any, HL.Number) << function(self, taskCell, rewardCell, rewardIndex)
+    local rewardBundles = taskCell.m_rewardBundles
+    if not rewardBundles or not rewardBundles[rewardIndex] then
+        return
+    end
+
+    local bundle = rewardBundles[rewardIndex]
+    local reward = {
+        id = bundle.id,
+        count = bundle.count,
+    }
+
+    rewardCell:InitItem(reward, true)
+    rewardCell:SetExtraInfo({
+        tipsPosType = UIConst.UI_TIPS_POS_TYPE.LeftMid,
+        tipsPosTransform = self.view.rewardList.transform,
+        isSideTips = true,
+    })
+    rewardCell.view.rewardedCover.gameObject:SetActive(taskCell.m_isReceived)
+    rewardCell.view.selectedBG.gameObject:SetActive(false)
+    rewardCell.view.button.onIsNaviTargetChanged = function(isTarget)
+        rewardCell.view.selectedBG.gameObject:SetActive(isTarget)
+    end
+end
+
+
+
+
+
 ActivityStaminaDiscountCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local task = self.m_tasks[index]
+    if not task then
+        return
+    end
     local isComplete = task.isComplete
     local isReceived = task.isReceived
     cell.descTxt.text = task.desc
     cell.progressTxt.text = task.curProgress .. "/" .. task.total
     cell.scrollbar.size = lume.clamp(task.curProgress/task.total, 0, 1)
     cell.redDot:InitRedDot("ActivityStaminaDiscountTask", {self.m_activityId, task.stageId})
-    if ActivityUtils.isNewActivityDayUnread(self.m_activityId) then
-        self.m_shownNewDay = true
-    end
+    cell.m_isReceived = isReceived
     cell.gameObject.name = "Cell" .. index
 
     
     local rewardId = task.rewardId
-    local rewardBundles = UIUtils.getRewardItems(rewardId)
-    cell.rewardCellCache = cell.rewardCellCache or UIUtils.genCellCache(cell.itemSmallReward)
-    cell.rewardCellCache:Refresh(#rewardBundles, function(item, innerIndex)
-        local reward = {
-            id = rewardBundles[innerIndex].id,
-            count = rewardBundles[innerIndex].count,
-        }
-        item:InitItem(reward, true)
-        item:SetExtraInfo({
-            tipsPosType = UIConst.UI_TIPS_POS_TYPE.LeftMid,
-            tipsPosTransform = self.view.rewardList.transform,
-            isSideTips = true,
-        })
-        item.view.rewardedCover.gameObject:SetActive(isReceived)
+    local rewardBundles = UIUtils.getRewardItems(rewardId) or {}
+
+    cell.m_rewardBundles = rewardBundles
+    cell.m_getRewardCell = cell.m_getRewardCell or UIUtils.genCachedCellFunction(cell.rewardScrollList)
+    cell.rewardScrollList.onUpdateCell:RemoveAllListeners()
+    cell.rewardScrollList.onUpdateCell:AddListener(function(obj, csRewardIndex)
+        self:_OnUpdateRewardCell(cell, cell.m_getRewardCell(obj), LuaIndex(csRewardIndex))
     end)
+    cell.rewardScrollList:UpdateCount(#cell.m_rewardBundles)
 
     
     local state = isReceived and "Received" or (isComplete and "Completed" or "NotCompleted")
@@ -233,9 +302,6 @@ ActivityStaminaDiscountCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << fu
     
     cell.notCompleteBtn.onClick:RemoveAllListeners()
     cell.notCompleteBtn.onClick:AddListener(function()
-        if self.m_shownNewDay then
-            ActivityUtils.setActivityDayAsRead(self.m_activityId)
-        end
         Utils.jumpToSystem(task.mapJumpId)
     end)
 end

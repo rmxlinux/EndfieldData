@@ -40,6 +40,8 @@ local PANEL_ID = PanelId.SpaceshipStation
 
 
 
+
+
 SpaceshipStationCtrl = HL.Class('SpaceshipStationCtrl', uiCtrl.UICtrl)
 
 
@@ -140,6 +142,12 @@ SpaceshipStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_UpdateCharacters()
     self:_UpdateStationInfos()
+
+    local recoverState = arg and arg.recoverState or nil
+    if recoverState then
+        self:_TryRecoverState(recoverState)
+        arg.recoverState = nil
+    end
 
     self:BindInputPlayerAction("ss_char_skill_detail",function()
         if self.m_skillNodes then
@@ -717,6 +725,62 @@ end
 
 SpaceshipStationCtrl.OnSetRoomStationSucc = HL.Method(HL.Table) << function(self, _)
     PhaseManager:PopPhase(PhaseId.SpaceshipStation)
+end
+
+
+
+
+SpaceshipStationCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
+    local savedChosen = recoverState.chosenCharIdList
+    if savedChosen then
+        self.m_chosenCharIdList = {}
+        for _, charId in ipairs(savedChosen) do
+            if self.m_allCharInfoReverseMap[charId] then
+                table.insert(self.m_chosenCharIdList, charId)
+            end
+        end
+    end
+
+    local sortNode = self.view.sortNode
+    local sortSelectedIndex = recoverState.sortSelectedIndex
+    local sortIsIncremental = recoverState.sortIsIncremental
+    if sortSelectedIndex and sortNode and sortNode.m_sortOptions and sortNode.view and sortNode.view.mobilePCNode and sortNode.view.mobilePCNode.dropDown then
+        local optionCount = #sortNode.m_sortOptions
+        if optionCount > 0 then
+            sortSelectedIndex = math.max(1, math.min(sortSelectedIndex, optionCount))
+            sortNode.isIncremental = sortIsIncremental == true
+            sortNode:RefreshIncremental()
+            sortNode.view.mobilePCNode.dropDown:SetSelected(CSIndex(sortSelectedIndex), true, false)
+        end
+    end
+
+    local filterTags = recoverState.filterTags
+    if filterTags and self.view.filterBtn.m_args and self.view.filterBtn.m_args.onConfirm then
+        self.view.filterBtn.m_args.onConfirm(filterTags)
+    else
+        sortNode:OnSortChanged()
+    end
+    sortNode:UpdateDeviceState()
+
+    self:_UpdateStationInfos()
+end
+
+
+
+SpaceshipStationCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = {
+        roomId = self.m_roomId,
+    }
+    local recoverState = {
+        chosenCharIdList = lume.clone(self.m_chosenCharIdList),
+        sortSelectedIndex = self.view.sortNode:GetCurSelectedIndex(),
+        sortIsIncremental = self.view.sortNode.isIncremental,
+    }
+    if self.view.filterBtn.m_args then
+        recoverState.filterTags = lume.deepCopy(self.view.filterBtn.m_args.selectedTags)
+    end
+    arg.recoverState = recoverState
+    return arg
 end
 
 

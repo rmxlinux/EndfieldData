@@ -81,6 +81,15 @@ local DEPOT_SLOT_TRANSMISSION_STYLE = "HideStorageTag"
 
 
 
+
+
+
+
+
+
+
+
+
 DomainItemTransferSelectCtrl = HL.Class('DomainItemTransferSelectCtrl', uiCtrl.UICtrl)
 
 
@@ -133,6 +142,7 @@ DomainItemTransferSelectCtrl.m_destinationCellCache = HL.Field(HL.Forward("UILis
 
 DomainItemTransferSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_info = args.info
+    local recoverState = self:_ProcessRecoverStateArg(args and args.recoverState)
 
     self.m_destinationCellCache = UIUtils.genCellCache(self.view.selectEndPointRoot.siteCell)
 
@@ -163,15 +173,20 @@ DomainItemTransferSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
     self:_InitBtn()
 
     self:_InitFromDomainInfo()
-    self:_InitLeftSidePlatformInfo(self.m_info.toDomain)
+    self:_ApplyRecoverState(recoverState)
+    self:_InitLeftSidePlatformInfo(self.m_targetDomain)
     self:_InitNumberSelector()
     self:_InitTransmissionMode()
 
-    if not self:_IsCurrentTransmitting() then
-        self:_OpenSelectTargetRoot()
+    if self:_IsCurrentTransmitting() then
+        self:_OpenDepot(recoverState)
+    elseif recoverState ~= nil and recoverState.isSelectingTarget == false and not string.isEmpty(self.m_targetDomain) then
+        self:_OpenDepot(recoverState)
     else
-        self:_OpenDepot()
+        self:_OpenSelectTargetRoot()
     end
+    self:_TryRecoverInstructionBook(recoverState)
+    self:_TryRecoverCommonPopUp(recoverState)
 
     self.view.depotExtraRoot.timeRemainingTxt.text = self:_GetTimeText()
     self:_StartCoroutine(function()
@@ -214,7 +229,33 @@ end
 
 
 
-DomainItemTransferSelectCtrl._OpenDepot = HL.Method() << function(self)
+DomainItemTransferSelectCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local recoverState = {
+        routeFromDomain = self.m_info.fromDomain,
+        routeIndex = self.m_info.index,
+        isSelectingTarget = self.view.selectEndPointRoot.gameObject.activeInHierarchy,
+        targetDomain = self.m_targetDomain,
+        chosenItemId = self.m_chosenItemId,
+        chosenItemCount = self.m_chosenItemCount,
+        transferTabNodeIsOn = self.view.transferTabNode.isOn,
+        depotState = self.view.depot:GetRecoverStateArg(),
+        numberSelectorCount = self.view.depotExtraRoot.numberSelector.curNumber,
+        commonPopUpArg = self:_GetCommonPopUpRecoverState(),
+    }
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and instructionCtrl:IsShow() and PhaseManager:GetTopPhaseId() == PhaseId.DomainItemTransfer and
+            (instructionCtrl.id == LOSSLESS_TRANSMISSION_INSTRUCTION_ID or instructionCtrl.id == LOSSLESS_VALUE_INSTRUCTION_ID) then
+        recoverState.instructionBookArg = {
+            id = instructionCtrl.id,
+        }
+    end
+    return recoverState
+end
+
+
+
+
+DomainItemTransferSelectCtrl._OpenDepot = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     AudioAdapter.PostEvent("Au_UI_Popup_DetailsPanel_Open")
 
     self:_ToggleLosslessTabOrTag(true)
@@ -239,6 +280,7 @@ DomainItemTransferSelectCtrl._OpenDepot = HL.Method() << function(self)
 
     local depotArgs = {
         domainId = self.m_info.fromDomain,
+        recoverState = recoverState and recoverState.depotState or nil,
 
         customOnUpdateCell = function(cell, info, luaIndex)
             local itemInfoPack = {
@@ -333,6 +375,7 @@ DomainItemTransferSelectCtrl._OpenDepot = HL.Method() << function(self)
     self:_RefreshLeftSideItem()
     self:_RefreshBtnAndText()
     self:_UpdateNumber()
+    self:_TryRecoverDepotState(recoverState)
 
     if DeviceInfo.usingController then
         self:Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.leftNode.groupId)
@@ -1037,8 +1080,38 @@ end
 
 
 
+
+DomainItemTransferSelectCtrl._ProcessRecoverStateArg = HL.Method(HL.Opt(HL.Any)).Return(HL.Opt(HL.Any)) << function(self, arg)
+    if arg == nil then
+        return nil
+    end
+    return arg
+end
+
+
+
+
+DomainItemTransferSelectCtrl._ApplyRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+    if not string.isEmpty(recoverState.targetDomain) then
+        self.m_targetDomain = recoverState.targetDomain
+    end
+    if recoverState.transferTabNodeIsOn ~= nil then
+        self.m_losslessTransmission = recoverState.transferTabNodeIsOn
+    end
+    if recoverState.chosenItemId ~= nil then
+        self.m_chosenItemId = recoverState.chosenItemId
+    end
+    if recoverState.chosenItemCount ~= nil then
+        self.m_chosenItemCount = recoverState.chosenItemCount
+    end
+end
+
+
+
 DomainItemTransferSelectCtrl._InitTransmissionMode = HL.Method() << function(self)
-    self.m_losslessTransmission = self.m_info.lossless
     
     self.view.transferTabNode:SetIsOnWithoutNotify(self.m_losslessTransmission)
     self.view.transferTabNode.interactable = self.m_losslessTransmissionUnlocked
@@ -1066,6 +1139,120 @@ DomainItemTransferSelectCtrl._UpdateTransmissionTag = HL.Method() << function(se
     
     self.view.warehouseTransferNode.gameObject:SetActive(not self.m_losslessTransmission)
     self.view.noConsumptionTransferNode.gameObject:SetActive(self.m_losslessTransmission)
+end
+
+
+
+DomainItemTransferSelectCtrl._GetCommonPopUpRecoverState = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    if PhaseManager:GetTopPhaseId() ~= PhaseId.DomainItemTransfer then
+        return
+    end
+    local isOpen, commonPopUpCtrl = UIManager:IsOpen(PanelId.CommonPopUp)
+    if not isOpen or not commonPopUpCtrl:IsShow() then
+        return
+    end
+    local recoverArg = commonPopUpCtrl:GetCurPhaseStateArg()
+    if not self:_IsDomainItemTransferSelectCommonPopUpArg(recoverArg) then
+        return
+    end
+    return recoverArg
+end
+
+
+
+
+DomainItemTransferSelectCtrl._IsDomainItemTransferSelectCommonPopUpArg = HL.Method(HL.Opt(HL.Any)).Return(HL.Boolean) << function(self, arg)
+    if arg == nil or type(arg) ~= "table" or string.isEmpty(arg.content) then
+        return false
+    end
+    return arg.content == Language.LUA_FAC_TRANS_CONFIRM_RESET
+        or arg.content == Language.LUA_FAC_TRANS_CONFIRM_MODIFY
+        or arg.content == Language.LUA_FAC_TRANS_CONFIRM_MODIFY_LOSSLESS
+end
+
+
+
+
+DomainItemTransferSelectCtrl._TryRecoverInstructionBook = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil or recoverState.instructionBookArg == nil then
+        return
+    end
+    if PhaseManager:GetTopPhaseId() ~= PhaseId.DomainItemTransfer then
+        return
+    end
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and instructionCtrl:IsShow() then
+        return
+    end
+    UIManager:Open(PanelId.InstructionBook, recoverState.instructionBookArg)
+    recoverState.instructionBookArg = nil
+end
+
+
+
+
+DomainItemTransferSelectCtrl._TryRecoverCommonPopUp = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil or recoverState.commonPopUpArg == nil then
+        return
+    end
+    if PhaseManager:GetTopPhaseId() ~= PhaseId.DomainItemTransfer then
+        return
+    end
+    if not self:_IsDomainItemTransferSelectCommonPopUpArg(recoverState.commonPopUpArg) then
+        return
+    end
+    local isOpen, commonPopUpCtrl = UIManager:IsOpen(PanelId.CommonPopUp)
+    if isOpen and commonPopUpCtrl:IsShow() then
+        return
+    end
+    self:Notify(MessageConst.SHOW_POP_UP, recoverState.commonPopUpArg)
+    recoverState.commonPopUpArg = nil
+end
+
+
+
+
+DomainItemTransferSelectCtrl._TryRecoverDepotState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+    local chosenItemId = self.m_chosenItemId
+    if not string.isEmpty(chosenItemId) then
+        local depotContent = self.view.depot.depotContent
+        local itemIndex = depotContent:GetItemIndex(chosenItemId)
+        if itemIndex ~= nil then
+            depotContent.view.itemList:ScrollToIndex(CSIndex(itemIndex), true)
+        end
+    end
+
+    local numberSelectorCount = self:_GetRecoverNumberSelectorCount(recoverState)
+    if numberSelectorCount > 0 and not string.isEmpty(chosenItemId) then
+        local numberSelector = self.view.depotExtraRoot.numberSelector
+        numberSelector:RefreshNumber(numberSelectorCount, numberSelector.m_min, numberSelector.m_max)
+        self.m_chosenItemCount = numberSelector.curNumber
+    end
+
+    self:_RefreshBtnAndText()
+    self:_RefreshLeftSideItem()
+    self:_UpdateNumber()
+    self:_UpdateTransmissionValue()
+end
+
+
+
+
+DomainItemTransferSelectCtrl._GetRecoverNumberSelectorCount = HL.Method(HL.Any).Return(HL.Number) << function(self, recoverState)
+    local numberSelectorCount = recoverState.numberSelectorCount
+    if type(numberSelectorCount) ~= "number" then
+        return 0
+    end
+    local numberSelector = self.view.depotExtraRoot.numberSelector
+    local minNumber = numberSelector.m_min
+    local maxNumber = numberSelector.m_max
+    if type(minNumber) ~= "number" or type(maxNumber) ~= "number" or maxNumber < minNumber then
+        return 0
+    end
+    return math.min(math.max(math.floor(numberSelectorCount), minNumber), maxNumber)
 end
 
 

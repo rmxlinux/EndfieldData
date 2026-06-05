@@ -378,7 +378,7 @@ end
 
 
 ActivityVersionGuide._OnJumpClick = HL.Method(HL.Any, HL.Number) << function(self, guideData, index)
-    local jumpId = guideData.mapJumpId
+    local jumpId = guideData.jumpId
     local succ, cfg = Tables.systemJumpTable:TryGetValue(jumpId)
     ActivityUtils.setFalseNewActivityConditionalStage(guideData.stageId)
     if succ then
@@ -470,9 +470,12 @@ ActivityVersionGuide._OnDestroy = HL.Override() << function(self)
     local status = GameInstance.player.activitySystem:GetActivityStatus(self.m_activityId)
     if status == GEnums.ActivityStatus.InProgress or status == GEnums.ActivityStatus.Completed then
         
+        
+        
         for _, guideInfo in ipairs(self.m_guideDataList) do
-            ActivityUtils.setFalseNewActivityConditionalStage(guideInfo.stageConfig.stageId)
+            ActivityUtils.setFalseNewActivityConditionalStage(guideInfo.stageConfig.stageId, true)
         end
+        ClientDataManagerInst:SaveUserData(ClientDataManagerInst.defaultCategory)
     end
 end
 

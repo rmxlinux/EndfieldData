@@ -16,6 +16,7 @@ local PANEL_ID = PanelId.ShopMonthlyDetail
 
 
 
+
 ShopMonthlyDetailCtrl = HL.Class('ShopMonthlyDetailCtrl', uiCtrl.UICtrl)
 
 
@@ -188,6 +189,12 @@ ShopMonthlyDetailCtrl._OnCashShopReceiveRefreshMsg = HL.Method() << function(sel
     GameInstance.player.guide:OnShopRefreshItemInfo()
     Notify(MessageConst.SHOW_TOAST, Language.LUA_REFRESH_CLOSE_SHOP_TOAST)
     self:Close()
+end
+
+
+
+ShopMonthlyDetailCtrl.GetGoodsId = HL.Method().Return(HL.String) << function(self)
+    return self.m_goodsId
 end
 
 HL.Commit(ShopMonthlyDetailCtrl)

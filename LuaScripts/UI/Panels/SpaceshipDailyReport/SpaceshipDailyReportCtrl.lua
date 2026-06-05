@@ -20,6 +20,8 @@ local PHASE_ID = PhaseId.SpaceshipDailyReport
 
 
 
+
+
 SpaceshipDailyReportCtrl = HL.Class('SpaceshipDailyReportCtrl', uiCtrl.UICtrl)
 
 
@@ -75,7 +77,40 @@ SpaceshipDailyReportCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_getReportCell = UIUtils.genCachedCellFunction(self.view.scrollViewScrollList)
 
     self:_InitData()
+    local recoverState = arg and arg.recoverState or nil
+    if recoverState then
+        self:_ChangeToDay(self:_GetRecoverDayIndex(recoverState))
+        arg.recoverState = nil
+    end
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+end
+
+
+
+SpaceshipDailyReportCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    return {
+        recoverState = {
+            dayIndex = self.m_curIndex,
+        }
+    }
+end
+
+
+
+
+SpaceshipDailyReportCtrl._GetRecoverDayIndex = HL.Method(HL.Table).Return(HL.Number) << function(self, recoverState)
+    local dayCount = #self.m_reportInfos
+    local recoverDayIndex = recoverState.dayIndex
+    if type(recoverDayIndex) ~= "number" or dayCount <= 0 then
+        return 1
+    end
+    if recoverDayIndex < 1 then
+        return 1
+    end
+    if recoverDayIndex > dayCount then
+        return dayCount
+    end
+    return recoverDayIndex
 end
 
 

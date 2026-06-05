@@ -75,6 +75,11 @@ local PANEL_ID = PanelId.FacTopView
 
 
 
+
+
+
+
+
 FacTopViewCtrl = HL.Class('FacTopViewCtrl', uiCtrl.UICtrl)
 
 
@@ -112,6 +117,9 @@ FacTopViewCtrl.m_isCollapsed = HL.Field(HL.Boolean) << false
 FacTopViewCtrl.m_escExitBindingId = HL.Field(HL.Number) << -1
 
 
+FacTopViewCtrl.m_keyHintCells = HL.Field(HL.Forward('UIListCache'))
+
+
 
 
 
@@ -121,7 +129,7 @@ FacTopViewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnDrag(eventData)
     end
 
-    self.m_typeCells = UIUtils.genCellCache(self.view.typeCell)
+    self.m_typeCells = self.m_typeCells or UIUtils.genCellCache(self.view.typeCell)
 
     self.view.rotBtn.onClick:AddListener(function()
         LuaSystemManager.factory:RotateTopViewCam()
@@ -151,24 +159,24 @@ FacTopViewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnOverScrollList(isNext)
     end)
 
-    UIUtils.bindInputPlayerAction("fac_top_view_rot_cam", function()
+    self:BindInputPlayerAction("fac_top_view_rot_cam", function()
         LuaSystemManager.factory:RotateTopViewCam()
     end, self.view.main.groupId)
     if DeviceInfo.usingKeyboard then
-        UIUtils.bindInputPlayerAction("fac_open_devices_list", function()
+        self:BindInputPlayerAction("fac_open_devices_list", function()
             Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT)
         end, self.view.main.groupId)
-        UIUtils.bindInputPlayerAction("fac_open_blueprint", function()
+        self:BindInputPlayerAction("fac_open_blueprint", function()
             PhaseManager:OpenPhase(PhaseId.FacBlueprint)
         end, self.view.main.groupId)
-        self.m_escExitBindingId = UIUtils.bindInputPlayerAction("fac_exit_top_view_mode_pc_esc", function()
+        self.m_escExitBindingId = self:BindInputPlayerAction("fac_exit_top_view_mode_pc_esc", function()
             
             if Utils.getCommonSettingValueBool("fac_top_view_esc_exit") and InputManagerInst:IsBindingEnabled(self.view.topViewToggle.toggleBindingId) then
                 Notify(MessageConst.FAC_TOGGLE_TOP_VIEW, false)
             end
         end, self.view.main.groupId)
     elseif DeviceInfo.usingController then
-        UIUtils.bindInputPlayerAction("fac_top_view_enter_batch_mode_ct", function()
+        self:BindInputPlayerAction("fac_top_view_enter_batch_mode_ct", function()
             Notify(MessageConst.FAC_ENTER_DESTROY_MODE)
         end, self.view.main.groupId)
         self:BindInputPlayerAction("fac_top_view_ct_scale_cam", function()
@@ -179,19 +187,19 @@ FacTopViewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
                 self:_ToggleContent(true)
             end
         end)
-        UIUtils.bindInputPlayerAction("common_cancel", function()
+        self:BindInputPlayerAction("common_cancel", function()
             if not self.m_isCollapsed then
                 self:_ToggleContent(false)
             end
         end, self.view.buildNode.groupId)
 
-        UIUtils.bindInputPlayerAction("fac_top_view_open_building_menu", function()
+        self:BindInputPlayerAction("fac_top_view_open_building_menu", function()
             self:_ControllerOpenCurBuildingMenu()
         end, self.view.main.groupId)
-        UIUtils.bindInputPlayerAction("fac_top_view_open_building_panel", function()
+        self:BindInputPlayerAction("fac_top_view_open_building_panel", function()
             self:_ControllerOpenCurBuildingPanel()
         end, self.view.main.groupId)
-        UIUtils.bindInputPlayerAction("fac_top_view_move_building", function()
+        self:BindInputPlayerAction("fac_top_view_move_building", function()
             self:_ControllerMoveCurBuilding()
         end, self.view.main.groupId)
     end
@@ -253,6 +261,45 @@ FacTopViewCtrl.OnClose = HL.Override() << function(self)
         LuaSystemManager.factory:ToggleTopView(false, true)
     end
     self.m_clearScreenKeyForControllerExpandBuildNode = UIManager:RecoverScreen(self.m_clearScreenKeyForControllerExpandBuildNode)
+end
+
+
+
+FacTopViewCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    if not self.m_typeCells and
+        not self.m_keyHintCells and
+        not self.m_filterCells and
+        not self.m_controllerMouseHoverHintCells then
+        return nil
+    end
+
+    local state = {
+        typeCells = self.m_typeCells,
+        keyHintCells = self.m_keyHintCells,
+        filterCells = self.m_filterCells,
+        controllerMouseHoverHintCells = self.m_controllerMouseHoverHintCells,
+    }
+
+    self.m_typeCells = nil
+    self.m_keyHintCells = nil
+    self.m_filterCells = nil
+    self.m_controllerMouseHoverHintCells = nil
+
+    return state
+end
+
+
+
+
+FacTopViewCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function(self, state)
+    if not state then
+        return
+    end
+
+    self.m_typeCells = state.typeCells
+    self.m_keyHintCells = state.keyHintCells
+    self.m_filterCells = state.filterCells
+    self.m_controllerMouseHoverHintCells = state.controllerMouseHoverHintCells
 end
 
 
@@ -386,6 +433,32 @@ FacTopViewCtrl.OnBuildModeChange = HL.Method(HL.Number) << function(self, mode)
     end
     self:PlayAnimationIn()
     self:_TryRecoverNaviInfo(not inBuild)
+end
+
+
+
+
+FacTopViewCtrl.RecoverControllerMouseOnChangeDevice = HL.Method(Vector3) << function(self, mouseWorldPos)
+    if not DeviceInfo.usingController then
+        return
+    end
+    self:_SetControllerMouseWorldPos(mouseWorldPos)
+end
+
+
+
+
+FacTopViewCtrl._SetControllerMouseWorldPos = HL.Method(Vector3) << function(self, mouseWorldPos)
+    local curScreenWorldRect = CSFactoryUtil.GetCurScreenWorldRect(FacConst.FAC_TOP_VIEW_CONTROLLER_MOUSE_PADDING)
+    mouseWorldPos.x = lume.clamp(mouseWorldPos.x, curScreenWorldRect.xMin, curScreenWorldRect.xMax)
+    mouseWorldPos.z = lume.clamp(mouseWorldPos.z, curScreenWorldRect.yMin, curScreenWorldRect.yMax)
+    LuaSystemManager.factory.topViewControllerMouseMoveTarget.position = mouseWorldPos
+    LuaSystemManager.factory.topViewControllerMouseMoveTargetChanged = true
+
+    local screenPos = CameraManager.mainCamera:WorldToScreenPoint(mouseWorldPos):XY()
+    local screenSize = Vector2(Screen.width, Screen.height)
+    local newPos = (screenPos - screenSize / 2) / Screen.width * self.view.rectTransform.rect.width
+    self.view.controllerMouse.anchoredPosition = newPos
 end
 
 
@@ -574,7 +647,7 @@ FacTopViewCtrl._TailUpdate = HL.Method() << function(self)
             local mouseWorldPos = LuaSystemManager.factory.topViewControllerMouseMoveTarget.position
 
             
-            local curScreenWorldRect = CSFactoryUtil.GetCurScreenWorldRect(CSFactoryUtil.Padding(150, 290, 250, 150)) 
+            local curScreenWorldRect = CSFactoryUtil.GetCurScreenWorldRect(FacConst.FAC_TOP_VIEW_CONTROLLER_MOUSE_PADDING)
             mouseWorldPos.x = lume.clamp(mouseWorldPos.x, curScreenWorldRect.xMin, curScreenWorldRect.xMax)
             mouseWorldPos.z = lume.clamp(mouseWorldPos.z, curScreenWorldRect.yMin, curScreenWorldRect.yMax)
             LuaSystemManager.factory.topViewControllerMouseMoveTarget.position = mouseWorldPos
@@ -886,13 +959,14 @@ end
 
 
 
-FacTopViewCtrl._OnClickType = HL.Method(HL.Number) << function(self, index)
+
+FacTopViewCtrl._OnClickType = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, index, noAutoExpand)
     self.m_selectedTypeIndex = index
     local tInfo = self.m_typeInfos[self.m_selectedTypeIndex]
     self:_ApplyFilter()
     self:_RefreshItemList(true)
     self.view.filterNode.gameObject:SetActive(not tInfo.noFilter)
-    if self.m_isCollapsed then
+    if not noAutoExpand and self.m_isCollapsed then
         self:_ToggleContent(true)
     end
 
@@ -1257,7 +1331,7 @@ FacTopViewCtrl._InitFilters = HL.Method() << function(self)
 
     local mapManager = GameInstance.player.mapManager
     for _, domainData in pairs(Tables.domainDataTable) do
-        local isDomainUnlocked = false
+        local isDomainUnlocked = true 
         for _, levelId in pairs(domainData.levelGroup) do
             if mapManager:IsLevelUnlocked(levelId) then
                 isDomainUnlocked = true
@@ -1291,7 +1365,7 @@ FacTopViewCtrl._InitFilters = HL.Method() << function(self)
     self:_ToggleFilterList(false, true)
     node.controllerHintPlaceholder:InitControllerHintPlaceholder({node.listInputBindingGroupMonoTarget.groupId})
 
-    self.m_filterCells = UIUtils.genCellCache(node.optionCell)
+    self.m_filterCells = self.m_filterCells or UIUtils.genCellCache(node.optionCell)
     self.m_filterCells:Refresh(#self.m_filterInfos, function(cell, index)
         local info = self.m_filterInfos[index]
         cell.name.text = info.name
@@ -1313,11 +1387,19 @@ end
 
 FacTopViewCtrl._ResetFilters = HL.Method() << function(self)
     self.m_selectedFilters = {}
+    self:_UpdateFilterCellStates()
+end
+
+
+
+FacTopViewCtrl._UpdateFilterCellStates = HL.Method() << function(self)
     self.m_filterCells:Update(function(cell, index)
-        cell.toggle:SetIsOnWithoutNotify(false)
+        local info = self.m_filterInfos[index]
+        cell.toggle:SetIsOnWithoutNotify(self.m_selectedFilters[info.id] == true)
     end)
     self:_UpdateFilterIcon()
 end
+
 
 
 
@@ -1602,8 +1684,8 @@ FacTopViewCtrl._InitKeyHints = HL.Method() << function(self)
             "fac_top_view_rot_cam",
         }
     end
-    local keyHintCells = UIUtils.genCellCache(self.view.keyHintCell)
-    keyHintCells:Refresh(#actionNames, function(cell, index)
+    self.m_keyHintCells = self.m_keyHintCells or UIUtils.genCellCache(self.view.keyHintCell)
+    self.m_keyHintCells:Refresh(#actionNames, function(cell, index)
         local actionId = actionNames[index]
         cell.actionKeyHint:SetActionId(actionId)
         cell.gameObject.name = "KeyHint-" .. actionId
@@ -1764,6 +1846,25 @@ FacTopViewCtrl.ToggleHideFacTopViewRightSideUi = HL.Method(HL.Boolean) << functi
 end
 
 
+
+
+
+
+
+
+FacTopViewCtrl.RecoverStateOnChangeDevice = HL.Method(HL.Number, HL.Table) << function(self, selectedTypeIndex, selectedFilters)
+    self.m_selectedFilters = selectedFilters
+    self:_UpdateFilterCellStates()
+
+    local tabCell
+    if selectedTypeIndex == 1 then
+        tabCell = self.view.customTypeCell
+    else
+        tabCell = self.m_typeCells:Get(selectedTypeIndex - 1)
+    end
+    tabCell.toggle:SetIsOnWithoutNotify(true) 
+    self:_OnClickType(selectedTypeIndex, true)
+end
 
 
 HL.Commit(FacTopViewCtrl)

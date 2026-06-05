@@ -482,5 +482,31 @@ end
 
 
 
+function RedDotUtils.hasContingencyContractTagHasRedDot(activityId, stageId, tagId)
+    if string.isEmpty(stageId) then
+        return false
+    end
+    
+    local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
+    if not activityData then
+        return false
+    end
+    
+    local isUnlock = ActivityUtils.isStageUnlockMultiConditionStageActivity(activityData, stageId)
+    if not isUnlock then
+        return false
+    end
+    
+    local isRead = ActivityUtils.isCcTagRead(tagId)
+    if isRead then
+        return false
+    end
+
+    return true, UIConst.RED_DOT_TYPE.Normal
+end
+
+
+
+
 _G.RedDotUtils = RedDotUtils
 return RedDotUtils

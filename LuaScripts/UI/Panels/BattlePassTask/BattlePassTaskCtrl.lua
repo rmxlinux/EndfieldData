@@ -69,6 +69,10 @@ local PANEL_ID = PanelId.BattlePassTask
 
 
 
+
+
+
+
 BattlePassTaskCtrl = HL.Class('BattlePassTaskCtrl', uiCtrl.UICtrl)
 
 
@@ -90,7 +94,9 @@ BattlePassTaskCtrl.s_messages = HL.StaticField(HL.Table) << {
 BattlePassTaskCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitViews(arg)
     self:_LoadData(true)
+    self:_RecoverState(arg and arg.panelArgs)
     self:_RenderViews()
+    self:_RecoverScrollPosition()
 end
 
 
@@ -355,6 +361,35 @@ end
 
 
 
+
+
+BattlePassTaskCtrl._EnsureLabelNaviLayer = HL.Method() << function(self)
+    if not DeviceInfo.usingController then
+        return
+    end
+    local labelNaviGroup = self.view.labelScrollListSelectableNaviGroup
+    if labelNaviGroup == nil or InputManagerInst.controllerNaviManager:IsLayerInStack(labelNaviGroup) then
+        return
+    end
+    local taskNaviGroup = self.view.taskScrollListSelectableNaviGroup
+    if taskNaviGroup ~= nil and InputManagerInst.controllerNaviManager:IsLayerInStack(taskNaviGroup) then
+        
+        
+        InputManagerInst.controllerNaviManager:TryRemoveLayer(taskNaviGroup)
+    end
+    if self.m_selectedLabelIndex <= 0 then
+        return
+    end
+    local selectedLabelCell = self.m_labelCacheFunc(self.m_selectedLabelIndex)
+    if selectedLabelCell ~= nil
+        and selectedLabelCell.button ~= nil
+        and selectedLabelCell.button.gameObject.activeInHierarchy then
+        UIUtils.setAsNaviTargetInSilentModeIfNecessary(labelNaviGroup, selectedLabelCell.button)
+    end
+end
+
+
+
 BattlePassTaskCtrl._NaviResume = HL.Method() << function(self)
     local lastNaviTarget = self.m_naviTaskTarget
     local lastNaviTaskId = self.m_naviTaskId
@@ -376,6 +411,7 @@ BattlePassTaskCtrl._NaviResume = HL.Method() << function(self)
             self.view.taskScrollList:ScrollToIndex(CSIndex(targetIndex), true)
             local cell = self.m_taskCacheFunc(targetIndex)
             if cell ~= nil and cell.naviDecorator ~= nil then
+                self:_EnsureLabelNaviLayer()
                 UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.taskScrollListSelectableNaviGroup, cell.naviDecorator)
                 self.m_naviTaskTarget = cell.naviDecorator
                 return
@@ -384,6 +420,7 @@ BattlePassTaskCtrl._NaviResume = HL.Method() << function(self)
     end
     
     if lastNaviTarget ~= nil then
+        self:_EnsureLabelNaviLayer()
         UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.taskScrollListSelectableNaviGroup, lastNaviTarget)
         return
     end
@@ -572,6 +609,45 @@ BattlePassTaskCtrl._ResetSelectLabel = HL.Method() << function(self)
         self.m_selectedLabelIndex = -1
     end
     self.m_selectedSubLabelIndex = 1
+end
+
+
+
+
+BattlePassTaskCtrl._RecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+    local labelCount = self.m_labelInfos ~= nil and #self.m_labelInfos or 0
+    if labelCount <= 0 then
+        self.m_selectedLabelIndex = -1
+        self.m_selectedSubLabelIndex = -1
+        return
+    end
+    if recoverState.selectedLabelIndex ~= nil then
+        self.m_selectedLabelIndex = math.max(1, math.min(recoverState.selectedLabelIndex, labelCount))
+    end
+    self:_LoadSubLabelData()
+    local subLabelCount = self.m_subLabelInfos ~= nil and #self.m_subLabelInfos or 0
+    if subLabelCount <= 0 then
+        self.m_selectedSubLabelIndex = 1
+    elseif recoverState.selectedSubLabelIndex ~= nil then
+        self.m_selectedSubLabelIndex = math.max(1, math.min(recoverState.selectedSubLabelIndex, subLabelCount))
+    else
+        self.m_selectedSubLabelIndex = math.max(1, math.min(self.m_selectedSubLabelIndex, subLabelCount))
+    end
+    self:_LoadGroupData()
+end
+
+
+
+BattlePassTaskCtrl._RecoverScrollPosition = HL.Method() << function(self)
+    if self.m_selectedLabelIndex > 0 then
+        self.view.labelScrollList:ScrollToIndex(CSIndex(self.m_selectedLabelIndex), true)
+    end
+    if self.m_subLabelInfos ~= nil and #self.m_subLabelInfos > 0 and self.m_selectedSubLabelIndex > 0 then
+        self.view.subLabelScrollList:ScrollToIndex(CSIndex(self.m_selectedSubLabelIndex), true)
+    end
 end
 
 
@@ -1240,6 +1316,15 @@ BattlePassTaskCtrl._TakeTaskRewards = HL.Method(HL.Table) << function(self, task
     if #needReadTasks > 0 then
         bpSystem:ReadTasks(needReadTasks)
     end
+end
+
+
+
+BattlePassTaskCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
+    return {
+        selectedLabelIndex = self.m_selectedLabelIndex,
+        selectedSubLabelIndex = self.m_selectedSubLabelIndex,
+    }
 end
 
 HL.Commit(BattlePassTaskCtrl)

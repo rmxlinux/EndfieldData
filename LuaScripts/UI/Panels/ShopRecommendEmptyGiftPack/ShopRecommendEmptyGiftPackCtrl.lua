@@ -46,6 +46,8 @@ ShopRecommendEmptyGiftPackCtrl.OnCreate = HL.Override(HL.Any) << function(self, 
 
     
     self:_SetupUI()
+
+    self.view.cashShopKrTips:InitCashShopKrTips()
 end
 
 

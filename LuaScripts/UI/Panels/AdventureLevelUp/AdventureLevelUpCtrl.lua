@@ -810,6 +810,12 @@ AdventureLevelUpCtrl._ReportPlacementEvent = HL.StaticMethod() << function()
         Utils.reportPlacementEvent(GEnums.ClientPlacementEventType.Level10)
     elseif curLevel == 18 then
         Utils.reportPlacementEvent(GEnums.ClientPlacementEventType.Level18)
+    elseif curLevel == 2 then
+        Utils.reportPlacementEvent(GEnums.ClientPlacementEventType.Level2)
+    elseif curLevel == 3 then
+        Utils.reportPlacementEvent(GEnums.ClientPlacementEventType.Level3)
+    elseif curLevel == 15 then
+        Utils.reportPlacementEvent(GEnums.ClientPlacementEventType.Level15)
     end
 end
 

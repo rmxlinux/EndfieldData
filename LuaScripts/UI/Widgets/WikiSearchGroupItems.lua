@@ -5,6 +5,8 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
 WikiSearchGroupItems = HL.Class('WikiSearchGroupItems', UIWidgetBase)
 
 
@@ -12,6 +14,9 @@ WikiSearchGroupItems.m_itemCache = HL.Field(HL.Forward("UIListCache"))
 
 
 WikiSearchGroupItems.m_monsterCache = HL.Field(HL.Forward("UIListCache"))
+
+
+WikiSearchGroupItems.m_wikiSearchResult = HL.Field(HL.Table)
 
 
 
@@ -30,6 +35,7 @@ end
 WikiSearchGroupItems.InitWikiSearchGroupItems = HL.Method(HL.Table, HL.Function, HL.Table, HL.Opt(HL.Boolean)) << function(
     self, wikiSearchResult, onItemClicked, readWikiEntries, isFirstClicked)
     self:_FirstTimeInit()
+    self.m_wikiSearchResult = wikiSearchResult
 
     self.view.titleTxt.text = Tables.wikiCategoryTable[wikiSearchResult.categoryId].categoryName
     local refreshFunc = function(cell, luaIndex)
@@ -82,6 +88,22 @@ WikiSearchGroupItems.InitWikiSearchGroupItems = HL.Method(HL.Table, HL.Function,
         self.m_monsterCache:Refresh(0)
         self.m_itemCache:Refresh(#wikiSearchResult.categoryResult, refreshFunc)
     end
+end
+
+
+
+
+WikiSearchGroupItems.GetCellByEntryId = HL.Method(HL.String).Return(HL.Opt(HL.Any, HL.Table)) << function(self, entryId)
+    if string.isEmpty(entryId) or not self.m_wikiSearchResult then
+        return nil, nil
+    end
+    local cache = self.m_wikiSearchResult.categoryId == WikiConst.EWikiCategoryType.Monster and self.m_monsterCache or self.m_itemCache
+    for luaIndex, entryShowData in ipairs(self.m_wikiSearchResult.categoryResult) do
+        if entryShowData.wikiEntryData.id == entryId then
+            return cache:GetItem(luaIndex), entryShowData
+        end
+    end
+    return nil, nil
 end
 
 HL.Commit(WikiSearchGroupItems)

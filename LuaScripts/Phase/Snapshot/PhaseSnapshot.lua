@@ -12,6 +12,10 @@ local PHASE_ID = PhaseId.Snapshot
 
 
 
+
+
+
+
 PhaseSnapshot = HL.Class('PhaseSnapshot', phaseBase.PhaseBase)
 
 
@@ -25,11 +29,13 @@ PhaseSnapshot.s_messages = HL.StaticField(HL.Table) << {
 
 
 
+PhaseSnapshot.snapshotPanel = HL.Field(HL.Forward("PhasePanelItem"))
 
 
-PhaseSnapshot._OnInit = HL.Override() << function(self)
-    PhaseSnapshot.Super._OnInit(self)
-end
+PhaseSnapshot.snapshotCameraPanel = HL.Field(HL.Forward("PhasePanelItem"))
+
+
+PhaseSnapshot.snapshotJoystickPanel = HL.Field(HL.Forward("PhasePanelItem"))
 
 
 
@@ -47,21 +53,27 @@ end
 
 
 PhaseSnapshot._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
-    
-    local snapshotCameraCtrl = UIManager:Open(PanelId.SnapshotCamera)
-    local arg = {
-        cameCtrl = snapshotCameraCtrl,
-    }
-    if self.arg then
-        arg.identifyGroupId = self.arg.identifyGroupId
-        arg.focus = self.arg.focus
-        arg.thirdPerson = self.arg.thirdPerson
-        arg.camInitRotate = self.arg.camInitRotate
-        arg.forbidMoveOrRotateCam = self.arg.forbidMoveOrRotateCam
-        arg.onOpenCallBack = self.arg.onOpenCallBack
+    if not self.arg then
+        self.arg = {}
+    elseif type(self.arg) ~= "table" then
+        
+        self.arg = {
+            identifyGroupId = self.arg.identifyGroupId,
+            focus = self.arg.focus,
+            thirdPerson = self.arg.thirdPerson,
+            camInitRotate = self.arg.camInitRotate,
+            forbidMoveOrRotateCam = self.arg.forbidMoveOrRotateCam,
+            isFromInteractive = self.arg.isFromInteractive,
+            onOpenCallBack = self.arg.onOpenCallBack,
+        }
     end
-    UIManager:Open(PanelId.Snapshot, arg)
-    UIManager:Open(PanelId.SnapshotJoystick, snapshotCameraCtrl)
+    
+    self.snapshotCameraPanel = self:CreatePhasePanelItem(PanelId.SnapshotCamera)
+    self.snapshotPanel = self:CreatePhasePanelItem(PanelId.Snapshot, self.arg)
+    self.snapshotJoystickPanel = self:CreatePhasePanelItem(PanelId.SnapshotJoystick)
+    if self.snapshotPanel and self.snapshotPanel.uiCtrl and self.snapshotPanel.uiCtrl._SyncJoystickForbidState then
+        self.snapshotPanel.uiCtrl:_SyncJoystickForbidState()
+    end
 end
 
 
@@ -69,9 +81,6 @@ end
 
 
 PhaseSnapshot._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
-    UIManager:Close(PanelId.Snapshot)
-    UIManager:Close(PanelId.SnapshotJoystick)
-    UIManager:Close(PanelId.SnapshotCamera)
 end
 
 
@@ -95,6 +104,13 @@ end
 
 
 
+
+PhaseSnapshot._OnInit = HL.Override() << function(self)
+    PhaseSnapshot.Super._OnInit(self)
+end
+
+
+
 PhaseSnapshot._OnActivated = HL.Override() << function(self)
 end
 
@@ -107,6 +123,16 @@ end
 
 PhaseSnapshot._OnDestroy = HL.Override() << function(self)
     PhaseSnapshot.Super._OnDestroy(self)
+end
+
+
+
+PhaseSnapshot.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = lume.deepCopy(self.arg or {})
+    if self.snapshotPanel and self.snapshotPanel.uiCtrl and self.snapshotPanel.uiCtrl._CollectResumeState then
+        arg.resumeState = self.snapshotPanel.uiCtrl:_CollectResumeState()
+    end
+    return arg
 end
 
 

@@ -44,7 +44,6 @@ local WAIT_FOR_ANIM_TIME = 0.5
 
 
 SnapshotChallengeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_phase = arg and arg.phase or nil
     self:_InitArg(arg)
     if not self:_CheckActivityExist() then
         return

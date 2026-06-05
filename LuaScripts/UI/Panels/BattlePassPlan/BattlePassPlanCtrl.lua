@@ -55,6 +55,8 @@ local PANEL_ID = PanelId.BattlePassPlan
 
 
 
+
+
 BattlePassPlanCtrl = HL.Class('BattlePassPlanCtrl', uiCtrl.UICtrl)
 
 
@@ -128,6 +130,7 @@ BattlePassPlanCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RenderViews()
     self:_ScrollToDefault()
     self:_PlayTrackUnlockAnimOnCreate(arg)
+    self:_TryRecoverSubPanel(arg and arg.panelArgs)
 end
 
 
@@ -303,7 +306,7 @@ end
 BattlePassPlanCtrl._NaviResume = HL.Method() << function(self)
     local lastNaviTarget = self.m_naviTarget
     if lastNaviTarget ~= nil then
-        UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.contentNaviGroup, lastNaviTarget)
+        UIUtils.setAsNaviTargetInSilentModeIfPhaseIsTop(self.view.contentNaviGroup, lastNaviTarget, PhaseId.BattlePass)
     end
 end
 
@@ -1036,6 +1039,37 @@ BattlePassPlanCtrl._OpenWeaponBox = HL.Method(HL.String, HL.Boolean) << function
         isPreview = isPreview,
         itemId = itemId,
     })
+end
+
+
+
+BattlePassPlanCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    if PhaseManager:GetTopPhaseId() ~= PhaseId.BattlePass then
+        return
+    end
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.BattlePassWeaponCase)
+    if not isOpen or ctrl == nil then
+        return
+    end
+    local subPanelArg = ctrl:GetCurPhaseStateArg()
+    if not subPanelArg then
+        return
+    end
+    subPanelArg.isBattlePassWeaponCase = true
+    return {
+        subPanelArg = subPanelArg,
+    }
+end
+
+
+
+
+BattlePassPlanCtrl._TryRecoverSubPanel = HL.Method(HL.Opt(HL.Any)) << function(self, panelArgs)
+    local subPanelArg = panelArgs and panelArgs.subPanelArg
+    if not subPanelArg or subPanelArg.isBattlePassWeaponCase ~= true then
+        return
+    end
+    UIManager:Open(PanelId.BattlePassWeaponCase, subPanelArg)
 end
 
 HL.Commit(BattlePassPlanCtrl)

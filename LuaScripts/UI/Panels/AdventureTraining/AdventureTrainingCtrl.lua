@@ -12,7 +12,6 @@ local PANEL_ID = PanelId.AdventureTraining
 
 
 
-
 AdventureTrainingCtrl = HL.Class('AdventureTrainingCtrl', uiCtrl.UICtrl)
 
 
@@ -41,7 +40,6 @@ AdventureTrainingCtrl.m_tableDataList = HL.Field(HL.Table)
 
 
 AdventureTrainingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_phase = arg.phase
     self:_InitData()
     self:_InitUI()
 end
@@ -51,7 +49,7 @@ end
 AdventureTrainingCtrl.OnShow = HL.Override() << function(self)
     local firstCell = self.m_genLevelCells:Get(1)
     if firstCell then
-        UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.listNaviGroup, firstCell.view.naviDecorator)
+        UIUtils.setAsNaviTargetInSilentModeIfPhaseIsTop(self.view.listNaviGroup, firstCell.view.naviDecorator, PhaseId.AdventureBook)
     end
 end
 
@@ -84,7 +82,7 @@ AdventureTrainingCtrl._RefreshAllUI = HL.Method() << function(self)
 
     local firstCell = self.m_genLevelCells:Get(1)
     if firstCell then
-        UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.listNaviGroup, firstCell.view.naviDecorator)
+        UIUtils.setAsNaviTargetInSilentModeIfPhaseIsTop(self.view.listNaviGroup, firstCell.view.naviDecorator, PhaseId.AdventureBook)
     end
 end
 

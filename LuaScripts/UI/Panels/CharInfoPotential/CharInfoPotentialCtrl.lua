@@ -40,6 +40,10 @@ local PANEL_ID = PanelId.CharInfoPotential
 
 
 
+
+
+
+
 CharInfoPotentialCtrl = HL.Class('CharInfoPotentialCtrl', uiCtrl.UICtrl)
 
 
@@ -64,6 +68,9 @@ local MAIN_STATE_NAME =
 local MAX_SKILL_COUNT = 5
 
 
+CharInfoPotentialCtrl.m_arg = HL.Field(HL.Table)
+
+
 CharInfoPotentialCtrl.m_charTemplateId = HL.Field(HL.String) << ''
 
 
@@ -79,13 +86,16 @@ CharInfoPotentialCtrl.m_isTrailChar = HL.Field(HL.Boolean) << false
 CharInfoPotentialCtrl.m_isChangingChar = HL.Field(HL.Boolean) << false
 
 
+CharInfoPotentialCtrl.m_isLevelUpActivated = HL.Field(HL.Boolean) << false
+
+
 
 
 
 CharInfoPotentialCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
+    self.m_arg = args
     self.m_charInstId = args.initCharInfo.instId
     self.m_charTemplateId = args.initCharInfo.templateId
-    self.m_phase = args.phase
 
     self:_InitAction()
     self:_InitController()
@@ -95,6 +105,15 @@ CharInfoPotentialCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.maxAnim.gameObject:SetActive(false)
     self.view.unlockAnimMask.gameObject:SetActive(false)
     AudioAdapter.PostEvent("Au_UI_Menu_CharPotential_Open")
+
+    self:_ProcessStateArg(self.m_arg.stateArg)
+    self.m_arg.stateArg = nil
+end
+
+CharInfoPotentialCtrl.OnClose = HL.Override() << function(self)
+    if self.m_isLevelUpActivated then
+        self:_ActiveLevelUp(false)
+    end
 end
 
 
@@ -324,13 +343,16 @@ end
 
 
 
-CharInfoPotentialCtrl._ActiveLevelUp = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, selectCurrent)
+
+CharInfoPotentialCtrl._ActiveLevelUp = HL.Method(HL.Boolean, HL.Opt(HL.Boolean, HL.Number)) << function(self, active, selectCurrent, selectedIndex)
+    self.m_isLevelUpActivated = active
     if active then
         self.view.animWrapper:PlayOutAnimation(function()
             self.view.stateController:SetState(MAIN_STATE_NAME.LevelUp)
             self:Notify(MessageConst.TOGGLE_CHAR_INFO_FOCUS_MODE, true)
             if selectCurrent then
-                self:_ShowSkill(self.m_potentialLevel + 1, true)
+                local index = selectedIndex or self.m_potentialLevel + 1
+                self:_ShowSkill(index, true)
             else
                 if DeviceInfo.usingController then
                     local naviIndex = self.m_potentialLevel + 1
@@ -354,6 +376,7 @@ CharInfoPotentialCtrl._ActiveLevelUp = HL.Method(HL.Boolean, HL.Opt(HL.Boolean))
                 InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.skillNaviGroup)
             end
         end)
+        self.m_selectedSkillIndex = 0
     end
     self.m_phase:ActivePotentialFocusCamera(active)
     self.m_phase:GetPotentialDecoView().btnViewDetails.gameObject:SetActive(not active)
@@ -847,6 +870,65 @@ CharInfoPotentialCtrl._ActiveAllSkillNode = HL.Method(HL.Boolean) << function(se
         if skillNode then
             skillNode.gameObject:SetActive(isActive)
         end
+    end
+end
+
+
+
+CharInfoPotentialCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local arg =
+    {
+        isLevelUpActivated = self.m_isLevelUpActivated,
+        selectedSkillIndex = self.m_selectedSkillIndex,
+    }
+    local isPhotoOpen, photoCtrl = UIManager:IsOpen(PanelId.CharInfoPhoto)
+    if isPhotoOpen then
+        arg.photoPanelArg = photoCtrl:GetCurStateArg()
+    end
+    local isThemOpen, themCtrl = UIManager:IsOpen(PanelId.FriendThemeChange)
+    if isThemOpen then
+        arg.themePanelArg = {
+            selectId = themCtrl.m_selectId,
+        }
+    end
+    return arg
+end
+
+
+
+
+CharInfoPotentialCtrl._ProcessStateArg = HL.Method(HL.Table) << function(self, arg)
+    if arg == nil then
+        return
+    end
+    if arg.isLevelUpActivated then
+        if arg.selectedSkillIndex and arg.selectedSkillIndex > 0 then
+            self:_ActiveLevelUp(true, true, arg.selectedSkillIndex)
+        else
+            self:_ActiveLevelUp(true)
+        end
+        self.view.animWrapper:ClearTween(true)
+    end
+    if arg.photoPanelArg then
+        arg.photoPanelArg.onClose = function()
+            self.view.rightNode.autoCloseArea.enabled = true
+            if self.view.rightNode.gameObject.activeSelf then
+                local isChanged = self.m_phase:RefreshPotentialPhoto(self.m_charInstId, arg.photoPanelArg.potentialLevel)
+                if isChanged then
+                    self.view.rightNode.gameObject:SetActive(false)
+                    self:_ShowSkill(0)
+                end
+            end
+        end
+        self.view.rightNode.autoCloseArea.enabled = false
+        UIManager:Open(PanelId.CharInfoPhoto, arg.photoPanelArg)
+    end
+    if arg.themePanelArg then
+        arg.themePanelArg.onClose = function()
+            self.view.rightNode.autoCloseArea.enabled = true
+        end
+        self.view.rightNode.autoCloseArea.enabled = false
+        UIManager:Open(PanelId.FriendThemeChange, arg.themePanelArg)
     end
 end
 

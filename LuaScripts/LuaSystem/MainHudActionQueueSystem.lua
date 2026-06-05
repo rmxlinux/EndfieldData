@@ -1,50 +1,7 @@
 
 local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MainHudActionQueueSystem = HL.Class('MainHudActionQueueSystem', LuaSystemBase.LuaSystemBase)
-
-
 
 
 MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
@@ -338,6 +295,13 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
         },
 
         
+        BackupPowerCheck = {
+            order = 97,
+            needWait = false,
+            ignoreMainHudInterrupt = true,
+        },
+
+        
         MapRegionToast = {
             order = 98,
             needWait = true,
@@ -393,25 +357,17 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
 end
 
 
-
 MainHudActionQueueSystem.m_pendingRequests = HL.Field(HL.Table)
-
 
 MainHudActionQueueSystem.configs = HL.Field(HL.Table) 
 
-
 MainHudActionQueueSystem.m_nextRequestId = HL.Field(HL.Number) << 1
-
 
 MainHudActionQueueSystem.m_isShowing = HL.Field(HL.Boolean) << false
 
-
 MainHudActionQueueSystem.m_tryStartActionCor = HL.Field(HL.Thread)
 
-
 MainHudActionQueueSystem.m_curShowingActionOrder = HL.Field(HL.Number) << math.mininteger
-
-
 
 
 MainHudActionQueueSystem.MainHudActionQueueSystem = HL.Constructor() << function(self)
@@ -493,13 +449,6 @@ MainHudActionQueueSystem.MainHudActionQueueSystem = HL.Constructor() << function
 end
 
 
-
-
-
-
-
-
-
 MainHudActionQueueSystem.AddRequest = HL.Method(HL.String, HL.Function, HL.Opt(HL.Function, HL.Boolean, HL.Function)) << function(self, type, action, getOrder, startImmediately, onDrop)
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.AddRequest", type, startImmediately)
     local requestId = self.m_nextRequestId
@@ -552,9 +501,6 @@ MainHudActionQueueSystem.AddRequest = HL.Method(HL.String, HL.Function, HL.Opt(H
     self:_TryAddStartActionCor()
 end
 
-
-
-
 MainHudActionQueueSystem._SortRequest = HL.Method(HL.Boolean) << function(self, forceSort)
     local needSort = forceSort
     for k, request in ipairs(self.m_pendingRequests) do
@@ -570,19 +516,13 @@ MainHudActionQueueSystem._SortRequest = HL.Method(HL.Boolean) << function(self, 
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem._SortRequest")
 end
 
-
-
 MainHudActionQueueSystem.IsShowing = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_isShowing
 end
 
-
-
 MainHudActionQueueSystem.GetCurQueueFirstRequest = HL.Method().Return(HL.Opt(HL.Table)) << function(self)
     return self.m_pendingRequests[1]
 end
-
-
 
 MainHudActionQueueSystem.GetCurQueueFirstRequestType = HL.Method().Return(HL.Opt(HL.String)) << function(self)
     local request = self.m_pendingRequests[1]
@@ -590,8 +530,6 @@ MainHudActionQueueSystem.GetCurQueueFirstRequestType = HL.Method().Return(HL.Opt
         return request.type
     end
 end
-
-
 
 MainHudActionQueueSystem._TryAddStartActionCor = HL.Method() << function(self)
     if self.m_isShowing or self.m_pendingRequests[1] == nil then
@@ -620,8 +558,6 @@ MainHudActionQueueSystem._TryAddStartActionCor = HL.Method() << function(self)
         end)
     end
 end
-
-
 
 MainHudActionQueueSystem._TryStartAction = HL.Method() << function(self)
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem._TryStartAction")
@@ -659,13 +595,9 @@ MainHudActionQueueSystem._TryStartAction = HL.Method() << function(self)
     self:_StartFirstAction()
 end
 
-
 MainHudActionQueueSystem.m_curPreloadId = HL.Field(HL.Any)
 
-
 MainHudActionQueueSystem.m_nextPreloadId = HL.Field(HL.Number) << 1
-
-
 
 MainHudActionQueueSystem._StartFirstAction = HL.Method() << function(self)
     self.m_isShowing = true
@@ -713,8 +645,6 @@ MainHudActionQueueSystem._StartFirstAction = HL.Method() << function(self)
     end
 end
 
-
-
 MainHudActionQueueSystem._CheckAllMainHudActionFinish = HL.Method() << function(self)
     if self.m_pendingRequests[1] ~= nil then
         return
@@ -723,11 +653,7 @@ MainHudActionQueueSystem._CheckAllMainHudActionFinish = HL.Method() << function(
     Notify(MessageConst.ALL_MAIN_HUD_ACTION_FINISH)
 end
 
-
 MainHudActionQueueSystem.m_lastFinishShowingFrameCount = HL.Field(HL.Number) << -1
-
-
-
 
 MainHudActionQueueSystem.OnOneMainHudActionFinish = HL.Method(HL.String) << function(self, type)
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.OnOneMainHudActionFinish", type)
@@ -756,10 +682,6 @@ MainHudActionQueueSystem.OnOneMainHudActionFinish = HL.Method(HL.String) << func
     self:_CheckAllMainHudActionFinish()
     CS.Beyond.Gameplay.Conditions.OnMainHudActionFinished.Trigger(false)
 end
-
-
-
-
 
 MainHudActionQueueSystem.Interrupt = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, includeCinematic, forceNotFinish)
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.Interrupt TRY", includeCinematic, forceNotFinish)
@@ -796,8 +718,6 @@ MainHudActionQueueSystem.Interrupt = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) <
     CS.Beyond.Gameplay.Conditions.OnMainHudActionFinished.Trigger(true)
 end
 
-
-
 MainHudActionQueueSystem._DropRequestWhenChangeScene = HL.Method() << function(self)
     local newRequests = {}
     for _, request in ipairs(self.m_pendingRequests) do
@@ -812,9 +732,6 @@ MainHudActionQueueSystem._DropRequestWhenChangeScene = HL.Method() << function(s
     end
     self.m_pendingRequests = newRequests
 end
-
-
-
 
 MainHudActionQueueSystem.RemoveActionsOfType = HL.Method(HL.String) << function(self, actionType)
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.RemoveActionsOfType", actionType)
@@ -864,9 +781,6 @@ MainHudActionQueueSystem.RemoveActionsOfType = HL.Method(HL.String) << function(
     end
 end
 
-
-
-
 MainHudActionQueueSystem.HasRequest = HL.Method(HL.String).Return(HL.Boolean) << function(self, actionType)
     for _, request in ipairs(self.m_pendingRequests) do
         if request.type == actionType then
@@ -878,12 +792,7 @@ end
 
 
 
-
 MainHudActionQueueSystem.m_playIgnoreMainHudActionTypes = HL.Field(HL.Table)
-
-
-
-
 
 MainHudActionQueueSystem.ToggleActionPlayIgnoreMainHud = HL.Method(HL.String, HL.Boolean) << function(self, actionType, ignoreMainHud)
     local curIsActive = self.m_playIgnoreMainHudActionTypes[actionType] == true
@@ -902,9 +811,6 @@ MainHudActionQueueSystem.ToggleActionPlayIgnoreMainHud = HL.Method(HL.String, HL
     end
 end
 
-
-
-
 MainHudActionQueueSystem._GetNextRequestIndex = HL.Method(HL.Boolean).Return(HL.Opt(HL.Number)) << function(self, forceSort)
     self:_SortRequest(forceSort) 
     if GameWorld.worldInfo.inMainHud and not CameraManager:IsCommonTempControllerActive() then
@@ -921,9 +827,6 @@ MainHudActionQueueSystem._GetNextRequestIndex = HL.Method(HL.Boolean).Return(HL.
     end
 end
 
-
-
-
 MainHudActionQueueSystem._MoveRequestToTop = HL.Method(HL.Opt(HL.Number)) << function(self, index)
     if index and index ~= 1 then
         local request = self.m_pendingRequests[index]
@@ -933,8 +836,6 @@ MainHudActionQueueSystem._MoveRequestToTop = HL.Method(HL.Opt(HL.Number)) << fun
         self.m_pendingRequests[1] = request
     end
 end
-
-
 
 
 
@@ -952,9 +853,6 @@ MainHudActionQueueSystem.ManuallyDropAllRequests = HL.Method() << function(self)
     end
     self.m_pendingRequests = {}
 end
-
-
-
 
 MainHudActionQueueSystem._OnInMainHudChanged = HL.Method(HL.Boolean) << function(self, inMainHud)
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem._OnInMainHudChanged", inMainHud)
@@ -992,9 +890,6 @@ MainHudActionQueueSystem._OnInMainHudChanged = HL.Method(HL.Boolean) << function
     self:Interrupt()
 end
 
-
-
-
 MainHudActionQueueSystem.HasRequestWaiting = HL.Method(HL.String).Return(HL.Boolean) << function(self, actionType)
     for k, request in ipairs(self.m_pendingRequests) do
         if request.type == actionType then
@@ -1006,8 +901,6 @@ MainHudActionQueueSystem.HasRequestWaiting = HL.Method(HL.String).Return(HL.Bool
     return false
 end
 
-
-
 MainHudActionQueueSystem.IsInLoginCheck = HL.Method().Return(HL.Boolean) << function(self)
     return self:HasRequest("LoginCheck_StartGuide") 
 end
@@ -1016,11 +909,7 @@ end
 
 
 
-
 MainHudActionQueueSystem.m_curActionStartTime = HL.Field(HL.Number) << -1
-
-
-
 
 MainHudActionQueueSystem.GetDebugInfos = HL.Method(HL.Opt(HL.Boolean)).Return(HL.String) << function(self, shouldPrint)
     local infos = {"<mark>--------------- MainHudActionQueueSystem DebugInfos ---------------\n"}
@@ -1073,8 +962,6 @@ MainHudActionQueueSystem.GetDebugInfos = HL.Method(HL.Opt(HL.Boolean)).Return(HL
     return rst
 end
 
-
-
 MainHudActionQueueSystem._GetPendingActionCount = HL.Method().Return(HL.Number, HL.Number) << function(self)
     local asyncCount, syncCount = 0, 0
     for _, request in ipairs(self.m_pendingRequests) do
@@ -1091,16 +978,12 @@ MainHudActionQueueSystem._GetPendingActionCount = HL.Method().Return(HL.Number, 
     return asyncCount, syncCount
 end
 
-
 MainHudActionQueueSystem.m_lastCheckPendingAsyncActionCount = HL.Field(HL.Number) << 0
-
 
 MainHudActionQueueSystem.m_firstIsGrowingCheckTime = HL.Field(HL.Number) << 0
 
 local AbnormalWaitingAsyncMinCount = 15
 local AbnormalWaitingTime = 60 * 2
-
-
 
 MainHudActionQueueSystem._DebugCheckState = HL.Method() << function(self)
     local curAsyncCount = self:_GetPendingActionCount()
@@ -1123,8 +1006,6 @@ MainHudActionQueueSystem._DebugCheckState = HL.Method() << function(self)
     end
     self.m_lastCheckPendingAsyncActionCount = curAsyncCount
 end
-
-
 
 MainHudActionQueueSystem._StartDebugCheck = HL.Method() << function(self)
     self:_StartCoroutine(function()

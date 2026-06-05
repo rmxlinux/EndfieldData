@@ -25,6 +25,12 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 
 
 
+
+
+
+
+
+
 WikiDetailBaseCtrl = HL.Class('WikiDetailBaseCtrl', uiCtrl.UICtrl)
 
 
@@ -42,6 +48,9 @@ WikiDetailBaseCtrl.s_messages = HL.StaticField(HL.Table) << {
 WikiDetailBaseCtrl.m_wikiEntryShowData = HL.Field(HL.Table)
 
 
+WikiDetailBaseCtrl.m_arg = HL.Field(HL.Table)
+
+
 WikiDetailBaseCtrl.m_wikiGroupShowDataList = HL.Field(HL.Table)
 
 
@@ -57,6 +66,7 @@ WikiDetailBaseCtrl.m_needHideModel = HL.Field(HL.Boolean) << true
 
 WikiDetailBaseCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitController()
+    self.m_arg = arg or {}
 
     
     local args = arg
@@ -83,6 +93,13 @@ WikiDetailBaseCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshLeft()
     self:_RefreshCenter()
     self:_RefreshRight()
+    self:_ApplyResumeState(args and args.resumeState or nil)
+    if self.m_arg then
+        self.m_arg.resumeState = nil
+    end
+
+    self:_RefreshTop()
+
     EventLogManagerInst:GameEvent_WikiEntry(self.m_wikiEntryShowData.wikiCategoryType,
         self.m_wikiEntryShowData.wikiGroupData.groupId, self.m_wikiEntryShowData.wikiEntryData.id)
 end
@@ -121,13 +138,6 @@ end
 
 
 
-WikiDetailBaseCtrl._OnPhaseItemBind = HL.Override() << function(self)
-    
-    self:_RefreshTop()
-end
-
-
-
 
 
 
@@ -139,6 +149,9 @@ end
 
 
 WikiDetailBaseCtrl._RefreshTop = HL.Virtual() << function(self)
+    if self.m_phase == nil then
+        return
+    end
     
     local wikiTopArgs = {
         phase = self.m_phase,
@@ -185,11 +198,13 @@ WikiDetailBaseCtrl._RefreshLeft = HL.Virtual() << function(self)
         wikiGroupShowDataList = self.m_wikiGroupShowDataList,
         onItemClicked = function(wikiEntryShowData)
             self.m_wikiEntryShowData = wikiEntryShowData
-            self.m_phase.m_currentWikiDetailArgs = {
-                categoryType = self.m_wikiEntryShowData.wikiCategoryType,
-                wikiEntryShowData = self.m_wikiEntryShowData,
-                wikiGroupShowDataList = self.m_wikiGroupShowDataList
-            }
+            if self.m_phase then
+                self.m_phase.m_currentWikiDetailArgs = {
+                    categoryType = self.m_wikiEntryShowData.wikiCategoryType,
+                    wikiEntryShowData = self.m_wikiEntryShowData,
+                    wikiGroupShowDataList = self.m_wikiGroupShowDataList
+                }
+            end
             self:_RefreshTop()
             self:_RefreshCenter()
             self:_RefreshRight()
@@ -212,10 +227,23 @@ end
 
 
 
+WikiDetailBaseCtrl._CollectLocalResumeState = HL.Virtual().Return(HL.Table) << function(self)
+    return {}
+end
+
+
+
+
+WikiDetailBaseCtrl._ApplyLocalResumeState = HL.Virtual(HL.Opt(HL.Any)) << function(self, resumeState)
+end
+
+
+
 
 
 
 WikiDetailBaseCtrl.Refresh = HL.Method(HL.Table) << function(self, args)
+    self.m_arg = args or {}
     if self.view.right.naviGroup then
         self.view.right.naviGroup:ManuallyStopFocus()
         if self.view.left.gameObject.activeSelf then
@@ -228,6 +256,43 @@ WikiDetailBaseCtrl.Refresh = HL.Method(HL.Table) << function(self, args)
     self:_RefreshTop()
     self:_RefreshCenter()
     self:_RefreshRight()
+    self:_ApplyResumeState(args and args.resumeState or nil)
+    if self.m_arg then
+        self.m_arg.resumeState = nil
+    end
+end
+
+
+
+WikiDetailBaseCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
+    arg.categoryType = self.m_wikiEntryShowData and self.m_wikiEntryShowData.wikiCategoryType or arg.categoryType
+    arg.wikiEntryShowData = self.m_wikiEntryShowData
+    arg.wikiGroupShowDataList = self.m_wikiGroupShowDataList
+    arg.resumeState = self:_CollectResumeState()
+    return arg
+end
+
+
+
+WikiDetailBaseCtrl._CollectResumeState = HL.Method().Return(HL.Table) << function(self)
+    return {
+        groupItemList = self.view.left and self.view.left.GetResumeState and self.view.left:GetResumeState() or nil,
+        localState = self:_CollectLocalResumeState(),
+    }
+end
+
+
+
+
+WikiDetailBaseCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState then
+        return
+    end
+    if self.view.left and self.view.left.ApplyResumeState then
+        self.view.left:ApplyResumeState(resumeState.groupItemList)
+    end
+    self:_ApplyLocalResumeState(resumeState.localState)
 end
 
 

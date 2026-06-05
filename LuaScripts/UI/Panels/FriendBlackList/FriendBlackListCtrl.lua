@@ -12,6 +12,9 @@ local PANEL_ID = PanelId.FriendBlackList
 
 
 
+
+
+
 FriendBlackListCtrl = HL.Class('FriendBlackListCtrl', uiCtrl.UICtrl)
 
 
@@ -19,6 +22,9 @@ FriendBlackListCtrl.m_friendList = HL.Field(HL.Table)
 
 
 FriendBlackListCtrl.m_isPsnFriend = HL.Field(HL.Boolean) << false
+
+
+FriendBlackListCtrl.m_recoverState = HL.Field(HL.Table)
 
 
 
@@ -35,6 +41,9 @@ FriendBlackListCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 FriendBlackListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_recoverState = arg and arg.blackListState or nil
+    self.m_isPsnFriend = self.m_recoverState and self.m_recoverState.isPsnFriend == true or false
+    self.view.friendList.m_isPsnTab = self.m_isPsnFriend
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     self.view.btnClose.onClick:AddListener(function()
         self:PlayAnimationOutAndClose()
@@ -58,6 +67,17 @@ FriendBlackListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end
     self.view.friendList:InitFriendListCtrl(initArg)
+    self:_ApplyRecoverState()
+end
+
+
+
+FriendBlackListCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = {}
+    arg.blackListState = {
+        isPsnFriend = self.m_isPsnFriend == true,
+    }
+    return arg
 end
 
 
@@ -107,6 +127,15 @@ FriendBlackListCtrl._Refresh = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << func
         self.view.friendList:RefreshInfoStayPos(self.m_friendList)
     else
         self.view.friendList:RefreshInfo(self.m_friendList,false, Language.LUA_BLACK_LIST_EMPTY_TIP, loading)
+    end
+end
+
+
+
+FriendBlackListCtrl._ApplyRecoverState = HL.Method() << function(self)
+    local sortNode = self.view and self.view.friendList and self.view.friendList.view and self.view.friendList.view.sortNode
+    if sortNode then
+        sortNode:UpdateDeviceState()
     end
 end
 

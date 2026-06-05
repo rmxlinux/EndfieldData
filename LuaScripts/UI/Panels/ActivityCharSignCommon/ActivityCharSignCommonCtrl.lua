@@ -10,6 +10,7 @@ local PANEL_ID = PanelId.ActivityCharSignCommon
 
 
 
+
 ActivityCharSignCommonCtrl = HL.Class('ActivityCharSignCommonCtrl', uiCtrl.UICtrl)
 
 
@@ -47,6 +48,16 @@ ActivityCharSignCommonCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
     self.m_checkInWidget:Init(initArg)
 end
 
+
+
+
+
+ActivityCharSignCommonCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
+    
+    if self.m_checkInWidget then
+        self.m_checkInWidget:OnPanelInputBlocked(active)
+    end
+end
 
 
 

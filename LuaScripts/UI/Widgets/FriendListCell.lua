@@ -460,6 +460,11 @@ FriendListCell._RefreshFriendCellInfo = HL.Method() << function(self)
     if self.arg.stateName == "SpaceshipClueGift" then
         self:_UpdateClueCells()
     end
+
+    
+    if self.arg.showContingencyContractActivityState then
+        self.view.commonPlayerHead:UpdateContingencyContractActivityState()
+    end
 end
 
 

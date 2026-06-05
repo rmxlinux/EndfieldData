@@ -53,6 +53,9 @@ local PANEL_ID = PanelId.CharInfoEquip
 
 
 
+
+
+
 CharInfoEquipCtrl = HL.Class('CharInfoEquipCtrl', uiCtrl.UICtrl)
 
 
@@ -70,6 +73,9 @@ CharInfoEquipCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_PUT_OFF_EQUIP] = 'OnPutOffEquip',
     [MessageConst.ON_TACTICAL_ITEM_CHANGE] = 'OnTacticalItemChange',
 }
+
+
+CharInfoEquipCtrl.m_arg = HL.Field(HL.Table)
 
 
 CharInfoEquipCtrl.m_charInfo = HL.Field(HL.Table)
@@ -109,12 +115,12 @@ CharInfoEquipCtrl.m_tabCellCache = HL.Field(HL.Forward("UIListCache"))
 
 
 CharInfoEquipCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg
     local initCharInfo = arg.initCharInfo or CharInfoUtils.getLeaderCharInfo()
     local mainControlTab = arg.mainControlTab or UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
 
     self.m_charInfo = initCharInfo
     self.m_curMainControlTab = mainControlTab
-    self.m_phase = arg.phase
 
     self.view.backButton.gameObject:SetActive(false)
 
@@ -128,6 +134,8 @@ CharInfoEquipCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.bgMask.gameObject:SetActive(false)
     self:_ToggleCompareMask(false)
     self:_InitController()
+    self:_ProcessStateArg(self.m_arg.stateArg)
+    self.m_arg.stateArg = nil
 end
 
 
@@ -795,6 +803,13 @@ CharInfoEquipCtrl._RefreshCommonTacticalItemList = HL.Method() << function(self)
     local charInstId = self.m_charInfo.instId
     local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
 
+    local curSortCSIndex, curSortIsIncremental, selectedTags, skipGraduallyShow
+    if self.m_arg.stateArg then
+        curSortCSIndex = self.m_arg.stateArg.curSortCSIndex
+        curSortIsIncremental = self.m_arg.stateArg.curSortIsIncremental
+        selectedTags = self.m_arg.stateArg.selectedTags
+        skipGraduallyShow = true
+    end
 
     self.view.commonItemList:InitCommonItemList({
         listType = UIConst.COMMON_ITEM_LIST_TYPE.CHAR_INFO_TACTICAL_ITEM,
@@ -820,6 +835,10 @@ CharInfoEquipCtrl._RefreshCommonTacticalItemList = HL.Method() << function(self)
             end
         end,
         enableKeyboardNavi = true,
+        curSortCSIndex = curSortCSIndex,
+        curSortIsIncremental = curSortIsIncremental,
+        selectedTags = selectedTags,
+        skipGraduallyShow = skipGraduallyShow,
     })
 
 
@@ -838,6 +857,14 @@ CharInfoEquipCtrl._RefreshCommonEquipList = HL.Method(HL.Number) << function(sel
     local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
     local equipIndex = UIConst.EQUIP_PART_TYPE_2_CELL_CONFIG[selectSlotIndex].equipIndex
     local _, equipInstId = charInst.equipCol:TryGetValue(equipIndex)
+
+    local curSortCSIndex, curSortIsIncremental, selectedTags, skipGraduallyShow
+    if self.m_arg.stateArg then
+        curSortCSIndex = self.m_arg.stateArg.curSortCSIndex
+        curSortIsIncremental = self.m_arg.stateArg.curSortIsIncremental
+        selectedTags = self.m_arg.stateArg.selectedTags
+        skipGraduallyShow = true
+    end
 
     self.view.commonItemList:InitCommonItemList({
         listType = UIConst.COMMON_ITEM_LIST_TYPE.CHAR_INFO_EQUIP,
@@ -863,6 +890,10 @@ CharInfoEquipCtrl._RefreshCommonEquipList = HL.Method(HL.Number) << function(sel
         end,
         maxWearLimit = maxWearLimit,
         enableKeyboardNavi = true,
+        curSortCSIndex = curSortCSIndex,
+        curSortIsIncremental = curSortIsIncremental,
+        selectedTags = selectedTags,
+        skipGraduallyShow = skipGraduallyShow,
     })
 
     
@@ -873,18 +904,15 @@ end
 
 
 CharInfoEquipCtrl._RefreshItemCellAddOn = HL.Method(HL.Table, HL.Table) << function(self, cell, itemInfo)
-    local charInst = CharInfoUtils.getPlayerCharInfoByInstId(self.m_charInfo.instId)
-    local charTemplateId = charInst.templateId
-    local spriteName = UIConst.UI_CHAR_HEAD_PREFIX .. charTemplateId
-
-    cell.imageCharMask.gameObject:SetActive(charInst.tacticalItemId == itemInfo.id)
-    cell.imageChar:LoadSprite(UIConst.UI_SPRITE_CHAR_HEAD, spriteName)
     cell.currentSelected.gameObject:SetActive(false)
     cell.disableMark.gameObject:SetActive(false)
 
+    local charInst = CharInfoUtils.getPlayerCharInfoByInstId(self.m_charInfo.instId)
     local isEquippedItem = charInst.tacticalItemId == itemInfo.id
-    cell.imageCharMask.gameObject:SetActive(isEquippedItem)
+    UIUtils.PlayAnimationAndToggleActive(cell.imageCharMask, isEquippedItem)
     if isEquippedItem then
+        local charTemplateId = charInst.templateId
+        local spriteName = UIConst.UI_CHAR_HEAD_PREFIX .. charTemplateId
         cell.imageChar:LoadSprite(UIConst.UI_SPRITE_CHAR_HEAD, spriteName)
     end
 end
@@ -899,6 +927,11 @@ CharInfoEquipCtrl._RefreshEquipCellAddOn = HL.Method(HL.Table, HL.Table) << func
     local equipInst = CharInfoUtils.getEquipByInstId(itemInfo.instId)
     local equipTemplate = Tables.equipTable:GetValue(equipTemplateId)
     local minWearLv = equipTemplate.minWearLv
+
+    
+    if equipInst == nil then
+        return
+    end
 
     local charInst = CharInfoUtils.getPlayerCharInfoByInstId(self.m_charInfo.instId)
     local belowMaxRarity = charInst.equipTierLimit < itemCfg.rarity
@@ -1128,6 +1161,35 @@ CharInfoEquipCtrl._InitController = HL.Method() << function(self)
         self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     end
     UIUtils.bindHyperlinkPopup(self, "CharInfoEquip", self.view.inputGroup.groupId)
+end
+
+
+
+CharInfoEquipCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local arg = {
+        isDetail = self.state == UIConst.CHAR_INFO_EQUIP_STATE.Detail,
+        isInCompare = self.m_isInCompare,
+        curSelectSlotIndex = self.m_curSelectSlotIndex,
+        curSortCSIndex = self.view.commonItemList.view.sortNode:GetCurSelectedIndex() - 1,
+        curSortIsIncremental = self.view.commonItemList.view.sortNode.isIncremental,
+        selectedTags = self.view.commonItemList.m_selectedTags,
+        curSelectedIndex = self.view.commonItemList:IsAnyItemSelecting() and self.view.commonItemList:GetCurSelectIndex() or nil
+    }
+    return arg
+end
+
+
+
+
+CharInfoEquipCtrl._ProcessStateArg = HL.Method(HL.Table) << function(self, arg)
+    if arg == nil or not arg.isDetail then
+        return
+    end
+    self:Notify(MessageConst.ON_SELECT_SLOT_CHANGE, arg.curSelectSlotIndex)
+    self.view.commonItemList:SetSelectedIndex(arg.curSelectedIndex, false)
+    if arg.isInCompare then
+        self:_ShowCompare(true)
+    end
 end
 
 

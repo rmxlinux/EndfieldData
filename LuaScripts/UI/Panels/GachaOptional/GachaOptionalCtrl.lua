@@ -19,6 +19,7 @@ local PANEL_ID = PanelId.GachaOptional
 
 
 
+
 GachaOptionalCtrl = HL.Class('GachaOptionalCtrl', uiCtrl.UICtrl)
 
 
@@ -121,7 +122,11 @@ end
 
 
 GachaOptionalCtrl._UpdateData = HL.Method() << function(self)
-    self.m_curSelectIndex = 1
+    if self.m_info.curSelectIndex then
+        self.m_curSelectIndex = self.m_info.curSelectIndex
+    else
+        self.m_curSelectIndex = 1
+    end
 end
 
 
@@ -225,26 +230,34 @@ GachaOptionalCtrl._RefreshOptionalCell = HL.Method(HL.Any, HL.Number) << functio
     selectNode.previewBtn.onClick:RemoveAllListeners()
     selectNode.previewBtn.onClick:AddListener(function()
         local ids = self.m_info.charIds
-        
-        local charInstIdList = {}
-        for _, id in ipairs(ids) do
-            local info = CharBag:CreateClientInitialGachaPoolChar(id)
-            table.insert(charInstIdList, info.instId)
-        end
-        
-        local maxCharInstIdList = {}
-        for _, id in ipairs(ids) do
-            local info = CharBag:CreateClientPerfectGachaPoolCharInfo(id)
-            table.insert(maxCharInstIdList, info.instId)
-        end
+        local charId = charInfo.charId
         CharInfoUtils.openCharInfoBestWay({
-            initCharInfo = {
-                instId = charInstIdList[luaIndex],
-                templateId = charInfo.charId,
-                charInstIdList = charInstIdList,
-                maxCharInstIdList = maxCharInstIdList,
-                isShowPreview = true,
-            },
+            initCharInfoCreator = function(initCharTemplateId)
+                local initCharInfo
+                
+                local charInstIdList = {}
+                initCharTemplateId = initCharTemplateId or charId
+                for _, id in ipairs(ids) do
+                    local info = CharBag:CreateClientInitialGachaPoolChar(id)
+                    table.insert(charInstIdList, info.instId)
+                    if id == initCharTemplateId then
+                        initCharInfo = info
+                    end
+                end
+                
+                local maxCharInstIdList = {}
+                for _, id in ipairs(ids) do
+                    local info = CharBag:CreateClientPerfectGachaPoolCharInfo(id)
+                    table.insert(maxCharInstIdList, info.instId)
+                end
+                return {
+                    instId = initCharInfo.instId,
+                    templateId = initCharInfo.templateId,
+                    charInstIdList = charInstIdList,
+                    maxCharInstIdList = maxCharInstIdList,
+                    isShowPreview = true,
+                }
+            end,
             onClose = function()
                 CharBag:ClearAllClientCharAndItemData()
             end,
@@ -335,6 +348,7 @@ GachaOptionalCtrl._OnClickOptionalCell = HL.Method(HL.Number) << function(self, 
     if self.m_curSelectIndex ~= luaIndex then
         local oldIndex = self.m_curSelectIndex
         self.m_curSelectIndex = luaIndex
+        self.m_info.curSelectIndex = luaIndex 
         
         local cell = self.m_optionalCellListCache:Get(luaIndex)
         if cell then
@@ -346,6 +360,15 @@ GachaOptionalCtrl._OnClickOptionalCell = HL.Method(HL.Number) << function(self, 
             oldCell.selectStateCtrl:SetState("Unselected")
         end
     end
+end
+
+
+
+GachaOptionalCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = lume.deepCopy(self.m_info)
+    arg.charInfos = nil
+    arg.chestRewardIdMap = nil
+    return arg
 end
 
 

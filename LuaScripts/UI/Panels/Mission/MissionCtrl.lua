@@ -115,6 +115,9 @@ local MissionFilterCellConfig = {
 
 
 
+
+
+
 MissionCtrl = HL.Class('MissionCtrl', uiCtrl.UICtrl)
 
 
@@ -275,6 +278,27 @@ MissionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self:_UpdateShow()
         end
     end)
+end
+
+
+
+MissionCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Any) << function(self)
+    local missionFilter
+    if type(self.m_missionFilterType) == "number" then
+        if self.m_missionFilterType >= 0 then
+            missionFilter = Utils.intToEnum(typeof(GEnums.MissionViewType), self.m_missionFilterType)
+            missionFilter = missionFilter:ToString()
+        end
+    elseif type(self.m_missionFilterType) == "string" then
+        missionFilter = self.m_missionFilterType
+    else
+        missionFilter = self.m_missionFilterType:ToString()
+    end
+
+    return {
+        autoSelect = self.m_selectedMissionId,
+        missionFilter = missionFilter,
+    }
 end
 
 
@@ -526,7 +550,7 @@ MissionCtrl._RefreshMissionList = HL.Method() << function(self)
             end
 
             table.sort(missionList, function(a, b)
-                self:_SortMissions(a, b)
+                return self:_SortMissions(a, b)
             end)
         end
         for _, missionId in pairs(subLayout.standaloneMissions) do
@@ -534,33 +558,45 @@ MissionCtrl._RefreshMissionList = HL.Method() << function(self)
         end
 
         table.sort(subViewInfo, function(a, b)
-            
-            if a.type == b.type then
-                local viewType = a.type
-                if viewType == MissionListCellType_Chapter then
-                    local chapterA = self.m_missionSystem:GetChapterInfo(a.id)
-                    local chapterB = self.m_missionSystem:GetChapterInfo(b.id)
-                    local aType = chapterA.type:ToInt()
-                    local bType= chapterB.type:ToInt()
-                    if aType == bType then
-                        
-                        local aMission = a.missionList[1]
-                        local bMission = b.missionList[1]
-                        if aMission ~= nil and bMission ~= nil then
-                            return self:_SortMissions(aMission, bMission)
-                        else
-                            return false
-                        end
-                    else
-                        return aType < bType
-                    end
-                elseif viewType == MissionListCellType_Mission then
-                    return self:_SortMissions(a, b)
-                else
-                    return false
-                end
-            else
+            if a.type == MissionListCellType_Importance or b.type == MissionListCellType_Importance then
                 return a.type < b.type
+            end
+
+            local aRepMission = self:_GetRepresentativeMissionInfo(a)
+            local bRepMission = self:_GetRepresentativeMissionInfo(b)
+            if aRepMission == nil or bRepMission == nil then
+                return false
+            end
+
+            local priorityResult = self:_CompareMissionPriority(aRepMission, aRepMission.missionId, bRepMission, bRepMission.missionId)
+            if priorityResult ~= nil then
+                return priorityResult
+            end
+
+            if a.type ~= b.type then
+                return a.type < b.type
+            end
+
+            if a.type == MissionListCellType_Chapter then
+                local chapterA = self.m_missionSystem:GetChapterInfo(a.id)
+                local chapterB = self.m_missionSystem:GetChapterInfo(b.id)
+                local aType = chapterA.type:ToInt()
+                local bType = chapterB.type:ToInt()
+                if aType == bType then
+                    local aMission = a.missionList[1]
+                    local bMission = b.missionList[1]
+                    if aMission ~= nil and bMission ~= nil then
+                        return self:_SortMissions(aMission, bMission)
+                    else
+                        return false
+                    end
+                else
+                    return aType < bType
+                end
+            elseif a.type == MissionListCellType_Mission then
+                return self:_SortMissions(a, b)
+            else
+                return false
             end
         end)
     end
@@ -703,6 +739,54 @@ end
 
 
 
+MissionCtrl._GetRepresentativeMissionInfo = HL.Method(HL.Any).Return(HL.Any) << function(self, viewInfo)
+    if viewInfo.type == MissionListCellType_Chapter then
+        local firstMission = viewInfo.missionList[1]
+        if firstMission then
+            return self.m_missionSystem:GetMissionInfo(firstMission.id)
+        end
+        return nil
+    elseif viewInfo.type == MissionListCellType_Mission then
+        return self.m_missionSystem:GetMissionInfo(viewInfo.id)
+    end
+    return nil
+end
+
+
+
+
+
+
+
+MissionCtrl._CompareMissionPriority = HL.Method(HL.Any, HL.String, HL.Any, HL.String).Return(HL.Any) << function(self, missionInfoA, missionIdA, missionInfoB, missionIdB)
+    local aIsMain = (missionInfoA.viewType == MissionViewType.MissionViewMain)
+    local bIsMain = (missionInfoB.viewType == MissionViewType.MissionViewMain)
+    if aIsMain ~= bIsMain then
+        return aIsMain
+    end
+
+    local aRec = missionInfoA.isCurrentlyRecommended
+    local bRec = missionInfoB.isCurrentlyRecommended
+    if aRec ~= bRec then
+        return aRec
+    end
+
+    if missionInfoA.extraInfoType ~= missionInfoB.extraInfoType then
+        return missionInfoA.extraInfoType:GetHashCode() > missionInfoB.extraInfoType:GetHashCode()
+    end
+
+    local aWillExpire = MissionSystem.GetMissionExpireInfo(missionIdA)
+    local bWillExpire = MissionSystem.GetMissionExpireInfo(missionIdB)
+    if aWillExpire ~= bWillExpire then
+        return aWillExpire
+    end
+
+    return nil
+end
+
+
+
+
 
 MissionCtrl._SortMissions = HL.Method(HL.Any, HL.Any).Return(HL.Boolean) << function(self, a, b)
     if a.type ~= MissionListCellType_Mission or b.type ~= MissionListCellType_Mission then
@@ -716,12 +800,13 @@ MissionCtrl._SortMissions = HL.Method(HL.Any, HL.Any).Return(HL.Boolean) << func
         return false
     end
 
-    if missionA.sortId ~= missionB.sortId then
-        return a.sortId > b.sortId  
+    local priorityResult = self:_CompareMissionPriority(missionA, a.id, missionB, b.id)
+    if priorityResult ~= nil then
+        return priorityResult
     end
 
-    if missionA.extraInfoType ~= missionB.extraInfoType then
-        return missionA.extraInfoType:GetHashCode() > missionB.extraInfoType:GetHashCode() 
+    if missionA.sortId ~= missionB.sortId then
+        return missionA.sortId > missionB.sortId
     end
 
     local _, aTypeInfo = Tables.missionTypeInfoTable:TryGetValue(missionA.missionType)
@@ -865,11 +950,13 @@ MissionCtrl._SetMissionCellContent = HL.Method(HL.Any, HL.Any, HL.Any) << functi
         missionCell.newRegionIcon.gameObject:SetActiveIfNecessary(unlockRegion)
     end
 
+    local insideSimpleChapter = false
     missionCell.charaIconImage.gameObject:SetActiveIfNecessary(false)
     local chapterId = self.m_missionSystem:GetChapterIdByMissionId(missionId)
     if chapterId and chapterId ~= nil then
         local chapterInfo = self.m_missionSystem:GetChapterInfo(chapterId)
         if chapterInfo and chapterInfo.type == ChapterType.Other then
+            insideSimpleChapter = true
             missionCell.charaIconImage.gameObject:SetActiveIfNecessary(true)
             local characterId = missionInfo.charId
             local _, characterImgInfo = Tables.actorImageTable:TryGetValue(characterId)
@@ -900,6 +987,17 @@ MissionCtrl._SetMissionCellContent = HL.Method(HL.Any, HL.Any, HL.Any) << functi
     else
         missionCell.stateController:SetState("NormalBg")
     end
+
+    local isRecommend = missionInfo.isCurrentlyRecommended
+    if insideSimpleChapter then
+        if isRecommend then
+            missionCell.stateController:SetState("CurrentRecommendTag")
+        else
+            missionCell.stateController:SetState("NoCurrentRecommendTag")
+        end
+    else
+        missionCell.stateController:SetState("NormalHeight")
+    end
 end
 
 
@@ -919,7 +1017,10 @@ MissionCtrl._RefreshMissionInfo = HL.Method() << function(self)
             missionInfoNode.missionName:SetAndResolveTextStyle(missionNameText)
 
             local missionDescText = missionInfo:GetMissionDesc():GetText()
-            missionInfoNode.missionDesc:SetAndResolveTextStyle(missionDescText)
+
+            
+            local actualText = UIUtils.resolveTextCinematic(missionDescText)
+            missionInfoNode.missionDesc:SetAndResolveTextStyle(actualText)
             local levelId = self:_GetLevelId(missionInfo)
             local _, sceneInfo = Tables.levelDescTable:TryGetValue(levelId)
             if sceneInfo then
@@ -1338,7 +1439,7 @@ end
 MissionCtrl.OnMissionStateChange = HL.Method(HL.Any) << function(self, arg)
     if self.m_selectedMissionId ~= "" then
         local missionState = self.m_missionSystem:GetMissionState(self.m_selectedMissionId)
-        if missionState == MissionState.None or missionState == MissionState.Failed then
+        if missionState == MissionState.None or missionState == MissionState.Failed or missionState == MissionState.Disabled then
             self.m_selectedMissionId = ""
         end
     end
@@ -1370,7 +1471,7 @@ MissionCtrl.OnQuestStateChange = HL.Method(HL.Any) << function(self, arg)
     local missionId = self.m_missionSystem:GetMissionIdByQuestId(questId)
     local missionState = self.m_missionSystem:GetMissionState(missionId)
 
-    if missionState == MissionState.None or missionState == MissionState.Failed then
+    if missionState == MissionState.None or missionState == MissionState.Failed or missionState == MissionState.Disabled then
         return
     end
 
@@ -1437,7 +1538,13 @@ MissionCtrl._ChangeSelectedMission = HL.Method(HL.Number) << function(self, offs
     self.m_doNotPostAudio = false
 
     self:_RefreshMissionInfo()
-    self.view.missionScrollView:ScrollToIndex(CSIndex(newInfo.cellIndex), true)
+
+    if DeviceInfo.usingController and offset == 0 and newInfo.cellIndex > 1 then
+        local scrollTarget = math.max(1, newInfo.cellIndex - 2)
+        self.view.missionScrollView:ScrollToIndex(CSIndex(scrollTarget), true)
+    else
+        self.view.missionScrollView:ScrollToIndex(CSIndex(newInfo.cellIndex), true)
+    end
     self:_RefreshNaviSelected()
 end
 

@@ -44,10 +44,6 @@ WeaponExhibitGemCardCtrl.m_effectCor = HL.Field(HL.Thread)
 
 WeaponExhibitGemCardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local weaponInfo = arg.weaponInfo
-    if arg.phase then
-        self.m_phase = arg.phase
-    end
-
     self.m_weaponInfo = weaponInfo
 
     self.view.gemCardLeft.gameObject:SetActive(false)
@@ -75,7 +71,8 @@ WeaponExhibitGemCardCtrl.RefreshGemCard = HL.Method(HL.Any) << function(self, ar
 
     
     local isDifferentGem = hasSelectedGem and hasEquippedGem and selectGemInstId ~= equippedGemInstId
-    if self.view.gemCardRight.gameObject.activeSelf ~= isDifferentGem then
+    if self.view.gemCardRight.gameObject.activeSelf ~= isDifferentGem or
+        self.view.gemCardRight.view.animationWrapper.curState ~= CS.Beyond.UI.UIConst.AnimationState.Stop then
         UIUtils.PlayAnimationAndToggleActive(self.view.gemCardRight.view.animationWrapper, isDifferentGem)
     end
 
@@ -91,6 +88,7 @@ WeaponExhibitGemCardCtrl.RefreshGemCard = HL.Method(HL.Any) << function(self, ar
         if self.m_gemInstIdRight ~= selectGemInstId then
             self.m_gemInstIdRight = selectGemInstId
             self.view.gemCardRight:InitGemCard(selectGemInstId, tryWeaponInstId)
+            self:_RefreshGemPerfectIcon(self.view.gemCardRight, selectGemInstId)
             self.view.gemCardRight.view.animationWrapper:ClearTween()
             self.view.gemCardRight.view.animationWrapper:PlayInAnimation()
         end
@@ -106,6 +104,7 @@ WeaponExhibitGemCardCtrl.RefreshGemCard = HL.Method(HL.Any) << function(self, ar
                     self.view.gemCardLeft.view.animationWrapper:PlayOutAnimation()
                     coroutine.wait(0.1)
                     self.view.gemCardLeft:InitGemCard(gemInstIdLeft, tryWeaponInstId)
+                    self:_RefreshGemPerfectIcon(self.view.gemCardLeft, gemInstIdLeft)
                     self.view.gemCardLeft.view.animationWrapper:PlayInAnimation()
                 end)
                 
@@ -114,6 +113,7 @@ WeaponExhibitGemCardCtrl.RefreshGemCard = HL.Method(HL.Any) << function(self, ar
                 self.view.gemCardLeft.view.animationWrapper:ClearTween()
                 self.view.gemCardLeft.view.animationWrapper:PlayInAnimation()
                 self.view.gemCardLeft:InitGemCard(gemInstIdLeft, tryWeaponInstId)
+                self:_RefreshGemPerfectIcon(self.view.gemCardLeft, gemInstIdLeft)
             end
 
             self.m_gemInstIdLeft = gemInstIdLeft
@@ -122,9 +122,41 @@ WeaponExhibitGemCardCtrl.RefreshGemCard = HL.Method(HL.Any) << function(self, ar
             
         end
     end
+
+    if hasLeftGem then
+        self:_RefreshGemPerfectIcon(self.view.gemCardLeft, gemInstIdLeft)
+    else
+        self:_RefreshGemPerfectIcon(self.view.gemCardLeft, -1)
+    end
+    if isDifferentGem then
+        self:_RefreshGemPerfectIcon(self.view.gemCardRight, selectGemInstId)
+    else
+        self:_RefreshGemPerfectIcon(self.view.gemCardRight, -1)
+    end
 end
 
+WeaponExhibitGemCardCtrl._RefreshGemPerfectIcon = HL.Method(HL.Any, HL.Any) << function(self, gemCard, gemInstId)
+    if not gemCard.view.gemNode then
+        return
+    end
 
+    local matchesCurWeapon = false
+    if gemInstId and gemInstId > 0 then
+        local isPerfectMatch, matchList = UIUtils.getGemWishListPerfectMatch(gemInstId)
+        if isPerfectMatch and matchList then
+            local curWeaponTemplateId = self.m_weaponInfo.weaponTemplateId
+            for _, weaponTemplateId in ipairs(matchList) do
+                if weaponTemplateId == curWeaponTemplateId then
+                    matchesCurWeapon = true
+                    break
+                end
+            end
+        end
+    end
+
+    gemCard.view.gemNode.gameObject:SetActive(matchesCurWeapon == true)
+    gemCard.view.leftDeco01.gameObject:SetActive(matchesCurWeapon ~= true)
+end
 
 WeaponExhibitGemCardCtrl._InitController = HL.Method() << function(self)
     local toggleFocusInputGroup = function(active)

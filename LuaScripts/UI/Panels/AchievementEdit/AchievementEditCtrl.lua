@@ -2,73 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.AchievementEdit
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AchievementEditCtrl = HL.Class('AchievementEditCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -79,54 +13,37 @@ AchievementEditCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACHIEVEMENT_DISPLAY_UPDATE] = '_OnDisplayUpdate',
 }
 
-
 AchievementEditCtrl.m_onClose = HL.Field(HL.Any) << nil
-
 
 AchievementEditCtrl.m_depotListCellFunc = HL.Field(HL.Function)
 
-
 AchievementEditCtrl.m_playerDisplay = HL.Field(HL.Any) << {}
-
 
 AchievementEditCtrl.m_playerDepot = HL.Field(HL.Any) << {}
 
-
 AchievementEditCtrl.m_editDisplay = HL.Field(HL.Any) << {}
-
 
 AchievementEditCtrl.m_editDepot = HL.Field(HL.Any) << {}
 
-
 AchievementEditCtrl.m_medalGroupDragOptions = HL.Field(HL.Table)
-
 
 AchievementEditCtrl.m_depotDragOptions = HL.Field(HL.Table)
 
-
 AchievementEditCtrl.m_isSaving = HL.Field(HL.Boolean) << false
-
 
 AchievementEditCtrl.m_dragMedalId = HL.Field(HL.String) << ''
 
-
 AchievementEditCtrl.m_naviDragBeginSlot = HL.Field(HL.Number) << -1
-
 
 AchievementEditCtrl.m_naviDragMedal = HL.Field(HL.Any)
 
-
 AchievementEditCtrl.m_naviCancelInputGroupId = HL.Field(HL.Number) << 1
-
 
 AchievementEditCtrl.m_naviRetractInputGroupId = HL.Field(HL.Number) << 1
 
-
 AchievementEditCtrl.m_naviFocusMedal = HL.Field(HL.Any)
 
-
 AchievementEditCtrl.m_lateTickKey = HL.Field(HL.Number) << -1
-
 
 AchievementEditCtrl.m_tipsSwitch = HL.Field(HL.Any) << nil
 
@@ -230,35 +147,27 @@ local DROP_MEDAL_CONFIGS = {
 }
 
 
-
-
-
 AchievementEditCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_onClose = arg.onClose
+    local recoverState = arg and arg.recoverState or nil
+    self.m_onClose = arg and arg.onClose
     self:_InitViews()
     self:_LoadData()
+    self:_TryRecoverState(recoverState)
     self:_RenderViews(true)
+    self:_TryRecoverAchievementDepot(recoverState and recoverState.achievementDepotState)
 end
-
-
 
 AchievementEditCtrl.OnShow = HL.Override() << function(self)
     self:_StartTick()
 end
 
-
-
 AchievementEditCtrl.OnHide = HL.Override() << function(self)
     self:_StopTick()
 end
 
-
-
 AchievementEditCtrl.OnClose = HL.Override() << function(self)
     self:_StopTick()
 end
-
-
 
 AchievementEditCtrl._StartTick = HL.Method() << function(self)
     self.m_lateTickKey = LuaUpdate:Add("TailTick", function(deltaTime)
@@ -276,13 +185,9 @@ AchievementEditCtrl._StartTick = HL.Method() << function(self)
     end)
 end
 
-
-
 AchievementEditCtrl._StopTick = HL.Method() << function(self)
     self.m_lateTickKey = LuaUpdate:Remove(self.m_lateTickKey)
 end
-
-
 
 AchievementEditCtrl._InitViews = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId}, nil, function(infoList)
@@ -416,8 +321,6 @@ AchievementEditCtrl._InitViews = HL.Method() << function(self)
     self:_InitNaviBind()
 end
 
-
-
 AchievementEditCtrl._InitNaviBind = HL.Method() << function(self)
     self.m_naviCancelInputGroupId = InputManagerInst:CreateGroup(self.view.inputGroup.groupId)
     UIUtils.bindInputPlayerAction("achievement_navi_edit_cancel", function()
@@ -448,9 +351,6 @@ AchievementEditCtrl._InitNaviBind = HL.Method() << function(self)
     self:_UpdateInputGroupStatus()
 end
 
-
-
-
 AchievementEditCtrl._OnNavigate = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, direction)
     local curr = InputManagerInst.controllerNaviManager.curTarget
     if curr == nil then
@@ -472,51 +372,30 @@ AchievementEditCtrl._OnNavigate = HL.Method(CS.UnityEngine.UI.NaviDirection) << 
     self.view.medalGroup:OnNavigate(direction, slotIndex)
 end
 
-
-
-
 AchievementEditCtrl._OnNavigateDepot = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, direction)
     InputManagerInst.controllerNaviManager:Navigate(direction)
 end
 
-
-
 AchievementEditCtrl._LoadData = HL.Method() << function(self)
     self.m_playerDisplay = {}
     self.m_playerDepot = {}
-    local achievementTable = Tables.achievementTable
     local achievementSystem = GameInstance.player.achievementSystem
     for slotIndex, achievementId in pairs(achievementSystem.achievementData.displayInfo) do
-        local hasPlayer, playerAchievement = achievementSystem.achievementData.achievementInfos:TryGetValue(achievementId)
-        local hasData, achievementData = achievementTable:TryGetValue(achievementId)
-        local medalBundle = {
-            achievementId = achievementId,
-            level = hasPlayer and playerAchievement.level or 0,
-            isPlated = hasPlayer and playerAchievement.isPlated,
-            isRare = hasData and achievementData.applyRareEffect,
-        }
-        self.m_playerDisplay[slotIndex] = medalBundle
+        local medalBundle = self:_GenMedalBundle(achievementId)
+        if medalBundle ~= nil then
+            self.m_playerDisplay[slotIndex] = medalBundle
+        end
     end
     for _, achievementId in pairs(achievementSystem.achievementData.displayDepot) do
-        local hasPlayer, playerAchievement = achievementSystem.achievementData.achievementInfos:TryGetValue(achievementId)
-        local hasData, achievementData = achievementTable:TryGetValue(achievementId)
-        local medalBundle = {
-            achievementId = achievementId,
-            level = hasPlayer and playerAchievement.level or 0,
-            isPlated = hasPlayer and playerAchievement.isPlated,
-            isRare = hasData and achievementData.applyRareEffect,
-        }
-        table.insert(self.m_playerDepot, medalBundle)
+        local medalBundle = self:_GenMedalBundle(achievementId)
+        if medalBundle ~= nil then
+            table.insert(self.m_playerDepot, medalBundle)
+        end
     end
     self:_ResetEditData()
 end
 
-
-
-
 AchievementEditCtrl._RefreshData = HL.Method(HL.Any) << function(self, editDepotMap)
-    local achievementTable = Tables.achievementTable
-    local achievementSystem = GameInstance.player.achievementSystem
     for slotIndex, medalBundle in pairs(self.m_editDisplay) do
         local achievementId = medalBundle.achievementId
         if editDepotMap[achievementId] == nil then
@@ -534,28 +413,112 @@ AchievementEditCtrl._RefreshData = HL.Method(HL.Any) << function(self, editDepot
         end
     end
     for achievementId, _ in pairs(editDepotMap) do
-        local hasPlayer, playerAchievement = achievementSystem.achievementData.achievementInfos:TryGetValue(achievementId)
-        local hasData, achievementData = achievementTable:TryGetValue(achievementId)
-        local medalBundle = {
-            achievementId = achievementId,
-            level = hasPlayer and playerAchievement.level or 0,
-            isPlated = hasPlayer and playerAchievement.isPlated,
-            isRare = hasData and achievementData.applyRareEffect,
-        }
-        table.insert(editDepot, medalBundle)
+        local medalBundle = self:_GenMedalBundle(achievementId)
+        if medalBundle ~= nil then
+            table.insert(editDepot, medalBundle)
+        end
     end
     self.m_editDepot = editDepot
 end
 
+AchievementEditCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    return {
+        displayInfo = self:_GetDisplayRecoverState(),
+        depotInfo = self:_GetDepotRecoverState(),
+        achievementDepotState = self:_GetAchievementDepotRecoverState(),
+    }
+end
 
+AchievementEditCtrl._GetDisplayRecoverState = HL.Method().Return(HL.Table) << function(self)
+    local displayInfo = {}
+    for slotIndex, medalBundle in pairs(self.m_editDisplay) do
+        if slotIndex > 0 and medalBundle ~= nil and not string.isEmpty(medalBundle.achievementId) then
+            displayInfo[slotIndex] = medalBundle.achievementId
+        end
+    end
+    return displayInfo
+end
+
+AchievementEditCtrl._GetDepotRecoverState = HL.Method().Return(HL.Table) << function(self)
+    local depotInfo = {}
+    for _, medalBundle in ipairs(self.m_editDepot) do
+        if medalBundle ~= nil and not string.isEmpty(medalBundle.achievementId) then
+            table.insert(depotInfo, medalBundle.achievementId)
+        end
+    end
+    return depotInfo
+end
+
+AchievementEditCtrl._GetAchievementDepotRecoverState = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.AchievementDepot)
+    if not isOpen or not ctrl:IsShow() then
+        return
+    end
+    return ctrl:GetRecoverStateArg()
+end
+
+AchievementEditCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+    self.m_editDisplay = {}
+    self.m_editDepot = {}
+    local displayInfo = recoverState.displayInfo or {}
+    local depotInfo = recoverState.depotInfo or {}
+    for slotIndex, achievementId in pairs(displayInfo) do
+        if slotIndex > 0 and not string.isEmpty(achievementId) then
+            local medalBundle = self:_GenMedalBundle(achievementId)
+            if medalBundle ~= nil then
+                self.m_editDisplay[slotIndex] = medalBundle
+            end
+        end
+    end
+    for _, achievementId in ipairs(depotInfo) do
+        if not string.isEmpty(achievementId) then
+            local medalBundle = self:_GenMedalBundle(achievementId)
+            if medalBundle ~= nil then
+                table.insert(self.m_editDepot, medalBundle)
+            end
+        end
+    end
+    self:_OnEditDisplayChanged()
+end
+
+AchievementEditCtrl._TryRecoverAchievementDepot = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+    local isOpen = UIManager:IsOpen(PanelId.AchievementDepot)
+    if isOpen then
+        return
+    end
+    self:_OpenDepot(recoverState)
+end
+
+AchievementEditCtrl._GenMedalBundle = HL.Method(HL.String).Return(HL.Opt(HL.Any)) << function(self, achievementId)
+    if string.isEmpty(achievementId) then
+        return
+    end
+    local achievementSystem = GameInstance.player.achievementSystem
+    local achievementTable = Tables.achievementTable
+    local hasPlayer, playerAchievement = achievementSystem.achievementData.achievementInfos:TryGetValue(achievementId)
+    local hasData, achievementData = achievementTable:TryGetValue(achievementId)
+    if not hasPlayer and not hasData then
+        return
+    end
+    return {
+        achievementId = achievementId,
+        level = hasPlayer and playerAchievement.level or 0,
+        isPlated = hasPlayer and playerAchievement.isPlated,
+        isRare = hasData and achievementData.applyRareEffect,
+    }
+end
 
 AchievementEditCtrl._ResetEditData = HL.Method() << function(self)
     self.m_editDisplay = lume.copy(self.m_playerDisplay)
     self.m_editDepot = lume.copy(self.m_playerDepot)
     self:_OnEditDisplayChanged()
 end
-
-
 
 AchievementEditCtrl._ClearMedalGroup = HL.Method() << function(self)
     for slotIndex, displayInfo in pairs(self.m_editDisplay) do
@@ -565,19 +528,12 @@ AchievementEditCtrl._ClearMedalGroup = HL.Method() << function(self)
     self:_OnEditDisplayChanged()
 end
 
-
-
-
 AchievementEditCtrl._RenderViews = HL.Method(HL.Boolean) << function(self, isInit)
     local haveDepot = #self.m_editDepot > 0
     self.view.bottomStateCtrl:SetState(haveDepot and "EtchHave" or "EtchNull")
     self.view.depotList:UpdateCount(#self.m_editDepot, isInit, false, false, not isInit)
     self.view.medalGroup:InitMedalGroup(self.m_editDisplay, Tables.achievementConst.maxDisplayPosition, self.m_medalGroupDragOptions)
 end
-
-
-
-
 
 AchievementEditCtrl._RenderDepotCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local medalBundle = self.m_editDepot[luaIndex]
@@ -586,19 +542,12 @@ AchievementEditCtrl._RenderDepotCell = HL.Method(HL.Any, HL.Number) << function(
     cell.view.button.customBindingViewLabelText = Language["key_hint_achievement_edit_take"]
 end
 
-
-
-
-
 AchievementEditCtrl._SetTips = HL.Method(HL.Boolean, HL.Opt(HL.String)) << function(self, isShow, stateName)
     self.m_tipsSwitch.isShow = isShow
     if stateName ~= nil then
         self.view.tipStateCtrl:SetState(stateName)
     end
 end
-
-
-
 
 AchievementEditCtrl._OnBeginDrag = HL.Method(HL.Any) << function(self, dragInfo)
     self.view.depotDropArea.gameObject:SetActive(true)
@@ -616,9 +565,6 @@ AchievementEditCtrl._OnBeginDrag = HL.Method(HL.Any) << function(self, dragInfo)
     AudioAdapter.PostEvent("Au_UI_Event_AchieveMedal_hold")
 end
 
-
-
-
 AchievementEditCtrl._OnEndDrag = HL.Method(HL.Any) << function(self, dragInfo)
     self.m_dragMedalId = ''
     self.view.depotDropArea.gameObject:SetActive(false)
@@ -634,10 +580,6 @@ AchievementEditCtrl._OnEndDrag = HL.Method(HL.Any) << function(self, dragInfo)
     end
 end
 
-
-
-
-
 AchievementEditCtrl._OnDragMedal = HL.Method(HL.Any, HL.Any) << function(self, dragInfo, dropInfo)
     if not DeviceInfo.usingController and dragInfo ~= nil and dropInfo ~= nil then
         local dragConfig = DRAG_MEDAL_CONFIGS[dragInfo.slotType]
@@ -652,10 +594,6 @@ AchievementEditCtrl._OnDragMedal = HL.Method(HL.Any, HL.Any) << function(self, d
     end
     self:_SetTips(false)
 end
-
-
-
-
 
 AchievementEditCtrl._OnDropMedal = HL.Method(HL.Any, HL.Any) << function(self, dragInfo, dropInfo)
     self.m_dragMedalId = ''
@@ -678,9 +616,6 @@ AchievementEditCtrl._OnDropMedal = HL.Method(HL.Any, HL.Any) << function(self, d
     dragDropConfig.action(self, dragInfo, dropInfo)
 end
 
-
-
-
 AchievementEditCtrl._OnDropToDepot = HL.Method(CS.UnityEngine.EventSystems.PointerEventData) << function(self, eventData)
     if IsNull(eventData.pointerDrag) then
         return
@@ -695,9 +630,6 @@ AchievementEditCtrl._OnDropToDepot = HL.Method(CS.UnityEngine.EventSystems.Point
     end
 end
 
-
-
-
 AchievementEditCtrl._FindEditDepot = HL.Method(HL.String).Return(HL.Number, HL.Any) << function(self, achievementId)
     local depotIndex = -1
     local depotMedal = nil
@@ -710,13 +642,10 @@ AchievementEditCtrl._FindEditDepot = HL.Method(HL.String).Return(HL.Number, HL.A
     return depotIndex, depotMedal
 end
 
-
-
-
 AchievementEditCtrl._FindEditDisplay = HL.Method(HL.String).Return(HL.Number, HL.Any) << function(self, achievementId)
     local slotIndex = -1
     local displayMedal = nil
-    for i, medal in ipairs(self.m_editDisplay) do
+    for i, medal in pairs(self.m_editDisplay) do
         if medal.achievementId == achievementId then
             slotIndex = i
             displayMedal = medal
@@ -725,9 +654,106 @@ AchievementEditCtrl._FindEditDisplay = HL.Method(HL.String).Return(HL.Number, HL
     return slotIndex, displayMedal
 end
 
+AchievementEditCtrl._GetCurrentNaviAchievementId = HL.Method().Return(HL.String) << function(self)
+    if not DeviceInfo.usingController then
+        return ''
+    end
+    if self.m_naviFocusMedal ~= nil and not string.isEmpty(self.m_naviFocusMedal.achievementId) then
+        return self.m_naviFocusMedal.achievementId
+    end
+    local curr = InputManagerInst.controllerNaviManager.curTarget
+    if curr == nil then
+        return ''
+    end
+    local currWidget = curr.transform:GetComponent("LuaUIWidget")
+    if currWidget == nil or currWidget.table == nil then
+        return ''
+    end
+    local medalSlot = currWidget.table[1]
+    if medalSlot == nil or string.isEmpty(medalSlot.m_achievementId) then
+        return ''
+    end
+    return medalSlot.m_achievementId
+end
 
+AchievementEditCtrl._SetNaviTarget = HL.Method(HL.Userdata, HL.Userdata, HL.Any) << function(self, naviGroup, target, focusMedal)
+    if target == nil then
+        return
+    end
+    self:SetAsNaviTargetInSilentModeIfNecessary(naviGroup, target)
+    self:_UpdateNaviFocusMedal(focusMedal)
+end
 
-AchievementEditCtrl._OpenDepot = HL.Method() << function(self)
+AchievementEditCtrl._FocusDisplaySlot = HL.Method(HL.Number) << function(self, slotIndex)
+    if slotIndex <= 0 then
+        return
+    end
+    local cellIndex = self.view.medalGroup:_GetMedalIndexBySlot(slotIndex)
+    if cellIndex < 0 then
+        return
+    end
+    self.view.medalGroup.view.slotList:ScrollToIndex(cellIndex, true)
+    self.view.medalGroup.view.slotList:UpdateShowingCells(function(csIndex, obj)
+        if csIndex ~= cellIndex then
+            return
+        end
+        local cell = self.view.medalGroup.m_getMedalSlotCell(obj)
+        self.view.medalGroup:_OnUpdateCell(cell, csIndex)
+        self:_SetNaviTarget(self.view.naviMedalGroup, cell.view.medalSlot.view.button, self.m_editDisplay[slotIndex])
+    end)
+end
+
+AchievementEditCtrl._FocusDepotIndex = HL.Method(HL.Number) << function(self, depotIndex)
+    if depotIndex <= 0 then
+        return
+    end
+    self.view.depotList:ScrollToIndex(depotIndex, true)
+    self.view.depotList:UpdateShowingCells(function(csIndex, obj)
+        local luaIndex = LuaIndex(csIndex)
+        if luaIndex ~= depotIndex then
+            return
+        end
+        local cell = self.m_depotListCellFunc(obj)
+        self:_RenderDepotCell(cell, luaIndex)
+        self:_SetNaviTarget(self.view.naviMedalDepot, cell.view.button, self.m_editDepot[depotIndex])
+    end)
+end
+
+AchievementEditCtrl._FocusFirstItem = HL.Method() << function(self)
+    for slotIndex = 1, Tables.achievementConst.maxDisplayPosition do
+        if self.m_editDisplay[slotIndex] ~= nil then
+            self:_FocusDisplaySlot(slotIndex)
+            return
+        end
+    end
+    if #self.m_editDepot > 0 then
+        self:_FocusDepotIndex(1)
+        return
+    end
+    self:_FocusDisplaySlot(1)
+end
+
+AchievementEditCtrl._RestoreNaviAfterDepotEdit = HL.Method(HL.String) << function(self, achievementId)
+    if not DeviceInfo.usingController then
+        return
+    end
+    if not string.isEmpty(achievementId) then
+        local slotIndex = self:_FindEditDisplay(achievementId)
+        if slotIndex > 0 then
+            self:_FocusDisplaySlot(slotIndex)
+            return
+        end
+        local depotIndex = self:_FindEditDepot(achievementId)
+        if depotIndex > 0 then
+            self:_FocusDepotIndex(depotIndex)
+            return
+        end
+    end
+    self:_FocusFirstItem()
+end
+
+AchievementEditCtrl._OpenDepot = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    local recoverNaviAchievementId = self:_GetCurrentNaviAchievementId()
     local currDepot = {}
     for slotIndex, medalBundle in pairs(self.m_editDisplay) do
         table.insert(currDepot, medalBundle.achievementId)
@@ -737,15 +763,15 @@ AchievementEditCtrl._OpenDepot = HL.Method() << function(self)
     end
     local args = {
         depot = currDepot,
+        recoverState = recoverState,
         onConfirm = function(editDepot)
             self:_RefreshData(editDepot)
             self:_RenderViews(true)
+            self:_RestoreNaviAfterDepotEdit(recoverNaviAchievementId)
         end
     }
     UIManager:Open(PanelId.AchievementDepot, args)
 end
-
-
 
 AchievementEditCtrl._SaveEditData = HL.Method() << function(self)
     if not self:_CheckDisplayDepotChanged() then
@@ -789,8 +815,6 @@ AchievementEditCtrl._SaveEditData = HL.Method() << function(self)
     achievementSystem:SaveDisplayDepot(displayInfo, depotInfo)
 end
 
-
-
 AchievementEditCtrl._OnEditDisplayChanged = HL.Method() << function(self)
     local displayInfo = {}
     for slotIndex, medalBundle in pairs(self.m_editDisplay) do
@@ -801,15 +825,11 @@ AchievementEditCtrl._OnEditDisplayChanged = HL.Method() << function(self)
     GameInstance.player.achievementSystem:OnDisplayClientChanged(displayInfo)
 end
 
-
-
 AchievementEditCtrl._CheckDisplayDepotChanged = HL.Method().Return(HL.Boolean) << function(self)
     local depotChanged = self:_CheckDepotChanged()
     local displayChanged = self:_CheckDisplayChanged()
     return depotChanged or displayChanged
 end
-
-
 
 AchievementEditCtrl._CheckDepotChanged = HL.Method().Return(HL.Boolean) << function(self)
     if #self.m_editDepot ~= #self.m_playerDepot then
@@ -832,8 +852,6 @@ AchievementEditCtrl._CheckDepotChanged = HL.Method().Return(HL.Boolean) << funct
     return false
 end
 
-
-
 AchievementEditCtrl._CheckDisplayChanged = HL.Method().Return(HL.Boolean) << function(self)
     local editCount = 0
     for slotIndex, medalBundle in pairs(self.m_editDisplay) do
@@ -853,8 +871,6 @@ AchievementEditCtrl._CheckDisplayChanged = HL.Method().Return(HL.Boolean) << fun
     return false
 end
 
-
-
 AchievementEditCtrl._OnBackClick = HL.Method() << function(self)
     if self:_CheckDisplayChanged() then
         Notify(MessageConst.SHOW_POP_UP, {
@@ -868,16 +884,12 @@ AchievementEditCtrl._OnBackClick = HL.Method() << function(self)
     self:_OnBackImpl()
 end
 
-
-
 AchievementEditCtrl._OnBackImpl = HL.Method() << function(self)
     if self.m_onClose ~= nil then
         self.m_onClose()
     end
     self:PlayAnimationOutAndClose()
 end
-
-
 
 AchievementEditCtrl._OnResetClick = HL.Method() << function(self)
     Notify(MessageConst.SHOW_POP_UP, {
@@ -889,8 +901,6 @@ AchievementEditCtrl._OnResetClick = HL.Method() << function(self)
     })
 end
 
-
-
 AchievementEditCtrl._OnDisplayUpdate = HL.Method() << function(self)
     self:_LoadData()
     self:_RenderViews(true)
@@ -900,10 +910,6 @@ AchievementEditCtrl._OnDisplayUpdate = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 AchievementEditCtrl._OnClick = HL.Method(HL.Number, HL.String) << function(self, slotIndex, achievementId)
     if DeviceInfo.usingController then
         self:_OnNaviClick(slotIndex, achievementId)
@@ -911,10 +917,6 @@ AchievementEditCtrl._OnClick = HL.Method(HL.Number, HL.String) << function(self,
         self:_OnDepotMedalClick(slotIndex, achievementId)
     end
 end
-
-
-
-
 
 AchievementEditCtrl._OnDepotMedalClick = HL.Method(HL.Number, HL.String) << function(self, slotIndex, achievementId)
     local depotIndex, depotMedal = self:_FindEditDepot(achievementId)
@@ -938,10 +940,6 @@ AchievementEditCtrl._OnDepotMedalClick = HL.Method(HL.Number, HL.String) << func
     self:_OnDropMedal(dragInfo, dropInfo)
 end
 
-
-
-
-
 AchievementEditCtrl._OnNaviClick = HL.Method(HL.Number, HL.String) << function(self, slotIndex, achievementId)
     if self.m_naviDragMedal == nil then
         
@@ -953,10 +951,6 @@ AchievementEditCtrl._OnNaviClick = HL.Method(HL.Number, HL.String) << function(s
     self:_UpdateNaviDragMedal()
     self:_UpdateInputGroupStatus()
 end
-
-
-
-
 
 AchievementEditCtrl._OnNaviDrag = HL.Method(HL.Number, HL.String) << function(self, slotIndex, achievementId)
     if slotIndex > 0 then
@@ -991,10 +985,6 @@ AchievementEditCtrl._OnNaviDrag = HL.Method(HL.Number, HL.String) << function(se
     end
 end
 
-
-
-
-
 AchievementEditCtrl._OnNaviDrop = HL.Method(HL.Number, HL.String) << function(self, slotIndex, achievementId)
     local dropInfo = {
         slotType = slotIndex > 0 and UIConst.ACHIEVEMENT_MEDAL_SLOT_TYPE.MedalDisplay or UIConst.ACHIEVEMENT_MEDAL_SLOT_TYPE.MedalDepot,
@@ -1016,8 +1006,6 @@ AchievementEditCtrl._OnNaviDrop = HL.Method(HL.Number, HL.String) << function(se
         self:_UpdateNaviFocusMedal(self.m_editDisplay[slotIndex])
     end
 end
-
-
 
 AchievementEditCtrl._OnNaviDragCancel = HL.Method() << function(self)
     if self.m_naviDragBeginSlot > 0 then
@@ -1057,8 +1045,6 @@ AchievementEditCtrl._OnNaviDragCancel = HL.Method() << function(self)
     self:_UpdateInputGroupStatus()
 end
 
-
-
 AchievementEditCtrl._OnNaviDragRetract = HL.Method() << function(self)
     if self.m_naviDragBeginSlot <= 0 then
         return
@@ -1083,24 +1069,16 @@ AchievementEditCtrl._OnNaviDragRetract = HL.Method() << function(self)
     self:_UpdateInputGroupStatus()
 end
 
-
-
-
 AchievementEditCtrl._UpdateNaviFocusMedal = HL.Method(HL.Any) << function(self, focusMedal)
     self.m_naviFocusMedal = focusMedal
     self:_UpdateNaviDragMedal()
 end
-
-
 
 AchievementEditCtrl._UpdateNaviDragMedal = HL.Method() << function(self)
     self.view.naviDragMedal.medal.gameObject:SetActive(self.m_naviDragMedal ~= nil)
     self.view.naviDragMedal.medal:InitMedal(self.m_naviDragMedal)
     self.view.etchKeyHint.gameObject:SetActive(self.m_naviDragMedal == nil and self.m_naviFocusMedal ~= nil)
 end
-
-
-
 
 AchievementEditCtrl._UpdateNaviDragFocus = HL.Method(HL.Number) << function(self, slotIndex)
     local dragInfo = nil
@@ -1120,19 +1098,14 @@ AchievementEditCtrl._UpdateNaviDragFocus = HL.Method(HL.Number) << function(self
     self:_OnDragMedal(dragInfo, dropInfo)
 end
 
-
-
-
 AchievementEditCtrl._UpdateNaviDragPos = HL.Method(HL.Any) << function(self, cell)
-    if cell == nil then
+    if cell == nil or not self.view.inputGroup.groupEnabled then
         return
     end
     local cellRectTrans = cell.transform
     local bound = CSUtils.CalcBoundOfRectTransform(cellRectTrans, self.view.naviDragNode)
     self.view.naviDragMedal.transform.anchoredPosition = Vector2(bound.center.x, bound.center.y)
 end
-
-
 
 AchievementEditCtrl._UpdateInputGroupStatus = HL.Method() << function(self)
     InputManagerInst:ToggleGroup(self.view.buttonGroup.groupId, self.m_naviDragMedal == nil)

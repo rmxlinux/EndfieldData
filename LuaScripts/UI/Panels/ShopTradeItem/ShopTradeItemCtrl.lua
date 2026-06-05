@@ -12,110 +12,46 @@ local PANEL_STATE =
 local PRICE_CHART_LINE_MIN = -80
 local PRICE_CHART_LINE_MAX = 90
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopTradeItemCtrl = HL.Class('ShopTradeItemCtrl', uiCtrl.UICtrl)
-
 
 ShopTradeItemCtrl.m_args = HL.Field(HL.Table)
 
-
 ShopTradeItemCtrl.m_friendSystem = HL.Field(CS.Beyond.Gameplay.FriendSystem)
-
 
 ShopTradeItemCtrl.m_shopSystem = HL.Field(CS.Beyond.Gameplay.ShopSystem)
 
 
-
 ShopTradeItemCtrl.m_genPriceItemCellCache = HL.Field(HL.Forward('UIListCache'))
-
 
 ShopTradeItemCtrl.m_hisPrice = HL.Field(HL.Userdata)
 
-
 ShopTradeItemCtrl.m_domainGoodsData = HL.Field(HL.Userdata)
-
 
 ShopTradeItemCtrl.m_standardPrice = HL.Field(HL.Number) << -1
 
-
 ShopTradeItemCtrl.m_shopGroupRemainCount = HL.Field(HL.Number) << -1
-
 
 ShopTradeItemCtrl.m_normalizedPriceValues = HL.Field(HL.Table)
 
-
 ShopTradeItemCtrl.m_lastState = HL.Field(HL.String) << ""
-
 
 ShopTradeItemCtrl.m_curState = HL.Field(HL.String) << ""
 
-
 ShopTradeItemCtrl.m_itemId = HL.Field(HL.String) << ""
-
 
 ShopTradeItemCtrl.m_moneyId = HL.Field(HL.String) << ""
 
-
 ShopTradeItemCtrl.m_friendList = HL.Field(HL.Table)
-
 
 ShopTradeItemCtrl.m_getFriendPriceCellFunc = HL.Field(HL.Function)
 
-
 ShopTradeItemCtrl.m_friendDataIsInit = HL.Field(HL.Boolean) << false
-
 
 ShopTradeItemCtrl.m_nowNaviFriendCell = HL.Field(HL.Table)
 
-
 ShopTradeItemCtrl.m_friendDetailKey = HL.Field(HL.Number) << -1
 
-
 ShopTradeItemCtrl.m_waitSellRsp = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -127,9 +63,6 @@ ShopTradeItemCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_BUY_ITEM_SUCC] = '_OnBuyItemSucc',
     [MessageConst.ON_SELL_ITEM_SUCC] = '_OnSellItemSucc',
 }
-
-
-
 
 
 ShopTradeItemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -198,34 +131,27 @@ ShopTradeItemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         if self.m_nowNaviFriendCell then
             self.m_nowNaviFriendCell.headIconImgButton.onClick:Invoke()
         end
-    end)
+    end, self.view.friendPriceScrollListInputBindingGroupMonoTarget.groupId)
     InputManagerInst:ToggleBinding(self.m_friendDetailKey, false)
     InputManagerInst:SetBindingText(self.m_friendDetailKey, Language.LUA_DOMAIN_SHOP_ITEM_FRIEND_DETAIL_KEY_HINT)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 
     GameInstance.player.shopSystem:SetSingleGoodsIdSee(self.m_args.goodsData.goodsTemplateId)
+    self:_ApplyResumeState(self.m_args and self.m_args.resumeState or nil)
 end
-
-
 
 
 ShopTradeItemCtrl.OnShow = HL.Override() << function(self)
 
 end
 
-
-
 ShopTradeItemCtrl.OnHide = HL.Override() << function(self)
 
 end
 
-
-
 ShopTradeItemCtrl.OnClose = HL.Override() << function(self)
 
 end
-
-
 
 
 ShopTradeItemCtrl._InitData = HL.Method() << function(self)
@@ -294,19 +220,40 @@ ShopTradeItemCtrl._InitData = HL.Method() << function(self)
     end
 end
 
-
+ShopTradeItemCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState then
+        return
+    end
+    local tradeState = resumeState.tradeState
+    if tradeState == PANEL_STATE.Sell or self.m_args.isSellOnly then
+        if not self.m_args.isSellOnly and self.view.operationToggle.view.toggle.isOn ~= false then
+            self.view.operationToggle.view.toggle.isOn = false
+        else
+            self:_SwitchSellState()
+        end
+    else
+        if self.view.operationToggle.view.toggle.isOn ~= true then
+            self.view.operationToggle.view.toggle.isOn = true
+        else
+            self:_SwitchPurchaseState()
+        end
+    end
+    
+    local selectedCount = math.max(resumeState.selectedCount or 1, 1)
+    self.view.numberSelector:RefreshNumber(selectedCount)
+    if resumeState.isFriendPriceShown == true then
+        
+        self:_SwitchFriendPriceState()
+    end
+end
 
 ShopTradeItemCtrl._TogglePurchaseState = HL.Method() << function(self)
     self.view.operationToggle.view.toggle.isOn = true
 end
 
-
-
 ShopTradeItemCtrl._ToggleSellState = HL.Method() << function(self)
     self.view.operationToggle.view.toggle.isOn = false
 end
-
-
 
 ShopTradeItemCtrl._SwitchPurchaseState = HL.Method() << function(self)
     if self.m_curState == PANEL_STATE.Purchase  then
@@ -373,8 +320,6 @@ ShopTradeItemCtrl._SwitchPurchaseState = HL.Method() << function(self)
     self:_RefreshLimitCount()
 end
 
-
-
 ShopTradeItemCtrl._RefreshLimitCount = HL.Method() << function(self)
     local diff = DomainShopUtils.getNextServerRefreshTimeLeftSecByType(GEnums.ShopFrequencyLimitType.Daily)
     if diff >= 0 then
@@ -399,8 +344,6 @@ ShopTradeItemCtrl._RefreshLimitCount = HL.Method() << function(self)
         self.view.supplementPurchaseInfo.gameObject:SetActive(false)
     end
 end
-
-
 
 ShopTradeItemCtrl._SwitchSellState = HL.Method() << function(self)
     if self.m_curState == PANEL_STATE.Sell  then
@@ -471,15 +414,10 @@ ShopTradeItemCtrl._SwitchSellState = HL.Method() << function(self)
     end
 end
 
-
-
-
 ShopTradeItemCtrl._SetPriceChartLinePos = HL.Method(HL.Number) << function(self, baseNormalized)
     local basePosition = baseNormalized * (math.abs(PRICE_CHART_LINE_MAX) + math.abs(PRICE_CHART_LINE_MIN)) / 2 + (PRICE_CHART_LINE_MAX + PRICE_CHART_LINE_MIN) / 2
     self.view.priceChartLine.anchoredPosition = Vector2(self.view.priceChartLine.anchoredPosition.x, basePosition)
 end
-
-
 
 
 ShopTradeItemCtrl._SwitchFriendPriceState = HL.Method() << function(self)
@@ -523,8 +461,6 @@ ShopTradeItemCtrl._SwitchFriendPriceState = HL.Method() << function(self)
     end
 end
 
-
-
 ShopTradeItemCtrl._UpdateFriend = HL.Method() << function(self)
     if self.m_friendDataIsInit then
         return
@@ -558,11 +494,12 @@ ShopTradeItemCtrl._UpdateFriend = HL.Method() << function(self)
     end
 end
 
-
-
 ShopTradeItemCtrl._UpdateFriendGoodsList = HL.Method() << function(self)
+    
+    if not self.m_friendList then
+        return
+    end
     self.m_getFriendPriceCellFunc = UIUtils.genCachedCellFunction(self.view.friendPriceScrollList)
-    local friendCount = self.m_shopSystem:GetGoodsFriendCount(self.m_args.goodsData.goodsId)
 
     local friendList = {}
     for i, v in ipairs(self.m_friendList) do
@@ -577,6 +514,7 @@ ShopTradeItemCtrl._UpdateFriendGoodsList = HL.Method() << function(self)
     end
     table.sort(friendList, Utils.genSortFunction({"curPrice"}, false))
     self.m_friendList = friendList
+    local friendCount = #self.m_friendList
     local ids = {}
     for i, info in pairs(self.m_friendList) do
         local roleId = info.friendInfo.roleId
@@ -593,10 +531,6 @@ ShopTradeItemCtrl._UpdateFriendGoodsList = HL.Method() << function(self)
     self.view.friendPriceScrollList.gameObject:SetActive(friendCount ~= 0)
     self.view.loadingNode.gameObject:SetActive(false)
 end
-
-
-
-
 
 ShopTradeItemCtrl._InitSingleFriendItem = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local fiendData = self.m_friendList[index]
@@ -690,9 +624,6 @@ ShopTradeItemCtrl._InitSingleFriendItem = HL.Method(HL.Table, HL.Number) << func
     end
 end
 
-
-
-
 ShopTradeItemCtrl.OnFriendCellNaviTargetChange = HL.Method(HL.Opt(HL.Table)) << function(self, cell)
     if cell ~= nil then
         self.m_nowNaviFriendCell = cell
@@ -701,11 +632,6 @@ ShopTradeItemCtrl.OnFriendCellNaviTargetChange = HL.Method(HL.Opt(HL.Table)) << 
         InputManagerInst:ToggleBinding(self.m_friendDetailKey, false)
     end
 end
-
-
-
-
-
 
 ShopTradeItemCtrl._InitSinglePriceItem = HL.Method(HL.Table, HL.Number, HL.Number)
     << function(self, cell, index, baseNormalized)
@@ -728,8 +654,6 @@ ShopTradeItemCtrl._InitSinglePriceItem = HL.Method(HL.Table, HL.Number, HL.Numbe
     end
 end
 
-
-
 ShopTradeItemCtrl._OnClickSellConfirm = HL.Method() << function(self)
     if self.m_waitSellRsp then
         return
@@ -747,8 +671,6 @@ ShopTradeItemCtrl._OnClickSellConfirm = HL.Method() << function(self)
         self.m_waitSellRsp = true
     end
 end
-
-
 
 
 ShopTradeItemCtrl._OnClickBuyConfirm = HL.Method() << function(self)
@@ -784,10 +706,6 @@ ShopTradeItemCtrl._OnClickBuyConfirm = HL.Method() << function(self)
     end
     self.m_shopSystem:BuyGoods(info.shopId, info.goodsId, buyCount)
 end
-
-
-
-
 
 ShopTradeItemCtrl._NormalizePriceValues = HL.Method(HL.Number, HL.Any)
                                             .Return(HL.Table, HL.Number, HL.Number)
@@ -851,8 +769,6 @@ ShopTradeItemCtrl._NormalizePriceValues = HL.Method(HL.Number, HL.Any)
     return result, basePosition, avgValue
 end
 
-
-
 ShopTradeItemCtrl._GetItemBuyItems = HL.Method().Return(HL.Table) << function(self)
     local goodsTableData = Tables.shopGoodsTable:GetValue(self.m_args.goodsData.goodsTemplateId)
     local allDisplayItems = UIUtils.getRewardItems(goodsTableData.rewardId)
@@ -883,9 +799,6 @@ ShopTradeItemCtrl._GetItemBuyItems = HL.Method().Return(HL.Table) << function(se
     return items
 end
 
-
-
-
 ShopTradeItemCtrl._OnBuyItemSucc = HL.Method(HL.Any) << function(self, arg)
     local items = self:_GetItemBuyItems()
     Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
@@ -898,9 +811,6 @@ ShopTradeItemCtrl._OnBuyItemSucc = HL.Method(HL.Any) << function(self, arg)
     })
     self:Close()
 end
-
-
-
 
 ShopTradeItemCtrl._OnSellItemSucc = HL.Method(HL.Any) << function(self, arg)
     self.m_waitSellRsp = false
@@ -920,6 +830,37 @@ ShopTradeItemCtrl._OnSellItemSucc = HL.Method(HL.Any) << function(self, arg)
         end,
     })
     self:Close()
+end
+
+ShopTradeItemCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local goodsData = self.m_args and self.m_args.goodsData or nil
+    if not goodsData then
+        return nil
+    end
+    
+    local latestGoodsData
+    if goodsData.roleId then
+        latestGoodsData = self.m_shopSystem:GetFriendGoodsData(goodsData.goodsId, goodsData.roleId)
+    else
+        latestGoodsData = self.m_shopSystem:GetShopGoodsData(goodsData.shopId, goodsData.goodsId)
+    end
+    if latestGoodsData == nil then
+        latestGoodsData = goodsData
+    end
+    local tradeState = self.m_curState == PANEL_STATE.FriendPrice and self.m_lastState or self.m_curState
+    if tradeState ~= PANEL_STATE.Sell then
+        tradeState = PANEL_STATE.Purchase
+    end
+    return {
+        goodsData = latestGoodsData,
+        isSellOnly = self.m_args.isSellOnly,
+        isDefaultSell = self.m_args.isDefaultSell,
+        resumeState = {
+            tradeState = tradeState,
+            selectedCount = self.view.numberSelector.curNumber,
+            isFriendPriceShown = self.m_curState == PANEL_STATE.FriendPrice,
+        }
+    }
 end
 
 

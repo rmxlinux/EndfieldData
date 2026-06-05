@@ -27,6 +27,8 @@ local PANEL_ID = PanelId.WeaponExhibitOverview
 
 
 
+
+
 WeaponExhibitOverviewCtrl = HL.Class('WeaponExhibitOverviewCtrl', uiCtrl.UICtrl)
 
 
@@ -37,6 +39,9 @@ WeaponExhibitOverviewCtrl = HL.Class('WeaponExhibitOverviewCtrl', uiCtrl.UICtrl)
 WeaponExhibitOverviewCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ITEM_LOCKED_STATE_CHANGED] = 'OnItemLockedStateChanged',
 }
+
+
+WeaponExhibitOverviewCtrl.m_arg = HL.Field(HL.Table)
 
 
 WeaponExhibitOverviewCtrl.m_weaponInfo = HL.Field(HL.Table)
@@ -57,10 +62,10 @@ end
 
 
 WeaponExhibitOverviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg
     local weaponInfo = arg.weaponInfo
     local phase = arg.phase
 
-    self.m_phase = phase
     self.m_weaponInfo = weaponInfo
 
     self.view.noUINode.gameObject:SetActive(false)
@@ -74,6 +79,10 @@ WeaponExhibitOverviewCtrl.OnShow = HL.Override() << function(self)
     local weaponInfo = self.m_weaponInfo
 
     self:_RefreshOverviewPanel(weaponInfo.weaponInstId, weaponInfo.weaponTemplateId)
+
+    if self.m_arg.stateArg and self.m_arg.stateArg.isBtnFullSkillClicked then
+        self.view.btnFullSkill.onClick:Invoke()
+    end
 end
 
 
@@ -395,6 +404,15 @@ WeaponExhibitOverviewCtrl._InitController = HL.Method() << function(self)
         self.view.controllerFocusHintNode.gameObject:SetActive(not isFocused)
     end)
     UIUtils.bindHyperlinkPopup(self, "WeaponSkill", self.view.mainInputGroup.groupId)
+end
+
+
+
+WeaponExhibitOverviewCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local arg = {
+        isBtnFullSkillClicked = UIManager:IsShow(PanelId.WeaponSkillDetail),
+    }
+    return arg
 end
 
 HL.Commit(WeaponExhibitOverviewCtrl)

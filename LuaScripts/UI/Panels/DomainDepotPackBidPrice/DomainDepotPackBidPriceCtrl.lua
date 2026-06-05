@@ -11,6 +11,7 @@ local PANEL_ID = PanelId.DomainDepotPackBidPrice
 
 
 
+
 DomainDepotPackBidPriceCtrl = HL.Class('DomainDepotPackBidPriceCtrl', uiCtrl.UICtrl)
 
 
@@ -84,6 +85,15 @@ DomainDepotPackBidPriceCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     end)
 
     self:_InitBidPriceController()
+end
+
+
+
+
+DomainDepotPackBidPriceCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    return {
+        domainDepotId = self.m_domainDepotId,
+    }
 end
 
 

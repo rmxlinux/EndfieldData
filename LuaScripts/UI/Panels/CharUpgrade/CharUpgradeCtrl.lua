@@ -48,6 +48,8 @@ local PANEL_ID = PanelId.CharUpgrade
 
 
 
+
+
 CharUpgradeCtrl = HL.Class('CharUpgradeCtrl', uiCtrl.UICtrl)
 
 
@@ -108,6 +110,9 @@ CharUpgradeCtrl.m_itemIdToCellIndex = HL.Field(HL.Table)
 CharUpgradeCtrl.m_levelUpCor = HL.Field(HL.Thread)
 
 
+CharUpgradeCtrl.m_arg = HL.Field(HL.Table)
+
+
 CharUpgradeCtrl.m_sliderTween = HL.Field(HL.Any)
 
 
@@ -128,6 +133,7 @@ CharUpgradeCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 CharUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg
     local initCharInfo = arg.initCharInfo or CharInfoUtils.getLeaderCharInfo()
 
     self.m_charInfo = initCharInfo
@@ -684,7 +690,12 @@ CharUpgradeCtrl._InitUpgradeCache = HL.Method(HL.Table) << function(self, charIn
         startGold = startGold + levelUpData[levelIndex].gold
     end
 
-    self.m_upgradeItemCostDict = {}
+    local upgradeItemCostDic
+    if self.m_arg.stateArg and self.m_arg.stateArg.upgradeItemCostDict then
+        upgradeItemCostDic = self.m_arg.stateArg.upgradeItemCostDict
+        self.m_arg.stateArg.upgradeItemCostDict = nil
+    end
+    self.m_upgradeItemCostDict = upgradeItemCostDic or {}
     self.m_level2RequireGoldDict = level2RequireGoldDict
     self.m_level2RequireExpDict = level2RequireExpDict
     self.m_expCardInfoList = self:_GenerateExpCardInfoList(charInstId)
@@ -866,5 +877,13 @@ CharUpgradeCtrl._UpdateAddAndSubBtnState = HL.Method() << function(self)
 end
 
 
+
+
+
+CharUpgradeCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local arg = {}
+    arg.upgradeItemCostDict = self.m_upgradeItemCostDict
+    return arg
+end
 
 HL.Commit(CharUpgradeCtrl)

@@ -13,6 +13,7 @@ local NetClientInst = GameInstance.netClientManager
 
 
 
+
 UIDPanelCtrl = HL.Class('UIDPanelCtrl', uiCtrl.UICtrl)
 
 
@@ -52,13 +53,18 @@ UIDPanelCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end)
 
-    self:_ProcessPingCfg()
-    self.m_updatePingValueCor = self:_StartCoroutine(function()
-        while true do
-            self:_UpdatePingInfo()
-            coroutine.wait(UIConst.COMMON_UI_TIME_UPDATE_INTERVAL)
-        end
-    end)
+    if self:_EnablePing() then
+        self:_ProcessPingCfg()
+        self.view.pingCon.gameObject:SetActive(true)
+        self.m_updatePingValueCor = self:_StartCoroutine(function()
+            while true do
+                self:_UpdatePingInfo()
+                coroutine.wait(UIConst.COMMON_UI_TIME_UPDATE_INTERVAL)
+            end
+        end)
+    else
+        self.view.pingCon.gameObject:SetActive(false)
+    end
 end
 
 
@@ -67,6 +73,15 @@ UIDPanelCtrl.OnClose = HL.Override() << function(self)
     if self.m_updatePingValueCor then
         self.m_updatePingValueCor = self:_ClearCoroutine(self.m_updatePingValueCor)
     end
+end
+
+
+
+UIDPanelCtrl._EnablePing = HL.Method().Return(HL.Boolean) << function(self)
+    if CS.Beyond.CloudGame.enabled then
+        return false 
+    end
+    return true
 end
 
 

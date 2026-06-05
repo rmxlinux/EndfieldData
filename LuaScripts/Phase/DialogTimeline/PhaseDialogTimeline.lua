@@ -118,6 +118,7 @@ end
 
 
 PhaseDialogTimeline._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    Notify(MessageConst.ON_DIALOG_PHASE_BACK_TO_TOP)
 end
 
 

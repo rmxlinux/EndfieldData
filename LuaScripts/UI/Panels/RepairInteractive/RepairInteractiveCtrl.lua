@@ -24,6 +24,7 @@ local PANEL_ID = PanelId.RepairInteractive
 
 
 
+
 RepairInteractiveCtrl = HL.Class('RepairInteractiveCtrl', uiCtrl.UICtrl)
 
 
@@ -382,7 +383,23 @@ end
 
 
 
+RepairInteractiveCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    if self.m_info == nil then
+        return nil
+    end
+    return {
+        unlockType = self.m_unlockType,
+        lockData = self.m_info.lockData,
+        callback = self.m_info.callback,
+    }
+end
+
+
+
 RepairInteractiveCtrl.OnClose = HL.Override() << function(self)
+    if InputManagerInst.inChangingInputDevice then
+        return
+    end
     if self.m_unlockType == GEnums.InteractiveUnlockType.Submit then
         if self.m_info ~= nil and self.m_info.callback ~= nil then
             

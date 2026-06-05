@@ -51,6 +51,7 @@ local PERMANENT_GOODS_CELL_REFRESH_WAIT_TIME = 0.05
 
 
 
+
 ShopWeaponCtrl = HL.Class('ShopWeaponCtrl', uiCtrl.UICtrl)
 
 
@@ -108,6 +109,10 @@ ShopWeaponCtrl.m_weeklyTimer = HL.Field(HL.Any)
 
 
 
+ShopWeaponCtrl.m_pendingAfterTopOrdered = HL.Field(HL.Table)
+
+
+
 
 
 
@@ -131,8 +136,6 @@ ShopWeaponCtrl.m_normalGoods = HL.Field(HL.Any)
 
 
 ShopWeaponCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_phase = arg.phase
-
     self:_InitShortCut()
 
     self.m_shopSystem = GameInstance.player.shopSystem
@@ -980,6 +983,31 @@ end
 
 
 
+ShopWeaponCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, arg)
+    
+    local isOpen, shopDetailCtrl = UIManager:IsOpen(PanelId.ShopDetail)
+    if isOpen then
+        local info = shopDetailCtrl:GetInfo()
+        arg.goodsId = info.goodsTemplateId
+    end
+end
+
+
+
+ShopWeaponCtrl.OnAfterCategoryTopOrdered = HL.Method() << function(self)
+    if not self.m_pendingAfterTopOrdered then
+        return
+    end
+    local list = self.m_pendingAfterTopOrdered
+    self.m_pendingAfterTopOrdered = nil
+    for _, action in ipairs(list) do
+        action()
+    end
+end
+
+
+
+
 
 
 
@@ -1005,13 +1033,15 @@ ShopWeaponCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
 
     local isBox = string.isEmpty(goods.rewardId)
     if isBox then
+        
         PhaseManager:OpenPhase(PhaseId.GachaWeaponPool, {goodsData = goodsData}, nil, true)
     else
-        self:_StartCoroutine(function()
+        
+        self.m_pendingAfterTopOrdered = self.m_pendingAfterTopOrdered or {}
+        table.insert(self.m_pendingAfterTopOrdered, function()
             UIManager:Open(PanelId.ShopDetail, goodsData)
         end)
     end
-    return
 end
 
 

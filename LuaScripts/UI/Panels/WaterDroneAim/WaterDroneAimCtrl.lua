@@ -34,6 +34,7 @@ local PANEL_ID = PanelId.WaterDroneAim
 
 
 
+
 WaterDroneAimCtrl = HL.Class('WaterDroneAimCtrl', uiCtrl.UICtrl)
 
 
@@ -46,20 +47,25 @@ WaterDroneAimCtrl.m_waterDroneBar = HL.Field(HL.Table)
 WaterDroneAimCtrl.m_controllerTriggerSettingHandlerId = HL.Field(HL.Number) << -1
 
 
+WaterDroneAimCtrl.m_isAimHitPointDifferent = HL.Field(HL.Boolean) << false
+
+
 
 
 
 
 WaterDroneAimCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SYNC_WATER_DRONE_AIM] = '_SyncWaterDroneAim',
+    [MessageConst.SYNC_WATER_DRONE_REAL_HIT_POINT] = '_SyncWaterDroneRealHitPoint',
     [MessageConst.HIDE_WATER_DRONE_AIM] = '_OnHideWaterDroneAim',
     [MessageConst.SYNC_LIQUID_STATE] = '_SyncLiquidState',
     [MessageConst.SYNC_REMAINING_LIQUID_CAPACITY] = '_SyncRemainingLiquidCapacity',
     [MessageConst.SYNC_SPRAYING] = '_SyncSpraying',
     [MessageConst.WATER_DRONE_AIM_HAS_LIQUID_STATE] = '_SyncHasLiquidState',
     [MessageConst.WATER_DRONE_LIQUID_STATE_EMPTY] = '_SetLiquidStateEmpty',
-    [MessageConst.ON_CONFIRM_CHANGE_INPUT_DEVICE_TYPE] = '_OnChangeInputDeviceType',
     [MessageConst.SYNC_WATER_DRONE_SHOOT_BUT_BANNED_HINT_LIQUID] = '_SyncWaterDroneShootButBannedHintLiquid',
+
+    [MessageConst.ON_CHANGE_INPUT_DEVICE_TYPE_FINISHED] = '_OnChangeInputDeviceTypeFinished',
 }
 
 
@@ -95,16 +101,19 @@ WaterDroneAimCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
     
     self:BindNormalAttackInputEvent()
-    
-    if DeviceInfo.usingTouch then
-        self.view.sprayBtn.onPressStart:AddListener(function()
-            self:StartPressAttackBtn()
-        end)
+    self.view.sprayBtn.onPressStart:AddListener(function()
+        if not DeviceInfo.usingTouch then
+            return
+        end
+        self:StartPressAttackBtn()
+    end)
 
-        self.view.sprayBtn.onPressEnd:AddListener(function()
-            self:ReleaseNormalAttackBtn()
-        end)
-    end
+    self.view.sprayBtn.onPressEnd:AddListener(function()
+        if not DeviceInfo.usingTouch then
+            return
+        end
+        self:ReleaseNormalAttackBtn()
+    end)
 
     self.m_waterDroneBar = Utils.wrapLuaNode(CSUtils.CreateObject(self.view.config.WATER_DRONE_BAR, UIManager.worldObjectRoot))
 
@@ -156,9 +165,7 @@ WaterDroneAimCtrl.OnClose = HL.Override() << function(self)
     end
     self.m_waterDroneBar = nil
     Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {false, "WaterDrone"})
-    if DeviceInfo.usingController then
-        GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "WaterDrone", false)
-    end
+    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "WaterDrone", false)
     self:_ClearControllerTriggerSetting()
 end
 
@@ -173,8 +180,10 @@ WaterDroneAimCtrl.OnShow = HL.Override() << function(self)
 
     if self:CanSwitchLiquid() then
         self.view.switchLiquidBtn.gameObject:SetActive(true)
+        self.view.switchKeyHint.gameObject:SetActive(true)
     else
         self.view.switchLiquidBtn.gameObject:SetActive(false)
+        self.view.switchKeyHint.gameObject:SetActive(false)
     end
 
     
@@ -233,6 +242,27 @@ end
 
 
 
+
+WaterDroneAimCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Table) << function(self, args)
+    if not self:IsShow() then
+        return
+    end
+
+    local inputType = args.inputType
+    Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {true, "WaterDrone"})
+    self:_ClearControllerTriggerSetting()
+    if inputType == DeviceInfo.InputType.Controller then
+        GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "WaterDrone", true)
+        if self.m_hasLiquid then
+            self:_AddControllerTriggerSetting()
+        end
+    else
+        GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "WaterDrone", false)
+    end
+end
+
+
+
 WaterDroneAimCtrl.StartPressAttackBtn = HL.Method() << function(self)
     self:_ExecuteCustomAbility()
     
@@ -264,9 +294,61 @@ WaterDroneAimCtrl._OnHideWaterDroneAim = HL.Method() << function(self)
     self:Hide()
     Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {false, "WaterDrone"})
     Notify(MessageConst.DISABLE_BATTLE_INDICATOR_CONTROLLER, {false, "WaterDrone"})
-    if DeviceInfo.usingController then
-        GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "WaterDrone", false)
+    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "WaterDrone", false)
+end
+
+
+
+WaterDroneAimCtrl._RefreshCurActiveAimAlpha = HL.Method() << function(self)
+    if not self.m_curActiveAim then
+        return
     end
+    local canvasGroup = self.m_curActiveAim.transform:GetComponent("CanvasGroup")
+    if canvasGroup then
+        canvasGroup.alpha = self.m_isAimHitPointDifferent and self.view.config.CROSSHAIR_ALPHA or 1
+    end
+end
+
+
+
+
+WaterDroneAimCtrl._SyncWaterDroneRealHitPoint = HL.Method(HL.Any) << function(self, args)
+    local isDifferent, realHitPoint = unpack(args)
+    self.m_isAimHitPointDifferent = isDifferent == true
+    local subCrosshair = self.view.subCrosshair.gameObject
+    if realHitPoint then
+        local screenPos = CameraManager.mainCamera:WorldToScreenPoint(realHitPoint)
+        if screenPos.z < 0 then
+            screenPos.x = -screenPos.x
+            screenPos.y = -screenPos.y
+        end
+
+        local halfW = Screen.width * 0.5
+        local halfH = Screen.height * 0.5
+        local dx = screenPos.x - halfW
+        local dy = screenPos.y - halfH
+        local distSq = dx * dx + dy * dy
+        local halfDiagSq = halfW * halfW + halfH * halfH
+        local normalizedDistSq = halfDiagSq > 0 and distSq / halfDiagSq or 0
+        local normalizedDist = math.sqrt(normalizedDistSq)
+        local scaleValue = 1
+        local subCrosshairCurve = self.view.config.SUB_CROSSHAIR_CURVE
+        if subCrosshairCurve then
+            scaleValue = subCrosshairCurve:Evaluate(normalizedDist)
+        end
+        self.view.subCrosshair.localScale = Vector3(scaleValue, scaleValue, 1)
+
+        
+        local uiPos = UIUtils.screenPointToUI(Vector2(screenPos.x, screenPos.y), self.uiCamera, self.view.transform)
+        self.view.subCrosshair.anchoredPosition = uiPos
+    end
+
+    if self.m_isAimHitPointDifferent then
+        subCrosshair:SetActive(true)
+    else
+        subCrosshair:SetActive(false)
+    end
+    self:_RefreshCurActiveAimAlpha()
 end
 
 
@@ -304,8 +386,8 @@ WaterDroneAimCtrl._SyncWaterDroneAim = HL.Method(HL.Any) << function(self, args)
     if self.m_curActiveAim then
         self.m_curActiveAim:SetActive(true)
     end
+    self:_RefreshCurActiveAimAlpha()
 end
-
 
 
 
@@ -349,6 +431,16 @@ end
 WaterDroneAimCtrl._SyncSpraying = HL.Method(HL.Table) << function(self, args)
     local isSpraying = unpack(args)
     self.view.sprayingText.gameObject:SetActive(isSpraying)
+    
+    if DeviceInfo.usingController then
+        if isSpraying then
+            if self.m_hasLiquid then
+                self:_AddControllerTriggerSetting()
+            end
+        else
+            self:_ClearControllerTriggerSetting()
+        end
+    end
 end
 
 
@@ -381,7 +473,6 @@ end
 
 
 
-
 WaterDroneAimCtrl._SetLiquidStateEmpty = HL.Method() << function(self)
     self.view.liquidState:SetState("EmptyNode")
 end
@@ -394,14 +485,6 @@ WaterDroneAimCtrl._SyncWaterDroneShootButBannedHintLiquid = HL.Method(HL.Table) 
     
     self.view.shootButBannedStateController:SetState(liquidId)
     
-end
-
-
-
-
-WaterDroneAimCtrl._OnChangeInputDeviceType = HL.Method(HL.Any) << function(self, args)
-    local customAbilityCom = GameUtil.mainCharacter.customAbilityCom
-    customAbilityCom:TryEndAbility_ByChangeInputDeviceType()
 end
 
 

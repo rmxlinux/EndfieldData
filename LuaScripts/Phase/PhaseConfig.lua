@@ -22,6 +22,12 @@ config = {
         systemId = "system_character",
         disableEffectLodControl = true,
         haveSceneCamera = true,
+        checkCanOpen = function(arg)
+            if GameInstance.player.generalAbilitySystem.isRPressed then
+                return false
+            end
+            return true
+        end,
     },
     
     CharFormation = {
@@ -78,6 +84,9 @@ config = {
         fov = 40,
         unlockSystemType = GEnums.UnlockSystemType.Watch,
         checkCanOpen = function(arg)
+            if GameInstance.player.simulationTrainingSystem.banAllAction then
+                return false, Language.LUA_GAME_MODE_FORBID_FACTORY_WATCH
+            end
             return not Utils.isInThrowMode()
         end,
     },
@@ -154,6 +163,9 @@ config = {
         panels = {},
         unlockSystemType = GEnums.UnlockSystemType.Map,
         checkCanOpen = function(arg)
+            if GameInstance.player.simulationTrainingSystem.banAllAction then
+                return false, Language.LUA_GAME_MODE_FORBID_FACTORY_WATCH
+            end
             return MapUtils.checkCanOpenMapAndParseArgs(arg)
         end,
     },
@@ -164,6 +176,9 @@ config = {
         fov = 40,
         unlockSystemType = GEnums.UnlockSystemType.Map,
         checkCanOpen = function(arg)
+            if GameInstance.player.simulationTrainingSystem.banAllAction then
+                return false, Language.LUA_GAME_MODE_FORBID_FACTORY_WATCH
+            end
             if Utils.isCurSquadAllDead() then
                 
                 return false, Language.LUA_GAME_MODE_FORBID_FACTORY_WATCH
@@ -243,7 +258,7 @@ config = {
         panels = {
             PanelId.Shop,
         },
-        isSimpleUIPhase = true,
+        isSimpleUIPhase = false,
     },
     
     ShopTrade = {
@@ -265,7 +280,7 @@ config = {
             local domainId = arg.domainId
             return DomainPOIUtils.checkCanOpenDomainShop(domainId), Language.LUA_DOMAIN_DEVELOPMENT_POI_UNLOCK_CLICK_TOAST
         end,
-        isSimpleUIPhase = true,
+        isSimpleUIPhase = false,
     },
     
     ShopCreditPointsPopUp = {
@@ -282,6 +297,7 @@ config = {
             PanelId.GameSetting,
         },
         isSimpleUIPhase = false,
+        redDotName = "GameSetting",
     },
     
     FacMachine = {
@@ -456,15 +472,6 @@ config = {
             PanelId.SettlementChar,
         },
         systemId = "system_settlement",
-        isSimpleUIPhase = true,
-    },
-    
-    SettlementSwitchRegionPopup = {
-
-        panels = {
-            PanelId.SettlementSwitchRegionPopup,
-        },
-        systemId = "system_domain_development",
         isSimpleUIPhase = true,
     },
     
@@ -997,6 +1004,28 @@ config = {
         isSimpleUIPhase = false,
     },
     
+    SimulationTraining = {
+        panels = {
+            PanelId.SimulationTraining,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    SimulationTrainingExplain = {
+        panels = {
+            PanelId.SimulationTrainingExplain,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    SimulationTrainingTask = {
+
+        panels = {
+           PanelId.SimulationTrainingTask,
+        },
+        isSimpleUIPhase = true,
+    },
+    
     CharacterSummon = {
 
         panels = {
@@ -1084,12 +1113,22 @@ config = {
         redDotName = "DomainEntry",
         systemId = "system_domain_development",
         checkCanOpen = function(args)
+            if GameInstance.player.simulationTrainingSystem.banAllAction then
+                return false, Language.LUA_GAME_MODE_FORBID_FACTORY_WATCH
+            end
             local domainId = args and args.domainId or Utils.getCurDomainId()
             
             local domainDevelopmentSystem = GameInstance.player.domainDevelopmentSystem
             local hasData = domainDevelopmentSystem.domainDevDataDic:TryGetValue(domainId)
             return hasData
         end,
+    },
+    
+    DomainPOIOverview = {
+        panels = {
+            PanelId.DomainPOIOverview,
+        },
+        isSimpleUIPhase = true,
     },
     
     DomainItemTransfer = {
@@ -1439,5 +1478,66 @@ config = {
         },
         isSimpleUIPhase = true,
     },
+    ContingencySelectTag = {
+
+        panels = {
+           PanelId.ContingencySelectTag,
+        },
+        isSimpleUIPhase = true,
+    },
+    ContingencyContractTask = {
+
+        panels = {
+           PanelId.ContingencyContractTask,
+        },
+        isSimpleUIPhase = true,
+    },
+    ContingencyContractDetailsPopup = {
+
+        panels = {
+            PanelId.ContingencyContractDetailsPopup,
+        },
+        isSimpleUIPhase = false,
+    },
+    StaminaPopUp = {
+        panels = {
+            PanelId.StaminaPopUp,
+        },
+        isSimpleUIPhase = true,
+    },
+    Dialog2D = {
+        panels = {
+           PanelId.Dialog2D,
+        },
+        isSimpleUIPhase = true,
+    },
+    FacReservePowerPopup = {
+
+        panels = {
+            PanelId.FacReservePowerPopup
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    FriendHeadSelectedPopUp = {
+
+        panels = {
+            PanelId.FriendHeadSelectedPopUp
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    GemWishlist = {
+
+        panels = {
+           PanelId.GemWishlist,
+        },
+        isSimpleUIPhase = true,
+        unlockSystemType = GEnums.UnlockSystemType.WeaponWishList,
+    },
+    
+    
+
     
 }

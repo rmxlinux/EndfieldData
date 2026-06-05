@@ -53,7 +53,7 @@ end
 AdventureBlackboxCtrl.OnShow = HL.Override() << function(self)
     local firstCell = self.m_genTabCells:Get(1)
     if firstCell then
-        InputManagerInst.controllerNaviManager:SetTarget(firstCell.view.naviDecorator)
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.node, firstCell.view.naviDecorator)
     end
 end
 
@@ -145,7 +145,7 @@ AdventureBlackboxCtrl._RefreshAllUI = HL.Method() << function(self)
 
     local firstCell = self.m_genTabCells:Get(1)
     if firstCell then
-        InputManagerInst.controllerNaviManager:SetTarget(firstCell.view.naviDecorator)
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.node, firstCell.view.naviDecorator)
     end
 end
 

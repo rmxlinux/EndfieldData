@@ -31,6 +31,9 @@ local PHASE_ID = PhaseId.PRTSStoryCollDetail
 
 
 
+
+
+
 PRTSStoryCollDetailCtrl = HL.Class('PRTSStoryCollDetailCtrl', uiCtrl.UICtrl)
 
 
@@ -98,8 +101,12 @@ PRTSStoryCollDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_args = arg
     self:_InitUI()
     self:_InitData(arg)
+    self:_ApplyResumeState(arg and arg.resumeState or nil)
     self:_UpdateData()
     self:_RefreshAllUI()
+    if self.m_args then
+        self.m_args.resumeState = nil
+    end
 
     self:_SendEventLog(true)
 end
@@ -167,6 +174,23 @@ end
 
 
 
+PRTSStoryCollDetailCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.m_args and lume.deepCopy(self.m_args) or {}
+    arg.resumeState = self:_CollectResumeState()
+    return arg
+end
+
+
+
+
+
+PRTSStoryCollDetailCtrl._CollectResumeState = HL.Method().Return(HL.Table) << function(self)
+    return {
+        curPageIndex = self.m_curPageIndex,
+        curItemIndex = self.m_curItemIndex,
+    }
+end
+
 
 
 
@@ -203,6 +227,37 @@ PRTSStoryCollDetailCtrl._InitData = HL.Method(HL.Table) << function(self, arg)
         self.m_info = {
             pageInfos = self:_CreateItemInfos(self.m_idList),
         }
+    end
+    self.m_curPageIndex = lume.clamp(self.m_curPageIndex, 1, math.max(#self.m_info.pageInfos, 1))
+    if self.m_isFirstLvId then
+        local curPageInfo = self.m_info.pageInfos[self.m_curPageIndex]
+        local itemCount = curPageInfo and #curPageInfo.itemInfos or 1
+        self.m_curItemIndex = lume.clamp(self.m_curItemIndex, 1, math.max(itemCount, 1))
+    else
+        self.m_curItemIndex = 1
+    end
+end
+
+
+
+
+PRTSStoryCollDetailCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState then
+        return
+    end
+    if resumeState.curPageIndex ~= nil then
+        self.m_curPageIndex = resumeState.curPageIndex
+    end
+    if resumeState.curItemIndex ~= nil then
+        self.m_curItemIndex = resumeState.curItemIndex
+    end
+    self.m_curPageIndex = lume.clamp(self.m_curPageIndex, 1, math.max(#self.m_info.pageInfos, 1))
+    if self.m_isFirstLvId then
+        local curPageInfo = self.m_info.pageInfos[self.m_curPageIndex]
+        local itemCount = curPageInfo and #curPageInfo.itemInfos or 1
+        self.m_curItemIndex = lume.clamp(self.m_curItemIndex, 1, math.max(itemCount, 1))
+    else
+        self.m_curItemIndex = 1
     end
 end
 

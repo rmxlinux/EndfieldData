@@ -20,6 +20,8 @@ local PANEL_ID = PanelId.CharInfoPhoto
 
 
 
+
+
 CharInfoPhotoCtrl = HL.Class('CharInfoPhotoCtrl', uiCtrl.UICtrl)
 
 
@@ -40,6 +42,7 @@ CharInfoPhotoCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
+
 CharInfoPhotoCtrl.m_arg = HL.Field(HL.Table)
 
 
@@ -50,6 +53,9 @@ CharInfoPhotoCtrl.m_pictureIds = HL.Field(HL.Table)
 
 
 CharInfoPhotoCtrl.m_curPicIndex = HL.Field(HL.Number) << 0
+
+
+CharInfoPhotoCtrl.m_curPicId = HL.Field(HL.String) << ""
 
 
 CharInfoPhotoCtrl.m_charInfo = HL.Field(CS.Beyond.Gameplay.CharInfo)
@@ -115,6 +121,12 @@ CharInfoPhotoCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.touchPanel.enabled = hasMultiPhoto
     self.view.photoFlipNode.gameObject:SetActive(false)
     self:_RefreshPicture(pictureIndex)
+
+    if self.m_arg.isFlipped then
+        self.view.animWrapper:SkipInAnimation()
+        self:Flip(true)
+        self.view.animWrapper:ClearTween(true)
+    end
 end
 
 
@@ -211,6 +223,7 @@ CharInfoPhotoCtrl._RefreshPicture = HL.Method(HL.Number) << function(self, pictu
         logger.error("立绘数据不存在:"..pictureId)
         return
     end
+    self.m_curPicId = pictureId
 
     if not GameInstance.player.charBag:IsCharPotentialPictureRead(pictureId) then
         GameInstance.player.charBag:SetCharPotentialPictureRead({ pictureId })
@@ -299,6 +312,17 @@ end
 
 CharInfoPhotoCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+end
+
+
+
+CharInfoPhotoCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    
+    local arg = lume.deepCopy(self.m_arg)
+    arg.pictureId = self.m_curPicId
+    arg.isFlipped = self.m_isFlipped
+    arg.onClose = nil
+    return arg
 end
 
 

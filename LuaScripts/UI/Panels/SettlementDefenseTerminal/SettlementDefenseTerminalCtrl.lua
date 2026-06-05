@@ -119,6 +119,10 @@ SettlementDefenseTerminalCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
         self.m_settlementId = arg
     end
 
+    if PhaseManager.isRecovering then
+        self.animationWrapper:SkipInAnimation()
+    end
+
     self:_InitController()
     self:_InitAction()
     self:_RefreshSafetyState()

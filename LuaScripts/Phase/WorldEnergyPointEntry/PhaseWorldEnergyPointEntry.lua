@@ -15,6 +15,7 @@ local PHASE_ID = PhaseId.WorldEnergyPointEntry
 
 
 
+
 PhaseWorldEnergyPointEntry = HL.Class('PhaseWorldEnergyPointEntry', phaseBase.PhaseBase)
 
 
@@ -103,6 +104,25 @@ end
 
 
 PhaseWorldEnergyPointEntry._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+end
+
+
+
+PhaseWorldEnergyPointEntry.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or nil
+    if arg == nil then
+        arg = {}
+    end
+
+    local panelItem = self.m_panel2Item and self.m_panel2Item[PanelId.WorldEnergyPointEntry]
+    local uiCtrl = panelItem and panelItem.uiCtrl
+    if uiCtrl and HL.TryGet(uiCtrl, "GetRecoverPopupStateArg") and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        
+        arg.popupState = uiCtrl:GetRecoverPopupStateArg()
+    else
+        arg.popupState = nil
+    end
+    return arg
 end
 
 

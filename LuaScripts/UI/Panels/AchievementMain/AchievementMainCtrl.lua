@@ -14,6 +14,13 @@ local PHASE_ID = PhaseId.AchievementMain
 
 
 
+
+
+
+
+
+
+
 AchievementMainCtrl = HL.Class('AchievementMainCtrl', uiCtrl.UICtrl)
 
 
@@ -49,9 +56,15 @@ local GOLD_LEVEL = 3
 
 
 AchievementMainCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    local achievementListState = arg and arg.achievementListState or nil
+    local achievementEditState = arg and arg.achievementEditState or nil
+    local commonIntroState = arg and arg.commonIntroState or nil
     self:_InitViews()
     self:_LoadData()
     self:_RenderView()
+    self:_TryRecoverAchievementList(achievementListState)
+    self:_TryRecoverAchievementEdit(achievementEditState)
+    self:_TryRecoverCommonIntro(commonIntroState)
 end
 
 
@@ -136,6 +149,107 @@ AchievementMainCtrl._RenderView = HL.Method() << function(self)
     self.view.sumSilverTxt.text = silverCount
     self.view.sumGoldTxt.text = goldCount
     self.view.medalGroup:InitMedalGroup(self.m_displayBundles, self.view.config.MEDAL_DISPLAY_SLOT_COUNT)
+end
+
+
+
+AchievementMainCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    return {
+        achievementListState = self:_GetAchievementListRecoverState(),
+        achievementEditState = self:_GetAchievementEditRecoverState(),
+        commonIntroState = self:_GetCommonIntroRecoverState(),
+    }
+end
+
+
+
+AchievementMainCtrl._GetAchievementListRecoverState = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return
+    end
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.AchievementList)
+    if not isOpen or not ctrl:IsShow() then
+        return
+    end
+    return ctrl:GetRecoverStateArg()
+end
+
+
+
+AchievementMainCtrl._GetAchievementEditRecoverState = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return
+    end
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.AchievementEdit)
+    if not isOpen or not ctrl:IsShow() then
+        return
+    end
+    return ctrl:GetRecoverStateArg()
+end
+
+
+
+AchievementMainCtrl._GetCommonIntroRecoverState = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return
+    end
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.CommonIntro)
+    if not isOpen or not ctrl:IsShow() then
+        return
+    end
+    local recoverState = ctrl:GetRecoverStateArg()
+    if recoverState == nil or recoverState.introId ~= "achievement" then
+        return
+    end
+    return recoverState
+end
+
+
+
+
+AchievementMainCtrl._TryRecoverAchievementList = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+    local isOpen = UIManager:IsOpen(PanelId.AchievementList)
+    if isOpen then
+        return
+    end
+    UIManager:Open(PanelId.AchievementList, recoverState)
+end
+
+
+
+
+AchievementMainCtrl._TryRecoverAchievementEdit = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+    local isOpen = UIManager:IsOpen(PanelId.AchievementEdit)
+    if isOpen then
+        return
+    end
+    UIManager:Open(PanelId.AchievementEdit, {
+        recoverState = recoverState,
+        onClose = function()
+            self.m_editSwitch.isShow = false
+        end
+    })
+    self.m_editSwitch.isShow = true
+end
+
+
+
+
+AchievementMainCtrl._TryRecoverCommonIntro = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+    local isOpen = UIManager:IsOpen(PanelId.CommonIntro)
+    if isOpen then
+        return
+    end
+    UIManager:Open(PanelId.CommonIntro, recoverState)
 end
 
 

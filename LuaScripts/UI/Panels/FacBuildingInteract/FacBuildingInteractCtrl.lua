@@ -111,6 +111,7 @@ local PANEL_ID = PanelId.FacBuildingInteract
 
 
 
+
 FacBuildingInteractCtrl = HL.Class('FacBuildingInteractCtrl', uiCtrl.UICtrl)
 
 local logisticInteractSampleOffsets = {
@@ -180,6 +181,7 @@ FacBuildingInteractCtrl.m_hoverInteractHighlightEffect = HL.Field(HL.Table)
 
 
 FacBuildingInteractCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    local isUsingCache = self.m_buildingInteractHighlightEffect ~= nil
     self.m_onClickScreen = function(eventData)
         self:_OnClickScreen(eventData)
     end
@@ -209,35 +211,8 @@ FacBuildingInteractCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnChangeDragBatchToggle(isOn)
     end)
 
-    do
-        local prefab = self.loader:LoadGameObject(FacConst.BUILDING_INTERACT_BUILDING_INDICATOR_PATH)
-        self.m_buildingInteractHighlightEffect = Utils.wrapLuaNode(self:_CreateWorldGameObject(prefab))
-        self.m_buildingInteractHighlightEffect.gameObject.name = "BuildingInteractHighlightEffect"
-        self.m_buildingInteractHighlightEffect.gameObject:SetActiveIfNecessary(false)
-    end
-
-    do
-        local prefab = self.loader:LoadGameObject(FacConst.BUILDING_INTERACT_NORMAL_INDICATOR_PATH)
-
-        self.m_subBuildingInteractHighlightEffect = Utils.wrapLuaNode(self:_CreateWorldGameObject(prefab))
-        self.m_subBuildingInteractHighlightEffect.gameObject.name = "SubBuildingInteractHighlightEffect"
-        self.m_subBuildingInteractHighlightEffect.gameObject:SetActiveIfNecessary(false)
-
-        self.m_logisticInteractHighlightEffect = Utils.wrapLuaNode(self:_CreateWorldGameObject(prefab))
-        self.m_logisticInteractHighlightEffect.gameObject.name = "LogisticInteractHighlightEffect"
-        self.m_logisticInteractHighlightEffect.gameObject:SetActiveIfNecessary(false)
-    end
-    do
-        local prefab = self.loader:LoadGameObject(FacConst.BUILDING_INTERACT_HOVER_INDICATOR_PATH)
-        self.m_hoverInteractHighlightEffect = Utils.wrapLuaNode(self:_CreateWorldGameObject(prefab))
-        self.m_hoverInteractHighlightEffect.gameObject.name = "HoverInteractHighlightEffect"
-        self.m_hoverInteractHighlightEffect.gameObject:SetActiveIfNecessary(false)
-    end
-    do
-        local prefab = self.loader:LoadGameObject(FacConst.BUILDING_INTERACT_PIPE_INDICATOR_PATH)
-        self.m_pipeInteractHighlightEffect = Utils.wrapLuaNode(self:_CreateWorldGameObject(prefab))
-        self.m_pipeInteractHighlightEffect.gameObject.name = "PipeInteractHighlightEffect"
-        self.m_pipeInteractHighlightEffect.gameObject:SetActiveIfNecessary(false)
+    if not isUsingCache then
+        self:_InitInteractHighlightEffects()
     end
 
     LuaSystemManager.factory.interactPanelCtrl = self
@@ -282,6 +257,85 @@ end
 FacBuildingInteractCtrl.OnClose = HL.Override() << function(self)
     self:_RemoveInteractOption() 
     self:_ClearRegister()
+end
+
+
+
+FacBuildingInteractCtrl._InitInteractHighlightEffects = HL.Method() << function(self)
+    do
+        local prefab = self.loader:LoadGameObject(FacConst.BUILDING_INTERACT_BUILDING_INDICATOR_PATH)
+        self.m_buildingInteractHighlightEffect = Utils.wrapLuaNode(self:_CreateWorldGameObject(prefab))
+        self.m_buildingInteractHighlightEffect.gameObject.name = "BuildingInteractHighlightEffect"
+        self.m_buildingInteractHighlightEffect.gameObject:SetActiveIfNecessary(false)
+    end
+
+    do
+        local prefab = self.loader:LoadGameObject(FacConst.BUILDING_INTERACT_NORMAL_INDICATOR_PATH)
+        self.m_subBuildingInteractHighlightEffect = Utils.wrapLuaNode(self:_CreateWorldGameObject(prefab))
+        self.m_subBuildingInteractHighlightEffect.gameObject.name = "SubBuildingInteractHighlightEffect"
+        self.m_subBuildingInteractHighlightEffect.gameObject:SetActiveIfNecessary(false)
+
+        self.m_logisticInteractHighlightEffect = Utils.wrapLuaNode(self:_CreateWorldGameObject(prefab))
+        self.m_logisticInteractHighlightEffect.gameObject.name = "LogisticInteractHighlightEffect"
+        self.m_logisticInteractHighlightEffect.gameObject:SetActiveIfNecessary(false)
+    end
+
+    do
+        local prefab = self.loader:LoadGameObject(FacConst.BUILDING_INTERACT_HOVER_INDICATOR_PATH)
+        self.m_hoverInteractHighlightEffect = Utils.wrapLuaNode(self:_CreateWorldGameObject(prefab))
+        self.m_hoverInteractHighlightEffect.gameObject.name = "HoverInteractHighlightEffect"
+        self.m_hoverInteractHighlightEffect.gameObject:SetActiveIfNecessary(false)
+    end
+
+    do
+        local prefab = self.loader:LoadGameObject(FacConst.BUILDING_INTERACT_PIPE_INDICATOR_PATH)
+        self.m_pipeInteractHighlightEffect = Utils.wrapLuaNode(self:_CreateWorldGameObject(prefab))
+        self.m_pipeInteractHighlightEffect.gameObject.name = "PipeInteractHighlightEffect"
+        self.m_pipeInteractHighlightEffect.gameObject:SetActiveIfNecessary(false)
+    end
+end
+
+
+
+FacBuildingInteractCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    if not self.m_buildingInteractHighlightEffect and
+        not self.m_subBuildingInteractHighlightEffect and
+        not self.m_logisticInteractHighlightEffect and
+        not self.m_pipeInteractHighlightEffect and
+        not self.m_hoverInteractHighlightEffect then
+        return nil
+    end
+
+    local state = {
+        buildingInteractHighlightEffect = self.m_buildingInteractHighlightEffect,
+        subBuildingInteractHighlightEffect = self.m_subBuildingInteractHighlightEffect,
+        logisticInteractHighlightEffect = self.m_logisticInteractHighlightEffect,
+        pipeInteractHighlightEffect = self.m_pipeInteractHighlightEffect,
+        hoverInteractHighlightEffect = self.m_hoverInteractHighlightEffect,
+    }
+
+    self.m_buildingInteractHighlightEffect = nil
+    self.m_subBuildingInteractHighlightEffect = nil
+    self.m_logisticInteractHighlightEffect = nil
+    self.m_pipeInteractHighlightEffect = nil
+    self.m_hoverInteractHighlightEffect = nil
+
+    return state
+end
+
+
+
+
+FacBuildingInteractCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function(self, state)
+    if not state then
+        return
+    end
+
+    self.m_buildingInteractHighlightEffect = state.buildingInteractHighlightEffect
+    self.m_subBuildingInteractHighlightEffect = state.subBuildingInteractHighlightEffect
+    self.m_logisticInteractHighlightEffect = state.logisticInteractHighlightEffect
+    self.m_pipeInteractHighlightEffect = state.pipeInteractHighlightEffect
+    self.m_hoverInteractHighlightEffect = state.hoverInteractHighlightEffect
 end
 
 
@@ -762,6 +816,17 @@ end
 
 
 FacBuildingInteractCtrl.OnFacDestroyModeChange = HL.Method(HL.Boolean) << function(self, inDestroyMode)
+    
+    local reserveBatchMode
+    local _, desPanelCtrl = UIManager:IsOpen(PanelId.FacDestroyMode)
+    if not inDestroyMode and InputManagerInst.inChangingInputDevice then
+        
+        reserveBatchMode = true
+    elseif inDestroyMode and desPanelCtrl.m_args.isFromChangeInputDevice then
+        
+        reserveBatchMode = true
+    end
+
     self:_ClearBeltHoverHint()
     if LuaSystemManager.factory.inTopView and DeviceInfo.usingController then
         
@@ -777,10 +842,14 @@ FacBuildingInteractCtrl.OnFacDestroyModeChange = HL.Method(HL.Boolean) << functi
     if isBatch then
         
         self.view.batchNode.gameObject:SetActive(true)
-        self:_ChangeBatchMode(true)
+        if not reserveBatchMode then
+            self:_ChangeBatchMode(true)
+        end
     else
         self.view.batchNode.gameObject:SetActive(false)
-        self:_ChangeBatchMode(false)
+        if not reserveBatchMode then
+            self:_ChangeBatchMode(false)
+        end
     end
     InputManagerInst:ToggleGroup(self.m_batchControllerBindingGroupId, isBatch and DeviceInfo.usingController)
 
@@ -1438,6 +1507,9 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
                     effect.line.localScale = Vector3(1, dist + effect.line.localPosition.y, 1)
                 end
                 CSFactoryUtil.DispatchFactoryBuildingApproachSelectedChanged(self.m_interactFacNodeId, nodeId)
+            end
+            if not isPreview and CSFactoryUtil.hideBuildingInteractHighlightEffect then
+                self.m_buildingInteractHighlightEffect.gameObject:SetActiveIfNecessary(false)
             end
         end
 

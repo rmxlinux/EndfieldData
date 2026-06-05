@@ -70,7 +70,6 @@ CharInfoAttributeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local mainControlTab = arg.mainControlTab or UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
     local phase = arg.phase
 
-    self.m_phase = phase
     self.m_charInfo = initCharInfo
     self.m_curMainControlTab = mainControlTab
     self.m_talentCellCache = {}

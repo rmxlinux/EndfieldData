@@ -312,7 +312,7 @@ end
 DungeonSettlementPopupCtrl._OnBtnRestartDungeonClick = HL.Method() << function(self)
     local restartFunc = function()
         self:PlayAnimationOutWithCallback(function()
-            GameWorld.worldInfo.subGame:SendReStart(true)
+            GameInstance.dungeonManager.curDungeonLikeSubGame:SendReStart(true)
             
             self:Close()
         end)

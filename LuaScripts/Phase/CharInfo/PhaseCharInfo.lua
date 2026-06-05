@@ -164,6 +164,9 @@ local OVERRIDE_CAMERA_PATH = "OverrideCameras/"
 
 
 
+
+
+
 PhaseCharInfo = HL.Class('PhaseCharInfo', phaseBase.PhaseBase)
 local PHASE_CHAR_INFO_GAME_OBJECT = "CharInfoChar"
 local PHASE_CHAR_INFO_CAM_ATTACHMENT = "CharInfoCamAttachment"
@@ -290,6 +293,7 @@ PhaseCharInfo.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_WEAPON_REFINE] = { 'OnWeaponRefine', true },
     [MessageConst.ON_CHAR_POTENTIAL_UNLOCK] = { 'OnCharPotentialUnlock', true },
     [MessageConst.ON_CHAR_MAX_POTENTIAL_EFFECT_TOGGLED] = { 'OnCharMaxPotentialEffectToggled', true },
+    [MessageConst.ON_PLAYER_CHAR_BAG_ADD_NEW] = { 'OnPlayerCharBagAddNew', false },
 }
 
 do
@@ -382,6 +386,9 @@ do
     PhaseCharInfo.m_charItemInitComplete = HL.Field(HL.Boolean) << false
 
     
+    PhaseCharInfo.m_actionsAfterCharItemInitCompleted = HL.Field(HL.Forward("Queue"))
+
+    
     PhaseCharInfo.m_preloadCor = HL.Field(HL.Thread)
 
     
@@ -393,12 +400,22 @@ do
     
     PhaseCharInfo.m_curCamPostfix = HL.Field(HL.String) << ""
 
+    
+    PhaseCharInfo.m_isInitPreview = HL.Field(HL.Boolean) << false
 end
 
 
 
 PhaseCharInfo._OnInit = HL.Override() << function(self)
     PhaseCharInfo.Super._OnInit(self)
+    self.m_actionsAfterCharItemInitCompleted = require_ex("Common/Utils/DataStructure/Queue")()
+    if self.arg and self.arg.initCharInfoCreator then
+        local initCharTemplateId
+        if self.arg.initCharInfo then
+            initCharTemplateId = self.arg.initCharInfo.templateId
+        end
+        self.arg.initCharInfo = self.arg.initCharInfoCreator(initCharTemplateId)
+    end
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 end
@@ -409,6 +426,12 @@ end
 
 
 PhaseCharInfo.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
+    if transitionType == PhaseConst.EPhaseState.TransitionBackToTop then
+        if not PhaseManager:IsPhaseHaveSceneCamera(anotherPhaseId) then
+            CameraManager:EnableUIModelCullingMask(true, "charInfo")
+        end
+    end
+
     if transitionType == PhaseConst.EPhaseState.TransitionIn then
         if not fastMode then
             
@@ -491,6 +514,7 @@ end
 
 PhaseCharInfo._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self:ActiveRenderScaleLock(true)
+    CameraManager:EnableUIModelCullingMask(true, "charInfo")
 end
 
 
@@ -506,9 +530,17 @@ PhaseCharInfo._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table
         self.m_charItem.uiModelMono:PauseAnimator(true)
     end
 
+    if PhaseManager:IsPhaseHaveSceneCamera(args and args.anotherPhaseId) then
+        CameraManager:EnableUIModelCullingMask(false, "charInfo")
+    end
+
     self.m_hideCamCor = self:_ClearCoroutine(self.m_hideCamCor)
+    local isRecovering = PhaseManager.isRecovering
     self.m_hideCamCor = self:_StartCoroutine(function()
-        coroutine.wait(1)
+        if not isRecovering then
+            coroutine.wait(1)
+        end
+        CameraManager:EnableUIModelCullingMask(false, "charInfo")
         self:_CloseAllCamGroup()
 
         
@@ -534,6 +566,7 @@ end
 
 
 PhaseCharInfo._OnActivated = HL.Override() << function(self)
+    CameraManager:EnableUIModelCullingMask(true, "charInfo")
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 
@@ -638,6 +671,7 @@ end
 
 
 PhaseCharInfo._OnDestroy = HL.Override() << function(self)
+    CameraManager:EnableUIModelCullingMask(false, "charInfo")
     GameInstance.player.charBag:SetPhaseCharInfoInstId(0)
     UIManager:Show(PanelId.Touch) 
     if self.m_skillTip then
@@ -681,6 +715,7 @@ end
 
 
 PhaseCharInfo._InitPanels = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean)) << function(self, initCharInfo, pageType, forceSkipIn)
+    local stateArg = self.arg and self.arg.stateArg
     local initPanels = PAGE_TYPE_2_PANEL_ID[pageType]
     if initPanels then
         for _, panelId in ipairs(initPanels) do
@@ -689,11 +724,18 @@ PhaseCharInfo._InitPanels = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean)) <
                 pageType = pageType,
                 phase = self,
                 forceSkipIn = forceSkipIn,
+                stateArg = stateArg,
             })
 
             self:_ProcessPanelInScene(phasePanelItem)
-            self:_TryShowFinal(phasePanelItem, pageType)
+            self:_TryShowFinal(phasePanelItem, pageType, nil, stateArg)
         end
+    end
+
+    
+    self:_ProcessStateArg(stateArg)
+    if self.arg and self.arg.stateArg then
+        self.arg.stateArg = nil
     end
 end
 
@@ -770,8 +812,8 @@ PhaseCharInfo._InitPhase = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean)) <<
     self.m_charInfoList = self:_GenerateCharInfoList(initCharInfo)
     self:_ProcessPreviewData(initCharInfo)
     self:_InitGo(initCharInfo, pageType)
-    self:_InitPanels(initCharInfo, pageType, skipInAnim)
     self:_InitCharacter(initCharInfo, pageType, skipInAnim)
+    self:_InitPanels(initCharInfo, pageType, skipInAnim)
 
     self:_ToggleCamAttachment(pageType == UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW)
 
@@ -821,7 +863,12 @@ PhaseCharInfo._GenerateCharInfoList = HL.Method(HL.Table).Return(HL.Table) << fu
             end
         else
             if Utils.isInMainScope() then
-                charInfoList = CharInfoUtils.getCharInfoList()
+                local csTeamIndex
+                local dungeonId = GameInstance.dungeonManager.curDungeonId
+                if DungeonUtils.isDungeonContract(dungeonId) then
+                    csTeamIndex = Tables.globalConst.contingencyContractCharTeamIndex
+                end
+                charInfoList = CharInfoUtils.getCharInfoList(csTeamIndex)
             else
                 charInfoList = CharInfoUtils.getCurScopeCharInfoList()
             end
@@ -899,10 +946,19 @@ PhaseCharInfo._RefreshCharModel = HL.Method(HL.Userdata, HL.Table, HL.Number, HL
         
         local targetLightGroup = self.m_templateId2LightGroup[templateId]
         phaseItem.uiModelMono:InitLightFollower(targetLightGroup.go.transform)
-        self:_PlayModelEffect(sceneObject, templateId)
+        if not skipIn then
+            self:_PlayModelEffect(sceneObject, templateId)
+        end
+
+        while self.m_actionsAfterCharItemInitCompleted:Count() > 0 do
+            local action = self.m_actionsAfterCharItemInitCompleted:Pop()
+            if action then
+                action()
+            end
+        end
 
         CS.Beyond.Gameplay.Conditions.OnCharInfoModelInitFinish.Trigger()
-    end, true)
+    end, true, UIConst.UI_MODEL_LAYER)
 end
 
 
@@ -920,6 +976,7 @@ PhaseCharInfo._RefreshCharModelAddon = HL.Method(HL.Userdata, HL.Table) << funct
             cameraGroup.go.transform:SetParent(sceneObject.view.charContainer)
             cameraGroup.go.transform.localPosition = Vector3.zero
             cameraGroup.go.transform.localEulerAngles = Vector3.zero
+            cameraGroup.go:SetLayerRecursive(UIConst.UI_MODEL_LAYER)
 
             if UNITY_EDITOR then
                 
@@ -959,6 +1016,7 @@ PhaseCharInfo._RefreshCharModelAddon = HL.Method(HL.Userdata, HL.Table) << funct
             lightGroup.go.transform:SetParent(sceneObject.view.charContainer)
             lightGroup.go.transform.localPosition = Vector3.zero
             lightGroup.go.transform.localEulerAngles = Vector3.zero
+            lightGroup.go:SetLayerRecursive(UIConst.UI_MODEL_LAYER)
             self.m_templateId2LightGroup[templateId] = lightGroup
         end
     end
@@ -1334,7 +1392,8 @@ end
 
 
 
-PhaseCharInfo._TryShowFinal = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Table)) << function(self, panelItem, pageType, extraArg)
+
+PhaseCharInfo._TryShowFinal = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Table, HL.Table)) << function(self, panelItem, pageType, extraArg, stateArg)
     if HL.TryGet(panelItem.uiCtrl, "PhaseCharInfoPanelShowFinal") then
         panelItem.uiCtrl:PhaseCharInfoPanelShowFinal({
             initCharInfo = self.m_charInfo,
@@ -1342,6 +1401,7 @@ PhaseCharInfo._TryShowFinal = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Table)
             phase = self,
             lastMainControlTab = self.m_beforePage,
             extraArg = extraArg, 
+            stateArg = stateArg,
         })
     else
         panelItem.uiCtrl:Show()
@@ -1646,6 +1706,9 @@ end
 
 
 PhaseCharInfo.OnCharInfoShowRotateChar = HL.Method(HL.Number) << function(self, deltaAngle)
+    if self.m_charItem == nil then
+        return
+    end
     self.m_charItem:RotateChar(deltaAngle)
 end
 
@@ -2231,7 +2294,13 @@ PhaseCharInfo.OnPreviewWeaponChange = HL.Method(HL.Number) << function(self, wea
     end
 
     self.m_curPreviewWeaponInstId = weaponInstId
-    self:ReloadPreviewWeapon()
+    if self.m_charItemInitComplete then
+        self:ReloadPreviewWeapon()
+    else
+        self.m_actionsAfterCharItemInitCompleted:Push(function()
+            self:ReloadPreviewWeapon()
+        end)
+    end
 end
 
 
@@ -2355,6 +2424,10 @@ PhaseCharInfo.OnCharMaxPotentialEffectToggled = HL.Method(HL.Table) << function(
     else
         charPhaseItem:UnloadPotentialEffects()
     end
+end
+
+PhaseCharInfo.OnPlayerCharBagAddNew = HL.StaticMethod() << function()
+    FilterUtils.setCharInstIdIndexDirty()
 end
 
 
@@ -2557,6 +2630,7 @@ PhaseCharInfo._InitPotentialScene = HL.Method() << function(self)
             if newAsset then
                 local newItem = CSUtils.CreateObject(newAsset, sceneRoot)
                 newItem.name = newDecoName
+                newItem:SetLayerRecursive(UIConst.UI_MODEL_LAYER)
                 local oldItem = sceneRoot:Find(replaceCfg.decoName)
                 if oldItem then
                     local posOffset = Vector3.zero
@@ -2653,6 +2727,7 @@ PhaseCharInfo.RefreshPotentialStar = HL.Method(HL.Number, HL.Number) << function
             local effectName = isMax and cfg.loopMaxEffectName or cfg.loopEffectName
             local effect = GameInstance.effectManager:CreateEffectOnTransform(effectName, mountPoint)
             effect:LoadImmediately()
+            effect:SetEffectOriginalLayer(UIConst.UI_MODEL_LAYER)
             table.insert(effects, effect)
         end
     end
@@ -2663,6 +2738,7 @@ PhaseCharInfo.RefreshPotentialStar = HL.Method(HL.Number, HL.Number) << function
             local mountPoint = self:_GetPotentialMountPoint(cfg.mountPoint)
             local effect = GameInstance.effectManager:CreateEffectOnTransform(cfg.effectName, mountPoint)
             effect:LoadImmediately()
+            effect:SetEffectOriginalLayer(UIConst.UI_MODEL_LAYER)
             table.insert(self.m_potentialMaxEffects, effect)
         end
     end
@@ -2683,6 +2759,7 @@ PhaseCharInfo.UnlockPotentialStar = HL.Method(HL.Number, HL.Number) << function(
             local effectName = cfg.unlockMaxEffectName
             local effect = GameInstance.effectManager:CreateEffectOnTransform(effectName, mountPoint)
             effect:LoadImmediately()
+            effect:SetEffectOriginalLayer(UIConst.UI_MODEL_LAYER)
             table.insert(effects, effect)
         end
         self:_ClearPotentialEffects(self.m_potentialMaxEffects)
@@ -2690,6 +2767,7 @@ PhaseCharInfo.UnlockPotentialStar = HL.Method(HL.Number, HL.Number) << function(
             local mountPoint = self:_GetPotentialMountPoint(cfg.mountPoint)
             local effect = GameInstance.effectManager:CreateEffectOnTransform(cfg.effectName, mountPoint)
             effect:LoadImmediately()
+            effect:SetEffectOriginalLayer(UIConst.UI_MODEL_LAYER)
             table.insert(self.m_potentialMaxEffects, effect)
         end
     else
@@ -2700,6 +2778,7 @@ PhaseCharInfo.UnlockPotentialStar = HL.Method(HL.Number, HL.Number) << function(
         local effectName = cfg.unlockEffectName
         local effect = GameInstance.effectManager:CreateEffectOnTransform(effectName, mountPoint)
         effect:LoadImmediately()
+        effect:SetEffectOriginalLayer(UIConst.UI_MODEL_LAYER)
         table.insert(effects, effect)
     end
 end
@@ -2834,11 +2913,13 @@ PhaseCharInfo.RefreshPotentialPhoto = HL.Method(HL.Number, HL.Opt(HL.Number)).Re
                                 for _, effectName in ipairs(effectConfig.effectNames) do
                                     local effectInst = GameInstance.effectManager:CreateEffectOnTransform(effectName, mountPoint)
                                     effectInst:LoadImmediately()
+                                    effectInst:SetEffectOriginalLayer(UIConst.UI_MODEL_LAYER)
                                     table.insert(effects, effectInst)
                                 end
                                 for _, vfxName in ipairs(effectConfig.vfxNames) do
                                     local effectInst = GameInstance.effectManager:CreateVFXEffectOnTransform(vfxName, renderHelper)
                                     effectInst:LoadImmediately()
+                                    effectInst:SetEffectOriginalLayer(UIConst.UI_MODEL_LAYER)
                                     table.insert(effects, effectInst)
                                 end
                             end
@@ -2848,6 +2929,7 @@ PhaseCharInfo.RefreshPotentialPhoto = HL.Method(HL.Number, HL.Opt(HL.Number)).Re
                         local mountPoint = sceneView.scene[effectConfig.mountPoint]
                         local effectInst = GameInstance.effectManager:CreateEffectOnTransform(effectConfig.shadowEffectName, mountPoint)
                         effectInst:LoadImmediately()
+                        effectInst:SetEffectOriginalLayer(UIConst.UI_MODEL_LAYER)
                         table.insert(effects, effectInst)
                     end
                 end
@@ -3054,6 +3136,9 @@ PhaseCharInfo._ProcessPreviewData = HL.Method(HL.Table) << function(self, initCh
     if initCharInfo.maxCharInstIdList then
         self.m_initCharInfoList = self.m_charInfoList
         self.m_maxCharInfoList = CharInfoUtils.getCharInfoListByInstIdList(initCharInfo.maxCharInstIdList, initCharInfo.isShowPreview)
+        if self.arg.stateArg and self.arg.stateArg.isInitPreview then
+            return
+        end
         
         self.m_charInfoList = self.m_maxCharInfoList
         for _, charInfo in pairs(self.m_maxCharInfoList) do
@@ -3068,7 +3153,8 @@ end
 
 
 
-PhaseCharInfo.ToggleInitMaxState = HL.Method(HL.Boolean).Return(HL.Table) << function(self, isInit)
+PhaseCharInfo.ToggleInitMaxState = HL.Method(HL.Boolean) << function(self, isInit)
+    self.m_isInitPreview = isInit
     if isInit then
         self.m_charInfoList = self.m_initCharInfoList
     else
@@ -3083,12 +3169,19 @@ PhaseCharInfo.ToggleInitMaxState = HL.Method(HL.Boolean).Return(HL.Table) << fun
         table.insert(charInstIdList, charInfo.instId)
     end
 
-    self.m_charItem.charInstId = self.m_charInfo.instId
     self.m_charInfo.charInstIdList = charInstIdList
-    self.m_curPreviewWeaponInstId = CharInfoUtils.getCharCurWeapon(self.m_charInfo.instId).weaponInstId
-    self.m_charItem:ReloadWeapon()
 
-    return self.m_charInfo
+    local function reloadWeapon()
+        self.m_charItem.charInstId = self.m_charInfo.instId
+        self.m_curPreviewWeaponInstId = CharInfoUtils.getCharCurWeapon(self.m_charInfo.instId).weaponInstId
+        self.m_charItem:ReloadWeapon()
+    end
+
+    if self.m_charItemInitComplete then
+        reloadWeapon()
+    else
+        self.m_actionsAfterCharItemInitCompleted:Push(reloadWeapon)
+    end
 end
 
 
@@ -3173,12 +3266,57 @@ end
 PhaseCharInfo.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}
     arg.pageType = self.m_curPage
-    arg.initCharInfo = {
-        instId = self.m_charInfo.instId,
-        templateId = self.m_charInfo.templateId,
-    }
+
+    if not arg.initCharInfo then
+        arg.initCharInfo = {}
+    end
+    arg.initCharInfo.instId = self.m_charInfo.instId
+    arg.initCharInfo.templateId = self.m_charInfo.templateId
+
     arg.forceSkipIn = true
+    local stateArg = {}
+    arg.stateArg = stateArg
+    stateArg.isInitPreview = self.m_isInitPreview
+    stateArg.openProAndElement = UIManager:IsOpen(PanelId.CharInfoProAndElement)
+    stateArg.openFullAttr = UIManager:IsOpen(PanelId.CharInfoFullAttribute)
+    stateArg.isExpandNodeOn = UIManager:IsShow(PanelId.CharExpandList)
+    for _, panelItem in pairs(self.m_panel2Item) do
+        if HL.TryGet(panelItem.uiCtrl, "GetCurStateArg") then
+            local arg = panelItem.uiCtrl:GetCurStateArg()
+            lume.extend(stateArg, arg)
+        end
+    end
     return arg
+end
+
+
+
+
+PhaseCharInfo._ProcessStateArg = HL.Method(HL.Table) << function(self, arg)
+    if not arg then
+        return
+    end
+    if arg.openProAndElement then
+        UIManager:Open(PanelId.CharInfoProAndElement)
+    end
+    if arg.openFullAttr then
+        local charInfoItem = self:_GetPanelPhaseItem(PanelId.CharInfo)
+        if charInfoItem then
+            charInfoItem.uiCtrl.view.charInfoBasicNodeLeft.view.attributeTitle.detailButton.onClick:Invoke()
+        end
+    end
+    if arg.isExpandNodeOn then
+        local charInfoItem = self:_GetPanelPhaseItem(PanelId.CharInfo)
+        if charInfoItem then
+            charInfoItem.uiCtrl.animationWrapper:SkipInAnimation()
+            charInfoItem.uiCtrl:_ToggleExpandNode(true)
+        end
+    end
+
+    self.m_actionsAfterCharItemInitCompleted:Push(function()
+        
+        AudioAdapter.PostEvent("au_global_ui_magnifier_panel_enter")
+    end)
 end
 
 

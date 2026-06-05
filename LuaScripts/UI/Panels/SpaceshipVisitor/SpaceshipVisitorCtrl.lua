@@ -37,6 +37,8 @@ local PANEL_ID = PanelId.SpaceshipVisitor
 
 
 
+
+
 SpaceshipVisitorCtrl = HL.Class('SpaceshipVisitorCtrl', uiCtrl.UICtrl)
 
 
@@ -103,6 +105,9 @@ SpaceshipVisitorCtrl.m_yesterdayRotationInfo = HL.Field(HL.Table)
 
 SpaceshipVisitorCtrl.m_csIndex2Cell = HL.Field(HL.Table)
 
+
+SpaceshipVisitorCtrl.m_pendingFocusCsIndex = HL.Field(HL.Number) << -1
+
 local RequestBatchNum = 10
 
 local SubCellState = {
@@ -165,6 +170,13 @@ SpaceshipVisitorCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.toggleTodayCell.isOn = true
     self.m_spaceship = GameInstance.player.spaceship
+
+    local recoverState = arg and arg.recoverState or nil
+    if recoverState then
+        self:_TryRecoverState(recoverState)
+        arg.recoverState = nil
+    end
+
     self.m_spaceship:QueryVisitInfo()
     self.view.helpCellNumTxt.text = Language.LUA_SPACESHIP_VISITOR_LOADING_TEXT
     self.view.visitCellNumTxt.text = Language.LUA_SPACESHIP_VISITOR_LOADING_TEXT
@@ -350,7 +362,21 @@ SpaceshipVisitorCtrl.UpdateFriendCells = HL.Method() << function(self)
         self.m_csIndex2Cell = {}
         self.view.scrollList:UpdateCount(self.m_showInfo.showNum, 0)
 
-        if self.m_csIndex2Cell[0] ~= nil then
+        if self.m_pendingFocusCsIndex >= 0 then
+            local rotInfo = self.view.toggleTodayCell.isOn and self.m_todayRotationInfo or self.m_yesterdayRotationInfo
+            for csIndex, cell in pairs(self.m_csIndex2Cell) do
+                if rotInfo[csIndex] == true then
+                    LayoutRebuilder.ForceRebuildLayoutImmediate(cell.rectTransform)
+                    self.view.scrollList:NotifyCellSizeChange(csIndex, cell.rectTransform.sizeDelta.y)
+                end
+            end
+            local targetCsIndex = math.min(self.m_pendingFocusCsIndex, self.m_showInfo.showNum - 1)
+            self.view.scrollList:ScrollToIndex(targetCsIndex, true)
+            if self.m_csIndex2Cell[targetCsIndex] ~= nil then
+                InputManagerInst.controllerNaviManager:SetTarget(self.m_csIndex2Cell[targetCsIndex].friendListCell.view.inputNaviDecorator)
+            end
+            self.m_pendingFocusCsIndex = -1
+        elseif self.m_csIndex2Cell[0] ~= nil then
             InputManagerInst.controllerNaviManager:SetTarget(self.m_csIndex2Cell[0].friendListCell.view.inputNaviDecorator)
         end
 
@@ -628,5 +654,57 @@ SpaceshipVisitorCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
+
+SpaceshipVisitorCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = {}
+    local recoverState = {
+        isYesterdayTab = not self.view.toggleTodayCell.isOn,
+    }
+
+    local todayRotCopy = {}
+    for k, v in pairs(self.m_todayRotationInfo) do
+        todayRotCopy[k] = v
+    end
+    recoverState.todayRotationInfo = todayRotCopy
+
+    local yesterdayRotCopy = {}
+    for k, v in pairs(self.m_yesterdayRotationInfo) do
+        yesterdayRotCopy[k] = v
+    end
+    recoverState.yesterdayRotationInfo = yesterdayRotCopy
+
+    if DeviceInfo.usingController and self.m_csIndex2Cell then
+        local curTarget = InputManagerInst.controllerNaviManager.curTarget
+        if curTarget then
+            for csIndex, cell in pairs(self.m_csIndex2Cell) do
+                if cell.friendListCell.view.inputNaviDecorator == curTarget then
+                    recoverState.focusedCsIndex = csIndex
+                    break
+                end
+            end
+        end
+    end
+
+    arg.recoverState = recoverState
+    return arg
+end
+
+SpaceshipVisitorCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
+    if recoverState.todayRotationInfo then
+        self.m_todayRotationInfo = recoverState.todayRotationInfo
+    end
+    if recoverState.yesterdayRotationInfo then
+        self.m_yesterdayRotationInfo = recoverState.yesterdayRotationInfo
+    end
+
+    if recoverState.focusedCsIndex then
+        self.m_pendingFocusCsIndex = recoverState.focusedCsIndex
+    end
+
+    if recoverState.isYesterdayTab then
+        self.view.toggleTodayCell.isOn = false
+        self.view.toggleYesterdayCell.isOn = true
+    end
+end
 
 HL.Commit(SpaceshipVisitorCtrl)

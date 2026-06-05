@@ -217,8 +217,10 @@ ShopTradeGoodsCell.InitCommonShopGoodsCellCommonMode = HL.Method(HL.Table) << fu
     
     self:_FirstTimeInit()
     self.m_info = info
-    self.view.redDot:InitRedDot("ShopSeeGoodsInfo", { goodsId = info.goodsId })
-    self:_UpdateReadInfo(info.goodsId)
+    self.view.redDot:InitRedDot("CommonShopSeeGoodsInfo", { goodsId = info.goodsId })
+    if not info.isLocked then
+        self:_UpdateReadInfo(info.goodsId)
+    end
     local leftSec = DomainShopUtils.getNextServerRefreshTimeLeftSecByType(info.refreshType)
     
     self.view.basicStateCtrl:SetState("Common")

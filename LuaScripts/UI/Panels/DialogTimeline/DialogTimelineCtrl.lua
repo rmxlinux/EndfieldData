@@ -164,7 +164,11 @@ DialogTimelineCtrl.OnDialogTimelineStartTrunk = HL.Method(HL.Table) << function(
         self.view.bottomMask.gameObject:SetActive(true)
     end
     self.m_dialogTextStopped = false
-    self.m_showingTrunkId = unpack(arg)
+
+    local trunkId, actorName = unpack(arg)
+    self.m_showingTrunkId = trunkId
+    self.view.actorNameLabel.gameObject:SetActive(not string.isEmpty(actorName))
+
     self:_TryShowDialogTextWithAnimation()
     self:_TrySetWaitNode(false)
     self:_RefreshCanSkip()

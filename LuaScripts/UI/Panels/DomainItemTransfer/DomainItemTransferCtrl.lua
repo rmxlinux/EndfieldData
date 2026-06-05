@@ -45,6 +45,8 @@ local LOSSLESS_TRANSMISSION_STATE = "NoConsumptionTransfer"
 
 
 
+
+
 DomainItemTransferCtrl = HL.Class('DomainItemTransferCtrl', uiCtrl.UICtrl)
 
 
@@ -88,6 +90,7 @@ DomainItemTransferCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_BuildDomainList()
     self:_SetPlatformInfo()
     self:_BuildRoutes()
+    self:_TryRecoverDomainItemTransferSelect(arg and arg.domainItemTransferSelectState)
 
     
     self:_StartCoroutine(function()
@@ -119,6 +122,14 @@ end
 
 DomainItemTransferCtrl.OnNotifyRouteInfoChange = HL.Method() << function(self)
     self:_RebuildAll()
+end
+
+
+
+DomainItemTransferCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    return {
+        domainItemTransferSelectState = self:_GetDomainItemTransferSelectRecoverState(),
+    }
 end
 
 
@@ -457,6 +468,40 @@ end
 
 
 
+DomainItemTransferCtrl._GetDomainItemTransferSelectRecoverState = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return
+    end
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.DomainItemTransferSelect)
+    if not isOpen or not ctrl:IsShow() then
+        return
+    end
+    return ctrl:GetRecoverStateArg()
+end
+
+
+
+
+DomainItemTransferCtrl._TryRecoverDomainItemTransferSelect = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil or string.isEmpty(recoverState.routeFromDomain) then
+        return
+    end
+    local isOpen = UIManager:IsOpen(PanelId.DomainItemTransferSelect)
+    if isOpen then
+        return
+    end
+    local routeInfo = self:_GetRouteInfo(recoverState.routeFromDomain)
+    if routeInfo == nil then
+        return
+    end
+    UIManager:Open(PanelId.DomainItemTransferSelect, {
+        info = routeInfo,
+        recoverState = recoverState,
+    })
+end
+
+
+
 
 
 
@@ -494,7 +539,7 @@ DomainItemTransferCtrl._SetFocusTargetByIndex = HL.Method(HL.Number) << function
     self.m_curFocusCellLuaIndex = index
 
     local firstCell = self.m_transmissionCellCache:Get(index)
-    InputManagerInst.controllerNaviManager:SetTarget(firstCell.domainItemTransferInfoCell)
+    self:SetAsNaviTargetInSilentModeIfNecessary(self.view.infoNodeNaviGroup, firstCell.domainItemTransferInfoCell)
 end
 
 

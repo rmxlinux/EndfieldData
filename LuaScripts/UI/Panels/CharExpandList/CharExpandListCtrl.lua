@@ -19,6 +19,7 @@ local PANEL_ID = PanelId.CharExpandList
 
 
 
+
 CharExpandListCtrl = HL.Class('CharExpandListCtrl', uiCtrl.UICtrl)
 
 
@@ -71,9 +72,18 @@ CharExpandListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.m_getCharHeadCell = UIUtils.genCachedCellFunction(self.view.charHeadCell)
 
+    local stateArg = self.m_args.stateArg
+    local csSortIndex
+    if stateArg and stateArg.sortSelectedIndex then
+        csSortIndex = CSIndex(stateArg.sortSelectedIndex)
+    end
+    local isIncremental = false
+    if stateArg and stateArg.sortIsIncremental ~= nil then
+        isIncremental = stateArg.sortIsIncremental
+    end
     self.view.sortNode:InitSortNode(UIConst.CHAR_FORMATION_LIST_SORT_OPTION, function(optData, isIncremental)
         self:_OnSortChanged(optData, isIncremental)
-    end, nil, false)
+    end, csSortIndex, isIncremental)
 
     self.view.charScrollList.onUpdateCell:AddListener(function(object, csIndex)
         self:_UpdateCharScrollListCell(object, csIndex)
@@ -213,6 +223,15 @@ CharExpandListCtrl._OnClickCell = HL.Method(HL.Number) << function(self, csIndex
     if self.m_args.onClickCell then
         self.m_args.onClickCell(info)
     end
+end
+
+
+
+CharExpandListCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local arg = {}
+    arg.sortSelectedIndex = self.view.sortNode:GetCurSelectedIndex()
+    arg.sortIsIncremental = self.view.sortNode.isIncremental
+    return arg
 end
 
 HL.Commit(CharExpandListCtrl)

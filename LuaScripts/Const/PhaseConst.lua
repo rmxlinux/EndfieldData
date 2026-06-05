@@ -38,6 +38,8 @@ FORBID_INPUT_DEVICE_CHANGE_PANELS = {
 
     "PlayerRename", 
     "DungeonSettlementPopup", 
+    "SimulationTrainingSettlementPopup", 
+    "WorldEnergyPointSettlement", 
     "DeathInfo", 
     "DramaticPerformanceBag", 
     "ShopMonthlyPassPopUp", 
@@ -51,15 +53,36 @@ FORBID_INPUT_DEVICE_CHANGE_PANELS = {
     "GachaWeaponPreheat",
     "GachaWeapon",
     "GachaWeaponResult",
+    "GachaSelCharTicPopup",
+    "GachaWeaponExtraRewardPopup",
+    "GachaImportantRewardPopup",
+    "GachaItemConvert",
+    "GachaPotentialPopup",
 
     
     "SettlementDefenseTransit",
     "SettlementDefenseFinish",
     "SettlementDefenseFinishFail",
+
+    
+    "RewardsPopUpForBlackBox",
+    "RewardsPopUpForSystem",
+    "RewardsPopupCenter",
+    "RewardsPopUpForCraft",
+    "EquipEnhanceResult",
+    "BattlePassRecommend",
+
+    
+    "ContingencyContractSettlement",
+
+    
+    "HudLayout",
 }
+
 
 FORBID_INPUT_DEVICE_CHANGE_PHASES = {
     "GenderSelect",
+    "Dialog",
 
     
     "GachaChar",
@@ -76,7 +99,6 @@ FORBID_INPUT_DEVICE_CHANGE_PHASES = {
 
 
 INPUT_DEVICE_CHANGE_FORCE_CLOSE_PANELS = {
-    "ItemTips",
     "WalletBar",
     "CommonTips",
     "Guide", 
@@ -92,12 +114,60 @@ EXCEPT_CHANGE_DEVICE_CLOSE_PANEL = {
     "VideoPreloader",
     "SpaceshipHudTips",
     "SpaceshipCabinInfoDisplay",
+    "WatchBlur",
+    "CommonHudToast",
 
     
     "CommonTaskTrackHud",
     "CommonTaskTrackToast",
     "CommonTaskTrackCountdown",
     "DungeonCharTutorialStepHud",
+    "ContingencyContractHud",
+
+    
+    "BombAim",
+    "WaterDroneAim",
+
+    
+    "MiniMap",
+    "FacTopViewBuildingInfo",
+    "CommonItemToast",
+    "CommonNewToast",
+    "AIBark",
+    "BattleBottomScreenEffect",
+    "BattleComboSkillUse",
+    "BattleDamageText",
+    "ControllerHint",
+    "FacBuildingInteract",
+    "FacMiniPowerHud",
+    "GeneralAbility",
+    "GeneralTracker",
+    "Guide",
+    "GuideLimited",
+    "HeadBar",
+    "HeadLabel",
+    "ItemTips",
+    "Joystick",
+    "Radio",
+    "RadioEmpty",
+    "WalletBar",
+}
+
+
+SUPPORT_REUSE_GO_ON_INPUT_CHANGE_PANELS = {
+    BattleBossInfo = true,
+    BattleComboSkill = true,
+    FacBuildMode = true,
+    FacDestroyMode = true,
+    
+    
+    
+    FacTopView = true,
+    MainHud = true,
+    MissionHud = true,
+    SNSHud = true,
+    SquadIcon = true,
+    
 }
 
 

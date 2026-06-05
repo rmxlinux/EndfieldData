@@ -17,7 +17,6 @@ local PANEL_ID = PanelId.DebugDeathInfo
 
 
 
-
 DebugDeathInfoCtrl = HL.Class('DebugDeathInfoCtrl', uiCtrl.UICtrl)
 
 
@@ -254,25 +253,8 @@ DebugDeathInfoCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.text7.text = "小队装备穿戴等级和"
     self.view.text8.text = "指定index"
 
-    local player = GameInstance and GameInstance.player
-    local deathDialogSys = player and player.deathDialogSystem
-    if deathDialogSys and deathDialogSys.HasDebugDeathInfoPanelDraft then
-        local draft = deathDialogSys.DebugDeathInfoPanelDraftData
-        self:_FillFieldsFromDeathInfo({
-            dungeonId = draft.dungeonId,
-            enemyId = draft.enemyId,
-            enemyLv = draft.enemyLv,
-            squadLvSum = draft.squadLvSum,
-            squadWeaponLvSum = draft.squadWeaponLvSum,
-            squadSkillLvSum = draft.squadSkillLvSum,
-            squadEquipLvSum = draft.squadEquipLvSum,
-        })
-        self.view.index1.text = draft.index1Text or ""
-        self.view.index2.text = draft.index2Text or ""
-    else
-        local defaultD = buildDefaultDeathInfoTable()
-        self:_FillFieldsFromDeathInfo(defaultD)
-    end
+    local defaultD = buildDefaultDeathInfoTable()
+    self:_FillFieldsFromDeathInfo(defaultD)
 
     self.view.closeButton.onClick:AddListener(function()
         UIManager:Close(PANEL_ID)
@@ -295,29 +277,6 @@ DebugDeathInfoCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.deathSquadEquipLvSum.onValueChanged:AddListener(onFieldChanged)
 
     self:_RefreshTipsDisplay()
-end
-
-
-
-DebugDeathInfoCtrl.OnClose = HL.Override() << function(self)
-    local player = GameInstance and GameInstance.player
-    local deathDialogSys = player and player.deathDialogSystem
-    if not deathDialogSys then
-        return
-    end
-
-    local d = self:_ReadDeathInfoFromFields()
-    deathDialogSys:SaveDebugDeathInfoPanelDraft(
-        d.dungeonId or "",
-        d.enemyId or "",
-        d.enemyLv,
-        d.squadLvSum,
-        d.squadWeaponLvSum,
-        d.squadSkillLvSum,
-        d.squadEquipLvSum,
-        self.view.index1.text or "",
-        self.view.index2.text or ""
-    )
 end
 
 HL.Commit(DebugDeathInfoCtrl)

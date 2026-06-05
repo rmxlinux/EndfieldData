@@ -13,6 +13,7 @@ local PANEL_ID = PanelId.ShopRecharge
 
 
 
+
 ShopRechargeCtrl = HL.Class('ShopRechargeCtrl', uiCtrl.UICtrl)
 
 
@@ -43,8 +44,6 @@ ShopRechargeCtrl.m_haveSetNaviTarget = HL.Field(HL.Boolean) << false
 
 
 ShopRechargeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_phase = arg.phase
-
     self.m_phase:ShowPsStore()
 
     if CashShopUtils.IsPS() then
@@ -105,6 +104,18 @@ end
 
 
 
+
+ShopRechargeCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, arg)
+
+end
+
+
+
+ShopRechargeCtrl.OnAfterCategoryTopOrdered = HL.Method() << function(self)
+end
+
+
+
 ShopRechargeCtrl._InitAction = HL.Method() << function(self)
     self.m_gemCellCache = UIUtils.genCellCache(self.view.shopGemCell)
 
@@ -125,7 +136,7 @@ ShopRechargeCtrl._InitAction = HL.Method() << function(self)
     end
     if isKR then
         self.view.kR_CP.functionBtn.onClick:AddListener(function()
-            UIManager:Open(PanelId.InstructionBook, "shop_recharge_kr")
+            CashShopUtils.ShowKrUrl()
         end)
     end
 end

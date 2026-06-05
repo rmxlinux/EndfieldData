@@ -75,6 +75,8 @@ local LoopAudios = {
 
 
 
+
+
 GachaCharCtrl = HL.Class('GachaCharCtrl', uiCtrl.UICtrl)
 
 
@@ -116,6 +118,9 @@ GachaCharCtrl.m_isSkipped = HL.Field(HL.Boolean) << false
 
 
 GachaCharCtrl.m_startTimerId = HL.Field(HL.Number) << -1
+
+
+GachaCharCtrl.m_start6StarNameUITimerId = HL.Field(HL.Number) << -1
 
 
 GachaCharCtrl.m_introduceVoiceTimerId = HL.Field(HL.Number) << -1
@@ -173,6 +178,7 @@ GachaCharCtrl._PlayCharacterAt = HL.Method(HL.Number) << function(self, index)
     self.m_curInfo = self.m_args.chars[index]
     self.m_lastSkipTime = 0
     self.m_startTimerId = self:_ClearTimer(self.m_startTimerId)
+    self.m_start6StarNameUITimerId = self:_ClearTimer(self.m_start6StarNameUITimerId)
     logger.info("GachaCharCtrl._PlayCharacterAt", index, self.m_curInfo)
     if index == 1 then
         self.m_sixStarUIBgLocalPos = self.m_phase.m_roomObjItem.view.sixStarUIBg.transform.localPosition
@@ -230,35 +236,14 @@ GachaCharCtrl._PlayStarAnimation = HL.Method() << function(self)
     self.m_startTimelineCor = self:_ClearCoroutine(self.m_startTimelineCor)
     self.m_startTimelineCor = self:_StartCoroutine(function()
         local delayTime = self.view.config["TIMELINE_DELAY_TIME_" .. rarity]
-        local timelineDelayPass = false
-        local uiDelayTime = self.view.config.SIX_STAR_UI_BG_DELAY_TIME
-        local uiDelayPass = false
         local tween = self.view.starNode.curTween
         local clipLength = self.view.starNode:GetClipLength(ani)
         while true do
             coroutine.step()
             local tweenValue = tween:GetValue()
-            if not timelineDelayPass and (tweenValue >= 1 or tweenValue * clipLength >= delayTime) then
-                timelineDelayPass = true
+            if tweenValue >= 1 or tweenValue * clipLength >= delayTime then
                 logger.info("GachaTest: startTimelineCor playTimeline")
                 self:_PlayTimeline(false)
-            end
-            if not uiDelayPass and (tweenValue >= 1 or tweenValue * clipLength >= uiDelayTime) then
-                uiDelayPass = true
-                if rarity >= 6 then
-                    local sixStarUIBg = self.m_phase.m_roomObjItem.view.sixStarUIBg
-                    sixStarUIBg.gameObject:SetActive(true)
-                    
-                    local worldParams = CS.Beyond.UI.UICanvasScaleHelper.CalcWorldCanvasParams(CameraManager.mainCamera, sixStarUIBg.transform, true)
-                    sixStarUIBg.transform.localScale = worldParams.uiRootScale;
-                    sixStarUIBg.transform.sizeDelta = worldParams.uiRootSize;
-                    
-                    sixStarUIBg.animationWrapper:Play("gacha_3d_char_in_bg", function()
-                        self.m_phase.m_roomObjItem.view.sixStarUIBg.gameObject:SetActive(false)
-                    end)
-                end
-            end
-            if timelineDelayPass and uiDelayPass then
                 return
             end
         end
@@ -296,6 +281,13 @@ GachaCharCtrl._PlayTimeline = HL.Method(HL.Boolean) << function(self, jumpToLoop
             end
         end,
     })
+    if self.m_curCharTLHelper.showContentTime > 0 then
+        self.m_curCharTLHelper:SetTriggerOnceTimer(self.m_curCharTLHelper.showContentTime, function()
+            if self.m_state ~= GachaState.CharLoop then
+                self:_ShowContent()
+            end
+        end)
+    end
 
     
     local lightPrefab = self.loader:LoadGameObject(string.format("Assets/Beyond/DynamicAssets/Gameplay/Prefabs/CharInfo/AdditionalLights/light_%s.prefab", charId))
@@ -339,6 +331,7 @@ GachaCharCtrl._PlayTimeline = HL.Method(HL.Boolean) << function(self, jumpToLoop
     end
 
     self.m_startTimerId = self:_ClearTimer(self.m_startTimerId)
+    self.m_start6StarNameUITimerId = self:_ClearTimer(self.m_start6StarNameUITimerId)
     self.m_isInWaitPlayCharTlTime = true
     if jumpToLoop then
         logger.info("GachaTest: playTimeline jumpToLoop")
@@ -352,6 +345,15 @@ GachaCharCtrl._PlayTimeline = HL.Method(HL.Boolean) << function(self, jumpToLoop
             if self.m_curCharTLHelper then
                 self.m_curCharTLHelper:PlayFromStart()
                 self.m_isInWaitPlayCharTlTime = false
+                if self.m_curInfo.rarity >= 6 then
+                    local uiDelayTime = self.view.config.SIX_STAR_UI_BG_DELAY_TIME
+                    if self.m_curCharTLHelper.showNameTime > 0 then
+                        uiDelayTime = self.m_curCharTLHelper.showNameTime
+                    end
+                    self.m_start6StarNameUITimerId = self:_StartTimer(uiDelayTime, function()
+                        self:_Show6StarNameUI()
+                    end)
+                end
             end
         end)
     end
@@ -368,6 +370,7 @@ GachaCharCtrl._ShowContent = HL.Method() << function(self)
     logger.info("GachaTest: showContent")
 
     self.m_startTimerId = self:_ClearTimer(self.m_startTimerId)
+    self.m_start6StarNameUITimerId = self:_ClearTimer(self.m_start6StarNameUITimerId)
 
     self.m_state = GachaState.CharLoop
 
@@ -456,6 +459,21 @@ GachaCharCtrl._SetContentVisible = HL.Method(HL.Boolean) << function(self, isSho
     if isShow then
         self.view.contentNodeAnimationWrapper:PlayInAnimation()
     end
+end
+
+
+
+GachaCharCtrl._Show6StarNameUI = HL.Method() << function(self)
+    local sixStarUIBg = self.m_phase.m_roomObjItem.view.sixStarUIBg
+    sixStarUIBg.gameObject:SetActive(true)
+    
+    local worldParams = CS.Beyond.UI.UICanvasScaleHelper.CalcWorldCanvasParams(CameraManager.mainCamera, sixStarUIBg.transform, true)
+    sixStarUIBg.transform.localScale = worldParams.uiRootScale;
+    sixStarUIBg.transform.sizeDelta = worldParams.uiRootSize;
+    
+    sixStarUIBg.animationWrapper:Play("gacha_3d_char_in_bg", function()
+        self.m_phase.m_roomObjItem.view.sixStarUIBg.gameObject:SetActive(false)
+    end)
 end
 
 
@@ -562,6 +580,7 @@ GachaCharCtrl._ClearCurAsset = HL.Method() << function(self)
     uiBgTrans:SetParent(self.m_phase.m_roomObjItem.view.transform)
     
     self.m_startTimerId = self:_ClearTimer(self.m_startTimerId)
+    self.m_start6StarNameUITimerId = self:_ClearTimer(self.m_start6StarNameUITimerId)
     self.m_curCharTLHelper:OnDispose()
     self.m_curCharTLHelper = nil
     GameObject.Destroy(self.m_curCharObj)

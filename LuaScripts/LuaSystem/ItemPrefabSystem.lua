@@ -18,6 +18,7 @@ local luaLoader = require_ex('Common/Utils/LuaResourceLoader')
 
 
 
+
 ItemPrefabSystem = HL.Class('ItemPrefabSystem', LuaSystemBase.LuaSystemBase)
 
 
@@ -64,6 +65,9 @@ ItemPrefabSystem.itemLimitTimeMarkNodePrefab = HL.Field(HL.Any)
 ItemPrefabSystem.itemRewardTypeTagPrefab = HL.Field(HL.Any)
 
 
+ItemPrefabSystem.gemPerfectIconPrefab = HL.Field(HL.Any)
+
+
 
 ItemPrefabSystem.ItemPrefabSystem = HL.Constructor() << function(self)
 end
@@ -86,6 +90,7 @@ ItemPrefabSystem.OnInit = HL.Override() << function(self)
     self.equipEnhanceNodePrefab = self.m_resourceLoader:LoadGameObject("Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Equip/Widgets/EquipEnhanceNode.prefab")
     self.itemLimitTimeMarkNodePrefab = self.m_resourceLoader:LoadGameObject("Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Common/Widgets/Item/ItemLimitTimeMarkNode.prefab")
     self.itemRewardTypeTagPrefab = self.m_resourceLoader:LoadGameObject("Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Common/Widgets/Item/ItemRewardTypeTag.prefab")
+    self.gemPerfectIconPrefab = self.m_resourceLoader:LoadGameObject("Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Common/Widgets/Item/ItemAddonGemPerfectIcon.prefab")
 end
 
 
@@ -103,6 +108,7 @@ ItemPrefabSystem.OnRelease = HL.Override() << function(self)
     self.equipEnhanceNodePrefab = nil
     self.itemLimitTimeMarkNodePrefab = nil
     self.itemRewardTypeTagPrefab = nil
+    self.gemPerfectIconPrefab = nil
     self.m_resourceLoader:DisposeAllHandles()
 end
 

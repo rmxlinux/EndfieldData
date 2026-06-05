@@ -19,6 +19,13 @@ local PHASE_ID = PhaseId.FriendThemeChange
 
 
 
+
+
+
+
+
+
+
 FriendThemeChangeCtrl = HL.Class('FriendThemeChangeCtrl', uiCtrl.UICtrl)
 
 
@@ -29,6 +36,12 @@ FriendThemeChangeCtrl = HL.Class('FriendThemeChangeCtrl', uiCtrl.UICtrl)
 
 FriendThemeChangeCtrl.s_messages = HL.StaticField(HL.Table) << {
     
+    [MessageConst.ON_BUSINESS_CARD_UNLOCK] = 'OnBusinessCardUnlock',
+    
+    [MessageConst.ON_SYSTEM_UNLOCK_CHANGED] = 'OnSystemUnlockChanged',
+    [MessageConst.ON_ALL_SYSTEM_UNLOCK_SYNC] = 'OnSystemUnlockChanged',
+    
+    [MessageConst.ON_ACTIVITY_UPDATED] = 'OnActivityUpdated',
 }
 
 
@@ -50,6 +63,9 @@ FriendThemeChangeCtrl.m_selectId = HL.Field(HL.String) << ""
 FriendThemeChangeCtrl.m_inCreate = HL.Field(HL.Boolean) << false
 
 
+FriendThemeChangeCtrl.m_arg = HL.Field(HL.Table)
+
+
 FriendThemeChangeCtrl.m_closeCallback = HL.Field(HL.Function)
 
 
@@ -57,6 +73,7 @@ FriendThemeChangeCtrl.m_closeCallback = HL.Field(HL.Function)
 
 
 FriendThemeChangeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg or {}
     self.m_inCreate = true
     self.m_closeCallback = arg and arg.onClose or nil
     self.view.btnBack.onClick:RemoveAllListeners()
@@ -77,35 +94,9 @@ FriendThemeChangeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 
-    self.m_selectId = (arg and arg.selectId) or GameInstance.player.friendSystem.SelfInfo.businessCardTopicId
+    self.m_selectId = self.m_arg.selectId or GameInstance.player.friendSystem.SelfInfo.businessCardTopicId
     GameInstance.player.friendSystem:ReadBusinessCardUnlockRedDot(CS.Beyond.Gameplay.FriendBusinessCardUnlockType.BusinessCardTopic, self.m_selectId)
-    self.m_infos = {}
-    for _, cfg in pairs(Tables.businessCardTopicTable) do
-        local info = {
-            sort = cfg.sort,
-            cfg = cfg,
-        }
-        local success, itemCfg = Tables.itemTable:TryGetValue(cfg.itemId)
-        if success then
-            local canShow = GameInstance.player.friendSystem:IsBusinessCardUnlock(CS.Beyond.Gameplay.FriendBusinessCardUnlockType.BusinessCardTopic, cfg.id) or Utils.isNotObtainCanShow(itemCfg.notObtainShow, itemCfg.notObtainShowTimeId)
-            if canShow then
-                table.insert(self.m_infos, info)
-            end
-        else
-            logger.error("FriendHeadSelectedPopUpCtrl:OnCreate itemCfg not found for id:", cfg.itemId)
-        end
-    end
-
-    table.sort(self.m_infos, function(a, b)
-        
-        local aUnlock = GameInstance.player.friendSystem:IsBusinessCardUnlock(CS.Beyond.Gameplay.FriendBusinessCardUnlockType.BusinessCardTopic, a.cfg.id)
-        local bUnlock = GameInstance.player.friendSystem:IsBusinessCardUnlock(CS.Beyond.Gameplay.FriendBusinessCardUnlockType.BusinessCardTopic, b.cfg.id)
-        if aUnlock ~= bUnlock then
-            return aUnlock
-        end
-
-        return a.sort < b.sort
-    end)
+    self:_RebuildInfos()
 
     self.m_getCellFunc = UIUtils.genCachedCellFunction(self.view.scrollList)
     self.view.themeList.onUpdateCell:RemoveAllListeners()
@@ -122,6 +113,14 @@ FriendThemeChangeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_OnSelectIdChange(true)
     self.view.m_inCreate = false
+end
+
+
+
+FriendThemeChangeCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
+    arg.selectId = self.m_selectId
+    return arg
 end
 
 
@@ -263,6 +262,89 @@ end
 
 
 
+FriendThemeChangeCtrl._RebuildInfos = HL.Method() << function(self)
+    self.m_infos = {}
+    for _, cfg in pairs(Tables.businessCardTopicTable) do
+        local info = {
+            sort = cfg.sort,
+            cfg = cfg,
+        }
+        local success, itemCfg = Tables.itemTable:TryGetValue(cfg.itemId)
+        if success then
+            local canShow = GameInstance.player.friendSystem:IsBusinessCardUnlock(CS.Beyond.Gameplay.FriendBusinessCardUnlockType.BusinessCardTopic, cfg.id) or Utils.isNotObtainCanShow(itemCfg.notObtainShow, itemCfg.notObtainShowTimeId)
+            if canShow then
+                table.insert(self.m_infos, info)
+            end
+        else
+            logger.error("FriendThemeChangeCtrl:_RebuildInfos itemCfg not found for id:", cfg.itemId)
+        end
+    end
+
+    table.sort(self.m_infos, function(a, b)
+        
+        local aUnlock = GameInstance.player.friendSystem:IsBusinessCardUnlock(CS.Beyond.Gameplay.FriendBusinessCardUnlockType.BusinessCardTopic, a.cfg.id)
+        local bUnlock = GameInstance.player.friendSystem:IsBusinessCardUnlock(CS.Beyond.Gameplay.FriendBusinessCardUnlockType.BusinessCardTopic, b.cfg.id)
+        if aUnlock ~= bUnlock then
+            return aUnlock
+        end
+
+        return a.sort < b.sort
+    end)
+
+    
+    if not string.isEmpty(self.m_selectId) then
+        local stillExist = false
+        for _, info in ipairs(self.m_infos) do
+            if info.cfg.id == self.m_selectId then
+                stillExist = true
+                break
+            end
+        end
+        if not stillExist then
+            self.m_selectId = GameInstance.player.friendSystem.SelfInfo.businessCardTopicId or ""
+            if string.isEmpty(self.m_selectId) and #self.m_infos > 0 then
+                self.m_selectId = self.m_infos[1].cfg.id
+            end
+        end
+    end
+end
+
+
+
+FriendThemeChangeCtrl._Refresh = HL.Method() << function(self)
+    if self.m_infos == nil then
+        return
+    end
+    
+    self:_RebuildInfos()
+    
+    self.view.themeList:UpdateCount(#self.m_infos)
+    self:_OnSelectIdChange(false)
+end
+
+
+
+FriendThemeChangeCtrl.OnBusinessCardUnlock = HL.Method() << function(self)
+    self:_Refresh()
+end
+
+
+
+FriendThemeChangeCtrl.OnSystemUnlockChanged = HL.Method() << function(self)
+    
+    
+    self:_Refresh()
+end
+
+
+
+FriendThemeChangeCtrl.OnActivityUpdated = HL.Method() << function(self)
+    
+    self:_Refresh()
+end
+
+
+
 FriendThemeChangeCtrl._TryInvokeCloseCallback = HL.Method() << function(self)
     if self.m_closeCallback then
         self.m_closeCallback()
@@ -287,8 +369,13 @@ end
 
 
 
+
+
 FriendThemeChangeCtrl.OnShow = HL.Override() << function(self)
-    self:_OnSelectIdChange(false)
+    if self.m_infos == nil then
+        return
+    end
+    self:_Refresh()
 end
 
 

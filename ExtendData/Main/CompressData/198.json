@@ -4,187 +4,52 @@
   "nodes": [
     {
       "_position": {
-        "x": -121.6459,
-        "y": 136.625
+        "x": 17.91727,
+        "y": -3356.184
       },
-      "_comment": "会客室工作",
-      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
-      "$id": "0"
-    },
-    {
-      "childConditions": [
-        {
-          "weight": {
-            "_name": "weight1",
-            "_targetVariableID": "ed6bc340-4b48-4a4e-8d8b-605e0a3145aa"
-          },
-          "condition": {
-            "result": {
-              "_name": "weight1",
-              "_targetVariableID": "ed6bc340-4b48-4a4e-8d8b-605e0a3145aa"
-            },
-            "weight": 15,
-            "seqActionId": {
-              "_name": "行为循环Id1",
-              "_targetVariableID": "0a21235a-6f60-4b6d-9148-bd0dd1782a23"
-            },
-            "latestChangeWeight": {
-              "_name": "最近使用过权重修改值",
-              "_targetVariableID": "d31c5b4e-3d2c-4ac3-a419-18cd76d6918f"
-            },
-            "holdChangeWeight": {
-              "_name": "被占用数量权重修改值",
-              "_targetVariableID": "5107911a-65ee-4794-a435-4afb1cf4ae93"
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.NpcChangeSeqActionWeight"
-          }
-        },
-        {
-          "weight": {
-            "_name": "weight2",
-            "_targetVariableID": "a795beb2-786b-4415-9d2b-8bd40e37f71a"
-          },
-          "condition": {
-            "result": {
-              "_name": "weight2",
-              "_targetVariableID": "a795beb2-786b-4415-9d2b-8bd40e37f71a"
-            },
-            "weight": 10,
-            "seqActionId": {
-              "_name": "行为循环Id2",
-              "_targetVariableID": "123d49c7-6303-4e02-9bb7-22386d565154"
-            },
-            "latestChangeWeight": {
-              "_name": "最近使用过权重修改值",
-              "_targetVariableID": "d31c5b4e-3d2c-4ac3-a419-18cd76d6918f"
-            },
-            "holdChangeWeight": {
-              "_name": "被占用数量权重修改值",
-              "_targetVariableID": "5107911a-65ee-4794-a435-4afb1cf4ae93"
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.NpcChangeSeqActionWeight"
-          }
-        }
-      ],
-      "_position": {
-        "x": -132.1941,
-        "y": 315.1405
-      },
-      "$type": "Beyond.Gameplay.AI.Nodes.ConditionalProbabilitySelector",
-      "$id": "1"
-    },
-    {
-      "_subTree": {
-        "_value": 1
-      },
-      "_variablesMap": [
-        {
-          "_targetSubGraphVariableID": "510cf188-ca67-4e3f-816d-7440ff6ce584",
-          "_canRead": true,
-          "_canWrite": true,
-          "_type": "System.Int32",
-          "_name": "行为循环Id1",
-          "_targetVariableID": "0a21235a-6f60-4b6d-9148-bd0dd1782a23"
-        }
-      ],
-      "additionalWidth": 201.0,
-      "_position": {
-        "x": -572.1941,
-        "y": 434.3405
-      },
-      "_comment": "行为循环1——基础工作",
-      "$type": "NodeCanvas.BehaviourTrees.SubTree",
-      "$id": "2"
-    },
-    {
-      "_subTree": {
-        "_value": 2
-      },
-      "_variablesMap": [
-        {
-          "_targetSubGraphVariableID": "510cf188-ca67-4e3f-816d-7440ff6ce584",
-          "_canRead": true,
-          "_canWrite": true,
-          "_type": "System.Int32",
-          "_name": "行为循环Id2",
-          "_targetVariableID": "123d49c7-6303-4e02-9bb7-22386d565154"
-        }
-      ],
-      "additionalWidth": 203.0,
-      "_position": {
-        "x": -72.19409,
-        "y": 435.1405
-      },
-      "_comment": "行为循环2——顺序工作",
-      "$type": "NodeCanvas.BehaviourTrees.SubTree",
-      "$id": "3"
+      "$type": "NodeCanvas.BehaviourTrees.Sequencer"
     }
   ],
-  "connections": [
+  "connections": [],
+  "canvasGroups": [
     {
-      "_sourceNode": {
-        "$ref": "0"
+      "name": "prepare",
+      "rect": {
+        "xMin": -1253.601,
+        "yMin": -2723.684,
+        "xMax": -690.749,
+        "yMax": -2515.049
       },
-      "_targetNode": {
-        "$ref": "1"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "1"
-      },
-      "_targetNode": {
-        "$ref": "2"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
-    },
-    {
-      "_sourceNode": {
-        "$ref": "1"
-      },
-      "_targetNode": {
-        "$ref": "3"
-      },
-      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+      "autoGroup": true
     }
   ],
-  "canvasGroups": [],
   "localBlackboard": {
     "_variables": {
-      "被占用数量权重修改值": {
-        "_value": -5,
-        "_name": "被占用数量权重修改值",
-        "_id": "5107911a-65ee-4794-a435-4afb1cf4ae93",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "TargetActor": {
+        "_name": "TargetActor",
+        "_id": "bfa4ea9c-771f-4c0f-be88-24eb8889185b",
+        "_isPublic": true,
+        "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.AIEntity, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
       },
-      "最近使用过权重修改值": {
-        "_value": -5,
-        "_name": "最近使用过权重修改值",
-        "_id": "d31c5b4e-3d2c-4ac3-a419-18cd76d6918f",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "GroupAITarget": {
+        "_name": "GroupAITarget",
+        "_id": "ecb30dad-7da1-4ea0-b67d-2d90b4944f6b",
+        "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.AIEntity, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
       },
-      "行为循环Id1": {
-        "_value": 1,
-        "_name": "行为循环Id1",
-        "_id": "0a21235a-6f60-4b6d-9148-bd0dd1782a23",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "MainCharacter": {
+        "_name": "MainCharacter",
+        "_id": "c3dd7e86-b887-4b82-818b-bdcdb6ca6844",
+        "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.AIEntity, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
       },
-      "行为循环Id2": {
-        "_value": 2,
-        "_name": "行为循环Id2",
-        "_id": "123d49c7-6303-4e02-9bb7-22386d565154",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "startPos": {
+        "_name": "startPos",
+        "_id": "5cc50d64-622a-4840-a6bb-ce167dfd6b2d",
+        "$type": "NodeCanvas.Framework.Variable`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
       },
-      "weight1": {
-        "_name": "weight1",
-        "_id": "ed6bc340-4b48-4a4e-8d8b-605e0a3145aa",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
-      },
-      "weight2": {
-        "_name": "weight2",
-        "_id": "a795beb2-786b-4415-9d2b-8bd40e37f71a",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "entered": {
+        "_name": "entered",
+        "_id": "b6e907a0-04f9-455c-9d02-4df70660f84b",
+        "$type": "NodeCanvas.Framework.Variable`1[[System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
       }
     }
   },

@@ -44,7 +44,7 @@ end
 
 
 BattleBossInfoCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.view.main.gameObject:SetActiveIfNecessary(false)
+    self.view.canvasGroup.alpha = 0
     local inFightEnemies = GameWorld.battle.enemies
     for _, enemyPtr in cs_pairs(inFightEnemies) do
         local enemy = enemyPtr.abilityCom
@@ -61,7 +61,7 @@ end
 
 BattleBossInfoCtrl.OnShow = HL.Override() << function(self)
     if self.m_targetAbilitySystem ~= nil then
-        self.view.main.gameObject:SetActive(true)
+        self.view.canvasGroup.alpha = 1
         self.view.anim:PlayInAnimation()
     end
     self.view.headBar:Refresh()
@@ -112,12 +112,12 @@ do
         self.view.anim:ClearTween()
         if self.m_targetAbilitySystem.alive then
             self.view.anim:PlayOutAnimation(function()
-                self.view.main.gameObject:SetActive(false)
+                self.view.canvasGroup.alpha = 0
                 self.view.headBar:Clear()
             end)
         else
             self.view.anim:PlayWithTween("battlebossinfo_broken", function()
-                self.view.main.gameObject:SetActive(false)
+                self.view.canvasGroup.alpha = 0
                 self.view.headBar:Clear()
             end)
         end
@@ -133,7 +133,7 @@ do
         self.view.anim:ClearTween()
         self.m_targetAbilitySystem = targetAbilitySystem
 
-        self.view.main.gameObject:SetActive(true)
+        self.view.canvasGroup.alpha = 1
         self.view.anim:PlayInAnimation()
         local enemyId = targetAbilitySystem.entity.templateData.id
         self.view.name.text = DataManager.enemyDataTable:GetEnemyName(enemyId)

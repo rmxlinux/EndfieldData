@@ -78,7 +78,7 @@ DungeonCustomRewardCtrl.TryStartSettlement = HL.StaticMethod() << function()
                 onConfirm = function()
                     
                     if ActivityUtils.getRealStaminaCost(costStamina) > GameInstance.player.inventory.curStamina then
-                        UIManager:Open(PanelId.StaminaPopUp)
+                        PhaseManager:OpenPhase(PhaseId.StaminaPopUp)
                     else
                         dungeonMgr:TryObtainReward(dungeonId, false, ActivityUtils.hasStaminaReduceCount(), 1)
                     end
@@ -187,7 +187,7 @@ DungeonCustomRewardCtrl._OnClickBtnAward = HL.Method() << function(self)
         GameInstance.dungeonManager:TryObtainReward(self.m_dungeonId, false, ActivityUtils.hasStaminaReduceCount(), self.m_curSelectRadio)
     else
         
-        UIManager:AutoOpen(PanelId.StaminaPopUp)
+        PhaseManager:OpenPhase(PhaseId.StaminaPopUp)
     end
 end
 

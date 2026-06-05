@@ -44,6 +44,12 @@ local PHASE_ID = PhaseId.GachaPool
 
 
 
+
+
+
+
+
+
 GachaPoolCtrl = HL.Class('GachaPoolCtrl', uiCtrl.UICtrl)
 
 
@@ -68,6 +74,9 @@ GachaPoolCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
+
+
+GachaPoolCtrl.m_arg = HL.Field(HL.Table)
 
 
 GachaPoolCtrl.m_getCell = HL.Field(HL.Function)
@@ -113,8 +122,8 @@ GachaPoolCtrl.m_jumpToPoolLuaIndex = HL.Field(HL.Number) << 0
 
 
 GachaPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_phase = arg and arg.phase or nil
     self:_InitUI()
+    self.m_arg = arg
     self:_InitData(arg.poolId)
 
     self:_StartCoroutine(function()
@@ -151,14 +160,22 @@ GachaPoolCtrl.OnShow = HL.Override() << function(self)
         end
     end
     
+    if self.m_arg.rewardQueueRestoreInfo then
+        self:_RecoverRewardQueue(self.m_arg.rewardQueueRestoreInfo)
+        self.m_arg.rewardQueueRestoreInfo = nil
+    end
+    
     if not self.m_isPlayingChangeTabInAni then
         self:_TryShowQueueReward()
     end
 
     local cell = self.m_poolTabCache:Get(self.m_curIndex)
     if cell then
-        UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.poolTabNodeNaviGroup, cell.toggle)
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.poolTabNodeNaviGroup, cell.toggle)
     end
+
+    
+    self:HandleSubPanelArg()
 end
 
 
@@ -636,6 +653,29 @@ end
 
 
 
+GachaPoolCtrl.GetSubPanelArg = HL.Method().Return(HL.Any) << function(self)
+    
+    local poolCell = self.m_getCell(self.m_curIndex).cellWidget
+    local subPanelArg = poolCell:GetSubPanelArg()
+    return subPanelArg
+end
+
+
+
+GachaPoolCtrl.HandleSubPanelArg = HL.Method() << function(self)
+    local subPanelArg = self.m_phase.arg.subPanelArg
+    if not subPanelArg then
+        return
+    end
+    
+    self.m_phase.arg.subPanelArg = nil
+    
+    local poolCell = self.m_getCell(self.m_curIndex).cellWidget
+    poolCell:HandleSubPanelArg(subPanelArg)
+end
+
+
+
 
 
 
@@ -778,6 +818,7 @@ end
 GachaPoolCtrl.AddQueueReward = HL.Method(HL.Table) << function(self, arg)
     logger.info("GachaPoolCtrl.AddQueueReward：" .. arg.queueRewardType)
     self.m_showRewardFuncQueue:Push({
+        queueRewardType = arg.queueRewardType,
         order = self.m_queueRewardConfigs[arg.queueRewardType].order,
         showRewardFunc = arg.showRewardFunc
     })
@@ -823,6 +864,44 @@ GachaPoolCtrl._ReportPlacementEvent = HL.Method(HL.Any) << function(self, msg)
     if totalPrevGachaCharCount < 30 and (totalPrevGachaCharCount + curCount) >= 30 then
         Utils.reportPlacementEvent(GEnums.ClientPlacementEventType.Gacha30xFirst)
     end
+end
+
+
+
+
+
+
+GachaPoolCtrl._RecoverRewardQueue = HL.Method(HL.Table) << function(self, restoreInfo)
+    if not restoreInfo or not restoreInfo.pendingItems then
+        return
+    end
+    for _, item in ipairs(restoreInfo.pendingItems) do
+        self.m_showRewardFuncQueue:Push(item)
+    end
+    self.m_curIsShowReward = restoreInfo.curIsShowReward
+end
+
+
+
+GachaPoolCtrl.GetRewardQueueRestoreInfo = HL.Method().Return(HL.Table) << function(self)
+    local pendingItems = {}
+    local count = self.m_showRewardFuncQueue:Count()
+    for i = 1, count do
+        local item = self.m_showRewardFuncQueue:AtIndex(i)
+        if item then
+            table.insert(pendingItems, item)
+        end
+    end
+    return {
+        curIsShowReward = self.m_curIsShowReward,
+        pendingItems = pendingItems,
+    }
+end
+
+
+
+GachaPoolCtrl.GetIsPlayingTabInAnimation = HL.Method().Return(HL.Boolean) << function(self)
+    return self.m_isPlayingChangeTabInAni
 end
 
 

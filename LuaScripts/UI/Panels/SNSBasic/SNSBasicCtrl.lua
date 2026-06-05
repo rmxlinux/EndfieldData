@@ -17,6 +17,7 @@ local PHASE_ID = PhaseId.SNS
 
 
 
+
 SNSBasicCtrl = HL.Class('SNSBasicCtrl', uiCtrl.UICtrl)
 
 
@@ -104,12 +105,21 @@ end
 
 
 SNSBasicCtrl._InitTabs = HL.Method() << function(self)
-    local defaultPanelId = unpack(self.m_args)
-    for luaIndex, tabInfo in ipairs(self.m_tabInfos) do
-        if defaultPanelId == tabInfo.panelId then
-            self.m_curTabIndex = luaIndex
-            break
+    local defaultPanelId = self.m_args and (self.m_args.defaultPanelId or unpack(self.m_args))
+    local recoverTabIndex = self.m_args and self.m_args.tabIndex or nil
+    if type(recoverTabIndex) == "number" and self.m_tabInfos[recoverTabIndex] then
+        self.m_curTabIndex = recoverTabIndex
+    else
+        for luaIndex, tabInfo in ipairs(self.m_tabInfos) do
+            if defaultPanelId == tabInfo.panelId then
+                self.m_curTabIndex = luaIndex
+                break
+            end
         end
+    end
+
+    if self.m_curTabIndex < 1 then
+        self.m_curTabIndex = 1
     end
 
     self.m_genTabCells:Refresh(#self.m_tabInfos, function(cell, luaIndex)
@@ -157,6 +167,20 @@ SNSBasicCtrl._OnTabClick = HL.Method(HL.Number) << function(self, luaIndex)
     
     local phase = self.m_phase
     phase:OnTabChange({ panelId = curTabInfo.panelId })
+end
+
+
+
+SNSBasicCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local curTabInfo = self.m_tabInfos and self.m_tabInfos[self.m_curTabIndex] or nil
+    if not curTabInfo then
+        return
+    end
+
+    return {
+        tabIndex = self.m_curTabIndex,
+        panelId = curTabInfo.panelId,
+    }
 end
 
 

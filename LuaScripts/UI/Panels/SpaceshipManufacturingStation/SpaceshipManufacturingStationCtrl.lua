@@ -4,82 +4,29 @@ local PHASE_ID = PhaseId.SpaceshipManufacturingStation
 
 local RoomStateEnum = SpaceshipUtils.RoomStateEnum
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipManufacturingStationCtrl = HL.Class('SpaceshipManufacturingStationCtrl', uiCtrl.UICtrl)
-
 
 SpaceshipManufacturingStationCtrl.m_roomId = HL.Field(HL.String) << ""
 
-
 SpaceshipManufacturingStationCtrl.m_showingFormulaList = HL.Field(HL.Boolean) << false
-
 
 SpaceshipManufacturingStationCtrl.m_curSelectFormulaId = HL.Field(HL.String) << ""
 
-
 SpaceshipManufacturingStationCtrl.m_curSelectNumber = HL.Field(HL.Number) << -1
-
 
 SpaceshipManufacturingStationCtrl.m_formulaList = HL.Field(HL.Table)
 
-
 SpaceshipManufacturingStationCtrl.m_diffBetweenSelectAndRemain = HL.Field(HL.Number) << 0
-
 
 SpaceshipManufacturingStationCtrl.m_diffBetweenSelectAndRemainDirty = HL.Field(HL.Boolean) << false
 
-
 SpaceshipManufacturingStationCtrl.m_animationWrapper = HL.Field(HL.Userdata)
-
 
 SpaceshipManufacturingStationCtrl.m_moveCam = HL.Field(HL.Boolean) << false
 
+SpaceshipManufacturingStationCtrl.m_clearScreenKey = HL.Field(HL.Number) << -1
+
+SpaceshipManufacturingStationCtrl.m_recoverState = HL.Field(HL.Table)
 
 
 
@@ -95,20 +42,16 @@ SpaceshipManufacturingStationCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SPACESHIP_MANUFACTURING_STATION_CANCEL] = "OnSpaceshipManufacturingStationCancel",
 }
 
-
 SpaceshipManufacturingStationCtrl.s_cachedSortOptCsIndex = HL.StaticField(HL.Number) << 0
 
-
 SpaceshipManufacturingStationCtrl.s_cachedSortIncremental = HL.StaticField(HL.Boolean) << false
-
-
-
 
 
 SpaceshipManufacturingStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
     self.m_roomId = arg.roomId
     self.m_moveCam = arg.moveCam == true
+    self.m_clearScreenKey = arg.clearScreenKey or -1
     local spaceship = GameInstance.player.spaceship
 
     self.m_animationWrapper = self.animationWrapper
@@ -148,8 +91,16 @@ SpaceshipManufacturingStationCtrl.OnCreate = HL.Override(HL.Any) << function(sel
 
     self:_InitBG()
     self:_InitRoomInfo()
-    self:_InitFormulaList() 
+    local recoverState = arg and arg.recoverState or nil
+    self.m_recoverState = recoverState
+    self:_InitFormulaList()
     self:_InitFormulaPanel()
+
+    if recoverState then
+        self:_TryRecoverState(recoverState)
+        arg.recoverState = nil
+        self.m_recoverState = nil
+    end
 
     
     
@@ -160,13 +111,9 @@ SpaceshipManufacturingStationCtrl.OnCreate = HL.Override(HL.Any) << function(sel
         end
     end)
 
-    
-    
-    
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+    self:_TryRecoverFriendHelpPopup(arg and arg.friendHelpPopupState or nil)
 end
-
-
 
 SpaceshipManufacturingStationCtrl._InitBG = HL.Method() << function(self)
     self.view.spaceshipRoomCommonBg:InitSpaceshipRoomCommonBg(self.m_roomId, function()
@@ -176,13 +123,9 @@ SpaceshipManufacturingStationCtrl._InitBG = HL.Method() << function(self)
     end)
 end
 
-
-
 SpaceshipManufacturingStationCtrl._InitRoomInfo = HL.Method() << function(self)
     self.view.roomCommonInfo:InitSpaceshipRoomCommonInfo(self.m_roomId, self.m_moveCam)
 end
-
-
 
 SpaceshipManufacturingStationCtrl._InitFormulaList = HL.Method() << function(self)
     local formulaData = {}
@@ -217,14 +160,12 @@ SpaceshipManufacturingStationCtrl._InitFormulaList = HL.Method() << function(sel
         SpaceshipManufacturingStationCtrl.s_cachedSortIncremental = isIncremental
     end
 
-    
+    if self.m_recoverState then
+        formulaData.defaultSelectFormulaId = self.m_recoverState.curSelectFormulaId
+        formulaData.defaultTabIndex = self.m_recoverState.formulaListTabIndex
+    end
     self.view.formulaList:InitSpaceshipRoomFormulaList(formulaData)
-
-    self:_RefreshNumberSelector()
-    self:_OnFormulaChange()
 end
-
-
 
 SpaceshipManufacturingStationCtrl._ProcessFormulaTabListData = HL.Method().Return(HL.Table) << function(self)
     local spaceship = GameInstance.player.spaceship
@@ -281,8 +222,6 @@ SpaceshipManufacturingStationCtrl._ProcessFormulaTabListData = HL.Method().Retur
     return formulaTabListData
 end
 
-
-
 SpaceshipManufacturingStationCtrl._InitFormulaPanel = HL.Method() << function(self)
     
     self.view.numberSelector:InitNumberSelector(0, 0, 0, function(curNumber, isChangeByBtn)
@@ -296,8 +235,6 @@ SpaceshipManufacturingStationCtrl._InitFormulaPanel = HL.Method() << function(se
 
     self:_ToggleFormulaListAndRoomInfo(false)
 end
-
-
 
 SpaceshipManufacturingStationCtrl._TickFormulaPanel = HL.Method() << function(self)
     local spaceship = GameInstance.player.spaceship
@@ -313,23 +250,17 @@ SpaceshipManufacturingStationCtrl._TickFormulaPanel = HL.Method() << function(se
     self:_RefreshFormulaTimeInfoByRemain()
 end
 
-
-
 SpaceshipManufacturingStationCtrl._RefreshFormulaInfoByRemain = HL.Method() << function(self)
     self:_RefreshFormulaOutcomeInfo()
     self:_RefreshFormulaTimeInfoByRemain()
     self:_RefreshFormulaBottomState()
 end
 
-
-
 SpaceshipManufacturingStationCtrl._RefreshFormulaInfoBySelected = HL.Method() << function(self)
     self:_RefreshFormulaOutcomeInfo()
     self:_RefreshFormulaTimeInfoBySelected()
     self:_RefreshFormulaBottomState()
 end
-
-
 
 SpaceshipManufacturingStationCtrl._RefreshFormulaOutcomeInfo = HL.Method() << function(self)
     local spaceship = GameInstance.player.spaceship
@@ -353,9 +284,10 @@ SpaceshipManufacturingStationCtrl._RefreshFormulaOutcomeInfo = HL.Method() << fu
     end
 end
 
-
-
 SpaceshipManufacturingStationCtrl._RefreshNumberSelector = HL.Method() << function(self)
+    if string.isEmpty(self.m_curSelectFormulaId) then
+        return
+    end
     local spaceship = GameInstance.player.spaceship
     local remainFormulaId = spaceship:GetManufacturingStationRemainFormulaId(self.m_roomId)
     local machineCapacity = spaceship:GetManufacturingStationCapacity(self.m_roomId)
@@ -379,9 +311,10 @@ SpaceshipManufacturingStationCtrl._RefreshNumberSelector = HL.Method() << functi
                                                              or not self.m_showingFormulaList and hasRemainFormula)
 end
 
-
-
 SpaceshipManufacturingStationCtrl._RefreshFormulaTimeInfoBySelected = HL.Method() << function(self)
+    if string.isEmpty(self.m_curSelectFormulaId) then
+        return
+    end
     local spaceship = GameInstance.player.spaceship
     local machineCapacity = spaceship:GetManufacturingStationCapacity(self.m_roomId)
 
@@ -397,8 +330,6 @@ SpaceshipManufacturingStationCtrl._RefreshFormulaTimeInfoBySelected = HL.Method(
 
     self.view.suspendImg.gameObject:SetActiveIfNecessary(false)
 end
-
-
 
 SpaceshipManufacturingStationCtrl._RefreshFormulaTimeInfoByRemain = HL.Method() << function(self)
     local spaceship = GameInstance.player.spaceship
@@ -438,8 +369,6 @@ SpaceshipManufacturingStationCtrl._RefreshFormulaTimeInfoByRemain = HL.Method() 
         self.view.suspendImg.gameObject:SetActiveIfNecessary(false)
     end
 end
-
-
 
 SpaceshipManufacturingStationCtrl._RefreshFormulaBottomState = HL.Method() << function(self)
     
@@ -498,10 +427,6 @@ SpaceshipManufacturingStationCtrl._RefreshFormulaBottomState = HL.Method() << fu
     self.view.changeFormulaBtn.gameObject:SetActiveIfNecessary(hasRemainFormula and not self.m_showingFormulaList)
 end
 
-
-
-
-
 SpaceshipManufacturingStationCtrl._OnNumberSelectorChange = HL.Method(HL.Number, HL.Boolean)
         << function(self, curNumber, isChangeByBtn)
     self.m_curSelectNumber = curNumber
@@ -524,9 +449,6 @@ SpaceshipManufacturingStationCtrl._OnNumberSelectorChange = HL.Method(HL.Number,
     local cantStart = curNumber ~= 0
     self.view.formulaSelectConfirmBtn.interactable = cantStart
 end
-
-
-
 
 SpaceshipManufacturingStationCtrl._RefreshOverCapacity = HL.Method(HL.String) << function(self, formulaId)
     if string.isEmpty(formulaId) then
@@ -553,8 +475,6 @@ SpaceshipManufacturingStationCtrl._RefreshOverCapacity = HL.Method(HL.String) <<
     end
 end
 
-
-
 SpaceshipManufacturingStationCtrl._RefreshPanelTopNode = HL.Method() << function(self)
     
     self.view.spaceshipRoomCommonBg:SetTopInfoNodeState(self.m_showingFormulaList)
@@ -569,17 +489,12 @@ SpaceshipManufacturingStationCtrl._RefreshPanelTopNode = HL.Method() << function
     end
 end
 
-
-
-
 SpaceshipManufacturingStationCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     if DeviceInfo.usingController then
         self.view.numberSelector.view.keyHintAdd.gameObject:SetActive(active)
         self.view.numberSelector.view.keyHintReduce.gameObject:SetActive(active)
     end
 end
-
-
 
 SpaceshipManufacturingStationCtrl._RefreshPanelBottomNode = HL.Method() << function(self)
     
@@ -598,8 +513,6 @@ SpaceshipManufacturingStationCtrl._RefreshPanelBottomNode = HL.Method() << funct
     self.view.suspendImg.gameObject:SetActiveIfNecessary(isShutDown)
 end
 
-
-
 SpaceshipManufacturingStationCtrl._OnFormulaChange = HL.Method() << function(self)
     if GameInstance.player.spaceship:GetManufacturingStationRemainFormulaId(self.m_roomId)
             == self.m_curSelectFormulaId then
@@ -609,18 +522,16 @@ SpaceshipManufacturingStationCtrl._OnFormulaChange = HL.Method() << function(sel
     end
 end
 
-
-
 SpaceshipManufacturingStationCtrl._OpenFormulaList = HL.Method() << function(self)
     self.m_animationWrapper:Play("spaceshipmanufacturingstation_change")
     AudioManager.PostEvent("Au_UI_Popup_DetailsPanel_Open")
 
     self:_ToggleFormulaListAndRoomInfo(true)
-    self:_RefreshPanelTopNode()
     self:_InitFormulaList()
+    self:_RefreshPanelTopNode()
+    self:_RefreshNumberSelector()
+    self:_OnFormulaChange()
 end
-
-
 
 SpaceshipManufacturingStationCtrl._CloseFormulaList = HL.Method() << function(self)
     local remainFormulaId = GameInstance.player.spaceship:GetManufacturingStationRemainFormulaId(self.m_roomId)
@@ -636,8 +547,6 @@ SpaceshipManufacturingStationCtrl._CloseFormulaList = HL.Method() << function(se
     self:_RefreshNumberSelector()
     self:_RefreshFormulaInfoByRemain()
 end
-
-
 
 SpaceshipManufacturingStationCtrl._OnFormulaSelectConfirmBtnClick = HL.Method() << function(self)
     
@@ -666,8 +575,6 @@ SpaceshipManufacturingStationCtrl._OnFormulaSelectConfirmBtnClick = HL.Method() 
     end
 end
 
-
-
 SpaceshipManufacturingStationCtrl._OnFormulaSelectCancelBtnClick = HL.Method() << function(self)
     if self.m_showingFormulaList then
         self:_CloseFormulaList()
@@ -678,9 +585,6 @@ SpaceshipManufacturingStationCtrl._OnFormulaSelectCancelBtnClick = HL.Method() <
         self:_RefreshFormulaInfoByRemain()
     end
 end
-
-
-
 
 SpaceshipManufacturingStationCtrl._ToggleFormulaListAndRoomInfo = HL.Method(HL.Boolean) << function(self, showFormula)
     self.m_showingFormulaList = showFormula
@@ -693,8 +597,6 @@ SpaceshipManufacturingStationCtrl._ToggleFormulaListAndRoomInfo = HL.Method(HL.B
 
     self.view.spaceshipRoomCommonBg:ToggleReturnBtnOn(showFormula)
 end
-
-
 
 
 SpaceshipManufacturingStationCtrl._ShowCancelFormulaToast = HL.Method() << function(self)
@@ -713,8 +615,6 @@ SpaceshipManufacturingStationCtrl._ShowCancelFormulaToast = HL.Method() << funct
     })
 end
 
-
-
 SpaceshipManufacturingStationCtrl._ShowExchangeFormulaToast = HL.Method() << function(self)
     local spaceship = GameInstance.player.spaceship
     local _, count = spaceship:GetManufacturingStationProduct(self.m_roomId)
@@ -731,8 +631,6 @@ SpaceshipManufacturingStationCtrl._ShowExchangeFormulaToast = HL.Method() << fun
     })
 end
 
-
-
 SpaceshipManufacturingStationCtrl._OnMoreInfoBtnClick = HL.Method() << function(self)
     local type = SpaceshipUtils.getRoomTypeByRoomId(self.m_roomId)
     local roomTypeData = Tables.spaceshipRoomTypeTable[type]
@@ -743,9 +641,6 @@ SpaceshipManufacturingStationCtrl._OnMoreInfoBtnClick = HL.Method() << function(
         posType = UIConst.UI_TIPS_POS_TYPE.LeftTop,
     })
 end
-
-
-
 
 SpaceshipManufacturingStationCtrl.OnSpaceshipManufacturingStationStart = HL.Method(HL.Any) << function(self, arg)
     self.m_diffBetweenSelectAndRemain = 0
@@ -758,9 +653,6 @@ SpaceshipManufacturingStationCtrl.OnSpaceshipManufacturingStationStart = HL.Meth
     self:_RefreshFormulaInfoByRemain()
     self:_RefreshPanelBottomNode()
 end
-
-
-
 
 SpaceshipManufacturingStationCtrl.OnSpaceshipManufacturingStationSync = HL.Method(HL.Any) << function(self, arg)
     self:_RefreshFormulaBottomState()
@@ -778,9 +670,6 @@ SpaceshipManufacturingStationCtrl.OnSpaceshipManufacturingStationSync = HL.Metho
     end
 end
 
-
-
-
 SpaceshipManufacturingStationCtrl.OnSpaceshipManufacturingStationCollect = HL.Method(HL.Any) << function(self, args)
     local _, itemId, count = unpack(args)
     Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
@@ -793,9 +682,6 @@ SpaceshipManufacturingStationCtrl.OnSpaceshipManufacturingStationCollect = HL.Me
     self:_RefreshFormulaInfoByRemain()
 end
 
-
-
-
 SpaceshipManufacturingStationCtrl.OnSpaceshipManufacturingStationCancel = HL.Method(HL.Any) << function(self, arg)
     self.m_diffBetweenSelectAndRemain = 0
     self.m_diffBetweenSelectAndRemainDirty = false
@@ -804,22 +690,98 @@ SpaceshipManufacturingStationCtrl.OnSpaceshipManufacturingStationCancel = HL.Met
     self:_RefreshPanelBottomNode()
 end
 
-
-
 SpaceshipManufacturingStationCtrl.OnSpaceshipRoomStationSync = HL.Method() << function(self)
     self:_RefreshFormulaBottomState()
     self:_RefreshPanelBottomNode()
 end
 
-
-
 SpaceshipManufacturingStationCtrl.OnClose = HL.Override() << function(self)
+    local clearScreenKey
     if self.m_moveCam then
-        local clearScreenKey = GameInstance.player.spaceship:UndoMoveCamToSpaceshipRoom(self.m_roomId)
+        clearScreenKey = GameInstance.player.spaceship:UndoMoveCamToSpaceshipRoom(self.m_roomId)
         if clearScreenKey and clearScreenKey ~= -1 then
             UIManager:RecoverScreen(clearScreenKey)
         end
     end
+    if self.m_clearScreenKey ~= -1 then
+        if self.m_clearScreenKey ~= clearScreenKey then
+            UIManager:RecoverScreen(self.m_clearScreenKey)
+        end
+        self.m_clearScreenKey = -1
+    end
+end
+
+SpaceshipManufacturingStationCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = {
+        roomId = self.m_roomId,
+        moveCam = self.m_moveCam,
+        clearScreenKey = self.m_clearScreenKey,
+        recoverState = {
+            showingFormulaList = self.m_showingFormulaList,
+            formulaListTabIndex = self.m_showingFormulaList and self.view.formulaList.m_curTabIndex or nil,
+            curSelectFormulaId = self.m_curSelectFormulaId,
+            curSelectNumber = self.m_curSelectNumber,
+        }
+    }
+    local isOpen, popupCtrl = UIManager:IsOpen(PanelId.SpaceShipFriendHelpList)
+    if isOpen and popupCtrl and popupCtrl.m_roomId == self.m_roomId then
+        arg.friendHelpPopupState = {
+            roomId = popupCtrl.m_roomId,
+        }
+    end
+    return arg
+end
+
+SpaceshipManufacturingStationCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+    local savedFormulaId = recoverState.curSelectFormulaId
+    if recoverState.showingFormulaList == true then
+        self:_OpenFormulaList()
+        self:_RecoverNumberSelectorState(recoverState.curSelectNumber)
+        self:_RefreshPanelTopNode()
+    else
+        if not string.isEmpty(savedFormulaId) then
+            self.m_curSelectFormulaId = savedFormulaId
+        end
+        self:_RefreshNumberSelector()
+        self:_RefreshFormulaInfoByRemain()
+        self:_RecoverNumberSelectorState(recoverState.curSelectNumber)
+    end
+end
+
+SpaceshipManufacturingStationCtrl._RecoverNumberSelectorState = HL.Method(HL.Opt(HL.Number)) << function(self, savedNumber)
+    local numberSelector = self.view and self.view.numberSelector
+    if not numberSelector or not savedNumber or savedNumber < 0 then
+        return
+    end
+    self.m_curSelectNumber = math.min(math.max(savedNumber, numberSelector.m_min), numberSelector.m_max)
+    numberSelector:RefreshNumber(self.m_curSelectNumber, numberSelector.m_min, numberSelector.m_max)
+    self:_RefreshFormulaBottomState()
+end
+
+SpaceshipManufacturingStationCtrl._TryRecoverFriendHelpPopup = HL.Method(HL.Opt(HL.Any)) << function(self, popupState)
+    if popupState == nil or string.isEmpty(popupState.roomId) or popupState.roomId ~= self.m_roomId then
+        return
+    end
+    local recoverPopup = function()
+        local isOpen, popupCtrl = UIManager:IsOpen(PanelId.SpaceShipFriendHelpList)
+        if not isOpen or not popupCtrl or popupCtrl.m_roomId ~= popupState.roomId then
+            UIManager:AutoOpen(PanelId.SpaceShipFriendHelpList, {
+                roomId = popupState.roomId,
+            })
+            isOpen, popupCtrl = UIManager:IsOpen(PanelId.SpaceShipFriendHelpList)
+        elseif not popupCtrl:IsShow() then
+            UIManager:AutoOpen(PanelId.SpaceShipFriendHelpList, {
+                roomId = popupState.roomId,
+            })
+        end
+        if isOpen and popupCtrl then
+            UIManager:SetTopOrder(PanelId.SpaceShipFriendHelpList)
+        end
+    end
+    recoverPopup()
 end
 
 HL.Commit(SpaceshipManufacturingStationCtrl)

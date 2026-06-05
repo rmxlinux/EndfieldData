@@ -91,6 +91,9 @@ SnapshotChallengeMainInfoCommon._OnFirstTimeInit = HL.Override() << function(sel
     self:RegisterMessage(MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE, function(args)
         self:_OnMultiStageUpdate(args)
     end)
+    self:RegisterMessage(MessageConst.ON_CONDITIONAL_MULTI_STAGE_PROGRESS_CHANGE, function(args)
+        self:_OnMultiStageUpdate(args)
+    end)
 
     self.view.scrollViewSelectableNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
         if not isFocused then
@@ -126,18 +129,13 @@ SnapshotChallengeMainInfoCommon.OnClose = HL.Virtual() << function(self)
         AudioAdapter.PostEvent(self.view.config.AUDIO_OUT_EVENT)
     end
     self.m_updateCor = self:_ClearCoroutine(self.m_updateCor)
-    local isOpen, _ = PhaseManager:IsOpen(PhaseId.Dialog)
-    if isOpen then
-        Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
-    end
     
     for _, stageId in pairs(self.m_readStageIds) do
         if ActivityUtils.isNewActivityConditionalStage(stageId) then
             ActivityUtils.setFalseNewActivityConditionalStage(stageId, true)
         end
     end
-    
-    ClientDataManagerInst:SaveUserData("Default") 
+    ClientDataManagerInst:SaveUserData(ClientDataManagerInst.defaultCategory) 
 end
 
 
@@ -168,11 +166,12 @@ SnapshotChallengeMainInfoCommon._InitData = HL.Virtual() << function(self)
     local _, multiStageCfg = Tables.activityConditionalMultiStageTable:TryGetValue(activityId)
     for stageId, stageCfg in pairs(multiStageCfg.stageList) do
         local _, activitySnapshotCfg = Tables.activitySnapshotChallengeTable:TryGetValue(stageId)
-        local levelId = stageCfg.levelId
+        local _, activitySnapshotStageCfg = Tables.activitySnapShotStageTable:TryGetValue(stageId)
+        local levelId = activitySnapshotStageCfg.levelId
         local hasLevelCfg, levelCfg = Tables.levelDescTable:TryGetValue(levelId)
         local levelName = hasLevelCfg and levelCfg.showName or ""
         local missionId = stageCfg.missionId
-        local questId = stageCfg.questId
+        local questId = activitySnapshotStageCfg.questId
         
         local rewardId = stageCfg.rewardId
         
@@ -192,15 +191,16 @@ SnapshotChallengeMainInfoCommon._InitData = HL.Virtual() << function(self)
         
         local canShowPreTaskDetail = preTaskState == CS.Beyond.Gameplay.MissionSystem.MissionState.Processing
         
+        local _, stageData = activityData.stageDataDict:TryGetValue(stageId)
         local stageInfo = {
             stageId = stageId,
             missionId = missionId,
             questId = questId,
             questTitle = stageCfg.name,
             questDesc = stageCfg.desc,
-            mapJumpId = stageCfg.mapJumpId,
+            jumpId = stageCfg.jumpId,
             levelName = levelName,
-            timeOffset = stageCfg.timeOffset,
+            openTime = stageData.OpenTimeTs,
             rewardList = UIUtils.getRewardItems(rewardId),
             sortId = stageCfg.sortId,
             
@@ -244,7 +244,7 @@ SnapshotChallengeMainInfoCommon._UpdateData = HL.Virtual(HL.Boolean) << function
         if firstCompleteStageIndex < 0 and stageInfo.state == self.StageStateEnum.Complete then
             firstCompleteStageIndex = i
         end
-        if firstInProgressStageIndex < 0 and stageInfo.state == self.StageStateEnum.InProgress then
+        if firstInProgressStageIndex < 0 and (stageInfo.state == self.StageStateEnum.InProgress or stageInfo.state == self.StageStateEnum.NeedCompletePreTask) then
             firstInProgressStageIndex = i
         end
     end
@@ -272,7 +272,7 @@ SnapshotChallengeMainInfoCommon._UpdateStageInfo = HL.Virtual(HL.Table) << funct
     
     local activityData = activitySystem:GetActivity(activityId)
     local stageData = activityData:GetStageData(stageId)
-    stageInfo.unlockTime = self.m_info.startTime + stageInfo.timeOffset * Const.SEC_PER_HOUR
+    stageInfo.unlockTime = stageInfo.openTime
     
     local state = self.StageStateEnum.Lock
     if stageData ~= nil then
@@ -319,7 +319,7 @@ SnapshotChallengeMainInfoCommon._InitUI = HL.Virtual() << function(self)
     viewNode.goToBtn.onClick:AddListener(function()
         
         local stageInfo = self.m_info.curStageInfo
-        Utils.jumpToSystem(stageInfo.mapJumpId)
+        Utils.jumpToSystem(stageInfo.jumpId)
     end)
     viewNode.rewardBtn.onClick:AddListener(function()
         local stageInfo = self.m_info.curStageInfo
@@ -481,7 +481,8 @@ SnapshotChallengeMainInfoCommon._RefreshContentUI = HL.Virtual(HL.Number) << fun
     viewNode.completeImg.gameObject:SetActive(isCompleteOrRewarded)
     viewNode.descTxt.text = isCompleteOrRewarded and stageInfo.completeDesc or stageInfo.normalDesc
     LayoutRebuilder.ForceRebuildLayoutImmediate(viewNode.descTxt.transform.parent)
-    InputManagerInst:ToggleBinding(self.view.scrollViewSelectableNaviGroup.FocusBindingId, viewNode.descTxt.transform.rect.height > viewNode.descScrollRect.transform.rect.height)
+    local canFocus = viewNode.descTxt.transform.rect.height > viewNode.descScrollRect.transform.rect.height
+    self.view.scrollViewSelectableNaviGroup.enabled = canFocus
     viewNode.questTitleTxt.text = stageInfo.questTitle
     viewNode.levelNameTxt.text = stageInfo.levelName
     viewNode.questDescTxt.text = stageInfo.questDesc
@@ -560,8 +561,7 @@ SnapshotChallengeMainInfoCommon._ChangeSelectStage = HL.Virtual(HL.Number) << fu
         curStageNode.stateCtrl:SetState("NoRedDot")
     end
     
-    
-    ClientDataManagerInst:SaveUserData("Default") 
+    ClientDataManagerInst:SaveUserData(ClientDataManagerInst.defaultCategory) 
 end
 
 

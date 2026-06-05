@@ -313,18 +313,18 @@ ItemTipsCtrl.OnSystemSizeChange = HL.Method() << function(self)
 end
 
 
-
 ItemTipsCtrl.m_cachedArgs = HL.Field(HL.Table)
 
 
 
-ItemTipsCtrl.HideItemTips = HL.Method() << function(self)
+ItemTipsCtrl.HideItemTips = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     local cachedOnClose
     if self.m_cachedArgs then
         cachedOnClose = self.m_cachedArgs.onClose
         self.m_cachedArgs = nil
     end
-    self:_CloseTips()
+    local skipAnim = args and args.skipAnim
+    self:_CloseTips(skipAnim)
     if cachedOnClose then
         cachedOnClose()
     end
@@ -713,6 +713,8 @@ end
 ItemTipsCtrl._RefreshGemNode = HL.Method(HL.String, HL.Number, HL.Userdata) << function(self, itemId, instId, itemType)
     local isGem = itemType == GEnums.ItemType.WeaponGem
     if not isGem then
+        self.view.gemNode.gameObject:SetActive(false)
+        self.view.weaponCompatibleNode.gameObject:SetActive(false)
         return
     end
     self.view.stateCtrl:SetState("weaponGem")
@@ -1384,7 +1386,9 @@ ItemTipsCtrl._CheckIfShowEmptyNode = HL.Method(HL.Any, HL.Any).Return(HL.Boolean
     end
 
     if itemType == GEnums.ItemType.WeaponGem then
-        return true
+        
+        local showGemNode = self.view.gemNode.gameObject.activeSelf
+        return not showGemNode
     end
 
     if itemType == GEnums.ItemType.Equip then

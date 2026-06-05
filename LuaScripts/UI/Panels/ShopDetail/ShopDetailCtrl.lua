@@ -19,6 +19,14 @@ local PANEL_ID = PanelId.ShopDetail
 
 
 
+
+
+
+
+
+
+
+
 ShopDetailCtrl = HL.Class('ShopDetailCtrl', uiCtrl.UICtrl)
 
 
@@ -29,7 +37,7 @@ ShopDetailCtrl = HL.Class('ShopDetailCtrl', uiCtrl.UICtrl)
 
 ShopDetailCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_BUY_ITEM_SUCC] = 'OnBuyItemSucc',
-    [MessageConst.ON_SHOP_GOODS_CONDITION_REFRESH] = '_OnCloseShopDetailPanel',
+    
     [MessageConst.ON_SHOP_REFRESH] = '_OnHandleShopRefresh',
 }
 
@@ -59,23 +67,24 @@ ShopDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
            self:TryClose()
        end)
     end)
-    self.m_info = arg
+    local goodsInfo = type(arg) == "table" and arg.goodsInfo or arg
+    self.m_info = goodsInfo
     self.view.numeberTxt.text = 1
 
-    local goodsId = arg.goodsTemplateId
+    local goodsId = goodsInfo.goodsTemplateId
     local goodsTableData = Tables.shopGoodsTable:GetValue(goodsId)
     local moneyId = goodsTableData.moneyId
     self.m_moneyId = moneyId
 
     local realPrice = 1
-    if arg.discount and arg.discount < 1 then
+    if goodsInfo.discount and goodsInfo.discount < 1 then
         self.view.discountTag.gameObject:SetActive(true)
         self.view.originalCostTxt.gameObject:SetActive(true)
-        local discountTxt = string.format("-%d<size=60%%>%%</size>", math.floor((1 - arg.discount) * 100 + 0.5))
+        local discountTxt = string.format("-%d<size=60%%>%%</size>", math.floor((1 - goodsInfo.discount) * 100 + 0.5))
         self.view.discountTagLuaReference.discountShadowTxt.text = discountTxt
         self.view.discountTagLuaReference.discountTxt.text = discountTxt
         self.view.originalCostTxt.text = goodsTableData.price
-        realPrice = CashShopUtils.GetDisplayPrice(goodsTableData.price, arg.discount)
+        realPrice = CashShopUtils.GetDisplayPrice(goodsTableData.price, goodsInfo.discount)
         self.view.costTxt.text = realPrice
     else
         self.view.discountTag.gameObject:SetActive(false)
@@ -119,18 +128,17 @@ ShopDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         if itemData.type == GEnums.ItemType.Weapon then
             WikiUtils.showWeaponPreview({ weaponId = self.m_itemId })
         elseif itemData.type == GEnums.ItemType.Char then
-            local info = GameInstance.player.charBag:CreateClientPerfectGachaPoolCharInfo(itemId)
-            local charInstIdList = {}
-            table.insert(charInstIdList, info.instId)
-            if not info then
-                return
-            end
             CharInfoUtils.openCharInfoBestWay({
-                initCharInfo = {
-                    instId = info.instId,
-                    templateId = itemId,
-                    charInstIdList = charInstIdList,
-                },
+                initCharInfoCreator = function(initCharTemplateId)
+                    local info = GameInstance.player.charBag:CreateClientPerfectGachaPoolCharInfo(itemId)
+                    local charInstIdList = {}
+                    table.insert(charInstIdList, info.instId)
+                    return {
+                        instId = info.instId,
+                        templateId = itemId,
+                        charInstIdList = charInstIdList,
+                    }
+                end,
                 onClose = function()
                     GameInstance.player.charBag:ClearAllClientCharAndItemData()
                 end,
@@ -161,8 +169,18 @@ ShopDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.moneyCell:InitMoneyCell(self.m_moneyId)
     self:_OnShopRefresh()
+    
+    self:_ApplyResumeState(arg and arg.resumeState or nil)
 
     GameInstance.player.shopSystem:SetSingleGoodsIdSee(goodsId)
+end
+
+
+
+
+ShopDetailCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
+    self.view.numberSelector.view.keyHintLeft.gameObject:SetActive(active)
+    self.view.numberSelector.view.keyHintRight.gameObject:SetActive(active)
 end
 
 
@@ -350,9 +368,54 @@ end
 
 
 
+
+ShopDetailCtrl._CanPutWeaponCount = HL.Method(HL.String, HL.Number).Return(HL.Boolean) << function(self, weaponId, count)
+    local depots = GameInstance.player.inventory.valuableDepots
+    if not depots:ContainsKey(GEnums.ItemValuableDepotType.Weapon) then
+        return true
+    end
+    local weaponDepot = depots[GEnums.ItemValuableDepotType.Weapon]:GetOrFallback(Utils.getCurrentScope())
+    if not weaponDepot then
+        return true
+    end
+    return weaponDepot:GetUsedGridCount() + count <= weaponDepot.gridLimit
+end
+
+
+
+
+
+ShopDetailCtrl._TryJumpToValuableDepotWhenWeaponDepotFull = HL.Method(HL.String, HL.Number).Return(HL.Boolean) << function(self, weaponId, count)
+    if self:_CanPutWeaponCount(weaponId, count) then
+        return false
+    end
+    Notify(MessageConst.SHOW_POP_UP, {
+        content = Language.LUA_GACHA_WEAPON_EXTRA_POP_UP_TEXT,
+        onConfirm = function()
+            PhaseManager:OpenPhase(PhaseId.ValuableDepot, {
+                depotType = GEnums.ItemValuableDepotType.Weapon,
+                inDestroyMode = true,
+                shouldClearScreenOnOpen = true,
+            })
+        end,
+    })
+    return true
+end
+
+
+
+
 ShopDetailCtrl._OnClickConfirm = HL.Method() << function(self)
     local buyCount = self.view.numberSelector.curNumber
     local info = self.m_info
+    local itemData = Tables.itemTable[self.m_itemId]
+
+    if itemData.type == GEnums.ItemType.Weapon then
+        local totalWeaponCount = math.max(self.m_bundleCount * buyCount, 1)
+        if self:_TryJumpToValuableDepotWhenWeaponDepotFull(self.m_itemId, totalWeaponCount) then
+            return
+        end
+    end
 
     
     local inventorySystem = GameInstance.player.inventory
@@ -478,11 +541,6 @@ end
 
 
 
-
-
-
-
-
 ShopDetailCtrl.TryClose = HL.Method() << function(self)
     if self.m_phase then
         self.m_phase:RemovePhasePanelItemById(PANEL_ID)
@@ -524,6 +582,52 @@ ShopDetailCtrl._SetNumberSelectorKeyHint = HL.Method(HL.Boolean) << function(sel
         or CS.Beyond.UI.CustomUIStyle.OverrideValidState.ForceNotValid
     self.view.numberSelector.view.addButton.transform:Find("KeyHint"):GetComponent("CustomUIStyle").overrideValidState = state
     self.view.numberSelector.view.reduceButton.transform:Find("KeyHint"):GetComponent("CustomUIStyle").overrideValidState = state
+end
+
+
+
+
+ShopDetailCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState or resumeState.selectedCount == nil then
+        return
+    end
+    self:SetNumberSelectorValue(math.max(resumeState.selectedCount, 1))
+end
+
+
+
+ShopDetailCtrl.GetInfo = HL.Method().Return(HL.Any) << function(self)
+    return self.m_info
+end
+
+
+
+ShopDetailCtrl.GetNumberSelectorValue = HL.Method().Return(HL.Number) << function(self)
+    return self.view.numberSelector.curNumber
+end
+
+
+
+
+ShopDetailCtrl.SetNumberSelectorValue = HL.Method(HL.Number) << function(self, value)
+    self.view.numberSelector:RefreshNumber(value)
+end
+
+
+
+ShopDetailCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local info = self.m_info
+    if not info then
+        return nil
+    end
+    
+    local latestInfo = GameInstance.player.shopSystem:GetShopGoodsData(info.shopId, info.goodsId) or info
+    return {
+        goodsInfo = latestInfo,
+        resumeState = {
+            selectedCount = self:GetNumberSelectorValue(),
+        }
+    }
 end
 
 HL.Commit(ShopDetailCtrl)

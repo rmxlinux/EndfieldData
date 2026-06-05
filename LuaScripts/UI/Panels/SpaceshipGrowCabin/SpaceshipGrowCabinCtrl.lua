@@ -13,121 +13,39 @@ local EnumState = SpaceshipUtils.RoomStateEnum
 local AUTO_SELECT_NEXT_SOW_BOX_SWITCH_KEY = "auto_select_next_sow_box_switch"
 local CLIENT_DATA_MANAGER_CATEGORY = "spaceship"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipGrowCabinCtrl = HL.Class('SpaceshipGrowCabinCtrl', uiCtrl.UICtrl)
-
 
 SpaceshipGrowCabinCtrl.m_roomId = HL.Field(HL.String) << ""
 
-
 SpaceshipGrowCabinCtrl.m_panelType = HL.Field(HL.Number) << PanelType.Overview
-
 
 SpaceshipGrowCabinCtrl.m_panelStack = HL.Field(HL.Forward("Stack"))
 
-
 SpaceshipGrowCabinCtrl.m_growCabinTick = HL.Field(HL.Thread)
-
 
 SpaceshipGrowCabinCtrl.m_id2GrowCabinBoxCell = HL.Field(HL.Table)
 
-
 SpaceshipGrowCabinCtrl.m_id2GrowCabinBoxCellLine = HL.Field(HL.Table)
-
 
 SpaceshipGrowCabinCtrl.m_overviewPanelTick = HL.Field(HL.Thread)
 
-
 SpaceshipGrowCabinCtrl.m_selectBoxId = HL.Field(HL.Number) << -1
-
 
 SpaceshipGrowCabinCtrl.m_curSelectSowFormulaId = HL.Field(HL.String) << ""
 
-
 SpaceshipGrowCabinCtrl.m_sowFormulaList = HL.Field(HL.Table)
-
 
 SpaceshipGrowCabinCtrl.m_autoSelectNextSowBox = HL.Field(HL.Boolean) << false
 
-
 SpaceshipGrowCabinCtrl.m_trainAudioPlayed = HL.Field(HL.Boolean) << false
-
 
 SpaceshipGrowCabinCtrl.m_curSelectBreedFormulaId = HL.Field(HL.String) << ""
 
-
 SpaceshipGrowCabinCtrl.m_breedFormulaList = HL.Field(HL.Table)
-
 
 SpaceshipGrowCabinCtrl.m_selectBreedMaterialNumber = HL.Field(HL.Number) << 0
 
-
 SpaceshipGrowCabinCtrl.m_animationWrapper = HL.Field(HL.Userdata)
-
 
 
 
@@ -144,28 +62,24 @@ SpaceshipGrowCabinCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SPACESHIP_ASSIST_DATA_MODIFY] = "_RefreshOverviewPanel",
 }
 
-
 SpaceshipGrowCabinCtrl.s_cachedBreedSortOptCsIndex = HL.StaticField(HL.Number) << 0
-
 
 SpaceshipGrowCabinCtrl.s_cachedBreedSortIncremental = HL.StaticField(HL.Boolean) << false
 
-
 SpaceshipGrowCabinCtrl.s_cachedSowSortOptCsIndex = HL.StaticField(HL.Number) << 0
-
 
 SpaceshipGrowCabinCtrl.s_cachedSowSortIncremental = HL.StaticField(HL.Boolean) << false
 
 
-
 SpaceshipGrowCabinCtrl.m_moveCam = HL.Field(HL.Boolean) << false
 
+SpaceshipGrowCabinCtrl.m_clearScreenKey = HL.Field(HL.Number) << -1
 
 SpaceshipGrowCabinCtrl.m_isInDetailNaviState = HL.Field(HL.Boolean) << false
 
-
 SpaceshipGrowCabinCtrl.m_tempCancelBindingId = HL.Field(HL.Number) << -1
 
+SpaceshipGrowCabinCtrl.m_recoverState = HL.Field(HL.Table)
 
 
 SpaceshipGrowCabinCtrl.OnShow = HL.Override() << function(self)
@@ -174,12 +88,10 @@ end
 
 
 
-
-
-
 SpaceshipGrowCabinCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_roomId = arg.roomId
     self.m_moveCam = arg.moveCam == true
+    self.m_clearScreenKey = arg.clearScreenKey or -1
 
     local _, value = ClientDataManagerInst:GetBool(AUTO_SELECT_NEXT_SOW_BOX_SWITCH_KEY, false, true,
                                                    CLIENT_DATA_MANAGER_CATEGORY)
@@ -245,6 +157,14 @@ SpaceshipGrowCabinCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshBgBottomNode()
     self:_RefreshOverviewPanelBottomNode()
 
+    local recoverState = arg and arg.recoverState or nil
+    if recoverState then
+        self.m_recoverState = recoverState
+        self:_TryRecoverState(recoverState)
+        self.m_recoverState = nil
+        arg.recoverState = nil
+    end
+
     
     self.m_overviewPanelTick = self:_StartCoroutine(function()
         while (true) do
@@ -254,29 +174,31 @@ SpaceshipGrowCabinCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+    self:_TryRecoverFriendHelpPopup(arg and arg.friendHelpPopupState or nil)
 end
-
-
 
 SpaceshipGrowCabinCtrl.OnHide = HL.Override() << function(self)
     self:_DeleteDetailNaviBinding()
 end
 
-
-
 SpaceshipGrowCabinCtrl.OnClose = HL.Override() << function(self)
     self.m_trainAudioPlayed = false
     ClientDataManagerInst:SetBool(AUTO_SELECT_NEXT_SOW_BOX_SWITCH_KEY, self.m_autoSelectNextSowBox, false,
                                   CLIENT_DATA_MANAGER_CATEGORY, true)
+    local clearScreenKey
     if self.m_moveCam then
-        local clearScreenKey = GameInstance.player.spaceship:UndoMoveCamToSpaceshipRoom(self.m_roomId)
+        clearScreenKey = GameInstance.player.spaceship:UndoMoveCamToSpaceshipRoom(self.m_roomId)
         if clearScreenKey and clearScreenKey ~= -1 then
             UIManager:RecoverScreen(clearScreenKey)
         end
     end
+    if self.m_clearScreenKey ~= -1 then
+        if self.m_clearScreenKey ~= clearScreenKey then
+            UIManager:RecoverScreen(self.m_clearScreenKey)
+        end
+        self.m_clearScreenKey = -1
+    end
 end
-
-
 
 SpaceshipGrowCabinCtrl._OnCloseBtnClick = HL.Method() << function(self)
     PhaseManager:PopPhase(PHASE_ID)
@@ -284,8 +206,6 @@ SpaceshipGrowCabinCtrl._OnCloseBtnClick = HL.Method() << function(self)
         self.m_overviewPanelTick = self:_ClearCoroutine(self.m_overviewPanelTick)
     end
 end
-
-
 
 SpaceshipGrowCabinCtrl._InitBG = HL.Method() << function(self)
     self.view.spaceshipRoomCommonBg:InitSpaceshipRoomCommonBg(self.m_roomId, function()
@@ -295,13 +215,9 @@ SpaceshipGrowCabinCtrl._InitBG = HL.Method() << function(self)
     end)
 end
 
-
-
 SpaceshipGrowCabinCtrl._InitRoomInfo = HL.Method() << function(self)
     self.view.roomCommonInfo:InitSpaceshipRoomCommonInfo(self.m_roomId, self.m_moveCam)
 end
-
-
 
 SpaceshipGrowCabinCtrl._InitOverviewPanel = HL.Method() << function(self)
     self.m_id2GrowCabinBoxCell = {}
@@ -325,6 +241,12 @@ SpaceshipGrowCabinCtrl._InitOverviewPanel = HL.Method() << function(self)
     end
     self:BindInputPlayerAction("ss_open_detail_navi", function()
         if self.m_isInDetailNaviState then
+            return
+        end
+        
+        
+        
+        if not self.m_panelStack or self.m_panelStack:Peek() ~= PanelType.Overview then
             return
         end
         self.m_isInDetailNaviState = true
@@ -352,8 +274,6 @@ SpaceshipGrowCabinCtrl._InitOverviewPanel = HL.Method() << function(self)
     end,self.view.plantingWarehouse.boxInfoNode.inputBindingGroupMonoTarget.groupId)
 end
 
-
-
 SpaceshipGrowCabinCtrl._DeleteDetailNaviBinding = HL.Method() << function(self)
     InputManagerInst:DeleteBinding(self.m_tempCancelBindingId)
     Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.plantingWarehouse.boxInfoNode.inputBindingGroupMonoTarget.groupId)
@@ -361,8 +281,6 @@ SpaceshipGrowCabinCtrl._DeleteDetailNaviBinding = HL.Method() << function(self)
     self.m_isInDetailNaviState = false
     self.view.plantingWarehouse.growBoxKeyHint.gameObject:SetActiveIfNecessary(true)
 end
-
-
 
 
 SpaceshipGrowCabinCtrl._TickGrowCabin = HL.Method() << function(self)
@@ -381,8 +299,6 @@ SpaceshipGrowCabinCtrl._TickGrowCabin = HL.Method() << function(self)
     end
 end
 
-
-
 SpaceshipGrowCabinCtrl._RefreshOverviewPanel = HL.Method() << function(self)
     for id, boxCell in pairs(self.m_id2GrowCabinBoxCell) do
         local lineCell = self.m_id2GrowCabinBoxCellLine[id]
@@ -391,8 +307,6 @@ SpaceshipGrowCabinCtrl._RefreshOverviewPanel = HL.Method() << function(self)
 
     self:_RefreshOverviewPanelBottomNode()
 end
-
-
 
 SpaceshipGrowCabinCtrl._RefreshOverviewPanelBottomNode = HL.Method() << function(self)
     
@@ -437,8 +351,6 @@ SpaceshipGrowCabinCtrl._RefreshOverviewPanelBottomNode = HL.Method() << function
 end
 
 
-
-
 SpaceshipGrowCabinCtrl._ResetPanel = HL.Method() << function(self)
     local peekPanel = self.m_panelStack:Peek()
     if peekPanel == PanelType.Overview then
@@ -450,14 +362,15 @@ SpaceshipGrowCabinCtrl._ResetPanel = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 SpaceshipGrowCabinCtrl._PushPanel = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(self, panelType, args)
     if self.m_panelStack:Contains(panelType) then
         logger.error("SpaceshipGrowCabinCtrl try to push an exit panel", panelType, self.m_panelStack:IndexOf(panelType))
         return
+    end
+    
+    
+    if panelType ~= PanelType.Overview and self.m_isInDetailNaviState then
+        self:_DeleteDetailNaviBinding()
     end
     self.view.spaceshipRoomCommonBg:SetFriendAssistNode(panelType == PanelType.Overview)
 
@@ -494,8 +407,6 @@ SpaceshipGrowCabinCtrl._PushPanel = HL.Method(HL.Number, HL.Opt(HL.Table)) << fu
     self.m_panelStack:Push(panelType)
 end
 
-
-
 SpaceshipGrowCabinCtrl._PopPanel = HL.Method() << function(self)
     if self.m_panelStack:Peek() == PanelType.Overview then
         logger.error("SpaceshipGrowCabinCtrl try to pop Overview panel")
@@ -527,8 +438,6 @@ SpaceshipGrowCabinCtrl._PopPanel = HL.Method() << function(self)
         self:_RefreshSowPanel()
     end
 end
-
-
 
 SpaceshipGrowCabinCtrl._RefreshSowFormulaList = HL.Method() << function(self)
     local formulaData = {}
@@ -566,10 +475,14 @@ SpaceshipGrowCabinCtrl._RefreshSowFormulaList = HL.Method() << function(self)
         SpaceshipGrowCabinCtrl.s_cachedSowSortIncremental = isIncremental
     end
 
+    if self.m_recoverState then
+        formulaData.defaultSelectFormulaId = self.m_recoverState.curSelectFormulaId
+        formulaData.defaultTabIndex = self.m_recoverState.formulaListTabIndex
+    end
+
+    self.view.formulaList.gameObject:SetActiveIfNecessary(true)
     self.view.formulaList:InitSpaceshipRoomFormulaList(formulaData)
 end
-
-
 
 SpaceshipGrowCabinCtrl._ProcessSowFormulaTabListData = HL.Method().Return(HL.Table) << function(self)
     local spaceship = GameInstance.player.spaceship
@@ -626,9 +539,6 @@ SpaceshipGrowCabinCtrl._ProcessSowFormulaTabListData = HL.Method().Return(HL.Tab
 
     return formulaTabListData
 end
-
-
-
 
 SpaceshipGrowCabinCtrl._RefreshSowPanel = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     local node = self.view.cultivationObject
@@ -691,8 +601,6 @@ SpaceshipGrowCabinCtrl._RefreshSowPanel = HL.Method(HL.Opt(HL.Boolean)) << funct
     end
 end
 
-
-
 SpaceshipGrowCabinCtrl._RefreshSowPanelTimeInfo = HL.Method() << function(self)
     local spaceship = GameInstance.player.spaceship
     local boxes = spaceship:GetGrowCabinBoxes(self.m_roomId)
@@ -713,8 +621,6 @@ SpaceshipGrowCabinCtrl._RefreshSowPanelTimeInfo = HL.Method() << function(self)
     node.timeTxt.text = UIUtils.getLeftTimeToSecond((totalProgress - curProgress) / produceRate)
 end
 
-
-
 SpaceshipGrowCabinCtrl._RefreshSowPanelWareHouse = HL.Method() << function(self)
     local node = self.view.cultivationObject
     local spaceship = GameInstance.player.spaceship
@@ -734,9 +640,6 @@ SpaceshipGrowCabinCtrl._RefreshSowPanelWareHouse = HL.Method() << function(self)
         boxNode.have.gameObject:SetActiveIfNecessary(succ and hasFormula)
     end
 end
-
-
-
 
 SpaceshipGrowCabinCtrl._RefreshBreedFormulaList = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     local formulaData = {}
@@ -771,11 +674,16 @@ SpaceshipGrowCabinCtrl._RefreshBreedFormulaList = HL.Method(HL.Opt(HL.Table)) <<
     end
 
     formulaData.defaultSelectFormulaId = args and args.jumpToSeedFormulaId
+    if self.m_recoverState then
+        if self.m_recoverState.curSelectFormulaId then
+            formulaData.defaultSelectFormulaId = self.m_recoverState.curSelectFormulaId
+        end
+        formulaData.defaultTabIndex = self.m_recoverState.formulaListTabIndex
+    end
 
+    self.view.formulaList.gameObject:SetActiveIfNecessary(true)
     self.view.formulaList:InitSpaceshipRoomFormulaList(formulaData)
 end
-
-
 
 SpaceshipGrowCabinCtrl._ProcessBreedFormulaTabListData = HL.Method().Return(HL.Table) << function(self)
     local spaceship = GameInstance.player.spaceship
@@ -832,8 +740,6 @@ SpaceshipGrowCabinCtrl._ProcessBreedFormulaTabListData = HL.Method().Return(HL.T
     return formulaTabListData
 end
 
-
-
 SpaceshipGrowCabinCtrl._RefreshBreedPanel = HL.Method() << function(self)
     local node = self.view.extractionWarehouse
     local spaceship = GameInstance.player.spaceship
@@ -877,10 +783,8 @@ SpaceshipGrowCabinCtrl._RefreshBreedPanel = HL.Method() << function(self)
     local curNumber = selectBreedFormulaUnlock and materialEnough and 1 or 0
     node.numberSelector:InitNumberSelector(curNumber, minNumber, maxNumber, function(number, isChangeByBtn)
         self.m_selectBreedMaterialNumber = number
-        if isChangeByBtn then
-            node.materialItem:UpdateCount(self.m_selectBreedMaterialNumber * seedNeedCount)
-            node.outcomeItem:UpdateCount(self.m_selectBreedMaterialNumber * formulaData.outcomeseedItemCount)
-        end
+        node.materialItem:UpdateCount(self.m_selectBreedMaterialNumber * seedNeedCount)
+        node.outcomeItem:UpdateCount(self.m_selectBreedMaterialNumber * formulaData.outcomeseedItemCount)
     end)
 
     
@@ -903,8 +807,6 @@ SpaceshipGrowCabinCtrl._RefreshBreedPanel = HL.Method() << function(self)
     end
 end
 
-
-
 SpaceshipGrowCabinCtrl._RefreshBgBottomNode = HL.Method() << function(self)
     local spaceship = GameInstance.player.spaceship
     local isProducing = spaceship:IsGrowCabinStateProducing(self.m_roomId)
@@ -919,17 +821,12 @@ SpaceshipGrowCabinCtrl._RefreshBgBottomNode = HL.Method() << function(self)
     end
 end
 
-
-
-
 SpaceshipGrowCabinCtrl._ToggleAutoSow = HL.Method(HL.Boolean) << function(self, toggleOn)
     self.m_autoSelectNextSowBox = toggleOn
 
     local node = self.view.cultivationObject
     node.pitchOn.gameObject:SetActiveIfNecessary(toggleOn)
 end
-
-
 
 SpaceshipGrowCabinCtrl._OnSowFormulaConfirmClick = HL.Method() << function(self)
     local boxes = GameInstance.player.spaceship:GetGrowCabinBoxes(self.m_roomId)
@@ -939,14 +836,9 @@ SpaceshipGrowCabinCtrl._OnSowFormulaConfirmClick = HL.Method() << function(self)
     end
 end
 
-
-
 SpaceshipGrowCabinCtrl._OnBreedFormulaConfirmClick = HL.Method() << function(self)
     GameInstance.player.spaceship:GrowCabinBreed(self.m_roomId, self.m_curSelectBreedFormulaId, self.m_selectBreedMaterialNumber)
 end
-
-
-
 
 SpaceshipGrowCabinCtrl._OnGoToBreedBtnClick = HL.Method(HL.Opt(HL.Boolean)) << function(self, jump)
     local args
@@ -959,9 +851,6 @@ SpaceshipGrowCabinCtrl._OnGoToBreedBtnClick = HL.Method(HL.Opt(HL.Boolean)) << f
     self:_PushPanel(PanelType.Breed, args)
 end
 
-
-
-
 SpaceshipGrowCabinCtrl.JumpToBreed = HL.Method(HL.String) << function(self, sowFormulaId)
     local args
     local sowFormulaData = Tables.spaceshipGrowCabinFormulaTable[sowFormulaId]
@@ -970,8 +859,6 @@ SpaceshipGrowCabinCtrl.JumpToBreed = HL.Method(HL.String) << function(self, sowF
     self:_DeleteDetailNaviBinding()
     self:_PushPanel(PanelType.Breed, args)
 end
-
-
 
 SpaceshipGrowCabinCtrl._OnAllContinueSowBtnClick = HL.Method() << function(self)
     local itemMap, needSowBoxIds = self:_GetCanContinueSowData()
@@ -996,8 +883,6 @@ SpaceshipGrowCabinCtrl._OnAllContinueSowBtnClick = HL.Method() << function(self)
         end,
     })
 end
-
-
 
 SpaceshipGrowCabinCtrl._GetCanContinueSowData = HL.Method().Return(HL.Table, HL.Table) << function(self)
     local spaceship = GameInstance.player.spaceship
@@ -1040,19 +925,12 @@ SpaceshipGrowCabinCtrl._GetCanContinueSowData = HL.Method().Return(HL.Table, HL.
     return itemMap, needSowBoxIds
 end
 
-
-
 SpaceshipGrowCabinCtrl._OnCollectAllBtnClick = HL.Method() << function(self)
     local spaceship = GameInstance.player.spaceship
     if spaceship:HasGrowCabinProduct(self.m_roomId) then
         spaceship:GrowCabinHarvestAll(self.m_roomId)
     end
 end
-
-
-
-
-
 
 SpaceshipGrowCabinCtrl._ShowOutcomePopup = HL.Method(HL.String, HL.Any, HL.Boolean)
     << function(self, title, csItems, showHelp)
@@ -1085,8 +963,6 @@ SpaceshipGrowCabinCtrl._ShowOutcomePopup = HL.Method(HL.String, HL.Any, HL.Boole
 end
 
 
-
-
 SpaceshipGrowCabinCtrl.OnSpaceshipGrowCabinSow = HL.Method() << function(self)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_SPACESHIP_ROOM_GROW_CABIN_BOX_SELECT_SUCC)
 
@@ -1117,16 +993,11 @@ SpaceshipGrowCabinCtrl.OnSpaceshipGrowCabinSow = HL.Method() << function(self)
     end
 end
 
-
-
-
 SpaceshipGrowCabinCtrl.OnSpaceshipGrowCabinModify = HL.Method(HL.Any) << function(self, args)
     local id, ids = unpack(args)
     self:_RefreshBgBottomNode()
     self:_RefreshOverviewPanel()
 end
-
-
 
 SpaceshipGrowCabinCtrl.OnSpaceshipRoomStationSync = HL.Method() << function(self)
     self:_RefreshBgBottomNode()
@@ -1138,22 +1009,14 @@ SpaceshipGrowCabinCtrl.OnSpaceshipRoomStationSync = HL.Method() << function(self
     end
 end
 
-
-
 SpaceshipGrowCabinCtrl.OnSpaceshipGrowCabinCancel = HL.Method() << function(self)
 end
-
-
-
 
 SpaceshipGrowCabinCtrl.OnSpaceshipGrowCabinHarvest = HL.Method(HL.Any) << function(self, args)
     local title = Language.LUA_SPACESHIP_ROOM_GROW_CABIN_SOW_OUTCOME_POPUP_TITLE
     local items = unpack(args)
     self:_ShowOutcomePopup(title, items, true)
 end
-
-
-
 
 SpaceshipGrowCabinCtrl.OnSpaceshipGrowCabinBreed = HL.Method(HL.Any) << function(self, args)
     local title = Language.LUA_SPACESHIP_ROOM_GROW_CABIN_BREED_OUTCOME_POPUP_TITLE
@@ -1162,8 +1025,92 @@ SpaceshipGrowCabinCtrl.OnSpaceshipGrowCabinBreed = HL.Method(HL.Any) << function
     self:_RefreshBreedPanel()
 end
 
+SpaceshipGrowCabinCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = {
+        roomId = self.m_roomId,
+        moveCam = self.m_moveCam,
+        clearScreenKey = self.m_clearScreenKey,
+    }
+    local isOpen, popupCtrl = UIManager:IsOpen(PanelId.SpaceShipFriendHelpList)
+    if isOpen and popupCtrl and popupCtrl.m_roomId == self.m_roomId then
+        arg.friendHelpPopupState = {
+            roomId = popupCtrl.m_roomId,
+        }
+    end
+    local currentPanel = self.m_panelStack:Peek()
+    if currentPanel == PanelType.Overview then
+        return arg
+    end
+    local recoverState = {
+        currentPanel = currentPanel,
+        hasSowInStack = self.m_panelStack:Contains(PanelType.Sow),
+        selectBoxId = self.m_selectBoxId,
+        autoSelectNextSowBox = self.m_autoSelectNextSowBox,
+        formulaListTabIndex = self.view.formulaList.m_curTabIndex,
+    }
+    if currentPanel == PanelType.Sow then
+        recoverState.curSelectFormulaId = self.m_curSelectSowFormulaId
+    elseif currentPanel == PanelType.Breed then
+        recoverState.curSelectFormulaId = self.m_curSelectBreedFormulaId
+        recoverState.selectBreedMaterialNumber = self.m_selectBreedMaterialNumber
+    end
+    arg.recoverState = recoverState
+    return arg
+end
 
+SpaceshipGrowCabinCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
+    local currentPanel = recoverState.currentPanel
+    if not currentPanel or currentPanel == PanelType.Overview then
+        return
+    end
 
+    if recoverState.autoSelectNextSowBox ~= nil then
+        self.m_autoSelectNextSowBox = recoverState.autoSelectNextSowBox
+    end
+
+    if currentPanel == PanelType.Sow then
+        self:_PushPanel(PanelType.Sow, { boxId = recoverState.selectBoxId or 1 })
+    elseif currentPanel == PanelType.Breed then
+        if recoverState.hasSowInStack then
+            self:_PushPanel(PanelType.Sow, { boxId = recoverState.selectBoxId or 1 })
+        end
+        self:_PushPanel(PanelType.Breed)
+        self:_RecoverBreedNumberState(recoverState.selectBreedMaterialNumber)
+    end
+end
+
+SpaceshipGrowCabinCtrl._RecoverBreedNumberState = HL.Method(HL.Opt(HL.Number)) << function(self, savedNumber)
+    local numberSelector = self.view and self.view.extractionWarehouse and self.view.extractionWarehouse.numberSelector
+    if not numberSelector or not savedNumber or savedNumber <= 0 or numberSelector.m_max <= 0 then
+        return
+    end
+    local recoverNumber = math.min(math.max(savedNumber, numberSelector.m_min), numberSelector.m_max)
+    self.m_selectBreedMaterialNumber = recoverNumber
+    numberSelector:RefreshNumber(recoverNumber, numberSelector.m_min, numberSelector.m_max)
+end
+
+SpaceshipGrowCabinCtrl._TryRecoverFriendHelpPopup = HL.Method(HL.Opt(HL.Any)) << function(self, popupState)
+    if popupState == nil or string.isEmpty(popupState.roomId) or popupState.roomId ~= self.m_roomId then
+        return
+    end
+    local recoverPopup = function()
+        local isOpen, popupCtrl = UIManager:IsOpen(PanelId.SpaceShipFriendHelpList)
+        if not isOpen or not popupCtrl or popupCtrl.m_roomId ~= popupState.roomId then
+            UIManager:AutoOpen(PanelId.SpaceShipFriendHelpList, {
+                roomId = popupState.roomId,
+            })
+            isOpen, popupCtrl = UIManager:IsOpen(PanelId.SpaceShipFriendHelpList)
+        elseif not popupCtrl:IsShow() then
+            UIManager:AutoOpen(PanelId.SpaceShipFriendHelpList, {
+                roomId = popupState.roomId,
+            })
+        end
+        if isOpen and popupCtrl then
+            UIManager:SetTopOrder(PanelId.SpaceShipFriendHelpList)
+        end
+    end
+    recoverPopup()
+end
 
 SpaceshipGrowCabinCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     if DeviceInfo.usingController then

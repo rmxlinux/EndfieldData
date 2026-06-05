@@ -1,3 +1,5 @@
+local SDKWebPortalTarget = CS.Beyond.SDK.SDKWebPortalTarget
+
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SDKApplicationMask
 
@@ -31,6 +33,11 @@ local Configs = {
         audioOnOpen = "Au_UI_Menu_Common_Large_Open",
         audioOnClose = "Au_UI_Menu_Common_Large_Close",
     },
+    
+    [SDKWebPortalTarget.SURVEY] = {
+        audioOnOpen = "Au_UI_Menu_QuestionnaireCenter_Open",
+        audioOnClose = "Au_UI_Menu_QuestionnaireCenter_Close",
+    },
 }
 
 
@@ -63,7 +70,7 @@ SDKApplicationMaskCtrl.OnShow = HL.Override() << function(self)
     GameInstance.audioManager:SetIsWebviewOpened(true)
     InputManagerInst.disableChangeInputDeviceCheck = true
     if DeviceInfo.usingController then
-        InputManagerInst:ToggleForceShowRealCursor(true)
+        InputManagerInst:SetCursorOverrideForDeviceChange(true)
         self.m_hideCursor = true
     end
 end
@@ -72,7 +79,7 @@ end
 
 SDKApplicationMaskCtrl.OnHide = HL.Override() << function(self)
     if self.m_hideCursor then
-        InputManagerInst:ToggleForceShowRealCursor(false)
+        InputManagerInst:SetCursorOverrideForDeviceChange(false)
         self.m_hideCursor = false
     end
     InputManagerInst.disableChangeInputDeviceCheck = false

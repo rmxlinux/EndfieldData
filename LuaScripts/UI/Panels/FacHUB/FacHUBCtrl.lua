@@ -99,7 +99,7 @@ FacHUBCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.view.domainName.text = Tables.domainDataTable[self.m_domainId].domainName
     end
 
-    self.view.moveBtn.gameObject:SetActive(FactoryUtils.canMoveBuilding(nodeId) and Utils.isInFacMainRegion())
+    self.view.moveBtn.gameObject:SetActive(FactoryUtils.canMoveBuilding(nodeId))
     self.view.moveBtn.onClick:AddListener(function()
         self:_MoveBuilding()
     end)
@@ -343,7 +343,7 @@ FacHUBCtrl._InitFacDataNode = HL.Method() << function(self)
                 if facSucc then
                     showCount = not facData.itemState
                 end
-                local isBookmark = scopeInfo:IsBookmarkItem(itemId)
+                local isBookmark = scopeInfo:IsBookmarkItem(itemId, self.m_domainId)
                 local order = 1
                 if isBookmark then
                     order = 0
@@ -506,7 +506,7 @@ FacHUBCtrl._InitFacHubController = HL.Method() << function(self)
         end
     end)
 
-    if FactoryUtils.canMoveBuilding(self.m_nodeId) and Utils.isInFacMainRegion() then
+    if FactoryUtils.canMoveBuilding(self.m_nodeId) then
         self.view.controllerSideMenuBtn.gameObject:SetActiveIfNecessary(true)
         self.view.controllerSideMenuBtn:InitControllerSideMenuBtn({
             extraBtnInfos = {

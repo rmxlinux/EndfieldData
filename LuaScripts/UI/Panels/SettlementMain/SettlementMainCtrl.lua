@@ -58,6 +58,8 @@ local missionSystem = GameInstance.player.mission
 
 
 
+
+
 SettlementMainCtrl = HL.Class('SettlementMainCtrl', uiCtrl.UICtrl)
 
 
@@ -186,6 +188,11 @@ SettlementMainCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
     self:_UpdateData(true)
     self:_RefreshAllUI()
+    if arg and type(arg) == "table" and arg.resumeOpenPanel then
+        for _, panelInfo in pairs(arg.resumeOpenPanel) do
+            UIManager:Open(panelInfo.panelId, panelInfo.arg)
+        end
+    end
 end
 
 
@@ -199,10 +206,6 @@ end
 SettlementMainCtrl.OnClose = HL.Override() << function(self)
     settlementSystem:RemoveSettlementSyncRequest(self.view.transform.name)
     self.m_moneyStoreCellAniInterval = self:_ClearCoroutine(self.m_moneyStoreCellAniInterval)
-    local isOpen, _ = PhaseManager:IsOpen(PhaseId.Dialog)
-    if isOpen then
-        Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
-    end
 end
 
 
@@ -231,6 +234,12 @@ end
 
 SettlementMainCtrl._InitData = HL.Method(HL.Any).Return(HL.Boolean) << function(self, arg)
     local domainId, defaultStlId = DomainPOIUtils.resolveOpenSettlementArgs(arg)
+    local initSelectItemCount = 0
+    if type(arg) == "table" and arg.resumeState then
+        domainId = arg.resumeState.domainId
+        defaultStlId = arg.resumeState.defaultStlId
+        initSelectItemCount = arg.resumeState.selectItemCount
+    end
     local hasCfg, domainCfg = Tables.domainDataTable:TryGetValue(domainId)
     if not hasCfg then
         logger.error("domainDataTable missing cfg, id: " .. domainId)
@@ -245,6 +254,7 @@ SettlementMainCtrl._InitData = HL.Method(HL.Any).Return(HL.Boolean) << function(
         moneyId = domainCfg.domainGoldItemId,
         itemStoreLimitCount = Utils.getDepotItemStackLimitCount(domainId),
         defaultStlId = defaultStlId,
+        initSelectItemCount = initSelectItemCount,
     }
     
     self.m_tradeIconAniInfo = {
@@ -468,7 +478,12 @@ SettlementMainCtrl._UpdateSellItemInfo = HL.Method(HL.Table, HL.String) << funct
     else
         sellItemInfo.itemId = ""
     end
-    self:_UpdateTradeInfo(stlInfo, 1)
+    if self.m_domainInfo.initSelectItemCount > 0 and self.m_domainInfo.defaultStlId == stlInfo.stlId then
+        self:_UpdateTradeInfo(stlInfo, self.m_domainInfo.initSelectItemCount)
+        self.m_domainInfo.initSelectItemCount = 0
+    else
+        self:_UpdateTradeInfo(stlInfo, 1)
+    end
 end
 
 
@@ -549,8 +564,13 @@ SettlementMainCtrl._InitUI = HL.Method() << function(self)
             settlementLevel = stlInfo.curLevel,
             curSellItem = stlInfo.sellItemInfo.itemId,
             onConfirmChanged = function(itemId)
+                local isOpen, settleMainCtrl = UIManager:IsOpen(PanelId.SettlementMain)
+                if not isOpen then
+                    return
+                end
+                local self = settleMainCtrl 
                 local curInfo = self.m_stlInfoList[self.m_curSelectStlIndex]
-                settlementSystem:SetCurSellItem(curInfo.stlId, itemId)
+                GameInstance.player.settlementSystem:SetCurSellItem(curInfo.stlId, itemId)
                 local preItemIsActivityItem = curInfo.sellItemInfo.isActivityItem or false
                 self:_UpdateSellItemInfo(curInfo, itemId)
                 local nowItemIsActivityItem = curInfo.sellItemInfo.isActivityItem or false
@@ -1342,6 +1362,38 @@ SettlementMainCtrl._OnActivityStageUpdate = HL.Method(HL.Any) << function(self, 
     self:_RefreshAllUI()
     self.m_hasActivityUpdateMsgWaitTradeComplete = false
 end
+
+
+
+SettlementMainCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local resumeOpenPanel = {}
+    if PhaseManager:GetTopPhaseId() == PHASE_ID then
+        if UIManager:IsOpen(PanelId.SettlementTokenInstruction) then
+            table.insert(resumeOpenPanel, {
+                panelId = PanelId.SettlementTokenInstruction,
+                arg = self.m_stlInfoList[self.m_curSelectStlIndex].stlId
+            })
+        end
+    end
+    local arg = {
+        resumeState = self:_CollectResumeState(),
+        resumeOpenPanel = resumeOpenPanel,
+    }
+    return arg
+end
+
+
+
+SettlementMainCtrl._CollectResumeState = HL.Method().Return(HL.Table) << function(self)
+    local stlInfo = self.m_stlInfoList[self.m_curSelectStlIndex]
+    local tradeInfo = stlInfo.tradeInfo
+    return {
+        domainId = self.m_domainInfo.id,
+        defaultStlId = stlInfo.stlId,
+        selectItemCount = tradeInfo.selectCount,
+    }
+end
+
 
 
 

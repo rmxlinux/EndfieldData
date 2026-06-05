@@ -44,6 +44,9 @@ WikiBuildingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     WikiBuildingCtrl.Super.OnCreate(self, arg)
     
     GameAction.FacToggleSystemEnabled(true, CS.Beyond.Gameplay.Factory.FacSystemTickSkipSource.UI)
+
+    self:_RefreshModel(true)
+    self:_PlayBgDecoAnim()
 end
 
 
@@ -63,7 +66,10 @@ WikiBuildingCtrl.OnClose = HL.Override() << function(self)
     end
 
     
-    GameAction.FacToggleSystemEnabled(false, CS.Beyond.Gameplay.Factory.FacSystemTickSkipSource.UI)
+    
+    
+    
+    GameAction.FacScheduleUISystemSkipAfterGraceFrames()
 end
 
 
@@ -77,15 +83,6 @@ end
 
 WikiBuildingCtrl.GetPanelId = HL.Override().Return(HL.Number) << function(self)
     return PANEL_ID
-end
-
-
-
-WikiBuildingCtrl._OnPhaseItemBind = HL.Override() << function(self)
-    WikiBuildingCtrl.Super._OnPhaseItemBind(self)
-    
-    self:_RefreshModel(true)
-    self:_PlayBgDecoAnim()
 end
 
 

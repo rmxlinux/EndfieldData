@@ -34,6 +34,10 @@ local PANEL_ID = PanelId.GachaWeaponPool
 
 
 
+
+
+
+
 GachaWeaponPoolCtrl = HL.Class('GachaWeaponPoolCtrl', uiCtrl.UICtrl)
 
 
@@ -56,6 +60,9 @@ GachaWeaponPoolCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 local commonBitsetSys = GameInstance.player.commonBitsetSystem
+
+
+GachaWeaponPoolCtrl.m_arg = HL.Field(HL.Table)
 
 
 GachaWeaponPoolCtrl.m_goodsData = HL.Field(CS.Beyond.Gameplay.ShopSystem.GoodsData)
@@ -101,6 +108,7 @@ end
 
 
 GachaWeaponPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg
     
     local goodsData = arg.goodsData
     self.m_goodsData = goodsData 
@@ -156,6 +164,10 @@ GachaWeaponPoolCtrl.OnShow = HL.Override() << function(self)
         logger.info("GachaOutside 预载完成", Time.unscaledTime - time)
     end)
 
+    if self.m_arg.rewardQueueRestoreInfo then
+        self.m_curIsShowReward = self.m_arg.rewardQueueRestoreInfo.curIsShowReward
+        self.m_arg.rewardQueueRestoreInfo = nil
+    end
     if not self.m_isRequesting then
         self:CheckAndShowSpecialRewardPopup()
         self:_TryShowQueueReward()
@@ -322,10 +334,39 @@ end
 
 
 
+GachaWeaponPoolCtrl._IsWeaponDepotFull = HL.Method().Return(HL.Boolean) << function(self)
+    local depots = GameInstance.player.inventory.valuableDepots
+    if not depots:ContainsKey(GEnums.ItemValuableDepotType.Weapon) then
+        return false
+    end
+    local weaponDepot = depots[GEnums.ItemValuableDepotType.Weapon]:GetOrFallback(Utils.getCurrentScope())
+    if not weaponDepot then
+        return false
+    end
+    return weaponDepot:GetUsedGridCount() >= weaponDepot.gridLimit
+end
+
+
+
 GachaWeaponPoolCtrl._OnGachaBtnClick = HL.Method() << function(self)
     if self.m_isRequesting or self.m_gachaWeaponGoodsCostInfo == nil then
         return
     end
+
+    if self:_IsWeaponDepotFull() then
+        Notify(MessageConst.SHOW_POP_UP, {
+            content = Language.LUA_GACHA_WEAPON_EXTRA_POP_UP_TEXT,
+            onConfirm = function()
+                PhaseManager:OpenPhase(PhaseId.ValuableDepot, {
+                    depotType = GEnums.ItemValuableDepotType.Weapon,
+                    inDestroyMode = true,
+                    shouldClearScreenOnOpen = true,
+                })
+            end,
+        })
+        return
+    end
+
     if self.m_gachaWeaponGoodsCostInfo.ticketEnough then
         GameInstance.player.shopSystem:ByGoodsGachaWeaponUseTicket(self.m_goodsData.shopId, self.m_goodsData.goodsId)
     elseif self.m_gachaWeaponGoodsCostInfo.moneyEnough then
@@ -741,6 +782,26 @@ end
 
 
 
+
+GachaWeaponPoolCtrl._RecoverRewardQueue = HL.Method(HL.Table) << function(self, restoreInfo)
+    if not restoreInfo or not restoreInfo.pendingItems then
+        return
+    end
+    for _, item in ipairs(restoreInfo.pendingItems) do
+        self.m_showRewardFuncQueue:Push(item)
+    end
+end
+
+
+
+GachaWeaponPoolCtrl.GetRewardQueueRestoreInfo = HL.Method().Return(HL.Table) << function(self)
+    return {
+        curIsShowReward = self.m_curIsShowReward,   
+    }
+end
+
+
+
 GachaWeaponPoolCtrl.CheckAndShowSpecialRewardPopup = HL.Method() << function(self)
     
     local csGachaSystem = GameInstance.player.gacha
@@ -757,15 +818,16 @@ GachaWeaponPoolCtrl.CheckAndShowSpecialRewardPopup = HL.Method() << function(sel
             local roundRewardIndex = (loopRound - 1) % loopRewardInfoCount
             local rewardId = poolCfg.intervalAutoRewardIds[roundRewardIndex]
             local items = UIUtils.getRewardItems(rewardId)
+            local poolId = self.m_poolId    
             local arg = {
                 queueRewardType = "LoopRewardReward",
                 showRewardFunc = function()
                     UIManager:AutoOpen(PanelId.GachaWeaponExtraRewardPopup, {
                         itemId = items[1].id,
-                        poolId = self.m_poolId,
+                        poolId = poolId,
                         onComplete = function()
                             csGachaSystem:SendConfirmRewardReq(
-                                self.m_poolId, CS.Proto.GACHA_CONFIRM_REWARD_TYPE.GcrtIntervalReward, { loopRound }, GEnums.GachaType.Weapon
+                                poolId, CS.Proto.GACHA_CONFIRM_REWARD_TYPE.GcrtIntervalReward, { loopRound }, GEnums.GachaType.Weapon
                             )
                             Notify(MessageConst.ON_ONE_GACHA_WEAPON_POOL_REWARD_FINISHED)
                         end,

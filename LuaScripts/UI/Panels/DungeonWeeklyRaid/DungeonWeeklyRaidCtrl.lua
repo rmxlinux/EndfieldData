@@ -27,6 +27,10 @@ local tabConfig = WeeklyRaidUtils.TabConfig
 
 
 
+
+
+
+
 DungeonWeeklyRaidCtrl = HL.Class('DungeonWeeklyRaidCtrl', uiCtrl.UICtrl)
 
 
@@ -81,18 +85,7 @@ DungeonWeeklyRaidCtrl.m_isPreview = HL.Field(HL.Boolean) << false
 DungeonWeeklyRaidCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.btnClose.onClick:RemoveAllListeners()
     self.view.btnClose.onClick:AddListener(function()
-        if not PhaseManager:CanPopPhase(PhaseId.DungeonWeeklyRaid) then
-            
-            return
-        end
-        local isOpen, phase = PhaseManager:IsOpen(PhaseId.Dialog)
-        if isOpen then
-            self:PlayAnimationOutWithCallback(function()
-                Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PhaseId.DungeonWeeklyRaid, 0 })
-            end)
-        else
-            self.m_phase:TryCloseTopPanel()
-        end
+        self.m_phase:TryCloseTopPanel()
     end)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
@@ -248,15 +241,6 @@ DungeonWeeklyRaidCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end)
 
-    
-    
-    for i = 1, #tabConfig do
-        if tabConfig[i].getDelegate() and tabConfig[i].getDelegate().Count > 0 then
-            self.m_currentTab = i
-            break
-        end
-    end
-
     local weekRaidCfg = Tables.weekRaidTable:GetValue(GameInstance.player.weekRaidSystem.gameId)
     local tabCount = #tabConfig
     
@@ -264,6 +248,14 @@ DungeonWeeklyRaidCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     if randomMissionState ~= CS.Beyond.Gameplay.MissionSystem.MissionState.Completed then
         tabCount = 1
     end
+
+    local recoverState = arg and arg.recoverState or nil
+    local targetTabIndex = self:_GetDefaultTabIndex()
+    if recoverState and type(recoverState.tabIndex) == "number" and recoverState.tabIndex >= 1 and recoverState.tabIndex <= tabCount then
+        targetTabIndex = recoverState.tabIndex
+    end
+    self.m_currentTab = targetTabIndex
+
     self.view.hintRoot.gameObject:SetActiveIfNecessary(tabCount > 1)
     self.m_genTabCells = UIUtils.genCellCache(self.view.topTabToggleCell)
     self.m_genTabCells:Refresh(tabCount, function(cell, luaIndex)
@@ -291,6 +283,63 @@ DungeonWeeklyRaidCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     
     self:_UpdateTech(nil)
+
+    if recoverState ~= nil then
+        self:_RecoverState(recoverState)
+        arg.recoverState = nil
+    end
+end
+
+
+
+DungeonWeeklyRaidCtrl._GetDefaultTabIndex = HL.Method().Return(HL.Number) << function(self)
+    for i = 1, #tabConfig do
+        local delegates = tabConfig[i].getDelegate()
+        if delegates and delegates.Count > 0 then
+            return i
+        end
+    end
+    return WeeklyRaidUtils.DungeonWeeklyRaidType.Normal
+end
+
+
+
+
+DungeonWeeklyRaidCtrl._GetRecoverSelectIndex = HL.Method(HL.Table).Return(HL.Number) << function(self, recoverState)
+    if recoverState == nil then
+        return 0
+    end
+
+    local recoverSelectIndex = type(recoverState.selectIndex) == "number" and recoverState.selectIndex or 0
+    local selectedDelegateId = recoverState.selectedDelegateId
+    if not string.isEmpty(selectedDelegateId) then
+        for i = 0, self.m_cacheDelegate.Count - 1 do
+            if self.m_cacheDelegate[i] == selectedDelegateId then
+                recoverSelectIndex = i
+                break
+            end
+        end
+    end
+
+    local currentCellCount = self:_GetCurrentCellCount()
+    if recoverSelectIndex < 0 then
+        return 0
+    end
+    if recoverSelectIndex >= currentCellCount then
+        return math.max(0, currentCellCount - 1)
+    end
+    return recoverSelectIndex
+end
+
+
+
+
+DungeonWeeklyRaidCtrl._RecoverState = HL.Method(HL.Table) << function(self, recoverState)
+    self.m_selectIndex = self:_GetRecoverSelectIndex(recoverState)
+    self:_OnSelectCellChange()
+    if self:_GetCurrentCellCount() > 0 then
+        self.view.scrollList:ScrollToIndex(self.m_selectIndex)
+    end
 end
 
 
@@ -413,6 +462,19 @@ DungeonWeeklyRaidCtrl._OnTabChange = HL.Method() << function(self)
 
     
     self:_UpdateDetailInfo()
+end
+
+
+
+DungeonWeeklyRaidCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
+    local recoverState = {
+        tabIndex = self.m_currentTab,
+        selectIndex = self.m_selectIndex,
+    }
+    if self.m_cacheDelegate and self.m_selectIndex >= 0 and self.m_selectIndex < self.m_cacheDelegate.Count then
+        recoverState.selectedDelegateId = self.m_cacheDelegate[self.m_selectIndex]
+    end
+    return recoverState
 end
 
 

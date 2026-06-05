@@ -57,6 +57,8 @@ local TAB_CONFIG = {
 
 
 
+
+
 ShopTokenCtrl = HL.Class('ShopTokenCtrl', uiCtrl.UICtrl)
 
 
@@ -111,12 +113,18 @@ ShopTokenCtrl.m_currSeenRange = HL.Field(HL.Table)
 ShopTokenCtrl.m_haveSeenGoodsId = HL.Field(HL.Table)
 
 
+ShopTokenCtrl.m_showExchange = HL.Field(HL.Boolean) << false
+
+
+
+ShopTokenCtrl.m_pendingAfterTopOrdered = HL.Field(HL.Table)
+
+
 
 
 
 ShopTokenCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_shopSystem = GameInstance.player.shopSystem
-    self.m_phase = arg.phase
     self:_InitUICallback()
     self:_InitShortCut()
     self:_InitContentList()
@@ -277,6 +285,7 @@ ShopTokenCtrl.Refresh = HL.Method(HL.Any, HL.Opt(HL.Number)) << function(self, g
     if self.m_currShopId == "shop_pay_yellow_1" then
         showExchange = false
     end
+    self.m_showExchange = showExchange
     self.view.redemptionVoucherNode.gameObject:SetActive(showExchange)
     self.view.tokensInfo.gameObject:SetActive(not showExchange)
 
@@ -417,11 +426,80 @@ ShopTokenCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
         arg.goodsId = nil
         for i = 0, self.m_goodsDataList.Count - 1 do
             if self.m_goodsDataList[i].goodsId == goodsId then
-                self:_StartCoroutine(function()
-                    CashShopUtils.OpenShopDetailPanel(self.m_goodsDataList[i], self)
+                local goodsData = self.m_goodsDataList[i]
+                self.m_pendingAfterTopOrdered = self.m_pendingAfterTopOrdered or {}
+                table.insert(self.m_pendingAfterTopOrdered, function()
+                    CashShopUtils.OpenShopDetailPanel(goodsData, self)
+
+                    
+                    if arg.CategoryTokenShopDetailNumberSelect then
+                        local value = arg.CategoryTokenShopDetailNumberSelect
+                        arg.CategoryTokenShopDetailNumberSelect = nil
+                        local isOpen, detailDialog = UIManager:IsOpen(PanelId.ShopDetail)
+                        if isOpen and detailDialog then
+                            detailDialog:SetNumberSelectorValue(value)
+                        end
+                    end
                 end)
             end
         end
+    end
+
+    if arg.CategoryTokenOpenExchange then
+        arg.CategoryTokenOpenExchange = nil
+        self.m_pendingAfterTopOrdered = self.m_pendingAfterTopOrdered or {}
+        table.insert(self.m_pendingAfterTopOrdered, function()
+            CashShopUtils.TryOpenShopTokenExchangePopUpPanel()
+        end)
+    end
+
+    if arg.showInstructionBook then
+        arg.showInstructionBook = nil
+        self.m_pendingAfterTopOrdered = self.m_pendingAfterTopOrdered or {}
+        table.insert(self.m_pendingAfterTopOrdered, function()
+            if self.m_showExchange then
+                UIManager:Open(PanelId.InstructionBook, "ShopTokenExchangePopUp")
+            else
+                UIManager:Open(PanelId.InstructionBook, "ShopToken_" .. self.m_currShopId)
+            end
+        end)
+    end
+end
+
+
+ShopTokenCtrl.OnAfterCategoryTopOrdered = HL.Method() << function(self)
+    if not self.m_pendingAfterTopOrdered then
+        return
+    end
+    local list = self.m_pendingAfterTopOrdered
+    self.m_pendingAfterTopOrdered = nil
+    for _, action in ipairs(list) do
+        action()
+    end
+end
+
+
+
+
+ShopTokenCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, arg)
+    
+    arg.shopId = self.m_currShopId
+    local isOpen, shopDetailCtrl = UIManager:IsOpen(PanelId.ShopDetail)
+    if isOpen then
+        local info = shopDetailCtrl:GetInfo()
+        local value = shopDetailCtrl:GetNumberSelectorValue()
+        arg.goodsId = info.goodsId
+        arg.CategoryTokenShopDetailNumberSelect = value
+    end
+
+    
+    local _, exchangeCtrl = UIManager:IsOpen(PanelId.ShopTokenExchangePopUp)
+    if exchangeCtrl then
+        arg.CategoryTokenOpenExchange = true
+    end
+
+    if UIManager:IsOpen(PanelId.InstructionBook) then
+        arg.showInstructionBook = true
     end
 end
 

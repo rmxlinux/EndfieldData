@@ -31,6 +31,8 @@ local PHASE_ID = PhaseId.BattlePass
 
 
 
+
+
 PhaseBattlePass = HL.Class('PhaseBattlePass', phaseBase.PhaseBase)
 
 
@@ -98,6 +100,7 @@ PhaseBattlePass._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table))
     end
     self.m_basePanel = self:CreatePhasePanelItem(PanelId.BattlePass, self.arg)
     self:_TryPopPanel()
+    self:_TryRecoverInstructionBook()
 end
 
 
@@ -188,6 +191,46 @@ PhaseBattlePass._OnRefresh = HL.Override() << function(self)
     end
 end
 
+
+
+PhaseBattlePass.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    if self.m_basePanel == nil or self.m_basePanel.uiCtrl == nil then
+        return arg
+    end
+    local recoverState = self.m_basePanel.uiCtrl:GetRecoverStateArg()
+    if recoverState ~= nil then
+        arg.panelId = recoverState.panelId
+        arg.panelArgs = recoverState.panelArgs
+    end
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and instructionCtrl:IsShow() and instructionCtrl.id == "battle_pass" and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        arg.instructionBookArg = {
+            id = instructionCtrl.id,
+        }
+    else
+        arg.instructionBookArg = nil
+    end
+    return arg
+end
+
+
+
+
+PhaseBattlePass._TryRecoverInstructionBook = HL.Method() << function(self)
+    if self.arg == nil or self.arg.instructionBookArg == nil then
+        return
+    end
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return
+    end
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and instructionCtrl:IsShow() then
+        return
+    end
+    UIManager:Open(PanelId.InstructionBook, self.arg.instructionBookArg)
+    self.arg.instructionBookArg = nil
+end
 
 
 

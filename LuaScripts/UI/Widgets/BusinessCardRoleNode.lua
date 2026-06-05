@@ -56,9 +56,11 @@ BusinessCardRoleNode.InitBusinessCardRoleNode = HL.Method(HL.Number, HL.Boolean)
                 UIManager:Open(PanelId.FriendRoleDisplay)
             end
         end)
-        if self.view.roleLayout.groupEnabled then
-            self.view['friendBusinessCardRoleCell' .. i].addBtn.customBindingViewLabelText = preview and Language.LUA_FRIEND_BUSINESS_EDIT_CHAR_PREVIEW or Language.LUA_FRIEND_BUSINESS_EDIT_CHAR
-        end
+        
+        
+        
+        
+        self.view['friendBusinessCardRoleCell' .. i].addBtn.customBindingViewLabelText = preview and Language.LUA_FRIEND_BUSINESS_EDIT_CHAR_PREVIEW or Language.LUA_FRIEND_BUSINESS_EDIT_CHAR
         if CSIndex(i) < list.Count and list[CSIndex(i)] ~= nil then
             local charConfig = Tables.characterTable:GetValue(list[CSIndex(i)].templateId)
             local args = {
@@ -89,9 +91,8 @@ BusinessCardRoleNode.InitBusinessCardRoleNode = HL.Method(HL.Number, HL.Boolean)
                     UIManager:Open(PanelId.FriendRoleDisplay)
                 end
             end, true)
-            if self.view.roleLayout.groupEnabled then
-                self.view['friendBusinessCardRoleCell' .. i].charHeadCell.view.button.customBindingViewLabelText = preview and Language.LUA_FRIEND_BUSINESS_EDIT_CHAR_PREVIEW or Language.LUA_FRIEND_BUSINESS_EDIT_CHAR
-            end
+            
+            self.view['friendBusinessCardRoleCell' .. i].charHeadCell.view.button.customBindingViewLabelText = preview and Language.LUA_FRIEND_BUSINESS_EDIT_CHAR_PREVIEW or Language.LUA_FRIEND_BUSINESS_EDIT_CHAR
             if i == 1 then
                 self.m_firstCharIsEmpty = false
             end

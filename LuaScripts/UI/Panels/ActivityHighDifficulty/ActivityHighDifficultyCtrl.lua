@@ -105,7 +105,7 @@ ActivityHighDifficultyCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
             end)
             local tasks = {}
             for _,task in ipairs(self.m_tasks) do
-                if (task.timeOffset > 0) == (tabIndex > 1) then
+                if (task.openTime > self.m_activity.startTime) == (tabIndex > 1) then
                     table.insert(tasks, task)
                 end
             end
@@ -153,60 +153,52 @@ ActivityHighDifficultyCtrl._RefreshInfo = HL.Method() << function(self)
     self.m_activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     self.m_tasks = {}
     self.m_tabTotalCount = 0
-    local timeOffsets = {}
+    local openTimes = {}
 
     
     for stageId, stageInfo in pairs(Tables.activityConditionalMultiStageTable[self.m_activityId].stageList) do
         local total = Tables.activityConditionalMultiStageCompleteConditionTable[stageId].conditionList[0].progressToCompare
-        if not timeOffsets[stageInfo.timeOffset] then
-            timeOffsets[stageInfo.timeOffset] = true
-            self.m_tabTotalCount = self.m_tabTotalCount + 1
-        end
         local curProgress
         local isComplete
         local isReceived
 
-        local suc, stageData = self.m_activity.stageDataDict:TryGetValue(stageId)
-        local unShown = false
-        if suc then
-            unShown = stageData.Status == GEnums.ActivityConditionalStageState.Locked:GetHashCode()
-        else
-            unShown = not self.m_activity.previewStageList:Contains(stageId)
+        local _, stageData = self.m_activity.stageDataDict:TryGetValue(stageId)
+        local openTime = stageData.OpenTimeTs
+        if not openTimes[openTime] then
+            openTimes[openTime] = true
+            self.m_tabTotalCount = self.m_tabTotalCount + 1
         end
-
-        if not unShown then
-            if suc then
-                if stageData.Conditions then
-                    
-                    for _, info in pairs(stageData.Conditions.Values) do
-                        curProgress = info
-                    end
-                else
-                    
-                    curProgress = total
+        if stageData.Status ~= GEnums.ActivityConditionalStageState.Locked:GetHashCode() then
+            if stageData.Conditions then
+                
+                for _, info in pairs(stageData.Conditions.Values) do
+                    curProgress = info
                 end
-                isComplete = stageData.Status >= GEnums.ActivityConditionalStageState.Completed:GetHashCode()
-                isReceived = stageData.Status >= GEnums.ActivityConditionalStageState.Rewarded:GetHashCode()
             else
-                curProgress = 0
-                isComplete = false
-                isReceived = false
+                
+                curProgress = total
             end
-
-            local task = {
-                stageId = stageId,
-                name = stageInfo.name,
-                sortId = stageInfo.sortId,
-                timeOffset = stageInfo.timeOffset,
-                rewardId = stageInfo.rewardId,
-                isComplete = isComplete,
-                isReceived = isReceived,
-                curProgress = curProgress,
-                total = total,
-            }
-            task.statusSortId = task.isReceived and 3 or (task.isComplete and 1 or 2)
-            table.insert(self.m_tasks, task)
+            isComplete = stageData.Status >= GEnums.ActivityConditionalStageState.Completed:GetHashCode()
+            isReceived = stageData.Status >= GEnums.ActivityConditionalStageState.Rewarded:GetHashCode()
+        else
+            curProgress = 0
+            isComplete = false
+            isReceived = false
         end
+
+        local task = {
+            stageId = stageId,
+            name = stageInfo.name,
+            sortId = stageInfo.sortId,
+            openTime = openTime,
+            rewardId = stageInfo.rewardId,
+            isComplete = isComplete,
+            isReceived = isReceived,
+            curProgress = curProgress,
+            total = total,
+        }
+        task.statusSortId = task.isReceived and 3 or (task.isComplete and 1 or 2)
+        table.insert(self.m_tasks, task)
     end
 end
 
@@ -313,7 +305,7 @@ ActivityHighDifficultyCtrl._ChangeTab = HL.Method(HL.Number, HL.Opt(HL.Boolean))
     
     local curTasks = {}
     for _,task in ipairs(self.m_tasks) do
-        if (task.timeOffset > 0) == (newIndex > 1) then
+        if (task.openTime > self.m_activity.startTime) == (newIndex > 1) then
             table.insert(curTasks, task)
         end
     end
@@ -358,7 +350,7 @@ ActivityHighDifficultyCtrl.OnStageChange = HL.Method(HL.Any) << function(self, a
     self.m_tabCells:Refresh(self.m_tabTotalCount, function(cell, tabIndex)
         local notOpen = true
         for _,task in ipairs(self.m_tasks) do
-            if (task.timeOffset > 0) == (tabIndex > 1) then
+            if (task.openTime > self.m_activity.startTime) == (tabIndex > 1) then
                 notOpen = false
                 break
             end

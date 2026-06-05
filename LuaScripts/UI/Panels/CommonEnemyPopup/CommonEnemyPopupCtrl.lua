@@ -16,6 +16,7 @@ local PANEL_ID = PanelId.CommonEnemyPopup
 
 
 
+
 CommonEnemyPopupCtrl = HL.Class('CommonEnemyPopupCtrl', uiCtrl.UICtrl)
 
 
@@ -56,10 +57,23 @@ CommonEnemyPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
+
 CommonEnemyPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.view.btnClose.onClick:AddListener(function()
-        self:_OnBtnCloseClick()
-    end)
+    if arg.isBackBtnStyle then
+        self.view.backBtn.gameObject:SetActive(true)
+        self.view.mask.gameObject:SetActive(false)
+        self.view.btnClose.gameObject:SetActive(false)
+        self.view.backBtn.onClick:AddListener(function()
+            self:_OnBtnCloseClick()
+        end)
+    else
+        self.view.btnClose.gameObject:SetActive(true)
+        self.view.mask.gameObject:SetActive(true)
+        self.view.backBtn.gameObject:SetActive(false)
+        self.view.btnClose.onClick:AddListener(function()
+            self:_OnBtnCloseClick()
+        end)
+    end
 
     self.view.mask.onClick:AddListener(function()
         self:_OnBtnCloseClick()
@@ -68,7 +82,9 @@ CommonEnemyPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.titleTxt.text = arg.title
     self.view.enemyListTitleTxt.text = arg.enemyListTitle or Language["ui_common_enemy_popup_info_list"]
     self.view.enemyInfoTitleTxt.text = arg.enemyInfoTitle or Language["ui_common_enemy_popup_info_desc"]
-
+    if arg.hideLevelTextNode then
+        self.view.levelTextNode.gameObject:SetActive(false)
+    end
     self.m_genEnemyCellFunc = UIUtils.genCachedCellFunction(self.view.dungeonEnemyScrollList)
     self.m_enemyAbilityCellCache = UIUtils.genCellCache(self.view.enemyAbilityCell)
     self.view.dungeonEnemyScrollList.onUpdateCell:AddListener(function(gameObject, csIndex)
@@ -102,7 +118,7 @@ CommonEnemyPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         logger.error("敌人相关信息有效的数量为0，请检查配置")
         return
     end
-    self:_Refresh()
+    self:_Refresh(arg)
     self:_InitController()
 end
 
@@ -138,8 +154,14 @@ end
 
 
 
-CommonEnemyPopupCtrl._Refresh = HL.Method() << function(self)
-    self.m_curSelectEnemyIndex = 1
+
+CommonEnemyPopupCtrl._Refresh = HL.Method(HL.Any) << function(self, arg)
+    if arg.initSelectEnemyLuaIndex ~= nil then
+        self.m_curSelectEnemyIndex = arg.initSelectEnemyLuaIndex
+    else
+        self.m_curSelectEnemyIndex = 1
+    end
+
     self:_RefreshContent()
     self.view.dungeonEnemyScrollList:UpdateCount(#self.m_enemyInfos)
 end
@@ -186,8 +208,15 @@ end
 
 CommonEnemyPopupCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+    if self.m_curSelectEnemyCell ~= nil then
+        UIUtils.setAsNaviTarget(self.m_curSelectEnemyCell.view.button)
+    end
+end
 
-    UIUtils.setAsNaviTarget(self.m_curSelectEnemyCell.view.button)
+
+
+CommonEnemyPopupCtrl.GetCurSelectEnemyLuaIndex = HL.Method().Return(HL.Number) << function(self)
+    return self.m_curSelectEnemyIndex
 end
 
 

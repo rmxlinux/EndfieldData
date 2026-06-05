@@ -10,6 +10,7 @@ local GetDescFunc = {
     [GEnums.DomainPoiType.DomainShop] = "_GetDescDomainShop",
     [GEnums.DomainPoiType.KiteStation] = "_GetDescKiteStation",
     [GEnums.DomainPoiType.DomainDepot] = "_GetDescDomainDepot",
+    [GEnums.DomainPoiType.SimulationTraining] = "_GetDescSimulationTraining",
     [GEnums.DomainPoiType.SewageTreatPlant] = "_GetDescSewageTreatPlant",
 }
 
@@ -24,6 +25,7 @@ local GetArgsFunc = {
         return args
     end
 }
+
 
 
 
@@ -351,6 +353,23 @@ CommonPOIUpgradeToastCtrl._GetDescDomainDepot = HL.Method().Return(HL.Table) << 
     return descList
 end
 
+
+
+
+CommonPOIUpgradeToastCtrl._GetDescSimulationTraining = HL.Method().Return(HL.Table) << function(self)
+    local descList = {}
+
+    local simulationTrainingSystem = GameInstance.player.simulationTrainingSystem
+    local curLevel = simulationTrainingSystem.curLevel
+
+    if curLevel == 1 then
+        table.insert(descList, Language.ui_simulationtraining_unlock_mainhud_toast)
+    else
+        table.insert(descList, Language.ui_simulationtraining_upgrade_mainhud_toast)
+    end
+
+    return descList
+end
 
 
 CommonPOIUpgradeToastCtrl._GetDescSewageTreatPlant = HL.Method().Return(HL.Table) << function(self)

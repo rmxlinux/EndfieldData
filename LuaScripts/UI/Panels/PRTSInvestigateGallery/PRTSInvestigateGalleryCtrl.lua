@@ -83,7 +83,7 @@ PRTSInvestigateGalleryCtrl.OnAnimationInFinished = HL.Override() << function(sel
     local firstObj = self.view.investList:Get(0)
     local firstCell = self.m_getInvestCellFunc(firstObj)
     if firstCell then
-        UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.investListNaviGroup, firstCell.gotoBtn)
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.investListNaviGroup, firstCell.gotoBtn)
     end
 end
 

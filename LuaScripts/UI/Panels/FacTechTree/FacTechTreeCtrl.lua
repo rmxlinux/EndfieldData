@@ -115,6 +115,11 @@ local UnhiddenClipName = {
 
 
 
+
+
+
+
+
 FacTechTreeCtrl = HL.Class('FacTechTreeCtrl', uiCtrl.UICtrl)
 
 
@@ -265,6 +270,12 @@ FacTechTreeCtrl.m_externalFocusNode = HL.Field(HL.Boolean) << false
 FacTechTreeCtrl.m_externalFocusId = HL.Field(HL.String) << ""
 
 
+FacTechTreeCtrl.m_isRelativeBlackboxNodeOpened = HL.Field(HL.Boolean) << false
+
+
+FacTechTreeCtrl.m_needRecoverRelativeBlackboxNode = HL.Field(HL.Boolean) << false
+
+
 
 
 
@@ -280,6 +291,7 @@ FacTechTreeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_curSelectTechId = arg.techId or ""
     self.m_needOpenLayerId = arg.layerId or ""
     self.m_packageId = arg.packageId
+    self.m_needRecoverRelativeBlackboxNode = arg.recoverRelativeBlackboxNode == true
 
     self.m_nodeCells = UIUtils.genCellCache(self.view.nodeCell)
     self.m_lineCells = UIUtils.genCellCache(self.view.lineCell)
@@ -461,6 +473,7 @@ end
 
 FacTechTreeCtrl.OnUnlockNode = HL.Method() << function(self)
     local techTreeSystem = GameInstance.player.facTechTreeSystem
+    local curTechId = self.m_curSelectNode.techId
 
     self:_UpdateRecommendNode()
     self:_RefreshLine(false)
@@ -472,7 +485,7 @@ FacTechTreeCtrl.OnUnlockNode = HL.Method() << function(self)
     local unlockItems = {}
     local rewardsItems = {}
     local buildingInfo = {}
-    local techId = self.m_curSelectNode.techId
+    local techId = curTechId
     local techData = facSTTNodeTable:GetValue(techId)
     for _, rewardData in pairs(techData.unlockReward) do
         if rewardData.count <= 0 then
@@ -524,7 +537,6 @@ FacTechTreeCtrl.FocusTechTreeNode = HL.Method(HL.Table) << function(self, args)
         self.m_externalFocusId = techId
         return
     end
-
 
     local luaIndex = self.m_techId2CellLuaIndex[techId]
     local nodeCell = self.m_nodeCells:Get(luaIndex)
@@ -592,6 +604,24 @@ FacTechTreeCtrl.AutoSelect = HL.Method(HL.Opt(HL.String)) << function(self, tech
     local luaIndex = self.m_techId2CellLuaIndex[techId]
     local nodeCell = self.m_nodeCells:Get(luaIndex)
     self:_OnClickNode(nodeCell)
+end
+
+
+
+FacTechTreeCtrl.GetCurSelectNode = HL.Method().Return(HL.Any) << function(self)
+    return self.m_curSelectNode
+end
+
+
+
+FacTechTreeCtrl.GetCurPackageId = HL.Method().Return(HL.Any) << function(self)
+    return self.m_packageId
+end
+
+
+
+FacTechTreeCtrl.GetIsRelativeBlackboxNodeOpened = HL.Method().Return(HL.Boolean) << function(self)
+    return self.m_isRelativeBlackboxNodeOpened
 end
 
 
@@ -1324,6 +1354,7 @@ end
 
 
 FacTechTreeCtrl._ToggleTechNodeRelativeBlackboxPanel = HL.Method(HL.Boolean) << function(self, isOn)
+    self.m_isRelativeBlackboxNodeOpened = isOn
     local detailNode = self.view.sidebar.facTechNodeDetail
     if isOn then
         detailNode.animationWrapper:PlayInAnimation()
@@ -1415,6 +1446,7 @@ FacTechTreeCtrl._CloseSidebar = HL.Method(HL.Opt(HL.Function)) << function(self,
     
     if self.m_curSelectNode then
         self.m_curSelectNode:OnSelect(false)
+        self.m_curSelectNode = nil
     end
 
     
@@ -1561,7 +1593,12 @@ FacTechTreeCtrl._OnOpenTweenFinished = HL.Method() << function(self)
         local focusTechCellIndex = string.isEmpty(focusTechId) and 1 or self.m_techId2CellLuaIndex[focusTechId]
         
         local defaultTargetCell = self.m_nodeCells:Get(focusTechCellIndex)
-        UIUtils.setAsNaviTarget(defaultTargetCell.view.itemBtn)
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.techNode, defaultTargetCell.view.itemBtn)
+    end
+
+    if self.m_needRecoverRelativeBlackboxNode and self.m_curSelectNode then
+        self.m_needRecoverRelativeBlackboxNode = false
+        self:_OnRelativeBtnClick()
     end
 end
 
@@ -1611,7 +1648,6 @@ FacTechTreeCtrl._ProcessCacheAfterAllOpenProgress = HL.Method() << function(self
     end
 
     local id = self.m_externalFocusId
-    
     self.m_curSelectTechId = id
     self.m_externalFocusId = ""
     local isTech, techCfg = Tables.facSTTNodeTable:TryGetValue(id)

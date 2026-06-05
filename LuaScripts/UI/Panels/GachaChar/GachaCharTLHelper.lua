@@ -16,6 +16,11 @@
 
 
 
+
+
+
+
+
 GachaCharTLHelper = HL.Class('GachaCharTLHelper')
 
 
@@ -44,6 +49,19 @@ GachaCharTLHelper.m_args = HL.Field(HL.Table)
 GachaCharTLHelper.m_exCamera = HL.Field(Transform)
 
 
+GachaCharTLHelper.showNameTime = HL.Field(HL.Number) << -1
+
+
+GachaCharTLHelper.showContentTime  = HL.Field(HL.Number) << -1
+
+
+GachaCharTLHelper.m_triggerOnceTime = HL.Field(HL.Number) << -1
+
+
+GachaCharTLHelper.m_triggerOnceTimeCallback = HL.Field(HL.Function)
+
+
+
 
 
 
@@ -62,6 +80,24 @@ GachaCharTLHelper.GachaCharTLHelper = HL.Constructor(CS.UnityEngine.Transform, H
             end
         end
     end
+
+    
+    local timeline = self.m_actorDirector.playableAsset;
+    self.showNameTime = -1
+    self.showContentTime = -1
+    for _, track in cs_pairs(timeline:GetOutputTracks()) do
+        if (track.name == "TimePointTrack") then
+            for _, timelineClip in cs_pairs(track:GetClips()) do
+                if timelineClip.displayName == "ShowNamePoint" then
+                    self.showNameTime = timelineClip.start
+                elseif timelineClip.displayName == "ShowContentPoint" then
+                    self.showContentTime = timelineClip.start
+                end
+            end
+            break
+        end
+    end
+    
 
     self.m_updateKey = LuaUpdate:Add("TailTick", function(deltaTime)
         self:TailTick(deltaTime)
@@ -161,6 +197,15 @@ end
 
 
 
+
+GachaCharTLHelper.SetTriggerOnceTimer = HL.Method(HL.Number, HL.Function) << function(self, time, callback)
+    self.m_triggerOnceTime = time
+    self.m_triggerOnceTimeCallback = callback
+end
+
+
+
+
 GachaCharTLHelper.TailTick = HL.Method(HL.Number) << function(self, deltaTime)
     if not self.inLoopTrack then
         if self.m_actorDirector.time >= self.m_loopStartTime then
@@ -177,6 +222,14 @@ GachaCharTLHelper.TailTick = HL.Method(HL.Number) << function(self, deltaTime)
             if self.m_args.onLoopChanged then
                 self.m_args.onLoopChanged(false)
             end
+        end
+    end
+
+    if self.m_triggerOnceTimeCallback ~= nil then
+        if self.m_actorDirector.time >= self.m_triggerOnceTime then
+            self.m_triggerOnceTime = -1
+            self.m_triggerOnceTimeCallback()
+            self.m_triggerOnceTimeCallback = nil
         end
     end
 end

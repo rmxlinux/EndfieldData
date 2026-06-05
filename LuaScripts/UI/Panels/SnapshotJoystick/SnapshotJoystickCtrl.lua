@@ -83,7 +83,7 @@ SnapshotJoystickCtrl.m_forbidToastColdDown = HL.Field(HL.Number) << 0
 
 
 SnapshotJoystickCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_cameraCtrl = arg
+    self.m_cameraCtrl = self.m_phase.snapshotCameraPanel.uiCtrl
     self.m_isPlayerMoveMode = not snapshotSystem.isCameraMoveMode
     
     self.view.joystick.onTouchStart:AddListener(function()

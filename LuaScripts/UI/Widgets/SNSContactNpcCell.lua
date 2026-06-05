@@ -10,10 +10,14 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 SNSContactNpcCell = HL.Class('SNSContactNpcCell', UIWidgetBase)
 
 
 SNSContactNpcCell.m_subDialogCellCache = HL.Field(HL.Forward("UIListCache"))
+
+
+SNSContactNpcCell.m_isFoldOut = HL.Field(HL.Boolean) << false
 
 
 SNSContactNpcCell.m_onNpcCellClick = HL.Field(HL.Function)
@@ -41,8 +45,9 @@ end
 
 
 
-SNSContactNpcCell.InitSNSContactNpcCell = HL.Method(HL.Table, HL.Function, HL.Function)
-        << function(self, chatVO, onNpcCellClick, dialogCellRefreshFunc)
+
+SNSContactNpcCell.InitSNSContactNpcCell = HL.Method(HL.Table, HL.Boolean, HL.Function, HL.Function)
+        << function(self, chatVO, defaultFoldOut, onNpcCellClick, dialogCellRefreshFunc)
     self:_FirstTimeInit()
 
     self.m_chatVO = chatVO
@@ -72,14 +77,14 @@ SNSContactNpcCell.InitSNSContactNpcCell = HL.Method(HL.Table, HL.Function, HL.Fu
         dialogCellRefreshFunc(cell, chatId, dialogVO.dialogId, index)
     end)
 
+    self.m_isFoldOut = defaultFoldOut
     self:_RefreshFoldOutIcon()
 end
 
 
 
 SNSContactNpcCell.ToggleFoldOut = HL.Method() << function(self)
-    local preState = self.m_chatVO.isFoldOut
-    self.m_chatVO.isFoldOut = not preState
+    self.m_isFoldOut = not self.m_isFoldOut
     self:_RefreshFoldOutIcon()
 end
 
@@ -96,8 +101,8 @@ end
 
 
 SNSContactNpcCell._RefreshFoldOutIcon = HL.Method() << function(self)
-    self.view.foldIconUp.gameObject:SetActiveIfNecessary(self.m_chatVO.isFoldOut)
-    self.view.foldIconDown.gameObject:SetActiveIfNecessary(not self.m_chatVO.isFoldOut)
+    self.view.foldIconUp.gameObject:SetActiveIfNecessary(self.m_isFoldOut)
+    self.view.foldIconDown.gameObject:SetActiveIfNecessary(not self.m_isFoldOut)
 end
 
 

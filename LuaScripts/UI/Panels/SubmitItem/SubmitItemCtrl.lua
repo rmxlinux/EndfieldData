@@ -77,19 +77,15 @@ SubmitItemCtrl.m_selectItemListCache = HL.Field(HL.Forward("UIListCache"))
 
 SubmitItemCtrl.m_submitType = HL.Field(HL.Number) << SubmitType.Common
 
+SubmitItemCtrl.m_waitingClosePanel = HL.Field(HL.Boolean) << false
+
 
 
 
 
 SubmitItemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.btnClose.onClick:AddListener(function()
-        if not PhaseManager:CanPopPhase(PHASE_ID) then
-            
-            return
-        end
-        self:PlayAnimationOutWithCallback(function()
-            self:ClosePanel(1)
-        end)
+        self:ClosePanel(1)
     end)
     self.view.btnSubmit.onClick:AddListener(function()
         self:_OnClickSubmit()
@@ -268,10 +264,6 @@ end
 
 
 SubmitItemCtrl._OnClickSubmit = HL.Method() << function(self)
-    if not PhaseManager:CanPopPhase(PHASE_ID) then
-        
-        return
-    end
     local enoughNormal = true
     self.m_normalItemListCache:Update(function(cell, index)
         local bundle = self.m_submitItemsNormal[index]
@@ -314,9 +306,7 @@ SubmitItemCtrl._OnClickSubmit = HL.Method() << function(self)
 
     local waitSubmitCallback = self:_Submit(selectInstIds, selectItemIds)
     if not waitSubmitCallback then
-        self:PlayAnimationOutWithCallback(function()
-            self:ClosePanel(0)
-        end)
+        self:ClosePanel(0)
     end
 end
 
@@ -649,9 +639,7 @@ end
 
 SubmitItemCtrl.OnSubmitItem = HL.Method(HL.Any) << function(self, submitId)
     if (submitId[1] == self.m_info.submitId) then
-        self:PlayAnimationOutWithCallback(function()
-            self:ClosePanel(0)
-        end)
+        self:ClosePanel(0)
     else
         print("SubmitItemCtrl.OnSubmitItem: submitId not match", submitId, self.m_info.submitId)
     end
@@ -687,11 +675,29 @@ end
 
 
 SubmitItemCtrl.ClosePanel = HL.Method(HL.Number) << function(self, nextChunkIndex)
-    if PhaseManager:IsOpen(PhaseId.Dialog) then
-        self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, nextChunkIndex })
-    else
-        PhaseManager:ExitPhaseFast(PHASE_ID)
+    if self.m_waitingClosePanel then
+        return
     end
+
+    Notify(MessageConst.DIALOG_CHANGE_NEXT_INDEX, { phaseId = PHASE_ID, nextIndex = nextChunkIndex, })
+    if PhaseManager:CanPopPhase(PHASE_ID) then
+        PhaseManager:PopPhase(PHASE_ID)
+        return
+    end
+
+    self.m_waitingClosePanel = true
+    self:_StartCoroutine(function()
+        coroutine.waitCondition(function()
+            return self.m_isClosed or PhaseManager:CanPopPhase(PHASE_ID)
+        end)
+
+        if self.m_isClosed then
+            return
+        end
+
+        self.m_waitingClosePanel = false
+        PhaseManager:PopPhase(PHASE_ID)
+    end)
 end
 
 HL.Commit(SubmitItemCtrl)

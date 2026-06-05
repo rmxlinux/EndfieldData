@@ -20,6 +20,7 @@ local PHASE_ID = PhaseId.SNS
 
 
 
+
 PhaseSNS = HL.Class('PhaseSNS', phaseBase.PhaseBase)
 
 local NeedClosePanelIds = {
@@ -68,7 +69,9 @@ PhaseSNS._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << fun
    self.m_panelId2Item = {}
 
    local defaultPanelId
-   if not self.arg then
+   if self.arg and self.arg.currentPanelId then
+      defaultPanelId = self.arg.currentPanelId
+   elseif not self.arg then
       defaultPanelId = PhaseSNS.s_prePanelId > 0 and PhaseSNS.s_prePanelId or SNS_BARKER_PANEL_ID
    elseif not string.isEmpty(self.arg.dialogId) then
       local dialogId = self.arg.dialogId
@@ -90,8 +93,12 @@ PhaseSNS._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << fun
       logger.error("invalid open phase params")
    end
 
-   self.m_basicPanelItem = self:CreatePhasePanelItem(SNS_BASIC_PANEL_ID, { defaultPanelId })
-   local defaultPanelItem = self:CreatePhasePanelItem(defaultPanelId, self.arg)
+   self.m_basicPanelItem = self:CreatePhasePanelItem(SNS_BASIC_PANEL_ID, {
+      defaultPanelId = defaultPanelId,
+      tabIndex = self.arg and self.arg.tabIndex or nil,
+   })
+   local defaultPanelArg = self.arg and self.arg.currentPanelArg ~= nil and self.arg.currentPanelArg or self.arg
+   local defaultPanelItem = self:CreatePhasePanelItem(defaultPanelId, defaultPanelArg)
    self.m_panelId2Item[defaultPanelId] = defaultPanelItem
    self.m_curPanelItem = defaultPanelItem
    local uiCtrl = defaultPanelItem.uiCtrl
@@ -173,6 +180,32 @@ PhaseSNS._OnRefresh = HL.Override() << function(self)
    
 
    logger.warn("PhaseSNS._OnRefresh fail")
+end
+
+
+
+PhaseSNS.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+   local arg = self.arg and lume.deepCopy(self.arg) or {}
+
+   if self.m_basicPanelItem and HL.TryGet(self.m_basicPanelItem.uiCtrl, "GetRecoverStateArg") then
+      local basicPanelArg = self.m_basicPanelItem.uiCtrl:GetRecoverStateArg()
+      if basicPanelArg then
+         arg.tabIndex = basicPanelArg.tabIndex
+         arg.currentPanelId = basicPanelArg.panelId
+      end
+   end
+
+   if self.m_curPanelItem and self.m_curPanelItem.uiCtrl then
+      arg.currentPanelId = self.m_curPanelItem.uiCtrl.panelId
+      if HL.TryGet(self.m_curPanelItem.uiCtrl, "GetRecoverStateArg") then
+         local currentPanelArg = self.m_curPanelItem.uiCtrl:GetRecoverStateArg()
+         arg.currentPanelArg = currentPanelArg and lume.deepCopy(currentPanelArg) or nil
+      else
+         arg.currentPanelArg = nil
+      end
+   end
+
+   return arg
 end
 
 

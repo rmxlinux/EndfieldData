@@ -6,6 +6,8 @@ local PANEL_ID = PanelId.DomainDepotGoodsSettle
 
 
 
+
+
 DomainDepotGoodsSettleCtrl = HL.Class('DomainDepotGoodsSettleCtrl', uiCtrl.UICtrl)
 
 
@@ -13,6 +15,9 @@ DomainDepotGoodsSettleCtrl.m_domainDepotId = HL.Field(HL.String) << ""
 
 
 DomainDepotGoodsSettleCtrl.m_deliverInstId = HL.Field(HL.Number) << 0
+
+
+DomainDepotGoodsSettleCtrl.m_stateName = HL.Field(HL.String) << ""
 
 
 
@@ -38,12 +43,13 @@ DomainDepotGoodsSettleCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         return
     end
     self.m_deliverInstId = arg.deliverInstId
+    self.m_stateName = arg.stateName
     local deliverInfo = GameInstance.player.domainDepotSystem:GetDomainDepotDeliverInfoByInstId(self.m_deliverInstId)
     self.m_domainDepotId = deliverInfo.domainDepotId
     DomainDepotUtils.UpdateReduceView(self.view.packageDamageReasonView, deliverInfo.itemType)
 
     local deposit = DomainDepotUtils.GetDomainDepotDeposit(self.m_deliverInstId)
-    self.view.bottomStateNode:SetState(arg.stateName)
+    self.view.bottomStateNode:SetState(self.m_stateName)
     self.view.item:InitItem({ id = DomainDepotUtils.GetMoneyId(self.m_domainDepotId), count = deposit }, true)
     
     
@@ -52,6 +58,16 @@ DomainDepotGoodsSettleCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
     
     self.view.bgBtn.gameObject:SetActive(true)
+end
+
+
+
+
+DomainDepotGoodsSettleCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    return {
+        deliverInstId = self.m_deliverInstId,
+        stateName = self.m_stateName,
+    }
 end
 
 

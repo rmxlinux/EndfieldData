@@ -77,6 +77,8 @@ BattlePassAdvancedPlanBuyCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
 
     
     self:_RefreshRewardsPreview()
+
+    self.view.cashShopKrTips:InitCashShopKrTips()
 end
 
 

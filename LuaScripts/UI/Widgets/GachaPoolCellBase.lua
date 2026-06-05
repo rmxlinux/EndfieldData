@@ -29,6 +29,8 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
 GachaPoolCellBase = HL.Class('GachaPoolCellBase', UIWidgetBase)
 
 
@@ -172,6 +174,8 @@ GachaPoolCellBase._InitBaseData = HL.Method() << function(self)
         },
         
         previewCharList = {},
+        
+        existCharVideo = not string.isEmpty(poolCfg.videoPath),
         
         gachaCostInfos = {
             permitSinglePull = poolTypeCfg.permitSinglePull,
@@ -454,6 +458,17 @@ GachaPoolCellBase._RefreshBaseUI = HL.Method() << function(self)
             end
         end
     end
+
+    
+    if self.view.videoBtn then
+        if self.m_baseInfo.existCharVideo then
+            self.view.videoBtn.onClick:RemoveAllListeners()
+            self.view.videoBtn.onClick:AddListener(function()
+                UIManager:Open(PanelId.GachaPoolVideo, self.m_poolId)
+            end)
+        end
+        self.view.videoBtn.gameObject:SetActive(self.m_baseInfo.existCharVideo)
+    end
     
 end
 
@@ -514,9 +529,9 @@ GachaPoolCellBase.UpdateMoneyNodeOnlyGachaTicket = HL.Virtual(HL.Any) << functio
     local inventory = GameInstance.player.inventory
     local valuableDepotType = GEnums.ItemValuableDepotType.CommercialItem
     local contains = inventory.valuableDepots:ContainsKey(valuableDepotType)
+    
     local depot 
     if contains then
-        
         depot = inventory.valuableDepots[valuableDepotType]:GetOrFallback(CS.Beyond.Gameplay.Scope.Create(GEnums.ScopeName.Main))
     end
     if string.isEmpty(poolCfg.ticketGachaSingleLt) then
@@ -525,9 +540,11 @@ GachaPoolCellBase.UpdateMoneyNodeOnlyGachaTicket = HL.Virtual(HL.Any) << functio
         moneyNode.gachaItem2.view.gameObject:SetActiveIfNecessary(true)
         moneyNode.gachaItem2:InitMoneyCell(poolCfg.ticketGachaSingleLt)
         if depot then
-            for instId, itemBundle in pairs(depot.instItems) do
-                if itemBundle.id == poolCfg.ticketGachaSingleLt then
+            local hasData, itemDict = depot.itemIdMapInstItems:TryGetValue(poolCfg.ticketGachaSingleLt)
+            if hasData then
+                for instId, itemBundle in pairs(itemDict) do
                     moneyNode.gachaItem2:SetItemInstId(instId)
+                    break
                 end
             end
         end
@@ -816,46 +833,89 @@ GachaPoolCellBase.ShowPreviewCharInfo = HL.Method(HL.Opt(HL.String)) << function
     if string.isEmpty(charId) then
         charId = ids[1]
     end
-    local curCharInfo
-    local charInstIdList = {}
-    for _, id in ipairs(ids) do
-        local info = GameInstance.player.charBag:CreateClientInitialGachaPoolChar(id)
-        if id == charId then
-            curCharInfo = info
-        end
-        table.insert(charInstIdList, info.instId)
-    end
-    if not curCharInfo then
-        return
-    end
-    logger.info("charInstIdList", charInstIdList)
 
-    local curMaxCharInfo
-    local maxCharInstIdList = {}
-    for _, id in ipairs(ids) do
-        local info = GameInstance.player.charBag:CreateClientPerfectGachaPoolCharInfo(id)
-        if id == charId then
-            curMaxCharInfo = info
-        end
-        table.insert(maxCharInstIdList, info.instId)
-    end
-    if not curMaxCharInfo then
-        return
-    end
     
     
     PhaseManager:OpenPhase(PhaseId.CharInfo, {
-        initCharInfo = {
-            instId = curCharInfo.instId,
-            templateId = charId,
-            charInstIdList = charInstIdList,
-            maxCharInstIdList = maxCharInstIdList,
-            isShowPreview = true,
-        },
+        initCharInfoCreator = function(initCharTemplateId)
+            initCharTemplateId = initCharTemplateId or charId
+            local initCharInfo
+            local charInstIdList = {}
+            for _, id in ipairs(ids) do
+                local info = GameInstance.player.charBag:CreateClientInitialGachaPoolChar(id)
+                if id == initCharTemplateId then
+                    initCharInfo = info
+                end
+                table.insert(charInstIdList, info.instId)
+            end
+
+            local maxCharInstIdList = {}
+            for _, id in ipairs(ids) do
+                local info = GameInstance.player.charBag:CreateClientPerfectGachaPoolCharInfo(id)
+                table.insert(maxCharInstIdList, info.instId)
+            end
+            return {
+                instId = initCharInfo.instId,
+                templateId = initCharTemplateId,
+                charInstIdList = charInstIdList,
+                maxCharInstIdList = maxCharInstIdList,
+                isShowPreview = true,
+            }
+        end,
         onClose = function()
             GameInstance.player.charBag:ClearAllClientCharAndItemData()
         end,
     })
+end
+
+
+
+GachaPoolCellBase.GetSubPanelArg = HL.Virtual().Return(HL.Opt(HL.Any)) << function(self)
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.GachaPoolVideo)
+    if isOpen then
+        local phaseStateArg = ctrl:GetCurPhaseStateArg()
+        if phaseStateArg then
+            return {
+                isGachaPoolVideo = true,
+                poolId = phaseStateArg,
+            }
+        end
+    end
+
+    isOpen, ctrl = UIManager:IsOpen(PanelId.GachaItemInstructionPopup)
+    if isOpen then
+        local phaseStateArg = ctrl:GetCurPhaseStateArg()
+        if phaseStateArg then
+            return {
+                isGachaItemInstructionPopup = true,
+                popupArg = phaseStateArg,
+            }
+        end
+    end
+
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.CommonPopUp)
+    if isOpen then
+        local phaseStateArg = ctrl:GetCurPhaseStateArg()
+        if phaseStateArg then
+            return {
+                isCommonPopUp = true,
+                popupArg = phaseStateArg,
+            }
+        end
+    end
+end
+
+
+
+
+GachaPoolCellBase.HandleSubPanelArg = HL.Virtual(HL.Any) << function(self, subPanelArg)
+    if subPanelArg.isGachaPoolVideo and not string.isEmpty(subPanelArg.poolId) then
+        UIManager:Open(PanelId.GachaPoolVideo, subPanelArg.poolId)
+    elseif subPanelArg.isGachaItemInstructionPopup and subPanelArg.popupArg then
+        UIManager:Open(PanelId.GachaItemInstructionPopup, subPanelArg.popupArg)
+    elseif subPanelArg.isCommonPopUp and subPanelArg.popupArg then
+        Notify(MessageConst.SHOW_POP_UP, subPanelArg.popupArg)
+    end
 end
 
 

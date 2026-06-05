@@ -269,7 +269,6 @@ ActivityCharacterTrialCtrl._UpdateHeadInfo = HL.Method(HL.Number) << function(se
     end
 
     self.view.activityCommonInfo:UpdateDescTxt(charTrial.desc)
-    self.view.bgImg:LoadSprite(BG_IMAGE_FOLDER, charTrial.dungeonBgPath)
     self.view.roleImg:LoadSprite(BG_IMAGE_FOLDER, charTrial.bgRolePath)
 end
 
@@ -293,13 +292,18 @@ end
 
 
 ActivityCharacterTrialCtrl.JumpToDungeon = HL.Method() << function(self)
-
     if self.m_selectedCsIndex == -1 then
         return
     end
     local dungeonId = self.m_csIndex2dungeonId[self.m_selectedCsIndex]
-    local dungeonCfg = Tables.dungeonTable[dungeonId]
-    local lockedTeamData = CharInfoUtils.getLockedFormationData(dungeonCfg.previewCharTeamId, true)
+    local hasSubGameInstData, subGameData = DataManager.subGameInstDataTable:TryGetValue(dungeonId)
+    if not hasSubGameInstData then
+        logger.error("JumpToDungeon失败,没有对应的subGameData,subGameId:", dungeonId)
+        return
+    end
+
+    local teamId = subGameData.teamConfigId
+    local lockedTeamData = CharInfoUtils.getLockedFormationData(teamId, true)
 
     local charInfos = {}
     for _, charInfo in ipairs(lockedTeamData.chars) do
@@ -307,13 +311,7 @@ ActivityCharacterTrialCtrl.JumpToDungeon = HL.Method() << function(self)
     end
 
     if GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId, charInfos) then
-        local activityId = self.m_activityId
-        LuaSystemManager.uiRestoreSystem:AddRequest(dungeonId, function()
-            PhaseManager:OpenPhaseFast(PhaseId.ActivityCenter, {
-                activityId = activityId,
-                gotoCenter = true,
-            })
-        end)
+        LuaSystemManager.uiRestoreSystem:AddRequest(dungeonId)
         Utils.reportPlacementEvent(GEnums.ClientPlacementEventType.DungeonBattleFirst)
     end
     GameInstance.player.charBag:ClearAllClientCharAndItemData()

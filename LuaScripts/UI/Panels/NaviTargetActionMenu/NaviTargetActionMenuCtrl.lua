@@ -12,6 +12,7 @@ local PANEL_ID = PanelId.NaviTargetActionMenu
 
 
 
+
 NaviTargetActionMenuCtrl = HL.Class('NaviTargetActionMenuCtrl', uiCtrl.UICtrl)
 
 local ContentState = {
@@ -219,6 +220,21 @@ end
 
 NaviTargetActionMenuCtrl.OnHide = HL.Override() << function(self)
     self.m_args = nil
+end
+
+
+
+NaviTargetActionMenuCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    if not self.m_args then
+        return
+    end
+
+    local arg = lume.deepCopy(self.m_args)
+    if self.m_args.transform then
+        arg.targetScreenRect = UIUtils.getTransformScreenRect(self.m_args.transform, self.uiCamera)
+        arg.transform = nil
+    end
+    return arg
 end
 
 HL.Commit(NaviTargetActionMenuCtrl)

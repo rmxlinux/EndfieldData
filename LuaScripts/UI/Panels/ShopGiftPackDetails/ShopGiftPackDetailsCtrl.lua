@@ -20,6 +20,7 @@ local PANEL_ID = PanelId.ShopGiftPackDetails
 
 
 
+
 ShopGiftPackDetailsCtrl = HL.Class('ShopGiftPackDetailsCtrl', uiCtrl.UICtrl)
 
 
@@ -263,5 +264,10 @@ ShopGiftPackDetailsCtrl._OnCashShopReceiveRefreshMsg = HL.Method() << function(s
     self:Close()
 end
 
+
+
+ShopGiftPackDetailsCtrl.GetGoodsId = HL.Method().Return(HL.String) << function(self)
+    return self.m_goodsId
+end
 
 HL.Commit(ShopGiftPackDetailsCtrl)

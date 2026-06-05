@@ -34,8 +34,6 @@ local MarkType = GEnums.MarkType
 
 
 
-
-
 PhaseMap = HL.Class('PhaseMap', phaseBase.PhaseBase)
 
 local MAP_PANEL_ID = PanelId.Map
@@ -74,10 +72,13 @@ local DETAIL_PANEL_MAP = {
     [MarkType.NpcCommonShop] = PanelId.MapMarkDetailDefault,
     [MarkType.SocialBuilding] = PanelId.MapMarkDetailSocialBuilding,
     [MarkType.WeekRaid] = PanelId.MapMarkDetailWeekRaid,
+    [MarkType.SimulationTraining] = PanelId.MapMarkDetailSimulationTraining,
     [MarkType.SSReceptionTeleport] = PanelId.MapMarkDetailCampFire,
     [MarkType.SnapshotActivity] = PanelId.MapMarkDetailActivitySnapShot,
+    [MarkType.SnapshotActivityNew] = PanelId.MapMarkDetailActivitySnapShot,
     [MarkType.ActivityCleaning] = PanelId.MapMarkDetailActivityCleaning,
     [MarkType.DungeonActmonsterActivity] = PanelId.MapMarkDetailActivityActmonsterCtrl,
+    [MarkType.ActivityContingencyContract] = PanelId.MapMarkDetailContingencyContract,
 
     
     [MarkType.DungeonPuzzle] = PanelId.MapMarkDetailDungeon,
@@ -212,6 +213,21 @@ PhaseMap._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << fun
         local _, ctrl = UIManager:IsOpen(MAP_MASK_PANEL_ID)
         ctrl:PlayAnimationOutAndClose()
     end
+
+    if self.arg ~= nil and self.arg.infoPopupArg ~= nil then
+        UIManager:Open(PanelId.MapInfoPopup, self.arg.infoPopupArg)
+        self.arg.infoPopupArg = nil
+    end
+
+    if self.arg ~= nil and self.arg.initRemindTipTabIndex ~= nil then
+        self.m_mapPanel.uiCtrl:RecoverRemindTip(self.arg.initRemindTipTabIndex)
+        self.arg.initRemindTipTabIndex = nil
+    end
+
+    if self.arg ~= nil and self.arg.isFilterPanelOpen then
+        self.m_mapPanel.uiCtrl:OpenFilterPanel()
+        self.arg.isFilterPanelOpen = nil
+    end
 end
 
 
@@ -267,6 +283,72 @@ end
 
 
 
+PhaseMap.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    local currState = self.m_mapPanel.uiCtrl:GetCurrState()
+    local currRemindState = self.m_mapPanel.uiCtrl:GetRemindTipState()
+    arg.levelId = currState.currLevelId
+    local selectedInstId = currState.selectedMarkInstId
+    if not string.isEmpty(selectedInstId) and MapUtils.isTemporaryCustomMark(selectedInstId) then
+        arg.instId = nil
+    else
+        arg.instId = selectedInstId
+    end
+
+    local isInfoPopupOpen = UIManager:IsOpen(PanelId.MapInfoPopup)
+    if isInfoPopupOpen then
+        arg.infoPopupArg = self.m_mapPanel.uiCtrl:GetPopupInfoState()
+    else
+        arg.infoPopupArg = nil
+    end
+
+    if currRemindState.isShowing then
+        arg.initRemindTipTabIndex = currRemindState.tabIndex
+    else
+        arg.initRemindTipTabIndex = nil
+    end
+
+    arg.bigRectState = self.m_mapPanel.uiCtrl:GetBigRectRecoverStateArg()
+
+    arg.tierId = self.m_mapPanel.uiCtrl:GetTierRecoverId()
+
+    arg.isFilterPanelOpen = self.m_filterPanel ~= nil and self.m_filterPanel.uiCtrl ~= nil
+
+    local detailPanelCtrl = self.m_detailPanel and self.m_detailPanel.uiCtrl
+    if not string.isEmpty(arg.instId) and detailPanelCtrl and
+            HL.TryGet(detailPanelCtrl, "GetRecoverPopupStateArg") and
+            PhaseManager:GetTopPhaseId() == PHASE_ID then
+        arg.detailPopupState = detailPanelCtrl:GetRecoverPopupStateArg()
+    else
+        arg.detailPopupState = nil
+    end
+
+    return arg
+end
+
+
+
+PhaseMap._TryRecoverDetailPopupState = HL.Method() << function(self)
+    if self.arg == nil or self.arg.detailPopupState == nil then
+        return
+    end
+    local popupState = self.arg.detailPopupState
+    self.arg.detailPopupState = nil
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return
+    end
+    if string.isEmpty(self.arg.instId) then
+        return
+    end
+    local detailPanelCtrl = self.m_detailPanel and self.m_detailPanel.uiCtrl
+    if detailPanelCtrl == nil or not HL.TryGet(detailPanelCtrl, "TryRecoverPopupState") then
+        return
+    end
+    detailPanelCtrl:TryRecoverPopupState(popupState)
+end
+
+
+
 
 
 
@@ -317,6 +399,7 @@ PhaseMap._OnShowMarkDetail = HL.Method(HL.Table) << function(self, args)
     self.m_detailPanel = self:CreatePhasePanelItem(panelId, panelArgs)
     self.m_detailPanel.uiCtrl:ChangePanelCfg("blockKeyboardEvent", DeviceInfo.usingController)
     self.m_detailPanelShownId = markInstId
+    self:_TryRecoverDetailPopupState()
 end
 
 
@@ -377,6 +460,7 @@ end
 
 
 
+
 PhaseMap._OnShowMarkMultiDelete = HL.Method(HL.Table) << function(self, args)
     local trackingMark
     if args.instId == GameInstance.player.mapManager.trackingMarkInstId then
@@ -402,6 +486,7 @@ PhaseMap._OnHideMarkMultiDelete = HL.Method() << function(self)
         self:RemovePhasePanelItem(self.m_multiDeletePanel)
     end)
 end
+
 
 
 

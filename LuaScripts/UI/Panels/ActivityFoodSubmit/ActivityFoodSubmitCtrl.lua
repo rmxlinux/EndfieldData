@@ -267,24 +267,15 @@ end
 
 
 ActivityFoodSubmitCtrl._OnClickCloseBtn = HL.Method() << function(self)
-    if not PhaseManager:CanPopPhase(PHASE_ID) then
-        
-        self:_StartTimer(1.5, function()
-            self:_OnClickCloseBtn()
-        end)
-        return
-    end
-    self.view.foodList.animationWrapper:PlayOutAnimation()
     if self.m_fromDialog then
-        AudioAdapter.PostEvent("Au_UI_Menu_Common_Large_Close")
         local res = 0
         if self.m_haveSucceedSubmit then
             res = 1
         end
-        self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, res })
-    else
-        PhaseManager:PopPhase(PHASE_ID)
+        Notify(MessageConst.DIALOG_CHANGE_NEXT_INDEX, { phaseId = PHASE_ID, nextIndex = res, })
     end
+    AudioAdapter.PostEvent("Au_UI_Menu_Common_Large_Close")
+    PhaseManager:PopPhase(PHASE_ID)
 end
 
 
@@ -506,9 +497,8 @@ ActivityFoodSubmitCtrl._OnUpdateMainCellNodeState = HL.Method(HL.Any, HL.Number)
         cell.nodeState:SetState("Locked")
         local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
         if activity ~= nil then
-            local stageStartTime = activity.startTime +
-                Utils.getServerTimeZoneOffsetSeconds() +
-                Tables.activityConditionalMultiStageTable[self.m_activityId].stageList[stageId].timeOffset * 60 * 60;
+            local _,stageData = activity.stageDataDict:TryGetValue(stageId)
+            local stageStartTime = stageData.OpenTimeTs + Utils.getServerTimeZoneOffsetSeconds()
             local curTime = DateTimeUtils.GetCurrentTimestampBySeconds() + Utils.getServerTimeZoneOffsetSeconds()
             local disTime = stageStartTime - curTime
             cell.lockedTimeTxt.text = UIUtils.getLeftTime(disTime)

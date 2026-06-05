@@ -60,6 +60,7 @@ local PHASE_ID = PhaseId.ManualCraftPopups
 
 
 
+
 ManualCraftPopupsCtrl = HL.Class('ManualCraftPopupsCtrl', uiCtrl.UICtrl)
 
 
@@ -121,6 +122,7 @@ ManualCraftPopupsCtrl.m_jumpRewardFlag = HL.Field(HL.Boolean) << false
 
 
 ManualCraftPopupsCtrl.m_initControllerSelected = HL.Field(HL.Boolean) << false
+ManualCraftPopupsCtrl.m_getCurPhaseStateFlag = HL.Field(HL.Boolean) << false
 
 
 ManualCraftPopupsCtrl.m_bindSubCache = HL.Field(HL.Table)
@@ -250,7 +252,9 @@ ManualCraftPopupsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     self.view.returnBtn.onClick:AddListener(function()
-        InputManagerInst.controllerNaviManager:SetTarget(nil)
+        if DeviceInfo.usingController then
+            self.view.contentCardListNavi:ManuallyStopFocus()
+        end
         self:_UpdateDefaultView(self.m_needRefreshReward)
     end)
 
@@ -312,13 +316,16 @@ ManualCraftPopupsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
 
     self.m_filterSetting = {}
-    local selectedFilter = {}
     local list = self.m_facManualCraftSystem:GetAllDomainData()
     for i = 0 , list.Count - 1 do
         local domainData = list[i]
         table.insert(self.m_filterSetting, {id = domainData.domainId, domainName = domainData.domainName, defaultIsOn = true,name = domainData.domainName,isOn = true})
-        table.insert(selectedFilter, self.m_filterSetting[i + 1])
     end
+
+    
+    local recoverSelectedItemId = arg and arg.selectedItemId
+    local needRecoverSelectPanel = arg and arg.recoverSelectPanel == true
+    self:_RecoverState(arg)
 
     self:_SortAndFilter()
 
@@ -354,7 +361,7 @@ ManualCraftPopupsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.filterBtn:InitFilterBtn({
         tagGroups = {{tags = self.m_filterSetting}} ,
-        selectedTags = { },
+        selectedTags = self:_GetSelectedFilterTags(),
         onConfirm = function(tags)
             self:_FilterBtnConfirm(tags)
             self.m_sortMode = self.view.sortNodeUp:GetCurSortData().sortMode
@@ -393,14 +400,15 @@ ManualCraftPopupsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end)
 
-    if self.m_jumpUnLock then
+    local recoveredSelectPanel = needRecoverSelectPanel and not string.isEmpty(recoverSelectedItemId) and self:_RecoverSelectPanelByItemId(recoverSelectedItemId)
+    if not recoveredSelectPanel and self.m_jumpUnLock then
         self.m_selectIndex = self.m_jumpIndex
         self.m_previewIndex = self.m_jumpIndex
         self.m_controllerItemId = self.m_jumpItem
         self:_UpdateActiveScroll()
         self:_UpdateSelectView(false)
         self.view.selectPanel:GetComponent(typeof(CS.Beyond.UI.UIAnimationWrapper)):Play("manualcraftpopups_select_in")
-    else
+    elseif not recoveredSelectPanel then
         self:_UpdateDefaultView(true)
     end
 
@@ -408,6 +416,84 @@ ManualCraftPopupsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_TickUpdate(deltaTime)
     end)
     self.m_tickValidTime = 0
+end
+
+
+
+ManualCraftPopupsCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    self.m_initControllerSelected = false
+    self.m_getCurPhaseStateFlag = true
+    local filterIds = {}
+    for _, filterInfo in ipairs(self.m_filterSetting) do
+        if filterInfo.isOn then
+            table.insert(filterIds, filterInfo.id)
+        end
+    end
+    local selectedItemId
+    if not self.m_inMainPanel and self.m_selectIndex and self.m_unlockItemList and self.m_unlockItemList[self.m_selectIndex] then
+        selectedItemId = self.m_unlockItemList[self.m_selectIndex].itemId
+    end
+    return {
+        sortMode = self.m_sortMode,
+        sortIncremental = self.m_sortIncremental,
+        filterIds = filterIds,
+        selectedItemId = selectedItemId,
+        recoverSelectPanel = not self.m_inMainPanel and not string.isEmpty(selectedItemId),
+    }
+end
+
+
+
+
+ManualCraftPopupsCtrl._RecoverState = HL.Method(HL.Opt(HL.Table)) << function(self, recoverState)
+    if not recoverState then
+        return
+    end
+    if recoverState.sortMode then
+        self.m_sortMode = recoverState.sortMode
+    end
+    if recoverState.sortIncremental ~= nil then
+        self.m_sortIncremental = recoverState.sortIncremental
+    end
+    if recoverState.filterIds then
+        local selectedFilterIdMap = {}
+        for _, filterId in ipairs(recoverState.filterIds) do
+            selectedFilterIdMap[filterId] = true
+        end
+        for _, filterInfo in ipairs(self.m_filterSetting) do
+            filterInfo.isOn = selectedFilterIdMap[filterInfo.id] == true
+        end
+    end
+end
+
+
+
+ManualCraftPopupsCtrl._GetSelectedFilterTags = HL.Method().Return(HL.Table) << function(self)
+    local selectedFilter = {}
+    for _, filterInfo in ipairs(self.m_filterSetting) do
+        if filterInfo.isOn then
+            table.insert(selectedFilter, filterInfo)
+        end
+    end
+    return selectedFilter
+end
+
+
+
+
+ManualCraftPopupsCtrl._RecoverSelectPanelByItemId = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
+    for index, item in ipairs(self.m_unlockItemList) do
+        if item.itemId == itemId then
+            self.m_selectIndex = index
+            self.m_previewIndex = index
+            self.m_controllerItemId = item.itemId
+            self:_UpdateActiveScroll()
+            self:_UpdateSelectView(false)
+            self.view.selectPanel:GetComponent(typeof(CS.Beyond.UI.UIAnimationWrapper)):Play("manualcraftpopups_select_in")
+            return true
+        end
+    end
+    return false
 end
 
 
@@ -747,6 +833,11 @@ ManualCraftPopupsCtrl._UpdateDefaultView = HL.Method(HL.Boolean) << function(sel
             end
         end
 
+        if #self.m_unlockItemList > 0 or self.m_getCurPhaseStateFlag then
+            self.m_getCurPhaseStateFlag = false
+            self.m_controllerItemId = self.m_unlockItemList[1].itemId
+        end
+
         local controllerBackIndex = -1
         for i = 1, #self.m_unlockItemList do
             local item = self.m_unlockItemList[i]
@@ -886,15 +977,14 @@ ManualCraftPopupsCtrl._UpdateDefaultCell = HL.Method(GameObject, HL.Number) << f
         self.view.selectPanel:GetComponent(typeof(CS.Beyond.UI.UIAnimationWrapper)):Play("manualcraftpopups_select_in")
     end)
 
-
     if self.m_initControllerSelected then
         if self.m_controllerItemId == item.itemId then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.button)
+            self:SetAsNaviTargetInSilentModeIfNecessary(self.view.contentNavi, cell.button)
         end
     else
         if index == LUA_FIRST_INDEX then
             self.m_initControllerSelected = true
-            InputManagerInst.controllerNaviManager:SetTarget(cell.button)
+            self:SetAsNaviTargetInSilentModeIfNecessary(self.view.contentNavi, cell.button)
         end
     end
 
@@ -950,7 +1040,7 @@ ManualCraftPopupsCtrl._UpdateSelectView = HL.Method(HL.Boolean) << function(self
     self.m_jumpRewardFlag = false
     self.m_rewardCellList:Refresh(data.rewardList.Count, function(cell, luaIndex)
         cell.gameObject.name = "RewardCell_" .. luaIndex
-        index = CSIndex(luaIndex)
+        local index = CSIndex(luaIndex)
         local rewardId = data.rewardList[index]
         local count = data.rewardCount[index]
         local condition = data.unlockCondition[index]
@@ -1006,25 +1096,27 @@ ManualCraftPopupsCtrl._UpdateSelectView = HL.Method(HL.Boolean) << function(self
         end
         activeNode.commodityText.text = Tables.itemTable:GetValue(rewardId).name
 
-        cell.receivedNode.keyHintR3.gameObject:SetActive(false)
-        cell.available.keyHintR3.gameObject:SetActive(false)
-        cell.notAvailable.keyHintR3.gameObject:SetActive(false)
-
-        cell.naviDecorator.onIsNaviTargetChanged = function(active)
+        local refreshKeyHint = function(active)
             cell.receivedNode.keyHintR3.gameObject:SetActive(active)
             cell.available.keyHintR3.gameObject:SetActive(active)
             cell.notAvailable.keyHintR3.gameObject:SetActive(active)
         end
 
+        cell.naviDecorator.onIsNaviTargetChanged = function(active)
+            refreshKeyHint(active)
+        end
+
+        refreshKeyHint(cell.naviDecorator.isNaviTarget)
+
         if self.m_jumpRewardFlag == false then
             if index == 0 then
-                InputManagerInst.controllerNaviManager:SetTarget(cell.naviDecorator)
-                cell.naviDecorator.onIsNaviTargetChanged(true)
+                self:SetAsNaviTargetInSilentModeIfNecessary(self.view.contentCardListNavi, cell.naviDecorator)
+                refreshKeyHint(cell.naviDecorator.isNaviTarget)
             end
             if showType == ShowRewardsType.AVAILABLE then
                 self.m_jumpRewardFlag = true
-                InputManagerInst.controllerNaviManager:SetTarget(cell.naviDecorator)
-                cell.naviDecorator.onIsNaviTargetChanged(true)
+                self:SetAsNaviTargetInSilentModeIfNecessary(self.view.contentCardListNavi, cell.naviDecorator)
+                refreshKeyHint(cell.naviDecorator.isNaviTarget)
             end
         end
 
@@ -1034,7 +1126,6 @@ ManualCraftPopupsCtrl._UpdateSelectView = HL.Method(HL.Boolean) << function(self
             InputManagerInst:DeleteBinding(alreadyBindingId)
             self.m_bindSubCache[groupId] = nil
         end
-
 
         self.m_bindSubCache[groupId] = InputManagerInst:CreateBindingByActionId("show_item_tips", function()
             if showType == ShowRewardsType.RECEIVED then

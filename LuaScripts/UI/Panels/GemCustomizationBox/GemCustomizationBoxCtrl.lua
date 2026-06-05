@@ -651,6 +651,10 @@ GemCustomizationBoxCtrl._OnReceiveServer = HL.Method(HL.Table) << function(self,
             local _, itemData = Tables.itemTable:TryGetValue(itemBundle.id)
             if itemData then
                 serverOpenBoxNum = serverOpenBoxNum + 1
+                local showGemPerfectIcon = false
+                if itemData.type == GEnums.ItemType.WeaponGem and itemBundle.instId and itemBundle.instId > 0 then
+                    showGemPerfectIcon = UIUtils.getGemWishListPerfectMatch(itemBundle.instId)
+                end
                 local putInside = false
                 for i = 1, #items do
                     if items[i].id == itemData.id and itemBundle.instId == 0 then
@@ -665,6 +669,7 @@ GemCustomizationBoxCtrl._OnReceiveServer = HL.Method(HL.Table) << function(self,
                                          count = itemBundle.count,
                                          instData = itemBundle.instData,
                                          instId = itemBundle.instId,
+                                         showGemPerfectIcon = showGemPerfectIcon,
                                          rarity = itemData.rarity,
                                          type = itemData.type:ToInt()})
                 end

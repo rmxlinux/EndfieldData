@@ -37,6 +37,8 @@ local PHASE_ID = PhaseId.SpaceshipRoomClueGift
 
 
 
+
+
 SpaceshipRoomClueGiftCtrl = HL.Class('SpaceshipRoomClueGiftCtrl', uiCtrl.UICtrl)
 
 
@@ -91,6 +93,9 @@ SpaceshipRoomClueGiftCtrl.friendListArrowJumpIn = HL.Field(HL.Number) << 0
 
 
 SpaceshipRoomClueGiftCtrl.m_inFriendListGroup = HL.Field(HL.Boolean) << false
+
+
+SpaceshipRoomClueGiftCtrl.m_pendingInputText = HL.Field(HL.String) << ""
 
 
 
@@ -175,6 +180,12 @@ SpaceshipRoomClueGiftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     InputManagerInst:ToggleBinding(self.friendListJumpIn, false)
     InputManagerInst:ToggleBinding(self.friendListArrowJumpIn, false)
+
+    local recoverState = arg and arg.recoverState or nil
+    if recoverState then
+        self:_TryRecoverState(recoverState)
+        arg.recoverState = nil
+    end
 end
 
 
@@ -249,16 +260,18 @@ SpaceshipRoomClueGiftCtrl._UpdateClueId2HaveClues = HL.Method() << function(self
     end
 
     if self.m_selectedClueId ~= -1 then
-        local selectedCell = self.m_clueId2ClueCell[self.m_selectedClueId]
-        local num = 0
-        if self.m_clueId2HaveClues[self.m_selectedClueId] ~= nil then
-            num = #self.m_clueId2HaveClues[self.m_selectedClueId]
-        end
-        selectedCell.inventoryNumTxt.text = num
-        if num > 0 then
-            selectedCell.stateController:SetState("Select")
-        else
-            selectedCell.stateController:SetState("Mask_select")
+        local selectedCell = self.m_clueId2ClueCell and self.m_clueId2ClueCell[self.m_selectedClueId]
+        if selectedCell then
+            local num = 0
+            if self.m_clueId2HaveClues[self.m_selectedClueId] ~= nil then
+                num = #self.m_clueId2HaveClues[self.m_selectedClueId]
+            end
+            selectedCell.inventoryNumTxt.text = num
+            if num > 0 then
+                selectedCell.stateController:SetState("Select")
+            else
+                selectedCell.stateController:SetState("Mask_select")
+            end
         end
     end
 end
@@ -514,6 +527,14 @@ end
 SpaceshipRoomClueGiftCtrl.OnSync = HL.Method() << function(self)
     self:_UpdateCache()
     self:_Refresh(false)
+    if not string.isEmpty(self.m_pendingInputText) then
+        self.view.friendList.view.inputField.text = self.m_pendingInputText
+        self.view.clearBtn.gameObject:SetActiveIfNecessary(true)
+        self.view.searchResult.gameObject:SetActiveIfNecessary(true)
+        self.m_pendingInputText = ""
+    elseif not string.isEmpty(self.view.friendList.view.inputField.text) then
+        self.view.friendList:OnChangeInputField(self.view.friendList.view.inputField.text)
+    end
 end
 
 
@@ -705,6 +726,43 @@ SpaceshipRoomClueGiftCtrl._Refresh = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) <
     if not self.m_inFriendListGroup then
         InputManagerInst:ToggleBinding(self.friendListJumpIn, #self.m_friendList > 0)
         InputManagerInst:ToggleBinding(self.friendListArrowJumpIn, #self.m_friendList > 0)
+    end
+end
+
+SpaceshipRoomClueGiftCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = {}
+    local recoverState = {}
+    local hasState = false
+
+    if self.m_selectedClueId and self.m_selectedClueId ~= -1 then
+        recoverState.selectedClueId = self.m_selectedClueId
+        hasState = true
+    end
+
+    local inputField = self.view.friendList.view.inputField
+    if inputField and inputField.text and not string.isEmpty(inputField.text) then
+        recoverState.inputText = inputField.text
+        hasState = true
+    end
+
+    if hasState then
+        arg.recoverState = recoverState
+    end
+    return arg
+end
+
+SpaceshipRoomClueGiftCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
+    if recoverState.inputText and not string.isEmpty(recoverState.inputText) then
+        self.m_pendingInputText = recoverState.inputText
+    end
+
+    if recoverState.selectedClueId and recoverState.selectedClueId ~= self.m_selectedClueId then
+        for luaIndex = 1, #self.m_luaIndex2ClueId do
+            if self.m_luaIndex2ClueId[luaIndex] == recoverState.selectedClueId then
+                self:_selectClue(luaIndex, true)
+                break
+            end
+        end
     end
 end
 

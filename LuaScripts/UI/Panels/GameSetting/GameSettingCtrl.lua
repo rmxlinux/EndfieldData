@@ -1,6 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GameSetting
 local HGUtils = CS.HG.Rendering.Runtime.HGUtils
+local CloudGame = CS.Beyond.CloudGame
 local GameSettingSetter = CS.Beyond.Scripts.Entry.GameSettingSetter
 local GameSettingHelper = CS.Beyond.Gameplay.GameSettingHelper
 local GameSetting = CS.Beyond.GameSetting
@@ -15,6 +16,15 @@ local KeyboardKeyCode = CS.Beyond.Input.KeyboardKeyCode
 local GamepadKeyCode = CS.Beyond.Input.GamepadKeyCode 
 local STANDARD_HORIZONTAL_RESOLUTION = CS.Beyond.UI.UIConst.STANDARD_HORIZONTAL_RESOLUTION
 local STANDARD_VERTICAL_RESOLUTION = CS.Beyond.UI.UIConst.STANDARD_VERTICAL_RESOLUTION
+
+
+
+
+
+
+
+
+
 
 
 
@@ -600,9 +610,17 @@ GameSettingCtrl._BuildSettingDataList = HL.Method() << function(self)
         return dataA.tabSortOrder < dataB.tabSortOrder
     end)
 
-    for tabIndex, tabData in ipairs(self.m_tabDataList) do
-        self.m_itemDataList[tabIndex] = self:_BuildSettingTabData(tabData)
+    
+    local tabDataList = {}
+    self.m_itemDataList = {}
+    for _, tabData in ipairs(self.m_tabDataList) do
+        local itemDataList = self:_BuildSettingTabData(tabData)
+        if #itemDataList > 0 then
+            table.insert(tabDataList, tabData)
+            table.insert(self.m_itemDataList, itemDataList)
+        end
     end
+    self.m_tabDataList = tabDataList
 end
 
 
@@ -779,6 +797,7 @@ GameSettingCtrl._LeaveSettingTab_KeyHint = HL.Method(HL.String, HL.Function)
         onConfirm = function()
             
             self:_KeyClearPendingActions()
+            Notify(MessageConst.GAME_SETTING_KEY_SETTING_CHANGED)
             
             callback()
         end,
@@ -829,9 +848,13 @@ GameSettingCtrl._RefreshSettingTab = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.
     UIUtils.setSizeDeltaY(self.view.viewContent, self.m_contentHeight)
 
     
-    if tabData.tabId == VIDEO_TAB_ID and not DeviceInfo.isConsole then
-        self.view.bottomNode.gameObject:SetActive(true)
-        self.view.bottomNodeStateCtrl:SetState("Video")
+    if tabData.tabId == VIDEO_TAB_ID then
+        if DeviceInfo.isConsole or CloudGame.enabled then
+            self.view.bottomNode.gameObject:SetActive(false)
+        else
+            self.view.bottomNode.gameObject:SetActive(true)
+            self.view.bottomNodeStateCtrl:SetState("Video")
+        end
     elseif tabData.tabId == KEY_HINT_TAB_ID then
         self.view.bottomNode.gameObject:SetActive(true)
         self.view.bottomNodeStateCtrl:SetState("Key")
@@ -1494,7 +1517,7 @@ GameSettingCtrl._InitSettingItemControlKeyAction = HL.Method(HL.Table, HL.Boolea
         
         if not string.isEmpty(iconPath) then
             isSet = true
-            iconPath = KEYICON_PATH .. iconPath .. ".png"
+            iconPath = InputManager.GetKeyboardIconPath(iconPath, isLongPress, true)
         end
         stateName = "Locked" 
     end
@@ -1542,7 +1565,7 @@ GameSettingCtrl._ValidateVideoNotchPadding = HL.Method(HL.String).Return(HL.Bool
     if currentRatio > standardRatio then
         return true 
     end
-    local safeArea = Screen.safeArea
+    local safeArea = DeviceInfo.safeArea
     if safeArea.x > 0 or safeArea.y > 0 then
         return true 
     end
@@ -1555,7 +1578,10 @@ end
 
 
 
-GameSettingCtrl._ValidateQualitySubSetting = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
+GameSettingCtrl._ValidateVideoQualitySubSetting = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
+    if CloudGame.enabled then
+        return false 
+    end
     return GameSettingHelper.IsQualitySubSettingValid(settingId)
 end
 
@@ -1564,6 +1590,9 @@ end
 
 
 GameSettingCtrl._ValidateVideoQualityMainSetting = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
+    if CloudGame.enabled then
+        return false 
+    end
     return not UNITY_PS5
 end
 
@@ -1572,7 +1601,30 @@ end
 
 
 GameSettingCtrl._ValidatePSVideoQualityMainSetting = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
+    if CloudGame.enabled then
+        return false 
+    end
     return UNITY_PS5
+end
+
+
+
+
+GameSettingCtrl._ValidateVideoFullScreen = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
+    if CloudGame.enabled then
+        return false 
+    end
+    return true
+end
+
+
+
+
+GameSettingCtrl._ValidateVideoResolution = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
+    if CloudGame.enabled then
+        return false 
+    end
+    return true
 end
 
 
@@ -1589,8 +1641,11 @@ end
 
 
 GameSettingCtrl._ValidateLanguageTextChangeSetting = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    
-    return not UIManager:IsOpen(PanelId.CommonTaskTrackHud)
+    if not GameWorld.worldInfo or not GameWorld.worldInfo.inSubGame then
+        return true
+    end
+
+    return GameMechanicsUtils.isCurGameCanSwitchLanguage()
 end
 
 
@@ -2012,6 +2067,21 @@ end
 
 
 
+GameSettingCtrl._DropdownGetIndexKeyboardType = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
+    return GameSetting.keyboardType:GetHashCode()
+end
+
+
+
+
+
+GameSettingCtrl._DropdownOnSelectKeyboardType = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
+    GameSettingSetter.keyboardType:Set(index)
+end
+
+
+
+
 
 
 
@@ -2176,6 +2246,7 @@ end
 
 
 GameSettingCtrl._SliderGetNotchPadding = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
+    settingId = GameSetting.GetCurVideoNotchPaddingId()
     return GameSettingHelper.GetGameSettingCanvasPaddingFromNotchPadding(self:_SliderGetValue(settingId), self.m_rootCanvasWidth)
 end
 
@@ -2549,6 +2620,20 @@ end
 
 
 
+GameSettingCtrl._ToggleGetStaminaRecover = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
+    return self:_ToggleGetValue(settingId)
+end
+
+
+
+
+GameSettingCtrl._ToggleGetStaminaDrugExpire = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
+    return self:_ToggleGetValue(settingId)
+end
+
+
+
+
 GameSettingCtrl._ToggleGetEnableUltimateMode2 = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
     return GameInstance.player.gameSettingSystem:GetToggleValue(settingId)
 end
@@ -2662,6 +2747,55 @@ end
 GameSettingCtrl._ToggleSetShowSmartAlert = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
     GameSettingSetter.otherShowSmartAlert:Set(value)
 end
+
+
+
+
+
+
+GameSettingCtrl._ToggleSetStaminaRecover = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
+    if not GameInstance.player.notificationManager:HasNotificationPermission() and value then
+        if self.m_itemCellMap[settingId] ~= nil then
+            self.m_itemCellMap[settingId].itemControl.toggle:SetValue(false, true)
+        end
+
+        self:_OpenNotificationPopup()
+        return
+    end
+    GameSettingSetter.staminaRecover:Set(value)
+end
+
+
+
+
+
+GameSettingCtrl._ToggleSetStaminaDrugExpire = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
+    if not GameInstance.player.notificationManager:HasNotificationPermission() and value then
+        if self.m_itemCellMap[settingId] ~= nil then
+            self.m_itemCellMap[settingId].itemControl.toggle:SetValue(false, true)
+        end
+
+        self:_OpenNotificationPopup()
+        return
+    end
+    GameSettingSetter.staminaDrugExpire:Set(value)
+end
+
+
+
+GameSettingCtrl._OpenNotificationPopup = HL.Method() << function(self)
+    Notify(MessageConst.SHOW_POP_UP,{
+        content = Language.LUA_GAME_SETTING_MOBILE_NOTIFICATION_TITLE,
+        subContent = Language.LUA_GAME_SETTING_MOBILE_NOTIFICATION_CONTENT,
+        onConfirm = function()
+            GameInstance.player.notificationManager:OpenSystemNotificationSettings()
+        end,
+        onCancel = nil,
+        confirmText  = Language.LUA_GAME_SETTING_MOBILE_NOTIFICATION_CONFIRM_TEXT,
+        cancelText  = Language.LUA_GAME_SETTING_MOBILE_NOTIFICATION_CANCEL_TEXT,
+    })
+end
+
 
 
 
@@ -2859,6 +2993,7 @@ GameSettingCtrl._KeyChangeActions = HL.Method(HL.Userdata, HL.Userdata, HL.Userd
     if dirty then
         
         self:_SetKeyActionState(itemData.settingId, KEY_ACTION_STATE.Dirty, isPrimary)
+        Notify(MessageConst.GAME_SETTING_KEY_SETTING_CHANGED, itemData.settingId)
     end
     return dirty 
 end
@@ -3051,7 +3186,7 @@ GameSettingCtrl._InsertSubQualityItemDataList = HL.Method(HL.Table) << function(
     
     local originalCount = #itemDataList
     for settingId, subQualityData in pairs(Tables.qualitySubSettingTable) do
-        if self:_IsSettingItemValid(settingId, "ValidateQualitySubSetting") then
+        if self:_IsSettingItemValid(settingId, "ValidateVideoQualitySubSetting") then
             local itemData = {}
             itemData.settingId = settingId
             itemData.settingGroupTitle = subQualityData.settingGroupTitle
@@ -3622,7 +3757,7 @@ end
 
 
 GameSettingCtrl._RefreshQualityLoad = HL.Method(HL.Opt(HL.Boolean)) << function(self, playAnim)
-    local show = DeviceInfo.isPC or DeviceInfo.isMobile
+    local show = (DeviceInfo.isPC or DeviceInfo.isMobile) and not CloudGame.enabled
     self.view.qualityLoadBar.gameObject:SetActive(show)
     if not show then
         return
@@ -3636,7 +3771,7 @@ end
 
 
 GameSettingCtrl._RefreshMemoryLoad = HL.Method(HL.Opt(HL.Boolean)) << function(self, playAnim)
-    local show = DeviceInfo.isPC
+    local show = DeviceInfo.isPC and not CloudGame.enabled
     self.view.memoryLoadBar.gameObject:SetActive(show)
     if not show then
         return

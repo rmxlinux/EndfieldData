@@ -31,6 +31,7 @@ local PANEL_ID = PanelId.CharInfoTalentUpgrade
 
 
 
+
 CharInfoTalentUpgradeCtrl = HL.Class('CharInfoTalentUpgradeCtrl', uiCtrl.UICtrl)
 
 
@@ -900,6 +901,14 @@ end
 CharInfoTalentUpgradeCtrl._InitControllerPlaceHolder = HL.Method(HL.Table) << function(self, args)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder(
         {self.view.inputGroup.groupId, args.inputGroupId})
+end
+
+
+
+CharInfoTalentUpgradeCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local arg = {}
+    arg.isSkillExpanding = self.m_isSkillExpanding
+    return arg
 end
 
 

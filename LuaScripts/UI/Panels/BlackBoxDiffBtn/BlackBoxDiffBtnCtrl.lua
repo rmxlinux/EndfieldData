@@ -290,7 +290,7 @@ BlackBoxDiffBtnCtrl.OnDungeonWarningStateChange = HL.Method(HL.Any) << function(
     local chapterId, conditions = unpack(args)
     if string.isEmpty(chapterId) then
         chapterId = Utils.getCurrentChapterId()
-        conditions = GameWorld.worldInfo.subGame.needCheckConditions
+        conditions = GameInstance.dungeonManager.curDungeonLikeSubGame.needCheckConditions
     end
     local curWarningState = false
     self.m_warningInfo = {}
@@ -395,7 +395,7 @@ BlackBoxDiffBtnCtrl._OnBtnResetClick = HL.Method() << function(self)
     if self.m_curPhase == Phase.Fail then
         self:_DoReset()
     else
-        local curStatus = GameWorld.worldInfo.subGame:GetCurrentCompletionStatus()
+        local curStatus = GameInstance.dungeonManager.curDungeonLikeSubGame:GetCurrentCompletionStatus()
         self:Notify(MessageConst.SHOW_POP_UP, {
             content = Language.LUA_DUNGEON_RESET_BLACKBOX_CONFIRM,
             onConfirm = function()
@@ -412,9 +412,9 @@ end
 
 BlackBoxDiffBtnCtrl._DoReset = HL.Method(HL.Any) << function(self, status)
     if status then
-        GameWorld.worldInfo.subGame:UserSendReStartAtStatus(status)
+        GameInstance.dungeonManager.curDungeonLikeSubGame:UserSendReStartAtStatus(status)
     else
-        GameWorld.worldInfo.subGame:SendReStart(true)
+        GameInstance.dungeonManager.curDungeonLikeSubGame:SendReStart(true)
     end
 end
 

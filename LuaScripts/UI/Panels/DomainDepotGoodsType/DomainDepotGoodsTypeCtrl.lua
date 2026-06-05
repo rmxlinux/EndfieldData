@@ -22,6 +22,12 @@ local DeliverPackType = GEnums.DeliverPackType
 
 
 
+
+
+
+
+
+
 DomainDepotGoodsTypeCtrl = HL.Class('DomainDepotGoodsTypeCtrl', uiCtrl.UICtrl)
 
 local ItemTypeCellViewConfig = {  
@@ -108,6 +114,12 @@ DomainDepotGoodsTypeCtrl.m_backPanel = HL.Field(HL.Forward("DomainDepotPackBackG
 DomainDepotGoodsTypeCtrl.m_incomeDomainRatio = HL.Field(HL.Number) << 1
 
 
+DomainDepotGoodsTypeCtrl.m_resumeState = HL.Field(HL.Table)
+
+
+DomainDepotGoodsTypeCtrl.m_curNaviItemViewNumber = HL.Field(HL.Number) << -1
+
+
 
 
 
@@ -115,6 +127,9 @@ DomainDepotGoodsTypeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_depotId = arg.depotId
     self.m_pack = arg.pack
     self.m_backPanel = arg.backPanel
+    
+    self.m_resumeState = arg.resumeState
+    arg.resumeState = nil
     local depotTableConfig = Tables.domainDepotTable[self.m_depotId]
     self.m_domainId = depotTableConfig.domainId
     self.m_incomeDomainRatio = Tables.domainDataTable[self.m_domainId].domainDepotOfferPriceRatio
@@ -129,6 +144,19 @@ DomainDepotGoodsTypeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitPackTypeSelectNode()
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+end
+
+
+
+
+DomainDepotGoodsTypeCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    return {
+        depotId = self.m_depotId,
+        resumeState = {
+            selectedItemType = self.m_selectedItemType:GetHashCode(),
+            selectedPackType = self.m_selectedPackType:GetHashCode(),
+        }
+    }
 end
 
 
@@ -198,12 +226,19 @@ DomainDepotGoodsTypeCtrl._InitItemTypeSelectNode = HL.Method() << function(self)
         end
     end
 
-    if firstSelectType ~= nil then
-        self.m_pack:PlayRandomItemDropAnim(firstSelectType)
-        self:_OnItemTypeClick(firstSelectType)
+    local targetSelectType = self:_GetResumeEnumValue(ItemTypeCellViewConfig, self.m_resumeState and self.m_resumeState.selectedItemType or nil)
+    
+    if targetSelectType == nil or not unlockedItemTypeList[targetSelectType] then
+        targetSelectType = firstSelectType
+    end
+
+    if targetSelectType ~= nil then
+        self.m_pack:PlayRandomItemDropAnim(targetSelectType)
+        self:_OnItemTypeClick(targetSelectType)
+        local targetViewCell = itemTypeSelectNode[ItemTypeCellViewConfig[targetSelectType].viewName]
 
         if DeviceInfo.usingController then
-            UIUtils.setAsNaviTarget(firstSelectButton)
+            UIUtils.setAsNaviTarget(targetViewCell.button)
         end
     end
 
@@ -307,15 +342,26 @@ DomainDepotGoodsTypeCtrl._InitPackTypeSelectNode = HL.Method() << function(self)
         end
     end
 
-    if firstViewTab ~= nil then
-        firstViewTab.toggle:SetIsOnWithoutNotify(true)
+    
+    local targetSelectType = self:_GetResumeEnumValue(PackTypeTabViewConfig, self.m_resumeState and self.m_resumeState.selectedPackType or nil)
+    if targetSelectType == nil or not unlockedPackTypeList[targetSelectType] then
+        targetSelectType = firstSelectType
+    end
+
+    if targetSelectType ~= nil then
+        local targetCfgData = PackTypeTabViewConfig[targetSelectType]
+        local targetViewTab = targetCfgData and packTypeSelectNode[targetCfgData.viewName] or nil
+        if targetViewTab == nil then
+            return
+        end
+        targetViewTab.toggle:SetIsOnWithoutNotify(true)
         if not DeviceInfo.usingController then
-            firstViewTab.toggle.interactable = false
+            targetViewTab.toggle.interactable = false
         end
         if validCount > 1 then
             firstViewTab.recommendIcon.gameObject:SetActive(true)
         end
-        self:_OnPackTypeToggle(firstSelectType)
+        self:_OnPackTypeToggle(targetSelectType)
     end
 end
 
@@ -358,6 +404,20 @@ DomainDepotGoodsTypeCtrl._RefreshIncomeValueState = HL.Method(HL.Number) << func
     local itemFactor = Tables.domainDepotDeliverItemTypeTable[self.m_selectedItemType].priceFactor
     local value = math.floor(limitPackValue * itemFactor * self.m_incomeDomainRatio)
     self.view.incomeNumTxt.text = string.format("%d", value)
+end
+
+
+
+
+
+
+DomainDepotGoodsTypeCtrl._GetResumeEnumValue = HL.Method(HL.Table, HL.Opt(HL.Any)).Return(HL.Any) << function(self, configMap, persistedValue)
+    for enumValue, _ in pairs(configMap) do
+        if enumValue:GetHashCode() == persistedValue then
+            return enumValue
+        end
+    end
+    return nil
 end
 
 

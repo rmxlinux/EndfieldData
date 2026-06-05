@@ -17,7 +17,6 @@ local DEFAULT_FAC_TECH_PACKAGE_ID = "tech_group_tundra"
 
 
 
-
 PhaseFacTechTree = HL.Class('PhaseFacTechTree', phaseBase.PhaseBase)
 
 
@@ -55,7 +54,14 @@ end
 PhaseFacTechTree._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local facTechTreeSystem = GameInstance.player.facTechTreeSystem
 
-    if self.arg then
+    if self.arg and next(self.arg) then
+        if self.arg.inPackage then
+            
+            self.arg.inPackage = false
+            self.m_currentPanelItem = self:CreatePhasePanelItem(PanelId.FacTechPackage)
+            return
+        end
+
         
         local techId = self.arg.techId
         local packageId = self.arg.packageId
@@ -66,7 +72,8 @@ PhaseFacTechTree._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)
             local techCfg = Tables.facSTTNodeTable[techId]
             self.m_currentPanelItem = self:CreatePhasePanelItem(PanelId.FacTechTree, {
                 techId = techId,
-                packageId = techCfg.groupId
+                packageId = techCfg.groupId,
+                recoverRelativeBlackboxNode = self.arg.recoverRelativeBlackboxNode,
             })
             return
         end
@@ -75,14 +82,16 @@ PhaseFacTechTree._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)
             local layerCfg = Tables.facSTTLayerTable[layerId]
             self.m_currentPanelItem = self:CreatePhasePanelItem(PanelId.FacTechTree, {
                 layerId = layerId,
-                packageId = layerCfg.groupId
+                packageId = layerCfg.groupId,
+                recoverRelativeBlackboxNode = self.arg.recoverRelativeBlackboxNode,
             })
             return
         end
 
         if not string.isEmpty(packageId) then
             self.m_currentPanelItem = self:CreatePhasePanelItem(PanelId.FacTechTree, {
-                packageId = packageId
+                packageId = packageId,
+                recoverRelativeBlackboxNode = self.arg.recoverRelativeBlackboxNode,
             })
             return
         end
@@ -178,9 +187,10 @@ PhaseFacTechTree.OpenTreePanel = HL.Method(HL.Any) << function(self, args)
 
     self:RemovePhasePanelItem(self.m_subPanelItem)
     local subItem = self.m_currentPanelItem
-    self.m_currentPanelItem.uiCtrl:Hide()
     self.m_currentPanelItem = self:CreatePhasePanelItem(PanelId.FacTechTree, { packageId = arg })
     self.m_subPanelItem = subItem
+
+    subItem.uiCtrl:Hide()
 end
 
 
@@ -189,9 +199,43 @@ end
 PhaseFacTechTree.OpenPackagePanel = HL.Method(HL.Table) << function(self, args)
     self:RemovePhasePanelItem(self.m_subPanelItem)
     local subItem = self.m_currentPanelItem
-    self.m_currentPanelItem.uiCtrl:Hide()
     self.m_currentPanelItem = self:CreatePhasePanelItem(PanelId.FacTechPackage, args)
     self.m_subPanelItem = subItem
+
+    subItem.uiCtrl:Hide()
+end
+
+
+
+PhaseFacTechTree.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+
+    if self.m_currentPanelItem.uiCtrl.panelId == PanelId.FacTechPackage then
+        arg.inPackage = true
+        arg.recoverRelativeBlackboxNode = nil
+    elseif self.m_currentPanelItem.uiCtrl.panelId == PanelId.FacTechTree then
+        local curSelectNode = self.m_currentPanelItem.uiCtrl:GetCurSelectNode()
+        if curSelectNode then
+            arg.techId = curSelectNode.techId
+            if self.m_currentPanelItem.uiCtrl.GetIsRelativeBlackboxNodeOpened then
+                arg.recoverRelativeBlackboxNode = self.m_currentPanelItem.uiCtrl:GetIsRelativeBlackboxNodeOpened()
+            else
+                arg.recoverRelativeBlackboxNode = nil
+            end
+        else
+            arg.techId = nil
+            arg.recoverRelativeBlackboxNode = nil
+        end
+        arg.packageId = self.m_currentPanelItem.uiCtrl:GetCurPackageId()
+
+        local isUnlockPopupOpen, popupCtrl = UIManager:IsOpen(PanelId.FacTechTreeUnlockTierPopup)
+        if isUnlockPopupOpen then
+            local curState = popupCtrl:GetCurState()
+            arg.layerId = curState.layerId
+        end
+    end
+
+    return arg
 end
 
 HL.Commit(PhaseFacTechTree)

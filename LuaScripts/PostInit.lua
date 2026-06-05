@@ -20,16 +20,10 @@ end)
 
 if BEYOND_DEBUG_COMMAND then
     local bindingId = InputManagerInst:CreateBindingByActionId("debug_reset_ui_panels", function()
-        Notify(MessageConst.EXIT_ALL_PHASE)
+        Notify(MessageConst.EXIT_ALL_PHASE, { CS.Beyond.EventSystemConst.ExitAllPhaseReason.DEBUG })
         Notify(MessageConst.OPEN_LEVEL_PHASE)
     end, -1)
     Register(MessageConst.ON_DISPOSE_LUA_ENV, function(arg)
         InputManagerInst:DeleteBinding(bindingId)
     end)
-end
-
-do 
-    xlua.private_accessible(typeof(CS.Beyond.Gameplay.Factory.FactoryUtil))
-    local newArr = CS.System.Array.CreateInstance(typeof(CS.UnityEngine.RaycastHit), 50)
-    CS.Beyond.Gameplay.Factory.FactoryUtil.s_raycastResults = newArr
 end

@@ -82,6 +82,62 @@ end
 
 
 
+
+
+
+
+
+function EquipTechUtils.getEquipEnhanceMaterialsGroups(partType, attrShowInfo, equipInstId)
+    local group = {
+        title = Language.LUA_EQUIP_ENHANCE_MATERIALS_TITLE,
+        itemList = {},
+    }
+    local enhancedGroup = {
+        title = Language.LUA_EQUIP_ENHANCE_MATERIALS_ENHANCED_TITLE,
+        itemList = {},
+    }
+    local extraArg = {
+        attrShowInfo = attrShowInfo,
+    }
+    
+    local equipDepot = GameInstance.player.inventory.valuableDepots[GEnums.ItemValuableDepotType.Equip]:GetOrFallback(Utils.getCurrentScope())
+    if equipDepot then
+        for _, itemBundle in cs_pairs(equipDepot.instItems) do
+            local equipInstData = itemBundle.instData
+            local templateId = equipInstData.templateId
+            local instId = equipInstData.instId
+            local _, equipData = Tables.equipTable:TryGetValue(templateId)
+
+            
+            if not equipInstData.isLocked and instId ~= equipInstId and equipInstData.equippedCharServerId == 0 and
+                equipData and equipData.partType == partType and EquipTechUtils.canEquipEnhance(templateId) and
+                EquipTechUtils.getEquipEnhanceSuccessProbability(equipInstData, attrShowInfo) > EquipTechConst.EEquipEnhanceSuccessProb.None then
+                local itemInfo = FilterUtils.processEquipEnhanceMaterial(templateId, instId, extraArg)
+                if equipInstData:HasAnyEnhanceRecord() then
+                    table.insert(enhancedGroup.itemList, itemInfo)
+                else
+                    table.insert(group.itemList, itemInfo)
+                end
+            end
+        end
+    end
+    local sortFunc = Utils.genSortFunction(EquipTechConst.EQUIP_ENHANCE_MATERIALS_SORT_OPTION[1].keys, false)
+    table.sort(group.itemList, sortFunc)
+    table.sort(enhancedGroup.itemList, sortFunc)
+    local groups = {}
+    if #group.itemList > 0 then
+        table.insert(groups, group)
+    end
+    if #enhancedGroup.itemList > 0 then
+        table.insert(groups, enhancedGroup)
+    end
+    return groups
+end
+
+
+
+
+
 function EquipTechUtils.getEquipEnhanceSuccessProbability(equipInstData, attrShowInfo)
     if not equipInstData then
         return EquipTechConst.EEquipEnhanceSuccessProb.None

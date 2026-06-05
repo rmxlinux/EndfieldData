@@ -22,7 +22,9 @@ QUICK_MENU_ITEM_ID_GETTER = {
     battlePass = "battlePass",
     cashShop = "cashShop",
     weekRaidTipInfo = "weekRaidTipInfo",
+    hubData = "hubData",
 }
+
 
 
 
@@ -128,6 +130,11 @@ QUICK_MENU_ITEM_CONFIG = {
         nameTextId = "LUA_QUICK_MENU_ITEM_HUB_NAME",
         iconId = "btn_hub",
     },
+    [QUICK_MENU_ITEM_ID_GETTER.hubData] = {
+        mainHudId = "hubData",
+        nameTextId = "LUA_QUICK_MENU_ITEM_HUB_DATA_NAME",
+        iconId = "btn_hubData",
+    },
     [QUICK_MENU_ITEM_ID_GETTER.controlCenter] = {
         mainHudId = "controlCenter",
         nameTextId = "LUA_QUICK_MENU_ITEM_CONTROL_CENTER_NAME",
@@ -150,6 +157,8 @@ QUICK_MENU_ITEM_CONFIG = {
         mainHudId = "battlePass",
         nameTextId = "LUA_QUICK_MENU_ITEM_BATTLE_PASS_NAME",
         iconId = "btn_battlepass",
+        
+        ignorePhaseOpenCheck = true,
     },
     [QUICK_MENU_ITEM_ID_GETTER.cashShop] = {
         mainHudId = "cashShop",
@@ -177,6 +186,7 @@ QUICK_MENU_LEFT_ITEM_CELLS_LIST = {
         QUICK_MENU_ITEM_ID_GETTER.dungeonInfo,
         QUICK_MENU_ITEM_ID_GETTER.wikiGuide,
         QUICK_MENU_ITEM_ID_GETTER.weekRaidTipInfo,
+        QUICK_MENU_ITEM_ID_GETTER.hubData,
     },
     {  
         QUICK_MENU_ITEM_ID_GETTER.hub,

@@ -13,6 +13,8 @@ local PANEL_ID = PanelId.SettlementSwitchRegionPopup
 
 
 
+
+
 SettlementSwitchRegionPopupCtrl = HL.Class('SettlementSwitchRegionPopupCtrl', uiCtrl.UICtrl)
 
 
@@ -20,6 +22,9 @@ SettlementSwitchRegionPopupCtrl.m_curDomainId = HL.Field(HL.String) << ""
 
 
 SettlementSwitchRegionPopupCtrl.m_curSelectDomainId = HL.Field(HL.String) << ""
+
+
+SettlementSwitchRegionPopupCtrl.m_arg = HL.Field(HL.Table)
 
 
 SettlementSwitchRegionPopupCtrl.m_unlockedDomainIds = HL.Field(HL.Table)
@@ -50,8 +55,10 @@ SettlementSwitchRegionPopupCtrl.m_regionRedDotName = HL.Field(HL.String) << ""
 
 
 SettlementSwitchRegionPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg or {}
+    arg = self.m_arg
     self.view.btnCancel.onClick:AddListener(function()
-        PhaseManager:PopPhase(PhaseId.SettlementSwitchRegionPopup)
+        self:PlayAnimationOutAndClose()
     end)
 
     if arg == nil or arg.curDomainId == nil or arg.unlockedDomainIds == nil then
@@ -61,6 +68,10 @@ SettlementSwitchRegionPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self,
 
     self.m_curDomainId = arg.curDomainId
     self.m_curSelectDomainId = arg.curDomainId
+    local resumeState = arg.resumeState
+    if resumeState and not string.isEmpty(resumeState.curSelectDomainId) then
+        self.m_curSelectDomainId = resumeState.curSelectDomainId
+    end
     self.m_regionRedDotName = arg.regionRedDot or ""
     self.m_unlockedDomainIds = {}
     for i = 1, #arg.unlockedDomainIds do
@@ -84,16 +95,31 @@ SettlementSwitchRegionPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self,
         return domainDataA.sortId < domainDataB.sortId
     end)
 
+    local hasSelectedDomain = false
+    for _, domainId in ipairs(self.m_unlockedDomainIds) do
+        if domainId == self.m_curSelectDomainId then
+            hasSelectedDomain = true
+            break
+        end
+    end
+    if not hasSelectedDomain then
+        self.m_curSelectDomainId = self.m_curDomainId
+    end
+    if string.isEmpty(self.m_curSelectDomainId) and #self.m_unlockedDomainIds > 0 then
+        self.m_curSelectDomainId = self.m_unlockedDomainIds[1]
+    end
+
     self.view.btnConfirm.onClick:AddListener(function()
         if arg.onConfirm then
             arg.onConfirm(self.m_curSelectDomainId)
         end
-        PhaseManager:PopPhase(PhaseId.SettlementSwitchRegionPopup)
+        UIManager:Close(PANEL_ID)
     end)
 
     self.m_regionCells = UIUtils.genCellCache(self.view.regionTemplate)
     self:_RefreshRegionCells()
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
+    self.m_arg.resumeState = nil
 end
 
 
@@ -156,6 +182,14 @@ SettlementSwitchRegionPopupCtrl.OnAnimationInFinished = HL.Override() << functio
     if firstCell then
         InputManagerInst.controllerNaviManager:SetTarget(firstCell.button)
     end
+end
+
+
+
+SettlementSwitchRegionPopupCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    return {
+        curSelectDomainId = self.m_curSelectDomainId,
+    }
 end
 
 HL.Commit(SettlementSwitchRegionPopupCtrl)

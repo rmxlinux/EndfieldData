@@ -7,6 +7,7 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 FilterBtn = HL.Class('FilterBtn', UIWidgetBase)
 
 
@@ -47,6 +48,15 @@ FilterBtn.InitFilterBtn = HL.Method(HL.Table) << function(self, args)
     end
 
     self:_UpdateState(args.selectedTags)
+end
+
+
+
+FilterBtn.GetSelectedTags = HL.Method().Return(HL.Table) << function(self)
+    if not self.m_args or not self.m_args.selectedTags then
+        return {}
+    end
+    return self.m_args.selectedTags
 end
 
 

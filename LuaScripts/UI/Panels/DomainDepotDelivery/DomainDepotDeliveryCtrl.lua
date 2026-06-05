@@ -12,6 +12,8 @@ local PANEL_ID = PanelId.DomainDepotDelivery
 
 
 
+
+
 DomainDepotDeliveryCtrl = HL.Class('DomainDepotDeliveryCtrl', uiCtrl.UICtrl)
 
 
@@ -25,6 +27,9 @@ DomainDepotDeliveryCtrl.m_domainDropDownInfo = HL.Field(HL.Table)
 
 
 DomainDepotDeliveryCtrl.m_curDomainIndex = HL.Field(HL.Number) << 1
+
+
+DomainDepotDeliveryCtrl.m_resumeState = HL.Field(HL.Table)
 
 
 
@@ -41,10 +46,19 @@ DomainDepotDeliveryCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 DomainDepotDeliveryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local inited = false
+    self.m_resumeState = arg and arg.resumeState or nil
+    GameInstance.player.domainDepotSystem.remoteDelegateDeliverList:Clear()
     self.view.refreshBtn.onClick:RemoveAllListeners()
     self.view.refreshBtn.onClick:AddListener(function()
         self:_OnRefreshBtnClick()
     end)
+
+    
+    if self.m_resumeState and self.m_resumeState.filterDomainId ~= nil then
+        self.m_filterDomainIdList = self.m_resumeState.filterDomainId
+    end
+
+
 
     self.m_getCellFunc = UIUtils.genCachedCellFunction(self.view.scrollList)
     self.view.scrollList.onUpdateCell:RemoveAllListeners()
@@ -89,6 +103,16 @@ DomainDepotDeliveryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     end
 
+    if self.m_resumeState and self.m_resumeState.filterDomainId ~= nil then
+        for index, info in ipairs(self.m_domainDropDownInfo) do
+            if info.domainId == self.m_filterDomainIdList then
+                self.m_curDomainIndex = index
+                break
+            end
+        end
+
+    end
+
     self.view.dropDownListUp:Init(function(index, option, isSelected)
         local info = self.m_domainDropDownInfo[LuaIndex(index)]
         option:SetText(info.name)
@@ -100,11 +124,23 @@ DomainDepotDeliveryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end)
     self.view.dropDownListUp:Refresh(#self.m_domainDropDownInfo, CSIndex(self.m_curDomainIndex))
+
     self.view.dropDownListUp.captionIcon:LoadSprite(UIConst.UI_SPRITE_DOMAIN_ICON, "icon_depot_filter_" .. self.m_domainDropDownInfo[self.m_curDomainIndex].icon)
 
     GameInstance.player.domainDepotSystem:SendSyncDomainDepotDeliverDelegate(self.m_filterDomainIdList)
 
     inited = true
+end
+
+
+
+
+DomainDepotDeliveryCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    return {
+        resumeState = {
+            filterDomainId = self.m_filterDomainIdList,
+        }
+    }
 end
 
 

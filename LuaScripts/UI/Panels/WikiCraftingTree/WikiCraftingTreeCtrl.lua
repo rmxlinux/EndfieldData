@@ -61,6 +61,7 @@ local PANEL_ID = PanelId.WikiCraftingTree
 
 
 
+
 WikiCraftingTreeCtrl = HL.Class('WikiCraftingTreeCtrl', uiCtrl.UICtrl)
 
 
@@ -136,15 +137,19 @@ WikiCraftingTreeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_InitAllCellCache()
     self:_RefreshCraft(self.m_wikiEntryShowData.wikiEntryData.refItemId)
+
+    self:_RefreshTop()
+    self.m_phase:ActiveCommonSceneItem(true)
+    self:_PlayBgDecoAnim(true)
 end
 
 
 
-WikiCraftingTreeCtrl._OnPhaseItemBind = HL.Override() << function(self)
-    
-    self:_RefreshTop()
-    self.m_phase:ActiveCommonSceneItem(true)
-    self:_PlayBgDecoAnim(true)
+WikiCraftingTreeCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    return {
+        wikiEntryShowData = self.m_wikiEntryShowData,
+        forceShowBackBtn = self.m_forceShowBackBtn,
+    }
 end
 
 

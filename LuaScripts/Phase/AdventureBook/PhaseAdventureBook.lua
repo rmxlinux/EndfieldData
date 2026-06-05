@@ -20,8 +20,6 @@ local PHASE_ID = PhaseId.AdventureStage
 
 
 
-
-
 PhaseAdventureBook = HL.Class('PhaseAdventureBook', phaseBase.PhaseBase)
 
 
@@ -40,7 +38,7 @@ PhaseAdventureBook.m_waitOpenCoroutine = HL.Field(HL.Thread)
 PhaseAdventureBook.m_dungeonTab = HL.Field(HL.String) << ""
 
 
-PhaseAdventureBook.m_needRestoreNaviOnActivated = HL.Field(HL.Boolean) << false
+PhaseAdventureBook.m_reopenGemTermOverviewGameGroupId = HL.Field(HL.String) << ""
 
 
 
@@ -97,7 +95,6 @@ end
 
 PhaseAdventureBook._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     Notify(MessageConst.ON_PHASE_ADVENTURE_BOOK_BEHIND)
-    self.m_needRestoreNaviOnActivated = true
 end
 
 
@@ -115,13 +112,6 @@ end
 
 
 PhaseAdventureBook._OnActivated = HL.Override() << function(self)
-    if self.m_needRestoreNaviOnActivated then
-        self.m_needRestoreNaviOnActivated = false
-        if DeviceInfo.usingController and self.m_curPanelItem and self.m_curPanelItem.uiCtrl
-            and self.m_curPanelItem.uiCtrl.panelId == PanelId.AdventureTraining then
-            self.m_curPanelItem.uiCtrl:OnShow()
-        end
-    end
 end
 
 
@@ -234,6 +224,12 @@ PhaseAdventureBook.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << func
     if arg.panelId == "AdventureDungeon" then
         arg.dungeonTab = self.m_curPanelItem.uiCtrl:GetCurTabName()
         arg.filterIndex = self.m_curPanelItem.uiCtrl:GetCurEnemySpawnerFilterIndex()
+        local isOpen, gemCtrl = UIManager:IsOpen(PanelId.GemTermOverviewPopup)
+        if isOpen and gemCtrl and gemCtrl.m_info then
+            arg.reopenGemTermOverviewGameGroupId = gemCtrl.m_info.gameGroupId
+        end
+    elseif arg.panelId == "AdventureStage" then
+        arg.adventureStageViewIndex = self.m_curPanelItem.uiCtrl.m_curAdventureStage
     end
     arg.phase = nil
     return arg

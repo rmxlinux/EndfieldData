@@ -10,6 +10,8 @@ local GachaPoolCellBase = require_ex('UI/Widgets/GachaPoolCellBase')
 
 
 
+
+
 GachaPoolCellStandard = HL.Class('GachaPoolCellStandard', GachaPoolCellBase)
 
 
@@ -62,11 +64,6 @@ GachaPoolCellStandard._InitData = HL.Method() << function(self)
         remainChoicePackProgress = self.m_baseInfo.cumulateChoicePackInfo.remainNeedPullCount,
         charIds = self.m_baseInfo.previewCharList,
     }
-    
-    self.m_choicePackJumpArg.onSuccess = function()
-        GachaPoolCellStandard.Super._UpdateBaseData(self)
-        self:_RefreshAllUI()
-    end
 end
 
 
@@ -86,6 +83,11 @@ GachaPoolCellStandard._InitUI = HL.Method() << function(self)
             UIManager:Open(PanelId.GachaOptional, self.m_choicePackJumpArg)
         end
     end)
+    
+    self:RegisterMessage(MessageConst.ON_GACHA_POOL_ROLE_DATA_CHANGED, function()
+        GachaPoolCellStandard.Super._UpdateBaseData(self)
+        self:_RefreshAllUI()
+    end)
 end
 
 
@@ -104,6 +106,33 @@ GachaPoolCellStandard._RefreshAllUI = HL.Method() << function(self)
         else
             choicePackNode.gameObject:SetActive(false)
         end
+    end
+end
+
+
+
+
+
+GachaPoolCellStandard.GetSubPanelArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.GachaOptional)
+    if isOpen then
+        local subPanelArg = ctrl:GetCurPhaseStateArg()
+        if subPanelArg then
+            subPanelArg.isGachaOptional = true
+            return subPanelArg
+        end
+    end
+    return GachaPoolCellStandard.Super.GetSubPanelArg(self)
+end
+
+
+
+
+GachaPoolCellStandard.HandleSubPanelArg = HL.Override(HL.Any) << function(self, subPanelArg)
+    if subPanelArg.isGachaOptional then
+        UIManager:Open(PanelId.GachaOptional, subPanelArg)
+    else
+        GachaPoolCellStandard.Super.HandleSubPanelArg(self, subPanelArg)
     end
 end
 

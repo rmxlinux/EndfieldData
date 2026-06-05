@@ -84,7 +84,18 @@ ActivityCommonInfo.InitActivityCommonInfo = HL.Method(HL.Table) << function(self
     self.view.infoNode.descriptionBtn.onClick:AddListener(function()
         ActivityUtils.GameEventLogActivityVisit(self.m_activityId, "descriptionButton", "visit_description")
         local instructionId = activityData.instructionId
-        UIManager:Open(PanelId.InstructionBook, instructionId)
+        UIManager:Open(PanelId.InstructionBook, {
+            id = instructionId,
+            onClose = function()
+                Notify(MessageConst.ON_TOGGLE_ACTIVITY_INSTRUCTION, {
+                    isShown = false
+                })
+            end
+        })
+        Notify(MessageConst.ON_TOGGLE_ACTIVITY_INSTRUCTION, {
+            instructionId = instructionId,
+            isShown = true
+        })
     end)
 
     
@@ -199,6 +210,7 @@ ActivityCommonInfo.UpdateRewardInfo = HL.Method(HL.Opt(HL.String)) << function(s
 
     if rewardId and not string.isEmpty(rewardId) then
         self.m_rewardId = rewardId
+        local _, rewardTableData = Tables.rewardTable:TryGetValue(rewardId)
         local rewardBundles = UIUtils.getRewardItems(rewardId)
         self.m_rewardCells:Refresh(#rewardBundles, function(cell, index)
             cell:InitItem(rewardBundles[index], function()
@@ -214,13 +226,21 @@ ActivityCommonInfo.UpdateRewardInfo = HL.Method(HL.Opt(HL.String)) << function(s
                     end
                 end
             })
-            cell.view.countNode.gameObject:SetActive(activityData.showRewardCnt)
+            
+            
+            
+            local isVisible = rewardTableData and rewardTableData.itemBundleVisibleList and rewardTableData.itemBundleVisibleList[CSIndex(index)] or 0
+            if isVisible == 1 then
+                cell.view.countNode.gameObject:SetActive(true)
+            else
+                cell.view.countNode.gameObject:SetActive(false)
+            end
         end)
     end
 
     
     local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
-    local receiveAll = activity and activity.receiveAllReward
+    local receiveAll = activity and activity.receiveAllReward and not self.view.config.HIDE_RECEIVE_ALL
     self.view.gotoNode.receiveAllNode.gameObject:SetActive(receiveAll)
     self.view.gotoNode.notReceiveAllNode.gameObject:SetActive(not receiveAll)
 end

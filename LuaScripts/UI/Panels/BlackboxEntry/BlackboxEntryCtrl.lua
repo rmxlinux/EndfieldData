@@ -42,7 +42,12 @@ local RewardSourceType = CS.Beyond.GEnums.RewardSourceType
 
 
 
+
+
 BlackboxEntryCtrl = HL.Class('BlackboxEntryCtrl', uiCtrl.UICtrl)
+
+
+BlackboxEntryCtrl.m_arg = HL.Field(HL.Any)
 
 
 BlackboxEntryCtrl.m_rewardCellCache = HL.Field(HL.Forward("UIListCache"))
@@ -97,6 +102,7 @@ BlackboxEntryCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 BlackboxEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg
     self.view.btnClose.onClick:AddListener(function()
         self:_OnBtnCloseClick()
     end)
@@ -149,6 +155,10 @@ BlackboxEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.m_packageId = arg.packageId
     self.m_curSelectedBlackboxId = arg.blackboxId or ""
+    if not string.isEmpty(arg.resumeBlackboxId) then
+        self.m_curSelectedBlackboxId = arg.resumeBlackboxId
+        arg.resumeBlackboxId = nil
+    end
 
     
     if self.view.redDotScrollRect then
@@ -159,6 +169,22 @@ BlackboxEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_Init()
     self:_InitController()
+
+    
+    if arg.resumeSelectedTags then
+        self:_OnFilterConfirm(arg.resumeSelectedTags)
+        arg.resumeSelectedTags = nil
+    end
+
+    
+    if arg.resumeRewardDetailsPopup then
+        UIManager:AutoOpen(PanelId.CommonRewardDetailsPopup, {
+            firstPartRewards = DungeonUtils.genFirstPartRewardsInfo(self.m_curSelectedBlackboxId),
+            secondPartRewards = DungeonUtils.genSecondPartRewardsInfo(self.m_curSelectedBlackboxId),
+            secondPartRewardsTitle = DungeonUtils.getRewardsDetailSecondRowTitle(self.m_curSelectedBlackboxId),
+        })
+        arg.resumeRewardDetailsPopup = nil
+    end
 end
 
 
@@ -439,10 +465,7 @@ BlackboxEntryCtrl._OnBtnEnterClick = HL.Method() << function(self)
     end
 
     local uiRestore = function()
-        LuaSystemManager.uiRestoreSystem:AddRequest(self.m_curSelectedBlackboxId, function()
-            PhaseManager:OpenPhaseFast(PHASE_ID, { packageId = self.m_packageId,
-                                                   blackboxId = self.m_curSelectedBlackboxId })
-        end)
+        LuaSystemManager.uiRestoreSystem:AddRequest(self.m_curSelectedBlackboxId)
     end
 
     if needConfirm then
@@ -770,6 +793,23 @@ BlackboxEntryCtrl.OnBlackboxDirectlyGetReward = HL.Method(HL.Table) << function(
             end
         end
     })
+end
+
+
+
+BlackboxEntryCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = lume.deepCopy(self.m_arg)
+    arg.resumeBlackboxId = self.m_curSelectedBlackboxId
+    
+    if self.m_cachedSelectedTags and #self.m_cachedSelectedTags > 0 then
+        arg.resumeSelectedTags = self.m_cachedSelectedTags
+    end
+    
+    local isRewardDetailsOpen = UIManager:IsOpen(PanelId.CommonRewardDetailsPopup) and PhaseManager:GetTopPhaseId() == PHASE_ID
+    if isRewardDetailsOpen then
+        arg.resumeRewardDetailsPopup = true
+    end
+    return arg
 end
 
 

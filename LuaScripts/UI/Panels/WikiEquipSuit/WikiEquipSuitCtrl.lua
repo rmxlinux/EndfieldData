@@ -39,6 +39,7 @@ local PANEL_ID = PanelId.WikiEquipSuit
 
 
 
+
 WikiEquipSuitCtrl = HL.Class('WikiEquipSuitCtrl', uiCtrl.UICtrl)
 
 local SWITCH_ANIM_NAME = "wiki_equipsuit_switch"
@@ -82,6 +83,10 @@ WikiEquipSuitCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         return self:_GetItemRedDotStateAt(index)
     end
     self:Refresh(arg)
+
+    self:_RefreshTop()
+    self.m_phase:ActiveCommonSceneItem(true)
+    self:_PlayDecoAnim(true)
 end
 
 
@@ -116,14 +121,6 @@ end
 
 
 
-WikiEquipSuitCtrl._OnPhaseItemBind = HL.Override() << function(self)
-    self:_RefreshTop()
-    self.m_phase:ActiveCommonSceneItem(true)
-    self:_PlayDecoAnim(true)
-end
-
-
-
 
 
 
@@ -134,6 +131,19 @@ WikiEquipSuitCtrl.Refresh = HL.Method(HL.Table) << function(self, args)
 
     self.m_wikiGroupShowDataList = WikiUtils.getWikiGroupShowDataList(args.categoryType)
     self:_RefreshTab()
+end
+
+
+
+WikiEquipSuitCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.m_args and lume.deepCopy(self.m_args) or {}
+    local selectedGroupData = self.m_wikiGroupShowDataList and self.m_wikiGroupShowDataList[self.m_selectedIndex] or nil
+    arg.wikiEntryShowData = nil
+    arg.resumeState = {
+        selectedGroupId = selectedGroupData and selectedGroupData.wikiGroupData.groupId or nil,
+        focusTab = true,
+    }
+    return arg
 end
 
 
@@ -199,7 +209,16 @@ WikiEquipSuitCtrl._RefreshTab = HL.Method(HL.Opt(HL.Boolean)) << function(self)
     end
 
     local selectedIndex = 1
-    if self.m_args.wikiEntryShowData then
+    local resumeState = self.m_args and self.m_args.resumeState or nil
+    if resumeState and not string.isEmpty(resumeState.selectedGroupId) then
+        for i, groupShowData in ipairs(self.m_wikiGroupShowDataList) do
+            if resumeState.selectedGroupId == groupShowData.wikiGroupData.groupId then
+                self.m_ignoreTabListAnim = true
+                selectedIndex = i
+                break
+            end
+        end
+    elseif self.m_args.wikiEntryShowData then
         for i, groupShowData in ipairs(self.m_wikiGroupShowDataList) do
             if self.m_args.wikiEntryShowData.wikiGroupData.groupId == groupShowData.wikiGroupData.groupId then
                 self.m_ignoreTabListAnim = true
@@ -218,8 +237,14 @@ WikiEquipSuitCtrl._RefreshTab = HL.Method(HL.Opt(HL.Boolean)) << function(self)
         self.view.centerNaviGroup:ManuallyFocus()
     end
     self:_SetSelectedIndex(selectedIndex)
+    if DeviceInfo.usingController and resumeState and resumeState.focusTab == true then
+        self:_NaviToSelectedTab(selectedIndex)
+    end
     self.m_ignoreTabListAnim = false
     self.m_selectedItemIndex = 1
+    if self.m_args then
+        self.m_args.resumeState = nil
+    end
 end
 
 
@@ -485,7 +510,7 @@ WikiEquipSuitCtrl._NaviToSelectedTab = HL.Method(HL.Opt(HL.Number)) << function(
     local selectedTabCell = self.m_getTabCell(self.view.scrollListLeft:Get(CSIndex(selectedIndex)))
     if selectedTabCell then
         if self.m_args.wikiEntryShowData then
-            UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.leftNaviGroup, selectedTabCell.btn)
+            UIUtils.setAsNaviTargetInSilentModeIfPhaseIsTop(self.view.leftNaviGroup, selectedTabCell.btn, PhaseId.Wiki)
         else
             UIUtils.setAsNaviTarget(selectedTabCell.btn)
         end

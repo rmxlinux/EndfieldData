@@ -27,15 +27,19 @@ local EquipTechConst = {
 
     EQUIP_ENHANCE_SORT_OPTION = {
         {
+            name = Language.LUA_EQUIP_ENHANCE_SORT_OPTION_CHAR,
+            keys = { "canEnhance", "equippedCharIndex", "partTypeReverseNum", "equipEnhanceLevel", "equipEnhanceTotalFailedTimes", "sortId1", "sortId2", "id", "instId" }
+        },
+        {
             name = Language.LUA_DEPOT_SORT_OPTION_DEFAULT,
-            keys = { "equipEnhanceLevel", "equipEnhanceTotalFailedTimes", "equippedCharInstId", "sortId1", "sortId2", "id" }
+            keys = { "equipEnhanceLevel", "equipEnhanceTotalFailedTimes", "equippedCharInstId", "sortId1", "sortId2", "id", "instId" }
         },
     },
 
     EQUIP_ENHANCE_MATERIALS_SORT_OPTION = {
         {
             name = Language.LUA_DEPOT_SORT_OPTION_DEFAULT,
-            keys = { "equipEnhanceSuccessProb", "equipEnhanceLevelReverse", "equipEnhanceTotalFailedTimesReverse", "equippedCharInstIdReverse", "sortId1", "sortId2", "id" }
+            keys = { "equipEnhanceSuccessProb", "equipEnhanceLevelReverse", "equipEnhanceTotalFailedTimesReverse", "equippedCharInstIdReverse", "sortId1", "sortId2", "id", "instId" }
         },
     },
 

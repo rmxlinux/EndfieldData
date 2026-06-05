@@ -46,6 +46,13 @@ local DeliverPackType = GEnums.DeliverPackType
 
 
 
+
+
+
+
+
+
+
 DomainDepotGoodsPackCtrl = HL.Class('DomainDepotGoodsPackCtrl', uiCtrl.UICtrl)
 
 
@@ -92,6 +99,9 @@ DomainDepotGoodsPackCtrl.m_selectedItemList = HL.Field(HL.Table)
 DomainDepotGoodsPackCtrl.m_currSelectedItemIndex = HL.Field(HL.Number) << -1
 
 
+DomainDepotGoodsPackCtrl.m_lastSelectedItemId = HL.Field(HL.String) << ""
+
+
 DomainDepotGoodsPackCtrl.m_incomeRatio = HL.Field(HL.Number) << 1
 
 
@@ -99,6 +109,9 @@ DomainDepotGoodsPackCtrl.m_pack = HL.Field(HL.Forward("DomainDepotPack"))
 
 
 DomainDepotGoodsPackCtrl.m_fillTween = HL.Field(HL.Userdata)
+
+
+DomainDepotGoodsPackCtrl.m_resumeState = HL.Field(HL.Table)
 
 
 
@@ -115,6 +128,7 @@ DomainDepotGoodsPackCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local domainRatio = Tables.domainDataTable[self.m_domainId].domainDepotOfferPriceRatio
     self.m_incomeRatio = domainRatio * itemFactor
     self.m_pack = arg.pack
+    self.m_resumeState = arg.resumeState
 
     self.view.backBtn.onClick:AddListener(function()
         Notify(MessageConst.ON_DOMAIN_DEPOT_BACK_TO_PACK_TYPE_SELECT_PANEL)
@@ -130,7 +144,28 @@ DomainDepotGoodsPackCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_pack:ClearPackItemCount()
 
     self:_InitPackController()
+    self:_ApplyResumeState(self.m_resumeState)
+    
 
+end
+
+
+
+
+DomainDepotGoodsPackCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local currentSelectedItemId = self.m_lastSelectedItemId
+    return {
+        depotId = self.m_depotId,
+        domainId = self.m_domainId,
+        itemType = self.m_itemType,
+        packType = self.m_packType,
+        minLimitValue = self.m_minLimitValue,
+        maxLimitValue = self.m_maxLimitValue,
+        resumeState = {
+            selectedItemList = lume.deepCopy(self.m_selectedItemList),
+            currentSelectedItemId = currentSelectedItemId,
+        }
+    }
 end
 
 
@@ -207,6 +242,97 @@ DomainDepotGoodsPackCtrl._OnPackFailed = HL.Method() << function(self)
     self:_RefreshAllValueState()
     self:_RefreshNextBtnState()
     self.view.nextBtn.enabled = true
+end
+
+
+
+
+
+DomainDepotGoodsPackCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if resumeState == nil or resumeState.selectedItemList == nil then
+        return
+    end
+
+    self.m_selectedItemList = lume.deepCopy(resumeState.selectedItemList or {})
+    self.m_lastSelectedItemId = resumeState.currentSelectedItemId or ""
+    self:_UpdateSelectItemListAfterDataChange()
+    self.m_currSelectedItemIndex = -1
+    self.view.numberSelector.view.gameObject:SetActive(false)
+
+    local currentSelectedItemId = self.m_lastSelectedItemId
+    if not string.isEmpty(currentSelectedItemId) and self.m_selectedItemList[currentSelectedItemId] ~= nil then
+        local selectedIndex = self:_FindItemIndexById(currentSelectedItemId)
+        if selectedIndex > 0 then
+            self.m_currSelectedItemIndex = selectedIndex
+            local maxCount = self:_GetItemNumberSelectorMaxCount(selectedIndex)
+            if maxCount < 1 then
+                maxCount = self.m_selectedItemList[currentSelectedItemId]
+            end
+            self.view.numberSelector.view.gameObject:SetActive(true)
+            self.view.numberSelector:InitNumberSelector(
+                self.m_selectedItemList[currentSelectedItemId],
+                1,
+                maxCount,
+                function(newCount)
+                    self.m_selectedItemList[currentSelectedItemId] = math.tointeger(newCount)
+                    local cell = self.m_itemCellGetFunc(selectedIndex)
+                    if cell ~= nil then
+                        self:_RefreshItemCellSelectNode(currentSelectedItemId, cell)
+                    end
+                    self:_RefreshValueDisplayNode()
+                end
+            )
+        end
+    end
+
+    self:_RefreshAllValueState()
+    if self.m_currSelectedItemIndex > 0 then
+        local currentCell = self.m_itemCellGetFunc(self.m_currSelectedItemIndex)
+        if currentCell ~= nil then
+            currentCell.item:SetSelected(true)
+        end
+    end
+
+    if self.m_currSelectedItemIndex > 0 and currentSelectedItemId ~= nil then
+        self:_RestoreControllerNavi(currentSelectedItemId)
+    end
+end
+
+
+
+
+
+DomainDepotGoodsPackCtrl._RestoreControllerNavi = HL.Method(HL.String) << function(self, itemId)
+    if string.isEmpty(itemId) then
+        return
+    end
+
+    local targetIndex = self:_FindItemIndexById(itemId)
+    if targetIndex <= 0 then
+        return
+    end
+
+    self.view.itemList:ScrollToIndex(CSIndex(targetIndex), true)
+    if DeviceInfo.usingController then
+        self.view.leftNaviGroup:ManuallyFocus()
+        local cell = self.m_itemCellGetFunc(targetIndex)
+        if cell ~= nil then
+            UIUtils.setAsNaviTarget(cell.item.view.button)
+        end
+    end
+end
+
+
+
+
+
+DomainDepotGoodsPackCtrl._FindItemIndexById = HL.Method(HL.String).Return(HL.Number) << function(self, itemId)
+    for index, itemInfo in ipairs(self.m_itemInfoList) do
+        if itemInfo.id == itemId then
+            return index
+        end
+    end
+    return -1
 end
 
 
@@ -332,6 +458,11 @@ DomainDepotGoodsPackCtrl._UpdateSelectItemListAfterDataChange = HL.Method() << f
             self.m_selectedItemList[itemId] = nil
         end
     end
+
+    
+    if not string.isEmpty(self.m_lastSelectedItemId) and self.m_selectedItemList[self.m_lastSelectedItemId] == nil then
+        self.m_lastSelectedItemId = ""
+    end
 end
 
 
@@ -353,6 +484,13 @@ DomainDepotGoodsPackCtrl._OnSelectItem = HL.Method(HL.Number) << function(self, 
         
         self.m_selectedItemList[id] = nil
         self.m_currSelectedItemIndex = -1
+        if self.m_lastSelectedItemId == id then
+            self.m_lastSelectedItemId = ""
+            for selectedItemId, _ in pairs(self.m_selectedItemList) do
+                self.m_lastSelectedItemId = selectedItemId
+                break
+            end
+        end
 
         self.view.numberSelector.view.gameObject:SetActive(false)
 
@@ -376,6 +514,7 @@ DomainDepotGoodsPackCtrl._OnSelectItem = HL.Method(HL.Number) << function(self, 
         self.view.numberSelector.view.gameObject:SetActive(true)
         self.view.numberSelector:InitNumberSelector(1, 1, maxCount, function(newCount)
             self.m_selectedItemList[id] = math.tointeger(newCount)
+            self.m_lastSelectedItemId = id
             if cell.item.id == id then
                 self:_RefreshItemCellSelectNode(id, cell)
             end
@@ -384,6 +523,7 @@ DomainDepotGoodsPackCtrl._OnSelectItem = HL.Method(HL.Number) << function(self, 
 
         self.m_selectedItemList[id] = 1
         self.m_currSelectedItemIndex = index
+        self.m_lastSelectedItemId = id
 
         cell.item:SetSelected(true)
 
@@ -664,6 +804,7 @@ DomainDepotGoodsPackCtrl._OnResetBtnClick = HL.Method() << function(self)
         self:_OnSelectItem(self.m_currSelectedItemIndex) 
     end
     self.m_selectedItemList = {}
+    self.m_lastSelectedItemId = ""
     self:_RefreshAllValueState()
 end
 

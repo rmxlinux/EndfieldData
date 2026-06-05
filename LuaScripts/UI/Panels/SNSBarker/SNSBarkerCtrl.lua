@@ -60,6 +60,11 @@ local ChatTypeFilter = {
 
 
 
+
+
+
+
+
 SNSBarkerCtrl = HL.Class('SNSBarkerCtrl', uiCtrl.UICtrl)
 
 
@@ -70,6 +75,9 @@ SNSBarkerCtrl.m_curSelectedSubDialogCell = HL.Field(HL.Forward("SNSSubDialogCell
 
 
 SNSBarkerCtrl.m_curSelectedSubDialogId = HL.Field(HL.String) << ""
+
+
+SNSBarkerCtrl.m_curSelectedChatId = HL.Field(HL.String) << ""
 
 
 SNSBarkerCtrl.m_chatVOs = HL.Field(HL.Table)
@@ -107,7 +115,8 @@ SNSBarkerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitData(arg)
     self:_InitFilterArgs()
 
-    self:_GenContactNpcVOs({})
+    self:_RefreshFilterBtnState()
+    self:_GenContactNpcVOs(self.m_cachedSelectedTags)
     self:_RefreshContactNpcList()
     self:_RefreshContent()
     
@@ -125,6 +134,9 @@ end
 
 
 SNSBarkerCtrl.OnClickContactNpcCell = HL.Method(HL.Number) << function(self, csIndex)
+    local chatVO = self.m_chatVOs[LuaIndex(csIndex)]
+    self.m_curSelectedChatId = chatVO and chatVO.chatId or ""
+
     
     
     
@@ -152,6 +164,7 @@ SNSBarkerCtrl.OnClickDialogCell = HL.Method(HL.String, HL.String, HL.Forward("SN
         return
     end
     self.m_curSelectedSubDialogId = dialogId
+    self.m_curSelectedChatId = chatId
 
     if self.m_curSelectedSubDialogCell then
         self.m_curSelectedSubDialogCell:SetSelected(false)
@@ -169,9 +182,14 @@ SNSBarkerCtrl._InitData = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     local dialogId = arg and arg.dialogId
     if not string.isEmpty(dialogId) and Tables.sNSDialogTable:ContainsKey(dialogId) then
         self.m_curSelectedSubDialogId = dialogId
+        self.m_curSelectedChatId = Tables.sNSDialogTable[dialogId].chatId
     end
 
-    self.m_cachedSelectedTags = {}
+    if string.isEmpty(self.m_curSelectedChatId) then
+        self.m_curSelectedChatId = arg and arg.selectedChatId or ""
+    end
+
+    self.m_cachedSelectedTags = arg and arg.selectedTags and lume.deepCopy(arg.selectedTags) or {}
 end
 
 
@@ -191,6 +209,8 @@ end
 
 SNSBarkerCtrl._RefreshContactNpcList = HL.Method() << function(self)
     local nonSelectSubDialog = string.isEmpty(self.m_curSelectedSubDialogId)
+    local selectedChatId = self.m_curSelectedChatId
+    local hasSelectedChat = not string.isEmpty(selectedChatId)
     local targetNpcCSIndex
 
     if not nonSelectSubDialog then
@@ -203,12 +223,23 @@ SNSBarkerCtrl._RefreshContactNpcList = HL.Method() << function(self)
                 break
             end
         end
+    elseif hasSelectedChat then
+        for luaIndex, chatVO in ipairs(self.m_chatVOs) do
+            if chatVO.chatId == selectedChatId then
+                targetNpcCSIndex = CSIndex(luaIndex)
+                break
+            end
+        end
     end
+
+    local shouldRecoverNpcCell = not nonSelectSubDialog or (hasSelectedChat and targetNpcCSIndex ~= nil)
 
     
     if targetNpcCSIndex == nil then
         targetNpcCSIndex = 0
         self.m_curSelectedSubDialogId = ""
+        self.m_curSelectedChatId = ""
+        shouldRecoverNpcCell = false
     end
 
     local hasResult = #self.m_chatVOs > 0
@@ -228,17 +259,14 @@ SNSBarkerCtrl._RefreshContactNpcList = HL.Method() << function(self)
         if self.m_isClosed then
             return
         end
-        if hasResult and targetNpcCSIndex ~= nil then
-            self.view.contactNpcScrollList:ScrollToIndex(targetNpcCSIndex, true)
-        end
         self.view.contactNpcScrollList.gameObject:SetActive(hasResult)
         self.view.nonResult.gameObject:SetActive(not hasResult)
+        if hasResult and targetNpcCSIndex ~= nil then
+            self:_TryRecoverScrollToNpcCell(targetNpcCSIndex)
+        end
 
-        if not nonSelectSubDialog then
+        if hasResult and shouldRecoverNpcCell then
             self.view.contactNpcScrollList:Toggle(targetNpcCSIndex, true)
-            
-            local npcCell = self.m_getContactNpcCellFunc(LuaIndex(targetNpcCSIndex))
-            npcCell:ToggleFoldOut()
         end
 
         coroutine.step()
@@ -254,7 +282,7 @@ SNSBarkerCtrl._OnUpdateContactNpcCell = HL.Method(GameObject, HL.Number) << func
     local npcVO = self.m_chatVOs[LuaIndex(csIndex)]
     
     local content = self.m_getContactNpcCellFunc(go)
-    content:InitSNSContactNpcCell(npcVO, function()
+    content:InitSNSContactNpcCell(npcVO, self:_ShouldFoldOutNpcCell(npcVO.chatId), function()
         self:OnClickContactNpcCell(csIndex)
     end, function(cell, chatId, dialogId, luaIndex)
         self:_RefreshSubCell(cell, chatId, dialogId, luaIndex)
@@ -391,8 +419,6 @@ SNSBarkerCtrl._GenContactNpcVOs = HL.Method(HL.Table) << function(self, selected
                     sortId2 = sortId2,
                     dialogIds = dialogIds,
                     hasTopic = hasTopic,
-                    
-                    isFoldOut = false,
                 })
             end
         end
@@ -450,6 +476,44 @@ end
 
 
 
+SNSBarkerCtrl._RefreshFilterBtnState = HL.Method() << function(self)
+    local hasFilter = #self.m_cachedSelectedTags > 0
+    self.view.btnCommonFilter.normalNode.gameObject:SetActiveIfNecessary(not hasFilter)
+    self.view.btnCommonFilter.existNode.gameObject:SetActiveIfNecessary(hasFilter)
+end
+
+
+
+
+SNSBarkerCtrl._TryRecoverScrollToNpcCell = HL.Method(HL.Number) << function(self, targetNpcCSIndex)
+    local targetNpcLuaIndex = LuaIndex(targetNpcCSIndex)
+    self:_StartCoroutine(function()
+        for _ = 1, 3 do
+            if self.m_isClosed then
+                return
+            end
+            self.view.contactNpcScrollList:ScrollToIndex(targetNpcCSIndex, true)
+            coroutine.step()
+            if self.m_getContactNpcCellFunc(targetNpcLuaIndex) ~= nil then
+                return
+            end
+        end
+    end)
+end
+
+
+
+
+SNSBarkerCtrl._ShouldFoldOutNpcCell = HL.Method(HL.String).Return(HL.Boolean) << function(self, chatId)
+    if not string.isEmpty(self.m_curSelectedSubDialogId) then
+        return Tables.sNSDialogTable[self.m_curSelectedSubDialogId].chatId == chatId
+    end
+
+    return not string.isEmpty(self.m_curSelectedChatId) and self.m_curSelectedChatId == chatId
+end
+
+
+
 
 SNSBarkerCtrl._IsFilterChange = HL.Method(HL.Table).Return(HL.Boolean) << function(self, selectedTags)
     if #self.m_cachedSelectedTags ~= #selectedTags then
@@ -462,7 +526,14 @@ SNSBarkerCtrl._IsFilterChange = HL.Method(HL.Table).Return(HL.Boolean) << functi
 
     local changed = false
     for _, selectedTag in ipairs(selectedTags) do
-        if not lume.find(self.m_cachedSelectedTags, selectedTag) then
+        local hasSameTag = false
+        for _, cachedSelectedTag in ipairs(self.m_cachedSelectedTags) do
+            if FilterUtils.isSameTagInfo(cachedSelectedTag, selectedTag) then
+                hasSameTag = true
+                break
+            end
+        end
+        if not hasSameTag then
             changed = true
             break
         end
@@ -479,15 +550,14 @@ SNSBarkerCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, selectedT
     if not self:_IsFilterChange(selectedTags) then
         return
     end
-    self.m_cachedSelectedTags = selectedTags
+    self.m_cachedSelectedTags = lume.deepCopy(selectedTags)
     self.m_curSelectedSubDialogId = ""
+    self.m_curSelectedChatId = ""
 
-    local hasFilter = #selectedTags > 0
-    self.view.btnCommonFilter.normalNode.gameObject:SetActiveIfNecessary(not hasFilter)
-    self.view.btnCommonFilter.existNode.gameObject:SetActiveIfNecessary(hasFilter)
+    self:_RefreshFilterBtnState()
     self.view.snsDialogContentCore:ClearAsyncHandler()
 
-    self:_GenContactNpcVOs(selectedTags)
+    self:_GenContactNpcVOs(self.m_cachedSelectedTags)
     
     self:_RefreshContactNpcListAfterFilter()
     self:_RefreshContent()
@@ -500,6 +570,21 @@ end
 SNSBarkerCtrl._OnBtnFilterClick = HL.Method() << function(self)
     self.m_filterArgs.selectedTags = self.m_cachedSelectedTags
     self:Notify(MessageConst.SHOW_COMMON_FILTER, self.m_filterArgs)
+end
+
+
+
+SNSBarkerCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local selectedChatId = self.m_curSelectedChatId
+    if string.isEmpty(selectedChatId) and not string.isEmpty(self.m_curSelectedSubDialogId) then
+        selectedChatId = Tables.sNSDialogTable[self.m_curSelectedSubDialogId].chatId
+    end
+
+    return {
+        dialogId = self.m_curSelectedSubDialogId,
+        selectedChatId = selectedChatId,
+        selectedTags = lume.deepCopy(self.m_cachedSelectedTags),
+    }
 end
 
 
@@ -536,7 +621,16 @@ SNSBarkerCtrl._RefreshNaviTarget = HL.Method() << function(self)
     local targetNpcCSIndex
 
     if nonSelectSubDialog then
-        self.m_curFocusNpcCellCSIndex = 0
+        local focusIndex = 0
+        if not string.isEmpty(self.m_curSelectedChatId) then
+            for luaIndex, chatVO in ipairs(self.m_chatVOs) do
+                if chatVO.chatId == self.m_curSelectedChatId then
+                    focusIndex = CSIndex(luaIndex)
+                    break
+                end
+            end
+        end
+        self.m_curFocusNpcCellCSIndex = focusIndex
         self.m_curFocusSubCellLuaIndex = -1
     else
         local dialogCfg = Tables.sNSDialogTable[self.m_curSelectedSubDialogId]

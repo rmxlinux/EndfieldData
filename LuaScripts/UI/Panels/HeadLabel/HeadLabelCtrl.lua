@@ -179,7 +179,9 @@ HeadLabelCtrl._AddHeadLabel = HL.Method(HL.Any) << function(self, targetObject)
     local headLabel = self.m_labelObjDict[targetObject]
     local csHeadLabel = headLabel.headLabel
     csHeadLabel.gameObject:SetActive(true)
-
+    headLabel.gameObject:SetLayerRecursive(UIConst.WORLD_UI_LAYER)
+    headLabel.canvas.enabled = true
+    
     csHeadLabel:SetTarget(targetObject)
     self:_RefreshNpcInfo(headLabel, targetObject)
 
@@ -355,7 +357,8 @@ HeadLabelCtrl._OnRemoveHeadLabel = HL.StaticMethod(HL.Any) << function(args)
         local cell = ctrl.m_labelObjDict[entity]
         cell.headLabel:Clear()
         if #ctrl.m_labelObjPool < CACHE_COUNT then
-            cell.headLabel:SetActive(false)
+            cell.gameObject:SetLayerRecursive(UIConst.HIDE_LAYER)
+            cell.canvas.enabled = false
             table.insert(ctrl.m_labelObjPool, cell)
         else
             GameObject.Destroy(cell.headLabel.gameObject)
@@ -403,7 +406,7 @@ end
 
 
 HeadLabelCtrl.ShowEnvTalk = HL.Method(HL.Table) << function(self, args)
-    local show, targetObject, envTalkSingleData = unpack(args)
+    local show, targetObject, envTalkSingleData, gender = unpack(args)
     if targetObject == nil then
         logger.error("ShowEnvTalk npc nil, npcId: " .. envTalkSingleData.npcId .. "!!!")
         return
@@ -433,7 +436,8 @@ HeadLabelCtrl.ShowEnvTalk = HL.Method(HL.Table) << function(self, args)
     bubbleNode:ClearTween()
     if show then
         if not string.isEmpty(envTalkSingleData.text) then
-            local text = UIUtils.resolveTextCinematic(envTalkSingleData.text)
+            local text = UIUtils.resolveTextPlayerName(envTalkSingleData.text)
+            text = UIUtils.resolveTextGender(text)
             headLabel.bubbleText:SetAndResolveTextStyle(text)
             headLabel.bubble.gameObject:SetActive(true)
         else
@@ -453,7 +457,9 @@ HeadLabelCtrl.ShowEnvTalk = HL.Method(HL.Table) << function(self, args)
         end
         csHeadLabel:SetSubRootVisible(HeadLabelType.Bubble, VisibleSource.System, true, false)
         
-        bubbleNode:PlayInAnimation()
+        if bubbleNode.gameObject.activeInHierarchy then
+            bubbleNode:PlayInAnimation()
+        end
     else
         self:_ClearEnvTalk(headLabel)
     end

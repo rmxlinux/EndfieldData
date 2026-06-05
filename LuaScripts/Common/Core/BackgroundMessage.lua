@@ -49,6 +49,10 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_PRELOAD_DIALOG_PANEL] = 'OnPreloadDialogPanel',
     },
     
+    ["Dialog2D"] = {
+        [MessageConst.ON_DIALOG_START_2D] = 'OnDialogStart2D',
+    },
+    
     ['DialogTimeline']={
         [MessageConst.ON_PRELOAD_DIALOG_TIMELINE_PANEL] = 'OnPreloadDialogTimelinePanel',
     },
@@ -206,6 +210,11 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_SHOW_DUNGEON_RESULT] = "OnShowDungeonResult",
     },
     
+    ['SimulationTrainingSettlementPopup'] = {
+        
+        [MessageConst.ON_SHOW_SIMULATION_TRAINING_RESULT] = "OnShowSimulationTrainingResult",
+    },
+    
     ['DungeonCustomReward'] = {
         
         [MessageConst.TRY_START_SETTLEMENT] = "TryStartSettlement",
@@ -230,6 +239,18 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     },
 
     
+    ['ContingencyContractHud'] = {
+        
+        [MessageConst.ON_DUNGEON_GAME_INIT] = "OnDungeonGameInit",
+        
+        [MessageConst.ON_SUB_GAME_RESET] = "OnSubGameReset",
+        
+        [MessageConst.ON_OPEN_SUB_GAME_TRACKINGS] = "OnOpenSubGameTrackings",
+        
+        [MessageConst.ON_CLOSE_SUB_GAME_TRACKINGS] = "OnCloseSubGameTrackings",
+    },
+
+    
     ['CommonTaskTrackHud'] = {
         
         [MessageConst.ON_OPEN_SUB_GAME_TRACKINGS] = "OnOpenSubGameTrackings",
@@ -239,10 +260,29 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_OPEN_SCRIPT_CUSTOM_TASK_TRACKING] = "OnOpenLevelScriptCustomTask",
         
         [MessageConst.ON_CLOSE_SCRIPT_CUSTOM_TASK_TRACKING] = "OnCloseLevelScriptCustomTask",
-        
-        [MessageConst.ON_DEACTIVATE_COMMON_TASK_TRACK_HUD] = "OnDeactivateCommonTaskTrackHud",
-    },
 
+        
+        [MessageConst.ON_SWITCH_LANGUAGE] = "OnSwitchLanguage",
+    },
+    
+    ['SimulationTrainingTrackHud'] = {
+        
+        [MessageConst.ON_OPEN_SUB_GAME_SIMULATION_TRAINING] = "OnOpenSubGameTrackings",
+        
+        [MessageConst.ON_CLOSE_SUB_GAME_SIMULATION_TRAINING] = "OnCloseSubGameTrack",
+        
+        [MessageConst.ON_SWITCH_LANGUAGE] = "OnSwitchLanguage",
+    },
+    
+    ['SimulationTraining'] = {
+        
+        [MessageConst.ON_OPEN_SIMULATION_TRAINING_DRAW_PANEL] = "ShowSimulationTraining",
+    },
+    
+    ['SimulationTrainingExplain'] = {
+        
+        [MessageConst.ON_OPEN_SIMULATION_TRAINING_EXPLAIN_PANEL] = "ShowSimulationTrainingExplain",
+    },
     
     ['CommonTaskTrackToast'] = {
         
@@ -901,6 +941,14 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         
         
         [MessageConst.SHOW_DEATH_INFO] = 'ShowDeathInfo',
+    },
+    ['ContingencyContractSettlement'] = {
+        
+        
+        [MessageConst.ON_CONTINGENCY_CONTRACT_SETTLEMENT] = 'OnSettlement',
+        
+        
+        [MessageConst.SHOW_CONTINGENCY_CONTRACT_SETTLEMENT] = 'ShowSettlement',
     },
     
     ['ImportantRewardPopup'] = {

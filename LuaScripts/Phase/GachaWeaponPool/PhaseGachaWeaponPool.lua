@@ -12,6 +12,7 @@ local PHASE_ID = PhaseId.GachaWeaponPool
 
 
 
+
 PhaseGachaWeaponPool = HL.Class('PhaseGachaWeaponPool', phaseBase.PhaseBase)
 
 
@@ -98,5 +99,16 @@ end
 
 
 
+
+
+PhaseGachaWeaponPool.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    
+    local panelItem = self.m_panel2Item[PanelId.GachaWeaponPool]
+    if panelItem then
+        arg.rewardQueueRestoreInfo = panelItem.uiCtrl:GetRewardQueueRestoreInfo()
+    end
+    return arg
+end
 
 HL.Commit(PhaseGachaWeaponPool)

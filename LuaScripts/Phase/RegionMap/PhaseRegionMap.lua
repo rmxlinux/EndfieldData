@@ -19,6 +19,9 @@ local PHASE_ID = PhaseId.RegionMap
 
 
 
+
+
+
 PhaseRegionMap = HL.Class('PhaseRegionMap', phaseBase.PhaseBase)
 local Panels = { PanelId.RegionMap, PanelId.RegionMap3D }
 
@@ -109,7 +112,9 @@ end
 
 
 PhaseRegionMap._OnDeActivated = HL.Override() << function(self)
-    self:_ClearCameraCfg()
+    if not self.m_behindPopupPhase then
+        self:_ClearCameraCfg()
+    end
 end
 
 
@@ -118,6 +123,7 @@ end
 
 
 PhaseRegionMap._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    self.m_behindPopupPhase = false
     if not fastMode then
         if self.m_RegionMap3DPanel and self.m_RegionMap3DPanel.uiCtrl then
             local wrapper = self.m_RegionMap3DPanel.uiCtrl.animationWrapper
@@ -148,6 +154,18 @@ end
 
 
 PhaseRegionMap._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    local nextPhaseId = args.anotherPhaseId
+    self.m_behindPopupPhase = (nextPhaseId == PhaseId.CommonMoneyExchange or nextPhaseId == PhaseId.StaminaPopUp)
+end
+
+
+
+
+
+
+PhaseRegionMap._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    self.m_behindPopupPhase = false
+    self:_InitCameraCfg()
 end
 
 
@@ -198,6 +216,9 @@ PhaseRegionMap.m_RegionMapPanel = HL.Field(HL.Forward("PhasePanelItem"))
 PhaseRegionMap.m_inited = HL.Field(HL.Boolean) << false
 
 
+PhaseRegionMap.m_behindPopupPhase = HL.Field(HL.Boolean) << false
+
+
 
 PhaseRegionMap._InitPhaseItems = HL.Method() << function(self)
     if not self.m_inited then
@@ -230,5 +251,14 @@ PhaseRegionMap._ClearCameraCfg = HL.Method() << function(self)
     CameraManager:SetUICameraPostProcess(false)
     CameraManager:RemoveUICamCullingMaskConfig("RegionMap")
 end
+
+
+
+PhaseRegionMap.GetCurStateArg = HL.Override().Return(HL.Any) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    arg.domainId = self.m_RegionMapPanel.uiCtrl.domainId
+    return arg
+end
+
 
 HL.Commit(PhaseRegionMap)

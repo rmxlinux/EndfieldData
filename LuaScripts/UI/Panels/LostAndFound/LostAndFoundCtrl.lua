@@ -181,16 +181,15 @@ LostAndFoundCtrl.OnGetLostAndFound = HL.Method(HL.Table) << function(self, args)
         title = Language.ui_common_have_item,
         icon = "icon_mail_obtain",
         items = getItems,
-        onComplete = function()
-            local lostAndFound = GameInstance.player.inventory.lostAndFound
-            local empty = lostAndFound:IsEmpty()
-            if empty then
-                PhaseManager:PopPhase(PhaseId.LostAndFound)
-            end
-        end
     })
 
-    self:_Refresh()
+    local lostAndFound = GameInstance.player.inventory.lostAndFound
+    local empty = lostAndFound:IsEmpty()
+    if empty then
+        PhaseManager:PopPhase(PhaseId.LostAndFound)
+    else
+        self:_Refresh()
+    end
 end
 
 

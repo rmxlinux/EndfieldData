@@ -1,6 +1,15 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GemCustomization
 local PHASE_ID = PhaseId.GemCustomization
+local INSTRUCTION_BOOK_ID = "energy_point_target"
+
+
+
+
+
+
+
+
 
 
 
@@ -61,8 +70,9 @@ GemCustomizationCtrl.m_term3CellListCache = HL.Field(HL.Forward("UIListCache"))
 
 GemCustomizationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitUI()
-    self:_InitData(arg)
+    self:_InitData(self:_GetGameGroupId(arg))
     self:_RefreshAllUI()
+    self:_ApplyRecoverState(self:_GetRecoverState(arg))
 end
 
 
@@ -151,6 +161,46 @@ end
 
 
 
+GemCustomizationCtrl._GetGameGroupId = HL.Method(HL.Any).Return(HL.Any) << function(self, arg)
+    if type(arg) == "table" then
+        return arg.gameGroupId
+    end
+    return arg
+end
+
+
+
+
+GemCustomizationCtrl._GetRecoverState = HL.Method(HL.Any).Return(HL.Opt(HL.Any)) << function(self, arg)
+    if type(arg) ~= "table" then
+        return nil
+    end
+    return arg.recoverState
+end
+
+
+
+GemCustomizationCtrl._CollectRecoverState = HL.Method().Return(HL.Table) << function(self)
+    local recoverState = {
+        
+        multiTermGroup1SelectTermIndexList = lume.clone(self.m_info.multiTermGroup1SelectTermIndexList),
+        multiTermGroup2SelectTermData = lume.deepCopy(self.m_info.multiTermGroup2SelectTermData),
+        
+        selectedMultiTermGroupIndex = DeviceInfo.usingController and self:_GetSelectedMultiTermGroupIndex() or nil,
+    }
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and instructionCtrl:IsShow() and instructionCtrl.id == INSTRUCTION_BOOK_ID and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        
+        recoverState.instructionBookArg = {
+            id = instructionCtrl.id,
+        }
+    end
+    return recoverState
+end
+
+
+
+
 
 GemCustomizationCtrl._InitUI = HL.Method() << function(self)
     
@@ -158,7 +208,7 @@ GemCustomizationCtrl._InitUI = HL.Method() << function(self)
         self:_OnClickBtnClose()
     end)
     self.view.helpBtn.onClick:AddListener(function()
-        UIManager:Open(PanelId.InstructionBook, "energy_point_target")
+        UIManager:Open(PanelId.InstructionBook, INSTRUCTION_BOOK_ID)
     end)
     self.view.gemResultNode.confirmBtn.onClick:AddListener(function()
         self:_OnClickConfirmBtn()
@@ -439,6 +489,117 @@ GemCustomizationCtrl._RefreshGemResultState = HL.Method() << function(self)
 end
 
 
+
+
+GemCustomizationCtrl._ApplyRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+    self:_ApplyRecoverTermSelectState(recoverState)
+    self:_TryRecoverInstructionBook(recoverState)
+end
+
+
+
+
+GemCustomizationCtrl._ApplyRecoverTermSelectState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+
+    
+    for _, info in ipairs(self.m_info.term1Infos) do
+        info.isSelect = false
+    end
+    self.m_info.multiTermGroup1SelectTermIndexList = {}
+    local group1SelectTermIndexList = recoverState.multiTermGroup1SelectTermIndexList or {}
+    for _, luaIndex in ipairs(group1SelectTermIndexList) do
+        local info = self.m_info.term1Infos[luaIndex]
+        if info ~= nil then
+            info.isSelect = true
+            table.insert(self.m_info.multiTermGroup1SelectTermIndexList, luaIndex)
+        end
+    end
+
+    for _, info in ipairs(self.m_info.term2Infos) do
+        info.isSelect = false
+    end
+    for _, info in ipairs(self.m_info.term3Infos) do
+        info.isSelect = false
+    end
+    local recoverGroup2SelectTermData = recoverState.multiTermGroup2SelectTermData or {}
+    local recoverGroupIndex = recoverGroup2SelectTermData.groupIndex or -1
+    local recoverTermIndex = recoverGroup2SelectTermData.termIndex or -1
+    local recoverInfo
+    if recoverGroupIndex == 1 then
+        recoverInfo = self.m_info.term2Infos[recoverTermIndex]
+    elseif recoverGroupIndex == 2 then
+        recoverInfo = self.m_info.term3Infos[recoverTermIndex]
+    end
+    if recoverInfo ~= nil then
+        recoverInfo.isSelect = true
+        self.m_info.multiTermGroup2SelectTermData.groupIndex = recoverGroupIndex
+        self.m_info.multiTermGroup2SelectTermData.termIndex = recoverTermIndex
+    else
+        self.m_info.multiTermGroup2SelectTermData.groupIndex = -1
+        self.m_info.multiTermGroup2SelectTermData.termIndex = -1
+    end
+
+    self:_RefreshMultiTermGroup1CompleteState()
+    self:_RefreshMultiTermGroup2CompleteState()
+    self:_RefreshTermResult1UI()
+    self:_RefreshTermResult2UI()
+    self:_RefreshGemResultState()
+
+    local selectedMultiTermGroupIndex = recoverState.selectedMultiTermGroupIndex
+    if selectedMultiTermGroupIndex == 1 or selectedMultiTermGroupIndex == 2 then
+        
+        self:_SetSelectMultiTermGroup(self.view["multiTermGroup" .. selectedMultiTermGroupIndex], true)
+    end
+end
+
+
+
+
+GemCustomizationCtrl._TryRecoverInstructionBook = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil or recoverState.instructionBookArg == nil then
+        return
+    end
+    if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
+        return
+    end
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and instructionCtrl:IsShow() then
+        return
+    end
+    UIManager:Open(PanelId.InstructionBook, recoverState.instructionBookArg)
+    recoverState.instructionBookArg = nil
+end
+
+
+
+
+
+GemCustomizationCtrl._GetSelectedMultiTermGroupIndex = HL.Method().Return(HL.Number) << function(self)
+    local preSelectMultiTermGroup = self.m_uiRelate.preSelectMultiTermGroup
+    if preSelectMultiTermGroup == self.view.multiTermGroup1 then
+        return 1
+    end
+    if preSelectMultiTermGroup == self.view.multiTermGroup2 then
+        return 2
+    end
+    return -1
+end
+
+
+
+GemCustomizationCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    return {
+        
+        gameGroupId = self.m_info.gameGroupId,
+        recoverState = self:_CollectRecoverState(),
+    }
+end
 
 
 

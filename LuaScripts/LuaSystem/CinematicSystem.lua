@@ -20,6 +20,9 @@ CinematicSystem.m_queueItems = HL.Field(HL.Table)
 CinematicSystem.m_waitPlayQueueItems = HL.Field(HL.Table)
 
 
+CinematicSystem.m_dialogWaitCoroutine = HL.Field(HL.Thread) << nil
+
+
 
 
 CinematicSystem.CinematicSystem = HL.Constructor() << function(self)
@@ -85,6 +88,14 @@ CinematicSystem._DoAction = HL.Method(HL.Any) << function(self, handle)
     local id = handle.id
     local queueItemType = data.queueItemType
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "CinematicSystem._DoAction", queueItemType, id)
+
+    if queueItemType == Const.CinematicQueueItemTypeEnum.Dialog and GameWorld.dialogManager.isPlaying then
+        
+        CoroutineManager:ClearCoroutine(self.m_dialogWaitCoroutine)
+        self.m_dialogWaitCoroutine = CoroutineManager:StartCoroutine(function() self:_WaitCurrentDialogFinishThenStart(handle) end, self)
+        return
+    end
+
     local res
     if not self.m_waitPlayQueueItems[id] then
         self.m_waitPlayQueueItems[id] = handle
@@ -108,6 +119,23 @@ CinematicSystem._DoAction = HL.Method(HL.Any) << function(self, handle)
         self.m_queueItems[id] = handle
         self.m_waitPlayQueueItems[id] = nil
     end
+end
+
+
+
+
+CinematicSystem._WaitCurrentDialogFinishThenStart = HL.Method(HL.Any) << function(self, handle)
+    while true do
+        if not GameWorld.dialogManager.isPlaying then
+            self:_DoAction(handle)
+            break
+        else
+            coroutine.step()
+        end
+    end
+
+    CoroutineManager:ClearCoroutine(self.m_dialogWaitCoroutine)
+    self.m_dialogWaitCoroutine = nil
 end
 
 
@@ -170,6 +198,9 @@ end
 CinematicSystem.OnRelease = HL.Override() << function(self)
     self.m_queueItems = {}
     self.m_waitPlayQueueItems = {}
+
+    CoroutineManager:ClearCoroutine(self.m_dialogWaitCoroutine)
+    self.m_dialogWaitCoroutine = nil
 end
 
 HL.Commit(CinematicSystem)

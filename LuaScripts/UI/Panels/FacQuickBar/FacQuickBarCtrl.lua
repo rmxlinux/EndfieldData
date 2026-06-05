@@ -71,6 +71,8 @@ local PANEL_ID = PanelId.FacQuickBar
 
 
 
+
+
 FacQuickBarCtrl = HL.Class('FacQuickBarCtrl', autoCalcOrderUICtrl.AutoCalcOrderUICtrl)
 
 
@@ -151,9 +153,9 @@ FacQuickBarCtrl.OnHide = HL.Override() << function(self)
     if DeviceInfo.usingController then
         if not string.isEmpty(self.m_curSettingBuildingItemId) then
             self:_ExitSetBuilding()
-        else
-            InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.main)
         end
+        
+        
         self:_ToggleCellActionOnSetNaviTarget(true)
     end
 end
@@ -714,6 +716,14 @@ FacQuickBarCtrl.ShowFacQuickBar = HL.StaticMethod(HL.Table) << function(arg)
         return
     end
     local self = FacQuickBarCtrl.AutoOpen(PANEL_ID, nil, true)
+
+    
+    
+    if DeviceInfo.usingController and self.m_lastAttachPanelId > 0 and self.m_lastAttachPanelId ~= arg.panelId then
+        InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.main)
+    end
+    self.m_lastAttachPanelId = arg.panelId
+
     self.m_arg = arg
     self.m_useActiveAction = arg.useActiveAction == true
     self:_AttachToPanel(arg)
@@ -845,41 +855,10 @@ end
 
 
 FacQuickBarCtrl._InitBeltNode = HL.Method() << function(self)
-    local node = self.view.beltNode
-    node.notDropHint.gameObject:SetActive(false)
-
-    local item = node.item
-    item:SetEnableHoverTips(DeviceInfo.usingKeyboard)
-    item:InitItem({ id = FacConst.BELT_ITEM_ID }, function()
+    self:_InitLogisticNode(self.view.beltNode, FacConst.BELT_ITEM_ID, function()
         self:_OnClickBelt()
     end)
-    item:AddHoverBinding("fac_quick_bar_controller_build", function()
-        self:_OnClickBelt()
-    end)
-    item:OpenLongPressTips()
-    item.canPlace = true
-    item.actionMenuArgs = {
-        source = UIConst.UI_DRAG_DROP_SOURCE_TYPE.QuickBar,
-    }
-
-    if node.itemDragHandler then
-        node.itemDragHandler.onDrag:AddListener(function(eventData)
-            Notify(MessageConst.MOVE_LEVEL_CAMERA, eventData.delta)
-        end)
     end
-
-    item.view.button.onHoverChange:AddListener(function(isHover)
-        if DeviceInfo.usingController then
-            node.keyHint.gameObject:SetActive(not isHover)
-            item.view.nameNode.gameObject:SetActive(isHover)
-            node.hoverKeyHint.gameObject:SetActive(isHover)
-        end
-    end)
-    item.view.nameNode.gameObject:SetActive(false)
-    if node.hoverKeyHint then
-        node.hoverKeyHint.gameObject:SetActive(false)
-    end
-end
 
 
 
@@ -904,17 +883,29 @@ end
 
 
 FacQuickBarCtrl._InitPipeNode = HL.Method() << function(self)
-    local node = self.view.pipeNode
+    self:_InitLogisticNode(self.view.pipeNode, FacConst.PIPE_ITEM_ID, function()
+        self:_OnClickPipe()
+    end)
+end
+
+
+
+FacQuickBarCtrl._OnClickPipe = HL.Method() << function(self)
+    Notify(MessageConst.FAC_ENTER_BELT_MODE, { beltId = FacConst.PIPE_ID })
+end
+
+
+
+
+
+
+FacQuickBarCtrl._InitLogisticNode = HL.Method(HL.Table, HL.String, HL.Function) << function(self, node, itemId, onClick)
     node.notDropHint.gameObject:SetActive(false)
 
     local item = node.item
     item:SetEnableHoverTips(DeviceInfo.usingKeyboard)
-    item:InitItem({ id = FacConst.PIPE_ITEM_ID }, function()
-        self:_OnClickPipe()
-    end)
-    item:AddHoverBinding("fac_quick_bar_controller_build", function()
-        self:_OnClickPipe()
-    end)
+    item:InitItem({ id = itemId }, onClick)
+    item:AddHoverBinding("fac_quick_bar_controller_build", onClick)
     item:OpenLongPressTips()
     item.canPlace = true
     item.actionMenuArgs = {
@@ -939,12 +930,6 @@ FacQuickBarCtrl._InitPipeNode = HL.Method() << function(self)
     if node.hoverKeyHint then
         node.hoverKeyHint.gameObject:SetActive(false)
     end
-end
-
-
-
-FacQuickBarCtrl._OnClickPipe = HL.Method() << function(self)
-    Notify(MessageConst.FAC_ENTER_BELT_MODE, { beltId = FacConst.PIPE_ID })
 end
 
 
@@ -1161,6 +1146,9 @@ FacQuickBarCtrl.m_zoomCamGroupId = HL.Field(HL.Number) << 0
 
 
 FacQuickBarCtrl.m_lastCellsActionOnSetNaviTarget = HL.Field(HL.Table)
+
+
+FacQuickBarCtrl.m_lastAttachPanelId = HL.Field(HL.Number) << -1
 
 
 

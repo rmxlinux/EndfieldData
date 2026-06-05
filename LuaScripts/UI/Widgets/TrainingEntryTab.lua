@@ -249,21 +249,12 @@ TrainingEntryTab._OnClickGoToBtn = HL.Method() << function(self)
     local panelId = self:GetPanelId()
     if panelId == PanelId.AdventureTraining then
         enterDungeonCallback = function(enterDungeonId)
-            LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId, function()
-                PhaseManager:OpenPhaseFast(PhaseId.AdventureBook, { panelId = "AdventureTraining" })
-                PhaseManager:OpenPhaseFast(PhaseId.DungeonEntry, {
-                    dungeonId = enterDungeonId,
-                    enterDungeonCallback = enterDungeonCallback })
-            end)
+            LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId)
         end
     elseif panelId == PanelId.DungeonTrainOverview then
         
         enterDungeonCallback = function(enterDungeonId)
             LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId, function()
-                PhaseManager:OpenPhaseFast(PhaseId.DungeonEntry, {
-                    dungeonId = enterDungeonId,
-                    enterDungeonCallback = enterDungeonCallback })
-            end, function()
                 return GameInstance.mode.modeType == GEnums.GameModeType.SpaceShip
             end)
         end

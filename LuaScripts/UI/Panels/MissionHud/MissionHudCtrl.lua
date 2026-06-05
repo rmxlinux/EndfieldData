@@ -111,6 +111,8 @@ local LEFT_HASH_OBJ_BTN = 3
 
 
 
+
+
 MissionHudCtrl = HL.Class('MissionHudCtrl', uiCtrl.UICtrl)
 
 
@@ -247,7 +249,7 @@ MissionHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.m_missionSystem:EnableMissionTrackData()
 
-    self.m_questCellCache = UIUtils.genCellCache(self.view.questCell)
+    self.m_questCellCache = self.m_questCellCache or UIUtils.genCellCache(self.view.questCell)
 
     self.view.trackCurrentDisplayMissionBtn.onClick:RemoveAllListeners()
     self.view.trackCurrentDisplayMissionBtn.onClick:AddListener(function()
@@ -272,6 +274,7 @@ MissionHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end)
     else
         self.view.triggerTrackBtn.gameObject:SetActiveIfNecessary(false)
+        self.view.trackCurrentDisplayMissionBtn.gameObject:SetActiveIfNecessary(true)
     end
 
     self:_RefreshOpenBtn()
@@ -404,6 +407,7 @@ MissionHudCtrl._StartSwitcherCoroutine = HL.Method() << function(self)
             
             if not DeviceInfo.usingTouch then
                 self.view.triggerTrackBtn.gameObject:SetActiveIfNecessary(false)
+                self.view.trackCurrentDisplayMissionBtn.gameObject:SetActiveIfNecessary(true)
             else
                 self.view.triggerTrackBtn.gameObject:SetActiveIfNecessary(not self.m_isOrderPlaying)
                 self.view.trackCurrentDisplayMissionBtn.gameObject:SetActiveIfNecessary(self.m_isOrderPlaying)
@@ -844,6 +848,8 @@ MissionHudCtrl._InitMissionShowData = HL.Method(HL.Any) << function(self, missio
     if DeviceInfo.usingTouch then
         self.view.trackCurrentDisplayMissionBtn.gameObject:SetActive(self.m_isOrderPlaying)
         self.view.triggerTrackBtn.gameObject:SetActive(not self.m_isOrderPlaying)
+    else
+        self.view.trackCurrentDisplayMissionBtn.gameObject:SetActiveIfNecessary(true)
     end
 
     if MissionTypeConfig[missionShowData.missionViewType] then
@@ -1845,10 +1851,41 @@ end
 MissionHudCtrl.OnClose = HL.Override() << function(self)
     self.m_missionSystem:DisableMissionTrackData()
     self:_TryRemoveMainHudActionQueueBlocker()
+    LuaSystemManager.mainHudActionQueue:RemoveActionsOfType("MissionHudResumeInfo")
+    self.m_blockedByMainHudActionQueueSys = false
+    self.m_blockingMainHudActionQueueSys = false
+    self.m_currentMissionShowData = nil
+    if self.m_questCellCache then
+        self.m_questCellCache:Refresh(0)
+    end
+    self.view.leftNode.gameObject:SetActive(false)
     if self.m_updateDistanceTimerHandler then
         LuaUpdate:Remove(self.m_updateDistanceTimerHandler)
         self.m_updateDistanceTimerHandler = nil
     end
+end
+
+
+
+MissionHudCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    if not self.m_questCellCache then
+        return nil
+    end
+    local questCellCache = self.m_questCellCache
+    self.m_questCellCache = nil
+    return {
+        questCellCache = questCellCache,
+    }
+end
+
+
+
+
+MissionHudCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function(self, state)
+    if not state then
+        return
+    end
+    self.m_questCellCache = state.questCellCache
 end
 
 

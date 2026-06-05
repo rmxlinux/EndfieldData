@@ -92,6 +92,7 @@ local luaLoader = require_ex('Common/Utils/LuaResourceLoader')
 
 PhaseManager = HL.Class("PhaseManager")
 
+local PHASE_DUMMY_NAVI_LAYER_KEY_FORMAT = "Phase%s"
 
 
 
@@ -145,6 +146,11 @@ PhaseManager.m_isExitingAll = HL.Field(HL.Boolean) << false
 PhaseManager.m_effectLodControlBlockers = HL.Field(HL.Table)
 
 
+PhaseManager.isRecovering = HL.Field(HL.Boolean) << false
+
+PhaseManager.m_forbidInputDeviceChangeKeys = HL.Field(HL.Table) 
+
+
 
 
 
@@ -165,6 +171,7 @@ PhaseManager.PhaseManager = HL.Constructor() << function(self)
     self.m_waitingQueue = require_ex("Common/Utils/DataStructure/Queue")()
     self.m_cacheTable = {}
     self.m_effectLodControlBlockers = {}
+    self.m_forbidInputDeviceChangeKeys = {}
     self.m_resourceLoader = luaLoader.LuaResourceLoader()
     local cacheRoot = GameObject("PhaseCacheRoot")
     GameObject.DontDestroyOnLoad(cacheRoot)
@@ -1196,6 +1203,11 @@ end
 
 
 
+
+
+
+
+
 PhaseManager._InitInputDeviceTypeChange = HL.Method() << function(self)
     Register(MessageConst.ENTER_MAIN_GAME, function()
         InputManagerInst.needProcessTryChange = true
@@ -1208,9 +1220,6 @@ PhaseManager._InitInputDeviceTypeChange = HL.Method() << function(self)
         local inputType = unpack(arg)
         self:_OnTryChangeInputDevice(inputType)
     end, self)
-    Register(MessageConst.ON_PHASE_LEVEL_ON_TOP, function(arg)
-        self:_OnInputDeviceTypeChangeFinish()
-    end, self)
 end
 
 
@@ -1220,11 +1229,27 @@ PhaseManager._ClearInputDeviceTypeChange = HL.Method() << function(self)
     logger.important(CS.Beyond.EnableLogType.DevOnly, "[InputDevice] 主流程开启直接切换设备")
 end
 
+PhaseManager.SetForbidInputDeviceChange = HL.Method(HL.String, HL.Boolean) << function(self, key, forbid)
+    if forbid then
+        self.m_forbidInputDeviceChangeKeys[key] = true
+    else
+        self.m_forbidInputDeviceChangeKeys[key] = nil
+    end
+end
+
 
 
 
 PhaseManager._CheckCanChangeInputDevice = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Boolean) << function(self, ignoreIsChanging)
     if not ignoreIsChanging and InputManagerInst.inChangingInputDevice then
+        return false  
+    end
+
+    if self:CheckIsInTransition() then
+        return false  
+    end
+
+    if not string.isEmpty(GameInstance.player.systemActionConflictManager.curProcessingSystemAction) then
         return false  
     end
 
@@ -1238,6 +1263,10 @@ PhaseManager._CheckCanChangeInputDevice = HL.Method(HL.Opt(HL.Boolean)).Return(H
                 return false
             end
         end
+    end
+
+    if next(self.m_forbidInputDeviceChangeKeys) ~= nil then
+        return false  
     end
 
     if GameInstance.player.guide.isInForceGuide then
@@ -1256,7 +1285,20 @@ PhaseManager._CheckCanChangeInputDevice = HL.Method(HL.Opt(HL.Boolean)).Return(H
         return false  
     end
 
+    if FactoryUtils.isCreatingBlueprint() then
+        return false  
+    end
+
     if GameInstance.player.towerDefenseSystem.hudState == CS.Beyond.Gameplay.TowerDefenseSystem.HUDState.WaitingFinished then
+        return false  
+    end
+
+    local _, generalAbility = UIManager:IsOpen(PanelId.GeneralAbility)
+    if generalAbility ~= nil and generalAbility.startPress then
+        return false  
+    end
+
+    if not self:_CheckCanChangeInputDeviceInCommercial() then
         return false  
     end
 
@@ -1267,7 +1309,7 @@ PhaseManager._CheckCanChangeInputDevice = HL.Method(HL.Opt(HL.Boolean)).Return(H
     end
 
     for _, phaseId in pairs(PhaseConst.FORBID_INPUT_DEVICE_CHANGE_PHASES) do
-        if PhaseId[phaseId] == topPhaseId then
+        if self:IsOpen(PhaseId[phaseId]) then
             return false  
         end
     end
@@ -1281,12 +1323,42 @@ end
 
 
 
-PhaseManager._CheckChangeInputToastIgnore = HL.Method().Return(HL.Boolean) << function(self)
-    return Utils.isInNarrative() and Utils.isNarrativeTopPhase()
+PhaseManager._CheckCanChangeInputDeviceInCommercial = HL.Method().Return(HL.Boolean) << function(self)
+    
+    
+    local isGachaOpen, gachaCtrl = UIManager:IsOpen(PanelId.GachaPool)
+    if isGachaOpen and gachaCtrl:GetIsPlayingTabInAnimation() then
+        return false
+    end
+    
+
+    
+    
+    local isInBPSeasonDisplay = UIManager:IsOpen(PanelId.BattlePassSeasonDisplay)
+    if isInBPSeasonDisplay then
+        return false
+    end
+    
+
+    
+    
+    if UIManager:IsShow(PanelId.CommonPopUp) then
+        local _, commonPopUpCtrl = UIManager:IsOpen(PanelId.CommonPopUp)
+        local popUpArgs = commonPopUpCtrl and commonPopUpCtrl.m_args
+        if popUpArgs and popUpArgs.content == Language.LUA_ACTIVITY_MODIFY_QUIT_TO_MENU then
+            return false
+        end
+    end
+    
+
+    return true
 end
 
 
-PhaseManager.m_isRealChangingInput = HL.Field(HL.Boolean) << false
+
+PhaseManager._CheckChangeInputToastIgnore = HL.Method().Return(HL.Boolean) << function(self)
+    return Utils.isInNarrative() and Utils.isNarrativeTopPhase()
+end
 
 
 
@@ -1302,132 +1374,90 @@ PhaseManager._OnTryChangeInputDevice = HL.Method(HL.Userdata) << function(self, 
         return
     end
 
-    if DeviceInfo.switchInputDeviceWithRecover then
-        local needConfirm = self:GetTopPhaseId() ~= PhaseId.Level
-        if not needConfirm then
-            
-            InputManagerInst:ToggleInputDeviceChangeMode(true)
-            logger.important(CS.Beyond.EnableLogType.DevOnly, "[InputDevice] 确认切换设备", inputType)
-            self.m_isRealChangingInput = true
-            Notify(MessageConst.HIDE_ITEM_TIPS)
-            self:_RealChangeInputDevice(inputType)
-            return
-        end
-    end
-
-    Notify(MessageConst.SHOW_INPUT_DEVICE_CHANGE_POPUP, {
-        inputType = inputType,
-        onConfirm = function()
-            logger.important(CS.Beyond.EnableLogType.DevOnly, "[InputDevice] 确认切换设备", inputType)
-            if not self:_CheckCanChangeInputDevice(true) then
-                Notify(MessageConst.SHOW_TOAST, Language.LUA_INPUT_DEVICE_CHANGE_FORBIDDEN)
-                InputManagerInst:ToggleInputDeviceChangeMode(false)
-                return
-            end
-            self.m_isRealChangingInput = true
-            Notify(MessageConst.HIDE_ITEM_TIPS)
-            local maskData = self:_GetChangeInMaskData(function()
-                self:_RealChangeInputDevice(inputType)
-            end)
-            GameAction.ShowBlackScreen(maskData)
-        end,
-        onCancel = function()
-            logger.important(CS.Beyond.EnableLogType.DevOnly, "[InputDevice] 取消切换设备", inputType)
-        end,
-    })
+    InputManagerInst:ToggleInputDeviceChangeMode(true)
+    logger.important(CS.Beyond.EnableLogType.DevOnly, "[InputDevice] 确认切换设备", inputType)
+    Notify(MessageConst.HIDE_ITEM_TIPS, { skipAnim = true })
+    self:_RealChangeInputDevice(inputType)
 end
 
 
 
-PhaseManager._OnInputDeviceTypeChangeFinish = HL.Method() << function(self)
-    if not InputManagerInst.inChangingInputDevice or not self.m_isRealChangingInput then
+
+PhaseManager._OnInputDeviceTypeChangeFinish = HL.Method(HL.Userdata) << function(self, inputType)
+    if not InputManagerInst.inChangingInputDevice then
         return
     end
 
-    local maskData = self:_GetChangeOutMaskData(function()
-        self:_AfterInputDeviceChanged()
-    end)
-    GameAction.ShowBlackScreen(maskData)
-    self.m_isRealChangingInput = false
+    InputManagerInst:ToggleInputDeviceChangeMode(false)
+    Notify(MessageConst.ON_CHANGE_INPUT_DEVICE_TYPE_FINISHED, { inputType = inputType })
 end
 
 
 
 
-PhaseManager._GetChangeInMaskData = HL.Method(HL.Function).Return(HL.Userdata) << function(self, fadeInCallback)
-    local inputDeviceChangeMaskInData = CS.Beyond.Gameplay.UICommonMaskData()
-    local fadeTime = DeviceInfo.switchInputDeviceWithRecover and UIConst.INPUT_DEVICE_CHANGE_WITH_RECOVER_MASK_TIME or UIConst.INPUT_DEVICE_CHANGE_MASK_TIME
-    inputDeviceChangeMaskInData.fadeInTime = fadeTime
-    inputDeviceChangeMaskInData.waitHide = true
-    inputDeviceChangeMaskInData.fadeType = UIConst.UI_COMMON_MASK_FADE_TYPE.FadeIn
-    inputDeviceChangeMaskInData.fadeInCallback = function()
-        fadeInCallback()
-    end
-
-    if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
-        inputDeviceChangeMaskInData.extraData = CS.Beyond.Gameplay.CommonMaskExtraData()
-        inputDeviceChangeMaskInData.extraData.desc = "PhaseManager->InputDeviceChangeIn"
-    end
-
-    return inputDeviceChangeMaskInData
-end
-
-
-
-
-PhaseManager._RealChangeInputDevice = HL.Method(HL.Userdata) << function(self, inputType)
+PhaseManager._RealChangeInputDevice = HL.Method(HL.Userdata) << function(self, newInputType)
     local phaseArgs = self:CollectCurPhaseArgs()
 
     
-    Notify(MessageConst.ON_CONFIRM_CHANGE_INPUT_DEVICE_TYPE, { inputType = inputType })
+    Notify(MessageConst.ON_CONFIRM_CHANGE_INPUT_DEVICE_TYPE, { inputType = newInputType })
 
     
     local closeExceptPanelIds = {}
-    for _, panelId in pairs(PhaseConst.EXCEPT_CHANGE_DEVICE_CLOSE_PANEL) do
-        table.insert(closeExceptPanelIds, PanelId[panelId])
-    end
-    self:_ExitAndCloseAll(closeExceptPanelIds)
-    for _, panelId in pairs(PhaseConst.INPUT_DEVICE_CHANGE_FORCE_CLOSE_PANELS) do
-        UIManager:Close(PanelId[panelId])
+    for _, name in pairs(PhaseConst.EXCEPT_CHANGE_DEVICE_CLOSE_PANEL) do
+        local panelId = PanelId[name]
+        if UIManager:_IsUsingSamePanelAssetOnInputTypeChange(panelId, DeviceInfo.inputType, newInputType) then
+            table.insert(closeExceptPanelIds, panelId)
+        end
     end
 
     
-    DeviceInfo.ChangeInputType(inputType)
+    UIManager.m_isHotSwitching = true
+    UIManager.m_hotSwitchCache = {}
+
+    
+    
+    
+    
+    
+    
+    
+    
+    InputManagerInst.controllerNaviManager:SetTarget(nil)
+    InputManagerInst.controllerNaviManager:ResetStateForUIDispose()
+
+    self:_ExitAndCloseAll(closeExceptPanelIds)
+    for _, name in pairs(PhaseConst.INPUT_DEVICE_CHANGE_FORCE_CLOSE_PANELS) do
+        UIManager:Close(PanelId[name])
+    end
+
+    
+    DeviceInfo.ChangeInputType(newInputType)
     GameInstance.player.guide:OnInputDeviceChanged()
 
     
-    if DeviceInfo.switchInputDeviceWithRecover then
-        self:RecoverPhaseByArgs(phaseArgs)
-    else
-        self:OpenPhase(PhaseId.Level)
-    end
-end
+    self:RecoverPhaseByArgs(phaseArgs)
 
-
-
-
-PhaseManager._GetChangeOutMaskData = HL.Method(HL.Function).Return(HL.Userdata) << function(self, fadeOutCallback)
-    local inputDeviceChangeMaskOutData = CS.Beyond.Gameplay.UICommonMaskData()
-    inputDeviceChangeMaskOutData.fadeInTime = 0
-    local fadeTime = DeviceInfo.switchInputDeviceWithRecover and UIConst.INPUT_DEVICE_CHANGE_WITH_RECOVER_MASK_TIME or UIConst.INPUT_DEVICE_CHANGE_MASK_TIME
-    inputDeviceChangeMaskOutData.fadeOutTime = fadeTime
-    inputDeviceChangeMaskOutData.fadeType = UIConst.UI_COMMON_MASK_FADE_TYPE.FadeOut
-    inputDeviceChangeMaskOutData.callback = function()
-        fadeOutCallback()
+    
+    for panelId, _ in pairs(UIManager.m_openedPanels) do
+        UIManager:RestoreShownPanelVisibilityIfNeeded(panelId)
     end
 
-    if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
-        inputDeviceChangeMaskOutData.extraData = CS.Beyond.Gameplay.CommonMaskExtraData()
-        inputDeviceChangeMaskOutData.extraData.desc = "PhaseManager->InputDeviceChangeOut"
+    
+    for _, cachedInfo in pairs(UIManager.m_hotSwitchCache) do
+        if cachedInfo.worldRoot then
+            GameObject.DestroyImmediate(cachedInfo.worldRoot.gameObject)
+        end
+        if cachedInfo.worldAutoRoot then
+            GameObject.DestroyImmediate(cachedInfo.worldAutoRoot.gameObject)
+        end
+        cachedInfo.loader:DisposeAllHandles()
+        GameObject.DestroyImmediate(cachedInfo.go)
     end
+    UIManager.m_hotSwitchCache = {}
+    UIManager.m_isHotSwitching = false
 
-    return inputDeviceChangeMaskOutData
-end
-
-
-
-PhaseManager._AfterInputDeviceChanged = HL.Method() << function(self)
-    InputManagerInst:ToggleInputDeviceChangeMode(false)
+    
+    self:_OnInputDeviceTypeChangeFinish(newInputType)
 end
 
 
@@ -1547,7 +1577,7 @@ PhaseManager._DoPushTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("
 
     if pushPhase then
         if pushPhase.cfg.notCreateDummyNaviLayer ~= true then
-            Notify(MessageConst.ATTACH_DUMMY_NAVI_LAYER, "Phase" .. pushPhase.cfg.name)
+            Notify(MessageConst.ATTACH_DUMMY_NAVI_LAYER, string.format(PHASE_DUMMY_NAVI_LAYER_KEY_FORMAT, pushPhase.cfg.name))
         end
         
         local cfg = pushPhase.cfg
@@ -1624,6 +1654,21 @@ PhaseManager.GetPhaseName = HL.Method(HL.Number).Return(HL.String) << function(s
     return cfg and cfg.name or ""
 end
 
+PhaseManager.IsPhaseHaveSceneCamera = HL.Method(HL.Opt(HL.Number)).Return(HL.Boolean) << function(self, phaseId)
+    if not phaseId then
+        return false
+    end
+    local cfg = self.m_cfgs[phaseId]
+    return cfg ~= nil and cfg.haveSceneCamera == true
+end
+
+
+
+
+PhaseManager.GetPhaseDummyNaviLayerName = HL.Method(HL.Number).Return(HL.String) << function(self, phaseId)
+    return string.format(PHASE_DUMMY_NAVI_LAYER_KEY_FORMAT, self:GetPhaseName(phaseId))
+end
+
 
 
 
@@ -1665,9 +1710,11 @@ end
 
 PhaseManager.RecoverPhaseByArgs = HL.Method(HL.Table) << function(self, args)
     logger.info("PhaseManager.RecoverPhaseByArgs", args)
+    self.isRecovering = true
     for _, v in ipairs(args) do
         self:OpenPhaseFast(v.id, v.arg)
     end
+    self.isRecovering = false
 end
 
 

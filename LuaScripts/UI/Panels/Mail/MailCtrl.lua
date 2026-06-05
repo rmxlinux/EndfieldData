@@ -42,6 +42,8 @@ local PANEL_ID = PanelId.Mail
 
 
 
+
+
 MailCtrl = HL.Class('MailCtrl', uiCtrl.UICtrl)
 
 local ASYNC_TEXTINFO_LINKINFO = 0.1
@@ -166,6 +168,8 @@ MailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end, self.view.inputGroup.groupId)
     InputManagerInst:ToggleBinding(self.m_naviToHyperLinkBindingId, false)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
+
+    self:_RecoverByArgs(arg)
 end
 
 
@@ -851,7 +855,7 @@ end
 
 MailCtrl._OnClickLink = HL.Method(HL.String) << function(self, value)
     logger.info("_OnClickLink", value)
-    CS.Beyond.UI.WebApplication.Start(value)
+    CS.Beyond.UI.WebApplication.StartHGBrowser(value)
 end
 
 
@@ -900,6 +904,44 @@ MailCtrl._NaviToHyperLink = HL.Method() << function(self)
     end
 end
 
+
+
+
+MailCtrl._RecoverByArgs = HL.Method(HL.Opt(HL.Any)) << function(self, args)
+    if not args then
+        return
+    end
+
+    if args.curMailIndex and self.m_curMails and self.m_curMails[args.curMailIndex] then
+        self.view.mailList:ScrollToIndex(CSIndex(args.curMailIndex), true)
+        if DeviceInfo.usingController then
+            local cell = self.m_getMailCell(args.curMailIndex)
+            if cell then
+                UIUtils.setAsNaviTarget(cell.button)
+            end
+        else
+            self:_OnClickMail(args.curMailIndex)
+        end
+    end
+
+    if args.isMailInstructionShown then
+        UIManager:Open(PanelId.InstructionBook, "mail")
+    end
+end
+
+
+
+MailCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    local isMailInstructionShown = false
+    if isOpen and instructionCtrl:IsShow() and instructionCtrl.id == "mail" then
+        isMailInstructionShown = true
+    end
+    return {
+        curMailIndex = self.m_curMailIndex,
+        isMailInstructionShown = isMailInstructionShown,
+    }
+end
 
 
 

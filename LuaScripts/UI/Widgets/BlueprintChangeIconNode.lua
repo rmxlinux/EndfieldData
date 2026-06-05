@@ -32,6 +32,8 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
 BlueprintChangeIconNode = HL.Class('BlueprintChangeIconNode', UIWidgetBase)
 
 
@@ -68,16 +70,10 @@ BlueprintChangeIconNode._OnFirstTimeInit = HL.Override() << function(self)
     self:_InitColorNode()
 
     self.view.colorBtn.onClick:AddListener(function()
-        self:_ChangeState(false)
-        if DeviceInfo.usingController then
-            UIUtils.setAsNaviTarget(self.m_selectedColorCell.button)
-        end
+        self:_ChangeState(false, true)
     end)
     self.view.iconBtn.onClick:AddListener(function()
-        self:_ChangeState(true)
-        if DeviceInfo.usingController then
-            UIUtils.setAsNaviTarget(self.m_selectedIconCell.button)
-        end
+        self:_ChangeState(true, true)
     end)
 end
 
@@ -617,8 +613,22 @@ BlueprintChangeIconNode.m_isIcon = HL.Field(HL.Boolean) << true
 
 
 
+BlueprintChangeIconNode.IsIconTabSelected = HL.Method().Return(HL.Boolean) << function(self)
+    return self.m_isIcon
+end
 
-BlueprintChangeIconNode._ChangeState = HL.Method(HL.Boolean) << function(self, isIcon)
+
+
+
+BlueprintChangeIconNode.SetTabState = HL.Method(HL.Boolean) << function(self, isIcon)
+    self:_ChangeState(isIcon, true)
+end
+
+
+
+
+
+BlueprintChangeIconNode._ChangeState = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isIcon, resetNavi)
     if self.m_isIcon == isIcon then
         return
     end
@@ -631,6 +641,11 @@ BlueprintChangeIconNode._ChangeState = HL.Method(HL.Boolean) << function(self, i
         self.view.colorBtnAnimationWrapper:PlayInAnimation()
         self.view.iconBtnAnimationWrapper:PlayOutAnimation()
     end
+
+    if DeviceInfo.usingController and resetNavi then
+        local target = isIcon and self.m_selectedIconCell.button or self.m_selectedColorCell.button
+        UIUtils.setAsNaviTarget(target)
+    end
 end
 
 
@@ -642,7 +657,7 @@ BlueprintChangeIconNode.RefreshController = HL.Method() << function(self)
     self.view.changeIconNodeMain:ManuallyFocus(true)
     self:_ChangeState(true)
     local targetIconId = self.curIconId
-    if self.m_selectedIconCell and self.m_selectedIconCell.m_id == self.curIconId and self.m_selectedIconCell.gameObject.activeInHierarchy then
+    if self.m_isIcon and self.m_selectedIconCell and self.m_selectedIconCell.m_id == self.curIconId and self.m_selectedIconCell.gameObject.activeInHierarchy then
         UIUtils.setAsNaviTarget(self.m_selectedIconCell.button)
         Notify(MessageConst.HIDE_ITEM_TIPS)
         return

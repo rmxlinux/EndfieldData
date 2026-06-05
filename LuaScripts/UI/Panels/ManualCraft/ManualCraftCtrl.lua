@@ -113,6 +113,7 @@ local ShowStatus = {
 
 
 
+
 ManualCraftCtrl = HL.Class('ManualCraftCtrl', uiCtrl.UICtrl)
 
 
@@ -126,6 +127,8 @@ ManualCraftCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_MANUAL_WORK_MODIFY] = 'OnManualWorkModify',
     [MessageConst.ON_MANUAL_WORK_CANCEL] = 'OnManualWorkCancel',
+    [MessageConst.ON_OPEN_COMMON_FILTER] = '_OpenCommonFilter',
+    [MessageConst.ON_CLOSE_COMMON_FILTER] = '_CloseCommonFilter',
     [MessageConst.ON_ITEM_COUNT_CHANGED] = 'OnItemCountChanged',
     [MessageConst.ON_MANUAL_CRAFT_POPUP_PANEL_CLOSE] = 'OnManualCraftPopupPanelClose',
 }
@@ -300,6 +303,7 @@ ManualCraftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     self:_InitFilterTypeTab()
+    self:_RecoverState(arg and arg.recoverState)
 
     self.view.btnCommon.onClick:AddListener(function()
         self:_StartCraft()
@@ -323,7 +327,6 @@ ManualCraftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:Notify(MessageConst.ON_DISABLE_COMMON_TOAST)
 end
-
 
 
 
@@ -358,6 +361,7 @@ ManualCraftCtrl.PhaseRefresh = HL.Method(HL.Any) << function(self, jumpId)
     if string.isEmpty(jumpId) then
         return
     end
+    self.view.itemContentSelectableNaviGroup:ManuallyStopFocus()
     self:_useItemNodesNaviGroupShowInfo(false)
     self.m_jumpId = jumpId
     local lastSelectedCraftId = self.m_selectedCraftTabType
@@ -981,11 +985,11 @@ ManualCraftCtrl._UpdateCell = HL.Method(GameObject, HL.Number) << function(self,
     if self.itemNaviFlag then
         if luaIdx == self.m_initSelectCsIndex + 1 then
             self.itemNaviFlag = false
-            InputManagerInst.controllerNaviManager:SetTarget(craftItemCell.button)
+            self:SetAsNaviTargetInSilentModeIfNecessary(self.view.craftNaviGroup, craftItemCell.button)
         end
     else
         if self.m_selectedCraftId == craftInfo.id then
-            InputManagerInst.controllerNaviManager:SetTarget(craftItemCell.button)
+            self:SetAsNaviTargetInSilentModeIfNecessary(self.view.craftNaviGroup, craftItemCell.button)
         end
     end
 
@@ -1095,6 +1099,70 @@ ManualCraftCtrl._SelectCraft = HL.Method(HL.String) << function(self, craftId)
     self.m_selectedCraftId = craftId
     self:_PlayCraftListSelectEffect(lastSelectedCraftId)
     self:_RefreshCraftNode(true)
+end
+
+
+
+
+ManualCraftCtrl._RecoverState = HL.Method(HL.Opt(HL.Table)) << function(self, recoverState)
+    if not recoverState then
+        return
+    end
+
+    if recoverState.filterIds then
+        local selectedFilterIdMap = {}
+        for _, filterId in ipairs(recoverState.filterIds) do
+            selectedFilterIdMap[filterId] = true
+        end
+        for _, filterInfo in ipairs(self.m_filterSetting) do
+            filterInfo.isOn = selectedFilterIdMap[filterInfo.id] == true
+        end
+    end
+
+    if recoverState.sortMode then
+        self.m_sortMode = recoverState.sortMode
+    end
+    if recoverState.sortIncremental ~= nil then
+        self.m_sortIncremental = recoverState.sortIncremental
+    end
+
+    if recoverState.tabIndex then
+        local entry = filterList[recoverState.tabIndex]
+        if entry and self.m_selectedCraftTabType == entry.type then
+            self.m_selectedCraftTabType = nil
+            self.m_nowTabCell = nil
+        end
+        if entry then
+            self:_ClickTab(recoverState.tabIndex)
+        end
+    end
+
+    if not string.isEmpty(recoverState.selectedCraftId) then
+        for index, craftInfo in ipairs(self.m_craftInfoList) do
+            if craftInfo.id == recoverState.selectedCraftId then
+                local csIndex = CSIndex(index)
+                if self.view.craftContent.curSelectedIndex ~= csIndex then
+                    self.view.craftContent:SetSelectedIndex(csIndex, true, true, false)
+                else
+                    self:_SelectCraft(recoverState.selectedCraftId)
+                end
+                self:_ScrollToCraftIndex(csIndex)
+                break
+            end
+        end
+    end
+
+    if recoverState.manualCount then
+        self.m_manualCount = recoverState.manualCount
+        self:_RefreshCraftNode(false)
+    end
+end
+
+
+
+
+ManualCraftCtrl._ScrollToCraftIndex = HL.Method(HL.Number) << function(self, csIndex)
+    self.view.craftContent:ScrollToIndex(csIndex, true, CS.Beyond.UI.UIScrollList.ScrollAlignType.Center, true)
 end
 
 
@@ -1403,6 +1471,19 @@ end
 
 
 
+ManualCraftCtrl._OpenCommonFilter = HL.Method() << function(self)
+    self.view.numberSelector_New:UpdateKeyHintVisible(false)
+end
+
+
+
+
+ManualCraftCtrl._CloseCommonFilter = HL.Method() << function(self)
+    self.view.numberSelector_New:UpdateKeyHintVisible(true)
+end
+
+
+
 
 ManualCraftCtrl._IsValuableItem = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
     local itemData = Tables.itemTable[itemId]
@@ -1608,5 +1689,24 @@ ManualCraftCtrl.OnAnimationInFinished = HL.Override() << function(self)
     if obj then
         InputManagerInst:MoveVirtualMouseTo(obj.transform, self.uiCamera)
     end
+end
+
+
+
+ManualCraftCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
+    local filterIds = {}
+    for _, filterInfo in ipairs(self.m_filterSetting) do
+        if filterInfo.isOn then
+            table.insert(filterIds, filterInfo.id)
+        end
+    end
+    return {
+        tabIndex = self.m_selectedTabIndex,
+        selectedCraftId = self.m_selectedCraftId,
+        manualCount = self.m_manualCount,
+        sortMode = self.m_sortMode,
+        sortIncremental = self.m_sortIncremental,
+        filterIds = filterIds,
+    }
 end
 HL.Commit(ManualCraftCtrl)

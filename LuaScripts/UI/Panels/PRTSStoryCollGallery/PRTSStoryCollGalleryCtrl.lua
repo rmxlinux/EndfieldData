@@ -31,6 +31,15 @@ local PHASE_ID = PhaseId.PRTSStoryCollGallery
 
 
 
+
+
+
+
+
+
+
+
+
 PRTSStoryCollGalleryCtrl = HL.Class('PRTSStoryCollGalleryCtrl', uiCtrl.UICtrl)
 
 
@@ -63,6 +72,9 @@ PRTSStoryCollGalleryCtrl.m_isOnlyShowUnread = HL.Field(HL.Boolean) << false
 PRTSStoryCollGalleryCtrl.m_curTabIndex = HL.Field(HL.Number) << 1
 
 
+PRTSStoryCollGalleryCtrl.m_arg = HL.Field(HL.Table)
+
+
 PRTSStoryCollGalleryCtrl.m_info = HL.Field(HL.Table)
 
 
@@ -72,15 +84,23 @@ PRTSStoryCollGalleryCtrl.m_needClearRedDotSet = HL.Field(HL.Table)
 PRTSStoryCollGalleryCtrl.m_isCurFocusItemList = HL.Field(HL.Boolean) << false
 
 
+PRTSStoryCollGalleryCtrl.m_selectedFirstLvId = HL.Field(HL.String) << ""
+
+
 
 
 
 
 PRTSStoryCollGalleryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg
     self:_InitUI()
     self:_InitData(arg)
     self:_UpdateData()
+    self:_ApplyResumeState(arg and arg.resumeState or nil)
     self:_RefreshAllUI()
+    if self.m_arg then
+        self.m_arg.resumeState = nil
+    end
 
     EventLogManagerInst:GameEvent_PRTSArchiveVisit(true, self.m_pageType)
 end
@@ -103,6 +123,15 @@ PRTSStoryCollGalleryCtrl.OnClose = HL.Override() << function(self)
             end
         end
     end
+end
+
+
+
+PRTSStoryCollGalleryCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
+    arg.pageType = self.m_pageType
+    arg.resumeState = self:_CollectResumeState()
+    return arg
 end
 
 
@@ -147,6 +176,19 @@ end
 
 
 
+PRTSStoryCollGalleryCtrl._CollectResumeState = HL.Method().Return(HL.Table) << function(self)
+    local curCategoryInfo = self.m_info and self.m_info.categoryInfos and self.m_info.categoryInfos[self.m_curTabIndex] or nil
+    return {
+        categoryId = curCategoryInfo and curCategoryInfo.id or nil,
+        tabIndex = self.m_curTabIndex,
+        isOnlyShowUnread = self.m_isOnlyShowUnread,
+        selectedFirstLvId = self.m_selectedFirstLvId,
+        isCurFocusItemList = self.m_isCurFocusItemList,
+    }
+end
+
+
+
 
 PRTSStoryCollGalleryCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     if (arg == nil or string.isEmpty(arg.pageType)) then
@@ -158,6 +200,8 @@ PRTSStoryCollGalleryCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     self.m_isOnlyShowUnread = false
     self.m_curTabIndex = 1
     self.m_needClearRedDotSet = {}
+    self.m_isCurFocusItemList = false
+    self.m_selectedFirstLvId = ""
 end
 
 
@@ -179,6 +223,24 @@ PRTSStoryCollGalleryCtrl._UpdateData = HL.Method() << function(self)
         iconPath = cfg.icon,
         categoryInfos = PRTSStoryCollGalleryCtrl._CreateCategoryInfos(categoryDataDict),
     }
+end
+
+
+
+
+PRTSStoryCollGalleryCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState or not self.m_info or not self.m_info.categoryInfos then
+        return
+    end
+    self.m_isOnlyShowUnread = resumeState.isOnlyShowUnread == true
+    local categoryIndex = self:_GetCategoryIndexById(resumeState.categoryId)
+    if categoryIndex > 0 then
+        self.m_curTabIndex = categoryIndex
+    else
+        self.m_curTabIndex = lume.clamp(resumeState.tabIndex or 1, 1, math.max(#self.m_info.categoryInfos, 1))
+    end
+    self.m_selectedFirstLvId = resumeState.selectedFirstLvId or ""
+    self.m_isCurFocusItemList = resumeState.isCurFocusItemList == true
 end
 
 
@@ -258,6 +320,50 @@ end
 
 
 
+PRTSStoryCollGalleryCtrl._GetCategoryIndexById = HL.Method(HL.String).Return(HL.Number) << function(self, categoryId)
+    if string.isEmpty(categoryId) then
+        return -1
+    end
+    for luaIndex, info in ipairs(self.m_info.categoryInfos) do
+        if info.id == categoryId then
+            return luaIndex
+        end
+    end
+    return -1
+end
+
+
+
+PRTSStoryCollGalleryCtrl._GetCurShowItemInfos = HL.Method().Return(HL.Table) << function(self)
+    if self.m_curTabIndex > 0 and self.m_curTabIndex <= #self.m_info.categoryInfos then
+        local categoryInfo = self.m_info.categoryInfos[self.m_curTabIndex]
+        if self.m_isOnlyShowUnread then
+            return categoryInfo.unreadItemInfos
+        end
+        return categoryInfo.itemInfos
+    end
+    return {}
+end
+
+
+
+
+PRTSStoryCollGalleryCtrl._GetItemIndexByFirstLvId = HL.Method(HL.String).Return(HL.Number) << function(self, firstLvId)
+    if string.isEmpty(firstLvId) then
+        return -1
+    end
+    local itemInfos = self:_GetCurShowItemInfos()
+    for luaIndex, info in ipairs(itemInfos) do
+        if info.firstLvId == firstLvId then
+            return luaIndex
+        end
+    end
+    return -1
+end
+
+
+
+
 
 
 
@@ -321,10 +427,32 @@ PRTSStoryCollGalleryCtrl._RefreshAllUI = HL.Method() << function(self)
     self:_RefreshTabList()
     self:_RefreshUnreadTog()
     self:_RefreshItemList(true)
-    local tabCell = self.m_genTabCells:Get(1)
-    if tabCell then
-        InputManagerInst.controllerNaviManager:SetTarget(tabCell.toggle)
+    if not self:_TryRestoreItemSelection() then
+        local tabCell = self.m_genTabCells:Get(self.m_curTabIndex) or self.m_genTabCells:Get(1)
+        if tabCell then
+            InputManagerInst.controllerNaviManager:SetTarget(tabCell.toggle)
+        end
     end
+end
+
+
+
+PRTSStoryCollGalleryCtrl._TryRestoreItemSelection = HL.Method().Return(HL.Boolean) << function(self)
+    local itemInfos = self:_GetCurShowItemInfos()
+    if #itemInfos <= 0 then
+        return false
+    end
+    local targetIndex = self:_GetItemIndexByFirstLvId(self.m_selectedFirstLvId)
+    if targetIndex < 1 then
+        targetIndex = 1
+    end
+    local targetInfo = itemInfos[targetIndex]
+    if not targetInfo then
+        return false
+    end
+    self.m_selectedFirstLvId = targetInfo.firstLvId
+    self.view.itemList:ScrollToIndex(CSIndex(targetIndex), true)
+    return false
 end
 
 
@@ -406,7 +534,7 @@ PRTSStoryCollGalleryCtrl._OnRefreshFirstLvItemCell = HL.Method(HL.Table, HL.Numb
         itemInfo = categoryInfo.itemInfos[luaIndex]
     end
     
-    cell.nameTxt.text = itemInfo.name
+    cell.nameTxt:SetAndResolveTextStyle(itemInfo.name)
     local realIconPath = Utils.getImgGenderDiffPath(itemInfo.iconPath)
     cell.iconImg:LoadSprite(UIConst.UI_SPRITE_PRTS_ICON, realIconPath)
     if itemInfo.maxCount <= 1 then
@@ -419,6 +547,11 @@ PRTSStoryCollGalleryCtrl._OnRefreshFirstLvItemCell = HL.Method(HL.Table, HL.Numb
     cell.gotoBtn.onClick:AddListener(function()
         self:_OnClickGotoBtn(luaIndex)
     end)
+    cell.gotoBtn.onIsNaviTargetChanged = function(isTarget)
+        if isTarget then
+            self.m_selectedFirstLvId = itemInfo.firstLvId
+        end
+    end
     cell.redDot:InitRedDot("PRTSFirstLv", itemInfo.firstLvId)
     
     if itemInfo.hasUnread then
@@ -436,6 +569,10 @@ PRTSStoryCollGalleryCtrl._OnClickGotoBtn = HL.Method(HL.Number) << function(self
         itemInfos = categoryInfo.unreadItemInfos
     else
         itemInfos = categoryInfo.itemInfos
+    end
+    local targetInfo = itemInfos[luaIndex]
+    if targetInfo then
+        self.m_selectedFirstLvId = targetInfo.firstLvId
     end
     local ids = {}
     for _, info in pairs(itemInfos) do

@@ -16,8 +16,6 @@ local PANEL_ID = PanelId.FacTechTreeUnlockTierPopup
 
 
 
-
-
 FacTechTreeUnlockTierPopupCtrl = HL.Class('FacTechTreeUnlockTierPopupCtrl', uiCtrl.UICtrl)
 
 
@@ -25,9 +23,6 @@ FacTechTreeUnlockTierPopupCtrl.m_costItemCellCache = HL.Field(HL.Forward("UIList
 
 
 FacTechTreeUnlockTierPopupCtrl.m_pageCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
-FacTechTreeUnlockTierPopupCtrl.m_curLayerId = HL.Field(HL.String) << ""
 
 
 FacTechTreeUnlockTierPopupCtrl.m_curLayerIndex = HL.Field(HL.Number) << -1
@@ -92,6 +87,15 @@ FacTechTreeUnlockTierPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, 
     self:_Refresh()
 
     self:_InitController()
+end
+
+
+
+FacTechTreeUnlockTierPopupCtrl.GetCurState = HL.Method().Return(HL.Table) << function(self)
+    return {
+        layerId = self.m_lockedLayerIds[self.m_curLayerIndex],
+        lockedLayerIds = self.m_lockedLayerIds,
+    }
 end
 
 

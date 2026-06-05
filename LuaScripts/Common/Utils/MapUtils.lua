@@ -11,6 +11,9 @@ function MapUtils.checkCanOpenMapAndParseArgs(args)
         
         return false, Language.LUA_GAME_MODE_FORBID_FACTORY_WATCH
     end
+    if GameInstance.player.simulationTrainingSystem.banAllAction then
+        return false, Language.LUA_GAME_MODE_FORBID_FACTORY_WATCH
+    end
     args = args or {}
     if PhaseManager:IsPhaseForbidden(PhaseId.Map) then
         return false, Language.LUA_MAP_OPEN_FORBID_CONDITION
@@ -77,6 +80,23 @@ function MapUtils.checkCanOpenMapAndParseArgs(args)
     if not string.isEmpty(args.instId) and not MapUtils.checkIsValidMarkInstId(args.instId) then
         return false
     end
+    return true
+end
+
+function MapUtils.isMarkVisible(markInstId, ignoreMist)
+    local success, markRuntimeData = GameInstance.player.mapManager:GetMarkInstRuntimeData(markInstId)
+    if not success then
+        return false
+    end
+
+    if not markRuntimeData.isVisible then
+        return false
+    end
+
+    if not ignoreMist and not markRuntimeData.visibleInMist and markRuntimeData:IsInMist() then
+        return false
+    end
+
     return true
 end
 
@@ -317,8 +337,7 @@ function MapUtils.mapRemindRedDotCheck(args)
         if mapMrg:IsRemindReadRedDot(enumType, processedId) then
             return true
         end
-        local succ, markRuntimeData = mapMrg:GetMarkInstRuntimeData(processedId)
-        if not succ or not markRuntimeData.isVisible or (not markRuntimeData.visibleInMist and markRuntimeData:IsInMist()) then
+        if not MapUtils.isMarkVisible(processedId) then
             return true
         end
         return false

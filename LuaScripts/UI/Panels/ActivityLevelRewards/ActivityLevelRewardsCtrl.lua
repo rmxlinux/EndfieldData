@@ -41,9 +41,6 @@ ActivityLevelRewardsCtrl.s_messages = HL.StaticField(HL.Table) << {
 ActivityLevelRewardsCtrl.m_rewardCount = HL.Field(HL.Number) << 0
 
 
-ActivityLevelRewardsCtrl.m_rewardList = HL.Field(HL.Table)
-
-
 ActivityLevelRewardsCtrl.m_activityId = HL.Field(HL.String) << ""
 
 
@@ -71,6 +68,9 @@ ActivityLevelRewardsCtrl.m_genCellFunc = HL.Field(HL.Function)
 ActivityLevelRewardsCtrl.m_listCells = HL.Field(HL.Table)
 
 
+ActivityLevelRewardsCtrl.m_rewardList = HL.Field(HL.Table)
+
+
 
 
 
@@ -81,6 +81,7 @@ ActivityLevelRewardsCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.activityCommonInfo:InitActivityCommonInfo(args)
     self.m_receiveStageList = {}
     self.m_completeStageList = {}
+    self.m_rewardList = {}
     self.m_rewardCount = Tables.ActivityLevelRewardsTable[self.m_activityId].stageList.length
     self.view.nowLevelNumberText.text = GameInstance.player.adventure.adventureLevelData.lv
 
@@ -163,6 +164,9 @@ ActivityLevelRewardsCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << funct
     local state = self.m_receiveStageList[index] and "Received" or (self.m_completeStageList[index] and "Completed" or "NotCompleted")
     cell.stateController:SetState(state)
     cell.redDot:InitRedDot("ActivityBaseMultiStageReward",state == "Completed")
+    if state == "Completed" then
+        table.insert(self.m_rewardList, index)
+    end
 
     
     local rewardId = stageData.rewardId
@@ -244,7 +248,7 @@ end
 
 ActivityLevelRewardsCtrl._LevelReward = HL.Method(HL.Number) << function(self,level)
     activityLevelRewardsCS = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
-    activityLevelRewardsCS:GainReward(level)
+    activityLevelRewardsCS:GainReward(self.m_rewardList)
     self.m_gainRewardIndex = level
 end
 

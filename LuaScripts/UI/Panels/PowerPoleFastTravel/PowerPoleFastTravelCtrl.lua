@@ -748,7 +748,7 @@ PowerPoleFastTravelCtrl.TriggerClosePanel = HL.Method() << function(self)
     if PhaseManager:IsOpen(PhaseId.PowerPoleFastTravel) and PhaseManager:GetTopPhaseId() == PhaseId.PowerPoleFastTravel then
         GameWorld.gameMechManager.travelPoleBrain:OnClosePanelNormal()
         PhaseManager:PopPhase(PhaseId.PowerPoleFastTravel, function()
-            GameWorld.gameMechManager.travelPoleBrain:RemoveRadioTag()
+            GameWorld.gameMechManager.travelPoleBrain:ClearExtraGlobalTags()
         end)
     end
 end

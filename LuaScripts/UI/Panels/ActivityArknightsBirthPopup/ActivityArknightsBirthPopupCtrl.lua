@@ -78,7 +78,6 @@ ActivityArknightsBirthPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     if suc then
         
         local curStage = 0 
-        local curStageId = ''
         local curSortId = 0
         for stageId, stageCfg in pairs(multiStageCfg.stageList) do
             
@@ -97,7 +96,6 @@ ActivityArknightsBirthPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self,
                 
                 if status ~= GEnums.ActivityConditionalStageState.Locked then
                     curStage = curStage + 1
-                    curStageId = stageId
                     local popupPanelId = Tables.activityArknightsBirthMultiStageTable[stageId].popupPanelId
                     if self.m_prefabName == nil or self.m_prefabName == '' then
                         self.m_prefabName = popupPanelId
@@ -126,10 +124,6 @@ ActivityArknightsBirthPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self,
             self:_Close()
         end)
         self.m_arknightsBirthPopup.rightNode.activityCommonInfo:InitActivityCommonInfo(arg)
-        if curStageId ~= '' then
-            self.m_arknightsBirthPopup.rightNode.activityCommonInfoLuaReference.infoNode.detailsTxt:SetAndResolveTextStyle(
-                Tables.activityArknightsBirthMultiStageTable[curStageId].desc)
-        end
         self.m_arknightsBirthPopup.rightNode.activityCommonInfo:UpdateGoToBtnDetailCallBack(function()
             self:_Close()
         end)

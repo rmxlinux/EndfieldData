@@ -26,6 +26,7 @@ BusinessCardProcessNode.InitBusinessCardProcessNodeByRoleId = HL.Method(HL.Numbe
             adventureLevel = playerInfo.adventureLevel,
             worldLevel = playerInfo.worldLevel,
             mainMissionId = playerInfo.mainMissionId,
+            isSelf = roleId == GameInstance.player.roleId,
         }
         self:InitBusinessCardProcessNode(info)
     else
@@ -50,24 +51,17 @@ BusinessCardProcessNode.InitBusinessCardProcessNode = HL.Method(HL.Table) << fun
     self.view.worldLevelTxt.text = info.worldLevel
 
     local currentChapter = nil
-    if info.mainMissionId then
+    if info.isSelf then
+        local missionSystem = GameInstance.player.mission
+        local missionId = missionSystem:GetLatestMainMissionId()
+        if not string.isEmpty(missionId) then
+            local chapterId = missionSystem:GetChapterIdByMissionId(missionId)
+            currentChapter = missionSystem:GetChapterInfo(chapterId)
+        end
+    elseif info.mainMissionId and not string.isEmpty(info.mainMissionId) then
         
         local chapterId = GameInstance.player.mission:GetChapterIdByMissionId(info.mainMissionId);
         currentChapter = GameInstance.player.mission:GetChapterInfo(chapterId)
-    else
-        local missionList = GameInstance.player.mission:GetMissionListLayout_CBT3(GEnums.MissionViewType.MissionViewMain:GetHashCode())
-        
-        local minChapterId = math.maxinteger
-        for _,listLayout in pairs(missionList.importance) do
-            for _, chapter in pairs(listLayout.chapters) do
-                local chapterInfo = GameInstance.player.mission:GetChapterInfo(chapter.chapterId)
-                if chapterInfo.priority < minChapterId then
-                    minChapterId = chapterInfo.priority
-                    currentChapter = chapterInfo
-                end
-            end
-        end
-
     end
 
     if currentChapter == nil then

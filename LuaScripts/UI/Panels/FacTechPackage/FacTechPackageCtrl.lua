@@ -105,7 +105,7 @@ FacTechPackageCtrl._InitController = HL.Method(HL.Table) << function(self, args)
 
     local packageId = unpack(args or {})
     local cell = string.isEmpty(packageId) and self.view.left or self.m_packageName2Cell[packageId]
-    UIUtils.setAsNaviTarget(cell.btn)
+    self:SetAsNaviTargetInSilentModeIfNecessary(self.view.selectableNaviGroup, cell.btn)
 end
 
 

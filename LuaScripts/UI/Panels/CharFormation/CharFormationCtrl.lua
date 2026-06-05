@@ -83,6 +83,15 @@ local CHAR_FORMATION_BLOCK_OBTAIN_WAYS_JUMP = "CharFormationBlockObtainWaysJump"
 
 
 
+
+
+
+
+
+
+
+
+
 CharFormationCtrl = HL.Class('CharFormationCtrl', uiCtrl.UICtrl)
 
 
@@ -97,6 +106,9 @@ CharFormationCtrl = HL.Class('CharFormationCtrl', uiCtrl.UICtrl)
 CharFormationCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHANGE_ACTIVE_SQUAD] = '_OnActiveSquadChange',
 }
+
+
+CharFormationCtrl.m_args = HL.Field(HL.Table)
 
 
 CharFormationCtrl.m_teamCells = HL.Field(HL.Forward("UIListCache"))
@@ -138,6 +150,9 @@ CharFormationCtrl.m_empty = HL.Field(HL.Boolean) << false
 CharFormationCtrl.m_dungeonId = HL.Field(HL.Any)
 
 
+CharFormationCtrl.m_subGameData = HL.Field(HL.Userdata)
+
+
 CharFormationCtrl.m_enterDungeonCallback = HL.Field(HL.Function)
 
 
@@ -157,8 +172,9 @@ CharFormationCtrl.m_curSelectTakeItemCount = HL.Field(HL.Number) << 0
 
 CharFormationCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self:_ProcessArgs(args)
+    self:_InitAction()
+    self:_Init()
     self:_InitController()
-    self:_UpdateWeekRaid()
     self.view.bannerMidNode.gameObject:SetActive(false)
 end
 
@@ -167,6 +183,7 @@ end
 
 CharFormationCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, args)
     self:_ProcessArgs(args)
+    self:_Init()
 end
 
 
@@ -278,7 +295,7 @@ CharFormationCtrl._OnBtnConfirmClicked = HL.Method() << function(self)
         end
     end
 
-    if self.state == UIConst.UI_CHAR_FORMATION_STATE.TeamWaitSet then
+    if self.state == UIConst.UI_CHAR_FORMATION_STATE.TeamWaitSet and self.m_customTeamIndex < 0 then
         self:Notify(MessageConst.ON_CHAR_FORMATION_TEAM_SET)
     end
 
@@ -326,7 +343,6 @@ CharFormationCtrl._OnBtnConfirmClicked = HL.Method() << function(self)
             
             
             GameWorld.dialogManager:Next(0)
-            
             if self.m_enterDungeonCallback then
                 self.m_enterDungeonCallback()
             end
@@ -339,6 +355,10 @@ CharFormationCtrl._OnBtnConfirmClicked = HL.Method() << function(self)
         
         AudioAdapter.PostEvent("au_ui_g_confirm_button")
     end
+
+    if self.m_args.startBtnCallback then
+        self.m_args.startBtnCallback()
+    end
 end
 
 
@@ -347,13 +367,17 @@ end
 
 
 
-CharFormationCtrl.InitSelectTeam = HL.Method() << function(self)
-    local curTeamIndex = GameInstance.player.charBag.curTeamIndex
-    self.m_teamSet = LuaIndex(curTeamIndex)
-    self:_SetTeamSelect(self.m_teamSet)
+
+CharFormationCtrl.InitSelectTeam = HL.Method(HL.Opt(HL.Number)) << function(self, selectedTeamIndex)
+    self.m_teamSet = self:_GetCurTeamIndex()
+    local index = self.m_teamSet
+    if selectedTeamIndex then
+        index = selectedTeamIndex
+    end
+    self:_SetTeamSelect(index)
 
     
-    self.view.infoNoe.gameObject:SetActive(not self.m_isFormationLocked)
+    self.view.infoNoe.gameObject:SetActive(not self:_IsSpecialFormation())
 end
 
 
@@ -440,6 +464,14 @@ CharFormationCtrl.SetState = HL.Method(HL.Number) << function(self, state)
         end
     end
     self.view.btnConfirm.gameObject:SetActive(showFormation)
+
+    if self.m_args.startBtnCallback then
+        self.view.btnConfirm.interactable = true
+    end
+    if self.m_args.startBtnText then
+        self.view.btnConfirm.text = self.m_args.startBtnText
+    end
+
     
     local showSingle = state == UIConst.UI_CHAR_FORMATION_STATE.SingleChar
     self.view.btnSoloConfirm.gameObject:SetActive(showSingle)
@@ -459,7 +491,7 @@ CharFormationCtrl.SetState = HL.Method(HL.Number) << function(self, state)
     self:RefreshSingleBtns(singleState, self.m_singleCharInfo)
 
     local leftRightVisible = state == UIConst.UI_CHAR_FORMATION_STATE.TeamWaitSet or state == UIConst.UI_CHAR_FORMATION_STATE.TeamHasSet
-    self:_RefreshLeftRightBtns(leftRightVisible and not self.m_lockedTeamData)
+    self:_RefreshLeftRightBtns(leftRightVisible and not self:_IsSpecialFormation())
 
     
     local back = state == UIConst.UI_CHAR_FORMATION_STATE.CharChange or state == UIConst.UI_CHAR_FORMATION_STATE.SingleChar
@@ -469,7 +501,9 @@ CharFormationCtrl.SetState = HL.Method(HL.Number) << function(self, state)
     
     self.view.btnBackTouch.gameObject:SetActive(showMixConfirm)
 
-    self:_RefreshWeekRaidCarryExplosivesVisible(showFormation)
+    local showCustomNode = state == UIConst.UI_CHAR_FORMATION_STATE.TeamWaitSet or
+                           state == UIConst.UI_CHAR_FORMATION_STATE.TeamHasSet
+    self.view.customNode.gameObject:SetActive(showCustomNode)
 
     self.preState = self.state
     self.state = state
@@ -545,12 +579,15 @@ end
 
 
 CharFormationCtrl.RefreshTeamName = HL.Method(HL.Opt(HL.String)) << function(self, name)
-    if string.isEmpty(name) and not self.m_isFormationLocked then
+    if self:_IsSpecialFormation() then
+        return
+    end
+    if string.isEmpty(name) then
         local team = GameInstance.player.charBag.teamList[CSIndex(self.m_curTeamIndex)]
         name = team.name
     end
 
-    if string.isEmpty(name) or self.m_isFormationLocked then
+    if string.isEmpty(name) then
         name = Language[string.format("LUA_TEAM_NUM_%d", self.m_curTeamIndex)]
     end
 
@@ -646,123 +683,72 @@ end
 
 
 
+CharFormationCtrl._GetCurTeamIndex = HL.Method().Return(HL.Number) << function(self)
+    if self.m_customTeamIndex > 0 then
+        return self.m_customTeamIndex
+    end
+    return LuaIndex(GameInstance.player.charBag.curTeamIndex)
+end
+
+
+
 
 CharFormationCtrl._ProcessArgs = HL.Method(HL.Table) << function(self, args)
+    self.m_args = args
+    self.m_customTeamIndex = args.customTeamIndex or -1
     self.m_dungeonId = args.dungeonId
     self.m_weekRaidArg = args.weekRaidArg
-    self.m_index2Char = {}
-    self.m_teamSet = LuaIndex(GameInstance.player.charBag.curTeamIndex)
     self.m_isFormationLocked = args.lockedTeamData ~= nil
     self.m_lockedTeamData = args.lockedTeamData
     self.m_enterDungeonCallback = args.enterDungeonCallback
-
-    self:_Init()
+    self.m_index2Char = {}
+    self.m_teamSet = self:_GetCurTeamIndex()
+    if not string.isEmpty(self.m_dungeonId) then
+        local _, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.m_dungeonId )
+        self.m_subGameData = subGameData
+    else
+        self.m_subGameData = nil
+    end
 end
 
 
 
 CharFormationCtrl._Init = HL.Method() << function(self)
     if self.m_dungeonId then
-        local succ, dungeonCfg = Tables.dungeonTable:TryGetValue(self.m_dungeonId)
-        if succ then
+        local _, dungeonCfg = Tables.dungeonTable:TryGetValue(self.m_dungeonId)
+        if dungeonCfg then
             if not string.isEmpty(dungeonCfg.dungeonName) then
-                self.view.titleTxt.text = dungeonCfg.dungeonName
+                self.view.titleTxt.text = string.format("//%s", dungeonCfg.dungeonName)
             end
             local featureInfos = DungeonUtils.getListByStr(dungeonCfg.featureDesc)
             local hasFeature = #featureInfos > 0
-            self.view.dungeonInfoBtn.onClick:RemoveAllListeners()
-            self.view.dungeonInfoBtn.onClick:AddListener(function()
-                UIManager:AutoOpen(PanelId.DungeonInfoPopup, { dungeonId = self.m_dungeonId })
-            end)
             self.view.dungeonInfoBtn.gameObject:SetActive(hasFeature)
         else
             self.view.dungeonInfoBtn.gameObject:SetActive(false)
             self.view.titleTxt.gameObject:SetActive(false)
         end
-    elseif self.m_weekRaidArg ~= nil then
-        local cfg = Tables.weekRaidTable:GetValue(GameInstance.player.weekRaidSystem.gameId)
-        self.view.titleTxt.text = cfg.raidTopic
-        self.view.titleDeco:LoadSprite(UIConst.UI_SPRITE_CHAR_FORMATION_ICON, cfg.icon)
-        self.view.dungeonInfoBtn.gameObject:SetActive(false)
+        if self.m_subGameData then
+            local iconId = DungeonConst.GameMechanicsTypeToFormationTitleIcon[self.m_subGameData.gameMechanicsType]
+            if not string.isEmpty(iconId) then
+                self.view.titleIcon:LoadSprite(UIConst.UI_SPRITE_CHAR_FORMATION_ICON, iconId)
+            end
+        end
     else
         self.view.dungeonInfoBtn.gameObject:SetActive(false)
     end
 
-    
-    self.view.btnClose.onClick:RemoveAllListeners()
-    self.view.btnClose.onClick:AddListener(function()
-        local isOpen, phase = PhaseManager:IsOpen(PhaseId.Dialog)
-        if isOpen then
-            Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PhaseId.CharFormation, 1 })
-        else
-            self.m_phase:OnCommonBackClicked()
-        end
-    end)
+    if not string.isEmpty(self.m_args.customTitle) then
+        self.view.titleTxt.text = string.format("//%s", self.m_args.customTitle)
+    end
 
-    self.view.btnBack.onClick:RemoveAllListeners()
-    self.view.btnBack.onClick:AddListener(function()
-        self.m_phase:OnCommonBackClicked()
-    end)
-
-    
-    self.view.btnRename.onClick:RemoveAllListeners()
-    self.view.btnRename.onClick:AddListener(function()
-        self:_OnChangeTeamNameClicked()
-    end)
-
-    
-    self.view.btnFormation.onClick:RemoveAllListeners()
-    self.view.btnFormation.onClick:AddListener(function()
-        self:_OnEnterMultiSelect()
-    end)
-
-    
-    self.view.btnMixConfirm.onClick:RemoveAllListeners()
-    self.view.btnMixConfirm.onClick:AddListener(function()
-        self:_OnBtnMixConfirmClicked()
-    end)
-
-    
-    self.view.btnMixInFight.onClick:AddListener(function()
-        self.m_phase:SetMemberAndActiveTeam()
-    end)
-
-    
-    self.view.btnConfirm.onClick:RemoveAllListeners()
-    self.view.btnConfirm.onClick:AddListener(function()
-        self:_OnBtnConfirmClicked()
-    end)
-
-    
-    self.view.btnSoloConfirm.onClick:RemoveAllListeners()
-    self.view.btnSoloConfirm.onClick:AddListener(function()
-        self:Notify(MessageConst.ON_CHAR_FORMATION_CONFIRM_SINGLE_CHAR, self.m_curTeamIndex)
-    end)
-
-    
-    self.view.btnRemove.onClick:RemoveAllListeners()
-    self.view.btnRemove.onClick:AddListener(function()
-        self:Notify(MessageConst.ON_CHAR_FORMATION_UNEQUIP_INDEX)
-    end)
-
-    self.view.buttonRight.onClick:RemoveAllListeners()
-    self.view.buttonRight.onClick:AddListener(function()
-        self:_SetTeamSelect(self.m_curTeamIndex + 1)
-    end)
-
-    self.view.buttonLeft.onClick:RemoveAllListeners()
-    self.view.buttonLeft.onClick:AddListener(function()
-        self:_SetTeamSelect(self.m_curTeamIndex - 1)
-    end)
-
-    self.view.charInformation.btnCultivation.onClick:RemoveAllListeners()
-    self.view.charInformation.btnCultivation.onClick:AddListener(function()
-        self:_OnCharInfoClicked(self.m_singleCharInfo)
-    end)
-
-    self:BindInputPlayerAction("common_open_team_panel", function()
-        PhaseManager:PopPhase(PhaseId.CharFormation)
-    end)
+    if self.m_args.infoBtnCallback then
+        self.view.dungeonInfoBtn.gameObject:SetActive(true)
+        self.view.dungeonInfoBtn.onClick:RemoveAllListeners()
+        self.view.dungeonInfoBtn.onClick:AddListener(self.m_args.infoBtnCallback)
+    end
+    if self.m_args.closeInfoBtn then
+        self.view.dungeonInfoBtn.gameObject:SetActive(false)
+    end
 
     self.m_teamCells = self.m_teamCells or UIUtils.genCellCache(self.view.team)
     local totalSquadNum = Tables.globalConst.totalSquadNum
@@ -776,35 +762,95 @@ CharFormationCtrl._Init = HL.Method() << function(self)
         cell.gameObject:SetActive(true)
     end)
 
+    self:BindInputPlayerAction("common_open_team_panel", function()
+        PhaseManager:PopPhase(PhaseId.CharFormation)
+    end)
+
     self.m_genStars = self.m_genStars or UIUtils.genCellCache(self.view.charInformation.starIcon)
     self.m_charTagCellCache = self.m_charTagCellCache or UIUtils.genCellCache(self.view.charInformation.tagCell)
-
-    
-    
 
     self.view.charInformation.gameObject:SetActive(false)
     self.view.emptyNode.gameObject:SetActive(false)
     self.view.btnCannotReplace.gameObject:SetActive(false)
-
     self.view.trialOperators.gameObject:SetActive(self.m_lockedTeamData and self.m_lockedTeamData.shouldShowTrailTips)
 
-    if not string.isEmpty(self.m_dungeonId) or self.m_weekRaidArg then
+    if not string.isEmpty(self.m_dungeonId) or self.m_weekRaidArg or self:_IsSpecialFormation() then
         UIManager:ToggleBlockObtainWaysJump(CHAR_FORMATION_BLOCK_OBTAIN_WAYS_JUMP, true)
     end
+
+    self.view.customNode.gameObject:SetAllChildrenActiveIfNecessary(false)
+    self:_UpdateWeekRaid()
+    self:_UpdateContingencyContract()
+end
+
+
+
+CharFormationCtrl._InitAction = HL.Method() << function(self)
+    
+    self.view.btnClose.onClick:AddListener(function()
+        self.m_phase:OnCommonBackClicked()
+    end)
+
+    self.view.btnBack.onClick:AddListener(function()
+        self.m_phase:OnCommonBackClicked()
+    end)
+
+    
+    self.view.btnRename.onClick:AddListener(function()
+        self:_OnChangeTeamNameClicked()
+    end)
+
+    
+    self.view.btnFormation.onClick:AddListener(function()
+        self:_OnEnterMultiSelect()
+    end)
+
+    
+    self.view.btnMixConfirm.onClick:AddListener(function()
+        self:_OnBtnMixConfirmClicked()
+    end)
+
+    
+    self.view.btnMixInFight.onClick:AddListener(function()
+        self.m_phase:SetMemberAndActiveTeam()
+    end)
+
+    
+    self.view.btnConfirm.onClick:AddListener(function()
+        self:_OnBtnConfirmClicked()
+    end)
+
+    
+    self.view.btnSoloConfirm.onClick:AddListener(function()
+        self:Notify(MessageConst.ON_CHAR_FORMATION_CONFIRM_SINGLE_CHAR, self.m_curTeamIndex)
+    end)
+
+    
+    self.view.btnRemove.onClick:AddListener(function()
+        self:Notify(MessageConst.ON_CHAR_FORMATION_UNEQUIP_INDEX)
+    end)
+
+    self.view.buttonRight.onClick:AddListener(function()
+        self:_SetTeamSelect(self:_WrapTeamIndex(self.m_curTeamIndex + 1))
+    end)
+
+    self.view.buttonLeft.onClick:AddListener(function()
+        self:_SetTeamSelect(self:_WrapTeamIndex(self.m_curTeamIndex - 1))
+    end)
+
+    self.view.charInformation.btnCultivation.onClick:AddListener(function()
+        self:_OnCharInfoClicked(self.m_singleCharInfo)
+    end)
+
+    self.view.dungeonInfoBtn.onClick:AddListener(function()
+        UIManager:AutoOpen(PanelId.DungeonInfoPopup, { dungeonId = self.m_dungeonId })
+    end)
 end
 
 
 
 
 CharFormationCtrl._SetTeamSelect = HL.Method(HL.Number) << function(self, index)
-
-    local totalSquadNum = Tables.globalConst.totalSquadNum
-    if index > totalSquadNum then
-        index = index - totalSquadNum
-    elseif index <= 0 then
-        index = index + totalSquadNum
-    end
-
     if self.m_curTeamIndex ~= index then
         local oldCell = self.m_teamCells:GetItem(self.m_curTeamIndex)
         if oldCell then
@@ -812,9 +858,10 @@ CharFormationCtrl._SetTeamSelect = HL.Method(HL.Number) << function(self, index)
         end
         self.m_curTeamIndex = index
         local newCell = self.m_teamCells:GetItem(self.m_curTeamIndex)
-        newCell:SetSelect(true)
+        if newCell then
+            newCell:SetSelect(true)
+        end
         self:Notify(MessageConst.ON_CHAR_FORMATION_SELECT_TEAM_CHANGE, self.m_curTeamIndex)
-        self:RefreshTeamName()
     end
 
     if self.m_curTeamIndex == self.m_teamSet then
@@ -824,6 +871,19 @@ CharFormationCtrl._SetTeamSelect = HL.Method(HL.Number) << function(self, index)
     end
 
     self:RefreshTeamName()
+end
+
+
+
+
+CharFormationCtrl._WrapTeamIndex = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
+    local totalSquadNum = Tables.globalConst.totalSquadNum
+    if index > totalSquadNum then
+        index = index - totalSquadNum
+    elseif index <= 0 then
+        index = index + totalSquadNum
+    end
+    return index
 end
 
 
@@ -898,8 +958,12 @@ CharFormationCtrl._RefreshLeftRightBtns = HL.Method(HL.Boolean) << function(self
     if visible then
         self.view.buttonLeft.gameObject:SetActive(true)
         self.view.buttonRight.gameObject:SetActive(true)
+        self.view.buttonLeft.interactable = true
+        self.view.buttonRight.interactable = true
         self.view.midNodeAnim:PlayInAnimation()
     else
+        self.view.buttonLeft.interactable = false
+        self.view.buttonRight.interactable = false
         self.view.midNodeAnim:PlayOutAnimation(function()
             self.view.buttonLeft.gameObject:SetActive(false)
             self.view.buttonRight.gameObject:SetActive(false)
@@ -946,6 +1010,7 @@ CharFormationCtrl._OnActiveSquadChange = HL.Method(HL.Table) << function(self, a
         coroutine.wait(self.view.config.SQUAD_CHANGED_TIPS_TIME)
         self.view.bannerMidNode.gameObject:SetActive(false)
     end)
+    FilterUtils.setCharInstIdIndexDirty()
 end
 
 
@@ -961,7 +1026,7 @@ CharFormationCtrl._EnterDungeon = HL.Method(HL.String, HL.Opt(HL.Table)) << func
     end
     if entered then
         
-        self:Notify(MessageConst.DIALOG_CLOSE_UI, { nil, nil, 0 })
+        GameWorld.dialogManager:Next(0)
         if self.m_enterDungeonCallback then
             self.m_enterDungeonCallback(dungeonId)
         end
@@ -1020,8 +1085,7 @@ end
 
 CharFormationCtrl._ActiveTeamInfo = HL.Method(HL.Boolean) << function(self, active)
     self.view.charTittleNode.gameObject:SetActive(active)
-    self.view.infoNoe.gameObject:SetActive(active and not self.m_isFormationLocked)
-    self:_RefreshWeekRaidCarryExplosivesVisible(active)
+    self.view.infoNoe.gameObject:SetActive(active and not self:_IsSpecialFormation())
 end
 
 
@@ -1059,6 +1123,99 @@ CharFormationCtrl.GetCurCharList = HL.Method().Return(HL.Table) << function(self
 end
 
 
+
+
+CharFormationCtrl.GetCharListItemByInstId = HL.Method(HL.Number).Return(HL.Opt(HL.Table)) << function(self, charInstId)
+    for _, charItem in ipairs(self.m_tmpCharItems or {}) do
+        if charItem.instId == charInstId then
+            return charItem
+        end
+    end
+    return nil
+end
+
+
+
+
+CharFormationCtrl.RecoverMultiCharListSelection = HL.Method(HL.Table).Return(HL.Table, HL.Table) << function(self, charInstIds)
+    local selectedCharItems = {}
+    for _, charInstId in ipairs(charInstIds) do
+        local charItem = self:GetCharListItemByInstId(charInstId)
+        if charItem then
+            table.insert(selectedCharItems, charItem)
+        end
+    end
+    self.view.charList:ShowSelectChars(selectedCharItems, false)
+
+    local charItemList = self:GetCurCharList()
+    local charInfoList = {}
+    for _, charItem in ipairs(charItemList) do
+        table.insert(charInfoList, {
+            charId = charItem.templateId,
+            charInstId = charItem.instId,
+            isLocked = charItem.isLocked,
+            isTrail = charItem.isTrail,
+            isReplaceable = charItem.isReplaceable,
+        })
+    end
+    return charItemList, charInfoList
+end
+
+
+
+CharFormationCtrl.CollectCharListSortFilterState = HL.Method().Return(HL.Table) << function(self)
+    local recoverState = {}
+    local charListView = self.view and self.view.charList and self.view.charList.view or nil
+    local sortNode = charListView and charListView.sortNode or nil
+    if sortNode then
+        recoverState.sortSelectedIndex = sortNode:GetCurSelectedIndex()
+        recoverState.sortIsIncremental = sortNode.isIncremental
+        if sortNode.m_filterBtn and sortNode.m_filterBtn.m_args then
+            recoverState.filterTags = lume.deepCopy(sortNode.m_filterBtn.m_args.selectedTags)
+        end
+    end
+    return recoverState
+end
+
+
+
+
+CharFormationCtrl.ApplyCharListSortFilterState = HL.Method(HL.Table) << function(self, recoverState)
+    if not recoverState then
+        return
+    end
+    local charListView = self.view and self.view.charList and self.view.charList.view or nil
+    local sortNode = charListView and charListView.sortNode or nil
+    if not sortNode then
+        return
+    end
+
+    local sortSelectedIndex = recoverState.sortSelectedIndex
+    if sortSelectedIndex and sortNode.m_sortOptions and sortNode.view and sortNode.view.mobilePCNode and sortNode.view.mobilePCNode.dropDown then
+        local optionCount = #sortNode.m_sortOptions
+        if optionCount > 0 then
+            sortSelectedIndex = math.max(1, math.min(sortSelectedIndex, optionCount))
+            sortNode.isIncremental = recoverState.sortIsIncremental == true
+            sortNode:RefreshIncremental()
+            sortNode.view.mobilePCNode.dropDown:SetSelected(CSIndex(sortSelectedIndex), true, false)
+        end
+    end
+
+    local filterTags = recoverState.filterTags and lume.deepCopy(recoverState.filterTags) or {}
+    if sortNode.m_filterBtn and sortNode.m_filterBtn.m_args then
+        sortNode.m_filterBtn.m_args.selectedTags = lume.deepCopy(filterTags)
+        if sortNode.m_filterBtn.m_args.onConfirm then
+            sortNode.m_filterBtn.m_args.onConfirm(filterTags)
+        else
+            sortNode:OnSortChanged()
+        end
+    else
+        sortNode:OnSortChanged()
+    end
+    sortNode:UpdateDeviceState()
+end
+
+
 CharFormationCtrl.m_charListMode = HL.Field(HL.Number) << 0
 
 
@@ -1081,7 +1238,7 @@ CharFormationCtrl._RefreshCharList = HL.Method() << function(self)
     if self.m_lockedTeamData then
         self.m_tmpCharItems = CharInfoUtils.getCharInfoListWithLockedTeamData(self.m_lockedTeamData)
     else
-        self.m_tmpCharItems = CharInfoUtils.getCharInfoList(CSIndex(self.m_curTeamIndex))
+        self.m_tmpCharItems = CharInfoUtils.getCharInfoList(CSIndex(self.m_curTeamIndex), true)
     end
     self.view.charList:UpdateCharItems(self.m_tmpCharItems)
 end
@@ -1127,6 +1284,16 @@ CharFormationCtrl.m_isFormationLocked = HL.Field(HL.Boolean) << false
 
 
 CharFormationCtrl.m_lockedTeamData = HL.Field(HL.Table)
+
+
+
+CharFormationCtrl.m_customTeamIndex = HL.Field(HL.Number) << -1
+
+
+
+CharFormationCtrl._IsSpecialFormation = HL.Method().Return(HL.Boolean) << function(self)
+    return self.m_lockedTeamData ~= nil or self.m_customTeamIndex > 0
+end
 
 
 
@@ -1194,28 +1361,26 @@ end
 
 
 
-
-CharFormationCtrl._RefreshWeekRaidCarryExplosivesVisible = HL.Method(HL.Boolean) << function(self, showTeamInfo)
-    
-    local isWeekRaid = self.m_weekRaidArg ~= nil
-    local success, maxCount = GameInstance.player.weekRaidSystem.techTypeValue:TryGetValue(GEnums.WeekRaidTechType.BombLimit)
-    self.view.carryingExplosives.gameObject:SetActive(isWeekRaid and success and maxCount > 0 and showTeamInfo)
-end
-
-
-
 CharFormationCtrl._UpdateWeekRaid = HL.Method() << function(self)
     local isWeekRaid = self.m_weekRaidArg ~= nil
-    self:_RefreshWeekRaidCarryExplosivesVisible(self.state == UIConst.UI_CHAR_FORMATION_STATE.TeamWaitSet or
-        self.state == UIConst.UI_CHAR_FORMATION_STATE.TeamHasSet)
+
+    
+    local success, maxCount = GameInstance.player.weekRaidSystem.techTypeValue:TryGetValue(GEnums.WeekRaidTechType.BombLimit)
+    self.view.carryingExplosives.gameObject:SetActive(isWeekRaid and success and maxCount > 0)
 
     if isWeekRaid then
+        self.m_curSelectTakeItemCount = GameInstance.player.weekRaidSystem.lastBombCount
         local lastCount = GameInstance.player.weekRaidSystem.lastBombCount
         local allCount = Utils.getItemCount(Tables.weekRaidConst.takeItemId, true, true)
         self.m_curSelectTakeItemCount = math.min(lastCount, allCount)
         if self.m_curSelectTakeItemCount ~= GameInstance.player.weekRaidSystem.lastBombCount then
             GameInstance.player.weekRaidSystem:SetBombCount(self.m_curSelectTakeItemCount)
         end
+        local cfg = Tables.weekRaidTable:GetValue(GameInstance.player.weekRaidSystem.gameId)
+        self.view.titleTxt.text = string.format("//%s", cfg.raidTopic)
+        self.view.titleIcon:LoadSprite(UIConst.UI_SPRITE_CHAR_FORMATION_ICON, cfg.icon)
+        self.view.dungeonInfoBtn.gameObject:SetActive(false)
+
         CS.Beyond.Gameplay.Conditions.OnWeekRaidIntroCharFormationOpen.Trigger()
         self.view.carryingExplosives.addBtn.onClick:RemoveAllListeners()
         self.view.carryingExplosives.addBtn.onClick:AddListener(function()
@@ -1249,6 +1414,10 @@ end
 
 
 CharFormationCtrl._UpdateTakeItemInfo = HL.Method() << function(self)
+    if self.m_isClosed then
+        return
+    end
+
     if self.m_curSelectTakeItemCount <= 0 then
         self.view.carryingExplosives.itemBigBlack.gameObject:SetActiveIfNecessary(false)
     else
@@ -1260,6 +1429,55 @@ CharFormationCtrl._UpdateTakeItemInfo = HL.Method() << function(self)
             self:_AdjustSelectTakeItemCount()
         end)
     end
+end
+
+
+
+
+
+
+CharFormationCtrl.m_isContingencyContract = HL.Field(HL.Boolean) << false
+
+
+
+CharFormationCtrl._UpdateContingencyContract = HL.Method() << function(self)
+    self.m_isContingencyContract = false
+    if self.m_subGameData and self.m_subGameData.gameMechanicsType == GEnums.GameMechanicsType.DungeonContingencyContract then
+        self.m_isContingencyContract = true
+    end
+    self.view.contingencyTips.gameObject:SetActive(false)
+
+    if not self.m_isContingencyContract then
+        return
+    end
+
+    
+    local ccSystem = GameInstance.player.contingencyContractSystem
+    local _, gameData = ccSystem.ccDataDict:TryGetValue(self.m_dungeonId)
+    local tagIds = {}
+    local tempTipData
+    if gameData then
+        for _, tagId in pairs(gameData.curSelectTagList) do
+            if not tempTipData then
+                local _, tipData = Tables.CcTagTipTable:TryGetValue(tagId)
+                if tipData and not string.isEmpty(tipData.formationTip) then
+                    tempTipData = tipData
+                    self.view.contingencyTips.gameObject:SetActive(true)
+                    self.view.contingencyTips.tipsTxt.text = tipData.formationTip
+                end
+            end
+            table.insert(tagIds, tagId)
+        end
+    end
+
+    self.view.dungeonInfoBtn.gameObject:SetActive(true)
+    self.view.dungeonInfoBtn.onClick:RemoveAllListeners()
+    self.view.dungeonInfoBtn.onClick:AddListener(function()
+        PhaseManager:OpenPhase(PhaseId.ContingencyContractDetailsPopup, {
+            gameId = self.m_dungeonId,
+            tagIds = tagIds,
+        })
+    end)
 end
 
 

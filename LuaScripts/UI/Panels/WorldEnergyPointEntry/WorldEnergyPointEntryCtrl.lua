@@ -37,6 +37,8 @@ local WEP_NOT_GEM_CUSTOM_CONFIRM_HINT_KEY = "wep_not_gem_custom_confirm_hint"
 
 
 
+
+
 WorldEnergyPointEntryCtrl = HL.Class('WorldEnergyPointEntryCtrl', uiCtrl.UICtrl)
 
 
@@ -89,6 +91,10 @@ WorldEnergyPointEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnClickGemCustomBtn()
     end)
 
+    self.view.btnGemWishlist.onClick:AddListener(function()
+        PhaseManager:OpenPhase(PhaseId.GemWishlist)
+    end)
+
     self.view.weakNode.onClick:AddListener(function()
         self:_OnClickWeakInfoBtn()
     end)
@@ -104,6 +110,12 @@ WorldEnergyPointEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_InitData(arg)
     self:_InitView()
+
+    
+    self:TryRecoverPopupState(arg and arg.popupState)
+    if arg then
+        arg.popupState = nil
+    end
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
@@ -149,6 +161,9 @@ WorldEnergyPointEntryCtrl._InitBasicView = HL.Method() << function(self)
 
     
     self.view.gemPreNode.gameObject:SetActive(self.m_isFull)
+
+    
+    self.view.btnGemWishlist.gameObject:SetActive(PhaseManager:IsPhaseUnlocked(PhaseId.GemWishlist))
 
     
     self.view.worldEnergyPointTitleTxt.text = worldEnergyPointCfg.gameName
@@ -338,13 +353,21 @@ end
 
 
 
-WorldEnergyPointEntryCtrl._OnClickEnemyInfoBtn = HL.Method() << function(self)
+
+WorldEnergyPointEntryCtrl._OnClickEnemyInfoBtn = HL.Method(HL.Opt(HL.Number)) << function(self, initSelectEnemyLuaIndex)
     local worldEnergyPointCfg = Tables.worldEnergyPointTable[self.m_gameId]
-    UIManager:AutoOpen(PanelId.CommonEnemyPopup, { title = Language.LUA_WEP_ENEMY_INFO_TITLE,
-                                                   enemyListTitle = Language["ui_dungeon_enemy_popup_info_list"],
-                                                   enemyInfoTitle = Language["ui_dungeon_enemy_popup_info_desc"],
-                                                   enemyIds = worldEnergyPointCfg.enemyIds,
-                                                   enemyLevels = worldEnergyPointCfg.enemyLevels })
+    local enemyPopupArg = {
+        title = Language.LUA_WEP_ENEMY_INFO_TITLE,
+        enemyListTitle = Language["ui_dungeon_enemy_popup_info_list"],
+        enemyInfoTitle = Language["ui_dungeon_enemy_popup_info_desc"],
+        enemyIds = worldEnergyPointCfg.enemyIds,
+        enemyLevels = worldEnergyPointCfg.enemyLevels
+    }
+    
+    if initSelectEnemyLuaIndex ~= nil then
+        enemyPopupArg.initSelectEnemyLuaIndex = initSelectEnemyLuaIndex
+    end
+    UIManager:AutoOpen(PanelId.CommonEnemyPopup, enemyPopupArg)
 end
 
 
@@ -515,6 +538,90 @@ WorldEnergyPointEntryCtrl._TryShowSerializedPopup = HL.Method(HL.String, HL.Stri
                 onConfirm()
             end,
         })
+    end
+end
+
+
+
+WorldEnergyPointEntryCtrl.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+    if isOpen and instructionCtrl.id == WORLD_ENERGY_POINT_WEAK_INSTRUCTION_ID then
+        return {
+            popupType = "WeakInstructionBook",
+        }
+    end
+
+    local isGemOverviewOpen = UIManager:IsOpen(PanelId.GemTermOverviewPopup)
+    if isGemOverviewOpen then
+        return {
+            popupType = "GemOverview",
+        }
+    end
+
+    local isRewardDetailsOpen = UIManager:IsOpen(PanelId.CommonRewardDetailsPopup)
+    if isRewardDetailsOpen then
+        return {
+            popupType = "RewardDetails",
+        }
+    end
+
+    local isEnemyPopupOpen, enemyPopupCtrl = UIManager:IsOpen(PanelId.CommonEnemyPopup)
+    if isEnemyPopupOpen then
+        local popupState = {
+            popupType = "EnemyDetails",
+        }
+        
+        if HL.TryGet(enemyPopupCtrl, "GetCurSelectEnemyLuaIndex") then
+            local selectedEnemyLuaIndex = enemyPopupCtrl:GetCurSelectEnemyLuaIndex()
+            if selectedEnemyLuaIndex > 0 then
+                popupState.selectedEnemyLuaIndex = selectedEnemyLuaIndex
+            end
+        end
+        return popupState
+    end
+end
+
+
+
+
+WorldEnergyPointEntryCtrl.TryRecoverPopupState = HL.Method(HL.Any) << function(self, popupState)
+    if popupState == nil or string.isEmpty(popupState.popupType) then
+        return
+    end
+
+    if popupState.popupType == "WeakInstructionBook" then
+        local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+        if isOpen and instructionCtrl.id == WORLD_ENERGY_POINT_WEAK_INSTRUCTION_ID then
+            return
+        end
+        self:_OnClickWeakInfoBtn()
+        return
+    end
+
+    if popupState.popupType == "GemOverview" then
+        local isOpen = UIManager:IsOpen(PanelId.GemTermOverviewPopup)
+        if isOpen then
+            return
+        end
+        self:_OnClickGemOverviewBtn()
+        return
+    end
+
+    if popupState.popupType == "RewardDetails" then
+        local isOpen = UIManager:IsOpen(PanelId.CommonRewardDetailsPopup)
+        if isOpen then
+            return
+        end
+        self:_OnClickBtnRewardDetails()
+        return
+    end
+
+    if popupState.popupType == "EnemyDetails" then
+        local isOpen = UIManager:IsOpen(PanelId.CommonEnemyPopup)
+        if isOpen then
+            return
+        end
+        self:_OnClickEnemyInfoBtn(popupState.selectedEnemyLuaIndex)
     end
 end
 

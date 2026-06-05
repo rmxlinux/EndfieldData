@@ -38,6 +38,8 @@ local PANEL_ID = PanelId.CharacterSummon
 
 
 
+
+
 CharacterSummonCtrl = HL.Class('CharacterSummonCtrl', uiCtrl.UICtrl)
 
 
@@ -143,6 +145,25 @@ CharacterSummonCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     self:_InitCharInfos()
+    if arg and arg.recoverState then
+        self:_TryRecoverState(arg.recoverState)
+    end
+end
+
+
+
+CharacterSummonCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local recoverState = {
+        selectedCharIdList = lume.clone(self.m_selectedNum2CharId),
+        sortSelectedIndex = self.view.sortNodeUp:GetCurSelectedIndex(),
+        sortIsIncremental = self.view.sortNodeUp.isIncremental,
+    }
+    if self.view.filterBtn.m_args then
+        recoverState.filterTags = lume.deepCopy(self.view.filterBtn.m_args.selectedTags)
+    end
+    return {
+        recoverState = recoverState,
+    }
 end
 
 
@@ -414,6 +435,51 @@ CharacterSummonCtrl._FilterBtnGetResCount = HL.Method(HL.Table).Return(HL.Number
         end
     end
     return resultCount
+end
+
+
+
+
+CharacterSummonCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
+    local validSelectedCharIdList = {}
+    if recoverState.selectedCharIdList then
+        for _, charId in ipairs(recoverState.selectedCharIdList) do
+            if self.m_charId2Infos[charId] then
+                table.insert(validSelectedCharIdList, charId)
+            end
+        end
+    end
+    self.m_selectedNum2CharId = {}
+    self.m_charId2ChooseState = {}
+    for index, charId in ipairs(validSelectedCharIdList) do
+        self.m_selectedNum2CharId[index] = charId
+        self.m_charId2ChooseState[charId] = index
+    end
+    self:_SetSelectedNum(#validSelectedCharIdList)
+
+    local sortNode = self.view.sortNodeUp
+    local sortSelectedIndex = recoverState.sortSelectedIndex
+    if sortSelectedIndex and sortNode and sortNode.m_sortOptions and sortNode.view and sortNode.view.mobilePCNode and sortNode.view.mobilePCNode.dropDown then
+        local optionCount = #sortNode.m_sortOptions
+        if optionCount > 0 then
+            sortSelectedIndex = math.max(1, math.min(sortSelectedIndex, optionCount))
+            sortNode.isIncremental = recoverState.sortIsIncremental == true
+            sortNode:RefreshIncremental()
+            sortNode.view.mobilePCNode.dropDown:SetSelected(CSIndex(sortSelectedIndex), true, false)
+        end
+    end
+
+    local filterTags = recoverState.filterTags and lume.deepCopy(recoverState.filterTags) or {}
+    self.m_selectedTags = filterTags
+    if self.view.filterBtn.m_args then
+        self.view.filterBtn.m_args.selectedTags = lume.deepCopy(filterTags)
+    end
+    if self.view.filterBtn.m_args and self.view.filterBtn.m_args.onConfirm then
+        self.view.filterBtn.m_args.onConfirm(filterTags)
+    else
+        sortNode:OnSortChanged()
+    end
+    sortNode:UpdateDeviceState()
 end
 
 

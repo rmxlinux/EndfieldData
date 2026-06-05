@@ -95,7 +95,7 @@ GameSettingItemCell.Refresh = HL.Method() << function(self)
     local showRedDot = not string.isEmpty(itemData.settingRedDot)
     self.view.redDot.gameObject:SetActive(showRedDot)
     if showRedDot then
-        self.view.redDot:InitRedDot(itemData.settingRedDot)
+        self.view.redDot:InitRedDot(itemData.settingRedDot, itemData.settingId, nil, self:GetUICtrl().view.redDotScrollRect)
     end
 end
 

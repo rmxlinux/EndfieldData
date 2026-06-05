@@ -31,6 +31,9 @@ local PANEL_ID = PanelId.CharInfoWeapon
 
 
 
+
+
+
 CharInfoWeaponCtrl = HL.Class('CharInfoWeaponCtrl', uiCtrl.UICtrl)
 
 
@@ -46,6 +49,9 @@ CharInfoWeaponCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.GUIDE_CHAR_INFO_WEAPON_SCROLL_TO_TOP] = 'OnGuideScrollToTop',
     [MessageConst.CHAR_INFO_WEAPON_SELECT_WEAPON] = 'OnNotifySelectWeapon',
 }
+
+
+CharInfoWeaponCtrl.m_arg = HL.Field(HL.Table)
 
 
 CharInfoWeaponCtrl.m_charInfo = HL.Field(HL.Table)
@@ -64,6 +70,7 @@ CharInfoWeaponCtrl.m_inCompare = HL.Field(HL.Boolean) << false
 
 
 CharInfoWeaponCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg
     self:_InitActionEvent()
 
     self.view.bgMask.gameObject:SetActive(false)
@@ -78,7 +85,6 @@ CharInfoWeaponCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local phase = arg.phase
 
     self.m_charInfo = initCharInfo
-    self.m_phase = phase
 
     local curWeaponInstId = CharInfoUtils.getCharCurWeapon(self.m_charInfo.instId).weaponInstId
     self.m_curSelectInstId = curWeaponInstId
@@ -87,6 +93,8 @@ CharInfoWeaponCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     if DeviceInfo.usingController then
         self.m_phase:_ActiveWeaponPageNavi(self, true)
     end
+    self:_ProcessStateArg(self.m_arg.stateArg)
+    self.m_arg.stateArg = nil
 end
 
 
@@ -283,6 +291,15 @@ CharInfoWeaponCtrl._RefreshWeaponList = HL.Method(HL.Opt(HL.Any)) << function(se
     local charTable = CharInfoUtils.getCharTableData(self.m_charInfo.templateId)
     local weaponType = charTable.weaponType
 
+    local curSortCSIndex, curSortIsIncremental, selectedTags, skipGraduallyShow
+    if self.m_arg.stateArg then
+        curSortCSIndex = self.m_arg.stateArg.curSortCSIndex
+        curSortIsIncremental = self.m_arg.stateArg.curSortIsIncremental
+        selectedTags = self.m_arg.stateArg.selectedTags
+        skipGraduallyShow = true
+        selectedIndexId = nil
+    end
+
     self.view.commonItemList:InitCommonItemList({
         listType = UIConst.COMMON_ITEM_LIST_TYPE.CHAR_INFO_WEAPON,
         defaultSelectedIndex = 1,
@@ -303,8 +320,15 @@ CharInfoWeaponCtrl._RefreshWeaponList = HL.Method(HL.Opt(HL.Any)) << function(se
         filter_weaponType = weaponType,
         enableKeyboardNavi = true,
         afterSetItemSelected = function(cell, selected)
+            if self.m_arg.stateArg and self.m_arg.stateArg.isTagBtnClicked then
+                return
+            end
             Notify(MessageConst.CHAR_INFO_WEAPON_LIST_SELECT_ITEM, cell)
         end,
+        curSortCSIndex = curSortCSIndex,
+        curSortIsIncremental = curSortIsIncremental,
+        selectedTags = selectedTags,
+        skipGraduallyShow = skipGraduallyShow,
     })
 end
 
@@ -544,6 +568,7 @@ CharInfoWeaponCtrl._InitController = HL.Method() << function(self)
     self.view.focusMasteryHint.gameObject:SetActive(false)
     self.m_focusMasteryBindingId = self:BindInputPlayerAction("char_info_weapon_focus_mastery", function()
         if self.state == UIConst.CHAR_INFO_WEAPON_STATE.Detail then
+            self.view.commonItemList.view.itemList:SkipGraduallyShow()
             self.view.focusMasteryNaviGroup:ManuallyFocus()
         end
     end)
@@ -570,6 +595,42 @@ CharInfoWeaponCtrl._SetFocusMasteryNaviGroupActive = HL.Method(HL.Boolean) << fu
     self.view.focusMasteryHint.gameObject:SetActive(enabled)
     self.view.focusMasteryNaviGroup.removeLayerOnDisable = enabled
     InputManagerInst:ToggleBinding(self.m_focusMasteryBindingId, enabled)
+end
+
+
+
+CharInfoWeaponCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    local arg = {
+        inCompare = self.m_inCompare,
+        isDetail = self.state == UIConst.CHAR_INFO_WEAPON_STATE.Detail,
+        curSortCSIndex = self.view.commonItemList.view.sortNode:GetCurSelectedIndex() - 1,
+        curSortIsIncremental = self.view.commonItemList.view.sortNode.isIncremental,
+        selectedTags = self.view.commonItemList.m_selectedTags,
+        curSelectedIndex = self.view.commonItemList:IsAnyItemSelecting() and self.view.commonItemList:GetCurSelectIndex() or nil,
+        isBtnFullSkillClicked = UIManager:IsShow(PanelId.WeaponSkillDetail),
+        isTagBtnClicked = UIManager:IsShow(PanelId.RecommendedTips),
+    }
+    return arg
+end
+
+
+
+
+CharInfoWeaponCtrl._ProcessStateArg = HL.Method(HL.Table) << function(self, arg)
+    if arg == nil or not arg.isDetail then
+        return
+    end
+    self:SwitchState(UIConst.CHAR_INFO_WEAPON_STATE.Detail)
+    self.view.commonItemList:SetSelectedIndex(arg.curSelectedIndex, false)
+    if arg.inCompare then
+        self:_SwitchCompare(true)
+    end
+    if arg.isBtnFullSkillClicked then
+        self.view.btnFullSkill.onClick:Invoke()
+    end
+    if arg.isTagBtnClicked then
+        self.view.weaponInfoRight.view.tagBtn.onClick:Invoke()
+    end
 end
 
 

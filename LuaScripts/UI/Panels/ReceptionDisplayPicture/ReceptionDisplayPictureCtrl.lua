@@ -15,6 +15,7 @@ local PANEL_ID = PanelId.ReceptionDisplayPicture
 
 
 
+
 ReceptionDisplayPictureCtrl = HL.Class('ReceptionDisplayPictureCtrl', uiCtrl.UICtrl)
 
 
@@ -106,6 +107,19 @@ end
 
 ReceptionDisplayPictureCtrl.OnClose = HL.Override() << function(self)
 
+end
+
+
+
+ReceptionDisplayPictureCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local info = self.m_charPotentialIndex2Infos and self.m_charPotentialIndex2Infos[self.m_curIndex]
+    if not info or not info.posterData then
+        return nil
+    end
+    return {
+        currentIndex = self.m_curIndex,
+        pictureId = info.posterData.pictureId,
+    }
 end
 
 

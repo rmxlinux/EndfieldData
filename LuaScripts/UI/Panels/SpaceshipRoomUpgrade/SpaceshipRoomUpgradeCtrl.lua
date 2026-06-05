@@ -2,46 +2,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipRoomUpgrade
 local PHASE_ID = PhaseId.SpaceshipRoomUpgrade
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipRoomUpgradeCtrl = HL.Class('SpaceshipRoomUpgradeCtrl', uiCtrl.UICtrl)
 
 
@@ -56,62 +16,43 @@ local States = {
 
 
 
-
 SpaceshipRoomUpgradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SPACESHIP_ON_ROOM_LEVEL_UP] = 'OnRoomLevelUp',
     [MessageConst.SPACESHIP_ON_ROOM_ADDED] = 'OnRoomAdded',
 }
 
 
-
 SpaceshipRoomUpgradeCtrl.m_roomId = HL.Field(HL.String) << ''
-
 
 SpaceshipRoomUpgradeCtrl.m_roomType = HL.Field(GEnums.SpaceshipRoomType)
 
-
 SpaceshipRoomUpgradeCtrl.m_allowBuildType = HL.Field(GEnums.SpaceshipRoomType)
-
 
 SpaceshipRoomUpgradeCtrl.m_buildTypeIndex = HL.Field(HL.Number) << -1
 
-
 SpaceshipRoomUpgradeCtrl.m_buildTypeData = HL.Field(HL.Table)
-
 
 SpaceshipRoomUpgradeCtrl.m_moveCam = HL.Field(HL.Boolean) << false
 
-
 SpaceshipRoomUpgradeCtrl.m_clearScreenKey = HL.Field(HL.Number) << -1
-
 
 SpaceshipRoomUpgradeCtrl.m_roomInfo = HL.Field(CS.Beyond.Gameplay.SpaceshipSystem.Room)
 
-
 SpaceshipRoomUpgradeCtrl.m_roomTypeData = HL.Field(Cfg.Types.SpaceshipRoomTypeData)
-
 
 SpaceshipRoomUpgradeCtrl.m_roomLvTable = HL.Field(HL.Userdata)
 
-
 SpaceshipRoomUpgradeCtrl.m_isEnough = HL.Field(HL.Boolean) << false
-
 
 SpaceshipRoomUpgradeCtrl.m_curSelectedLv = HL.Field(HL.Number) << -1
 
-
 SpaceshipRoomUpgradeCtrl.m_state = HL.Field(HL.String) << ''
-
 
 SpaceshipRoomUpgradeCtrl.m_upgradeEffectCells = HL.Field(HL.Forward('UIListCache'))
 
-
 SpaceshipRoomUpgradeCtrl.m_portNodeCells = HL.Field(HL.Forward('UIListCache'))
 
-
 SpaceshipRoomUpgradeCtrl.m_tempCancelBindingId = HL.Field(HL.Number) << -1
-
-
 
 SpaceshipRoomUpgradeCtrl.OnIntSSRoom = HL.StaticMethod(HL.Any) << function(args)
     local roomId, type, cameraBlend = unpack(args)
@@ -133,11 +74,30 @@ SpaceshipRoomUpgradeCtrl.OnIntSSRoom = HL.StaticMethod(HL.Any) << function(args)
     elseif type == CS.Beyond.Gameplay.SpaceshipIntType.Room then
         local roomType = room.type
         local phaseId = PhaseId[SpaceshipConst.ROOM_PHASE_ID_NAME_MAP_BY_TYPE[roomType]]
+        local phaseArgs =
+        {
+            roomId = roomId,
+            moveCam = true,
+        }
+        if not PhaseManager:CheckCanOpenPhaseAndToast(phaseId, phaseArgs) or PhaseManager:CheckIsInTransition() then
+            return
+        end
+
+        local startPhaseId = PhaseManager:GetTopPhaseId()
         GameInstance.player.spaceship:MoveCamToSpaceshipRoom(roomId)
+        local clearScreenKey
+        if cameraBlend then
+            clearScreenKey = UIManager:ClearScreen()
+        end
+        phaseArgs.clearScreenKey = clearScreenKey
         TimerManager:StartTimer(0.5, function()
-            local phaseArgs = { roomId = roomId, moveCam = true, }
-            if not PhaseManager:CheckCanOpenPhaseAndToast(phaseId, phaseArgs) or PhaseManager:CheckIsInTransition() then
+            local canOpenPhase = PhaseManager:GetTopPhaseId() == startPhaseId and not PhaseManager:CheckIsInTransition()
+                and PhaseManager:CheckCanOpenPhase(phaseId, phaseArgs, true)
+            if not canOpenPhase then
                 GameInstance.player.spaceship:UndoMoveCamToSpaceshipRoom(roomId)
+                if clearScreenKey and clearScreenKey ~= -1 then
+                    UIManager:RecoverScreen(clearScreenKey)
+                end
                 return
             end
             PhaseManager:OpenPhase(phaseId, phaseArgs)
@@ -155,17 +115,12 @@ SpaceshipRoomUpgradeCtrl.OnIntSSRoom = HL.StaticMethod(HL.Any) << function(args)
     end
 end
 
-
-
 SpaceshipRoomUpgradeCtrl.OnRoomDeconstruct = HL.StaticMethod(HL.Any) << function(args)
     local roomId = unpack(args)
     local emptyRoomData = Tables.spaceshipEmptyRoomTable[roomId]
     local dialogId = emptyRoomData.demolitionDialogId
     SpaceshipUtils.playSSDialog(roomId, dialogId)
 end
-
-
-
 
 
 SpaceshipRoomUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -267,8 +222,6 @@ SpaceshipRoomUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
 SpaceshipRoomUpgradeCtrl.OnShow = HL.Override() << function(self)
     if self.m_state == States.Upgrade then
         self:_RefreshUpgradeInfo()
@@ -276,8 +229,6 @@ SpaceshipRoomUpgradeCtrl.OnShow = HL.Override() << function(self)
         self:_RefreshBuildInfo(self.m_roomType)
     end
 end
-
-
 
 SpaceshipRoomUpgradeCtrl.OnClose = HL.Override() << function(self)
     
@@ -291,14 +242,10 @@ SpaceshipRoomUpgradeCtrl.OnClose = HL.Override() << function(self)
 end
 
 
-
-
 SpaceshipRoomUpgradeCtrl._DeleteDetailNaviBinding = HL.Method() << function(self)
     InputManagerInst:DeleteBinding(self.m_tempCancelBindingId)
     Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.roomInfoTipNode.tipNodeInputBindingGroupMonoTarget.groupId)
 end
-
-
 
 SpaceshipRoomUpgradeCtrl._SetViewByRoomTypeData = HL.Method() << function(self)
     if not self.m_roomTypeData then
@@ -327,9 +274,6 @@ end
 
 
 
-
-
-
 SpaceshipRoomUpgradeCtrl.OnRoomAdded = HL.Method(HL.Table) << function(self, arg)
     local roomId = unpack(arg)
     if roomId ~= self.m_roomId then
@@ -337,8 +281,6 @@ SpaceshipRoomUpgradeCtrl.OnRoomAdded = HL.Method(HL.Table) << function(self, arg
     end
     self:_Exit(true)
 end
-
-
 
 SpaceshipRoomUpgradeCtrl._InitBuildInfo = HL.Method() << function(self)
     self.m_curSelectedLv = 1
@@ -362,9 +304,6 @@ SpaceshipRoomUpgradeCtrl._InitBuildInfo = HL.Method() << function(self)
     self:_RefreshBuildInfo(self.m_buildTypeData[self.m_buildTypeIndex].type)
 end
 
-
-
-
 SpaceshipRoomUpgradeCtrl._OnClickBuildSwitchBtn = HL.Method(HL.Boolean) <<function(self, isLeft)
     if isLeft then
         self.m_buildTypeIndex = self.m_buildTypeIndex - 1
@@ -379,8 +318,6 @@ SpaceshipRoomUpgradeCtrl._OnClickBuildSwitchBtn = HL.Method(HL.Boolean) <<functi
     end
     self:_RefreshBuildInfo(self.m_buildTypeData[self.m_buildTypeIndex].type)
 end
-
-
 SpaceshipRoomUpgradeCtrl._RefreshRedDot = HL.Method() <<function(self)
     local data = self.m_buildTypeData
     local index = self.m_buildTypeIndex
@@ -409,9 +346,6 @@ SpaceshipRoomUpgradeCtrl._RefreshRedDot = HL.Method() <<function(self)
         playerSpaceship:ReadBuildRoomRedDot(midType)
     end
 end
-
-
-
 
 SpaceshipRoomUpgradeCtrl._RefreshBuildInfo = HL.Method(GEnums.SpaceshipRoomType) << function(self, roomType)
     self.m_roomType = roomType
@@ -459,9 +393,6 @@ end
 
 
 
-
-
-
 SpaceshipRoomUpgradeCtrl.OnRoomLevelUp = HL.Method(HL.Table) << function(self, arg)
     local roomId = unpack(arg)
     if roomId ~= self.m_roomId then
@@ -469,8 +400,6 @@ SpaceshipRoomUpgradeCtrl.OnRoomLevelUp = HL.Method(HL.Table) << function(self, a
     end
     self:_Exit(true)
 end
-
-
 
 SpaceshipRoomUpgradeCtrl._RefreshUpgradeInfo = HL.Method() << function(self)
     local roomInfo = self.m_roomInfo
@@ -541,17 +470,12 @@ SpaceshipRoomUpgradeCtrl._RefreshUpgradeInfo = HL.Method() << function(self)
     self.view.newTagImg.gameObject:SetActive(false)
 end
 
-
-
-
 SpaceshipRoomUpgradeCtrl._ChangeCurSelectedLv = HL.Method(HL.Number) << function(self, newLv)
     local roomInfo = self.m_roomInfo
     newLv = lume.clamp(newLv, 2, roomInfo.maxLv)
     self.m_curSelectedLv = newLv
     self:_RefreshUpgradeInfo()
 end
-
-
 
 SpaceshipRoomUpgradeCtrl._UpdateChangeLvNodeState = HL.Method() << function(self)
     local node = self.view.changeLvNode
@@ -569,17 +493,11 @@ SpaceshipRoomUpgradeCtrl._UpdateChangeLvNodeState = HL.Method() << function(self
     self:_UpdateChangeLvCell(node.rightLvCell, self.m_curSelectedLv)
 end
 
-
-
-
-
 SpaceshipRoomUpgradeCtrl._UpdateChangeLvCell = HL.Method(HL.Table, HL.Number) << function(self, cell, lv)
     cell.text.text = lv
     cell.isCurHintNode.gameObject:SetActive(lv == self.m_roomInfo.lv)
     cell.image.enabled = lv > self.m_roomInfo.lv
 end
-
-
 
 
 
@@ -619,19 +537,12 @@ end
 
 
 
-
-
-
 SpaceshipRoomUpgradeCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     if DeviceInfo.usingController then
         self.view.changeLvNode.keyHintAdd.gameObject:SetActive(active)
         self.view.changeLvNode.keyHintReduce.gameObject:SetActive(active)
     end
 end
-
-
-
-
 
 SpaceshipRoomUpgradeCtrl._UpdateCommonItemList = HL.Method(HL.Table, HL.Opt(HL.Any)) << function(self, listNode, itemInfos)
     local count = itemInfos and #itemInfos or 0
@@ -672,8 +583,6 @@ SpaceshipRoomUpgradeCtrl._UpdateCommonItemList = HL.Method(HL.Table, HL.Opt(HL.A
         end
     end)
 end
-
-
 
 SpaceshipRoomUpgradeCtrl._UpdateCostItemList = HL.Method() << function(self)
     if not self.m_roomLvTable then
@@ -732,8 +641,6 @@ SpaceshipRoomUpgradeCtrl._UpdateCostItemList = HL.Method() << function(self)
     end
 end
 
-
-
 SpaceshipRoomUpgradeCtrl._OnClickConfirm = HL.Method() << function(self)
     if self:IsPlayingAnimationIn() then
         
@@ -745,9 +652,6 @@ SpaceshipRoomUpgradeCtrl._OnClickConfirm = HL.Method() << function(self)
         GameInstance.player.spaceship:LevelUpRoom(self.m_roomId)
     end
 end
-
-
-
 
 SpaceshipRoomUpgradeCtrl._Exit = HL.Method(HL.Opt(HL.Boolean)) << function(self, needDialog)
     

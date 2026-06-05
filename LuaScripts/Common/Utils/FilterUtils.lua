@@ -18,11 +18,16 @@ local CALC_TYPE = {
 
 
 
+
+
 FilterUtils.EQUIP_PART_FILTER_TYPE = {
     GEnums.CraftShowingType.EquipBody,
     GEnums.CraftShowingType.EquipHead,
     GEnums.CraftShowingType.EquipRing
 }
+
+
+
 
 
 
@@ -142,7 +147,7 @@ function FilterUtils.processWeapon(templateId, instId)
         return nil
     end
 
-    local weaponCfg = Tables.weaponBasicTable:GetValue(templateId)
+    local _, weaponCfg = Tables.weaponBasicTable:TryGetValue(templateId)
     if not weaponCfg then
         return nil
     end
@@ -191,6 +196,8 @@ function FilterUtils.processWeaponGem(templateId, instId, extraArgs)
     infoDefault.lockedIndexReverse = -infoDefault.lockedIndex
     infoDefault.equippedWeaponInstId = gemInst.weaponInstId
     infoDefault.equippedWeaponInstIdReverse = -infoDefault.equippedWeaponInstId
+    infoDefault.isEquippedSort = gemInst.weaponInstId > 0 and 1 or 0
+    infoDefault.isEquippedSortReverse = -infoDefault.isEquippedSort
 
     
     infoDefault.enableOnWeapon = false
@@ -214,6 +221,11 @@ function FilterUtils.processWeaponGem(templateId, instId, extraArgs)
     end
 
     infoDefault.skillMap = skillMap
+
+    local isPerfectMatch = UIUtils.getGemWishListPerfectMatch(instId)
+    infoDefault.gemPerfectMatchSort = isPerfectMatch and 1 or 0
+    infoDefault.gemPerfectMatchSortReverse = -infoDefault.gemPerfectMatchSort
+
     return infoDefault
 end
 
@@ -273,8 +285,14 @@ function FilterUtils.processEquipEnhance(templateId, instId)
         return nil
     end
     infoDefault.equipInstData = CharInfoUtils.getEquipByInstId(instId)
+    infoDefault.canEnhance = infoDefault.equipInstData:IsMaxEnhanced() and 0 or 1
     infoDefault.equipEnhanceLevel = infoDefault.equipInstData:IsMaxEnhanced() and -1 or infoDefault.equipInstData:GetEnhanceLevel()
     infoDefault.equipEnhanceTotalFailedTimes = infoDefault.equipInstData:GetTotalFailedTimes()
+    if infoDefault.equippedCharInstId and infoDefault.equippedCharInstId > 0 and FilterUtils.charInstId2Index then
+        local index = FilterUtils.charInstId2Index[infoDefault.equippedCharInstId]
+        infoDefault.equippedCharIndex = index and -index or -math.huge
+        infoDefault.partTypeReverseNum = -infoDefault.partType:ToInt()
+    end
     return infoDefault
 end
 
@@ -533,6 +551,24 @@ function FilterUtils.generateConfig_DEPOT_WEAPON()
     return DEPOT_WEAPON
 end
 
+function FilterUtils.RemoveFilterTag(tagGroups, groupType, param)
+    for _, group in ipairs(tagGroups or {}) do
+        for index = #(group.tags or {}), 1, -1 do
+            local tag = group.tags[index]
+            if tag.groupType == groupType and tag.param == param then
+                table.remove(group.tags, index)
+            end
+        end
+    end
+end
+
+function FilterUtils.generateConfig_DEPOT_WEAPON_DESTROY()
+    local filterConfigs = FilterUtils.generateConfig_DEPOT_WEAPON()
+    
+    FilterUtils.RemoveFilterTag(filterConfigs, "WeaponRarity", 6)
+    return filterConfigs
+end
+
 function FilterUtils.generateConfig_CHAR_INFO_WEAPON()
     local FILTER_CHAR_INFO_WEAPON = {
         {
@@ -630,12 +666,6 @@ function FilterUtils.generateConfig_DEPOT_GEM_DESTROY()
                     name = Tables.itemTable["item_gem_rarity_4"].name,
                     funcName = "_filterByRarity",
                     param = 4,
-                },
-                {
-                    groupType = "Rarity",
-                    name = Tables.itemTable["item_gem_rarity_5"].name,
-                    funcName = "_filterByRarity",
-                    param = 5,
                 },
             }
         },
@@ -914,6 +944,44 @@ end
 
 
 
+function FilterUtils.isSameTagInfo(leftTag, rightTag)
+    local function isSameValue(left, right)
+        if left == nil and right ~= nil then
+            return false
+        end
+        if left ~= nil and right == nil then
+            return false
+        end
+        if type(left) ~= type(right) then
+            return false
+        end
+        if type(left) ~= "table" then
+            return left == right
+        end
+        for k, v in pairs(left) do
+            if not isSameValue(v, right[k]) then
+                return false
+            end
+        end
+        for k, v in pairs(right) do
+            if not isSameValue(v, left[k]) then
+                return false
+            end
+        end
+        return true
+    end
+
+    return isSameValue(leftTag, rightTag)
+end
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1074,26 +1142,6 @@ function FilterUtils._filterByGemEnableOnWeapon(info, param)
     end
     return info.enableOnWeapon == param
 end
-
-
-
-
-
-
-
-function FilterUtils._filterByEquipFormulaLocked(info, locked)
-    return locked == not FactoryUtils.isEquipFormulaUnlocked(info.formulaId)
-end
-
-
-
-
-
-function FilterUtils._filterByEquipEnhanced(info, enhanced)
-    return info.equipInstData:IsEnhanced() == enhanced
-end
-
-
 
 
 
@@ -1288,6 +1336,30 @@ function FilterUtils.getEquipMainAttrFilterList()
         }
     end
     return equipMainAttrFilterList
+end
+
+
+
+
+
+FilterUtils.charInstId2Index = nil
+FilterUtils.isCharInstIdIndexDirty = true
+
+function FilterUtils.updateCharInstIdIndex()
+    if not FilterUtils.isCharInstIdIndexDirty then
+        return
+    end
+    FilterUtils.charInstId2Index = {}
+    local charInfoList = CharInfoUtils.getCharInfoList()
+    table.sort(charInfoList, Utils.genSortFunction(UIConst.CHAR_FORMATION_LIST_SORT_OPTION[1].reverseKeys))
+    for index, charInfo in ipairs(charInfoList) do
+        FilterUtils.charInstId2Index[charInfo.instId] = index
+    end
+    FilterUtils.isCharInstIdIndexDirty = false
+end
+
+function FilterUtils.setCharInstIdIndexDirty()
+    FilterUtils.isCharInstIdIndexDirty = true
 end
 
 

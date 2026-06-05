@@ -19,7 +19,6 @@ local PHASE_ID = PhaseId.AdventureBook
 
 
 
-
 AdventureBookCtrl = HL.Class('AdventureBookCtrl', uiCtrl.UICtrl)
 
 local DUNGEON_TAB_INDEX = 3
@@ -67,6 +66,13 @@ AdventureBookCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.m_createArg = arg
     self:_InitTabs()
+
+    if self.m_createArg and self.m_createArg.panelId then
+        self:ChangeTab(self.m_createArg)
+        self.m_createArg = nil
+    else
+        self:_OnTabClick(self.m_curTabIndex, true)
+    end
 end
 
 
@@ -91,12 +97,18 @@ AdventureBookCtrl.ChangeTab = HL.Method(HL.Any) << function(self, arg)
         if self.m_phase.m_panel2Item[PanelId.AdventureDungeon] ~= nil then
             Notify(MessageConst.ON_CHANGE_ADVENTURE_DUNGEON_TAB, {
                 dungeonTab = arg.dungeonTab,
-                filterIndex = arg.filterIndex
+                filterIndex = arg.filterIndex,
+                reopenGemTermOverviewGameGroupId = arg.reopenGemTermOverviewGameGroupId,
             })
         else
             
             self.m_phase.m_dungeonTab = arg.dungeonTab
+            self.m_phase.m_reopenGemTermOverviewGameGroupId = arg.reopenGemTermOverviewGameGroupId or ""
         end
+        
+        arg.dungeonTab = nil
+        arg.filterIndex = nil
+        arg.reopenGemTermOverviewGameGroupId = nil
     end
 end
 
@@ -111,17 +123,6 @@ AdventureBookCtrl._OnReceiveSelectTab = HL.Method(HL.Any) << function(self, arg)
     self:_OnTabClick(self.m_curTabIndex, true)
     if arg.dungeonTab and panelId == PanelId.AdventureDungeon then
         Notify(MessageConst.ON_CHANGE_ADVENTURE_DUNGEON_TAB, { dungeonTab = arg.dungeonTab })
-    end
-end
-
-
-
-AdventureBookCtrl._OnPhaseItemBind = HL.Override() << function(self)
-    if self.m_createArg and self.m_createArg.panelId then
-        self:ChangeTab(self.m_createArg)
-        self.m_createArg = nil
-    else
-        self:_OnTabClick(self.m_curTabIndex, true)
     end
 end
 
@@ -170,6 +171,7 @@ end
 
 AdventureBookCtrl._InitTabInfos = HL.Method() << function(self)
     self.m_tabInfos = {
+        
         {
             id = "AdventureStage",
             icon = "icon_adventure_book",
@@ -178,6 +180,7 @@ AdventureBookCtrl._InitTabInfos = HL.Method() << function(self)
             redDot = "AdventureBookTabStage",
             checkRedDot = AdventureBookUtils.CheckRedDotAdventureBookTabStage
         },
+        
         {
             id = "AdventureDaily",
             icon = "icon_adventure_daily",
@@ -231,6 +234,7 @@ AdventureBookCtrl._InitTabInfos = HL.Method() << function(self)
             })
         end
     end
+    
     if AdventureBookUtils.HaveActivityTab() then
         table.insert(self.m_tabInfos, {
             id = "AdventureActivity",

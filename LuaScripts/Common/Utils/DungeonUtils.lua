@@ -171,54 +171,6 @@ function DungeonUtils.getEntryText(dungeonId)
     return entryText
 end
 
-function DungeonUtils.onClickExitDungeonBtn()
-    local dungeonId = GameInstance.dungeonManager.curDungeonId
-    if string.isEmpty(dungeonId) then
-        return
-    end
-
-    
-    if GameWorld.worldInfo.subGame == nil then
-        return
-    end
-
-    if not string.isEmpty(GameInstance.player.systemActionConflictManager.curProcessingSystemAction) then
-        logger.warn("DungeonUtils.onClickExitDungeonBtn systemConflict:", GameInstance.player.systemActionConflictManager:GetCurProcessingSystemActionInfo())
-        return
-    end
-
-    local dungeonCfg = Tables.dungeonTable[dungeonId]
-    local confirmHint
-    local succ, dungeonTypeCfg = Tables.dungeonTypeTable:TryGetValue(dungeonCfg.dungeonCategory)
-    if succ then
-        confirmHint = GameWorld.worldInfo.subGame.isPass and dungeonTypeCfg.afterSuccStopConfirmText or
-                dungeonTypeCfg.beforeSuccStopConfirmText
-    else
-        confirmHint = "副本类型表中没有配置：" .. dungeonCfg.dungeonCategory
-    end
-    local arg = {
-        content = confirmHint,
-        onConfirm = function()
-            GameInstance.dungeonManager:LeaveDungeon()
-        end,
-        freezeWorld = true,
-        pauseGame = true,
-        showGameSettingBtn = true, 
-        interrupt = {
-            interruptMessage = { MessageConst.SHOW_DEATH_INFO },
-        },
-    }
-
-    if succ and dungeonTypeCfg.dungeonType == "dungeon_weeklyraid" then
-        AudioAdapter.PostEvent("Au_UI_Menu_StripMenuPauseTick_Open")
-        arg.onCancel = function()
-            AudioAdapter.PostEvent("Au_UI_Menu_StripMenuPauseTick_Close")
-        end
-    end
-
-    Notify(MessageConst.SHOW_POP_UP, arg)
-end
-
 
 function DungeonUtils.getDungeonChestCount(sceneId)
     
@@ -430,7 +382,7 @@ end
 
 function DungeonUtils.startSubGameLeaveTick(action)
     local tickId = LuaUpdate:Add("LateTick", function(deltaTime)
-        local game = GameWorld.worldInfo.subGame
+        local game = GameInstance.dungeonManager.curDungeonLikeSubGame
         local leftTime = 0
         if game ~= nil then
             leftTime = game:GetRealLeaveTimestampForLua() - DateTimeUtils.GetCurrentTimestampBySeconds()
@@ -445,42 +397,103 @@ end
 
 
 
+
+
+local FUNC_ON_CLICK_DUNGEON_INFO_BY_CATEGORY = {
+    [DungeonConst.DUNGEON_CATEGORY.CharTutorial] = "onClickDungeonInfoBtnCharTutorial",
+    [DungeonConst.DUNGEON_CATEGORY.CharTrial] = "onClickDungeonInfoBtnCharTrial",
+    [DungeonConst.DUNGEON_CATEGORY.ContingencyContract] = "onClickDungeonInfoBtnContingencyContract",
+}
+
 function DungeonUtils.onClickDungeonInfoBtn()
     local dungeonId = GameInstance.dungeonManager.curDungeonId
-    if DungeonUtils.isDungeonCharTutorial(dungeonId) then
-        
-        local curStage = GameWorld.worldInfo.subGame.stage
-        local charTutorialCfg = Tables.dungeonCharTutorialTable[dungeonId]
-        local stageCfg = charTutorialCfg.tutorialStageData[CSIndex(curStage)]
-
-        GameAction.ManuallyStartGuideGroup(stageCfg.guideGroupId)
-    else
-        UIManager:AutoOpen(PanelId.DungeonInfoPopup, { dungeonId = dungeonId, needBindAction = true })
+    local succ, dungeonCfg = Tables.dungeonTable:TryGetValue(dungeonId)
+    if not succ then
+        logger.error("DungeonUtils.onClickDungeonInfoBtn invalid dungeonId", dungeonId)
+        return
     end
+    local funcName = FUNC_ON_CLICK_DUNGEON_INFO_BY_CATEGORY[dungeonCfg.dungeonCategory]
+    if not funcName then
+        
+        UIManager:AutoOpen(PanelId.DungeonInfoPopup, { dungeonId = dungeonId, needBindAction = true })
+        return
+    end
+
+    DungeonUtils[funcName](dungeonId)
 end
+
+function DungeonUtils.onClickDungeonInfoBtnCharTutorial(dungeonId)
+    
+    local curStage = GameInstance.dungeonManager.curDungeonLikeSubGame.stage
+    local charTutorialCfg = Tables.dungeonCharTutorialTable[dungeonId]
+    local stageCfg = charTutorialCfg.tutorialStageData[CSIndex(curStage)]
+
+    GameAction.ManuallyStartGuideGroup(stageCfg.guideGroupId)
+end
+
+function DungeonUtils.onClickDungeonInfoBtnCharTrial(dungeonId)
+    local charTrialCfg = Tables.dungeonCharTrialTable[dungeonId]
+    GameAction.ManuallyStartGuideGroup(charTrialCfg.guideGroupId)
+end
+
+function DungeonUtils.onClickDungeonInfoBtnContingencyContract(dungeonId)
+    
+    local ccSystem = GameInstance.player.contingencyContractSystem
+    local _, gameData = ccSystem.ccDataDict:TryGetValue(dungeonId)
+    local tagIds = {}
+    if gameData then
+        for _, tagId in pairs(gameData.curSelectTagList) do
+            table.insert(tagIds, tagId)
+        end
+    end
+
+    PhaseManager:OpenPhase(PhaseId.ContingencyContractDetailsPopup, {
+        gameId = dungeonId,
+        tagIds = tagIds,
+    })
+end
+
+local FUNC_CHECK_VISIBILITY_DUNGEON_INFO_BTN = {
+    [DungeonConst.DUNGEON_CATEGORY.CharTutorial] = function(dungeonId)
+        local game = GameInstance.dungeonManager.curDungeonLikeSubGame
+        if not game then
+            return false
+        end
+
+        
+        
+        local stage = game.stage
+        local charTutorialCfg = Tables.dungeonCharTutorialTable[dungeonId]
+        local tutorialStageCfg = charTutorialCfg.tutorialStageData[CSIndex(stage)]
+        return not string.isEmpty(tutorialStageCfg.guideGroupId)
+    end,
+    [DungeonConst.DUNGEON_CATEGORY.ContingencyContract] = function(dungeonId)
+        
+        
+        return DeviceInfo.usingController
+    end,
+    [DungeonConst.DUNGEON_CATEGORY.CharTrial] = function(dungeonId)
+        return not string.isEmpty(Tables.dungeonCharTrialTable[dungeonId].guideGroupId)
+    end
+}
 
 function DungeonUtils.checkVisibilityDungeonInfoBtn()
     if not Utils.isInDungeon() then
         return false
     end
 
-    local curDungeonId = GameInstance.dungeonManager.curDungeonId
-    if not DungeonUtils.isDungeonCharTutorial(curDungeonId) then
-        return DungeonUtils.isDungeonHasFeatureInfo(curDungeonId)
-    end
-
-
-    local game = GameWorld.worldInfo.subGame
-    if not game then
+    local dungeonId = GameInstance.dungeonManager.curDungeonId
+    local succ, dungeonCfg = Tables.dungeonTable:TryGetValue(dungeonId)
+    if not succ then
+        logger.error("DungeonUtils.checkVisibilityDungeonInfoBtn invalid dungeonId", dungeonId)
         return false
     end
 
-    
-    
-    local stage = game.stage
-    local charTutorialCfg = Tables.dungeonCharTutorialTable[curDungeonId]
-    local tutorialStageCfg = charTutorialCfg.tutorialStageData[CSIndex(stage)]
-    return not string.isEmpty(tutorialStageCfg.guideGroupId)
+    local checkVisibilityFunc = FUNC_CHECK_VISIBILITY_DUNGEON_INFO_BTN[dungeonCfg.dungeonCategory]
+    if not checkVisibilityFunc then
+        return DungeonUtils.isDungeonHasFeatureInfo(dungeonId)
+    end
+    return checkVisibilityFunc(dungeonId)
 end
 
 function DungeonUtils.isDungeonHasFeatureInfo(dungeonId)
@@ -518,6 +531,76 @@ end
 
 
 
+function DungeonUtils.showExitDungeonBtn()
+    
+    
+    return Utils.isInDungeon() and not Utils.isInDungeonFactory()
+end
+
+function DungeonUtils.onClickExitDungeonBtn()
+    local dungeonId = GameInstance.dungeonManager.curDungeonId
+    if string.isEmpty(dungeonId) then
+        return
+    end
+
+    
+    if GameInstance.dungeonManager.curDungeonLikeSubGame == nil then
+        return
+    end
+
+    if WeeklyRaidUtils.IsInWeeklyRaid() then
+        Notify(MessageConst.SHOW_WEEK_RAID_LEAVE_CONFIRM)
+        return
+    end
+
+    if not string.isEmpty(GameInstance.player.systemActionConflictManager.curProcessingSystemAction) then
+        logger.warn("DungeonUtils.onClickExitDungeonBtn systemConflict:",
+                    GameInstance.player.systemActionConflictManager:GetCurProcessingSystemActionInfo())
+        return
+    end
+
+    if LuaSystemManager.commonTaskTrackSystem:HasRequest() then
+        return
+    end
+
+    local dungeonCfg = Tables.dungeonTable[dungeonId]
+    local confirmHint
+    local succ, dungeonTypeCfg = Tables.dungeonTypeTable:TryGetValue(dungeonCfg.dungeonCategory)
+    if succ then
+        confirmHint = GameInstance.dungeonManager.curDungeonLikeSubGame.isPass and dungeonTypeCfg.afterSuccStopConfirmText or
+                dungeonTypeCfg.beforeSuccStopConfirmText
+    else
+        confirmHint = "副本类型表中没有配置：" .. dungeonCfg.dungeonCategory
+    end
+    local arg = {
+        content = confirmHint,
+        onConfirm = function()
+            GameInstance.dungeonManager:LeaveDungeon()
+        end,
+        freezeWorld = true,
+        pauseGame = true,
+        showGameSettingBtn = true, 
+        interrupt = {
+            interruptMessage = { MessageConst.SHOW_DEATH_INFO },
+        },
+    }
+
+    if succ and dungeonTypeCfg.dungeonType == "dungeon_weeklyraid" then
+        AudioAdapter.PostEvent("Au_UI_Menu_StripMenuPauseTick_Open")
+        arg.onCancel = function()
+            AudioAdapter.PostEvent("Au_UI_Menu_StripMenuPauseTick_Close")
+        end
+    end
+
+    Notify(MessageConst.SHOW_POP_UP, arg)
+end
+
+
+
+
+
+
+
 
 function DungeonUtils.dungeonTypeValidate(dungeonId, dungeonCategory)
     local succ, dungeonCfg = Tables.dungeonTable:TryGetValue(dungeonId)
@@ -540,6 +623,24 @@ function DungeonUtils.isDungeonChallenge(dungeonId)
     return DungeonUtils.dungeonTypeValidate(dungeonId, DungeonConst.DUNGEON_CATEGORY.Challenge)
 end
 
+function DungeonUtils.isDungeonContract(dungeonId)
+    return DungeonUtils.dungeonTypeValidate(dungeonId, DungeonConst.DUNGEON_CATEGORY.ContingencyContract)
+end
+
+
+
+
+function DungeonUtils.TryGetDungeonCfg(dungeonId)
+    return Tables.dungeonTable:TryGetValue(dungeonId)
+end
+
+function DungeonUtils.TryGetDungeonCategoryCfg(dungeonId)
+    local instSucc, dungeonCfg = DungeonUtils.TryGetDungeonCfg(dungeonId)
+    if not instSucc then
+        return false, nil
+    end
+    return Tables.dungeonTypeTable:TryGetValue(dungeonCfg.dungeonCategory)
+end
 
 
 

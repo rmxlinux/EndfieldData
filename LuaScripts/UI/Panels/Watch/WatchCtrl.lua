@@ -46,6 +46,15 @@ local PANEL_ID = PanelId.Watch
 
 
 
+
+
+
+
+
+
+
+
+
 WatchCtrl = HL.Class('WatchCtrl', uiCtrl.UICtrl)
 
 
@@ -91,6 +100,7 @@ local BTN_CONST = {
         SNS = 72,
         MAP = 81,
         GAME_TOOL = 82,
+        QUESTIONNAIRE = 91,
     },
     CENTER = {
         SETTING = 201,
@@ -101,6 +111,12 @@ local BTN_CONST = {
         FAC_CHAR_SET = 206,
     }
 }
+
+local RIGHT_BTN_ORDER = {}
+for _, key in pairs(BTN_CONST.RIGHT) do
+    table.insert(RIGHT_BTN_ORDER, key)
+end
+table.sort(RIGHT_BTN_ORDER)
 
 
 WatchCtrl.m_btnData = HL.Field(HL.Table)
@@ -263,8 +279,22 @@ WatchCtrl.BuildData = HL.Method() << function(self)
         
         [BTN_CONST.RIGHT.GAME_TOOL] = {
             view = self.view.gameToolBtn,
+            onClick = function()
+                CS.Beyond.SDK.SDKUtils.OpenHGWebPortalSDK("sk_toolkit", "", nil)
+                EventLogManagerInst:GameEvent_GameToolClick()
+            end,
             column = 8,
             needHide = GameInstance.player.gameSettingSystem.forbiddenGameTool or CS.Beyond.SDK.SDKConsts.IsBilibiliVersion()
+        },
+        [BTN_CONST.RIGHT.QUESTIONNAIRE] = {
+            view = self.view.questionnaireBtn,
+            onClick = function()
+                CS.Beyond.SDK.SDKAccountUtils.OpenSurvey()
+            end,
+            needShowRedDot = true,
+            redDotName = "Questionnaire",
+            column = 9,
+            needHide = GameInstance.player.gameSettingSystem.forbiddenWebView,
         },
         [BTN_CONST.CENTER.MAIL] = {
             view = self.view.mailNode,
@@ -284,6 +314,7 @@ WatchCtrl.BuildData = HL.Method() << function(self)
         [BTN_CONST.CENTER.SETTING] = {
             view = self.view.settingNode,
             phaseId = PhaseId.GameSetting,
+            needShowRedDot = true,
         },
         [BTN_CONST.CENTER.FAC_TECH_TREE] = {
             view = self.view.techtreeNode,
@@ -330,6 +361,8 @@ end
 WatchCtrl.InitWatchNodes = HL.Method() << function(self)
     self:BuildData()
 
+    self:_SnapshotRightList()
+    self:_RelayoutRightList()
     self:_RefreshBtnLockState()
 
     self.view.mapBtn.onClick:AddListener(function()
@@ -344,6 +377,153 @@ WatchCtrl.InitWatchNodes = HL.Method() << function(self)
 end
 
 
+WatchCtrl.m_rightGroups = HL.Field(HL.Table)
+
+
+WatchCtrl.m_rightGroupHeight = HL.Field(HL.Number) << 0
+
+
+WatchCtrl.m_rightGroupSpacing = HL.Field(HL.Number) << 0
+
+
+WatchCtrl.m_rightContentOriginalHeight = HL.Field(HL.Number) << 0
+
+
+WatchCtrl.m_rightListVisibleLength = HL.Field(HL.Number) << 1
+
+
+
+WatchCtrl._SnapshotRightList = HL.Method() << function(self)
+    local rightList = self.view.rightList
+    local groups = {}
+
+    for i = 0, rightList.childCount - 1 do
+        local child = rightList:GetChild(i)
+        if string.startWith(child.name, "Group") then
+            table.insert(groups, child)
+        end
+    end
+
+    local rightListScale = rightList.localScale.y
+    if #groups >= 1 then
+        self.m_rightGroupHeight = groups[1].sizeDelta.y * rightListScale
+    end
+    if #groups >= 2 then
+        self.m_rightGroupSpacing = math.abs(groups[1].anchoredPosition.y - groups[2].anchoredPosition.y) * rightListScale
+    end
+
+    self.m_rightGroups = groups
+    self.m_rightContentOriginalHeight = self.view.scrollViewContent.sizeDelta.y
+
+    self.m_rightListVisibleLength = self.view.scrollViewRectTransform.rect.height / self.m_rightGroupSpacing
+end
+
+
+
+WatchCtrl._RelayoutRightList = HL.Method() << function(self)
+    local groups = self.m_rightGroups
+    if not groups then
+        return
+    end
+
+    local activeBtns = {}
+    for _, key in ipairs(RIGHT_BTN_ORDER) do
+        local data = self.m_btnData[key]
+        if data then
+            data.column = nil
+            if data.needHide then
+                data.view.gameObject:SetActive(false)
+            else
+                table.insert(activeBtns, key)
+            end
+        end
+    end
+
+    local activeGroupCount = math.ceil(#activeBtns / 2)
+    local btnGrid = {}
+    local btnIndex = 1
+
+    for i, group in ipairs(groups) do
+        if i <= activeGroupCount then
+            group.gameObject:SetActive(true)
+            btnGrid[i] = {}
+            for slot = 0, 1 do
+                if btnIndex <= #activeBtns then
+                    local key = activeBtns[btnIndex]
+                    local data = self.m_btnData[key]
+                    data.view.transform:SetParent(group, false)
+                    data.view.transform:SetSiblingIndex(slot)
+                    data.view.gameObject:SetActive(true)
+                    data.column = i
+                    table.insert(btnGrid[i], data.view.btn)
+                    btnIndex = btnIndex + 1
+                end
+            end
+        else
+            group.gameObject:SetActive(false)
+        end
+    end
+
+    local inactiveGroupCount = #groups - activeGroupCount
+    local inactiveGroupHeight = inactiveGroupCount * self.m_rightGroupSpacing
+
+    local contentSizeDelta = self.view.scrollViewContent.sizeDelta
+    contentSizeDelta.y = self.m_rightContentOriginalHeight - inactiveGroupHeight
+    self.view.scrollViewContent.sizeDelta = contentSizeDelta
+
+    self.m_rightListLength = activeGroupCount
+
+    self:_RebuildRightListNavigation(btnGrid)
+end
+
+
+
+
+WatchCtrl._RebuildRightListNavigation = HL.Method(HL.Table) << function(self, btnGrid)
+    local rowCount = self.m_rightListLength
+    for row = 1, rowCount do
+        local btnRow = btnGrid[row]
+        for column, btn in ipairs(btnRow) do
+            btn.useExplicitNaviSelect = true
+
+            local upBtnRow = btnGrid[row - 1]
+            if upBtnRow then
+                btn:SetExplicitSelectOnUp(upBtnRow[math.min(column, #upBtnRow)])
+                btn.banExplicitOnUp = false
+            else
+                btn:SetExplicitSelectOnUp(nil)
+                btn.banExplicitOnUp = true
+            end
+
+            local downBtnRow = btnGrid[row + 1]
+            if downBtnRow then
+                btn:SetExplicitSelectOnDown(downBtnRow[math.min(column, #downBtnRow)])
+                btn.banExplicitOnDown = false
+            else
+                btn:SetExplicitSelectOnDown(nil)
+                btn.banExplicitOnDown = true
+            end
+
+            if column > 1 then
+                btn:SetExplicitSelectOnLeft(btnRow[column - 1])
+                btn.banExplicitOnLeft = false
+            else
+                btn:SetExplicitSelectOnLeft(nil)
+                btn.banExplicitOnLeft = true
+            end
+
+            if column < #btnRow then
+                btn:SetExplicitSelectOnRight(btnRow[column + 1])
+                btn.banExplicitOnRight = false
+            else
+                btn:SetExplicitSelectOnRight(nil)
+                btn.banExplicitOnRight = true
+            end
+        end
+    end
+end
+
+
 
 WatchCtrl._RefreshBtnLockState = HL.Method() << function(self)
     local inSafeZone = Utils.isInSafeZone()
@@ -351,7 +531,7 @@ WatchCtrl._RefreshBtnLockState = HL.Method() << function(self)
         local view, phaseId, needHide = data.view, data.phaseId, data.needHide
         if view ~= nil and needHide then
             view.gameObject:SetActive(false)
-        elseif view ~= nil and phaseId ~= nil then
+        elseif view ~= nil then
             local needRefreshUnlock = data.needRefreshUnlock == true
             local unlocked = (not needRefreshUnlock) or self:_CheckUnlock(phaseId, true)
             local needCheckSafeZone = data.view.safeZoneIcon ~= nil
@@ -376,7 +556,12 @@ WatchCtrl._RefreshBtnLockState = HL.Method() << function(self)
             local needShowRedDot = data.needShowRedDot
             if view.redDot ~= nil then
                 if needShowRedDot and unlocked then
-                    local redDotName = PhaseManager:GetPhaseRedDotName(phaseId)
+                    local redDotName
+                    if data.redDotName then
+                        redDotName = data.redDotName
+                    elseif phaseId then
+                        redDotName = PhaseManager:GetPhaseRedDotName(phaseId)
+                    end
                     local showRedDot = not string.isEmpty(redDotName)
                     view.redDot.gameObject:SetActiveIfNecessary(showRedDot)
                     if showRedDot then
@@ -419,6 +604,10 @@ WatchCtrl._InitAvatarTheme = HL.Method() << function(self)
             if successAgain then
                 local path = string.format(UIConst.UI_WATCH_BUSINESS_CARD_PREFAB_PATH , cfg.watchPrefab)
                 local prefab = self:LoadGameObject(path)
+                if prefab == nil then
+                    logger.critical("无法加载表盘上的名片预制体，路径：%s, businessCardId: %s", path, businessCardId)
+                    return
+                end
                 if self.m_playerInfoNode then
                     CSUtils.ClearUIComponents(self.m_playerInfoNode) 
                     GameObject.DestroyImmediate(self.m_playerInfoNode)
@@ -523,11 +712,11 @@ WatchCtrl.m_tween = HL.Field(HL.Any)
 
 WatchCtrl._InitSpecialRoll = HL.Method() << function(self)
     self.view.scrollViewScrollRect.verticalNormalizedPosition = 1
-    local viewArea = 1 - self.view.scrollViewRectTransform.rect.y / self.view.scrollViewContent.rect.y
     for _,index in pairs(BTN_CONST.RIGHT) do
         local config = self.m_btnData[index]
         if config.column then
             config.view.btn.onIsNaviTargetChanged = function(active)
+                local viewArea = self.view.scrollViewRectTransform.rect.height / self.view.scrollViewContent.rect.height
                 local now = 1 - self.view.scrollViewScrollRect.verticalNormalizedPosition
                 local minView = (1 - viewArea) * now
                 local maxView = minView + viewArea
@@ -537,7 +726,6 @@ WatchCtrl._InitSpecialRoll = HL.Method() << function(self)
                     self:_RollTo(config.column)
                 end
             end
-            self.m_rightListLength = math.max(self.m_rightListLength, config.column)
         end
     end
 end
@@ -546,10 +734,9 @@ end
 
 
 WatchCtrl._GetRollUpPosition = HL.Method(HL.Number).Return(HL.Number) << function(self, column)
-    local position = (column - 1) / self.m_rightListLength
-    local viewArea = self.view.scrollViewRectTransform.rect.y / self.view.scrollViewContent.rect.y
+    local position = (column - 1) / (self.m_rightListLength - self.m_rightListVisibleLength)
     
-    local normalizedPosition = position / viewArea - self.view.config.CONTROLLER_SCROLL_FINE_TUNE_VALUE
+    local normalizedPosition = position - self.view.config.CONTROLLER_SCROLL_FINE_TUNE_VALUE
     normalizedPosition = lume.clamp(normalizedPosition , 0, 1)
     return normalizedPosition
 end
@@ -586,6 +773,9 @@ end
 WatchCtrl.m_regionMapSetting = HL.Field(HL.Userdata)
 
 
+WatchCtrl.m_domainMapNode = HL.Field(HL.Any)
+
+
 
 WatchCtrl._OpenMap = HL.Method() << function(self)
     if Utils.isInSpaceShip() then
@@ -598,10 +788,14 @@ end
 
 
 WatchCtrl._InitDomain = HL.Method() << function(self)
+    if self.m_domainMapNode ~= nil then
+        return
+    end
     
     if Utils.isInSpaceShip() then
         local spaceshipPrefab = self:LoadGameObject(string.format(MapConst.UI_DOMAIN_MAP_PATH, MapConst.UI_SPACESHIP_MAP))
         local spaceshipGo = CSUtils.CreateObject(spaceshipPrefab, self.view.domainRoot[string.lower(MapConst.UI_SPACESHIP_MAP)])
+        self.m_domainMapNode = spaceshipGo
         local spaceship = Utils.wrapLuaNode(spaceshipGo)
         local _, roomInfo = GameInstance.player.spaceship:TryGetRoom(Tables.spaceshipConst.controlCenterRoomId)
         spaceship.spaceshipInfo.lvTxt.text = roomInfo.lv
@@ -617,6 +811,7 @@ WatchCtrl._InitDomain = HL.Method() << function(self)
 
     local domainPrefab = self:LoadGameObject(string.format(MapConst.UI_DOMAIN_MAP_PATH, domainData.domainMap))
     local domainGo = CSUtils.CreateObject(domainPrefab, self.view.domainRoot[string.lower(domainData.domainMap)])
+    self.m_domainMapNode = domainGo
     
     local _, regionMapSetting = domainGo:TryGetComponent(typeof(CS.Beyond.UI.RegionMapSetting))
     if regionMapSetting == nil then
@@ -668,16 +863,22 @@ WatchCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.fullScreenCloseBtn.onClick:AddListener(function()
         PhaseManager:PopPhase(PhaseId.Watch)
     end)
-    self.view.quitBtn.onClick:AddListener(function()
-        self:Notify(MessageConst.SHOW_POP_UP, {
-            content = Language.LUA_EXIT_GAME_CONFIRM,
-            hideBlur = true,
-            onConfirm = function()
-                logger.info("click quit btn on watch")
-                GameInstance.instance:ReturnToLoginWithDelay()
-            end,
-        })
-    end)
+    if CS.Beyond.CloudGame.enabled then
+        
+        self.view.quitBtn.gameObject:SetActive(false)
+    else
+        self.view.quitBtn.gameObject:SetActive(true)
+        self.view.quitBtn.onClick:AddListener(function()
+            self:Notify(MessageConst.SHOW_POP_UP, {
+                content = Language.LUA_EXIT_GAME_CONFIRM,
+                hideBlur = true,
+                onConfirm = function()
+                    logger.info("click quit btn on watch")
+                    GameInstance.instance:ReturnToLogin()
+                end,
+            })
+        end)
+    end
 
     self.view.announcementBtn.onClick:AddListener(function()
         GameInstance.player.announcement:OpenAnnouncement()
@@ -742,12 +943,6 @@ WatchCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitSpecialRoll()
 
     
-    self.view.gameToolBtn.btn.onClick:AddListener(function()
-        CS.Beyond.SDK.SDKUtils.OpenHGWebPortalSDK("sk_toolkit","",nil)
-        EventLogManagerInst:GameEvent_GameToolClick()
-    end)
-
-    
     self:_StartCoroutine(function()
         while true do
             if self:IsShow() then
@@ -756,6 +951,11 @@ WatchCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             coroutine.wait(RIGHT_LIFT_RED_DOT_CHECK_TIME)
         end
     end)
+
+    
+    if not GameInstance.player.gameSettingSystem.forbiddenWebView then
+        CS.Beyond.SDK.SDKAccountUtils.QuerySurveyState()
+    end
 end
 
 local RIGHT_LIST_ROLL_FINE_TUNE_VALUE = 0.01
@@ -765,7 +965,7 @@ local RIGHT_LIST_ROLL_FINE_TUNE_VALUE = 0.01
 WatchCtrl._RefreshRightListRedDots = HL.Method() << function(self)
     local upRedDots = {}
     local downRedDots = {}
-    local viewArea = 1 - self.view.scrollViewRectTransform.rect.y / self.view.scrollViewContent.rect.y
+    local viewArea = 1 - self.view.scrollViewRectTransform.rect.height / self.view.scrollViewContent.rect.height
 
     for _,index in pairs(BTN_CONST.RIGHT) do
         local config = self.m_btnData[index]
@@ -776,7 +976,12 @@ WatchCtrl._RefreshRightListRedDots = HL.Method() << function(self)
             local maxView = minView + viewArea
             local target = CSIndex(config.column) / CSIndex(self.m_rightListLength) + RIGHT_LIST_ROLL_FINE_TUNE_VALUE
             local targetInView = target >= minView and target < maxView + 1 / self.m_rightListLength
-            local redDotName = PhaseManager:GetPhaseRedDotName(config.phaseId)
+            local redDotName
+            if config.redDotName then
+                redDotName = config.redDotName
+            elseif config.phaseId then
+                redDotName = PhaseManager:GetPhaseRedDotName(config.phaseId)
+            end
             if not string.isEmpty(redDotName) and not targetInView then
                 if config.column <= self.m_rightListLength/2 then
                     table.insert(upRedDots,redDotName)
@@ -797,6 +1002,34 @@ WatchCtrl.OnClose = HL.Override() << function(self)
     self:_SetActiveControllerPanel(false)
     self:_ClearCameraCfg()
     self.m_banner:OnDestroy()
+end
+
+
+
+WatchCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    if self.m_domainMapNode == nil and self.m_regionMapSetting == nil then
+        return nil
+    end
+
+    local state = {
+        domainMapNode = self.m_domainMapNode,
+        regionMapSetting = self.m_regionMapSetting,
+    }
+    self.m_domainMapNode = nil
+    self.m_regionMapSetting = nil
+    return state
+end
+
+
+
+
+WatchCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function(self, state)
+    if not state then
+        return
+    end
+
+    self.m_domainMapNode = state.domainMapNode
+    self.m_regionMapSetting = state.regionMapSetting
 end
 
 

@@ -66,14 +66,21 @@ AdventureDungeonCell.InitAdventureDungeonCell = HL.Method(HL.Any, HL.Opt(HL.Bool
     self:_FirstTimeInit()
 
     self.m_info = info
-    self.m_subGameIds = info.subGameIds
+    self.m_subGameIds = info.subGameIds or {}
+
+    if info.isEmpty then
+        self.view.contentState:SetState("Empty")
+        return
+    end
+    self.view.contentState:SetState("Normal")
 
     
     local hasRoleImg = not string.isEmpty(info.dungeonRoleImg)
     local hasDungeonImg = not string.isEmpty(info.dungeonImg)
 
     local stateCtrl = self.view.contentState
-    if info.dungeonCategory == GEnums.DungeonCategoryType.BossRush then
+    if info.dungeonCategory == GEnums.DungeonCategoryType.BossRush or
+       info.dungeonCategory == GEnums.DungeonCategoryType.MiniBossRush then
         self.view.imgState:SetState("ShowBoss")
         if info.isHunterMode then
             stateCtrl:SetState("BossHunt")

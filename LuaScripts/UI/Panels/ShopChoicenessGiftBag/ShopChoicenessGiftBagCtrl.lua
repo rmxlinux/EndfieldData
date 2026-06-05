@@ -53,6 +53,8 @@ ShopChoicenessGiftBagCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     self.view.priceTxt:SetAndResolveTextStyle(CashShopUtils.getGoodsPriceText(cashGoodsId))
+
+    self.view.cashShopKrTips:InitCashShopKrTips()
 end
 
 

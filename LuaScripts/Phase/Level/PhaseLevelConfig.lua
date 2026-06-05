@@ -60,7 +60,6 @@ local DefaultConfig = {
         PanelId.FacMainLeft,
         PanelId.FacMainRight,
         PanelId.FacQuickBar, 
-
         PanelId.BattleAction,
         PanelId.SquadIcon,
         PanelId.BattleComboSkill,

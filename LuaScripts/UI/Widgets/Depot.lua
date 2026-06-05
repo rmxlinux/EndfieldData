@@ -44,6 +44,11 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
+
+
+
 Depot = HL.Class('Depot', UIWidgetBase)
 
 
@@ -138,6 +143,7 @@ Depot.InitDepot = HL.Method(GEnums.ItemValuableDepotType, HL.Opt(HL.Function, HL
 
     self.m_valuableDepotType = valuableDepotType
     self:_RefreshShowingTypeData()
+    self:_TryRecoverStateBeforeInit(extraArgs.recoverState)
     local domainId = Utils.getCurDomainId()
     if extraArgs.domainId ~= nil then
         domainId = extraArgs.domainId
@@ -188,6 +194,78 @@ Depot.InitDepot = HL.Method(GEnums.ItemValuableDepotType, HL.Opt(HL.Function, HL
 
     self.m_inInit = false
     self.m_inited = true
+end
+
+
+
+Depot.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    return {
+        typeIndex = self.m_curTypeIndex,
+        showingType = self:_GetRecoverShowingType(),
+    }
+end
+
+
+
+
+Depot.TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    
+    if recoverState == nil or not self.m_inited then
+        return
+    end
+    local recoverTypeIndex = self:_GetRecoverTypeIndex(recoverState)
+    if recoverTypeIndex == self.m_curTypeIndex then
+        return
+    end
+    local typeCell = self.m_typeCells:Get(recoverTypeIndex)
+    if typeCell ~= nil then
+        typeCell.toggle.isOn = true
+    end
+end
+
+
+
+
+
+Depot._TryRecoverStateBeforeInit = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+    self.m_curTypeIndex = self:_GetRecoverTypeIndex(recoverState)
+    self:_RefreshShowingTypeTitle()
+end
+
+
+
+Depot._GetRecoverShowingType = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    local info = self.m_itemShowingTypeInfos and self.m_itemShowingTypeInfos[self.m_curTypeIndex]
+    if info == nil or info.types == nil then
+        return nil
+    end
+    return info.types[1]
+end
+
+
+
+
+Depot._GetRecoverTypeIndex = HL.Method(HL.Any).Return(HL.Number) << function(self, recoverState)
+    local typeCount = self.m_itemShowingTypeInfos and #self.m_itemShowingTypeInfos or 0
+    if typeCount <= 0 then
+        return 1
+    end
+    local recoverShowingType = recoverState.showingType
+    if recoverShowingType ~= nil then
+        for index, info in ipairs(self.m_itemShowingTypeInfos) do
+            if info.types ~= nil and info.types[1] == recoverShowingType then
+                return index
+            end
+        end
+    end
+    local recoverTypeIndex = recoverState.typeIndex
+    if type(recoverTypeIndex) == "number" then
+        return math.min(math.max(recoverTypeIndex, 1), typeCount)
+    end
+    return 1
 end
 
 

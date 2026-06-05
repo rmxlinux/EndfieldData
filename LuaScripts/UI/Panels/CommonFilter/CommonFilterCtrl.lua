@@ -13,49 +13,7 @@ local ShowMode =
 }
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonFilter
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonFilterCtrl = HL.Class('CommonFilterCtrl', uiCtrl.UICtrl)
-
-
 
 CommonFilterCtrl.ShowCommonFilter = HL.StaticMethod(HL.Table) << function(args)
     
@@ -67,75 +25,51 @@ end
 
 
 
-
 CommonFilterCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
 
-
 CommonFilterCtrl.m_getFilterTagGroupCell = HL.Field(HL.Function)
-
 
 CommonFilterCtrl.m_getSortTagGroupCell = HL.Field(HL.Function)
 
-
 CommonFilterCtrl.m_filterSelectedTags = HL.Field(HL.Table)
-
 
 CommonFilterCtrl.m_filterTagGroups = HL.Field(HL.Table)
 
-
 CommonFilterCtrl.m_tags = HL.Field(HL.Table)
-
 
 CommonFilterCtrl.m_args = HL.Field(HL.Table)
 
-
 CommonFilterCtrl.m_filterIsGroup = HL.Field(HL.Boolean) << false
-
 
 CommonFilterCtrl.m_titlePaddingTop = HL.Field(HL.Number) << 0
 
-
 CommonFilterCtrl.m_noTitlePaddingTop = HL.Field(HL.Number) << 0
-
 
 CommonFilterCtrl.m_sortSelectedTag = HL.Field(HL.Table)
 
-
 CommonFilterCtrl.m_sortSelectedIndex = HL.Field(HL.Number) << 0
-
 
 CommonFilterCtrl.m_originalOptions = HL.Field(HL.Table)
 
-
 CommonFilterCtrl.m_originalSortTag = HL.Field(HL.Table)
-
 
 CommonFilterCtrl.m_sortOptions = HL.Field(HL.Table)
 
-
 CommonFilterCtrl.m_sortTagGroups = HL.Field(HL.Table)
-
 
 CommonFilterCtrl.m_curSelectMode = HL.Field(HL.String) << SelectMode.Filter
 
-
 CommonFilterCtrl.m_showMode = HL.Field(HL.String) << ShowMode.None
 
-
 CommonFilterCtrl.m_naviTargetInitialized = HL.Field(HL.Boolean) << false
-
 
 CommonFilterCtrl.m_sortNode = HL.Field(HL.Any)
 
 
-
 CommonFilterCtrl.m_naviTargetInfo = HL.Field(HL.Table)
-
-
-
 
 
 CommonFilterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -165,10 +99,8 @@ CommonFilterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnUpdateSortTagGroupCell(self.m_getSortTagGroupCell(obj), LuaIndex(csIndex))
     end)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+    Notify(MessageConst.ON_OPEN_COMMON_FILTER)
 end
-
-
-
 
 
 
@@ -188,11 +120,7 @@ end
 
 CommonFilterCtrl._Init = HL.Method(HL.Table) << function(self, args)
     self:_InitData(args)
-    self:_UpdateState()
 end
-
-
-
 CommonFilterCtrl._InitData = HL.Method(HL.Table) << function(self, args)
     self.m_args = args
 
@@ -200,15 +128,11 @@ CommonFilterCtrl._InitData = HL.Method(HL.Table) << function(self, args)
     
     if args.tagGroups then
         self.m_filterTagGroups = args.tagGroups or {}
-        if args.selectedTags then
-            self.m_filterSelectedTags = lume.copy(args.selectedTags)
-        else
-            self.m_filterSelectedTags = {}
-        end
+        self.m_filterSelectedTags = args.selectedTags and lume.copy(args.selectedTags) or {}
         local filterGroupCount = #self.m_filterTagGroups or 0
         self.m_filterIsGroup = filterGroupCount > 1
 
-        self.m_originalOptions = lume.copy(args.selectedTags)
+        self.m_originalOptions = lume.copy(self.m_filterSelectedTags)
 
         self.m_curSelectMode = SelectMode.Filter
     end
@@ -271,8 +195,6 @@ CommonFilterCtrl._InitData = HL.Method(HL.Table) << function(self, args)
     self.view.titleMulti.gameObject:SetActive(self.m_showMode == ShowMode.Multi)
 end
 
-
-
 CommonFilterCtrl._ReFreshMultiBtnState = HL.Method() << function(self)
     local isFilter = self.m_curSelectMode == SelectMode.Filter
     if isFilter then
@@ -301,53 +223,55 @@ CommonFilterCtrl._ReFreshMultiBtnState = HL.Method() << function(self)
     self:_UpdateState()
 end
 
-
-
 CommonFilterCtrl._UpdateState = HL.Method() << function(self)
     if self.m_curSelectMode == SelectMode.Filter then
         self.view.scrollListFilter:UpdateCount(#self.m_filterTagGroups)
         self:_UpdateResultCount()
         if self.m_naviTargetInfo ~= nil then
-            self.view.scrollListFilter:ScrollToIndex(CSIndex(self.m_naviTargetInfo.index), true)
-            
+            local scrollIndex = CSIndex(self.m_naviTargetInfo.index)
+            self.m_naviTargetInfo = nil
+            self.m_naviTargetInitialized = false
+            self.view.scrollListFilter:ScrollToIndex(scrollIndex, true)
+            self.view.scrollListFilter:UpdateCount(#self.m_filterTagGroups)
+        end
+        if self.m_naviTargetInfo ~= nil then
+            InputManagerInst.controllerNaviManager:SetTarget(self.m_naviTargetInfo.target)
             self.m_naviTargetInfo = nil
         end
     elseif self.m_curSelectMode == SelectMode.Sort then
         self.view.scrollListSort:UpdateCount(#self.m_sortTagGroups)
         if self.m_naviTargetInfo ~= nil then
-            self.view.scrollListSort:ScrollToIndex(CSIndex(self.m_naviTargetInfo.index), true)
-            
+            local scrollIndex = CSIndex(self.m_naviTargetInfo.index)
+            self.m_naviTargetInfo = nil
+            self.m_naviTargetInitialized = false
+            self.view.scrollListSort:ScrollToIndex(scrollIndex, true)
+            self.view.scrollListSort:UpdateCount(#self.m_sortTagGroups)
+        end
+        if self.m_naviTargetInfo ~= nil then
+            InputManagerInst.controllerNaviManager:SetTarget(self.m_naviTargetInfo.target)
             self.m_naviTargetInfo = nil
         end
     end
 end
 
-
-
-
-
-
 CommonFilterCtrl._OnCellSelectedChanged = HL.Method(HL.Table, HL.Boolean, HL.Boolean) << function(self, cell, isSelect, active)
+    local bindingId = cell.toggle.hoverConfirmBindingId
     if self.m_curSelectMode == SelectMode.Sort then
-        if isSelect then
-            InputManagerInst:ToggleBinding(cell.toggle.hoverConfirmBindingId, false)
+        InputManagerInst:SetBindingText(bindingId, Language.LUA_COMMON_FILTER_SELECT_KEY_HINT)
+        if active then
+            InputManagerInst:ToggleBinding(bindingId, not isSelect)
         end
-        InputManagerInst:SetBindingText(cell.toggle.hoverConfirmBindingId, Language.LUA_COMMON_FILTER_SELECT_KEY_HINT)
     elseif self.m_curSelectMode == SelectMode.Filter then
         if isSelect then
-            InputManagerInst:SetBindingText(cell.toggle.hoverConfirmBindingId, Language.LUA_COMMON_FILTER_CANCEL_SELECT_KEY_HINT)
+            InputManagerInst:SetBindingText(bindingId, Language.LUA_COMMON_FILTER_CANCEL_SELECT_KEY_HINT)
         else
-            InputManagerInst:SetBindingText(cell.toggle.hoverConfirmBindingId, Language.LUA_COMMON_FILTER_SELECT_KEY_HINT)
+            InputManagerInst:SetBindingText(bindingId, Language.LUA_COMMON_FILTER_SELECT_KEY_HINT)
         end
     end
     if not active then
-        InputManagerInst:ToggleBinding(cell.toggle.hoverConfirmBindingId, false)
+        InputManagerInst:ToggleBinding(bindingId, false)
     end
 end
-
-
-
-
 
 CommonFilterCtrl._OnUpdateSortTagGroupCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     if not self.m_sortSelectedTag or self.m_curSelectMode ~= SelectMode.Sort then
@@ -377,9 +301,8 @@ CommonFilterCtrl._OnUpdateSortTagGroupCell = HL.Method(HL.Table, HL.Number) << f
     cell.toggle.onIsNaviTargetChanged = function(active)
         self:_OnCellSelectedChanged(cell, cell.toggle.isOn, active)
     end
+    self:_OnCellSelectedChanged(cell, cell.toggle.isOn, cell.toggle.isNaviTarget)
 end
-
-
 
 CommonFilterCtrl._UpdateModState = HL.Method() << function(self)
     if not self.m_originalSortTag then
@@ -414,32 +337,19 @@ CommonFilterCtrl._UpdateModState = HL.Method() << function(self)
     self.view.filterModifiedMark.gameObject:SetActive(filterModState)
 end
 
-
-
-
-
-
 CommonFilterCtrl._SetSortNaviTarget = HL.Method(HL.Number, HL.Table, HL.Table)
     << function(self, index, tagInfo, tagCell)
-    local setNavi = false
     if self.m_naviTargetInitialized then
         return
     end
-    if index == 1 then
-        setNavi = true
-    end
-    if setNavi then
+    local isSelected = self.m_sortSelectedTag and self.m_sortSelectedTag.name == tagInfo.name and self.m_sortSelectedTag.isIncremental == tagInfo.isIncremental
+    if isSelected then
         self.m_naviTargetInfo = {}
         self.m_naviTargetInfo.target = tagCell.toggle
         self.m_naviTargetInfo.index = index
-        InputManagerInst.controllerNaviManager:SetTarget(self.m_naviTargetInfo.target)
         self.m_naviTargetInitialized = true
     end
 end
-
-
-
-
 
 CommonFilterCtrl._OnUpdateFilterTagGroupCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     if not self.m_filterTagGroups or self.m_curSelectMode ~= SelectMode.Filter then
@@ -465,38 +375,39 @@ CommonFilterCtrl._OnUpdateFilterTagGroupCell = HL.Method(HL.Table, HL.Number) <<
     end)
 end
 
-
-
-
-
-
-
 CommonFilterCtrl._SetFilterNaviTarget = HL.Method(HL.Number, HL.Number, HL.Table, HL.Table)
     << function(self, tagIndex, index, tagInfo, tagCell)
-    local setNavi = false
     if self.m_naviTargetInitialized then
         return
     end
-    if tagIndex == 1 and index == 1 then
-        setNavi = true
+    local hasSelectedTags = self.m_filterSelectedTags and next(self.m_filterSelectedTags)
+    local setNavi = false
+    if hasSelectedTags then
+        setNavi = self:_GetSelectedTagIndex(tagInfo) > 0
+    else
+        setNavi = (tagIndex == 1 and index == 1)
     end
     if setNavi then
         self.m_naviTargetInfo = {}
         self.m_naviTargetInfo.target = tagCell.toggle
         self.m_naviTargetInfo.index = index
-        InputManagerInst.controllerNaviManager:SetTarget(self.m_naviTargetInfo.target)
         self.m_naviTargetInitialized = true
     end
 end
 
-
-
-
+CommonFilterCtrl._GetSelectedTagIndex = HL.Method(HL.Table).Return(HL.Number) << function(self, tagInfo)
+    for index, selectedTagInfo in ipairs(self.m_filterSelectedTags) do
+        if FilterUtils.isSameTagInfo(selectedTagInfo, tagInfo) then
+            return index
+        end
+    end
+    return 0
+end
 
 CommonFilterCtrl._UpdateTagCell = HL.Method(HL.Table, HL.Table) << function(self, cell, tagInfo)
     cell.name.text = tagInfo.name
     cell.toggle.onValueChanged:RemoveAllListeners()
-    cell.toggle.isOn = lume.find(self.m_filterSelectedTags, tagInfo) ~= nil
+    cell.toggle.isOn = self:_GetSelectedTagIndex(tagInfo) > 0
     cell.toggle.onIsNaviTargetChanged = nil
     cell.toggle.onIsNaviTargetChanged = function(active)
         self:_OnCellSelectedChanged(cell, cell.toggle.isOn, active)
@@ -507,27 +418,22 @@ CommonFilterCtrl._UpdateTagCell = HL.Method(HL.Table, HL.Table) << function(self
         self:_UpdateModState()
         self:_OnCellSelectedChanged(cell, isOn, true)
     end)
+    self:_OnCellSelectedChanged(cell, cell.toggle.isOn, cell.toggle.isNaviTarget)
 end
 
-
-
-
-
 CommonFilterCtrl._OnClickTagCell = HL.Method(HL.Table, HL.Boolean) << function(self, tagInfo, isOn)
-    local index = lume.find(self.m_filterSelectedTags, tagInfo)
+    local index = self:_GetSelectedTagIndex(tagInfo)
     if isOn then
-        if not index then
+        if index <= 0 then
             table.insert(self.m_filterSelectedTags, tagInfo)
         end
     else
-        if index then
+        if index > 0 then
             table.remove(self.m_filterSelectedTags, index)
         end
     end
     self:_UpdateResultCount()
 end
-
-
 
 CommonFilterCtrl._UpdateResultCount = HL.Method() << function(self)
     local getResultCount = self.m_args.getResultCount
@@ -538,8 +444,6 @@ CommonFilterCtrl._UpdateResultCount = HL.Method() << function(self)
     self.view.filterResultNode.gameObject:SetActive(true)
     self.view.filterResultCount.text = getResultCount(self.m_filterSelectedTags)
 end
-
-
 
 CommonFilterCtrl._OnClickConfirm = HL.Method() << function(self)
     local sortNode = self.m_args.sortNodeWidget
@@ -571,8 +475,6 @@ CommonFilterCtrl._OnClickConfirm = HL.Method() << function(self)
     self:_CloseSelf()
 end
 
-
-
 CommonFilterCtrl._OnClickReset = HL.Method() << function(self)
     if self.m_curSelectMode == SelectMode.Filter then
         self.m_filterSelectedTags = {}
@@ -586,8 +488,6 @@ CommonFilterCtrl._OnClickReset = HL.Method() << function(self)
     self:_UpdateModState()
 end
 
-
-
 CommonFilterCtrl._CloseSelf = HL.Method() << function(self)
     self.m_args = nil
     self.m_tags = nil
@@ -596,6 +496,7 @@ CommonFilterCtrl._CloseSelf = HL.Method() << function(self)
     self.m_sortSelectedIndex = 0
     self.m_sortSelectedTag = nil
     self:PlayAnimationOutAndClose()
+    Notify(MessageConst.ON_CLOSE_COMMON_FILTER)
 end
 
 HL.Commit(CommonFilterCtrl)

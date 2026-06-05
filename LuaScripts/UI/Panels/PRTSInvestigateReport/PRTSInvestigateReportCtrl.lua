@@ -56,6 +56,8 @@ PRTSInvestigateReportCtrl.m_aniUpdateKey = HL.Field(HL.Number) << -1
 
 PRTSInvestigateReportCtrl.m_aniCurPlayTime = HL.Field(HL.Number) << 0
 
+PRTSInvestigateReportCtrl.m_isNewReport = HL.Field(HL.Boolean) << false
+
 
 
 
@@ -66,7 +68,31 @@ PRTSInvestigateReportCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitData(arg)
     self:_UpdateData()
     self:_InitUI()
+    self:_ApplyResumeState(arg and arg.resumeState or nil)
     self:_RefreshAllUI()
+end
+
+PRTSInvestigateReportCtrl.OnClose = HL.Override() << function(self)
+    self.m_aniUpdateKey = LuaUpdate:Remove(self.m_aniUpdateKey)
+end
+
+PRTSInvestigateReportCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    return {
+        investId = self.m_belongsInvestId,
+        storyCollId = self.m_storyCollId,
+        showSubmitAni = self.m_showSubmitAni,
+        isNewReport = self.m_isNewReport,
+        resumeState = {
+            aniCurPlayTime = self.m_aniCurPlayTime,
+        },
+    }
+end
+
+PRTSInvestigateReportCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState then
+        return
+    end
+    self.m_aniCurPlayTime = resumeState.aniCurPlayTime or self.m_aniCurPlayTime
 end
 
 
@@ -78,7 +104,8 @@ end
 PRTSInvestigateReportCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     self.m_belongsInvestId = arg.investId
     self.m_storyCollId = arg.storyCollId
-    self.m_showSubmitAni = arg.showSubmitAni or false
+    self.m_isNewReport = arg.isNewReport or false
+    self.m_showSubmitAni = arg.isNewReport or self.m_isNewReport
 end
 
 
@@ -142,7 +169,9 @@ PRTSInvestigateReportCtrl._PlaySubmitAni = HL.Method() << function(self)
         return
     end
     self.view.contentNode.gameObject:SetActiveIfNecessary(false)
-    self.m_aniCurPlayTime = 0
+    local aniTimeProgress = self.view.config.ANI_TIME_PROGRESS
+    self.m_aniCurPlayTime = lume.clamp(self.m_aniCurPlayTime, 0, aniTimeProgress)
+    self.view.progressBar.fillAmount = aniTimeProgress > 0 and self.m_aniCurPlayTime / aniTimeProgress or 1
     AudioManager.PostEvent("Au_UI_Event_PRTS_Processing")
     self.m_aniUpdateKey = LuaUpdate:Add("Tick", function(deltaTime)
         self:_OnTickSubmitAni(deltaTime)
@@ -165,7 +194,9 @@ PRTSInvestigateReportCtrl._OnTickSubmitAni = HL.Method(HL.Number) << function(se
     local curTime = self.m_aniCurPlayTime + deltaTime
     self.m_aniCurPlayTime = curTime
     if curTime >= self.view.config.ANI_TIME_PROGRESS then
-        LuaUpdate:Remove(self.m_aniUpdateKey)
+        self.m_aniUpdateKey = LuaUpdate:Remove(self.m_aniUpdateKey)
+        self.view.progressBar.fillAmount = 1
+        self.m_showSubmitAni = false
         local aniWrapper = self.animationWrapper
         self:_ShowContent()
         aniWrapper:PlayWithTween("prtsstorycolldetailinves_in")
@@ -180,7 +211,7 @@ end
 PRTSInvestigateReportCtrl._OnClickCloseBtn = HL.Method() << function(self)
     PhaseManager:PopPhase(PhaseId.PRTSInvestigateReport)
     
-    if not self.m_showSubmitAni then
+    if not self.m_isNewReport then
         return
     end
     

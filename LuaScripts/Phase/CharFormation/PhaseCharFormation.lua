@@ -136,6 +136,9 @@ local PHASE_CHAR_FORMATION_GAME_OBJECT = "CharFormation"
 
 
 
+
+
+
 PhaseCharFormation = HL.Class('PhaseCharFormation', phaseBase.PhaseBase)
 local Panels = { PanelId.CharFormation, }
 
@@ -322,6 +325,11 @@ PhaseCharFormation.m_hideCamCor = HL.Field(HL.Thread)
 
 
 
+
+
+
+
+
 PhaseCharFormation._OnInit = HL.Override() << function(self)
     self:_ProcessArgs()
     self.m_curTeam = {}
@@ -358,6 +366,12 @@ end
 
 
 PhaseCharFormation.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
+    if transitionType == PhaseConst.EPhaseState.TransitionBackToTop then
+        if not PhaseManager:IsPhaseHaveSceneCamera(anotherPhaseId) then
+            CameraManager:EnableUIModelCullingMask(true, "charFormation")
+        end
+    end
+
     if transitionType == PhaseConst.EPhaseState.TransitionIn and not fastMode then
         
         UIManager:PreloadPanelAsset(PanelId.CharFormation, PHASE_ID)
@@ -408,7 +422,7 @@ PhaseCharFormation._OnActivated = HL.Override() << function(self)
 
     self.m_hideCamCor = self:_ClearCoroutine(self.m_hideCamCor)
     self.m_sceneObject.view.light.gameObject:SetActive(true)
-    CameraManager:AddMainCamCullingMaskConfig("CharFormation", UIConst.LAYERS.CharFormation)
+    CameraManager:EnableUIModelCullingMask(true, "charFormation")
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 end
@@ -418,7 +432,6 @@ end
 
 PhaseCharFormation._OnDeActivated = HL.Override() << function(self)
     self:_HideSkillTip()
-    CameraManager:RemoveMainCamCullingMaskConfig("CharFormation")
 end
 
 
@@ -438,9 +451,17 @@ end
 
 
 PhaseCharFormation._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    if PhaseManager:IsPhaseHaveSceneCamera(args and args.anotherPhaseId) then
+        CameraManager:EnableUIModelCullingMask(false, "charFormation")
+    end
+
     self.m_hideCamCor = self:_ClearCoroutine(self.m_hideCamCor)
+    local isRecovering = PhaseManager.isRecovering
     self.m_hideCamCor = self:_StartCoroutine(function()
-        coroutine.wait(1)
+        if not isRecovering then
+            coroutine.wait(1)
+        end
+        CameraManager:EnableUIModelCullingMask(false, "charFormation")
         self.m_sceneObject.view.light.gameObject:SetActive(false)
     end)
 end
@@ -450,12 +471,13 @@ end
 
 
 PhaseCharFormation._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    CameraManager:EnableUIModelCullingMask(true, "charFormation")
 end
 
 
 
 PhaseCharFormation._OnDestroy = HL.Override() << function(self)
-    CameraManager:RemoveMainCamCullingMaskConfig("CharFormation")
+    CameraManager:EnableUIModelCullingMask(false, "charFormation")
     if self.m_tickKey > 0 then
         LuaUpdate:Remove(self.m_tickKey)
         self.m_tickKey = -1
@@ -470,6 +492,47 @@ PhaseCharFormation._OnDestroy = HL.Override() << function(self)
 
     
     GameInstance.player.charBag:ClearAllClientCharAndItemData()
+end
+
+
+
+PhaseCharFormation.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    arg.teamIndex = self.m_curTeamIndex
+    arg.charListState = nil
+    arg.commonPopUpArg = nil
+    if self.m_charFormation then
+        local uiCtrl = self.m_charFormation.uiCtrl
+        if uiCtrl.state == UIConst.UI_CHAR_FORMATION_STATE.SingleChar then
+            local selectedCharInfo = self.m_curTeam[self.m_singleCharIndex]
+            arg.charListState = {
+                state = uiCtrl.state,
+                mode = uiCtrl.m_charListMode,
+                singleCharIndex = self.m_singleCharIndex,
+                selectedCharInstId = selectedCharInfo and selectedCharInfo.charInstId or nil,
+                sortFilterState = uiCtrl:CollectCharListSortFilterState(),
+            }
+        elseif uiCtrl.state == UIConst.UI_CHAR_FORMATION_STATE.CharChange then
+            local selectedCharInstIds = {}
+            for _, charItem in ipairs(self.m_tmpTeam or {}) do
+                table.insert(selectedCharInstIds, charItem.instId)
+            end
+            arg.charListState = {
+                state = uiCtrl.state,
+                mode = uiCtrl.m_charListMode,
+                selectedCharInstIds = selectedCharInstIds,
+                sortFilterState = uiCtrl:CollectCharListSortFilterState(),
+            }
+        end
+    end
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.CommonPopUp)
+    if isOpen and UIManager:IsShow(PanelId.CommonPopUp) and PhaseManager:GetTopPhaseId() == PHASE_ID then
+        local commonPopUpArg = ctrl:GetCurPhaseStateArg()
+        if commonPopUpArg then
+            arg.commonPopUpArg = commonPopUpArg
+        end
+    end
+    return arg
 end
 
 
@@ -498,8 +561,16 @@ PhaseCharFormation._ProcessArgs = HL.Method() << function(self)
             self.arg.lockedTeamData = self:_GenerateLockedFormationData(subGameData.teamConfigId)
         end
     end
-
     self.m_lockedTeamData = self.arg.lockedTeamData
+
+    self.m_customTeamIndex = -1
+    if self.arg.customTeamIndex then
+        if self.arg.customTeamIndex < Tables.globalConst.totalSquadNum then
+            logger.error(string.format("自定义编队索引非法: %d，小于正常最大编队数量: %d", self.arg.customTeamIndex, Tables.globalConst.totalSquadNum))
+        else
+            self.m_customTeamIndex = self.arg.customTeamIndex
+        end
+    end
 end
 
 
@@ -512,9 +583,58 @@ PhaseCharFormation._InitPhaseItems = HL.Method() << function(self)
         end
 
         self.m_charFormation = self:_GetPanelPhaseItem(PanelId.CharFormation)
-        self.m_charFormation.uiCtrl:InitSelectTeam()
+        local recoverIndex
+        if self.arg and self.arg.teamIndex then
+            recoverIndex = self.arg.teamIndex
+            self.arg.teamIndex = nil
+        end
+        self.m_charFormation.uiCtrl:InitSelectTeam(recoverIndex)
+        self:_TryRecoverCharListState()
+        if self.arg and self.arg.commonPopUpArg then
+            Notify(MessageConst.SHOW_POP_UP, self.arg.commonPopUpArg)
+            self.arg.commonPopUpArg = nil
+        end
     end
     self.m_inited = true
+end
+
+
+
+PhaseCharFormation._TryRecoverCharListState = HL.Method() << function(self)
+    if not self.arg or not self.arg.charListState or not self.m_charFormation then
+        return
+    end
+    local recoverState = self.arg.charListState
+    self.arg.charListState = nil
+    if recoverState.state == UIConst.UI_CHAR_FORMATION_STATE.SingleChar then
+        local singleCharIndex = recoverState.singleCharIndex
+        if type(singleCharIndex) ~= "number" or singleCharIndex <= 0 or singleCharIndex > Const.BATTLE_SQUAD_MAX_CHAR_NUM then
+            return
+        end
+        self:OnEnterSingleChar(singleCharIndex)
+        self.m_charFormation.uiCtrl:ApplyCharListSortFilterState(recoverState.sortFilterState or {})
+        local selectedCharInstId = recoverState.selectedCharInstId
+        local selectedCharInfo = self.m_curTeam[singleCharIndex]
+        local curSelectedInstId = selectedCharInfo and selectedCharInfo.charInstId or nil
+        if selectedCharInstId and selectedCharInstId ~= curSelectedInstId then
+            local cell = self.m_charFormation.uiCtrl.view.charList:GetCellByIndex(singleCharIndex)
+            if cell then
+                cell:SetSingleSelect(false)
+            end
+            local charItem = self.m_charFormation.uiCtrl:GetCharListItemByInstId(selectedCharInstId)
+            if charItem then
+                self.m_charFormation.uiCtrl:SetCharListMode(UIConst.CharListMode.Single, selectedCharInstId)
+                self:OnCharListSingleSelect({ 0, charItem })
+            end
+        end
+    elseif recoverState.state == UIConst.UI_CHAR_FORMATION_STATE.CharChange then
+        self.m_charFormation.uiCtrl:OpenCharList(recoverState.mode or UIConst.CharListMode.MultiSelect)
+        self.m_charFormation.uiCtrl:SetState(UIConst.UI_CHAR_FORMATION_STATE.CharChange)
+        self:OnEnterMultiSelect()
+        self.m_charFormation.uiCtrl:ApplyCharListSortFilterState(recoverState.sortFilterState or {})
+        local charItemList, charInfoList = self.m_charFormation.uiCtrl:RecoverMultiCharListSelection(recoverState.selectedCharInstIds or {})
+        self:OnCharListMultiSelect({ charItemList, charInfoList })
+    end
 end
 
 
@@ -801,9 +921,9 @@ end
 PhaseCharFormation.OnCurSelectTeamChange = HL.Method(HL.Number) << function(self, teamIndex)
     self.m_curTeamIndex = teamIndex
 
-    local isLockedTeam = self.m_lockedTeamData ~= nil
-    self.m_sceneObject.view.formationDeco.gameObject:SetActive(not isLockedTeam)
-    if not isLockedTeam then
+    local showTeamIndex = self.m_lockedTeamData == nil and self.m_customTeamIndex <= 0
+    self.m_sceneObject.view.formationDeco.gameObject:SetActive(showTeamIndex)
+    if showTeamIndex then
         self.m_sceneObject.view.formationDeco.textNum.text = string.format("0%d", teamIndex)
         self.m_sceneObject.view.formationDeco.animationWrapper:PlayInAnimation()
     end
@@ -941,7 +1061,7 @@ PhaseCharFormation._RefreshPhaseCharItem = HL.Method(HL.Forward("PhaseCharItem")
     phaseCharItem:SetVisible(true)
     phaseCharItem:SetTrigger(UIConst.PHASE_CHAR_ITEM_ENABLE_SWITCH_FORMATION)
     phaseCharItem:SetInteger(PhaseConst.PHASE_CHAR_ITEM_FORMATION_PARAM_NAME, animStateInt)
-    phaseCharItem:ReloadWeapon()
+    phaseCharItem:ReloadWeapon(false)
     phaseCharItem:SwitchWeaponState(weaponState)
     
     phaseCharItem.uiModelMono:ForceUpdateAnimator()
@@ -1145,6 +1265,7 @@ PhaseCharFormation._TryGetLightGroup = HL.Method(HL.String).Return(HL.Forward("P
         if success then
             lightGroup = result
             lightGroup.go:SetAllChildrenActiveIfNecessary(false)
+            lightGroup.go:SetLayerRecursive(UIConst.UI_MODEL_LAYER)
         end
         self.m_templateId2LightGroup[templateId] = lightGroup
     end
@@ -1161,6 +1282,7 @@ PhaseCharFormation._TryGetTrackGroup = HL.Method(HL.String).Return(HL.Forward("P
         local success, result = xpcall(self.CreatePhaseGOItem, debug.traceback, self, charDisplayData.charInfoCameraGroup, nil, nil, "CharInfo")
         if success then
             trackGroup = result
+            trackGroup.go:SetLayerRecursive(UIConst.UI_MODEL_LAYER)
             if UNITY_EDITOR then
                 
                 local cinemachineWaypointGroup = trackGroup.go:AddComponent(typeof(CS.Beyond.DevTools.CinemachineWaypointGroup))
@@ -1309,7 +1431,7 @@ PhaseCharFormation._TryGetCharModel = HL.Method(HL.Table, HL.Opt(HL.Number, HL.F
                 lookAtIk.solver:SetLookAtWeight(0)
             end
             callback(phaseItem)
-        end)
+        end, nil, UIConst.UI_MODEL_LAYER)
 
     end
 end
@@ -1678,6 +1800,7 @@ PhaseCharFormation._GetOverrideCamera = HL.Method(HL.String, Transform).Return(H
     local phaseItem = self:_GetGOPhaseItem(path)
     if not phaseItem then
         phaseItem = self:CreatePhaseGOItem(path)
+        phaseItem.go:SetLayerRecursive(UIConst.UI_MODEL_LAYER)
         phaseItem.go:SetActive(false)
     end
 
@@ -1717,6 +1840,9 @@ PhaseCharFormation._OnSquadChange = HL.Method(HL.Table) << function(self, args)
         end
 
         self:_RefreshTeamChars()
+    end
+    if teamIndex == LuaIndex(GameInstance.player.charBag.curTeamIndex) then
+        FilterUtils.setCharInstIdIndexDirty()
     end
 end
 
@@ -2028,7 +2154,7 @@ PhaseCharFormation._Refresh3DUIVisible = HL.Method(HL.Boolean) << function(self,
         end
     end
     
-    if self.m_lockedTeamData then
+    if self.m_lockedTeamData or self.m_customTeamIndex > 0 then
         self.m_sceneObject.view.formationDeco.gameObject:SetActive(false)
     else
         if not allVisible and self.m_sceneObject.view.formationDeco.gameObject.activeSelf then
@@ -2232,6 +2358,9 @@ PhaseCharFormation._PlayTeamVoice = HL.Method() << function(self)
         return
     end
     local memberCount = #self.m_curTeam
+    if memberCount == 0 then
+        return
+    end
     local index = math.random(1, memberCount)
     local charId = self.m_curTeam[index].charId
     Utils.triggerVoice("chrbark_squad", charId)
@@ -2376,6 +2505,14 @@ PhaseCharFormation._GenerateLockedFormationData = HL.Method(HL.String).Return(HL
     end
     return lockedTeamData
 end
+
+
+
+
+
+
+PhaseCharFormation.m_customTeamIndex = HL.Field(HL.Number) << -1
+
 
 
 

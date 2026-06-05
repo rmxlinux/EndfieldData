@@ -7,6 +7,12 @@ local MainState = {
     Fac = "Fac", 
     Hub = "Hub", 
 }
+local MAXIMUM_MAKE_COUNT = 999
+
+
+
+
+
 
 
 
@@ -151,6 +157,7 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self.m_curCraftModeState = not Utils.isInBlackbox() and Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacHub)
         end
     end
+    local recoverState = self:_ProcessRecoverStateArg(arg and arg.recoverState)
     self.view.mainController:SetState(self.m_onlyCraftNode and MainState.Hub or MainState.Fac)
     if DeviceInfo.usingController or self.m_onlyCraftNode then
         self.view.dragTips.gameObject:SetActiveIfNecessary(false)
@@ -168,23 +175,7 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self.view.commonToggle:Toggle()
         end)
         self.view.commonToggle:InitCommonToggle(function(isOn)
-            self.m_curCraftModeState = not isOn
-            self.view.placeNode.gameObject:SetActiveIfNecessary(isOn)
-            self.view.craftNode.gameObject:SetActiveIfNecessary(not isOn)
-            self.view.scrollList:UpdateShowingCells(function(csIndex, obj)
-                local cell = self.m_getCell(obj)
-                local item = self.m_showListInfos[self.m_selectedTypeIndex][LuaIndex(csIndex)]
-                local disNodeShow = (self.m_curCraftModeState and item.type ~= QuickBarItemType.Building)
-                    or (not self.m_curCraftModeState and item.domainSortGroup < FacConst.DOMAIN_SORT_GROUP.Unsuitable)
-                cell.view.disNode.gameObject:SetActiveIfNecessary(disNodeShow)
-            end)
-            if self.m_curCraftModeState then
-                self:_RefreshSelectedCraftNode()
-                self.view.craftNode.animationWrapper:PlayInAnimation()
-            else
-                self:_RefreshSelectedPlaceNode()
-                self.view.placeNode.animationWrapper:PlayInAnimation()
-            end
+            self:_OnChangeModeToggle(isOn)
         end, not self.m_curCraftModeState, true)
         self.view.commonToggle:SetCustomAnimation("common_toggle_to_left02", "common_toggle_to_right02")
         if Utils.isInBlackbox() or not Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacHub) then
@@ -208,7 +199,11 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.craftNode.depotCountTitle.text = Language[depotKey]
     if self.m_bluePrintMode then
         self.view.toppingToggle.onValueChanged:RemoveAllListeners()
-        self.view.toppingToggle.isOn = true
+        if recoverState ~= nil and recoverState.toppingToggleIsOn ~= nil then
+            self.view.toppingToggle.isOn = recoverState.toppingToggleIsOn
+        else
+            self.view.toppingToggle.isOn = true
+        end
         self.view.toppingToggle.onValueChanged:AddListener(function(isOn)
             self:_UpdateShowListInfos()
             self:_RefreshItemList()
@@ -268,9 +263,11 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end)
     end
 
-    self:_InitSortAndFilterNode()
+    self:_InitSortAndFilterNode(recoverState)
     self:_InitTypeData()
     self:_RefreshTypeList()
+    
+    self:_TryRecoverExtraState(recoverState)
 end
 
 
@@ -327,7 +324,133 @@ end
 
 
 
-FacBuildListSelectCtrl._InitSortAndFilterNode = HL.Method() << function(self)
+FacBuildListSelectCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
+    local recoverState = {}
+    local curTab = self.m_typeInfos and self.m_typeInfos[self.m_selectedTypeIndex]
+    if curTab and curTab.data then
+        recoverState.tabId = curTab.data.id
+    end
+    local curList = self.m_showListInfos and self.m_showListInfos[self.m_selectedTypeIndex]
+    local item = curList and curList[LuaIndex(self.view.scrollList.curSelectedIndex)]
+    if item then
+        recoverState.selectedItemId = item.itemId
+    end
+    if self.m_filterTags then
+        recoverState.filterDomainIds = {}
+        for domainId, _ in pairs(self.m_filterTags) do
+            table.insert(recoverState.filterDomainIds, domainId)
+        end
+        table.sort(recoverState.filterDomainIds)
+    end
+    if self.view.sortNode then
+        recoverState.sortSelectedIndex = self.view.sortNode:GetCurSelectedIndex()
+        recoverState.sortIsIncremental = self.view.sortNode.isIncremental
+    end
+    if not self.m_onlyCraftNode then
+        recoverState.toggleIsOn = self.view.commonToggle.toggle.isOn
+    end
+    if self.m_bluePrintMode then
+        recoverState.toppingToggleIsOn = self.view.toppingToggle.isOn
+    end
+    if self.m_curCraftModeState and self.view.craftNode.numberSelector.gameObject.activeSelf then
+        recoverState.craftCount = self.view.craftNode.numberSelector.curNumber
+    end
+    return recoverState
+end
+
+
+
+
+FacBuildListSelectCtrl._ProcessRecoverStateArg = HL.Method(HL.Opt(HL.Any)).Return(HL.Opt(HL.Any)) << function(self, arg)
+    if not arg then
+        return nil
+    end
+    if not string.isEmpty(arg.tabId) then
+        if not string.isEmpty(arg.selectedItemId) then
+            FacBuildListSelectCtrl.s_lastSelectInfo = { arg.tabId, arg.selectedItemId }
+        else
+            FacBuildListSelectCtrl.s_lastSelectInfo = { arg.tabId }
+        end
+    end
+    if not self.m_onlyCraftNode and arg.toggleIsOn ~= nil then
+        self.m_curCraftModeState = not arg.toggleIsOn
+    end
+    return arg
+end
+
+
+
+
+
+FacBuildListSelectCtrl._GetRecoverFilterTags = HL.Method(HL.Table, HL.Opt(HL.Any)).Return(HL.Table) << function(self, filterTagGroups, recoverState)
+    if not recoverState or not recoverState.filterDomainIds or #recoverState.filterDomainIds == 0 then
+        return {}
+    end
+    local recoverDomainIdMap = {}
+    for _, domainId in ipairs(recoverState.filterDomainIds) do
+        recoverDomainIdMap[domainId] = true
+    end
+    local recoverFilterTags = {}
+    for _, tagInfo in ipairs(filterTagGroups) do
+        if recoverDomainIdMap[tagInfo.domainId] then
+            table.insert(recoverFilterTags, tagInfo)
+        end
+    end
+    return recoverFilterTags
+end
+
+
+
+
+
+FacBuildListSelectCtrl._OnChangeModeToggle = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isOn, skipAnimation)
+    self.m_curCraftModeState = not isOn
+    self.view.placeNode.gameObject:SetActiveIfNecessary(isOn)
+    self.view.craftNode.gameObject:SetActiveIfNecessary(not isOn)
+    self.view.scrollList:UpdateShowingCells(function(csIndex, obj)
+        local cell = self.m_getCell(obj)
+        local item = self.m_showListInfos[self.m_selectedTypeIndex][LuaIndex(csIndex)]
+        local disNodeShow = (self.m_curCraftModeState and item.type ~= QuickBarItemType.Building)
+            or (not self.m_curCraftModeState and item.domainSortGroup < FacConst.DOMAIN_SORT_GROUP.Unsuitable)
+        cell.view.disNode.gameObject:SetActiveIfNecessary(disNodeShow)
+    end)
+    if self.m_curCraftModeState then
+        self:_RefreshSelectedCraftNode()
+        if not skipAnimation then
+            self.view.craftNode.animationWrapper:PlayInAnimation()
+        end
+    else
+        self:_RefreshSelectedPlaceNode()
+        if not skipAnimation then
+            self.view.placeNode.animationWrapper:PlayInAnimation()
+        end
+    end
+end
+
+
+
+
+FacBuildListSelectCtrl._TryRecoverExtraState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if not recoverState then
+        return
+    end
+    if not self.m_onlyCraftNode and recoverState.toggleIsOn ~= nil then
+        self.view.commonToggle:SetValue(recoverState.toggleIsOn, true)
+        self:_OnChangeModeToggle(recoverState.toggleIsOn, true)
+    end
+    if recoverState.craftCount ~= nil and self.m_curCraftModeState then
+        local curList = self.m_showListInfos and self.m_showListInfos[self.m_selectedTypeIndex]
+        local item = curList and curList[LuaIndex(self.view.scrollList.curSelectedIndex)]
+        if item and item.type == QuickBarItemType.Building then
+            self.view.craftNode.numberSelector:RefreshNumber(recoverState.craftCount)
+        end
+    end
+end
+
+
+
+
+FacBuildListSelectCtrl._InitSortAndFilterNode = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     local filterTagGroups = {}
     local mapManager = GameInstance.player.mapManager
     for id, domainData in pairs(Tables.domainDataTable) do
@@ -347,10 +470,19 @@ FacBuildListSelectCtrl._InitSortAndFilterNode = HL.Method() << function(self)
         end
     end
     table.sort(filterTagGroups, Utils.genSortFunction({ "sort" }));
+    
+    local recoverFilterTags = self:_GetRecoverFilterTags(filterTagGroups, recoverState)
+    if #recoverFilterTags > 0 then
+        self.m_filterTags = {}
+        for _, tagInfo in ipairs(recoverFilterTags) do
+            self.m_filterTags[tagInfo.domainId] = true
+        end
+    end
     self.view.filterBtn:InitFilterBtn({
         tagGroups = {
             { tags = filterTagGroups }
         },
+        selectedTags = recoverFilterTags,
         onConfirm = function(tags)
             if tags then
                 self.m_filterTags = {}
@@ -381,13 +513,20 @@ FacBuildListSelectCtrl._InitSortAndFilterNode = HL.Method() << function(self)
             reverseKeys = { "domainReverseSort", "sortId1", "sortId2", "rarity", "id" },
         },
     }
+    
+    local sortSelectedIndex = recoverState and recoverState.sortSelectedIndex or 1
+    sortSelectedIndex = lume.clamp(sortSelectedIndex, 1, #self.m_sortOptions)
+    local sortIsIncremental = recoverState and recoverState.sortIsIncremental
+    if sortIsIncremental == nil then
+        sortIsIncremental = true
+    end
     self.view.sortNode:InitSortNode(self.m_sortOptions, function(optData, isIncremental)
         self.m_sortData = optData
         self.m_sortIncremental = isIncremental
         self:_UpdateShowListInfos()
         self:_RefreshItemList()
-    end, 0, true, true, self.view.filterBtn)
-    self.m_sortData = self.m_sortOptions[1]
+    end, CSIndex(sortSelectedIndex), sortIsIncremental, true, self.view.filterBtn)
+    self.m_sortData = self.m_sortOptions[sortSelectedIndex]
     self.m_sortIncremental = self.view.sortNode.isIncremental
 end
 
@@ -997,7 +1136,7 @@ FacBuildListSelectCtrl._RefreshSelectedCraftNode = HL.Method(HL.Opt(HL.Boolean))
         self.view.craftNode.depotCountTxt.color = depotCount == 0 and self.view.config.COUNT_EMPTY_COLOR or self.view.config.COUNT_ENOUGH_COLOR
 
         local craftData = Tables.factoryHubCraftTable:GetValue(item.id)
-        local maxMakeCount = math.maxinteger
+        local maxMakeCount = MAXIMUM_MAKE_COUNT
         for index = 1, FacConst.FAC_HUB_CRAFT_MAX_INCOME_NUM do
             if craftData.ingredients.length >= index then
                 local itemBundle = craftData.ingredients[CSIndex(index)]

@@ -699,8 +699,9 @@ end
 
 function CashShopUtils.CheckCashShopNewCashGoodsRedDot(goodsIds)
     for _, goodsId in ipairs(goodsIds) do
+        local canBuy = CashShopUtils.CheckCanBuyCashShopGoods(goodsId)
         local isNew = GameInstance.player.cashShopSystem:IsNewGoods(goodsId)
-        if isNew then
+        if canBuy and isNew then
             return true
         end
     end
@@ -716,6 +717,11 @@ function CashShopUtils.IsOnceCashShop(cashShopId)
         end
     end
     return false
+end
+
+function CashShopUtils.ShowKrUrlBtn()
+    local isKR = I18nUtils.curEnvLang == GEnums.EnvLang.KR and CS.Beyond.SDK.SDKConsts.IsOverseaVersion()
+    return isKR
 end
 
 
@@ -1113,15 +1119,17 @@ function CashShopUtils.HaveCharPotentialExchange()
         local templateId = charInfo.templateId
         local currentPotentialLevel = charInfo.potentialLevel
         local _, characterPotentialList = Tables.characterPotentialTable:TryGetValue(templateId)
-        
-        local maxPotentialLevel = characterPotentialList.potentialUnlockBundle.Count
-        local materialId = characterPotentialList.firstItemId
-        local getCount = Utils.getItemCount(materialId)
-        
-        local redundant = currentPotentialLevel + getCount - maxPotentialLevel
-        
-        if redundant > 0 then
-            return true
+        if characterPotentialList then
+            
+            local maxPotentialLevel = characterPotentialList.potentialUnlockBundle.Count
+            local materialId = characterPotentialList.firstItemId
+            local getCount = Utils.getItemCount(materialId)
+            
+            local redundant = currentPotentialLevel + getCount - maxPotentialLevel
+            
+            if redundant > 0 then
+                return true
+            end
         end
     end
 
@@ -1373,6 +1381,10 @@ function CashShopUtils.OpenShopDetailPanel(info, uiCtrl)
     else
         UIManager:Open(PanelId.ShopDetail, info)
     end
+end
+
+function CashShopUtils.ShowKrUrl()
+    UIManager:Open(PanelId.InstructionBook, "shop_recharge_kr")
 end
 
 

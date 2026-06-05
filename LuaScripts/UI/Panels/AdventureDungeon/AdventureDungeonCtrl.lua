@@ -1,10 +1,14 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.AdventureDungeon
+local EMPTY_APPEND_TAB_NAMES = {
+    GEnums.DungeonCategoryType.MiniBossRush:ToString(),
+}
 
 local SeriesTableFilterItem = {
     [GEnums.DungeonCategoryType.BasicResource] = {},
     [GEnums.DungeonCategoryType.CharResource] = {},
     [GEnums.DungeonCategoryType.BossRush] = {},
+    [GEnums.DungeonCategoryType.MiniBossRush] = {},
     [GEnums.DungeonCategoryType.SpecialResource] = {},
 }
 
@@ -14,24 +18,35 @@ local TabDataList = {
     {
         type = GEnums.DungeonCategoryType.CharResource,
         tabName = "ui_AdventureDungeonPanel_title_charmaterial",
-        imgPath = "deco_adventure_d_material",
+        imgPath = "icon_adventure_dg_tab_char_resource",
     },
     {
         type = GEnums.DungeonCategoryType.BasicResource,
         tabName = "ui_AdventureDungeonPanel_title_basematerial",
-        imgPath = "deco_adventure_d_currency",
+        imgPath = "icon_adventure_dg_tab_basic_resource",
     },
     {
         type = GEnums.DungeonCategoryType.BossRush,
         tabName = "ui_AdventureDungeonPanel_title_boss",
-        imgPath = "deco_adventure_d_leaderchallenge",
+        imgPath = "icon_adventure_dg_tab_boss_rush",
     },
     {
         type = GEnums.DungeonCategoryType.SpecialResource,
         tabName = "ui_AdventureDungeonPanel_title_specialResource",
-        imgPath = "deco_adventure_d_challengethis",
+        imgPath = "icon_adventure_dg_tab_special_resource",
+    },
+    
+    
+    
+    {
+        type = GEnums.DungeonCategoryType.MiniBossRush,
+        tabName = "ui_AdventureDungeonPanel_title_miniBoss",
+        imgPath = "icon_adventure_dg_tab_mini_boss",
     },
 }
+
+
+
 
 
 
@@ -149,7 +164,6 @@ AdventureDungeonCtrl.m_needResetSingleListTarget = HL.Field(HL.Boolean) << false
 
 
 AdventureDungeonCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_phase = arg.phase
     self:_InitShortCut()
     self:_InitData()
     self:_UpdateData()
@@ -170,7 +184,11 @@ end
 
 
 AdventureDungeonCtrl._OnChangeTab = HL.Method(HL.Any) << function(self, arg)
-    local dungeonTab = arg.dungeonTab
+    local dungeonTab = arg and arg.dungeonTab or nil
+    if string.isEmpty(dungeonTab) then
+        logger.error(ELogChannel.UI, "[AdventureDungeonCtrl._OnChangeTab] 跳转到指定dungeonTab失败，参数为空")
+        return
+    end
     self.m_currSelectDropdownIndex = (arg.filterIndex ~= nil and arg.filterIndex > 0) and arg.filterIndex or 0
     local index = 1
     for _, categoryInfo in pairs(self.m_dungeonCategoryInfos) do
@@ -180,19 +198,24 @@ AdventureDungeonCtrl._OnChangeTab = HL.Method(HL.Any) << function(self, arg)
         index = index + 1
     end
     if index > #self.m_dungeonCategoryInfos then
-        logger.error(ELogChannel.UI, "[AdventureDungeonCtrl._OnChangeTab] 跳转到指定dungeonTab失败，可能是没解锁或配置错，tabName:" .. dungeonTab)
+        logger.error(ELogChannel.UI, "[AdventureDungeonCtrl._OnChangeTab] 跳转到指定dungeonTab失败，可能是没解锁或配置错，tabName:" .. tostring(dungeonTab))
         index = 1
     end
     self.m_curTabIndex = math.min(index, #self.m_dungeonCategoryInfos)
     local cell = self.m_genTabCells:Get(self.m_curTabIndex)
     cell.toggle:SetIsOnWithoutNotify(true)
-    InputManagerInst.controllerNaviManager:SetTarget(cell.toggle)
+    self:SetAsNaviTargetInSilentModeIfNecessary(self.view.tabNaviGroup, cell.toggle)
     if DeviceInfo.usingController then
         self.m_naviOnLeft = true
         InputManagerInst:ToggleGroup(self.view.slideNodeMonoTarget.groupId, not self.m_naviOnLeft)
         InputManagerInst:ToggleGroup(self.view.tabTogMonoTarget.groupId, self.m_naviOnLeft)
     end
     self:_OnClickTabToggle(self.m_curTabIndex, true)
+    if arg.reopenGemTermOverviewGameGroupId ~= nil and not string.isEmpty(tostring(arg.reopenGemTermOverviewGameGroupId)) then
+        local gid = arg.reopenGemTermOverviewGameGroupId
+        arg.reopenGemTermOverviewGameGroupId = nil
+        UIManager:Open(PanelId.GemTermOverviewPopup, gid)
+    end
 end
 
 
@@ -290,7 +313,13 @@ AdventureDungeonCtrl.OnShow = HL.Override() << function(self)
     if not string.isEmpty(self.m_phase.m_dungeonTab) then
         local dungeonTab = self.m_phase.m_dungeonTab
         self.m_phase.m_dungeonTab = ""
-        self:_OnChangeTab(dungeonTab)
+        self:_OnChangeTab({dungeonTab = dungeonTab})
+    end
+
+    if not string.isEmpty(self.m_phase.m_reopenGemTermOverviewGameGroupId) then
+        local gemGid = self.m_phase.m_reopenGemTermOverviewGameGroupId
+        self.m_phase.m_reopenGemTermOverviewGameGroupId = ""
+        UIManager:Open(PanelId.GemTermOverviewPopup, gemGid)
     end
 
     if DeviceInfo.usingController then
@@ -299,7 +328,7 @@ AdventureDungeonCtrl.OnShow = HL.Override() << function(self)
             self.m_naviOnLeft = true
             InputManagerInst:ToggleGroup(self.view.slideNodeMonoTarget.groupId, not self.m_naviOnLeft)
             InputManagerInst:ToggleGroup(self.view.tabTogMonoTarget.groupId, self.m_naviOnLeft)
-            InputManagerInst.controllerNaviManager:SetTarget(cell.toggle)
+            self:SetAsNaviTargetInSilentModeIfNecessary(self.view.tabNaviGroup, cell.toggle)
         end
     end
 
@@ -330,7 +359,7 @@ end
 
 
 AdventureDungeonCtrl._UpdateData = HL.Method() << function(self)
-    self.m_dungeonCategoryInfos = { }
+    self.m_dungeonCategoryInfos = {}
     for _, v in pairs(TabDataList) do
         self:_InitDataCommonDungeon(v.type, v.tabName, v.imgPath)
     end
@@ -348,7 +377,7 @@ AdventureDungeonCtrl._RefreshAllUI = HL.Method() << function(self)
     self:_OnClickTabToggle(self.m_curTabIndex, true)
     local cell = self.m_genTabCells:Get(1)
     if cell then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.toggle)
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.tabNaviGroup, cell.toggle)
     end
 end
 
@@ -488,6 +517,23 @@ AdventureDungeonCtrl._InitDataCommonDungeon = HL.Method(HL.Any, HL.String, HL.St
     end
     table.sort(newCategoryInfo.dungeonInfosList, Utils.genSortFunction({ "category2ndType" }, true))
     
+    if categoryType == GEnums.DungeonCategoryType.MiniBossRush then
+        for _, infosBundle in pairs(newCategoryInfo.dungeonInfosList) do
+            for _, info in pairs(infosBundle.infos) do
+                local allGained = true
+                for _, subGameId in pairs(info.subGameIds) do
+                    if GameInstance.dungeonManager:IsDungeonUnlocked(subGameId) and
+                       not GameInstance.dungeonManager:IsDungeonFirstPassRewardGained(subGameId) then
+                        allGained = false
+                        break
+                    end
+                end
+                info.allFirstPassGained = allGained and 1 or 0
+            end
+            table.sort(infosBundle.infos, Utils.genSortFunction({ "allFirstPassGained", "sortId" }, true))
+        end
+    end
+    
     table.insert(self.m_dungeonCategoryInfos, newCategoryInfo)
 end
 
@@ -503,12 +549,9 @@ AdventureDungeonCtrl._HandleAndCreateSeriesInfo = HL.Method(HL.Any,  HL.Table).R
         local dungeonCategory = seriesCfg.dungeonCategory
         local seriesId = seriesCfg.id
         local isActive = (
-            (dungeonCategory == GEnums.DungeonCategoryType.CharResource or
-            dungeonCategory == GEnums.DungeonCategoryType.BasicResource or
-            dungeonCategory == GEnums.DungeonCategoryType.SpecialResource or
-            dungeonCategory == GEnums.DungeonCategoryType.BossRush) and
-            (GameInstance.dungeonManager:IsDungeonInteractiveActive(seriesId) or
-            dungeonCategory == GEnums.DungeonCategoryType.BossRush)
+            dungeonCategory == GEnums.DungeonCategoryType.BossRush or
+            dungeonCategory == GEnums.DungeonCategoryType.MiniBossRush or
+            GameInstance.dungeonManager:IsDungeonInteractiveActive(seriesId)
         )
         local info = {
             seriesId = seriesId,
@@ -546,7 +589,9 @@ AdventureDungeonCtrl._HandleAndCreateSeriesInfo = HL.Method(HL.Any,  HL.Table).R
         
         local count = #info.subGameIds
         if count <= 0 or maxStaminaCost <= 0 then
-            info.staminaTxt = "0"
+            if dungeonCategory ~= GEnums.DungeonCategoryType.MiniBossRush then
+                info.staminaTxt = "0"
+            end
         elseif count == 1 then
             info.staminaTxt = tostring(maxStaminaCost)
             info.staminaMin = maxStaminaCost
@@ -581,7 +626,7 @@ AdventureDungeonCtrl._InitDataMonsterSpawnPoint = HL.Method() << function(self)
     
     local newCategoryInfo = {
         tabName = "ui_AdventureDungeonPanel_title_enemyspawner",
-        tabImgPath = "deco_adventure_d_brushingmonsters",
+        tabImgPath = "icon_adventure_dg_tab_monster_spawn",
         tabJumpName = "EnemySpawner",
         dungeonInfosList = {},
         subGameIds = {},
@@ -646,7 +691,16 @@ AdventureDungeonCtrl._InitDataMonsterSpawnPoint = HL.Method() << function(self)
         return  
     end
     table.sort(infosBundle.infos, Utils.genSortFunction({ "sortId" }, true))
-    table.insert(self.m_dungeonCategoryInfos, newCategoryInfo)
+    
+    local insertIndex = #self.m_dungeonCategoryInfos + 1
+    local miniBossRushTabName = GEnums.DungeonCategoryType.MiniBossRush:ToString()
+    for index, categoryInfo in ipairs(self.m_dungeonCategoryInfos) do
+        if categoryInfo.tabJumpName == miniBossRushTabName then
+            insertIndex = index
+            break
+        end
+    end
+    table.insert(self.m_dungeonCategoryInfos, insertIndex, newCategoryInfo)
 end
 
 
@@ -741,8 +795,8 @@ AdventureDungeonCtrl._OnClickTabToggle = HL.Method(HL.Number, HL.Opt(HL.Boolean)
             singleCategoryNode.titleState:SetState("ShowTitle")
             singleCategoryNode.titleTxt.text = infosBundle.name
         end
-        self.m_filterdInfos = infosBundle.infos
-        local cellCount = #infosBundle.infos
+        self.m_filterdInfos = self:_BuildSingleCategoryInfos(infosBundle.infos)
+        local cellCount = #self.m_filterdInfos
         self.view.singleCategoryNode.singleCategoryList:UpdateCount(cellCount, true)
         self.m_useDungeonList = false
     end
@@ -791,6 +845,39 @@ end
 
 
 
+AdventureDungeonCtrl._NeedAppendEmptyCell = HL.Method(HL.Table).Return(HL.Boolean) << function(self, categoryInfo)
+    if categoryInfo == nil then
+        return false
+    end
+    for _, tabName in ipairs(EMPTY_APPEND_TAB_NAMES) do
+        if categoryInfo.tabJumpName == tabName then
+            return true
+        end
+    end
+    return false
+end
+
+
+
+
+AdventureDungeonCtrl._BuildSingleCategoryInfos = HL.Method(HL.Table).Return(HL.Table) << function(self, infos)
+    local displayInfos = {}
+    for _, info in ipairs(infos) do
+        table.insert(displayInfos, info)
+    end
+    local categoryInfo = self.m_dungeonCategoryInfos[self.m_curTabIndex]
+    if self:_NeedAppendEmptyCell(categoryInfo) then
+        local lastInfo = displayInfos[#displayInfos]
+        if lastInfo == nil or not lastInfo.isEmpty then
+            table.insert(displayInfos, { isEmpty = true, subGameIds = {} })
+        end
+    end
+    return displayInfos
+end
+
+
+
+
 
 AdventureDungeonCtrl._OnSelectFilter = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, index, forceSelect)
     logger.info("[adventure] dropdown csIndex: " .. tostring(csIndex))
@@ -807,9 +894,9 @@ AdventureDungeonCtrl._OnSelectFilter = HL.Method(HL.Number, HL.Opt(HL.Boolean)) 
         end
         return x.domainId == selectDomainId
     end)
-    self.m_filterdInfos = filtered
+    self.m_filterdInfos = self:_BuildSingleCategoryInfos(filtered)
     self.m_needResetSingleListTarget = true
-    self.view.singleCategoryNode.singleCategoryList:UpdateCount(#filtered)
+    self.view.singleCategoryNode.singleCategoryList:UpdateCount(#self.m_filterdInfos)
 end
 
 
@@ -869,12 +956,17 @@ AdventureDungeonCtrl._UpdateSingleDungeonCell = HL.Method(HL.Any, HL.Number) << 
         cellInfo = infosBundle.infos[luaIndex]
     end
 
+    if cellInfo == nil then
+        return
+    end
     cell:InitAdventureDungeonCell(cellInfo)
-    cellInfo.hasRead = true
+    if not cellInfo.isEmpty then
+        cellInfo.hasRead = true
+    end
 
     if self.m_needResetSingleListTarget and luaIndex == 1 then
         self.m_needResetSingleListTarget = false
-        UIUtils.setAsNaviTarget(cell.view.naviDecorator)
+        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.dungeonCategoryListNaviGroup, cell.view.naviDecorator)
     end
 end
 
@@ -900,6 +992,12 @@ AdventureDungeonCtrl._ProcessDungeonSeriesRewards = HL.Method(HL.String, HL.Bool
             table.insert(dungeonIds, v)
         end
         self:_ProcessDungeonRewardsBoss(dungeonIds, rewardList)
+    elseif dungeonSeriesCfg.dungeonCategory == GEnums.DungeonCategoryType.MiniBossRush then
+        local dungeonIds = {}
+        for _, v in pairs(dungeonSeriesCfg.includeDungeonIds) do
+            table.insert(dungeonIds, v)
+        end
+        self:_ProcessDungeonRewardsMiniBoss(dungeonIds, rewardList)
     else
         local rewards = {}
         for _, v in pairs(dungeonSeriesCfg.includeDungeonIds) do
@@ -1190,6 +1288,45 @@ end
 
 
 
+AdventureDungeonCtrl._ProcessDungeonRewardsMiniBoss = HL.Method(HL.Table, HL.Table) << function(self, dungeonIds, rewards)
+    local dungeonMgr = GameInstance.dungeonManager
+    local lastUnlockedDungeonId = ""
+    for _, dungeonId in ipairs(dungeonIds) do
+        if dungeonMgr:IsDungeonUnlocked(dungeonId) then
+            lastUnlockedDungeonId = dungeonId
+        end
+    end
+    if lastUnlockedDungeonId == "" then
+        return
+    end
+
+    local gameMechanicCfg = Tables.gameMechanicTable[lastUnlockedDungeonId]
+    local hasFirstReward = not string.isEmpty(gameMechanicCfg.firstPassRewardId)
+    if hasFirstReward then
+        local firstRewardGained = dungeonMgr:IsDungeonFirstPassRewardGained(lastUnlockedDungeonId)
+        local _, rewardsCfg = Tables.rewardTable:TryGetValue(gameMechanicCfg.firstPassRewardId)
+        if rewardsCfg then
+            for _, itemBundle in pairs(rewardsCfg.itemBundles) do
+                local itemCfg = Tables.itemTable[itemBundle.id]
+                table.insert(rewards, {
+                    id = itemBundle.id,
+                    rarity = itemCfg.rarity,
+                    type = itemCfg.type:ToInt(),
+                    isFirst = true,
+                    isExtra = false,
+                    gainedSortId = firstRewardGained and 1 or 2,
+                    rewardTypeSortId = 3,
+                    gained = firstRewardGained,
+                })
+            end
+        end
+    end
+end
+
+
+
+
+
 AdventureDungeonCtrl._ProcessDungeonBossInfo = HL.Method(HL.String, HL.Table) << function(self, seriesId, info)
     local dungeonSeriesData = Tables.DungeonSeriesTable[seriesId]
     
@@ -1338,6 +1475,9 @@ AdventureDungeonCtrl.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) <
     end
 
     if cellInfo == nil then
+        return 0
+    end
+    if cellInfo.isEmpty then
         return 0
     end
 

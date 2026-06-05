@@ -509,21 +509,29 @@ CommonMaskCtrl._RefreshTextCor = HL.Method() << function(self)
         local speed = 1
 
         local key = langKey.key
-        local hasVo, voiceId = Tables.textVoIdTable:TryGetValue(key)
         local calculatedDuration = -1
-        if hasVo then
-            local res, duration = VoiceUtils.TryGetVoiceDuration(voiceId)
-            if res then
-                calculatedDuration = duration
-                VoiceManager:SpeakNarrative(voiceId, nil, CS.Beyond.Gameplay.Audio.NarrativeVoiceConfig.DEFAULT_CONFIG)
+
+        if key ~= nil then
+            local hasVo, voiceId = Tables.textVoIdTable:TryGetValue(key)
+            if hasVo then
+                local res, duration = VoiceUtils.TryGetVoiceDuration(voiceId)
+                if res then
+                    calculatedDuration = duration
+                    VoiceManager:SpeakNarrative(voiceId, nil, CS.Beyond.Gameplay.Audio.NarrativeVoiceConfig.DEFAULT_CONFIG)
+                end
             end
         end
 
         if BEYOND_DEBUG then
-            if not res then
-                rawText = key
-                logger.error("当前id表里不存在: " .. rawText)
-                speed = 5
+            if data.useCustomText then
+                rawText = string.format("<color=red>[Dev Only] Debug Custom Text:</color> %s", data.customText)
+                calculatedDuration = UIUtils.getTextShowDuration(data.customText, speed)
+            else
+                if not res then
+                    rawText = key
+                    logger.error("当前id表里不存在: " .. rawText)
+                    speed = 5
+                end
             end
         end
 

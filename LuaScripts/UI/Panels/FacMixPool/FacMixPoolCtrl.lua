@@ -129,6 +129,8 @@ local DEFAULT_SELECTOR_NAVI_INDEX_PRIORITY = { 3, 1, 2 }
 
 
 
+
+
 FacMixPoolCtrl = HL.Class('FacMixPoolCtrl', uiCtrl.UICtrl)
 
 local CACHE_ITEM_SLOT_VIEW_NAME_FORMAT = "itemSlot%d"
@@ -242,12 +244,49 @@ FacMixPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     self:_InitMixPoolController()
+    self:_TryRecoverState(arg and arg.recoverState)
 end
 
 
 
 FacMixPoolCtrl.OnClose = HL.Override() << function(self)
     self:_ClearPoolCache()
+end
+
+
+
+FacMixPoolCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    if not self.m_isInSelectMode or self.m_selectorConfig == nil or self.m_selectorConfig[self.m_selectModeIndex] == nil then
+        return nil
+    end
+    return {
+        selectModeIndex = self.m_selectModeIndex,
+        selectModeItemId = self.m_selectModeItemId,
+    }
+end
+
+
+
+
+FacMixPoolCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
+    if recoverState == nil then
+        return
+    end
+    local selectorIndex = recoverState.selectModeIndex
+    if selectorIndex == nil or self.m_selectorConfig == nil or self.m_selectorConfig[selectorIndex] == nil then
+        return
+    end
+    self:_OnEnterPoolSelectMode(selectorIndex)
+    local selectItemId = recoverState.selectModeItemId or ""
+    self:_SetAndRefreshPoolSelectModeSelectorState(selectItemId)
+    self:_RefreshPoolCacheSelectModeState(true)
+    if DeviceInfo.usingController and not string.isEmpty(selectItemId) then
+        local cacheIndex = self.m_cacheItemIdToIndexMap[selectItemId]
+        local itemSlot = cacheIndex and self:_GetPoolCacheItemSlotByIndex(cacheIndex) or nil
+        if itemSlot ~= nil then
+            UIUtils.setAsNaviTarget(itemSlot.button)
+        end
+    end
 end
 
 
@@ -302,6 +341,37 @@ FacMixPoolCtrl._InitPoolCache = HL.Method() << function(self)
     self.m_cacheNode = self.m_isExpansionPool and self.view.expansionCacheNode or self.view.cacheNode
     self.view.cacheNode.gameObject:SetActive(not self.m_isExpansionPool)
     self.view.expansionCacheNode.gameObject:SetActive(self.m_isExpansionPool)
+
+    
+    self.view.autoClearNode.gameObject:SetActiveIfNecessary(self.m_isExpansionPool)
+    if self.m_isExpansionPool then
+        self.view.autoClearNode.autoToggle:SetIsOnWithoutNotify(self.m_buildingInfo.fluidReaction.autoClearCacheWhenAllBlock)
+        self.view.autoClearNode.autoToggle.onValueChanged:AddListener(function(isOn)
+            GameInstance.player.remoteFactory.core:Message_SetFluidReactionAutoClearCacheWhenAllBlock(
+                ScopeUtil.GetCurrentChapterId(),
+                self.m_buildingInfo.fluidReaction.componentId,
+                isOn)
+        end)
+        self.view.autoClearNode.tipsBtn.onClick:AddListener(function()
+            self.view.autoClearNode.tipsInfoNode.gameObject:SetActiveIfNecessary(true)
+            if DeviceInfo.usingController then
+                Notify(MessageConst.SHOW_AS_CONTROLLER_SMALL_MENU, {
+                    panelId = PANEL_ID,
+                    isGroup = true,
+                    id = self.view.autoClearNode.tipsInfoNode.groupId,
+                    hintPlaceholder = self.view.buildingCommon.view.controllerHintPlaceholder,
+                    rectTransform = self.view.autoClearNode.tipsInfoNode.transform,
+                    noHighlight = true,
+                })
+            end
+        end)
+        self.view.autoClearNode.tipsMaskBtn.onClick:AddListener(function()
+            self.view.autoClearNode.tipsInfoNode.gameObject:SetActiveIfNecessary(false)
+            if DeviceInfo.usingController then
+                Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.autoClearNode.tipsInfoNode.groupId)
+            end
+        end)
+    end
 
     
     self:_ClearPoolCacheItemDataList()
@@ -568,8 +638,7 @@ FacMixPoolCtrl._RefreshPoolCacheItemState = HL.Method(HL.Number, HL.String) << f
     end
 
     local stateChanged = itemSlot.controller.curStateName ~= nil and itemSlot.controller.curStateName ~= state
-    local isNormalOrBlockedState = itemSlot.controller.curStateName == CacheItemSlotState.Normal or
-        itemSlot.controller.curStateName == CacheItemSlotState.Blocked
+    local isNormalOrBlockedState = state == CacheItemSlotState.Normal or state == CacheItemSlotState.Blocked
     if stateChanged and isNormalOrBlockedState then
         local animName = state == CacheItemSlotState.Normal and "facmixpoolitemblocked_out" or "facmixpoolitemblocked_in"
         itemSlot.animationWrapper:PlayWithTween(animName, function()

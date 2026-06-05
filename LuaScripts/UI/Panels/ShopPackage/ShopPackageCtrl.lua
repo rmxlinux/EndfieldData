@@ -80,7 +80,6 @@ ShopPackageCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 ShopPackageCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_shopGoodsInfos = arg.tabData.cashGoodsInfos
-    self.m_phase = arg.phase
 
     
     table.sort(self.m_shopGoodsInfos, Utils.genSortFunction({ "soldOutSortValue", "priority" }, true))
@@ -89,6 +88,8 @@ ShopPackageCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         
         UIManager:Open(PanelId.InstructionBook, "ShopPackage_All")
     end)
+
+    self.view.cashShopKrTips:InitCashShopKrTips()
 
     self:_InitShortCut()
 
@@ -324,7 +325,10 @@ end
 ShopPackageCtrl._SetupViewMonthlyPass = HL.Method(HL.Table, HL.String) << function(self, cell, goodsId)
     local remainValidDays = GameInstance.player.monthlyPassSystem:GetRemainValidDays()
     cell.monthlyPassNode.gameObject:SetActiveIfNecessary(remainValidDays > 0)
-    cell.dayNumberTxt.text = remainValidDays
+    local text = Language.ui_shop_monthlycard_days_remain_count
+        .. string.format("<size=200%%> %s </size>", remainValidDays)
+        .. Language.ui_shop_monthlycard_days
+    cell.dayNumberTxt.text = text
 end
 
 

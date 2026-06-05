@@ -141,7 +141,8 @@ end
 
 
 
-MapRemind.InitMapRemind = HL.Method(HL.String, HL.Table, HL.Function) << function(self, levelId, infos, onClose)
+
+MapRemind.InitMapRemind = HL.Method(HL.String, HL.Table, HL.Function, HL.Opt(HL.Number)) << function(self, levelId, infos, onClose, initIndex)
     self:_FirstTimeInit()
     self.m_curTabIndex = -1
     self.m_levelId = levelId
@@ -154,8 +155,7 @@ MapRemind.InitMapRemind = HL.Method(HL.String, HL.Table, HL.Function) << functio
         
         local cfg = Tables.mapRemindTable:GetValue(k)
         for _,insId in pairs(v.insIdList) do
-            local succ, markRuntimeData = GameInstance.player.mapManager:GetMarkInstRuntimeData(insId)
-            if succ and markRuntimeData.isVisible and (markRuntimeData.visibleInMist or not markRuntimeData:IsInMist()) then
+            if MapUtils.isMarkVisible(insId) then
                 table.insert(self.m_mapRemindInfos[cfg.tabType], { key = k, value =
                 {
                     insId = insId,
@@ -178,10 +178,14 @@ MapRemind.InitMapRemind = HL.Method(HL.String, HL.Table, HL.Function) << functio
     end
 
     local index = 1
-    
-    
-    if #self.m_mapRemindInfos[GEnums.MapRemindTabType.ImportantMatters] == 0 and #self.m_mapRemindInfos[GEnums.MapRemindTabType.CollectionTips] ~= 0 then
-        index = 2
+    if initIndex then
+        index = initIndex
+    else
+        
+        
+        if #self.m_mapRemindInfos[GEnums.MapRemindTabType.ImportantMatters] == 0 and #self.m_mapRemindInfos[GEnums.MapRemindTabType.CollectionTips] ~= 0 then
+            index = 2
+        end
     end
     self:_InitTabInfos(index)
 end
@@ -199,6 +203,12 @@ MapRemind.UpdateMapRemindInfo = HL.Method() << function(self)
         return
     end
     InputManagerInst.controllerNaviManager:SetTarget(cell.btn)
+end
+
+
+
+MapRemind.GetCurTabIndex = HL.Method().Return(HL.Number) << function(self)
+   return self.m_curTabIndex
 end
 
 

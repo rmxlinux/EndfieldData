@@ -26,13 +26,6 @@ end
 
 
 
-WikiEquipCtrl._OnPhaseItemBind = HL.Override() << function(self)
-    WikiEquipCtrl.Super._OnPhaseItemBind(self)
-    self:_PlayBgDecoAnim()
-end
-
-
-
 WikiEquipCtrl._RefreshCenter = HL.Override() << function(self)
     WikiEquipCtrl.Super._RefreshCenter(self)
     local hasValue

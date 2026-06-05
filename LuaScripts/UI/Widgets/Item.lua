@@ -74,6 +74,7 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 Item = HL.Class('Item', UIWidgetBase)
 local LT_ITEM_TICK_TIME_INTERVAL = 30
 
@@ -186,6 +187,7 @@ Item._ResetOnInit = HL.Method() << function(self)
     self.canSetQuickBar = false
 
     self:ShowPickUpLogo(false)
+    self:ShowGemPerfectIcon(false)
     self:_UpdateLevelNode()
     self.view.button.onIsNaviTargetChanged = nil
     self.view.button.onClick:RemoveAllListeners()
@@ -997,6 +999,31 @@ Item.ShowPickUpLogo = HL.Method(HL.Boolean) << function(self, isShow)
     else
         self.view.pickUpNode.gameObject:SetActive(isShow)
     end
+end
+
+
+
+
+Item.ShowGemPerfectIcon = HL.Method(HL.Boolean) << function(self, isShow)
+    if not self.view.gemPerfectIcon then
+        if not isShow then
+            return
+        end
+        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.gemPerfectIconPrefab, self.view.animationNode.transform)
+        obj.name = "GemPerfectIcon"
+        obj.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
+        obj.transform.localScale = Vector3.one
+        local leftUp = Vector2(0, 1)
+        obj.transform.pivot = leftUp
+        obj.transform.anchorMin = leftUp
+        obj.transform.anchorMax = leftUp
+        obj.transform.anchoredPosition = Vector2(0, 0)
+        self.view.gemPerfectIcon = obj
+    end
+    self.view.gemPerfectIcon.gameObject:SetActive(isShow)
+
+    
+    self.view.deco1.gameObject:SetActive(not isShow and self.m_needShowDeco1) 
 end
 
 

@@ -147,7 +147,14 @@ MachineSmartAlertNode._CheckToRefreshState = HL.Method(HL.Table, HL.Number).Retu
     local alertText
     if refreshTag then
         if self.m_curCondition ~= GEnums.FacSmartAlertType.DoNotShow then
-            alertText = Tables.factorySmartAlertTable:GetValue(self.m_curCondition)
+            local alertData = Tables.factorySmartAlertTable:GetValue(self.m_curCondition)
+            if DeviceInfo.usingController then
+                alertText = alertData.alertText_ct
+            elseif DeviceInfo.usingTouch then
+                alertText = alertData.alertText_mb
+            else
+                alertText = alertData.alertText
+            end
             if type(newArgs) == "table" and #newArgs > 0 then
                 alertText = string.format(alertText, unpack(newArgs))
             end

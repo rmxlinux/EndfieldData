@@ -141,7 +141,7 @@ FacInventoryStationCtrl._OnBuildingStateChanged = HL.Method(GEnums.FacBuildingSt
     if isDepotDisabled then
         if not self.m_waitInitNaviTarget then
             if not self.view.inventoryArea:IsNaviGroupTopLayer(true) then
-                self.view.inventoryArea:NaviToPart(true, false)
+                self.view.inventoryArea:NaviToPart(true, true)
             end
         end
     end

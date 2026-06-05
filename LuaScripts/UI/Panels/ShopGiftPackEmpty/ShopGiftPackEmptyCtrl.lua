@@ -45,6 +45,10 @@ local USE_CASH_SHOP_IDS ={
 
 
 
+
+
+
+
 ShopGiftPackEmptyCtrl = HL.Class('ShopGiftPackEmptyCtrl', uiCtrl.UICtrl)
 
 
@@ -79,6 +83,12 @@ ShopGiftPackEmptyCtrl.m_haveSeenGoodsId = HL.Field(HL.Table)
 
 
 
+ShopGiftPackEmptyCtrl.m_pendingAfterTopOrdered = HL.Field(HL.Table)
+
+
+
+
+
 
 ShopGiftPackEmptyCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SDK_PRODUCT_INFO_UPDATE] = '_OnSdkProductInfoUpdate',
@@ -92,8 +102,6 @@ ShopGiftPackEmptyCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 ShopGiftPackEmptyCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_phase = arg.phase
-
     self.m_phase:ShowPsStore()
 
     self.m_getTabCellFunc = UIUtils.genCachedCellFunction(self.view.cashShopVerticalTabList.scrollList)
@@ -121,14 +129,81 @@ ShopGiftPackEmptyCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitData()
     self:_RefreshUI()
 
+    self:_ProcessArg(arg)
+end
+
+
+
+
+ShopGiftPackEmptyCtrl._ProcessArg = HL.Method(HL.Table) << function(self, arg)
     if arg ~= nil and arg.goodsId ~= nil then
-        self:ChooseTabByGoodsId(arg.goodsId, true, true)
+        local goodsId = arg.goodsId
+        arg.goodsId = nil
+        local cashShopId = arg.cashShopId
+        arg.cashShopId = nil
+        
+        
+        self.m_pendingAfterTopOrdered = self.m_pendingAfterTopOrdered or {}
+        table.insert(self.m_pendingAfterTopOrdered, function()
+            self:ChooseTabByGoodsId(goodsId, true, cashShopId)
+        end)
     elseif arg ~= nil and arg.cashShopId ~= nil then
-        self:ChooseTabByCashShopId(arg.cashShopId, nil, true)
+        local cashShopId = arg.cashShopId
+        arg.cashShopId = nil
+        self:ChooseTabByCashShopId(cashShopId, nil, true)
+
+        
+        if arg.showInstructionBook then
+            arg.showInstructionBook = nil
+            self.m_pendingAfterTopOrdered = self.m_pendingAfterTopOrdered or {}
+            table.insert(self.m_pendingAfterTopOrdered, function()
+                UIManager:Open(PanelId.InstructionBook, "ShopPackage_All")
+            end)
+        end
     else
         if string.isEmpty(self.m_currTabCashShopId) then
             self:_SetTabByIndex(1, nil, true)
         end
+    end
+end
+
+
+
+
+ShopGiftPackEmptyCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, arg)
+    local isDetailOpen, detailCtrl = UIManager:IsOpen(PanelId.ShopGiftPackDetails)
+    local isMonthlyDetailOpen, monthlyDetailCtrl = UIManager:IsOpen(PanelId.ShopMonthlyDetail)
+    if isDetailOpen then
+        
+        local goodsId = detailCtrl:GetGoodsId()
+        arg.goodsId = goodsId
+        arg.cashShopId = self.m_currTabCashShopId
+    elseif isMonthlyDetailOpen then
+        
+        local goodsId = monthlyDetailCtrl:GetGoodsId()
+        arg.goodsId = goodsId
+        arg.cashShopId = self.m_currTabCashShopId
+    else
+        
+        arg.cashShopId = self.m_currTabCashShopId
+        
+        if UIManager:IsOpen(PanelId.InstructionBook) then
+            arg.showInstructionBook = true
+        end
+    end
+end
+
+
+
+
+ShopGiftPackEmptyCtrl.OnAfterCategoryTopOrdered = HL.Method() << function(self)
+    if not self.m_pendingAfterTopOrdered then
+        return
+    end
+    local list = self.m_pendingAfterTopOrdered
+    self.m_pendingAfterTopOrdered = nil
+    for _, action in ipairs(list) do
+        action()
     end
 end
 
@@ -370,6 +445,7 @@ ShopGiftPackEmptyCtrl._OnTabClick = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Bo
     if self.m_currTabCashShopId == MONTHLY_PASS_CASHSHOPID then
         self.m_phase:RemovePhasePanelItemByIdWrapper(PanelId.ShopMonthlyPass)
         self.m_phase:RemovePhasePanelItemByIdWrapper(PanelId.ShopMonthlyPass3D)
+        self.m_phase:RemovePhasePanelItemByIdWrapper(PanelId.CashShopKrTips)
     else
         self.m_phase:RemovePhasePanelItemByIdWrapper(NORMAL_CASHSHOP_GIFTPACK_PANEL_ID)
     end
@@ -385,6 +461,7 @@ ShopGiftPackEmptyCtrl._OnTabClick = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Bo
             {
                 isDailyPopup = false,
             })
+        self.m_phase:CreateOrShowPhasePanelItemWrapper(PanelId.CashShopKrTips)
     else
         
         if tabData.cashShopId == Tables.cashShopConst.SpecialGiftPackShopId then
@@ -450,49 +527,70 @@ end
 
 
 
-ShopGiftPackEmptyCtrl.ChooseTabByGoodsId = HL.Method(HL.String, HL.Boolean, HL.Opt(HL.Boolean)).Return(HL.String)
-    << function(self, goodsId, openDetailPanel, onCreate)
-    
+
+ShopGiftPackEmptyCtrl.ChooseTabByGoodsId = HL.Method(HL.String, HL.Boolean, HL.Opt(HL.String)).Return(HL.String)
+    << function(self, goodsId, openDetailPanel, cashShopId)
     local foundTabData = nil
     local foundTabIndex = 0
-    for i = 2, #self.m_tabDataList do
-        local tabData = self.m_tabDataList[i]
-        local cashGoodsInfos = tabData.cashGoodsInfos
-        for _, cashGoodsInfo in ipairs(cashGoodsInfos) do
-            if cashGoodsInfo.goodsId == goodsId then
-                foundTabData = tabData
-                foundTabIndex = i
-                break
-            end
-        end
-        if foundTabData ~= nil then
-            break
+    
+    if cashShopId then
+        local v, k = lume.match(self.m_tabDataList, function(tabData)
+            return tabData.cashShopId == cashShopId
+        end)
+        if v then
+            foundTabData = v
+            foundTabIndex = k
         end
     end
+
+    
+    if foundTabData == nil then
+        local v, k = lume.match(self.m_tabDataList, function(tabData)
+            
+            if tabData.cashShopId == ALL_SHOP_ID then
+                return false
+            end
+            local cashGoodsInfos = tabData.cashGoodsInfos
+            local foundGoodsInfo = lume.match(cashGoodsInfos, function(info)
+                return info.goodsId == goodsId
+            end)
+            if foundGoodsInfo then
+                return true
+            end
+        end)
+        if v then
+            foundTabData = v
+            foundTabIndex = k
+        end
+    end
+
     
     if foundTabData ~= nil then
         self:_SetTabByIndex(foundTabIndex)
+        
+        
+        
+        
         if openDetailPanel then
-            if foundTabData.isMonthlyPass then
-                
-                CashShopUtils.TryBuyMonthlyPass(goodsId, foundTabData.cashShopId)
-            else
-                local foundInfo = lume.match(foundTabData.cashGoodsInfos, function(info)
-                    return info.goodsId == goodsId
-                end)
-                if onCreate then
-                    self:_StartCoroutine(function()
-                        UIManager:Open(PanelId.ShopGiftPackDetails, {
-                            goodsId = goodsId,
-                            cashShopId = foundInfo.cashShopId,
-                        })
-                    end)
-                else
-                    UIManager:Open(PanelId.ShopGiftPackDetails, {
+            local foundInfo = lume.match(foundTabData.cashGoodsInfos, function(info)
+                return info.goodsId == goodsId
+            end)
+            local isMonthlyPassGoods = foundInfo and foundInfo.isMonthlyPass
+            if isMonthlyPassGoods then
+                if foundTabData.cashShopId == ALL_SHOP_ID then
+                    UIManager:Open(PanelId.ShopMonthlyDetail, {
                         goodsId = goodsId,
-                        cashShopId = foundInfo.cashShopId,
+                        goodsInfo = foundInfo,
                     })
+                else
+                    
+                    CashShopUtils.TryBuyMonthlyPass(goodsId, foundTabData.cashShopId)
                 end
+            else
+                UIManager:Open(PanelId.ShopGiftPackDetails, {
+                    goodsId = goodsId,
+                    cashShopId = foundInfo.cashShopId,
+                })
             end
         end
         return foundTabData.cashShopId

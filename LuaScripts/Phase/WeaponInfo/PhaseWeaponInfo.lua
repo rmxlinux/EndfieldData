@@ -84,6 +84,9 @@ local PHASE_ITEMS = {
 
 
 
+
+
+
 PhaseWeaponInfo = HL.Class('PhaseWeaponInfo', phaseBase.PhaseBase)
 
 PhaseWeaponInfo.m_weaponExhibitInfo = HL.Field(HL.Table)
@@ -139,14 +142,26 @@ PhaseWeaponInfo.ResetWeaponRotation = HL.Method() << function(self)
     sceneObject.view.weaponRotateRoot.transform.rotation = Quaternion.identity
 end
 
+PhaseWeaponInfo._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    CameraManager:EnableUIModelCullingMask(true, "weaponInfo")
+end
+
 
 
 
 
 PhaseWeaponInfo._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
+    if PhaseManager:IsPhaseHaveSceneCamera(args and args.anotherPhaseId) then
+        CameraManager:EnableUIModelCullingMask(false, "weaponInfo")
+    end
+
     self.m_hideCamCor = self:_ClearCoroutine(self.m_hideCamCor)
+    local isRecovering = PhaseManager.isRecovering
     self.m_hideCamCor = self:_StartCoroutine(function()
-        coroutine.wait(1) 
+        if not isRecovering then
+            coroutine.wait(1) 
+        end
+        CameraManager:EnableUIModelCullingMask(false, "weaponInfo")
         self:_ResetVCam()
         self:_ToggleSceneLight(false)
     end)
@@ -159,6 +174,12 @@ end
 
 PhaseWeaponInfo.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
     if transitionType == PhaseConst.EPhaseState.TransitionBackToTop then
+        if not PhaseManager:IsPhaseHaveSceneCamera(anotherPhaseId) then
+            CameraManager:EnableUIModelCullingMask(true, "weaponInfo")
+        end
+    end
+
+    if transitionType == PhaseConst.EPhaseState.TransitionBackToTop then
         self.m_hideCamCor = PhaseManager:_ClearCoroutine(self.m_hideCamCor)
         self:_ToggleSceneLight(true)
         self:_RefreshVCam(self.m_curPageType)
@@ -169,6 +190,46 @@ PhaseWeaponInfo.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL
         self.m_isBlendExit = true 
         UIManager:PreloadPanelAsset(PanelId.WeaponExhibitEmpty, PHASE_ID)
     end
+end
+
+
+
+
+PhaseWeaponInfo._InitPanels = HL.Method(HL.Table) << function(self, arg)
+    if self.m_isPanelsInit then
+        return
+    end
+    local pageType = arg.pageType
+    local pageBefore = self.m_curPageType
+    local isFast = arg.isFocusJump == true
+    self.m_curPageType = pageType
+    self:ResetWeaponRotation()
+    self:_RefreshVCam(pageType)
+    self:_ToggleWeaponUpgradeDeco(pageType == UIConst.WEAPON_EXHIBIT_PAGE_TYPE.UPGRADE)
+    if pageType == UIConst.WEAPON_EXHIBIT_PAGE_TYPE.POTENTIAL then
+        self:_ToggleWeaponPotential(true, isFast)
+    elseif pageBefore == UIConst.WEAPON_EXHIBIT_PAGE_TYPE.POTENTIAL then
+        self:_ToggleWeaponPotential(false, isFast)
+    end
+    local neededPanels = WEAPON_EXHIBIT_PAGE_TYPE_2_PANEL_ID[pageType]
+    for _, panelId in pairs(neededPanels) do
+        if not self.m_panel2Item[panelId] then
+            self:CreatePhasePanelItem(panelId, {
+                pageType = pageType,
+                phase = self,
+                weaponInfo = {
+                    weaponTemplateId = self.m_weaponExhibitInfo.weaponInst.templateId,
+                    weaponInstId = self.m_weaponExhibitInfo.weaponInst.instId,
+                },
+                isFocusJump = arg.isFocusJump,
+                stateArg = arg.stateArg,
+            })
+        else
+            UIManager:Show(panelId)
+        end
+    end
+    self:_RefreshGridDeco(pageType)
+    self.m_isPanelsInit = true
 end
 
 
@@ -435,6 +496,7 @@ end
 
 
 PhaseWeaponInfo._OnActivated = HL.Override() << function(self)
+    CameraManager:EnableUIModelCullingMask(true, "weaponInfo")
     local arg = self.arg
     local weaponTemplateId = arg.weaponTemplateId
     local weaponInstId = arg.weaponInstId
@@ -469,11 +531,19 @@ PhaseWeaponInfo._OnActivated = HL.Override() << function(self)
     if pageType == lastPageType then
         return
     end
-    self:OnSelectPageChange({
-        pageType = pageType,
-        isFocusJump = arg.isFocusJump  
-    })
-    self.m_isPanelsInit = true
+    if self.m_isPanelsInit then
+        self:OnSelectPageChange({
+            pageType = pageType,
+            isFocusJump = arg.isFocusJump  
+        })
+    else
+        self:_InitPanels({
+            pageType = pageType,
+            isFocusJump = arg.isFocusJump,  
+            stateArg = arg.stateArg,
+        })
+    end
+
 
     if self.m_isBlendExit then
         self.m_isBlendExit = false
@@ -492,6 +562,7 @@ end
 
 
 PhaseWeaponInfo._OnDestroy = HL.Override() << function(self)
+    CameraManager:EnableUIModelCullingMask(false, "weaponInfo")
     self:_CleanUpWeapon()
     self:_RemoveCameraController()
 
@@ -574,6 +645,7 @@ PhaseWeaponInfo._InitWeaponModel = HL.Method(HL.Table) << function(self, weaponE
         weaponGo.transform.localRotation = Quaternion.Euler(spawnData.generateRotationEuler)
         weaponGo.transform.localPosition = spawnData.generateOffset
         weaponGo.transform.localScale = spawnData.generateScale
+        weaponGo:SetLayerRecursive(UIConst.UI_MODEL_LAYER)
 
         self:_RefreshWeaponDecoEffect(weaponGo, weaponInstId)
     end
@@ -603,6 +675,7 @@ PhaseWeaponInfo._InitVCamController = HL.Method(HL.String) << function(self, wea
         return
     end
 
+    cameraGroup.go:SetLayerRecursive(UIConst.UI_MODEL_LAYER)
     self.m_cameraGroup = cameraGroup
 end
 
@@ -683,7 +756,7 @@ end
 PhaseWeaponInfo._CleanUpWeaponEffect = HL.Method() << function(self)
     if self.m_weaponDecoBundleList then
         for _, bundle in ipairs(self.m_weaponDecoBundleList) do
-            bundle:Dispose()
+            bundle:Dispose(true)
         end
         self.m_weaponDecoBundleList = nil
     end
@@ -706,5 +779,19 @@ PhaseWeaponInfo._RefreshWeaponDecoEffect = HL.Method(HL.Userdata, HL.Number) << 
     table.insert(self.m_weaponDecoBundleList, weaponDecoBundle)
 end
 
+
+
+PhaseWeaponInfo.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    local stateArg = {}
+    arg.stateArg = stateArg
+    for _, panelItem in pairs(self.m_panel2Item) do
+        if HL.TryGet(panelItem.uiCtrl, "GetCurStateArg") then
+            local arg = panelItem.uiCtrl:GetCurStateArg()
+            lume.extend(stateArg, arg)
+        end
+    end
+    return arg
+end
 
 HL.Commit(PhaseWeaponInfo)

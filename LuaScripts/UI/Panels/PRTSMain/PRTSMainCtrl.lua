@@ -59,7 +59,7 @@ PRTSMainCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitData()
     self:_UpdateData()
     self:_RefreshAllUI()
-    UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.naviGroup, self.view.investigateTab.gotoBtn)
+    UIUtils.setAsNaviTargetInSilentModeIfPhaseIsTop(self.view.naviGroup, self.view.investigateTab.gotoBtn, PhaseId.PRTS)
 end
 
 

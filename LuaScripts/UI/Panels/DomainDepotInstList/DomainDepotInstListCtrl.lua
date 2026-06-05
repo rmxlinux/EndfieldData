@@ -8,6 +8,11 @@ local PANEL_ID = PanelId.DomainDepotInstList
 
 
 
+
+
+
+
+
 DomainDepotInstListCtrl = HL.Class('DomainDepotInstListCtrl', uiCtrl.UICtrl)
 
 
@@ -26,10 +31,18 @@ DomainDepotInstListCtrl.m_instCellGetFunc = HL.Field(HL.Function)
 DomainDepotInstListCtrl.m_instIdList = HL.Field(HL.Table)
 
 
+DomainDepotInstListCtrl.m_resumeState = HL.Field(HL.Table)
+
+
+DomainDepotInstListCtrl.m_curNaviDepotId = HL.Field(HL.String) << ""
+
+
 
 
 
 DomainDepotInstListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    
+    self.m_resumeState = arg.resumeState
     self.m_instCellGetFunc = UIUtils.genCachedCellFunction(self.view.instList)
 
     self.view.instList.onUpdateCell:AddListener(function(obj, csIndex)
@@ -61,14 +74,34 @@ DomainDepotInstListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         table.insert(self.m_instIdList, idData.depotId)
     end
 
+    self.m_curNaviDepotId = self.m_instIdList[1] or ""
+
     self.view.instList:UpdateCount(#self.m_instIdList, true)
 end
 
 
 
 DomainDepotInstListCtrl.OnShow = HL.Override() << function(self)
-    local firstCell = self.m_instCellGetFunc(1)
-    UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.selectableNaviGroup, firstCell.view.confirmBtn)
+    self:_ApplyResumeState(self.m_resumeState)
+    self.m_resumeState = nil
+end
+
+
+
+
+DomainDepotInstListCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
+    return {
+        resumeState = {
+            selectedDepotId = self.m_curNaviDepotId,
+        }
+    }
+end
+
+
+
+
+DomainDepotInstListCtrl.ResumeControllerNavi = HL.Method() << function(self)
+    self:_ApplyResumeState({ selectedDepotId = self.m_curNaviDepotId })
 end
 
 
@@ -77,9 +110,44 @@ end
 
 DomainDepotInstListCtrl._OnUpdateInstCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     cell:InitDomainDepotInstCell(self.m_instIdList[index])
+    
+    local originOnIsNaviTargetChanged = cell.view.confirmBtn.onIsNaviTargetChanged
+    cell.view.confirmBtn.onIsNaviTargetChanged = function(isNaviTarget)
+        if originOnIsNaviTargetChanged then
+            originOnIsNaviTargetChanged(isNaviTarget)
+        end
+        if isNaviTarget then
+            self.m_curNaviDepotId = self.m_instIdList[index]
+        end
+    end
+end
 
-    if index == 1 then
-        UIUtils.setAsNaviTarget(cell.view.confirmBtn)
+
+
+
+
+DomainDepotInstListCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
+    if #self.m_instIdList <= 0 then
+        return
+    end
+    local targetDepotId = resumeState and resumeState.selectedDepotId or self.m_curNaviDepotId
+    local targetIndex = 1
+    for index, depotId in ipairs(self.m_instIdList) do
+        if depotId == targetDepotId then
+            targetIndex = index
+            break
+        end
+    end
+    self.m_curNaviDepotId = self.m_instIdList[targetIndex] or ""
+    self.view.instList:ScrollToIndex(CSIndex(targetIndex), true)
+    if not DeviceInfo.usingController then
+        return
+    end
+    local targetCell = self.m_instCellGetFunc(targetIndex)
+    if targetCell ~= nil then
+        UIUtils.setAsNaviTargetInSilentModeIfPhaseIsTop(self.view.selectableNaviGroup, targetCell.view.confirmBtn, PhaseId.DomainDepotPackage)
+    else
+        self.view.instList:ScrollToIndex(CSIndex(targetIndex), true)
     end
 end
 

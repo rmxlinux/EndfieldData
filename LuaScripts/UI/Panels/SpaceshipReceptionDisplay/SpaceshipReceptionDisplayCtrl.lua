@@ -2,95 +2,37 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipReceptionDisplay
 local PHASE_ID = PhaseId.SpaceshipReceptionDisplay
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipReceptionDisplayCtrl = HL.Class('SpaceshipReceptionDisplayCtrl', uiCtrl.UICtrl)
-
 
 SpaceshipReceptionDisplayCtrl.m_infoList = HL.Field(HL.Table)
 
-
 SpaceshipReceptionDisplayCtrl.m_filteredInfoList = HL.Field(HL.Table)
-
 
 SpaceshipReceptionDisplayCtrl.m_selectedTags = HL.Field(HL.Table)
 
-
 SpaceshipReceptionDisplayCtrl.m_isSave = HL.Field(HL.Boolean) << false
-
 
 SpaceshipReceptionDisplayCtrl.GetCell = HL.Field(HL.Function)
 
-
 SpaceshipReceptionDisplayCtrl.cell2Select = HL.Field(HL.Table)
-
 
 SpaceshipReceptionDisplayCtrl.m_select2Cell = HL.Field(HL.Table)
 
-
 SpaceshipReceptionDisplayCtrl.m_maxSelectNum = HL.Field(HL.Number) << 1
-
 
 SpaceshipReceptionDisplayCtrl.m_nowSelectNum = HL.Field(HL.Number) << 0
 
-
 SpaceshipReceptionDisplayCtrl.m_pictureRedDots = HL.Field(HL.Table)
-
 
 SpaceshipReceptionDisplayCtrl.m_nowNaviPictureCell = HL.Field(HL.Userdata)
 
-
 SpaceshipReceptionDisplayCtrl.m_sortIsIncremental = HL.Field(HL.Boolean) << false
-
 
 SpaceshipReceptionDisplayCtrl.m_sortOptData = HL.Field(HL.Table)
 
-
 SpaceshipReceptionDisplayCtrl.m_redDotShowCor = HL.Field(HL.Thread)
 
+SpaceshipReceptionDisplayCtrl.m_viewDetailBindingId = HL.Field(HL.Number) << 0
 
 
 
@@ -102,7 +44,6 @@ SpaceshipReceptionDisplayCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_READ_NEW_SS_PICTURE] = '_UpdateRedDotByInfoList',
     [MessageConst.ON_SPACESHIP_HEAD_NAVI_TARGET_CHANGE] = 'OnCellNaviTargetChange',
 }
-
 
 SpaceshipReceptionDisplayCtrl.ResetPicture = HL.StaticMethod() << function()
     local picIdsList = GameInstance.player.spaceship:GetScreenWallPicIds()
@@ -119,9 +60,6 @@ SpaceshipReceptionDisplayCtrl.ResetPicture = HL.StaticMethod() << function()
         GameInstance.player.spaceship:ChangeGuestRoomScreenWallPics(picIdsTable)
     end
 end
-
-
-
 
 
 SpaceshipReceptionDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -193,7 +131,7 @@ SpaceshipReceptionDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
         self:OnUpdateCell(object, cellIndex)
     end)
 
-    self:BindInputPlayerAction("ss_view_detail_picture", function()
+    self.m_viewDetailBindingId = self:BindInputPlayerAction("ss_view_detail_picture", function()
         if self.m_nowNaviPictureCell then
             self.m_nowNaviPictureCell:OpenPicturePanel()
         end
@@ -222,8 +160,14 @@ SpaceshipReceptionDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
             table.insert(picIdsTable, picIdsList[i])
         end
     end
-    self:ShowSelectItems(picIdsTable)
-    self:SetSaveState(true)
+    local recoverState = arg and arg.recoverState or nil
+    if recoverState then
+        self:_TryRecoverState(recoverState)
+    else
+        self:ShowSelectItems(picIdsTable)
+        self:SetSaveState(true)
+    end
+    self:_TryRecoverPicturePopup(arg and arg.picturePopupState or nil)
     self.m_redDotShowCor = self:_StartCoroutine(function()
         while true do
             coroutine.wait(0.2)
@@ -233,27 +177,44 @@ SpaceshipReceptionDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
+SpaceshipReceptionDisplayCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local recoverState = {
+        selectedPictureIds = self:_GetSelectedPictureIdList(),
+        sortSelectedIndex = self.view.sortNode:GetCurSelectedIndex(),
+        sortIsIncremental = self.view.sortNode.isIncremental,
+        isSave = self.m_isSave,
+    }
+    if self.view.filterBtn.m_args then
+        recoverState.filterTags = lume.deepCopy(self.view.filterBtn.m_args.selectedTags)
+    end
+    local selectedIndex = self.view and self.view.pictureScroll and LuaIndex(self.view.pictureScroll.curSelectedIndex) or 0
+    local selectedInfo = selectedIndex > 0 and self.m_filteredInfoList[selectedIndex] or nil
+    if selectedInfo and selectedInfo.posterData then
+        recoverState.currentPictureId = selectedInfo.posterData.pictureId
+    elseif self.m_nowNaviPictureCell and self.m_nowNaviPictureCell.m_pictureId then
+        recoverState.currentPictureId = self.m_nowNaviPictureCell.m_pictureId
+    end
+    local arg = {
+        recoverState = recoverState,
+    }
+    local isOpen, popupCtrl = UIManager:IsOpen(PanelId.ReceptionDisplayPicture)
+    if isOpen and popupCtrl and popupCtrl:IsShow() and PhaseManager:GetTopPhaseId() == PHASE_ID and popupCtrl.GetRecoverStateArg then
+        arg.picturePopupState = popupCtrl:GetRecoverStateArg()
+    end
+    return arg
+end
 
 SpaceshipReceptionDisplayCtrl.OnClose = HL.Override() << function(self)
 
 end
 
-
 SpaceshipReceptionDisplayCtrl.OnIntScreen = HL.StaticMethod() << function()
     PhaseManager:OpenPhase(PHASE_ID)
 end
 
-
-
-
 SpaceshipReceptionDisplayCtrl.OnCellNaviTargetChange = HL.Method(HL.Opt(HL.Userdata)) << function(self, cell)
     self.m_nowNaviPictureCell = cell
 end
-
-
-
-
 
 SpaceshipReceptionDisplayCtrl.OnUpdateCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, index)
     local cell = self:GetCellByIndex(index)
@@ -270,9 +231,6 @@ SpaceshipReceptionDisplayCtrl.OnUpdateCell = HL.Method(HL.Userdata, HL.Number) <
     end
     self:_UpdateRedDot()
 end
-
-
-
 
 SpaceshipReceptionDisplayCtrl.OnClickItem = HL.Method(HL.Number) << function(self, cellIndex)
     local cell = self:GetCellByIndex(cellIndex)
@@ -305,16 +263,10 @@ SpaceshipReceptionDisplayCtrl.OnClickItem = HL.Method(HL.Number) << function(sel
     self:SetSaveState(false)
 end
 
-
-
-
-
 SpaceshipReceptionDisplayCtrl.UpdatePicCount = HL.Method(HL.Number, HL.Number) << function(self, nowNum, maxNum)
     self.view.picCountTxt.text = string.format("%d<size=26>/%d</size>", nowNum, maxNum)
     self.view.lvDotNode:InitLvDotNode(nowNum, maxNum)
 end
-
-
 
 SpaceshipReceptionDisplayCtrl._UpdateMultiSelect = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Table) << function(self)
     local result = {}
@@ -339,9 +291,6 @@ SpaceshipReceptionDisplayCtrl._UpdateMultiSelect = HL.Method(HL.Opt(HL.Boolean))
     return itemList
 end
 
-
-
-
 SpaceshipReceptionDisplayCtrl.ShowSelectItems = HL.Method(HL.Opt(HL.Table)) << function(self, items)
     
     self.cell2Select = {}
@@ -361,8 +310,6 @@ SpaceshipReceptionDisplayCtrl.ShowSelectItems = HL.Method(HL.Opt(HL.Table)) << f
     self:_OnFilterConfirm(self.m_selectedTags)
 end
 
-
-
 SpaceshipReceptionDisplayCtrl._ShowMultiItems = HL.Method() << function(self)
     for cellIndex = 1, self.view.pictureScroll.count do
         local cell = self:GetCellByIndex(cellIndex)
@@ -371,9 +318,6 @@ SpaceshipReceptionDisplayCtrl._ShowMultiItems = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 SpaceshipReceptionDisplayCtrl._GetIndexByPicId = HL.Method(HL.Any).Return(HL.Number) << function(self, pictureId)
     for index = 1, #self.m_filteredInfoList do
@@ -385,8 +329,6 @@ SpaceshipReceptionDisplayCtrl._GetIndexByPicId = HL.Method(HL.Any).Return(HL.Num
     return -1;
 end
 
-
-
 SpaceshipReceptionDisplayCtrl._GetNextIndex = HL.Method().Return(HL.Number) << function(self)
     for index = 1, self.m_maxSelectNum do
         if not Utils.isInclude(self.cell2Select, index) then
@@ -395,9 +337,6 @@ SpaceshipReceptionDisplayCtrl._GetNextIndex = HL.Method().Return(HL.Number) << f
     end
     return -1
 end
-
-
-
 
 SpaceshipReceptionDisplayCtrl.GetCellByIndex = HL.Method(HL.Number).Return(HL.Forward("SSPictureCell")) << function(self, cellIndex)
     local go = self.view.pictureScroll:Get(CSIndex(cellIndex))
@@ -408,9 +347,6 @@ SpaceshipReceptionDisplayCtrl.GetCellByIndex = HL.Method(HL.Number).Return(HL.Fo
     return cell
 end
 
-
-
-
 SpaceshipReceptionDisplayCtrl._GetCellSelectIndex = HL.Method(HL.Number).Return(HL.Number) << function(self, cellIndex)
     if self.cell2Select[cellIndex] ~= nil and self.cell2Select[cellIndex] > 0 then
         return self.cell2Select[cellIndex]
@@ -418,9 +354,6 @@ SpaceshipReceptionDisplayCtrl._GetCellSelectIndex = HL.Method(HL.Number).Return(
         return -1
     end
 end
-
-
-
 
 SpaceshipReceptionDisplayCtrl.SetSaveState = HL.Method(HL.Boolean) << function(self, isSave)
     if self.m_isSave == isSave then
@@ -434,8 +367,6 @@ SpaceshipReceptionDisplayCtrl.SetSaveState = HL.Method(HL.Boolean) << function(s
     self.m_isSave = isSave
 end
 
-
-
 SpaceshipReceptionDisplayCtrl._InitSortNode = HL.Method() << function(self)
     self.view.sortNode:InitSortNode(UIConst.SS_PICTURE_SORT_OPTION, function(optData, isIncremental)
         local filteredList = self.m_filteredInfoList
@@ -443,8 +374,6 @@ SpaceshipReceptionDisplayCtrl._InitSortNode = HL.Method() << function(self)
         self:_RefreshPicList(true, filteredList)
     end, nil, false, true, self.view.filterBtn)
 end
-
-
 
 SpaceshipReceptionDisplayCtrl._InitFilterNode = HL.Method() << function(self)
     local filterArgs = {
@@ -462,11 +391,6 @@ SpaceshipReceptionDisplayCtrl._InitFilterNode = HL.Method() << function(self)
 end
 
 
-
-
-
-
-
 SpaceshipReceptionDisplayCtrl._SortData = HL.Method(HL.Table, HL.Table, HL.Boolean) << function(self, itemList, keys, isIncremental)
     if itemList then
         table.sort(itemList, Utils.genSortFunction(keys, isIncremental))
@@ -474,9 +398,6 @@ SpaceshipReceptionDisplayCtrl._SortData = HL.Method(HL.Table, HL.Table, HL.Boole
         self.m_sortOptData = keys
     end
 end
-
-
-
 
 SpaceshipReceptionDisplayCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, tags)
     self.m_selectedTags = tags or {}
@@ -490,12 +411,12 @@ SpaceshipReceptionDisplayCtrl._OnFilterConfirm = HL.Method(HL.Table) << function
     else
         self.view.commonState:SetState("ScreenNull")
     end
+    if self.m_viewDetailBindingId > 0 then
+        InputManagerInst:ToggleBinding(self.m_viewDetailBindingId, #filteredList > 0)
+    end
     self.m_filteredInfoList = filteredList
     self:_RefreshPicList(true, filteredList)
 end
-
-
-
 
 SpaceshipReceptionDisplayCtrl.UpdatePictureItems = HL.Method(HL.Table) << function(self, items)
     self.m_infoList = lume.deepCopy(items)
@@ -503,9 +424,6 @@ SpaceshipReceptionDisplayCtrl.UpdatePictureItems = HL.Method(HL.Table) << functi
     self:_OnFilterConfirm(self.m_selectedTags)
     self.view.sortNode:SortCurData()
 end
-
-
-
 
 SpaceshipReceptionDisplayCtrl._OnFilterGetCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tags)
     local resultCount = 0
@@ -516,11 +434,6 @@ SpaceshipReceptionDisplayCtrl._OnFilterGetCount = HL.Method(HL.Table).Return(HL.
     end
     return resultCount
 end
-
-
-
-
-
 SpaceshipReceptionDisplayCtrl._ApplySort = HL.Method(HL.Table, HL.Table, HL.Boolean).Return(HL.Table)
     << function(self, itemInfoList, optData, isIncremental)
     local tempPictureIdList = {}
@@ -556,10 +469,6 @@ SpaceshipReceptionDisplayCtrl._ApplySort = HL.Method(HL.Table, HL.Table, HL.Bool
     end
     return itemInfoList
 end
-
-
-
-
 
 SpaceshipReceptionDisplayCtrl._ApplyFilter = HL.Method(HL.Table, HL.Table).Return(HL.Table)
     << function(self, itemInfoList, selectedTags)
@@ -597,24 +506,104 @@ end
 
 
 
-
-
-
-
 SpaceshipReceptionDisplayCtrl._RefreshPicList = HL.Method(HL.Opt(HL.Boolean, HL.Table)) << function(self, setTop, targetItems)
     local count = #targetItems
     self.view.pictureScroll:UpdateCount(count, setTop or false)
     self:_UpdateRedDotByInfoList()
 end
 
+SpaceshipReceptionDisplayCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
+    local sortNode = self.view.sortNode
+    local sortSelectedIndex = recoverState.sortSelectedIndex
+    if sortSelectedIndex and sortNode and sortNode.m_sortOptions and sortNode.view and sortNode.view.mobilePCNode and sortNode.view.mobilePCNode.dropDown then
+        local optionCount = #sortNode.m_sortOptions
+        if optionCount > 0 then
+            sortSelectedIndex = math.max(1, math.min(sortSelectedIndex, optionCount))
+            sortNode.isIncremental = recoverState.sortIsIncremental == true
+            sortNode:RefreshIncremental()
+            sortNode.view.mobilePCNode.dropDown:SetSelected(CSIndex(sortSelectedIndex), true, false)
+        end
+    end
 
+    local filterTags = recoverState.filterTags and lume.deepCopy(recoverState.filterTags) or {}
+    self.m_selectedTags = filterTags
+    if self.view.filterBtn.m_args then
+        self.view.filterBtn.m_args.selectedTags = lume.deepCopy(filterTags)
+    end
+
+    local selectedPictureIds = {}
+    if recoverState.selectedPictureIds then
+        for _, pictureId in ipairs(recoverState.selectedPictureIds) do
+            if self:_GetIndexByPicId(pictureId) > 0 then
+                table.insert(selectedPictureIds, pictureId)
+            end
+        end
+    else
+        local picIdsList = GameInstance.player.spaceship:GetScreenWallPicIds()
+        if picIdsList and picIdsList.Count > 0 then
+            for i = CSIndex(1), CSIndex(picIdsList.Count) do
+                table.insert(selectedPictureIds, picIdsList[i])
+            end
+        end
+    end
+    self:ShowSelectItems(selectedPictureIds)
+    if recoverState.isSave == nil then
+        self:SetSaveState(true)
+    else
+        self:SetSaveState(recoverState.isSave == true)
+    end
+    sortNode:UpdateDeviceState()
+    self:_TryRecoverPictureScrollState(recoverState.currentPictureId)
+end
+
+SpaceshipReceptionDisplayCtrl._GetSelectedPictureIdList = HL.Method().Return(HL.Table) << function(self)
+    local selectedPictureIds = {}
+    for selectIndex = 1, self.m_maxSelectNum do
+        local cellIndex = self.m_select2Cell[selectIndex]
+        local item = cellIndex and self.m_filteredInfoList[cellIndex] or nil
+        if item and item.posterData then
+            table.insert(selectedPictureIds, item.posterData.pictureId)
+        end
+    end
+    return selectedPictureIds
+end
+
+SpaceshipReceptionDisplayCtrl._TryRecoverPictureScrollState = HL.Method(HL.Opt(HL.Any)) << function(self, pictureId)
+    if pictureId == nil then
+        return
+    end
+    local targetIndex = self:_GetIndexByPicId(pictureId)
+    if targetIndex <= 0 then
+        return
+    end
+    self.view.pictureScroll:SetSelectedIndex(CSIndex(targetIndex), false, true, true)
+end
+
+SpaceshipReceptionDisplayCtrl._TryRecoverPicturePopup = HL.Method(HL.Opt(HL.Table)) << function(self, popupState)
+    if popupState == nil then
+        return
+    end
+    local isOpen, popupCtrl = UIManager:IsOpen(PanelId.ReceptionDisplayPicture)
+    if isOpen and popupCtrl and popupCtrl:IsShow() then
+        return
+    end
+    local pictureId = popupState.pictureId
+    if pictureId == nil and popupState.currentIndex and popupState.currentIndex > 0 then
+        local info = self.m_filteredInfoList[popupState.currentIndex]
+        pictureId = info and info.posterData and info.posterData.pictureId or nil
+    end
+    if pictureId == nil then
+        return
+    end
+    UIManager:AutoOpen(PanelId.ReceptionDisplayPicture, {
+        pictureId = pictureId,
+        pictureList = self.m_filteredInfoList,
+    })
+end
 
 SpaceshipReceptionDisplayCtrl._OnSavePicture = HL.Method() << function(self)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_SS_POSTER_SAVE_POPUP)
 end
-
-
-
 
 SpaceshipReceptionDisplayCtrl._UpdateRedDotByInfoList = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     self.m_pictureRedDots = {}
@@ -627,8 +616,6 @@ SpaceshipReceptionDisplayCtrl._UpdateRedDotByInfoList = HL.Method(HL.Opt(HL.Tabl
     end
     self:_UpdateRedDot()
 end
-
-
 
 SpaceshipReceptionDisplayCtrl._UpdateRedDot = HL.Method() << function(self)
     if not self.m_pictureRedDots then
@@ -644,8 +631,6 @@ SpaceshipReceptionDisplayCtrl._UpdateRedDot = HL.Method() << function(self)
     end
     self.view.redDot.gameObject:SetActive(needRedDot)
 end
-
-
 
 SpaceshipReceptionDisplayCtrl._GetShowingCellStartEnd = HL.Method().Return(HL.Number,HL.Number) << function(self)
     local totalCount = lume.count(self.m_filteredInfoList)

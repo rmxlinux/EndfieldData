@@ -36,6 +36,8 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
+
 FriendList = HL.Class('FriendList', UIWidgetBase)
 
 
@@ -318,7 +320,10 @@ FriendList.RefreshInfo = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.String, HL.Bo
                     end
                 end
                 self.view.scrollList:UpdateCount(endIndex - del, true)
-                self:NaviToFirstCell()
+                
+                if self:_CanRecordNaviTarget() then
+                    self:NaviToFirstCell()
+                end
             end)
         else
             GameInstance.player.friendSystem:SyncFriendInfo(self.m_arg.infoDicIndex, ids, function(delArray)
@@ -338,12 +343,17 @@ FriendList.RefreshInfo = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.String, HL.Bo
                     end
                 end
                 self.view.scrollList:UpdateCount(endIndex - del, true)
-                self:NaviToFirstCell()
+                
+                if self:_CanRecordNaviTarget() then
+                    self:NaviToFirstCell()
+                end
             end)
         end
     else
         self.view.scrollList:UpdateCount(endIndex, true)
-        self:NaviToFirstCell()
+        if self:_CanRecordNaviTarget() then
+            self:NaviToFirstCell()
+        end
     end
 end
 
@@ -399,7 +409,7 @@ FriendList.RefreshInfoStayPos = HL.Method(HL.Table) << function(self, info)
         
         
     end
-    if self:GetUICtrl().view.inputGroup.groupEnabled then
+    if self:_CanRecordNaviTarget() then
         if wasEmpty or InputManagerInst.controllerNaviManager.curTarget == nil then
             self:NaviToFirstCell()
         elseif needNaviToLast then
@@ -409,7 +419,7 @@ FriendList.RefreshInfoStayPos = HL.Method(HL.Table) << function(self, info)
             end
 
             if not self.m_clueGiftNaviModel then
-                InputManagerInst.controllerNaviManager:SetTarget(lastCell:GetComponent("InputBindingGroupNaviDecorator"))
+                self:_SetCellAsNaviTarget(lastCell)
             end
         end
     end
@@ -419,12 +429,66 @@ end
 
 FriendList.NaviToFirstCell = HL.Method() << function(self)
     local go = self.view.scrollList:Get(0)
+    self:_SetCellAsNaviTarget(go)
+end
+
+
+
+FriendList._CanRecordNaviTarget = HL.Method().Return(HL.Boolean) << function(self)
+    if not DeviceInfo.usingController then
+        return false
+    end
+    local ctrl = self:GetUICtrl()
+    if ctrl == nil or ctrl.view == nil or IsNull(ctrl.view.gameObject) or not ctrl.view.gameObject.activeInHierarchy then
+        return false
+    end
+    
+    if ctrl.view.inputGroup.groupEnabled then
+        return true
+    end
+    
+    
+    
+    
+    
+    
+    
+    return ctrl.m_phase ~= nil
+end
+
+
+
+
+FriendList._SetCellAsNaviTarget = HL.Method(HL.Opt(HL.Userdata)) << function(self, go)
     if IsNull(go) then
         return
     end
 
     if not self.m_clueGiftNaviModel then
-        InputManagerInst.controllerNaviManager:SetTarget(go:GetComponent("InputBindingGroupNaviDecorator"))
+        local target = go:GetComponent("InputBindingGroupNaviDecorator")
+        if IsNull(target) then
+            return
+        end
+
+        local ctrl = self:GetUICtrl()
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        local isForeground = ctrl ~= nil and ctrl.view ~= nil
+            and ctrl.view.inputGroup ~= nil and ctrl.view.inputGroup.groupEnabled
+        if isForeground then
+            InputManagerInst.controllerNaviManager:SetTarget(target)
+        elseif ctrl ~= nil and ctrl.m_phase ~= nil and target.naviGroup ~= nil then
+            ctrl:SetAsNaviTargetInSilentModeIfNecessary(target.naviGroup, target)
+        else
+            InputManagerInst.controllerNaviManager:SetTarget(target)
+        end
     end
 end
 
@@ -627,4 +691,3 @@ end
 
 HL.Commit(FriendList)
 return FriendList
-

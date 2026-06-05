@@ -45,6 +45,7 @@ local PHASE_ID = PhaseId.CashShop
 
 
 
+
 PhaseCashShop = HL.Class('PhaseCashShop', phaseBase.PhaseBase)
 
 local TabPanelIds = {
@@ -141,6 +142,23 @@ end
 
 
 
+PhaseCashShop.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = {} 
+    arg.shopGroupId = self.currCategoryId
+    local panelId = TabPanelIds[self.currCategoryId]
+    local ctrl = self.m_panel2Item[panelId].uiCtrl
+    
+    ctrl:SetCashShopStateArg(arg)
+    
+    if not string.isEmpty(self.m_backToRecommendPanelTabId) then
+        arg.backToRecommendPanelTabId = self.m_backToRecommendPanelTabId
+    end
+    return arg
+end
+
+
+
+
 
 
 PhaseCashShop.OpenCategory = HL.Method(HL.String, HL.Opt(HL.String))
@@ -159,7 +177,21 @@ PhaseCashShop.OpenCategory = HL.Method(HL.String, HL.Opt(HL.String))
         self:CreateOrShowPhasePanelItemWrapper(panelId, arg)
         UIManager:SetTopOrder(MainPanelId)
 
+        
+        
+        
+        
         Notify(MessageConst.ON_CASH_SHOP_OPEN_CATEGORY)
+
+        
+        
+        
+        
+        
+        local newPanelItem = self.m_panel2Item[panelId]
+        if newPanelItem and newPanelItem.uiCtrl then
+            newPanelItem.uiCtrl:OnAfterCategoryTopOrdered()
+        end
     end
 end
 
@@ -511,7 +543,7 @@ PhaseCashShop.OpenGiftpackCategoryAndOpenDetailPanel = HL.Method(HL.String, HL.S
     self.m_backToRecommendPanelTabId = self.m_panel2Item[PanelId.ShopRecommend].uiCtrl:GetCurrTabId()
     Notify(MessageConst.CASH_SHOP_REFRESH_CLOSE_BTN_UI)
     self:Refresh({
-        shopGroupId = CashShopConst.CashShopCategoryType.Pack
+        shopGroupId = CashShopConst.CashShopCategoryType.Pack,
     })
     
     local panelItem = self.m_panel2Item[PanelId.ShopGiftPackEmpty]

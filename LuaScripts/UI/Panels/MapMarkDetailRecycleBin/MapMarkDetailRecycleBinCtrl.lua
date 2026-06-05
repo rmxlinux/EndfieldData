@@ -126,7 +126,9 @@ MapMarkDetailRecycleBinCtrl._InitRecycleBinInfo = HL.Method() << function(self)
         })
     end)
 
+    local _, domainPOICfg = Tables.domainPoiTable:TryGetValue(GEnums.DomainPoiType.RecycleBin)
     local commonArgs = {}
+    commonArgs.titleText = domainPOICfg.name .. "#" .. recycleBinCfg.serialId
     commonArgs.bigBtnActive = true
     commonArgs.markInstId = self.m_markInstId
     commonArgs.descText = descRawText

@@ -138,6 +138,11 @@ end
 
 FacMainRightCtrl.OnHide = HL.Override() << function(self)
     self:StopFocus()
+    PhaseManager:SetForbidInputDeviceChange("FacMainRight.Focus", false)
+end
+
+FacMainRightCtrl.OnClose = HL.Override() << function(self)
+    PhaseManager:SetForbidInputDeviceChange("FacMainRight.Focus", false)
 end
 
 
@@ -289,6 +294,7 @@ FacMainRightCtrl._OnIsTopLayerChanged = HL.Method(HL.Boolean) << function(self, 
     end
 
     self.view.animation.isActive = isTopLayer
+    PhaseManager:SetForbidInputDeviceChange("FacMainRight.Focus", isTopLayer)
     if isTopLayer then
         UIManager:HideWithKey(PanelId.GeneralAbility, "FacMainRightPanel")
     else

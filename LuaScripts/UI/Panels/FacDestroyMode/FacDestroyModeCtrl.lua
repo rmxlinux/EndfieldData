@@ -41,6 +41,8 @@ local FAC_DESTROY_MODE_STATE_KEY = "FacDestroyModeCtrl"
 
 
 
+
+
 FacDestroyModeCtrl = HL.Class('FacDestroyModeCtrl', uiCtrl.UICtrl)
 
 
@@ -116,6 +118,30 @@ FacDestroyModeCtrl.OnClose = HL.Override() << function(self)
     else
         self:_ClearOnExit()
     end
+end
+
+
+
+FacDestroyModeCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    if self.m_keyHintCells == nil then
+        return nil
+    end
+
+    local state = {
+        keyHintCells = self.m_keyHintCells,
+    }
+    self.m_keyHintCells = nil
+    return state
+end
+
+
+
+
+FacDestroyModeCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function(self, state)
+    if not state then
+        return
+    end
+    self.m_keyHintCells = state.keyHintCells
 end
 
 
@@ -230,15 +256,22 @@ FacDestroyModeCtrl._OnEnterMode = HL.Method(HL.Table) << function(self, args)
         self:_Update()
     end, true)
 
+    self.m_args = args
+
     local inTopView = LuaSystemManager.factory.inTopView
     local showHidePipe = inTopView and FactoryUtils.canShowPipe()
     self.view.hidePipeToggle.gameObject:SetActive(showHidePipe)
-    self.view.hidePipeToggle.toggle:SetIsOnWithoutNotify(false)
+    if args.isFromChangeInputDevice then 
+        local isHideToggleOn = FactoryUtils.isPipeInSimpleFigure()
+        self.view.hidePipeToggle.toggle:SetIsOnWithoutNotify(isHideToggleOn)
+    else
+        self.view.hidePipeToggle.toggle:SetIsOnWithoutNotify(false)
+        self:_OnChangeHideToggle(false)
+    end
+
     self.view.errorHint.gameObject:SetActive(false)
     self.view.warningHint.gameObject:SetActive(false)
-    self:_OnChangeHideToggle(false)
 
-    self.m_args = args
     self.view.createBPHint.gameObject:SetActive(args.showCreateHint)
 
     self.view.batchNode.gameObject:SetActive(false)
@@ -287,6 +320,10 @@ FacDestroyModeCtrl._OnEnterMode = HL.Method(HL.Table) << function(self, args)
     end
 
     self:_UpdateKeyHintStates()
+
+    if self.m_args.isFromChangeInputDevice and self.m_args.openSaveBP then
+        self:_SaveBlueprint()
+    end
 end
 
 
@@ -332,7 +369,9 @@ FacDestroyModeCtrl._RealExitMode = HL.Method() << function(self)
     self.m_keyHintCells:Refresh(0)
     self.m_keyHintName = ""
 
-    FactoryUtils.stopLogisticFigureRenderer()
+    if not InputManagerInst.inChangingInputDevice then
+        FactoryUtils.stopLogisticFigureRenderer()
+    end
 
     
     LuaSystemManager.factory.inDestroyMode = false
@@ -518,7 +557,7 @@ FacDestroyModeCtrl.m_keyHintName = HL.Field(HL.String) << ''
 
 
 FacDestroyModeCtrl._InitKeyHint = HL.Method() << function(self)
-    self.m_keyHintCells = UIUtils.genCellCache(self.view.keyHintCell)
+    self.m_keyHintCells = self.m_keyHintCells or UIUtils.genCellCache(self.view.keyHintCell)
 end
 
 

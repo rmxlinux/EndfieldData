@@ -305,8 +305,7 @@ MoneyCell._OnClickItem = HL.Method() << function(self)
         if self.m_staminaShowItemTips then
             self:_OnClickItem2ShowItemTips()
         elseif DeviceInfo.usingController then
-            local ctrl = UIManager:Open(PanelId.StaminaPopUp)
-            ctrl:SetStaminaCloseFun(self.m_staminaCloseFun)
+            PhaseManager:OpenPhase(PhaseId.StaminaPopUp, { closeFun = self.m_staminaCloseFun })
             if self.m_staminaClickFun then
                 self.m_staminaClickFun()
             end
@@ -333,6 +332,11 @@ end
 
 
 MoneyCell._OnClickItem2ShowItemTips = HL.Method() << function(self)
+    if UIManager:IsShow(PanelId.RewardsPopUpForSystem) then
+        
+        
+        return
+    end
     if DeviceInfo.usingController and self.m_isItemTipsShowing then
         return  
     end
@@ -362,7 +366,7 @@ end
 
 MoneyCell._OnClickAddItem = HL.Method() << function(self)
     if self:IsStamina() then
-        UIManager:Open(PanelId.StaminaPopUp)
+        PhaseManager:OpenPhase(PhaseId.StaminaPopUp)
         if self.m_staminaClickFun then
             self.m_staminaClickFun()
         end

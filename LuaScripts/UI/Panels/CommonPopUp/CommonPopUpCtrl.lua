@@ -32,6 +32,8 @@ EToggleStyle = {
 
 
 
+
+
 CommonPopUpCtrl = HL.Class('CommonPopUpCtrl', uiCtrl.UICtrl)
 
 
@@ -43,7 +45,8 @@ CommonPopUpCtrl = HL.Class('CommonPopUpCtrl', uiCtrl.UICtrl)
 
 CommonPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_STAMINA_CHANGED] = "OnStaminaChanged",
-    [MessageConst.HIDE_POP_UP] = '_HidePopUp',
+    [MessageConst.HIDE_POP_UP] = "_HidePopUp",
+    [MessageConst.ON_CHANGE_INPUT_DEVICE_TYPE_FINISHED] = "_OnChangeInputDeviceFinished",
 }
 
 
@@ -195,7 +198,7 @@ CommonPopUpCtrl._FreezeWorld = HL.Method() << function(self)
     self.m_timeScaleHandler = Utils.FreezeWorldByUI()
     AudioAdapter.PostEvent("au_global_contr_fullscreen_menu_pause")
     if self.m_args.pauseGame == true then
-        GameWorld.worldInfo:TryPauseGameTime(GEnums.GameTimeFreezeReason.UI)
+        GameWorld.subGameManager:TryPauseGameTime(GEnums.GameTimeFreezeReason.UI)
     end
 end
 
@@ -207,7 +210,7 @@ CommonPopUpCtrl._ResumeWorld = HL.Method() << function(self)
         self.m_timeScaleHandler = 0
         AudioAdapter.PostEvent("au_global_contr_fullscreen_menu_resume")
         if self.m_args.pauseGame == true then
-            GameWorld.worldInfo:TryResumeGameTime(GEnums.GameTimeFreezeReason.UI)
+            GameWorld.subGameManager:TryResumeGameTime(GEnums.GameTimeFreezeReason.UI)
         end
     end
 end
@@ -238,6 +241,20 @@ end
 
 CommonPopUpCtrl._HidePopUp = HL.Method() << function(self)
     self:PlayAnimationOutAndHide()
+end
+
+
+
+
+CommonPopUpCtrl._OnChangeInputDeviceFinished = HL.Method(HL.Any) << function(self, arg)
+    
+    
+    if self.view.inputField.gameObject.activeSelf then
+        self.view.inputField:DeactivateInputField(true)
+    end
+    if self.view.inputFieldMore.gameObject.activeSelf then
+        self.view.inputFieldMore:DeactivateInputField(true)
+    end
 end
 
 
@@ -449,6 +466,15 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
         
         self.view.toggle.toggleText.text = toggleArg.toggleText
         self.view.toggle.toggle.isOn = toggleArg.isOn
+        if toggleArg.onHintTextId ~= nil then
+            self.view.toggle.toggle.onHintTextId = toggleArg.onHintTextId
+        end
+        if toggleArg.offHintTextId ~= nil then
+            self.view.toggle.toggle.offHintTextId = toggleArg.offHintTextId
+        end
+        if toggleArg.onHintTextId ~= nil or toggleArg.offHintTextId ~= nil then
+            self.view.toggle.toggle:RefreshHintText()
+        end
         
         if string.isEmpty(toggleArg.toggleTips) then
             self.view.toggle.tipsNode.gameObject:SetActive(false)
@@ -697,6 +723,21 @@ CommonPopUpCtrl._SetToggleStyle = HL.Method(HL.String) << function(self, styleTy
             self.view.toggle.toggle.targetGraphic = self.view.toggle.circle
         end
     end
+end
+
+
+
+CommonPopUpCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    if not self.m_args then
+        return
+    end
+    local arg = lume.deepCopy(self.m_args)
+    if arg.input then
+        arg.inputName = self.view.inputField.text
+    elseif arg.inputMore then
+        arg.inputName = self.view.inputFieldMore.text
+    end
+    return arg
 end
 
 

@@ -246,7 +246,7 @@ FacBattleCtrl._GetNextChargingMode = HL.Method().Return(HL.Number) << function(s
             if isInPowerNet then
                 local powerInfo = FactoryUtils.getCurRegionPowerInfo()
                 if powerInfo ~= nil then
-                    if powerInfo.powerSaveMax > 0 and powerInfo.powerSaveCurrent <= 0 and powerInfo.powerGen < powerInfo.powerCost then
+                    if powerInfo.powerSaveMax > 0 and powerInfo.powerSaveCurrent <= 0 and powerInfo.powerGen < powerInfo.powerCost and not FactoryUtils.getIsInBackupPower() then
                         isInPowerNet = false  
                         powerNetPowerEnough = false
                     end
@@ -287,9 +287,9 @@ FacBattleCtrl._UpdateAndRefreshBattleChargingState = HL.Method() << function(sel
         local needRefreshInventory = nextChargingMode == ChargingMode.Closed or self.m_currentChargingMode == ChargingMode.Closed
         self.m_currentChargingMode = nextChargingMode
         self:_RefreshChargingMode(nextChargingMode)
-        if needRefreshInventory then
-            self:_RefreshInventoryItemCellsOnStateChange()
-        end
+        
+        
+        
     end
 
     if self.m_currentChargingMode == ChargingMode.Battery then

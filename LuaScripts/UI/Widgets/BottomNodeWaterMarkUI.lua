@@ -28,6 +28,11 @@ BottomNodeWaterMarkUI.InitBottomNodeWaterMarkUI = HL.Method(HL.Table) << functio
         elseif arg.type == "PhotoShot" then
             self.view.apertureText.text = arg.aperture
             self.view.focusText.text = arg.focus
+        elseif arg.type == "ContingencyContractSettlement" then
+            
+            local node = self.view.settlementNode
+            node.timeTxt.text = arg.timeStamp
+            node.codeTxt.text = arg.showCodeId
         end
     end
 end

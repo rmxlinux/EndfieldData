@@ -17,6 +17,8 @@ local GachaPoolCellBase = require_ex('UI/Widgets/GachaPoolCellBase')
 
 
 
+
+
 GachaPoolCellStarter = HL.Class('GachaPoolCellStarter', GachaPoolCellBase)
 
 
@@ -262,6 +264,31 @@ GachaPoolCellStarter._TryJumpToActivity = HL.Method() << function(self)
         return
     end
     PhaseManager:GoToPhase(PhaseId.ActivityCenter, { activityId = Tables.charGachaConst.gachaBeginnerActivityId, gotoCenter = true})
+end
+
+
+
+GachaPoolCellStarter.GetSubPanelArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local isOpen, ctrl = UIManager:IsOpen(PanelId.BattlePassWeaponCase)
+    if isOpen then
+        local subPanelArg = ctrl:GetCurPhaseStateArg()
+        if subPanelArg then
+            subPanelArg.isBattlePassWeaponCase = true
+            return subPanelArg
+        end
+    end
+    return GachaPoolCellStarter.Super.GetSubPanelArg(self)
+end
+
+
+
+
+GachaPoolCellStarter.HandleSubPanelArg = HL.Override(HL.Any) << function(self, subPanelArg)
+    if subPanelArg.isBattlePassWeaponCase then
+        UIManager:Open(PanelId.BattlePassWeaponCase, subPanelArg)
+    else
+        GachaPoolCellStarter.Super.HandleSubPanelArg(self, subPanelArg)
+    end
 end
 
 

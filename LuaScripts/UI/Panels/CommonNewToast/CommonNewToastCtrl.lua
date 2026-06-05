@@ -222,7 +222,7 @@ CommonNewToastCtrl._StartPlayNewItem = HL.Method(HL.Table) << function(self, dat
         self.view.toastState:SetState("StoryItem")
         local prtsData = Tables.prtsAllItem:GetValue(prtsId)
         local _, firstLvInfo = Tables.prtsFirstLv:TryGetValue(prtsData.firstLvId)
-        node.storyNode.nameTxt.text = prtsData.name
+        node.storyNode.nameTxt:SetAndResolveTextStyle(prtsData.name)
         local iconPath = Utils.getImgGenderDiffPath(firstLvInfo.icon)
         node.storyNode.itemIcon:LoadSprite(UIConst.UI_SPRITE_PRTS_ICON, iconPath)
         node.storyNode.typeIcon:LoadSprite(UIConst.UI_SPRITE_PRTS, "icon_tab_" .. prtsData.type .. "_nml")
@@ -237,7 +237,7 @@ CommonNewToastCtrl._StartPlayNewItem = HL.Method(HL.Table) << function(self, dat
         self.view.toastState:SetState("PRTSInvest")
         local investCfg = Utils.tryGetTableCfg(Tables.prtsInvestigate, investId)
         if investCfg then
-            node.investNode.investNameTxt.text = investCfg.name
+            node.investNode.investNameTxt:SetAndResolveTextStyle(investCfg.name)
             
             local curCount = GameInstance.player.prts:GetStoryCollUnlockCount(investId)
             local targetCount = #investCfg.collectionIdList

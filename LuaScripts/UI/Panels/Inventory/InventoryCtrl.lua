@@ -74,6 +74,7 @@ local PANEL_ID = PanelId.Inventory
 
 
 
+
 InventoryCtrl = HL.Class('InventoryCtrl', uiCtrl.UICtrl)
 
 
@@ -403,6 +404,7 @@ end
 
 InventoryCtrl.OnChangeSpaceshipDomainId = HL.Method(HL.Any) << function(self, _)
     self:_InitDepot()
+    self:_RefreshSwitchDepotState()
 end
 
 
@@ -473,12 +475,7 @@ InventoryCtrl._Refresh = HL.Method() << function(self)
 
             self.view.blockDepotManualInOutNode.gameObject:SetActive(Utils.isDepotManualInOutLocked())
 
-            if Utils.isInSpaceShip() then
-                local depotInChapter = GameInstance.player.inventory.factoryDepot:GetOrFallback(Utils.getCurrentScope())
-                self.view.switchDepotBtn.gameObject:SetActive(depotInChapter.Count > 1)
-            else
-                self.view.switchDepotBtn.gameObject:SetActive(false)
-            end
+            self:_RefreshSwitchDepotState()
         else
             self.view.stateController:SetState("NoDepot")
         end
@@ -540,6 +537,22 @@ InventoryCtrl._InitDepot = HL.Method() << function(self)
             cell.item.canSetQuickBar = true
         end,
     })
+end
+
+
+
+InventoryCtrl._RefreshSwitchDepotState = HL.Method() << function(self)
+    if Utils.isInSpaceShip() then
+        local depotInChapter = GameInstance.player.inventory.factoryDepot:GetOrFallback(Utils.getCurrentScope())
+        self.view.switchDepotBtn.gameObject:SetActive(depotInChapter.Count > 1)
+
+        local domainId = GameInstance.player.inventory.spaceshipDomainId
+        local domainData = Tables.domainDataTable:GetValue(domainId)
+        self.view.switchDepotIcon:LoadSprite(UIConst.UI_SPRITE_INVENTORY, domainData.domainIcon)
+        self.view.switchDepotLineImg.color = UIUtils.getColorByString(domainData.domainColor)
+    else
+        self.view.switchDepotBtn.gameObject:SetActive(false)
+    end
 end
 
 
@@ -1513,7 +1526,7 @@ InventoryCtrl.m_timeScaleHandler = HL.Field(HL.Number) << 0
 InventoryCtrl._FreezeWorld = HL.Method() << function(self)
     self:_ResumeWorld()
     self.m_timeScaleHandler = Utils.FreezeWorldByUI()
-    GameWorld.worldInfo:TryPauseGameTime(GEnums.GameTimeFreezeReason.UI)
+    GameWorld.subGameManager:TryPauseGameTime(GEnums.GameTimeFreezeReason.UI)
 end
 
 
@@ -1522,7 +1535,7 @@ InventoryCtrl._ResumeWorld = HL.Method() << function(self)
     if self.m_timeScaleHandler > 0 then
         Utils.ResumeWorldByUI(self.m_timeScaleHandler)
         self.m_timeScaleHandler = 0
-        GameWorld.worldInfo:TryResumeGameTime(GEnums.GameTimeFreezeReason.UI)
+        GameWorld.subGameManager:TryResumeGameTime(GEnums.GameTimeFreezeReason.UI)
     end
 end
 

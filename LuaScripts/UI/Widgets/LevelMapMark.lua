@@ -653,6 +653,9 @@ end
 
 
 LevelMapMark._UpdateSettlementDefense = HL.Method() << function(self)
+    if self.markRuntimeData.detail == nil or string.isEmpty(self.markRuntimeData.detail.settlementId) then
+        return
+    end
     local settlementId = self.markRuntimeData.detail.settlementId
     local isDanger = false
     if not string.isEmpty(settlementId) then
@@ -707,11 +710,15 @@ LevelMapMark._RefreshResourceStateNodeContent = HL.Method() << function(self)
     local resourceStateNode = self.view.resourceStateNode
     if self.markRuntimeData.type == GEnums.MarkType.DoodadGroup then
         local doodadGroupData = GameInstance.player.doodadSystem:GetDoodadSystemDataByMarkInst(self.markRuntimeData.instId)
-        resourceStateNode.countTxt.text = tostring(doodadGroupData.curCount)
-        if doodadGroupData.curCount == 0 then
-            resourceStateNode.contentStateController:SetState("Hidden")
+        if doodadGroupData ~= nil then
+            resourceStateNode.countTxt.text = tostring(doodadGroupData.curCount)
+            if doodadGroupData.curCount == 0 then
+                resourceStateNode.contentStateController:SetState("Hidden")
+            else
+                resourceStateNode.contentStateController:SetState(doodadGroupData.curCount == doodadGroupData.maxCount and "Max" or "Normal")
+            end
         else
-            resourceStateNode.contentStateController:SetState(doodadGroupData.curCount == doodadGroupData.maxCount and "Max" or "Normal")
+            self.view.iconImg.sprite = nil
         end
     elseif self.markRuntimeData.type == GEnums.MarkType.MinePointTeam then
         if self.markRuntimeData.mapId ~= GameWorld.worldInfo.curMapIdStr then

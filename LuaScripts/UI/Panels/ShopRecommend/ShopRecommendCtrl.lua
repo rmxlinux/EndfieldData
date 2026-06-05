@@ -44,10 +44,12 @@ local tabDataPrototypeList = {
                 {
                     isDailyPopup = false,
                 })
+            self.m_phase:CreateOrShowPhasePanelItemWrapper(PanelId.CashShopKrTips)
         end,
         OverrideDestroyPanelFunc = function(self)
             self.m_phase:RemovePhasePanelItemByIdWrapper(PanelId.ShopMonthlyPass)
             self.m_phase:RemovePhasePanelItemByIdWrapper(PanelId.ShopMonthlyPass3D)
+            self.m_phase:RemovePhasePanelItemByIdWrapper(PanelId.CashShopKrTips)
         end,
         CheckBottomFunc = function()
             local canBuy = CashShopUtils.CheckCanBuyMonthlyPass()
@@ -246,6 +248,8 @@ local tabDataPrototypeList = {
 
 
 
+
+
 ShopRecommendCtrl = HL.Class('ShopRecommendCtrl', uiCtrl.UICtrl)
 
 
@@ -282,8 +286,6 @@ ShopRecommendCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 ShopRecommendCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_phase = arg.phase
-
     self.m_getTabCellFunc = UIUtils.genCachedCellFunction(self.view.cashShopVerticalTabList.scrollList)
     self.view.cashShopVerticalTabList.scrollList.onUpdateCell:AddListener(function(obj, index)
         local cell = self.m_getTabCellFunc(obj)
@@ -349,7 +351,7 @@ ShopRecommendCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitTabData()
     self:_InitShortCut()
     self:_RefreshShowTabData()
-    self:_RefreshUI()
+    self:_ProcessArg(arg)
 end
 
 
@@ -370,6 +372,39 @@ end
 
 
 
+
+
+
+
+ShopRecommendCtrl._ProcessArg = HL.Method(HL.Table) << function(self, arg)
+    
+    
+    local tabId = ""
+    if arg and not string.isEmpty(arg.CategoryRecommendTabId) then
+        tabId = arg.CategoryRecommendTabId
+        arg.CategoryRecommendTabId = ""  
+    end
+
+    self.view.cashShopVerticalTabList.scrollList:UpdateCount(#self.m_showTabDataList)
+
+    if string.isEmpty(tabId) then
+        self:_SetTabByIndex(1)
+    else
+        self:SetCurrTabId(tabId)
+    end
+end
+
+
+
+
+ShopRecommendCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, arg)
+    arg.CategoryRecommendTabId = self.m_currTabId
+end
+
+
+
+ShopRecommendCtrl.OnAfterCategoryTopOrdered = HL.Method() << function(self)
+end
 
 
 
@@ -517,10 +552,6 @@ end
 
 ShopRecommendCtrl._RefreshUI = HL.Method() << function(self)
     self.view.cashShopVerticalTabList.scrollList:UpdateCount(#self.m_showTabDataList)
-
-    if string.isEmpty(self.m_currTabId) then
-        self:_SetTabByIndex(1)
-    end
 end
 
 
@@ -530,9 +561,12 @@ ShopRecommendCtrl._SetTabByIndex = HL.Method(HL.Int) << function(self, index)
     if #self.m_showTabDataList >= index then
         local obj = self.view.cashShopVerticalTabList.scrollList:Get(CSIndex(index))
         local cell = self.m_getTabCellFunc(obj)
-        UIUtils.setAsNaviTarget(cell.toggle)
-        cell.toggle:SetIsOnWithoutNotify(true)
-        self:_OnTabClick(self.m_showTabDataList[index])
+        if DeviceInfo.usingController then
+            UIUtils.setAsNaviTarget(cell.toggle)
+        else
+            cell.toggle:SetIsOnWithoutNotify(true)
+            self:_OnTabClick(self.m_showTabDataList[index])
+        end
     end
 end
 

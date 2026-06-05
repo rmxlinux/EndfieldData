@@ -35,14 +35,8 @@ SpaceshipShopCtrl.m_shopGroupList = HL.Field(HL.Any)
 
 SpaceshipShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.closeBtn.onClick:AddListener(function()
-        
-        local isOpen, phase = PhaseManager:IsOpen(PhaseId.Dialog)
-        if isOpen then
-            self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 0 })
-            AudioManager.PostEvent("Au_UI_Menu_SpaceshipShopPanel_Close")
-        else
-            PhaseManager:PopPhase(PHASE_ID)
-        end
+        AudioManager.PostEvent("Au_UI_Menu_SpaceshipShopPanel_Close")
+        PhaseManager:PopPhase(PHASE_ID)
     end)
     UIManager:ToggleBlockObtainWaysJump("space_ship_shop", true)
     self.m_needPlaySoldOut = {}

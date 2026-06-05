@@ -137,6 +137,7 @@ local ControllerDynamicTopBtnBaseOrder = 100000
 
 
 
+
 MainHudCtrl = HL.Class('MainHudCtrl', uiCtrl.UICtrl)
 
 local PhaseForbidStyle = CS.Beyond.Gameplay.PhaseForbidStyle
@@ -166,6 +167,7 @@ MainHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.DISABLE_BATTLE_INDICATOR_CONTROLLER] = 'OnDisableBattleIndicatorController',
     [MessageConst.ON_EXIT_FACTORY_MODE] = 'OnExitFactoryMode',
     [MessageConst.ON_TOGGLE_SPRINT] = 'OnToggleSprint',
+    [MessageConst.ON_DASH_ENABLE_CONFIG_CHANGED] = 'OnDashEnableChanged',
     [MessageConst.ON_APPLICATION_FOCUS] = 'OnApplicationFocus',
     [MessageConst.ON_DOMAIN_DEVELOPMENT_UNLOCK] = 'OnDomainDevelopmentUnlock',
     [MessageConst.ON_SUB_GAME_STAGE_CHANGE] = "OnSubGameStageChange",
@@ -251,6 +253,11 @@ end
 
 MainHudCtrl.OnShow = HL.Override() << function(self)
     self.m_forceBtnOutside = Utils.isInDungeon()
+    self.m_forceBtnInside = GameWorld.battle.isSquadInFight
+
+    self.view.jumpAnimNode:SampleClipAtPercent("mobile_mainhud_jumpbtn_pressedring", 0)
+    self.view.sprintAnimNode:SampleClipAtPercent("mobile_mainhud_jumpbtn_pressedring", 0)
+    self.view.sprintLightSuccess:SampleClipAtPercent("mobile_mainhud_jumpbtn_release_success", 0)
 
     self.view.topRightBtns.controllerBtnList.gameObject:SetActive(DeviceInfo.usingController)
     self:UpdateAllTopBtnsVisible()
@@ -267,10 +274,10 @@ MainHudCtrl.OnShow = HL.Override() << function(self)
         self:_ToggleControllerIndicator(true)
     end
     self.view.attackButton:OnShow()
-    self:_InitActivityBubbles()
     self.m_characterFootBar.mainCharFootBar:SetUIDisable("MainHudActive", false)
     self:OnToggleSprint({ GameInstance.playerController.isMainCharacterSprinting })
     self:_UpdateWatchBtnBinding()
+    self:OnThrowModeChange(nil)
 end
 
 
@@ -292,10 +299,44 @@ end
 
 
 MainHudCtrl.OnClose = HL.Override() << function(self)
+    self.view.attackButton:ReleaseNormalAttackBtn()
+    GameInstance.playerController:ToggleIndicatorAttack(false)
     if self.m_characterFootBar then
         GameObject.Destroy(self.m_characterFootBar.gameObject)
     end
     self.m_characterFootBar = nil
+end
+
+
+
+MainHudCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    self:_ResetTopBtnLayoutForHotSwitchReuse()
+    return nil
+end
+
+
+
+MainHudCtrl._ResetTopBtnLayoutForHotSwitchReuse = HL.Method() << function(self)
+    if not self.m_topBtnDataList then
+        return
+    end
+    for _, info in ipairs(self.m_topBtnDataList) do
+        if info.oriParentTrans and info.viewNode then
+            if info.viewNode.transform.parent ~= info.oriParentTrans then
+                info.viewNode.transform:SetParent(info.oriParentTrans)
+                info.viewNode.transform.localScale = Vector3.one
+            end
+            if info.posType then
+                local canvasGroup = info.viewNode.transform:GetComponent("CanvasGroup")
+                if NotNull(canvasGroup) then
+                    canvasGroup:DOKill()
+                    canvasGroup.alpha = 1
+                end
+            end
+        end
+    end
+    self.view.topRightBtns.controllerBtnList.moreDeco.gameObject:SetActive(false)
+    self.view.topRightBtns.controllerBtnList.gameObject:SetActive(false)
 end
 
 
@@ -344,21 +385,10 @@ MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
         exitDungeon = { 
             button = self.view.topLeftBtns.exitDungeonBtn,
             checkVisible = function()
-                return Utils.isInDungeon() and not Utils.isInDungeonFactory()
+                return DungeonUtils.showExitDungeonBtn()
             end,
             onClick = function()
-                if WeeklyRaidUtils.IsInWeeklyRaid() then
-                    local dungeonId = GameInstance.dungeonManager.curDungeonId
-                    if string.isEmpty(dungeonId) then
-                        return
-                    end
-                    Notify(MessageConst.SHOW_WEEK_RAID_LEAVE_CONFIRM)
-                else
-                    if LuaSystemManager.commonTaskTrackSystem:HasRequest() then
-                        return
-                    end
-                    DungeonUtils.onClickExitDungeonBtn()
-                end
+                DungeonUtils.onClickExitDungeonBtn()
             end
         },
         exitFocusMode = { 
@@ -412,6 +442,21 @@ MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
                 return Utils.isInFactoryMode()
             end,
         },
+        hubData = {
+            button = self.view.topLeftBtns.hubDataBtn,
+            checkVisible = function()
+                if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacYieldStats) then
+                    return false
+                end
+                if not Utils.isCurrentMapHasFactoryGrid() or Utils.isInBlackbox() then
+                    return false
+                end
+                return true
+            end,
+            onClick = function()
+                PhaseManager:OpenPhase(PhaseId.FacHUBData, { tabIndex = 1 })
+            end,
+        },
         emptySwitch = { 
             viewNode = self.view.topLeftBtns.emptySwitchNode,
             checkVisible = function()
@@ -443,6 +488,18 @@ MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
             end,
             controllerPosType = ControllerTopBtnPosTypes.Fixed,
             controllerPosOrder = 1,
+        },
+        ContingencyContractInfoBtn={
+            button = self.view.topLeftBtns.contingencyContractInfoBtn,
+            checkVisible = function()
+                return ContingencyContractUtils.CheckVisibilityDungeonInfoBtn()
+            end,
+            onClick = function()
+                ContingencyContractUtils.OnClickDungeonInfoBtnContingencyContract()
+            end,
+            customUpdateBtnInfo = function()
+                ContingencyContractUtils.UpdateMainHudInfoBtn(self.view)
+            end,
         },
         domain = { 
             button = self.view.topLeftBtns.domainBtn,
@@ -497,7 +554,13 @@ MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
             button = self.view.topRightBtns.simpleMenuBtn,
             phaseId = PhaseId.SimpleSystem,
             checkVisible = function()
-                return not Utils.isSystemUnlocked(GEnums.UnlockSystemType.Watch)
+                local show = not Utils.isSystemUnlocked(GEnums.UnlockSystemType.Watch)
+                if Utils.isInDungeon() then
+                    if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.Watch) then
+                        show = false
+                    end
+                end
+                return show
             end,
         },
         simpleMenuForForbidden = { 
@@ -664,6 +727,21 @@ MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
             checkVisible = function()
                 return Utils.isSystemUnlocked(GEnums.UnlockSystemType.Activity)
             end,
+            
+            
+            
+            onClick = function()
+                local args = { openFrom = "MainHud" }
+                local isOpen, reminderCtrl = UIManager:IsOpen(PanelId.ActivityStartReminder)
+                if isOpen and reminderCtrl then
+                    local bubbleActivityId = reminderCtrl:GetShowingActivityId()
+                    if not string.isEmpty(bubbleActivityId) then
+                        args.gotoCenter = true
+                        args.activityId = bubbleActivityId
+                    end
+                end
+                PhaseManager:OpenPhase(PhaseId.ActivityCenter, args)
+            end,
         },
 
         wikiGuide = {
@@ -693,6 +771,17 @@ MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
             posType = TopBtnPosType.AlwaysInside,
             controllerPosType = ControllerTopBtnPosTypes.Fixed,
             controllerPosOrder = 3,
+            onClick = function()
+                if GameInstance.player.gameSettingSystem.forbiddenBp then
+                    Notify(MessageConst.SHOW_TOAST, Language.LUA_SWITCH_TYPE_FORBIDDEN_TOAST)
+                    return
+                end
+                if not BattlePassUtils.CheckBattlePassSeasonValid() then
+                    Notify(MessageConst.SHOW_TOAST, Language.LUA_BATTLEPASS_CANNOT_OPEN_TOAST)
+                    return
+                end
+                PhaseManager:OpenPhase(PhaseId.BattlePass)
+            end,
         },
 
         cashShop = {
@@ -773,6 +862,7 @@ MainHudCtrl._InitSingleTopBtn = HL.Method(HL.Table) << function(self, info)
             end
         end
     end
+
     if hasPosType then
         
         info.oriParentTrans = info.viewNode.transform.parent
@@ -891,6 +981,9 @@ MainHudCtrl._UpdateSingleTopBtnVisible = HL.Method(HL.Table, HL.Opt(HL.Boolean, 
     end
     if visible then
         self:_UpdateBtnPos(info)
+        if info.customUpdateBtnInfo then
+            info.customUpdateBtnInfo()
+        end
     end
 end
 
@@ -1042,11 +1135,11 @@ MainHudCtrl._InitMainHudBinding = HL.Method() << function(self)
     end, self.view.topNodeInputGroup.groupId)
 
     
-    self.m_indicatorControllerGroupId = InputManagerInst:CreateGroup(self.view.inputGroup.groupId)
-    UIUtils.bindInputPlayerAction("common_indicator_start", function()
+    self.m_indicatorControllerGroupId = self:CreateInputGroup(self.view.inputGroup.groupId)
+    self:BindInputPlayerAction("common_indicator_start", function()
         self:_ToggleControllerIndicator(true)
     end, self.m_indicatorControllerGroupId)
-    UIUtils.bindInputPlayerAction("common_indicator_end", function()
+    self:BindInputPlayerAction("common_indicator_end", function()
         self:_ToggleControllerIndicator(false)
     end, self.m_indicatorControllerGroupId)
 
@@ -1069,6 +1162,7 @@ MainHudCtrl._InitMainHudBinding = HL.Method() << function(self)
     if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.Jump) then
         self:TogglePlayerJump({"system_unlock", true})
     end
+    self:OnDashEnableChanged({GameWorld.battle.dashEnable})
 end
 
 
@@ -1149,10 +1243,6 @@ MainHudCtrl._InitDebugAction = HL.Method() << function(self)
     end)
     self:BindInputPlayerAction("battle_debug_get_debug_info", function()
         CS.Beyond.Gameplay.Core.PlayerController.GetDebugInfo()
-    end)
-    
-    self:BindInputEvent(CS.Beyond.Input.KeyboardKeyCode.Minus, function()
-        Notify(MessageConst.ON_SHOW_SNAPSHOT)
     end)
 end
 
@@ -1464,6 +1554,9 @@ MainHudCtrl.OnSystemUnlock = HL.Method(HL.Table) << function(self, arg)
         GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidSprint, "Unlock", false);
     elseif system == GEnums.UnlockSystemType.Jump then
         self:TogglePlayerJump({"system_unlock", false})
+    elseif system == GEnums.UnlockSystemType.Activity then
+        
+        UIManager:AutoOpen(PanelId.ActivityStartReminder)
     end
 end
 
@@ -1700,7 +1793,7 @@ MainHudCtrl._OnPressSprint = HL.Method() << function(self)
         end
     end
 
-    if Utils.isForbidden(ForbidType.ForbidMove) then
+    if Utils.isForbidden(ForbidType.ForbidMove) or not GameWorld.battle.dashEnable then
         return
     end
     if GameInstance.playerController:OnSprintPressed() then
@@ -1819,6 +1912,17 @@ MainHudCtrl.TogglePlayerJump = HL.Method(HL.Table) << function(self, args)
     else
         self.view.jumpBtn.gameObject:SetActive(true)
     end
+end
+
+
+
+
+MainHudCtrl.OnDashEnableChanged = HL.Method(HL.Table) << function(self, args)
+    if self.view.sprintDisableNode == nil then
+        return
+    end
+    local enable = unpack(args)
+    self.view.sprintDisableNode.gameObject:SetActive(not enable)
 end
 
 
@@ -2146,6 +2250,10 @@ MainHudCtrl._UpdateAllTopBtnsVisibleInController = HL.Method() << function(self)
             else
                 info.viewNode.gameObject:SetActive(true)
             end
+
+            if info.customUpdateBtnInfo then
+                info.customUpdateBtnInfo()
+            end
         else
             info.viewNode.gameObject:SetActive(false)
         end
@@ -2233,87 +2341,6 @@ end
 
 
 
-
-
-MainHudCtrl.m_activityBubbleIndex = HL.Field(HL.Number) << -1
-
-
-MainHudCtrl._InitActivityBubbles = HL.Method() << function(self)
-    if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.Activity) then
-        return
-    end
-    
-    local activities = GameInstance.player.activitySystem:GetAllActivities()
-    local allActivities = {}
-    for _, activity in cs_pairs(activities) do
-        local _, activityData = Tables.activityTable:TryGetValue(activity.id)
-        if not activityData or not activityData.bubbleSortId then
-            return
-        end
-        if activityData then
-            table.insert(allActivities, {
-                id = activity.id,
-                completed = activity.isCompleted and 1 or 0,
-                bubbleSortId = -activityData.bubbleSortId,
-                bubbleText = activityData.bubbleText,
-                bubbleType = activityData.bubbleType,
-                isUnlocked = activity.isUnlocked,
-            })
-        end
-    end
-
-    
-    table.sort(allActivities, Utils.genSortFunction({"completed","bubbleSortId", "id"}, true))
-
-    
-    local node = self.view.topRightBtns.activityStartReminderNode
-    if not node then
-        return
-    end
-
-    
-    if BEYOND_DEBUG_COMMAND then
-        local debugActivityId = ActivityUtils.getDebugActivityBubbleId()
-        if not string.isEmpty(debugActivityId) then
-            local success, activity = Tables.activityTable:TryGetValue(debugActivityId)
-            if success then
-                self.m_activityBubbleIndex = -1
-                node.gameObject:SetActive(true)
-                node.stateController:SetState(activity.bubbleType)
-                node.reminderContentTxt.text = activity.bubbleText
-                self:_StartCoroutine(function()
-                    coroutine.wait(self.view.config.ACTIVITY_BUBBLE_DISAPPEAR_TIME)
-                    if self.m_activityBubbleIndex == -1 then
-                        self.view.topRightBtns.activityStartReminderNode.gameObject:SetActive(false)
-                    end
-                end)
-                return
-            end
-        end
-    end
-
-    
-    for index = 1,#allActivities do
-        local activity = allActivities[index]
-        if ActivityUtils.isNewActivityBubble(activity.id) and activity.isUnlocked and not string.isEmpty(activity.bubbleText) then
-            self.m_activityBubbleIndex = index
-            node.gameObject:SetActive(true)
-            node.stateController:SetState(activity.bubbleType)
-            node.reminderContentTxt.text = activity.bubbleText
-            self:_StartCoroutine(function()
-                coroutine.wait(self.view.config.ACTIVITY_BUBBLE_DISAPPEAR_TIME)
-                ActivityUtils.setFalseNewActivityBubble(activity.id)
-                if self.m_activityBubbleIndex == index then
-                    self.view.topRightBtns.activityStartReminderNode.gameObject:SetActive(false)
-                end
-            end)
-            return
-        elseif self.m_activityBubbleIndex == index then
-            self.view.topRightBtns.activityStartReminderNode.gameObject:SetActive(false)
-        end
-    end
-    self.view.topRightBtns.activityStartReminderNode.gameObject:SetActive(false)
-end
 
 
 

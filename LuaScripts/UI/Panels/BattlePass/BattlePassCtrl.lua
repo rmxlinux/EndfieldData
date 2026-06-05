@@ -121,6 +121,8 @@ BattlePassCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_LoadData(true)
     self:_RenderViews()
     self:_RenderTimeRelatedPart()
+
+    self:_ChangeTab(self.m_curTabIndex, true)
 end
 
 
@@ -466,16 +468,6 @@ end
 
 
 
-
-BattlePassCtrl._OnPhaseItemBind = HL.Override() << function(self)
-    self:_ChangeTab(self.m_curTabIndex, true)
-end
-
-
-
-
-
-
 BattlePassCtrl._OnChangeTab = HL.Method(HL.Any) << function(self, arg)
     if arg == nil or arg.panelId == nil then
         return
@@ -520,6 +512,25 @@ BattlePassCtrl._ChangeTab = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function
             self.m_phase:HidePsStore()
         end
     end
+end
+
+
+
+BattlePassCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
+    local recoverState = {}
+    if self.m_tabInfos ~= nil and self.m_curTabIndex > 0 then
+        local tabInfo = self.m_tabInfos[self.m_curTabIndex]
+        if tabInfo ~= nil then
+            local isOpen, ctrl = UIManager:IsOpen(tabInfo.panelId)
+            if isOpen and ctrl ~= nil then
+                recoverState.panelId = ctrl.panelCfg.name
+                if HL.TryGet(ctrl, "GetRecoverStateArg") then
+                    recoverState.panelArgs = ctrl:GetRecoverStateArg()
+                end
+            end
+        end
+    end
+    return recoverState
 end
 
 

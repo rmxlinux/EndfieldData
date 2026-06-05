@@ -1,4 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
+
 local LIST_CONFIG = {
     [UIConst.COMMON_ITEM_LIST_TYPE.WEAPON_EXHIBIT_GEM] = {
         infoProcessFunc = "processWeaponGem",
@@ -279,6 +280,10 @@ end
 
 
 
+
+
+
+
 CommonItemList.InitCommonItemList = HL.Method(HL.Table) << function(self, arg)
     self.m_arg = arg
 
@@ -303,9 +308,12 @@ CommonItemList.InitCommonItemList = HL.Method(HL.Table) << function(self, arg)
 
         if selected then
             local itemBtn = self.m_getItemBtn(cell)
-            if itemBtn and itemBtn ~= InputManagerInst.controllerNaviManager.curTarget then
+            
+            
+            
+            if not arg.suppressAutoNaviTarget and itemBtn and itemBtn ~= InputManagerInst.controllerNaviManager.curTarget then
                 if self.view.scrollRect and self.view.scrollRect.naviGroup then
-                    UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.scrollRect.naviGroup, itemBtn)
+                    self:GetUICtrl():SetAsNaviTargetInSilentModeIfNecessary(self.view.scrollRect.naviGroup, itemBtn)
                 else
                     UIUtils.setAsNaviTarget(itemBtn)
                 end
@@ -615,6 +623,8 @@ CommonItemList._InitSortNode = HL.Method() << function(self)
         return
     end
 
+    local isIncremental = self.m_arg.curSortIsIncremental or false
+    local curSortCSIndex = self.m_arg.curSortCSIndex
     local sortOption = listConfig.getSortOption() or {}
     self.view.sortNode:InitSortNode(sortOption, function(optData, isIncremental)
         local filteredList = self.m_filteredInfoList
@@ -645,7 +655,7 @@ CommonItemList._InitSortNode = HL.Method() << function(self)
         if #filteredList <= 0 then
             return
         end
-    end, nil, false, true, self.view.filterBtn)
+    end, curSortCSIndex, isIncremental, true, self.view.filterBtn)
 end
 
 
@@ -654,11 +664,16 @@ CommonItemList._InitFilterNode = HL.Method() << function(self)
     local listConfig = self.m_curListConfig
     local filterTagGroups = {}
     local filterTagGroupFunc = listConfig.filterTagGroupFunc
+    local selectedTags = {}
     if filterTagGroupFunc and FilterUtils[filterTagGroupFunc] then
-        filterTagGroups, self.m_selectedTags = FilterUtils[filterTagGroupFunc](self.m_arg.selectedTagArgs)
+        filterTagGroups, selectedTags = FilterUtils[filterTagGroupFunc](self.m_arg.selectedTagArgs)
     end
 
-    self.m_selectedTags = self.m_selectedTags or {}
+    if self.m_arg.selectedTags then
+        self.m_selectedTags = self.m_arg.selectedTags
+    else
+        self.m_selectedTags = selectedTags
+    end
     self.m_filterTagGroups = filterTagGroups
 
     local showFilter = (filterTagGroups ~= nil) and (next(filterTagGroups) ~= nil) and (listConfig.hideFilter ~= true)

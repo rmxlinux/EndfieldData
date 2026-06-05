@@ -51,6 +51,10 @@ local PHASE_ID = PhaseId.SpaceshipCollectionBooth
 
 
 
+
+
+
+
 SpaceshipCollectionBoothCtrl = HL.Class('SpaceshipCollectionBoothCtrl', uiCtrl.UICtrl)
 
 
@@ -166,6 +170,15 @@ SpaceshipCollectionBoothCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
     end)
 
     self:_ToggleItemList(false, true)
+    local recoverState = arg and arg.recoverState or nil
+    if recoverState then
+        self:_TryRecoverState(recoverState)
+        arg.recoverState = nil
+    end
+    if arg and arg.instructionBookId then
+        UIManager:Open(PanelId.InstructionBook, arg.instructionBookId)
+        arg.instructionBookId = nil
+    end
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 
@@ -199,7 +212,87 @@ SpaceshipCollectionBoothCtrl._SetCurItemAsNaviTarget = HL.Method() << function(s
             self.view.itemScrollList:ScrollToIndex(self.m_curItemIndex, true)
             InputManagerInst.controllerNaviManager:SetTarget(self.m_getItemCell(self.m_curItemIndex).button)
         end
+    else
+        local cell = self.m_slotCells:Get(self.m_curSlotIndex)
+        if cell and cell.toggle then
+            InputManagerInst.controllerNaviManager:SetTarget(cell.toggle)
+        end
     end
+end
+
+
+
+SpaceshipCollectionBoothCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = {
+        recoverState = {
+            slotId = self:_GetCurSlotId(),
+            showingItemList = self.m_showingItemList,
+        }
+    }
+    if self.m_showingItemList then
+        arg.recoverState.isEmptySelected = self.m_curItemIndex == 0
+        arg.recoverState.selectedItemId = self:_GetCurChooseItemId()
+    end
+    if PhaseManager:GetTopPhaseId() == PHASE_ID then
+        local isBookOpen, bookCtrl = UIManager:IsOpen(PanelId.InstructionBook)
+        if isBookOpen and bookCtrl and bookCtrl:IsShow() and bookCtrl.id == "spaceship_showcase" then
+            arg.instructionBookId = bookCtrl.id
+        end
+    end
+    return arg
+end
+
+
+
+
+SpaceshipCollectionBoothCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
+    local recoverSlotIndex = self:_GetRecoverSlotIndex(recoverState)
+    self:_OnClickSlot(recoverSlotIndex, true)
+    if not recoverState.showingItemList then
+        return
+    end
+    self:_ToggleItemList(true, true)
+    local recoverItemIndex = self:_GetRecoverItemIndex(recoverState)
+    if recoverItemIndex ~= self.m_curItemIndex then
+        self:_OnClickItem(recoverItemIndex)
+    else
+        self:_UpdateContent()
+    end
+    self:_SetCurItemAsNaviTarget()
+end
+
+
+
+
+SpaceshipCollectionBoothCtrl._GetRecoverSlotIndex = HL.Method(HL.Table).Return(HL.Number) << function(self, recoverState)
+    local recoverSlotId = recoverState.slotId
+    if string.isEmpty(recoverSlotId) then
+        return self.m_curSlotIndex
+    end
+    for index, info in ipairs(self.m_slotInfos) do
+        if info.id == recoverSlotId then
+            return index
+        end
+    end
+    return self.m_curSlotIndex
+end
+
+
+
+
+SpaceshipCollectionBoothCtrl._GetRecoverItemIndex = HL.Method(HL.Table).Return(HL.Number) << function(self, recoverState)
+    if recoverState.isEmptySelected then
+        return 0
+    end
+    local recoverItemId = recoverState.selectedItemId
+    if not string.isEmpty(recoverItemId) then
+        for index, info in ipairs(self.m_itemInfos) do
+            if info.id == recoverItemId then
+                return index
+            end
+        end
+    end
+    return self:_GetCurItemIndex()
 end
 
 

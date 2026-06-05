@@ -139,13 +139,14 @@ GachaPoolCellLimited.CheckAndShowSpecialRewardPopup = HL.Override() << function(
     local testimonialInfo = baseInfo.cumulateTestimonialInfo
     if not testimonialInfo.isCheck then
         local itemId = testimonialInfo.testimonialItemId
+        local poolId = self.m_poolId    
         local arg = {
             queueRewardType = "TestimonialReward",
             showRewardFunc = function()
                 UIManager:AutoOpen(PanelId.GachaImportantRewardPopup, {
                     itemId = itemId,
                     onComplete = function()
-                        csGachaSystem:SendConfirmRewardReq(self.m_poolId, CS.Proto.GACHA_CONFIRM_REWARD_TYPE.GcrtOnceReward, {
+                        csGachaSystem:SendConfirmRewardReq(poolId, CS.Proto.GACHA_CONFIRM_REWARD_TYPE.GcrtOnceReward, {
                             CS.Proto.CHAR_GACHA_ONCE_AUTO_REWARD_INDEX.CgoarIndexTestimonial:GetHashCode()
                         })
                         Notify(MessageConst.ON_ONE_GACHA_POOL_REWARD_FINISHED)
@@ -164,6 +165,7 @@ GachaPoolCellLimited.CheckAndShowSpecialRewardPopup = HL.Override() << function(
             local poolCfg = Tables.gachaCharPoolTable[self.m_poolId]
             for loopRound, isCheck in pairs(poolData.roleDataMsg.IntervalAutoRewardCheckMap) do
                 if not isCheck then
+                    local poolId = self.m_poolId    
                     local arg = {
                         queueRewardType = "PotentialReward",
                         showRewardFunc = function()
@@ -171,7 +173,7 @@ GachaPoolCellLimited.CheckAndShowSpecialRewardPopup = HL.Override() << function(
                                 charId = poolCfg.upCharIds[0],
                                 potentialItemId = loopRewardInfo.rewardItemInfo[1].id,
                                 onComplete = function()
-                                    csGachaSystem:SendConfirmRewardReq(self.m_poolId, CS.Proto.GACHA_CONFIRM_REWARD_TYPE.GcrtIntervalReward, {
+                                    csGachaSystem:SendConfirmRewardReq(poolId, CS.Proto.GACHA_CONFIRM_REWARD_TYPE.GcrtIntervalReward, {
                                         loopRound
                                     })
                                     Notify(MessageConst.ON_ONE_GACHA_POOL_REWARD_FINISHED)

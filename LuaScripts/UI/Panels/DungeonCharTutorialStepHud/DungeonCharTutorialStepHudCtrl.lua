@@ -281,7 +281,7 @@ end
 DungeonCharTutorialStepHudCtrl._RefreshStage = HL.Method(HL.Opt(HL.Number)) << function(self, pushStage)
     local charTutorialCfg = Tables.dungeonCharTutorialTable[self.m_dungeonId]
 
-    local game = GameWorld.worldInfo.subGame
+    local game = GameInstance.dungeonManager.curDungeonLikeSubGame
     local stage = game.stage
     if pushStage ~= nil then
         stage = pushStage

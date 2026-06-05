@@ -503,6 +503,18 @@ FAC_VALVE_NODE_IDS = {
 
 FAC_TOP_VIEW_AUTO_MOVE_CAM_SPD = 11
 
+
+
+
+
+
+
+
+
+
+FAC_TOP_VIEW_CAM_DRAG_PADDING = CSFactoryUtil.Padding(250, 300, 300, 250)
+FAC_TOP_VIEW_CONTROLLER_MOUSE_PADDING = CSFactoryUtil.Padding(150, 250, 250, 150)
+
 DOMAIN_SORT_GROUP = {
     Normal = 4,           
     Unsuitable = 3,       
@@ -583,3 +595,15 @@ FAC_BP_ABNORMAL_ICON_TYPE = {
 
 FAC_SEWAGE_TREAT_IMPORTER_BUILDING_ID = "liquid_clean_gate_1"
 FAC_SEWAGE_TREAT_EXPORTER_BUILDING_ID = "liquid_recycle_gate_1"
+
+FAC_BUILD_MODE_MSG_MAP = {
+    [FAC_BUILD_MODE.Building] = MessageConst.FAC_ENTER_BUILDING_MODE,
+    [FAC_BUILD_MODE.Logistic] = MessageConst.FAC_ENTER_LOGISTIC_MODE,
+    [FAC_BUILD_MODE.Belt] = MessageConst.FAC_ENTER_BELT_MODE,
+    [FAC_BUILD_MODE.Blueprint] = MessageConst.FAC_ENTER_BLUEPRINT_MODE,
+}
+
+NEED_AUTO_CONNECT_EXTRA_HINT_BUILDING = {
+    ["power_diffuser_2"] = true,
+    ["power_pole_3"] = true,
+}

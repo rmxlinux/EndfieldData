@@ -6,6 +6,7 @@ local PANEL_ID = PanelId.InstructionBook
 
 
 
+
 InstructionBookCtrl = HL.Class('InstructionBookCtrl', uiCtrl.UICtrl)
 
 
@@ -18,6 +19,9 @@ InstructionBookCtrl = HL.Class('InstructionBookCtrl', uiCtrl.UICtrl)
 InstructionBookCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
+
+
+InstructionBookCtrl.id = HL.Field(HL.Any)
 
 
 InstructionBookCtrl.onClose = HL.Field(HL.Any) << nil
@@ -34,6 +38,7 @@ InstructionBookCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     else
         id = arg
     end
+    self.id = id
     self.view.closeButton.onClick:AddListener(function()
         self:PlayAnimationOut()
     end)

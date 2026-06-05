@@ -9,6 +9,7 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
+
 PuzzleBlockShadow = HL.Class('PuzzleBlockShadow', UIWidgetBase)
 
 
@@ -53,6 +54,13 @@ end
 
 PuzzleBlockShadow.Rotate = HL.Method(HL.Number) << function(self, rotateCount)
     self.m_tweenCore = self.view.viewRect:DORotate(Vector3(0, 0, -90 * (rotateCount % 4)), 0.2)
+end
+
+
+
+
+PuzzleBlockShadow.RecoverRotation = HL.Method(HL.Number) << function(self, rotateCount)
+    self.view.viewRect.localRotation = Quaternion.Euler(0, 0, -90 * (rotateCount % 4))
 end
 
 

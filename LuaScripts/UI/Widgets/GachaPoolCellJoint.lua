@@ -158,6 +158,7 @@ GachaPoolCellJoint.CheckAndShowSpecialRewardPopup = HL.Override() << function(se
     
     local onceRewardInfo = baseInfo.onceAutoRewardItemInfo
     if not onceRewardInfo.isCheck then
+        local poolId = self.m_poolId    
         local arg = {
             queueRewardType = "TestimonialReward",  
             showRewardFunc = function()
@@ -168,7 +169,7 @@ GachaPoolCellJoint.CheckAndShowSpecialRewardPopup = HL.Override() << function(se
                     itemCount = onceRewardInfo.itemCount,
                     desc = string.format(Language.LUA_GACHA_GOT_TEN_TICKET_IMPORTANT_DESC, formatName),
                     onComplete = function()
-                        csGachaSystem:SendConfirmRewardReq(self.m_poolId, CS.Proto.GACHA_CONFIRM_REWARD_TYPE.GcrtOnceReward, {
+                        csGachaSystem:SendConfirmRewardReq(poolId, CS.Proto.GACHA_CONFIRM_REWARD_TYPE.GcrtOnceReward, {
                             CS.Proto.CHAR_GACHA_ONCE_AUTO_REWARD_INDEX.CgoarIndexOnceRewardId:GetHashCode()
                         })
                         Notify(MessageConst.ON_ONE_GACHA_POOL_REWARD_FINISHED)
@@ -182,13 +183,14 @@ GachaPoolCellJoint.CheckAndShowSpecialRewardPopup = HL.Override() << function(se
     local onceRewardInfo2 = baseInfo.onceAutoRewardItemInfo2
     if not onceRewardInfo2.isCheck then
         local itemId = onceRewardInfo2.itemId
+        local poolId = self.m_poolId    
         local arg = {
             queueRewardType = "SelCharTicReward",
             showRewardFunc = function()
                 UIManager:AutoOpen(PanelId.GachaSelCharTicPopup, {
                     itemId = itemId,
                     onComplete = function()
-                        csGachaSystem:SendConfirmRewardReq(self.m_poolId, CS.Proto.GACHA_CONFIRM_REWARD_TYPE.GcrtOnceReward, {
+                        csGachaSystem:SendConfirmRewardReq(poolId, CS.Proto.GACHA_CONFIRM_REWARD_TYPE.GcrtOnceReward, {
                             CS.Proto.CHAR_GACHA_ONCE_AUTO_REWARD_INDEX.CgoarIndexOnceRewardId2:GetHashCode()
                         })
                         Notify(MessageConst.ON_ONE_GACHA_POOL_REWARD_FINISHED)
@@ -204,7 +206,8 @@ GachaPoolCellJoint.CheckAndShowSpecialRewardPopup = HL.Override() << function(se
         
         local suc, poolData = csGachaSystem.poolInfos:TryGetValue(self.m_poolId)
         if suc then
-            local poolCfg = Tables.gachaCharPoolTable[self.m_poolId]
+            local poolId = self.m_poolId    
+            local poolCfg = Tables.gachaCharPoolTable[poolId]
             for loopRound, isCheck in pairs(poolData.roleDataMsg.IntervalAutoRewardCheckMap) do
                 if not isCheck then
                     local arg = {
@@ -215,7 +218,7 @@ GachaPoolCellJoint.CheckAndShowSpecialRewardPopup = HL.Override() << function(se
                                 potentialItemId = loopRewardInfo.rewardItemInfo[1].id,
                                 isPotentialBox = true,
                                 onComplete = function()
-                                    csGachaSystem:SendConfirmRewardReq(self.m_poolId, CS.Proto.GACHA_CONFIRM_REWARD_TYPE.GcrtIntervalReward, {
+                                    csGachaSystem:SendConfirmRewardReq(poolId, CS.Proto.GACHA_CONFIRM_REWARD_TYPE.GcrtIntervalReward, {
                                         loopRound
                                     })
                                     Notify(MessageConst.ON_ONE_GACHA_POOL_REWARD_FINISHED)

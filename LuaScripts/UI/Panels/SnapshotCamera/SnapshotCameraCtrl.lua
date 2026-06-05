@@ -33,6 +33,14 @@ local PANEL_ID = PanelId.SnapshotCamera
 
 
 
+
+
+
+
+
+
+
+
 SnapshotCameraCtrl = HL.Class('SnapshotCameraCtrl', uiCtrl.UICtrl)
 
 
@@ -271,6 +279,45 @@ end
 
 
 
+SnapshotCameraCtrl.GetCameraRotationState = HL.Method().Return(HL.Any) << function(self)
+    if not snapshotSystem.camController then
+        return nil
+    end
+    return snapshotSystem.camController:GetCameraRotation()
+end
+
+
+
+
+
+SnapshotCameraCtrl.SetCameraRotationState = HL.Method(HL.Any, HL.Boolean) << function(self, rotation, isResume)
+    if not snapshotSystem.camController or rotation == nil then
+        return
+    end
+    snapshotSystem.camController:SetCameraRotation(rotation, isResume)
+end
+
+
+
+SnapshotCameraCtrl.GetCameraParamFullSnapshot = HL.Method().Return(HL.Any) << function(self)
+    if not snapshotSystem.camController then
+        return nil
+    end
+    return snapshotSystem.camController:GetCameraParamFullSnapshot()
+end
+
+
+
+
+SnapshotCameraCtrl.RestoreCameraParamFullSnapshot = HL.Method(HL.Any) << function(self, snapshot)
+    if not snapshotSystem.camController or snapshot == nil then
+        return
+    end
+    snapshotSystem.camController:RestoreCameraParamFullSnapshot(snapshot)
+end
+
+
+
 SnapshotCameraCtrl.GetFocalLen = HL.Method().Return(HL.Number) << function(self)
     return CameraManager.mainCamera.focalLength
 end
@@ -279,6 +326,44 @@ end
 
 SnapshotCameraCtrl.GetAperture = HL.Method().Return(HL.Number) << function(self)
     return CameraManager.mainCamAdditionalData.physicalParameters.aperture
+end
+
+
+
+SnapshotCameraCtrl.GetZoomScale = HL.Method().Return(HL.Number) << function(self)
+    if not snapshotSystem.camController then
+        return 0
+    end
+    return snapshotSystem.camController:GetZoomScale()
+end
+
+
+
+
+SnapshotCameraCtrl.SetZoomScale = HL.Method(HL.Number) << function(self, value)
+    if not snapshotSystem.camController then
+        return
+    end
+    snapshotSystem.camController:SetZoomScale(value)
+end
+
+
+
+SnapshotCameraCtrl.GetCameraOffset = HL.Method().Return(Vector3) << function(self)
+    if not snapshotSystem.camController then
+        return Vector3.zero
+    end
+    return snapshotSystem.camController:GetCameraOffset()
+end
+
+
+
+
+SnapshotCameraCtrl.SetCameraOffset = HL.Method(Vector3) << function(self, offset)
+    if not snapshotSystem.camController then
+        return
+    end
+    snapshotSystem.camController:SetCameraOffset(offset)
 end
 
 

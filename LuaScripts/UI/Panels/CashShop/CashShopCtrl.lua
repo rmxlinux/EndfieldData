@@ -24,7 +24,6 @@ local recommend_group_id = "shop_pay_recommend"
 
 
 
-
 CashShopCtrl = HL.Class('CashShopCtrl', uiCtrl.UICtrl)
 
 local AllTabCategory = {
@@ -68,7 +67,6 @@ CashShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitAction()
     self:_InitData()
     self:_SetupUI()
-    self.m_phase = arg.phase
     self.m_phase.cashShopCtrl = self
     self:_ProcessArg(arg)
 end
@@ -226,6 +224,13 @@ end
 
 
 CashShopCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
+    
+    
+    
+    
+    
+    
+
     local hopeCategoryId = CashShopConst.CashShopCategoryType.Recommend
     if arg and not string.isEmpty(arg.shopGroupId) then
         hopeCategoryId = arg.shopGroupId
@@ -273,6 +278,12 @@ CashShopCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
         else
             self.m_phase:OpenCategory(categoryId)
         end
+    end
+
+    if arg.backToRecommendPanelTabId then
+        self.m_phase.m_backToRecommendPanelTabId = arg.backToRecommendPanelTabId
+        arg.backToRecommendPanelTabId = nil
+        self:_RefreshUICloseBtn()
     end
 end
 

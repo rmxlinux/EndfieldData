@@ -71,7 +71,12 @@ PhasePresetTeamSwitch.ShowEnterPresetTeamDungeonConfirm = HL.StaticMethod(HL.Tab
     local dunSeriesId = dungeonSeriesId
     local dunSeriesData = Tables.DungeonSeriesTable[dunSeriesId]
     local dungeonId = dunSeriesData.includeDungeonIds[0]
-    local _, subGameData = DataManager.subGameInstDataTable:TryGetValue(dungeonId)
+    local hasSubGameInstData, subGameData = DataManager.subGameInstDataTable:TryGetValue(dungeonId)
+    if not hasSubGameInstData then
+        logger.error("ShowEnterPresetTeamDungeonConfirm失败,没有对应的subGameData,subGameId:", dungeonId)
+        return
+    end
+
     local teamId = subGameData.teamConfigId
     if string.isEmpty(teamId) then
         logger.error('试图通过【副本入口 - 预设编队Only】交互物，进入一个没配预设编队的副本，dungeonSeriesId: ', dungeonSeriesId)
@@ -159,8 +164,13 @@ PhasePresetTeamSwitch._CreatePresetTeamDungeonArg = HL.Method().Return(HL.Table)
     local dunSeriesId = self.arg.dungeonSeriesId
     local dunSeriesData = Tables.DungeonSeriesTable[dunSeriesId]
     local dungeonId = dunSeriesData.includeDungeonIds[0]
-    local _, dungeonCfg = Tables.DungeonTable:TryGetValue(dungeonId)
-    local teamId = dungeonCfg.previewCharTeamId
+    local hasSubGameInstData, subGameData = DataManager.subGameInstDataTable:TryGetValue(dungeonId)
+    if not hasSubGameInstData then
+        logger.error("_CreatePresetTeamDungeonArg失败,没有对应的subGameData,subGameId:", dungeonId)
+        return
+    end
+
+    local teamId = subGameData.teamConfigId
     local charInfo = CharInfoUtils.getLockedFormationData(teamId, true)
 
     local arg = {
@@ -215,8 +225,13 @@ end
 
 PhasePresetTeamSwitch._CreateDungeonCharArg = HL.Method().Return(HL.Table) << function(self)
     local dungeonId = self.m_dungeonId
-    local _, dungeonCfg = Tables.DungeonTable:TryGetValue(dungeonId)
-    local teamId = dungeonCfg.previewCharTeamId
+    local hasSubGameInstData, subGameData = DataManager.subGameInstDataTable:TryGetValue(dungeonId)
+    if not hasSubGameInstData then
+        logger.error("_CreateDungeonCharArg失败,没有对应的subGameData,subGameId:", dungeonId)
+        return
+    end
+
+    local teamId = subGameData.teamConfigId
     local charInfo = CharInfoUtils.getLockedFormationData(teamId, true)
     
     local allPresetTeam = charInfo.lockedTeamMemberCount >= charInfo.maxTeamMemberCount
@@ -233,7 +248,7 @@ PhasePresetTeamSwitch._CreateDungeonCharArg = HL.Method().Return(HL.Table) << fu
                     local presetCharInfo = CharInfoUtils.getPlayerCharInfoByInstId(char.charInstId)
                     table.insert(charInfos, presetCharInfo)
                 end
-                Notify(MessageConst.DIALOG_CLOSE_UI, {PanelId.PresetTeamSwitch, PHASE_ID, 0})
+                PhaseManager:PopPhase(PHASE_ID)
                 GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId, charInfos)
                 GameInstance.player.charBag:ClearAllClientCharAndItemData()
             else
@@ -248,7 +263,7 @@ PhasePresetTeamSwitch._CreateDungeonCharArg = HL.Method().Return(HL.Table) << fu
             if onCancel then
                 onCancel()
             end
-            Notify(MessageConst.DIALOG_CLOSE_UI, {PanelId.PresetTeamSwitch, PHASE_ID, 0})
+            PhaseManager:PopPhase(PHASE_ID)
         end,
     }
     return arg
@@ -274,14 +289,15 @@ PhasePresetTeamSwitch._CreateEnterFocusModeArg = HL.Method().Return(HL.Table) <<
             if onConfirmCallback then
                 onConfirmCallback()
             end
-            Notify(MessageConst.DIALOG_CLOSE_UI, {PanelId.PresetTeamSwitch, PHASE_ID, 0})
+            PhaseManager:PopPhase(PHASE_ID)
         end,
         onCancel = function()
             local onCancel = self.arg.onCancel
             if onCancel then
                 onCancel()
             end
-            Notify(MessageConst.DIALOG_CLOSE_UI, {PanelId.PresetTeamSwitch, PHASE_ID, 1})
+            Notify(MessageConst.DIALOG_CHANGE_NEXT_INDEX, { phaseId = PHASE_ID, nextIndex = 1, })
+            PhaseManager:PopPhase(PHASE_ID)
         end,
     }
     return arg

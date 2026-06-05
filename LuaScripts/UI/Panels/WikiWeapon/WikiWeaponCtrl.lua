@@ -13,9 +13,20 @@ local PANEL_ID = PanelId.WikiWeapon
 
 
 
+
+
 WikiWeaponCtrl = HL.Class('WikiWeaponCtrl', wikiDetailBaseCtrl.WikiDetailBaseCtrl)
 
 
+
+
+
+
+WikiWeaponCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    WikiWeaponCtrl.Super.OnCreate(self, arg)
+    self:_RefreshModel(true)
+    self:_PlayBgDecoAnim()
+end
 
 
 
@@ -36,15 +47,6 @@ end
 
 WikiWeaponCtrl.GetPanelId = HL.Override().Return(HL.Number) << function(self)
     return PANEL_ID
-end
-
-
-
-WikiWeaponCtrl._OnPhaseItemBind = HL.Override() << function(self)
-    WikiWeaponCtrl.Super._OnPhaseItemBind(self)
-    
-    self:_RefreshModel(true)
-    self:_PlayBgDecoAnim()
 end
 
 
@@ -80,6 +82,26 @@ WikiWeaponCtrl._RefreshRight = HL.Override() << function(self)
 end
 
 
+
+
+
+WikiWeaponCtrl._CollectLocalResumeState = HL.Override().Return(HL.Table) << function(self)
+    return {
+        isShowWeaponMaxInfo = self.m_isShowWeaponMaxInfo == true,
+    }
+end
+
+
+
+
+WikiWeaponCtrl._ApplyLocalResumeState = HL.Override(HL.Opt(HL.Any)) << function(self, resumeState)
+    if not resumeState then
+        return
+    end
+    self.m_isShowWeaponMaxInfo = resumeState.isShowWeaponMaxInfo == true
+    self:_RefreshModel()
+    self:_RefreshRight()
+end
 
 
 

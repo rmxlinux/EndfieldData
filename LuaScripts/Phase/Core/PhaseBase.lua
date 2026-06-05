@@ -497,8 +497,9 @@ end
 
 
 
-PhaseBase.CreatePhaseCharItem = HL.Method(HL.Table, HL.Any, HL.Function, HL.Opt(HL.Boolean)) << function(
-    self, data, parent, callback, prepareEffect)
+
+PhaseBase.CreatePhaseCharItem = HL.Method(HL.Table, HL.Any, HL.Function, HL.Opt(HL.Boolean, HL.Number)) << function(
+    self, data, parent, callback, prepareEffect, layer)
     local charId = data.charId
     local charInstId = data.charInstId ~= nil and data.charInstId or 0
     local modelPath = string.format(PhaseConst.PHASE_CHAR_MODEL_FILE_PATH, charId)
@@ -520,6 +521,7 @@ PhaseBase.CreatePhaseCharItem = HL.Method(HL.Table, HL.Any, HL.Function, HL.Opt(
             return
         end
 
+        modelGo.transform.localPosition = Vector3.zero
         local phaseItem = require_ex("Phase/PhaseItem/PhaseCharItem").PhaseCharItem(data)
         phaseItem:BindBasicInfos(self, self.phaseId)
         phaseItem:BindGameObject(modelGo)
@@ -531,6 +533,9 @@ PhaseBase.CreatePhaseCharItem = HL.Method(HL.Table, HL.Any, HL.Function, HL.Opt(
         end
         local modelMono = modelGo:GetComponent("CharUIModelMono")
         if NotNull(modelMono) then
+            if layer then
+                modelMono:ChangeLayer(layer)
+            end
             modelMono:LoadDecoItems()
         end
         self.m_phaseItems[phaseItem] = true
@@ -598,10 +603,9 @@ PhaseBase.CreatePhasePanelItem = HL.Method(HL.Number, HL.Opt(HL.Any)).Return(HL.
         logger.critical("尝试重复 CreatePhasePanelItem", UIManager.m_names[panelId])
         return self.m_panel2Item[panelId]
     end
-    local panel = UIManager:AutoOpen(panelId, arg)
     local phaseItem = require_ex("Phase/PhaseItem/PhasePanelItem").PhasePanelItem(arg)
     phaseItem:BindBasicInfos(self, self.phaseId)
-    phaseItem:BindUICtrl(panel)
+    UIManager:AutoOpenWithPhaseItem(panelId, phaseItem, arg)
     phaseItem.hideOnDestroy = self.cfg.hideOnDestroy == true
     self.m_phaseItems[phaseItem] = true
     self.m_panel2Item[panelId] = phaseItem

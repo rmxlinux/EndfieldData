@@ -67,7 +67,7 @@ end
 
 
 
-DeathInfoFakeCtrl._ShowTips = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Number, HL.Number)).Return(HL.Boolean) << function(self, tipGroup, indexOffset, index1, index2)
+DeathInfoFakeCtrl._ShowTips = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Number), HL.Opt(HL.Number)).Return(HL.Boolean) << function(self, tipGroup, indexOffset, index1, index2)
     if not tipGroup or #tipGroup == 0 then
         return false
     end
@@ -98,7 +98,7 @@ end
 
 
 
-DeathInfoFakeCtrl._TryShowInDungeonMode = HL.Method(HL.Table, HL.Opt(HL.Number, HL.Number)).Return(HL.Boolean) << function(self, deathInfo, index1, index2)
+DeathInfoFakeCtrl._TryShowInDungeonMode = HL.Method(HL.Table, HL.Opt(HL.Number), HL.Opt(HL.Number)).Return(HL.Boolean) << function(self, deathInfo, index1, index2)
     local dungeonId = deathInfo.dungeonId
     if not dungeonId then
         return false
@@ -120,7 +120,7 @@ end
 
 
 
-DeathInfoFakeCtrl._TryShowInEnemyMode = HL.Method(HL.Table, HL.Opt(HL.Number, HL.Number)).Return(HL.Boolean) << function(self, deathInfo, index1, index2)
+DeathInfoFakeCtrl._TryShowInEnemyMode = HL.Method(HL.Table, HL.Opt(HL.Number), HL.Opt(HL.Number)).Return(HL.Boolean) << function(self, deathInfo, index1, index2)
     if not deathInfo.enemyId or deathInfo.enemyLv < 0 then
         return false
     end

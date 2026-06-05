@@ -44,6 +44,9 @@ GemCard.InitGemCard = HL.Method(HL.Number, HL.Opt(HL.Number)) << function(self, 
     self:_FirstTimeInit()
 
     if not gemInstId or gemInstId <= 0 then
+        if self.view.gemNode then
+            self.view.gemNode.gameObject:SetActive(false)
+        end
         return
     end
     self.m_gemInst = gemInstId
@@ -52,6 +55,14 @@ GemCard.InitGemCard = HL.Method(HL.Number, HL.Opt(HL.Number)) << function(self, 
         self.view.gemSkillNode:InitGemSkillNode(gemInstId, { weaponInstId = tryWeaponInstId })
     end
     self.m_refreshSkillNode()
+
+    local isPerfectMatch = UIUtils.getGemWishListPerfectMatch(gemInstId)
+    if self.view.gemNode then
+        self.view.gemNode.gameObject:SetActive(isPerfectMatch)
+    end
+    if self.view.leftDeco01 then
+        self.view.leftDeco01.gameObject:SetActive(not isPerfectMatch)
+    end
 end
 
 

@@ -38,6 +38,8 @@ WorldLevelPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 WorldLevelPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    arg = arg or {}
+
     self.view.closeBtn.onClick:RemoveAllListeners()
     self.view.closeBtn.onClick:AddListener(function()
         self:PlayAnimationOutAndClose()
@@ -51,7 +53,19 @@ WorldLevelPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_isUp = arg.isUp or false
     local currentWorldLevel = GameInstance.player.adventure.currentWorldLevel
     local maxWorldLevel = GameInstance.player.adventure.currentMaxWorldLevel
-    self.m_targetWorldLevel = self.m_isUp and maxWorldLevel or currentWorldLevel - 1
+
+    if self.m_isUp then
+        self.m_targetWorldLevel = maxWorldLevel
+    else
+        local defaultTargetWorldLevel = currentWorldLevel - 1
+        local restoreTargetWorldLevel = tonumber(arg.targetWorldLevel)
+        if restoreTargetWorldLevel then
+            self.m_targetWorldLevel = math.max(1, math.min(restoreTargetWorldLevel, defaultTargetWorldLevel))
+        else
+            self.m_targetWorldLevel = defaultTargetWorldLevel
+        end
+    end
+
     self.view.exploreLvTxt.text = string.format("%02d", currentWorldLevel)
 
     self.view.effectTipsTxt:SetAndResolveTextStyle(string.format(self.m_isUp and Language.LUA_WORLD_LEVEL_UP_TIP or Language.LUA_WORLD_LEVEL_DOWN_TIP, self.m_targetWorldLevel))
@@ -116,13 +130,25 @@ WorldLevelPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     local count
+    local initialIndex
     if self.m_isUp then
         count = 1
+        initialIndex = 0
     else
         count = currentWorldLevel - 1
+        initialIndex = math.max(0, self.m_targetWorldLevel - 1)
     end
 
-    self.view.exploreLvNode:RefreshLayout(count, count - 1)
+    self.view.exploreLvNode:RefreshLayout(count, initialIndex)
+end
+
+
+
+WorldLevelPopupCtrl.GetPopupState = HL.Method().Return(HL.Table) << function(self)
+    return {
+        isUp = self.m_isUp,
+        targetWorldLevel = self.m_targetWorldLevel,
+    }
 end
 
 

@@ -26,6 +26,7 @@ local PHASE_ID = PhaseId.FacRegionUpgrade
 
 
 
+
 PhaseFacRegionUpgrade = HL.Class('PhaseFacRegionUpgrade', phaseBase.PhaseBase)
 
 
@@ -148,10 +149,15 @@ PhaseFacRegionUpgrade._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.O
 
 
 PhaseFacRegionUpgrade._EnterFacRegionUpgradeState = HL.Method(HL.Boolean) << function(self, fastMode)
-    local levelId, regionIndex = unpack(self.arg)
+    local levelId = self.arg and self.arg.levelId
+    local regionIndex = self.arg and self.arg.regionIndex
+    if levelId == nil or regionIndex == nil then
+        levelId, regionIndex = unpack(self.arg)
+    end
     self.arg = {
         levelId = levelId,
         regionIndex = regionIndex,
+        recoverState = self.arg and self.arg.recoverState,
     }
 
     
@@ -308,6 +314,16 @@ PhaseFacRegionUpgrade._OnDestroy = HL.Override() << function(self)
     PhaseFacRegionUpgrade.Super._OnDestroy(self)
     self.m_loadAsyncActionHelper:Clear()
     self.m_loadAsyncActionHelper = nil
+end
+
+
+
+PhaseFacRegionUpgrade.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    local arg = self.arg and lume.deepCopy(self.arg) or {}
+    if self.m_panelCtrl then
+        arg.recoverState = self.m_panelCtrl:GetRecoverStateArg()
+    end
+    return arg
 end
 
 
