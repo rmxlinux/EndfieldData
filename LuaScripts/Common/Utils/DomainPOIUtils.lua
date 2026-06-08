@@ -1525,6 +1525,25 @@ function DomainPOIUtils.resolveOpenSettlementArgs(args)
     return domainId, defaultStlId
 end
 
+function DomainPOIUtils.resolveOpenGradeArgs(arg)
+    local tableArg
+    local domainId
+    if type(arg) == "string" then
+        tableArg = { domainId = arg }
+    elseif type(arg) == "table" then
+        tableArg = arg
+    else
+        tableArg = { domainId = Utils.getCurDomainId() }
+    end
+    if not string.isEmpty(tableArg.domainId) then
+        domainId = tableArg.domainId
+    else
+        domainId = Utils.getCurDomainId()
+        tableArg.domainId = domainId
+    end
+    return tableArg, domainId
+end
+
 
 
 

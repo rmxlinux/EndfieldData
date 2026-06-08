@@ -485,7 +485,18 @@ FacBlueprintCtrl._TryRecoverCommonPopUp = HL.Method(HL.Opt(HL.Any)) << function(
     if isOpen and commonPopUpCtrl:IsShow() then
         return
     end
+    commonPopUpArg.onConfirm = function(shareCode)
+        self:_OnClickImportConfirm(shareCode)
+    end
+    commonPopUpArg.onCancel = function()
+        UIManager:Close(PanelId.BlueprintShareBlackScreen)
+    end
     self:Notify(MessageConst.SHOW_POP_UP, commonPopUpArg)
+end
+
+FacBlueprintCtrl._OnClickImportConfirm = HL.Method(HL.String) << function(self, shareCode)
+    self.m_shareCode = shareCode
+    GameInstance.player.remoteFactory.blueprint:SendQuerySharedBlueprint(shareCode)
 end
 
 
@@ -1433,8 +1444,7 @@ FacBlueprintCtrl._InitShare = HL.Method() << function(self)
             inputPaste = true,
             pasteFunc = FactoryUtils.getMatchingBlueprintShareCode,
             onConfirm = function(shareCode)
-                self.m_shareCode = shareCode
-                GameInstance.player.remoteFactory.blueprint:SendQuerySharedBlueprint(shareCode)
+                self:_OnClickImportConfirm(shareCode)
             end,
             closeOnConfirm = false,
             onCancel = function()
