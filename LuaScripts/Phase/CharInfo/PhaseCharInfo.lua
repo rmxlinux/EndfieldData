@@ -946,7 +946,7 @@ PhaseCharInfo._RefreshCharModel = HL.Method(HL.Userdata, HL.Table, HL.Number, HL
         
         local targetLightGroup = self.m_templateId2LightGroup[templateId]
         phaseItem.uiModelMono:InitLightFollower(targetLightGroup.go.transform)
-        if not skipIn then
+        if forceSkipIn ~= true then
             self:_PlayModelEffect(sceneObject, templateId)
         end
 
