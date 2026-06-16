@@ -439,11 +439,6 @@ ShopCtrl._RefreshTimeCountDown = HL.Virtual() << function(self)
         if self.m_activityShopInfo and self.m_activityShopInfo.showCloseCd then
             local activityId = self.m_activityShopInfo.activityId
             local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
-            
-            if not activityData then
-                self.view.timeNode.gameObject:SetActiveIfNecessary(false)
-                return
-            end
             local shopEndTime = activityData.endTime
             if shopEndTime then
                 state = "CloseCd"

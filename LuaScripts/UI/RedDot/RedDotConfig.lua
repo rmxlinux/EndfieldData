@@ -3459,9 +3459,6 @@ local Config = {
             local activityId, stageId = unpack(args)
             
             local activity = GameInstance.player.activitySystem:GetActivity(activityId)
-            if not activity then
-                return false
-            end
             for id, stageData in cs_pairs(activity.stageDataDict) do
                 if id == stageId and stageData.Status == GEnums.ActivityConditionalStageState.Completed:GetHashCode() then
                     return true, UIConst.RED_DOT_TYPE.Normal
@@ -3855,9 +3852,6 @@ local Config = {
         Check = function(arg)
             local activityId = arg.activityId
             local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
-            if not activityData then
-                return false
-            end
             local ids = arg.stageIds or {}
             if arg.stageId then
                 table.insert(ids, arg.stageId)
@@ -3886,9 +3880,6 @@ local Config = {
         Check = function(arg)
             local activityId = arg.activityId
             local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
-            if not activityData then
-                return false
-            end
             local ids = arg.stageIds or {}
             if arg.stageId then
                 table.insert(ids, arg.stageId)
@@ -3921,9 +3912,6 @@ local Config = {
         Check = function(arg)
             local activityId = arg.activityId
             local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
-            if not activityData then
-                return false
-            end
             local ids = arg.stageIds or {}
             if arg.stageId then
                 table.insert(ids, arg.stageId)
@@ -4131,7 +4119,7 @@ local Config = {
         Check = function(activityId)
             
             local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
-            if not activityData or activityData.status ~= GEnums.ActivityStatus.InProgress then
+            if activityData.status ~= GEnums.ActivityStatus.InProgress then
                 return false
             else
                 
@@ -4162,7 +4150,7 @@ local Config = {
         Check = function(activityId)
             local activity = GameInstance.player.activitySystem:GetActivity(activityId)
             
-            if not activity or activity.status ~= GEnums.ActivityStatus.InProgress then
+            if activity.status ~= GEnums.ActivityStatus.InProgress then
                 return false
             else
                 
@@ -4205,10 +4193,6 @@ local Config = {
             local groupId = args.groupId
             local Group2TaskMap = ContingencyContractUtils.CreateGroupToTaskMap(activityId)
             local activity = GameInstance.player.activitySystem:GetActivity(args.activityId)
-            
-            if not activity then
-                return false
-            end
             local hasNewTask = false
 
             for _,taskId in ipairs(Group2TaskMap[groupId]) do
@@ -4243,10 +4227,6 @@ local Config = {
             local activityId = args.activityId
             local taskId = args.taskId
             local activity = GameInstance.player.activitySystem:GetActivity(activityId)
-            
-            if not activity then
-                return false
-            end
             local taskData = activity:GetTaskData(taskId)
             if taskData then
                 local status = GEnums.ActivityConditionalTaskState.__CastFrom(taskData.Status)

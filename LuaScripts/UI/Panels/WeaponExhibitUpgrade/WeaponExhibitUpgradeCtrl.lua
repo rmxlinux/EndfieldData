@@ -271,7 +271,6 @@ WeaponExhibitUpgradeCtrl.OnWeaponGainExp = HL.Method(HL.Table) << function(self,
 
     self.m_upgradeEffectCor = self:_ClearCoroutine(self.m_upgradeEffectCor)
     self.m_upgradeEffectCor = self:_StartCoroutine(function()
-        PhaseManager:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", true)
         local hadLevelUp = expInfoBefore.curLv < newLv
         if hadLevelUp then
             AudioAdapter.PostEvent("Au_UI_Event_WeaponLevelUp")
@@ -287,7 +286,6 @@ WeaponExhibitUpgradeCtrl.OnWeaponGainExp = HL.Method(HL.Table) << function(self,
 
         if newLv >= expInfo.stageLv then
             if newLv >= expInfo.maxLv then
-                PhaseManager:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
                 self:_LeaveWeaponUpgrade()
                 return
             end
@@ -298,7 +296,6 @@ WeaponExhibitUpgradeCtrl.OnWeaponGainExp = HL.Method(HL.Table) << function(self,
             aniWrapper:Play("weaponexhibitupgrade_out", function()
                 self:PlayAnimationIn()
                 self:OnShow()
-                PhaseManager:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
             end)
         end
     end)
@@ -336,7 +333,6 @@ WeaponExhibitUpgradeCtrl.OnWeaponBreakthrough = HL.Method(HL.Table) << function(
 
     self.m_upgradeEffectCor = self:_ClearCoroutine(self.m_upgradeEffectCor)
     self.m_upgradeEffectCor = self:_StartCoroutine(function()
-        PhaseManager:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", true)
         self.view.breakWeaponInfo.view.animation:Play("weaponexhibitupgrade_breakweaponinfo_break_in")
         self.view.luaPanel:BlockAllInput()
         coroutine.wait(0.5) 
@@ -350,7 +346,6 @@ WeaponExhibitUpgradeCtrl.OnWeaponBreakthrough = HL.Method(HL.Table) << function(
             self:PlayAnimationIn()
             self:OnShow()
             self.view.luaPanel:RecoverAllInput()
-            PhaseManager:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
         end)
     end)
 end
@@ -369,13 +364,8 @@ WeaponExhibitUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_isFocusJump = arg.isFocusJump == true
 end
 
-WeaponExhibitUpgradeCtrl.OnHide = HL.Override() << function(self)
-    PhaseManager:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
-end
-
 
 WeaponExhibitUpgradeCtrl.OnClose = HL.Override() << function()
-    PhaseManager:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
     CS.Beyond.Lua.UtilsForLua.ToggleWeaponInUpgradePanelOption(false)
 end
 
@@ -432,8 +422,8 @@ WeaponExhibitUpgradeCtrl.OnShow = HL.Override() << function(self)
                 self:_ToggleExpandNode(true)
             end
         end
+        self.m_arg.stateArg = nil
     end
-    self.m_arg.stateArg = nil
 end
 
 

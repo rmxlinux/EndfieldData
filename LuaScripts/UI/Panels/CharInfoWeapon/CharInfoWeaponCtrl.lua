@@ -568,7 +568,6 @@ CharInfoWeaponCtrl._InitController = HL.Method() << function(self)
     self.view.focusMasteryHint.gameObject:SetActive(false)
     self.m_focusMasteryBindingId = self:BindInputPlayerAction("char_info_weapon_focus_mastery", function()
         if self.state == UIConst.CHAR_INFO_WEAPON_STATE.Detail then
-            self.view.commonItemList.view.itemList:SkipGraduallyShow()
             self.view.focusMasteryNaviGroup:ManuallyFocus()
         end
     end)

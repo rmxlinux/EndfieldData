@@ -248,9 +248,10 @@ ContingencySelectTagCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_UpdateData()
     self:_RefreshAllUI()
     local recoverJoinedTagIds = recoverState and recoverState.joinedTagIds
-    local needAutoScroll = arg.tagIds ~= nil or not string.isEmpty(arg.shareCode)
-    self:_ApplyShareTag(recoverJoinedTagIds or self.m_basicInfo.defaultTagIds, recoverJoinedTagIds ~= nil, needAutoScroll)
+    self:_ApplyShareTag(recoverJoinedTagIds or self.m_basicInfo.defaultTagIds, recoverJoinedTagIds ~= nil)
     self:_RefreshCurScoreUI()
+    
+    self:_UpdateLockScoreArea()
     self:_TryPlayTagEffectCellInAni()
     
     local sucOpenPopup = self:TryRecoverPopupState(recoverState and recoverState.popupState)
@@ -289,7 +290,7 @@ ContingencySelectTagCtrl.OnShow = HL.Override() << function(self)
             if self.m_basicInfo.scoreLockAniData.playHeadIndex < 1 then
                 self.m_basicInfo.scoreLockAniData.playHeadIndex = index
             end
-            self.view.inputGroup.enabled = false
+            InputManagerInst:ToggleGroup(self.view.inputGroup.groupId, false)
             self.view.forbidInteractMask.gameObject:SetActive(true)
         end
     end
@@ -317,7 +318,7 @@ ContingencySelectTagCtrl.OnAnimationInFinished = HL.Override() << function(self)
                     local headCell = self.m_lockAreaCellCache:Get(headIndex)
                     AudioAdapter.PostEvent("Au_UI_Event_CCReignite_NodeStarUnlock")
                     headCell.animationWrapper:Play("selecttag_lockedareacell_out", function()
-                        self.view.inputGroup.enabled = true
+                        InputManagerInst:ToggleGroup(self.view.inputGroup.groupId, true)
                         self.view.forbidInteractMask.gameObject:SetActive(false)
                         headCell.gameObject:SetActive(false)
                         self.m_curNaviTagCellIndex = -1 
@@ -350,8 +351,8 @@ ContingencySelectTagCtrl.OnClose = HL.Override() << function(self)
     
     ClientDataManagerInst:SaveUserData(ClientDataManagerInst.defaultCategory)
 
-    self.m_lockAreaAniCor = self:_ClearCoroutine(self.m_lockAreaAniCor)
-    self.m_tipsTagUnlockTimeCor = self:_ClearCoroutine(self.m_tipsTagUnlockTimeCor)
+    self:_ClearCoroutine(self.m_lockAreaAniCor)
+    self:_ClearCoroutine(self.m_tipsTagUnlockTimeCor)
 end
 
 
@@ -789,7 +790,7 @@ ContingencySelectTagCtrl._OpenImportSharePopup = HL.Method(HL.Opt(HL.Any)) << fu
         totalScore = self.m_basicInfo.curScore,
         recoverState = recoverState,
         importCallback = function(shareTagIds)
-            self:_ApplyShareTag(shareTagIds, false, true)
+            self:_ApplyShareTag(shareTagIds)
         end,
     })
 end
@@ -974,7 +975,6 @@ end
 ContingencySelectTagCtrl._RefreshAllUI = HL.Method() << function(self)
     self:_RefreshTagCellList()
     self:_InitLockScoreArea()
-    self:_UpdateLockScoreArea()
     
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.tagListContent)   
     self.m_arrowCellCache:Refresh(#self.m_conflictArrowInfos, function(cell, luaIndex)
@@ -1243,8 +1243,6 @@ ContingencySelectTagCtrl._RefreshTagEffectCell = HL.Method(HL.Any, HL.Number) <<
     local tagInfo = self.m_joinedTagInfos[luaIndex]
     cell.gameObject.name = "tagEffectCell_" .. tagInfo.tagId
     
-    cell.animationWrapper:SampleClipAtPercent("tageffectcell_in", 1)
-    
     cell.levelTxt.text = tagInfo.level
     cell.tagNameTxt.text = tagInfo.tagFullName
     cell.descTxt.text = tagInfo.desc
@@ -1358,7 +1356,7 @@ end
 
 ContingencySelectTagCtrl._SetTagEffectControllerScrollEnabled = HL.Method(HL.Boolean) << function(self, enabled)
     if self.view.tagEffectListRect then
-        self.view.tagEffectListRect.controllerScrollEnabled = enabled and self.view.inputGroup.internalEnabled
+        self.view.tagEffectListRect.controllerScrollEnabled = enabled
     end
 end
 
@@ -2251,7 +2249,7 @@ end
 
 
 
-ContingencySelectTagCtrl._ApplyShareTag = HL.Method(HL.Table, HL.Boolean, HL.Boolean) << function(self, tagIds, keepJoinOrder, autoScroll)
+ContingencySelectTagCtrl._ApplyShareTag = HL.Method(HL.Table, HL.Opt(HL.Boolean)) << function(self, tagIds, keepJoinOrder)
     if tagIds == nil or #tagIds <= 0 then
         self:_ClearAllTag(true, false)
         return
@@ -2279,21 +2277,6 @@ ContingencySelectTagCtrl._ApplyShareTag = HL.Method(HL.Table, HL.Boolean, HL.Boo
         local col, row = ContingencyContractUtils.GetColumnRow(self.m_curNaviTagCellIndex)
         local tagInfo = self.m_tagInfos[col][row]
         self:_RefreshTagCellOpenBtnHoverText(tagInfo)
-    end
-    
-    if autoScroll then
-        if #self.m_joinedTagInfos > 0 then
-            local tagInfo = self.m_joinedTagInfos[1]
-            local needNaviCellIndex = tagInfo.cellIndex
-            local tagCell = self:_GetTagCell(needNaviCellIndex)
-            if tagCell then
-                self.view.tagList:AutoScrollToRectTransform(tagCell.transform, true)
-                if DeviceInfo.usingController then
-                    self.m_curNaviTagCellIndex = needNaviCellIndex
-                    self:_SetNaviTagCell(false)
-                end
-            end
-        end
     end
 end
 
@@ -2340,17 +2323,17 @@ ContingencySelectTagCtrl._ShowTagTips = HL.Method(HL.Table) << function(self, ta
     end
     if not isOpen then
         
-        self.m_tipsTagUnlockTimeCor = self:_ClearCoroutine(self.m_tipsTagUnlockTimeCor)
+        self:_ClearCoroutine(self.m_tipsTagUnlockTimeCor)
         local leftTime = tagInfo.openTime - DateTimeUtils.GetCurrentTimestampBySeconds()
         tipsNode.unlockTimeTxt.text = UIUtils.getLeftTime(leftTime)
         self.m_tipsTagUnlockTimeCor = self:_StartCoroutine(function()
+            local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()
             while true do
                 coroutine.wait(1)
-                local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()
                 local leftTime = tagInfo.openTime - curTime
                 tipsNode.unlockTimeTxt.text = UIUtils.getLeftTime(leftTime)
                 if leftTime <= 0 then
-                    self.m_tipsTagUnlockTimeCor = self:_ClearCoroutine(self.m_tipsTagUnlockTimeCor)
+                    self:_ClearCoroutine(self.m_tipsTagUnlockTimeCor)
                     break
                 end
             end
@@ -2422,7 +2405,7 @@ ContingencySelectTagCtrl._HideTagTips = HL.Method(HL.Opt(HL.Boolean)) << functio
         self.view.tipsNodeRoot.gameObject:SetActive(false)
     end
     self.m_curOpenTipsTagIndex = -1
-    self.m_tipsTagUnlockTimeCor = self:_ClearCoroutine(self.m_tipsTagUnlockTimeCor)
+    self:_ClearCoroutine(self.m_tipsTagUnlockTimeCor)
     self:_ClearTagSelect()
     local canSwitchArea = #self.m_joinedTagInfos > 0
     self.view.switchAreaKeyHint.gameObject:SetActive(canSwitchArea)
@@ -2754,51 +2737,8 @@ ContingencySelectTagCtrl._OnMultiStageUpdate = HL.Method(HL.Any) << function(sel
             end
         })
     else
-        self:_TryRefreshNewUnlockedTags()
-    end
-end
-
-ContingencySelectTagCtrl._TryRefreshNewUnlockedTags = HL.Method() << function(self)
-    local preLockedTagInfos = {}
-    for _, tagInfo in pairs(self.m_allTagInfosMap) do
-        if not tagInfo.isUnlockByStage then
-            table.insert(preLockedTagInfos, tagInfo)
-        end
-    end
-
-    self:_UpdateData()
-    local refreshCount = 0
-    local needRefreshNaviTagCell = false
-    for _, tagInfo in ipairs(preLockedTagInfos) do
-        if tagInfo.isUnlockByStage then
-            if DeviceInfo.usingController and self.m_isNaviTagCell and self.m_curNaviTagCellIndex == tagInfo.cellIndex then
-                needRefreshNaviTagCell = true
-            end
-            local cell = self:_GetTagCell(tagInfo.cellIndex)
-            if cell then
-                self:_InitTagCell(cell, tagInfo.cellIndex)
-                self:_RefreshTagConflictAndLock(tagInfo)
-                refreshCount = refreshCount + 1
-            end
-        end
-    end
-    if refreshCount > 0 and self.view.tipsNodeRoot.gameObject.activeSelf then
-        self:_HideTagTips(true)
-    end
-    if needRefreshNaviTagCell then
-        self:_SetNaviTagCell(false)
-    end
-end
-
-ContingencySelectTagCtrl._RefreshTagConflictAndLock = HL.Method(HL.Table) << function(self, tagInfo)
-    local conflictInfo = self.m_tagConflictInfos[tagInfo.conflictId]
-    if conflictInfo then
-        self:_ChangeTagConflict(tagInfo, conflictInfo.curJoinedTag ~= nil and conflictInfo.curJoinedTag ~= tagInfo)
-    end
-
-    for _, lockId in ipairs(tagInfo.lockIds) do
-        local lockInfo = self.m_tagKeyInfos[lockId]
-        self:_ChangeTagLock(tagInfo, lockId, lume.count(lockInfo.curJoinedKeyTags) <= 0)
+        self:_UpdateData()
+        self:_RefreshAllUI()
     end
 end
 

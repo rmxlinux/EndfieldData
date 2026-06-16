@@ -870,29 +870,6 @@ function Utils.getNextWeeklyServerRefreshTime()
     return os.time(today4AM) + timePerDay * deltaDays + Utils._getTimeZoneDiffOfClientAndServer()
 end
 
-
-
-
-
-
-function Utils.getServerWeekdayISOAt4AM()
-    local curTime = DateTimeUtils.GetCurrentTimestampBySeconds() + Utils.getServerTimeZoneOffsetSeconds()
-    local curDate = os.date("!*t", curTime)
-    
-    local weekDay = curDate.wday - 1
-    if weekDay == 0 then
-        weekDay = 7
-    end
-    
-    if curDate.hour < UIConst.COMMON_SERVER_UPDATE_TIME then
-        weekDay = weekDay - 1
-        if weekDay == 0 then
-            weekDay = 7
-        end
-    end
-    return weekDay
-end
-
 function Utils._getTimeZoneDiffOfClientAndServer()
     return CS.System.TimeZoneInfo.Local:GetUtcOffset(CS.System.DateTime.Now).TotalSeconds - Utils.getServerTimeZoneOffsetSeconds()
 end

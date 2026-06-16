@@ -10,7 +10,6 @@ ActivityContingencyContractCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_UPDATED] = '_OnActivityUpdate',
     [MessageConst.ON_ACHIEVEMENT_UPDATE] = '_OnAchievementUpdate',
     [MessageConst.ON_ACTIVITY_PREPARE_TRANSITION_BACK_TO_TOP] = '_OnBackToTop',
-    [MessageConst.ON_CONDITIONAL_MULTI_STAGE_TASK_PROGRESS_CHANGE] = '_OnStageUpdate',
 }
 
 ActivityContingencyContractCtrl.m_activityId = HL.Field(HL.String) << ""
@@ -133,7 +132,6 @@ ActivityContingencyContractCtrl._StageUpdate = HL.Method(HL.Opt(HL.Boolean)) << 
         if isGameplayEnd then
             self.view.activityCommonInfo.view.infoNode.countDownWidget:InitCountDownText(self.m_shopEndTime)
             self.view.activityCommonInfo.view.gotoNode.stateController:SetState("None")
-            ActivityUtils.setFalseIntroMissionActivity(self.m_activityId, true) 
         end
     end
 end
@@ -267,7 +265,6 @@ ActivityContingencyContractCtrl._OnStageUpdate = HL.Method(HL.Any) << function(s
         return
     end
     self:_StageUpdate()
-    self:_UpdateData()
 end
 
 ActivityContingencyContractCtrl._OnActivityUpdate = HL.Method(HL.Any) << function(self, arg)

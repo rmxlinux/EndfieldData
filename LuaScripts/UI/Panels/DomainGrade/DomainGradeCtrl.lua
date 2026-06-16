@@ -58,7 +58,26 @@ DomainGradeCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 DomainGradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_arg, self.m_domainId = DomainPOIUtils.resolveOpenGradeArgs(arg)
+    
+    self.m_arg = type(arg) == "table" and arg or { domainId = arg }
+    local domainId
+    if arg then
+        local value
+        if type(arg) == "string" then
+            value = arg
+        elseif type(arg) == "table" then
+            value = arg.domainId
+        end
+        if string.isEmpty(value) then
+            domainId = DEFAULT_DOMAIN
+        else
+            domainId = value
+        end
+    else
+        domainId = DEFAULT_DOMAIN
+    end
+    self.m_domainId = domainId
+
     self.m_genGradeListCellFunc = UIUtils.genCachedCellFunction(self.view.listScrollView)
 
     self.view.listScrollView.onUpdateCell:AddListener(function(gameObject, csIndex)

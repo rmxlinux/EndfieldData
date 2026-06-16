@@ -103,13 +103,8 @@ BusinessCardPersonalInfoNode.UpdateContingencyContractActivityState = HL.Method(
 
     local success, playerInfo = GameInstance.player.friendSystem:TryGetFriendInfo(self.m_id)
     if success and playerInfo and playerInfo.contingencyContractBestRecord.Item1 ~= nil and playerInfo.contingencyContractBestRecord.Item2 > 0 then
-        local activityData = GameInstance.player.activitySystem:GetActivity(playerInfo.contingencyContractBestRecord.Item1)
-        if activityData == nil then
-            self.view["levelTag" .. postfix].gameObject:SetActiveIfNecessary(false)
-            return
-        end
-        local currentTime = DateTimeUtils.GetCurrentTimestampBySeconds()
-        local isOpen = activityData.gameplayEndTime - currentTime > 0
+        local cfg = Tables.activityTable:GetValue(playerInfo.contingencyContractBestRecord.Item1)
+        local isOpen = Utils.isCurTimeInTimeIdRange(cfg.timeId, false)
         self.view["levelTag" .. postfix].gameObject:SetActiveIfNecessary(isOpen)
         self.view["activityLevelTxt" .. postfix].text = tostring(playerInfo.contingencyContractBestRecord.Item2)
         local rangeArray = Tables.activityContingencyContractTable:GetValue(playerInfo.contingencyContractBestRecord.Item1).rangeArray

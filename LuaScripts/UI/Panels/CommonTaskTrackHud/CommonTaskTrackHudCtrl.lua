@@ -199,7 +199,6 @@ CommonTaskTrackHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SUB_GAME_RESET] = "OnSubGameReset",
 
     [MessageConst.ON_HUD_BTN_VISIBLE_CHANGE] = "OnHudBtnVisibleChange",
-    [MessageConst.ON_INPUT_DEVICE_TYPE_CHANGED] = "OnInputDeviceTypeChange",
 }
 
 
@@ -212,10 +211,14 @@ CommonTaskTrackHudCtrl.s_trackHudFinishState = HL.StaticField(HL.Number) << Phas
 
 
 CommonTaskTrackHudCtrl.OnSwitchLanguage = HL.StaticMethod() << function()
-    if GameWorld.worldInfo.subGame == nil then
-        return
-    end
+    CommonTaskTrackHudCtrl.TryRecover()
+end
 
+CommonTaskTrackHudCtrl.OnInputDeviceTypeChange = HL.StaticMethod() << function()
+    CommonTaskTrackHudCtrl.TryRecover()
+end
+
+CommonTaskTrackHudCtrl.TryRecover = HL.StaticMethod() << function()
     if CommonTaskTrackHudCtrl.s_trackHudFinishState ~= Phase.Normal then
         return
     end
@@ -223,7 +226,7 @@ CommonTaskTrackHudCtrl.OnSwitchLanguage = HL.StaticMethod() << function()
     
     if CommonTaskTrackHudCtrl.s_trackHudState == TrackingHudState.Custom then
         CommonTaskTrackHudCtrl.OnOpenLevelScriptCustomTask()
-    elseif CommonTaskTrackHudCtrl.s_trackHudState == TrackingHudState.SubGame then
+    elseif CommonTaskTrackHudCtrl.s_trackHudState == TrackingHudState.SubGame and GameWorld.worldInfo.subGame ~= nil then
         CommonTaskTrackHudCtrl.OnOpenSubGameTrackings({ GameWorld.worldInfo.subGame.id, Phase.Normal })
     end
 end
@@ -428,6 +431,14 @@ CommonTaskTrackHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_mainGoalCellCache = UIUtils.genCellCache(self.view.mainGoalCell)
     self.m_extraGoalCellCache = UIUtils.genCellCache(self.view.extraGoalCell)
     self.m_originalAnchoredPos = self.view.main.anchoredPosition
+
+    self.view.btnReset.onClick:AddListener(function()
+        self:_OnBtnResetClick()
+    end)
+
+    self.view.btnStop.onClick:AddListener(function()
+        self:_OnBtnStopClick()
+    end)
 
     if DeviceInfo.usingTouch then
         self.view.contentScrollView.onValueChanged:AddListener(function(normalizedPosition)
@@ -675,35 +686,6 @@ end
 
 
 
-CommonTaskTrackHudCtrl._RefreshBtnState = HL.Method() << function(self)
-    self.view.btnReset.onClick:RemoveAllListeners()
-    self.view.btnReset.onClick:AddListener(function()
-        self:_OnBtnResetClick()
-    end)
-
-    self.view.btnStop.onClick:RemoveAllListeners()
-    self.view.btnStop.onClick:AddListener(function()
-        self:_OnBtnStopClick()
-    end)
-
-
-    local success, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.m_subGameId)
-    self.m_quitBtnVisible = success and subGameData.canQuit
-    self.view.btnStop.gameObject:SetActiveIfNecessary(success and subGameData.canQuit)
-    self.view.btnStopTxt:SetAndResolveTextStyle(success and subGameData.resetBtnName:GetText() or self.m_subGameId)
-
-    local getGameDataSucc, gameMechanicData = Tables.gameMechanicTable:TryGetValue(self.m_subGameId)
-    local getCategorySucc, gameMechanicCategoryData = Tables.gameMechanicCategoryTable:TryGetValue(getGameDataSucc and gameMechanicData.gameCategory or "")
-    local canReChallenge = getCategorySucc and gameMechanicCategoryData.canReChallenge
-    self.m_resetBtnVisible = canReChallenge
-    self.view.btnReset.gameObject:SetActiveIfNecessary(canReChallenge)
-
-    self.view.btnNode.gameObject:SetActiveIfNecessary(getCategorySucc and not gameMechanicCategoryData.hideBtnNode and
-                                                              (self.m_quitBtnVisible or self.m_resetBtnVisible))
-end
-
-
-
 CommonTaskTrackHudCtrl._RefreshSubGameTrack = HL.Method() << function(self)
     local trackingMgr = GameWorld.levelScriptTaskTrackingManager
     local mainTask = trackingMgr.mainTask
@@ -718,7 +700,18 @@ CommonTaskTrackHudCtrl._RefreshSubGameTrack = HL.Method() << function(self)
     self:_RefreshMainTask()
     self:_RefreshExtraTask()
 
-    self:_RefreshBtnState()
+    local success, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.m_subGameId)
+    self.m_quitBtnVisible = success and subGameData.canQuit
+    self.view.btnStop.gameObject:SetActiveIfNecessary(success and subGameData.canQuit)
+    self.view.btnStopTxt:SetAndResolveTextStyle(success and subGameData.resetBtnName:GetText() or self.m_subGameId)
+
+    local getGameDataSucc, gameMechanicData = Tables.gameMechanicTable:TryGetValue(self.m_subGameId)
+    local getCategorySucc, gameMechanicCategoryData = Tables.gameMechanicCategoryTable:TryGetValue(getGameDataSucc and gameMechanicData.gameCategory or "")
+    local canReChallenge = getCategorySucc and gameMechanicCategoryData.canReChallenge
+    self.m_resetBtnVisible = canReChallenge
+    self.view.btnReset.gameObject:SetActiveIfNecessary(canReChallenge)
+    self.view.btnNode.gameObject:SetActiveIfNecessary(getCategorySucc and not gameMechanicCategoryData.hideBtnNode and
+                                                              (self.m_quitBtnVisible or self.m_resetBtnVisible))
 
     local title
     
@@ -727,8 +720,7 @@ CommonTaskTrackHudCtrl._RefreshSubGameTrack = HL.Method() << function(self)
     end
     
     if string.isEmpty(title) then
-        local getGameDataSucc, gameMechanicData = Tables.gameMechanicTable:TryGetValue(self.m_subGameId)
-        title = getGameDataSucc and gameMechanicData.gameName
+        title = success and gameMechanicData.gameName
     end
     self:_ProcessTitle(title)
     self:_ProcessTitleIcon()
@@ -1196,20 +1188,6 @@ CommonTaskTrackHudCtrl.OnSubGameReset = HL.Method() << function(self)
 
     self:_ToggleBtnVisible(false)
     self:ToggleResetBtnLoopHint(false)
-end
-
-
-
-
-CommonTaskTrackHudCtrl.OnInputDeviceTypeChange = HL.Method(HL.Table) << function(self, args)
-    local refs = self.view.gameObject:GetComponent("LuaReference")
-    self.view.btnReset = nil
-    self.view.btnStop = nil
-    self.view.bottomBtnNode = nil
-    self.view.btnResetFollower = nil
-    self.view.resetBtnLoopHint = nil
-    refs:BindToLua(self.view) 
-    self:_RefreshBtnState()
 end
 
 

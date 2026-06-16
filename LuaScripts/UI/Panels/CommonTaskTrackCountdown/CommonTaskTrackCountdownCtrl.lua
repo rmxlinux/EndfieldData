@@ -115,6 +115,7 @@ CommonTaskTrackCountdownCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FINISH_COMMON_TASK_COUNTING] = "OnFinishCommonTaskCounting",
 
     [MessageConst.ON_DUNGEON_COMPLETE] = "OnDungeonComplete",
+    [MessageConst.ON_SUB_GAME_RESET] = "OnSubGameReset",
 
     
     
@@ -443,6 +444,12 @@ CommonTaskTrackCountdownCtrl.OnDungeonComplete = HL.Method(HL.Table) << function
     if node and node.timeTxt then
         node.timeTxt.text = UIUtils.getLeftTimeToSecond(math.floor(curGameTimeRecord / 1000))
     end
+end
+
+
+
+CommonTaskTrackCountdownCtrl.OnSubGameReset = HL.Method() << function(self)
+    self:Hide()
 end
 
 

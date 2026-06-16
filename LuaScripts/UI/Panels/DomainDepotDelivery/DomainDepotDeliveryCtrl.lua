@@ -97,7 +97,6 @@ DomainDepotDeliveryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             })
             if domainId == curDomainId then
                 self.m_curDomainIndex = #self.m_domainDropDownInfo
-                self.m_filterDomainIdList = domainId
             end
         end
 

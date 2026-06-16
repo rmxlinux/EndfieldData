@@ -470,7 +470,7 @@ PhaseCharInfo.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.N
             local targetGroup = self.m_templateId2DollyTrackPathGroup[self.m_charInfo.templateId]
             targetGroup.go:SetActive(true)
         end
-        if self.m_charItem and self.m_charItem.uiModelMono then
+        if self.m_charInfo and self.m_charItem.uiModelMono then
             self.m_charItem.uiModelMono:PauseAnimator(false)
         end
         if self.m_charItem and self.m_charItem.animator then
@@ -946,7 +946,7 @@ PhaseCharInfo._RefreshCharModel = HL.Method(HL.Userdata, HL.Table, HL.Number, HL
         
         local targetLightGroup = self.m_templateId2LightGroup[templateId]
         phaseItem.uiModelMono:InitLightFollower(targetLightGroup.go.transform)
-        if forceSkipIn ~= true then
+        if not skipIn then
             self:_PlayModelEffect(sceneObject, templateId)
         end
 

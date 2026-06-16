@@ -321,18 +321,9 @@ MainHudCtrl._ResetTopBtnLayoutForHotSwitchReuse = HL.Method() << function(self)
         return
     end
     for _, info in ipairs(self.m_topBtnDataList) do
-        if info.oriParentTrans and info.viewNode then
-            if info.viewNode.transform.parent ~= info.oriParentTrans then
-                info.viewNode.transform:SetParent(info.oriParentTrans)
-                info.viewNode.transform.localScale = Vector3.one
-            end
-            if info.posType then
-                local canvasGroup = info.viewNode.transform:GetComponent("CanvasGroup")
-                if NotNull(canvasGroup) then
-                    canvasGroup:DOKill()
-                    canvasGroup.alpha = 1
-                end
-            end
+        if info.oriParentTrans and info.viewNode and info.viewNode.transform.parent ~= info.oriParentTrans then
+            info.viewNode.transform:SetParent(info.oriParentTrans)
+            info.viewNode.transform.localScale = Vector3.one
         end
     end
     self.view.topRightBtns.controllerBtnList.moreDeco.gameObject:SetActive(false)
@@ -1554,9 +1545,6 @@ MainHudCtrl.OnSystemUnlock = HL.Method(HL.Table) << function(self, arg)
         GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidSprint, "Unlock", false);
     elseif system == GEnums.UnlockSystemType.Jump then
         self:TogglePlayerJump({"system_unlock", false})
-    elseif system == GEnums.UnlockSystemType.Activity then
-        
-        UIManager:AutoOpen(PanelId.ActivityStartReminder)
     end
 end
 

@@ -728,7 +728,7 @@ SimulationTrainingCtrl._OnClickChallengeBtn = HL.Method() << function(self)
             local maskData = CS.Beyond.Gameplay.UICommonMaskData()
             maskData.fadeType = UIConst.UI_COMMON_MASK_FADE_TYPE.FadeIn
             maskData.fadeInTime = 0.1
-            maskData.fadeWaitTime = 30
+            maskData.fadeWaitTime = 2
             Notify(MessageConst.ON_COMMON_MASK_HIGH_START, {maskData})
         end,
         startBtnText = Language.LUA_SIMULATION_TRAINING_CHAR_FORMATION_CHALLENGE_BTN,

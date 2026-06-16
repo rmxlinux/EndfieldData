@@ -1069,15 +1069,6 @@ ValuableDepotCtrl._OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Bool
     end
 end
 
-
-ValuableDepotCtrl._GetDestroyMaxCount = HL.Method().Return(HL.Number) << function(self)
-    local info = self.m_tabsInfo[self.m_curTabIndex]
-    if info and info.type == GEnums.ItemValuableDepotType.Equip then
-        return 100
-    end
-    return Tables.GlobalConst.depotDestroyMaxCount
-end
-
 ValuableDepotCtrl._AutoFillDestroyList = HL.Method(HL.Number) << function(self, tabIndex)
     self.m_destroyInfo[tabIndex] = {}
     self.m_destroyCount = 0
@@ -1090,7 +1081,7 @@ ValuableDepotCtrl._AutoFillDestroyList = HL.Method(HL.Number) << function(self, 
     local showItemList = self.m_curShowItemList
     local isLack = false
     for itemIndex, itemInfo in pairs(showItemList) do
-        if self.m_destroyCount >= self:_GetDestroyMaxCount() then
+        if self.m_destroyCount >= Tables.GlobalConst.depotDestroyMaxCount then
             Notify(MessageConst.SHOW_TOAST, Language.LUA_DEPOT_DES_AUTO_FILL_REACH_MAX)
             if isLack then
                 Notify(MessageConst.SHOW_TOAST, Language.LUA_DEPOT_DES_AUTO_FILL_HAS_LACK)
@@ -1563,7 +1554,7 @@ ValuableDepotCtrl._ClickItemInDestroyMode = HL.Method(HL.Number, HL.Opt(HL.Boole
             if isBlocked then
                 Notify(MessageConst.SHOW_TOAST, toast)
                 self:_SetDestroyCountTarget("")
-            elseif self.m_destroyCount >= self:_GetDestroyMaxCount() then
+            elseif self.m_destroyCount >= Tables.GlobalConst.depotDestroyMaxCount then
                 Notify(MessageConst.SHOW_TOAST, Language.LUA_ITEM_CANT_DESTROY_BECAUSE_SELECTED_MAX)
                 self:_SetDestroyCountTarget("")
             else
@@ -1599,7 +1590,7 @@ ValuableDepotCtrl._MarkItemDestroy = HL.Method(HL.Number) << function(self, inde
     if isBlocked then
         return
     end
-    if self.m_destroyCount >= self:_GetDestroyMaxCount() then
+    if self.m_destroyCount >= Tables.GlobalConst.depotDestroyMaxCount then
         return
     end
 
@@ -1744,7 +1735,7 @@ end
 
 ValuableDepotCtrl._UpdateDestroySelectTotalCount = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     local node = self.view.destroyNode
-    node.selectCountTxt.text = string.format(Language.LUA_DEPOT_DESTROY_COUNT, self.m_destroyCount, self:_GetDestroyMaxCount())
+    node.selectCountTxt.text = string.format(Language.LUA_DEPOT_DESTROY_COUNT, self.m_destroyCount, Tables.globalConst.depotDestroyMaxCount)
     local showBtn = self.m_destroyCount > 0
     local rightNode = node.rightNode
     if not rightNode.animationWrapper then

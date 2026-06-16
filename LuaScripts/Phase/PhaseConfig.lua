@@ -1148,11 +1148,6 @@ config = {
            PanelId.DomainGrade,
         },
         isSimpleUIPhase = true,
-        checkCanOpen = function(arg)
-            local _, domainId = DomainPOIUtils.resolveOpenGradeArgs(arg)
-            local hasValue, _ = GameInstance.player.domainDevelopmentSystem.domainDevDataDic:TryGetValue(domainId)
-            return hasValue
-        end,
     },
     
     DomainDepotPackage = {

@@ -138,25 +138,28 @@ ContingencyContractHudCtrl.StartSwitchStageTimer = HL.Method(HL.Table) << functi
         AudioAdapter.PostEvent("Au_UI_Event_CCReignite_CountDownAppear")
     end)
 
-    local _, durationMs = unpack(args)
+    local startTsMs, durationMs, startFreezeOffsetMs = unpack(args)
+    local interval = 1
+    local timer = 1
     self.m_countDownAudioPlayingId = AudioAdapter.PostEvent("Au_UI_Event_CCReignite_CountDown")
-    local leftMs = durationMs
-    local prevSec = math.ceil(durationMs / 1000)
-    self.view.countdownTxt.text = prevSec
     self.m_switchStageTimerTickId = LuaUpdate:Remove(self.m_switchStageTimerTickId)
     self.m_switchStageTimerTickId = LuaUpdate:Add("Tick", function(deltaTime)
-        
-        if TimeManagerInst.timeScale == 0 then
+        local game = GameInstance.dungeonManager.curDungeonLikeSubGame
+        if game == nil or game.waitingSrvResume then
             return
         end
-        leftMs = leftMs - deltaTime * 1000
-        leftMs = lume.clamp(leftMs, 0, durationMs)
-        local curSec = math.ceil(leftMs / 1000)
-        if curSec ~= prevSec and not self.m_isClosed then
+
+        local curTsMs = DateTimeUtils.GetCurrentTimestampByMilliseconds()
+        local freezeOffsetMs = GameInstance.dungeonManager.curDungeonLikeSubGame:GetRealEndGameTimestampMsForLua() - startFreezeOffsetMs
+        local realSwitchStageTsMs = startTsMs + durationMs + freezeOffsetMs
+        local left = lume.clamp(realSwitchStageTsMs - curTsMs, 0, durationMs)
+        
+        timer = timer + deltaTime
+        if timer > interval and not self.m_isClosed then
             self.view.titleAdaptNode:Play("contingencycontract_numb_change")
-            prevSec = curSec
+            timer = 0
         end
-        self.view.countdownTxt.text = curSec
+        self.view.countdownTxt.text = math.floor(left / 1000)
     end)
 end
 
