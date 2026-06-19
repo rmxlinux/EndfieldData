@@ -14,6 +14,7 @@ ActivityCenterCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_UPDATED] = 'OnActivityUpdated',
     [MessageConst.ON_ACTIVITY_NAVI_FAILED] = 'OnActivityNaviFailed',
     [MessageConst.ON_ACTIVITY_CENTER_BACK_TO_TOP] = '_OnBackToTop',
+    [MessageConst.ON_UNREAD_ACTIVITY_PUSH] = '_OnServerUnreadActivityPush',
 }
 
 ActivityCenterCtrl.s_debugDelay = HL.StaticField(HL.Number) << -1
@@ -39,6 +40,13 @@ ActivityCenterCtrl.m_initialActivityId = HL.Field(HL.String) << ""
 ActivityCenterCtrl.m_enterType = HL.Field(HL.String) << ""
 
 ActivityCenterCtrl.m_needSaveClientData = HL.Field(HL.Boolean) << false
+
+
+
+
+
+
+ActivityCenterCtrl.m_optimisticReadPushIds = HL.Field(HL.Table)
 
 
 
@@ -104,7 +112,7 @@ ActivityCenterCtrl._RefreshTabList = HL.Method() << function(self)
             
             
             local tabPush, allActives = self:_PickActiveTabPush(activity.id, activity)
-            local normalState, selectedState = self:_ResolveTabCellStateNames(tabPush)
+            local normalState, selectedState = self:_ResolveTabCellStateNames(tabPush, activity)
             table.insert(self.m_allActivities, {
                 id = activity.id,
                 sortId = -activityData.sortId,
@@ -113,6 +121,8 @@ ActivityCenterCtrl._RefreshTabList = HL.Method() << function(self)
                 completed = activity:GetCompleteSortId(),
                 type = activityData.type,
                 status = activity.status,
+                
+                placeAtBottom = activity.placeAtBottom,
                 normalState = normalState,
                 selectedState = selectedState,
                 tabPush = tabPush, 
@@ -130,6 +140,26 @@ ActivityCenterCtrl._RefreshTabList = HL.Method() << function(self)
             type = activity.type,
             index = index,
         }
+    end
+
+    
+    
+    
+    
+    do
+        local activitySystem = GameInstance.player.activitySystem
+        for _, entry in ipairs(self.m_allActivities) do
+            local tabPush = entry.tabPush
+            if tabPush
+                and tabPush.tabType == "End"
+                and not string.isEmpty(tabPush.pushID)
+                and not activitySystem:IsActivityPushRead(tabPush.pushID)
+                and ActivityUtils.isActivityEndTabRedDotSeen(tabPush.pushID)
+            then
+                ActivityUtils.clearActivityEndTabRedDotSeen(tabPush.pushID, true) 
+                self.m_needSaveClientData = true
+            end
+        end
     end
 
     
@@ -216,6 +246,10 @@ ActivityCenterCtrl._RefreshTabEndCountDown = HL.Method(HL.Any, HL.Table) << func
     local needCountDown = tabPush
         and tabPush.tabType == "End"
         and activity
+        and not activity.isCompleted
+        
+        
+        and not activity.placeAtBottom
     if needCountDown then
         
         
@@ -283,6 +317,100 @@ ActivityCenterCtrl._OnTabClicked = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Bo
 
     local entry = self.m_allActivities[index]
 
+    
+    
+    
+    
+    
+    local tabPush = entry and entry.tabPush
+    
+    
+    if tabPush
+        and tabPush.tabType == "Update"
+        and not string.isEmpty(tabPush.pushID)
+        and self:_IsConditionListSatisfied(tabPush.pushID, entry and entry.activity)
+        and not GameInstance.player.activitySystem:IsActivityPushRead(tabPush.pushID)
+    then
+        local clickedCell = self:_GetCell(index)
+        if clickedCell and clickedCell.normalNode and not IsNull(clickedCell.normalNode.updateNode) then
+            local markReadIds = self:_CollectTabBatchReadIds(tabPush, entry)
+            if #markReadIds > 0 then
+                if not self.m_optimisticReadPushIds then
+                    self.m_optimisticReadPushIds = {}
+                end
+                for _, pushID in ipairs(markReadIds) do
+                    self.m_optimisticReadPushIds[pushID] = true
+                end
+                GameInstance.player.activitySystem:MarkActivityPushReadBatch(markReadIds)
+            end
+            clickedCell.normalNode.updateNode.gameObject:SetActive(false)
+        end
+    end
+
+    
+    
+    
+    
+    if entry.activity then
+        local bubbleReadIds = self:_CollectActivityUnreadBubblePushIds(id, entry.activity)
+        if #bubbleReadIds > 0 then
+            if not self.m_optimisticReadPushIds then
+                self.m_optimisticReadPushIds = {}
+            end
+            for _, pushID in ipairs(bubbleReadIds) do
+                self.m_optimisticReadPushIds[pushID] = true
+            end
+            GameInstance.player.activitySystem:MarkActivityPushReadBatch(bubbleReadIds)
+        end
+    end
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    if tabPush
+        and tabPush.tabType == "End"
+        and not string.isEmpty(tabPush.pushID)
+        and self:_IsConditionListSatisfied(tabPush.pushID, entry and entry.activity)
+    then
+        if not ActivityUtils.isActivityEndTabRedDotSeen(tabPush.pushID) then
+            ActivityUtils.setActivityEndTabRedDotSeen(tabPush.pushID, true) 
+            self.m_needSaveClientData = true
+        end
+        if not GameInstance.player.activitySystem:IsActivityPushRead(tabPush.pushID) then
+            
+            local markReadIds = self:_CollectTabBatchReadIds(tabPush, entry)
+            if #markReadIds > 0 then
+                if not self.m_optimisticReadPushIds then
+                    self.m_optimisticReadPushIds = {}
+                end
+                for _, pushID in ipairs(markReadIds) do
+                    self.m_optimisticReadPushIds[pushID] = true
+                end
+                GameInstance.player.activitySystem:MarkActivityPushReadBatch(markReadIds)
+            end
+        end
+        
+        
+        
+        
+        
+        
+        local _clickedCell = self:_GetCell(index)
+        if _clickedCell then
+            for _, _innerCell in ipairs({ _clickedCell.selectNode, _clickedCell.normalNode }) do
+                if _innerCell and _innerCell.redDot then
+                    self:_ApplyRedDotPriority(_innerCell.redDot, entry)
+                end
+            end
+        end
+    end
+
     if ActivityUtils.isNewActivity(id) then
         ActivityUtils.setFalseNewActivity(id, true) 
         self.m_needSaveClientData = true
@@ -291,34 +419,11 @@ ActivityCenterCtrl._OnTabClicked = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Bo
         ActivityUtils.setFalseNewUnlockActivity(id, true) 
         self.m_needSaveClientData = true
     end
-    if ActivityUtils.isNewIntroMissionActivity(id) then
-        ActivityUtils.setFalseIntroMissionActivity(id, true) 
-        self.m_needSaveClientData = true
-    end
 
     
     if ActivityUtils.isNewActivityBubble(id) and entry.activity.isUnlocked then
         ActivityUtils.setFalseNewActivityBubble(id, true) 
         self.m_needSaveClientData = true
-    end
-
-    
-    
-    local tabPush = entry and entry.tabPush
-    if tabPush
-        and not string.isEmpty(tabPush.pushID)
-        and not GameInstance.player.activitySystem:IsActivityPushRead(tabPush.pushID)
-    then
-        local clickedCell = self:_GetCell(index)
-        if clickedCell then
-            if tabPush.tabType == "Update" and clickedCell.normalNode and not IsNull(clickedCell.normalNode.updateNode) then
-                local markReadIds = self:_CollectTabBatchReadIds(tabPush, entry)
-                if #markReadIds > 0 then
-                    GameInstance.player.activitySystem:MarkActivityPushReadBatch(markReadIds)
-                end
-                clickedCell.normalNode.updateNode.gameObject:SetActive(false)
-            end
-        end
     end
 
     
@@ -502,21 +607,31 @@ end
 
 
 
-ActivityCenterCtrl._IsConditionListSatisfied = HL.Method(HL.String).Return(HL.Boolean) << function(self, pushID)
+
+
+
+
+
+
+
+ActivityCenterCtrl._IsConditionListSatisfied = HL.Method(HL.String, HL.Opt(HL.Any)).Return(HL.Boolean) << function(self, pushID, activity)
     if string.isEmpty(pushID) or not Tables.activityPushConditionTable then
         return true
     end
     local hasCondition, conditionData = Tables.activityPushConditionTable:TryGetValue(pushID)
-    if not hasCondition then
-        return true
-    end
-    if not conditionData or not conditionData.conditionList then
+    
+    local conditionListMissing = (not hasCondition)
+        or (not conditionData)
+        or (not conditionData.conditionList)
+        or (not conditionData.conditionList.Count)
+        or (conditionData.conditionList.Count <= 0)
+    if conditionListMissing then
+        if activity and activity.status == GEnums.ActivityStatus.Locked then
+            return false
+        end
         return true
     end
     local list = conditionData.conditionList
-    if not list.Count or list.Count <= 0 then
-        return true
-    end
     for i = 1, list.Count do
         local cond = list[CSIndex(i)]
         if cond then
@@ -536,7 +651,8 @@ end
 
 
 
-ActivityCenterCtrl._IsTabPushActivated = HL.Method(HL.Any, HL.Any, HL.Number, HL.Number).Return(HL.Boolean) << function(self, pushData, activity, curTs, curWeekday)
+
+ActivityCenterCtrl._IsPushActivated = HL.Method(HL.Any, HL.Any, HL.Number, HL.Number).Return(HL.Boolean) << function(self, pushData, activity, curTs, curWeekday)
     
     
     local realEndTime = self:_GetServerActivityEndTime(pushData, activity)
@@ -544,7 +660,7 @@ ActivityCenterCtrl._IsTabPushActivated = HL.Method(HL.Any, HL.Any, HL.Number, HL
         return false
     end
     if pushData.isWeeklyRefresh then
-        if activity.isCompleted then
+        if activity.isCompleted or activity.placeAtBottom then
             return false
         end
         if curWeekday < (pushData.pushInWeekday or 0) then
@@ -569,17 +685,48 @@ end
 
 
 
+
+
+
+ActivityCenterCtrl._CollectActivityUnreadBubblePushIds = HL.Method(HL.String, HL.Any).Return(HL.Table) << function(self, activityId, activity)
+    local result = {}
+    if not Tables.activityPushBubbleTable or not activity then
+        return result
+    end
+    local activitySystem = GameInstance.player.activitySystem
+    
+    local optimisticRead = self.m_optimisticReadPushIds
+    local curTs = DateTimeUtils.GetCurrentTimestampBySeconds()
+    local curWeekday = Utils.getServerWeekdayISOAt4AM()
+    for _, pushData in pairs(Tables.activityPushBubbleTable) do
+        if pushData.activityId == activityId
+            and pushData.pushType == "Bubble"
+            and not string.isEmpty(pushData.pushID)
+            and self:_IsPushActivated(pushData, activity, curTs, curWeekday)
+            and self:_IsConditionListSatisfied(pushData.pushID, activity)
+            and not activitySystem:IsActivityPushRead(pushData.pushID)
+            and not (optimisticRead and optimisticRead[pushData.pushID])
+        then
+            table.insert(result, pushData.pushID)
+        end
+    end
+    return result
+end
+
+
+
 ActivityCenterCtrl._GatherActiveTabPushes = HL.Method(HL.String, HL.Any).Return(HL.Any) << function(self, activityId, activity)
     local result = {}
     if not Tables.activityPushBubbleTable or not activity then
         return result
     end
     local curTs = DateTimeUtils.GetCurrentTimestampBySeconds()
-    local curWeekday = GameInstance.player.activitySystem:GetServerWeekdayISO()
+    
+    local curWeekday = Utils.getServerWeekdayISOAt4AM()
     for _, pushData in pairs(Tables.activityPushBubbleTable) do
         if pushData.activityId == activityId
             and pushData.pushType == "Tab"
-            and self:_IsTabPushActivated(pushData, activity, curTs, curWeekday)
+            and self:_IsPushActivated(pushData, activity, curTs, curWeekday)
         then
             table.insert(result, {
                 pushData = pushData,
@@ -622,9 +769,27 @@ end
 
 
 
-ActivityCenterCtrl._ResolveTabCellStateNames = HL.Method(HL.Opt(HL.Any)).Return(HL.String, HL.String) << function(self, tabPush)
-    if tabPush and tabPush.tabType == "End" then
-        if not GameInstance.player.activitySystem:IsActivityPushRead(tabPush.pushID) then
+
+
+
+
+
+
+
+ActivityCenterCtrl._ResolveTabCellStateNames = HL.Method(HL.Opt(HL.Any, HL.Any)).Return(HL.String, HL.String) << function(self, tabPush, activity)
+    if tabPush and tabPush.tabType == "End" and activity
+        and not activity.isCompleted
+        and not activity.placeAtBottom
+    then
+        local endTime = self:_GetServerActivityEndTime(tabPush, activity)
+        if not endTime then
+            if tabPush.isWeeklyRefresh then
+                endTime = Utils.getNextWeeklyServerRefreshTime()
+            else
+                endTime = activity.endTime or 0
+            end
+        end
+        if endTime and endTime > 0 and endTime > DateTimeUtils.GetCurrentTimestampBySeconds() then
             return TAB_END_NORMAL_STATE, TAB_END_SELECTED_STATE
         end
     end
@@ -644,11 +809,16 @@ end
 
 
 
-ActivityCenterCtrl._GetTabIndicatorPriority = HL.Method(HL.Table).Return(HL.Boolean, HL.Boolean, HL.Boolean) << function(self, entry)
+
+
+
+ActivityCenterCtrl._GetTabIndicatorPriority = HL.Method(HL.Table).Return(HL.Boolean, HL.Boolean, HL.Boolean, HL.Boolean) << function(self, entry)
     local activity = entry and entry.activity
     local activityData = entry and entry.activityData
-    if not activity or not activityData or activity.isCompleted then
-        return false, false, false
+    
+    
+    if not activity or not activityData or activity.isCompleted or activity.placeAtBottom then
+        return false, false, false, false
     end
     local id = activityData.id
 
@@ -666,13 +836,37 @@ ActivityCenterCtrl._GetTabIndicatorPriority = HL.Method(HL.Table).Return(HL.Bool
     end
 
     local tabPush = entry.tabPush
+    
+    
+    
+    local optimisticRead = self.m_optimisticReadPushIds
+        and tabPush
+        and tabPush.pushID
+        and self.m_optimisticReadPushIds[tabPush.pushID]
+    local conditionSatisfied = tabPush
+        and not string.isEmpty(tabPush.pushID)
+        and self:_IsConditionListSatisfied(tabPush.pushID, activity)
     local hasUpdate = (
         tabPush
         and tabPush.tabType == "Update"
         and not string.isEmpty(tabPush.pushID)
+        and conditionSatisfied
         and not GameInstance.player.activitySystem:IsActivityPushRead(tabPush.pushID)
+        and not optimisticRead
     ) and true or false
-    return hasNew, hasUpdate, hasNormal
+
+    
+    
+    local hasEndOnce = (
+        tabPush
+        and tabPush.tabType == "End"
+        and not string.isEmpty(tabPush.pushID)
+        and conditionSatisfied
+        and not GameInstance.player.activitySystem:IsActivityPushRead(tabPush.pushID)
+        and not optimisticRead
+        and not ActivityUtils.isActivityEndTabRedDotSeen(tabPush.pushID)
+    ) and true or false
+    return hasNew, hasUpdate, hasNormal, hasEndOnce
 end
 
 
@@ -695,7 +889,8 @@ ActivityCenterCtrl._RefreshTabPriorityIndicators = HL.Method(HL.Any, HL.Table) <
     local nodes = { cell.selectNode, cell.normalNode }
     for _, innerCell in ipairs(nodes) do
         if innerCell and innerCell.redDot then
-            if not activity.isCompleted and not string.isEmpty(redDotName) then
+            
+            if not activity.isCompleted and not activity.placeAtBottom and not string.isEmpty(redDotName) then
                 
                 
                 innerCell.redDot:InitRedDot(redDotName, activityData.id, function(rd)
@@ -704,7 +899,6 @@ ActivityCenterCtrl._RefreshTabPriorityIndicators = HL.Method(HL.Any, HL.Table) <
                 self.view.redDotScrollRect.gameObject:SetActive(true)
                 self:_ApplyRedDotPriority(innerCell.redDot, entry)
             else
-                innerCell.redDot:Stop()
                 innerCell.redDot.gameObject:SetActive(false)
             end
         end
@@ -715,21 +909,27 @@ end
 
 
 
+
+
+
+
+
 ActivityCenterCtrl._ApplyRedDotPriority = HL.Method(HL.Any, HL.Table) << function(self, redDot, entry)
     if not redDot or IsNull(redDot.gameObject) then
         return
     end
-    local hasNew, hasUpdate, hasNormal = self:_GetTabIndicatorPriority(entry)
+    local hasNew, hasUpdate, hasNormal, hasEndOnce = self:_GetTabIndicatorPriority(entry)
+    
     
     local showNew = hasNew
-    local showNormal = (not hasNew) and (not hasUpdate) and hasNormal
+    local showNormal = (not hasNew) and (not hasUpdate) and (hasNormal or hasEndOnce)
     local active = showNew or showNormal
-    redDot.gameObject:SetActive(active)
+
+    if redDot.view.content and not IsNull(redDot.view.content.gameObject) then
+        redDot.view.content.gameObject:SetActive(active)
+    end
     if not active then
         return
-    end
-    if redDot.view.content and not IsNull(redDot.view.content.gameObject) then
-        redDot.view.content.gameObject:SetActive(true)
     end
     if redDot.view.new and not IsNull(redDot.view.new.gameObject) then
         redDot.view.new.gameObject:SetActiveIfNecessary(showNew)
@@ -749,7 +949,13 @@ ActivityCenterCtrl._CollectTabBatchReadIds = HL.Method(HL.Any, HL.Table).Return(
     end
     local activitySystem = GameInstance.player.activitySystem
     
-    table.insert(result, currentTabPush.pushID)
+    
+    
+    local optimisticRead = self.m_optimisticReadPushIds
+    
+    if not (optimisticRead and optimisticRead[currentTabPush.pushID]) then
+        table.insert(result, currentTabPush.pushID)
+    end
     local actives = entry and entry.tabPushAllActives
     if not actives then
         return result
@@ -762,6 +968,7 @@ ActivityCenterCtrl._CollectTabBatchReadIds = HL.Method(HL.Any, HL.Table).Return(
             and info.isWeekly == curIsWeekly
             and info.activationOrder <= curOrder
             and not activitySystem:IsActivityPushRead(p.pushID)
+            and not (optimisticRead and optimisticRead[p.pushID])
         then
             table.insert(result, p.pushID)
         end
@@ -790,8 +997,8 @@ ActivityCenterCtrl.OnActivityUpdated = HL.Method(HL.Any) << function(self, arg)
     end
 
     
-    if activity.status ~= self.m_allActivities[self.m_activityDict[id].index].status
-     or activity.placeAtBottom ~= self.m_allActivities[self.m_activityDict[id].index].placeAtBottom then
+    local oldEntry = self.m_allActivities[self.m_activityDict[id].index]
+    if activity.placeAtBottom ~= oldEntry.placeAtBottom or activity.status ~= oldEntry.status then
         self:_RefreshTabCompleteState()
         return
     end
@@ -806,6 +1013,11 @@ ActivityCenterCtrl._RefreshTabCompleteState = HL.Method() << function(self)
             cell.normalNode.completedIconNode.gameObject:SetActive(activity.isCompleted or activity.placeAtBottom)
         end
     end)
+end
+
+ActivityCenterCtrl._OnServerUnreadActivityPush = HL.Method() << function(self)
+    self.m_optimisticReadPushIds = {}
+    self:_RefreshTabList()
 end
 
 ActivityCenterCtrl._IsActivityChanged = HL.Method().Return(HL.Boolean) << function(self)

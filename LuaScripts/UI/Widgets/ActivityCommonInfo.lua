@@ -240,7 +240,7 @@ ActivityCommonInfo.UpdateRewardInfo = HL.Method(HL.Opt(HL.String)) << function(s
 
     
     local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
-    local receiveAll = activity and activity.receiveAllReward
+    local receiveAll = activity and activity.receiveAllReward and not self.view.config.HIDE_RECEIVE_ALL
     self.view.gotoNode.receiveAllNode.gameObject:SetActive(receiveAll)
     self.view.gotoNode.notReceiveAllNode.gameObject:SetActive(not receiveAll)
 end

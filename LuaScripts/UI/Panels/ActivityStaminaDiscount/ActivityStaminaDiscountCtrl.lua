@@ -23,7 +23,6 @@ local PANEL_ID = PanelId.ActivityStaminaDiscount
 
 
 
-
 ActivityStaminaDiscountCtrl = HL.Class('ActivityStaminaDiscountCtrl', uiCtrl.UICtrl)
 
 
@@ -63,9 +62,6 @@ ActivityStaminaDiscountCtrl.m_receiveAllBindingId = HL.Field(HL.Number) << -1
 ActivityStaminaDiscountCtrl.m_refreshDirty = HL.Field(HL.Boolean) << false
 
 
-ActivityStaminaDiscountCtrl.m_shownNewDay = HL.Field(HL.Boolean) << false
-
-
 
 
 ActivityStaminaDiscountCtrl.OnBeforePanelActive = HL.Method(HL.Any) << function(self, args)
@@ -77,6 +73,7 @@ end
 
 ActivityStaminaDiscountCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_activityId = args.activityId
+
     self:_ApplyAudioOnOpen(self.m_activityId)
     local bgStateData = Tables.activityStaminaRefundBgStateTable and Tables.activityStaminaRefundBgStateTable[self.m_activityId]
     if bgStateData and not string.isEmpty(bgStateData.bgStateName) then
@@ -138,9 +135,12 @@ end
 
 
 ActivityStaminaDiscountCtrl.OnClose = HL.Override() << function(self)
-    if self.m_shownNewDay then
-        ActivityUtils.setActivityDayAsRead(self.m_activityId)
-    end
+    
+    
+    
+    
+    
+    ActivityUtils.setActivityDayAsRead(self.m_activityId)
 end
 
 
@@ -273,9 +273,6 @@ ActivityStaminaDiscountCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << fu
     cell.scrollbar.size = lume.clamp(task.curProgress/task.total, 0, 1)
     cell.redDot:InitRedDot("ActivityStaminaDiscountTask", {self.m_activityId, task.stageId})
     cell.m_isReceived = isReceived
-    if ActivityUtils.isNewActivityDayUnread(self.m_activityId) then
-        self.m_shownNewDay = true
-    end
     cell.gameObject.name = "Cell" .. index
 
     
@@ -305,14 +302,6 @@ ActivityStaminaDiscountCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << fu
     
     cell.notCompleteBtn.onClick:RemoveAllListeners()
     cell.notCompleteBtn.onClick:AddListener(function()
-        if self.m_shownNewDay then
-            ActivityUtils.setActivityDayAsRead(self.m_activityId, true) 
-            
-            local _, ctrl = UIManager:IsOpen(PanelId.ActivityCenter)
-            if ctrl then
-                ctrl:UpdateNeedSave()
-            end
-        end
         Utils.jumpToSystem(task.mapJumpId)
     end)
 end

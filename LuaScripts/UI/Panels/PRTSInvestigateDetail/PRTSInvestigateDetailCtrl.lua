@@ -186,7 +186,7 @@ PRTSInvestigateDetailCtrl._OnInvestigateFinished = HL.Method(HL.Table) << functi
         PhaseManager:OpenPhase(PhaseId.PRTSInvestigateReport, {
             investId = self.m_info.investId,
             storyCollId = self.m_info.unlockPrts,
-            showSubmitAni = true,
+            isNewReport = true,
         })
     end
 end

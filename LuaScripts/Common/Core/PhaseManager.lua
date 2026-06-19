@@ -1340,6 +1340,17 @@ PhaseManager._CheckCanChangeInputDeviceInCommercial = HL.Method().Return(HL.Bool
     end
     
 
+    
+    
+    if UIManager:IsShow(PanelId.CommonPopUp) then
+        local _, commonPopUpCtrl = UIManager:IsOpen(PanelId.CommonPopUp)
+        local popUpArgs = commonPopUpCtrl and commonPopUpCtrl.m_args
+        if popUpArgs and popUpArgs.content == Language.LUA_ACTIVITY_MODIFY_QUIT_TO_MENU then
+            return false
+        end
+    end
+    
+
     return true
 end
 

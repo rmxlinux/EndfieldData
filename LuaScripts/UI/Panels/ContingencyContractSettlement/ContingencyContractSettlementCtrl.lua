@@ -592,7 +592,8 @@ ContingencyContractSettlementCtrl._OnShareBtnClick = HL.Method() << function(sel
             self.view.main:SetState("NoShare")
             
             
-            self.view.leftNdoe.tipsNode.gameObject:SetActive(self.m_resultData.isBestScore)
+            local showSocialTips = self.m_resultData.isBestScore and self.m_resultData.score > 0
+            self.view.leftNdoe.tipsNode.gameObject:SetActive(showSocialTips)
         end, 
         onClose = function()
         end,      

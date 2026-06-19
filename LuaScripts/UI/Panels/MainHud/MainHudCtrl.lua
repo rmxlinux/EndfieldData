@@ -214,6 +214,8 @@ MainHudCtrl.m_characterFootBar = HL.Field(HL.Table)
 
 MainHudCtrl.m_quickMenuBindingId = HL.Field(HL.Number) << -1
 
+MainHudCtrl.m_forbidAllTopBtn = HL.Field(HL.Boolean) << false
+
 
 
 
@@ -321,9 +323,18 @@ MainHudCtrl._ResetTopBtnLayoutForHotSwitchReuse = HL.Method() << function(self)
         return
     end
     for _, info in ipairs(self.m_topBtnDataList) do
-        if info.oriParentTrans and info.viewNode and info.viewNode.transform.parent ~= info.oriParentTrans then
-            info.viewNode.transform:SetParent(info.oriParentTrans)
-            info.viewNode.transform.localScale = Vector3.one
+        if info.oriParentTrans and info.viewNode then
+            if info.viewNode.transform.parent ~= info.oriParentTrans then
+                info.viewNode.transform:SetParent(info.oriParentTrans)
+                info.viewNode.transform.localScale = Vector3.one
+            end
+            if info.posType then
+                local canvasGroup = info.viewNode.transform:GetComponent("CanvasGroup")
+                if NotNull(canvasGroup) then
+                    canvasGroup:DOKill()
+                    canvasGroup.alpha = 1
+                end
+            end
         end
     end
     self.view.topRightBtns.controllerBtnList.moreDeco.gameObject:SetActive(false)
@@ -1045,6 +1056,9 @@ end
 
 
 MainHudCtrl._GetSingleTopBtnVisible = HL.Method(HL.Table).Return(HL.Boolean) << function(self, info)
+    if self.m_forbidAllTopBtn then
+        return false
+    end
     
     if Utils.isInSettlementDefenseDefending() then
         if not info.canStayInTowerDefenseDefending then
@@ -1545,6 +1559,9 @@ MainHudCtrl.OnSystemUnlock = HL.Method(HL.Table) << function(self, arg)
         GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidSprint, "Unlock", false);
     elseif system == GEnums.UnlockSystemType.Jump then
         self:TogglePlayerJump({"system_unlock", false})
+    elseif system == GEnums.UnlockSystemType.Activity then
+        
+        UIManager:AutoOpen(PanelId.ActivityStartReminder)
     end
 end
 
@@ -2340,6 +2357,11 @@ MainHudCtrl._UpdateWatchBtnBinding = HL.Method() << function(self)
     else
         self.view.topRightBtns.watchBtn.onClick:ChangeBindingPlayerAction("common_open_watch")
     end
+end
+
+MainHudCtrl.ForbidAllTopBtn = HL.Method(HL.Boolean) << function(self, isForbid)
+    self.m_forbidAllTopBtn = isForbid
+    self:UpdateAllTopBtnsVisible()
 end
 
 

@@ -82,6 +82,7 @@ FORBID_INPUT_DEVICE_CHANGE_PANELS = {
 
 FORBID_INPUT_DEVICE_CHANGE_PHASES = {
     "GenderSelect",
+    "Dialog",
 
     
     "GachaChar",
@@ -117,6 +118,7 @@ EXCEPT_CHANGE_DEVICE_CLOSE_PANEL = {
     "CommonHudToast",
 
     
+    "CommonTaskTrackHud",
     "CommonTaskTrackToast",
     "CommonTaskTrackCountdown",
     "DungeonCharTutorialStepHud",

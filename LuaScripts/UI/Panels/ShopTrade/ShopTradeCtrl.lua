@@ -116,6 +116,7 @@ ShopTradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SELL_ITEM_SUCC] = '_OnSellItemSuccess',
     [MessageConst.ON_SHOP_REFRESH] = '_OnShopRefresh',
     [MessageConst.ON_FRIEND_SHOP_INFO_SYNC] = '_OnFriendShopRefresh',
+    [MessageConst.ON_SCREEN_SIZE_CHANGED] = '_OnScreenSizeChanged',
 }
 
 
@@ -1046,7 +1047,7 @@ ShopTradeCtrl.m_InitGetCellSizeHelperInfo = HL.Method() << function(self)
     local goodsSpacing = goodsListGrid.spacing
     local goodsPadding = goodsListGrid.padding
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.goodsNode.scrollContainer.transform)
-    local lineWidth = goodsNode.goodsGroupList.transform.rect.width - goodsNode.goodsTagList.transform.rect.width - self.view.goodsNode.scrollContainer.spacing
+    local lineWidth = goodsNode.goodsGroupList.transform.rect.width - goodsNode.goodsTagList.transform.rect.width - self.view.goodsNode.scrollContainer.spacing - goodsPadding.left - goodsPadding.right
     local maxCountOneLine = math.floor((lineWidth + goodsSpacing.x) / (goodsSize.x + goodsSpacing.x))
     
     self.m_getCellSizeHelperInfo = {
@@ -2156,6 +2157,27 @@ ShopTradeCtrl._OnFriendShopRefresh = HL.Method() << function(self)
             end
         end
     end
+end
+
+
+
+ShopTradeCtrl._OnScreenSizeChanged = HL.Method() << function(self)
+    self:m_InitGetCellSizeHelperInfo()
+    local count = 0
+    if self.m_isLocalShop then
+        if self.m_isSelectCommonShop then
+            count = #self.m_localShopInfo.commonShopInfo.goodsGroupList
+        else
+            count = #self.m_localShopInfo.randomShopInfo.goodsGroupList + 1
+        end
+    else
+        local shopInfo = self.m_friendShopInfoList[self.m_curSelectFriendShopIndex]
+        if shopInfo == nil then
+            return
+        end
+        count = #shopInfo.goodsGroupList
+    end
+    self.view.goodsNode.goodsGroupList:UpdateCount(count, false)
 end
 
 

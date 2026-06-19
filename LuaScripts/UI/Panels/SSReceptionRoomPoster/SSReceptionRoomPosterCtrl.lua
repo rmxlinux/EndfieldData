@@ -378,20 +378,22 @@ SSReceptionRoomPosterCtrl.RefreshWeaponScroll = HL.Method() << function(self)
     local ids = GameInstance.player.spaceship:GetWeaponInstIdsByType(self.m_curWeaponType)
     if ids then
         for i = 1, ids.Count do
-            local _, itemBundle = GameInstance.player.inventory:TryGetWeaponInst(Utils.getCurrentScope(), ids[CSIndex(i)])
+            local res, itemBundle = GameInstance.player.inventory:TryGetWeaponInst(Utils.getCurrentScope(), ids[CSIndex(i)])
+            
+            if res then
+                local templateId = itemBundle.id
+                local instId = itemBundle.instId or 0
+                local instData = itemBundle.instData
+                local _, itemCfg = Tables.itemTable:TryGetValue(templateId)
 
-            local templateId = itemBundle.id
-            local instId = itemBundle.instId or 0
-            local instData = itemBundle.instData
-            local _, itemCfg = Tables.itemTable:TryGetValue(templateId)
-
-            if not itemCfg then
-                logger.error("Can't get itemCfg for templateId: " .. templateId)
-            else
-                local itemInfo = FilterUtils.processWeapon(templateId, instId)
-                itemInfo.itemCfg = itemCfg
-                itemInfo.itemInst = instData
-                table.insert(self.m_selectInsIdList, itemInfo)
+                if not itemCfg then
+                    logger.error("Can't get itemCfg for templateId: " .. templateId)
+                else
+                    local itemInfo = FilterUtils.processWeapon(templateId, instId)
+                    itemInfo.itemCfg = itemCfg
+                    itemInfo.itemInst = instData
+                    table.insert(self.m_selectInsIdList, itemInfo)
+                end
             end
         end
     end

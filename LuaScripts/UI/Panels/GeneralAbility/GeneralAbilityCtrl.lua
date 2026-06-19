@@ -1354,7 +1354,9 @@ GeneralAbilityCtrl._RefreshWheelShownState = HL.Method(HL.Boolean) << function(s
     end
 
     UIUtils.PlayAnimationAndToggleActive(self.view.middleAnim, isShown)
-    UIUtils.PlayAnimationAndToggleActive(self.view.selectorAnim, isShown)
+    UIUtils.PlayAnimationAndToggleActive(self.view.selectorAnim, isShown, function()
+        GameInstance.player.generalAbilitySystem.isInSelectMode = isShown
+    end)
     self:_TempAbilityAnim(isShown)
 
     local abilityData = self.m_abilityDataMap[self:_GetSelectedType()]
@@ -1373,7 +1375,7 @@ GeneralAbilityCtrl._RefreshWheelShownState = HL.Method(HL.Boolean) << function(s
             self:ChangePanelCfg("realMouseMode", Types.EPanelMouseMode.NotNeedShow)
         end
     end
-    GameInstance.player.generalAbilitySystem.isInSelectMode = isShown
+
     InputManagerInst:ToggleBinding(self.m_selectorCancelBinding, isShown)
     InputManagerInst:ToggleBinding(self.m_selectorClickBinding, isShown)
     local isOpen, panel = UIManager:IsOpen(PanelId.MainHud)

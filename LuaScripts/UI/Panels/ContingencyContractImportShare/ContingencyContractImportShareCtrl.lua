@@ -123,9 +123,15 @@ ContingencyContractImportShareCtrl._InitUI = HL.Method() << function(self)
         if string.isEmpty(shareText) then
             Notify(MessageConst.SHOW_TOAST, Language.LUA_CONTINGENCY_CONTRACT_SHARE_NEED_COPY_TIP)
         else
+            local inputField = self.view.analyzeCodeNode.inputField
+            inputField.text = shareText
+            inputField:ForceLabelUpdate()
             
-            self.view.analyzeCodeNode.inputField.text = shareText
-            self.view.analyzeCodeNode.inputField.textComponent.alignment = CS.TMPro.TextAlignmentOptions.Right
+            inputField.textComponent:ForceMeshUpdate()
+            local textRect = inputField.textComponent.rectTransform
+            local viewport = inputField.textViewport
+            local overflowWidth = inputField.textComponent.preferredWidth - viewport.rect.width
+            textRect.anchoredPosition = CS.UnityEngine.Vector2(overflowWidth > 0 and -overflowWidth or 0, textRect.anchoredPosition.y)
         end
     end)
 
@@ -159,12 +165,9 @@ ContingencyContractImportShareCtrl._InitUI = HL.Method() << function(self)
 
     self.view.analyzeCodeNode.inputField.onValueChanged:AddListener(function()
         local inputField = self.view.analyzeCodeNode.inputField
-        if inputField.textComponent.alignment ~= CS.TMPro.TextAlignmentOptions.Left then
-            inputField.textComponent.alignment = CS.TMPro.TextAlignmentOptions.Left
-        end
-        local shareText = self.view.analyzeCodeNode.inputField.text
+        local shareText = inputField.text
         shareText = string.gsub(shareText, "\n", "")
-        self.view.analyzeCodeNode.inputField:SetTextWithoutNotify(shareText)
+        inputField:SetTextWithoutNotify(shareText)
         self.m_importTagInfos.shareText = shareText
         self:_RefreshAnalyzeCodeNode()
     end)

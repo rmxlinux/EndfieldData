@@ -138,10 +138,25 @@ CommonShareCtrl.ScreenCaptureAndShare = HL.StaticMethod(HL.Any) << function(arg)
                 LayoutRebuilder.ForceRebuildLayoutImmediate(this.view.hideRoot.transform)
                 this.view.stateController:SetState(arg.needEdge == false and "HideAll" or "Hide")
                 coroutine.waitForRenderDone()
-                coroutine.step()
                 
-                coroutine.step()
-                coroutine.step()
+                
+                local isBlurShowing = false
+                for _ = 1, 30 do
+                    local isOpen, blurCtrl = UIManager:IsOpen(PanelId.FullScreenSceneBlur)
+                    isBlurShowing = isOpen and blurCtrl ~= nil and blurCtrl.view ~= nil and blurCtrl.view.blurBG ~= nil and blurCtrl.view.blurBG.gameObject.activeSelf
+                    if not isBlurShowing then
+                        break
+                    end
+                    coroutine.step()
+                end
+
+                local isOpen, blurCtrl = UIManager:IsOpen(PanelId.FullScreenSceneBlur)
+                isBlurShowing = isOpen and blurCtrl ~= nil and blurCtrl.view ~= nil and blurCtrl.view.blurBG ~= nil and blurCtrl.view.blurBG.gameObject.activeSelf
+                if isBlurShowing then
+                    logger.error("CommonShareCtrl.ScreenCaptureAndShare: wait FullScreenSceneBlur exit timeout")
+                end
+
+                coroutine.waitForRenderDone()
             end
             local photoRealHeight = this.view.photoImgWithWaterMark.rectTransform.rect.width / ratio
             local offset = photoRealHeight * waterMarkScale / 2
@@ -468,8 +483,8 @@ CommonShareCtrl._OnFadeInEnd = HL.Method() << function(self)
                 local data = {
                     shareChannel = info.id,
                     imgPath = savePath,
-                    title = self.m_type == "Blueprint" and string.format(Language.LUA_SHARE_BLUEPRINT_TITLE, self.m_arg.codeId) or Language.LUA_SHARE_PHOTO_TITLE,
-                    desc = self.m_type == "Blueprint" and string.format(Language.LUA_SHARE_BLUEPRINT_DESC, self.m_arg.codeId) or Language.LUA_SHARE_PHOTO_DESC,
+                    title = (self.m_type == "Blueprint" or self.m_type == "ContingencyContractSettlement") and string.format(Language.LUA_SHARE_BLUEPRINT_TITLE, self.m_arg.codeId) or Language.LUA_SHARE_PHOTO_TITLE,
+                    desc = (self.m_type == "Blueprint" or self.m_type == "ContingencyContractSettlement") and string.format(Language.LUA_SHARE_BLUEPRINT_DESC, self.m_arg.codeId) or Language.LUA_SHARE_PHOTO_DESC,
                     extraData = "{}",
                 }
                 if info.id == SKLandId or info.id == OverseaSKLandId then

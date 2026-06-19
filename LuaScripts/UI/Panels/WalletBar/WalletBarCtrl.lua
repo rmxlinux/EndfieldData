@@ -131,6 +131,7 @@ end
 
 
 WalletBarCtrl.OnShow = HL.Override() << function(self)
+    WalletBarCtrl.Super.OnShow(self)
     
     local notchPadding = GameSetting.videoCachedNotchPadding
     self.m_baseNotchPaddingPixel = GameSettingHelper.GetGameSettingCanvasPaddingFromNotchPadding(notchPadding, UIManager.uiCanvasRect.rect.width)
@@ -145,6 +146,7 @@ end
 
 
 WalletBarCtrl.OnHide = HL.Override() << function(self)
+    WalletBarCtrl.Super.OnHide(self)
     if self.m_curArgs == nil then
         self.view.contentNaviGroup:ManuallyStopFocus()
         self.view.contentNaviGroup:ClearLastFocusNaviTarget()

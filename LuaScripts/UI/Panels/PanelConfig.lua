@@ -4526,6 +4526,7 @@ config = {
         realMouseMode = Types.EPanelMouseMode.NeedShow,
         virtualMouseMode = Types.EPanelMouseMode.ForceHide,
         freezeWorld = true,
+        blockObtainWaysJump = true,
     },
     
     
@@ -11394,6 +11395,7 @@ config = {
         realMouseMode = Types.EPanelMouseMode.NeedShow,
         virtualMouseMode = Types.EPanelMouseMode.ForceHide,
         freezeWorld = true,
+        blockObtainWaysJump = true,
     },
     
     

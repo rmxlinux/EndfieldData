@@ -72,6 +72,7 @@ local PANEL_ID = PanelId.BattlePassTask
 
 
 
+
 BattlePassTaskCtrl = HL.Class('BattlePassTaskCtrl', uiCtrl.UICtrl)
 
 
@@ -360,6 +361,35 @@ end
 
 
 
+
+
+BattlePassTaskCtrl._EnsureLabelNaviLayer = HL.Method() << function(self)
+    if not DeviceInfo.usingController then
+        return
+    end
+    local labelNaviGroup = self.view.labelScrollListSelectableNaviGroup
+    if labelNaviGroup == nil or InputManagerInst.controllerNaviManager:IsLayerInStack(labelNaviGroup) then
+        return
+    end
+    local taskNaviGroup = self.view.taskScrollListSelectableNaviGroup
+    if taskNaviGroup ~= nil and InputManagerInst.controllerNaviManager:IsLayerInStack(taskNaviGroup) then
+        
+        
+        InputManagerInst.controllerNaviManager:TryRemoveLayer(taskNaviGroup)
+    end
+    if self.m_selectedLabelIndex <= 0 then
+        return
+    end
+    local selectedLabelCell = self.m_labelCacheFunc(self.m_selectedLabelIndex)
+    if selectedLabelCell ~= nil
+        and selectedLabelCell.button ~= nil
+        and selectedLabelCell.button.gameObject.activeInHierarchy then
+        UIUtils.setAsNaviTargetInSilentModeIfNecessary(labelNaviGroup, selectedLabelCell.button)
+    end
+end
+
+
+
 BattlePassTaskCtrl._NaviResume = HL.Method() << function(self)
     local lastNaviTarget = self.m_naviTaskTarget
     local lastNaviTaskId = self.m_naviTaskId
@@ -381,6 +411,7 @@ BattlePassTaskCtrl._NaviResume = HL.Method() << function(self)
             self.view.taskScrollList:ScrollToIndex(CSIndex(targetIndex), true)
             local cell = self.m_taskCacheFunc(targetIndex)
             if cell ~= nil and cell.naviDecorator ~= nil then
+                self:_EnsureLabelNaviLayer()
                 UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.taskScrollListSelectableNaviGroup, cell.naviDecorator)
                 self.m_naviTaskTarget = cell.naviDecorator
                 return
@@ -389,6 +420,7 @@ BattlePassTaskCtrl._NaviResume = HL.Method() << function(self)
     end
     
     if lastNaviTarget ~= nil then
+        self:_EnsureLabelNaviLayer()
         UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.taskScrollListSelectableNaviGroup, lastNaviTarget)
         return
     end

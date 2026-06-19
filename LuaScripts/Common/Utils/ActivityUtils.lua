@@ -209,6 +209,40 @@ function ActivityUtils.setFalseNewActivityBubble(id, noSave)
 end
 
 
+
+
+
+
+
+local activityEndTabRedDotSeenText = "activity_end_tab_seen_key_"
+function ActivityUtils.isActivityEndTabRedDotSeen(pushID)
+    if string.isEmpty(pushID) then
+        return true
+    end
+    return ClientDataManagerInst:GetBool(activityEndTabRedDotSeenText .. pushID, false)
+end
+function ActivityUtils.setActivityEndTabRedDotSeen(pushID, noSave)
+    if string.isEmpty(pushID) then
+        return
+    end
+    if noSave then
+        ClientDataManagerInst:SetBool(activityEndTabRedDotSeenText .. pushID, true, false, ClientDataManagerInst.defaultCategory)
+    else
+        ClientDataManagerInst:SetBool(activityEndTabRedDotSeenText .. pushID, true, false)
+    end
+end
+function ActivityUtils.clearActivityEndTabRedDotSeen(pushID, noSave)
+    if string.isEmpty(pushID) then
+        return
+    end
+    if noSave then
+        ClientDataManagerInst:SetBool(activityEndTabRedDotSeenText .. pushID, false, false, ClientDataManagerInst.defaultCategory)
+    else
+        ClientDataManagerInst:SetBool(activityEndTabRedDotSeenText .. pushID, false, false)
+    end
+end
+
+
 local newDebugBubbleText = "new_debug_activity_bubble_key"
 function ActivityUtils.getDebugActivityBubbleId()
     local success, activityId = ClientDataManagerInst:GetString(newDebugBubbleText, false)
@@ -359,7 +393,7 @@ end
 function ActivityUtils.IsSimulationTrainingGotoDetailRead()
     return ClientDataManagerInst:GetBool("activity_simulation_training_goto_detail", false)
 end
-function ActivityUtils.SetSimulationTrainingGotoDetailRead(noSave)
+function ActivityUtils.SetSimulationTrainingGotoDetailRead()
     ClientDataManagerInst:SetBool("activity_simulation_training_goto_detail", true, false, EClientDataTimeValidType.Permanent)
     Notify(MessageConst.ON_ACTIVITY_SIMULATION_TRAINING_GOTO)
 end

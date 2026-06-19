@@ -244,19 +244,20 @@ ContingencyContractTaskCtrl._OnTaskProgress = HL.Method(HL.Any) << function(self
     self:_OnUpdate()
     if self.m_needUpdateRefresh then
         self.m_needUpdateRefresh = false
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_ACTIVITY_MODIFY_QUIT_TO_MENU)
-        
-        self:_OnClickTab(1,true, true) 
-        if DeviceInfo.usingController then
+        if PhaseManager:GetTopPhaseId()==PHASE_ID then
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_ACTIVITY_MODIFY_QUIT_TO_MENU)
             
-            local firstTab = self.m_tabCell[1]
-            UIUtils.setAsNaviTarget(firstTab.button)
+            self:_OnClickTab(1,true, true) 
+            if DeviceInfo.usingController then
+                
+                local firstTab = self.m_tabCell[1]
+                UIUtils.setAsNaviTarget(firstTab.button)
+            end
         end
     end
 end
 
 ContingencyContractTaskCtrl._OnUpdate = HL.Method() << function(self)
-    self.m_needUpdateRefresh = false
     self:_UpdateContentHeight()
 
     
@@ -408,9 +409,18 @@ ContingencyContractTaskCtrl._OnUpdateTaskList = HL.Method(HL.Any, HL.Number, HL.
             end
         end
     end
-    countdownState = groupData.canUpdate and (latestUnlockTime and "Countdown" or "Updated") or "None"
-    if latestUnlockTime then
-        cell.countDownText:InitCountDownText(latestUnlockTime)
+    if groupData.canUpdate then
+        local allTaskCount = self.m_groupData[index].totalTaskNum
+        
+        local hideTip = currentTaskCount ~= allTaskCount and not latestUnlockTime
+        countdownState = hideTip and "None" or (latestUnlockTime and "Countdown" or "Updated")
+        if latestUnlockTime then
+            cell.countDownText:InitCountDownText(latestUnlockTime, function()
+                self.m_needUpdateRefresh = true
+            end)
+        end
+    else
+        countdownState = "None"
     end
     cell.titleNode:SetState(countdownState)
     table.sort(currentTasks, Utils.genSortFunction({ "completed", "inProgress", "sortId" }, true))
@@ -539,10 +549,6 @@ ContingencyContractTaskCtrl._OnUpdateTask = HL.Method(HL.Any, HL.Number, HL.Tabl
     end
 
     cell.stateController:SetState(state)
-    
-    if PhaseManager:GetTopPhaseId()==PHASE_ID and ActivityUtils.isCcNewTask(self.m_activityId, taskId) then
-        self.m_needUpdateRefresh = true
-    end
 
     
     local conditionIdList = self.m_taskInfoDict[taskId].completeConditionId

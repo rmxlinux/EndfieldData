@@ -14,7 +14,14 @@ ActivityStartReminderCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_NEW_DAY] = '_OnExternalRefresh',
     
     
+    [MessageConst.ON_UNREAD_ACTIVITY_PUSH] = '_OnExternalRefresh',
+    
+    
     [MessageConst.ACTIVITY_DEBUG_SHOW_BUBBLE] = '_OnDebugForceShowBubble',
+    
+    
+    
+    [MessageConst.ON_SCREEN_SIZE_CHANGED] = '_OnScreenSizeChanged',
 }
 
 
@@ -25,6 +32,11 @@ ActivityStartReminderCtrl.s_activityBubbleScrollMaxWidth = HL.StaticField(HL.Num
 
 
 ActivityStartReminderCtrl.s_bubbleDisappearTime = HL.StaticField(HL.Number) << 8
+
+
+ActivityStartReminderCtrl.s_bubbleScrollPreWaitTime = HL.StaticField(HL.Number) << 2
+
+ActivityStartReminderCtrl.s_bubbleScrollPostWaitTime = HL.StaticField(HL.Number) << 1
 
 
 ActivityStartReminderCtrl.s_posSyncDuration = HL.StaticField(HL.Number) << 0.5
@@ -55,10 +67,21 @@ ActivityStartReminderCtrl.m_nextActivationTimerId = HL.Field(HL.Number) << -1
 
 
 
+
+ActivityStartReminderCtrl.m_pendingInitWatcherSeq = HL.Field(HL.Number) << 0
+
+
+
+
 ActivityStartReminderCtrl.m_debugBubbleSeq = HL.Field(HL.Number) << -1
 
 ActivityStartReminderCtrl.m_layoutElementCache = HL.Field(HL.Userdata)
 
+
+
+
+
+ActivityStartReminderCtrl.m_optimisticReadPushIds = HL.Field(HL.Table)
 
 
 ActivityStartReminderCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -72,6 +95,8 @@ end
 ActivityStartReminderCtrl.OnClose = HL.Override() << function(self)
     self.m_pendingRefreshTimerId = self:_ClearTimer(self.m_pendingRefreshTimerId)
     self.m_nextActivationTimerId = self:_ClearTimer(self.m_nextActivationTimerId)
+    
+    self.m_pendingInitWatcherSeq = (self.m_pendingInitWatcherSeq or 0) + 1
 end
 
 
@@ -202,14 +227,19 @@ ActivityStartReminderCtrl._SyncPositionToActivityBtn = HL.Method() << function(s
     if IsNull(node) then
        return
     end
+    local _refStartPos = refNode.position
+    local _btn = mainHudCtrl.view.topRightBtns and mainHudCtrl.view.topRightBtns.activityBtn
+    local _btnLossy = _btn and _btn.transform and _btn.transform.lossyScale or nil
 
     node.position = refNode.position
 
     
     self:_StartCoroutine(function()
         local startTime = Time.realtimeSinceStartup
+        local _frameCount = 0
         while Time.realtimeSinceStartup - startTime < ActivityStartReminderCtrl.s_posSyncDuration do
             coroutine.step()
+            _frameCount = _frameCount + 1
             if IsNull(self.view.gameObject) or IsNull(node) then
                 return
             end
@@ -223,7 +253,40 @@ ActivityStartReminderCtrl._SyncPositionToActivityBtn = HL.Method() << function(s
             end
             node.position = stillRef.position
         end
+        
+        local stillOpen, hud = UIManager:IsOpen(PanelId.MainHud)
+        if stillOpen and hud then
+            local stillRef = hud.view.topRightBtns and hud.view.topRightBtns.activityStartReminderNodePos
+            if stillRef and not IsNull(stillRef) then
+                local _refEndPos = stillRef.position
+                
+                
+                local observeStart = Time.realtimeSinceStartup
+                while Time.realtimeSinceStartup - observeStart < 2.0 do
+                    coroutine.step()
+                    if IsNull(self.view.gameObject) then
+                        return
+                    end
+                end
+            end
+        end
     end)
+end
+
+
+
+
+
+
+
+ActivityStartReminderCtrl._OnScreenSizeChanged = HL.Method() << function(self)
+    if IsNull(self.view.activityStartReminderNode) then
+        return
+    end
+    if not self.view.activityStartReminderNode.gameObject.activeSelf then
+        return
+    end
+    self:_SyncPositionToActivityBtn()
 end
 
 
@@ -354,7 +417,9 @@ ActivityStartReminderCtrl._StartActivityBubbleDismissCoroutine = HL.Method(HL.Nu
     local disappearTime = ActivityStartReminderCtrl.s_bubbleDisappearTime
     self:_StartCoroutine(function()
         if needScroll then
-            coroutine.wait(disappearTime * 2 / 3)
+            
+            
+            coroutine.wait(ActivityStartReminderCtrl.s_bubbleScrollPreWaitTime)
             if self.m_activityBubbleIndex ~= bubbleIndex then
                 return
             end
@@ -366,7 +431,7 @@ ActivityStartReminderCtrl._StartActivityBubbleDismissCoroutine = HL.Method(HL.Nu
                 return
             end
             self:_StopActivityBubbleScrollAtCurrentPos()
-            coroutine.wait(disappearTime / 3)
+            coroutine.wait(ActivityStartReminderCtrl.s_bubbleScrollPostWaitTime)
         else
             coroutine.wait(disappearTime)
         end
@@ -381,7 +446,7 @@ ActivityStartReminderCtrl._StartActivityBubbleDismissCoroutine = HL.Method(HL.Nu
                 GameInstance.player.activitySystem:MarkActivityPushReadBatch(markReadIds)
             end
             self:_ResetActivityBubbleScrollText()
-            self.view.activityStartReminderNode.gameObject:SetActive(false)
+            self:_SafeDeactivateBubbleNode()
             
             self.m_showingActivityId = ""
             
@@ -416,10 +481,39 @@ ActivityStartReminderCtrl._StartActivityBtnVisibilityWatcher = HL.Method(HL.Numb
                     GameInstance.player.activitySystem:MarkActivityPushReadBatch(markReadIds)
                 end
                 self:_ResetActivityBubbleScrollText()
-                if not IsNull(self.view.activityStartReminderNode) then
-                    self.view.activityStartReminderNode.gameObject:SetActive(false)
-                end
+                self:_SafeDeactivateBubbleNode()
                 self.m_showingActivityId = ""
+                return
+            end
+        end
+    end)
+end
+
+
+
+
+
+
+
+
+ActivityStartReminderCtrl._StartPendingInitWatcher = HL.Method() << function(self)
+    self.m_pendingInitWatcherSeq = (self.m_pendingInitWatcherSeq or 0) + 1
+    local seq = self.m_pendingInitWatcherSeq
+    self:_StartCoroutine(function()
+        while true do
+            coroutine.step()
+            if self.m_pendingInitWatcherSeq ~= seq then
+                return
+            end
+            if IsNull(self.view.gameObject) then
+                return
+            end
+            if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.Activity) then
+                return
+            end
+            if self:_IsMainHudActivityBtnVisible() then
+                
+                self:_InitActivityBubbles()
                 return
             end
         end
@@ -528,6 +622,26 @@ end
 
 
 
+ActivityStartReminderCtrl._SafeDeactivateBubbleNode = HL.Method() << function(self)
+    local node = self.view.activityStartReminderNode
+    if IsNull(node) then
+        return
+    end
+    if not node.gameObject.activeSelf then
+        return
+    end
+
+    local anim = node.gameObject:GetComponent("UIAnimationWrapper")
+    if not IsNull(anim) and anim.curState == CS.Beyond.UI.UIConst.AnimationState.Out then
+        return
+    end
+
+    node.gameObject:SetActive(false)
+end
+
+
+
+
 
 
 ActivityStartReminderCtrl._IsConditionListSatisfied = HL.Method(HL.String).Return(HL.Boolean) << function(self, pushID)
@@ -577,21 +691,31 @@ end
 
 
 ActivityStartReminderCtrl._CollectBatchReadIds = HL.Method(HL.Any, HL.Any).Return(HL.Any) << function(self, currentPush, candidates)
-    local activitySystem = GameInstance.player.activitySystem
     local result = {}
     
     table.insert(result, currentPush.pushID)
     for _, c in ipairs(candidates) do
+        
         if c.pushID ~= currentPush.pushID
             and c.activityId == currentPush.activityId
             and c.isWeekly == currentPush.isWeekly
             and c.activationOrder <= currentPush.activationOrder
-            and not activitySystem:IsActivityPushRead(c.pushID)
+            and not self:_IsPushReadOptimistic(c.pushID)
         then
             table.insert(result, c.pushID)
         end
     end
     return result
+end
+
+
+
+
+ActivityStartReminderCtrl._IsPushReadOptimistic = HL.Method(HL.String).Return(HL.Boolean) << function(self, pushID)
+    if self.m_optimisticReadPushIds and self.m_optimisticReadPushIds[pushID] then
+        return true
+    end
+    return GameInstance.player.activitySystem:IsActivityPushRead(pushID)
 end
 
 
@@ -647,15 +771,24 @@ ActivityStartReminderCtrl._TryMigrateLegacyBubbleReads = HL.Method() << function
 
     if #toReportPushIds > 0 then
         activitySystem:MarkActivityPushReadBatch(toReportPushIds)
+        
+        
+        
+        
+        if not self.m_optimisticReadPushIds then
+            self.m_optimisticReadPushIds = {}
+        end
+        for _, pushID in ipairs(toReportPushIds) do
+            self.m_optimisticReadPushIds[pushID] = true
+        end
     end
 
     
     
-    ClientDataManagerInst:SetBool(
-        ActivityStartReminderCtrl.s_legacyMigrationFlagKey, true, false, EClientDataTimeValidType.Permanent
-    )
+    ClientDataManagerInst:SetBool(ActivityStartReminderCtrl.s_legacyMigrationFlagKey, true, false, ClientDataManagerInst.defaultCategory) 
     ActivityStartReminderCtrl.s_legacyMigrationDone = true
 end
+
 
 
 
@@ -683,15 +816,21 @@ ActivityStartReminderCtrl._InitActivityBubbles = HL.Method() << function(self)
     self.m_showingActivityId = ""
     self.m_nextActivationTimerId = self:_ClearTimer(self.m_nextActivationTimerId)
     if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.Activity) then
+        
+        self.m_pendingInitWatcherSeq = (self.m_pendingInitWatcherSeq or 0) + 1
         return
     end
     
+    
     if not self:_IsMainHudActivityBtnVisible() then
+        self:_StartPendingInitWatcher()
         return
     end
     if not Tables.activityPushBubbleTable then
         return
     end
+    
+    self.m_pendingInitWatcherSeq = (self.m_pendingInitWatcherSeq or 0) + 1
 
     
     
@@ -700,7 +839,9 @@ ActivityStartReminderCtrl._InitActivityBubbles = HL.Method() << function(self)
     local activitySystem = GameInstance.player.activitySystem
     local curTs = DateTimeUtils.GetCurrentTimestampBySeconds()
     
-    local curWeekday = activitySystem:GetServerWeekdayISO()
+    
+    
+    local curWeekday = Utils.getServerWeekdayISOAt4AM()
 
     
     
@@ -723,7 +864,9 @@ ActivityStartReminderCtrl._InitActivityBubbles = HL.Method() << function(self)
                     pass = false
                 elseif pushData.isWeeklyRefresh then
                     
+                    
                     if not activity.isCompleted
+                        and not activity.placeAtBottom
                         and curWeekday >= (pushData.pushInWeekday or 0)
                         and self:_IsConditionListSatisfied(pushData.pushID)
                     then
@@ -731,15 +874,23 @@ ActivityStartReminderCtrl._InitActivityBubbles = HL.Method() << function(self)
                     end
                 else
                     
-                    local offsetHours = self:_GetServerOffsetHours(pushData)
-                    local activationTime = (activity.startTime or 0) + offsetHours * Const.SEC_PER_HOUR
-                    if curTs >= activationTime then
-                        if self:_IsConditionListSatisfied(pushData.pushID) then
-                            pass = true
-                        end
-                    else
-                        if not nextActivationTs or activationTime < nextActivationTs then
-                            nextActivationTs = activationTime
+                    
+                    
+                    
+                    
+                    if not activity.isCompleted
+                        and not activity.placeAtBottom
+                    then
+                        local offsetHours = self:_GetServerOffsetHours(pushData)
+                        local activationTime = (activity.startTime or 0) + offsetHours * Const.SEC_PER_HOUR
+                        if curTs >= activationTime then
+                            if self:_IsConditionListSatisfied(pushData.pushID) then
+                                pass = true
+                            end
+                        else
+                            if not nextActivationTs or activationTime < nextActivationTs then
+                                nextActivationTs = activationTime
+                            end
                         end
                     end
                 end
@@ -747,11 +898,16 @@ ActivityStartReminderCtrl._InitActivityBubbles = HL.Method() << function(self)
                     local activationOrder, isWeekly = self:_CollectActivationOrder(pushData, activity)
                     
                     
+                    
+                    
+                    local _, activityData = Tables.activityTable:TryGetValue(pushData.activityId)
+                    local activitySortId = (activityData and activityData.sortId) or 0
                     table.insert(allCandidates, {
                         pushID = pushData.pushID,
                         activityId = pushData.activityId,
                         bubbleType = pushData.bubbleType,
                         bubbleText = self:_FormatBubbleText(pushData, activity, pushData.bubbleText),
+                        activitySortId = activitySortId,
                         bubbleSortId = pushData.bubbleSortId or 0,
                         activationOrder = activationOrder,
                         isWeekly = isWeekly,
@@ -793,7 +949,20 @@ ActivityStartReminderCtrl._InitActivityBubbles = HL.Method() << function(self)
     end
 
     
-    table.sort(candidates, Utils.genSortFunction({ "bubbleSortId", "pushID" }, true))
+    
+    
+    
+    
+    
+    table.sort(candidates, function(a, b)
+        if a.activitySortId ~= b.activitySortId then
+            return a.activitySortId > b.activitySortId
+        end
+        if a.bubbleSortId ~= b.bubbleSortId then
+            return a.bubbleSortId < b.bubbleSortId
+        end
+        return a.pushID < b.pushID
+    end)
 
     
     
@@ -819,9 +988,11 @@ ActivityStartReminderCtrl._InitActivityBubbles = HL.Method() << function(self)
 
     
     
+    
+    
     for index = 1, #candidates do
         local c = candidates[index]
-        if not activitySystem:IsActivityPushRead(c.pushID) and not string.isEmpty(c.bubbleText) then
+        if not self:_IsPushReadOptimistic(c.pushID) and not string.isEmpty(c.bubbleText) then
             self.m_activityBubbleIndex = index
             self.m_showingActivityId = c.activityId or ""
             self:_ApplyBubbleVisual(c.bubbleType, c.bubbleText)
@@ -833,11 +1004,11 @@ ActivityStartReminderCtrl._InitActivityBubbles = HL.Method() << function(self)
             return
         elseif self.m_activityBubbleIndex == index then
             self:_ResetActivityBubbleScrollText()
-            self.view.activityStartReminderNode.gameObject:SetActive(false)
+            self:_SafeDeactivateBubbleNode()
         end
     end
     self:_ResetActivityBubbleScrollText()
-    self.view.activityStartReminderNode.gameObject:SetActive(false)
+    self:_SafeDeactivateBubbleNode()
 end
 
 

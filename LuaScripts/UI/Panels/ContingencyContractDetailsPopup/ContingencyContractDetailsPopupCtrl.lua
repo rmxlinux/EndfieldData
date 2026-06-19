@@ -76,6 +76,11 @@ ContingencyContractDetailsPopupCtrl.OnCreate = HL.Override(HL.Any) << function(s
     if arg then
         arg.recoverState = nil
     end
+    if #self.m_tagInfos > 0 then
+        UIUtils.setAsNaviTarget(self.view.tagEffectListNaviDeco)
+    else
+        UIUtils.setAsNaviTarget(self.view.descListNaviDeco)
+    end
 end
 
 

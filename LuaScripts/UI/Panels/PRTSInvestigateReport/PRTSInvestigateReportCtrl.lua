@@ -56,6 +56,8 @@ PRTSInvestigateReportCtrl.m_aniUpdateKey = HL.Field(HL.Number) << -1
 
 PRTSInvestigateReportCtrl.m_aniCurPlayTime = HL.Field(HL.Number) << 0
 
+PRTSInvestigateReportCtrl.m_isNewReport = HL.Field(HL.Boolean) << false
+
 
 
 
@@ -79,6 +81,7 @@ PRTSInvestigateReportCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.A
         investId = self.m_belongsInvestId,
         storyCollId = self.m_storyCollId,
         showSubmitAni = self.m_showSubmitAni,
+        isNewReport = self.m_isNewReport,
         resumeState = {
             aniCurPlayTime = self.m_aniCurPlayTime,
         },
@@ -86,10 +89,10 @@ PRTSInvestigateReportCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.A
 end
 
 PRTSInvestigateReportCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
-    if not resumeState or not resumeState.aniCurPlayTime then
+    if not resumeState then
         return
     end
-    self.m_aniCurPlayTime = resumeState.aniCurPlayTime
+    self.m_aniCurPlayTime = resumeState.aniCurPlayTime or self.m_aniCurPlayTime
 end
 
 
@@ -101,7 +104,8 @@ end
 PRTSInvestigateReportCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     self.m_belongsInvestId = arg.investId
     self.m_storyCollId = arg.storyCollId
-    self.m_showSubmitAni = arg.showSubmitAni or false
+    self.m_isNewReport = arg.isNewReport or false
+    self.m_showSubmitAni = arg.isNewReport or self.m_isNewReport
 end
 
 
@@ -207,7 +211,7 @@ end
 PRTSInvestigateReportCtrl._OnClickCloseBtn = HL.Method() << function(self)
     PhaseManager:PopPhase(PhaseId.PRTSInvestigateReport)
     
-    if not self.m_showSubmitAni then
+    if not self.m_isNewReport then
         return
     end
     

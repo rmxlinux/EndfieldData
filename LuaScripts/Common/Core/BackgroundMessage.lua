@@ -263,8 +263,6 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
 
         
         [MessageConst.ON_SWITCH_LANGUAGE] = "OnSwitchLanguage",
-        
-        [MessageConst.ON_INPUT_DEVICE_TYPE_CHANGED] = "OnInputDeviceTypeChange",
     },
     
     ['SimulationTrainingTrackHud'] = {

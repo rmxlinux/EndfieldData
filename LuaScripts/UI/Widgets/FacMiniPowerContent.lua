@@ -82,6 +82,7 @@ FacMiniPowerContent.ToggleCoroutine = HL.Method(HL.Boolean) << function(self, ac
         end
     else
         self.m_refreshCoroutine = self:_ClearCoroutine(self.m_refreshCoroutine)
+        self.m_softMaskResetCoroutine = self:_ClearCoroutine(self.m_softMaskResetCoroutine)
     end
 end
 
@@ -283,6 +284,8 @@ FacMiniPowerContent._HideBackupPower = HL.Method() << function(self)
     reserveNode.gameObject:SetActive(false)
 end
 
+FacMiniPowerContent.m_softMaskResetCoroutine = HL.Field(HL.Thread)
+
 FacMiniPowerContent._UpdateBackupPowerState = HL.Method() << function(self)
     if not (self.shouldShowBackupPower and self.m_canShowBackupPower) then
         return
@@ -333,6 +336,14 @@ FacMiniPowerContent._UpdateBackupPowerState = HL.Method() << function(self)
         
         if inUse then
             reserveNode.lineAnimationWrapper:Play(self.view.config.BACKUP_IN_USE)
+            
+            self:_ClearCoroutine(self.m_softMaskResetCoroutine)
+            self.m_softMaskResetCoroutine = self:_StartCoroutine(function()
+                coroutine.wait(0.2)
+                local currentPos = reserveNode.bgUseLineMask.anchoredPosition
+                reserveNode.bgUseLineMask.anchoredPosition = CS.UnityEngine.Vector2(currentPos.x, currentPos.y + 0.00001)
+                reserveNode.bgUseLineMask.anchoredPosition = CS.UnityEngine.Vector2(currentPos.x, currentPos.y)
+            end)
         end
     end
 
