@@ -447,7 +447,14 @@ ShopDetailCtrl._OnClickConfirm = HL.Method() << function(self)
     if self.m_moneyId == Tables.globalConst.gachaWeaponItemId then
         GameInstance.player.shopSystem:ByGoodsGachaWeapon(info.shopId, info.goodsId)
     else
-        GameInstance.player.shopSystem:BuyGoods(info.shopId, info.goodsId, buyCount)
+        
+        local msg = CS.Proto.CS_SHOP_BUY()
+        msg.ShopId = info.shopId
+        msg.GoodsId = info.goodsId
+        msg.Count = buyCount
+        msg.UseWeaponboxTicket = false
+        msg.Timestamp = DateTimeUtils.GetCurrentTimestampBySeconds()
+        GameInstance.player.shopSystem:SendUIMsg(msg)
     end
 end
 

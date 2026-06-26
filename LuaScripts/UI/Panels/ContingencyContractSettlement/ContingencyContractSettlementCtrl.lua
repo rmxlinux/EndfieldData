@@ -149,6 +149,7 @@ ContingencyContractSettlementCtrl.OnClose = HL.Override() << function(self)
         self.m_recoverInputTimerKey = self:_ClearTimer(self.m_recoverInputTimerKey)
     end
     Utils.stopDefaultChannelVoice()
+    PhaseManager:SetForbidInputDeviceChange("ContingencyContract.Settlement", false)
 end
 
 

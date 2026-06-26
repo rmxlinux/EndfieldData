@@ -188,6 +188,17 @@ PhaseActivityCenter.ShowActivity = HL.Method(HL.Any) << function(self, arg)
     end
 
     
+    local _, activityData = Tables.activityTable:TryGetValue(activityId)
+    if activityData and not string.isEmpty(activityData.bgm) then
+        AudioManager.PostEvent(activityData.bgm)
+    else
+        if not arg.isInit then
+            
+            AudioManager.PostEvent("au_music_meta_ui_stop")
+        end
+    end
+
+    
     if DeviceInfo.usingController then
         
         panel.uiCtrl:BindInputPlayerAction("common_back", function()

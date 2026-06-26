@@ -168,6 +168,7 @@ ContingencyContractHudCtrl.OnEndToastStart = HL.Method(HL.String) << function(se
         return
     end
     self:_ToggleTopMainHud(false)
+    PhaseManager:SetForbidInputDeviceChange("ContingencyContract.Settlement", true)
     self:Close()
 end
 

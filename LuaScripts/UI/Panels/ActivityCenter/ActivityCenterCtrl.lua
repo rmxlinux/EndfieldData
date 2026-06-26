@@ -444,16 +444,8 @@ ActivityCenterCtrl._OnTabClicked = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Bo
         end,
         btnClose = self.view.btnClose,
         delay = ActivityCenterCtrl.s_debugDelay >= 0 and ActivityCenterCtrl.s_debugDelay or self.view.config.SHOW_ACTIVITY_FROM_NAVI_DELAY,
+        isInit = isInit or false,
     })
-    
-    local _, activityData = Tables.activityTable:TryGetValue(id)
-    if activityData and not string.isEmpty(activityData.bgm) then
-        AudioManager.PostEvent(activityData.bgm)
-    else
-        if not isInit then
-            AudioManager.PostEvent("au_music_meta_ui_stop")
-        end
-    end
 
     
     if self.m_needSaveClientData then
