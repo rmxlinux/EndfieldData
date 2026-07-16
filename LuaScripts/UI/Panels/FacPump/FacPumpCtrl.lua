@@ -1,66 +1,28 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacPump
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacPumpCtrl = HL.Class('FacPumpCtrl', uiCtrl.UICtrl)
 
 local NORMAL_DESC_TEXT_ID = "ui_fac_liquid_pump_last"
 local EMPTY_DESC_TEXT_ID = "ui_fac_liquid_pump_noliquid"
 local EMPTY_ITEM_NAME_TEXT_ID = "ui_fac_liquid_pump_noleft"
 
-
 FacPumpCtrl.m_buildingInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_FluidPumpIn)
-
 
 FacPumpCtrl.m_sourceInfo = HL.Field(CS.Beyond.Gameplay.Factory.FactoryUtil.FluidContainerInfo)
 
-
 FacPumpCtrl.m_sourceContainer = HL.Field(HL.Userdata)
-
 
 FacPumpCtrl.m_lastSourceItemCount = HL.Field(HL.Number) << -1
 
-
 FacPumpCtrl.m_lastSourceItemId = HL.Field(HL.String) << ""
-
 
 FacPumpCtrl.m_updateThread = HL.Field(HL.Thread)
 
-
 FacPumpCtrl.m_progressInitThread = HL.Field(HL.Thread)
-
 
 FacPumpCtrl.m_progressUpdateThread = HL.Field(HL.Thread)
 
-
 FacPumpCtrl.m_needRefreshProgress = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -70,9 +32,6 @@ FacPumpCtrl.m_needRefreshProgress = HL.Field(HL.Boolean) << false
 FacPumpCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 FacPumpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -89,7 +48,7 @@ FacPumpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.facCacheRepository:InitFacCacheRepository({
         cache = self.m_buildingInfo.pumpCache,
         isInCache = false,
-        isFluidCache = true,
+        cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid,
         cacheIndex = 1,
         slotCount = 1,
         fakeFormulaDataList = FactoryUtils.getBuildingCrafts(self.m_buildingInfo.buildingId),
@@ -129,13 +88,9 @@ FacPumpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.facCacheRepository.view.repoNaviGroup:NaviToThisGroup()
 end
 
-
-
 FacPumpCtrl.OnClose = HL.Override() << function(self)
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_buildingInfo.nodeId)
 end
-
-
 
 FacPumpCtrl._InitPumpSourceContainer = HL.Method() << function(self)
     local sourceNodeId = self.m_buildingInfo.fluidPumpIn.sourceNodeId
@@ -156,8 +111,6 @@ end
 
 
 
-
-
 FacPumpCtrl._InitPumpUpdateThread = HL.Method() << function(self)
     self:_RefreshPumpSourceContainerItemCount()
     self.m_updateThread = self:_StartCoroutine(function()
@@ -167,8 +120,6 @@ FacPumpCtrl._InitPumpUpdateThread = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 FacPumpCtrl._RefreshPumpSourceContainerBasicContent = HL.Method() << function(self)
     if self.m_sourceInfo == nil then
@@ -193,8 +144,6 @@ FacPumpCtrl._RefreshPumpSourceContainerBasicContent = HL.Method() << function(se
     self.view.normalCountNode.gameObject:SetActive(not isInfinite)
     self.view.infiniteCountNode.gameObject:SetActive(isInfinite)
 end
-
-
 
 FacPumpCtrl._RefreshPumpSourceContainerItemCount = HL.Method() << function(self)
     if self.m_sourceContainer == nil or self.m_sourceInfo == nil then
@@ -236,8 +185,6 @@ FacPumpCtrl._RefreshPumpSourceContainerItemCount = HL.Method() << function(self)
     self.m_lastSourceItemCount = currentCount
 end
 
-
-
 FacPumpCtrl._RefreshPumpTargetFormula = HL.Method() << function(self)
     local targetCraftInfo = FactoryUtils.getBuildingProcessingCraft(self.m_buildingInfo)
     if self.view.buildingCommon.lastState ~= GEnums.FacBuildingState.Normal then
@@ -246,9 +193,6 @@ FacPumpCtrl._RefreshPumpTargetFormula = HL.Method() << function(self)
     self.view.formulaNode:RefreshDisplayFormula(targetCraftInfo)
     self.view.facCacheRepository:UpdateRepositoryFormula(targetCraftInfo ~= nil and targetCraftInfo.craftId or "")
 end
-
-
-
 
 FacPumpCtrl._RefreshChangeState = HL.Method(HL.Userdata) << function(self, state)
     local sourceItemId = self.m_sourceContainer.holdItem.id
@@ -267,8 +211,6 @@ end
 
 
 
-
-
 FacPumpCtrl._InitPumpProgressInitThread = HL.Method() << function(self)
     self:_UpdatePumpProgressInitializedState()
     self.m_progressInitThread = self:_StartCoroutine(function()
@@ -279,8 +221,6 @@ FacPumpCtrl._InitPumpProgressInitThread = HL.Method() << function(self)
     end)
 end
 
-
-
 FacPumpCtrl._InitPumpProgressUpdateThread = HL.Method() << function(self)
     self:_RefreshPumpProgress()
     self.m_progressUpdateThread = self:_StartCoroutine(function()
@@ -290,8 +230,6 @@ FacPumpCtrl._InitPumpProgressUpdateThread = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 FacPumpCtrl._UpdatePumpProgressInitializedState = HL.Method() << function(self)
     if self.m_buildingInfo.fluidPumpIn.progressIncrPerMS == 0 then
@@ -320,8 +258,6 @@ FacPumpCtrl._UpdatePumpProgressInitializedState = HL.Method() << function(self)
     self.m_progressInitThread = self:_ClearCoroutine(self.m_progressInitThread)
 end
 
-
-
 FacPumpCtrl._RefreshPumpProgress = HL.Method() << function(self)
     if not self.m_needRefreshProgress then
         return
@@ -330,16 +266,10 @@ FacPumpCtrl._RefreshPumpProgress = HL.Method() << function(self)
     self.view.facProgressNode:UpdateProgress(self.m_buildingInfo.fluidPumpIn.currentProgress)
 end
 
-
-
 FacPumpCtrl._StopPumpProgressRefresh = HL.Method() << function(self)
     self.view.facProgressNode:InitFacProgressNode(0, 0)
     self.m_needRefreshProgress = false
 end
-
-
-
-
 
 
 
@@ -352,7 +282,7 @@ FacPumpCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) << functi
     end
 
     
-    local isEmptyBottle = Tables.emptyBottleTable:ContainsKey(itemBundle.id)
+    local isEmptyBottle = FactoryUtils.isEmptyBottleOrJarItem(itemBundle.id, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
     local isEmpty = string.isEmpty(itemBundle.id)
     
     if not isEmptyBottle and not isEmpty then
@@ -369,10 +299,7 @@ end
 
 
 
-
 FacPumpCtrl.m_naviGroupSwitcher = HL.Field(HL.Forward('NaviGroupSwitcher'))
-
-
 
 FacPumpCtrl._InitFacMachineCrafterController = HL.Method() << function(self)
     local NaviGroupSwitcher = require_ex("Common/Utils/UI/NaviGroupSwitcher").NaviGroupSwitcher
@@ -380,8 +307,6 @@ FacPumpCtrl._InitFacMachineCrafterController = HL.Method() << function(self)
 
     self:_RefreshNaviGroupSwitcherInfos()
 end
-
-
 
 FacPumpCtrl._RefreshNaviGroupSwitcherInfos = HL.Method() << function(self)
     if self.m_naviGroupSwitcher == nil then

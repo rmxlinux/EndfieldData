@@ -1,51 +1,19 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DialogCtrlBase = HL.Class('DialogCtrlBase', uiCtrl.UICtrl)
-
 
 DialogCtrlBase.m_optionCells = HL.Field(HL.Forward("UIListCache"))
 
-
 DialogCtrlBase.m_optionCount = HL.Field(HL.Number) << 0
 
+DialogCtrlBase.m_curEntryLinks = HL.Field(HL.Userdata) << nil
+
+DialogCtrlBase.m_enableGlossaryPopUp = HL.Field(HL.Boolean) << true
 
 
 
 
 
 DialogCtrlBase.s_messages = HL.StaticField(HL.Table) << {}
-
-
-
 
 
 DialogCtrlBase.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -88,26 +56,26 @@ DialogCtrlBase.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:OnBtnStopClick()
     end)
 
+    self.view.textTalk.uiText.onClickLink:RemoveAllListeners()
+    self.view.textTalk.uiText.onClickLink:AddListener(function(linkId)
+        self:OnLinkClick(linkId)
+    end)
+
     
     self:_InitDialogController()
     self:OnCreated(arg)
 end
-
-
-
 
 DialogCtrlBase.OnCreated = HL.Virtual(HL.Any) << function(self, arg)
 end
 
 
 
-
-
 DialogCtrlBase._InitDialogController = HL.Method() << function(self)
     self:_SwitchControllerAutoPlayHint()
+    self:_RefreshGlossaryNoteKeyHint()
+    self:BindInputPlayerAction("dialog_open_note", function() self:_OpenGlossaryPopUp() end)
 end
-
-
 
 DialogCtrlBase._EnableDialogControllerOption = HL.Method() << function(self)
     if not DeviceInfo.usingController or self.m_optionCount <= 0 then
@@ -122,8 +90,6 @@ DialogCtrlBase._EnableDialogControllerOption = HL.Method() << function(self)
     self.view.optionNaviGroup:ManuallyFocus()
 end
 
-
-
 DialogCtrlBase._DisableDialogControllerOption = HL.Method() << function(self)
     if not DeviceInfo.usingController or self.m_optionCount > 0 then
         return
@@ -131,9 +97,6 @@ DialogCtrlBase._DisableDialogControllerOption = HL.Method() << function(self)
 
     self.view.optionNaviGroup:ManuallyStopFocus()
 end
-
-
-
 
 DialogCtrlBase.SetTrunkOption = HL.Virtual(HL.Userdata) << function(self, optionData)
     if self:IsHide() then
@@ -178,31 +141,18 @@ DialogCtrlBase.SetTrunkOption = HL.Virtual(HL.Userdata) << function(self, option
     self:_TrySetWaitNode(showWait)
 end
 
-
-
 DialogCtrlBase._RefreshCanSkip = HL.Virtual() << function(self)
 end
 
-
-
 DialogCtrlBase.OnDialogTextStopped = HL.Virtual() << function(self)
 end
-
-
-
-
 
 DialogCtrlBase.OnOptionClick = HL.Virtual(HL.Number, HL.Any) << function(self, index, data)
 end
 
 
-
-
-
 DialogCtrlBase._TrySetWaitNode = HL.Virtual(HL.Boolean) << function(self, active)
 end
-
-
 
 DialogCtrlBase._SwitchControllerAutoPlayHint = HL.Method() << function(self)
     local onAutoPlay = self:_GetCurrentAutoMode()
@@ -217,7 +167,19 @@ DialogCtrlBase._SwitchControllerAutoPlayHint = HL.Method() << function(self)
     self.view.controllerHint.skipHintLoop.gameObject:SetActiveIfNecessary(onAutoPlay)
 end
 
+DialogCtrlBase._RefreshGlossaryNoteKeyHint = HL.Method() << function(self)
+    local enable = true
 
+    if self.m_phase == nil or self.m_curEntryLinks == nil or self.m_curEntryLinks.Count == 0 then
+        enable = false
+    end
+
+    if not self.m_enableGlossaryPopUp then
+        enable = false
+    end
+
+    self.view.noteKeyHintNode.gameObject:SetActive(enable)
+end
 
 DialogCtrlBase._GetCurrentAutoMode = HL.Virtual().Return(HL.Boolean) << function(self)
     return GameWorld.dialogManager.autoMode
@@ -226,38 +188,56 @@ end
 
 
 
-
-
 DialogCtrlBase.OnBtnBackClick = HL.Virtual() << function(self)
 end
-
-
 
 DialogCtrlBase.OnBtnNextClick = HL.Virtual() << function(self)
 end
 
-
-
 DialogCtrlBase.OnBtnSkipClick = HL.Virtual() << function(self)
 end
 
-
-
 DialogCtrlBase.OnBtnAutoClick = HL.Virtual() << function(self)
 end
-
-
 
 DialogCtrlBase.OnBtnLogClick = HL.Virtual() << function(self)
     self:Notify(MessageConst.OPEN_DIALOG_RECORD)
 end
 
-
-
 DialogCtrlBase.OnBtnStopClick = HL.Virtual() << function(self)
 end
 
 
+
+DialogCtrlBase.OnLinkClick = HL.Virtual(HL.String) << function(self, linkId)
+    if UIUtils.resolveLinkTypeFromId(linkId) ~= UIConst.UI_TEXT_LINK_TYPE.Narrative then
+        return
+    end
+    self:_OpenGlossaryPopUp()
+end
+
+DialogCtrlBase._OpenGlossaryPopUp = HL.Method() << function(self)
+    if self.m_phase == nil or self.m_curEntryLinks == nil or self.m_curEntryLinks.Count == 0 then
+        return
+    end
+
+    if not self.m_enableGlossaryPopUp then
+        return
+    end
+
+    AudioAdapter.PostEvent("Au_UI_Button_Common")
+    self.m_phase:CreatePhasePanelItem(PanelId.DialogGlossaryPopUp, { self.m_curEntryLinks })
+end
+
+DialogCtrlBase.SetCurEntryLinks = HL.Method(HL.Userdata) << function(self, links)
+    self.m_curEntryLinks = links
+    self:_RefreshGlossaryNoteKeyHint()
+end
+
+DialogCtrlBase.SetGlossaryPopUpEnable = HL.Method(HL.Boolean) << function(self, isEnable)
+    self.m_enableGlossaryPopUp = isEnable
+    self:_RefreshGlossaryNoteKeyHint()
+end
 
 
 
@@ -267,14 +247,9 @@ DialogCtrlBase._RefreshAutoMode = HL.Virtual(HL.Boolean) << function(self, autoM
     self:_SwitchControllerAutoPlayHint()
 end
 
-
-
-
 DialogCtrlBase.OnRefreshAutoMode = HL.Method(HL.Table) << function (self, arg)
     self:_RefreshAutoMode(unpack(arg))
 end
-
-
 
 
 DialogCtrlBase.ShowDevWaterMark = HL.Method() << function(self)
@@ -285,13 +260,9 @@ DialogCtrlBase.ShowDevWaterMark = HL.Method() << function(self)
     end
 end
 
-
-
 DialogCtrlBase.GetCurDialogId = HL.Virtual().Return(HL.String) << function(self)
     return ""
 end
-
-
 
 DialogCtrlBase.CheckTextPlaying = HL.Method().Return(HL.Boolean) << function(self)
     if self.view.textTalk.gameObject.activeInHierarchy and self.view.textTalk.playing then
@@ -300,8 +271,6 @@ DialogCtrlBase.CheckTextPlaying = HL.Method().Return(HL.Boolean) << function(sel
 
     return false
 end
-
-
 
 DialogCtrlBase.OnShow = HL.Override() << function(self)
     self:OnDialogShow()
@@ -319,15 +288,11 @@ DialogCtrlBase.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 DialogCtrlBase.OnDialogShow = HL.Virtual() << function(self)
     if self.m_optionCount > 0 then
          self:_EnableDialogControllerOption()
     end
 end
-
-
 
 
 

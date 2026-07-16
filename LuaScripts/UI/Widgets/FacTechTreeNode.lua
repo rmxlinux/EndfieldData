@@ -7,39 +7,19 @@ local State = {
     Unlocked = 3,
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
 FacTechTreeNode = HL.Class('FacTechTreeNode', UIWidgetBase)
-
 
 FacTechTreeNode.techId = HL.Field(HL.String) << ""
 
-
 FacTechTreeNode.x = HL.Field(HL.Number) << 0
-
 
 FacTechTreeNode.y = HL.Field(HL.Number) << 0
 
-
 FacTechTreeNode.m_state = HL.Field(HL.Number) << State.None
-
 
 FacTechTreeNode.m_onClickFunc = HL.Field(HL.Function)
 
-
 FacTechTreeNode.m_onIsNaviTargetChanged = HL.Field(HL.Function)
-
-
 
 
 FacTechTreeNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -56,12 +36,6 @@ FacTechTreeNode._OnFirstTimeInit = HL.Override() << function(self)
         end
     end
 end
-
-
-
-
-
-
 
 FacTechTreeNode.InitFacTechTreeNode = HL.Method(HL.Table, HL.Boolean, HL.Function, HL.Function)
         << function(self, techInfo, recommend, onClickFun, onIsNaviTargetChanged)
@@ -81,9 +55,6 @@ FacTechTreeNode.InitFacTechTreeNode = HL.Method(HL.Table, HL.Boolean, HL.Functio
     self:Refresh(recommend)
     self.view.redDot:InitRedDot("TechTreeNode", techInfo.techId)
 end
-
-
-
 
 FacTechTreeNode.Refresh = HL.Method(HL.Boolean) << function(self, recommend)
     local techTreeSystem = GameInstance.player.facTechTreeSystem
@@ -130,15 +101,9 @@ FacTechTreeNode.Refresh = HL.Method(HL.Boolean) << function(self, recommend)
     end
 end
 
-
-
-
 FacTechTreeNode.OnSelect = HL.Method(HL.Boolean) << function(self, isSelect)
     self.view.selected.gameObject:SetActiveIfNecessary(isSelect)
 end
-
-
-
 
 FacTechTreeNode.OnShowNameStateChange = HL.Method(HL.Boolean) << function(self, show)
     self.view.nameNode.gameObject:SetActiveIfNecessary(show)

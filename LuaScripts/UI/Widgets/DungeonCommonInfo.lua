@@ -15,57 +15,30 @@ local Style = {
 
 local HunterModeInstructionId = "hunter_mode"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DungeonCommonInfo = HL.Class('DungeonCommonInfo', UIWidgetBase)
-
 
 DungeonCommonInfo.m_dungeonId = HL.Field(HL.String) << ""
 
-
 DungeonCommonInfo.m_customArgs = HL.Field(HL.Table)
-
 
 DungeonCommonInfo.m_detailRewardData = HL.Field(HL.Table)
 
-
 DungeonCommonInfo.m_rewardCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 DungeonCommonInfo.m_dungeonGoalCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 DungeonCommonInfo.m_charAttributeCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
+DungeonCommonInfo.m_paramBlackboard = HL.Field(CS.Beyond.Blackboard)
+DungeonCommonInfo.m_paramBlackboardFormatData = HL.Field(CS.Beyond.Gameplay.BlackboardFormatData)
 
 
 DungeonCommonInfo._OnFirstTimeInit = HL.Override() << function(self)
     self.m_rewardCellCache = UIUtils.genCellCache(self.view.rewardCell)
     self.m_dungeonGoalCellCache = UIUtils.genCellCache(self.view.dungeonGoalCell)
     self.m_charAttributeCellCache = UIUtils.genCellCache(self.view.attriNode)
+    self.m_paramBlackboard = CS.Beyond.Blackboard()
+    self.m_paramBlackboardFormatData = CS.Beyond.Gameplay.BlackboardFormatData(self.m_paramBlackboard)
 
     self.view.tipsBtn.onClick:AddListener(function()
         self:_OnTipsBtnClick()
@@ -77,6 +50,10 @@ DungeonCommonInfo._OnFirstTimeInit = HL.Override() << function(self)
 
     self.view.btnRewardDetails.onClick:AddListener(function()
         self:_OnBtnRewardDetailsClick()
+    end)
+
+    self.view.btnSelectReward.onClick:AddListener(function()
+        self:_OnBtnSelectRewardClick()
     end)
 
     self.view.btnDungeonEntry.onClick:AddListener(function()
@@ -103,16 +80,10 @@ DungeonCommonInfo._OnFirstTimeInit = HL.Override() << function(self)
     self.view.walletBarPlaceholder:InitWalletBarPlaceholder(ids)
 end
 
-
-
-
 DungeonCommonInfo.InitDungeonCommonInfo = HL.Method(HL.Table) << function(self, customArgs)
     self:_FirstTimeInit()
     self.m_customArgs = customArgs
 end
-
-
-
 
 DungeonCommonInfo.RefreshDungeonCommonInfo = HL.Method(HL.String) << function(self, dungeonId)
     self.m_dungeonId = dungeonId
@@ -124,8 +95,6 @@ DungeonCommonInfo.RefreshDungeonCommonInfo = HL.Method(HL.String) << function(se
     self.view.animation:PlayInAnimation()
 end
 
-
-
 DungeonCommonInfo._RefreshCommonInfo = HL.Method() << function(self)
     local dungeonCfg = Tables.dungeonTable[self.m_dungeonId]
     local dungeonMgr = GameInstance.dungeonManager
@@ -136,12 +105,20 @@ DungeonCommonInfo._RefreshCommonInfo = HL.Method() << function(self)
     local hasExtraReward = not string.isEmpty(dungeonCfg.extraRewardId)
     local extraRewardGained = dungeonMgr:IsDungeonExtraRewardGained(self.m_dungeonId)
 
+    self.m_paramBlackboard:Clear()
+    if dungeonCfg.paramList then
+        for i = 1, dungeonCfg.paramList.Count do
+            local param = dungeonCfg.paramList[CSIndex(i)]
+            self.m_paramBlackboard:Assign(param.key, param.value)
+        end
+    end
+
     
     local hasHunterMode = DungeonUtils.isDungeonHasHunterMode(self.m_dungeonId)
     
     local hunterModeOpen = DungeonUtils.isHunterModeUnlocked()
     
-    local haveHardMode = Tables.dungeonRaidTable:TryGetValue(self.m_dungeonId)
+    local haveHardMode = Tables.dungeonRaidTable:TryGetValue(self.m_dungeonId) or Tables.dungeonRaid2NormalTable:TryGetValue(self.m_dungeonId) or Tables.dungeonNormal2RaidTable:TryGetValue(self.m_dungeonId)
     local styleState = Style.DefaultMode
     if hasHunterMode then
         styleState = Style.HunterMode
@@ -166,7 +143,7 @@ DungeonCommonInfo._RefreshCommonInfo = HL.Method() << function(self)
     
     self.view.timeRecordNode.gameObject:SetActive(showTimeInfo)
     self.view.timeTxt.text = (hasRecord and isPass) and
-            UIUtils.getLeftTimeToSecond(subGameRecord.bestPassTime / 1000) or "--:--:--"
+            UIUtils.getLeftTimeToSecond(math.floor(subGameRecord.bestPassTime / 1000)) or "--:--:--"
 
     
     local hasLocation = not string.isEmpty(dungeonCfg.levelId)
@@ -189,7 +166,8 @@ DungeonCommonInfo._RefreshCommonInfo = HL.Method() << function(self)
     
     local hasFeature = DungeonUtils.isDungeonHasFeatureInfo(self.m_dungeonId)
     if hasFeature then
-        self.view.featureTxt:SetAndResolveTextStyle(dungeonCfg.featureDesc)
+        self.view.featureTxt:SetAndResolveTextStyle(
+            CS.Beyond.Gameplay.FormatUtils.FormatBattleText(dungeonCfg.featureDesc, self.m_paramBlackboardFormatData))
     end
     self.view.feature.gameObject:SetActive(hasFeature)
 
@@ -259,8 +237,7 @@ DungeonCommonInfo._RefreshCommonInfo = HL.Method() << function(self)
     self:_RefreshDungeonRewards()
 
     local hasCustomReward = not string.isEmpty(dungeonCfg.customRewardId)
-    
-    self.view.selectNode.gameObject:SetActive(hasCustomReward)
+    self.view.rewardNode:SetState(hasCustomReward and "CustomReward" or "NormalReward ")
     
     self.view.materialDecoImage.gameObject:SetActive(hasCustomReward)
     self:_RefreshBottomStamina()
@@ -317,20 +294,28 @@ DungeonCommonInfo._RefreshCommonInfo = HL.Method() << function(self)
     end
     self.view.unlockedNode.gameObject:SetActive(isUnlock)
     if haveHardMode then
-        self.view.hardTogStateController:SetState(Tables.dungeonRaidTable[self.m_dungeonId].isRaid and "On" or "Off")
+        local isHardRaid , hardRaidData = Tables.dungeonRaidTable:TryGetValue(self.m_dungeonId)
+        local stateName = ""
+        if isHardRaid then
+            if hardRaidData.isRaid then
+                stateName = "On"
+            else
+                stateName = "Off"
+            end
+        else
+            
+             local isRaid2Normal = Tables.dungeonRaid2NormalTable:TryGetValue(self.m_dungeonId)
+             if isRaid2Normal then
+                stateName = "On"
+             else
+                stateName = "Off"
+             end
+        end
+        self.view.hardTogStateController:SetState(stateName)
     else
         self.view.hardModeNode.gameObject:SetActive(false)
     end
 end
-
-
-
-
-
-
-
-
-
 
 DungeonCommonInfo._GenRewardInfo = HL.Method(HL.String, HL.Number, HL.Number, HL.Boolean, HL.Boolean, HL.String,
                                              HL.Opt(HL.Number)).Return(HL.Table)
@@ -351,8 +336,6 @@ DungeonCommonInfo._GenRewardInfo = HL.Method(HL.String, HL.Number, HL.Number, HL
         sortId2 = itemCfg.sortId2,
     }
 end
-
-
 
 DungeonCommonInfo._RefreshDungeonRewards = HL.Method() << function(self)
     local dungeonMgr = GameInstance.dungeonManager
@@ -441,8 +424,6 @@ DungeonCommonInfo._RefreshDungeonRewards = HL.Method() << function(self)
     self.view.rewardList.normalizedPosition = Vector2(0, 0)
 end
 
-
-
 DungeonCommonInfo._RefreshBottomStamina = HL.Method() << function(self)
     if not DungeonUtils.isDungeonUnlock(self.m_dungeonId) then
         self.view.staminaLaveNode.gameObject:SetActive(false)
@@ -468,8 +449,6 @@ DungeonCommonInfo._RefreshBottomStamina = HL.Method() << function(self)
     self.view.staminaLaveNode.gameObject:SetActive(canReduceStamina)
 end
 
-
-
 DungeonCommonInfo._RefreshWalletBar = HL.Method() << function(self)
     
     local dungeonCfg = Tables.dungeonTable[self.m_dungeonId]
@@ -477,20 +456,22 @@ DungeonCommonInfo._RefreshWalletBar = HL.Method() << function(self)
     self.view.walletBarPlaceholder.gameObject:SetActive(showWalletBar)
 end
 
-
-
 DungeonCommonInfo._OnTipsBtnClick = HL.Method() << function(self)
     UIManager:Open(PanelId.InstructionBook, HunterModeInstructionId)
 end
-
-
 
 DungeonCommonInfo._OnBtnRewardDetailsClick = HL.Method() << function(self)
     local dungeonCfg = Tables.dungeonTable[self.m_dungeonId]
     local hasOptionReward = not string.isEmpty(dungeonCfg.customRewardId)
     local openPanelId = hasOptionReward and PanelId.DungeonRewardSelectPopup or PanelId.CommonRewardDetailsPopup
+    
+    
+    local firstPartRewards = self.m_detailRewardData
+    if firstPartRewards == nil or next(firstPartRewards) == nil then
+        firstPartRewards = DungeonUtils.genFirstPartRewardsInfo(self.m_dungeonId)
+    end
     local args = hasOptionReward and { dungeonId = self.m_dungeonId } or {
-        firstPartRewards = self.m_detailRewardData or DungeonUtils.genFirstPartRewardsInfo(self.m_dungeonId),
+        firstPartRewards = firstPartRewards,
         firstPartRewardsTitle = DungeonUtils.getRewardsDetailFirstRowTitle(self.m_dungeonId),
         secondPartRewards = DungeonUtils.genSecondPartRewardsInfo(self.m_dungeonId),
         secondPartRewardsTitle = DungeonUtils.getRewardsDetailSecondRowTitle(self.m_dungeonId),
@@ -498,15 +479,13 @@ DungeonCommonInfo._OnBtnRewardDetailsClick = HL.Method() << function(self)
     UIManager:AutoOpen(openPanelId, args)
 end
 
-
-
+DungeonCommonInfo._OnBtnSelectRewardClick = HL.Method() << function(self)
+    UIManager:AutoOpen(PanelId.DungeonRewardSelectPopup, { dungeonId = self.m_dungeonId })
+end
 
 DungeonCommonInfo.SetRewardDetailsData = HL.Method(HL.Table) << function(self, data)
     self.m_detailRewardData = data
 end
-
-
-
 
 DungeonCommonInfo._OnBtnEnemyDetailsClick = HL.Method(HL.Opt(HL.Number)) << function(self, initSelectEnemyLuaIndex)
     local dungeonCfg = Tables.dungeonTable[self.m_dungeonId]
@@ -517,14 +496,13 @@ DungeonCommonInfo._OnBtnEnemyDetailsClick = HL.Method(HL.Opt(HL.Number)) << func
         enemyInfoTitle = Language["ui_dungeon_enemy_popup_info_desc"],
         enemyIds = dungeonCfg.enemyIds,
         enemyLevels = dungeonCfg.enemyLevels,
+        hideDamageTakenInfo = (dungeonCfg.dungeonCategory == "dungeon_highdifficulty")
     }
     if initSelectEnemyLuaIndex ~= nil then
         enemyPopupArg.initSelectEnemyLuaIndex = initSelectEnemyLuaIndex
     end
     UIManager:AutoOpen(PanelId.CommonEnemyPopup, enemyPopupArg)
 end
-
-
 
 DungeonCommonInfo.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
@@ -569,8 +547,6 @@ DungeonCommonInfo.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL.Any)) <
         }
     end
 end
-
-
 
 
 DungeonCommonInfo.TryRecoverPopupState = HL.Method(HL.Any) << function(self, popupState)
@@ -619,8 +595,6 @@ DungeonCommonInfo.TryRecoverPopupState = HL.Method(HL.Any) << function(self, pop
     end
 end
 
-
-
 DungeonCommonInfo._OnBtnDungeonEntryClick = HL.Method() << function(self)
     local isCostStamina, costStamina = DungeonUtils.isDungeonCostStamina(self.m_dungeonId)
     local realCostStamina = ActivityUtils.getRealStaminaCost(costStamina)
@@ -633,16 +607,13 @@ DungeonCommonInfo._OnBtnDungeonEntryClick = HL.Method() << function(self)
     end
 end
 
-
-
-DungeonCommonInfo._OpenCharFormation = HL.Method() << function(self)
+DungeonCommonInfo._OpenCharFormation = HL.Virtual() << function(self)
     PhaseManager:GoToPhase(PhaseId.CharFormation, {
         dungeonId = self.m_dungeonId,
         enterDungeonCallback = self.m_customArgs and self.m_customArgs.enterDungeonCallback or nil,
+        enterConfirmCallback = self.m_customArgs and self.m_customArgs.enterConfirmCallback or nil,
     })
 end
-
-
 
 DungeonCommonInfo._OnBtnUnlockConditionClick = HL.Method() << function(self)
     local uncompletedConditionIds = DungeonUtils.getUncompletedConditionIds(self.m_dungeonId)

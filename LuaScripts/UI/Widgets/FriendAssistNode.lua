@@ -4,16 +4,7 @@ local ignoreRedDotRoomType = {
     [GEnums.SpaceshipRoomType.GrowCabin] = true,
 }
 
-
-
-
-
-
-
-
 FriendAssistNode = HL.Class('FriendAssistNode', UIWidgetBase)
-
-
 
 
 FriendAssistNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -25,14 +16,9 @@ FriendAssistNode._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
 FriendAssistNode.m_assistCells = HL.Field(HL.Forward('UIListCache'))
 
-
 FriendAssistNode.m_roomId = HL.Field(HL.String) << ""
-
-
-
 
 
 FriendAssistNode.InitFriendAssistNode = HL.Method(HL.String) << function(self, roomId)
@@ -48,8 +34,6 @@ FriendAssistNode.InitFriendAssistNode = HL.Method(HL.String) << function(self, r
         UIManager:AutoOpen(PanelId.SpaceShipFriendHelpList, {roomId = roomId})
     end)
 end
-
-
 
 FriendAssistNode.UpdateData = HL.Method() << function(self)
     local beHelpedCreditLeft, beAssistTime = GameInstance.player.spaceship:GetCabinAssistedTime(self.m_roomId)
@@ -86,8 +70,6 @@ FriendAssistNode.UpdateData = HL.Method() << function(self)
         end
     end
 end
-
-
 
 FriendAssistNode._SetTimeText = HL.Method() << function(self)
     local targetTime = Utils.getNextCommonServerRefreshTime()

@@ -4,35 +4,17 @@ local LEVEL_CELL_GOT_HINT_STATE = "GotHint"
 local LEVEL_CELL_PRESENT_STATE = "Present"
 local LEVEL_CELL_LOCKED_STATE = "Locked"
 
-
-
-
-
-
-
-
-
-
-
-
-
 SubmitCollectionLevelCell = HL.Class('SubmitCollectionLevelCell', UIWidgetBase)
 
-
 SubmitCollectionLevelCell.m_rewardItemCacheCell = HL.Field(HL.Forward("UIListCache"))
-
 
 SubmitCollectionLevelCell.m_tween = HL.Field(HL.Any)
 
 
 
-
 SubmitCollectionLevelCell.m_submitCollectionView = HL.Field(HL.Table)
 
-
 SubmitCollectionLevelCell.m_controllerSelectCellIndex = HL.Field(HL.Number) << -1
-
-
 
 
 
@@ -45,16 +27,11 @@ SubmitCollectionLevelCell._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 SubmitCollectionLevelCell._OnDestroy = HL.Override() << function(self)
     if self.m_tween ~= nil then
         self.m_tween:Kill()
     end
 end
-
-
-
 
 SubmitCollectionLevelCell._OnRewardItemClick = HL.Method(HL.Number) << function(self, rewardCellLuaIndex)
     local rewardCell = self.m_rewardItemCacheCell:Get(rewardCellLuaIndex)
@@ -68,10 +45,6 @@ SubmitCollectionLevelCell._OnRewardItemClick = HL.Method(HL.Number) << function(
 
     rewardCell:ShowTips(posInfo)
 end
-
-
-
-
 
 SubmitCollectionLevelCell.InitSubmitCollectionLevelCell = HL.Method(HL.Table, HL.Number)
         << function(self, view, csIndex)
@@ -111,12 +84,22 @@ SubmitCollectionLevelCell.InitSubmitCollectionLevelCell = HL.Method(HL.Table, HL
     local itemBundles = rewardData.itemBundles
     local rewardCount = itemBundles.Count
     self.m_rewardItemCacheCell:Refresh(rewardCount, function(rewardCell, luaIndex)
-        rewardCell:InitItem(itemBundles[CSIndex(luaIndex)], function()
+        rewardCell.view.maxMaskNode.gameObject:SetActiveIfNecessary(false)
+        local itemBundle = itemBundles[CSIndex(luaIndex)]
+        rewardCell:InitItem(itemBundle, function()
             self:_OnRewardItemClick(luaIndex)
         end)
         rewardCell:SetExtraInfo({ isSideTips = DeviceInfo.usingController })
         rewardCell.view.rewardedCover.gameObject:SetActiveIfNecessary(haveGotReward)
         rewardCell.view.button.clickHintTextId = "virtual_mouse_hint_view"
+        if not haveGotReward and itemBundle.id == "item_add_endurance" then
+            local current = GameInstance.playerController.maxDashCount
+            local maxDashCount = Tables.globalConst.maxDashEnergyLimit / Tables.globalConst.dashCostEnergyValue
+            if current >= maxDashCount then
+                rewardCell.view.rewardedCover.gameObject:SetActiveIfNecessary(false)
+                rewardCell.view.maxMaskNode.gameObject:SetActiveIfNecessary(true)
+            end
+        end
     end)
 
     
@@ -126,14 +109,9 @@ SubmitCollectionLevelCell.InitSubmitCollectionLevelCell = HL.Method(HL.Table, HL
     
 end
 
-
-
 SubmitCollectionLevelCell.SetMaxLevel = HL.Method() << function(self)
    
 end
-
-
-
 
 SubmitCollectionLevelCell.DoProgressSliderTween = HL.Method(HL.Number) << function(self, startValue)
     local curLv = GameInstance.player.inventory:CurEtherLevel()
@@ -157,8 +135,6 @@ SubmitCollectionLevelCell.DoProgressSliderTween = HL.Method(HL.Number) << functi
     end, targetValue, config.SLIDER_TWEEN_TIME):SetEase(config.SLIDER_TWEEN_CURV)
     AudioAdapter.PostEvent("Au_UI_Event_EtherCount")
 end
-
-
 
 SubmitCollectionLevelCell.GetProgressSlider = HL.Method().Return(CS.Beyond.UI.UISlider) << function(self)
     return self.view.progressSlider

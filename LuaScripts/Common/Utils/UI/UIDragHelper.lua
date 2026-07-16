@@ -1,44 +1,20 @@
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 UIDragHelper = HL.Class('UIDragHelper')
-
 
 
 UIDragHelper.info = HL.Field(HL.Table)
 
-
 UIDragHelper.source = HL.Field(HL.Number) << -1
 
-
 UIDragHelper.type = HL.Field(HL.Any)
-
+UIDragHelper.cantDrop = HL.Field(HL.Boolean) << false
+UIDragHelper.cantDropText = HL.Field(HL.String) << ""
 
 UIDragHelper.uiDragItem = HL.Field(CS.Beyond.UI.UIDragItem)
 
-
 UIDragHelper.m_enterObj = HL.Field(GameObject)
 
-
 UIDragHelper.m_enterDropHelper = HL.Field(HL.Forward('UIDropHelper'))
-
-
-
-
 
 
 
@@ -74,13 +50,12 @@ UIDragHelper.UIDragHelper = HL.Constructor(CS.Beyond.UI.UIDragItem, HL.Table) <<
     uiDragItem.luaTable = {self} 
 end
 
-
-
-
 UIDragHelper.RefreshInfo = HL.Method(HL.Table) << function(self, info)
     self.info = info
     self.source = self.info.source
     self.type = self.info.type
+    self.cantDrop = info.cantDrop or false
+    self.cantDropText = info.cantDropText or ""
 
     
     self.uiDragItem.onBeginDragEvent:AddListener(function(eventData)
@@ -93,8 +68,6 @@ UIDragHelper.RefreshInfo = HL.Method(HL.Table) << function(self, info)
         self:_OnEndDrag(eventData)
     end)
 end
-
-
 
 UIDragHelper.GetId = HL.Method().Return(HL.Any) << function(self)
     local source = self.source
@@ -116,15 +89,14 @@ UIDragHelper.GetId = HL.Method().Return(HL.Any) << function(self)
         id = info.itemId
     elseif source == UIConst.UI_DRAG_DROP_SOURCE_TYPE.UseItemBar then
         id = info.itemId
+    elseif source == UIConst.UI_DRAG_DROP_SOURCE_TYPE.DecoBuildModeSelect then
+        id = info.itemId
     end
     return id
 end
 
 
-
 UIDragHelper.isHalfDragging = HL.Field(HL.Boolean) << false
-
-
 
 UIDragHelper.GetCount = HL.Method().Return(HL.Opt(HL.Number)) << function(self)
     local count = self.info.count
@@ -141,9 +113,6 @@ end
 
 
 
-
-
-
 UIDragHelper._OnBeginDrag = HL.Method(CS.UnityEngine.EventSystems.PointerEventData) << function(self, eventData)
     if self.info.onBeginDrag then
         self.info.onBeginDrag(self.m_enterObj, self.m_enterDropHelper)
@@ -152,9 +121,6 @@ UIDragHelper._OnBeginDrag = HL.Method(CS.UnityEngine.EventSystems.PointerEventDa
     UIUtils.playItemDragAudio(self:GetId())
     Notify(MessageConst.ON_START_UI_DRAG, self)
 end
-
-
-
 
 UIDragHelper._OnEndDrag = HL.Method(CS.UnityEngine.EventSystems.PointerEventData) << function(self, eventData)
     
@@ -169,9 +135,6 @@ UIDragHelper._OnEndDrag = HL.Method(CS.UnityEngine.EventSystems.PointerEventData
     Notify(MessageConst.HIDE_ITEM_DRAG_HELPER)
 end
 
-
-
-
 UIDragHelper._OnDragging = HL.Method(CS.UnityEngine.EventSystems.PointerEventData) << function(self, eventData)
     
     local enterObj = eventData.pointerEnter
@@ -183,7 +146,7 @@ UIDragHelper._OnDragging = HL.Method(CS.UnityEngine.EventSystems.PointerEventDat
             local dropItem = enterObj:GetComponentInParent(typeof(CS.Beyond.UI.UIDropItem))
             if dropItem and dropItem.luaTable then
                 dropHelper = dropItem.luaTable[1]
-                if dropHelper:Accept(self) then
+                if dropHelper:Accept(self) and not self.cantDrop then
                     self.m_enterDropHelper = dropHelper
                     dropHelper.uiDropItem:ToggleHighlight(true)
                     GameInstance.mobileMotionManager:PostEventCommonShort()
@@ -201,8 +164,6 @@ UIDragHelper._OnDragging = HL.Method(CS.UnityEngine.EventSystems.PointerEventDat
         self.info.onDrag(eventData)
     end
 end
-
-
 
 UIDragHelper.ClearDraggingData = HL.Method() << function(self)
     

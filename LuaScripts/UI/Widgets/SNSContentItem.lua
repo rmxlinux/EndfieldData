@@ -1,12 +1,6 @@
 local SNSContentBase = require_ex('UI/Widgets/SNSContentBase')
 
-
-
-
-
 SNSContentItem = HL.Class('SNSContentItem', SNSContentBase)
-
-
 
 
 SNSContentItem._OnSNSContentInit = HL.Override() << function(self)
@@ -31,13 +25,9 @@ end
 
 
 
-
-
 SNSContentItem.CanSetTarget = HL.Override().Return(HL.Boolean) << function(self)
     return true
 end
-
-
 
 SNSContentItem.GetNaviTarget = HL.Override().Return(HL.Any) << function(self)
     return self.view.button

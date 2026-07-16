@@ -1,27 +1,6 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacPowerDiffuser
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacPowerDiffuserCtrl = HL.Class('FacPowerDiffuserCtrl', uiCtrl.UICtrl)
 
 local FAC_NOT_SHOW_TEMPLATE_ID_MINER = "miner_1"
@@ -34,37 +13,25 @@ local ADVANCED_BUILDING_ID = "power_diffuser_2"
 
 
 
-
 FacPowerDiffuserCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacPowerDiffuserCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 FacPowerDiffuserCtrl.m_uiInfo = HL.Field(HL.Userdata)
 
-
 FacPowerDiffuserCtrl.m_powerInfo = HL.Field(HL.Userdata)
-
 
 FacPowerDiffuserCtrl.m_diffuserInfos = HL.Field(HL.Table)
 
-
 FacPowerDiffuserCtrl.m_poleInfos = HL.Field(HL.Table)
-
 
 FacPowerDiffuserCtrl.m_diffuserCacheList = HL.Field(HL.Forward('UIListCache'))
 
-
 FacPowerDiffuserCtrl.m_poleCacheList = HL.Field(HL.Forward('UIListCache'))
 
-
 FacPowerDiffuserCtrl.m_isAdvancedBuilding = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -93,6 +60,8 @@ FacPowerDiffuserCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local scrollRectYEnable = self.view.scrollRect.rect.size.y < self.view.contentRect.rect.size.y
     self.view.controllerHint.gameObject:SetActiveIfNecessary(scrollRectYEnable)
 
+    self.view.buildingCommon.view.buttonsNaviGroup:NaviToThisGroup()
+
     self:_StartCoroutine(function()
         while true do
             coroutine.wait(UIConst.FAC_COMMON_UI_UPDATE_INTERVAL)
@@ -102,17 +71,12 @@ FacPowerDiffuserCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
-
 FacPowerDiffuserCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, isActive)
     self.view.controllerHint.enabled = isActive
     if self.m_diffuserInfos == nil or #self.m_diffuserInfos == 0 then
         InputManagerInst:ToggleBinding(self.view.naviGroup.FocusBindingId, false)
     end
 end
-
-
 
 FacPowerDiffuserCtrl._Refresh = HL.Method() << function(self)
     local infos = {}
@@ -172,16 +136,12 @@ FacPowerDiffuserCtrl._Refresh = HL.Method() << function(self)
     end
 end
 
-
-
 FacPowerDiffuserCtrl._InitPowerInfo = HL.Method() << function(self)
     self.m_powerInfo = FactoryUtils.getCurRegionPowerInfo()
     local powerStorageCapacity = self.m_powerInfo.powerSaveMax
     self.view.maxRestPowerText.text = string.format("/%s", UIUtils.getNumString(powerStorageCapacity))
     self:_RefreshPowerInfo()
 end
-
-
 
 FacPowerDiffuserCtrl._RefreshPowerInfo = HL.Method() << function(self)
     local powerInfo = self.m_powerInfo
@@ -193,10 +153,6 @@ FacPowerDiffuserCtrl._RefreshPowerInfo = HL.Method() << function(self)
     
     self.view.restPowerText.text = UIUtils.getNumString(restPower)
 end
-
-
-
-
 
 FacPowerDiffuserCtrl._OnUpdateDiffuserCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local info = self.m_diffuserInfos[index]
@@ -224,10 +180,6 @@ FacPowerDiffuserCtrl._OnUpdateDiffuserCell = HL.Method(HL.Table, HL.Number) << f
     self:_RefreshDriverPower(cell, info)
 end
 
-
-
-
-
 FacPowerDiffuserCtrl._OnUpdatePoleCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local info = self.m_poleInfos[index]
     local data = Tables.factoryBuildingTable:GetValue(info.templateId)
@@ -240,9 +192,6 @@ FacPowerDiffuserCtrl._OnUpdatePoleCell = HL.Method(HL.Table, HL.Number) << funct
     cell.power.text = tostring(info.nodeCount)
 end
 
-
-
-
 FacPowerDiffuserCtrl._RefreshMachineCellToggleState = HL.Method(HL.Any) << function(self, cell)
     if cell == nil then
         return
@@ -251,8 +200,6 @@ FacPowerDiffuserCtrl._RefreshMachineCellToggleState = HL.Method(HL.Any) << funct
     local isOn = cell.toggle.toggle.isOn
     cell.machineInfoNode.color = isOn and self.view.config.COLOR_MACHINE_OPENED or self.view.config.COLOR_MACHINE_CLOSED
 end
-
-
 
 FacPowerDiffuserCtrl._RefreshAllDriversPower = HL.Method() << function(self)
     
@@ -266,19 +213,10 @@ FacPowerDiffuserCtrl._RefreshAllDriversPower = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 FacPowerDiffuserCtrl._RefreshDriverPower = HL.Method(HL.Table, HL.Table) << function(self, cell, info)
     cell.power.text = FactoryUtils.getCurBuildingConsumePower(info.nodeId)
     cell.stateIcon:LoadSprite(FactoryUtils.getBuildingStateIconName(info.nodeId))
 end
-
-
-
-
-
 
 FacPowerDiffuserCtrl._OnToggleMachine = HL.Method(HL.Table, HL.Table, HL.Boolean) << function(self, cell, info, isOn)
     GameInstance.player.remoteFactory.core:Message_OpEnableNode(Utils.getCurrentChapterId(), info.nodeId, isOn)

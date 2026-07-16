@@ -1,37 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 ItemIcon = HL.Class('ItemIcon', UIWidgetBase)
 
 
-
-
 ItemIcon._OnFirstTimeInit = HL.Override() << function(self)
-    
 end
-
 
 ItemIcon.m_itemId = HL.Field(HL.Any)
 
-
 ItemIcon.m_instId = HL.Field(HL.Any)
 
-
 ItemIcon.showRarity = HL.Field(HL.Boolean) << true
-
-
-
-
-
 
 ItemIcon.InitItemIcon = HL.Method(HL.Opt(HL.String, HL.Boolean, HL.Number)) << function(self, itemId, isBig, instId)
     self:_FirstTimeInit()
@@ -45,7 +24,7 @@ ItemIcon.InitItemIcon = HL.Method(HL.Opt(HL.String, HL.Boolean, HL.Number)) << f
     local itemData = Tables.itemTable[itemId]
     self.view.icon:LoadSprite(isBig and UIConst.UI_SPRITE_ITEM_BIG or UIConst.UI_SPRITE_ITEM, itemData.iconId)
     self:_RefreshGemAddOnNode(isBig == true, itemData, instId)
-    self:_UpdateLiquidIcon()
+    self:_UpdateLiquidOrGasIcon()
 
     local compositeId = itemData.iconCompositeId
     if string.isEmpty(compositeId) then
@@ -77,9 +56,6 @@ ItemIcon.InitItemIcon = HL.Method(HL.Opt(HL.String, HL.Boolean, HL.Number)) << f
     end
 end
 
-
-
-
 ItemIcon._UpdateTrans = HL.Method(HL.Opt(GEnums.ItemIconTransType)) << function(self, transType)
     local trans = self.view.icon.transform
     if transType == GEnums.ItemIconTransType.Formula then
@@ -101,11 +77,6 @@ ItemIcon._UpdateTrans = HL.Method(HL.Opt(GEnums.ItemIconTransType)) << function(
 end
 
 local DEFAULT_GEM_SPRITE = "icon_wpngem_00"
-
-
-
-
-
 ItemIcon._RefreshGemAddOnNode = HL.Method(HL.Boolean, HL.Any, HL.Opt(HL.Number)) << function(self, isBig, itemData, instId)
     local gemAttrIconPath
     if instId and instId > 0 then
@@ -147,25 +118,26 @@ ItemIcon._RefreshGemAddOnNode = HL.Method(HL.Boolean, HL.Any, HL.Opt(HL.Number))
     end
 end
 
-
-
-
 ItemIcon.SetAlpha = HL.Method(HL.Number) << function(self, alpha)
     self.view.canvasGroup.alpha = alpha
 end
 
-
-
-ItemIcon._UpdateLiquidIcon = HL.Method() << function(self)
+ItemIcon._UpdateLiquidOrGasIcon = HL.Method() << function(self)
     
-    local liquidIcon
+    local icon
     local isFullBottle, fullBottleData = Tables.fullBottleTable:TryGetValue(self.m_itemId)
     if isFullBottle then
         local liquidData = Tables.itemTable[fullBottleData.liquidId]
-        liquidIcon = liquidData.iconId
+        icon = liquidData.iconId
+    else
+        isFullBottle, fullBottleData = Tables.fullGasJarTable:TryGetValue(self.m_itemId)
+        if isFullBottle then
+            local gasData = Tables.itemTable[fullBottleData.gasId]
+            icon = gasData.iconId
+        end
     end
     if not self.view.liquidIcon then
-        if not liquidIcon then
+        if not icon then
             return
         end
         local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.liquidIconPrefab, self.view.transform)
@@ -181,9 +153,9 @@ ItemIcon._UpdateLiquidIcon = HL.Method() << function(self)
         obj.transform.sizeDelta = Vector2(size, size)
         self.view.liquidIcon = obj:GetComponent("UIImage")
     end
-    if liquidIcon then
+    if icon then
         self.view.liquidIcon.gameObject:SetActive(true)
-        self.view.liquidIcon:LoadSprite(UIConst.UI_SPRITE_ITEM, liquidIcon)
+        self.view.liquidIcon:LoadSprite(UIConst.UI_SPRITE_ITEM, icon)
     else
         self.view.liquidIcon.gameObject:SetActive(false)
     end

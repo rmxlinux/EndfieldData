@@ -2,36 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.AchievementToast
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AchievementToastCtrl = HL.Class('AchievementToastCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -41,8 +12,6 @@ AchievementToastCtrl = HL.Class('AchievementToastCtrl', uiCtrl.UICtrl)
 AchievementToastCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
 
 AchievementToastCtrl.RequestAchievementToasts = HL.StaticMethod(HL.Any) << function(arg)
     if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.Achievement) then
@@ -58,29 +27,21 @@ AchievementToastCtrl.RequestAchievementToasts = HL.StaticMethod(HL.Any) << funct
     end)
 end
 
-
 AchievementToastCtrl.EnableAchievementToastByLoading = HL.StaticMethod() << function()
     AchievementToastCtrl._EnableByKey(UIConst.ACHIEVEMENT_TOAST_DISABLE_KEY.Loading)
 end
-
 
 AchievementToastCtrl.DisableAchievementToastByLoading = HL.StaticMethod() << function()
     AchievementToastCtrl._DisableByKey(UIConst.ACHIEVEMENT_TOAST_DISABLE_KEY.Loading)
 end
 
-
-
 AchievementToastCtrl.EnableAchievementToast = HL.StaticMethod(HL.Any) << function(arg)
     AchievementToastCtrl._EnableByKey(arg)
 end
 
-
-
 AchievementToastCtrl.DisableAchievementToast = HL.StaticMethod(HL.Any) << function(arg)
     AchievementToastCtrl._DisableByKey(arg)
 end
-
-
 
 AchievementToastCtrl._EnableByKey = HL.StaticMethod(HL.String) << function(key)
     if string.isEmpty(key) then
@@ -90,8 +51,6 @@ AchievementToastCtrl._EnableByKey = HL.StaticMethod(HL.String) << function(key)
     AchievementToastCtrl.s_disableByKey[key] = nil
 end
 
-
-
 AchievementToastCtrl._DisableByKey = HL.StaticMethod(HL.String) << function(key)
     if string.isEmpty(key) then
         logger.error("Achievement disable status is setting without key, pls check.")
@@ -99,7 +58,6 @@ AchievementToastCtrl._DisableByKey = HL.StaticMethod(HL.String) << function(key)
     end
     AchievementToastCtrl.s_disableByKey[key] = true
 end
-
 
 AchievementToastCtrl._CheckIsDisable = HL.StaticMethod().Return(HL.Boolean) << function()
     for key, flag in pairs(AchievementToastCtrl.s_disableByKey) do
@@ -110,23 +68,15 @@ AchievementToastCtrl._CheckIsDisable = HL.StaticMethod().Return(HL.Boolean) << f
     return false
 end
 
-
 AchievementToastCtrl.m_updateKey = HL.Field(HL.Number) << -1
-
 
 AchievementToastCtrl.m_requestQueue = HL.Field(HL.Forward("Queue"))
 
-
 AchievementToastCtrl.m_showTween = HL.Field(HL.Any) << nil
-
 
 AchievementToastCtrl.m_achievementToastTimer = HL.Field(HL.Number) << 0
 
-
 AchievementToastCtrl.s_disableByKey = HL.StaticField(HL.Table) << {}
-
-
-
 
 
 AchievementToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -153,8 +103,6 @@ end
 
 
 
-
-
 AchievementToastCtrl.OnClose = HL.Override() << function(self)
     if self.m_achievementToastTimer > 0 then
         self:_ClearTimer(self.m_achievementToastTimer)
@@ -163,9 +111,6 @@ AchievementToastCtrl.OnClose = HL.Override() << function(self)
     self.m_showTween:Clear()
     self.m_showTween = nil
 end
-
-
-
 
 
 
@@ -181,14 +126,9 @@ AchievementToastCtrl._RequestToasts = HL.Method(HL.Any) << function(self, bundle
     end
 end
 
-
-
-
 AchievementToastCtrl._RequestToast = HL.Method(HL.Any) << function(self, achieveBundle)
     self.m_requestQueue:Push(achieveBundle)
 end
-
-
 
 AchievementToastCtrl._Update = HL.Method() << function(self)
     if AchievementToastCtrl._CheckIsDisable() then
@@ -202,9 +142,6 @@ AchievementToastCtrl._Update = HL.Method() << function(self)
         bundle = self.m_requestQueue:Pop()
     end
 end
-
-
-
 
 AchievementToastCtrl._ShowToast = HL.Method(HL.Any).Return(HL.Boolean) << function(self, achieveBundle)
     self.m_showTween:Reset(false)
@@ -226,11 +163,6 @@ AchievementToastCtrl._ShowToast = HL.Method(HL.Any).Return(HL.Boolean) << functi
     end)
     return true
 end
-
-
-
-
-
 
 AchievementToastCtrl._RenderToast = HL.Method(HL.Any, HL.Any, HL.Boolean) << function(self, achieveBundle, achievementData, isPlated)
     local isRare = achievementData.applyRareEffect and achieveBundle.toLevel > Tables.achievementConst.levelDisplayEffect
@@ -273,8 +205,6 @@ AchievementToastCtrl._RenderToast = HL.Method(HL.Any, HL.Any, HL.Boolean) << fun
     end
 end
 
-
-
 AchievementToastCtrl._ResetUpgradeAnim = HL.Method() << function(self)
     if not string.isEmpty(self.view.config.UPGRADE_RESET_SAMPLE_ANIM_NAME) then
         self.view.animationNode:SampleClipAtPercent(self.view.config.UPGRADE_RESET_SAMPLE_ANIM_NAME, 0)
@@ -283,36 +213,24 @@ AchievementToastCtrl._ResetUpgradeAnim = HL.Method() << function(self)
     end
 end
 
-
-
-
 AchievementToastCtrl._PlayUpgradeAnim = HL.Method(HL.String) << function(self, animName)
     if not string.isEmpty(animName) then
         self.view.animationNode:PlayWithTween(animName)
     end
 end
 
-
-
-
 AchievementToastCtrl._HideToast = HL.Method(HL.Opt(HL.Boolean)) << function(self, fastMode)
     self.m_showTween.isShow = false
 end
-
-
 
 AchievementToastCtrl._OnToastEnd = HL.Method() << function(self)
     self:_ClearTimer(self.m_achievementToastTimer)
     self.m_achievementToastTimer = 0
 end
 
-
-
 AchievementToastCtrl._OnToastShown = HL.Method() << function(self)
     
 end
-
-
 
 AchievementToastCtrl._OnToastHidden = HL.Method() << function(self)
     self:_OnToastEnd()

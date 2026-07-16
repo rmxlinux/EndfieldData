@@ -1,55 +1,21 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityVersionGuide = HL.Class('ActivityVersionGuide', UIWidgetBase)
-
 
 ActivityVersionGuide.m_activityId = HL.Field(HL.String) << ''
 
-
 ActivityVersionGuide.m_guideDataList = HL.Field(HL.Table)
-
 
 ActivityVersionGuide.m_getCell = HL.Field(HL.Function)
 
-
 ActivityVersionGuide.m_listCells = HL.Field(HL.Table)
-
 
 ActivityVersionGuide.m_focusIndex = HL.Field(HL.Number) << 1
 
+ActivityVersionGuide.m_normalizedPosition = HL.Field(HL.Number) << 1
 
 ActivityVersionGuide.m_genCellFunc = HL.Field(HL.Function)
 
-
 ActivityVersionGuide.m_taskCells = HL.Field(HL.Any)
-
-
-
 
 ActivityVersionGuide.InitVersionGuide = HL.Method(HL.Any) << function(self, args)
     self:RegisterMessage(MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE, function(args)
@@ -102,8 +68,6 @@ ActivityVersionGuide.InitVersionGuide = HL.Method(HL.Any) << function(self, args
     end
 end
 
-
-
 ActivityVersionGuide._RefreshMissionMode = HL.Method() << function(self)
     
     self.m_listCells = {}
@@ -117,8 +81,6 @@ ActivityVersionGuide._RefreshMissionMode = HL.Method() << function(self)
     
     self:_RefreshTaskCells()
 end
-
-
 
 ActivityVersionGuide._CollectGuideData = HL.Method() << function(self)
     self.m_guideDataList = {}
@@ -139,8 +101,6 @@ ActivityVersionGuide._CollectGuideData = HL.Method() << function(self)
         table.insert(self.m_guideDataList, dataRef)
     end
 end
-
-
 
 ActivityVersionGuide._SortGuideDataList = HL.Method() << function(self)
     
@@ -166,8 +126,6 @@ ActivityVersionGuide._SortGuideDataList = HL.Method() << function(self)
     table.sort(self.m_guideDataList, Utils.genSortFunction({ "_sortPriority", "sortId" }, true))
 end
 
-
-
 ActivityVersionGuide._RefreshTaskCells = HL.Method() << function(self)
     
     self.m_taskCells:Refresh(#self.m_guideDataList, function(cell, index)
@@ -175,30 +133,29 @@ ActivityVersionGuide._RefreshTaskCells = HL.Method() << function(self)
     end)
 end
 
-
-
-
 ActivityVersionGuide._SetAsNaviTarget = HL.Method(HL.Number) << function(self, index)
     if index <= 0 or not DeviceInfo.usingController then
         return
     end
     local cell = self.m_taskCells:Get(index)
     if cell then
-        UIUtils.setAsNaviTarget(cell.naviDecorator)
+        self:SetNaviTarget(cell.naviDecorator)
     end
 end
 
+ActivityVersionGuide.OnShow = HL.Method() << function(self)
+    self.view.scrollRect.verticalNormalizedPosition = self.m_normalizedPosition
+end
 
+ActivityVersionGuide.OnHide = HL.Method() << function(self)
+    self.m_normalizedPosition = self.view.scrollRect.verticalNormalizedPosition
+end
 
 ActivityVersionGuide.OnActivityCenterNaviFailed = HL.Method() << function(self)
     self.view.scrollRect.verticalNormalizedPosition = 1
     self.m_focusIndex = 1
     self:_SetAsNaviTarget(self.m_focusIndex)
 end
-
-
-
-
 
 ActivityVersionGuide._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local guideInfo = self.m_guideDataList[index]
@@ -334,8 +291,6 @@ ActivityVersionGuide._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(se
     end
 end
 
-
-
 ActivityVersionGuide._RefreshGuides = HL.Method() << function(self)
     
     for index, guideInfo in ipairs(self.m_guideDataList) do
@@ -351,18 +306,12 @@ ActivityVersionGuide._RefreshGuides = HL.Method() << function(self)
     end
 end
 
-
-
-
 ActivityVersionGuide._OnMultiStageUpdate = HL.Method(HL.Table) << function(self, args)
     local id = unpack(args)
     if id == self.m_activityId and ActivityUtils.isActivityUnlocked(id) then
         self:_RefreshGuides()
     end
 end
-
-
-
 
 ActivityVersionGuide._OnActivityUpdate = HL.Method(HL.Table) << function(self, args)
     local id = unpack(args)
@@ -372,10 +321,6 @@ ActivityVersionGuide._OnActivityUpdate = HL.Method(HL.Table) << function(self, a
         self:_RefreshMissionMode()
     end
 end
-
-
-
-
 
 ActivityVersionGuide._OnJumpClick = HL.Method(HL.Any, HL.Number) << function(self, guideData, index)
     local jumpId = guideData.jumpId
@@ -391,18 +336,12 @@ ActivityVersionGuide._OnJumpClick = HL.Method(HL.Any, HL.Number) << function(sel
 end
 
 
-
-
-
 ActivityVersionGuide._GetStageData = HL.Method(HL.String).Return(HL.Any) << function(self, stageId)
     local activityCS = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     
     local success, stageData = activityCS.stageDataDict:TryGetValue(stageId)
     return stageData
 end
-
-
-
 
 ActivityVersionGuide._GetStageStateString = HL.Method(HL.Number).Return(HL.String) << function(self, stageStatus)
     if stageStatus == 0 or stageStatus == 1 then 
@@ -417,9 +356,6 @@ ActivityVersionGuide._GetStageStateString = HL.Method(HL.Number).Return(HL.Strin
 end
 
 
-
-
-
 ActivityVersionGuide._OnReceiveReward = HL.Method(HL.Any) << function(self, guideData)
     ActivityUtils.setFalseNewActivityConditionalStage(guideData.stageId)
     GameInstance.player.activitySystem:SendReceiveRewardConditionMultiStage(self.m_activityId, self:GetAllCanReceiveStageIds())
@@ -428,8 +364,6 @@ ActivityVersionGuide._OnReceiveReward = HL.Method(HL.Any) << function(self, guid
     self.m_focusIndex = 1
     self:_SetAsNaviTarget(self.m_focusIndex)
 end
-
-
 
 ActivityVersionGuide.GetAllCanReceiveStageIds = HL.Method().Return(HL.Table) << function(self)
     local stageIds = {}
@@ -440,9 +374,6 @@ ActivityVersionGuide.GetAllCanReceiveStageIds = HL.Method().Return(HL.Table) << 
     end
     return stageIds
 end
-
-
-
 
 ActivityVersionGuide.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
     local luaIndex = LuaIndex(index)
@@ -464,18 +395,13 @@ ActivityVersionGuide.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) <
     end
 end
 
-
-
 ActivityVersionGuide._OnDestroy = HL.Override() << function(self)
     local status = GameInstance.player.activitySystem:GetActivityStatus(self.m_activityId)
     if status == GEnums.ActivityStatus.InProgress or status == GEnums.ActivityStatus.Completed then
         
-        
-        
         for _, guideInfo in ipairs(self.m_guideDataList) do
-            ActivityUtils.setFalseNewActivityConditionalStage(guideInfo.stageConfig.stageId, true)
+            ActivityUtils.setFalseNewActivityConditionalStage(guideInfo.stageConfig.stageId)
         end
-        ClientDataManagerInst:SaveUserData(ClientDataManagerInst.defaultCategory)
     end
 end
 

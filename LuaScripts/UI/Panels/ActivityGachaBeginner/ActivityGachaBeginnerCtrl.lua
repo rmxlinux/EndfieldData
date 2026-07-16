@@ -2,22 +2,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityGachaBeginner
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityGachaBeginnerCtrl = HL.Class('ActivityGachaBeginnerCtrl', uiCtrl.UICtrl)
 
 
@@ -30,33 +14,23 @@ local csGachaSystem = GameInstance.player.gacha
 
 
 
-
 ActivityGachaBeginnerCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_GACHA_BEGINNER_STAGE_MODIFY] = '_OnActivityOrGachaPoolChange',
     [MessageConst.ON_GACHA_POOL_ROLE_DATA_CHANGED] = '_OnActivityOrGachaPoolChange',
 }
 
 
-
 ActivityGachaBeginnerCtrl.m_info = HL.Field(HL.Table)
-
 
 ActivityGachaBeginnerCtrl.m_weaponItemCellListCache = HL.Field(HL.Forward("UIListCache"))
 
-
 ActivityGachaBeginnerCtrl.m_missionCellListCache = HL.Field(HL.Forward("UIListCache"))
-
 
 ActivityGachaBeginnerCtrl.m_confirmFocusBindId = HL.Field(HL.Number) << -1
 
-
 ActivityGachaBeginnerCtrl.m_cancelFocusBindId = HL.Field(HL.Number) << -1
 
-
 ActivityGachaBeginnerCtrl.m_rewardList = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -68,9 +42,6 @@ ActivityGachaBeginnerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_UpdateData()
     self:_RefreshAllUI()
 end
-
-
-
 
 
 
@@ -136,8 +107,6 @@ ActivityGachaBeginnerCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     end
 end
 
-
-
 ActivityGachaBeginnerCtrl._UpdateData = HL.Method() << function(self)
     self.m_rewardList = {}
     local activityData = activitySystem:GetActivity(Tables.charGachaConst.gachaBeginnerActivityId)
@@ -168,8 +137,6 @@ end
 
 
 
-
-
 ActivityGachaBeginnerCtrl._InitUI = HL.Method() << function(self)
     self.m_weaponItemCellListCache = UIUtils.genCellCache(self.view.weaponItemCell)
     self.m_missionCellListCache = UIUtils.genCellCache(self.view.missionNode.missionCell)
@@ -191,7 +158,7 @@ ActivityGachaBeginnerCtrl._InitUI = HL.Method() << function(self)
         end
         local firstCell = self.m_missionCellListCache:Get(1)
         if firstCell then
-            InputManagerInst.controllerNaviManager:SetTarget(firstCell.naviDeco)
+            self:SetNaviTarget(firstCell.naviDeco)
         end
     end)
 
@@ -204,8 +171,6 @@ ActivityGachaBeginnerCtrl._InitUI = HL.Method() << function(self)
     end)
     InputManagerInst:ToggleBinding(self.m_cancelFocusBindId, false)
 end
-
-
 
 ActivityGachaBeginnerCtrl._RefreshAllUI = HL.Method() << function(self)
     local itemId = self.m_info.cumulateRewardItemInfo.id
@@ -225,8 +190,6 @@ ActivityGachaBeginnerCtrl._RefreshAllUI = HL.Method() << function(self)
     self:_RefreshStageMissionUI()
 end
 
-
-
 ActivityGachaBeginnerCtrl._RefreshCumulateRewardUI = HL.Method() << function(self)
     if self.m_info.remainPullCount <= 0 then
         self.view.weaponBoxRewardTips:SetAndResolveTextStyle(Language.LUA_ACTIVITY_GACHA_BEGINNER_CAN_GET_WEAPON_REWARD)
@@ -234,8 +197,6 @@ ActivityGachaBeginnerCtrl._RefreshCumulateRewardUI = HL.Method() << function(sel
         self.view.weaponBoxRewardTips:SetAndResolveTextStyle(string.format(Language.LUA_ACTIVITY_GACHA_BEGINNER_WEAPON_REWARD_REMAIN_PULL_COUNT, self.m_info.remainPullCount))
     end
 end
-
-
 
 ActivityGachaBeginnerCtrl._RefreshStageMissionUI = HL.Method() << function(self)
     local missionNode = self.view.missionNode
@@ -281,8 +242,6 @@ ActivityGachaBeginnerCtrl._RefreshStageMissionUI = HL.Method() << function(self)
         end)
     end)
 end
-
-
 
 
 

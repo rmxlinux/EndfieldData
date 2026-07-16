@@ -2,19 +2,9 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.ActivityPopup
 
-
-
-
-
-
-
-
-
 PhaseActivityPopup = HL.Class('PhaseActivityPopup', phaseBase.PhaseBase)
 
-
 PhaseActivityPopup.m_popupIds = HL.Field(HL.Table)
-
 
 
 
@@ -27,15 +17,10 @@ PhaseActivityPopup.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
-
 PhaseActivityPopup._OnInit = HL.Override() << function(self)
     PhaseActivityPopup.Super._OnInit(self)
     UIManager:ToggleBlockObtainWaysJump("PhaseActivityPopup", true, {})
 end
-
-
-
 
 PhaseActivityPopup._ShowPopUp = HL.Method(HL.Number) << function(self, index)
     local id = self.m_popupIds[index]
@@ -62,8 +47,6 @@ PhaseActivityPopup._ShowPopUp = HL.Method(HL.Number) << function(self, index)
     })
 end
 
-
-
 PhaseActivityPopup._OnDestroy = HL.Override() << function(self)
     PhaseActivityPopup.Super._OnDestroy(self)
     if self.arg and self.arg.closeCallback then
@@ -71,8 +54,6 @@ PhaseActivityPopup._OnDestroy = HL.Override() << function(self)
     end
     UIManager:ToggleBlockObtainWaysJump("PhaseActivityPopup", false)
 end
-
-
 
 PhaseActivityPopup.ManuallyPopup = HL.StaticMethod(HL.Table) << function(args)
     
@@ -101,10 +82,6 @@ PhaseActivityPopup.ManuallyPopup = HL.StaticMethod(HL.Table) << function(args)
         popupIds = activityIds,
     })
 end
-
-
-
-
 
 
 

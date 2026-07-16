@@ -3,81 +3,7 @@ local InteractOptionType = CS.Beyond.Gameplay.Core.InteractOptionType
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.InteractOption
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 InteractOptionCtrl = HL.Class('InteractOptionCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -111,38 +37,26 @@ local MAX_DISPLAY_COUNT = 999
 
 
 
-
 InteractOptionCtrl.m_optionInfoMap = HL.Field(HL.Table) 
-
 
 
 
 
 InteractOptionCtrl.m_curShowingOptInfoList = HL.Field(HL.Table) 
 
-
 InteractOptionCtrl.m_curShowingOptCount = HL.Field(HL.Number) << 0
-
 
 InteractOptionCtrl.m_curSelectedOptIdentifier = HL.Field(HL.String) << ""
 
-
 InteractOptionCtrl.m_cellObjCache = HL.Field(HL.Forward("CommonCache"))
-
 
 InteractOptionCtrl.m_obj2CellMap = HL.Field(HL.Table) 
 
-
 InteractOptionCtrl.m_playingOutInfoTimers = HL.Field(HL.Table) 
-
 
 InteractOptionCtrl.m_viewGroupConfig = HL.Field(HL.Table)
 
-
 InteractOptionCtrl.m_sortFunc = HL.Field(HL.Function)
-
-
-
 
 
 
@@ -157,7 +71,7 @@ InteractOptionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.m_pressStartIdentifier = nil
         local info = self.m_optionInfoMap[self.m_curSelectedOptIdentifier]
         if info and self.view.listNode.gameObject.activeSelf then
-            if not info.identifier.isPickable then
+            if not info.identifier.isPickable and info.longPressAction == nil then
                 self:_OnClickOption(self.m_curSelectedOptIdentifier)
                 return
             end
@@ -206,16 +120,11 @@ InteractOptionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 
-
 InteractOptionCtrl.m_updateCor = HL.Field(HL.Thread)
-
 
 InteractOptionCtrl.m_needUpdateList = HL.Field(HL.Boolean) << false
 
-
 InteractOptionCtrl.m_nextUpdateNeedToTop = HL.Field(HL.Boolean) << true
-
-
 
 InteractOptionCtrl._TryUpdateListTick = HL.Method() << function(self)
     if self.m_needUpdateList then
@@ -228,14 +137,10 @@ end
 
 
 
-
-
 InteractOptionCtrl.OnShow = HL.Override() << function(self)
     self:_RefreshList()
     self:_Register()
 end
-
-
 
 InteractOptionCtrl.OnHide = HL.Override() << function(self)
     Notify(MessageConst.ON_TOGGLE_INTERACT_OPTION_SCROLL, false)
@@ -243,18 +148,13 @@ InteractOptionCtrl.OnHide = HL.Override() << function(self)
     self:_InterruptPickupAll()
 end
 
-
-
 InteractOptionCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.ON_TOGGLE_INTERACT_OPTION_SCROLL, false)
     self:_ClearRegister()
     self:_InterruptPickupAll()
 end
 
-
 InteractOptionCtrl.m_onScroll = HL.Field(HL.Function)
-
-
 
 InteractOptionCtrl._Register = HL.Method() << function(self)
     local touchPanel = UIManager.commonTouchPanel
@@ -275,16 +175,11 @@ InteractOptionCtrl._Register = HL.Method() << function(self)
     end)
 end
 
-
-
 InteractOptionCtrl._ClearRegister = HL.Method() << function(self)
     local touchPanel = UIManager.commonTouchPanel
     touchPanel.onScroll:RemoveListener(self.m_onScroll)
     self.m_updateCor = self:_ClearCoroutine(self.m_updateCor)
 end
-
-
-
 
 
 
@@ -301,20 +196,12 @@ end
 
 
 
-
 InteractOptionCtrl.m_hideListKeys = HL.Field(HL.Table)
-
-
-
 
 InteractOptionCtrl.OnToggleHideInteractOptionList = HL.Method(HL.Table) << function(self, args)
     local key, hide = unpack(args)
     self:ToggleHideInteractOptionList(key, hide)
 end
-
-
-
-
 
 InteractOptionCtrl.ToggleHideInteractOptionList = HL.Method(HL.String, HL.Boolean) << function(self, key, hide)
     if hide then
@@ -324,9 +211,6 @@ InteractOptionCtrl.ToggleHideInteractOptionList = HL.Method(HL.String, HL.Boolea
     end
     self:RefreshActiveState()
 end
-
-
-
 
 InteractOptionCtrl.RefreshActiveState = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     local shouldHide = next(self.m_hideListKeys)
@@ -342,20 +226,13 @@ InteractOptionCtrl.RefreshActiveState = HL.Method(HL.Opt(HL.Any)) << function(se
     end
 end
 
-
-
 InteractOptionCtrl.CameraHideHud = HL.Method() << function(self)
     self:ToggleHideInteractOptionList("CameraHideHud", true)
 end
 
-
-
 InteractOptionCtrl.CameraEndHideHud = HL.Method() << function(self)
     self:ToggleHideInteractOptionList("CameraHideHud", false)
 end
-
-
-
 
 
 
@@ -378,9 +255,6 @@ InteractOptionCtrl.AddInteractOption = HL.Method(HL.Table) << function(self, arg
     self.m_needUpdateList = true
     self.m_nextUpdateNeedToTop = true
 end
-
-
-
 
 InteractOptionCtrl.UpdateInteractOption = HL.Method(HL.Table) << function(self, args)
     local newInfo = self:_GetSingleInteractOptionInfo(args)
@@ -446,9 +320,6 @@ InteractOptionCtrl.UpdateInteractOption = HL.Method(HL.Table) << function(self, 
     CS.Beyond.Gameplay.CheckHasInteractOption.Update()
 end
 
-
-
-
 InteractOptionCtrl.RemoveInteractOption = HL.Method(HL.Table) << function(self, args)
     
     local isList = lume.isarray(args)
@@ -485,9 +356,6 @@ InteractOptionCtrl.RemoveInteractOption = HL.Method(HL.Table) << function(self, 
     end
 end
 
-
-
-
 InteractOptionCtrl._OnOptOutAnimFinished = HL.Method(HL.Table) << function(self, info)
     local cell = info.cell
     self.m_playingOutInfoTimers[info] = nil
@@ -498,11 +366,7 @@ InteractOptionCtrl._OnOptOutAnimFinished = HL.Method(HL.Table) << function(self,
     CS.Beyond.Gameplay.CheckHasInteractOption.Update()
 end
 
-
 InteractOptionCtrl.m_nextOptSeqNum = HL.Field(HL.Number) << 1
-
-
-
 
 InteractOptionCtrl._ParseOptionData = HL.Method(HL.Any).Return(HL.Table) << function(self, optionData)
     local optionInfo = {
@@ -561,9 +425,6 @@ InteractOptionCtrl._ParseOptionData = HL.Method(HL.Any).Return(HL.Table) << func
     return optionInfo
 end
 
-
-
-
 InteractOptionCtrl._GetSingleInteractOptionInfo = HL.Method(HL.Any).Return(HL.Table) << function(self, optionData)
     local optionInfo = self:_ParseOptionData(optionData)
     if optionInfo == nil then
@@ -581,9 +442,6 @@ InteractOptionCtrl._GetSingleInteractOptionInfo = HL.Method(HL.Any).Return(HL.Ta
     end
     return optionInfo
 end
-
-
-
 
 InteractOptionCtrl._GetGroupInteractOptions = HL.Method(HL.Any).Return(HL.Table) << function(self, optionDataList)
     local optionInfoList = {}
@@ -626,9 +484,6 @@ InteractOptionCtrl._GetGroupInteractOptions = HL.Method(HL.Any).Return(HL.Table)
     return optionInfoList
 end
 
-
-
-
 InteractOptionCtrl._OnScroll = HL.Method(HL.Number) << function(self, delta)
     if self.m_curShowingOptCount <= 1 or self.m_isFocusingForGuide then
         return
@@ -642,18 +497,12 @@ InteractOptionCtrl._OnScroll = HL.Method(HL.Number) << function(self, delta)
     self:_SelectOption(newIndex)
 end
 
-
-
-
 InteractOptionCtrl._SelectOption = HL.Method(HL.Number) << function(self, newIndex)
     local newInfo = self.m_curShowingOptInfoList[newIndex]
     self:_SetSelected(newInfo.identifier.value)
     self:_ScrollTo(newIndex)
     AudioAdapter.PostEvent("au_ui_btn_f_menubar_highlight")
 end
-
-
-
 
 InteractOptionCtrl._OnUpdateCell = HL.Method(HL.Table) << function(self, info)
     local cell = info.cell
@@ -682,6 +531,7 @@ InteractOptionCtrl._OnUpdateCell = HL.Method(HL.Table) << function(self, info)
             
             local isPickUp, _ = Tables.useItemTable:TryGetValue(info.itemId)
             node.itemNode.pickUpNode.gameObject:SetActive(isPickUp)
+            node.itemNode.portableDeviceNode.gameObject:SetActive(Utils.isPortableDevice(info.itemId))
             UIUtils.setItemRarityImage(node.itemNode.rarityImg, itemData.rarity)
         else
             node.nameTxt.text = "ERROR: No ItemId"
@@ -703,7 +553,8 @@ InteractOptionCtrl._OnUpdateCell = HL.Method(HL.Table) << function(self, info)
     cell.button.onPressStart:RemoveAllListeners()
     cell.button.onPressEnd:RemoveAllListeners()
     local isPickable = info.identifier.isPickable
-    if isPickable then
+    local canLongPress = isPickable or info.longPressAction ~= nil
+    if canLongPress then
         cell.button.onPressStart:AddListener(function(_)
             self:_OnPressOptionStart()
         end)
@@ -722,7 +573,7 @@ InteractOptionCtrl._OnUpdateCell = HL.Method(HL.Table) << function(self, info)
     cell.button.onPressEnd:AddListener(function(eventData)
         local newInfo = self.m_optionInfoMap[key]
         self:_UpdateOptionSelected(newInfo)
-        if isPickable then
+        if canLongPress then
             
             if not eventData or (eventData.position - eventData.pressPosition).sqrMagnitude < 1 then
                 self:_OnPressOptionEnd()
@@ -734,9 +585,6 @@ InteractOptionCtrl._OnUpdateCell = HL.Method(HL.Table) << function(self, info)
     self:_UpdateOptionSelected(info)
     self:_UpdateCellObjectName(info)
 end
-
-
-
 
 InteractOptionCtrl._UpdateCellObjectName = HL.Method(HL.Table) << function(self, info)
     local cell = info.cell
@@ -754,9 +602,6 @@ InteractOptionCtrl._UpdateCellObjectName = HL.Method(HL.Table) << function(self,
     CS.Beyond.Gameplay.Conditions.OnInteractOptionShow.Trigger(cell.gameObject.name)
 end
 
-
-
-
 InteractOptionCtrl._SetSelected = HL.Method(HL.String) << function(self, newIdentifier)
     if self.m_isFocusingForGuide then
         return
@@ -769,16 +614,11 @@ InteractOptionCtrl._SetSelected = HL.Method(HL.String) << function(self, newIden
     self:_UpdateOptionSelected(newInfo)
 end
 
-
-
 InteractOptionCtrl._RefreshScrollHint = HL.Method() << function(self)
     local showScroll = self:IsShow() and self.m_curShowingOptCount > 1
     self.view.scrollHint.gameObject:SetActive(showScroll)
     Notify(MessageConst.ON_TOGGLE_INTERACT_OPTION_SCROLL, showScroll)
 end
-
-
-
 
 InteractOptionCtrl._UpdateOptionSelected = HL.Method(HL.Table) << function(self, info)
     if info == nil then
@@ -807,8 +647,6 @@ InteractOptionCtrl._UpdateOptionSelected = HL.Method(HL.Table) << function(self,
         cell.animator:SetTrigger("Normal")
     end
 end
-
-
 
 InteractOptionCtrl._UpdateBtnHint = HL.Method() << function(self)
     local cell
@@ -839,8 +677,6 @@ InteractOptionCtrl._UpdateBtnHint = HL.Method() << function(self)
     end
 end
 
-
-
 InteractOptionCtrl._SortInteractOptionList = HL.Method() << function(self)
     if self.m_curShowingOptInfoList == nil or #self.m_curShowingOptInfoList <= 1 then
         return
@@ -849,9 +685,6 @@ InteractOptionCtrl._SortInteractOptionList = HL.Method() << function(self)
 end
 
 InteractOptionCtrl.m_optionClickedThisTick = HL.Field(HL.Boolean) << false
-
-
-
 
 InteractOptionCtrl._OnClickOption = HL.Method(HL.String) << function(self, identifier)
     if self.m_optionClickedThisTick then
@@ -903,8 +736,6 @@ InteractOptionCtrl._OnClickOption = HL.Method(HL.String) << function(self, ident
     self.m_optionClickedThisTick = true
 end
 
-
-
 InteractOptionCtrl._ClearShowingUIOptions = HL.Method() << function(self)
     for info, timer in pairs(self.m_playingOutInfoTimers) do
         self:_ClearTimer(timer)
@@ -916,16 +747,11 @@ InteractOptionCtrl._ClearShowingUIOptions = HL.Method() << function(self)
 end
 
 
-
-
-
 InteractOptionCtrl.ClearUIOptions = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     self:_ClearShowingUIOptions()
     self.m_curShowingOptInfoList = {}
     self:_UpdateCurShowingList(true)
 end
-
-
 
 
 
@@ -945,9 +771,6 @@ InteractOptionCtrl._GetNewCell = HL.Method().Return(HL.Table) << function(self)
     return cell
 end
 
-
-
-
 InteractOptionCtrl._CacheCell = HL.Method(HL.Table) << function(self, cell)
     if cell == nil then
         return
@@ -966,10 +789,6 @@ InteractOptionCtrl._CacheCell = HL.Method(HL.Table) << function(self, cell)
 
     self.m_cellObjCache:Cache(cell.gameObject)
 end
-
-
-
-
 
 InteractOptionCtrl._DeleteCell = HL.Method(HL.Table, HL.Table) << function(self, cell, optionInfo)
     if cell == nil or optionInfo == nil then
@@ -993,9 +812,6 @@ InteractOptionCtrl._DeleteCell = HL.Method(HL.Table, HL.Table) << function(self,
         end
     end
 end
-
-
-
 
 InteractOptionCtrl._UpdateCurShowingList = HL.Method(HL.Opt(HL.Boolean)) << function(self, toTop)
     self.m_needUpdateList = false
@@ -1043,8 +859,6 @@ InteractOptionCtrl._UpdateCurShowingList = HL.Method(HL.Opt(HL.Boolean)) << func
     self:_RefreshList()
 end
 
-
-
 InteractOptionCtrl._RefreshList = HL.Method() << function(self)
     self:_RefreshScrollHint()
     for index, info in ipairs(self.m_curShowingOptInfoList) do
@@ -1070,9 +884,6 @@ InteractOptionCtrl._RefreshList = HL.Method() << function(self)
     CS.Beyond.Gameplay.CheckHasInteractOption.Update()
 end
 
-
-
-
 InteractOptionCtrl._ScrollTo = HL.Method(HL.Number) << function(self, index)
     if index <= 0 or self.m_isFocusingForGuide then
         return
@@ -1080,9 +891,6 @@ InteractOptionCtrl._ScrollTo = HL.Method(HL.Number) << function(self, index)
     local cell = self.m_curShowingOptInfoList[index].cell
     self.view.optionList:ScrollToNaviTarget(cell.button)
 end
-
-
-
 
 
 
@@ -1135,9 +943,6 @@ InteractOptionCtrl._AddGroupInteractOptions = HL.Method(HL.Any) << function(self
     end
 end
 
-
-
-
 InteractOptionCtrl._RemoveGroupInteractOptions = HL.Method(HL.String) << function(self, groupSourceId)
     if string.isEmpty(groupSourceId) then
         return
@@ -1163,9 +968,6 @@ InteractOptionCtrl._RemoveGroupInteractOptions = HL.Method(HL.String) << functio
     end
 end
 
-
-
-
 InteractOptionCtrl.AddInteractOptions = HL.Method(HL.Any) << function(self, args)
     if args == nil then
         return
@@ -1181,9 +983,6 @@ InteractOptionCtrl.AddInteractOptions = HL.Method(HL.Any) << function(self, args
     self.m_needUpdateList = true
     self.m_nextUpdateNeedToTop = true
 end
-
-
-
 
 InteractOptionCtrl.UpdateInteractOptions = HL.Method(HL.Any) << function(self, args)
     if args == nil then
@@ -1207,9 +1006,6 @@ InteractOptionCtrl.UpdateInteractOptions = HL.Method(HL.Any) << function(self, a
     self:_UpdateCurShowingList(false)
 end
 
-
-
-
 InteractOptionCtrl.RemoveInteractOptions = HL.Method(HL.Any) << function(self, args)
     if args == nil then
         return
@@ -1224,8 +1020,6 @@ InteractOptionCtrl.RemoveInteractOptions = HL.Method(HL.Any) << function(self, a
 
     self:_UpdateCurShowingList(false)
 end
-
-
 
 
 
@@ -1376,14 +1170,9 @@ end
 
 
 
-
 InteractOptionCtrl.m_pickupAllCoroutine = HL.Field(HL.Thread)
 
-
 InteractOptionCtrl.m_pressStartIdentifier = HL.Field(HL.Any)
-
-
-
 
 InteractOptionCtrl._OnPressOptionStart = HL.Method(HL.Opt(HL.Boolean)) << function(self, fromInputAction)
     self.m_pressStartIdentifier = self.m_curSelectedOptIdentifier
@@ -1395,9 +1184,10 @@ InteractOptionCtrl._OnPressOptionStart = HL.Method(HL.Opt(HL.Boolean)) << functi
         
         info.cell.animator:Play("Pressed")
     end
-    if not info.identifier.isPickable then
+    if not info.identifier.isPickable and info.longPressAction == nil then
         return
     end
+    local pressedIdentifier = self.m_curSelectedOptIdentifier
     self.m_pickupAllCoroutine = self:_ClearCoroutine(self.m_pickupAllCoroutine)
     local node = self.view.btnHint
     self.m_pickupAllCoroutine = self:_StartCoroutine(function()
@@ -1414,13 +1204,15 @@ InteractOptionCtrl._OnPressOptionStart = HL.Method(HL.Opt(HL.Boolean)) << functi
                 coroutine.step()
             end
         end
-        self:_OnTriggerPickupAll()
+        local pressedInfo = self.m_optionInfoMap[pressedIdentifier]
+        if pressedInfo and pressedInfo.longPressAction ~= nil then
+            pressedInfo.longPressAction()
+        else
+            self:_OnTriggerPickupAll()
+        end
         self:_InterruptPickupAll()
     end)
 end
-
-
-
 
 InteractOptionCtrl._OnPressOptionEnd = HL.Method(HL.Opt(HL.Boolean)) << function(self, fromInputAction)
     local info = self.m_optionInfoMap[self.m_curSelectedOptIdentifier]
@@ -1431,22 +1223,18 @@ InteractOptionCtrl._OnPressOptionEnd = HL.Method(HL.Opt(HL.Boolean)) << function
     if self.m_pickupAllCoroutine then
         self:_InterruptPickupAll()
         
-        if not info or not info.identifier.isPickable then
+        if not info or (not info.identifier.isPickable and info.longPressAction == nil) then
             return
         end
         self:_OnClickOption(self.m_curSelectedOptIdentifier)
     end
 end
 
-
-
 InteractOptionCtrl._InterruptPickupAll = HL.Method() << function(self)
     self.m_pickupAllCoroutine = self:_ClearCoroutine(self.m_pickupAllCoroutine)
     self.view.btnHint.pressHintNode.gameObject:SetActive(false)
     self.view.btnHint.pressArrow.gameObject:SetActive(false)
 end
-
-
 
 InteractOptionCtrl._OnTriggerPickupAll = HL.Method() << function(self)
     local list = {}
@@ -1468,10 +1256,7 @@ end
 
 
 
-
 InteractOptionCtrl.s_subBuildingOptUseIndexNameForGuide = HL.StaticField(HL.Boolean) << true
-
-
 
 InteractOptionCtrl.FacToggleSubBuildingOptUseIndexNameForGuide = HL.StaticMethod(HL.Table) << function(arg)
     local useIndexName = unpack(arg)
@@ -1485,14 +1270,9 @@ InteractOptionCtrl.FacToggleSubBuildingOptUseIndexNameForGuide = HL.StaticMethod
     end
 end
 
-
 InteractOptionCtrl.m_isFocusingForGuide = HL.Field(HL.Boolean) << false
 
-
 InteractOptionCtrl.m_focusingForGuideOptName = HL.Field(HL.String) << ""
-
-
-
 
 InteractOptionCtrl.FocusOnInteractOption = HL.Method(HL.Table) << function(self, arg)
     logger.info("InteractOptionCtrl.FocusOnInteractOption", arg)
@@ -1520,10 +1300,6 @@ InteractOptionCtrl.FocusOnInteractOption = HL.Method(HL.Table) << function(self,
     end
     logger.error("InteractOptionCtrl.FocusOnInteractOption: No Target OptName", optName)
 end
-
-
-
-
 
 
 

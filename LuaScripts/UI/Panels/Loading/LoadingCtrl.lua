@@ -1,21 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Loading
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 LoadingCtrl = HL.Class('LoadingCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -31,9 +16,6 @@ LoadingCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 LoadingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local enableDebug = (BEYOND_DEBUG or BEYOND_DEBUG_COMMAND) and CS.Beyond.Cfg.RemoteGameCfg.instance.data.enableDebugInfo
     self.view.debugNode.gameObject:SetActiveIfNecessary(enableDebug)
@@ -47,14 +29,11 @@ LoadingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 LoadingCtrl.OnClose = HL.Override() << function(self)
     
+    UIManager:RemoveMainCameraTempRequest("Loading")
     self.view.bgImg:ReleaseSprite()
 end
-
-
 
 LoadingCtrl.OpenLoadingPanel = HL.StaticMethod(HL.Opt(HL.Table)) << function(args)
     local isShowing = UIManager:IsShow(PANEL_ID)
@@ -68,18 +47,14 @@ LoadingCtrl.OpenLoadingPanel = HL.StaticMethod(HL.Opt(HL.Table)) << function(arg
         GameInstance.SetBurstMode(false, GameInstance.EBurstModeReason.LoadingUI)
         self:_StartTimer(0.5, function()
             
-            if UIManager:IsShow(PANEL_ID) and not self:IsPlayingAnimationOut() then
+            if UIManager:IsShow(PANEL_ID) and not self:IsPlayingAnimationOut() and not self.m_isClosing then
                 GameInstance.SetBurstMode(true, GameInstance.EBurstModeReason.LoadingUI)
             end
         end)
     end
 end
 
-
 LoadingCtrl.m_extraLoadingSystems = HL.Field(HL.Table)
-
-
-
 
 LoadingCtrl._Init = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     self.m_extraLoadingSystems = {}
@@ -105,22 +80,14 @@ LoadingCtrl._Init = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     
 end
 
-
-
 LoadingCtrl.CloseLoadingPanel = HL.Method() << function(self)
     self:_TryCloseLoading()
 end
-
-
-
 
 LoadingCtrl.AddLoadingSystem = HL.Method(HL.Table) << function(self, args)
     local sysName = unpack(args)
     self.m_extraLoadingSystems[sysName] = true
 end
-
-
-
 
 LoadingCtrl.RemoveLoadingSystem = HL.Method(HL.Table) << function(self, args)
     local sysName = unpack(args)
@@ -128,10 +95,7 @@ LoadingCtrl.RemoveLoadingSystem = HL.Method(HL.Table) << function(self, args)
     self:_TryCloseLoading()
 end
 
-
 LoadingCtrl.m_isClosing = HL.Field(HL.Boolean) << false
-
-
 
 LoadingCtrl._TryCloseLoading = HL.Method() << function(self)
     if next(self.m_extraLoadingSystems) or self.m_isClosing then
@@ -154,17 +118,13 @@ LoadingCtrl._TryCloseLoading = HL.Method() << function(self)
     end)
 end
 
-
-
 LoadingCtrl._Update = HL.Method() << function(self)
     self.view.progressBar.value = GameWorld.levelLoader.progress
 end
 
-
-
 LoadingCtrl.StartCameraRenderInLoading = HL.Method() << function(self)
     logger.info("LoadingCtrl.StartCameraRenderInLoading")
-    UIManager:ChangeHideCameraPanelState(self.panelId, UIConst.HIDE_CAMERA_PANEL_STATE.In) 
+    UIManager:AddMainCameraTempRequest("Loading")
 end
 
 HL.Commit(LoadingCtrl)

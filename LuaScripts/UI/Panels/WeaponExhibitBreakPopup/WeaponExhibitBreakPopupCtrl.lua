@@ -1,12 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WeaponExhibitBreakPopup
-
-
-
-
 WeaponExhibitBreakPopupCtrl = HL.Class('WeaponExhibitBreakPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -17,9 +12,6 @@ WeaponExhibitBreakPopupCtrl = HL.Class('WeaponExhibitBreakPopupCtrl', uiCtrl.UIC
 WeaponExhibitBreakPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 WeaponExhibitBreakPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -45,8 +37,6 @@ WeaponExhibitBreakPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     })
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
 
 WeaponExhibitBreakPopupCtrl._InitActionEvent = HL.Method() << function(self, arg)
     self.view.continueButton.onClick:AddListener(function()

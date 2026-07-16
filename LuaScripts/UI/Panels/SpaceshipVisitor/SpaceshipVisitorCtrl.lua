@@ -1,46 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipVisitor
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipVisitorCtrl = HL.Class('SpaceshipVisitorCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -51,60 +12,41 @@ SpaceshipVisitorCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SPACESHIP_RECV_QUERY_VISIT_INFO] = 'OnRecvQueryVisitInfo',
 }
 
-
 SpaceshipVisitorCtrl.m_getScrollListCell = HL.Field(HL.Function)
-
 
 SpaceshipVisitorCtrl.m_showInfo = HL.Field(HL.Table)
 
-
 SpaceshipVisitorCtrl.m_bindSwitchAction = HL.Field(HL.Table)
-
 
 SpaceshipVisitorCtrl.m_bindFriendHeadAction = HL.Field(HL.Table)
 
-
 SpaceshipVisitorCtrl.m_spaceship = HL.Field(HL.Any)
-
 
 SpaceshipVisitorCtrl.m_visitRecord = HL.Field(HL.Any)
 
-
 SpaceshipVisitorCtrl.m_queryVisitInfo = HL.Field(HL.Boolean) << false
-
 
 SpaceshipVisitorCtrl.m_haveFriendInfo = HL.Field(HL.Boolean) << false
 
-
 SpaceshipVisitorCtrl.m_requestHandle = HL.Field(HL.Number) << -1
-
 
 SpaceshipVisitorCtrl.m_requestTime = HL.Field(HL.Number) << 1
 
-
 SpaceshipVisitorCtrl.m_requestCount = HL.Field(HL.Number) << 0
-
 
 SpaceshipVisitorCtrl.m_requestTodayIds = HL.Field(HL.Table)
 
-
 SpaceshipVisitorCtrl.m_requestTodayIndex = HL.Field(HL.Number) << 1
-
 
 SpaceshipVisitorCtrl.m_requestYesterdayIds = HL.Field(HL.Table)
 
-
 SpaceshipVisitorCtrl.m_requestYesterdayIndex = HL.Field(HL.Number) << 1
-
 
 SpaceshipVisitorCtrl.m_todayRotationInfo = HL.Field(HL.Table)
 
-
 SpaceshipVisitorCtrl.m_yesterdayRotationInfo = HL.Field(HL.Table)
 
-
 SpaceshipVisitorCtrl.m_csIndex2Cell = HL.Field(HL.Table)
-
 
 SpaceshipVisitorCtrl.m_pendingFocusCsIndex = HL.Field(HL.Number) << -1
 
@@ -125,9 +67,6 @@ local SOLD_PRICE_TYPE_ICON = "reception_visitor_detailicon01"
 local PROD_SUPPORT_TYPE_ICON = "reception_visitor_detailicon02"
 
 local CONTROL_CENTER_TYPE = 0
-
-
-
 
 
 SpaceshipVisitorCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -182,15 +121,11 @@ SpaceshipVisitorCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.visitCellNumTxt.text = Language.LUA_SPACESHIP_VISITOR_LOADING_TEXT
 end
 
-
-
 SpaceshipVisitorCtrl.OnRecvQueryVisitInfo = HL.Method() << function(self)
     self.m_queryVisitInfo = true
     self.m_visitRecord = self.m_spaceship:GetRoomVisitRecord()
     self:_HandleFriendInfo()
 end
-
-
 
 SpaceshipVisitorCtrl._HandleFriendInfo = HL.Method() << function(self)
     self.m_requestTodayIds = {}
@@ -232,8 +167,6 @@ SpaceshipVisitorCtrl._HandleFriendInfo = HL.Method() << function(self)
     end
 end
 
-
-
 SpaceshipVisitorCtrl._RealUpdateInfo = HL.Method() << function(self)
     self.m_haveFriendInfo = true
     self.view.helpCellNumTxt.text = self.m_visitRecord.weeklyBeSupportedCnt
@@ -254,9 +187,6 @@ SpaceshipVisitorCtrl._RealUpdateInfo = HL.Method() << function(self)
     end
 end
 
-
-
-
 SpaceshipVisitorCtrl._RequestTick = HL.Method(HL.Number) << function(self, deltaTime)
     self.m_requestTime = self.m_requestTime + deltaTime
     if self.m_requestTime < 1 then
@@ -273,8 +203,6 @@ SpaceshipVisitorCtrl._RequestTick = HL.Method(HL.Number) << function(self, delta
     end
     GameInstance.player.friendSystem:SyncSocialFriendInfo(ids)
 end
-
-
 
 SpaceshipVisitorCtrl._GetNextPageNotInitIds = HL.Method().Return(HL.Table) << function(self)
     self.m_requestCount = self.m_requestCount + 1
@@ -300,9 +228,6 @@ SpaceshipVisitorCtrl._GetNextPageNotInitIds = HL.Method().Return(HL.Table) << fu
     return ids
 end
 
-
-
-
 SpaceshipVisitorCtrl.AddTodayId = HL.Method(HL.Table) << function(self, ids)
     if self.m_requestTodayIndex <= #self.m_requestTodayIds then
         table.insert(ids, self.m_requestTodayIds[self.m_requestTodayIndex])
@@ -313,9 +238,6 @@ SpaceshipVisitorCtrl.AddTodayId = HL.Method(HL.Table) << function(self, ids)
     end
 end
 
-
-
-
 SpaceshipVisitorCtrl.AddYesterdayId = HL.Method(HL.Table) << function(self, ids)
     if self.m_requestYesterdayIndex <= #self.m_requestYesterdayIds then
         table.insert(ids, self.m_requestYesterdayIds[self.m_requestYesterdayIndex])
@@ -325,8 +247,6 @@ SpaceshipVisitorCtrl.AddYesterdayId = HL.Method(HL.Table) << function(self, ids)
         self.m_requestTodayIndex = self.m_requestTodayIndex + 1
     end
 end
-
-
 
 SpaceshipVisitorCtrl.UpdateTodayInfo = HL.Method() << function(self)
     self.m_showInfo = {}
@@ -340,8 +260,6 @@ SpaceshipVisitorCtrl.UpdateTodayInfo = HL.Method() << function(self)
     self:UpdateFriendCells()
 end
 
-
-
 SpaceshipVisitorCtrl.UpdateYesterdayInfo = HL.Method() << function(self)
     self.m_showInfo = {}
     if not self.m_haveFriendInfo then
@@ -352,8 +270,6 @@ SpaceshipVisitorCtrl.UpdateYesterdayInfo = HL.Method() << function(self)
     end
     self:UpdateFriendCells()
 end
-
-
 
 SpaceshipVisitorCtrl.UpdateFriendCells = HL.Method() << function(self)
     if self.m_showInfo.showNum > 0 then
@@ -373,11 +289,11 @@ SpaceshipVisitorCtrl.UpdateFriendCells = HL.Method() << function(self)
             local targetCsIndex = math.min(self.m_pendingFocusCsIndex, self.m_showInfo.showNum - 1)
             self.view.scrollList:ScrollToIndex(targetCsIndex, true)
             if self.m_csIndex2Cell[targetCsIndex] ~= nil then
-                InputManagerInst.controllerNaviManager:SetTarget(self.m_csIndex2Cell[targetCsIndex].friendListCell.view.inputNaviDecorator)
+                self:SetNaviTarget(self.m_csIndex2Cell[targetCsIndex].friendListCell.view.inputNaviDecorator)
             end
             self.m_pendingFocusCsIndex = -1
         elseif self.m_csIndex2Cell[0] ~= nil then
-            InputManagerInst.controllerNaviManager:SetTarget(self.m_csIndex2Cell[0].friendListCell.view.inputNaviDecorator)
+            self:SetNaviTarget(self.m_csIndex2Cell[0].friendListCell.view.inputNaviDecorator)
         end
 
         self.view.scrollListAnimationWrapper:PlayInAnimation()
@@ -386,10 +302,6 @@ SpaceshipVisitorCtrl.UpdateFriendCells = HL.Method() << function(self)
         self.view.visitorNull.gameObject:SetActive(true)
     end
 end
-
-
-
-
 
 SpaceshipVisitorCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, csIndex)
     self.m_csIndex2Cell[csIndex] = cell
@@ -475,12 +387,6 @@ SpaceshipVisitorCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(
 
 end
 
-
-
-
-
-
-
 SpaceshipVisitorCtrl.RotationBtnRect = HL.Method(HL.Any, HL.Any, HL.Number, HL.Boolean) << function(self, cell, opData, csIndex, isInit)
     if isInit then
         if self.view.toggleTodayCell.isOn then
@@ -535,10 +441,6 @@ SpaceshipVisitorCtrl.RotationBtnRect = HL.Method(HL.Any, HL.Any, HL.Number, HL.B
         self.view.scrollRect:ScrollToNaviTarget(cell.friendListCell.view.inputNaviDecorator)
     end
 end
-
-
-
-
 
 SpaceshipVisitorCtrl.UpdateSubCellList = HL.Method(HL.Any, HL.Any) << function(self, cell, opData)
     if not opData.joinedInfoExchange and opData.prodSupportList.Count == 0 and opData.moneyIdToSoldPrice.Count == 0 then
@@ -638,13 +540,9 @@ SpaceshipVisitorCtrl.UpdateSubCellList = HL.Method(HL.Any, HL.Any) << function(s
 end
 
 
-
-
 SpaceshipVisitorCtrl.ShowSpaceshipVisitor = HL.StaticMethod(HL.Opt(HL.Table)) << function(args)
     PhaseManager:OpenPhase(PhaseId.SpaceshipVisitor)
 end
-
-
 
 
 SpaceshipVisitorCtrl.OnClose = HL.Override() << function(self)

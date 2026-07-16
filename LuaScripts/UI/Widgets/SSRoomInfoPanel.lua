@@ -1,13 +1,7 @@
 local SSStatusBarBase = require_ex('UI/Widgets/SSStatusBarBase')
 
-
-
-
-
-
 SSRoomInfoPanel = HL.Class('SSRoomInfoPanel', SSStatusBarBase)
 local RoomState = CS.Beyond.Gameplay.SpaceshipSystem.RoomState
-
 
 SSRoomInfoPanel.m_roomType = HL.Field(GEnums.SpaceshipRoomType)
 
@@ -99,15 +93,9 @@ local STATUS_BAR_CONST = {
     }
 }
 
-
-
 SSRoomInfoPanel.SetupSwitchStateHandleFunctions = HL.Override() << function(self)
     self.m_stateHandleFuncLut = {}
 end
-
-
-
-
 
 SSRoomInfoPanel.DefaultStateHandle = HL.Override(HL.String, CS.Beyond.Gameplay.SpaceshipSystem.RoomState) << function(self, roomId, roomState)
     self:SetupView()
@@ -119,8 +107,6 @@ SSRoomInfoPanel.DefaultStateHandle = HL.Override(HL.String, CS.Beyond.Gameplay.S
         self.view.titleText.text = SpaceshipUtils.getFormatCabinSerialNum(roomId, roomInfo.serialNum)
     end
 end
-
-
 
 SSRoomInfoPanel.SetupView = HL.Override() << function(self)
     

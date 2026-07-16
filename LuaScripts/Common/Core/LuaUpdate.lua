@@ -2,29 +2,14 @@
 
 local LuaUpdateGroupClass = require_ex('Common/Core/LuaUpdateGroup')
 
-
-
-
-
-
-
-
-
-
-
 LuaUpdate = HL.Class('LuaUpdate')
-
 
 
 LuaUpdate.m_groups = HL.Field(HL.Table)
 
-
 LuaUpdate.m_keyToUpdateName = HL.Field(HL.Table)
 
-
 LuaUpdate.m_nextKey = HL.Field(HL.Number) << 1
-
-
 
 
 LuaUpdate.LuaUpdate = HL.Constructor() << function(self)
@@ -47,27 +32,15 @@ LuaUpdate.LuaUpdate = HL.Constructor() << function(self)
     end
 end
 
-
-
-
 LuaUpdate._GetGroup = HL.Method(HL.String).Return(LuaUpdateGroupClass) << function(self, updateName)
     
     return self.m_groups[updateName]
 end
 
-
-
-
-
 LuaUpdate._ExecActions = HL.Method(HL.String, HL.Number) << function(self, updateName, deltaTime)
     local group = self:_GetGroup(updateName)
     group:_ExecActions(deltaTime)
 end
-
-
-
-
-
 
 LuaUpdate.Add = HL.Method(HL.String, HL.Function, HL.Opt(HL.Boolean)).Return(HL.Opt(HL.Number)) << function(self, updateName, action, useTimeSlice)
     local group = self:_GetGroup(updateName)
@@ -77,9 +50,6 @@ LuaUpdate.Add = HL.Method(HL.String, HL.Function, HL.Opt(HL.Boolean)).Return(HL.
     self.m_keyToUpdateName[key] = updateName
     return key
 end
-
-
-
 
 LuaUpdate.Remove = HL.Method(HL.Opt(HL.Number)).Return(HL.Number) << function(self, key)
     if not key or key == -1 then
@@ -97,8 +67,6 @@ LuaUpdate.Remove = HL.Method(HL.Opt(HL.Number)).Return(HL.Number) << function(se
     group:Remove(key)
     return -1
 end
-
-
 
 
 LuaUpdate.GetDebugInfo = HL.Method().Return(HL.String) << function(self)

@@ -2,12 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.PresetTeamSwitch
 
-
-
-
-
 PresetTeamSwitchCtrl = HL.Class('PresetTeamSwitchCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -18,11 +13,7 @@ PresetTeamSwitchCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 PresetTeamSwitchCtrl.m_charHeadCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 

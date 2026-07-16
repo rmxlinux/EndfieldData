@@ -4,47 +4,7 @@ local EOperationType = CS.Beyond.Gameplay.EOperationType
 local FertilizeIncreaseType = GEnums.FertilizeIncreaseType
 local UnlockSystemType = GEnums.UnlockSystemType
 local PANEL_ID = PanelId.FacCultivate
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacCultivateCtrl = HL.Class('FacCultivateCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -59,56 +19,43 @@ FacCultivateCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CROP_EXTRA_OPERATION_FINISH] = '_OnExtraOperationFinish',
     [MessageConst.On_FERTILIZE_PANEL_DO_OPERATION] = '_OnUpdateIfDoOperation'
 }
-
 FacCultivateCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 FacCultivateCtrl.m_soilNode = HL.Field(CS.Beyond.Gameplay.FacSoilSystem.SoilNode)
 
-
 FacCultivateCtrl.m_soilShow = HL.Field(CS.Beyond.Gameplay.SoilShow)
-
 
 FacCultivateCtrl.m_soilComp = HL.Field(CS.Beyond.Gameplay.Core.IntFacSoilComponent)
 
-
 FacCultivateCtrl.m_soilCfg = HL.Field(CS.Beyond.Cfg.PlantingStepData)
-
 
 FacCultivateCtrl.m_uiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_Soil)
 
-
 FacCultivateCtrl.m_enumMap = HL.Field(HL.Table)
-
 
 FacCultivateCtrl.m_enumList = HL.Field(HL.Table)
 
-
 FacCultivateCtrl.m_enumReverseLookup = HL.Field(HL.Table)
-
 
 FacCultivateCtrl.m_progressImgMap = HL.Field(HL.Table)
 
-
 FacCultivateCtrl.m_partNodeList = HL.Field(HL.Table)
-
 
 FacCultivateCtrl.m_getCell = HL.Field(HL.Function)
 
-
 FacCultivateCtrl.m_showInfo = HL.Field(HL.Boolean) << false
-
 
 FacCultivateCtrl.m_currentStep = HL.Field(HL.Number) << -1
 
-
 FacCultivateCtrl.m_doTweenAnim = HL.Field(HL.Any)
 
+FacCultivateCtrl.m_openedInProgress = HL.Field(HL.Boolean) << false
+
+FacCultivateCtrl.m_waitingExitPhase = HL.Field(HL.Boolean) << false
 
 FacCultivateCtrl.s_key = HL.StaticField(HL.Number) << -1
 
-
-
+FacCultivateCtrl.m_inNaviState = HL.Field(HL.Boolean) << false
 
 
 FacCultivateCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -208,6 +155,7 @@ FacCultivateCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local hasFound, curStepConstCfg = Tables.plantingStepConstTable:TryGetValue(self.m_soilCfg.id)
     local rewardId = self.m_soilNode.fertilizeIncreaseType == FertilizeIncreaseType.None and self.m_soilCfg.rewardId or self.m_soilCfg.newRewardId
     local rewardValid, rewardCfg = Tables.rewardSoilTable:TryGetValue(rewardId)
+    self.m_openedInProgress = self.m_soilComp.isNatureResourceBusy
     self.view.mainPanel.gameObject:SetActiveIfNecessary(not self.m_soilComp.isNatureResourceBusy)
     self:_SetCancelBtn(self.m_soilComp.isNatureResourceBusy)
     self.view.bottomNode.gameObject:SetActiveIfNecessary(self.m_soilComp.isNatureResourceBusy)
@@ -237,11 +185,11 @@ FacCultivateCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         count = showItemNum
     }, true)
     if DeviceInfo.usingController then
-        self.view.item:SetExtraInfo({
-            tipsPosType = UIConst.UI_TIPS_POS_TYPE.RightMid,
-            tipsPosTransform = self.view.item.gameObject.rectTransform,
-            isSideTips = true,
-        })
+        
+        
+        
+        
+        
     end
     self.m_getCell = UIUtils.genCachedCellFunction(self.view.scrollList)
     self.view.scrollList.onUpdateCell:AddListener(function(obj, csIndex)
@@ -265,23 +213,9 @@ FacCultivateCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     if DeviceInfo.usingController then
-        self.view.closeContentInfoBtn.onClick:AddListener(function()
-            AudioAdapter.PostEvent("Au_UI_Toast_Common_Small_Close") 
-            self:_SetInfoVisible(false)
-        end)
-        self.view.doubleClickCloseBtn.onClick:AddListener(function()
-            AudioAdapter.PostEvent("Au_UI_Toast_Common_Small_Close") 
-            self:_SetInfoVisible(false)
-        end)
-        self.view.itemPlantNode.onIsFocusedChange:AddListener(function(isFocused)
-            if not isFocused then
-                Notify(MessageConst.HIDE_ITEM_TIPS)
-            end
-        end)
+        self:_InitController()
     end
 end
-
-
 
 FacCultivateCtrl._UpdateProgressNode = HL.Method() << function(self)
     
@@ -296,8 +230,6 @@ FacCultivateCtrl._UpdateProgressNode = HL.Method() << function(self)
         self.view.bottomProgressText.text = stepConstCfg.progressText
     end
 end
-
-
 
 
 
@@ -323,9 +255,6 @@ FacCultivateCtrl._RefreshBtn = HL.Method() << function(self)
     self:_SetCancelBtn(self.m_soilComp.isNatureResourceBusy)
 end
 
-
-
-
 FacCultivateCtrl._SetInfoVisible = HL.Method(HL.Boolean) << function(self, infoVisible)
     self.view.closeInfoBtn.gameObject:SetActiveIfNecessary(infoVisible)
     self.view.stepContainer.gameObject:SetActiveIfNecessary(not infoVisible)
@@ -347,8 +276,6 @@ FacCultivateCtrl._SetInfoVisible = HL.Method(HL.Boolean) << function(self, infoV
         self.view.controllerHintPlaceholder.gameObject:SetActive(not infoVisible)
     end
 end
-
-
 
 FacCultivateCtrl._DoOperation = HL.Method() << function(self)
     if self.m_soilComp.isNatureResourceBusy then
@@ -374,9 +301,6 @@ FacCultivateCtrl._DoOperation = HL.Method() << function(self)
     self.m_soilShow:DoOperation(false)
 end
 
-
-
-
 FacCultivateCtrl._OnStepChange = HL.Method(HL.Table) << function(self, args)
     local nodeId = unpack(args)
     if self.m_soilComp.soilNodeId ~= nodeId then
@@ -397,6 +321,11 @@ end
 
 
 
+FacCultivateCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    self:_KillTween()
+    return nil
+end
+
 FacCultivateCtrl._KillTween = HL.Method() << function(self)
     if self.m_doTweenAnim then
         self.m_doTweenAnim:Kill()
@@ -404,15 +333,9 @@ FacCultivateCtrl._KillTween = HL.Method() << function(self)
     self.m_doTweenAnim = nil
 end
 
-
-
-
 FacCultivateCtrl._SetCancelBtn = HL.Method(HL.Boolean) << function(self, showBtn)
     self.view.itemContent.gameObject:SetActiveIfNecessary(showBtn)
 end
-
-
-
 
 FacCultivateCtrl._OnOperationFailed = HL.Method(HL.Any) << function(self, arg)
     local nodeId = unpack(arg)
@@ -421,9 +344,6 @@ FacCultivateCtrl._OnOperationFailed = HL.Method(HL.Any) << function(self, arg)
     end
 end
 
-
-
-
 FacCultivateCtrl._OnExtraOperationFinish = HL.Method(HL.Any) << function(self, arg)
     local nodeId = unpack(arg)
     if self.m_nodeId == nodeId then
@@ -431,14 +351,9 @@ FacCultivateCtrl._OnExtraOperationFinish = HL.Method(HL.Any) << function(self, a
     end
 end
 
-
-
-
 FacCultivateCtrl._OnOperationFailedForce = HL.Method(HL.Any) << function(self, arg)
     self:_ExitAnyWay()
 end
-
-
 
 FacCultivateCtrl._ExitAnyWay = HL.Method() << function(self)
     if self.view.bottomNode.gameObject.activeInHierarchy then   
@@ -452,8 +367,6 @@ FacCultivateCtrl._ExitAnyWay = HL.Method() << function(self)
     end
 end
 
-
-
 FacCultivateCtrl._ClosePanel = HL.Method() << function(self)
     
     Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.contentInfoStateInputBindingGroupMonoTarget.groupId)
@@ -461,14 +374,33 @@ FacCultivateCtrl._ClosePanel = HL.Method() << function(self)
     if isOpen then
         sideMenuCtrl:PlayAnimationOutAndClose()
     end
-    if PhaseManager:IsOpen(PhaseId.FacMachine) then
-        PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
-    else
+    if not PhaseManager:IsOpen(PhaseId.FacMachine) then
         UIManager:Close(PANEL_ID)
+        return
     end
+    if not PhaseManager:CheckIsInTransition() then
+        PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
+        return
+    end
+    if self.m_waitingExitPhase then
+        return
+    end
+    self.m_waitingExitPhase = true
+    self:_StartCoroutine(function()
+        coroutine.waitCondition(function()
+            return self.m_isClosed or not PhaseManager:CheckIsInTransition()
+        end)
+        self.m_waitingExitPhase = false
+        if self.m_isClosed then
+            return
+        end
+        if PhaseManager:IsOpen(PhaseId.FacMachine) then
+            PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
+        else
+            UIManager:Close(PANEL_ID)
+        end
+    end)
 end
-
-
 
 FacCultivateCtrl._UpdateShow = HL.Method() << function(self)
     if self.m_nodeId == nil then
@@ -476,6 +408,12 @@ FacCultivateCtrl._UpdateShow = HL.Method() << function(self)
         return
     end
     if CSFactoryUtil.CheckMinaCharOperateNodeBlockByTeammate(self.m_nodeId) then
+        self:_ExitAnyWay()
+        return
+    end
+
+    
+    if self.m_openedInProgress and not self.m_soilComp.isNatureResourceBusy then
         self:_ExitAnyWay()
         return
     end
@@ -570,10 +508,6 @@ FacCultivateCtrl._UpdateShow = HL.Method() << function(self)
     self:_RefreshBtn()
 end
 
-
-
-
-
 FacCultivateCtrl._UpdateFertilizeState = HL.Method(HL.Boolean, HL.Any) << function(self, isFertilizeUnlock, curStepCfg)
     if isFertilizeUnlock then    
         if curStepCfg.plantingStepType == GEnums.PlantingStepType.Grow then
@@ -586,8 +520,6 @@ FacCultivateCtrl._UpdateFertilizeState = HL.Method(HL.Boolean, HL.Any) << functi
     end
 end
 
-
-
 FacCultivateCtrl._UpdateFertilizeIfUnlock = HL.Method() << function(self)
     if self.m_soilNode:CanFertilize() then 
         self.view.righNodeState:SetState("Fertilization")
@@ -595,8 +527,6 @@ FacCultivateCtrl._UpdateFertilizeIfUnlock = HL.Method() << function(self)
     self:_UpdateFertilizeIfCannot()
     end
 end
-
-
 
 FacCultivateCtrl._UpdateFertilizeIfCannot = HL.Method() << function(self)
     if self.m_soilNode.fertilizeCount == 0 then 
@@ -612,8 +542,6 @@ FacCultivateCtrl._UpdateFertilizeIfCannot = HL.Method() << function(self)
     end
 end
 
-
-
 FacCultivateCtrl._OnUpdateIfDoOperation = HL.Method() << function(self)
     
     
@@ -622,12 +550,10 @@ FacCultivateCtrl._OnUpdateIfDoOperation = HL.Method() << function(self)
     self:_ClosePanel()
 end
 
-
-
 FacCultivateCtrl._PlayDoTweenAnim = HL.Method() << function(self)
     local curStep = self.m_soilNode.soilStage
     local curStepCfg = self.m_soilCfg.plantingSteps[curStep]
-    local progress = curStepCfg.plantingStepType == GEnums.PlantingStepType.Water and self.m_soilShow:GetProgress() or 0
+    local progress = self.m_soilShow:GetProgress()
     self.view.barMask.sizeDelta = Vector2(-(1 - progress) * self.view.bar.rect.size.x,self.view.barMask.sizeDelta.y)
     self:_UpdateShow()  
 
@@ -649,10 +575,6 @@ FacCultivateCtrl._PlayDoTweenAnim = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 FacCultivateCtrl._OnUpdateStepCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local curEnum = self.m_enumList[index]
     local hasFound, curStepConstCfg = Tables.plantingStepConstTable:TryGetValue(curEnum)
@@ -661,8 +583,6 @@ FacCultivateCtrl._OnUpdateStepCell = HL.Method(HL.Table, HL.Number) << function(
     cell.text.text = curStepConstCfg.stepDescription
     cell.blackBG.gameObject:SetActiveIfNecessary(index % 2 == 0)
 end
-
-
 
 FacCultivateCtrl._OnOpenCrop = HL.StaticMethod(HL.Any) << function(arg)
     local unpackNodeId, cb = unpack(arg)
@@ -685,5 +605,51 @@ FacCultivateCtrl._OnOpenCrop = HL.StaticMethod(HL.Any) << function(arg)
         failCb = cb,
     })
 end
+
+
+
+
+FacCultivateCtrl.m_naviToItemBindingId = HL.Field(HL.Number) << -1
+
+FacCultivateCtrl.m_cancelNaviItemBindingId = HL.Field(HL.Number) << -1
+
+FacCultivateCtrl._InitController = HL.Method() << function(self)
+    self.view.closeContentInfoBtn.onClick:AddListener(function()
+        AudioAdapter.PostEvent("Au_UI_Toast_Common_Small_Close") 
+        self:_SetInfoVisible(false)
+    end)
+    self.view.doubleClickCloseBtn.onClick:AddListener(function()
+        AudioAdapter.PostEvent("Au_UI_Toast_Common_Small_Close") 
+        self:_SetInfoVisible(false)
+    end)
+    self.m_naviToItemBindingId = UIUtils.bindInputPlayerAction("fac_cultivate_item", function()
+        self:_SetInNaviState(true)
+    end, self.view.inputGroup.groupId)
+    self.m_cancelNaviItemBindingId = UIUtils.bindInputPlayerAction("common_cancel", function()
+        self:_SetInNaviState(false)
+    end, self.view.inputGroup.groupId)
+    self.view.buildingCommon.view.controllerSideMenuBtn:InitControllerSideMenuBtn({
+        preOpenMenu = function()
+            self:_SetInNaviState(false)
+        end,
+    })
+    self:_SetInNaviState(false)
+end
+
+FacCultivateCtrl._SetInNaviState = HL.Method(HL.Boolean) << function(self, navi)
+    self.m_inNaviState = navi
+    self.view.buildingCommon.view.closeButton.enabled = not navi
+    InputManagerInst:ToggleBinding(self.m_naviToItemBindingId, not navi)
+    InputManagerInst:ToggleBinding(self.m_cancelNaviItemBindingId, navi)
+    InputManagerInst:ToggleGroup(self.view.buttonNodeGroup.groupId, not navi)
+    if navi then
+        self:SetNaviTarget(self.view.item.view.button)
+    else
+        InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.buildingCommon.view.buttonsNaviGroup)
+        InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.itemPlantNode)
+    end
+end
+
+
 
 HL.Commit(FacCultivateCtrl)

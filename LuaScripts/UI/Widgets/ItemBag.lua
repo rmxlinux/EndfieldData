@@ -1,18 +1,10 @@
 
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 ItemBag = HL.Class('ItemBag', UIWidgetBase)
 
 
-
 ItemBag.itemBagContent = HL.Field(HL.Forward("ItemBagContent"))
-
-
 
 
 ItemBag._OnFirstTimeInit = HL.Override() << function(self)
@@ -29,18 +21,12 @@ ItemBag._OnFirstTimeInit = HL.Override() << function(self)
     self.itemBagContent = self.view.itemBagContent
 end
 
-
-
-
-
 ItemBag.InitItemBag = HL.Method(HL.Opt(HL.Function, HL.Table)) << function(self, onClickItemAction, otherArgs)
     self:_FirstTimeInit()
 
     self.itemBagContent:InitItemBagContent(onClickItemAction, otherArgs)
     self:_UpdateCount()
 end
-
-
 
 ItemBag._UpdateCount = HL.Method() << function(self)
     local bag = GameInstance.player.inventory.itemBag:GetOrFallback(Utils.getCurrentScope())

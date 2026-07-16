@@ -1,30 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacPipeRouterCtrl = HL.Class('FacPipeRouterCtrl', uiCtrl.UICtrl)
 
 local MAX_ROUTER_PORT_COUNT = 4
@@ -33,44 +9,29 @@ local NON_SINGLE_ROUTER_PORT_INDEX_OFFSET = -1
 local ROUTER_PIPE_ITEM_INDEX_IN_LIST = 0
 local SINGLE_ROUTER_ITEM_INDEX = 0
 
-
 FacPipeRouterCtrl.m_buildingInfo = HL.Field(HL.Userdata)
-
 
 FacPipeRouterCtrl.m_isSinglePortIn = HL.Field(HL.Boolean) << false
 
-
 FacPipeRouterCtrl.m_routerItems = HL.Field(HL.Table)
-
 
 FacPipeRouterCtrl.m_inPipeInfoList = HL.Field(HL.Table)
 
-
 FacPipeRouterCtrl.m_outPipeInfoList = HL.Field(HL.Table)
-
 
 FacPipeRouterCtrl.m_updateThread = HL.Field(HL.Thread)
 
-
 FacPipeRouterCtrl.m_inBindingAnimMap = HL.Field(HL.Table)
-
 
 FacPipeRouterCtrl.m_outBindingAnimMap = HL.Field(HL.Table)
 
-
 FacPipeRouterCtrl.m_inItemAnimMap = HL.Field(HL.Table)
-
 
 FacPipeRouterCtrl.m_outItemAnimMap = HL.Field(HL.Table)
 
-
 FacPipeRouterCtrl.m_itemSpriteCache = HL.Field(HL.Table)
 
-
 FacPipeRouterCtrl.m_initialNaviTarget = HL.Field(HL.Forward("Item"))
-
-
-
 
 FacPipeRouterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_buildingInfo = arg.uiInfo
@@ -102,19 +63,13 @@ FacPipeRouterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 FacPipeRouterCtrl.OnClose = HL.Override() << function(self)
     self:_ClearConveyorEvent()
     self.m_updateThread = self:_ClearCoroutine(self.m_updateThread)
 end
 
-
-
 FacPipeRouterCtrl._InitRouterPortData = HL.Virtual() << function(self)
 end
-
-
 
 FacPipeRouterCtrl._InitConveyorEvent = HL.Method() << function(self)
     self.m_inPipeInfoList, self.m_outPipeInfoList = FactoryUtils.getBuildingPortState(self.m_buildingInfo.nodeId, true)
@@ -139,8 +94,6 @@ FacPipeRouterCtrl._InitConveyorEvent = HL.Method() << function(self)
     end, self)
 end
 
-
-
 FacPipeRouterCtrl._ClearConveyorEvent = HL.Method() << function(self)
     if self.m_inPipeInfoList ~= nil then
         for _, inPipeInfo in pairs(self.m_inPipeInfoList) do
@@ -160,8 +113,6 @@ FacPipeRouterCtrl._ClearConveyorEvent = HL.Method() << function(self)
     MessageManager:UnregisterAll(self)
 end
 
-
-
 FacPipeRouterCtrl._InitRouterUpdateThread = HL.Method() << function(self)
     
     self:_UpdateRouterItems()
@@ -172,8 +123,6 @@ FacPipeRouterCtrl._InitRouterUpdateThread = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 FacPipeRouterCtrl._UpdateRouterItems = HL.Method() << function(self)
     for index = SINGLE_ROUTER_PORT_INDEX, MAX_ROUTER_PORT_COUNT do
@@ -214,10 +163,6 @@ end
 
 
 
-
-
-
-
 FacPipeRouterCtrl._RefreshRouterItemState = HL.Method(HL.Number, HL.String) << function(self, index, itemId)
     local viewItemName = string.format("itemLogistics%d", index)
     local viewItem = self.view[viewItemName]
@@ -246,8 +191,6 @@ FacPipeRouterCtrl._RefreshRouterItemState = HL.Method(HL.Number, HL.String) << f
     end
 end
 
-
-
 FacPipeRouterCtrl._OnDeleteRouterButtonClicked = HL.Method() << function(self)
     if not FactoryUtils.canDelBuilding(self.m_buildingInfo.nodeId, true) then
         return
@@ -255,8 +198,6 @@ FacPipeRouterCtrl._OnDeleteRouterButtonClicked = HL.Method() << function(self)
     PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
     GameInstance.player.remoteFactory.core:Message_OpDismantle(Utils.getCurrentChapterId(), self.m_buildingInfo.nodeId)
 end
-
-
 
 
 
@@ -278,9 +219,6 @@ FacPipeRouterCtrl._InitConveyorBindingAnim = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 FacPipeRouterCtrl._OnConveyorChanged = HL.Method(HL.Any) << function(self, args)
     local bindingNodeId, componentId, isIn, itemList = unpack(args)

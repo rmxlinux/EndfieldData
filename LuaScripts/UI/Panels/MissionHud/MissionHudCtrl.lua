@@ -33,88 +33,7 @@ local LEFT_HASH_OBJ_NO_DIST_NODE = 1
 local LEFT_HASH_OBJ_DIST_NUMBER = 2
 local LEFT_HASH_OBJ_BTN = 3
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MissionHudCtrl = HL.Class('MissionHudCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -136,72 +55,50 @@ MissionHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_TOGGLE_PHASE_FORBID] = "_OnTogglePhaseForbid",
 }
 
-
 MissionHudCtrl.m_missionSystem = HL.Field(HL.Any)
-
 
 MissionHudCtrl.m_questCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 MissionHudCtrl.m_currentMissionShowData = HL.Field(HL.Any)
-
 
 MissionHudCtrl.m_missionStateChangeSignal = HL.Field(HL.Table)
 
-
 MissionHudCtrl.m_updateDistanceTimerHandler = HL.Field(HL.Any)
 
-
 MissionHudCtrl.m_leftContentHash = HL.Field(HL.Number) << 0
-
 
 MissionHudCtrl.m_lastRebuildFrame = HL.Field(HL.Number) << 0
 
 
 
 
-
 MissionHudCtrl.m_canScrollContent = HL.Field(HL.Boolean) << false
-
 
 MissionHudCtrl.m_showArrow = HL.Field(HL.Boolean) << true
 
-
 MissionHudCtrl.m_modifyingContentDontShowProg = HL.Field(HL.Boolean) << false
-
 
 MissionHudCtrl.m_canFold = HL.Field(HL.Boolean) << false
 
-
 MissionHudCtrl.m_isFold = HL.Field(HL.Boolean) << true
-
 
 MissionHudCtrl.m_skipBossBattleButtonVisible = HL.StaticField(HL.Boolean) << false
 
-
 MissionHudCtrl.m_scrollState = HL.Field(HL.Number) << -1
-
 
 MissionHudCtrl.m_rectFoldHeight = HL.Field(HL.Number) << 0
 
-
 MissionHudCtrl.m_rectUnfoldHeight = HL.Field(HL.Number) << 0
-
 
 MissionHudCtrl.m_tween = HL.Field(HL.Any)
 
-
 MissionHudCtrl.m_isOrderPlaying = HL.Field(HL.Boolean) << false
-
 
 MissionHudCtrl.m_customLevelScriptBtnClearScreenKey = HL.Field(HL.Number) << -1
 
-
 MissionHudCtrl.m_switcherCoroutine = HL.Field(HL.Thread)
 
-
 MissionHudCtrl.m_blockedByMainHudActionQueueSys = HL.Field(HL.Boolean) << false
-
 
 MissionHudCtrl.m_blockingMainHudActionQueueSys = HL.Field(HL.Boolean) << false
 
@@ -236,9 +133,6 @@ local MissionTypeConfig = {
         missionDecoIcon = "misc_mission_icon_gray",
     },
 }
-
-
-
 
 
 MissionHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -310,7 +204,6 @@ MissionHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
 MissionHudCtrl.OnMissionCompleteOrderEnqueue = HL.StaticMethod() << function()
     
     local open, self = UIManager:IsOpen(PanelId.MissionHud)
@@ -319,8 +212,6 @@ MissionHudCtrl.OnMissionCompleteOrderEnqueue = HL.StaticMethod() << function()
     end
     self:_TryBlockMainHudActionQueueSys()
 end
-
-
 
 MissionHudCtrl._TryBlockMainHudActionQueueSys = HL.Method() << function(self)
     if self.m_blockingMainHudActionQueueSys then
@@ -352,13 +243,9 @@ MissionHudCtrl._TryBlockMainHudActionQueueSys = HL.Method() << function(self)
     end)
 end
 
-
-
 MissionHudCtrl.OnMissionHudOrderEnqueue = HL.Method() << function(self)
     self:_TryStartSwitcherCoroutine()
 end
-
-
 
 MissionHudCtrl._TryStartSwitcherCoroutine = HL.Method() << function(self)
     if self.m_switcherCoroutine ~= nil then
@@ -380,8 +267,6 @@ MissionHudCtrl._TryStartSwitcherCoroutine = HL.Method() << function(self)
 
     self:_DisplayCurrentTrackingMission()
 end
-
-
 
 MissionHudCtrl._StartSwitcherCoroutine = HL.Method() << function(self)
     local animThread = function(animInfo)
@@ -746,13 +631,9 @@ MissionHudCtrl._StartSwitcherCoroutine = HL.Method() << function(self)
     end)
 end
 
-
-
 MissionHudCtrl._IsPlayingMissionAnim = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_isOrderPlaying;
 end
-
-
 
 MissionHudCtrl._TryRemoveMainHudActionQueueBlocker = HL.Method() << function(self)
     if self.m_blockingMainHudActionQueueSys then
@@ -761,9 +642,6 @@ MissionHudCtrl._TryRemoveMainHudActionQueueBlocker = HL.Method() << function(sel
         self.m_blockingMainHudActionQueueSys = false
     end
 end
-
-
-
 
 MissionHudCtrl._ObjAnimThreadFunc = HL.Method(HL.Any) << function(self, animInfo)
     local animWrapper = animInfo.animWrapper
@@ -803,8 +681,6 @@ MissionHudCtrl._ObjAnimThreadFunc = HL.Method(HL.Any) << function(self, animInfo
     end
 end
 
-
-
 MissionHudCtrl._FetchNextOrderShowData = HL.Method().Return(HL.Any) << function(self)
     if self.m_missionSystem:MissionHudExclusiveMode() then
         local trackMissionId = self.m_missionSystem:GetTrackMissionId()
@@ -821,8 +697,6 @@ MissionHudCtrl._FetchNextOrderShowData = HL.Method().Return(HL.Any) << function(
     return ret
 end
 
-
-
 MissionHudCtrl._GetNextOrderIndex = HL.Method().Return(HL.Number) << function(self)
     if self.m_missionSystem:MissionHudExclusiveMode() then
         local trackMissionId = self.m_missionSystem:GetTrackMissionId()
@@ -836,9 +710,6 @@ MissionHudCtrl._GetNextOrderIndex = HL.Method().Return(HL.Number) << function(se
     local ret = self.m_missionSystem:GetNextOrderIndex("")
     return ret
 end
-
-
-
 
 MissionHudCtrl._InitMissionShowData = HL.Method(HL.Any) << function(self, missionShowData)
     self.m_currentMissionShowData = missionShowData
@@ -938,9 +809,6 @@ MissionHudCtrl._InitMissionShowData = HL.Method(HL.Any) << function(self, missio
     end
 end
 
-
-
-
 MissionHudCtrl._RefreshQuestContentIfNecessary = HL.Method(HL.Any) << function(self, missionShowData)
     if missionShowData ~= nil and missionShowData.modifyContent then
         missionShowData.modifyContent = false
@@ -953,9 +821,6 @@ MissionHudCtrl._RefreshQuestContentIfNecessary = HL.Method(HL.Any) << function(s
         self:_RebuildLayoutAndAdaptByDevice()
     end
 end
-
-
-
 
 MissionHudCtrl._RefreshQuestContent = HL.Method(HL.Any) << function(self, missionShowData)
     self.m_questCellCache:Refresh(missionShowData.questShowDataList.Count, function(questCell, questLuaIdx)
@@ -1003,9 +868,6 @@ MissionHudCtrl._RefreshQuestContent = HL.Method(HL.Any) << function(self, missio
     self:_RebuildLayoutAndAdaptByDevice()
 end
 
-
-
-
 MissionHudCtrl._OnQuestObjectiveUpdate = HL.Method(HL.Any) << function(self, arg)
     
     if (not self.m_currentMissionShowData) then
@@ -1035,9 +897,6 @@ MissionHudCtrl._OnQuestObjectiveUpdate = HL.Method(HL.Any) << function(self, arg
     end
 end
 
-
-
-
 MissionHudCtrl._GetMissionShowDataAnimType = HL.Method(HL.Any).Return(HL.Number) << function(self, missionShowData)
     if missionShowData.animType == MissionAnimType.New then
         return MISSION_ANIM_TYPE.NewMission
@@ -1063,8 +922,6 @@ MissionHudCtrl._GetMissionShowDataAnimType = HL.Method(HL.Any).Return(HL.Number)
     return MISSION_ANIM_TYPE.None
 end
 
-
-
 MissionHudCtrl._SkipAnimationAndTrackMission = HL.Method() << function(self)
     if self:_IsPlayingMissionAnim() then
         local missionShowData = self.m_missionSystem:GetCurrentOrderShowData()
@@ -1089,9 +946,6 @@ end
 
 
 
-
-
-
 MissionHudCtrl._OnScrollValueChanged = HL.Method(Vector2) << function(self, normalizedPosition)
     if not self.m_canScrollContent then
         return
@@ -1112,9 +966,6 @@ MissionHudCtrl._OnScrollValueChanged = HL.Method(Vector2) << function(self, norm
         
     end
 end
-
-
-
 
 MissionHudCtrl._RebuildLayoutAndAdaptByDevice = HL.Method(HL.Opt(HL.Boolean)) << function(self, doNotReCalcWidth)
     self.m_lastRebuildFrame = CS.Beyond.DLogger.FrameCountThreadSafe
@@ -1160,8 +1011,6 @@ MissionHudCtrl._RebuildLayoutAndAdaptByDevice = HL.Method(HL.Opt(HL.Boolean)) <<
 
     self:_UpdateScrollContentWightsState(true)
 end
-
-
 
 MissionHudCtrl._RebuildLayout = HL.Method() << function(self)
     
@@ -1254,9 +1103,6 @@ MissionHudCtrl._RebuildLayout = HL.Method() << function(self)
     end
 end
 
-
-
-
 MissionHudCtrl._UpdateScrollContentWightsState = HL.Method(HL.Boolean) << function(self, ignoreAnim)
     self.view.scrollbarNode.gameObject:SetActiveIfNecessary(not self.m_isFold and self.m_scrollState == UIConst.TRACK_HUD_SCROLL_STATE.AlwaysCanScroll)
     
@@ -1281,8 +1127,6 @@ MissionHudCtrl._UpdateScrollContentWightsState = HL.Method(HL.Boolean) << functi
 
     self.view.arrowBottomNode.gameObject:SetActiveIfNecessary(self.m_canScrollContent)
 end
-
-
 
 MissionHudCtrl._OnBtnFoldClick = HL.Method() << function(self)
     local config = self.view.config
@@ -1322,13 +1166,9 @@ MissionHudCtrl._OnBtnFoldClick = HL.Method() << function(self)
     end)
 end
 
-
-
 MissionHudCtrl._GetCanScrollState = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_scrollState == UIConst.TRACK_HUD_SCROLL_STATE.AlwaysCanScroll and not self.m_isFold
 end
-
-
 
 
 
@@ -1364,13 +1204,9 @@ MissionHudCtrl._TriggerTrack = HL.Method() << function(self)
     end
 end
 
-
-
 MissionHudCtrl.OnSyncAllMission = HL.Method() << function(self)
     self:_DisplayCurrentTrackingMission()
 end
-
-
 
 MissionHudCtrl._DisplayCurrentTrackingMission = HL.Method() << function(self)
     
@@ -1386,9 +1222,6 @@ MissionHudCtrl._DisplayCurrentTrackingMission = HL.Method() << function(self)
     end
 end
 
-
-
-
 MissionHudCtrl._SetImportanceView = HL.Method(HL.Any) << function(self, showData)
     local importance = showData.importance
     if importance == MissionImportance.High then
@@ -1402,10 +1235,6 @@ MissionHudCtrl._SetImportanceView = HL.Method(HL.Any) << function(self, showData
     end
 end
 
-
-
-
-
 MissionHudCtrl._UpdateObjectiveCellDistance = HL.Method(HL.Any, HL.Any) << function(self, objectiveCell, objectiveShowData)
     if (not string.isEmpty(objectiveShowData.distanceText)) and
         (not self:_IsPlayingMissionAnim()) and (not self.m_modifyingContentDontShowProg) then
@@ -1416,8 +1245,6 @@ MissionHudCtrl._UpdateObjectiveCellDistance = HL.Method(HL.Any, HL.Any) << funct
         objectiveCell.distanceNode.gameObject:SetActive(false)
     end
 end
-
-
 
 MissionHudCtrl._UpdateAllObjectiveDistance = HL.Method() << function(self)
     if self:_IsPlayingMissionAnim() then
@@ -1499,10 +1326,6 @@ MissionHudCtrl._UpdateAllObjectiveDistance = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 MissionHudCtrl._UpdateObjectiveCellDesc = HL.Method(HL.Any, HL.Any) << function(self, objectiveCell, objectiveShowData)
     local objectiveDesc
     if objectiveShowData.useStrDesc then
@@ -1523,10 +1346,6 @@ MissionHudCtrl._UpdateObjectiveCellDesc = HL.Method(HL.Any, HL.Any) << function(
     end
 end
 
-
-
-
-
 MissionHudCtrl._UpdateObjectiveCellProgress = HL.Method(HL.Any, HL.Any) << function(self, objectiveCell, objectiveShowData)
     
     if (not self.m_modifyingContentDontShowProg) and objectiveShowData.isShowProgress and
@@ -1541,9 +1360,6 @@ MissionHudCtrl._UpdateObjectiveCellProgress = HL.Method(HL.Any, HL.Any) << funct
         objectiveCell.progress.gameObject:SetActive(false)
     end
 end
-
-
-
 
 MissionHudCtrl._ProgNumToText = HL.Method(HL.Any).Return(HL.Any) << function(self, num)
     if num < 10000 then
@@ -1574,10 +1390,6 @@ MissionHudCtrl._ProgNumToText = HL.Method(HL.Any).Return(HL.Any) << function(sel
     end
 end
 
-
-
-
-
 MissionHudCtrl._CombineProgToText = HL.Method(HL.Any, HL.Any).Return(HL.Any) << function(self, num, text)
     local carryFunc = function(x)
         
@@ -1593,10 +1405,6 @@ MissionHudCtrl._CombineProgToText = HL.Method(HL.Any, HL.Any).Return(HL.Any) << 
     return string.format("%d%s", carryFunc(num), text)
 end
 
-
-
-
-
 MissionHudCtrl._UpdateObjectiveCellComplete = HL.Method(HL.Any, HL.Any) << function(self, objectiveCell, objectiveShowData)
     if objectiveShowData.isCompleted then
         local clipName = self.view.config.OBJECTIVE_CELL_COMPLETE_CLIP_NAME
@@ -1606,11 +1414,6 @@ MissionHudCtrl._UpdateObjectiveCellComplete = HL.Method(HL.Any, HL.Any) << funct
         objectiveCell.animationWrapper:SampleClipAtPercent(clipName, 0)
     end
 end
-
-
-
-
-
 
 
 
@@ -1638,9 +1441,6 @@ end
 
 
 
-
-
-
 MissionHudCtrl._GetQuestCell = HL.Method(HL.String).Return(HL.Any) << function(self, questId)
     local questCellCount = self.m_questCellCache:GetCount()
     for i = 1, questCellCount do
@@ -1651,10 +1451,6 @@ MissionHudCtrl._GetQuestCell = HL.Method(HL.String).Return(HL.Any) << function(s
     end
     return nil
 end
-
-
-
-
 
 MissionHudCtrl._GetObjectiveCell = HL.Method(HL.String, HL.Number).Return(HL.Any) << function(self, questId, objectiveIdx)
     local questCellCount = self.m_questCellCache:GetCount()
@@ -1673,14 +1469,9 @@ MissionHudCtrl._GetObjectiveCell = HL.Method(HL.String, HL.Number).Return(HL.Any
     return nil
 end
 
-
-
-
 MissionHudCtrl._OnTogglePhaseForbid = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     self:_RefreshOpenBtn()
 end
-
-
 
 MissionHudCtrl._RefreshOpenBtn = HL.Method() << function(self)
     local showMissionBtn = not DeviceInfo.usingController and
@@ -1690,15 +1481,10 @@ MissionHudCtrl._RefreshOpenBtn = HL.Method() << function(self)
     self.view.openMissionUI.gameObject:SetActive(showMissionBtn)
 end
 
-
-
-
 MissionHudCtrl._OnTrackingSns = HL.Method(HL.Any) << function(self, args)
     local dialogId = unpack(args)
     PhaseManager:OpenPhase(PhaseId.SNS, {dialogId = dialogId})
 end
-
-
 
 MissionHudCtrl._ModifyBtnStateByFacTopView = HL.Method() << function(self)
     local isTopView = LuaSystemManager.factory.inTopView
@@ -1709,25 +1495,16 @@ MissionHudCtrl._ModifyBtnStateByFacTopView = HL.Method() << function(self)
     end
 end
 
-
-
-
 MissionHudCtrl._OnFacTopViewChange = HL.Method(HL.Boolean) << function(self, useless)
     self:_ModifyBtnStateByFacTopView()
     self:_RefreshCloseBtn()
 end
-
-
-
 
 MissionHudCtrl._ChangeSkipBossBattleButtonState = HL.Method(HL.Table) << function(self, args)
     local show = unpack(args)
     MissionHudCtrl.m_skipBossBattleButtonVisible = show
     self:_HandleSkipBossBattleButton(show)
 end
-
-
-
 
 MissionHudCtrl._HandleSkipBossBattleButton = HL.Method(HL.Boolean) << function(self, show)
     if show then
@@ -1774,13 +1551,9 @@ MissionHudCtrl._HandleSkipBossBattleButton = HL.Method(HL.Boolean) << function(s
     end
 end
 
-
-
 MissionHudCtrl.SkipMissionBtnAnimIn = HL.Method() << function(self)
     self.view.openMissionPanelBtnWrapper:SkipInAnimation()
 end
-
-
 
 MissionHudCtrl._RefreshCloseBtn = HL.Method() << function(self)
     if not DeviceInfo.usingTouch then
@@ -1795,15 +1568,10 @@ MissionHudCtrl._RefreshCloseBtn = HL.Method() << function(self)
     self.view.closeBtn.gameObject:SetActive(true)
 end
 
-
-
 MissionHudCtrl._ShrinkPanel = HL.Method() << function(self)
     UIManager:AutoOpen(PanelId.MissionHudMini, {needAnimationIn = true})
     UIManager:HideWithKey(PANEL_ID, "MiniPanel")
 end
-
-
-
 
 MissionHudCtrl._OnMissionStateChange = HL.Method(HL.Any) << function(self, args)
     if not self.m_missionStateChangeSignal then
@@ -1813,28 +1581,19 @@ MissionHudCtrl._OnMissionStateChange = HL.Method(HL.Any) << function(self, args)
     end
 end
 
-
-
-
 MissionHudCtrl._OnTrackingToUI = HL.Method(HL.Any) << function(self, args)
     local jumpId = unpack(args)
     Utils.jumpToSystem(jumpId)
 end
-
-
 
 MissionHudCtrl._OnExclusiveModeChange = HL.Method() << function(self, args)
     self:_RefreshOpenBtn()
     self:_TryStartSwitcherCoroutine()
 end
 
-
-
 MissionHudCtrl._OnOpenBtnAvailableChange = HL.Method() << function(self, args)
     self:_RefreshOpenBtn()
 end
-
-
 
 MissionHudCtrl.OnShow = HL.Override() << function(self)
     self:_TryStartSwitcherCoroutine()
@@ -1845,8 +1604,6 @@ MissionHudCtrl.OnShow = HL.Override() << function(self)
     self.view.openMissionPanelBtnWrapper:ClearTween()
     self.view.openMissionPanelBtnWrapper:PlayInAnimation()
 end
-
-
 
 MissionHudCtrl.OnClose = HL.Override() << function(self)
     self.m_missionSystem:DisableMissionTrackData()
@@ -1865,8 +1622,6 @@ MissionHudCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 MissionHudCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     if not self.m_questCellCache then
         return nil
@@ -1878,18 +1633,12 @@ MissionHudCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any
     }
 end
 
-
-
-
 MissionHudCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function(self, state)
     if not state then
         return
     end
     self.m_questCellCache = state.questCellCache
 end
-
-
-
 
 MissionHudCtrl.PlayAnimationOutWithCallback = HL.Override(HL.Opt(HL.Function)) << function(self, action)
     MissionHudCtrl.Super.PlayAnimationOutWithCallback(self, action)

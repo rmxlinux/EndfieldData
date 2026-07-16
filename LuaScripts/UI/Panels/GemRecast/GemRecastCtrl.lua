@@ -17,36 +17,7 @@ local GEM_RECAST_CTRL_TAB = {
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GemRecast
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GemRecastCtrl = HL.Class('GemRecastCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -61,33 +32,22 @@ GemRecastCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 GemRecastCtrl.m_curTab = HL.Field(HL.Number) << GEM_RECAST_TAB_TYPE.FORGE
 
-
 GemRecastCtrl.m_curSelectFormulaIndex = HL.Field(HL.Number) << -1
-
 
 GemRecastCtrl.m_sortedFormulas = HL.Field(HL.Table)
 
 
-
 GemRecastCtrl.m_gemIngredientDict = HL.Field(HL.Table)
-
 
 GemRecastCtrl.m_gemIngredientList = HL.Field(HL.Table)
 
-
 GemRecastCtrl.m_starCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 GemRecastCtrl.m_rankCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 GemRecastCtrl.m_gemCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 
@@ -102,8 +62,6 @@ GemRecastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitActionEvent()
 
 end
-
-
 
 GemRecastCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.btnClose.onClick:AddListener(function()
@@ -163,14 +121,9 @@ GemRecastCtrl._InitActionEvent = HL.Method() << function(self)
     self.m_gemCellCache = UIUtils.genCellCache(self.view.listCellGemRecastSmaller)
 end
 
-
-
 GemRecastCtrl.OnShow = HL.Override() << function(self)
     self:_RefreshMainPanel(self.m_curTab)
 end
-
-
-
 
 GemRecastCtrl._RefreshMainPanel = HL.Method(HL.Number) << function(self, curSelectTab)
     self.view.btnEmpty.gameObject:SetActive(false)
@@ -187,9 +140,6 @@ GemRecastCtrl._RefreshMainPanel = HL.Method(HL.Number) << function(self, curSele
     self:_InitCommonNode(curSelectTab)
     self:_ToggleGemList(false)
 end
-
-
-
 
 GemRecastCtrl._InitCommonNode = HL.Method(HL.Number) << function(self, curSelectTab)
     local firstUnlockIndex = nil
@@ -230,9 +180,6 @@ GemRecastCtrl._InitCommonNode = HL.Method(HL.Number) << function(self, curSelect
     self:_RefreshForgeRankCellCache(sortedFormulas)
     self:_RefreshForgeNode(sortedFormulas[self.m_curSelectFormulaIndex])
 end
-
-
-
 
 GemRecastCtrl._RefreshForgeRankCellCache = HL.Method(HL.Table) << function(self, sortedFormulas)
     self.m_rankCellCache:Refresh(#sortedFormulas, function(cell, index)
@@ -278,9 +225,6 @@ GemRecastCtrl._RefreshForgeRankCellCache = HL.Method(HL.Table) << function(self,
     end)
 end
 
-
-
-
 GemRecastCtrl._RefreshForgeNode = HL.Method(HL.Userdata) << function(self, formula)
     self.view.rightBarAniWrp:PlayInAnimation()
     local outputGemId = formula.showProductItemId
@@ -320,15 +264,9 @@ GemRecastCtrl._RefreshForgeNode = HL.Method(HL.Userdata) << function(self, formu
     self:_RefreshGemCellCache(formula)
 end
 
-
-
-
 GemRecastCtrl._RefreshCommonNode = HL.Method(HL.Userdata) << function(self, formula)
 
 end
-
-
-
 
 
 
@@ -352,9 +290,6 @@ GemRecastCtrl._RefreshGemCellCache = HL.Method(HL.Userdata) << function(self, fo
     end)
 end
 
-
-
-
 GemRecastCtrl._ToggleGemList = HL.Method(HL.Boolean) << function(self, isOn)
     if isOn then
         self.view.btnEmpty.gameObject:SetActive(true)
@@ -366,11 +301,6 @@ GemRecastCtrl._ToggleGemList = HL.Method(HL.Boolean) << function(self, isOn)
         end)
     end
 end
-
-
-
-
-
 
 GemRecastCtrl._RefreshGemRecastCellAddOn = HL.Method(HL.Table, HL.Opt(HL.Table, HL.Function)) << function(self, cell, itemInfo, onClick)
     local isEmpty = itemInfo == nil
@@ -404,9 +334,6 @@ GemRecastCtrl._RefreshGemRecastCellAddOn = HL.Method(HL.Table, HL.Opt(HL.Table, 
     cell.btnDelete.gameObject:SetActive(isSelected)
     cell.currentSelected.gameObject:SetActive(isSelected)
 end
-
-
-
 
 GemRecastCtrl._AddIngredient = HL.Method(HL.Table) << function(self, itemInfo)
     local instId = itemInfo.instId
@@ -447,9 +374,6 @@ GemRecastCtrl._AddIngredient = HL.Method(HL.Table) << function(self, itemInfo)
     self:_RefreshGemCellCache(curFormula)
 end
 
-
-
-
 GemRecastCtrl._RemoveIngredient = HL.Method(HL.Table) << function(self, itemInfo)
     local instId = itemInfo.instId
     local curFormula = self.m_sortedFormulas[self.m_curSelectFormulaIndex]
@@ -465,9 +389,6 @@ GemRecastCtrl._RemoveIngredient = HL.Method(HL.Table) << function(self, itemInfo
     self:_RefreshGemCellCache(curFormula)
 end
 
-
-
-
 GemRecastCtrl._GenerateIngredientList = HL.Method(HL.Table).Return(HL.Table) << function(self, ingredientDict)
     local ingredientList = {}
     for instId, itemInfo in pairs(ingredientDict) do
@@ -479,9 +400,6 @@ GemRecastCtrl._GenerateIngredientList = HL.Method(HL.Table).Return(HL.Table) << 
 
     return ingredientList
 end
-
-
-
 
 GemRecastCtrl._AutoFill = HL.Method(HL.Userdata) << function(self, formula)
     local newDict = {}
@@ -512,9 +430,6 @@ GemRecastCtrl._AutoFill = HL.Method(HL.Userdata) << function(self, formula)
     self.view.commonGemList:RefreshAllCells()
 end
 
-
-
-
 GemRecastCtrl._OnItemLockedStateChanged = HL.Method(HL.Table) << function(self, arg)
     local itemId, instId, isLock = unpack(arg)
     if not isLock then
@@ -531,15 +446,9 @@ GemRecastCtrl._OnItemLockedStateChanged = HL.Method(HL.Table) << function(self, 
     end
 end
 
-
-
-
 GemRecastCtrl.OnGemDetach = HL.Method(HL.Table) << function(self, arg)
     self.view.commonGemList:RefreshAllCells()
 end
-
-
-
 
 GemRecastCtrl.OnGemRecast = HL.Method(HL.Table) << function(self, arg)
     local title

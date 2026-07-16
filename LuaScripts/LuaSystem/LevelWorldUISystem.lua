@@ -1,16 +1,8 @@
 local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
 
-
-
-
-
-
 LevelWorldUISystem = HL.Class('LevelWorldUISystem', LuaSystemBase.LuaSystemBase)
 
-
 LevelWorldUISystem.m_activeLevelWorldUis = HL.Field(HL.Table)
-
-
 
 LevelWorldUISystem.LevelWorldUISystem = HL.Constructor() << function(self)
     self.m_activeLevelWorldUis = {}
@@ -41,9 +33,6 @@ LevelWorldUISystem.LevelWorldUISystem = HL.Constructor() << function(self)
     end)
 end
 
-
-
-
 LevelWorldUISystem._ReleaseLevelUi = HL.Method(HL.Number) << function(self, levelUiId)
     
     local toRelease = self.m_activeLevelWorldUis[levelUiId]
@@ -56,8 +45,6 @@ LevelWorldUISystem._ReleaseLevelUi = HL.Method(HL.Number) << function(self, leve
     CSUtils.ClearUIComponents(toRelease.gameObject)
     self.m_activeLevelWorldUis[levelUiId] = nil
 end
-
-
 
 LevelWorldUISystem.OnRelease = HL.Override() << function(self)
     

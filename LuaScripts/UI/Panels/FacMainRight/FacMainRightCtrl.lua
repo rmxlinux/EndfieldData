@@ -1,33 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacMainRight
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacMainRightCtrl = HL.Class('FacMainRightCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -45,17 +19,11 @@ FacMainRightCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 FacMainRightCtrl.m_isBuilding = HL.Field(HL.Boolean) << false
-
 
 FacMainRightCtrl.m_lastBuildItemId = HL.Field(HL.String) << ''
 
-
 FacMainRightCtrl.m_zoomCamGroupId = HL.Field(HL.Number) << 0
-
-
-
 
 
 
@@ -67,7 +35,7 @@ FacMainRightCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_UpdateBlueprintBtn()
 
     self.view.buildBtn.onClick:AddListener(function()
-        Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT)
+        Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, {showLastType = true})
     end)
 
     self.view.destroyBtn.onClick:AddListener(function()
@@ -125,8 +93,6 @@ FacMainRightCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitBtnRedDot()
 end
 
-
-
 FacMainRightCtrl.OnShow = HL.Override() << function(self)
     self:_UpdateLastBuildNode()
     self:UpdateMachineIcon()
@@ -134,26 +100,20 @@ FacMainRightCtrl.OnShow = HL.Override() << function(self)
     self.view.equipBtn.gameObject:SetActive(PhaseManager:CheckCanOpenPhase(PhaseId.EquipTech))
 end
 
-
-
 FacMainRightCtrl.OnHide = HL.Override() << function(self)
     self:StopFocus()
-    PhaseManager:SetForbidInputDeviceChange("FacMainRight.Focus", false)
+    LuaSystemManager.inputDeviceChangeSystem:SetForbidInputDeviceChange("FacMainRight.Focus", false)
 end
 
 FacMainRightCtrl.OnClose = HL.Override() << function(self)
-    PhaseManager:SetForbidInputDeviceChange("FacMainRight.Focus", false)
+    LuaSystemManager.inputDeviceChangeSystem:SetForbidInputDeviceChange("FacMainRight.Focus", false)
 end
-
-
 
 FacMainRightCtrl.StopFocus = HL.Method() << function(self)
     if self.isControllerPanel then
         self.view.animationSelectableNaviGroup:ManuallyStopFocus()
     end
 end
-
-
 
 FacMainRightCtrl.UpdateMachineIcon = HL.Method() << function(self)
     if not self.view.machineIconBtn then
@@ -164,9 +124,6 @@ FacMainRightCtrl.UpdateMachineIcon = HL.Method() << function(self)
     self.view.machineIconBtn.iconOff.gameObject:SetActive(isOn)
     self.view.machineIconBtn.text.text = isOn and Language.LUA_FAC_MAIN_RIGHT_MACHINE_ICON_OFF or Language.LUA_FAC_MAIN_RIGHT_MACHINE_ICON_ON
 end
-
-
-
 
 
 FacMainRightCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, isTopView)
@@ -185,14 +142,9 @@ FacMainRightCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, is
     end
 end
 
-
-
-
 FacMainRightCtrl.OnSystemUnlock = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     self:_UpdateBlueprintBtn()
 end
-
-
 
 FacMainRightCtrl.OnExitFactoryMode = HL.Method(HL.Opt(HL.Any)) << function(self)
     self.m_lastBuildItemId = ""
@@ -201,9 +153,6 @@ FacMainRightCtrl.OnExitFactoryMode = HL.Method(HL.Opt(HL.Any)) << function(self)
     self.m_btnBoxOpened = false
     self.m_btnBoxOpenedInTopView = false
 end
-
-
-
 
 FacMainRightCtrl.OnEnterBuildingMode = HL.Method(HL.String) << function(self, id)
     local count = Utils.getItemCount(id)
@@ -215,16 +164,11 @@ FacMainRightCtrl.OnEnterBuildingMode = HL.Method(HL.String) << function(self, id
     self:_UpdateLastBuildNode()
 end
 
-
-
-
 FacMainRightCtrl.OnEnterLogisticMode = HL.Method(HL.String) << function(self, id)
     self.m_lastBuildItemId = id
     self.m_isBuilding = false
     self:_UpdateLastBuildNode()
 end
-
-
 
 FacMainRightCtrl._InitBtnRedDot = HL.Method() << function(self)
     if Utils.isInBlackbox() then
@@ -233,11 +177,12 @@ FacMainRightCtrl._InitBtnRedDot = HL.Method() << function(self)
         return
     end
 
-    self.view.buildBtnRedDot:InitRedDot("FacBuildModeMenuLogisticTab")
+    self.view.buildBtnRedDot:InitRedDot("FacBuildMode")
     self.view.equipBtnRedDot:InitRedDot("EquipTech")
+    if self.view.toolBoxRedDot then
+        self.view.toolBoxRedDot:InitRedDot("ToolBox")
+    end
 end
-
-
 
 FacMainRightCtrl._UpdateLastBuildNode = HL.Method() << function(self)
     local node = self.view.lastBuildNode
@@ -254,8 +199,6 @@ FacMainRightCtrl._UpdateLastBuildNode = HL.Method() << function(self)
     node.itemIcon:LoadSprite(UIConst.UI_SPRITE_ITEM, data.iconId)
     node.itemIconShadow:LoadSprite(UIConst.UI_SPRITE_ITEM, data.iconId)
 end
-
-
 
 FacMainRightCtrl._OnCLickLastBuild = HL.Method() << function(self)
     local itemId = self.m_lastBuildItemId
@@ -277,9 +220,6 @@ FacMainRightCtrl._OnCLickLastBuild = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacMainRightCtrl._OnIsTopLayerChanged = HL.Method(HL.Boolean) << function(self, isTopLayer)
     if isTopLayer then
         
@@ -294,7 +234,7 @@ FacMainRightCtrl._OnIsTopLayerChanged = HL.Method(HL.Boolean) << function(self, 
     end
 
     self.view.animation.isActive = isTopLayer
-    PhaseManager:SetForbidInputDeviceChange("FacMainRight.Focus", isTopLayer)
+    LuaSystemManager.inputDeviceChangeSystem:SetForbidInputDeviceChange("FacMainRight.Focus", isTopLayer)
     if isTopLayer then
         UIManager:HideWithKey(PanelId.GeneralAbility, "FacMainRightPanel")
     else
@@ -332,15 +272,11 @@ FacMainRightCtrl._OnIsTopLayerChanged = HL.Method(HL.Boolean) << function(self, 
     Notify(MessageConst.TOGGLE_HIDE_FAC_TOP_VIEW_RIGHT_SIDE_UI, isTopLayer)
 end
 
-
-
 FacMainRightCtrl._CloseBtnBox = HL.Method() << function(self)
     if self.view.toolBoxToggle then
         self.view.toolBoxToggle.isOn = false
     end
 end
-
-
 
 FacMainRightCtrl._UpdateTopViewState = HL.Method() << function(self)
     local inTopView = LuaSystemManager.factory.inTopView
@@ -352,19 +288,13 @@ FacMainRightCtrl._UpdateTopViewState = HL.Method() << function(self)
     end
 end
 
-
 FacMainRightCtrl.m_btnBoxOpened = HL.Field(HL.Boolean) << false
 
-
 FacMainRightCtrl.m_btnBoxOpenedInTopView = HL.Field(HL.Boolean) << false
-
-
 
 FacMainRightCtrl.OnResetBlackbox = HL.Method() << function(self)
     self:_CloseBtnBox()
 end
-
-
 
 FacMainRightCtrl._UpdateBlueprintBtn = HL.Method() << function(self)
     local isSystemUnlocked = Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacBlueprint)

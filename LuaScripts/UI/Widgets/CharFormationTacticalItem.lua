@@ -1,14 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
 CharFormationTacticalItem = HL.Class('CharFormationTacticalItem', UIWidgetBase)
 
 local STATE_NAME = {
@@ -16,13 +7,9 @@ local STATE_NAME = {
     EMPTY = "empty",
 }
 
-
 CharFormationTacticalItem.m_args = HL.Field(HL.Table)
 
-
 CharFormationTacticalItem.m_isNaviTarget = HL.Field(HL.Boolean) << false
-
-
 
 
 
@@ -53,9 +40,6 @@ CharFormationTacticalItem._OnFirstTimeInit = HL.Override() << function(self)
         self.m_isNaviTarget = active
     end
 end
-
-
-
 
 
 
@@ -107,16 +91,12 @@ CharFormationTacticalItem.InitCharFormationTacticalItem = HL.Method(HL.Table) <<
     self.view.lock.gameObject:SetActive(self.m_args.isLocked == true)
 end
 
-
-
 CharFormationTacticalItem.CanChangeItem = HL.Method().Return(HL.Boolean) << function(self)
     if not self.m_args.isClickable or self.m_args.isForbidden or self.m_args.isLocked then
         return false
     end
     return true
 end
-
-
 
 
 
@@ -138,8 +118,6 @@ CharFormationTacticalItem._OnBtnItemClicked = HL.Method() << function(self)
     end
 end
 
-
-
 CharFormationTacticalItem.GoToCharInfoEquipPage = HL.Method() << function(self)
     if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.Equip) then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_SYSTEM_EQUIP_LOCKED)
@@ -159,8 +137,6 @@ CharFormationTacticalItem.GoToCharInfoEquipPage = HL.Method() << function(self)
         }
     })
 end
-
-
 
 CharFormationTacticalItem._ShowTips = HL.Method() << function(self)
     

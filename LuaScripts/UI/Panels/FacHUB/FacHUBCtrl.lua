@@ -3,37 +3,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacHUB
 local SHOW_TRSBTN_CHECK_DOMAIN_ID = "domain_1"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacHUBCtrl = HL.Class('FacHUBCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -48,35 +18,23 @@ FacHUBCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_ON_DEL_TIME_LIMITED_FORMULA] = "_OnFormulaDelete",
 }
 
-
 FacHUBCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 FacHUBCtrl.m_domainId = HL.Field(HL.String) << ""
 
-
 FacHUBCtrl.m_hubInfo = HL.Field(CS.Beyond.Gameplay.FacSpMachineSystem.HubInfo)
-
 
 FacHUBCtrl.m_getMaterialCell = HL.Field(HL.Function)
 
-
 FacHUBCtrl.m_materialList = HL.Field(HL.Table)
-
 
 FacHUBCtrl.m_showItemCell = HL.Field(HL.Table) 
 
-
 FacHUBCtrl.m_activeAreaList = HL.Field(HL.Forward('UIListCache'))
-
 
 FacHUBCtrl.m_curDomainDepotStackLimitCount = HL.Field(HL.Number) << 0
 
-
 FacHUBCtrl.m_waitingForNaviFirstShowCell = HL.Field(HL.Boolean) << true
-
-
-
 
 
 
@@ -190,8 +148,6 @@ end
 
 
 
-
-
 FacHUBCtrl._InitPowerStorageNode = HL.Method() << function(self)
     self:_RefreshPowerStorageNodeProgress()
     self:_RefreshPowerStorageNodeElse()
@@ -202,8 +158,6 @@ FacHUBCtrl._InitPowerStorageNode = HL.Method() << function(self)
     node.notEnoughCostLine:InitBrokenLine()
     self:_ReqPowerData()
 end
-
-
 
 FacHUBCtrl._RefreshPowerStorageNodeElse = HL.Method() << function(self)
     local powerInfo = FactoryUtils.getCurRegionPowerInfo()
@@ -233,8 +187,6 @@ FacHUBCtrl._RefreshPowerStorageNodeElse = HL.Method() << function(self)
     end
 end
 
-
-
 FacHUBCtrl._RefreshPowerStorageNodeProgress = HL.Method() << function(self)
     local powerInfo = FactoryUtils.getCurRegionPowerInfo()
     local node = self.view.powerStorageNode
@@ -246,8 +198,6 @@ FacHUBCtrl._RefreshPowerStorageNodeProgress = HL.Method() << function(self)
     end
     node.fill.fillAmount = fillAmount
 end
-
-
 
 
 
@@ -266,8 +216,6 @@ FacHUBCtrl._MoveBuilding = HL.Method() << function(self)
     })
 end
 
-
-
 FacHUBCtrl._InitOtherStatisticDataNode = HL.Method() << function(self)
     if Utils.isInBlackbox() then
         return
@@ -280,8 +228,6 @@ FacHUBCtrl._InitOtherStatisticDataNode = HL.Method() << function(self)
         cell.nameTxt.text = Tables.domainDataTable[id].domainName
     end)
 end
-
-
 
 FacHUBCtrl._InitOfflineTips = HL.Method() << function(self)
     if Utils.isInBlackbox() then
@@ -312,8 +258,6 @@ end
 
 
 
-
-
 FacHUBCtrl._InitFacDataNode = HL.Method() << function(self)
     local materialList = {}
     local itemIdList
@@ -338,11 +282,7 @@ FacHUBCtrl._InitFacDataNode = HL.Method() << function(self)
 
             if showItem then
                 local itemData = Tables.itemTable[itemId]
-                local facSucc, facData = Tables.factoryItemTable:TryGetValue(itemId)
-                local showCount = false
-                if facSucc then
-                    showCount = not facData.itemState
-                end
+                local showCount = FactoryUtils.isFactoryItemNormal(itemId)
                 local isBookmark = scopeInfo:IsBookmarkItem(itemId, self.m_domainId)
                 local order = 1
                 if isBookmark then
@@ -370,10 +310,6 @@ FacHUBCtrl._InitFacDataNode = HL.Method() << function(self)
     self.view.facDataNode.materialList:UpdateCount(#materialList)
     self:_RefreshItemCount()
 end
-
-
-
-
 
 FacHUBCtrl._OnUpdateMaterialCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local itemInfo = self.m_materialList[index]
@@ -415,8 +351,6 @@ FacHUBCtrl._OnUpdateMaterialCell = HL.Method(HL.Table, HL.Number) << function(se
     self:_ReqOneData(itemInfo.itemId)
 end
 
-
-
 FacHUBCtrl._RefreshItemCount = HL.Method() << function(self)
     self.view.facDataNode.materialList:UpdateShowingCells(function(csIndex, obj)
         local cell = self.m_getMaterialCell(obj)
@@ -431,8 +365,6 @@ FacHUBCtrl._RefreshItemCount = HL.Method() << function(self)
     end)
 end
 
-
-
 FacHUBCtrl._ReqProductData = HL.Method() << function(self)
     local itemIds = {}
     for i = 1, #self.m_showItemCell do
@@ -442,8 +374,6 @@ FacHUBCtrl._ReqProductData = HL.Method() << function(self)
     end
     GameInstance.player.facSpMachineSystem:ReqProductData(GEnums.FacStatisticRank_Productivity.Minute10, itemIds)
 end
-
-
 
 FacHUBCtrl.OnSyncProductData = HL.Method() << function(self)
     for i = 1, #self.m_showItemCell do
@@ -464,27 +394,17 @@ FacHUBCtrl.OnSyncProductData = HL.Method() << function(self)
     end
 end
 
-
-
 FacHUBCtrl.OnSyncBookmarkItem = HL.Method() << function(self)
     self:_InitFacDataNode()
 end
-
-
-
 
 FacHUBCtrl._ReqOneData = HL.Method(HL.String) << function(self, itemId)
     GameInstance.player.facSpMachineSystem:ReqOneProductData(GEnums.FacStatisticRank_Productivity.Minute10, itemId)
 end
 
-
-
-
 FacHUBCtrl._OnFormulaDelete = HL.Method(HL.Any) << function(self, args)
     self:_InitFacDataNode()
 end
-
-
 
 
 
@@ -500,7 +420,7 @@ FacHUBCtrl._InitFacHubController = HL.Method() << function(self)
                 if cell.item.view.button.isNaviTarget then
                     cell.item:ShowTips()
                 else
-                    InputManagerInst.controllerNaviManager:SetTarget(cell.item.view.button)
+                    self:SetNaviTarget(cell.item.view.button)
                 end
             end
         end
@@ -527,14 +447,9 @@ end
 
 
 
-
-
 FacHUBCtrl._ReqPowerData = HL.Method() << function(self)
     GameInstance.player.facSpMachineSystem:ReqPowerData(GEnums.FacStatisticRank_Power.Minute10)
 end
-
-
-
 
 FacHUBCtrl.OnSyncPowerData = HL.Method(HL.Any) << function(self, args)
     logger.info("FacHUBCtrl.OnSyncPowerData")

@@ -1,22 +1,7 @@
 
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.GachaLauncher
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseGachaLauncher = HL.Class('PhaseGachaLauncher', phaseBase.PhaseBase)
-
 
 
 
@@ -27,16 +12,11 @@ PhaseGachaLauncher.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 PhaseGachaLauncher.m_launcherObjItem = HL.Field(HL.Forward('PhaseGameObjectItem'))
-
 
 PhaseGachaLauncher.m_launcherDirector = HL.Field(CS.UnityEngine.Playables.PlayableDirector)
 
-
 PhaseGachaLauncher.m_cutsceneData = HL.Field(HL.Any)
-
-
 
 
 
@@ -47,18 +27,9 @@ end
 
 
 
-
-
-
-
-
 PhaseGachaLauncher.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 
 end
-
-
-
-
 
 PhaseGachaLauncher._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local maxRarity = 0
@@ -86,29 +57,15 @@ PhaseGachaLauncher._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Tabl
     LuaSystemManager.gachaSystem:UpdateGachaSettingState()
 end
 
-
-
-
-
 PhaseGachaLauncher._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     GameInstance.player.gacha.curPlayingTimelineMaxRarity = 0
 end
 
-
-
-
-
 PhaseGachaLauncher._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseGachaLauncher._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
 
 
 
@@ -119,13 +76,9 @@ PhaseGachaLauncher._OnActivated = HL.Override() << function(self)
     LuaSystemManager.gachaSystem:UpdateGachaSettingState()
 end
 
-
-
 PhaseGachaLauncher._OnDeActivated = HL.Override() << function(self)
     LuaSystemManager.gachaSystem:UpdateGachaSettingState()
 end
-
-
 
 PhaseGachaLauncher._OnDestroy = HL.Override() << function(self)
     PhaseGachaLauncher.Super._OnDestroy(self)

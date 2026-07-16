@@ -1,22 +1,7 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 StorageContent = HL.Class('StorageContent', UIWidgetBase)
-
 
 
 
@@ -24,16 +9,11 @@ StorageContent = HL.Class('StorageContent', UIWidgetBase)
 
 StorageContent.m_getCell = HL.Field(HL.Function)
 
-
 StorageContent.m_storage = HL.Field(CS.Beyond.Gameplay.RemoteFactory.FBUtil.GridBox)
-
 
 StorageContent.m_onClickItemAction = HL.Field(HL.Function)
 
-
 StorageContent.m_waitInitNaviTarget = HL.Field(HL.Boolean) << true
-
-
 
 
 
@@ -87,11 +67,6 @@ StorageContent._OnFirstTimeInit = HL.Override() << function(self)
 end
 
 
-
-
-
-
-
 StorageContent.InitStorageContent = HL.Method(CS.Beyond.Gameplay.RemoteFactory.FBUtil.GridBox, HL.Opt(HL.Function, HL.Table)) <<
 function(self, storage, onClickItemAction, otherArgs)
     otherArgs = otherArgs or {}
@@ -113,13 +88,9 @@ function(self, storage, onClickItemAction, otherArgs)
     end)
 end
 
-
-
 StorageContent.Refresh = HL.Method() << function(self)
     self.view.itemList:UpdateCount(self.m_storage.items.Count)
 end
-
-
 
 StorageContent._TryUpdateContent = HL.Method() << function(self)
     for k, v in pairs(self.m_storage.items) do
@@ -132,10 +103,6 @@ StorageContent._TryUpdateContent = HL.Method() << function(self)
         end
     end
 end
-
-
-
-
 
 StorageContent._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, csIndex)
     local item = self.m_storage.items[csIndex]
@@ -201,10 +168,6 @@ StorageContent._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, ce
     cell.item.view.button:ChangeActionOnSetNaviTarget(action)
 end
 
-
-
-
-
 StorageContent._OnDropItem = HL.Method(HL.Number, HL.Forward('UIDragHelper')) << function(self, csIndex, dragHelper)
     local source = dragHelper.source
     local dragInfo = dragHelper.info
@@ -261,9 +224,6 @@ StorageContent._OnDropItem = HL.Method(HL.Number, HL.Forward('UIDragHelper')) <<
     end
 end
 
-
-
-
 StorageContent._OnClickItem = HL.Method(HL.Number) << function(self, csIndex)
     local item = self.m_storage.items[csIndex]
     local id, count = item.Item1, item.Item2
@@ -295,9 +255,6 @@ StorageContent._OnClickItem = HL.Method(HL.Number) << function(self, csIndex)
         cell.item:ShowTips()
     end
 end
-
-
-
 
 StorageContent._ShowMobileDragHelper = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if not DeviceInfo.usingTouch then
@@ -352,9 +309,6 @@ StorageContent._ShowMobileDragHelper = HL.Method(HL.Forward('UIDragHelper')) << 
     }
     Notify(MessageConst.SHOW_ITEM_DRAG_HELPER, args)
 end
-
-
-
 
 
 StorageContent._OnMoveItemToStorage = HL.Method(HL.Table) << function(self, args)

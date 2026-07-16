@@ -27,43 +27,6 @@ local SMART_ALERT_FUNCTION_NAME_LIST = {
     "_CheckAlertDiffTypeLiquidCannotSprayedCondition",
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacSquirterCtrl = HL.Class('FacSquirterCtrl', uiCtrl.UICtrl)
 
 local SOIL_CELL_PROGRESS_TWEEN_DURATION = 0.25
@@ -71,33 +34,23 @@ local SQUIRTER_SPRITES_FOLDER_PATH = "Factory/Squirter"
 local INVALID_ITEM_TEXT_ID = "ui_fac_squirter_different_liquid"
 local INVALID_SOIL_NODES_TEXT_ID = "ui_fac_squirter_no_target_info"
 
-
 FacSquirterCtrl.m_buildingInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_FluidSpray)
-
 
 FacSquirterCtrl.m_updateThread = HL.Field(HL.Thread)
 
-
 FacSquirterCtrl.m_soilNodeDataList = HL.Field(HL.Table)
-
 
 FacSquirterCtrl.m_needUpdateSoilNodes = HL.Field(HL.Boolean) << false
 
-
 FacSquirterCtrl.m_soilCellConfig = HL.Field(HL.Table)
-
 
 FacSquirterCtrl.m_validLiquidIds = HL.Field(HL.Table)
 
-
 FacSquirterCtrl.m_soilCellTweenList = HL.Field(HL.Table)
-
 
 FacSquirterCtrl.m_soilCells = HL.Field(HL.Forward('UIListCache'))
 
-
 FacSquirterCtrl.m_outState = HL.Field(HL.String) << ""
-
 
 
 
@@ -106,9 +59,6 @@ FacSquirterCtrl.m_outState = HL.Field(HL.String) << ""
 FacSquirterCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 FacSquirterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -130,7 +80,7 @@ FacSquirterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.facCacheRepository:InitFacCacheRepository({
         cache = self.m_buildingInfo.sprayCache,
         isInCache = true,
-        isFluidCache = true,
+        cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid,
         cacheIndex = 1,
         slotCount = 1,
     })
@@ -157,8 +107,6 @@ FacSquirterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.facCacheRepository.view.repoNaviGroup:NaviToThisGroup()
 end
 
-
-
 FacSquirterCtrl.OnClose = HL.Override() << function(self)
     self.view.buildingCommon:ClearSmartAlertUpdate()
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_buildingInfo.nodeId)
@@ -171,8 +119,6 @@ FacSquirterCtrl.OnClose = HL.Override() << function(self)
         end
     end
 end
-
-
 
 FacSquirterCtrl._InitSquirterUpdateThread = HL.Method() << function(self)
     self:_UpdateAndRefreshOutState()
@@ -189,8 +135,6 @@ end
 
 
 
-
-
 FacSquirterCtrl._InitSquirterStaticData = HL.Method() << function(self)
     self.m_validLiquidIds = {}
     local success, tableData = Tables.factoryFluidSprayTable:TryGetValue(self.m_buildingInfo.buildingId)
@@ -203,8 +147,6 @@ FacSquirterCtrl._InitSquirterStaticData = HL.Method() << function(self)
     end
 end
 
-
-
 FacSquirterCtrl._InitSquirterBasicContent = HL.Method() << function(self)
     local success, tableData = Tables.factoryFluidSprayTable:TryGetValue(self.m_buildingInfo.buildingId)
     if not success then
@@ -214,15 +156,11 @@ FacSquirterCtrl._InitSquirterBasicContent = HL.Method() << function(self)
     self:_RefreshSquirterSpeed()
 end
 
-
-
 FacSquirterCtrl._RefreshSquirterSpeed = HL.Method() << function(self)
     local speed = self.m_buildingInfo.fluidSpray.lastRoundSprayCount
     self.view.speedNode.currSpeedText.text = string.format("%d", speed)
     self.view.speedNode.currSpeedText.color = speed > 0 and self.view.config.NORMAL_COLOR or self.view.config.STOPPED_COLOR
 end
-
-
 
 
 
@@ -240,8 +178,6 @@ FacSquirterCtrl._IsCurrentCacheItemValid = HL.Method().Return(HL.Boolean) << fun
 
     return string.isEmpty(cacheItemId) or self.m_validLiquidIds[cacheItemId] == true  
 end
-
-
 
 FacSquirterCtrl._UpdateAndRefreshOutState = HL.Method() << function(self)
     local state = OutState.None
@@ -293,8 +229,6 @@ end
 
 
 
-
-
 FacSquirterCtrl._InitSquirterSoilCellColorConfig = HL.Method() << function(self)
     self.m_soilCellConfig = {
         [SoilState.Spraying] = {
@@ -338,8 +272,6 @@ FacSquirterCtrl._InitSquirterSoilCellColorConfig = HL.Method() << function(self)
     }
 end
 
-
-
 FacSquirterCtrl._InitSquirterSoilNodes = HL.Method() << function(self)
     local soilNodes = self.m_buildingInfo:GetProcessingSoilNodes()
 
@@ -378,10 +310,6 @@ FacSquirterCtrl._InitSquirterSoilNodes = HL.Method() << function(self)
     self.m_needUpdateSoilNodes = true
 end
 
-
-
-
-
 FacSquirterCtrl._RefreshSquirterSoilNodeBasicContent = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     if cell == nil then
         return
@@ -400,8 +328,6 @@ FacSquirterCtrl._RefreshSquirterSoilNodeBasicContent = HL.Method(HL.Any, HL.Numb
     cell.titleNode.text.text = facBuildingData.name
 end
 
-
-
 FacSquirterCtrl._UpdateAndRefreshSquirterAllSoilNodesState = HL.Method() << function(self)
     if not self.m_needUpdateSoilNodes then
         return
@@ -413,11 +339,6 @@ FacSquirterCtrl._UpdateAndRefreshSquirterAllSoilNodesState = HL.Method() << func
         self:_UpdateAndRefreshSquirterSoilNodeState(cell, index, false)
     end
 end
-
-
-
-
-
 
 FacSquirterCtrl._UpdateAndRefreshSquirterSoilNodeState = HL.Method(HL.Any, HL.Number, HL.Boolean) << function(self, cell, index, firstRefresh)
     if cell == nil then
@@ -514,10 +435,6 @@ FacSquirterCtrl._UpdateAndRefreshSquirterSoilNodeState = HL.Method(HL.Any, HL.Nu
     data.state = state
 end
 
-
-
-
-
 FacSquirterCtrl._RefreshSquirterSoilNodeAnimState = HL.Method(HL.Any, HL.Number) << function(self, cell, state)
     local animName = "facsquirtersoil_change"
     if state == SoilState.Invalid then
@@ -537,10 +454,6 @@ end
 
 
 
-
-
-
-
 FacSquirterCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) << function(self, cell, itemBundle)
     if cell == nil or itemBundle == nil then
         return
@@ -548,8 +461,8 @@ FacSquirterCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) << fu
 
     
     local itemId = itemBundle.id
-    local isEmptyBottle = Tables.emptyBottleTable:ContainsKey(itemId)
-    local isFullBottle = Tables.fullBottleTable:ContainsKey(itemId)
+    local isEmptyBottle = FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+    local isFullBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
     local isBottle = isEmptyBottle or isFullBottle
     local isEmpty = string.isEmpty(itemBundle.id)
     
@@ -567,10 +480,7 @@ end
 
 
 
-
 FacSquirterCtrl.m_naviGroupSwitcher = HL.Field(HL.Forward('NaviGroupSwitcher'))
-
-
 
 FacSquirterCtrl._InitFacMachineCrafterController = HL.Method() << function(self)
     local NaviGroupSwitcher = require_ex("Common/Utils/UI/NaviGroupSwitcher").NaviGroupSwitcher
@@ -578,8 +488,6 @@ FacSquirterCtrl._InitFacMachineCrafterController = HL.Method() << function(self)
 
     self:_RefreshNaviGroupSwitcherInfos()
 end
-
-
 
 FacSquirterCtrl._RefreshNaviGroupSwitcherInfos = HL.Method() << function(self)
     if self.m_naviGroupSwitcher == nil then
@@ -601,10 +509,7 @@ end
 
 
 
-
 FacSquirterCtrl.m_smartAlertTargetTransformCache = HL.Field(HL.Table)
-
-
 
 FacSquirterCtrl._UpdateSmartAlertCache = HL.Method() << function(self)
     self.m_smartAlertTargetTransformCache = {}
@@ -615,9 +520,6 @@ FacSquirterCtrl._UpdateSmartAlertCache = HL.Method() << function(self)
         self.m_smartAlertTargetTransformCache.fluidCache = list[1].transform
     end
 end
-
-
-
 
 FacSquirterCtrl._CheckAlertCanBeOpenedCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Closed then
@@ -643,9 +545,6 @@ FacSquirterCtrl._CheckAlertCanBeOpenedCondition = HL.Method(HL.Userdata).Return(
     return false
 end
 
-
-
-
 FacSquirterCtrl._CheckAlertNoPowerWithoutDiffuserCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.NotInPowerNet then
         return false
@@ -662,9 +561,6 @@ FacSquirterCtrl._CheckAlertNoPowerWithoutDiffuserCondition = HL.Method(HL.Userda
     end
     return false
 end
-
-
-
 
 FacSquirterCtrl._CheckAlertNoPowerWithDiffuserCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.NotInPowerNet then
@@ -683,9 +579,6 @@ FacSquirterCtrl._CheckAlertNoPowerWithDiffuserCondition = HL.Method(HL.Userdata)
     return false
 end
 
-
-
-
 FacSquirterCtrl._CheckAlertNoPowerCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.NoPower then
         return false
@@ -699,9 +592,6 @@ FacSquirterCtrl._CheckAlertNoPowerCondition = HL.Method(HL.Userdata).Return(HL.B
     }
     return true, alertInfo
 end
-
-
-
 
 FacSquirterCtrl._CheckAlertLiquidTypeCannotDumpedCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Idle then
@@ -731,9 +621,6 @@ FacSquirterCtrl._CheckAlertLiquidTypeCannotDumpedCondition = HL.Method(HL.Userda
     end
     return false
 end
-
-
-
 
 FacSquirterCtrl._CheckAlertDiffTypeLiquidCannotSprayedCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Idle then

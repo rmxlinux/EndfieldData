@@ -1,30 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 CashShopItem = HL.Class('CashShopItem', UIWidgetBase)
-
 
 CashShopItem.m_info = HL.Field(HL.Any)
 
-
 CashShopItem.m_isBox = HL.Field(HL.Boolean) << false
-
 
 CashShopItem.m_hideRemainCount = HL.Field(HL.Boolean) << false
 
-
 CashShopItem.m_hideNew = HL.Field(HL.Boolean) << false
-
-
 
 
 CashShopItem._OnFirstTimeInit = HL.Override() << function(self)
@@ -57,9 +41,6 @@ CashShopItem._OnFirstTimeInit = HL.Override() << function(self)
         self:_RefreshTag()
     end)
 end
-
-
-
 
 CashShopItem.UpdateMoney = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     local goodsTableData = Tables.shopGoodsTable[self.m_info.goodsTemplateId]
@@ -135,23 +116,13 @@ CashShopItem.UpdateMoney = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
 
     local shopSystem = GameInstance.player.shopSystem
     local remainCount = shopSystem:GetRemainCountByGoodsId(info.shopId, info.goodsId)
-    if self.view.stateController then
-        if remainCount == 0 then
-            self.view.stateController:SetState("SoldOutNode")
-        else
-            self.view.stateController:SetState("Normal")
-        end
-    elseif self.view.soldOutNode then
-        self.view.soldOutNode.gameObject:SetActive(remainCount == 0)
+    if self.view.config.SHOW_SOLDOUT then
+        self:_ToggleSoldOut(remainCount == 0)
+        self.view.cashShopItemTag:_SetDisable(remainCount == 0)
     end
 
     self:_RefreshTag()
 end
-
-
-
-
-
 
 CashShopItem.InitCashShopItem = HL.Method(HL.Any, HL.Opt(HL.Boolean, HL.Boolean))
     << function(self, info, hideRemainCount, hideNew)
@@ -275,17 +246,14 @@ CashShopItem.InitCashShopItem = HL.Method(HL.Any, HL.Opt(HL.Boolean, HL.Boolean)
         
 
         local unlock = shopSystem:CheckGoodsUnlocked(goodsId)
-        local stateCtrl = self.view.stateController
-        if stateCtrl then
-            if not unlock then
-                stateCtrl:SetState("LockNode")
-            elseif remainCount == 0 then
-                stateCtrl:SetState("SoldOutNode")
-            else
-                stateCtrl:SetState("Normal")
-            end
-        elseif self.view.soldOutNode then
-            self.view.soldOutNode.gameObject:SetActive(remainCount == 0)
+        if not unlock then
+            self:_ToggleLock(true)
+            self.view.cashShopItemTag:_SetDisable(true)
+        elseif self.view.config.SHOW_SOLDOUT then
+            self:_ToggleSoldOut(remainCount == 0)
+            self.view.cashShopItemTag:_SetDisable(remainCount == 0)
+        else
+            self.view.cashShopItemTag:_SetDisable(false)
         end
 
         _, itemData = Tables.itemTable:TryGetValue(itemId)
@@ -308,18 +276,15 @@ CashShopItem.InitCashShopItem = HL.Method(HL.Any, HL.Opt(HL.Boolean, HL.Boolean)
         end
     end
 
-    if count ~= nil and count > 1 and self.view.numberTxt then
-        self.view.numberTxt.text = "× " .. count
-        self.view.number.gameObject:SetActiveIfNecessary(true)
-    elseif self.view.numberTxt then
-        self.view.number.gameObject:SetActiveIfNecessary(false)
+    if count ~= nil and count > 1 then
+        self:_SetNumberTxt(count)
+    else
+        self:_SetNumberTxt(0)
     end
     if self.view.weaponDeco and itemData then
         self.view.weaponDeco.gameObject:SetActive(itemData.type == GEnums.ItemType.Weapon)
     end
 end
-
-
 
 CashShopItem._UpdateGuarantee = HL.Method() << function(self)
     if not self.m_isBox then
@@ -336,8 +301,6 @@ CashShopItem._UpdateGuarantee = HL.Method() << function(self)
     end
 end
 
-
-
 CashShopItem._RefreshTag = HL.Method() << function(self)
     if self.view.cashShopItemTag then
         self.view.cashShopItemTag:InitCashShopItemTag({
@@ -346,6 +309,59 @@ CashShopItem._RefreshTag = HL.Method() << function(self)
             hideRemainCount = self.m_hideRemainCount,
             hideNew = self.m_hideNew,
         })
+    end
+end
+
+CashShopItem._ToggleSoldOut = HL.Method(HL.Boolean) << function(self, active)
+    if not self.view.soldOutNode then
+        if not active then
+            return
+        end
+        local prefab = LuaSystemManager.cashShopItemPrefabSystem.soldOutNode
+        if not prefab then
+            return
+        end
+        local obj = CSUtils.CreateObject(prefab, self.view.dynamicParent.transform)
+        self.view.soldOutNode = obj.transform
+    end
+    self.view.soldOutNode.gameObject:SetActive(active)
+end
+
+CashShopItem._ToggleLock = HL.Method(HL.Boolean) << function(self, active)
+    if not self.view.lockNode then
+        if not active then
+            return
+        end
+        local prefab = LuaSystemManager.cashShopItemPrefabSystem.lockNode
+        if not prefab then
+            return
+        end
+        local obj = CSUtils.CreateObject(prefab, self.view.dynamicParent.transform)
+        self.view.lockNode = obj.transform
+    end
+    self.view.lockNode.gameObject:SetActive(active)
+end
+
+CashShopItem._SetNumberTxt = HL.Method(HL.Number) << function(self, number)
+    if not self.view.config.SHOW_NUMBER then
+        return
+    end
+    local active = number > 1
+    if not self.view.numberNode then
+        if not active then
+            return
+        end
+        local prefab = LuaSystemManager.cashShopItemPrefabSystem.numberNode
+        if not prefab then
+            return
+        end
+        local obj = CSUtils.CreateObject(prefab, self.view.dynamicParent.transform)
+        obj.transform:SetAsFirstSibling()
+        self.view.numberNode = Utils.wrapLuaNode(obj)
+    end
+    self.view.numberNode.gameObject:SetActive(active)
+    if active then
+        self.view.numberNode.numberTxt.text = "× " .. number
     end
 end
 

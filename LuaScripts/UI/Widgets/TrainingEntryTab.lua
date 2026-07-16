@@ -1,42 +1,18 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 TrainingEntryTab = HL.Class('TrainingEntryTab', UIWidgetBase)
-
 
 TrainingEntryTab.m_seriesId = HL.Field(HL.String) << ""
 
-
 TrainingEntryTab.m_tableCfg = HL.Field(HL.Any)
-
 
 TrainingEntryTab.m_info = HL.Field(HL.Table)
 
-
 TrainingEntryTab.m_index = HL.Field(HL.Number) << 0
-
 
 TrainingEntryTab.m_genRewardCells = HL.Field(HL.Forward("UIListCache"))
 
-
 TrainingEntryTab.m_onClickGotoBtnFunc = HL.Field(HL.Function)
-
-
 
 
 TrainingEntryTab._OnFirstTimeInit = HL.Override() << function(self)
@@ -52,12 +28,6 @@ TrainingEntryTab._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
 end
-
-
-
-
-
-
 
 TrainingEntryTab.InitTrainingEntryTab = HL.Method(HL.Boolean, HL.Opt(HL.String, HL.Number, HL.Function))
         << function(self, isEmptyState, dungeonSeriesId, index, onClickGotoBtnFunc)
@@ -87,8 +57,6 @@ TrainingEntryTab.InitTrainingEntryTab = HL.Method(HL.Boolean, HL.Opt(HL.String, 
     self.view.redDot:InitRedDot("DungeonReadNormal", self.m_tableCfg.includeDungeonIds)
 end
 
-
-
 TrainingEntryTab._UpdateData = HL.Method() << function(self)
     local curPassNum = 0
     for _, id in pairs(self.m_tableCfg.includeDungeonIds) do
@@ -105,8 +73,6 @@ TrainingEntryTab._UpdateData = HL.Method() << function(self)
     }
 end
 
-
-
 TrainingEntryTab._GetDungeonSeriesRewardInfos = HL.StaticMethod(HL.Any).Return(HL.Table) << function(seriesCfg)
     local rewards = {}
     for _, v in pairs(seriesCfg.includeDungeonIds) do
@@ -119,9 +85,6 @@ TrainingEntryTab._GetDungeonSeriesRewardInfos = HL.StaticMethod(HL.Any).Return(H
     table.sort(rewardList, Utils.genSortFunction({ "rarity", "type" }))
     return rewardList
 end
-
-
-
 
 
 TrainingEntryTab._GetDungeonSeriesRewardInfosOverride = HL.Method(HL.Any).Return(HL.Table) << function(self, seriesCfg)
@@ -144,9 +107,6 @@ TrainingEntryTab._GetDungeonSeriesRewardInfosOverride = HL.Method(HL.Any).Return
     table.sort(rewardList, Utils.genSortFunction({ "rarity", "type" }))
     return rewardList
 end
-
-
-
 
 TrainingEntryTab._ProcessDungeonRewards = HL.StaticMethod(HL.String, HL.Table) << function(dungeonId, rewards)
     local hasCfg, gameMechanicCfg = Tables.gameMechanicTable:TryGetValue(dungeonId)
@@ -174,9 +134,6 @@ TrainingEntryTab._ProcessDungeonRewards = HL.StaticMethod(HL.String, HL.Table) <
     end
 end
 
-
-
-
 TrainingEntryTab._MergeRewards = HL.StaticMethod(HL.String, HL.Table) << function(rewardId, rewards)
     local hasCfg, rewardsCfg = Tables.rewardTable:TryGetValue(rewardId)
     if not hasCfg then
@@ -202,8 +159,6 @@ TrainingEntryTab._MergeRewards = HL.StaticMethod(HL.String, HL.Table) << functio
         end
     end
 end
-
-
 
 TrainingEntryTab._RefreshAllUI = HL.Method() << function(self)
     local info = self.m_info
@@ -241,8 +196,6 @@ TrainingEntryTab._RefreshAllUI = HL.Method() << function(self)
         
     end)
 end
-
-
 
 TrainingEntryTab._OnClickGoToBtn = HL.Method() << function(self)
     local enterDungeonCallback

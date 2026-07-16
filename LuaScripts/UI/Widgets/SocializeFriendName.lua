@@ -1,15 +1,8 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 SocializeFriendName = HL.Class('SocializeFriendName', UIWidgetBase)
 
-
 SocializeFriendName.m_friendRoleId = HL.Field(HL.Number) << 0
-
-
 
 
 SocializeFriendName._OnFirstTimeInit = HL.Override() << function(self)
@@ -17,9 +10,6 @@ SocializeFriendName._OnFirstTimeInit = HL.Override() << function(self)
         self:InitSocializeFriendName(self.m_friendRoleId)
     end)
 end
-
-
-
 
 
 

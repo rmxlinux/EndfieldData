@@ -2,33 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopDetail
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopDetailCtrl = HL.Class('ShopDetailCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -41,23 +15,15 @@ ShopDetailCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SHOP_REFRESH] = '_OnHandleShopRefresh',
 }
 
-
 ShopDetailCtrl.m_info = HL.Field(HL.Any)
-
 
 ShopDetailCtrl.m_itemId = HL.Field(HL.String) << ""
 
-
 ShopDetailCtrl.m_moneyId = HL.Field(HL.String) << ""
-
 
 ShopDetailCtrl.m_realPrice = HL.Field(HL.Number) << 0
 
-
 ShopDetailCtrl.m_bundleCount = HL.Field(HL.Number) << 0
-
-
-
 
 
 ShopDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -159,9 +125,21 @@ ShopDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.ownNumberTxt.text = haveItemCount
     local itemTypeName = UIUtils.getItemTypeName(self.m_itemId)
+    if itemData.type == GEnums.ItemType.PhotoAnim then
+        local isStatic = DomainShopUtils.IsPhotoAnimActionStatic(self.m_itemId)
+        if isStatic then
+            itemTypeName = string.format(Language.LUA_SHOP_PHOTO_ANIM_STATIC_SUFFIX, itemTypeName)
+        else
+            itemTypeName = string.format(Language.LUA_SHOP_PHOTO_ANIM_DYNAMIC_SUFFIX, itemTypeName)
+        end
+        self.view.actionIcon.gameObject:SetActive(not isStatic)
+    else
+        self.view.actionIcon.gameObject:SetActive(false)
+    end
     self.view.subTitleTxt.text = itemTypeName
     self.view.descTxt.text = itemData.desc
     self.view.descTxt02.text = itemData.decoDesc
+    self:_RefreshCharAnimNode(itemId, itemData)
 
     
     UIUtils.displayGiftItemTags(self.view.collectionTagNode, self.m_itemId)
@@ -175,23 +153,16 @@ ShopDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     GameInstance.player.shopSystem:SetSingleGoodsIdSee(goodsId)
 end
 
-
-
-
 ShopDetailCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     self.view.numberSelector.view.keyHintLeft.gameObject:SetActive(active)
     self.view.numberSelector.view.keyHintRight.gameObject:SetActive(active)
 end
-
-
 
 ShopDetailCtrl._OnHandleShopRefresh = HL.Method() << function(self)
     GameInstance.player.guide:OnShopRefreshItemInfo()
     Notify(MessageConst.SHOW_TOAST, Language.LUA_REFRESH_CLOSE_SHOP_TOAST)
     self:TryClose()
 end
-
-
 
 ShopDetailCtrl._OnShopRefresh = HL.Method() << function(self)
     local arg = self.m_info
@@ -365,9 +336,34 @@ ShopDetailCtrl._OnShopRefresh = HL.Method() << function(self)
     end
 end
 
+ShopDetailCtrl._RefreshCharAnimNode = HL.Method(HL.String, HL.Any) << function(self, itemId, itemData)
+    local charAnimNode = self.view.charAnimNode
+    if not charAnimNode then
+        return
+    end
+    local isPhotoAnim = itemData and itemData.type == GEnums.ItemType.PhotoAnim
+    charAnimNode.gameObject:SetActive(isPhotoAnim)
+    if not isPhotoAnim then
+        return
+    end
 
+    local commonHeadIcon = charAnimNode.commonHeadIcon
+    local characterId = DomainShopUtils.GetPhotoAnimCharacterIdByItemId(itemId)
+    local hasCharacterCfg = not string.isEmpty(characterId)
+    local hasOwnedCharacter = hasCharacterCfg and CharInfoUtils.getPlayerCharInfoByTemplateId(characterId, GEnums.CharType.Default) ~= nil
 
+    commonHeadIcon.gameObject:SetActive(true)
+    commonHeadIcon.headIconImg.gameObject:SetActive(hasCharacterCfg)
+    commonHeadIcon.emptyNode.gameObject:SetActive(not hasCharacterCfg)
+    charAnimNode.nameTxt.gameObject:SetActive(hasCharacterCfg)
+    charAnimNode.tipsNode.gameObject:SetActive(hasCharacterCfg and not hasOwnedCharacter)
 
+    if hasCharacterCfg then
+        local _, characterCfg = Tables.characterTable:TryGetValue(characterId)
+        charAnimNode.nameTxt.text = string.format(Language.LUA_SHOP_PHOTO_ANIM_EXCLUSIVE_ACTION, characterCfg.name)
+        commonHeadIcon.headIconImg:LoadSprite(UIConst.UI_SPRITE_ROUND_CHAR_HEAD, UIConst.UI_ROUND_CHAR_HEAD_PREFIX .. characterId)
+    end
+end
 
 ShopDetailCtrl._CanPutWeaponCount = HL.Method(HL.String, HL.Number).Return(HL.Boolean) << function(self, weaponId, count)
     local depots = GameInstance.player.inventory.valuableDepots
@@ -380,10 +376,6 @@ ShopDetailCtrl._CanPutWeaponCount = HL.Method(HL.String, HL.Number).Return(HL.Bo
     end
     return weaponDepot:GetUsedGridCount() + count <= weaponDepot.gridLimit
 end
-
-
-
-
 
 ShopDetailCtrl._TryJumpToValuableDepotWhenWeaponDepotFull = HL.Method(HL.String, HL.Number).Return(HL.Boolean) << function(self, weaponId, count)
     if self:_CanPutWeaponCount(weaponId, count) then
@@ -403,8 +395,6 @@ ShopDetailCtrl._TryJumpToValuableDepotWhenWeaponDepotFull = HL.Method(HL.String,
 end
 
 
-
-
 ShopDetailCtrl._OnClickConfirm = HL.Method() << function(self)
     local buyCount = self.view.numberSelector.curNumber
     local info = self.m_info
@@ -420,25 +410,9 @@ ShopDetailCtrl._OnClickConfirm = HL.Method() << function(self)
     
     local inventorySystem = GameInstance.player.inventory
     if inventorySystem:IsPlaceInBag(self.m_itemId) then
-        
-        local itemTableData = Tables.itemTable[self.m_itemId]
-        local stackCount = itemTableData.maxBackpackStackCount
-
         local totalCount = self.m_bundleCount * buyCount
-
-        local itemBag = inventorySystem.itemBag:GetOrFallback(Utils.getCurrentScope())
-        local emptySlotCount = itemBag.slotCount - itemBag:GetUsedSlotCount()
-        local sameItemCount = itemBag:GetCount(self.m_itemId)
-        local itemSlotCount = math.ceil(sameItemCount / stackCount)
-
-        local capacity
-        if itemSlotCount > 0 then
-            capacity = (emptySlotCount + itemSlotCount) * stackCount - sameItemCount
-        else
-            capacity = stackCount * emptySlotCount
-        end
-
-        if capacity < totalCount then
+        local canPut = inventorySystem:CanItemBagPutInItem(Utils.getCurrentScope(), self.m_itemId, totalCount)
+        if not canPut then
             Notify(MessageConst.SHOW_TOAST, Language.LUA_SHOP_BACKPACK_FULL)
             return
         end
@@ -447,19 +421,9 @@ ShopDetailCtrl._OnClickConfirm = HL.Method() << function(self)
     if self.m_moneyId == Tables.globalConst.gachaWeaponItemId then
         GameInstance.player.shopSystem:ByGoodsGachaWeapon(info.shopId, info.goodsId)
     else
-        
-        local msg = CS.Proto.CS_SHOP_BUY()
-        msg.ShopId = info.shopId
-        msg.GoodsId = info.goodsId
-        msg.Count = buyCount
-        msg.UseWeaponboxTicket = false
-        msg.Timestamp = DateTimeUtils.GetCurrentTimestampBySeconds()
-        GameInstance.player.shopSystem:SendUIMsg(msg)
+        GameInstance.player.shopSystem:BuyGoods(info.shopId, info.goodsId, buyCount)
     end
 end
-
-
-
 
 ShopDetailCtrl.OnBuyItemSucc = HL.Method(HL.Any) << function(self, arg)
     local info = self.m_info
@@ -526,6 +490,7 @@ ShopDetailCtrl.OnBuyItemSucc = HL.Method(HL.Any) << function(self, arg)
                 title = Language.LUA_BUY_ITEM_SUCC_TITLE,
                 icon = "icon_common_rewards",
                 items = items,
+                notShowGachaWeaponDisplay = true,
             })
             Notify(MessageConst.AFTER_ON_BUY_ITEM_SUCC)
         end
@@ -546,8 +511,6 @@ ShopDetailCtrl.OnBuyItemSucc = HL.Method(HL.Any) << function(self, arg)
     self:TryClose()
 end
 
-
-
 ShopDetailCtrl.TryClose = HL.Method() << function(self)
     if self.m_phase then
         self.m_phase:RemovePhasePanelItemById(PANEL_ID)
@@ -556,8 +519,6 @@ ShopDetailCtrl.TryClose = HL.Method() << function(self)
     end
 end
 
-
-
 ShopDetailCtrl._OnCloseShopDetailPanel = HL.Method() << function(self)
     if self:IsPlayingAnimationOut() then
         return
@@ -565,20 +526,13 @@ ShopDetailCtrl._OnCloseShopDetailPanel = HL.Method() << function(self)
     self:TryClose()
 end
 
-
-
 ShopDetailCtrl._OnShowItemTips = HL.Method() << function(self)
     self:_SetNumberSelectorKeyHint(false)
 end
 
-
-
 ShopDetailCtrl._OnHideItemTips = HL.Method() << function(self)
     self:_SetNumberSelectorKeyHint(true)
 end
-
-
-
 
 ShopDetailCtrl._SetNumberSelectorKeyHint = HL.Method(HL.Boolean) << function(self, active)
     if not DeviceInfo.usingController then
@@ -591,9 +545,6 @@ ShopDetailCtrl._SetNumberSelectorKeyHint = HL.Method(HL.Boolean) << function(sel
     self.view.numberSelector.view.reduceButton.transform:Find("KeyHint"):GetComponent("CustomUIStyle").overrideValidState = state
 end
 
-
-
-
 ShopDetailCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
     if not resumeState or resumeState.selectedCount == nil then
         return
@@ -601,26 +552,17 @@ ShopDetailCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, r
     self:SetNumberSelectorValue(math.max(resumeState.selectedCount, 1))
 end
 
-
-
 ShopDetailCtrl.GetInfo = HL.Method().Return(HL.Any) << function(self)
     return self.m_info
 end
-
-
 
 ShopDetailCtrl.GetNumberSelectorValue = HL.Method().Return(HL.Number) << function(self)
     return self.view.numberSelector.curNumber
 end
 
-
-
-
 ShopDetailCtrl.SetNumberSelectorValue = HL.Method(HL.Number) << function(self, value)
     self.view.numberSelector:RefreshNumber(value)
 end
-
-
 
 ShopDetailCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local info = self.m_info

@@ -1,39 +1,17 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
 SNSContentBase = HL.Class('SNSContentBase', UIWidgetBase)
-
 
 SNSContentBase.m_contentInfo = HL.Field(HL.Table)
 
-
 SNSContentBase.m_contentCfg = HL.Field(HL.Any)
-
 
 SNSContentBase.m_loadingFinishCallBack = HL.Field(HL.Function)
 
-
 SNSContentBase.m_notifyCellSizeChange = HL.Field(HL.Function)
-
-
 
 SNSContentBase._OnSNSContentInit = HL.Virtual() << function(self)
 end
-
-
-
-
-
 
 SNSContentBase.InitSNSContentBase = HL.Method(HL.Table, HL.Opt(HL.Function, HL.Function))
         << function(self, contentInfo, loadingFinishCallBack, notifyCellSizeChange)
@@ -61,13 +39,9 @@ SNSContentBase.InitSNSContentBase = HL.Method(HL.Table, HL.Opt(HL.Function, HL.F
     self:_OnSNSContentInit()
 end
 
-
-
 SNSContentBase.HasEmojiComp = HL.Virtual().Return(HL.Boolean) << function(self)
     return false
 end
-
-
 
 SNSContentBase.IsTypeVote = HL.Virtual().Return(HL.Boolean) << function(self)
     return false
@@ -75,13 +49,9 @@ end
 
 
 
-
-
 SNSContentBase.CanSetTarget = HL.Virtual().Return(HL.Boolean) << function(self)
     return false
 end
-
-
 
 SNSContentBase.GetNaviTarget = HL.Virtual().Return(HL.Any) << function(self)
     return nil

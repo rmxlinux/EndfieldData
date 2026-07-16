@@ -1,84 +1,25 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacMain
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacMainCtrl = HL.Class('FacMainCtrl', uiCtrl.UICtrl)
 
 local FORMULA_PIN_TOAST_TEXT_ID = "LUA_FORMULA_PIN_TOAST"
 local FORMULA_CANCEL_PIN_TOAST_TEXT_ID = "LUA_FORMULA_CANCEL_PIN_TOAST"
 
-
 FacMainCtrl.m_pinFormulaInCells = HL.Field(HL.Forward('UIListCache'))
-
 
 FacMainCtrl.m_pinFormulaOutCells = HL.Field(HL.Forward('UIListCache'))
 
-
 FacMainCtrl.m_pinFormulaDataSeq = HL.Field(HL.Table)
-
 
 FacMainCtrl.m_isPinFormula = HL.Field(HL.Boolean) << false
 
-
 FacMainCtrl.m_focusPinInfo = HL.Field(HL.Table) << nil
-
 
 FacMainCtrl.m_cancelPinTimer = HL.Field(HL.Number) << 0
 
-
 FacMainCtrl.m_isCancelPinLock = HL.Field(HL.Boolean) << false
 
-
 FacMainCtrl.m_closeBindingId = HL.Field(HL.Number) << -1
-
 
 
 
@@ -102,11 +43,7 @@ FacMainCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_ON_DEL_TIME_LIMITED_FORMULA] = "_OnFormulaDelete",
 }
 
-
 FacMainCtrl.m_needUpdatePin = HL.Field(HL.Boolean) << false
-
-
-
 
 
 FacMainCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -116,8 +53,6 @@ FacMainCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_UpdateAndRefreshPinFormula()
 end
 
-
-
 FacMainCtrl.OnShow = HL.Override() << function(self)
     self.view.facQuickBarPlaceHolder.gameObject:SetActive(not LuaSystemManager.factory.inTopView)
     if self.view.pinFormulaNode.gameObject.activeInHierarchy then
@@ -125,14 +60,10 @@ FacMainCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 FacMainCtrl.OnHide = HL.Override() << function(self)
     self.view.facQuickBarPlaceHolder.gameObject:SetActive(false)
     self.view.pinFormulaNode.formulaDetailNodeSelectableNaviGroup:ManuallyStopFocus()
 end
-
-
 
 
 FacMainCtrl._OnPlayAnimationOut = HL.Override() << function(self)
@@ -141,19 +72,13 @@ FacMainCtrl._OnPlayAnimationOut = HL.Override() << function(self)
     end
 end
 
-
-
 FacMainCtrl._OnEnterFacMainRegion = HL.Method(HL.Opt(HL.Any)) << function(self)
     self:_RefreshPinFormula()
 end
 
-
-
 FacMainCtrl._OnExitFacMainRegion = HL.Method() << function(self)
     self:_RefreshPinFormula()
 end
-
-
 
 
 
@@ -197,9 +122,6 @@ FacMainCtrl._InitPinNode = HL.Method() << function(self)
     self:OnFacMainRightActiveChange(false)
 end
 
-
-
-
 FacMainCtrl._OnIsTopLayerChanged = HL.Method(HL.Boolean) << function(self, isTopLayer)
 
     if isTopLayer then
@@ -214,9 +136,6 @@ FacMainCtrl._OnIsTopLayerChanged = HL.Method(HL.Boolean) << function(self, isTop
     Notify(MessageConst.TOGGLE_HIDE_FAC_TOP_VIEW_RIGHT_SIDE_UI, isTopLayer)
 end
 
-
-
-
 FacMainCtrl.OnFacMainRightActiveChange = HL.Method(HL.Boolean) << function(self, isActive)
     local node = self.view.pinFormulaNode
     node.activeKeyHint.gameObject:SetActive(DeviceInfo.usingController and not isActive)
@@ -227,9 +146,6 @@ FacMainCtrl.OnFacMainRightActiveChange = HL.Method(HL.Boolean) << function(self,
         CS.Beyond.Gameplay.Conditions.OnFacMainPinHintShow.Trigger()
     end
 end
-
-
-
 
 FacMainCtrl._OnFormulaDelete = HL.Method(HL.Any) << function(self, args)
     local chapterInfo = FactoryUtils.getCurChapterInfo()
@@ -250,9 +166,6 @@ FacMainCtrl._OnFormulaDelete = HL.Method(HL.Any) << function(self, args)
         end
     end
 end
-
-
-
 
 FacMainCtrl._OnPinStateChanged = HL.Method(HL.Table) << function(self, pinStateInfo)
     local pinId, pinType, chapterId = unpack(pinStateInfo)
@@ -277,9 +190,6 @@ FacMainCtrl._OnPinStateChanged = HL.Method(HL.Table) << function(self, pinStateI
     self:_ShowPinFormulaChangedToast(lastPinFormulaId, currPinFormulaId)
 end
 
-
-
-
 FacMainCtrl._OnPinSystemLockedStateChanged = HL.Method(HL.Any) << function(self, arg)
     local systemIndex = unpack(arg)
     if systemIndex == GEnums.UnlockSystemType.FacCraftPin:GetHashCode() then
@@ -287,16 +197,9 @@ FacMainCtrl._OnPinSystemLockedStateChanged = HL.Method(HL.Any) << function(self,
     end
 end
 
-
-
-
 FacMainCtrl._OnFacBuildingNodeStateChanged = HL.Method(HL.Any) << function(self, arg)
     self.m_needUpdatePin = true
 end
-
-
-
-
 
 FacMainCtrl._ShowPinFormulaChangedToast = HL.Method(HL.String, HL.String) << function(self, lastId, currId)
     
@@ -324,17 +227,10 @@ FacMainCtrl._ShowPinFormulaChangedToast = HL.Method(HL.String, HL.String) << fun
     Notify(MessageConst.SHOW_TOAST, string.format(Language[textId], formulaDesc))
 end
 
-
-
 FacMainCtrl._GetPinFormulaIdFromFormulaData = HL.Method().Return(HL.String) << function(self)
     local formulaData = self:_GetCurPinFormulaData()
     return formulaData == nil and "" or formulaData.craftId
 end
-
-
-
-
-
 
 FacMainCtrl._TryFocusPinItem = HL.Method(HL.Any, HL.Table, HL.Boolean) << function(self, cell, itemBundle, isIn)
     local craftData = isIn and FactoryUtils.getItemCraft(itemBundle.id) or nil
@@ -348,15 +244,11 @@ FacMainCtrl._TryFocusPinItem = HL.Method(HL.Any, HL.Table, HL.Boolean) << functi
     self:_RefreshPinFocusNode()
 end
 
-
-
 FacMainCtrl._UnFocusPinItem = HL.Method() << function(self)
     self:_UnSelectItemsIfNecessary()
     self.m_focusPinInfo = nil
     self:_RefreshPinFocusNode()
 end
-
-
 
 FacMainCtrl._RefreshPinFocusNode = HL.Method() << function(self)
     local pinFormulaNode = self.view.pinFormulaNode
@@ -384,16 +276,11 @@ FacMainCtrl._RefreshPinFocusNode = HL.Method() << function(self)
     pinFormulaNode.focusContent.anchoredPosition = Vector2(bound.center.x, bound.center.y)
 end
 
-
-
-
 FacMainCtrl._UpdateAndRefreshPinFormula = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     self:_UnlockCancelButton()
     self:_UpdatePinFormulaData()
     self:_RefreshPinFormula(isInit)
 end
-
-
 
 FacMainCtrl._UpdatePinFormulaData = HL.Method() << function(self)
     self.m_pinFormulaDataSeq = {}
@@ -424,9 +311,6 @@ FacMainCtrl._UpdatePinFormulaData = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacMainCtrl._LoadPinFormulaData = HL.Method(HL.String).Return(HL.Table) << function(self, formulaId)
     if Tables.factoryMachineCraftTable:ContainsKey(formulaId) then
         return FactoryUtils.parseMachineCraftData(formulaId)
@@ -438,17 +322,12 @@ FacMainCtrl._LoadPinFormulaData = HL.Method(HL.String).Return(HL.Table) << funct
     return nil
 end
 
-
-
 FacMainCtrl._GetCurPinFormulaData = HL.Method().Return(HL.Table) << function(self)
     if self.m_pinFormulaDataSeq == nil or #self.m_pinFormulaDataSeq <= 0 then
         return nil
     end
     return self.m_pinFormulaDataSeq[#self.m_pinFormulaDataSeq].data
 end
-
-
-
 
 FacMainCtrl._RefreshPinFormula = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     local pinFormulaNode = self.view.pinFormulaNode
@@ -478,8 +357,6 @@ FacMainCtrl._RefreshPinFormula = HL.Method(HL.Opt(HL.Boolean)) << function(self,
     end
 end
 
-
-
 FacMainCtrl._RefreshPinFormulaNode = HL.Method() << function(self)
     local pinFormulaNode = self.view.pinFormulaNode
     if pinFormulaNode == nil then
@@ -490,6 +367,12 @@ FacMainCtrl._RefreshPinFormulaNode = HL.Method() << function(self)
     if formulaData == nil then
         return
     end
+    if pinFormulaNode.earlyAccessNode ~= nil then
+        local isEarlyAccessBuilding = not string.isEmpty(formulaData.buildingId) and
+            FactoryUtils.isSkipUnlockedBuilding(formulaData.buildingId) and
+            not Utils.isInBlackbox()
+        pinFormulaNode.earlyAccessNode.gameObject:SetActiveIfNecessary(isEarlyAccessBuilding)
+    end
 
     if formulaData.formulaMode == nil or formulaData.formulaMode == FacConst.FAC_FORMULA_MODE_MAP.NORMAL then
         pinFormulaNode.iconMode.gameObject:SetActive(false)
@@ -497,7 +380,7 @@ FacMainCtrl._RefreshPinFormulaNode = HL.Method() << function(self)
         local hasMode, modeData = Tables.factoryMachineCraftModeTable:TryGetValue(formulaData.formulaMode)
         pinFormulaNode.iconMode.gameObject:SetActive(hasMode)
         if hasMode then
-            pinFormulaNode.iconMode:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, modeData.iconId)
+            pinFormulaNode.iconMode:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_COMMON, modeData.iconId)
         end
     end
 
@@ -547,13 +430,15 @@ FacMainCtrl._RefreshPinFormulaNode = HL.Method() << function(self)
         end)
         cell.outcomeItem:SetExtraInfo({ isSideTips = DeviceInfo.usingController })
     end)
+
+    
+    FactoryUtils.refreshEnvIcon(formulaData.env, pinFormulaNode.environmentIconController)
+
     LayoutRebuilder.ForceRebuildLayoutImmediate(pinFormulaNode.animationNode.transform)
 
     self:_RefreshPinFormulaNodeText()
     self:_RefreshPinFocusNode()
 end
-
-
 
 FacMainCtrl._RefreshPinFormulaNodeText = HL.Method() << function(self)
     local pinFormulaNode = self.view.pinFormulaNode
@@ -575,8 +460,6 @@ FacMainCtrl._RefreshPinFormulaNodeText = HL.Method() << function(self)
     end
 end
 
-
-
 FacMainCtrl._UnSelectItemsIfNecessary = HL.Method() << function(self)
     local closeFuc = function(isIn)
         local cells = isIn and self.m_pinFormulaInCells:GetItems() or self.m_pinFormulaOutCells:GetItems()
@@ -589,12 +472,6 @@ FacMainCtrl._UnSelectItemsIfNecessary = HL.Method() << function(self)
     closeFuc(true)
     closeFuc(false)
 end
-
-
-
-
-
-
 
 FacMainCtrl._FocusItemWithTips = HL.Method(HL.Any, HL.Table, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, cell, itemBundle, isIn, isRefocus)
     local pinFormulaNode = self.view.pinFormulaNode
@@ -614,14 +491,10 @@ FacMainCtrl._FocusItemWithTips = HL.Method(HL.Any, HL.Table, HL.Boolean, HL.Opt(
     self:_TryFocusPinItem(cell, itemBundle, isIn)
 end
 
-
-
 FacMainCtrl._UnFocusItemAndTips = HL.Method() << function(self)
     Notify(MessageConst.HIDE_ITEM_TIPS)
     self:_UnFocusPinItem()
 end
-
-
 
 FacMainCtrl._LockCancelButton = HL.Method() << function(self)
     local pinFormulaNode = self.view.pinFormulaNode
@@ -631,9 +504,6 @@ FacMainCtrl._LockCancelButton = HL.Method() << function(self)
         self:_UnlockCancelButton(true)
     end)
 end
-
-
-
 
 FacMainCtrl._UnlockCancelButton = HL.Method(HL.Opt(HL.Boolean)) << function(self, fromTimer)
     if fromTimer ~= true then
@@ -647,10 +517,6 @@ FacMainCtrl._UnlockCancelButton = HL.Method(HL.Opt(HL.Boolean)) << function(self
     pinFormulaNode.cancelProtectNode.gameObject:SetActive(false)
 end
 
-
-
-
-
 FacMainCtrl._ApplyPinFormulaCraft = HL.Method(HL.Table, HL.Table) << function(self, craftData, itemBundle)
     table.insert(self.m_pinFormulaDataSeq, {
         data = craftData,
@@ -662,9 +528,6 @@ FacMainCtrl._ApplyPinFormulaCraft = HL.Method(HL.Table, HL.Table) << function(se
     end
 end
 
-
-
-
 FacMainCtrl._PreviousPinFormulaCraft = HL.Method(HL.Table) << function(self, fromItem)
     table.remove(self.m_pinFormulaDataSeq)
     self:_RefreshPinFormulaNode()
@@ -672,10 +535,6 @@ FacMainCtrl._PreviousPinFormulaCraft = HL.Method(HL.Table) << function(self, fro
         self:_RefocusPinItem(fromItem, true)
     end
 end
-
-
-
-
 
 FacMainCtrl._RefocusPinItem = HL.Method(HL.Table, HL.Boolean).Return(HL.Boolean) << function(self, fromItem, isIn)
     if fromItem == nil then
@@ -687,7 +546,7 @@ FacMainCtrl._RefocusPinItem = HL.Method(HL.Table, HL.Boolean).Return(HL.Boolean)
         local item = isIn and cell.incomeItem or cell.outcomeItem
         if item.id == fromItem.id then
             if DeviceInfo.usingController then
-                UIUtils.setAsNaviTarget(item.view.button)
+                self:SetNaviTarget(item.view.button)
             end
             self:_FocusItemWithTips(item, fromItem, isIn, true)
             hasFocus = true
@@ -695,8 +554,6 @@ FacMainCtrl._RefocusPinItem = HL.Method(HL.Table, HL.Boolean).Return(HL.Boolean)
     end
     return hasFocus
 end
-
-
 
 FacMainCtrl._OnPinFormulaCloseBtnClick = HL.Method() << function(self)
     if self.m_isCancelPinLock == true then
@@ -711,11 +568,6 @@ FacMainCtrl._OnPinFormulaCloseBtnClick = HL.Method() << function(self)
     end
 end
 
-
-
-
-
-
 FacMainCtrl._OnPinItemClick = HL.Method(HL.Any, HL.Table, HL.Boolean) << function(self, cell, itemBundle, isIn)
     if self.m_focusPinInfo ~= nil and self.m_focusPinInfo.focusCell == cell and not DeviceInfo.usingController then
         self:_UnFocusItemAndTips()
@@ -723,10 +575,6 @@ FacMainCtrl._OnPinItemClick = HL.Method(HL.Any, HL.Table, HL.Boolean) << functio
     end
     self:_FocusItemWithTips(cell, itemBundle, isIn)
 end
-
-
-
-
 
 FacMainCtrl._OnApplyCraftClick = HL.Method(HL.Table, HL.Table) << function(self, craftData, itemBundle)
     local targetIndex = -1
@@ -751,8 +599,6 @@ FacMainCtrl._OnApplyCraftClick = HL.Method(HL.Table, HL.Table) << function(self,
     end
 end
 
-
-
 FacMainCtrl._OnPreviousCraftClick = HL.Method() << function(self)
     local dataSeq = self.m_pinFormulaDataSeq[#self.m_pinFormulaDataSeq]
     if dataSeq.isRoot == true then
@@ -766,16 +612,10 @@ FacMainCtrl._OnPreviousCraftClick = HL.Method() << function(self)
 end
 
 
-
-
-
 FacMainCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, active)
     
     self.view.facQuickBarPlaceHolder.gameObject:SetActive(not active and self:IsShow())
 end
-
-
-
 
 FacMainCtrl.OnFacTopViewHideUIModeChange = HL.Method(HL.Boolean) << function(self, isTopViewHideUIMode)
     self.view.rightNode.gameObject:SetActive(not isTopViewHideUIMode)

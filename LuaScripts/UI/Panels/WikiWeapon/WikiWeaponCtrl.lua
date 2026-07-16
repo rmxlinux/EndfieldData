@@ -1,24 +1,6 @@
 local wikiDetailBaseCtrl = require_ex('UI/Panels/WikiDetailBase/WikiDetailBaseCtrl')
 local PANEL_ID = PanelId.WikiWeapon
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiWeaponCtrl = HL.Class('WikiWeaponCtrl', wikiDetailBaseCtrl.WikiDetailBaseCtrl)
-
-
-
 
 
 
@@ -28,41 +10,29 @@ WikiWeaponCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_PlayBgDecoAnim()
 end
 
-
-
 WikiWeaponCtrl.OnShow = HL.Override() << function(self)
     WikiWeaponCtrl.Super.OnShow(self)
     self:_RefreshModel()
     self:_PlayBgDecoAnim()
 end
 
-
-
 WikiWeaponCtrl._OnPlayAnimationOut = HL.Override() << function(self)
     WikiWeaponCtrl.Super._OnPlayAnimationOut(self)
     self.m_phase:PlayBgAnim("wiki_plane_toweapon_out")
 end
 
-
-
 WikiWeaponCtrl.GetPanelId = HL.Override().Return(HL.Number) << function(self)
     return PANEL_ID
 end
-
-
 
 WikiWeaponCtrl._RefreshCenter = HL.Override() << function(self)
     WikiWeaponCtrl.Super._RefreshCenter(self)
     self:_RefreshModel()
 end
 
-
 WikiWeaponCtrl.m_isShowWeaponMaxInfo = HL.Field(HL.Boolean) << false
 
-
 WikiWeaponCtrl.m_isBtnAttrInited = HL.Field(HL.Boolean) << false
-
-
 
 
 WikiWeaponCtrl._RefreshRight = HL.Override() << function(self)
@@ -83,16 +53,11 @@ end
 
 
 
-
-
 WikiWeaponCtrl._CollectLocalResumeState = HL.Override().Return(HL.Table) << function(self)
     return {
         isShowWeaponMaxInfo = self.m_isShowWeaponMaxInfo == true,
     }
 end
-
-
-
 
 WikiWeaponCtrl._ApplyLocalResumeState = HL.Override(HL.Opt(HL.Any)) << function(self, resumeState)
     if not resumeState then
@@ -102,9 +67,6 @@ WikiWeaponCtrl._ApplyLocalResumeState = HL.Override(HL.Opt(HL.Any)) << function(
     self:_RefreshModel()
     self:_RefreshRight()
 end
-
-
-
 
 WikiWeaponCtrl._RefreshModel = HL.Method(HL.Opt(HL.Boolean)) << function(self, playInAnim)
     if self.m_phase then
@@ -125,9 +87,6 @@ end
 
 
 
-
-
-
 WikiWeaponCtrl._GetWeaponShowData = HL.Method(HL.Boolean).Return(HL.Table) << function(self, isMaxLevel)
     local templateId = self.m_wikiEntryShowData.wikiEntryData.refItemId
     local hasValue
@@ -138,6 +97,7 @@ WikiWeaponCtrl._GetWeaponShowData = HL.Method(HL.Boolean).Return(HL.Table) << fu
     
     local weaponTalentDetailList
     local maxLevel, initMaxLevel, breakThroughCount, maxBreakthroughLevel, maxRefineLevel = 0, 0, 0, 0, 0
+    local archiveDesc
 
     hasValue, weaponBasicData = Tables.weaponBasicTable:TryGetValue(templateId)
 
@@ -155,6 +115,7 @@ WikiWeaponCtrl._GetWeaponShowData = HL.Method(HL.Boolean).Return(HL.Table) << fu
         if hasValue then
             maxRefineLevel = #weaponTalentDetailList.list
         end
+        archiveDesc = weaponBasicData.weaponDesc
     end
 
     
@@ -165,12 +126,10 @@ WikiWeaponCtrl._GetWeaponShowData = HL.Method(HL.Boolean).Return(HL.Table) << fu
         breakthroughLevel = isMaxLevel and maxBreakthroughLevel or 0,
         maxBreakthroughLevel = maxBreakthroughLevel,
         refineLevel = isMaxLevel and maxRefineLevel or 0,
+        archiveDesc = archiveDesc,
     }
     return weaponShowData
 end
-
-
-
 
 
 WikiWeaponCtrl._RefreshWeaponShowInfo = HL.Method(HL.Table) << function(self, weaponShowData)
@@ -189,9 +148,8 @@ WikiWeaponCtrl._RefreshWeaponShowInfo = HL.Method(HL.Table) << function(self, we
     view.btnSkill.onClick:AddListener(function()
         self.m_phase:CreateOrShowPhasePanelItem(PanelId.WikiWeaponSkill, self.m_wikiEntryShowData)
     end)
+    view.archiveText.text = weaponShowData.archiveDesc
 end
-
-
 
 WikiWeaponCtrl._PlayBgDecoAnim = HL.Method() << function(self)
     if self.m_phase then

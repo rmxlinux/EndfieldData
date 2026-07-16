@@ -2,12 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GemEnhanceResult
 
-
-
-
-
 GemEnhanceResultCtrl = HL.Class('GemEnhanceResultCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -18,11 +13,7 @@ GemEnhanceResultCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 GemEnhanceResultCtrl.m_termLevelCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 

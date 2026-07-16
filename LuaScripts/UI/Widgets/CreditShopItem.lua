@@ -1,11 +1,6 @@
 local ShopItemWidget = require_ex('UI/Widgets/ShopItem')
 
-
-
 CreditShopItem = HL.Class('CreditShopItem', ShopItemWidget)
-
-
-
 
 CreditShopItem.InitShopItem = HL.Override(HL.Table) << function(self, info)
     self:_FirstTimeInit()

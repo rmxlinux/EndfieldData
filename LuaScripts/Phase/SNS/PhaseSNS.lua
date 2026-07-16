@@ -1,26 +1,6 @@
 
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.SNS
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseSNS = HL.Class('PhaseSNS', phaseBase.PhaseBase)
 
 local NeedClosePanelIds = {
@@ -32,15 +12,11 @@ local SNS_BARKER_PANEL_ID = PanelId.SNSBarker
 local SNS_MISSION_PANEL_ID = PanelId.SNSMission
 local SNS_FRIEND_PANEL_ID = PanelId.SNSFriend
 
-
 PhaseSNS.m_basicPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseSNS.m_curPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseSNS.m_panelId2Item = HL.Field(HL.Table)
-
 
 
 
@@ -49,19 +25,12 @@ PhaseSNS.m_panelId2Item = HL.Field(HL.Table)
 PhaseSNS.s_messages = HL.StaticField(HL.Table) << {
 }
 
-
 PhaseSNS.s_prePanelId = HL.StaticField(HL.Number) << -1
-
-
 
 
 PhaseSNS._OnInit = HL.Override() << function(self)
    PhaseSNS.Super._OnInit(self)
 end
-
-
-
-
 
 
 
@@ -110,10 +79,6 @@ PhaseSNS._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << fun
    self:_BindControllerHintPlaceHolder()
 end
 
-
-
-
-
 PhaseSNS._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     for _, panelId in pairs(NeedClosePanelIds) do
         if UIManager:IsOpen(panelId) then
@@ -122,16 +87,8 @@ PhaseSNS._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << fu
     end
 end
 
-
-
-
-
 PhaseSNS._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseSNS._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
@@ -141,23 +98,15 @@ end
 
 
 
-
-
 PhaseSNS._OnActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseSNS._OnDeActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseSNS._OnDestroy = HL.Override() << function(self)
    PhaseSNS.Super._OnDestroy(self)
 end
-
-
 
 PhaseSNS._OnRefresh = HL.Override() << function(self)
     local isFriendSChat = false
@@ -182,8 +131,6 @@ PhaseSNS._OnRefresh = HL.Override() << function(self)
    logger.warn("PhaseSNS._OnRefresh fail")
 end
 
-
-
 PhaseSNS.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
    local arg = self.arg and lume.deepCopy(self.arg) or {}
 
@@ -207,9 +154,6 @@ PhaseSNS.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
 
    return arg
 end
-
-
-
 
 
 
@@ -253,8 +197,6 @@ PhaseSNS.OnTabChange = HL.Method(HL.Table) << function(self, args)
    self:_BindControllerHintPlaceHolder()
 end
 
-
-
 PhaseSNS._BindControllerHintPlaceHolder = HL.Method() << function(self)
    if not DeviceInfo.usingController then
       return
@@ -275,17 +217,11 @@ end
 
 
 
-
-
-
 PhaseSNS.OnSNSBarkerContentCoreFocus = HL.Method(HL.Boolean) << function(self, isOn)
    
    local ctrl = self.m_basicPanelItem.uiCtrl
    ctrl:ToggleTitleBindGroup(not isOn)
 end
-
-
-
 
 PhaseSNS.ToggleBasicPanelCloseBtn = HL.Method(HL.Boolean) << function(self, isOn)
    

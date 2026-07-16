@@ -7,7 +7,6 @@ FacHudBottomMaskCtrl = HL.Class('FacHudBottomMaskCtrl', uiCtrl.UICtrl)
 
 
 
-
 FacHudBottomMaskCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }

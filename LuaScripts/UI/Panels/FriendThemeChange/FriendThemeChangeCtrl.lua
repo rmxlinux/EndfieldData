@@ -2,32 +2,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FriendThemeChange
 local PHASE_ID = PhaseId.FriendThemeChange
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FriendThemeChangeCtrl = HL.Class('FriendThemeChangeCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -44,32 +19,21 @@ FriendThemeChangeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_UPDATED] = 'OnActivityUpdated',
 }
 
-
 FriendThemeChangeCtrl.m_getCellFunc = HL.Field(HL.Function)
-
 
 FriendThemeChangeCtrl.m_panel = HL.Field(HL.Userdata)
 
-
 FriendThemeChangeCtrl.m_businessCard = HL.Field(HL.Forward('FriendBusinessCard'))
-
 
 FriendThemeChangeCtrl.m_infos = HL.Field(HL.Table)
 
-
 FriendThemeChangeCtrl.m_selectId = HL.Field(HL.String) << ""
-
 
 FriendThemeChangeCtrl.m_inCreate = HL.Field(HL.Boolean) << false
 
-
 FriendThemeChangeCtrl.m_arg = HL.Field(HL.Table)
 
-
 FriendThemeChangeCtrl.m_closeCallback = HL.Field(HL.Function)
-
-
-
 
 
 FriendThemeChangeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -115,16 +79,11 @@ FriendThemeChangeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.m_inCreate = false
 end
 
-
-
 FriendThemeChangeCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
     arg.selectId = self.m_selectId
     return arg
 end
-
-
-
 
 
 FriendThemeChangeCtrl.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
@@ -146,10 +105,6 @@ FriendThemeChangeCtrl.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) 
     end
 end
 
-
-
-
-
 FriendThemeChangeCtrl._UpdateCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, csIndex)
     local cell = self.m_getCellFunc(object)
     local id = self.m_infos[LuaIndex(csIndex)].cfg.id
@@ -165,12 +120,9 @@ FriendThemeChangeCtrl._UpdateCell = HL.Method(HL.Userdata, HL.Number) << functio
 
     
     if self.m_selectId == id and self.m_inCreate then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.view.themeBtn)
+        self:SetNaviTarget(cell.view.themeBtn)
     end
 end
-
-
-
 
 FriendThemeChangeCtrl._OnSelectIdChange = HL.Method(HL.Boolean) << function(self, init)
     
@@ -223,9 +175,6 @@ FriendThemeChangeCtrl._OnSelectIdChange = HL.Method(HL.Boolean) << function(self
     self.view.detailsTxt.text = Tables.itemTable[cfg.itemId].decoDesc
 end
 
-
-
-
 FriendThemeChangeCtrl._UpdateObtainWay = HL.Method(HL.String) << function(self, itemId)
     local obtainWay = Utils.tryGetItemFirstObtainWay(itemId)
     local cell = self.view.obtainCell
@@ -259,8 +208,6 @@ FriendThemeChangeCtrl._UpdateObtainWay = HL.Method(HL.String) << function(self, 
         end
     end
 end
-
-
 
 FriendThemeChangeCtrl._RebuildInfos = HL.Method() << function(self)
     self.m_infos = {}
@@ -309,8 +256,6 @@ FriendThemeChangeCtrl._RebuildInfos = HL.Method() << function(self)
     end
 end
 
-
-
 FriendThemeChangeCtrl._Refresh = HL.Method() << function(self)
     if self.m_infos == nil then
         return
@@ -322,13 +267,9 @@ FriendThemeChangeCtrl._Refresh = HL.Method() << function(self)
     self:_OnSelectIdChange(false)
 end
 
-
-
 FriendThemeChangeCtrl.OnBusinessCardUnlock = HL.Method() << function(self)
     self:_Refresh()
 end
-
-
 
 FriendThemeChangeCtrl.OnSystemUnlockChanged = HL.Method() << function(self)
     
@@ -336,22 +277,16 @@ FriendThemeChangeCtrl.OnSystemUnlockChanged = HL.Method() << function(self)
     self:_Refresh()
 end
 
-
-
 FriendThemeChangeCtrl.OnActivityUpdated = HL.Method() << function(self)
     
     self:_Refresh()
 end
-
-
 
 FriendThemeChangeCtrl._TryInvokeCloseCallback = HL.Method() << function(self)
     if self.m_closeCallback then
         self.m_closeCallback()
     end
 end
-
-
 
 FriendThemeChangeCtrl._Close = HL.Method() << function(self)
     self:_TryInvokeCloseCallback()
@@ -366,8 +301,6 @@ FriendThemeChangeCtrl._Close = HL.Method() << function(self)
         end
     end
 end
-
-
 
 
 

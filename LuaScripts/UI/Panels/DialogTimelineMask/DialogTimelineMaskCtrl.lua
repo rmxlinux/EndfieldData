@@ -2,21 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DialogTimelineMask
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 DialogTimelineMaskCtrl = HL.Class('DialogTimelineMaskCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -28,38 +14,18 @@ DialogTimelineMaskCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_STOP_CAMERA_CROSS_FADE] = 'OnStopCameraCrossFade',
 }
 
-
 DialogTimelineMaskCtrl.m_setCaptureCor = HL.Field(HL.Thread)
-
 
 DialogTimelineMaskCtrl.m_captureRtHandle = HL.Field(HL.Userdata)
 
-
 DialogTimelineMaskCtrl.m_timelineHandle = HL.Field(HL.Userdata)
-
-
-
 
 
 DialogTimelineMaskCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_timelineHandle = unpack(arg)
 end
 
-
-
 DialogTimelineMaskCtrl._InitBorderMask = HL.Method() << function(self, arg)
-    local useBlack = true
-    if GameWorld.dialogManager.dialogTree then
-        local dialogType = GameWorld.dialogManager.dialogTree.dialogType
-        local normal = dialogType == Const.DialogType.Normal
-        if normal then
-            useBlack = false
-        end
-    else
-        useBlack = false
-    end
-
-    if useBlack then
         local screenWidth = Screen.width
         local screenHeight = Screen.height
 
@@ -71,13 +37,7 @@ DialogTimelineMaskCtrl._InitBorderMask = HL.Method() << function(self, arg)
         self.view.rightBorder.gameObject:SetActive(true)
         
         
-    else
-        self.view.leftBorder.gameObject:SetActive(false)
-        self.view.rightBorder.gameObject:SetActive(false)
-    end
 end
-
-
 
 DialogTimelineMaskCtrl.OnShow = HL.Override() << function(self)
     self:_InitBorderMask()
@@ -85,15 +45,11 @@ DialogTimelineMaskCtrl.OnShow = HL.Override() << function(self)
 end
 
 
-
-
 DialogTimelineMaskCtrl.OnStartCameraCrossFade = HL.Method() << function(self)
     self:_ReleaseCaptureRt()
     self.m_captureRtHandle = ScreenCaptureUtils.GetScreenCaptureWithoutUI();
     self.m_setCaptureCor = self:_StartCoroutine(function() return self:_SetScreenCapture() end)
 end
-
-
 
 DialogTimelineMaskCtrl._SetScreenCapture = HL.Method() << function(self)
     coroutine.waitForRenderDone()
@@ -103,16 +59,12 @@ DialogTimelineMaskCtrl._SetScreenCapture = HL.Method() << function(self)
     end
 end
 
-
-
 DialogTimelineMaskCtrl._ReleaseCaptureRt = HL.Method() << function(self)
     if self.m_captureRtHandle then
         self.m_captureRtHandle:Release()
         self.m_captureRtHandle = nil
     end
 end
-
-
 
 DialogTimelineMaskCtrl.OnStopCameraCrossFade = HL.Method() << function(self)
     if self.m_setCaptureCor then
@@ -124,8 +76,6 @@ DialogTimelineMaskCtrl.OnStopCameraCrossFade = HL.Method() << function(self)
     self.view.cameraCrossFade.gameObject:SetActive(false)
     self.view.cameraCrossFade.texture = nil
 end
-
-
 
 
 

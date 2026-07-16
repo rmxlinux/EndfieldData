@@ -7,7 +7,6 @@ BlueprintsUnlockHintCtrl = HL.Class('BlueprintsUnlockHintCtrl', uiCtrl.UICtrl)
 
 
 
-
 BlueprintsUnlockHintCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 

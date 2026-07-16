@@ -2,22 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FriendBusinessCardRoot
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FriendBusinessCardRootCtrl = HL.Class('FriendBusinessCardRootCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -26,25 +11,19 @@ FriendBusinessCardRootCtrl = HL.Class('FriendBusinessCardRootCtrl', uiCtrl.UICtr
 
 FriendBusinessCardRootCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FRIEND_BUSINESS_INFO_CHANGE] = 'OnFriendBusinessInfoChange',
+    [MessageConst.ON_BIRTHDAY_VISIBILITY_REFRESH] = 'OnBirthdayRefresh',
+    [MessageConst.ON_BIRTHDAY_SET] = 'OnBirthdayRefresh'
 }
-
 
 FriendBusinessCardRootCtrl.m_roleId = HL.Field(HL.Number) << 0
 
-
 FriendBusinessCardRootCtrl.m_panel = HL.Field(HL.Userdata)
-
 
 FriendBusinessCardRootCtrl.m_businessCard = HL.Field(HL.Forward('FriendBusinessCard'))
 
-
 FriendBusinessCardRootCtrl.m_businessCardId = HL.Field(HL.String) << ''
 
-
 FriendBusinessCardRootCtrl.m_isPlayInAnimationInFrame = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -59,14 +38,9 @@ FriendBusinessCardRootCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
 end
 
-
-
-
 FriendBusinessCardRootCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, args)
     
 end
-
-
 
 FriendBusinessCardRootCtrl._UpdateCardInfo = HL.Method() << function(self)
     local success , friendInfo = GameInstance.player.friendSystem:TryGetFriendInfo(self.m_roleId)
@@ -126,8 +100,6 @@ FriendBusinessCardRootCtrl._UpdateCardInfo = HL.Method() << function(self)
     self:_TrySetDefaultNaviTarget()
 end
 
-
-
 FriendBusinessCardRootCtrl._TrySetDefaultNaviTarget = HL.Method() << function(self)
     if self.m_businessCard == nil or self.m_businessCard.view == nil then
         return
@@ -135,18 +107,14 @@ FriendBusinessCardRootCtrl._TrySetDefaultNaviTarget = HL.Method() << function(se
     if self.view == nil or self.view.inputGroup == nil then
         return
     end
-    
     if not self.view.inputGroup.groupEnabled then
         return
     end
 
-    
     if self.m_businessCard.m_isExpanded then
         self.m_businessCard.view.businessCardRoleNode:NaviToFirstChar()
     end
 end
-
-
 
 FriendBusinessCardRootCtrl.RefreshTabBlockState = HL.Method() << function(self)
     if self.m_phase == nil then
@@ -160,13 +128,9 @@ FriendBusinessCardRootCtrl.RefreshTabBlockState = HL.Method() << function(self)
     self.m_phase:SetTabBlockState(shouldBlock)
 end
 
-
-
 FriendBusinessCardRootCtrl.OnFriendBusinessInfoChange = HL.Method() << function(self)
     self:_UpdateCardInfo()
 end
-
-
 
 FriendBusinessCardRootCtrl.OnShow = HL.Override() << function(self)
     self.m_businessCard:InitFriendBusinessCard(self.m_roleId)
@@ -180,6 +144,13 @@ FriendBusinessCardRootCtrl.OnShow = HL.Override() << function(self)
             self.m_isPlayInAnimationInFrame = false
         end)
     end
+end
+
+FriendBusinessCardRootCtrl.OnBirthdayRefresh = HL.Method() << function(self)
+    if self.m_roleId ~= GameInstance.player.roleId then
+        return
+    end
+    self.m_businessCard:RefreshBirthdayInfo()
 end
 
 

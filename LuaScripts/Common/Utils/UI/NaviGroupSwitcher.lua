@@ -1,37 +1,14 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
 NaviGroupSwitcher = HL.Class("NaviGroupSwitcher")
-
 
 NaviGroupSwitcher.m_groupsInfos = HL.Field(HL.Table)
 
-
 NaviGroupSwitcher.m_bindingGroupId = HL.Field(HL.Number) << -1
-
 
 NaviGroupSwitcher.m_prevBindingId = HL.Field(HL.Number) << -1
 
-
 NaviGroupSwitcher.m_nextBindingId = HL.Field(HL.Number) << -1
 
-
 NaviGroupSwitcher.m_isReverse = HL.Field(HL.Boolean) << false
-
-
-
-
-
 
 
 
@@ -55,13 +32,8 @@ function(self, parentGroupId, groupInfos, isReverse)
     self:ChangeGroupInfos(groupInfos)
 end
 
-
-
 NaviGroupSwitcher._OnTopLayerChanged = HL.Method() << function(self)
 end
-
-
-
 
 NaviGroupSwitcher._GetGroupInfo = HL.Method(HL.Boolean).Return(HL.Opt(HL.Table)) << function(self, isNext)
     local count = #self.m_groupsInfos
@@ -86,9 +58,6 @@ NaviGroupSwitcher._GetGroupInfo = HL.Method(HL.Boolean).Return(HL.Opt(HL.Table))
     return self.m_groupsInfos[1]
 end
 
-
-
-
 NaviGroupSwitcher.ChangeGroupInfos = HL.Method(HL.Opt(HL.Table)) << function(self, groupInfos)
     self:ClearGroupInfos()
     if not groupInfos then
@@ -103,8 +72,6 @@ NaviGroupSwitcher.ChangeGroupInfos = HL.Method(HL.Opt(HL.Table)) << function(sel
     end
 end
 
-
-
 NaviGroupSwitcher.ClearGroupInfos = HL.Method() << function(self)
     if not self.m_groupsInfos then
         return
@@ -115,9 +82,6 @@ NaviGroupSwitcher.ClearGroupInfos = HL.Method() << function(self)
     self.m_groupsInfos = nil
 end
 
-
-
-
 NaviGroupSwitcher.Move = HL.Method(HL.Boolean) << function(self, isNext)
     local info = self:_GetGroupInfo(isNext)
     if not info then
@@ -126,9 +90,6 @@ NaviGroupSwitcher.Move = HL.Method(HL.Boolean) << function(self, isNext)
     local forceDefault = info.forceDefault == true
     info.naviGroup:NaviToThisGroup(forceDefault)
 end
-
-
-
 
 NaviGroupSwitcher.ToggleActive = HL.Method(HL.Boolean) << function(self, active)
     InputManagerInst:ToggleGroup(self.m_bindingGroupId, active)

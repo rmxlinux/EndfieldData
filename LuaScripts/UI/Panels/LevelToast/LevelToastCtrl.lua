@@ -1,17 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.LevelToast
-
-
-
-
-
-
-
-
-
 LevelToastCtrl = HL.Class('LevelToastCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -24,13 +14,8 @@ LevelToastCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 LevelToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
-
-
 
 
 LevelToastCtrl.OnHide = HL.Override() << function(self)
@@ -44,22 +29,15 @@ end
 
 
 
-
-
 LevelToastCtrl.OnShowLevelCollectionToast = HL.StaticMethod(HL.Any) << function (arg)
     local ctrl = LevelToastCtrl.AutoOpen(PANEL_ID, nil, false)
     ctrl:_ShowLevelCollectionToast(arg)
 end
 
-
-
 LevelToastCtrl.OnShowLevelCollectionToastSimple = HL.StaticMethod(HL.Any) << function (arg)
     local ctrl = LevelToastCtrl.AutoOpen(PANEL_ID, nil, false)
     ctrl:_ShowLevelCollectionToastSimple(arg)
 end
-
-
-
 
 LevelToastCtrl._ShowLevelCollectionToastSimple = HL.Method(HL.Any) << function (self, arg)
     local data = unpack(arg)
@@ -83,9 +61,6 @@ LevelToastCtrl._ShowLevelCollectionToastSimple = HL.Method(HL.Any) << function (
     self.view.levelCollection:Play("level_toast_collection_show")
 end
 
-
-
-
 LevelToastCtrl._GetLevelCollectionToastItemData = HL.Method(HL.String).Return(HL.Any) << function(self, itemId)
     local success, itemTable =  Tables.sceneCollectableItemTable:TryGetValue(GameWorld.worldInfo.curLevelId)
     if not success then
@@ -106,9 +81,6 @@ LevelToastCtrl._GetLevelCollectionToastItemData = HL.Method(HL.String).Return(HL
 
     return nil
 end
-
-
-
 
 
 LevelToastCtrl._ShowLevelCollectionToast = HL.Method(HL.Any) << function (self, arg)

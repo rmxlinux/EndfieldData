@@ -1,52 +1,26 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharInfoBasicNode = HL.Class('CharInfoBasicNode', UIWidgetBase)
 
 local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
 
 do
-    
     CharInfoBasicNode.m_starCellCache = HL.Field(HL.Forward("UIListCache"))
 
-    
     CharInfoBasicNode.m_fcAttrCellCache = HL.Field(HL.Forward("UIListCache"))
 
-    
     CharInfoBasicNode.m_scAttrCellCache = HL.Field(HL.Forward("UIListCache"))
 
-    
     CharInfoBasicNode.m_imageSelectCache = HL.Field(HL.Table)
 
-    
     CharInfoBasicNode.m_charInstId = HL.Field(HL.Number) << -1
 
-    
     CharInfoBasicNode.m_fcHintDataList = HL.Field(HL.Table)
 
-    
     CharInfoBasicNode.m_scHintDataList = HL.Field(HL.Table)
 
-    
     CharInfoBasicNode.m_battleTagCellCache = HL.Field(HL.Forward("UIListCache"))
 end
-
-
 
 
 CharInfoBasicNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -85,10 +59,6 @@ CharInfoBasicNode._OnFirstTimeInit = HL.Override() << function(self)
 
     self:_InitCharInfoBasicNodeController()
 end
-
-
-
-
 
 CharInfoBasicNode.InitCharInfoBasicNode = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, charInstId, hideWhenOpenDetail)
     self:_FirstTimeInit()
@@ -247,16 +217,11 @@ CharInfoBasicNode.InitCharInfoBasicNode = HL.Method(HL.Number, HL.Opt(HL.Boolean
     self.view.tagDeco.gameObject:SetActive(tagCount % 2 == 0)
 end
 
-
-
-
 CharInfoBasicNode._RefreshImageSelect = HL.Method(HL.Opt(HL.Any)) << function(self, showCell)
     for parentCell, cell in pairs(self.m_imageSelectCache) do
         cell.gameObject:SetActive(parentCell == showCell and not DeviceInfo.usingController)
     end
 end
-
-
 
 CharInfoBasicNode._OnShowCurrentCharFullAttribute = HL.Method() << function(self)
     local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(self.m_charInstId)
@@ -265,11 +230,6 @@ CharInfoBasicNode._OnShowCurrentCharFullAttribute = HL.Method() << function(self
     end
     self:_OpenCharInfoFullAttribute(self.m_charInstId, charInfo.templateId)
 end
-
-
-
-
-
 
 CharInfoBasicNode._OpenCharInfoFullAttribute = HL.Method(HL.Number, HL.String, HL.Opt(HL.Function)) << function(self, instId, templateId, onClose)
     UIManager:Open(PanelId.CharInfoFullAttribute,{
@@ -280,8 +240,6 @@ CharInfoBasicNode._OpenCharInfoFullAttribute = HL.Method(HL.Number, HL.String, H
         onClose = onClose,
     })
 end
-
-
 
 
 
@@ -307,9 +265,6 @@ CharInfoBasicNode._InitCharInfoBasicNodeController = HL.Method() << function(sel
         end
     end
 end
-
-
-
 
 CharInfoBasicNode._ActiveControllerAutoClick = HL.Method(HL.Boolean) << function(self, isActive)
     local actionOnSetNaviTarget = isActive and ActionOnSetNaviTarget.AutoTriggerOnClick or ActionOnSetNaviTarget.PressConfirmTriggerOnClick

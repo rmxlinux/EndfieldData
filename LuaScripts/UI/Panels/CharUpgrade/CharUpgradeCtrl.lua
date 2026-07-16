@@ -1,57 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharUpgrade
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharUpgradeCtrl = HL.Class('CharUpgradeCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -59,65 +8,45 @@ CharUpgradeCtrl = HL.Class('CharUpgradeCtrl', uiCtrl.UICtrl)
 
 CharUpgradeCtrl.m_charInfo = HL.Field(HL.Table)
 
-
 CharUpgradeCtrl.m_upgradeItemCostDict = HL.Field(HL.Table)
-
 
 CharUpgradeCtrl.m_expCardInfoList = HL.Field(HL.Table)
 
-
 CharUpgradeCtrl.m_curGenerateExp = HL.Field(HL.Number) << 0
-
 
 CharUpgradeCtrl.m_upgradeItemCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 CharUpgradeCtrl.m_level2RequireExpDict = HL.Field(HL.Table)
-
 
 CharUpgradeCtrl.m_level2RequireGoldDict = HL.Field(HL.Table)
 
-
 CharUpgradeCtrl.m_fromLevel = HL.Field(HL.Number) << 0
-
 
 CharUpgradeCtrl.m_toLevel = HL.Field(HL.Number) << 0
 
-
 CharUpgradeCtrl.m_stageLevel = HL.Field(HL.Number) << 0
 
-
 CharUpgradeCtrl.m_curWorldLevel = HL.Field(HL.Number) << 0
-
 
 CharUpgradeCtrl.m_worldLimitLevel = HL.Field(HL.Number) << 0
 
 
 
-
 CharUpgradeCtrl.m_controllerCurSelectedItemId = HL.Field(HL.String) << ""
-
 
 CharUpgradeCtrl.m_upgradeItemList = HL.Field(HL.Table)
 
-
 CharUpgradeCtrl.m_breakItemList = HL.Field(HL.Table)
-
 
 CharUpgradeCtrl.m_itemIdToCellIndex = HL.Field(HL.Table)
 
-
 CharUpgradeCtrl.m_levelUpCor = HL.Field(HL.Thread)
-
 
 CharUpgradeCtrl.m_arg = HL.Field(HL.Table)
 
-
 CharUpgradeCtrl.m_sliderTween = HL.Field(HL.Any)
 
-
 CharUpgradeCtrl.m_curNaviTargetUpgradeItemCell = HL.Field(HL.Any)
-
 
 
 
@@ -127,9 +56,6 @@ CharUpgradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHAR_GAIN_EXP] = 'OnCharGainExp',
     [MessageConst.ON_CHAR_LEVEL_UP] = 'OnCharLevelUp',
 }
-
-
-
 
 
 CharUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -155,15 +81,10 @@ CharUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
-
 CharUpgradeCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     self.view.upgradeNode.addKeyHint.gameObject:SetActive(active)
     self.view.upgradeNode.subKeyHint.gameObject:SetActive(active)
 end
-
-
 
 CharUpgradeCtrl._InitCharUpgradePanel = HL.Method() << function(self)
     self.view.upgradeNode.upgradeLevelNode.addExp.text = 0
@@ -174,13 +95,9 @@ CharUpgradeCtrl._InitCharUpgradePanel = HL.Method() << function(self)
     self.view.breakNode.upgradeLevelNode.addExpBar.fillAmount = 0
 end
 
-
-
 CharUpgradeCtrl.OnHide = HL.Override() << function(self)
     Notify(MessageConst.HIDE_ITEM_TIPS)
 end
-
-
 
 CharUpgradeCtrl.OnClose = HL.Override() << function(self)
     if self.m_sliderTween then
@@ -191,8 +108,6 @@ CharUpgradeCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.HIDE_ITEM_TIPS)
 end
 
-
-
 CharUpgradeCtrl.OnShow = HL.Override() << function(self)
     local initCharInfo = self.m_charInfo
 
@@ -200,15 +115,9 @@ CharUpgradeCtrl.OnShow = HL.Override() << function(self)
     self:_RefreshUpgradePanel(initCharInfo)
 end
 
-
-
-
 CharUpgradeCtrl.OnCharGainExp = HL.Method(HL.Table) << function(self, arg)
     self:_RefreshUpgradePanel(self.m_charInfo)
 end
-
-
-
 
 CharUpgradeCtrl.OnCharLevelUp = HL.Method(HL.Table) << function(self, arg)
     Utils.triggerVoice("chrup_level", self.m_charInfo.templateId)
@@ -217,10 +126,6 @@ CharUpgradeCtrl.OnCharLevelUp = HL.Method(HL.Table) << function(self, arg)
         self:_RefreshUpgradePanel(self.m_charInfo, true)
     end)
 end
-
-
-
-
 
 CharUpgradeCtrl.AddUpgradeItem = HL.Method(HL.String, HL.Number) << function(self, itemId, count)
     local charInstId = self.m_charInfo.instId
@@ -244,12 +149,6 @@ CharUpgradeCtrl.AddUpgradeItem = HL.Method(HL.String, HL.Number) << function(sel
         self.m_upgradeItemCostDict[itemId] = addItemCount
     end
 end
-
-
-
-
-
-
 
 CharUpgradeCtrl._TryGetAddItemCount = HL.Method(HL.Number, HL.Number, HL.String, HL.Number).Return(HL.Number) << function(self, curGenerateExp, expRequire, itemId, count)
     local expItemDataMap = Tables.expItemDataMap
@@ -278,10 +177,6 @@ CharUpgradeCtrl._TryGetAddItemCount = HL.Method(HL.Number, HL.Number, HL.String,
 
     return nextCount
 end
-
-
-
-
 
 CharUpgradeCtrl._RefreshUpgradePanel = HL.Method(HL.Table, HL.Opt(HL.Boolean)) << function(self, charInfo, isUpgradeTransition)
     local charInstId = charInfo.instId
@@ -327,10 +222,6 @@ CharUpgradeCtrl._RefreshUpgradePanel = HL.Method(HL.Table, HL.Opt(HL.Boolean)) <
         self:_RefreshBreakNode(charInfo.instId)
     end
 end
-
-
-
-
 
 CharUpgradeCtrl._RefreshUpgradeNode = HL.Method(HL.Table, HL.Opt(HL.Boolean)) << function(self, charInfo, isUpgradeTransition)
     local charInstId = charInfo.instId
@@ -430,8 +321,6 @@ CharUpgradeCtrl._RefreshUpgradeNode = HL.Method(HL.Table, HL.Opt(HL.Boolean)) <<
     self:_UpdateAddAndSubBtnState()
 end
 
-
-
 CharUpgradeCtrl._GetCurAddOnExp = HL.Method().Return(HL.Number) << function(self)
     local expSum = 0
     local expItemDataMap = Tables.expItemDataMap
@@ -443,11 +332,6 @@ CharUpgradeCtrl._GetCurAddOnExp = HL.Method().Return(HL.Number) << function(self
 
     return expSum
 end
-
-
-
-
-
 
 CharUpgradeCtrl._CalcLevelByExp = HL.Method(HL.Number, HL.Number, HL.Number).Return(HL.Number, HL.Number) << function(self, addExp, curLevel, maxLevel)
     local level2RequireExpDict = self.m_level2RequireExpDict
@@ -466,10 +350,6 @@ CharUpgradeCtrl._CalcLevelByExp = HL.Method(HL.Number, HL.Number, HL.Number).Ret
 
     return curLevel, addExp
 end
-
-
-
-
 
 CharUpgradeCtrl._RefreshUpgradeItemCell = HL.Method(HL.Table, HL.String) << function(self, cell, itemId)
     local costCount = self.m_upgradeItemCostDict[itemId] or 0
@@ -505,6 +385,11 @@ CharUpgradeCtrl._RefreshUpgradeItemCell = HL.Method(HL.Table, HL.String) << func
             tipsPosType = UIConst.UI_TIPS_POS_TYPE.RightTop,
             tipsPosTransform = self.view.upgradeNode.focusHintTransform,
             isSideTips = true,
+            onBeforeJump = function()
+                if DeviceInfo.usingController then
+                    self.view.upgradeNode.upgradeListSelectableNaviGroup:ManuallyStopFocus()
+                end
+            end
         })
     end
 
@@ -526,10 +411,6 @@ CharUpgradeCtrl._RefreshUpgradeItemCell = HL.Method(HL.Table, HL.String) << func
     UIUtils.PlayAnimationAndToggleActive(cell.selectedNode, costCount > 0)
 end
 
-
-
-
-
 CharUpgradeCtrl._ShowItemTips = HL.Method(HL.Any, HL.String) << function(self, cell, itemId)
     Notify(MessageConst.SHOW_ITEM_TIPS, {
         transform = cell.itemBigBlack.transform,
@@ -543,9 +424,6 @@ CharUpgradeCtrl._ShowItemTips = HL.Method(HL.Any, HL.String) << function(self, c
         end
     })
 end
-
-
-
 
 CharUpgradeCtrl._AutoFillUpgradeItem = HL.Method(HL.Opt(HL.Number)).Return(HL.Table) << function(self, targetLevel)
     local charInstId = self.m_charInfo.instId
@@ -590,9 +468,6 @@ end
 
 
 
-
-
-
 CharUpgradeCtrl._GenerateExpCardInfoList = HL.Method(HL.Number).Return(HL.Table) << function(self, charInstId)
     local expItemDataMap = Tables.expItemDataMap
     local expCardInfoList = {}
@@ -614,11 +489,6 @@ CharUpgradeCtrl._GenerateExpCardInfoList = HL.Method(HL.Number).Return(HL.Table)
     return expCardInfoList
 end
 
-
-
-
-
-
 CharUpgradeCtrl._TryFillUpgradeItem = HL.Method(HL.Number, HL.Number, HL.Number).Return(HL.Number, HL.Number, HL.Number) << function(self, expGain, inventoryCount, expRequire)
     local wishCount = math.ceil(expRequire / expGain)
     local costCount = math.min(wishCount, inventoryCount)
@@ -629,9 +499,6 @@ CharUpgradeCtrl._TryFillUpgradeItem = HL.Method(HL.Number, HL.Number, HL.Number)
 
     return costCount, expLeft, expOverflow
 end
-
-
-
 
 CharUpgradeCtrl._RefreshBreakNode = HL.Method(HL.Number) << function(self, charInstId)
     local charInstInfo = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
@@ -670,9 +537,6 @@ CharUpgradeCtrl._RefreshBreakNode = HL.Method(HL.Number) << function(self, charI
 
 end
 
-
-
-
 CharUpgradeCtrl._InitUpgradeCache = HL.Method(HL.Table) << function(self, charInfo)
     local charInstId = charInfo.instId
     local curExp, levelUpExp, curLevel, maxLevel, expCards = CharInfoUtils.getCharExpInfo(charInstId)
@@ -700,8 +564,6 @@ CharUpgradeCtrl._InitUpgradeCache = HL.Method(HL.Table) << function(self, charIn
     self.m_level2RequireExpDict = level2RequireExpDict
     self.m_expCardInfoList = self:_GenerateExpCardInfoList(charInstId)
 end
-
-
 
 CharUpgradeCtrl._InitActionEvent = HL.Method() << function(self)
     self.m_upgradeItemCellCache = UIUtils.genCellCache(self.view.upgradeNode.upgradeItemCell)
@@ -777,11 +639,9 @@ CharUpgradeCtrl._InitActionEvent = HL.Method() << function(self)
         self:_RefreshUpgradeNode(self.m_charInfo)
     end)
     self.view.upgradeNode.upgradeTips.tipsBtn.onClick:AddListener(function()
-        UIManager:AutoOpen(PanelId.WorldLevelTipsPopup, { isTipsMode = true })
+        PhaseManager:OpenPhase(PhaseId.WorldLevelPopup, { isTipsMode = true, isFromCharUpgrade = true })
     end)
 end
-
-
 
 CharUpgradeCtrl._CheckGoldEnough = HL.Method().Return(HL.Boolean) << function(self)
     local needGold = self:_GetCostGoldNum()
@@ -789,8 +649,6 @@ CharUpgradeCtrl._CheckGoldEnough = HL.Method().Return(HL.Boolean) << function(se
 
     return curGold >= needGold
 end
-
-
 
 CharUpgradeCtrl._GetCostGoldNum = HL.Method().Return(HL.Number) << function(self)
     local oldExp, _, oldLv, stageLevel = CharInfoUtils.getCharExpInfo(self.m_charInfo.instId)
@@ -835,8 +693,6 @@ CharUpgradeCtrl._GetCostGoldNum = HL.Method().Return(HL.Number) << function(self
     return totalCostGold
 end
 
-
-
 CharUpgradeCtrl._CheckHasUpgradeItem = HL.Method().Return(HL.Boolean) << function(self)
     if not self.m_upgradeItemCostDict then
         return false
@@ -853,8 +709,6 @@ CharUpgradeCtrl._CheckHasUpgradeItem = HL.Method().Return(HL.Boolean) << functio
     return hasItem
 end
 
-
-
 CharUpgradeCtrl._CanAddItem = HL.Method().Return(HL.Boolean) << function(self)
     for _, info in ipairs(self.m_expCardInfoList) do
         local costCount = self.m_upgradeItemCostDict[info.itemId] or 0
@@ -867,16 +721,12 @@ end
 
 
 
-
-
 CharUpgradeCtrl._UpdateAddAndSubBtnState = HL.Method() << function(self)
     self.view.upgradeNode.subBtnStateController:SetState(
         (self.m_toLevel > self.m_fromLevel and self.m_fromLevel < self.m_worldLimitLevel) and "normal" or "gray")
     self.view.upgradeNode.addBtnStateController:SetState(
         (self.m_toLevel < self.m_stageLevel and self:_CanAddItem() and self.m_toLevel < self.m_worldLimitLevel) and "normal" or "gray")
 end
-
-
 
 
 

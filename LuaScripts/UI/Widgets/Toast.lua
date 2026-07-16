@@ -1,51 +1,24 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 Toast = HL.Class('Toast', UIWidgetBase)
-
 
 Toast.m_isInMainHud = HL.Field(HL.Boolean) << false
 
-
 Toast.m_isToastShowReady = HL.Field(HL.Boolean) << false
-
 
 Toast.m_isToastShow = HL.Field(HL.Boolean) << false
 
-
 Toast.m_toastTimerId = HL.Field(HL.Number) << -1
 
-
 Toast.m_args = HL.Field(HL.Table)
-
-
 
 Toast._OnDisable = HL.Override() << function(self)
     self:_HideToast()
 end
 
-
-
 Toast._OnDestroy = HL.Override() << function(self)
     self:_HideToast()
 end
-
-
 
 
 Toast._OnFirstTimeInit = HL.Override() << function(self)
@@ -58,9 +31,6 @@ Toast._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
 Toast.InitToast = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     self:_FirstTimeInit()
 
@@ -70,8 +40,6 @@ Toast.InitToast = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     self.view.rectTransform.gameObject:SetActive(false)
 end
 
-
-
 Toast.OnEnterMainHud = HL.Method() << function(self)
     self.m_isInMainHud = true
 
@@ -80,13 +48,9 @@ Toast.OnEnterMainHud = HL.Method() << function(self)
     end
 end
 
-
-
 Toast.OnLeaveMainHud = HL.Method() << function(self)
     self.m_isInMainHud = false
 end
-
-
 
 Toast.ShowToast = HL.Method() << function(self)
     if self.view.config.IS_MAIN_HUD_TOAST and not self.m_isInMainHud then
@@ -121,8 +85,6 @@ Toast.ShowToast = HL.Method() << function(self)
     end
 end
 
-
-
 Toast.HideToast = HL.Method() << function(self)
     local finishFunc
     if self.m_args then
@@ -144,13 +106,9 @@ Toast.HideToast = HL.Method() << function(self)
     end
 end
 
-
-
 Toast.IsToastShow = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_isToastShow
 end
-
-
 
 Toast._HideToast = HL.Method() << function(self)
     if not self.m_isToastShow then

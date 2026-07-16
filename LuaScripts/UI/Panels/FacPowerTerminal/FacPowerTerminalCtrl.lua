@@ -1,13 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacPowerTerminal
-
-
-
-
-
-
 FacPowerTerminalCtrl = HL.Class('FacPowerTerminalCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -19,11 +12,7 @@ FacPowerTerminalCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacPowerTerminalCtrl.m_powerInfo = HL.Field(CS.Proto.SCD_FACTORY_SYNC_BLACKBOARD_POWER)
-
-
-
 
 
 FacPowerTerminalCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -44,9 +33,6 @@ FacPowerTerminalCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
-
 FacPowerTerminalCtrl._RefreshPowerTerminal = HL.Method(HL.String) << function(self, instKey)
     local success, powerTerminalCfg = Tables.factorySpecialPowerPoleTable:TryGetValue(instKey)
     if not success then
@@ -57,8 +43,6 @@ FacPowerTerminalCtrl._RefreshPowerTerminal = HL.Method(HL.String) << function(se
     self.view.terminalDescText.text = powerTerminalCfg.buildingDesc
     self.view.buildingCommon.view.machineName.text = powerTerminalCfg.buildingName
 end
-
-
 
 FacPowerTerminalCtrl._RefreshPowerInfo = HL.Method() << function(self)
     local powerInfo = FactoryUtils.getCurRegionPowerInfo()

@@ -1,45 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharFormationList = HL.Class('CharFormationList', UIWidgetBase)
 
 local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
@@ -51,56 +11,39 @@ local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
 
 
 
-
 CharFormationList.info = HL.Field(HL.Table)
-
 
 
 CharFormationList.m_selectNum = HL.Field(HL.Number) << -1
 
 
-
 CharFormationList.m_mode = HL.Field(HL.Number) << -1
-
 
 
 CharFormationList.m_charNum = HL.Field(HL.Number) << 0
 
-
 CharFormationList.m_originSingleSelect = HL.Field(HL.Number) << 0
-
 
 CharFormationList.curSingleSelect = HL.Field(HL.Number) << 0
 
 
-
 CharFormationList.cell2Select = HL.Field(HL.Table)
-
 
 CharFormationList.m_select2Cell = HL.Field(HL.Table)
 
-
 CharFormationList.m_charItems = HL.Field(HL.Table)
-
 
 CharFormationList.m_onCharListChanged = HL.Field(HL.Function)
 
-
 CharFormationList.GetCell = HL.Field(HL.Function)
-
 
 CharFormationList.m_clickFunc = HL.Field(HL.Function)
 
-
 CharFormationList.m_updateFunc = HL.Field(HL.Function)
-
 
 CharFormationList.m_ignoreDead = HL.Field(HL.Boolean) << false
 
-
 CharFormationList.m_naviTargetInitialized = HL.Field(HL.Boolean) << false
-
-
 
 
 
@@ -134,7 +77,7 @@ CharFormationList._OnFirstTimeInit = HL.Override() << function(self)
             self.view.charScrollList:ScrollToIndex(targetIndex, true)
             local cell = self:GetCellByIndex(targetIndex)
             if cell then
-                UIUtils.setAsNaviTarget(cell.view.button)
+                self:SetNaviTarget(cell.view.button)
             end
         end
     end)
@@ -146,11 +89,6 @@ CharFormationList._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
-
-
 CharFormationList.InitCharFormationList = HL.Method(HL.Table, HL.Opt(HL.Function, HL.Boolean)) << function(self, info, onCharListChanged , ignoreDead)
     self:_FirstTimeInit()
 
@@ -158,9 +96,6 @@ CharFormationList.InitCharFormationList = HL.Method(HL.Table, HL.Opt(HL.Function
     self:_InitData(info)
     self.m_onCharListChanged = onCharListChanged
 end
-
-
-
 
 CharFormationList._InitData = HL.Method(HL.Table) << function(self, info)
     self.info = info or {}
@@ -182,9 +117,6 @@ CharFormationList._InitData = HL.Method(HL.Table) << function(self, info)
     self.m_naviTargetInitialized = false
 end
 
-
-
-
 CharFormationList._GetCharIndex = HL.Method(HL.Any).Return(HL.Number) << function(self, charInstId)
     for index = 1, #self.m_charItems do
         local charItem = self.m_charItems[index]
@@ -194,10 +126,6 @@ CharFormationList._GetCharIndex = HL.Method(HL.Any).Return(HL.Number) << functio
     end
     return -1;
 end
-
-
-
-
 
 CharFormationList._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(self, optData, isIncremental)
     if self.m_charItems then
@@ -237,25 +165,18 @@ CharFormationList._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(s
             end
         end
         if DeviceInfo.usingController then
-            UIUtils.setAsNaviTarget(nil)
+            self:ClearNaviTarget()
         end
 
         self:_RefreshCharList(scrollToIndex)
     end
 end
 
-
-
-
-
 CharFormationList._SortData = HL.Method(HL.Table, HL.Boolean) << function(self, keys, isIncremental)
     if self.m_charItems then
         table.sort(self.m_charItems, Utils.genSortFunction(keys, isIncremental))
     end
 end
-
-
-
 
 CharFormationList._RefreshCharList = HL.Method(HL.Opt(HL.Number)) << function(self, scrollToIndex)
     if not scrollToIndex then
@@ -268,9 +189,6 @@ CharFormationList._RefreshCharList = HL.Method(HL.Opt(HL.Number)) << function(se
     end
 end
 
-
-
-
 CharFormationList._ShowMultiChars = HL.Method(HL.Opt(HL.Boolean)) << function(self, playAnim)
     for cellIndex = 1, self.view.charScrollList.count do
         local cell = self:GetCellByIndex(cellIndex)
@@ -280,9 +198,6 @@ CharFormationList._ShowMultiChars = HL.Method(HL.Opt(HL.Boolean)) << function(se
     end
 end
 
-
-
-
 CharFormationList._ShowSingleChars = HL.Method(HL.Opt(HL.Boolean)) << function(self, playAnim)
     for cellIndex = 1, self.view.charScrollList.count do
         local cell = self:GetCellByIndex(cellIndex)
@@ -291,9 +206,6 @@ CharFormationList._ShowSingleChars = HL.Method(HL.Opt(HL.Boolean)) << function(s
         end
     end
 end
-
-
-
 
 CharFormationList._UpdateMultiSelect = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Table, HL.Table) << function(self, playAnim)
     local result = {}
@@ -329,8 +241,6 @@ CharFormationList._UpdateMultiSelect = HL.Method(HL.Opt(HL.Boolean)).Return(HL.T
     return charItemList, charInfoList
 end
 
-
-
 CharFormationList._GetNextIndex = HL.Method().Return(HL.Number) << function(self)
     for index = 1, self.m_selectNum do
         if not Utils.isInclude(self.cell2Select, index) then
@@ -339,8 +249,6 @@ CharFormationList._GetNextIndex = HL.Method().Return(HL.Number) << function(self
     end
     return -1
 end
-
-
 
 CharFormationList._RefreshMode = HL.Method() << function(self)
     local singleSelected = self.m_mode == UIConst.CharListMode.Single
@@ -355,24 +263,16 @@ CharFormationList._RefreshMode = HL.Method() << function(self)
         local cell = self:GetCellByIndex(self.curSingleSelect)
         if cell then
             cell:SetSingleSelect(true)
-            UIUtils.setAsNaviTarget(cell.view.button)
+            self:SetNaviTarget(cell.view.button)
         end
     end
 end
-
-
-
-
 
 
 CharFormationList.SetUpdateCellFunc = HL.Method(HL.Opt(HL.Function, HL.Function)) << function(self, updateFunc, clickFunc)
     self.m_updateFunc = updateFunc
     self.m_clickFunc = clickFunc
 end
-
-
-
-
 
 CharFormationList.OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function)) << function(self, object, index)
     local cell = self:GetCellByIndex(index)
@@ -417,21 +317,27 @@ CharFormationList.OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Fun
         local isUnavailable = false
         
         if self.info.lockedTeamData then
+            local tempalteMatch = false
             for _, char in pairs(self.info.lockedTeamData.chars) do
                 if char.isLocked and not char.isReplaceable and
                     char.charId == item.templateId and char.charInstId ~= item.instId then
                     isUnavailable = true
                     break
                 end
+
+                if char.charId == item.templateId then
+                    tempalteMatch = true
+                end
+            end
+
+            if not tempalteMatch and self.info.lockedTeamData.lockedTeamMemberCount >= self.info.lockedTeamData.maxTeamMemberCount then
+                isUnavailable = true
             end
         end
 
         cell:SetUnavailable(isUnavailable)
     end
 end
-
-
-
 
 CharFormationList.GetCellByIndex = HL.Method(HL.Number).Return(HL.Forward("CharFormationHeadCell")) << function(self, cellIndex)
     local go = self.view.charScrollList:Get(CSIndex(cellIndex))
@@ -442,10 +348,6 @@ CharFormationList.GetCellByIndex = HL.Method(HL.Number).Return(HL.Forward("CharF
 
     return cell
 end
-
-
-
-
 
 CharFormationList.ShowSelectChars = HL.Method(HL.Table, HL.Opt(HL.Boolean)) << function(self, m_charItems, playAnim)
     
@@ -465,10 +367,6 @@ CharFormationList.ShowSelectChars = HL.Method(HL.Table, HL.Opt(HL.Boolean)) << f
     end
 end
 
-
-
-
-
 CharFormationList.SetMode = HL.Method(HL.Any, HL.Any) << function(self, mode, charInstId)
     self.m_naviTargetInitialized = false
     self.m_mode = mode
@@ -478,8 +376,6 @@ CharFormationList.SetMode = HL.Method(HL.Any, HL.Any) << function(self, mode, ch
     self.m_originSingleSelect = self.curSingleSelect
     self:_RefreshMode()
 end
-
-
 
 CharFormationList.GetEmpty = HL.Method().Return(HL.Boolean) << function(self)
     local empty
@@ -491,16 +387,10 @@ CharFormationList.GetEmpty = HL.Method().Return(HL.Boolean) << function(self)
     return empty
 end
 
-
-
-
 CharFormationList.UpdateCharItems = HL.Method(HL.Table) << function(self, items)
     self.m_charItems = lume.deepCopy(items)
     self.view.sortNode:SortCurData()
 end
-
-
-
 
 CharFormationList._GetCellSelectIndex = HL.Method(HL.Number).Return(HL.Number) << function(self, cellIndex)
     if self.cell2Select[cellIndex] ~= nil and self.cell2Select[cellIndex] > 0 then
@@ -509,9 +399,6 @@ CharFormationList._GetCellSelectIndex = HL.Method(HL.Number).Return(HL.Number) <
         return -1
     end
 end
-
-
-
 
 CharFormationList._RefreshSingleSelect = HL.Method(HL.Number) << function(self, cellIndex)
     if self.curSingleSelect > 0 then
@@ -525,10 +412,6 @@ CharFormationList._RefreshSingleSelect = HL.Method(HL.Number) << function(self, 
     cell:SetSingleSelect(true)
     self.curSingleSelect = cellIndex
 end
-
-
-
-
 
 CharFormationList.OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Boolean)) << function(self, cellIndex, playAnim)
     local cell = self:GetCellByIndex(cellIndex)
@@ -627,10 +510,6 @@ CharFormationList.OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Bool
     end
 end
 
-
-
-
-
 CharFormationList._UpdateSlotIndex = HL.Method(HL.Table, HL.Any) << function(self, charItem, selectedIndex)
     if selectedIndex then
         charItem.slotIndex = selectedIndex
@@ -640,8 +519,6 @@ CharFormationList._UpdateSlotIndex = HL.Method(HL.Table, HL.Any) << function(sel
         charItem.slotReverseIndex = -1
     end
 end
-
-
 
 
 

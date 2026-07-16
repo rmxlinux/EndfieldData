@@ -1,35 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WikiSearch
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiSearchCtrl = HL.Class('WikiSearchCtrl', uiCtrl.UICtrl)
 
 local STATE_NAME = {
@@ -45,25 +16,17 @@ local CONTENT_OUT_ANIM = "wiki_search_content_out"
 
 
 
-
 WikiSearchCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHECK_SENSITIVE_SUCCESS] = '_OnCheckSensitiveSuccess',
 }
 
-
 WikiSearchCtrl.m_isShowingResult = HL.Field(HL.Boolean) << false
-
 
 WikiSearchCtrl.m_arg = HL.Field(HL.Table)
 
-
 WikiSearchCtrl.m_pendingResumeState = HL.Field(HL.Any)
 
-
 WikiSearchCtrl.m_checkSensitiveKeyword = HL.Field(HL.Any)
-
-
-
 
 
 
@@ -121,8 +84,6 @@ WikiSearchCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_ApplyResumeState(arg and arg.resumeState or nil)
 end
 
-
-
 WikiSearchCtrl.OnShow = HL.Override() << function(self)
     self.view.selectableNaviGroup:NaviToThisGroup()
     local resumeState = self.m_pendingResumeState or (self.m_arg and self.m_arg.resumeState or nil)
@@ -149,13 +110,10 @@ WikiSearchCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 WikiSearchCtrl.OnHide = HL.Override() << function (self)
     AudioAdapter.PostEvent("Au_UI_Popup_Common_Large_Close")
+    Notify(MessageConst.QUICK_HIDE_FULL_SCREEN_SCENE_BLUR)
 end
-
-
 
 WikiSearchCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
@@ -166,9 +124,6 @@ WikiSearchCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << fun
     }
     return arg
 end
-
-
-
 
 WikiSearchCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
     if not resumeState or string.isEmpty(resumeState.keyword) then
@@ -182,10 +137,6 @@ WikiSearchCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, r
         self.m_pendingResumeState = lume.deepCopy(resumeState)
     end
 end
-
-
-
-
 
 WikiSearchCtrl._RestoreSearchResult = HL.Method(HL.String, HL.Opt(HL.String)) << function(self, keyword, selectedEntryId)
     self.m_phase.curSearchKeyword = keyword
@@ -201,9 +152,6 @@ WikiSearchCtrl._RestoreSearchResult = HL.Method(HL.String, HL.Opt(HL.String)) <<
     self:_RestoreSelectedItem(selectedEntryId)
 end
 
-
-
-
 WikiSearchCtrl._RestoreSelectedItem = HL.Method(HL.Opt(HL.String)) << function(self, selectedEntryId)
     if string.isEmpty(selectedEntryId) then
         return
@@ -215,7 +163,7 @@ WikiSearchCtrl._RestoreSelectedItem = HL.Method(HL.Opt(HL.String)) << function(s
                 local itemCell, entryShowData = groupCell:GetCellByEntryId(selectedEntryId)
                 if itemCell and entryShowData then
                     self:_SetItemSelected(itemCell, entryShowData)
-                    InputManagerInst.controllerNaviManager:SetTarget(itemCell.view.button)
+                    self:SetNaviTarget(itemCell.view.button)
                     return
                 end
             end
@@ -228,15 +176,13 @@ WikiSearchCtrl._RestoreSelectedItem = HL.Method(HL.Opt(HL.String)) << function(s
                 local itemCell, entryShowData = groupCell:GetCellByEntryId(selectedEntryId)
                 if itemCell and entryShowData then
                     self:_SetItemSelected(itemCell, entryShowData)
-                    InputManagerInst.controllerNaviManager:SetTarget(itemCell.view.btn)
+                    self:SetNaviTarget(itemCell.view.btn)
                     return
                 end
             end
         end
     end
 end
-
-
 
 
 
@@ -258,8 +204,6 @@ WikiSearchCtrl._OnSearchBtnClicked = HL.Method() << function(self)
     GameInstance.player.wikiSystem:CheckSensitive(keyword)
 end
 
-
-
 WikiSearchCtrl._OnCheckSensitiveSuccess = HL.Method() << function(self)
     if not self.m_checkSensitiveKeyword then
         return
@@ -268,9 +212,6 @@ WikiSearchCtrl._OnCheckSensitiveSuccess = HL.Method() << function(self)
     self.m_checkSensitiveKeyword = nil
     self:_Search(keyword)
 end
-
-
-
 
 WikiSearchCtrl._Search = HL.Method(HL.String) << function(self, keyword)
     self.m_phase.curSearchKeyword = keyword
@@ -286,11 +227,6 @@ WikiSearchCtrl._Search = HL.Method(HL.String) << function(self, keyword)
     self:_RefreshResult(resultItems, resultTutorials)
     AudioAdapter.PostEvent("Au_UI_Popup_Common_Large_Open")
 end
-
-
-
-
-
 
 WikiSearchCtrl._ClearSearch = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean)) << function(self, isClosed, showHistory, activeInput)
     if self.m_phase then
@@ -314,8 +250,6 @@ WikiSearchCtrl._ClearSearch = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL.Boolea
     end
 end
 
-
-
 WikiSearchCtrl._ShowHistory = HL.Method() << function(self)
     local function show()
         self.view.stateCtrl:SetState(STATE_NAME.SEARCH)
@@ -330,9 +264,6 @@ WikiSearchCtrl._ShowHistory = HL.Method() << function(self)
         show()
     end
 end
-
-
-
 
 
 
@@ -394,16 +325,9 @@ WikiSearchCtrl._GetSearchResult = HL.Method(HL.String).Return(HL.Table, HL.Table
     return resultItems, resultTutorials
 end
 
-
 WikiSearchCtrl.m_groupItemsCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WikiSearchCtrl.m_groupTutorialsCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
-
-
 
 WikiSearchCtrl._RefreshResult = HL.Method(HL.Table, HL.Table, HL.Opt(HL.String)) << function(self, resultItems, resultTutorials, selectedEntryId)
     self:_MarkWikiEntryRead()
@@ -438,12 +362,7 @@ WikiSearchCtrl._RefreshResult = HL.Method(HL.Table, HL.Table, HL.Opt(HL.String))
     end)
 end
 
-
 WikiSearchCtrl.m_selectedItem = HL.Field(HL.Userdata)
-
-
-
-
 
 WikiSearchCtrl._SetItemSelected = HL.Method(HL.Userdata, HL.Table) << function(self, itemCell, entryShowData)
     if self.m_selectedItem then
@@ -460,9 +379,6 @@ WikiSearchCtrl._SetItemSelected = HL.Method(HL.Userdata, HL.Table) << function(s
     self:_RefreshDetails(entryShowData)
     self:_ScrollToSelectedItem(itemCell)
 end
-
-
-
 
 WikiSearchCtrl._ScrollToSelectedItem = HL.Method(HL.Userdata) << function(self, itemCell)
     if not itemCell then
@@ -482,11 +398,7 @@ WikiSearchCtrl._ScrollToSelectedItem = HL.Method(HL.Userdata) << function(self, 
     self.view.scrollView:AutoScrollToRectTransform(targetTransform, true)
 end
 
-
 WikiSearchCtrl.m_curWikiEntryShowData = HL.Field(HL.Table)
-
-
-
 
 WikiSearchCtrl._RefreshDetails = HL.Method(HL.Table) << function(self, wikiEntryShowData)
     self.m_curWikiEntryShowData = wikiEntryShowData
@@ -500,10 +412,7 @@ end
 
 
 
-
 WikiSearchCtrl.m_historyCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 WikiSearchCtrl._RefreshHistory = HL.Method() << function(self)
     local historyKeywords = WikiUtils.getHistorySearchKeywords()
@@ -531,10 +440,7 @@ end
 
 
 
-
 WikiSearchCtrl.m_readWikiEntries = HL.Field(HL.Table)
-
-
 
 WikiSearchCtrl._MarkWikiEntryRead = HL.Method() << function(self)
     if self.m_readWikiEntries then
@@ -552,8 +458,6 @@ end
 
 
 
-
-
 WikiSearchCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     self.view.searchNodeNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
@@ -563,7 +467,7 @@ WikiSearchCtrl._InitController = HL.Method() << function(self)
         else
             self.view.inputField:DeactivateInputField()
             if self.view.historyNode.gameObject.activeSelf and self.m_historyCache and self.m_historyCache:GetCount() > 0 then
-                UIUtils.setAsNaviTarget(self.m_historyCache:Get(1).btn)
+                self:SetNaviTarget(self.m_historyCache:Get(1).btn)
             end
             InputManagerInst:ChangeParent(true, self.view.searchBtnInputGroup.groupId, self.view.inputGroup.groupId)
         end

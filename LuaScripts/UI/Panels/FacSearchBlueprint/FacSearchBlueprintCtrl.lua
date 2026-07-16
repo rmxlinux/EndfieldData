@@ -2,80 +2,31 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacSearchBlueprint
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacSearchBlueprintCtrl = HL.Class('FacSearchBlueprintCtrl', uiCtrl.UICtrl)
-
 
 
 
 FacSearchBlueprintCtrl.m_typeCells = HL.Field(HL.Forward('UIListCache'))
 
-
 FacSearchBlueprintCtrl.m_typeInfos = HL.Field(HL.Table) 
-
 
 FacSearchBlueprintCtrl.m_searchResults = HL.Field(HL.Table) 
 
-
 FacSearchBlueprintCtrl.m_selectedTypeIndex = HL.Field(HL.Number) << 0
-
 
 FacSearchBlueprintCtrl.m_selectedIndex = HL.Field(HL.Number) << 0
 
-
 FacSearchBlueprintCtrl.m_bpAbnormalIconHelper = HL.Field(HL.Table)
-
 
 FacSearchBlueprintCtrl.m_bpCtrl = HL.Field(HL.Forward('FacBlueprintCtrl'))
 
-
 FacSearchBlueprintCtrl.m_blueprintID = HL.Field(HL.Any) << 0
-
 
 FacSearchBlueprintCtrl.m_gettingShareCode = HL.Field(HL.Boolean) << false
 
-
 FacSearchBlueprintCtrl.m_friendSharing = HL.Field(HL.Boolean) << false
 
-
 FacSearchBlueprintCtrl.m_friendRoleId = HL.Field(HL.Any)
-
 
 
 
@@ -95,9 +46,6 @@ local sourceTypeTable = {
     Sys = 2,
     Gift = 3,
 }
-
-
-
 
 
 FacSearchBlueprintCtrl.OnCreate = HL.Override(HL.Any) << function(self, searchInfos)
@@ -169,10 +117,7 @@ FacSearchBlueprintCtrl.OnCreate = HL.Override(HL.Any) << function(self, searchIn
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
 FacSearchBlueprintCtrl.m_curKeyWord = HL.Field(HL.String) << ''
-
-
 
 FacSearchBlueprintCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
     local searchInfos = {
@@ -194,9 +139,6 @@ FacSearchBlueprintCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << func
     end
     return searchInfos
 end
-
-
-
 
 FacSearchBlueprintCtrl._TryRecoverSelectedCell = HL.Method(HL.Opt(HL.Any)).Return(HL.Boolean) << function(self, searchInfos)
     if not searchInfos or not self.m_searchResults or #self.m_searchResults == 0 then
@@ -222,9 +164,6 @@ FacSearchBlueprintCtrl._TryRecoverSelectedCell = HL.Method(HL.Opt(HL.Any)).Retur
     return false
 end
 
-
-
-
 FacSearchBlueprintCtrl._TrySearch = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAni)
     self.m_curKeyWord = string.trim(self.view.inputField.text)
     if string.isEmpty(self.m_curKeyWord) then
@@ -234,21 +173,14 @@ FacSearchBlueprintCtrl._TrySearch = HL.Method(HL.Opt(HL.Boolean)) << function(se
     GameInstance.player.wikiSystem:CheckSensitive(self.m_curKeyWord)
 end
 
-
-
 FacSearchBlueprintCtrl._OnCheckSensitiveSuccess = HL.Method() << function(self)
     self:_RealSearch()
 end
-
-
-
 
 FacSearchBlueprintCtrl._RealSearch = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAni)
     self:_UpdateSearchResultData()
     self:_UpdateSearchResultView(skipAni)
 end
-
-
 
 FacSearchBlueprintCtrl._UpdateSearchResultData = HL.Method() << function(self)
     local keyword = self.m_curKeyWord
@@ -276,9 +208,6 @@ FacSearchBlueprintCtrl._UpdateSearchResultData = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 FacSearchBlueprintCtrl._UpdateSearchResultView = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAni)
     TimerManager:ClearAllTimer(self)
@@ -309,7 +238,7 @@ FacSearchBlueprintCtrl._UpdateSearchResultView = HL.Method(HL.Opt(HL.Boolean)) <
         local count = 0
         typeCell.m_cells:Refresh(#typeInfo.validInsts, function(cell, index)
             if typeIndex == 1 and index == 1 then
-                UIUtils.setAsNaviTarget(cell.view.button)
+                self:SetNaviTarget(cell.view.button)
             end
             self:_OnUpdateCell(cell, typeIndex, index)
             cell.gameObject:SetActive(false)
@@ -335,11 +264,6 @@ FacSearchBlueprintCtrl._UpdateSearchResultView = HL.Method(HL.Opt(HL.Boolean)) <
     self:_OnClickCell(1, 1)
 end
 
-
-
-
-
-
 FacSearchBlueprintCtrl._OnUpdateCell = HL.Method(HL.Forward('BlueprintCell'), HL.Number, HL.Number) << function(self, cell, typeIndex, index)
     local inst = self.m_searchResults[typeIndex].validInsts[index]
     cell:InitBlueprintCell({
@@ -351,10 +275,6 @@ FacSearchBlueprintCtrl._OnUpdateCell = HL.Method(HL.Forward('BlueprintCell'), HL
     })
     cell.view.selected.gameObject:SetActive(self.m_selectedTypeIndex == typeIndex and self.m_selectedIndex == index)
 end
-
-
-
-
 
 FacSearchBlueprintCtrl._OnClickCell = HL.Method(HL.Number, HL.Number) << function(self, typeIndex, index)
     if #self.m_searchResults < typeIndex or #(self.m_searchResults[typeIndex].validInsts) < index then
@@ -377,8 +297,6 @@ FacSearchBlueprintCtrl._OnClickCell = HL.Method(HL.Number, HL.Number) << functio
     self.view.infoNode:PlayInAnimation()
 end
 
-
-
 FacSearchBlueprintCtrl._UpdateInfoNode = HL.Method() << function(self)
     local inst = self.m_searchResults[self.m_selectedTypeIndex].validInsts[self.m_selectedIndex]
     if not inst then
@@ -393,18 +311,14 @@ FacSearchBlueprintCtrl._UpdateInfoNode = HL.Method() << function(self)
     local canEdit = inst.csInst.sourceType == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintSourceType.Mine
     content.view.rightActions.editBtn.gameObject:SetActive(canEdit)
     content.view.rightActions.previewBtn.gameObject:SetActive(not canEdit)
-    self.view.bottomBtns.useBtn.gameObject:SetActive(not content.haveLackTechs)
-    self.view.bottomBtns.lackNode.gameObject:SetActive(content.haveLackTechs)
+    self.view.bottomBtns.useBtn.gameObject:SetActive(content.canUseBP)
+    self.view.bottomBtns.lackNode.gameObject:SetActive(content.haveLackTechs and not content.canUseBP)
 end
-
-
 
 FacSearchBlueprintCtrl._OnClickCraftBtn = HL.Method() << function(self)
     local deviceList = self.view.blueprintContent:GetAllDeviceIdAndCount()
     Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { bluePrintData = deviceList })
 end
-
-
 
 FacSearchBlueprintCtrl._OnClickUseBtn = HL.Method() << function(self)
     if not Utils.isInFacMainRegion() then
@@ -441,8 +355,6 @@ FacSearchBlueprintCtrl._OnClickUseBtn = HL.Method() << function(self)
     UIManager:RecoverScreen(clearScreenKey)
 end
 
-
-
 FacSearchBlueprintCtrl._ExitOtherPhase = HL.Method() << function(self)
     
     local exitList = {}
@@ -457,26 +369,17 @@ FacSearchBlueprintCtrl._ExitOtherPhase = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacSearchBlueprintCtrl.FacOnModifyBlueprint = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     self.view.blueprintContent:Refresh()
     local cell = self.m_typeCells:Get(self.m_selectedTypeIndex).m_cells:Get(self.m_selectedIndex)
     self:_OnUpdateCell(cell, self.m_selectedTypeIndex, self.m_selectedIndex)
 end
 
-
-
 FacSearchBlueprintCtrl._SendToFriend = HL.Method() << function(self)
     local inst = self.m_searchResults[self.m_selectedTypeIndex].validInsts[self.m_selectedIndex]
     local id = inst.id
     self:_GetShareCode(inst, id)
 end
-
-
-
-
 
 FacSearchBlueprintCtrl._GetShareCode = HL.Method(HL.Any,HL.Any) << function(self, inst, id)
     self.m_gettingShareCode = true
@@ -491,9 +394,6 @@ FacSearchBlueprintCtrl._GetShareCode = HL.Method(HL.Any,HL.Any) << function(self
         logger.error("Invalid blueprint source type: "..tostring(type))
     end
 end
-
-
-
 
 FacSearchBlueprintCtrl.RefreshShareState = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     local cell, index, reviewStatus
@@ -535,9 +435,6 @@ FacSearchBlueprintCtrl.RefreshShareState = HL.Method(HL.Opt(HL.Any)) << function
     end
 end
 
-
-
-
 FacSearchBlueprintCtrl.FacOnShareBlueprint = HL.Method(HL.Table) << function(self, args)
     if self.m_gettingShareCode then
         self.m_gettingShareCode = false
@@ -548,8 +445,6 @@ FacSearchBlueprintCtrl.FacOnShareBlueprint = HL.Method(HL.Table) << function(sel
         end)
     end
 end
-
-
 
 FacSearchBlueprintCtrl.OnShow = HL.Override() << function(self)
     self.view.scrollView.verticalNormalizedPosition = self.m_normalizedPosition
@@ -563,7 +458,7 @@ FacSearchBlueprintCtrl.OnShow = HL.Override() << function(self)
                 if typeIndex == self.m_selectedTypeIndex and index == self.m_selectedIndex then
                     self:_StartCoroutine(function()
                         coroutine.step()
-                        UIUtils.setAsNaviTarget(cell.view.button)
+                        self:SetNaviTarget(cell.view.button)
                     end)
                 end
             end)
@@ -571,16 +466,11 @@ FacSearchBlueprintCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
 FacSearchBlueprintCtrl.m_normalizedPosition = HL.Field(HL.Number) << 0
-
-
 
 FacSearchBlueprintCtrl.OnHide = HL.Override() << function(self)
     self.m_normalizedPosition = self.view.scrollView.verticalNormalizedPosition
 end
-
-
 
 FacSearchBlueprintCtrl._ShowPreview = HL.Method() << function(self)
     if DeviceInfo.usingController then

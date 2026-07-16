@@ -1,59 +1,8 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacCacheRepository = HL.Class('FacCacheRepository', UIWidgetBase)
 
-
 FacCacheRepository.m_onRepoInitializeFinish = HL.Field(HL.Function)
-
-
 
 
 FacCacheRepository._OnFirstTimeInit = HL.Override() << function(self)
@@ -69,18 +18,13 @@ FacCacheRepository._OnFirstTimeInit = HL.Override() << function(self)
     self:_InitRepositoryDrop()
 end
 
-
-
 FacCacheRepository._OnDestroy = HL.Override() << function(self)
     self:_ClearRepositoryCache()
 end
 
-
-
-
 FacCacheRepository.InitFacCacheRepository = HL.Method(HL.Table) << function(self, repoData)
     
-    self.m_isFluidCache = repoData.isFluidCache or false
+    self.m_itemCacheType = repoData.cacheType or FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal
     self:_FirstTimeInit()
 
     if repoData == nil then
@@ -107,6 +51,7 @@ FacCacheRepository.InitFacCacheRepository = HL.Method(HL.Table) << function(self
     self.m_cacheChangedCallback = repoData.cacheChangedCallback or function()end
     self.m_onRepoInitializeFinish= repoData.onRepoInitializeFinish or function()end
     self.m_producerInfo = repoData.producerInfo
+    self.m_disableDump = repoData.disableDump or false
     self.m_itemInfoList = {}
 
     self:_InitRepositoryCache()
@@ -118,9 +63,6 @@ FacCacheRepository.InitFacCacheRepository = HL.Method(HL.Table) << function(self
     end
 end
 
-
-
-
 FacCacheRepository._RefreshRepository = HL.Method(HL.Boolean) << function(self, formulaChanged)
     self:_RefreshRepositoryItemInfoList(formulaChanged)
     self:_RefreshRepositorySlotList()
@@ -128,40 +70,29 @@ end
 
 
 
-
 FacCacheRepository.m_isInCache = HL.Field(HL.Boolean) << false
-
 
 FacCacheRepository.m_outRepoCanDrop = HL.Field(HL.Boolean) << false
 
-
-FacCacheRepository.m_isFluidCache = HL.Field(HL.Boolean) << false
-
+FacCacheRepository.m_itemCacheType = HL.Field(HL.Number) << 0
 
 FacCacheRepository.m_cache = HL.Field(CS.Beyond.Gameplay.RemoteFactory.FBUtil.Cache)
 
-
 FacCacheRepository.m_hasEmptySlot = HL.Field(HL.Boolean) << false
-
 
 FacCacheRepository.m_cacheIndex = HL.Field(HL.Number) << -1
 
-
 FacCacheRepository.m_cacheInitialized = HL.Field(HL.Boolean) << false
-
 
 FacCacheRepository.m_forceUpdateOutRepoWithFormula = HL.Field(HL.Boolean) << false
 
+FacCacheRepository.m_disableDump = HL.Field(HL.Boolean) << false
 
 FacCacheRepository.m_onCacheChanged = HL.Field(HL.Function)
 
-
 FacCacheRepository.m_cacheChangedCallback = HL.Field(HL.Function)
 
-
 FacCacheRepository.m_producerInfo = HL.Field(HL.Userdata)  
-
-
 
 FacCacheRepository._InitRepositoryCache = HL.Method() << function(self)
     if self.m_cacheInitialized then
@@ -181,8 +112,6 @@ FacCacheRepository._InitRepositoryCache = HL.Method() << function(self)
     self.m_cacheInitialized = true
 end
 
-
-
 FacCacheRepository._ClearRepositoryCache = HL.Method() << function(self)
     if not self.m_cacheInitialized then
         return
@@ -196,10 +125,6 @@ FacCacheRepository._ClearRepositoryCache = HL.Method() << function(self)
 
     self.m_cacheInitialized = false
 end
-
-
-
-
 
 FacCacheRepository._OnCacheChanged = HL.Method(HL.Userdata, HL.Boolean) << function(self, changedItems, hasNewOrRemove)
     if hasNewOrRemove then
@@ -227,19 +152,13 @@ end
 
 
 
-
 FacCacheRepository.m_currFormulaId = HL.Field(HL.String) << ""
-
 
 FacCacheRepository.m_lastFormulaId = HL.Field(HL.String) << ""
 
-
 FacCacheRepository.m_lockFormulaId = HL.Field(HL.String) << ""
 
-
 FacCacheRepository.m_fakeFormulaDataList = HL.Field(HL.Table)
-
-
 
 FacCacheRepository._GetCacheCraftItemDataList = HL.Method().Return(HL.Table) << function(self)
     local formulaId = string.isEmpty(self.m_currFormulaId) and self.m_lastFormulaId or self.m_currFormulaId
@@ -265,23 +184,23 @@ FacCacheRepository._GetCacheCraftItemDataList = HL.Method().Return(HL.Table) << 
     else
         local craftData = Tables.factoryMachineCraftTable:GetValue(formulaId)
         local craftItemList = self.m_isInCache and craftData.ingredients or craftData.outcomes
-        local itemBundleGroup = craftItemList[CSIndex(self.m_cacheIndex)]
-        for index = 0, itemBundleGroup.group.Count - 1 do
-            local itemBundle = itemBundleGroup.group[index]
-            if itemBundle ~= nil then
-                table.insert(result, {
-                    id = itemBundle.id,
-                    count = itemBundle.count,
-                })
+        
+        if self.m_cacheIndex <= craftItemList.Count then
+            local itemBundleGroup = craftItemList[CSIndex(self.m_cacheIndex)]
+            for index = 0, itemBundleGroup.group.Count - 1 do
+                local itemBundle = itemBundleGroup.group[index]
+                if itemBundle ~= nil then
+                    table.insert(result, {
+                        id = itemBundle.id,
+                        count = itemBundle.count,
+                    })
+                end
             end
         end
     end
 
     return result
 end
-
-
-
 
 FacCacheRepository._InsertEmptyItemFromCache = HL.Method(HL.Table) << function(self, itemInfoList)
     local craftItemDataList = self:_GetCacheCraftItemDataList()
@@ -291,8 +210,8 @@ FacCacheRepository._InsertEmptyItemFromCache = HL.Method(HL.Table) << function(s
 
     for _, itemData in pairs(craftItemDataList) do
         local id = itemData.id
-        local isFluid = FactoryUtils.isFactoryItemFluid(id)
-        if self.m_cache:GetCount(id) == 0 and #itemInfoList < self.m_slotCount and isFluid == self.m_isFluidCache then
+        local cacheType = FactoryUtils.getFactoryItemCacheState(id)
+        if self.m_cache:GetCount(id) == 0 and #itemInfoList < self.m_slotCount and FactoryUtils.isCacheTypeAcceptItemType(self.m_itemCacheType, cacheType) then
             table.insert(itemInfoList, {
                 id = id,
                 count = 0,
@@ -307,18 +226,11 @@ end
 
 
 
-
 FacCacheRepository.m_itemInfoList = HL.Field(HL.Table)
-
 
 FacCacheRepository.m_slotCount = HL.Field(HL.Number) << 0
 
-
 FacCacheRepository.m_slotList = HL.Field(HL.Forward('UIListCache'))
-
-
-
-
 
 FacCacheRepository._CreateRepositoryItemInfo = HL.Method(HL.String, HL.Number).Return(HL.Table) << function(self, id, count)
     local itemSuccess, data = Tables.itemTable:TryGetValue(id)
@@ -339,8 +251,6 @@ FacCacheRepository._CreateRepositoryItemInfo = HL.Method(HL.String, HL.Number).R
     return info
 end
 
-
-
 FacCacheRepository._GetRepositoryItemSortMap = HL.Method().Return(HL.Table) << function(self)
     local craftItemDataList = self:_GetCacheCraftItemDataList()
     if craftItemDataList == nil then
@@ -360,9 +270,6 @@ FacCacheRepository._GetRepositoryItemSortMap = HL.Method().Return(HL.Table) << f
 
     return sortIdMap
 end
-
-
-
 
 FacCacheRepository._RefreshRepositoryItemInfoList = HL.Method(HL.Boolean) << function(self, formulaChanged)
     if not self.m_cache then
@@ -447,8 +354,6 @@ FacCacheRepository._RefreshRepositoryItemInfoList = HL.Method(HL.Boolean) << fun
     end
 end
 
-
-
 FacCacheRepository._RefreshRepositorySlotList = HL.Method() << function(self)
     if self.m_itemInfoList == nil or #self.m_itemInfoList <= 0 then
         return
@@ -460,10 +365,6 @@ FacCacheRepository._RefreshRepositorySlotList = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 FacCacheRepository._OnRefreshRepositorySlotCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     if cell == nil then
         return
@@ -472,17 +373,14 @@ FacCacheRepository._OnRefreshRepositorySlotCell = HL.Method(HL.Any, HL.Number) <
     cell:InitFacCacheSlot({
         slotIndex = index,
         itemInfo = self.m_itemInfoList[index],
-        isFluid = self.m_isFluidCache,
+        cacheType = self.m_itemCacheType,
         cache = self.m_cache,
         isInCache = self.m_isInCache,
         lockFormulaId = self.m_lockFormulaId,
         producerInfo = self.m_producerInfo,
+        disableDump = self.m_disableDump,
     })
 end
-
-
-
-
 
 FacCacheRepository._RefreshRepositorySlotCellInfo = HL.Method(HL.String, HL.Number) << function(self, itemId, count)
     local slotIndex
@@ -506,11 +404,8 @@ FacCacheRepository._RefreshRepositorySlotCellInfo = HL.Method(HL.String, HL.Numb
     self:_OnRefreshRepositorySlotCell(cell, slotIndex)
 end
 
-
-
-
 FacCacheRepository._OnMoveToInCacheSlotHintStateChange = HL.Method(HL.Boolean) << function(self, needShow)
-    if self.m_isFluidCache or not self.m_isInCache then
+    if self.m_itemCacheType ~= FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal or not self.m_isInCache then
         return
     end
 
@@ -532,10 +427,7 @@ end
 
 
 
-
 FacCacheRepository.m_dropHelper = HL.Field(HL.Forward('UIDropHelper'))
-
-
 
 FacCacheRepository._InitRepositoryDrop = HL.Method() << function(self)
     self.m_dropHelper = UIUtils.initUIDropHelper(self.view.dropMask, {
@@ -545,12 +437,14 @@ FacCacheRepository._InitRepositoryDrop = HL.Method() << function(self)
                 return false
             end
             local itemId = dragHelper.info.itemId
-            if itemId ~= nil or string.isEmpty(itemId) then
-                local isEmptyBottle = Tables.emptyBottleTable:ContainsKey(itemId)
-                local isFullBottle = Tables.fullBottleTable:ContainsKey(itemId)
-                local isBottle = isEmptyBottle or isFullBottle
-                if self.m_isFluidCache and not isBottle then
-                    return false
+            if itemId ~= nil and not string.isEmpty(itemId) then
+                if self.m_itemCacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal then
+                    return true
+                else
+                    local isEmptyBottleOrJar = FactoryUtils.isEmptyBottleOrJarItem(itemId, self.m_itemCacheType)
+                    local isFullBottleOrJar = FactoryUtils.isFullBottleOrJarItem(itemId, self.m_itemCacheType)
+                    local isBottleOrJar = isEmptyBottleOrJar or isFullBottleOrJar
+                    return isBottleOrJar
                 end
             end
             return true
@@ -560,7 +454,8 @@ FacCacheRepository._InitRepositoryDrop = HL.Method() << function(self)
             
             if self.m_slotList:GetCount() > 1 then
                 local _, shouldEnterSelectMode = self:_TryDropItemToRepository(dragHelper, true, CS.Proto.ITEM_MOVE_MODE.Grid)
-                shouldEnterSelectMode = shouldEnterSelectMode and not self.m_isFluidCache
+                
+                shouldEnterSelectMode = shouldEnterSelectMode and (self.m_itemCacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal)
                 return shouldEnterSelectMode
             else
                 self:_TryDropItemToRepository(dragHelper, false)
@@ -568,14 +463,10 @@ FacCacheRepository._InitRepositoryDrop = HL.Method() << function(self)
         end,
         isDropArea = true,
         quickDropCheckGameObject = self.gameObject,
-        dropPriority = self.m_isFluidCache and 2 or 1,
+        
+        dropPriority = self.m_itemCacheType,
     })
 end
-
-
-
-
-
 
 FacCacheRepository._TryDropItemToRepository = HL.Method(HL.Forward('UIDragHelper'), HL.Boolean, HL.Opt(CS.Proto.ITEM_MOVE_MODE)).Return(HL.Boolean, HL.Boolean) << function(self, dragHelper, tryAllSlot, mode)
     local shouldEnterSelectMode = true
@@ -598,18 +489,11 @@ end
 
 
 
-
-
-
-
 FacCacheRepository.UpdateRepositoryFormula = HL.Method(HL.String, HL.Opt(HL.String)) << function(self, formulaId, lastFormulaId)
     self.m_currFormulaId = formulaId
     self.m_lastFormulaId = lastFormulaId or ""
     self:_RefreshRepository(true)
 end
-
-
-
 
 FacCacheRepository.RefreshRepositoryBlockState = HL.Method(HL.Boolean) << function(self, isBlocked)
     if self.m_slotList == nil then
@@ -623,8 +507,6 @@ FacCacheRepository.RefreshRepositoryBlockState = HL.Method(HL.Boolean) << functi
         end
     end
 end
-
-
 
 FacCacheRepository.GetRepositorySlotList = HL.Method().Return(HL.Table) << function(self)
     local lineList = {}
@@ -640,23 +522,14 @@ FacCacheRepository.GetRepositorySlotList = HL.Method().Return(HL.Table) << funct
     return lineList
 end
 
-
-
-
-
 FacCacheRepository.TryDropItemToRepository = HL.Method(HL.Forward('UIDragHelper'), HL.Opt(CS.Proto.ITEM_MOVE_MODE)).Return(HL.Boolean) << function(self, dragHelper, mode)
     local succ = self:_TryDropItemToRepository(dragHelper, false, mode)
     return succ
 end
 
-
-
-FacCacheRepository.GetIsFluidCache = HL.Method().Return(HL.Boolean) << function(self)
-    return self.m_isFluidCache
+FacCacheRepository.GetRepoCacheType = HL.Method().Return(HL.Number) << function(self)
+    return self.m_itemCacheType
 end
-
-
-
 
 FacCacheRepository.SetSlotListBtnEnabled = HL.Method(HL.Boolean) << function(self, enable)
     for i = 1, self.m_slotList:GetCount() do
@@ -667,16 +540,12 @@ FacCacheRepository.SetSlotListBtnEnabled = HL.Method(HL.Boolean) << function(sel
     end
 end
 
-
-
 FacCacheRepository.SetFirstSlotToNaviTarget = HL.Method() << function(self)
     if self.m_slotList:GetCount() > 0 then
         local cell = self.m_slotList:GetItem(1)
-        cell:SetNaviTarget()
+        cell:SetNaviTargetToThis()
     end
 end
-
-
 
 FacCacheRepository.GetFirstSlotNaviTarget = HL.Method().Return(HL.Userdata) << function(self)
     if self.m_slotList:GetCount() > 0 then
@@ -687,10 +556,9 @@ end
 
 
 
-
-
 FacCacheRepository.ClearFluidSlotShaderOnChangeMode = HL.Method() << function(self)
-    if self.m_isFluidCache then
+    
+    if self.m_itemCacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid then
         for i = 1, self.m_slotList:GetCount() do
             local cell = self.m_slotList:GetItem(i)
             if cell ~= nil then

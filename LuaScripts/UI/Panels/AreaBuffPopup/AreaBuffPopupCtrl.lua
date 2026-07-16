@@ -2,21 +2,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.AreaBuffPopup
 local ICON_FOLDER = "ItemIcon"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 AreaBuffPopupCtrl = HL.Class('AreaBuffPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -26,29 +12,19 @@ AreaBuffPopupCtrl = HL.Class('AreaBuffPopupCtrl', uiCtrl.UICtrl)
 AreaBuffPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
-
 AreaBuffPopupCtrl.m_tabCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 AreaBuffPopupCtrl.m_redDotTable = HL.Field(HL.Table)
 
-
 AreaBuffPopupCtrl.m_showBuffList = HL.Field(HL.Table)
-
 
 AreaBuffPopupCtrl.m_animIndex = HL.Field(HL.Number) << 0
 
-
 AreaBuffPopupCtrl.m_animTime = HL.Field(HL.Number) << 0
-
 
 AreaBuffPopupCtrl.m_animTickHandle = HL.Field(HL.Number) << -1
 
-
 AreaBuffPopupCtrl.m_isClose = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -114,9 +90,6 @@ AreaBuffPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
-
 AreaBuffPopupCtrl._AnimTick = HL.Method(HL.Number) << function(self, deltaTime)
     if self.m_isClose then
         return
@@ -138,10 +111,6 @@ AreaBuffPopupCtrl._AnimTick = HL.Method(HL.Number) << function(self, deltaTime)
 
     self.m_animIndex = self.m_animIndex + 1
 end
-
-
-
-
 
 AreaBuffPopupCtrl.UpdateRedDotInfo = HL.Method(HL.Any, HL.Any) << function(self, curLevelBuffList, lastLevelBuffList)
     self.m_redDotTable = {}
@@ -170,8 +139,6 @@ AreaBuffPopupCtrl.UpdateRedDotInfo = HL.Method(HL.Any, HL.Any) << function(self,
         self.m_redDotTable[curBuff] = isNew
     end
 end
-
-
 
 
 AreaBuffPopupCtrl.OnClose = HL.Override() << function(self)

@@ -5,21 +5,7 @@ local PANEL_ID = PanelId.FullScreenSceneBlur
 
 local MarkerState = CS.Beyond.UI.FullScreenSceneBlurMarker.State
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 FullScreenSceneBlurCtrl = HL.Class('FullScreenSceneBlurCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -31,23 +17,15 @@ FullScreenSceneBlurCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 FullScreenSceneBlurCtrl.m_activeMarkers = HL.Field(HL.Table)
-
 
 FullScreenSceneBlurCtrl.m_blackBlurMarkers = HL.Field(HL.Table)
 
-
 FullScreenSceneBlurCtrl.m_notUseSceneColorPSMarkers = HL.Field(HL.Table)
-
 
 FullScreenSceneBlurCtrl.m_needUpdate = HL.Field(HL.Boolean) << false
 
-
 FullScreenSceneBlurCtrl.m_updateKey = HL.Field(HL.Number) << -1
-
-
-
 
 
 
@@ -66,19 +44,12 @@ FullScreenSceneBlurCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
 FullScreenSceneBlurCtrl.OnClose = HL.Override() << function(self)
     self.m_updateKey = LuaUpdate:Remove(self.m_updateKey)
     CS.Beyond.UI.FullScreenSceneBlurMarker.s_onFullScreenSceneBlurMarkerStateChanged = nil
+    UIManager:RemoveMainCameraTempRequest("FullScreenSceneBlur")
     self.view.blurBGRawImage:DOKill()
 end
-
-
-
-
-
-
 
 FullScreenSceneBlurCtrl.OnFullScreenSceneBlurMarkerStateChanged = HL.Method(HL.Number, MarkerState, HL.Boolean, HL.Boolean) << function(self, id, state, useWhiteBlur, useSceneColorPS)
     if state == MarkerState.OnEnable then
@@ -102,13 +73,26 @@ FullScreenSceneBlurCtrl.OnFullScreenSceneBlurMarkerStateChanged = HL.Method(HL.N
     end
 end
 
-
-
 FullScreenSceneBlurCtrl._Update = HL.Method() << function(self)
     if self.m_needUpdate then
         self:_UpdateState()
     end
 end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -119,18 +103,46 @@ FullScreenSceneBlurCtrl._UpdateState = HL.Method() << function(self)
 
     if curIsShowing ~= shouldShow then
         if shouldShow then
+            local shouldPlayInAnim = UIManager:WasSceneVisibleBeforeThisHideCameraPanel()
+            logger.info("FullScreenSceneBlurCtrl: blur activating, shouldPlayInAnim", shouldPlayInAnim)
+
+            UIManager:AddMainCameraTempRequest("FullScreenSceneBlur")
+            TimerManager:StartFrameTimer(2, function()
+                logger.info("FullScreenSceneBlurCtrl: blur RT captured, releasing camera request")
+                UIManager:RemoveMainCameraTempRequest("FullScreenSceneBlur")
+            end, self)
+
             self.view.blurBGAnimationWrapper:ClearTween(false)
             self.view.blurBG.gameObject:SetActive(true)
-        elseif self.view.blurBGAnimationWrapper.curState ~= CS.Beyond.UI.UIConst.AnimationState.Out then
-            self.view.blurBGAnimationWrapper:PlayOutAnimation(function()
-                self.view.blurBG.gameObject:SetActive(false)
-            end)
+
+            if shouldPlayInAnim then
+                self.view.blurBGAnimationWrapper:PlayInAnimation()
+            else
+                self.view.blurBGAnimationWrapper:SampleToInAnimationEnd()
+            end
+        else
+            if self.view.blurBGAnimationWrapper.curState ~= CS.Beyond.UI.UIConst.AnimationState.Out then
+                
+                
+                UIManager:AddMainCameraTempRequest("FullScreenSceneBlur")
+                self.view.blurBGAnimationWrapper:PlayOutAnimation(function()
+                    self.view.blurBG.gameObject:SetActive(false)
+                    
+                    
+                    
+                    UIManager:RemoveMainCameraTempRequest("FullScreenSceneBlur")
+                end)
+            end
         end
     elseif curIsShowing then
         if self.view.blurBGAnimationWrapper.curState == CS.Beyond.UI.UIConst.AnimationState.Out then
             
             self.view.blurBGAnimationWrapper:ClearTween(false)
             self.view.blurBGAnimationWrapper:SampleToInAnimationEnd()
+            
+            
+            
+            UIManager:RemoveMainCameraTempRequest("FullScreenSceneBlur")
         end
     end
 
@@ -150,11 +162,11 @@ FullScreenSceneBlurCtrl._UpdateState = HL.Method() << function(self)
     end
 end
 
-
-
 FullScreenSceneBlurCtrl.QuickHideBlur = HL.Method() << function(self)
     self.view.blurBGRawImage:DOKill()
     self.view.blurBG.gameObject:SetActive(false)
+    
+    UIManager:RemoveMainCameraTempRequest("FullScreenSceneBlur")
 end
 
 HL.Commit(FullScreenSceneBlurCtrl)

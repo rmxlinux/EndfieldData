@@ -1,30 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
 SNSFriendBlueprintItem = HL.Class('SNSFriendBlueprintItem', UIWidgetBase)
-
 
 SNSFriendBlueprintItem.m_getTagCellFunc = HL.Field(HL.Function)
 
-
 SNSFriendBlueprintItem.m_bpSharedCode = HL.Field(HL.String) << ""
-
 
 SNSFriendBlueprintItem.m_message = HL.Field(HL.Any) << nil
 
-
 SNSFriendBlueprintItem.curState = HL.Field(HL.Any) << nil
-
 
 SNSFriendBlueprintItem.m_isQueryingBP = HL.Field(HL.Boolean) << false
 
@@ -35,10 +19,6 @@ local BlueprintShowState = {
     InValid = "InValid",
 }
 local ICON_PATH = "ItemIcon/"
-
-
-
-
 
 SNSFriendBlueprintItem.InitSNSFriendBlueprintItem = HL.Method(HL.Any, HL.Any) << function(self, message, dialogContentNaviGroup)
     self.curState = nil
@@ -81,9 +61,6 @@ SNSFriendBlueprintItem.InitSNSFriendBlueprintItem = HL.Method(HL.Any, HL.Any) <<
 
     self:UpdateBluePrintShow(message)
 end
-
-
-
 
 
 SNSFriendBlueprintItem.UpdateBluePrintShow = HL.Method(HL.Any) << function(self, message)
@@ -145,8 +122,6 @@ SNSFriendBlueprintItem.UpdateBluePrintShow = HL.Method(HL.Any) << function(self,
 end
 
 
-
-
 SNSFriendBlueprintItem.CheckCanJumpIn = HL.Method().Return(HL.Boolean)<< function(self)
     if not self.m_message then
         return false
@@ -161,14 +136,9 @@ SNSFriendBlueprintItem.CheckCanJumpIn = HL.Method().Return(HL.Boolean)<< functio
     return false
 end
 
-
-
 SNSFriendBlueprintItem.SetTargetNode = HL.Method() << function(self)
-    InputManagerInst.controllerNaviManager:SetTarget(self.view.nodeNaviDeco)
+    self:SetNaviTarget(self.view.nodeNaviDeco)
 end
-
-
-
 
 SNSFriendBlueprintItem.SetState = HL.Method(HL.String) << function(self, state)
     self.curState = state

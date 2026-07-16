@@ -3,43 +3,20 @@ local RegisterEventToCS = CS.Beyond.EventManager.AddLuaListenGlobal;
 local RED_DOT_TYPE = UIConst.RED_DOT_TYPE
 local RED_DOT_TYPE_MAX = UIConst.RED_DOT_TYPE_MAX
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RedDotManager = HL.Class('RedDotManager')
-
 
 
 
 
 RedDotManager.m_activeMsgs = HL.Field(HL.Table) 
 
-
 RedDotManager.m_activeRedDots = HL.Field(HL.Table) 
-
 
 RedDotManager.m_redDotInstanceMap = HL.Field(HL.Table) 
 
-
 RedDotManager.m_nexActiveRedDotId = HL.Field(HL.Number) << 1
 
-
 RedDotManager.configs = HL.Field(HL.Table)
-
-
 
 
 
@@ -51,8 +28,6 @@ RedDotManager.RedDotManager = HL.Constructor() << function(self)
 
     self:UpdateConfigs()
 end
-
-
 
 RedDotManager.UpdateConfigs = HL.Method() << function(self)
     logger.info(ELogChannel.RedDot, "RedDotManager.UpdateConfigs")
@@ -115,10 +90,6 @@ RedDotManager.UpdateConfigs = HL.Method() << function(self)
 end
 
 
-
-
-
-
 RedDotManager.AddFatherSon = HL.Method(HL.String, HL.String) << function(self, fatherName, sonName)
     logger.info(ELogChannel.RedDot, "RedDotManager.AddFatherSon", fatherName, sonName)
 
@@ -145,9 +116,6 @@ RedDotManager.AddFatherSon = HL.Method(HL.String, HL.String) << function(self, f
     sonRedDot.fathers[fatherName] = true
 end
 
-
-
-
 RedDotManager.OnMessage = HL.Method(HL.Number) << function(self, msgId)
     local redDots = self.m_activeMsgs[msgId]
     if not redDots then
@@ -160,11 +128,6 @@ RedDotManager.OnMessage = HL.Method(HL.Number) << function(self, msgId)
         self:TriggerUpdate(name)
     end
 end
-
-
-
-
-
 
 RedDotManager.GetRedDotState = HL.Method(HL.String, HL.Opt(HL.Any, HL.Number)).Return(HL.Boolean, HL.Opt(HL.Number, HL.Number)) <<
 function(self, name, arg, penetrateLevel)
@@ -218,9 +181,6 @@ function(self, name, arg, penetrateLevel)
 
     return result, redDotType, expireTs
 end
-
-
-
 
 RedDotManager.TriggerUpdate = HL.Method(HL.String) << function(self, name)
     local redDot = self.configs and self.configs[name]
@@ -278,11 +238,6 @@ end
 
 
 
-
-
-
-
-
 RedDotManager.AddRedDotInstance = HL.Method(HL.String, HL.Function, HL.Forward('RedDot')).Return(HL.Opt(HL.Number)) <<
 function(self, name, onUpdate, uiWidget)
     logger.info(ELogChannel.RedDot, "RedDotManager.AddRedDotInstance", name)
@@ -310,9 +265,6 @@ function(self, name, onUpdate, uiWidget)
     return key
 end
 
-
-
-
 RedDotManager.RemoveRedDotInstance = HL.Method(HL.Number).Return(HL.Number) << function(self, key)
     logger.info(ELogChannel.RedDot, "RedDotManager.RemoveRedDotInstance", key)
 
@@ -329,9 +281,6 @@ RedDotManager.RemoveRedDotInstance = HL.Method(HL.Number).Return(HL.Number) << f
     self:_TryDeactiveRedDot(name)
     return -1
 end
-
-
-
 
 RedDotManager._ActiveRedDot = HL.Method(HL.String).Return(HL.Opt(HL.Table)) << function(self, name)
     local redDot = self.configs[name]
@@ -373,9 +322,6 @@ RedDotManager._ActiveRedDot = HL.Method(HL.String).Return(HL.Opt(HL.Table)) << f
 
     return activeRedDots[name]
 end
-
-
-
 
 RedDotManager._TryDeactiveRedDot = HL.Method(HL.String) << function(self, name)
     local activeRedDots = self.m_activeRedDots

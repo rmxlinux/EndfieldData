@@ -1,15 +1,6 @@
 local wikiDetailBaseCtrl = require_ex('UI/Panels/WikiDetailBase/WikiDetailBaseCtrl')
 local PANEL_ID = PanelId.WikiEquip
-
-
-
-
-
-
-
 WikiEquipCtrl = HL.Class('WikiEquipCtrl', wikiDetailBaseCtrl.WikiDetailBaseCtrl)
-
-
 
 
 
@@ -18,13 +9,9 @@ WikiEquipCtrl.OnShow = HL.Override() << function(self)
     self:_PlayBgDecoAnim()
 end
 
-
-
 WikiEquipCtrl.GetPanelId = HL.Override().Return(HL.Number) << function(self)
     return PANEL_ID
 end
-
-
 
 WikiEquipCtrl._RefreshCenter = HL.Override() << function(self)
     WikiEquipCtrl.Super._RefreshCenter(self)
@@ -38,8 +25,6 @@ WikiEquipCtrl._RefreshCenter = HL.Override() << function(self)
     end
 end
 
-
-
 WikiEquipCtrl._RefreshRight = HL.Override() << function(self)
     local view = self.view.right
     local itemId = self.m_wikiEntryShowData.wikiEntryData.refItemId
@@ -48,8 +33,6 @@ WikiEquipCtrl._RefreshRight = HL.Override() << function(self)
     view.equipDetails.equipSuitNode:InitEquipSuitNode(itemId)
     EquipTechUtils.setEquipBaseInfo(view.equipInfo, self.loader, itemId)
 end
-
-
 
 
 

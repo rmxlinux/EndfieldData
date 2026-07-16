@@ -9,42 +9,21 @@ local PanelType = {
     DailyPopup = 2,
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityFreeMonthlyPass3DCtrl = HL.Class('ActivityFreeMonthlyPass3DCtrl', uiCtrl.UICtrl)
-
 
 ActivityFreeMonthlyPass3DCtrl.m_activityId = HL.Field(HL.String) << ''
 
-
 ActivityFreeMonthlyPass3DCtrl.m_currPageType = HL.Field(HL.Any) << PanelType.Shop
-
 
 
 ActivityFreeMonthlyPass3DCtrl.m_rewardList1 = HL.Field(HL.Table)
 
 
-
 ActivityFreeMonthlyPass3DCtrl.m_rewardList2 = HL.Field(HL.Table)
-
 
 ActivityFreeMonthlyPass3DCtrl.m_rewardCell1 = HL.Field(HL.Forward("UIListCache"))
 
-
 ActivityFreeMonthlyPass3DCtrl.m_rewardCell2 = HL.Field(HL.Forward("UIListCache"))
-
 
 
 
@@ -53,9 +32,6 @@ ActivityFreeMonthlyPass3DCtrl.m_rewardCell2 = HL.Field(HL.Forward("UIListCache")
 ActivityFreeMonthlyPass3DCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 
@@ -107,9 +83,6 @@ end
 
 
 
-
-
-
 ActivityFreeMonthlyPass3DCtrl.PlayGotDailyReward = HL.Method(HL.Any) << function(self, endCallback)
     if self.m_currPageType == PanelType.DailyPopup then
         self.view.contentState:SetState("AcquireAfter")
@@ -135,8 +108,6 @@ ActivityFreeMonthlyPass3DCtrl.PlayGotDailyReward = HL.Method(HL.Any) << function
 end
 
 
-
-
 ActivityFreeMonthlyPass3DCtrl.SampleToAnimBegin = HL.Method() << function(self)
     if self.m_currPageType == PanelType.DailyPopup then
         self.view.contentState:SetState("AcquireBefore")
@@ -151,8 +122,6 @@ ActivityFreeMonthlyPass3DCtrl.SampleToAnimBegin = HL.Method() << function(self)
     
     self.animationWrapper:PlayWithTween("shopmonthlypass_loop", nil, CS.Beyond.UI.UIConst.AnimationState.Loop)
 end
-
-
 
 
 
@@ -190,8 +159,6 @@ ActivityFreeMonthlyPass3DCtrl._SetUIPos = HL.Method() << function(self)
         end
     end
 end
-
-
 
 ActivityFreeMonthlyPass3DCtrl._RefreshDailyPopupUI = HL.Method() << function(self)
     local RectOffset = CS.UnityEngine.RectOffset
@@ -240,8 +207,6 @@ ActivityFreeMonthlyPass3DCtrl._RefreshDailyPopupUI = HL.Method() << function(sel
         self.view.aniAll:SampleToInAnimationEnd()
     end
 end
-
-
 
 ActivityFreeMonthlyPass3DCtrl._RefreshShopUI = HL.Method() << function(self)
     local RectOffset = CS.UnityEngine.RectOffset

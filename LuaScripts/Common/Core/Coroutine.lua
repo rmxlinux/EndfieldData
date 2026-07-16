@@ -144,6 +144,9 @@ end
 function coroutine._stepUpdate()
     
     local count = waitStepCorCount
+    if count == 0 then
+        return
+    end
     waitStepCorCount = 0
     local cors = waitStepCors
     waitStepCors = {}

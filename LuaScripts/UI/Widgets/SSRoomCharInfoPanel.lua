@@ -1,14 +1,5 @@
 local LevelWorldUIBase = require_ex('UI/Widgets/LevelWorldUIBase')
 
-
-
-
-
-
-
-
-
-
 SSRoomCharInfoPanel = HL.Class('SSRoomCharInfoPanel', LevelWorldUIBase)
 
 local SS_ROOM_CHAR_INFO_CONST = {
@@ -20,24 +11,16 @@ local SS_ROOM_CHAR_INFO_CONST = {
     }
 }
 
-
 SSRoomCharInfoPanel.m_roomId = HL.Field(HL.String) << ""
-
 
 SSRoomCharInfoPanel.m_charListCache = HL.Field(HL.Forward("UIListCache"))
 
-
 SSRoomCharInfoPanel.m_showing = HL.Field(HL.Boolean) << false
-
-
 
 
 SSRoomCharInfoPanel._OnFirstTimeInit = HL.Override() << function(self)
     self.m_charListCache = UIUtils.genCellCache(self.view.roleNode)
 end
-
-
-
 
 SSRoomCharInfoPanel.InitLevelWorldUi = HL.Override(HL.Any) << function(self, args)
     self:_FirstTimeInit()
@@ -49,8 +32,6 @@ SSRoomCharInfoPanel.InitLevelWorldUi = HL.Override(HL.Any) << function(self, arg
     Notify(MessageConst.SS_REGISTER_CHAR_INFO_PANEL, args)
 end
 
-
-
 SSRoomCharInfoPanel.OnLevelWorldUiReleased = HL.Override() << function(self)
     local cacheListItems = self.m_charListCache:GetItems()
     self.m_charListCache:Refresh(0, nil, false, function(item, index)
@@ -60,19 +41,12 @@ SSRoomCharInfoPanel.OnLevelWorldUiReleased = HL.Override() << function(self)
     Notify(MessageConst.SS_UNREGISTER_CHAR_INFO_PANEL, self.m_roomId)
 end
 
-
-
-
 SSRoomCharInfoPanel._InitCharInfo = HL.Method(GEnums.SpaceshipRoomType) << function(self, roomType)
     local isManufacturing = roomType == CS.Beyond.GEnums.SpaceshipRoomType.ManufacturingStation
     local isGrowCabin = roomType == CS.Beyond.GEnums.SpaceshipRoomType.GrowCabin
     self.view.iconM.gameObject:SetActive(isManufacturing)
     self.view.iconGC.gameObject:SetActive(isGrowCabin)
 end
-
-
-
-
 
 SSRoomCharInfoPanel.UpdateCharInfo = HL.Method(HL.Number, HL.Any) << function(self, maxCharCount, charList)
     local charNumText = string.format("%d/%d", charList and charList.Count or 0, maxCharCount)

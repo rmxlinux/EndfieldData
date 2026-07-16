@@ -2,41 +2,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GemEnhance
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GemEnhanceCtrl = HL.Class('GemEnhanceCtrl', uiCtrl.UICtrl)
 
 local ENHANCE_NODE_STATE_NAME = {
@@ -49,37 +14,25 @@ local ENHANCE_NODE_STATE_NAME = {
 
 
 
-
 GemEnhanceCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_GEM_ENHANCE] = '_OnGemEnhance',
 }
 
-
 GemEnhanceCtrl.m_args = HL.Field(HL.Table)
-
 
 GemEnhanceCtrl.m_selectedGemInstId = HL.Field(HL.Number) << -1
 
-
 GemEnhanceCtrl.m_selectedMaterialGemInstId = HL.Field(HL.Number) << -1
-
 
 GemEnhanceCtrl.m_selectedTermIndex = HL.Field(HL.Number) << -1
 
-
 GemEnhanceCtrl.m_isSelectedTermMax = HL.Field(HL.Boolean) << false
-
 
 GemEnhanceCtrl.m_TermLevelCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 GemEnhanceCtrl.m_selectedTermEnhanceData = HL.Field(HL.Any)
 
-
 GemEnhanceCtrl.m_isCostEnough = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -170,16 +123,12 @@ end
 
 
 
-
-
 GemEnhanceCtrl._EnterSelectionMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGraduallyShow)
     self.view.lockNaviGroup.enabled = true
     self.view.controllerFocusHintNode.gameObject:SetActive(true)
     self.view.stateController:SetState("selection")
     self:_RefreshLeftGemList(skipGraduallyShow)
 end
-
-
 
 GemEnhanceCtrl._RefreshLeftGemList = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGraduallyShow)
     local selectedTermIdMap = self.m_args.selectedTermIdMap
@@ -210,12 +159,12 @@ GemEnhanceCtrl._RefreshLeftGemList = HL.Method(HL.Opt(HL.Boolean)) << function(s
         defaultSelectedIndex = 1,
         selectedTagArgs = selectedTermIdMap,
         selectedIndexId = selectedGemInstId > 0 and selectedGemInstId or nil,
+        skipGraduallyShow = skipGraduallyShow,
         onFilterNone = function()
             self.m_selectedGemInstId = -1
             self.view.stateController:SetState("empty")
             self:_UpdateSelectedGemSkillInfo()
         end,
-        skipGraduallyShow = skipGraduallyShow,
         
         sortKeys = { "gemPerfectMatchSort", "isEquippedSort", "lockedIndex", "rarity", "sortId1", "sortId2", "id", "instId" }
     })
@@ -224,9 +173,6 @@ GemEnhanceCtrl._RefreshLeftGemList = HL.Method(HL.Opt(HL.Boolean)) << function(s
     self.m_args.selectedTermIdMap = nil
     self.m_args.gemInstId = nil
 end
-
-
-
 
 GemEnhanceCtrl._OnSelectGem = HL.Method(HL.Table) << function(self, itemInfo)
     if self.m_selectedGemInstId == itemInfo.instId then
@@ -237,9 +183,6 @@ GemEnhanceCtrl._OnSelectGem = HL.Method(HL.Table) << function(self, itemInfo)
     self:_UpdateSelectedGemBasicInfo(itemInfo)
     self:_UpdateSelectedGemSkillInfo()
 end
-
-
-
 
 GemEnhanceCtrl._UpdateSelectedGemBasicInfo = HL.Method(HL.Table) << function(self, itemInfo)
     local gemInst = CharInfoUtils.getGemByInstId(itemInfo.instId)
@@ -261,8 +204,6 @@ GemEnhanceCtrl._UpdateSelectedGemBasicInfo = HL.Method(HL.Table) << function(sel
         self.view.infoNode.gemNode.gameObject:SetActive(isPerfectMatch)
     end
 end
-
-
 
 GemEnhanceCtrl._UpdateSelectedGemSkillInfo = HL.Method() << function(self)
     self.view.entriesGroupNode.animationWrapper:PlayInAnimation()
@@ -296,8 +237,6 @@ GemEnhanceCtrl._UpdateSelectedGemSkillInfo = HL.Method() << function(self)
     end
 end
 
-
-
 GemEnhanceCtrl._RefreshSelectedGemInfoByInstId = HL.Method() << function(self)
     local gemInstId = self.m_selectedGemInstId
     if gemInstId == nil or gemInstId <= 0 then
@@ -321,15 +260,10 @@ GemEnhanceCtrl._RefreshSelectedGemInfoByInstId = HL.Method() << function(self)
     self:_UpdateSelectedGemSkillInfo()
 end
 
-
-
-
 GemEnhanceCtrl._SetInfoGemSelected = HL.Method(HL.Boolean) << function(self, isSelected)
     self.view.infoNode.btnExplain.gameObject:SetActive(not isSelected)
     self.view.infoNode.selectedBG.gameObject:SetActive(isSelected)
 end
-
-
 
 
 
@@ -341,8 +275,6 @@ GemEnhanceCtrl._EnterEnhanceModeWithAnim = HL.Method() << function(self)
         self:_EnterEnhanceMode()
     end)
 end
-
-
 
 GemEnhanceCtrl._EnterEnhanceMode = HL.Method() << function(self)
     self.view.lockNaviGroup.enabled = false
@@ -380,9 +312,6 @@ GemEnhanceCtrl._EnterEnhanceMode = HL.Method() << function(self)
     self:_RefreshEnhanceTerm()
 end
 
-
-
-
 GemEnhanceCtrl._BackToSelectionMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, playOutAnim)
     if playOutAnim then
         self.view.bottomEnhancedNode.animationWrapper:PlayOutAnimation()
@@ -394,9 +323,6 @@ GemEnhanceCtrl._BackToSelectionMode = HL.Method(HL.Opt(HL.Boolean)) << function(
         self:_EnterSelectionMode()
     end
 end
-
-
-
 
 GemEnhanceCtrl._RefreshEnhanceTerm = HL.Method(HL.Opt(HL.Boolean)) << function(self, playSwitchAnim)
     local gemInst = CharInfoUtils.getGemByInstId(self.m_selectedGemInstId)
@@ -435,22 +361,16 @@ GemEnhanceCtrl._RefreshEnhanceTerm = HL.Method(HL.Opt(HL.Boolean)) << function(s
     end
 end
 
-
-
 GemEnhanceCtrl._OnPreTermClicked = HL.Method() << function(self)
     self.m_selectedTermIndex = math.max(0, self.m_selectedTermIndex - 1)
     self:_RefreshEnhanceTerm(true)
 end
-
-
 
 GemEnhanceCtrl._OnNextTermClicked = HL.Method() << function(self)
     local gemInst = CharInfoUtils.getGemByInstId(self.m_selectedGemInstId)
     self.m_selectedTermIndex = math.min(gemInst.termList.Count - 1, self.m_selectedTermIndex + 1)
     self:_RefreshEnhanceTerm(true)
 end
-
-
 
 GemEnhanceCtrl._RefreshProb = HL.Method() << function(self)
     local stateName = "Empty"
@@ -466,8 +386,6 @@ GemEnhanceCtrl._RefreshProb = HL.Method() << function(self)
     end
     self.view.bottomEnhancedNode.probStateCtrl:SetState(stateName)
 end
-
-
 
 GemEnhanceCtrl._GetCurrentGemEnhanceData = HL.Method().Return(HL.Any) << function(self)
     local gemInst = CharInfoUtils.getGemByInstId(self.m_selectedGemInstId)
@@ -488,9 +406,6 @@ GemEnhanceCtrl._GetCurrentGemEnhanceData = HL.Method().Return(HL.Any) << functio
     end
     return nil
 end
-
-
-
 
 GemEnhanceCtrl._RefreshMaterialGemList = HL.Method(HL.Opt(HL.Boolean)) << function(self, isFirstSelected)
     local selectedMaterialGemTermIdMap = self.m_args.resumeMaterialSelectedTermIdMap
@@ -536,9 +451,6 @@ GemEnhanceCtrl._RefreshMaterialGemList = HL.Method(HL.Opt(HL.Boolean)) << functi
     })
 end
 
-
-
-
 GemEnhanceCtrl._OnSelectMaterialGem = HL.Method(HL.Table) << function(self, itemInfo)
     local isEmpty = itemInfo == nil
     local instId = isEmpty and -1 or itemInfo.instId
@@ -557,8 +469,6 @@ GemEnhanceCtrl._OnSelectMaterialGem = HL.Method(HL.Table) << function(self, item
     self:_RefreshEnhanceBtn()
 end
 
-
-
 GemEnhanceCtrl._RefreshEnhanceMaterial = HL.Method() << function(self)
     local gemEnhanceData = self:_GetCurrentGemEnhanceData()
     local itemId = Tables.gemConst.gemEnhancementItemId
@@ -572,8 +482,6 @@ GemEnhanceCtrl._RefreshEnhanceMaterial = HL.Method() << function(self)
     self.view.enhancedNode.commonStorageNode:InitStorageNode(itemCount, costItemCount, true)
     self.m_isCostEnough = itemCount >= costItemCount
 end
-
-
 
 GemEnhanceCtrl._RefreshEnhanceBtn = HL.Method() << function(self)
     local isMaterialMode = self.view.enhancedNode.stateController.currentStateName == ENHANCE_NODE_STATE_NAME.MATERIAL
@@ -603,8 +511,6 @@ GemEnhanceCtrl._RefreshEnhanceBtn = HL.Method() << function(self)
     self.view.bottomEnhancedNode.limitReachedNode.gameObject:SetActive(not isAvailable)
 end
 
-
-
 GemEnhanceCtrl._OnEnhanceConfirmClicked = HL.Method() << function(self)
     local isMaterial = self.view.enhancedNode.stateController.currentStateName == ENHANCE_NODE_STATE_NAME.MATERIAL
     local gemInst = CharInfoUtils.getGemByInstId(self.m_selectedGemInstId, true)
@@ -632,9 +538,6 @@ GemEnhanceCtrl._OnEnhanceConfirmClicked = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 GemEnhanceCtrl._OnGemEnhance = HL.Method(HL.Table) << function(self, args)
     
@@ -667,8 +570,6 @@ end
 
 
 
-
-
 GemEnhanceCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     self.view.lockNaviGroup.onIsTopLayerChanged:AddListener(function(isTopLayer)
@@ -692,9 +593,6 @@ end
 
 
 
-
-
-
 GemEnhanceCtrl._GetSelectedTagArgMap = HL.Method(HL.Any).Return(HL.Opt(HL.Any)) << function(self, commonItemList)
     if not commonItemList or commonItemList.m_selectedTags == nil then
         return nil
@@ -707,8 +605,6 @@ GemEnhanceCtrl._GetSelectedTagArgMap = HL.Method(HL.Any).Return(HL.Opt(HL.Any)) 
     end
     return selectedTagArgMap
 end
-
-
 
 GemEnhanceCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = lume.deepCopy(self.m_args)

@@ -1,34 +1,18 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 PuzzleInfo = HL.Class('PuzzleInfo', UIWidgetBase)
-
 
 PuzzleInfo.m_puzzleCells = HL.Field(HL.Forward("UIListCache"))
 
-
 PuzzleInfo.m_puzzleCellData = HL.Field(HL.Table)
 
-
 PuzzleInfo.m_puzzleCellSize = HL.Field(HL.Number) << -1
-
-
 
 
 PuzzleInfo._OnFirstTimeInit = HL.Override() << function(self)
     
     self.m_puzzleCells = UIUtils.genCellCache(self.view.puzzleCell)
 end
-
-
-
-
 
 PuzzleInfo.InitPuzzleInfo = HL.Method(HL.Table, HL.Number) << function(self, data, size)
     self:_FirstTimeInit()
@@ -44,10 +28,6 @@ PuzzleInfo.InitPuzzleInfo = HL.Method(HL.Table, HL.Number) << function(self, dat
         self:_UpdateCells(cell, index)
     end)
 end
-
-
-
-
 
 PuzzleInfo._UpdateCells = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local data = self.m_puzzleCellData.rotateBlocks[index]

@@ -1,15 +1,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkFilter
 
-
-
-
-
 MapMarkFilterCtrl = HL.Class('MapMarkFilterCtrl', uiCtrl.UICtrl)
 
-
 MapMarkFilterCtrl.m_categoryCells = HL.Field(HL.Forward("UIListCache"))
-
 
 
 
@@ -18,9 +12,6 @@ MapMarkFilterCtrl.m_categoryCells = HL.Field(HL.Forward("UIListCache"))
 MapMarkFilterCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 MapMarkFilterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -43,8 +34,6 @@ MapMarkFilterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
 
 MapMarkFilterCtrl._InitFilterCategoryCells = HL.Method() << function(self)
     self.m_categoryCells = UIUtils.genCellCache(self.view.markCategoryCell)

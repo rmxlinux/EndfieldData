@@ -1,19 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 FriendThemeChangeThemeCell = HL.Class('FriendThemeChangeThemeCell', UIWidgetBase)
-
 
 FriendThemeChangeThemeCell.m_onClick = HL.Field(HL.Function) 
 
-
 FriendThemeChangeThemeCell.m_id = HL.Field(HL.String) << "" 
-
-
 
 
 FriendThemeChangeThemeCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -25,12 +16,6 @@ FriendThemeChangeThemeCell._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
 end
-
-
-
-
-
-
 
 FriendThemeChangeThemeCell.InitFriendThemeChangeThemeCell = HL.Method(Cfg.Types.BusinessCardTopicData, HL.Function, HL.Boolean, HL.Boolean) << function(self, cfg, onClick, selected, unlocked)
     self:_FirstTimeInit()

@@ -2,22 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityBenefits
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityBenefitsCtrl = HL.Class('ActivityBenefitsCtrl', uiCtrl.UICtrl)
-
 
 ActivityBenefitsCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_DOMAIN_DEVELOPMENT_LEVEL_REWARD_GET] = '_OnRefresh',
@@ -25,12 +10,9 @@ ActivityBenefitsCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ADVENTURE_BOOK_STAGE_MODIFY] = '_OnRefresh',
 }
 
-
 ActivityBenefitsCtrl.m_activityId = HL.Field(HL.String) << ''
 
-
 ActivityBenefitsCtrl.m_getCell = HL.Field(HL.Function)
-
 
 ActivityBenefitsCtrl.m_benefits = HL.Field(HL.Table)
 
@@ -172,7 +154,7 @@ local benefitConfigTable = {
         end,
         getRewardIdByStageIdFunc = function(id)
             
-            return GameInstance.player.mission:GetMissionInfo(id).rewardId
+            return GameInstance.player.mission:GetMissionMetaAsset(id).rewardId
         end,
     },
     
@@ -296,9 +278,6 @@ local benefitConfigTable = {
     },
 }
 
-
-
-
 ActivityBenefitsCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     ActivityBenefitsCtrl.PrepareBenefits()
     self.m_activityId = args.activityId
@@ -319,11 +298,7 @@ ActivityBenefitsCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end)
 end
 
-
 ActivityBenefitsCtrl.m_naviTarget = HL.Field(HL.Number) << -1
-
-
-
 
 ActivityBenefitsCtrl._OnRefresh = HL.Method(HL.Table) << function(self, arg)
     self:_RefreshInfo()
@@ -342,28 +317,20 @@ ActivityBenefitsCtrl._OnRefresh = HL.Method(HL.Table) << function(self, arg)
     end
 end
 
-
-
-
 ActivityBenefitsCtrl._SetNaviTarget = HL.Method(HL.Number) << function(self, index)
     if index == 0 or not DeviceInfo.usingController  then
         return
     end
     local cell = self:_GetCell(index)
     if cell then
-        UIUtils.setAsNaviTarget(cell.naviDecorator)
+        self:SetNaviTarget(cell.naviDecorator)
     end
 end
-
-
-
 
 ActivityBenefitsCtrl._GetCell = HL.Method(HL.Number).Return(HL.Any) << function(self, index)
     local oriCell = self.view.scrollList:Get(CSIndex(index))
     return oriCell and self.m_getCell(oriCell)
 end
-
-
 
 ActivityBenefitsCtrl._RefreshInfo = HL.Method() << function(self)
     local isPreparedActivity = self.m_activityId == PREPARE_ACTIVITY_ID
@@ -476,10 +443,6 @@ ActivityBenefitsCtrl._RefreshInfo = HL.Method() << function(self)
     table.sort(self.m_benefits, Utils.genSortFunction({"stateSortId", "sortId"}, true))
 end
 
-
-
-
-
 ActivityBenefitsCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local info = self.m_benefits[index]
     cell.gameObject.name = "Cell" .. index
@@ -555,9 +518,6 @@ ActivityBenefitsCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(se
     cell.bigRewardTxt:SetAndResolveTextStyle(info.bigRewardStatement)
 end
 
-
-
-
 ActivityBenefitsCtrl._IsBenefitUnlocked = HL.Method(HL.String).Return(HL.Boolean) << function(self, benefitId)
     local config = benefitConfigTable[benefitId]
     if not config then
@@ -570,7 +530,6 @@ ActivityBenefitsCtrl._IsBenefitUnlocked = HL.Method(HL.String).Return(HL.Boolean
     end
     return unlockFunc()
 end
-
 
 ActivityBenefitsCtrl.PrepareBenefits = HL.StaticMethod() << function()
     

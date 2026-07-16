@@ -1,32 +1,28 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 BusinessCardPersonalInfoNode = HL.Class('BusinessCardPersonalInfoNode', UIWidgetBase)
-
 
 BusinessCardPersonalInfoNode.m_id = HL.Field(HL.Number) << 0
 
-
 BusinessCardPersonalInfoNode.m_preview = HL.Field(HL.Boolean) << false
-
-
 
 
 BusinessCardPersonalInfoNode._OnFirstTimeInit = HL.Override() << function(self)
     self.view.btnOther.onClick:RemoveAllListeners()
     self.view.btnOther.onClick:AddListener(function()
+        local success, playerInfo = GameInstance.player.friendSystem:TryGetFriendInfo(self.m_id)
+        local postfix = (success and not string.isEmpty(playerInfo.remakeName)) and "Remark" or "Name"
+        local seasonTag = self.view["seasonTag" .. postfix]
+        local levelTag = self.view["levelTag" .. postfix]
+        local recordTipsTransform = seasonTag.gameObject.activeInHierarchy and seasonTag.transform
+            or levelTag.gameObject.activeInHierarchy and levelTag.transform
+            or self.view.tipRect
         if self.m_id == GameInstance.player.roleId then
-            FriendUtils.FRIEND_CELL_INIT_FUNC.onSelfClick(self.view.tipRect, self.m_id)
+            FriendUtils.FRIEND_CELL_INIT_FUNC.onSelfClick(self.view.tipRect, self.m_id, recordTipsTransform)
         elseif GameInstance.player.friendSystem.friendInfoDic:ContainsKey(self.m_id) then
-            
-            FriendUtils.FRIEND_CELL_INIT_FUNC.onBusinessCardFriendPlayerClick(self.view.tipRect, self.m_id)
+            FriendUtils.FRIEND_CELL_INIT_FUNC.onBusinessCardFriendPlayerClick(self.view.tipRect, self.m_id, recordTipsTransform)
         else
-            FriendUtils.FRIEND_CELL_INIT_FUNC.onBusinessCardStrangerPlayerClick(self.view.tipRect, self.m_id)
+            FriendUtils.FRIEND_CELL_INIT_FUNC.onBusinessCardStrangerPlayerClick(self.view.tipRect, self.m_id, recordTipsTransform)
         end
     end)
 
@@ -35,11 +31,21 @@ BusinessCardPersonalInfoNode._OnFirstTimeInit = HL.Override() << function(self)
         Unity.GUIUtility.systemCopyBuffer = self.view.playerUidTxt.text
         Notify(MessageConst.SHOW_TOAST, Language.LUA_COPY_UID_SUCCESS)
     end)
+
+    local openRecordTips = function(transform)
+        if self.m_id ~= 0 then
+            UIManager:Open(PanelId.FriendBusinessRecordTips, { roleId = self.m_id, transform = transform, posType = UIConst.UI_TIPS_POS_TYPE.LeftAlignBottom })
+        end
+    end
+    self.view.levelTagRemark.onClick:RemoveAllListeners()
+    self.view.levelTagRemark.onClick:AddListener(function() openRecordTips(self.view.levelTagRemark.transform) end)
+    self.view.levelTagName.onClick:RemoveAllListeners()
+    self.view.levelTagName.onClick:AddListener(function() openRecordTips(self.view.levelTagName.transform) end)
+    self.view.seasonTagRemark.onClick:RemoveAllListeners()
+    self.view.seasonTagRemark.onClick:AddListener(function() openRecordTips(self.view.seasonTagRemark.transform) end)
+    self.view.seasonTagName.onClick:RemoveAllListeners()
+    self.view.seasonTagName.onClick:AddListener(function() openRecordTips(self.view.seasonTagName.transform) end)
 end
-
-
-
-
 
 BusinessCardPersonalInfoNode.InitBusinessCardPersonalInfoNodeByRoleId = HL.Method(HL.Number, HL.Boolean) << function(self, roleId, preview)
     self:_FirstTimeInit()
@@ -48,8 +54,10 @@ BusinessCardPersonalInfoNode.InitBusinessCardPersonalInfoNodeByRoleId = HL.Metho
     self.m_id = roleId
     if self.m_id == GameInstance.player.roleId then
         self.view.redDot:InitRedDot("NewAvatarInfo")
+        self.view.moreInfoRedDot:InitRedDot("SelfBusinessCard")
     else
         self.view.redDot.gameObject:SetActiveIfNecessary(false)
+        self.view.moreInfoRedDot.gameObject:SetActiveIfNecessary(false)
     end
 
     local success, playerInfo = GameInstance.player.friendSystem:TryGetFriendInfo(roleId)
@@ -65,8 +73,16 @@ BusinessCardPersonalInfoNode.InitBusinessCardPersonalInfoNodeByRoleId = HL.Metho
 
     self.view.commonPlayerHead:UpdateHideLevelTxt(true)
     self.view.commonPlayerHead:InitCommonPlayerHeadByRoleId(roleId, click)
-    self:UpdateContingencyContractActivityState(string.isEmpty(playerInfo.remakeName) and "Name" or "Remark")
-    self.view["levelTag" .. (string.isEmpty(playerInfo.remakeName) and "Remark" or "Name")].gameObject:SetActiveIfNecessary(false)
+    local postfix = string.isEmpty(playerInfo.remakeName) and "Name" or "Remark"
+    local oppositePostfix = string.isEmpty(playerInfo.remakeName) and "Remark" or "Name"
+    self:UpdateContingencyContractActivityState(postfix)
+    self.view["levelTag" .. oppositePostfix].gameObject:SetActiveIfNecessary(false)
+    self:UpdateSeasonTowerActivityState(postfix)
+    self.view["seasonTag" .. oppositePostfix].gameObject:SetActiveIfNecessary(false)
+    local showLineImage = self.view["levelTag" .. postfix].gameObject.activeSelf
+        and self.view["seasonTag" .. postfix].gameObject.activeSelf
+    self.view["lineImage" .. postfix].gameObject:SetActiveIfNecessary(showLineImage)
+    self.view["lineImage" .. oppositePostfix].gameObject:SetActiveIfNecessary(false)
     
 
     local stateName = string.isEmpty(playerInfo.remakeName) and "NoRemarks" or "Remarks"
@@ -89,11 +105,8 @@ BusinessCardPersonalInfoNode.InitBusinessCardPersonalInfoNodeByRoleId = HL.Metho
     end
 
     self.view.playerUidTxt.text = playerInfo.platformRoleId
-    self.view.timeText.text = os.date(Language.LUA_BUSINESS_CARD_TIME, playerInfo.createTime)
+    self:_RefreshBirthdayInfo(playerInfo)
 end
-
-
-
 
 BusinessCardPersonalInfoNode.UpdateContingencyContractActivityState = HL.Method(HL.String) << function(self, postfix)
     if self.m_id == 0 then
@@ -127,6 +140,52 @@ BusinessCardPersonalInfoNode.UpdateContingencyContractActivityState = HL.Method(
     end
 end
 
+BusinessCardPersonalInfoNode.UpdateSeasonTowerActivityState = HL.Method(HL.String) << function(self, postfix)
+    if self.m_id == 0 then
+        self.view["seasonTag" .. postfix].gameObject:SetActiveIfNecessary(false)
+        return
+    end
+
+    local success, playerInfo = GameInstance.player.friendSystem:TryGetFriendInfo(self.m_id)
+    local displayRecord = success and FriendUtils.getSeasonTowerDisplayRecord(playerInfo)
+    local rank = displayRecord and displayRecord.rank or 0
+    if displayRecord and FriendUtils.SEASON_TOWER_RANK_NAMES[rank] then
+        self.view["seasonTag" .. postfix].gameObject:SetActiveIfNecessary(true)
+        self.view["seasonTowerTagSmall" .. postfix]:SetState(FriendUtils.SEASON_TOWER_RANK_NAMES[rank])
+    else
+        self.view["seasonTag" .. postfix].gameObject:SetActiveIfNecessary(false)
+    end
+end
+
+BusinessCardPersonalInfoNode.RefreshBirthdayInfo = HL.Method() << function(self)
+    local success, playerInfo = GameInstance.player.friendSystem:TryGetFriendInfo(self.m_id)
+    if success then
+        self:_RefreshBirthdayInfo(playerInfo)
+    end
+end
+
+BusinessCardPersonalInfoNode._RefreshBirthdayInfo = HL.Method(HL.Any) << function(self, playerInfo)
+    if GameInstance.player.friendSystem:IsBirthdayVisible(self.m_id) then
+        self.view.timeText.text = string.format(Language.LUA_FRIEND_BIRTHDAY_FORMAT, playerInfo.monthOfBirthday, playerInfo.dayOfBirthday)
+        self.view.stateController:SetState("Birthday")
+    else
+        self.view.timeText.text = os.date(Language.LUA_BUSINESS_CARD_TIME, playerInfo.createTime)
+        self.view.stateController:SetState("JoiningDay")
+    end
+
+    if not self.m_preview and self.m_id == GameInstance.player.roleId and GameInstance.player.friendSystem:IsBirthdayAlreadySet() then
+        self.view.switchBtn.interactable = true
+        self.view.switchBtn.onClick:RemoveAllListeners()
+        self.view.switchBtn.onClick:AddListener(function()
+            GameInstance.player.friendSystem:SetBirthdayVisible(not GameInstance.player.friendSystem:IsBirthdayVisible(GameInstance.player.roleId))
+        end)
+
+        self.view.switchNode.gameObject:SetActiveIfNecessary(not DeviceInfo.usingController)
+    else
+        self.view.switchBtn.interactable = false
+        self.view.switchNode.gameObject:SetActiveIfNecessary(false)
+    end
+end
+
 HL.Commit(BusinessCardPersonalInfoNode)
 return BusinessCardPersonalInfoNode
-

@@ -18,51 +18,13 @@ local itemTypeConfig = {
     },
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainDepotPack = HL.Class('DomainDepotPack', UIWidgetBase)
-
 
 DomainDepotPack.m_spriteNameList = HL.Field(HL.Table)
 
-
 DomainDepotPack.m_currentAnim = HL.Field(HL.Table)
 
-
 DomainDepotPack.m_randomItemIndex = HL.Field(HL.Number) << 1
-
 
 DomainDepotPack.m_hasChangeItemType = HL.Field(HL.Boolean) << false
 
@@ -73,53 +35,36 @@ DomainDepotPack.m_hasChangeItemType = HL.Field(HL.Boolean) << false
 
 
 
-
 DomainDepotPack.m_animInfo = HL.Field(HL.Table)
-
 
 DomainDepotPack.m_randomAnimInfo = HL.Field(HL.Table)
 
-
 DomainDepotPack.m_packOutAnimInfo = HL.Field(HL.Table)
 
-
 DomainDepotPack.m_packInAnimInfo = HL.Field(HL.Table)
-
 
 DomainDepotPack.m_itemInfo = HL.Field(HL.Table)
 
 
-
 DomainDepotPack.m_itemCount = HL.Field(HL.Number) << 0
-
 
 DomainDepotPack.m_targetCount = HL.Field(HL.Number) << 0
 
-
 DomainDepotPack.m_changeValue = HL.Field(HL.Number) << 0
-
 
 DomainDepotPack.m_itemType = HL.Field(GEnums.DomainDepotDeliverItemType)
 
-
 DomainDepotPack.m_currentShowItemType = HL.Field(GEnums.DomainDepotDeliverItemType)
-
 
 DomainDepotPack.m_packSize = HL.Field(GEnums.DeliverPackType)
 
-
 DomainDepotPack.m_usedDropDownIndexTable = HL.Field(HL.Table)
-
 
 DomainDepotPack.m_inRandomAnim = HL.Field(HL.Boolean) << false
 
-
 DomainDepotPack.m_isUpCountAnim = HL.Field(HL.Boolean) << false
 
-
 DomainDepotPack.m_isInCountChangeAnim = HL.Field(HL.Boolean) << false
-
-
 
 
 
@@ -211,14 +156,9 @@ end
 
 
 
-
-
 DomainDepotPack.InitDomainDepotPack = HL.Method() << function(self)
     self:_FirstTimeInit()
 end
-
-
-
 
 
 DomainDepotPack.ChangePackSize = HL.Method(GEnums.DeliverPackType) << function(self, packSize)
@@ -231,8 +171,6 @@ DomainDepotPack.ChangePackSize = HL.Method(GEnums.DeliverPackType) << function(s
     
 end
 
-
-
 DomainDepotPack.ClearPackItemCount = HL.Method() << function(self)
     self.m_isInCountChangeAnim = false
     self.m_itemCount = 0
@@ -241,9 +179,6 @@ DomainDepotPack.ClearPackItemCount = HL.Method() << function(self)
         self.view['block0' .. i].gameObject:SetActiveIfNecessary(false)
     end
 end
-
-
-
 
 
 DomainDepotPack.ChangePackItemCount = HL.Method(HL.Number) << function(self, count)
@@ -300,9 +235,6 @@ DomainDepotPack.ChangePackItemCount = HL.Method(HL.Number) << function(self, cou
     end
 end
 
-
-
-
 DomainDepotPack.InitPackageSellBgNode = HL.Method(HL.Any) << function(self, deliverInfo)
     self.m_packSize = deliverInfo.deliverPackType
     self.m_itemType = deliverInfo.itemType
@@ -327,9 +259,6 @@ DomainDepotPack.InitPackageSellBgNode = HL.Method(HL.Any) << function(self, deli
         self.view['block0' .. i].gameObject:SetActiveIfNecessary(true)
     end
 end
-
-
-
 
 DomainDepotPack.ChangePackItemType = HL.Method(GEnums.DomainDepotDeliverItemType) << function(self, itemType)
     
@@ -400,10 +329,6 @@ DomainDepotPack.ChangePackItemType = HL.Method(GEnums.DomainDepotDeliverItemType
 end
 
 
-
-
-
-
 DomainDepotPack.PlayRandomItemDropAnim = HL.Method(GEnums.DomainDepotDeliverItemType) << function(self, itemType)
     self.m_itemType = itemType
     self.m_inRandomAnim = true
@@ -428,8 +353,6 @@ DomainDepotPack.PlayRandomItemDropAnim = HL.Method(GEnums.DomainDepotDeliverItem
     end
 end
 
-
-
 DomainDepotPack.GetUniqueRandomIndex = HL.Method().Return(HL.Number) << function(self)
     local idx = math.floor(lume.random(1, 9.999)) 
     if self.m_usedDropDownIndexTable[idx] ~= true then
@@ -446,10 +369,6 @@ DomainDepotPack.GetUniqueRandomIndex = HL.Method().Return(HL.Number) << function
     end
     return 0 
 end
-
-
-
-
 
 DomainDepotPack.GotoSellAnim = HL.Method(GEnums.DeliverPackType, GEnums.DomainDepotDeliverItemType) << function(self, packType, itemType)
     self.m_packSize = packType
@@ -498,9 +417,6 @@ DomainDepotPack.GotoSellAnim = HL.Method(GEnums.DeliverPackType, GEnums.DomainDe
 
 end
 
-
-
-
 DomainDepotPack.CloseBoxCover = HL.Method(HL.Opt(HL.Number)) << function(self, insId)
 
     if insId ~= nil then
@@ -532,16 +448,12 @@ DomainDepotPack.CloseBoxCover = HL.Method(HL.Opt(HL.Number)) << function(self, i
     self:_PlayAnimImp()
 end
 
-
-
 DomainDepotPack.HideAllBlocks = HL.Method() << function(self)
     
     for i = 1, 9 do
         self.view['block0' .. i].gameObject:SetActiveIfNecessary(false)
     end
 end
-
-
 
 
 
@@ -626,8 +538,6 @@ DomainDepotPack._PlayAnimImp = HL.Method() << function(self)
         self:_PlayAnimImp()
     end
 end
-
-
 
 DomainDepotPack._ChangePack = HL.Method() << function(self)
     table.insert(self.m_animInfo, 1, self.m_packOutAnimInfo)

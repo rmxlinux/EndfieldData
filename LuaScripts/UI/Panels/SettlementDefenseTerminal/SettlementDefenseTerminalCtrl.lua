@@ -1,42 +1,5 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SettlementDefenseTerminal
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SettlementDefenseTerminalCtrl = HL.Class('SettlementDefenseTerminalCtrl', uiCtrl.UICtrl)
 
 local MAX_DISPLAY_REWARD_COUNT = 3
@@ -47,48 +10,33 @@ local ENEMY_DETAIL_TITLE_TEXT_ID = "ui_fac_settlement_defence_radar_enemy_review
 local ENEMY_LIST_TITLE_TEXT_ID = "ui_fac_settlement_defence_radar_eny_list_left"
 local ENEMY_INFO_TITLE_TEXT_ID = "ui_fac_settlement_defence_radar_eny_list_right"
 
-
 SettlementDefenseTerminalCtrl.m_getGroupCell = HL.Field(HL.Function)
-
 
 SettlementDefenseTerminalCtrl.m_getRecommendCell = HL.Field(HL.Function)
 
-
 SettlementDefenseTerminalCtrl.m_rewardCells = HL.Field(HL.Forward('UIListCache'))
-
 
 SettlementDefenseTerminalCtrl.m_settlementId = HL.Field(HL.String) << ""
 
-
 SettlementDefenseTerminalCtrl.m_selectedLevelId = HL.Field(HL.String) << ""
-
 
 SettlementDefenseTerminalCtrl.m_groupDataList = HL.Field(HL.Userdata)
 
-
 SettlementDefenseTerminalCtrl.m_selectedGroupIndex = HL.Field(HL.Number) << 0
-
 
 SettlementDefenseTerminalCtrl.m_maxUnlockedGroupIndex = HL.Field(HL.Number) << 0
 
-
 SettlementDefenseTerminalCtrl.m_maxUnCompletedGroupIndex = HL.Field(HL.Number) << 0
-
 
 SettlementDefenseTerminalCtrl.m_towerDefenseSystem = HL.Field(HL.Userdata)
 
-
 SettlementDefenseTerminalCtrl.m_settlementSystem = HL.Field(HL.Userdata)
-
 
 SettlementDefenseTerminalCtrl.m_lastFailedGroupIndex = HL.Field(HL.Number) << 0
 
-
 SettlementDefenseTerminalCtrl.s_lastFailedTdId = HL.StaticField(HL.String) << ''
 
-
 SettlementDefenseTerminalCtrl.m_enterSelectedTdId = HL.Field(HL.String) << ''
-
 
 
 
@@ -99,14 +47,9 @@ SettlementDefenseTerminalCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
-
 SettlementDefenseTerminalCtrl.ShowTerminalPanel = HL.StaticMethod(HL.Any) << function(arg)
     PhaseManager:OpenPhase(PhaseId.SettlementDefenseTerminal, arg)
 end
-
-
-
 
 
 SettlementDefenseTerminalCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -131,13 +74,9 @@ SettlementDefenseTerminalCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
     self.view.luaPanel:BlockAllInput()
 end
 
-
-
 SettlementDefenseTerminalCtrl.OnAnimationInFinished = HL.Override() << function(self)
     self.view.luaPanel:RecoverAllInput()
 end
-
-
 
 SettlementDefenseTerminalCtrl._InitAction = HL.Method() << function(self)
     self.view.leftList.addNode.addInfo.tipsBtn.onClick:AddListener(function()
@@ -175,15 +114,11 @@ SettlementDefenseTerminalCtrl._InitAction = HL.Method() << function(self)
     end)
 end
 
-
-
 SettlementDefenseTerminalCtrl._OnConfirmButtonClicked = HL.Method() << function(self)
     PhaseManager:PopPhase(PhaseId.SettlementDefenseTerminal, function()
         self.m_towerDefenseSystem:EnterPreparingPhase(self.m_selectedLevelId)
     end)
 end
-
-
 
 SettlementDefenseTerminalCtrl._InitGroupList = HL.Method() << function(self)
     local isGuideCompleted = Utils.isSettlementDefenseGuideCompleted()
@@ -244,10 +179,6 @@ SettlementDefenseTerminalCtrl._InitGroupList = HL.Method() << function(self)
     self:_RefreshLevelContent()
 end
 
-
-
-
-
 SettlementDefenseTerminalCtrl._RefreshGroupCell = HL.Method(HL.Table, HL.Number) << function(self, cell, luaIndex)
     local groupData = self.m_groupDataList[CSIndex(luaIndex)]
     if groupData == nil then
@@ -261,7 +192,7 @@ SettlementDefenseTerminalCtrl._RefreshGroupCell = HL.Method(HL.Table, HL.Number)
     local isSelected = self.m_selectedGroupIndex == luaIndex
     self:_SetGroupSelected(luaIndex, isSelected)
     if isSelected and cell.button ~= InputManagerInst.controllerNaviManager.curTarget then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.button)
+        self:SetNaviTarget(cell.button)
     end
 
     cell.gameObject.name = string.format("Level_%d", luaIndex)
@@ -296,9 +227,6 @@ SettlementDefenseTerminalCtrl._RefreshGroupCell = HL.Method(HL.Table, HL.Number)
     end
 end
 
-
-
-
 SettlementDefenseTerminalCtrl._OnLevelSelected = HL.Method(HL.Number) << function(self, luaIndex)
     if luaIndex == self.m_selectedGroupIndex then
         return
@@ -310,11 +238,6 @@ SettlementDefenseTerminalCtrl._OnLevelSelected = HL.Method(HL.Number) << functio
     self.m_selectedGroupIndex = luaIndex
     self:_RefreshLevelContent()
 end
-
-
-
-
-
 
 SettlementDefenseTerminalCtrl._SetGroupSelected = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Boolean)) << function(
     self, index, isSelected, playAnim)
@@ -347,10 +270,6 @@ SettlementDefenseTerminalCtrl._SetGroupSelected = HL.Method(HL.Number, HL.Boolea
     end
 
 end
-
-
-
-
 
 SettlementDefenseTerminalCtrl._RefreshLevelContent = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, isAuto, playAnim)
     local groupData = self.m_groupDataList[CSIndex(self.m_selectedGroupIndex)]
@@ -399,9 +318,6 @@ SettlementDefenseTerminalCtrl._RefreshLevelContent = HL.Method(HL.Opt(HL.Boolean
     self.m_selectedLevelId = levelId
 end
 
-
-
-
 SettlementDefenseTerminalCtrl._RefreshRecommendBuildingContent = HL.Method(HL.Userdata) << function(self, levelTableData)
     local recommendNode = self.view.rightDetail.recommendNode
     if not self.m_getRecommendCell then
@@ -423,9 +339,6 @@ SettlementDefenseTerminalCtrl._RefreshRecommendBuildingContent = HL.Method(HL.Us
     recommendNode.recommendScrollList:UpdateCount(#levelTableData.recommendBuildingItemIds)
 end
 
-
-
-
 SettlementDefenseTerminalCtrl._RefreshEnemyContent = HL.Method(HL.Userdata) << function(self, levelTableData)
     self.view.rightDetail.enemyInfoBtn.onClick:RemoveAllListeners()
     self.view.rightDetail.enemyInfoBtn.onClick:AddListener(function()
@@ -438,10 +351,6 @@ SettlementDefenseTerminalCtrl._RefreshEnemyContent = HL.Method(HL.Userdata) << f
         })
     end)
 end
-
-
-
-
 
 SettlementDefenseTerminalCtrl._RefreshRewardContent = HL.Method(HL.Userdata, HL.Userdata) << function(self, levelData, levelTableData)
     if levelData == nil or levelTableData == nil then
@@ -477,10 +386,6 @@ SettlementDefenseTerminalCtrl._RefreshRewardContent = HL.Method(HL.Userdata, HL.
     end
 end
 
-
-
-
-
 SettlementDefenseTerminalCtrl._RefreshMapContent = HL.Method(HL.String, HL.String) << function(self, mapImage, detailImage)
     if not string.isEmpty(mapImage) then
         self.view.mapNode.mapImage:LoadSprite(UIConst.UI_SPRITE_SETTLEMENT_DEFENSE_MAP, mapImage)
@@ -490,10 +395,6 @@ SettlementDefenseTerminalCtrl._RefreshMapContent = HL.Method(HL.String, HL.Strin
         self.view.mapNode.detailImage:LoadSprite(UIConst.UI_SPRITE_SETTLEMENT_DEFENSE_DETAIL, detailImage)
     end
 end
-
-
-
-
 
 SettlementDefenseTerminalCtrl._RefreshLevelBtnState = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isAuto, playAnim)
     local rightDetail = self.view.rightDetail
@@ -560,13 +461,9 @@ SettlementDefenseTerminalCtrl._RefreshLevelBtnState = HL.Method(HL.Boolean, HL.O
     end
 end
 
-
-
 SettlementDefenseTerminalCtrl._RefreshSafetyState = HL.Method() << function(self)
     self.view.topNode:SetState(self.m_towerDefenseSystem:GetSettlementDefenseState(self.m_settlementId):ToString())
 end
-
-
 
 SettlementDefenseTerminalCtrl._RefreshBuffState = HL.Method() << function(self)
     
@@ -595,8 +492,6 @@ SettlementDefenseTerminalCtrl._RefreshBuffState = HL.Method() << function(self)
         addInfoView.additionDurationCell.gameObject:SetActive(false)
     end
 end
-
-
 
 SettlementDefenseTerminalCtrl._ShowBuffInfoTips = HL.Method() << function(self)
     
@@ -644,15 +539,10 @@ SettlementDefenseTerminalCtrl._ShowBuffInfoTips = HL.Method() << function(self)
     addTipsNodeView.detailsNode.gameObject:SetActive(not isEmpty)
 end
 
-
-
 SettlementDefenseTerminalCtrl._HideBuffInfoTips = HL.Method() << function(self)
     self.view.leftList.addNode.stateController:SetState("UnSelected")
     self:_RefreshBuffState()
 end
-
-
-
 
 SettlementDefenseTerminalCtrl._GetLevelGroupName = HL.Method(HL.String).Return(HL.String) << function(self, tdId)
     local levelName = ""
@@ -665,8 +555,6 @@ SettlementDefenseTerminalCtrl._GetLevelGroupName = HL.Method(HL.String).Return(H
     end
     return levelName
 end
-
-
 
 
 

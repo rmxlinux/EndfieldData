@@ -161,10 +161,16 @@ end
 
 
 
+CashShopUtils.s_pendingFreeCashShopBuyList = {}
+
 
 
 
 function CashShopUtils.getGoodsPriceText(goodsId, useSDKFormat)
+    local haveCfg, cfg = Tables.giftpackCashShopGoodsDataTable:TryGetValue(goodsId)
+    if haveCfg and cfg.isFree then
+        return Language.LUA_CASH_SHOP_GOODS_FREE_PRICE
+    end
     
     local cashShopSystem = GameInstance.player.cashShopSystem
     
@@ -216,6 +222,13 @@ end
 function CashShopUtils.createOrder(goodsId, cashShopId, count)
     
     local cashShopSystem = GameInstance.player.cashShopSystem
+    local haveCfg, cfg = Tables.giftpackCashShopGoodsDataTable:TryGetValue(goodsId)
+    if haveCfg and cfg.isFree then
+        
+        CashShopUtils.recordFreeCashShopBuy(goodsId, count)
+        cashShopSystem:CreateFreeOrder(goodsId, cashShopId, count)
+        return
+    end
     
     if CashShopUtils.IsPS() then
         local content = ""
@@ -363,6 +376,44 @@ end
 
 
 
+function CashShopUtils.recordFreeCashShopBuy(goodsId, count)
+    table.insert(CashShopUtils.s_pendingFreeCashShopBuyList, {
+        goodsId = goodsId,
+        count = count,
+    })
+end
+
+
+function CashShopUtils.popFreeCashShopBuy()
+    if #CashShopUtils.s_pendingFreeCashShopBuyList == 0 then
+        return nil
+    end
+    return table.remove(CashShopUtils.s_pendingFreeCashShopBuyList, 1)
+end
+
+
+
+
+
+function CashShopUtils.getFreeCashShopRewardItems(goodsId, count)
+    local result = {}
+    local _, goodsData = Tables.cashShopGoodsTable:TryGetValue(goodsId)
+    if not goodsData or string.isEmpty(goodsData.rewardId) then
+        return result
+    end
+    local _, rewardTableData = Tables.rewardTable:TryGetValue(goodsData.rewardId)
+    if not rewardTableData then
+        return result
+    end
+    local buyCount = count or 1
+    for _, itemBundle in pairs(rewardTableData.itemBundles) do
+        table.insert(result, { id = itemBundle.id, count = itemBundle.count * buyCount })
+    end
+    return result
+end
+
+
+
 
 function CashShopUtils.getOrderSettleRewardItems(orderSettle)
     local result = {}
@@ -441,7 +492,9 @@ function CashShopUtils.tryShowRemainOrderList(endCallback, interrupt)
 
     local function endCallbackWrap()
         Notify(MessageConst.TOGGLE_IN_MAIN_HUD_STATE, { key = CashShopConst.RemainOrderMainHudKey, isInMainHud = true })
-        endCallback()
+        if endCallback then
+            endCallback()
+        end
     end
     Notify(MessageConst.TOGGLE_IN_MAIN_HUD_STATE, { key = CashShopConst.RemainOrderMainHudKey, isInMainHud = false })
 
@@ -726,6 +779,27 @@ end
 
 
 
+function CashShopUtils.GetGoodsLimitData(goodsId)
+    local _, cfg = Tables.giftpackCashShopGoodsDataTable:TryGetValue(goodsId)
+    if cfg and cfg.isFree then
+        local dict = GameInstance.player.cashShopSystem.freeGoodsLimitDataDic
+        local haveData, limitData = dict:TryGetValue(goodsId)
+        local purchaseCount = haveData and limitData.count or 0
+        local ret = {
+            goodsId = goodsId,
+            limitType = CS.Beyond.Gameplay.CashShopSystem.EPlatformLimitGoodsType.Common,
+            limitCount = cfg.availCount,
+            purchaseCount = purchaseCount,
+        }
+        return ret
+    else
+        local platformLimitGoodsData = GameInstance.player.cashShopSystem:GetPlatformLimitGoodsData(goodsId)
+        return platformLimitGoodsData
+    end
+end
+
+
+
 
 function CashShopUtils.TryOpenSpecialGiftPopup()
     local packId = GameInstance.player.cashShopSystem.waitShowSpecialGiftPackId
@@ -778,6 +852,19 @@ function CashShopUtils.TryCloseSpecialGiftPopup()
         ctrl:Exit()
     end
 end
+
+
+
+
+function CashShopUtils.TabDataShowPsStore(tabData)
+    if tabData.ShowPsStoreFunc ~= nil then
+        local show = tabData.ShowPsStoreFunc(tabData)
+        return show
+    else
+        return tabData.ShowPsStore
+    end
+end
+
 
 
 
@@ -1118,8 +1205,8 @@ function CashShopUtils.HaveCharPotentialExchange()
     for _, charInfo in pairs(charList) do
         local templateId = charInfo.templateId
         local currentPotentialLevel = charInfo.potentialLevel
-        local _, characterPotentialList = Tables.characterPotentialTable:TryGetValue(templateId)
-        if characterPotentialList then
+        local succ, characterPotentialList = Tables.characterPotentialTable:TryGetValue(templateId)
+        if succ and characterPotentialList then
             
             local maxPotentialLevel = characterPotentialList.potentialUnlockBundle.Count
             local materialId = characterPotentialList.firstItemId
@@ -1146,30 +1233,32 @@ function CashShopUtils.TryOpenShopTokenExchangePopUpPanel()
         local templateId = charInfo.templateId
         local currentPotentialLevel = charInfo.potentialLevel
         local succ, characterPotentialList = Tables.characterPotentialTable:TryGetValue(templateId)
-        
-        local maxPotentialLevel = characterPotentialList.potentialUnlockBundle.Count
-        
-        local unlockData = characterPotentialList.potentialUnlockBundle[0]
-        local materialId = unlockData.itemIds[0]
-        local getCount = Utils.getItemCount(materialId)
-        
-        local redundant = currentPotentialLevel + getCount - maxPotentialLevel
-        
-        if redundant > 0 then
-            logger.info(string.format("%s已满潜,itemID:%s,多出来%s个",
-                templateId, materialId, redundant))
-            local getItemDataSucc, itemData = Tables.itemTable:TryGetValue(materialId)
-            if getItemDataSucc then
-                table.insert(redundantItemInfo, {
-                    itemId = materialId,
-                    count = redundant,
-                    rarity = itemData.rarity,
-                    itemData = itemData,
-                    sortId1 = -itemData.sortId1,
-                    sortId2 = -itemData.sortId2,
-                })
-            else
-                logger.error("缺少数据 " .. materialId .. " 注意拉新。")
+        if succ and characterPotentialList then
+            
+            local maxPotentialLevel = characterPotentialList.potentialUnlockBundle.Count
+            
+            local unlockData = characterPotentialList.potentialUnlockBundle[0]
+            local materialId = unlockData.itemIds[0]
+            local getCount = Utils.getItemCount(materialId)
+            
+            local redundant = currentPotentialLevel + getCount - maxPotentialLevel
+            
+            if redundant > 0 then
+                logger.info(string.format("%s已满潜,itemID:%s,多出来%s个",
+                    templateId, materialId, redundant))
+                local getItemDataSucc, itemData = Tables.itemTable:TryGetValue(materialId)
+                if getItemDataSucc then
+                    table.insert(redundantItemInfo, {
+                        itemId = materialId,
+                        count = redundant,
+                        rarity = itemData.rarity,
+                        itemData = itemData,
+                        sortId1 = -itemData.sortId1,
+                        sortId2 = -itemData.sortId2,
+                    })
+                else
+                    logger.error("缺少数据 " .. materialId .. " 注意拉新。")
+                end
             end
         end
     end
@@ -1420,6 +1509,104 @@ end
 function CashShopUtils.IsShopCategory(categoryId)
     local isCashShopCategory = CashShopUtils.IsCashShopCategory(categoryId)
     return not isCashShopCategory
+end
+
+
+
+
+
+
+function CashShopUtils.LogGiftpackShop(targetCashShopId)
+    local logContent = "currTs:" .. tostring(DateTimeUtils.GetCurrentTimestampBySeconds()) .. "\n"
+    for cashShopId, showData in pairs(Tables.GiftpackCashShopClientShowDataTable) do
+        if cashShopId == targetCashShopId then
+            
+            local shopData = GameInstance.player.cashShopSystem:GetShopData(cashShopId)
+            if shopData == nil then
+                logContent = logContent .. string.format(
+                    "shopId:%s, 未找到shopData.\n", cashShopId)
+            else
+                logContent = logContent .. string.format(
+                    "shopId:%s, isOpen:%s.\n", cashShopId, shopData:IsOpen())
+                local goodsList = GameInstance.player.cashShopSystem:GetGoodsList(shopData)
+                logContent = logContent .. string.format(
+                    "GetGoodsList().Count:%s.\n", goodsList.Count)
+                if true then
+                    
+                    local list = shopData.goodsList
+                    if list.Count > 0 then
+                        for _, goodsData in pairs(list) do
+                            local isOpen = goodsData:IsOpen()
+                            logContent = logContent .. string.format(
+                                "\n\n%s的isOpen:%s\n",
+                                goodsData.goodsId, isOpen)
+
+                            
+                            if not isOpen then
+                                local openTs = goodsData.openTimeStamp
+                                local closeTs = goodsData.closeTimeStamp
+                                local currTs = DateTimeUtils.GetCurrentTimestampBySeconds()
+                                logContent = logContent .. string.format(
+                                    "openTs:%s. (%s)\n", openTs, DateTimeUtils.TimeStamp2ServerTime(openTs):ToString("yyyy-MM-dd HH:mm:ss"))
+                                logContent = logContent .. string.format(
+                                    "closeTs:%s. (%s)\n", closeTs, DateTimeUtils.TimeStamp2ServerTime(closeTs):ToString("yyyy-MM-dd HH:mm:ss"))
+                                if openTs ~= 0 and currTs < openTs then
+                                    logContent = logContent .. string.format(
+                                        "%s不显示因为%s < %s.\n",
+                                        goodsData.goodsId, currTs, openTs)
+                                elseif closeTs ~= 0 and currTs > closeTs then
+                                    logContent = logContent .. string.format(
+                                        "%s不显示因为%s > %s.\n",
+                                        goodsData.goodsId, currTs, closeTs)
+                                else
+                                    logContent = logContent .. string.format(
+                                        "%s不显示可能因为condition.\n",
+                                        goodsData.goodsId)
+                                    local succ, cfg = Tables.GiftpackCashShopGoodsDataTable:TryGetValue(goodsData.goodsId)
+                                    if succ then
+                                        local operator = cfg.conditionOpType
+                                        logContent = logContent .. string.format(
+                                            "condition operator:%s.\n",
+                                            operator)
+                                    end
+                                    local conditionDicValues = goodsData.conditionDic
+                                    logContent = logContent .. string.format(
+                                        "goodsData.conditionDic.Count:%s.\n",
+                                        conditionDicValues.Count)
+                                    for _, value in pairs(conditionDicValues) do
+                                        local id = value.conditionId
+                                        local flag = value.flag
+                                        logContent = logContent .. string.format(
+                                            "conditionID:%s, Flag:%s.\n",
+                                            id, flag)
+                                    end
+                                end
+                            end
+
+                        end
+                    end
+                end
+            end
+        end
+    end
+    UIManager:Open(PanelId.CommonBook, {
+        title = "debug",
+        content = logContent,
+        onConfirm = function()
+            
+        end,
+    })
+end
+
+
+function CashShopUtils.RecommendPanelAddRuntimeTabDataAndRefresh(id)
+    local _, ctrl = UIManager:IsOpen(PanelId.ShopRecommend)
+    if ctrl == nil then
+        logger.error("推荐页还未打开！")
+        return
+    end
+
+    ctrl:ForceAddRuntimeTabDataToBottom(id)
 end
 
 

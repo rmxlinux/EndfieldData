@@ -1,24 +1,13 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 Medal = HL.Class('Medal', UIWidgetBase)
-
-
 
 
 Medal._OnFirstTimeInit = HL.Override() << function(self)
     
 end
 
-
 Medal.id = HL.Field(HL.String) << ''
-
-
-
 
 
 Medal.InitMedal = HL.Method(HL.Opt(HL.Any))
@@ -34,9 +23,6 @@ Medal.InitMedal = HL.Method(HL.Opt(HL.Any))
     end
     self:_RenderIcon(medalBundle)
 end
-
-
-
 
 Medal._RenderIcon = HL.Method(HL.Any) << function(self, medalBundle)
     local iconPath = (self.view.config.USE_ICON_BIG == true) and UIConst.UI_SPRITE_MEDAL_ICON_BIG or UIConst.UI_SPRITE_MEDAL_ICON

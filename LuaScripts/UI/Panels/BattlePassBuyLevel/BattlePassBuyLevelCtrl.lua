@@ -3,36 +3,9 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BattlePassBuyLevel
 local PHASE_ID = PhaseId.BattlePassBuyLevel
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BattlePassBuyLevelCtrl = HL.Class('BattlePassBuyLevelCtrl', uiCtrl.UICtrl)
 
 local MIN_REFRESH_TIME = 0.1
-
 
 
 
@@ -42,50 +15,33 @@ BattlePassBuyLevelCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_BATTLE_PASS_BUY_LEVEL] = '_OnBuyLevel',
 }
 
-
 BattlePassBuyLevelCtrl.m_bpSystem = HL.Field(HL.Any)
-
 
 BattlePassBuyLevelCtrl.m_originiumEnough = HL.Field(HL.Boolean) << true
 
-
 BattlePassBuyLevelCtrl.m_maxLevel = HL.Field(HL.Number) << 1
-
 
 BattlePassBuyLevelCtrl.m_curLevel = HL.Field(HL.Number) << 1
 
-
 BattlePassBuyLevelCtrl.m_targetLevel = HL.Field(HL.Number) << 1
-
 
 BattlePassBuyLevelCtrl.m_buyLevel = HL.Field(HL.Number) << 0
 
-
 BattlePassBuyLevelCtrl.m_currExp = HL.Field(HL.Number) << 0
-
 
 BattlePassBuyLevelCtrl.m_seasonData = HL.Field(HL.Any)
 
-
 BattlePassBuyLevelCtrl.m_rewards = HL.Field(HL.Any)
-
 
 BattlePassBuyLevelCtrl.m_getCell = HL.Field(HL.Function)
 
-
 BattlePassBuyLevelCtrl.m_buyOriTrack = HL.Field(HL.Boolean) << false
-
 
 BattlePassBuyLevelCtrl.m_buyProtocalTrack = HL.Field(HL.Boolean) << false
 
-
 BattlePassBuyLevelCtrl.m_onBuyClose = HL.Field(HL.Function)
 
-
 BattlePassBuyLevelCtrl.m_updateKey = HL.Field(HL.Number) << -1
-
-
-
 
 
 BattlePassBuyLevelCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -128,17 +84,12 @@ BattlePassBuyLevelCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end, true)
 end
 
-
-
 BattlePassBuyLevelCtrl._InitNumberSelector = HL.Method() << function(self)
     local maxBuyLevel = math.max(self.m_maxLevel - self.m_curLevel, 1)
     self.view.numberSelector:InitNumberSelector(maxBuyLevel, 1, maxBuyLevel, function(curNumber)
         self:_RefreshLevelInfos(math.floor(curNumber))
     end)
 end
-
-
-
 
 BattlePassBuyLevelCtrl._OnBuyLevel = HL.Method(HL.Table) << function(self, arg)
     local curLevel = unpack(arg)
@@ -156,9 +107,6 @@ BattlePassBuyLevelCtrl._OnBuyLevel = HL.Method(HL.Table) << function(self, arg)
     })
     PhaseManager:PopPhase(PHASE_ID)
 end
-
-
-
 
 BattlePassBuyLevelCtrl._RefreshLevelInfos = HL.Method(HL.Opt(HL.Number)) << function(self, curNumber)
     
@@ -179,8 +127,6 @@ BattlePassBuyLevelCtrl._RefreshLevelInfos = HL.Method(HL.Opt(HL.Number)) << func
     
     self:_RefreshRewards(self.m_curLevel + 1, self.m_targetLevel)
 end
-
-
 
 BattlePassBuyLevelCtrl._InitViews = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
@@ -226,10 +172,6 @@ BattlePassBuyLevelCtrl._InitViews = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 BattlePassBuyLevelCtrl._RefreshRewards = HL.Method(HL.Number,HL.Number) << function(self, startLevel, endLevel)
     local levelGroupId = self.m_seasonData.levelGroupId
     local overrideLevelGroupId = self.m_seasonData.ovrLvRewardGroupId
@@ -266,10 +208,6 @@ BattlePassBuyLevelCtrl._RefreshRewards = HL.Method(HL.Number,HL.Number) << funct
     self.view.scrollList:UpdateCount(#self.m_rewards, 1, false, false, true)
 end
 
-
-
-
-
 BattlePassBuyLevelCtrl._OnUpdateCell = HL.Method(HL.Any,HL.Number) << function(self, obj, index)
     local cell = self.m_getCell(obj)
     cell:InitItem(self.m_rewards[index], true)
@@ -280,10 +218,7 @@ BattlePassBuyLevelCtrl._OnUpdateCell = HL.Method(HL.Any,HL.Number) << function(s
     end
 end
 
-
 BattlePassBuyLevelCtrl.m_init = HL.Field(HL.Boolean) << false
-
-
 
 BattlePassBuyLevelCtrl.OnShow = HL.Override() << function(self)
     if self.m_init then
@@ -292,8 +227,6 @@ BattlePassBuyLevelCtrl.OnShow = HL.Override() << function(self)
         self.m_init = true
     end
 end
-
-
 
 
 

@@ -2,15 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaItemConvert
 
-
-
-
-
-
-
-
 GachaItemConvertCtrl = HL.Class('GachaItemConvertCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -22,11 +14,7 @@ GachaItemConvertCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 GachaItemConvertCtrl.m_info = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -48,8 +36,6 @@ GachaItemConvertCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshAllUI()
 end
 
-
-
 GachaItemConvertCtrl.OnClose = HL.Override() << function(self)
     local onComplete = self.m_info.onComplete
     self.m_info = nil
@@ -57,8 +43,6 @@ GachaItemConvertCtrl.OnClose = HL.Override() << function(self)
         onComplete()
     end
 end
-
-
 
 
 
@@ -93,8 +77,6 @@ GachaItemConvertCtrl._InitUI = HL.Method() << function(self)
         self.view.controllerFocusHintNode.gameObject:SetActive(not isFocused)
     end)
 end
-
-
 
 GachaItemConvertCtrl._RefreshAllUI = HL.Method() << function(self)
     self.view.originalItem.itemIcon:InitItemIcon(self.m_info.originalItemId, true)

@@ -2,21 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipHudTips
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipHudTipsCtrl = HL.Class('SpaceshipHudTipsCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -29,14 +15,9 @@ SpaceshipHudTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 SpaceshipHudTipsCtrl.m_getCellFunc = HL.Field(HL.Function)
 
-
 SpaceshipHudTipsCtrl.m_charFavDatas = HL.Field(HL.Table)
-
-
-
 
 
 SpaceshipHudTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -55,7 +36,6 @@ SpaceshipHudTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
 SpaceshipHudTipsCtrl.OnLoadingPanelClosed = HL.StaticMethod() << function()
     if not Utils.isInSpaceShip() or UIManager:IsOpen(PANEL_ID) then
         return
@@ -72,8 +52,6 @@ SpaceshipHudTipsCtrl.OnLoadingPanelClosed = HL.StaticMethod() << function()
     end)
 end
 
-
-
 SpaceshipHudTipsCtrl.OnCharFriendshipChanged = HL.Method() << function(self)
     LuaSystemManager.mainHudActionQueue:AddRequest("SpaceshipHudTips", function()
         
@@ -84,8 +62,6 @@ SpaceshipHudTipsCtrl.OnCharFriendshipChanged = HL.Method() << function(self)
         self:_TryShowFavToast()
     end)
 end
-
-
 
 SpaceshipHudTipsCtrl._TryShowFavToast = HL.Method() << function(self)
     logger.info("SpaceshipHudTipsCtrl._TryShowFavToast")
@@ -123,10 +99,6 @@ SpaceshipHudTipsCtrl._TryShowFavToast = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 SpaceshipHudTipsCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local info = self.m_charFavDatas[index]
     local charData = Tables.characterTable[info.charId]
@@ -136,16 +108,12 @@ SpaceshipHudTipsCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(
     cell.oldFriendshipTxt.text = string.format(Language.LUA_SPACESHIP_CHAR_FRIENDSHIP_FORMAT, info.oldPercent)
 end
 
-
-
 SpaceshipHudTipsCtrl._OnAllToastFinished = HL.Method() << function(self)
     AudioAdapter.PostEvent("Au_UI_Popup_SpaceshipHudTipsPanel_Close")
     self.view.friendshipNode.animationWrapper:PlayOutAnimation(function()
         self:_Exit()
     end)
 end
-
-
 
 SpaceshipHudTipsCtrl._Exit = HL.Method() << function(self)
     local mainHudActionQueue = LuaSystemManager.mainHudActionQueue
@@ -159,15 +127,10 @@ SpaceshipHudTipsCtrl._Exit = HL.Method() << function(self)
     end
 end
 
-
-
 SpaceshipHudTipsCtrl.InterruptMainHudActionQueue = HL.Method() << function(self)
     self.view.productNode.animation:ClearTween(false)
     self.view.main.gameObject:SetActive(false)
 end
-
-
-
 
 SpaceshipHudTipsCtrl.TryAddFriendshipToast = HL.Method(HL.Number) << function(self, count)
     self.view.friendshipNode.gameObject:SetActive(true)

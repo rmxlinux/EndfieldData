@@ -1,27 +1,13 @@
 local Item = require_ex('UI/Widgets/Item')
 
-
-
-
-
-
-
-
-
 ItemAdventureReward = HL.Class('ItemAdventureReward', Item)
-
-
 
 
 ItemAdventureReward._OnFirstTimeInit = HL.Override() << function(self)
     
 end
 
-
 ItemAdventureReward.m_rewardInfo = HL.Field(HL.Table)
-
-
-
 
 ItemAdventureReward.InitItemAdventureReward = HL.Method(HL.Table) << function(self, rewardInfo)
     self:_FirstTimeInit()
@@ -32,8 +18,6 @@ ItemAdventureReward.InitItemAdventureReward = HL.Method(HL.Table) << function(se
     self:_UpdateBaseItem()
     self:_UpdateCornerMark()
 end
-
-
 
 ItemAdventureReward._UpdateBaseItem = HL.Method() << function(self)
     local rewardInfo = self.m_rewardInfo
@@ -93,8 +77,6 @@ ItemAdventureReward._UpdateBaseItem = HL.Method() << function(self)
     end
 end
 
-
-
 ItemAdventureReward._UpdateCornerMark = HL.Method() << function(self)
     local rewardInfo = self.m_rewardInfo
     
@@ -110,9 +92,6 @@ ItemAdventureReward._UpdateCornerMark = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 ItemAdventureReward._UpdateRewardIcon = HL.Method(HL.Any) << function(self, data)
     self.view.icon:InitItemIcon(data.id, self.view.config.USE_BIG_ICON)
@@ -135,9 +114,6 @@ ItemAdventureReward._UpdateRewardIcon = HL.Method(HL.Any) << function(self, data
         self.view.simpleStateController:SetState("NoRarity")
     end
 end
-
-
-
 
 ItemAdventureReward._UpdateRewardWeaponAddon = HL.Method(HL.Any) << function(self, data)
     local itemCfg = Tables.itemTable:GetValue(data.id)

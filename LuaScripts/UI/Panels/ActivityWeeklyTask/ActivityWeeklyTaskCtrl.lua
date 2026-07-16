@@ -2,31 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityWeeklyTask
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityWeeklyTaskCtrl = HL.Class('ActivityWeeklyTaskCtrl', uiCtrl.UICtrl)
-
 
 ActivityWeeklyTaskCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = 'OnUpdate',
@@ -34,30 +10,21 @@ ActivityWeeklyTaskCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_WEEKLY_TASK_CHANGE] = 'OnUpdate',
 }
 
-
 ActivityWeeklyTaskCtrl.m_activityId = HL.Field(HL.String) << ''
-
 
 ActivityWeeklyTaskCtrl.m_activity = HL.Field(HL.Any)
 
-
 ActivityWeeklyTaskCtrl.m_tasks = HL.Field(HL.Table)
-
 
 ActivityWeeklyTaskCtrl.m_mileStones = HL.Field(HL.Table)
 
-
 ActivityWeeklyTaskCtrl.m_taskCells = HL.Field(HL.Any)
-
 
 ActivityWeeklyTaskCtrl.m_mileStoneCells = HL.Field(HL.Any)
 
-
 ActivityWeeklyTaskCtrl.m_maxScore = HL.Field(HL.Number) << 0
 
-
 ActivityWeeklyTaskCtrl.m_viewBindingId = HL.Field(HL.Number) << 0
-
 
 ActivityWeeklyTaskCtrl.m_score = HL.Field(HL.Number) << 0
 
@@ -66,9 +33,6 @@ local TaskColorTable = {
     [2] = "Middle",
     [1] = "Low",
 }
-
-
-
 
 ActivityWeeklyTaskCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_score = -1
@@ -82,20 +46,15 @@ ActivityWeeklyTaskCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self:_Refresh()
 end
 
-
-
-
 ActivityWeeklyTaskCtrl._SetNaviTarget = HL.Method(HL.Number) << function(self, index)
     if index == 0 or not DeviceInfo.usingController  then
         return
     end
     local cell = self.m_taskCells:Get(index)
     if cell then
-        UIUtils.setAsNaviTarget(cell.naviDecorator)
+        self:SetNaviTarget(cell.naviDecorator)
     end
 end
-
-
 
 ActivityWeeklyTaskCtrl._Refresh = HL.Method() << function(self)
     local activityUnlocked = ActivityUtils.isActivityUnlocked(self.m_activityId)
@@ -119,8 +78,6 @@ ActivityWeeklyTaskCtrl._Refresh = HL.Method() << function(self)
         end)
     end
 end
-
-
 
 ActivityWeeklyTaskCtrl._GetTaskInfo = HL.Method() << function(self)
     local tasks = {}
@@ -147,8 +104,6 @@ ActivityWeeklyTaskCtrl._GetTaskInfo = HL.Method() << function(self)
     table.sort(tasks, Utils.genSortFunction({ "statusSortId", "sortId", "taskId" }, true))
     self.m_tasks = tasks
 end
-
-
 
 ActivityWeeklyTaskCtrl._GetMileStoneInfo = HL.Method() << function(self)
     self.m_maxScore = 0
@@ -190,8 +145,6 @@ ActivityWeeklyTaskCtrl._GetMileStoneInfo = HL.Method() << function(self)
     end
     self.m_score = self.m_activity.score
 end
-
-
 
 ActivityWeeklyTaskCtrl._RefreshTaskView = HL.Method() << function(self)
     self.m_taskCells:GraduallyRefresh(#self.m_tasks, self.view.config.TASK_CELL_GRADUALLY_SHOW_TIME, function(cell, index)
@@ -237,19 +190,9 @@ ActivityWeeklyTaskCtrl._RefreshTaskView = HL.Method() << function(self)
     end)
 end
 
-
-
-ActivityWeeklyTaskCtrl.OnClose = HL.Override() << function(self)
-    self.m_taskCells:OnClose()
-end
-
-
-
 ActivityWeeklyTaskCtrl.OnActivityCenterNaviFailed = HL.Method() << function(self)
     self:_SetNaviTarget(1)
 end
-
-
 
 ActivityWeeklyTaskCtrl._RefreshMileStoneView = HL.Method() << function(self)
     local canReceive = false
@@ -319,8 +262,6 @@ ActivityWeeklyTaskCtrl._RefreshMileStoneView = HL.Method() << function(self)
     self.view.mileStoneStateNode.button.gameObject:SetActive(canReceive)
 end
 
-
-
 ActivityWeeklyTaskCtrl._ReceiveAllMileStoneReward = HL.Method() << function(self)
     local ids = {}
     for _, mileStone in ipairs(self.m_mileStones) do
@@ -333,8 +274,6 @@ ActivityWeeklyTaskCtrl._ReceiveAllMileStoneReward = HL.Method() << function(self
     end
 end
 
-
-
 ActivityWeeklyTaskCtrl._ReceiveAllTaskReward = HL.Method() << function(self)
     local ids = {}
     for _, task in ipairs(self.m_tasks) do
@@ -346,9 +285,6 @@ ActivityWeeklyTaskCtrl._ReceiveAllTaskReward = HL.Method() << function(self)
         self.m_activity:CompleteTask(ids)
     end
 end
-
-
-
 
 ActivityWeeklyTaskCtrl.OnUpdate = HL.Method(HL.Table) << function(self, args)
     local id = unpack(args)

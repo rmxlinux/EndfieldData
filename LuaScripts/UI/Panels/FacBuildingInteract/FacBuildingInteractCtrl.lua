@@ -4,114 +4,6 @@ local uMath = CS.Unity.Mathematics.math
 local GeneralAbilityType = GEnums.GeneralAbilityType
 local AbilityState = CS.Beyond.Gameplay.GeneralAbilitySystem.AbilityState
 local PANEL_ID = PanelId.FacBuildingInteract
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacBuildingInteractCtrl = HL.Class('FacBuildingInteractCtrl', uiCtrl.UICtrl)
 
 local logisticInteractSampleOffsets = {
@@ -140,7 +32,6 @@ local INTERACT_ICON_DELETE_ALL = "btn_del_all_building_icon"
 
 
 
-
 FacBuildingInteractCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_BUILD_MODE_CHANGE] = 'OnBuildModeChange',
@@ -158,25 +49,18 @@ FacBuildingInteractCtrl.s_messages = HL.StaticField(HL.Table) << {
 
     [MessageConst.FAC_STOP_DRAG_IN_BATCH_MODE] = 'FacStopDragInBatchMode',
     [MessageConst.ACTIVE_BUILDING_LIKE] = 'OnActiveBuildingLike',
+    [MessageConst.FAC_ON_UDPIPE_INTERACT_STATE_CHANGED] = '_OnUdpipeInteractStateChanged',
 }
-
 
 FacBuildingInteractCtrl.m_buildingInteractHighlightEffect = HL.Field(HL.Table)
 
-
 FacBuildingInteractCtrl.m_subBuildingInteractHighlightEffect = HL.Field(HL.Table)
-
 
 FacBuildingInteractCtrl.m_logisticInteractHighlightEffect = HL.Field(HL.Table)
 
-
 FacBuildingInteractCtrl.m_pipeInteractHighlightEffect = HL.Field(HL.Table)
 
-
 FacBuildingInteractCtrl.m_hoverInteractHighlightEffect = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -227,8 +111,6 @@ FacBuildingInteractCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
 end
 
-
-
 FacBuildingInteractCtrl.OnShow = HL.Override() << function(self)
     self:_AddRegister()
     if not LuaSystemManager.factory.inTopView then
@@ -240,8 +122,6 @@ FacBuildingInteractCtrl.OnShow = HL.Override() << function(self)
         type = LuaSystemManager.factory.inBatchSelectMode and UIConst.MOUSE_ICON_HINT.Frame or UIConst.MOUSE_ICON_HINT.Default,
     })
 end
-
-
 FacBuildingInteractCtrl.OnHide = HL.Override() << function(self)
     self:_ClearRegister()
     CSFactoryUtil.DispatchFactoryBuildingApproachSelectedChanged(self.m_interactFacNodeId, nil)
@@ -252,14 +132,10 @@ FacBuildingInteractCtrl.OnHide = HL.Override() << function(self)
         type = UIConst.MOUSE_ICON_HINT.Default,
     })
 end
-
-
 FacBuildingInteractCtrl.OnClose = HL.Override() << function(self)
     self:_RemoveInteractOption() 
     self:_ClearRegister()
 end
-
-
 
 FacBuildingInteractCtrl._InitInteractHighlightEffects = HL.Method() << function(self)
     do
@@ -295,8 +171,6 @@ FacBuildingInteractCtrl._InitInteractHighlightEffects = HL.Method() << function(
     end
 end
 
-
-
 FacBuildingInteractCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     if not self.m_buildingInteractHighlightEffect and
         not self.m_subBuildingInteractHighlightEffect and
@@ -323,9 +197,6 @@ FacBuildingInteractCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.O
     return state
 end
 
-
-
-
 FacBuildingInteractCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function(self, state)
     if not state then
         return
@@ -338,12 +209,10 @@ FacBuildingInteractCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any
     self.m_hoverInteractHighlightEffect = state.hoverInteractHighlightEffect
 end
 
-
 FacBuildingInteractCtrl.m_hoverGridRectInt = HL.Field(CS.UnityEngine.RectInt)
 
-
-
 FacBuildingInteractCtrl._TailTick = HL.Method() << function(self)
+    if not CS.UnityEngine.Application.isFocused then return end
     if LuaSystemManager.factory.inBatchSelectMode then
         if not DeviceInfo.usingTouch then
             local screenPos = InputManager.mousePosition
@@ -374,9 +243,6 @@ FacBuildingInteractCtrl._TailTick = HL.Method() << function(self)
     self:_UpdateInteractTarget(LuaSystemManager.factory.inTopView)
 end
 
-
-
-
 FacBuildingInteractCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, active)
     self:_RemoveInteractOption() 
     self.m_hoverInteractHighlightEffect.gameObject:SetActive(false)
@@ -390,9 +256,6 @@ FacBuildingInteractCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(s
     self.m_pipeInteractHighlightEffect.boxMarkNode.gameObject:SetActive(pipeMarkShowAsBox)
 end
 
-
-
-
 FacBuildingInteractCtrl.UpdateInteractOption = HL.Method(HL.Opt(HL.Boolean)) << function(self, force)
     if force or self:IsShow() then
         self:_UpdateInteractTarget()
@@ -401,13 +264,16 @@ end
 
 
 
+FacBuildingInteractCtrl._OnUdpipeInteractStateChanged = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
+    self:_UpdateInteractTarget(LuaSystemManager.factory.inTopView, true)
+end
+
+
 
 
 FacBuildingInteractCtrl.m_tailTickId = HL.Field(HL.Number) << -1
 
-
 FacBuildingInteractCtrl.m_slowlyUpdateCor = HL.Field(HL.Thread)
-
 
 
 FacBuildingInteractCtrl._AddRegister = HL.Method() << function(self)
@@ -432,8 +298,6 @@ FacBuildingInteractCtrl._AddRegister = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 FacBuildingInteractCtrl._ClearRegister = HL.Method() << function(self)
     local touchPanel = UIManager.commonTouchPanel
@@ -461,13 +325,9 @@ end
 
 
 
-
 FacBuildingInteractCtrl.m_onClickScreen = HL.Field(HL.Function)
 
-
-
-
-FacBuildingInteractCtrl._OnClickScreen = HL.Method(HL.Userdata) << function(self, eventData)
+FacBuildingInteractCtrl._OnClickScreen = HL.Method(HL.Userdata, HL.Opt(HL.Boolean)) << function(self, eventData, forceSelectFirstTarget)
     if not LuaSystemManager.factory.inTopView then
         return
     end
@@ -476,16 +336,32 @@ FacBuildingInteractCtrl._OnClickScreen = HL.Method(HL.Userdata) << function(self
         return
     end
 
+    Notify(MessageConst.FAC_TOPVIEW_HIDE_MULTI_TARGET_MENU)
+
     if LuaSystemManager.factory.inBatchSelectMode then
         self:_ClickScreenInBatchMode()
     else
         self:_UpdateInteractTarget(true, true)
         self:_UpdateFakeInteractOption()
-        self:_OnClickFakeInteractOption()
+
+        if LuaSystemManager.factory.inDestroyMode then
+            self:_OnClickFakeInteractOption()
+        else
+            local targets = self:_CollectAllInteractTargets()
+            if #targets == 0 then
+                self:_RemoveInteractOption()
+            elseif #targets == 1 or forceSelectFirstTarget then
+                targets[1].action()
+            else
+                local screenRect = self:_CalcInteractScreenRect()
+                Notify(MessageConst.FAC_TOPVIEW_SHOW_MULTI_TARGET_MENU, {
+                    targets = targets,
+                    screenRect = screenRect,
+                })
+            end
+        end
     end
 end
-
-
 
 FacBuildingInteractCtrl._ClickScreenInBatchMode = HL.Method() << function(self)
     self:_UpdateInteractTarget(true, true)
@@ -519,6 +395,10 @@ FacBuildingInteractCtrl._ClickScreenInBatchMode = HL.Method() << function(self)
     if not nodeId then
         return
     end
+    if FactoryUtils.isInvalidBuilding(nodeId) then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_FACTORY_INVALID_BUILDING_OP_DISABLE_TOAST)
+        return 
+    end
     local slotId = FactoryUtils.getPendingBuildingNodeSlotId(nodeId)
     if slotId then
         unitIndex = nil
@@ -551,11 +431,7 @@ FacBuildingInteractCtrl._ClickScreenInBatchMode = HL.Method() << function(self)
     end
 end
 
-
 FacBuildingInteractCtrl.m_onRightClickScreen = HL.Field(HL.Function)
-
-
-
 
 FacBuildingInteractCtrl._OnRightClickScreen = HL.Method(HL.Userdata) << function(self, eventData)
     if not LuaSystemManager.factory.inTopView then
@@ -570,11 +446,7 @@ FacBuildingInteractCtrl._OnRightClickScreen = HL.Method(HL.Userdata) << function
     
 end
 
-
 FacBuildingInteractCtrl.m_onLongPressScreen = HL.Field(HL.Function)
-
-
-
 
 FacBuildingInteractCtrl._OnLongPressScreen = HL.Method(HL.Userdata) << function(self, eventData)
     if not LuaSystemManager.factory.inTopView then
@@ -618,11 +490,7 @@ FacBuildingInteractCtrl._OnLongPressScreen = HL.Method(HL.Userdata) << function(
     end
 end
 
-
 FacBuildingInteractCtrl.m_onDragScreen = HL.Field(HL.Function)
-
-
-
 
 FacBuildingInteractCtrl._OnDragScreen = HL.Method(HL.Userdata) << function(self, eventData)
     if LuaSystemManager.factory.inDragSelectBatchMode then
@@ -633,11 +501,7 @@ FacBuildingInteractCtrl._OnDragScreen = HL.Method(HL.Userdata) << function(self,
 end
 
 
-
 FacBuildingInteractCtrl.m_onDragScreenBegin = HL.Field(HL.Function)
-
-
-
 
 FacBuildingInteractCtrl._OnDragScreenBegin = HL.Method(Vector2) << function(self, pos)
     if LuaSystemManager.factory.inDragSelectBatchMode then
@@ -649,11 +513,7 @@ FacBuildingInteractCtrl._OnDragScreenBegin = HL.Method(Vector2) << function(self
 end
 
 
-
 FacBuildingInteractCtrl.m_onDragScreenEnd = HL.Field(HL.Function)
-
-
-
 
 FacBuildingInteractCtrl._OnDragScreenEnd = HL.Method(HL.Opt(Vector2)) << function(self, pos)
     if LuaSystemManager.factory.inDragSelectBatchMode then
@@ -667,11 +527,7 @@ end
 
 local pressHintDelay = 0.2
 local pressDuration = 0.5
-
 FacBuildingInteractCtrl.m_onPressScreen = HL.Field(HL.Function)
-
-
-
 
 FacBuildingInteractCtrl._OnPressScreen = HL.Method(HL.Userdata) << function(self, eventData)
     if not LuaSystemManager.factory.inTopView then
@@ -756,11 +612,7 @@ FacBuildingInteractCtrl._OnPressScreen = HL.Method(HL.Userdata) << function(self
     end)
 end
 
-
 FacBuildingInteractCtrl.m_onReleaseScreen = HL.Field(HL.Function)
-
-
-
 
 FacBuildingInteractCtrl._OnReleaseScreen = HL.Method(HL.Userdata) << function(self, eventData)
     if not LuaSystemManager.factory.inTopView then
@@ -784,19 +636,13 @@ FacBuildingInteractCtrl._OnReleaseScreen = HL.Method(HL.Userdata) << function(se
     end
 end
 
-
-
 FacBuildingInteractCtrl._StopPressHint = HL.Method() << function(self)
     self.m_pressHintCor = self:_ClearCoroutine(self.m_pressHintCor)
     self.view.longPressHint.gameObject:SetActive(false)
     self.view.longPressHint.image:DOKill()
 end
 
-
 FacBuildingInteractCtrl.m_pressHintCor = HL.Field(HL.Thread)
-
-
-
 
 
 
@@ -811,9 +657,6 @@ FacBuildingInteractCtrl.OnBuildModeChange = HL.Method(HL.Number) << function(sel
     CSFactoryUtil.ClearHoverGrid()
     self.m_hoverGridRectInt = nil
 end
-
-
-
 
 FacBuildingInteractCtrl.OnFacDestroyModeChange = HL.Method(HL.Boolean) << function(self, inDestroyMode)
     
@@ -858,15 +701,10 @@ FacBuildingInteractCtrl.OnFacDestroyModeChange = HL.Method(HL.Boolean) << functi
     self.m_hoverGridRectInt = nil
 end
 
-
-
 FacBuildingInteractCtrl.BeforeExitDestroyMode = HL.Method() << function(self)
     
     self.view.batchNode:PlayOutAnimation()
 end
-
-
-
 
 FacBuildingInteractCtrl.OnBuildingRemoved = HL.Method(HL.Table) << function(self, arg)
     
@@ -876,18 +714,12 @@ FacBuildingInteractCtrl.OnBuildingRemoved = HL.Method(HL.Table) << function(self
     end
 end
 
-
-
-
 FacBuildingInteractCtrl.OnPendingSlotsRemoved = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     self:_RemoveInteractOption()
     if LuaSystemManager.factory.inBatchSelectMode then
         self:_ClearAllBatchTargets()
     end
 end
-
-
-
 
 FacBuildingInteractCtrl._OnInteractFactory = HL.Method(HL.Table) << function(self, option)
     local buildingNodeId = option.buildingNodeId
@@ -962,11 +794,6 @@ FacBuildingInteractCtrl._OnInteractFactory = HL.Method(HL.Table) << function(sel
     end
 end
 
-
-
-
-
-
 FacBuildingInteractCtrl._OpenBuildingPanel = HL.Method(HL.Opt(HL.Any, HL.Table, HL.String)).Return(HL.Opt(HL.Number))
 << function(self, nodeId, customArg, buildingId)
     Notify(MessageConst.FAC_OPEN_BUILDING_PANEL, {
@@ -978,9 +805,32 @@ end
 
 
 
+FacBuildingInteractCtrl._IsUdPipeConnected = HL.Method(HL.Number).Return(HL.Boolean) << function(self, nodeId)
+    local nodeHandler = FactoryUtils.getBuildingNodeHandler(nodeId)
+    if nodeHandler == nil then
+        return false
+    end
+    local cpt = nodeHandler:GetComponentInPosition(GEnums.FCComponentPos.FluidUdPipe:GetHashCode())
+    return cpt ~= nil and cpt.valid and cpt.udPipe.connectComponent ~= nil
+end
+
+
+
+
+
+
+FacBuildingInteractCtrl._AppendDebugSuffix = HL.Method(HL.String, HL.Number, HL.Number).Return(HL.String)
+<< function(self, text, chapterId, nodeId)
+    if not CS.Beyond.Gameplay.Factory.BuildingName.s_showDebugNodeId then
+        return text
+    end
+    return text .. " (ch:" .. chapterId .. ", nid:" .. nodeId .. ")"
+end
+
 FacBuildingInteractCtrl._RemoveInteractOption = HL.Method() << function(self)
     CSFactoryUtil.DispatchFactoryBuildingApproachSelectedChanged(self.m_interactFacNodeId, nil)
     self.m_interactFacNodeId = nil
+    self.m_interactFacOverlapNodeIds = nil
     self.m_selectedInteractFacNodeId = nil
     self.m_buildingUseDefaultOption = nil
     self.m_interactSubBuildingIndex = -1
@@ -1035,13 +885,6 @@ FacBuildingInteractCtrl._RemoveInteractOption = HL.Method() << function(self)
     GameInstance.player.generalAbilitySystem:DeactivateTempAbility(GeneralAbilityType.BuildingLike)
 end
 
-
-
-
-
-
-
-
 FacBuildingInteractCtrl._SetEffect = HL.Method(HL.Table, CS.UnityEngine.Vector3, HL.Number, HL.Opt(CS.UnityEngine.Vector3, CS.UnityEngine.Vector3))
         << function(self, effect, pos, offsetY, rot, scale)
     if DeviceInfo.usingTouch and LuaSystemManager.factory.inTopView then
@@ -1064,12 +907,6 @@ FacBuildingInteractCtrl._SetEffect = HL.Method(HL.Table, CS.UnityEngine.Vector3,
         effect["effect" .. k]:Update(0)
     end
 end
-
-
-
-
-
-
 
 FacBuildingInteractCtrl._SetBoxEffect = HL.Method(HL.Table, CS.UnityEngine.Vector3, HL.Opt(CS.UnityEngine.Vector3, HL.String)) << function(self, effect, pos, rot, buildingId)
     if DeviceInfo.usingTouch and LuaSystemManager.factory.inTopView then
@@ -1107,10 +944,6 @@ end
 
 
 
-
-
-
-
 FacBuildingInteractCtrl._GetGridUnitFromWorldPos = HL.Method(Vector2, HL.Number).Return(HL.Table) << function(self, worldPos, sampleType)
     local gridPos = Unity.Vector2Int(lume.round(worldPos.x), lume.round(worldPos.y))
 
@@ -1134,33 +967,26 @@ end
 
 
 
-
 FacBuildingInteractCtrl.m_interactFacNodeId = HL.Field(HL.Any)
 
 
-FacBuildingInteractCtrl.m_interactFacNodeIdIsBuilding = HL.Field(HL.Boolean) << false
+FacBuildingInteractCtrl.m_interactFacOverlapNodeIds = HL.Field(HL.Any)
 
+FacBuildingInteractCtrl.m_interactFacNodeIdIsBuilding = HL.Field(HL.Boolean) << false
 
 FacBuildingInteractCtrl.m_buildingUseDefaultOption = HL.Field(HL.Any)
 
-
 FacBuildingInteractCtrl.m_interactSubBuildingIndex = HL.Field(HL.Number) << -1
-
 
 FacBuildingInteractCtrl.m_interactLogisticPos = HL.Field(CS.UnityEngine.Vector2Int)
 
-
 FacBuildingInteractCtrl.m_interactPipeNodeId = HL.Field(HL.Any)
-
 
 FacBuildingInteractCtrl.m_interactPipeUnitIndex = HL.Field(HL.Any) 
 
-
 FacBuildingInteractCtrl.m_delayedPipeNodeInfo = HL.Field(HL.Table)
 
-
-
-
+FacBuildingInteractCtrl.m_lastDetectWorldPos = HL.Field(HL.Any)
 
 
 FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, isPreview, forceUpdate)
@@ -1210,6 +1036,7 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
             end
         end
         playerPos = worldPos
+        self.m_lastDetectWorldPos = worldPos
         playerForward = Vector3.forward
         playerRight = Vector3.right
 
@@ -1224,12 +1051,15 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
 
     
     local foundBuilding, targetBuildingNodeId, targetBuildingTemplateId, targetBuildingPosition, targetBuildingRotation, targetBuildingAdjustMapHeight, subBuildingInfo
+    local targetBuildingChapterId, pipeChapterId, beltChapterId
+    local csOverlappingNodeIds
     if useAsyncRst then
         
         local succ, info = CSFactoryUtil.GetShouldInteractFacEntityUsingAsyncRst()
         foundBuilding = succ and info.valid and info.nodeId > 0
         if foundBuilding then
             targetBuildingNodeId = info.nodeId
+            targetBuildingChapterId = info.chapterId
             targetBuildingTemplateId = info.templateName
             targetBuildingPosition = info.position:ToVector3()
             targetBuildingRotation = info.rotation:ToVector3()
@@ -1244,9 +1074,19 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
             end
         end
     else
-        foundBuilding, targetBuildingNodeId, targetBuildingTemplateId, targetBuildingPosition, targetBuildingRotation, targetBuildingAdjustMapHeight, subBuildingInfo
+        foundBuilding, targetBuildingNodeId, targetBuildingTemplateId, targetBuildingPosition, targetBuildingRotation, targetBuildingAdjustMapHeight, subBuildingInfo, csOverlappingNodeIds
             = CSFactoryUtil.GetShouldInteractFacEntity(LuaSystemManager.factory.inDestroyMode, maxDist, maxAngle, playerPos, playerForward, isClickMode, isClickMode)
     end
+
+    
+    local overlapList = nil
+    if csOverlappingNodeIds and csOverlappingNodeIds.Count > 0 then
+        overlapList = {}
+        for i = 0, csOverlappingNodeIds.Count - 1 do
+            overlapList[#overlapList + 1] = csOverlappingNodeIds[i]
+        end
+    end
+    self.m_interactFacOverlapNodeIds = overlapList
 
     local buildingPendingSlotId = foundBuilding and CSFactoryUtil.GetBlueprintSlotId(chapterId, targetBuildingNodeId) or 0
     local isPendingBuilding = buildingPendingSlotId > 0
@@ -1270,11 +1110,13 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
         end
         local isHub = isBuilding and (buildingData.type == GEnums.FacBuildingType.Hub or buildingData.type == GEnums.FacBuildingType.SubHub)
         local isXLoader = isBuilding and (buildingData.type == GEnums.FacBuildingType.Loader or buildingData.type == GEnums.FacBuildingType.Unloader)
+        local isUdPipe = isBuilding and (buildingData.type == GEnums.FacBuildingType.UdPipeLoader or buildingData.type == GEnums.FacBuildingType.UdPipeUnloader)
 
         local needUpdateBuildingEffect = false
         if buildingChanged or forceUpdate then
             self.m_interactFacNodeIdIsBuilding = isBuilding
             if not isClickMode then
+                local isInvalidBuilding = FactoryUtils.isInvalidBuilding(nodeId)
                 
                 local args = {
                     type = CS.Beyond.Gameplay.Core.InteractOptionType.Factory,
@@ -1284,17 +1126,42 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
                     templateId = targetBuildingTemplateId,
                     icon = LuaSystemManager.factory.inDestroyMode
                         and (FactoryUtils.isOthersSocialBuilding(nodeId) and INTERACT_ICON_DELETE_SOCIAL or INTERACT_ICON_DELETE)
-                        or INTERACT_ICON_COMMON,
+                        or (isInvalidBuilding and INTERACT_ICON_DELETE or INTERACT_ICON_COMMON),
+                    isDel = isInvalidBuilding,
                 }
                 if isPendingBuilding then
                     args.text = FactoryUtils.getPendingSlotName(buildingPendingSlotId)
                     args.action = function()
                         self:_OnInteractFactory({ buildingNodeId = nodeId })
                     end
+                elseif isInvalidBuilding then
+                    if isBuilding then
+                        args.text = string.format(Language.LUA_FACTORY_INVALID_BUILDING_INTERACT, buildingData.name)
+                    else
+                        local unitData = FactoryUtils.getLogisticData(targetBuildingTemplateId)
+                        args.text = string.format(Language.LUA_FACTORY_INVALID_BUILDING_INTERACT, unitData.name)
+                    end
+                    args.action = function()
+                        FactoryUtils.delBuilding(nodeId)
+                    end
                 elseif isBuilding then
                     args.text = buildingData.name
+                    
+                    
+                    if isUdPipe and not LuaSystemManager.factory.inDestroyMode and self:_IsUdPipeConnected(nodeId) then
+                        args.text = string.format(Language.LUA_FAC_UDPIPE_INTERACT_CONNECTED, buildingData.name)
+                    end
                     args.action = function()
                         self:_OnInteractFactory({ buildingNodeId = nodeId })
+                    end
+                    if not LuaSystemManager.factory.inDestroyMode then
+                        args.longPressAction = function()
+                            if FactoryUtils.canMoveBuilding(nodeId, true) then
+                                Notify(MessageConst.FAC_ENTER_BUILDING_MODE, { nodeId = nodeId })
+                            else
+                                Notify(MessageConst.SHOW_TOAST, Language.LUA_FACTORY_BUILDING_MOVE_NOT_ALLOWED)
+                            end
+                        end
                     end
                 else
                     local unitData = FactoryUtils.getLogisticData(targetBuildingTemplateId)
@@ -1303,12 +1170,15 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
                         self:_OnInteractFactory({ nodeId = nodeId })
                     end
                 end
+                if useAsyncRst then
+                    args.text = self:_AppendDebugSuffix(args.text, targetBuildingChapterId, nodeId)
+                end
 
                 if LuaSystemManager.factory.inDestroyMode then
                     args.isDel = true
                 end
 
-                if isBuilding and not isPendingBuilding then
+                if isBuilding and not isPendingBuilding and not isInvalidBuilding then
                     if not self.m_interactFacNodeId then
                         GameWorld.interactiveFacWrapperManager:OnFacBuildingInteractOptionAdded(nodeId)
                     else
@@ -1455,6 +1325,9 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
                     
                     local inputName = I18nUtils.CombineStringWithLanguageSpilt(Language.LUA_FAC_HUB_INPUT, newSubIndex)
                     args.text = string.format("<color=#fff100>%s</color>", inputName)
+                    if useAsyncRst then
+                        args.text = self:_AppendDebugSuffix(args.text, targetBuildingChapterId, nodeId)
+                    end
                     args.icon = "btn_fac_hub_port"
                     args.action = function()
                         self:_OnInteractFactory({
@@ -1471,6 +1344,9 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
                         msg = MessageConst.UPDATE_INTERACT_OPTION
                     end
                     args.text = Tables.factoryBuildingTable[subBuildingTemplateId].name
+                    if useAsyncRst then
+                        args.text = self:_AppendDebugSuffix(args.text, targetBuildingChapterId, nodeId)
+                    end
                     args.action = function()
                         self:_OnInteractFactory({
                             buildingNodeId = subNodeId,
@@ -1554,7 +1430,7 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
     
     local pipeNodeId, pipeGridUnit, pipeGridPos
     if isClickMode then
-        if not FactoryUtils.isPipeInSimpleFigure() then
+        if LuaSystemManager.factory:GetSimpleFigureModeFromRenderer() ~= FacConst.SIMPLE_FIGURE_MODE.SimplePipeFigure then
             pipeGridPos = GameInstance.remoteFactoryManager.visual:WorldToBeltGrid(playerPos)
             pipeGridUnit = self:_GetGridUnitFromWorldPos(pipeGridPos, FacConst.FAC_SAMPLE_TYPE.Pipe)
             pipeGridPos = Unity.Vector2Int(lume.round(pipeGridPos.x), lume.round(pipeGridPos.y))
@@ -1574,6 +1450,7 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
                 nodeId = info.nodeId
                 unitIndex = info.uintIndex
                 pipeGridPos = Unity.Vector2Int(math.floor(info.position.x), math.floor(info.position.z))
+                pipeChapterId = info.chapterId
             end
         else
             success, pipeGridPos, nodeId, unitIndex = CSFactoryUtil.GetShouldInteractLogistic(false, LuaSystemManager.factory.inDestroyMode, true)
@@ -1644,17 +1521,20 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
 
             if not isClickMode then
                 
+                local isInvalidBuilding = FactoryUtils.isInvalidBuilding(pipeNodeId)
                 local interactArgs = {
                     type = CS.Beyond.Gameplay.Core.InteractOptionType.Factory,
                     sourceId = INTERACT_SOURCE_ID_PIPE,
                     templateId = pipeGridUnit.unitTemplateId,
-                    isDel = LuaSystemManager.factory.inDestroyMode,
+                    isDel = LuaSystemManager.factory.inDestroyMode or isInvalidBuilding,
 
                     text = isPendingPipe and FactoryUtils.getPendingSlotName(pipePendingSlotId) or Language.LUA_FAC_PIPE_INTERACT_OPTION,
                     icon = LuaSystemManager.factory.inDestroyMode and INTERACT_ICON_DELETE or INTERACT_ICON_COMMON,
 
                     action = function()
-                        if LuaSystemManager.factory.inDestroyMode then
+                        if isInvalidBuilding then
+                            FactoryUtils.delBuilding(pipeNodeId)
+                        elseif LuaSystemManager.factory.inDestroyMode then
                             self:_OnInteractFactory({ nodeId = pipeGridUnit.nodeId, unitIndex = pipeGridUnit.unitIndex })
                         else
                             self:_OnInteractFactory({ nodeId = pipeGridUnit.nodeId, unitIndex = pipeGridUnit.unitIndex })
@@ -1662,6 +1542,12 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
                     end,
                     sortId = 500, 
                 }
+                if isInvalidBuilding then
+                    interactArgs.text = string.format(Language.LUA_FACTORY_INVALID_BUILDING_INTERACT, interactArgs.text)
+                end
+                if useAsyncRst then
+                    interactArgs.text = self:_AppendDebugSuffix(interactArgs.text, pipeChapterId, pipeNodeId)
+                end
                 Notify(MessageConst.ADD_INTERACT_OPTION, interactArgs)
 
                 if LuaSystemManager.factory.inDestroyMode then
@@ -1712,6 +1598,7 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
             
             
             self.m_interactFacNodeId = nil
+            self.m_interactFacOverlapNodeIds = nil
         end
     end
     
@@ -1720,7 +1607,7 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
     local logisticPos
     local beltGridUnit
     if isClickMode then
-        if not self.m_interactFacNodeId and not self.m_interactPipeNodeId and not FactoryUtils.isBeltInSimpleFigure() then
+        if LuaSystemManager.factory:GetSimpleFigureModeFromRenderer() ~= FacConst.SIMPLE_FIGURE_MODE.SimpleBeltFigure then
             local beltPos = GameInstance.remoteFactoryManager.visual:WorldToBeltGrid(playerPos)
             beltGridUnit = self:_GetGridUnitFromWorldPos(beltPos, FacConst.FAC_SAMPLE_TYPE.Belt)
             if beltGridUnit.success then
@@ -1739,6 +1626,7 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
                 nodeId = info.nodeId
                 unitIndex = info.uintIndex
                 logisticPos = Unity.Vector2Int(math.floor(info.position.x), math.floor(info.position.z))
+                beltChapterId = info.chapterId
             end
         else
             success, logisticPos, nodeId, unitIndex = CSFactoryUtil.GetShouldInteractLogistic(true, LuaSystemManager.factory.inDestroyMode, true)
@@ -1822,6 +1710,9 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
                 else
                     args.sortId = 300 
                     args.text = logisticName
+                    if useAsyncRst then
+                        args.text = self:_AppendDebugSuffix(args.text, beltChapterId, beltGridUnit.nodeId)
+                    end
                 end
                 if delAllArgs then
                     Notify(MessageConst.ADD_INTERACT_OPTION, delAllArgs)
@@ -1898,9 +1789,6 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
     self:_UpdatePendingSlotHighlight(buildingPendingSlotId, pipePendingSlotId, beltPendingSlotId)
 end
 
-
-
-
 FacBuildingInteractCtrl.OnActiveBuildingLike = HL.Method(HL.Any) << function(self, args)
     local nodeId = unpack(args)
     FactoryUtils.likeSocialBuilding(nodeId, function()
@@ -1912,44 +1800,27 @@ FacBuildingInteractCtrl.OnActiveBuildingLike = HL.Method(HL.Any) << function(sel
 end
 
 
-
 FacBuildingInteractCtrl.m_lastControllerHoverGridPos = HL.Field(HL.Any)
-
 
 FacBuildingInteractCtrl.m_curHighlightedPipeNodeId = HL.Field(HL.Any)
 
-
 FacBuildingInteractCtrl.m_curHighlightedPipeUnitIndex = HL.Field(HL.Any)
-
-
-
-
 
 FacBuildingInteractCtrl._SetHighlightedPipeNode = HL.Method(HL.Opt(HL.Number, HL.Number)) << function(self, pipeNodeId, unitIndex)
     if self.m_curHighlightedPipeNodeId == pipeNodeId and self.m_curHighlightedPipeUnitIndex == unitIndex then
-        
         return
     end
-    if self.m_curHighlightedPipeNodeId then
-        
-        GameInstance.remoteFactoryManager:SoloSelect(self.m_curHighlightedPipeNodeId, false)
-    end
     if pipeNodeId and not (DeviceInfo.usingTouch and LuaSystemManager.factory.inTopView) then
-        
-        GameInstance.remoteFactoryManager:SoloSelect(pipeNodeId, true, unitIndex)
+        LuaSystemManager.factory:RequestPipeHighlight("hover", pipeNodeId, unitIndex)
+    else
+        LuaSystemManager.factory:ReleasePipeHighlight("hover")
     end
     self.m_curHighlightedPipeNodeId = pipeNodeId
     self.m_curHighlightedPipeUnitIndex = unitIndex
 end
 
 
-
 FacBuildingInteractCtrl.m_curHighlightedSlotIds = HL.Field(HL.Table)
-
-
-
-
-
 
 FacBuildingInteractCtrl._UpdatePendingSlotHighlight = HL.Method(HL.Number, HL.Number, HL.Number) << function(self, buildingSlotId, pipeSlotId, beltSlotId)
     local newIds = {}
@@ -1978,22 +1849,15 @@ end
 
 
 
-
 FacBuildingInteractCtrl.m_selectedInteractFacNodeId = HL.Field(HL.Any)
-
 
 FacBuildingInteractCtrl.m_selectedInteractFacNodeIdIsBuilding = HL.Field(HL.Boolean) << false
 
-
 FacBuildingInteractCtrl.m_selectedInteractSubBuildingIndex = HL.Field(HL.Number) << -1
-
 
 FacBuildingInteractCtrl.m_selectedInteractLogisticPos = HL.Field(CS.UnityEngine.Vector2Int)
 
-
 FacBuildingInteractCtrl.m_selectedInteractPipeNodeId = HL.Field(HL.Any)
-
-
 
 
 FacBuildingInteractCtrl._InitFakeInteractOption = HL.Method() << function(self)
@@ -2002,8 +1866,6 @@ FacBuildingInteractCtrl._InitFakeInteractOption = HL.Method() << function(self)
     end)
     self.view.listNode.gameObject:SetActive(false)
 end
-
-
 
 FacBuildingInteractCtrl._UpdateFakeInteractOption = HL.Method() << function(self)
     if self.m_selectedInteractFacNodeId == self.m_interactFacNodeId
@@ -2094,9 +1956,6 @@ FacBuildingInteractCtrl._UpdateFakeInteractOption = HL.Method() << function(self
 
 end
 
-
-
-
 FacBuildingInteractCtrl._OnClickFakeInteractOption = HL.Method(HL.Opt(HL.Boolean)) << function(self, isAll)
     if self.m_selectedInteractPipeNodeId then
         self:_OnInteractFactory({
@@ -2128,23 +1987,254 @@ FacBuildingInteractCtrl._OnClickFakeInteractOption = HL.Method(HL.Opt(HL.Boolean
     self:_RemoveInteractOption()
 end
 
+FacBuildingInteractCtrl._CollectAllInteractTargets = HL.Method().Return(HL.Table) << function(self)
+    local targets = {}
+    local seenPendingSlotIds = {}
 
+    local detectPos = self.m_lastDetectWorldPos
+    local chapterId = Utils.getCurrentChapterId()
+
+    if self.m_selectedInteractPipeNodeId then
+        local pipeNodeId = self.m_selectedInteractPipeNodeId
+        local pipeUnitIndex = self.m_interactPipeUnitIndex
+        local pipeGridPos = GameInstance.remoteFactoryManager.visual:WorldToBeltGrid(detectPos)
+        local height = CSFactoryUtil.GetPipeUnitHeight(pipeNodeId, pipeUnitIndex)
+        local pipePendingSlotId = CSFactoryUtil.GetBlueprintSlotId(chapterId, pipeNodeId)
+        local isPendingPipe = pipePendingSlotId > 0
+        if not isPendingPipe or not seenPendingSlotIds[pipePendingSlotId] then
+            if isPendingPipe then
+                seenPendingSlotIds[pipePendingSlotId] = true
+            end
+            table.insert(targets, {
+                type = "pipe",
+                name = isPendingPipe and FactoryUtils.getPendingSlotName(pipePendingSlotId) or Language.LUA_FAC_PIPE_INTERACT_OPTION,
+                effectInfo = {
+                    nodeId = pipeNodeId,
+                    unitIndex = pipeUnitIndex,
+                    worldPos = Vector3(lume.round(pipeGridPos.x) + 0.5, height, lume.round(pipeGridPos.y) + 0.5),
+                },
+                action = function()
+                    self:_OnInteractFactory({
+                        nodeId = pipeNodeId,
+                        unitIndex = pipeUnitIndex,
+                    })
+                    self:_RemoveInteractOption()
+                end,
+            })
+        end
+    end
+
+    
+    
+    
+    if self.m_interactFacOverlapNodeIds then
+        for _, overlapNodeId in ipairs(self.m_interactFacOverlapNodeIds) do
+            local overlapPendingSlotId = CSFactoryUtil.GetBlueprintSlotId(chapterId, overlapNodeId)
+            local isOverlapPending = overlapPendingSlotId > 0
+            if isOverlapPending then
+                if not seenPendingSlotIds[overlapPendingSlotId] then
+                    seenPendingSlotIds[overlapPendingSlotId] = true
+                    local capturedNodeId = overlapNodeId
+                    table.insert(targets, {
+                        type = "building",
+                        name = FactoryUtils.getPendingSlotName(overlapPendingSlotId),
+                        effectInfo = {
+                            worldPos = detectPos,
+                        },
+                        action = function()
+                            self:_OnInteractFactory({ buildingNodeId = capturedNodeId })
+                            self:_RemoveInteractOption()
+                        end,
+                    })
+                end
+            else
+                local handler = FactoryUtils.getBuildingNodeHandler(overlapNodeId)
+                if handler then
+                    local _, buildingData = Tables.factoryBuildingTable:TryGetValue(handler.templateId)
+                    local isBuilding = buildingData ~= nil
+                    local targetName
+                    if isBuilding then
+                        targetName = buildingData.name
+                    else
+                        local unitData = FactoryUtils.getLogisticData(handler.templateId)
+                        targetName = unitData and unitData.name
+                    end
+                    if targetName then
+                        local effectWorldPos = CSFactoryUtil.GetBuildingModelPosition(handler)
+                        local capturedNodeId = overlapNodeId
+                        local capturedIsBuilding = isBuilding
+                        table.insert(targets, {
+                            type = "building",
+                            name = targetName,
+                            effectInfo = {
+                                worldPos = effectWorldPos,
+                            },
+                            action = function()
+                                if capturedIsBuilding then
+                                    self:_OnInteractFactory({ buildingNodeId = capturedNodeId })
+                                else
+                                    self:_OnInteractFactory({ nodeId = capturedNodeId })
+                                end
+                                self:_RemoveInteractOption()
+                            end,
+                        })
+                    end
+                end
+            end
+        end
+    end
+
+    if self.m_selectedInteractFacNodeId then
+        local nodeId = self.m_selectedInteractFacNodeId
+        local buildingPendingSlotId = CSFactoryUtil.GetBlueprintSlotId(chapterId, nodeId)
+        local isPendingBuilding = buildingPendingSlotId > 0
+
+        if isPendingBuilding then
+            
+            if not seenPendingSlotIds[buildingPendingSlotId] then
+                seenPendingSlotIds[buildingPendingSlotId] = true
+                table.insert(targets, {
+                    type = "building",
+                    name = FactoryUtils.getPendingSlotName(buildingPendingSlotId),
+                    effectInfo = {
+                        worldPos = detectPos,
+                    },
+                    action = function()
+                        self:_OnInteractFactory({ buildingNodeId = nodeId })
+                        self:_RemoveInteractOption()
+                    end,
+                })
+            end
+        else
+            
+            local isBuilding = self.m_selectedInteractFacNodeIdIsBuilding
+            local subIndex = self.m_selectedInteractSubBuildingIndex
+            local handler = FactoryUtils.getBuildingNodeHandler(nodeId)
+            local effectWorldPos = CSFactoryUtil.GetBuildingModelPosition(handler)
+            local targetName
+            if isBuilding then
+                if subIndex >= 0 then
+                    targetName = Language.LUA_FAC_HUB_INPUT .. subIndex
+                else
+                    local buildingData = Tables.factoryBuildingTable[handler.templateId]
+                    targetName = buildingData.name
+                end
+            else
+                local unitData = FactoryUtils.getLogisticData(handler.templateId)
+                targetName = unitData.name
+            end
+            table.insert(targets, {
+                type = "building",
+                name = targetName,
+                effectInfo = {
+                    worldPos = effectWorldPos,
+                },
+                action = function()
+                    if isBuilding then
+                        if subIndex >= 0 then
+                            self:_OnInteractFactory({
+                                buildingNodeId = nodeId,
+                                subBuildingIndex = subIndex,
+                            })
+                        else
+                            self:_OnInteractFactory({ buildingNodeId = nodeId })
+                        end
+                    else
+                        self:_OnInteractFactory({ nodeId = nodeId })
+                    end
+                    self:_RemoveInteractOption()
+                end,
+            })
+        end
+    end
+
+    if self.m_selectedInteractLogisticPos then
+        local logisticPos = self.m_selectedInteractLogisticPos
+        local chapterInfo = FactoryUtils.getCurChapterInfo()
+        local succ, beltNodeId, beltUnitIndex = GameInstance.remoteFactoryManager:TrySampleConveyor(logisticPos)
+        if succ and beltNodeId then
+            local beltPendingSlotId = CSFactoryUtil.GetBlueprintSlotId(chapterId, beltNodeId)
+            local isPendingBelt = beltPendingSlotId > 0
+            if not isPendingBelt or not seenPendingSlotIds[beltPendingSlotId] then
+                if isPendingBelt then
+                    seenPendingSlotIds[beltPendingSlotId] = true
+                end
+                local beltName
+                if isPendingBelt then
+                    beltName = FactoryUtils.getPendingSlotName(beltPendingSlotId)
+                else
+                    local handler = chapterInfo:GetNode(beltNodeId)
+                    beltName = Tables.factoryGridBeltTable:GetValue(handler.templateId).beltData.name
+                end
+                local unitHeight = FactoryUtils.queryVoxelRangeHeightAdjust(logisticPos.x, CSFactoryUtil.GetBeltHeight(beltNodeId), logisticPos.y)
+                table.insert(targets, {
+                    type = "belt",
+                    name = beltName,
+                    effectInfo = {
+                        worldPos = Vector3(logisticPos.x + 0.5, unitHeight, logisticPos.y + 0.5),
+                    },
+                    action = function()
+                        self:_OnInteractFactory({
+                            nodeId = beltNodeId,
+                            unitIndex = beltUnitIndex,
+                            logisticPos = logisticPos,
+                        })
+                        self:_RemoveInteractOption()
+                    end,
+                })
+            end
+        end
+    end
+
+    return targets
+end
+
+FacBuildingInteractCtrl._CalcInteractScreenRect = HL.Method().Return(HL.Userdata) << function(self)
+    local worldPoints
+    if DeviceInfo.usingTouch and LuaSystemManager.factory.inTopView and self.m_lastDetectWorldPos then
+        local wp = self.m_lastDetectWorldPos
+        local cx = math.floor(wp.x) + 0.5
+        local cz = math.floor(wp.z) + 0.5
+        worldPoints = {
+            Vector3(cx - 0.5, wp.y, cz - 0.5),
+            Vector3(cx + 0.5, wp.y, cz - 0.5),
+            Vector3(cx - 0.5, wp.y, cz + 0.5),
+            Vector3(cx + 0.5, wp.y, cz + 0.5),
+        }
+    else
+        local effect = self.m_hoverInteractHighlightEffect
+        worldPoints = {
+            effect.corner1.transform.position,
+            effect.corner2.transform.position,
+            effect.corner3.transform.position,
+            effect.corner4.transform.position,
+        }
+    end
+    local cam = CameraManager.mainCamera
+    local sp = cam:WorldToScreenPoint(worldPoints[1])
+    local minX, minY, maxX, maxY = sp.x, sp.y, sp.x, sp.y
+    for i = 2, #worldPoints do
+        sp = cam:WorldToScreenPoint(worldPoints[i])
+        minX = math.min(minX, sp.x)
+        minY = math.min(minY, sp.y)
+        maxX = math.max(maxX, sp.x)
+        maxY = math.max(maxY, sp.y)
+    end
+    return Unity.Rect(minX, Screen.height - maxY, maxX - minX, maxY - minY)
+end
 
 FacBuildingInteractCtrl.OnFacTopViewCamTargetMoved = HL.Method() << function(self)
     self:_RemoveTouchInteractOption()
+    Notify(MessageConst.FAC_TOPVIEW_HIDE_MULTI_TARGET_MENU)
     if self.m_dragTargetsInBatchModeUpdateKey > 0 then
         self.m_needUpdateDragTargetsInBatchMode = true
     end
 end
 
-
-
-
 FacBuildingInteractCtrl.OnFacTopViewCamZoom = HL.Method(HL.Number) << function(self, _)
     self:_RemoveTouchInteractOption()
+    Notify(MessageConst.FAC_TOPVIEW_HIDE_MULTI_TARGET_MENU)
 end
-
-
 
 FacBuildingInteractCtrl._RemoveTouchInteractOption = HL.Method() << function(self)
     if self.m_selectedInteractFacNodeId or self.m_selectedInteractLogisticPos or self.m_selectedInteractPipeNodeId then
@@ -2158,20 +2248,13 @@ end
 
 
 
-
 FacBuildingInteractCtrl.m_oldBatchSelectedTargetIds = HL.Field(HL.Table)
-
-
-
 
 FacBuildingInteractCtrl._ResetBatch = HL.Method(HL.Boolean) << function(self, inDestroyMode)
     self.view.batchSelectFrame.gameObject:SetActive(false)
     self.view.batchToggle.isOn = inDestroyMode and LuaSystemManager.factory.inTopView and DeviceInfo.usingKeyboard
     LuaSystemManager.factory:ChangeIsReverseSelect(false)
 end
-
-
-
 
 FacBuildingInteractCtrl._ChangeBatchMode = HL.Method(HL.Boolean) << function(self, isBatch)
     LuaSystemManager.factory.inBatchSelectMode = isBatch
@@ -2192,9 +2275,6 @@ FacBuildingInteractCtrl._ChangeBatchMode = HL.Method(HL.Boolean) << function(sel
     end
 end
 
-
-
-
 FacBuildingInteractCtrl._OnChangeDragBatchToggle = HL.Method(HL.Boolean) << function(self, isBatch)
     LuaSystemManager.factory.inDragSelectBatchMode = isBatch
     if isBatch then
@@ -2210,8 +2290,6 @@ FacBuildingInteractCtrl._OnChangeDragBatchToggle = HL.Method(HL.Boolean) << func
     end
 end
 
-
-
 FacBuildingInteractCtrl._ClearAllBatchTargets = HL.Method() << function(self)
     local curChapterId = Utils.getCurrentChapterId()
     for nodeId, _ in pairs(LuaSystemManager.factory.batchSelectTargets) do
@@ -2225,17 +2303,11 @@ FacBuildingInteractCtrl._ClearAllBatchTargets = HL.Method() << function(self)
 end
 
 
-
 FacBuildingInteractCtrl.m_dragStartWorldPos = HL.Field(HL.Any)
-
 
 FacBuildingInteractCtrl.m_dragTargetsInBatchModeUpdateKey = HL.Field(HL.Number) << -1
 
-
 FacBuildingInteractCtrl.m_needUpdateDragTargetsInBatchMode = HL.Field(HL.Boolean) << false
-
-
-
 
 FacBuildingInteractCtrl._OnDragBeginInBatchMode = HL.Method(Vector2) << function(self, pos)
     if DeviceInfo.usingKeyboard then
@@ -2271,8 +2343,6 @@ FacBuildingInteractCtrl._OnDragBeginInBatchMode = HL.Method(Vector2) << function
     InputManagerInst:ToggleBinding(UIManager.commonTouchPanel.onClick.bindingId, false)
 end
 
-
-
 FacBuildingInteractCtrl._OnDragEndInBatchMode = HL.Method() << function(self)
     if DeviceInfo.usingKeyboard then
         LuaSystemManager.factory:ChangeIsReverseSelect(false)
@@ -2291,14 +2361,9 @@ FacBuildingInteractCtrl._OnDragEndInBatchMode = HL.Method() << function(self)
     InputManagerInst:ToggleBinding(UIManager.commonTouchPanel.onClick.bindingId, true)
 end
 
-
-
 FacBuildingInteractCtrl.IsDraggingInBatchMode = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_dragTargetsInBatchModeUpdateKey > 0
 end
-
-
-
 
 FacBuildingInteractCtrl._OnDragInBatchMode = HL.Method(HL.Opt(CS.UnityEngine.EventSystems.PointerEventData)) << function(self, eventData)
     self.m_needUpdateDragTargetsInBatchMode = true
@@ -2307,10 +2372,7 @@ FacBuildingInteractCtrl._OnDragInBatchMode = HL.Method(HL.Opt(CS.UnityEngine.Eve
     end
 end
 
-
 FacBuildingInteractCtrl.m_dragPos = HL.Field(Vector2)
-
-
 
 FacBuildingInteractCtrl._UpdateDragTargetsInBatchMode = HL.Method() << function(self)
     local startWorldPos = self.m_dragStartWorldPos
@@ -2349,15 +2411,19 @@ FacBuildingInteractCtrl._UpdateDragTargetsInBatchMode = HL.Method() << function(
     self.view.batchSelectFrame:SetState(iconPosState)
 
     
-    local excludeBelt, excludePipe = GameInstance.remoteFactoryManager:GetSimpleFigureInfo()
+    local excludeBelt, excludePipe = LuaSystemManager.factory:GetSimpleFigureExcludeBeltPipeForBatchSelect()
     local targetNodeIds, beltInfos = CSFactoryUtil.GetFacEntityInRect(LuaSystemManager.factory.inDestroyMode, startWorldPos, endWorldPos, excludeBelt, excludePipe, true, Utils.isInBlackbox(), true)
     local targetNodeIdTbl = {}
     for _, v in pairs(targetNodeIds) do
-        targetNodeIdTbl[v] = true
+        if not FactoryUtils.isInvalidBuilding(v) then
+            targetNodeIdTbl[v] = true
+        end
     end
     for k, v in pairs(beltInfos) do
         local t = Utils.csList2Table(v)
-        targetNodeIdTbl[k] = t
+        if not FactoryUtils.isInvalidBuilding(k) then
+            targetNodeIdTbl[k] = t
+        end
     end
 
     if LuaSystemManager.factory.isReverseBatchSelect then
@@ -2448,13 +2514,7 @@ FacBuildingInteractCtrl._UpdateDragTargetsInBatchMode = HL.Method() << function(
 end
 
 
-
 FacBuildingInteractCtrl.m_isInBlackbox = HL.Field(HL.Boolean) << false
-
-
-
-
-
 
 FacBuildingInteractCtrl._SelectBatchTarget = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, nodeId, isAdd, unitIndex)
     
@@ -2551,15 +2611,9 @@ end
 
 
 
-
-
 FacBuildingInteractCtrl._NeedShowHoverHint = HL.Method().Return(HL.Boolean) << function(self)
     return LuaSystemManager.factory.inTopView and not LuaSystemManager.factory.inBatchSelectMode
 end
-
-
-
-
 
 FacBuildingInteractCtrl._ToggleBeltHoverHint = HL.Method(CS.UnityEngine.Vector2Int, HL.Boolean) << function(self, pos, isActive)
     
@@ -2574,8 +2628,6 @@ FacBuildingInteractCtrl._ToggleBeltHoverHint = HL.Method(CS.UnityEngine.Vector2I
     
 end
 
-
-
 FacBuildingInteractCtrl._UpdatePipeHoverHint = HL.Method() << function(self)
     
     
@@ -2585,8 +2637,6 @@ FacBuildingInteractCtrl._UpdatePipeHoverHint = HL.Method() << function(self)
     
 end
 
-
-
 FacBuildingInteractCtrl._ClearBeltHoverHint = HL.Method() << function(self)
     if self.m_interactLogisticPos then
         self:_ToggleBeltHoverHint(self.m_interactLogisticPos, false)
@@ -2594,13 +2644,9 @@ FacBuildingInteractCtrl._ClearBeltHoverHint = HL.Method() << function(self)
     self.view.hoverInfoTextNode.gameObject:SetActive(false)
 end
 
-
-
 FacBuildingInteractCtrl._SlowlyUpdate = HL.Method() << function(self)
     
 end
-
-
 
 FacBuildingInteractCtrl._UpdateHoverInfoText = HL.Method() << function(self)
     if not self.view.hoverInfoTextNode.gameObject.activeInHierarchy then
@@ -2635,16 +2681,11 @@ end
 
 
 
-
 FacBuildingInteractCtrl.m_batchControllerBindingGroupId = HL.Field(HL.Number) << -1
-
 
 FacBuildingInteractCtrl.m_batchControllerDragCor = HL.Field(HL.Thread)
 
-
 FacBuildingInteractCtrl.m_batchControllerDragCorIsReverseDrag = HL.Field(HL.Boolean) << false
-
-
 
 FacBuildingInteractCtrl._InitBatchController = HL.Method() << function(self)
     self.m_batchControllerBindingGroupId = InputManagerInst:CreateGroup(self.view.inputGroup.groupId)
@@ -2666,9 +2707,6 @@ FacBuildingInteractCtrl._InitBatchController = HL.Method() << function(self)
     end, self.m_batchControllerBindingGroupId)
     InputManagerInst:ToggleGroup(self.m_batchControllerBindingGroupId, false)
 end
-
-
-
 
 FacBuildingInteractCtrl._StartBatchControllerDragCor = HL.Method(HL.Boolean) << function(self, isReverse)
     if self.m_batchControllerDragCor then
@@ -2700,8 +2738,6 @@ FacBuildingInteractCtrl._StartBatchControllerDragCor = HL.Method(HL.Boolean) << 
     end)
 end
 
-
-
 FacBuildingInteractCtrl._StopBatchControllerDragCor = HL.Method() << function(self)
     if not self.m_batchControllerDragCor then
         return
@@ -2714,18 +2750,12 @@ end
 
 
 
-
 FacBuildingInteractCtrl.m_onlyValidHubUnloaderIndex = HL.Field(HL.Number) << -1
-
-
-
 
 FacBuildingInteractCtrl.FacBlockOtherHubUnloaderInteract = HL.Method(HL.Table) << function(self, arg)
     local targetIndex = unpack(arg)
     self.m_onlyValidHubUnloaderIndex = targetIndex
 end
-
-
 
 FacBuildingInteractCtrl.FacStopDragInBatchMode = HL.Method() << function(self)
     self:_StopBatchControllerDragCor()

@@ -2,13 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DebugMarketingCamera
 
-
-
-
-
-
 DebugMarketingCameraCtrl = HL.Class('DebugMarketingCameraCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -21,9 +15,6 @@ DebugMarketingCameraCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 DebugMarketingCameraCtrl.m_camController = HL.Field(CS.Beyond.Gameplay.View.MarketingCameraController)
-
-
-
 
 
 
@@ -138,14 +129,10 @@ end
 
 
 
-
-
 DebugMarketingCameraCtrl.OnClose = HL.Override() << function(self)
     CameraUtils:CloseMarketingCamera()
     InputManagerInst.enableMarketingCamera = false
 end
-
-
 
 DebugMarketingCameraCtrl._Update = HL.Method() << function(self)
     

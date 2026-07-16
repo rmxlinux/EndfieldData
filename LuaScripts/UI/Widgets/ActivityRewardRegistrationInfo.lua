@@ -2,12 +2,7 @@
 
 local ActivityCheckInBase = require_ex('UI/Widgets/ActivityCheckInBase')
 
-
-
 ActivityRewardRegistrationInfo = HL.Class('ActivityRewardRegistrationInfo', ActivityCheckInBase)
-
-
-
 
 ActivityRewardRegistrationInfo.Init = HL.Method(HL.Table) << function(self, args)
     self:_InitAnim({

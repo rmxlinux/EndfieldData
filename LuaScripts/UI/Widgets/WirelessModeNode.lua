@@ -1,86 +1,38 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WirelessModeNode = HL.Class('WirelessModeNode', UIWidgetBase)
 
 local INVALID_PERCENT_VALUE = -1
 
-
 WirelessModeNode.m_buildingInfo = HL.Field(HL.Userdata)
-
 
 WirelessModeNode.m_wirelessModeContent = HL.Field(HL.Table)
 
-
 WirelessModeNode.m_contentUpdateThread = HL.Field(HL.Thread)
-
 
 WirelessModeNode.m_wirelessPercent = HL.Field(HL.Number) << 0
 
-
 WirelessModeNode.m_isPaused = HL.Field(HL.Boolean) << false
-
 
 WirelessModeNode.m_isBlocked = HL.Field(HL.Boolean) << false
 
-
 WirelessModeNode.m_onComplete = HL.Field(HL.Function)
-
-
 
 
 WirelessModeNode._OnFirstTimeInit = HL.Override() << function(self)
 end
 
-
-
 WirelessModeNode._OnEnable = HL.Override() << function(self)
     self:_RestartWirelessUpdateThread()
 end
-
-
 
 WirelessModeNode._OnDisable = HL.Override() << function(self)
     self:_ClearWirelessUpdateThread()
 end
 
-
-
 WirelessModeNode._OnDestroy = HL.Override() << function(self)
     self:_ClearWirelessUpdateThread()
 end
-
-
-
-
 
 WirelessModeNode.InitWirelessModeNode = HL.Method(HL.Userdata, HL.Opt(HL.Function)) << function(self, buildingInfo, onComplete)
     self:_FirstTimeInit()
@@ -96,8 +48,6 @@ WirelessModeNode.InitWirelessModeNode = HL.Method(HL.Userdata, HL.Opt(HL.Functio
     self:_InitWirelessMode()
 end
 
-
-
 WirelessModeNode._InitWirelessMode = HL.Method() << function(self)
     local isWirelessMode = self.m_buildingInfo.cacheTransport.inUse
     self.view.wirelessModeToggle.isOn = isWirelessMode
@@ -108,9 +58,6 @@ WirelessModeNode._InitWirelessMode = HL.Method() << function(self)
     self:_RefreshDomainInfo()
     self:_RestartWirelessUpdateThread()
 end
-
-
-
 
 WirelessModeNode._ChangeWirelessMode = HL.Method(HL.Boolean) << function(self, isWirelessMode)
     self.m_buildingInfo.sender:Message_OpCacheTransportEnable(Utils.getCurrentChapterId(), self.m_buildingInfo.cacheTransport.componentId, isWirelessMode, function()
@@ -129,9 +76,6 @@ WirelessModeNode._ChangeWirelessMode = HL.Method(HL.Boolean) << function(self, i
     end)
 end
 
-
-
-
 WirelessModeNode._RefreshModeDisplayAfterChanged = HL.Method(HL.Boolean) << function(self, isWirelessMode)
     self.view.wirelessModeContent.gameObject:SetActiveIfNecessary(isWirelessMode)
 
@@ -149,8 +93,6 @@ end
 
 
 
-
-
 WirelessModeNode._StartContentUpdateThread = HL.Method() << function(self)
     self.m_wirelessPercent = INVALID_PERCENT_VALUE
     self:_UpdateWirelessModeContent(true)
@@ -162,8 +104,6 @@ WirelessModeNode._StartContentUpdateThread = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 WirelessModeNode._RestartWirelessUpdateThread = HL.Method() << function(self)
     if self.m_buildingInfo == nil then
@@ -181,16 +121,11 @@ WirelessModeNode._RestartWirelessUpdateThread = HL.Method() << function(self)
     self:_StartContentUpdateThread()
 end
 
-
-
 WirelessModeNode._ClearWirelessUpdateThread = HL.Method() << function(self)
     if self.m_contentUpdateThread ~= nil then
         self.m_contentUpdateThread = self:_ClearCoroutine(self.m_contentUpdateThread)
     end
 end
-
-
-
 
 
 
@@ -226,9 +161,6 @@ WirelessModeNode._UpdateWirelessModeContent = HL.Method(HL.Opt(HL.Boolean)) << f
     end
 end
 
-
-
-
 WirelessModeNode._RefreshLineColor = HL.Method(HL.Any) << function(self, color)
     self.m_wirelessModeContent.lineGroup.color = color
     self.m_wirelessModeContent.timeText.color = color
@@ -237,15 +169,11 @@ WirelessModeNode._RefreshLineColor = HL.Method(HL.Any) << function(self, color)
     self.m_wirelessModeContent.infoTextGroup.color = color
 end
 
-
-
 WirelessModeNode._SwitchNormalState = HL.Method() << function(self)
     self:_RefreshLineColor(self.config.COLOR_LINE_NORMAL)
     self.m_wirelessModeContent.infoText.text = Language.LUA_FAC_MINER_WIRELESS_MODE_NORMAL
     self.m_wirelessModeContent.iconAnimationWrapper:PlayWithTween("facminerwireless_loop")
 end
-
-
 
 WirelessModeNode._SwitchPausedState = HL.Method() << function(self)
     self:_RefreshLineColor(self.config.COLOR_LINE_PAUSED)
@@ -253,9 +181,6 @@ WirelessModeNode._SwitchPausedState = HL.Method() << function(self)
     self.m_wirelessModeContent.iconAnimationWrapper:PlayWithTween("facminerwireless_defalut")
     self.m_wirelessPercent = INVALID_PERCENT_VALUE
 end
-
-
-
 
 WirelessModeNode._SwitchCompletedState = HL.Method(HL.Opt(HL.Function)) << function(self, animationCallback)
     if not self.m_isBlocked then
@@ -274,10 +199,6 @@ WirelessModeNode._SwitchCompletedState = HL.Method(HL.Opt(HL.Function)) << funct
     end
 end
 
-
-
-
-
 WirelessModeNode._RefreshTimeInfo = HL.Method(HL.Number, HL.Number) << function(self, timeRemain, fillPercent)
     if fillPercent <= 0 then
         timeRemain = 0  
@@ -287,8 +208,6 @@ WirelessModeNode._RefreshTimeInfo = HL.Method(HL.Number, HL.Number) << function(
     self.m_wirelessModeContent.timeText.text = string.format("%02d:%02d", min, second)
     self.m_wirelessModeContent.fillBG.fillAmount = fillPercent
 end
-
-
 
 WirelessModeNode._RefreshDomainInfo = HL.Method() << function(self)
     self.m_wirelessModeContent.titleTxt.gameObject:SetActive(false)
@@ -312,9 +231,6 @@ end
 
 
 
-
-
-
 WirelessModeNode.RefreshPausedState = HL.Method(HL.Boolean) << function(self, isPaused)
     if not isPaused then
         self:_SwitchNormalState()
@@ -323,10 +239,6 @@ WirelessModeNode.RefreshPausedState = HL.Method(HL.Boolean) << function(self, is
     end
     self.m_isPaused = isPaused
 end
-
-
-
-
 
 WirelessModeNode.RefreshBlockedState = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isBlocked, forceRefresh)
     if isBlocked == self.m_isBlocked and not forceRefresh then
@@ -343,9 +255,6 @@ WirelessModeNode.RefreshBlockedState = HL.Method(HL.Boolean, HL.Opt(HL.Boolean))
     end
     self.m_isBlocked = isBlocked
 end
-
-
-
 
 WirelessModeNode.RefreshSwitchValidState = HL.Method(HL.Boolean) << function(self, isValid)
     self.view.wirelessModeToggle.interactable = isValid

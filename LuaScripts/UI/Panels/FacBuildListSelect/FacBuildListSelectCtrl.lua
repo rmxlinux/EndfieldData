@@ -6,67 +6,11 @@ local QuickBarItemType = FacConst.QuickBarItemType
 local MainState = {
     Fac = "Fac", 
     Hub = "Hub", 
+    Blackbox = "Blackbox", 
 }
 local MAXIMUM_MAKE_COUNT = 999
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacBuildListSelectCtrl = HL.Class('FacBuildListSelectCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -79,59 +23,41 @@ FacBuildListSelectCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_SCROLL_TO_BUILDLIST_TARGET_ITEM] = "OnActionScrollToTarget",
 }
 
-
 FacBuildListSelectCtrl.s_lastSelectInfo = HL.StaticField(HL.Table)
-
 
 FacBuildListSelectCtrl.m_typeInfos = HL.Field(HL.Table)
 
-
 FacBuildListSelectCtrl.m_showListInfos = HL.Field(HL.Table)
-
 
 FacBuildListSelectCtrl.m_selectedTypeIndex = HL.Field(HL.Number) << 1
 
-
 FacBuildListSelectCtrl.m_getCell = HL.Field(HL.Function)
-
 
 FacBuildListSelectCtrl.m_getTabCell = HL.Field(HL.Function)
 
-
 FacBuildListSelectCtrl.m_curCraftModeState = HL.Field(HL.Boolean) << false
 
+FacBuildListSelectCtrl.m_curDecoBuildingState = HL.Field(HL.Boolean) << false
 
 FacBuildListSelectCtrl.m_lastPlaceModeSelectId = HL.Field(HL.String) << ""
 
-
 FacBuildListSelectCtrl.m_lastCraftModeSelectId = HL.Field(HL.String) << ""
-
 
 FacBuildListSelectCtrl.m_sortOptions = HL.Field(HL.Table)
 
-
 FacBuildListSelectCtrl.m_sortData = HL.Field(HL.Table)
-
 
 FacBuildListSelectCtrl.m_sortIncremental = HL.Field(HL.Boolean) << false
 
-
 FacBuildListSelectCtrl.m_onlyCraftNode = HL.Field(HL.Boolean) << false
-
 
 FacBuildListSelectCtrl.m_bluePrintMode = HL.Field(HL.Boolean) << false
 
-
 FacBuildListSelectCtrl.m_filterTags = HL.Field(HL.Any)
-
 
 FacBuildListSelectCtrl.m_bluePrintData = HL.Field(HL.Table)
 
-
 FacBuildListSelectCtrl.m_waitingForCraftData = HL.Field(HL.Table)
-
-
-
 
 
 FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -151,14 +77,19 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             end
         end
         if arg.selectedId ~= nil then
-            FacBuildListSelectCtrl.s_lastSelectInfo = { "all", arg.selectedId }
-            
-            
-            self.m_curCraftModeState = not Utils.isInBlackbox() and Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacHub)
+            if not FactoryUtils.isDecoBuildingItem(arg.selectedId) then
+                FacBuildListSelectCtrl.s_lastSelectInfo = { "all", arg.selectedId }
+                
+                
+                self.m_curCraftModeState = not Utils.isInBlackbox() and Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacHub)
+            end
         end
     end
     local recoverState = self:_ProcessRecoverStateArg(arg and arg.recoverState)
-    self.view.mainController:SetState(self.m_onlyCraftNode and MainState.Hub or MainState.Fac)
+    local isInBlackbox = Utils.isInBlackbox()
+    local isInDungeon = Utils.isInDungeon()
+    self.view.mainController:SetState(self.m_onlyCraftNode and MainState.Hub or
+        ((isInBlackbox or isInDungeon) and MainState.Blackbox or MainState.Fac))
     if DeviceInfo.usingController or self.m_onlyCraftNode then
         self.view.dragTips.gameObject:SetActiveIfNecessary(false)
     end
@@ -178,7 +109,7 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self:_OnChangeModeToggle(isOn)
         end, not self.m_curCraftModeState, true)
         self.view.commonToggle:SetCustomAnimation("common_toggle_to_left02", "common_toggle_to_right02")
-        if Utils.isInBlackbox() or not Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacHub) then
+        if isInBlackbox or not Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacHub) then
             self.view.commonToggle:ToggleInteractable(false)
             self.view.canCraftImg.gameObject:SetActiveIfNecessary(false)
             self.view.disCraftImg.gameObject:SetActiveIfNecessary(true)
@@ -188,7 +119,33 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
                 hintPlaceholder = self.view.controllerHintPlaceholder
             }
         })
+
+        if isInBlackbox or isInDungeon then
+            self.view.contentStateController:SetState("Industry")
+            self.view.typeToggle.gameObject:SetActiveIfNecessary(false)
+            self.view.decoBuildingRoot.gameObject:SetActiveIfNecessary(false)
+        else
+            self.view.decoBuildingRoot:InitFacBuildListDecoBuildingInfoNode(self.view.inputGroup.groupId, arg.selectedId)
+            self.view.typeToggle.gameObject:SetActiveIfNecessary(true)
+            local isShowDecoBuilding = (arg and arg.showLastType) and LuaSystemManager.factory:FacBuildListSelectIsShowDecoBuilding() or false
+            if arg.selectedId ~= nil and FactoryUtils.isDecoBuildingItem(arg.selectedId) then
+                isShowDecoBuilding = true
+            end
+            self.view.typeToggle:InitCommonToggle(function(isOn)
+                self:_OnChangeTypeToggle(isOn)
+            end, not isShowDecoBuilding, true)
+            self:_OnChangeTypeToggle(not isShowDecoBuilding)
+
+            self.view.typeToggle:SetCustomAnimation("common_toggle_to_left04", "common_toggle_to_right04")
+            self.view.typeToggle.view.industryRedDot:InitRedDot("FacBuildModeIndustry")
+            self.view.typeToggle.view.decoRedDot:InitRedDot("FacBuildModeDecorate")
+        end
+    else
+        self.view.contentStateController:SetState("Industry")
+        self.view.typeToggle.gameObject:SetActiveIfNecessary(false)
+        self.view.decoBuildingRoot.gameObject:SetActiveIfNecessary(false)
     end
+
     self.m_curCraftModeState = self.m_curCraftModeState or self.m_onlyCraftNode
     self.view.placeNode.gameObject:SetActiveIfNecessary(not self.m_curCraftModeState)
     self.view.craftNode.gameObject:SetActiveIfNecessary(self.m_curCraftModeState)
@@ -268,10 +225,8 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshTypeList()
     
     self:_TryRecoverExtraState(recoverState)
+    self:_InitRedDot()
 end
-
-
-
 
 FacBuildListSelectCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, isActive)
     if DeviceInfo.usingController then
@@ -279,9 +234,6 @@ FacBuildListSelectCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << functio
         self.view.numberAddKeyhint.gameObject:SetActive(isActive)
     end
 end
-
-
-
 
 FacBuildListSelectCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, args)
     
@@ -293,19 +245,15 @@ end
 
 
 
-
-
 FacBuildListSelectCtrl.OnHide = HL.Override() << function(self)
     self:_SaveSelectInfo()
+    self.view.decoBuildingRoot:OnHide()
 end
-
-
 
 FacBuildListSelectCtrl.OnClose = HL.Override() << function(self)
     self:_SaveSelectInfo()
+    self.view.decoBuildingRoot:OnClose()
 end
-
-
 
 FacBuildListSelectCtrl._SaveSelectInfo = HL.Method() << function(self)
     if not self.m_typeInfos then
@@ -321,8 +269,6 @@ FacBuildListSelectCtrl._SaveSelectInfo = HL.Method() << function(self)
         FacBuildListSelectCtrl.s_lastSelectInfo = { tabId, id }
     end
 end
-
-
 
 FacBuildListSelectCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
     local recoverState = {}
@@ -358,9 +304,6 @@ FacBuildListSelectCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << func
     return recoverState
 end
 
-
-
-
 FacBuildListSelectCtrl._ProcessRecoverStateArg = HL.Method(HL.Opt(HL.Any)).Return(HL.Opt(HL.Any)) << function(self, arg)
     if not arg then
         return nil
@@ -378,10 +321,6 @@ FacBuildListSelectCtrl._ProcessRecoverStateArg = HL.Method(HL.Opt(HL.Any)).Retur
     return arg
 end
 
-
-
-
-
 FacBuildListSelectCtrl._GetRecoverFilterTags = HL.Method(HL.Table, HL.Opt(HL.Any)).Return(HL.Table) << function(self, filterTagGroups, recoverState)
     if not recoverState or not recoverState.filterDomainIds or #recoverState.filterDomainIds == 0 then
         return {}
@@ -398,10 +337,6 @@ FacBuildListSelectCtrl._GetRecoverFilterTags = HL.Method(HL.Table, HL.Opt(HL.Any
     end
     return recoverFilterTags
 end
-
-
-
-
 
 FacBuildListSelectCtrl._OnChangeModeToggle = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isOn, skipAnimation)
     self.m_curCraftModeState = not isOn
@@ -427,9 +362,6 @@ FacBuildListSelectCtrl._OnChangeModeToggle = HL.Method(HL.Boolean, HL.Opt(HL.Boo
     end
 end
 
-
-
-
 FacBuildListSelectCtrl._TryRecoverExtraState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if not recoverState then
         return
@@ -446,9 +378,6 @@ FacBuildListSelectCtrl._TryRecoverExtraState = HL.Method(HL.Opt(HL.Any)) << func
         end
     end
 end
-
-
-
 
 FacBuildListSelectCtrl._InitSortAndFilterNode = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     local filterTagGroups = {}
@@ -530,9 +459,6 @@ FacBuildListSelectCtrl._InitSortAndFilterNode = HL.Method(HL.Opt(HL.Any)) << fun
     self.m_sortIncremental = self.view.sortNode.isIncremental
 end
 
-
-
-
 FacBuildListSelectCtrl._GetContentFilterResultCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tags)
     local domainMap
     if tags then
@@ -560,8 +486,6 @@ FacBuildListSelectCtrl._GetContentFilterResultCount = HL.Method(HL.Table).Return
     return count
 end
 
-
-
 FacBuildListSelectCtrl._InitTypeData = HL.Method() << function(self)
     local typeInfos = {}
     local isInMainRegion = Utils.isInFacMainRegion()
@@ -578,6 +502,7 @@ FacBuildListSelectCtrl._InitTypeData = HL.Method() << function(self)
     }
     table.insert(typeInfos, allTypeInfo)
 
+    local domainId = FactoryUtils.getCurAndAutoTransferBlackBoxToDomainId()
     local logisticTypeInfo
     do 
         local typeData = Tables.factoryQuickBarTypeTable:GetValue("logistic")
@@ -588,8 +513,8 @@ FacBuildListSelectCtrl._InitTypeData = HL.Method() << function(self)
             redDot = "FacBuildModeMenuLogisticTab",
         }
         if isInMainRegion then 
-            if GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedBelt then
-                for id, data in pairs(Tables.factoryGridBeltTable) do
+            for id, data in pairs(Tables.factoryGridBeltTable) do
+                if FactoryUtils.isLogisticUnlocked(id, domainId) then
                     local item = {
                         id = id,
                         itemId = data.beltData.itemId,
@@ -602,24 +527,24 @@ FacBuildListSelectCtrl._InitTypeData = HL.Method() << function(self)
                     }
                     table.insert(logisticTypeInfo.items, item)
                 end
-                if GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedValve then
-                    for id, data in pairs(Tables.FactoryBoxValveTable) do
-                        local item = {
-                            id = id,
-                            itemId = data.gridUnitData.itemId,
-                            type = QuickBarItemType.Logistic,
-                            data = data.gridUnitData,
-                            conveySpeed = 1000000 / data.gridUnitData.msPerRound,
-                            recommendDomains = {},
-                            domainSortGroup = FacConst.DOMAIN_SORT_GROUP.Normal,
-                            domainReverseSort = -FacConst.DOMAIN_SORT_GROUP.Normal,
-                        }
-                        table.insert(logisticTypeInfo.items, item)
-                    end
+            end
+            for id, data in pairs(Tables.FactoryBoxValveTable) do
+                if FactoryUtils.isLogisticUnlocked(id, domainId) then
+                    local item = {
+                        id = id,
+                        itemId = data.gridUnitData.itemId,
+                        type = QuickBarItemType.Logistic,
+                        data = data.gridUnitData,
+                        conveySpeed = 1000000 / data.gridUnitData.msPerRound,
+                        recommendDomains = {},
+                        domainSortGroup = FacConst.DOMAIN_SORT_GROUP.Normal,
+                        domainReverseSort = -FacConst.DOMAIN_SORT_GROUP.Normal,
+                    }
+                    table.insert(logisticTypeInfo.items, item)
                 end
             end
-            if GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedBridge then
-                for id, data in pairs(Tables.factoryGridConnecterTable) do
+            for id, data in pairs(Tables.factoryGridConnecterTable) do
+                if FactoryUtils.isLogisticUnlocked(id, domainId) then
                     local item = {
                         id = id,
                         itemId = data.gridUnitData.itemId,
@@ -635,16 +560,7 @@ FacBuildListSelectCtrl._InitTypeData = HL.Method() << function(self)
                 end
             end
             for id, data in pairs(Tables.factoryGridRouterTable) do
-                local unlockType = FacConst.LOGISTIC_UNLOCK_SYSTEM_MAP[id]
-                local unlocked = false
-                if unlockType == GEnums.UnlockSystemType.FacMerger then
-                    unlocked = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedConverger
-                elseif unlockType == GEnums.UnlockSystemType.FacSplitter then
-                    unlocked = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedSplitter
-                elseif unlockType == GEnums.UnlockSystemType.FacValve then
-                    unlocked = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedValve
-                end
-                if unlocked then
+                if FactoryUtils.isLogisticUnlocked(id, domainId) then
                     local item = {
                         id = id,
                         itemId = data.gridUnitData.itemId,
@@ -662,8 +578,8 @@ FacBuildListSelectCtrl._InitTypeData = HL.Method() << function(self)
         end
 
         if FactoryUtils.isDomainSupportPipe() then 
-            if GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipe then
-                for id, data in pairs(Tables.factoryLiquidPipeTable) do
+            for id, data in pairs(Tables.factoryLiquidPipeTable) do
+                if FactoryUtils.isLogisticUnlocked(id, domainId) then
                     local item = {
                         id = id,
                         itemId = data.pipeData.itemId,
@@ -677,24 +593,24 @@ FacBuildListSelectCtrl._InitTypeData = HL.Method() << function(self)
                     }
                     table.insert(logisticTypeInfo.items, item)
                 end
-                if GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipeValve then
-                    for id, data in pairs(Tables.factoryFluidValveTable) do
-                        local item = {
-                            id = id,
-                            itemId = data.liquidUnitData.itemId,
-                            type = QuickBarItemType.Logistic,
-                            data = data.liquidUnitData,
-                            conveySpeed = 1000000 / data.liquidUnitData.msPerRound,
-                            recommendDomains = FactoryUtils.GetAllowPipeDoaminList(),
-                            domainSortGroup = FacConst.DOMAIN_SORT_GROUP.Normal,
-                            domainReverseSort = -FacConst.DOMAIN_SORT_GROUP.Normal,
-                        }
-                        table.insert(logisticTypeInfo.items, item)
-                    end
+            end
+            for id, data in pairs(Tables.factoryFluidValveTable) do
+                if FactoryUtils.isLogisticUnlocked(id, domainId) then
+                    local item = {
+                        id = id,
+                        itemId = data.liquidUnitData.itemId,
+                        type = QuickBarItemType.Logistic,
+                        data = data.liquidUnitData,
+                        conveySpeed = 1000000 / data.liquidUnitData.msPerRound,
+                        recommendDomains = FactoryUtils.GetAllowPipeDoaminList(),
+                        domainSortGroup = FacConst.DOMAIN_SORT_GROUP.Normal,
+                        domainReverseSort = -FacConst.DOMAIN_SORT_GROUP.Normal,
+                    }
+                    table.insert(logisticTypeInfo.items, item)
                 end
             end
-            if GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipeConnector then
-                for id, data in pairs(Tables.factoryLiquidConnectorTable) do
+            for id, data in pairs(Tables.factoryLiquidConnectorTable) do
+                if FactoryUtils.isLogisticUnlocked(id, domainId) then
                     local item = {
                         id = id,
                         liquidUnitId = data.liquidUnitData.itemId,
@@ -711,16 +627,7 @@ FacBuildListSelectCtrl._InitTypeData = HL.Method() << function(self)
                 end
             end
             for id, data in pairs(Tables.factoryLiquidRouterTable) do
-                local unlockType = FacConst.LOGISTIC_UNLOCK_SYSTEM_MAP[id]
-                local unlocked = false
-                if unlockType == GEnums.UnlockSystemType.FacPipeConverger then
-                    unlocked = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipeConverger
-                elseif unlockType == GEnums.UnlockSystemType.FacPipeSplitter then
-                    unlocked = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipeSplitter
-                elseif unlockType == GEnums.UnlockSystemType.FacPipeValve then
-                    unlocked = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipeValve
-                end
-                if unlocked then
+                if FactoryUtils.isLogisticUnlocked(id, domainId) then
                     local item = {
                         id = id,
                         liquidUnitId = data.liquidUnitData.itemId,
@@ -738,15 +645,19 @@ FacBuildListSelectCtrl._InitTypeData = HL.Method() << function(self)
             end
         end
 
+        local filteredItems = {}
         for _, v in ipairs(logisticTypeInfo.items) do
             local itemData = Tables.itemTable[v.itemId]
             v.rarity = itemData.rarity
             v.sortId1 = itemData.sortId1
             v.sortId2 = itemData.sortId2
+            if not FactoryUtils.isSkipBuildingInvalidInDomain(v.id, domainId) then
+                table.insert(filteredItems, v)
+            end
         end
+        logisticTypeInfo.items = filteredItems
     end
 
-    local domainId = FactoryUtils.getCurAndAutoTransferBlackBoxToDomainId()
     do 
         local infos = {}
         if not self.m_onlyCraftNode then
@@ -756,7 +667,7 @@ FacBuildListSelectCtrl._InitTypeData = HL.Method() << function(self)
             local typeId = data.quickBarType
             if not string.isEmpty(typeId) and (not data.onlyShowOnMain or isInMainRegion) then
                 local itemData = FactoryUtils.getBuildingItemData(id)
-                if FactoryUtils.isSpMachineFormulaUnlocked(id) then
+                if FactoryUtils.isSpMachineFormulaUnlocked(id) and not FactoryUtils.isSkipBuildingInvalidInDomain(id, domainId) then
                     local info = infos[typeId]
                     if not info then
                         local typeData = Tables.factoryQuickBarTypeTable:GetValue(typeId)
@@ -804,8 +715,6 @@ FacBuildListSelectCtrl._InitTypeData = HL.Method() << function(self)
     self:_UpdateShowListInfos()
 end
 
-
-
 FacBuildListSelectCtrl._UpdateShowListInfos = HL.Method() << function(self)
     local bpSort = self.view.toppingToggle.isOn
     self.m_showListInfos = {}
@@ -848,8 +757,6 @@ FacBuildListSelectCtrl._UpdateShowListInfos = HL.Method() << function(self)
     end
 end
 
-
-
 FacBuildListSelectCtrl._RefreshTypeList = HL.Method() << function(self)
     local count = #self.m_typeInfos
     self.m_selectedTypeIndex = math.min(math.max(self.m_selectedTypeIndex, 1), count)
@@ -866,10 +773,6 @@ FacBuildListSelectCtrl._RefreshTypeList = HL.Method() << function(self)
     self.view.tabScrollList:ScrollToIndex(self.m_selectedTypeIndex)
     self:_OnClickType(self.m_selectedTypeIndex, true)
 end
-
-
-
-
 
 FacBuildListSelectCtrl._OnUpdateTypeCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local info = self.m_typeInfos[index]
@@ -894,10 +797,6 @@ FacBuildListSelectCtrl._OnUpdateTypeCell = HL.Method(HL.Any, HL.Number) << funct
     end
 end
 
-
-
-
-
 FacBuildListSelectCtrl._OnClickType = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, index, firstOpen)
     self.m_selectedTypeIndex = index
     self.view.tabText.text = self.m_typeInfos[index].data.name
@@ -905,9 +804,6 @@ FacBuildListSelectCtrl._OnClickType = HL.Method(HL.Number, HL.Opt(HL.Boolean)) <
 
     self:_RefreshItemList(firstOpen)
 end
-
-
-
 
 FacBuildListSelectCtrl._RefreshItemList = HL.Method(HL.Opt(HL.Boolean)) << function(self, firstOpen)
     local info = self.m_showListInfos[self.m_selectedTypeIndex]
@@ -935,10 +831,6 @@ FacBuildListSelectCtrl._RefreshItemList = HL.Method(HL.Opt(HL.Boolean)) << funct
     end
 end
 
-
-
-
-
 FacBuildListSelectCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local item = self.m_showListInfos[self.m_selectedTypeIndex][index]
     local itemId = item.itemId
@@ -957,6 +849,10 @@ FacBuildListSelectCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(
         or (not self.m_curCraftModeState and item.domainSortGroup < FacConst.DOMAIN_SORT_GROUP.Unsuitable)
     cell.view.disNode.gameObject:SetActiveIfNecessary(disNodeShow)
     cell.view.bpNode.gameObject:SetActiveIfNecessary(self.m_bluePrintData[item.id] ~= nil)
+    if self.m_bluePrintData[item.id] ~= nil then
+        local isSkip = FactoryUtils.isSkipUnlockedBuilding(item.id)
+        cell.view.bpNode:SetState(isSkip and "Skip" or "Normal")
+    end
     cell.item.view.button.longPressHintTextId = nil
     if DeviceInfo.usingController then
         cell.item:SetEnableHoverTips(false)
@@ -976,7 +872,7 @@ FacBuildListSelectCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(
     
 
     if not Utils.isInBlackbox() and item.hasRedDot then
-        cell.view.redDot:InitRedDot("FacBuildModeMenuItem", item.id)
+        cell.view.redDot:InitRedDot("FacBuildModeMenuItem", item.id, nil, self.view.redDotScrollRect)
     else
         cell.view.redDot:Stop()
     end
@@ -989,27 +885,34 @@ FacBuildListSelectCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(
             source = UIConst.UI_DRAG_DROP_SOURCE_TYPE.BuildModeSelect,
             type = data.type,
             itemId = itemId,
+            cantDrop = item.domainSortGroup < FacConst.DOMAIN_SORT_GROUP.Unsuitable,
+            cantDropText = Language.LUA_FACTORY_INVENTORY_BUILDING_QUICKBAR_FORBID
         })
         cell:InitPressDrag()
         cell.item.view.button.longPressHintTextId = "virtual_mouse_hint_drag"
     end
 end
 
-
-
-
 FacBuildListSelectCtrl._OnClickItem = HL.Method(HL.Number) << function(self, index)
     self:_RefreshSelectedInfo()
     self.view.infoAnimationWrapper:PlayWithTween("facbuildmodinfonode_in")
 end
 
-
-
-
 FacBuildListSelectCtrl._RefreshSelectedInfo = HL.Method(HL.Opt(HL.Boolean)) << function(self, forceUpdate)
     local item = self.m_showListInfos[self.m_selectedTypeIndex][LuaIndex(self.view.scrollList.curSelectedIndex)]
     if item == nil then
+        if self.view.earlyAccessCtrl ~= nil then
+            self.view.earlyAccessCtrl:SetState("Normal")
+        end
         return
+    end
+
+    if self.view.earlyAccessCtrl ~= nil then
+        local earlyAccessState = "Normal"
+        if not string.isEmpty(item.id) and FactoryUtils.isSkipUnlockedBuilding(item.id) then
+            earlyAccessState = "EarlyAccess"
+        end
+        self.view.earlyAccessCtrl:SetState(earlyAccessState)
     end
 
     if self.m_curCraftModeState then
@@ -1018,21 +921,18 @@ FacBuildListSelectCtrl._RefreshSelectedInfo = HL.Method(HL.Opt(HL.Boolean)) << f
         self:_RefreshSelectedPlaceNode(forceUpdate)
     end
 
-    if not self.m_onlyCraftNode then
+    if not self.m_onlyCraftNode and not self.m_curDecoBuildingState then
         InputManagerInst:ToggleBinding(self.m_setQuickBarBindingId, item.type ~= QuickBarItemType.Belt)
     end
 
     if item.hasRedDot then
         local _, hasSaved = ClientDataManagerInst:GetBool(FacConst.FAC_BUILD_LIST_REDDOT_DATA_CATEGORY .. item.id, false, false, FacConst.FAC_BUILD_LIST_REDDOT_DATA_CATEGORY)
         if not hasSaved then
-            ClientDataManagerInst:SetBool(FacConst.FAC_BUILD_LIST_REDDOT_DATA_CATEGORY .. item.id, true, false, FacConst.FAC_BUILD_LIST_REDDOT_DATA_CATEGORY, true)
+            ClientDataManagerInst:SetBool(FacConst.FAC_BUILD_LIST_REDDOT_DATA_CATEGORY .. item.id, true, false, FacConst.FAC_BUILD_LIST_REDDOT_DATA_CATEGORY)
             RedDotManager:TriggerUpdate("FacBuildModeMenuItem")
         end
     end
 end
-
-
-
 
 FacBuildListSelectCtrl._RefreshSelectedPlaceNode = HL.Method(HL.Opt(HL.Boolean)) << function(self, forceUpdate)
     local item = self.m_showListInfos[self.m_selectedTypeIndex][LuaIndex(self.view.scrollList.curSelectedIndex)]
@@ -1075,7 +975,7 @@ FacBuildListSelectCtrl._RefreshSelectedPlaceNode = HL.Method(HL.Opt(HL.Boolean))
         self.view.placeNode.depotCountTxt.color = depotCount == 0 and self.view.config.COUNT_EMPTY_COLOR or self.view.config.COUNT_ENOUGH_COLOR
 
         local buildingData = FactoryUtils.getItemBuildingData(id)
-        self.view.placeNode.powerTxt.text = buildingData.powerConsume
+        self.view.placeNode.powerTxt.text = GameInstance.remoteFactoryManager.system.core.progressStatus:IsBuildingPowerCostNoNeed(item.id) and 0 or buildingData.powerConsume
 
         local lack
         if Utils.isInFacMainRegion() then
@@ -1091,9 +991,6 @@ FacBuildListSelectCtrl._RefreshSelectedPlaceNode = HL.Method(HL.Opt(HL.Boolean))
         end
     end
 end
-
-
-
 
 FacBuildListSelectCtrl._RefreshSelectedCraftNode = HL.Method(HL.Opt(HL.Boolean)) << function(self, forceUpdate)
     local item = self.m_showListInfos[self.m_selectedTypeIndex][LuaIndex(self.view.scrollList.curSelectedIndex)]
@@ -1184,8 +1081,6 @@ FacBuildListSelectCtrl._RefreshSelectedCraftNode = HL.Method(HL.Opt(HL.Boolean))
     end
 end
 
-
-
 FacBuildListSelectCtrl._OnCurCountChange = HL.Method() << function(self)
     local item = self.m_showListInfos[self.m_selectedTypeIndex][LuaIndex(self.view.scrollList.curSelectedIndex)]
     if item == nil then
@@ -1206,8 +1101,6 @@ FacBuildListSelectCtrl._OnCurCountChange = HL.Method() << function(self)
     end
 end
 
-
-
 FacBuildListSelectCtrl._OnClickBuild = HL.Method() << function(self)
     local item = self.m_showListInfos[self.m_selectedTypeIndex][LuaIndex(self.view.scrollList.curSelectedIndex)]
     if item == nil then
@@ -1222,8 +1115,6 @@ FacBuildListSelectCtrl._OnClickBuild = HL.Method() << function(self)
     self.m_waitingForCraftData.count = count
     GameInstance.player.facSpMachineSystem:StartHubCraft(item.id, count)
 end
-
-
 
 FacBuildListSelectCtrl._OnClickConfirm = HL.Method() << function(self)
     local item = self.m_showListInfos[self.m_selectedTypeIndex][LuaIndex(self.view.scrollList.curSelectedIndex)]
@@ -1255,8 +1146,6 @@ FacBuildListSelectCtrl._OnClickConfirm = HL.Method() << function(self)
     end
 end
 
-
-
 FacBuildListSelectCtrl._OnClickWiki = HL.Method() << function(self)
     local item = self.m_showListInfos[self.m_selectedTypeIndex][LuaIndex(self.view.scrollList.curSelectedIndex)]
     if item == nil then
@@ -1285,9 +1174,6 @@ FacBuildListSelectCtrl._OnClickWiki = HL.Method() << function(self)
     })
 end
 
-
-
-
 FacBuildListSelectCtrl.OnItemCountChanged = HL.Method(HL.Table) << function(self, args)
     local itemId2DiffCount = unpack(args)
     local item = self.m_showListInfos[self.m_selectedTypeIndex][LuaIndex(self.view.scrollList.curSelectedIndex)]
@@ -1296,9 +1182,6 @@ FacBuildListSelectCtrl.OnItemCountChanged = HL.Method(HL.Table) << function(self
         self:_TryUpdateCellByItemId(item.itemId)
     end
 end
-
-
-
 
 FacBuildListSelectCtrl._TryUpdateCellByItemId = HL.Method(HL.String) << function(self, targetItemId)
     local info = self.m_typeInfos[self.m_selectedTypeIndex]
@@ -1316,8 +1199,6 @@ FacBuildListSelectCtrl._TryUpdateCellByItemId = HL.Method(HL.String) << function
         end
     end
 end
-
-
 
 FacBuildListSelectCtrl.OnHubCraftSucc = HL.Method() << function(self)
     if self.m_waitingForCraftData == nil or self.m_waitingForCraftData.id == nil then
@@ -1342,9 +1223,6 @@ FacBuildListSelectCtrl.OnHubCraftSucc = HL.Method() << function(self)
     Notify(MessageConst.SHOW_CRAFT_REWARDS, info)
 end
 
-
-
-
 FacBuildListSelectCtrl.OnActionScrollToTarget = HL.Method(HL.Any) << function(self, args)
     local targetBuildingId = unpack(args)
     local mainTab = 1
@@ -1363,7 +1241,7 @@ FacBuildListSelectCtrl.OnActionScrollToTarget = HL.Method(HL.Any) << function(se
         if DeviceInfo.usingController then
             local cell = self.m_getCell(targetIndex)
             if cell ~= nil then
-                UIUtils.setAsNaviTarget(cell.view.inputNaviDecorator)
+                self:SetNaviTarget(cell.view.inputNaviDecorator)
             end
         else
             self.view.scrollList:SetSelectedIndex(CSIndex(targetIndex))
@@ -1371,19 +1249,48 @@ FacBuildListSelectCtrl.OnActionScrollToTarget = HL.Method(HL.Any) << function(se
     end
 end
 
-
+FacBuildListSelectCtrl._OnChangeTypeToggle = HL.Method(HL.Boolean) << function(self, isOn)
+    if isOn then
+        self.m_curDecoBuildingState = false
+        self.view.contentStateController:SetState("Industry")
+        self.view.decoBuildingRoot:OnHide()
+        if self.m_selectedTypeIndex > 0 then
+            self.view.tabScrollList:ScrollToIndex(self.m_selectedTypeIndex, true)
+        end
+        if self.m_tabListNextBindingId > 0 then
+            InputManagerInst:ToggleBinding(self.m_tabListNextBindingId, true)
+            InputManagerInst:ToggleBinding(self.m_tabListPrevBindingId, true)
+        end
+        self:_NaviToBuildList()
+        self.view.infoAnimationWrapper:PlayInAnimation()
+        if not self.m_onlyCraftNode and self.m_showListInfos ~= nil then
+            local item = self.m_showListInfos[self.m_selectedTypeIndex][LuaIndex(self.view.scrollList.curSelectedIndex)]
+            if item ~= nil then
+                InputManagerInst:ToggleBinding(self.m_setQuickBarBindingId, item.type ~= QuickBarItemType.Belt)
+            end
+        end
+    else
+        self.m_curDecoBuildingState = true
+        if self.m_setQuickBarBindingId > 0 then
+            InputManagerInst:ToggleBinding(self.m_setQuickBarBindingId, false)
+        end
+        if self.m_tabListNextBindingId > 0 then
+            InputManagerInst:ToggleBinding(self.m_tabListNextBindingId, false)
+            InputManagerInst:ToggleBinding(self.m_tabListPrevBindingId, false)
+        end
+        self.view.contentStateController:SetState("Decorate")
+        self.view.decoBuildingRoot:OnShow()
+    end
+    LuaSystemManager.factory:SetFacBuildListSelectDecoBuilding(not isOn)
+end
 
 
 
 FacBuildListSelectCtrl.m_tabListNextBindingId = HL.Field(HL.Number) << -1
 
-
 FacBuildListSelectCtrl.m_tabListPrevBindingId = HL.Field(HL.Number) << -1
 
-
 FacBuildListSelectCtrl.m_setQuickBarBindingId = HL.Field(HL.Number) << -1
-
-
 
 FacBuildListSelectCtrl._InitBuildListController = HL.Method() << function(self)
     self.m_tabListNextBindingId = UIUtils.bindInputPlayerAction("fac_build_list_tab_switch_next", function()
@@ -1418,13 +1325,48 @@ FacBuildListSelectCtrl._InitBuildListController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
 FacBuildListSelectCtrl._NaviToBuildList = HL.Method() << function(self)
+    if self.m_curDecoBuildingState or self.m_getCell == nil then
+        return
+    end
     local slot = self.m_getCell(LuaIndex(self.view.scrollList.curSelectedIndex))
     if slot ~= nil then
-        InputManagerInst.controllerNaviManager:SetTarget(slot.view.inputNaviDecorator)
+        self:SetNaviTarget(slot.view.inputNaviDecorator)
     end
+end
+
+FacBuildListSelectCtrl._InitRedDot = HL.Method() << function(self)
+    self.view.redDotScrollRect.getRedDotStateAt = function(csIndex)
+        return self:_GetRedDotStateAt(csIndex)
+    end
+end
+
+FacBuildListSelectCtrl._GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
+    if Utils.isInBlackbox() then
+        return 0
+    end
+
+    local info = self.m_showListInfos[self.m_selectedTypeIndex]
+    if info == nil or #info == 0 then
+        return 0
+    end
+
+    local luaIndex = LuaIndex(index)
+    if luaIndex < 1 or luaIndex > #info then
+        return 0
+    end
+
+    local item = info[luaIndex]
+    if not item.hasRedDot then
+        return 0
+    end
+
+    local hasRedDot, redDotType = RedDotManager:GetRedDotState("FacBuildModeMenuItem", item.id)
+    if hasRedDot then
+        return redDotType
+    end
+
+    return 0
 end
 
 

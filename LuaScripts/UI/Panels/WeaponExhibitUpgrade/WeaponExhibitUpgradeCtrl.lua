@@ -1,91 +1,6 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WeaponExhibitUpgrade
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WeaponExhibitUpgradeCtrl = HL.Class('WeaponExhibitUpgradeCtrl', uiCtrl.UICtrl)
 
 
@@ -109,7 +24,6 @@ local SELECTION_OPTIONS = {
     },
 }
 
-
 WeaponExhibitUpgradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_WEAPON_GAIN_EXP] = 'OnWeaponGainExp',
@@ -121,98 +35,65 @@ WeaponExhibitUpgradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ITEM_COUNT_CHANGED] = '_OnItemCountChanged',
 }
 
-
 WeaponExhibitUpgradeCtrl.m_arg = HL.Field(HL.Table)
-
 
 WeaponExhibitUpgradeCtrl.m_level2RequireExpDict = HL.Field(HL.Table)
 
-
 WeaponExhibitUpgradeCtrl.m_level2RequireGoldDict = HL.Field(HL.Table)
-
 
 WeaponExhibitUpgradeCtrl.m_costItemInfoList = HL.Field(HL.Table)
 
-
 WeaponExhibitUpgradeCtrl.m_costItemInfoDict = HL.Field(HL.Table)
-
 
 WeaponExhibitUpgradeCtrl.m_upgradeItemInfoList = HL.Field(HL.Table)
 
-
 WeaponExhibitUpgradeCtrl.m_weaponInfo = HL.Field(HL.Table)
-
 
 WeaponExhibitUpgradeCtrl.m_isFocusJump = HL.Field(HL.Boolean) << false
 
-
 WeaponExhibitUpgradeCtrl.m_getBasicCostItemCell = HL.Field(HL.Function)
-
 
 WeaponExhibitUpgradeCtrl.m_getExpandCostItemCell = HL.Field(HL.Function)
 
-
 WeaponExhibitUpgradeCtrl.m_getBreakCostItemCell = HL.Field(HL.Function)
-
 
 WeaponExhibitUpgradeCtrl.m_isBreakthrough = HL.Field(HL.Boolean) << false
 
-
 WeaponExhibitUpgradeCtrl.m_selectionOptions = HL.Field(HL.Table)
-
 
 WeaponExhibitUpgradeCtrl.m_maxFillWeaponQuality = HL.Field(HL.Number) << 4
 
-
 WeaponExhibitUpgradeCtrl.m_weaponExhibitInfo = HL.Field(HL.Table)
-
 
 WeaponExhibitUpgradeCtrl.m_curGenerateExp = HL.Field(HL.Number) << 0
 
-
 WeaponExhibitUpgradeCtrl.m_curTargetLv = HL.Field(HL.Number) << 0
-
 
 WeaponExhibitUpgradeCtrl.m_isBreakItemEnough = HL.Field(HL.Boolean) << false
 
-
 WeaponExhibitUpgradeCtrl.m_rewardCache = HL.Field(HL.Any)
-
 
 WeaponExhibitUpgradeCtrl.m_lastClickItemId = HL.Field(HL.Any)
 
-
 WeaponExhibitUpgradeCtrl.m_lastClickItemInfo = HL.Field(HL.Table)
-
 
 WeaponExhibitUpgradeCtrl.m_forceFocusListIndex = HL.Field(HL.Number) << -1
 
-
 WeaponExhibitUpgradeCtrl.m_upgradeEffectCor = HL.Field(HL.Thread)
-
 
 WeaponExhibitUpgradeCtrl.m_itemFillCor = HL.Field(HL.Thread)
 
-
 WeaponExhibitUpgradeCtrl.m_breakItemList = HL.Field(HL.Userdata)
-
 
 WeaponExhibitUpgradeCtrl.m_naviMaterialCell = HL.Field(HL.Any)
 
-
 WeaponExhibitUpgradeCtrl.m_naviMaterialItemInfo = HL.Field(HL.Table)
 
-
 WeaponExhibitUpgradeCtrl.s_materialFilterSelectionIndex = HL.StaticField(HL.Number) << -1
-
-
-
 
 WeaponExhibitUpgradeCtrl.CacheRewardsPopup = HL.Method(HL.Any) << function(self, args)
     self.m_rewardCache = args
 end
-
-
 
 WeaponExhibitUpgradeCtrl.ShowRewardsPopup = HL.Method() << function(self)
     if self.m_rewardCache then
@@ -224,9 +105,6 @@ WeaponExhibitUpgradeCtrl.ShowRewardsPopup = HL.Method() << function(self)
     end
     self.m_rewardCache = nil
 end
-
-
-
 
 WeaponExhibitUpgradeCtrl._OnItemLockedStateChanged = HL.Method(HL.Table) << function(self, arg)
     local itemId, instId, isLock = unpack(arg)
@@ -245,15 +123,9 @@ WeaponExhibitUpgradeCtrl._OnItemLockedStateChanged = HL.Method(HL.Table) << func
     end
 end
 
-
-
-
 WeaponExhibitUpgradeCtrl.OnGemDetach = HL.Method(HL.Table) << function(self, arg)
     self.view.expandNode.commonItemList:RefreshAllCells()
 end
-
-
-
 
 WeaponExhibitUpgradeCtrl.OnWeaponGainExp = HL.Method(HL.Table) << function(self, arg)
     local weaponInstId, newLv, newExp = unpack(arg)
@@ -271,7 +143,7 @@ WeaponExhibitUpgradeCtrl.OnWeaponGainExp = HL.Method(HL.Table) << function(self,
 
     self.m_upgradeEffectCor = self:_ClearCoroutine(self.m_upgradeEffectCor)
     self.m_upgradeEffectCor = self:_StartCoroutine(function()
-        PhaseManager:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", true)
+        LuaSystemManager.inputDeviceChangeSystem:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", true)
         local hadLevelUp = expInfoBefore.curLv < newLv
         if hadLevelUp then
             AudioAdapter.PostEvent("Au_UI_Event_WeaponLevelUp")
@@ -287,7 +159,6 @@ WeaponExhibitUpgradeCtrl.OnWeaponGainExp = HL.Method(HL.Table) << function(self,
 
         if newLv >= expInfo.stageLv then
             if newLv >= expInfo.maxLv then
-                PhaseManager:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
                 self:_LeaveWeaponUpgrade()
                 return
             end
@@ -298,13 +169,11 @@ WeaponExhibitUpgradeCtrl.OnWeaponGainExp = HL.Method(HL.Table) << function(self,
             aniWrapper:Play("weaponexhibitupgrade_out", function()
                 self:PlayAnimationIn()
                 self:OnShow()
-                PhaseManager:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
+                LuaSystemManager.inputDeviceChangeSystem:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
             end)
         end
     end)
 end
-
-
 
 WeaponExhibitUpgradeCtrl._LeaveWeaponUpgrade = HL.Method() << function(self, arg)
     if self.m_isFocusJump then
@@ -322,9 +191,6 @@ WeaponExhibitUpgradeCtrl._LeaveWeaponUpgrade = HL.Method() << function(self, arg
     })
 end
 
-
-
-
 WeaponExhibitUpgradeCtrl.OnWeaponBreakthrough = HL.Method(HL.Table) << function(self, arg)
     AudioAdapter.PostEvent("Au_UI_Event_WeaponLevelLimit")
     local weaponInstId, newBreakLv = unpack(arg)
@@ -336,7 +202,7 @@ WeaponExhibitUpgradeCtrl.OnWeaponBreakthrough = HL.Method(HL.Table) << function(
 
     self.m_upgradeEffectCor = self:_ClearCoroutine(self.m_upgradeEffectCor)
     self.m_upgradeEffectCor = self:_StartCoroutine(function()
-        PhaseManager:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", true)
+        LuaSystemManager.inputDeviceChangeSystem:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", true)
         self.view.breakWeaponInfo.view.animation:Play("weaponexhibitupgrade_breakweaponinfo_break_in")
         self.view.luaPanel:BlockAllInput()
         coroutine.wait(0.5) 
@@ -350,13 +216,10 @@ WeaponExhibitUpgradeCtrl.OnWeaponBreakthrough = HL.Method(HL.Table) << function(
             self:PlayAnimationIn()
             self:OnShow()
             self.view.luaPanel:RecoverAllInput()
-            PhaseManager:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
+            LuaSystemManager.inputDeviceChangeSystem:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
         end)
     end)
 end
-
-
-
 
 
 WeaponExhibitUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -370,16 +233,13 @@ WeaponExhibitUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 WeaponExhibitUpgradeCtrl.OnHide = HL.Override() << function(self)
-    PhaseManager:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
+    LuaSystemManager.inputDeviceChangeSystem:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
 end
-
 
 WeaponExhibitUpgradeCtrl.OnClose = HL.Override() << function()
-    PhaseManager:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
+    LuaSystemManager.inputDeviceChangeSystem:SetForbidInputDeviceChange("WeaponExhibitUpgrade.Anim", false)
     CS.Beyond.Lua.UtilsForLua.ToggleWeaponInUpgradePanelOption(false)
 end
-
-
 
 WeaponExhibitUpgradeCtrl.OnShow = HL.Override() << function(self)
     local weaponInfo = self.m_weaponInfo
@@ -436,15 +296,10 @@ WeaponExhibitUpgradeCtrl.OnShow = HL.Override() << function(self)
     self.m_arg.stateArg = nil
 end
 
-
-
-
 WeaponExhibitUpgradeCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     self.view.addKeyHint.gameObject:SetActive(active)
     self.view.reduceKeyHint.gameObject:SetActive(active)
 end
-
-
 
 WeaponExhibitUpgradeCtrl._InitActionEvent = HL.Method() << function(self)
     self.m_getBasicCostItemCell = UIUtils.genCachedCellFunction(self.view.upgradeNode.costItemList)
@@ -520,10 +375,7 @@ WeaponExhibitUpgradeCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.walletBarPlaceholder:InitWalletBarPlaceholder(UIConst.INVENTORY_MONEY_IDS)
 end
 
-
 WeaponExhibitUpgradeCtrl.m_materialsDecreaseInputGroupId = HL.Field(HL.Number) << -1
-
-
 
 WeaponExhibitUpgradeCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
@@ -567,10 +419,6 @@ WeaponExhibitUpgradeCtrl._InitController = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 WeaponExhibitUpgradeCtrl._InitUpgradeCache = HL.Method(HL.Number, HL.String) << function(self, weaponInstId, weaponTemplateId)
     local _, weaponCfg = Tables.weaponBasicTable:TryGetValue(weaponTemplateId)
     if not weaponCfg then
@@ -607,10 +455,6 @@ WeaponExhibitUpgradeCtrl._InitUpgradeCache = HL.Method(HL.Number, HL.String) << 
     self.m_costItemInfoDict = {}
 end
 
-
-
-
-
 WeaponExhibitUpgradeCtrl._RefreshBreakPanel = HL.Method(HL.Number, HL.String) << function(self, weaponInstId, weaponTemplateId)
     local weaponExhibitInfo = CharInfoUtils.getWeaponExhibitBasicInfo(weaponTemplateId, weaponInstId)
 
@@ -627,19 +471,12 @@ WeaponExhibitUpgradeCtrl._RefreshBreakPanel = HL.Method(HL.Number, HL.String) <<
     self:_RefreshBreakthroughButton(fromBreakthroughCfg.breakthroughGold)
 end
 
-
-
-
-
-
 WeaponExhibitUpgradeCtrl._RefreshUpgradePanel = HL.Method(HL.Number, HL.String, HL.Opt(HL.Table)) << function(self, weaponInstId, weaponTemplateId, costItemInfoDict)
     self.m_costItemInfoDict = costItemInfoDict or {}
     self:_RefreshBottomCostItem()
     self:_ResetCostItem(costItemInfoDict)
     self:_RefreshUpgradeInformation(weaponInstId, weaponTemplateId)
 end
-
-
 
 WeaponExhibitUpgradeCtrl._RefreshSelectionDropdown = HL.Method() << function(self)
     local optionCount = #self.m_selectionOptions
@@ -649,10 +486,6 @@ WeaponExhibitUpgradeCtrl._RefreshSelectionDropdown = HL.Method() << function(sel
     end
     self.view.upgradeNode.selectionDropDown.dropdown:Refresh(optionCount, lastSelectKey)
 end
-
-
-
-
 
 WeaponExhibitUpgradeCtrl._RefreshTitle = HL.Method(HL.String, HL.Boolean) << function(self, weaponTemplateId, isBreakthrough)
     local _, itemCfg = Tables.itemTable:TryGetValue(weaponTemplateId)
@@ -664,9 +497,6 @@ WeaponExhibitUpgradeCtrl._RefreshTitle = HL.Method(HL.String, HL.Boolean) << fun
     local title = isBreakthrough and Language.LUA_WEAPON_EXHIBIT_BREAKTHROUGH_TITLE or Language.LUA_WEAPON_EXHIBIT_UPGRADE_TITLE
     self.view.title.text = string.format(title, itemCfg.name)
 end
-
-
-
 
 
 WeaponExhibitUpgradeCtrl._RefreshBottomCostItem = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGraduallyShow)
@@ -682,20 +512,12 @@ WeaponExhibitUpgradeCtrl._RefreshBottomCostItem = HL.Method(HL.Opt(HL.Boolean)) 
     end
 end
 
-
-
-
 WeaponExhibitUpgradeCtrl._RefreshBreakItemList = HL.Method(HL.Userdata) << function(self, breakthroughCfg)
     local breakItemList = breakthroughCfg.breakItemList
 
     self.m_breakItemList = breakthroughCfg.breakItemList
     self.view.breakNode.costItemList:UpdateCount(#breakItemList)
 end
-
-
-
-
-
 
 WeaponExhibitUpgradeCtrl._RefreshUpgradeInformation = HL.Method(HL.Number, HL.String, HL.Opt(HL.Boolean)) << function(
     self, weaponInstId, weaponTemplateId, inUpgradeTransition)
@@ -733,10 +555,6 @@ WeaponExhibitUpgradeCtrl._RefreshUpgradeInformation = HL.Method(HL.Number, HL.St
     self:_UpdateAddAndReduceButtonState()
 end
 
-
-
-
-
 WeaponExhibitUpgradeCtrl._RefreshUpgradeBtn = HL.Method(HL.Number, HL.Number) << function(self, generateExp, requireGold)
     local curGold = Utils.getItemCount(UIConst.INVENTORY_MONEY_IDS[1], true)
     local goldEnough = curGold >= requireGold
@@ -744,9 +562,6 @@ WeaponExhibitUpgradeCtrl._RefreshUpgradeBtn = HL.Method(HL.Number, HL.Number) <<
     self.view.goldCostNumber.text = UIUtils.setCountColor(requireGold, not goldEnough)
     self.view.btnLevelUp.text = Language.LUA_WEAPON_EXHIBIT_UPGRADE
 end
-
-
-
 
 WeaponExhibitUpgradeCtrl._RefreshBreakthroughButton = HL.Method(HL.Number) << function(self, requireGold)
     local curGold = Utils.getItemCount(UIConst.INVENTORY_MONEY_IDS[1], true)
@@ -756,10 +571,6 @@ WeaponExhibitUpgradeCtrl._RefreshBreakthroughButton = HL.Method(HL.Number) << fu
     self.view.btnLevelUp.text = Language.LUA_WEAPON_EXHIBIT_BREAKTHROUGH
     
 end
-
-
-
-
 
 WeaponExhibitUpgradeCtrl._RefreshBasicCostItemCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, index)
     local cell = self.m_getBasicCostItemCell(object)
@@ -771,10 +582,6 @@ WeaponExhibitUpgradeCtrl._RefreshBasicCostItemCell = HL.Method(HL.Userdata, HL.N
         self:_ToggleExpandNode(true)
     end)
 end
-
-
-
-
 
 WeaponExhibitUpgradeCtrl._RefreshBreakCostItemCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, index)
     local cell = self.m_getBreakCostItemCell(object)
@@ -802,10 +609,6 @@ WeaponExhibitUpgradeCtrl._RefreshBreakCostItemCell = HL.Method(HL.Userdata, HL.N
     cell.storageNode:InitStorageNode(inventoryCount, itemInfo.count, true)
 end
 
-
-
-
-
 WeaponExhibitUpgradeCtrl._OnClickExpandCostItemCell = HL.Method(HL.Table, HL.Boolean) << function(self, costItemInfo, realClick)
     if not realClick then
         return
@@ -828,11 +631,6 @@ WeaponExhibitUpgradeCtrl._OnClickExpandCostItemCell = HL.Method(HL.Table, HL.Boo
 
     self:_AddIntoCostItemDict(costItemInfo, 1)
 end
-
-
-
-
-
 
 WeaponExhibitUpgradeCtrl._RefreshCostItemCell = HL.Method(HL.Any, HL.Table, HL.Any) << function(self, cell, costItemInfo, onClickAction)
     local isEmpty = not costItemInfo
@@ -893,10 +691,6 @@ WeaponExhibitUpgradeCtrl._RefreshCostItemCell = HL.Method(HL.Any, HL.Table, HL.A
     end
 end
 
-
-
-
-
 WeaponExhibitUpgradeCtrl._ToggleExpandNode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isExpand, closeAll)
     self.m_itemFillCor = self:_ClearCoroutine(self.m_itemFillCor)
 
@@ -943,8 +737,6 @@ WeaponExhibitUpgradeCtrl._ToggleExpandNode = HL.Method(HL.Boolean, HL.Opt(HL.Boo
     AudioManager.PostEvent(audioEventKey)
 end
 
-
-
 WeaponExhibitUpgradeCtrl._CalcGenerateExp = HL.Method().Return(HL.Number) << function(self)
     local expSum = 0
     for _, costItemInfo in pairs(self.m_costItemInfoDict) do
@@ -953,10 +745,6 @@ WeaponExhibitUpgradeCtrl._CalcGenerateExp = HL.Method().Return(HL.Number) << fun
     end
     return expSum
 end
-
-
-
-
 
 WeaponExhibitUpgradeCtrl._TryModifyCostItemDict = HL.Method(HL.Table, HL.Number) << function(self, itemInfo, count)
     local costItemInfoDict = self.m_costItemInfoDict
@@ -990,10 +778,6 @@ WeaponExhibitUpgradeCtrl._TryModifyCostItemDict = HL.Method(HL.Table, HL.Number)
     costItemInfoDict[indexId] = itemInfo
 end
 
-
-
-
-
 WeaponExhibitUpgradeCtrl._AddIntoCostItemDict = HL.Method(HL.Table, HL.Number) << function(self, itemInfo, count)
     local weaponInfo = self.m_weaponInfo
 
@@ -1003,10 +787,6 @@ WeaponExhibitUpgradeCtrl._AddIntoCostItemDict = HL.Method(HL.Table, HL.Number) <
     self.view.expandNode.commonItemList:RefreshCellById(itemInfo.indexId)
     self:_RefreshUpgradeInformation(weaponInfo.weaponInstId, weaponInfo.weaponTemplateId)
 end
-
-
-
-
 
 WeaponExhibitUpgradeCtrl._TryAddIntoCostItemDict = HL.Method(HL.Table, HL.Number) << function(self, itemInfo, count)
     local curCount = itemInfo.count or 0
@@ -1089,10 +869,6 @@ WeaponExhibitUpgradeCtrl._TryAddIntoCostItemDict = HL.Method(HL.Table, HL.Number
 end
 
 
-
-
-
-
 WeaponExhibitUpgradeCtrl._RemoveFromCostItemDict = HL.Method(HL.Table, HL.Number) << function(self, itemInfo, count)
     local costItemInfoDict = self.m_costItemInfoDict
     local weaponInfo = self.m_weaponInfo
@@ -1111,11 +887,6 @@ WeaponExhibitUpgradeCtrl._RemoveFromCostItemDict = HL.Method(HL.Table, HL.Number
     self.view.expandNode.commonItemList:RefreshCellById(itemInfo.indexId)
 end
 
-
-
-
-
-
 WeaponExhibitUpgradeCtrl._CalcLevelByExp = HL.Method(HL.Number, HL.Number, HL.Number).Return(HL.Number, HL.Number) << function(self, addExp, curLevel, maxLevel)
     local level2RequireExpDict = self.m_level2RequireExpDict
 
@@ -1133,8 +904,6 @@ WeaponExhibitUpgradeCtrl._CalcLevelByExp = HL.Method(HL.Number, HL.Number, HL.Nu
     return curLevel, addExp
 end
 
-
-
 WeaponExhibitUpgradeCtrl._AutoFillCostItem = HL.Method() << function(self)
     local weaponInfo = self.m_weaponInfo
 
@@ -1144,8 +913,6 @@ WeaponExhibitUpgradeCtrl._AutoFillCostItem = HL.Method() << function(self)
     self.view.expandNode.commonItemList:RefreshAllCells()
     self:_RefreshUpgradeInformation(weaponInfo.weaponInstId, weaponInfo.weaponTemplateId)
 end
-
-
 
 WeaponExhibitUpgradeCtrl._TryFillCostItem = HL.Method() << function(self)
     local upgradeItemInfoList = self.m_upgradeItemInfoList
@@ -1167,11 +934,6 @@ WeaponExhibitUpgradeCtrl._TryFillCostItem = HL.Method() << function(self)
         self:Notify(MessageConst.SHOW_TOAST, Language.LUA_WEAPON_EXHIBIT_UPGRADE_NO_ITEM)
     end
 end
-
-
-
-
-
 
 WeaponExhibitUpgradeCtrl._AutoFillCostItemDict = HL.Method(HL.Number, HL.Number, HL.Table).Return(HL.Table)
     << function(self, targetExp, maxQuality, upgradeItemInfoList)
@@ -1269,19 +1031,11 @@ WeaponExhibitUpgradeCtrl._AutoFillCostItemDict = HL.Method(HL.Number, HL.Number,
     return costItemInfoDict
 end
 
-
-
-
-
 WeaponExhibitUpgradeCtrl._RefreshWeaponCellAddOn = HL.Method(HL.Any, HL.Table) << function(self, cell, itemInfo)
     cell.selectNode.gameObject:SetActive(itemInfo.count ~= nil and itemInfo.count > 0)
     cell.multiSelectNode.gameObject:SetActive(false)
     cell.selectCount.text = itemInfo.count
 end
-
-
-
-
 
 WeaponExhibitUpgradeCtrl._RefreshItemCellAddOn = HL.Method(HL.Any, HL.Table) << function(self, cell, itemInfo)
     cell.selectNode.gameObject:SetActive(itemInfo.count ~= nil and itemInfo.count > 0)
@@ -1289,10 +1043,6 @@ WeaponExhibitUpgradeCtrl._RefreshItemCellAddOn = HL.Method(HL.Any, HL.Table) << 
     cell.multiSelectNode.gameObject:SetActive(true)
     cell.selectCount.text = itemInfo.count
 end
-
-
-
-
 
 WeaponExhibitUpgradeCtrl._RefreshCellAddOn = HL.Method(HL.Any, HL.Table) << function(self, cell, itemInfo)
     if itemInfo.itemInst ~= nil then
@@ -1322,19 +1072,10 @@ WeaponExhibitUpgradeCtrl._RefreshCellAddOn = HL.Method(HL.Any, HL.Table) << func
     end
 end
 
-
-
-
-
 WeaponExhibitUpgradeCtrl._OnItemBtnMinusClicked = HL.Method(HL.Any, HL.Table) << function(self, cell, itemInfo)
     self:_RemoveFromCostItemDict(itemInfo, 1)
     self:_RefreshCellAddOn(cell, itemInfo)
 end
-
-
-
-
-
 
 WeaponExhibitUpgradeCtrl._OnItemIsNaviTargetChanged = HL.Method(HL.Any, HL.Table, HL.Boolean) << function(self, cell, itemInfo, isTarget)
     if isTarget and self.view.expandNode.gameObject.activeInHierarchy then
@@ -1353,9 +1094,6 @@ WeaponExhibitUpgradeCtrl._OnItemIsNaviTargetChanged = HL.Method(HL.Any, HL.Table
         })
     end
 end
-
-
-
 
 WeaponExhibitUpgradeCtrl._ResetCostItem = HL.Method(HL.Opt(HL.Table)) << function(self, costItemInfoDict)
     self.m_costItemInfoDict = costItemInfoDict or {}
@@ -1410,10 +1148,6 @@ WeaponExhibitUpgradeCtrl._ResetCostItem = HL.Method(HL.Opt(HL.Table)) << functio
     end
 end
 
-
-
-
-
 WeaponExhibitUpgradeCtrl._StartFillTimer = HL.Method(HL.Table, HL.Number) << function(self, itemInfo, count)
     self.m_itemFillCor = self:_ClearCoroutine(self.m_itemFillCor)
     self.m_itemFillCor = self:_StartCoroutine(function()
@@ -1428,14 +1162,9 @@ WeaponExhibitUpgradeCtrl._StartFillTimer = HL.Method(HL.Table, HL.Number) << fun
     end)
 end
 
-
-
-
 WeaponExhibitUpgradeCtrl._StopFillTimer = HL.Method(HL.Table) << function(self, itemInfo)
     self.m_itemFillCor = self:_ClearCoroutine(self.m_itemFillCor)
 end
-
-
 
 WeaponExhibitUpgradeCtrl._CollectCostItemInfoList = HL.Method().Return(HL.Table) << function(self)
     local costItemInfoList = {}
@@ -1470,8 +1199,6 @@ WeaponExhibitUpgradeCtrl._CollectCostItemInfoList = HL.Method().Return(HL.Table)
 
     return costItemInfoList
 end
-
-
 
 WeaponExhibitUpgradeCtrl._ClickWeaponUpgradeButton = HL.Method() << function(self)
     if self.m_curGenerateExp <= 0 then
@@ -1515,8 +1242,6 @@ WeaponExhibitUpgradeCtrl._ClickWeaponUpgradeButton = HL.Method() << function(sel
     GameInstance.player.charBag:AddWeaponExp(weaponInfo.weaponInstId, costItemId2Count, costWeaponInstIds)
 end
 
-
-
 WeaponExhibitUpgradeCtrl._ClickWeaponBreakButton = HL.Method() << function(self)
     local exhibitInfo = self.m_weaponExhibitInfo
     local expInfo = CharInfoUtils.getWeaponExpInfo(exhibitInfo.weaponInst.instId)
@@ -1554,8 +1279,6 @@ WeaponExhibitUpgradeCtrl._ClickWeaponBreakButton = HL.Method() << function(self)
     GameInstance.player.charBag:BreakthroughWeapon(weaponInfo.weaponInstId)
 end
 
-
-
 WeaponExhibitUpgradeCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     local arg = {}
     arg.costItemInfoDict = self.m_costItemInfoDict
@@ -1569,15 +1292,11 @@ end
 
 
 
-
-
 WeaponExhibitUpgradeCtrl._UpdateAddAndReduceButtonState = HL.Method() << function(self)
     self.view.addBtnStateCtrl:SetState(self.m_curTargetLv < self.m_weaponExhibitInfo.stageLv
         and "normal" or "gray")
     self.view.reduceBtnStateCtrl:SetState(self.m_curTargetLv == self.m_weaponExhibitInfo.curLv and "gray" or "normal")
 end
-
-
 
 WeaponExhibitUpgradeCtrl._AddOneLevel = HL.Method() << function(self)
     local targetLv = self.m_curTargetLv + 1
@@ -1603,8 +1322,6 @@ WeaponExhibitUpgradeCtrl._AddOneLevel = HL.Method() << function(self)
     self.view.expandNode.commonItemList:RefreshAllCells()
     self:_RefreshUpgradeInformation(self.m_weaponInfo.weaponInstId, self.m_weaponInfo.weaponTemplateId)
 end
-
-
 
 WeaponExhibitUpgradeCtrl._SubOneLevel = HL.Method() << function(self)
     if self.m_curTargetLv - self.m_weaponExhibitInfo.curLv <= 1 then
@@ -1680,9 +1397,6 @@ WeaponExhibitUpgradeCtrl._SubOneLevel = HL.Method() << function(self)
     self:_RefreshUpgradeInformation(self.m_weaponInfo.weaponInstId, self.m_weaponInfo.weaponTemplateId)
 end
 
-
-
-
 WeaponExhibitUpgradeCtrl._ResetItemInfoCount = HL.Method(HL.Table) << function(self, itemInfoList)
     if itemInfoList == nil then
         return
@@ -1692,9 +1406,6 @@ WeaponExhibitUpgradeCtrl._ResetItemInfoCount = HL.Method(HL.Table) << function(s
         itemInfo.addCount = 0
     end
 end
-
-
-
 
 WeaponExhibitUpgradeCtrl._OnItemCountChanged = HL.Method(HL.Table) << function(self, args)
     if self.m_isBreakthrough and

@@ -1,154 +1,68 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 local LuaNodeCache = require_ex('Common/Utils/LuaNodeCache')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SettlementDefenseMapRoot = HL.Class('SettlementDefenseMapRoot', UIWidgetBase)
 
 local ENEMY_UPDATE_THREAD_INTERVAL = 0.1
 local BUILDING_UPDATE_THREAD_INTERVAL = 0.5
 
-
 SettlementDefenseMapRoot.m_towerDefenseGame = HL.Field(HL.Userdata)
-
 
 SettlementDefenseMapRoot.m_settlementId = HL.Field(HL.Userdata)
 
-
 SettlementDefenseMapRoot.m_basicUpdateThread = HL.Field(HL.Thread)
-
 
 SettlementDefenseMapRoot.m_enemyUpdateThread = HL.Field(HL.Thread)
 
-
 SettlementDefenseMapRoot.m_buildingUpdateThread = HL.Field(HL.Thread)
-
 
 SettlementDefenseMapRoot.m_leftBottomPos = HL.Field(Vector2)
 
-
 SettlementDefenseMapRoot.m_rightUpPos = HL.Field(Vector2)
-
 
 SettlementDefenseMapRoot.m_centerPos = HL.Field(Vector2)
 
-
 SettlementDefenseMapRoot.m_realLeftBottomPos = HL.Field(Vector2)
-
 
 SettlementDefenseMapRoot.m_realRightUpPos = HL.Field(Vector2)
 
-
 SettlementDefenseMapRoot.m_mapRectWidth = HL.Field(HL.Number) << -1
-
 
 SettlementDefenseMapRoot.m_mapRectHeight = HL.Field(HL.Number) << -1
 
-
 SettlementDefenseMapRoot.m_viewRectWidth = HL.Field(HL.Number) << -1
-
 
 SettlementDefenseMapRoot.m_viewRectHeight = HL.Field(HL.Number) << -1
 
-
 SettlementDefenseMapRoot.m_mapWidth = HL.Field(HL.Number) << -1
-
 
 SettlementDefenseMapRoot.m_mapHeight = HL.Field(HL.Number) << -1
 
-
 SettlementDefenseMapRoot.m_mapRectOffset = HL.Field(Vector2)
-
 
 SettlementDefenseMapRoot.m_playerRectOffset = HL.Field(Vector2)
 
-
 SettlementDefenseMapRoot.m_playerAngle = HL.Field(HL.Number) << -1
-
 
 SettlementDefenseMapRoot.m_playerViewAngle = HL.Field(HL.Number) << -1
 
-
 SettlementDefenseMapRoot.m_coreIconCache = HL.Field(LuaNodeCache)
-
 
 SettlementDefenseMapRoot.m_spawnerIconCache = HL.Field(LuaNodeCache)
 
-
 SettlementDefenseMapRoot.m_enemyIconCache = HL.Field(LuaNodeCache)
-
 
 SettlementDefenseMapRoot.m_buildingIconCache = HL.Field(LuaNodeCache)
 
-
 SettlementDefenseMapRoot.m_routeIconCache = HL.Field(LuaNodeCache)
-
 
 SettlementDefenseMapRoot.m_enemyDataMap = HL.Field(HL.Table)
 
-
 SettlementDefenseMapRoot.m_buildingDataMap = HL.Field(HL.Table)
-
 
 SettlementDefenseMapRoot.m_isTransitFinished = HL.Field(HL.Boolean) << false
 
-
 SettlementDefenseMapRoot.m_hpChangeCallbackList = HL.Field(HL.Table)
-
-
 
 
 SettlementDefenseMapRoot._OnFirstTimeInit = HL.Override() << function(self)
@@ -169,8 +83,6 @@ SettlementDefenseMapRoot._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 SettlementDefenseMapRoot._OnDestroy = HL.Override() << function(self)
     self.m_basicUpdateThread = self:_ClearCoroutine(self.m_basicUpdateThread)
     self.m_enemyUpdateThread = self:_ClearCoroutine(self.m_enemyUpdateThread)
@@ -184,8 +96,6 @@ SettlementDefenseMapRoot._OnDestroy = HL.Override() << function(self)
         end
     end
 end
-
-
 
 SettlementDefenseMapRoot.InitSettlementDefenseMapRoot = HL.Method() << function(self)
     self.m_towerDefenseGame = GameInstance.player.towerDefenseSystem.towerDefenseGame
@@ -206,8 +116,6 @@ end
 
 
 
-
-
 SettlementDefenseMapRoot._InitIconCache = HL.Method() << function(self)
     local originalIcon, iconRoot = self.view.originalIcon, self.view.iconRoot
 
@@ -217,8 +125,6 @@ SettlementDefenseMapRoot._InitIconCache = HL.Method() << function(self)
     self.m_buildingIconCache = LuaNodeCache(originalIcon.buildingIcon, iconRoot.buildingRoot)
     self.m_routeIconCache = LuaNodeCache(originalIcon.routeIcon, iconRoot.routeRoot)
 end
-
-
 
 SettlementDefenseMapRoot._InitMapRect = HL.Method() << function(self)
     local activeTdId = GameInstance.player.towerDefenseSystem.activeTdId
@@ -266,8 +172,6 @@ SettlementDefenseMapRoot._InitMapRect = HL.Method() << function(self)
 
 end
 
-
-
 SettlementDefenseMapRoot._InitMapUpdateThread = HL.Method() << function(self)
     self:_PreUpdateAndRefreshAll()
     self.m_basicUpdateThread = self:_StartCoroutine(function()
@@ -309,8 +213,6 @@ SettlementDefenseMapRoot._InitMapUpdateThread = HL.Method() << function(self)
     end)
 end
 
-
-
 SettlementDefenseMapRoot._InitMapCores = HL.Method() << function(self)
     local coreAbilitySystems = self.m_towerDefenseGame.tdCoreAbilitySystems
     for coreAbilityIndex = 0, coreAbilitySystems.Count - 1 do
@@ -331,8 +233,6 @@ SettlementDefenseMapRoot._InitMapCores = HL.Method() << function(self)
     end
 end
 
-
-
 SettlementDefenseMapRoot._InitMapSpawners = HL.Method() << function(self)
     
     
@@ -348,8 +248,6 @@ SettlementDefenseMapRoot._InitMapSpawners = HL.Method() << function(self)
     end
 end
 
-
-
 SettlementDefenseMapRoot._InitMapBuildings = HL.Method() << function(self)
     local buildings = self.m_towerDefenseGame.battleBuildings
     for buildingIndex = 0, buildings.Count - 1 do
@@ -364,16 +262,12 @@ end
 
 
 
-
-
 SettlementDefenseMapRoot._PreUpdateAndRefreshAll = HL.Method() << function(self)
     self:_UpdateMapAndPlayerRectState()
     self:_UpdatePlayerAndCameraRotation()
     self:_RefreshMapRect()
     self:_RefreshPlayerRect()
 end
-
-
 
 SettlementDefenseMapRoot._UpdateMapAndPlayerRectState = HL.Method() << function(self)
     local character = GameInstance.playerController.mainCharacter
@@ -408,8 +302,6 @@ SettlementDefenseMapRoot._UpdateMapAndPlayerRectState = HL.Method() << function(
     self.m_mapRectOffset = rectPosOffset
 end
 
-
-
 SettlementDefenseMapRoot._UpdatePlayerAndCameraRotation = HL.Method() << function(self)
     local character = GameInstance.playerController.mainCharacter
     if not NotNull(character.rootCom.transform) then
@@ -418,8 +310,6 @@ SettlementDefenseMapRoot._UpdatePlayerAndCameraRotation = HL.Method() << functio
     self.m_playerAngle = character.rootCom.transform.eulerAngles.y;
     self.m_playerViewAngle = CameraManager.mainCamera.transform.eulerAngles.y;
 end
-
-
 
 SettlementDefenseMapRoot._UpdateEnemyDataMap = HL.Method() << function(self)
     local enemies = self.m_towerDefenseGame.enemies
@@ -457,8 +347,6 @@ SettlementDefenseMapRoot._UpdateEnemyDataMap = HL.Method() << function(self)
     end
 end
 
-
-
 SettlementDefenseMapRoot._UpdateBuildingDataMap = HL.Method() << function(self)
     for _, buildingData in pairs(self.m_buildingDataMap) do
         local nodeId = buildingData.nodeId
@@ -472,13 +360,9 @@ end
 
 
 
-
-
 SettlementDefenseMapRoot._RefreshMapRect = HL.Method() << function(self)
     self.view.mapRect.anchoredPosition = self.m_mapRectOffset
 end
-
-
 
 SettlementDefenseMapRoot._RefreshPlayerRect = HL.Method() << function(self)
     local playerRect = self.view.playerRect
@@ -486,8 +370,6 @@ SettlementDefenseMapRoot._RefreshPlayerRect = HL.Method() << function(self)
     playerRect.playerArrow.localEulerAngles = Vector3(0.0, 0.0, -self.m_playerAngle);
     playerRect.playerView.localEulerAngles = Vector3(0.0, 0.0, -self.m_playerViewAngle);
 end
-
-
 
 SettlementDefenseMapRoot._RefreshEnemiesRect = HL.Method() << function(self)
     for _, enemyData in pairs(self.m_enemyDataMap) do
@@ -498,17 +380,11 @@ SettlementDefenseMapRoot._RefreshEnemiesRect = HL.Method() << function(self)
     end
 end
 
-
-
 SettlementDefenseMapRoot._RefreshBuildingsState = HL.Method() << function(self)
     for _, buildingData in pairs(self.m_buildingDataMap) do
         buildingData.icon.brokenNode.gameObject:SetActive(buildingData.isBroken)
     end
 end
-
-
-
-
 
 SettlementDefenseMapRoot._RefreshIconRectPos = HL.Method(Vector3, HL.Any) << function(self, worldPos, icon)
     if icon == nil then
@@ -529,15 +405,9 @@ end
 
 
 
-
-
-
 SettlementDefenseMapRoot._OnBuildingAdded = HL.Method(HL.Number) << function(self, nodeId)
     self:_BuildBuildingData(nodeId)
 end
-
-
-
 
 SettlementDefenseMapRoot._OnBuildingRemoved = HL.Method(HL.Number) << function(self, nodeId)
     local buildingData = self.m_buildingDataMap[nodeId]
@@ -554,9 +424,6 @@ end
 
 
 
-
-
-
 SettlementDefenseMapRoot._OnRouteCreated = HL.Method(HL.Number) << function(self, routeId)
     if self.view.config.NEED_WAIT_TRANSIT_COMPLETE and not self.m_isTransitFinished then
         return
@@ -564,9 +431,6 @@ SettlementDefenseMapRoot._OnRouteCreated = HL.Method(HL.Number) << function(self
 
     self:_CreateRouteIcon(routeId)
 end
-
-
-
 
 SettlementDefenseMapRoot._CreateRouteIcon = HL.Method(HL.Number) << function(self, routeId)
     if routeId == nil then
@@ -592,8 +456,6 @@ end
 
 
 
-
-
 SettlementDefenseMapRoot._OnTransitFinished = HL.Method() << function(self)
     self.m_isTransitFinished = true
 
@@ -602,9 +464,6 @@ SettlementDefenseMapRoot._OnTransitFinished = HL.Method() << function(self)
         self:_CreateRouteIcon(routeId)
     end
 end
-
-
-
 
 SettlementDefenseMapRoot._BuildBuildingData = HL.Method(HL.Number) << function(self, nodeId)
     if nodeId == nil then

@@ -1,25 +1,13 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 DungeonSelectionCell = HL.Class('DungeonSelectionCell', UIWidgetBase)
 
-
 DungeonSelectionCell.m_styleNode = HL.Field(HL.Any)
-
-
 
 
 DungeonSelectionCell._OnFirstTimeInit = HL.Override() << function(self)
     
 end
-
-
-
-
 
 DungeonSelectionCell.InitDungeonSelectionCell = HL.Method(HL.Any, HL.Function) << function(self, info, clickFunc)
     self:_FirstTimeInit()
@@ -53,9 +41,6 @@ DungeonSelectionCell.InitDungeonSelectionCell = HL.Method(HL.Any, HL.Function) <
         end
     end)
 end
-
-
-
 
 DungeonSelectionCell.SetSelected = HL.Method(HL.Boolean) << function(self, selected)
     if selected then

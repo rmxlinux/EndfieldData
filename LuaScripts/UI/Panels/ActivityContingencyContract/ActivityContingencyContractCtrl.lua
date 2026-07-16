@@ -10,7 +10,7 @@ ActivityContingencyContractCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_UPDATED] = '_OnActivityUpdate',
     [MessageConst.ON_ACHIEVEMENT_UPDATE] = '_OnAchievementUpdate',
     [MessageConst.ON_ACTIVITY_PREPARE_TRANSITION_BACK_TO_TOP] = '_OnBackToTop',
-    [MessageConst.ON_CONDITIONAL_MULTI_STAGE_TASK_PROGRESS_CHANGE] = '_OnStageUpdate',
+    [MessageConst.ON_CONDITIONAL_MULTI_STAGE_TASK_PROGRESS_CHANGE] = '_OnTaskUpdate',
 }
 
 ActivityContingencyContractCtrl.m_activityId = HL.Field(HL.String) << ""
@@ -135,7 +135,7 @@ ActivityContingencyContractCtrl._StageUpdate = HL.Method(HL.Opt(HL.Boolean)) << 
         if isGameplayEnd then
             self.view.activityCommonInfo.view.infoNode.countDownWidget:InitCountDownText(self.m_shopEndTime)
             self.view.activityCommonInfo.view.gotoNode.stateController:SetState("None")
-            ActivityUtils.setFalseIntroMissionActivity(self.m_activityId, true) 
+            ActivityUtils.setFalseIntroMissionActivity(self.m_activityId) 
         end
     end
 end
@@ -163,12 +163,9 @@ ActivityContingencyContractCtrl._InitTagRenewTips = HL.Method(HL.String) << func
     if not ActivityUtils.isCcFirstEnterSelectAfterUpdate(unreadStage) then
         renewTipsNode.btnDetail.onClick:RemoveAllListeners()
         renewTipsNode.btnDetail.onClick:AddListener(function()
-            
-            ActivityUtils.setCcFirstEnterSelectAfterUpdate(unreadStage, true)
-            ActivityUtils.setFalseNewActivityBubble(self.m_activityId, true)
-            ActivityUtils.setFalseNewActivityBubble(unreadStage, true)
-            
-            ClientDataManagerInst:SaveUserData(ClientDataManagerInst.defaultCategory)
+            ActivityUtils.setCcFirstEnterSelectAfterUpdate(unreadStage)
+            ActivityUtils.setFalseNewActivityBubble(self.m_activityId)
+            ActivityUtils.setFalseNewActivityBubble(unreadStage)
             Utils.jumpToSystem(self.m_gotoDetailJumpId)
             
             if self:_CheckCcAllNewTagRead(unreadStage) then
@@ -214,7 +211,6 @@ end
 ActivityContingencyContractCtrl._GetCcNewTagStage = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Opt(HL.String)) << function(self, onCreate)
     local activityData = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     local gameData = GameInstance.player.contingencyContractSystem:GetCcGameData(self.m_gameId)
-    local setReadFlag = false
     local unreadStageId
     for stageId, tagList in pairs(self.m_stageToTagMap) do
         local stageData = activityData:GetStageData(stageId)
@@ -230,8 +226,7 @@ ActivityContingencyContractCtrl._GetCcNewTagStage = HL.Method(HL.Opt(HL.Boolean)
                     if not ActivityUtils.isCcTagRead(tagId) then
                         
                         if tagInfo.unlockScore > gameData.historyBestScore then
-                            setReadFlag = true
-                            ActivityUtils.setCcTagRead(tagId, true)  
+                            ActivityUtils.setCcTagRead(tagId)
                         else
                             unreadStageId = stageId
                         end
@@ -239,10 +234,6 @@ ActivityContingencyContractCtrl._GetCcNewTagStage = HL.Method(HL.Opt(HL.Boolean)
                 end
             end
         end
-    end
-    
-    if setReadFlag and not onCreate then
-        ClientDataManagerInst:SaveUserData(ClientDataManagerInst.defaultCategory)
     end
     return unreadStageId
 end
@@ -261,6 +252,14 @@ ActivityContingencyContractCtrl._CheckCcAllNewTagRead = HL.Method(HL.String).Ret
         end
     end
     return true
+end
+
+ActivityContingencyContractCtrl._OnTaskUpdate = HL.Method(HL.Any) << function(self, arg)
+    local activityId = unpack(arg)
+    if activityId ~= self.m_activityId then
+        return
+    end
+    self:_UpdateData()
 end
 
 ActivityContingencyContractCtrl._OnStageUpdate = HL.Method(HL.Any) << function(self, arg)

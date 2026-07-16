@@ -2,13 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BlockInputWhenPhaseLevel
 
-
-
-
-
-
 BlockInputWhenPhaseLevelCtrl = HL.Class('BlockInputWhenPhaseLevelCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -19,10 +13,7 @@ BlockInputWhenPhaseLevelCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 BlockInputWhenPhaseLevelCtrl.s_blockInfos = HL.StaticField(HL.Table)
-
-
 
 BlockInputWhenPhaseLevelCtrl.ToggleBlockInputWhenPhaseLevel = HL.StaticMethod(HL.Table) << function(args)
     local key, isBlock = unpack(args)
@@ -36,7 +27,6 @@ BlockInputWhenPhaseLevelCtrl.ToggleBlockInputWhenPhaseLevel = HL.StaticMethod(HL
     end
     BlockInputWhenPhaseLevelCtrl.UpdateState()
 end
-
 
 BlockInputWhenPhaseLevelCtrl.UpdateState = HL.StaticMethod() << function()
     local shouldBlock = PhaseManager:GetTopPhaseId() == PhaseId.Level and BlockInputWhenPhaseLevelCtrl.s_blockInfos and next(BlockInputWhenPhaseLevelCtrl.s_blockInfos)

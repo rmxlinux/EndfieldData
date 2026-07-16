@@ -8,42 +8,17 @@ local DEFAULT_DOMAIN = "domain_1"
 
 local UNOPENED_LV = 99999
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainGradeCtrl = HL.Class('DomainGradeCtrl', uiCtrl.UICtrl)
-
 
 DomainGradeCtrl.m_domainId = HL.Field(HL.String) << ""
 
-
 DomainGradeCtrl.m_arg = HL.Field(HL.Table)
-
 
 DomainGradeCtrl.m_domainLevelData = HL.Field(HL.Table)
 
-
 DomainGradeCtrl.m_genGradeListCellFunc = HL.Field(HL.Function)
 
-
 DomainGradeCtrl.m_defaultNaviIndex = HL.Field(HL.Number) << 1
-
 
 
 
@@ -52,9 +27,6 @@ DomainGradeCtrl.m_defaultNaviIndex = HL.Field(HL.Number) << 1
 DomainGradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_DOMAIN_DEVELOPMENT_LEVEL_REWARD_GET] = 'OnDomainDevelopmentLevelRewardGet',
 }
-
-
-
 
 
 DomainGradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -100,8 +72,6 @@ DomainGradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 DomainGradeCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
     arg.domainId = self.m_domainId
@@ -132,9 +102,6 @@ DomainGradeCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << fu
     return arg
 end
 
-
-
-
 DomainGradeCtrl._GetGradeLuaIndexByLevel = HL.Method(HL.Number).Return(HL.Number) << function(self, lv)
     if not self.m_domainLevelData then
         return 0
@@ -146,9 +113,6 @@ DomainGradeCtrl._GetGradeLuaIndexByLevel = HL.Method(HL.Number).Return(HL.Number
     end
     return 0
 end
-
-
-
 
 DomainGradeCtrl._FocusGradeByLevel = HL.Method(HL.Number).Return(HL.Boolean) << function(self, lv)
     local luaIndex = self:_GetGradeLuaIndexByLevel(lv)
@@ -164,25 +128,17 @@ DomainGradeCtrl._FocusGradeByLevel = HL.Method(HL.Number).Return(HL.Boolean) << 
     if not cell then
         return false
     end
-    InputManagerInst.controllerNaviManager:SetTarget(cell.view.naviDeco)
+    self:SetNaviTarget(cell.view.naviDeco)
     return true
 end
-
-
 
 DomainGradeCtrl._OnClickBtnBack = HL.Method() << function(self)
     PhaseManager:PopPhase(PHASE_ID)
 end
 
-
-
 DomainGradeCtrl._OnClickHistoryBtn = HL.Method() << function(self)
     UIManager:Open(PanelId.DomainGradeSourceInstruction, self.m_domainId)
 end
-
-
-
-
 
 DomainGradeCtrl._UpdateGradeListCell = HL.Method(GameObject, HL.Number) << function(self, gameObject, csIndex)
     
@@ -192,14 +148,9 @@ DomainGradeCtrl._UpdateGradeListCell = HL.Method(GameObject, HL.Number) << funct
     cell:InitDomainGradeListCell(self.m_domainId, self.m_domainLevelData[luaIndex])
 end
 
-
-
 DomainGradeCtrl._UpdateMoneyCell = HL.Method() << function(self)
     self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(self.m_domainId)
 end
-
-
-
 
 DomainGradeCtrl._UpdateContentList = HL.Method(HL.Boolean) << function(self, isInit)
     local domainDevSys = GameInstance.player.domainDevelopmentSystem
@@ -269,7 +220,7 @@ DomainGradeCtrl._UpdateContentList = HL.Method(HL.Boolean) << function(self, isI
             local cellGo = self.view.listScrollView:Get(CSIndex(self.m_defaultNaviIndex))
             local cell = cellGo and self.m_genGradeListCellFunc(cellGo) or nil
             if cell then
-                InputManagerInst.controllerNaviManager:SetTarget(cell.view.naviDeco)
+                self:SetNaviTarget(cell.view.naviDeco)
             end
         else
             
@@ -282,8 +233,6 @@ DomainGradeCtrl._UpdateContentList = HL.Method(HL.Boolean) << function(self, isI
         end
     end)
 end
-
-
 
 DomainGradeCtrl._UpdateDomainDevLv = HL.Method() << function(self)
     local dataSucc, domainDevData = GameInstance.player.domainDevelopmentSystem.domainDevDataDic:TryGetValue(self.m_domainId)
@@ -323,9 +272,6 @@ DomainGradeCtrl._UpdateDomainDevLv = HL.Method() << function(self)
     self.view.lvTxt.color = color
 end
 
-
-
-
 DomainGradeCtrl.OnDomainDevelopmentLevelRewardGet = HL.Method(HL.Any) << function(self, args)
     local changedLevels = unpack(args)
     local rewards = {}
@@ -350,9 +296,6 @@ DomainGradeCtrl.OnDomainDevelopmentLevelRewardGet = HL.Method(HL.Any) << functio
 
     self:_UpdateContentList(true)
 end
-
-
-
 
 DomainGradeCtrl.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
     local luaIndex = LuaIndex(index)

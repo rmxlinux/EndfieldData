@@ -1,37 +1,13 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SearchNewFriendList
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SearchNewFriendListCtrl = HL.Class('SearchNewFriendListCtrl', uiCtrl.UICtrl)
-
 
 SearchNewFriendListCtrl.m_searchList = HL.Field(HL.Table)
 
-
 SearchNewFriendListCtrl.m_searchKey = HL.Field(HL.String) << ""
 
-
 SearchNewFriendListCtrl.m_recoverState = HL.Field(HL.Table)
-
 
 
 
@@ -42,9 +18,6 @@ SearchNewFriendListCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FRIEND_CELL_INFO_CHANGE] = 'OnCellChange',
     [MessageConst.ON_CHANGE_INPUT_DEVICE_TYPE_FINISHED] = '_OnChangeInputDeviceTypeFinished',
 }
-
-
-
 
 
 SearchNewFriendListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -116,22 +89,16 @@ SearchNewFriendListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_ApplyRecoverState()
 end
 
-
-
 SearchNewFriendListCtrl._Loading = HL.Method() << function(self)
     self.m_searchList = {}
     self.view.text.text = string.format(Language.LUA_FRIEND_SEARCH_COUNT, self.m_searchKey, #self.m_searchList)
     self.view.friendList:RefreshInfo(self.m_searchList, true, Language.LUA_FRIEND_SEARCHING, true)
 end
 
-
-
 SearchNewFriendListCtrl._OnSearch = HL.Method() << function(self)
     self.m_searchKey = self.view.inputField.text
     GameInstance.player.friendSystem:SearchNewFriend(self.m_searchKey)
 end
-
-
 
 SearchNewFriendListCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local sortNode = self.view and self.view.friendList and self.view.friendList.view and self.view.friendList.view.sortNode
@@ -151,8 +118,6 @@ SearchNewFriendListCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any
     return arg
 end
 
-
-
 SearchNewFriendListCtrl._StartInput = HL.Method() << function(self)
     if DeviceInfo.inputType ~= DeviceInfo.InputType.Controller then
         return
@@ -166,8 +131,6 @@ SearchNewFriendListCtrl._StartInput = HL.Method() << function(self)
     })
 end
 
-
-
 SearchNewFriendListCtrl._EndInput = HL.Method() << function(self)
     if DeviceInfo.inputType ~= DeviceInfo.InputType.Controller then
         return
@@ -177,22 +140,16 @@ SearchNewFriendListCtrl._EndInput = HL.Method() << function(self)
     self.view.friendList:NaviToFirstCell()
 end
 
-
-
 SearchNewFriendListCtrl.OnSearchFriendEnd = HL.Method() << function(self)
     self:_UpdateCache()
     self:_Refresh()
 end
-
-
 
 SearchNewFriendListCtrl.OnCellChange = HL.Method() << function(self)
     self:_UpdateCache()
     self.view.friendList:RefreshInfoStayPos(self.m_searchList)
     self.view.friendList:OnChangeInputField(self.view.inputField.text)
 end
-
-
 
 SearchNewFriendListCtrl._UpdateCache = HL.Method() << function(self)
     self.m_searchList = {}
@@ -205,15 +162,11 @@ SearchNewFriendListCtrl._UpdateCache = HL.Method() << function(self)
     end
 end
 
-
-
 SearchNewFriendListCtrl._Refresh = HL.Method() << function(self)
     self.view.text.text = string.format(Language.LUA_FRIEND_SEARCH_COUNT, self.m_searchKey, #self.m_searchList)
     self.view.friendList:RefreshInfo(self.m_searchList, true, Language.LUA_FRIEND_NO_SEARCH_FRIEND)
     self.view.friendList:OnChangeInputField(self.view.inputField.text)
 end
-
-
 
 SearchNewFriendListCtrl._ApplyRecoverState = HL.Method() << function(self)
     local sortState = self.m_recoverState and self.m_recoverState.sortState or nil
@@ -234,9 +187,6 @@ SearchNewFriendListCtrl._ApplyRecoverState = HL.Method() << function(self)
     self:_RestoreSearchInput(self.m_recoverState)
 end
 
-
-
-
 SearchNewFriendListCtrl._RestoreSearchInput = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
         return
@@ -253,9 +203,6 @@ SearchNewFriendListCtrl._RestoreSearchInput = HL.Method(HL.Opt(HL.Any)) << funct
     end
 end
 
-
-
-
 SearchNewFriendListCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Table) << function(self, args)
     if not self:IsShow() then
         return
@@ -265,8 +212,6 @@ SearchNewFriendListCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Table) <
         sortNode:UpdateDeviceState()
     end
 end
-
-
 
 SearchNewFriendListCtrl.OnShow = HL.Override() << function(self)
     local recoverState = self.m_recoverState
@@ -284,8 +229,6 @@ SearchNewFriendListCtrl.OnShow = HL.Override() << function(self)
     end
     InputManagerInst:ToggleGroup(self.view.textInputBindingGroup.groupId, true)
 end
-
-
 
 SearchNewFriendListCtrl.OnClose = HL.Override() << function(self)
     GameInstance.player.friendSystem:ClearSyncCallback()

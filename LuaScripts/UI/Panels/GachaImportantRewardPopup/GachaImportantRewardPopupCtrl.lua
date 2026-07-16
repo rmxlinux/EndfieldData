@@ -2,15 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaImportantRewardPopup
 
-
-
-
-
-
-
-
 GachaImportantRewardPopupCtrl = HL.Class('GachaImportantRewardPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -22,11 +14,7 @@ GachaImportantRewardPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 GachaImportantRewardPopupCtrl.m_info = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -47,8 +35,6 @@ GachaImportantRewardPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
     self:_RefreshAllUI()
 end
 
-
-
 GachaImportantRewardPopupCtrl.OnClose = HL.Override() << function(self)
     local onComplete = self.m_info.onComplete
     self.m_info = nil
@@ -59,16 +45,12 @@ end
 
 
 
-
-
 GachaImportantRewardPopupCtrl._InitUI = HL.Method() << function(self)
     self.view.maskBtn.onClick:AddListener(function()
         self:PlayAnimationOutAndClose()
     end)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
 
 GachaImportantRewardPopupCtrl._RefreshAllUI = HL.Method() << function(self)
     local itemId = self.m_info.itemId

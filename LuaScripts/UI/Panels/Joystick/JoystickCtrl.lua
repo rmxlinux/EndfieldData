@@ -1,33 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Joystick
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 JoystickCtrl = HL.Class('JoystickCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -42,11 +15,7 @@ JoystickCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FORBID_SYSTEM_CHANGED] = 'OnForbidSystemChange',
 }
 
-
 JoystickCtrl.m_update = HL.Field(HL.Function)
-
-
-
 
 
 JoystickCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -93,19 +62,13 @@ JoystickCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_UpdateMoveForbidStatus()
 end
 
-
-
 JoystickCtrl.OnShow = HL.Override() << function(self)
     self:_AddRegisters()
 end
 
-
-
 JoystickCtrl.OnHide = HL.Override() << function(self)
     self:_ClearRegisters()
 end
-
-
 
 
 JoystickCtrl.OnClose = HL.Override() << function(self)
@@ -115,17 +78,11 @@ JoystickCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
-
 JoystickCtrl.OnGameSettingChanged = HL.Method(HL.Number) << function(self, reason)
     if reason == UIConst.GameSettingChangeReason.Default then
         self:_UpdateWalkRunRation()
     end
 end
-
-
-
 
 JoystickCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, inputEnabled)
     if inputEnabled then
@@ -144,8 +101,6 @@ end
 
 
 
-
-
 JoystickCtrl._AddRegisters = HL.Method() << function(self)
     if InputManagerInst.afterCheckInput then
         InputManagerInst.afterCheckInput = InputManagerInst.afterCheckInput + self.m_update
@@ -153,8 +108,6 @@ JoystickCtrl._AddRegisters = HL.Method() << function(self)
         InputManagerInst.afterCheckInput = self.m_update
     end
 end
-
-
 
 JoystickCtrl._ClearRegisters = HL.Method() << function(self)
     GameInstance.playerController:UpdateMoveCommand(Vector2.zero)
@@ -168,16 +121,11 @@ end
 
 
 
-
 JoystickCtrl.m_isMoveForbid = HL.Field(HL.Boolean) << false
-
-
 
 JoystickCtrl._Update = HL.Method() << function(self)
     self:_UpdateMove()
 end
-
-
 
 JoystickCtrl._UpdateMove = HL.Method() << function(self)
     if not self:CanPlayerMove() then
@@ -197,17 +145,12 @@ JoystickCtrl._UpdateMove = HL.Method() << function(self)
     end
 end
 
-
-
 JoystickCtrl._ToggleWalk = HL.Method() << function(self)
     if FactoryUtils.isInTopView() then
         return
     end
     GameInstance.playerController:ToggleWalk()
 end
-
-
-
 
 JoystickCtrl._ToggleAutoSprint = HL.Method(HL.Boolean) << function(self, isAutoSprint)
     if not CS.Beyond.GameSetting.controllerCachedAutoSprint then
@@ -216,14 +159,9 @@ JoystickCtrl._ToggleAutoSprint = HL.Method(HL.Boolean) << function(self, isAutoS
     GameInstance.playerController:OnJoystickSprint(isAutoSprint)
 end
 
-
-
 JoystickCtrl._UpdateWalkRunRation = HL.Method() << function(self)
     self.view.joystick.walkRation = CS.Beyond.GameSetting.controllerCachedWalkRunRatio
 end
-
-
-
 
 JoystickCtrl.OnForbidSystemChange = HL.Method(HL.Any) << function(self, args)
     local forbidType, isForbid = unpack(args)
@@ -235,21 +173,14 @@ JoystickCtrl.OnForbidSystemChange = HL.Method(HL.Any) << function(self, args)
     self:_UpdateMoveForbidStatus()
 end
 
-
-
-
 JoystickCtrl.OnToggleVirtualMouse = HL.Method(HL.Table) << function(self, args)
     local isActive = unpack(args)
     GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMove, "VirtualMouse", isActive);
 end
 
-
-
 JoystickCtrl._UpdateMoveForbidStatus = HL.Method() << function(self)
     self.m_isMoveForbid = Utils.isForbidden(ForbidType.ForbidMove)
 end
-
-
 
 JoystickCtrl.CanPlayerMove = HL.Method().Return(HL.Boolean) << function(self)
     return not self.m_isMoveForbid
@@ -260,19 +191,13 @@ end
 
 
 
-
 JoystickCtrl.m_flyModeUpPressKey = HL.Field(HL.Number) << -1
-
 
 JoystickCtrl.m_flyModeUpReleaseKey = HL.Field(HL.Number) << -1
 
-
 JoystickCtrl.m_flyModeDownPressKey = HL.Field(HL.Number) << -1
 
-
 JoystickCtrl.m_flyModeDownReleaseKey = HL.Field(HL.Number) << -1
-
-
 
 JoystickCtrl.OnToggleDebugFly = HL.Method() << function(self)
     if BEYOND_DEBUG_COMMAND then

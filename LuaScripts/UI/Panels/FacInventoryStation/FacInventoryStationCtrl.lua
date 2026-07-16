@@ -2,24 +2,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacInventoryStation
 local FacBuildingState = GEnums.FacBuildingState
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacInventoryStationCtrl = HL.Class('FacInventoryStationCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -30,20 +13,13 @@ FacInventoryStationCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacInventoryStationCtrl.m_uiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo)
-
 
 FacInventoryStationCtrl.m_nodeId = HL.Field(HL.Number) << -1
 
-
 FacInventoryStationCtrl.m_waitInitNaviTarget = HL.Field(HL.Boolean) << true
 
-
 FacInventoryStationCtrl.m_naviGroupSwitcher = HL.Field(HL.Forward('NaviGroupSwitcher'))
-
-
-
 
 
 FacInventoryStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -81,6 +57,12 @@ FacInventoryStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end,
         adaptForceQuickDropKeyhintToGray = true,
     })
+    local itemBagNaviGroup = self.view.inventoryArea:GetNaviGroup(true)
+    itemBagNaviGroup.onDefaultNaviFailed:AddListener(function(dir)
+        if dir == CS.UnityEngine.UI.NaviDirection.Right then
+            self.view.buildingCommon.view.buttonsNaviGroup:NaviToThisGroup()
+        end
+    end)
     local canMoveItem = itemMoveCheckFunc()
     self.view.inventoryArea:ToggleAllQuickDropBindings(canMoveItem)
 
@@ -94,26 +76,17 @@ FacInventoryStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 FacInventoryStationCtrl.OnShow = HL.Override() << function(self)
     self:_UpdateView()
 end
-
-
 
 FacInventoryStationCtrl.OnClose = HL.Override() << function(self)
     EventLogManagerInst.itemBagDepotTransferPath = 1
 end
 
-
-
 FacInventoryStationCtrl._UpdateView = HL.Method() << function(self)
 
 end
-
-
-
 
 FacInventoryStationCtrl._OnBuildingStateChanged = HL.Method(GEnums.FacBuildingState) << function(self, state)
     local linkStateName, depotStateName = "Normal", "Normal"
@@ -154,12 +127,6 @@ FacInventoryStationCtrl._OnBuildingStateChanged = HL.Method(GEnums.FacBuildingSt
     self.m_naviGroupSwitcher:ToggleActive(not isDepotDisabled)
 end
 
-
-
-
-
-
-
 FacInventoryStationCtrl._UpdateInventoryItemCell = HL.Method(HL.Userdata, HL.Any, HL.Number, HL.Boolean)
     << function(self, cell, itemBundle, luaIndex, isItemBag)
     if cell == nil or itemBundle == nil then
@@ -179,27 +146,18 @@ FacInventoryStationCtrl._UpdateInventoryItemCell = HL.Method(HL.Userdata, HL.Any
     end
 end
 
-
-
 FacInventoryStationCtrl._CanMoveItem = HL.Method().Return(HL.Boolean) << function(self)
     local buildingState = self.view.buildingCommon.lastState
     return buildingState == FacBuildingState.Normal 
 end
 
-
-
-
 FacInventoryStationCtrl._CheckItemValid = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
     return true 
 end
 
-
-
 FacInventoryStationCtrl._InitController = HL.Method() << function(self)
     self:_RefreshNaviGroupSwitcherInfos()
 end
-
-
 
 FacInventoryStationCtrl._RefreshNaviGroupSwitcherInfos = HL.Method() << function(self)
     if self.m_naviGroupSwitcher == nil then

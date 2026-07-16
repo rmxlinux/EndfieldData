@@ -1,20 +1,11 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SettlementDefenseRewardsInfo
 local PHASE_ID = PhaseId.SettlementDefenseRewardsInfo
-
-
-
-
-
-
 SettlementDefenseRewardsInfoCtrl = HL.Class('SettlementDefenseRewardsInfoCtrl', uiCtrl.UICtrl)
-
 
 SettlementDefenseRewardsInfoCtrl.m_isCompleted = HL.Field(HL.Boolean) << false
 
-
 SettlementDefenseRewardsInfoCtrl.m_firstRewardCells = HL.Field(HL.Forward('UIListCache'))
-
 
 
 
@@ -23,9 +14,6 @@ SettlementDefenseRewardsInfoCtrl.m_firstRewardCells = HL.Field(HL.Forward('UILis
 SettlementDefenseRewardsInfoCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 SettlementDefenseRewardsInfoCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -43,9 +31,6 @@ SettlementDefenseRewardsInfoCtrl.OnCreate = HL.Override(HL.Any) << function(self
     self:_RefreshFirstRewardItemList(args.firstRewardId)
     self:_RefreshBuildingRewardContent(args.bandwidthReward, args.battleLimitReward)
 end
-
-
-
 
 SettlementDefenseRewardsInfoCtrl._RefreshFirstRewardItemList = HL.Method(HL.String) << function(self, rewardId)
     if string.isEmpty(rewardId) then
@@ -70,10 +55,6 @@ SettlementDefenseRewardsInfoCtrl._RefreshFirstRewardItemList = HL.Method(HL.Stri
         cell.getNode.gameObject:SetActive(self.m_isCompleted)
     end)
 end
-
-
-
-
 
 SettlementDefenseRewardsInfoCtrl._RefreshBuildingRewardContent = HL.Method(HL.Number, HL.Number) << function(self, bandwidth, battleLimit)
     self.view.bandwidthNode.rewardBandwidthCount.text = string.format("+%d", bandwidth)

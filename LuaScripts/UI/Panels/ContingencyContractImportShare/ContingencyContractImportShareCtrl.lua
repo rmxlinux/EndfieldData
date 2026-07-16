@@ -1,22 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ContingencyContractImportShare
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ContingencyContractImportShareCtrl = HL.Class('ContingencyContractImportShareCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -29,20 +14,13 @@ ContingencyContractImportShareCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 ContingencyContractImportShareCtrl.m_gameId = HL.Field(HL.String) << ""
-
 
 ContingencyContractImportShareCtrl.m_shareTagInfos = HL.Field(HL.Table)
 
-
 ContingencyContractImportShareCtrl.m_importTagInfos = HL.Field(HL.Table)
 
-
 ContingencyContractImportShareCtrl.m_importCallback = HL.Field(HL.Function)
-
-
-
 
 
 
@@ -55,11 +33,8 @@ ContingencyContractImportShareCtrl.OnCreate = HL.Override(HL.Any) << function(se
     if arg then
         arg.recoverState = nil
     end
-    InputManagerInst.controllerNaviManager:SetTarget(self.view.genCodeNode.naviDeco)
+    self:SetNaviTarget(self.view.genCodeNode.naviDeco)
 end
-
-
-
 
 
 
@@ -83,8 +58,6 @@ ContingencyContractImportShareCtrl._InitData = HL.Method(HL.Table) << function(s
         isErrorCode = true,
     }
 end
-
-
 
 
 
@@ -126,7 +99,6 @@ ContingencyContractImportShareCtrl._InitUI = HL.Method() << function(self)
             local inputField = self.view.analyzeCodeNode.inputField
             inputField.text = shareText
             inputField:ForceLabelUpdate()
-            
             inputField.textComponent:ForceMeshUpdate()
             local textRect = inputField.textComponent.rectTransform
             local viewport = inputField.textViewport
@@ -186,16 +158,12 @@ ContingencyContractImportShareCtrl._InitUI = HL.Method() << function(self)
     end
 end
 
-
-
 ContingencyContractImportShareCtrl._RefreshAllUI = HL.Method() << function(self)
     local genCodeNode = self.view.genCodeNode
     genCodeNode.shareCodeTxt.text = self.m_shareTagInfos.shareCode
     genCodeNode.totalScoreTxt.text = self.m_shareTagInfos.totalScore
     self:_RefreshAnalyzeCodeNode()
 end
-
-
 
 ContingencyContractImportShareCtrl._RefreshAnalyzeCodeNode = HL.Method() << function(self)
     local analyzeCodeNode = self.view.analyzeCodeNode
@@ -206,9 +174,6 @@ ContingencyContractImportShareCtrl._RefreshAnalyzeCodeNode = HL.Method() << func
     end
 end
 
-
-
-
 ContingencyContractImportShareCtrl._TryRecoverInputState = HL.Method(HL.Any) << function(self, recoverState)
     if recoverState == nil or recoverState.inputShareText == nil then
         return
@@ -216,8 +181,6 @@ ContingencyContractImportShareCtrl._TryRecoverInputState = HL.Method(HL.Any) << 
     
     self.view.analyzeCodeNode.inputField.text = recoverState.inputShareText
 end
-
-
 
 
 
@@ -236,8 +199,6 @@ ContingencyContractImportShareCtrl._AnalyzeShareText = HL.Method() << function(s
     info.shareTagIds = tagIds
     info.totalScore = totalScore
 end
-
-
 
 ContingencyContractImportShareCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
     return {

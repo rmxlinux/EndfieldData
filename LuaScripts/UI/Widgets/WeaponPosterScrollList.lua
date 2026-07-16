@@ -7,96 +7,39 @@ local LIST_CONFIG = {
         filterTagGroupFunc = "generateConfig_CHAR_INFO_WEAPON",
     },
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WeaponPosterScrollList = HL.Class('WeaponPosterScrollList', UIWidgetBase)
-
 
 WeaponPosterScrollList.m_getItemCell = HL.Field(HL.Function)
 
-
 WeaponPosterScrollList.m_itemInfoList = HL.Field(HL.Table)
-
 
 WeaponPosterScrollList.m_filteredInfoList = HL.Field(HL.Table)
 
-
 WeaponPosterScrollList.m_selectedTags = HL.Field(HL.Table)
-
 
 WeaponPosterScrollList.m_filterTagGroups = HL.Field(HL.Table)
 
-
 WeaponPosterScrollList.m_arg = HL.Field(HL.Table)
-
 
 WeaponPosterScrollList.m_curListConfig = HL.Field(HL.Table)
 
-
 WeaponPosterScrollList.m_curSelectIndex2ItemInfo = HL.Field(HL.Table)
-
 
 WeaponPosterScrollList.m_curSelectItemInfos = HL.Field(HL.Table)
 
-
 WeaponPosterScrollList.m_sortIsIncremental = HL.Field(HL.Boolean) << false
-
 
 WeaponPosterScrollList.m_sortOptData = HL.Field(HL.Table)
 
 
 
-
 WeaponPosterScrollList.m_onClickItem = HL.Field(HL.Function)
-
 
 WeaponPosterScrollList.m_setItemSelected = HL.Field(HL.Function)
 
-
 WeaponPosterScrollList.m_getItemBtn = HL.Field(HL.Function)
 
-
 WeaponPosterScrollList.m_lastListType = HL.Field(HL.String) << ""
-
-
 
 
 
@@ -152,9 +95,6 @@ end
 
 
 
-
-
-
 WeaponPosterScrollList.InitWeaponPosterScrollList = HL.Method(HL.Table) << function(self, arg)
     self:_FirstTimeInit()
 
@@ -168,7 +108,7 @@ WeaponPosterScrollList.InitWeaponPosterScrollList = HL.Method(HL.Table) << funct
         if selected then
             local itemBtn = self.m_getItemBtn(cell)
             if itemBtn and itemBtn ~= InputManagerInst.controllerNaviManager.curTarget then
-                InputManagerInst.controllerNaviManager:SetTarget(itemBtn)
+                self:SetNaviTarget(itemBtn)
             end
         else
             cell:SetSelectIndex()
@@ -190,8 +130,6 @@ WeaponPosterScrollList.InitWeaponPosterScrollList = HL.Method(HL.Table) << funct
     self:Refresh(arg)
 end
 
-
-
 WeaponPosterScrollList.GetItemDepotCount = HL.Method().Return(HL.Number) << function(self)
     if not self.m_itemInfoList then
         return 0
@@ -200,18 +138,12 @@ WeaponPosterScrollList.GetItemDepotCount = HL.Method().Return(HL.Number) << func
     return #self.m_itemInfoList
 end
 
-
-
-
 WeaponPosterScrollList.GetItemInfoByIndex = HL.Method(HL.Number).Return(HL.Opt(HL.Table)) << function(self, index)
     if not self.m_filteredInfoList then
         return
     end
     return self.m_filteredInfoList[index]
 end
-
-
-
 
 WeaponPosterScrollList.GetItemInfoByIndexId = HL.Method(HL.Any).Return(HL.Opt(HL.Table)) << function(self, indexId)
     if not self.m_filteredInfoList then
@@ -223,9 +155,6 @@ WeaponPosterScrollList.GetItemInfoByIndexId = HL.Method(HL.Any).Return(HL.Opt(HL
         end
     end
 end
-
-
-
 
 
 WeaponPosterScrollList.Refresh = HL.Method(HL.Table) << function(self, arg)
@@ -251,8 +180,6 @@ WeaponPosterScrollList.Refresh = HL.Method(HL.Table) << function(self, arg)
     self:_RefreshItemList(filteredList, skipGraduallyShow ,0,false, arg.defaultSelected)
 end
 
-
-
 WeaponPosterScrollList.RefreshSelectItemsIndex = HL.Method() << function(self)
     for index, info in pairs(self.m_curSelectIndex2ItemInfo) do
         for selectIndex, itemInfo in ipairs(self.m_curSelectItemInfos) do
@@ -269,9 +196,6 @@ WeaponPosterScrollList.RefreshSelectItemsIndex = HL.Method() << function(self)
 end
 
 
-
-
-
 WeaponPosterScrollList.RefreshCellById = HL.Method(HL.Any) << function(self, id)
     for index, filteredInfo in pairs(self.m_filteredInfoList) do
         if type(filteredInfo.indexId) == type(id) and filteredInfo.indexId == id then
@@ -283,17 +207,12 @@ WeaponPosterScrollList.RefreshCellById = HL.Method(HL.Any) << function(self, id)
     end
 end
 
-
-
-
 WeaponPosterScrollList.RefreshCellByIndex = HL.Method(HL.Number) << function(self, index)
     local curGo = self.view.scrollList:Get(CSIndex(index))
     if curGo then
         self:_RefreshItemCell(curGo, index)
     end
 end
-
-
 
 WeaponPosterScrollList.RefreshAllCells = HL.Method() << function(self)
     for index, _ in pairs(self.m_filteredInfoList) do
@@ -303,11 +222,6 @@ WeaponPosterScrollList.RefreshAllCells = HL.Method() << function(self)
         end
     end
 end
-
-
-
-
-
 
 WeaponPosterScrollList.SetSelectedIndex = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Boolean))
     << function(self, luaIndex, realClick, noScroll)
@@ -365,9 +279,6 @@ WeaponPosterScrollList.SetSelectedIndex = HL.Method(HL.Number, HL.Boolean, HL.Op
     end
 end
 
-
-
-
 WeaponPosterScrollList._GetIndexByIndexId = HL.Method(HL.Any).Return(HL.Opt(HL.Number)) << function(self, id)
     for index, filteredInfo in pairs(self.m_filteredInfoList) do
         if type(filteredInfo.indexId) == type(id) and  filteredInfo.indexId == id then
@@ -375,8 +286,6 @@ WeaponPosterScrollList._GetIndexByIndexId = HL.Method(HL.Any).Return(HL.Opt(HL.N
         end
     end
 end
-
-
 
 WeaponPosterScrollList._InitSortNode = HL.Method() << function(self)
     local listConfig = self.m_curListConfig
@@ -399,8 +308,6 @@ WeaponPosterScrollList._InitSortNode = HL.Method() << function(self)
         end
     end, nil, false, true, self.view.filterBtn)
 end
-
-
 
 WeaponPosterScrollList._InitFilterNode = HL.Method() << function(self)
     local listConfig = self.m_curListConfig
@@ -435,13 +342,6 @@ WeaponPosterScrollList._InitFilterNode = HL.Method() << function(self)
     self.view.filterBtn:InitFilterBtn(filterArgs)
 end
 
-
-
-
-
-
-
-
 WeaponPosterScrollList._RefreshItemList = HL.Method(HL.Table, HL.Boolean, HL.Number, HL.Opt(HL.Boolean, HL.Table))
     << function(self, filteredList, skipGraduallyShow, realIndex, realClick, selects)
     local isEmpty = filteredList == nil or #filteredList == 0
@@ -457,10 +357,6 @@ WeaponPosterScrollList._RefreshItemList = HL.Method(HL.Table, HL.Boolean, HL.Num
         self:ShowSelectItems(selects)
     end
 end
-
-
-
-
 
 WeaponPosterScrollList._RefreshItemCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, index)
     local listCell = self.m_getItemCell(object)
@@ -497,9 +393,6 @@ WeaponPosterScrollList._RefreshItemCell = HL.Method(HL.Userdata, HL.Number) << f
     self.m_setItemSelected(listCell, selected)
 end
 
-
-
-
 WeaponPosterScrollList._OnFilterConfirm = HL.Method(HL.Table) << function(self, tags)
     local itemInfoList = self.m_itemInfoList
     local filteredList = self:_ApplyFilter(itemInfoList, tags)
@@ -512,9 +405,6 @@ WeaponPosterScrollList._OnFilterConfirm = HL.Method(HL.Table) << function(self, 
 
     self:_RefreshItemList(filteredList, false, 1, false)
 end
-
-
-
 
 WeaponPosterScrollList._OnFilterGetCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tags)
     local getCountFunc = self.m_curListConfig.getFilterResultCountFunc
@@ -532,10 +422,6 @@ WeaponPosterScrollList._OnFilterGetCount = HL.Method(HL.Table).Return(HL.Number)
     end
     return resultCount
 end
-
-
-
-
 
 WeaponPosterScrollList._ApplyFilter = HL.Method(HL.Table, HL.Table).Return(HL.Table) << function(self, itemInfoList, selectedTags)
     local filteredList = {}
@@ -567,11 +453,6 @@ WeaponPosterScrollList._ApplyFilter = HL.Method(HL.Table, HL.Table).Return(HL.Ta
 
     return filteredList
 end
-
-
-
-
-
 
 WeaponPosterScrollList._ApplySort = HL.Method(HL.Table, HL.Table, HL.Boolean).Return(HL.Table) << function(self, itemInfoList, optData, isIncremental)
     if self.m_curListConfig.hideSort or not optData or not next(optData) then
@@ -610,11 +491,6 @@ WeaponPosterScrollList._ApplySort = HL.Method(HL.Table, HL.Table, HL.Boolean).Re
     return itemInfoList
 end
 
-
-
-
-
-
 WeaponPosterScrollList._SortData = HL.Method(HL.Table, HL.Table, HL.Boolean)
     << function(self, itemList, keys, isIncremental)
     if itemList then
@@ -623,8 +499,6 @@ WeaponPosterScrollList._SortData = HL.Method(HL.Table, HL.Table, HL.Boolean)
         self.m_sortOptData = keys
     end
 end
-
-
 
 WeaponPosterScrollList._CollectItemInfoList = HL.Method().Return(HL.Table) << function(self)
     local listConfig = self.m_curListConfig
@@ -659,9 +533,6 @@ WeaponPosterScrollList._CollectItemInfoList = HL.Method().Return(HL.Table) << fu
 
     return itemInfoList
 end
-
-
-
 
 WeaponPosterScrollList.ShowSelectItems = HL.Method(HL.Table) << function(self, selectIdList)
     local selectedInstIds = {}
@@ -700,9 +571,6 @@ WeaponPosterScrollList.ShowSelectItems = HL.Method(HL.Table) << function(self, s
     self.m_curSelectIndex2ItemInfo = indexMap
     self:RefreshSelectItemsIndex()
 end
-
-
-
 
 
 

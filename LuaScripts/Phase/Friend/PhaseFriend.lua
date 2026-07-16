@@ -1,47 +1,16 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.Friend
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseFriend = HL.Class('PhaseFriend', phaseBase.PhaseBase)
-
 
 PhaseFriend.m_curPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseFriend.m_curPopupPanel = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseFriend.m_panelItemDic = HL.Field(HL.Table)
 
-
 PhaseFriend.m_popupPanelItemDic = HL.Field(HL.Table)
 
-
 PhaseFriend.m_tabPanel = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 
 
@@ -54,8 +23,6 @@ PhaseFriend.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
-
 PhaseFriend._OnInit = HL.Override() << function(self)
     PhaseFriend.Super._OnInit(self)
 end
@@ -63,17 +30,8 @@ end
 
 
 
-
-
-
-
-
 PhaseFriend.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhaseFriend._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if self.arg == nil then
@@ -109,13 +67,24 @@ PhaseFriend._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << 
         self.arg.friendBusinessCardPreviewArg = nil
     end
 
-    if self.arg and self.arg.naviTargetActionMenuArg then
-        Notify(MessageConst.SHOW_NAVI_TARGET_ACTION_MENU, self.arg.naviTargetActionMenuArg)
+    
+    if self.arg then
         self.arg.naviTargetActionMenuArg = nil
     end
 
     if self.arg and self.arg.commonPopUpArg then
-        Notify(MessageConst.SHOW_POP_UP, self.arg.commonPopUpArg)
+        local commonPopUpArg = self.arg.commonPopUpArg
+        if commonPopUpArg.content == Language.LUA_SPACESHIP_VISIT_LEAVE_RETURN_FRIEND_TIPS then
+            commonPopUpArg.onConfirm = function()
+                GameInstance.player.spaceship:LeaveVisitSpaceShip(true)
+            end
+            Notify(MessageConst.SHOW_POP_UP, commonPopUpArg)
+        elseif commonPopUpArg.content == Language.LUA_SPACESHIP_VISIT_LEAVE_FRIEND_TIPS then
+            commonPopUpArg.onConfirm = function()
+                GameInstance.player.spaceship:LeaveVisitSpaceShip(false)
+            end
+            Notify(MessageConst.SHOW_POP_UP, commonPopUpArg)
+        end
         self.arg.commonPopUpArg = nil
     end
 
@@ -150,23 +119,11 @@ PhaseFriend._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << 
     end
 end
 
-
-
-
-
 PhaseFriend._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseFriend._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseFriend._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self:_RefreshCurPanelTabBlockState()
@@ -177,17 +134,11 @@ end
 
 
 
-
-
 PhaseFriend._OnActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseFriend._OnDeActivated = HL.Override() << function(self)
 end
-
-
 
 
 
@@ -209,10 +160,6 @@ PhaseFriend._OnRefresh = HL.Override() << function(self)
     end
 end
 
-
-
-
-
 PhaseFriend.OpenPopupPanel = HL.Method(HL.Number, HL.Any) << function(self, panelId, args)
     if panelId == nil then
         return
@@ -229,9 +176,6 @@ PhaseFriend.OpenPopupPanel = HL.Method(HL.Number, HL.Any) << function(self, pane
     self.m_curPopupPanel = panelItem
 end
 
-
-
-
 PhaseFriend.ClosePopupPanel = HL.Method(HL.Number) << function(self, panelId)
     if self.m_popupPanelItemDic[panelId] then
         self.m_popupPanelItemDic[panelId].uiCtrl:Close()
@@ -240,10 +184,6 @@ PhaseFriend.ClosePopupPanel = HL.Method(HL.Number) << function(self, panelId)
         self.m_curPanelItem.uiCtrl:OnPhaseRefresh(self.arg)
     end
 end
-
-
-
-
 
 PhaseFriend.OnTabChange = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(self, panelId ,arg)
     if panelId == nil then
@@ -269,8 +209,6 @@ PhaseFriend.OnTabChange = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(sel
     self.m_curPanelItem = panelItem
     self:_BindControllerHintPlaceHolder()
 end
-
-
 
 PhaseFriend.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}
@@ -315,13 +253,7 @@ PhaseFriend.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(se
             arg.friendBusinessCardPreviewArg = friendBusinessCardPreviewArg
         end
     end
-    isOpen, ctrl = UIManager:IsOpen(PanelId.NaviTargetActionMenu)
-    if isOpen and UIManager:IsShow(PanelId.NaviTargetActionMenu) and PhaseManager:GetTopPhaseId() == PHASE_ID then
-        local naviTargetActionMenuArg = ctrl:GetCurPhaseStateArg()
-        if naviTargetActionMenuArg then
-            arg.naviTargetActionMenuArg = naviTargetActionMenuArg
-        end
-    end
+    
     isOpen, ctrl = UIManager:IsOpen(PanelId.CommonPopUp)
     if isOpen and UIManager:IsShow(PanelId.CommonPopUp) and PhaseManager:GetTopPhaseId() == PHASE_ID then
         local commonPopUpArg = ctrl:GetCurPhaseStateArg()
@@ -372,16 +304,11 @@ PhaseFriend.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(se
     return arg
 end
 
-
-
-
 PhaseFriend.SetTabBlockState = HL.Method(HL.Boolean) << function(self, isBlock)
     if self.m_tabPanel and self.m_tabPanel.uiCtrl then
         self.m_tabPanel.uiCtrl.view.inputGroup.enabled = not isBlock
     end
 end
-
-
 
 PhaseFriend._RefreshCurPanelTabBlockState = HL.Method() << function(self)
     if self.m_curPanelItem == nil or self.m_curPanelItem.uiCtrl == nil then
@@ -395,8 +322,6 @@ PhaseFriend._RefreshCurPanelTabBlockState = HL.Method() << function(self)
         self:SetTabBlockState(false)
     end
 end
-
-
 
 PhaseFriend._BindControllerHintPlaceHolder = HL.Method() << function(self)
     if not self.m_tabPanel or not self.m_curPanelItem then
@@ -413,10 +338,7 @@ PhaseFriend._BindControllerHintPlaceHolder = HL.Method() << function(self)
     end
 end
 
-
 PhaseFriend.s_mainFriendCharTemplateId = HL.StaticField(HL.String) << ""
-
-
 
 PhaseFriend._OnFriendCharQuery = HL.StaticMethod(HL.Table) << function(args)
     local roleId, charData = unpack(args)

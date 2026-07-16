@@ -193,10 +193,10 @@ CommonBatchLockCtrl._InitNaviTarget = HL.Method() << function(self)
     if targetSelectable then
         local targetNaviGroup = targetSelectable.naviGroup or self.m_tagNaviGroup or self.m_rootNaviGroup
         if targetNaviGroup then
-            self:SetAsNaviTargetInSilentModeIfNecessary(targetNaviGroup, targetSelectable)
+            self:SetNaviTarget(targetSelectable)
             return
         end
-        InputManagerInst.controllerNaviManager:SetTarget(targetSelectable)
+        self:SetNaviTarget(targetSelectable)
     end
 end
 

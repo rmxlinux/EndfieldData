@@ -1,15 +1,8 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 CharBreakSkillCell = HL.Class('CharBreakSkillCell', UIWidgetBase)
 
-
 CharBreakSkillCell.m_callback = HL.Field(HL.Function)
-
-
 
 
 CharBreakSkillCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -34,9 +27,6 @@ CharBreakSkillCell._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
 end
-
-
-
 
 
 CharBreakSkillCell.InitCharBreakSkillCell = HL.Method(HL.Table) << function(self, data)

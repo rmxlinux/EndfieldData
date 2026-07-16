@@ -1,34 +1,14 @@
-
-
-
-
-
-
-
-
-
-
 UIGoCache = HL.Class('UIGoCache')
-
 
 UIGoCache.m_freeList = HL.Field(HL.Table)
 
-
 UIGoCache.m_usedList = HL.Field(HL.Table)
-
 
 UIGoCache.m_parent = HL.Field(HL.Userdata)
 
-
 UIGoCache.m_wrapFunction = HL.Field(HL.Function)
 
-
 UIGoCache.m_goTemplate = HL.Field(HL.Any)
-
-
-
-
-
 
 UIGoCache.UIGoCache = HL.Constructor(HL.Any, HL.Opt(HL.Function, HL.Any)) << function(self, goTemplate, wrapFunction, parent)
     self.m_freeList = {}
@@ -38,8 +18,6 @@ UIGoCache.UIGoCache = HL.Constructor(HL.Any, HL.Opt(HL.Function, HL.Any)) << fun
     self.m_parent = parent and parent.transform or goTemplate.transform.parent
     self.m_goTemplate.gameObject:SetActive(false)
 end
-
-
 
 UIGoCache.Get = HL.Method().Return(HL.Any) << function(self)
     if #self.m_freeList > 0 then
@@ -55,9 +33,6 @@ UIGoCache.Get = HL.Method().Return(HL.Any) << function(self)
     return cell
 end
 
-
-
-
 UIGoCache.Recycle = HL.Method(HL.Any) << function(self, cell)
     local index = lume.find(self.m_usedList, cell)
     if index then
@@ -66,8 +41,6 @@ UIGoCache.Recycle = HL.Method(HL.Any) << function(self, cell)
         table.insert(self.m_freeList, cell)
     end
 end
-
-
 
 UIGoCache.RecycleAll = HL.Method() << function(self)
     for i, cell in ipairs(self.m_usedList) do

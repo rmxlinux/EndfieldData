@@ -1,14 +1,7 @@
 local SnapshotChallengeMainInfoCommon = require_ex('UI/Widgets/SnapshotChallengeMainInfoCommon')
 
 
-
-
-
-
 SnapshotChallengeMainInfoUniverse = HL.Class('SnapshotChallengeMainInfoUniverse', SnapshotChallengeMainInfoCommon)
-
-
-
 
 SnapshotChallengeMainInfoUniverse._RefreshContentUI = HL.Override(HL.Number) << function(self, stageIndex)
     SnapshotChallengeMainInfoUniverse.Super._RefreshContentUI(self, stageIndex)
@@ -25,9 +18,6 @@ SnapshotChallengeMainInfoUniverse._RefreshContentUI = HL.Override(HL.Number) << 
     end
 end
 
-
-
-
 SnapshotChallengeMainInfoUniverse._ChangeSelectStage = HL.Override(HL.Number) << function(self, stageIndex)
     local oldIndex = self.m_info.curSelectStage
     local oldStageNode = self.m_stageNodeList[oldIndex]
@@ -37,8 +27,6 @@ SnapshotChallengeMainInfoUniverse._ChangeSelectStage = HL.Override(HL.Number) <<
     local curStageInfo = self.m_info.stageInfoList[stageIndex]
     SnapshotChallengeMainInfoUniverse.Super._ChangeSelectStage(self, stageIndex)
 end
-
-
 
 SnapshotChallengeMainInfoUniverse._RefreshStageCell = HL.Override() << function(self)
     SnapshotChallengeMainInfoUniverse.Super._RefreshStageCell(self)

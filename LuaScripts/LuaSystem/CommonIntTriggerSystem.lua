@@ -13,6 +13,12 @@ CommonIntTriggerSystem.OnInit = HL.Override() << function(self)
 end
 
 CommonIntTriggerSystem.OnRelease = HL.Override() << function(self)
+    if self.m_spaceshipRoomMsgGroups ~= nil then
+        for _, groupKey in pairs(self.m_spaceshipRoomMsgGroups) do
+            MessageManager:UnregisterAll(groupKey)
+        end
+        self.m_spaceshipRoomMsgGroups = {}
+    end
 end
 
 CommonIntTriggerSystem.CallLuaUI = HL.Method(HL.Table, HL.Boolean) << function(self, args, isOn)
@@ -54,25 +60,103 @@ CommonIntTriggerSystem.m_curSpaceshipRoomCamConfigs = HL.Field(HL.Table)
 
 CommonIntTriggerSystem.m_curSpaceshipRoomCamStack = HL.Field(HL.Table)
 
+CommonIntTriggerSystem.m_spaceshipRoomMsgGroups = HL.Field(HL.Table)
 
-CommonIntTriggerSystem.SpaceshipRoom_ON = HL.Method(HL.String, HL.Opt(HL.Any)) << function(self, roomId, camConfigsCS)
+
+CommonIntTriggerSystem._RefreshSpaceshipRoomOptions = HL.Method(HL.String) << function(self, roomId)
     local unlocked, room = GameInstance.player.spaceship:TryGetRoom(roomId)
     if not unlocked or GameInstance.player.spaceship.isViewingFriend then
         return
     end
+    local roomType = room.type
+    local roomTypeData = Tables.spaceshipRoomTypeTable[roomType]
 
-    GameInstance.player.spaceship:SetSpaceshipRoomCamConfig(roomId, "default", camConfigsCS[0]);
-    GameInstance.player.spaceship:SetSpaceshipRoomCamConfig(roomId, "upgrade", camConfigsCS[1]);
+    local roomText = roomTypeData.viewOptName
+    local roomIcon = roomTypeData.icon
+    if GameInstance.player.spaceship:HaveRoomProductToCollect(roomType, roomId) then
+        roomText = "<color=#fede00>" .. roomText .. "</color>"
+        roomIcon = roomIcon .. "_yellow"
+    end
+    Notify(MessageConst.UPDATE_INTERACT_OPTION, {
+        type = CS.Beyond.Gameplay.Core.InteractOptionType.Spaceship,
+        sourceId = roomId,
+        text = roomText,
+        icon = roomIcon,
+        subIndex = 1,
+    })
+
+    local isMaxLv = room.lv >= room.maxLv
+    local upgradeText = isMaxLv and roomTypeData.maxLvOptName or roomTypeData.upgradeOptName
+    local upgradeIcon = isMaxLv and "btn_common_exchange_icon" or "ss_room_upgrade_int_icon"
+    if GameInstance.player.spaceship:IsRoomCanLevelUp(roomId) then
+        upgradeText = "<color=#fede00>" .. upgradeText .. "</color>"
+        upgradeIcon = upgradeIcon .. "_yellow"
+    end
+    Notify(MessageConst.UPDATE_INTERACT_OPTION, {
+        type = CS.Beyond.Gameplay.Core.InteractOptionType.Spaceship,
+        sourceId = roomId,
+        text = upgradeText,
+        icon = upgradeIcon,
+        subIndex = 2,
+    })
+end
+
+CommonIntTriggerSystem._RegisterSpaceshipRoomRefresh = HL.Method(HL.String) << function(self, roomId)
+    self:_UnregisterSpaceshipRoomRefresh(roomId)
+    local groupKey = {}
+    self.m_spaceshipRoomMsgGroups = self.m_spaceshipRoomMsgGroups or {}
+    self.m_spaceshipRoomMsgGroups[roomId] = groupKey
+
+    local refreshMsgs = {
+        MessageConst.SPACESHIP_ON_ROOM_LEVEL_UP,
+        MessageConst.ON_ITEM_BAG_CHANGED,
+        MessageConst.ON_WALLET_CHANGED,
+        MessageConst.ON_VALUABLE_DEPOT_CHANGED,
+        MessageConst.ON_FACTORY_DEPOT_CHANGED,
+    }
+    for _, msg in ipairs(refreshMsgs) do
+        MessageManager:Register(msg, function()
+            self:_RefreshSpaceshipRoomOptions(roomId)
+        end, groupKey)
+    end
+end
+
+CommonIntTriggerSystem._UnregisterSpaceshipRoomRefresh = HL.Method(HL.String) << function(self, roomId)
+    if not self.m_spaceshipRoomMsgGroups then
+        return
+    end
+    local groupKey = self.m_spaceshipRoomMsgGroups[roomId]
+    if groupKey then
+        MessageManager:UnregisterAll(groupKey)
+        self.m_spaceshipRoomMsgGroups[roomId] = nil
+    end
+end
+
+CommonIntTriggerSystem.SpaceshipRoom_ON = HL.Method(HL.String, HL.Opt(HL.Any)) << function(self, roomId, camConfigsCS)
+    if not UIManager:IsOpen(PanelId.InteractOption) then
+        return
+    end
+    local unlocked, room = GameInstance.player.spaceship:TryGetRoom(roomId)
+    if not unlocked or GameInstance.player.spaceship.isViewingFriend then
+        return
+    end
 
     local roomType = room.type
     local sourceId = roomId
     local phaseId = PhaseId[SpaceshipConst.ROOM_PHASE_ID_NAME_MAP_BY_TYPE[roomType]]
     local roomTypeData = Tables.spaceshipRoomTypeTable[roomType]
     local roomName = roomTypeData.name
+
+    local roomText = roomTypeData.viewOptName
+    local roomIcon = roomTypeData.icon
+    if GameInstance.player.spaceship:HaveRoomProductToCollect(roomType, roomId) then
+        roomText = "<color=#fede00>" .. roomText .. "</color>"
+        roomIcon = roomIcon .. "_yellow"
+    end
     local openInteractOptArgs = {
         type = CS.Beyond.Gameplay.Core.InteractOptionType.Spaceship,
         sourceId = sourceId,
-        text = roomTypeData.viewOptName,
+        text = roomText,
         action = function()
             local phaseArgs = {
                 roomId = roomId,
@@ -83,7 +167,7 @@ CommonIntTriggerSystem.SpaceshipRoom_ON = HL.Method(HL.String, HL.Opt(HL.Any)) <
             end
 
             local startPhaseId = PhaseManager:GetTopPhaseId()
-            GameInstance.player.spaceship:SetCurSpaceshipRoomCamConfig(roomId, camConfigsCS[0])
+            GameInstance.player.spaceship:SetCurSpaceshipRoomCamConfig(roomId, CS.Beyond.Gameplay.SpaceshipSystem.DEFAULT_CAM_BLEND_KEY)
             GameInstance.player.spaceship:MoveCamToSpaceshipRoom(roomId)
 
             local clearScreenKey = UIManager:ClearScreen()
@@ -101,7 +185,7 @@ CommonIntTriggerSystem.SpaceshipRoom_ON = HL.Method(HL.String, HL.Opt(HL.Any)) <
                 PhaseManager:OpenPhase(phaseId, phaseArgs)
             end)
         end,
-        icon = roomTypeData.icon,
+        icon = roomIcon,
         subIndex = 1,
         sortId = 1,
         roomName = roomName,
@@ -109,25 +193,35 @@ CommonIntTriggerSystem.SpaceshipRoom_ON = HL.Method(HL.String, HL.Opt(HL.Any)) <
     Notify(MessageConst.ADD_INTERACT_OPTION, openInteractOptArgs)
 
     local isMaxLv = room.lv >= room.maxLv
+    local upgradeText = isMaxLv and roomTypeData.maxLvOptName or roomTypeData.upgradeOptName
+    local upgradeIcon = isMaxLv and "btn_common_exchange_icon" or "ss_room_upgrade_int_icon"
+    if GameInstance.player.spaceship:IsRoomCanLevelUp(roomId) then
+        upgradeText = "<color=#fede00>" .. upgradeText .. "</color>"
+        upgradeIcon = upgradeIcon .. "_yellow"
+    end
     local upgradeInteractOptArgs = {
         type = CS.Beyond.Gameplay.Core.InteractOptionType.Spaceship,
         sourceId = sourceId,
-        text = isMaxLv and roomTypeData.maxLvOptName or roomTypeData.upgradeOptName,
+        text = upgradeText,
         action = function()
-            GameInstance.player.spaceship:SetCurSpaceshipRoomCamConfig(roomId, camConfigsCS[1])
+            GameInstance.player.spaceship:SetCurSpaceshipRoomCamConfig(roomId, CS.Beyond.Gameplay.SpaceshipSystem.UPGRADE_CAM_BLEND_KEY)
             PhaseManager:OpenPhase(PhaseId.SpaceshipRoomUpgrade, {
                 roomId = roomId,
                 moveCam = true,
             })
         end,
-        icon = isMaxLv and "btn_common_exchange_icon" or "ss_room_upgrade_int_icon",
+        icon = upgradeIcon,
         subIndex = 2,
         sortId = 1,
     }
     Notify(MessageConst.ADD_INTERACT_OPTION, upgradeInteractOptArgs)
+
+    self:_RegisterSpaceshipRoomRefresh(roomId)
 end
 
 CommonIntTriggerSystem.SpaceshipRoom_OFF = HL.Method(HL.String, HL.Opt(HL.Any)) << function(self, roomId, camConfigsCS)
+    self:_UnregisterSpaceshipRoomRefresh(roomId)
+
     local unlocked, room = GameInstance.player.spaceship:TryGetRoom(roomId)
     if not unlocked or GameInstance.player.spaceship.isViewingFriend then
         return

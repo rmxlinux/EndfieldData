@@ -1,21 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
 DungeonCommonSelectionCell = HL.Class('DungeonCommonSelectionCell', UIWidgetBase)
-
 
 DungeonCommonSelectionCell.m_dungeonId = HL.Field(HL.String) << ""
 
-
 DungeonCommonSelectionCell.m_clickFunc = HL.Field(HL.Function)
-
 
 DungeonCommonSelectionCell.m_styleNode = HL.Field(HL.Any)
 
@@ -39,8 +28,6 @@ local UIState = {
 
 
 
-
-
 DungeonCommonSelectionCell._OnFirstTimeInit = HL.Override() << function(self)
     self.view.clickBtn.onClick:AddListener(function()
         if self.m_clickFunc then
@@ -48,10 +35,6 @@ DungeonCommonSelectionCell._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
 end
-
-
-
-
 
 DungeonCommonSelectionCell.InitDungeonCommonSelectionCell = HL.Method(HL.String, HL.Function)
         << function(self, dungeonId, clickFunc)
@@ -77,9 +60,6 @@ DungeonCommonSelectionCell.InitDungeonCommonSelectionCell = HL.Method(HL.String,
     self.view.reliefTab.gameObject:SetActive(inRelief)
 end
 
-
-
-
 DungeonCommonSelectionCell.SetSelected = HL.Method(HL.Boolean) << function(self, isOn)
     
     
@@ -90,9 +70,6 @@ DungeonCommonSelectionCell.SetSelected = HL.Method(HL.Boolean) << function(self,
         GameInstance.player.subGameSys:SendSubGameListRead({ self.m_dungeonId })
     end
 end
-
-
-
 
 DungeonCommonSelectionCell._UpdateState = HL.Method(HL.Opt(HL.Boolean)) << function(self, isOn)
     
@@ -150,6 +127,83 @@ DungeonCommonSelectionCell._UpdateState = HL.Method(HL.Opt(HL.Boolean)) << funct
 
     local state3 = isOn and "Select" or "Unselect"
     self.view.stateController:SetState(state3)
+end
+
+
+DungeonCommonSelectionCell.RefreshForActivityEntry = HL.Method(HL.Number, HL.Table) << function(self, cellIndex, context)
+    local csIndex = CSIndex(cellIndex)
+    local dungeonId = context.dungeonSeriesData.includeDungeonIds[csIndex]
+    local success, dungeonData = Tables.dungeonTable:TryGetValue(dungeonId)
+    if success then
+        local stateName = "Lock"
+        local activityData = GameInstance.player.activitySystem:GetActivity(context.activityId)
+        local activityDungeonCfg = Tables.activityDungeonTable:GetValue(context.activityId)
+        local activityDungeonStateCfg = activityDungeonCfg.gameMap:GetValue(dungeonId) 
+        local _, stageData = activityData.stageDataDict:TryGetValue(activityDungeonStateCfg.gameUnlockStage)
+
+        local stageUnlocked = stageData.Status >= GEnums.ActivityConditionalStageState.Unlocked:GetHashCode()
+        local stageRewarded = stageData.Status >= GEnums.ActivityConditionalStageState.Rewarded:GetHashCode()
+
+        if context.useDungeonPassedForCompleteState then
+            
+            
+            
+            local hasRaid, raidId = Tables.dungeonNormal2RaidTable:TryGetValue(dungeonId)
+            local normalPassed = hasRaid and DungeonUtils.isDungeonPassed(dungeonId)
+            local raidPassed = hasRaid and (not string.isEmpty(raidId)) and DungeonUtils.isDungeonPassed(raidId)
+            if normalPassed and raidPassed then
+                if not stageUnlocked then
+                    logger.error("DungeonCommonSelectionCell: stage 未解锁但 normal+raid 都已通关, dungeonId=" .. tostring(dungeonId))
+                end
+                stateName = "Complete"
+            elseif normalPassed then
+                if not stageUnlocked then
+                    logger.error("DungeonCommonSelectionCell: stage 未解锁但 normal 已通关, dungeonId=" .. tostring(dungeonId))
+                end
+                stateName = "Raid"
+            elseif stageUnlocked then
+                stateName = "Unlock"
+            end
+        else
+            if stageUnlocked then
+                if stageRewarded then
+                    stateName = "Complete"
+                else
+                    stateName = "Unlock"
+                end
+            end
+        end
+        self.view.stateController:SetState(stateName, false)
+
+        local isSelected = dungeonId == context.selectedDungeonId or (Tables.dungeonNormal2RaidTable:GetValue(dungeonId) == context.selectedDungeonId)
+        
+        self.view.stateController:SetState(
+            isSelected and "Select" or "Unselect", false
+        )
+
+        if not string.isEmpty(activityDungeonStateCfg.showState) then
+            self.view.stateController:SetState(activityDungeonStateCfg.showState, false)
+        end
+        self.view.levelDescTxt.text = dungeonData.dungeonName
+        if self.view.serialNumberTxt then
+            self.view.serialNumberTxt.text = activityDungeonStateCfg.lv
+        end
+        
+        
+        
+        
+        local cellRedDotName = context.cellRedDotName or "ActivityDungeonState"
+        local cellRedDotArgs
+        if context.cellRedDotArgsBuilder then
+            cellRedDotArgs = context.cellRedDotArgsBuilder(dungeonId, activityDungeonStateCfg)
+        else
+            cellRedDotArgs = {
+                activityId = context.arg.activityId,
+                stageId = activityDungeonStateCfg.gameUnlockStage,
+            }
+        end
+        self.view.redDot:InitRedDot(cellRedDotName, cellRedDotArgs, nil, context.redDotScrollRect)
+    end
 end
 
 HL.Commit(DungeonCommonSelectionCell)

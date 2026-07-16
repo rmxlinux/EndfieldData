@@ -2,22 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharInfoAttributeHint
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharInfoAttributeHintCtrl = HL.Class('CharInfoAttributeHintCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -28,11 +13,7 @@ CharInfoAttributeHintCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHAR_INFO_CLOSE_ATTR_TIP] = '_CloseAttrTips',
 }
 
-
 CharInfoAttributeHintCtrl.isShowingHint = HL.Field(HL.Boolean) << false
-
-
-
 
 
 CharInfoAttributeHintCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -54,13 +35,9 @@ CharInfoAttributeHintCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 
-
 CharInfoAttributeHintCtrl.m_args = HL.Field(HL.Table)
 
-
 CharInfoAttributeHintCtrl.m_isFC = HL.Field(HL.Boolean) << false
-
-
 
 CharInfoAttributeHintCtrl.CharInfoShowFCAttrHint = HL.StaticMethod(HL.Table) << function(args)
     
@@ -75,8 +52,6 @@ CharInfoAttributeHintCtrl.CharInfoShowFCAttrHint = HL.StaticMethod(HL.Table) << 
 
     CharInfoAttributeHintCtrl._TryShowHint(args, true)
 end
-
-
 
 CharInfoAttributeHintCtrl.CharInfoShowSCAttrHint = HL.StaticMethod(HL.Table) << function(args)
     
@@ -94,9 +69,6 @@ CharInfoAttributeHintCtrl.CharInfoShowSCAttrHint = HL.StaticMethod(HL.Table) << 
 
     CharInfoAttributeHintCtrl._TryShowHint(args, false)
 end
-
-
-
 
 CharInfoAttributeHintCtrl._TryShowHint = HL.StaticMethod(HL.Table, HL.Boolean) << function(args, isFirstClass)
     if args.key == nil then
@@ -148,8 +120,6 @@ CharInfoAttributeHintCtrl._TryShowHint = HL.StaticMethod(HL.Table, HL.Boolean) <
     Notify(MessageConst.ON_CHAR_INFO_SHOW_ATTR_TIP)
 end
 
-
-
 CharInfoAttributeHintCtrl._ShowFCAttrHintNode = HL.Method() << function(self)
     local hintNode = self.view.fcAttributeHintNode
     local hintInfo = AttributeUtils.getAttributeHint(self.m_args.attributeInfo, {
@@ -158,8 +128,6 @@ CharInfoAttributeHintCtrl._ShowFCAttrHintNode = HL.Method() << function(self)
     })
     self:_RefreshAttributeHint(hintNode, self.m_args.attributeInfo, hintInfo, true)
 end
-
-
 
 CharInfoAttributeHintCtrl._ShowSCMainAttrHintNode = HL.Method() << function(self)
     local hintNode = self.view.scAttributeHintNode
@@ -220,12 +188,6 @@ CharInfoAttributeHintCtrl._ShowSCMainAttrHintNode = HL.Method() << function(self
     end)
 end
 
-
-
-
-
-
-
 CharInfoAttributeHintCtrl._RefreshAttributeHint = HL.Method(HL.Any, HL.Table, HL.Table, HL.Boolean) << function(self, cell, attributeInfo, hintInfo, isFCAttr)
     cell.attributeText.text = attributeInfo.showName
     cell.hintText.text = hintInfo.mainHint
@@ -251,8 +213,6 @@ CharInfoAttributeHintCtrl._RefreshAttributeHint = HL.Method(HL.Any, HL.Table, HL
     end
 end
 
-
-
 CharInfoAttributeHintCtrl._CloseAttrTips = HL.Method() << function(self)
     if self.m_args ~= nil and self.m_args.onHintClose ~= nil then
         self.m_args.onHintClose()
@@ -265,8 +225,6 @@ CharInfoAttributeHintCtrl._CloseAttrTips = HL.Method() << function(self)
     end
     self:PlayAnimationOutAndClose()
 end
-
-
 
 CharInfoAttributeHintCtrl._OnCloseAttrTips = HL.Method() << function(self)
     Notify(MessageConst.ON_CHAR_INFO_CLOSE_ATTR_TIP)

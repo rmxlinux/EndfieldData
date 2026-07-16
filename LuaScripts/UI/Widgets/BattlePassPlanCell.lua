@@ -1,26 +1,13 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 BattlePassPlanCell = HL.Class('BattlePassPlanCell', UIWidgetBase)
 
-
 BattlePassPlanCell.m_itemCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 BattlePassPlanCell._OnFirstTimeInit = HL.Override() << function(self)
     self.m_itemCellCache = UIUtils.genCellCache(self.view.itemNode)
 end
-
-
-
-
-
 
 BattlePassPlanCell.InitBattlePassPlanCell = HL.Method(HL.Any, HL.Opt(HL.Any, HL.Function)) << function(self, itemBundles, levelInfo, onTakeReward)
     
@@ -79,8 +66,6 @@ BattlePassPlanCell.InitBattlePassPlanCell = HL.Method(HL.Any, HL.Opt(HL.Any, HL.
     end)
 end
 
-
-
 BattlePassPlanCell.SetAsNaviFocusCell = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
@@ -88,21 +73,21 @@ BattlePassPlanCell.SetAsNaviFocusCell = HL.Method() << function(self)
     
     for _, itemCell in pairs(self.m_itemCellCache:GetItems()) do
         if itemCell.isEmpty ~= true and itemCell.canObtain then
-            UIUtils.setAsNaviTarget(itemCell.itemBlack.view.button)
+            self:SetNaviTarget(itemCell.itemBlack.view.button)
             return
         end
     end
     
     for _, itemCell in pairs(self.m_itemCellCache:GetItems()) do
         if itemCell.isEmpty ~= true and itemCell.isObtained then
-            UIUtils.setAsNaviTarget(itemCell.itemBlack.view.button)
+            self:SetNaviTarget(itemCell.itemBlack.view.button)
             return
         end
     end
     
     for _, itemCell in pairs(self.m_itemCellCache:GetItems()) do
         if itemCell.isEmpty ~= true then
-            UIUtils.setAsNaviTarget(itemCell.itemBlack.view.button)
+            self:SetNaviTarget(itemCell.itemBlack.view.button)
             return
         end
     end

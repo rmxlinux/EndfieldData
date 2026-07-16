@@ -2,11 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailActivityCleaning
 
-
-
-
 MapMarkDetailActivityCleaningCtrl = HL.Class('MapMarkDetailActivityCleaningCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -16,9 +12,6 @@ MapMarkDetailActivityCleaningCtrl = HL.Class('MapMarkDetailActivityCleaningCtrl'
 MapMarkDetailActivityCleaningCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 MapMarkDetailActivityCleaningCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)

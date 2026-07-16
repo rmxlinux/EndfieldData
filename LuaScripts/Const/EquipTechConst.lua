@@ -1,3 +1,9 @@
+local SORT_TYPE = {     
+    MATERIAL = CS.Beyond.Gameplay.EquipTechSystem.EPanelSortType.Material:GetHashCode(),
+    EQUIP_PART = CS.Beyond.Gameplay.EquipTechSystem.EPanelSortType.EquipPart:GetHashCode(),
+    EARLY_ACCEPT = CS.Beyond.Gameplay.EquipTechSystem.EPanelSortType.EarlyAccept:GetHashCode(),
+}
+
 local EquipTechConst = {
 
     
@@ -7,22 +13,24 @@ local EquipTechConst = {
         High = 3,  
     },
 
-    EQUIP_PRODUCE_SORT_OPTION = {
-        {
-            name = Language.LUA_DEPOT_SORT_OPTION_DEFAULT,
-            keys = { "minWearLv", "rarity", "sortId1", "sortId2", "id" }
-        },
-    },
+    PANL_SORT_TYPE = SORT_TYPE,
 
-    EQUIP_PRODUCE_PACK_SORT_OPTION = {
-        {
+    EQUIP_PRODUCE_PACK_SORT_CONFIG = {
+        [SORT_TYPE.MATERIAL] = {
             name = Language.LUA_EQUIP_PRODUCE_PACK_SORT_OPTION_MATERIAL,
-            keys = { "costMatSortId", "sortId" }
+            keys = { "costMatSortId", "sortId" },
+            innerKeys = { "costItemSortId", "minWearLv", "rarity", "sortId1", "sortId2", "id" },
         },
-        {
-            name = Language.LUA_EQUIP_PRODUCE_PACK_SORT_OPTION_QUALITY,
-            keys = { "sortId" }
+        [SORT_TYPE.EQUIP_PART] = {
+            name = Language.LUA_EQUIP_PRODUCE_PACK_SORT_OPTION_EQUIP_PART,
+            keys = { "costMatSortId", "sortId" },
+            innerKeys = { "minWearLv", "rarity", "sortId1", "sortId2", "id" },
         },
+        [SORT_TYPE.EARLY_ACCEPT] = {
+            name = Language.LUA_EQUIP_PRODUCE_PACK_SORT_OPTION_EARLY_ACCEPT,
+            keys = { "generalPackSortId", "costMatSortId", "sortId" },
+            innerKeys = { "costItemSortId", "minWearLv", "rarity", "sortId1", "sortId2", "id" },
+        }
     },
 
     EQUIP_ENHANCE_SORT_OPTION = {
@@ -48,6 +56,14 @@ local EquipTechConst = {
         PartialNew = 104,
     }
 }
+
+EquipTechConst.EQUIP_PRODUCE_PACK_SORT_OPTION = (function()
+    local options = {}
+    for _, cfg in ipairs(EquipTechConst.EQUIP_PRODUCE_PACK_SORT_CONFIG) do
+        options[#options + 1] = { name = cfg.name, keys = cfg.keys }
+    end
+    return options
+end)()
 
 
 _G.EquipTechConst = EquipTechConst

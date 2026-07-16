@@ -1,48 +1,23 @@
 local SNSContentBase = require_ex('UI/Widgets/SNSContentBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SNSContentVoice = HL.Class('SNSContentVoice', SNSContentBase)
-
 
 SNSContentVoice.m_timerId = HL.Field(HL.Number) << -1
 
-
 SNSContentVoice.m_voiceHandleId = HL.Field(HL.Number) << -1
-
 
 SNSContentVoice.m_showText = HL.Field(HL.Boolean) << false
 
-
 SNSContentVoice.s_playingVoice = HL.StaticField(HL.Forward("SNSContentVoice"))
-
-
 
 
 SNSContentVoice._OnDisable = HL.Override() << function(self)
     self:_ClearVoice()
 end
 
-
-
 SNSContentVoice._OnDestroy = HL.Override() << function(self)
     self:_ClearVoice()
 end
-
-
 
 SNSContentVoice._OnSNSContentInit = HL.Override() << function(self)
     self.view.voiceTextNode.gameObject:SetActiveIfNecessary(false)
@@ -71,8 +46,6 @@ SNSContentVoice._OnSNSContentInit = HL.Override() << function(self)
     self.view.voiceNodeBtn.customBindingViewLabelText = Language.LUA_SNS_CONTENT_CELL_VOICE_START_PLAY_DESC
 end
 
-
-
 SNSContentVoice._PlayVoice = HL.Method() << function(self)
     
     if SNSContentVoice.s_playingVoice ~= nil then
@@ -93,8 +66,6 @@ SNSContentVoice._PlayVoice = HL.Method() << function(self)
     end
 end
 
-
-
 SNSContentVoice._ClearVoice = HL.Method() << function(self)
     if self.m_timerId >= 0 then
         self:_ClearTimer(self.m_timerId)
@@ -109,8 +80,6 @@ SNSContentVoice._ClearVoice = HL.Method() << function(self)
     end
 end
 
-
-
 SNSContentVoice._OnClickShowTextBtn = HL.Method() << function(self)
     local isShow = not self.m_showText
     self.view.voiceTextNode.gameObject:SetActiveIfNecessary(isShow)
@@ -122,8 +91,6 @@ SNSContentVoice._OnClickShowTextBtn = HL.Method() << function(self)
     self.m_showText = isShow
     self:_UpdateHintText()
 end
-
-
 
 SNSContentVoice._GetTimeText = HL.Method().Return(HL.String) << function(self)
     local contentParam = self.m_contentCfg.contentParam
@@ -138,8 +105,6 @@ SNSContentVoice._GetTimeText = HL.Method().Return(HL.String) << function(self)
     end
 end
 
-
-
 SNSContentVoice._UpdateHintText = HL.Method() << function(self)
     local showText = self.m_showText and Language.LUA_SNS_CONTENT_CELL_VOICE_HIDE_TEXT_DESC or
             Language.LUA_SNS_CONTENT_CELL_VOICE_SHOW_TEXT_DESC
@@ -150,13 +115,9 @@ end
 
 
 
-
-
 SNSContentVoice.CanSetTarget = HL.Override().Return(HL.Boolean) << function(self)
     return true
 end
-
-
 
 SNSContentVoice.GetNaviTarget = HL.Override().Return(HL.Any) << function(self)
     return self.view.textVoiceRoot

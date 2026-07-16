@@ -1,30 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
-
-
-
-
-
-
-
 WikiRefBtn = HL.Class('WikiRefBtn', UIWidgetBase)
-
-
 
 
 WikiRefBtn._OnFirstTimeInit = HL.Override() << function(self)
     
 end
 
-
 WikiRefBtn.m_showingItemTips = HL.Field(HL.Boolean) << false
 
-
 WikiRefBtn.m_showingWikiTips = HL.Field(HL.Boolean) << false
-
-
-
 
 WikiRefBtn.InitWikiRefBtn = HL.Method(HL.String) << function(self, wikiEntryId)
     self:_FirstTimeInit()
@@ -110,8 +96,6 @@ WikiRefBtn.InitWikiRefBtn = HL.Method(HL.String) << function(self, wikiEntryId)
 end
 
 
-
-
 WikiRefBtn.OnTipClosed = HL.Method() << function(self)
     if NotNull(self.view.gameObject) then
         self:SetSelected(false)
@@ -119,9 +103,6 @@ WikiRefBtn.OnTipClosed = HL.Method() << function(self)
     self.m_showingItemTips = false
     self.m_showingWikiTips = false
 end
-
-
-
 
 
 WikiRefBtn.SetSelected = HL.Method(HL.Boolean) << function(self, isSelected)

@@ -1,76 +1,35 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacPipeConnector
 local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacPipeConnectorCtrl = HL.Class('FacPipeConnectorCtrl', uiCtrl.UICtrl)
 
 local CONNECTOR_START_PORT_INDEX = 1
 local CONNECTOR_MAX_PORTS_COUNT = 4
 local SINGLE_CONNECTOR_ITEM_INDEX = 0
 
-
 FacPipeConnectorCtrl.m_buildingInfo = HL.Field(HL.Userdata)
-
 
 FacPipeConnectorCtrl.m_updateThread = HL.Field(HL.Thread)
 
-
 FacPipeConnectorCtrl.m_connectorItems = HL.Field(HL.Table)
-
 
 FacPipeConnectorCtrl.m_lastValidConnectorItems = HL.Field(HL.Table)
 
-
 FacPipeConnectorCtrl.m_skipIndexMap = HL.Field(HL.Table)
-
 
 FacPipeConnectorCtrl.m_inPipeInfoList = HL.Field(HL.Table)
 
-
 FacPipeConnectorCtrl.m_outPipeInfoList = HL.Field(HL.Table)
-
 
 FacPipeConnectorCtrl.m_inBindingAnimMap = HL.Field(HL.Table)
 
-
 FacPipeConnectorCtrl.m_outBindingAnimMap = HL.Field(HL.Table)
-
 
 FacPipeConnectorCtrl.m_inItemAnimMap = HL.Field(HL.Table)
 
-
 FacPipeConnectorCtrl.m_outItemAnimMap = HL.Field(HL.Table)
 
-
 FacPipeConnectorCtrl.m_itemSpriteCache = HL.Field(HL.Table)
-
 
 
 
@@ -80,9 +39,6 @@ FacPipeConnectorCtrl.m_itemSpriteCache = HL.Field(HL.Table)
 FacPipeConnectorCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 FacPipeConnectorCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -110,18 +66,23 @@ FacPipeConnectorCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitConveyorBindingAnim()
 
     if DeviceInfo.usingController then
+        
+        local naviBridgeBtn
+        if self.view.buildingCommon.view.delButton.gameObject.activeSelf then
+            naviBridgeBtn = self.view.buildingCommon.view.delButton
+        else
+            naviBridgeBtn = self.view.buildingCommon.view.forbiddenDelButton
+        end
+        self.view.liquidItemLogistics1.view.button:SetExplicitSelectOnRight(naviBridgeBtn)
+        self.view.liquidItemLogistics4.view.button:SetExplicitSelectOnLeft(naviBridgeBtn)
         self.view.liquidItemLogistics1:SetAsNaviTarget()
     end
 end
-
-
 
 FacPipeConnectorCtrl.OnClose = HL.Override() << function(self)
     self:_ClearConveyorEvent()
     self.m_updateThread = self:_ClearCoroutine(self.m_updateThread)
 end
-
-
 
 FacPipeConnectorCtrl._InitConveyorEvent = HL.Method() << function(self)
     self.m_inPipeInfoList, self.m_outPipeInfoList = FactoryUtils.getBuildingPortState(self.m_buildingInfo.nodeId, true)
@@ -146,8 +107,6 @@ FacPipeConnectorCtrl._InitConveyorEvent = HL.Method() << function(self)
     end, self)
 end
 
-
-
 FacPipeConnectorCtrl._ClearConveyorEvent = HL.Method() << function(self)
     if self.m_inPipeInfoList ~= nil then
         for _, inPipeInfo in pairs(self.m_inPipeInfoList) do
@@ -167,8 +126,6 @@ FacPipeConnectorCtrl._ClearConveyorEvent = HL.Method() << function(self)
     MessageManager:UnregisterAll(self)
 end
 
-
-
 FacPipeConnectorCtrl._InitConnectorUpdateItemsThread = HL.Method() << function(self)
     self.m_connectorItems = {}
     self.m_lastValidConnectorItems = {}
@@ -180,8 +137,6 @@ FacPipeConnectorCtrl._InitConnectorUpdateItemsThread = HL.Method() << function(s
         end
     end)
 end
-
-
 
 FacPipeConnectorCtrl._UpdateConnectorItems = HL.Method() << function(self)
     self.m_skipIndexMap = {}
@@ -228,9 +183,6 @@ FacPipeConnectorCtrl._UpdateConnectorItems = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacPipeConnectorCtrl._UpdatePortIndexSkipMap = HL.Method(HL.Number) << function(self, portLuaIndex)
     
     if portLuaIndex % 2 == 0 then
@@ -240,10 +192,6 @@ FacPipeConnectorCtrl._UpdatePortIndexSkipMap = HL.Method(HL.Number) << function(
     end
 end
 
-
-
-
-
 FacPipeConnectorCtrl._GetViewIndexByConnectorPortIndex = HL.Method(HL.Number, HL.Boolean).Return(HL.Number) <<
     function(self, portLuaIndex, isIn)
         if isIn then
@@ -252,10 +200,6 @@ FacPipeConnectorCtrl._GetViewIndexByConnectorPortIndex = HL.Method(HL.Number, HL
             return portLuaIndex % 2 == 0 and portLuaIndex or portLuaIndex + 1
         end
     end
-
-
-
-
 
 FacPipeConnectorCtrl._RefreshConnectorItemState = HL.Method(HL.Number, HL.String) << function(self, index, itemId)
     local viewItemName = string.format("liquidItemLogistics%d", index)
@@ -290,8 +234,6 @@ FacPipeConnectorCtrl._RefreshConnectorItemState = HL.Method(HL.Number, HL.String
     end
 end
 
-
-
 FacPipeConnectorCtrl._OnDeleteConnectorButtonClicked = HL.Method() << function(self)
     if not FactoryUtils.canDelBuilding(self.m_buildingInfo.nodeId, true) then
         return
@@ -299,8 +241,6 @@ FacPipeConnectorCtrl._OnDeleteConnectorButtonClicked = HL.Method() << function(s
     PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
     GameInstance.player.remoteFactory.core:Message_OpDismantle(Utils.getCurrentChapterId(), self.m_buildingInfo.nodeId)
 end
-
-
 
 
 
@@ -357,14 +297,9 @@ FacPipeConnectorCtrl._InitAnimDataMap = HL.Method() << function(self)
     }
 end
 
-
-
-
 FacPipeConnectorCtrl._GetAnimIndexFromPipeInfoIndex = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
     return math.ceil(index / 2.0)
 end
-
-
 
 FacPipeConnectorCtrl._InitConveyorBindingAnim = HL.Method() << function(self)
     
@@ -383,9 +318,6 @@ FacPipeConnectorCtrl._InitConveyorBindingAnim = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 FacPipeConnectorCtrl._OnConveyorChanged = HL.Method(HL.Any) << function(self, args)
     local bindingNodeId, componentId, isIn, itemList = unpack(args)

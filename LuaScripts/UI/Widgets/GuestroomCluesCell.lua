@@ -1,29 +1,15 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
 GuestroomCluesCell = HL.Class('GuestroomCluesCell', UIWidgetBase)
-
 
 GuestroomCluesCell.m_onClick = HL.Field(HL.Function)
 
-
 GuestroomCluesCell.m_genCharCells = HL.Field(HL.Forward("UIListCache"))
-
 
 GuestroomCluesCell.m_hasBeenPlaced = HL.Field(HL.Boolean) << false
 
 
-
 GuestroomCluesCell.m_clueCellData = HL.Field(HL.Userdata)
-
-
 
 
 GuestroomCluesCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -74,10 +60,6 @@ GuestroomCluesCell._OnFirstTimeInit = HL.Override() << function(self)
         self:RefreshDelState()
     end)
 end
-
-
-
-
 
 GuestroomCluesCell.InitGuestroomCluesCell = HL.Method(HL.Any, HL.Function) << function(self, data, onClick)
     self:_FirstTimeInit()
@@ -140,7 +122,11 @@ GuestroomCluesCell.InitGuestroomCluesCell = HL.Method(HL.Any, HL.Function) << fu
     if data.fromRoleId ~= 0 then
         local success , friendInfo = GameInstance.player.friendSystem:TryGetFriendInfo(data.fromRoleId)
         if success then
-            self.view.nameTxt.text = FriendUtils.getFriendInfoByRoleId(data.fromRoleId)
+            if GameInstance.player.roleId == data.fromRoleId then
+                self.view.nameTxt.text = FriendUtils.getFriendInfoByRoleId(data.fromRoleId) .. Language.LUA_SPACESHIP_CLUE_MINE_MARK
+            else
+                self.view.nameTxt.text = FriendUtils.getFriendInfoByRoleId(data.fromRoleId)
+            end
         else
             self.view.nameTxt.text = Language.LUA_FRIEND_NOT_EXIST
         end
@@ -151,8 +137,6 @@ GuestroomCluesCell.InitGuestroomCluesCell = HL.Method(HL.Any, HL.Function) << fu
 
     self:RefreshDelState()
 end
-
-
 
 
 GuestroomCluesCell.RefreshDelState = HL.Method() << function(self)

@@ -1,14 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonDrag
 local CommonDropHintType = CS.Beyond.UI.CommonDropHintType
-
-
-
-
-
-
 CommonDragCtrl = HL.Class('CommonDragCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -20,18 +13,11 @@ CommonDragCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 CommonDragCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     CS.Beyond.UI.UIDragItem.s_commonDragObjectParent = self.view.transform
 end
 
-
 CommonDragCtrl.m_curTarget = HL.Field(HL.Any)
-
-
-
 
 CommonDragCtrl._OnToggleItemSlotDropHighlight = HL.Method(HL.Table) << function(self, args)
     local active, hintType, position, parent, target = unpack(args)
@@ -62,8 +48,6 @@ CommonDragCtrl._OnToggleItemSlotDropHighlight = HL.Method(HL.Table) << function(
         self.m_curTarget = nil
     end
 end
-
-
 
 
 CommonDragCtrl._ResetDropHighlight = HL.Method() << function(self)

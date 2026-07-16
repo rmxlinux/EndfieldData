@@ -1,80 +1,22 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacMachineCrafter
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacMachineCrafterCtrl = HL.Class('FacMachineCrafterCtrl', uiCtrl.UICtrl)
-
-local SWITCH_LIQUID_MODE_POPUP_TITLE_TEXT_ID = "ui_fac_pipe_mode_close_info_title"
-local SWITCH_LIQUID_MODE_POPUP_DESC_TEXT_ID = "ui_fac_pipe_mode_close_info_des"
-local SWITCH_LIQUID_MODE_POPUP_TOGGLE_TEXT_ID = "ui_fac_pipe_mode_close_info_choose"
-local SWITCH_LIQUID_MODE_POPUP_LOCAL_DATA_KEY = "hide_fac_machine_crafter_mode_switch_pop_up"
 
 local START_CACHE_COUNT = 1
 local MAX_CACHE_COUNT = 4
-local SINGLE_LIQUID_CACHE_SLOT_SPACING_Y = 110
 
 local SMART_ALERT_FUNCTION_NAME_LIST = {
     "_CheckAlertNoPowerCondition",
     "_CheckAlertNoPowerWithDiffuserCondition",
     "_CheckAlertNoPowerWithoutDiffuserCondition",
     "_CheckAlertCanBeOpenedCondition",
+    "_CheckAlertActivatorCostInsufficientCondition",
+    "_CheckAlertFillingNeedUnlockGasCondition",
     "_CheckAlertFluidInputEmptyCondition",
     "_CheckAlertNormalInputEmptyCondition",
+    "_CheckAlertDismantlerNeedUnlockGasCondition",
     "_CheckAlertInputInvalidFormulaCondition",
+    "_CheckAlertFormulaNeedEnvCondition",
     "_CheckAlertOutputCacheFullWithPipeCondition",
     "_CheckAlertOutputCacheFullWithoutPipeCondition",
     "_CheckAlertOutputCacheFullWithBeltCondition",
@@ -94,80 +36,79 @@ local SMART_ALERT_FUNCTION_NAME_LIST = {
 
 
 
-
 FacMachineCrafterCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FAC_MACHINE_MODE_CHANGE_SYNC_PORT] = '_OnModeChangeSyncPort',
     [MessageConst.FAC_ON_DEL_TIME_LIMITED_FORMULA] = "_OnFormulaDelete",
 }
 
-
 FacMachineCrafterCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 FacMachineCrafterCtrl.m_uiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_Producer)
 
-
 FacMachineCrafterCtrl.m_onBuildingFormulaChanged = HL.Field(HL.Function)
-
-
-FacMachineCrafterCtrl.m_cachesMap = HL.Field(HL.Table)
-
-
-FacMachineCrafterCtrl.m_normalSlotList = HL.Field(HL.Table)
-
-
-FacMachineCrafterCtrl.m_hideModeSwitchPopUp = HL.Field(HL.Boolean) << false
-
 
 FacMachineCrafterCtrl.m_lastProgressFormulaId = HL.Field(HL.String) << ""
 
-
 FacMachineCrafterCtrl.m_skipFirstRefreshFormula = HL.Field(HL.Boolean) << true
-
 
 FacMachineCrafterCtrl.m_isInventoryLocked = HL.Field(HL.Boolean) << false
 
-
 FacMachineCrafterCtrl.m_noNormalOutputCache = HL.Field(HL.Boolean) << false
-
 
 FacMachineCrafterCtrl.m_needInversePipe = HL.Field(HL.Boolean) << false
 
-
 FacMachineCrafterCtrl.m_smartAlertTargetTransformCache = HL.Field(HL.Table)
-
 
 FacMachineCrafterCtrl.m_smartAlertConditionDataCache = HL.Field(HL.Table)
 
+FacMachineCrafterCtrl.m_isCacheAreaInitialized = HL.Field(HL.Boolean) << false
 
+FacMachineCrafterCtrl.m_needRefreshPortState = HL.Field(HL.Boolean) << false
 
+FacMachineCrafterCtrl.m_layoutData = HL.Field(HL.Table)
+
+FacMachineCrafterCtrl.m_cacheInCanDropLevel = HL.Field(HL.Number) << 0
+
+FacMachineCrafterCtrl.m_cacheOutCanDropLevel = HL.Field(HL.Number) << 0
 
 
 FacMachineCrafterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_uiInfo = arg.uiInfo
     local nodeId = self.m_uiInfo.nodeId
     self.m_nodeId = nodeId
-    self.m_cachesMap = {}
 
     
-    local layoutData = FactoryUtils.getMachineCraftCacheLayoutData(self.m_nodeId)
-    self.m_noNormalOutputCache = next(layoutData.normalOutcomeCaches) == nil
-    self.m_needInversePipe = #layoutData.fluidIncomeCaches >= 2 or #layoutData.fluidOutcomeCaches >= 2
+    self:_ProcessLayoutData()
+    self.m_noNormalOutputCache = self.m_layoutData.outSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal] == 0
+    self.m_needInversePipe = FacConst.FAC_PRODUCER_NEED_INVERSE_PIPE[self.m_uiInfo.nodeHandler.templateId] ~= nil
     self.view.inventoryArea:InitInventoryArea({
         onStateChange = function()
             self:_RefreshNaviGroupSwitcherInfos()
         end,
+        customOnUpdateCell = function(cell, itemBundle)
+            self:_RefreshInventoryItemCell(cell, itemBundle)
+        end,
         customSetActionMenuArgs = function(actionMenuArgs)
             actionMenuArgs.cacheArea = self.view.cacheArea
         end,
-        hasFluidInCache = layoutData and (next(layoutData.fluidIncomeCaches) ~= nil),
-        noNormalCache = next(layoutData.normalIncomeCaches) == nil and self.m_noNormalOutputCache,
+        hasFluidInCache = self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid] > 0 or self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid] > 0,
+        hasGasInCache = self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas] > 0 or self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid] > 0,
+        noNormalCache = self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal] == 0,
         lockFormulaId = FactoryUtils.getMachineCraftLockFormulaId(self.m_uiInfo.nodeId),
     })
     self.m_isInventoryLocked = FactoryUtils.isBuildingInventoryLocked(nodeId)
     self.view.inventoryArea:LockInventoryArea(self.m_isInventoryLocked)
 
+    
     self.view.functionBtn.gameObject:SetActiveIfNecessary(not self.m_noNormalOutputCache)
+    self.view.formulaNode.view.decoNode.gameObject:SetActiveIfNecessary(self.m_noNormalOutputCache)
+    self.view.gainBtn.onClick:AddListener(function()
+        self.view.cacheArea:GainAreaOutItems()
+    end)
+
+    
+    self:_OnExpendTypeMachineInit()
+
     
     self:_StartCoroutine(function()
         while true do
@@ -176,6 +117,7 @@ FacMachineCrafterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             end
             coroutine.step()
             self.view.facProgressNode:UpdateProgress(self.m_uiInfo.producer.currentProgress)
+            self:_OnExpendTypeMachineUpdate()
             if not self.m_noNormalOutputCache then
                 self:_UpdateGainButtonState()
             end
@@ -192,11 +134,15 @@ FacMachineCrafterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
     self.view.buildingCommon:InitBuildingCommon(self.m_uiInfo, {
         onStateChanged = function(state)
-            self:_RefreshChangeState(state)
+            self:_OnExpendTypeStateUpdate(state)
+        end,
+        onEnvChanged = function(env)
+            self:_RefreshFormulaInfo()
         end,
         smartAlertFuncNameList = SMART_ALERT_FUNCTION_NAME_LIST,
         targetCtrlInstance = self
     })
+    self.view.buildingCommon.isModeEnvRelated = FactoryUtils.checkIsBuildingModeEnvRelated(self.m_uiInfo.buildingId, self.m_uiInfo.formulaMan.currentMode)
     self:_RefreshCrafterWidth()
 
     
@@ -207,10 +153,46 @@ FacMachineCrafterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_ChangePipeSpacingWithCacheSlotCount()
 
     
-    self:_InitModeSwitchNode()
+    self.view.machineToggle:InitMachineToggle(self.m_uiInfo, {
+        preSwitchMode = function()
+            if self.m_isClosed then
+                return
+            end
+            self.view.buildingCommon.smartAlertChangeCachePauseUpdate = true
+        end,
+        postSwitchMode = function()
+            if self.m_isClosed then
+                return
+            end
+            self:_PostSwitchMode()
+        end,
+    })
+    if self.view.machineToggle.gameObject.activeSelf then
+        self.view.buildingCommon.view.controllerSideMenuBtn:InitControllerSideMenuBtn({
+            extraBtnInfos = {
+                {
+                    button = self.view.formulaNode.view.openBtn,
+                    sprite = self.view.formulaNode.view.openBtnIcon.sprite,
+                    textId = "key_hint_fac_machine_toggle_formula",
+                    priority = 2.2,
+                },
+                {
+                    name = "MachineToggle",
+                    action = function()
+                        self.view.machineToggle:ControllerSideMenuClick()
+                    end,
+                    getText = function()
+                        return self.view.machineToggle:GetControllerSideMenuText()
+                    end,
+                    sprite = self.view.machineToggle:GetControllerSideMenuSprite(),
+                    priority = 2.1,
+                },
+            }
+        })
+    end
 
-    self.view.cacheAreaCanvasGroup.alpha = 0
     
+    self.view.cacheAreaCanvasGroup.alpha = 0
     self.view.cacheArea:InitFacCacheArea({
         buildingInfo = self.m_uiInfo,
         inChangedCallback = function(cacheItems)
@@ -222,10 +204,10 @@ FacMachineCrafterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self:_RefreshFormulaInfo()
         end,
         outChangedCallback = function(cacheItems)
-            self:_RefreshCacheMap(cacheItems)
         end,
         onInitializeFinished = function()
             self.view.cacheAreaCanvasGroup.alpha = 1
+            self.m_isCacheAreaInitialized = true
             self:_InitCacheBelt()
 
             
@@ -239,15 +221,10 @@ FacMachineCrafterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self.view.contentBindingGroup.enabled = isIn
         end
     })
-    self.view.gainBtn.onClick:AddListener(function()
-    self.view.cacheArea:GainAreaOutItems()
-    end)
 
     
     GameInstance.remoteFactoryManager:RegisterInterestedUnitId(nodeId)
     end
-
-
 
 FacMachineCrafterCtrl.OnClose = HL.Override() << function(self)
     self.view.buildingCommon:ClearSmartAlertUpdate()
@@ -255,12 +232,64 @@ FacMachineCrafterCtrl.OnClose = HL.Override() << function(self)
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_nodeId)
 end
 
+FacMachineCrafterCtrl.OnShow = HL.Override() << function(self)
+    if self.m_needRefreshPortState then
+        self.m_needRefreshPortState = false
+        self.view.cacheBelt:RefreshBeltCellsState()
+        self.view.cachePipe:RefreshPipeCellsState()
+    end
+end
 
+FacMachineCrafterCtrl.OnHide = HL.Override() << function(self)
+    self.m_needRefreshPortState = true
+end
 
 FacMachineCrafterCtrl.OnAnimationInFinished = HL.Override() << function(self)
 end
 
 
+
+
+FacMachineCrafterCtrl._OnExpendTypeMachineInit = HL.Virtual() << function(self)
+
+end
+
+FacMachineCrafterCtrl._OnExpendTypeMachineUpdate = HL.Virtual() << function(self)
+
+end
+
+FacMachineCrafterCtrl._OnExpendTypeStateUpdate = HL.Virtual(HL.Userdata) << function(self, state)
+    self:_RefreshChangeState(state)
+end
+
+
+
+
+FacMachineCrafterCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) << function(self, cell, itemBundle)
+    if cell == nil or itemBundle == nil then
+        return
+    end
+
+    if self.m_cacheInCanDropLevel == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal then
+        
+        return
+    end
+
+    local itemId = itemBundle.id
+
+    local canDrop = FactoryUtils.isEmptyBottleOrJarItem(itemId, self.m_cacheInCanDropLevel)
+        or FactoryUtils.isFullBottleOrJarItem(itemId, self.m_cacheInCanDropLevel)
+        or FactoryUtils.isEmptyBottleOrJarItem(itemId, self.m_cacheOutCanDropLevel)
+    local isEmpty = string.isEmpty(itemBundle.id)
+    
+    if not canDrop and not isEmpty then
+        cell.view.forbiddenMask.gameObject:SetActiveIfNecessary(true)
+        cell.view.dropItem.enabled = false
+    end
+    if not canDrop then
+        cell.view.dragItem.enabled = false
+    end
+end
 
 
 
@@ -287,14 +316,17 @@ FacMachineCrafterCtrl._GetMachineFormulaId = HL.Method().Return(HL.String) << fu
     return self.m_uiInfo.lastFormulaId
 end
 
-
-
 FacMachineCrafterCtrl._RefreshFormulaInfo = HL.Method() << function(self)
+    if not self.m_isCacheAreaInitialized then
+        return
+    end
     if self.m_lastProgressFormulaId and (not self.m_lastProgressFormulaId:isEmpty()) then
         if not GameInstance.player.remoteFactory.core:IsFormulaVisible(self.m_lastProgressFormulaId) then
             self.m_lastProgressFormulaId = ""
         end
     end
+
+
     local id = self:_GetMachineFormulaId()
     local isFormulaMissing = string.isEmpty(id)
 
@@ -311,9 +343,18 @@ FacMachineCrafterCtrl._RefreshFormulaInfo = HL.Method() << function(self)
         return
     end
 
-    local craftInfo = FactoryUtils.parseMachineCraftData(id)
+    local machineCraftData = Tables.factoryMachineCrafterTable:GetValue(self.m_uiInfo.buildingId)
+    local formulaGroupId
+    for index = 0, machineCraftData.modeMap.Count - 1 do
+        local mapData = machineCraftData.modeMap[index]
+        if mapData ~= nil and mapData.modeName == self.m_uiInfo.formulaMan.currentMode then
+            formulaGroupId = mapData.groupName
+            break
+        end
+    end
+    local craftInfo = FactoryUtils.parseMachineCraftData(id, formulaGroupId)
     local craftData = Tables.factoryMachineCraftTable:GetValue(id)
-    local time = FactoryUtils.getCraftNeedTime(craftData)
+    local time = craftInfo.time
 
     self.view.formulaNode:RefreshDisplayFormula(craftInfo)
     self.view.cacheArea:ChangedFormula(id, self.m_uiInfo.lastFormulaId)
@@ -324,7 +365,7 @@ FacMachineCrafterCtrl._RefreshFormulaInfo = HL.Method() << function(self)
         craftData.totalProgress * FacConst.CRAFT_PROGRESS_MULTIPLIER,
         colorStr,
         function()
-            self.view.cacheArea:PlayArrowAnimation("facmac_decoarrow_loop")
+            self.view.cacheArea:PlayArrowAnimation()
             AudioAdapter.PostEvent("au_ui_fac_yield")
         end,
         function()
@@ -335,8 +376,6 @@ FacMachineCrafterCtrl._RefreshFormulaInfo = HL.Method() << function(self)
 
     self.view.facProgressNode:SwitchAudioPlayingState(not string.isEmpty(self.m_uiInfo.formulaId))
 end
-
-
 
 FacMachineCrafterCtrl._GetCurrentMatchedFormulaId = HL.Method().Return(HL.String) << function(self)
     local itemList = {}
@@ -355,14 +394,18 @@ FacMachineCrafterCtrl._GetCurrentMatchedFormulaId = HL.Method().Return(HL.String
         end
     end
 
+    local currEnv
+    if self.m_uiInfo.envReceiver ~= nil then
+        currEnv = self.m_uiInfo.envReceiver.currentEnv
+    end
+
     return FactoryUtils.getMatchedFormulaIdByItemList(
         self.m_uiInfo.buildingId,
         self.m_uiInfo.formulaMan.currentMode,
-        itemList
+        itemList,
+        currEnv
     )
 end
-
-
 
 FacMachineCrafterCtrl._RefreshCrafterWidth = HL.Method() << function(self)
     local isWide = self.view.buildingCommon.bgRatio > 1
@@ -387,9 +430,6 @@ FacMachineCrafterCtrl._RefreshCrafterWidth = HL.Method() << function(self)
     self.view.cacheArea.view.outRepositoryList.repository2.view.slotCell.view.itemSlot.view.facLineCell:ChangeLineWidth(outWidth)
 end
 
-
-
-
 FacMachineCrafterCtrl._RefreshChangeState = HL.Method(HL.Userdata) << function(self, state)
     local useStateText = FactoryUtils.refreshStateNodeByState(self.view.facStateNode, self.view.facProgressNode, state)
     self.view.cacheArea:RefreshAreaBlockState(state == GEnums.FacBuildingState.Blocked)
@@ -397,8 +437,6 @@ FacMachineCrafterCtrl._RefreshChangeState = HL.Method(HL.Userdata) << function(s
         self.view.facProgressNode:SwitchAudioPlayingState(state == GEnums.FacBuildingState.Normal)
     end
 end
-
-
 
 
 
@@ -422,21 +460,6 @@ FacMachineCrafterCtrl._InitCacheBelt = HL.Method() << function(self)
     })
 end
 
-
-
-
-FacMachineCrafterCtrl._RefreshCacheMap = HL.Method(HL.Userdata) << function(self, cache)
-    if cache == nil then
-        return
-    end
-
-    local componentId = cache.componentId
-    if self.m_cachesMap[componentId] == nil then
-        self.m_cachesMap[componentId] = cache
-    end
-end
-
-
 FacMachineCrafterCtrl._UpdateGainButtonState = HL.Method() << function(self)
     local findItem = false
 
@@ -456,8 +479,6 @@ FacMachineCrafterCtrl._UpdateGainButtonState = HL.Method() << function(self)
 
     self.view.gainBtn.interactable = findItem and not self.m_isInventoryLocked
 end
-
-
 
 
 
@@ -490,190 +511,87 @@ end
 
 
 
-
-
-FacMachineCrafterCtrl._InitModeSwitchNode = HL.Method() << function(self)
-    self.view.modeToggle.gameObject:SetActive(false)
-
-    local nodePredefinedParam = self.m_uiInfo.nodeHandler.predefinedParam
-    local needModeNode = true
-    if
-        nodePredefinedParam ~= nil and
-        nodePredefinedParam.producer ~= nil
-    then
-        needModeNode = nodePredefinedParam.producer.enableModeSwitch
-    end
-    if needModeNode then
-        if
-            nodePredefinedParam ~= nil and
-            nodePredefinedParam.producer ~= nil
-        then
-            if nodePredefinedParam.producer.modeMethod == CS.Beyond.GEnums.FCProducerPredefineModeMethod.InheritDomain then
-                local domainMatched = false
-                local buildingMatched = false
-                local curDungeonId = GameInstance.dungeonManager.curDungeonId
-                local existDungionData, dungeonData = Tables.dungeonFactoryTable:TryGetValue(curDungeonId)
-                if existDungionData then
-                    local relatedDomainId = dungeonData.domainId
-                    if relatedDomainId and not relatedDomainId:isEmpty() then
-                        local existDomainData, domainData = Tables.domainDataTable:TryGetValue(relatedDomainId)
-                        if existDomainData then
-                            for idx = 0, domainData.machineModeTypeGroup.Count - 1 do
-                                if domainData.machineModeTypeGroup[idx] == FacConst.FAC_FORMULA_MODE_MAP.LIQUID then
-                                    domainMatched = true
-                                    break
-                                end
-                            end
-                        end
-                    end
-                end
-                if domainMatched then
-                    local buildingData = Tables.factoryMachineCrafterTable:GetValue(self.m_uiInfo.nodeHandler.templateId)
-                    if buildingData.modeMap.Count > 1 then
-                        for index = 0, buildingData.modeMap.Count - 1 do
-                            local mapData = buildingData.modeMap[index]
-                            if mapData ~= nil and mapData.modeName == FacConst.FAC_FORMULA_MODE_MAP.LIQUID then
-                                buildingMatched = true
-                                break
-                            end
-                        end
-                    end
-                end
-                needModeNode = domainMatched and buildingMatched
-            else
-                needModeNode = nodePredefinedParam.producer.modeMethod == CS.Beyond.GEnums.FCProducerPredefineModeMethod.NormalAndLiquid
-            end
-        else
-            needModeNode = FactoryUtils.checkBuildingHasModeSwitch(self.m_uiInfo.nodeHandler.templateId)
-        end
-    end
-
-    if not needModeNode then
-        return
-    end
-
-    self.view.modeToggle.gameObject:SetActive(true)
-
-    self.view.modeToggle.onValueChanged:AddListener(function(isOn)
-        
-        self.view.modeToggle:SetIsOnWithoutNotify(not isOn)
-        self:_OnModeSwitchButtonClicked()
-    end)
-
-    local formulaMan = self.m_uiInfo.formulaMan
-    if formulaMan ~= nil then
-        self.view.modeToggle:SetIsOnWithoutNotify(formulaMan.currentMode == FacConst.FAC_FORMULA_MODE_MAP.NORMAL)
-    end
-end
-
-
-
-FacMachineCrafterCtrl._OnModeSwitchButtonClicked = HL.Method() << function(self)
-    
-    local currentMode = self.m_uiInfo.formulaMan.currentMode
-    if currentMode == FacConst.FAC_FORMULA_MODE_MAP.NORMAL then
-        self:_SwitchMode(FacConst.FAC_FORMULA_MODE_MAP.LIQUID)
-    else
-        
-        local _, hidePopUp = ClientDataManagerInst:GetBool(SWITCH_LIQUID_MODE_POPUP_LOCAL_DATA_KEY, false)
-        if hidePopUp or Utils.isInBlackbox() then  
-            self:_SwitchMode(FacConst.FAC_FORMULA_MODE_MAP.NORMAL)
-        else
-            Notify(MessageConst.SHOW_POP_UP, {
-                content = Language[SWITCH_LIQUID_MODE_POPUP_TITLE_TEXT_ID],
-                subContent = string.format(UIConst.COLOR_STRING_FORMAT,
-                        UIConst.COUNT_RED_COLOR_STR,
-                        Language[SWITCH_LIQUID_MODE_POPUP_DESC_TEXT_ID]),
-                onConfirm = function()
-                    self:_SwitchMode(FacConst.FAC_FORMULA_MODE_MAP.NORMAL)
-                end,
-                toggle = {
-                    onValueChanged = function(isOn)
-                        self.m_hideModeSwitchPopUp = isOn
-                    end,
-                    toggleText = Language[SWITCH_LIQUID_MODE_POPUP_TOGGLE_TEXT_ID],
-                    onHintTextId = SWITCH_LIQUID_MODE_POPUP_TOGGLE_TEXT_ID,
-                    offHintTextId = SWITCH_LIQUID_MODE_POPUP_TOGGLE_TEXT_ID,
-                    isOn = false,
-                }
-            })
-        end
-    end
-end
-
-
-
-
-FacMachineCrafterCtrl._SwitchMode = HL.Method(HL.String) << function(self, targetMode)
-    self.view.buildingCommon.smartAlertChangeCachePauseUpdate = true
-    GameInstance.player.remoteFactory.core:Message_OpChangeProducerMode(Utils.getCurrentChapterId(), self.m_nodeId, targetMode, function(message, result)
-        self:_PostSwitchMode()
-    end)
-end
-
-
-
-
 FacMachineCrafterCtrl._OnModeChangeSyncPort = HL.Method(HL.Any) << function(self, args)
     local nodeId = unpack(args)
     if nodeId == self.m_nodeId then
         
+        self.view.cacheArea:RefreshCacheArea()
         self.view.cacheBelt:RefreshCacheBelt()
         self.view.cachePipe:RefreshCachePipe()
     end
 end
 
-
-
-
 FacMachineCrafterCtrl._OnFormulaDelete = HL.Method(HL.Any) << function(self, args)
     self:_RefreshFormulaInfo()
 end
 
-
-
 FacMachineCrafterCtrl._PostSwitchMode = HL.Method() << function(self)
     self.m_uiInfo:Update(true)
+    self.m_lastProgressFormulaId = ""
     self.m_uiInfo:ClearProducerLastValidFormulaId()
+    self:_RefreshFormulaInfo()
     self.view.cacheArea:RefreshCacheArea()
     self.view.cacheBelt:RefreshCacheBelt()
     self.view.cachePipe:RefreshCachePipe()
     self.view.formulaNode:RefreshRedDot()
-    self.view.modeToggle:SetIsOnWithoutNotify(self.m_uiInfo.formulaMan.currentMode == FacConst.FAC_FORMULA_MODE_MAP.NORMAL)
+    self:_ProcessLayoutData()
     self:_UpdateSmartAlertCache()
+    self:_ChangePipeSpacingWithCacheSlotCount()
     self.view.inventoryArea:SetBuildingHasFluidCache(self.m_smartAlertConditionDataCache.hasFluidCache)
+    self.view.inventoryArea:SetBuildingNoNormalCache(not self.m_smartAlertConditionDataCache.hasItemCache)
+    self.view.functionBtn.gameObject:SetActiveIfNecessary(not self.m_noNormalOutputCache)
+    self.view.formulaNode.view.decoNode.gameObject:SetActiveIfNecessary(self.m_noNormalOutputCache)
     if self.view.buildingCommon.smartAlertDynamicNode ~= nil then
         self.view.buildingCommon.smartAlertDynamicNode:ForceUpdateAlertPosition()
     end
+    self.view.buildingCommon.isModeEnvRelated = FactoryUtils.checkIsBuildingModeEnvRelated(self.m_uiInfo.buildingId, self.m_uiInfo.formulaMan.currentMode)
     if self.view.cacheArea:CheckRepoNaviTargetTopLayer(true) or self.view.cacheArea:CheckRepoNaviTargetTopLayer(false) then
         self.view.cacheArea:InitAreaNaviTarget()
     end
-
-    if self.m_hideModeSwitchPopUp then
-        
-        ClientDataManagerInst:SetBool(SWITCH_LIQUID_MODE_POPUP_LOCAL_DATA_KEY, true, false)
-        self.m_hideModeSwitchPopUp = false 
-    end
 end
-
-
 
 FacMachineCrafterCtrl._ChangePipeSpacingWithCacheSlotCount = HL.Method() << function(self)
-    local layoutData = FactoryUtils.getMachineCraftCacheLayoutData(self.m_nodeId)
-    if #layoutData.normalIncomeCaches <= 0 and #layoutData.fluidIncomeCaches <= 1 then
-        self.view.cachePipe:ChangePipeSpacingY(SINGLE_LIQUID_CACHE_SLOT_SPACING_Y, true)
-    end
-    if #layoutData.normalOutcomeCaches <= 0 and #layoutData.fluidOutcomeCaches <= 1 then
-        self.view.cachePipe:ChangePipeSpacingY(SINGLE_LIQUID_CACHE_SLOT_SPACING_Y, false)
-    end
-    if #layoutData.fluidIncomeCaches >= 2 then
-        self.view.cachePipe:ChangePipeLineColor(true)
-    end
-    if #layoutData.fluidOutcomeCaches >= 2 then
-        self.view.cachePipe:ChangePipeLineColor(false)
-    end
+    
+    local oneLiquidIn = self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal] == 0 and
+        self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid] + self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas] + self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid] == 1
+    local oneLiquidOut = self.m_layoutData.outSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal] == 0 and
+        self.m_layoutData.outSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid] + self.m_layoutData.outSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas] + self.m_layoutData.outSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid] == 1
+    self.view.cachePipe:ChangePipeSpacingY(true, oneLiquidIn)
+    self.view.cachePipe:ChangePipeSpacingY(false, oneLiquidOut)
+
+    
+    self.view.cachePipe:ChangePipeLineColor(true, #self.m_layoutData.liquidIncomeCaches < 2)
+    self.view.cachePipe:ChangePipeLineColor(false, #self.m_layoutData.liquidOutcomeCaches < 2)
 end
 
+FacMachineCrafterCtrl._ProcessLayoutData = HL.Method() << function(self)
+    self.m_layoutData = FactoryUtils.getMachineCraftCacheLayoutData(self.m_nodeId)
+
+    if self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal] > 0 then
+        self.m_cacheInCanDropLevel = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal
+    elseif self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid] > 0 then
+        self.m_cacheInCanDropLevel = FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid
+    else
+        self.m_cacheInCanDropLevel = 0
+        if self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid] > 0 then
+            self.m_cacheInCanDropLevel = self.m_cacheInCanDropLevel + FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid
+        end
+        if self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas] > 0 then
+            self.m_cacheInCanDropLevel = self.m_cacheInCanDropLevel + FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas
+        end
+    end
+    if self.m_layoutData.outSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid] > 0 then
+        self.m_cacheOutCanDropLevel = FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid
+    else
+        self.m_cacheOutCanDropLevel = 0
+        if self.m_layoutData.outSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid] > 0 then
+            self.m_cacheOutCanDropLevel = self.m_cacheOutCanDropLevel + FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid
+        end
+        if self.m_layoutData.outSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas] > 0 then
+            self.m_cacheOutCanDropLevel = self.m_cacheOutCanDropLevel + FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas
+        end
+    end
+end
 
 
 
@@ -681,8 +599,6 @@ end
 
 
 FacMachineCrafterCtrl.m_naviGroupSwitcher = HL.Field(HL.Forward('NaviGroupSwitcher'))
-
-
 
 FacMachineCrafterCtrl._InitFacMachineCrafterController = HL.Method() << function(self)
     local NaviGroupSwitcher = require_ex("Common/Utils/UI/NaviGroupSwitcher").NaviGroupSwitcher
@@ -697,8 +613,6 @@ FacMachineCrafterCtrl._InitFacMachineCrafterController = HL.Method() << function
     )
 end
 
-
-
 FacMachineCrafterCtrl._RefreshNaviGroupSwitcherInfos = HL.Method() << function(self)
     if self.m_naviGroupSwitcher == nil then
         return
@@ -709,8 +623,6 @@ FacMachineCrafterCtrl._RefreshNaviGroupSwitcherInfos = HL.Method() << function(s
     self.view.inventoryArea:AddNaviGroupSwitchInfo(naviGroupInfos)
     self.m_naviGroupSwitcher:ChangeGroupInfos(naviGroupInfos)
 end
-
-
 
 
 
@@ -798,10 +710,11 @@ FacMachineCrafterCtrl._UpdateSmartAlertCache = HL.Method() << function(self)
             end
         end
     end
-    local layoutData = FactoryUtils.getMachineCraftCacheLayoutData(self.m_nodeId)
-    if layoutData then
-        self.m_smartAlertConditionDataCache.hasItemCache = next(layoutData.normalIncomeCaches) ~= nil
-        self.m_smartAlertConditionDataCache.hasFluidCache = next(layoutData.fluidIncomeCaches) ~= nil
+    if self.m_layoutData then
+        self.m_smartAlertConditionDataCache.hasItemCache = self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal] > 0
+        self.m_smartAlertConditionDataCache.hasFluidCache = self.m_layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid] > 0
+        
+        self.m_noNormalOutputCache = self.m_layoutData.outSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal] == 0
     end
     self.m_smartAlertConditionDataCache.machineName = Tables.factoryBuildingTable:GetValue(self.m_uiInfo.buildingId).name
     self.m_smartAlertConditionDataCache.hasBelt = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedBelt and
@@ -811,11 +724,10 @@ FacMachineCrafterCtrl._UpdateSmartAlertCache = HL.Method() << function(self)
         )
     self.m_smartAlertConditionDataCache.hasPipe = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipe
 
+    self.m_smartAlertConditionDataCache.fillingAndDismantlerUnlockGasMode = not GameInstance.player.facTechTreeSystem:NodeIsLocked("tech_jinlong_4_filling_and_dismantler_mode_2")
+
     self.view.buildingCommon.smartAlertChangeCachePauseUpdate = false
 end
-
-
-
 
 FacMachineCrafterCtrl._CheckAlertNormalInputSingleBlockedCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Normal then
@@ -855,9 +767,6 @@ FacMachineCrafterCtrl._CheckAlertNormalInputSingleBlockedCondition = HL.Method(H
     return false
 end
 
-
-
-
 FacMachineCrafterCtrl._CheckAlertNormalInputMultiBlockedCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Normal then
         return false
@@ -894,9 +803,6 @@ FacMachineCrafterCtrl._CheckAlertNormalInputMultiBlockedCondition = HL.Method(HL
     end
     return false
 end
-
-
-
 
 FacMachineCrafterCtrl._CheckAlertFluidInputSingleBlockedCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Normal then
@@ -936,9 +842,6 @@ FacMachineCrafterCtrl._CheckAlertFluidInputSingleBlockedCondition = HL.Method(HL
     return false
 end
 
-
-
-
 FacMachineCrafterCtrl._CheckAlertFluidInputMultiBlockedCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Normal then
         return false
@@ -976,9 +879,6 @@ FacMachineCrafterCtrl._CheckAlertFluidInputMultiBlockedCondition = HL.Method(HL.
     return false
 end
 
-
-
-
 FacMachineCrafterCtrl._CheckAlertNormalOutputMultiBlockedCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Normal then
         return false
@@ -1008,9 +908,6 @@ FacMachineCrafterCtrl._CheckAlertNormalOutputMultiBlockedCondition = HL.Method(H
     return false
 end
 
-
-
-
 FacMachineCrafterCtrl._CheckAlertFluidOutputMultiBlockedCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Normal then
         return false
@@ -1039,9 +936,6 @@ FacMachineCrafterCtrl._CheckAlertFluidOutputMultiBlockedCondition = HL.Method(HL
     end
     return false
 end
-
-
-
 
 FacMachineCrafterCtrl._CheckAlertInputCacheFullCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Normal then
@@ -1114,9 +1008,6 @@ FacMachineCrafterCtrl._CheckAlertInputCacheFullCondition = HL.Method(HL.Userdata
     return false
 end
 
-
-
-
 FacMachineCrafterCtrl._CheckAlertOutputCacheFullWithoutBeltCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Blocked then
         return false
@@ -1153,9 +1044,6 @@ FacMachineCrafterCtrl._CheckAlertOutputCacheFullWithoutBeltCondition = HL.Method
     end
     return false
 end
-
-
-
 
 FacMachineCrafterCtrl._CheckAlertOutputCacheFullWithBeltCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Blocked then
@@ -1194,9 +1082,6 @@ FacMachineCrafterCtrl._CheckAlertOutputCacheFullWithBeltCondition = HL.Method(HL
     return false
 end
 
-
-
-
 FacMachineCrafterCtrl._CheckAlertOutputCacheFullWithoutPipeCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Blocked then
         return false
@@ -1233,9 +1118,6 @@ FacMachineCrafterCtrl._CheckAlertOutputCacheFullWithoutPipeCondition = HL.Method
     end
     return false
 end
-
-
-
 
 FacMachineCrafterCtrl._CheckAlertOutputCacheFullWithPipeCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Blocked then
@@ -1274,9 +1156,6 @@ FacMachineCrafterCtrl._CheckAlertOutputCacheFullWithPipeCondition = HL.Method(HL
     end
     return false
 end
-
-
-
 
 FacMachineCrafterCtrl._CheckAlertInputInvalidFormulaCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Idle then
@@ -1324,9 +1203,6 @@ FacMachineCrafterCtrl._CheckAlertInputInvalidFormulaCondition = HL.Method(HL.Use
     return false
 end
 
-
-
-
 FacMachineCrafterCtrl._CheckAlertNormalInputEmptyCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Idle then
         return false
@@ -1355,9 +1231,6 @@ FacMachineCrafterCtrl._CheckAlertNormalInputEmptyCondition = HL.Method(HL.Userda
     end
     return false
 end
-
-
-
 
 FacMachineCrafterCtrl._CheckAlertFluidInputEmptyCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Idle then
@@ -1388,9 +1261,6 @@ FacMachineCrafterCtrl._CheckAlertFluidInputEmptyCondition = HL.Method(HL.Userdat
     return false
 end
 
-
-
-
 FacMachineCrafterCtrl._CheckAlertCanBeOpenedCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Closed then
         return false
@@ -1415,9 +1285,6 @@ FacMachineCrafterCtrl._CheckAlertCanBeOpenedCondition = HL.Method(HL.Userdata).R
     return false
 end
 
-
-
-
 FacMachineCrafterCtrl._CheckAlertNoPowerWithoutDiffuserCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.NotInPowerNet then
         return false
@@ -1434,9 +1301,6 @@ FacMachineCrafterCtrl._CheckAlertNoPowerWithoutDiffuserCondition = HL.Method(HL.
     end
     return false
 end
-
-
-
 
 FacMachineCrafterCtrl._CheckAlertNoPowerWithDiffuserCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.NotInPowerNet then
@@ -1455,9 +1319,6 @@ FacMachineCrafterCtrl._CheckAlertNoPowerWithDiffuserCondition = HL.Method(HL.Use
     return false
 end
 
-
-
-
 FacMachineCrafterCtrl._CheckAlertNoPowerCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
     if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.NoPower then
         return false
@@ -1470,6 +1331,161 @@ FacMachineCrafterCtrl._CheckAlertNoPowerCondition = HL.Method(HL.Userdata).Retur
         defaultOpen = checkOpen
     }
     return true, alertInfo
+end
+
+FacMachineCrafterCtrl._CheckAlertFillingNeedUnlockGasCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
+    if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Idle or self.m_smartAlertConditionDataCache.fillingAndDismantlerUnlockGasMode then
+        return false
+    end
+
+    
+    
+    
+    
+    
+    
+    if self.m_uiInfo.nodeHandler.templateId == "filling_powder_mc_1" then
+        local inPipeInfoList = FactoryUtils.getBuildingPortState(self.m_nodeId, true)
+        if inPipeInfoList then
+            for pipeIndex, pipeInfo in ipairs(inPipeInfoList) do
+                if pipeInfo.isBlock then
+                    local blockGas = false
+                    local liquidCache = self.m_uiInfo:GetCache(1, true, true)
+                    if liquidCache then
+                        if liquidCache.blockedMismatchItems.Count == 0 then
+                            if liquidCache.items.Count > 0 then
+                                for itemId, itemCount in cs_pairs(liquidCache.items) do
+                                    local facItemSuccess, facItemData = Tables.factoryItemTable:TryGetValue(itemId)
+                                    if facItemSuccess then
+                                        if itemCount < facItemData.buildingBufferStackLimit then
+                                            blockGas = true
+                                        end
+                                    end
+                                end
+                            else
+                                blockGas = true
+                            end
+                        else
+                            for i = 0, liquidCache.blockedMismatchItems.Count - 1 do
+                                if Tables.gasTable:ContainsKey(liquidCache.blockedMismatchItems[i].itemId) then
+                                    blockGas = true
+                                    break
+                                end
+                            end
+                        end
+                    end
+                    if blockGas then
+                        local checkOpen = DeviceInfo.usingController and
+                            self.view.cacheArea:CheckRepoNaviTargetTopLayer(true) and
+                            self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
+                        local alertInfo = {
+                            condition = GEnums.FacSmartAlertType.FillingNeedUnlockGas,
+                            targetTransform = self.m_smartAlertTargetTransformCache.inPipe[1],
+                            defaultOpen = checkOpen
+                        }
+                        return true, alertInfo
+                    end
+                end
+            end
+        end
+    end
+
+    return false
+end
+
+FacMachineCrafterCtrl._CheckAlertDismantlerNeedUnlockGasCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
+    if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Idle or self.m_smartAlertConditionDataCache.fillingAndDismantlerUnlockGasMode then
+        return false
+    end
+
+    
+    
+    
+    
+    
+    if self.m_uiInfo.nodeHandler.templateId == "dismantler_1" then
+        local normalCache = self.m_uiInfo:GetCache(1, true, false)
+        if normalCache and normalCache.items.Count > 0 then
+            for itemId, _ in cs_pairs(normalCache.items) do
+                if FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas) then
+                    local checkOpen = DeviceInfo.usingController and
+                        self.view.cacheArea:CheckRepoNaviTargetTopLayer(true) and
+                        self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
+                    local alertInfo = {
+                        condition = GEnums.FacSmartAlertType.DismantlerNeedUnlockGas,
+                        targetTransform = self.m_smartAlertTargetTransformCache.normalInput[1][1],
+                        defaultOpen = checkOpen
+                    }
+                    return true, alertInfo
+                end
+            end
+        end
+    end
+
+    return false
+end
+
+FacMachineCrafterCtrl._CheckAlertActivatorCostInsufficientCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
+    if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.InActive then
+        return false
+    end
+
+    
+    
+    
+    
+    if self.m_uiInfo.activatorCost ~= nil and self.view.activatorNodes ~= nil then
+        if self.m_uiInfo.activatorCost.currentBufCnt * 6 < self.m_activatorNeedCount then
+            local checkOpen = DeviceInfo.usingController and
+                self.view.activatorNodes.naviGroup.IsTopLayer and
+                self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
+            local alertInfo = {
+                condition = GEnums.FacSmartAlertType.ActivatorCostInsufficient,
+                targetTransform = self.view.activatorNodes.item.transform,
+                args = {self.m_consumeItemName},
+                defaultOpen = checkOpen
+            }
+            return true, alertInfo
+        end
+    end
+
+    return false
+end
+
+FacMachineCrafterCtrl._CheckAlertFormulaNeedEnvCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
+    if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Idle or string.isEmpty(self.m_lastProgressFormulaId) then
+        return false
+    end
+
+    
+    
+    
+    
+    local machineCraftData = Tables.factoryMachineCrafterTable:GetValue(self.m_uiInfo.buildingId)
+    local formulaGroupId
+    for index = 0, machineCraftData.modeMap.Count - 1 do
+        local mapData = machineCraftData.modeMap[index]
+        if mapData ~= nil and mapData.modeName == self.m_uiInfo.formulaMan.currentMode then
+            formulaGroupId = mapData.groupName
+            break
+        end
+    end
+    local craftInfo = FactoryUtils.parseMachineCraftData(self.m_lastProgressFormulaId, formulaGroupId)
+    if craftInfo.env ~= nil and craftInfo.env ~= GEnums.FacEnvGenEnvType.None and craftInfo.env:GetHashCode() ~= self.view.buildingCommon.currEnvState then
+        local envName = Language["ui_fac_vaporizer_env_" .. string.lower(craftInfo.env:ToString())]
+        local checkOpen = DeviceInfo.usingController and
+            not self.view.buildingCommon.view.buttonsNaviGroup.IsTopLayer and
+            self:GetSortingOrder() >= UIManager:CurBlockKeyboardEventPanelOrder()
+        local alertInfo = {
+            condition = GEnums.FacSmartAlertType.FormulaNeedEnv,
+            targetTransform = self.view.buildingCommon.view.envStateController.transform,
+            args = {envName},
+            defaultOpen = checkOpen
+        }
+        return true, alertInfo
+    end
+
+    return false
 end
 
 

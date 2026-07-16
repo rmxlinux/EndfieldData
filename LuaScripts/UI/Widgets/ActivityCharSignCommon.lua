@@ -2,17 +2,12 @@
 
 local ActivityCheckInBase = require_ex('UI/Widgets/ActivityCheckInBase')
 
-
-
 ActivityCharSignCommon = HL.Class('ActivityCharSignCommon', ActivityCheckInBase)
-
-
-
 
 ActivityCharSignCommon.Init = HL.Virtual(HL.Table) << function(self, args)
     self.view.cell.gameObject:SetActive(false)
     self:_InitAnim({
-        startAnimTime = 0.3,
+        replayScrollAnimOnShow = args.replayScrollAnimOnShow,
     })
     self:_InitScrollList({
         scrollList = self.view.signScrollList,

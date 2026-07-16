@@ -24,14 +24,24 @@ local Config = {
     ValuableDepotItem = {
         msgs = {
             MessageConst.ON_READ_NEW_ITEM,
+            MessageConst.ON_READ_NEW_INST_ITEM,
             MessageConst.ON_ITEM_COUNT_CHANGED,
             MessageConst.ON_VALUABLE_DEPOT_IMPORT_ITEM_CHANGED,
         },
         readLike = false,
         needArg = true,
-        Check = function(id)
+        Check = function(arg)
+            local id = arg
+            local instId
+            if type(arg) == "table" then
+                id = arg.id
+                instId = arg.instId
+            end
             if RedDotUtils.isNewObtainedImportantValuableDepotItem(id) then
                 return true, UIConst.RED_DOT_TYPE.Normal
+            end
+            if instId then
+                return GameInstance.player.inventory:IsNewItem(id, instId), UIConst.RED_DOT_TYPE.New
             end
             return GameInstance.player.inventory:IsNewItem(id), UIConst.RED_DOT_TYPE.New
         end,
@@ -296,7 +306,7 @@ local Config = {
     },
     BlackboxSelectionCellRead = {
         msgs = {
-            MessageConst.ON_BLACKBOX_ACTIVE,
+            MessageConst.ON_SUB_GAME_ACTIVE,
             MessageConst.ON_BLACKBOX_READ,
         },
         readLike = true,
@@ -1293,6 +1303,9 @@ local Config = {
         },
     },
     ManualCraftType = {
+        msgs = {
+            MessageConst.ON_CRAFT_SWITCH_STAMINA,
+        },
         readLike = false,
         needArg = true,
         Check = function(formulaType)
@@ -1308,6 +1321,26 @@ local Config = {
         sons = {
             ManualCraftItem = false,
         },
+    },
+    ManualCraftConvert = {
+        msgs = {
+            MessageConst.ON_UNREAD_MANUAL_CRAFT,
+            MessageConst.ON_READ_MANUAL_CRAFT,
+        },
+        readLike = false,
+        needArg = false,
+        Check = function()
+            local blackboxData = GameWorld.worldInfo.curLevel.levelData.blackbox
+            if blackboxData then
+                return false
+            end
+            local useStamina = GameInstance.player.facManualCraft.useStamina
+            if GameInstance.player.facManualCraft:ExistUnreadFormulaByTypeFilteredByStamina(
+                CS.Beyond.GEnums.CraftShowingType.ManualCraftConvert, not useStamina) then
+                return true, UIConst.RED_DOT_TYPE.New
+            end
+            return false
+        end,
     },
     ManualCraftItem = {
         msgs = {
@@ -1415,6 +1448,21 @@ local Config = {
             return false, UIConst.RED_DOT_TYPE.Normal
         end,
     },
+    FacBuildMode = {
+        sons = {
+            FacBuildModeIndustry = true,
+            FacBuildModeDecorate = true,
+        },
+        readLike = false,
+        needArg = false,
+    },
+    FacBuildModeIndustry = {
+        sons = {
+            FacBuildModeMenuLogisticTab = true
+        },
+        readLike = false,
+        needArg = false,
+    },
     FacBuildModeMenuLogisticTab = {
         msgs = {
             MessageConst.ON_SYSTEM_UNLOCK_CHANGED,
@@ -1446,7 +1494,108 @@ local Config = {
             return false
         end,
     },
-
+    FacBuildModeDecorate = {
+        sons = {
+            DecoBuilding = false
+        },
+        readLike = false,
+        needArg = false,
+        Check = function()
+            if Utils.isInBlackbox() then
+                return false
+            end
+            for id, _ in pairs(Tables.FactoryDecoBuildingTable) do
+                if FactoryUtils.isDecoBuildingVisible(id) then
+                    local hasRedDot = RedDotManager:GetRedDotState("DecoBuilding", id)
+                    if hasRedDot then
+                        return true, UIConst.RED_DOT_TYPE.Normal
+                    end
+                end
+            end
+            return false
+        end,
+    },
+    DecoBuildingAllObtainWay = {
+        sons = {
+            DecoBuildingObtainWay = false
+        },
+        needArg = true,
+        readLike = false,
+        Check = function(id)
+            if Utils.isInBlackbox() then
+                return false
+            end
+            local success, decoInfo = Tables.FactoryDecoBuildingTable:TryGetValue(id)
+            if success and #decoInfo.obtainIds > 0 then
+                for i = 1, #decoInfo.obtainIds do
+                    local obtainRedDot, _ = RedDotManager:GetRedDotState("DecoBuildingObtainWay", {itemId = id, obtainId = decoInfo.obtainIds[CSIndex(i)]})
+                    if obtainRedDot then
+                        return true, UIConst.RED_DOT_TYPE.Normal
+                    end
+                end
+            end
+            return false
+        end
+    },
+    DecoBuildingObtainWay = {
+        Check = function(args)
+            if Utils.isInBlackbox() then
+                return false
+            end
+            local success, decoInfo = Tables.FactoryDecoBuildingTable:TryGetValue(args.itemId)
+            if success then
+                local obtainId = args.obtainId
+                local successObtainId, obtainInfo = Tables.DecoBuildingObtainWaysTable:TryGetValue(obtainId)
+                if successObtainId and obtainInfo.showGetReward then
+                    if not GameInstance.player.remoteFactory.core:CheckDecorateObtained(obtainId) then
+                        for i = 1, #obtainInfo.conditionIds do
+                            local conditionId = obtainInfo.conditionIds[CSIndex(i)]
+                            local conditionInfo = Tables.DecoBuildingObtainConditionTable[conditionId]
+                            local _, value = LuaGameConditionUtils.getConditionValueByParameters(
+                                    conditionInfo.conditionType,
+                                    conditionInfo.parameters)
+                            if value > 0 then
+                                return true, UIConst.RED_DOT_TYPE.Normal
+                            end
+                        end
+                    else
+                        return false
+                    end
+                end
+            end
+            return false
+        end,
+        needArg = true,
+        readLike = false,
+    },
+    DecoBuilding = {
+        Check = function(id)
+            if Utils.isInBlackbox() then
+                return false
+            end
+            local remoteFactoryCore = GameInstance.player.remoteFactory.core
+            local buildingId = Tables.factoryDecoBuildingTable[id].buildingId
+            local result, gotCnt, placedCnt = remoteFactoryCore:GetDecoBuildingCount(buildingId)
+            local totalNum = gotCnt + placedCnt
+            if totalNum > 0 then
+                if RedDotManager:GetRedDotState("DecoBuildingAllObtainWay", id) then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
+                return not RedDotUtils.checkDecoBuildingFirstGetIsRead(id), UIConst.RED_DOT_TYPE.Normal
+            else
+                if FactoryUtils.isDecoBuildingVisible(id) then
+                    return not RedDotUtils.checkDecoBuildingNewIsRead(id), UIConst.RED_DOT_TYPE.New
+                end
+            end
+            return false
+        end,
+        needArg = true,
+        readLike = false,
+        msgs = {
+            MessageConst.ON_FAC_DECO_BUILDING_RED_DOT_REFRESH,
+            MessageConst.ON_QUEST_STATE_CHANGE,
+        },
+    },
     SNSNormalDialogSubCell = {
         msgs = {
             MessageConst.ON_READ_SNS_DIALOG,
@@ -1740,7 +1889,12 @@ local Config = {
             return false
         end,
     },
-
+    ToolBox = {
+        readLike = false,
+        sons = {
+            FacBuildMode = true,
+        }
+    },
     EquipTech = {
         msgs = {
             MessageConst.ON_SYSTEM_UNLOCK_CHANGED,
@@ -1986,8 +2140,33 @@ local Config = {
         },
         readLike = true,
         needArg = true,
-        Check = function(taskId)
-            return GameInstance.player.adventure:IsTaskComplete(taskId)
+        Check = function(arg)
+            local hasCfg, stageTaskCfg = Tables.adventureBookStageRewardTable:TryGetValue(arg.stage)
+            if not hasCfg then
+                return false
+            end
+            local hasCompleteTask = false
+            for _, taskId in pairs(stageTaskCfg.taskIds) do
+                local taskData = Tables.adventureTaskTable[taskId]
+                if taskData ~= nil then
+                    local slotId = taskData.stageSlotId
+                    if slotId == arg.slotId then
+                        if GameInstance.player.adventure:IsTaskRewarded(taskId) then
+                            return false
+                        end
+                        local taskComplete = GameInstance.player.adventure:IsTaskComplete(taskId)
+                        if not taskComplete then
+                            local taskValue = AdventureBookUtils.GetTaskCurrProgress(taskData)
+                            local maxProgress = AdventureBookUtils.GetTaskMaxProgress(taskData)
+                            taskComplete = taskValue >= maxProgress
+                        end
+                        if taskComplete then
+                            hasCompleteTask = true
+                        end
+                    end
+                end
+            end
+            return hasCompleteTask
         end
     },
 
@@ -2045,7 +2224,7 @@ local Config = {
         Check = function(ids)
             for _, id in pairs(ids) do
                 if GameInstance.player.subGameSys:IsGameUnread(id) then
-                    return true
+                    return true, UIConst.RED_DOT_TYPE.New
                 end
             end
             return false
@@ -2139,7 +2318,7 @@ local Config = {
 
     AdventureBookTabBlackbox = {
         msgs = {
-            MessageConst.ON_BLACKBOX_ACTIVE,
+            MessageConst.ON_SUB_GAME_ACTIVE,
             MessageConst.ON_BLACKBOX_READ,
         },
         readLike = false,
@@ -2207,7 +2386,7 @@ local Config = {
 
     AdventureBlackboxCell = {
         msgs = {
-            MessageConst.ON_BLACKBOX_ACTIVE,
+            MessageConst.ON_SUB_GAME_ACTIVE,
             MessageConst.ON_BLACKBOX_READ,
         },
         readLike = false,
@@ -2230,6 +2409,8 @@ local Config = {
             MessageConst.ON_HIGH_DIFFICULTY_NEW_RED_DOT_SET_FALSE,
             MessageConst.ON_ACTIVITY_UPDATED,
             MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_SEASON_TOWER_NEW,
+            MessageConst.ON_SEASON_TOWER_ACHIEVE_UPDATE,
         },
         sons = {
             WeekRaid = false,
@@ -2260,22 +2441,6 @@ local Config = {
             local pickUpList = GameInstance.player.recycleBinSystem.canPickUpInstIds
             return pickUpList.Count > 0, UIConst.RED_DOT_TYPE.Normal
         end
-    },
-
-    SettlementDefenseTerminal = {
-        msgs = {
-            MessageConst.ON_TOWER_DEFENSE_LEVEL_UNLOCKED,
-            MessageConst.ON_TOWER_DEFENSE_LEVEL_COMPLETED,
-        },
-        readLike = false,
-        needArg = false,
-        Check = function()
-            if not Utils.isSettlementDefenseGuideCompleted() then
-                return false
-            end
-            local dangerSettlementIds = GameInstance.player.towerDefenseSystem.dangerSettlementIds
-            return dangerSettlementIds.Count > 0, UIConst.RED_DOT_TYPE.Normal
-        end,
     },
 
     
@@ -2488,8 +2653,9 @@ local Config = {
         readLike = false,
         needArg = true,
         Check = function(id)
-            return GameInstance.player.friendSystem:IsBusinessCardUnlock(CS.Beyond.Gameplay.FriendBusinessCardUnlockType.BusinessCardTopic, id) and
-                not GameInstance.player.friendSystem:IsBusinessCardReadRedDot(CS.Beyond.Gameplay.FriendBusinessCardUnlockType.BusinessCardTopic, id), UIConst.RED_DOT_TYPE.Normal
+            return (GameInstance.player.friendSystem:IsBusinessCardUnlock(CS.Beyond.Gameplay.FriendBusinessCardUnlockType.BusinessCardTopic, id) and
+                not GameInstance.player.friendSystem:IsBusinessCardReadRedDot(CS.Beyond.Gameplay.FriendBusinessCardUnlockType.BusinessCardTopic, id))
+                 , UIConst.RED_DOT_TYPE.Normal
         end
     },
 
@@ -2510,6 +2676,7 @@ local Config = {
         msgs = {
             MessageConst.ON_AVATAR_FRAME_UNLOCK,
             MessageConst.ON_AVATAR_FRAME_READ,
+            MessageConst.ON_BIRTHDAY_SET,
         },
         readLike = false,
         needArg = true,
@@ -2524,6 +2691,7 @@ local Config = {
             NewBusinessCard = true,
             NewAvatar = true,
             NewAvatarFrame = true,
+            SetBirthday = true,
         },
         readLike = false,
     },
@@ -2534,6 +2702,32 @@ local Config = {
             NewAvatarFrame = true,
         },
         readLike = false,
+    },
+
+    SelfBusinessCard = {
+        sons = {
+            SetBirthday = true,
+        },
+        readLike = false,
+    },
+
+    PlayInfoCell = {
+        sons = {
+            NewBusinessCard = true,
+            SelfBusinessCard = true,
+        },
+        readLike = false,
+    },
+
+    SetBirthday = {
+        msgs = {
+            MessageConst.ON_BIRTHDAY_SET,
+        },
+        readLike = false,
+        needArg = false,
+        Check = function()
+            return Utils.isSystemUnlocked(GEnums.UnlockSystemType.Birthday) and not GameInstance.player.friendSystem:IsBirthdayAlreadySet()
+        end
     },
 
     
@@ -3044,7 +3238,15 @@ local Config = {
             if suc then
                 return suc, type
             elseif ActivityUtils.isNewActivityDayUnread(id) then
-                return true, UIConst.RED_DOT_TYPE.Normal
+                
+                
+                if activity.stageDataDict then
+                    for _, stageData in pairs(activity.stageDataDict) do
+                        if stageData.Status < GEnums.ActivityConditionalStageState.Rewarded:GetHashCode() then
+                            return true, UIConst.RED_DOT_TYPE.Normal
+                        end
+                    end
+                end
             end
             return false
         end
@@ -3469,6 +3671,9 @@ local Config = {
             end
 
             
+            if activity.isCompleted then
+                return false 
+            end
             if HighDifficultyUtils.isNewHighDifficultyTask(activityId, stageId) then
                 return true, UIConst.RED_DOT_TYPE.New
             end
@@ -3543,6 +3748,7 @@ local Config = {
     ActivityStaminaDiscountTask = {
         msgs = {
             MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
         },
         readLike = false,
         needArg = true,
@@ -3695,6 +3901,33 @@ local Config = {
             return false
         end
     },
+    ActivityWEB = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+            MessageConst.ON_ACTIVITY_NEW_DAY,
+            MessageConst.ON_ACTIVITY_WEB_PORTAL_STATE_CHANGE,
+        },
+        readLike = false,
+        needArg = true,
+        penetrateLevel = UIConst.RED_DOT_TYPE.Normal,
+        Check = function(id)
+            if ActivityUtils.isWebActivityFirstVisitUnread(id) then
+                return true, UIConst.RED_DOT_TYPE.Normal
+            end
+            local suc, type = ActivityUtils.checkActivityRedDot(id)
+            if suc then
+                return suc, type
+            end
+            local webSuc, webInfo = Tables.activityWebTable:TryGetValue(id)
+            if webSuc and webInfo then
+                if CS.Beyond.SDK.SDKAccountUtils.GetActivityWebPortalRedDot(webInfo.jumpId) then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
+            end
+            return false
+        end
+    },
     ActivityVersionGuide = {
         msgs = {
             MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
@@ -3748,7 +3981,7 @@ local Config = {
             return false
         end
     },
-    ActivityRandomReward = {
+    ActivityScratchOffLottery = {
         msgs = {
             MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
             MessageConst.ON_ACTIVITY_UPDATED,
@@ -3756,10 +3989,21 @@ local Config = {
         readLike = false,
         needArg = true,
         Check = function(id)
-            
+            local activity = GameInstance.player.activitySystem:GetActivity(id)
+            if activity == nil or activity.isCompleted then
+                return false 
+            end
 
             
-            return ActivityUtils.checkActivityRedDot(activityId)
+            local state, type = ActivityUtils.checkActivityRedDot(id)
+            if state then
+                return state, type
+            end
+            
+            if ActivityUtils.isNewActivityDayUnread(id) then
+                return true, UIConst.RED_DOT_TYPE.Normal
+            end
+            return false
         end
     },
     ActivityRewardOverview = {
@@ -3784,6 +4028,10 @@ local Config = {
         needArg = true,
         Check = function(activityId)
             local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if activity == nil or activity.isCompleted then
+                return false 
+            end
+
             local maxScore = 0
             for mileStoneId, received in pairs(activity.mileStoneInfo) do
                 local success, info = Tables.activityWeeklyTaskMileStoneTable[activityId].mileStones:TryGetValue(mileStoneId)
@@ -3960,6 +4208,7 @@ local Config = {
             if not activityData then
                 return false
             end
+            local stageCfgSuc, stageCfg = Tables.activityConditionalMultiStageTable:TryGetValue(activityId)
             
             if activityData.status == GEnums.ActivityStatus.InProgress then
                 
@@ -3967,7 +4216,17 @@ local Config = {
                     local status = GEnums.ActivityConditionalStageState.__CastFrom(stageData.Status)
                     if status == GEnums.ActivityConditionalStageState.Completed then
                         
-                        return true, UIConst.RED_DOT_TYPE.Normal
+                        local hasReward = true
+                        if stageCfgSuc then
+                            local stageInfoSuc, stageInfo = stageCfg.stageList:TryGetValue(stageId)
+                            if stageInfoSuc and string.isEmpty(stageInfo.rewardId) then
+                                hasReward = false
+                            end
+                        end
+                        if hasReward then
+                            
+                            return true, UIConst.RED_DOT_TYPE.Normal
+                        end
                     elseif status == GEnums.ActivityConditionalStageState.Unlocked
                         and ActivityUtils.isNewActivityConditionalStage(stageId) then
                         
@@ -4307,6 +4566,408 @@ local Config = {
             return false
         end
     },
+    ActivitySeasonTower = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            
+            return ActivityUtils.checkActivityRedDot(activityId)
+        end,
+        sons = {
+            SeasonTowerMain = true,
+        }
+    },
+    ActivitySkipChapter = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity or not activity.isUnlocked then
+                return ActivityUtils.checkActivityRedDot(activityId)
+            end
+
+            
+            if RedDotManager:GetRedDotState("ActivitySkipChapterDetailBtn", activityId) then
+                return true, UIConst.RED_DOT_TYPE.Normal
+            end
+
+            return ActivityUtils.checkActivityRedDot(activityId)
+        end
+    },
+    ActivitySkipChapterDetailBtn = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            local _, clicked = ClientDataManagerInst:GetBool(activityId .. "_skip_chapter_detail_btn_clicked", false)
+            if not clicked then
+                return true, UIConst.RED_DOT_TYPE.Normal
+            end
+            return false
+        end
+    },
+    ActivityRacingDungeon = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            return ActivityUtils.checkActivityRedDot(activityId)
+        end,
+        sons = {
+            ActivityRacingDungeonTaskDetail = true,
+            ActivityRacingDungeonMilestoneDetail = true,
+        }
+    },
+    ActivityRacingDungeonTaskDetail = {
+        msgs = {
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_TASK_PROGRESS_CHANGE,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_NEW_TASK_READ,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity then
+                return false
+            end
+            if activity.status ~= GEnums.ActivityStatus.InProgress
+            and activity.status ~= GEnums.ActivityStatus.Completed then
+                return false
+            end
+            local taskDataDict = activity.taskDataDict
+            for _, taskData in pairs(taskDataDict) do
+                local status = GEnums.ActivityConditionalTaskState.__CastFrom(taskData.Status)
+                if status == GEnums.ActivityConditionalTaskState.Completed then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                elseif status == GEnums.ActivityConditionalTaskState.Unlocked
+                    and ActivityUtils.RacingDungeonIsStageTwoTask(activityId, taskData.Id)
+                    and ActivityUtils.isNewTask(activityId, taskData.Id) then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
+            end
+            return false
+        end,
+        sons = {
+            ActivityRacingDungeonSingleTask = false,
+        }
+    },
+    ActivityRacingDungeonSingleTask = {
+        msgs = {
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_TASK_PROGRESS_CHANGE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(args)
+            local activityId = args.activityId
+            local taskId = args.taskId
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity then
+                return false
+            end
+            local taskData = activity:GetTaskData(taskId)
+            if taskData then
+                local status = GEnums.ActivityConditionalTaskState.__CastFrom(taskData.Status)
+                if status == GEnums.ActivityConditionalTaskState.Completed then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                elseif status == GEnums.ActivityConditionalTaskState.Unlocked
+                    and ActivityUtils.RacingDungeonIsStageTwoTask(activityId, taskId)
+                    and ActivityUtils.isNewTask(activityId, taskId) then
+                    return true, UIConst.RED_DOT_TYPE.New
+                end
+            end
+            return false
+        end
+    },
+    ActivityRacingDungeonMilestoneDetail = {
+        msgs = {
+            MessageConst.ON_RACING_DUNGEON_GET_MILESTONE_REWARD,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+            MessageConst.ON_RACING_DUNGEON_MILESTONE_NODE_READ,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity then
+                return false
+            end
+            if activity.status ~= GEnums.ActivityStatus.InProgress
+            and activity.status ~= GEnums.ActivityStatus.Completed then
+                return false
+            end
+            local haveCfg, milestoneCfg = Tables.activityRacingDungeonMilestoneTable:TryGetValue(activityId)
+            if not haveCfg then
+                return false
+            end
+            local milestoneScore = activity.milestoneScore
+            local receivedNodes = activity.receivedMilestoneNodes
+            local hasNew = false
+            for nodeId, nodeData in pairs(milestoneCfg.milestoneMap) do
+                local _, stageData = activity.stageDataDict:TryGetValue(nodeData.unlockStageId)
+                local status = stageData and GEnums.ActivityConditionalStageState.__CastFrom(stageData.Status)
+                if status and status ~= GEnums.ActivityConditionalStageState.Locked then
+                    if not receivedNodes:Contains(nodeId) and milestoneScore >= nodeData.completeScore then
+                        return true, UIConst.RED_DOT_TYPE.Normal
+                    end
+                    if ActivityUtils.isNewMilestoneNode(activityId, nodeId) then
+                        hasNew = true
+                    end
+                end
+            end
+            if hasNew then
+                return true, UIConst.RED_DOT_TYPE.Normal
+            end
+            return false
+        end,
+        sons = {
+            ActivityRacingDungeonSingleMilestone = false,
+        }
+    },
+    ActivityRacingDungeonSingleMilestone = {
+        msgs = {
+            MessageConst.ON_RACING_DUNGEON_GET_MILESTONE_REWARD,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+            MessageConst.ON_ACTIVITY_RACING_DUNGEON_MILESTONE_CHANGED,  
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(args)
+            local activityId = args.activityId
+            local nodeId = args.nodeId
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity then
+                return false
+            end
+            local haveCfg, milestoneCfg = Tables.activityRacingDungeonMilestoneTable:TryGetValue(activityId)
+            if not haveCfg then
+                return false
+            end
+            if not nodeId then
+                return false
+            end
+            local nodeData = milestoneCfg.milestoneMap[nodeId]
+            if not nodeData then
+                return false
+            end
+            local _, stageData = activity.stageDataDict:TryGetValue(nodeData.unlockStageId)
+            local status = stageData and GEnums.ActivityConditionalStageState.__CastFrom(stageData.Status)
+            if not status or status == GEnums.ActivityConditionalStageState.Locked then
+                return false
+            end
+            if not activity.receivedMilestoneNodes:Contains(nodeId) and activity.milestoneScore >= nodeData.completeScore then
+                return true, UIConst.RED_DOT_TYPE.Normal
+            end
+            if ActivityUtils.isNewMilestoneNode(activityId, nodeId) then
+                return true, UIConst.RED_DOT_TYPE.New
+            end
+            return false
+        end
+    },
+    ActivityReflowNew = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            
+
+            
+            return ActivityUtils.checkActivityRedDot(activityId)
+        end,
+        sons = {
+            ActivityReflowSignin = true,
+            ActivityReflowTask = true,
+            ActivityReflowBP = true,
+            ActivityReflowReconnectReward = true,
+            ActivityReflowQuestionnaire = true,
+        }
+    },
+    ActivityReflowSignin = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_UPDATED,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity then
+                return false
+            end
+            return activity.loginDays ~= activity.rewardDays.Count
+        end,
+    },
+    ActivityReflowTask = {
+        msgs = {
+
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity then
+                return false
+            end
+            local _, reflowCfg = Tables.activityReflowTable:TryGetValue(activityId)
+            local milestoneId = reflowCfg.activityMilestoneId
+            local _, milestone = activity.milestones:TryGetValue(milestoneId)
+            
+            for _, taskData in pairs(milestone.tasks) do
+                if taskData and GEnums.ActivityConditionalTaskState.__CastFrom(taskData.status) == GEnums.ActivityConditionalTaskState.Completed then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
+            end
+            
+            for _, stageData in pairs(milestone.stages) do
+                if stageData  and stageData.reached and not stageData.rewarded then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
+            end
+            return false
+        end,
+        sons = {
+            ActivityReflowSingleTaskGroup = false,
+            ActivityReflowSingleMilestoneStage = false,
+        }
+    },
+    ActivityReflowSingleMilestoneStage = {
+        msgs = {
+            MessageConst.ON_REFLOW_MILESTONE_UPDATE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(arg)
+            local activityId = arg.activityId
+            local milestoneId = arg.milestoneId
+            local stageId = arg.stageId
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity then
+                return false
+            end
+            local _, milestone = activity.milestones:TryGetValue(milestoneId)
+            if milestone then
+                local _, stageData = milestone.stages:TryGetValue(stageId)
+                return stageData and stageData.reached and not stageData.rewarded
+            end
+            return false
+        end,
+        sons = {
+
+        }
+    },
+    ActivityReflowSingleTaskGroup = {
+        msgs = {
+
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(arg)
+            local activityId = arg.activityId
+            local milestoneId = arg.milestoneId
+            local taskGroupId = arg.taskGroupId
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity then
+                return false
+            end
+            local _, activityCfg = Tables.activityTaskGroupTable:TryGetValue(activityId)
+            local _, groupCfg = activityCfg.TaskGroupConfig:TryGetValue(taskGroupId)
+            local _, milestone = activity.milestones:TryGetValue(milestoneId)
+            for _, taskId in pairs(groupCfg.tasks) do
+                local _, taskData = milestone.tasks:TryGetValue(taskId)
+                if taskData and GEnums.ActivityConditionalTaskState.__CastFrom(taskData.status) == GEnums.ActivityConditionalTaskState.Completed then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
+            end
+            return false
+        end,
+        sons = {
+            ActivityReflowSingleTask = false,
+        }
+    },
+    ActivityReflowSingleTask = {
+        msgs = {
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_TASK_PROGRESS_CHANGE,
+            MessageConst.ON_REFLOW_MILESTONE_UPDATE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(arg)
+            local activityId = arg.activityId
+            local milestoneId = arg.milestoneId
+            local taskId = arg.taskId
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity then
+                return false
+            end
+            local _, milestone = activity.milestones:TryGetValue(milestoneId)
+            if milestone then
+                local _, taskData = milestone.tasks:TryGetValue(taskId)
+                return taskData and GEnums.ActivityConditionalTaskState.__CastFrom(taskData.status) == GEnums.ActivityConditionalTaskState.Completed
+            end
+            return false
+        end,
+    },
+    ActivityReflowBP = {
+        msgs = {
+            MessageConst.ON_REFLOW_BP_READ,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            local _, activityCfg = Tables.activityReflowTable:TryGetValue(activityId)
+            local taskGroupId = activityCfg.reflowCfg.bpTaskGroupId
+            local hasRedDot, type = BattlePassUtils.CheckGroupRedDot(taskGroupId)
+            if hasRedDot then
+                return true, UIConst.RED_DOT_TYPE.Normal
+            end
+            return false
+        end,
+        sons = {
+            BattlePassTaskItem = false,
+        }
+    },
+    ActivityReflowQuestionnaire = {
+        msgs = {
+            MessageConst.ON_REFLOW_QUESTIONNAIRE_UPDATE,
+            MessageConst.ON_REFLOW_QUESTIONNAIRE_READ,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            return not ActivityUtils.hasReflowQuestionnaireRead(activityId)
+        end,
+    },
+    ActivityReflowReconnectReward = {
+        msgs = {
+            MessageConst.ON_REFLOW_REWARD_GAIN
+        },
+        readLike = true,
+        needArg = true,
+        Check = function(activityId)
+            local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activity then
+                return false
+            end
+            return not activity.oneTimeRewardReceived
+        end
+    },
+    
+
 
     ActivityDungeonState = {
         msgs = {
@@ -4334,6 +4995,14 @@ local Config = {
                 local status = GEnums.ActivityConditionalStageState.__CastFrom(stageData.Status)
                 if status == GEnums.ActivityConditionalStageState.Completed then
                     
+                    local stageCfgSuc, stageCfg = Tables.activityConditionalMultiStageTable:TryGetValue(args.activityId)
+                    if stageCfgSuc then
+                        local stageInfoSuc, stageInfo = stageCfg.stageList:TryGetValue(args.stageId)
+                        if stageInfoSuc and string.isEmpty(stageInfo.rewardId) then
+                            return false
+                        end
+                    end
+                    
                     return true, UIConst.RED_DOT_TYPE.Normal
                 elseif status == GEnums.ActivityConditionalStageState.Unlocked
                     and ActivityUtils.isNewActivityConditionalStage(args.stageId) then
@@ -4343,6 +5012,129 @@ local Config = {
             end
             return false
         end
+    },
+
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    ActivityDoubleAssaultDungeon = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(args)
+            if type(args) ~= "table" then
+                return false
+            end
+            local activityData = GameInstance.player.activitySystem:GetActivity(args.activityId)
+            if not activityData or activityData.status ~= GEnums.ActivityStatus.InProgress then
+                return false
+            end
+
+            local function checkSingleDungeon(dungeonId)
+                local hasStateCfg, dungeonStateCfg = Tables.activityDungeonState:TryGetValue(dungeonId)
+                if not hasStateCfg then
+                    return false
+                end
+                local hasStageData, stageData = activityData.stageDataDict:TryGetValue(dungeonStateCfg.activityStage)
+                if not hasStageData then
+                    return false
+                end
+                local status = GEnums.ActivityConditionalStageState.__CastFrom(stageData.Status)
+                if status == GEnums.ActivityConditionalStageState.Locked then
+                    return false
+                end
+                return ActivityUtils.isNewDoubleAssaultDungeon(dungeonId)
+            end
+
+            if args.dungeonId then
+                if checkSingleDungeon(args.dungeonId) then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
+                return false
+            end
+
+            local hasCfg, activityDungeonCfg = Tables.activityDungeonTable:TryGetValue(args.activityId)
+            if not hasCfg or not activityDungeonCfg then
+                return false
+            end
+            
+            
+            for dungeonId, _ in pairs(activityDungeonCfg.gameMap) do
+                local id = tostring(dungeonId)
+                if Tables.dungeonNormal2RaidTable:ContainsKey(id) and checkSingleDungeon(id) then
+                    return true, UIConst.RED_DOT_TYPE.Normal
+                end
+            end
+            return false
+        end
+    },
+
+    
+    
+    
+    
+    
+    ActivityDoubleBattle = {
+        msgs = {
+            MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
+            MessageConst.ON_ACTIVITY_UPDATED,
+            MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE,
+            MessageConst.ON_READ_ACTIVITY_CONDITION_STAGE,
+            
+            MessageConst.ON_SC_MULTI_STAGE_ACTIVITY_GAIN_TASK_REWARD,
+            MessageConst.ON_SC_MULTI_STAGE_ACTIVITY_GAIN_REWARD,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(activityId)
+            
+            local hasActivityRedDot, activityRedDotType = ActivityUtils.checkActivityRedDot(activityId)
+            if hasActivityRedDot then
+                return hasActivityRedDot, activityRedDotType
+            end
+
+            local activityData = GameInstance.player.activitySystem:GetActivity(activityId)
+            if not activityData or activityData.status ~= GEnums.ActivityStatus.InProgress then
+                return false
+            end
+
+            
+            local hasNewDungeon = RedDotManager:GetRedDotState("ActivityDoubleAssaultDungeon", { activityId = activityId })
+            if hasNewDungeon then
+                return true, UIConst.RED_DOT_TYPE.Normal
+            end
+
+            
+            local hasTaskCfg, taskCfg = Tables.activityConditionalMultiStageTaskConfigTable:TryGetValue(activityId)
+            if hasTaskCfg and taskCfg then
+                local taskMap = ActivityUtils.CreateGroupToTaskMap(activityId)
+                local completedHash = GEnums.ActivityConditionalTaskState.Completed:GetHashCode()
+                for _, taskList in pairs(taskMap) do
+                    for _, taskId in ipairs(taskList) do
+                        local hasTaskConfig, taskGroupCfg = taskCfg.TaskConfigMap:TryGetValue(taskId)
+                        if hasTaskConfig and taskGroupCfg and #taskGroupCfg.completeConditionId == 1 then
+                            local taskData = activityData:GetTaskData(taskId)
+                            if taskData and taskData.Status == completedHash then
+                                return true, UIConst.RED_DOT_TYPE.Normal
+                            end
+                        end
+                    end
+                end
+            end
+            return false
+        end,
+        sons = {
+        }
     },
 
     
@@ -4611,6 +5403,38 @@ local Config = {
     
 
     
+
+    StarShop = {
+        readLike = false,
+        msgs = {
+            MessageConst.ON_SHOP_GOODS_SEE_GOODS_INFO_CHANGE,
+            MessageConst.ON_SHOP_REFRESH,
+        },
+        needArg = false,
+        Check = function()
+            local shopSystem = GameInstance.player.shopSystem
+            local shopGroupData = shopSystem:GetShopGroupData("shop_trstar")
+            if not shopGroupData then
+                return false
+            end
+            for i = 0, shopGroupData.shopIdList.Count - 1 do
+                local shopId = shopGroupData.shopIdList[i]
+                local shopData = shopSystem:GetShopData(shopId)
+                if shopData then
+                    for goodsId, _ in pairs(shopData.goodsDic) do
+                        if shopSystem:IsNewGoodsId(goodsId) then
+                            return true, UIConst.RED_DOT_TYPE.Normal
+                        end
+                    end
+                end
+            end
+            return false
+        end,
+    },
+
+    
+
+    
     SSControlCenter = {
         readLike = false,
         msgs = {
@@ -4732,6 +5556,37 @@ local Config = {
             MessageConst.ON_SPACESHIP_CLUE_INFO_CHANGE,
         },
     },
+
+    SSMusicPlayerAlbum = {
+        readLike = true,
+        needArg = true,
+        Check = function(albumId)
+            local success, albumInfo = Tables.spaceshipAlbumMusicTable:TryGetValue(albumId)
+            if not success then
+                return false
+            end
+            for _, musicId in pairs(albumInfo.musicList) do
+                if GameInstance.player.spaceship:CheckMusicUnlock(musicId) and not RedDotUtils.checkMusicIsRead(musicId) then
+                    return true, UIConst.RED_DOT_TYPE.New
+                end
+            end
+            return false
+        end,
+        sons = {
+            SSMusicPlayerSingleMusic = false,
+        }
+    },
+
+    SSMusicPlayerSingleMusic = {
+        msgs = {
+            MessageConst.ON_SET_MUSIC_READ,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(musicId)
+            return GameInstance.player.spaceship:CheckMusicUnlock(musicId) and not RedDotUtils.checkMusicIsRead(musicId), UIConst.RED_DOT_TYPE.New
+        end
+    },
     
 
     
@@ -4739,6 +5594,7 @@ local Config = {
         msgs = {
             MessageConst.ON_VALUABLE_DEPOT_CHANGED,
             MessageConst.ON_ITEM_LOCKED_STATE_CHANGED,
+            MessageConst.ON_READ_NEW_INST_ITEM,
             MessageConst.ON_VALUABLE_DEPOT_IMPORT_ITEM_CHANGED,
         },
         readLike = false,
@@ -4774,6 +5630,7 @@ local Config = {
 
     ValuableDepotTabCommon = {
         msgs = {
+            MessageConst.ON_READ_NEW_INST_ITEM,
             MessageConst.ON_ITEM_COUNT_CHANGED,
             MessageConst.ON_VALUABLE_DEPOT_IMPORT_ITEM_CHANGED,
         },
@@ -4788,6 +5645,7 @@ local Config = {
         msgs = {
             MessageConst.ON_VALUABLE_DEPOT_CHANGED,
             MessageConst.ON_ITEM_LOCKED_STATE_CHANGED,
+            MessageConst.ON_READ_NEW_INST_ITEM,
             MessageConst.ON_ITEM_COUNT_CHANGED,
             MessageConst.ON_VALUABLE_DEPOT_IMPORT_ITEM_CHANGED,
         },
@@ -4817,6 +5675,64 @@ local Config = {
     
 
     
+
+    SeasonTowerMain = {
+        msgs = {
+            MessageConst.ON_SEASON_TOWER_NEW,
+        },
+        readLike = false,
+        needArg = false,
+        Check = function()
+            return SeasonTowerUtils.checkMainRedDot()
+        end,
+        sons = {
+            SeasonTowerAchieve = true,
+        }
+    },
+    SeasonTowerNew = {
+        msgs = {
+            MessageConst.ON_SEASON_TOWER_NEW,
+        },
+        readLike = true,
+        needArg = false,
+        Check = function()
+            return SeasonTowerUtils.checkMainRedDot(), UIConst.RED_DOT_TYPE.New
+        end,
+    },
+    SeasonTowerNewSeason = {
+        msgs = {
+            MessageConst.ON_SEASON_TOWER_NEW,
+        },
+        readLike = true,
+        needArg = false,
+        Check = function()
+            return SeasonTowerUtils.isNewSeason(), UIConst.RED_DOT_TYPE.New
+        end,
+    },
+    SeasonTowerAchieve = {
+        msgs = {
+            MessageConst.ON_SEASON_TOWER_ACHIEVE_UPDATE,
+        },
+        readLike = false,
+        needArg = false,
+        Check = function()
+            return SeasonTowerUtils.hasAnyAchieveReward()
+        end,
+    },
+    SeasonTowerAchieveSingle = {
+        msgs = {
+            MessageConst.ON_SEASON_TOWER_ACHIEVE_UPDATE,
+        },
+        readLike = false,
+        needArg = true,
+        Check = function(gameId)
+            return SeasonTowerUtils.hasGameAchieveReward(gameId)
+        end,
+    },
+
+    
+
+    
     
     GameSetting = {
         sons = {
@@ -4833,12 +5749,11 @@ local Config = {
         readLike = false,
         needArg = false,
         Check = function()
-            local tabId = "gameSetting_key_hint"
-            if not CS.Beyond.GameSetting.IsSettingTabValid(tabId) then
+            if not CS.Beyond.GameSetting.IsSettingTabVisible(GameSettingConst.TAB_ID_KEY_HINT) then
                 return false 
             end
             local gameSettingSystem = GameInstance.player.gameSettingSystem
-            local settingItems = Tables.settingTabTable[tabId].tabItems
+            local settingItems = Tables.settingTabTable[GameSettingConst.TAB_ID_KEY_HINT].tabItems
             for settingId, settingItemData in pairs(settingItems) do
                 if not gameSettingSystem:IsKeySettingValid(settingId) then
                     return true 
@@ -4891,6 +5806,63 @@ local Config = {
         Check = function(arg)
             return RedDotUtils.hasContingencyContractTagHasRedDot(arg.activityId, arg.stageId, arg.tagId)
         end
+    },
+    
+
+    
+    
+    SnapshotActionItem = {
+        msgs = {
+            MessageConst.ON_READ_NEW_ITEM,
+            MessageConst.ON_FIRST_GOT_ITEM,
+        },
+        readLike = true,
+        needArg = true,
+        Check = function(itemId)
+            if string.isEmpty(itemId) then return false end
+            return GameInstance.player.inventory:IsNewItem(itemId), UIConst.RED_DOT_TYPE.New
+        end,
+    },
+    
+    SnapshotActionTab = {
+        msgs = {
+            MessageConst.ON_READ_NEW_ITEM,
+            MessageConst.ON_FIRST_GOT_ITEM,
+            MessageConst.ON_BATTLE_SQUAD_CHANGED,
+        },
+        readLike = false,
+        needArg = false,
+        Check = function()
+            local inventory = GameInstance.player.inventory
+            local squadManager = GameInstance.player.squadManager
+            local snapshotSystem = GameInstance.player.snapshotSystem
+            local curSquad = squadManager and squadManager.curSquad
+            local slots = curSquad and curSquad.slots
+            if not slots or not snapshotSystem then
+                return false
+            end
+
+            for i = 0, slots.Count - 1 do
+                local slot = slots[i]
+                if slot then
+                    local entries = snapshotSystem:GetActionsForCharacter(slot.charId)
+                    if entries then
+                        for j = 0, entries.Count - 1 do
+                            local entry = entries[j]
+                            local _, cfg = Tables.snapshotActionTable:TryGetValue(entry.templateActionId)
+                            local itemId = cfg and cfg.itemId
+                            if not string.isEmpty(itemId) and inventory:IsNewItem(itemId) then
+                                return true, UIConst.RED_DOT_TYPE.New
+                            end
+                        end
+                    end
+                end
+            end
+            return false
+        end,
+        sons = {
+            SnapshotActionItem = false,
+        },
     },
     
 

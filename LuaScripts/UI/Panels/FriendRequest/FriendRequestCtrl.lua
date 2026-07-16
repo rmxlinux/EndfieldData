@@ -2,43 +2,17 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FriendRequest
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FriendRequestCtrl = HL.Class('FriendRequestCtrl', uiCtrl.UICtrl)
-
 
 FriendRequestCtrl.m_friendList = HL.Field(HL.Table)
 
-
 FriendRequestCtrl.m_arg = HL.Field(HL.Any)
-
 
 FriendRequestCtrl.m_friendInitArg = HL.Field(HL.Table)
 
-
 FriendRequestCtrl.m_emptyTipString = HL.Field(HL.String) << ""
 
-
 FriendRequestCtrl.m_recoverState = HL.Field(HL.Table)
-
 
 
 
@@ -50,9 +24,6 @@ FriendRequestCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FRIEND_CELL_INFO_CHANGE] = 'OnCellChange',
     [MessageConst.ON_SEND_MSG_FREQUENCY_ERROR] = 'OnFrequencyError',
 }
-
-
-
 
 
 FriendRequestCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -68,8 +39,6 @@ FriendRequestCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_ChooseInitMethod()
 end
 
-
-
 FriendRequestCtrl._ChooseInitMethod = HL.Method() << function(self)
     local arg = self.m_arg
     if arg and arg.onShareClick then
@@ -79,8 +48,6 @@ FriendRequestCtrl._ChooseInitMethod = HL.Method() << function(self)
     end
     self:_Refresh(true, true)
 end
-
-
 
 FriendRequestCtrl._InitFriendRequest = HL.Method() << function(self)
     GameInstance.player.friendSystem:SyncFriendRequestSimpleInfo()
@@ -108,8 +75,6 @@ FriendRequestCtrl._InitFriendRequest = HL.Method() << function(self)
     self:_ApplyRecoverState()
 end
 
-
-
 FriendRequestCtrl._InitFriendShare = HL.Method() << function(self)
     local arg = self.m_arg
     self.view.friendNumber.gameObject:SetActive(false)
@@ -136,8 +101,6 @@ FriendRequestCtrl._InitFriendShare = HL.Method() << function(self)
     self:_ApplyRecoverState()
 end
 
-
-
 FriendRequestCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
     local sortNode = self.view and self.view.friendList and self.view.friendList.view and self.view.friendList.view.sortNode
@@ -152,28 +115,20 @@ FriendRequestCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << 
     return arg
 end
 
-
-
 FriendRequestCtrl.OnSync = HL.Method() << function(self)
     self:_UpdateCache()
     self:_Refresh()
     GameInstance.player.friendSystem:SaveWaitAccept()
 end
 
-
-
 FriendRequestCtrl.OnCellChange = HL.Method() << function(self)
     self:_UpdateCache()
     self:_Refresh(true)
 end
 
-
-
 FriendRequestCtrl.OnFrequencyError = HL.Method() << function(self)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_FRIEND_SEND_REQUEST_FREQUENCY_LIMIT)
 end
-
-
 
 FriendRequestCtrl._UpdateCache = HL.Method() << function(self)
     self.m_friendList = {}
@@ -192,10 +147,6 @@ FriendRequestCtrl._UpdateCache = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 FriendRequestCtrl._Refresh = HL.Method(HL.Opt(HL.Boolean,HL.Boolean)) << function(self, stayTop, loading)
     local friendSystem = GameInstance.player.friendSystem
     
@@ -209,8 +160,6 @@ FriendRequestCtrl._Refresh = HL.Method(HL.Opt(HL.Boolean,HL.Boolean)) << functio
         self.view.friendList:RefreshInfo(self.m_friendList, true, self.m_emptyTipString, loading)
     end
 end
-
-
 
 FriendRequestCtrl._ApplyRecoverState = HL.Method() << function(self)
     local sortState = self.m_recoverState and self.m_recoverState.sortState or nil
@@ -230,13 +179,9 @@ FriendRequestCtrl._ApplyRecoverState = HL.Method() << function(self)
     end
 end
 
-
-
 FriendRequestCtrl.IsShareMode = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_arg ~= nil and self.m_arg.onShareClick ~= nil
 end
-
-
 
 
 

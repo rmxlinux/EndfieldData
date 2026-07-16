@@ -1,51 +1,23 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SSBacklogNode = HL.Class('SSBacklogNode', UIWidgetBase)
-
 
 
 SSBacklogNode.m_backlogSortFunc = HL.Field(HL.Function)
 
-
 SSBacklogNode.m_backlogData = HL.Field(HL.Table)
-
 
 SSBacklogNode.m_nowBacklogData = HL.Field(HL.Table)
 
-
 SSBacklogNode.m_backlogItems = HL.Field(HL.Table)
-
 
 SSBacklogNode.m_genBacklogCells = HL.Field(HL.Userdata)
 
-
 SSBacklogNode.m_isFocus = HL.Field(HL.Boolean) << false
-
 
 SSBacklogNode.m_isInit = HL.Field(HL.Boolean) << false
 
-
 SSBacklogNode.m_nowClickIndex = HL.Field(HL.Number) << 1
-
-
 
 
 
@@ -74,8 +46,6 @@ SSBacklogNode._OnFirstTimeInit = HL.Override() << function(self)
     end, true)
 end
 
-
-
 SSBacklogNode.InitSSBacklogNode = HL.Method() << function(self)
     self:_FirstTimeInit()
     if not self.m_isInit then
@@ -91,9 +61,6 @@ SSBacklogNode.InitSSBacklogNode = HL.Method() << function(self)
         self:RefreshData(true)
     end
 end
-
-
-
 
 
 SSBacklogNode.RefreshData = HL.Method(HL.Opt(HL.Boolean)) << function(self, noAnim)
@@ -122,9 +89,6 @@ SSBacklogNode.RefreshData = HL.Method(HL.Opt(HL.Boolean)) << function(self, noAn
     end
 end
 
-
-
-
 SSBacklogNode.UpdateView = HL.Method(HL.Opt(HL.Boolean)) << function(self, noAnim)
     if not self:GetNeedShowState() then
         if self.view.gameObject.activeSelf then
@@ -151,8 +115,6 @@ SSBacklogNode.UpdateView = HL.Method(HL.Opt(HL.Boolean)) << function(self, noAni
     end)
     self:UpdateFocus()
 end
-
-
 SSBacklogNode.GetNeedShowState = HL.Method().Return(HL.Boolean) << function(self)
     if GameInstance.player.spaceship.isViewingFriend or not self.m_nowBacklogData then
         return false
@@ -164,8 +126,6 @@ SSBacklogNode.GetNeedShowState = HL.Method().Return(HL.Boolean) << function(self
     end
     return false
 end
-
-
 
 
 SSBacklogNode.UpdateFocus = HL.Method() << function(self)
@@ -187,13 +147,9 @@ SSBacklogNode.UpdateFocus = HL.Method() << function(self)
                 end
             end
         end
-        InputManagerInst.controllerNaviManager:SetTarget(self.m_backlogItems[targetIndex].backlogBtn)
+        self:SetNaviTarget(self.m_backlogItems[targetIndex].backlogBtn)
     end
 end
-
-
-
-
 
 
 SSBacklogNode.InitCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
@@ -214,10 +170,6 @@ SSBacklogNode.InitCell = HL.Method(HL.Table, HL.Number) << function(self, cell, 
         self.m_nowClickIndex = index
     end)
 end
-
-
-
-
 
 SSBacklogNode.UpdateCell = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, index, noAnim)
     local data = self.m_backlogData[index]
@@ -248,8 +200,6 @@ SSBacklogNode.UpdateCell = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(
         cell.gameObject:SetActive(true)
     end
 end
-
-
 
 
 SSBacklogNode.PlayOutAnimation = HL.Method() << function(self)

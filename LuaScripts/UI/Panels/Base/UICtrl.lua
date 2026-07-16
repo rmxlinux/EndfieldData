@@ -1,154 +1,50 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 UICtrl = HL.Class("UICtrl")
-
 
 
 
 UICtrl.panelId = HL.Field(HL.Number) << -1
 
-
 UICtrl.model = HL.Field(HL.Forward("UIModel"))
-
 
 UICtrl.view = HL.Field(HL.Table)
 
-
 UICtrl.panelCfg = HL.Field(HL.Table)
-
 
 UICtrl.loader = HL.Field(HL.Forward("LuaResourceLoader"))
 
-
 UICtrl.animationWrapper = HL.Field(CS.Beyond.UI.UIAnimationWrapper)
-
 
 UICtrl.naviGroup = HL.Field(CS.Beyond.UI.UISelectableNaviGroup)
 
-
 UICtrl.uiCamera = HL.Field(HL.Userdata)
-
 
 UICtrl.planeDistance = HL.Field(HL.Number) << -1
 
-
 UICtrl.m_phase = HL.Field(HL.Forward("PhaseBase"))
-
 
 UICtrl.m_phaseItem = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 UICtrl.m_worldAutoRoot = HL.Field(HL.Userdata)
-
 
 UICtrl.m_worldRoot = HL.Field(HL.Userdata)
 
-
 UICtrl.m_outAnimAsyncActionHelper = HL.Field(HL.Forward("AsyncActionHelper"))
-
 
 UICtrl.isControllerPanel = HL.Field(HL.Boolean) << false
 
-
 UICtrl.isPCPanel = HL.Field(HL.Boolean) << false
-
 
 UICtrl.isDefaultPanel = HL.Field(HL.Boolean) << false
 
-
 UICtrl.isFinishedCreation = HL.Field(HL.Boolean) << false
-
 
 UICtrl.m_updateKeys = HL.Field(HL.Table)
 
-
 UICtrl.m_isClosed = HL.Field(HL.Boolean) << false
-
 
 UICtrl.m_inputBindingIds = HL.Field(HL.Table)
 
-
 UICtrl.m_inputGroupIds = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -157,51 +53,34 @@ UICtrl.m_inputGroupIds = HL.Field(HL.Table)
 UICtrl.OnCreate = HL.Virtual(HL.Opt(HL.Any)) << function(self, arg)
 end
 
-
-
-
 UICtrl.OnPhaseRefresh = HL.Virtual(HL.Opt(HL.Any)) << function(self, arg)
 end
 
-
+UICtrl.OnCustomUIStyleRefChanged = HL.Virtual() << function(self)
+end
 
 UICtrl.GetCurPhaseStateArg = HL.Virtual().Return(HL.Opt(HL.Any)) << function(self)
 end
 
 
-
-
 UICtrl.OnClose = HL.Virtual() << function(self)
 end
-
-
 
 UICtrl.OnShow = HL.Virtual() << function(self)
 end
 
-
-
 UICtrl.OnHide = HL.Virtual() << function(self)
 end
 
-
-
 UICtrl.OnAnimationInFinished = HL.Virtual() << function(self)
 end
-
-
 
 UICtrl.ExtractHotSwitchRuntimeState = HL.Virtual().Return(HL.Opt(HL.Any)) << function(self)
     return nil
 end
 
-
-
-
 UICtrl.RestoreHotSwitchRuntimeState = HL.Virtual(HL.Opt(HL.Any)) << function(self, state)
 end
-
-
 
 
 UICtrl.Clear = HL.Method() << function(self)
@@ -227,35 +106,21 @@ end
 
 
 
-
-
-
-
-
 UICtrl.AutoOpen = HL.StaticMethod(HL.Number, HL.Opt(HL.Any, HL.Boolean, HL.Function)).Return(HL.Opt(HL.Forward("UICtrl"))) << function(panelId, arg, forceShow, onShowCallback)
     return UIManager:AutoOpen(panelId, arg, forceShow, onShowCallback)
 end
-
-
 
 UICtrl.Close = HL.Method() << function(self)
     UIManager:Close(self.panelId)
 end
 
-
-
 UICtrl.Show = HL.Method() << function(self)
     UIManager:Show(self.panelId)
 end
 
-
-
 UICtrl.Hide = HL.Method() << function(self)
     UIManager:Hide(self.panelId)
 end
-
-
-
 
 UICtrl.IsShow = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Boolean) << function(self, ignoreClear)
     if self.m_isClosed then
@@ -264,15 +129,9 @@ UICtrl.IsShow = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Boolean) << function(sel
     return UIManager:IsShow(self.panelId, ignoreClear)
 end
 
-
-
 UICtrl.IsHide = HL.Method().Return(HL.Boolean) << function(self)
     return UIManager:IsHide(self.panelId)
 end
-
-
-
-
 
 
 UICtrl.PlayAnimation = HL.Virtual(HL.String, HL.Opt(HL.Function)) << function(self, aniName, onComplete)
@@ -282,17 +141,12 @@ UICtrl.PlayAnimation = HL.Virtual(HL.String, HL.Opt(HL.Function)) << function(se
     end
 end
 
-
-
 UICtrl.PlayAnimationIn = HL.Virtual() << function(self)
     local wrapper = self.animationWrapper
     if wrapper then
         wrapper:PlayInAnimation()
     end
 end
-
-
-
 
 UICtrl.PlayAnimationOut = HL.Virtual(HL.Opt(HL.Number)) << function(self, outCompleteActionType)
     outCompleteActionType = outCompleteActionType or UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Close
@@ -305,8 +159,6 @@ UICtrl.PlayAnimationOut = HL.Virtual(HL.Opt(HL.Number)) << function(self, outCom
     end)
 end
 
-
-
 UICtrl.GetAnimationOutDuration = HL.Method().Return(HL.Number) << function(self)
     local wrapper = self.animationWrapper
     if wrapper then
@@ -314,8 +166,6 @@ UICtrl.GetAnimationOutDuration = HL.Method().Return(HL.Number) << function(self)
     end
     return 0
 end
-
-
 
 UICtrl.GetAnimationInDuration = HL.Method().Return(HL.Number) << function(self)
     local wrapper = self.animationWrapper
@@ -325,19 +175,13 @@ UICtrl.GetAnimationInDuration = HL.Method().Return(HL.Number) << function(self)
     return 0
 end
 
-
-
 UICtrl.PlayAnimationOutAndClose = HL.Method() << function(self)
     self:PlayAnimationOut(UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Close)
 end
 
-
-
 UICtrl.PlayAnimationOutAndHide = HL.Method() << function(self)
     self:PlayAnimationOut(UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Hide)
 end
-
-
 
 UICtrl.IsPlayingAnimationOut = HL.Virtual().Return(HL.Boolean) << function(self)
     local wrapper = self.animationWrapper
@@ -347,8 +191,6 @@ UICtrl.IsPlayingAnimationOut = HL.Virtual().Return(HL.Boolean) << function(self)
     return false
 end
 
-
-
 UICtrl.IsPlayingAnimationIn = HL.Virtual().Return(HL.Boolean) << function(self)
     local wrapper = self.animationWrapper
     if wrapper then
@@ -356,9 +198,6 @@ UICtrl.IsPlayingAnimationIn = HL.Virtual().Return(HL.Boolean) << function(self)
     end
     return false
 end
-
-
-
 
 UICtrl.PlayAnimationOutWithCallback = HL.Virtual(HL.Opt(HL.Function)) << function(self, outCompleteAction)
     if self.m_isClosed then
@@ -428,40 +267,37 @@ UICtrl.PlayAnimationOutWithCallback = HL.Virtual(HL.Opt(HL.Function)) << functio
         if outCompleteAction then
             outCompleteAction()
         end
+        if self.panelCfg.hideCamera then
+            
+            
+            UIManager:_UpdateMainCamera()
+        end
     end)
 
     
+    
+    
     self:_OnPlayAnimationOut()
     self.m_outAnimAsyncActionHelper:Start()
+    if self.panelCfg.hideCamera then
+        
+        
+        UIManager:_UpdateMainCamera()
+    end
 
 end
-
-
 
 UICtrl._OnPlayAnimationOut = HL.Virtual() << function(self)
-    
-    if self.panelCfg.hideCamera then
-        UIManager:ChangeHideCameraPanelState(self.panelId, UIConst.HIDE_CAMERA_PANEL_STATE.Out) 
-    end
 end
-
 
 
 UICtrl.m_needPlayOutAnimWidgets = HL.Field(HL.Table)
-
-
-
 UICtrl.RegisterPlayOutAnimWidget = HL.Virtual(HL.Forward('UIWidgetBase')) << function(self, widget)
     if not self.m_needPlayOutAnimWidgets then
         self.m_needPlayOutAnimWidgets = {}
     end
     self.m_needPlayOutAnimWidgets[widget] = true
 end
-
-
-
-
-
 
 
 
@@ -475,16 +311,10 @@ UICtrl._StartTimer = HL.Method(HL.Number, HL.Function, HL.Opt(HL.Boolean)).Retur
     return TimerManager:StartTimer(duration, func, unscaled, self)
 end
 
-
-
-
 UICtrl._ClearTimer = HL.Method(HL.Number).Return(HL.Number) << function(self, timer)
     TimerManager:ClearTimer(timer)
     return -1
 end
-
-
-
 
 UICtrl._StartCoroutine = HL.Method(HL.Function).Return(HL.Opt(HL.Thread)) << function(self, func)
     if self.m_isClosed then
@@ -494,17 +324,10 @@ UICtrl._StartCoroutine = HL.Method(HL.Function).Return(HL.Opt(HL.Thread)) << fun
     return CoroutineManager:StartCoroutine(func, self)
 end
 
-
-
-
 UICtrl._ClearCoroutine = HL.Method(HL.Thread).Return(HL.Any) << function(self, coroutine)
     CoroutineManager:ClearCoroutine(coroutine)
     return nil
 end
-
-
-
-
 
 
 UICtrl._StartUpdate = HL.Method(HL.Function, HL.Opt(HL.String)).Return(HL.Number) << function(self, func, updateName)
@@ -518,9 +341,6 @@ UICtrl._StartUpdate = HL.Method(HL.Function, HL.Opt(HL.String)).Return(HL.Number
     return key
 end
 
-
-
-
 UICtrl._RemoveUpdate = HL.Method(HL.Number).Return(HL.Number) << function(self, key)
     LuaUpdate:Remove(key)
     self.m_updateKeys[key] = nil
@@ -531,17 +351,9 @@ end
 
 
 
-
-
-
-
 UICtrl.Notify = HL.Method(HL.Number, HL.Opt(HL.Any)) << function(self, msg, arg)
     Notify(msg, arg)
 end
-
-
-
-
 
 
 
@@ -560,10 +372,6 @@ UICtrl.SetSortingOrder = HL.Method(HL.Number, HL.Boolean) << function(self, orde
     self:OnSortingOrderChange(order, isInit)
 end
 
-
-
-
-
 UICtrl.OnSortingOrderChange = HL.Virtual(HL.Number, HL.Boolean) << function(self, order, isInit)
     local luaPanel = self.view.luaPanel
     local sortingOrderComps = luaPanel.sortingOrderComps
@@ -575,22 +383,13 @@ UICtrl.OnSortingOrderChange = HL.Virtual(HL.Number, HL.Boolean) << function(self
     end
 end
 
-
-
 UICtrl.ToTop = HL.Method() << function(self)
     UIManager:SetTopOrder(self.panelId)
 end
 
-
-
 UICtrl.GetSortingOrder = HL.Method().Return(HL.Number) << function(self)
     return self.view.panelCanvas.sortingOrder
 end
-
-
-
-
-
 
 
 
@@ -608,9 +407,6 @@ UICtrl.BindInputPlayerAction = HL.Method(HL.String, HL.Function, HL.Opt(HL.Numbe
 end
 
 
-
-
-
 UICtrl.CreateInputGroup = HL.Method(HL.Opt(HL.Number)).Return(HL.Number) << function(self, parentGroupId)
     parentGroupId = parentGroupId or self.view.inputGroup.groupId
     local groupId = InputManagerInst:CreateGroup(parentGroupId)
@@ -622,8 +418,6 @@ UICtrl.CreateInputGroup = HL.Method(HL.Opt(HL.Number)).Return(HL.Number) << func
     end
     return groupId
 end
-
-
 
 
 UICtrl._CleanupInputForHotSwitch = HL.Method() << function(self)
@@ -646,12 +440,6 @@ end
 
 
 
-
-
-
-
-
-
 UICtrl.BindInputEvent = HL.Method(HL.Userdata, HL.Function, HL.Opt(HL.String, HL.Any)).Return(HL.Number)
         << function(self, key, action, modifyKeys, timing)
     local groupId = self.view.inputGroup.groupId
@@ -664,8 +452,6 @@ UICtrl.BindInputEvent = HL.Method(HL.Userdata, HL.Function, HL.Opt(HL.String, HL
     end
     return bindingId
 end
-
-
 
 UICtrl.UpdateInputGroupState = HL.Method().Return(HL.Boolean) << function(self)
     local active = false
@@ -694,14 +480,8 @@ UICtrl.UpdateInputGroupState = HL.Method().Return(HL.Boolean) << function(self)
     return active
 end
 
-
-
-
 UICtrl._OnPanelInputBlocked = HL.Virtual(HL.Boolean) << function(self, active)
 end
-
-
-
 
 UICtrl.DeleteInputBinding = HL.Method(HL.Number).Return(HL.Number) << function(self, keyId)
     if keyId then
@@ -709,9 +489,6 @@ UICtrl.DeleteInputBinding = HL.Method(HL.Number).Return(HL.Number) << function(s
     end
     return -1
 end
-
-
-
 
 
 
@@ -728,10 +505,6 @@ UICtrl.GetCurPanelCfg = HL.Method(HL.String).Return(HL.Any) << function(self, na
     end
 end
 
-
-
-
-
 UICtrl.ChangeCurPanelBlockSetting = HL.Method(HL.Opt(HL.Boolean, HL.Number))
         << function(self, blockKeyboardEvent, multiTouchType)
     if not self.view then
@@ -747,29 +520,18 @@ UICtrl.ChangeCurPanelBlockSetting = HL.Method(HL.Opt(HL.Boolean, HL.Number))
     UIManager:CalcOtherSystemPropertyByPanelOrder()
 end
 
-
-
-
-
 UICtrl.ChangePanelCfg = HL.Method(HL.String, HL.Any) << function(self, key, value)
     self.view.curPanelCfg[key] = value
     UIManager:CalcOtherSystemPropertyByPanelOrder()
 end
 
-
-
 UICtrl.GetBlockKeyboardEvent = HL.Method().Return(HL.Boolean) << function(self)
     return self:GetCurPanelCfg("blockKeyboardEvent")
 end
 
-
-
 UICtrl.GetMultiTouchType = HL.Method().Return(HL.Number) << function(self)
     return self:GetCurPanelCfg("multiTouchType")
 end
-
-
-
 
 
 
@@ -786,25 +548,19 @@ end
 
 
 
-
-
-
-
 UICtrl.LoadSprite = HL.Method(HL.String, HL.Opt(HL.String)).Return(Unity.Sprite) << function(self, path, name)
     return UIUtils.loadSprite(self.loader, path, name)
 end
-
-
-
 
 UICtrl.LoadGameObject = HL.Method(HL.String).Return(CS.UnityEngine.GameObject) << function(self, path)
     local obj = self.loader:LoadGameObject(path)
     return obj
 end
 
-
-
-
+UICtrl.LoadGameObjectAsync = HL.Method(HL.String, HL.Function).Return(HL.Number) << function(self, path, callback)
+    local key = self.loader:LoadGameObjectAsync(path, callback)
+    return key
+end
 
 
 
@@ -823,10 +579,6 @@ UICtrl._CreateWorldGameObject = HL.Method(GameObject, HL.Opt(HL.Boolean)).Return
     return obj
 end
 
-
-
-
-
 UICtrl._CreateEmptyWorldGameObject = HL.Method(HL.String, HL.Opt(HL.Boolean)).Return(GameObject) << function(self, name, notAuto)
     if notAuto and not self.m_worldRoot then
         self:_CreateWorldObjectRoot(false)
@@ -841,9 +593,6 @@ UICtrl._CreateEmptyWorldGameObject = HL.Method(HL.String, HL.Opt(HL.Boolean)).Re
     end
     return obj
 end
-
-
-
 
 UICtrl._CreateWorldObjectRoot = HL.Method(HL.Boolean) << function(self, isAuto)
     if isAuto then
@@ -862,16 +611,11 @@ UICtrl._CreateWorldObjectRoot = HL.Method(HL.Boolean) << function(self, isAuto)
     end
 end
 
-
-
-
 UICtrl.SetGameObjectVisible = HL.Method(HL.Boolean) << function(self, visible)
     if self.m_worldAutoRoot then
         self.m_worldAutoRoot.gameObject:SetActive(visible)
     end
 end
-
-
 
 UICtrl._DestroyAllWorldGameObject = HL.Method() << function(self)
     if self.m_worldRoot then
@@ -889,11 +633,7 @@ end
 
 
 
-
 UICtrl.s_useBlackOutPanelIds = HL.StaticField(HL.Table)
-
-
-
 
 UICtrl.TogglePanelUseBlackOut = HL.StaticMethod(HL.Number, HL.Boolean) << function(panelId, useBlackOut)
     
@@ -910,32 +650,51 @@ end
 
 
 
+UICtrl._GetDummyNaviLayerKey = HL.Method().Return(HL.String) << function(self)
+    if self.panelCfg.needNaviDummyLayer then
+        return self.panelCfg.name
+    end
+    local phase = self.m_phase
+    if phase ~= nil then
+        if not phase.cfg.notCreateDummyNaviLayer then
+            local key = PhaseManager:GetPhaseDummyNaviLayerName(phase.phaseId)
+            if string.isEmpty(key) then
+                logger.error("[UICtrl] _GetDummyNaviLayerKey", self.panelCfg.name, "无法找到当前面板所属Phase的DummyNaviLayer")
+            end
+            return key
+        end
+    end
+    return ""
+end
 
+UICtrl.SetNaviTarget = HL.Method(HL.Userdata) << function(self, selectable)
+    local needTopDummyLayerKey = self:_GetDummyNaviLayerKey()
+    if string.isEmpty(needTopDummyLayerKey) then
+        InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(selectable)
+        return
+    end
+    local needTopDummyLayer = LuaSystemManager.dummyNaviLayerSystem:GetDummyNaviLayerByKey(needTopDummyLayerKey)
+    if needTopDummyLayer ~= nil then
+        InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(selectable, needTopDummyLayer)
+    end
+end
 
-
+UICtrl.ClearNaviTarget = HL.Method() << function(self)
+    local needTopDummyLayerKey = self:_GetDummyNaviLayerKey()
+    if string.isEmpty(needTopDummyLayerKey) then
+        InputManagerInst.controllerNaviManager:ClearTargetIfNecessary()
+        return
+    end
+    local needTopDummyLayer = LuaSystemManager.dummyNaviLayerSystem:GetDummyNaviLayerByKey(needTopDummyLayerKey)
+    if needTopDummyLayer ~= nil then
+        InputManagerInst.controllerNaviManager:ClearTargetIfNecessary(needTopDummyLayer)
+    end
+end
 
 
 UICtrl.SetAsNaviTargetInSilentModeIfNecessary = HL.Method(HL.Userdata, HL.Userdata, HL.Opt(HL.String)) << function(self, targetNaviGroup, targetSelectable, needTopDummyLayerKey)
-    if needTopDummyLayerKey == nil then
-        if self.panelCfg.needNaviDummyLayer then
-            needTopDummyLayerKey = self.panelCfg.name
-        else
-            local phase = self.m_phase
-            if phase ~= nil then
-                if not phase.cfg.notCreateDummyNaviLayer then
-                    needTopDummyLayerKey = PhaseManager:GetPhaseDummyNaviLayerName(phase.phaseId)
-                    if string.isEmpty(needTopDummyLayerKey) then
-                        logger.error("[UICtrl] SetAsNaviTargetInSilentModeIfNecessary", self.panelCfg.name, "无法找到当前面板所属Phase的DummyNaviLayer")
-                    end
-                else
-                    logger.error("[UICtrl] SetAsNaviTargetInSilentModeIfNecessary", self.panelCfg.name, "当前面板所属Phase无DummyNaviLayer")
-                end
-            else
-                logger.error("[UICtrl] SetAsNaviTargetInSilentModeIfNecessary", self.panelCfg.name, "无法找到当前面板所属Phase")
-            end
-        end
-    end
-    UIUtils.setAsNaviTargetInSilentModeIfNecessary(targetNaviGroup, targetSelectable, needTopDummyLayerKey)
+    logger.error("[UICtrl] SetAsNaviTargetInSilentModeIfNecessary 已废弃，请使用 self:SetNaviTarget(selectable)", self.panelCfg.name)
+    self:SetNaviTarget(targetSelectable)
 end
 
 

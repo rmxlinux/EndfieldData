@@ -1,36 +1,17 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DomainDepotDelivery
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainDepotDeliveryCtrl = HL.Class('DomainDepotDeliveryCtrl', uiCtrl.UICtrl)
-
 
 DomainDepotDeliveryCtrl.m_getCellFunc = HL.Field(HL.Function)
 
-
 DomainDepotDeliveryCtrl.m_filterDomainIdList = HL.Field(HL.String) << ""
-
 
 DomainDepotDeliveryCtrl.m_domainDropDownInfo = HL.Field(HL.Table)
 
-
 DomainDepotDeliveryCtrl.m_curDomainIndex = HL.Field(HL.Number) << 1
 
-
 DomainDepotDeliveryCtrl.m_resumeState = HL.Field(HL.Table)
-
 
 
 
@@ -39,9 +20,6 @@ DomainDepotDeliveryCtrl.m_resumeState = HL.Field(HL.Table)
 DomainDepotDeliveryCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_DOMAIN_DEPOT_DELIVERY_SYNC] = 'OnSync',
 }
-
-
-
 
 
 DomainDepotDeliveryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -133,8 +111,6 @@ DomainDepotDeliveryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 
-
-
 DomainDepotDeliveryCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     return {
         resumeState = {
@@ -142,8 +118,6 @@ DomainDepotDeliveryCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << functio
         }
     }
 end
-
-
 
 DomainDepotDeliveryCtrl._OnRefreshBtnClick = HL.Method() << function(self)
     GameInstance.player.domainDepotSystem:SendSyncDomainDepotDeliverDelegate(self.m_filterDomainIdList)
@@ -157,8 +131,6 @@ DomainDepotDeliveryCtrl._OnRefreshBtnClick = HL.Method() << function(self)
     end)
 end
 
-
-
 DomainDepotDeliveryCtrl.OnSync = HL.Method() << function(self)
     self.view.times1Txt.text = GameInstance.player.domainDepotSystem.dailyTakeDelegateCount
     self.view.scrollList:UpdateCount(GameInstance.player.domainDepotSystem.remoteDelegateDeliverList.Count)
@@ -166,15 +138,11 @@ DomainDepotDeliveryCtrl.OnSync = HL.Method() << function(self)
     self.view.emptyNode.gameObject:SetActive(GameInstance.player.domainDepotSystem.remoteDelegateDeliverList.Count == 0)
 end
 
-
-
 DomainDepotDeliveryCtrl.OnShow = HL.Override() << function(self)
     if GameInstance.player.domainDepotSystem.remoteDelegateDeliverList.Count ~= 0 then
         self:OnSync()
     end
 end
-
-
 
 
 DomainDepotDeliveryCtrl.OnHide = HL.Override() << function(self)

@@ -1,18 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 PotentialRankNode = HL.Class('PotentialRankNode', UIWidgetBase)
-
-
 
 
 PotentialRankNode._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
 
 PotentialRankNode.InitPotentialRankNode = HL.Method(HL.Number) << function(self, charInstId)
     self:_FirstTimeInit()

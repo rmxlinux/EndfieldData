@@ -1,16 +1,8 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 GemSkillNode = HL.Class('GemSkillNode', UIWidgetBase)
 
-
 GemSkillNode.m_gemSkillCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 GemSkillNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -18,19 +10,11 @@ GemSkillNode._OnFirstTimeInit = HL.Override() << function(self)
     
 end
 
-
-
-
-
 GemSkillNode.InitGemSkillNode = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(self, gemInstId, tryArg)
     self:_FirstTimeInit()
 
     self:_RefreshSkillNode(gemInstId, tryArg)
 end
-
-
-
-
 
 GemSkillNode._RefreshSkillNode = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(self, gemInstId, tryArg)
     local gemInst = CharInfoUtils.getGemByInstId(gemInstId)

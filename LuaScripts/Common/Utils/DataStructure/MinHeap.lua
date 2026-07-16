@@ -1,27 +1,13 @@
 
 
 
-
-
-
-
-
-
 MinHeapNode = HL.Class('MinHeapNode')
-
 
 MinHeapNode.key = HL.Field(HL.Any)
 
-
 MinHeapNode.value = HL.Field(HL.Number) << -1
 
-
 MinHeapNode.index = HL.Field(HL.Number) << -1
-
-
-
-
-
 
 
 MinHeapNode.Init = HL.Method(HL.Any, HL.Number, HL.Number) << function(self, key, value, index)
@@ -29,8 +15,6 @@ MinHeapNode.Init = HL.Method(HL.Any, HL.Number, HL.Number) << function(self, key
     self.value = value
     self.index = index
 end
-
-
 
 MinHeapNode.Clear = HL.Method() << function(self)
     self.key = nil
@@ -43,43 +27,15 @@ HL.Commit(MinHeapNode)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MinHeap = HL.Class('MinHeap')
-
 
 MinHeap.m_nodeList = HL.Field(HL.Table)
 
-
 MinHeap.m_nodeMap = HL.Field(HL.Table)
-
 
 MinHeap.m_count = HL.Field(HL.Number) << 0
 
-
 MinHeap.m_nodeCache = HL.Field(HL.Forward("Stack"))
-
-
 
 
 MinHeap.MinHeap = HL.Constructor() << function(self)
@@ -87,10 +43,6 @@ MinHeap.MinHeap = HL.Constructor() << function(self)
     self.m_nodeMap = {}
     self.m_nodeCache = require_ex("Common/Utils/DataStructure/Stack")()
 end
-
-
-
-
 
 MinHeap._Swap = HL.Method(HL.Number, HL.Number) << function(self, index1, index2)
     if index1 == index2 then
@@ -105,9 +57,6 @@ MinHeap._Swap = HL.Method(HL.Number, HL.Number) << function(self, index1, index2
     self.m_nodeMap[self.m_nodeList[index2].key] = self.m_nodeList[index2]
 end
 
-
-
-
 MinHeap._AdjustUp = HL.Method(HL.Number) << function(self, index)
     local parent = math.floor(index / 2)
     if parent == 0 then
@@ -118,9 +67,6 @@ MinHeap._AdjustUp = HL.Method(HL.Number) << function(self, index)
         self:_AdjustUp(parent)
     end
 end
-
-
-
 
 MinHeap._AdjustDown = HL.Method(HL.Number) << function(self, index)
     local size = self:Size()
@@ -137,15 +83,9 @@ MinHeap._AdjustDown = HL.Method(HL.Number) << function(self, index)
     end
 end
 
-
-
 MinHeap.Size = HL.Method().Return(HL.Number) << function(self)
     return self.m_count
 end
-
-
-
-
 
 MinHeap.Add = HL.Method(HL.Any, HL.Number) << function(self, key, value)
     if self.m_nodeMap[key] then
@@ -161,9 +101,6 @@ MinHeap.Add = HL.Method(HL.Any, HL.Number) << function(self, key, value)
     self.m_count = self.m_count + 1
     self:_AdjustUp(self:Size())
 end
-
-
-
 
 MinHeap.Remove = HL.Method(HL.Any) << function(self, key)
     local node = self.m_nodeMap[key]
@@ -188,10 +125,6 @@ MinHeap.Remove = HL.Method(HL.Any) << function(self, key)
     end
 end
 
-
-
-
-
 MinHeap.UpdateValue = HL.Method(HL.Any, HL.Number) << function(self, key, newValue)
     if not self.m_nodeMap[key] then
         logger.error("MinHeap:UpdateValue obj not exist " .. tostring(key))
@@ -207,16 +140,12 @@ MinHeap.UpdateValue = HL.Method(HL.Any, HL.Number) << function(self, key, newVal
     end
 end
 
-
-
 MinHeap.Min = HL.Method().Return(HL.Opt(HL.Any, HL.Number)) << function(self)
     if self:Size() > 0 then
         return self.m_nodeList[1].key, self.m_nodeList[1].value
     end
     return nil
 end
-
-
 
 MinHeap.Pop = HL.Method().Return(HL.Opt(HL.Any, HL.Number)) << function(self)
     local size = self:Size()
@@ -244,8 +173,6 @@ MinHeap.Pop = HL.Method().Return(HL.Opt(HL.Any, HL.Number)) << function(self)
     return nil
 end
 
-
-
 MinHeap.Peek = HL.Method().Return(HL.Opt(HL.Any, HL.Number)) << function(self)
     local size = self:Size()
     if size > 0 then
@@ -256,21 +183,13 @@ MinHeap.Peek = HL.Method().Return(HL.Opt(HL.Any, HL.Number)) << function(self)
     return nil
 end
 
-
-
-
 MinHeap.GetValue = HL.Method(HL.Any).Return(HL.Opt(HL.Any)) << function(self, key)
     return self.m_nodeMap[key] and self.m_nodeMap[key].value or nil
 end
 
-
-
-
 MinHeap.Find = HL.Method(HL.Any).Return(HL.Boolean) << function(self, key)
     return self.m_nodeMap[key] and true or false
 end
-
-
 
 MinHeap.NodeIter = HL.Method().Return(HL.Any) << function(self)
     local i = 0
@@ -286,8 +205,6 @@ MinHeap.NodeIter = HL.Method().Return(HL.Any) << function(self)
     end
 end
 
-
-
 MinHeap.Clear = HL.Method() << function(self)
     for _, node in pairs(self.m_nodeMap) do
         self:_CacheNode(node)
@@ -297,8 +214,6 @@ MinHeap.Clear = HL.Method() << function(self)
     self.m_count = 0
 end
 
-
-
 MinHeap._GetNode = HL.Method().Return(MinHeapNode) << function(self)
     if self.m_nodeCache:Empty() then
         return MinHeapNode()
@@ -306,9 +221,6 @@ MinHeap._GetNode = HL.Method().Return(MinHeapNode) << function(self)
         return self.m_nodeCache:Pop()
     end
 end
-
-
-
 
 MinHeap._CacheNode = HL.Method(MinHeapNode) << function(self, node)
     node:Clear()

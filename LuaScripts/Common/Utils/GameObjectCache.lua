@@ -1,14 +1,5 @@
 local CommonCache = require_ex("Common/Utils/CommonCache")
-
-
 GameObjectCache = HL.Class('GameObjectCache', CommonCache)
-
-
-
-
-
-
-
 
 GameObjectCache.GameObjectCache = HL.Constructor(HL.Any, HL.Any, HL.Opt(HL.Function, HL.Function, HL.Function))
 << function(self, template, root, onCreate, onUse, onCache)

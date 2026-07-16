@@ -1,77 +1,29 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local shopSystem = GameInstance.player.shopSystem
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipShopBaseCtrl = HL.Class('SpaceshipShopBaseCtrl', uiCtrl.UICtrl)
-
 
 SpaceshipShopBaseCtrl.m_shopGroupId = HL.Field(HL.String) << ""
 
-
 SpaceshipShopBaseCtrl.m_shopId = HL.Field(HL.String) << ""
-
 
 SpaceshipShopBaseCtrl.m_goodsInfos = HL.Field(HL.Table)
 
-
 SpaceshipShopBaseCtrl.m_goods = HL.Field(HL.Table)
-
 
 SpaceshipShopBaseCtrl.m_soldOut = HL.Field(HL.Table)
 
-
 SpaceshipShopBaseCtrl.m_needPlaySoldOut = HL.Field(HL.Table)
-
 
 SpaceshipShopBaseCtrl.m_needPlayUnlock = HL.Field(HL.Table)
 
-
 SpaceshipShopBaseCtrl.m_waitAnimation = HL.Field(HL.Boolean) << false
-
 
 SpaceshipShopBaseCtrl.m_getCellFunc = HL.Field(HL.Function)
 
-
 SpaceshipShopBaseCtrl.m_isInitSortNode = HL.Field(HL.Boolean) << false
-
 SpaceshipShopBaseCtrl.m_needShowUnlock = HL.Field(HL.Boolean) << false
 
-
 SpaceshipShopBaseCtrl.m_lastBuyGoods = HL.Field(HL.Table)
-
 
 
 
@@ -93,20 +45,14 @@ SpaceshipShopBaseCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SPACESHIP_RECV_QUERY_VISIT_INFO] = '_OnReceiveVisitInfo',
 }
 
-
-
 SpaceshipShopBaseCtrl._OnShopRefresh = HL.Virtual() << function(self)
     logger.info("[shop] _OnShopRefresh")
     if self.m_waitAnimation then
         return
     end
-    self.view.scrollList:SkipGraduallyShow()
     self:_RefreshSheetTabs(self.m_shopId)
     self.view.scrollList:SkipGraduallyShow()
 end
-
-
-
 
 
 
@@ -114,16 +60,9 @@ SpaceshipShopBaseCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
 end
 
-
-
-
 SpaceshipShopBaseCtrl._RefreshSheetTabs = HL.Virtual(HL.String) << function(self, curShopId)
 
 end
-
-
-
-
 
 SpaceshipShopBaseCtrl._ApplySortOption = HL.Method(HL.Opt(HL.Table, HL.Boolean)) << function(self, sortData, isIncremental)
     sortData = sortData or self.view.sortNode:GetCurSortData()
@@ -143,15 +82,9 @@ SpaceshipShopBaseCtrl._ApplySortOption = HL.Method(HL.Opt(HL.Table, HL.Boolean))
     self:_RefreshContent()
 end
 
-
-
 SpaceshipShopBaseCtrl._RefreshContent = HL.Method() << function(self)
     self.view.scrollList:UpdateCount(#self.m_goodsInfos)
 end
-
-
-
-
 
 SpaceshipShopBaseCtrl._RefreshContentCell = HL.Virtual(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local goodsId = self.m_goodsInfos[luaIndex].id
@@ -159,14 +92,9 @@ SpaceshipShopBaseCtrl._RefreshContentCell = HL.Virtual(HL.Any, HL.Number) << fun
     cell:InitCashShopItem(goodsData, true, true)
 end
 
-
-
-
 SpaceshipShopBaseCtrl.CheckGoodsUnlocked = HL.Virtual(HL.String).Return(HL.Boolean) << function(self, goodsId)
     return not shopSystem:CheckGoodsUnlocked(goodsId)
 end
-
-
 
 
 SpaceshipShopBaseCtrl._RefreshTimeCountDown = HL.Virtual() << function(self)
@@ -174,16 +102,10 @@ end
 
 
 
-
-
-
 SpaceshipShopBaseCtrl._CalculateTargetTime = HL.Method(GEnums.ShopRefreshCycleType).Return(HL.Number) << function(self, refreshCycleType)
     local time = self:_CalculateServerTargetTime(refreshCycleType)
     return time
 end
-
-
-
 
 SpaceshipShopBaseCtrl._CalculateServerTargetTime = HL.Method(GEnums.ShopRefreshCycleType).Return(HL.Number) << function(self, refreshCycleType)
     if refreshCycleType == GEnums.ShopRefreshCycleType.Daily then
@@ -194,9 +116,6 @@ SpaceshipShopBaseCtrl._CalculateServerTargetTime = HL.Method(GEnums.ShopRefreshC
         return Utils.getNextMonthlyServerRefreshTime()
     end
 end
-
-
-
 
 SpaceshipShopBaseCtrl.OnLimitChange = HL.Method(HL.Any) << function(self, data)
     local goods, left
@@ -212,9 +131,6 @@ SpaceshipShopBaseCtrl.OnLimitChange = HL.Method(HL.Any) << function(self, data)
         end
     end
 end
-
-
-
 
 SpaceshipShopBaseCtrl.OnConditionChange = HL.Method(HL.Any) << function(self, data)
     local goods, unlock
@@ -232,15 +148,10 @@ SpaceshipShopBaseCtrl.OnConditionChange = HL.Method(HL.Any) << function(self, da
     end
 end
 
-
-
-
 SpaceshipShopBaseCtrl.OnBuyItemSucc = HL.Virtual(HL.Any) << function(self, arg)
     local goodsId = arg[1].GoodsId
     table.insert(self.m_lastBuyGoods, goodsId)
 end
-
-
 
 SpaceshipShopBaseCtrl.OnAfterBuyItemSucc = HL.Virtual() << function(self)
     for i, v in ipairs(self.m_goodsInfos) do
@@ -302,46 +213,28 @@ SpaceshipShopBaseCtrl.OnAfterBuyItemSucc = HL.Virtual() << function(self)
     self.m_lastBuyGoods = {}
 end
 
-
-
-
 SpaceshipShopBaseCtrl.WaitAnimation = HL.Method(HL.Boolean) << function(self, state)
     self.m_waitAnimation = state
 end
-
-
-
 
 SpaceshipShopBaseCtrl.SetMoneyCell = HL.Virtual(HL.Boolean) << function(self, arg)
 
 end
 
-
-
 SpaceshipShopBaseCtrl._OnShopGoodsManualRefresh = HL.Virtual() << function(self)
 
 end
-
-
-
 
 SpaceshipShopBaseCtrl._OnGetCredit = HL.Virtual(HL.Table) << function(self, args)
 
 end
 
-
-
-
 SpaceshipShopBaseCtrl._OnWalletChanged = HL.Virtual(HL.Table) << function(self, args)
 
 end
 
-
-
 SpaceshipShopBaseCtrl._OnReceiveVisitInfo = HL.Virtual() << function(self)
 end
-
-
 
 SpaceshipShopBaseCtrl.OnClose = HL.Override() << function(self)
 end

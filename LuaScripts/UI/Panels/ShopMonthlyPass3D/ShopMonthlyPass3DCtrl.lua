@@ -10,51 +10,27 @@ local PanelType = {
     DailyPopup = 2,
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopMonthlyPass3DCtrl = HL.Class('ShopMonthlyPass3DCtrl', uiCtrl.UICtrl)
 
-
 ShopMonthlyPass3DCtrl.m_currPageType = HL.Field(HL.Any) << PanelType.Shop
-
 
 
 ShopMonthlyPass3DCtrl.m_rewardList1 = HL.Field(HL.Table)
 
 
-
 ShopMonthlyPass3DCtrl.m_rewardList2 = HL.Field(HL.Table)
-
 
 
 ShopMonthlyPass3DCtrl.m_rewardList3 = HL.Field(HL.Table)
 
 
-
 ShopMonthlyPass3DCtrl.m_remainDayNumber = HL.Field(HL.Number) << 0
-
 
 ShopMonthlyPass3DCtrl.m_rewardCell1 = HL.Field(HL.Forward("UIListCache"))
 
-
 ShopMonthlyPass3DCtrl.m_rewardCell2 = HL.Field(HL.Forward("UIListCache"))
 
-
 ShopMonthlyPass3DCtrl.m_rewardCell3 = HL.Field(HL.Forward("UIListCache"))
-
 
 
 
@@ -63,9 +39,6 @@ ShopMonthlyPass3DCtrl.m_rewardCell3 = HL.Field(HL.Forward("UIListCache"))
 ShopMonthlyPass3DCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 
@@ -132,13 +105,9 @@ ShopMonthlyPass3DCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 ShopMonthlyPass3DCtrl.OnShow = HL.Override() << function(self)
     self.animationWrapper:PlayInAnimation()
 end
-
-
 
 
 
@@ -198,8 +167,6 @@ ShopMonthlyPass3DCtrl._RefreshDailyPopupUI = HL.Method() << function(self)
     end
 end
 
-
-
 ShopMonthlyPass3DCtrl.PlayGotDailyReward = HL.Method() << function(self)
     local haveGotDailyReward = self.m_phase and self.m_phase.m_haveGotReward or false
     if haveGotDailyReward then
@@ -217,8 +184,6 @@ ShopMonthlyPass3DCtrl.PlayGotDailyReward = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 ShopMonthlyPass3DCtrl._RefreshShopUI = HL.Method() << function(self)
     local RectOffset = CS.UnityEngine.RectOffset

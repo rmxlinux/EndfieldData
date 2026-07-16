@@ -1,32 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
 CircularProgressBar = HL.Class('CircularProgressBar', UIWidgetBase)
 
 local TEMP_VALUE_TWEEN_TIME<const> = 0.3
 
-
 CircularProgressBar.m_totalValue = HL.Field(HL.Number) << 100
-
 
 CircularProgressBar.m_currentValue = HL.Field(HL.Number) << 0
 
-
 CircularProgressBar.m_tempValue = HL.Field(HL.Number) << 0
 
-
 CircularProgressBar.m_tempValueTweener = HL.Field(HL.Userdata) << nil
-
-
-
 
 CircularProgressBar.InitCircularProgressBar = HL.Method(HL.Number) << function(self, totalValue)
     self:_FirstTimeInit()
@@ -39,9 +23,6 @@ CircularProgressBar.InitCircularProgressBar = HL.Method(HL.Number) << function(s
     self.view.currentValue.fillAmount = 0
     self.view.tempValue.fillAmount = 0
 end
-
-
-
 
 CircularProgressBar.SetCurrentValue = HL.Method(HL.Number) << function(self, value)
     if value > 0 then
@@ -62,10 +43,6 @@ CircularProgressBar.SetCurrentValue = HL.Method(HL.Number) << function(self, val
         self.view.increaseBg.gameObject:SetActive(true)
     end
 end
-
-
-
-
 
 CircularProgressBar.SetTempValue = HL.Method(HL.Number, HL.Boolean) << function(self, value, keepActive)
     if self.m_currentValue == self.m_totalValue then
@@ -104,8 +81,6 @@ CircularProgressBar.SetTempValue = HL.Method(HL.Number, HL.Boolean) << function(
         self.m_tempValueTweener:OnComplete(onTweenComplete)
     end
 end
-
-
 
 
 CircularProgressBar.RefreshDisplay = HL.Method() << function(self)

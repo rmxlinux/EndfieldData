@@ -6,47 +6,7 @@ local InfoState = {
     Paused = "Paused",
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacSewageTreatImporterCtrl = HL.Class('FacSewageTreatImporterCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -56,50 +16,33 @@ FacSewageTreatImporterCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacSewageTreatImporterCtrl.m_buildingInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_SewageTreatImport)
-
 
 FacSewageTreatImporterCtrl.m_updateThread = HL.Field(HL.Thread)
 
-
 FacSewageTreatImporterCtrl.m_validLiquidIds = HL.Field(HL.Table)
-
 
 FacSewageTreatImporterCtrl.m_sewageItemData = HL.Field(HL.Table)
 
-
 FacSewageTreatImporterCtrl.m_lastValidItemId = HL.Field(HL.String) << ""
-
 
 FacSewageTreatImporterCtrl.m_lastConsumeItemId = HL.Field(HL.String) << ""
 
-
 FacSewageTreatImporterCtrl.m_isItemDirty = HL.Field(HL.Boolean) << false
-
 
 FacSewageTreatImporterCtrl.m_treatItemId = HL.Field(HL.String) << ""
 
-
 FacSewageTreatImporterCtrl.m_progressInitThread = HL.Field(HL.Thread)
-
 
 FacSewageTreatImporterCtrl.m_progressUpdateThread = HL.Field(HL.Thread)
 
-
 FacSewageTreatImporterCtrl.m_needRefreshProgress = HL.Field(HL.Boolean) << false
-
 
 FacSewageTreatImporterCtrl.m_isPipeBlocked = HL.Field(HL.Boolean) << false
 
-
 FacSewageTreatImporterCtrl.m_currTreatInfoState = HL.Field(HL.String) << ""
 
-
 FacSewageTreatImporterCtrl.m_dropHelper = HL.Field(HL.Forward('UIDropHelper'))
-
-
-
 
 
 FacSewageTreatImporterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -130,7 +73,7 @@ FacSewageTreatImporterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.facCacheRepository:InitFacCacheRepository({
         cache = self.m_buildingInfo.fluidCache,
         isInCache = true,
-        isFluidCache = true,
+        cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid,
         cacheIndex = 1,
         slotCount = 1,
         formulaId = crafts[1].craftId,  
@@ -159,16 +102,12 @@ FacSewageTreatImporterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     GameInstance.remoteFactoryManager:RegisterInterestedUnitId(self.m_buildingInfo.nodeId)
 end
 
-
-
 FacSewageTreatImporterCtrl.OnClose = HL.Override() << function(self)
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_buildingInfo.nodeId)
 
     self.m_updateThread = self:_ClearCoroutine(self.m_updateThread)
     self.m_progressUpdateThread = self:_ClearCoroutine(self.m_progressUpdateThread)
 end
-
-
 
 FacSewageTreatImporterCtrl._InitSewageTreatImportStaticData = HL.Method() << function(self)
     self.m_validLiquidIds = {}
@@ -184,8 +123,6 @@ FacSewageTreatImporterCtrl._InitSewageTreatImportStaticData = HL.Method() << fun
     end
 end
 
-
-
 FacSewageTreatImporterCtrl._InitSewageTreatImporterUpdateThread = HL.Method() << function(self)
     self:_UpdateAndRefreshAll()
     self.m_updateThread = self:_StartCoroutine(function()
@@ -195,8 +132,6 @@ FacSewageTreatImporterCtrl._InitSewageTreatImporterUpdateThread = HL.Method() <<
         end
     end)
 end
-
-
 
 FacSewageTreatImporterCtrl._GetSewageTreatImporterIndex = HL.Method().Return(HL.Number) << function(self)
     local instKey = self.m_buildingInfo.nodeHandler.instKey
@@ -213,8 +148,6 @@ FacSewageTreatImporterCtrl._GetSewageTreatImporterIndex = HL.Method().Return(HL.
     return 1
 end
 
-
-
 FacSewageTreatImporterCtrl._UpdateAndRefreshAll = HL.Method() << function(self)
     self:_UpdateSewageTreatImporterCacheItemData()
     self:_RefreshTreatConsumeInfo()
@@ -225,8 +158,6 @@ FacSewageTreatImporterCtrl._UpdateAndRefreshAll = HL.Method() << function(self)
         self.m_isItemDirty = false
     end
 end
-
-
 
 
 
@@ -259,8 +190,6 @@ FacSewageTreatImporterCtrl._UpdateSewageTreatImporterCacheItemData = HL.Method()
     self.m_lastConsumeItemId = self.m_buildingInfo.consumeItemId
 end
 
-
-
 FacSewageTreatImporterCtrl._ClearSewageTreatImporterItemData = HL.Method() << function(self)
     self.m_lastValidItemId = ""
     self.m_sewageItemData = {
@@ -270,9 +199,6 @@ FacSewageTreatImporterCtrl._ClearSewageTreatImporterItemData = HL.Method() << fu
     self.m_isItemDirty = true
 end
 
-
-
-
 FacSewageTreatImporterCtrl._OnPipeStateChanged = HL.Method(HL.Table) << function(self, pipeInfo)
     if pipeInfo == nil then
         return
@@ -281,9 +207,6 @@ FacSewageTreatImporterCtrl._OnPipeStateChanged = HL.Method(HL.Table) << function
     self.m_isPipeBlocked = pipeInfo.isBlock
     self:_RefreshSewageTreatImporterTipsVisibleState()
 end
-
-
-
 
 FacSewageTreatImporterCtrl._RefreshSewageTreatImporterTipsVisibleState = HL.Method(HL.Opt(HL.Userdata)) << function(self, state)
     if self.m_sewageItemData == nil then
@@ -308,10 +231,6 @@ end
 
 
 
-
-
-
-
 FacSewageTreatImporterCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) << function(self, cell, itemBundle)
     if cell == nil or itemBundle == nil then
         return
@@ -319,8 +238,8 @@ FacSewageTreatImporterCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL
 
     
     local itemId = itemBundle.id
-    local isEmptyBottle = Tables.emptyBottleTable:ContainsKey(itemId)
-    local isFullBottle = Tables.fullBottleTable:ContainsKey(itemId)
+    local isEmptyBottle = FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+    local isFullBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
     local isBottle = isEmptyBottle or isFullBottle
     local isEmpty = string.isEmpty(itemBundle.id)
     local needMask = not isBottle and not isEmpty
@@ -358,8 +277,6 @@ end
 
 
 
-
-
 FacSewageTreatImporterCtrl._InitTreatConsumeInfo = HL.Method() << function(self)
     
     local treatInfoNode = self.view.treatInfoNode
@@ -367,8 +284,6 @@ FacSewageTreatImporterCtrl._InitTreatConsumeInfo = HL.Method() << function(self)
     local itemData = Tables.itemTable:GetValue(self.m_treatItemId)
     treatInfoNode.itemNameTxt.text = itemData.name
 end
-
-
 
 FacSewageTreatImporterCtrl._RefreshTreatConsumeInfo = HL.Method() << function(self)
     local treatInfoNode = self.view.treatInfoNode
@@ -395,8 +310,6 @@ end
 
 
 
-
-
 FacSewageTreatImporterCtrl._InitSewageTreatImporterProgressInitThread = HL.Method() << function(self)
     self:_UpdateSewageTreatImporterProgressInitializedState()
     self.m_progressInitThread = self:_StartCoroutine(function()
@@ -407,8 +320,6 @@ FacSewageTreatImporterCtrl._InitSewageTreatImporterProgressInitThread = HL.Metho
     end)
 end
 
-
-
 FacSewageTreatImporterCtrl._InitSewageTreatImporterProgressUpdateThread = HL.Method() << function(self)
     self:_RefreshSewageTreatImporterProgress()
     self.m_progressUpdateThread = self:_StartCoroutine(function()
@@ -418,8 +329,6 @@ FacSewageTreatImporterCtrl._InitSewageTreatImporterProgressUpdateThread = HL.Met
         end
     end)
 end
-
-
 
 FacSewageTreatImporterCtrl._UpdateSewageTreatImporterProgressInitializedState = HL.Method() << function(self)
     if self.m_buildingInfo.fluidConsume.progressIncrPerMS == 0 then
@@ -435,8 +344,6 @@ FacSewageTreatImporterCtrl._UpdateSewageTreatImporterProgressInitializedState = 
     self.m_progressInitThread = self:_ClearCoroutine(self.m_progressInitThread)
 end
 
-
-
 FacSewageTreatImporterCtrl._RefreshSewageTreatImporterProgressNode = HL.Method() << function(self)
     if string.isEmpty(self.m_lastValidItemId) or self.m_buildingInfo.fluidConsume.progressIncrPerMS == 0 then
         self:_StopSewageTreatImporterProgressRefresh()
@@ -448,8 +355,6 @@ FacSewageTreatImporterCtrl._RefreshSewageTreatImporterProgressNode = HL.Method()
     end
 end
 
-
-
 FacSewageTreatImporterCtrl._RefreshSewageTreatImporterProgress = HL.Method() << function(self)
     if not self.m_needRefreshProgress then
         return
@@ -458,15 +363,10 @@ FacSewageTreatImporterCtrl._RefreshSewageTreatImporterProgress = HL.Method() << 
     self.view.facProgressNode:UpdateProgress(self.m_buildingInfo.fluidConsume.currentProgress)
 end
 
-
-
 FacSewageTreatImporterCtrl._StopSewageTreatImporterProgressRefresh = HL.Method() << function(self)
     self.view.facProgressNode:InitFacProgressNode(0, 0, nil, nil, nil, nil, true)
     self.m_needRefreshProgress = false
 end
-
-
-
 
 FacSewageTreatImporterCtrl._RefreshChangeState = HL.Method(HL.Userdata) << function(self, state)
     FactoryUtils.refreshStateNodeByState(self.view.facStateNode, self.view.facProgressNode, state)
@@ -477,15 +377,10 @@ end
 
 
 
-
-
 FacSewageTreatImporterCtrl._InitSewageTreatImporterFormulaNode = HL.Method() << function(self)
     self.view.formulaNode:InitFormulaNode(self.m_buildingInfo)
     self:_RefreshSewageTreatImporterTargetFormula()
 end
-
-
-
 
 FacSewageTreatImporterCtrl._RefreshSewageTreatImporterTargetFormula = HL.Method(HL.Opt(HL.Userdata)) << function(self, state)
     local targetCraftInfo = FactoryUtils.getBuildingProcessingCraft(self.m_buildingInfo)
@@ -504,10 +399,7 @@ end
 
 
 
-
 FacSewageTreatImporterCtrl.m_naviGroupSwitcher = HL.Field(HL.Forward('NaviGroupSwitcher'))
-
-
 
 FacSewageTreatImporterCtrl._InitFacSewageTreatImporterController = HL.Method() << function(self)
     local NaviGroupSwitcher = require_ex("Common/Utils/UI/NaviGroupSwitcher").NaviGroupSwitcher
@@ -520,8 +412,6 @@ FacSewageTreatImporterCtrl._InitFacSewageTreatImporterController = HL.Method() <
     end
     self.view.contentNaviGroup:NaviToThisGroup()
 end
-
-
 
 FacSewageTreatImporterCtrl._RefreshNaviGroupSwitcherInfos = HL.Method() << function(self)
     if self.m_naviGroupSwitcher == nil then

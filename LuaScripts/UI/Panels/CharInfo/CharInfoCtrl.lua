@@ -1,52 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharInfo
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharInfoCtrl = HL.Class('CharInfoCtrl', uiCtrl.UICtrl)
 
 local CONTROL_TAB_FUNC_DICT = {
@@ -97,7 +51,6 @@ local CONTROL_TAB_FUNC_DICT = {
         hintText = Language.LUA_CHAR_INFO_TITLE_POTENTIAL,
     },
 }
-
 CharInfoCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHAR_INFO_SELECT_CHAR_CHANGE] = 'OnSelectCharChange',
     [MessageConst.CHAR_INFO_EMPTY_BUTTON_CLICK] = 'OnCommonEmptyButtonClick',
@@ -109,48 +62,32 @@ CharInfoCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 do
     
-    
     CharInfoCtrl.m_getCharHeadCell = HL.Field(HL.Function)
 
-    
     CharInfoCtrl.m_charInfoList = HL.Field(HL.Table)
 
-    
     CharInfoCtrl.m_charInfo = HL.Field(HL.Table)
 
-    
     CharInfoCtrl.m_professionCache = HL.Field(HL.Forward("UIListCache"))
 
-    
     CharInfoCtrl.m_elementalCache = HL.Field(HL.Forward("UIListCache"))
 
-    
     CharInfoCtrl.m_equipIsOn = HL.Field(HL.Boolean) << false
 
-    
     CharInfoCtrl.m_effectCor = HL.Field(HL.Thread)
 
-    
     CharInfoCtrl.m_tabCellCache = HL.Field(HL.Forward("UIListCache"))
 
-    
     CharInfoCtrl.m_equipSlotMap = HL.Field(HL.Table)
 
-    
     CharInfoCtrl.m_curPageType = HL.Field(HL.Number) << UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
 
-    
     CharInfoCtrl.m_focusMode = HL.Field(HL.Boolean) << false
 
-    
     CharInfoCtrl.m_isCharListInited = HL.Field(HL.Boolean) << false
 
-    
     CharInfoCtrl.m_arg = HL.Field(HL.Table)
 end
-
-
-
 
 CharInfoCtrl.OnCreate = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
     self.m_arg = arg
@@ -183,9 +120,6 @@ CharInfoCtrl.OnCreate = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
     self:_UpdateGyroEffectParams()
 end
 
-
-
-
 CharInfoCtrl.PhaseCharInfoPanelShowFinal = HL.Method(HL.Table) << function(self, arg)
     local initCharInfo = arg.initCharInfo or CharInfoUtils.getLeaderCharInfo()
     local pageType = arg.pageType or UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
@@ -198,24 +132,17 @@ CharInfoCtrl.PhaseCharInfoPanelShowFinal = HL.Method(HL.Table) << function(self,
     self:Show()
 end
 
-
-
 CharInfoCtrl.OnShow = HL.Override() << function(self)
     self:OnPageChange(self.m_curPageType)
 end
-
-
 
 CharInfoCtrl.OnHide = HL.Override() << function (self)
     self.view.bottomMenuCover.gameObject:SetActive(false)
     self.view.gyroscopeRoot.gameObject:SetActive(false)
 end
 
-
-
-
 CharInfoCtrl.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInfo)
-    Notify(MessageConst.HIDE_HYPERLINK_TIPS)
+    Notify(MessageConst.ON_STOP_HOVER_LINK)
     local aimWrapper= self.view.charInfoBasicNodeRight.view.gameObject.activeSelf and
                         self.view.charInfoBasicNodeRight.view.animationWrapper or self.view.gyroscopeRoot
     aimWrapper:ClearTween()
@@ -237,9 +164,6 @@ CharInfoCtrl.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInfo
     end)
 end
 
-
-
-
 CharInfoCtrl.OnCommonEmptyButtonClick = HL.Method(HL.Opt(HL.Userdata)) << function(self, _)
     self:_ToggleExpandNode(false)
     local scrollToIndex = -1
@@ -254,9 +178,6 @@ CharInfoCtrl.OnCommonEmptyButtonClick = HL.Method(HL.Opt(HL.Userdata)) << functi
         self.view.charListNode.charList:ScrollToIndex(scrollToIndex, true)
     end
 end
-
-
-
 
 CharInfoCtrl.OnToggleFocusMode = HL.Method(HL.Boolean) << function(self, isOn)
     if self.m_focusMode == isOn then
@@ -278,15 +199,10 @@ CharInfoCtrl.OnToggleFocusMode = HL.Method(HL.Boolean) << function(self, isOn)
     end
 end
 
-
-
-
 CharInfoCtrl.OnToggleMenuListAndTopBtn = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.menuListNode.gameObject:SetActive(isOn)
     self.view.closeButton.gameObject:SetActive(isOn)
 end
-
-
 
 CharInfoCtrl._InitActionEvent = HL.Method() << function(self)
     self.m_getCharHeadCell = UIUtils.genCachedCellFunction(self.view.charListNode.charList)
@@ -391,10 +307,6 @@ CharInfoCtrl._InitActionEvent = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 CharInfoCtrl._RefreshCharInfo = HL.Method(HL.Table, HL.Table) << function(self, initCharInfo, charInfoList)
     self:_RefreshCharList(initCharInfo, charInfoList)
     self:_RefreshCharInfoBasic(initCharInfo.instId)
@@ -405,18 +317,11 @@ CharInfoCtrl._RefreshCharInfo = HL.Method(HL.Table, HL.Table) << function(self, 
     self:_ChangeDungeonNode(initCharInfo.templateId)
 end
 
-
-
-
 CharInfoCtrl._RefreshCharInfoBasic = HL.Method(HL.Number) << function(self, charInstId)
     self.view.charInfoBasicNodeLeft:InitCharInfoBasicNode(charInstId)
     self.view.charInfoBasicNodeRight:InitCharInfoBasicNode(charInstId, true)
     self.view.friendshipNode:InitFriendshipNode(charInstId)
 end
-
-
-
-
 
 CharInfoCtrl._RefreshCharList = HL.Method(HL.Table, HL.Table) << function(self, initCharInfo, charInfoList)
     if self.m_phase then
@@ -425,10 +330,6 @@ CharInfoCtrl._RefreshCharList = HL.Method(HL.Table, HL.Table) << function(self, 
     self.view.charListNode.charList:UpdateCount(#charInfoList)
     self.m_isCharListInited = true
 end
-
-
-
-
 
 CharInfoCtrl._RefreshSmallCharHeadCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, csIndex)
     local charInfo = self.m_charInfoList[LuaIndex(csIndex)]
@@ -452,9 +353,6 @@ CharInfoCtrl._RefreshSmallCharHeadCell = HL.Method(HL.Userdata, HL.Number) << fu
         self:_OnClickCharHeadCell(charHeadCell.charInfo, true)
     end)
 end
-
-
-
 
 CharInfoCtrl._ToggleExpandNode = HL.Method(HL.Boolean) << function(self, isOn)
     if self.view.charListNode.animation then
@@ -539,17 +437,9 @@ CharInfoCtrl._ToggleExpandNode = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.charGradeNode.blocksRaycasts = not isOn
 end
 
-
-
-
-
 CharInfoCtrl._OnClickCharHeadCell = HL.Method(HL.Table, HL.Boolean) << function(self, charInfo, realClick)
     self:_ChangeSelectIndex(charInfo, realClick)
 end
-
-
-
-
 
 CharInfoCtrl._ChangeSelectIndex = HL.Method(HL.Table, HL.Boolean) << function(self, charInfo, realClick)
     local curTemplateId = self.m_charInfo.templateId
@@ -568,9 +458,6 @@ CharInfoCtrl._ChangeSelectIndex = HL.Method(HL.Table, HL.Boolean) << function(se
     
 end
 
-
-
-
 CharInfoCtrl._ChangeDungeonNode = HL.Method(HL.String) << function(self, templateId)
     local virtualId = CS.Beyond.Gameplay.CharUtils.GetVirtualCharTemplateId(templateId)
     local success, dungeonId = Tables.CharId2DungeonIdTable:TryGetValue(virtualId)
@@ -580,8 +467,6 @@ CharInfoCtrl._ChangeDungeonNode = HL.Method(HL.String) << function(self, templat
         self.view.dungeonNode.gameObject:SetActive(false)
     end
 end
-
-
 
 CharInfoCtrl._RefreshRedDot = HL.Method() << function(self)
     self.view.rightBottomNode.profileBtnRedDot:InitRedDot("CharInfoProfile", self.m_charInfo.templateId)
@@ -602,9 +487,6 @@ CharInfoCtrl._RefreshRedDot = HL.Method() << function(self)
     end
 end
 
-
-
-
 CharInfoCtrl._RefreshMenuNode = HL.Method(HL.Number) << function(self, curPageType)
     self.m_tabCellCache:Refresh(lume.count(CONTROL_TAB_FUNC_DICT), function(cell, index)
         local pageType = CONTROL_TAB_FUNC_DICT[index].pageType
@@ -615,18 +497,12 @@ CharInfoCtrl._RefreshMenuNode = HL.Method(HL.Number) << function(self, curPageTy
     self:_RefreshMenuNodeNavi()
 end
 
-
-
-
 CharInfoCtrl._RefreshDetailNode = HL.Method(HL.Table) << function(self, charInfo)
     self.view.charLevelNode:InitCharLevelNode(charInfo.instId)
     self.view.potentialRankNode:InitPotentialRankNode(charInfo.instId)
     self:_RefreshWeaponNode(charInfo)
     self:_RefreshEquipNode(charInfo)
 end
-
-
-
 
 CharInfoCtrl._RefreshWeaponNode = HL.Method(HL.Table) << function(self, charInfo)
     local weaponInfo = CharInfoUtils.getCharCurWeapon(charInfo.instId)
@@ -636,9 +512,6 @@ CharInfoCtrl._RefreshWeaponNode = HL.Method(HL.Table) << function(self, charInfo
     UIUtils.setItemRarityImage(self.view.weaponRarityMarker.mainColor, weaponExhibitInfo.itemCfg.rarity)
     self.view.weaponLvText.text = weaponExhibitInfo.curLv
 end
-
-
-
 
 CharInfoCtrl._RefreshEquipNode = HL.Method(HL.Table) << function(self, charInfo)
     local instId = self.m_charInfo.instId
@@ -675,12 +548,6 @@ CharInfoCtrl._RefreshEquipNode = HL.Method(HL.Table) << function(self, charInfo)
     end
 end
 
-
-
-
-
-
-
 CharInfoCtrl._RefreshTabCell = HL.Method(HL.Any, HL.Number, HL.Boolean, HL.Number) << function(self, cell, index, isCurTab, curPageType)
     local tabIcon = UIConst.CHAR_INFO_TAB_ICON_PREFIX .. index
     local config = CONTROL_TAB_FUNC_DICT[index]
@@ -716,7 +583,7 @@ CharInfoCtrl._RefreshTabCell = HL.Method(HL.Any, HL.Number, HL.Boolean, HL.Numbe
         end
         if not self.m_hasControllerSetTarget and isCurTab and
             InputManagerInst.controllerNaviManager.curTarget ~= cell.button then
-            UIUtils.setAsNaviTarget(cell.button)
+            self:SetNaviTarget(cell.button)
             self.m_hasControllerSetTarget = true
         end
         if isCurTab then
@@ -727,9 +594,6 @@ CharInfoCtrl._RefreshTabCell = HL.Method(HL.Any, HL.Number, HL.Boolean, HL.Numbe
         end
     end
 end
-
-
-
 
 CharInfoCtrl._OnClickTab = HL.Method(HL.Number) << function(self, index)
     local config = CONTROL_TAB_FUNC_DICT[index]
@@ -752,9 +616,6 @@ CharInfoCtrl._OnClickTab = HL.Method(HL.Number) << function(self, index)
         pageType = config.pageType
     })
 end
-
-
-
 
 CharInfoCtrl.OnPageChange = HL.Method(HL.Any) << function(self, arg)
     local pageType = arg
@@ -817,10 +678,6 @@ CharInfoCtrl.OnPageChange = HL.Method(HL.Any) << function(self, arg)
     end
 end
 
-
-
-
-
 CharInfoCtrl._TryToggleDetailNode = HL.Method(HL.Boolean, HL.Any) << function(self, isOn, pageType)
     local shouldActive = isOn and pageType == UIConst.CHAR_INFO_TAB_TYPE.OVERVIEW
     if shouldActive then
@@ -831,9 +688,6 @@ CharInfoCtrl._TryToggleDetailNode = HL.Method(HL.Boolean, HL.Any) << function(se
         self.view.gyroscopeRoot:PlayOutAnimation()
     end
 end
-
-
-
 
 CharInfoCtrl._CheckIfTabUnlock = HL.Method(HL.Number).Return(HL.Boolean) << function(self, tabIndex)
     local config = CONTROL_TAB_FUNC_DICT[tabIndex]
@@ -847,9 +701,6 @@ CharInfoCtrl._CheckIfTabUnlock = HL.Method(HL.Number).Return(HL.Boolean) << func
 
     return false
 end
-
-
-
 
 CharInfoCtrl.GuideChangeChar = HL.Method(HL.Table) << function(self, args)
     local charId = unpack(args)
@@ -875,8 +726,6 @@ CharInfoCtrl.GuideChangeChar = HL.Method(HL.Table) << function(self, args)
     self:_ChangeSelectIndex(charInfo, false)
 end
 
-
-
 CharInfoCtrl._UpdateGyroEffectParams = HL.Method() << function(self)
     local curAspectRatio = Screen.width / Screen.height
     local maxAngel = self.view.config.GYRO_EFFECT_MAX_ANGLE_CURVE:Evaluate(curAspectRatio)
@@ -885,14 +734,9 @@ end
 
 
 
-
 CharInfoCtrl.m_hasControllerSetTarget = HL.Field(HL.Boolean) << false
 
-
 CharInfoCtrl.m_menuTabConfirmBindingId = HL.Field(HL.Number) << -1
-
-
-
 
 CharInfoCtrl._InitCharInfoController = HL.Method(HL.Opt(HL.Boolean)) << function(self, forceSkipIn)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
@@ -903,14 +747,14 @@ CharInfoCtrl._InitCharInfoController = HL.Method(HL.Opt(HL.Boolean)) << function
             if not weaponPanelItem or not weaponPanelItem.uiCtrl then
                 return
             end
-            UIUtils.setAsNaviTarget(weaponPanelItem.uiCtrl.view.weaponInfoRight.view.charWeaponBasicNode.btnUpgrade)
+            self:SetNaviTarget(weaponPanelItem.uiCtrl.view.weaponInfoRight.view.charWeaponBasicNode.btnUpgrade)
         end
         if self.m_curPageType == UIConst.CHAR_INFO_PAGE_TYPE.EQUIP then
             local equipPanelItem = self.m_phase:_GetPanelPhaseItem(PanelId.CharInfoEquipSlot)
             if not equipPanelItem or not equipPanelItem.uiCtrl then
                 return
             end
-            UIUtils.setAsNaviTarget(equipPanelItem.uiCtrl.view.equipBody.button)
+            self:SetNaviTarget(equipPanelItem.uiCtrl.view.equipBody.button)
         end
     end)
     InputManagerInst:ToggleBinding(self.m_menuTabConfirmBindingId, false)
@@ -947,7 +791,7 @@ CharInfoCtrl._InitCharInfoController = HL.Method(HL.Opt(HL.Boolean)) << function
             local selectedTab = self.m_tabCellCache:Get(self.m_curPageType)
             if selectedTab then
                 if InputManagerInst.controllerNaviManager.curTarget ~= selectedTab.button then
-                    UIUtils.setAsNaviTarget(selectedTab.button)
+                    self:SetNaviTarget(selectedTab.button)
                 end
             end
         end)
@@ -959,8 +803,6 @@ CharInfoCtrl._InitCharInfoController = HL.Method(HL.Opt(HL.Boolean)) << function
 
     self:_RefreshCharInfoSideMenu()
 end
-
-
 
 CharInfoCtrl._RefreshMenuNodeNavi = HL.Method() << function(self)
     local secondTab = self.m_tabCellCache:Get(2)
@@ -989,8 +831,6 @@ CharInfoCtrl._RefreshMenuNodeNavi = HL.Method() << function(self)
     self.view.rightBottomNode.profileBtn.banExplicitOnRight = true
     self.view.rightBottomNode.profileBtn:SetExplicitSelectOnUp(lastTab.button)
 end
-
-
 
 CharInfoCtrl._RefreshCharInfoSideMenu = HL.Method() << function(self)
     self.view.controllerSideMenuBtn:InitControllerSideMenuBtn()

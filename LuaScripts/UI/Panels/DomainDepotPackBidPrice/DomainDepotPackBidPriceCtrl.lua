@@ -2,18 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DomainDepotPackBidPrice
 
-
-
-
-
-
-
-
-
-
-
 DomainDepotPackBidPriceCtrl = HL.Class('DomainDepotPackBidPriceCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -24,17 +13,11 @@ DomainDepotPackBidPriceCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 DomainDepotPackBidPriceCtrl.m_domainDepotId = HL.Field(HL.String) << ""
-
 
 DomainDepotPackBidPriceCtrl.m_trySkipBindingId = HL.Field(HL.Number) << -1
 
-
 DomainDepotPackBidPriceCtrl.m_isClick = HL.Field(HL.Boolean) << false
-
-
-
 
 
 DomainDepotPackBidPriceCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -88,15 +71,11 @@ DomainDepotPackBidPriceCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
 end
 
 
-
-
 DomainDepotPackBidPriceCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     return {
         domainDepotId = self.m_domainDepotId,
     }
 end
-
-
 
 DomainDepotPackBidPriceCtrl._OnNextBtnClick = HL.Method() << function(self)
     if self.m_isClick then
@@ -105,8 +84,6 @@ DomainDepotPackBidPriceCtrl._OnNextBtnClick = HL.Method() << function(self)
     self.m_isClick = true
     Notify(MessageConst.ON_OPEN_DOMAIN_DEPOT_PACK_SELL_PANEL, { domainDepotId = self.m_domainDepotId })
 end
-
-
 
 
 
@@ -120,8 +97,6 @@ DomainDepotPackBidPriceCtrl._InitBidPriceController = HL.Method() << function(se
     
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
 
 DomainDepotPackBidPriceCtrl._OnControllerTrySkip = HL.Method() << function(self)
     self:BindInputPlayerAction("domain_depot_bid_price_skip", function()

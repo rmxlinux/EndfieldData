@@ -1,53 +1,7 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local FormulaCtrl = require_ex('UI/Panels/Formula/FormulaCtrl')
 local PHASE_ID = PhaseId.FacMachine
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseFacMachine = HL.Class('PhaseFacMachine', phaseBase.PhaseBase)
-
 
 
 
@@ -74,46 +28,31 @@ local NeedClosePanelIds = {
 
 local QuestState = CS.Beyond.Gameplay.MissionSystem.QuestState
 
-
 PhaseFacMachine.curPanelId = HL.Field(HL.Number) << -1
-
 
 PhaseFacMachine.curPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseFacMachine.curNodeId = HL.Field(HL.Any)
-
 
 PhaseFacMachine.m_panelArg = HL.Field(HL.Any)
 
-
 PhaseFacMachine.m_panelBuildingDataId = HL.Field(HL.Any)
-
 
 PhaseFacMachine.m_hidePanelKey = HL.Field(HL.Number) << -1
 
-
 PhaseFacMachine.m_isDoingOut = HL.Field(HL.Boolean) << false
-
 
 PhaseFacMachine.curUIInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.NodeUIInfo)
 
-
 PhaseFacMachine.m_curBuildingPos = HL.Field(Vector3)
-
 
 PhaseFacMachine.m_curBuildingRadius = HL.Field(HL.Number) << 0
 
-
 PhaseFacMachine.m_isHalfPanel = HL.Field(HL.Boolean) << false
-
 
 PhaseFacMachine.m_updateKey = HL.Field(HL.Number) << -1
 
-
 PhaseFacMachine.m_tickInitialized = HL.Field(HL.Boolean) << false
-
-
 
 
 
@@ -132,6 +71,16 @@ PhaseFacMachine.OpenBuildingPanel = HL.StaticMethod(HL.Table) << function(args)
 
     local nodeId = args.nodeId
     local buildingSyncNode = FactoryUtils.getBuildingNodeHandler(nodeId)
+
+    
+    local isInvalidBuilding = FactoryUtils.isInvalidBuilding(nodeId)
+    if isInvalidBuilding then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_FACTORY_INVALID_BUILDING_OP_DISABLE_TOAST)
+        if (args.failCb ~= nil) then
+            args.failCb()
+        end
+        return
+    end
 
     
     if buildingSyncNode and not GameInstance.player.guide.skipAllGuide then
@@ -162,8 +111,6 @@ PhaseFacMachine.OpenBuildingPanel = HL.StaticMethod(HL.Table) << function(args)
     end
 end
 
-
-
 PhaseFacMachine.OpenBuildingPanelAlter = HL.StaticMethod(HL.Table) << function(args)
     local nodeId, customArg, buildingId = unpack(args)
 
@@ -182,10 +129,16 @@ PhaseFacMachine.OpenBuildingPanelAlter = HL.StaticMethod(HL.Table) << function(a
     })
 end
 
-
-
 PhaseFacMachine.OpenLogisticPanel = HL.StaticMethod(HL.Table) << function(args)
     local buildingSyncNode = FactoryUtils.getBuildingNodeHandler(args.nodeId)
+
+    
+    local isInvalidBuilding = FactoryUtils.isInvalidBuilding(args.nodeId)
+    if isInvalidBuilding then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_FACTORY_INVALID_BUILDING_OP_DISABLE_TOAST)
+        return
+    end
+
     
     if buildingSyncNode and not GameInstance.player.guide.skipAllGuide then
         if PhaseFacMachine.CheckPanelUnlockedState(buildingSyncNode.templateId, buildingSyncNode.instKey, args.customArg) == false then
@@ -205,8 +158,6 @@ PhaseFacMachine.OpenLogisticPanel = HL.StaticMethod(HL.Table) << function(args)
     args.isBuilding = false
     PhaseManager:OpenPhase(PhaseId.FacMachine, args)
 end
-
-
 
 PhaseFacMachine.OpenNearestBuildingPanel = HL.StaticMethod(HL.Table) << function(arg)
     local buildingId, ignoreCull = unpack(arg)
@@ -234,8 +185,6 @@ PhaseFacMachine.OpenNearestBuildingPanel = HL.StaticMethod(HL.Table) << function
         ignoreDist = true,
     })
 end
-
-
 
 
 
@@ -353,9 +302,6 @@ PhaseFacMachine._OnInit = HL.Override() << function(self)
     self:_StartFbAndTickUpdate()
 end
 
-
-
-
 PhaseFacMachine._ParseNonBuildingPanelArgs = HL.Method(HL.Table).Return(HL.Table) << function(self, args)
     local result = {}
     if args == nil then
@@ -411,21 +357,32 @@ PhaseFacMachine._ParseNonBuildingPanelArgs = HL.Method(HL.Table).Return(HL.Table
     return result
 end
 
-
-
 PhaseFacMachine._StartFbAndTickUpdate = HL.Method() << function(self)
     if self.curUIInfo and not self.m_tickInitialized and not self.m_isDoingOut then
-        
-        self.curUIInfo.sender:Message_HSFB(Utils.getCurrentChapterId(), false, { self.curNodeId })
-        self.curUIInfo:Update(true)
+        local nodeValid = self.curUIInfo.nodeHandler and self.curUIInfo.nodeHandler.valid
+        if nodeValid then
+            
+            self.curUIInfo.sender:Message_HSFB(Utils.getCurrentChapterId(), false, { self.curNodeId })
+            self.curUIInfo:Update(true)
+        else
+            self:_StartCoroutine(function()
+                coroutine.waitCondition(function()
+                    return PhaseManager.m_curState == Const.PhaseState.Idle or PhaseManager:GetTopPhaseId() ~= PHASE_ID
+                end)
+                if PhaseManager:GetTopPhaseId() == PHASE_ID then
+                    self.m_curBuildingPos = nil
+                    PhaseManager:PopPhase(PHASE_ID)
+                    Notify(MessageConst.FAC_UPDATE_INTERACT_OPTION, true)
+                end
+            end)
+            return
+        end
         self.m_updateKey = LuaUpdate:Add("Tick", function()
             self:_Update()
         end)
         self.m_tickInitialized = true
     end
 end
-
-
 
 PhaseFacMachine._StopFbAndTickUpdate = HL.Method() << function(self)
     if self.curUIInfo and self.m_tickInitialized then
@@ -435,11 +392,6 @@ PhaseFacMachine._StopFbAndTickUpdate = HL.Method() << function(self)
         self.m_tickInitialized = false
     end
 end
-
-
-
-
-
 
 
 
@@ -457,10 +409,6 @@ PhaseFacMachine.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL
         end
     end
 end
-
-
-
-
 
 PhaseFacMachine._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if self.m_panelArg.uiInfo ~= nil and string.isEmpty(self.m_panelArg.uiInfo.nodeHandler.templateId) then
@@ -489,10 +437,6 @@ PhaseFacMachine._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table))
     end
 end
 
-
-
-
-
 PhaseFacMachine._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self.m_isDoingOut = true
     Notify(MessageConst.HIDE_ITEM_TIPS)
@@ -507,27 +451,15 @@ PhaseFacMachine._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)
     CS.Beyond.Gameplay.Audio.AudioRemoteFactoryBridge.OnUnitUiClosed(self.curNodeId, self.m_panelBuildingDataId)
 end
 
-
-
-
-
 PhaseFacMachine._DoPhaseTransitionOutAfterItems = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self.m_hidePanelKey = UIManager:RecoverScreen(self.m_hidePanelKey)
 end
-
-
-
-
 
 PhaseFacMachine._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if args.anotherPhaseId == PhaseId.FacBuildListSelect and self.curPanelItem ~= nil and self.curPanelId ~= PanelId.FacHUB then
         self.curPanelItem.uiCtrl:Hide()
     end
 end
-
-
-
-
 
 PhaseFacMachine._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if args.anotherPhaseId == PhaseId.FacBuildListSelect and self.curPanelItem ~= nil and self.curPanelId ~= PanelId.FacHUB then
@@ -538,8 +470,6 @@ PhaseFacMachine._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.
         self.curPanelItem.uiCtrl:RefreshList(true)
     end
 end
-
-
 
 PhaseFacMachine.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}
@@ -559,8 +489,6 @@ PhaseFacMachine.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << functio
     return arg
 end
 
-
-
 PhaseFacMachine._GetFormulaRecoverArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
         return nil
@@ -572,8 +500,6 @@ PhaseFacMachine._GetFormulaRecoverArg = HL.Method().Return(HL.Opt(HL.Any)) << fu
     return formulaCtrl:GetRecoverStateArg(self.curNodeId, self.m_panelBuildingDataId)
 end
 
-
-
 PhaseFacMachine._GetBuildingCommon = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local uiCtrl = self.curPanelItem and self.curPanelItem.uiCtrl
     local buildingCommon = uiCtrl and uiCtrl.view and uiCtrl.view.buildingCommon
@@ -582,8 +508,6 @@ PhaseFacMachine._GetBuildingCommon = HL.Method().Return(HL.Opt(HL.Any)) << funct
     end
     return buildingCommon
 end
-
-
 
 PhaseFacMachine._ShouldRecoverFriendRequest = HL.Method().Return(HL.Boolean) << function(self)
     if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
@@ -599,8 +523,6 @@ PhaseFacMachine._ShouldRecoverFriendRequest = HL.Method().Return(HL.Boolean) << 
     end
     return friendRequestCtrl:IsShareMode()
 end
-
-
 
 PhaseFacMachine._TryRecoverFriendRequest = HL.Method() << function(self)
     if self.arg == nil or self.arg.needRecoverFriendRequest ~= true then
@@ -621,8 +543,6 @@ PhaseFacMachine._TryRecoverFriendRequest = HL.Method() << function(self)
     self.arg.needRecoverFriendRequest = nil
 end
 
-
-
 PhaseFacMachine._ShouldRecoverFacSourceDetails = HL.Method().Return(HL.Boolean) << function(self)
     if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
         return false
@@ -637,8 +557,6 @@ PhaseFacMachine._ShouldRecoverFacSourceDetails = HL.Method().Return(HL.Boolean) 
     end
     return facSourceDetailsCtrl:GetTargetNodeId() == self.curNodeId
 end
-
-
 
 PhaseFacMachine._TryRecoverFacSourceDetails = HL.Method() << function(self)
     if self.arg == nil or self.arg.needRecoverFacSourceDetails ~= true then
@@ -659,8 +577,6 @@ PhaseFacMachine._TryRecoverFacSourceDetails = HL.Method() << function(self)
     self.arg.needRecoverFacSourceDetails = nil
 end
 
-
-
 PhaseFacMachine._GetInventoryAreaRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local uiCtrl = self.curPanelItem and self.curPanelItem.uiCtrl
     local inventoryArea = uiCtrl and uiCtrl.view and uiCtrl.view.inventoryArea
@@ -669,8 +585,6 @@ PhaseFacMachine._GetInventoryAreaRecoverStateArg = HL.Method().Return(HL.Opt(HL.
     end
     return inventoryArea:GetRecoverStateArg()
 end
-
-
 
 PhaseFacMachine._GetFacMixPoolRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     if self.curPanelId ~= PanelId.FacMixPool then
@@ -682,8 +596,6 @@ PhaseFacMachine._GetFacMixPoolRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any
     end
     return uiCtrl:GetRecoverStateArg()
 end
-
-
 
 PhaseFacMachine._TryRecoverInventoryArea = HL.Method() << function(self)
     local recoverState = self.arg and self.arg.inventoryAreaState
@@ -699,8 +611,6 @@ PhaseFacMachine._TryRecoverInventoryArea = HL.Method() << function(self)
     inventoryArea:TryRecoverState(recoverState)
     self.arg.inventoryAreaState = nil
 end
-
-
 
 PhaseFacMachine._TryRecoverFormula = HL.Method() << function(self)
     local formulaArg = self.arg and self.arg.formulaArg
@@ -723,8 +633,6 @@ PhaseFacMachine._TryRecoverFormula = HL.Method() << function(self)
     self.arg.formulaArg = nil
 end
 
-
-
 PhaseFacMachine._TryRecoverInstructionBook = HL.Method() << function(self)
     if self.curPanelId ~= PanelId.FacHUB or self.arg == nil or self.arg.instructionBookArg == nil then
         return
@@ -745,8 +653,6 @@ end
 
 
 
-
-
 PhaseFacMachine._OnActivated = HL.Override() << function(self)
     self:_StartFbAndTickUpdate()
     if self.m_panelBuildingDataId and not self.m_isDoingOut then
@@ -760,13 +666,9 @@ PhaseFacMachine._OnActivated = HL.Override() << function(self)
     end
 end
 
-
-
 PhaseFacMachine._OnDeActivated = HL.Override() << function(self)
     self:_StopFbAndTickUpdate()
 end
-
-
 
 PhaseFacMachine._OnDestroy = HL.Override() << function(self)
     self:_StopFbAndTickUpdate()
@@ -774,8 +676,6 @@ PhaseFacMachine._OnDestroy = HL.Override() << function(self)
         self:RemovePhasePanelItem(self.curPanelItem)  
     end
 end
-
-
 
 PhaseFacMachine._Update = HL.Method() << function(self)
     local nodeValid = false
@@ -806,10 +706,6 @@ PhaseFacMachine._Update = HL.Method() << function(self)
         end
     end
 end
-
-
-
-
 
 
 

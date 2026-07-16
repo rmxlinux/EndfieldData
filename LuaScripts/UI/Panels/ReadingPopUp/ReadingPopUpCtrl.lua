@@ -2,18 +2,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ReadingPopUp
 local PHASE_ID = PhaseId.ReadingPopUp
 
-
-
-
-
-
-
-
-
-
-
 ReadingPopUpCtrl = HL.Class('ReadingPopUpCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -25,20 +14,13 @@ ReadingPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 ReadingPopUpCtrl.m_arg = HL.Field(HL.Table)
-
 
 ReadingPopUpCtrl.m_readId = HL.Field(HL.String) << ""
 
-
 ReadingPopUpCtrl.m_handle = HL.Field(HL.Any)
 
-
 ReadingPopUpCtrl.m_onCloseCallback = HL.Field(HL.Any)
-
-
-
 
 
 ReadingPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -54,8 +36,6 @@ ReadingPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_onCloseCallback = arg.closeCallback
 end
 
-
-
 ReadingPopUpCtrl._ShowContent = HL.Virtual() << function(self)
     local hasCfg = Tables.richContentTable:TryGetValue(self.m_readId)
     if hasCfg then
@@ -67,13 +47,9 @@ ReadingPopUpCtrl._ShowContent = HL.Virtual() << function(self)
     end
 end
 
-
-
 ReadingPopUpCtrl.OnShow = HL.Override() << function(self)
     self:_ShowContent()
 end
-
-
 
 ReadingPopUpCtrl.OnClose = HL.Override() << function(self)
     if not string.isEmpty(self.m_readId) then

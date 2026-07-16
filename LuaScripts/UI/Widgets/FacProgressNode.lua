@@ -1,21 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacProgressNode = HL.Class('FacProgressNode', UIWidgetBase)
 
 local INVALID_PERCENT = -1
@@ -25,54 +9,32 @@ local APPROXIMATE_TOLERANCE = 0.1
 local ZERO_PERCENTAGE_TOLERANCE = 0.1
 
 
-
-
 FacProgressNode._OnFirstTimeInit = HL.Override() << function(self)
     
 end
 
-
 FacProgressNode.m_fillFullWidth = HL.Field(HL.Number) << -1
-
 
 FacProgressNode.m_totalProgress = HL.Field(HL.Number) << -1
 
-
 FacProgressNode.m_lastPercent = HL.Field(HL.Number) << -1
-
 
 FacProgressNode.m_roundingTime = HL.Field(HL.Number) << -1
 
-
 FacProgressNode.m_textColor = HL.Field(HL.String) << ""
-
 
 FacProgressNode.m_onProgressFinished = HL.Field(HL.Function)
 
-
 FacProgressNode.m_onProgressStarted = HL.Field(HL.Function)
-
 
 FacProgressNode.m_needNotifyStarted = HL.Field(HL.Boolean) << false
 
-
 FacProgressNode.m_showOriProgressNumber = HL.Field(HL.Boolean) << false
-
-
 
 FacProgressNode._OnDestroy = HL.Override() << function(self)
     
     AudioAdapter.PostEvent("au_ui_fac_producing_loop_stop")
 end
-
-
-
-
-
-
-
-
-
 
 
 FacProgressNode.InitFacProgressNode = HL.Method(HL.Number, HL.Number, HL.Opt(HL.String, HL.Function, HL.Function, HL.Number, HL.Boolean)) << function(
@@ -103,9 +65,6 @@ FacProgressNode.InitFacProgressNode = HL.Method(HL.Number, HL.Number, HL.Opt(HL.
     self:UpdateProgress(initialProgress)
 end
 
-
-
-
 FacProgressNode._RefreshProgressText = HL.Method(HL.Number) << function(self, textNumber)
     if textNumber == INVALID_TIME_TEXT_NUMBER then
         self.view.progressText.text = "--"
@@ -122,10 +81,6 @@ FacProgressNode._RefreshProgressText = HL.Method(HL.Number) << function(self, te
         end
     end
 end
-
-
-
-
 
 FacProgressNode.UpdateProgress = HL.Method(HL.Number,HL.Opt(HL.Table)) << function(self, curProgress, doTweenConfig)
     
@@ -173,9 +128,6 @@ FacProgressNode.UpdateProgress = HL.Method(HL.Number,HL.Opt(HL.Table)) << functi
 
     self.m_lastPercent = percent
 end
-
-
-
 
 FacProgressNode.SwitchAudioPlayingState = HL.Method(HL.Boolean) << function(self, isPlaying)
     

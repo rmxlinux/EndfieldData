@@ -1,49 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipStation
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipStationCtrl = HL.Class('SpaceshipStationCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -56,35 +14,23 @@ SpaceshipStationCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 SpaceshipStationCtrl.m_roomId = HL.Field(HL.String) << ''
-
 
 SpaceshipStationCtrl.m_isControlCenter = HL.Field(HL.Boolean) << false
 
-
 SpaceshipStationCtrl.m_charEffectCells = HL.Field(HL.Forward('UIListCache'))
-
 
 SpaceshipStationCtrl.m_getCharCell = HL.Field(HL.Function)
 
-
 SpaceshipStationCtrl.m_maxStationCharNum = HL.Field(HL.Number) << -1
-
 
 SpaceshipStationCtrl.m_maxLvStationCharNum = HL.Field(HL.Number) << -1
 
-
 SpaceshipStationCtrl.m_isScrollInit = HL.Field(HL.Boolean) << true
-
 
 SpaceshipStationCtrl.m_skillNodes = HL.Field(HL.Table)
 
-
 SpaceshipStationCtrl.m_nowNaviHeadCell = HL.Field(HL.Userdata)
-
-
-
 
 
 
@@ -132,6 +78,7 @@ SpaceshipStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local roomTypeData = Tables.spaceshipRoomTypeTable[roomType]
     self.view.nameTxt.text = roomTypeData.name
     self.view.bigBgIcon:LoadSprite(UIConst.UI_SPRITE_SPACESHIP_ROOM, roomTypeData.bg .. "_shallow")
+    self.view.iconImg:LoadSprite(UIConst.UI_SPRITE_SPACESHIP_ROOM, roomTypeData.icon)
     local color = UIUtils.getColorByString(roomTypeData.color)
     self.view.colorBg.color = color
 
@@ -159,17 +106,10 @@ SpaceshipStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
-
 SpaceshipStationCtrl.OnHeadCellNaviTargetChange = HL.Method(HL.Opt(HL.Userdata)) << function(self, cell)
     self.m_nowNaviHeadCell = cell
     self:_OnCellSelectedChanged(cell.m_charId, cell.view.button)
 end
-
-
-
-
 
 SpaceshipStationCtrl._OnCellSelectedChanged = HL.Method(HL.String, HL.Any) << function(self, charId, target)
     local chosenIndex = lume.find(self.m_chosenCharIdList, charId)
@@ -182,15 +122,12 @@ end
 
 
 
-
 SpaceshipStationCtrl.m_filterTags = HL.Field(HL.Table)
 
 local FilterType = {
     Skill = 1,
     WorkState = 2,
 }
-
-
 
 SpaceshipStationCtrl._InitFilter = HL.Method() << function(self)
     local inited = false
@@ -254,18 +191,11 @@ SpaceshipStationCtrl._InitFilter = HL.Method() << function(self)
     inited = true
 end
 
-
-
-
 SpaceshipStationCtrl._ApplyFilter = HL.Method(HL.Opt(HL.Table)) << function(self, tags)
     self.m_filterTags = tags
     self:_GenCurCharInfos()
     self:_UpdateCharacters(true)
 end
-
-
-
-
 
 SpaceshipStationCtrl._IsFilterValid = HL.Method(HL.Table, HL.Opt(HL.Table)).Return(HL.Boolean) << function(self, info, tags)
     tags = tags or self.m_filterTags
@@ -285,12 +215,12 @@ SpaceshipStationCtrl._IsFilterValid = HL.Method(HL.Table, HL.Opt(HL.Table)).Retu
         local isPass
         for _, v in ipairs(list) do
             if v.type == FilterType.Skill then
-                if info.char:HasSkillForRoom(v.roomType) then
+                if info.char:HasSkillForRoom(v.roomType) or lume.find(self.m_chosenCharIdList, info.char.id) then
                     isPass = true
                     break
                 end
             elseif v.type == FilterType.WorkState then
-                if v.isWorking == info.char.isWorking and v.isResting == info.char.isResting then
+                if v.isWorking == info.char.isWorking and v.isResting == info.char.isResting or lume.find(self.m_chosenCharIdList, info.char.id) then
                     isPass = true
                     break
                 end
@@ -303,9 +233,6 @@ SpaceshipStationCtrl._IsFilterValid = HL.Method(HL.Table, HL.Opt(HL.Table)).Retu
     return true
 end
 
-
-
-
 SpaceshipStationCtrl._GetContentFilterResultCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tags)
     local count = 0
     for _, v in ipairs(self.m_allCharInfos) do
@@ -315,8 +242,6 @@ SpaceshipStationCtrl._GetContentFilterResultCount = HL.Method(HL.Table).Return(H
     end
     return count
 end
-
-
 
 SpaceshipStationCtrl._InitSort = HL.Method() << function(self)
     local sortOptions = {
@@ -353,11 +278,6 @@ SpaceshipStationCtrl._InitSort = HL.Method() << function(self)
         self:_ApplySortOption(data, isIncremental, true)
     end, 0, nil, true, self.view.filterBtn)
 end
-
-
-
-
-
 
 SpaceshipStationCtrl._ApplySortOption = HL.Method(HL.Opt(HL.Table, HL.Boolean, HL.Boolean)) << function(self, sortData, isIncremental, needUpdateList)
     sortData = sortData or self.view.sortNode:GetCurSortData()
@@ -407,22 +327,15 @@ end
 
 
 
-
 SpaceshipStationCtrl.m_allCharInfos = HL.Field(HL.Table)
-
 
 SpaceshipStationCtrl.m_allCharInfoReverseMap = HL.Field(HL.Table)
 
-
 SpaceshipStationCtrl.m_curCharInfos = HL.Field(HL.Table)
-
 
 SpaceshipStationCtrl.m_curCharInfoReverseMap = HL.Field(HL.Table)
 
-
 SpaceshipStationCtrl.m_chosenCharIdList = HL.Field(HL.Table)
-
-
 
 SpaceshipStationCtrl._GenAllCharInfos = HL.Method() << function(self)
     self.m_allCharInfos = {}
@@ -466,8 +379,6 @@ SpaceshipStationCtrl._GenAllCharInfos = HL.Method() << function(self)
     end
 end
 
-
-
 SpaceshipStationCtrl._GenCurCharInfos = HL.Method() << function(self)
     self.m_curCharInfos = {}
     for _, v in ipairs(self.m_allCharInfos) do
@@ -483,11 +394,7 @@ end
 
 
 
-
 SpaceshipStationCtrl.m_showFriendship = HL.Field(HL.Boolean) << false
-
-
-
 
 SpaceshipStationCtrl._UpdateCharacters = HL.Method(HL.Opt(HL.Boolean)) << function(self, notGen)
     if not notGen then
@@ -499,10 +406,6 @@ SpaceshipStationCtrl._UpdateCharacters = HL.Method(HL.Opt(HL.Boolean)) << functi
     self.view.charScrollList:UpdateCount(count)
     self.view.charListEmptyNode.gameObject:SetActive(count == 0)
 end
-
-
-
-
 
 SpaceshipStationCtrl._OnUpdateCell = HL.Method(HL.Forward("SSCharHeadCell"), HL.Number) << function(self, cell, index)
     local indexOfLineHead = index - ((index - 1) % self.view.charScrollList.countPerLine)
@@ -529,14 +432,11 @@ SpaceshipStationCtrl._OnUpdateCell = HL.Method(HL.Forward("SSCharHeadCell"), HL.
     local showFriendship = self.m_isControlCenter or self.m_showFriendship
     cell.view.friendshipNode.gameObject:SetActive(showFriendship)
     if index == 1 and self.m_isScrollInit then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.view.button)
+        self:SetNaviTarget(cell.view.button)
         self.m_isScrollInit = false
         self:OnHeadCellNaviTargetChange(cell)
     end
 end
-
-
-
 
 SpaceshipStationCtrl._UpdateCharChooseState = HL.Method(HL.String) << function(self, charId)
     local index = self.m_curCharInfoReverseMap[charId]
@@ -549,24 +449,15 @@ SpaceshipStationCtrl._UpdateCharChooseState = HL.Method(HL.String) << function(s
     end
 end
 
-
-
-
-
 SpaceshipStationCtrl._UpdateCharCellChooseState = HL.Method(HL.String, HL.Forward("SSCharHeadCell")) << function(self, charId, cell)
     local chosenIndex = lume.find(self.m_chosenCharIdList, charId)
     cell:SetChooseState(chosenIndex)
 end
 
-
-
-
 SpaceshipStationCtrl._OnClickChar = HL.Method(HL.Number) << function(self, index)
     local charInfo = self.m_curCharInfos[index]
     self:_ToggleChooseChar(charInfo.id)
 end
-
-
 
 
 
@@ -681,9 +572,6 @@ SpaceshipStationCtrl._UpdateStationInfos = HL.Method() << function(self)
 end
 
 
-
-
-
 SpaceshipStationCtrl._ToggleChooseChar = HL.Method(HL.String) << function(self, charId)
     local chosenIndex = lume.find(self.m_chosenCharIdList, charId)
     if chosenIndex then
@@ -709,8 +597,6 @@ SpaceshipStationCtrl._ToggleChooseChar = HL.Method(HL.String) << function(self, 
     self:_UpdateStationInfos()
 end
 
-
-
 SpaceshipStationCtrl._OnClickReset = HL.Method() << function(self)
     local oldChars = self.m_chosenCharIdList
     self.m_chosenCharIdList = {}
@@ -720,15 +606,9 @@ SpaceshipStationCtrl._OnClickReset = HL.Method() << function(self)
     self:_UpdateStationInfos()
 end
 
-
-
-
 SpaceshipStationCtrl.OnSetRoomStationSucc = HL.Method(HL.Table) << function(self, _)
     PhaseManager:PopPhase(PhaseId.SpaceshipStation)
 end
-
-
-
 
 SpaceshipStationCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
     local savedChosen = recoverState.chosenCharIdList
@@ -765,8 +645,6 @@ SpaceshipStationCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, re
     self:_UpdateStationInfos()
 end
 
-
-
 SpaceshipStationCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = {
         roomId = self.m_roomId,
@@ -782,8 +660,6 @@ SpaceshipStationCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) 
     arg.recoverState = recoverState
     return arg
 end
-
-
 
 SpaceshipStationCtrl._OnClickConfirm = HL.Method() << function(self)
     local spaceship = GameInstance.player.spaceship

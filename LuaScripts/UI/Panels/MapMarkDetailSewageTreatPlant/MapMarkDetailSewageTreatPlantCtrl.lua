@@ -8,7 +8,6 @@ MapMarkDetailSewageTreatPlantCtrl = HL.Class('MapMarkDetailSewageTreatPlantCtrl'
 
 
 
-
 MapMarkDetailSewageTreatPlantCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }

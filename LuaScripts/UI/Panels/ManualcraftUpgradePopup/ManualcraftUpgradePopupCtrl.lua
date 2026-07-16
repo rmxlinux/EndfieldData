@@ -1,24 +1,12 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ManualcraftUpgradePopup
-
-
-
-
-
-
-
-
 ManualcraftUpgradePopupCtrl = HL.Class('ManualcraftUpgradePopupCtrl', uiCtrl.UICtrl)
-
 
 ManualcraftUpgradePopupCtrl.m_index = HL.Field(HL.Number) << 0
 
-
 ManualcraftUpgradePopupCtrl.m_itemList = HL.Field(HL.Table)
 
-
 ManualcraftUpgradePopupCtrl.m_cellList = HL.Field(HL.Any)
-
 
 
 
@@ -28,9 +16,6 @@ ManualcraftUpgradePopupCtrl.m_cellList = HL.Field(HL.Any)
 ManualcraftUpgradePopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 ManualcraftUpgradePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -82,8 +67,6 @@ ManualcraftUpgradePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self:_OnUpdateUI()
 end
 
-
-
 ManualcraftUpgradePopupCtrl._ContinueHandle = HL.Method() << function(self)
     if self.m_index == #self.m_itemList then
         PhaseManager:PopPhase(PhaseId.ManualcraftUpgradePopup)
@@ -92,8 +75,6 @@ ManualcraftUpgradePopupCtrl._ContinueHandle = HL.Method() << function(self)
         self:_OnUpdateUI()
     end
 end
-
-
 
 
 ManualcraftUpgradePopupCtrl._OnUpdateUI = HL.Method() << function(self)

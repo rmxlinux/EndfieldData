@@ -1,17 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SimulationTrainingExplain
 local PHASE_ID = PhaseId.SimulationTrainingExplain
-
-
-
-
-
-
-
-
-
 SimulationTrainingExplainCtrl = HL.Class('SimulationTrainingExplainCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -22,15 +12,11 @@ SimulationTrainingExplainCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 SimulationTrainingExplainCtrl.m_enemyCells = HL.Field(HL.Forward("UIListCache"))
-
 
 SimulationTrainingExplainCtrl.m_system = HL.Field(HL.Any)
 
-
 SimulationTrainingExplainCtrl.m_gameId = HL.Field(HL.Any) << nil
-
 
 SimulationTrainingExplainCtrl.m_close = HL.Field(HL.Boolean) << false
 
@@ -53,14 +39,10 @@ local PointNumberImg = {
 
 local IMG_FOLDER = "SimulationTraining"
 
-
-
 SimulationTrainingExplainCtrl.ShowSimulationTrainingExplain = HL.StaticMethod(HL.Opt(HL.Table)) << function(args)
     
     UIManager:Open(PANEL_ID, args)
 end
-
-
 
 
 SimulationTrainingExplainCtrl.OnClose = HL.Override() << function(self)
@@ -69,9 +51,6 @@ SimulationTrainingExplainCtrl.OnClose = HL.Override() << function(self)
         self.m_system:HideInteractive()
     end
 end
-
-
-
 
 
 SimulationTrainingExplainCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)

@@ -1,20 +1,9 @@
 local LogisticPortLinkageStatus = FacCoreNS.FactoryGridLogisticSystem.LogisticPortLinkageStatus
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacLoader
-
-
-
-
-
-
-
-
-
-
 FacLoaderCtrl = HL.Class('FacLoaderCtrl', uiCtrl.UICtrl)
 
 local INVALID_COUNT_TEXT = "--"
-
 
 
 
@@ -26,14 +15,9 @@ FacLoaderCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacLoaderCtrl.m_nodeId = HL.Field(HL.Any)
 
-
 FacLoaderCtrl.m_uiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_BusLoader)
-
-
-
 
 
 FacLoaderCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -74,14 +58,10 @@ FacLoaderCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_NaviToLoadingInfo()
 end
 
-
-
 FacLoaderCtrl.OnClose = HL.Override() << function(self)
     GameInstance.player.remoteFactory.core:Message_HSFB(Utils.getCurrentChapterId(), true, {1})
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_nodeId)
 end
-
-
 
 FacLoaderCtrl._UpdateTransferItem = HL.Method() << function(self)
     local id = self.m_uiInfo.lastLoadItemId
@@ -120,25 +100,16 @@ FacLoaderCtrl._UpdateTransferItem = HL.Method() << function(self)
     self.view.decoIcon.gameObject:SetActiveIfNecessary(not itemExist)
 end
 
-
-
-
 FacLoaderCtrl._RefreshBlockState = HL.Method(HL.Boolean) << function(self, isBlock)
     local state = isBlock and GEnums.FacBuildingState.Blocked or GEnums.FacBuildingState.Normal
     self.view.buildingCommon:ChangeBuildingStateDisplay(state)
 end
-
-
-
-
 
 FacLoaderCtrl._RefreshItemCount = HL.Method(HL.String, HL.Any) << function(self, countText, color)
     self.view.infoShadowNode.countText.text = countText
     self.view.infoNode.countText.text = countText
     self.view.infoNode.countText.color = color
 end
-
-
 
 FacLoaderCtrl._NaviToLoadingInfo = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -147,7 +118,7 @@ FacLoaderCtrl._NaviToLoadingInfo = HL.Method() << function(self)
 
     local itemExist = not string.isEmpty(self.m_uiInfo.lastLoadItemId)
     local naviTarget = itemExist and self.view.loadingItem.view.button or self.view.loadingEmptyNaviDecorator
-    UIUtils.setAsNaviTarget(naviTarget)
+    self:SetNaviTarget(naviTarget)
 end
 
 HL.Commit(FacLoaderCtrl)

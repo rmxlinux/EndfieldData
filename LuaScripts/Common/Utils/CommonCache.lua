@@ -1,29 +1,12 @@
-
-
-
-
-
-
-
-
 CommonCache = HL.Class('CommonCache')
-
 
 CommonCache.m_cacheStack = HL.Field(HL.Forward("Stack"))
 
-
 CommonCache.m_createFunc = HL.Field(HL.Function)
-
 
 CommonCache.m_onUse = HL.Field(HL.Function)
 
-
 CommonCache.m_onCache = HL.Field(HL.Function)
-
-
-
-
-
 
 CommonCache.CommonCache = HL.Constructor(HL.Function, HL.Opt(HL.Function, HL.Function))
 << function(self, createFunc, onUse, onCache)
@@ -32,8 +15,6 @@ CommonCache.CommonCache = HL.Constructor(HL.Function, HL.Opt(HL.Function, HL.Fun
     self.m_onUse = onUse
     self.m_onCache = onCache
 end
-
-
 
 CommonCache.Get = HL.Method().Return(HL.Any) << function(self)
     local cell
@@ -47,9 +28,6 @@ CommonCache.Get = HL.Method().Return(HL.Any) << function(self)
     end
     return cell
 end
-
-
-
 
 CommonCache.Cache = HL.Method(HL.Any) << function (self, cell)
     if self.m_onCache then

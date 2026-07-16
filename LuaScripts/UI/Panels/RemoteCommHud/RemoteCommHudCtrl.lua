@@ -1,44 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.RemoteCommHud
 local AUTO_TIME_OUT_TIME = 30
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RemoteCommHudCtrl = HL.Class('RemoteCommHudCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -50,47 +13,31 @@ RemoteCommHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 RemoteCommHudCtrl.s_auto = HL.StaticField(HL.Boolean) << false
-
 
 RemoteCommHudCtrl.m_inited = HL.Field(HL.Boolean) << false
 
-
 RemoteCommHudCtrl.m_autoNextTimer = HL.Field(HL.Number) << -1
-
 
 RemoteCommHudCtrl.m_startTime = HL.Field(HL.Number) << 0
 
-
 RemoteCommHudCtrl.m_pauseTime = HL.Field(HL.Number) << 0
-
 
 RemoteCommHudCtrl.m_voiceHandleId = HL.Field(HL.Number) << 0
 
-
 RemoteCommHudCtrl.m_forceAuto = HL.Field(HL.Any)
-
 
 RemoteCommHudCtrl.m_singleData = HL.Field(Cfg.Types.RemoteCommonSingleData)
 
-
 RemoteCommHudCtrl.m_firstShown = HL.Field(HL.Boolean) << false
-
 
 RemoteCommHudCtrl.m_remoteCommSingleId = HL.Field(HL.String) << ""
 
-
 RemoteCommHudCtrl.m_clickCount = HL.Field(HL.Number) << 0
-
 
 RemoteCommHudCtrl.m_clickable = HL.Field(HL.Boolean) << false
 
-
 RemoteCommHudCtrl.m_clickableTimer = HL.Field(HL.Number) << -1
-
-
-
 
 
 RemoteCommHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -122,8 +69,6 @@ RemoteCommHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
 RemoteCommHudCtrl.OnShow = HL.Override() << function(self)
     self:SetForceAuto(nil)
     local autoMode = self:_GetCurAuto()
@@ -137,8 +82,6 @@ RemoteCommHudCtrl.OnShow = HL.Override() << function(self)
     self:SetClickable(false)
     self:_RefreshAutoHint()
 end
-
-
 
 RemoteCommHudCtrl._GetAutoNextTime = HL.Method().Return(HL.Number) << function(self)
     local pastTime = 0
@@ -168,8 +111,6 @@ RemoteCommHudCtrl._GetAutoNextTime = HL.Method().Return(HL.Number) << function(s
     return existTime
 end
 
-
-
 RemoteCommHudCtrl._GetCurAuto = HL.Method().Return(HL.Boolean) << function(self)
     if self.m_forceAuto ~= nil then
         return self.m_forceAuto
@@ -177,23 +118,15 @@ RemoteCommHudCtrl._GetCurAuto = HL.Method().Return(HL.Boolean) << function(self)
     return RemoteCommHudCtrl.s_auto
 end
 
-
-
-
 RemoteCommHudCtrl.SetForceAuto = HL.Method(HL.Any) << function(self, forceAuto)
     self.m_forceAuto = forceAuto
     self:_RefreshAutoHint()
 end
 
-
-
 RemoteCommHudCtrl.OnClose = HL.Override() << function(self)
     self:_ClearAutoNextTimer()
     self:ClearClickableTimer()
 end
-
-
-
 
 RemoteCommHudCtrl._SwitchAuto = HL.Method(HL.Opt(HL.Boolean)) << function(self, auto)
     local tmpAuto = not RemoteCommHudCtrl.s_auto
@@ -213,8 +146,6 @@ RemoteCommHudCtrl._SwitchAuto = HL.Method(HL.Opt(HL.Boolean)) << function(self, 
     self:_RefreshAutoHint()
 end
 
-
-
 RemoteCommHudCtrl._RefreshAutoHint = HL.Method() << function(self)
     local curAutoState = self:_GetCurAuto()
     if self.m_forceAuto == nil then
@@ -228,8 +159,6 @@ RemoteCommHudCtrl._RefreshAutoHint = HL.Method() << function(self)
     self.view.controllerHint.skipHint.gameObject:SetActiveIfNecessary(not curAutoState)
     self.view.controllerHint.skipHintLoop.gameObject:SetActiveIfNecessary(curAutoState)
 end
-
-
 
 RemoteCommHudCtrl._StartAutoNextTimer = HL.Method() << function(self)
     self:_ClearAutoNextTimer()
@@ -245,8 +174,6 @@ RemoteCommHudCtrl._StartAutoNextTimer = HL.Method() << function(self)
     end
 end
 
-
-
 RemoteCommHudCtrl._OnNextButtonClick = HL.Method() << function(self)
     self.m_clickCount = self.m_clickCount + 1
     if self.m_forceAuto or not self.m_clickable then
@@ -260,13 +187,9 @@ RemoteCommHudCtrl._OnNextButtonClick = HL.Method() << function(self)
     end
 end
 
-
-
 RemoteCommHudCtrl._Next = HL.Method() << function(self)
     self:Notify(MessageConst.REMOTE_COMM_NEXT)
 end
-
-
 
 RemoteCommHudCtrl._ClearAutoNextTimer = HL.Method() << function(self)
     if self.m_autoNextTimer >= 0 then
@@ -275,18 +198,12 @@ RemoteCommHudCtrl._ClearAutoNextTimer = HL.Method() << function(self)
     self.m_autoNextTimer = -1
 end
 
-
-
 RemoteCommHudCtrl._StopVoice = HL.Method() << function(self)
     if self.m_voiceHandleId > 0 then
         VoiceManager:StopVoice(self.m_voiceHandleId)
     end
     self.m_voiceHandleId = -1
 end
-
-
-
-
 
 RemoteCommHudCtrl.RefreshText = HL.Method(HL.String, Cfg.Types.RemoteCommonSingleData) << function(self, remoteCommId, singleData)
     self.m_singleData = singleData
@@ -323,8 +240,6 @@ RemoteCommHudCtrl.RefreshText = HL.Method(HL.String, Cfg.Types.RemoteCommonSingl
     self.m_remoteCommSingleId = string.format("%s_%d", remoteCommId, index)
 end
 
-
-
 RemoteCommHudCtrl.StartClickableTimer = HL.Method() << function(self)
     self:ClearClickableTimer()
     self.m_clickableTimer = self:_StartTimer(1.0, function()
@@ -332,17 +247,12 @@ RemoteCommHudCtrl.StartClickableTimer = HL.Method() << function(self)
     end)
 end
 
-
-
 RemoteCommHudCtrl.ClearClickableTimer = HL.Method() << function(self)
     if self.m_clickableTimer then
         self:_ClearTimer(self.m_clickableTimer)
         self.m_clickableTimer = -1
     end
 end
-
-
-
 
 RemoteCommHudCtrl.SetClickable = HL.Method(HL.Boolean) << function(self, enable)
     if self.m_forceAuto then
@@ -353,13 +263,9 @@ RemoteCommHudCtrl.SetClickable = HL.Method(HL.Boolean) << function(self, enable)
     self.view.dialogTextNode.waitNode.gameObject:SetActive(enable)
 end
 
-
-
 RemoteCommHudCtrl._EndRemoteComm = HL.Method() << function(self)
     self:Notify(MessageConst.REMOTE_COMM_SKIP_END)
 end
-
-
 
 RemoteCommHudCtrl._Pause = HL.Method() << function(self)
     VoiceManager:PauseVoice(self.m_voiceHandleId)
@@ -367,8 +273,6 @@ RemoteCommHudCtrl._Pause = HL.Method() << function(self)
     self.m_pauseTime = Time.time
     self:Notify(MessageConst.REMOTE_COMM_PAUSE)
 end
-
-
 
 RemoteCommHudCtrl._Resume = HL.Method() << function(self)
     if self.m_voiceHandleId > 0 then
@@ -380,8 +284,6 @@ RemoteCommHudCtrl._Resume = HL.Method() << function(self)
     self.m_pauseTime = 0
     self:Notify(MessageConst.REMOTE_COMM_RESUME)
 end
-
-
 
 RemoteCommHudCtrl._UpdateClickRecord = HL.Method() << function(self)
     GameWorld.gameMechManager.mainCharRemoteCommBrain:UpdateClickRecord(self.m_remoteCommSingleId, self.m_clickCount)

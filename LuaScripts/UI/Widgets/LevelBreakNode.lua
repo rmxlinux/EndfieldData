@@ -1,28 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 LevelBreakNode = HL.Class('LevelBreakNode', UIWidgetBase)
 
-
 LevelBreakNode.m_breakCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 
 LevelBreakNode._OnFirstTimeInit = HL.Override() << function(self)
     self.m_breakCellCache = UIUtils.genCellCache(self.view.breakCell)
 end
-
-
-
-
-
 
 LevelBreakNode.InitLevelBreakNodeSimple = HL.Method(HL.Number, HL.Number, HL.Opt(HL.Boolean)) << function(self, curBreakStage, maxBreakStage, showNextStage)
     self:_FirstTimeInit()
@@ -35,11 +21,6 @@ LevelBreakNode.InitLevelBreakNodeSimple = HL.Method(HL.Number, HL.Number, HL.Opt
         cell.breaking.gameObject:SetActive(showNextStage and curBreakStage + 1 == index)
     end)
 end
-
-
-
-
-
 
 LevelBreakNode.InitLevelBreakNode = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Table)) << function(self, curBreakStage, showNextBreakStage, customBreakInfoList)
     self:_FirstTimeInit()

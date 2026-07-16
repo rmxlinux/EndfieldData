@@ -1,20 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 ActivityCommonRecord = HL.Class('ActivityCommonRecord', UIWidgetBase)
-
 
 ActivityCommonRecord.m_activityId = HL.Field(HL.String) << ""
 
-
 ActivityCommonRecord.m_rankRelatedId = HL.Field(HL.String) << ""
-
-
 
 
 ActivityCommonRecord._OnFirstTimeInit = HL.Override() << function(self)
@@ -22,10 +12,6 @@ ActivityCommonRecord._OnFirstTimeInit = HL.Override() << function(self)
         self:_OnClickRankingBtn()
     end)
 end
-
-
-
-
 
 ActivityCommonRecord.InitActivityCommonRecord = HL.Method(HL.String, HL.String) << function(self, activityId, rankRelatedId)
     self:_FirstTimeInit()
@@ -42,8 +28,6 @@ ActivityCommonRecord.InitActivityCommonRecord = HL.Method(HL.String, HL.String) 
     local floorRankValue = math.floor(rankValue / 1000)
     self.view.timeTxt.text = succ and UIUtils.getLeftTimeToSecond(floorRankValue) or "--:--"
 end
-
-
 
 ActivityCommonRecord._OnClickRankingBtn = HL.Method() << function(self)
     PhaseManager:OpenPhase(PhaseId.ActivityRanking, {

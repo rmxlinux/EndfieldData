@@ -1,21 +1,8 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 PuzzleBlockShadow = HL.Class('PuzzleBlockShadow', UIWidgetBase)
 
-
 PuzzleBlockShadow.m_tweenCore = HL.Field(HL.Any)
-
-
 
 PuzzleBlockShadow._OnDestroy = HL.Override() << function(self)
     if self.m_tweenCore then
@@ -24,13 +11,8 @@ PuzzleBlockShadow._OnDestroy = HL.Override() << function(self)
 end
 
 
-
-
 PuzzleBlockShadow._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
 
 PuzzleBlockShadow.InitPuzzleBlockShadow = HL.Method(HL.Table) << function(self, data)
     self:_FirstTimeInit()
@@ -49,36 +31,21 @@ PuzzleBlockShadow.InitPuzzleBlockShadow = HL.Method(HL.Table) << function(self, 
     self:SetVisible(false)
 end
 
-
-
-
 PuzzleBlockShadow.Rotate = HL.Method(HL.Number) << function(self, rotateCount)
     self.m_tweenCore = self.view.viewRect:DORotate(Vector3(0, 0, -90 * (rotateCount % 4)), 0.2)
 end
-
-
-
 
 PuzzleBlockShadow.RecoverRotation = HL.Method(HL.Number) << function(self, rotateCount)
     self.view.viewRect.localRotation = Quaternion.Euler(0, 0, -90 * (rotateCount % 4))
 end
 
-
-
-
 PuzzleBlockShadow.SetPosition = HL.Method(Vector3) << function(self, position)
     self.view.rectTransform.position = position
 end
 
-
-
-
 PuzzleBlockShadow.SetVisible = HL.Method(HL.Boolean) << function(self, visible)
     self.view.gameObject:SetActiveIfNecessary(visible)
 end
-
-
-
 
 PuzzleBlockShadow.SetLegal = HL.Method(HL.Boolean) << function(self, legal)
     self.view.viewImage.color = legal and Color.white or Color.red

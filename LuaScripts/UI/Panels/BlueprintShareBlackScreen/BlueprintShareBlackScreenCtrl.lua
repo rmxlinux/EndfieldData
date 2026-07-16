@@ -1,26 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BlueprintShareBlackScreen
 local PHASE_ID = PhaseId.BlueprintShareBlackScreen
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BlueprintShareBlackScreenCtrl = HL.Class('BlueprintShareBlackScreenCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -30,29 +11,19 @@ BlueprintShareBlackScreenCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_ON_SHARE_BLUEPRINT] = 'FacOnShareBlueprint',
 }
 
-
 BlueprintShareBlackScreenCtrl.m_blueprintID = HL.Field(HL.Any) << 0
-
 
 BlueprintShareBlackScreenCtrl.m_csBPInst = HL.Field(CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintInstance)
 
-
 BlueprintShareBlackScreenCtrl.m_isReporting = HL.Field(HL.Boolean) << false
-
 
 BlueprintShareBlackScreenCtrl.m_sharingOutside = HL.Field(HL.Boolean) << false
 
-
 BlueprintShareBlackScreenCtrl.m_gettingShareCode = HL.Field(HL.Boolean) << false
-
 
 BlueprintShareBlackScreenCtrl.m_onClose = HL.Field(HL.Function)
 
-
 BlueprintShareBlackScreenCtrl.m_deviceInfo = HL.Field(HL.Table)
-
-
-
 
 
 BlueprintShareBlackScreenCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -68,14 +39,11 @@ BlueprintShareBlackScreenCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
     self:_InitNodes(tipsTransform)
     InputManagerInst:ToggleGroup(self.view.bindingGroup.groupId, true)
     if self.m_isReporting then
-        UIUtils.setAsNaviTarget(self.view.infoBtn)
+        self:SetNaviTarget(self.view.infoBtn)
     else
-        UIUtils.setAsNaviTarget(self.view.shareToFriendsBtn)
+        self:SetNaviTarget(self.view.shareToFriendsBtn)
     end
 end
-
-
-
 
 
 BlueprintShareBlackScreenCtrl._InitNodes = HL.Method(HL.Any) << function(self,tipsTransform)
@@ -108,8 +76,6 @@ BlueprintShareBlackScreenCtrl._InitNodes = HL.Method(HL.Any) << function(self,ti
     end
 end
 
-
-
 BlueprintShareBlackScreenCtrl._ReportBlueprint = HL.Method() << function(self)
     local roleId = self.m_csBPInst.creatorRoleId
     GameInstance.player.friendSystem:SyncFriendInfoById(roleId, function()
@@ -122,23 +88,16 @@ BlueprintShareBlackScreenCtrl._ReportBlueprint = HL.Method() << function(self)
     end)
 end
 
-
-
 BlueprintShareBlackScreenCtrl.OnClose = HL.Override() << function(self)
     if self.m_onClose then
         self.m_onClose()
     end
 end
 
-
-
 BlueprintShareBlackScreenCtrl._ShareOutside = HL.Method() << function(self)
     self.m_sharingOutside = true
     self:_GetShareCode()
 end
-
-
-
 
 BlueprintShareBlackScreenCtrl.FacOnShareBlueprint = HL.Method(HL.Table) << function(self, args)
     if self.m_gettingShareCode then
@@ -195,14 +154,10 @@ BlueprintShareBlackScreenCtrl.FacOnShareBlueprint = HL.Method(HL.Table) << funct
     end
 end
 
-
-
 BlueprintShareBlackScreenCtrl._ShareToFriends = HL.Method() << function(self)
     self.m_sharingOutside = false
     self:_GetShareCode()
 end
-
-
 
 BlueprintShareBlackScreenCtrl._GetShareCode = HL.Method() << function(self)
     self.m_gettingShareCode = true
@@ -214,8 +169,6 @@ BlueprintShareBlackScreenCtrl._GetShareCode = HL.Method() << function(self)
         GameInstance.player.remoteFactory.blueprint:SendShareGiftBlueprint(self.m_blueprintID)
     end
 end
-
-
 
 
 BlueprintShareBlackScreenCtrl._SeeCreatorInfo = HL.Method() << function(self)

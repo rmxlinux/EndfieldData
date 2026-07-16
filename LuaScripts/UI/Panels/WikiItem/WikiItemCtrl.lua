@@ -1,14 +1,5 @@
 local wikiDetailBaseCtrl = require_ex('UI/Panels/WikiDetailBase/WikiDetailBaseCtrl')
 local PANEL_ID = PanelId.WikiItem
-
-
-
-
-
-
-
-
-
 WikiItemCtrl = HL.Class('WikiItemCtrl', wikiDetailBaseCtrl.WikiDetailBaseCtrl)
 
 
@@ -22,7 +13,9 @@ local SHOW_CRAFT_TREE_GROUP_TABLE = {
 
 
 
-
+WikiItemCtrl.s_overrideMessages = HL.StaticField(HL.Table) << {
+    [MessageConst.FAC_ON_UNLOCK_TECH_TREE_UI] = '_FacOnUnlockTechTreeUI',
+}
 
 
 
@@ -31,19 +24,17 @@ WikiItemCtrl.OnShow = HL.Override() << function(self)
     self:_PlayBgDecoAnim()
 end
 
-
-
 WikiItemCtrl.OnClose = HL.Override() << function(self)
     self:GameEventLogExit()
 end
-
-
 
 WikiItemCtrl.GetPanelId = HL.Override().Return(HL.Number) << function(self)
     return PANEL_ID
 end
 
-
+WikiItemCtrl._FacOnUnlockTechTreeUI = HL.Method(HL.Table) << function(self, args)
+    self:_RefreshRight()
+end
 
 WikiItemCtrl._RefreshCenter = HL.Override() << function(self)
     WikiItemCtrl.Super._RefreshCenter(self)
@@ -57,10 +48,7 @@ WikiItemCtrl._RefreshCenter = HL.Override() << function(self)
     end
 end
 
-
 WikiItemCtrl.m_isBtnInited = HL.Field(HL.Boolean) << false
-
-
 
 WikiItemCtrl._RefreshRight = HL.Override() << function(self)
     local view = self.view.right
@@ -79,6 +67,8 @@ WikiItemCtrl._RefreshRight = HL.Override() << function(self)
         end)
     end
     view.viewBtn.gameObject:SetActive(SHOW_CRAFT_TREE_GROUP_TABLE[self.m_wikiEntryShowData.wikiGroupData.groupId] == true)
+
+    LayoutRebuilder.ForceRebuildLayoutImmediate(view.scrollRect.content)
 
     local itemId = self.m_wikiEntryShowData.wikiEntryData.refItemId
     view.itemObtainWaysForWiki:InitItemObtainWays(itemId, nil, self.m_itemTipsPosInfo, function(cell, craftCellView)
@@ -203,14 +193,12 @@ WikiItemCtrl._RefreshRight = HL.Override() << function(self)
     end
 
     local isFocusEnabled = view.itemAsInput.m_obtainCells:GetCount() > 0 or
-        (view.itemObtainWaysForWiki.m_obtainCells:GetCount() > 0 and
+        ((view.itemObtainWaysForWiki.m_obtainCells:GetCount() > 0 or view.itemObtainWaysForWiki.view.emptyNode.gameObject.activeSelf) and
             view.itemObtainWaysForWiki.view.gameObject.activeSelf) or
         isWeaponPotentialItem
     view.naviGroup.enabled = isFocusEnabled
     self.view.right.controllerFocusHintNode.gameObject:SetActive(isFocusEnabled)
 end
-
-
 
 
 

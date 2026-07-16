@@ -1,44 +1,20 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MapRemind = HL.Class('MapRemind', UIWidgetBase)
-
 
 MapRemind.m_tabInfos = HL.Field(HL.Table)
 
-
 MapRemind.m_mapRemindInfos = HL.Field(HL.Table)
-
 
 MapRemind.m_curTabIndex = HL.Field(HL.Number) << -1
 
-
 MapRemind.m_onClose = HL.Field(HL.Function)
-
 
 MapRemind.m_genTabCells = HL.Field(HL.Forward("UIListCache"))
 
-
 MapRemind.m_getCell = HL.Field(HL.Function)
 
-
 MapRemind.m_levelId = HL.Field(HL.String) << ""
-
-
 
 
 MapRemind._OnFirstTimeInit = HL.Override() << function(self)
@@ -80,10 +56,6 @@ MapRemind._OnFirstTimeInit = HL.Override() << function(self)
     }
 end
 
-
-
-
-
 MapRemind._OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function)) << function(self, object, index)
     local tabType = GEnums.MapRemindTabType.__CastFrom(self.m_curTabIndex - 1)
     local info = self.m_mapRemindInfos[tabType][index]
@@ -117,14 +89,21 @@ MapRemind._OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function))
     cell.mattersIconImg:LoadSprite(UIConst.UI_SPRITE_MAP_MARK_ICON_SMALL, icon)
     cell.btn.onClick:RemoveAllListeners()
     cell.btn.onClick:AddListener(function()
-        MapUtils.openMap(instId)
+        if info.value.onClick then
+            info.value.onClick(self.m_levelId)
+        else
+            MapUtils.openMap(instId)
+        end
         self.m_onClose()
     end)
     cell.btn.customBindingViewLabelText = Language.LUA_MAP_REMIND_CELL_CONFIRM
+
+    if info.value.state then
+        cell.animRoot:SetState(info.value.state)
+    else
+        cell.animRoot:SetState("Normal")
+    end
 end
-
-
-
 
 MapRemind._GetCellByIndex = HL.Method(HL.Number).Return(HL.Any) << function(self, cellIndex)
     local go = self.view.infoScrollList:Get(CSIndex(cellIndex))
@@ -135,12 +114,6 @@ MapRemind._GetCellByIndex = HL.Method(HL.Number).Return(HL.Any) << function(self
 
     return cell
 end
-
-
-
-
-
-
 
 MapRemind.InitMapRemind = HL.Method(HL.String, HL.Table, HL.Function, HL.Opt(HL.Number)) << function(self, levelId, infos, onClose, initIndex)
     self:_FirstTimeInit()
@@ -154,26 +127,28 @@ MapRemind.InitMapRemind = HL.Method(HL.String, HL.Table, HL.Function, HL.Opt(HL.
     for k, v in pairs(infos) do
         
         local cfg = Tables.mapRemindTable:GetValue(k)
-        for _,insId in pairs(v.insIdList) do
-            if MapUtils.isMarkVisible(insId) then
+        for _, insId in pairs(v.insIdList) do
+            if MapUtils.isMarkVisible(insId) or k == GEnums.MapRemindType.InvalidBuilding then
                 table.insert(self.m_mapRemindInfos[cfg.tabType], { key = k, value =
                 {
                     insId = insId,
                     redDotName = v.redDotName,
                     useMarkIcon = v.useMarkIcon,
+                    state = v.state,
+                    onClick = v.onClick,
                 }})
             end
         end
     end
 
-    
     for tabType, infoList in pairs(self.m_mapRemindInfos) do
         table.sort(infoList, function(a, b)
-            if a.key == b.key then
-                return a.value.insId < b.value.insId
-            else
-                return a.key:GetHashCode() < b.key:GetHashCode()
+            local cfgA = Tables.mapRemindTable:GetValue(a.key)
+            local cfgB = Tables.mapRemindTable:GetValue(b.key)
+            if cfgA.sort ~= cfgB.sort then
+                return cfgA.sort < cfgB.sort
             end
+            return a.value.insId < b.value.insId
         end)
     end
 
@@ -190,8 +165,6 @@ MapRemind.InitMapRemind = HL.Method(HL.String, HL.Table, HL.Function, HL.Opt(HL.
     self:_InitTabInfos(index)
 end
 
-
-
 MapRemind.UpdateMapRemindInfo = HL.Method() << function(self)
     
     
@@ -202,17 +175,12 @@ MapRemind.UpdateMapRemindInfo = HL.Method() << function(self)
     if cell == nil then
         return
     end
-    InputManagerInst.controllerNaviManager:SetTarget(cell.btn)
+    self:SetNaviTarget(cell.btn)
 end
-
-
 
 MapRemind.GetCurTabIndex = HL.Method().Return(HL.Number) << function(self)
    return self.m_curTabIndex
 end
-
-
-
 
 MapRemind._InitTabInfos = HL.Method(HL.Number) << function(self, index)
     self.m_genTabCells:Refresh(#self.m_tabInfos, function(cell, luaIndex)
@@ -234,9 +202,6 @@ MapRemind._InitTabInfos = HL.Method(HL.Number) << function(self, index)
         end
     end)
 end
-
-
-
 
 MapRemind._OnTabClick = HL.Method(HL.Number) << function(self, luaIndex)
     if self.m_curTabIndex == luaIndex then

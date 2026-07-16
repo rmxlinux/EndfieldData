@@ -1,18 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MouseIconHint
-
-
-
-
-
-
-
-
-
-
 MouseIconHintCtrl = HL.Class('MouseIconHintCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -22,18 +11,13 @@ MouseIconHintCtrl = HL.Class('MouseIconHintCtrl', uiCtrl.UICtrl)
 
 MouseIconHintCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHANGE_MOUSE_ICON_HINT] = 'ChangeMouseIconHint',
-    [MessageConst.SHOW_HYPERLINK_TIPS] = 'ShowHyperlinkHoverIcon',
-    [MessageConst.HIDE_HYPERLINK_TIPS] = 'HideHyperlinkHoverIcon',
+    [MessageConst.ON_START_HOVER_LINK] = 'OnStartHoverLink',
+    [MessageConst.ON_STOP_HOVER_LINK] = 'OnStopHoverLink',
 }
-
 
 MouseIconHintCtrl.m_iconInfos = HL.Field(HL.Table)
 
-
 MouseIconHintCtrl.m_nextPriority = HL.Field(HL.Number) << 0
-
-
-
 
 
 
@@ -42,13 +26,8 @@ MouseIconHintCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_UpdateIcon()
 end
 
-
-
 MouseIconHintCtrl.OnClose = HL.Override() << function(self)
 end
-
-
-
 
 MouseIconHintCtrl.ChangeMouseIconHint = HL.Method(HL.Table) << function(self, args)
     local name = args.name
@@ -70,8 +49,6 @@ MouseIconHintCtrl.ChangeMouseIconHint = HL.Method(HL.Table) << function(self, ar
     end
     self:_UpdateIcon()
 end
-
-
 
 MouseIconHintCtrl._UpdateIcon = HL.Method() << function(self)
     local maxPriority = -1
@@ -96,22 +73,26 @@ MouseIconHintCtrl._UpdateIcon = HL.Method() << function(self)
 end
 
 
+MouseIconHintCtrl.OnStartHoverLink = HL.Method(HL.Table) << function(self, arg)
+    local linkId = unpack(arg)
+    local linkType = UIUtils.resolveLinkTypeFromId(linkId)
+    local linkMouseIconType = UIConst.UI_TEXT_LINK_MOUSE_ICON[linkType]
 
+    local hotspotPos = nil
+    if linkMouseIconType == UIConst.MOUSE_ICON_HINT.Magnifier then
+        hotspotPos = Vector2(16, 16)
+    end
 
-
-MouseIconHintCtrl.ShowHyperlinkHoverIcon = HL.Method(HL.Any) << function(self, _)
     self:ChangeMouseIconHint({
-        name = "HyperlinkHover",
-        type = UIConst.MOUSE_ICON_HINT.Magnifier,
-        hotspotPos = Vector2(16, 16),
+        name = "LinkHover",
+        type = linkMouseIconType,
+        hotspotPos = hotspotPos,
     })
 end
 
-
-
-MouseIconHintCtrl.HideHyperlinkHoverIcon = HL.Method() << function(self)
+MouseIconHintCtrl.OnStopHoverLink = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     self:ChangeMouseIconHint({
-        name = "HyperlinkHover",
+        name = "LinkHover",
         type = UIConst.MOUSE_ICON_HINT.Default,
     })
 end

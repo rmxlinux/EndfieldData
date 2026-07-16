@@ -1,52 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacHUBData
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacHUBDataCtrl = HL.Class('FacHUBDataCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -61,23 +16,15 @@ FacHUBDataCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 FacHUBDataCtrl.m_curTabIndex = HL.Field(HL.Number) << 0
-
 
 FacHUBDataCtrl.m_tabCells = HL.Field(HL.Forward('UIListCache'))
 
-
 FacHUBDataCtrl.m_tabInfos = HL.Field(HL.Table)
-
 
 FacHUBDataCtrl.m_domainDropDownInfo = HL.Field(HL.Table)
 
-
 FacHUBDataCtrl.m_curDomainIndex = HL.Field(HL.Number) << 1
-
-
-
 
 
 
@@ -135,8 +82,6 @@ FacHUBDataCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
 FacHUBDataCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local recoverState = {
         tabIndex = self.m_curTabIndex,
@@ -161,20 +106,12 @@ FacHUBDataCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << fun
     return recoverState
 end
 
-
-
-
 FacHUBDataCtrl._ProcessRecoverStateArg = HL.Method(HL.Opt(HL.Any)).Return(HL.Opt(HL.Any)) << function(self, arg)
     if not arg then
         return nil
     end
     return arg
 end
-
-
-
-
-
 
 FacHUBDataCtrl._ClampRecoverIndex = HL.Method(HL.Number, HL.Number, HL.Number).Return(HL.Number) << function(self, index, maxCount, defaultIndex)
     if maxCount <= 0 or type(index) ~= "number" then
@@ -188,9 +125,6 @@ FacHUBDataCtrl._ClampRecoverIndex = HL.Method(HL.Number, HL.Number, HL.Number).R
     end
     return index
 end
-
-
-
 
 FacHUBDataCtrl._TryRecoverInstructionBook = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil or recoverState.instructionBookArg == nil then
@@ -209,14 +143,9 @@ end
 
 
 
-
-
 FacHUBDataCtrl._GetCurDomainId = HL.Method().Return(HL.String) << function(self)
     return self.m_domainDropDownInfo[self.m_curDomainIndex].domainId
 end
-
-
-
 
 
 
@@ -257,10 +186,6 @@ FacHUBDataCtrl._InitTabs = HL.Method(HL.Number) << function(self, tabIndex)
     self:_OnClickTab(tabIndex, true)
 end
 
-
-
-
-
 FacHUBDataCtrl._OnClickTab = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, index, isInit)
     if not isInit and self.m_curTabIndex == index then
         return
@@ -290,11 +215,7 @@ end
 
 
 
-
 FacHUBDataCtrl.m_powerDurationDropDownInfo = HL.Field(HL.Table)
-
-
-
 
 FacHUBDataCtrl._InitElectricNode = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     local inited = false
@@ -338,8 +259,6 @@ FacHUBDataCtrl._InitElectricNode = HL.Method(HL.Opt(HL.Any)) << function(self, r
     inited = true
 end
 
-
-
 FacHUBDataCtrl._InitPowersByLocalData = HL.Method() << function(self)
     local node = self.view.electricNode
     local domainId = self:_GetCurDomainId()
@@ -354,9 +273,6 @@ FacHUBDataCtrl._InitPowersByLocalData = HL.Method() << function(self)
         node.dataLine.notEnoughLine:InitBrokenLine()
     end
 end
-
-
-
 
 
 FacHUBDataCtrl._OnDomainChanged = HL.Method(HL.Number) << function(self, index)
@@ -374,15 +290,10 @@ FacHUBDataCtrl._OnDomainChanged = HL.Method(HL.Number) << function(self, index)
     end
 end
 
-
-
 FacHUBDataCtrl._ReqPowerData = HL.Method() << function(self)
     local curInfo = self.m_powerDurationDropDownInfo[LuaIndex(self.view.electricNode.durationDropDown.selectedIndex)]
     GameInstance.player.facSpMachineSystem:ReqPowerData(curInfo.type, self:_GetCurDomainId())
 end
-
-
-
 
 FacHUBDataCtrl.OnSyncPowerData = HL.Method(HL.Any) << function(self, args)
     logger.info("FacHUBDataCtrl.OnSyncPowerData")
@@ -430,10 +341,6 @@ FacHUBDataCtrl.OnSyncPowerData = HL.Method(HL.Any) << function(self, args)
     costLine:InitBrokenLine(costPoints, count)
 end
 
-
-
-
-
 FacHUBDataCtrl._UpdateElectricText = HL.Method(HL.Number, HL.Number) << function(self, curGen, curCost)
     local node = self.view.electricNode
     node.curGenPowerNode.text.text = curGen
@@ -441,8 +348,6 @@ FacHUBDataCtrl._UpdateElectricText = HL.Method(HL.Number, HL.Number) << function
     node.curCostPowerNode.text.text = curCost
     node.curCostPowerNode.textShadow.text = curCost
 end
-
-
 
 FacHUBDataCtrl._UpdateElectricNode = HL.Method() << function(self)
     local node = self.view.electricNode
@@ -457,20 +362,13 @@ end
 
 
 
-
 FacHUBDataCtrl.m_itemDurationDropDownInfo = HL.Field(HL.Table)
-
 
 FacHUBDataCtrl.m_filterTags = HL.Field(HL.Table) 
 
-
 FacHUBDataCtrl.m_items = HL.Field(HL.Table)
 
-
 FacHUBDataCtrl.m_showingItems = HL.Field(HL.Table)
-
-
-
 
 
 FacHUBDataCtrl._InitProductivityNode = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
@@ -591,10 +489,6 @@ FacHUBDataCtrl._InitProductivityNode = HL.Method(HL.Opt(HL.Any)) << function(sel
     inited = true
 end
 
-
-
-
-
 FacHUBDataCtrl._GetRecoverFilterTags = HL.Method(HL.Table, HL.Opt(HL.Any)).Return(HL.Table) << function(self, filterTagGroups, recoverState)
     if not recoverState or not recoverState.filterShowingTypes or #recoverState.filterShowingTypes == 0 then
         return {}
@@ -612,8 +506,6 @@ FacHUBDataCtrl._GetRecoverFilterTags = HL.Method(HL.Table, HL.Opt(HL.Any)).Retur
     return recoverFilterTags
 end
 
-
-
 FacHUBDataCtrl._UpdateProductivityNode = HL.Method() << function(self)
     local node = self.view.productivityNode
     node.domainDropDown:SetSelected(CSIndex(self.m_curDomainIndex), true, false)
@@ -622,8 +514,6 @@ FacHUBDataCtrl._UpdateProductivityNode = HL.Method() << function(self)
     self:_RefreshItemList()
     self:_ReqProductData()
 end
-
-
 
 FacHUBDataCtrl._InitItemData = HL.Method() << function(self)
     self.m_items = {}
@@ -664,10 +554,6 @@ FacHUBDataCtrl._InitItemData = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 FacHUBDataCtrl._SortData = HL.Method(HL.Table, HL.Boolean) << function(self, sortData, isIncremental)
     local keys = isIncremental and sortData.keys or sortData.reverseKeys
     if sortData.isProductivity then
@@ -688,8 +574,6 @@ FacHUBDataCtrl._SortData = HL.Method(HL.Table, HL.Boolean) << function(self, sor
     table.sort(self.m_showingItems, Utils.genSortFunction(keys, isIncremental))
 end
 
-
-
 FacHUBDataCtrl._ApplyFilter = HL.Method() << function(self)
     if not self.m_filterTags or not next(self.m_filterTags) then
         self.m_showingItems = self.m_items
@@ -706,8 +590,6 @@ FacHUBDataCtrl._ApplyFilter = HL.Method() << function(self)
     self:_SortData(sortData, sort.isIncremental)
 end
 
-
-
 FacHUBDataCtrl._RefreshItemList = HL.Method() << function(self)
     local node = self.view.productivityNode
     node.itemList:UpdateCount(#self.m_showingItems)
@@ -715,13 +597,10 @@ FacHUBDataCtrl._RefreshItemList = HL.Method() << function(self)
         local firstIndex = node.itemList:GetShowingCellsIndexRange()
         local cell = node.m_getCell(LuaIndex(firstIndex))
         if cell ~= nil then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.naviDecorator)
+            self:SetNaviTarget(cell.naviDecorator)
         end
     end
 end
-
-
-
 
 FacHUBDataCtrl._GetContentFilterResultCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tags)
     local tagDic = {}
@@ -736,10 +615,6 @@ FacHUBDataCtrl._GetContentFilterResultCount = HL.Method(HL.Table).Return(HL.Numb
     end
     return count
 end
-
-
-
-
 
 FacHUBDataCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local itemInfo = self.m_showingItems[index]
@@ -798,10 +673,6 @@ FacHUBDataCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, ce
     self:_ReqOneProductData(itemId) 
 end
 
-
-
-
-
 FacHUBDataCtrl._ChangeCostTheoTxtColor = HL.Method(HL.Any, HL.Boolean) << function(self, cell, over)
     if over then
         cell.costTheoTxt.color = self.view.config.COST_RED_COLOR
@@ -815,9 +686,6 @@ FacHUBDataCtrl._ChangeCostTheoTxtColor = HL.Method(HL.Any, HL.Boolean) << functi
         cell.decoTimeTxt.color = self.view.config.COST_GRAY_COLOR
     end
 end
-
-
-
 
 FacHUBDataCtrl._MarkProductItem = HL.Method(HL.Number) << function(self, index)
     local itemInfo = self.m_showingItems[index]
@@ -835,15 +703,10 @@ FacHUBDataCtrl._MarkProductItem = HL.Method(HL.Number) << function(self, index)
     itemInfo.reverseOrder = -itemInfo.order
 end
 
-
-
-
 FacHUBDataCtrl._ReqOneProductData = HL.Method(HL.String) << function(self, itemId)
     local curInfo = self.m_itemDurationDropDownInfo[LuaIndex(self.view.productivityNode.dropDown.selectedIndex)]
     GameInstance.player.facSpMachineSystem:ReqOneProductData(curInfo.type, itemId, self:_GetCurDomainId())
 end
-
-
 
 FacHUBDataCtrl._ReqProductData = HL.Method() << function(self)
     local node = self.view.productivityNode
@@ -855,8 +718,6 @@ FacHUBDataCtrl._ReqProductData = HL.Method() << function(self)
     local curInfo = self.m_itemDurationDropDownInfo[LuaIndex(self.view.productivityNode.dropDown.selectedIndex)]
     GameInstance.player.facSpMachineSystem:ReqProductData(curInfo.type, itemIds, self:_GetCurDomainId())
 end
-
-
 
 FacHUBDataCtrl.OnSyncProductData = HL.Method() << function(self)
     local node = self.view.productivityNode
@@ -942,25 +803,17 @@ FacHUBDataCtrl.OnSyncProductData = HL.Method() << function(self)
     end)
 end
 
-
-
-
 FacHUBDataCtrl._GetItemCount = HL.Method(HL.String).Return(HL.Number) << function(self, itemId)
     local inventory = GameInstance.player.inventory
     local id = ScopeUtil.ChapterIdStr2Int(self:_GetCurDomainId())
     return inventory:GetItemCountInDepot(Utils.getCurrentScope(), id, itemId)
 end
 
-
-
-
 FacHUBDataCtrl._OnFormulaDelete = HL.Method(HL.Any) << function(self, args)
     if self.m_curTabIndex == 1 then
         self:_UpdateProductivityNode()
     end
 end
-
-
 
 
 

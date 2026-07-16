@@ -7,33 +7,7 @@ local SIGNAL_1 = 1
 local LuaNodeCache = require_ex('Common/Utils/LuaNodeCache')
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GeneralTrackerCtrl = HL.Class('GeneralTrackerCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -50,42 +24,29 @@ GeneralTrackerCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_QUEST_OBJECTIVE_UPDATE] = '_OnQuestObjectiveUpdate',
 }
 
-
 GeneralTrackerCtrl.s_missionShowTime = HL.StaticField(HL.Number) << 0
-
 
 GeneralTrackerCtrl.s_missionTrackerSignal = HL.StaticField(HL.Number) << 0
 
-
 GeneralTrackerCtrl.s_onShowSignal = HL.Field(HL.Number) << 0
-
 
 GeneralTrackerCtrl.OnShowMissionTracker = HL.StaticMethod() << function()
     GeneralTrackerCtrl.s_missionTrackerSignal = SIGNAL_1
     GeneralTrackerCtrl.s_missionShowTime = 0
 end
 
-
 GeneralTrackerCtrl.m_rootTransform = HL.Field(HL.Userdata)
-
 
 GeneralTrackerCtrl.m_missionTrackerTickHandler = HL.Field(HL.Any)
 
 
-
 GeneralTrackerCtrl.m_commonTrackerData = HL.Field(HL.Table)
-
 
 GeneralTrackerCtrl.m_commonTrackers = HL.Field(HL.Table)
 
-
 GeneralTrackerCtrl.m_commonTrackerTickHandler = HL.Field(HL.Number) << -1
 
-
 GeneralTrackerCtrl.m_commonTrackerNodeCache = HL.Field(LuaNodeCache)
-
-
-
 
 
 
@@ -112,8 +73,6 @@ GeneralTrackerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.commonTrackerNode.gameObject:SetActive(false)
 end
 
-
-
 GeneralTrackerCtrl.OnShow = HL.Override() << function(self)
     GeneralTrackerCtrl.s_missionShowTime = 0
     self.s_onShowSignal = 1
@@ -125,14 +84,10 @@ GeneralTrackerCtrl.OnShow = HL.Override() << function(self)
     end)
 end
 
-
-
 GeneralTrackerCtrl.OnHide = HL.Override() << function(self)
     LuaUpdate:Remove(self.m_missionTrackerTickHandler)
     self.m_missionTrackerTickHandler = nil
 end
-
-
 
 GeneralTrackerCtrl.OnClose = HL.Override() << function(self)
     GameInstance.player.commonTrackingSystem.rootTransform = nil
@@ -140,48 +95,32 @@ GeneralTrackerCtrl.OnClose = HL.Override() << function(self)
     self.m_missionTrackerTickHandler = nil
 end
 
-
 GeneralTrackerCtrl._ResetMissionShowTime = HL.StaticMethod() << function()
     GeneralTrackerCtrl.s_missionShowTime = 0
 end
-
-
 
 GeneralTrackerCtrl._OnTrackMissionChange = HL.Method() << function(self)
     GeneralTrackerCtrl._ResetMissionShowTime()
 end
 
-
-
 GeneralTrackerCtrl._RefreshMissionTrackAlpha = HL.Method() << function(self)
     GeneralTrackerCtrl._ResetMissionShowTime()
 end
-
-
-
 
 GeneralTrackerCtrl._OnMissionStateChange = HL.Method(HL.Any) << function(self, arg)
     local missionId, missionState = unpack(arg)
     GeneralTrackerCtrl._ResetMissionShowTime()
 end
 
-
-
-
 GeneralTrackerCtrl._OnQuestStateChange = HL.Method(HL.Any) << function(self, arg)
     local questId, questState = unpack(arg)
     GeneralTrackerCtrl._ResetMissionShowTime()
 end
 
-
-
-
 GeneralTrackerCtrl._OnQuestObjectiveUpdate = HL.Method(HL.Any) << function(self, arg)
     local questId = unpack(arg)
     GeneralTrackerCtrl._ResetMissionShowTime()
 end
-
-
 
 GeneralTrackerCtrl._TickMissionTrackers = HL.Method() << function(self)
     local missionHudOpen, _ = UIManager:IsOpen(PanelId.MissionHud) or UIManager:IsOpen(PanelId.WeeklyRaidTaskTrackHud)
@@ -201,15 +140,10 @@ end
 
 
 
-
-
 GeneralTrackerCtrl._TickCommonTrackers = HL.Method() << function(self)
     self.view.commonTrackerUpdate:UpdateCommonTrackers(true, self.s_onShowSignal)
     self.s_onShowSignal = 0
 end
-
-
-
 
 GeneralTrackerCtrl.PlayAnimationOutWithCallback = HL.Override(HL.Opt(HL.Function)) << function(self, action)
     self.view.commonTrackerUpdate:AllTrackersPlayOutAnimation()

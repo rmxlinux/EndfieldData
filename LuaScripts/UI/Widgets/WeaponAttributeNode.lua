@@ -1,52 +1,22 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WeaponAttributeNode = HL.Class('WeaponAttributeNode', UIWidgetBase)
-
 
 WeaponAttributeNode.m_mainAttributeCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WeaponAttributeNode.m_subAttributeCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 WeaponAttributeNode.m_extraAttributeCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WeaponAttributeNode.m_effectCor = HL.Field(HL.Thread)
-
 
 WeaponAttributeNode.m_normalSubAttrTextColor = HL.Field(Color)
 
-
 WeaponAttributeNode.m_normalSubAttrValueColor = HL.Field(Color)
-
 
 WeaponAttributeNode.m_normalExtraAttrTextColor = HL.Field(Color)
 
-
 WeaponAttributeNode.m_normalExtraAttrValueColor = HL.Field(Color)
-
-
 
 
 
@@ -60,10 +30,6 @@ WeaponAttributeNode._OnFirstTimeInit = HL.Override() << function(self)
     self.m_normalExtraAttrTextColor = self.view.extraAttributeCell.attributeText.color
     self.m_normalExtraAttrValueColor = self.view.extraAttributeCell.fromValue.color
 end
-
-
-
-
 
 WeaponAttributeNode.InitWeaponAttributeNode = HL.Method(HL.Number, HL.Opt(HL.Number)) << function(self, weaponInstId, gemInstId)
     self:_FirstTimeInit()
@@ -82,10 +48,6 @@ WeaponAttributeNode.InitWeaponAttributeNode = HL.Method(HL.Number, HL.Opt(HL.Num
     end)
 end
 
-
-
-
-
 WeaponAttributeNode.InitWeaponAttributeNodeByTemplateId = HL.Method(HL.String, HL.Opt(HL.Boolean)) << function(self, weaponTemplateId, isMaxLevel)
     self:_FirstTimeInit()
 
@@ -101,12 +63,6 @@ WeaponAttributeNode.InitWeaponAttributeNodeByTemplateId = HL.Method(HL.String, H
         self:_RefreshAttributeCell(cell, attributeInfo)
     end)
 end
-
-
-
-
-
-
 
 WeaponAttributeNode.InitCharAttributeNode = HL.Method(HL.Number, HL.Number, HL.Number, HL.Opt(HL.Table)) << function(self, charInstId, targetLevel, targetStage, extraArg)
     self:_FirstTimeInit()
@@ -143,9 +99,6 @@ WeaponAttributeNode.InitCharAttributeNode = HL.Method(HL.Number, HL.Number, HL.N
     end
 end
 
-
-
-
 WeaponAttributeNode.InitEquipAttributeFullNode = HL.Method(HL.Number) << function(self, charInstId)
     self:_FirstTimeInit()
 
@@ -171,10 +124,6 @@ WeaponAttributeNode.InitEquipAttributeFullNode = HL.Method(HL.Number) << functio
 end
 
 
-
-
-
-
 WeaponAttributeNode.InitEquipAttributeNode = HL.Method(HL.Number, HL.Opt(HL.String)) << function(self, equipInstId, charTemplateId)
     self:_FirstTimeInit()
 
@@ -182,23 +131,12 @@ WeaponAttributeNode.InitEquipAttributeNode = HL.Method(HL.Number, HL.Opt(HL.Stri
     self:_Init(mainAttrShowInfoList, extraAttrShowInfoList, defShowInfo, charTemplateId, equipInstId)
 end
 
-
-
-
-
 WeaponAttributeNode.InitEquipAttributeNodeByTemplateId = HL.Method(HL.String, HL.Opt(HL.String)) << function(self, equipTemplateId, charTemplateId)
     self:_FirstTimeInit()
 
     local defShowInfo, mainAttrShowInfoList, extraAttrShowInfoList = CharInfoUtils.getEquipTemplateShowAttributes(equipTemplateId)
     self:_Init(mainAttrShowInfoList, extraAttrShowInfoList, defShowInfo, charTemplateId)
 end
-
-
-
-
-
-
-
 
 WeaponAttributeNode._Init = HL.Method(HL.Table, HL.Table, HL.Table, HL.Opt(HL.String, HL.Number)) << function(
     self, fcAttrShowList, extraAttrShowList, defShowInfo, charTemplateId, equipInstId)
@@ -253,12 +191,6 @@ WeaponAttributeNode._Init = HL.Method(HL.Table, HL.Table, HL.Table, HL.Opt(HL.St
 end
 
 
-
-
-
-
-
-
 WeaponAttributeNode._RefreshAttributeCell = HL.Method(HL.Table, HL.Table, HL.Opt(HL.Boolean, HL.Boolean)) << function(
     self, cell, attributeInfo, showPlus, showEnhance)
     cell.attributeText.text = attributeInfo.showName
@@ -288,10 +220,6 @@ WeaponAttributeNode._RefreshAttributeCell = HL.Method(HL.Table, HL.Table, HL.Opt
         cell.attributeIcon:LoadSprite(UIConst.UI_SPRITE_ATTRIBUTE_ICON, attributeInfo.iconName)
     end
 end
-
-
-
-
 
 WeaponAttributeNode.InitWeaponUpgradeAttributeNode = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(self, arg, extraArg)
     self:_FirstTimeInit()
@@ -325,12 +253,6 @@ WeaponAttributeNode.InitWeaponUpgradeAttributeNode = HL.Method(HL.Table, HL.Opt(
         end)
     end
 end
-
-
-
-
-
-
 
 WeaponAttributeNode._RefreshUpgradeAttributeCell = HL.Method(HL.Table, HL.Table, HL.Table, HL.Opt(HL.Boolean)) << function(self, cell, attributeInfo, targetAttributeInfo, forceDiff)
     self:_RefreshAttributeCell(cell, attributeInfo)

@@ -1,24 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SettlementDefenseInGameHud
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SettlementDefenseInGameHudCtrl = HL.Class('SettlementDefenseInGameHudCtrl', uiCtrl.UICtrl)
 
 local ENEMY_COUNT_FORMAT = "%d/%d"
@@ -29,30 +11,21 @@ local CORE_ATTACKED_IN_ANIMATION_NAME = "defense_hpcell_attack_in"
 
 local RETREAT_CONFIRM_POP_UP_TEXT_ID = "ui_fac_settlement_defence_retreat_pop_up"
 
-
 SettlementDefenseInGameHudCtrl.m_towerDefenseSystem = HL.Field(HL.Userdata)
-
 
 SettlementDefenseInGameHudCtrl.m_towerDefenseGame = HL.Field(HL.Userdata)
 
-
 SettlementDefenseInGameHudCtrl.m_coreDataList = HL.Field(HL.Table)
-
 
 SettlementDefenseInGameHudCtrl.m_coreInfoCells = HL.Field(HL.Forward("UIListCache"))
 
-
 SettlementDefenseInGameHudCtrl.m_updateThread = HL.Field(HL.Thread)
-
 
 SettlementDefenseInGameHudCtrl.m_coreHpImageWidth = HL.Field(HL.Number) << -1
 
-
 SettlementDefenseInGameHudCtrl.m_updateTick = HL.Field(HL.Number) << -1
 
-
 SettlementDefenseInGameHudCtrl.m_hpChangeCallbackList = HL.Field(HL.Table)
-
 
 
 
@@ -61,9 +34,6 @@ SettlementDefenseInGameHudCtrl.m_hpChangeCallbackList = HL.Field(HL.Table)
 SettlementDefenseInGameHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_TOWER_DEFENSE_DEFENDING_ENEMY_KILLED] = '_RefreshEnemyCount',
 }
-
-
-
 
 
 SettlementDefenseInGameHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -92,8 +62,6 @@ SettlementDefenseInGameHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, 
     end)
 end
 
-
-
 SettlementDefenseInGameHudCtrl.OnClose = HL.Override() << function(self)
     
     for index = 1, self.m_coreInfoCells:GetCount() do
@@ -116,8 +84,6 @@ SettlementDefenseInGameHudCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 SettlementDefenseInGameHudCtrl._OnTowerDefenseRetreatButtonClicked = HL.Method() << function(self)
     Notify(MessageConst.SHOW_POP_UP, {
         content = Language[RETREAT_CONFIRM_POP_UP_TEXT_ID],
@@ -127,8 +93,6 @@ SettlementDefenseInGameHudCtrl._OnTowerDefenseRetreatButtonClicked = HL.Method()
         freezeWorld = true,
     })
 end
-
-
 
 
 
@@ -168,10 +132,6 @@ SettlementDefenseInGameHudCtrl._InitCoreInfo = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 SettlementDefenseInGameHudCtrl._OnCoreHpChanged = HL.Method(HL.Number, HL.Number) << function(self, index, changedHp)
     local coreData = self.m_coreDataList[index]
     local cell = self.m_coreInfoCells:Get(index)
@@ -197,8 +157,6 @@ SettlementDefenseInGameHudCtrl._OnCoreHpChanged = HL.Method(HL.Number, HL.Number
     cell.animationWrapper:PlayWithTween(CORE_ATTACKED_IN_ANIMATION_NAME)
 end
 
-
-
 SettlementDefenseInGameHudCtrl._RefreshCoreInfoListPosition = HL.Method() << function(self)
     local success, taskTrackCtrl = UIManager:IsOpen(PanelId.CommonTaskTrackHud)
     if not success then
@@ -217,13 +175,9 @@ end
 
 
 
-
-
 SettlementDefenseInGameHudCtrl._InitEnemyCount = HL.Method() << function(self)
     self:_RefreshEnemyCount()
 end
-
-
 
 SettlementDefenseInGameHudCtrl._RefreshEnemyCount = HL.Method() << function(self)
     self.view.enemyCountNode.enemyCount.text = string.format(

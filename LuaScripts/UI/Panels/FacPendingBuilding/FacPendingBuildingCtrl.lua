@@ -2,21 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacPendingBuilding
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacPendingBuildingCtrl = HL.Class('FacPendingBuildingCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -29,17 +15,11 @@ FacPendingBuildingCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 FacPendingBuildingCtrl.m_slotId = HL.Field(HL.Number) << -1
-
 
 FacPendingBuildingCtrl.m_getCell = HL.Field(HL.Function)
 
-
 FacPendingBuildingCtrl.m_infos = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -84,9 +64,6 @@ end
 
 
 
-
-
-
 FacPendingBuildingCtrl.RefreshList = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGradually)
     local slotInfo = GameInstance.remoteFactoryManager.currentChapterInfo:GetPendingPlaceSlot(self.m_slotId)
     local infoMap = {}
@@ -127,10 +104,6 @@ FacPendingBuildingCtrl.RefreshList = HL.Method(HL.Opt(HL.Boolean)) << function(s
     self.view.submitBtn.interactable = hasItemCanSubmit
 end
 
-
-
-
-
 FacPendingBuildingCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local info = self.m_infos[index]
     cell.stateController:SetState(info.isCompleted and "Complete" or "Normal")
@@ -147,8 +120,6 @@ FacPendingBuildingCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << functio
     cell.submitCountTxt.text = string.format("%d/%d", info.submitCount, info.needCount)
     cell.progressBar.fillAmount = info.submitCount / info.needCount
 end
-
-
 
 
 
@@ -172,8 +143,6 @@ FacPendingBuildingCtrl._OnClickCraft = HL.Method() << function(self)
     Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { bluePrintData = deviceList })
 end
 
-
-
 FacPendingBuildingCtrl._OnClickSubmit = HL.Method() << function(self)
     if self:IsPlayingAnimationIn() then
         return
@@ -191,8 +160,6 @@ FacPendingBuildingCtrl._OnClickSubmit = HL.Method() << function(self)
         self:FacOnPendingNodeChanged()
     end)
 end
-
-
 
 FacPendingBuildingCtrl._OnClickCancel = HL.Method() << function(self)
     local sys = GameInstance.remoteFactoryManager.system
@@ -213,11 +180,7 @@ end
 
 
 
-
 FacPendingBuildingCtrl.m_isExiting = HL.Field(HL.Boolean) << false
-
-
-
 
 FacPendingBuildingCtrl.FacOnPendingNodeChanged = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     local slotInfo = GameInstance.remoteFactoryManager.currentChapterInfo:GetPendingPlaceSlot(self.m_slotId)

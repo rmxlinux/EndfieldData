@@ -2,58 +2,6 @@ local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.DomainDepotPackage
 local DOMAIN_DEPOT_BACKGROUND_STAGES = UIConst.DOMAIN_DEPOT_BACKGROUND_STAGES
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseDomainDepotPackage = HL.Class('PhaseDomainDepotPackage', phaseBase.PhaseBase)
 
 local DOMAIN_MONEY_TITLE_NAVI_GROUP_ORDER_OFFSET = 5
@@ -63,45 +11,31 @@ local TOP_PANEL_ID_TO_TAB_INDEX = {
     [PanelId.DomainDepotMyOrder] = 3,
 }
 
-
 PhaseDomainDepotPackage.m_popAsyncActionHelper = HL.Field(HL.Forward("AsyncActionHelper"))
-
 
 PhaseDomainDepotPackage.m_curPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseDomainDepotPackage.m_panelItemDic = HL.Field(HL.Table)
-
 
 PhaseDomainDepotPackage.m_typePanel = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseDomainDepotPackage.m_itemPanel = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseDomainDepotPackage.m_backPanel = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseDomainDepotPackage.m_sellPanel = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseDomainDepotPackage.m_tabPanel = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseDomainDepotPackage.m_showSellAnimPanel = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseDomainDepotPackage.m_sellEndPanel = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseDomainDepotPackage.m_pendingPanelArgMap = HL.Field(HL.Table)
-
 
 PhaseDomainDepotPackage.m_lastTabPanelId = HL.Field(HL.Number) << PanelId.DomainDepotInstList
 
-
 PhaseDomainDepotPackage.m_lastTopPanelState = HL.Field(HL.Table)
-
 
 
 
@@ -122,8 +56,6 @@ PhaseDomainDepotPackage.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CLOSE_DOMAIN_DEPOT_PACK_SETTLE_PANEL] = { 'OnClosePackSellEndPanel', true },
 }
 
-
-
 PhaseDomainDepotPackage.OnOpenDomainDepotTab = HL.StaticMethod(HL.Table) << function(args)
     local domainId
     if string.isEmpty(args) then
@@ -136,14 +68,9 @@ PhaseDomainDepotPackage.OnOpenDomainDepotTab = HL.StaticMethod(HL.Table) << func
     PhaseManager:OpenPhase(PhaseId.DomainDepotPackage, { domainId = domainId })
 end
 
-
-
 PhaseDomainDepotPackage.OnCloseDomainDepotTab = HL.Method() << function(self)
     PhaseManager:PopPhase(PHASE_ID)
 end
-
-
-
 
 PhaseDomainDepotPackage.OnTabChange = HL.Method(HL.Number) << function(self, panelId)
     if panelId == nil then
@@ -185,17 +112,8 @@ end
 
 
 
-
-
-
-
-
 PhaseDomainDepotPackage.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhaseDomainDepotPackage._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if self.arg == nil then
@@ -225,28 +143,14 @@ PhaseDomainDepotPackage._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL
     self.arg.resumeOpenPanel = nil
 end
 
-
-
-
-
 PhaseDomainDepotPackage._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseDomainDepotPackage._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseDomainDepotPackage._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
 
 
 
@@ -260,17 +164,11 @@ PhaseDomainDepotPackage._OnInit = HL.Override() << function(self)
     self.m_popAsyncActionHelper = require_ex("Common/Utils/AsyncActionHelper")(true)
 end
 
-
-
 PhaseDomainDepotPackage._OnActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseDomainDepotPackage._OnDeActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseDomainDepotPackage._OnDestroy = HL.Override() << function(self)
     self.m_popAsyncActionHelper:Clear()
@@ -278,8 +176,6 @@ PhaseDomainDepotPackage._OnDestroy = HL.Override() << function(self)
 
     PhaseDomainDepotPackage.Super._OnDestroy(self)
 end
-
-
 
 PhaseDomainDepotPackage._OnRefresh = HL.Override() << function(self)
     local removeFunc = function(panel)
@@ -299,10 +195,6 @@ PhaseDomainDepotPackage._OnRefresh = HL.Override() << function(self)
     self.m_tabPanel.uiCtrl:ForceResetTab()
 end
 
-
-
-
-
 PhaseDomainDepotPackage._PlayAnimationOutAndRemovePhaseItem = HL.Method(HL.Forward("PhasePanelItem"), HL.Opt(HL.Function)) << function(self, phaseItem, onRemove)
     local removeCallback = function()
         if onRemove ~= nil then
@@ -320,9 +212,6 @@ PhaseDomainDepotPackage._PlayAnimationOutAndRemovePhaseItem = HL.Method(HL.Forwa
     end
 end
 
-
-
-
 PhaseDomainDepotPackage._AsyncPlayAnimationOutAndRemovePhaseItem = HL.Method(HL.Forward("PhasePanelItem")) << function(self, phaseItem)
     self.m_popAsyncActionHelper:AddAction(function(onComplete)
         self:_PlayAnimationOutAndRemovePhaseItem(phaseItem, function()
@@ -331,31 +220,34 @@ PhaseDomainDepotPackage._AsyncPlayAnimationOutAndRemovePhaseItem = HL.Method(HL.
     end)
 end
 
-
-
-
 PhaseDomainDepotPackage._AsyncPlayBackAnimationOutByStageAndRemovePhaseItem = HL.Method(HL.Number, HL.Opt(HL.Function)) << function(self, stage)
     self.m_popAsyncActionHelper:AddAction(function(onComplete)
+        
+        if self.m_backPanel == nil or self.m_backPanel.uiCtrl == nil then
+            onComplete()
+            return
+        end
         self.m_backPanel.uiCtrl:PlayAnimationByStage(stage, false, function()
             self:RemovePhasePanelItem(self.m_backPanel)
+            self.m_backPanel = nil
             onComplete()
         end)
-        UIManager:ChangeHideCameraPanelState(self.m_backPanel.uiCtrl.panelId, UIConst.HIDE_CAMERA_PANEL_STATE.Out)
+        
     end)
 end
-
-
-
 
 PhaseDomainDepotPackage._AsyncPlayBackAnimationOutByStage = HL.Method(HL.Number) << function(self, stage)
     self.m_popAsyncActionHelper:AddAction(function(onComplete)
+        
+        if self.m_backPanel == nil or self.m_backPanel.uiCtrl == nil then
+            onComplete()
+            return
+        end
         self.m_backPanel.uiCtrl:PlayAnimationByStage(stage, false, function()
             onComplete()
         end)
     end)
 end
-
-
 
 PhaseDomainDepotPackage._BindPlaceHolder = HL.Method() << function(self)
     if not self.m_tabPanel then
@@ -375,8 +267,6 @@ end
 
 
 
-
-
 PhaseDomainDepotPackage.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = lume.deepCopy(self.arg or {})
     arg.resumeState = self:_CollectResumeState()
@@ -384,8 +274,6 @@ PhaseDomainDepotPackage.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) <<
     arg.resumeOpenPanel = #resumeOpenPanel > 0 and resumeOpenPanel or nil
     return arg
 end
-
-
 
 
 PhaseDomainDepotPackage._CollectResumeState = HL.Method().Return(HL.Table) << function(self)
@@ -400,9 +288,6 @@ PhaseDomainDepotPackage._CollectResumeState = HL.Method().Return(HL.Table) << fu
         panelStates = self:_CollectOpenPanelStates(),
     }
 end
-
-
-
 
 
 PhaseDomainDepotPackage._CollectPanelState = HL.Method(HL.Opt(HL.Forward("PhasePanelItem"))).Return(HL.Table) << function(self, panelItem)
@@ -428,8 +313,6 @@ PhaseDomainDepotPackage._CollectPanelState = HL.Method(HL.Opt(HL.Forward("PhaseP
 end
 
 
-
-
 PhaseDomainDepotPackage._CollectOpenPanelStates = HL.Method().Return(HL.Table) << function(self)
     local panelStates = {}
     local panelItems = {
@@ -449,8 +332,6 @@ PhaseDomainDepotPackage._CollectOpenPanelStates = HL.Method().Return(HL.Table) <
 end
 
 
-
-
 PhaseDomainDepotPackage._CollectResumeOpenPanel = HL.Method().Return(HL.Table) << function(self)
     local resumeOpenPanel = {}
     local canResumeInstructionBook = self.m_lastTabPanelId == PanelId.DomainDepotDelivery or self.m_lastTabPanelId == PanelId.DomainDepotMyOrder
@@ -467,9 +348,6 @@ PhaseDomainDepotPackage._CollectResumeOpenPanel = HL.Method().Return(HL.Table) <
 end
 
 
-
-
-
 PhaseDomainDepotPackage._RestoreByResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
     self:_RestoreTopPanelState(resumeState)
     local panelStates = resumeState and resumeState.panelStates or nil
@@ -480,9 +358,6 @@ PhaseDomainDepotPackage._RestoreByResumeState = HL.Method(HL.Opt(HL.Any)) << fun
         self:_RestorePanelState(panelState)
     end
 end
-
-
-
 
 
 PhaseDomainDepotPackage._RestoreTopPanelState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
@@ -497,9 +372,6 @@ PhaseDomainDepotPackage._RestoreTopPanelState = HL.Method(HL.Opt(HL.Any)) << fun
         index = selectedTabIndex,
     })
 end
-
-
-
 
 
 PhaseDomainDepotPackage._RestorePanelState = HL.Method(HL.Table) << function(self, panelState)
@@ -522,15 +394,9 @@ PhaseDomainDepotPackage._RestorePanelState = HL.Method(HL.Table) << function(sel
     end
 end
 
-
-
-
 PhaseDomainDepotPackage._GetTabIndexByPanelId = HL.Method(HL.Opt(HL.Number)).Return(HL.Number) << function(self, panelId)
     return TOP_PANEL_ID_TO_TAB_INDEX[panelId] or 1
 end
-
-
-
 
 
 
@@ -547,15 +413,10 @@ PhaseDomainDepotPackage.OnOpenPackTypeSelectPanel = HL.Method(HL.Table) << funct
     self.m_backPanel.uiCtrl:OnGoodsPack()
 end
 
-
-
 PhaseDomainDepotPackage.OnClosePackTypeSelectPanel = HL.Method() << function(self)
     self:_PlayAnimationOutAndRemovePhaseItem(self.m_backPanel)
     self:_PlayAnimationOutAndRemovePhaseItem(self.m_typePanel)
 end
-
-
-
 
 PhaseDomainDepotPackage.OnOpenPackItemSelectPanel = HL.Method(HL.Table) << function(self, args)
     if self.m_typePanel.uiCtrl:IsPlayingAnimationOut() then
@@ -568,15 +429,11 @@ PhaseDomainDepotPackage.OnOpenPackItemSelectPanel = HL.Method(HL.Table) << funct
     self.m_itemPanel = self:CreatePhasePanelItem(PanelId.DomainDepotGoodsPack, args)
 end
 
-
-
 PhaseDomainDepotPackage.OnClosePackItemSelectPanel = HL.Method() << function(self)
     self:_PlayAnimationOutAndRemovePhaseItem(self.m_typePanel)
     self:_PlayAnimationOutAndRemovePhaseItem(self.m_itemPanel)
     self:_PlayAnimationOutAndRemovePhaseItem(self.m_backPanel)
 end
-
-
 
 PhaseDomainDepotPackage.OnBackToPackTypeSelectPanel = HL.Method() << function(self)
     self:_PlayAnimationOutAndRemovePhaseItem(self.m_itemPanel)
@@ -585,9 +442,6 @@ PhaseDomainDepotPackage.OnBackToPackTypeSelectPanel = HL.Method() << function(se
     end
     self.m_typePanel.uiCtrl:Show()
 end
-
-
-
 
 PhaseDomainDepotPackage.OnOpenSellAnimPanel = HL.Method(HL.Any) << function(self, args)
     if self.m_backPanel == nil or self.m_backPanel.uiCtrl == nil then
@@ -611,9 +465,6 @@ PhaseDomainDepotPackage.OnOpenSellAnimPanel = HL.Method(HL.Any) << function(self
 
     self.m_popAsyncActionHelper:Start()
 end
-
-
-
 
 PhaseDomainDepotPackage.OnOpenPackSellPanel = HL.Method(HL.Any) << function(self, args)
     if self.m_backPanel == nil or self.m_backPanel.uiCtrl == nil then
@@ -645,16 +496,11 @@ PhaseDomainDepotPackage.OnOpenPackSellPanel = HL.Method(HL.Any) << function(self
     end
 end
 
-
-
 PhaseDomainDepotPackage.OnClosePackSellPanel = HL.Method() << function(self)
     self:_PlayAnimationOutAndRemovePhaseItem(self.m_backPanel)
     self:_PlayAnimationOutAndRemovePhaseItem(self.m_showSellAnimPanel)
     self:_PlayAnimationOutAndRemovePhaseItem(self.m_sellPanel)
 end
-
-
-
 
 PhaseDomainDepotPackage.OnPackSellEndPanel = HL.Method(HL.Any) << function(self, args)
     if self.m_backPanel == nil or self.m_backPanel.uiCtrl == nil then
@@ -680,8 +526,6 @@ PhaseDomainDepotPackage.OnPackSellEndPanel = HL.Method(HL.Any) << function(self,
         self:RemovePhasePanelItem(self.m_curPanelItem)
     end
 end
-
-
 
 PhaseDomainDepotPackage.OnClosePackSellEndPanel = HL.Method() << function(self)
     self.m_popAsyncActionHelper:Clear()

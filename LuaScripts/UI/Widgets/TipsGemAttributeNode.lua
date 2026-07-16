@@ -1,20 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 TipsGemAttributeNode = HL.Class('TipsGemAttributeNode', UIWidgetBase)
-
 
 TipsGemAttributeNode.m_termGroupList = HL.Field(HL.Table)
 
-
 TipsGemAttributeNode.m_termGroupCells = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 TipsGemAttributeNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -22,14 +12,9 @@ TipsGemAttributeNode._OnFirstTimeInit = HL.Override() << function(self)
     self.m_termGroupCells = UIUtils.genCellCache(self.view.tipsGemAttributeCell)
 end
 
-
-
 TipsGemAttributeNode.InitTipsGemAttributeNode = HL.Method() << function(self)
     self:_FirstTimeInit()
 end
-
-
-
 
 TipsGemAttributeNode.RefreshView = HL.Method(HL.String) << function(self, itemId)
     

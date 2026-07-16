@@ -3,37 +3,9 @@ local PANEL_ID = PanelId.HeadLabel
 
 local HeadLabelType = CS.Beyond.UI.UIHeadLabel.HeadLabelType
 local VisibleSource = CS.Beyond.UI.UIHeadLabel.VisibleSource
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 HeadLabelCtrl = HL.Class('HeadLabelCtrl', uiCtrl.UICtrl)
 
 local CACHE_COUNT = 30
-
 
 
 
@@ -46,15 +18,11 @@ HeadLabelCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 HeadLabelCtrl.m_labelObjDict = HL.Field(HL.Table)
-
 
 HeadLabelCtrl.m_labelLogicIdDict = HL.Field(HL.Table)
 
-
 HeadLabelCtrl.m_labelObjPool = HL.Field(HL.Table)
-
 
 
 
@@ -64,16 +32,11 @@ HeadLabelCtrl._OnLevelPreStart = HL.StaticMethod() << function()
 end
 
 
-
-
-
 HeadLabelCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_labelObjDict = {}
     self.m_labelObjPool = {}
     self.m_labelLogicIdDict = {}
 end
-
-
 
 
 
@@ -95,8 +58,6 @@ HeadLabelCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 HeadLabelCtrl.PreCacheHeadLabels = HL.Method() << function(self)
     if #self.m_labelObjPool <= 0 then
         for i = 1, CACHE_COUNT do
@@ -108,9 +69,6 @@ HeadLabelCtrl.PreCacheHeadLabels = HL.Method() << function(self)
     end
 end
 
-
-
-
 HeadLabelCtrl.GetEntityLabelIconPos = HL.Method(HL.Number).Return(HL.Any) << function(self, logicId)
     if self.m_labelLogicIdDict[logicId] == nil then
         return nil
@@ -119,22 +77,16 @@ HeadLabelCtrl.GetEntityLabelIconPos = HL.Method(HL.Number).Return(HL.Any) << fun
     return self.m_labelLogicIdDict[logicId].iconHolder.position
 end
 
-
-
 HeadLabelCtrl._OnAddHeadLabel = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = HeadLabelCtrl.AutoOpen(PANEL_ID, args, false)
     local targetObject = unpack(args)
     ctrl:_AddHeadLabel(targetObject)
 end
 
-
-
 HeadLabelCtrl._OnEnvTalkChanged = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = HeadLabelCtrl.AutoOpen(PANEL_ID, args, false)
     ctrl:ShowEnvTalk(args)
 end
-
-
 
 HeadLabelCtrl._OnStateChanged = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = HeadLabelCtrl.AutoOpen(PANEL_ID, args, false)
@@ -150,8 +102,6 @@ HeadLabelCtrl._OnStateChanged = HL.StaticMethod(HL.Any) << function(args)
     ctrl:ShowState(data.headLabelStateData, nil, entity)
 end
 
-
-
 HeadLabelCtrl._OnGiftChanged = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = HeadLabelCtrl.AutoOpen(PANEL_ID, args, false)
     local entity = unpack(args)
@@ -165,9 +115,6 @@ HeadLabelCtrl._OnGiftChanged = HL.StaticMethod(HL.Any) << function(args)
     local hasNpc, data = CS.Beyond.Gameplay.Core.NpcManager.TryGetValue(npc.npcId)
     ctrl:UpdateGift(data.headLabelStateData, nil, entity)
 end
-
-
-
 
 HeadLabelCtrl._AddHeadLabel = HL.Method(HL.Any) << function(self, targetObject)
     local needInit = false
@@ -193,8 +140,6 @@ HeadLabelCtrl._AddHeadLabel = HL.Method(HL.Any) << function(self, targetObject)
     self.m_labelLogicIdDict[csHeadLabel.entityLogicId] = csHeadLabel
 end
 
-
-
 HeadLabelCtrl._TryGetMissionHeadLabelIcon = HL.StaticMethod(HL.String).Return(HL.Any) << function(npcId)
     local res, proxy = GameWorld.npcProxyMgr:TryGetNpcProxyByNpcId(npcId)
     local proxyId = ""
@@ -204,11 +149,6 @@ HeadLabelCtrl._TryGetMissionHeadLabelIcon = HL.StaticMethod(HL.String).Return(HL
     local res, icon = GameInstance.player.mission:GetNpcHeadIcon(npcId, proxyId)
     return icon
 end
-
-
-
-
-
 
 HeadLabelCtrl._RefreshNpcHeadLabel = HL.Method(HL.Table, HL.String, HL.Any) << function(self, headLabel, npcId, npc)
     local hasNpc, data = CS.Beyond.Gameplay.Core.NpcManager.TryGetValue(npcId)
@@ -268,10 +208,6 @@ HeadLabelCtrl._RefreshNpcHeadLabel = HL.Method(HL.Table, HL.String, HL.Any) << f
     end
 end
 
-
-
-
-
 HeadLabelCtrl._RefreshNpcInfo = HL.Method(HL.Table, HL.Any) << function(self, headLabel, target)
     logger.info("_RefreshNpcInfo, target: " .. tostring(target) .. ", headLabel: " .. tostring(headLabel))
     if not target or not headLabel then
@@ -294,9 +230,6 @@ HeadLabelCtrl._RefreshNpcInfo = HL.Method(HL.Table, HL.Any) << function(self, he
     end
 end
 
-
-
-
 HeadLabelCtrl._UpdateHeadLabelIcon = HL.Method(HL.Any) << function(self, args)
     
     local targetObject = unpack(args)
@@ -310,8 +243,6 @@ HeadLabelCtrl._UpdateHeadLabelIcon = HL.Method(HL.Any) << function(self, args)
         end
     end
 end
-
-
 
 HeadLabelCtrl._CreateHeadLabel = HL.Method().Return(HL.Table) << function(self)
     local prefab = self.view.config.CHAR_HEAD_LABEL
@@ -336,8 +267,6 @@ HeadLabelCtrl._CreateHeadLabel = HL.Method().Return(HL.Table) << function(self)
     return result
 end
 
-
-
 HeadLabelCtrl._TryGetHeadLabel = HL.Method().Return(HL.Table) << function(self)
     if self.m_labelObjPool ~= nil and #self.m_labelObjPool > 0 then
         local result = self.m_labelObjPool[#self.m_labelObjPool]
@@ -347,8 +276,6 @@ HeadLabelCtrl._TryGetHeadLabel = HL.Method().Return(HL.Table) << function(self)
         return self:_CreateHeadLabel()
     end
 end
-
-
 
 HeadLabelCtrl._OnRemoveHeadLabel = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = HeadLabelCtrl.AutoOpen(PANEL_ID, args, false)
@@ -368,16 +295,10 @@ HeadLabelCtrl._OnRemoveHeadLabel = HL.StaticMethod(HL.Any) << function(args)
     end
 end
 
-
-
-
 HeadLabelCtrl._ClearStateNode = HL.Method(HL.Table) << function(self, headLabel)
     local stateNode = headLabel.stateNode
     stateNode.gameObject:SetActive(false)
 end
-
-
-
 
 HeadLabelCtrl._ClearEnvTalk = HL.Method(HL.Table) << function(self, headLabel)
     local csHeadLabel = headLabel.headLabel
@@ -401,9 +322,6 @@ HeadLabelCtrl._ClearEnvTalk = HL.Method(HL.Table) << function(self, headLabel)
         csHeadLabel:SetVisibleDirty()
     end
 end
-
-
-
 
 HeadLabelCtrl.ShowEnvTalk = HL.Method(HL.Table) << function(self, args)
     local show, targetObject, envTalkSingleData, gender = unpack(args)
@@ -437,7 +355,7 @@ HeadLabelCtrl.ShowEnvTalk = HL.Method(HL.Table) << function(self, args)
     if show then
         if not string.isEmpty(envTalkSingleData.text) then
             local text = UIUtils.resolveTextPlayerName(envTalkSingleData.text)
-            text = UIUtils.resolveTextGender(text)
+            text = UIUtils.resolveTextGenderWithNpcGender(text, gender)
             headLabel.bubbleText:SetAndResolveTextStyle(text)
             headLabel.bubble.gameObject:SetActive(true)
         else
@@ -466,11 +384,6 @@ HeadLabelCtrl.ShowEnvTalk = HL.Method(HL.Table) << function(self, args)
 
     csHeadLabel:SetVisibleDirty()
 end
-
-
-
-
-
 
 HeadLabelCtrl.ShowState = HL.Method(HL.Any, HL.Opt(HL.Any, HL.Any)) << function(self, data, headLabel, targetObject)
     if type(data) == "table" then
@@ -542,11 +455,6 @@ HeadLabelCtrl.ShowState = HL.Method(HL.Any, HL.Opt(HL.Any, HL.Any)) << function(
         self:_ClearStateNode(headLabel)
     end
 end
-
-
-
-
-
 
 HeadLabelCtrl.UpdateGift = HL.Method(HL.Any, HL.Opt(HL.Any, HL.Any)) << function(self, data, headLabel, targetObject)
     if type(data) == "table" then

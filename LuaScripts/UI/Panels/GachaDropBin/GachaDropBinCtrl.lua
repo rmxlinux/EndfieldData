@@ -1,15 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaDropBin
 
-
-
-
-
-
-
-
 GachaDropBinCtrl = HL.Class('GachaDropBinCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -20,11 +12,7 @@ GachaDropBinCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 GachaDropBinCtrl.m_sortedRarityList = HL.Field(HL.Table)
-
-
-
 
 
 GachaDropBinCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -41,8 +29,6 @@ local RarityEffectName = {
     [5] = "RarityEffect5",
     [6] = "RarityEffect6",
 }
-
-
 
 GachaDropBinCtrl.Start = HL.Method() << function(self)
     self.m_sortedRarityList = {}
@@ -108,16 +94,11 @@ GachaDropBinCtrl.Start = HL.Method() << function(self)
     end)
 end
 
-
-
 GachaDropBinCtrl._OnClickSkip = HL.Method() << function(self)
     local onComplete = self.m_phase.arg.onComplete
     onComplete()
     PhaseManager:ExitPhaseFast(PhaseId.GachaDropBin)
 end
-
-
-
 
 GachaDropBinCtrl._SetRarity = HL.StaticMethod(Transform, HL.Number) << function(effectRoot, rarity)
     local cut3RarityName = RarityEffectName[rarity]

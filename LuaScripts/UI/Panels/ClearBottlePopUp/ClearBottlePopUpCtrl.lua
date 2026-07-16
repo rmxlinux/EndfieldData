@@ -1,32 +1,18 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ClearBottlePopUp
 
-
-
-
-
-
-
-
-
-
 ClearBottlePopUpCtrl = HL.Class('ClearBottlePopUpCtrl', uiCtrl.UICtrl)
 
 local CAPACITY_TEXT_ID = "LUA_ITEM_TIPS_LIQUID_INFO_FULL_CAPACITY"
 local CLEAR_TIPS_TEXT_ID = "LUA_CLEAR_BOTTLE_POPUP_TIPS_TEXT"
 
-
 ClearBottlePopUpCtrl.m_itemBagIndex = HL.Field(HL.Number) << -1
-
 
 ClearBottlePopUpCtrl.m_fromDepot = HL.Field(HL.Boolean) << false
 
-
 ClearBottlePopUpCtrl.m_itemId = HL.Field(HL.String) << ""
 
-
 ClearBottlePopUpCtrl.m_itemCount = HL.Field(HL.Number) << -1
-
 
 
 
@@ -35,9 +21,6 @@ ClearBottlePopUpCtrl.m_itemCount = HL.Field(HL.Number) << -1
 ClearBottlePopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 ClearBottlePopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -65,8 +48,6 @@ ClearBottlePopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshPopupContent()
 end
 
-
-
 ClearBottlePopUpCtrl._OnConfirmBtnClicked = HL.Method() << function(self)
     local scope = Utils.getCurrentScope()
     local chapterId = Utils.getCurrentChapterId()
@@ -75,23 +56,33 @@ ClearBottlePopUpCtrl._OnConfirmBtnClicked = HL.Method() << function(self)
     else
         GameInstance.player.inventory:DumpBottleInItemBag(self.m_itemBagIndex, self.m_itemCount, scope)
     end
+    local isFullBottle = FactoryUtils.isFullBottleOrJarItem(self.m_itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+    if isFullBottle then
+        AudioAdapter.PostEvent("Au_UI_Event_WaterDown_Small")
+    else
+        AudioAdapter.PostEvent("Au_UI_Event_GasDown_Small")
+    end
     self:PlayAnimationOutAndClose()
 end
 
-
-
 ClearBottlePopUpCtrl._RefreshPopupContent = HL.Method() << function(self)
     local fullBottleSuccess, fullBottleData = Tables.fullBottleTable:TryGetValue(self.m_itemId)
+    local isGas = false
     if not fullBottleSuccess then
-        return
+        fullBottleSuccess, fullBottleData = Tables.fullGasJarTable:TryGetValue(self.m_itemId)
+        if not fullBottleSuccess then
+            return
+        end
+        isGas = true;
     end
 
-    local bottleItemId, liquidItemId = fullBottleData.emptyBottleId, fullBottleData.liquidId
-    local bottleCapacity = fullBottleData.liquidCapacity
+    local bottleItemId = isGas and fullBottleData.emptyJarId or fullBottleData.emptyBottleId
+    local itemId = isGas and fullBottleData.gasId or fullBottleData.liquidId
+    local bottleCapacity = isGas and fullBottleData.gasCapacity or fullBottleData.liquidCapacity
 
     local bottleSuccess, bottleData = Tables.itemTable:TryGetValue(bottleItemId)
-    local liquidSuccess, liquidData = Tables.itemTable:TryGetValue(liquidItemId)
-    if not bottleSuccess or not liquidSuccess then
+    local itemSuccess, itemData = Tables.itemTable:TryGetValue(itemId)
+    if not bottleSuccess or not itemSuccess then
         return
     end
 
@@ -102,14 +93,17 @@ ClearBottlePopUpCtrl._RefreshPopupContent = HL.Method() << function(self)
 
     
     local liquidInfoNode = self.view.liquidInfoNode
-    liquidInfoNode.nameTxt.text = liquidData.name
+    liquidInfoNode.nameTxt.text = itemData.name
     local liquidCount = bottleCapacity * self.m_itemCount
     liquidInfoNode.capacityTxt.text = string.format(Language[CAPACITY_TEXT_ID], liquidCount)
-    liquidInfoNode.rarityLine.color = UIUtils.getItemRarityColor(liquidData.rarity)
-    liquidInfoNode.icon:LoadSprite(UIConst.UI_SPRITE_ITEM, liquidData.iconId)
+    liquidInfoNode.rarityLine.color = UIUtils.getItemRarityColor(itemData.rarity)
+    liquidInfoNode.icon:LoadSprite(UIConst.UI_SPRITE_ITEM, itemData.iconId)
 
     
-    self.view.tipsTxt.text = string.format(Language[CLEAR_TIPS_TEXT_ID], liquidCount, liquidData.name)
+    self.view.tipsTxt.text = string.format(Language[CLEAR_TIPS_TEXT_ID], liquidCount, itemData.name)
+    self.view.titleText.text = isGas and Language.LUA_ITEM_TIPS_EMPTY_GAS_TITLE or Language.LUA_ITEM_TIPS_EMPTY_LIQUID_TITLE
+    self.view.liquidPouring.gameObject:SetActiveIfNecessary(not isGas)
+    self.view.gasDumping.gameObject:SetActiveIfNecessary(isGas)
 
     
     self.view.sourceItem:InitItem({ id = self.m_itemId, count = self.m_itemCount }, true)

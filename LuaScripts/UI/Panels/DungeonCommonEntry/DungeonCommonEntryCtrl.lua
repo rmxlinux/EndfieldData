@@ -12,72 +12,25 @@ local CustomFindFirstSelectDungeonFunc = {
     [DungeonConst.DUNGEON_CATEGORY.CharTutorial] = '_FindFirstSelectCharTutorial',
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DungeonCommonEntryCtrl = HL.Class('DungeonCommonEntryCtrl', uiCtrl.UICtrl)
-
 
 DungeonCommonEntryCtrl.m_dungeonSeriesId = HL.Field(HL.String) << ""
 
-
 DungeonCommonEntryCtrl.m_curTabIndex = HL.Field(HL.Number) << 1
-
 
 DungeonCommonEntryCtrl.m_curSelectedDungeonId = HL.Field(HL.String) << ""
 
-
 DungeonCommonEntryCtrl.m_dungeonTabCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 DungeonCommonEntryCtrl.m_curSelectedCell = HL.Field(HL.Any)
 
-
 DungeonCommonEntryCtrl.m_tabDungeonIds = HL.Field(HL.Table)
-
 
 DungeonCommonEntryCtrl.m_haveHardMode = HL.Field(HL.Boolean) << false
 
-
 DungeonCommonEntryCtrl.m_fromDialog = HL.Field(HL.Boolean) << false
 
-
 DungeonCommonEntryCtrl.m_arg = HL.Field(HL.Table)
-
 
 
 
@@ -86,9 +39,6 @@ DungeonCommonEntryCtrl.m_arg = HL.Field(HL.Table)
 DungeonCommonEntryCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_DUNGEON_DIRECTLY_GET_REWARD] = 'OnDirectlyGetReward',
 }
-
-
-
 
 
 DungeonCommonEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -117,7 +67,8 @@ DungeonCommonEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             end
 
             if self.m_fromDialog then
-                self:Notify(MessageConst.DIALOG_CLOSE_UI, { PANEL_ID, PHASE_ID, 1 })
+                Notify(MessageConst.DIALOG_CHANGE_NEXT_INDEX, { phaseId = PHASE_ID, nextIndex = 1 })
+                PhaseManager:PopPhase(PHASE_ID)
             end
         end
     end
@@ -137,13 +88,9 @@ DungeonCommonEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     CS.Beyond.Gameplay.Conditions.OnDungeonCommonEntryPanelOpen.Trigger(self.m_dungeonSeriesId, false)
 end
 
-
-
 DungeonCommonEntryCtrl.OnAnimationInFinished = HL.Override() << function(self)
     CS.Beyond.Gameplay.Conditions.OnDungeonCommonEntryPanelOpen.Trigger(self.m_dungeonSeriesId, true)
 end
-
-
 
 DungeonCommonEntryCtrl.OnShow = HL.Override() << function(self)
     self:_UpdateNaviTarget()
@@ -157,8 +104,6 @@ DungeonCommonEntryCtrl.OnClose = HL.Override() << function(self)
     UIManager:Close(PanelId.CommonEnemyPopup)
 end
 
-
-
 DungeonCommonEntryCtrl._InitDungeonSeriesInfo = HL.Method() << function(self)
     
     local dungeonSeriesCfg = Tables.dungeonSeriesTable[self.m_dungeonSeriesId]
@@ -168,8 +113,6 @@ DungeonCommonEntryCtrl._InitDungeonSeriesInfo = HL.Method() << function(self)
     
     self:_InitAchievement()
 end
-
-
 
 DungeonCommonEntryCtrl._InitRaid = HL.Method() << function(self)
     
@@ -204,7 +147,15 @@ DungeonCommonEntryCtrl._InitRaid = HL.Method() << function(self)
         info.view.hardModeNode.gameObject:SetActive(true)
         self:_RefreshHardTog(self.m_curSelectedDungeonId)
         self.view.dungeonCommonInfo.view.hardTog.onValueChanged:AddListener(function(isOn)
-            self.m_curSelectedDungeonId = Tables.dungeonRaidTable[self.m_curSelectedDungeonId].RelatedLevel
+            local isRaid, raidData = Tables.dungeonRaidTable:TryGetValue(self.m_curSelectedDungeonId)
+            if isRaid then
+                self.m_curSelectedDungeonId = raidData.RelatedLevel
+            elseif isOn then
+                self.m_curSelectedDungeonId = Tables.dungeonRaid2NormalTable[self.m_curSelectedDungeonId]
+            else
+                self.m_curSelectedDungeonId = Tables.dungeonNormal2RaidTable[self.m_curSelectedDungeonId]
+            end
+
             info:RefreshDungeonCommonInfo(self.m_curSelectedDungeonId)
             info.view.hardTogStateController:SetState(isOn and "On" or "Off")
             if isOn then
@@ -213,8 +164,6 @@ DungeonCommonEntryCtrl._InitRaid = HL.Method() << function(self)
         end)
     end
 end
-
-
 
 DungeonCommonEntryCtrl._InitAchievement = HL.Method() << function(self)
     local achievementId
@@ -239,8 +188,6 @@ DungeonCommonEntryCtrl._InitAchievement = HL.Method() << function(self)
     self.view.etchedSealNode.gameObject:SetActive(not string.isEmpty(achievementId))
 end
 
-
-
 DungeonCommonEntryCtrl._InitDungeonTabs = HL.Method() << function(self)
     
     self:_GenDungeonTabInfos()
@@ -264,8 +211,6 @@ DungeonCommonEntryCtrl._InitDungeonTabs = HL.Method() << function(self)
     self.view.dungeonSelectionNode.gameObject:SetActiveIfNecessary(showSelectionNode)
 end
 
-
-
 DungeonCommonEntryCtrl._GenDungeonTabInfos = HL.Method() << function(self)
     self.m_tabDungeonIds = {}
     local dungeonSeriesCfg = Tables.dungeonSeriesTable[self.m_dungeonSeriesId]
@@ -278,8 +223,6 @@ DungeonCommonEntryCtrl._GenDungeonTabInfos = HL.Method() << function(self)
         end
     end
 end
-
-
 
 DungeonCommonEntryCtrl._GenDungeonCharTutorialTabInfos = HL.Method() << function(self)
     local dungeonSeriesCfg = Tables.dungeonSeriesTable[self.m_dungeonSeriesId]
@@ -303,8 +246,6 @@ DungeonCommonEntryCtrl._GenDungeonCharTutorialTabInfos = HL.Method() << function
     end)
 end
 
-
-
 DungeonCommonEntryCtrl._GenDungeonHighDifficultyTabInfos = HL.Method() << function(self)
     if not self.m_haveHardMode then
         return
@@ -316,8 +257,6 @@ DungeonCommonEntryCtrl._GenDungeonHighDifficultyTabInfos = HL.Method() << functi
         table.insert(self.m_tabDungeonIds, dungeonInfo.normalId)
     end
 end
-
-
 
 DungeonCommonEntryCtrl._FindFirstSelectDungeonTab = HL.Method() << function(self)
     
@@ -352,19 +291,12 @@ DungeonCommonEntryCtrl._FindFirstSelectDungeonTab = HL.Method() << function(self
     end
 end
 
-
-
 DungeonCommonEntryCtrl._FindFirstSelectCharTutorial = HL.Method() << function(self)
     
     if string.isEmpty(self.m_curSelectedDungeonId) then
         self.m_curSelectedDungeonId = self.m_tabDungeonIds[1]
     end
 end
-
-
-
-
-
 
 
 DungeonCommonEntryCtrl._UpdateTabCell = HL.Method(HL.Any, HL.String, HL.Number) << function(self, cell, dungeonId,
@@ -388,21 +320,13 @@ DungeonCommonEntryCtrl._UpdateTabCell = HL.Method(HL.Any, HL.String, HL.Number) 
     end
 end
 
-
-
 DungeonCommonEntryCtrl._GenCustomArgs = HL.Method().Return(HL.Table) << function(self)
     return self.m_arg
 end
 
-
-
 DungeonCommonEntryCtrl._OnBtnCloseClick = HL.Method() << function(self)
     PhaseManager:PopPhase(PHASE_ID)
 end
-
-
-
-
 
 DungeonCommonEntryCtrl._OnDungeonTabClick = HL.Method(HL.Any, HL.String)
         << function(self, cell, dungeonId)
@@ -427,9 +351,6 @@ DungeonCommonEntryCtrl._OnDungeonTabClick = HL.Method(HL.Any, HL.String)
 
     self:_RefreshCommonInfo(false)
 end
-
-
-
 
 DungeonCommonEntryCtrl._RefreshHardTog = HL.Method(HL.String) << function(self, dungeonId)
     local info = self.view.dungeonCommonInfo
@@ -463,9 +384,6 @@ DungeonCommonEntryCtrl._RefreshHardTog = HL.Method(HL.String) << function(self, 
     end
 
 end
-
-
-
 
 DungeonCommonEntryCtrl._RefreshCommonInfo = HL.Method(HL.Boolean) << function(self, isInit)
     if isInit then
@@ -506,8 +424,6 @@ DungeonCommonEntryCtrl._RefreshCommonInfo = HL.Method(HL.Boolean) << function(se
     end
 end
 
-
-
 DungeonCommonEntryCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
@@ -518,19 +434,15 @@ DungeonCommonEntryCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
 DungeonCommonEntryCtrl._UpdateNaviTarget = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
     end
 
     if self.m_dungeonTabCellCache:GetCount() > 1 then
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.selectableNaviGroup, self.m_curSelectedCell.view.clickBtn)
+        self:SetNaviTarget(self.m_curSelectedCell.view.clickBtn)
     end
 end
-
-
 
 DungeonCommonEntryCtrl._OnClickDirectlyGetRewardBtn = HL.Method() << function(self)
     
@@ -550,9 +462,6 @@ DungeonCommonEntryCtrl._OnClickDirectlyGetRewardBtn = HL.Method() << function(se
     })
 end
 
-
-
-
 DungeonCommonEntryCtrl.OnDirectlyGetReward = HL.Method(HL.Any) << function(self, arg)
     self.m_dungeonTabCellCache:Refresh(#self.m_tabDungeonIds, function(cell, luaIndex)
         local dungeonId = self.m_tabDungeonIds[luaIndex]
@@ -560,7 +469,7 @@ DungeonCommonEntryCtrl.OnDirectlyGetReward = HL.Method(HL.Any) << function(self,
     end)
     self.m_curSelectedCell:SetSelected(true)
     self:_RefreshCommonInfo(false)
-    self:SetAsNaviTargetInSilentModeIfNecessary(self.view.selectableNaviGroup, self.m_curSelectedCell.view.clickBtn)
+    self:SetNaviTarget(self.m_curSelectedCell.view.clickBtn)
     
     local RewardSourceType = CS.Beyond.GEnums.RewardSourceType
     local firstPassRewardPack = GameInstance.player.inventory:ConsumeLatestRewardPackOfType(RewardSourceType.DungeonFirstPass)
@@ -616,20 +525,13 @@ DungeonCommonEntryCtrl.OnDirectlyGetReward = HL.Method(HL.Any) << function(self,
     })
 end
 
-
-
 DungeonCommonEntryCtrl.GetCurSelectDungeonId = HL.Method().Return(HL.String) << function(self)
     return self.m_curSelectedDungeonId
 end
 
-
-
 DungeonCommonEntryCtrl.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     return self.view.dungeonCommonInfo:GetRecoverPopupStateArg()
 end
-
-
-
 
 DungeonCommonEntryCtrl.TryRecoverPopupState = HL.Method(HL.Any) << function(self, popupState)
     self.view.dungeonCommonInfo:TryRecoverPopupState(popupState)

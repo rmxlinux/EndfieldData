@@ -2,24 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.AdventureBlackbox
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AdventureBlackboxCtrl = HL.Class('AdventureBlackboxCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -30,14 +13,9 @@ AdventureBlackboxCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_DUNGEON_DIRECTLY_GET_REWARD] = 'OnBlackboxDirectlyGetReward',
 }
 
-
 AdventureBlackboxCtrl.m_genTabCells = HL.Field(HL.Forward("UIListCache"))
 
-
 AdventureBlackboxCtrl.m_tabInfos = HL.Field(HL.Table)
-
-
-
 
 
 AdventureBlackboxCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -48,24 +26,17 @@ AdventureBlackboxCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshAllUI()
 end
 
-
-
 AdventureBlackboxCtrl.OnShow = HL.Override() << function(self)
     local firstCell = self.m_genTabCells:Get(1)
     if firstCell then
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.node, firstCell.view.naviDecorator)
+        self:SetNaviTarget(firstCell.view.naviDecorator)
     end
 end
-
-
-
 
 AdventureBlackboxCtrl.OnBlackboxDirectlyGetReward = HL.Method(HL.Table) << function(self, arg)
     self:_UpdateData()
     self:_RefreshAllUI()
 end
-
-
 
 AdventureBlackboxCtrl._UpdateData = HL.Method() << function(self)
     self.m_tabInfos = {}
@@ -135,8 +106,6 @@ AdventureBlackboxCtrl._UpdateData = HL.Method() << function(self)
     end
 end
 
-
-
 AdventureBlackboxCtrl._RefreshAllUI = HL.Method() << function(self)
     self.m_genTabCells:Refresh(#self.m_tabInfos, function(cell, luaIndex)
         local info = self.m_tabInfos[luaIndex]
@@ -145,11 +114,9 @@ AdventureBlackboxCtrl._RefreshAllUI = HL.Method() << function(self)
 
     local firstCell = self.m_genTabCells:Get(1)
     if firstCell then
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.node, firstCell.view.naviDecorator)
+        self:SetNaviTarget(firstCell.view.naviDecorator)
     end
 end
-
-
 
 AdventureBlackboxCtrl._GetBlackboxPassedCount = HL.StaticMethod(HL.Any).Return(HL.Number) << function(blackboxIds)
     local count = 0
@@ -161,8 +128,6 @@ AdventureBlackboxCtrl._GetBlackboxPassedCount = HL.StaticMethod(HL.Any).Return(H
     return count
 end
 
-
-
 AdventureBlackboxCtrl._GetBlackboxUnlockedCount = HL.StaticMethod(HL.Any).Return(HL.Number) << function(blackboxIds)
     local count = 0
     for _, id in pairs(blackboxIds) do
@@ -173,8 +138,6 @@ AdventureBlackboxCtrl._GetBlackboxUnlockedCount = HL.StaticMethod(HL.Any).Return
     return count
 end
 
-
-
 AdventureBlackboxCtrl._GetFilteredBlackbox = HL.StaticMethod(HL.Any).Return(HL.Table) << function(blackboxIds)
     local infos = FactoryUtils.getBlackboxInfoTbl(blackboxIds, true)
     local ret = {}
@@ -183,8 +146,6 @@ AdventureBlackboxCtrl._GetFilteredBlackbox = HL.StaticMethod(HL.Any).Return(HL.T
     end
     return  ret
 end
-
-
 
 AdventureBlackboxCtrl._GetBlackboxRewardList = HL.StaticMethod(HL.Any).Return(HL.Table) << function(blackboxIds)
     
@@ -202,8 +163,6 @@ AdventureBlackboxCtrl._GetBlackboxRewardList = HL.StaticMethod(HL.Any).Return(HL
 end
 
 
-
-
 AdventureBlackboxCtrl._GetBlackboxRewardListOverride = HL.StaticMethod(HL.String).Return(HL.Table) << function(rewardId)
     local rewards = {}
     AdventureBlackboxCtrl._MergeReward(rewardId, rewards)
@@ -214,9 +173,6 @@ AdventureBlackboxCtrl._GetBlackboxRewardListOverride = HL.StaticMethod(HL.String
     table.sort(rewardList, Utils.genSortFunction({ "rarity", "type" }))
     return rewardList
 end
-
-
-
 
 AdventureBlackboxCtrl._ProcessBlackboxRewards = HL.StaticMethod(HL.String, HL.Table) << function(dungeonId, rewards)
     local hasCfg, gameMechanicCfg = Tables.gameMechanicTable:TryGetValue(dungeonId)
@@ -242,9 +198,6 @@ AdventureBlackboxCtrl._ProcessBlackboxRewards = HL.StaticMethod(HL.String, HL.Ta
         AdventureBlackboxCtrl._MergeReward(gameMechanicCfg.extraRewardId, rewards)
     end
 end
-
-
-
 
 AdventureBlackboxCtrl._MergeReward = HL.StaticMethod(HL.String, HL.Table) << function(rewardId, rewards)
     local hasCfg, rewardsCfg = Tables.rewardTable:TryGetValue(rewardId)

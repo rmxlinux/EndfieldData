@@ -2,36 +2,17 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SettlementDefenseFinishFail
 local PHASE_ID = PhaseId.SettlementDefenseFinishFail
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SettlementDefenseFinishFailCtrl = HL.Class('SettlementDefenseFinishFailCtrl', uiCtrl.UICtrl)
 
 local ZERO_HP_TOLERANCE = 0.01
 
-
 SettlementDefenseFinishFailCtrl.s_cachedPhaseArgs = HL.StaticField(HL.Table)
-
 
 SettlementDefenseFinishFailCtrl.m_coreHpCells = HL.Field(HL.Forward("UIListCache"))
 
-
 SettlementDefenseFinishFailCtrl.m_isConfirmed = HL.Field(HL.Boolean) << false
 
-
 SettlementDefenseFinishFailCtrl.m_tdId = HL.Field(HL.String) << ''
-
 
 
 
@@ -40,9 +21,6 @@ SettlementDefenseFinishFailCtrl.m_tdId = HL.Field(HL.String) << ''
 SettlementDefenseFinishFailCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_LOADING_PANEL_CLOSED] = '_OnLoadingPanelClosed',
 }
-
-
-
 
 
 SettlementDefenseFinishFailCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -60,20 +38,16 @@ SettlementDefenseFinishFailCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     self:_RefreshCoreHps(args.coreHpInfoList)
 end
 
-
-
 SettlementDefenseFinishFailCtrl._OnLoadingPanelClosed = HL.Method() << function(self)
     if PhaseManager:IsOpen(PHASE_ID) then
         PhaseManager:ExitPhaseFast(PHASE_ID)
     end
 end
 
-
-
 SettlementDefenseFinishFailCtrl._InitAction = HL.Method() << function(self)
     local function close(callback)
         if not self:IsPlayingAnimationIn() then
-            if GameInstance.player.squadManager:IsCurSquadAllDead() and not self.m_isConfirmed then
+            if GameInstance.player.squadManager:IsAllDead() and not self.m_isConfirmed then
                 GameInstance.gameplayNetwork:SendRevive(true)
                 self.m_isConfirmed = true
             end
@@ -95,11 +69,8 @@ SettlementDefenseFinishFailCtrl._InitAction = HL.Method() << function(self)
             GameInstance.player.towerDefenseSystem:EnterPreparingPhase(self.m_tdId)
         end)
     end)
-    self.view.btnRestart.gameObject:SetActive(not GameInstance.player.squadManager:IsCurSquadAllDead())
+    self.view.btnRestart.gameObject:SetActive(not GameInstance.player.squadManager:IsAllDead())
 end
-
-
-
 
 SettlementDefenseFinishFailCtrl._RefreshName = HL.Method(HL.String) << function(self, tdId)
     local name = ''
@@ -112,9 +83,6 @@ SettlementDefenseFinishFailCtrl._RefreshName = HL.Method(HL.String) << function(
     end
     self.view.nameText.text = name
 end
-
-
-
 
 SettlementDefenseFinishFailCtrl._RefreshCoreHps = HL.Method(HL.Table) << function(self, coreHpInfoList)
     local count = coreHpInfoList == nil and 0 or #coreHpInfoList
@@ -133,8 +101,6 @@ SettlementDefenseFinishFailCtrl._RefreshCoreHps = HL.Method(HL.Table) << functio
         cell.stateController:SetState(stateName)
     end)
 end
-
-
 
 SettlementDefenseFinishFailCtrl.OnTowerDefenseLevelFinished = HL.StaticMethod(HL.Any) << function(args)
     if not Utils.isInSettlementDefenseDefending() then
@@ -170,7 +136,6 @@ SettlementDefenseFinishFailCtrl.OnTowerDefenseLevelFinished = HL.StaticMethod(HL
     }
 end
 
-
 SettlementDefenseFinishFailCtrl.OnTowerDefenseLevelCleared = HL.StaticMethod() << function()
     if SettlementDefenseFinishFailCtrl.s_cachedPhaseArgs == nil or
         SettlementDefenseFinishFailCtrl.s_cachedPhaseArgs.finishType == CS.Beyond.Gameplay.Core.TowerDefenseGame.FinishType.Complete then
@@ -179,8 +144,6 @@ SettlementDefenseFinishFailCtrl.OnTowerDefenseLevelCleared = HL.StaticMethod() <
     end
     PhaseManager:OpenPhase(PHASE_ID, SettlementDefenseFinishFailCtrl.s_cachedPhaseArgs)
 end
-
-
 
 SettlementDefenseFinishFailCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})

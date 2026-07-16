@@ -1,5 +1,12 @@
 local AdventureBookUtils = {}
 
+AdventureBookUtils.StageTaskDisplayState = {
+    InProgress = 1,
+    Complete = 2,
+    Rewarded = 3,
+    OtherDomainRewarded = 4,
+}
+
 function AdventureBookUtils.CheckRedDotAdventureBookTabStage()
     
     local adventureBookData = GameInstance.player.adventure.adventureBookData
@@ -15,10 +22,29 @@ function AdventureBookUtils.CheckRedDotAdventureBookTabStage()
         logger.error("[Adventure Book Stage Reward Table] missing cfg, id = "..curStage)
         return false
     end
-    local taskIds = stageTaskCfg.taskIds
-    for _, taskId in pairs(taskIds) do
-        isComplete = GameInstance.player.adventure:IsTaskComplete(taskId)
-        if isComplete then
+    local slotCompleteMap = {}
+    local slotRewardedMap = {}
+    for _, taskId in pairs(stageTaskCfg.taskIds) do
+        local taskData = Tables.adventureTaskTable[taskId]
+        if taskData ~= nil then
+            local slotId = string.isEmpty(taskData.stageSlotId) and taskId or taskData.stageSlotId
+            if GameInstance.player.adventure:IsTaskRewarded(taskId) then
+                slotRewardedMap[slotId] = true
+            else
+                local taskValue = AdventureBookUtils.GetTaskCurrProgress(taskData)
+                local maxProgress = AdventureBookUtils.GetTaskMaxProgress(taskData)
+                local taskComplete = GameInstance.player.adventure:IsTaskComplete(taskId)
+                if not taskComplete then
+                    taskComplete = taskValue >= maxProgress
+                end
+                if taskComplete then
+                    slotCompleteMap[slotId] = true
+                end
+            end
+        end
+    end
+    for slotId, _ in pairs(slotCompleteMap) do
+        if not slotRewardedMap[slotId] then
             return true
         end
     end
@@ -253,16 +279,17 @@ end
 
 function AdventureBookUtils.InitActivityDataList()
     local ret = {}
+    local emptyNode = nil
     for id, cfg in pairs(Tables.AdventureActivityDataTable) do
         local type = cfg.type
         local data = AdventureBookUtils.GetActivityDataByType(type)
         data.id = cfg.id
         data.type = cfg.type
-        data.name = cfg.name
-        data.titleImg = cfg.titleImg
-        data.decoImg = cfg.decoImg
-        data.bgImg = cfg.bgImg
-        data.bgNodeColor = cfg.bgNodeColor
+        data.name = data.name or cfg.name
+        data.titleImg = data.titleImg or cfg.titleImg
+        data.decoImg = data.decoImg or cfg.decoImg
+        data.bgImg = data.bgImg or cfg.bgImg
+        data.bgNodeColor = data.bgNodeColor or cfg.bgNodeColor
 
         local rewardInfos = {}
         if cfg.rewardList ~= nil then
@@ -274,8 +301,18 @@ function AdventureBookUtils.InitActivityDataList()
 
         local isShow = data.checkShowFunc()
         if isShow then
-            table.insert(ret, data)
+            if cfg.type ~= "empty" then
+                table.insert(ret, data)
+            else
+                emptyNode = data
+            end
         end
+    end
+    table.sort(ret, function(a, b)
+        return a.id < b.id
+    end)
+    if #ret < 3 then
+        table.insert(ret, emptyNode)
     end
     return ret
 end
@@ -311,6 +348,26 @@ function AdventureBookUtils.GetActivityDataByType(type)
                 PhaseManager:OpenPhase(PhaseId.HighDifficultyMainHud,{})
             end,
             redDotName = "AdventureBookHighDifficulty",
+        }
+    elseif type == "SeasonTower" then
+        return {
+            checkShowFunc = function()
+                if GameInstance.player.gameSettingSystem.forbiddenSeasonTower then
+                    return false
+                end
+                if GameInstance.player.seasonTowerSystem.currentSeasonId <= 0 then
+                    return false
+                end
+                local ret = Utils.isSystemUnlocked(GEnums.UnlockSystemType.SeasonTowerDungeon)
+                return ret
+            end,
+            nodeStateName = "Normal",
+            setUI = true,
+            ClickFunc = function()
+                PhaseManager:GoToPhase(PhaseId.SeasonTowerMainHud,{})
+            end,
+            redDotName = "SeasonTowerMain",
+            bgImg = (Utils.getPlayerGender() == CS.Proto.GENDER.GenMale) and "bg_adventure_activity_3_a" or "bg_adventure_activity_3_b",
         }
     elseif type == "empty" then
         return {

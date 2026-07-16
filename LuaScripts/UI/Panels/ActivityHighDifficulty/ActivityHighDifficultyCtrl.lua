@@ -2,33 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityHighDifficulty
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityHighDifficultyCtrl = HL.Class('ActivityHighDifficultyCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -39,38 +13,25 @@ ActivityHighDifficultyCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_PROGRESS_CHANGE] = 'OnStageChange',
 }
 
-
 ActivityHighDifficultyCtrl.m_activityId = HL.Field(HL.String) << ''
-
 
 ActivityHighDifficultyCtrl.m_activity = HL.Field(HL.Any)
 
-
 ActivityHighDifficultyCtrl.m_curTabIndex = HL.Field(HL.Number) << 0
-
 
 ActivityHighDifficultyCtrl.m_tabCells = HL.Field(HL.Any)
 
-
 ActivityHighDifficultyCtrl.m_tabTotalCount = HL.Field(HL.Number) << 0
-
 
 ActivityHighDifficultyCtrl.m_tasks = HL.Field(HL.Table)
 
-
 ActivityHighDifficultyCtrl.m_getTaskCell = HL.Field(HL.Function)
-
 
 ActivityHighDifficultyCtrl.m_curShowingTasks = HL.Field(HL.Table)
 
-
 ActivityHighDifficultyCtrl.m_BgNode = HL.Field(HL.Any)
 
-
 ActivityHighDifficultyCtrl.m_shownNewTaskIds = HL.Field(HL.Table)
-
-
-
 
 
 ActivityHighDifficultyCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -147,8 +108,6 @@ ActivityHighDifficultyCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
     end
 end
 
-
-
 ActivityHighDifficultyCtrl._RefreshInfo = HL.Method() << function(self)
     self.m_activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     self.m_tasks = {}
@@ -202,8 +161,6 @@ ActivityHighDifficultyCtrl._RefreshInfo = HL.Method() << function(self)
     end
 end
 
-
-
 ActivityHighDifficultyCtrl.GetAllCanReceiveStageIds = HL.Method().Return(HL.Table) << function(self)
     local stageIds = {}
     for _, task in ipairs(self.m_curShowingTasks) do
@@ -213,10 +170,6 @@ ActivityHighDifficultyCtrl.GetAllCanReceiveStageIds = HL.Method().Return(HL.Tabl
     end
     return stageIds
 end
-
-
-
-
 
 ActivityHighDifficultyCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     
@@ -271,9 +224,6 @@ ActivityHighDifficultyCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << fun
     end
 end
 
-
-
-
 ActivityHighDifficultyCtrl._SetNaviTarget = HL.Method(HL.Number) << function(self,index)
     if index == 0 or not DeviceInfo.usingController  then
         return
@@ -285,13 +235,9 @@ ActivityHighDifficultyCtrl._SetNaviTarget = HL.Method(HL.Number) << function(sel
     end
     local cell = oriCell and self.m_getTaskCell(oriCell)
     if cell then
-        UIUtils.setAsNaviTarget(cell.naviDecorator)
+        self:SetNaviTarget(cell.naviDecorator)
     end
 end
-
-
-
-
 
 ActivityHighDifficultyCtrl._ChangeTab = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, newIndex, forceRefresh)
     
@@ -338,9 +284,6 @@ ActivityHighDifficultyCtrl._ChangeTab = HL.Method(HL.Number, HL.Opt(HL.Boolean))
     end
 end
 
-
-
-
 ActivityHighDifficultyCtrl.OnStageChange = HL.Method(HL.Any) << function(self, args)
     local id = unpack(args)
     if id ~= self.m_activityId then
@@ -360,9 +303,6 @@ ActivityHighDifficultyCtrl.OnStageChange = HL.Method(HL.Any) << function(self, a
     self:_ChangeTab(self.m_curTabIndex, true)
 end
 
-
-
-
 ActivityHighDifficultyCtrl.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
     local luaIndex = LuaIndex(index)
     if luaIndex < 1 or luaIndex > #self.m_curShowingTasks then
@@ -378,14 +318,10 @@ ActivityHighDifficultyCtrl.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Num
 end
 
 
-
-
 ActivityHighDifficultyCtrl.OnActivityCenterNaviFailed = HL.Method() << function(self)
     local firstCell = self.view.scrollList:GetRangeInView().x
     self:_SetNaviTarget(LuaIndex(firstCell))
 end
-
-
 
 ActivityHighDifficultyCtrl.OnClose = HL.Override() << function(self)
     local taskIds = {}

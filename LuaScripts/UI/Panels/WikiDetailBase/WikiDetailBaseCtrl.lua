@@ -1,38 +1,5 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiDetailBaseCtrl = HL.Class('WikiDetailBaseCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -44,23 +11,15 @@ WikiDetailBaseCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 WikiDetailBaseCtrl.m_wikiEntryShowData = HL.Field(HL.Table)
-
 
 WikiDetailBaseCtrl.m_arg = HL.Field(HL.Table)
 
-
 WikiDetailBaseCtrl.m_wikiGroupShowDataList = HL.Field(HL.Table)
-
 
 WikiDetailBaseCtrl.m_itemTipsPosInfo = HL.Field(HL.Table)
 
-
 WikiDetailBaseCtrl.m_needHideModel = HL.Field(HL.Boolean) << true
-
-
-
 
 
 
@@ -104,16 +63,12 @@ WikiDetailBaseCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.m_wikiEntryShowData.wikiGroupData.groupId, self.m_wikiEntryShowData.wikiEntryData.id)
 end
 
-
-
 WikiDetailBaseCtrl.OnClose = HL.Override() << function(self)
     if self.m_phase then
         self.m_phase:DestroyModel()
     end
     self:GameEventLogExit()
 end
-
-
 
 WikiDetailBaseCtrl.OnShow = HL.Override() << function(self)
     if self.m_phase then
@@ -127,8 +82,6 @@ WikiDetailBaseCtrl.OnShow = HL.Override() << function(self)
     self:GameEventLogEnter()
 end
 
-
-
 WikiDetailBaseCtrl.OnHide = HL.Override() << function(self)
     if self.m_needHideModel and self.m_phase then
         self.m_phase:ActiveModelRotateRoot(false)
@@ -140,13 +93,9 @@ end
 
 
 
-
-
 WikiDetailBaseCtrl.GetPanelId = HL.Virtual().Return(HL.Number) << function(self)
 
 end
-
-
 
 WikiDetailBaseCtrl._RefreshTop = HL.Virtual() << function(self)
     if self.m_phase == nil then
@@ -161,8 +110,6 @@ WikiDetailBaseCtrl._RefreshTop = HL.Virtual() << function(self)
     }
     self.view.top:InitWikiTop(wikiTopArgs)
 end
-
-
 
 WikiDetailBaseCtrl._RefreshCenter = HL.Virtual() << function(self)
     
@@ -188,8 +135,6 @@ WikiDetailBaseCtrl._RefreshCenter = HL.Virtual() << function(self)
             not string.isEmpty(prtsId) and GameInstance.player.prts:IsPrtsUnlocked(prtsId))
     end
 end
-
-
 
 WikiDetailBaseCtrl._RefreshLeft = HL.Virtual() << function(self)
     
@@ -219,26 +164,16 @@ WikiDetailBaseCtrl._RefreshLeft = HL.Virtual() << function(self)
     self.view.left:InitWikiGroupItemList(wikiGroupItemListArgs)
 end
 
-
-
 WikiDetailBaseCtrl._RefreshRight = HL.Virtual() << function(self)
 
 end
-
-
 
 WikiDetailBaseCtrl._CollectLocalResumeState = HL.Virtual().Return(HL.Table) << function(self)
     return {}
 end
 
-
-
-
 WikiDetailBaseCtrl._ApplyLocalResumeState = HL.Virtual(HL.Opt(HL.Any)) << function(self, resumeState)
 end
-
-
-
 
 
 
@@ -262,8 +197,6 @@ WikiDetailBaseCtrl.Refresh = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
 WikiDetailBaseCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
     arg.categoryType = self.m_wikiEntryShowData and self.m_wikiEntryShowData.wikiCategoryType or arg.categoryType
@@ -273,17 +206,12 @@ WikiDetailBaseCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) <<
     return arg
 end
 
-
-
 WikiDetailBaseCtrl._CollectResumeState = HL.Method().Return(HL.Table) << function(self)
     return {
         groupItemList = self.view.left and self.view.left.GetResumeState and self.view.left:GetResumeState() or nil,
         localState = self:_CollectLocalResumeState(),
     }
 end
-
-
-
 
 WikiDetailBaseCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
     if not resumeState then
@@ -297,17 +225,12 @@ end
 
 
 
-
 WikiDetailBaseCtrl.m_enterTime = HL.Field(HL.Number) << -1
-
-
 
 WikiDetailBaseCtrl.GameEventLogEnter = HL.Method() << function(self)
     self.m_enterTime = Time.realtimeSinceStartup
     EventLogManagerInst:GameEvent_WikiCategory(true, self.m_wikiEntryShowData.wikiCategoryType, 0)
 end
-
-
 
 WikiDetailBaseCtrl.GameEventLogExit = HL.Method() << function(self)
     if self.m_enterTime < 0 then
@@ -322,13 +245,9 @@ end
 
 
 
-
 WikiDetailBaseCtrl.m_closeItemTipsBindingId = HL.Field(HL.Number) << -1
 
-
 WikiDetailBaseCtrl.m_currentNaviCraftCellView = HL.Field(HL.Table)
-
-
 
 WikiDetailBaseCtrl._InitController = HL.Virtual() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
@@ -352,9 +271,6 @@ WikiDetailBaseCtrl._InitController = HL.Virtual() << function(self)
         InputManagerInst:ToggleBinding(self.m_closeItemTipsBindingId, false)
     end
 end
-
-
-
 
 WikiDetailBaseCtrl._InitItemObtainWaysController = HL.Method(HL.Userdata).Return(CS.UnityEngine.UI.Selectable, CS.Beyond.UI.UISelectableNaviGroup) << function(self, itemObtainWaysForWiki)
     local lastCraftFirstSelectable = nil
@@ -427,13 +343,11 @@ WikiDetailBaseCtrl._InitItemObtainWaysController = HL.Method(HL.Userdata).Return
     if not lastNaviGroup then
         lastNaviGroup = itemObtainWaysForWiki.view.selectableNaviGroup
     end
+    if itemObtainWaysForWiki.view.emptyNode.gameObject.activeSelf then
+        return itemObtainWaysForWiki.view.emptyNode.button, nil
+    end
     return lastCraftFirstSelectable, lastNaviGroup
 end
-
-
-
-
-
 
 WikiDetailBaseCtrl._OnRightItemIsNaviTargetChanged = HL.Method(HL.Boolean, HL.Userdata, HL.Opt(HL.Table)) << function(self, isTarget, selectable, craftCellView)
     if not DeviceInfo.usingController then
@@ -457,10 +371,6 @@ WikiDetailBaseCtrl._OnRightItemIsNaviTargetChanged = HL.Method(HL.Boolean, HL.Us
     self.m_itemTipsPosInfo.isSideTips = UIManager:IsShow(PanelId.ItemTips)
     self.m_currentNaviCraftCellView = isTarget and craftCellView or nil
 end
-
-
-
-
 
 WikiDetailBaseCtrl._OnClickRightItemCell = HL.Method(HL.Userdata, HL.Opt(HL.Table)) << function(self, cell, craftCellView)
     self.m_itemTipsPosInfo.isSideTips = true

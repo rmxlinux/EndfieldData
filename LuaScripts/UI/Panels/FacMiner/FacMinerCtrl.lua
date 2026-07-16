@@ -2,38 +2,6 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local FactoryGlobalUnlockIndex = FacCoreNS.FactoryGlobalUnlockIndex
 local MinerOutputMode = FacCoreNS.MinerOutputMode
 local PANEL_ID = PanelId.FacMiner
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacMinerCtrl = HL.Class('FacMinerCtrl', uiCtrl.UICtrl)
 
 local MAX_MINE_PROGRESS_EFFICIENCY = 100
@@ -44,42 +12,28 @@ local ARROW_ANIMATION_NAME = "facmac_decoarrow_loop"
 
 
 
-
 FacMinerCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
-
 FacMinerCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 FacMinerCtrl.m_uiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_Collector)
 
-
 FacMinerCtrl.m_wirelessModeValid = HL.Field(HL.Boolean) << false
-
 
 FacMinerCtrl.m_itemDepotMaxStackCount = HL.Field(HL.Number) << -1
 
-
 FacMinerCtrl.m_isBlocked = HL.Field(HL.Boolean) << false
-
 
 FacMinerCtrl.m_wirelessModeUpdateThread = HL.Field(HL.Thread)
 
-
 FacMinerCtrl.m_progressUpdateThread = HL.Field(HL.Thread)
-
 
 FacMinerCtrl.m_progressInitUpdateThread = HL.Field(HL.Thread)
 
-
 FacMinerCtrl.m_cache = HL.Field(HL.Userdata)
 
-
 FacMinerCtrl.m_onCacheChanged = HL.Field(HL.Function)
-
-
-
 
 
 FacMinerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -130,8 +84,6 @@ FacMinerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitMinerController()
 end
 
-
-
 FacMinerCtrl.OnClose = HL.Override() << function(self)
     self:_ClearWirelessModeUpdateThread()
     self:_ClearProgressUpdateThread()
@@ -145,9 +97,6 @@ FacMinerCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
-
 FacMinerCtrl._OnStateChanged = HL.Method(HL.Userdata) << function(self, state)
     if self.m_wirelessModeValid then
         self.view.wirelessModeNode:RefreshPausedState(
@@ -157,8 +106,6 @@ FacMinerCtrl._OnStateChanged = HL.Method(HL.Userdata) << function(self, state)
 
     self.view.facProgressNode:SwitchAudioPlayingState(state == GEnums.FacBuildingState.Normal)
 end
-
-
 
 FacMinerCtrl._RefreshFormulaInfo = HL.Method() << function(self)
     self.view.formulaNode:InitFormulaNode(self.m_uiInfo)
@@ -204,8 +151,6 @@ end
 
 
 
-
-
 FacMinerCtrl._StartWirelessModeUpdateThread = HL.Method() << function(self)
     self:_UpdateWirelessModeBlockedState(true)
     self.m_wirelessModeUpdateThread = self:_StartCoroutine(function()
@@ -216,15 +161,11 @@ FacMinerCtrl._StartWirelessModeUpdateThread = HL.Method() << function(self)
     end)
 end
 
-
-
 FacMinerCtrl._ClearWirelessModeUpdateThread = HL.Method() << function(self)
     if self.m_wirelessModeUpdateThread ~= nil then
         self.m_wirelessModeUpdateThread = self:_ClearCoroutine(self.m_wirelessModeUpdateThread)
     end
 end
-
-
 
 FacMinerCtrl._StartProgressUpdateThread = HL.Method() << function(self)
     self.m_progressUpdateThread = self:_StartCoroutine(function()
@@ -235,15 +176,11 @@ FacMinerCtrl._StartProgressUpdateThread = HL.Method() << function(self)
     end)
 end
 
-
-
 FacMinerCtrl._ClearProgressUpdateThread = HL.Method() << function(self)
     if self.m_progressUpdateThread ~= nil then
         self.m_progressUpdateThread = self:_ClearCoroutine(self.m_progressUpdateThread)
     end
 end
-
-
 
 
 
@@ -264,8 +201,6 @@ FacMinerCtrl._InitWirelessModeNode = HL.Method() << function(self)
 
     self.m_wirelessModeValid = minerData.hasDroneMode
 end
-
-
 
 FacMinerCtrl._CheckCacheItemStateOnComplete = HL.Method() << function(self)
     local items = self.m_uiInfo.cache.items
@@ -290,8 +225,6 @@ end
 
 
 
-
-
 FacMinerCtrl._InitProgressNode = HL.Method() << function(self)
     self:_UpdateProgressInitializedState()
     self.m_progressInitUpdateThread = self:_StartCoroutine(function()
@@ -301,8 +234,6 @@ FacMinerCtrl._InitProgressNode = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 
 
@@ -326,7 +257,7 @@ FacMinerCtrl._InitFacCacheRepository = HL.Method() << function(self)
         self.view.fluidCacheRepository:InitFacCacheRepository({
             cache = self.m_uiInfo.waterCache,
             isInCache = true,
-            isFluidCache = true,
+            cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid,
             cacheIndex = 1,
             slotCount = 1,
             fakeFormulaDataList = FactoryUtils.getBuildingCrafts(self.m_uiInfo.buildingId)
@@ -355,8 +286,6 @@ FacMinerCtrl._InitFacCacheRepository = HL.Method() << function(self)
     end
 end
 
-
-
 FacMinerCtrl._UpdateGainButtonState = HL.Method() << function(self)
     local findItem = false
     for id, count in pairs(self.m_cache.items) do
@@ -367,8 +296,6 @@ FacMinerCtrl._UpdateGainButtonState = HL.Method() << function(self)
     end
     self.view.gainBtn.interactable = findItem
 end
-
-
 
 
 
@@ -394,10 +321,6 @@ FacMinerCtrl._InitInventoryArea = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 FacMinerCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) << function(self, cell, itemBundle)
     if cell == nil or itemBundle == nil then
         return
@@ -406,8 +329,8 @@ FacMinerCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) << funct
     
     
     local itemId = itemBundle.id
-    local isEmptyBottle = Tables.emptyBottleTable:ContainsKey(itemId)
-    local isFullBottle = Tables.fullBottleTable:ContainsKey(itemId)
+    local isEmptyBottle = FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+    local isFullBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
     local isBottle = isEmptyBottle or isFullBottle
     local canDrag = self.m_uiInfo.isFluidCollector and isBottle
     local isEmpty = string.isEmpty(itemBundle.id)
@@ -426,9 +349,6 @@ end
 
 
 
-
-
-
 FacMinerCtrl._UpdateWirelessModeBlockedState = HL.Method(HL.Opt(HL.Boolean)) << function(self, forceRefresh)
     if not self.m_wirelessModeValid or string.isEmpty(self.m_uiInfo.collectingItemId) then
         return
@@ -437,8 +357,6 @@ FacMinerCtrl._UpdateWirelessModeBlockedState = HL.Method(HL.Opt(HL.Boolean)) << 
     local depotCount = GameInstance.player.inventory:GetItemCountInDepot(Utils.getCurrentScope(), Utils.getCurrentChapterId(), self.m_uiInfo.collectingItemId)
     self.view.wirelessModeNode:RefreshBlockedState(depotCount == self.m_itemDepotMaxStackCount, forceRefresh)
 end
-
-
 
 FacMinerCtrl._UpdateProgressInitializedState = HL.Method() << function(self)
     if self.m_uiInfo.collector.progressIncreasePerMS == 0 then
@@ -460,8 +378,6 @@ FacMinerCtrl._UpdateProgressInitializedState = HL.Method() << function(self)
     self.m_progressInitUpdateThread = self:_ClearCoroutine(self.m_progressInitUpdateThread)
 end
 
-
-
 FacMinerCtrl._UpdateProgressState = HL.Method() << function(self)
     local currentProgress = self.m_uiInfo.currentProgress
     self.view.facProgressNode:UpdateProgress(currentProgress)
@@ -472,10 +388,7 @@ end
 
 
 
-
 FacMinerCtrl.m_naviGroupSwitcher = HL.Field(HL.Forward('NaviGroupSwitcher'))
-
-
 
 FacMinerCtrl._InitMinerController = HL.Method() << function(self)
     local NaviGroupSwitcher = require_ex("Common/Utils/UI/NaviGroupSwitcher").NaviGroupSwitcher
@@ -495,7 +408,7 @@ FacMinerCtrl._InitMinerController = HL.Method() << function(self)
         self.view.contentNaviGroup.getDefaultSelectableFunc = function()
             return self.view.sourceItem.view.button
         end
-        UIUtils.setAsNaviTarget(self.view.sourceItem.view.button)
+        self:SetNaviTarget(self.view.sourceItem.view.button)
     end
 end
 

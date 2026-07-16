@@ -1,23 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 TipWeaponLevelNode = HL.Class('TipWeaponLevelNode', UIWidgetBase)
-
-
 
 
 TipWeaponLevelNode._OnFirstTimeInit = HL.Override() << function(self)
     
 end
-
-
-
-
-
-
 
 TipWeaponLevelNode.InitTipWeaponLevelNodeNoInst = HL.Method(HL.Number, HL.Number, HL.Number, HL.Number) << function(self, curLv, stageLv, curBreakthroughLv, maxBreakthroughLv)
     self.view.curLvText.text = curLv
@@ -26,10 +14,6 @@ TipWeaponLevelNode.InitTipWeaponLevelNodeNoInst = HL.Method(HL.Number, HL.Number
 
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.levelNode)
 end
-
-
-
-
 
 TipWeaponLevelNode.InitTipWeaponLevelNode = HL.Method(HL.String, HL.Number) << function(self, templateId, instId)
     self:_FirstTimeInit()

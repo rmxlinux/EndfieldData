@@ -12,6 +12,7 @@ FACTORY_BUILDING_UI_MAP = {
     [GEnums.FacBuildingType.Loader] = { "FacLoader", false },
     [GEnums.FacBuildingType.Unloader] = { "FacUnloader", false },
     [GEnums.FacBuildingType.Miner] = { "FacMiner", false },
+    [GEnums.FacBuildingType.GasMiner] = { "FacGasMiner", false },
     [GEnums.FacBuildingType.Storager] = { "FacStorage", false },
     [GEnums.FacBuildingType.Soil] = { "FacCultivate", false },
     [GEnums.FacBuildingType.TravelPole] = { "FacTravelPole", false },
@@ -35,6 +36,8 @@ FACTORY_BUILDING_UI_MAP = {
     [GEnums.FacBuildingType.SewageTreatPlantImport] = { "FacSewageTreatImporter", false },
     [GEnums.FacBuildingType.SewageTreatPlantExport] = { "FacSewageTreatExporter", false },
     [GEnums.FacBuildingType.Decorate] = { "FacDecorate", false },
+    [GEnums.FacBuildingType.MachineWithActivator] = { "FacMachineActivator", false },
+    [GEnums.FacBuildingType.EnvGenWithActivator] = { "FacEnvGenActivator", false },
 }
 
 
@@ -104,6 +107,13 @@ FAC_BUILD_MODE = {
     Blueprint = 5,
 }
 
+
+SIMPLE_FIGURE_MODE = {
+    None = 0,
+    SimplePipeFigure = 1,
+    SimpleBeltFigure = 2,
+}
+
 FAC_LINK_WIRE_TOAST_TYPE = {
     Start = 1,
     Cancel = 2,
@@ -153,6 +163,7 @@ POLE_RANGE_EFFECT_MAP = {
     ["power_pole_2"] = powerPoleRangeEffect_2,
     ["power_pole_3"] = powerPoleRangeEffect_2,
 }
+VAPORIZER_RANGE_EFFECT = "Assets/Beyond/DynamicAssets/Gameplay/Effects/Prefabs/P_fxfac_vaporizer_boundary_2501.prefab"
 
 FLUID_SPRAY_RANGE_EFFECT = "Assets/Beyond/DynamicAssets/Gameplay/Effects/Prefabs/P_interactive_sprinkler_01_range_5x4.prefab"
 EFFECT_PREFAB_PATH_FORMAT = "Assets/Beyond/DynamicAssets/Gameplay/Effects/Prefabs/%s.prefab"
@@ -175,6 +186,7 @@ FAC_BUILDING_STATE_TO_SPRITE = {
     [GEnums.FacBuildingState.NoPower] = "icon_ui_power_pole_machine_state_3",
     [GEnums.FacBuildingState.NotInPowerNet] = "icon_ui_power_pole_machine_state_1",
     [GEnums.FacBuildingState.Fixable] = "icon_ui_power_pole_machine_state_7",
+    [GEnums.FacBuildingState.InActive] = "icon_ui_machinestate10",
 }
 
 FAC_TOP_VIEW_BUILDING_STATE_TO_SPRITE = {
@@ -186,6 +198,7 @@ FAC_TOP_VIEW_BUILDING_STATE_TO_SPRITE = {
     [GEnums.FacBuildingState.NotInPowerNet] = "icon_building_state_1",
     [GEnums.FacBuildingState.BusDisconnect] = "icon_building_state_7",
     [GEnums.FacBuildingState.PortDisconnect] = "icon_building_state_8",
+    [GEnums.FacBuildingState.InActive] = "icon_building_state_9",
 }
 
 CRAFT_PROGRESS_MULTIPLIER = CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryUtil.craftProgressMultiplier
@@ -328,6 +341,21 @@ QuickBarItemType = {
 FAC_FORMULA_MODE_MAP = {
     NORMAL = "normal",
     LIQUID = "liquid",
+    GAS = "gas",
+    GASLIQUID = "gasliquid",
+    GASTRANS = "gastrans";
+    LIQUIDTRANS = "liquidtrans";
+    SOLIDTRANS = "solidtrans";
+}
+
+FAC_FORMULA_MODE_TOGGLE_AUDIO = {
+    [FAC_FORMULA_MODE_MAP.NORMAL] = "Au_UI_Toggle_FacBasicMode",
+    [FAC_FORMULA_MODE_MAP.LIQUID] = "Au_UI_Toggle_FacLiqMode",
+    [FAC_FORMULA_MODE_MAP.GAS] = "Au_UI_Toggle_FacGasMode",
+    [FAC_FORMULA_MODE_MAP.GASLIQUID] = "Au_UI_Toggle_FacLiqGasMode",
+    [FAC_FORMULA_MODE_MAP.GASTRANS] = "Au_UI_Toggle_FacGasMode",
+    [FAC_FORMULA_MODE_MAP.LIQUIDTRANS] = "Au_UI_Toggle_FacLiqMode",
+    [FAC_FORMULA_MODE_MAP.SOLIDTRANS] = "Au_UI_Toggle_FacSolidMode",
 }
 
 FAC_TOP_VIEW_BASIC_ACTION_IDS = {
@@ -392,6 +420,19 @@ SMARTALERT_TRASNFORM_OFFSET = {
     [GEnums.FacSmartAlertType.LiquidTypeCannotDumped] = { x = 0, y = -14 },
     [GEnums.FacSmartAlertType.DiffTypeLiquidCannotDumped] = { x = 0, y = -14 },
     [GEnums.FacSmartAlertType.DiffTypeLiquidCannotSprayed] = { x = 0, y = -14 },
+    [GEnums.FacSmartAlertType.FillingNeedUnlockGas] = { x = 0, y = 0 },
+    [GEnums.FacSmartAlertType.DismantlerNeedUnlockGas] = { x = 0, y = -14 },
+    [GEnums.FacSmartAlertType.TargetTypeCannotDumped] = { x = 0, y = -14 },
+    [GEnums.FacSmartAlertType.ActivatorCostInsufficient] = { x = 0, y = -14 },
+    [GEnums.FacSmartAlertType.EnvGenInputInvalidGas] = { x = 0, y = -14 },
+    [GEnums.FacSmartAlertType.EnvGenInputGasInsufficient] = { x = 0, y = -14 },
+    [GEnums.FacSmartAlertType.EnvGenNoInputGas] = { x = 0, y = -14 },
+    [GEnums.FacSmartAlertType.FormulaNeedEnv] = { x = 0, y = -14 },
+}
+
+SMARTALERT_ANIMATION_NAME_POSTFIX = {
+    
+    
 }
 
 MAIN_REGION_CAM_STATE = "Factory/CCS_Fac_Region"
@@ -439,6 +480,14 @@ BLUEPRINT_PREVIEW_SP_BUILDING_BG = {
     [GEnums.FacBuildingType.Loader] = { "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/bg_machine_loader.png" },
     [GEnums.FacBuildingType.Unloader] = { "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/bg_machine_unloader.png" },
 }
+
+
+BLUEPRINT_PREVIEW_SP_BUILDING_BG_BY_TEMPLATE_ID = {
+    ["udpipe_loader_1"] = { "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/bg_machine_udpipe_loader_1.png" },
+    ["udpipe_loader_2"] = { "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/bg_machine_udpipe_loader_2.png" },
+    ["udpipe_unloader_1"] = { "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/bg_machine_udpipe_unloader_1.png" },
+    ["udpipe_unloader_2"] = { "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/bg_machine_udpipe_unloader_2.png" },
+}
 BLUEPRINT_PREVIEW_LOGISTIC_BG = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/bg_logistic_%s.png"
 BLUEPRINT_PREVIEW_BELT_PORT_IN = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/port_in_%d.png"
 BLUEPRINT_PREVIEW_BELT_PORT_OUT = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/port_out_%d.png"
@@ -448,6 +497,16 @@ BLUEPRINT_PREVIEW_BELT_PORT_IN_ALTER = "Assets/Beyond/DynamicAssets/Gameplay/UI/
 BLUEPRINT_PREVIEW_BELT_PORT_OUT_ALTER = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/port_out_%d_%d.png" 
 BLUEPRINT_PREVIEW_PIPE_PORT_IN_ALTER = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/pipe_port_in_%d_%d.png" 
 BLUEPRINT_PREVIEW_PIPE_PORT_OUT_ALTER = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/pipe_port_out_%d_%d.png" 
+BLUEPRINT_PREVIEW_BELT_PORT_IN_UNIT = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/port_in_1.png"
+BLUEPRINT_PREVIEW_BELT_PORT_OUT_UNIT = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/port_out_1.png"
+BLUEPRINT_PREVIEW_PIPE_PORT_IN_UNIT = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/pipe_port_in_1.png"
+BLUEPRINT_PREVIEW_PIPE_PORT_OUT_UNIT = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/pipe_port_out_1.png"
+BLUEPRINT_PREVIEW_EDGE_PORT_ALT_SUPPORT = {
+    beltIn = {},
+    beltOut = {},
+    pipeIn = {},
+    pipeOut = {},
+}
 BLUEPRINT_PREVIEW_BUILDING_DEFAULT_EDGE_SMALL = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/deco_edge_small.png"
 BLUEPRINT_PREVIEW_BUILDING_DEFAULT_EDGE_BIG = "Assets/Beyond/DynamicAssets/Gameplay/UI/Sprites/Blueprint/deco_edge_big.png"
 
@@ -529,6 +588,7 @@ FAC_BUILDING_STATE_TO_PREFAB_PATH = {
     [GEnums.FacBuildingState.Blocked] = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Factory/Widgets/BuildingStateBlock.prefab",
     [GEnums.FacBuildingState.NoPower] = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Factory/Widgets/BuildingStateNoPower.prefab",
     [GEnums.FacBuildingState.NotInPowerNet] = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Factory/Widgets/BuildingStateNotLinked.prefab",
+    [GEnums.FacBuildingState.InActive] = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Factory/Widgets/BuildingStateInActive.prefab",
 }
 
 FAC_BUILDING_NORMAL_STATE_CUSTOM_TEXT_ID = {
@@ -553,6 +613,7 @@ FAC_BUILDING_NORMAL_STATE_CUSTOM_TEXT_ID = {
     [GEnums.FacBuildingType.FluidPumpOut] = "ui_fac_common_running_dumper",             
     [GEnums.FacBuildingType.Battle] = "ui_fac_battle_building_on_alert",                
     [GEnums.FacBuildingType.SewageTreatPlantImport] = "ui_fac_common_running_cleaner",  
+    [GEnums.FacBuildingType.GasMiner] = "ui_fac_common_produce_mining",                 
 }
 
 FAC_NON_BUILDING_NORMAL_STATE_CUSTOM_TEXT_ID = {
@@ -586,6 +647,9 @@ FocusStateTable = {
 
 FAC_BLUEPRINT_IMPORT_INPUTFIELD_MAX_LENGTH = 40
 
+
+FAC_BLUEPRINT_PRODUCT_ICON_GAS_PREFIX = CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintConsts.BLUEPRINT_PRODUCT_ICON_GAS_PREFIX
+
 FAC_BP_ABNORMAL_ICON_TYPE = {
     Normal = 1,
     Locked = 2,
@@ -593,14 +657,42 @@ FAC_BP_ABNORMAL_ICON_TYPE = {
     TimeLimitedExpired = 4,
 }
 
-FAC_SEWAGE_TREAT_IMPORTER_BUILDING_ID = "liquid_clean_gate_1"
-FAC_SEWAGE_TREAT_EXPORTER_BUILDING_ID = "liquid_recycle_gate_1"
-
 FAC_BUILD_MODE_MSG_MAP = {
     [FAC_BUILD_MODE.Building] = MessageConst.FAC_ENTER_BUILDING_MODE,
     [FAC_BUILD_MODE.Logistic] = MessageConst.FAC_ENTER_LOGISTIC_MODE,
     [FAC_BUILD_MODE.Belt] = MessageConst.FAC_ENTER_BELT_MODE,
     [FAC_BUILD_MODE.Blueprint] = MessageConst.FAC_ENTER_BLUEPRINT_MODE,
+}
+
+FAC_SEWAGE_TREAT_IMPORTER_BUILDING_ID = "liquid_clean_gate_1"
+FAC_SEWAGE_TREAT_EXPORTER_BUILDING_ID = "liquid_recycle_gate_1"
+
+FAC_CACHE_SLOT_TYPE_STATE = {
+    Normal = GEnums.FCItemCacheType.Normal:GetHashCode(),
+    Liquid = GEnums.FCItemCacheType.Liquid:GetHashCode(),
+    Gas = GEnums.FCItemCacheType.Gas:GetHashCode(),
+    GasLiquid = GEnums.FCItemCacheType.Liquid:GetHashCode() + GEnums.FCItemCacheType.Gas:GetHashCode(),
+}
+
+FAC_CACHE_SLOT_TYPE_CTRL_STATE = {
+    [FAC_CACHE_SLOT_TYPE_STATE.Liquid] = "liquid",
+    [FAC_CACHE_SLOT_TYPE_STATE.Gas] = "gas",
+    [FAC_CACHE_SLOT_TYPE_STATE.GasLiquid] = "liquidAndGas",
+}
+
+FAC_PRODUCER_NEED_INVERSE_PIPE = {
+    ["liquid_purifier_1"] = true,
+    ["gas_reactor_1"] = true,
+    ["transmuter_1"] = true,
+    ["transmuter_2"] = true,
+}
+
+FAC_ENV_DISPLAY_CONFIG = {
+    [GEnums.FacEnvGenEnvType.None] = {color = "808080", icon = "Factory/EnvironmentIcon/icon_fac_environment_shadow_empty"},
+    [GEnums.FacEnvGenEnvType.Stable] = {color = "32c0ff", icon = "Factory/EnvironmentIcon/icon_fac_environment_shadow_stable", textKey = "ui_fac_common_gas_env_stable"},
+    [GEnums.FacEnvGenEnvType.Humidity] = {color = "ffffff", icon = "Factory/EnvironmentIcon/icon_fac_environment_shadow_moist", textKey = "ui_fac_common_gas_env_humidty"},
+    [GEnums.FacEnvGenEnvType.Acid] = {color = "ffba00", icon = "Factory/EnvironmentIcon/icon_fac_environment_shadow_acidic", textKey = "ui_fac_common_gas_env_acid"},
+    [GEnums.FacEnvGenEnvType.Xiranite] = {color = "1ec89a", icon = "Factory/EnvironmentIcon/icon_fac_environment_shadow_xirang", textKey = "ui_fac_common_gas_env_xiranite"},
 }
 
 NEED_AUTO_CONNECT_EXTRA_HINT_BUILDING = {

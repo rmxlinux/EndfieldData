@@ -1,32 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 AdventureDungeonCell = HL.Class('AdventureDungeonCell', UIWidgetBase)
-
 
 
 
 AdventureDungeonCell.m_genRewardCells = HL.Field(HL.Forward("UIListCache"))
 
-
 AdventureDungeonCell.m_rewardInfos = HL.Field(HL.Table)
-
 
 AdventureDungeonCell.m_info = HL.Field(HL.Table)
 
-
 AdventureDungeonCell.m_subGameIds = HL.Field(HL.Table)
-
-
 
 
 
@@ -56,14 +40,23 @@ AdventureDungeonCell._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
+AdventureDungeonCell._ResetReusableState = HL.Method() << function(self)
+    local stateCtrl = self.view.contentState
+    
+    stateCtrl:SetState("BossNormal")
+    stateCtrl:SetState("PropsNormal")
+    stateCtrl:SetState("Normal")
+    self.view.staminaState:SetState("HideStamina")
+    self.view.expandState:SetState("Hide")
+    self.view.staminaCostTxt.gameObject:SetActive(false)
+    self.view.dungeonBgImg.gameObject:SetActiveIfNecessary(false)
+end
 
 
 
 AdventureDungeonCell.InitAdventureDungeonCell = HL.Method(HL.Any, HL.Opt(HL.Boolean)) << function(self, info, isScrollRect)
     self:_FirstTimeInit()
+    self:_ResetReusableState()
 
     self.m_info = info
     self.m_subGameIds = info.subGameIds or {}
@@ -72,7 +65,6 @@ AdventureDungeonCell.InitAdventureDungeonCell = HL.Method(HL.Any, HL.Opt(HL.Bool
         self.view.contentState:SetState("Empty")
         return
     end
-    self.view.contentState:SetState("Normal")
 
     
     local hasRoleImg = not string.isEmpty(info.dungeonRoleImg)
@@ -218,8 +210,6 @@ AdventureDungeonCell.InitAdventureDungeonCell = HL.Method(HL.Any, HL.Opt(HL.Bool
 
 end
 
-
-
 AdventureDungeonCell._OnClickGoToBtn = HL.Method() << function(self)
     local id = self.m_info.seriesId
     if string.isEmpty(id) then
@@ -231,8 +221,6 @@ AdventureDungeonCell._OnClickGoToBtn = HL.Method() << function(self)
     Notify(MessageConst.ON_OPEN_DUNGEON_ENTRY_PANEL, { id })
     GameInstance.player.subGameSys:SendSubGameListRead(self.m_subGameIds)
 end
-
-
 
 AdventureDungeonCell._OnClickTracerBtn = HL.Method() << function(self)
     local hasData, instId = GameInstance.player.mapManager:GetMapMarkInstId(self.m_info.mapMarkType, self.m_info.seriesId)
@@ -247,8 +235,6 @@ AdventureDungeonCell._OnClickTracerBtn = HL.Method() << function(self)
     MapUtils.openMap(instId)
     GameInstance.player.subGameSys:SendSubGameListRead(self.m_subGameIds)
 end
-
-
 
 AdventureDungeonCell._OnClickLockBtn = HL.Method() << function(self)
     local gameGroupId = self.m_info.gameGroupId

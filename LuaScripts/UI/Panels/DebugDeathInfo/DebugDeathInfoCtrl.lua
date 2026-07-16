@@ -1,5 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DebugDeathInfo
+local DisplayMode = CS.Beyond.Gameplay.Core.DeathPerformance.CommonDeathPanelDisplayMode
 
 
 
@@ -10,19 +11,19 @@ local PANEL_ID = PanelId.DebugDeathInfo
 
 
 
-
-
-
-
-
-
+local DISPLAY_MODE_OPTIONS = {
+    { mode = DisplayMode.WorldDeath, label = "WorldDeath 世界死亡" },
+    { mode = DisplayMode.DungeonFail, label = "DungeonFail 副本失败" },
+    { mode = DisplayMode.Miasma, label = "Miasma 迷雾死亡" },
+}
 
 DebugDeathInfoCtrl = HL.Class('DebugDeathInfoCtrl', uiCtrl.UICtrl)
 
 
-
 DebugDeathInfoCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
+
+DebugDeathInfoCtrl.m_selectedModeCsIndex = HL.Field(HL.Number) << 0
 
 
 
@@ -88,7 +89,7 @@ local function buildDefaultDeathInfoTable()
         end
 
         local squadManager2 = GameInstance.player.squadManager
-        local isKilled = squadManager2 and squadManager2:IsCurSquadAllDead()
+        local isKilled = squadManager2 and squadManager2:IsAllDead()
         if isKilled and GameWorld and GameWorld.battle then
             local battleDeathInfo = GameWorld.battle:GetDieSnapShot()
             if battleDeathInfo and battleDeathInfo.killer then
@@ -101,9 +102,6 @@ local function buildDefaultDeathInfoTable()
     return d
 end
 
-
-
-
 DebugDeathInfoCtrl._FillFieldsFromDeathInfo = HL.Method(HL.Table) << function(self, d)
     self.view.deathDungeonId.text = d.dungeonId or ""
     self.view.deathEnemyId.text = d.enemyId or ""
@@ -113,8 +111,6 @@ DebugDeathInfoCtrl._FillFieldsFromDeathInfo = HL.Method(HL.Table) << function(se
     self.view.deathSquadSkillLvSum.text = tostring(d.squadSkillLvSum)
     self.view.deathSquadEquipLvSum.text = tostring(d.squadEquipLvSum)
 end
-
-
 
 DebugDeathInfoCtrl._ReadDeathInfoFromFields = HL.Method().Return(HL.Table) << function(self)
     return {
@@ -132,29 +128,40 @@ end
 
 DebugDeathInfoCtrl._GetTipGroupAndMode = HL.Method().Return(HL.String, HL.Userdata, HL.Number) << function(self)
     local deathInfo = self:_ReadDeathInfoFromFields()
+    local displayMode = DISPLAY_MODE_OPTIONS[self.m_selectedModeCsIndex + 1].mode
 
-    if deathInfo.dungeonId then
-        local _, tipGroupBean = Tables.dungeonDeathTips:TryGetValue(deathInfo.dungeonId)
-        if tipGroupBean and tipGroupBean.tipContents and #tipGroupBean.tipContents > 0 then
-            return "dungeon", tipGroupBean.tipContents, -1
+    if displayMode == DisplayMode.Miasma then
+        if Tables.miasmaDeathTips and #Tables.miasmaDeathTips > 0 then
+            return "miasma", Tables.miasmaDeathTips, 0
         end
-        return "dungeon", nil, -1
+        return "miasma->common", Tables.commonDeathTips, 0
     end
 
+    if displayMode == DisplayMode.DungeonFail then
+        if deathInfo.dungeonId then
+            local _, tipGroupBean = Tables.dungeonDeathTips:TryGetValue(deathInfo.dungeonId)
+            if tipGroupBean and tipGroupBean.tipContents and #tipGroupBean.tipContents > 0 then
+                return "dungeon", tipGroupBean.tipContents, -1
+            end
+        end
+        if deathInfo.enemyId and deathInfo.enemyLv >= 0 then
+            local _, tipGroupBean = Tables.enemyRelatedDeathTips:TryGetValue(deathInfo.enemyId)
+            if tipGroupBean and tipGroupBean.tipContents and #tipGroupBean.tipContents > 0 then
+                return "enemy", tipGroupBean.tipContents, -1
+            end
+        end
+        return "common", Tables.commonDeathTips, 0
+    end
+
+    
     if deathInfo.enemyId and deathInfo.enemyLv >= 0 then
         local _, tipGroupBean = Tables.enemyRelatedDeathTips:TryGetValue(deathInfo.enemyId)
         if tipGroupBean and tipGroupBean.tipContents and #tipGroupBean.tipContents > 0 then
             return "enemy", tipGroupBean.tipContents, -1
         end
-        return "enemy", nil, -1
     end
-
     return "common", Tables.commonDeathTips, 0
 end
-
-
-
-
 
 
 DebugDeathInfoCtrl._AppendTrainingPreview = HL.Method(HL.Table, HL.Table) << function(self, deathInfo, lines)
@@ -203,16 +210,15 @@ DebugDeathInfoCtrl._AppendTrainingPreview = HL.Method(HL.Table, HL.Table) << fun
     end
 end
 
-
-
 DebugDeathInfoCtrl._RefreshTipsDisplay = HL.Method() << function(self)
     local deathInfo = self:_ReadDeathInfoFromFields()
     local lines = {}
 
     self:_AppendTrainingPreview(deathInfo, lines)
 
-    lines[#lines + 1] = "=== 死亡提示候选（dungeon > enemy > common）==="
+    local modeLabel = DISPLAY_MODE_OPTIONS[self.m_selectedModeCsIndex + 1].label
     local mode, tipGroup, indexOffset = self:_GetTipGroupAndMode()
+    lines[#lines + 1] = "=== 死亡提示候选（displayMode=" .. modeLabel .. " | 实际命中=" .. mode .. "）==="
     if not tipGroup or #tipGroup == 0 then
         lines[#lines + 1] = "当前 DeathInfo 未找到对应 tips (mode=" .. mode .. ")"
     else
@@ -224,8 +230,6 @@ DebugDeathInfoCtrl._RefreshTipsDisplay = HL.Method() << function(self)
     self.view.tipsPreviewText.text = table.concat(lines, "\n")
 end
 
-
-
 DebugDeathInfoCtrl._OnConfirm = HL.Method() << function(self)
     local deathInfo = self:_ReadDeathInfoFromFields()
     local index1 = tonumber(self.view.index1.text)
@@ -236,11 +240,38 @@ DebugDeathInfoCtrl._OnConfirm = HL.Method() << function(self)
         deathInfo = deathInfo,
         index1 = index1,
         index2 = index2,
+        displayMode = DISPLAY_MODE_OPTIONS[self.m_selectedModeCsIndex + 1].mode,
     })
 end
 
-
-
+DebugDeathInfoCtrl._InitDisplayModeDropdown = HL.Method() << function(self)
+    local dropdown = self.view.displayModeDropdown
+    dropdown:ClearComponent()
+    dropdown:Init(
+        function(csIndex, option, _)
+            option:SetText(DISPLAY_MODE_OPTIONS[csIndex + 1].label)
+        end,
+        function(csIndex, isOn)
+            if not isOn then
+                return
+            end
+            self.m_selectedModeCsIndex = csIndex
+            
+            for i = 0, #DISPLAY_MODE_OPTIONS - 1 do
+                if i ~= csIndex then
+                    dropdown:SetSelected(i, false, false, false, false)
+                end
+            end
+            self:_RefreshTipsDisplay()
+        end
+    )
+    dropdown:Refresh(#DISPLAY_MODE_OPTIONS)
+    
+    dropdown:SetSelected(self.m_selectedModeCsIndex, true, false, false, false)
+    dropdown.onIsNaviTargetChanged = function(isTarget)
+        InputManagerInst:ToggleGroup(dropdown.groupId, isTarget)
+    end
+end
 
 
 DebugDeathInfoCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -275,6 +306,8 @@ DebugDeathInfoCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.deathSquadWeaponLvSum.onValueChanged:AddListener(onFieldChanged)
     self.view.deathSquadSkillLvSum.onValueChanged:AddListener(onFieldChanged)
     self.view.deathSquadEquipLvSum.onValueChanged:AddListener(onFieldChanged)
+
+    self:_InitDisplayModeDropdown()
 
     self:_RefreshTipsDisplay()
 end

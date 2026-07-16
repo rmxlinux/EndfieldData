@@ -2,12 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailRacingDungeon
 
-
-
-
-
 MapMarkDetailRacingDungeonCtrl = HL.Class('MapMarkDetailRacingDungeonCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -17,9 +12,6 @@ MapMarkDetailRacingDungeonCtrl = HL.Class('MapMarkDetailRacingDungeonCtrl', uiCt
 MapMarkDetailRacingDungeonCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 MapMarkDetailRacingDungeonCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -36,8 +28,6 @@ MapMarkDetailRacingDungeonCtrl.OnCreate = HL.Override(HL.Any) << function(self, 
 
     self.view.detailCommon:InitMapMarkDetailCommon(commonArgs)
 end
-
-
 
 MapMarkDetailRacingDungeonCtrl._OpenRacingDungeonPanel = HL.Method() << function(self)
     PhaseManager:OpenPhase(PhaseId.RacingDungeonEntry)

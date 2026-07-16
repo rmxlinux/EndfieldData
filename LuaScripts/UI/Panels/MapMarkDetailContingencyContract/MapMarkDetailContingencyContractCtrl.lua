@@ -2,17 +2,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailContingencyContract
 
-
-
-
-
-
-
 MapMarkDetailContingencyContractCtrl = HL.Class('MapMarkDetailContingencyContractCtrl', uiCtrl.UICtrl)
 
-
 MapMarkDetailContingencyContractCtrl.m_activityId = HL.Field(HL.String) << ""
-
 
 
 
@@ -21,9 +13,6 @@ MapMarkDetailContingencyContractCtrl.m_activityId = HL.Field(HL.String) << ""
 MapMarkDetailContingencyContractCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = '_OnStageUpdate',
 }
-
-
-
 
 
 MapMarkDetailContingencyContractCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -59,9 +48,6 @@ MapMarkDetailContingencyContractCtrl.OnCreate = HL.Override(HL.Any) << function(
 
 end
 
-
-
-
 MapMarkDetailContingencyContractCtrl._OnStageUpdate = HL.Method(HL.Any) << function(self, arg)
     local activityId = unpack(arg)
     if activityId ~= self.m_activityId then
@@ -69,8 +55,6 @@ MapMarkDetailContingencyContractCtrl._OnStageUpdate = HL.Method(HL.Any) << funct
     end
     self:_StageUpdate()
 end
-
-
 
 MapMarkDetailContingencyContractCtrl._StageUpdate = HL.Method() << function(self)
     

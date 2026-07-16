@@ -3,29 +3,7 @@ local SocialBuildingSource = CS.Beyond.Gameplay.Factory.SocialBuildingSource
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailSocialBuilding
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MapMarkDetailSocialBuildingCtrl = HL.Class('MapMarkDetailSocialBuildingCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -36,26 +14,17 @@ MapMarkDetailSocialBuildingCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FAC_RECEIVED_SOCIAL_BUILDING_DATA_UPDATED] = "_OnFacReceivedSocialBuildingDataUpdated",
 }
 
-
 MapMarkDetailSocialBuildingCtrl.m_existing = HL.Field(HL.Boolean) << false
-
 
 MapMarkDetailSocialBuildingCtrl.m_markRuntimeData = HL.Field(HL.Userdata)
 
-
 MapMarkDetailSocialBuildingCtrl.m_nodeId = HL.Field(HL.Number) << -1
-
 
 MapMarkDetailSocialBuildingCtrl.m_social = HL.Field(CS.Beyond.Gameplay.RemoteFactory.ServerChapterInfo.ComponentHandler.Payload_Social)
 
-
 MapMarkDetailSocialBuildingCtrl.m_isOthersSocialBuilding = HL.Field(HL.Boolean) << false
 
-
 MapMarkDetailSocialBuildingCtrl.m_ownerId = HL.Field(HL.Number) << -1
-
-
-
 
 
 MapMarkDetailSocialBuildingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -109,15 +78,20 @@ MapMarkDetailSocialBuildingCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     end
 
     self.view.mapMarkDetailCommon:InitMapMarkDetailCommon(commonArgs)
+
+    if self.m_existing and not self.m_isOthersSocialBuilding then
+        self.view.leftBtn.gameObject:SetActiveIfNecessary(true)
+        self.view.leftBtn.onClick:AddListener(function()
+            self:_DeleteSelfBuilding()
+        end)
+    else
+        self.view.leftBtn.gameObject:SetActiveIfNecessary(false)
+    end
 end
-
-
 
 MapMarkDetailSocialBuildingCtrl.OnShow = HL.Override() << function(self)
     self:_UpdateView()
 end
-
-
 
 MapMarkDetailSocialBuildingCtrl._UpdateView = HL.Method() << function(self)
     local active = self.m_isOthersSocialBuilding
@@ -129,8 +103,6 @@ MapMarkDetailSocialBuildingCtrl._UpdateView = HL.Method() << function(self)
         self:_UpdateSocialBuildingView()
     end
 end
-
-
 
 MapMarkDetailSocialBuildingCtrl._UpdateSocialBuildingView = HL.Method() << function(self)
     
@@ -173,9 +145,6 @@ MapMarkDetailSocialBuildingCtrl._UpdateSocialBuildingView = HL.Method() << funct
     end
 end
 
-
-
-
 MapMarkDetailSocialBuildingCtrl._UpdateOwnerView_Player = HL.Method(HL.Number).Return(HL.Boolean) << function(self, ownerId)
     local success, ownerInfo = GameInstance.player.friendSystem:TryGetFriendInfo(ownerId)
     if not success or not ownerInfo.init then
@@ -192,8 +161,6 @@ MapMarkDetailSocialBuildingCtrl._UpdateOwnerView_Player = HL.Method(HL.Number).R
     return true
 end
 
-
-
 MapMarkDetailSocialBuildingCtrl._UpdateReceivedSocialBuildingCount = HL.Method() << function(self)
     local remoteFactorySystem = GameInstance.player.remoteFactory
     self.view.stabilityTitleText.text = Language.LUA_MAP_MARK_DETAIL_SOCIAL_BUILDING_RECEPTION_TITLE
@@ -206,8 +173,6 @@ MapMarkDetailSocialBuildingCtrl._UpdateReceivedSocialBuildingCount = HL.Method()
     self.view.stabilityValueText.text = string.format(receptionValueTextFormat, buildingCount, buildingMaxCount)
     self.view.receiveSocialBuildingTips.gameObject:SetActive(not isBuildingReceivable)
 end
-
-
 
 MapMarkDetailSocialBuildingCtrl._ReceiveSocialBuilding = HL.Method() << function(self)
     
@@ -228,11 +193,6 @@ MapMarkDetailSocialBuildingCtrl._ReceiveSocialBuilding = HL.Method() << function
     end
 end
 
-
-
-
-
-
 MapMarkDetailSocialBuildingCtrl._SendReceiveSocialBuilding = HL.Method(HL.Opt(HL.String, HL.Number, HL.Number))
     << function(self, buildingLevelId, buildingNodeId, buildingOwnerId)
     local markRuntimeData = self.m_markRuntimeData
@@ -244,8 +204,6 @@ MapMarkDetailSocialBuildingCtrl._SendReceiveSocialBuilding = HL.Method(HL.Opt(HL
         GameInstance.player.friendChatSystem:SendReceiveSocialBuilding(chatRoleId, chatMsgIndex)
     end
 end
-
-
 
 MapMarkDetailSocialBuildingCtrl._DeleteSocialBuilding = HL.Method() << function(self)
 
@@ -263,8 +221,20 @@ MapMarkDetailSocialBuildingCtrl._DeleteSocialBuilding = HL.Method() << function(
     end, true, nil, self.m_markRuntimeData.chapterId)
 end
 
+MapMarkDetailSocialBuildingCtrl._DeleteSelfBuilding = HL.Method() << function(self)
+    if GameWorld.gameMechManager.travelPoleBrain:CanOpenMiniMap() then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_SYSTEM_FORBIDDEN)
+        return
+    end
 
-
+    FactoryUtils.delBuilding(self.m_nodeId, function()
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_FACTORY_BUILDING_DEL_TOAST)
+        if self.m_isClosed then
+            return
+        end
+        self:PlayAnimationOutAndClose()
+    end, true, nil, self.m_markRuntimeData.chapterId, true)
+end
 
 
 
@@ -291,15 +261,10 @@ MapMarkDetailSocialBuildingCtrl._OnFacSocialBuildingReceived = HL.Method(HL.Tabl
     end
 end
 
-
-
-
 MapMarkDetailSocialBuildingCtrl._OnFacReceivedSocialBuildingDataUpdated = HL.Method(HL.Table) << function(self, args)
     
     self:_UpdateSocialBuildingState()
 end
-
-
 
 MapMarkDetailSocialBuildingCtrl._UpdateSocialBuildingState = HL.Method() << function(self)
     
@@ -334,8 +299,6 @@ MapMarkDetailSocialBuildingCtrl._UpdateSocialBuildingState = HL.Method() << func
     
     Notify(MessageConst.SHOW_TOAST, Language.LUA_FRIEND_RECEIVE_SOCIAL_BUILDING_SUCCESS)
 end
-
-
 
 MapMarkDetailSocialBuildingCtrl.OnClose = HL.Override() << function(self)
     GameInstance.player.friendSystem:ClearSyncCallback()

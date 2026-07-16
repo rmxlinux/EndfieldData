@@ -1,105 +1,39 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 Depot = HL.Class('Depot', UIWidgetBase)
-
 
 
 
 
 Depot.depotContent = HL.Field(HL.Forward("DepotContent"))
 
-
 Depot.m_extraArgs = HL.Field(HL.Table)
-
 
 Depot.m_inInit = HL.Field(HL.Boolean) << false
 
-
 Depot.m_inited = HL.Field(HL.Boolean) << false
-
 
 Depot.m_curTypeIndex = HL.Field(HL.Number) << -1
 
-
 Depot.m_itemShowingTypeInfos = HL.Field(HL.Table)
-
 
 Depot.m_sortOptions = HL.Field(HL.Table)
 
-
 Depot.m_nonValidShowTypes = HL.Field(HL.Table)
-
 
 Depot.m_typeCells = HL.Field(HL.Forward('UIListCache'))
 
-
 Depot.m_valuableDepotType = HL.Field(GEnums.ItemValuableDepotType)
-
 
 Depot.m_onClickItemAction = HL.Field(HL.Function)
 
-
 Depot.m_onToggleDestroyMode = HL.Field(HL.Function)
-
 
 Depot.m_onChangeTypeFunction = HL.Field(HL.Function)
 
-
 Depot.m_oriPaddingBottom = HL.Field(HL.Number) << 0
 
-
 Depot.m_waitInitNaviTarget = HL.Field(HL.Boolean) << false
-
-
 
 
 
@@ -125,11 +59,6 @@ Depot._OnFirstTimeInit = HL.Override() << function(self)
         self:_OnSortChanged(optData, isIncremental)
     end, nil, nil, true)
 end
-
-
-
-
-
 
 Depot.InitDepot = HL.Method(GEnums.ItemValuableDepotType, HL.Opt(HL.Function, HL.Table)) << function(self, valuableDepotType, onClickItemAction, extraArgs)
     self.m_sortOptions = extraArgs.sortOptions or UIConst.FAC_DEPOT_SORT_OPTIONS
@@ -196,17 +125,12 @@ Depot.InitDepot = HL.Method(GEnums.ItemValuableDepotType, HL.Opt(HL.Function, HL
     self.m_inited = true
 end
 
-
-
 Depot.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     return {
         typeIndex = self.m_curTypeIndex,
         showingType = self:_GetRecoverShowingType(),
     }
 end
-
-
-
 
 Depot.TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     
@@ -224,9 +148,6 @@ Depot.TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState
 end
 
 
-
-
-
 Depot._TryRecoverStateBeforeInit = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
         return
@@ -235,8 +156,6 @@ Depot._TryRecoverStateBeforeInit = HL.Method(HL.Opt(HL.Any)) << function(self, r
     self:_RefreshShowingTypeTitle()
 end
 
-
-
 Depot._GetRecoverShowingType = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local info = self.m_itemShowingTypeInfos and self.m_itemShowingTypeInfos[self.m_curTypeIndex]
     if info == nil or info.types == nil then
@@ -244,9 +163,6 @@ Depot._GetRecoverShowingType = HL.Method().Return(HL.Opt(HL.Any)) << function(se
     end
     return info.types[1]
 end
-
-
-
 
 Depot._GetRecoverTypeIndex = HL.Method(HL.Any).Return(HL.Number) << function(self, recoverState)
     local typeCount = self.m_itemShowingTypeInfos and #self.m_itemShowingTypeInfos or 0
@@ -267,9 +183,6 @@ Depot._GetRecoverTypeIndex = HL.Method(HL.Any).Return(HL.Number) << function(sel
     end
     return 1
 end
-
-
-
 
 Depot._RefreshShowingTypeList = HL.Method(HL.Opt(HL.Boolean)) << function(self, blockEmptyType)
     if blockEmptyType then
@@ -326,8 +239,6 @@ Depot._RefreshShowingTypeList = HL.Method(HL.Opt(HL.Boolean)) << function(self, 
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.typesNode.transform)
 end
 
-
-
 Depot._RefreshShowingTypeData = HL.Method() << function(self)
     self.m_curTypeIndex = 1
     self.m_itemShowingTypeInfos = {
@@ -338,7 +249,11 @@ Depot._RefreshShowingTypeData = HL.Method() << function(self)
     }
     local showingTypes = UIConst.FACTORY_DEPOT_SHOWING_TYPES
     for _, v in ipairs(showingTypes) do
-        if not self.m_nonValidShowTypes or not lume.find(self.m_nonValidShowTypes, v) then
+        local isLocked
+        if v == GEnums.ItemShowingType.PortableDevice then
+            isLocked = not Utils.isSystemUnlocked(GEnums.UnlockSystemType.ColoredBagItem)
+        end
+        if not isLocked and (not self.m_nonValidShowTypes or not lume.find(self.m_nonValidShowTypes, v)) then
             local data = Tables.itemShowingTypeTable:GetValue(v:ToInt())
             table.insert(self.m_itemShowingTypeInfos, {
                 name = data.name,
@@ -347,13 +262,8 @@ Depot._RefreshShowingTypeData = HL.Method() << function(self)
             })
         end
     end
-
     self:_RefreshShowingTypeTitle()
 end
-
-
-
-
 
 Depot._OnClickShowingType = HL.Method(HL.Table, HL.Number) << function(self, typeCell, index)
     if DeviceInfo.usingController and InputManagerInst.controllerNaviManager:IsTopLayer(self.depotContent.view.itemListSelectableNaviGroup) then
@@ -383,10 +293,6 @@ Depot._OnClickShowingType = HL.Method(HL.Table, HL.Number) << function(self, typ
     end
 end
 
-
-
-
-
 Depot._RefreshTypeCellSelectedState = HL.Method(HL.Any, HL.Boolean) << function(self, cell, isSelected)
     if cell == nil then
         return
@@ -396,8 +302,6 @@ Depot._RefreshTypeCellSelectedState = HL.Method(HL.Any, HL.Boolean) << function(
     cell.lightNode.gameObject:SetActive(isSelected)
 end
 
-
-
 Depot._RefreshShowingTypeTitle = HL.Method() << function(self, index)
     local info = self.m_itemShowingTypeInfos[self.m_curTypeIndex]
     if info == nil then
@@ -405,10 +309,6 @@ Depot._RefreshShowingTypeTitle = HL.Method() << function(self, index)
     end
     self.view.typeTitle.text = info.name
 end
-
-
-
-
 
 Depot._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(self, optData, isIncremental)
     if self.m_inInit then
@@ -421,11 +321,15 @@ Depot._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(self, optData
         self.depotContent.sortKeys = optData.keys
     end
     self.depotContent:OnSortChanged()
+
+    self.depotContent.view.itemList:ScrollToIndex(0, true)
+    if DeviceInfo.usingController then
+        local firstCell = self.depotContent:GetCell(1)
+        if firstCell then
+            self:SetNaviTarget(firstCell.item.view.button)
+        end
+    end
 end
-
-
-
-
 
 
 Depot._OnClickItem = HL.Method(HL.String, HL.Opt(HL.Forward("ItemSlot"))) << function(self, itemId, cell)
@@ -505,16 +409,11 @@ end
 
 
 
-
 Depot.m_inDestroyMode = HL.Field(HL.Boolean) << false
-
 
 Depot.m_destroyInfo = HL.Field(HL.Table) 
 
-
 Depot.m_curSelectedItemIdInDesMode = HL.Field(HL.String) << ""
-
-
 
 
 Depot._InitDestroyNode = HL.Method() << function(self)
@@ -533,10 +432,6 @@ Depot._InitDestroyNode = HL.Method() << function(self)
     self.m_destroyInfo = {}
     self:ToggleDestroyMode(false, true)
 end
-
-
-
-
 
 Depot.ToggleDestroyMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, noAnimation)
     if not self.m_inited then
@@ -606,7 +501,6 @@ Depot.ToggleDestroyMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(
                 rectTransform = node.transform,
                 noHighlight = true,
             })
-
             if not self.depotContent.view.itemListSelectableNaviGroup.IsTopLayer then
                 self:SetAsNaviTarget()
             end
@@ -627,10 +521,6 @@ Depot.ToggleDestroyMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(
         self.m_onToggleDestroyMode(active)
     end
 end
-
-
-
-
 
 Depot._UpdateItemBlockMask = HL.Method(HL.Any, HL.Table) << function(self, cell, info)
     cell.view.dragItem.disableDrag = self.m_inDestroyMode
@@ -653,9 +543,6 @@ Depot._UpdateItemBlockMask = HL.Method(HL.Any, HL.Table) << function(self, cell,
     InputManagerInst:SetBindingText(button.hoverConfirmBindingId, Language[button.clickHintTextId])
     cell.view.blockMask.gameObject:SetActiveIfNecessary(showMask)
 end
-
-
-
 
 Depot._ClickItemInDestroyMode = HL.Method(HL.String) << function(self, itemId)
     if self.m_destroyInfo[itemId] then
@@ -694,10 +581,6 @@ Depot._ClickItemInDestroyMode = HL.Method(HL.String) << function(self, itemId)
     self.view.destroyNode.confirmBtn.gameObject:SetActive(next(self.m_destroyInfo) ~= nil)
 end
 
-
-
-
-
 Depot._UpdateItemDestroySelect = HL.Method(HL.String, HL.Opt(HL.Forward("ItemSlot"))) << function(self, itemId, cell)
     local index = self.depotContent:GetItemIndex(itemId)
     if not cell then
@@ -720,19 +603,10 @@ Depot._UpdateItemDestroySelect = HL.Method(HL.String, HL.Opt(HL.Forward("ItemSlo
     InputManagerInst:SetBindingText(cell.item.view.button.hoverConfirmBindingId, Language[cell.item.view.button.clickHintTextId])
 end
 
-
-
-
-
 Depot._OnChangeItemDestroyCount = HL.Method(HL.String, HL.Number) << function(self, itemId, newCount)
     self.m_destroyInfo[itemId] = newCount
     self:_UpdateItemDestroySelect(itemId)
 end
-
-
-
-
-
 
 Depot._CustomOnUpdateCell = HL.Method(HL.Forward("ItemSlot"), HL.Table, HL.Number) << function(self, cell, info, luaIndex)
     if DeviceInfo.usingController then
@@ -776,10 +650,6 @@ Depot._CustomOnUpdateCell = HL.Method(HL.Forward("ItemSlot"), HL.Table, HL.Numbe
     self:_UpdateItemDestroySelect(info.id, cell)
 end
 
-
-
-
-
 Depot._TryDisableHoverBindingOnEmptyItem = HL.Method(HL.Forward("ItemSlot"), HL.Opt(HL.Any)) << function(self, cell, itemBundle)
     if self.m_extraArgs.emptyItemClickable then
         return
@@ -792,15 +662,9 @@ Depot._TryDisableHoverBindingOnEmptyItem = HL.Method(HL.Forward("ItemSlot"), HL.
     end
 end
 
-
-
-
 Depot._TryDisableItemHoverBindingOnDestroyMode = HL.Method(HL.Forward("ItemSlot")) << function(self, cell)
     InputManagerInst:ToggleGroup(cell.item.view.button.hoverBindingGroupId, not self.m_inDestroyMode)
 end
-
-
-
 
 Depot._RefreshDestroySelectorNodeOnHover = HL.Method(HL.Any) << function(self, itemBundle)
     local itemId = itemBundle ~= nil and itemBundle.id or ""
@@ -820,10 +684,6 @@ Depot._RefreshDestroySelectorNodeOnHover = HL.Method(HL.Any) << function(self, i
         end
     end
 end
-
-
-
-
 
 Depot._ShowTipsOnNaviTargetInDestroyMode = HL.Method(HL.Forward("ItemSlot"), HL.Opt(HL.Any)) << function(self, cell, itemBundle)
     if not self.m_inDestroyMode then
@@ -851,8 +711,6 @@ Depot._ShowTipsOnNaviTargetInDestroyMode = HL.Method(HL.Forward("ItemSlot"), HL.
     end
 end
 
-
-
 Depot._ConfirmDestroy = HL.Method() << function(self)
     local items = {}
     for id, count in pairs(self.m_destroyInfo) do
@@ -878,10 +736,6 @@ end
 
 
 
-
-
-
-
 Depot._RefreshNaviTargetItemState = HL.Method(HL.Forward("ItemSlot"), HL.Table) << function(self, cell, info)
     self:_TryDisableHoverBindingOnEmptyItem(cell, info)
     self:_TryDisableItemHoverBindingOnDestroyMode(cell)
@@ -890,8 +744,6 @@ Depot._RefreshNaviTargetItemState = HL.Method(HL.Forward("ItemSlot"), HL.Table) 
     self:_RefreshCellHoverTipsEnabledState(cell)
 end
 
-
-
 Depot._RefreshShowingCellHoverTipsEnabledState = HL.Method() << function(self)
     self.depotContent.view.itemList:UpdateShowingCells(function(csIndex, obj)
         local cell = self.depotContent.m_getCell(obj)
@@ -899,14 +751,9 @@ Depot._RefreshShowingCellHoverTipsEnabledState = HL.Method() << function(self)
     end)
 end
 
-
-
-
 Depot._RefreshCellHoverTipsEnabledState = HL.Method(HL.Forward("ItemSlot")) << function(self, cell)
     cell.view.item:SetEnableHoverTips(not self.m_inDestroyMode)
 end
-
-
 
 Depot.SetAsNaviTarget = HL.Method() << function(self)
     local cell = self.depotContent:GetCell(1)

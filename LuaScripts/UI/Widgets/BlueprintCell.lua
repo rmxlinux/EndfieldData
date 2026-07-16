@@ -1,15 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 BlueprintCell = HL.Class('BlueprintCell', UIWidgetBase)
-
-
 
 
 BlueprintCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -18,17 +9,11 @@ BlueprintCell._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
 BlueprintCell.m_onClick = HL.Field(HL.Function)
-
 
 BlueprintCell.m_showStatus = HL.Field(HL.Boolean) << false
 
-
 BlueprintCell.m_inst = HL.Field(HL.Any)
-
-
-
 
 BlueprintCell.InitBlueprintCell = HL.Method(HL.Table) << function(self, arg)
     self.m_inst = arg.inst
@@ -52,9 +37,6 @@ BlueprintCell.InitBlueprintCell = HL.Method(HL.Table) << function(self, arg)
     end
     self:RefreshCellState(reviewStatus)
 end
-
-
-
 
 BlueprintCell.RefreshCellState = HL.Method(HL.Any) << function(self, reviewStatus)
     if self.m_showStatus then

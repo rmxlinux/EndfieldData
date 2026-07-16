@@ -2,31 +2,15 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailDungeonSS
 
-
-
-
-
-
-
-
-
-
-
-
 MapMarkDetailDungeonSSCtrl = HL.Class('MapMarkDetailDungeonSSCtrl', uiCtrl.UICtrl)
-
 
 MapMarkDetailDungeonSSCtrl.m_firstPassRewardItemCache = HL.Field(HL.Forward('UIListCache'))
 
-
 MapMarkDetailDungeonSSCtrl.m_hunterModeRewardItemCache = HL.Field(HL.Forward('UIListCache'))
-
 
 MapMarkDetailDungeonSSCtrl.m_markInstId = HL.Field(HL.String) << ""
 
-
 MapMarkDetailDungeonSSCtrl.m_dungeonSeriesId = HL.Field(HL.String) << ""
-
 
 
 
@@ -37,9 +21,6 @@ MapMarkDetailDungeonSSCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 MapMarkDetailDungeonSSCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_firstPassRewardItemCache = UIUtils.genCellCache(self.view.firstPassRewardItem)
     self.m_hunterModeRewardItemCache = UIUtils.genCellCache(self.view.hunterModeRewardItem)
@@ -48,8 +29,6 @@ MapMarkDetailDungeonSSCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitDungeonInfo()
     self:_InitController()
 end
-
-
 
 
 
@@ -99,9 +78,6 @@ MapMarkDetailDungeonSSCtrl._InitDungeonInfo = HL.Method() << function(self)
     self:_InitMapMarkDetailCommon(markRuntimeData.isActive)
 end
 
-
-
-
 MapMarkDetailDungeonSSCtrl._InitMapMarkDetailCommon = HL.Method(HL.Boolean) << function(self, mapMarkActive)
     
     local dungeonId = Tables.dungeonSeriesTable[self.m_dungeonSeriesId].includeDungeonIds[0]
@@ -127,8 +103,6 @@ MapMarkDetailDungeonSSCtrl._InitMapMarkDetailCommon = HL.Method(HL.Boolean) << f
 
     self.view.mapMarkDetailCommon:InitMapMarkDetailCommon(commonArgs)
 end
-
-
 
 MapMarkDetailDungeonSSCtrl._InitController = HL.Method() << function(self)
     if DeviceInfo.usingController then

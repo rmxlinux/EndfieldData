@@ -47,7 +47,12 @@ local Config = {
     [GEnums.MapRemindType.SettlementDefenseTerminal] = {
         redDotName = "",
         Check = function(levelId)
-            if not Utils.isSettlementDefenseGuideCompleted() then
+            local mapId = nil
+            local success, levelConfig = Utils.getLevelConfig(levelId)
+            if success then
+                mapId = levelConfig.mapIdStr
+            end
+            if not Utils.isSettlementDefenseGuideCompleted(mapId) then
                 return {}
             end
             return GameInstance.player.towerDefenseSystem.dangerSettlementIds
@@ -103,56 +108,11 @@ local Config = {
             local spaceship = GameInstance.player.spaceship
             local mapManager = GameInstance.player.mapManager
 
-            for roomId, roomData in pairs(Tables.spaceshipEmptyRoomTable) do
+            for roomId, _ in pairs(Tables.spaceshipEmptyRoomTable) do
                 if roomId == Tables.spaceshipConst.guestRoomId then
                     goto continue
                 end
-                local isBuild, room = spaceship:TryGetRoom(roomId)
-                local canBuildOrLevelUp = true
-                local levelData
-                local function CheckIsEnough(levelData)
-                    if levelData then
-                        local commonLvData = Tables.spaceshipRoomLvTable[levelData.id]
-                        for index = 1, commonLvData.costItems.Count do
-                            local itemBundle = commonLvData.costItems[CSIndex(index)]
-                            local ownCount = Utils.getItemCount(itemBundle.id, true, true)
-
-                            if ownCount < itemBundle.count then
-                                canBuildOrLevelUp = false
-                                break
-                            end
-                        end
-                    end
-                end
-
-                if isBuild and room.lv ~= room.maxLv then
-                    
-                    levelData = SpaceshipUtils.getRoomLvTableByType(room.roomType)[room.lv + 1]
-                    CheckIsEnough(levelData)
-                    if not room:CanLevelUp() then
-                        canBuildOrLevelUp = false
-                    end
-                elseif not isBuild then
-                    
-                    for i = CSIndex(1), CSIndex(Tables.SpaceshipBuildTypeTable[roomData.roomType].typeList.Count) do
-                        local roomType = Tables.SpaceshipBuildTypeTable[roomData.roomType].typeList[i].type
-                        if not spaceship:IsRoomAreaLocked(roomId) and spaceship:IsRoomTypeCanBuild(roomType) then
-                            canBuildOrLevelUp = true
-                            levelData = SpaceshipUtils.getRoomLvTableByType(roomType)[1]
-                            CheckIsEnough(levelData)
-                            if canBuildOrLevelUp then
-                                break
-                            end
-                        else
-                            canBuildOrLevelUp = false
-                        end
-                    end
-                else
-                    
-                    canBuildOrLevelUp = false
-                end
-
-                if canBuildOrLevelUp then
+                if spaceship:IsRoomCanLevelUp(roomId) then
                     local instId = mapManager:GetMapInstIdBySpaceshipRoomId(roomId)
                     if instId and instId ~= "" then
                         if roomId == Tables.spaceshipConst.controlCenterRoomId then
@@ -228,8 +188,17 @@ local Config = {
             if insId == nil then
                 return {}
             end
+            if finalPOIType == nil then
+                logger.error(string.format("MapRemindConfig AnyPOICanUnlock finalPOIType为空, levelId=%s, insId=%s",
+                    tostring(levelId), tostring(insId)))
+            end
+            local markType = DomainPOIUtils.MarkTypeMap[finalPOIType]
+            if markType == nil then
+                logger.error(string.format("MapRemindConfig AnyPOICanUnlock MarkTypeMap缺失, levelId=%s, poiType=%s, insId=%s",
+                    tostring(levelId), tostring(finalPOIType), tostring(insId)))
+            end
             
-            local _,markId = GameInstance.player.mapManager:GetMapMarkInstId(DomainPOIUtils.MarkTypeMap[finalPOIType], insId)
+            local _,markId = GameInstance.player.mapManager:GetMapMarkInstId(markType, insId)
             return { markId }
         end,
         useMarkIcon = true,
@@ -300,7 +269,38 @@ local Config = {
             return ids
         end,
     },
+    [GEnums.MapRemindType.NewGasMine] = {
+        redDotName = "",
+        Check = function(levelId)
+            return GameInstance.player.doodadSystem:GetNewGasMineIds(levelId)
+        end,
+    },
+    [GEnums.MapRemindType.InvalidBuilding] = {
+        redDotName = "",
+        state = "Hint",
+        Check = function(levelId)
+            local ids = {}
+            if Utils.isInSpaceShip() then
+                return ids
+            end
+            
+            local chapterId = ScopeUtil.GetChapterId(levelId)
+            if chapterId ~= Utils.getCurrentChapterId() then
+                return ids
+            end
 
+            local invalidPlacedBuildings = GameInstance.player.remoteFactory:GetInvalidPlacedBuildings(chapterId)
+            if invalidPlacedBuildings ~= nil and invalidPlacedBuildings.Count > 0 then
+                local instId = GameInstance.player.mapManager:GetFacMarkInstId(chapterId, invalidPlacedBuildings[0].nodeId)
+                table.insert(ids, instId)
+            end
+            return ids
+        end,
+        onClick = function(levelId)
+            local chapterId = ScopeUtil.GetChapterId(levelId)
+            UIManager:Open(PanelId.MapWaitDeleteBuildingList, chapterId)
+        end,
+    }
 }
 
 return Config

@@ -1,35 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 CharInfoSkillCell = HL.Class('CharInfoSkillCell', UIWidgetBase)
-
-
 
 
 CharInfoSkillCell._OnFirstTimeInit = HL.Override() << function(self)
 end
 
-
 CharInfoSkillCell.skills = HL.Field(HL.Table)
-
 
 CharInfoSkillCell.m_charInfo = HL.Field(HL.Table)
 
-
 CharInfoSkillCell.onClickCallback = HL.Field(HL.Function)
-
-
-
-
 
 CharInfoSkillCell.InitCharInfoSkillCell = HL.Method(HL.Table, HL.Opt(HL.Function)) << function(self, info, callback)
     self:_FirstTimeInit()
@@ -42,15 +23,11 @@ CharInfoSkillCell.InitCharInfoSkillCell = HL.Method(HL.Table, HL.Opt(HL.Function
     self:_Refresh()
 end
 
-
-
 CharInfoSkillCell._OnClick = HL.Method() << function(self)
     if self.onClickCallback then
         self.onClickCallback(self.skills)
     end
 end
-
-
 
 CharInfoSkillCell._Refresh = HL.Method() << function(self)
     local single = #self.skills == 1
@@ -81,17 +58,11 @@ CharInfoSkillCell._Refresh = HL.Method() << function(self)
     end
 end
 
-
-
-
 CharInfoSkillCell.InitSkill = HL.Method(HL.Table) << function(self, data)
     self.skills = data.skills
     self.m_charInfo = data.charInfo
     self:_Refresh()
 end
-
-
-
 
 CharInfoSkillCell.SetSelect = HL.Method(HL.Boolean) << function(self, select)
     local single = #self.skills == 1

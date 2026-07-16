@@ -1,43 +1,13 @@
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 Queue = HL.Class('Queue')
-
 
 Queue.m_data = HL.Field(HL.Table)
 
-
 Queue.m_head = HL.Field(HL.Number) << -1
-
 
 Queue.m_tail = HL.Field(HL.Number) << -1
 
-
 Queue.m_length = HL.Field(HL.Number) << 0
-
-
 
 Queue.Queue = HL.Constructor() << function(self)
     self.m_data = {}
@@ -46,22 +16,15 @@ Queue.Queue = HL.Constructor() << function(self)
     self.m_length = 0
 end
 
-
-
-
 Queue.Push = HL.Method(HL.Any) << function(self, val)
     self.m_tail = self.m_tail + 1
     self.m_data[self.m_tail] = val
     self.m_length = self.m_length + 1
 end
 
-
-
 Queue.Empty = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_head > self.m_tail
 end
-
-
 
 Queue.Pop = HL.Method().Return(HL.Any) << function(self)
     assert(not self:Empty(), string.format("pop error %d %d", self.m_head, self.m_tail))
@@ -72,21 +35,15 @@ Queue.Pop = HL.Method().Return(HL.Any) << function(self)
     return val
 end
 
-
-
 Queue.Front = HL.Method().Return(HL.Any) << function(self)
     assert(not self:Empty(), string.format("front error %d %d", self.m_head, self.m_tail))
     return self.m_data[self.m_head]
 end
 
-
-
 Queue.GetTail = HL.Method().Return(HL.Any) << function(self)
     assert(not self:Empty(), string.format("tail error %d %d", self.m_head, self.m_tail))
     return self.m_data[self.m_tail]
 end
-
-
 
 Queue.PopTail = HL.Method().Return(HL.Any) << function(self)
     assert(not self:Empty(), string.format("pop tail error %d %d", self.m_head, self.m_tail))
@@ -97,19 +54,13 @@ Queue.PopTail = HL.Method().Return(HL.Any) << function(self)
     return val
 end
 
-
-
 Queue.Size = HL.Method().Return(HL.Number) << function(self)
     return self.m_length
 end
 
-
-
 Queue.Count = HL.Method().Return(HL.Number) << function(self)
     return self:Size()
 end
-
-
 
 Queue.Clear = HL.Method() << function(self)
     self.m_data = {}
@@ -118,9 +69,6 @@ Queue.Clear = HL.Method() << function(self)
     self.m_length = 0
 end
 
-
-
-
 Queue.AtIndex = HL.Method(HL.Number).Return(HL.Any) << function(self, index)
     if self.m_head + index - 1 > self.m_tail then
         logger.error("index is larger than length", index, self.m_length)
@@ -128,9 +76,6 @@ Queue.AtIndex = HL.Method(HL.Number).Return(HL.Any) << function(self, index)
     end
     return self.m_data[self.m_head + index - 1]
 end
-
-
-
 
 Queue.Sort = HL.Method(HL.Function) << function(self, functionObject)
     if self:Empty() then
@@ -141,12 +86,6 @@ Queue.Sort = HL.Method(HL.Function) << function(self, functionObject)
         return left < right
     end)
 end
-
-
-
-
-
-
 
 Queue._QuickSort = HL.Method(HL.Table, HL.Any, HL.Any, HL.Function) << function(self, array, left, right, functionObject)
     if left < right then
@@ -177,9 +116,6 @@ Queue._QuickSort = HL.Method(HL.Table, HL.Any, HL.Any, HL.Function) << function(
     end
 end
 
-
-
-
 Queue.Contains = HL.Method(HL.Any).Return(HL.Boolean) << function(self, val)
     if self:Empty() then
         return false
@@ -193,9 +129,6 @@ Queue.Contains = HL.Method(HL.Any).Return(HL.Boolean) << function(self, val)
 
     return false
 end
-
-
-
 
 Queue.IndexOf = HL.Method(HL.Any).Return(HL.Opt(HL.Number)) << function(self, val)
     if self:Empty() then
@@ -211,9 +144,6 @@ Queue.IndexOf = HL.Method(HL.Any).Return(HL.Opt(HL.Number)) << function(self, va
     return nil
 end
 
-
-
-
 Queue.Move2Tail = HL.Method(HL.Any) << function(self, index)
     if self:Empty() or index < self.m_head or index > self.m_tail then
         return
@@ -226,9 +156,6 @@ Queue.Move2Tail = HL.Method(HL.Any) << function(self, index)
     self.m_data[self.m_tail] = targetValue
 end
 
-
-
-
 Queue.Move2Front = HL.Method(HL.Number) << function(self, index)
     if self:Empty() or index < self.m_head or index > self.m_tail then
         return
@@ -240,9 +167,6 @@ Queue.Move2Front = HL.Method(HL.Number) << function(self, index)
     end
     self.m_data[self.m_head] = targetValue
 end
-
-
-
 
 Queue.RemoveAt = HL.Method(HL.Number) << function(self, index)
     if self:Empty() or index < self.m_head or index > self.m_tail then
@@ -261,9 +185,6 @@ Queue.RemoveAt = HL.Method(HL.Number) << function(self, index)
     self.m_tail = self.m_tail - 1
     self.m_length = self.m_length - 1
 end
-
-
-
 
 Queue.RemoveIf = HL.Method(HL.Function) << function(self, functionObject)
     if self:Empty() then

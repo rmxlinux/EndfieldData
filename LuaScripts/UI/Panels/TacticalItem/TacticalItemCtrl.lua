@@ -1,40 +1,6 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.TacticalItem
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 TacticalItemCtrl = HL.Class('TacticalItemCtrl', uiCtrl.UICtrl)
 
 local CLOSE_WAIT_FX_DURATION = 0.5
@@ -46,17 +12,13 @@ local TacticalItemUtil = CS.Beyond.Gameplay.TacticalItemUtil
 
 
 
-
 TacticalItemCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_USE_ITEM] = 'OnUseItem',
 }
 
-
 TacticalItemCtrl.m_getCharCell = HL.Field(HL.Function)
 
-
 TacticalItemCtrl.m_selectCharInstIdDict = HL.Field(HL.Table)
-
 
 TacticalItemCtrl.m_curItemId = HL.Field(HL.String) << ""
 
@@ -117,9 +79,6 @@ local USE_ITEM_CFG = {
 }
 
 
-
-
-
 TacticalItemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local itemId = arg.itemId
     self.m_curItemId = itemId
@@ -127,9 +86,6 @@ TacticalItemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_RefreshTacticalPanel(itemId)
 end
-
-
-
 
 TacticalItemCtrl.OnUseItem = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     local itemId, _ = unpack(arg)
@@ -147,11 +103,6 @@ TacticalItemCtrl.OnUseItem = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
         end
     end)
 end
-
-
-
-
-
 
 
 
@@ -178,11 +129,6 @@ TacticalItemCtrl._AfterUseCheckDefault = HL.Method(HL.String, HL.Opt(HL.Boolean,
         end
     end
 end
-
-
-
-
-
 
 TacticalItemCtrl._AfterUseCheckSingleUsp = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Number)) << function(
     self, itemId, inUseItemTransition, delayCloseTime)
@@ -218,11 +164,6 @@ TacticalItemCtrl._AfterUseCheckSingleUsp = HL.Method(HL.String, HL.Opt(HL.Boolea
     self:_AfterUseCheckDefault(itemId, nil, delayCloseTime)
 end
 
-
-
-
-
-
 TacticalItemCtrl._AfterUseCheckRevive = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Number)) << function(
     self, itemId, inUseItemTransition, delayCloseTime)
     self:_StartCoroutine(function()
@@ -245,11 +186,6 @@ TacticalItemCtrl._AfterUseCheckRevive = HL.Method(HL.String, HL.Opt(HL.Boolean, 
         end
     end)
 end
-
-
-
-
-
 
 TacticalItemCtrl._AfterUseCheckSingleHeal = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Number)) << function(
     self, itemId, inUseItemTransition, delayCloseTime)
@@ -282,8 +218,6 @@ TacticalItemCtrl._AfterUseCheckSingleHeal = HL.Method(HL.String, HL.Opt(HL.Boole
     self:_AfterUseCheckDefault(itemId, nil, delayCloseTime)
 end
 
-
-
 TacticalItemCtrl._PlaySelectedCharHpRecoverFx = HL.Method() << function(self)
     local selectedCharInstId = next(self.m_selectCharInstIdDict)
     if selectedCharInstId then
@@ -293,8 +227,6 @@ TacticalItemCtrl._PlaySelectedCharHpRecoverFx = HL.Method() << function(self)
         cell.charHeadCellLongHpBar.view.disableMask.gameObject:SetActive(false)
     end
 end
-
-
 
 TacticalItemCtrl._PlaySelectedCharUspUpFx = HL.Method() << function(self)
     local selectedCharInstId = next(self.m_selectCharInstIdDict)
@@ -307,17 +239,9 @@ end
 
 
 
-
-
-
-
 TacticalItemCtrl.UseItem = HL.Method(HL.String, HL.Table) << function(self, itemId, selectCharInstIdDict)
     GameInstance.player.inventory:UseItem(Utils.getCurrentScope(), itemId)
 end
-
-
-
-
 
 TacticalItemCtrl.UseItemOnTarget = HL.Method(HL.String, HL.Table) << function(self, itemId, selectCharInstIdDict)
     local charInstId
@@ -332,8 +256,6 @@ TacticalItemCtrl.UseItemOnTarget = HL.Method(HL.String, HL.Table) << function(se
 
     GameInstance.player.inventory:UseItemOnTarget(Utils.getCurrentScope(), itemId, charInstId)
 end
-
-
 
 TacticalItemCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.cancelBtn.onClick:AddListener(function()
@@ -375,10 +297,6 @@ TacticalItemCtrl._InitActionEvent = HL.Method() << function(self)
     UIUtils.bindHyperlinkPopup(self, "TacticalItem", self.view.inputGroup.groupId)
 end
 
-
-
-
-
 TacticalItemCtrl._RefreshTacticalPanel = HL.Method(HL.String, HL.Opt(HL.Boolean)) << function(self, itemId, inUseItemTransition)
     local useItemCfg = Tables.useItemTable:GetValue(itemId)
 
@@ -387,9 +305,6 @@ TacticalItemCtrl._RefreshTacticalPanel = HL.Method(HL.String, HL.Opt(HL.Boolean)
     self:_RefreshItemNode(itemId)
     self:_RefreshSquadNode(squadMembers, cfg, useItemCfg, inUseItemTransition)
 end
-
-
-
 
 TacticalItemCtrl._RefreshItemNode = HL.Method(HL.String) << function(self, itemId)
     local itemCfg = Tables.itemTable:GetValue(itemId)
@@ -400,12 +315,6 @@ TacticalItemCtrl._RefreshItemNode = HL.Method(HL.String) << function(self, itemI
     self.view.desc:SetAndResolveTextStyle(UIUtils.getItemUseDesc(itemId))
     self.view.name.text = itemCfg.name
 end
-
-
-
-
-
-
 
 TacticalItemCtrl._RefreshSquadNode = HL.Method(HL.Table, HL.Table, HL.Userdata, HL.Opt(HL.Boolean)) << function(self, squadMembers, cfg, useItemCfg, inUseItemTransition)
     local squadMemberCount = #squadMembers
@@ -436,8 +345,6 @@ TacticalItemCtrl._RefreshSquadNode = HL.Method(HL.Table, HL.Table, HL.Userdata, 
 end
 
 
-
-
 TacticalItemCtrl._GetAllAliveMember = HL.Method().Return(HL.Table) << function(self)
     local singleHealSquadMembers = {}
     local squadSlots = GameInstance.player.squadManager.curSquad.slots
@@ -459,8 +366,6 @@ TacticalItemCtrl._GetAllAliveMember = HL.Method().Return(HL.Table) << function(s
     return singleHealSquadMembers
 end
 
-
-
 TacticalItemCtrl._GetAllDeadMember = HL.Method().Return(HL.Table) << function(self)
     local squadSlots = GameInstance.player.squadManager.curSquad.slots
     local deadMember = {}
@@ -476,13 +381,6 @@ TacticalItemCtrl._GetAllDeadMember = HL.Method().Return(HL.Table) << function(se
 
     return deadMember
 end
-
-
-
-
-
-
-
 
 
 
@@ -512,13 +410,6 @@ TacticalItemCtrl._RefreshCharCellDefault = HL.Method(HL.Table, HL.Table, HL.User
 
     end
 end
-
-
-
-
-
-
-
 
 TacticalItemCtrl._RefreshCharCellWithBuff = HL.Method(HL.Table, HL.Table, HL.Userdata, HL.Table, HL.Opt(HL.Boolean)) << function(
     self, cell, memberInfo, useItemCfg, cfg, inUseItemTransition)
@@ -553,13 +444,6 @@ TacticalItemCtrl._RefreshCharCellWithBuff = HL.Method(HL.Table, HL.Table, HL.Use
         end)
     end
 end
-
-
-
-
-
-
-
 
 TacticalItemCtrl._RefreshCharCellWithUsp = HL.Method(HL.Table, HL.Table, HL.Userdata, HL.Table, HL.Opt(HL.Boolean)) << function(
     self, cell, memberInfo, useItemCfg, cfg, inUseItemTransition)
@@ -603,13 +487,6 @@ TacticalItemCtrl._RefreshCharCellWithUsp = HL.Method(HL.Table, HL.Table, HL.User
     end
 end
 
-
-
-
-
-
-
-
 TacticalItemCtrl._RefreshCharCellWithHp = HL.Method(HL.Table, HL.Table, HL.Userdata, HL.Table, HL.Opt(HL.Boolean)) << function(
     self, cell, memberInfo, useItemCfg, cfg, inUseItemTransition)
     self:_RefreshCharCellDefault(cell, memberInfo, useItemCfg, cfg, inUseItemTransition)
@@ -621,12 +498,6 @@ TacticalItemCtrl._RefreshCharCellWithHp = HL.Method(HL.Table, HL.Table, HL.Userd
         self:_RefreshHeadCellWithHp(cell.charHeadCellLongHpBar, slot, useItemCfg, inUseItemTransition)
     end
 end
-
-
-
-
-
-
 
 TacticalItemCtrl._RefreshHeadCellBasic = HL.Method(HL.Userdata, HL.Userdata, HL.Userdata, HL.Table) << function(
     self, cell, slot, useItemCfg, cfg)
@@ -649,19 +520,13 @@ TacticalItemCtrl._RefreshHeadCellBasic = HL.Method(HL.Userdata, HL.Userdata, HL.
     if DeviceInfo.usingController then
         if cfg.onClick and isSelected then
             cell.view.selectedBG.gameObject:SetActive(false)
-            InputManagerInst.controllerNaviManager:SetTarget(cell.view.button)
+            self:SetNaviTarget(cell.view.button)
         end
     end
 
     local isAlive = slot.character ~= nil and slot.character.abilityCom.alive
     cell.view.disableMask.gameObject:SetActive(not isAlive)
 end
-
-
-
-
-
-
 
 TacticalItemCtrl._RefreshHeadCellWithHp = HL.Method(HL.Userdata, HL.Userdata, HL.Userdata, HL.Opt(HL.Boolean)) << function(self, cell, slot, useItemCfg, inUseItemTransition)
     local isAlive = slot.character ~= nil and slot.character.abilityCom.alive
@@ -699,11 +564,6 @@ end
 
 
 
-
-
-
-
-
 TacticalItemCtrl._OnClickSingleSelect = HL.Method(HL.Table, HL.Number, HL.Any) << function(self, memberInfo, index, useItemCfg)
     if useItemCfg.targetNumType == GEnums.ItemUseTargetNumType.All then
         return
@@ -718,9 +578,6 @@ TacticalItemCtrl._OnClickSingleSelect = HL.Method(HL.Table, HL.Number, HL.Any) <
 
     self:_RefreshTacticalPanel(self.m_curItemId)
 end
-
-
-
 
 
 
@@ -757,9 +614,6 @@ TacticalItemCtrl._SelectLowestUspRate = HL.Method(HL.Table, HL.Opt(HL.Any)).Retu
     }, minUspRate >= 1
 end
 
-
-
-
 TacticalItemCtrl._SelectLowestHpRate = HL.Method(HL.Table, HL.Opt(HL.Any)).Return(HL.Table, HL.Boolean) << function(self, squadMembers)
     
     local defaultSelectInstId = -1
@@ -794,9 +648,6 @@ TacticalItemCtrl._SelectLowestHpRate = HL.Method(HL.Table, HL.Opt(HL.Any)).Retur
         [defaultSelectInstId] = defaultIndex
     }, minHpRate >= 1
 end
-
-
-
 TacticalItemCtrl._SelectAll = HL.Method(HL.Table, HL.Opt(HL.Any)).Return(HL.Table) << function(self, squadMembers)
     
     local selectDict = {}
@@ -815,9 +666,6 @@ TacticalItemCtrl._SelectAll = HL.Method(HL.Table, HL.Opt(HL.Any)).Return(HL.Tabl
     return selectDict
 end
 
-
-
-
 TacticalItemCtrl._SelectFirstOne = HL.Method(HL.Table, HL.Opt(HL.Any)).Return(HL.Table) << function(self, squadMembers)
     
     for i = 1, #squadMembers do
@@ -829,9 +677,6 @@ TacticalItemCtrl._SelectFirstOne = HL.Method(HL.Table, HL.Opt(HL.Any)).Return(HL
         end
     end
 end
-
-
-
 
 TacticalItemCtrl._SelectFirstOneAlive = HL.Method(HL.Table, HL.Opt(HL.Any)).Return(HL.Table) << function(self, squadMembers)
     for i = 1, #squadMembers do
@@ -845,10 +690,6 @@ TacticalItemCtrl._SelectFirstOneAlive = HL.Method(HL.Table, HL.Opt(HL.Any)).Retu
         end
     end
 end
-
-
-
-
 
 TacticalItemCtrl._SelectAliveDependOnTargetNumType = HL.Method(HL.Table, HL.Opt(HL.Any)).Return(HL.Table) << function(self, squadMembers, useItemCfg)
     if useItemCfg.targetNumType == GEnums.ItemUseTargetNumType.Single then

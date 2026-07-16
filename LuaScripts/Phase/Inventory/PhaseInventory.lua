@@ -1,22 +1,6 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.Inventory
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseInventory = HL.Class('PhaseInventory', phaseBase.PhaseBase)
-
 
 
 
@@ -25,15 +9,11 @@ PhaseInventory.s_messages = HL.StaticField(HL.Table) << {
      [MessageConst.OPEN_INVENTORY_PANEL] = { 'OpenInventoryPanel', false },
 }
 
-
 PhaseInventory.m_hidePanelKey = HL.Field(HL.Number) << -1
-
 
 PhaseInventory.m_invPanel = HL.Field(HL.Forward('InventoryCtrl'))
 
-
 PhaseInventory.m_inHalfScreen = HL.Field(HL.Boolean) << false
-
 
 PhaseInventory.m_radioTagHandle = HL.Field(HL.Any)
 
@@ -46,23 +26,15 @@ local ReservePanelIds = {
 }
 
 
-
 PhaseInventory.OpenInventoryPanel = HL.StaticMethod() << function()
     PhaseManager:OpenPhase(PhaseId.Inventory)
 end
-
-
 
 PhaseInventory._OnInit = HL.Override() << function(self)
     PhaseInventory.Super._OnInit(self)
     
     self.m_radioTagHandle = GameInstance.player.globalTagsSystem:AddGlobalTag(CS.Beyond.Gameplay.GlobalTagDefine.notStopRadioTags)
 end
-
-
-
-
-
 
 PhaseInventory.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
     if transitionType == PhaseConst.EPhaseState.TransitionIn then
@@ -77,10 +49,6 @@ PhaseInventory.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.
         end
     end
 end
-
-
-
-
 
 PhaseInventory._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local reservePanelIds = self.m_inHalfScreen and ReservePanelIds or { PanelId.Inventory }
@@ -101,15 +69,11 @@ PhaseInventory._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) 
     end
 end
 
-
-
 PhaseInventory._OnActivated = HL.Override() << function(self)
     if not self.m_radioTagHandle then
         self.m_radioTagHandle = GameInstance.player.globalTagsSystem:AddGlobalTag(CS.Beyond.Gameplay.GlobalTagDefine.notStopRadioTags)
     end
 end
-
-
 
 PhaseInventory._OnDeActivated = HL.Override() << function(self)
     if self.m_radioTagHandle then
@@ -121,10 +85,6 @@ PhaseInventory._OnDeActivated = HL.Override() << function(self)
         end)
     end
 end
-
-
-
-
 
 PhaseInventory._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     Notify(MessageConst.HIDE_ITEM_TIPS)
@@ -148,10 +108,6 @@ PhaseInventory._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table))
     end
 end
 
-
-
-
-
 PhaseInventory._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if args.anotherPhaseId == PhaseId.FacDepotSwitching then
         return
@@ -162,10 +118,6 @@ PhaseInventory._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Tabl
         self.m_invPanel:PlayAnimationOut(UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Hide)
     end
 end
-
-
-
-
 
 PhaseInventory._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if args.anotherPhaseId == PhaseId.FacDepotSwitching then

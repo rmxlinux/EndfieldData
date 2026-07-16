@@ -1,20 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.LiquidPoolScanUI
-
-
-
-
-
-
-
-
-
-
-
-
 LiquidPoolScanUICtrl = HL.Class('LiquidPoolScanUICtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -26,14 +13,9 @@ LiquidPoolScanUICtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 LiquidPoolScanUICtrl.m_liquidPoolObjDict = HL.Field(HL.Table)
 
-
 LiquidPoolScanUICtrl.m_liquidPoolObjPool = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -41,8 +23,6 @@ LiquidPoolScanUICtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_liquidPoolObjDict = {}
     self.m_liquidPoolObjPool = {}
 end
-
-
 
 
 
@@ -65,19 +45,11 @@ LiquidPoolScanUICtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 LiquidPoolScanUICtrl._OnAddLiquidPoolUI = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = LiquidPoolScanUICtrl.AutoOpen(PANEL_ID, args, false)
     local waterVolumeId, x, y, z = unpack(args)
     ctrl:_AddLiquidPool(waterVolumeId, x, y, z)
 end
-
-
-
-
-
-
 
 LiquidPoolScanUICtrl._AddLiquidPool = HL.Method(HL.Number, HL.Number, HL.Number, HL.Number) << function(self, waterVolumeId, x, y, z)
     if self.m_liquidPoolObjDict[waterVolumeId] == nil then
@@ -89,8 +61,6 @@ LiquidPoolScanUICtrl._AddLiquidPool = HL.Method(HL.Number, HL.Number, HL.Number,
 
     liquidPool:SetWaterInfo(waterVolumeId, x, y, z)
 end
-
-
 
 LiquidPoolScanUICtrl._CreateLiquidPool = HL.Method().Return(HL.Table) << function(self)
     if self.m_liquidPoolObjPool ~= nil and #self.m_liquidPoolObjPool > 0 then
@@ -104,8 +74,6 @@ LiquidPoolScanUICtrl._CreateLiquidPool = HL.Method().Return(HL.Table) << functio
     end
 end
 
-
-
 LiquidPoolScanUICtrl._OnRemoveLiquidPoolUI = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = LiquidPoolScanUICtrl.AutoOpen(PANEL_ID, args, false)
     local entity = unpack(args)
@@ -117,8 +85,6 @@ LiquidPoolScanUICtrl._OnRemoveLiquidPoolUI = HL.StaticMethod(HL.Any) << function
         ctrl.m_liquidPoolObjDict[entity] = nil
     end
 end
-
-
 
 LiquidPoolScanUICtrl._OnUpdateLiquidPoolUI = HL.StaticMethod(HL.Any) << function(args)
     

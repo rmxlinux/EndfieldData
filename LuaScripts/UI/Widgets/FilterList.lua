@@ -1,44 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FilterList = HL.Class('FilterList', UIWidgetBase)
-
 
 FilterList.m_onConfirm = HL.Field(HL.Function)
 
-
 FilterList.m_selectedTags = HL.Field(HL.Table)
-
 
 FilterList.m_selectedTagsBefore = HL.Field(HL.Table)
 
-
 FilterList.m_tagGroupCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 FilterList.m_tagGroups = HL.Field(HL.Table)
-
-
 
 
 
@@ -67,19 +39,12 @@ FilterList._OnFirstTimeInit = HL.Override() << function(self)
     self:_InitNavigation()
 end
 
-
-
 FilterList._CloseSelf = HL.Method() << function(self)
     self.m_selectedTags = lume.copy(self.m_selectedTagsBefore)
     self:_RefreshFilterList()
     self.view.gameObject:SetActive(false)
     AudioAdapter.PostEvent("au_ui_menu_side_close")
 end
-
-
-
-
-
 
 FilterList.InitFilterListWithTags = HL.Method(HL.Table, HL.Function, HL.Opt(HL.Table)) << function(self, tags, onConfirm, selectedTags)
     local tagGroups = {}
@@ -89,11 +54,6 @@ FilterList.InitFilterListWithTags = HL.Method(HL.Table, HL.Function, HL.Opt(HL.T
 
     self:InitFilterListWithTagGroups(tagGroups, onConfirm, selectedTags)
 end
-
-
-
-
-
 
 FilterList.InitFilterListWithTagGroups = HL.Method(HL.Table, HL.Function, HL.Opt(HL.Table)) << function(self, tagGroups, onConfirm, selectedTags)
     self:_FirstTimeInit()
@@ -111,8 +71,6 @@ FilterList.InitFilterListWithTagGroups = HL.Method(HL.Table, HL.Function, HL.Opt
     self:_RefreshFilterList()
 end
 
-
-
 FilterList._RefreshFilterList = HL.Method() << function(self)
     local tagGroups = self.m_tagGroups
     self.m_tagGroupCellCache:Refresh(#tagGroups, function(cell, index)
@@ -120,10 +78,6 @@ FilterList._RefreshFilterList = HL.Method() << function(self)
         self:_RefreshTagGroupCell(cell, tagGroupInfo)
     end)
 end
-
-
-
-
 
 FilterList._RefreshTagGroupCell = HL.Method(HL.Table, HL.Table) << function(self, groupCell, tagGroupInfo)
     if not groupCell.m_tagCellCache then
@@ -144,11 +98,6 @@ FilterList._RefreshTagGroupCell = HL.Method(HL.Table, HL.Table) << function(self
         self:_RefreshTagCell(tagCell, tagInfo, isEnd)
     end)
 end
-
-
-
-
-
 
 FilterList._RefreshTagCell = HL.Method(HL.Any, HL.Table, HL.Boolean) << function(self, cell, tagInfo, isEnd)
     cell.tagTxt.text = tagInfo.name
@@ -172,10 +121,7 @@ end
 
 
 
-
 FilterList.m_curNaviIndex = HL.Field(HL.Number) << 1
-
-
 
 FilterList._InitNavigation = HL.Method() << function(self)
     InputManagerInst:CreateBindingByActionId("common_navigation_up_no_hint", function()
@@ -189,9 +135,6 @@ FilterList._InitNavigation = HL.Method() << function(self)
     end, self.view.inputBindingGroupMonoTarget.groupId)
 end
 
-
-
-
 FilterList._NavigateSelected = HL.Method(HL.Number) << function(self, offset)
     
     local count = 0
@@ -204,8 +147,6 @@ FilterList._NavigateSelected = HL.Method(HL.Number) << function(self, offset)
     self:_RefreshNavigateSelected()
     AudioAdapter.PostEvent("au_ui_g_select")
 end
-
-
 
 FilterList._SelectCurNavigation = HL.Method() << function(self)
     local count = 0
@@ -222,8 +163,6 @@ FilterList._SelectCurNavigation = HL.Method() << function(self)
     end
 end
 
-
-
 FilterList._RefreshNavigateSelected = HL.Method() << function(self)
     local count = 0
     self.m_tagGroupCellCache:Update(function(groupCell)
@@ -234,8 +173,6 @@ FilterList._RefreshNavigateSelected = HL.Method() << function(self)
         end)
     end)
 end
-
-
 
 
 
@@ -260,16 +197,12 @@ FilterList._OnEnable = HL.Override() << function(self)
     self:_RefreshNavigateSelected()
 end
 
-
-
 FilterList._OnDisable = HL.Override() << function(self)
     if not DeviceInfo.usingController or self.m_isFirstTimeInit then
         return
     end
     Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.inputBindingGroupMonoTarget.groupId)
 end
-
-
 
 FilterList._OnDestroy = HL.Override() << function(self)
     if not DeviceInfo.usingController or self.m_isFirstTimeInit then

@@ -1,20 +1,12 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 WeaponCompatibleNode = HL.Class('WeaponCompatibleNode', UIWidgetBase)
-
 
 WeaponCompatibleNode.m_cellCache = HL.Field(HL.Forward("UIListCache"))
 
 WeaponCompatibleNode._OnFirstTimeInit = HL.Override() << function(self)
     self.m_cellCache = UIUtils.genCellCache(self.view.content)
 end
-
-
-
 
 WeaponCompatibleNode.InitWeaponCompatibleNode = HL.Method(HL.Number) << function(self, gemInstId)
     self:_FirstTimeInit()

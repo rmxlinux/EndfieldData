@@ -2,22 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacDepotSwitching
 local PHASE_ID = PhaseId.FacDepotSwitching
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacDepotSwitchingCtrl = HL.Class('FacDepotSwitchingCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -29,17 +14,11 @@ FacDepotSwitchingCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 FacDepotSwitchingCtrl.m_getCell = HL.Field(HL.Function)
-
 
 FacDepotSwitchingCtrl.m_depotInfos = HL.Field(HL.Table)
 
-
 FacDepotSwitchingCtrl.m_selectedIndex = HL.Field(HL.Number) << -1
-
-
-
 
 
 
@@ -76,14 +55,12 @@ FacDepotSwitchingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
     if self.m_selectedIndex > 0 then
         local cell = self.m_getCell(self.m_selectedIndex)
-        InputManagerInst.controllerNaviManager:SetTarget(cell.button)
+        self:SetNaviTarget(cell.button)
     end
     self:_UpdateConfirmButtonState(true)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
 
 
 FacDepotSwitchingCtrl._InitInfos = HL.Method() << function(self)
@@ -113,14 +90,9 @@ FacDepotSwitchingCtrl._InitInfos = HL.Method() << function(self)
     end
 end
 
-
-
 FacDepotSwitchingCtrl._Exit = HL.Method() << function(self)
     PhaseManager:PopPhase(PHASE_ID)
 end
-
-
-
 
 FacDepotSwitchingCtrl.OnChangeSpaceshipDomainId = HL.Method(HL.Table) << function(self, args)
     self.view.scrollList:UpdateCount(#self.m_depotInfos)
@@ -137,8 +109,6 @@ FacDepotSwitchingCtrl.OnChangeSpaceshipDomainId = HL.Method(HL.Table) << functio
     AudioAdapter.PostEvent("Au_UI_Toast_SwitchWareLoading")
 end
 
-
-
 FacDepotSwitchingCtrl._OnClickConfirm = HL.Method() << function(self)
     local info = self.m_depotInfos[self.m_selectedIndex]
     if info.strId == GameInstance.player.inventory.spaceshipDomainId then
@@ -146,10 +116,6 @@ FacDepotSwitchingCtrl._OnClickConfirm = HL.Method() << function(self)
     end
     GameInstance.player.inventory:ChangeSpaceshipDomainId(info.strId)
 end
-
-
-
-
 
 FacDepotSwitchingCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local info = self.m_depotInfos[index]
@@ -161,9 +127,6 @@ FacDepotSwitchingCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function
     cell.icon:LoadSprite(UIConst.UI_SPRITE_INVENTORY, "icon_" .. info.strId)
     self:_UpdateCellSelected(index)
 end
-
-
-
 
 FacDepotSwitchingCtrl._UpdateCellSelected = HL.Method(HL.Number) << function(self, index)
     local cell = self.m_getCell(index)
@@ -180,9 +143,6 @@ FacDepotSwitchingCtrl._UpdateCellSelected = HL.Method(HL.Number) << function(sel
     end
 end
 
-
-
-
 FacDepotSwitchingCtrl._OnUpdateSelectIndex = HL.Method(HL.Number) << function(self, index)
     if index == self.m_selectedIndex then
         return
@@ -194,9 +154,6 @@ FacDepotSwitchingCtrl._OnUpdateSelectIndex = HL.Method(HL.Number) << function(se
 
     self:_UpdateConfirmButtonState(true)
 end
-
-
-
 
 FacDepotSwitchingCtrl._UpdateConfirmButtonState = HL.Method(HL.Boolean) << function(self, active)
     local index = self.m_selectedIndex

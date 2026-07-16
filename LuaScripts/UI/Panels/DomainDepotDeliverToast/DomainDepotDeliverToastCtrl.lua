@@ -1,25 +1,13 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DomainDepotDeliverToast
 
-
-
-
-
-
-
-
-
-
 DomainDepotDeliverToastCtrl = HL.Class('DomainDepotDeliverToastCtrl', uiCtrl.UICtrl)
 
 local DOMAIN_DEPOT_DELIVER_TOAST_MAIN_HUD_QUEUE_TYPE = "DomainDepotDeliverToast"
 
-
 DomainDepotDeliverToastCtrl.m_showTimer = HL.Field(HL.Number) << -1
 
-
 DomainDepotDeliverToastCtrl.s_waitShowRecvToast = HL.StaticField(HL.Boolean) << false
-
 
 
 
@@ -28,9 +16,6 @@ DomainDepotDeliverToastCtrl.s_waitShowRecvToast = HL.StaticField(HL.Boolean) << 
 DomainDepotDeliverToastCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.INTERRUPT_MAIN_HUD_ACTION_QUEUE] = 'OnInterruptMainHudActionQueue',
 }
-
-
-
 
 
 DomainDepotDeliverToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -52,13 +37,10 @@ DomainDepotDeliverToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     end)
 end
 
-
-
 DomainDepotDeliverToastCtrl.OnInterruptMainHudActionQueue = HL.Method() << function(self)
     self.m_showTimer = self:_ClearTimer(self.m_showTimer)
     self:Close()
 end
-
 
 DomainDepotDeliverToastCtrl.ShowDeliverRecvToast = HL.StaticMethod() << function()
     DomainDepotDeliverToastCtrl.s_waitShowRecvToast = true
@@ -67,8 +49,6 @@ DomainDepotDeliverToastCtrl.ShowDeliverRecvToast = HL.StaticMethod() << function
         UIManager:AutoOpen(PANEL_ID, { showRecvFinish = true })
     end)
 end
-
-
 
 DomainDepotDeliverToastCtrl.ShowDeliverSendToast = HL.StaticMethod(HL.Any) << function(arg)
     local isSendFinished = unpack(arg)
@@ -79,7 +59,6 @@ DomainDepotDeliverToastCtrl.ShowDeliverSendToast = HL.StaticMethod(HL.Any) << fu
         UIManager:AutoOpen(PANEL_ID, { showRecvFinish = false })
     end)
 end
-
 
 DomainDepotDeliverToastCtrl.ClearDeliverToast = HL.StaticMethod() << function()
     if not DomainDepotDeliverToastCtrl.s_waitShowRecvToast then

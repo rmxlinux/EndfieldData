@@ -1,59 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacCacheArea = HL.Class('FacCacheArea', UIWidgetBase)
-
 
 FacCacheArea.m_onInitializeFinished = HL.Field(HL.Function)
 
-
 FacCacheArea.hasNormalCacheIn = HL.Field(HL.Boolean) << false
-
 
 FacCacheArea.hasFluidCacheIn = HL.Field(HL.Boolean) << false
 
+FacCacheArea.hasGasCacheIn = HL.Field(HL.Boolean) << false
 
+FacCacheArea.m_isActivator = HL.Field(HL.Boolean) << false
 
 
 FacCacheArea._OnFirstTimeInit = HL.Override() << function(self)
@@ -65,16 +22,11 @@ FacCacheArea._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 FacCacheArea._OnDestroy = HL.Override() << function(self)
     if self.m_currDragHelper then
-        self:_ClearMoveToInCacheSlotBinding()
+        self:_ClearMoveToInCacheSlotBinding(true)
     end
 end
-
-
-
 
 FacCacheArea.InitFacCacheArea = HL.Method(HL.Table) << function(self, areaData)
     self:_FirstTimeInit()
@@ -90,13 +42,16 @@ FacCacheArea.InitFacCacheArea = HL.Method(HL.Table) << function(self, areaData)
     self.m_inRepositoryList = {}
     self.m_outRepositoryList = {}
 
+    self.m_isActivator = FactoryUtils.getBuildingTypeByBuildingId(self.m_buildingInfo.buildingId) == GEnums.FacBuildingType.MachineWithActivator
+    self.view.decoActivatorAnimation.gameObject:SetActive(self.m_isActivator)
+    self.view.decoArrowAnimation.gameObject:SetActive(not self.m_isActivator)
+
     self:_InitAreaRepositoryList(true)
     self:_InitCacheAreaController()
     if self.m_onInitializeFinished ~= nil then
         self.m_onInitializeFinished()
     end
 end
-
 
 
 
@@ -108,20 +63,13 @@ FacCacheArea.m_buildingInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.Building
 
 
 
-
 FacCacheArea.m_inRepositoryList = HL.Field(HL.Table)
-
 
 FacCacheArea.m_outRepositoryList = HL.Field(HL.Table)
 
-
 FacCacheArea.m_inRepositoryChangedCallback = HL.Field(HL.Function)
 
-
 FacCacheArea.m_outRepositoryChangedCallback = HL.Field(HL.Function)
-
-
-
 
 FacCacheArea._InitAreaRepositoryList = HL.Method(HL.Opt(HL.Boolean)) << function(self, needDelayInit)
     local layoutData = FactoryUtils.getMachineCraftCacheLayoutData(self.m_buildingInfo.nodeId)
@@ -144,49 +92,27 @@ FacCacheArea._InitAreaRepositoryList = HL.Method(HL.Opt(HL.Boolean)) << function
     self.m_inRepositoryList = {}
     self.m_outRepositoryList = {}
 
-    local normalInitRepoList = {
-        {
-            cache = layoutData.normalIncomeCaches,
-            isIn = true,
-        },
-        {
-            cache = layoutData.normalOutcomeCaches,
-            isIn = false,
-        },
-    }
-
-    local fluidInitRepoList = {
-        {
-            cache = layoutData.fluidIncomeCaches,
-            isIn = true,
-        },
-        {
-            cache = layoutData.fluidOutcomeCaches,
-            isIn = false,
-        },
-    }
-
-    self.hasNormalCacheIn = #layoutData.normalIncomeCaches > 0
-    self.hasFluidCacheIn = #layoutData.fluidIncomeCaches > 0
+    if layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal] > 0 then
+        self.hasNormalCacheIn = true
+    end
+    if layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid] > 0 then
+        self.hasFluidCacheIn = true
+        self.hasGasCacheIn = true
+    else
+        self.hasFluidCacheIn = layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid] > 0
+        self.hasGasCacheIn = layoutData.inSlotCountByType[FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas] > 0
+    end
 
     if needDelayInit then
         self:_StartCoroutine(function()
             coroutine.step()
         end)
     end
-    for _, initInfo in ipairs(normalInitRepoList) do
-        self:_InitAreaRepositoryListByCaches(initInfo.cache, initInfo.isIn, false)
-    end
-
-    for _, initInfo in ipairs(fluidInitRepoList) do
-        self:_InitAreaRepositoryListByCaches(initInfo.cache, initInfo.isIn, true)
-    end
+    self:_InitAreaRepositoryListByCaches(layoutData.normalIncomeCaches, true, false)
+    self:_InitAreaRepositoryListByCaches(layoutData.normalOutcomeCaches, false, false)
+    self:_InitAreaRepositoryListByCaches(layoutData.liquidIncomeCaches, true, true)
+    self:_InitAreaRepositoryListByCaches(layoutData.liquidOutcomeCaches, false, true)
 end
-
-
-
-
-
 
 FacCacheArea._InitAreaRepositoryListByCaches = HL.Method(HL.Table, HL.Boolean, HL.Boolean) << function(self, caches, isIn, isFluid)
     local repoList = isIn and self.m_inRepositoryList or self.m_outRepositoryList
@@ -200,7 +126,7 @@ FacCacheArea._InitAreaRepositoryListByCaches = HL.Method(HL.Table, HL.Boolean, H
             repo:InitFacCacheRepository({
                 cache = self.m_buildingInfo:GetCache(cacheIndex, isIn, isFluid),
                 isInCache = isIn,
-                isFluidCache = isFluid,
+                cacheType = cache.cacheType,
                 cacheIndex = cacheIndex,
                 slotCount = cache.slotCount,
                 formulaId = self.m_buildingInfo.formulaId,
@@ -216,10 +142,6 @@ FacCacheArea._InitAreaRepositoryListByCaches = HL.Method(HL.Table, HL.Boolean, H
         end
     end
 end
-
-
-
-
 
 FacCacheArea._GetAreaRepositoryItemCount = HL.Method(HL.Table, HL.Boolean).Return(HL.Number) << function(self, crafts, isIn)
     if crafts == nil then
@@ -250,28 +172,20 @@ FacCacheArea._GetAreaRepositoryItemCount = HL.Method(HL.Table, HL.Boolean).Retur
     return result
 end
 
-
-
-
-
-FacCacheArea._GetAreaRepositorySlotGroup = HL.Method(HL.Boolean, HL.Table).Return(HL.Table) << function(self, isFluid, repoList)
+FacCacheArea._GetAreaRepositorySlotGroup = HL.Method(HL.Number, HL.Table).Return(HL.Table) << function(self, cacheType, repoList)
     local slotGroup = {}
     if repoList == nil then
         return slotGroup
     end
 
     for _, repo in ipairs(repoList) do
-        if isFluid == repo:GetIsFluidCache() then
+        if FactoryUtils.isCacheTypeAcceptItemType(cacheType, repo:GetRepoCacheType()) then
             table.insert(slotGroup, repo:GetRepositorySlotList())
         end
     end
 
     return slotGroup
 end
-
-
-
-
 
 
 
@@ -292,22 +206,15 @@ end
 
 
 
-
 FacCacheArea.m_moveConfirmBindingId = HL.Field(HL.Number) << -1
-
 
 FacCacheArea.m_moveCancelBindingId = HL.Field(HL.Number) << -1
 
-
 FacCacheArea.m_currDragHelper = HL.Field(HL.Any)
-
 
 FacCacheArea.m_currMoveSourceItem = HL.Field(HL.Userdata)
 
-
 FacCacheArea.m_onIsInCacheAreaNaviGroup = HL.Field(HL.Function)
-
-
 
 FacCacheArea._InitCacheAreaController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -343,26 +250,30 @@ FacCacheArea._InitCacheAreaController = HL.Method() << function(self)
     end)
 end
 
-
-
-FacCacheArea._ClearMoveToInCacheSlotBinding = HL.Method() << function(self)
+FacCacheArea._ClearMoveToInCacheSlotBinding = HL.Method(HL.Opt(HL.Boolean)) << function(self, destroy)
     self.m_currDragHelper = nil
     self:_RefreshSlotButtonState(true)
     if self.m_currMoveSourceItem ~= nil then
         self.m_currMoveSourceItem:SetSelected(false)
-        UIUtils.setAsNaviTarget(self.m_currMoveSourceItem.view.button)
+        if not destroy then
+            self:SetNaviTarget(self.m_currMoveSourceItem.view.button)
+        end
     end
     for _, repo in ipairs(self.m_inRepositoryList) do
         repo:SetSlotListBtnEnabled(true)
     end
+    for _, repo in ipairs(self.m_outRepositoryList) do
+        repo:SetSlotListBtnEnabled(true)
+    end
     self.view.inRepositoryList.inRepoNaviGroup.enablePartner = true
+    self.view.outRepositoryList.outRepoNaviGroup.enablePartner = true
+    self.view.inRepositoryList.inRepoNaviGroup.onDefaultNaviFailed:RemoveAllListeners()
+    self.view.outRepositoryList.outRepoNaviGroup.onDefaultNaviFailed:RemoveAllListeners()
     InputManagerInst:ToggleBinding(self.m_moveConfirmBindingId, false)
     InputManagerInst:ToggleBinding(self.m_moveCancelBindingId, false)
     Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.inputGroup.groupId)
     Notify(MessageConst.FAC_ON_MOVE_HIDE_CONTROLLER_MODE_HINT)
 end
-
-
 
 FacCacheArea._OnNaviTargetMoveToSelectedSlotConfirm = HL.Method() << function(self)
     for _, repo in ipairs(self.m_inRepositoryList) do
@@ -374,21 +285,31 @@ FacCacheArea._OnNaviTargetMoveToSelectedSlotConfirm = HL.Method() << function(se
             end
         end
     end
-end
-
-
-
-
-FacCacheArea._RefreshSlotButtonState = HL.Method(HL.Boolean) << function(self, active)
-    local inSlotGroupList = self:_GetAreaRepositorySlotGroup(false, self.m_inRepositoryList)
-    for _, slotGroup in ipairs(inSlotGroupList) do
-        for _, slot in ipairs(slotGroup) do
-            slot:SetSlotBtnHoverBindingEnabled(active)
+    for _, repo in ipairs(self.m_outRepositoryList) do
+        local slotList = repo:GetRepositorySlotList()
+        for _, slot in ipairs(slotList) do
+            if slot:IsNaviTarget() then
+                slot:TryDropItem(self.m_currDragHelper, false)
+                return
+            end
         end
     end
 end
 
-
+FacCacheArea._RefreshSlotButtonState = HL.Method(HL.Boolean) << function(self, active)
+    for _, repo in ipairs(self.m_inRepositoryList) do
+        local slotList = repo:GetRepositorySlotList()
+        for _, slot in ipairs(slotList) do
+            slot:SetSlotBtnHoverBindingEnabled(active)
+        end
+    end
+    for _, repo in ipairs(self.m_outRepositoryList) do
+        local slotList = repo:GetRepositorySlotList()
+        for _, slot in ipairs(slotList) do
+            slot:SetSlotBtnHoverBindingEnabled(active)
+        end
+    end
+end
 
 
 
@@ -400,74 +321,64 @@ FacCacheArea.RefreshCacheArea = HL.Method() << function(self)
     self:_InitAreaRepositoryList()
 end
 
-
-
-
 FacCacheArea.RefreshAreaBlockState = HL.Method(HL.Boolean) << function(self, isBlocked)
-    self.view.decoArrowAnimation.gameObject:SetActive(not isBlocked)
+    self.view.decoActivatorAnimation.transform.localScale = isBlocked and Vector3.zero or Vector3.one
+    self.view.decoArrowAnimation.transform.localScale = isBlocked and Vector3.zero or Vector3.one
     self.view.blockNode.gameObject:SetActive(isBlocked)
 end
-
-
 
 FacCacheArea.GainAreaOutItems = HL.Method() << function(self)
     local core = GameInstance.player.remoteFactory.core
     core:Message_OpMoveAllCacheOutItemToBag(Utils.getCurrentChapterId(), self.m_buildingInfo.nodeId)
 end
 
-
-
 FacCacheArea.GetAreaInRepositoryNormalSlotGroup = HL.Method().Return(HL.Table) << function(self)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.inRepositoryList.rectTransform)
-    return self:_GetAreaRepositorySlotGroup(false, self.m_inRepositoryList)
+    return self:_GetAreaRepositorySlotGroup(FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal, self.m_inRepositoryList)
 end
-
-
 
 FacCacheArea.GetAreaOutRepositoryNormalSlotGroup = HL.Method().Return(HL.Table) << function(self)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.outRepositoryList.rectTransform)
-    return self:_GetAreaRepositorySlotGroup(false, self.m_outRepositoryList)
+    return self:_GetAreaRepositorySlotGroup(FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal, self.m_outRepositoryList)
 end
-
-
 
 FacCacheArea.GetAreaInRepositoryFluidSlotGroup = HL.Method().Return(HL.Table) << function(self)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.inRepositoryList.rectTransform)
-    return self:_GetAreaRepositorySlotGroup(true, self.m_inRepositoryList)
+    return self:_GetAreaRepositorySlotGroup(FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid, self.m_inRepositoryList)
 end
-
-
 
 FacCacheArea.GetAreaOutRepositoryFluidSlotGroup = HL.Method().Return(HL.Table) << function(self)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.inRepositoryList.rectTransform)
-    return self:_GetAreaRepositorySlotGroup(true, self.m_outRepositoryList)
+    return self:_GetAreaRepositorySlotGroup(FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid, self.m_outRepositoryList)
 end
 
-
-
-
-
-FacCacheArea.PlayArrowAnimation = HL.Method(HL.String, HL.Opt(HL.Function)) << function(self, animationName, callback)
-    self.view.decoArrowAnimation:PlayWithTween(animationName, callback)
+FacCacheArea.PlayArrowAnimation = HL.Method(HL.Opt(HL.Function)) << function(self, callback)
+    if self.m_isActivator then
+        self.view.decoActivatorAnimation:PlayWithTween("facconnector_arrow04", callback)
+    else
+        self.view.decoArrowAnimation:PlayWithTween("facmac_decoarrow_loop", callback)
+    end
 end
 
-
-
-
-
-
-FacCacheArea.DropItemToArea = HL.Method(HL.Forward('UIDragHelper'), HL.Boolean, HL.Opt(CS.Proto.ITEM_MOVE_MODE)) << function(self, dragHelper, isFluid, mode)
+FacCacheArea.DropItemToArea = HL.Method(HL.Forward('UIDragHelper'), HL.Number, HL.Opt(CS.Proto.ITEM_MOVE_MODE)) << function(self, dragHelper, cacheType, mode)
     for _, repo in ipairs(self.m_inRepositoryList) do
-        if isFluid == repo:GetIsFluidCache() then
+        if FactoryUtils.isCacheTypeAcceptItemType(repo:GetRepoCacheType(), cacheType) then
             if repo:TryDropItemToRepository(dragHelper, mode) == true then
                 return
             end
         end
     end
+    local bottleOrJarFill = FactoryUtils.isEmptyBottleOrJarItem(dragHelper.info.itemId, cacheType)
+    if bottleOrJarFill then
+        for _, repo in ipairs(self.m_outRepositoryList) do
+            if FactoryUtils.isCacheTypeAcceptItemType(repo:GetRepoCacheType(), cacheType) then
+                if repo:TryDropItemToRepository(dragHelper, mode) == true then
+                    return
+                end
+            end
+        end
+    end
 end
-
-
-
 
 FacCacheArea.GetDropToComponentId = HL.Method(HL.Forward('UIDragHelper')).Return(HL.Opt(HL.Number)) << function(self, dragHelper)
     for _, repo in ipairs(self.m_inRepositoryList) do
@@ -481,16 +392,11 @@ FacCacheArea.GetDropToComponentId = HL.Method(HL.Forward('UIDragHelper')).Return
     return nil
 end
 
-
-
 FacCacheArea.InitAreaNaviTarget = HL.Method() << function(self)
     if #self.m_inRepositoryList > 0 then
         self.m_inRepositoryList[#self.m_inRepositoryList]:SetFirstSlotToNaviTarget()
     end
 end
-
-
-
 
 FacCacheArea.CheckRepoNaviTargetTopLayer = HL.Method(HL.Boolean).Return(HL.Boolean) << function(self, isIn)
     if isIn then
@@ -501,29 +407,35 @@ FacCacheArea.CheckRepoNaviTargetTopLayer = HL.Method(HL.Boolean).Return(HL.Boole
     return false
 end
 
-
-
-
 FacCacheArea.AddNaviGroupSwitchInfo = HL.Method(HL.Table) << function(self, naviGroupInfos)
-    table.insert(naviGroupInfos, {
+    local groupData = {
         naviGroup = self.view.inRepositoryList.inRepoNaviGroup,
         subGroups = { self.view.outRepositoryList.outRepoNaviGroup },
         text = Language.LUA_INV_NAVI_SWITCH_TO_MACHINE,
         forceDefault = true,
-    })
+    }
+    if self.m_isActivator then
+        local ctrl = self:GetUICtrl()
+        table.insert(groupData.subGroups, ctrl.view.activatorNodes.naviGroup)
+    end
+    table.insert(naviGroupInfos, groupData)
 end
 
-
-
-
-
-
-FacCacheArea.NaviTargetMoveToInCacheSlot = HL.Method(HL.Forward('Item'), HL.Forward('UIDragHelper'), HL.Boolean) << function(self, sourceItem, dragHelper, isFluid)
+FacCacheArea.NaviTargetMoveToInCacheSlot = HL.Method(HL.Forward('Item'), HL.Forward('UIDragHelper'), HL.Number) << function(self, sourceItem, dragHelper, cacheType)
     local slotCount = 0
     for _, repo in ipairs(self.m_inRepositoryList) do
-        if isFluid == repo:GetIsFluidCache() then
+        if FactoryUtils.isCacheTypeAcceptItemType(repo:GetRepoCacheType(), cacheType) then
             local slotList = repo:GetRepositorySlotList()
             slotCount = slotCount + #slotList
+        end
+    end
+    local bottleOrJarFill = FactoryUtils.isEmptyBottleOrJarItem(dragHelper.info.itemId, cacheType)
+    if bottleOrJarFill then
+        for _, repo in ipairs(self.m_outRepositoryList) do
+            if FactoryUtils.isCacheTypeAcceptItemType(repo:GetRepoCacheType(), cacheType) then
+                local slotList = repo:GetRepositorySlotList()
+                slotCount = slotCount + #slotList
+            end
         end
     end
 
@@ -544,25 +456,47 @@ FacCacheArea.NaviTargetMoveToInCacheSlot = HL.Method(HL.Forward('Item'), HL.Forw
         })
 
         for _, repo in ipairs(self.m_inRepositoryList) do
-            if isFluid ~= repo:GetIsFluidCache() then
+            if not FactoryUtils.isCacheTypeAcceptItemType(repo:GetRepoCacheType(), cacheType) then
+                repo:SetSlotListBtnEnabled(false)
+            end
+        end
+        for _, repo in ipairs(self.m_outRepositoryList) do
+            if not FactoryUtils.isCacheTypeAcceptItemType(repo:GetRepoCacheType(), cacheType) then
                 repo:SetSlotListBtnEnabled(false)
             end
         end
         self.view.inRepositoryList.inRepoNaviGroup:NaviToThisGroup(true)
         self.view.inRepositoryList.inRepoNaviGroup.enablePartner = false
+        if bottleOrJarFill then
+            self.view.outRepositoryList.outRepoNaviGroup.enablePartner = false
+            self.view.inRepositoryList.inRepoNaviGroup.onDefaultNaviFailed:AddListener(function(dir)
+                if dir == CS.UnityEngine.UI.NaviDirection.Right then
+                    self.view.outRepositoryList.outRepoNaviGroup:NaviToThisGroup(true)
+                end
+            end)
+            self.view.outRepositoryList.outRepoNaviGroup.onDefaultNaviFailed:AddListener(function(dir)
+                if dir == CS.UnityEngine.UI.NaviDirection.Left then
+                    self.view.inRepositoryList.inRepoNaviGroup:NaviToThisGroup(true)
+                end
+            end)
+        end
         self.m_currMoveSourceItem:SetSelected(true)
         self:_RefreshSlotButtonState(false)
 
-        local textId = isFluid and "LUA_ITEM_ACTION_CACHE_AREA_SELECT_LIQUID_SLOT" or "LUA_ITEM_ACTION_CACHE_AREA_SELECT_NORMAL_SLOT"
+        local textId
+        if cacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal then
+            textId = "LUA_ITEM_ACTION_CACHE_AREA_SELECT_NORMAL_SLOT"
+        elseif cacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid then
+            textId = bottleOrJarFill and "LUA_ITEM_ACTION_CACHE_AREA_SELECT_LIQUID_SLOT_FILL" or "LUA_ITEM_ACTION_CACHE_AREA_SELECT_LIQUID_SLOT"
+        elseif cacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas then
+            textId = bottleOrJarFill and "LUA_ITEM_ACTION_CACHE_AREA_SELECT_GAS_SLOT_FILL" or "LUA_ITEM_ACTION_CACHE_AREA_SELECT_GAS_SLOT"
+        end
         Notify(MessageConst.FAC_ON_MOVE_SHOW_CONTROLLER_MODE_HINT, Language[textId])
     else
         
-        self:DropItemToArea(dragHelper, isFluid)
+        self:DropItemToArea(dragHelper, cacheType)
     end
 end
-
-
-
 
 
 
@@ -610,9 +544,6 @@ FacCacheArea.OnStartUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(s
     end
     Notify(MessageConst.SHOW_ITEM_DRAG_HELPER, args)
 end
-
-
-
 
 FacCacheArea.OnEndUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     Notify(MessageConst.HIDE_ITEM_DRAG_HELPER)

@@ -2,37 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DialogSign
 local PHASE_ID = PhaseId.DialogSign
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DialogSignCtrl = HL.Class('DialogSignCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -45,70 +15,94 @@ DialogSignCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 }
 
-
 DialogSignCtrl.m_textContent = HL.Field(HL.String) << ''
 
+DialogSignCtrl.m_curEntryLinks = HL.Field(HL.Userdata) << nil
+
+DialogSignCtrl.m_enableGlossaryPopUp = HL.Field(HL.Boolean) << false
 
 DialogSignCtrl.m_optionConfig = HL.Field(HL.Userdata)
 
-
 DialogSignCtrl.m_textShowSpeed = HL.Field(HL.Number) << 0
-
 
 DialogSignCtrl.m_optionDelayTime = HL.Field(HL.Number) << 0
 
-
 DialogSignCtrl.m_signDelayTime = HL.Field(HL.Number) << 0.5
-
 
 DialogSignCtrl.m_optionTimer = HL.Field(HL.Number) << -1
 
-
 DialogSignCtrl.m_signTimer = HL.Field(HL.Number) << -1
-
 
 DialogSignCtrl.m_typeWriterCor = HL.Field(HL.Thread)
 
-
 DialogSignCtrl.m_textPlayCompleted = HL.Field(HL.Boolean) << false
-
 
 DialogSignCtrl.m_lastMaxVisibleCharacters = HL.Field(HL.Number) << -1
 
-
 DialogSignCtrl.m_lastVisibleLineNumber = HL.Field(HL.Number) << -1
-
 
 DialogSignCtrl.m_hasScrolledToBottom = HL.Field(HL.Boolean) << false
 
-
 DialogSignCtrl.m_dialogAutoMode = HL.Field(HL.Boolean) << false
 
-
-
 DialogSignCtrl.OnShowDialogSignOption = HL.StaticMethod(HL.Table) << function(arg)
-    PhaseManager:OpenPhase(PHASE_ID, arg)
+    
+    PhaseManager:OpenPhase(PHASE_ID, arg, nil, true)
 end
-
-
-
 
 
 DialogSignCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_textContent, self.m_optionConfig, self.m_textShowSpeed, self.m_optionDelayTime, self.m_signDelayTime = unpack(arg)
+    self.m_textContent, self.m_curEntryLinks = UIUtils.resolveNarrativeTextWithEntryLinks(self.m_textContent)
+    self.m_enableGlossaryPopUp = false
+    self:BindInputPlayerAction("dialog_open_note", function() self:_OpenGlossaryPopUp() end)
+
+    self.view.content.uiText.onClickLink:AddListener(function(linkId)
+        self:OnLinkClick(linkId)
+    end)
 end
-
-
 
 DialogSignCtrl.OnShow = HL.Override() << function(self)
     if GameWorld.dialogTimelineManager.autoMode then
         self.m_dialogAutoMode = true
         GameWorld.dialogTimelineManager:SetAutoMode(false)
     end
+    self:_RefreshGlossaryNoteKeyHint()
     self:StartAutoTypeWriter()
 end
 
+DialogSignCtrl._RefreshGlossaryNoteKeyHint = HL.Method() << function(self)
+    local enable = true
 
+    if self.m_phase == nil or self.m_curEntryLinks == nil or self.m_curEntryLinks.Count == 0 then
+        enable = false
+    end
+
+    if not self.m_enableGlossaryPopUp then
+        enable = false
+    end
+
+    self.view.noteKeyHintNode.gameObject:SetActive(enable)
+end
+
+DialogSignCtrl.OnLinkClick = HL.Method(HL.String) << function(self, linkId)
+    if UIUtils.resolveLinkTypeFromId(linkId) ~= UIConst.UI_TEXT_LINK_TYPE.Narrative then
+        return
+    end
+    self:_OpenGlossaryPopUp()
+end
+
+DialogSignCtrl._OpenGlossaryPopUp = HL.Method() << function(self)
+    if self.m_phase == nil or self.m_curEntryLinks == nil or self.m_curEntryLinks.Count == 0 then
+        return
+    end
+
+    if not self.m_enableGlossaryPopUp then
+        return
+    end
+
+    self.m_phase:CreatePhasePanelItem(PanelId.DialogGlossaryPopUp, { self.m_curEntryLinks })
+end
 
 DialogSignCtrl.StartAutoTypeWriter = HL.Method() << function(self)
     self.view.scrollView.disableScroll = true
@@ -125,6 +119,8 @@ DialogSignCtrl.StartAutoTypeWriter = HL.Method() << function(self)
     self.view.content:SetText(self.m_textContent, false)
     self.view.content:Play()
 
+    self.view.content.uiText.raycastTarget = false
+
     self.m_typeWriterCor = self:_StartCoroutine(function()
         while self.m_isClosed ~= true and self.m_textPlayCompleted ~= true do
             self:TryAutoScrollToBottomLine()
@@ -139,8 +135,6 @@ DialogSignCtrl.StartAutoTypeWriter = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 DialogSignCtrl.TryAutoScrollToBottomLine = HL.Method() << function(self)
     
@@ -190,10 +184,6 @@ DialogSignCtrl.TryAutoScrollToBottomLine = HL.Method() << function(self)
         end
     end
 end
-
-
-
-
 
 DialogSignCtrl._IsLineVisibleInViewport = HL.Method(HL.Userdata, HL.Number).Return(HL.Boolean) << function(self, textInfo, lineNumber)
     if textInfo == nil or lineNumber < 0 or lineNumber >= textInfo.lineCount then
@@ -259,8 +249,6 @@ DialogSignCtrl._IsLineVisibleInViewport = HL.Method(HL.Userdata, HL.Number).Retu
     return isLineFullyVisible
 end
 
-
-
 DialogSignCtrl._ScrollHalfViewportOrToBottom = HL.Method() << function(self)
     local scrollView = self.view.scrollView
     if scrollView == nil or not scrollView.vertical then
@@ -293,14 +281,16 @@ DialogSignCtrl._ScrollHalfViewportOrToBottom = HL.Method() << function(self)
     scrollView:ScrollTo(newContentPos, false)
 end
 
-
-
 DialogSignCtrl.OnTextPlayComplete = HL.Method() << function(self)
     self.m_textPlayCompleted = true
     self.view.scrollView.disableScroll = false
     self.view.scrollView.controllerScrollEnabled = true
     self.view.scrollViewImage.raycastTarget = true
+    self.view.content.uiText.raycastTarget = true
     self.view.scrollKeyHint.gameObject:SetActive(true)
+
+    self.m_enableGlossaryPopUp = true
+    self:_RefreshGlossaryNoteKeyHint()
 
     if self.m_typeWriterCor ~= nil then
         self.m_typeWriterCor = self:_ClearCoroutine(self.m_typeWriterCor)
@@ -317,8 +307,6 @@ DialogSignCtrl.OnTextPlayComplete = HL.Method() << function(self)
         self:ShowOption()
     end
 end
-
-
 
 DialogSignCtrl.ShowOption = HL.Method() << function(self)
     local data = {
@@ -337,8 +325,6 @@ DialogSignCtrl.ShowOption = HL.Method() << function(self)
     self.view.optionCell.view.keyHintContent.gameObject:SetActive(true)
 end
 
-
-
 DialogSignCtrl.OnOptionSelect = HL.Method() << function(self)
     if GameWorld.dialogTimelineManager.canClick then
         GameWorld.dialogTimelineManager:Next()
@@ -349,9 +335,11 @@ DialogSignCtrl.OnOptionSelect = HL.Method() << function(self)
     self:StartSign()
 end
 
-
-
 DialogSignCtrl.StartSign = HL.Method() << function(self)
+    
+    if self.m_signDelayTime < 0 then
+        return
+    end
     self.m_signTimer = self:_StartTimer(self.m_signDelayTime, function()
         if self.m_isClosed then
             return
@@ -360,19 +348,13 @@ DialogSignCtrl.StartSign = HL.Method() << function(self)
     end)
 end
 
-
-
 DialogSignCtrl.OnHideDialogSignOption = HL.Method() << function(self)
     PhaseManager:PopPhase(PHASE_ID)
 end
 
-
-
 DialogSignCtrl.OnDialogTimelineFinish = HL.Method() << function(self)
     PhaseManager:ExitPhaseFast(PHASE_ID)
 end
-
-
 
 DialogSignCtrl.OnClose = HL.Override() << function(self)
     if self.m_typeWriterCor ~= nil then

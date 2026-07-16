@@ -4,26 +4,6 @@ local PANEL_ID = PanelId.CashShop
 
 local recommend_group_id = "shop_pay_recommend"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CashShopCtrl = HL.Class('CashShopCtrl', uiCtrl.UICtrl)
 
 local AllTabCategory = {
@@ -38,29 +18,20 @@ local AllTabCategory = {
 
 
 
-
 CashShopCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CASH_SHOP_SHOW_WALLET_BAR] = 'ShowWalletBar',
     [MessageConst.CASH_SHOP_REFRESH_CLOSE_BTN_UI] = '_RefreshUICloseBtn',
 }
 
-
 CashShopCtrl.m_tabCategoryData = HL.Field(HL.Table)
-
 
 CashShopCtrl.m_showRecommendTab = HL.Field(HL.Boolean) << true
 
-
 CashShopCtrl.m_tabCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 CashShopCtrl.m_categoryIdToTabCell = HL.Field(HL.Table)
 
-
 CashShopCtrl.m_showWalletBarArg = HL.Field(HL.Table)
-
-
-
 
 
 CashShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -71,8 +42,6 @@ CashShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_ProcessArg(arg)
 end
 
-
-
 CashShopCtrl.OnShow = HL.Override() << function(self)
     local wrapper = self.animationWrapper
     if wrapper then
@@ -82,14 +51,9 @@ CashShopCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 CashShopCtrl.OnClose = HL.Override() << function(self)
     CashShopUtils.TryCloseSpecialGiftPopup()
 end
-
-
-
 
 CashShopCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
     
@@ -105,17 +69,11 @@ CashShopCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
     self:_ProcessArg(arg)
 end
 
-
-
-
-
 CashShopCtrl.OnSortingOrderChange = HL.Override(HL.Number, HL.Boolean) << function(self, order, isInit)
     CashShopCtrl.Super.OnSortingOrderChange(self, order, isInit)
     self.view.walletBarPlaceholder.gameObject:SetActive(false)
     self.view.walletBarPlaceholder.gameObject:SetActive(true)
 end
-
-
 
 CashShopCtrl._InitAction = HL.Method() << function(self)
     self.view.btnClose.onClick:AddListener(function()
@@ -135,8 +93,6 @@ CashShopCtrl._InitAction = HL.Method() << function(self)
 
     self.m_tabCellCache = UIUtils.genCellCache(self.view.tabCell)
 end
-
-
 
 CashShopCtrl._InitData = HL.Method() << function(self)
     local shopCategoryTypeList = CashShopUtils.InitCategoryTypeList()
@@ -174,8 +130,6 @@ CashShopCtrl._InitData = HL.Method() << function(self)
     self.m_tabCategoryData = shopCategoryTypeList
 end
 
-
-
 CashShopCtrl._SetupUI = HL.Method() << function(self)
     self.view.tabSpCell.gameObject:SetActive(self.m_showRecommendTab)
     local _, recommendShopGroupData = Tables.shopGroupTable:TryGetValue(recommend_group_id)
@@ -212,16 +166,11 @@ CashShopCtrl._SetupUI = HL.Method() << function(self)
     end)
 end
 
-
-
 CashShopCtrl._RefreshUICloseBtn = HL.Method() << function(self)
     local canBackToRecommend = not string.isEmpty(self.m_phase.m_backToRecommendPanelTabId)
     self.view.btnClose.gameObject:SetActive(not canBackToRecommend)
     self.view.backBtn.gameObject:SetActive(canBackToRecommend)
 end
-
-
-
 
 CashShopCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
     
@@ -287,15 +236,10 @@ CashShopCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
     end
 end
 
-
-
-
 CashShopCtrl.ShowWalletBar = HL.Method(HL.Table) << function(self, arg)
     self.m_showWalletBarArg = arg
     self:_ShowWalletBarCore()
 end
-
-
 
 CashShopCtrl._ShowWalletBarCore = HL.Method() << function(self)
     if self.m_showWalletBarArg == nil then
@@ -312,9 +256,6 @@ CashShopCtrl._ShowWalletBarCore = HL.Method() << function(self)
     end
 end
 
-
-
-
 CashShopCtrl._ClickCategory = HL.Method(HL.String) << function(self, categoryId)
     if self.m_phase.currCategoryId == categoryId then
         return
@@ -323,8 +264,6 @@ CashShopCtrl._ClickCategory = HL.Method(HL.String) << function(self, categoryId)
     self.m_phase:OpenCategory(categoryId)
     self.m_phase:ClearBackToRecommendPanel()
 end
-
-
 
 CashShopCtrl._CloseAllDialogPanel = HL.Method() << function(self)
     local isOpen, shopDetailCtrl = UIManager:IsOpen(PanelId.ShopDetail)

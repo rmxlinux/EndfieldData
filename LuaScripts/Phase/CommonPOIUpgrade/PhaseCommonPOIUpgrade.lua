@@ -1,38 +1,15 @@
 
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.CommonPOIUpgrade
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseCommonPOIUpgrade = HL.Class('PhaseCommonPOIUpgrade', phaseBase.PhaseBase)
-
 
 PhaseCommonPOIUpgrade.m_domainPOIType = HL.Field(GEnums.DomainPoiType)
 
-
 PhaseCommonPOIUpgrade.m_instId = HL.Field(HL.String) << ""
-
 
 PhaseCommonPOIUpgrade.m_blendCamCfg = HL.Field(CS.Beyond.Gameplay.RelativeCameraBlendConfig)
 
-
 PhaseCommonPOIUpgrade.m_upgradeTag = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -47,8 +24,6 @@ PhaseCommonPOIUpgrade.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
-
 PhaseCommonPOIUpgrade._OnInit = HL.Override() << function(self)
     PhaseCommonPOIUpgrade.Super._OnInit(self)
 end
@@ -56,17 +31,8 @@ end
 
 
 
-
-
-
-
-
 PhaseCommonPOIUpgrade.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhaseCommonPOIUpgrade._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local domainPOIType, instId, blendCamCfg = unpack(self.arg)
@@ -82,10 +48,6 @@ PhaseCommonPOIUpgrade._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.T
     self.m_instId = instId
     self.m_blendCamCfg = blendCamCfg
 end
-
-
-
-
 
 PhaseCommonPOIUpgrade._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if not self.m_blendCamCfg then
@@ -108,16 +70,8 @@ PhaseCommonPOIUpgrade._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.
     CS.Beyond.Gameplay.View.CameraUtils.DoCommonTempBlendOut(GameWorld.levelLoader.isLoading and -1 or blendOutDuration)
 end
 
-
-
-
-
 PhaseCommonPOIUpgrade._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseCommonPOIUpgrade._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
@@ -127,23 +81,15 @@ end
 
 
 
-
-
 PhaseCommonPOIUpgrade._OnActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseCommonPOIUpgrade._OnDeActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseCommonPOIUpgrade._OnDestroy = HL.Override() << function(self)
     PhaseCommonPOIUpgrade.Super._OnDestroy(self)
 end
-
-
 
 
 
@@ -152,17 +98,11 @@ PhaseCommonPOIUpgrade.OpenPhaseCommonPOI = HL.StaticMethod(HL.Table) << function
 end
 
 
-
-
-
 PhaseCommonPOIUpgrade.OnCommonPOIUnlocked = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     
     self.m_upgradeTag = true
     PhaseManager:ExitPhaseFast(PHASE_ID)
 end
-
-
-
 
 PhaseCommonPOIUpgrade.OnCommonPOILevelUp = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     

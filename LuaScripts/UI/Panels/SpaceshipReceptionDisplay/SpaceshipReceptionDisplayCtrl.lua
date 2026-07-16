@@ -227,7 +227,7 @@ SpaceshipReceptionDisplayCtrl.OnUpdateCell = HL.Method(HL.Userdata, HL.Number) <
     local isOld = GameInstance.player.spaceship:GetPictureRedDotReadState(item.posterData.pictureId)
     cell:UpdateRedDotState(not isOld)
     if index == 1 then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.view.pictureBtn)
+        self:SetNaviTarget(cell.view.pictureBtn)
     end
     self:_UpdateRedDot()
 end

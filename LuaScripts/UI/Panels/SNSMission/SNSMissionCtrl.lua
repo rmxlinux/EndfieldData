@@ -15,56 +15,19 @@ local MissionViewTypeCfg = {
     [GEnums.MissionViewType.MissionViewOther] = "ui_mis_panel_tab_other",
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SNSMissionCtrl = HL.Class('SNSMissionCtrl', uiCtrl.UICtrl)
-
 
 SNSMissionCtrl.m_filterMissionRelatedDialogInfos = HL.Field(HL.Table)
 
-
 SNSMissionCtrl.m_genMissionDialogCellFunc = HL.Field(HL.Function)
-
 
 SNSMissionCtrl.m_curSelectDialogId = HL.Field(HL.String) << ""
 
-
 SNSMissionCtrl.m_dialogId2LuaIndex = HL.Field(HL.Table)
-
 
 SNSMissionCtrl.m_cachedSelectedTags = HL.Field(HL.Table)
 
-
 SNSMissionCtrl.m_filterArgs = HL.Field(HL.Table)
-
 
 
 
@@ -73,9 +36,6 @@ SNSMissionCtrl.m_filterArgs = HL.Field(HL.Table)
 SNSMissionCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 SNSMissionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -107,9 +67,6 @@ end
 
 
 
-
-
-
 SNSMissionCtrl._InitData = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     local dialogId = arg and arg.dialogId
     if not string.isEmpty(dialogId) and Tables.sNSDialogTable:ContainsKey(dialogId) then
@@ -118,8 +75,6 @@ SNSMissionCtrl._InitData = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
 
     self.m_cachedSelectedTags = arg and arg.selectedTags and lume.deepCopy(arg.selectedTags) or {}
 end
-
-
 
 SNSMissionCtrl._RefreshContent = HL.Method() << function(self)
     local hasSelectDialog = not string.isEmpty(self.m_curSelectDialogId)
@@ -132,10 +87,6 @@ SNSMissionCtrl._RefreshContent = HL.Method() << function(self)
     self.view.nonSelected.gameObject:SetActive(not hasSelectDialog)
     self.view.selected.gameObject:SetActive(hasSelectDialog)
 end
-
-
-
-
 
 SNSMissionCtrl._OnUpdateMissionDialogCell = HL.Method(GameObject, HL.Number) << function(self, go, csIndex)
     
@@ -157,8 +108,6 @@ SNSMissionCtrl._OnUpdateMissionDialogCell = HL.Method(GameObject, HL.Number) << 
         end
     end
 end
-
-
 
 SNSMissionCtrl._RefreshMissionRelatedDialogList = HL.Method() << function(self)
     local hasResult = #self.m_filterMissionRelatedDialogInfos > 0
@@ -186,8 +135,6 @@ SNSMissionCtrl._RefreshMissionRelatedDialogList = HL.Method() << function(self)
     end
 end
 
-
-
 SNSMissionCtrl._RefreshNaviTarget = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
@@ -205,14 +152,16 @@ SNSMissionCtrl._RefreshNaviTarget = HL.Method() << function(self)
 
     
     local cell = self.m_genMissionDialogCellFunc(findTargetLuaIndex)
-    UIUtils.setAsNaviTarget(cell and cell.view.btnClick)
+    self:SetNaviTarget(cell and cell.view.btnClick)
 end
 
-
-
-
-
 SNSMissionCtrl._OnClickMissionDialogCell = HL.Method(HL.String, HL.String) << function(self, chatId, dialogId)
+    if #self.m_filterMissionRelatedDialogInfos == 0 then
+        
+        
+        return
+    end
+
     if self.m_curSelectDialogId == dialogId then
         return
     end
@@ -230,8 +179,6 @@ SNSMissionCtrl._OnClickMissionDialogCell = HL.Method(HL.String, HL.String) << fu
 
     self:_RefreshContent()
 end
-
-
 
 SNSMissionCtrl._InitFilterArgs = HL.Method() << function(self)
     local filterArgs = {}
@@ -276,16 +223,11 @@ SNSMissionCtrl._InitFilterArgs = HL.Method() << function(self)
     self.m_filterArgs = filterArgs
 end
 
-
-
 SNSMissionCtrl._RefreshFilterBtnState = HL.Method() << function(self)
     local hasFilter = #self.m_cachedSelectedTags > 0
     self.view.btnCommonFilter.normalNode.gameObject:SetActiveIfNecessary(not hasFilter)
     self.view.btnCommonFilter.existNode.gameObject:SetActiveIfNecessary(hasFilter)
 end
-
-
-
 
 SNSMissionCtrl._IsFilterChange = HL.Method(HL.Table).Return(HL.Boolean) << function(self, selectedTags)
     if #self.m_cachedSelectedTags ~= #selectedTags then
@@ -312,9 +254,6 @@ SNSMissionCtrl._IsFilterChange = HL.Method(HL.Table).Return(HL.Boolean) << funct
     return false
 end
 
-
-
-
 SNSMissionCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, selectedTags)
     selectedTags = selectedTags or {}
     if not self:_IsFilterChange(selectedTags) then
@@ -333,9 +272,6 @@ SNSMissionCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, selected
     self:_ManuallyResetControllerState()
     self:_RefreshNaviTarget()
 end
-
-
-
 
 SNSMissionCtrl._UpdateFilterMissionRelatedDialogInfos = HL.Method(HL.Table) << function(self, selectedTags)
     local sns = GameInstance.player.sns
@@ -437,9 +373,6 @@ SNSMissionCtrl._UpdateFilterMissionRelatedDialogInfos = HL.Method(HL.Table) << f
     self.m_filterMissionRelatedDialogInfos = lume.concat(missionRelatedDialogInfosPart1, missionRelatedDialogInfosPart2)
 end
 
-
-
-
 SNSMissionCtrl._TryRecoverScrollToDialogCell = HL.Method(HL.Number) << function(self, targetLuaIndex)
     local targetCSIndex = CSIndex(targetLuaIndex)
     self:_StartCoroutine(function()
@@ -456,14 +389,10 @@ SNSMissionCtrl._TryRecoverScrollToDialogCell = HL.Method(HL.Number) << function(
     end)
 end
 
-
-
 SNSMissionCtrl._OnBtnFilterClick = HL.Method() << function(self)
     self.m_filterArgs.selectedTags = self.m_cachedSelectedTags
     self:Notify(MessageConst.SHOW_COMMON_FILTER, self.m_filterArgs)
 end
-
-
 
 SNSMissionCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     return {
@@ -472,40 +401,27 @@ SNSMissionCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << functi
     }
 end
 
-
-
 SNSMissionCtrl.GetPanelType = HL.Method().Return(HL.Number) << function(self)
     return SNSUtils.PanelType.FullScreenPanel
 end
 
 
 
-
 SNSMissionCtrl.m_focusCellCSIndex = HL.Field(HL.Number) << -1
-
-
-
 
 SNSMissionCtrl.OnContentCoreFocus = HL.Method(HL.Boolean) << function(self, isOn)
     self.m_phase:OnSNSBarkerContentCoreFocus(isOn)
 end
 
-
-
 SNSMissionCtrl.ReturnToFocusCell = HL.Method() << function(self)
     
     local cell = self.m_genMissionDialogCellFunc(LuaIndex(self.m_focusCellCSIndex))
-    UIUtils.setAsNaviTarget(cell.view.btnClick)
+    self:SetNaviTarget(cell.view.btnClick)
 end
-
-
 
 SNSMissionCtrl.TryContinueDialog = HL.Method() << function(self)
     self:_RefreshContent()
 end
-
-
-
 
 SNSMissionCtrl.OnSwitchOn = HL.Method(HL.Boolean) << function(self, isOn)
     if not isOn then
@@ -513,7 +429,7 @@ SNSMissionCtrl.OnSwitchOn = HL.Method(HL.Boolean) << function(self, isOn)
         return
     end
 
-    ClientDataManagerInst:SetBool(SNSUtils.MISSION_TAB_READ, true, false, SNSUtils.SNS_CATEGORY, true)
+    ClientDataManagerInst:SetBool(SNSUtils.MISSION_TAB_READ, true, false, SNSUtils.SNS_CATEGORY)
     Notify(MessageConst.ON_SNS_MISSION_TAB_READ_STATE_CHANGE)
 
     if not DeviceInfo.usingController then
@@ -523,15 +439,13 @@ SNSMissionCtrl.OnSwitchOn = HL.Method(HL.Boolean) << function(self, isOn)
     
     local cell = self.m_genMissionDialogCellFunc(LuaIndex(self.m_focusCellCSIndex))
     if cell then
-        UIUtils.setAsNaviTarget(cell.view.btnClick)
+        self:SetNaviTarget(cell.view.btnClick)
     end
 
     
     local phase = self.m_phase
     phase:ToggleBasicPanelCloseBtn(true)
 end
-
-
 
 SNSMissionCtrl._ManuallyResetControllerState = HL.Method() << function(self)
     self.view.snsDialogContentCore:ToggleContentCoreFocusable(false)

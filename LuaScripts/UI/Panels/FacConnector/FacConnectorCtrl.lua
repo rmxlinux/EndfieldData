@@ -2,37 +2,6 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacSplitter
 local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacConnectorCtrl = HL.Class('FacConnectorCtrl', uiCtrl.UICtrl)
 
 local CONNECTOR_START_PORT_INDEX = 1
@@ -43,55 +12,37 @@ local SINGLE_CONNECTOR_ITEM_INDEX = 0
 
 
 
-
 FacConnectorCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacConnectorCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 FacConnectorCtrl.m_uiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.LogisticUnitUIInfo_BoxBridge)
 
-
 FacConnectorCtrl.m_updateThread = HL.Field(HL.Thread)
-
 
 FacConnectorCtrl.m_connectorItems = HL.Field(HL.Table)
 
-
 FacConnectorCtrl.m_lastValidConnectorItems = HL.Field(HL.Table)
-
 
 FacConnectorCtrl.m_skipIndexMap = HL.Field(HL.Table)
 
-
 FacConnectorCtrl.m_conveyorSkipIndex = HL.Field(HL.Table)
-
 
 FacConnectorCtrl.m_inBeltInfoList = HL.Field(HL.Table)
 
-
 FacConnectorCtrl.m_outBeltInfoList = HL.Field(HL.Table)
-
 
 FacConnectorCtrl.m_inBindingAnimMap = HL.Field(HL.Table)
 
-
 FacConnectorCtrl.m_outBindingAnimMap = HL.Field(HL.Table)
-
 
 FacConnectorCtrl.m_inItemAnimMap = HL.Field(HL.Table)
 
-
 FacConnectorCtrl.m_outItemAnimMap = HL.Field(HL.Table)
 
-
 FacConnectorCtrl.m_itemSpriteCache = HL.Field(HL.Table)
-
-
-
 
 
 FacConnectorCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -122,18 +73,23 @@ FacConnectorCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitConveyorBindingAnim()
 
     if DeviceInfo.usingController then
+        
+        local naviBridgeBtn
+        if self.view.buildingCommon.view.delButton.gameObject.activeSelf then
+            naviBridgeBtn = self.view.buildingCommon.view.delButton
+        else
+            naviBridgeBtn = self.view.buildingCommon.view.forbiddenDelButton
+        end
+        self.view.itemLogistics1.view.button:SetExplicitSelectOnRight(naviBridgeBtn)
+        self.view.itemLogistics4.view.button:SetExplicitSelectOnLeft(naviBridgeBtn)
         self.view.itemLogistics1:SetAsNaviTarget()
     end
 end
-
-
 
 FacConnectorCtrl.OnClose = HL.Override() << function(self)
     self:_ClearConveyorEvent()
     self.m_updateThread = self:_ClearCoroutine(self.m_updateThread)
 end
-
-
 
 FacConnectorCtrl._InitConveyorEvent = HL.Method() << function(self)
     self.m_inBeltInfoList, self.m_outBeltInfoList = FactoryUtils.getBuildingPortState(self.m_uiInfo.nodeId, false)
@@ -146,15 +102,11 @@ FacConnectorCtrl._InitConveyorEvent = HL.Method() << function(self)
     end, self)
 end
 
-
-
 FacConnectorCtrl._ClearConveyorEvent = HL.Method() << function(self)
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_uiInfo.nodeId)
 
     MessageManager:UnregisterAll(self)
 end
-
-
 
 FacConnectorCtrl._InitConnectorUpdateThread = HL.Method() << function(self)
     
@@ -166,8 +118,6 @@ FacConnectorCtrl._InitConnectorUpdateThread = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 
 
@@ -227,9 +177,6 @@ FacConnectorCtrl._UpdateConnectorItems = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacConnectorCtrl._UpdatePortIndexSkipMap = HL.Method(HL.Number) << function(self, portLuaIndex)
     
     if portLuaIndex % 2 == 0 then
@@ -239,10 +186,6 @@ FacConnectorCtrl._UpdatePortIndexSkipMap = HL.Method(HL.Number) << function(self
     end
 end
 
-
-
-
-
 FacConnectorCtrl._GetViewIndexByConnectorPortIndex = HL.Method(HL.Number, HL.Boolean).Return(HL.Number) <<
     function(self, portLuaIndex, isIn)
     if isIn then
@@ -251,10 +194,6 @@ FacConnectorCtrl._GetViewIndexByConnectorPortIndex = HL.Method(HL.Number, HL.Boo
         return portLuaIndex % 2 == 0 and portLuaIndex or portLuaIndex + 1
     end
 end
-
-
-
-
 
 FacConnectorCtrl._RefreshConnectorItemState = HL.Method(HL.Number, HL.String) << function(self, index, itemId)
     local viewItemName = string.format("itemLogistics%d", index)
@@ -301,8 +240,6 @@ FacConnectorCtrl._RefreshConnectorItemState = HL.Method(HL.Number, HL.String) <<
     end
 end
 
-
-
 FacConnectorCtrl._OnDeleteConnectorButtonClicked = HL.Method() << function(self)
     if not FactoryUtils.canDelBuilding(self.m_nodeId, true) then
         return
@@ -310,9 +247,6 @@ FacConnectorCtrl._OnDeleteConnectorButtonClicked = HL.Method() << function(self)
     PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
     GameInstance.player.remoteFactory.core:Message_OpDismantle(Utils.getCurrentChapterId(), self.m_nodeId)
 end
-
-
-
 
 FacConnectorCtrl._GetConnectorItemSprite = HL.Method(HL.String).Return(HL.Userdata) << function(self, itemId)
     if self.m_itemSpriteCache[itemId] == nil then
@@ -323,8 +257,6 @@ FacConnectorCtrl._GetConnectorItemSprite = HL.Method(HL.String).Return(HL.Userda
     end
     return self.m_itemSpriteCache[itemId]
 end
-
-
 
 
 
@@ -381,14 +313,9 @@ FacConnectorCtrl._InitAnimDataMap = HL.Method() << function(self)
     }
 end
 
-
-
-
 FacConnectorCtrl._GetAnimIndexFromBeltInfoIndex = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
     return math.ceil(index / 2.0)
 end
-
-
 
 FacConnectorCtrl._InitConveyorBindingAnim = HL.Method() << function(self)
     
@@ -407,9 +334,6 @@ FacConnectorCtrl._InitConveyorBindingAnim = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 FacConnectorCtrl._OnConveyorChanged = HL.Method(HL.Any) << function(self, args)
     local bindingNodeId, componentId, isIn, itemList, itemIndexList = unpack(args)

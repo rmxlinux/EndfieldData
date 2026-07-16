@@ -1,55 +1,22 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WeaponInfo = HL.Class('WeaponInfo', UIWidgetBase)
-
 
 WeaponInfo.m_weaponStarCell = HL.Field(HL.Forward("UIListCache"))
 
-
 WeaponInfo.m_gemStarCell = HL.Field(HL.Forward("UIListCache"))
-
 
 WeaponInfo.m_weaponInfo = HL.Field(HL.Table)
 
-
 WeaponInfo.m_equipCallback = HL.Field(HL.Function)
-
 
 WeaponInfo.m_expandCallback = HL.Field(HL.Function)
 
-
 WeaponInfo.m_lastTryGemInstId = HL.Field(HL.Any)
-
 
 WeaponInfo.m_isTrailChar = HL.Field(HL.Boolean) << false
 
-
 WeaponInfo.m_isBtnUpgradeClicked = HL.Field(HL.Boolean) << false
-
-
 
 
 WeaponInfo._OnFirstTimeInit = HL.Override() << function(self)
@@ -152,11 +119,6 @@ WeaponInfo._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
-
-
 WeaponInfo._InitWeaponInfo = HL.Method(HL.Table, HL.Opt(HL.Number, HL.String)) << function(self, weaponInfo, tryGemInstId, tryCharId)
     self:_FirstTimeInit()
     self.m_weaponInfo = weaponInfo
@@ -180,9 +142,6 @@ WeaponInfo._InitWeaponInfo = HL.Method(HL.Table, HL.Opt(HL.Number, HL.String)) <
 end
 
 
-
-
-
 WeaponInfo.InitInCharInfo = HL.Method(HL.Table) << function(self, weaponInfo)
     self.view.charWeaponBasicNode.gameObject:SetActive(true)
     self.view.weaponBasicNode.gameObject:SetActive(false)
@@ -191,9 +150,6 @@ WeaponInfo.InitInCharInfo = HL.Method(HL.Table) << function(self, weaponInfo)
 
     self:_InitWeaponInfo(weaponInfo, weaponInfo.weaponExhibitInfo.weaponInst.attachedGemInstId, weaponInfo.charId)
 end
-
-
-
 
 WeaponInfo.InitInWeaponExhibit = HL.Method(HL.Table) << function(self, weaponInfo)
     self.view.charWeaponBasicNode.gameObject:SetActive(false)
@@ -204,10 +160,6 @@ WeaponInfo.InitInWeaponExhibit = HL.Method(HL.Table) << function(self, weaponInf
     self:_InitWeaponInfo(weaponInfo, weaponInfo.weaponExhibitInfo.weaponInst.attachedGemInstId)
 end
 
-
-
-
-
 WeaponInfo.InitInWeaponExhibitGem = HL.Method(HL.Table, HL.Opt(HL.Number)) << function(self, weaponInfo, tryGemInstId)
     self.view.charWeaponBasicNode.gameObject:SetActive(false)
     self.view.weaponBasicNode.gameObject:SetActive(false)
@@ -217,10 +169,6 @@ WeaponInfo.InitInWeaponExhibitGem = HL.Method(HL.Table, HL.Opt(HL.Number)) << fu
     self:_InitWeaponInfo(weaponInfo, tryGemInstId)
 end
 
-
-
-
-
 WeaponInfo.InitInWeaponExhibitGemCompare = HL.Method(HL.Table, HL.Opt(HL.Number)) << function(self, weaponInfo, tryGemInstId)
     self.view.charWeaponBasicNode.gameObject:SetActive(false)
     self.view.weaponBasicNode.gameObject:SetActive(false)
@@ -229,9 +177,6 @@ WeaponInfo.InitInWeaponExhibitGemCompare = HL.Method(HL.Table, HL.Opt(HL.Number)
 
     self:_InitWeaponInfo(weaponInfo, tryGemInstId)
 end
-
-
-
 
 WeaponInfo._RefreshTitleNode = HL.Method(HL.Table) << function(self, weaponExhibitInfo)
     local itemCfg = weaponExhibitInfo.itemCfg
@@ -243,9 +188,6 @@ WeaponInfo._RefreshTitleNode = HL.Method(HL.Table) << function(self, weaponExhib
     self.view.titleNode.lockToggle.gameObject:SetActive(not self.m_isTrailChar)
 end
 
-
-
-
 WeaponInfo._RefreshNameNode = HL.Method(HL.Table) << function(self, weaponExhibitInfo)
     local itemCfg = weaponExhibitInfo.itemCfg
     local weaponCfg = weaponExhibitInfo.weaponCfg
@@ -256,9 +198,6 @@ WeaponInfo._RefreshNameNode = HL.Method(HL.Table) << function(self, weaponExhibi
     self.view.nameNode.typeText.text = Language[string.format("LUA_WEAPON_TYPE_%d", weaponTypeInt)]
     UIUtils.setItemRarityImage(self.view.nameNode.rarityColor, weaponExhibitInfo.itemCfg.rarity)
 end
-
-
-
 
 WeaponInfo._RefreshBasicNode = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     local weaponExhibitInfo = self.m_weaponInfo.weaponExhibitInfo
@@ -323,18 +262,11 @@ WeaponInfo._RefreshBasicNode = HL.Method(HL.Opt(HL.Table)) << function(self, arg
     self.m_weaponStarCell:Refresh(itemCfg.rarity)
 end
 
-
-
-
 WeaponInfo._RefreshWeaponTrail = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     local weaponExhibitInfo = arg.weaponExhibitInfo
     local isTrailWeapon = CharInfoUtils.checkIsWeaponInTrail(weaponExhibitInfo.weaponInst.instId)
     self.view.weaponBasicNode.btnPreview.gameObject:SetActive(not isTrailWeapon)
 end
-
-
-
-
 
 WeaponInfo._RefreshGemCompareNode = HL.Method(HL.Table, HL.Opt(HL.Number)) << function(self, weaponExhibitInfo, tryGemInstId)
     if tryGemInstId == nil then
@@ -358,18 +290,9 @@ WeaponInfo._RefreshGemCompareNode = HL.Method(HL.Table, HL.Opt(HL.Number)) << fu
     }, true)
 end
 
-
-
-
-
 WeaponInfo._RefreshAttributes = HL.Method(HL.Number, HL.Opt(HL.Number)) << function(self, weaponInstId, tryGemInstId)
     self.view.weaponAttributeNode:InitWeaponAttributeNode(weaponInstId, tryGemInstId)
 end
-
-
-
-
-
 
 WeaponInfo._RefreshSkill = HL.Method(HL.Number, HL.Opt(HL.Number, HL.String)) << function(self, weaponInstId, tryGemInstId, tryCharId)
     local weaponInst = CharInfoUtils.getWeaponByInstId(weaponInstId)
@@ -380,9 +303,6 @@ WeaponInfo._RefreshSkill = HL.Method(HL.Number, HL.Opt(HL.Number, HL.String)) <<
         tryCharId = tryCharId,
     })
 end
-
-
-
 
 WeaponInfo._RefreshButtonState = HL.Method(HL.Table) << function(self, weaponInfo)
     if self.m_isTrailChar then

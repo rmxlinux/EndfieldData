@@ -1,19 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 CharPotential = HL.Class('CharPotential', UIWidgetBase)
-
-
 
 
 CharPotential._OnFirstTimeInit = HL.Override() << function(self)
 
 end
-
-
-
 
 CharPotential.InitCharPotential = HL.Method(HL.Number) << function(self, potentialLevel)
     self:_FirstTimeInit()

@@ -2,16 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DebugInputRecord
 
-
-
-
-
-
-
-
-
 DebugInputRecordCtrl = HL.Class('DebugInputRecordCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -22,14 +13,9 @@ DebugInputRecordCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 DebugInputRecordCtrl.m_lateTickKey = HL.Field(HL.Number) << -1
 
-
 DebugInputRecordCtrl.m_items = HL.Field(HL.Table)
-
-
-
 
 
 DebugInputRecordCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -48,16 +34,12 @@ end
 
 
 
-
-
 DebugInputRecordCtrl.OnClose = HL.Override() << function(self)
     if self.m_lateTickKey ~= -1 then
         LuaUpdate:Remove(self.m_lateTickKey)
         self.m_lateTickKey = -1
     end
 end
-
-
 
 DebugInputRecordCtrl._Update = HL.Method() << function(self)
     local current = InputManagerInst.currentPressHistory
@@ -85,8 +67,6 @@ DebugInputRecordCtrl._Update = HL.Method() << function(self)
         end
     end
 end
-
-
 
 DebugInputRecordCtrl.OnToggleDebugInputRecord = HL.StaticMethod(HL.Table) << function(arg)
     local show = arg and arg[1]

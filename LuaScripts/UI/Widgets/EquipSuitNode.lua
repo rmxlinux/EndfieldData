@@ -1,30 +1,13 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
 EquipSuitNode = HL.Class('EquipSuitNode', UIWidgetBase)
 
-
 EquipSuitNode.m_suitDescCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 EquipSuitNode._OnFirstTimeInit = HL.Override() << function(self)
     self.m_suitDescCellCache = UIUtils.genCellCache(self.view.suitDescCell)
 end
-
-
-
-
-
-
 
 
 EquipSuitNode.InitEmptyEquipSuitNode = HL.Method(HL.String, HL.Opt(HL.Number, HL.Number, HL.Number)) << function(self, equipTemplateId, tryCharInstId, tryEquipInstId, trySlotIndex)
@@ -84,12 +67,6 @@ EquipSuitNode.InitEmptyEquipSuitNode = HL.Method(HL.String, HL.Opt(HL.Number, HL
         cell.desc.color = suitEnable and self.view.config.TEXT_COLOR_ENABLE or self.view.config.TEXT_COLOR_DISABLE
     end)
 end
-
-
-
-
-
-
 
 EquipSuitNode.InitEquipSuitNode = HL.Method(HL.String, HL.Opt(HL.Number, HL.Number, HL.Number)) << function(self, equipTemplateId, tryCharInstId, tryEquipInstId, trySlotIndex)
     self:_FirstTimeInit()
@@ -153,9 +130,6 @@ EquipSuitNode.InitEquipSuitNode = HL.Method(HL.String, HL.Opt(HL.Number, HL.Numb
     end)
 end
 
-
-
-
 EquipSuitNode.InitEquipSuitNodeByCharInstId = HL.Method(HL.Number) << function(self, charInstId)
     self:_FirstTimeInit()
 
@@ -203,11 +177,6 @@ EquipSuitNode.InitEquipSuitNodeByCharInstId = HL.Method(HL.Number) << function(s
 
     self.view.suitNum.text = string.format(Language.LUA_CHAR_INFO_SUIT_EQUIP_NUM_FORMAT, curEquipCount, firstSuitCfg.equipCnt)
 end
-
-
-
-
-
 
 EquipSuitNode._CollectSuitInfoDictFromCharInst = HL.Method(HL.Number, HL.Opt(HL.Number, HL.Number)).Return(HL.Table) << function(self, charInstId, tryEquipInstId, trySlotIndex)
     local suitInfoDict = {}
@@ -267,8 +236,6 @@ EquipSuitNode._CollectSuitInfoDictFromCharInst = HL.Method(HL.Number, HL.Opt(HL.
 
     return countDict
 end
-
-
 
 EquipSuitNode._GetLogoFolder = HL.Method().Return(HL.String) << function(self)
     return self.config.WHITE_LOGO and UIConst.UI_SPRITE_EQUIPMENT_LOGO_BIG_WHITE or UIConst.UI_SPRITE_EQUIPMENT_LOGO_BIG

@@ -3,31 +3,15 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 local SHOW_REWARD_ITEM_COUNT = 5
 local LEVEL_EFFECT_MAX_COUNT = 3
 
-
-
-
-
-
-
-
-
-
-
 DomainGradeListCell = HL.Class('DomainGradeListCell', UIWidgetBase)
-
 
 DomainGradeListCell.m_domainId = HL.Field(HL.String) << ""
 
-
 DomainGradeListCell.m_lv = HL.Field(HL.Number) << -1
-
 
 DomainGradeListCell.m_levelEffectCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 DomainGradeListCell.m_rewardItemCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 DomainGradeListCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -50,10 +34,6 @@ DomainGradeListCell._OnFirstTimeInit = HL.Override() << function(self)
     self:GetUICtrl().view.redDotScrollRect:RegisterRedDot(redDotRoot, redDotNormal, redDotNew)
 end
 
-
-
-
-
 DomainGradeListCell.InitDomainGradeListCell = HL.Method(HL.String, HL.Table)
         << function(self, domainId, domainDevelopmentLevelData)
     self:_FirstTimeInit()
@@ -69,8 +49,6 @@ DomainGradeListCell.InitDomainGradeListCell = HL.Method(HL.String, HL.Table)
         self:_UpdateLevelDetail()
     end
 end
-
-
 
 DomainGradeListCell._UpdateLevelDetail = HL.Method() << function(self)
     local domainDevSys = GameInstance.player.domainDevelopmentSystem
@@ -103,13 +81,9 @@ DomainGradeListCell._UpdateLevelDetail = HL.Method() << function(self)
     self.view.detailNode.gameObject:SetActive(detailsCount > LEVEL_EFFECT_MAX_COUNT)
 end
 
-
-
 DomainGradeListCell._OnClickReceiveBtn = HL.Method() << function(self)
     GameInstance.player.domainDevelopmentSystem:TakeLevelReward(self.m_domainId, self.m_lv)
 end
-
-
 
 DomainGradeListCell._OnClickDetailBtn = HL.Method() << function(self)
     UIManager:Open(PanelId.DomainGradePopup, { domainId = self.m_domainId, lv = self.m_lv })

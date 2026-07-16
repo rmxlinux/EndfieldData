@@ -2,49 +2,24 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityMissionReward
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityMissionRewardCtrl = HL.Class('ActivityMissionRewardCtrl', uiCtrl.UICtrl)
-
 
 ActivityMissionRewardCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_UPDATED] = '_OnActivityUpdate',
     [MessageConst.ON_LEVEL_REWARD_UPDATE] = '_OnActivityUpdate',
 }
 
-
 ActivityMissionRewardCtrl.m_activityId = HL.Field(HL.String) << ""
-
 
 ActivityMissionRewardCtrl.m_getCell = HL.Field(HL.Function)
 
-
 ActivityMissionRewardCtrl.m_completeStageList = HL.Field(HL.Table)
-
 
 ActivityMissionRewardCtrl.m_receiveStageList = HL.Field(HL.Table)
 
-
 ActivityMissionRewardCtrl.m_listCells = HL.Field(HL.Table)
 
-
 ActivityMissionRewardCtrl.m_gainRewardIndex = HL.Field(HL.Number) << 0
-
-
-
 
 
 ActivityMissionRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -85,20 +60,13 @@ ActivityMissionRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end
 end
 
-
-
-
 ActivityMissionRewardCtrl._SetAsNaviTarget = HL.Method(HL.Number) << function(self, index)
-    UIUtils.setAsNaviTarget(self.m_getCell(self.view.rewardList:Get(CSIndex(index))).inputBindingGroupNaviDecorator)
+    self:SetNaviTarget(self.m_getCell(self.view.rewardList:Get(CSIndex(index))).inputBindingGroupNaviDecorator)
 end
-
-
 
 ActivityMissionRewardCtrl.OnActivityCenterNaviFailed = HL.Method() << function(self)
     self:_SetAsNaviTarget(1)
 end
-
-
 
 ActivityMissionRewardCtrl.GetAllCanReceiveStageIds = HL.Method().Return(HL.Table) << function(self)
     local stageIds = {}
@@ -110,10 +78,6 @@ ActivityMissionRewardCtrl.GetAllCanReceiveStageIds = HL.Method().Return(HL.Table
     end
     return stageIds
 end
-
-
-
-
 
 ActivityMissionRewardCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     self.m_listCells[index] = self.m_listCells[index] or UIUtils.genCellCache(cell.reward)
@@ -167,8 +131,6 @@ ActivityMissionRewardCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << func
     end
 end
 
-
-
 ActivityMissionRewardCtrl._RefreshRewards = HL.Method() << function(self)
     local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     local completeStageList = activity.completeStageList
@@ -181,9 +143,6 @@ ActivityMissionRewardCtrl._RefreshRewards = HL.Method() << function(self)
     end
     self.view.rewardList:UpdateCount(Tables.ActivityLevelRewardsTable[self.m_activityId].stageList.length)
 end
-
-
-
 
 ActivityMissionRewardCtrl._OnActivityUpdate = HL.Method(HL.Table) << function(self,args)
     local id = unpack(args)

@@ -1,30 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 TeamCell = HL.Class('TeamCell', UIWidgetBase)
 
-
 TeamCell.index = HL.Field(HL.Number) << -1
-
 
 TeamCell.data = HL.Field(HL.Table)
 
 
 
 
-
-
 TeamCell._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
-
 
 TeamCell.InitTeamCell = HL.Method(HL.Any, HL.Opt(HL.Function)) << function(self, data, onClickItem)
     self:_FirstTimeInit()
@@ -41,9 +27,6 @@ TeamCell.InitTeamCell = HL.Method(HL.Any, HL.Opt(HL.Function)) << function(self,
     end
     self.view.textNum.text = string.format("%02d", self.index)
 end
-
-
-
 
 TeamCell.SetSelect = HL.Method(HL.Boolean) << function(self, isSelected)
     self.view.stateController:SetState(isSelected and 'Selected' or 'Normal')

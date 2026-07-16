@@ -39,6 +39,7 @@ LOADER_POWER_LINE_MAX_COUNT = 1024
 RESOURCE_RELATED_MARK_TYPE = {
     [GEnums.MarkType.DoodadGroup] = true,
     [GEnums.MarkType.MinePointTeam] = true,
+    [GEnums.MarkType.GasMinePointTeam] = true,
 }
 
 
@@ -172,6 +173,7 @@ DOMAIN_DEPOT_MAP_EXPECTED_STATIC_ELEMENT_TYPES = {
     [CS.Beyond.Gameplay.UILevelMapStaticElementType.Crane] = true,
     [CS.Beyond.Gameplay.UILevelMapStaticElementType.Misty] = true,
     [CS.Beyond.Gameplay.UILevelMapStaticElementType.NarrativeAreaText] = true,
+    [CS.Beyond.Gameplay.UILevelMapStaticElementType.Common] = true,
 }
 
 WEEK_RAID_MAP_EXPECTED_STATIC_ELEMENT_TYPES = {
@@ -180,6 +182,7 @@ WEEK_RAID_MAP_EXPECTED_STATIC_ELEMENT_TYPES = {
     [CS.Beyond.Gameplay.UILevelMapStaticElementType.Crane] = true,
     [CS.Beyond.Gameplay.UILevelMapStaticElementType.Misty] = true,
     [CS.Beyond.Gameplay.UILevelMapStaticElementType.NarrativeAreaText] = true,
+    [CS.Beyond.Gameplay.UILevelMapStaticElementType.Common] = true,
 }
 
 MINI_MAP_EXPECTED_STATIC_ELEMENT_TYPES = {
@@ -187,6 +190,7 @@ MINI_MAP_EXPECTED_STATIC_ELEMENT_TYPES = {
     [CS.Beyond.Gameplay.UILevelMapStaticElementType.SettlementRegion] = true,
     [CS.Beyond.Gameplay.UILevelMapStaticElementType.Crane] = true,
     [CS.Beyond.Gameplay.UILevelMapStaticElementType.Misty] = true,
+    [CS.Beyond.Gameplay.UILevelMapStaticElementType.Common] = true,
 }
 
 

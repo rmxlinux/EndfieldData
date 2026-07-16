@@ -1,40 +1,18 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GuestroomCluesCenterNode = HL.Class('GuestroomCluesCenterNode', UIWidgetBase)
-
 
 GuestroomCluesCenterNode.m_spaceship = HL.Field(HL.Userdata)
 
-
 GuestroomCluesCenterNode.m_onIsFocusedChange = HL.Field(HL.Function)
-
 
 GuestroomCluesCenterNode.m_showClueDetailBindingId = HL.Field(HL.Number) << -1
 
-
 GuestroomCluesCenterNode.m_nowNaviClueCell = HL.Field(HL.Table)
-
 
 GuestroomCluesCenterNode.m_selectNode = HL.Field(HL.Table)
 
-
 GuestroomCluesCenterNode.m_timeCor = HL.Field(HL.Thread)
-
-
 
 
 GuestroomCluesCenterNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -71,7 +49,7 @@ GuestroomCluesCenterNode._OnFirstTimeInit = HL.Override() << function(self)
             if not clueNode then
                 clueNode = self.view.clue1
             end
-            InputManagerInst.controllerNaviManager:SetTarget(clueNode.inputBindingGroupNaviDecorator)
+            self:SetNaviTarget(clueNode.inputBindingGroupNaviDecorator)
             InputManagerInst:ToggleBinding(self.m_showClueDetailBindingId, true)
         else
             self.m_nowNaviClueCell = nil
@@ -93,9 +71,6 @@ GuestroomCluesCenterNode._OnFirstTimeInit = HL.Override() << function(self)
     InputManagerInst:ToggleBinding(self.m_showClueDetailBindingId, false)
 end
 
-
-
-
 GuestroomCluesCenterNode.InitGuestroomCluesCenterNode = HL.Method(HL.Any) << function(self, onFocus)
     self:_FirstTimeInit()
     self.m_onIsFocusedChange = onFocus
@@ -104,14 +79,10 @@ GuestroomCluesCenterNode.InitGuestroomCluesCenterNode = HL.Method(HL.Any) << fun
     self:RefreshCluesState(true)
 end
 
-
-
 GuestroomCluesCenterNode.RefreshData = HL.Method() << function(self)
     self:RefreshBottomState()
     self:RefreshCluesState(false)
 end
-
-
 
 GuestroomCluesCenterNode.RefreshBottomState = HL.Method() << function(self)
     
@@ -157,9 +128,6 @@ GuestroomCluesCenterNode.RefreshBottomState = HL.Method() << function(self)
         self.view.exchangeInfoText.text = levelData.baseInfoReward
     end
 end
-
-
-
 
 
 GuestroomCluesCenterNode.RefreshCluesState = HL.Method(HL.Boolean) << function(self, isInit)
@@ -218,9 +186,6 @@ GuestroomCluesCenterNode.RefreshCluesState = HL.Method(HL.Boolean) << function(s
     end
 end
 
-
-
-
 GuestroomCluesCenterNode.SelectClueIndex = HL.Method(HL.Number) << function(self, index)
     if index <= 0 or index > Tables.spaceshipConst.spaceshipGuestRoomClueTypeTotalCount then
         self:UnSelectClueIndex()
@@ -234,8 +199,6 @@ GuestroomCluesCenterNode.SelectClueIndex = HL.Method(HL.Number) << function(self
     self.m_selectNode = clueNode
     self.m_selectNode.selectedBG.gameObject:SetActive(true)
 end
-
-
 
 GuestroomCluesCenterNode.UnSelectClueIndex = HL.Method() << function(self)
     if self.m_selectNode then

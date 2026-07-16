@@ -1,15 +1,8 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 WeaponIntroduction = HL.Class('WeaponIntroduction', UIWidgetBase)
 
-
 WeaponIntroduction.m_starCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 WeaponIntroduction._OnFirstTimeInit = HL.Override() << function(self)
@@ -17,10 +10,6 @@ WeaponIntroduction._OnFirstTimeInit = HL.Override() << function(self)
 
     
 end
-
-
-
-
 
 WeaponIntroduction.InitWeaponIntroduction = HL.Method(HL.String, HL.Number) << function(self, weaponTemplateId, weaponInstId)
     self:_FirstTimeInit()

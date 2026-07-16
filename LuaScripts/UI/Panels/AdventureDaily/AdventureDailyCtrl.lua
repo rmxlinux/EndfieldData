@@ -2,41 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.AdventureDaily
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AdventureDailyCtrl = HL.Class('AdventureDailyCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -55,26 +21,21 @@ AdventureDailyCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 AdventureDailyCtrl.m_getTaskCell = HL.Field(HL.Function)
-
 
 AdventureDailyCtrl.m_taskInfos = HL.Field(HL.Table)
 
-
 AdventureDailyCtrl.m_isCurActivationMax = HL.Field(HL.Boolean) << false
-
 
 AdventureDailyCtrl.m_isFirstShow = HL.Field(HL.Boolean) << true
 
-
 AdventureDailyCtrl.m_isBPActive = HL.Field(HL.Boolean) << false
-
 
 AdventureDailyCtrl.m_getAllActionGroupId = HL.Field(HL.Number) << 0
 
+AdventureDailyCtrl.m_taskRefreshPendingTimerId = HL.Field(HL.Number) << -1
 
-
+AdventureDailyCtrl.m_rewardTipsNode = HL.Field(HL.Any)
 
 
 AdventureDailyCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -90,13 +51,6 @@ AdventureDailyCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.taskListNaviGroup.onIsTopLayerChanged:AddListener(function(isTop)
         if isTop then
             self:_TryHideProgressRewardTips()
-        end
-    end)
-
-    self.view.rewardTips.gameObject:SetActive(false)
-    self.view.rewardTips.rewardItems.view.rewardListNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
-        if not isFocused then
-            Notify(MessageConst.HIDE_ITEM_TIPS)
         end
     end)
 
@@ -142,14 +96,12 @@ AdventureDailyCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.countDownText:InitCountDownText(Utils.getNextCommonServerRefreshTime())
 end
 
-
-
 AdventureDailyCtrl.OnClose = HL.Override() << function(self)
+    self.m_taskRefreshPendingTimerId = self:_ClearTimer(self.m_taskRefreshPendingTimerId)
+    self.m_rewardTipsNode = nil
     self.view.progressNode.progressBarImg:DOKill()
     self:_TryHideProgressRewardTips()
 end
-
-
 
 AdventureDailyCtrl.OnShow = HL.Override() << function(self)
     if not self.m_isFirstShow then
@@ -160,27 +112,19 @@ AdventureDailyCtrl.OnShow = HL.Override() << function(self)
 
     local firstCell = self.m_getTaskCell(1)
     if firstCell then
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.taskListNaviGroup, firstCell.naviDecorator)
+        self:SetNaviTarget(firstCell.naviDecorator)
     end
 end
 
-
-
-
 AdventureDailyCtrl.OnAdventureTaskModify = HL.Method(HL.Opt(HL.Any)) << function(self, _)
-    
-    self:_RefreshTaskNode()
+    self:_ScheduleRefreshTaskNode()
+    self.view.countDownText:InitCountDownText(Utils.getNextCommonServerRefreshTime())
 end
-
-
 
 AdventureDailyCtrl.OnDailyActivationModify = HL.Method() << function(self)
     self:_RefreshProgressNode()
-    self:_RefreshTaskNode()
+    self:_ScheduleRefreshTaskNode()
 end
-
-
-
 
 AdventureDailyCtrl.OnDailyActivationReward = HL.Method(HL.Any) << function(self, args)
     
@@ -209,22 +153,17 @@ AdventureDailyCtrl.OnDailyActivationReward = HL.Method(HL.Any) << function(self,
     })
 end
 
-
-
 AdventureDailyCtrl.Refresh = HL.Method() << function(self)
     self:_RefreshProgressNode()
-    self:_RefreshTaskNode()
+    self:_ScheduleRefreshTaskNode()
+    self.view.countDownText:InitCountDownText(Utils.getNextCommonServerRefreshTime())
 end
-
 
 
 
 AdventureDailyCtrl.m_progressInfos = HL.Field(HL.Table)
 
-
 AdventureDailyCtrl.m_maxActivation = HL.Field(HL.Number) << -1
-
-
 
 
 AdventureDailyCtrl._InitProgressNode = HL.Method() << function(self)
@@ -260,9 +199,6 @@ AdventureDailyCtrl._InitProgressNode = HL.Method() << function(self)
     self:_RefreshProgressNode(true)
 end
 
-
-
-
 AdventureDailyCtrl._RefreshProgressNode = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     local node = self.view.progressNode
     local canGetAllReward = false
@@ -288,8 +224,6 @@ AdventureDailyCtrl._RefreshProgressNode = HL.Method(HL.Opt(HL.Boolean)) << funct
         self.view.taskNodeStateController:SetState("NoBP")
     end
 end
-
-
 
 AdventureDailyCtrl._RefreshProgressBPPart = HL.Method() << function(self)
     local bpSystem = GameInstance.player.battlePassSystem
@@ -322,10 +256,6 @@ AdventureDailyCtrl._RefreshProgressBPPart = HL.Method() << function(self)
     end)
     self.view.taskNodeStateController:SetState((not activationMax) and "NoBP" or (hasBpRewardAvail and "BpReward" or "BpTask"))
 end
-
-
-
-
 
 AdventureDailyCtrl._RefreshProgressCell = HL.Method(HL.Any, HL.Number).Return(HL.Boolean)
     << function(self, cell, index)
@@ -366,11 +296,7 @@ AdventureDailyCtrl._RefreshProgressCell = HL.Method(HL.Any, HL.Number).Return(HL
     return canGetReward
 end
 
-
 AdventureDailyCtrl.m_curShowingRewardHintIndex = HL.Field(HL.Number) << -1
-
-
-
 
 
 AdventureDailyCtrl._OnHintBtnClick = HL.Method(HL.Number) << function(self, index)
@@ -383,11 +309,8 @@ AdventureDailyCtrl._OnHintBtnClick = HL.Method(HL.Number) << function(self, inde
 end
 
 
-
-
-
 AdventureDailyCtrl._ShowProgressRewardTips = HL.Method(HL.Number) << function(self, index)
-    local node = self.view.rewardTips
+    local node = self:_EnsureRewardTips()
     local preCell = self.view.progressNode.m_progressCells:Get(self.m_curShowingRewardHintIndex)
     if preCell then
         preCell.lightCircle.gameObject:SetActive(false)
@@ -441,11 +364,8 @@ AdventureDailyCtrl._ShowProgressRewardTips = HL.Method(HL.Number) << function(se
     AudioAdapter.PostEvent("Au_UI_Button_Common")
 end
 
-
-
-
 AdventureDailyCtrl._OnHintBtnClickWhenController = HL.Method(HL.Number) << function(self, index)
-    local node = self.view.rewardTips
+    local node = self:_EnsureRewardTips()
     local preCell = self.view.progressNode.m_progressCells:Get(self.m_curShowingRewardHintIndex)
     if preCell then
         preCell.lightCircle.gameObject:SetActive(false)
@@ -485,16 +405,9 @@ AdventureDailyCtrl._OnHintBtnClickWhenController = HL.Method(HL.Number) << funct
     node.animationWrapper:PlayInAnimation()
 end
 
-
-
 AdventureDailyCtrl._GetAllReward = HL.Method() << function(self)
     GameInstance.player.adventure:TakeAdventureAllActivationReward()
 end
-
-
-
-
-
 
 AdventureDailyCtrl._PostInitProgressTipsRewardItem = HL.Method(HL.Any, HL.Any, HL.Boolean) << function(self, cell, bundle, isMax)
     if not self.m_isBPActive or bundle.id ~= Tables.battlePassConst.bpExpItem or not isMax then
@@ -508,19 +421,38 @@ AdventureDailyCtrl._PostInitProgressTipsRewardItem = HL.Method(HL.Any, HL.Any, H
     end
 end
 
-
-
 AdventureDailyCtrl._TryHideProgressRewardTips = HL.Method() << function(self)
-    if self.view.rewardTips.gameObject.activeSelf == true then
-        self.view.rewardTips.animationWrapper:PlayOutAnimation(function()
-            self.view.rewardTips.gameObject:SetActive(false)
-        end)
-        local cell = self.view.progressNode.m_progressCells:Get(self.m_curShowingRewardHintIndex)
-        if cell then
-            cell.lightCircle.gameObject:SetActive(false)
-        end
-        self.m_curShowingRewardHintIndex = -1
+    local node = self.m_rewardTipsNode
+    if not node or not node.gameObject.activeSelf then
+        return
     end
+    node.animationWrapper:PlayOutAnimation(function()
+        node.gameObject:SetActive(false)
+    end)
+    local cell = self.view.progressNode.m_progressCells:Get(self.m_curShowingRewardHintIndex)
+    if cell then
+        cell.lightCircle.gameObject:SetActive(false)
+    end
+    self.m_curShowingRewardHintIndex = -1
+end
+
+
+AdventureDailyCtrl._EnsureRewardTips = HL.Method().Return(HL.Any) << function(self)
+    if self.m_rewardTipsNode then
+        return self.m_rewardTipsNode
+    end
+    local prefab = self:LoadGameObject("Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Adventure/Widgets/AdventureDailyRewardTips.prefab")
+    local obj = CSUtils.CreateObject(prefab, self.view.transform)
+    obj.name = "RewardTips"
+    obj.transform.localScale = Vector3.one
+    obj:SetActive(false)
+    self.m_rewardTipsNode = Utils.wrapLuaNode(obj)
+    self.m_rewardTipsNode.rewardItems.view.rewardListNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
+        if not isFocused then
+            Notify(MessageConst.HIDE_ITEM_TIPS)
+        end
+    end)
+    return self.m_rewardTipsNode
 end
 
 
@@ -528,6 +460,15 @@ end
 
 
 
+AdventureDailyCtrl._ScheduleRefreshTaskNode = HL.Method() << function(self)
+    if self.m_taskRefreshPendingTimerId ~= -1 then
+        return
+    end
+    self.m_taskRefreshPendingTimerId = TimerManager:StartFrameTimer(0, function()
+        self.m_taskRefreshPendingTimerId = -1
+        self:_RefreshTaskNode()
+    end, self)
+end
 
 AdventureDailyCtrl._RefreshTaskNode = HL.Method() << function(self)
     local taskDic = GameInstance.player.adventure.adventureBookData.adventureTasks
@@ -570,10 +511,6 @@ AdventureDailyCtrl._RefreshTaskNode = HL.Method() << function(self)
     
 end
 
-
-
-
-
 AdventureDailyCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local info = self.m_taskInfos[index]
     cell.desc.text = info.data.taskDesc
@@ -614,20 +551,20 @@ AdventureDailyCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(se
         end
     end
 
+    
+    if not self.m_isCurActivationMax then
+        cell.gameObject.transform:Find("StateNode/BtnNode/RightNode/TextLayout").gameObject:SetActive(false)
+    end
+
     cell.cellAniWrapper:PlayWithTween("adventuredailytaskcell_in")
 
     cell.redDot:InitRedDot("AdventureBookTabDailyTaskCell", info.id)
 end
 
-
-
-
 AdventureDailyCtrl._OnClickGetBtn = HL.Method(HL.Number) << function(self, index)
     local info = self.m_taskInfos[index]
     GameInstance.player.adventure:TakeAdventureTaskReward(info.id)
 end
-
-
 
 AdventureDailyCtrl._OnClickGetAllBtn = HL.Method() << function(self)
     GameInstance.player.adventure:TakeAdventureAllTaskRewardOfType(GEnums.AdventureTaskType.Daily)
@@ -635,14 +572,11 @@ end
 
 
 
-
-
-
 AdventureDailyCtrl.OnAdventureTabChangedSame = HL.Method(HL.Number) << function(self, panelId)
     if panelId == PANEL_ID then
         local firstCell = self.m_getTaskCell(1)
         if firstCell then
-            InputManagerInst.controllerNaviManager:SetTarget(firstCell.naviDecorator)
+            self:SetNaviTarget(firstCell.naviDecorator)
         end
     end
 end

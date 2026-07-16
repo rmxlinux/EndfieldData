@@ -1,51 +1,6 @@
 
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.CashShop
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseCashShop = HL.Class('PhaseCashShop', phaseBase.PhaseBase)
 
 local TabPanelIds = {
@@ -60,36 +15,26 @@ local MainPanelId = PanelId.CashShop
 local SDK_PRODUCT_INFO_TIMEOUT = 5  
 local UPDATE_SDK_PRODUCT_INFO_INTERVAL = 10  
 
-
 PhaseCashShop.cashShopCtrl = HL.Field(HL.Any)
-
 
 PhaseCashShop.currCategoryId = HL.Field(HL.String) << ""
 
 
 
-
 PhaseCashShop.m_backToRecommendPanelTabId = HL.Field(HL.String) << ""
 
-
 PhaseCashShop.m_haveShowPsStoreLogo = HL.Field(HL.Boolean) << false
-
 
 PhaseCashShop.m_storeShowPsStoreLogo = HL.Field(HL.Boolean) << false
 
 
-
 PhaseCashShop.m_needGameEvent = HL.Field(HL.Boolean) << false
-
 
 PhaseCashShop.m_enterButton = HL.Field(HL.String) << ""
 
-
 PhaseCashShop.m_enterPanel = HL.Field(HL.String) << ""
 
-
 PhaseCashShop.m_modifyPanelItemFrameCount = HL.Field(HL.Number) << 0
-
 
 
 
@@ -98,6 +43,7 @@ PhaseCashShop.m_modifyPanelItemFrameCount = HL.Field(HL.Number) << 0
 PhaseCashShop.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.OPEN_LEVEL_PHASE] = { 'OnOpenLevelPhase', false },
     [MessageConst.ON_CASH_SHOP_ORDER_SETTLE] = { 'OnOrderSettle', false },
+    [MessageConst.ON_SC_PAY_FREQUENCY_LIMIT_MODIFY] = { 'OnFreeCashShopBuySucc', false },
     [MessageConst.ON_SDK_MASK_HIDE] = { 'TryPopOrderSettle', false },
     [MessageConst.ON_ACCEPT_ORDERS] = { '_OnAcceptOrders', false },
     [MessageConst.ON_PAY_ERROR] = { '_OnPayError', false },
@@ -106,10 +52,7 @@ PhaseCashShop.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CASH_SHOP_CHOOSE_GIFTPACK_TAB_BY_GOODSID] = { '_ChooseGiftpackByGoodsId', true },
 }
 
-
 PhaseCashShop.m_cashShopSystem = HL.Field(HL.Userdata)
-
-
 
 
 
@@ -127,8 +70,6 @@ PhaseCashShop._OnInit = HL.Override() << function(self)
     self.m_cashShopSystem = GameInstance.player.cashShopSystem
 end
 
-
-
 PhaseCashShop._InitAllPhaseItems = HL.Override() << function(self)
     local arg = self.arg or {}
     if arg.enter_button then
@@ -138,8 +79,6 @@ PhaseCashShop._InitAllPhaseItems = HL.Override() << function(self)
     self:CreatePhasePanelItem(PanelId.CashShop, arg)
     arg.cashShopId = nil  
 end
-
-
 
 
 PhaseCashShop.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
@@ -155,10 +94,6 @@ PhaseCashShop.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(
     end
     return arg
 end
-
-
-
-
 
 
 PhaseCashShop.OpenCategory = HL.Method(HL.String, HL.Opt(HL.String))
@@ -197,11 +132,6 @@ end
 
 
 
-
-
-
-
-
 PhaseCashShop.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
     if not fastMode and transitionType == PhaseConst.EPhaseState.TransitionIn then
         if not UNITY_EDITOR then
@@ -234,32 +164,16 @@ PhaseCashShop.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.N
     end
 end
 
-
-
-
-
 PhaseCashShop._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseCashShop._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseCashShop._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self.m_storeShowPsStoreLogo = self.m_haveShowPsStoreLogo
     self:HidePsStore()
 end
-
-
-
-
 
 PhaseCashShop._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if self.m_storeShowPsStoreLogo then
@@ -273,26 +187,16 @@ end
 
 
 
-
-
 PhaseCashShop._OnActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseCashShop._OnDeActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseCashShop._OnDestroy = HL.Override() << function(self)
     self:HidePsStore()
     PhaseCashShop.Super._OnDestroy(self)
 end
-
-
-
-
 
 
 
@@ -317,10 +221,6 @@ end
 
 
 
-
-
-
-
 PhaseCashShop.RemovePhasePanelItemByIdWrapper = HL.Method(HL.Number, HL.Opt(HL.Any)) << function(self, panelId, arg)
     if PhaseCashShop.CheckIsPop() then
         local ctrlName = ""
@@ -336,7 +236,6 @@ PhaseCashShop.RemovePhasePanelItemByIdWrapper = HL.Method(HL.Number, HL.Opt(HL.A
     self:RemovePhasePanelItemById(panelId, arg)
 end
 
-
 PhaseCashShop.CheckIsPop = HL.StaticMethod().Return(HL.Boolean) << function()
     if PhaseManager.m_curState == Const.PhaseState.Pop and
         PhaseManager.curPhase.phaseId ~= PHASE_ID then
@@ -348,20 +247,17 @@ end
 
 
 
-
 PhaseCashShop.s_orderSettleQueue = HL.StaticField(HL.Forward("Queue"))
 
+PhaseCashShop.s_freeCashShopRewardQueue = HL.StaticField(HL.Forward("Queue"))
 
 PhaseCashShop.s_webOrderList = HL.StaticField(HL.Table)
-
 
 PhaseCashShop.OnOpenLevelPhase = HL.StaticMethod() << function()
     if PhaseCashShop.s_webOrderList and next(PhaseCashShop.s_webOrderList) then
         PhaseCashShop._AddMainHudActionQuest()
     end
 end
-
-
 
 PhaseCashShop.OnOrderSettle = HL.StaticMethod(HL.Table) << function(arg)
     
@@ -390,6 +286,33 @@ PhaseCashShop.OnOrderSettle = HL.StaticMethod(HL.Table) << function(arg)
     end
 end
 
+PhaseCashShop.OnFreeCashShopBuySucc = HL.StaticMethod() << function()
+    local freeBuyInfo = CashShopUtils.popFreeCashShopBuy()
+    if not freeBuyInfo then
+        return
+    end
+    local rewardItems = CashShopUtils.getFreeCashShopRewardItems(freeBuyInfo.goodsId, freeBuyInfo.count)
+    if #rewardItems == 0 then
+        return
+    end
+    local rewardArg = {
+        items = rewardItems,
+        onComplete = function()
+            PhaseCashShop.TryPopOrderSettle()
+        end,
+    }
+    if UIManager:IsShow(PanelId.SDKApplicationMask) or UIManager:IsShow(PanelId.RewardsPopUpForSystem) then
+        if PhaseCashShop.s_freeCashShopRewardQueue == nil then
+            PhaseCashShop.s_freeCashShopRewardQueue = require_ex("Common/Utils/DataStructure/Queue")()
+        end
+        PhaseCashShop.s_freeCashShopRewardQueue:Push(rewardArg)
+        return
+    end
+    Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
+        items = rewardArg.items,
+        onComplete = rewardArg.onComplete,
+    })
+end
 
 PhaseCashShop._AddMainHudActionQuest = HL.StaticMethod() << function()
     if LuaSystemManager.mainHudActionQueue:HasRequest("CashShopOrderSettle") then
@@ -419,8 +342,6 @@ PhaseCashShop._AddMainHudActionQuest = HL.StaticMethod() << function()
     end)
 end
 
-
-
 PhaseCashShop._OnAcceptOrders = HL.StaticMethod(HL.Table) << function(orderIds)
     if PhaseCashShop.s_webOrderList == nil then
         return
@@ -435,9 +356,6 @@ PhaseCashShop._OnAcceptOrders = HL.StaticMethod(HL.Table) << function(orderIds)
     end
 end
 
-
-
-
 PhaseCashShop._OnStartPayment = HL.Method(HL.Table) << function(self, arg)
     local key = unpack(arg)
     if key ~= CS.Beyond.SDK.PaymentEasyAccess.MASK_KEY_PAYMENT then
@@ -447,9 +365,6 @@ PhaseCashShop._OnStartPayment = HL.Method(HL.Table) << function(self, arg)
     self.m_storeShowPsStoreLogo = self.m_haveShowPsStoreLogo
     self:HidePsStore()
 end
-
-
-
 
 PhaseCashShop._OnClosePayment = HL.Method(HL.Table) << function(self, arg)
     local key = unpack(arg)
@@ -462,7 +377,6 @@ PhaseCashShop._OnClosePayment = HL.Method(HL.Table) << function(self, arg)
     end
 end
 
-
 PhaseCashShop.TryPopOrderSettle = HL.StaticMethod() << function()
     if PhaseCashShop.s_orderSettleQueue ~= nil and
         PhaseCashShop.s_orderSettleQueue:Count() > 0 then
@@ -470,10 +384,12 @@ PhaseCashShop.TryPopOrderSettle = HL.StaticMethod() << function()
         CashShopUtils.showOrderSettle(orderSettle, function()
             PhaseCashShop.TryPopOrderSettle()
         end)
+    elseif PhaseCashShop.s_freeCashShopRewardQueue ~= nil and
+        PhaseCashShop.s_freeCashShopRewardQueue:Count() > 0 then
+        local rewardArg = PhaseCashShop.s_freeCashShopRewardQueue:Pop()
+        Notify(MessageConst.SHOW_SYSTEM_REWARDS, rewardArg)
     end
 end
-
-
 
 PhaseCashShop._OnPayError = HL.StaticMethod(HL.Table) << function(arg)
     
@@ -484,8 +400,6 @@ PhaseCashShop._OnPayError = HL.StaticMethod(HL.Table) << function(arg)
         hideCancel = true,
     })
 end
-
-
 
 
 
@@ -524,11 +438,6 @@ end
 
 
 
-
-
-
-
-
 PhaseCashShop.OpenGiftpackCategoryAndOpenDetailPanel = HL.Method(HL.String, HL.String, HL.Opt(HL.Boolean))
     << function(self, shopGoodsId, recommendId, openDetailPanel)
     if openDetailPanel == nil then
@@ -559,10 +468,6 @@ PhaseCashShop.OpenGiftpackCategoryAndOpenDetailPanel = HL.Method(HL.String, HL.S
     end
 end
 
-
-
-
-
 PhaseCashShop.OpenWeaponCategoryAndOpenDetailPanel = HL.Method(HL.Any, HL.String)
     << function(self, shopGoodsData, recommendId)
     
@@ -588,10 +493,6 @@ PhaseCashShop.OpenWeaponCategoryAndOpenDetailPanel = HL.Method(HL.Any, HL.String
         )
     end
 end
-
-
-
-
 
 
 PhaseCashShop.OpenGiftpackCategoryByCashShopId = HL.Method(HL.String, HL.Opt(HL.String))
@@ -621,14 +522,10 @@ PhaseCashShop.OpenGiftpackCategoryByCashShopId = HL.Method(HL.String, HL.Opt(HL.
     end
 end
 
-
-
 PhaseCashShop.ClearBackToRecommendPanel = HL.Method() << function(self)
     self.m_backToRecommendPanelTabId = ""
     Notify(MessageConst.CASH_SHOP_REFRESH_CLOSE_BTN_UI)
 end
-
-
 
 PhaseCashShop.ShowPsStore = HL.Method() << function(self)
     if self.m_haveShowPsStoreLogo then
@@ -638,8 +535,6 @@ PhaseCashShop.ShowPsStore = HL.Method() << function(self)
     CashShopUtils.ShowPsStore()
 end
 
-
-
 PhaseCashShop.HidePsStore = HL.Method() << function(self)
     if not self.m_haveShowPsStoreLogo then
         return
@@ -647,9 +542,6 @@ PhaseCashShop.HidePsStore = HL.Method() << function(self)
     self.m_haveShowPsStoreLogo = false
     CashShopUtils.HidePsStore()
 end
-
-
-
 
 PhaseCashShop._ChooseGiftpackByGoodsId = HL.Method(HL.Any) << function(self, arg)
     self:Refresh({

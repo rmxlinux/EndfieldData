@@ -2,46 +2,19 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopChoicenessGroupBag
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopChoicenessGroupBagCtrl = HL.Class('ShopChoicenessGroupBagCtrl', uiCtrl.UICtrl)
-
 
 ShopChoicenessGroupBagCtrl.m_tabData = HL.Field(HL.Table)
 
-
 ShopChoicenessGroupBagCtrl.m_cashGoodsIds = HL.Field(HL.Table)
-
 
 ShopChoicenessGroupBagCtrl.m_getTabCellFunc = HL.Field(HL.Function)
 
-
 ShopChoicenessGroupBagCtrl.m_scroll = HL.Field(HL.Any)
-
 
 ShopChoicenessGroupBagCtrl.m_canBuyCount = HL.Field(HL.Number) << 0
 
-
 ShopChoicenessGroupBagCtrl.m_currNaviIndex = HL.Field(HL.Int) << 1
-
 
 
 
@@ -52,9 +25,6 @@ ShopChoicenessGroupBagCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 ShopChoicenessGroupBagCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_tabData = arg
     self.m_cashGoodsIds = self.m_tabData.cashGoodsIds
@@ -63,8 +33,6 @@ ShopChoicenessGroupBagCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_InitShortCut()
 end
-
-
 
 
 
@@ -120,9 +88,6 @@ ShopChoicenessGroupBagCtrl._RefreshUI = HL.Method() << function(self)
 end
 
 
-
-
-
 ShopChoicenessGroupBagCtrl._RefreshUIOne = HL.Method(HL.Table) << function(self, canBuyGoodsIds)
     local root = self.view.content1
     root.contentBtn.onClick:RemoveAllListeners()
@@ -134,9 +99,6 @@ ShopChoicenessGroupBagCtrl._RefreshUIOne = HL.Method(HL.Table) << function(self,
     
     root.tagLayout.tagNew.gameObject:SetActive(false)
 end
-
-
-
 
 
 ShopChoicenessGroupBagCtrl._RefreshUITwo = HL.Method(HL.Table) << function(self, canBuyGoodsIds)
@@ -159,9 +121,6 @@ ShopChoicenessGroupBagCtrl._RefreshUITwo = HL.Method(HL.Table) << function(self,
 end
 
 
-
-
-
 ShopChoicenessGroupBagCtrl._RefreshUIThree = HL.Method(HL.Table) << function(self, canBuyGoodsIds)
     self.m_scroll = self.view.content3Scroll
 
@@ -181,9 +140,6 @@ ShopChoicenessGroupBagCtrl._RefreshUIThree = HL.Method(HL.Table) << function(sel
     self.m_scroll:UpdateCount(3)
 end
 
-
-
-
 ShopChoicenessGroupBagCtrl._SetDefaultCell = HL.Method(HL.Any) << function(self, cell)
     local stateCtrl = cell.stateController
     stateCtrl:SetState("SellOut")
@@ -197,10 +153,6 @@ ShopChoicenessGroupBagCtrl._SetDefaultCell = HL.Method(HL.Any) << function(self,
     
     cell.tagLayout.tagNew.gameObject:SetActive(false)
 end
-
-
-
-
 
 ShopChoicenessGroupBagCtrl._SetGiftCell = HL.Method(HL.Any, HL.String) << function(self, cell, goodsId)
     local stateCtrl = cell.stateController
@@ -239,8 +191,6 @@ ShopChoicenessGroupBagCtrl._SetGiftCell = HL.Method(HL.Any, HL.String) << functi
     end
 end
 
-
-
 ShopChoicenessGroupBagCtrl._InitShortCut = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
@@ -265,8 +215,6 @@ ShopChoicenessGroupBagCtrl._InitShortCut = HL.Method() << function(self)
     end
 end
 
-
-
 ShopChoicenessGroupBagCtrl._OnGoLeft = HL.Method() << function(self)
     local currIndex = self.m_currNaviIndex
 
@@ -276,12 +224,10 @@ ShopChoicenessGroupBagCtrl._OnGoLeft = HL.Method() << function(self)
         leftCtrl:NaviTargetCurrTab()
     else
         local targetCell = self.m_getTabCellFunc(self.m_scroll:Get(CSIndex(currIndex - 1)))
-        UIUtils.setAsNaviTarget(targetCell.inputBindingGroupNaviDecorator)
+        self:SetNaviTarget(targetCell.inputBindingGroupNaviDecorator)
         self.m_currNaviIndex = self.m_currNaviIndex - 1
     end
 end
-
-
 
 ShopChoicenessGroupBagCtrl._OnGoRight = HL.Method() << function(self)
     local targetIndex = self.m_currNaviIndex + 1
@@ -290,11 +236,9 @@ ShopChoicenessGroupBagCtrl._OnGoRight = HL.Method() << function(self)
     end
 
     local targetCell = self.m_getTabCellFunc(self.m_scroll:Get(CSIndex(targetIndex)))
-    UIUtils.setAsNaviTarget(targetCell.inputBindingGroupNaviDecorator)
+    self:SetNaviTarget(targetCell.inputBindingGroupNaviDecorator)
     self.m_currNaviIndex = targetIndex
 end
-
-
 
 ShopChoicenessGroupBagCtrl.OnRecommendSetNaviTarget = HL.Method().Return(HL.Boolean) << function(self)
     if self.m_canBuyCount == 0 then
@@ -303,13 +247,11 @@ ShopChoicenessGroupBagCtrl.OnRecommendSetNaviTarget = HL.Method().Return(HL.Bool
 
     InputManagerInst:ToggleGroup(self.view.contentStateInputBindingGroupMonoTarget.groupId, true)
     local firstCell = self.m_getTabCellFunc(self.m_scroll:Get(0))
-    UIUtils.setAsNaviTarget(firstCell.inputBindingGroupNaviDecorator)
+    self:SetNaviTarget(firstCell.inputBindingGroupNaviDecorator)
     self.m_currNaviIndex = 1
 
     return true
 end
-
-
 
 ShopChoicenessGroupBagCtrl.CheckRecommendSetNaviTarget = HL.Method().Return(HL.Boolean) << function(self)
     if self.m_canBuyCount == 0 then

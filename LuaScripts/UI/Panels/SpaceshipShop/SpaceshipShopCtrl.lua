@@ -6,31 +6,9 @@ local PHASE_ID = PhaseId.SpaceshipShop
 local shopSystem = GameInstance.player.shopSystem
 local SSSHOP_DETAIL_CLIENT_DATA_MANAGER_LAST_SEEN_TIMESTAMP_KEY = "SSShopDetailLastSeenRefresh"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipShopCtrl = HL.Class('SpaceshipShopCtrl', ShopCtrl.ShopCtrl)
 
-
 SpaceshipShopCtrl.m_shopGroupList = HL.Field(HL.Any)
-
-
-
 
 
 SpaceshipShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -127,9 +105,6 @@ SpaceshipShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
-
 SpaceshipShopCtrl.PlaySwitchTabAnimation = HL.Method(HL.String) << function(self, groupId)
     local curGroupIndex = 0
     for i = 0, self.m_shopGroupList.Count - 1 do
@@ -153,8 +128,6 @@ SpaceshipShopCtrl.PlaySwitchTabAnimation = HL.Method(HL.String) << function(self
     end
 end
 
-
-
 SpaceshipShopCtrl.InitTab = HL.Method() << function(self)
     self.view.tabsMobile:InitShopTabsForSwitchShopGroup(self.m_shopGroupList, self.m_shopGroupId, function(groupId)
         self:PlaySwitchTabAnimation(groupId)
@@ -165,9 +138,6 @@ SpaceshipShopCtrl.InitTab = HL.Method() << function(self)
         self:RefreshSpaceShipSheetTabs(groupId)
     end)
 end
-
-
-
 
 SpaceshipShopCtrl._SwitchPage = HL.Method(HL.Number) << function(self, diff)
     local index = 0
@@ -185,9 +155,6 @@ SpaceshipShopCtrl._SwitchPage = HL.Method(HL.Number) << function(self, diff)
     index = index + diff
     self:_UpdateBtnState(index)
 end
-
-
-
 
 SpaceshipShopCtrl._UpdateBtnState = HL.Method(HL.Number) << function(self, index)
     local groupData = shopSystem:GetShopGroupData(self.m_shopGroupId)
@@ -208,10 +175,6 @@ SpaceshipShopCtrl._UpdateBtnState = HL.Method(HL.Number) << function(self, index
     self.view.btnUpper.gameObject:SetActive(index > 0 and not(index == groupData.shopIdList.Count - 1 and isUnlockCycleShop))
 
 end
-
-
-
-
 
 
 SpaceshipShopCtrl.RefreshSpaceShipSheetTabs = HL.Method(HL.String, HL.Opt(HL.String)) << function(self, curGroupId, shopId)
@@ -329,8 +292,6 @@ SpaceshipShopCtrl.RefreshSpaceShipSheetTabs = HL.Method(HL.String, HL.Opt(HL.Str
     self:_ApplySortOption()
 end
 
-
-
 SpaceshipShopCtrl._RefreshTimeCountDown = HL.Override() << function(self)
     
     self.view.timeNode.gameObject:SetActiveIfNecessary(true)
@@ -370,21 +331,13 @@ SpaceshipShopCtrl._RefreshTimeCountDown = HL.Override() << function(self)
     )
 end
 
-
-
-
 SpaceshipShopCtrl._RefreshSheetTabs = HL.Override(HL.String) << function(self, curShopId)
 
 end
 
-
-
 SpaceshipShopCtrl._GetMoneyTime = HL.Method().Return(HL.Number) << function(self)
     return Utils.getNextWeeklyServerRefreshTime()
 end
-
-
-
 
 SpaceshipShopCtrl._GetMoneyTimeText = HL.Method(HL.Number).Return(HL.Any) << function(self, leftTime)
     if leftTime > 24 * 3600 then
@@ -395,9 +348,6 @@ SpaceshipShopCtrl._GetMoneyTimeText = HL.Method(HL.Number).Return(HL.Any) << fun
         return tostring(string.format(Language.LUA_SPACE_SHOP_REFRESH_AT_ONCE, math.max(1 ,math.floor(leftTime / 60))))
     end
 end
-
-
-
 
 
 
@@ -425,15 +375,10 @@ end
 
 
 
-
-
-
 SpaceshipShopCtrl.CheckGoodsUnlocked = HL.Override(HL.String).Return(HL.Boolean) << function(self, goodsId)
     local shopSystem = GameInstance.player.shopSystem
     return not (shopSystem:CheckGoodsUnlocked(goodsId) and shopSystem:CheckShopUnlocked(self.m_shopId))
 end
-
-
 
 SpaceshipShopCtrl._OnShopRefresh = HL.Override() << function(self)
     if self.m_waitAnimation then
@@ -445,8 +390,6 @@ SpaceshipShopCtrl._OnShopRefresh = HL.Override() << function(self)
     self.view.scrollList:SkipGraduallyShow()
     self.view.emptyClick.gameObject:SetActiveIfNecessary(false)
 end
-
-
 
 SpaceshipShopCtrl.OnAfterBuyItemSucc = HL.Override() << function(self)
     
@@ -482,14 +425,9 @@ SpaceshipShopCtrl.OnAfterBuyItemSucc = HL.Override() << function(self)
     end
 end
 
-
-
-
 SpaceshipShopCtrl.SetMoneyCell = HL.Override(HL.Boolean) << function(self, arg)
     self.view.moneyCell.gameObject:SetActiveIfNecessary(not arg)
 end
-
-
 
 
 

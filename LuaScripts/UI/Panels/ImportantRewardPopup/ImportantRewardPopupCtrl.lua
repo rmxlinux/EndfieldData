@@ -2,18 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ImportantRewardPopup
 
-
-
-
-
-
-
-
-
-
-
 ImportantRewardPopupCtrl = HL.Class('ImportantRewardPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -25,37 +14,26 @@ ImportantRewardPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 ImportantRewardPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.maskBtn.onClick:AddListener(function()
         self:_Exit()
     end)
 end
 
-
-
 ImportantRewardPopupCtrl.OnShow = HL.Override() << function (self)
     Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = self.panelId, enabled = true})
     UIManager:HideWithKey(PanelId.InteractOption, "ImportantRewardPopupCtrl") 
 end
-
-
 
 ImportantRewardPopupCtrl.OnHide = HL.Override() << function(self)
     Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = self.panelId, enabled = false})
     UIManager:ShowWithKey(PanelId.InteractOption, "ImportantRewardPopupCtrl")
 end
 
-
-
 ImportantRewardPopupCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = self.panelId, enabled = false})
     UIManager:ShowWithKey(PanelId.InteractOption, "ImportantRewardPopupCtrl")
 end
-
-
 
 ImportantRewardPopupCtrl.OnGetImportantRewardItem = HL.StaticMethod(HL.Table) << function(args)
     local itemId, count = unpack(args)
@@ -64,8 +42,6 @@ ImportantRewardPopupCtrl.OnGetImportantRewardItem = HL.StaticMethod(HL.Table) <<
         self:_UpdateContent(itemId)
     end)
 end
-
-
 
 ImportantRewardPopupCtrl._Exit = HL.Method() << function(self)
     self:PlayAnimationOutWithCallback(function()
@@ -78,15 +54,10 @@ ImportantRewardPopupCtrl._Exit = HL.Method() << function(self)
     end)
 end
 
-
-
 ImportantRewardPopupCtrl.InterruptMainHudActionQueue = HL.Method() << function(self)
     Notify(MessageConst.HIDE_ITEM_TIPS)
     self:Close()
 end
-
-
-
 
 ImportantRewardPopupCtrl._UpdateContent = HL.Method(HL.String) << function(self, itemId)
     self.view.itemIcon:InitItemIcon(itemId, true)

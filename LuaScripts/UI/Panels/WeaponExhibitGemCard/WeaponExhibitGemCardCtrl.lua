@@ -1,17 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WeaponExhibitGemCard
-
-
-
-
-
-
-
-
-
 WeaponExhibitGemCardCtrl = HL.Class('WeaponExhibitGemCardCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -25,21 +15,14 @@ WeaponExhibitGemCardCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CLOSE_WEAPON_EXHIBIT_GEM_CARD] = "PlayAnimationOut",
 }
 
-
 WeaponExhibitGemCardCtrl.m_gemInstIdLeft = HL.Field(HL.Number) << -1
-
 
 WeaponExhibitGemCardCtrl.m_gemInstIdRight = HL.Field(HL.Number) << -1
 
 
-
 WeaponExhibitGemCardCtrl.m_weaponInfo = HL.Field(HL.Table)
 
-
 WeaponExhibitGemCardCtrl.m_effectCor = HL.Field(HL.Thread)
-
-
-
 
 
 WeaponExhibitGemCardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -50,9 +33,6 @@ WeaponExhibitGemCardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.gemCardRight.gameObject:SetActive(false)
     self:_InitController()
 end
-
-
-
 
 WeaponExhibitGemCardCtrl.RefreshGemCard = HL.Method(HL.Any) << function(self, arg)
     local hasGem = arg.hasGem

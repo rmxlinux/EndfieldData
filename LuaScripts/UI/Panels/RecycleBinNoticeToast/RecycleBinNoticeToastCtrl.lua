@@ -2,14 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.RecycleBinNoticeToast
 
-
-
-
-
-
-
 RecycleBinNoticeToastCtrl = HL.Class('RecycleBinNoticeToastCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -20,17 +13,11 @@ RecycleBinNoticeToastCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
-
 RecycleBinNoticeToastCtrl.OnRecycleBinUpgradeAndCollected = HL.StaticMethod(HL.Table) << function(args)
     UIManager:AutoOpen(PANEL_ID, args)
 end
 
-
 RecycleBinNoticeToastCtrl.m_durationCor = HL.Field(HL.Thread)
-
-
-
 
 
 RecycleBinNoticeToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -39,8 +26,6 @@ RecycleBinNoticeToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:PlayAnimationOutAndClose()
     end)
 end
-
-
 
 
 

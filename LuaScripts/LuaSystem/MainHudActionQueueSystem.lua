@@ -70,6 +70,29 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
     self.configs = {
 
         
+        
+        LoginCheck_ImportantActivity_WaitCinematic = {
+            order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST - 40,
+            needWait = true,
+            ignoreCinematicInterrupt = true,
+            ignoreMainHudInterrupt = true,
+            finishWhenInterrupt = true,
+            dropWhenChangeScene = true,
+        },
+
+        
+        
+        
+        LoginCheck_ImportantActivity_Top = {
+            order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST - 40, 
+            needWait = true,
+            ignoreCinematicInterrupt = true,
+            ignoreMainHudInterrupt = true,
+            finishWhenInterrupt = true,
+            dropWhenChangeScene = true,
+        },
+
+        
         LoginCheck_CashShopOrderSettle = {
             order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST - 30,
             needWait = true,
@@ -109,6 +132,14 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
         },
 
         
+        CinematicBlocker = {
+            order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST - 1, 
+            needWait = true,
+            isCinematic = true,
+            dropWhenChangeScene = true,
+        },
+
+        
         Cinematic = {
             order = CS.Beyond.MainHudActionQueueConsts.CINEMATIC_ORDER_FIRST, 
             needWait = true,
@@ -139,7 +170,7 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
         CashShopOrderSettleInterrupt = {
             order = -0.1,
             needWait = true,
-            checkGuideOnStart = true,
+            waitForceGuideEnd = true,
             ignoreMainHudInterrupt = true,
         },
 
@@ -147,7 +178,7 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
         CashShopOrderSettle = {
             order = 0,
             needWait = true,
-            checkGuideOnStart = true,
+            waitForceGuideEnd = true,
             ignoreMainHudInterrupt = true,
         },
 
@@ -156,7 +187,28 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
             order = 0.1,
             needWait = true,
             finishWhenInterrupt = true,
-            checkGuideOnStart = true,
+            waitForceGuideEnd = true,
+            ignoreMainHudInterrupt = true,
+        },
+
+        
+        
+        LoginCheck_ImportantActivity_Fallback = {
+            order = 0.15,
+            needWait = true,
+            finishWhenInterrupt = true,
+            waitForceGuideEnd = true,
+            ignoreMainHudInterrupt = true,
+            ignoreCinematicInterrupt = true,
+            dropWhenChangeScene = true,
+        },
+
+        
+        LoginCheck_Reflow = {
+            order = 0.18,
+            needWait = true,
+            finishWhenInterrupt = true,
+            waitForceGuideEnd = true,
             ignoreMainHudInterrupt = true,
         },
 
@@ -165,7 +217,7 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
             order = 0.2,
             needWait = true,
             finishWhenInterrupt = true,
-            checkGuideOnStart = true,
+            waitForceGuideEnd = true,
             ignoreMainHudInterrupt = true,
         },
 
@@ -174,7 +226,7 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
             order = 0.5,
             needWait = true,
             ignoreCinematicInterrupt = true,
-            checkGuideOnStart = true,
+            waitForceGuideEnd = true,
         },
 
         
@@ -206,7 +258,7 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
             needWait = true,
             finishWhenInterrupt = true,
             dropWhenChangeScene = true,
-            checkGuideOnStart = true,
+            waitForceGuideEnd = true,
             ignoreMainHudInterrupt = true,
         },
 
@@ -223,7 +275,7 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
             needWait = true,
             ignoreCinematicInterrupt = true,
             preloadPanelId = PanelId.ImportantRewardPopup,
-            checkGuideOnStart = true,
+            waitForceGuideEnd = true,
         },
 
         
@@ -232,7 +284,7 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
             needWait = true,
             finishWhenInterrupt = false,
             preloadPanelId = PanelId.AdventureLevelUp,
-            checkGuideOnStart = true,
+            waitForceGuideEnd = true,
         },
 
         
@@ -349,6 +401,10 @@ MainHudActionQueueSystem._InitConfigs = HL.Method() << function(self)
             finishWhenInterrupt = false,
             dropWhenChangeScene = true,
         },
+        UnlockMusic = {
+            order = 100,
+            needWait = false,
+        },
     }
 
     for k, v in pairs(self.configs) do
@@ -365,7 +421,7 @@ MainHudActionQueueSystem.m_nextRequestId = HL.Field(HL.Number) << 1
 
 MainHudActionQueueSystem.m_isShowing = HL.Field(HL.Boolean) << false
 
-MainHudActionQueueSystem.m_tryStartActionCor = HL.Field(HL.Thread)
+MainHudActionQueueSystem.m_startupDelayCor = HL.Field(HL.Thread)
 
 MainHudActionQueueSystem.m_curShowingActionOrder = HL.Field(HL.Number) << math.mininteger
 
@@ -449,8 +505,8 @@ MainHudActionQueueSystem.MainHudActionQueueSystem = HL.Constructor() << function
 end
 
 
-MainHudActionQueueSystem.AddRequest = HL.Method(HL.String, HL.Function, HL.Opt(HL.Function, HL.Boolean, HL.Function)) << function(self, type, action, getOrder, startImmediately, onDrop)
-    logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.AddRequest", type, startImmediately)
+MainHudActionQueueSystem.AddRequest = HL.Method(HL.String, HL.Function, HL.Opt(HL.Function, HL.Boolean, HL.Function)) << function(self, type, action, getOrder, skipStartupDelay, onDrop)
+    logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.AddRequest", type, skipStartupDelay)
     local requestId = self.m_nextRequestId
     self.m_nextRequestId = self.m_nextRequestId + 1
     local cfg = self.configs[type]
@@ -464,41 +520,57 @@ MainHudActionQueueSystem.AddRequest = HL.Method(HL.String, HL.Function, HL.Opt(H
     }
     setmetatable(request, { __index = cfg })
     table.insert(self.m_pendingRequests, request)
-    
-    if request.isCinematic then
-        
-        FactoryUtils.exitFactoryRelatedMode()
 
-        if GameWorld.worldInfo.inMainHud or self.m_playIgnoreMainHudActionTypes[type] then
-            local curRequest = self.m_pendingRequests[1]
-            if curRequest and not curRequest.isCinematic and not curRequest.ignoreCinematicInterrupt then
-                if self.m_isShowing then
-                    self:Interrupt()
-                    curRequest.order = nil 
-                    local nextRequestIndex = self:_GetNextRequestIndex(true)
-                    self:_MoveRequestToTop(nextRequestIndex)
-                    self:_StartFirstAction()
-                    return
-                else
-                    
-                    curRequest.order = nil 
-                end
-            end
-        end
+    if self:_TryCutIn(request) then
+        return
     end
 
     self:_SortRequest(true)
 
-    request.startImmediately = startImmediately
-    if startImmediately then
+    request.skipStartupDelay = skipStartupDelay
+    if skipStartupDelay then
         if self.m_isShowing or self.m_pendingRequests[1] ~= request then
-            logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.AddRequest startImmediately 失败", type, "当前：", self.m_isShowing, self.m_pendingRequests[1].type)
+            logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.AddRequest skipStartupDelay 失败", type, "当前：", self.m_isShowing, self.m_pendingRequests[1].type)
         else
             self:_TryStartAction()
             return
         end
     end
     self:_TryAddStartActionCor()
+end
+
+
+
+
+
+MainHudActionQueueSystem._TryCutIn = HL.Method(HL.Table).Return(HL.Boolean) << function(self, request)
+    if not request.isCinematic then
+        return false
+    end
+    
+    FactoryUtils.exitFactoryRelatedMode()
+
+    if not (GameWorld.worldInfo.inMainHud or self.m_playIgnoreMainHudActionTypes[request.type]) then
+        return false
+    end
+
+    local curRequest = self.m_pendingRequests[1]
+    if not (curRequest and not curRequest.isCinematic and not curRequest.ignoreCinematicInterrupt) then
+        return false
+    end
+
+    if self.m_isShowing then
+        self:Interrupt()
+        curRequest.order = nil 
+        local nextRequestIndex = self:_GetNextRequestIndex(true)
+        self:_MoveRequestToTop(nextRequestIndex)
+        self:_StartFirstAction()
+        return true
+    else
+        
+        curRequest.order = nil 
+        return false
+    end
 end
 
 MainHudActionQueueSystem._SortRequest = HL.Method(HL.Boolean) << function(self, forceSort)
@@ -536,19 +608,19 @@ MainHudActionQueueSystem._TryAddStartActionCor = HL.Method() << function(self)
         logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem._TryAddStartActionCor Skipped")
         return
     end
-    if self.m_tryStartActionCor then
+    if self.m_startupDelayCor then
         logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem._TryAddStartActionCor Duplicated")
         return
     end
     if self.m_lastFinishShowingFrameCount == Time.frameCount then
         logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem._TryAddStartActionCor 当帧刚结束，所以直接开始，确保播放之间是无缝的")
         self:_TryStartAction()
-    elseif self.m_pendingRequests[1].startImmediately then
-        logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem._TryAddStartActionCor startImmediately")
+    elseif self.m_pendingRequests[1].skipStartupDelay then
+        logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem._TryAddStartActionCor skipStartupDelay")
         self:_TryStartAction()
     else
         logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem._TryAddStartActionCor Succ")
-        self.m_tryStartActionCor = self:_StartCoroutine(function()
+        self.m_startupDelayCor = self:_StartCoroutine(function()
             
             
             
@@ -562,7 +634,7 @@ end
 MainHudActionQueueSystem._TryStartAction = HL.Method() << function(self)
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem._TryStartAction")
 
-    self.m_tryStartActionCor = self:_ClearCoroutine(self.m_tryStartActionCor)
+    self.m_startupDelayCor = self:_ClearCoroutine(self.m_startupDelayCor)
 
     if GameInstance.player.guide.preCheckFinished and GameInstance.player.guide.isInForceGuide and not Utils.isInBlackbox() then
         
@@ -606,9 +678,12 @@ MainHudActionQueueSystem._StartFirstAction = HL.Method() << function(self)
     request.order = self.m_curShowingActionOrder 
     local cfg = self.configs[request.type]
 
-    if cfg.checkGuideOnStart and GameInstance.player.guide.isInForceGuide and not Utils.isInBlackbox() then
+    if cfg.waitForceGuideEnd and GameInstance.player.guide.isInForceGuide and not Utils.isInBlackbox() then
         
         logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem._StartFirstAction Failed Because Of Guide", request.type, request)
+        
+        
+        request.order = nil
         self:Interrupt(false, true)
         return
     else
@@ -645,7 +720,7 @@ MainHudActionQueueSystem._StartFirstAction = HL.Method() << function(self)
     end
 end
 
-MainHudActionQueueSystem._CheckAllMainHudActionFinish = HL.Method() << function(self)
+MainHudActionQueueSystem._NotifyIfAllFinished = HL.Method() << function(self)
     if self.m_pendingRequests[1] ~= nil then
         return
     end
@@ -679,14 +754,14 @@ MainHudActionQueueSystem.OnOneMainHudActionFinish = HL.Method(HL.String) << func
     self.m_curActionStartTime = -1
     self.m_lastFinishShowingFrameCount = Time.frameCount
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem showing finished")
-    self:_CheckAllMainHudActionFinish()
+    self:_NotifyIfAllFinished()
     CS.Beyond.Gameplay.Conditions.OnMainHudActionFinished.Trigger(false)
 end
 
-MainHudActionQueueSystem.Interrupt = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, includeCinematic, forceNotFinish)
-    logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.Interrupt TRY", includeCinematic, forceNotFinish)
+MainHudActionQueueSystem.Interrupt = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, includeCinematic, keepInQueue)
+    logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.Interrupt TRY", includeCinematic, keepInQueue)
     if not includeCinematic then
-        if not self.m_isShowing and self.m_tryStartActionCor == nil then
+        if not self.m_isShowing and self.m_startupDelayCor == nil then
             self.m_curPreloadId = nil
             return
         end
@@ -695,7 +770,7 @@ MainHudActionQueueSystem.Interrupt = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) <
             return
         end
     end
-    self.m_tryStartActionCor = self:_ClearCoroutine(self.m_tryStartActionCor)
+    self.m_startupDelayCor = self:_ClearCoroutine(self.m_startupDelayCor)
     if not self.m_isShowing then
         self.m_curPreloadId = nil
         return
@@ -705,13 +780,13 @@ MainHudActionQueueSystem.Interrupt = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) <
     self.m_curPreloadId = nil
     self.m_isShowing = false
     self.m_curActionStartTime = -1
-    local needRemove = request.finishWhenInterrupt and not forceNotFinish
+    local needRemove = request.finishWhenInterrupt and not keepInQueue
     if needRemove then
         table.remove(self.m_pendingRequests, 1)
     end
     Notify(MessageConst.INTERRUPT_MAIN_HUD_ACTION_QUEUE)
     if needRemove then
-        self:_CheckAllMainHudActionFinish()
+        self:_NotifyIfAllFinished()
     else
         request.haveBeenInterrupted = true
     end
@@ -842,8 +917,10 @@ end
 MainHudActionQueueSystem.ManuallyDropAllRequests = HL.Method() << function(self)
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.ManuallyDropAllRequests")
     if self:IsShowing() then
-        logger.error("MainHudActionQueueSystem.ManuallyDropAllRequests FAIL because: IsShowing")
-        return
+        
+        
+        logger.error(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.ManuallyDropAllRequests: interrupting current showing action")
+        self:Interrupt(true, true)
     end
     for _, request in ipairs(self.m_pendingRequests) do
         logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "MainHudActionQueueSystem.ManuallyDropAllRequests", request.name)
@@ -927,9 +1004,9 @@ MainHudActionQueueSystem.GetDebugInfos = HL.Method(HL.Opt(HL.Boolean)).Return(HL
 
     
     table.insert(infos, "\n--------------- 当前队列 m_pendingRequests ---------------\n")
-    table.insert(infos, "序号\t类型\t\tID\tstartImmediately\t优先级\n")
+    table.insert(infos, "序号\t类型\t\tID\tskipStartupDelay\t优先级\n")
     for k, v in ipairs(self.m_pendingRequests) do
-        table.insert(infos, string.format("%d\t%s\t\t%d\t%s\t%f\n", k, v.type, v.id, v.startImmediately, v.getOrder and v.getOrder() or v.order))
+        table.insert(infos, string.format("%d\t%s\t\t%d\t%s\t%f\n", k, v.type, v.id, v.skipStartupDelay, v.getOrder and v.getOrder() or v.order))
     end
 
     

@@ -3,28 +3,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BattlePassAdvancedPlanBuy
 local PHASE_ID = PhaseId.BattlePassAdvancedPlanBuy
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BattlePassAdvancedPlanBuyCtrl = HL.Class('BattlePassAdvancedPlanBuyCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -35,32 +14,21 @@ BattlePassAdvancedPlanBuyCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_BATTLE_PASS_TRACK_UPDATE] = '_AfterBuy',
 }
 
-
 BattlePassAdvancedPlanBuyCtrl.m_bpSystem = HL.Field(HL.Any)
-
 
 BattlePassAdvancedPlanBuyCtrl.m_buyOriTrack = HL.Field(HL.Boolean) << false
 
-
 BattlePassAdvancedPlanBuyCtrl.m_buyProtocalTrack = HL.Field(HL.Boolean) << false
-
 
 BattlePassAdvancedPlanBuyCtrl.m_seasonData = HL.Field(HL.Any)
 
-
 BattlePassAdvancedPlanBuyCtrl.m_oriPreInfos = HL.Field(HL.Any)
-
 
 BattlePassAdvancedPlanBuyCtrl.m_payPreInfos = HL.Field(HL.Any)
 
-
 BattlePassAdvancedPlanBuyCtrl.m_topCells = HL.Field(HL.Any)
 
-
 BattlePassAdvancedPlanBuyCtrl.m_bottomCells = HL.Field(HL.Any)
-
-
-
 
 
 BattlePassAdvancedPlanBuyCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -81,15 +49,11 @@ BattlePassAdvancedPlanBuyCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
     self.view.cashShopKrTips:InitCashShopKrTips()
 end
 
-
-
 BattlePassAdvancedPlanBuyCtrl._InitData = HL.Method() << function(self)
     self.m_bpSystem = GameInstance.player.battlePassSystem
     self.m_seasonData = BattlePassUtils.GetSeasonData()
     self:_RefreshTrackState()
 end
-
-
 
 
 BattlePassAdvancedPlanBuyCtrl._InitViews = HL.Method() << function(self)
@@ -168,11 +132,9 @@ BattlePassAdvancedPlanBuyCtrl._InitViews = HL.Method() << function(self)
     self.view.originiumKeyHint.gameObject:SetActive(true)
     self.view.agreementKeyHint.gameObject:SetActive(false)
     if DeviceInfo.usingController then
-        UIUtils.setAsNaviTarget(self.view.originiumAllocateNode)
+        self:SetNaviTarget(self.view.originiumAllocateNode)
     end
 end
-
-
 
 BattlePassAdvancedPlanBuyCtrl._RefreshTrackState = HL.Method() << function(self)
     local isOrgTrackActive, playerOrgTrack = BattlePassUtils.CheckBattlePassTrackActive(GEnums.BPTrackType.ORIGINIUM)
@@ -186,8 +148,6 @@ BattlePassAdvancedPlanBuyCtrl._RefreshTrackState = HL.Method() << function(self)
     self.view.buyOriBtnStateController:SetState(self.m_buyOriTrack and (useOrgTicket and "Ticket" or "Buy") or "NotBuy")
     self.view.buyProBtnStateController:SetState(self.m_buyProtocalTrack and (usePayTicket and "Ticket" or "Buy") or "NotBuy")
 end
-
-
 
 BattlePassAdvancedPlanBuyCtrl._AfterBuy = HL.Method() << function(self)
     local buyingPro = not self.m_buyProtocalTrack and BattlePassUtils.CheckPayTrackActive()
@@ -206,8 +166,6 @@ BattlePassAdvancedPlanBuyCtrl._AfterBuy = HL.Method() << function(self)
         end)
     end
 end
-
-
 
 BattlePassAdvancedPlanBuyCtrl._RefreshRewardsPreview = HL.Method() << function(self)
     self.m_oriPreInfos = self:_GetInfo(GEnums.BPTrackType.ORIGINIUM)
@@ -228,9 +186,6 @@ BattlePassAdvancedPlanBuyCtrl._RefreshRewardsPreview = HL.Method() << function(s
     end)
     AudioAdapter.PostEvent("Au_UI_Event_BPMotion")
 end
-
-
-
 
 BattlePassAdvancedPlanBuyCtrl._GetInfo = HL.Method(HL.Any).Return(HL.Table) << function(self, trackType)
     local ret = {}
@@ -267,11 +222,6 @@ BattlePassAdvancedPlanBuyCtrl._GetInfo = HL.Method(HL.Any).Return(HL.Table) << f
     return ret
 end
 
-
-
-
-
-
 BattlePassAdvancedPlanBuyCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Table, HL.Boolean) << function(self, cell, info, isLast)
     
     cell.nameTxt.text = string.format(info.name, info.count)
@@ -296,20 +246,14 @@ BattlePassAdvancedPlanBuyCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Table, HL.Boo
     cell.decoLineImage.gameObject:SetActive(not isLast)
 end
 
-
-
 BattlePassAdvancedPlanBuyCtrl.OnShow = HL.Override() << function(self)
 end
 
 
 
 
-
-
 BattlePassAdvancedPlanBuyCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.ON_BATTLE_PASS_ADVANCED_BUY_CLOSE)
-    self.m_topCells:OnClose()
-    self.m_bottomCells:OnClose()
 end
 
 

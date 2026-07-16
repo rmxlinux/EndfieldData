@@ -1,36 +1,6 @@
 
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.GenderSelect
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseGenderSelect = HL.Class('PhaseGenderSelect', phaseBase.PhaseBase)
 local PHASE_GENDER_SELECT_OBJECT = "GameplayGenderSelect"
 local EnterCutsceneId = "Cutscene_e0m0_1"
@@ -49,7 +19,6 @@ local TITLE_TEXT_MAT_PATH = "Assets/Beyond/DynamicAssets/Gameplay/Prefabs/Gender
 
 
 
-
 PhaseGenderSelect.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.GENDER_SELECT_START] = { 'OnGenderSelectStart', false },
     [MessageConst.ON_CONFIRM_GENDER] = { 'OnConfirmGender', true },
@@ -57,40 +26,27 @@ PhaseGenderSelect.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_GENDER_HOVER_ANIM] = { 'GenderHoverPlayAnim', true },
 }
 
-
 PhaseGenderSelect.m_sceneObject = HL.Field(HL.Forward("PhaseGameObjectItem"))
-
 
 PhaseGenderSelect.m_genderSelectPanel = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseGenderSelect.m_genderConfirmPanel = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseGenderSelect.m_firstActive = HL.Field(HL.Boolean) << true
 
-
 PhaseGenderSelect.m_curSelection = HL.Field(HL.String) << AVAILABLE_SELECTION.None
-
 
 PhaseGenderSelect.m_onFinishGenderSelect = HL.Field(HL.Any)
 
-
 PhaseGenderSelect.m_effectCor = HL.Field(HL.Thread)
-
 
 PhaseGenderSelect.m_genderHoverTimerId = HL.Field(HL.Number) << 0
 
-
 PhaseGenderSelect.m_hadSelected = HL.Field(HL.Boolean) << false
-
 
 PhaseGenderSelect.m_genderConfirmCheckUpdateKey = HL.Field(HL.Number) << -1
 
-
 PhaseGenderSelect.m_timelineHandle = HL.Field(HL.Any)
-
-
 
 PhaseGenderSelect.OnGenderSelectStart = HL.StaticMethod(HL.Any) << function(onFinishGenderSelect)
     logger.info(ELogChannel.GamePlay, "PhaseGenderSelect.OnGenderSelectStart")
@@ -98,14 +54,10 @@ PhaseGenderSelect.OnGenderSelectStart = HL.StaticMethod(HL.Any) << function(onFi
 end
 
 
-
-
 PhaseGenderSelect._OnInit = HL.Override() << function(self)
     PhaseGenderSelect.Super._OnInit(self)
     self.m_sceneObject = nil
 end
-
-
 
 
 
@@ -135,8 +87,6 @@ PhaseGenderSelect._OnActivated = HL.Override() << function(self)
     self.m_firstActive = false
 end
 
-
-
 PhaseGenderSelect._InitSceneObject = HL.Method() << function(self)
     self.m_sceneObject = self:CreatePhaseGOItem(PHASE_GENDER_SELECT_OBJECT, PhaseManager.m_cacheRoot)
     local sceneObject = self.m_sceneObject
@@ -151,8 +101,6 @@ PhaseGenderSelect._InitSceneObject = HL.Method() << function(self)
     view.hoverImageMale.gameObject:SetActive(false)
     view.hoverImageFemale.gameObject:SetActive(false)
 end
-
-
 
 PhaseGenderSelect.OnNotificationActive = HL.Method() << function(self)
     logger.info(ELogChannel.GamePlay, "PhaseGenderSelect OnNotificationActive")
@@ -184,9 +132,6 @@ PhaseGenderSelect.OnNotificationActive = HL.Method() << function(self)
     self.m_genderConfirmPanel.uiCtrl:Hide()
 end
 
-
-
-
 PhaseGenderSelect._ToggleGenderSelectGameplay = HL.Method(HL.Boolean) << function(self, isOn)
     local sceneObject = self.m_sceneObject
     if not sceneObject then
@@ -202,15 +147,11 @@ PhaseGenderSelect._ToggleGenderSelectGameplay = HL.Method(HL.Boolean) << functio
     sceneObject.view.light.gameObject:SetActive(isOn)
 end
 
-
-
 PhaseGenderSelect.ChooseFemale = HL.Method() << function(self)
     logger.info(ELogChannel.GamePlay, "PhaseGenderSelect ChooseFemale")
     AudioAdapter.PostEvent("Au_UI_Button_Player_Girl")
     self:_InnerChooseGender(AVAILABLE_SELECTION.Female)
 end
-
-
 
 PhaseGenderSelect.ChooseMale = HL.Method() << function(self)
     logger.info(ELogChannel.GamePlay, "PhaseGenderSelect ChooseMale")
@@ -219,16 +160,11 @@ PhaseGenderSelect.ChooseMale = HL.Method() << function(self)
     self:_InnerChooseGender(AVAILABLE_SELECTION.Male)
 end
 
-
-
 PhaseGenderSelect.ChooseNone = HL.Method() << function(self)
     logger.info(ELogChannel.GamePlay, "PhaseGenderSelect ChooseNone")
 
     self:_InnerChooseGender(AVAILABLE_SELECTION.None)
 end
-
-
-
 
 PhaseGenderSelect.OnGenderHoverChange = HL.Method(HL.Table) << function(self, arg)
     local view = self.m_sceneObject.view
@@ -252,8 +188,6 @@ PhaseGenderSelect.OnGenderHoverChange = HL.Method(HL.Table) << function(self, ar
     end
 end
 
-
-
 PhaseGenderSelect._ClearGenderHoverTimer = HL.Method() << function(self)
     if self.m_genderHoverTimerId > 0 then
         TimerManager:ClearTimer(self.m_genderHoverTimerId)
@@ -261,9 +195,6 @@ PhaseGenderSelect._ClearGenderHoverTimer = HL.Method() << function(self)
 
     self.m_genderHoverTimerId = 0
 end
-
-
-
 
 PhaseGenderSelect.GenderHoverPlayAnim = HL.Method(HL.Table) << function(self, arg)
     local isIn, delay = unpack(arg)
@@ -323,8 +254,6 @@ PhaseGenderSelect.GenderHoverPlayAnim = HL.Method(HL.Table) << function(self, ar
 
 end
 
-
-
 PhaseGenderSelect.ConfirmSelection = HL.Method() << function(self)
     
     if self.m_hadSelected then
@@ -362,10 +291,6 @@ PhaseGenderSelect.ConfirmSelection = HL.Method() << function(self)
     playerInfoSystem:SetGender(serverGender, true)
 end
 
-
-
-
-
 PhaseGenderSelect._InnerChooseGender = HL.Method(HL.String, HL.Opt(HL.Boolean)) << function(self, gender, isInit)
     local sceneObject = self.m_sceneObject
 
@@ -398,8 +323,6 @@ PhaseGenderSelect._InnerChooseGender = HL.Method(HL.String, HL.Opt(HL.Boolean)) 
         end
     end)
 end
-
-
 
 PhaseGenderSelect.OnConfirmGender = HL.Method() << function(self)
     
@@ -441,8 +364,6 @@ PhaseGenderSelect.OnConfirmGender = HL.Method() << function(self)
     end)
 end
 
-
-
 PhaseGenderSelect.LeaveGenderSelect = HL.Method() << function(self)
     AudioManager.PostEvent(AudioDataContainer.audioGlobalConfig.specialGameplayGenderSelectOut)
 
@@ -457,8 +378,6 @@ PhaseGenderSelect.LeaveGenderSelect = HL.Method() << function(self)
         self.m_onFinishGenderSelect()
     end
 end
-
-
 
 PhaseGenderSelect._OnDestroy = HL.Override() << function(self)
     PhaseGenderSelect.Super._OnDestroy(self)

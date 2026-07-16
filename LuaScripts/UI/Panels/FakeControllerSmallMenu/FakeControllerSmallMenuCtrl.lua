@@ -1,41 +1,13 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FakeControllerSmallMenu
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FakeControllerSmallMenuCtrl = HL.Class('FakeControllerSmallMenuCtrl', uiCtrl.UICtrl)
 
 local DEFAULT_PANEL_OFFSET = 5
 
-
 FakeControllerSmallMenuCtrl.m_currMenuData = HL.Field(HL.Table)
 
-
 FakeControllerSmallMenuCtrl.m_menuDataStack = HL.Field(HL.Forward("Stack"))
-
 
 
 
@@ -49,10 +21,8 @@ FakeControllerSmallMenuCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 FakeControllerSmallMenuCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    logger.info("[FakeControllerSmallMenu] OnCreate")
     self.view.highlightCell.maskNode.onClick:AddListener(function()
         self:_OnClickClose()
     end)
@@ -60,24 +30,20 @@ FakeControllerSmallMenuCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self.m_menuDataStack = require_ex("Common/Utils/DataStructure/Stack")()
 end
 
-
 FakeControllerSmallMenuCtrl.m_lateTickKey = HL.Field(HL.Number) << -1
 
-
-
 FakeControllerSmallMenuCtrl.OnShow = HL.Override() << function(self)
+    logger.info("[FakeControllerSmallMenu] OnShow")
     self.m_lateTickKey = LuaUpdate:Add("LateTick", function(deltaTime)
         self:_RefreshHighlight()
     end)
 end
-
-
 FakeControllerSmallMenuCtrl.OnHide = HL.Override() << function(self)
+    logger.info("[FakeControllerSmallMenu] OnHide")
     self:_Clear()
 end
-
-
 FakeControllerSmallMenuCtrl.OnClose = HL.Override() << function(self)
+    logger.info("[FakeControllerSmallMenu] OnClose, stackCount=" .. tostring(self.m_menuDataStack and self.m_menuDataStack:Count() or 0))
     
     
     
@@ -93,8 +59,6 @@ FakeControllerSmallMenuCtrl.OnClose = HL.Override() << function(self)
     self:_Clear()
 end
 
-
-
 FakeControllerSmallMenuCtrl.ShowAsControllerSmallMenu = HL.StaticMethod(HL.Table) << function(args)
     
     
@@ -104,12 +68,19 @@ FakeControllerSmallMenuCtrl.ShowAsControllerSmallMenu = HL.StaticMethod(HL.Table
         args = FakeControllerSmallMenuCtrl.TryParseArgs(unpack(args))
     end
 
+    logger.info("[FakeControllerSmallMenu] ShowAsControllerSmallMenu, id=" .. tostring(args and args.id) ..
+        ", panelId=" .. tostring(args and args.panelId) .. ", isGroup=" .. tostring(args and args.isGroup))
+
+    
+    local isOpen, ctrl = UIManager:IsOpen(PANEL_ID)
+    if isOpen and ctrl:IsPlayingAnimationOut() then
+        ctrl:_FinishOutAnimationAndHide()
+    end
+
     
     local self = FakeControllerSmallMenuCtrl.AutoOpen(PANEL_ID, nil, true)
     self:_TryRefresh(args)
 end
-
-
 
 FakeControllerSmallMenuCtrl.TryParseArgs = HL.StaticMethod(HL.Userdata).Return(HL.Table) << function(csArgs)
     local panelId = csArgs.panelId
@@ -134,18 +105,14 @@ FakeControllerSmallMenuCtrl.TryParseArgs = HL.StaticMethod(HL.Userdata).Return(H
     }
 end
 
-
-
-
 FakeControllerSmallMenuCtrl.OnInputDeviceTypeChanged = HL.Method(HL.Table) << function(self, arg)
+    logger.info("[FakeControllerSmallMenu] OnInputDeviceTypeChanged, force close")
     self:_ForceClose()
 end
 
-
-
-
 FakeControllerSmallMenuCtrl.CloseControllerSmallMenu = HL.Method(HL.Any) << function(self, groupId)
     if not self:IsShow() then
+        logger.info("[FakeControllerSmallMenu] CloseControllerSmallMenu skipped (not show), groupId=" .. tostring(groupId))
         return
     end
 
@@ -153,40 +120,35 @@ FakeControllerSmallMenuCtrl.CloseControllerSmallMenu = HL.Method(HL.Any) << func
         groupId = unpack(groupId)
     end
 
+    logger.info("[FakeControllerSmallMenu] CloseControllerSmallMenu, groupId=" .. tostring(groupId))
     self:_TryClose(groupId)
 end
-
-
-
 
 FakeControllerSmallMenuCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     self.view.highlightCell.gameObject:SetActive(active)
 end
 
-
-
 FakeControllerSmallMenuCtrl._Clear = HL.Method() << function(self)
+    logger.info("[FakeControllerSmallMenu] _Clear")
     LuaUpdate:Remove(self.m_lateTickKey)
     self.m_lateTickKey = -1
     Notify(MessageConst.TOGGLE_LEVEL_CAMERA_MOVE, { "guide", true })
     CoroutineManager:ClearAllCoroutine(self)
 end
 
-
-
 FakeControllerSmallMenuCtrl._OnClickClose = HL.Method() << function(self)
     if self.m_currMenuData and not self.m_currMenuData.canClickClose then
+        logger.info("[FakeControllerSmallMenu] _OnClickClose blocked by canClickClose, id=" .. tostring(self.m_currMenuData.id))
         return
     end
+    logger.info("[FakeControllerSmallMenu] _OnClickClose, force close")
     self:_ForceClose()
 end
-
-
-
 
 FakeControllerSmallMenuCtrl._TryRefresh = HL.Method(HL.Table) << function(self, args)
     local id = args.id
     if id == nil then
+        logger.info("[FakeControllerSmallMenu] _TryRefresh skipped, id is nil")
         return
     end
 
@@ -200,21 +162,23 @@ FakeControllerSmallMenuCtrl._TryRefresh = HL.Method(HL.Table) << function(self, 
         AudioAdapter.PostEvent(self.view.config.NORMAL_FRAME_OPEN_AUDIO)
     end
     self.m_menuDataStack:Push(args)
+    logger.info("[FakeControllerSmallMenu] _TryRefresh push" .. tostring(id) ..
+        ", stackCount=" .. tostring(self.m_menuDataStack:Count()))
 
     self:_Refresh(self.m_menuDataStack:Peek())
 end
 
-
-
-
 FakeControllerSmallMenuCtrl._Refresh = HL.Method(HL.Table) << function(self, menuData)
     if menuData == nil or self.m_currMenuData == menuData then
+        logger.info("[FakeControllerSmallMenu] _Refresh skipped (nil or same menuData)")
         return
     end
 
     local id = menuData.id
     local isGroup = menuData.isGroup
     local oldGroupId = InputManagerInst:GetGroupParentId(isGroup, id)
+    logger.info("[FakeControllerSmallMenu] _Refresh, id=" .. tostring(id) .. ", isGroup=" .. tostring(isGroup) ..
+        ", borrow parent: " .. tostring(oldGroupId) .. " -> " .. tostring(self.view.inputGroup.groupId))
     InputManagerInst:ChangeParent(isGroup, id, self.view.inputGroup.groupId)
     local needShowType = menuData.useVirtualMouse and Types.EPanelMouseMode.NeedShow or Types.EPanelMouseMode.ForceHide
     self:ChangePanelCfg("virtualMouseMode", needShowType)
@@ -247,8 +211,6 @@ FakeControllerSmallMenuCtrl._Refresh = HL.Method(HL.Table) << function(self, men
     self:_RefreshHighlight()
 end
 
-
-
 FakeControllerSmallMenuCtrl._RefreshHighlight = HL.Method() << function(self)
     if not self.view.highlightCell.gameObject.activeSelf then
         return
@@ -270,6 +232,7 @@ FakeControllerSmallMenuCtrl._RefreshHighlight = HL.Method() << function(self)
     local targetRect = UIUtils.getUIRectOfRectTransform(target, self.uiCamera) 
 
     rectTrans.anchoredPosition = Vector2(targetRect.center.x, -targetRect.center.y)
+    rectTrans.localRotation = target.rotation
     rectTrans.sizeDelta = targetRect.size
 
     
@@ -300,9 +263,6 @@ FakeControllerSmallMenuCtrl._RefreshHighlight = HL.Method() << function(self)
     end
 end
 
-
-
-
 FakeControllerSmallMenuCtrl._ChangePanelOrder = HL.Method(HL.Table) << function(self, menuData)
     if menuData == nil then
         return
@@ -331,24 +291,30 @@ FakeControllerSmallMenuCtrl._ChangePanelOrder = HL.Method(HL.Table) << function(
     end
 end
 
-
+FakeControllerSmallMenuCtrl._FinishOutAnimationAndHide = HL.Method() << function(self)
+    logger.info("[FakeControllerSmallMenu] _FinishOutAnimationAndHide (interrupt out anim)")
+    if self.m_outAnimAsyncActionHelper then
+        self.m_outAnimAsyncActionHelper:ForceClear()
+    end
+    self:Hide()
+end
 
 FakeControllerSmallMenuCtrl._ForceClose = HL.Method() << function(self)
     if self.m_menuDataStack:Empty() then
+        logger.info("[FakeControllerSmallMenu] _ForceClose skipped (stack empty)")
         return
     end
 
+    logger.info("[FakeControllerSmallMenu] _ForceClose, stackCount=" .. tostring(self.m_menuDataStack:Count()))
     self:_Close(self.m_menuDataStack:Peek())
     self.m_menuDataStack:Clear()
 
     self:Hide()
 end
 
-
-
-
 FakeControllerSmallMenuCtrl._TryClose = HL.Method(HL.Number) << function(self, groupId)
     if self.m_menuDataStack:Empty() then
+        logger.info("[FakeControllerSmallMenu] _TryClose skipped (stack empty), groupId=" .. tostring(groupId))
         return
     end
 
@@ -362,9 +328,12 @@ FakeControllerSmallMenuCtrl._TryClose = HL.Method(HL.Number) << function(self, g
         end
     end
     if closeMenuData == nil then
+        logger.info("[FakeControllerSmallMenu] _TryClose no match in stack, groupId=" .. tostring(groupId))
         return
     end
 
+    logger.info("[FakeControllerSmallMenu] _TryClose match, groupId=" .. tostring(groupId) ..
+        ", index=" .. tostring(index) .. ", isTop=" .. tostring(index == self.m_menuDataStack:Count()))
     if index == self.m_menuDataStack:Count() then
         self:_Close(closeMenuData)
     end
@@ -386,11 +355,9 @@ FakeControllerSmallMenuCtrl._TryClose = HL.Method(HL.Number) << function(self, g
     end
 end
 
-
-
-
 FakeControllerSmallMenuCtrl._Close = HL.Method(HL.Table) << function(self, menuData)
     if menuData == nil then
+        logger.info("[FakeControllerSmallMenu] _Close skipped (menuData nil)")
         return
     end
 
@@ -406,6 +373,8 @@ FakeControllerSmallMenuCtrl._Close = HL.Method(HL.Table) << function(self, menuD
     local id = menuData.id
     local isGroup = menuData.isGroup
     local oldGroupId = menuData.oldGroupId
+    logger.info("[FakeControllerSmallMenu] _Close, id=" .. tostring(id) .. ", isGroup=" .. tostring(isGroup) ..
+        ", restore parent -> " .. tostring(oldGroupId))
     InputManagerInst:ChangeParent(isGroup, id, oldGroupId)
 
     if menuData.onClose then
@@ -415,17 +384,17 @@ FakeControllerSmallMenuCtrl._Close = HL.Method(HL.Table) << function(self, menuD
     self.m_currMenuData = nil
 end
 
-
-
-
 FakeControllerSmallMenuCtrl._TransferParent = HL.Method(HL.Table) << function(self, menuData)
     if menuData == nil then
+        logger.info("[FakeControllerSmallMenu] _TransferParent skipped (menuData nil)")
         return
     end
 
     local id = menuData.id
     local isGroup = menuData.isGroup
     local oldGroupId = menuData.oldGroupId
+    logger.info("[FakeControllerSmallMenu] _TransferParent, id=" .. tostring(id) .. ", isGroup=" .. tostring(isGroup) ..
+        ", return parent -> " .. tostring(oldGroupId))
     InputManagerInst:ChangeParent(isGroup, id, oldGroupId)
 
     if menuData.hintPlaceholder ~= nil then
@@ -435,8 +404,6 @@ FakeControllerSmallMenuCtrl._TransferParent = HL.Method(HL.Table) << function(se
         Notify(MessageConst.HIDE_WALLET_BAR, PANEL_ID)
     end
 end
-
-
 
 FakeControllerSmallMenuCtrl.OnPanelOrderRecalculated = HL.Method() << function(self)
     if self.m_currMenuData == nil then

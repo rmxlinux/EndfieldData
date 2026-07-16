@@ -2,28 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WikiWeaponSkill
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiWeaponSkillCtrl = HL.Class('WikiWeaponSkillCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -34,17 +13,11 @@ WikiWeaponSkillCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 WikiWeaponSkillCtrl.m_curWikiEntryShowData = HL.Field(HL.Table)
-
 
 WikiWeaponSkillCtrl.m_arg = HL.Field(HL.Table)
 
-
 WikiWeaponSkillCtrl.m_curWeaponSkillShowData = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -73,19 +46,13 @@ end
 
 
 
-
 WikiWeaponSkillCtrl.m_getSkillItemCell = HL.Field(HL.Function)
-
 
 WikiWeaponSkillCtrl.m_weaponSkillShowDataList = HL.Field(HL.Table)
 
-
 WikiWeaponSkillCtrl.m_selectedIndex = HL.Field(HL.Number) << 0
 
-
 WikiWeaponSkillCtrl.m_pendingNaviIndex = HL.Field(HL.Number) << 0
-
-
 
 WikiWeaponSkillCtrl._RefreshLeft = HL.Method() << function(self)
     self.m_weaponSkillShowDataList = WikiUtils.getWeaponSkillShowDataList(self.m_curWikiEntryShowData.wikiEntryData.refItemId)
@@ -136,8 +103,6 @@ WikiWeaponSkillCtrl._RefreshLeft = HL.Method() << function(self)
     self:_SetSelectedIndex(selectedIndex)
 end
 
-
-
 WikiWeaponSkillCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
     arg.resumeState = {
@@ -145,9 +110,6 @@ WikiWeaponSkillCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) <
     }
     return arg
 end
-
-
-
 
 WikiWeaponSkillCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
     if not resumeState or not resumeState.selectedIndex or resumeState.selectedIndex <= 1 then
@@ -161,9 +123,6 @@ WikiWeaponSkillCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(se
     end
 end
 
-
-
-
 WikiWeaponSkillCtrl._TrySetSelectedCellNaviTarget = HL.Method(HL.Number).Return(HL.Boolean) << function(self, targetIndex)
     local selectedCellObj = self.view.left.scrollListLeft:Get(CSIndex(targetIndex))
     local selectedCell = selectedCellObj and self.m_getSkillItemCell(selectedCellObj) or nil
@@ -171,12 +130,9 @@ WikiWeaponSkillCtrl._TrySetSelectedCellNaviTarget = HL.Method(HL.Number).Return(
         return false
     end
     self:_SetCellSelected(selectedCell, true, false)
-    InputManagerInst.controllerNaviManager:SetTarget(selectedCell.btn)
+    self:SetNaviTarget(selectedCell.btn)
     return true
 end
-
-
-
 
 WikiWeaponSkillCtrl._SetSelectedIndex = HL.Method(HL.Number) << function(self, selectedIndex)
     if selectedIndex == self.m_selectedIndex then
@@ -192,11 +148,6 @@ WikiWeaponSkillCtrl._SetSelectedIndex = HL.Method(HL.Number) << function(self, s
     self:_TrySetSelectedCellNaviTarget(selectedIndex)
 end
 
-
-
-
-
-
 WikiWeaponSkillCtrl._SetCellSelected = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, cell, isSelected, playAnim)
     if not cell then
         return
@@ -209,16 +160,11 @@ WikiWeaponSkillCtrl._SetCellSelected = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL
     cell.normalNode.gameObject:SetActive(not isSelected)
 end
 
-
 WikiWeaponSkillCtrl.m_getEffectCell = HL.Field(HL.Function)
-
 
 WikiWeaponSkillCtrl.m_getWeaponCell = HL.Field(HL.Function)
 
-
 WikiWeaponSkillCtrl.m_weaponList = HL.Field(HL.Table)
-
-
 
 WikiWeaponSkillCtrl._RefreshCenter = HL.Method() << function(self)
     local hasValue

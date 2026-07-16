@@ -1,35 +1,12 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiCraftingTreeItem = HL.Class('WikiCraftingTreeItem', UIWidgetBase)
-
 
 WikiCraftingTreeItem.m_args = HL.Field(HL.Table)
 
-
 WikiCraftingTreeItem.m_hasWiki = HL.Field(HL.Boolean) << false
 
-
 WikiCraftingTreeItem.m_isMain = HL.Field(HL.Boolean) << false
-
-
 
 
 WikiCraftingTreeItem._OnFirstTimeInit = HL.Override() << function(self)
@@ -47,9 +24,6 @@ WikiCraftingTreeItem._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
 end
-
-
-
 
 
 
@@ -82,14 +56,9 @@ WikiCraftingTreeItem.InitWikiCraftingTreeItem = HL.Method(HL.Table) << function(
     self:_InitController()
 end
 
-
-
 WikiCraftingTreeItem.GetItemId = HL.Method().Return(HL.String) << function(self)
     return self.m_args.itemId
 end
-
-
-
 
 WikiCraftingTreeItem.SetMain = HL.Method(HL.Boolean) << function(self, isMain)
     self.view.mainNode.gameObject:SetActive(isMain)
@@ -101,10 +70,6 @@ WikiCraftingTreeItem.SetMain = HL.Method(HL.Boolean) << function(self, isMain)
         end
     end
 end
-
-
-
-
 
 WikiCraftingTreeItem.SetJumpBtn = HL.Method(HL.Boolean, HL.Boolean) << function(self, isMain, hasWiki)
     local stateName
@@ -118,39 +83,24 @@ WikiCraftingTreeItem.SetJumpBtn = HL.Method(HL.Boolean, HL.Boolean) << function(
     self.view.selectNode.stateController:SetState(stateName)
 end
 
-
-
-
 WikiCraftingTreeItem.SetSelected = HL.Method(HL.Boolean) << function(self, isSelected)
     self.view.selectNode.gameObject:SetActive(isSelected)
     self.view.itemBlack.view.nonDrawingGraphic.enabled = not isSelected
 end
 
-
-
 WikiCraftingTreeItem.GetButton = HL.Method().Return(HL.Userdata) << function(self)
     return self.view.itemBlack.view.button
 end
-
-
-
 
 WikiCraftingTreeItem.SetLeftMountPointCount = HL.Method(HL.Number) << function(self, count)
     CSUtils.UIContainerResize(self.view.leftNode, count)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.leftNode)
 end
 
-
-
-
 WikiCraftingTreeItem.SetRightMountPointCount = HL.Method(HL.Number) << function(self, count)
     CSUtils.UIContainerResize(self.view.rightNode, count)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.rightNode)
 end
-
-
-
-
 
 WikiCraftingTreeItem.GetLeftMountPoint = HL.Method(Transform, HL.Number).Return(Vector2) << function(self, relativeTo, index)
     local node = self.view.leftNode.transform:GetChild(CSIndex(index))
@@ -161,10 +111,6 @@ WikiCraftingTreeItem.GetLeftMountPoint = HL.Method(Transform, HL.Number).Return(
     return Vector2.zero
 end
 
-
-
-
-
 WikiCraftingTreeItem.GetRightMountPoint = HL.Method(Transform, HL.Number).Return(Vector2) << function(self, relativeTo, index)
     local node = self.view.rightNode.transform:GetChild(CSIndex(index))
     if node then
@@ -174,15 +120,9 @@ WikiCraftingTreeItem.GetRightMountPoint = HL.Method(Transform, HL.Number).Return
     return Vector2.zero
 end
 
-
-
 WikiCraftingTreeItem.HideExpandToggle = HL.Method() << function(self)
     self.view.expandToggle.gameObject:SetActive(false)
 end
-
-
-
-
 
 WikiCraftingTreeItem.SetExpandToggle = HL.Method(HL.Boolean, HL.Function) << function(self, isOn, callback)
     self.view.expandToggle.onValueChanged:RemoveAllListeners()
@@ -198,8 +138,6 @@ WikiCraftingTreeItem.SetExpandToggle = HL.Method(HL.Boolean, HL.Function) << fun
         end
     end)
 end
-
-
 
 WikiCraftingTreeItem._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then

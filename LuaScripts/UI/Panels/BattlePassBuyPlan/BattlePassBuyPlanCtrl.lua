@@ -3,27 +3,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BattlePassBuyPlan
 local PHASE_ID = PhaseId.BattlePassBuyPlan
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BattlePassBuyPlanCtrl = HL.Class('BattlePassBuyPlanCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -36,38 +16,25 @@ BattlePassBuyPlanCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 local itemPerLine = 7
 
-
 BattlePassBuyPlanCtrl.m_bpSystem = HL.Field(HL.Any)
-
 
 BattlePassBuyPlanCtrl.m_buyOriTrack = HL.Field(HL.Boolean) << false
 
-
 BattlePassBuyPlanCtrl.m_buyProtocalTrack = HL.Field(HL.Boolean) << false
-
 
 BattlePassBuyPlanCtrl.m_seasonData = HL.Field(HL.Any)
 
-
 BattlePassBuyPlanCtrl.m_rewardNow = HL.Field(HL.Table)
-
 
 BattlePassBuyPlanCtrl.m_rewardFuture = HL.Field(HL.Table)
 
-
 BattlePassBuyPlanCtrl.m_rewardNowCells = HL.Field(HL.Any)
-
 
 BattlePassBuyPlanCtrl.m_rewardFutureCells = HL.Field(HL.Any)
 
-
 BattlePassBuyPlanCtrl.m_isOri = HL.Field(HL.Boolean) << true
 
-
 BattlePassBuyPlanCtrl.m_onClose = HL.Field(HL.Function)
-
-
-
 
 
 BattlePassBuyPlanCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -128,9 +95,6 @@ BattlePassBuyPlanCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
-
 BattlePassBuyPlanCtrl._AfterBuy = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     local buyingPro = not self.m_buyProtocalTrack and BattlePassUtils.CheckPayTrackActive()
 
@@ -141,8 +105,6 @@ BattlePassBuyPlanCtrl._AfterBuy = HL.Method(HL.Opt(HL.Any)) << function(self, ar
     end
 
 end
-
-
 
 BattlePassBuyPlanCtrl._RefreshState = HL.Method() << function(self)
     local alreadyBuy
@@ -165,8 +127,6 @@ BattlePassBuyPlanCtrl._RefreshState = HL.Method() << function(self)
         self.view.amountNode:SetState("Pay")
     end
 end
-
-
 
 BattlePassBuyPlanCtrl._InitReward = HL.Method() << function(self)
     local maxLevel = self.m_seasonData.maxLevel
@@ -246,8 +206,6 @@ BattlePassBuyPlanCtrl._InitReward = HL.Method() << function(self)
     end)
 end
 
-
-
 BattlePassBuyPlanCtrl._BuyPlan = HL.Method() << function(self)
     if self.m_isOri then
         BattlePassUtils.BuyOriginiumTrack()
@@ -256,13 +214,9 @@ BattlePassBuyPlanCtrl._BuyPlan = HL.Method() << function(self)
     end
 end
 
-
-
 BattlePassBuyPlanCtrl.OnShow = HL.Override() << function(self)
     self:_RefreshState()
 end
-
-
 
 
 

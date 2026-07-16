@@ -7,7 +7,6 @@ MissionTrackerCtrl = HL.Class('MissionTrackerCtrl', uiCtrl.UICtrl)
 
 
 
-
 MissionTrackerCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }

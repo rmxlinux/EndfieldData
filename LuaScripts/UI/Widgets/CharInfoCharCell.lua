@@ -1,30 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 CharInfoCharCell = HL.Class('CharInfoCharCell', UIWidgetBase)
 
-
 CharInfoCharCell.info = HL.Field(HL.Table)
-
 
 CharInfoCharCell.data = HL.Field(HL.Userdata)
 
 
 
 
-
-
 CharInfoCharCell._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
-
 
 CharInfoCharCell.InitCharInfoCharCell = HL.Method(HL.Any, HL.Opt(HL.Function)) << function(self, info, onClick)
     self:_FirstTimeInit()
@@ -54,9 +40,6 @@ CharInfoCharCell.InitCharInfoCharCell = HL.Method(HL.Any, HL.Opt(HL.Function)) <
     self.view.selectNode.gameObject:SetActive(hasData)
     self.view.imageBlank.gameObject:SetActive(not hasData)
 end
-
-
-
 
 CharInfoCharCell.RefreshCharInfo = HL.Method(HL.Userdata) << function(self, charInfo)
     if charInfo then

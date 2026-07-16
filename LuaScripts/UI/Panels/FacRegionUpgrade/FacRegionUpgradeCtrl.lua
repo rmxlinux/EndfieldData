@@ -7,82 +7,9 @@ local RegionBoundEffectType = {
     Bottom = 3,
     Top = 4,
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacRegionUpgradeCtrl = HL.Class('FacRegionUpgradeCtrl', uiCtrl.UICtrl)
 
 local WALLET_ICON_NAME_FORMAT = "%s_black"
-
 
 
 
@@ -94,89 +21,59 @@ FacRegionUpgradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_ON_UNLOCK_TECH_TREE_UI] = '_OnTechTreeStateChanged',
 }
 
-
 FacRegionUpgradeCtrl.m_levelId = HL.Field(HL.String) << ""
-
 
 FacRegionUpgradeCtrl.m_isLoadFinished = HL.Field(HL.Boolean) << false
 
-
 FacRegionUpgradeCtrl.m_purchaseEnabled = HL.Field(HL.Boolean) << true
-
 
 FacRegionUpgradeCtrl.m_regionIndex = HL.Field(HL.Number) << -1
 
-
 FacRegionUpgradeCtrl.m_selectItemId = HL.Field(HL.String) << ""
-
 
 FacRegionUpgradeCtrl.m_purchaseItemId = HL.Field(HL.String) << ""
 
-
 FacRegionUpgradeCtrl.m_regionItemDataList = HL.Field(HL.Table)
-
 
 FacRegionUpgradeCtrl.m_regionItemCells = HL.Field(HL.Forward('UIListCache'))
 
-
 FacRegionUpgradeCtrl.m_busItemDataList = HL.Field(HL.Table)
-
 
 FacRegionUpgradeCtrl.m_busItemCells = HL.Field(HL.Forward('UIListCache'))
 
-
 FacRegionUpgradeCtrl.m_itemDataGetter = HL.Field(HL.Table)
-
 
 FacRegionUpgradeCtrl.m_regionSceneDataList = HL.Field(HL.Table)
 
-
 FacRegionUpgradeCtrl.m_currencyItemId = HL.Field(HL.String) << ""
-
 
 FacRegionUpgradeCtrl.m_currencyItemIconId = HL.Field(HL.String) << ""
 
-
 FacRegionUpgradeCtrl.m_currencyItemSprite = HL.Field(HL.Userdata)
-
 
 FacRegionUpgradeCtrl.m_currencyItemName = HL.Field(HL.String) << ""
 
-
 FacRegionUpgradeCtrl.m_currencyCount = HL.Field(HL.Number) << -1
-
 
 FacRegionUpgradeCtrl.m_isAllPurchased = HL.Field(HL.Boolean) << false
 
-
 FacRegionUpgradeCtrl.m_actionDescCells = HL.Field(HL.Forward('UIListCache'))
-
 
 FacRegionUpgradeCtrl.m_actionBusFreeCells = HL.Field(HL.Forward('UIListCache'))
 
-
 FacRegionUpgradeCtrl.m_conditionDescCells = HL.Field(HL.Forward('UIListCache'))
-
 
 FacRegionUpgradeCtrl.m_regionState = HL.Field(HL.Userdata)
 
-
 FacRegionUpgradeCtrl.m_regionEffectDataGetter = HL.Field(HL.Table)
-
 
 FacRegionUpgradeCtrl.m_regionEffectInitialized = HL.Field(HL.Boolean) << false
 
-
 FacRegionUpgradeCtrl.m_busEffectDataGetter = HL.Field(HL.Table)
-
 
 FacRegionUpgradeCtrl.m_busEffectInitialized = HL.Field(HL.Boolean) << false
 
-
 FacRegionUpgradeCtrl.m_purchasedAnimTimer = HL.Field(HL.Number) << -1
-
-
-
 
 
 FacRegionUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -210,20 +107,14 @@ FacRegionUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_TryRecoverState(recoverState)
 end
 
-
-
 FacRegionUpgradeCtrl.OnClose = HL.Override() << function(self)
     self:_ClearPurchasedAnimTimer()
 end
-
-
 
 FacRegionUpgradeCtrl.OnLoadFinished = HL.Method() << function(self)
     self.m_isLoadFinished = true
     self:_InitRegionUpgradeController()
 end
-
-
 
 
 
@@ -250,8 +141,6 @@ FacRegionUpgradeCtrl._InitCurrencyItem = HL.Method() << function(self)
     self.view.walletBarPlaceholder:InitWalletBarPlaceholder({ self.m_currencyItemId })
 end
 
-
-
 FacRegionUpgradeCtrl._InitItemDetailList = HL.Method() << function(self)
     self.m_regionItemCells = UIUtils.genCellCache(self.view.regionItemCell)
     self.m_busItemCells = UIUtils.genCellCache(self.view.busItemCell)
@@ -265,9 +154,6 @@ FacRegionUpgradeCtrl._InitItemDetailList = HL.Method() << function(self)
     self:_RefreshBtnNodeState()
     self:_RefreshBusNodeState()
 end
-
-
-
 
 FacRegionUpgradeCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState and not string.isEmpty(recoverState.selectedItemId) then
@@ -287,9 +173,6 @@ end
 
 
 
-
-
-
 FacRegionUpgradeCtrl._OnWalletChanged = HL.Method(HL.Any) << function(self, eventArgs)
     local changeId = unpack(eventArgs)
     if changeId ~= self.m_currencyItemId then
@@ -301,8 +184,6 @@ FacRegionUpgradeCtrl._OnWalletChanged = HL.Method(HL.Any) << function(self, even
     self:_RefreshBtnNodeState()
 end
 
-
-
 FacRegionUpgradeCtrl._OnPurchaseSelectedItem = HL.Method() << function(self)
     if string.isEmpty(self.m_selectItemId) or not self.m_purchaseEnabled then
         return
@@ -312,17 +193,13 @@ FacRegionUpgradeCtrl._OnPurchaseSelectedItem = HL.Method() << function(self)
     GameInstance.player.remoteFactory.panelStore:SendBuyGood(self.m_selectItemId)
 end
 
-
-
-FacRegionUpgradeCtrl._OnTechTreeStateChanged = HL.Method() << function(self)
+FacRegionUpgradeCtrl._OnTechTreeStateChanged = HL.Method(HL.Table) << function(self, args)
     self:_RefreshBusNodeState()
 
     if not DeviceInfo.usingController then
         self:_SelectUpgradeItemCell()
     end
 end
-
-
 
 FacRegionUpgradeCtrl._OnUpgradeDataChanged = HL.Method() << function(self)
     local purchasedCountGetFunc = function()
@@ -385,10 +262,6 @@ end
 
 
 
-
-
-
-
 FacRegionUpgradeCtrl._GetConditionCompleted = HL.Method(GEnums.ConditionType, HL.Table).Return(HL.Boolean) << function(self, condition, args)
     if condition == GEnums.ConditionType.CheckFacPanelStoreGoodDone then
         local itemData = self.m_itemDataGetter[args[1]]
@@ -400,10 +273,6 @@ FacRegionUpgradeCtrl._GetConditionCompleted = HL.Method(GEnums.ConditionType, HL
 
     return false
 end
-
-
-
-
 
 FacRegionUpgradeCtrl._GetConditionDescText = HL.Method(GEnums.ConditionType, HL.Table).Return(HL.String) << function(self, condition, args)
     local success, conditionDescData = Tables.facPanelStoreConditionDescTable:TryGetValue(condition)
@@ -423,9 +292,6 @@ FacRegionUpgradeCtrl._GetConditionDescText = HL.Method(GEnums.ConditionType, HL.
     return ""
 end
 
-
-
-
 FacRegionUpgradeCtrl._GetItemDataListByType = HL.Method(GEnums.FacPanelStoreGoodType).Return(HL.Table) << function(self, type)
     if type == GEnums.FacPanelStoreGoodType.RegionLevelUp then
         return self.m_regionItemDataList
@@ -434,10 +300,6 @@ FacRegionUpgradeCtrl._GetItemDataListByType = HL.Method(GEnums.FacPanelStoreGood
     end
     return nil
 end
-
-
-
-
 
 FacRegionUpgradeCtrl._GetItemSelectCallbackByType = HL.Method(HL.String, GEnums.FacPanelStoreGoodType).Return(HL.Function) << function(self, id, type)
     if type == GEnums.FacPanelStoreGoodType.RegionLevelUp then
@@ -457,21 +319,15 @@ end
 
 
 
-
-
 FacRegionUpgradeCtrl._UpdateCurrencyCount = HL.Method() << function(self)
     self.m_currencyCount = GameInstance.player.inventory:GetItemCount(Utils.getCurrentScope(), Utils.getCurrentChapterId(), self.m_currencyItemId)
 end
-
-
 
 FacRegionUpgradeCtrl._UpdateAndRefreshAllUpgradeItems = HL.Method() << function(self)
     self:_UpdateUpgradeItemDataList()
     self:_RefreshUpgradeItemCells()
     self:_RefreshAllItemCellsCurrencyTextColor()
 end
-
-
 
 FacRegionUpgradeCtrl._UpdateUpgradeItemDataList = HL.Method() << function(self)
     local system = GameInstance.player.remoteFactory.panelStore
@@ -524,8 +380,6 @@ FacRegionUpgradeCtrl._UpdateUpgradeItemDataList = HL.Method() << function(self)
     self:_UpdateBusItemDataList()
 end
 
-
-
 FacRegionUpgradeCtrl._UpdateRegionItemDataList = HL.Method() << function(self)
     for _, data in ipairs(self.m_regionItemDataList) do
         for actionIndex = 0, data.actions.Count - 1 do
@@ -536,8 +390,6 @@ FacRegionUpgradeCtrl._UpdateRegionItemDataList = HL.Method() << function(self)
         end
     end
 end
-
-
 
 FacRegionUpgradeCtrl._UpdateBusItemDataList = HL.Method() << function(self)
     for _, data in ipairs(self.m_busItemDataList) do
@@ -550,8 +402,6 @@ FacRegionUpgradeCtrl._UpdateBusItemDataList = HL.Method() << function(self)
     end
 end
 
-
-
 FacRegionUpgradeCtrl._RefreshUpgradeItemCells = HL.Method() << function(self)
     self.m_regionItemCells:Refresh(#self.m_regionItemDataList, function(cell, index)
         self:_RefreshUpgradeItemCell(cell, self.m_regionItemDataList[index])
@@ -560,10 +410,6 @@ FacRegionUpgradeCtrl._RefreshUpgradeItemCells = HL.Method() << function(self)
         self:_RefreshUpgradeItemCell(cell, self.m_busItemDataList[index])
     end)
 end
-
-
-
-
 
 FacRegionUpgradeCtrl._RefreshUpgradeItemCell = HL.Method(HL.Table, HL.Table) << function(self, cell, data)
     cell.nameTxt.text = data.name
@@ -599,8 +445,6 @@ FacRegionUpgradeCtrl._RefreshUpgradeItemCell = HL.Method(HL.Table, HL.Table) << 
     data.cell = cell
 end
 
-
-
 FacRegionUpgradeCtrl._RefreshAllItemCellsCurrencyTextColor = HL.Method() << function(self)
     for _, data in pairs(self.m_itemDataGetter) do
         local cell = data.cell
@@ -610,8 +454,6 @@ FacRegionUpgradeCtrl._RefreshAllItemCellsCurrencyTextColor = HL.Method() << func
             self.view.config.PURCHASE_COST_NOT_ENOUGH_COLOR
     end
 end
-
-
 
 FacRegionUpgradeCtrl._RefreshActionAndConditionInfo = HL.Method() << function(self)
     self.view.leftNode.gameObject:SetActive(false)
@@ -688,8 +530,6 @@ FacRegionUpgradeCtrl._RefreshActionAndConditionInfo = HL.Method() << function(se
     self.view.leftNode.gameObject:SetActive(true)
 end
 
-
-
 FacRegionUpgradeCtrl._RefreshBtnNodeState = HL.Method() << function(self)
     local btnNode = self.view.btnNode
     if self.m_isAllPurchased then
@@ -719,8 +559,6 @@ FacRegionUpgradeCtrl._RefreshBtnNodeState = HL.Method() << function(self)
     end
 end
 
-
-
 FacRegionUpgradeCtrl._RefreshBusNodeState = HL.Method() << function(self)
     local isFacTechTreeUnlocked = Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacTechTree)
     if not isFacTechTreeUnlocked then
@@ -741,9 +579,6 @@ FacRegionUpgradeCtrl._RefreshBusNodeState = HL.Method() << function(self)
 
     self.view.busStateController:SetState("Normal")
 end
-
-
-
 
 
 
@@ -775,14 +610,12 @@ FacRegionUpgradeCtrl._SelectUpgradeItemCell = HL.Method(HL.Opt(HL.String)) << fu
         self:BlendOutCameraFromSelectItemTarget(false)
 
         if self.naviGroup.IsTopLayer then
-            UIUtils.setAsNaviTarget(nil)
+            self:SetNaviTarget(nil)
         end
     else
         self:BlendInCameraToSelectItemTarget()
     end
 end
-
-
 
 FacRegionUpgradeCtrl._FindNextItemCellToSelect = HL.Method() << function(self)
     if string.isEmpty(self.m_selectItemId) then
@@ -793,7 +626,7 @@ FacRegionUpgradeCtrl._FindNextItemCellToSelect = HL.Method() << function(self)
         for _, data in ipairs(dataList) do
             if not data.isPurchased then
                 if DeviceInfo.usingController then
-                    UIUtils.setAsNaviTarget(data.cell.button)  
+                    self:SetNaviTarget(data.cell.button)  
                 else
                     self:_SelectUpgradeItemCell(data.id)
                 end
@@ -824,10 +657,6 @@ FacRegionUpgradeCtrl._FindNextItemCellToSelect = HL.Method() << function(self)
     self:_SelectUpgradeItemCell()
 end
 
-
-
-
-
 FacRegionUpgradeCtrl._OnRegionLevelUpItemSelectedStateChange = HL.Method(HL.String, HL.Boolean) << function(self, id, selected)
     local data = self.m_itemDataGetter[id]
     if data == nil or data.upgradeLevel == nil then
@@ -840,10 +669,6 @@ FacRegionUpgradeCtrl._OnRegionLevelUpItemSelectedStateChange = HL.Method(HL.Stri
     end
 end
 
-
-
-
-
 FacRegionUpgradeCtrl._OnBusPlaceItemSelectedStateChange = HL.Method(HL.String, HL.Boolean) << function(self, id, selected)
     local data = self.m_itemDataGetter[id]
     if data == nil or data.instKey == nil then
@@ -855,8 +680,6 @@ FacRegionUpgradeCtrl._OnBusPlaceItemSelectedStateChange = HL.Method(HL.String, H
         effectData.effectController:SetSelectState(selected)
     end
 end
-
-
 
 FacRegionUpgradeCtrl.BlendInCameraToSelectItemTarget = HL.Method() << function(self)
     local cameraConfig = DataManager.facRegionUpgradeCameraConfig
@@ -876,9 +699,6 @@ FacRegionUpgradeCtrl.BlendInCameraToSelectItemTarget = HL.Method() << function(s
     )
 end
 
-
-
-
 FacRegionUpgradeCtrl.BlendOutCameraFromSelectItemTarget = HL.Method(HL.Boolean) << function(self, fastMode)
     local blendTime = fastMode and 0 or DataManager.facRegionUpgradeCameraConfig.exitTargetBlendData.blendTime
     CameraUtils.DoCommonTempBlendOut(
@@ -888,13 +708,9 @@ FacRegionUpgradeCtrl.BlendOutCameraFromSelectItemTarget = HL.Method(HL.Boolean) 
     )
 end
 
-
-
 FacRegionUpgradeCtrl.GetSelectItemId = HL.Method().Return(HL.String) << function(self)
     return self.m_selectItemId
 end
-
-
 
 FacRegionUpgradeCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Table)) << function(self)
     if string.isEmpty(self.m_selectItemId) then
@@ -904,8 +720,6 @@ FacRegionUpgradeCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Table)) <
         selectedItemId = self.m_selectItemId,
     }
 end
-
-
 
 
 
@@ -937,9 +751,6 @@ FacRegionUpgradeCtrl._InitRegionSceneData = HL.Method() << function(self)
     self.m_regionState = regionState
 end
 
-
-
-
 FacRegionUpgradeCtrl.InitRegionEffects = HL.Method(HL.Table) << function(self, effectList)
     self.m_regionEffectDataGetter = {}
     if effectList == nil then
@@ -963,8 +774,6 @@ FacRegionUpgradeCtrl.InitRegionEffects = HL.Method(HL.Table) << function(self, e
     self:_OnRegionLevelUpItemSelectedStateChange(self.m_selectItemId, true)
 end
 
-
-
 FacRegionUpgradeCtrl.GetBusEffectInstKeyList = HL.Method().Return(HL.Table) << function(self)
     local instKeyList = {}
     for _, data in ipairs(self.m_busItemDataList) do
@@ -978,9 +787,6 @@ FacRegionUpgradeCtrl.GetBusEffectInstKeyList = HL.Method().Return(HL.Table) << f
     end
     return instKeyList
 end
-
-
-
 
 FacRegionUpgradeCtrl.InitBusEffects = HL.Method(HL.Table) << function(self, effectList)
     self.m_busEffectDataGetter = {}
@@ -1003,8 +809,6 @@ FacRegionUpgradeCtrl.InitBusEffects = HL.Method(HL.Table) << function(self, effe
     self:_OnBusPlaceItemSelectedStateChange(self.m_selectItemId, true)
 end
 
-
-
 FacRegionUpgradeCtrl._ResetRegionEffects = HL.Method() << function(self)
     local lastPurchasedLevel = 1
     for _, data in ipairs(self.m_regionItemDataList) do
@@ -1021,8 +825,6 @@ FacRegionUpgradeCtrl._ResetRegionEffects = HL.Method() << function(self)
         effectData.effectController:SetVisibleState(level >= lastPurchasedLevel)
     end
 end
-
-
 
 FacRegionUpgradeCtrl._ResetBusEffects = HL.Method() << function(self)
     for _, data in ipairs(self.m_busItemDataList) do
@@ -1041,8 +843,6 @@ end
 
 
 
-
-
 FacRegionUpgradeCtrl._OnPurchaseSelectItemBefore = HL.Method() << function(self)
     local itemData = self.m_itemDataGetter[self.m_purchaseItemId]
     if itemData == nil then
@@ -1053,7 +853,7 @@ FacRegionUpgradeCtrl._OnPurchaseSelectItemBefore = HL.Method() << function(self)
 
     UIUtils.PlayAnimationAndToggleActive(self.view.mainAnim, false, function()
         if DeviceInfo.usingController then
-            UIUtils.setAsNaviTarget(nil)
+            self:SetNaviTarget(nil)
         end
     end)
 
@@ -1065,8 +865,6 @@ FacRegionUpgradeCtrl._OnPurchaseSelectItemBefore = HL.Method() << function(self)
 
     self.view.luaPanel:BlockAllInput()
 end
-
-
 
 FacRegionUpgradeCtrl._OnPurchaseRegionItemBefore = HL.Method() << function(self)
     if not self.m_regionEffectInitialized then
@@ -1085,8 +883,6 @@ FacRegionUpgradeCtrl._OnPurchaseRegionItemBefore = HL.Method() << function(self)
     end
 end
 
-
-
 FacRegionUpgradeCtrl._OnPurchaseBusItemBefore = HL.Method() << function(self)
     if not self.m_busEffectInitialized then
         return
@@ -1100,9 +896,6 @@ FacRegionUpgradeCtrl._OnPurchaseBusItemBefore = HL.Method() << function(self)
     
     CS.Beyond.Gameplay.Actions.GameAction.FacShowForceUpdate(true)
 end
-
-
-
 
 FacRegionUpgradeCtrl._OnPurchaseSelectItemAfter = HL.Method(HL.Function) << function(self, onPlayFinished)
     local itemData = self.m_itemDataGetter[self.m_purchaseItemId]
@@ -1127,9 +920,6 @@ FacRegionUpgradeCtrl._OnPurchaseSelectItemAfter = HL.Method(HL.Function) << func
     end
 end
 
-
-
-
 FacRegionUpgradeCtrl._OnPurchaseRegionItemAfter = HL.Method(HL.Function) << function(self, onPlayFinished)
     if not self.m_regionEffectInitialized then
         onPlayFinished()
@@ -1153,9 +943,6 @@ FacRegionUpgradeCtrl._OnPurchaseRegionItemAfter = HL.Method(HL.Function) << func
     end)
 end
 
-
-
-
 FacRegionUpgradeCtrl._OnPurchaseBusItemAfter = HL.Method(HL.Function) << function(self, onPlayFinished)
     
     CS.Beyond.Gameplay.Actions.GameAction.FacShowForceUpdate(false)
@@ -1171,8 +958,6 @@ FacRegionUpgradeCtrl._OnPurchaseBusItemAfter = HL.Method(HL.Function) << functio
     end)
 end
 
-
-
 FacRegionUpgradeCtrl._ClearPurchasedAnimTimer = HL.Method() << function(self)
     if self.m_purchasedAnimTimer <= 0 then
         return
@@ -1185,19 +970,15 @@ end
 
 
 
-
-
 FacRegionUpgradeCtrl._InitRegionUpgradeController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
     self:_FindFirstItemCellToSelectInController()
 end
 
-
-
 FacRegionUpgradeCtrl._FindFirstItemCellToSelectInController = HL.Method() << function(self)
     local selectedItemData = self.m_itemDataGetter[self.m_selectItemId]
     if selectedItemData ~= nil and selectedItemData.cell ~= nil then
-        UIUtils.setAsNaviTarget(selectedItemData.cell.button)
+        self:SetNaviTarget(selectedItemData.cell.button)
         return
     end
 
@@ -1206,7 +987,7 @@ FacRegionUpgradeCtrl._FindFirstItemCellToSelectInController = HL.Method() << fun
     for _, dataList in ipairs(findList) do
         for _, data in ipairs(dataList) do
             if not data.isPurchased then
-                UIUtils.setAsNaviTarget(data.cell.button)
+                self:SetNaviTarget(data.cell.button)
                 return
             end
         end

@@ -1,24 +1,12 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 DomainDepotPriceListCell = HL.Class('DomainDepotPriceListCell', UIWidgetBase)
-
 
 DomainDepotPriceListCell.m_onClick = HL.Field(HL.Function)
 
-
 DomainDepotPriceListCell.m_info = HL.Field(HL.Table)
 
-
 DomainDepotPriceListCell.m_domainDepotId = HL.Field(HL.String) << ""
-
-
 
 
 DomainDepotPriceListCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -42,9 +30,6 @@ DomainDepotPriceListCell._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
 DomainDepotPriceListCell.SetCellState = HL.Method(HL.Any) << function(self, select)
     if select == true then
         self.view.stateController:SetState('Sel')
@@ -54,11 +39,6 @@ DomainDepotPriceListCell.SetCellState = HL.Method(HL.Any) << function(self, sele
         self.view.stateController:SetState('Empty')
     end
 end
-
-
-
-
-
 
 DomainDepotPriceListCell.InitDomainDepotPriceListCell = HL.Method(HL.String, HL.Table, HL.Function) << function(self, domainDepotId, info, onClick)
     self:_FirstTimeInit()

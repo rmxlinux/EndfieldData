@@ -2,11 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailAvailableMission
 
-
-
-
 MapMarkDetailAvailableMissionCtrl = HL.Class('MapMarkDetailAvailableMissionCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -15,9 +11,6 @@ MapMarkDetailAvailableMissionCtrl = HL.Class('MapMarkDetailAvailableMissionCtrl'
 MapMarkDetailAvailableMissionCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 MapMarkDetailAvailableMissionCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)

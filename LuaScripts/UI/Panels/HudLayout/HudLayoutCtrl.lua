@@ -2,25 +2,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.HudLayout
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 HudLayoutCtrl = HL.Class('HudLayoutCtrl', uiCtrl.UICtrl)
 
 local D_PAD_CONFIG = {
@@ -52,19 +33,13 @@ local comboSkillLayoutConfig = {
 
 
 
-
 HudLayoutCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_HUD_LAYOUT_CHANGED] = "_OnHudLayoutChanged",
 }
 
-
 HudLayoutCtrl.m_layoutHandleList = HL.Field(HL.Userdata)
 
-
 HudLayoutCtrl.m_selectedLayoutHandle = HL.Field(HL.Userdata)
-
-
-
 
 
 HudLayoutCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -76,8 +51,6 @@ HudLayoutCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
     PhaseManager:ExitPhaseFastTo(PhaseId.Level)
 end
-
-
 
 HudLayoutCtrl._InitAction = HL.Method() << function(self)
     self.view.operationNode.btnBack.onClick:AddListener(function()
@@ -192,17 +165,12 @@ HudLayoutCtrl._InitAction = HL.Method() << function(self)
     self:_ActiveFacMode(isFacMode)
 end
 
-
-
 HudLayoutCtrl._CloseToMainHud = HL.Method() << function(self)
     self.view.selectedNode.gameObject:SetActive(false)
     self:PlayAnimationOutAndClose()
     PhaseManager:ExitPhaseFastTo(PhaseId.Level)
     Notify(MessageConst.TRY_SWITCH_FAC_MODE, self.view.switchModeNode.isOn)
 end
-
-
-
 
 HudLayoutCtrl._OnLayoutHandleClicked = HL.Method(HL.Userdata) << function(self, layoutHandle)
     if self.m_selectedLayoutHandle == layoutHandle then
@@ -221,8 +189,6 @@ HudLayoutCtrl._OnLayoutHandleClicked = HL.Method(HL.Userdata) << function(self, 
 
     self:_RefreshOperationNode()
 end
-
-
 
 HudLayoutCtrl._RefreshOperationNode = HL.Method() << function(self)
     local isSelected = self.m_selectedLayoutHandle ~= nil
@@ -268,11 +234,7 @@ HudLayoutCtrl._RefreshOperationNode = HL.Method() << function(self)
     end
 end
 
-
 HudLayoutCtrl.m_moveTickKey = HL.Field(HL.Number) << -1
-
-
-
 
 HudLayoutCtrl._StartMoveTick = HL.Method(Vector2) << function(self, velocity)
     self:_StopMoveTick()
@@ -285,28 +247,18 @@ HudLayoutCtrl._StartMoveTick = HL.Method(Vector2) << function(self, velocity)
     end)
 end
 
-
-
 HudLayoutCtrl._StopMoveTick = HL.Method() << function(self)
     LuaUpdate:Remove(self.m_moveTickKey)
 end
-
-
 
 HudLayoutCtrl._OnHudLayoutChanged = HL.Method() << function(self)
     self:_SetCanSave(true)
 end
 
-
-
-
 HudLayoutCtrl._SetCanSave = HL.Method(HL.Boolean) << function(self, canSave)
     self.view.operationNode.btnSave.gameObject:SetActive(canSave)
     self.view.operationNode.btnSaveDisable.gameObject:SetActive(not canSave)
 end
-
-
-
 
 HudLayoutCtrl._ActiveFacMode = HL.Method(HL.Boolean) << function(self, isFactory)
     self.view.factory.gameObject:SetActive(isFactory)
@@ -317,9 +269,6 @@ HudLayoutCtrl._ActiveFacMode = HL.Method(HL.Boolean) << function(self, isFactory
     self.view.switchModeNode.isOn = isFactory
 end
 
-
-
-
 HudLayoutCtrl._RefreshComboSkillLayoutType = HL.Method(HL.Userdata) << function(self, layoutType)
     local stateName = "RightToLeft"
     if layoutType == CS.Beyond.UI.UICustomLayoutElement.LayoutType.LeftToRight then
@@ -329,9 +278,7 @@ HudLayoutCtrl._RefreshComboSkillLayoutType = HL.Method(HL.Userdata) << function(
 end
 
 
-
 HudLayoutCtrl.m_oriScreenRatioInt = HL.Field(HL.Number) << -1
-
 
 HudLayoutCtrl.OnScreenSizeChanged = HL.StaticMethod() << function()
     local isOpen, self = UIManager:IsOpen(PANEL_ID)
@@ -343,8 +290,6 @@ HudLayoutCtrl.OnScreenSizeChanged = HL.StaticMethod() << function()
         CS.Beyond.UI.UICustomLayoutElement.RefreshAll() 
     end
 end
-
-
 
 HudLayoutCtrl._OnScreenSizeChanged = HL.Method() << function(self)
     local curRatio = DeviceInfo:GetCurRatioInt()

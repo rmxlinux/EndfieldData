@@ -2,16 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.EquipEnhanceResult
 
-
-
-
-
-
-
-
-
 EquipEnhanceResultCtrl = HL.Class('EquipEnhanceResultCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -22,14 +13,9 @@ EquipEnhanceResultCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 EquipEnhanceResultCtrl.m_returnedIngredientInstIds = HL.Field(HL.Table)
 
-
 EquipEnhanceResultCtrl.m_getReturnEquipItemCell = HL.Field(HL.Function)
-
-
-
 
 
 
@@ -86,9 +72,6 @@ EquipEnhanceResultCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
-
 EquipEnhanceResultCtrl._RefreshReturnedIngredientList = HL.Method(HL.Opt(HL.Table)) << function(self, returnedInstIds)
     self.m_returnedIngredientInstIds = returnedInstIds or {}
     local node = self.view.returnEquipNode
@@ -113,10 +96,6 @@ EquipEnhanceResultCtrl._RefreshReturnedIngredientList = HL.Method(HL.Opt(HL.Tabl
     end
 end
 
-
-
-
-
 EquipEnhanceResultCtrl._OnUpdateReturnEquipItemCell = HL.Method(HL.Forward("Item"), HL.Number) << function(self, cell, index)
     local instId = self.m_returnedIngredientInstIds[index]
     local equipInst = CharInfoUtils.getEquipByInstId(instId)
@@ -129,8 +108,6 @@ EquipEnhanceResultCtrl._OnUpdateReturnEquipItemCell = HL.Method(HL.Forward("Item
         isSideTips = DeviceInfo.usingController,
     })
 end
-
-
 
 EquipEnhanceResultCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})

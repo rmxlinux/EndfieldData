@@ -1,17 +1,9 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WeaponExhibitUpgradePopup
-
-
-
-
 WeaponExhibitUpgradePopupCtrl = HL.Class('WeaponExhibitUpgradePopupCtrl', uiCtrl.UICtrl)
 
-
 WeaponExhibitUpgradePopupCtrl.s_messages = HL.StaticField(HL.Table) << {}
-
-
-
 
 
 
@@ -39,8 +31,6 @@ WeaponExhibitUpgradePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
     })
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
 
 WeaponExhibitUpgradePopupCtrl._InitActionEvent = HL.Method() << function(self, arg)
     self.view.continueButton.onClick:AddListener(function()

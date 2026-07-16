@@ -2,45 +2,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.AdventureLevelUp
 local MAIN_HUD_TOAST_TYPE = "AdventureLevelUp"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AdventureLevelUpCtrl = HL.Class('AdventureLevelUpCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -54,44 +16,29 @@ AdventureLevelUpCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 AdventureLevelUpCtrl.m_genRecipeCells = HL.Field(HL.Forward("UIListCache"))
-
 
 AdventureLevelUpCtrl.m_genRewardCells = HL.Field(HL.Forward("UIListCache"))
 
-
 AdventureLevelUpCtrl.m_levelUpInfoQueue = HL.Field(HL.Forward("Queue"))
-
 
 AdventureLevelUpCtrl.m_aniQueue = HL.Field(HL.Forward("Queue"))
 
-
 AdventureLevelUpCtrl.m_aniPlayInfo = HL.Field(HL.Table)
-
 
 AdventureLevelUpCtrl.m_clearScreenKey = HL.Field(HL.Number) << -1
 
-
 AdventureLevelUpCtrl.m_isWorldFreeze = HL.Field(HL.Boolean) << false
-
 
 AdventureLevelUpCtrl.skipNextResume = HL.StaticField(HL.Boolean) << false
 
-
 AdventureLevelUpCtrl.ResumePreLv = HL.StaticField(HL.Number) << 1
-
 
 AdventureLevelUpCtrl.ResumePreExp = HL.StaticField(HL.Number) << 0
 
-
 AdventureLevelUpCtrl.isLevelUpForForceSNS = HL.StaticField(HL.Boolean) << false
 
-
 AdventureLevelUpCtrl.m_inputBindKeyExit = HL.Field(HL.Number) << -1
-
-
-
 
 
 
@@ -116,13 +63,9 @@ AdventureLevelUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
 AdventureLevelUpCtrl.OnClose = HL.Override() << function(self)
     self:_SetFreezeWorld(false) 
 end
-
-
 
 AdventureLevelUpCtrl.OnShowAdventureLevelUp = HL.StaticMethod(HL.Any) << function(arg)
     local preLv, preExp = unpack(arg)
@@ -168,22 +111,15 @@ AdventureLevelUpCtrl.OnShowAdventureLevelUp = HL.StaticMethod(HL.Any) << functio
     end
 end
 
-
 AdventureLevelUpCtrl.HaveAdventureLevelUpInQueue = HL.StaticMethod().Return(HL.Boolean) << function()
     return AdventureLevelUpCtrl.isLevelUpForForceSNS and (LuaSystemManager.mainHudActionQueue:HasRequest(MAIN_HUD_TOAST_TYPE) or UIManager:IsShow(PANEL_ID))
 end
-
-
 
 AdventureLevelUpCtrl.InterruptMainHudActionQueue = HL.Method() << function(self)
     self.animationWrapper:ClearTween(false)
     self:_ClearCache()
     self:Close()
 end
-
-
-
-
 
 
 
@@ -303,9 +239,6 @@ AdventureLevelUpCtrl._UpdateData = HL.Method(HL.Number, HL.Number) << function(s
     })
 end
 
-
-
-
 AdventureLevelUpCtrl._GetLevelUpReward = HL.Method(HL.String).Return(HL.Table, HL.Table) << function(self, rewardId)
     local recipeItemInfos = {}
     local rewardItemInfos = {}
@@ -338,8 +271,6 @@ AdventureLevelUpCtrl._GetLevelUpReward = HL.Method(HL.String).Return(HL.Table, H
     return recipeItemInfos, rewardItemInfos
 end
 
-
-
 AdventureLevelUpCtrl._ClearCache = HL.Method() << function(self)
     if self.m_aniPlayInfo and self.m_aniPlayInfo.updateKey > 0 then
         LuaUpdate:Remove(self.m_aniPlayInfo.updateKey)
@@ -357,18 +288,12 @@ end
 
 
 
-
-
-
-
 AdventureLevelUpCtrl._StartShow = HL.Method(HL.Number, HL.Number) << function(self, preLv, preExp)
     logger.info("AdventureLevelUpCtrl：_StartShow -> preLv " .. preLv)
     logger.info("AdventureLevelUpCtrl：_StartShow -> preExp " .. preExp)
     self:_UpdateData(preLv, preExp)
     self:_TryPlayUpgrade()
 end
-
-
 
 AdventureLevelUpCtrl._TryPlayUpgrade = HL.Method() << function(self)
     
@@ -403,8 +328,6 @@ AdventureLevelUpCtrl._TryPlayUpgrade = HL.Method() << function(self)
         self:_StartPlayNotLevelUpAni()
     end
 end
-
-
 
 AdventureLevelUpCtrl._StartPlayLevelUpAni = HL.Method() << function(self)
     if self.m_aniPlayInfo == nil or self.m_aniPlayInfo.basicInfo == nil then
@@ -451,9 +374,6 @@ AdventureLevelUpCtrl._StartPlayLevelUpAni = HL.Method() << function(self)
     end)
 end
 
-
-
-
 AdventureLevelUpCtrl._OnUpdateLevelUpProgressAni = HL.Method(HL.Number) << function(self, deltaTime)
     local playInfo = self.m_aniPlayInfo
     local lvUpInfo = playInfo.basicInfo
@@ -469,8 +389,6 @@ AdventureLevelUpCtrl._OnUpdateLevelUpProgressAni = HL.Method(HL.Number) << funct
     AdventureLevelUpCtrl.ResumePreExp = lume.round(lvUpInfo.curLvLevelUpExp + curTickExp)
     self:_UpdateUIProgress(progressNode, math.floor(curTickExp), lvUpInfo.targetExp, lvUpInfo.maxExp)
 end
-
-
 
 AdventureLevelUpCtrl._OnEndLevelUpProgressAni = HL.Method() << function(self)
     if self.m_aniPlayInfo == nil or self.m_aniPlayInfo.basicInfo == nil then
@@ -490,8 +408,6 @@ AdventureLevelUpCtrl._OnEndLevelUpProgressAni = HL.Method() << function(self)
         self:_PlayReward()
     end)
 end
-
-
 
 AdventureLevelUpCtrl._StartPlayNotLevelUpAni = HL.Method() << function(self)
     if BEYOND_DEBUG_COMMAND then
@@ -548,9 +464,6 @@ AdventureLevelUpCtrl._StartPlayNotLevelUpAni = HL.Method() << function(self)
     end)
 end
 
-
-
-
 AdventureLevelUpCtrl._OnUpdateNotLevelUpProgressAni = HL.Method(HL.Number) << function(self, deltaTime)
     local playInfo = self.m_aniPlayInfo
     local lvUpInfo = playInfo.basicInfo
@@ -566,8 +479,6 @@ AdventureLevelUpCtrl._OnUpdateNotLevelUpProgressAni = HL.Method(HL.Number) << fu
     AdventureLevelUpCtrl.ResumePreExp = lume.round(lvUpInfo.curLvLevelUpExp + curTickExp)
     self:_UpdateUIProgress(progressNode, math.floor(curTickExp), lvUpInfo.targetExp, lvUpInfo.maxExp)
 end
-
-
 
 AdventureLevelUpCtrl._OnEndNotLevelUpProgressAni = HL.Method() << function(self)
     if self.m_aniPlayInfo == nil or self.m_aniPlayInfo.basicInfo == nil then
@@ -585,8 +496,6 @@ AdventureLevelUpCtrl._OnEndNotLevelUpProgressAni = HL.Method() << function(self)
         self:_TryPlayUpgrade()
     end)
 end
-
-
 
 AdventureLevelUpCtrl._PlayReward = HL.Method() << function(self)
     if self.m_aniPlayInfo == nil or self.m_aniPlayInfo.basicInfo == nil then
@@ -686,8 +595,6 @@ AdventureLevelUpCtrl._PlayReward = HL.Method() << function(self)
     self:_NestedPlayAniQueue()
 end
 
-
-
 AdventureLevelUpCtrl._NestedPlayAniQueue = HL.Method() << function(self)
     if self.m_aniQueue:Count() > 0 then
         local aniWrapper = self.animationWrapper
@@ -703,9 +610,6 @@ AdventureLevelUpCtrl._NestedPlayAniQueue = HL.Method() << function(self)
         end)
     end
 end
-
-
-
 
 AdventureLevelUpCtrl._CompleteCloseSelf = HL.Method(HL.Opt(HL.Boolean)) << function(self, fastMode)
     if self:IsPlayingAnimationOut() then
@@ -726,12 +630,6 @@ AdventureLevelUpCtrl._CompleteCloseSelf = HL.Method(HL.Opt(HL.Boolean)) << funct
         Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, MAIN_HUD_TOAST_TYPE)
     end)
 end
-
-
-
-
-
-
 
 AdventureLevelUpCtrl._UpdateUIProgress = HL.Method(HL.Any, HL.Number, HL.Number, HL.Number)
     << function(self, viewRef, curValue, targetGrowthValue, totalValue)
@@ -765,9 +663,6 @@ AdventureLevelUpCtrl._UpdateUIProgress = HL.Method(HL.Any, HL.Number, HL.Number,
     end
 end
 
-
-
-
 AdventureLevelUpCtrl._ClearOrRecoverScreen = HL.Method(HL.Boolean) << function(self, isClear)
     if isClear then
         if self.m_clearScreenKey <= 0 then
@@ -782,9 +677,6 @@ AdventureLevelUpCtrl._ClearOrRecoverScreen = HL.Method(HL.Boolean) << function(s
 end
 
 
-
-
-
 AdventureLevelUpCtrl._SetFreezeWorld = HL.Method(HL.Boolean) << function(self, isFreeze)
     if self.m_isWorldFreeze == isFreeze then
         return
@@ -797,7 +689,6 @@ AdventureLevelUpCtrl._SetFreezeWorld = HL.Method(HL.Boolean) << function(self, i
         Notify(MessageConst.CLOSE_FREEZE_WORLD_PANEL, "AdventureLevelUpCtrl")
     end
 end
-
 
 
 

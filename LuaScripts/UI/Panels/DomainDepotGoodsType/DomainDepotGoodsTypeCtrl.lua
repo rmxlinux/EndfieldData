@@ -3,31 +3,6 @@ local PANEL_ID = PanelId.DomainDepotGoodsType
 local DomainDepotDeliverItemType = GEnums.DomainDepotDeliverItemType
 local DeliverPackType = GEnums.DeliverPackType
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainDepotGoodsTypeCtrl = HL.Class('DomainDepotGoodsTypeCtrl', uiCtrl.UICtrl)
 
 local ItemTypeCellViewConfig = {  
@@ -84,43 +59,29 @@ local TYPE_AUDIO_KEY_MAP = {
 
 
 
-
 DomainDepotGoodsTypeCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 DomainDepotGoodsTypeCtrl.m_domainId = HL.Field(HL.String) << ""
-
 
 DomainDepotGoodsTypeCtrl.m_depotId = HL.Field(HL.String) << ""
 
-
 DomainDepotGoodsTypeCtrl.m_selectedItemType = HL.Field(DomainDepotDeliverItemType)
-
 
 DomainDepotGoodsTypeCtrl.m_selectedPackType = HL.Field(DeliverPackType)
 
-
 DomainDepotGoodsTypeCtrl.m_valueLimitCfg = HL.Field(HL.Table)
-
 
 DomainDepotGoodsTypeCtrl.m_pack = HL.Field(HL.Forward("DomainDepotPack"))
 
-
 DomainDepotGoodsTypeCtrl.m_backPanel = HL.Field(HL.Forward("DomainDepotPackBackGroundCtrl"))
-
 
 DomainDepotGoodsTypeCtrl.m_incomeDomainRatio = HL.Field(HL.Number) << 1
 
-
 DomainDepotGoodsTypeCtrl.m_resumeState = HL.Field(HL.Table)
 
-
 DomainDepotGoodsTypeCtrl.m_curNaviItemViewNumber = HL.Field(HL.Number) << -1
-
-
-
 
 
 DomainDepotGoodsTypeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -147,8 +108,6 @@ DomainDepotGoodsTypeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 
-
-
 DomainDepotGoodsTypeCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     return {
         depotId = self.m_depotId,
@@ -159,8 +118,6 @@ DomainDepotGoodsTypeCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << functi
     }
 end
 
-
-
 DomainDepotGoodsTypeCtrl._InitMoneyNodes = HL.Method() << function(self)
     DomainDepotUtils.InitTopMoneyTitle(self.view.domainTopMoneyTitle, self.m_domainId, function()
         Notify(MessageConst.ON_CLOSE_DOMAIN_DEPOT_PACK_TYPE_SELECT_PANEL)
@@ -168,8 +125,6 @@ DomainDepotGoodsTypeCtrl._InitMoneyNodes = HL.Method() << function(self)
 
     DomainDepotUtils.RefreshMoneyIconWithDomain(self.view.moneyIconImg, self.m_domainId)
 end
-
-
 
 DomainDepotGoodsTypeCtrl._OnClickNextBtn = HL.Method() << function(self)
     local limitCfg = self.m_valueLimitCfg[self.m_selectedItemType][self.m_selectedPackType]
@@ -183,14 +138,10 @@ DomainDepotGoodsTypeCtrl._OnClickNextBtn = HL.Method() << function(self)
     })
 end
 
-
-
 DomainDepotGoodsTypeCtrl._PlayTypeSelectAudio = HL.Method() << function(self)
     local audioKey = TYPE_AUDIO_KEY_MAP[self.m_selectedItemType][self.m_selectedPackType]
     AudioAdapter.PostEvent(audioKey)
 end
-
-
 
 
 
@@ -238,7 +189,7 @@ DomainDepotGoodsTypeCtrl._InitItemTypeSelectNode = HL.Method() << function(self)
         local targetViewCell = itemTypeSelectNode[ItemTypeCellViewConfig[targetSelectType].viewName]
 
         if DeviceInfo.usingController then
-            UIUtils.setAsNaviTarget(targetViewCell.button)
+            self:SetNaviTarget(targetViewCell.button)
         end
     end
 
@@ -258,9 +209,6 @@ DomainDepotGoodsTypeCtrl._InitItemTypeSelectNode = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 DomainDepotGoodsTypeCtrl._OnItemTypeClick = HL.Method(DomainDepotDeliverItemType) << function(self, itemType)
     if self.m_selectedItemType == itemType then
@@ -297,8 +245,6 @@ DomainDepotGoodsTypeCtrl._OnItemTypeClick = HL.Method(DomainDepotDeliverItemType
     self.m_pack:ChangePackItemType(itemType)
     self.m_backPanel:ChangePackItemType(itemType)
 end
-
-
 
 
 
@@ -365,9 +311,6 @@ DomainDepotGoodsTypeCtrl._InitPackTypeSelectNode = HL.Method() << function(self)
     end
 end
 
-
-
-
 DomainDepotGoodsTypeCtrl._OnPackTypeToggle = HL.Method(DeliverPackType) << function(self, packType)
     self.m_selectedPackType = packType
     self:_RefreshPackValueState()
@@ -379,13 +322,9 @@ end
 
 
 
-
-
 DomainDepotGoodsTypeCtrl._InitPackValueLimitCfg = HL.Method() << function(self)
     self.m_valueLimitCfg = DomainDepotUtils.GetDepotPackValueLimitCfg(self.m_depotId)
 end
-
-
 
 DomainDepotGoodsTypeCtrl._RefreshPackValueState = HL.Method() << function(self)
     if self.m_selectedItemType == nil or self.m_selectedPackType == nil then
@@ -397,18 +336,11 @@ DomainDepotGoodsTypeCtrl._RefreshPackValueState = HL.Method() << function(self)
     self:_RefreshIncomeValueState(limitCfg.maxLimitValue)
 end
 
-
-
-
 DomainDepotGoodsTypeCtrl._RefreshIncomeValueState = HL.Method(HL.Number) << function(self, limitPackValue)
     local itemFactor = Tables.domainDepotDeliverItemTypeTable[self.m_selectedItemType].priceFactor
     local value = math.floor(limitPackValue * itemFactor * self.m_incomeDomainRatio)
     self.view.incomeNumTxt.text = string.format("%d", value)
 end
-
-
-
-
 
 
 DomainDepotGoodsTypeCtrl._GetResumeEnumValue = HL.Method(HL.Table, HL.Opt(HL.Any)).Return(HL.Any) << function(self, configMap, persistedValue)

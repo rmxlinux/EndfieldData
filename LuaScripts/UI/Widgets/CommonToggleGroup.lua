@@ -1,37 +1,19 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
 CommonToggleGroup = HL.Class('CommonToggleGroup', UIWidgetBase)
-
 
 CommonToggleGroup.m_toggleCache = HL.Field(HL.Forward("UIListCache"))
 
-
 CommonToggleGroup.m_tweenSelectBg = HL.Field(HL.Userdata)
-
 
 CommonToggleGroup.m_toggleIsOnAction = HL.Field(HL.Function)
 
-
 CommonToggleGroup.m_selectBgSiblingIndex = HL.Field(HL.Number) << -1
-
-
 
 
 CommonToggleGroup._OnFirstTimeInit = HL.Override() << function(self)
     self.m_toggleCache = UIUtils.genCellCache(self.view.toggle)
 end
-
-
-
 
 
 
@@ -72,19 +54,12 @@ CommonToggleGroup.InitCommonToggleGroup = HL.Method(HL.Table) << function(self, 
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.transform)
 end
 
-
-
 CommonToggleGroup._OnDestroy = HL.Override() << function (self)
     if self.m_tweenSelectBg then
         self.m_tweenSelectBg:Kill()
         self.m_tweenSelectBg = nil
     end
 end
-
-
-
-
-
 
 CommonToggleGroup._OnToggleIsOn = HL.Method(HL.Number, HL.Table, HL.Boolean) << function(self, index, toggleCell, playAnim)
     if self.m_selectBgSiblingIndex > 0 then

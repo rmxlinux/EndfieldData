@@ -2,67 +2,25 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopPackage
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopPackageCtrl = HL.Class('ShopPackageCtrl', uiCtrl.UICtrl)
 
-
 ShopPackageCtrl.m_shopGoodsInfos = HL.Field(HL.Table)
-
 
 ShopPackageCtrl.m_getCellFunc = HL.Field(HL.Function)
 
 
-
 ShopPackageCtrl.m_isControllerTarget = HL.Field(HL.Boolean) << false
-
 
 ShopPackageCtrl.m_currNaviIndex = HL.Field(HL.Int) << 1
 
-
 ShopPackageCtrl.m_needResetCurrNavi = HL.Field(HL.Boolean) << false
-
 
 ShopPackageCtrl.m_currDynamicTagGoodsId = HL.Field(HL.String) << ""
 
 
-
 ShopPackageCtrl.m_currSeenRange = HL.Field(HL.Table)
 
-
 ShopPackageCtrl.m_latestCloseCor = HL.Field(HL.Any)
-
 
 
 
@@ -73,9 +31,6 @@ ShopPackageCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_OPEN_CASH_SHOP_DETAILS] = '_OnOpenDetailsPanel',
     [MessageConst.ON_CLOSE_CASH_SHOP_DETAILS] = '_OnCloseDetailsPanel',
 }
-
-
-
 
 
 ShopPackageCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -106,7 +61,7 @@ ShopPackageCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_SetupCellView(cell, shopGoodsInfo)
 
         if self.m_needResetCurrNavi and LuaIndex(index) == self.m_currNaviIndex then
-            UIUtils.setAsNaviTarget(cell.inputBindingGroupNaviDecorator)
+            self:SetNaviTarget(cell.inputBindingGroupNaviDecorator)
             self.m_needResetCurrNavi = false
         end
     end)
@@ -143,12 +98,8 @@ ShopPackageCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 ShopPackageCtrl.OnShow = HL.Override() << function(self)
 end
-
-
 
 
 
@@ -159,8 +110,6 @@ ShopPackageCtrl.OnClose = HL.Override() << function(self)
         self.m_latestCloseCor = nil
     end
 end
-
-
 
 
 
@@ -195,10 +144,6 @@ ShopPackageCtrl._InitShortCut = HL.Method() << function(self)
     InputManagerInst:ToggleGroup(self.view.scrollGroupTarget.groupId, false)
 end
 
-
-
-
-
 ShopPackageCtrl._SetupCellView = HL.Method(HL.Table, HL.Table) << function(self, cell, shopGoodsInfo)
     local shopGoodsId = shopGoodsInfo.goodsId
     local succ, shopGoodsData = Tables.CashShopGoodsTable:TryGetValue(shopGoodsId)
@@ -217,6 +162,10 @@ ShopPackageCtrl._SetupCellView = HL.Method(HL.Table, HL.Table) << function(self,
     if shopGoodsData.goodsType == GEnums.CashGoodsType.MonthlyCard then
         stateCtrl:SetState("MonthlyPass")
         self:_SetupViewMonthlyPass(cell, shopGoodsId)
+    elseif not string.isEmpty(self:_GetCellHintText(shopGoodsId)) then
+        stateCtrl:SetState("DeadlineNode")
+        local hintText = self:_GetCellHintText(shopGoodsId)
+        cell.deadlineNode.deadlineTxt.text = hintText
     else
         stateCtrl:SetState("Other")
     end
@@ -227,6 +176,14 @@ ShopPackageCtrl._SetupCellView = HL.Method(HL.Table, HL.Table) << function(self,
     self:_SetupCellDynamicTag(cell, showDynamicTag)
     
     if shopGoodsData.goodsType == GEnums.CashGoodsType.MonthlyCard then
+        if showDynamicTag then
+            stateCtrl:SetState("MonthlyUp")
+        else
+            stateCtrl:SetState("MonthlyDown")
+        end
+    end
+    
+    if not string.isEmpty(self:_GetCellHintText(shopGoodsId)) then
         if showDynamicTag then
             stateCtrl:SetState("MonthlyUp")
         else
@@ -283,10 +240,6 @@ ShopPackageCtrl._SetupCellView = HL.Method(HL.Table, HL.Table) << function(self,
 end
 
 
-
-
-
-
 ShopPackageCtrl._SetupCellViewTag = HL.Method(HL.Any, HL.Table) << function(self, cell, shopGoodsInfo)
     local tagWidget = cell.cashShopItemTag
     tagWidget:InitCashShopItemTag({
@@ -294,11 +247,6 @@ ShopPackageCtrl._SetupCellViewTag = HL.Method(HL.Any, HL.Table) << function(self
         shopGoodsInfo = shopGoodsInfo,
     })
 end
-
-
-
-
-
 
 
 ShopPackageCtrl._SetupCellDynamicTag = HL.Method(HL.Any, HL.Boolean, HL.Opt(HL.Boolean))
@@ -319,8 +267,13 @@ ShopPackageCtrl._SetupCellDynamicTag = HL.Method(HL.Any, HL.Boolean, HL.Opt(HL.B
 end
 
 
-
-
+ShopPackageCtrl._GetCellHintText = HL.Method(HL.Any).Return(HL.String) << function(self, cashGoodsId)
+    local _, cfg = Tables.cashShopHintTextTable:TryGetValue(cashGoodsId)
+    if cfg then
+        return cfg.hintText
+    end
+    return ""
+end
 
 ShopPackageCtrl._SetupViewMonthlyPass = HL.Method(HL.Table, HL.String) << function(self, cell, goodsId)
     local remainValidDays = GameInstance.player.monthlyPassSystem:GetRemainValidDays()
@@ -330,8 +283,6 @@ ShopPackageCtrl._SetupViewMonthlyPass = HL.Method(HL.Table, HL.String) << functi
         .. Language.ui_shop_monthlycard_days
     cell.dayNumberTxt.text = text
 end
-
-
 
 ShopPackageCtrl._UpdateContent = HL.Method() << function(self)
     logger.info("ShopPackageCtrl: 收到msg，刷新content")
@@ -346,8 +297,6 @@ ShopPackageCtrl._UpdateContent = HL.Method() << function(self)
     end)
 end
 
-
-
 ShopPackageCtrl._OnOpenDetailsPanel = HL.Method() << function(self)
     self.view.contentScroll:UpdateShowingCells(function(index, obj)
         local cell = self.m_getCellFunc(obj)
@@ -355,8 +304,6 @@ ShopPackageCtrl._OnOpenDetailsPanel = HL.Method() << function(self)
         self:_SetupCellDynamicTag(cell, false, true)
     end)
 end
-
-
 
 ShopPackageCtrl._OnCloseDetailsPanel = HL.Method() << function(self)
     self.view.contentScroll:UpdateShowingCells(function(index, obj)
@@ -367,8 +314,6 @@ ShopPackageCtrl._OnCloseDetailsPanel = HL.Method() << function(self)
     end)
 end
 
-
-
 ShopPackageCtrl.TargetFirstCell = HL.Method().Return(HL.Boolean) << function(self)
     logger.info("ShopPackageCtrl: TargetFirstCell")
     
@@ -376,7 +321,7 @@ ShopPackageCtrl.TargetFirstCell = HL.Method().Return(HL.Boolean) << function(sel
     local firstCell = self.m_getCellFunc(self.view.contentScroll:Get(range.x))
     if firstCell then
         InputManagerInst:ToggleGroup(self.view.scrollGroupTarget.groupId, true)
-        UIUtils.setAsNaviTarget(firstCell.inputBindingGroupNaviDecorator)
+        self:SetNaviTarget(firstCell.inputBindingGroupNaviDecorator)
         self.m_currNaviIndex = LuaIndex(range.x)
         self:_SetSingleGoodsReadByIndex(self.m_currNaviIndex)
         return true
@@ -385,8 +330,6 @@ ShopPackageCtrl.TargetFirstCell = HL.Method().Return(HL.Boolean) << function(sel
     end
 
 end
-
-
 
 ShopPackageCtrl._OnGoLeft = HL.Method() << function(self)
     logger.info("ShopPackageCtrl: _OnGoLeft")
@@ -401,13 +344,11 @@ ShopPackageCtrl._OnGoLeft = HL.Method() << function(self)
         logger.info("ShopPackageCtrl: _OnGoLeft: NaviTargetCurrTab, currIndex is: " .. currIndex)
     else
         local targetCell = self.m_getCellFunc(self.view.contentScroll:Get(CSIndex(currIndex - 1)))
-        UIUtils.setAsNaviTarget(targetCell.inputBindingGroupNaviDecorator)
+        self:SetNaviTarget(targetCell.inputBindingGroupNaviDecorator)
         self.m_currNaviIndex = self.m_currNaviIndex - 1
         self:_SetSingleGoodsReadByIndex(self.m_currNaviIndex)
     end
 end
-
-
 
 ShopPackageCtrl._OnGoUp = HL.Method() << function(self)
     local countPerLine = self.view.contentScroll.countPerLine
@@ -417,12 +358,10 @@ ShopPackageCtrl._OnGoUp = HL.Method() << function(self)
     end
 
     local targetCell = self.m_getCellFunc(self.view.contentScroll:Get(CSIndex(targetIndex)))
-    UIUtils.setAsNaviTarget(targetCell.inputBindingGroupNaviDecorator)
+    self:SetNaviTarget(targetCell.inputBindingGroupNaviDecorator)
     self.m_currNaviIndex = targetIndex
     self:_SetSingleGoodsReadByIndex(self.m_currNaviIndex)
 end
-
-
 
 ShopPackageCtrl._OnGoRight = HL.Method() << function(self)
     local targetIndex = self.m_currNaviIndex + 1
@@ -431,12 +370,10 @@ ShopPackageCtrl._OnGoRight = HL.Method() << function(self)
     end
 
     local targetCell = self.m_getCellFunc(self.view.contentScroll:Get(CSIndex(targetIndex)))
-    UIUtils.setAsNaviTarget(targetCell.inputBindingGroupNaviDecorator)
+    self:SetNaviTarget(targetCell.inputBindingGroupNaviDecorator)
     self.m_currNaviIndex = targetIndex
     self:_SetSingleGoodsReadByIndex(self.m_currNaviIndex)
 end
-
-
 
 ShopPackageCtrl._OnGoDown = HL.Method() << function(self)
     local countPerLine = self.view.contentScroll.countPerLine
@@ -453,12 +390,10 @@ ShopPackageCtrl._OnGoDown = HL.Method() << function(self)
     end
 
     local targetCell = self.m_getCellFunc(self.view.contentScroll:Get(CSIndex(targetIndex)))
-    UIUtils.setAsNaviTarget(targetCell.inputBindingGroupNaviDecorator)
+    self:SetNaviTarget(targetCell.inputBindingGroupNaviDecorator)
     self.m_currNaviIndex = targetIndex
     self:_SetSingleGoodsReadByIndex(self.m_currNaviIndex)
 end
-
-
 
 ShopPackageCtrl.GetCurrNaviGoodsId = HL.Method().Return(HL.String) << function(self)
     if self.m_currNaviIndex > #self.m_shopGoodsInfos then
@@ -467,9 +402,6 @@ ShopPackageCtrl.GetCurrNaviGoodsId = HL.Method().Return(HL.String) << function(s
         return self.m_shopGoodsInfos[self.m_currNaviIndex].goodsId
     end
 end
-
-
-
 
 ShopPackageCtrl.SetCurrNaviByGoodsId = HL.Method(HL.String) << function(self, goodsId)
     if goodsId ~= nil then
@@ -484,9 +416,6 @@ ShopPackageCtrl.SetCurrNaviByGoodsId = HL.Method(HL.String) << function(self, go
     self.m_currNaviIndex = 1
 end
 
-
-
-
 ShopPackageCtrl._SetSingleGoodsReadByIndex = HL.Method(HL.Number) << function(self, luaIndex)
     local info = self.m_shopGoodsInfos[luaIndex]
     if info ~= nil then
@@ -494,8 +423,6 @@ ShopPackageCtrl._SetSingleGoodsReadByIndex = HL.Method(HL.Number) << function(se
         GameInstance.player.cashShopSystem:ReadCashGoods(goodsId)
     end
 end
-
-
 
 
 ShopPackageCtrl._ComputeCurrDynamicTag = HL.Method() << function(self)
@@ -521,8 +448,6 @@ ShopPackageCtrl._ComputeCurrDynamicTag = HL.Method() << function(self)
         self.m_currDynamicTagGoodsId = maxDynamicPriorityGoodsInfo.goodsId
     end
 end
-
-
 
 
 ShopPackageCtrl._SetGoodsCloseRefreshCoroutine = HL.Method() << function(self)
@@ -552,8 +477,6 @@ ShopPackageCtrl._SetGoodsCloseRefreshCoroutine = HL.Method() << function(self)
     end)
 end
 
-
-
 ShopPackageCtrl._UpdateSeeRange = HL.Method() << function(self)
     local range = self.view.contentScroll:GetShowRange()
     local currX = range.x
@@ -565,9 +488,6 @@ ShopPackageCtrl._UpdateSeeRange = HL.Method() << function(self)
         self.m_currSeenRange.y = currY
     end
 end
-
-
-
 
 
 ShopPackageCtrl.UpdateSeeGoods = HL.Method(HL.Table) << function(self, seeGoodsId)

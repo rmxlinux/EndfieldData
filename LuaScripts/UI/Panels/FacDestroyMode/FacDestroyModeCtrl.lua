@@ -1,50 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacDestroyMode
 local FAC_DESTROY_MODE_STATE_KEY = "FacDestroyModeCtrl"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacDestroyModeCtrl = HL.Class('FacDestroyModeCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -59,17 +16,11 @@ FacDestroyModeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_ON_TOGGLE_BATCH_TARGET] = 'OnToggleBatchTarget',
 }
 
-
 FacDestroyModeCtrl.m_hideKey = HL.Field(HL.Number) << -1
-
 
 FacDestroyModeCtrl.m_exitBindingId = HL.Field(HL.Number) << -1
 
-
 FacDestroyModeCtrl.m_exitSecondaryBindingId = HL.Field(HL.Number) << -1
-
-
-
 
 
 FacDestroyModeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -93,15 +44,10 @@ FacDestroyModeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitKeyHint()
 end
 
-
-
 FacDestroyModeCtrl.OnShow = HL.Override() << function(self)
     self.view.reverseToggle:SetIsOnWithoutNotify(false)
     self.view.reverseToggle.gameObject:SetActive(LuaSystemManager.factory.inTopView and DeviceInfo.usingTouch)
 end
-
-
-
 
 FacDestroyModeCtrl._ToggleExitBinding = HL.Method(HL.Boolean) << function(self, active)
     InputManagerInst:ToggleBinding(self.m_exitBindingId, active)
@@ -110,8 +56,6 @@ FacDestroyModeCtrl._ToggleExitBinding = HL.Method(HL.Boolean) << function(self, 
     end
 end
 
-
-
 FacDestroyModeCtrl.OnClose = HL.Override() << function(self)
     if LuaSystemManager.factory.inDestroyMode then
         self:_RealExitMode()
@@ -119,8 +63,6 @@ FacDestroyModeCtrl.OnClose = HL.Override() << function(self)
         self:_ClearOnExit()
     end
 end
-
-
 
 FacDestroyModeCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     if self.m_keyHintCells == nil then
@@ -134,17 +76,12 @@ FacDestroyModeCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL
     return state
 end
 
-
-
-
 FacDestroyModeCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function(self, state)
     if not state then
         return
     end
     self.m_keyHintCells = state.keyHintCells
 end
-
-
 
 FacDestroyModeCtrl.EnterMode = HL.StaticMethod(HL.Opt(HL.Table)) << function(args)
     if Utils.isCurSquadAllDead() then
@@ -237,14 +174,9 @@ FacDestroyModeCtrl.EnterMode = HL.StaticMethod(HL.Opt(HL.Table)) << function(arg
     end
 end
 
-
 FacDestroyModeCtrl.m_args = HL.Field(HL.Table)
 
-
 FacDestroyModeCtrl.s_radioTagHandle = HL.StaticField(HL.Any)
-
-
-
 
 FacDestroyModeCtrl._OnEnterMode = HL.Method(HL.Table) << function(self, args)
     LuaSystemManager.factory.inDestroyMode = true
@@ -262,11 +194,15 @@ FacDestroyModeCtrl._OnEnterMode = HL.Method(HL.Table) << function(self, args)
     local showHidePipe = inTopView and FactoryUtils.canShowPipe()
     self.view.hidePipeToggle.gameObject:SetActive(showHidePipe)
     if args.isFromChangeInputDevice then 
-        local isHideToggleOn = FactoryUtils.isPipeInSimpleFigure()
+        local rMode = LuaSystemManager.factory:GetSimpleFigureModeFromRenderer()
+        local isHideToggleOn = rMode == FacConst.SIMPLE_FIGURE_MODE.SimplePipeFigure
         self.view.hidePipeToggle.toggle:SetIsOnWithoutNotify(isHideToggleOn)
+        LuaSystemManager.factory:SetSimpleFigureMode(rMode, true)
     else
-        self.view.hidePipeToggle.toggle:SetIsOnWithoutNotify(false)
-        self:_OnChangeHideToggle(false)
+        local fac = LuaSystemManager.factory
+        local isHideToggleOn = fac.simpleFigureMode == FacConst.SIMPLE_FIGURE_MODE.SimplePipeFigure
+        self.view.hidePipeToggle.toggle:SetIsOnWithoutNotify(isHideToggleOn)
+        self:_OnChangeHideToggle(isHideToggleOn)
     end
 
     self.view.errorHint.gameObject:SetActive(false)
@@ -326,14 +262,9 @@ FacDestroyModeCtrl._OnEnterMode = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
 FacDestroyModeCtrl.ExitModeForCS = HL.StaticMethod(HL.Opt(HL.Any)) << function(arg)
     FacDestroyModeCtrl.ExitMode(true)
 end
-
-
-
 
 FacDestroyModeCtrl.ExitMode = HL.StaticMethod(HL.Opt(HL.Boolean, HL.Boolean)) << function(skipAnim, fromBtn)
     if not LuaSystemManager.factory.inDestroyMode then
@@ -362,15 +293,17 @@ FacDestroyModeCtrl.ExitMode = HL.StaticMethod(HL.Opt(HL.Boolean, HL.Boolean)) <<
     end
 end
 
-
-
 FacDestroyModeCtrl._RealExitMode = HL.Method() << function(self)
     self:Hide()
     self.m_keyHintCells:Refresh(0)
     self.m_keyHintName = ""
 
     if not InputManagerInst.inChangingInputDevice then
-        FactoryUtils.stopLogisticFigureRenderer()
+        if LuaSystemManager.factory.inTopView then
+            LuaSystemManager.factory:ApplySimpleFigureToRenderer()
+        else
+            LuaSystemManager.factory:ClearSimpleFigureEcsOnly()
+        end
     end
 
     
@@ -388,8 +321,6 @@ FacDestroyModeCtrl._RealExitMode = HL.Method() << function(self)
     Notify(MessageConst.TOGGLE_FORBID_ATTACK, { FAC_DESTROY_MODE_STATE_KEY, false })
 end
 
-
-
 FacDestroyModeCtrl._ClearOnExit = HL.Method() << function(self)
     self.m_hideKey = UIManager:RecoverScreen(self.m_hideKey)
     self.m_updateKey = LuaUpdate:Remove(self.m_updateKey)
@@ -398,25 +329,14 @@ FacDestroyModeCtrl._ClearOnExit = HL.Method() << function(self)
     GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.FacDestroySystemActionConflictName)
 end
 
-
-
-
 FacDestroyModeCtrl._OnChangeHideToggle = HL.Method(HL.Boolean) << function(self, isOn)
-    if isOn then
-        FactoryUtils.startPipeFigureRenderer()
-    else
-        FactoryUtils.stopLogisticFigureRenderer()
-    end
+    local mode = isOn and FacConst.SIMPLE_FIGURE_MODE.SimplePipeFigure or FacConst.SIMPLE_FIGURE_MODE.None
+    LuaSystemManager.factory:SetSimpleFigureMode(mode)
 end
-
-
-
 
 FacDestroyModeCtrl._OnChangeReverseToggle = HL.Method(HL.Boolean) << function(self, isOn)
     LuaSystemManager.factory:ChangeIsReverseSelect(isOn)
 end
-
-
 
 FacDestroyModeCtrl.OnDragBeginInBathMode = HL.Method() << function(self)
     self.view.keyHintNode.gameObject:SetActive(false)
@@ -424,15 +344,11 @@ FacDestroyModeCtrl.OnDragBeginInBathMode = HL.Method() << function(self)
     self:_ToggleExitBinding(false)
 end
 
-
-
 FacDestroyModeCtrl.OnDragEndInBathMode = HL.Method() << function(self)
     self:_ToggleExitBinding(true)
     self.view.batchNode.transform.localScale = Vector3.one 
     self.view.keyHintNode.gameObject:SetActive(true)
 end
-
-
 
 FacDestroyModeCtrl._ConfirmBatchDel = HL.Method() << function(self)
     if GameInstance.remoteFactoryManager.batchSelect.hasHub then
@@ -493,10 +409,7 @@ FacDestroyModeCtrl._ConfirmBatchDel = HL.Method() << function(self)
     end
 end
 
-
 FacDestroyModeCtrl.m_updateKey = HL.Field(HL.Number) << -1
-
-
 
 FacDestroyModeCtrl._Update = HL.Method() << function(self)
     self:_UpdateKeyHintStates()
@@ -548,20 +461,13 @@ local ControllerKeyHints = {
     },
 }
 
-
 FacDestroyModeCtrl.m_keyHintCells = HL.Field(HL.Forward('UIListCache'))
 
-
 FacDestroyModeCtrl.m_keyHintName = HL.Field(HL.String) << ''
-
-
 
 FacDestroyModeCtrl._InitKeyHint = HL.Method() << function(self)
     self.m_keyHintCells = self.m_keyHintCells or UIUtils.genCellCache(self.view.keyHintCell)
 end
-
-
-
 
 FacDestroyModeCtrl._RefreshKeyHint = HL.Method(HL.Opt(HL.String)) << function(self, name)
     self.m_keyHintName = name
@@ -588,16 +494,11 @@ FacDestroyModeCtrl._RefreshKeyHint = HL.Method(HL.Opt(HL.String)) << function(se
     end)
 end
 
-
 FacDestroyModeCtrl.m_needUpdateActionInteract = HL.Field(HL.Boolean) << false
-
-
 
 FacDestroyModeCtrl.OnToggleBatchTarget = HL.Method() << function(self)
     self.m_needUpdateActionInteract = true
 end
-
-
 
 FacDestroyModeCtrl._UpdateKeyHintStates = HL.Method() << function(self)
     local name = "normal"
@@ -650,9 +551,6 @@ end
 
 
 
-
-
-
 FacDestroyModeCtrl._OnClickDel = HL.Method(HL.Boolean) << function(self, isAll)
     if LuaSystemManager.factory.inBatchSelectMode then
         Notify(MessageConst.FAC_STOP_DRAG_IN_BATCH_MODE)
@@ -662,8 +560,6 @@ FacDestroyModeCtrl._OnClickDel = HL.Method(HL.Boolean) << function(self, isAll)
         interactCtrl:_OnClickFakeInteractOption(isAll)
     end
 end
-
-
 
 
 
@@ -695,8 +591,6 @@ FacDestroyModeCtrl._InitBatchNode = HL.Method() << function(self)
     end)
 end
 
-
-
 FacDestroyModeCtrl.TryStartBatchMove = HL.Method() << function(self)
     if not self.view.inputGroup.groupEnabled then
         return
@@ -705,8 +599,6 @@ FacDestroyModeCtrl.TryStartBatchMove = HL.Method() << function(self)
         self:_EnterBPMode(true)
     end
 end
-
-
 
 
 FacDestroyModeCtrl._SaveBlueprint = HL.Method() << function(self)
@@ -725,10 +617,6 @@ FacDestroyModeCtrl._SaveBlueprint = HL.Method() << function(self)
     UIManager:Open(PanelId.FacSaveBlueprint)
 end
 
-
-
-
-
 FacDestroyModeCtrl.CheckBatchActionValid = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)).Return(HL.Boolean) << function(self, isMoveAct, noToast)
     local rst, toast = self:_CheckBatchActionValid(isMoveAct)
     if toast and not noToast then
@@ -736,9 +624,6 @@ FacDestroyModeCtrl.CheckBatchActionValid = HL.Method(HL.Opt(HL.Boolean, HL.Boole
     end
     return rst
 end
-
-
-
 
 FacDestroyModeCtrl._CheckBatchActionValid = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Boolean, HL.Opt(HL.String)) << function(self, isMoveAct)
     local range = GameInstance.remoteFactoryManager.batchSelect.selectedRange
@@ -770,8 +655,6 @@ FacDestroyModeCtrl._CheckBatchActionValid = HL.Method(HL.Opt(HL.Boolean)).Return
     end
     return true
 end
-
-
 
 FacDestroyModeCtrl._UpdateBatchActionInteractable = HL.Method() << function(self)
     local batch = GameInstance.remoteFactoryManager.batchSelect
@@ -816,9 +699,6 @@ FacDestroyModeCtrl._UpdateBatchActionInteractable = HL.Method() << function(self
         self.view.warningHintTxt.text = warningHintTxt
     end
 end
-
-
-
 
 FacDestroyModeCtrl._EnterBPMode = HL.Method(HL.Boolean) << function(self, isMove)
     local range = GameInstance.remoteFactoryManager.batchSelect.selectedRange
@@ -870,8 +750,6 @@ FacDestroyModeCtrl._EnterBPMode = HL.Method(HL.Boolean) << function(self, isMove
         initGridPos = initGridPos,
     })
 end
-
-
 
 
 

@@ -1,22 +1,11 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonVideo
-
-
-
-
-
-
-
-
 CommonVideoCtrl = HL.Class('CommonVideoCtrl', uiCtrl.UICtrl)
-
 
 CommonVideoCtrl.m_coroutine = HL.Field(HL.Thread)
 
-
 CommonVideoCtrl.m_isPlaying = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -26,9 +15,6 @@ CommonVideoCtrl.m_isPlaying = HL.Field(HL.Boolean) << false
 CommonVideoCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 CommonVideoCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -41,8 +27,6 @@ CommonVideoCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
 
 CommonVideoCtrl._OnShowVideo = HL.StaticMethod(HL.String) << function(videoPath)
     local self = UIManager:AutoOpen(PANEL_ID)
@@ -86,16 +70,12 @@ CommonVideoCtrl._OnShowVideo = HL.StaticMethod(HL.String) << function(videoPath)
     end
 end
 
-
-
 CommonVideoCtrl.OnClose = HL.Override() << function(self)
     if self.m_coroutine ~= nil then
         self:_ClearCoroutine(self.m_coroutine)
         self.m_coroutine = nil
     end
 end
-
-
 
 CommonVideoCtrl._TogglePlayPause = HL.Method() << function(self)
     local status = self.view.videoNode.player.status

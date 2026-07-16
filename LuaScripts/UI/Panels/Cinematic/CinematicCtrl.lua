@@ -1,23 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Cinematic
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CinematicCtrl = HL.Class('CinematicCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -30,17 +13,11 @@ CinematicCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_LOAD_NEW_CUTSCENE] = 'OnLoadNewCinematic',
 }
 
-
 CinematicCtrl.m_timelineHandle = HL.Field(HL.Userdata)
-
 
 CinematicCtrl.m_debugSkipCounter = HL.Field(HL.Number) << 0
 
-
 CinematicCtrl.m_fmvNodeMap = HL.Field(HL.Table)
-
-
-
 
 CinematicCtrl.OnLoadNewCinematic = HL.Method(HL.Any) << function(self, arg)
     if arg == nil then
@@ -51,9 +28,6 @@ CinematicCtrl.OnLoadNewCinematic = HL.Method(HL.Any) << function(self, arg)
     self.m_timelineHandle = unpack(arg)
     self:OnShow()
 end
-
-
-
 
 
 CinematicCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -70,8 +44,6 @@ CinematicCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitBorderMask()
 end
 
-
-
 CinematicCtrl._InitBorderMask = HL.Method() << function(self, arg)
     local screenWidth = Screen.width
     local screenHeight = Screen.height
@@ -83,8 +55,6 @@ CinematicCtrl._InitBorderMask = HL.Method() << function(self, arg)
     self.view.leftBorder.transform.sizeDelta = Vector2(borderSize, screenHeight) * ratio
     self.view.rightBorder.transform.sizeDelta = Vector2(borderSize, screenHeight) * ratio
 end
-
-
 
 CinematicCtrl.OnShow = HL.Override() << function(self)
     self:_ShowCinematic()
@@ -108,21 +78,15 @@ CinematicCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 CinematicCtrl.OnHide = HL.Override() << function(self)
     self.view.exUINode:Clear()
 end
-
-
 
 CinematicCtrl.OnClose = HL.Override() << function(self)
     self.view.exUINode.view.button.onClick:RemoveAllListeners()
     self.view.exUINode:Clear()
     self:ClearFMV()
 end
-
-
 
 CinematicCtrl._ShowCinematic = HL.Method() << function(self)
     local cinematicMgr = GameWorld.cutsceneManager
@@ -149,8 +113,6 @@ CinematicCtrl._ShowCinematic = HL.Method() << function(self)
     self.view.mask.gameObject:SetActive(hasMask)
 end
 
-
-
 CinematicCtrl.OnBtnSkipClick = HL.Method() << function(self)
     local cinematicMgr = GameWorld.cutsceneManager
 
@@ -173,9 +135,6 @@ CinematicCtrl.OnBtnSkipClick = HL.Method() << function(self)
 end
 
 
-
-
-
 CinematicCtrl.StopFMV = HL.Method(HL.String) << function(self, fmvId)
     local fmvNode = self.m_fmvNodeMap[fmvId]
     if not fmvNode then
@@ -191,15 +150,9 @@ CinematicCtrl.StopFMV = HL.Method(HL.String) << function(self, fmvId)
     end
 end
 
-
-
 CinematicCtrl.ClearFMV = HL.Method() << function(self)
     lume.each(lume.keys(self.m_fmvNodeMap), function(fmvId) self:StopFMV(fmvId) end)
 end
-
-
-
-
 
 CinematicCtrl.GetLoadedFMVNode = HL.Method(HL.String, HL.String).Return(HL.Any) << function(self, fmvId, fmvPath)
     if self.m_fmvNodeMap[fmvId] then

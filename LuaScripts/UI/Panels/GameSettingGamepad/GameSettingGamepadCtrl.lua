@@ -6,45 +6,7 @@ local GamepadKeyCode = CS.Beyond.Input.GamepadKeyCode
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GameSettingGamepad
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GameSettingGamepadCtrl = HL.Class('GameSettingGamepadCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -54,38 +16,25 @@ GameSettingGamepadCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CONTROLLER_TYPE_CHANGED] = "_OnControllerTypeChanged",
 }
 
-
 GameSettingGamepadCtrl.m_system = HL.Field(HL.Userdata)
-
 
 GameSettingGamepadCtrl.m_itemDataList = HL.Field(HL.Table)
 
-
 GameSettingGamepadCtrl.m_itemDataToKeyCode = HL.Field(HL.Table) 
-
 
 GameSettingGamepadCtrl.m_keyCodeToItemData = HL.Field(HL.Table) 
 
-
 GameSettingGamepadCtrl.m_itemCells = HL.Field(HL.Forward("UIListCache"))
-
 
 GameSettingGamepadCtrl.m_itemCellHeight = HL.Field(HL.Number) << 0
 
-
 GameSettingGamepadCtrl.m_itemCellHeightWithoutTitle = HL.Field(HL.Number) << 0
-
 
 GameSettingGamepadCtrl.m_itemControlConfigs = HL.Field(HL.Table)
 
-
 GameSettingGamepadCtrl.m_dropdownListMaskOriginalPadding = HL.Field(HL.Number) << 0
 
-
 GameSettingGamepadCtrl.m_contentHeight = HL.Field(HL.Number) << 0
-
-
-
 
 
 GameSettingGamepadCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -132,8 +81,6 @@ GameSettingGamepadCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 GameSettingGamepadCtrl.OnClose = HL.Override() << function(self)
     
     local isAnyDirty = self:_IsAnySettingItemDirty()
@@ -142,22 +89,16 @@ GameSettingGamepadCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 GameSettingGamepadCtrl.OnShow = HL.Override() << function(self)
     self:_RefreshView(true)
     self:_SetNaviTarget()
 end
-
-
 
 GameSettingGamepadCtrl._CloseSelf = HL.Method() << function(self)
     self:PlayAnimationOutWithCallback(function()
         self.m_phase:RemovePhasePanelItemById(PanelId.GameSettingGamepad)
     end)
 end
-
-
 
 GameSettingGamepadCtrl._BuildKeyCodeMapping = HL.Method() << function(self)
     lume.clear(self.m_itemDataToKeyCode)
@@ -176,39 +117,24 @@ GameSettingGamepadCtrl._BuildKeyCodeMapping = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 GameSettingGamepadCtrl._UpdateKeyCodeMapping = HL.Method(HL.Userdata, HL.Userdata) << function(self, itemData, keyCode)
     self.m_itemDataToKeyCode[itemData].current = keyCode
     self.m_keyCodeToItemData[keyCode] = itemData
 end
-
-
-
 
 GameSettingGamepadCtrl._GetKeyCodeBySettingItem = HL.Method(HL.Userdata).Return(HL.Userdata) << function(self, itemData)
     local keyCode = self.m_itemDataToKeyCode[itemData]
     return keyCode.current
 end
 
-
-
-
 GameSettingGamepadCtrl._GetSettingItemByKeyCode = HL.Method(HL.Userdata).Return(HL.Userdata) << function(self, keyCode)
     return self.m_keyCodeToItemData[keyCode]
 end
-
-
-
 
 GameSettingGamepadCtrl._IsSettingItemDirty = HL.Method(HL.Userdata).Return(HL.Boolean) << function(self, itemData)
     local keyCode = self.m_itemDataToKeyCode[itemData]
     return keyCode.current ~= keyCode.original
 end
-
-
 
 GameSettingGamepadCtrl._IsAnySettingItemDirty = HL.Method().Return(HL.Boolean) << function(self)
     for itemData, keyCode in pairs(self.m_itemDataToKeyCode) do
@@ -219,8 +145,6 @@ GameSettingGamepadCtrl._IsAnySettingItemDirty = HL.Method().Return(HL.Boolean) <
     return false
 end
 
-
-
 GameSettingGamepadCtrl._IsAllSettingItemsDefault = HL.Method().Return(HL.Boolean) << function(self)
     for itemData, keyCode in pairs(self.m_itemDataToKeyCode) do
         if keyCode.current ~= keyCode.default then
@@ -230,14 +154,10 @@ GameSettingGamepadCtrl._IsAllSettingItemsDefault = HL.Method().Return(HL.Boolean
     return true
 end
 
-
-
 GameSettingGamepadCtrl._ClearPendingSettings = HL.Method() << function(self)
     
     GameInstance.player.gameSettingSystem:ClearAllPendingKeySettings()
 end
-
-
 
 GameSettingGamepadCtrl._ResetAllSettings = HL.Method() << function(self)
     
@@ -246,9 +166,6 @@ GameSettingGamepadCtrl._ResetAllSettings = HL.Method() << function(self)
     GameInstance.player.gameSettingSystem:SaveSetting()
     Notify(MessageConst.ON_GAME_SETTING_CHANGED, UIConst.GameSettingChangeReason.Gamepad)
 end
-
-
-
 
 GameSettingGamepadCtrl._RefreshView = HL.Method(HL.Boolean) << function(self, rebuildData)
     if rebuildData then
@@ -269,10 +186,6 @@ GameSettingGamepadCtrl._RefreshView = HL.Method(HL.Boolean) << function(self, re
         UIUtils.getGamepadKeyImageText(GamepadKeyCode.LT, false, keyScale))
     self.view.tipsText:SetAndResolveTextStyle(tipsText)
 end
-
-
-
-
 
 GameSettingGamepadCtrl._RefreshSettingItemCell = HL.Method(HL.Userdata, HL.Number) << function(self, itemCell, itemIndex)
     local itemData = self.m_itemDataList[itemIndex]
@@ -302,9 +215,6 @@ GameSettingGamepadCtrl._RefreshSettingItemCell = HL.Method(HL.Userdata, HL.Numbe
     )
 end
 
-
-
-
 GameSettingGamepadCtrl._InitSettingItemControlDropdown = HL.Method(HL.Userdata) << function(self, itemCell)
     local itemData = itemCell.itemData
     local itemControl = itemCell.itemControl
@@ -332,9 +242,6 @@ GameSettingGamepadCtrl._InitSettingItemControlDropdown = HL.Method(HL.Userdata) 
     local isDirty = self:_IsSettingItemDirty(itemData)
     itemControl.dirtyNode.gameObject:SetActive(isDirty)
 end
-
-
-
 
 GameSettingGamepadCtrl._DropdownAdjustExpandDirection = HL.Method(HL.Userdata) << function(self, itemCell)
     local itemControl = itemCell.itemControl
@@ -367,9 +274,6 @@ GameSettingGamepadCtrl._DropdownAdjustExpandDirection = HL.Method(HL.Userdata) <
     
     itemControl.layoutStateCtrl:SetState(isInUpperHalf and "Downward" or "Upward")
 end
-
-
-
 
 GameSettingGamepadCtrl._DropdownGetOptionTextList = HL.Method(HL.Userdata).Return(HL.Table) << function(self, itemData)
     local optionTextList = {}
@@ -407,9 +311,6 @@ GameSettingGamepadCtrl._DropdownGetOptionTextList = HL.Method(HL.Userdata).Retur
     return optionTextList
 end
 
-
-
-
 GameSettingGamepadCtrl._DropdownGetOptionIndex = HL.Method(HL.Userdata).Return(HL.Number) << function(self, itemData)
     local options = itemData.options
     local currKeyCode = self:_GetKeyCodeBySettingItem(itemData)
@@ -428,10 +329,6 @@ GameSettingGamepadCtrl._DropdownGetOptionIndex = HL.Method(HL.Userdata).Return(H
     logger.error(ELogChannel.GameSetting, "Failed to get gamepad setting option index, settingId: " .. itemData.settingId)
     return 1
 end
-
-
-
-
 
 GameSettingGamepadCtrl._DropdownOnSelectOption = HL.Method(HL.Userdata, HL.Number) << function(self, itemData, optionIndex)
     local targetKeyCode 
@@ -479,8 +376,6 @@ GameSettingGamepadCtrl._DropdownOnSelectOption = HL.Method(HL.Userdata, HL.Numbe
     self:_RefreshView(false)
 end
 
-
-
 GameSettingGamepadCtrl._OnCloseBtnClick = HL.Method() << function(self)
     local isAnyDirty = self:_IsAnySettingItemDirty()
     if isAnyDirty then
@@ -499,8 +394,6 @@ GameSettingGamepadCtrl._OnCloseBtnClick = HL.Method() << function(self)
         self:_CloseSelf()
     end
 end
-
-
 
 GameSettingGamepadCtrl._OnResetBtnClick = HL.Method() << function(self)
     local isAllDefault = self:_IsAllSettingItemsDefault()
@@ -529,8 +422,6 @@ GameSettingGamepadCtrl._OnResetBtnClick = HL.Method() << function(self)
         })
     end
 end
-
-
 
 GameSettingGamepadCtrl._OnSaveBtnClick = HL.Method() << function(self)
     
@@ -566,20 +457,15 @@ GameSettingGamepadCtrl._OnSaveBtnClick = HL.Method() << function(self)
     end
 end
 
-
-
 GameSettingGamepadCtrl._SetNaviTarget = HL.Method() << function(self)
-    InputManagerInst.controllerNaviManager:SetTarget(nil)
+    self:ClearNaviTarget()
 
     local itemCount = #self.m_itemDataList
     if itemCount > 0 then
         local firstCell = self.m_itemCells:Get(1)
-        InputManagerInst.controllerNaviManager:SetTarget(firstCell.view.naviDecorator)
+        self:SetNaviTarget(firstCell.view.naviDecorator)
     end
 end
-
-
-
 
 GameSettingGamepadCtrl._OnControllerTypeChanged = HL.Method(HL.Any) << function(self, args)
     local controllerType = DeviceInfo.controllerType

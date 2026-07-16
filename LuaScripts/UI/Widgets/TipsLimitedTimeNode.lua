@@ -1,59 +1,30 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 TipsLimitedTimeNode = HL.Class('TipsLimitedTimeNode', UIWidgetBase)
 
 
 local TICK_TIME_INTERVAL = 2
 
 
-
 TipsLimitedTimeNode.m_itemId = HL.Field(HL.String) << ""
-
 
 TipsLimitedTimeNode.m_instId = HL.Field(HL.Number) << 0
 
-
 TipsLimitedTimeNode.m_info = HL.Field(HL.Table)
-
 
 TipsLimitedTimeNode.m_onTimeOut = HL.Field(HL.Function)
 
-
 TipsLimitedTimeNode.m_luaUpdateKey = HL.Field(HL.Number) << 0
 
-
 TipsLimitedTimeNode.m_deltaTime = HL.Field(HL.Number) << 0
-
 
 TipsLimitedTimeNode.m_isExpireWarningState = HL.Field(HL.Boolean) << false
 
 
 
 
-
-
 TipsLimitedTimeNode._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
-
-
 
 TipsLimitedTimeNode.InitTipsLimitedTimeNode = HL.Method(HL.String, HL.Number, HL.Opt(HL.Function)) << function(self, itemId, instId, onTimeOut)
     self:_FirstTimeInit()
@@ -66,26 +37,17 @@ TipsLimitedTimeNode.InitTipsLimitedTimeNode = HL.Method(HL.String, HL.Number, HL
     self:_ToggleTickTime(true)
 end
 
-
-
 TipsLimitedTimeNode._OnEnable = HL.Override() << function(self)
     self:_ToggleTickTime(true)
 end
-
-
 
 TipsLimitedTimeNode._OnDisable = HL.Override() << function(self)
     self:_ToggleTickTime(false)
 end
 
-
-
 TipsLimitedTimeNode._OnDestroy = HL.Override() << function(self)
     self:_ToggleTickTime(false)
 end
-
-
-
 
 TipsLimitedTimeNode._ToggleTickTime = HL.Method(HL.Boolean) << function(self, isOn)
     if isOn then
@@ -116,8 +78,6 @@ TipsLimitedTimeNode._ToggleTickTime = HL.Method(HL.Boolean) << function(self, is
         self.view.gameObject:SetActive(false)
     end
 end
-
-
 
 TipsLimitedTimeNode._RefreshTime = HL.Method() << function(self)
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()

@@ -4,25 +4,14 @@ local PANEL_ID = PanelId.MapMarkDetailMission
 local ChapterType = CS.Beyond.Gameplay.ChapterType
 local QuestType = GEnums.QuestType
 
-
-
-
-
-
-
-
-
 MapMarkDetailMissionCtrl = HL.Class('MapMarkDetailMissionCtrl', uiCtrl.UICtrl)
 
 local CHAPTER_ICON_PATH = "Mission/ChapterIconNew"
 local OPTIONAL_TEXT_COLOR = "C7EC59"
 
-
 MapMarkDetailMissionCtrl.m_questList = HL.Field(HL.Forward('UIListCache'))
 
-
 MapMarkDetailMissionCtrl.m_rewardList = HL.Field(HL.Forward('UIListCache'))
-
 
 
 
@@ -31,9 +20,6 @@ MapMarkDetailMissionCtrl.m_rewardList = HL.Field(HL.Forward('UIListCache'))
 MapMarkDetailMissionCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 MapMarkDetailMissionCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -119,9 +105,6 @@ MapMarkDetailMissionCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end
 end
 
-
-
-
 MapMarkDetailMissionCtrl._FillQuestInfo = HL.Method(HL.Table) << function(self, args)
     local missionRuntimeAsset = args.missionRuntimeAsset
     local missionData = args.missionData
@@ -179,9 +162,6 @@ MapMarkDetailMissionCtrl._FillQuestInfo = HL.Method(HL.Table) << function(self, 
     end)
 end
 
-
-
-
 MapMarkDetailMissionCtrl._FillRewardsInfo = HL.Method(HL.Table) << function(self, args)
     local missionRuntimeAsset = args.missionRuntimeAsset
     local rewardItemBundles = {}
@@ -215,9 +195,6 @@ MapMarkDetailMissionCtrl._FillRewardsInfo = HL.Method(HL.Table) << function(self
         })
     end)
 end
-
-
-
 
 MapMarkDetailMissionCtrl._RemoveTrace = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     GameInstance.player.mission:StopTrackMission()

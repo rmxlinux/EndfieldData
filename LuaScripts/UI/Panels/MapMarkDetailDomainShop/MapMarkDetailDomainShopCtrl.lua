@@ -5,18 +5,7 @@ local PANEL_ID = PanelId.MapMarkDetailDomainShop
 
 local shopSystem = GameInstance.player.shopSystem
 
-
-
-
-
-
-
-
-
-
-
 MapMarkDetailDomainShopCtrl = HL.Class('MapMarkDetailDomainShopCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -28,17 +17,11 @@ MapMarkDetailDomainShopCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 MapMarkDetailDomainShopCtrl.m_markInstId = HL.Field(HL.String) << ""
-
 
 MapMarkDetailDomainShopCtrl.m_commonArgs = HL.Field(HL.Table)
 
-
 MapMarkDetailDomainShopCtrl.m_info = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -52,14 +35,9 @@ end
 
 
 
-
-
-
 MapMarkDetailDomainShopCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     self.m_markInstId = arg.markInstId
 end
-
-
 
 MapMarkDetailDomainShopCtrl._UpdateData = HL.Method() << function(self)
     
@@ -106,7 +84,8 @@ MapMarkDetailDomainShopCtrl._UpdateData = HL.Method() << function(self)
         desc = desc .. curDesc
     end
     
-    local upgradeQuestId = Tables.shopDomainConst.domainShopUnlockQuestId
+    local canSkipPreconditions = DomainPOIUtils._CanSkipDomainShopChannelPreconditions(shopChannelCfg)
+    local upgradeQuestId = canSkipPreconditions and "" or Tables.shopDomainConst.domainShopUnlockQuestId
     local questIsComplete = true
     local questState
     if string.isEmpty(upgradeQuestId) then
@@ -120,10 +99,6 @@ MapMarkDetailDomainShopCtrl._UpdateData = HL.Method() << function(self)
         curLv = curLv,
         isUnlock = isUnlock,
         isMaxLv = isFinalMax and curLv >= maxLv,
-        
-        questState = questState,
-        upgradeQuestId = upgradeQuestId,
-        questIsComplete = questIsComplete,
     }
     
     self.m_commonArgs = {}
@@ -131,17 +106,32 @@ MapMarkDetailDomainShopCtrl._UpdateData = HL.Method() << function(self)
     commonArgs.markInstId = self.m_markInstId
     commonArgs.descText = desc
     commonArgs.bigBtnActive = questIsComplete
+
+    if not questIsComplete then
+        if questState == CS.Beyond.Gameplay.MissionSystem.QuestState.Processing
+            or questState == CS.Beyond.Gameplay.MissionSystem.QuestState.Paused
+        then
+            local upgradeMissionId = GameInstance.player.mission:GetMissionIdByQuestId(upgradeQuestId)
+            commonArgs.jumpInfo = {
+                onJump = function()
+                    PhaseManager:OpenPhase(PhaseId.Mission, {autoSelect = upgradeMissionId, useBlackMask = true})
+                end,
+                jumpText = Language.LUA_DOMAIN_SHOP_UNLOCK_QUEST_DESC,
+            }
+        elseif not string.isEmpty(upgradeQuestId) then
+            commonArgs.hintInfo = {
+                hintText = Language.LUA_POI_UPGRADE_NEED_COMPLETE_TASK,
+                importantHint = true,
+            }
+        end
+    end
 end
-
-
 
 
 
 MapMarkDetailDomainShopCtrl._InitUI = HL.Method() << function(self)
     self.view.mapMarkDetailCommon:_FirstTimeInit()
 end
-
-
 
 MapMarkDetailDomainShopCtrl._RefreshAllUI = HL.Method() << function(self)
     local info = self.m_info
@@ -150,27 +140,6 @@ MapMarkDetailDomainShopCtrl._RefreshAllUI = HL.Method() << function(self)
     self.view.mapMarkDetailCommonStateController:SetState(info.isUnlock and "Unlocked" or "Locked")
     self.view.lvStateNode:SetState(info.isMaxLv and "Max" or "Nrl")
     self.view.lvNumTxt.text = info.curLv
-    
-    if not info.questIsComplete then
-        self.view.unlockTaskTxt.text = Language.LUA_DOMAIN_SHOP_UNLOCK_QUEST_DESC
-        self.view.unlockTaskBtn.gameObject:SetActive(true)
-        if info.questState == CS.Beyond.Gameplay.MissionSystem.QuestState.Processing
-            or info.questState == CS.Beyond.Gameplay.MissionSystem.QuestState.Paused
-        then
-            local upgradeMissionId = GameInstance.player.mission:GetMissionIdByQuestId(info.upgradeQuestId)
-            self.view.unlockTaskBtn.onClick:AddListener(function()
-                PhaseManager:OpenPhase(PhaseId.Mission, {
-                    autoSelect = upgradeMissionId
-                })
-            end)
-        else
-            self.view.unlockTaskBtn.onClick:AddListener(function()
-                Notify(MessageConst.SHOW_TOAST, Language.LUA_POI_UPGRADE_NEED_COMPLETE_TASK)
-            end)
-        end
-    else
-        self.view.unlockTaskBtn.gameObject:SetActive(false)
-    end
 end
 
 

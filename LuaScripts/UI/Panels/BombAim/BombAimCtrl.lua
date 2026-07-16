@@ -1,36 +1,15 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BombAim
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BombAimCtrl = HL.Class('BombAimCtrl', uiCtrl.UICtrl)
-
 
 BombAimCtrl.m_isInitAim = HL.Field(HL.Boolean) << false
 
-
 BombAimCtrl.m_isHit = HL.Field(HL.Boolean) << false
-
 
 BombAimCtrl.m_controllerTriggerSettingHandlerId = HL.Field(HL.Number) << -1
 
-
 BombAimCtrl.m_isControllerTriggerUsingVibration = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -42,9 +21,6 @@ BombAimCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.HIDE_BOMB_AIM] = '_OnHideBombAim',
     [MessageConst.ON_CHANGE_INPUT_DEVICE_TYPE_FINISHED] = '_OnChangeInputDeviceTypeFinished',
 }
-
-
-
 
 
 BombAimCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -63,22 +39,17 @@ BombAimCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
 BombAimCtrl.OnShow = HL.Override() << function(self)
     if DeviceInfo.usingController then
         self:_ToggleControllerTriggerSetting(true)
     end
 end
 
-
-
 BombAimCtrl.OnHide = HL.Override() << function(self)
     if DeviceInfo.usingController then
         self:_ToggleControllerTriggerSetting(false)
     end
 end
-
 
 BombAimCtrl._OnShowBombAim = HL.StaticMethod() << function()
     local bombAimPanel = UIManager:AutoOpen(PANEL_ID)
@@ -87,26 +58,17 @@ BombAimCtrl._OnShowBombAim = HL.StaticMethod() << function()
     Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {true, "Bomb"})
     if DeviceInfo.usingController then
         bombAimPanel:_ToggleControllerTriggerSetting(true)
-        UIManager:HideWithKey(PanelId.BattleAction, "Bomb")
-        GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "Bomb", true)
     end
 end
-
-
 
 BombAimCtrl._OnHideBombAim = HL.Method() << function(self)
     self:Hide()
     self.m_isHit = false
     Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {false, "Bomb"})
     self:_ToggleControllerTriggerSetting(false)
-    if DeviceInfo.usingController then
-        UIManager:ShowWithKey(PanelId.BattleAction, "Bomb")
-        GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "Bomb", false)
-    end
+    
+    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "Bomb", false)
 end
-
-
-
 
 BombAimCtrl._OnSyncAimPos = HL.Method(HL.Any) << function(self, args)
     local pos, isHit = unpack(args)
@@ -127,9 +89,6 @@ BombAimCtrl._OnSyncAimPos = HL.Method(HL.Any) << function(self, args)
     self.view.aimImage.anchoredPosition = uiPos
     self.view.aimImageFar.anchoredPosition = uiPos
 end
-
-
-
 
 BombAimCtrl._ToggleControllerTriggerSetting = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active)
     local oldHandlerId = self.m_controllerTriggerSettingHandlerId
@@ -160,9 +119,6 @@ BombAimCtrl._ToggleControllerTriggerSetting = HL.Method(HL.Boolean, HL.Opt(HL.Bo
     end
 end
 
-
-
-
 BombAimCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Table) << function(self, args)
     if not self:IsShow() then
         return
@@ -181,8 +137,6 @@ BombAimCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Table) << function(s
     end
 end
 
-
-
 BombAimCtrl._OnCancel = HL.Method() << function(self)
     if GameInstance.playerController.mainCharacter == nil then
         return
@@ -191,15 +145,11 @@ BombAimCtrl._OnCancel = HL.Method() << function(self)
     GameInstance.playerController.mainCharacter.interactiveInstigatorCtrl:ClearPickupItem()
 end
 
-
-
 BombAimCtrl.OnClose = HL.Override() << function(self)
     self:_ToggleControllerTriggerSetting(false)
-    if DeviceInfo.usingController then
-        UIManager:ShowWithKey(PanelId.BattleAction, "Bomb")
-        GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "Bomb", false)
-    end
     self:_OnCancel()
+    
+    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "Bomb", false)
 end
 
 HL.Commit(BombAimCtrl)

@@ -1,19 +1,7 @@
 
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.ActivityPhotoTakingUniverse
-
-
-
-
-
-
-
-
-
-
-
 PhaseActivityPhotoTakingUniverse = HL.Class('PhaseActivityPhotoTakingUniverse', phaseBase.PhaseBase)
-
 
 
 
@@ -25,16 +13,9 @@ PhaseActivityPhotoTakingUniverse.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
-
 PhaseActivityPhotoTakingUniverse._OnInit = HL.Override() << function(self)
     PhaseActivityPhotoTakingUniverse.Super._OnInit(self)
 end
-
-
-
-
-
 
 
 
@@ -57,30 +38,14 @@ PhaseActivityPhotoTakingUniverse.PrepareTransition = HL.Override(HL.Number, HL.B
     end
 end
 
-
-
-
-
 PhaseActivityPhotoTakingUniverse._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseActivityPhotoTakingUniverse._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseActivityPhotoTakingUniverse._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseActivityPhotoTakingUniverse._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
@@ -90,17 +55,11 @@ end
 
 
 
-
-
 PhaseActivityPhotoTakingUniverse._OnActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseActivityPhotoTakingUniverse._OnDeActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseActivityPhotoTakingUniverse._OnDestroy = HL.Override() << function(self)
     PhaseActivityPhotoTakingUniverse.Super._OnDestroy(self)

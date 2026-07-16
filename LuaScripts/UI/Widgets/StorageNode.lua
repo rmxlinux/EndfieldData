@@ -1,22 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 StorageNode = HL.Class('StorageNode', UIWidgetBase)
-
-
 
 
 StorageNode._OnFirstTimeInit = HL.Override() << function(self)
     
 end
-
-
-
-
-
-
 
 StorageNode.InitStorageNode = HL.Method(HL.Number,HL.Opt(HL.Number, HL.Boolean, HL.Boolean)) << function(self, count, needCount, ignoreInSafeZone, itemBagOnly)
     self:_FirstTimeInit()

@@ -1,20 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 AdventureRewardTagCell = HL.Class('AdventureRewardTagCell', UIWidgetBase)
-
 
 AdventureRewardTagCell.m_rewardInfo = HL.Field(HL.Table)
 
-
 AdventureRewardTagCell.m_onClickFunc = HL.Field(HL.Function)
-
-
 
 
 AdventureRewardTagCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -29,10 +19,6 @@ AdventureRewardTagCell._OnFirstTimeInit = HL.Override() << function(self)
     
 end
 
-
-
-
-
 AdventureRewardTagCell.InitAdventureRewardTagCell = HL.Method(HL.Table, HL.Function) << function(self, info, onClickFunc)
     self:_FirstTimeInit()
 
@@ -41,8 +27,6 @@ AdventureRewardTagCell.InitAdventureRewardTagCell = HL.Method(HL.Table, HL.Funct
 
     self:_UpdateInfo()
 end
-
-
 
 AdventureRewardTagCell._UpdateInfo = HL.Method() << function(self)
     local adventure = GameInstance.player.adventure

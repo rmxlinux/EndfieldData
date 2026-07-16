@@ -2,22 +2,11 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DungeonUnlockConditionPopup
 
-
-
-
-
-
-
-
-
 DungeonUnlockConditionPopupCtrl = HL.Class('DungeonUnlockConditionPopupCtrl', uiCtrl.UICtrl)
-
 
 DungeonUnlockConditionPopupCtrl.m_unlockConditionCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 DungeonUnlockConditionPopupCtrl.m_dungeonId = HL.Field(HL.String) << ""
-
 
 
 
@@ -26,9 +15,6 @@ DungeonUnlockConditionPopupCtrl.m_dungeonId = HL.Field(HL.String) << ""
 DungeonUnlockConditionPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 DungeonUnlockConditionPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -49,11 +35,9 @@ DungeonUnlockConditionPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     if self.m_unlockConditionCellCache:GetCount() >= 1 then
         local cell = self.m_unlockConditionCellCache:Get(1)
         local decorator = cell.gameObject:GetComponent("InputBindingGroupNaviDecorator")
-        UIUtils.setAsNaviTarget(decorator)
+        self:SetNaviTarget(decorator)
     end
 end
-
-
 
 
 
@@ -68,8 +52,6 @@ end
 DungeonUnlockConditionPopupCtrl._OnBtnCloseClick = HL.Method() << function(self)
     self:PlayAnimationOut(UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Close)
 end
-
-
 
 DungeonUnlockConditionPopupCtrl._Refresh = HL.Method() << function(self)
     local uncompletedConditionIds = DungeonUtils.getUncompletedConditionIds(self.m_dungeonId)
@@ -92,10 +74,6 @@ DungeonUnlockConditionPopupCtrl._Refresh = HL.Method() << function(self)
         self:_UpdateCell(cell, uncompletedConditionInfo[luaIndex])
     end)
 end
-
-
-
-
 
 DungeonUnlockConditionPopupCtrl._UpdateCell = HL.Method(HL.Any, HL.Table) << function(self, cell, info)
     cell.normalNode.gameObject:SetActiveIfNecessary(info.isKnown)

@@ -1,41 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharInfoWeapon
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharInfoWeaponCtrl = HL.Class('CharInfoWeaponCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -50,23 +15,15 @@ CharInfoWeaponCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHAR_INFO_WEAPON_SELECT_WEAPON] = 'OnNotifySelectWeapon',
 }
 
-
 CharInfoWeaponCtrl.m_arg = HL.Field(HL.Table)
-
 
 CharInfoWeaponCtrl.m_charInfo = HL.Field(HL.Table)
 
-
 CharInfoWeaponCtrl.m_curSelectInstId = HL.Field(HL.Int) << 0
-
 
 CharInfoWeaponCtrl.state = HL.Field(HL.Number) << UIConst.CHAR_INFO_WEAPON_STATE.Normal
 
-
 CharInfoWeaponCtrl.m_inCompare = HL.Field(HL.Boolean) << false
-
-
-
 
 
 CharInfoWeaponCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -97,15 +54,11 @@ CharInfoWeaponCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_arg.stateArg = nil
 end
 
-
-
 CharInfoWeaponCtrl.OnClose = HL.Override() << function(self)
     if DeviceInfo.usingController then
         self.m_phase:_ActiveWeaponPageNavi(self, false)
     end
 end
-
-
 
 CharInfoWeaponCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.backButton.onClick:RemoveAllListeners()
@@ -155,9 +108,6 @@ CharInfoWeaponCtrl._InitActionEvent = HL.Method() << function(self)
     end)
 end
 
-
-
-
 CharInfoWeaponCtrl._SwitchCompare = HL.Method(HL.Opt(HL.Boolean)) << function(self, compare)
     if self.state == UIConst.CHAR_INFO_WEAPON_STATE.Detail then
         self.m_inCompare = compare
@@ -174,18 +124,12 @@ CharInfoWeaponCtrl._SwitchCompare = HL.Method(HL.Opt(HL.Boolean)) << function(se
     end
 end
 
-
-
-
 CharInfoWeaponCtrl.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInfo)
     self.m_charInfo = charInfo
     local curWeaponInstId = CharInfoUtils.getCharCurWeapon(self.m_charInfo.instId).weaponInstId
     self.m_curSelectInstId = curWeaponInstId
     self:_RefreshWeaponInfo()
 end
-
-
-
 
 CharInfoWeaponCtrl.SwitchState = HL.Method(HL.Number) << function(self, state)
     if self.state == state then
@@ -201,8 +145,6 @@ CharInfoWeaponCtrl.SwitchState = HL.Method(HL.Number) << function(self, state)
     InputManagerInst:ToggleBinding(self.m_focusMasteryBindingId, inDetail)
     self.view.focusMasteryNaviGroup.removeLayerOnDisable = inDetail
 end
-
-
 
 CharInfoWeaponCtrl._RefreshState = HL.Method() << function(self)
     local inDetail = self.state == UIConst.CHAR_INFO_WEAPON_STATE.Detail
@@ -222,8 +164,6 @@ CharInfoWeaponCtrl._RefreshState = HL.Method() << function(self)
     self:_RefreshRecommendButton()
 end
 
-
-
 CharInfoWeaponCtrl._RefreshCompareButton = HL.Method() << function(self)
     local inDetail = self.state == UIConst.CHAR_INFO_WEAPON_STATE.Detail
     local curWeaponInstId = CharInfoUtils.getCharCurWeapon(self.m_charInfo.instId).weaponInstId
@@ -234,16 +174,11 @@ CharInfoWeaponCtrl._RefreshCompareButton = HL.Method() << function(self)
     self:_SetFocusMasteryNaviGroupActive(not inCompare or not canCompare)
 end
 
-
-
 CharInfoWeaponCtrl._RefreshRecommendButton = HL.Method() << function(self)
     local inDetail = self.state == UIConst.CHAR_INFO_WEAPON_STATE.Detail
     local inCompare = self.m_inCompare
     self.view.weaponInfoRight.view.recommendTagLayout.gameObject:SetActive(inDetail and not inCompare)
 end
-
-
-
 
 CharInfoWeaponCtrl._ToggleWeaponItemList = HL.Method(HL.Boolean) << function(self, inDetail)
     self:Notify(MessageConst.TOGGLE_CHAR_INFO_FOCUS_MODE, inDetail)
@@ -259,8 +194,6 @@ CharInfoWeaponCtrl._ToggleWeaponItemList = HL.Method(HL.Boolean) << function(sel
         self:Notify(MessageConst.CHAR_INFO_WEAPON_SECOND_CLOSE)
     end
 end
-
-
 
 CharInfoWeaponCtrl.OnShow = HL.Override() << function(self)
     local curEquipWeaponInstId = CharInfoUtils.getCharCurWeapon(self.m_charInfo.instId).weaponInstId
@@ -278,14 +211,9 @@ CharInfoWeaponCtrl.OnShow = HL.Override() << function(self)
     self:_RefreshWeaponInfo()
 end
 
-
-
 CharInfoWeaponCtrl.OnHide = HL.Override() << function(self)
     self.m_curSelectInstId = 0
 end
-
-
-
 
 CharInfoWeaponCtrl._RefreshWeaponList = HL.Method(HL.Opt(HL.Any)) << function(self, selectedIndexId)
     local charTable = CharInfoUtils.getCharTableData(self.m_charInfo.templateId)
@@ -332,9 +260,6 @@ CharInfoWeaponCtrl._RefreshWeaponList = HL.Method(HL.Opt(HL.Any)) << function(se
     })
 end
 
-
-
-
 CharInfoWeaponCtrl._GetCurSelectedCellHint = HL.Method(HL.Table).Return(HL.String) << function(self, itemInfo)
     local weaponInstId = itemInfo.instId
     local curEquipWeaponInstId = CharInfoUtils.getCharCurWeapon(self.m_charInfo.instId).weaponInstId
@@ -349,8 +274,6 @@ CharInfoWeaponCtrl._GetCurSelectedCellHint = HL.Method(HL.Table).Return(HL.Strin
 
     return ""
 end
-
-
 
 CharInfoWeaponCtrl._RefreshWeaponInfo = HL.Method() << function(self)
     local curWeaponInfo = CharInfoUtils.getCharCurWeapon(self.m_charInfo.instId)
@@ -406,9 +329,6 @@ CharInfoWeaponCtrl._RefreshWeaponInfo = HL.Method() << function(self)
     end
 end
 
-
-
-
 CharInfoWeaponCtrl._OnEquipClick = HL.Method(HL.Table) << function(self, weaponInfo)
     local weaponInstId = self.m_curSelectInstId
     local isInFight = Utils.isInFight()
@@ -447,8 +367,6 @@ CharInfoWeaponCtrl._OnEquipClick = HL.Method(HL.Table) << function(self, weaponI
     GameInstance.player.charBag:PutOnWeapon(self.m_charInfo.instId, weaponInstId)
 end
 
-
-
 CharInfoWeaponCtrl._OnNormalEquipClick = HL.Method() << function(self)
     local isInFight = Utils.isInFight()
     if isInFight then
@@ -465,14 +383,9 @@ CharInfoWeaponCtrl._OnNormalEquipClick = HL.Method() << function(self)
     self:SwitchState(UIConst.CHAR_INFO_WEAPON_STATE.Detail)
 end
 
-
-
 CharInfoWeaponCtrl.OnCommonEmptyButtonClick = HL.Method(HL.Opt(HL.Userdata)) << function(self)
     self:_SwitchCompare(false)
 end
-
-
-
 
 CharInfoWeaponCtrl.OnPutOnWeapon = HL.Method(HL.Table) << function(self, arg)
     self:_RefreshState()
@@ -480,9 +393,6 @@ CharInfoWeaponCtrl.OnPutOnWeapon = HL.Method(HL.Table) << function(self, arg)
     self.view.commonItemList:RefreshAllCells()
     Utils.triggerVoice("chrbark_weap", self.m_charInfo.templateId)
 end
-
-
-
 
 CharInfoWeaponCtrl._OnWeaponClick = HL.Method(HL.Table) << function(self, itemInfo)
     local weaponInstId = itemInfo.instId
@@ -496,9 +406,6 @@ CharInfoWeaponCtrl._OnWeaponClick = HL.Method(HL.Table) << function(self, itemIn
 
     self:Notify(MessageConst.CHAR_INFO_PREVIEW_WEAPON, weaponInstId)
 end
-
-
-
 
 CharInfoWeaponCtrl.OnNotifySelectWeapon = HL.Method(HL.Any) << function(self, arg)
     if not arg.instId and not arg.id then
@@ -531,9 +438,6 @@ CharInfoWeaponCtrl.OnNotifySelectWeapon = HL.Method(HL.Any) << function(self, ar
     end
 end
 
-
-
-
 CharInfoWeaponCtrl.OnGuideScrollToTop = HL.Method(HL.Table) << function(self, arg)
     local itemId = unpack(arg)
     local filterInfoList = self.view.commonItemList.m_filteredInfoList
@@ -553,10 +457,7 @@ end
 
 
 
-
 CharInfoWeaponCtrl.m_focusMasteryBindingId = HL.Field(HL.Number) << -1
-
-
 
 CharInfoWeaponCtrl._InitController = HL.Method() << function(self)
     local extraBtnInfos = {}
@@ -587,17 +488,12 @@ CharInfoWeaponCtrl._InitController = HL.Method() << function(self)
     UIUtils.bindHyperlinkPopup(self, "WeaponSkill", self.view.inputGroup.groupId)
 end
 
-
-
-
 CharInfoWeaponCtrl._SetFocusMasteryNaviGroupActive = HL.Method(HL.Boolean) << function(self, enabled)
     self.view.focusMasteryNaviGroup.enabled = enabled
     self.view.focusMasteryHint.gameObject:SetActive(enabled)
     self.view.focusMasteryNaviGroup.removeLayerOnDisable = enabled
     InputManagerInst:ToggleBinding(self.m_focusMasteryBindingId, enabled)
 end
-
-
 
 CharInfoWeaponCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     local arg = {
@@ -612,9 +508,6 @@ CharInfoWeaponCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(sel
     }
     return arg
 end
-
-
-
 
 CharInfoWeaponCtrl._ProcessStateArg = HL.Method(HL.Table) << function(self, arg)
     if arg == nil or not arg.isDetail then

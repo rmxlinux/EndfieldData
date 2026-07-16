@@ -2,22 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityArknightsBirthPopup
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityArknightsBirthPopupCtrl = HL.Class('ActivityArknightsBirthPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -28,35 +13,23 @@ ActivityArknightsBirthPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_UPDATED] = 'OnActivityUpdate',
 }
 
-
 ActivityArknightsBirthPopupCtrl.m_closeCallback = HL.Field(HL.Function)
-
 
 ActivityArknightsBirthPopupCtrl.m_activityId = HL.Field(HL.String) << ''
 
-
 ActivityArknightsBirthPopupCtrl.m_activityData = HL.Field(CS.Beyond.Gameplay.ActivityArknightsBirth)
-
 
 ActivityArknightsBirthPopupCtrl.m_stageInfoList = HL.Field(HL.Table)
 
-
 ActivityArknightsBirthPopupCtrl.m_prefabNode = HL.Field(HL.Any)
-
 
 ActivityArknightsBirthPopupCtrl.m_prefabName = HL.Field(HL.String) << ''
 
-
 ActivityArknightsBirthPopupCtrl.m_arknightsBirthPopup = HL.Field(HL.Any)
-
 
 ActivityArknightsBirthPopupCtrl.m_timeOffset = HL.Field(HL.Int) << 0
 
-
 ActivityArknightsBirthPopupCtrl.m_maskStageId = HL.Field(HL.String) << ''
-
-
-
 
 
 ActivityArknightsBirthPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -145,8 +118,6 @@ ActivityArknightsBirthPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     end
 end
 
-
-
 ActivityArknightsBirthPopupCtrl._Close = HL.Method() << function(self)
     
     
@@ -165,9 +136,6 @@ ActivityArknightsBirthPopupCtrl._Close = HL.Method() << function(self)
         self.m_closeCallback()
     end)
 end
-
-
-
 
 ActivityArknightsBirthPopupCtrl.OnActivityUpdate = HL.Method(HL.Table) << function(self, args)
     local id = unpack(args)

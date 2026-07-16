@@ -2,11 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailKiteStation
 
-
-
-
 MapMarkDetailKiteStationCtrl = HL.Class('MapMarkDetailKiteStationCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -16,9 +12,6 @@ MapMarkDetailKiteStationCtrl = HL.Class('MapMarkDetailKiteStationCtrl', uiCtrl.U
 MapMarkDetailKiteStationCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 MapMarkDetailKiteStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)

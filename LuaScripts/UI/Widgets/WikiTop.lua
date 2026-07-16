@@ -1,17 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
 WikiTop = HL.Class('WikiTop', UIWidgetBase)
 
 
@@ -179,17 +167,12 @@ local WIKI_ROOT = {
 
 
 
-
 WikiTop.m_folderCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 
 WikiTop.m_folderPath = HL.Field(HL.Table)
 
-
 WikiTop.m_args = HL.Field(HL.Table)
-
-
 
 
 WikiTop._OnFirstTimeInit = HL.Override() << function(self)
@@ -217,20 +200,13 @@ WikiTop._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 WikiTop._OnEnable = HL.Override() << function (self)
     self.view.naviGroup:ManuallyStopFocus()
 end
 
-
-
 WikiTop._OnDisable = HL.Override() << function(self)
     self.view.naviGroup:ManuallyStopFocus()
 end
-
-
-
 
 
 
@@ -296,11 +272,6 @@ WikiTop.InitWikiTop = HL.Method(HL.Table) << function(self, args)
     end)
 end
 
-
-
-
-
-
 WikiTop._FindFolderPath = HL.Method(HL.Table, HL.Table, HL.Table).Return(HL.Boolean) << function(
     self, folder, folderArgs, folderPath)
     if folder.panelId == folderArgs.panelId and (folder.categoryType == nil or folder.categoryType == folderArgs.categoryType) then
@@ -317,8 +288,6 @@ WikiTop._FindFolderPath = HL.Method(HL.Table, HL.Table, HL.Table).Return(HL.Bool
     end
     return false
 end
-
-
 
 WikiTop._FolderBack = HL.Method() << function(self)
     if self.m_folderPath and #self.m_folderPath > 1 then
@@ -340,8 +309,6 @@ WikiTop._FolderBack = HL.Method() << function(self)
         end
     end
 end
-
-
 
 WikiTop._RemoveUnusedPanel = HL.Method() << function(self)
     local panelIdToRemove = {}
@@ -368,8 +335,6 @@ WikiTop._RemoveUnusedPanel = HL.Method() << function(self)
         end
     end
 end
-
-
 
 WikiTop._RefreshSearch = HL.Method() << function(self)
     self.view.inputField.text = self.m_args.phase.curSearchKeyword

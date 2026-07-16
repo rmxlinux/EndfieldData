@@ -1,15 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DialogSkipPopUp
-
-
-
-
-
-
-
 DialogSkipPopUpCtrl = HL.Class('DialogSkipPopUpCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -21,11 +13,7 @@ DialogSkipPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 DialogSkipPopUpCtrl.m_needRecoverAuto = HL.Field(HL.Boolean) << false
-
-
-
 
 
 DialogSkipPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -59,9 +47,6 @@ end
 
 
 
-
-
-
 DialogSkipPopUpCtrl.RefreshSummary = HL.Method(HL.Any) << function(self, summaryId)
     self.view.subText.text = Language.LUA_CONFIRM_SKIP_DIALOG
     if string.isEmpty(summaryId) then
@@ -75,13 +60,9 @@ DialogSkipPopUpCtrl.RefreshSummary = HL.Method(HL.Any) << function(self, summary
     end
 end
 
-
-
 DialogSkipPopUpCtrl.SetCloseRecoverAuto = HL.Method() << function(self)
     self.m_needRecoverAuto = true
 end
-
-
 
 DialogSkipPopUpCtrl._TryRecoverAutoMode = HL.Method() << function(self)
     if self.m_needRecoverAuto then

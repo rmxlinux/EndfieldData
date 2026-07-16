@@ -4,34 +4,15 @@ local PANEL_ID = PanelId.CommonProgress
 
 local ICON_PATH = "CommonProgress"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonProgressCtrl = HL.Class('CommonProgressCtrl', uiCtrl.UICtrl)
-
 
 CommonProgressCtrl.m_doTweenAnim = HL.Field(HL.Any)
 
-
 CommonProgressCtrl.m_totalTime = HL.Field(HL.Any) << 0
-
 
 CommonProgressCtrl.m_progressId = HL.Field(HL.Any) << 0
 
-
 CommonProgressCtrl.m_system = HL.Field(CS.Beyond.Gameplay.ProgressManager)
-
 
 
 
@@ -43,9 +24,6 @@ CommonProgressCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CLOSE_PROGRESS] = '_OnCloseProgress',
     [MessageConst.ON_REFRESH_PROGRESS] = '_OnRefreshProgress'
 }
-
-
-
 
 
 CommonProgressCtrl.OnCreate = HL.Override(HL.Any) << function(self, id)
@@ -61,9 +39,6 @@ CommonProgressCtrl.OnCreate = HL.Override(HL.Any) << function(self, id)
     end
     self:_RefreshUI(id)
 end
-
-
-
 
 CommonProgressCtrl._RefreshUI = HL.Method(HL.Any) << function(self, id)
     if id == self.m_progressId then
@@ -98,9 +73,6 @@ CommonProgressCtrl._RefreshUI = HL.Method(HL.Any) << function(self, id)
     self:_PlayDoTweenAnim()
 end
 
-
-
-
 CommonProgressCtrl._OnInterruptProgress = HL.Method(HL.Any) << function(self, args)
     local id = unpack(args)
     if id ~= self.m_progressId then
@@ -108,9 +80,6 @@ CommonProgressCtrl._OnInterruptProgress = HL.Method(HL.Any) << function(self, ar
     end
     self.m_system:InterruptProgress(self.m_progressId)
 end
-
-
-
 
 CommonProgressCtrl._OnCloseProgress = HL.Method(HL.Any) << function(self, args)
     local id = unpack(args)
@@ -120,17 +89,12 @@ CommonProgressCtrl._OnCloseProgress = HL.Method(HL.Any) << function(self, args)
     self:_ClosePanel()
 end
 
-
-
-
 CommonProgressCtrl._OnRefreshProgress = HL.Method(HL.Any) << function(self, id)
     if id == self.m_progressId then
         return
     end
     self:_RefreshUI(id)
 end
-
-
 
 CommonProgressCtrl._PlayDoTweenAnim = HL.Method() << function(self)
     local progress = self.m_system:GetProgress(self.m_progressId)
@@ -142,15 +106,11 @@ CommonProgressCtrl._PlayDoTweenAnim = HL.Method() << function(self)
     ):SetEase(1)
 end
 
-
-
 CommonProgressCtrl._ClosePanel = HL.Method() << function(self)
     self.view.anim:PlayOutAnimation(function()
         UIManager:Close(PANEL_ID)
     end)
 end
-
-
 
 
 

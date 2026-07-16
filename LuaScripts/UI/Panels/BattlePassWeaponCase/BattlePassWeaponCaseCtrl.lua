@@ -261,7 +261,7 @@ BattlePassWeaponCaseCtrl._SetModeNaviTarget = HL.Method(HL.Boolean, HL.Opt(HL.Ta
     if not cell then
         return
     end
-    UIUtils.setAsNaviTarget(isOn and cell.button or cell.btnConfirm)
+    self:SetNaviTarget(isOn and cell.button or cell.btnConfirm)
 end
 
 BattlePassWeaponCaseCtrl._Refresh = HL.Method() << function(self)

@@ -2,21 +2,9 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetail
 local PHASE_ID = PhaseId.MapMarkDetail
 local MarkType = GEnums.MarkType
-
-
-
-
-
-
-
-
-
-
 MapMarkDetailCtrl = HL.Class('MapMarkDetailCtrl', uiCtrl.UICtrl)
 
-
 MapMarkDetailCtrl.m_markInstId = HL.Field(HL.String) << ""
-
 
 
 
@@ -25,9 +13,6 @@ MapMarkDetailCtrl.m_markInstId = HL.Field(HL.String) << ""
 MapMarkDetailCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_TRACKING_MAP_MARK] = '_OnMarkTrackingStateChanged' ,
 }
-
-
-
 
 
 MapMarkDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -44,8 +29,6 @@ MapMarkDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self:_SimpleRefreshDetailContent(markInstId)
 end
 
-
-
 MapMarkDetailCtrl.OnShowLevelMapMarkDetail = HL.StaticMethod(HL.Any) << function(args)
     if PhaseManager:IsPhaseRepeated(PHASE_ID) then
         local ctrl = UIManager:AutoOpen(PANEL_ID)
@@ -55,29 +38,17 @@ MapMarkDetailCtrl.OnShowLevelMapMarkDetail = HL.StaticMethod(HL.Any) << function
     end
 end
 
-
-
-
 MapMarkDetailCtrl.RefreshDetail = HL.Method(HL.String) << function(self, markInstId)
     self:_SimpleRefreshDetailContent(markInstId)
 end
-
-
-
 
 MapMarkDetailCtrl._CloseDetail = HL.Method(HL.Boolean) << function(self, fastMode)
     Notify(MessageConst.HIDE_LEVEL_MAP_MARK_DETAIL)
 end
 
-
-
-
 MapMarkDetailCtrl._OnMarkTrackingStateChanged = HL.Method(HL.Any) << function(self, args)
     self:_RefreshTrackButtonText()
 end
-
-
-
 
 MapMarkDetailCtrl._SimpleRefreshDetailContent = HL.Method(HL.String) << function(self, markInstId)
     
@@ -132,8 +103,6 @@ MapMarkDetailCtrl._SimpleRefreshDetailContent = HL.Method(HL.String) << function
         commonNode.subTitle.text.text = levelDesc.showName
     end
 end
-
-
 
 MapMarkDetailCtrl._RefreshTrackButtonText = HL.Method() << function(self)
     local isTracking = self.m_markInstId == GameInstance.player.mapManager.trackingMarkInstId

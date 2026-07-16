@@ -2,28 +2,13 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonRewardDetailsPopup
 
-
-
-
-
-
-
-
-
-
-
-
 CommonRewardDetailsPopupCtrl = HL.Class('CommonRewardDetailsPopupCtrl', uiCtrl.UICtrl)
-
 
 CommonRewardDetailsPopupCtrl.m_args = HL.Field(HL.Table)
 
-
 CommonRewardDetailsPopupCtrl.m_firstPartRewardCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 CommonRewardDetailsPopupCtrl.m_secondPartRewardCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 
 
@@ -32,9 +17,6 @@ CommonRewardDetailsPopupCtrl.m_secondPartRewardCellCache = HL.Field(HL.Forward("
 CommonRewardDetailsPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 
@@ -69,8 +51,6 @@ end
 
 
 
-
-
 CommonRewardDetailsPopupCtrl._OnCloseBtnClick = HL.Method() << function(self)
     if UIManager:IsShow(PanelId.ItemTips) then
         self:Notify(MessageConst.HIDE_ITEM_TIPS)
@@ -79,14 +59,10 @@ CommonRewardDetailsPopupCtrl._OnCloseBtnClick = HL.Method() << function(self)
     end
 end
 
-
-
 CommonRewardDetailsPopupCtrl._InitRewardDetails = HL.Method() << function(self)
     self:_InitFirstPartRewards()
     self:_InitSecondPartRewards()
 end
-
-
 
 
 CommonRewardDetailsPopupCtrl._InitFirstPartRewards = HL.Method() << function(self)
@@ -100,8 +76,6 @@ CommonRewardDetailsPopupCtrl._InitFirstPartRewards = HL.Method() << function(sel
         cell.item:InitItem(reward, true)
     end)
 end
-
-
 
 CommonRewardDetailsPopupCtrl._InitSecondPartRewards = HL.Method() << function(self)
     
@@ -118,8 +92,6 @@ CommonRewardDetailsPopupCtrl._InitSecondPartRewards = HL.Method() << function(se
     end
     self.view.secondRewardsNode.gameObject:SetActive(secondRowRewardsCount > 0)
 end
-
-
 
 CommonRewardDetailsPopupCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then

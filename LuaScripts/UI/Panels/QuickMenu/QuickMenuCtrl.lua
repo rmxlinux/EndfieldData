@@ -23,84 +23,33 @@ local EXTRA_DELAY_RECOVER_SCREEN_FRAME_COUNT = 5
 
 local QUICK_MENU_INVALID_ITEM_ID = QuickMenuConst.QUICK_MENU_ITEM_ID_GETTER.none
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 QuickMenuCtrl = HL.Class('QuickMenuCtrl', uiCtrl.UICtrl)
-
 
 QuickMenuCtrl.m_mainHudCtrl = HL.Field(HL.Forward("MainHudCtrl"))
 
-
 QuickMenuCtrl.m_centerCells = HL.Field(HL.Forward("UIListCache"))
-
 
 QuickMenuCtrl.m_quickMenuCenterItemData = HL.Field(HL.Table)
 
-
 QuickMenuCtrl.m_quickMenuUpdateThread = HL.Field(HL.Thread)
-
 
 QuickMenuCtrl.m_currentArrowAngle = HL.Field(HL.Number) << 0
 
-
 QuickMenuCtrl.m_currentSelectedCenterItemId = HL.Field(HL.String) << ""
-
 
 QuickMenuCtrl.m_quickMenuLeftItemData = HL.Field(HL.Table)
 
-
 QuickMenuCtrl.m_quickMenuRightItemData = HL.Field(HL.Table)
-
 
 QuickMenuCtrl.m_currentStickPushed = HL.Field(HL.Boolean) << false
 
-
 QuickMenuCtrl.s_clearScreenKey = HL.StaticField(HL.Number) << -1
 
-
 QuickMenuCtrl.s_releaseCloseEnabled = HL.StaticField(HL.Boolean) << true
-
 
 QuickMenuCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SELECT_QUICK_MENU_SYSTEM] = '_OnSelectSystem',
 }
-
-
-
 
 
 QuickMenuCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -117,20 +66,15 @@ QuickMenuCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     QuickMenuCtrl.ActivateQuickMenu()
 end
 
-
-
 QuickMenuCtrl.OnClose = HL.Override() << function(self)
     self.m_quickMenuUpdateThread = self:_ClearCoroutine(self.m_quickMenuUpdateThread)
     AudioManager.PostEvent("au_ui_menu_dial_close")
     QuickMenuCtrl.DeactivateQuickMenu()
 end
 
-
-
 QuickMenuCtrl.OnAnimationInFinished = HL.Override() << function(self)
     GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.QuickMenuSystemActionConflictName)
 end
-
 
 QuickMenuCtrl.ActivateQuickMenu = HL.StaticMethod() << function()
     if not GameInstance.player.systemActionConflictManager:TryStartSystemAction(Const.QuickMenuSystemActionConflictName) then
@@ -146,7 +90,6 @@ QuickMenuCtrl.ActivateQuickMenu = HL.StaticMethod() << function()
     end, CLEAR_SCREEN_EXPECTED_PANEL_LIST)
 end
 
-
 QuickMenuCtrl.DeactivateQuickMenu = HL.StaticMethod() << function()
     if QuickMenuCtrl.s_clearScreenKey <= 0 then
         return
@@ -156,31 +99,20 @@ QuickMenuCtrl.DeactivateQuickMenu = HL.StaticMethod() << function()
     QuickMenuCtrl.s_clearScreenKey = -1
 end
 
-
-
 QuickMenuCtrl.OnToggleReleaseClose = HL.StaticMethod(HL.Any) << function(arg)
     QuickMenuCtrl.s_releaseCloseEnabled = unpack(arg)
 end
-
-
-
 
 QuickMenuCtrl._OnSelectSystem = HL.Method(HL.Any) << function(self, arg)
     local systemId = unpack(arg)
     self:_SelectQuickMenuItem(self.m_quickMenuCenterItemData[systemId])
 end
 
-
-
-
 QuickMenuCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     if not active then
         self:Close()
     end
 end
-
-
-
 
 
 
@@ -308,9 +240,6 @@ QuickMenuCtrl._BuildMenuItemData = HL.Method(HL.String).Return(HL.Opt(HL.Table))
     return cellData
 end
 
-
-
-
 QuickMenuCtrl._BuildMenuItemDataListAndGetValid = HL.Method(HL.Any).Return(HL.Table, HL.Table) << function(self, itemList)
     if not itemList then
         return nil, nil
@@ -327,8 +256,6 @@ QuickMenuCtrl._BuildMenuItemDataListAndGetValid = HL.Method(HL.Any).Return(HL.Ta
     end
     return firstValidItemData, lastItemIgnoreForbiddenData
 end
-
-
 
 QuickMenuCtrl._InitQuickMenuCenterCells = HL.Method() << function(self)
     self.m_quickMenuCenterItemData = {}
@@ -399,8 +326,6 @@ QuickMenuCtrl._InitQuickMenuCenterCells = HL.Method() << function(self)
     end)
 end
 
-
-
 QuickMenuCtrl._InitQuickMenuLeftCells = HL.Method() << function(self)
     self.m_quickMenuLeftItemData = {}
     local anyValidItem = false
@@ -458,8 +383,6 @@ QuickMenuCtrl._InitQuickMenuLeftCells = HL.Method() << function(self)
         self:_QuickMenuItemOnPress(self.m_quickMenuLeftItemData[4])
     end)
 end
-
-
 
 QuickMenuCtrl._InitQuickMenuRightCells = HL.Method() << function(self)
     self.m_quickMenuRightItemData = {}
@@ -519,10 +442,6 @@ QuickMenuCtrl._InitQuickMenuRightCells = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 QuickMenuCtrl._InitQuickMenuRefreshMessages = HL.Method(HL.String, HL.Table) << function(self, itemId, itemCell)
     local itemConfig = QuickMenuConst.QUICK_MENU_ITEM_CONFIG[itemId]
     if itemConfig ~= nil and itemConfig.refreshMessageList ~= nil then
@@ -537,8 +456,6 @@ QuickMenuCtrl._InitQuickMenuRefreshMessages = HL.Method(HL.String, HL.Table) << 
         end
     end
 end
-
-
 
 
 
@@ -579,9 +496,6 @@ QuickMenuCtrl._InitQuickMenu = HL.Method() << function(self)
     self.view.selectArrow.gameObject:SetActive(false)
 end
 
-
-
-
 QuickMenuCtrl._QuickMenuItemOnPress = HL.Method(HL.Opt(HL.Any)) << function(self, itemData)
     local isValid = true
     if self.m_currentSelectedCenterItemId == QUICK_MENU_INVALID_ITEM_ID then
@@ -601,10 +515,6 @@ QuickMenuCtrl._QuickMenuItemOnPress = HL.Method(HL.Opt(HL.Any)) << function(self
     end
 
 end
-
-
-
-
 
 QuickMenuCtrl._SelectQuickMenuItem = HL.Method(HL.Opt(HL.Any, HL.Boolean)) << function(self, itemData, onlyShowToastIfInvalid)
     if QuickMenuCtrl.s_clearScreenKey <= 0 then
@@ -653,10 +563,6 @@ QuickMenuCtrl._SelectQuickMenuItem = HL.Method(HL.Opt(HL.Any, HL.Boolean)) << fu
     end
 end
 
-
-
-
-
 QuickMenuCtrl._GetQuickMenuItemIsInConfig = HL.Method(HL.Table, HL.Number).Return(HL.Boolean) << function(self, configTable, phaseId)
     if configTable == nil then
         return
@@ -671,9 +577,6 @@ QuickMenuCtrl._GetQuickMenuItemIsInConfig = HL.Method(HL.Table, HL.Number).Retur
     return false
 end
 
-
-
-
 QuickMenuCtrl._IsQuickMenuItemNeedExtraDelayRecoverScreen = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
     local itemConfig = QuickMenuConst.QUICK_MENU_ITEM_CONFIG[itemId]
     if itemConfig == nil then
@@ -682,16 +585,9 @@ QuickMenuCtrl._IsQuickMenuItemNeedExtraDelayRecoverScreen = HL.Method(HL.String)
     return itemConfig.needExtraDelayRecoverScreen == true
 end
 
-
-
-
 QuickMenuCtrl._GetQuickMenuItemIsLocked = HL.Method(HL.Number).Return(HL.Boolean) << function(self, phaseId)
     return not PhaseManager:IsPhaseUnlocked(phaseId)
 end
-
-
-
-
 
 QuickMenuCtrl._RefreshQuickMenuCell = HL.Method(HL.Table, HL.Table) << function(self, itemCell, itemData)
     
@@ -713,8 +609,6 @@ end
 
 
 
-
-
 QuickMenuCtrl._UpdateQuickMenuState = HL.Method() << function(self)
     local rightStickValue = InputManagerInst:GetGamepadStickValue(false)
     local useRightStick = rightStickValue.x ~= 0 or rightStickValue.y ~= 0
@@ -723,8 +617,6 @@ QuickMenuCtrl._UpdateQuickMenuState = HL.Method() << function(self)
         self:_SelectQuickMenuItem(self.m_quickMenuCenterItemData[self.m_currentSelectedCenterItemId])
     end
 end
-
-
 
 QuickMenuCtrl._UpdateSelectArrowState = HL.Method() << function(self)
     if QuickMenuCtrl.s_clearScreenKey <= 0 then
@@ -747,8 +639,6 @@ QuickMenuCtrl._UpdateSelectArrowState = HL.Method() << function(self)
     self.view.selectArrow.gameObject:SetActive(true)
     self.m_currentStickPushed = true
 end
-
-
 
 QuickMenuCtrl._UpdateSelectItemState = HL.Method() << function(self)
     if self.m_currentArrowAngle == 0 and not self.m_currentStickPushed then
@@ -791,8 +681,6 @@ QuickMenuCtrl._UpdateSelectItemState = HL.Method() << function(self)
         CS.Beyond.Gameplay.Conditions.OnQuickMenuSystemHover.Trigger(triggerItemId)
     end
 end
-
-
 
 QuickMenuCtrl._UpdateSystemInfo = HL.Method() << function(self)
     if self.view == nil then

@@ -1,49 +1,22 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapCustomMarkDetail
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MapCustomMarkDetailCtrl = HL.Class('MapCustomMarkDetailCtrl', uiCtrl.UICtrl)
-
 
 MapCustomMarkDetailCtrl.m_customMarkTemplateCells = HL.Field(HL.Forward('UIListCache'))
 
-
 MapCustomMarkDetailCtrl.m_selectMarkTempId = HL.Field(HL.String) << ""
-
 
 MapCustomMarkDetailCtrl.m_selectMarkTempCell = HL.Field(HL.Table)
 
-
 MapCustomMarkDetailCtrl.m_tempTypeList = HL.Field(HL.Userdata)
-
 
 MapCustomMarkDetailCtrl.m_markInstId = HL.Field(HL.String) << ""
 
-
 MapCustomMarkDetailCtrl.m_markInstRuntimeData = HL.Field(HL.Userdata)
-
 
 MapCustomMarkDetailCtrl.m_noteIsChange = HL.Field(HL.Boolean) << false
 
-
 MapCustomMarkDetailCtrl.m_markTypeIsChange = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -52,9 +25,6 @@ MapCustomMarkDetailCtrl.m_markTypeIsChange = HL.Field(HL.Boolean) << false
 MapCustomMarkDetailCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_MAP_MARK_RUNTIME_DATA_CHANGED] = '_OnDataChanged',
 }
-
-
-
 
 
 MapCustomMarkDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -74,18 +44,12 @@ MapCustomMarkDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitCustomMark()
 end
 
-
-
 MapCustomMarkDetailCtrl.OnShow = HL.Override() << function(self)
 
 end
-
-
 MapCustomMarkDetailCtrl.OnHide = HL.Override() << function(self)
 
 end
-
-
 MapCustomMarkDetailCtrl.OnClose = HL.Override() << function(self)
     GameInstance.player.mapManager:RemoveSelectCustomMark()
     if not self.m_markInstRuntimeData.isSelect and (self.m_noteIsChange or self.m_markTypeIsChange) then
@@ -102,8 +66,6 @@ MapCustomMarkDetailCtrl.OnClose = HL.Override() << function(self)
         end
     end
 end
-
-
 
 MapCustomMarkDetailCtrl._InitCustomMark = HL.Method() << function(self)
     self.view.detailCommon.gameObject:SetActive(true)
@@ -133,7 +95,7 @@ MapCustomMarkDetailCtrl._InitCustomMark = HL.Method() << function(self)
             self.m_selectMarkTempCell = cell
             cell.select.gameObject:SetActive(true)
             if DeviceInfo.usingController then
-                UIUtils.setAsNaviTarget(cell.button)
+                self:SetNaviTarget(cell.button)
             end
         else
             cell.select.gameObject:SetActive(false)
@@ -163,8 +125,6 @@ MapCustomMarkDetailCtrl._InitCustomMark = HL.Method() << function(self)
     self.view.markNowNumTxt.text = curNum
     self.view.markFullNumTxt.text = string.format("/%d", maxNum)
 end
-
-
 
 MapCustomMarkDetailCtrl._InitMapMarkDetailCommon = HL.Method() << function(self)
     local commonArgs = {}
@@ -227,17 +187,12 @@ MapCustomMarkDetailCtrl._InitMapMarkDetailCommon = HL.Method() << function(self)
     self.view.detailCommon:InitMapMarkDetailCommon(commonArgs)
 end
 
-
-
-
 MapCustomMarkDetailCtrl._OnDataChanged = HL.Method(HL.Table) << function(self, args)
     local instId, isAdd = unpack(args)
     if isAdd then
         self.m_markInstRuntimeData = GameInstance.player.mapManager:GetQuickSearchCustomMarkData(instId)
     end
 end
-
-
 
 MapCustomMarkDetailCtrl._OnConfirmMark = HL.Method() << function(self)
     if self.m_selectMarkTempId == "" then

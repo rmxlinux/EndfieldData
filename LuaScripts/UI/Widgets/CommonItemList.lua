@@ -89,124 +89,44 @@ local LIST_CONFIG = {
         getDepotFunc = "_GetEquipEnhanceMaterialsDepot"
     },
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonItemList = HL.Class('CommonItemList', UIWidgetBase)
-
 
 CommonItemList.m_getItemCell = HL.Field(HL.Function)
 
-
 CommonItemList.m_itemInfoList = HL.Field(HL.Table)
-
 
 CommonItemList.m_filteredInfoList = HL.Field(HL.Table)
 
-
 CommonItemList.m_selectedTags = HL.Field(HL.Table)
-
 
 CommonItemList.m_curSelectIndex = HL.Field(HL.Number) << 0
 
-
 CommonItemList.m_curSelectId = HL.Field(HL.Any) << 0
-
 
 CommonItemList.m_filterTagGroups = HL.Field(HL.Table)
 
-
 CommonItemList.m_arg = HL.Field(HL.Table)
-
 
 CommonItemList.m_curListConfig = HL.Field(HL.Table)
 
 
-
 CommonItemList.m_onClickItem = HL.Field(HL.Function)
-
 
 CommonItemList.m_onFinishGraduallyShow = HL.Field(HL.Function)
 
-
 CommonItemList.m_onLongPressItem = HL.Field(HL.Function)
-
 
 CommonItemList.m_onPressItem = HL.Field(HL.Function)
 
-
 CommonItemList.m_onReleaseItem = HL.Field(HL.Function)
-
 
 CommonItemList.m_refreshItemAddOn = HL.Field(HL.Function)
 
-
 CommonItemList.m_setItemSelected = HL.Field(HL.Function)
-
 
 CommonItemList.m_getItemBtn = HL.Field(HL.Function)
 
-
 CommonItemList.m_lastListType = HL.Field(HL.String) << ""
-
-
 
 
 
@@ -281,9 +201,6 @@ end
 
 
 
-
-
-
 CommonItemList.InitCommonItemList = HL.Method(HL.Table) << function(self, arg)
     self.m_arg = arg
 
@@ -313,9 +230,9 @@ CommonItemList.InitCommonItemList = HL.Method(HL.Table) << function(self, arg)
             
             if not arg.suppressAutoNaviTarget and itemBtn and itemBtn ~= InputManagerInst.controllerNaviManager.curTarget then
                 if self.view.scrollRect and self.view.scrollRect.naviGroup then
-                    self:GetUICtrl():SetAsNaviTargetInSilentModeIfNecessary(self.view.scrollRect.naviGroup, itemBtn)
+                    self:SetNaviTarget(itemBtn)
                 else
-                    UIUtils.setAsNaviTarget(itemBtn)
+                    self:SetNaviTarget(itemBtn)
                 end
             end
 
@@ -341,16 +258,10 @@ CommonItemList.InitCommonItemList = HL.Method(HL.Table) << function(self, arg)
     self:Refresh(arg)
 end
 
-
-
-
-
 CommonItemList.PlayGraduallyShow = HL.Method(HL.Opt(HL.Number, HL.Boolean)) << function(self, selectIndex, realClick)
     selectIndex = selectIndex or self:_GetDefaultSelectIndex()
     self:_RefreshItemList(self.m_filteredInfoList, false, selectIndex, realClick)
 end
-
-
 
 CommonItemList.GetItemDepotCount = HL.Method().Return(HL.Number) << function(self)
     if not self.m_itemInfoList then
@@ -360,8 +271,6 @@ CommonItemList.GetItemDepotCount = HL.Method().Return(HL.Number) << function(sel
     return #self.m_itemInfoList
 end
 
-
-
 CommonItemList.GetFilteredItemDepotCount = HL.Method().Return(HL.Number) << function(self)
     if not self.m_filteredInfoList then
         return 0
@@ -370,18 +279,12 @@ CommonItemList.GetFilteredItemDepotCount = HL.Method().Return(HL.Number) << func
     return #self.m_filteredInfoList
 end
 
-
-
-
 CommonItemList.GetItemInfoByIndex = HL.Method(HL.Number).Return(HL.Opt(HL.Table)) << function(self, index)
     if not self.m_filteredInfoList then
         return
     end
     return self.m_filteredInfoList[index]
 end
-
-
-
 
 CommonItemList.GetItemInfoByIndexId = HL.Method(HL.Any).Return(HL.Opt(HL.Table)) << function(self, indexId)
     if not self.m_filteredInfoList then
@@ -393,9 +296,6 @@ CommonItemList.GetItemInfoByIndexId = HL.Method(HL.Any).Return(HL.Opt(HL.Table))
         end
     end
 end
-
-
-
 
 
 CommonItemList.Refresh = HL.Method(HL.Table) << function(self, arg)
@@ -424,16 +324,12 @@ CommonItemList.Refresh = HL.Method(HL.Table) << function(self, arg)
     self:_RefreshItemList(filteredList, skipGraduallyShow, selectIndex, false)
 end
 
-
-
 CommonItemList.GetCurSelectedItem = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local curGo = self.view.itemList:Get(CSIndex(self.m_curSelectIndex))
     if curGo then
         return curGo
     end
 end
-
-
 
 CommonItemList.GetCurSelectedItemCell = HL.Method().Return(HL.Any) << function(self)
     local curGo = self:GetCurSelectedItem()
@@ -443,10 +339,6 @@ CommonItemList.GetCurSelectedItemCell = HL.Method().Return(HL.Any) << function(s
     return nil
 end
 
-
-
-
-
 CommonItemList.SetSelectedAppearance = HL.Method(HL.Any, HL.Boolean) << function(self, cell, selected)
     if not cell then
         return
@@ -454,20 +346,13 @@ CommonItemList.SetSelectedAppearance = HL.Method(HL.Any, HL.Boolean) << function
     cell.item.view.selectedBG.gameObject:SetActive(selected)
 end
 
-
-
 CommonItemList.IsAnyItemSelecting = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_curSelectIndex > 0
 end
 
-
-
 CommonItemList.GetCurSelectIndex = HL.Method().Return(HL.Number) << function(self)
     return self.m_curSelectIndex
 end
-
-
-
 
 CommonItemList.RefreshCellById = HL.Method(HL.Any) << function(self, id)
     
@@ -481,17 +366,12 @@ CommonItemList.RefreshCellById = HL.Method(HL.Any) << function(self, id)
     end
 end
 
-
-
-
 CommonItemList.RefreshCellByIndex = HL.Method(HL.Number) << function(self, index)
     local curGo = self.view.itemList:Get(CSIndex(index))
     if curGo then
         self:_RefreshItemCell(curGo, index)
     end
 end
-
-
 
 CommonItemList.RefreshAllCells = HL.Method() << function(self)
     for index, itemInfo in pairs(self.m_filteredInfoList) do
@@ -501,8 +381,6 @@ CommonItemList.RefreshAllCells = HL.Method() << function(self)
         end
     end
 end
-
-
 
 CommonItemList.RefreshAllCellsItemAddOn = HL.Method() << function(self)
     for index, itemInfo in pairs(self.m_filteredInfoList) do
@@ -515,11 +393,6 @@ CommonItemList.RefreshAllCellsItemAddOn = HL.Method() << function(self)
         end
     end
 end
-
-
-
-
-
 
 CommonItemList.SetSelectedId = HL.Method(HL.Any, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, id, realClick, noScroll)
     
@@ -536,11 +409,6 @@ CommonItemList.SetSelectedId = HL.Method(HL.Any, HL.Boolean, HL.Opt(HL.Boolean))
 
     self:SetSelectedIndex(1, realClick, noScroll)
 end
-
-
-
-
-
 
 CommonItemList.SetSelectedIndex = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, luaIndex, realClick, noScroll)
     if luaIndex == nil then
@@ -592,9 +460,6 @@ CommonItemList.SetSelectedIndex = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Boo
     end
 end
 
-
-
-
 CommonItemList._GetIndexByIndexId = HL.Method(HL.Any).Return(HL.Opt(HL.Number)) << function(self, id)
     for index, filteredInfo in pairs(self.m_filteredInfoList) do
         if type(filteredInfo.indexId) == type(id) and  filteredInfo.indexId == id then
@@ -603,9 +468,6 @@ CommonItemList._GetIndexByIndexId = HL.Method(HL.Any).Return(HL.Opt(HL.Number)) 
     end
 end
 
-
-
-
 CommonItemList._GetIndexByItemId = HL.Method(HL.String).Return(HL.Opt(HL.Number)) << function(self, id)
     for index, filteredInfo in pairs(self.m_filteredInfoList) do
         if not string.isEmpty(filteredInfo.id) and filteredInfo.id == id then
@@ -613,8 +475,6 @@ CommonItemList._GetIndexByItemId = HL.Method(HL.String).Return(HL.Opt(HL.Number)
         end
     end
 end
-
-
 
 CommonItemList._InitSortNode = HL.Method() << function(self)
     local listConfig = self.m_curListConfig
@@ -657,8 +517,6 @@ CommonItemList._InitSortNode = HL.Method() << function(self)
         end
     end, curSortCSIndex, isIncremental, true, self.view.filterBtn)
 end
-
-
 
 CommonItemList._InitFilterNode = HL.Method() << function(self)
     local listConfig = self.m_curListConfig
@@ -707,12 +565,6 @@ CommonItemList._InitFilterNode = HL.Method() << function(self)
     end
 end
 
-
-
-
-
-
-
 CommonItemList._RefreshItemList = HL.Method(HL.Table, HL.Boolean, HL.Number, HL.Opt(HL.Boolean)) << function(self, filteredList, skipGraduallyShow, realIndex, realClick)
     local isEmpty = filteredList == nil or #filteredList == 0
     self.view.emptyNode.gameObject:SetActive(isEmpty)
@@ -732,9 +584,6 @@ CommonItemList._RefreshItemList = HL.Method(HL.Table, HL.Boolean, HL.Number, HL.
         end
     end
 end
-
-
-
 
 CommonItemList._GetDefaultSelectIndex = HL.Method(HL.Opt(HL.Number)).Return(HL.Number) << function(self, forceSelectIndex)
     local defaultSelectIndex = -1
@@ -762,10 +611,6 @@ CommonItemList._GetDefaultSelectIndex = HL.Method(HL.Opt(HL.Number)).Return(HL.N
 
     return defaultSelectIndex
 end
-
-
-
-
 
 CommonItemList._RefreshItemCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, index)
     local listCell = self.m_getItemCell(object)
@@ -842,9 +687,6 @@ CommonItemList._RefreshItemCell = HL.Method(HL.Userdata, HL.Number) << function(
     self.m_setItemSelected(listCell, self.m_curSelectId == itemInfo.indexId)
 end
 
-
-
-
 CommonItemList._OnFilterConfirm = HL.Method(HL.Table) << function(self, tags)
     local itemInfoList = self.m_itemInfoList
     local filteredList = self:_ApplyFilter(itemInfoList, tags)
@@ -858,9 +700,6 @@ CommonItemList._OnFilterConfirm = HL.Method(HL.Table) << function(self, tags)
 
     self:_RefreshItemList(filteredList, false, 1, false)
 end
-
-
-
 
 CommonItemList._OnFilterGetCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tags)
     local getCountFunc = self.m_curListConfig.getFilterResultCountFunc
@@ -878,10 +717,6 @@ CommonItemList._OnFilterGetCount = HL.Method(HL.Table).Return(HL.Number) << func
     end
     return resultCount
 end
-
-
-
-
 
 CommonItemList._ApplyFilter = HL.Method(HL.Table, HL.Table).Return(HL.Table) << function(self, itemInfoList, selectedTags)
     if self.m_curListConfig.applyFilterFunc and self[self.m_curListConfig.applyFilterFunc] then
@@ -902,11 +737,6 @@ CommonItemList._ApplyFilter = HL.Method(HL.Table, HL.Table).Return(HL.Table) << 
     return filteredList
 end
 
-
-
-
-
-
 CommonItemList._ApplySort = HL.Method(HL.Table, HL.Table, HL.Boolean).Return(HL.Table) << function(self, itemInfoList, optData, isIncremental)
     if self.m_curListConfig.hideSort or not optData or not next(optData) then
         return itemInfoList
@@ -923,8 +753,6 @@ CommonItemList._ApplySort = HL.Method(HL.Table, HL.Table, HL.Boolean).Return(HL.
     table.sort(itemInfoList, Utils.genSortFunction(sortKeys, isIncremental))
     return itemInfoList
 end
-
-
 
 CommonItemList._CollectItemInfoList = HL.Method().Return(HL.Table) << function(self)
     local listConfig = self.m_curListConfig
@@ -962,9 +790,6 @@ end
 
 
 
-
-
-
 CommonItemList._GetWeaponGemDepot = HL.Method(HL.Table).Return(HL.Table) << function(self, arg)
     local filteredInstItems = {}
     local gemDepot = GameInstance.player.inventory.valuableDepots[GEnums.ItemValuableDepotType.WeaponGem]:GetOrFallback(Utils.getCurrentScope())
@@ -985,9 +810,6 @@ CommonItemList._GetWeaponGemDepot = HL.Method(HL.Table).Return(HL.Table) << func
 
     return filteredInstItems
 end
-
-
-
 
 CommonItemList._GetWeaponGemMaterialDepot = HL.Method(HL.Table).Return(HL.Table) << function(self, arg)
     local filteredInstItems = {}
@@ -1010,9 +832,6 @@ CommonItemList._GetWeaponGemMaterialDepot = HL.Method(HL.Table).Return(HL.Table)
     return filteredInstItems
 end
 
-
-
-
 CommonItemList._GetWeaponUpgradeDepot = HL.Method(HL.Table).Return(HL.Table) << function(self, arg)
     local weaponDepot = self:_GetWeaponDepot(arg)
 
@@ -1026,9 +845,6 @@ CommonItemList._GetWeaponUpgradeDepot = HL.Method(HL.Table).Return(HL.Table) << 
 
     return weaponDepot
 end
-
-
-
 
 CommonItemList._GetWeaponPotentialDepot = HL.Method(HL.Table).Return(HL.Table) << function(self, arg)
     local weaponDepot = self:_GetWeaponDepot(arg)
@@ -1047,9 +863,6 @@ CommonItemList._GetWeaponPotentialDepot = HL.Method(HL.Table).Return(HL.Table) <
     return weaponDepot
 end
 
-
-
-
 CommonItemList._GetTacticalItemDepot = HL.Method(HL.Table).Return(HL.Table) << function(self, arg)
     local useItems = {}
     local filter_isFound = arg.filter_isFound
@@ -1064,9 +877,6 @@ CommonItemList._GetTacticalItemDepot = HL.Method(HL.Table).Return(HL.Table) << f
     end
     return useItems
 end
-
-
-
 
 CommonItemList._GetEquipDepot = HL.Method(HL.Table).Return(HL.Table) << function(self, arg)
     local filteredInstItems = {}
@@ -1105,9 +915,6 @@ CommonItemList._GetEquipDepot = HL.Method(HL.Table).Return(HL.Table) << function
     return filteredInstItems
 end
 
-
-
-
 CommonItemList._GetWeaponDepot = HL.Method(HL.Table).Return(HL.Table) << function(self, arg)
     local filteredInstItems = {}
 
@@ -1142,23 +949,13 @@ CommonItemList._GetWeaponDepot = HL.Method(HL.Table).Return(HL.Table) << functio
     return filteredInstItems
 end
 
-
-
-
 CommonItemList._GetEquipEnhanceDepot = HL.Method(HL.Table).Return(HL.Table) << function(self, args)
     return EquipTechUtils.getEquipEnhanceItemList(args.filter_equipType)
 end
 
-
-
-
 CommonItemList._GetEquipEnhanceMaterialsDepot = HL.Method(HL.Table).Return(HL.Table) << function(self, args)
     return EquipTechUtils.getEquipEnhanceMaterialsItemList(args.filter_equipType, args.attrShowInfo, args.equipInstId)
 end
-
-
-
-
 
 
 

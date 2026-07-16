@@ -1,31 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
 SNSContactNpcCell = HL.Class('SNSContactNpcCell', UIWidgetBase)
-
 
 SNSContactNpcCell.m_subDialogCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 SNSContactNpcCell.m_isFoldOut = HL.Field(HL.Boolean) << false
-
 
 SNSContactNpcCell.m_onNpcCellClick = HL.Field(HL.Function)
 
-
 SNSContactNpcCell.m_chatVO = HL.Field(HL.Table)
-
-
 
 
 SNSContactNpcCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -39,12 +22,6 @@ SNSContactNpcCell._OnFirstTimeInit = HL.Override() << function(self)
         self:_OnFoldButtonClick()
     end)
 end
-
-
-
-
-
-
 
 SNSContactNpcCell.InitSNSContactNpcCell = HL.Method(HL.Table, HL.Boolean, HL.Function, HL.Function)
         << function(self, chatVO, defaultFoldOut, onNpcCellClick, dialogCellRefreshFunc)
@@ -60,7 +37,7 @@ SNSContactNpcCell.InitSNSContactNpcCell = HL.Method(HL.Table, HL.Boolean, HL.Fun
     self.view.topicTips.gameObject:SetActive(hasChatInfo and chatInfo.hasTopicToStart)
 
     self.view.name:SetAndResolveTextStyle(chatCfg.name)
-    self.view.icon:LoadSprite(UIConst.UI_SPRITE_ROUND_CHAR_HEAD, chatCfg.listIcon)
+    self.view.icon:LoadSprite(UIConst.UI_SPRITE_ROUND_CHAR_HEAD, chatCfg.icon)
 
     local isGroup = chatCfg.chatType == GEnums.SNSChatType.Group
     self.view.official.gameObject:SetActiveIfNecessary(isGroup and chatCfg.tagType == GEnums.SNSGroupDialogTagType.Official)
@@ -81,14 +58,10 @@ SNSContactNpcCell.InitSNSContactNpcCell = HL.Method(HL.Table, HL.Boolean, HL.Fun
     self:_RefreshFoldOutIcon()
 end
 
-
-
 SNSContactNpcCell.ToggleFoldOut = HL.Method() << function(self)
     self.m_isFoldOut = not self.m_isFoldOut
     self:_RefreshFoldOutIcon()
 end
-
-
 
 SNSContactNpcCell._OnFoldButtonClick = HL.Method() << function(self)
     if self.m_onNpcCellClick then
@@ -98,14 +71,10 @@ SNSContactNpcCell._OnFoldButtonClick = HL.Method() << function(self)
     self:ToggleFoldOut()
 end
 
-
-
 SNSContactNpcCell._RefreshFoldOutIcon = HL.Method() << function(self)
     self.view.foldIconUp.gameObject:SetActiveIfNecessary(self.m_isFoldOut)
     self.view.foldIconDown.gameObject:SetActiveIfNecessary(not self.m_isFoldOut)
 end
-
-
 
 SNSContactNpcCell._GenSubDialogCellVOs = HL.Method().Return(HL.Table) << function(self)
     local sns = GameInstance.player.sns

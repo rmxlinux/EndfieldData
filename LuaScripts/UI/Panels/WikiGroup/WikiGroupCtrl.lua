@@ -2,47 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WikiGroup
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiGroupCtrl = HL.Class('WikiGroupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -53,25 +13,17 @@ WikiGroupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 WikiGroupCtrl.m_wikiGroupShowDataList = HL.Field(HL.Table)
-
 
 
 
 WikiGroupCtrl.m_categoryType = HL.Field(HL.String) << ""
 
-
 WikiGroupCtrl.m_detailPanelId = HL.Field(HL.Number) << 0
-
 
 WikiGroupCtrl.m_args = HL.Field(HL.Table)
 
-
 WikiGroupCtrl.m_activeScrollListCenter = HL.Field(HL.Any)
-
-
-
 
 
 
@@ -103,8 +55,6 @@ WikiGroupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_PlayDecoAnim(true)
 end
 
-
-
 WikiGroupCtrl.OnShow = HL.Override() << function(self)
     if self.m_phase and (self.m_phase.m_currentWikiGroupArgs.categoryType ~= self.m_args.categoryType or
         self.m_phase.m_currentWikiGroupArgs.wikiEntryShowData ~= self.m_args.wikiEntryShowData) then
@@ -115,27 +65,18 @@ WikiGroupCtrl.OnShow = HL.Override() << function(self)
     self:_PlayDecoAnim(true)
 end
 
-
-
 WikiGroupCtrl.OnHide = HL.Override() << function(self)
     self:_MarkWikiEntryRead()
 end
-
-
 
 WikiGroupCtrl.OnClose = HL.Override() << function(self)
     self:_MarkWikiEntryRead()
 end
 
-
-
 WikiGroupCtrl._OnPlayAnimationOut = HL.Override() << function(self)
     WikiGroupCtrl.Super._OnPlayAnimationOut(self)
     self:_PlayDecoAnim(false)
 end
-
-
-
 
 
 
@@ -148,8 +89,6 @@ WikiGroupCtrl.Refresh = HL.Method(HL.Table) << function(self, args)
     self:_RefreshTab()
 end
 
-
-
 WikiGroupCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.m_args and lume.deepCopy(self.m_args) or {}
     local selectedGroupData = self.m_wikiGroupShowDataList and self.m_wikiGroupShowDataList[self.m_selectedIndex] or nil
@@ -161,9 +100,6 @@ WikiGroupCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << func
     return arg
 end
 
-
-
-
 WikiGroupCtrl._SwitchCategoryType = HL.Method(HL.String) << function(self, categoryType)
     self.m_categoryType = categoryType
     if self.m_categoryType ==  WikiConst.EWikiCategoryType.Monster then
@@ -173,9 +109,6 @@ WikiGroupCtrl._SwitchCategoryType = HL.Method(HL.String) << function(self, categ
     end
 end
 
-
-
-
 WikiGroupCtrl._SwitchActiveScrollList = HL.Method(HL.Any) << function(self, scrollListToActivate)
     if self.m_activeScrollListCenter == scrollListToActivate then
         return
@@ -184,8 +117,6 @@ WikiGroupCtrl._SwitchActiveScrollList = HL.Method(HL.Any) << function(self, scro
     self.m_activeScrollListCenter = scrollListToActivate
     self.m_activeScrollListCenter.gameObject:SetActive(true)
 end
-
-
 
 WikiGroupCtrl._RefreshTop = HL.Method() << function(self)
     
@@ -197,9 +128,6 @@ WikiGroupCtrl._RefreshTop = HL.Method() << function(self)
     self.view.top:InitWikiTop(wikiTopArgs)
 end
 
-
-
-
 WikiGroupCtrl._PlayDecoAnim = HL.Method(HL.Boolean) << function(self, isIn)
     if self.m_phase then
         self.m_phase:PlayDecoAnim(isIn and "wiki_uideco_grouppanel_in" or "wiki_uideco_grouppanel_out")
@@ -208,13 +136,9 @@ end
 
 
 
-
 WikiGroupCtrl.m_getTabCell = HL.Field(HL.Function)
 
-
 WikiGroupCtrl.m_selectedIndex = HL.Field(HL.Number) << 0
-
-
 
 WikiGroupCtrl._RefreshTab = HL.Method() << function(self)
     if self.m_getTabCell == nil then
@@ -247,10 +171,8 @@ WikiGroupCtrl._RefreshTab = HL.Method() << function(self)
             end
             local selectedTabCell = self.m_getTabCell(self.view.scrollListLeft:Get(CSIndex(self.m_selectedIndex)))
             if selectedTabCell then
-                if self.m_args.wikiEntryShowData then
-                    self:SetAsNaviTargetInSilentModeIfNecessary(self.view.leftNaviGroup, selectedTabCell.btn)
-                else
-                    UIUtils.setAsNaviTarget(selectedTabCell.btn)
+                if not self.m_args.wikiEntryShowData then
+                    self:SetNaviTarget(selectedTabCell.btn)
                 end
             end
         end)
@@ -283,16 +205,13 @@ WikiGroupCtrl._RefreshTab = HL.Method() << function(self)
     if DeviceInfo.usingController and resumeState and resumeState.focusTab == true then
         local selectedTabCell = self.m_getTabCell(self.view.scrollListLeft:Get(CSIndex(selectedIndex)))
         if selectedTabCell then
-            UIUtils.setAsNaviTarget(selectedTabCell.btn)
+            self:SetNaviTarget(selectedTabCell.btn)
         end
     end
     if self.m_args then
         self.m_args.resumeState = nil
     end
 end
-
-
-
 
 WikiGroupCtrl._SetSelectedIndex = HL.Method(HL.Number) << function(self, selectedIndex)
     if self.m_selectedIndex == selectedIndex then
@@ -304,11 +223,6 @@ WikiGroupCtrl._SetSelectedIndex = HL.Method(HL.Number) << function(self, selecte
     local wikiGroupShowData = self.m_wikiGroupShowDataList[selectedIndex]
     self:_RefreshScrollListCenter(wikiGroupShowData)
 end
-
-
-
-
-
 
 WikiGroupCtrl._SetTabCellSelected = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, cell, isSelected, playAnim)
     if not cell then
@@ -326,26 +240,17 @@ end
 
 
 
-
 WikiGroupCtrl.m_getItemCell = HL.Field(HL.Function)
-
 
 WikiGroupCtrl.m_getMonsterCell = HL.Field(HL.Function)
 
-
 WikiGroupCtrl.m_wikiEntryShowDataList = HL.Field(HL.Table)
-
 
 WikiGroupCtrl.m_ignoreScrollListAnim = HL.Field(HL.Boolean) << false
 
-
 WikiGroupCtrl.m_isBackNaviSelected = HL.Field(HL.Boolean) << false
 
-
 WikiGroupCtrl.m_selectedItemIndex = HL.Field(HL.Number) << 0
-
-
-
 
 WikiGroupCtrl._RefreshScrollListCenter = HL.Method(HL.Table) << function(self, wikiGroupShowData)
     self:_MarkWikiEntryRead()
@@ -368,8 +273,6 @@ WikiGroupCtrl._RefreshScrollListCenter = HL.Method(HL.Table) << function(self, w
     end
     self.m_ignoreScrollListAnim = false
 end
-
-
 
 WikiGroupCtrl._BindCellFunction = HL.Method() << function(self)
     if self.m_categoryType == WikiConst.EWikiCategoryType.Monster then
@@ -453,10 +356,7 @@ end
 
 
 
-
 WikiGroupCtrl.m_readWikiEntries = HL.Field(HL.Table)
-
-
 
 WikiGroupCtrl._MarkWikiEntryRead = HL.Method() << function(self)
     if self.m_readWikiEntries then
@@ -468,9 +368,6 @@ WikiGroupCtrl._MarkWikiEntryRead = HL.Method() << function(self)
         self.m_readWikiEntries = {}
     end
 end
-
-
-
 
 WikiGroupCtrl._GetTabRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
     local luaIndex = LuaIndex(index)
@@ -488,9 +385,6 @@ WikiGroupCtrl._GetTabRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << f
         return 0
     end
 end
-
-
-
 
 WikiGroupCtrl._GetItemRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
     local luaIndex = LuaIndex(index)
@@ -513,10 +407,7 @@ end
 
 
 
-
 WikiGroupCtrl.m_naviTabIndex = HL.Field(HL.Number) << 0
-
-
 
 WikiGroupCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
@@ -536,7 +427,7 @@ WikiGroupCtrl._InitController = HL.Method() << function(self)
                     local tabCell = self.m_getTabCell(self.view.scrollListLeft:Get(CSIndex(self.m_naviTabIndex)))
                     self.m_naviTabIndex = 0
                     if tabCell then
-                        UIUtils.setAsNaviTarget(tabCell.btn)
+                        self:SetNaviTarget(tabCell.btn)
                     end
 
                 end
@@ -562,8 +453,6 @@ WikiGroupCtrl._InitController = HL.Method() << function(self)
     end
 end
 
-
-
 WikiGroupCtrl._NaviToSelectedItem = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
@@ -571,13 +460,13 @@ WikiGroupCtrl._NaviToSelectedItem = HL.Method() << function(self)
     if self.m_categoryType == WikiConst.EWikiCategoryType.Monster then
         local selectedMonsterCell = self.m_getMonsterCell(self.view.monsterScrollListCenter:Get(CSIndex(self.m_selectedItemIndex)))
         if not self.m_isBackNaviSelected and selectedMonsterCell and self.m_args.wikiEntryShowData then
-            UIUtils.setAsNaviTarget(selectedMonsterCell.view.button)
+            self:SetNaviTarget(selectedMonsterCell.view.button)
             self.m_isBackNaviSelected = true
         end
     else
         local selectedItemCell = self.m_getItemCell(self.view.itemScrollListCenter:Get(CSIndex(self.m_selectedItemIndex)))
         if not self.m_isBackNaviSelected and selectedItemCell and self.m_args.wikiEntryShowData then
-            UIUtils.setAsNaviTarget(selectedItemCell.view.button)
+            self:SetNaviTarget(selectedItemCell.view.button)
             self.m_isBackNaviSelected = true
         end
     end

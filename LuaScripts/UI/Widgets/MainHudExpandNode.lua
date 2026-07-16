@@ -1,29 +1,13 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 MainHudExpandNode = HL.Class('MainHudExpandNode', UIWidgetBase)
-
 
 
 MainHudExpandNode.m_isExpanded = HL.Field(HL.Boolean) << false
 
-
 MainHudExpandNode.m_autoTimerId = HL.Field(HL.Number) << -1
 
-
 MainHudExpandNode.m_belongNode = HL.Field(HL.Table)
-
-
-
 
 
 MainHudExpandNode.InitMainHudExpandNode = HL.Method(HL.Table) << function(self, belongNode)
@@ -37,8 +21,6 @@ MainHudExpandNode.InitMainHudExpandNode = HL.Method(HL.Table) << function(self, 
     self:SetExpanded(false, true)
 end
 
-
-
 MainHudExpandNode.StartAutoCloseTimer = HL.Method() << function(self)
     self:ClearAutoCloseTimer()
     self.m_autoTimerId = self:_StartTimer(self.view.config.EXPAND_TIME, function()
@@ -46,15 +28,9 @@ MainHudExpandNode.StartAutoCloseTimer = HL.Method() << function(self)
     end)
 end
 
-
-
 MainHudExpandNode.ClearAutoCloseTimer = HL.Method() << function(self)
     self.m_autoTimerId = self:_ClearTimer(self.m_autoTimerId)
 end
-
-
-
-
 
 MainHudExpandNode.SetExpanded = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, expand, skipAnimation)
     CoroutineManager:ClearAllCoroutine(self) 
@@ -96,9 +72,6 @@ MainHudExpandNode.SetExpanded = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << fun
     end
 end
 
-
-
-
 MainHudExpandNode._OnAnimationFinished = HL.Method(HL.Opt(HL.Boolean)) << function(self, forceRefreshAlpha)
     local node = self.m_belongNode
     self.transform.localScale = self.m_isExpanded and Vector3.one or Vector3.zero
@@ -110,9 +83,6 @@ MainHudExpandNode._OnAnimationFinished = HL.Method(HL.Opt(HL.Boolean)) << functi
         end)
     end
 end
-
-
-
 
 MainHudExpandNode._RefreshAlpha = HL.Method(HL.Function) << function(self, actionOnCanvasGroup)
     local childCount = self.view.transform.childCount

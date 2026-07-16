@@ -1,106 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ContingencySelectTag
 local PHASE_ID = PhaseId.ContingencySelectTag
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ContingencySelectTagCtrl = HL.Class('ContingencySelectTagCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -131,106 +32,72 @@ local RomanNumber1to5 = { "I", "II", "III", "IV", "V" }
 local COMMON_INTRO_ID = "contingency_contract"
 
 
-
 ContingencySelectTagCtrl.m_gameId = HL.Field(HL.String) << ""
-
 
 ContingencySelectTagCtrl.m_activityId = HL.Field(HL.String) << ""
 
-
 ContingencySelectTagCtrl.m_basicInfo = HL.Field(HL.Table)
-
 
 ContingencySelectTagCtrl.m_tagInfos = HL.Field(HL.Table)
 
-
 ContingencySelectTagCtrl.m_allTagInfosMap = HL.Field(HL.Table)
-
 
 ContingencySelectTagCtrl.m_tagKeyInfos = HL.Field(HL.Table)
 
-
 ContingencySelectTagCtrl.m_tagConflictInfos = HL.Field(HL.Table)
-
 
 ContingencySelectTagCtrl.m_unlockScoreInfos = HL.Field(HL.Table)
 
-
 ContingencySelectTagCtrl.m_conflictArrowInfos = HL.Field(HL.Table)
-
 
 ContingencySelectTagCtrl.m_joinedTagInfos = HL.Field(HL.Table)
 
-
 ContingencySelectTagCtrl.m_joinedTagInfosMap = HL.Field(HL.Table)
-
 
 ContingencySelectTagCtrl.m_joinedSeqGlobal = HL.Field(HL.Number) << 1
 
-
 ContingencySelectTagCtrl.m_newJoinedKeyInfo = HL.Field(HL.Table)
 
-
 ContingencySelectTagCtrl.m_outsideLockDotInfo = HL.Field(HL.Table)
-
 
 ContingencySelectTagCtrl.m_sortSetting = HL.Field(HL.Table)
 
 
 
-
 ContingencySelectTagCtrl.m_tagCellCache = HL.Field(HL.Table)
-
 
 ContingencySelectTagCtrl.m_getTagEffectCellFunc = HL.Field(HL.Function)
 
-
 ContingencySelectTagCtrl.m_arrowCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 ContingencySelectTagCtrl.m_lockAreaCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 ContingencySelectTagCtrl.m_tipsKeyCellCacheList = HL.Field(HL.Table)
-
 
 ContingencySelectTagCtrl.m_curSelectTagCellIndex = HL.Field(HL.Number) << -1
 
-
 ContingencySelectTagCtrl.m_waitEnterDungeon = HL.Field(HL.Boolean) << false
-
 
 ContingencySelectTagCtrl.m_checkOutsideLockDotTickTime = HL.Field(HL.Number) << 0
 
-
 ContingencySelectTagCtrl.m_curOpenTipsTagIndex = HL.Field(HL.Number) << -1
-
 
 ContingencySelectTagCtrl.m_tipsTagUnlockTimeCor = HL.Field(HL.Thread)
 
-
 ContingencySelectTagCtrl.m_lockAreaAniCor = HL.Field(HL.Thread)
-
 
 ContingencySelectTagCtrl.m_tagEffectCellInAniUpdateKey = HL.Field(HL.Number) << -1
 
 
 
 
-
 ContingencySelectTagCtrl.m_isNaviTagCell = HL.Field(HL.Boolean) << false
-
 
 ContingencySelectTagCtrl.m_curNaviTagCellIndex = HL.Field(HL.Number) << -1
 
-
 ContingencySelectTagCtrl.m_curNaviTagEffectCellIndex = HL.Field(HL.Number) << -1
 
-
 ContingencySelectTagCtrl.m_isEnableAreaOperate = HL.Field(HL.Boolean) << true
-
-
-
 
 
 
@@ -261,8 +128,6 @@ ContingencySelectTagCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         arg.recoverState = nil
     end
 end
-
-
 
 ContingencySelectTagCtrl.OnShow = HL.Override() << function(self)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.topRightNode)
@@ -295,8 +160,6 @@ ContingencySelectTagCtrl.OnShow = HL.Override() << function(self)
     end
     
 end
-
-
 
 ContingencySelectTagCtrl.OnAnimationInFinished = HL.Override() << function(self)
     if self.m_basicInfo.scoreLockAniData.playTailIndex > 0 then
@@ -340,22 +203,14 @@ ContingencySelectTagCtrl.OnAnimationInFinished = HL.Override() << function(self)
     self.m_basicInfo.scoreLockAniData.preHistoryMaxScore = self.m_basicInfo.historyMaxScore
 end
 
-
-
 ContingencySelectTagCtrl.OnClose = HL.Override() << function(self)
     LuaUpdate:Remove(self.m_tagEffectCellInAniUpdateKey)
     self.m_tagEffectCellInAniUpdateKey = -1
     self:_SetTagEffectControllerScrollEnabled(false)
-    
-    
-    ClientDataManagerInst:SaveUserData(ClientDataManagerInst.defaultCategory)
 
     self.m_lockAreaAniCor = self:_ClearCoroutine(self.m_lockAreaAniCor)
     self.m_tipsTagUnlockTimeCor = self:_ClearCoroutine(self.m_tipsTagUnlockTimeCor)
 end
-
-
-
 
 ContingencySelectTagCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     self:_ActiveSwitchAreaAndTagEffectControllerScroll(active)
@@ -374,9 +229,6 @@ ContingencySelectTagCtrl._ActiveSwitchAreaAndTagEffectControllerScroll = HL.Meth
         self:_SetTagEffectControllerScrollEnabled(false)
     end
 end
-
-
-
 
 
 
@@ -471,8 +323,6 @@ ContingencySelectTagCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     end
 end
 
-
-
 ContingencySelectTagCtrl._InitConflictArrowData = HL.Method() << function(self)
     
     self.m_conflictArrowInfos = {}
@@ -544,8 +394,6 @@ ContingencySelectTagCtrl._InitConflictArrowData = HL.Method() << function(self)
     self.m_conflictArrowInfos = tempList
 end
 
-
-
 ContingencySelectTagCtrl._UpdateData = HL.Method() << function(self)
     
     
@@ -580,8 +428,6 @@ ContingencySelectTagCtrl._UpdateData = HL.Method() << function(self)
         end
     end
 end
-
-
 
 ContingencySelectTagCtrl._UpdateOutsideDotInfo = HL.Method() << function(self)
     if not self.m_newJoinedKeyInfo then
@@ -619,9 +465,6 @@ ContingencySelectTagCtrl._UpdateOutsideDotInfo = HL.Method() << function(self)
         self.m_checkOutsideLockDotTickTime = Time.time + CheckOutsideLockDotInterval
     end
 end
-
-
-
 
 
 
@@ -750,8 +593,6 @@ ContingencySelectTagCtrl._InitUI = HL.Method(HL.Opt(HL.Any)) << function(self, r
     AudioManager.PostEvent("au_music_meta_ui_cc_v1d3_preparing_enter")
 end
 
-
-
 ContingencySelectTagCtrl._GetJoinedTagIds = HL.Method().Return(HL.Table) << function(self)
     local joinedTagInfos = {}
     for _, tagInfo in pairs(self.m_joinedTagInfosMap) do
@@ -768,9 +609,6 @@ ContingencySelectTagCtrl._GetJoinedTagIds = HL.Method().Return(HL.Table) << func
     return joinedTagIds
 end
 
-
-
-
 ContingencySelectTagCtrl._OpenDetailsPopup = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     PhaseManager:OpenPhase(PhaseId.ContingencyContractDetailsPopup, {
         gameId = self.m_gameId,
@@ -778,9 +616,6 @@ ContingencySelectTagCtrl._OpenDetailsPopup = HL.Method(HL.Opt(HL.Any)) << functi
         recoverState = recoverState,
     })
 end
-
-
-
 
 ContingencySelectTagCtrl._OpenImportSharePopup = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     UIManager:Open(PanelId.ContingencyContractImportShare, {
@@ -793,8 +628,6 @@ ContingencySelectTagCtrl._OpenImportSharePopup = HL.Method(HL.Opt(HL.Any)) << fu
         end,
     })
 end
-
-
 
 ContingencySelectTagCtrl.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local isOpen, importShareCtrl = UIManager:IsOpen(PanelId.ContingencyContractImportShare)
@@ -827,8 +660,6 @@ ContingencySelectTagCtrl.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL.
         end
     end
 end
-
-
 
 ContingencySelectTagCtrl.TryRecoverPopupState = HL.Method(HL.Any).Return(HL.Boolean) << function(self, popupState)
     if popupState == nil or string.isEmpty(popupState.popupType) then
@@ -871,8 +702,6 @@ ContingencySelectTagCtrl.TryRecoverPopupState = HL.Method(HL.Any).Return(HL.Bool
     end
     return false
 end
-
-
 
 ContingencySelectTagCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local joinedTagIds = self:_GetJoinedTagIds()
@@ -969,8 +798,6 @@ ContingencySelectTagCtrl._RefreshTagCellList = HL.Method() << function(self)
     self.view.tagCell.gameObject:SetActive(false)
 end
 
-
-
 ContingencySelectTagCtrl._RefreshAllUI = HL.Method() << function(self)
     self:_RefreshTagCellList()
     self:_InitLockScoreArea()
@@ -996,10 +823,6 @@ ContingencySelectTagCtrl._RefreshAllUI = HL.Method() << function(self)
     
     self.view.outsideDotNode:SetState("RedDot")
 end
-
-
-
-
 
 ContingencySelectTagCtrl._InitTagCell = HL.Method(HL.Any, HL.Number) << function(self, inCell, luaIndex)
     
@@ -1107,9 +930,6 @@ ContingencySelectTagCtrl._InitTagCell = HL.Method(HL.Any, HL.Number) << function
     
 end
 
-
-
-
 ContingencySelectTagCtrl._RefreshTagCellOpenBtnHoverText = HL.Method(HL.Table) << function(self, tagInfo)
     local tagCell = self:_GetTagCell(tagInfo.cellIndex)
     if not tagCell then
@@ -1128,10 +948,6 @@ ContingencySelectTagCtrl._RefreshTagCellOpenBtnHoverText = HL.Method(HL.Table) <
         InputManagerInst:SetBindingText(tagCell.openedBtn.hoverConfirmBindingId, Language.LUA_CONTINGENCY_CONTRACT_SELECT_TAG_NAVI_SET_JOIN)
     end
 end
-
-
-
-
 
 ContingencySelectTagCtrl._InitConflictArrowCell = HL.Method(HL.Any, HL.Number) << function(self, inCell, luaIndex)
     local cell = inCell
@@ -1161,15 +977,11 @@ ContingencySelectTagCtrl._InitConflictArrowCell = HL.Method(HL.Any, HL.Number) <
     end
 end
 
-
-
 ContingencySelectTagCtrl._InitLockScoreArea = HL.Method() << function(self)
     self.m_lockAreaCellCache:Refresh(#self.m_basicInfo.needLockAreaInfos, function(cell, luaIndex)
         self:_RefreshLockAreaCell(cell, luaIndex, self.m_basicInfo.needLockAreaInfos[luaIndex])
     end)
 end
-
-
 
 ContingencySelectTagCtrl._UpdateLockScoreArea = HL.Method() << function(self)
     
@@ -1202,11 +1014,6 @@ ContingencySelectTagCtrl._UpdateLockScoreArea = HL.Method() << function(self)
     end
 end
 
-
-
-
-
-
 ContingencySelectTagCtrl._RefreshLockAreaCell = HL.Method(HL.Any, HL.Number, HL.Table) << function(self, inCell, luaIndex, info)
     
     local cell = inCell
@@ -1232,10 +1039,6 @@ ContingencySelectTagCtrl._RefreshLockAreaCell = HL.Method(HL.Any, HL.Number, HL.
     cell.rectTransform.anchoredPosition = Vector2(paddingLeft + preTagCellLength, 0)
     cell.rectTransform:SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, length)
 end
-
-
-
-
 
 ContingencySelectTagCtrl._RefreshTagEffectCell = HL.Method(HL.Any, HL.Number) << function(self, inCell, luaIndex)
     
@@ -1328,9 +1131,6 @@ ContingencySelectTagCtrl._RefreshTagEffectCell = HL.Method(HL.Any, HL.Number) <<
     end
 end
 
-
-
-
 ContingencySelectTagCtrl._GetTagEffectCell = HL.Method(HL.Number).Return(HL.Opt(HL.Any)) << function(self, luaIndex)
     if luaIndex <= 0 or not self.m_getTagEffectCellFunc then
         return nil
@@ -1342,19 +1142,12 @@ ContingencySelectTagCtrl._GetTagEffectCell = HL.Method(HL.Number).Return(HL.Opt(
     return self.m_getTagEffectCellFunc(obj)
 end
 
-
-
-
-
 ContingencySelectTagCtrl._ScrollTagEffectListToIndex = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, luaIndex, fastMode)
     if luaIndex <= 0 or luaIndex > #self.m_joinedTagInfos then
         return
     end
     self.view.tagEffectList:ScrollToIndex(CSIndex(luaIndex), fastMode == true, CS.Beyond.UI.UIScrollList.ScrollAlignType.Top)
 end
-
-
-
 
 ContingencySelectTagCtrl._SetTagEffectControllerScrollEnabled = HL.Method(HL.Boolean) << function(self, enabled)
     if self.view.tagEffectListRect then
@@ -1396,11 +1189,6 @@ ContingencySelectTagCtrl._RefreshCurScoreUI = HL.Method() << function(self)
         end
     end
 end
-
-
-
-
-
 
 ContingencySelectTagCtrl._ChangeTagSelect = HL.Method(HL.Table, HL.Boolean, HL.Boolean) << function(self, tagInfo, isSelect, isFromTagClick)
     local luaIndex = tagInfo.cellIndex
@@ -1464,8 +1252,6 @@ ContingencySelectTagCtrl._ChangeTagSelect = HL.Method(HL.Table, HL.Boolean, HL.B
     end
 end
 
-
-
 ContingencySelectTagCtrl._ClearTagSelect = HL.Method() << function(self)
     if self.m_curSelectTagCellIndex > 0 then
         local cell = self:_GetTagCell(self.m_curSelectTagCellIndex)
@@ -1476,10 +1262,6 @@ ContingencySelectTagCtrl._ClearTagSelect = HL.Method() << function(self)
     self.view.selectTagArrow.gameObject:SetActive(false)
     self.m_curSelectTagCellIndex = -1
 end
-
-
-
-
 
 ContingencySelectTagCtrl._ChangeTagJoin = HL.Method(HL.Table, HL.Boolean) << function(self, tagInfo, isJoin)
     local cell = self:_GetTagCell(tagInfo.cellIndex)
@@ -1514,11 +1296,6 @@ ContingencySelectTagCtrl._ChangeTagJoin = HL.Method(HL.Table, HL.Boolean) << fun
     end
     self:_UpdateTagSelectRemoveNode(tagInfo)
 end
-
-
-
-
-
 
 ContingencySelectTagCtrl._ChangeTagLock = HL.Method(HL.Table, HL.String, HL.Boolean) << function(self, tagInfo, keyId, isLock)
     local lockIndex
@@ -1575,10 +1352,6 @@ ContingencySelectTagCtrl._ChangeTagLock = HL.Method(HL.Table, HL.String, HL.Bool
     end
 end
 
-
-
-
-
 ContingencySelectTagCtrl._ChangeTagConflict = HL.Method(HL.Table, HL.Boolean) << function(self, tagInfo, isConflict)
     local cell = self:_GetTagCell(tagInfo.cellIndex)
     if not cell then
@@ -1591,11 +1364,6 @@ ContingencySelectTagCtrl._ChangeTagConflict = HL.Method(HL.Table, HL.Boolean) <<
         cell.arrowNode.stateController:SetState(isJoined and "Joined" or "NotJoined")
     end
 end
-
-
-
-
-
 
 ContingencySelectTagCtrl._RefreshTipsLockCell = HL.Method(HL.Table, HL.Any, HL.Forward("UIListCache")) << function(self, keyInfo, inCell, keyCellCache)
     
@@ -1678,14 +1446,10 @@ ContingencySelectTagCtrl._RefreshTipsLockCell = HL.Method(HL.Table, HL.Any, HL.F
     lockCell.stateController:SetState(joinedKeyCount >= needUseKeyCount and "Unlock" or "Lock")
 end
 
-
-
 ContingencySelectTagCtrl._RefreshUIWhenTagJoinChange = HL.Method() << function(self)
     self:_SortAndRefreshJoinedTagInfos()
     self:_RefreshCurScoreUI()
 end
-
-
 
 ContingencySelectTagCtrl._TryPlayTagEffectCellInAni = HL.Method() << function(self)
     local listCount = #self.m_joinedTagInfos
@@ -1736,8 +1500,6 @@ ContingencySelectTagCtrl._TryPlayTagEffectCellInAni = HL.Method() << function(se
     end)
 end
 
-
-
 ContingencySelectTagCtrl._TryStopTagEffectCellInAni = HL.Method() << function(self)
     if self.m_tagEffectCellInAniUpdateKey <= 0 then
         return
@@ -1761,10 +1523,6 @@ end
 
 
 
-
-
-
-
 ContingencySelectTagCtrl._SetTagJoinAndRefreshUI = HL.Method(HL.Table, HL.Boolean) << function(self, tagInfo, setJoin)
     self:_SetTagJoin(tagInfo, setJoin, false)
     self:_RefreshUIWhenTagJoinChange()
@@ -1772,9 +1530,6 @@ ContingencySelectTagCtrl._SetTagJoinAndRefreshUI = HL.Method(HL.Table, HL.Boolea
         self:_TryPlayTagEffectCellInAni()
     end
 end
-
-
-
 
 ContingencySelectTagCtrl._QuickUnlockTag = HL.Method(HL.Table) << function(self, tagInfo)
     local hasScoreNotValidTag = false
@@ -1810,11 +1565,6 @@ ContingencySelectTagCtrl._QuickUnlockTag = HL.Method(HL.Table) << function(self,
     
     self:_RefreshUIWhenTagJoinChange()
 end
-
-
-
-
-
 
 ContingencySelectTagCtrl._SetTagJoin = HL.Method(HL.Table, HL.Boolean, HL.Boolean) << function(self, tagInfo, setJoin, isInit)
     logger.info(string.format("ContingencySelectTagCtrl：SetJoinTag [%s] [id:%d] [c%d_r%d]", setJoin, tagInfo.tagId, tagInfo.column, tagInfo.row))
@@ -1878,13 +1628,9 @@ ContingencySelectTagCtrl._SetTagJoin = HL.Method(HL.Table, HL.Boolean, HL.Boolea
     end
 end
 
-
-
-
-
 ContingencySelectTagCtrl._OnClickOpenedTag = HL.Method(HL.Table, HL.Boolean) << function(self, tagInfo, controllerQuickUnjoin)
     logger.info("ContingencySelectTagCtrl：点击openedBtn")
-    ActivityUtils.setCcTagRead(tagInfo.tagId, true) 
+    ActivityUtils.setCcTagRead(tagInfo.tagId)
     
     local isTagLockByTag = self:_IsTagLockByTag(tagInfo)
     if not isTagLockByTag then
@@ -1968,20 +1714,11 @@ ContingencySelectTagCtrl._OnClickOpenedTag = HL.Method(HL.Table, HL.Boolean) << 
     self:_RefreshTagCellOpenBtnHoverText(tagInfo)
 end
 
-
-
-
 ContingencySelectTagCtrl._OnCLickNotOpenTag = HL.Method(HL.Table) << function(self, tagInfo)
     logger.info("ContingencySelectTagCtrl：点击notOpenBtn")
     self:_ChangeTagSelect(tagInfo, true, true)
     self:_ShowTagTips(tagInfo)
 end
-
-
-
-
-
-
 
 ContingencySelectTagCtrl._TryChangeKeyJoin = HL.Method(HL.Table, HL.Table, HL.Boolean, HL.Boolean) << function(self, keyInfo, tagInfo, isJoin, needHint)
     local tagId = tagInfo.tagId
@@ -2030,11 +1767,6 @@ ContingencySelectTagCtrl._TryChangeKeyJoin = HL.Method(HL.Table, HL.Table, HL.Bo
     end
 end
 
-
-
-
-
-
 ContingencySelectTagCtrl._TryChangeConflictJoin = HL.Method(HL.Table, HL.Table, HL.Boolean) << function(self, conflictInfo, tagInfo, isJoin)
     local tagId = tagInfo.tagId
     if isJoin then
@@ -2062,10 +1794,6 @@ ContingencySelectTagCtrl._TryChangeConflictJoin = HL.Method(HL.Table, HL.Table, 
     end
 end
 
-
-
-
-
 ContingencySelectTagCtrl._TryChangeLockJoin = HL.Method(HL.Table, HL.Boolean) << function(self, tagInfo, isJoin)
     local tagId = tagInfo.tagId
     if isJoin then
@@ -2091,9 +1819,6 @@ ContingencySelectTagCtrl._TryChangeLockJoin = HL.Method(HL.Table, HL.Boolean) <<
     end
 end
 
-
-
-
 ContingencySelectTagCtrl._IsTagLockByTag = HL.Method(HL.Table).Return(HL.Boolean) << function(self, tagInfo)
     for i, lockId in pairs(tagInfo.lockIds) do
         local lockInfo = self.m_tagKeyInfos[lockId]
@@ -2103,11 +1828,6 @@ ContingencySelectTagCtrl._IsTagLockByTag = HL.Method(HL.Table).Return(HL.Boolean
     end
     return false
 end
-
-
-
-
-
 
 ContingencySelectTagCtrl._IsLastKeyLockUp = HL.Method(HL.String, HL.Number, HL.Boolean).Return(HL.Boolean)
     << function(self, keyId, tagId, checkDependLock)
@@ -2121,8 +1841,6 @@ ContingencySelectTagCtrl._IsLastKeyLockUp = HL.Method(HL.String, HL.Number, HL.B
     return false
 end
 
-
-
 ContingencySelectTagCtrl._SortAndRefreshJoinedTagInfos = HL.Method() << function(self)
     self.m_joinedTagInfos = {}
     for i, tagInfo in pairs(self.m_joinedTagInfosMap) do
@@ -2131,17 +1849,11 @@ ContingencySelectTagCtrl._SortAndRefreshJoinedTagInfos = HL.Method() << function
     self:_SortAndRefreshTagEffectList()
 end
 
-
-
 ContingencySelectTagCtrl._RefreshTagEffectIndices = HL.Method() << function(self)
     for luaIndex, tagInfo in ipairs(self.m_joinedTagInfos) do
         tagInfo.tagEffectIndex = luaIndex
     end
 end
-
-
-
-
 
 ContingencySelectTagCtrl._SortAndRefreshTagEffectList = HL.Method(HL.Opt(HL.Table, HL.Boolean)) << function(self, sortData, isIncremental)
     local isFromTagJoinChange = sortData == nil
@@ -2190,9 +1902,6 @@ ContingencySelectTagCtrl._SortAndRefreshTagEffectList = HL.Method(HL.Opt(HL.Tabl
         self.view.switchAreaKeyHint.gameObject:SetActive(canSwitchArea)
     end
 end
-
-
-
 
 ContingencySelectTagCtrl._ClearAllTag = HL.Method(HL.Boolean, HL.Boolean) << function(self, refreshUI, showToast)
     local tempTagInfoMap = self.m_joinedTagInfosMap
@@ -2247,10 +1956,6 @@ ContingencySelectTagCtrl._ClearAllTag = HL.Method(HL.Boolean, HL.Boolean) << fun
     end
 end
 
-
-
-
-
 ContingencySelectTagCtrl._ApplyShareTag = HL.Method(HL.Table, HL.Boolean, HL.Boolean) << function(self, tagIds, keepJoinOrder, autoScroll)
     if tagIds == nil or #tagIds <= 0 then
         self:_ClearAllTag(true, false)
@@ -2296,9 +2001,6 @@ ContingencySelectTagCtrl._ApplyShareTag = HL.Method(HL.Table, HL.Boolean, HL.Boo
         end
     end
 end
-
-
-
 
 ContingencySelectTagCtrl._ShowTagTips = HL.Method(HL.Table) << function(self, tagInfo)
     if self.m_curOpenTipsTagIndex == tagInfo.cellIndex then
@@ -2411,9 +2113,6 @@ ContingencySelectTagCtrl._ShowTagTips = HL.Method(HL.Table) << function(self, ta
     end
 end
 
-
-
-
 ContingencySelectTagCtrl._HideTagTips = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     if DeviceInfo.usingController then
         Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.tagTipsNode.inputGroup.groupId)
@@ -2428,18 +2127,15 @@ ContingencySelectTagCtrl._HideTagTips = HL.Method(HL.Opt(HL.Boolean)) << functio
     self.view.switchAreaKeyHint.gameObject:SetActive(canSwitchArea)
 end
 
-
-
-
 ContingencySelectTagCtrl._OnSetTagSuccess = HL.Method(HL.Any) << function(self, arg)
     local gameId = unpack(arg)
     if gameId ~= self.m_gameId then
         return
     end
+
     if self.m_waitEnterDungeon then
         PhaseManager:GoToPhase(PhaseId.CharFormation, {
             dungeonId = gameId,
-            customTeamIndex = LuaIndex(Tables.globalConst.contingencyContractCharTeamIndex),
             enterDungeonCallback = function(enterDungeonId)
                 LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId)
             end,
@@ -2450,8 +2146,6 @@ ContingencySelectTagCtrl._OnSetTagSuccess = HL.Method(HL.Any) << function(self, 
         self.m_waitEnterDungeon = false
     end
 end
-
-
 
 ContingencySelectTagCtrl._RefreshOutsideLockDot = HL.Method() << function(self)
     if self.m_outsideLockDotInfo == nil then
@@ -2481,9 +2175,6 @@ ContingencySelectTagCtrl._RefreshOutsideLockDot = HL.Method() << function(self)
     end
 end
 
-
-
-
 ContingencySelectTagCtrl._isTagCellCanView = HL.Method(RectTransform).Return(HL.Boolean, HL.Number) << function(self, tagCellTransform)
     local viewport = self.view.tagList and self.view.tagList.viewport
     if not viewport or not tagCellTransform then
@@ -2510,9 +2201,6 @@ ContingencySelectTagCtrl._isTagCellCanView = HL.Method(RectTransform).Return(HL.
     return false, side
 end
 
-
-
-
 ContingencySelectTagCtrl._isTagEffectCellCanView = HL.Method(RectTransform).Return(HL.Boolean) << function(self, tagEffectCellTransform)
     local viewport = self.view.tagEffectListRect and self.view.tagEffectListRect.viewport
     if not viewport or not tagEffectCellTransform then
@@ -2524,9 +2212,6 @@ ContingencySelectTagCtrl._isTagEffectCellCanView = HL.Method(RectTransform).Retu
     local overlapY = cellRect.yMax <= viewRect.yMax and cellRect.yMin >= viewRect.yMin
     return overlapY
 end
-
-
-
 
 ContingencySelectTagCtrl._GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, csIndex)
     local luaIndex = LuaIndex(csIndex)
@@ -2548,8 +2233,6 @@ ContingencySelectTagCtrl._GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Numb
     end
 end
 
-
-
 ContingencySelectTagCtrl._GetFirstNotEmptyTagInfo = HL.Method().Return(HL.Opt(HL.Table)) << function(self)
     
     local maxCol = #self.m_tagInfos
@@ -2562,8 +2245,6 @@ ContingencySelectTagCtrl._GetFirstNotEmptyTagInfo = HL.Method().Return(HL.Opt(HL
         end
     end
 end
-
-
 
 ContingencySelectTagCtrl._SetNaviTagCell = HL.Method(HL.Boolean) << function(self, isForceNavi)
     local tagInfo
@@ -2606,15 +2287,15 @@ ContingencySelectTagCtrl._SetNaviTagCell = HL.Method(HL.Boolean) << function(sel
     if tagCell then
         if isForceNavi then
             if tagInfo.isUnlockByStage then
-                UIUtils.setAsNaviTarget(tagCell.openedBtn)
+                self:SetNaviTarget(tagCell.openedBtn)
             else
-                UIUtils.setAsNaviTarget(tagCell.notOpenBtn)
+                self:SetNaviTarget(tagCell.notOpenBtn)
             end
         else
             if tagInfo.isUnlockByStage then
-                self:SetAsNaviTargetInSilentModeIfNecessary(self.view.centerTagSelectorNaviGroup, tagCell.openedBtn)
+                self:SetNaviTarget(tagCell.openedBtn)
             else
-                self:SetAsNaviTargetInSilentModeIfNecessary(self.view.centerTagSelectorNaviGroup, tagCell.notOpenBtn)
+                self:SetNaviTarget(tagCell.notOpenBtn)
             end
         end
         self.m_isNaviTagCell = true
@@ -2623,8 +2304,6 @@ ContingencySelectTagCtrl._SetNaviTagCell = HL.Method(HL.Boolean) << function(sel
         self:_ChangeAreaOperateEnable(true)
     end
 end
-
-
 
 ContingencySelectTagCtrl._SetNaviTagEffectCell = HL.Method() << function(self)
     
@@ -2678,7 +2357,7 @@ ContingencySelectTagCtrl._SetNaviTagEffectCell = HL.Method() << function(self)
     
     
     if tagEffectCell then
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.rightTagEffectListNaviGroup, tagEffectCell.naviDeco)
+        self:SetNaviTarget(tagEffectCell.naviDeco)
         if self.view.tagEffectListRect then
             self.view.tagEffectListRect:AutoScrollToRectTransform(tagEffectCell.transform)
         elseif tagEffectCellIndex > 0 then
@@ -2690,9 +2369,6 @@ ContingencySelectTagCtrl._SetNaviTagEffectCell = HL.Method() << function(self)
     end
 end
 
-
-
-
 ContingencySelectTagCtrl._ChangeAreaOperateEnable = HL.Method(HL.Boolean) << function(self, isEnable)
     self.m_isEnableAreaOperate = isEnable
     self.view.rewardInstructionBtnInputGroup.enabled = isEnable
@@ -2700,9 +2376,6 @@ ContingencySelectTagCtrl._ChangeAreaOperateEnable = HL.Method(HL.Boolean) << fun
     self.view.shareTagBtnInputGroup.enabled = isEnable
     self:_SetTagEffectControllerScrollEnabled(isEnable)
 end
-
-
-
 
 ContingencySelectTagCtrl._UpdateTagSelectRemoveNode = HL.Method(HL.Table) << function(self, tagInfo)
     local cellIndex = tagInfo.cellIndex
@@ -2726,9 +2399,6 @@ end
 
 
 
-
-
-
 ContingencySelectTagCtrl._OnMultiStageUpdate = HL.Method(HL.Any) << function(self, arg)
     local activityId = unpack(arg)
     if self.m_activityId ~= activityId then
@@ -2746,13 +2416,7 @@ ContingencySelectTagCtrl._OnMultiStageUpdate = HL.Method(HL.Any) << function(sel
         end
         UIManager:Close(PanelId.ContingencyContractImportShare)
         UIManager:Close(PanelId.ContingencyContractInstructionBook)
-        Notify(MessageConst.SHOW_POP_UP, {
-            content = Language.LUA_ACTIVITY_MODIFY_QUIT_TO_MENU,
-            hideCancel = true,
-            onConfirm = function()
-                PhaseManager:ExitPhaseFastTo(PhaseId.Level, true)
-            end
-        })
+        ActivityUtils.backToMainHud()
     else
         self:_TryRefreshNewUnlockedTags()
     end
@@ -2801,8 +2465,6 @@ ContingencySelectTagCtrl._RefreshTagConflictAndLock = HL.Method(HL.Table) << fun
         self:_ChangeTagLock(tagInfo, lockId, lume.count(lockInfo.curJoinedKeyTags) <= 0)
     end
 end
-
-
 
 ContingencySelectTagCtrl._SendSetTagList = HL.Method() << function(self)
     local joinedTagIds = {}

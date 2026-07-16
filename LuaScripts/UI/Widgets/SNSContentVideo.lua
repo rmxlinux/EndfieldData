@@ -1,12 +1,6 @@
 local SNSContentBase = require_ex('UI/Widgets/SNSContentBase')
 
-
-
-
-
 SNSContentVideo = HL.Class('SNSContentVideo', SNSContentBase)
-
-
 
 SNSContentVideo._OnSNSContentInit = HL.Override() << function(self)
     self.view.image:LoadSprite(UIConst.UI_SPRITE_SNS_VIDEO_PREVIEW, self.m_contentCfg.contentParam[0])
@@ -24,13 +18,9 @@ end
 
 
 
-
-
 SNSContentVideo.CanSetTarget = HL.Override().Return(HL.Boolean) << function(self)
     return true
 end
-
-
 
 SNSContentVideo.GetNaviTarget = HL.Override().Return(HL.Any) << function(self)
     return self.view.playBtn

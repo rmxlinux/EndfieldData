@@ -1,11 +1,6 @@
 local SNSContentWithEmojiComp = require_ex('UI/Widgets/SNSContentWithEmojiComp')
 
-
-
-
 SNSContentPic = HL.Class('SNSContentPic', SNSContentWithEmojiComp)
-
-
 
 SNSContentPic._OnSNSContentInit = HL.Override() << function(self)
     SNSContentPic.Super._OnSNSContentInit(self)
@@ -22,10 +17,16 @@ end
 
 
 
-
-
 SNSContentPic.CanSetTarget = HL.Override().Return(HL.Boolean) << function(self)
     return true
+end
+
+SNSContentPic.GetNaviTarget = HL.Override().Return(HL.Any) << function(self)
+    local target = SNSContentPic.Super.GetNaviTarget(self)
+    if target then
+        return target
+    end
+    return self.view.picButton
 end
 
 

@@ -2,33 +2,13 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DungeonCustomReward
 local PHASE_ID = PhaseId.DungeonCustomReward
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DungeonCustomRewardCtrl = HL.Class('DungeonCustomRewardCtrl', uiCtrl.UICtrl)
-
 
 DungeonCustomRewardCtrl.m_dungeonId = HL.Field(HL.String) << ""
 
-
 DungeonCustomRewardCtrl.m_costStamina = HL.Field(HL.Number) << -1
 
-
 DungeonCustomRewardCtrl.m_curSelectRadio = HL.Field(HL.Number) << -1
-
 
 
 
@@ -37,7 +17,6 @@ DungeonCustomRewardCtrl.m_curSelectRadio = HL.Field(HL.Number) << -1
 DungeonCustomRewardCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_STAMINA_CHANGED] = 'OnStaminaChanged',
 }
-
 
 DungeonCustomRewardCtrl.TryStartSettlement = HL.StaticMethod() << function()
     local dungeonMgr = GameInstance.dungeonManager
@@ -96,9 +75,6 @@ DungeonCustomRewardCtrl.TryStartSettlement = HL.StaticMethod() << function()
 end
 
 
-
-
-
 DungeonCustomRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.btnAward.onClick:AddListener(function()
         self:_OnClickBtnAward()
@@ -113,8 +89,6 @@ DungeonCustomRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitController()
 end
 
-
-
 DungeonCustomRewardCtrl.OnAnimationInFinished = HL.Override() << function(self)
     if ActivityUtils.hasStaminaReduceCount() then
         return
@@ -122,14 +96,9 @@ DungeonCustomRewardCtrl.OnAnimationInFinished = HL.Override() << function(self)
     self.view.customRewardRadioComp:SetDefaultTarget()
 end
 
-
-
 DungeonCustomRewardCtrl.OnStaminaChanged = HL.Method() << function(self)
     self:_RefreshState()
 end
-
-
-
 
 
 
@@ -148,8 +117,6 @@ DungeonCustomRewardCtrl._InitData = HL.Method(HL.Table) << function(self, args)
         self.m_curSelectRadio = 1
     end
 end
-
-
 
 DungeonCustomRewardCtrl._InitView = HL.Method() << function(self)
     local ids = { Tables.dungeonConst.staminaItemId }
@@ -178,8 +145,6 @@ DungeonCustomRewardCtrl._InitView = HL.Method() << function(self)
     self:_RefreshState()
 end
 
-
-
 DungeonCustomRewardCtrl._OnClickBtnAward = HL.Method() << function(self)
     local realCostStamina = ActivityUtils.getRealStaminaCost(self.m_curSelectRadio * self.m_costStamina)
     if GameInstance.player.inventory.curStamina >= realCostStamina then
@@ -190,8 +155,6 @@ DungeonCustomRewardCtrl._OnClickBtnAward = HL.Method() << function(self)
         PhaseManager:OpenPhase(PhaseId.StaminaPopUp)
     end
 end
-
-
 
 DungeonCustomRewardCtrl._OnClickBtnCancel = HL.Method() << function(self)
     PhaseManager:ExitPhaseFast(PHASE_ID)
@@ -207,15 +170,10 @@ DungeonCustomRewardCtrl._OnClickBtnCancel = HL.Method() << function(self)
     end
 end
 
-
-
-
 DungeonCustomRewardCtrl._OnRewardRadioChanged = HL.Method(HL.Number) << function(self, radioIndex)
     self.m_curSelectRadio = radioIndex
     self:_RefreshState()
 end
-
-
 
 DungeonCustomRewardCtrl._RefreshState = HL.Method() <<function(self)
     local hasSelectRadio = self.m_curSelectRadio > 0
@@ -246,8 +204,6 @@ DungeonCustomRewardCtrl._RefreshState = HL.Method() <<function(self)
 
     self.view.consumeMultiplesCoupon.gameObject:SetActive(self.m_curSelectRadio > 1)
 end
-
-
 
 DungeonCustomRewardCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then

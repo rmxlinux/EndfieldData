@@ -1,30 +1,10 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaOptional
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GachaOptionalCtrl = HL.Class('GachaOptionalCtrl', uiCtrl.UICtrl)
 
 
 local csGachaSystem = GameInstance.player.gacha
-
 
 
 
@@ -39,20 +19,13 @@ GachaOptionalCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 local CharBag = GameInstance.player.charBag
 
-
 GachaOptionalCtrl.m_info = HL.Field(HL.Table)
-
 
 GachaOptionalCtrl.m_optionalCellListCache = HL.Field(HL.Forward("UIListCache"))
 
-
 GachaOptionalCtrl.m_waitResult = HL.Field(HL.Boolean) << false
 
-
 GachaOptionalCtrl.m_curSelectIndex = HL.Field(HL.Number) << 0
-
-
-
 
 
 
@@ -64,17 +37,12 @@ GachaOptionalCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshAllUI()
 end
 
-
-
 GachaOptionalCtrl.OnShow = HL.Override() << function(self)
     local cell = self.m_optionalCellListCache:Get(self.m_curSelectIndex)
     if cell then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.naviDeco)
+        self:SetNaviTarget(cell.naviDeco)
     end
 end
-
-
-
 
 
 
@@ -119,8 +87,6 @@ GachaOptionalCtrl._InitData = HL.Method(HL.Table) << function(self, arg)
     end
 end
 
-
-
 GachaOptionalCtrl._UpdateData = HL.Method() << function(self)
     if self.m_info.curSelectIndex then
         self.m_curSelectIndex = self.m_info.curSelectIndex
@@ -128,8 +94,6 @@ GachaOptionalCtrl._UpdateData = HL.Method() << function(self)
         self.m_curSelectIndex = 1
     end
 end
-
-
 
 GachaOptionalCtrl._InitSelCharChestData = HL.Method() << function(self)
     local localChestItemId = self.m_info.chestItemId
@@ -150,8 +114,6 @@ GachaOptionalCtrl._InitSelCharChestData = HL.Method() << function(self)
     self.m_info.charIds = charIds
     self.m_info.chestRewardIdMap = chestRewardIdMap
 end
-
-
 
 
 
@@ -183,8 +145,6 @@ GachaOptionalCtrl._InitUI = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 GachaOptionalCtrl._RefreshAllUI = HL.Method() << function(self)
     self.m_optionalCellListCache:Refresh(#self.m_info.charInfos, function(cell, luaIndex)
         self:_RefreshOptionalCell(cell, luaIndex)
@@ -196,10 +156,6 @@ GachaOptionalCtrl._RefreshAllUI = HL.Method() << function(self)
         self.view.invitableStateCtrl:SetState(self.m_info.remainChoicePackProgress <= 0 and "Invitable" or "NotInvitable")
     end
 end
-
-
-
-
 
 GachaOptionalCtrl._RefreshOptionalCell = HL.Method(HL.Any, HL.Number) << function(self, _cell, luaIndex)
     local charInfo = self.m_info.charInfos[luaIndex]
@@ -282,14 +238,9 @@ end
 
 
 
-
-
 GachaOptionalCtrl.OnGachaPoolRoleDataChanged = HL.Method() << function(self)
     self:_ReceiveRewardComplete()
 end
-
-
-
 
 GachaOptionalCtrl.OnSCOpenInventoryChest = HL.Method(HL.Table) << function(self, args)
     local rewardPack = GameInstance.player.inventory:ConsumeLatestRewardPackOfType(CS.Beyond.GEnums.RewardSourceType.ItemCase)
@@ -330,8 +281,6 @@ GachaOptionalCtrl.OnSCOpenInventoryChest = HL.Method(HL.Table) << function(self,
     self:_ReceiveRewardComplete()
 end
 
-
-
 GachaOptionalCtrl._ReceiveRewardComplete = HL.Method() << function(self)
     if self.m_waitResult then
         self:Close()
@@ -340,9 +289,6 @@ GachaOptionalCtrl._ReceiveRewardComplete = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 GachaOptionalCtrl._OnClickOptionalCell = HL.Method(HL.Number) << function(self, luaIndex)
     if self.m_curSelectIndex ~= luaIndex then
@@ -361,8 +307,6 @@ GachaOptionalCtrl._OnClickOptionalCell = HL.Method(HL.Number) << function(self, 
         end
     end
 end
-
-
 
 GachaOptionalCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = lume.deepCopy(self.m_info)

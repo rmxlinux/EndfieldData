@@ -2,17 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ItemDragHelper
 
-
-
-
-
-
-
-
-
-
 ItemDragHelperCtrl = HL.Class('ItemDragHelperCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -22,8 +12,6 @@ ItemDragHelperCtrl = HL.Class('ItemDragHelperCtrl', uiCtrl.UICtrl)
 ItemDragHelperCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.HIDE_ITEM_DRAG_HELPER] = 'HideItemDragHelper',
 }
-
-
 
 
 
@@ -55,14 +43,9 @@ end
 
 
 
-
 ItemDragHelperCtrl.m_isLeft = HL.Field(HL.Boolean) << false
 
-
 ItemDragHelperCtrl.m_actions = HL.Field(HL.Table)
-
-
-
 
 
 ItemDragHelperCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -78,8 +61,6 @@ end
 
 
 
-
-
 ItemDragHelperCtrl.HideItemDragHelper = HL.Method() << function(self)
     if not self:IsShow() then
         return
@@ -87,8 +68,6 @@ ItemDragHelperCtrl.HideItemDragHelper = HL.Method() << function(self)
     self.m_actions = nil
     self:PlayAnimationOutAndHide()
 end
-
-
 
 ItemDragHelperCtrl.Refresh = HL.Method() << function(self)
     self.view.leftNode.gameObject:SetActive(self.m_isLeft)
@@ -107,9 +86,6 @@ ItemDragHelperCtrl.Refresh = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 ItemDragHelperCtrl._OnClickCell = HL.Method(HL.Number) << function(self, index)
     local info = self.m_actions[index]

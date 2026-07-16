@@ -1,41 +1,19 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacUnloaderSelect
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacUnloaderSelectCtrl = HL.Class('FacUnloaderSelectCtrl', uiCtrl.UICtrl)
-
 
 FacUnloaderSelectCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
-
 FacUnloaderSelectCtrl.m_buildingInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo)
-
 
 FacUnloaderSelectCtrl.m_subIndex = HL.Field(HL.Number) << 1
 
-
 FacUnloaderSelectCtrl.m_selector = HL.Field(CS.Beyond.Gameplay.RemoteFactory.FBUtil.Selector)
-
 
 FacUnloaderSelectCtrl.m_selectCallback = HL.Field(HL.Function)
 
-
 FacUnloaderSelectCtrl.m_waitInitNaviTarget = HL.Field(HL.Boolean) << true
-
-
-
 
 
 FacUnloaderSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -60,12 +38,8 @@ FacUnloaderSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitController()
 end
 
-
-
 FacUnloaderSelectCtrl.OnClose = HL.Override() << function(self)
 end
-
-
 
 FacUnloaderSelectCtrl.ShowUnloaderSelect = HL.StaticMethod(HL.Table) << function(args)
     if args == nil then
@@ -80,8 +54,6 @@ FacUnloaderSelectCtrl.ShowUnloaderSelect = HL.StaticMethod(HL.Table) << function
     })
     UIManager:SetTopOrder(PANEL_ID)
 end
-
-
 
 FacUnloaderSelectCtrl._InitUnloaderSelect = HL.Method() << function(self)
     local playerInBlackbox = ScopeUtil.IsPlayerInBlackbox()
@@ -166,7 +138,7 @@ FacUnloaderSelectCtrl._InitUnloaderSelect = HL.Method() << function(self)
                 local confirmTextId = (not isEmpty and isSelected) and "key_hint_fac_unloader_cancel_select" or "key_hint_fac_unloader_confirm_select"
                 InputManagerInst:SetBindingText(cell.item.view.button.hoverConfirmBindingId, Language[confirmTextId])
                 if self.m_waitInitNaviTarget and info.id == self.m_selector.selectItemId then
-                    UIUtils.setAsNaviTarget(cell.item.view.button)
+                    self:SetNaviTarget(cell.item.view.button)
                     self.m_waitInitNaviTarget = false
                 end
             end
@@ -203,8 +175,6 @@ FacUnloaderSelectCtrl._InitUnloaderSelect = HL.Method() << function(self)
     end
 end
 
-
-
 FacUnloaderSelectCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
@@ -230,9 +200,6 @@ FacUnloaderSelectCtrl._InitController = HL.Method() << function(self)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
-
 
 FacUnloaderSelectCtrl._OnSelectItem = HL.Method(HL.String) << function(self, itemId)
     if self.m_selectCallback ~= nil then

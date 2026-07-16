@@ -1,22 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
 FriendshipNode = HL.Class('FriendshipNode', UIWidgetBase)
-
 
 FriendshipNode.m_charInstId = HL.Field(HL.Number) << 0
 
-
 FriendshipNode.m_friendshipValue = HL.Field(HL.Number) << 0
-
-
 
 
 
@@ -43,9 +31,6 @@ FriendshipNode._OnFirstTimeInit = HL.Override() << function(self)
     end
 end
 
-
-
-
 FriendshipNode.InitFriendshipNode = HL.Method(HL.Number) << function(self, charInstId)
     self.m_charInstId = charInstId
     self:_FirstTimeInit()
@@ -66,9 +51,6 @@ FriendshipNode.InitFriendshipNode = HL.Method(HL.Number) << function(self, charI
     self:_RefreshFriendship()
 end
 
-
-
-
 FriendshipNode.InitFriendshipNodeByFriendShipValue = HL.Method(HL.Number) << function(self, friendshipValue)
     self.m_friendshipValue = friendshipValue
     self:_FirstTimeInit()
@@ -85,8 +67,6 @@ FriendshipNode.InitFriendshipNodeByFriendShipValue = HL.Method(HL.Number) << fun
     self:_RefreshFriendshipByValue()
 end
 
-
-
 FriendshipNode._RefreshFriendship = HL.Method() << function(self)
     if self.m_charInstId == 0 then
         return
@@ -99,8 +79,6 @@ FriendshipNode._RefreshFriendship = HL.Method() << function(self)
     self.view.percentText.text = string.format("%.0f%%", CharInfoUtils.getCharRelationShowValue(friendshipValue))
     self.view.fill.fillAmount = rate
 end
-
-
 
 FriendshipNode._RefreshFriendshipByValue = HL.Method() << function(self)
     local maxFriendship = CSPlayerDataUtil.maxFriendship

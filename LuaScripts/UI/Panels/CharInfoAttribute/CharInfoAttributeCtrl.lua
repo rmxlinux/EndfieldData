@@ -1,31 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharInfoAttribute
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharInfoAttributeCtrl = HL.Class('CharInfoAttributeCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -40,29 +15,19 @@ CharInfoAttributeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHAR_NORMAL_SKILL_CHANGE] = '_OnCharNormalSkillChange', 
 }
 
-
 CharInfoAttributeCtrl.m_charInfo = HL.Field(HL.Table)
-
 
 CharInfoAttributeCtrl.m_curMainControlTab = HL.Field(HL.Number) << UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
 
-
 CharInfoAttributeCtrl.m_curSelectSlotIndex = HL.Field(HL.Number) << -1
-
 
 CharInfoAttributeCtrl.m_overviewAttributeCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 CharInfoAttributeCtrl.m_basicInfoStarCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 CharInfoAttributeCtrl.m_talentCellCache = HL.Field(HL.Table)
 
-
 CharInfoAttributeCtrl.m_talentList = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 CharInfoAttributeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -79,9 +44,6 @@ CharInfoAttributeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshAttributePanel(initCharInfo, mainControlTab)
 end
 
-
-
-
 CharInfoAttributeCtrl._OnCharNormalSkillChange = HL.Method(HL.Table) << function(self, arg)
     local instId = self.m_charInfo.instId
     local templateId = self.m_charInfo.templateId
@@ -89,26 +51,17 @@ CharInfoAttributeCtrl._OnCharNormalSkillChange = HL.Method(HL.Table) << function
     self.view.overviewNode.charSkillNode:RefreshSkillSelect()
 end
 
-
-
-
 CharInfoAttributeCtrl._OnUnlockSkill = HL.Method(HL.Table) << function(self, arg)
     local instId = self.m_charInfo.instId
     local templateId = self.m_charInfo.templateId
     self.view.overviewNode.charSkillNode:RefreshSkills(instId, templateId)
 end
 
-
-
-
 CharInfoAttributeCtrl.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInfo)
     self.m_charInfo = charInfo
     self.view.overviewNode.redDot:InitRedDot("CharBreak", self.m_charInfo.instId)
     self:_RefreshAttributePanel(charInfo, self.m_curMainControlTab)
 end
-
-
-
 
 CharInfoAttributeCtrl.OnSelectTabChange = HL.Method(HL.Number) << function(self, tabType)
     if tabType == self.m_curMainControlTab then
@@ -117,9 +70,6 @@ CharInfoAttributeCtrl.OnSelectTabChange = HL.Method(HL.Number) << function(self,
     self.m_curMainControlTab = tabType
     self:_RefreshAttributePanel(self.m_charInfo, tabType)
 end
-
-
-
 
 CharInfoAttributeCtrl.OnSelectWhenEnabled = HL.Method(HL.Number) << function(self, tabType)
     local charInfo = self.m_charInfo
@@ -134,8 +84,6 @@ CharInfoAttributeCtrl.OnSelectWhenEnabled = HL.Method(HL.Number) << function(sel
         return
     end
 end
-
-
 
 CharInfoAttributeCtrl._InitActionEvent = HL.Method() << function(self)
     local overviewNode = self.view.overviewNode
@@ -156,13 +104,6 @@ CharInfoAttributeCtrl._InitActionEvent = HL.Method() << function(self)
 end
 
 
-
-
-
-
-
-
-
 CharInfoAttributeCtrl._RefreshAttributePanel = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Number, HL.Number, HL.Number))
         << function(self, charInfo, mainControlTab, selectedEquipInstId, compareEquipInstId, slotIndex)
     local isOverview = mainControlTab == UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
@@ -173,9 +114,6 @@ CharInfoAttributeCtrl._RefreshAttributePanel = HL.Method(HL.Table, HL.Number, HL
         return
     end
 end
-
-
-
 
 CharInfoAttributeCtrl._RefreshOverviewNode = HL.Method(HL.Table) << function(self, charInfo)
     local instId = charInfo.instId
@@ -243,9 +181,6 @@ CharInfoAttributeCtrl._RefreshOverviewNode = HL.Method(HL.Table) << function(sel
     LayoutRebuilder.ForceRebuildLayoutImmediate(overviewNode.mainInfoNode)
 end
 
-
-
-
 CharInfoAttributeCtrl._RefreshTalent = HL.Method(HL.Any) << function(self, talents)
     local unlockTalents = talents.unlockTalents
     local enhancedTalents = talents.enhancedTalents
@@ -290,8 +225,6 @@ CharInfoAttributeCtrl._RefreshTalent = HL.Method(HL.Any) << function(self, talen
     end)
 end
 
-
-
 CharInfoAttributeCtrl._ClearTalent = HL.Method() << function(self)
     for _, cellCache in pairs(self.m_talentCellCache) do
         cellCache:Refresh(0)
@@ -300,8 +233,6 @@ CharInfoAttributeCtrl._ClearTalent = HL.Method() << function(self)
     self.m_talentList:Refresh(0)
     self.m_talentCellCache = {}
 end
-
-
 
 CharInfoAttributeCtrl._OnClickDetailButton = HL.Method() << function(self)
     local phase = self.m_phase
@@ -314,15 +245,9 @@ CharInfoAttributeCtrl._OnClickDetailButton = HL.Method() << function(self)
     end
 end
 
-
-
-
 CharInfoAttributeCtrl._OnShowSkills = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     self:_OnShowTalent(-1)
 end
-
-
-
 
 CharInfoAttributeCtrl._OnShowTalent = HL.Method(HL.Number) << function(self, talentIndex)
     self.view.overviewNode.charSkillNode:RefreshSkillSelect()

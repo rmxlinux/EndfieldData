@@ -1,33 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 PuzzleChessboardConditionItem = HL.Class('PuzzleChessboardConditionItem', UIWidgetBase)
-
 
 PuzzleChessboardConditionItem.m_group1ConditionCells = HL.Field(HL.Forward("UIListCache"))
 
-
 PuzzleChessboardConditionItem.m_group2ConditionCells = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 PuzzleChessboardConditionItem._OnFirstTimeInit = HL.Override() << function(self)
     self.m_group1ConditionCells = UIUtils.genCellCache(self.view.rectangleNode.colorGroup1.conditionCell)
     self.m_group2ConditionCells = UIUtils.genCellCache(self.view.rectangleNode.colorGroup2.conditionCell)
 end
-
-
-
-
-
-
 
 PuzzleChessboardConditionItem.InitPuzzleChessboardConditionItem = HL.Method(HL.Table, HL.Number, HL.Number, HL.Number)
         << function(self, eColor2ConditionsTbl, cellSize, spacing, gridNum)
@@ -36,12 +19,6 @@ PuzzleChessboardConditionItem.InitPuzzleChessboardConditionItem = HL.Method(HL.T
     self:UpdateContent(eColor2ConditionsTbl, cellSize, spacing, gridNum)
     self:Toggle(true)
 end
-
-
-
-
-
-
 
 PuzzleChessboardConditionItem.UpdateContent = HL.Method(HL.Table, HL.Number, HL.Number, HL.Number)
         << function(self, eColor2ConditionsTbl, cellSize, spacing, gridNum)
@@ -118,9 +95,6 @@ PuzzleChessboardConditionItem.UpdateContent = HL.Method(HL.Table, HL.Number, HL.
     self.view.emptyNode.gameObject:SetActiveIfNecessary(empty)
     self.view.contentNode.gameObject:SetActiveIfNecessary(not empty)
 end
-
-
-
 
 PuzzleChessboardConditionItem.Toggle = HL.Method(HL.Boolean) << function(self, rectangle)
     self.view.rectangleNode.gameObject:SetActiveIfNecessary(rectangle)

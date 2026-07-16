@@ -1,18 +1,6 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.NaviTargetActionMenu
-
-
-
-
-
-
-
-
-
-
-
-
 NaviTargetActionMenuCtrl = HL.Class('NaviTargetActionMenuCtrl', uiCtrl.UICtrl)
 
 local ContentState = {
@@ -24,19 +12,13 @@ local ContentState = {
 
 
 
-
 NaviTargetActionMenuCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.HIDE_NAVI_TARGET_ACTION_MENU] = 'HideNaviTargetActionMenu',
 }
 
-
 NaviTargetActionMenuCtrl.m_cells = HL.Field(HL.Forward('UIListCache'))
 
-
 NaviTargetActionMenuCtrl.m_args = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -49,8 +31,6 @@ NaviTargetActionMenuCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
     self.m_cells = UIUtils.genCellCache(self.view.btnCell)
 end
-
-
 
 
 
@@ -83,9 +63,6 @@ NaviTargetActionMenuCtrl.ShowNaviTargetActionMenu = HL.StaticMethod(HL.Table) <<
     end
     self:_RefreshContent(args)
 end
-
-
-
 
 NaviTargetActionMenuCtrl._RefreshContent = HL.Method(HL.Table) << function(self, args)
     self.m_args = args
@@ -121,6 +98,13 @@ NaviTargetActionMenuCtrl._RefreshContent = HL.Method(HL.Table) << function(self,
                 cell.leftText.gameObject:SetActive(true)
                 cell.leftText.text = info.text
             end
+
+            if info.redDot then
+                cell.redDot:InitRedDot(info.redDot)
+            else
+                cell.redDot.gameObject:SetActiveIfNecessary(false)
+            end
+
             cell.actionNode.onClick:AddListener(function()
                 self:_OnClickCell(index)
             end)
@@ -131,7 +115,7 @@ NaviTargetActionMenuCtrl._RefreshContent = HL.Method(HL.Table) << function(self,
             cell.titleText.text = info.text
         end
         if index == 1 then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.actionNode)
+            self:SetNaviTarget(cell.actionNode)
         end
     end)
 
@@ -151,11 +135,12 @@ NaviTargetActionMenuCtrl._RefreshContent = HL.Method(HL.Table) << function(self,
     self.view.closeMask.enabled = args.noMask ~= true
 end
 
-
-
-
 NaviTargetActionMenuCtrl._OnClickCell = HL.Method(HL.Number) << function(self, index)
     local args = self.m_args
+    if args.checkActionValid ~= nil and not args.checkActionValid() then
+         self:HideNaviTargetActionMenu()
+         return
+    end
     if args == nil or args.actions == nil then
         return
     end
@@ -163,12 +148,8 @@ NaviTargetActionMenuCtrl._OnClickCell = HL.Method(HL.Number) << function(self, i
     if action == nil then
         return
     end
-    self:HideNaviTargetActionMenu(action.action)
+    self:HideNaviTargetActionMenu(action.action, action.beforeCloseAction)
 end
-
-
-
-
 
 NaviTargetActionMenuCtrl._OnHoverCell = HL.Method(HL.Number, HL.Boolean) << function(self, index, isHover)
     local args = self.m_args
@@ -186,11 +167,15 @@ NaviTargetActionMenuCtrl._OnHoverCell = HL.Method(HL.Number, HL.Boolean) << func
     onHoverAction(isHover)
 end
 
-
-
-
-NaviTargetActionMenuCtrl.HideNaviTargetActionMenu = HL.Method(HL.Opt(HL.Function)) << function(self, callback)
+NaviTargetActionMenuCtrl.HideNaviTargetActionMenu = HL.Method(HL.Opt(HL.Function, HL.Function)) <<
+    function(self, callback, beforeCloseAction)
     if self:IsPlayingAnimationOut() then
+        return
+    end
+
+    
+    
+    if self.m_args == nil then
         return
     end
 
@@ -206,6 +191,9 @@ NaviTargetActionMenuCtrl.HideNaviTargetActionMenu = HL.Method(HL.Opt(HL.Function
         onClose()
     end
 
+    if beforeCloseAction then
+        beforeCloseAction()
+    end
     if callback then
         self:PlayAnimationOutWithCallback(function()
             self:Hide()
@@ -216,13 +204,9 @@ NaviTargetActionMenuCtrl.HideNaviTargetActionMenu = HL.Method(HL.Opt(HL.Function
     end
 end
 
-
-
 NaviTargetActionMenuCtrl.OnHide = HL.Override() << function(self)
     self.m_args = nil
 end
-
-
 
 NaviTargetActionMenuCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     if not self.m_args then

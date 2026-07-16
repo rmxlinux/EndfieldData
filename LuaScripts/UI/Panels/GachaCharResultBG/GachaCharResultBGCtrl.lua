@@ -9,7 +9,6 @@ GachaCharResultBGCtrl = HL.Class('GachaCharResultBGCtrl', uiCtrl.UICtrl)
 
 
 
-
 GachaCharResultBGCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }

@@ -1,35 +1,16 @@
 local RegisterEventToCS = CS.Beyond.EventManager.AddLuaListenGlobal;
 
-
-
-
-
-
-
-
-
-
-
-
-
 MessageManager = HL.Class('MessageManager')
-
 
 MessageManager.m_registerMap = HL.Field(HL.Table) 
 
-
 MessageManager.m_registerMsgs = HL.Field(HL.Table) 
-
 
 MessageManager.m_registerGroups = HL.Field(HL.Table) 
 
-
 MessageManager.m_nextRegisterKey = HL.Field(HL.Number) << 1
 
-
 MessageManager.m_sendingMsgPendingActions = HL.Field(HL.Table)
-
-
 
 MessageManager.MessageManager = HL.Constructor() << function(self)
     self.m_registerMap = {}
@@ -38,11 +19,6 @@ MessageManager.MessageManager = HL.Constructor() << function(self)
     self.m_sendingMsgPendingActions = {}
     self.m_nextRegisterKey = 1
 end
-
-
-
-
-
 
 MessageManager.Register = HL.Method(HL.Number, HL.Function, HL.Opt(HL.Any)).Return(HL.Opt(HL.Number)) << function(self, msg, action, groupKey)
     if not msg or type(msg) ~= "number" then
@@ -83,17 +59,11 @@ MessageManager.Register = HL.Method(HL.Number, HL.Function, HL.Opt(HL.Any)).Retu
     return registerKey
 end
 
-
-
-
 MessageManager.Unregister = HL.Method(HL.Number) << function(self, registerKey)
     if self.m_registerMap[registerKey] then
         self.m_registerMap[registerKey] = nil
     end
 end
-
-
-
 
 MessageManager.UnregisterAll = HL.Method(HL.Any) << function(self, groupKey)
     local keys = self.m_registerGroups[groupKey]
@@ -106,10 +76,6 @@ MessageManager.UnregisterAll = HL.Method(HL.Any) << function(self, groupKey)
     end
     self.m_registerGroups[groupKey] = nil
 end
-
-
-
-
 
 MessageManager.Send = HL.Method(HL.Number, HL.Opt(HL.Any)) << function(self, msg, arg)
     if not msg or type(msg) ~= "number" then
@@ -161,9 +127,6 @@ MessageManager.Send = HL.Method(HL.Number, HL.Opt(HL.Any)) << function(self, msg
         RedDotManager:OnMessage(msg)
     end
 end
-
-
-
 
 MessageManager._TryDealPendingActions = HL.Method(HL.Table) << function(self, actions)
     if not next(actions) then

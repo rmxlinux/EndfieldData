@@ -1,56 +1,26 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 NumberSelector = HL.Class('NumberSelector', UIWidgetBase)
-
 
 NumberSelector.curNumber = HL.Field(HL.Number) << 1
 
-
 NumberSelector.m_min = HL.Field(HL.Number) << 1
-
 
 NumberSelector.m_max = HL.Field(HL.Number) << 1
 
-
 NumberSelector.m_remainingCount = HL.Field(HL.Number) << 1
-
 
 NumberSelector.m_showRemaining = HL.Field(HL.Boolean) << false
 
-
 NumberSelector.m_onNumberChanged = HL.Field(HL.Function)
-
 
 NumberSelector.m_onBtnClick = HL.Field(HL.Function)
 
-
 NumberSelector.m_addBtnPressCoroutine = HL.Field(HL.Thread)
-
 
 NumberSelector.m_reduceBtnPressCoroutine = HL.Field(HL.Thread)
 
-
 NumberSelector.m_forceSlider = HL.Field(HL.Boolean) << false 
-
-
 
 
 NumberSelector._OnFirstTimeInit = HL.Override() << function(self)
@@ -139,24 +109,11 @@ NumberSelector._OnFirstTimeInit = HL.Override() << function(self)
     end
 end
 
-
-
-
 NumberSelector._GetPressBtnRefreshParam = HL.Method(HL.Number).Return(HL.Number, HL.Number, HL.Any) << function(self, curRefreshCount)
     local curGear = math.min(math.ceil(curRefreshCount / UIConst.NUMBER_SELECTOR_COUNT_CHANGE_GEAR_REFRESH_COUNT) + 1, #UIConst.NUMBER_SELECTOR_COUNT_REFRESH_GEAR_PARAM)
     local gearParam = UIConst.NUMBER_SELECTOR_COUNT_REFRESH_GEAR_PARAM[curGear]
     return gearParam.refreshInterval, gearParam.refreshAmount, gearParam.isFastMode
 end
-
-
-
-
-
-
-
-
-
-
 
 NumberSelector.InitNumberSelector = HL.Method(HL.Number, HL.Number, HL.Number, HL.Opt(HL.Function, HL.Boolean, HL.Number, HL.Function, HL.Boolean)) <<
 function(self, curNumber, min, max, onNumberChanged, showRemaining, remainingCount, onBtnClick, forceSlider)
@@ -174,11 +131,6 @@ function(self, curNumber, min, max, onNumberChanged, showRemaining, remainingCou
 
     self:_Refresh(curNumber, false, true)
 end
-
-
-
-
-
 
 NumberSelector._Refresh = HL.Method(HL.Opt(HL.Number, HL.Boolean, HL.Boolean)) << function(self, curNumber, isChangeByBtn, isInit)
     curNumber = lume.clamp(curNumber or self.curNumber or 1, self.m_min, self.m_max)
@@ -224,11 +176,6 @@ NumberSelector._Refresh = HL.Method(HL.Opt(HL.Number, HL.Boolean, HL.Boolean)) <
     end
 end
 
-
-
-
-
-
 NumberSelector.RefreshNumber = HL.Method(HL.Number, HL.Opt(HL.Number, HL.Number)) << function(self, curNumber, min, max)
     self.m_min = min or self.m_min or 1
     self.m_max = max or self.m_max or math.maxinteger
@@ -237,15 +184,10 @@ NumberSelector.RefreshNumber = HL.Method(HL.Number, HL.Opt(HL.Number, HL.Number)
     self:_Refresh(curNumber)
 end
 
-
-
-
 NumberSelector.UpdateKeyHintVisible = HL.Method(HL.Boolean) << function(self, show)
     self.view.keyHintLeft.gameObject:SetActive(show)
     self.view.keyHintRight.gameObject:SetActive(show)
 end
-
-
 
 NumberSelector._UpdateMinMax = HL.Method() << function(self)
     self.view.minText.text = self.m_min

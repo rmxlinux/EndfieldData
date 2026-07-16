@@ -1,8 +1,6 @@
 local ActivityCheckInBase = require_ex('UI/Widgets/ActivityCheckInBase')
 
-
 ActivityRewardRegistrationInfo = HL.Class('ActivityRewardRegistrationInfo', ActivityCheckInBase)
-
 
 ActivityCommonSigninCtrl.m_activityId = HL.Field(HL.String) << ''
 

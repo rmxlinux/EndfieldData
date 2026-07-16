@@ -3,28 +3,9 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacMarkerManagePopup
 local CREDIT_TEXT_FORMAT = "%s<color=#8D9194>/%s</color>"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacMarkerManagePopupCtrl = HL.Class('FacMarkerManagePopupCtrl', uiCtrl.UICtrl)
 
 local SIGN_BUILDINGID = "marker_1"
-
 
 
 
@@ -34,39 +15,26 @@ FacMarkerManagePopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacMarkerManagePopupCtrl.m_playerAllSignCount = HL.Field(HL.Number) << 0
-
 
 
 FacMarkerManagePopupCtrl.m_playerAllSignInfo = HL.Field(HL.Table)
 
-
 FacMarkerManagePopupCtrl.m_getCell = HL.Field(HL.Function)
-
 
 FacMarkerManagePopupCtrl.m_nodeId = HL.Field(HL.Any)
 
-
 FacMarkerManagePopupCtrl.m_roleId = HL.Field(HL.Any)
-
 
 FacMarkerManagePopupCtrl.m_onDelBuilding = HL.Field(HL.Any)
 
-
 FacMarkerManagePopupCtrl.m_sortOptions = HL.Field(HL.Table)
-
 
 FacMarkerManagePopupCtrl.m_sortData = HL.Field(HL.Table)
 
-
 FacMarkerManagePopupCtrl.m_sortIncremental = HL.Field(HL.Boolean) << false
 
-
 FacMarkerManagePopupCtrl.m_waitingNaviFirst = HL.Field(HL.Boolean) << false
-
-
-
 
 
 FacMarkerManagePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -113,8 +81,6 @@ end
 
 
 
-
-
 FacMarkerManagePopupCtrl._InitSort = HL.Method() << function(self)
     self.m_sortOptions = {
         {
@@ -142,8 +108,6 @@ FacMarkerManagePopupCtrl._InitSort = HL.Method() << function(self)
     self.m_sortIncremental = self.view.sortNodeUp.isIncremental
 end
 
-
-
 FacMarkerManagePopupCtrl._UpdateMarkerList = HL.Method() << function(self)
     self.m_playerAllSignCount, self.m_playerAllSignInfo = FactoryUtils.getPlayerAllMarkerBuildingNodeInfo()
     for _, signInfo in ipairs(self.m_playerAllSignInfo) do
@@ -158,10 +122,6 @@ FacMarkerManagePopupCtrl._UpdateMarkerList = HL.Method() << function(self)
     self.view.markerScrollList:UpdateCount(#self.m_playerAllSignInfo)
     self.view.markerNumTxt.text = string.format(CREDIT_TEXT_FORMAT, self.m_playerAllSignCount, Tables.factoryConst.signNodeCountLimit)
 end
-
-
-
-
 
 FacMarkerManagePopupCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local signData = self.m_playerAllSignInfo[index]
@@ -186,7 +146,7 @@ FacMarkerManagePopupCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << functio
     cell.maintainNumTxt.text = FactoryUtils.getBuildingComponentPayload_Social(signData.nodeId, chapterIdNum).like
     if self.m_waitingNaviFirst and index == 1 then
         self.m_waitingNaviFirst = false
-        UIUtils.setAsNaviTarget(cell.naviDecorator)
+        self:SetNaviTarget(cell.naviDecorator)
     end
 
     cell.positionBtn.gameObject:SetActiveIfNecessary(self.m_nodeId ~= nil or self.m_roleId ~= nil)
@@ -194,6 +154,10 @@ FacMarkerManagePopupCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << functio
     if self.m_nodeId ~= nil or self.m_roleId ~= nil then
         cell.positionBtn.onClick:RemoveAllListeners()
         cell.positionBtn.onClick:AddListener(function()
+            if GameInstance.player.spaceship.isViewingFriend then
+                Notify(MessageConst.SHOW_TOAST, Language.LUA_FRIEND_SOCIAL_BUILDING_JUMP_SPACESHIP_TIP)
+                return
+            end
             local id = ScopeUtil.ChapterIdStr2Int(signData.chapter)
             local success, mapInstId = GameInstance.player.mapManager:GetFacMarkInstIdByNodeId(id, signData.nodeId)
             if success then
@@ -262,11 +226,7 @@ end
 
 local CHAPTER_ERROR_CODE = 1081
 
-
 FacMarkerManagePopupCtrl.m_curChapterId = HL.Field(HL.String) << ""
-
-
-
 
 FacMarkerManagePopupCtrl._CheckChapterDiffAndToast = HL.Method(HL.String).Return(HL.Boolean) << function(self, chapter)
     if string.isEmpty(self.m_curChapterId) then

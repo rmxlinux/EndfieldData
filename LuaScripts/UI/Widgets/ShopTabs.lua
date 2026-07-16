@@ -1,25 +1,12 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
-
-
-
-
-
 ShopTabs = HL.Class('ShopTabs', UIWidgetBase)
 
-
 ShopTabs.m_tabCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 ShopTabs._OnFirstTimeInit = HL.Override() << function(self)
     self.m_tabCellCache = UIUtils.genCellCache(self.view.tabCell)
 end
-
-
-
-
-
 
 ShopTabs.InitShopTabs = HL.Method(HL.String, HL.String, HL.Function) << function(self, shopGroupId, curShopId, callBack)
     self:_FirstTimeInit()
@@ -53,11 +40,6 @@ ShopTabs.InitShopTabs = HL.Method(HL.String, HL.String, HL.Function) << function
         
     end)
 end
-
-
-
-
-
 
 ShopTabs.InitShopTabsForSwitchShopGroup = HL.Method(HL.Any, HL.String, HL.Function) << function(self, shopGroupList, curGroupId, callBack)
     self:_FirstTimeInit()

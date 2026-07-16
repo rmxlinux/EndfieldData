@@ -1,15 +1,8 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 CharLevelNode = HL.Class('CharLevelNode', UIWidgetBase)
 
-
 CharLevelNode.m_expCells = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 CharLevelNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -17,9 +10,6 @@ CharLevelNode._OnFirstTimeInit = HL.Override() << function(self)
 
     
 end
-
-
-
 
 CharLevelNode.InitCharLevelNode = HL.Method(HL.Number) << function(self, instId)
     self:_FirstTimeInit()

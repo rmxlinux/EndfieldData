@@ -2,61 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipCollectionBooth
 local PHASE_ID = PhaseId.SpaceshipCollectionBooth
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipCollectionBoothCtrl = HL.Class('SpaceshipCollectionBoothCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -68,26 +14,18 @@ SpaceshipCollectionBoothCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 SpaceshipCollectionBoothCtrl.m_showingItemList = HL.Field(HL.Boolean) << false
-
 
 SpaceshipCollectionBoothCtrl.m_slotCells = HL.Field(HL.Forward('UIListCache'))
 
-
 SpaceshipCollectionBoothCtrl.m_getItemCell = HL.Field(HL.Function)
 
-
 SpaceshipCollectionBoothCtrl.m_level = HL.Field(CS.Beyond.Gameplay.Core.SpaceShipGameLevel)
-
 
 
 SpaceshipCollectionBoothCtrl.OpenSpaceshipShowcasePanel = HL.StaticMethod() << function()
     PhaseManager:OpenPhase(PHASE_ID)
 end
-
-
-
 
 
 SpaceshipCollectionBoothCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -187,13 +125,9 @@ SpaceshipCollectionBoothCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
     Utils.enableCameraDOF(data)
 end
 
-
-
 SpaceshipCollectionBoothCtrl.OnShow = HL.Override() << function(self)
     self:_SetCurItemAsNaviTarget()
 end
-
-
 
 SpaceshipCollectionBoothCtrl.OnClose = HL.Override() << function(self)
     Utils.disableCameraDOF()
@@ -202,25 +136,21 @@ SpaceshipCollectionBoothCtrl.OnClose = HL.Override() << function(self)
     level:ShowCharacters()
 end
 
-
-
 SpaceshipCollectionBoothCtrl._SetCurItemAsNaviTarget = HL.Method() << function(self)
     if self.m_showingItemList then
         if self.m_curItemIndex == 0 then
-            InputManagerInst.controllerNaviManager:SetTarget(self.view.emptyCell.button)
+            self:SetNaviTarget(self.view.emptyCell.button)
         else
             self.view.itemScrollList:ScrollToIndex(self.m_curItemIndex, true)
-            InputManagerInst.controllerNaviManager:SetTarget(self.m_getItemCell(self.m_curItemIndex).button)
+            self:SetNaviTarget(self.m_getItemCell(self.m_curItemIndex).button)
         end
     else
         local cell = self.m_slotCells:Get(self.m_curSlotIndex)
         if cell and cell.toggle then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.toggle)
+            self:SetNaviTarget(cell.toggle)
         end
     end
 end
-
-
 
 SpaceshipCollectionBoothCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = {
@@ -242,9 +172,6 @@ SpaceshipCollectionBoothCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(H
     return arg
 end
 
-
-
-
 SpaceshipCollectionBoothCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
     local recoverSlotIndex = self:_GetRecoverSlotIndex(recoverState)
     self:_OnClickSlot(recoverSlotIndex, true)
@@ -261,9 +188,6 @@ SpaceshipCollectionBoothCtrl._TryRecoverState = HL.Method(HL.Table) << function(
     self:_SetCurItemAsNaviTarget()
 end
 
-
-
-
 SpaceshipCollectionBoothCtrl._GetRecoverSlotIndex = HL.Method(HL.Table).Return(HL.Number) << function(self, recoverState)
     local recoverSlotId = recoverState.slotId
     if string.isEmpty(recoverSlotId) then
@@ -276,9 +200,6 @@ SpaceshipCollectionBoothCtrl._GetRecoverSlotIndex = HL.Method(HL.Table).Return(H
     end
     return self.m_curSlotIndex
 end
-
-
-
 
 SpaceshipCollectionBoothCtrl._GetRecoverItemIndex = HL.Method(HL.Table).Return(HL.Number) << function(self, recoverState)
     if recoverState.isEmptySelected then
@@ -295,17 +216,10 @@ SpaceshipCollectionBoothCtrl._GetRecoverItemIndex = HL.Method(HL.Table).Return(H
     return self:_GetCurItemIndex()
 end
 
-
-
-
 SpaceshipCollectionBoothCtrl.SpaceshipOnShowcaseModify = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_SS_SHOWCASE_SAVE_SUCC)
     self:_RefreshItemList()
 end
-
-
-
-
 
 SpaceshipCollectionBoothCtrl._TryExecute = HL.Method(HL.Function, HL.String) << function(self, action, hint)
     if not self.m_showingItemList or self:_IsCurChooseIsCurrentPlaced() then
@@ -325,13 +239,9 @@ end
 
 
 
-
 SpaceshipCollectionBoothCtrl.m_slotInfos = HL.Field(HL.Table)
 
-
 SpaceshipCollectionBoothCtrl.m_curSlotIndex = HL.Field(HL.Number) << 1
-
-
 
 SpaceshipCollectionBoothCtrl._RefreshSlots = HL.Method() << function(self)
     local slotTable = Tables.spaceshipShowcaseTable
@@ -356,11 +266,6 @@ SpaceshipCollectionBoothCtrl._RefreshSlots = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
-
 SpaceshipCollectionBoothCtrl._UpdateSlotState = HL.Method(HL.Number, HL.Opt(HL.Table, HL.Table)) << function(self, index, cell, info)
     if not cell then
         cell = self.m_slotCells:Get(index)
@@ -375,10 +280,6 @@ SpaceshipCollectionBoothCtrl._UpdateSlotState = HL.Method(HL.Number, HL.Opt(HL.T
         cell.stateController:SetState(isEmpty and "Empty" or "Normal")
     end
 end
-
-
-
-
 
 SpaceshipCollectionBoothCtrl._OnClickSlot = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, index, isInit)
     if index == self.m_curSlotIndex and not isInit then
@@ -395,8 +296,6 @@ SpaceshipCollectionBoothCtrl._OnClickSlot = HL.Method(HL.Number, HL.Opt(HL.Boole
     self:_UpdateSlotEffect()
     AudioAdapter.PostEvent("au_int_system_spaceship_showcase_light")
 end
-
-
 
 SpaceshipCollectionBoothCtrl._UpdateAreaInfo = HL.Method() << function(self)
     local node = self.view.areaInfoNode
@@ -419,13 +318,9 @@ end
 
 
 
-
 SpaceshipCollectionBoothCtrl.m_itemInfos = HL.Field(HL.Table)
 
-
 SpaceshipCollectionBoothCtrl.m_curItemIndex = HL.Field(HL.Number) << 0 
-
-
 
 SpaceshipCollectionBoothCtrl._InitItemInfos = HL.Method() << function(self)
     self.m_itemInfos = {}
@@ -445,8 +340,6 @@ SpaceshipCollectionBoothCtrl._InitItemInfos = HL.Method() << function(self)
     end
 end
 
-
-
 SpaceshipCollectionBoothCtrl._UpdateItemInfoOrder = HL.Method() << function(self)
     local slotInfo = self.m_slotInfos[self.m_curSlotIndex]
     for _, v in ipairs(self.m_itemInfos) do
@@ -456,10 +349,6 @@ SpaceshipCollectionBoothCtrl._UpdateItemInfoOrder = HL.Method() << function(self
     end
     table.sort(self.m_itemInfos, Utils.genSortFunction({ "isCurrentSortId", "usedSortId", "sortId1", "sortId2", "rarity" }, true))
 end
-
-
-
-
 
 SpaceshipCollectionBoothCtrl._ToggleItemList = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, isInit)
     self.m_showingItemList = active
@@ -496,13 +385,12 @@ SpaceshipCollectionBoothCtrl._ToggleItemList = HL.Method(HL.Boolean, HL.Opt(HL.B
             else
                 self:_UpdateContent() 
             end
+            self:_SetCurItemAsNaviTarget()
         end
     end
 
     self.view.arrowNode:SetState(DeviceInfo.usingTouch and (active and "MobileExhibitNode" or "MobileBoothNode") or "Normal")
 end
-
-
 
 SpaceshipCollectionBoothCtrl._RefreshItemList = HL.Method() << function(self)
     self:_UpdateItemInfoOrder()
@@ -513,8 +401,6 @@ SpaceshipCollectionBoothCtrl._RefreshItemList = HL.Method() << function(self)
     self:_SetCurItemAsNaviTarget()
     self:_OnClickItem(self.m_curItemIndex)
 end
-
-
 
 SpaceshipCollectionBoothCtrl._GetCurItemIndex = HL.Method().Return(HL.Number) << function(self)
     local curItemId = GameInstance.player.spaceship:GetShowcaseItemAt(self:_GetCurSlotId())
@@ -527,10 +413,6 @@ SpaceshipCollectionBoothCtrl._GetCurItemIndex = HL.Method().Return(HL.Number) <<
     end
     return 0
 end
-
-
-
-
 
 SpaceshipCollectionBoothCtrl._OnUpdateItemCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     
@@ -558,10 +440,6 @@ SpaceshipCollectionBoothCtrl._OnUpdateItemCell = HL.Method(HL.Table, HL.Number) 
     end
     self:_UpdateItemChooseState(index, itemCell)
 end
-
-
-
-
 
 SpaceshipCollectionBoothCtrl._UpdateTagNode = HL.Method(HL.Table, HL.Opt(HL.String)) << function(self, tagNode, itemId)
     if not tagNode.m_tagCells then
@@ -593,9 +471,6 @@ SpaceshipCollectionBoothCtrl._UpdateTagNode = HL.Method(HL.Table, HL.Opt(HL.Stri
     end)
 end
 
-
-
-
 SpaceshipCollectionBoothCtrl._OnClickItem = HL.Method(HL.Number) << function(self, index)
     local oldIndex = self.m_curItemIndex
     self.m_curItemIndex = index
@@ -605,10 +480,6 @@ SpaceshipCollectionBoothCtrl._OnClickItem = HL.Method(HL.Number) << function(sel
     self.m_level.showcaseItemManager:PreviewItemAt(self:_GetCurChooseItemId(), self:_GetCurSlotId())
     self:_UpdateCameraState()
 end
-
-
-
-
 
 SpaceshipCollectionBoothCtrl._UpdateItemChooseState = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(self, index, cell)
     if index == 0 then
@@ -620,8 +491,6 @@ SpaceshipCollectionBoothCtrl._UpdateItemChooseState = HL.Method(HL.Number, HL.Op
         end
     end
 end
-
-
 
 
 
@@ -655,8 +524,6 @@ SpaceshipCollectionBoothCtrl._UpdateContent = HL.Method() << function(self)
     node.confirmBtn.gameObject:SetActive(self.m_showingItemList and curPlacedItemId ~= itemId)
 end
 
-
-
 SpaceshipCollectionBoothCtrl._OnClickConfirm = HL.Method() << function(self)
     local curSlotId = self:_GetCurSlotId()
     local itemId
@@ -688,9 +555,6 @@ SpaceshipCollectionBoothCtrl._OnClickConfirm = HL.Method() << function(self)
     GameInstance.player.spaceship:ModifySpaceshipShowcase(curSlotId, itemId)
 end
 
-
-
-
 SpaceshipCollectionBoothCtrl._EventLogOnConfirm = HL.Method(HL.Opt(HL.String)) << function(self, itemId)
     
     local curSlotId = self:_GetCurSlotId()
@@ -706,13 +570,9 @@ end
 
 
 
-
-
 SpaceshipCollectionBoothCtrl._GetCurSlotId = HL.Method().Return(HL.String) << function(self)
     return self.m_slotInfos[self.m_curSlotIndex].id
 end
-
-
 
 SpaceshipCollectionBoothCtrl._GetCurChooseItemId = HL.Method().Return(HL.Opt(HL.String)) << function(self)
     if self.m_curItemIndex > 0 then
@@ -720,8 +580,6 @@ SpaceshipCollectionBoothCtrl._GetCurChooseItemId = HL.Method().Return(HL.Opt(HL.
     end
     return nil
 end
-
-
 
 SpaceshipCollectionBoothCtrl._IsCurChooseIsCurrentPlaced = HL.Method().Return(HL.Boolean) << function(self)
     local chooseItemId = self:_GetCurChooseItemId()
@@ -733,25 +591,17 @@ end
 
 
 
-
 SpaceshipCollectionBoothCtrl.m_camCtrl = HL.Field(CS.Beyond.Gameplay.View.SimpleCameraController)
-
 
 SpaceshipCollectionBoothCtrl.m_camTransposer = HL.Field(CS.Cinemachine.CinemachineTransposer)
 
-
 SpaceshipCollectionBoothCtrl.m_camComposer = HL.Field(CS.Cinemachine.CinemachineComposer)
-
 
 SpaceshipCollectionBoothCtrl.m_camTarget = HL.Field(CS.UnityEngine.Transform)
 
-
 SpaceshipCollectionBoothCtrl.m_lvData = HL.Field(CS.Beyond.Gameplay.SpaceShipSpecificData)
 
-
 SpaceshipCollectionBoothCtrl.m_camTween = HL.Field(HL.Any)
-
-
 
 SpaceshipCollectionBoothCtrl._InitCamera = HL.Method() << function(self)
     self.m_camTarget = self:_CreateEmptyWorldGameObject("SpaceshipShowcaseTarget").transform
@@ -765,8 +615,6 @@ SpaceshipCollectionBoothCtrl._InitCamera = HL.Method() << function(self)
     self.m_camComposer = CSUtils.GetCinemachineComposer(vCam)
 end
 
-
-
 SpaceshipCollectionBoothCtrl._ClearCamera = HL.Method() << function(self)
     self:_ClearCamTween()
     GameObject.Destroy(self.m_camTarget.gameObject)
@@ -776,9 +624,6 @@ SpaceshipCollectionBoothCtrl._ClearCamera = HL.Method() << function(self)
     self.m_camTransposer = nil
     self.m_camComposer = nil
 end
-
-
-
 
 SpaceshipCollectionBoothCtrl._UpdateCameraState = HL.Method(HL.Opt(HL.Boolean)) << function(self, noTween)
     local slotInfo = self.m_lvData.showcaseSlotLocalPosInfoList[CSIndex(self.m_curSlotIndex)]
@@ -831,8 +676,6 @@ SpaceshipCollectionBoothCtrl._UpdateCameraState = HL.Method(HL.Opt(HL.Boolean)) 
     end
 end
 
-
-
 SpaceshipCollectionBoothCtrl._ClearCamTween = HL.Method() << function(self)
     if self.m_camTween then
         self.m_camTween:Kill()
@@ -843,13 +686,9 @@ end
 
 
 
-
 SpaceshipCollectionBoothCtrl.m_lowerSlotEffect = HL.Field(GameObject)
 
-
 SpaceshipCollectionBoothCtrl.m_upperSlotEffect = HL.Field(GameObject)
-
-
 
 SpaceshipCollectionBoothCtrl._UpdateSlotEffect = HL.Method() << function(self)
     local useLower, pos, rot = unpack(SpaceshipConst.SHOWCASE_SLOT_EFFECT_INFO[self.m_curSlotIndex])

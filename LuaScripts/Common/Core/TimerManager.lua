@@ -1,57 +1,26 @@
 local minHeapClass = require_ex("Common/Utils/DataStructure/MinHeap")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 TimerManager = HL.Class('TimerManager')
-
 
 TimerManager.m_heap = HL.Field(HL.Forward("MinHeap"))
 
-
 TimerManager.m_unscaledHeap = HL.Field(HL.Forward("MinHeap"))
-
 
 TimerManager.m_frameHeap = HL.Field(HL.Forward("MinHeap"))
 
-
 TimerManager.m_removedTimerKeys = HL.Field(HL.Table) 
-
 
 TimerManager.m_groupTimerKeys = HL.Field(HL.Table) 
 
-
 TimerManager.m_nextTimerKey = HL.Field(HL.Number) << 1
-
 
 TimerManager.m_frameCount = HL.Field(HL.Number) << 0
 
-
 TimerManager.m_requestCache = HL.Field(HL.Forward("Stack"))
-
 
 TimerManager.m_timerStackTraces = HL.Field(HL.Table) 
 
-
+TimerManager.m_reachedTimers = HL.Field(HL.Table)
 
 
 TimerManager.TimerManager = HL.Constructor() << function(self)
@@ -62,15 +31,13 @@ TimerManager.TimerManager = HL.Constructor() << function(self)
     self.m_removedTimerKeys = {}
     self.m_groupTimerKeys = setmetatable({}, { __mode = "k" })
     self.m_timerStackTraces = {}
+    self.m_reachedTimers = {}
     self.m_nextTimerKey = 1
     self.m_frameCount = 0
     LuaUpdate:Add("Tick", function(deltaTime)
         self:Tick(deltaTime)
     end)
 end
-
-
-
 
 TimerManager.Tick = HL.Method(HL.Number) << function(self, deltaTime)
     self.m_frameCount = self.m_frameCount + 1
@@ -79,12 +46,9 @@ TimerManager.Tick = HL.Method(HL.Number) << function(self, deltaTime)
     self:_UpdateTimers(self.m_frameHeap, self.m_frameCount)
 end
 
-
-
-
-
 TimerManager._UpdateTimers = HL.Method(HL.Forward("MinHeap"), HL.Number) << function(self, heap, time)
-    local reachedTimers = {} 
+    local reachedTimers = self.m_reachedTimers
+    local reachedCount = 0
     while heap:Size() > 0 do
         local request, triggerTime = heap:Min()
         if self.m_removedTimerKeys[request.key] then
@@ -97,19 +61,18 @@ TimerManager._UpdateTimers = HL.Method(HL.Forward("MinHeap"), HL.Number) << func
         else
             if time >= triggerTime then
                 heap:Pop()
-                table.insert(reachedTimers, request)
+                reachedCount = reachedCount + 1
+                reachedTimers[reachedCount] = request
             else
                 break
             end
         end
     end
-    for _, request in pairs(reachedTimers) do
-        self:_ExecuteTimer(request)
+    for i = 1, reachedCount do
+        self:_ExecuteTimer(reachedTimers[i])
+        reachedTimers[i] = nil
     end
 end
-
-
-
 
 TimerManager._ExecuteTimer = HL.Method(HL.Table) << function(self, request)
     if ENABLE_PROFILER then
@@ -131,11 +94,6 @@ TimerManager._ExecuteTimer = HL.Method(HL.Table) << function(self, request)
     self:_CacheRequest(request)
 end
 
-
-
-
-
-
 TimerManager.StartFrameTimer = HL.Method(HL.Number, HL.Function, HL.Opt(HL.Any)).Return(HL.Number)
 << function(self, frameNum, action, groupKey)
     local triggerTime = self.m_frameCount + frameNum
@@ -143,21 +101,12 @@ TimerManager.StartFrameTimer = HL.Method(HL.Number, HL.Function, HL.Opt(HL.Any))
     return self:_StartTimer(heap, triggerTime, action, groupKey)
 end
 
-
-
-
-
-
-
 TimerManager.StartTimer = HL.Method(HL.Number, HL.Function, HL.Opt(HL.Boolean, HL.Any)).Return(HL.Number)
 << function(self, time, action, unscaled, groupKey)
     local triggerTime = (unscaled and Time.unscaledTime or Time.time) + time
     local heap = unscaled and self.m_unscaledHeap or self.m_heap
     return self:_StartTimer(heap, triggerTime, action, groupKey)
 end
-
-
-
 
 TimerManager.GetTimerTriggerTime = HL.Method(HL.Number).Return(HL.Number) << function(self, timerId)
     for key, _ in self.m_heap:NodeIter() do
@@ -176,12 +125,6 @@ TimerManager.GetTimerTriggerTime = HL.Method(HL.Number).Return(HL.Number) << fun
 
     return -1
 end
-
-
-
-
-
-
 
 TimerManager._StartTimer = HL.Method(HL.Forward("MinHeap"), HL.Number, HL.Function, HL.Opt(HL.Any)).Return(HL.Number)
 << function(self, heap, triggerTime, action, groupKey)
@@ -211,9 +154,6 @@ TimerManager._StartTimer = HL.Method(HL.Forward("MinHeap"), HL.Number, HL.Functi
     return key
 end
 
-
-
-
 TimerManager.ClearTimer = HL.Method(HL.Number) << function(self, key)
     if key then
         self.m_removedTimerKeys[key] = true
@@ -222,9 +162,6 @@ TimerManager.ClearTimer = HL.Method(HL.Number) << function(self, key)
         end
     end
 end
-
-
-
 
 TimerManager.ClearAllTimer = HL.Method(HL.Any) << function(self, groupKey)
     local keys = self.m_groupTimerKeys[groupKey]
@@ -236,8 +173,6 @@ TimerManager.ClearAllTimer = HL.Method(HL.Any) << function(self, groupKey)
     end
 end
 
-
-
 TimerManager._GetRequest = HL.Method().Return(HL.Table) << function(self)
     if self.m_requestCache:Empty() then
         return {}
@@ -246,16 +181,11 @@ TimerManager._GetRequest = HL.Method().Return(HL.Table) << function(self)
     end
 end
 
-
-
-
 TimerManager._CacheRequest = HL.Method(HL.Table) << function(self, request)
     request.action = nil
     request.groupKey = nil
     self.m_requestCache:Push(request)
 end
-
-
 
 TimerManager._GetCallerStackLabel = HL.Method().Return(HL.String) << function(self)
     local thisSource

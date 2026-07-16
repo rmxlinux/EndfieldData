@@ -7,45 +7,26 @@ local InstCellState = {
     Delivering = "Delivering",
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainDepotInstCell = HL.Class('DomainDepotInstCell', UIWidgetBase)
 
 local MAX_LEVEL_FORMAT = "/%s"
 
-
 DomainDepotInstCell.m_depotId = HL.Field(HL.String) << ""
-
 
 DomainDepotInstCell.m_instCellState = HL.Field(HL.String) << ""
 
-
 DomainDepotInstCell.m_itemTypeCell = HL.Field(HL.Forward('UIListCache'))
-
 
 DomainDepotInstCell.m_nextAvailablePackTimestamp = HL.Field(HL.Number) << 0
 
-
 DomainDepotInstCell.m_countdownTextFormat = HL.Field(HL.String) << ""
-
 
 DomainDepotInstCell.m_preparingTimeTickThread = HL.Field(HL.Number) << -1
 
 
+
+
+DomainDepotInstCell.m_onNaviTargetChanged = HL.Field(HL.Function)
 
 
 DomainDepotInstCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -70,9 +51,6 @@ DomainDepotInstCell._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
 DomainDepotInstCell.InitDomainDepotInstCell = HL.Method(HL.String) << function(self, depotId)
     self:_FirstTimeInit()
 
@@ -85,15 +63,14 @@ DomainDepotInstCell.InitDomainDepotInstCell = HL.Method(HL.String) << function(s
     self:_InitCellController()
 end
 
-
-
 DomainDepotInstCell._OnDestroy = HL.Override() << function(self)
     if self.m_preparingTimeTickThread > 0 then
         self.m_preparingTimeTickThread = LuaUpdate:Remove(self.m_preparingTimeTickThread)
     end
+    
+    self.view.confirmBtn.onIsNaviTargetChanged = nil
+    self.m_onNaviTargetChanged = nil
 end
-
-
 
 DomainDepotInstCell._OnClickMapBtn = HL.Method() << function(self)
     local success, markInstId = GameInstance.player.mapManager:GetMapMarkInstId(GEnums.MarkType.DomainDepot, self.m_depotId)
@@ -102,8 +79,6 @@ DomainDepotInstCell._OnClickMapBtn = HL.Method() << function(self)
     end
     MapUtils.openMap(markInstId)
 end
-
-
 
 DomainDepotInstCell._OnClickConfirmBtn = HL.Method() << function(self)
     if self.m_instCellState == InstCellState.Ready then
@@ -114,8 +89,6 @@ DomainDepotInstCell._OnClickConfirmBtn = HL.Method() << function(self)
         PhaseManager:GoToPhase(PhaseId.Mission, { autoSelect = Tables.domainDepotConst.depotDeliverMissionId })
     end
 end
-
-
 
 DomainDepotInstCell._RefreshBasicInfo = HL.Method() << function(self)
     local depotInfo = DomainDepotUtils.GetDepotInfo(self.m_depotId)
@@ -165,10 +138,6 @@ DomainDepotInstCell._RefreshBasicInfo = HL.Method() << function(self)
     self.view.depotImg:LoadSprite(UIConst.UI_SPRITE_DOMAIN_DEPOT_INST, depotTableConfig.depotImage)
 end
 
-
-
-
-
 DomainDepotInstCell._RefreshAndSetInstCellState = HL.Method(HL.String, HL.Boolean) << function(self, state, needRefreshProgress)
     self.view.stateController:SetState(state)
     if needRefreshProgress then
@@ -200,8 +169,6 @@ DomainDepotInstCell._RefreshAndSetInstCellState = HL.Method(HL.String, HL.Boolea
         self.view.confirmBtn:ChangeActionOnSetNaviTarget(naviAction)
     end
 end
-
-
 
 DomainDepotInstCell._RefreshInstState = HL.Method() << function(self)
     local depotInfo = DomainDepotUtils.GetDepotInfo(self.m_depotId)
@@ -254,8 +221,6 @@ DomainDepotInstCell._RefreshInstState = HL.Method() << function(self)
     end
 end
 
-
-
 DomainDepotInstCell._RefreshPreparingRemainingTime = HL.Method() << function(self)
     local currTimestamp = DateTimeUtils.GetCurrentTimestampBySeconds()
     local remainSeconds = math.floor(self.m_nextAvailablePackTimestamp - currTimestamp + 0.5)
@@ -264,8 +229,6 @@ DomainDepotInstCell._RefreshPreparingRemainingTime = HL.Method() << function(sel
     local remainMinutes = math.floor((remainSeconds % Const.SEC_PER_HOUR) / Const.SEC_PER_MIN)
     self.view.countdownTxt.text = string.format(self.m_countdownTextFormat, remainHours, remainMinutes)
 end
-
-
 
 
 
@@ -279,7 +242,15 @@ DomainDepotInstCell._InitCellController = HL.Method() << function(self)
     self.view.confirmBtn.onIsNaviTargetChanged = function(isNaviTarget)
         self.view.confirmKeyHint.gameObject:SetActive(isNaviTarget)
         self.view.inputGroup.enabled = isNaviTarget
+        if self.m_onNaviTargetChanged then
+            self.m_onNaviTargetChanged(isNaviTarget)
+        end
     end
+end
+
+
+DomainDepotInstCell.SetOnNaviTargetChanged = HL.Method(HL.Opt(HL.Function)) << function(self, callback)
+    self.m_onNaviTargetChanged = callback
 end
 
 

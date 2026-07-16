@@ -4,153 +4,48 @@
 local phaseConfig = require_ex("Phase/PhaseConfig")
 local luaLoader = require_ex('Common/Utils/LuaResourceLoader')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseManager = HL.Class("PhaseManager")
 
 local PHASE_DUMMY_NAVI_LAYER_KEY_FORMAT = "Phase%s"
 
 
 
-
 PhaseManager.curPhase = HL.Field(HL.Forward("PhaseBase"))
-
 
 PhaseManager.phaseIds = HL.Field(HL.Table) 
 
-
 PhaseManager.phaseId2Names = HL.Field(HL.Table) 
-
 
 PhaseManager.m_openedPhaseSet = HL.Field(HL.Table) 
 
-
 PhaseManager.m_cfgs = HL.Field(HL.Table) 
-
 
 PhaseManager.m_transCor = HL.Field(HL.Thread)
 
-
 PhaseManager.m_curState = HL.Field(HL.Number) << 1 
-
 
 PhaseManager.m_phaseStack = HL.Field(HL.Forward("Stack")) 
 
-
 PhaseManager.m_waitingQueue = HL.Field(HL.Forward("Queue"))
 
+PhaseManager.m_phaseOpenStartTime = HL.Field(HL.Table)
 
 PhaseManager.m_waitingDestroyList = HL.Field(HL.Table)
 
-
 PhaseManager.m_defaultFOV = HL.Field(HL.Number) << -1
-
 
 PhaseManager.m_cacheTable = HL.Field(HL.Table) 
 
-
 PhaseManager.m_resourceLoader = HL.Field(HL.Forward("LuaResourceLoader"))
 
-
 PhaseManager.m_cacheRoot = HL.Field(Transform)
-
 
 PhaseManager.m_isExitingAll = HL.Field(HL.Boolean) << false
 
 
-
 PhaseManager.m_effectLodControlBlockers = HL.Field(HL.Table)
 
-
 PhaseManager.isRecovering = HL.Field(HL.Boolean) << false
-
-PhaseManager.m_forbidInputDeviceChangeKeys = HL.Field(HL.Table) 
-
-
 
 
 
@@ -166,12 +61,12 @@ PhaseManager.PhaseManager = HL.Constructor() << function(self)
     self.phaseId2Names = {}
     self.m_openedPhaseSet = {}
     self.m_cfgs = {}
+    self.m_phaseOpenStartTime = {}
     self.m_waitingDestroyList = {}
     self.m_phaseStack = require_ex("Common/Utils/DataStructure/Stack")()
     self.m_waitingQueue = require_ex("Common/Utils/DataStructure/Queue")()
     self.m_cacheTable = {}
     self.m_effectLodControlBlockers = {}
-    self.m_forbidInputDeviceChangeKeys = {}
     self.m_resourceLoader = luaLoader.LuaResourceLoader()
     local cacheRoot = GameObject("PhaseCacheRoot")
     GameObject.DontDestroyOnLoad(cacheRoot)
@@ -186,32 +81,26 @@ PhaseManager.PhaseManager = HL.Constructor() << function(self)
         self:OpenPhase(PhaseId[phaseIdName], phaseArg)
     end, self)
 
-    Register(MessageConst.ON_APPLICATION_QUIT, function(arg)
-        self:_Dispose()
-    end, self)
-    Register(MessageConst.ON_DISPOSE_LUA_ENV, function(arg)
-        self:_Dispose()
-    end, self)
     Register(MessageConst.EXIT_ALL_PHASE, function(arg)
-        self:_ExitAndCloseAll()
+        local reason = unpack(arg)
+        if reason == CS.Beyond.EventSystemConst.ExitAllPhaseReason.SEAMLESS_LOADING then
+            self:_ExitOnSeamlessLoading()
+        else
+            self:_ExitAndCloseAll()
+        end
     end, self)
 
     Register(MessageConst.ON_CLEAN_CACHE_POOL, function(arg)
         UIManager:ReleaseCachedPanelAsset()
     end, self)
 
-    self:_InitInputDeviceTypeChange()
 end
-
-
 
 PhaseManager.InitPhaseConfigs = HL.Method() << function(self)
     self:_InitConfig()
     self:_InitBackMsgs()
     self.m_defaultFOV = UIManager:GetUICameraFOV()
 end
-
-
 
 PhaseManager._OnTopPhaseChanged = HL.Method() << function(self)
     if self.curPhase then
@@ -221,8 +110,6 @@ PhaseManager._OnTopPhaseChanged = HL.Method() << function(self)
     end
     Notify(MessageConst.UPDATE_BLOCK_INPUT_WHEN_PHASE_LEVEL)
 end
-
-
 
 PhaseManager._InitConfig = HL.Method() << function(self)
     local nextId = 1
@@ -253,8 +140,6 @@ PhaseManager._InitConfig = HL.Method() << function(self)
     end
 end
 
-
-
 PhaseManager._InitBackMsgs = HL.Method() << function(self)
     for _, cfg in pairs(self.m_cfgs) do
         if not cfg.isSimpleUIPhase then
@@ -282,11 +167,9 @@ end
 
 
 
+PhaseManager.GoToPhase = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Function, HL.Boolean)) << function(self, phaseId, arg, callback, couldWait)
+    logger.info("PhaseManager.GoToPhase", phaseId, self:GetPhaseName(phaseId), arg)
 
-
-
-
-PhaseManager.GoToPhase = HL.Method(HL.Number, HL.Opt(HL.Any)) << function(self, phaseId, arg)
     if self.m_isExitingAll then
         logger.info("Phase isExitingAll, GotoPhase Fail", phaseId, self:GetPhaseName(phaseId))
         return
@@ -295,23 +178,21 @@ PhaseManager.GoToPhase = HL.Method(HL.Number, HL.Opt(HL.Any)) << function(self, 
     if self:GetTopPhaseId() == phaseId then
         
         self:ForceRefreshPhase(phaseId, arg)
+        if callback then callback() end
     elseif self:IsOpen(phaseId) then
         
         self:ExitPhaseFastTo(phaseId)
         self:ForceRefreshPhase(phaseId, arg)
+        if callback then callback() end
     else
         
-        self:OpenPhase(phaseId, arg)
+        self:OpenPhase(phaseId, arg, callback, couldWait)
     end
 end
 
-
-
-
-
-
-
 PhaseManager.OpenPhase = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Function, HL.Boolean)).Return(HL.Boolean) << function(self, phaseId, arg, callback, couldWait)
+    logger.info("PhaseManager.OpenPhase", phaseId, self:GetPhaseName(phaseId), arg, couldWait)
+
     if self.m_isExitingAll then
         logger.info("Phase isExitingAll, OpenPhase Fail", phaseId, self:GetPhaseName(phaseId))
         return false
@@ -331,6 +212,7 @@ PhaseManager.OpenPhase = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Function, HL.Boo
         return false
     end
 
+    self.m_phaseOpenStartTime[phaseId] = Time.realtimeSinceStartupAsDouble
     self.m_waitingQueue:Push({ phaseId, arg, false, callback })
 
     
@@ -339,11 +221,9 @@ PhaseManager.OpenPhase = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Function, HL.Boo
     return true
 end
 
-
-
-
-
 PhaseManager.OpenPhaseFast = HL.Method(HL.Number, HL.Opt(HL.Any)).Return(HL.Boolean) << function(self, phaseId, arg)
+    logger.info("PhaseManager.OpenPhaseFast", phaseId, self:GetPhaseName(phaseId), arg)
+
     if self.m_isExitingAll then
         logger.info("Phase isExitingAll, OpenPhaseFast Fail", phaseId, self:GetPhaseName(phaseId))
         return false
@@ -353,6 +233,7 @@ PhaseManager.OpenPhaseFast = HL.Method(HL.Number, HL.Opt(HL.Any)).Return(HL.Bool
         return false
     end
 
+    self.m_phaseOpenStartTime[phaseId] = Time.realtimeSinceStartupAsDouble
     self.m_waitingQueue:Push({ phaseId, arg, true, nil })
 
     
@@ -361,11 +242,9 @@ PhaseManager.OpenPhaseFast = HL.Method(HL.Number, HL.Opt(HL.Any)).Return(HL.Bool
     return true
 end
 
-
-
-
-
 PhaseManager.PopPhase = HL.Method(HL.Number, HL.Opt(HL.Function)).Return(HL.Boolean) << function(self, phaseId, callback)
+    logger.info("PhaseManager.PopPhase", phaseId, self:GetPhaseName(phaseId))
+
     if not self:CanPopPhase(phaseId) then
         return false
     end
@@ -373,9 +252,6 @@ PhaseManager.PopPhase = HL.Method(HL.Number, HL.Opt(HL.Function)).Return(HL.Bool
     self:_DoPopPhase(callback)
     return true
 end
-
-
-
 
 PhaseManager.CanPopPhase = HL.Method(HL.Number).Return(HL.Boolean) << function(self, phaseId)
     if self.m_isExitingAll then
@@ -413,7 +289,38 @@ end
 
 
 
+
+
+
+
+
+
+PhaseManager._IsPhaseInTransitionRef = HL.Method(HL.Forward("PhaseBase")).Return(HL.Boolean) << function(self, phase)
+    if self.m_curState == Const.PhaseState.Idle then
+        return false
+    end
+    
+    if self.m_waitingDestroyList[phase] then
+        return true
+    end
+    
+    
+    if self.m_curState == Const.PhaseState.Push then
+        local topIdx = self.m_phaseStack:TopIndex()
+        if topIdx and topIdx >= 2 and phase == self.m_phaseStack:Get(topIdx - 1) then
+            return true
+        end
+    end
+    
+    if phase == self.curPhase then
+        return phase.state ~= PhaseConst.EPhaseState.Activated
+    end
+    return false
+end
+
 PhaseManager.ExitPhaseFast = HL.Method(HL.Number) << function(self, phaseId)
+    logger.info("PhaseManager.ExitPhaseFast", phaseId, self:GetPhaseName(phaseId))
+
     if self.m_isExitingAll then
         logger.info("Phase isExitingAll, ExitPhaseFast Fail", phaseId, self:GetPhaseName(phaseId))
         return
@@ -424,8 +331,15 @@ PhaseManager.ExitPhaseFast = HL.Method(HL.Number) << function(self, phaseId)
         return
     end
 
+    local startTime = Time.realtimeSinceStartupAsDouble
     local phase = self.m_openedPhaseSet[phaseId]
     if phase then
+        if self:_IsPhaseInTransitionRef(phase) then
+            logger.critical("PhaseManager.ExitPhaseFast 跳过：phase 正被当前 transition 协程引用",
+                phaseId, self:GetPhaseName(phaseId),
+                "m_curState=", self.m_curState, "phase.state=", phase.state)
+            return
+        end
         self.m_curState = Const.PhaseState.Pop
         local isExitTopPhase = phase == self.m_phaseStack:Peek()
         self.m_openedPhaseSet[phaseId] = nil
@@ -435,7 +349,8 @@ PhaseManager.ExitPhaseFast = HL.Method(HL.Number) << function(self, phaseId)
             self.curPhase = newPhase
             self:_OnTopPhaseChanged()
             self:_DoPopTransition(nil, newPhase, true)
-            EventLogManagerInst:GameEvent_UISwitch(phase.cfg.name, newPhase and newPhase.cfg.name or "", false)
+            local costSecond = Time.realtimeSinceStartupAsDouble - startTime
+            EventLogManagerInst:GameEvent_UISwitch(phase.cfg.name, newPhase and newPhase.cfg.name or "", false, costSecond)
         end
         self.m_curState = Const.PhaseState.Idle
     else
@@ -445,11 +360,9 @@ PhaseManager.ExitPhaseFast = HL.Method(HL.Number) << function(self, phaseId)
     self:_UpdateIsUsingSystemSceneCamera()
 end
 
-
-
-
-
 PhaseManager.ExitPhaseFastTo = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, targetPhaseId, forceExit)
+    logger.info("PhaseManager.ExitPhaseFastTo", targetPhaseId, self:GetPhaseName(targetPhaseId), forceExit)
+
     if self.m_isExitingAll then
         logger.info("Phase isExitingAll, ExitPhaseFastTo Fail", targetPhaseId, self:GetPhaseName(targetPhaseId))
         return
@@ -464,6 +377,7 @@ PhaseManager.ExitPhaseFastTo = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << funct
         return
     end
 
+    local startTime = Time.realtimeSinceStartupAsDouble
     self.m_curState = Const.PhaseState.Pop
     local isTop = true
     local oldTopPhaseName = self.curPhase.cfg.name
@@ -475,7 +389,8 @@ PhaseManager.ExitPhaseFastTo = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << funct
         if phaseId == targetPhaseId then
             if not isTop then
                 self:_DoPopTransition(nil, phase, true)
-                EventLogManagerInst:GameEvent_UISwitch(oldTopPhaseName, phase.cfg.name, false)
+                local costSecond = Time.realtimeSinceStartupAsDouble - startTime
+                EventLogManagerInst:GameEvent_UISwitch(oldTopPhaseName, phase.cfg.name, false, costSecond)
             end
             self.m_curState = Const.PhaseState.Idle
             self:_UpdateIsUsingSystemSceneCamera()
@@ -489,13 +404,11 @@ PhaseManager.ExitPhaseFastTo = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << funct
     logger.error("ExitPhaseFastTo: No Target Phase", targetPhaseId)
     self.curPhase = nil
     self:_OnTopPhaseChanged()
-    EventLogManagerInst:GameEvent_UISwitch(oldTopPhaseName, "", false)
+    local costSecond = Time.realtimeSinceStartupAsDouble - startTime
+    EventLogManagerInst:GameEvent_UISwitch(oldTopPhaseName, "", false, costSecond)
     self.m_curState = Const.PhaseState.Idle
     self:_UpdateIsUsingSystemSceneCamera()
 end
-
-
-
 
 PhaseManager.IsPhaseRepeated = HL.Method(HL.Number).Return(HL.Boolean) << function(self, phaseId)
     if self:IsInWaitingQueue(phaseId) then
@@ -512,11 +425,9 @@ PhaseManager.IsPhaseRepeated = HL.Method(HL.Number).Return(HL.Boolean) << functi
     return false
 end
 
-
-
-
-
 PhaseManager.ForceRefreshPhase = HL.Method(HL.Number, HL.Any) << function(self, phaseId, arg)
+    logger.info("PhaseManager.ForceRefreshPhase", phaseId, self:GetPhaseName(phaseId), arg)
+
     if phaseId == nil then
         return
     end
@@ -533,8 +444,6 @@ PhaseManager.ForceRefreshPhase = HL.Method(HL.Number, HL.Any) << function(self, 
     phase:Refresh(arg)
 end
 
-
-
 PhaseManager.GetTopPhaseId = HL.Method().Return(HL.Opt(HL.Number)) << function(self)
     local topPhase = self.m_phaseStack:Peek()
     if not topPhase then
@@ -542,8 +451,6 @@ PhaseManager.GetTopPhaseId = HL.Method().Return(HL.Opt(HL.Number)) << function(s
     end
     return topPhase.phaseId
 end
-
-
 
 PhaseManager.GetTopPhaseName = HL.Method().Return(HL.String) << function(self)
     local topPhaseId = self:GetTopPhaseId()
@@ -553,8 +460,6 @@ PhaseManager.GetTopPhaseName = HL.Method().Return(HL.String) << function(self)
     local cfg = self.m_cfgs[topPhaseId]
     return cfg.name
 end
-
-
 
 PhaseManager.GetTopOpenAndValidPhaseId = HL.Method().Return(HL.Opt(HL.Number)) << function(self)
     
@@ -567,11 +472,6 @@ PhaseManager.GetTopOpenAndValidPhaseId = HL.Method().Return(HL.Opt(HL.Number)) <
         end
     end
 end
-
-
-
-
-
 
 
 
@@ -605,11 +505,6 @@ PhaseManager.TryCacheGOByName = HL.Method(HL.Number, HL.String, HL.Opt(HL.Functi
     end
 end
 
-
-
-
-
-
 PhaseManager.TryCacheGo = HL.Method(HL.Number, HL.String, CS.UnityEngine.GameObject) << function(self, phaseId, name, go)
     local key = phaseId .. name
     if self.m_cacheTable[key] or not go then
@@ -619,10 +514,6 @@ PhaseManager.TryCacheGo = HL.Method(HL.Number, HL.String, CS.UnityEngine.GameObj
         self.m_cacheTable[key]:SetActive(false)
     end
 end
-
-
-
-
 
 PhaseManager.GetCachedGameObject = HL.Method(HL.Number, HL.String).Return(CS.UnityEngine.GameObject) << function(self, phaseId, name)
     local key = phaseId .. name
@@ -634,10 +525,6 @@ PhaseManager.GetCachedGameObject = HL.Method(HL.Number, HL.String).Return(CS.Uni
     return res
 end
 
-
-
-
-
 PhaseManager.ReleaseCache = HL.Method(HL.Number, HL.String) << function(self, phaseId, name)
     local key = phaseId .. name
     local obj = self.m_cacheTable[key]
@@ -647,8 +534,6 @@ PhaseManager.ReleaseCache = HL.Method(HL.Number, HL.String) << function(self, ph
         self.m_cacheTable[key] = nil
     end
 end
-
-
 
 PhaseManager.ReleaseAllCache = HL.Method() << function(self)
     for k, obj in pairs(self.m_cacheTable) do
@@ -663,16 +548,10 @@ end
 
 
 
-
-
-
 PhaseManager.IsOpen = HL.Method(HL.Number).Return(HL.Boolean, HL.Opt(HL.Forward("PhaseBase"))) << function(self, phaseId)
     local phase = self.m_openedPhaseSet[phaseId]
     return phase ~= nil, phase
 end
-
-
-
 
 PhaseManager.IsOpenAndValid = HL.Method(HL.Number).Return(HL.Boolean, HL.Opt(HL.Forward("PhaseBase"))) << function(self, phaseId)
     local phase = self.m_openedPhaseSet[phaseId]
@@ -682,14 +561,9 @@ PhaseManager.IsOpenAndValid = HL.Method(HL.Number).Return(HL.Boolean, HL.Opt(HL.
     return false
 end
 
-
-
 PhaseManager.IsEmptyPhase = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_phaseStack:Empty()
 end
-
-
-
 
 PhaseManager.IsInWaitingQueue = HL.Method(HL.Number).Return(HL.Boolean) << function(self, phaseId)
     local queue = self.m_waitingQueue
@@ -704,9 +578,6 @@ PhaseManager.IsInWaitingQueue = HL.Method(HL.Number).Return(HL.Boolean) << funct
     end
     return false
 end
-
-
-
 
 PhaseManager.IsPhaseUnlocked = HL.Method(HL.Number).Return(HL.Boolean) << function(self, phaseId)
     if CS.Beyond.GlobalOptions.instance.auditing then
@@ -728,9 +599,6 @@ PhaseManager.IsPhaseUnlocked = HL.Method(HL.Number).Return(HL.Boolean) << functi
     return true
 end
 
-
-
-
 PhaseManager.IsPhaseForbidden = HL.Method(HL.Number).Return(HL.Boolean, HL.Any, HL.Any) << function(self, phaseId)
     local cfg = self.m_cfgs[phaseId]
     if cfg.cannotForbid then
@@ -743,9 +611,6 @@ PhaseManager.IsPhaseForbidden = HL.Method(HL.Number).Return(HL.Boolean, HL.Any, 
     end
     return isForbidden, forbidStyle, forbidParams
 end
-
-
-
 
 PhaseManager.GetPhaseRedDotName = HL.Method(HL.Number).Return(HL.String) << function(self, phaseId)
     local cfg = self.m_cfgs[phaseId]
@@ -768,9 +633,6 @@ PhaseManager.GetPhaseRedDotName = HL.Method(HL.Number).Return(HL.String) << func
 
     return systemConfigData.redDotName
 end
-
-
-
 
 PhaseManager.GetPhaseSystemViewConfig = HL.Method(HL.Number).Return(HL.Table) << function(self, phaseId)
     local cfg = self.m_cfgs[phaseId]
@@ -795,10 +657,6 @@ end
 
 
 
-
-
-
-
 PhaseManager.CheckCanOpenPhaseAndToast = HL.Method(HL.Number, HL.Opt(HL.Any)).Return(HL.Boolean) << function(self, phaseId, arg)
     local rst, toast, errorInfo = self:_RealCheckCanOpenPhase(phaseId, arg, true, true)
     if rst then
@@ -814,24 +672,13 @@ PhaseManager.CheckCanOpenPhaseAndToast = HL.Method(HL.Number, HL.Opt(HL.Any)).Re
 end
 
 
-
-
 PhaseManager.CheckIsInTransition = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_transCor ~= nil
 end
 
-
-
-
-
-
 PhaseManager.CheckCanOpenPhase = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Boolean)).Return(HL.Boolean, HL.Opt(HL.String, HL.String)) << function(self, phaseId, arg, considerIsOpen)
     return self:_RealCheckCanOpenPhase(phaseId, arg, considerIsOpen)
 end
-
-
-
-
 
 PhaseManager.CheckCanRefreshPhaseAndToast = HL.Method(HL.Number, HL.Opt(HL.Any)).Return(HL.Boolean) << function(self, phaseId, arg)
     
@@ -847,12 +694,6 @@ PhaseManager.CheckCanRefreshPhaseAndToast = HL.Method(HL.Number, HL.Opt(HL.Any))
     end
     return false
 end
-
-
-
-
-
-
 
 PhaseManager._RealCheckCanOpenPhase = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Boolean, HL.Boolean)).Return(HL.Boolean, HL.Opt(HL.String, HL.String)) << function(self, phaseId, arg, considerIsOpen, checkConflict)
     if not self:IsPhaseUnlocked(phaseId) then
@@ -916,8 +757,6 @@ PhaseManager._RealCheckCanOpenPhase = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Boo
     return rst, nil, errorInfo
 end
 
-
-
 PhaseManager._TryOpenPhase = HL.Method() << function(self)
     if self.m_transCor or self.m_waitingQueue:Empty() then
         return
@@ -952,7 +791,6 @@ PhaseManager._TryOpenPhase = HL.Method() << function(self)
     local oldPhase = self.curPhase
     self.curPhase = newPhase
     self:_OnTopPhaseChanged()
-    EventLogManagerInst:GameEvent_UISwitch(oldPhase and oldPhase.cfg.name or "", newPhase.cfg.name, true)
     if fastMode then
         self:_DoPushTransition(oldPhase, newPhase, true)
         self.m_curState = Const.PhaseState.Idle
@@ -974,10 +812,6 @@ PhaseManager._TryOpenPhase = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 PhaseManager._DoFinishPhase = HL.Method(HL.Forward("PhaseBase"), HL.Boolean) << function(self, phase, fastMode)
     Notify(MessageConst.ON_UI_PHASE_EXITED, phase.cfg.name)
 
@@ -989,10 +823,8 @@ PhaseManager._DoFinishPhase = HL.Method(HL.Forward("PhaseBase"), HL.Boolean) << 
     Notify(MessageConst.UPDATE_DEBUG_PHASE_TEXT)
 end
 
-
-
-
 PhaseManager._DoPopPhase = HL.Method(HL.Opt(HL.Function)) << function(self, callback)
+    local startTime = Time.realtimeSinceStartupAsDouble
     
     self:_ClearTransCor()
 
@@ -1009,9 +841,10 @@ PhaseManager._DoPopPhase = HL.Method(HL.Opt(HL.Function)) << function(self, call
     local newTopPhase = self.m_phaseStack:Peek()
     self.curPhase = newTopPhase
     self:_OnTopPhaseChanged()
-    EventLogManagerInst:GameEvent_UISwitch(oldPhase.cfg.name, newTopPhase and newTopPhase.cfg.name or "", false)
     self.m_transCor = self:_StartCoroutine(function()
         self:_DoPopTransition(oldPhase, newTopPhase, false)
+        local costSecond = Time.realtimeSinceStartupAsDouble - startTime
+        EventLogManagerInst:GameEvent_UISwitch(oldPhase.cfg.name, newTopPhase and newTopPhase.cfg.name or "", false, costSecond)
         self.m_curState = Const.PhaseState.Idle
         if callback then
             callback()
@@ -1019,8 +852,6 @@ PhaseManager._DoPopPhase = HL.Method(HL.Opt(HL.Function)) << function(self, call
         self:_TryOpenPhase()
     end)
 end
-
-
 
 PhaseManager._ClearTransCor = HL.Method() << function(self)
     if self.m_transCor ~= nil then
@@ -1032,10 +863,6 @@ PhaseManager._ClearTransCor = HL.Method() << function(self)
         GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.PhasePushSystemActionConflictName)
     end
 end
-
-
-
-
 
 PhaseManager._CreatePhase = HL.Method(HL.Number, HL.Opt(HL.Any)).Return(HL.Forward("PhaseBase")) << function(self, phaseId, arg)
     local cfg = self.m_cfgs[phaseId]
@@ -1070,9 +897,6 @@ PhaseManager._CreatePhase = HL.Method(HL.Number, HL.Opt(HL.Any)).Return(HL.Forwa
     return phase
 end
 
-
-
-
 PhaseManager._ReleasePhase = HL.Method(HL.Forward("PhaseBase")) << function(self, phase)
     local cfg = self.m_cfgs[phase.phaseId]
 
@@ -1089,8 +913,6 @@ PhaseManager._ReleasePhase = HL.Method(HL.Forward("PhaseBase")) << function(self
     self.m_openedPhaseSet[phase.phaseId] = nil
 end
 
-
-
 PhaseManager._RefreshUIScaler = HL.Method() << function(self)
     local comp = UIManager.worldUICanvas:GetComponent("UICanvasScaleHelper")
     if comp then
@@ -1103,24 +925,21 @@ end
 
 
 
-
-
-
 PhaseManager._StartCoroutine = HL.Method(HL.Function).Return(HL.Thread) << function(self, func)
     return CoroutineManager:StartCoroutine(func, self)
 end
-
-
-
 
 PhaseManager._ClearCoroutine = HL.Method(HL.Thread) << function(self, coroutine)
     CoroutineManager:ClearCoroutine(coroutine)
 end
 
-
-
 PhaseManager._Dispose = HL.Method() << function(self)
-    self:ExitAllPhase()
+    
+    
+    
+    
+    UIManager:StartCacheRecoverScreen()
+    self:_PopAllPhases()
 
     
     self:ReleaseAllCache()
@@ -1133,20 +952,22 @@ PhaseManager._Dispose = HL.Method() << function(self)
     UIManager:Dispose()
 
     
+    UIManager:EndCacheRecoverScreen()
+
+    
     if self.m_resourceLoader ~= nil then
         self.m_resourceLoader:DisposeAllHandles()
     end
 
-    
-    self:_ClearInputDeviceTypeChange()
 end
 
 
 
-PhaseManager.ExitAllPhase = HL.Method() << function(self)
-    logger.info("ExitAllPhase")
+
+
+
+PhaseManager._PopAllPhases = HL.Method() << function(self)
     self.m_isExitingAll = true
-    UIManager:StartCacheRecoverScreen()
     self:_ClearTransCor()
 
     local count = self.m_phaseStack:Count()
@@ -1169,19 +990,69 @@ PhaseManager.ExitAllPhase = HL.Method() << function(self)
     self.m_phaseStack:Clear()
     self.m_waitingQueue:Clear()
     self.m_isExitingAll = false
+end
 
+PhaseManager.ExitAllPhase = HL.Method() << function(self)
+    logger.info("PhaseManager.ExitAllPhase")
+    UIManager:StartCacheRecoverScreen()
+    self:_PopAllPhases()
     UIManager:EndCacheRecoverScreen()
 end
 
-
-
+PhaseManager.ExitAllPhaseExceptLevel = HL.Method() << function(self)
+    logger.info("ExitAllPhaseExceptLevel")
+    self.m_isExitingAll = true
+    self:_ClearTransCor()
+    local levelPhaseId = PhaseId.Level
+    local levelPhase = nil
+    
+    local count = self.m_phaseStack:Count()
+    for _ = 1, count do
+        local phase = self.m_phaseStack:Pop()
+        if phase.phaseId == levelPhaseId then
+            levelPhase = phase
+        else
+            self.m_openedPhaseSet[phase.phaseId] = nil
+            self:_DoFinishPhase(phase, true)
+        end
+    end
+    
+    for phase, active in pairs(self.m_waitingDestroyList) do
+        if active and phase.phaseId ~= levelPhaseId then
+            self:_DoFinishPhase(phase, true)
+        end
+    end
+    
+    self.m_waitingDestroyList = {}
+    self.m_openedPhaseSet = {}
+    self.m_phaseStack:Clear()
+    self.m_waitingQueue:Clear()
+    
+    if levelPhase then
+        self.m_openedPhaseSet[levelPhaseId] = levelPhase
+        self.m_phaseStack:Push(levelPhase)
+        self.curPhase = levelPhase
+    else
+        self.curPhase = nil
+    end
+    self:_OnTopPhaseChanged()
+    self.m_isExitingAll = false
+end
 
 PhaseManager._ExitAndCloseAll = HL.Method(HL.Opt(HL.Table)) << function(self, closeExceptPanelIds)
     self:ExitAllPhase()
     UIManager:CloseAllUI(true, closeExceptPanelIds)
 end
 
-
+PhaseManager._ExitOnSeamlessLoading = HL.Method(HL.Opt(HL.Table)) << function(self)
+    self:ExitAllPhaseExceptLevel()
+    
+    local closeExceptPanelIds = {}
+    for _, panelId in pairs(PhaseConst.DONT_DESTROY_ON_SEAMLESS_LOADING) do
+        table.insert(closeExceptPanelIds, PanelId[panelId])
+    end
+    UIManager:CloseAllUI(true, closeExceptPanelIds)
+end
 
 PhaseManager._UpdateIsUsingSystemSceneCamera = HL.Method() << function(self)
     for _ = self.m_phaseStack:Count(), 1, -1 do
@@ -1201,275 +1072,6 @@ end
 
 
 
-
-
-
-
-
-
-
-PhaseManager._InitInputDeviceTypeChange = HL.Method() << function(self)
-    Register(MessageConst.ENTER_MAIN_GAME, function()
-        InputManagerInst.needProcessTryChange = true
-        logger.important(CS.Beyond.EnableLogType.DevOnly, "[InputDevice] 主流程关闭直接切换设备")
-    end, self)
-    Register(MessageConst.ON_TRY_CHANGE_INPUT_DEVICE_TYPE, function(arg)
-        if not GameInstance.isInGameplay then
-            return 
-        end
-        local inputType = unpack(arg)
-        self:_OnTryChangeInputDevice(inputType)
-    end, self)
-end
-
-
-
-PhaseManager._ClearInputDeviceTypeChange = HL.Method() << function(self)
-    InputManagerInst.needProcessTryChange = false
-    logger.important(CS.Beyond.EnableLogType.DevOnly, "[InputDevice] 主流程开启直接切换设备")
-end
-
-PhaseManager.SetForbidInputDeviceChange = HL.Method(HL.String, HL.Boolean) << function(self, key, forbid)
-    if forbid then
-        self.m_forbidInputDeviceChangeKeys[key] = true
-    else
-        self.m_forbidInputDeviceChangeKeys[key] = nil
-    end
-end
-
-
-
-
-PhaseManager._CheckCanChangeInputDevice = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Boolean) << function(self, ignoreIsChanging)
-    if not ignoreIsChanging and InputManagerInst.inChangingInputDevice then
-        return false  
-    end
-
-    if self:CheckIsInTransition() then
-        return false  
-    end
-
-    if not string.isEmpty(GameInstance.player.systemActionConflictManager.curProcessingSystemAction) then
-        return false  
-    end
-
-    local topPhaseId = self:GetTopPhaseId()
-    if not ignoreIsChanging and topPhaseId == PhaseId.Level then
-        
-        
-        local _, mainHud = UIManager:IsOpen(PanelId.MainHud)
-        if mainHud and not mainHud.view.inputGroup.internalEnabled then
-            if not FactoryUtils.isInTopView() then 
-                return false
-            end
-        end
-    end
-
-    if next(self.m_forbidInputDeviceChangeKeys) ~= nil then
-        return false  
-    end
-
-    if GameInstance.player.guide.isInForceGuide then
-        return false  
-    end
-
-    if GameWorld.gameMechManager.travelPoleBrain.inFastTravelMode then
-        return false  
-    end
-
-    if Utils.isInBlackbox() then
-        return false  
-    end
-
-    if Utils.isInNarrative() then
-        return false  
-    end
-
-    if FactoryUtils.isCreatingBlueprint() then
-        return false  
-    end
-
-    if GameInstance.player.towerDefenseSystem.hudState == CS.Beyond.Gameplay.TowerDefenseSystem.HUDState.WaitingFinished then
-        return false  
-    end
-
-    local _, generalAbility = UIManager:IsOpen(PanelId.GeneralAbility)
-    if generalAbility ~= nil and generalAbility.startPress then
-        return false  
-    end
-
-    if not self:_CheckCanChangeInputDeviceInCommercial() then
-        return false  
-    end
-
-    for _, panelId in pairs(PhaseConst.FORBID_INPUT_DEVICE_CHANGE_PANELS) do
-        if UIManager:IsShow(PanelId[panelId]) then
-            return false  
-        end
-    end
-
-    for _, phaseId in pairs(PhaseConst.FORBID_INPUT_DEVICE_CHANGE_PHASES) do
-        if self:IsOpen(PhaseId[phaseId]) then
-            return false  
-        end
-    end
-
-    if GameInstance.playerController.inUltimateCasting then
-        return false  
-    end
-
-    return true
-end
-
-
-
-PhaseManager._CheckCanChangeInputDeviceInCommercial = HL.Method().Return(HL.Boolean) << function(self)
-    
-    
-    local isGachaOpen, gachaCtrl = UIManager:IsOpen(PanelId.GachaPool)
-    if isGachaOpen and gachaCtrl:GetIsPlayingTabInAnimation() then
-        return false
-    end
-    
-
-    
-    
-    local isInBPSeasonDisplay = UIManager:IsOpen(PanelId.BattlePassSeasonDisplay)
-    if isInBPSeasonDisplay then
-        return false
-    end
-    
-
-    
-    
-    if UIManager:IsShow(PanelId.CommonPopUp) then
-        local _, commonPopUpCtrl = UIManager:IsOpen(PanelId.CommonPopUp)
-        local popUpArgs = commonPopUpCtrl and commonPopUpCtrl.m_args
-        if popUpArgs and popUpArgs.content == Language.LUA_ACTIVITY_MODIFY_QUIT_TO_MENU then
-            return false
-        end
-    end
-    
-
-    return true
-end
-
-
-
-PhaseManager._CheckChangeInputToastIgnore = HL.Method().Return(HL.Boolean) << function(self)
-    return Utils.isInNarrative() and Utils.isNarrativeTopPhase()
-end
-
-
-
-
-PhaseManager._OnTryChangeInputDevice = HL.Method(HL.Userdata) << function(self, inputType)
-    logger.important(CS.Beyond.EnableLogType.DevOnly, "[InputDevice] 开始切换设备", inputType)
-    if not self:_CheckCanChangeInputDevice() then
-        logger.important(CS.Beyond.EnableLogType.DevOnly, "[InputDevice] 当前无法切换输入设备", inputType)
-        if self:_CheckChangeInputToastIgnore() then
-            return
-        end
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_INPUT_DEVICE_CHANGE_FORBIDDEN)
-        return
-    end
-
-    InputManagerInst:ToggleInputDeviceChangeMode(true)
-    logger.important(CS.Beyond.EnableLogType.DevOnly, "[InputDevice] 确认切换设备", inputType)
-    Notify(MessageConst.HIDE_ITEM_TIPS, { skipAnim = true })
-    self:_RealChangeInputDevice(inputType)
-end
-
-
-
-
-PhaseManager._OnInputDeviceTypeChangeFinish = HL.Method(HL.Userdata) << function(self, inputType)
-    if not InputManagerInst.inChangingInputDevice then
-        return
-    end
-
-    InputManagerInst:ToggleInputDeviceChangeMode(false)
-    Notify(MessageConst.ON_CHANGE_INPUT_DEVICE_TYPE_FINISHED, { inputType = inputType })
-end
-
-
-
-
-PhaseManager._RealChangeInputDevice = HL.Method(HL.Userdata) << function(self, newInputType)
-    local phaseArgs = self:CollectCurPhaseArgs()
-
-    
-    Notify(MessageConst.ON_CONFIRM_CHANGE_INPUT_DEVICE_TYPE, { inputType = newInputType })
-
-    
-    local closeExceptPanelIds = {}
-    for _, name in pairs(PhaseConst.EXCEPT_CHANGE_DEVICE_CLOSE_PANEL) do
-        local panelId = PanelId[name]
-        if UIManager:_IsUsingSamePanelAssetOnInputTypeChange(panelId, DeviceInfo.inputType, newInputType) then
-            table.insert(closeExceptPanelIds, panelId)
-        end
-    end
-
-    
-    UIManager.m_isHotSwitching = true
-    UIManager.m_hotSwitchCache = {}
-
-    
-    
-    
-    
-    
-    
-    
-    
-    InputManagerInst.controllerNaviManager:SetTarget(nil)
-    InputManagerInst.controllerNaviManager:ResetStateForUIDispose()
-
-    self:_ExitAndCloseAll(closeExceptPanelIds)
-    for _, name in pairs(PhaseConst.INPUT_DEVICE_CHANGE_FORCE_CLOSE_PANELS) do
-        UIManager:Close(PanelId[name])
-    end
-
-    
-    DeviceInfo.ChangeInputType(newInputType)
-    GameInstance.player.guide:OnInputDeviceChanged()
-
-    
-    self:RecoverPhaseByArgs(phaseArgs)
-
-    
-    for panelId, _ in pairs(UIManager.m_openedPanels) do
-        UIManager:RestoreShownPanelVisibilityIfNeeded(panelId)
-    end
-
-    
-    for _, cachedInfo in pairs(UIManager.m_hotSwitchCache) do
-        if cachedInfo.worldRoot then
-            GameObject.DestroyImmediate(cachedInfo.worldRoot.gameObject)
-        end
-        if cachedInfo.worldAutoRoot then
-            GameObject.DestroyImmediate(cachedInfo.worldAutoRoot.gameObject)
-        end
-        cachedInfo.loader:DisposeAllHandles()
-        GameObject.DestroyImmediate(cachedInfo.go)
-    end
-    UIManager.m_hotSwitchCache = {}
-    UIManager.m_isHotSwitching = false
-
-    
-    self:_OnInputDeviceTypeChangeFinish(newInputType)
-end
-
-
-
-
-
-
-
-
-
-
-
 PhaseManager._DoPopTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("PhaseBase"), HL.Boolean) << function(self, popPhase, newTopPhase, fastMode)
     logger.info("PhaseManager._DoPopTransition", popPhase and popPhase.cfg.name, newTopPhase and newTopPhase.cfg.name, fastMode)
 
@@ -1482,12 +1084,18 @@ PhaseManager._DoPopTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("P
         newTopPhase:PrepareTransition(PhaseConst.EPhaseState.TransitionBackToTop, fastMode, popPhaseId)
     end
 
+    UIManager:PauseMainCameraUpdate()
+    
+    
+    if self:_IsSceneVisibleAfterTransition() then
+        UIManager:AddMainCameraTempRequest("PhaseTransition")
+    end
+
     if popPhase then
         popPhase:TransitionOut(fastMode, {
             anotherPhaseId = newTopPhaseId
         })
         if not fastMode and popPhase.state == PhaseConst.EPhaseState.TransitionOut then
-            
             coroutine.waitCondition(function()
                 return popPhase.state ~= PhaseConst.EPhaseState.TransitionOut
             end)
@@ -1499,7 +1107,6 @@ PhaseManager._DoPopTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("P
     self:_UpdateIsUsingSystemSceneCamera()
 
     if newTopPhase then
-        
         local cfg = newTopPhase.cfg
         local fov = cfg.fov
         if fov and fov > 0 then
@@ -1525,23 +1132,25 @@ PhaseManager._DoPopTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("P
             anotherPhaseId = popPhaseId
         })
 
+        UIManager:ResumeMainCameraUpdate()
+
         if not fastMode and newTopPhase.state == PhaseConst.EPhaseState.TransitionBackToTop then
-            
             coroutine.waitCondition(function()
                 return newTopPhase.state ~= PhaseConst.EPhaseState.TransitionBackToTop
             end)
         end
+    else
+        UIManager:ResumeMainCameraUpdate()
     end
+
+    
+    
+    UIManager:RemoveMainCameraTempRequest("PhaseTransition")
 
     if not fastMode then
         self.m_transCor = nil
     end
 end
-
-
-
-
-
 
 PhaseManager._DoPushTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("PhaseBase"), HL.Boolean) << function(self, oldTopPhase, pushPhase, fastMode)
     logger.info("PhaseManager._DoPushTransition", oldTopPhase and oldTopPhase.cfg.name, pushPhase and pushPhase.cfg.name, fastMode)
@@ -1561,12 +1170,19 @@ PhaseManager._DoPushTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("
         end
     end
 
+    UIManager:PauseMainCameraUpdate()
+    
+    
+    
+    if self:_IsSceneVisibleAfterTransition() then
+        UIManager:AddMainCameraTempRequest("PhaseTransition")
+    end
+
     if oldTopPhase then
         oldTopPhase:TransitionBehind(fastMode, {
             anotherPhaseId = pushPhaseId
         })
         if not fastMode and oldTopPhase.state == PhaseConst.EPhaseState.TransitionBehind then
-            
             coroutine.waitCondition(function()
                 return oldTopPhase.state ~= PhaseConst.EPhaseState.TransitionBehind
             end)
@@ -1579,7 +1195,6 @@ PhaseManager._DoPushTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("
         if pushPhase.cfg.notCreateDummyNaviLayer ~= true then
             Notify(MessageConst.ATTACH_DUMMY_NAVI_LAYER, string.format(PHASE_DUMMY_NAVI_LAYER_KEY_FORMAT, pushPhase.cfg.name))
         end
-        
         local cfg = pushPhase.cfg
         local fov = cfg.fov
         if fov and fov > 0 then
@@ -1593,21 +1208,33 @@ PhaseManager._DoPushTransition = HL.Method(HL.Forward("PhaseBase"), HL.Forward("
             anotherPhaseId = oldTopPhaseId
         })
 
+        
+        local openCostSecond = 0
+        if self.m_phaseOpenStartTime[pushPhase.phaseId] ~= nil then
+            openCostSecond = Time.realtimeSinceStartupAsDouble - self.m_phaseOpenStartTime[pushPhase.phaseId]
+            self.m_phaseOpenStartTime[pushPhase.phaseId] = nil
+        end
+        EventLogManagerInst:GameEvent_UISwitch(oldTopPhase and oldTopPhase.cfg.name or "", pushPhase.cfg.name, true, openCostSecond)
+        
+
+        UIManager:ResumeMainCameraUpdate()
+
         if not fastMode and pushPhase.state == PhaseConst.EPhaseState.TransitionIn then
-            
             coroutine.waitCondition(function()
                 return pushPhase.state ~= PhaseConst.EPhaseState.TransitionIn
             end)
         end
+    else
+        UIManager:ResumeMainCameraUpdate()
     end
+
+    
+    UIManager:RemoveMainCameraTempRequest("PhaseTransition")
 
     if not fastMode then
         self.m_transCor = nil
     end
 end
-
-
-
 
 
 
@@ -1620,9 +1247,6 @@ PhaseManager.DisableEffectLodByPhase = HL.Method(HL.Number) << function(self, ph
     self.m_effectLodControlBlockers[phaseId] = true
 end
 
-
-
-
 PhaseManager.ResumeEffectLodByPhase = HL.Method(HL.Number) << function(self, phaseId)
     self.m_effectLodControlBlockers[phaseId] = nil
     if next(self.m_effectLodControlBlockers) == nil then
@@ -1634,20 +1258,13 @@ end
 
 
 
-
-
 PhaseManager.GetPhaseStack = HL.Method().Return(HL.Forward("Stack")) << function(self)
     return self.m_phaseStack
 end
 
-
-
 PhaseManager.GetPhaseCfgs = HL.Method().Return(HL.Table) << function(self)
     return self.m_cfgs
 end
-
-
-
 
 PhaseManager.GetPhaseName = HL.Method(HL.Number).Return(HL.String) << function(self, phaseId)
     local cfg = self.m_cfgs[phaseId]
@@ -1665,12 +1282,26 @@ end
 
 
 
+
+
+
+
+
+
+
+
+
+PhaseManager._IsSceneVisibleAfterTransition = HL.Method().Return(HL.Boolean) << function(self)
+    local topPhase = self.m_phaseStack:Peek()
+    if topPhase == nil then
+        return false
+    end
+    return topPhase.cfg.sceneVisible == true or topPhase.cfg.haveSceneCamera == true
+end
+
 PhaseManager.GetPhaseDummyNaviLayerName = HL.Method(HL.Number).Return(HL.String) << function(self, phaseId)
     return string.format(PHASE_DUMMY_NAVI_LAYER_KEY_FORMAT, self:GetPhaseName(phaseId))
 end
-
-
-
 
 PhaseManager.GetPhaseIdByName = HL.Method(HL.String).Return(HL.Number) << function(self, phaseName)
     if self.phaseIds[phaseName] ~= nil then
@@ -1678,8 +1309,6 @@ PhaseManager.GetPhaseIdByName = HL.Method(HL.String).Return(HL.Number) << functi
     end
     return -1
 end
-
-
 
 
 
@@ -1704,9 +1333,6 @@ PhaseManager.CollectCurPhaseArgs = HL.Method().Return(HL.Table) << function(self
     logger.info("PhaseManager.CollectCurPhaseArgs", args)
     return args
 end
-
-
-
 
 PhaseManager.RecoverPhaseByArgs = HL.Method(HL.Table) << function(self, args)
     logger.info("PhaseManager.RecoverPhaseByArgs", args)

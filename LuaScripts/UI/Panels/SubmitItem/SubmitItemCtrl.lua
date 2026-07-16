@@ -1,35 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SubmitItem
 local PHASE_ID = PhaseId.SubmitItem
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SubmitItemCtrl = HL.Class('SubmitItemCtrl', uiCtrl.UICtrl)
 
 local SubmitType = {
@@ -45,42 +16,32 @@ local SubmitType = {
 
 
 
-
 SubmitItemCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SUBMIT_ITEM] = 'OnSubmitItem',
+    [MessageConst.ON_SUBMIT_ITEM_FAILED] = 'OnSubmitItemFailed',
 }
-
 
 SubmitItemCtrl.m_submitItemsNormal = HL.Field(HL.Table)
 
-
 SubmitItemCtrl.m_submitItemsSelect = HL.Field(HL.Table)
-
 
 SubmitItemCtrl.m_selectItemBundle = HL.Field(HL.Table)
 
-
 SubmitItemCtrl.m_controllerSelectCache = HL.Field(HL.Table)
-
 
 SubmitItemCtrl.m_controllerToggleSelectBindingId = HL.Field(HL.Number) << -1
 
-
 SubmitItemCtrl.m_info = HL.Field(HL.Table)
-
 
 SubmitItemCtrl.m_normalItemListCache = HL.Field(HL.Forward("UIListCache"))
 
-
 SubmitItemCtrl.m_selectItemListCache = HL.Field(HL.Forward("UIListCache"))
-
 
 SubmitItemCtrl.m_submitType = HL.Field(HL.Number) << SubmitType.Common
 
 SubmitItemCtrl.m_waitingClosePanel = HL.Field(HL.Boolean) << false
 
-
-
+SubmitItemCtrl.m_isSubmitting = HL.Field(HL.Boolean) << false
 
 
 SubmitItemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -107,7 +68,13 @@ SubmitItemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     if not objId then
         objId = 0
     end
-    self.m_info = { submitId = submitId, questId = questId, objId = objId , fromDialog = arg.fromDialog}
+    self.m_info = {
+        submitId = submitId,
+        questId = questId,
+        objId = objId,
+        fromDialog = arg.fromDialog,
+        actionData = arg.actionData
+    }
 
     local data = Tables.submitItem[submitId]
     if data.name ~= nil and data.name ~= "" then
@@ -240,8 +207,6 @@ SubmitItemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 SubmitItemCtrl._GetSelectItemBundleCount = HL.Method().Return(HL.Number) << function(self)
     local totalCount = 0
     for _, itemData in pairs(self.m_selectItemBundle) do
@@ -261,9 +226,12 @@ SubmitItemCtrl._GetSelectItemBundleCount = HL.Method().Return(HL.Number) << func
     return totalCount
 end
 
-
-
 SubmitItemCtrl._OnClickSubmit = HL.Method() << function(self)
+    if self.m_isSubmitting then
+        return
+    end
+    self.m_isSubmitting = true
+
     local enoughNormal = true
     self.m_normalItemListCache:Update(function(cell, index)
         local bundle = self.m_submitItemsNormal[index]
@@ -286,6 +254,7 @@ SubmitItemCtrl._OnClickSubmit = HL.Method() << function(self)
 
     if not enoughNormal or not enoughSelect then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_SUBMIT_ITEM_INSUFFICENT_TIP)
+        self.m_isSubmitting = false
         return
     end
 
@@ -304,19 +273,21 @@ SubmitItemCtrl._OnClickSubmit = HL.Method() << function(self)
         end
     end
 
-    local waitSubmitCallback = self:_Submit(selectInstIds, selectItemIds)
-    if not waitSubmitCallback then
+    local syncAndWaitSubmit = self:_Submit(selectInstIds, selectItemIds)
+    if not syncAndWaitSubmit then
+        self.m_isSubmitting = false
         self:ClosePanel(0)
     end
 end
 
-
-
-
-
 SubmitItemCtrl._Submit = HL.Method(HL.Table, HL.Table).Return(HL.Boolean) << function(self, selectInstIds, selectItemIds)
+    local syncSubmitToServerImmediately = false
     if self.m_info.fromDialog then
-        if GameWorld.dialogManager.isPlaying then
+        if self.m_info.actionData and self.m_info.actionData.syncSubmitToServerImmediately then
+            
+            syncSubmitToServerImmediately = true
+        elseif GameWorld.dialogManager.isPlaying then
+            
             GameWorld.dialogManager:RegisterPendingSubmission(CS.Beyond.Gameplay.InventoryItemSubmitter(
                 Utils.getCurrentScope(),
                 Utils.getCurrentChapterId(),
@@ -326,11 +297,17 @@ SubmitItemCtrl._Submit = HL.Method(HL.Table, HL.Table).Return(HL.Boolean) << fun
                 selectInstIds,
                 selectItemIds
             ))
+            syncSubmitToServerImmediately = false
         else
             Notify(MessageConst.SHOW_TOAST, Language["ui_msc_submit_fail"])
+            syncSubmitToServerImmediately = false
         end
-        return false
     else
+        
+        syncSubmitToServerImmediately = true
+    end
+
+    if syncSubmitToServerImmediately then
         GameInstance.player.inventory:SubmitItem(
             Utils.getCurrentScope(),
             Utils.getCurrentChapterId(),
@@ -340,11 +317,11 @@ SubmitItemCtrl._Submit = HL.Method(HL.Table, HL.Table).Return(HL.Boolean) << fun
             selectInstIds,
             selectItemIds
         )
-        return true
     end
+
+    
+    return syncSubmitToServerImmediately
 end
-
-
 
 SubmitItemCtrl._OpenItemSelectList = HL.Method() << function(self)
     if self.view.left.gameObject.activeSelf then
@@ -404,8 +381,6 @@ SubmitItemCtrl._OpenItemSelectList = HL.Method() << function(self)
     end
 end
 
-
-
 SubmitItemCtrl._CloseItemSelectList = HL.Method() << function(self)
     if not self.view.left.gameObject.activeSelf then
         return
@@ -424,11 +399,6 @@ SubmitItemCtrl._CloseItemSelectList = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
-
 SubmitItemCtrl._OnSelectItem = HL.Method(HL.Table, HL.Any, HL.Number) << function(self, itemBundle, cell, index)
     if DeviceInfo.usingController then
         self.m_controllerSelectCache = {itemBundle, cell, index}
@@ -443,8 +413,6 @@ SubmitItemCtrl._OnSelectItem = HL.Method(HL.Table, HL.Any, HL.Number) << functio
     end
 end
 
-
-
 SubmitItemCtrl._OnControllerConfirmSelect = HL.Method() << function(self)
     if next(self.m_controllerSelectCache) ~= nil then
         self:_RealSelectItem(unpack(self.m_controllerSelectCache))
@@ -457,9 +425,6 @@ SubmitItemCtrl._OnControllerConfirmSelect = HL.Method() << function(self)
         InputManagerInst:SetBindingText(self.m_controllerToggleSelectBindingId, keyHintText)
     end
 end
-
-
-
 
 SubmitItemCtrl._GetItemSelectIndex = HL.Method(HL.Table).Return(HL.Number) << function(self, itemBundle)
     for i = #self.m_submitItemsSelect, 1, -1 do
@@ -478,11 +443,6 @@ SubmitItemCtrl._GetItemSelectIndex = HL.Method(HL.Table).Return(HL.Number) << fu
 
     return -1
 end
-
-
-
-
-
 
 SubmitItemCtrl._RealSelectItem = HL.Method(HL.Table, HL.Any, HL.Number) << function(self, itemBundle, cell, index)
     
@@ -535,8 +495,6 @@ SubmitItemCtrl._RealSelectItem = HL.Method(HL.Table, HL.Any, HL.Number) << funct
     self:_UpdateCount()
 end
 
-
-
 SubmitItemCtrl._UpdateSelectText = HL.Method() << function(self)
     local totalCount = self:_GetSelectItemBundleCount()
     local hasSelectItem = totalCount > 0
@@ -569,8 +527,6 @@ SubmitItemCtrl._UpdateSelectText = HL.Method() << function(self)
     end
 end
 
-
-
 SubmitItemCtrl._RefreshCenter = HL.Method() << function(self)
     local totalCount = self:_GetSelectItemBundleCount()
     local hasSelectItem = totalCount > 0
@@ -578,8 +534,6 @@ SubmitItemCtrl._RefreshCenter = HL.Method() << function(self)
     self.view.centerSelect.gameObject:SetActiveIfNecessary(hasSelectItem)
     self.view.centerNormal.gameObject:SetActiveIfNecessary(hasNormalItem)
 end
-
-
 
 SubmitItemCtrl._GetItemCount = HL.StaticMethod(HL.String).Return(HL.Number) << function(itemId)
     local itemData = Tables.itemTable:GetValue(itemId)
@@ -591,8 +545,6 @@ SubmitItemCtrl._GetItemCount = HL.StaticMethod(HL.String).Return(HL.Number) << f
 
     return GameInstance.player.inventory:GetItemCountInBag(Utils.getCurrentScope(), itemId)
 end
-
-
 
 SubmitItemCtrl._UpdateCount = HL.Method() << function(self)
     self:_RefreshCenter()
@@ -634,20 +586,24 @@ SubmitItemCtrl._UpdateCount = HL.Method() << function(self)
     end)
 end
 
-
-
-
 SubmitItemCtrl.OnSubmitItem = HL.Method(HL.Any) << function(self, submitId)
+    self.m_isSubmitting = false
     if (submitId[1] == self.m_info.submitId) then
         self:ClosePanel(0)
     else
-        print("SubmitItemCtrl.OnSubmitItem: submitId not match", submitId, self.m_info.submitId)
+        logger.info("SubmitItemCtrl.OnSubmitItem: submitId not match", submitId, self.m_info.submitId)
     end
 end
 
-
-
-
+SubmitItemCtrl.OnSubmitItemFailed = HL.Method(HL.Any) << function(self, submitId)
+    self.m_isSubmitting = false
+    if (submitId[1] == self.m_info.submitId) then
+        self:PlayAnimationOutWithCallback(function()
+            self:ClosePanel(0)
+        end)
+        logger.error("SubmitItemCtrl.OnSubmitItemFailed: submit failed for submitId ", submitId)
+    end
+end
 
 SubmitItemCtrl.OnItemLockedStateChanged = HL.Method(HL.String, HL.Number) << function(self, itemId, instId)
     local selectedItems = self.m_submitItemsSelect
@@ -664,15 +620,10 @@ SubmitItemCtrl.OnItemLockedStateChanged = HL.Method(HL.String, HL.Number) << fun
     end
 end
 
-
-
 SubmitItemCtrl.ShowPanel = HL.StaticMethod(HL.Any) << function(arg)
     arg = unpack(arg) or arg
     PhaseManager:OpenPhase(PHASE_ID, arg)
 end
-
-
-
 
 SubmitItemCtrl.ClosePanel = HL.Method(HL.Number) << function(self, nextChunkIndex)
     if self.m_waitingClosePanel then

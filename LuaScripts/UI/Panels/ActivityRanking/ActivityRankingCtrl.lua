@@ -27,64 +27,25 @@ local floorRankValueConverter = function(value)
     return math.floor(value / 1000)
 end
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityRankingCtrl = HL.Class('ActivityRankingCtrl', uiCtrl.UICtrl)
-
 
 ActivityRankingCtrl.m_activityId = HL.Field(HL.String) << ""
 
-
 ActivityRankingCtrl.m_rankRelatedId = HL.Field(HL.String) << ""
-
 
 ActivityRankingCtrl.m_genRankListCellFunc = HL.Field(HL.Function)
 
-
 ActivityRankingCtrl.m_rawRankInfoDic = HL.Field(HL.Userdata)
-
 
 ActivityRankingCtrl.m_rankInfo = HL.Field(HL.Table)
 
-
 ActivityRankingCtrl.m_selfRankInfo = HL.Field(HL.Table)
-
 
 ActivityRankingCtrl.m_rankInfoReady = HL.Field(HL.Boolean) << false
 
-
 ActivityRankingCtrl.m_roleSimpleInfoReady = HL.Field(HL.Boolean) << false
 
-
 ActivityRankingCtrl.m_scrollToSelfTag = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -94,9 +55,6 @@ ActivityRankingCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_REQ_RANK_LIST] = 'OnActivityReqRankList',
     [MessageConst.ON_FRIEND_INFO_SYNC] = "OnFriendInfoSync",
 }
-
-
-
 
 
 ActivityRankingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -109,14 +67,9 @@ end
 
 
 
-
-
 ActivityRankingCtrl.OnClose = HL.Override() << function(self)
     GameInstance.player.friendSystem:ClearSyncCallback()
 end
-
-
-
 
 ActivityRankingCtrl.OnActivityReqRankList = HL.Method(HL.Table) << function(self, args)
     local activityId, rankRelatedId, rankInfoDic = unpack(args)
@@ -134,15 +87,11 @@ ActivityRankingCtrl.OnActivityReqRankList = HL.Method(HL.Table) << function(self
     self:_TryRefresh()
 end
 
-
-
 ActivityRankingCtrl.OnFriendInfoSync = HL.Method() << function(self)
     self.m_roleSimpleInfoReady = true
 
     self:_TryRefresh()
 end
-
-
 
 ActivityRankingCtrl._InitUI = HL.Method() << function(self)
     self.view.btnClose.onClick:AddListener(function()
@@ -165,15 +114,10 @@ ActivityRankingCtrl._InitUI = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
-
 ActivityRankingCtrl._InitData = HL.Method(HL.Table) << function(self, args)
     self.m_activityId = args.activityId
     self.m_rankRelatedId = args.rankRelatedId
 end
-
-
 
 ActivityRankingCtrl._InitView = HL.Method() << function(self)
     
@@ -186,8 +130,6 @@ ActivityRankingCtrl._InitView = HL.Method() << function(self)
     GameInstance.player.activitySystem:SendReqActivityFriendRank(self.m_activityId, self.m_rankRelatedId)
     GameInstance.player.friendSystem:SyncFriendSimpleInfo()
 end
-
-
 
 ActivityRankingCtrl._RefreshData = HL.Method() << function(self)
     self.m_rankInfo = {}
@@ -232,15 +174,11 @@ ActivityRankingCtrl._RefreshData = HL.Method() << function(self)
 
 end
 
-
-
 ActivityRankingCtrl._RefreshView = HL.Method() << function(self)
     self.view.main:SetState(PanelState.Normal)
     self.view.activityRankingScrollList:UpdateCount(#self.m_rankInfo)
     self:_RefreshSelfInfo()
 end
-
-
 
 ActivityRankingCtrl._TryRefresh = HL.Method() << function(self)
     if not self.m_rankInfoReady then
@@ -260,18 +198,12 @@ ActivityRankingCtrl._TryRefresh = HL.Method() << function(self)
     end
 
     local cell = self.m_genRankListCellFunc(1)
-    UIUtils.setAsNaviTarget(cell.inputBindingGroupNaviDecorator)
+    self:SetNaviTarget(cell.inputBindingGroupNaviDecorator)
 end
-
-
 
 ActivityRankingCtrl._OnClickBtnClose = HL.Method() << function(self)
     PhaseManager:PopPhase(PHASE_ID)
 end
-
-
-
-
 
 ActivityRankingCtrl._OnUpdateCellRankingCell = HL.Method(GameObject, HL.Number) << function(self, go, csIndex)
     local cell = self.m_genRankListCellFunc(go)
@@ -329,9 +261,6 @@ ActivityRankingCtrl._OnUpdateCellRankingCell = HL.Method(GameObject, HL.Number) 
     end
 end
 
-
-
-
 ActivityRankingCtrl._GetRankingStateByRanking = HL.Method(HL.Number).Return(HL.String) << function(self, ranking)
     local rankingState = RankingState.RankingNormal
     if ranking == 1 then
@@ -345,8 +274,6 @@ ActivityRankingCtrl._GetRankingStateByRanking = HL.Method(HL.Number).Return(HL.S
     end
     return rankingState
 end
-
-
 
 ActivityRankingCtrl._RefreshSelfInfo = HL.Method() << function(self)
     local selfInfo = GameInstance.player.friendSystem.SelfInfo
@@ -382,8 +309,6 @@ ActivityRankingCtrl._RefreshSelfInfo = HL.Method() << function(self)
     end)
 end
 
-
-
 ActivityRankingCtrl._OnClickSelfJumpBtn = HL.Method() << function(self)
     if not self.m_selfRankInfo.rankLuaIndex then
         self:Notify(MessageConst.SHOW_TOAST, Language.LUA_ACTIVITY_RANKING_JUMP_TO_SELF_FAIL)
@@ -397,12 +322,10 @@ ActivityRankingCtrl._OnClickSelfJumpBtn = HL.Method() << function(self)
 
     if fastMode then
         local cell = self.m_genRankListCellFunc(luaIndex)
-        UIUtils.setAsNaviTarget(cell.inputBindingGroupNaviDecorator)
+        self:SetNaviTarget(cell.inputBindingGroupNaviDecorator)
         self:_PlayLocateSelfAnim()
     end
 end
-
-
 
 ActivityRankingCtrl._OnScrollEndRankingScrollList = HL.Method() << function(self)
     if not self.m_scrollToSelfTag then
@@ -413,8 +336,6 @@ ActivityRankingCtrl._OnScrollEndRankingScrollList = HL.Method() << function(self
     self:_PlayLocateSelfAnim()
 end
 
-
-
 ActivityRankingCtrl._PlayLocateSelfAnim = HL.Method() << function(self)
     local luaIndex = self.m_selfRankInfo.rankLuaIndex
     local rankCell = self.m_genRankListCellFunc(luaIndex)
@@ -424,8 +345,6 @@ ActivityRankingCtrl._PlayLocateSelfAnim = HL.Method() << function(self)
     end
     rankCell.animationWrapper:Play(LocateSelfAnim)
 end
-
-
 
 ActivityRankingCtrl._EventLogRankingView = HL.Method() << function(self)
     local eventRankInfo = {}

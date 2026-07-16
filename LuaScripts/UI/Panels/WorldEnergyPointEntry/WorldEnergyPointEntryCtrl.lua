@@ -8,54 +8,17 @@ local WEP_STAMINA_LACK_START_CONFIRM_HINT_KEY = "wep_stamina_lack_start_confirm_
 local WEP_GEM_CUSTOM_ITEM_LACK_CONFIRM_HINT_KEY = "wep_gem_custom_item_lack_confirm_hint"
 local WEP_NOT_GEM_CUSTOM_CONFIRM_HINT_KEY = "wep_not_gem_custom_confirm_hint"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WorldEnergyPointEntryCtrl = HL.Class('WorldEnergyPointEntryCtrl', uiCtrl.UICtrl)
-
 
 WorldEnergyPointEntryCtrl.m_rewardCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WorldEnergyPointEntryCtrl.m_gameGroupId = HL.Field(HL.String) << ""
-
 
 WorldEnergyPointEntryCtrl.m_gameId = HL.Field(HL.String) << ""
 
-
 WorldEnergyPointEntryCtrl.m_entityLid = HL.Field(HL.Number) << -1
 
-
 WorldEnergyPointEntryCtrl.m_isFull = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -65,9 +28,6 @@ WorldEnergyPointEntryCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_WORLD_ENERGY_POINT_SELECT_TERMS_CHANGED] = 'OnWEPSelectTermsChanged',
     [MessageConst.ON_STAMINA_CHANGED] = 'OnStaminaChanged',
 }
-
-
-
 
 
 WorldEnergyPointEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -127,9 +87,6 @@ end
 
 
 
-
-
-
 WorldEnergyPointEntryCtrl._InitData = HL.Method(HL.Table) << function(self, arg)
     local gameGroupId, _, entityLid = unpack(arg)
     self.m_gameGroupId = gameGroupId
@@ -137,8 +94,6 @@ WorldEnergyPointEntryCtrl._InitData = HL.Method(HL.Table) << function(self, arg)
     self.m_gameId = GameInstance.player.worldEnergyPointSystem:GetCurSubGameId(gameGroupId)
     self.m_isFull = GameInstance.player.worldEnergyPointSystem.isFull
 end
-
-
 
 WorldEnergyPointEntryCtrl._InitView = HL.Method() << function(self)
     self:_InitBasicView()
@@ -152,8 +107,6 @@ WorldEnergyPointEntryCtrl._InitView = HL.Method() << function(self)
     
     self:_RefreshCostStaminaNode()
 end
-
-
 
 WorldEnergyPointEntryCtrl._InitBasicView = HL.Method() << function(self)
     local worldEnergyPointCfg = Tables.worldEnergyPointTable[self.m_gameId]
@@ -193,8 +146,6 @@ WorldEnergyPointEntryCtrl._InitBasicView = HL.Method() << function(self)
     local succ, wepGroupRecord = GameInstance.player.worldEnergyPointSystem:TryGetWorldEnergyPointGroupRecord(self.m_gameGroupId)
     self.view.weakNode.gameObject:SetActive(succ and wepGroupRecord.isWeak)
 end
-
-
 
 
 WorldEnergyPointEntryCtrl._RefreshRewards = HL.Method() << function(self)
@@ -251,14 +202,6 @@ WorldEnergyPointEntryCtrl._RefreshRewards = HL.Method() << function(self)
     self.view.rewardList.normalizedPosition = Vector2(0, 0)
 end
 
-
-
-
-
-
-
-
-
 WorldEnergyPointEntryCtrl._GenRewardInfo = HL.Method(HL.String, HL.Number, HL.Number, HL.Boolean, HL.String, HL.Opt(HL.Number)).Return(HL.Table)
         << function(self, tagState, groupId, rewardTypeSortId, gained, itemId, itemCount)
     local itemCfg = Tables.itemTable[itemId]
@@ -275,8 +218,6 @@ WorldEnergyPointEntryCtrl._GenRewardInfo = HL.Method(HL.String, HL.Number, HL.Nu
         sortId2 = itemCfg.sortId2,
     }
 end
-
-
 
 WorldEnergyPointEntryCtrl._RefreshSelectTerms = HL.Method() << function(self)
     self.view.gemCustomNode.gameObject:SetActive(self.m_isFull)
@@ -318,8 +259,6 @@ WorldEnergyPointEntryCtrl._RefreshSelectTerms = HL.Method() << function(self)
     end
 end
 
-
-
 WorldEnergyPointEntryCtrl._RefreshCostStaminaNode = HL.Method() << function(self)
     
     local worldEnergyPointCfg = Tables.worldEnergyPointTable[self.m_gameId]
@@ -339,20 +278,13 @@ WorldEnergyPointEntryCtrl._RefreshCostStaminaNode = HL.Method() << function(self
     self.view.staminaLaveNode.gameObject:SetActive(self.m_isFull and canReduceStamina)
 end
 
-
-
 WorldEnergyPointEntryCtrl._OnClickBtnClose = HL.Method() << function(self)
     PhaseManager:PopPhase(PHASE_ID)
 end
 
-
-
 WorldEnergyPointEntryCtrl._OnClickGemOverviewBtn = HL.Method() << function(self)
     UIManager:Open(PanelId.GemTermOverviewPopup, self.m_gameGroupId)
 end
-
-
-
 
 WorldEnergyPointEntryCtrl._OnClickEnemyInfoBtn = HL.Method(HL.Opt(HL.Number)) << function(self, initSelectEnemyLuaIndex)
     local worldEnergyPointCfg = Tables.worldEnergyPointTable[self.m_gameId]
@@ -369,8 +301,6 @@ WorldEnergyPointEntryCtrl._OnClickEnemyInfoBtn = HL.Method(HL.Opt(HL.Number)) <<
     end
     UIManager:AutoOpen(PanelId.CommonEnemyPopup, enemyPopupArg)
 end
-
-
 
 WorldEnergyPointEntryCtrl._OnClickBtnRewardDetails = HL.Method() << function(self)
     local wepGroupCfg = Tables.worldEnergyPointGroupTable[self.m_gameGroupId]
@@ -425,19 +355,13 @@ WorldEnergyPointEntryCtrl._OnClickBtnRewardDetails = HL.Method() << function(sel
     UIManager:AutoOpen(PanelId.CommonRewardDetailsPopup, rewardArgs)
 end
 
-
-
 WorldEnergyPointEntryCtrl._OnClickGemCustomBtn = HL.Method() << function(self)
     PhaseManager:OpenPhase(PhaseId.GemCustomization, self.m_gameGroupId)
 end
 
-
-
 WorldEnergyPointEntryCtrl._OnClickWeakInfoBtn = HL.Method() << function(self)
     UIManager:Open(PanelId.InstructionBook, WORLD_ENERGY_POINT_WEAK_INSTRUCTION_ID)
 end
-
-
 
 WorldEnergyPointEntryCtrl._OnClickBtnGameStartBtn = HL.Method() << function(self)
     
@@ -465,14 +389,10 @@ WorldEnergyPointEntryCtrl._OnClickBtnGameStartBtn = HL.Method() << function(self
     end
 end
 
-
-
 WorldEnergyPointEntryCtrl._TryStartWorldEnergyPoint = HL.Method() << function(self)
     GameInstance.player.worldEnergyPointSystem:SendReqStartWorldEnergyPoint(self.m_gameId, self.m_entityLid)
     PhaseManager:PopPhase(PHASE_ID)
 end
-
-
 
 WorldEnergyPointEntryCtrl._StartStaminaCheck = HL.Method() << function(self)
     local wepGameCfg = Tables.worldEnergyPointTable[self.m_gameId]
@@ -491,8 +411,6 @@ WorldEnergyPointEntryCtrl._StartStaminaCheck = HL.Method() << function(self)
     end
 end
 
-
-
 WorldEnergyPointEntryCtrl._ShowGemCustomItemLackPopup = HL.Method() << function(self)
     self:_TryShowSerializedPopup(Language.LUA_WEP_GEM_CUSTOM_ITEM_LACK_CONFIRM_HINT,
                                  WEP_GEM_CUSTOM_ITEM_LACK_CONFIRM_HINT_KEY, function()
@@ -500,19 +418,12 @@ WorldEnergyPointEntryCtrl._ShowGemCustomItemLackPopup = HL.Method() << function(
     end)
 end
 
-
-
 WorldEnergyPointEntryCtrl._ShowNotGemCustomPopup = HL.Method() << function(self)
     self:_TryShowSerializedPopup(Language.LUA_WEP_NOT_GEM_CUSTOM_CONFIRM_HINT,
                                  WEP_NOT_GEM_CUSTOM_CONFIRM_HINT_KEY, function()
         self:_StartStaminaCheck()
     end)
 end
-
-
-
-
-
 
 WorldEnergyPointEntryCtrl._TryShowSerializedPopup = HL.Method(HL.String, HL.String, HL.Function)
         << function(self, content, serializeKey, onConfirm)
@@ -533,15 +444,13 @@ WorldEnergyPointEntryCtrl._TryShowSerializedPopup = HL.Method(HL.String, HL.Stri
             onConfirm = function()
                 ClientDataManagerInst:SetBool(serializeKey,
                                               closuresIsOn, false,
-                                              SERIALIZED_CATEGORY, true,
+                                              SERIALIZED_CATEGORY,
                                               EClientDataTimeValidType.CurrentDay)
                 onConfirm()
             end,
         })
     end
 end
-
-
 
 WorldEnergyPointEntryCtrl.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
@@ -580,9 +489,6 @@ WorldEnergyPointEntryCtrl.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL
         return popupState
     end
 end
-
-
-
 
 WorldEnergyPointEntryCtrl.TryRecoverPopupState = HL.Method(HL.Any) << function(self, popupState)
     if popupState == nil or string.isEmpty(popupState.popupType) then
@@ -625,9 +531,6 @@ WorldEnergyPointEntryCtrl.TryRecoverPopupState = HL.Method(HL.Any) << function(s
     end
 end
 
-
-
-
 WorldEnergyPointEntryCtrl.OnWEPSelectTermsChanged = HL.Method(HL.Table) << function(self, args)
     local gameGroupId = unpack(args)
     if self.m_gameGroupId ~= gameGroupId then
@@ -636,8 +539,6 @@ WorldEnergyPointEntryCtrl.OnWEPSelectTermsChanged = HL.Method(HL.Table) << funct
 
     self:_RefreshSelectTerms()
 end
-
-
 
 WorldEnergyPointEntryCtrl.OnStaminaChanged = HL.Method() << function(self)
     self:_RefreshCostStaminaNode()

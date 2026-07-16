@@ -1,25 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
 ContactFriendCell = HL.Class('ContactFriendCell', UIWidgetBase)
-
 
 ContactFriendCell.m_friendInfo = HL.Field(HL.Any)
 
-
 ContactFriendCell.m_roleId = HL.Field(HL.Any)
-
 
 ContactFriendCell.m_hideRedDot = HL.Field(HL.Boolean) << false
 
@@ -30,13 +15,6 @@ local FriendState = {
 }
 
 local DEFAULT_CHAT_BG_ICON = "business_card_topic_normal_2"
-
-
-
-
-
-
-
 
 ContactFriendCell.InitContactFriendCell = HL.Method(HL.Number, HL.Any, HL.Number,HL.Function, HL.Opt(HL.Function)) << function(
     self, roleId, friendInfo, csIndex, onClickFun, headClickFun)
@@ -70,11 +48,6 @@ ContactFriendCell.InitContactFriendCell = HL.Method(HL.Number, HL.Any, HL.Number
     end)
 end
 
-
-
-
-
-
 ContactFriendCell.InitLoadingFriendCell = HL.Method(HL.Number, HL.Number, HL.Function) << function(self, roleId, csIndex, onClickFun)
     self.view.noDataState.gameObject:SetActive(true)
     self.view.noDataBgDecoMask.gameObject:SetActive(true)
@@ -99,11 +72,6 @@ ContactFriendCell.InitLoadingFriendCell = HL.Method(HL.Number, HL.Number, HL.Fun
     end)
     self.view.redDotLayout.gameObject:SetActive(false)
 end
-
-
-
-
-
 
 
 ContactFriendCell.InitEmptyFriendCell = HL.Method(HL.Number, HL.Number, HL.Function) << function(self, roleId, csIndex, onClickFun)
@@ -131,8 +99,6 @@ ContactFriendCell.InitEmptyFriendCell = HL.Method(HL.Number, HL.Number, HL.Funct
     self.view.redDotLayout.gameObject:SetActive(false)
 end
 
-
-
 ContactFriendCell.UpdateOnlineInfo = HL.Method() << function(self)
     self.view.onlineState.gameObject:SetActive(true)
     local friendInfo = self.m_friendInfo
@@ -150,8 +116,6 @@ ContactFriendCell.UpdateOnlineInfo = HL.Method() << function(self)
 end
 
 
-
-
 ContactFriendCell.UpdateTileTxt = HL.Method() << function(self)
     local friendInfo = self.m_friendInfo
     local nameStr = ""
@@ -162,8 +126,6 @@ ContactFriendCell.UpdateTileTxt = HL.Method() << function(self)
     end
     self.view.tileTxt.text = nameStr
 end
-
-
 
 ContactFriendCell.UpdateThemeBg = HL.Method() << function(self)
     local friendInfo = self.m_friendInfo
@@ -181,14 +143,9 @@ ContactFriendCell.UpdateThemeBg = HL.Method() << function(self)
 end
 
 
-
-
-
 ContactFriendCell.SetHideRedDot = HL.Method(HL.Boolean) << function(self, hide)
     self.m_hideRedDot = hide
 end
-
-
 
 ContactFriendCell.UpdateRedDot = HL.Method() << function(self)
     if self.m_hideRedDot then

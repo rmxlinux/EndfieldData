@@ -15,113 +15,7 @@ local UnhiddenClipName = {
     TechLine = "factechtree_line_unhidden",
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacTechTreeCtrl = HL.Class('FacTechTreeCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -139,6 +33,11 @@ FacTechTreeCtrl.s_messages = HL.StaticField(HL.Table) << {
 
     [MessageConst.FAC_ON_UNLOCK_TECH_TREE_UI] = 'OnUnlockNode',
     [MessageConst.FAC_ON_UNLOCK_TECH_TIER_UI] = 'OnUnlockTier',
+
+    [MessageConst.FAC_ON_UNLOCK_STT_LAYERS_BEGIN] = 'OnUnlockSttLayersBegin',
+    [MessageConst.FAC_ON_UNLOCK_STT_LAYERS_END] = 'OnUnlockSttLayersEnd',
+
+    [MessageConst.ON_SUB_GAME_ACTIVE] = "OnSubGameActive",
 }
 
 local facSTTGroupTable = Tables.facSTTGroupTable
@@ -146,137 +45,93 @@ local facSTTLayerTable = Tables.facSTTLayerTable
 local facSTTNodeTable = Tables.facSTTNodeTable
 local facSTTCategoryTable = Tables.facSTTCategoryTable
 
-
 FacTechTreeCtrl.m_nodeCells = HL.Field(HL.Forward("UIListCache"))
-
 
 FacTechTreeCtrl.m_lineCells = HL.Field(HL.Forward("UIListCache"))
 
-
 FacTechTreeCtrl.m_layerCells = HL.Field(HL.Forward("UIListCache"))
-
 
 FacTechTreeCtrl.m_categoryTabCells = HL.Field(HL.Forward("UIListCache"))
 
-
 FacTechTreeCtrl.m_categoryLineCells = HL.Field(HL.Forward("UIListCache"))
-
 
 FacTechTreeCtrl.m_targetCells = HL.Field(HL.Forward("UIListCache"))
 
-
 FacTechTreeCtrl.m_unhiddenCategoryBgCells = HL.Field(HL.Forward("UIListCache"))
-
 
 FacTechTreeCtrl.m_normalLayerCutLineCells = HL.Field(HL.Forward("UIListCache"))
 
-
 FacTechTreeCtrl.m_getRewardCell = HL.Field(HL.Function)
-
 
 FacTechTreeCtrl.m_curSelectNode = HL.Field(HL.Any)
 
-
 FacTechTreeCtrl.m_lineList = HL.Field(HL.Table)
-
 
 FacTechTreeCtrl.m_rewardList = HL.Field(HL.Table)
 
-
 FacTechTreeCtrl.m_recommendTechId = HL.Field(HL.String) << ""
-
 
 FacTechTreeCtrl.m_popupArgs = HL.Field(HL.Table)
 
-
 FacTechTreeCtrl.m_popupUIState = HL.Field(HL.Number) << 0
-
 
 FacTechTreeCtrl.m_showSidebar = HL.Field(HL.Boolean) << false
 
-
 FacTechTreeCtrl.m_isFocus = HL.Field(HL.Boolean) << false
-
 
 FacTechTreeCtrl.m_packageId = HL.Field(HL.String) << ""
 
-
 FacTechTreeCtrl.m_followTick = HL.Field(HL.Number) << -1
-
 
 FacTechTreeCtrl.m_lastScale = HL.Field(HL.Number) << -1
 
-
 FacTechTreeCtrl.m_getConsumeItemCell = HL.Field(HL.Function)
-
 
 FacTechTreeCtrl.m_consumeItems = HL.Field(HL.Table)
 
-
 FacTechTreeCtrl.m_blackboxCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 FacTechTreeCtrl.m_getBlackboxCellFunc = HL.Field(HL.Function)
 
-
 FacTechTreeCtrl.m_allBlackboxIds = HL.Field(HL.Table)
-
 
 FacTechTreeCtrl.m_showBlackboxAvailableTimer = HL.Field(HL.Number) << -1
 
-
 FacTechTreeCtrl.m_showUnhiddenCategoryQueue = HL.Field(HL.Table)
-
 
 FacTechTreeCtrl.m_showUnhiddenCategoryIndex = HL.Field(HL.Number) << 0
 
-
 FacTechTreeCtrl.m_showUnhiddenTechQueue = HL.Field(HL.Table)
-
 
 FacTechTreeCtrl.m_showUnhiddenTechIndex = HL.Field(HL.Number) << 0
 
-
 FacTechTreeCtrl.m_curSelectTechId = HL.Field(HL.String) << ""
-
 
 FacTechTreeCtrl.m_isAllOpenProgressFinished = HL.Field(HL.Boolean) << false
 
-
 FacTechTreeCtrl.m_techId2CellLuaIndex = HL.Field(HL.Table)
-
 
 FacTechTreeCtrl.m_techId2LineCellLuaIndex = HL.Field(HL.Table)
 
-
 FacTechTreeCtrl.m_unhiddenShowCor = HL.Field(HL.Thread)
-
 
 FacTechTreeCtrl.m_openUnlockTierBindingKey = HL.Field(HL.Number) << -1
 
-
 FacTechTreeCtrl.m_lockedLayerIds = HL.Field(HL.Table)
-
 
 FacTechTreeCtrl.m_curFocusNode = HL.Field(HL.Any)
 
-
 FacTechTreeCtrl.m_needOpenLayerId = HL.Field(HL.String) << ""
-
 
 FacTechTreeCtrl.m_externalFocusNode = HL.Field(HL.Boolean) << false
 
-
 FacTechTreeCtrl.m_externalFocusId = HL.Field(HL.String) << ""
 
+FacTechTreeCtrl.m_activeGamesWhenUnlockLayer = HL.Field(HL.Table)
 
 FacTechTreeCtrl.m_isRelativeBlackboxNodeOpened = HL.Field(HL.Boolean) << false
 
-
 FacTechTreeCtrl.m_needRecoverRelativeBlackboxNode = HL.Field(HL.Boolean) << false
-
-
-
 
 
 FacTechTreeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -397,8 +252,6 @@ FacTechTreeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitController()
 end
 
-
-
 FacTechTreeCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.CLOSE_TECH_TREE_POP_UP)
 
@@ -416,14 +269,9 @@ FacTechTreeCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
-
 FacTechTreeCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     self.view.screenZoomNode.gameObject:SetActive(active)
 end
-
-
 
 FacTechTreeCtrl.OnRefreshUI = HL.Method() << function(self)
     if not self.m_showSidebar then
@@ -433,8 +281,14 @@ FacTechTreeCtrl.OnRefreshUI = HL.Method() << function(self)
     self:_RefreshNodeDetail()
 end
 
-
-
+FacTechTreeCtrl.OnSubGameActive = HL.Method(HL.Table) << function(self, args)
+    
+    
+    if self.m_activeGamesWhenUnlockLayer then
+        local gameId = unpack(args)
+        table.insert(self.m_activeGamesWhenUnlockLayer, gameId)
+    end
+end
 
 FacTechTreeCtrl.OnUnlockTier = HL.Method(HL.Table) << function(self, args)
     self:_UpdateUnlockLayerIds()
@@ -452,14 +306,6 @@ FacTechTreeCtrl.OnUnlockTier = HL.Method(HL.Table) << function(self, args)
 
     self:_RefreshLine(false)
 
-    local layerCfg = Tables.facSTTLayerTable[layerId]
-    if layerCfg.blackboxIds.Count > 0 then
-        self.view.blackBoxAddNode.gameObject:SetActiveIfNecessary(true)
-        self.m_showBlackboxAvailableTimer = self:_StartTimer(self.view.config.SHOW_BLACKBOX_AVAILABLE_TIME, function()
-            self.view.blackBoxAddNode.gameObject:SetActiveIfNecessary(false)
-        end)
-    end
-
     local length = self.m_layerCells:Get(1):GetUnlockClipLength()
     self:_UpdateRecommendNode()
     self:_StartTimer(length, function()
@@ -469,11 +315,29 @@ FacTechTreeCtrl.OnUnlockTier = HL.Method(HL.Table) << function(self, args)
     end)
 end
 
+FacTechTreeCtrl.OnUnlockSttLayersBegin = HL.Method() << function(self)
+    self.m_activeGamesWhenUnlockLayer = {}
+end
 
+FacTechTreeCtrl.OnUnlockSttLayersEnd = HL.Method() << function(self)
+    
+    if #self.m_activeGamesWhenUnlockLayer > 0 then
+        self:_ShowBlackboxAvailable()
+    end
 
-FacTechTreeCtrl.OnUnlockNode = HL.Method() << function(self)
+    self.m_activeGamesWhenUnlockLayer = nil
+end
+
+FacTechTreeCtrl._ShowBlackboxAvailable = HL.Method() << function(self)
+    self.view.blackBoxAddNode.gameObject:SetActiveIfNecessary(true)
+    self.m_showBlackboxAvailableTimer = self:_StartTimer(self.view.config.SHOW_BLACKBOX_AVAILABLE_TIME, function()
+        self.view.blackBoxAddNode.gameObject:SetActiveIfNecessary(false)
+    end)
+end
+
+FacTechTreeCtrl.OnUnlockNode = HL.Method(HL.Table) << function(self, args)
     local techTreeSystem = GameInstance.player.facTechTreeSystem
-    local curTechId = self.m_curSelectNode.techId
+    local curTechId = unpack(args)
 
     self:_UpdateRecommendNode()
     self:_RefreshLine(false)
@@ -514,17 +378,11 @@ FacTechTreeCtrl.OnUnlockNode = HL.Method() << function(self)
     CS.Beyond.Gameplay.Audio.AudioRemoteFactoryAnnouncement.Announcement("au_fac_announcement_techtree_unlock")
 end
 
-
-
-
 FacTechTreeCtrl.OnRefreshNodeName = HL.Method(HL.Boolean) << function(self, show)
     self.m_nodeCells:Update(function(cell, _)
         cell:OnShowNameStateChange(show)
     end)
 end
-
-
-
 
 FacTechTreeCtrl.FocusTechTreeNode = HL.Method(HL.Table) << function(self, args)
     local techId = unpack(args)
@@ -542,9 +400,6 @@ FacTechTreeCtrl.FocusTechTreeNode = HL.Method(HL.Table) << function(self, args)
     local nodeCell = self.m_nodeCells:Get(luaIndex)
     self:_OnClickNode(nodeCell, false)
 end
-
-
-
 
 FacTechTreeCtrl.FocusTechTreeCategory = HL.Method(HL.Table) << function(self, args)
     local categoryId = unpack(args)
@@ -565,9 +420,6 @@ FacTechTreeCtrl.FocusTechTreeCategory = HL.Method(HL.Table) << function(self, ar
     self.view.bigRectHelper:FocusNode(categoryTab.rectTransform)
 end
 
-
-
-
 FacTechTreeCtrl.FocusTechTreeLayer = HL.Method(HL.Table) << function(self, args)
     local layerId = unpack(args)
     local succ, layerCfg = Tables.facSTTLayerTable:TryGetValue(layerId)
@@ -587,14 +439,9 @@ FacTechTreeCtrl.FocusTechTreeLayer = HL.Method(HL.Table) << function(self, args)
     self.view.bigRectHelper:FocusNode(layerCell.view.craft)
 end
 
-
-
 FacTechTreeCtrl.ZoomToFullTechTree = HL.Method() << function(self)
     self.view.bigRectHelper:ZoomToFullRect(function()  end)
 end
-
-
-
 
 FacTechTreeCtrl.AutoSelect = HL.Method(HL.Opt(HL.String)) << function(self, techId)
     if string.isEmpty(techId) then
@@ -606,25 +453,17 @@ FacTechTreeCtrl.AutoSelect = HL.Method(HL.Opt(HL.String)) << function(self, tech
     self:_OnClickNode(nodeCell)
 end
 
-
-
 FacTechTreeCtrl.GetCurSelectNode = HL.Method().Return(HL.Any) << function(self)
     return self.m_curSelectNode
 end
-
-
 
 FacTechTreeCtrl.GetCurPackageId = HL.Method().Return(HL.Any) << function(self)
     return self.m_packageId
 end
 
-
-
 FacTechTreeCtrl.GetIsRelativeBlackboxNodeOpened = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_isRelativeBlackboxNodeOpened
 end
-
-
 
 FacTechTreeCtrl._InitInfo = HL.Method() << function(self)
     local packageCfg = Tables.facSTTGroupTable[self.m_packageId]
@@ -634,8 +473,6 @@ FacTechTreeCtrl._InitInfo = HL.Method() << function(self)
     self.view.domainIcon:LoadSprite(UIConst.UI_SPRITE_SETTLEMENT, domainCfg.domainIcon)
     self.view.nameText:SetAndResolveTextStyle(packageCfg.groupName)
 end
-
-
 
 FacTechTreeCtrl._UpdateUnlockLayerIds = HL.Method() << function(self)
     self.m_lockedLayerIds = {}
@@ -659,8 +496,6 @@ FacTechTreeCtrl._UpdateUnlockLayerIds = HL.Method() << function(self)
         end
     end
 end
-
-
 
 FacTechTreeCtrl._BuildPanel = HL.Method() << function(self)
     local system = GameInstance.player.facTechTreeSystem
@@ -983,8 +818,6 @@ FacTechTreeCtrl._BuildPanel = HL.Method() << function(self)
     end)
 end
 
-
-
 FacTechTreeCtrl._UpdateRecommendNode = HL.Method() << function(self)
     local recommendTechId = ""
     local minSort = math.maxinteger
@@ -1026,9 +859,6 @@ FacTechTreeCtrl._UpdateRecommendNode = HL.Method() << function(self)
     self.m_recommendTechId = recommendTechId
 end
 
-
-
-
 FacTechTreeCtrl._RefreshLine = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     local lineList = self.m_lineList
     local techTreeSystem = GameInstance.player.facTechTreeSystem
@@ -1054,9 +884,6 @@ FacTechTreeCtrl._RefreshLine = HL.Method(HL.Opt(HL.Boolean)) << function(self, i
     end)
 end
 
-
-
-
 FacTechTreeCtrl._OnClickLayer = HL.Method(HL.String) << function(self, layerId)
     local isLocked = GameInstance.player.facTechTreeSystem:LayerIsLocked(layerId)
     if not isLocked or string.isEmpty(Tables.facSTTLayerTable[layerId].preLayer) then
@@ -1065,10 +892,6 @@ FacTechTreeCtrl._OnClickLayer = HL.Method(HL.String) << function(self, layerId)
 
     UIManager:Open(PanelId.FacTechTreeUnlockTierPopup, { layerId = layerId, lockedLayerIds = self.m_lockedLayerIds })
 end
-
-
-
-
 
 FacTechTreeCtrl._OnClickNode = HL.Method(HL.Any, HL.Opt(HL.Boolean)) << function(self, node, playSound)
     self:_ToggleSideBarForController(true)
@@ -1087,8 +910,6 @@ FacTechTreeCtrl._OnClickNode = HL.Method(HL.Any, HL.Opt(HL.Boolean)) << function
     end
 end
 
-
-
 FacTechTreeCtrl._RefreshNodeDetail = HL.Method() << function(self)
     local detailNode = self.view.sidebar.facTechNodeDetail
     local techId = self.m_curSelectNode.techId
@@ -1103,12 +924,11 @@ FacTechTreeCtrl._RefreshNodeDetail = HL.Method() << function(self)
     local techTreeSystem = GameInstance.player.facTechTreeSystem
     local isLocked = techTreeSystem:NodeIsLocked(techId)
     local conditions = nodeData.conditions
-    if not isLocked or conditions.Count <= 0 then
-        detailNode.conditionNode.gameObject:SetActiveIfNecessary(false)
-    else
-        detailNode.conditionNode.gameObject:SetActiveIfNecessary(true)
+    local showConditionNode = conditions.Count > 0 and isLocked
+    detailNode.conditionNode.gameObject:SetActiveIfNecessary(showConditionNode)
+    if showConditionNode then
         self.m_targetCells:Refresh(nodeData.conditions.Count, function(item, index)
-            self:_RefreshConditions(item, index)
+            self:_RefreshConditionCell(item, index)
         end)
     end
 
@@ -1164,8 +984,6 @@ FacTechTreeCtrl._RefreshNodeDetail = HL.Method() << function(self)
 
     
 end
-
-
 
 FacTechTreeCtrl._RefreshUnlockButton = HL.Method() << function(self)
     local detailNode = self.view.sidebar.facTechNodeDetail
@@ -1242,10 +1060,6 @@ FacTechTreeCtrl._RefreshUnlockButton = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 FacTechTreeCtrl._OnUpdateRewardsCell = HL.Method(HL.Forward("Item"), HL.Number) << function(self, cell, luaIndex)
     local techId = self.m_curSelectNode.techId
     local techTreeSystem = GameInstance.player.facTechTreeSystem
@@ -1265,10 +1079,6 @@ FacTechTreeCtrl._OnUpdateRewardsCell = HL.Method(HL.Forward("Item"), HL.Number) 
     cell.view.rewardedCover.gameObject:SetActiveIfNecessary(not techTreeSystem:NodeIsLocked(techId))
 end
 
-
-
-
-
 FacTechTreeCtrl._OnUpdateConsumeCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local consumeItemData = self.m_consumeItems[luaIndex]
     cell.ownTxt.text = consumeItemData.ownCount
@@ -1276,8 +1086,6 @@ FacTechTreeCtrl._OnUpdateConsumeCell = HL.Method(HL.Any, HL.Number) << function(
         self:_OnClickShowRewardItemTips(consumeItemData.id)
     end)
 end
-
-
 
 FacTechTreeCtrl._OnCostPointClick = HL.Method() << function(self)
     local packageCfg = Tables.facSTTGroupTable[self.m_packageId]
@@ -1289,9 +1097,6 @@ FacTechTreeCtrl._OnCostPointClick = HL.Method() << function(self)
     })
 end
 
-
-
-
 FacTechTreeCtrl._OnClickShowRewardItemTips = HL.Method(HL.String) << function(self, itemId)
     self:Notify(MessageConst.SHOW_ITEM_TIPS, {
         itemId = itemId,
@@ -1302,43 +1107,63 @@ FacTechTreeCtrl._OnClickShowRewardItemTips = HL.Method(HL.String) << function(se
     })
 end
 
-
-
-
-
-FacTechTreeCtrl._RefreshConditions = HL.Method(HL.Table, HL.Number) << function(self, item, index)
+FacTechTreeCtrl._RefreshConditionCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local techId = self.m_curSelectNode.techId
     local nodeData = facSTTNodeTable:GetValue(techId)
     local techTreeSystem = GameInstance.player.facTechTreeSystem
     local conditions = nodeData.conditions
     local condition = conditions[CSIndex(index)]
-    local progress = techTreeSystem:GetConditionProgress(techId, condition.conditionId)
-    local total = techTreeSystem:GetConditionTotalProgress(condition.conditionId)
-    local progress = string.format("(%1$d/%2$d)", progress, total)
-    item.desc.text = condition.desc .. " " .. progress
-    item.descNormal.text = condition.desc .. " " .. progress
 
-    item.normal.gameObject:SetActiveIfNecessary(
-            not techTreeSystem:GetConditionIsCompleted(techId, condition.conditionId))
-    item.complete.gameObject:SetActiveIfNecessary(
-            techTreeSystem:GetConditionIsCompleted(techId, condition.conditionId))
+    local isMissionCell = condition.conditionType == GEnums.ConditionType.MissionStateEqual
+            or condition.conditionType == GEnums.ConditionType.QuestStateEqual
+    local isQuestId = condition.conditionType == GEnums.ConditionType.QuestStateEqual
+    
+    local isComplete = techTreeSystem:GetConditionIsCompleted(techId, condition.conditionId)
+    local missionStyle = isMissionCell and not isComplete
+    cell.stateController:SetState(missionStyle and "GotoMission" or "Normal")
+    if missionStyle then
+        local id = condition.parameters[0].valueStringList[0]
+        local missionId = isQuestId and GameInstance.player.mission:GetMissionIdByQuestId(id) or id
+        cell.gotoMissionBtn.onClick:RemoveAllListeners()
+        cell.gotoMissionBtn.onClick:AddListener(function()
+            if GameInstance.player.mission:GetMissionState(missionId) ==
+                    CS.Beyond.Gameplay.MissionSystem.MissionState.Processing then
+                PhaseManager:OpenPhase(PhaseId.Mission, { autoSelect = missionId })
+            else
+                Notify(MessageConst.SHOW_TOAST, Language.LUA_TECH_TREE_TECH_MISSION_CONDITION_NOT_PROCESSING)
+            end
+        end)
+        cell.missionDescTxt.text = condition.desc
+    else
+        local progress = techTreeSystem:GetConditionProgress(techId, condition.conditionId)
+        local total = techTreeSystem:GetConditionTotalProgress(condition.conditionId)
+        local progress = string.format("(%1$d/%2$d)", progress, total)
+        cell.normalNode:SetState(isComplete and "Complete" or "Normal")
+        cell.descTxt.text = condition.desc .. " " .. progress
+    end
 end
-
-
 
 FacTechTreeCtrl._OnRelativeBtnClick = HL.Method() << function(self)
     local techId = self.m_curSelectNode.techId
     local nodeData = facSTTNodeTable:GetValue(techId)
-    local layerId = nodeData.layer
-    if GameInstance.player.facTechTreeSystem:LayerIsLocked(layerId) then
+    
+    local relativeBlackboxes = FactoryUtils.getBlackboxInfoTbl(nodeData.blackboxIds, false)
+    local showToast = false
+    for _, relativeBlackbox in ipairs(relativeBlackboxes) do
+        if not DungeonUtils.isDungeonActive(relativeBlackbox.blackboxId) then
+            showToast = true
+            break
+        end
+    end
+
+    if showToast then
+        local layerId = nodeData.layer
         local layerCfg = Tables.facSTTLayerTable[layerId]
         local hint = string.format(Language.LUA_TECH_TREE_JUMP_BLACKBOX_ENTRY_FAIL_FORMAT, layerCfg.name)
         Notify(MessageConst.SHOW_TOAST, hint)
         return
     end
 
-    
-    local relativeBlackboxes = FactoryUtils.getBlackboxInfoTbl(nodeData.blackboxIds, false)
     if #relativeBlackboxes > 0 then
         self.m_blackboxCellCache:Refresh(#relativeBlackboxes, function(cell, luaIndex)
             local info = relativeBlackboxes[luaIndex]
@@ -1349,9 +1174,6 @@ FacTechTreeCtrl._OnRelativeBtnClick = HL.Method() << function(self)
         self:Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_TECH_TREE_NO_RELATIVE_BLACKBOX_TOAST_DESC)
     end
 end
-
-
-
 
 FacTechTreeCtrl._ToggleTechNodeRelativeBlackboxPanel = HL.Method(HL.Boolean) << function(self, isOn)
     self.m_isRelativeBlackboxNodeOpened = isOn
@@ -1371,10 +1193,6 @@ FacTechTreeCtrl._ToggleTechNodeRelativeBlackboxPanel = HL.Method(HL.Boolean) << 
     end
 end
 
-
-
-
-
 FacTechTreeCtrl._OnUpdateBlackboxCell = HL.Method(HL.Any, HL.String) << function(self, cell, blackboxId)
     FactoryUtils.updateBlackboxCell(cell, blackboxId, function()
         local isUnlock = DungeonUtils.isDungeonUnlock(blackboxId)
@@ -1383,16 +1201,12 @@ FacTechTreeCtrl._OnUpdateBlackboxCell = HL.Method(HL.Any, HL.String) << function
             self:_ToggleTechNodeRelativeBlackboxPanel(false)
             PhaseManager:OpenPhase(PhaseId.BlackboxEntry, { packageId = self.m_packageId, blackboxId = blackboxId })
         end
-    end)
+    end, true)
 end
-
-
 
 FacTechTreeCtrl._OnPackUpBtnClick = HL.Method() << function(self)
     self:_ToggleTechNodeRelativeBlackboxPanel(false)
 end
-
-
 
 FacTechTreeCtrl._OpenNodeDetail = HL.Method() << function(self)
     self:_ShowSideBar(SidebarType.NodeDetails)
@@ -1400,8 +1214,6 @@ FacTechTreeCtrl._OpenNodeDetail = HL.Method() << function(self)
 
     self.view.sidebar.facTechNodeDetail.animationWrapper:SampleToOutAnimationEnd()
 end
-
-
 
 FacTechTreeCtrl._OpenBlackboxOverview = HL.Method() << function(self)
     self:_ShowSideBar(SidebarType.BlackboxList)
@@ -1414,9 +1226,6 @@ FacTechTreeCtrl._OpenBlackboxOverview = HL.Method() << function(self)
     blackboxOverview.emptyNode.gameObject:SetActiveIfNecessary(count == 0)
 end
 
-
-
-
 FacTechTreeCtrl._ShowSideBar = HL.Method(HL.Number) << function(self, sidebarType)
     self.m_showSidebar = true
     self.view.bigRectHelper:ChangePaddingRight(math.floor(self.view.sidebar.rectTransform.sizeDelta.x))
@@ -1428,9 +1237,6 @@ FacTechTreeCtrl._ShowSideBar = HL.Method(HL.Number) << function(self, sidebarTyp
     self.view.sidebar.blackboxOverview.gameObject:SetActiveIfNecessary(sidebarType == SidebarType.BlackboxList)
     InputManagerInst:ToggleGroup(self.view.sidebar.inputBindingGroupMonoTarget.groupId, true)
 end
-
-
-
 
 FacTechTreeCtrl._CloseSidebar = HL.Method(HL.Opt(HL.Function)) << function(self, onFinish)
     if self.m_showSidebar == false then
@@ -1460,16 +1266,11 @@ FacTechTreeCtrl._CloseSidebar = HL.Method(HL.Opt(HL.Function)) << function(self,
     end)
 end
 
-
-
 FacTechTreeCtrl._GenFilterArgs = HL.Method().Return(HL.Table) << function(self)
     return FactoryUtils.genFilterBlackboxArgs(self.m_packageId, function(selectedTags)
         self:_OnFilterConfirm(selectedTags)
     end)
 end
-
-
-
 
 FacTechTreeCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, selectedTags)
     selectedTags = selectedTags or {}
@@ -1486,13 +1287,9 @@ FacTechTreeCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, selecte
     end
 end
 
-
-
 FacTechTreeCtrl._OnBtnBlackboxClick = HL.Method() << function(self)
     PhaseManager:OpenPhase(PhaseId.BlackboxEntry, { packageId = self.m_packageId })
 end
-
-
 
 FacTechTreeCtrl._ShowUnlock = HL.Method() << function(self)
     local args = self.m_popupArgs
@@ -1511,8 +1308,6 @@ FacTechTreeCtrl._ShowUnlock = HL.Method() << function(self)
     end
 end
 
-
-
 FacTechTreeCtrl._ShowLevelUp = HL.Method() << function(self)
     local args = self.m_popupArgs
     if not string.isEmpty(args.buildingInfo.buildingId) then
@@ -1529,8 +1324,6 @@ FacTechTreeCtrl._ShowLevelUp = HL.Method() << function(self)
         self:_ShowRewards()
     end
 end
-
-
 
 FacTechTreeCtrl._ShowRewards = HL.Method() << function(self, args)
     local args = self.m_popupArgs
@@ -1549,8 +1342,6 @@ FacTechTreeCtrl._ShowRewards = HL.Method() << function(self, args)
     end
 end
 
-
-
 FacTechTreeCtrl._HidePopup = HL.Method() << function(self)
     if self.m_popupUIState > 0 then
         Notify(MessageConst.HIDE_TECH_TREE_POP_UP, { onHide = function()
@@ -1561,8 +1352,6 @@ FacTechTreeCtrl._HidePopup = HL.Method() << function(self)
     end
     self.m_popupUIState = 0
 end
-
-
 
 FacTechTreeCtrl._OnOpenTweenFinished = HL.Method() << function(self)
     self:_StartUnhiddenCategoryShow()
@@ -1593,7 +1382,7 @@ FacTechTreeCtrl._OnOpenTweenFinished = HL.Method() << function(self)
         local focusTechCellIndex = string.isEmpty(focusTechId) and 1 or self.m_techId2CellLuaIndex[focusTechId]
         
         local defaultTargetCell = self.m_nodeCells:Get(focusTechCellIndex)
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.techNode, defaultTargetCell.view.itemBtn)
+        self:SetNaviTarget(defaultTargetCell.view.itemBtn)
     end
 
     if self.m_needRecoverRelativeBlackboxNode and self.m_curSelectNode then
@@ -1601,8 +1390,6 @@ FacTechTreeCtrl._OnOpenTweenFinished = HL.Method() << function(self)
         self:_OnRelativeBtnClick()
     end
 end
-
-
 
 FacTechTreeCtrl._AllOpenProgressFinished = HL.Method() << function(self)
     self:AutoSelect(self.m_curSelectTechId)
@@ -1625,11 +1412,6 @@ FacTechTreeCtrl._AllOpenProgressFinished = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
-
 FacTechTreeCtrl._FocusTechNode = HL.Method(Transform, HL.Opt(HL.Boolean, HL.Function)) << function(self, trans, needTween, cb)
     self.m_isFocus = true
     self.view.bigRectHelper:FocusNode(trans, needTween, function()
@@ -1639,8 +1421,6 @@ FacTechTreeCtrl._FocusTechNode = HL.Method(Transform, HL.Opt(HL.Boolean, HL.Func
         self.m_isFocus = false
     end)
 end
-
-
 
 FacTechTreeCtrl._ProcessCacheAfterAllOpenProgress = HL.Method() << function(self)
     if string.isEmpty(self.m_externalFocusId) then
@@ -1665,8 +1445,6 @@ end
 
 
 
-
-
 FacTechTreeCtrl._StartUnhiddenCategoryShow = HL.Method() << function(self)
     if #self.m_showUnhiddenCategoryQueue > 0 then
         self.m_showUnhiddenCategoryIndex = 0
@@ -1676,8 +1454,6 @@ FacTechTreeCtrl._StartUnhiddenCategoryShow = HL.Method() << function(self)
         self:_StartUnhiddenTechShow()
     end
 end
-
-
 
 FacTechTreeCtrl._NextUnhiddenCategoryShow = HL.Method() << function(self)
     self.m_showUnhiddenCategoryIndex = self.m_showUnhiddenCategoryIndex + 1
@@ -1711,8 +1487,6 @@ FacTechTreeCtrl._NextUnhiddenCategoryShow = HL.Method() << function(self)
     end
 end
 
-
-
 FacTechTreeCtrl._StartUnhiddenTechShow = HL.Method() << function(self)
     if #self.m_showUnhiddenTechQueue > 0 then
         self.m_showUnhiddenTechIndex = 0
@@ -1722,8 +1496,6 @@ FacTechTreeCtrl._StartUnhiddenTechShow = HL.Method() << function(self)
         self:_AllOpenProgressFinished()
     end
 end
-
-
 
 FacTechTreeCtrl._NextUnhiddenTechShow = HL.Method() << function(self)
     self.m_showUnhiddenTechIndex = self.m_showUnhiddenTechIndex + 1
@@ -1743,11 +1515,13 @@ FacTechTreeCtrl._NextUnhiddenTechShow = HL.Method() << function(self)
             lineCell = self.m_lineCells:Get(lineCellIndex)
         end
 
+        local unhiddenTechStartShowInterval = self.view.config.UNHIDDEN_TECH_START_SHOW_INTERVAL
         local isFullInScreen = self:_IsElementFullInScreen(nodeCell.rectTransform)
         self.m_unhiddenShowCor = self:_ClearCoroutine(self.m_unhiddenShowCor)
         self.m_unhiddenShowCor = self:_StartCoroutine(function()
             
             if not isFullInScreen then
+                
                 self.view.bigRectHelper:FocusNode(nodeCell.rectTransform)
                 coroutine.wait(0.5)
             end
@@ -1759,10 +1533,14 @@ FacTechTreeCtrl._NextUnhiddenTechShow = HL.Method() << function(self)
                 lineCell.view.animationWrapper:Play(UnhiddenClipName.TechLine)
             end
 
-            local nodeClipLength = nodeCell.view.animationWrapper:GetClipLength(UnhiddenClipName.TechNode)
             nodeCell.view.gameObject:SetActiveIfNecessary(true)
             nodeCell.view.animationWrapper:Play(UnhiddenClipName.TechNode)
-            coroutine.wait(math.max(nodeClipLength, lineClipLength))
+            
+            
+            local showTime = unhiddenTechStartShowInterval
+            
+            AudioAdapter.PostEvent("Au_UI_Popup_NewTechnodeAppear")
+            coroutine.wait(showTime)
             GameInstance.player.facTechTreeSystem:ReadUnhiddenTech({ actionInfo.techId })
 
             self:_NextUnhiddenTechShow()
@@ -1770,15 +1548,12 @@ FacTechTreeCtrl._NextUnhiddenTechShow = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacTechTreeCtrl._IsElementFullInScreen = HL.Method(RectTransform).Return(HL.Boolean) << function(self, trans)
     local vectorArray = CS.System.Array.CreateInstance(typeof(Vector3), 4)
     trans:GetWorldCorners(vectorArray)
     for i = 0, vectorArray.Length - 1 do
         local vec = vectorArray[i]
-        if not UIUtils.isPosInScreen(vec) then
+        if not UIUtils.isPosInScreen(vec, self.uiCamera) then
             return false
         end
     end
@@ -1793,13 +1568,9 @@ local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
 
 local TOGGLE_NAVI_KEY = "TOGGLE_NAVI_KEY"
 
-
 FacTechTreeCtrl.m_zoomOutActionId = HL.Field(HL.Number) << -1
 
-
 FacTechTreeCtrl.m_zoomActionId = HL.Field(HL.Number) << -1
-
-
 
 FacTechTreeCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -1839,18 +1610,12 @@ FacTechTreeCtrl._InitController = HL.Method() << function(self)
     InputManagerInst:ToggleBinding(self.m_zoomActionId, false)
 end
 
-
-
-
 FacTechTreeCtrl._ToggleUnlockTier = HL.Method(HL.Boolean) << function(self, isEnable)
     local layerCells = self.m_layerCells:GetItems()
     for _, cell in pairs(layerCells) do
         cell:OnLayerInputEnableChange(isEnable)
     end
 end
-
-
-
 
 FacTechTreeCtrl._ToggleNodeCellFocusAsClick = HL.Method(HL.Boolean) << function(self, isOn)
     if not DeviceInfo.usingController then
@@ -1864,9 +1629,6 @@ FacTechTreeCtrl._ToggleNodeCellFocusAsClick = HL.Method(HL.Boolean) << function(
     end)
 end
 
-
-
-
 FacTechTreeCtrl._ToggleSideBarForController = HL.Method(HL.Boolean) << function(self, isOn)
     if not DeviceInfo.usingController then
         return
@@ -1876,10 +1638,6 @@ FacTechTreeCtrl._ToggleSideBarForController = HL.Method(HL.Boolean) << function(
     self:_ToggleNodeCellFocusAsClick(isOn)
     self:_ToggleUnlockTier(not isOn)
 end
-
-
-
-
 
 FacTechTreeCtrl._OnIsNaviTargetChangedNode = HL.Method(HL.Forward("FacTechTreeNode"), HL.Boolean) << function(self, cell, isTarget)
     if isTarget then

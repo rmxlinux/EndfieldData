@@ -2,71 +2,31 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopTokenExchangePopUp
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopTokenExchangePopUpCtrl = HL.Class('ShopTokenExchangePopUpCtrl', uiCtrl.UICtrl)
-
 
 ShopTokenExchangePopUpCtrl.m_redundantItemInfo = HL.Field(HL.Table)
 
-
 ShopTokenExchangePopUpCtrl.m_exchangeDatas = HL.Field(HL.Table)
-
 
 ShopTokenExchangePopUpCtrl.m_getCellFunc = HL.Field(HL.Function)
 
-
 ShopTokenExchangePopUpCtrl.m_exchangeCells = HL.Field(HL.Any)
-
 
 
 ShopTokenExchangePopUpCtrl.m_currLeftNaviIndex = HL.Field(HL.Number) << 1
 
 
-
 ShopTokenExchangePopUpCtrl.m_currRightNaviIndex = HL.Field(HL.Number) << 1
-
 
 
 ShopTokenExchangePopUpCtrl.m_currNaviIsLeft = HL.Field(HL.Boolean) << false
 
 
-
 ShopTokenExchangePopUpCtrl.m_currNaviIsRight = HL.Field(HL.Boolean) << false
-
 
 ShopTokenExchangePopUpCtrl.m_showItems = HL.Field(HL.Table)
 
-
 ShopTokenExchangePopUpCtrl.m_focusGroupId = HL.Field(HL.Number) << 0
-
 
 
 
@@ -78,9 +38,6 @@ ShopTokenExchangePopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CASH_SHOP_OPEN_CATEGORY] = '_OnCashShopOpenCategory',
     [MessageConst.ON_SHOP_SHOW_REWARD] = '_OnReceiveReward',
 }
-
-
-
 
 
 ShopTokenExchangePopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -132,8 +89,6 @@ ShopTokenExchangePopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshUI()
 end
 
-
-
 ShopTokenExchangePopUpCtrl.OnShow = HL.Override() << function(self)
     if not DeviceInfo.usingController then
         return
@@ -146,8 +101,6 @@ ShopTokenExchangePopUpCtrl.OnShow = HL.Override() << function(self)
     InputManagerInst:ToggleGroup(self.view.rightNodeInputBindingGroupMonoTarget.groupId, false)
     InputManagerInst:ToggleGroup(self.view.buttonLayoutMonoTarget.groupId, true)
 end
-
-
 
 
 
@@ -192,8 +145,6 @@ ShopTokenExchangePopUpCtrl._InitData = HL.Method() << function(self)
     end
 end
 
-
-
 ShopTokenExchangePopUpCtrl._InitExchangeData = HL.Method() << function(self)
     local rewardItemDict = {}
     self.m_exchangeDatas = {}
@@ -236,8 +187,6 @@ ShopTokenExchangePopUpCtrl._InitExchangeData = HL.Method() << function(self)
     table.sort(self.m_exchangeDatas, Utils.genSortFunction({ "rarity" }, true))
 end
 
-
-
 ShopTokenExchangePopUpCtrl._RefreshUI = HL.Method() << function(self)
     self.view.scrollList:UpdateCount(#self.m_redundantItemInfo)
     self.m_exchangeCells:Refresh(#self.m_exchangeDatas, function(cell, index)
@@ -261,8 +210,6 @@ ShopTokenExchangePopUpCtrl._RefreshUI = HL.Method() << function(self)
     end)
 end
 
-
-
 ShopTokenExchangePopUpCtrl._OnClickBtnConfirm = HL.Method() << function(self)
     local arg1 = {}
     local arg2 = {}
@@ -272,9 +219,6 @@ ShopTokenExchangePopUpCtrl._OnClickBtnConfirm = HL.Method() << function(self)
     end
     GameInstance.player.cashShopSystem:SendPotentialMaterialExchange(arg1, arg2)
 end
-
-
-
 
 ShopTokenExchangePopUpCtrl._OnReceiveServer = HL.Method(HL.Table) << function(self, args)
     logger.info("ShopTokenExchangePopUpCtrl._OnReceiveServer 显示reward")
@@ -287,9 +231,6 @@ ShopTokenExchangePopUpCtrl._OnReceiveServer = HL.Method(HL.Table) << function(se
 
     self:Close()
 end
-
-
-
 
 ShopTokenExchangePopUpCtrl._OnReceiveReward = HL.Method(HL.Any) << function(self, args)
     logger.info("ShopTokenExchangePopUpCtrl._OnReceiveReward: 暂存reward")
@@ -321,13 +262,9 @@ ShopTokenExchangePopUpCtrl._OnReceiveReward = HL.Method(HL.Any) << function(self
     end
 end
 
-
-
 ShopTokenExchangePopUpCtrl._OnCashShopOpenCategory = HL.Method() << function(self)
     self:Close()
 end
-
-
 
 ShopTokenExchangePopUpCtrl._InitShortCut = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -392,8 +329,6 @@ ShopTokenExchangePopUpCtrl._InitShortCut = HL.Method() << function(self)
     end, self.view.rightNodeInputBindingGroupMonoTarget.groupId)
 end
 
-
-
 ShopTokenExchangePopUpCtrl._OnGoLeft = HL.Method() << function(self)
     logger.info("ShopTokenExchangePopUpCtrl._OnGoLeft")
 
@@ -407,8 +342,6 @@ ShopTokenExchangePopUpCtrl._OnGoLeft = HL.Method() << function(self)
     end
 end
 
-
-
 ShopTokenExchangePopUpCtrl._OnGoUp = HL.Method() << function(self)
     logger.info("ShopTokenExchangePopUpCtrl._OnGoUp")
 
@@ -418,8 +351,6 @@ ShopTokenExchangePopUpCtrl._OnGoUp = HL.Method() << function(self)
         self:_RightNaviAddValue(-1)
     end
 end
-
-
 
 ShopTokenExchangePopUpCtrl._OnGoRight = HL.Method() << function(self)
     logger.info("ShopTokenExchangePopUpCtrl._OnGoRight")
@@ -440,8 +371,6 @@ ShopTokenExchangePopUpCtrl._OnGoRight = HL.Method() << function(self)
     end
 end
 
-
-
 ShopTokenExchangePopUpCtrl._OnGoDown = HL.Method() << function(self)
     logger.info("ShopTokenExchangePopUpCtrl._OnGoDown")
 
@@ -452,9 +381,6 @@ ShopTokenExchangePopUpCtrl._OnGoDown = HL.Method() << function(self)
     end
 end
 
-
-
-
 ShopTokenExchangePopUpCtrl._LeftNaviAddCol = HL.Method(HL.Number) << function(self, value)
     local curr = self.m_currLeftNaviIndex
     local new = curr + value
@@ -463,13 +389,10 @@ ShopTokenExchangePopUpCtrl._LeftNaviAddCol = HL.Method(HL.Number) << function(se
     end
 
     local targetCell = self.m_getCellFunc(self.view.scrollList:Get(CSIndex(new)))
-    UIUtils.setAsNaviTarget(targetCell.view.button)
+    self:SetNaviTarget(targetCell.view.button)
 
     self.m_currLeftNaviIndex = new
 end
-
-
-
 
 ShopTokenExchangePopUpCtrl._LeftNaviAddRow = HL.Method(HL.Number) << function(self, value)
     local curr = self.m_currLeftNaviIndex
@@ -480,13 +403,10 @@ ShopTokenExchangePopUpCtrl._LeftNaviAddRow = HL.Method(HL.Number) << function(se
     end
 
     local targetCell = self.m_getCellFunc(self.view.scrollList:Get(CSIndex(new)))
-    UIUtils.setAsNaviTarget(targetCell.view.button)
+    self:SetNaviTarget(targetCell.view.button)
 
     self.m_currLeftNaviIndex = new
 end
-
-
-
 
 ShopTokenExchangePopUpCtrl._RightNaviAddValue = HL.Method(HL.Number) << function(self, value)
     local curr = self.m_currRightNaviIndex
@@ -497,7 +417,7 @@ ShopTokenExchangePopUpCtrl._RightNaviAddValue = HL.Method(HL.Number) << function
 
     InputManagerInst:ToggleGroup(self.view.rightNodeInputBindingGroupMonoTarget.groupId, true)
     local targetCell = self.m_getCellFunc(self.m_exchangeCells:Get(new))
-    UIUtils.setAsNaviTarget(targetCell.inputBindingGroupNaviDecorator)
+    self:SetNaviTarget(targetCell.inputBindingGroupNaviDecorator)
 
     self.m_currRightNaviIndex = new
 

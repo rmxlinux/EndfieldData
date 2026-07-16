@@ -1,18 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipCharTips
-
-
-
-
-
-
-
-
-
-
 SpaceshipCharTipsCtrl = HL.Class('SpaceshipCharTipsCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -23,17 +12,11 @@ SpaceshipCharTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.HIDE_SPACESHIP_CHAR_TIPS] = 'HideSpaceshipCharTips',
 }
 
-
 SpaceshipCharTipsCtrl.m_charId = HL.Field(HL.String) << ''
-
 
 SpaceshipCharTipsCtrl.m_args = HL.Field(HL.Table)
 
-
 SpaceshipCharTipsCtrl.m_onClose = HL.Field(HL.Function)
-
-
-
 
 
 SpaceshipCharTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -41,8 +24,6 @@ SpaceshipCharTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:HideTips()
     end)
 end
-
-
 
 SpaceshipCharTipsCtrl.ShowTips = HL.StaticMethod(HL.Table) << function(args)
     
@@ -65,9 +46,6 @@ SpaceshipCharTipsCtrl.ShowTips = HL.StaticMethod(HL.Table) << function(args)
 
     self:UpdateContent(args)
 end
-
-
-
 
 SpaceshipCharTipsCtrl.UpdateContent = HL.Method(HL.Table) << function(self, args)
     if self.m_args and args.key == self.m_args.key then
@@ -98,8 +76,6 @@ SpaceshipCharTipsCtrl.UpdateContent = HL.Method(HL.Table) << function(self, args
     UIUtils.updateTipsPosition(self.view.content.transform, transform, self.view.rectTransform, self.uiCamera, posType, args.padding)
 end
 
-
-
 SpaceshipCharTipsCtrl.HideTips = HL.Method() << function(self)
     if self.m_args.blockOtherInput then
         self:ChangeCurPanelBlockSetting(false)
@@ -115,9 +91,6 @@ SpaceshipCharTipsCtrl.HideTips = HL.Method() << function(self)
         self:Hide()
     end)
 end
-
-
-
 
 SpaceshipCharTipsCtrl.HideSpaceshipCharTips = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     if not self.m_args then

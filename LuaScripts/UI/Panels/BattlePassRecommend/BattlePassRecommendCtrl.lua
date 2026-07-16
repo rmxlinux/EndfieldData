@@ -2,14 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BattlePassRecommend
 
-
-
-
-
-
-
 BattlePassRecommendCtrl = HL.Class('BattlePassRecommendCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -20,11 +13,7 @@ BattlePassRecommendCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 BattlePassRecommendCtrl.m_arg = HL.Field(HL.Table)
-
-
-
 
 
 BattlePassRecommendCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -45,8 +34,6 @@ end
 
 
 
-
-
 BattlePassRecommendCtrl._InitViews = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
     self.view.btnCommonCancel.onClick:RemoveAllListeners()
@@ -58,6 +45,11 @@ BattlePassRecommendCtrl._InitViews = HL.Method() << function(self)
             end
         end)
     end)
+    
+    if self.m_arg.fromBuyPlan then
+        self.view.btnCommonCancel.onClick:ChangeBindingPlayerAction("common_confirm_close")
+    end
+    
     self.view.mainStateController:SetState(self.m_arg.fromBuyPlan and "One" or "Two")
     if not self.m_arg.fromBuyPlan then
         self.view.btnCommon.onClick:RemoveAllListeners()
@@ -76,8 +68,6 @@ BattlePassRecommendCtrl._InitViews = HL.Method() << function(self)
         end
     end
 end
-
-
 
 BattlePassRecommendCtrl._RenderViews = HL.Method() << function(self)
     local bundles = {}

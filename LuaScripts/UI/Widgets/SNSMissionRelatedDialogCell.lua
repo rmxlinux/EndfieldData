@@ -1,25 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
 SNSMissionRelatedDialogCell = HL.Class('SNSMissionRelatedDialogCell', UIWidgetBase)
-
 
 SNSMissionRelatedDialogCell.m_dialogId = HL.Field(HL.String) << ""
 
-
 SNSMissionRelatedDialogCell.m_onClickDialogCellFunc = HL.Field(HL.Function)
-
-
 
 
 SNSMissionRelatedDialogCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -33,10 +18,6 @@ SNSMissionRelatedDialogCell._OnFirstTimeInit = HL.Override() << function(self)
         self:_OnClickDialogCell()
     end)
 end
-
-
-
-
 
 SNSMissionRelatedDialogCell.InitSNSMissionRelatedDialogCell = HL.Method(HL.String, HL.Function)
         << function(self, dialogId, onClickFunc)
@@ -52,21 +33,16 @@ SNSMissionRelatedDialogCell.InitSNSMissionRelatedDialogCell = HL.Method(HL.Strin
     self.view.redDot:InitRedDot("SNSMissionDialogCell", dialogId)
 end
 
-
-
-
 SNSMissionRelatedDialogCell.SetSelected = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.bgNode:SetState(isOn and "Selected" or "Normal")
 end
-
-
 
 SNSMissionRelatedDialogCell._InitInfo = HL.Method() << function(self)
     local dialogCfg = Tables.sNSDialogTable[self.m_dialogId]
     local chatId = dialogCfg.chatId
     local chatCfg = Tables.sNSChatTable[chatId]
 
-    self.view.headIcon:LoadSprite(UIConst.UI_SPRITE_ROUND_CHAR_HEAD, chatCfg.listIcon)
+    self.view.headIcon:LoadSprite(UIConst.UI_SPRITE_ROUND_CHAR_HEAD, chatCfg.icon)
 
     local missionId = dialogCfg.relatedMissionId
     local meta = GameInstance.player.mission:GetMissionMetaAsset(missionId)
@@ -78,9 +54,6 @@ SNSMissionRelatedDialogCell._InitInfo = HL.Method() << function(self)
     self.view.bgNode:SetState(importanceStr)
 end
 
-
-
-
 SNSMissionRelatedDialogCell._OnSNSDialogModify = HL.Method(HL.String) << function(self, dialogId)
     if dialogId ~= self.m_dialogId then
         return
@@ -90,8 +63,6 @@ SNSMissionRelatedDialogCell._OnSNSDialogModify = HL.Method(HL.String) << functio
     self:_RefreshDialogInfoEndState()
 end
 
-
-
 SNSMissionRelatedDialogCell._RefreshDialogInfo = HL.Method() << function(self)
     local latestContent = SNSUtils.getFirstContent(self.m_dialogId)
     local richStyleContent = SNSUtils.resolveTextStyleWithPlayerName(latestContent)
@@ -99,14 +70,10 @@ SNSMissionRelatedDialogCell._RefreshDialogInfo = HL.Method() << function(self)
     self.view.descTxtS:SetAndResolveTextStyle(richStyleContent)
 end
 
-
-
 SNSMissionRelatedDialogCell._RefreshDialogInfoEndState = HL.Method() << function(self)
     local isEnd = GameInstance.player.sns:DialogHasEnd(self.m_dialogId)
     self.view.canvasGroup.alpha = isEnd and 0.6 or 1
 end
-
-
 
 SNSMissionRelatedDialogCell._OnClickDialogCell = HL.Method() << function(self)
     if self.m_onClickDialogCellFunc then

@@ -18,75 +18,27 @@ local EQUIP_INDEX_LIST = {
     UIConst.CHAR_INFO_EQUIP_SLOT_MAP.EDC_2, 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ContingencyContractSettlementCtrl = HL.Class('ContingencyContractSettlementCtrl', uiCtrl.UICtrl)
-
 
 ContingencyContractSettlementCtrl.m_gameId = HL.Field(HL.Any)
 
-
 ContingencyContractSettlementCtrl.m_activityId = HL.Field(HL.Any)
-
 
 ContingencyContractSettlementCtrl.m_resultData = HL.Field(HL.Any)
 
-
 ContingencyContractSettlementCtrl.m_charCells = HL.Field(HL.Forward("UIListCache"))
-
 
 ContingencyContractSettlementCtrl.m_getTagCellFunc = HL.Field(HL.Function)
 
-
 ContingencyContractSettlementCtrl.m_luaUpdateKey = HL.Field(HL.Number) << -1
-
 
 ContingencyContractSettlementCtrl.m_clearScreenKey = HL.Field(HL.Number) << -1
 
-
 ContingencyContractSettlementCtrl.m_isWorldFreeze = HL.Field(HL.Boolean) << false
-
 
 ContingencyContractSettlementCtrl.m_playVoiceTimerKey = HL.Field(HL.Number) << -1
 
-
 ContingencyContractSettlementCtrl.m_recoverInputTimerKey = HL.Field(HL.Number) << -1
-
 
 
 
@@ -95,9 +47,6 @@ ContingencyContractSettlementCtrl.m_recoverInputTimerKey = HL.Field(HL.Number) <
 ContingencyContractSettlementCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CONTINGENCY_CONTRACT_SETTLEMENT] = 'OnSettlement',
 }
-
-
-
 
 
 
@@ -131,8 +80,6 @@ ContingencyContractSettlementCtrl.OnCreate = HL.Override(HL.Any) << function(sel
     AudioAdapter.PostEvent(self.m_resultData.isPass and "Au_UI_Popup_CCReignite_Completed" or "Au_UI_Popup_CCReignite_Failed")
 end
 
-
-
 ContingencyContractSettlementCtrl.OnClose = HL.Override() << function(self)
     self:_SetFreezeWorld(false)
     InputManagerInst:SetCursorShowRequest("AutoShowCursorContingencyContractSettlement", false)
@@ -148,11 +95,9 @@ ContingencyContractSettlementCtrl.OnClose = HL.Override() << function(self)
     if self.m_recoverInputTimerKey > 0 then
         self.m_recoverInputTimerKey = self:_ClearTimer(self.m_recoverInputTimerKey)
     end
+    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "ContingencyContractSettlement", false)
     Utils.stopDefaultChannelVoice()
-    PhaseManager:SetForbidInputDeviceChange("ContingencyContract.Settlement", false)
 end
-
-
 
 
 
@@ -188,8 +133,6 @@ ContingencyContractSettlementCtrl._BindUI = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 ContingencyContractSettlementCtrl._InitData = HL.Method() << function(self)
     local serverResultData
     if self.m_gameId then
@@ -206,9 +149,6 @@ ContingencyContractSettlementCtrl._InitData = HL.Method() << function(self)
         self:_ConstructResultData()
     end
 end
-
-
-
 
 ContingencyContractSettlementCtrl._ConvertServerResultDataToLua = HL.Method(HL.Any) << function(self, serverResultData)
     
@@ -253,8 +193,6 @@ ContingencyContractSettlementCtrl._ConvertServerResultDataToLua = HL.Method(HL.A
     self.m_resultData = data
 end
 
-
-
 ContingencyContractSettlementCtrl._ConstructResultData = HL.Method() << function(self)
     local data = {}
     data.isFake = true
@@ -280,8 +218,6 @@ ContingencyContractSettlementCtrl._ConstructResultData = HL.Method() << function
     self.m_resultData = data
 end
 
-
-
 ContingencyContractSettlementCtrl._SetupUI = HL.Method() << function(self)
     local success = self.m_resultData.isPass
     self.view.main:SetState(success and "Success" or "Fail")
@@ -299,8 +235,6 @@ ContingencyContractSettlementCtrl._SetupUI = HL.Method() << function(self)
     
     self.view.aniNode.newRecordNode.gameObject:SetActive(self.m_resultData.isBestScore)
 end
-
-
 
 ContingencyContractSettlementCtrl._StartScoreAnim = HL.Method() << function(self)
     local curve = self.view.config.SCORE_CURVE
@@ -353,8 +287,6 @@ ContingencyContractSettlementCtrl._StartScoreAnim = HL.Method() << function(self
 
     end)
 end
-
-
 
 ContingencyContractSettlementCtrl._SetupLeftUI = HL.Method() << function(self)
     
@@ -414,8 +346,6 @@ ContingencyContractSettlementCtrl._SetupLeftUI = HL.Method() << function(self)
     end
 end
 
-
-
 ContingencyContractSettlementCtrl._SetupRightUI = HL.Method() << function(self)
     local charCount = #self.m_resultData.charInstIdList
     self.m_charCells:GraduallyRefresh(4, 0.1, function(cell, index)
@@ -432,9 +362,6 @@ ContingencyContractSettlementCtrl._SetupRightUI = HL.Method() << function(self)
     end)
 end
 
-
-
-
 ContingencyContractSettlementCtrl._FadeRightUI = HL.Method(HL.Any) << function(self, time)
     local curr = 1
     self:_StartCoroutine(function()
@@ -447,10 +374,6 @@ ContingencyContractSettlementCtrl._FadeRightUI = HL.Method(HL.Any) << function(s
         end
     end)
 end
-
-
-
-
 
 ContingencyContractSettlementCtrl._SetupCharCell = HL.Method(HL.Any, HL.Any) << function(self, cell, charInstId)
     
@@ -560,8 +483,6 @@ ContingencyContractSettlementCtrl._SetupCharCell = HL.Method(HL.Any, HL.Any) << 
     end
 end
 
-
-
 ContingencyContractSettlementCtrl._OnShareBtnClick = HL.Method() << function(self)
     self.view.main:SetState("Share")
     
@@ -603,8 +524,6 @@ ContingencyContractSettlementCtrl._OnShareBtnClick = HL.Method() << function(sel
     })
 end
 
-
-
 ContingencyContractSettlementCtrl._OnAgainBtnClick = HL.Method() << function(self)
     local activityIsClosed = self:_ActivityIsClosed()
     if activityIsClosed then
@@ -624,8 +543,6 @@ ContingencyContractSettlementCtrl._OnAgainBtnClick = HL.Method() << function(sel
         })
     end
 end
-
-
 
 ContingencyContractSettlementCtrl._OnDoneBtnClick = HL.Method() << function(self)
     if self.m_resultData and self.m_resultData.isFake then
@@ -647,8 +564,6 @@ ContingencyContractSettlementCtrl._OnDoneBtnClick = HL.Method() << function(self
     end
 end
 
-
-
 ContingencyContractSettlementCtrl._StartPlayUIInAni = HL.Method() << function(self)
     self.m_clearScreenKey = UIManager:ClearScreen({ PanelId.ContingencyContractSettlement })
     if not DeviceInfo.usingController then
@@ -669,8 +584,6 @@ ContingencyContractSettlementCtrl._StartPlayUIInAni = HL.Method() << function(se
     end
 end
 
-
-
 ContingencyContractSettlementCtrl._StartPlayCharVoice = HL.Method() << function(self)
     if not self.m_resultData.isPass then
         return  
@@ -683,9 +596,6 @@ ContingencyContractSettlementCtrl._StartPlayCharVoice = HL.Method() << function(
     local charId = charIdList[math.random(1, #charIdList)]
     
 end
-
-
-
 
 ContingencyContractSettlementCtrl._SetFreezeWorld = HL.Method(HL.Boolean) << function(self, isFreeze)
     if self.m_isWorldFreeze == isFreeze then
@@ -700,9 +610,6 @@ ContingencyContractSettlementCtrl._SetFreezeWorld = HL.Method(HL.Boolean) << fun
     end
 end
 
-
-
-
 ContingencyContractSettlementCtrl._InternalHide = HL.Method(HL.Boolean) << function(self, isHide)
     if isHide then
         self.view.main.gameObject:SetLayerRecursive(UIConst.HIDE_LAYER)
@@ -714,8 +621,6 @@ ContingencyContractSettlementCtrl._InternalHide = HL.Method(HL.Boolean) << funct
     end
     
 end
-
-
 
 
 ContingencyContractSettlementCtrl._TestShowRewardPanel = HL.Method() << function(self)
@@ -735,8 +640,6 @@ ContingencyContractSettlementCtrl._TestShowRewardPanel = HL.Method() << function
         Notify(MessageConst.SHOW_SYSTEM_REWARDS, rewardPanelArgs)
     end
 end
-
-
 
 ContingencyContractSettlementCtrl._GetRewardItemList = HL.Method().Return(HL.Table) << function(self)
     local rewardSourceTypeList = {
@@ -769,16 +672,12 @@ ContingencyContractSettlementCtrl._GetRewardItemList = HL.Method().Return(HL.Tab
     return items
 end
 
-
-
 ContingencyContractSettlementCtrl._LeaveDungeonAfterSettlement = HL.Method() << function(self)
     if self:_ActivityIsClosed() and self.m_gameId then
         LuaSystemManager.uiRestoreSystem:RemoveRequest(self.m_gameId)
     end
     GameInstance.dungeonManager:LeaveDungeon()
 end
-
-
 
 ContingencyContractSettlementCtrl._ActivityIsClosed = HL.Method().Return(HL.Boolean) << function(self)
     if self.m_resultData.isGameLock then
@@ -800,8 +699,6 @@ end
 
 
 
-
-
 ContingencyContractSettlementCtrl.OnSettlement = HL.StaticMethod(HL.Any) << function(args)
     
     local isAllDead = Utils.isCurSquadAllDead()
@@ -813,8 +710,6 @@ ContingencyContractSettlementCtrl.OnSettlement = HL.StaticMethod(HL.Any) << func
     GameInstance.player.contingencyContractSystem.latestSettlementGameId = ""
     ContingencyContractSettlementCtrl.ShowSettlement(args)
 end
-
-
 
 ContingencyContractSettlementCtrl.ShowSettlement = HL.StaticMethod(HL.Any) << function(args)
     LuaSystemManager.commonTaskTrackSystem:AddRequest("DungeonSettlement", function()

@@ -1,17 +1,8 @@
 local DungeonCommonInfo = require_ex('UI/Widgets/DungeonCommonInfo')
 
-
-
-
-
-
-
 DungeonActivityCommonInfo = HL.Class('DungeonActivityCommonInfo', DungeonCommonInfo)
 
-
 DungeonActivityCommonInfo.m_missionId = HL.Field(HL.String) << ''
-
-
 
 
 DungeonActivityCommonInfo._OnFirstTimeInit = HL.Override() << function(self)
@@ -22,10 +13,9 @@ DungeonActivityCommonInfo._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
 DungeonActivityCommonInfo.m_activityId = HL.Field(HL.String) << ''
 
-
+DungeonActivityCommonInfo.m_openCharFormationCallback = HL.Field(HL.Function)
 
 DungeonActivityCommonInfo.InitDungeonActivityCommonInfo = HL.Method() << function(self)
     self:_FirstTimeInit()
@@ -33,9 +23,17 @@ DungeonActivityCommonInfo.InitDungeonActivityCommonInfo = HL.Method() << functio
     
 end
 
+DungeonActivityCommonInfo.SetOpenCharFormationCallback = HL.Method(HL.Function) << function(self, callback)
+    self.m_openCharFormationCallback = callback
+end
 
-
-
+DungeonActivityCommonInfo._OpenCharFormation = HL.Override() << function(self)
+    if self.m_openCharFormationCallback then
+        self.m_openCharFormationCallback(self.m_dungeonId)
+        return
+    end
+    DungeonActivityCommonInfo.Super._OpenCharFormation(self)
+end
 
 DungeonActivityCommonInfo.RefreshDungeonActivityCommonInfo = HL.Method(HL.String, HL.String) << function(self, dungeonId, activityId)
     DungeonActivityCommonInfo.Super.RefreshDungeonCommonInfo(self, dungeonId)
@@ -48,9 +46,15 @@ DungeonActivityCommonInfo.RefreshDungeonActivityCommonInfo = HL.Method(HL.String
     local success, stageData = activityData.stageDataDict:TryGetValue(activityDungeonStateCfg.activityStage)
     local stageCfg = Tables.activityConditionalMultiStageTable:GetValue(self.m_activityId)
 
-    self.view.claimRewardsBtn.gameObject:SetActive(stageData.Status == GEnums.ActivityConditionalStageState.Completed:GetHashCode())
+    local rewardId = stageCfg.stageList[activityDungeonStateCfg.activityStage].rewardId
+    local isStageCompleted = stageData.Status == GEnums.ActivityConditionalStageState.Completed:GetHashCode()
+    local isStageRewarded = stageData.Status == GEnums.ActivityConditionalStageState.Rewarded:GetHashCode()
+    
+    local treatCompletedAsRewarded = isStageCompleted and string.isEmpty(rewardId)
+
+    self.view.claimRewardsBtn.gameObject:SetActive(isStageCompleted and not treatCompletedAsRewarded)
     self.view.goToBattleBtn.gameObject:SetActive(stageData.Status == GEnums.ActivityConditionalStageState.Unlocked:GetHashCode())
-    self.view.rechallengeBtn.gameObject:SetActive(stageData.Status == GEnums.ActivityConditionalStageState.Rewarded:GetHashCode())
+    self.view.rechallengeBtn.gameObject:SetActive(isStageRewarded or treatCompletedAsRewarded)
 
     
     if not string.isEmpty(stageCfg.stageList[activityDungeonStateCfg.activityStage].rankRelatedId) then
@@ -60,9 +64,7 @@ DungeonActivityCommonInfo.RefreshDungeonActivityCommonInfo = HL.Method(HL.String
         self.view.activityCommonRecord.gameObject:SetActive(false)
     end
 
-    local gained = stageData.Status == GEnums.ActivityConditionalStageState.Rewarded:GetHashCode()
-
-    local rewardId = stageCfg.stageList[activityDungeonStateCfg.activityStage].rewardId
+    local gained = isStageRewarded or treatCompletedAsRewarded
 
     local rewards = {}
 
@@ -75,6 +77,7 @@ DungeonActivityCommonInfo.RefreshDungeonActivityCommonInfo = HL.Method(HL.String
                 table.insert(rewards, { id = itemId,
                                         count = itemBundle.count,
                                         gained = gained,
+                                        typeTag = DungeonConst.DUNGEON_REWARD_TAG_STATE.First,
                                         sortId1 = itemCfg.sortId1,
                                         sortId2 = itemCfg.sortId2, })
             else
@@ -83,6 +86,15 @@ DungeonActivityCommonInfo.RefreshDungeonActivityCommonInfo = HL.Method(HL.String
         end
     elseif not string.isEmpty(rewardId) then
         logger.error("配置的首通奖励RewardId在Reward表中找不到：", rewardId)
+    end
+
+    
+    
+    if #rewards == 0 then
+        rewards = DungeonUtils.genFirstPartRewardsInfo(self.m_dungeonId)
+        for _, reward in ipairs(rewards) do
+            reward.typeTag = DungeonConst.DUNGEON_REWARD_TAG_STATE.First
+        end
     end
 
     self.view.rewardNode.gameObject:SetActive(#rewards > 0)

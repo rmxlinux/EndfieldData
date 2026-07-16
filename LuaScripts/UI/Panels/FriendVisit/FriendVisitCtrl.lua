@@ -1,12 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FriendVisit
 
-
-
-
-
 FriendVisitCtrl = HL.Class('FriendVisitCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -17,14 +12,9 @@ FriendVisitCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
-
 FriendVisitCtrl.OpenFriendVisit = HL.StaticMethod(HL.Any) << function(msg)
     UIManager:AutoOpen(PANEL_ID, msg)
 end
-
-
-
 
 
 FriendVisitCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)

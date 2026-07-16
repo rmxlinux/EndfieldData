@@ -7,7 +7,6 @@ DebugTextCtrl = HL.Class('DebugTextCtrl', uiCtrl.UICtrl)
 
 
 
-
 DebugTextCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 

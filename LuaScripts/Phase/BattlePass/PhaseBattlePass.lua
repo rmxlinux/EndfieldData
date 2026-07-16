@@ -1,40 +1,6 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.BattlePass
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseBattlePass = HL.Class('PhaseBattlePass', phaseBase.PhaseBase)
-
 
 
 
@@ -47,31 +13,21 @@ PhaseBattlePass.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 PhaseBattlePass.m_panelItemDic = HL.Field(HL.Table)
-
 
 PhaseBattlePass.m_basePanel = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseBattlePass.m_curPanel = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseBattlePass.m_transCoroutine = HL.Field(HL.Thread)
 
-
 PhaseBattlePass.m_isChanging = HL.Field(HL.Boolean) << false
-
 
 PhaseBattlePass.m_bpEndTimer = HL.Field(HL.Number) << 0
 
-
 PhaseBattlePass.m_haveShowPsStoreLogo = HL.Field(HL.Boolean) << false
 
-
 PhaseBattlePass.m_storeShowPsStoreLogo = HL.Field(HL.Boolean) << false
-
-
 
 
 PhaseBattlePass._OnInit = HL.Override() << function(self)
@@ -81,17 +37,8 @@ end
 
 
 
-
-
-
-
-
 PhaseBattlePass.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhaseBattlePass._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self.m_panelItemDic = {}
@@ -103,26 +50,14 @@ PhaseBattlePass._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table))
     self:_TryRecoverInstructionBook()
 end
 
-
-
-
-
 PhaseBattlePass._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     Notify(MessageConst.HIDE_COMMON_HOVER_TIP)
 end
-
-
-
-
 
 PhaseBattlePass._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self.m_storeShowPsStoreLogo = self.m_haveShowPsStoreLogo
     self:HidePsStore()
 end
-
-
-
-
 
 PhaseBattlePass._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if self.m_storeShowPsStoreLogo then
@@ -130,8 +65,6 @@ PhaseBattlePass._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.
         self:ShowPsStore()
     end
 end
-
-
 
 
 
@@ -153,16 +86,12 @@ PhaseBattlePass._OnActivated = HL.Override() << function(self)
     end)
 end
 
-
-
 PhaseBattlePass._OnDeActivated = HL.Override() << function(self)
     if self.m_bpEndTimer > 0 then
         TimerManager:ClearTimer(self.m_bpEndTimer)
         self.m_bpEndTimer = 0
     end
 end
-
-
 
 PhaseBattlePass.CloseSelf = HL.Override() << function(self)
     if self.arg and self.arg.fromPhase == PhaseId.CashShop then
@@ -171,14 +100,10 @@ PhaseBattlePass.CloseSelf = HL.Override() << function(self)
     PhaseBattlePass.Super.CloseSelf(self)
 end
 
-
-
 PhaseBattlePass._OnDestroy = HL.Override() << function(self)
     self:HidePsStore()
     PhaseBattlePass.Super._OnDestroy(self)
 end
-
-
 
 PhaseBattlePass._OnRefresh = HL.Override() << function(self)
     if not self.m_basePanel then
@@ -190,8 +115,6 @@ PhaseBattlePass._OnRefresh = HL.Override() << function(self)
         self.m_curPanel.uiCtrl:OnPhaseRefresh(self.arg)
     end
 end
-
-
 
 PhaseBattlePass.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}
@@ -215,8 +138,6 @@ PhaseBattlePass.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << functio
 end
 
 
-
-
 PhaseBattlePass._TryRecoverInstructionBook = HL.Method() << function(self)
     if self.arg == nil or self.arg.instructionBookArg == nil then
         return
@@ -232,8 +153,6 @@ PhaseBattlePass._TryRecoverInstructionBook = HL.Method() << function(self)
     self.arg.instructionBookArg = nil
 end
 
-
-
 PhaseBattlePass._TryOpenBattlePassDisplay = HL.Method().Return(HL.Boolean) << function(self)
     
     
@@ -247,6 +166,10 @@ PhaseBattlePass._TryOpenBattlePassDisplay = HL.Method().Return(HL.Boolean) << fu
         bpSystem:ReadSeason(GameInstance.player.battlePassSystem.seasonData.seasonId)
         UIManager:Open(PanelId.BattlePassSeasonDisplay, {
             onClose = function()
+                
+                if self.m_destroyed or self.m_panel2Item == nil or self.state == PhaseConst.EPhaseState.TransitionOut or self.state == PhaseConst.EPhaseState.WaitRelease then
+                    return
+                end
                 local arg = nil
                 if self.arg ~= nil then
                     arg = self.arg
@@ -257,7 +180,9 @@ PhaseBattlePass._TryOpenBattlePassDisplay = HL.Method().Return(HL.Boolean) << fu
                 self.m_basePanel = self:CreatePhasePanelItem(PanelId.BattlePass, arg)
                 self:_TryPopPanel()
                 if BattlePassUtils.CheckBattlePassPurchaseBlock() then
-                    UIManager:SetTopOrder(PanelId.BattlePassSeasonDisplay)
+                    if UIManager:IsOpen(PanelId.BattlePassSeasonDisplay) then
+                        UIManager:SetTopOrder(PanelId.BattlePassSeasonDisplay)
+                    end
                     return
                 end
                 local popupPanelId = nil
@@ -277,8 +202,6 @@ PhaseBattlePass._TryOpenBattlePassDisplay = HL.Method().Return(HL.Boolean) << fu
     end
     return false
 end
-
-
 
 PhaseBattlePass._TryPopPanel = HL.Method() << function(self)
     local popupPanelId = nil
@@ -303,11 +226,6 @@ PhaseBattlePass._TryPopPanel = HL.Method() << function(self)
     end
 end
 
-
-
-
-
-
 PhaseBattlePass.ChangePanel = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Any)).Return(HL.Boolean) << function(self, panelId, isRight, arg)
     if self.m_isChanging then
         return false
@@ -316,11 +234,6 @@ PhaseBattlePass.ChangePanel = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Any)).R
     return true
 end
 
-
-
-
-
-
 PhaseBattlePass._OpenPanel = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Any)) << function(self, panelId, isRight, arg)
     self:_ClearCoroutine(self.m_transCoroutine)
     self.m_transCoroutine = nil
@@ -328,7 +241,7 @@ PhaseBattlePass._OpenPanel = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Any)) <<
     if self.m_curPanel ~= nil then
         self:_HidePanelImpl(self.m_curPanel, isRight,function()
             if self.m_curPanel.uiCtrl.panelId ~= panelId then
-                InputManagerInst.controllerNaviManager:SetTarget(nil)
+                self.m_curPanel:ClearNaviTarget()
             end
             self.m_curPanel = self:_OpenPanelImpl(panelId, isRight, arg)
         end)
@@ -336,11 +249,6 @@ PhaseBattlePass._OpenPanel = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Any)) <<
         self.m_curPanel = self:_OpenPanelImpl(panelId, isRight, arg, true)
     end
 end
-
-
-
-
-
 
 PhaseBattlePass._HidePanelImpl = HL.Method(HL.Forward("PhasePanelItem"), HL.Boolean, HL.Function)
     << function(self, panelItem, isRight, onPanelHide)
@@ -363,12 +271,6 @@ PhaseBattlePass._HidePanelImpl = HL.Method(HL.Forward("PhasePanelItem"), HL.Bool
         self.m_isChanging = false
     end)
 end
-
-
-
-
-
-
 
 PhaseBattlePass._OpenPanelImpl = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Any, HL.Boolean)).Return(HL.Forward("PhasePanelItem"))
     << function(self, panelId, isRight, arg, isFirstInit)
@@ -396,8 +298,6 @@ PhaseBattlePass._OpenPanelImpl = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Any,
     return panelItem
 end
 
-
-
 PhaseBattlePass.ShowPsStore = HL.Method() << function(self)
     if BattlePassUtils.CheckBattlePassPurchaseBlock() then
         return
@@ -408,8 +308,6 @@ PhaseBattlePass.ShowPsStore = HL.Method() << function(self)
     self.m_haveShowPsStoreLogo = true
     CashShopUtils.ShowPsStore()
 end
-
-
 
 PhaseBattlePass.HidePsStore = HL.Method() << function(self)
     if BattlePassUtils.CheckBattlePassPurchaseBlock() then
@@ -422,9 +320,6 @@ PhaseBattlePass.HidePsStore = HL.Method() << function(self)
     CashShopUtils.HidePsStore()
 end
 
-
-
-
 PhaseBattlePass._OnStartPayment = HL.Method(HL.Table) << function(self, arg)
     local key = unpack(arg)
     if key ~= CS.Beyond.SDK.PaymentEasyAccess.MASK_KEY_PAYMENT then
@@ -434,9 +329,6 @@ PhaseBattlePass._OnStartPayment = HL.Method(HL.Table) << function(self, arg)
     self.m_storeShowPsStoreLogo = self.m_haveShowPsStoreLogo
     self:HidePsStore()
 end
-
-
-
 
 PhaseBattlePass._OnClosePayment = HL.Method(HL.Table) << function(self, arg)
     local key = unpack(arg)

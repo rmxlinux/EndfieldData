@@ -2,21 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityStartReminderPopup
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityStartReminderPopupCtrl = HL.Class('ActivityStartReminderPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -27,27 +13,19 @@ ActivityStartReminderPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 ActivityStartReminderPopupCtrl.arg = HL.Field(HL.Any)
-
 
 ActivityStartReminderPopupCtrl.m_id = HL.Field(HL.String) << ""
 
-
 ActivityStartReminderPopupCtrl.m_conditionCells = HL.Field(HL.Any)
-
 
 ActivityStartReminderPopupCtrl.m_firstCell = HL.Field(HL.Any)
 
-
 ActivityStartReminderPopupCtrl.m_activity = HL.Field(HL.Any)
-
 
 ActivityStartReminderPopupCtrl.m_conditions = HL.Field(HL.Table)
 
-
 ActivityStartReminderPopupCtrl.m_drawMode = HL.Field(HL.Number) << 1
-
 
 ActivityStartReminderPopupCtrl.m_source = HL.Field(HL.String) << ""
 
@@ -71,9 +49,6 @@ local ClientActivityConditionHandleInfoTable = {
         end
     },
 }
-
-
-
 
 
 ActivityStartReminderPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -120,14 +95,10 @@ ActivityStartReminderPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, 
 
     
     if DeviceInfo.usingController then
-        UIUtils.setAsNaviTarget(self.m_firstCell.button)
+        self:SetNaviTarget(self.m_firstCell.button)
         self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputBindingGroupMonoTarget.groupId })
     end
 end
-
-
-
-
 
 ActivityStartReminderPopupCtrl._OnUpdateCell = HL.Method(HL.Any,HL.Number) << function(self, cell, index)
     if index == 1 then
@@ -176,7 +147,7 @@ ActivityStartReminderPopupCtrl._OnUpdateCell = HL.Method(HL.Any,HL.Number) << fu
                 return
             end
             Utils.jumpToSystem(condition.jumpId)
-            self:_Close()
+            self:_Close(true)
         end)
     else
         cell.stateController:SetState("Empty")
@@ -197,12 +168,13 @@ ActivityStartReminderPopupCtrl._OnUpdateCell = HL.Method(HL.Any,HL.Number) << fu
     end
 end
 
+ActivityStartReminderPopupCtrl._Close = HL.Method(HL.Opt(HL.Boolean)) << function(self, fast)
+    if fast then
+        UIManager:Close(PANEL_ID)
+    else
+        self:PlayAnimationOutAndClose()
+    end
 
-
-ActivityStartReminderPopupCtrl._Close = HL.Method() << function(self)
-    self.view.animationWrapper:PlayOutAnimation(function()
-        self:Close()
-    end)
 end
 
 HL.Commit(ActivityStartReminderPopupCtrl)

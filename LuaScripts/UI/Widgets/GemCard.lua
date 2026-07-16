@@ -1,25 +1,12 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
 GemCard = HL.Class('GemCard', UIWidgetBase)
-
 
 GemCard.m_starCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 GemCard.m_gemInst = HL.Field(HL.Number) << -1
 
-
 GemCard.m_refreshSkillNode = HL.Field(HL.Function)
-
-
 
 
 GemCard._OnFirstTimeInit = HL.Override() << function(self)
@@ -35,10 +22,6 @@ GemCard._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
 end
-
-
-
-
 
 GemCard.InitGemCard = HL.Method(HL.Number, HL.Opt(HL.Number)) << function(self, gemInstId, tryWeaponInstId)
     self:_FirstTimeInit()
@@ -65,9 +48,6 @@ GemCard.InitGemCard = HL.Method(HL.Number, HL.Opt(HL.Number)) << function(self, 
     end
 end
 
-
-
-
 GemCard._RefreshBasicInfo = HL.Method(HL.Number) << function(self, gemInstId)
     local gemInst = CharInfoUtils.getGemByInstId(gemInstId)
     local gemItemCfg = Tables.itemTable:GetValue(gemInst.templateId)
@@ -81,9 +61,6 @@ GemCard._RefreshBasicInfo = HL.Method(HL.Number) << function(self, gemInstId)
     UIUtils.setItemRarityImage(self.view.titleColor, gemItemCfg.rarity)
     self.m_starCellCache:Refresh(gemItemCfg.rarity)
 end
-
-
-
 
 GemCard.ActiveToggleGroup = HL.Method(HL.Boolean) << function(self, isActive)
     self.view.naviGroup.gameObject:SetActive(isActive)

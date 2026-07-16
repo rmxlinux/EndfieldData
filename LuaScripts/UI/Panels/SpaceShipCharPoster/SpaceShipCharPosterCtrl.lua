@@ -26,6 +26,7 @@ SpaceShipCharPosterCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SET_SPACESHIP_CHAR_POSTER_SERIAL_NUMBER] = 'SetSerialNumberNode',
     [MessageConst.ON_CONFIRM_GENDER] = 'ResetCharPoster',
     [MessageConst.ON_CHAR_POTENTIAL_UNLOCK] = 'ResetCharPosterUI',
+    [MessageConst.ON_SPACESHIP_VISIT_FRIEND] = 'ResetCharPoster',
 }
 
 SpaceShipCharPosterCtrl.OpenSpaceshipCharPoster = HL.StaticMethod() << function()
@@ -103,27 +104,38 @@ SpaceShipCharPosterCtrl.ResetCharPosterUI = HL.Method(HL.Opt(HL.Any)) << functio
 end
 
 SpaceShipCharPosterCtrl.ResetCharPoster = HL.Method(HL.Opt(HL.Any)) << function(self, args)
-    local idInfos = {}
     local charTemplateIds = GameInstance.player.spaceship:GetCharWallCharTemplateIds()
     if charTemplateIds then
-        for i = 1, charTemplateIds.Count do
-            local serverCharInfo = CharInfoUtils.getPlayerCharInfoByTemplateId(charTemplateIds[CSIndex(i)], GEnums.CharType.Default)
-            local info = CharInfoUtils.getSingleCharInfoList(serverCharInfo.instId)
-            table.insert(idInfos, info[1])
-        end
-        for index = 1, Tables.spaceshipConst.charExhibitionMaxCount do
-            local info = {}
-            info.index = index
-            if idInfos[index] then
-                info.charId = idInfos[index].templateId
+        if GameInstance.player.spaceship.isViewingFriend then
+            for index = 1, Tables.spaceshipConst.charExhibitionMaxCount do
+                local info = {}
+                info.index = index
+                if index <= charTemplateIds.Count then
+                    info.charId = charTemplateIds[CSIndex(index)]
+                end
+                self:SetSingleCharPoster(info)
             end
-            self:SetSingleCharPoster(info)
+        else
+            local idInfos = {}
+            for i = 1, charTemplateIds.Count do
+                local serverCharInfo = CharInfoUtils.getPlayerCharInfoByTemplateId(charTemplateIds[CSIndex(i)], GEnums.CharType.Default)
+                local info = CharInfoUtils.getSingleCharInfoList(serverCharInfo.instId)
+                table.insert(idInfos, info[1])
+            end
+            for index = 1, Tables.spaceshipConst.charExhibitionMaxCount do
+                local info = {}
+                info.index = index
+                if idInfos[index] then
+                    info.charId = idInfos[index].templateId
+                end
+                self:SetSingleCharPoster(info)
+            end
+            local ids = {}
+            for i, info in ipairs(idInfos) do
+                table.insert(ids, info.templateId)
+            end
+            GameInstance.player.spaceship:ChangeGuestRoomCharWallChars(ids)
         end
-        local ids = {}
-        for i, info in ipairs(idInfos) do
-            table.insert(ids, info.templateId)
-        end
-        GameInstance.player.spaceship:ChangeGuestRoomCharWallChars(ids)
     end
 end
 

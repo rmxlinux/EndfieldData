@@ -3,27 +3,7 @@ local PANEL_ID = PanelId.ActivityCharacterTrial
 local activitySystem = GameInstance.player.activitySystem
 local CharacterTrialStatus = CS.Beyond.Gameplay.ActivitySystem.CharacterTrialStatus
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityCharacterTrialCtrl = HL.Class('ActivityCharacterTrialCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -34,35 +14,27 @@ ActivityCharacterTrialCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHARACTER_TRIAL_INFO_CHANGE] = 'OnCharacterTrialInfoChange',
 }
 
-
 ActivityCharacterTrialCtrl.m_activityId = HL.Field(HL.String) << ''
-
 
 ActivityCharacterTrialCtrl.m_csIndex2HeadCell = HL.Field(HL.Table)
 
-
 ActivityCharacterTrialCtrl.m_csIndex2dungeonId = HL.Field(HL.Table)
-
 
 ActivityCharacterTrialCtrl.m_trialDataList = HL.Field(HL.Table)
 
-
 ActivityCharacterTrialCtrl.m_selectedCsIndex = HL.Field(HL.Number) << -1
-
 
 ActivityCharacterTrialCtrl.m_headNum = HL.Field(HL.Number) << 0
 
-
 ActivityCharacterTrialCtrl.m_dungeonCount = HL.Field(HL.Number) << 0
-
 
 ActivityCharacterTrialCtrl.m_headCells = HL.Field(HL.Forward("UIListCache"))
 
+ActivityCharacterTrialCtrl.m_equipCells = HL.Field(HL.Any)
+
+
 local HEAD_ICON_SMALL = "_s"
 local BG_IMAGE_FOLDER = "Activity"
-
-
-
 
 
 
@@ -70,6 +42,7 @@ ActivityCharacterTrialCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
     self.m_activityId = args.activityId
     self.view.activityCommonInfo:InitActivityCommonInfo(args)
 
+    self.m_equipCells = UIUtils.genCellCache(self.view.equipItem)
     self.view.btnSmallest.onClick:AddListener(function()
         ActivityUtils.GameEventLogActivityVisit(self.m_activityId, "gotoGachaButton", "visit_gacha")
         if self.m_selectedCsIndex == -1 then
@@ -94,6 +67,23 @@ ActivityCharacterTrialCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
         self:ClickGotoBtn()
     end)
 
+    self.view.rewardsPreviewNaviGroup.onIsFocusedChange:AddListener(function(isFocus)
+        if not isFocus then
+            self.view.scrollViewRewardsNaviGroup:ManuallyStopFocus()
+        end
+    end)
+    self.view.scrollViewRewardsNaviGroup.onIsFocusedChange:AddListener(function(isFocus)
+        if not isFocus then
+            self.view.rewardsPreviewNaviGroup:ManuallyStopFocus()
+        end
+    end)
+    self.view.scrollViewEquipNaviGroup.onIsFocusedChange:AddListener(function(isFocus)
+        if not isFocus then
+            self.view.rewardsPreviewNaviGroup:ManuallyStopFocus()
+            self.view.scrollViewRewardsNaviGroup:ManuallyStopFocus()
+        end
+    end)
+
     self.m_headCells = UIUtils.genCellCache(self.view.headCell)
 
     self.m_trialDataList = {}
@@ -102,7 +92,6 @@ ActivityCharacterTrialCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
             local trialTable = {
                 dungeonId = dungeonId,
                 activityId = trialData.activityId,
-                dungeonBgPath = trialData.dungeonBgPath,
                 sortId = trialData.sortId,
             }
             table.insert(self.m_trialDataList, trialTable)
@@ -147,8 +136,6 @@ ActivityCharacterTrialCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
     end)
 end
 
-
-
 ActivityCharacterTrialCtrl._SelectPrev = HL.Method() << function(self)
     if self.m_selectedCsIndex == 0 then
         return
@@ -156,18 +143,12 @@ ActivityCharacterTrialCtrl._SelectPrev = HL.Method() << function(self)
     self:_SelectHead(self.m_selectedCsIndex - 1)
 end
 
-
-
 ActivityCharacterTrialCtrl._SelectNext = HL.Method() << function(self)
     if self.m_selectedCsIndex == self.m_dungeonCount - 1 then
         return
     end
     self:_SelectHead(self.m_selectedCsIndex + 1)
 end
-
-
-
-
 
 ActivityCharacterTrialCtrl._OnUpdateHeadCell = HL.Method(HL.Table, HL.Number) << function(self, cell, luaIndex)
     local csIndex = CSIndex(luaIndex)
@@ -195,27 +176,21 @@ ActivityCharacterTrialCtrl._OnUpdateHeadCell = HL.Method(HL.Table, HL.Number) <<
 
 end
 
-
-
-
 ActivityCharacterTrialCtrl.OnCharacterTrialInfoChange = HL.Method(HL.Any) << function(self, args)
     self:_UpdateHeadInfo(self.m_selectedCsIndex)
     local newRewardDungeonId = unpack(args)
     if not string.isEmpty(newRewardDungeonId) and #newRewardDungeonId > 0 then
         self:_UpdateHeadInfo(self.m_selectedCsIndex)
-        local success, charTrial = Tables.activityCharTrial:TryGetValue(newRewardDungeonId)
-        if success then
-            local rewardData = Tables.RewardTable[charTrial.rewardId]
-            Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
-                title = Language.LUA_ACTIVITY_CHARACTER_TRIAL_GET_REWARD_TITLE,
-                items = rewardData.itemBundles,
-            })
-        end
+        
+        
+        
+        
+        
+        
+        
+        
     end
 end
-
-
-
 
 
 ActivityCharacterTrialCtrl._SelectHead = HL.Method(HL.Number) << function(self, csIndex)
@@ -224,9 +199,6 @@ ActivityCharacterTrialCtrl._SelectHead = HL.Method(HL.Number) << function(self, 
     end
     self:_UpdateHeadInfo(csIndex)
 end
-
-
-
 
 ActivityCharacterTrialCtrl._UpdateHeadInfo = HL.Method(HL.Number) << function(self, csIndex)
     for key, cell in pairs(self.m_csIndex2HeadCell) do
@@ -257,23 +229,69 @@ ActivityCharacterTrialCtrl._UpdateHeadInfo = HL.Method(HL.Number) << function(se
     if trialStatus == CharacterTrialStatus.CanTrial then
         self.view.btnGoto.gameObject:SetActive(true)
         self.view.btnReward.gameObject:SetActive(false)
-        self.view.activityCommonInfo:UpdateRewardInfo(charTrial.rewardId)
+        self.view.activityCommonInfo:UpdateRewardInfo(charTrial.showRewardId)
+        self:UpdateEquipReward(charTrial.equipRewardId)
     elseif trialStatus == CharacterTrialStatus.CanGetReward then
         self.view.btnGoto.gameObject:SetActive(false)
         self.view.btnReward.gameObject:SetActive(true)
-        self.view.activityCommonInfo:UpdateRewardInfo(charTrial.rewardId)
+        self.view.activityCommonInfo:UpdateRewardInfo(charTrial.showRewardId)
+        self:UpdateEquipReward(charTrial.equipRewardId)
     elseif trialStatus == CharacterTrialStatus.GotReward then
         self.view.btnGoto.gameObject:SetActive(true)
         self.view.btnReward.gameObject:SetActive(false)
-        self.view.activityCommonInfo:UpdateRewardInfo(charTrial.rewardId)
+        self.view.activityCommonInfo:UpdateRewardInfo(charTrial.showRewardId)
+        self:UpdateEquipReward(charTrial.equipRewardId)
     end
 
     self.view.activityCommonInfo:UpdateDescTxt(charTrial.desc)
     self.view.roleImg:LoadSprite(BG_IMAGE_FOLDER, charTrial.bgRolePath)
 end
 
+ActivityCharacterTrialCtrl.UpdateEquipReward = HL.Method(HL.Any) << function(self, equipRewardId)
+    if equipRewardId == nil or string.isEmpty(equipRewardId) then
+        self.view.equipNode.gameObject:SetActive(false)
+        self.view.arrowImgRectTransform.gameObject:SetActive(false)
+        return
+    end
+    self.view.equipNode.gameObject:SetActive(true)
+    self.view.arrowImgRectTransform.gameObject:SetActive(false)
 
+    local _, rewardTableData = Tables.rewardTable:TryGetValue(equipRewardId)
+    local rewardBundles = UIUtils.getRewardItems(equipRewardId)
 
+    local showBundles = {}
+    for i = 1, #rewardBundles do
+        local b = rewardBundles[i]
+        for j = 1, b.count do
+            table.insert(showBundles, b)
+        end
+    end
+
+    self.m_equipCells:Refresh(#showBundles, function(cell, index)
+
+        cell:InitItem(showBundles[index], function()
+            local itemBundle = GameInstance.player.charBag:CreateClientMaxEnhancedEquip(showBundles[index].id)
+            cell.instId = itemBundle.instId
+            cell:ShowTips(nil, function()
+                GameInstance.player.charBag:RemoveClientItemBundle(cell.instId)
+            end)
+        end)
+        cell:SetExtraInfo({
+            tipsPosType = UIConst.UI_TIPS_POS_TYPE.LeftMid,
+            tipsPosTransform = self.view.activityCommonInfo.view.scrollViewRewards,
+            isSideTips = true,
+            onBeforeJump = function()
+                if DeviceInfo.usingController then
+                    self.view.scrollViewEquipNaviGroup:ManuallyStopFocus()
+                    self.view.rewardsPreviewNaviGroup:ManuallyStopFocus()
+                    self.view.scrollViewRewardsNaviGroup:ManuallyStopFocus()
+                end
+            end
+        })
+        cell.view.countNode.gameObject:SetActive(false)
+        cell.view.equipEnhanceNode.gameObject:SetActive(true)
+    end)
+end
 
 ActivityCharacterTrialCtrl.ClickGotoBtn = HL.Method() << function(self)
     if self.m_selectedCsIndex == -1 then
@@ -287,8 +305,6 @@ ActivityCharacterTrialCtrl.ClickGotoBtn = HL.Method() << function(self)
         self:JumpToDungeon()
     end
 end
-
-
 
 
 ActivityCharacterTrialCtrl.JumpToDungeon = HL.Method() << function(self)

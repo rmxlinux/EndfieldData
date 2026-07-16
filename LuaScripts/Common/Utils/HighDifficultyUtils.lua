@@ -20,9 +20,7 @@ function HighDifficultyUtils.isNewHighDifficultyTask(activityId, taskId)
 end
 function HighDifficultyUtils.setFalseNewHighDifficultyTask(activityId, taskIds)
     for index, taskId in ipairs(taskIds) do
-        
-        local needSave = index == #taskIds
-        ClientDataManagerInst:SetBool(newActivityHighDifficultyTaskText .. activityId .. taskId, true, false, "Default", needSave, EClientDataTimeValidType.Permanent)
+        ClientDataManagerInst:SetBool(newActivityHighDifficultyTaskText .. activityId .. taskId, true, false, "Default", EClientDataTimeValidType.Permanent)
     end
     Notify(MessageConst.ACTIVITY_HIGH_DIFFICULTY_NEW_TASK_SET_FALSE)
 end

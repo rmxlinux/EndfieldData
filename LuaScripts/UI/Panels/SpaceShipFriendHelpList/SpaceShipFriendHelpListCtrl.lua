@@ -2,30 +2,13 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceShipFriendHelpList
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceShipFriendHelpListCtrl = HL.Class('SpaceShipFriendHelpListCtrl', uiCtrl.UICtrl)
-
 
 SpaceShipFriendHelpListCtrl.m_roomId = HL.Field(HL.String) << ""
 
-
 SpaceShipFriendHelpListCtrl.m_showFriendBusinessCardBindingId = HL.Field(HL.Number) << -1
 
-
 SpaceShipFriendHelpListCtrl.m_nowNaviFriendCell = HL.Field(HL.Userdata)
-
 
 
 
@@ -36,9 +19,6 @@ SpaceShipFriendHelpListCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SPACESHIP_USE_HELP_CREDIT] = 'OnUseHelpCredit',
     [MessageConst.ON_SPACESHIP_ASSIST_DATA_MODIFY] = 'OnUseHelpCredit',
 }
-
-
-
 
 
 SpaceShipFriendHelpListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -90,32 +70,21 @@ SpaceShipFriendHelpListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 SpaceShipFriendHelpListCtrl.OnShow = HL.Override() << function(self)
 
 end
-
-
 
 SpaceShipFriendHelpListCtrl.OnHide = HL.Override() << function(self)
 
 end
 
-
-
 SpaceShipFriendHelpListCtrl.OnClose = HL.Override() << function(self)
 
 end
 
-
-
 SpaceShipFriendHelpListCtrl.OnRecvQueryInfo = HL.Method() << function(self)
     self:_RefreshData()
 end
-
-
-
 
 
 SpaceShipFriendHelpListCtrl.OnUseHelpCredit = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
@@ -125,9 +94,6 @@ SpaceShipFriendHelpListCtrl.OnUseHelpCredit = HL.Method(HL.Opt(HL.Table)) << fun
     local roomId = arg and arg[1] or self.m_roomId
     self:_RefreshData(roomId)
 end
-
-
-
 
 SpaceShipFriendHelpListCtrl._InitData = HL.Method(HL.Opt(HL.String)) << function(self, roomId)
     roomId = roomId or self.m_roomId
@@ -146,9 +112,6 @@ SpaceShipFriendHelpListCtrl._InitData = HL.Method(HL.Opt(HL.String)) << function
     
     self.view.hintNode.gameObject:SetActive(isGrowCabin and beAssistTime < beHelpedCreditLeft)
 end
-
-
-
 
 
 SpaceShipFriendHelpListCtrl._RefreshData = HL.Method(HL.Opt(HL.String)) << function(self, roomId)

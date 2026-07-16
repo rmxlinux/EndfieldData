@@ -2,20 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopRecharge
 
-
-
-
-
-
-
-
-
-
-
-
-
 ShopRechargeCtrl = HL.Class('ShopRechargeCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -27,20 +14,13 @@ ShopRechargeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CASH_SHOP_PLATFORM_DATA_REFRESH] = '_Refresh',
 }
 
-
 ShopRechargeCtrl.m_cashShopId = HL.Field(HL.String) << ''
-
 
 ShopRechargeCtrl.m_cashShopSystem = HL.Field(HL.Userdata)
 
-
 ShopRechargeCtrl.m_gemCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 ShopRechargeCtrl.m_haveSetNaviTarget = HL.Field(HL.Boolean) << false
-
-
-
 
 
 ShopRechargeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -72,8 +52,6 @@ ShopRechargeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
 ShopRechargeCtrl.OnShow = HL.Override() << function(self)
     Notify(MessageConst.CASH_SHOP_SHOW_WALLET_BAR, {
         moneyIds = {Tables.globalConst.originiumItemId, Tables.globalConst.diamondItemId},
@@ -97,13 +75,8 @@ ShopRechargeCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 ShopRechargeCtrl.OnClose = HL.Override() << function(self)
 end
-
-
-
 
 ShopRechargeCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, arg)
 
@@ -113,8 +86,6 @@ end
 
 ShopRechargeCtrl.OnAfterCategoryTopOrdered = HL.Method() << function(self)
 end
-
-
 
 ShopRechargeCtrl._InitAction = HL.Method() << function(self)
     self.m_gemCellCache = UIUtils.genCellCache(self.view.shopGemCell)
@@ -141,8 +112,6 @@ ShopRechargeCtrl._InitAction = HL.Method() << function(self)
     end
 end
 
-
-
 ShopRechargeCtrl._Refresh = HL.Method() << function(self)
     
     local csShopData = self.m_cashShopSystem:GetShopData(self.m_cashShopId)
@@ -167,7 +136,7 @@ ShopRechargeCtrl._Refresh = HL.Method() << function(self)
     self.m_gemCellCache:Refresh(#goodsTable, function(cell, index)
         if index == 1 and not self.m_haveSetNaviTarget then
             self.m_haveSetNaviTarget = true
-            UIUtils.setAsNaviTarget(cell.button)
+            self:SetNaviTarget(cell.button)
         end
         local tblGoodData = goodsTable[index]
         local goodsId = tblGoodData.cashGoodsId

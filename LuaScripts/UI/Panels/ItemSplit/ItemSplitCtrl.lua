@@ -1,23 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ItemSplit
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ItemSplitCtrl = HL.Class('ItemSplitCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -29,32 +13,21 @@ ItemSplitCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 ItemSplitCtrl.m_args = HL.Field(HL.Table)
-
 
 ItemSplitCtrl.m_slotIndex = HL.Field(HL.Number) << -1
 
-
 ItemSplitCtrl.m_itemId = HL.Field(HL.String) << ''
-
 
 ItemSplitCtrl.m_count = HL.Field(HL.Number) << 1
 
-
 ItemSplitCtrl.m_curCount = HL.Field(HL.Number) << 1
-
 
 ItemSplitCtrl.m_onComplete = HL.Field(HL.Function)
 
-
 ItemSplitCtrl.m_addBtnPressCoroutine = HL.Field(HL.Thread)
 
-
 ItemSplitCtrl.m_reduceBtnPressCoroutine = HL.Field(HL.Thread)
-
-
-
 
 
 ItemSplitCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -159,25 +132,16 @@ ItemSplitCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
 ItemSplitCtrl.OnClose = HL.Override() << function(self)
     if self.m_onComplete then
         self.m_onComplete()
     end
 end
 
-
-
-
-
 ItemSplitCtrl._ChangeNum = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, num, isFinalNum)
     local newNum = isFinalNum and num or (self.m_curCount + num)
     self.view.numSlider.value = newNum
 end
-
-
-
 
 ItemSplitCtrl._OnNumChanged = HL.Method(HL.Number) << function(self, num)
     self.view.addBtn.interactable = num < self.m_count - 1
@@ -194,8 +158,6 @@ ItemSplitCtrl._OnNumChanged = HL.Method(HL.Number) << function(self, num)
         self.m_reduceBtnPressCoroutine = self:_ClearCoroutine(self.m_reduceBtnPressCoroutine)
     end
 end
-
-
 
 ItemSplitCtrl._OnClickConfirm = HL.Method() << function(self)
     local toSlot = GameInstance.player.inventory.itemBag:GetOrFallback(Utils.getCurrentScope()):GetFirstEmptySlotIndex()

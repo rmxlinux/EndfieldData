@@ -2,25 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.QuickEquipTacticalItem
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 QuickEquipTacticalItemCtrl = HL.Class('QuickEquipTacticalItemCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -31,12 +13,9 @@ QuickEquipTacticalItemCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 QuickEquipTacticalItemCtrl.m_tacticalItemId = HL.Field(HL.String) << ""
 
-
 QuickEquipTacticalItemCtrl.m_getSquadCell = HL.Field(HL.Function)
-
 
 
 
@@ -52,9 +31,6 @@ QuickEquipTacticalItemCtrl.m_squadCellDataList = HL.Field(HL.Table)
 
 
 
-
-
-
 QuickEquipTacticalItemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_tacticalItemId = arg.tacticalItemId
 
@@ -63,8 +39,6 @@ QuickEquipTacticalItemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_SetMainTacticalItem()
     self:_SetSquadTacticalItem()
 end
-
-
 
 QuickEquipTacticalItemCtrl._InitAction = HL.Method() << function(self)
     self.view.topNode.btnClose.onClick:AddListener(function()
@@ -84,8 +58,6 @@ QuickEquipTacticalItemCtrl._InitAction = HL.Method() << function(self)
     end)
 end
 
-
-
 QuickEquipTacticalItemCtrl._SetMainTacticalItem = HL.Method() << function(self)
     local itemId = self.m_tacticalItemId
     local cell = self.view.medicineNode
@@ -101,8 +73,6 @@ QuickEquipTacticalItemCtrl._SetMainTacticalItem = HL.Method() << function(self)
     cell.equipDescTxt:SetAndResolveTextStyle(equipDesc)
     UIUtils.setItemRarityImage(cell.rarityColor, itemCfg.rarity)
 end
-
-
 
 QuickEquipTacticalItemCtrl._SetSquadTacticalItem = HL.Method() << function(self)
     self.m_getSquadCell = UIUtils.genCachedCellFunction(self.view.rightNode.scrollList)
@@ -127,10 +97,6 @@ QuickEquipTacticalItemCtrl._SetSquadTacticalItem = HL.Method() << function(self)
     self.view.rightNode.scrollList:UpdateCount(#self.m_squadCellDataList)
     self:_UpdateSaveBtn()
 end
-
-
-
-
 
 QuickEquipTacticalItemCtrl._UpdateSquadCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local data = self.m_squadCellDataList[index]
@@ -172,16 +138,11 @@ QuickEquipTacticalItemCtrl._UpdateSquadCell = HL.Method(HL.Table, HL.Number) << 
     self:_SetSquadCellEquipped(index, isEquipped)
 
     if DeviceInfo.usingController and index == 1 then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.button)
+        self:SetNaviTarget(cell.button)
     end
     InputManagerInst:SetBindingText(cell.button.hoverConfirmBindingId, data.isEquipped and
         Language.LUA_QUICK_EQUIP_TACTICAL_ITEM_OFF or Language.LUA_QUICK_EQUIP_TACTICAL_ITEM_ON)
 end
-
-
-
-
-
 
 QuickEquipTacticalItemCtrl._UpdateCellItemDetail = HL.Method(HL.Table, HL.String, HL.Opt(HL.Boolean)) << function(
     self, cell, itemId, isEquipped)
@@ -206,9 +167,6 @@ QuickEquipTacticalItemCtrl._UpdateCellItemDetail = HL.Method(HL.Table, HL.String
     end
 end
 
-
-
-
 QuickEquipTacticalItemCtrl._OnSquadCellClicked = HL.Method(HL.Number) << function(self, index)
     local cellData = self.m_squadCellDataList[index]
     self:_SetSquadCellEquipped(index, not cellData.isEquipped)
@@ -216,10 +174,6 @@ QuickEquipTacticalItemCtrl._OnSquadCellClicked = HL.Method(HL.Number) << functio
         Language.LUA_QUICK_EQUIP_TACTICAL_ITEM_OFF or Language.LUA_QUICK_EQUIP_TACTICAL_ITEM_ON)
     self:_UpdateSaveBtn()
 end
-
-
-
-
 
 QuickEquipTacticalItemCtrl._SetSquadCellEquipped = HL.Method(HL.Number, HL.Boolean) << function(self, index, isEquipped)
     local cellData = self.m_squadCellDataList[index]
@@ -242,8 +196,6 @@ QuickEquipTacticalItemCtrl._SetSquadCellEquipped = HL.Method(HL.Number, HL.Boole
     self:_UpdateCellItemDetail(cellData.cell, equippedItemId, isEquipped)
 end
 
-
-
 QuickEquipTacticalItemCtrl._isDirty = HL.Method().Return(HL.Boolean) << function(self)
     local isDirty = false
     for _, data in ipairs(self.m_squadCellDataList) do
@@ -255,14 +207,10 @@ QuickEquipTacticalItemCtrl._isDirty = HL.Method().Return(HL.Boolean) << function
     return isDirty
 end
 
-
-
 QuickEquipTacticalItemCtrl._UpdateSaveBtn = HL.Method() << function(self)
     local isDirty = self:_isDirty()
     self.view.rightNode.btnStateCtrl:SetState(isDirty and 'Normal' or 'Disabled')
 end
-
-
 
 QuickEquipTacticalItemCtrl._SaveAndClose = HL.Method() << function(self)
     for _, data in ipairs(self.m_squadCellDataList) do
@@ -273,8 +221,6 @@ QuickEquipTacticalItemCtrl._SaveAndClose = HL.Method() << function(self)
     self:PlayAnimationOutAndClose()
     Notify(MessageConst.SHOW_TOAST, Language.LUA_QUICK_EQUIP_SAVED)
 end
-
-
 
 QuickEquipTacticalItemCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})

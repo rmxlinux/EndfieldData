@@ -1,52 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharPosterScrollList = HL.Class('CharPosterScrollList', UIWidgetBase)
 
 local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
@@ -58,65 +11,45 @@ local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
 
 
 
-
 CharPosterScrollList.info = HL.Field(HL.Table)
-
 
 
 CharPosterScrollList.m_selectNum = HL.Field(HL.Number) << -1
 
 
-
 CharPosterScrollList.m_mode = HL.Field(HL.Number) << -1
-
 
 
 CharPosterScrollList.m_charNum = HL.Field(HL.Number) << 0
 
-
 CharPosterScrollList.m_originSingleSelect = HL.Field(HL.Number) << 0
-
 
 CharPosterScrollList.curSingleSelect = HL.Field(HL.Number) << 0
 
 
-
 CharPosterScrollList.cell2Select = HL.Field(HL.Table)
-
 
 CharPosterScrollList.m_select2Cell = HL.Field(HL.Table)
 
-
 CharPosterScrollList.m_charItems = HL.Field(HL.Table)
-
 
 CharPosterScrollList.m_onCharListChanged = HL.Field(HL.Function)
 
-
 CharPosterScrollList.GetCell = HL.Field(HL.Function)
-
 
 CharPosterScrollList.m_clickFunc = HL.Field(HL.Function)
 
-
 CharPosterScrollList.m_updateFunc = HL.Field(HL.Function)
-
 
 CharPosterScrollList.m_naviTargetInitialized = HL.Field(HL.Boolean) << false
 
-
 CharPosterScrollList.m_selectedTags = HL.Field(HL.Table)
-
 
 CharPosterScrollList.m_sortOptData = HL.Field(HL.Table)
 
-
 CharPosterScrollList.m_sortIsIncremental = HL.Field(HL.Boolean) << false
 
-
 CharPosterScrollList.m_filteredInfoList = HL.Field(HL.Table)
-
-
 
 
 CharPosterScrollList._OnFirstTimeInit = HL.Override() << function(self)
@@ -140,18 +73,11 @@ CharPosterScrollList._OnFirstTimeInit = HL.Override() << function(self)
     self:_InitFilterNode()
 end
 
-
-
-
-
 CharPosterScrollList.InitCharPosterScrollList = HL.Method(HL.Table, HL.Opt(HL.Function)) << function(self, info, onCharListChanged)
     self:_InitData(info)
     self:_FirstTimeInit()
     self.m_onCharListChanged = onCharListChanged
 end
-
-
-
 
 CharPosterScrollList._InitData = HL.Method(HL.Table) << function(self, info)
     self.info = info or {}
@@ -174,8 +100,6 @@ CharPosterScrollList._InitData = HL.Method(HL.Table) << function(self, info)
     self.m_naviTargetInitialized = false
 end
 
-
-
 CharPosterScrollList._InitSortNode = HL.Method() << function(self)
     self.view.sortNode:InitSortNode(UIConst.CHAR_POSTER_LIST_SORT_OPTION, function(optData, isIncremental)
         local filteredList = self.m_filteredInfoList
@@ -184,11 +108,6 @@ CharPosterScrollList._InitSortNode = HL.Method() << function(self)
         self:_RefreshCharList(true, filteredList)
     end, nil, false, true, self.view.filterBtn)
 end
-
-
-
-
-
 
 CharPosterScrollList._ApplySort = HL.Method(HL.Table, HL.Table, HL.Boolean).Return(HL.Table)
     << function(self, itemInfoList, optData, isIncremental)
@@ -238,10 +157,6 @@ CharPosterScrollList._ApplySort = HL.Method(HL.Table, HL.Table, HL.Boolean).Retu
 
     return itemInfoList
 end
-
-
-
-
 CharPosterScrollList._ApplyFilter = HL.Method(HL.Table, HL.Table).Return(HL.Table)
     << function(self, itemInfoList, selectedTags)
     local filteredList = {}
@@ -289,8 +204,6 @@ CharPosterScrollList._ApplyFilter = HL.Method(HL.Table, HL.Table).Return(HL.Tabl
 end
 
 
-
-
 CharPosterScrollList._InitFilterNode = HL.Method() << function(self)
     local filterArgs = {
         tagGroups = FilterUtils.generateConfig_DEPOT_CHAR(),
@@ -306,9 +219,6 @@ CharPosterScrollList._InitFilterNode = HL.Method() << function(self)
     self.view.filterBtn:InitFilterBtn(filterArgs)
 end
 
-
-
-
 CharPosterScrollList._OnFilterConfirm = HL.Method(HL.Table) << function(self, tags)
     self.m_selectedTags = tags or {}
     self.m_filteredInfoList = self.m_charItems
@@ -319,9 +229,6 @@ CharPosterScrollList._OnFilterConfirm = HL.Method(HL.Table) << function(self, ta
     self.m_filteredInfoList = filteredList
     self:_RefreshCharList(true, filteredList)
 end
-
-
-
 
 
 CharPosterScrollList._OnFilterGetCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tags)
@@ -335,9 +242,6 @@ CharPosterScrollList._OnFilterGetCount = HL.Method(HL.Table).Return(HL.Number) <
 end
 
 
-
-
-
 CharPosterScrollList._GetCharIndex = HL.Method(HL.Any).Return(HL.Number) << function(self, charInstId)
     for index = 1, #self.m_filteredInfoList do
         local charItem = self.m_filteredInfoList[index]
@@ -348,10 +252,6 @@ CharPosterScrollList._GetCharIndex = HL.Method(HL.Any).Return(HL.Number) << func
     return -1;
 end
 
-
-
-
-
 CharPosterScrollList._SortData = HL.Method(HL.Table, HL.Boolean) << function(self, keys, isIncremental)
     if self.m_filteredInfoList then
         table.sort(self.m_filteredInfoList, Utils.genSortFunction(keys, isIncremental))
@@ -360,21 +260,17 @@ CharPosterScrollList._SortData = HL.Method(HL.Table, HL.Boolean) << function(sel
     end
 end
 
-
-
-
-
 CharPosterScrollList._RefreshCharList = HL.Method(HL.Opt(HL.Boolean, HL.Table)) << function(self, setTop, targetItems)
     targetItems = targetItems or self.m_charItems
     local count = #targetItems
+    local isEmpty = count <= 0
+    self.view.emptyNode.gameObject:SetActive(isEmpty)
+    self.view.charScrollList.gameObject:SetActive(not isEmpty)
     self.view.charScrollList:UpdateCount(count, setTop or false)
     if self.m_onCharListChanged then
         self.m_onCharListChanged(targetItems)
     end
 end
-
-
-
 
 CharPosterScrollList._ShowMultiChars = HL.Method(HL.Opt(HL.Boolean)) << function(self, playAnim)
     for cellIndex = 1, self.view.charScrollList.count do
@@ -385,9 +281,6 @@ CharPosterScrollList._ShowMultiChars = HL.Method(HL.Opt(HL.Boolean)) << function
     end
 end
 
-
-
-
 CharPosterScrollList._ShowSingleChars = HL.Method(HL.Opt(HL.Boolean)) << function(self, playAnim)
     for cellIndex = 1, self.view.charScrollList.count do
         local cell = self:GetCellByIndex(cellIndex)
@@ -396,9 +289,6 @@ CharPosterScrollList._ShowSingleChars = HL.Method(HL.Opt(HL.Boolean)) << functio
         end
     end
 end
-
-
-
 
 CharPosterScrollList._UpdateMultiSelect = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Table, HL.Table) << function(self, playAnim)
     local result = {}
@@ -434,8 +324,6 @@ CharPosterScrollList._UpdateMultiSelect = HL.Method(HL.Opt(HL.Boolean)).Return(H
     return charItemList, charInfoList
 end
 
-
-
 CharPosterScrollList._GetNextIndex = HL.Method().Return(HL.Number) << function(self)
     for index = 1, self.m_selectNum do
         if not Utils.isInclude(self.cell2Select, index) then
@@ -444,8 +332,6 @@ CharPosterScrollList._GetNextIndex = HL.Method().Return(HL.Number) << function(s
     end
     return -1
 end
-
-
 
 CharPosterScrollList._RefreshMode = HL.Method() << function(self)
     local singleSelected = self.m_mode == UIConst.CharListMode.Single
@@ -460,7 +346,7 @@ CharPosterScrollList._RefreshMode = HL.Method() << function(self)
         local cell = self:GetCellByIndex(self.curSingleSelect)
         if cell then
             cell:SetSingleSelect(true)
-            InputManagerInst.controllerNaviManager:SetTarget(cell.view.button)
+            self:SetNaviTarget(cell.view.button)
         end
         
         if DeviceInfo.usingController and self.curSingleSelect <= 0 then
@@ -468,7 +354,7 @@ CharPosterScrollList._RefreshMode = HL.Method() << function(self)
                 coroutine.step()
                 local cell = self:GetCellByIndex(1)
                 if cell then
-                    InputManagerInst.controllerNaviManager:SetTarget(cell.view.button)
+                    self:SetNaviTarget(cell.view.button)
                 end
             end)
         end
@@ -478,18 +364,10 @@ end
 
 
 
-
-
-
-
 CharPosterScrollList.SetUpdateCellFunc = HL.Method(HL.Opt(HL.Function, HL.Function)) << function(self, updateFunc, clickFunc)
     self.m_updateFunc = updateFunc
     self.m_clickFunc = clickFunc
 end
-
-
-
-
 
 CharPosterScrollList.OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function)) << function(self, object, index)
     local cell = self:GetCellByIndex(index)
@@ -557,13 +435,10 @@ CharPosterScrollList.OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.
         self.m_naviTargetInitialized = true
         self:_StartCoroutine(function()
             coroutine.step()
-            InputManagerInst.controllerNaviManager:SetTarget(naviTargetCell.view.button)
+            self:SetNaviTarget(naviTargetCell.view.button)
         end)
     end
 end
-
-
-
 
 CharPosterScrollList.GetCellByIndex = HL.Method(HL.Number).Return(HL.Forward("CharFormationHeadCell")) << function(self, cellIndex)
     local go = self.view.charScrollList:Get(CSIndex(cellIndex))
@@ -574,11 +449,6 @@ CharPosterScrollList.GetCellByIndex = HL.Method(HL.Number).Return(HL.Forward("Ch
 
     return cell
 end
-
-
-
-
-
 
 CharPosterScrollList.ShowSelectChars = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.Boolean)) << function(self, items, playAnim, refreshScroll)
     
@@ -602,10 +472,6 @@ CharPosterScrollList.ShowSelectChars = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL
     end
 end
 
-
-
-
-
 CharPosterScrollList.SetMode = HL.Method(HL.Any, HL.Any) << function(self, mode, charInstId)
     self.m_naviTargetInitialized = false
     self.m_mode = mode
@@ -615,8 +481,6 @@ CharPosterScrollList.SetMode = HL.Method(HL.Any, HL.Any) << function(self, mode,
     self.m_originSingleSelect = self.curSingleSelect
     self:_RefreshMode()
 end
-
-
 
 CharPosterScrollList.GetEmpty = HL.Method().Return(HL.Boolean) << function(self)
     local empty
@@ -628,18 +492,12 @@ CharPosterScrollList.GetEmpty = HL.Method().Return(HL.Boolean) << function(self)
     return empty
 end
 
-
-
-
 CharPosterScrollList.UpdateCharItems = HL.Method(HL.Table) << function(self, items)
     self.m_charItems = lume.deepCopy(items)
     self.m_filteredInfoList = lume.deepCopy(items)
     self:_OnFilterConfirm(self.m_selectedTags)
     self.view.sortNode:SortCurData()
 end
-
-
-
 
 CharPosterScrollList._GetCellSelectIndex = HL.Method(HL.Number).Return(HL.Number) << function(self, cellIndex)
     if self.cell2Select[cellIndex] ~= nil and self.cell2Select[cellIndex] > 0 then
@@ -648,9 +506,6 @@ CharPosterScrollList._GetCellSelectIndex = HL.Method(HL.Number).Return(HL.Number
         return -1
     end
 end
-
-
-
 
 CharPosterScrollList._RefreshSingleSelect = HL.Method(HL.Number) << function(self, cellIndex)
     if self.curSingleSelect > 0 then
@@ -664,10 +519,6 @@ CharPosterScrollList._RefreshSingleSelect = HL.Method(HL.Number) << function(sel
     cell:SetSingleSelect(true)
     self.curSingleSelect = cellIndex
 end
-
-
-
-
 
 CharPosterScrollList.OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Boolean)) << function(self, cellIndex, playAnim)
     local cell = self:GetCellByIndex(cellIndex)
@@ -751,10 +602,6 @@ CharPosterScrollList.OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Function, HL.B
         end
     end
 end
-
-
-
-
 
 CharPosterScrollList._UpdateSlotIndex = HL.Method(HL.Table, HL.Any) << function(self, charItem, selectedIndex)
     if selectedIndex then

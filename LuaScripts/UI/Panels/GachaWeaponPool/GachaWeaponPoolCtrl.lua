@@ -1,45 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaWeaponPool
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GachaWeaponPoolCtrl = HL.Class('GachaWeaponPoolCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -61,40 +23,27 @@ GachaWeaponPoolCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 local commonBitsetSys = GameInstance.player.commonBitsetSystem
 
-
 GachaWeaponPoolCtrl.m_arg = HL.Field(HL.Table)
-
 
 GachaWeaponPoolCtrl.m_goodsData = HL.Field(CS.Beyond.Gameplay.ShopSystem.GoodsData)
 
-
 GachaWeaponPoolCtrl.m_poolId = HL.Field(HL.String) << ""
-
 
 GachaWeaponPoolCtrl.m_price = HL.Field(HL.Number) << 0
 
-
 GachaWeaponPoolCtrl.m_itemNoUpCache = HL.Field(HL.Forward('UIListCache'))
-
 
 GachaWeaponPoolCtrl.m_createdWeaponInsts = HL.Field(HL.Table)
 
-
 GachaWeaponPoolCtrl.m_isRequesting = HL.Field(HL.Boolean) << false
-
 
 GachaWeaponPoolCtrl.m_gachaFlowCoroutine = HL.Field(HL.Thread)
 
-
 GachaWeaponPoolCtrl.m_loopRewardItemUIList = HL.Field(HL.Table)
-
 
 GachaWeaponPoolCtrl.m_gachaWeaponGoodsCostInfo = HL.Field(HL.Table)
 
-
 GachaWeaponPoolCtrl.m_isAutoExchangeMoney = HL.Field(HL.Boolean) << false
-
-
 
 
 GachaWeaponPoolCtrl.CloseSelf = HL.Method() << function(self)
@@ -103,9 +52,6 @@ GachaWeaponPoolCtrl.CloseSelf = HL.Method() << function(self)
     end
     PhaseManager:PopPhase(PhaseId.GachaWeaponPool)
 end
-
-
-
 
 GachaWeaponPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_arg = arg
@@ -147,14 +93,12 @@ GachaWeaponPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.weaponShowMessageNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
         if isFocused then
-            InputManagerInst.controllerNaviManager:SetTarget(self.view.itemUp.view.button)
+            self:SetNaviTarget(self.view.itemUp.view.button)
         end
     end)
 
     self:_InitData()
 end
-
-
 
 GachaWeaponPoolCtrl.OnShow = HL.Override() << function(self)
     GameInstance.player.shopSystem:SetSingleGoodsIdSee(self.m_goodsData.goodsId)
@@ -173,8 +117,6 @@ GachaWeaponPoolCtrl.OnShow = HL.Override() << function(self)
         self:_TryShowQueueReward()
     end
 end
-
-
 
 GachaWeaponPoolCtrl._InitData = HL.Method() << function(self)
     
@@ -293,8 +235,6 @@ GachaWeaponPoolCtrl._InitData = HL.Method() << function(self)
     self:_InitRewardQueueConfigs()
 end
 
-
-
 GachaWeaponPoolCtrl._UpdateRemainingTime = HL.Method() << function(self)
     local isRealTime, resultValue = CashShopUtils.GetGachaWeaponPoolCloseTimeInfo(self.m_poolId)
     if isRealTime then
@@ -332,8 +272,6 @@ GachaWeaponPoolCtrl._UpdateRemainingTime = HL.Method() << function(self)
     end
 end
 
-
-
 GachaWeaponPoolCtrl._IsWeaponDepotFull = HL.Method().Return(HL.Boolean) << function(self)
     local depots = GameInstance.player.inventory.valuableDepots
     if not depots:ContainsKey(GEnums.ItemValuableDepotType.Weapon) then
@@ -345,8 +283,6 @@ GachaWeaponPoolCtrl._IsWeaponDepotFull = HL.Method().Return(HL.Boolean) << funct
     end
     return weaponDepot:GetUsedGridCount() >= weaponDepot.gridLimit
 end
-
-
 
 GachaWeaponPoolCtrl._OnGachaBtnClick = HL.Method() << function(self)
     if self.m_isRequesting or self.m_gachaWeaponGoodsCostInfo == nil then
@@ -398,8 +334,6 @@ GachaWeaponPoolCtrl._OnGachaBtnClick = HL.Method() << function(self)
     self.m_isRequesting = true
 end
 
-
-
 GachaWeaponPoolCtrl._OnNoMoneyBtnClick = HL.Method() << function(self)
     UIManager:Open(PanelId.GachaWeaponInsufficient, {
         onClickOriginiumExchange = function()
@@ -450,9 +384,6 @@ GachaWeaponPoolCtrl._OnNoMoneyBtnClick = HL.Method() << function(self)
         end
     })
 end
-
-
-
 
 GachaWeaponPoolCtrl.OnWalletChanged = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     self.m_gachaWeaponGoodsCostInfo = CashShopUtils.TryGetBuyGachaWeaponGoodsCostInfo(self.m_goodsData.shopId, self.m_goodsData.goodsId)
@@ -533,9 +464,6 @@ GachaWeaponPoolCtrl.OnWalletChanged = HL.Method(HL.Opt(HL.Any)) << function(self
     end
     self.view.walletBarPlaceholder:InitWalletBarPlaceholder(moneyIds, false, true)
 end
-
-
-
 
 GachaWeaponPoolCtrl.OnGachaSucc = HL.Method(HL.Table) << function(self, arg)
     self:OnWalletChanged()
@@ -640,6 +568,7 @@ GachaWeaponPoolCtrl.OnGachaSucc = HL.Method(HL.Table) << function(self, arg)
             showRewardFunc = function()
                 Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
                     items = getItems,
+                    notShowGachaWeaponDisplay = true,
                     onComplete = function()
                         Notify(MessageConst.ON_ONE_GACHA_WEAPON_POOL_REWARD_FINISHED)
                     end,
@@ -653,14 +582,9 @@ GachaWeaponPoolCtrl.OnGachaSucc = HL.Method(HL.Table) << function(self, arg)
     
 end
 
-
-
 GachaWeaponPoolCtrl.OnGachaPoolRoleDataChanged = HL.Method() << function(self)
     self:_InitData()
 end
-
-
-
 
 GachaWeaponPoolCtrl._ShowPerfectWeaponPreview = HL.Method(HL.String) << function(self, weaponId)
     local weaponInst
@@ -691,8 +615,6 @@ GachaWeaponPoolCtrl._ShowPerfectWeaponPreview = HL.Method(HL.String) << function
     GameAction.ShowBlackScreen(dynamicFadeData)
 end
 
-
-
 GachaWeaponPoolCtrl._GetOriginiumConvertWeaponGoldInfo = HL.Method().Return(HL.Table) << function(self)
     local weaponGoldId = self.m_gachaWeaponGoodsCostInfo.costMoneyId
     local curGoldCount = Utils.getItemCount(self.m_gachaWeaponGoodsCostInfo.costMoneyId)
@@ -718,8 +640,6 @@ GachaWeaponPoolCtrl._GetOriginiumConvertWeaponGoldInfo = HL.Method().Return(HL.T
     return convertInfo
 end
 
-
-
 GachaWeaponPoolCtrl.OnClose = HL.Override() << function(self)
     self.m_createdWeaponInsts = {}
     self.m_gachaFlowCoroutine = self:_ClearCoroutine(self.m_gachaFlowCoroutine)
@@ -727,16 +647,11 @@ GachaWeaponPoolCtrl.OnClose = HL.Override() << function(self)
 end
 
 
-
 GachaWeaponPoolCtrl.m_showRewardFuncQueue = HL.Field(HL.Forward("Queue"))
-
 
 GachaWeaponPoolCtrl.m_queueRewardConfigs = HL.Field(HL.Table)
 
-
 GachaWeaponPoolCtrl.m_curIsShowReward = HL.Field(HL.Boolean) << false
-
-
 
 GachaWeaponPoolCtrl._InitRewardQueueConfigs = HL.Method() << function(self)
     self.m_queueRewardConfigs = {
@@ -749,9 +664,6 @@ GachaWeaponPoolCtrl._InitRewardQueueConfigs = HL.Method() << function(self)
     }
 end
 
-
-
-
 GachaWeaponPoolCtrl.AddQueueReward = HL.Method(HL.Table) << function(self, arg)
     logger.info("GachaWeaponPoolCtrl.AddQueueReward：" .. arg.queueRewardType)
     self.m_showRewardFuncQueue:Push({
@@ -763,8 +675,6 @@ GachaWeaponPoolCtrl.AddQueueReward = HL.Method(HL.Table) << function(self, arg)
     end)
 end
 
-
-
 GachaWeaponPoolCtrl._TryShowQueueReward = HL.Method() << function(self)
     if self.m_showRewardFuncQueue:Count() > 0 and not self.m_curIsShowReward then
         self.m_curIsShowReward = true
@@ -773,15 +683,10 @@ GachaWeaponPoolCtrl._TryShowQueueReward = HL.Method() << function(self)
     end
 end
 
-
-
 GachaWeaponPoolCtrl.OnOneQueueRewardFinished = HL.Method() << function(self)
     self.m_curIsShowReward = false
     self:_TryShowQueueReward()
 end
-
-
-
 
 GachaWeaponPoolCtrl._RecoverRewardQueue = HL.Method(HL.Table) << function(self, restoreInfo)
     if not restoreInfo or not restoreInfo.pendingItems then
@@ -792,15 +697,11 @@ GachaWeaponPoolCtrl._RecoverRewardQueue = HL.Method(HL.Table) << function(self, 
     end
 end
 
-
-
 GachaWeaponPoolCtrl.GetRewardQueueRestoreInfo = HL.Method().Return(HL.Table) << function(self)
     return {
         curIsShowReward = self.m_curIsShowReward,   
     }
 end
-
-
 
 GachaWeaponPoolCtrl.CheckAndShowSpecialRewardPopup = HL.Method() << function(self)
     

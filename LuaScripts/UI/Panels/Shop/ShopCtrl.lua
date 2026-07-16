@@ -167,8 +167,8 @@ ShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_ApplySortOption(data, isIncremental)
     end, #sortOptions - 1, false, true)
 
-    self:_RefreshSheetTabs(self.m_shopId)
     self.view.sortNode.gameObject:SetActive(false)
+    self:_RefreshSheetTabs(self.m_shopId)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     local resumeOpenPanel = type(arg) == "table" and arg.resumeOpenPanel or nil
@@ -377,12 +377,13 @@ ShopCtrl._RefreshContentCell = HL.Virtual(HL.Any, HL.Number, HL.String) << funct
     local displayItem = UIUtils.getRewardFirstItem(goodsTableData.rewardId)
 
     local remainCount = shopSystem:GetRemainCountByGoodsId(self.m_shopId, goodsId)
-    if luaIndex == #self.m_goodsInfos and not self.m_haveControllerTarget then
+    
+    if luaIndex == 1 and not self.m_haveControllerTarget then
         local firstCell = self.m_getCellFunc(1)
         if firstCell then
             local hasSortNode = self.m_activityShopInfo==nil or self.m_activityShopInfo.hasSortComponent
             self.view.sortNode.gameObject:SetActive(hasSortNode)
-            InputManagerInst.controllerNaviManager:SetTarget(firstCell.view.selectBtn)
+            self:SetNaviTarget(firstCell.view.selectBtn)
             self.m_haveControllerTarget = true
         end
     end

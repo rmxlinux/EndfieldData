@@ -12,45 +12,7 @@ local PanelState = {
 
 local RESULT_2_REWARDS_CLIP = "dungeonsettlementpopup_change"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DungeonSettlementPopupCtrl = HL.Class('DungeonSettlementPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -61,10 +23,7 @@ DungeonSettlementPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_STAMINA_CHANGED] = 'OnStaminaChanged',
 }
 
-
 DungeonSettlementPopupCtrl.s_cachedCompleteResult = HL.StaticField(HL.Table)
-
-
 
 DungeonSettlementPopupCtrl.OnDungeonComplete = HL.StaticMethod(HL.Any) << function(args)
     local isNewTimeRecord, curGameTimeRecord = unpack(args)
@@ -75,8 +34,6 @@ DungeonSettlementPopupCtrl.OnDungeonComplete = HL.StaticMethod(HL.Any) << functi
     DungeonSettlementPopupCtrl.s_cachedCompleteResult.isNewTimeRecord = isNewTimeRecord
     DungeonSettlementPopupCtrl.s_cachedCompleteResult.curGameTimeRecord = curGameTimeRecord
 end
-
-
 
 DungeonSettlementPopupCtrl.OnShowDungeonResult = HL.StaticMethod(HL.Any) << function(args)
     local dungeonId, leaveTimeDuration, useStaminaReduce = unpack(args)
@@ -105,35 +62,30 @@ DungeonSettlementPopupCtrl.OnShowDungeonResult = HL.StaticMethod(HL.Any) << func
     end)
 end
 
-
 DungeonSettlementPopupCtrl.m_panelState = HL.Field(HL.Number) << -1
-
 
 DungeonSettlementPopupCtrl.m_dungeonId = HL.Field(HL.String) << ""
 
+DungeonSettlementPopupCtrl.m_charInfoTable = HL.Field(HL.Table)
 
 DungeonSettlementPopupCtrl.m_mainCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 DungeonSettlementPopupCtrl.m_extraCellCache = HL.Field(HL.Forward("UIListCache"))
 
+DungeonSettlementPopupCtrl.m_charHeadCellCache = HL.Field(HL.Forward("UIListCache"))
 
 DungeonSettlementPopupCtrl.m_getRewardItemCellFunc = HL.Field(HL.Function)
 
-
 DungeonSettlementPopupCtrl.m_items = HL.Field(HL.Table)
-
 
 DungeonSettlementPopupCtrl.m_canCloseSelf = HL.Field(HL.Boolean) << false
 
-
 DungeonSettlementPopupCtrl.m_hasShowResultState = HL.Field(HL.Boolean) << false
-
 
 DungeonSettlementPopupCtrl.m_leaveTick = HL.Field(HL.Number) << -1
 
 
-
+DungeonSettlementPopupCtrl.m_pausedGameTimeForDoubleBattle = HL.Field(HL.Boolean) << false
 
 
 DungeonSettlementPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -157,6 +109,7 @@ DungeonSettlementPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnBtnRestartDungeonClick()
     end)
 
+    self.m_charInfoTable = {}
     self.m_mainCellCache = UIUtils.genCellCache(self.view.mainCell)
     self.m_extraCellCache = UIUtils.genCellCache(self.view.extraCell)
     self.m_getRewardItemCellFunc = UIUtils.genCachedCellFunction(self.view.rewardsScrollList)
@@ -171,19 +124,13 @@ DungeonSettlementPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitController()
 end
 
-
-
 DungeonSettlementPopupCtrl.OnShow = HL.Override() << function(self)
     Notify(MessageConst.ON_DUNGEON_SETTLEMENT_OPENED)
 end
 
-
-
 DungeonSettlementPopupCtrl.OnHide = HL.Override() << function(self)
     Notify(MessageConst.ON_DUNGEON_SETTLEMENT_CLOSED)
 end
-
-
 
 DungeonSettlementPopupCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.HIDE_ITEM_TIPS)
@@ -192,9 +139,10 @@ DungeonSettlementPopupCtrl.OnClose = HL.Override() << function(self)
     if self.m_leaveTick then
         self.m_leaveTick = LuaUpdate:Remove(self.m_leaveTick)
     end
+
+    
+    self:_TryResumeGameTime()
 end
-
-
 
 DungeonSettlementPopupCtrl.OnAnimationInFinished = HL.Override() << function(self)
     local obj = self.view.rewardsScrollList:Get(0)
@@ -205,8 +153,6 @@ DungeonSettlementPopupCtrl.OnAnimationInFinished = HL.Override() << function(sel
         end
     end
 end
-
-
 
 DungeonSettlementPopupCtrl._OnGraduallyShowFinish = HL.Method() << function(self)
     self.view.btnEmpty.gameObject:SetActive(false)
@@ -225,20 +171,17 @@ DungeonSettlementPopupCtrl._OnGraduallyShowFinish = HL.Method() << function(self
     end
 end
 
-
-
 DungeonSettlementPopupCtrl._OnBtnEmptyClick = HL.Method() << function(self)
     if self.m_panelState == PanelState.ShowResult then
         self.m_panelState = PanelState.ShowRewards
         self:_ToggleRewardsState(true)
         self.animationWrapper:Play(RESULT_2_REWARDS_CLIP)
         self:_UpdateRewardsState()
+        self:_TryResumeGameTime()
     elseif self.m_panelState == PanelState.ShowRewards then
         self:_OnClickSkipGraduallyShow()
     end
 end
-
-
 
 DungeonSettlementPopupCtrl._OnBtnCloseClick = HL.Method() << function(self)
     if not self.m_canCloseSelf then
@@ -252,8 +195,6 @@ DungeonSettlementPopupCtrl._OnBtnCloseClick = HL.Method() << function(self)
     end)
 end
 
-
-
 DungeonSettlementPopupCtrl._UpdateRewardsState = HL.Method() << function(self)
     local dungeonCfg = Tables.dungeonTable[self.m_dungeonId]
     local gameCategory = dungeonCfg.dungeonCategory
@@ -264,7 +205,7 @@ DungeonSettlementPopupCtrl._UpdateRewardsState = HL.Method() << function(self)
     local rewardsCount = #self.m_items
     self.view.rewardsList.gameObject:SetActiveIfNecessary(rewardsCount > 0)
     self.view.emptyRewardNode.gameObject:SetActiveIfNecessary(rewardsCount == 0)
-    self.view.rewardsScrollList:UpdateCount(rewardsCount)
+    self.view.rewardsScrollList:UpdateCount(rewardsCount, true)
 
     self.view.btnNode.gameObject:SetActiveIfNecessary(not self.m_canCloseSelf)
     self.view.infoDeco.gameObject:SetActiveIfNecessary(self.m_canCloseSelf)
@@ -277,8 +218,6 @@ DungeonSettlementPopupCtrl._UpdateRewardsState = HL.Method() << function(self)
 
     self.view.btnEmpty.gameObject:SetActiveIfNecessary(true)
 end
-
-
 
 DungeonSettlementPopupCtrl._RefreshCostStamina = HL.Method() << function(self)
     
@@ -294,9 +233,6 @@ DungeonSettlementPopupCtrl._RefreshCostStamina = HL.Method() << function(self)
     })
 end
 
-
-
-
 DungeonSettlementPopupCtrl._ToggleRewardsState = HL.Method(HL.Boolean) << function(self, isRewardState)
     self.view.rewardsNode.gameObject:SetActiveIfNecessary(isRewardState)
     self.view.infoNode.gameObject:SetActiveIfNecessary(not isRewardState)
@@ -306,8 +242,6 @@ DungeonSettlementPopupCtrl._ToggleRewardsState = HL.Method(HL.Boolean) << functi
     self.view.titleTxt.text = isRewardState and Language.LUA_DUNGEON_SETTLEMENT_REWARDS_TITLE
             or Language.LUA_DUNGEON_SETTLEMENT_RESULT_TITLE
 end
-
-
 
 DungeonSettlementPopupCtrl._OnBtnRestartDungeonClick = HL.Method() << function(self)
     local restartFunc = function()
@@ -332,8 +266,6 @@ DungeonSettlementPopupCtrl._OnBtnRestartDungeonClick = HL.Method() << function(s
     end
 end
 
-
-
 DungeonSettlementPopupCtrl._OnBtnLeaveDungeonClick = HL.Method() << function(self)
     
     self:Notify(MessageConst.HIDE_ITEM_TIPS)
@@ -342,8 +274,6 @@ DungeonSettlementPopupCtrl._OnBtnLeaveDungeonClick = HL.Method() << function(sel
     
     GameInstance.dungeonManager:LeaveDungeon()
 end
-
-
 
 DungeonSettlementPopupCtrl._OnClickSkipGraduallyShow = HL.Method() << function(self)
     if self.m_hasShowResultState then
@@ -355,10 +285,6 @@ DungeonSettlementPopupCtrl._OnClickSkipGraduallyShow = HL.Method() << function(s
     self.view.rewardsScrollList:SkipGraduallyShow()
 end
 
-
-
-
-
 DungeonSettlementPopupCtrl._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(self, go, csIndex)
     local cell = self.m_getRewardItemCellFunc(go)
     local index = LuaIndex(csIndex)
@@ -369,8 +295,6 @@ DungeonSettlementPopupCtrl._OnUpdateCell = HL.Method(GameObject, HL.Number) << f
         isSideTips = DeviceInfo.usingController,
     })
 end
-
-
 
 DungeonSettlementPopupCtrl._GetRewardItems = HL.Method().Return(HL.Table) << function(self)
     local items = {}
@@ -427,9 +351,6 @@ DungeonSettlementPopupCtrl._GetRewardItems = HL.Method().Return(HL.Table) << fun
     return items
 end
 
-
-
-
 DungeonSettlementPopupCtrl._TryGetRewardTypeTag = HL.Method(HL.String).Return(HL.Opt(HL.String))
         << function(self, itemId)
     local dungeonCfg = Tables.dungeonTable[self.m_dungeonId]
@@ -466,8 +387,6 @@ DungeonSettlementPopupCtrl._TryGetRewardTypeTag = HL.Method(HL.String).Return(HL
     end
 end
 
-
-
 DungeonSettlementPopupCtrl._UpdateResultState = HL.Method() << function(self)
     local succ, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.m_dungeonId)
     if not succ then
@@ -487,12 +406,20 @@ DungeonSettlementPopupCtrl._UpdateResultState = HL.Method() << function(self)
 
     local trackingMgr = GameWorld.levelScriptTaskTrackingManager
     
-    local mainTask = trackingMgr.mainTask
-    local mainTaskCount = mainTask ~= nil and mainTask.objectives.Length or 0
-    self.m_mainCellCache:Refresh(mainTaskCount, function(cell, luaIndex)
-        self:_UpdateGoalCell(cell, luaIndex, LevelScriptTaskType.Main)
-    end)
-    self.view.mainInfoNode.gameObject:SetActiveIfNecessary(mainTaskCount > 0)
+    if self:_IsFromDoubleAssaultBattle() then
+        
+        self.m_mainCellCache:Refresh(1, function(cell, luaIndex)
+            self:_UpdateDungeonNameCell(cell)
+        end)
+        self.view.mainInfoNode.gameObject:SetActiveIfNecessary(true)
+    else
+        local mainTask = trackingMgr.mainTask
+        local mainTaskCount = mainTask ~= nil and mainTask.objectives.Length or 0
+        self.m_mainCellCache:Refresh(mainTaskCount, function(cell, luaIndex)
+            self:_UpdateGoalCell(cell, luaIndex, LevelScriptTaskType.Main)
+        end)
+        self.view.mainInfoNode.gameObject:SetActiveIfNecessary(mainTaskCount > 0)
+    end
 
     
     local extraTask = trackingMgr.extraTask
@@ -510,12 +437,33 @@ DungeonSettlementPopupCtrl._UpdateResultState = HL.Method() << function(self)
     if hasChest then
         self.view.chestInfoNode.chestNumTxt.text = string.format("%d/%d", gainedRewardChestNum, maxRewardChestNum)
     end
+
+    if #self.m_charInfoTable > 0 then
+        self.m_charHeadCellCache = UIUtils.genCellCache(self.view.charHeadCell)
+        self.m_charHeadCellCache:Refresh(#self.m_charInfoTable, function(cell, luaIndex)
+            local charInfo = self.m_charInfoTable[luaIndex]
+            
+            cell:InitCharFormationHeadCell({
+                instId = charInfo.charInstId,
+                templateId = charInfo.charId,
+                noHpBar = false,
+                isTrail = CharInfoUtils.checkIsCardInTrail(charInfo.charInstId),
+            })
+            local isAlive = charInfo.character ~= nil and charInfo.character.abilityCom.alive
+            if isAlive then
+                cell.view.charHeadBar.gameObject:SetActive(true)
+                cell.view.addHpFill.gameObject:SetActive(false)
+                cell.view.totalAddHpFill.gameObject:SetActive(false)
+                cell.view.curHpFill.gameObject:SetActive(true)
+                local abilityCom = charInfo.character.abilityCom
+                cell.view.curHpFill.fillAmount = abilityCom.hp / abilityCom.maxHp
+            end
+        end)
+        self.view.charInfoNode.gameObject:SetActive(true)
+    else
+        self.view.charInfoNode.gameObject:SetActive(false)
+    end
 end
-
-
-
-
-
 
 DungeonSettlementPopupCtrl._UpdateGoalCell = HL.Method(HL.Any, HL.Number, CS.Beyond.Gameplay.LevelScriptTaskType)
         << function(self, cell, luaIndex, taskType)
@@ -535,6 +483,41 @@ DungeonSettlementPopupCtrl._UpdateGoalCell = HL.Method(HL.Any, HL.Number, CS.Bey
 end
 
 
+DungeonSettlementPopupCtrl._UpdateDungeonNameCell = HL.Method(HL.Any) << function(self, cell)
+    local _, dungeonCfg = Tables.dungeonTable:TryGetValue(self.m_dungeonId)
+    local dungeonName = dungeonCfg and dungeonCfg.dungeonName or ""
+    cell.goalTxt.text = string.format(Language.LUA_DUNGEON_SETTLEMENT_LEVEL_FINISHED, dungeonName)
+    cell.stateTxt.gameObject:SetActive(false)
+    cell.finishedIcon.gameObject:SetActive(true)
+    cell.normalIcon.gameObject:SetActive(true)
+end
+
+
+DungeonSettlementPopupCtrl._TryGetSourceActivity = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
+    for aid, activityDungeonData in pairs(Tables.activityDungeonTable) do
+        if activityDungeonData and activityDungeonData.gameMap and activityDungeonData.gameMap:ContainsKey(self.m_dungeonId) then
+            local activity = GameInstance.player.activitySystem:GetActivity(aid)
+            if activity then
+                return activity
+            end
+        end
+    end
+    return nil
+end
+
+
+DungeonSettlementPopupCtrl._IsFromDoubleAssaultBattle = HL.Method().Return(HL.Boolean) << function(self)
+    local activity = self:_TryGetSourceActivity()
+    if activity == nil then
+        return false
+    end
+    return GEnums.ActivityType.__CastFrom(activity.type) == GEnums.ActivityType.DoubleBattle
+end
+
+
+DungeonSettlementPopupCtrl._NeedFreezeGameTime = HL.Method().Return(HL.Boolean) << function(self)
+    return self:_IsFromDoubleAssaultBattle()
+end
 
 DungeonSettlementPopupCtrl._CheckCanCloseSelf = HL.Method() << function(self)
     if not self.m_canCloseSelf then
@@ -543,11 +526,26 @@ DungeonSettlementPopupCtrl._CheckCanCloseSelf = HL.Method() << function(self)
     self.view.btnClose.gameObject:SetActiveIfNecessary(true)
 end
 
-
-
-
 DungeonSettlementPopupCtrl.StartSettlement = HL.Method(HL.String) << function(self, dungeonId)
     self.m_dungeonId = dungeonId
+
+    
+    local sourceActivity = self:_TryGetSourceActivity()
+    if sourceActivity and sourceActivity.charTeam then
+        local squad = GameInstance.player.squadManager.curSquad.slots
+        for i = 0, squad.Count - 1 do
+            local slot = squad[i]
+            table.insert(self.m_charInfoTable, slot)
+        end
+    end
+
+    
+    if self:_NeedFreezeGameTime() then
+        GameWorld.subGameManager:TryPauseGameTime(GEnums.GameTimeFreezeReason.UI)
+        self.m_pausedGameTimeForDoubleBattle = true
+    end
+
+
     self.m_items = self:_GetRewardItems()
 
     local needStamina = DungeonUtils.isDungeonCostStamina(self.m_dungeonId)
@@ -562,7 +560,7 @@ DungeonSettlementPopupCtrl.StartSettlement = HL.Method(HL.String) << function(se
     end
 
     
-    local needShowResult = DungeonUtils.isDungeonChallenge(self.m_dungeonId)
+    local needShowResult = DungeonUtils.isDungeonChallenge(self.m_dungeonId) or (self.m_charInfoTable ~= nil and #self.m_charInfoTable > 0)
     self.m_hasShowResultState = needShowResult
     
     self.m_canCloseSelf = DungeonUtils.isDungeonChar(self.m_dungeonId)
@@ -581,6 +579,7 @@ DungeonSettlementPopupCtrl.StartSettlement = HL.Method(HL.String) << function(se
     elseif self.m_panelState == PanelState.ShowRewards then
         self:_ToggleRewardsState(true)
         self:_UpdateRewardsState()
+        self:_TryResumeGameTime()
     end
 
     if self.m_canCloseSelf then
@@ -594,13 +593,16 @@ DungeonSettlementPopupCtrl.StartSettlement = HL.Method(HL.String) << function(se
     end
 end
 
-
-
 DungeonSettlementPopupCtrl.OnStaminaChanged = HL.Method() << function(self)
     self:_RefreshCostStamina()
 end
 
-
+DungeonSettlementPopupCtrl._TryResumeGameTime = HL.Method() << function(self)
+    if self.m_pausedGameTimeForDoubleBattle then
+        self.m_pausedGameTimeForDoubleBattle = false
+        GameWorld.subGameManager:TryResumeGameTime(GEnums.GameTimeFreezeReason.UI)
+    end
+end
 
 DungeonSettlementPopupCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then

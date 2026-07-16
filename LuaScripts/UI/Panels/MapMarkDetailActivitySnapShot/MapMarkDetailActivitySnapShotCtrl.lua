@@ -1,11 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailActivitySnapShot
 
-
-
-
 MapMarkDetailActivitySnapShotCtrl = HL.Class('MapMarkDetailActivitySnapShotCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -15,9 +11,6 @@ MapMarkDetailActivitySnapShotCtrl = HL.Class('MapMarkDetailActivitySnapShotCtrl'
 MapMarkDetailActivitySnapShotCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 MapMarkDetailActivitySnapShotCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)

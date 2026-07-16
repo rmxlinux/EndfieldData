@@ -1,18 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 MapTrackingInfo = HL.Class('MapTrackingInfo', UIWidgetBase)
-
 
 MapTrackingInfo.m_trackingListCache = HL.Field(HL.Forward("UIListCache"))
 
-
 MapTrackingInfo.m_mapManager = HL.Field(HL.Userdata)
-
 
 
 
@@ -24,14 +16,9 @@ MapTrackingInfo.m_mapManager = HL.Field(HL.Userdata)
 MapTrackingInfo.m_trackingInfoList = HL.Field(HL.Table)
 
 
-
-
 MapTrackingInfo._OnFirstTimeInit = HL.Override() << function(self)
     self.m_trackingListCache = UIUtils.genCellCache(self.view.cellTracking)
 end
-
-
-
 
 
 

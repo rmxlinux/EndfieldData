@@ -2,23 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailEnemySpawner
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MapMarkDetailEnemySpawnerCtrl = HL.Class('MapMarkDetailEnemySpawnerCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -28,23 +12,15 @@ MapMarkDetailEnemySpawnerCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 MapMarkDetailEnemySpawnerCtrl.m_firstRewardItemCache = HL.Field(HL.Forward('UIListCache'))
-
 
 MapMarkDetailEnemySpawnerCtrl.m_commonRewardItemCache = HL.Field(HL.Forward('UIListCache'))
 
-
 MapMarkDetailEnemySpawnerCtrl.m_gameGroupId = HL.Field(HL.String) << ""
-
 
 MapMarkDetailEnemySpawnerCtrl.m_gameId = HL.Field(HL.String) << ""
 
-
 MapMarkDetailEnemySpawnerCtrl.m_markInstId = HL.Field(HL.String) << ""
-
-
-
 
 
 MapMarkDetailEnemySpawnerCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -74,14 +50,9 @@ MapMarkDetailEnemySpawnerCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
     self:_InitView()
 end
 
-
-
 MapMarkDetailEnemySpawnerCtrl._OnClickEnemyDetailBtn = HL.Method() << function(self)
     self:OpenEnemyDetailPopup()
 end
-
-
-
 
 MapMarkDetailEnemySpawnerCtrl.OpenEnemyDetailPopup = HL.Method(HL.Opt(HL.Number)) << function(self, initSelectEnemyLuaIndex)
     local worldEnergyPointCfg = Tables.worldEnergyPointTable[self.m_gameId]
@@ -97,8 +68,6 @@ MapMarkDetailEnemySpawnerCtrl.OpenEnemyDetailPopup = HL.Method(HL.Opt(HL.Number)
     end
     UIManager:AutoOpen(PanelId.CommonEnemyPopup, enemyPopupArg)
 end
-
-
 
 MapMarkDetailEnemySpawnerCtrl.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local isOpen, enemyPopupCtrl = UIManager:IsOpen(PanelId.CommonEnemyPopup)
@@ -117,9 +86,6 @@ MapMarkDetailEnemySpawnerCtrl.GetRecoverPopupStateArg = HL.Method().Return(HL.Op
     return popupState
 end
 
-
-
-
 MapMarkDetailEnemySpawnerCtrl.TryRecoverPopupState = HL.Method(HL.Any) << function(self, popupState)
     if popupState == nil or string.isEmpty(popupState.popupType) then
         return
@@ -134,13 +100,9 @@ MapMarkDetailEnemySpawnerCtrl.TryRecoverPopupState = HL.Method(HL.Any) << functi
     self:OpenEnemyDetailPopup(popupState.selectedEnemyLuaIndex)
 end
 
-
-
 MapMarkDetailEnemySpawnerCtrl._InitData = HL.Method() << function(self)
     self.m_gameId = GameInstance.player.worldEnergyPointSystem:GetCurSubGameId(self.m_gameGroupId)
 end
-
-
 
 MapMarkDetailEnemySpawnerCtrl._InitView = HL.Method() << function(self)
     local wepGroupCfg = Tables.worldEnergyPointGroupTable[self.m_gameGroupId]
@@ -193,13 +155,6 @@ MapMarkDetailEnemySpawnerCtrl._InitView = HL.Method() << function(self)
     end
     self.view.commonRewardNode.gameObject:SetActive(isFull)
 end
-
-
-
-
-
-
-
 
 MapMarkDetailEnemySpawnerCtrl._GenRewardInfo = HL.Method(HL.String, HL.Number, HL.Boolean, HL.String, HL.Opt(HL.Number)).Return(HL.Table)
         << function(self, typeTag, rewardTypeSortId, gained, itemId, itemCount)

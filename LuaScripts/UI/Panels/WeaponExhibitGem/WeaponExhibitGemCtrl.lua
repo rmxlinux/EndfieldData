@@ -1,39 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WeaponExhibitGem
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WeaponExhibitGemCtrl = HL.Class('WeaponExhibitGemCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -49,28 +17,19 @@ WeaponExhibitGemCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 }
 
-
 WeaponExhibitGemCtrl.m_arg = HL.Field(HL.Table)
-
 
 WeaponExhibitGemCtrl.m_weaponInfo = HL.Field(HL.Table)
 
-
 WeaponExhibitGemCtrl.m_weaponExhibitInfo = HL.Field(HL.Table)
-
 
 WeaponExhibitGemCtrl.m_isCompareOn = HL.Field(HL.Boolean) << false
 
-
 WeaponExhibitGemCtrl.m_isFocusJump = HL.Field(HL.Boolean) << false
-
 
 WeaponExhibitGemCtrl.m_curSelectGemInstId = HL.Field(HL.Number) << -1
 
-
 WeaponExhibitGemCtrl.m_weaponSkillList = HL.Field(HL.Userdata)
-
-
 
 WeaponExhibitGemCtrl.OnGemAttach = HL.Method(HL.Table) << function(self)
     local weaponInfo = self.m_weaponInfo
@@ -84,8 +43,6 @@ WeaponExhibitGemCtrl.OnGemAttach = HL.Method(HL.Table) << function(self)
     AudioAdapter.PostEvent("au_ui_weapon_subjoin")
 end
 
-
-
 WeaponExhibitGemCtrl.OnGemDetach = HL.Method(HL.Table) << function(self)
     local weaponInfo = self.m_weaponInfo
     local weaponExhibitInfo = CharInfoUtils.getWeaponExhibitBasicInfo(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)
@@ -95,9 +52,6 @@ WeaponExhibitGemCtrl.OnGemDetach = HL.Method(HL.Table) << function(self)
     self.view.commonGemHorizontalList:RefreshAllCells()
     self:_RefreshGemCompareNode(weaponExhibitInfo, self.m_curSelectGemInstId)
 end
-
-
-
 
 
 WeaponExhibitGemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -115,8 +69,6 @@ WeaponExhibitGemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitActionEvent()
     self:_InitController()
 end
-
-
 
 WeaponExhibitGemCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.btnBack.onClick:AddListener(function()
@@ -189,8 +141,6 @@ WeaponExhibitGemCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.gemEnhanceBtn.gameObject:SetActive(Utils.isSystemUnlocked(GEnums.UnlockSystemType.GemEnhance))
 end
 
-
-
 WeaponExhibitGemCtrl.OnShow = HL.Override() << function(self)
     local weaponInfo = self.m_weaponInfo
     local weaponExhibitInfo = CharInfoUtils.getWeaponExhibitBasicInfo(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)
@@ -211,17 +161,12 @@ WeaponExhibitGemCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 WeaponExhibitGemCtrl._PlayCustomAnimationOut = HL.Method() << function(self)
     UIUtils.PlayAnimationAndToggleActive(self.view.basicInfoNode.animationWrapper, false)
     UIUtils.PlayAnimationAndToggleActive(self.view.gemCellUnselected.animationWrapper, false, function()
         self:Hide()
     end)
 end
-
-
-
 
 WeaponExhibitGemCtrl._RefreshGemPanel = HL.Method(HL.Table) << function(self, weaponExhibitInfo)
     self.view.title.text = string.format(Language.LUA_WEAPON_EXHIBIT_GEM_TITLE, weaponExhibitInfo.itemCfg.name)
@@ -230,15 +175,9 @@ WeaponExhibitGemCtrl._RefreshGemPanel = HL.Method(HL.Table) << function(self, we
     self:_RefreshGemList(true, self.m_curSelectGemInstId)
 end
 
-
-
 WeaponExhibitGemCtrl._OnGemChanged = HL.Method(HL.Table) << function(self)
     self:_RefreshGemPanel(self.m_weaponExhibitInfo)
 end
-
-
-
-
 
 WeaponExhibitGemCtrl._RefreshGemList = HL.Method(HL.Boolean, HL.Opt(HL.Number)) << function(self, skipGraduallyShow, curSelectGemInstId)
     self.view.commonGemHorizontalList:InitCommonItemList({
@@ -285,10 +224,6 @@ WeaponExhibitGemCtrl._RefreshGemList = HL.Method(HL.Boolean, HL.Opt(HL.Number)) 
     end
 end
 
-
-
-
-
 WeaponExhibitGemCtrl._GetButtonState = HL.Method(HL.Table, HL.Number).Return(HL.Boolean, HL.Boolean, HL.Boolean) << function(self, weaponExhibitInfo, selectedGemInstId)
     local isReplace = true
     local isLoad = true
@@ -332,10 +267,6 @@ WeaponExhibitGemCtrl._GetButtonState = HL.Method(HL.Table, HL.Number).Return(HL.
     return isReplace, isLoad, isUnload
 end
 
-
-
-
-
 WeaponExhibitGemCtrl._GetCurSelectedCellHint = HL.Method(HL.Table, HL.Number).Return(HL.String) << function(self, weaponExhibitInfo, cellGemInstId)
     if cellGemInstId ~= self.m_curSelectGemInstId then
         return ""
@@ -358,10 +289,6 @@ WeaponExhibitGemCtrl._GetCurSelectedCellHint = HL.Method(HL.Table, HL.Number).Re
 end
 
 
-
-
-
-
 WeaponExhibitGemCtrl._OnClickCellWhenSelected = HL.Method(HL.Table, HL.Number) << function(self, weaponExhibitInfo, selectedGemInstId)
     local isReplace, isLoad, isUnload = self:_GetButtonState(weaponExhibitInfo, selectedGemInstId)
 
@@ -377,10 +304,6 @@ WeaponExhibitGemCtrl._OnClickCellWhenSelected = HL.Method(HL.Table, HL.Number) <
         self:_OnClickUnload()
     end
 end
-
-
-
-
 
 WeaponExhibitGemCtrl._RefreshGemCompareNode = HL.Method(HL.Table, HL.Opt(HL.Number)) << function(self, weaponExhibitInfo, newGemInstId)
     local selectGemInst
@@ -457,10 +380,6 @@ WeaponExhibitGemCtrl._RefreshGemCompareNode = HL.Method(HL.Table, HL.Opt(HL.Numb
     })
 end
 
-
-
-
-
 WeaponExhibitGemCtrl._RefreshButtonNode = HL.Method(HL.Table, HL.Opt(HL.Userdata)) << function(self, weaponExhibitInfo, compareGemInst)
     local canCompare = (compareGemInst and compareGemInst.instId > 0) and (weaponExhibitInfo.gemInst and compareGemInst.instId ~= weaponExhibitInfo.gemInst.instId)
     local inCompare = self.m_isCompareOn
@@ -508,9 +427,6 @@ WeaponExhibitGemCtrl._RefreshButtonNode = HL.Method(HL.Table, HL.Opt(HL.Userdata
     end
 end
 
-
-
-
 WeaponExhibitGemCtrl._OnSelectNewGem = HL.Method(HL.Table) << function(self, itemInfo)
     local weaponExhibitInfo = self.m_weaponExhibitInfo
     local curEquippingGemInstId = weaponExhibitInfo.gemInst and weaponExhibitInfo.gemInst.instId or -1
@@ -538,8 +454,6 @@ WeaponExhibitGemCtrl._OnSelectNewGem = HL.Method(HL.Table) << function(self, ite
     self:_RefreshGemCompareNode(self.m_weaponExhibitInfo, selectedGemInstId)
 end
 
-
-
 WeaponExhibitGemCtrl._OnClickReplace = HL.Method() << function(self)
     local weaponInstId = self.m_weaponInfo.weaponInstId
     local selectGemInstId = self.m_curSelectGemInstId
@@ -563,8 +477,6 @@ WeaponExhibitGemCtrl._OnClickReplace = HL.Method() << function(self)
     end
 end
 
-
-
 WeaponExhibitGemCtrl._OnClickLoad = HL.Method() << function(self)
     local weaponInstId = self.m_weaponInfo.weaponInstId
     local gemInstId = self.m_curSelectGemInstId
@@ -576,22 +488,15 @@ WeaponExhibitGemCtrl._OnClickLoad = HL.Method() << function(self)
     GameInstance.player.charBag:AttachGem(weaponInstId, gemInstId)
 end
 
-
-
 WeaponExhibitGemCtrl._OnClickUnload = HL.Method() << function(self)
     local weaponInstId = self.m_weaponInfo.weaponInstId
     GameInstance.player.charBag:DetachGem(weaponInstId)
 end
 
-
-
-
 WeaponExhibitGemCtrl._ToggleWeaponDetail = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.weaponCompareNode.gameObject:SetActive(isOn)
     self.view.gemCompareNode.gameObject:SetActive(not isOn)
 end
-
-
 
 
 
@@ -617,15 +522,10 @@ WeaponExhibitGemCtrl._InitController = HL.Method() << function(self)
     UIUtils.bindHyperlinkPopup(self, "WeaponSkill", self.view.inputGroup.groupId)
 end
 
-
-
-
 WeaponExhibitGemCtrl.ToggleFocusInputGroup = HL.Method(HL.Boolean) << function(self, active)
     InputManagerInst:ToggleGroup(self.view.bottomInputGroup.groupId, active)
     InputManagerInst:ToggleGroup(self.view.rightInputGroup.groupId, active)
 end
-
-
 
 WeaponExhibitGemCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     local arg = {

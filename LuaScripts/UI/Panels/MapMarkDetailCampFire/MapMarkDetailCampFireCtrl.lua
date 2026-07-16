@@ -2,15 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailCampFire
 
-
-
-
-
-
-
-
 MapMarkDetailCampFireCtrl = HL.Class('MapMarkDetailCampFireCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -20,17 +12,11 @@ MapMarkDetailCampFireCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 MapMarkDetailCampFireCtrl.m_teleportValidationId = HL.Field(HL.String) << ""
-
 
 MapMarkDetailCampFireCtrl.m_logicIdGlobal = HL.Field(HL.Any)
 
-
 MapMarkDetailCampFireCtrl.m_markInstId = HL.Field(HL.Any)
-
-
-
 
 
 MapMarkDetailCampFireCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -67,8 +53,6 @@ MapMarkDetailCampFireCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end
     self.view.detailCommon:InitMapMarkDetailCommon(commonArgs)
 end
-
-
 
 MapMarkDetailCampFireCtrl._Teleport = HL.Method() << function(self)
     Utils.teleportToEntity(self.m_teleportValidationId, function()

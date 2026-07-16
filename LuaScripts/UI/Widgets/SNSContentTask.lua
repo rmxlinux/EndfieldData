@@ -3,13 +3,7 @@ local SNSContentBase = require_ex('UI/Widgets/SNSContentBase')
 local MissionState = CS.Beyond.Gameplay.MissionSystem.MissionState
 local MissionType = CS.Beyond.Gameplay.MissionSystem.MissionType
 
-
-
-
-
 SNSContentTask = HL.Class('SNSContentTask', SNSContentBase)
-
-
 
 SNSContentTask._OnSNSContentInit = HL.Override() << function(self)
     local missionId = self.m_contentCfg.contentParam[0]
@@ -57,13 +51,9 @@ end
 
 
 
-
-
 SNSContentTask.CanSetTarget = HL.Override().Return(HL.Boolean) << function(self)
     return true
 end
-
-
 
 SNSContentTask.GetNaviTarget = HL.Override().Return(HL.Any) << function(self)
     return self.view.btnClick

@@ -1,39 +1,10 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.RegionMap3D
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RegionMap3DCtrl = HL.Class('RegionMap3DCtrl', uiCtrl.UICtrl)
 
 local SWITCH_ANIMATION_IN_FORMAT = "regionmap3d_%s_in"
 local SWITCH_ANIMATION_OUT_FORMAT = "regionmap3d_%s_out"
-
 
 
 
@@ -46,32 +17,21 @@ RegionMap3DCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CLICK_REGIONMAP_LOCK] = '_OnClickRegionMapLevelBtn',
 }
 
-
 RegionMap3DCtrl.m_args = HL.Field(HL.Table)
-
 
 RegionMap3DCtrl.m_domainId = HL.Field(HL.String) << ""
 
-
 RegionMap3DCtrl.m_loadedRegionMapSetting = HL.Field(HL.Table)
-
 
 RegionMap3DCtrl.m_levelDataList = HL.Field(HL.Table)
 
-
 RegionMap3DCtrl.m_loadedRegionMapTransform = HL.Field(HL.Table)
-
 
 RegionMap3DCtrl.m_initNaviThread = HL.Field(HL.Thread)
 
-
 RegionMap3DCtrl.m_lastSwitchDomainId = HL.Field(HL.String) << ""
 
-
 RegionMap3DCtrl.m_nextSwitchDomainId = HL.Field(HL.String) << ""
-
-
-
 
 
 
@@ -87,8 +47,6 @@ RegionMap3DCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitRegionMap3DController()
 end
 
-
-
 RegionMap3DCtrl.OnClose = HL.Override() << function(self)
     if self.m_controllerNaviThread ~= nil then
         self:_ClearCoroutine(self.m_controllerNaviThread)
@@ -103,20 +61,12 @@ end
 
 
 
-
-
-
 RegionMap3DCtrl._OnSwitchDomainMap = HL.Method(HL.Table) << function(self, args)
     self.m_domainId = args.domainId
     self:_PlayMapSwitchAnimation(args.lastDomainId, args.domainId, function()
         self:_RefreshAll()
     end)
 end
-
-
-
-
-
 
 RegionMap3DCtrl._PlayMapSwitchAnimation = HL.Method(HL.String, HL.String, HL.Function) << function(self, lastDomainId, nextDomainId, onComplete)
     local getAnimationData = function(domainId)
@@ -144,15 +94,11 @@ RegionMap3DCtrl._PlayMapSwitchAnimation = HL.Method(HL.String, HL.String, HL.Fun
     end)
 end
 
-
-
 RegionMap3DCtrl._OnClickRegionMapLevelBtn = HL.Method() << function(self)
     if DeviceInfo.usingController and not string.isEmpty(self.m_controllerNaviLevelId) then
         self.view.regionMap3DPanel:OnLevelHoverChanged(self.m_controllerNaviLevelId, false)
     end
 end
-
-
 
 
 
@@ -204,9 +150,6 @@ RegionMap3DCtrl._RefreshAll = HL.Method() << function(self)
     end
 end
 
-
-
-
 RegionMap3DCtrl._GetDomainRegionMapSetting = HL.Method(HL.String).Return(CS.Beyond.UI.RegionMapSetting) << function(self, domainId)
     local regionMapSetting = self.m_loadedRegionMapSetting[domainId]
     if regionMapSetting then
@@ -229,22 +172,15 @@ end
 
 
 
-
 RegionMap3DCtrl.m_controllerNaviThread = HL.Field(HL.Thread)
-
 
 RegionMap3DCtrl.m_regionMapGroupId = HL.Field(HL.Number) << -1
 
-
 RegionMap3DCtrl.m_controllerNaviWaitTimer = HL.Field(HL.Number) << -1
-
 
 RegionMap3DCtrl.m_controllerNaviLevelId = HL.Field(HL.String) << ""
 
-
 RegionMap3DCtrl.m_controllerNaviRect = HL.Field(RectTransform)
-
-
 
 RegionMap3DCtrl._InitRegionMap3DController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -265,8 +201,6 @@ RegionMap3DCtrl._InitRegionMap3DController = HL.Method() << function(self)
     end)
 end
 
-
-
 RegionMap3DCtrl._OnConfirmNaviTargetLevel = HL.Method() << function(self)
     if string.isEmpty(self.m_controllerNaviLevelId) then
         return
@@ -274,8 +208,6 @@ RegionMap3DCtrl._OnConfirmNaviTargetLevel = HL.Method() << function(self)
     self.view.regionMap3DPanel:OnClickLevelBtn(self.m_controllerNaviLevelId, "")
     AudioAdapter.PostEvent("Au_UI_Button_SceenBasicInfo")
 end
-
-
 
 RegionMap3DCtrl._DelayInitNaviTarget = HL.Method() << function(self)
     if self.m_initNaviThread ~= nil then
@@ -287,8 +219,6 @@ RegionMap3DCtrl._DelayInitNaviTarget = HL.Method() << function(self)
         self.m_initNaviThread = self:_ClearCoroutine(self.m_initNaviThread)
     end)
 end
-
-
 
 RegionMap3DCtrl._InitNaviTarget = HL.Method() << function(self)
     local _, initialLevelId = DataManager.uiLevelMapConfig.controllerInitialSelectLevel:TryGetValue(self.m_domainId)
@@ -311,8 +241,6 @@ RegionMap3DCtrl._InitNaviTarget = HL.Method() << function(self)
 
     self:_SetNaviTarget(initialLevelId, true)
 end
-
-
 
 RegionMap3DCtrl._TickNavigateLevelRect = HL.Method() << function(self)
     if not InputManagerInst:IsGroupEnabled(self.m_regionMapGroupId) then
@@ -358,17 +286,17 @@ RegionMap3DCtrl._TickNavigateLevelRect = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 RegionMap3DCtrl._SetNaviTarget = HL.Method(HL.String, HL.Opt(HL.Boolean)) << function(self, levelId, noWait)
+    local basicInfo = self.m_levelDataList[levelId]
+    if basicInfo == nil then
+        return
+    end
+
     if not string.isEmpty(self.m_controllerNaviLevelId) then
         self.view.regionMap3DPanel:OnLevelHoverChanged(self.m_controllerNaviLevelId, false)
     end
 
     self.m_controllerNaviLevelId = levelId
-    local basicInfo = self.m_levelDataList[levelId]
     self.m_controllerNaviRect = basicInfo.rectTransform
 
     self.view.regionMap3DPanel:OnLevelHoverChanged(levelId, true)

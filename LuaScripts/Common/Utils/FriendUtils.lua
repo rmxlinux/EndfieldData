@@ -218,9 +218,108 @@ FriendUtils.FRIEND_CELL_HEAD_FUNC = {
             end
         }
     end,
+    
+    ADD_BIRTHDAY_INFO = function(id)
+        return {
+            text = Language.LUA_FRIEND_SET_BIRTHDAY,
+            redDot = "SetBirthday",
+            action = function()
+                UIManager:Open(PanelId.SetBirthdayPopUp)
+            end
+        }
+    end,
+    
+    SHOW_BIRTHDAY = function(id)
+        return {
+            text = Language.LUA_FRIEND_SHOW_BIRTHDAY,
+            action = function()
+                GameInstance.player.friendSystem:SetBirthdayVisible(true)
+            end
+        }
+    end,
+    
+    HIDE_BIRTHDAY = function(id)
+        return {
+            text = Language.LUA_FRIEND_HIDE_BIRTHDAY,
+            action = function()
+                GameInstance.player.friendSystem:SetBirthdayVisible(false)
+            end
+        }
+    end,
+    VIEW_RECORD_TIPS = function(id, rectTransform)
+        return {
+            text = Language.LUA_FRIEND_VIEW_RECORD_TIPS,
+            action = function()
+                UIManager:Open(PanelId.FriendBusinessRecordTips, {
+                    roleId = id,
+                    transform = rectTransform,
+                    posType = UIConst.UI_TIPS_POS_TYPE.LeftAlignBottom,
+                })
+            end
+        }
+    end,
+    SHOW_SEASON_TOWER_RECORD = function()
+        return {
+            text = Language.LUA_FRIEND_SHOW_SEASON_TOWER_RECORD,
+            action = function()
+                GameInstance.player.friendSystem:HideSeasonTowerRecordFlagModify(false)
+            end
+        }
+    end,
+    HIDE_SEASON_TOWER_RECORD = function()
+        return {
+            text = Language.LUA_FRIEND_HIDE_SEASON_TOWER_RECORD,
+            action = function()
+                GameInstance.player.friendSystem:HideSeasonTowerRecordFlagModify(true)
+            end
+        }
+    end,
 }
 
 FriendUtils.CELL_HEIGHT = 60
+
+FriendUtils.isSeasonTowerRecordDisplayToggleEnabled = function()
+    return Tables.globalConst.enableSeasonTowerRecordDisplayToggle == true
+end
+
+FriendUtils.isSeasonTowerRecordVisible = function(record)
+    return record ~= nil and not record.ForceHide and (not record.Hide or not FriendUtils.isSeasonTowerRecordDisplayToggleEnabled()) and not GameInstance.player.gameSettingSystem.forbiddenSeasonTower
+end
+
+FriendUtils.SEASON_TOWER_RANK_NAMES = {[0] = "None", [1] = "D", [2] = "C", [3] = "B", [4] = "A", [5] = "S", [6] = "SS"}
+
+FriendUtils.hasAnyRecordTagVisible = function(roleId)
+    local success, playerInfo = GameInstance.player.friendSystem:TryGetFriendInfo(roleId)
+    if not success then
+        return false
+    end
+    if FriendUtils.getSeasonTowerDisplayRecord(playerInfo) then
+        return true
+    end
+    local ccRecord = playerInfo.contingencyContractBestRecord
+    if ccRecord.Item1 ~= nil and ccRecord.Item2 > 0 then
+        local activityData = GameInstance.player.activitySystem:GetActivity(ccRecord.Item1)
+        if activityData ~= nil and activityData.gameplayEndTime - DateTimeUtils.GetCurrentTimestampBySeconds() > 0 then
+            return true
+        end
+    end
+    return false
+end
+
+FriendUtils.getSeasonTowerDisplayRecord = function(playerInfo)
+    if not playerInfo or not FriendUtils.isSeasonTowerRecordVisible(playerInfo.seasonTowerRecord) then
+        return nil
+    end
+    return playerInfo.seasonTowerDisplayRecord
+end
+
+FriendUtils.hasSeasonTowerHistoryRecord = function(playerInfo)
+    if not playerInfo or not FriendUtils.isSeasonTowerRecordVisible(playerInfo.seasonTowerRecord) then
+        return false
+    end
+    local historyRecord = playerInfo.seasonTowerHistoryRecord
+    return historyRecord ~= nil and historyRecord.Count > 0
+end
 
 
 FriendUtils.FRIEND_CELL_INIT_FUNC = {
@@ -231,9 +330,7 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
         }
         if DeviceInfo.inputType == DeviceInfo.InputType.Controller then
             args.actions = {}
-            if not GameInstance.player.spaceship.isViewingFriend then
-                table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.CHAT(id))
-            end
+            table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.CHAT(id))
             if DeviceInfo.inputType == DeviceInfo.InputType.Controller and GameInstance.player.friendSystem:GetCharInfoByRoleId(id).Count > 0 then
                 table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.CHAR_INFO(charInfoCallBack))
             end
@@ -280,7 +377,7 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
         end
         Notify(MessageConst.SHOW_NAVI_TARGET_ACTION_MENU, args)
     end,
-    onBusinessCardFriendPlayerClick = function(rectTransform, id)
+    onBusinessCardFriendPlayerClick = function(rectTransform, id, recordTipsTransform)
         local args = {
             transform = rectTransform,
             cellHeight = 60,
@@ -289,11 +386,13 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
 
         local isFriend = GameInstance.player.friendSystem.friendInfoDic:ContainsKey(id) and not (FriendUtils.isPsnPlatform() and GameInstance.player.friendSystem.isPSNOnly and not GameInstance.player.friendSystem:IsPsnFriend(id))
 
+        if FriendUtils.hasAnyRecordTagVisible(id) then
+            table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.VIEW_RECORD_TIPS(id, recordTipsTransform or rectTransform))
+        end
+
         
         if isFriend then
-            if not GameInstance.player.spaceship.isViewingFriend then
-                table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.CHAT(id))
-            end
+            table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.CHAT(id))
             table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.REMARK_MODIFY(id))
             table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.REMOVE_FRIEND(id))
         end
@@ -313,12 +412,15 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
         end
         Notify(MessageConst.SHOW_NAVI_TARGET_ACTION_MENU, args)
     end,
-    onBusinessCardStrangerPlayerClick = function(rectTransform, id)
+    onBusinessCardStrangerPlayerClick = function(rectTransform, id, recordTipsTransform)
         local args = {
             transform = rectTransform,
             cellHeight = 60,
             actions = {}
         }
+        if FriendUtils.hasAnyRecordTagVisible(id) then
+            table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.VIEW_RECORD_TIPS(id, recordTipsTransform or rectTransform))
+        end
         if not GameInstance.player.friendSystem:PlayerInBlackList(id) then
             table.insert(args.actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.ADD_BLACK_LIST(id))
         end
@@ -360,19 +462,43 @@ FriendUtils.FRIEND_CELL_INIT_FUNC = {
         Notify(MessageConst.SHOW_NAVI_TARGET_ACTION_MENU, args)
     end,
 
-    onSelfClick = function(rectTransform, id)
+    onSelfClick = function(rectTransform, id, recordTipsTransform)
         local actions = {}
-        if GameInstance.player.friendSystem.isCommunicationRestricted then
-            actions = {
-                [1] = FriendUtils.FRIEND_CELL_HEAD_FUNC.SWITCH_AVATAR(id),
-                [2] = FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_TOPIC_MODIFY(id),
-            }
+        local tipsRect = recordTipsTransform or rectTransform
+        local success, selfInfo = GameInstance.player.friendSystem:TryGetFriendInfo(id)
+        if not FriendUtils.isSeasonTowerRecordDisplayToggleEnabled() then
+            if FriendUtils.hasAnyRecordTagVisible(id) then
+                table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.VIEW_RECORD_TIPS(id, tipsRect))
+            end
         else
-            actions = {
-                [1] = FriendUtils.FRIEND_CELL_HEAD_FUNC.SWITCH_AVATAR(id),
-                [2] = FriendUtils.FRIEND_CELL_HEAD_FUNC.SIGNATURE_MODIFY(id),
-                [3] = FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_TOPIC_MODIFY(id),
-            }
+            local isHidden = success and selfInfo.seasonTowerRecord and selfInfo.seasonTowerRecord.Hide
+            if isHidden then
+                table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.SHOW_SEASON_TOWER_RECORD())
+            else
+                if FriendUtils.hasAnyRecordTagVisible(id) then
+                    table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.VIEW_RECORD_TIPS(id, tipsRect))
+                end
+                table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.HIDE_SEASON_TOWER_RECORD())
+            end
+        end
+        if GameInstance.player.friendSystem.isCommunicationRestricted then
+            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.SWITCH_AVATAR(id))
+            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_TOPIC_MODIFY(id))
+        else
+            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.SWITCH_AVATAR(id))
+            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.SIGNATURE_MODIFY(id))
+            table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.BUSINESS_CARD_TOPIC_MODIFY(id))
+        end
+        if Utils.isSystemUnlocked(GEnums.UnlockSystemType.Birthday) then
+            if GameInstance.player.friendSystem:IsBirthdayAlreadySet() then
+                if GameInstance.player.friendSystem:IsBirthdayVisible(id) then
+                    table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.HIDE_BIRTHDAY(id))
+                else
+                    table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.SHOW_BIRTHDAY(id))
+                end
+            else
+                table.insert(actions, FriendUtils.FRIEND_CELL_HEAD_FUNC.ADD_BIRTHDAY_INFO(id))
+            end
         end
         local args = {
             transform = rectTransform,

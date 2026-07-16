@@ -1,37 +1,12 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.DialogTimeline
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseDialogTimeline = HL.Class('PhaseDialogTimeline', phaseBase.PhaseBase)
 
 
 
 
 
-
 PhaseDialogTimeline.m_panelItem = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseDialogTimeline.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_PLAY_DIALOG_TIMELINE] = { 'OnPlayDialogTimeline', false },
@@ -44,8 +19,6 @@ PhaseDialogTimeline.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.HIDE_DIALOG_TIMELINE_SKIP_POP_UP] = { '_HideDialogSkipPopUp', true },
     [MessageConst.SKIP_DIALOG_TIMELINE] = { '_SkipDialogTimeline', true },
 }
-
-
 
 PhaseDialogTimeline.OnPlayDialogTimeline = HL.StaticMethod(HL.Table) << function(arg)
     arg.fast = true
@@ -60,21 +33,15 @@ end
 
 
 
-
-
 PhaseDialogTimeline._OnInit = HL.Override() << function(self)
     PhaseDialogTimeline.Super._OnInit(self)
 end
-
-
 
 PhaseDialogTimeline.ClearOut = HL.Method() << function(self)
     if self.m_panelItem then
         self.m_panelItem.uiCtrl.animationWrapper:ClearTween(true)
     end
 end
-
-
 
 
 PhaseDialogTimeline._InitAllPhaseItems = HL.Override() << function(self)
@@ -84,44 +51,21 @@ end
 
 
 
-
-
-
-
-
 PhaseDialogTimeline.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhaseDialogTimeline._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseDialogTimeline._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseDialogTimeline._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseDialogTimeline._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     Notify(MessageConst.ON_DIALOG_PHASE_BACK_TO_TOP)
 end
-
-
 
 
 
@@ -133,21 +77,14 @@ PhaseDialogTimeline._OnActivated = HL.Override() << function(self)
     UIManager:Hide(PanelId.DialogMask)
 end
 
-
-
 PhaseDialogTimeline._OnDeActivated = HL.Override() << function(self)
     UIManager:Show(PanelId.DialogMask)
 end
-
-
 
 PhaseDialogTimeline._OnDestroy = HL.Override() << function(self)
     PhaseDialogTimeline.Super._OnDestroy(self)
     self.m_panelItem = nil
 end
-
-
-
 
 
 
@@ -179,23 +116,15 @@ PhaseDialogTimeline.OnFinishDialogTimeline = HL.Method(HL.Opt(HL.Any)) << functi
     end
 end
 
-
-
-
 PhaseDialogTimeline.OnShowDialogOption = HL.Method(HL.Table) << function(self, data)
     local options = unpack(data)
     self:_DoShowDialogOption(options)
 end
 
-
-
-
 PhaseDialogTimeline._DoShowDialogOption = HL.Method(HL.Userdata) << function
 (self, options)
     self.m_panelItem.uiCtrl:SetTrunkOption(options)
 end
-
-
 
 
 
@@ -241,8 +170,6 @@ PhaseDialogTimeline._OpenDialogSkipPopUp = HL.Method() << function(self)
     end
 end
 
-
-
 PhaseDialogTimeline._HideDialogSkipPopUp = HL.Method() << function(self)
     local panelItem = self:_GetPanelPhaseItem(PanelId.DialogSkipPopUp)
     if panelItem then
@@ -250,14 +177,10 @@ PhaseDialogTimeline._HideDialogSkipPopUp = HL.Method() << function(self)
     end
 end
 
-
-
 PhaseDialogTimeline._SkipDialogTimeline = HL.Method() << function(self)
     self:_HideDialogSkipPopUp()
     GameWorld.dialogTimelineManager:SkipDialog()
 end
-
-
 
 
 
@@ -269,8 +192,6 @@ PhaseDialogTimeline._OpenDialogRecord = HL.Method() << function(self)
     end
     panelItem.uiCtrl:Show()
 end
-
-
 
 PhaseDialogTimeline._HideDialogRecord = HL.Method() << function(self)
     local panelItem = self:_GetPanelPhaseItem(PanelId.DialogRecord)

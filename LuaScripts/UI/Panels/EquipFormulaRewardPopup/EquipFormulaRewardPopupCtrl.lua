@@ -2,30 +2,15 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.EquipFormulaRewardPopup
 
-
-
-
-
-
-
-
-
-
-
 EquipFormulaRewardPopupCtrl = HL.Class('EquipFormulaRewardPopupCtrl', uiCtrl.UICtrl)
-
 
 EquipFormulaRewardPopupCtrl.m_itemListCache = HL.Field(HL.Forward("UIListCache"))
 
-
 EquipFormulaRewardPopupCtrl.m_toastTimerId = HL.Field(HL.Number) << -1
-
 
 EquipFormulaRewardPopupCtrl.m_firstFormulaId = HL.Field(HL.String) << ""
 
-
 EquipFormulaRewardPopupCtrl.m_isInterrupted = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -35,17 +20,12 @@ EquipFormulaRewardPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.INTERRUPT_MAIN_HUD_ACTION_QUEUE] = 'InterruptMainHudActionQueue',
 }
 
-
-
 EquipFormulaRewardPopupCtrl.ShowRewardEquipFormula = HL.StaticMethod(HL.Any) << function(arg)
     LuaSystemManager.mainHudActionQueue:AddRequest("EquipFormulaRewardPopup", function()
         local ctrl = UIManager:AutoOpen(PANEL_ID)
         ctrl:ShowReward(arg)
     end)
 end
-
-
-
 
 
 EquipFormulaRewardPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -60,9 +40,6 @@ EquipFormulaRewardPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     
     
 end
-
-
-
 
 EquipFormulaRewardPopupCtrl.ShowReward = HL.Method(HL.Any) << function(self, args)
     local oriItems = unpack(args)
@@ -103,8 +80,6 @@ EquipFormulaRewardPopupCtrl.ShowReward = HL.Method(HL.Any) << function(self, arg
         end)
     end)
 end
-
-
 
 EquipFormulaRewardPopupCtrl.InterruptMainHudActionQueue = HL.Method() << function(self)
     self.m_toastTimerId = self:_ClearTimer(self.m_toastTimerId)

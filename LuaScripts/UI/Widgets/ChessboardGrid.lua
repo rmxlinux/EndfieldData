@@ -1,32 +1,16 @@
 local EColor = CS.Beyond.Gameplay.EColor
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 ChessboardGrid = HL.Class('ChessboardGrid', UIWidgetBase)
-
 
 ChessboardGrid.m_gridInfo = HL.Field(HL.Table)
 
-
 ChessboardGrid.m_puzzleGame = HL.Field(HL.Userdata)
-
-
 
 
 ChessboardGrid._OnFirstTimeInit = HL.Override() << function(self)
 
 end
-
-
-
-
-
-
 
 ChessboardGrid.InitChessboardGrid = HL.Method(HL.Table, HL.Function, HL.Function, HL.Function)
         << function(self, gridInfo, dropFunc, pointerEnterFunc, pointerExitFunc)
@@ -67,9 +51,6 @@ ChessboardGrid.InitChessboardGrid = HL.Method(HL.Table, HL.Function, HL.Function
     self.m_gridInfo = gridInfo
     self:SetHighlight(false)
 end
-
-
-
 
 ChessboardGrid.SetHighlight = HL.Method(HL.Boolean) << function(self, on)
     self.view.highlight.gameObject:SetActiveIfNecessary(on)

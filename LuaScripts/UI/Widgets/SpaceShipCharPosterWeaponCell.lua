@@ -1,20 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 SpaceShipCharPosterWeaponCell = HL.Class('SpaceShipCharPosterWeaponCell', UIWidgetBase)
-
-
 
 
 SpaceShipCharPosterWeaponCell._OnFirstTimeInit = HL.Override() << function(self)
 
 end
-
-
-
 
 SpaceShipCharPosterWeaponCell.InitSpaceShipCharPosterWeaponCell = HL.Method(HL.Table) << function(self, args)
     self:_FirstTimeInit()
@@ -49,9 +40,6 @@ SpaceShipCharPosterWeaponCell.InitSpaceShipCharPosterWeaponCell = HL.Method(HL.T
     self.view.extra.potentialStar:InitWeaponPotentialStar(itemInfo.itemInst.refineLv)
     self:SetSelectIndex(args.selectIndex)
 end
-
-
-
 
 
 SpaceShipCharPosterWeaponCell.SetSelectIndex = HL.Method(HL.Opt(HL.Number)) << function(self, index)

@@ -132,7 +132,7 @@ SpaceShipFriendHelpRoleCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << fu
 
     self:_UpdateCharChooseState(charId)
     if not self.m_nowNaviHeadCell and index == 1 then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.ssCharHeadCell.view.button)
+        self:SetNaviTarget(cell.ssCharHeadCell.view.button)
         self:OnHeadCellNaviTargetChange(cell.ssCharHeadCell)
     end
 end

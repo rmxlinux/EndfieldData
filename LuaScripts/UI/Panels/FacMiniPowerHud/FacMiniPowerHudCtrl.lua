@@ -1,4 +1,3 @@
-
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacMiniPowerHud
 FacMiniPowerHudCtrl = HL.Class('FacMiniPowerHudCtrl', uiCtrl.UICtrl)
@@ -18,6 +17,12 @@ FacMiniPowerHudCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 FacMiniPowerHudCtrl.m_miniPowerContent = HL.Field(HL.Userdata)
 
+FacMiniPowerHudCtrl.m_baseMode = HL.Field(HL.String) << ""
+
+FacMiniPowerHudCtrl.m_switchMode = HL.Field(HL.String) << ""
+
+FacMiniPowerHudCtrl.m_ignoreModeSwitchPopUp = HL.Field(HL.Boolean) << false
+
 
 FacMiniPowerHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_miniPowerContent = self.view.defaultNode.facMiniPowerContent
@@ -27,6 +32,16 @@ FacMiniPowerHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_miniPowerContent.gameObject:SetActive(false)
     
     self.view.defaultNode.animationWrapper:SampleToOutAnimationEnd()
+
+    local node = self.view.defaultNode
+    node.multimodeToggle:InitCommonToggle(function(isOn)
+        self:_OnMultimodeToggleChanged(isOn)
+    end, false, true)
+    node.multimodeToggle:SetCustomAnimation("common_toggle_to_left05", "common_toggle_to_right05")
+    node.multimodeToggle.toggle.checkIsValueValid = function(isOn)
+        return self:_CheckIsMultimodeToggleValueValid(isOn)
+    end
+    self:_HideMultimodeToggle()
 
     UIManager:SetTopOrder(PanelId.MainHud) 
 end
@@ -92,12 +107,18 @@ end
 FacMiniPowerHudCtrl.m_curBuildBuildingItemId = HL.Field(HL.String) << ''
 
 FacMiniPowerHudCtrl._OnBuildModeChange = HL.Method(HL.String) << function(self, buildingItemId)
+    local changed = self.m_curBuildBuildingItemId ~= buildingItemId
     self.m_curBuildBuildingItemId = buildingItemId
     local data = FactoryUtils.getItemBuildingData(buildingItemId)
     local inBuildingMode = FactoryUtils.isInBuildMode()
     local node = self.view.defaultNode
 
     node.facMiniPowerContent:SwitchFacMiniPowerContent(buildingItemId)
+
+    if changed then
+        self.m_ignoreModeSwitchPopUp = false 
+    end
+    self:_RefreshMultimodeToggle(buildingItemId)
 
     node.buildPreviewTxt.gameObject:SetActive(inBuildingMode)
     if not inBuildingMode then
@@ -114,6 +135,102 @@ FacMiniPowerHudCtrl.OnFacBuildingPreviewPositionRotationChanged = HL.Method() <<
     node.facMiniPowerContent:SwitchFacMiniPowerContent(self.m_curBuildBuildingItemId)
 end
 
+FacMiniPowerHudCtrl._HideMultimodeToggle = HL.Method() << function(self)
+    self.m_baseMode, self.m_switchMode = "", ""
+    self.view.defaultNode.multimodeToggle.gameObject:SetActive(false)
+end
+
+FacMiniPowerHudCtrl._RefreshMultimodeToggle = HL.Method(HL.String, HL.Opt(HL.Boolean)) << function(self, buildingItemId)
+    if not FactoryUtils.isInBuildMode() or string.isEmpty(buildingItemId) then
+        self:_HideMultimodeToggle()
+        return
+    end
+
+    local buildingMode = GameInstance.remoteFactoryManager.interact.currentBuildingMode
+    if not buildingMode then
+        self:_HideMultimodeToggle()
+        return
+    end
+
+    local buildingId = buildingMode.buildingId
+    local hasModeSwitch, baseMode, switchMode = FactoryUtils.checkBuildingHasModeSwitch(buildingId)
+    if not hasModeSwitch then
+        self:_HideMultimodeToggle()
+        return
+    end
+
+    self.m_baseMode, self.m_switchMode = baseMode, switchMode
+
+    local currentMode = buildingMode.nodeMode
+    if currentMode ~= baseMode and currentMode ~= switchMode then
+        logger.error(ELogChannel.Factory, "Invalid building mode, buildingId: " .. tostring(buildingId)
+            .. ", currentMode: " .. tostring(currentMode)
+            .. ", baseMode: " .. tostring(baseMode) .. ", switchMode: " .. tostring(switchMode))
+        self:_HideMultimodeToggle()
+        return
+    end
+
+    local node = self.view.defaultNode
+    node.multimodeToggle.gameObject:SetActive(true)
+    node.multimodeToggle:SetValue(currentMode == switchMode, true)
+
+    
+    local switchModeData = Tables.factoryMachineCraftModeTable:GetValue(switchMode)
+    node.multimodeToggle.view.left.text.text = switchModeData.machineModeTypeName
+    node.multimodeToggle.view.left.icon:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_COMMON, switchModeData.iconId)
+    local baseModeData = Tables.factoryMachineCraftModeTable:GetValue(baseMode)
+    node.multimodeToggle.view.right.text.text = baseModeData.machineModeTypeName
+    node.multimodeToggle.view.right.icon:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_COMMON, baseModeData.iconId)
+
+    CS.Beyond.Gameplay.Conditions.OnFacEnterBuildingModeSwitch.Trigger()
+end
+
+FacMiniPowerHudCtrl._CheckIsMultimodeToggleValueValid = HL.Method(HL.Boolean).Return(HL.Boolean) << function(self, isOn)
+    if self.m_ignoreModeSwitchPopUp then
+        return true 
+    end
+
+    local buildingMode = GameInstance.remoteFactoryManager.interact.currentBuildingMode
+    if not buildingMode then
+        return false
+    end
+
+    if not buildingMode.isMoving then
+        return true 
+    end
+
+    local success = FactoryUtils.checkSwitchBuildingMode(buildingMode.buildingId, buildingMode.nodeMode, self.m_baseMode, self.m_switchMode, function()
+        self.m_ignoreModeSwitchPopUp = true 
+        self:_OnMultimodeToggleChanged(isOn)
+    end)
+    return success
+end
+
+FacMiniPowerHudCtrl._OnMultimodeToggleChanged = HL.Method(HL.Boolean) << function(self, isOn)
+    local targetMode = isOn and self.m_switchMode or self.m_baseMode
+    if string.isEmpty(targetMode) then
+        self:_HideMultimodeToggle()
+        return
+    end
+
+    local buildingMode = GameInstance.remoteFactoryManager.interact.currentBuildingMode
+    if not buildingMode then
+        self:_HideMultimodeToggle()
+        return
+    end
+
+    local success = buildingMode:TrySetPreviewMode(CSFactoryUtil.ToFacNodeMode(targetMode))
+    if success then
+        self.view.defaultNode.facMiniPowerContent:SwitchFacMiniPowerContent(self.m_curBuildBuildingItemId)
+    end
+    self:_RefreshMultimodeToggle(self.m_curBuildBuildingItemId)
+
+    local toggleAudio = FacConst.FAC_FORMULA_MODE_TOGGLE_AUDIO[targetMode]
+    if toggleAudio then
+        AudioAdapter.PostEvent(toggleAudio)
+    end
+end
+
 FacMiniPowerHudCtrl.OnBuildModeChange = HL.Method(HL.Number) << function(self, mode)
     
     local node = self.view.defaultNode
@@ -128,6 +245,7 @@ FacMiniPowerHudCtrl.OnFacChapterReset = HL.Method() << function(self)
         return
     end
     node.facMiniPowerContent:SwitchFacMiniPowerContent(self.m_curBuildBuildingItemId)
+    self:_RefreshMultimodeToggle(self.m_curBuildBuildingItemId)
 end
 
 HL.Commit(FacMiniPowerHudCtrl)

@@ -1,21 +1,6 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.OutOfScreenTargets
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 OutOfScreenTargetsCtrl = HL.Class('OutOfScreenTargetsCtrl', uiCtrl.UICtrl)
 
 
@@ -24,78 +9,99 @@ OutOfScreenTargetsCtrl = HL.Class('OutOfScreenTargetsCtrl', uiCtrl.UICtrl)
 
 
 
-
 OutOfScreenTargetsCtrl.s_messages = HL.StaticField(HL.Table) << {
-    
+    [MessageConst.TOGGLE_DEBUG_OUT_OF_SCREEN_TARGETS_MODE] = 'OnToggleDebugOutOfScreenTargetsMode',
 }
-
 
 OutOfScreenTargetsCtrl.m_arrows = HL.Field(HL.Table)
 
-
 OutOfScreenTargetsCtrl.m_arrowsCache = HL.Field(HL.Table)
-
 
 OutOfScreenTargetsCtrl.m_arrowsWithOutAnimation = HL.Field(HL.Table)
 
-
 OutOfScreenTargetsCtrl.m_lateTickKey = HL.Field(HL.Number) << -1
-
-
-
+OutOfScreenTargetsCtrl.m_isGPUMode = HL.Field(HL.Boolean) << true
+OutOfScreenTargetsCtrl.m_isGPUModeInited = HL.Field(HL.Boolean) << false
+OutOfScreenTargetsCtrl.m_isCPUModeInited = HL.Field(HL.Boolean) << false
 
 
 OutOfScreenTargetsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    self.view.outOfScreenTargetsCtrl:OnCreate()
+    self.view.arrow.gameObject:SetActive(false)
+    if self.m_isGPUMode then
+        self.view.outOfScreenTargetsCtrlV2:OnCreate()
+        self.m_isGPUModeInited = true
+    else
+        self.view.outOfScreenTargetsCtrl:OnCreate()
+        self.m_isCPUModeInited = true
+    end
 end
-
-
 
 OutOfScreenTargetsCtrl.OnClose = HL.Override() << function(self)
-    
-    
-    self.view.outOfScreenTargetsCtrl:OnClose()
+    if self.m_isGPUModeInited then
+        if not self.m_isGPUMode then
+            self.view.outOfScreenTargetsCtrlV2:DebugChangeImpl(false)
+        end
+        self.view.outOfScreenTargetsCtrlV2:OnClose()
+    end
+
+    if self.m_isCPUModeInited then
+        if self.m_isGPUMode then
+            self.view.outOfScreenTargetsCtrl:DebugChangeImpl(false)
+        end
+        self.view.outOfScreenTargetsCtrl:OnClose()
+    end
 end
-
-
 
 OutOfScreenTargetsCtrl.OnShow = HL.Override() << function(self)
-    
-    
-    
-    
-    
-    
-    self.view.outOfScreenTargetsCtrl:OnShow()
+    if self.m_isGPUMode then
+        self.view.outOfScreenTargetsCtrlV2:OnShow()
+    else
+        self.view.outOfScreenTargetsCtrl:OnShow()
+    end
 end
-
-
 
 OutOfScreenTargetsCtrl.OnHide = HL.Override() << function(self)
-
+    if self.m_isGPUMode then
+        self.view.outOfScreenTargetsCtrlV2:OnHide()
+    end
 end
 
+OutOfScreenTargetsCtrl.OnToggleDebugOutOfScreenTargetsMode = HL.Method() << function(self)
+    self.m_isGPUMode = not self.m_isGPUMode
+    GameAction.ShowUIToast("已切换到" .. (self.m_isGPUMode and "GPU模式" or "CPU模式"))
+    if self.m_isGPUModeInited == false and self.m_isGPUMode then
+        self.m_isGPUModeInited = true
+        self.view.outOfScreenTargetsCtrlV2:OnCreate()
+        self.view.outOfScreenTargetsCtrlV2:OnShow()
+        if self.m_isCPUModeInited then
+            self.view.outOfScreenTargetsCtrl:DebugChangeImpl(true)
+        end
+        return
+    end
 
+    if self.m_isCPUModeInited == false and not self.m_isGPUMode then
+        self.m_isCPUModeInited = true
+        self.view.outOfScreenTargetsCtrl:OnCreate()
+        self.view.outOfScreenTargetsCtrl:OnShow()
+        if self.m_isGPUModeInited then
+            self.view.outOfScreenTargetsCtrlV2:DebugChangeImpl(true)
+        end
+        return
+    end
+
+    if self.m_isGPUModeInited then
+        self.view.outOfScreenTargetsCtrlV2:DebugChangeImpl(not self.m_isGPUMode)
+    end
+    if self.m_isCPUModeInited then
+        self.view.outOfScreenTargetsCtrl:DebugChangeImpl(self.m_isGPUMode)
+    end
+end
 
 OutOfScreenTargetsCtrl._Update = HL.Method() << function(self)
     self:_UpdateOutOfScreenTargets()
 end
 
 do 
-    
-    
     OutOfScreenTargetsCtrl._UpdateOutOfScreenTargets = HL.Method() << function(self)
         local hostileEnemies = GameWorld.battle.enemies
         local targetScrPoses = {}
@@ -140,17 +146,10 @@ do
         end
     end
 
-    
-    
-    
-    
-    
     OutOfScreenTargetsCtrl._IsPosInScreen = HL.Method(HL.Userdata, HL.Number, HL.Number).Return(HL.Boolean) << function(self, screenPos, screenWidth, screenHeight)
         return screenPos.x >= 0 and screenPos.x <= screenWidth and screenPos.y >= 0 and screenPos.y <= screenHeight and screenPos.z >= 0
     end
 
-    
-    
     OutOfScreenTargetsCtrl._CreateOneArrow = HL.Method().Return(HL.Table) << function(self)
         local cacheCount = #self.m_arrowsCache
         if cacheCount > 0 then
@@ -167,9 +166,6 @@ do
         return arrow
     end
 
-    
-    
-    
     OutOfScreenTargetsCtrl._ScreenPosToUIPos = HL.Method(HL.Userdata).Return(HL.Userdata, HL.Number) << function(self, screenPos)
         local needRevert = screenPos.z < 0
         local x = screenPos.x - Screen.width * 0.5

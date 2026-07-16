@@ -1,21 +1,7 @@
 
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.ReadingPopUp
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseReadingPopUp = HL.Class('PhaseReadingPopUp', phaseBase.PhaseBase)
-
 
 
 
@@ -28,8 +14,6 @@ PhaseReadingPopUp.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
-
 PhaseReadingPopUp._OnInit = HL.Override() << function(self)
     PhaseReadingPopUp.Super._OnInit(self)
 end
@@ -37,22 +21,13 @@ end
 
 
 
-
-
-
-
-
 PhaseReadingPopUp.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhaseReadingPopUp._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local data, callback = unpack(self.arg)
     local handle = nil
-    local id
+    local id, overrideRadioId
     if type(data) ~= "string" then
         handle = data
         id = handle.data.readingPopupId
@@ -73,6 +48,7 @@ PhaseReadingPopUp._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table
         radioTitle = readingPopCfg.title
         
         id = readingPopCfg.contentId
+        overrideRadioId = readingPopCfg.overrideRadioId
     end
     
     if Tables.richContentTable:TryGetValue(id) then
@@ -97,6 +73,7 @@ PhaseReadingPopUp._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table
         richContentId = richContentId,
         radioId = radioId,
         radioTitle = radioTitle,
+        overrideRadioId = overrideRadioId,
         
         iconType = iconType,
         bgType = bgType,
@@ -111,23 +88,11 @@ PhaseReadingPopUp._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table
     end
 end
 
-
-
-
-
 PhaseReadingPopUp._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseReadingPopUp._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseReadingPopUp._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
@@ -137,29 +102,19 @@ end
 
 
 
-
-
 PhaseReadingPopUp._OnActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseReadingPopUp._OnDeActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseReadingPopUp._OnDestroy = HL.Override() << function(self)
     PhaseReadingPopUp.Super._OnDestroy(self)
 end
 
-
-
 PhaseReadingPopUp.OnShowReadingPopPanel = HL.StaticMethod(HL.Table) << function(arg)
     PhaseManager:OpenPhase(PHASE_ID, arg, nil, true)
 end
-
-
 
 PhaseReadingPopUp.OnShowReadingPopPanelByHandle = HL.StaticMethod(HL.Table) << function(arg)
     PhaseManager:OpenPhase(PHASE_ID, arg, nil, true)

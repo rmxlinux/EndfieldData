@@ -1,36 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GachaPoolCellBase = HL.Class('GachaPoolCellBase', UIWidgetBase)
 
 
@@ -39,16 +8,11 @@ local MAX_SHOW_CHAR_INFO_COUNT = 5
 
 
 
-
 GachaPoolCellBase.m_poolId = HL.Field(HL.String) << ""
-
 
 GachaPoolCellBase.m_baseInfo = HL.Field(HL.Table)
 
-
 GachaPoolCellBase.m_isAutoExchangeMoney = HL.Field(HL.Boolean) << false
-
-
 
 
 
@@ -56,9 +20,6 @@ GachaPoolCellBase.m_isAutoExchangeMoney = HL.Field(HL.Boolean) << false
 GachaPoolCellBase._OnFirstTimeInit = HL.Override() << function(self)
     self:_InitBaseUI()
 end
-
-
-
 
 GachaPoolCellBase.InitGachaPoolCell = HL.Method(HL.String) << function(self, poolId)
     self.m_poolId = poolId
@@ -69,25 +30,17 @@ GachaPoolCellBase.InitGachaPoolCell = HL.Method(HL.String) << function(self, poo
     self.view.animationWrapper:SampleToOutAnimationEnd()
 end
 
-
-
 GachaPoolCellBase.UpdateGachaPoolCell = HL.Method() << function(self)
     self:_UpdateBaseData()
     self:_RefreshBaseUI()
     self:_InnerUpdateGachaPoolCell()
 end
 
-
-
 GachaPoolCellBase._InnerInitGachaPoolCell = HL.Virtual() << function(self)
 end
 
-
-
 GachaPoolCellBase._InnerUpdateGachaPoolCell = HL.Virtual() << function(self)
 end
-
-
 
 
 
@@ -282,8 +235,6 @@ GachaPoolCellBase._InitBaseData = HL.Method() << function(self)
     
 end
 
-
-
 GachaPoolCellBase._UpdateBaseData = HL.Method() << function(self)
     
     local hasInfo, poolInfo = csGachaSystem.poolInfos:TryGetValue(self.m_poolId)
@@ -369,8 +320,6 @@ end
 
 
 
-
-
 GachaPoolCellBase._InitBaseUI = HL.Method() << function(self)
     self.view.gachaOnceBtn.button.onClick:RemoveAllListeners()
     self.view.gachaOnceBtn.button.onClick:AddListener(function()
@@ -402,8 +351,6 @@ GachaPoolCellBase._InitBaseUI = HL.Method() << function(self)
         end)
     end
 end
-
-
 
 GachaPoolCellBase._RefreshBaseUI = HL.Method() << function(self)
     self.view.gachaOnceBtn.gameObject:SetActive(self.m_baseInfo.gachaCostInfos.permitSinglePull)
@@ -472,10 +419,6 @@ GachaPoolCellBase._RefreshBaseUI = HL.Method() << function(self)
     
 end
 
-
-
-
-
 GachaPoolCellBase._RefreshGachaBtn = HL.Method(HL.Any, HL.Table) << function(self, btnCell, pullCostInfos)
     if not btnCell.m_moneyCellCache then
         btnCell.m_moneyCellCache = UIUtils.genCellCache(btnCell.moneyPriceCell)
@@ -497,26 +440,17 @@ end
 
 
 
-
-
-
 GachaPoolCellBase.UpdateMoneyNode = HL.Method(HL.Any) << function(self, moneyNode)
     self:UpdateMoneyNodeOnlyMoney(moneyNode)
     self:UpdateMoneyNodeOnlyGachaTicket(moneyNode)
     self:UpdateGachaBtnCost()
 end
 
-
-
-
 GachaPoolCellBase.UpdateMoneyNodeOnlyMoney = HL.Method(HL.Any) << function(self, moneyNode)
     local count = GameInstance.player.inventory:GetItemCountInWallet(Tables.globalConst.originiumItemId)
     moneyNode.originiumConvertedDiamond.text.text = count * Tables.CharGachaConst.exchangeCharGachaCostItemCount
     
 end
-
-
-
 
 GachaPoolCellBase.UpdateMoneyNodeOnlyGachaTicket = HL.Virtual(HL.Any) << function(self, moneyNode)
     
@@ -553,8 +487,6 @@ GachaPoolCellBase.UpdateMoneyNodeOnlyGachaTicket = HL.Virtual(HL.Any) << functio
     
 end
 
-
-
 GachaPoolCellBase.UpdateGachaBtnCost = HL.Method() << function(self)
     local gachaCostInfos = self.m_baseInfo.gachaCostInfos
     
@@ -576,10 +508,6 @@ GachaPoolCellBase.UpdateGachaBtnCost = HL.Method() << function(self)
     end
     self:_RefreshGachaBtn(self.view.gachaTenBtn, gachaCostInfos.tenPullCostInfos)
 end
-
-
-
-
 
 GachaPoolCellBase._GetGachaCost = HL.Method(HL.Table, HL.Number).Return(HL.Table) << function(self, pullItemInfos, times)
     local diamondId = Tables.globalConst.diamondItemId
@@ -631,9 +559,6 @@ GachaPoolCellBase._GetGachaCost = HL.Method(HL.Table, HL.Number).Return(HL.Table
         diamondNeedCount = diamondNeedCount,
     }
 end
-
-
-
 
 GachaPoolCellBase._Gacha = HL.Method(HL.Boolean) << function(self, isTen)
     if not self:_CheckCanGacha() then
@@ -774,8 +699,6 @@ GachaPoolCellBase._Gacha = HL.Method(HL.Boolean) << function(self, isTen)
     })
 end
 
-
-
 GachaPoolCellBase._CheckCanGacha = HL.Method().Return(HL.Boolean) << function(self)
     local poolId = self.m_poolId
     local succ, csInfo = GameInstance.player.gacha.poolInfos:TryGetValue(poolId)
@@ -796,10 +719,6 @@ GachaPoolCellBase._CheckCanGacha = HL.Method().Return(HL.Boolean) << function(se
     return false
 end
 
-
-
-
-
 GachaPoolCellBase._ExecuteGacha = HL.Method(HL.Table, HL.Boolean) << function(self, cost, isTen)
     logger.info("GachaPoolCellBase._ExecuteGacha", self.m_poolId, cost)
     if not self:_CheckCanGacha() then
@@ -812,16 +731,11 @@ GachaPoolCellBase._ExecuteGacha = HL.Method(HL.Table, HL.Boolean) << function(se
     end
 end
 
-
-
 GachaPoolCellBase.CheckAndShowSpecialRewardPopup = HL.Virtual() << function(self)
     
     
     
 end
-
-
-
 
 GachaPoolCellBase.ShowPreviewCharInfo = HL.Method(HL.Opt(HL.String)) << function(self, charId)
     if PhaseManager:IsOpen(PhaseId.CharInfo) then
@@ -868,8 +782,6 @@ GachaPoolCellBase.ShowPreviewCharInfo = HL.Method(HL.Opt(HL.String)) << function
     })
 end
 
-
-
 GachaPoolCellBase.GetSubPanelArg = HL.Virtual().Return(HL.Opt(HL.Any)) << function(self)
     local isOpen, ctrl = UIManager:IsOpen(PanelId.GachaPoolVideo)
     if isOpen then
@@ -905,9 +817,6 @@ GachaPoolCellBase.GetSubPanelArg = HL.Virtual().Return(HL.Opt(HL.Any)) << functi
     end
 end
 
-
-
-
 GachaPoolCellBase.HandleSubPanelArg = HL.Virtual(HL.Any) << function(self, subPanelArg)
     if subPanelArg.isGachaPoolVideo and not string.isEmpty(subPanelArg.poolId) then
         UIManager:Open(PanelId.GachaPoolVideo, subPanelArg.poolId)
@@ -922,8 +831,6 @@ end
 
 local CLIENT_IS_PLAY_CHANGE_TAB_IN_ANI = "clientIsPlayChangeTabInAni_"
 
-
-
 GachaPoolCellBase.CheckCanPlayChangeTabInAni = HL.Method().Return(HL.Boolean) << function(self)
     local aniName = self.view.config.CHANGE_TAB_IN_ANI
     if string.isEmpty(aniName) then
@@ -933,9 +840,6 @@ GachaPoolCellBase.CheckCanPlayChangeTabInAni = HL.Method().Return(HL.Boolean) <<
     local suc, isPlay, removed = ClientDataManagerInst:GetBool(CLIENT_IS_PLAY_CHANGE_TAB_IN_ANI .. self.m_poolId, false)
     return not isPlay
 end
-
-
-
 
 GachaPoolCellBase.PlayGachaChangeTabInAni = HL.Method(HL.Function) << function(self, callback)
     
@@ -961,8 +865,6 @@ GachaPoolCellBase.PlayGachaChangeTabInAni = HL.Method(HL.Function) << function(s
     end
 end
 
-
-
 GachaPoolCellBase.PlayGachaScrollInAni = HL.Method() << function(self)
     
     local aniWrapper = self.view.animationWrapper
@@ -979,8 +881,6 @@ GachaPoolCellBase.PlayGachaScrollInAni = HL.Method() << function(self)
     end
 end
 
-
-
 GachaPoolCellBase.PlayGachaScrollOutAni = HL.Method() << function(self)
     
     local aniWrapper = self.view.animationWrapper
@@ -992,8 +892,6 @@ GachaPoolCellBase.PlayGachaScrollOutAni = HL.Method() << function(self)
         logger.error("[卡池动效缺失：ScrollOutAni] 卡池id：" .. self.m_poolId)
     end
 end
-
-
 
 GachaPoolCellBase.PlayGachaOutAni = HL.Method() << function(self)
     

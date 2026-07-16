@@ -507,8 +507,8 @@ function AttributeUtils._generateAgiHint(attributeCfg, extraCfg)
     end
 
     local attributes = charInst.attributes
-    local resistanceFromAgi = attributes:GetValue(GEnums.AttributeType.PhysicalDmgResistScalar)
-    local resistanceShowValue = AttributeUtils.generateAttributeShowInfo(GEnums.AttributeType.PhysicalDmgResistScalar, resistanceFromAgi, {
+    local resistanceFromAgi = attributes:GetValue(GEnums.AttributeType.PhysicalResistance)
+    local resistanceShowValue = AttributeUtils.generateAttributeShowInfo(GEnums.AttributeType.PhysicalResistance, resistanceFromAgi, {
         fromSpecificSystem = UIConst.CHAR_INFO_ATTRIBUTE_SPECIFIC_SYSTEM.CHAR_FULL_ATTR
     }).showValue
 
@@ -524,8 +524,8 @@ function AttributeUtils._generateWisdHint(attributeCfg, extraCfg)
     end
 
     local attributes = charInst.attributes
-    local resistanceFromWisd = attributes:GetValue(GEnums.AttributeType.FireDmgResistScalar)
-    local resistanceShowValue = AttributeUtils.generateAttributeShowInfo(GEnums.AttributeType.FireDmgResistScalar, resistanceFromWisd, {
+    local resistanceFromWisd = attributes:GetValue(GEnums.AttributeType.FireResistance)
+    local resistanceShowValue = AttributeUtils.generateAttributeShowInfo(GEnums.AttributeType.FireResistance, resistanceFromWisd, {
         fromSpecificSystem = UIConst.CHAR_INFO_ATTRIBUTE_SPECIFIC_SYSTEM.CHAR_FULL_ATTR
     }).showValue
 

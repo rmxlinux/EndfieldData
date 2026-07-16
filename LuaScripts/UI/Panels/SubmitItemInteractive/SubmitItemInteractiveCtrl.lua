@@ -1,24 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SubmitItemInteractive
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SubmitItemInteractiveCtrl = HL.Class('SubmitItemInteractiveCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -30,26 +13,17 @@ SubmitItemInteractiveCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SUBMIT_ITEM] = 'OnSubmitItem',
 }
 
-
 SubmitItemInteractiveCtrl.m_submitItemsNormal = HL.Field(HL.Table)
-
 
 SubmitItemInteractiveCtrl.m_submitItemsSelect = HL.Field(HL.Table)
 
-
 SubmitItemInteractiveCtrl.m_selectItemBundle = HL.Field(HL.Table)
-
 
 SubmitItemInteractiveCtrl.m_info = HL.Field(HL.Table)
 
-
 SubmitItemInteractiveCtrl.m_normalItemListCache = HL.Field(HL.Forward("UIListCache"))
 
-
 SubmitItemInteractiveCtrl.m_selectItemListCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 SubmitItemInteractiveCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -131,8 +105,6 @@ SubmitItemInteractiveCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
 SubmitItemInteractiveCtrl._OnClickSubmit = HL.Method() << function(self)
     if self.m_selectItemBundle.count ~= 0 then
         local selectInstIds = {}
@@ -145,18 +117,12 @@ SubmitItemInteractiveCtrl._OnClickSubmit = HL.Method() << function(self)
     end
 end
 
-
-
 SubmitItemInteractiveCtrl._OnClickSelectItem = HL.Method() << function(self)
     self.view.itemSelectList.gameObject:SetActiveIfNecessary(true)
     self.view.itemSelectList:InitItemSelectList({self.m_selectItemBundle.id}, self.m_submitItemsSelect, function(itemBundle, cell)
         self:_OnSelectItem(itemBundle, cell)
     end)
 end
-
-
-
-
 
 SubmitItemInteractiveCtrl._OnSelectItem = HL.Method(HL.Table, HL.Any) << function(self, itemBundle, cell)
     
@@ -185,8 +151,6 @@ SubmitItemInteractiveCtrl._OnSelectItem = HL.Method(HL.Table, HL.Any) << functio
     self:_UpdateCount()
 end
 
-
-
 SubmitItemInteractiveCtrl._UpdateSelectText = HL.Method() << function(self)
     local hasSelectItem = #self.m_submitItemsSelect > 0
 
@@ -202,8 +166,6 @@ SubmitItemInteractiveCtrl._UpdateSelectText = HL.Method() << function(self)
                 rarityColorStr))
     end
 end
-
-
 
 SubmitItemInteractiveCtrl._UpdateCount = HL.Method() << function(self)
     local enoughNormal = true
@@ -240,9 +202,6 @@ SubmitItemInteractiveCtrl._UpdateCount = HL.Method() << function(self)
     self.view.btnSubmit.interactable = enoughNormal and enoughSelect
 end
 
-
-
-
 SubmitItemInteractiveCtrl.OnSubmitItem = HL.Method(HL.Any) << function(self, submitId)
     if (submitId[1] == self.m_info.submitId) then
         self:Close()
@@ -250,8 +209,6 @@ SubmitItemInteractiveCtrl.OnSubmitItem = HL.Method(HL.Any) << function(self, sub
         print("SubmitItemInteractiveCtrl.OnSubmitItem: submitId not match", submitId, self.m_info.submitId)
     end
 end
-
-
 
 SubmitItemInteractiveCtrl.ShowPanel = HL.StaticMethod(HL.Any) << function(arg)
     arg = unpack(arg) or arg

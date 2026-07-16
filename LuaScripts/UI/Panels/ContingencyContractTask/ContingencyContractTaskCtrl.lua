@@ -140,21 +140,6 @@ end
 
 ContingencyContractTaskCtrl.OnClose = HL.Override() << function(self)
     self:_UpdateReadInfo()
-    
-    
-    if self.m_tabCache then
-        self.m_tabCache:OnClose()
-    end
-    if self.m_taskListCache then
-        self.m_taskListCache:OnClose()
-    end
-    if self.m_taskCacheTable then
-        for _, taskCache in pairs(self.m_taskCacheTable) do
-            if taskCache then
-                taskCache:OnClose()
-            end
-        end
-    end
 end
 
 ContingencyContractTaskCtrl._InitSelectedIndex = HL.Method(HL.Number) << function(self, index)
@@ -710,12 +695,12 @@ ContingencyContractTaskCtrl._SetNavi = HL.Method() << function(self)
     
     if DeviceInfo.usingController then
         local selectedTab = self.m_tabCell[self.m_selectedTabIndex]
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.groupListNode.naviGroup, selectedTab.button)
+        self:SetNaviTarget(selectedTab.button)
 
         
         self.view.groupListNode.naviGroup.onDefaultNaviFailed:AddListener(function(dir)
             if dir == Unity.UI.NaviDirection.Right then
-                UIUtils.setAsNaviTarget(self.m_taskCell[self.m_selectedTabIndex][1].cell.naviDecorator)
+                self:SetNaviTarget(self.m_taskCell[self.m_selectedTabIndex][1].cell.naviDecorator)
             end
         end)
         
@@ -724,16 +709,16 @@ ContingencyContractTaskCtrl._SetNavi = HL.Method() << function(self)
                 local targetTab = self.m_tabCell[self.m_selectedTabIndex]
                 
                 
-                UIUtils.setAsNaviTarget(targetTab.button)
+                self:SetNaviTarget(targetTab.button)
                 
             end
         end)
         
         local viewBindingId = self:BindInputPlayerAction("common_confirm", function()
-            UIUtils.setAsNaviTarget(self.m_taskCell[self.m_selectedTabIndex][1].cell.naviDecorator)
+            self:SetNaviTarget(self.m_taskCell[self.m_selectedTabIndex][1].cell.naviDecorator)
         end)
         local backToTabBindingId = self:BindInputPlayerAction("common_back", function()
-            UIUtils.setAsNaviTarget(self.m_tabCell[self.m_selectedTabIndex].button)
+            self:SetNaviTarget(self.m_tabCell[self.m_selectedTabIndex].button)
         end)
         InputManagerInst:ToggleBinding(viewBindingId, true)
         InputManagerInst:ToggleBinding(backToTabBindingId, false)
@@ -748,16 +733,10 @@ ContingencyContractTaskCtrl._SetNavi = HL.Method() << function(self)
 end
 
 ContingencyContractTaskCtrl._UpdateReadInfo = HL.Method() << function(self)
-    local isDirty = false
     for id,_ in pairs(self.m_readTasks) do
         if ActivityUtils.isCcNewTask(self.m_activityId, id) then
-           isDirty = true
-           ActivityUtils.setCcNewTaskRead(self.m_activityId, id, true) 
+           ActivityUtils.setCcNewTaskRead(self.m_activityId, id)
         end
-    end
-    
-    if isDirty then
-        ClientDataManagerInst:SaveUserData(ClientDataManagerInst.defaultCategory)
     end
 end
 

@@ -3,29 +3,15 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.PuzzleTrackPopup
 local PHASE_ID = PhaseId.PuzzleTrackPopup
 
-
-
-
-
-
-
-
-
-
 PuzzleTrackPopupCtrl = HL.Class('PuzzleTrackPopupCtrl', uiCtrl.UICtrl)
-
 
 PuzzleTrackPopupCtrl.m_luaIndex = HL.Field(HL.Number) << -1
 
-
 PuzzleTrackPopupCtrl.m_totalNum = HL.Field(HL.Number) << -1
-
 
 PuzzleTrackPopupCtrl.m_blocks = HL.Field(HL.Table)
 
-
 PuzzleTrackPopupCtrl.m_animationWrapper = HL.Field(HL.Any)
-
 
 
 
@@ -34,9 +20,6 @@ PuzzleTrackPopupCtrl.m_animationWrapper = HL.Field(HL.Any)
 PuzzleTrackPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 PuzzleTrackPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -88,8 +71,6 @@ PuzzleTrackPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
 PuzzleTrackPopupCtrl._RefreshBlock = HL.Method() << function(self)
     self.view.imageAnimation:Play("puzzletrackpopup_image_in")
 
@@ -97,8 +78,6 @@ PuzzleTrackPopupCtrl._RefreshBlock = HL.Method() << function(self)
     self.view.image:LoadSprite(UIConst.UI_SPRITE_MINIGAME_BLOCK, block.resPath..UIConst.UI_MINIGAME_PUZZLE_GREY_BLOCK_SUFFIX)
     self.view.txtNumber.text = string.format("%d/%d", self.m_luaIndex, self.m_totalNum)
 end
-
-
 
 PuzzleTrackPopupCtrl._OnBtnJump = HL.Method() << function(self)
     local mapMgr = GameInstance.player.mapManager

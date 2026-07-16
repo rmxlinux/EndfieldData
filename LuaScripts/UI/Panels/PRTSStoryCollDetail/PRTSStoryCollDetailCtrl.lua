@@ -1,41 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.PRTSStoryCollDetail
 local PHASE_ID = PhaseId.PRTSStoryCollDetail
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PRTSStoryCollDetailCtrl = HL.Class('PRTSStoryCollDetailCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -53,38 +19,25 @@ local ContentTypeEnum = {
     Radio = 1,
 }
 
-
 PRTSStoryCollDetailCtrl.m_isFirstLvId = HL.Field(HL.Boolean) << false
-
 
 PRTSStoryCollDetailCtrl.m_showGotoBtn = HL.Field(HL.Boolean) << false
 
-
 PRTSStoryCollDetailCtrl.m_idList = HL.Field(HL.Table)
-
 
 PRTSStoryCollDetailCtrl.m_curPageIndex = HL.Field(HL.Number) << 1
 
-
 PRTSStoryCollDetailCtrl.m_curItemIndex = HL.Field(HL.Number) << 1
-
 
 PRTSStoryCollDetailCtrl.m_genIndexPointCells = HL.Field(HL.Forward("UIListCache"))
 
-
 PRTSStoryCollDetailCtrl.m_info = HL.Field(HL.Table)
-
 
 PRTSStoryCollDetailCtrl.m_curItemInfo = HL.Field(HL.Table)
 
-
 PRTSStoryCollDetailCtrl.m_args = HL.Field(HL.Table)
 
-
 PRTSStoryCollDetailCtrl.m_logTimeTemp = HL.Field(HL.Number) << -1
-
-
-
 
 
 
@@ -111,14 +64,9 @@ PRTSStoryCollDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_SendEventLog(true)
 end
 
-
-
 PRTSStoryCollDetailCtrl.OnClose = HL.Override() << function(self)
     self:_SendEventLog(false)
 end
-
-
-
 
 PRTSStoryCollDetailCtrl._SendEventLog = HL.Method(HL.Boolean) << function(self, isEnter)
     if not isEnter and self.m_logTimeTemp < 0 then
@@ -153,16 +101,11 @@ PRTSStoryCollDetailCtrl._SendEventLog = HL.Method(HL.Boolean) << function(self, 
     end
 end
 
-
-
-
 PRTSStoryCollDetailCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, arg)
     self:_InitData(arg)
     self:_UpdateData()
     self:_RefreshAllUI()
 end
-
-
 
 PRTSStoryCollDetailCtrl.ShowSelf = HL.StaticMethod(HL.Any) << function(args)
     local id, isFirstLv = unpack(args)
@@ -172,15 +115,11 @@ PRTSStoryCollDetailCtrl.ShowSelf = HL.StaticMethod(HL.Any) << function(args)
     })
 end
 
-
-
 PRTSStoryCollDetailCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.m_args and lume.deepCopy(self.m_args) or {}
     arg.resumeState = self:_CollectResumeState()
     return arg
 end
-
-
 
 
 
@@ -190,9 +129,6 @@ PRTSStoryCollDetailCtrl._CollectResumeState = HL.Method().Return(HL.Table) << fu
         curItemIndex = self.m_curItemIndex,
     }
 end
-
-
-
 
 PRTSStoryCollDetailCtrl._InitData = HL.Method(HL.Table) << function(self, arg)
     if not arg.idList and arg.id then
@@ -238,9 +174,6 @@ PRTSStoryCollDetailCtrl._InitData = HL.Method(HL.Table) << function(self, arg)
     end
 end
 
-
-
-
 PRTSStoryCollDetailCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
     if not resumeState then
         return
@@ -260,9 +193,6 @@ PRTSStoryCollDetailCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << functio
         self.m_curItemIndex = 1
     end
 end
-
-
-
 
 PRTSStoryCollDetailCtrl._CreateItemInfos = HL.Method(HL.Any).Return(HL.Table) << function(self, itemIds)
     local itemInfos = {}
@@ -298,8 +228,6 @@ PRTSStoryCollDetailCtrl._CreateItemInfos = HL.Method(HL.Any).Return(HL.Table) <<
     return itemInfos
 end
 
-
-
 PRTSStoryCollDetailCtrl._UpdateData = HL.Method() << function(self)
     if self.m_isFirstLvId then
         local pageInfo = self.m_info.pageInfos[self.m_curPageIndex]
@@ -308,8 +236,6 @@ PRTSStoryCollDetailCtrl._UpdateData = HL.Method() << function(self)
         self.m_curItemInfo = self.m_info.pageInfos[self.m_curPageIndex]
     end
 end
-
-
 
 
 
@@ -343,16 +269,12 @@ PRTSStoryCollDetailCtrl._InitUI = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 PRTSStoryCollDetailCtrl._RefreshAllUI = HL.Method() << function(self)
     self:_RefreshContent()
     self:_RefreshIndexPoint()
     self:_RefreshPageSwitchBtn()
     self:_RefreshItemSwitchBtn()
 end
-
-
 
 PRTSStoryCollDetailCtrl._RefreshContent = HL.Method() << function(self)
     local info = self.m_curItemInfo
@@ -372,7 +294,7 @@ PRTSStoryCollDetailCtrl._RefreshContent = HL.Method() << function(self)
         self.view.prtsRichContent.gameObject:SetActiveIfNecessary(false)
         
         local itemCfg = Utils.tryGetTableCfg(Tables.prtsAllItem, info.itemId)
-        self.view.prtsRadio:InitPRTSRadio(info.contentId, itemCfg.name)
+        self.view.prtsRadio:InitPRTSRadio(info.contentId, itemCfg.name, itemCfg.overrideRadioId)
         self.view.prtsRadio:SetPlayRadio(true)
         if self.m_showGotoBtn and info.belongsInvestIds then
             
@@ -384,8 +306,6 @@ PRTSStoryCollDetailCtrl._RefreshContent = HL.Method() << function(self)
     
     GameInstance.player.prts:MarkRead(info.itemId)
 end
-
-
 
 PRTSStoryCollDetailCtrl._RefreshIndexPoint = HL.Method() << function(self)
     local pointCount = 0
@@ -403,10 +323,6 @@ PRTSStoryCollDetailCtrl._RefreshIndexPoint = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 PRTSStoryCollDetailCtrl._OnRefreshIndexPointCell = HL.Method(HL.Table, HL.Number) << function(self, cell, luaIndex)
     if luaIndex == self.m_curItemIndex then
         cell.indexPointState:SetState("Select")
@@ -414,8 +330,6 @@ PRTSStoryCollDetailCtrl._OnRefreshIndexPointCell = HL.Method(HL.Table, HL.Number
         cell.indexPointState:SetState("Unselect")
     end
 end
-
-
 
 PRTSStoryCollDetailCtrl._RefreshPageSwitchBtn = HL.Method() << function(self)
     local totalCount = #self.m_info.pageInfos
@@ -425,8 +339,6 @@ PRTSStoryCollDetailCtrl._RefreshPageSwitchBtn = HL.Method() << function(self)
     viewRef.pageUpBtn.gameObject:SetActiveIfNecessary(showUpBtn)
     viewRef.pageDownBtn.gameObject:SetActiveIfNecessary(showDownBtn)
 end
-
-
 
 PRTSStoryCollDetailCtrl._RefreshItemSwitchBtn = HL.Method() << function(self)
     local viewRef = self.view
@@ -447,9 +359,6 @@ PRTSStoryCollDetailCtrl._RefreshItemSwitchBtn = HL.Method() << function(self)
     viewRef.itemNextBtn.gameObject:SetActiveIfNecessary(showNextBtn)
 end
 
-
-
-
 PRTSStoryCollDetailCtrl._OnClickPageUpOrDownBtn = HL.Method(HL.Boolean) << function(self, isDown)
     if isDown then
         self.m_curPageIndex = self.m_curPageIndex + 1
@@ -466,9 +375,6 @@ PRTSStoryCollDetailCtrl._OnClickPageUpOrDownBtn = HL.Method(HL.Boolean) << funct
     local aniWrapper = self.animationWrapper
     aniWrapper:PlayWithTween("prtsstorycolldetail_change")
 end
-
-
-
 
 PRTSStoryCollDetailCtrl._OnClickItemPreOrNextBtn = HL.Method(HL.Boolean) << function(self, isNext)
     if not self.m_isFirstLvId then
@@ -491,9 +397,6 @@ PRTSStoryCollDetailCtrl._OnClickItemPreOrNextBtn = HL.Method(HL.Boolean) << func
     local aniWrapper = self.animationWrapper
     aniWrapper:PlayWithTween("prtsstorycolldetail_change")
 end
-
-
-
 
 PRTSStoryCollDetailCtrl._OnClickGotoBtn = HL.Method(HL.Number) << function(self, luaIndex)
     local investId = self.m_curItemInfo.belongsInvestIds[CSIndex(luaIndex)]

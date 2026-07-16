@@ -2,25 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.PRTSInvestigateReport
 local PHASE_ID = PhaseId.PRTSInvestigateReport
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PRTSInvestigateReportCtrl = HL.Class('PRTSInvestigateReportCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -38,28 +20,19 @@ local ContentTypeEnum = {
     Radio = 1,
 }
 
-
 PRTSInvestigateReportCtrl.m_showSubmitAni = HL.Field(HL.Boolean) << false
-
 
 PRTSInvestigateReportCtrl.m_storyCollId = HL.Field(HL.String) << ""
 
-
 PRTSInvestigateReportCtrl.m_belongsInvestId = HL.Field(HL.String) << ""
-
 
 PRTSInvestigateReportCtrl.m_info = HL.Field(HL.Table)
 
-
 PRTSInvestigateReportCtrl.m_aniUpdateKey = HL.Field(HL.Number) << -1
-
 
 PRTSInvestigateReportCtrl.m_aniCurPlayTime = HL.Field(HL.Number) << 0
 
 PRTSInvestigateReportCtrl.m_isNewReport = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -98,17 +71,12 @@ end
 
 
 
-
-
-
 PRTSInvestigateReportCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     self.m_belongsInvestId = arg.investId
     self.m_storyCollId = arg.storyCollId
     self.m_isNewReport = arg.isNewReport or false
     self.m_showSubmitAni = arg.isNewReport or self.m_isNewReport
 end
-
-
 PRTSInvestigateReportCtrl._UpdateData = HL.Method() << function(self)
     local itemCfg = Utils.tryGetTableCfg(Tables.prtsAllItem, self.m_storyCollId)
     self.m_info = {
@@ -123,16 +91,12 @@ end
 
 
 
-
-
 PRTSInvestigateReportCtrl._InitUI = HL.Method() << function(self)
     self.view.closeBtn.onClick:AddListener(function()
         self:_OnClickCloseBtn()
     end)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
 
 PRTSInvestigateReportCtrl._RefreshAllUI = HL.Method() << function(self)
     local info = self.m_info
@@ -162,8 +126,6 @@ PRTSInvestigateReportCtrl._RefreshAllUI = HL.Method() << function(self)
     end
 end
 
-
-
 PRTSInvestigateReportCtrl._PlaySubmitAni = HL.Method() << function(self)
     if self.m_aniUpdateKey > 0 then
         return
@@ -178,17 +140,12 @@ PRTSInvestigateReportCtrl._PlaySubmitAni = HL.Method() << function(self)
     end)
 end
 
-
-
 PRTSInvestigateReportCtrl._ShowContent = HL.Method() << function(self)
     self.view.contentNode.gameObject:SetActiveIfNecessary(true)
     if self.m_info.contentType == ContentTypeEnum.Radio then
         self.view.prtsRadio:SetPlayRadio(true)
     end
 end
-
-
-
 
 PRTSInvestigateReportCtrl._OnTickSubmitAni = HL.Method(HL.Number) << function(self, deltaTime)
     local curTime = self.m_aniCurPlayTime + deltaTime
@@ -206,8 +163,6 @@ PRTSInvestigateReportCtrl._OnTickSubmitAni = HL.Method(HL.Number) << function(se
     self.view.progressBar.fillAmount = curTime / self.view.config.ANI_TIME_PROGRESS
 end
 
-
-
 PRTSInvestigateReportCtrl._OnClickCloseBtn = HL.Method() << function(self)
     PhaseManager:PopPhase(PhaseId.PRTSInvestigateReport)
     
@@ -218,7 +173,7 @@ PRTSInvestigateReportCtrl._OnClickCloseBtn = HL.Method() << function(self)
     local investCfg = Utils.tryGetTableCfg(Tables.prtsInvestigate, self.m_belongsInvestId)
     if investCfg then
         Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
-            items = investCfg.rewardItemList
+            items = UIUtils.getRewardItems(investCfg.rewardId)
         })
     end
 end

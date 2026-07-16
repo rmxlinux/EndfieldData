@@ -2,20 +2,10 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GenderSelectConfirmHolder
 
-
-
-
-
-
-
-
-
 GenderSelectConfirmHolderCtrl = HL.Class('GenderSelectConfirmHolderCtrl', uiCtrl.UICtrl)
 local PANEL_ASSET_PATH = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/CreateRole/GenderSelectConfirmPanel.prefab"
 
-
 GenderSelectConfirmHolderCtrl.m_node = HL.Field(HL.Table)
-
 
 
 
@@ -24,9 +14,6 @@ GenderSelectConfirmHolderCtrl.m_node = HL.Field(HL.Table)
 GenderSelectConfirmHolderCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 GenderSelectConfirmHolderCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -48,8 +35,6 @@ GenderSelectConfirmHolderCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
     self:_InitActionEvent()
 end
 
-
-
 GenderSelectConfirmHolderCtrl._InitActionEvent = HL.Method() << function(self)
     self.m_node.cancelBtn.onClick:AddListener(function()
         self.m_phase:ChooseNone()
@@ -60,21 +45,15 @@ GenderSelectConfirmHolderCtrl._InitActionEvent = HL.Method() << function(self)
     end)
 end
 
-
-
 GenderSelectConfirmHolderCtrl.GetRealPanelView = HL.Method().Return(HL.Table) << function(self, arg)
     return self.m_node
 end
-
-
 
 GenderSelectConfirmHolderCtrl.OnHide = HL.Override() << function(self)
     UIUtils.PlayAnimationAndToggleActive(self.m_node.animationWrapper, false, function()
         self.m_node.transform.gameObject:SetActive(false)
     end)
 end
-
-
 
 GenderSelectConfirmHolderCtrl.OnShow = HL.Override() << function(self)
     UIUtils.PlayAnimationAndToggleActive(self.m_node.animationWrapper, true, function()

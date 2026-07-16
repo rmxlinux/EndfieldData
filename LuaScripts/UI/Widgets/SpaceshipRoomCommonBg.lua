@@ -1,33 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipRoomCommonBg = HL.Class('SpaceshipRoomCommonBg', UIWidgetBase)
-
 
 SpaceshipRoomCommonBg.m_roomId = HL.Field(HL.String) << ""
 
-
 SpaceshipRoomCommonBg.m_closeFunc = HL.Field(HL.Function)
-
 
 SpaceshipRoomCommonBg.m_returnFunc = HL.Field(HL.Function)
 
-
 SpaceshipRoomCommonBg.m_state = HL.Field(HL.Number) << -1
-
-
 
 
 SpaceshipRoomCommonBg._OnFirstTimeInit = HL.Override() << function(self)
@@ -43,11 +24,6 @@ SpaceshipRoomCommonBg._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
 end
-
-
-
-
-
 
 SpaceshipRoomCommonBg.InitSpaceshipRoomCommonBg = HL.Method(HL.String, HL.Function, HL.Function)
         << function(self, roomId, returnFunc, closeFunc)
@@ -79,9 +55,6 @@ SpaceshipRoomCommonBg.InitSpaceshipRoomCommonBg = HL.Method(HL.String, HL.Functi
     end)
 end
 
-
-
-
 SpaceshipRoomCommonBg.SetState = HL.Method(HL.Number) << function(self, state)
     local StateEnum = SpaceshipUtils.RoomStateEnum
     local preState = self.m_state
@@ -102,9 +75,6 @@ SpaceshipRoomCommonBg.SetState = HL.Method(HL.Number) << function(self, state)
     self.view.stateShutDown.gameObject:SetActiveIfNecessary(state == StateEnum.ShutDown)
 end
 
-
-
-
 SpaceshipRoomCommonBg.SetSubTitle = HL.Method(HL.Opt(HL.String)) << function(self, subTitle)
     local isEmpty = string.isEmpty(subTitle)
 
@@ -114,33 +84,20 @@ SpaceshipRoomCommonBg.SetSubTitle = HL.Method(HL.Opt(HL.String)) << function(sel
     end
 end
 
-
-
-
 SpaceshipRoomCommonBg.ToggleReturnBtnOn = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.returnBtn.gameObject:SetActiveIfNecessary(isOn)
     self.view.closeBtn.gameObject:SetActiveIfNecessary(not isOn)
 end
-
-
-
 
 SpaceshipRoomCommonBg.SetTopInfoNodeState = HL.Method(HL.Boolean) << function(self, active)
     
     self.view.infoNode.gameObject:SetActiveIfNecessary(active)
 end
 
-
-
-
-
 SpaceshipRoomCommonBg.RefreshTopInfoNode = HL.Method(HL.String, HL.String) << function(self, efficacyName, efficacyTxt)
     self.view.efficacyName.text = efficacyName
     self.view.efficacyTxt.text = efficacyTxt
 end
-
-
-
 
 SpaceshipRoomCommonBg.SetFriendAssistNode = HL.Method(HL.Boolean) << function(self, active)
     self.view.friendAssistNode.gameObject:SetActiveIfNecessary(active)

@@ -46,50 +46,19 @@ local tabInfo = {
     [2] = tabConfig.avatarFrame,
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FriendHeadSelectedPopUpCtrl = HL.Class('FriendHeadSelectedPopUpCtrl', uiCtrl.UICtrl)
-
 
 FriendHeadSelectedPopUpCtrl.m_selectId = HL.Field(HL.String) << ""
 
-
 FriendHeadSelectedPopUpCtrl.m_tabConfig = HL.Field(HL.Table)
-
 
 FriendHeadSelectedPopUpCtrl.m_getCell = HL.Field(HL.Function)
 
-
 FriendHeadSelectedPopUpCtrl.m_cfgTable = HL.Field(HL.Table)
-
 
 FriendHeadSelectedPopUpCtrl.m_inTabChange = HL.Field(HL.Boolean) << false
 
-
 FriendHeadSelectedPopUpCtrl.m_genTabCells = HL.Field(HL.Forward("UIListCache"))
-
 
 
 
@@ -106,9 +75,6 @@ FriendHeadSelectedPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_ACTIVITY_UPDATED] = 'OnActivityUpdated',
 }
-
-
-
 
 
 FriendHeadSelectedPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -215,14 +181,10 @@ FriendHeadSelectedPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     
 end
 
-
-
 FriendHeadSelectedPopUpCtrl._ResetSelectToCurrent = HL.Method() << function(self)
     tabConfig.avatar.currentSelectId = tabConfig.avatar.GetCurrentId()
     tabConfig.avatarFrame.currentSelectId = tabConfig.avatarFrame.GetCurrentId()
 end
-
-
 
 FriendHeadSelectedPopUpCtrl._CancelAndClose = HL.Method() << function(self)
     if not InputManagerInst.inChangingInputDevice then
@@ -231,8 +193,6 @@ FriendHeadSelectedPopUpCtrl._CancelAndClose = HL.Method() << function(self)
     self:_Close()
 end
 
-
-
 FriendHeadSelectedPopUpCtrl._Close = HL.Method() << function(self)
     if PhaseManager:IsOpen(PHASE_ID) then
         PhaseManager:PopPhase(PHASE_ID)
@@ -240,10 +200,6 @@ FriendHeadSelectedPopUpCtrl._Close = HL.Method() << function(self)
         self:PlayAnimationOutAndClose()
     end
 end
-
-
-
-
 
 FriendHeadSelectedPopUpCtrl._UpdateCell = HL.Method(HL.Userdata, HL.Number) << function(self, gameObject, luaIndex)
     local itemCell = self.m_getCell(gameObject)
@@ -275,11 +231,9 @@ FriendHeadSelectedPopUpCtrl._UpdateCell = HL.Method(HL.Userdata, HL.Number) << f
     
     if DeviceInfo.usingController and self.m_inTabChange and self.m_tabConfig.currentSelectId == cfg.id then
         self.m_inTabChange = false
-        InputManagerInst.controllerNaviManager:SetTarget(itemCell.itemBig.view.button)
+        self:SetNaviTarget(itemCell.itemBig.view.button)
     end
 end
-
-
 
 FriendHeadSelectedPopUpCtrl._OnSelectChange = HL.Method() << function(self)
     local currentAvatarIcon = ""
@@ -312,9 +266,6 @@ FriendHeadSelectedPopUpCtrl._OnSelectChange = HL.Method() << function(self)
     self.view.confirmBtn.interactable = canConfirm
     self.view.confirmState:SetState(canConfirm and 'NormalState' or 'DisableState')
 end
-
-
-
 
 FriendHeadSelectedPopUpCtrl._UpdateObtainWay = HL.Method(HL.String) << function(self, itemId)
     local obtainWay = Utils.tryGetItemFirstObtainWay(itemId)
@@ -350,8 +301,6 @@ FriendHeadSelectedPopUpCtrl._UpdateObtainWay = HL.Method(HL.String) << function(
         end
     end
 end
-
-
 
 FriendHeadSelectedPopUpCtrl._RebuildCfgTableForCurrentTab = HL.Method() << function(self)
     if self.m_tabConfig == nil then
@@ -398,8 +347,6 @@ FriendHeadSelectedPopUpCtrl._RebuildCfgTableForCurrentTab = HL.Method() << funct
     end
 end
 
-
-
 FriendHeadSelectedPopUpCtrl._Refresh = HL.Method() << function(self)
     if self.m_tabConfig == nil then
         return
@@ -411,8 +358,6 @@ FriendHeadSelectedPopUpCtrl._Refresh = HL.Method() << function(self)
     
     self:_OnSelectChange()
 end
-
-
 
 FriendHeadSelectedPopUpCtrl.OnFriendBusinessInfoChange = HL.Method() << function(self)
     
@@ -426,19 +371,13 @@ FriendHeadSelectedPopUpCtrl.OnFriendBusinessInfoChange = HL.Method() << function
     self:_Refresh()
 end
 
-
-
 FriendHeadSelectedPopUpCtrl.OnAvatarUnlock = HL.Method() << function(self)
     self:_Refresh()
 end
 
-
-
 FriendHeadSelectedPopUpCtrl.OnAvatarFrameUnlock = HL.Method() << function(self)
     self:_Refresh()
 end
-
-
 
 FriendHeadSelectedPopUpCtrl.OnSystemUnlockChanged = HL.Method() << function(self)
     
@@ -446,14 +385,10 @@ FriendHeadSelectedPopUpCtrl.OnSystemUnlockChanged = HL.Method() << function(self
     self:_Refresh()
 end
 
-
-
 FriendHeadSelectedPopUpCtrl.OnActivityUpdated = HL.Method() << function(self)
     
     self:_Refresh()
 end
-
-
 
 
 
@@ -466,8 +401,6 @@ FriendHeadSelectedPopUpCtrl.OnShow = HL.Override() << function(self)
     self.m_inTabChange = true
     self:_Refresh()
 end
-
-
 
 FriendHeadSelectedPopUpCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local tabIndex = 1

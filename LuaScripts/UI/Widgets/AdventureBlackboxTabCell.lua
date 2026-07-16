@@ -1,14 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 AdventureBlackboxTabCell = HL.Class('AdventureBlackboxTabCell', UIWidgetBase)
-
-
 
 
 AdventureBlackboxTabCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -27,14 +19,9 @@ AdventureBlackboxTabCell._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
 AdventureBlackboxTabCell.m_genRewardCells = HL.Field(HL.Forward("UIListCache"))
 
-
 AdventureBlackboxTabCell.m_info = HL.Field(HL.Table)
-
-
-
 
 AdventureBlackboxTabCell.InitAdventureBlackboxTabCell = HL.Method(HL.Table) << function(self, info)
     self:_FirstTimeInit()
@@ -71,8 +58,6 @@ AdventureBlackboxTabCell.InitAdventureBlackboxTabCell = HL.Method(HL.Table) << f
     end)
     node.redDot:InitRedDot("AdventureBlackboxCell", info.blackboxIds)
 end
-
-
 
 AdventureBlackboxTabCell.InitEmptyState = HL.Method() << function(self)
     self:_FirstTimeInit()

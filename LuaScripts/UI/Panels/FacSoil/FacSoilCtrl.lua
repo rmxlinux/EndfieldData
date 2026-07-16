@@ -1,30 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacSoil
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacSoilCtrl = HL.Class('FacSoilCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -36,35 +13,23 @@ FacSoilCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacSoilCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 FacSoilCtrl.m_soil = HL.Field(HL.Userdata)
 
-
 FacSoilCtrl.m_seedItemTypeCount = HL.Field(HL.Number) << 0
-
 
 FacSoilCtrl.m_seedInfoList = HL.Field(HL.Table)
 
-
 FacSoilCtrl.m_getCell = HL.Field(HL.Function)
-
 
 FacSoilCtrl.m_selectedSeedItem = HL.Field(HL.Table)
 
-
 FacSoilCtrl.m_selectedCell = HL.Field(HL.Userdata)
-
 
 FacSoilCtrl.m_curFocusCell = HL.Field(HL.Userdata)
 
-
 FacSoilCtrl.m_selectSeedView = HL.Field(HL.Boolean) << false
-
-
-
 
 
 FacSoilCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -103,8 +68,6 @@ FacSoilCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     InputManagerInst:SetVirtualMouseIconVisible(false)
 end
 
-
-
 FacSoilCtrl._UpdateStateInfo = HL.Method() << function(self)
     local soil = self.m_soil
     if soil.hasSeed then
@@ -140,8 +103,6 @@ FacSoilCtrl._UpdateStateInfo = HL.Method() << function(self)
 
     self:_UpdateSelectView()
 end
-
-
 
 FacSoilCtrl._UpdateSelectView = HL.Method() << function(self)
     if self.m_soil.hasSeed then
@@ -194,8 +155,6 @@ FacSoilCtrl._UpdateSelectView = HL.Method() << function(self)
     end
 end
 
-
-
 FacSoilCtrl.OnAnimationInFinished = HL.Override() << function(self)
     local soil = self.m_soil
     if soil and soil.hasSeed then
@@ -208,10 +167,6 @@ FacSoilCtrl.OnAnimationInFinished = HL.Override() << function(self)
         end
     end
 end
-
-
-
-
 
 FacSoilCtrl._OnUpdateSeedItemCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local seedItemData = self.m_seedInfoList[luaIndex]
@@ -229,10 +184,6 @@ FacSoilCtrl._OnUpdateSeedItemCell = HL.Method(HL.Any, HL.Number) << function(sel
     cell.view.button.clickHintTextId = "key_hint_common_select"
 end
 
-
-
-
-
 FacSoilCtrl._OnFocusSeedItemCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     if self.m_curFocusCell ~= nil then
         self.m_curFocusCell:SetSelected(false)
@@ -242,10 +193,6 @@ FacSoilCtrl._OnFocusSeedItemCell = HL.Method(HL.Any, HL.Number) << function(self
     self.m_curFocusCell = cell
     cell:SetSelected(true)
 end
-
-
-
-
 
 FacSoilCtrl._OnClickSeedItemCell = HL.Method(HL.Any, HL.Any, HL.Boolean) << function(self, cell, seedItemData)
     if self.m_selectedCell == cell then
@@ -280,8 +227,6 @@ FacSoilCtrl._OnClickSeedItemCell = HL.Method(HL.Any, HL.Any, HL.Boolean) << func
     end
 end
 
-
-
 FacSoilCtrl._OnBtnPlant = HL.Method() << function(self)
     local selectedSeedItem = self.m_selectedSeedItem
     if selectedSeedItem ~= nil then
@@ -291,13 +236,9 @@ FacSoilCtrl._OnBtnPlant = HL.Method() << function(self)
     Notify(MessageConst.HIDE_ITEM_TIPS)
 end
 
-
-
 FacSoilCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.HIDE_ITEM_TIPS)
 end
-
-
 
 FacSoilCtrl._OnBtnCancel = HL.Method() << function(self)
     self:Notify(MessageConst.SHOW_POP_UP, {
@@ -307,8 +248,6 @@ FacSoilCtrl._OnBtnCancel = HL.Method() << function(self)
         end
     })
 end
-
-
 
 FacSoilCtrl._OnBtnHarvest = HL.Method() << function(self)
     if self.m_soil.canHarvest then

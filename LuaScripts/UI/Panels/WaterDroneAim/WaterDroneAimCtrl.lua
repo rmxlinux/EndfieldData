@@ -2,53 +2,15 @@ local WaterDroneAimType = CS.Beyond.Gameplay.WaterDroneAimType
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WaterDroneAim
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WaterDroneAimCtrl = HL.Class('WaterDroneAimCtrl', uiCtrl.UICtrl)
-
 
 WaterDroneAimCtrl.m_curActiveAim = HL.Field(GameObject)
 
-
 WaterDroneAimCtrl.m_waterDroneBar = HL.Field(HL.Table)
-
 
 WaterDroneAimCtrl.m_controllerTriggerSettingHandlerId = HL.Field(HL.Number) << -1
 
-
 WaterDroneAimCtrl.m_isAimHitPointDifferent = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -67,9 +29,6 @@ WaterDroneAimCtrl.s_messages = HL.StaticField(HL.Table) << {
 
     [MessageConst.ON_CHANGE_INPUT_DEVICE_TYPE_FINISHED] = '_OnChangeInputDeviceTypeFinished',
 }
-
-
-
 
 
 WaterDroneAimCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -120,13 +79,9 @@ WaterDroneAimCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitWaterDroneJoystickBinding()
 end
 
-
-
 WaterDroneAimCtrl.CanSwitchLiquid = HL.Method().Return(HL.Boolean) << function(self)
     return not GameInstance.player.forbidSystem:IsForbidden(ForbidType.ForbidWaterDroneSwitchLiquidBtn)
 end
-
-
 
 
 
@@ -157,19 +112,16 @@ WaterDroneAimCtrl.BindNormalAttackInputEvent = HL.Method() << function(self)
     end)
 end
 
-
-
 WaterDroneAimCtrl.OnClose = HL.Override() << function(self)
     if self.m_waterDroneBar then
         GameObject.Destroy(self.m_waterDroneBar.gameObject)
     end
     self.m_waterDroneBar = nil
     Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {false, "WaterDrone"})
-    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "WaterDrone", false)
     self:_ClearControllerTriggerSetting()
+    
+    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "WaterDrone", false)
 end
-
-
 
 WaterDroneAimCtrl.OnShow = HL.Override() << function(self)
     
@@ -196,14 +148,11 @@ WaterDroneAimCtrl.OnShow = HL.Override() << function(self)
     Notify(MessageConst.DISABLE_BATTLE_INDICATOR_CONTROLLER, {true, "WaterDrone"})
     self:_ClearControllerTriggerSetting()
     if DeviceInfo.usingController then
-        GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "WaterDrone", true)
         if self.m_hasLiquid then
             self:_AddControllerTriggerSetting()
         end
     end
 end
-
-
 
 WaterDroneAimCtrl.OnHide = HL.Override() << function(self)
     
@@ -218,9 +167,9 @@ WaterDroneAimCtrl.OnHide = HL.Override() << function(self)
     self:_ToggleShowHideBattleAction(true)
 
     self:_ClearControllerTriggerSetting()
+    
+    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "WaterDrone", false)
 end
-
-
 
 WaterDroneAimCtrl._ClearControllerTriggerSetting = HL.Method() << function(self)
     if self.m_controllerTriggerSettingHandlerId > 0 then
@@ -229,9 +178,6 @@ WaterDroneAimCtrl._ClearControllerTriggerSetting = HL.Method() << function(self)
     end
 end
 
-
-
-
 WaterDroneAimCtrl._ToggleShowHideBattleAction = HL.Method(HL.Boolean) << function(self, active)
     if active then
         UIManager:ShowWithKey(PanelId.BattleAction, "WaterDroneAim")
@@ -239,9 +185,6 @@ WaterDroneAimCtrl._ToggleShowHideBattleAction = HL.Method(HL.Boolean) << functio
         UIManager:HideWithKey(PanelId.BattleAction, "WaterDroneAim")
     end
 end
-
-
-
 
 WaterDroneAimCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Table) << function(self, args)
     if not self:IsShow() then
@@ -261,14 +204,10 @@ WaterDroneAimCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Table) << func
     end
 end
 
-
-
 WaterDroneAimCtrl.StartPressAttackBtn = HL.Method() << function(self)
     self:_ExecuteCustomAbility()
     
 end
-
-
 
 WaterDroneAimCtrl.ReleaseNormalAttackBtn = HL.Method() << function(self)
     GameInstance.playerController.mainCharacter.customAbilityCom:StopAbility();
@@ -276,28 +215,20 @@ WaterDroneAimCtrl.ReleaseNormalAttackBtn = HL.Method() << function(self)
 end
 
 
-
-
 WaterDroneAimCtrl._ExecuteCustomAbility = HL.Method() << function(self)
     GameInstance.playerController.mainCharacter.customAbilityCom:UseAbility()
 end
 
-
 WaterDroneAimCtrl.OnShowWaterDroneAim = HL.StaticMethod() << function()
     local waterDroneAimPanel = UIManager:AutoOpen(PANEL_ID)
 end
-
-
 
 WaterDroneAimCtrl._OnHideWaterDroneAim = HL.Method() << function(self)
     
     self:Hide()
     Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {false, "WaterDrone"})
     Notify(MessageConst.DISABLE_BATTLE_INDICATOR_CONTROLLER, {false, "WaterDrone"})
-    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "WaterDrone", false)
 end
-
-
 
 WaterDroneAimCtrl._RefreshCurActiveAimAlpha = HL.Method() << function(self)
     if not self.m_curActiveAim then
@@ -308,9 +239,6 @@ WaterDroneAimCtrl._RefreshCurActiveAimAlpha = HL.Method() << function(self)
         canvasGroup.alpha = self.m_isAimHitPointDifferent and self.view.config.CROSSHAIR_ALPHA or 1
     end
 end
-
-
-
 
 WaterDroneAimCtrl._SyncWaterDroneRealHitPoint = HL.Method(HL.Any) << function(self, args)
     local isDifferent, realHitPoint = unpack(args)
@@ -351,9 +279,6 @@ WaterDroneAimCtrl._SyncWaterDroneRealHitPoint = HL.Method(HL.Any) << function(se
     self:_RefreshCurActiveAimAlpha()
 end
 
-
-
-
 WaterDroneAimCtrl._SyncWaterDroneAim = HL.Method(HL.Any) << function(self, args)
     local aimType = unpack(args)
     local aimObject
@@ -390,9 +315,6 @@ WaterDroneAimCtrl._SyncWaterDroneAim = HL.Method(HL.Any) << function(self, args)
 end
 
 
-
-
-
 WaterDroneAimCtrl._SyncLiquidState = HL.Method(HL.Table) << function(self, args)
     local isAvailable, stateName = unpack(args)
     if isAvailable then
@@ -406,9 +328,6 @@ WaterDroneAimCtrl._SyncLiquidState = HL.Method(HL.Table) << function(self, args)
     else
     end
 end
-
-
-
 
 WaterDroneAimCtrl._SyncRemainingLiquidCapacity = HL.Method(HL.Table) << function(self, args)
     local isInfinity, count = unpack(args)
@@ -425,9 +344,6 @@ WaterDroneAimCtrl._SyncRemainingLiquidCapacity = HL.Method(HL.Table) << function
     end
 end
 
-
-
-
 WaterDroneAimCtrl._SyncSpraying = HL.Method(HL.Table) << function(self, args)
     local isSpraying = unpack(args)
     self.view.sprayingText.gameObject:SetActive(isSpraying)
@@ -443,11 +359,7 @@ WaterDroneAimCtrl._SyncSpraying = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
 WaterDroneAimCtrl.m_hasLiquid = HL.Field(HL.Boolean) << false
-
-
-
 
 WaterDroneAimCtrl._SyncHasLiquidState = HL.Method(HL.Table) << function(self, args)
     local hasLiquid = unpack(args)
@@ -462,8 +374,6 @@ WaterDroneAimCtrl._SyncHasLiquidState = HL.Method(HL.Table) << function(self, ar
     end
 end
 
-
-
 WaterDroneAimCtrl._AddControllerTriggerSetting = HL.Method() << function(self)
     if DeviceInfo.usingController and not DeviceInfo.isMobile and self.m_controllerTriggerSettingHandlerId == -1 then
         self.m_controllerTriggerSettingHandlerId = GameInstance.audioManager.gamePad.scePad:SetTriggerEffect(self.view.psTriggerEffectCfg.commands[0])
@@ -471,14 +381,9 @@ WaterDroneAimCtrl._AddControllerTriggerSetting = HL.Method() << function(self)
 end
 
 
-
-
 WaterDroneAimCtrl._SetLiquidStateEmpty = HL.Method() << function(self)
     self.view.liquidState:SetState("EmptyNode")
 end
-
-
-
 
 WaterDroneAimCtrl._SyncWaterDroneShootButBannedHintLiquid = HL.Method(HL.Table) << function(self, args)
     local liquidId = unpack(args)
@@ -487,16 +392,12 @@ WaterDroneAimCtrl._SyncWaterDroneShootButBannedHintLiquid = HL.Method(HL.Table) 
     
 end
 
-
-
 WaterDroneAimCtrl._OnCancel = HL.Method() << function(self)
     if GameInstance.playerController.mainCharacter == nil then
         return
     end
     GameInstance.playerController.mainCharacter.customAbilityCom:EndAbility() 
 end
-
-
 
 
 WaterDroneAimCtrl._OnSwitchLiquidOpenBagBtn = HL.Method() << function(self)
@@ -509,16 +410,11 @@ end
 
 
 
-
-
 WaterDroneAimCtrl._InitWaterDroneJoystickBinding = HL.Method() << function(self)
     self.view.uiJoystick.onDrag:AddListener(function(eventData)
         self:_OnDrag(eventData)
     end)
 end
-
-
-
 
 
 WaterDroneAimCtrl._OnDrag = HL.Method(HL.Userdata) << function(self, eventData)

@@ -1,24 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacStorage
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacStorageCtrl = HL.Class('FacStorageCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -31,29 +14,19 @@ FacStorageCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 FacStorageCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 FacStorageCtrl.m_uiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_DepositBox)
 
-
 FacStorageCtrl.m_lastCDTime = HL.Field(HL.Number) << 1
-
 
 FacStorageCtrl.m_lastIsDisabled = HL.Field(HL.Boolean) << false
 
-
 FacStorageCtrl.m_confirmBtnImage = HL.Field(HL.Any)
-
 
 FacStorageCtrl.m_confirmBtnImageOriginColor = HL.Field(HL.Any)
 
-
 FacStorageCtrl.m_waitingForResponse = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -94,22 +67,15 @@ FacStorageCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitStorageController()
 end
 
-
-
 FacStorageCtrl.OnClose = HL.Override() << function(self)
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_nodeId)
 end
-
-
-
 
 FacStorageCtrl._OnStateChanged = HL.Method(HL.Userdata) << function(self, state)
     self.view.wirelessModeNode:RefreshPausedState(
         state ~= GEnums.FacBuildingState.Normal and state ~= GEnums.FacBuildingState.Idle and state ~= GEnums.FacBuildingState.Blocked
     )
 end
-
-
 
 FacStorageCtrl._InitWirelessMode = HL.Method() << function(self)
     self.view.wirelessModeNode:InitWirelessModeNode(self.m_uiInfo, function()
@@ -129,9 +95,6 @@ FacStorageCtrl._InitWirelessMode = HL.Method() << function(self)
 
     self:_CheckCacheItemStateOnComplete(true)
 end
-
-
-
 
 FacStorageCtrl._CheckCacheItemStateOnComplete = HL.Method(HL.Boolean) << function(self, forceRefresh)
     local items = self.m_uiInfo.gridBox.items
@@ -161,18 +124,13 @@ end
 
 
 
-
 FacStorageCtrl.m_naviGroupSwitcher = HL.Field(HL.Forward('NaviGroupSwitcher'))
-
-
 
 FacStorageCtrl._InitStorageController = HL.Method() << function(self)
     local NaviGroupSwitcher = require_ex("Common/Utils/UI/NaviGroupSwitcher").NaviGroupSwitcher
     self.m_naviGroupSwitcher = NaviGroupSwitcher(self.view.inputGroup.groupId, nil, true)
     self:_RefreshNaviGroupSwitcherInfos()
 end
-
-
 
 FacStorageCtrl._RefreshNaviGroupSwitcherInfos = HL.Method() << function(self)
     if self.m_naviGroupSwitcher == nil then

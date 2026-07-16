@@ -4,29 +4,15 @@ local PANEL_ID = PanelId.ShopCreditPointsPopUp
 local PHASE_ID = PhaseId.ShopCreditPointsPopUp
 
 local CREDIT_TEXT_FORMAT = "%s<color=#A7A7A7>/%s</color>"
-
-
-
-
-
-
-
-
-
 ShopCreditPointsPopUpCtrl = HL.Class('ShopCreditPointsPopUpCtrl', uiCtrl.UICtrl)
-
 
 ShopCreditPointsPopUpCtrl.m_visitRecord = HL.Field(HL.Any)
 
-
 ShopCreditPointsPopUpCtrl.m_spaceship = HL.Field(HL.Any)
-
 
 ShopCreditPointsPopUpCtrl.m_queryVisitInfo = HL.Field(HL.Boolean) << false
 
-
 ShopCreditPointsPopUpCtrl.m_haveFriendInfo = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -35,9 +21,6 @@ ShopCreditPointsPopUpCtrl.m_haveFriendInfo = HL.Field(HL.Boolean) << false
 ShopCreditPointsPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SPACESHIP_RECV_QUERY_VISIT_INFO] = 'OnRecvQueryVisitInfo',
 }
-
-
-
 
 
 ShopCreditPointsPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -60,15 +43,11 @@ ShopCreditPointsPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.listCellYesterday.text.text = 0
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
 ShopCreditPointsPopUpCtrl.OnRecvQueryVisitInfo = HL.Method() << function(self)
     self.m_queryVisitInfo = true
     self.m_visitRecord = self.m_spaceship:GetRoomVisitRecord()
     self:UpdateCells()
 end
-
-
 
 ShopCreditPointsPopUpCtrl.UpdateCells = HL.Method() << function(self)
     

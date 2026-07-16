@@ -1,58 +1,26 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FriendListCell = HL.Class('FriendListCell', UIWidgetBase)
-
 
 FriendListCell.info = HL.Field(HL.Userdata)
 
-
 FriendListCell.id = HL.Field(HL.Number) << 0
-
 
 FriendListCell.charInfos = HL.Field(HL.Table)
 
-
 FriendListCell.charInstanceIdList = HL.Field(HL.Table)
-
 
 FriendListCell.charCellList = HL.Field(HL.Table)
 
-
 FriendListCell.arg = HL.Field(HL.Table)
-
 
 FriendListCell.m_clueCells = HL.Field(HL.Forward("UIListCache"))
 
-
 FriendListCell.showCharInfoCallBack = HL.Field(HL.Function)
-
 
 FriendListCell.searchKey = HL.Field(HL.String) << ""
 
-
 FriendListCell.m_buildNodeId = HL.Field(HL.Number) << 0
-
-
 
 
 FriendListCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -155,16 +123,9 @@ FriendListCell._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 FriendListCell.SetLoadingState = HL.Method() << function(self)
     self.view.emptyStateCtrl:SetState("Loading")
 end
-
-
-
-
-
 
 FriendListCell.RefreshFriendListCell = HL.Method(HL.Number, HL.Table, HL.String) << function(self, id, arg, searchKey)
     self.view.psnInfoBtnForBlackUser.gameObject:SetActiveIfNecessary(false)
@@ -201,7 +162,12 @@ FriendListCell.RefreshFriendListCell = HL.Method(HL.Number, HL.Table, HL.String)
         local success, info = GameInstance.player.friendSystem:GetDictInfo(arg.infoDicIndex):TryGetValue(self.id)
         if not success then
             logger.info("未找到好友数据 " .. self.id)
-            self.view.emptyStateCtrl:SetState("NoData")
+            local friendInfo = GameInstance.player.spaceship:GetFriendRoleInfo()
+            if GameInstance.player.spaceship.isViewingFriend and friendInfo and friendInfo.roleId == self.id then
+                self.view.emptyStateCtrl:SetState("NoData_Spaceship")
+            else
+                self.view.emptyStateCtrl:SetState("NoData")
+            end
             return
         end
         showInfo = info
@@ -219,14 +185,9 @@ FriendListCell.RefreshFriendListCell = HL.Method(HL.Number, HL.Table, HL.String)
         self.view.commonPlayerHead.view.psRoot.gameObject:SetActiveIfNecessary(false)
     end
     if self.view.msgBtn.gameObject.activeSelf then
-        self.view.msgBtn.gameObject:SetActive(not GameInstance.player.spaceship.isViewingFriend and GameInstance.player.friendSystem:PlayerInBlackList(self.info.roleId) == false)
+        self.view.msgBtn.gameObject:SetActive(GameInstance.player.friendSystem:PlayerInBlackList(self.info.roleId) == false)
     end
 end
-
-
-
-
-
 
 FriendListCell.RefreshFriendListCellByPsnId = HL.Method(HL.String, HL.Table, HL.String) << function(self, id, arg, searchKey)
     self.arg = arg
@@ -281,14 +242,15 @@ FriendListCell.RefreshFriendListCellByPsnId = HL.Method(HL.String, HL.Table, HL.
     end
 end
 
-
-
-
 FriendListCell._UpdateUnRegisterPlayer = HL.Method(HL.Any) << function(self, info)
     
     self.view.emptyStateCtrl:SetState("NonGameUser")
     self.view.sonyNameTxt.text = info.psName
     self.info = info
+    
+    self.view.commonPlayerHead.view.levelTag.gameObject:SetActiveIfNecessary(false)
+    self.view.commonPlayerHead.view.seasonTag.gameObject:SetActiveIfNecessary(false)
+    self.view.commonPlayerHead.view.lineImage.gameObject:SetActiveIfNecessary(false)
     self.view.playerHeadBtnForNoGameUser.enabled = true
     self.view.playerHeadBtnForNoGameUser.onClick:RemoveAllListeners()
     self.view.playerHeadBtnForNoGameUser.onClick:AddListener(function()
@@ -312,8 +274,6 @@ FriendListCell._UpdateUnRegisterPlayer = HL.Method(HL.Any) << function(self, inf
         Notify(MessageConst.SHOW_NAVI_TARGET_ACTION_MENU, args)
     end)
 end
-
-
 
 FriendListCell._RefreshFriendCellInfo = HL.Method() << function(self)
     if not self.info then
@@ -465,9 +425,8 @@ FriendListCell._RefreshFriendCellInfo = HL.Method() << function(self)
     if self.arg.showContingencyContractActivityState then
         self.view.commonPlayerHead:UpdateContingencyContractActivityState()
     end
+    self.view.commonPlayerHead:UpdateSeasonTowerActivityState()
 end
-
-
 
 FriendListCell._UpdateClueCells = HL.Method() << function(self)
     self.m_clueCells = self.m_clueCells or UIUtils.genCellCache(self.view.clueNode)
@@ -500,9 +459,6 @@ FriendListCell._UpdateClueCells = HL.Method() << function(self)
     end)
 end
 
-
-
-
 FriendListCell._OnCharInfoClick = HL.Method(HL.Number) << function(self, cellIndex)
     if GameInstance.player.friendSystem:PlayerInBlackList(self.info.roleId) then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_FRIEND_IN_BLACK_LIST)
@@ -514,8 +470,6 @@ FriendListCell._OnCharInfoClick = HL.Method(HL.Number) << function(self, cellInd
     end
     FriendUtils.openFriendCharInfo(self.info.roleId, self.info.charInfos[CSIndex(cellIndex)].templateId, templateIdList)
 end
-
-
 
 FriendListCell._OnEnable = HL.Override() << function(self)
     if not self.info then

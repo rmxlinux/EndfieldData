@@ -1,82 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Inventory
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 InventoryCtrl = HL.Class('InventoryCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -105,37 +29,25 @@ InventoryCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 InventoryCtrl.m_shouldHidePanelsOnShow = HL.Field(HL.Boolean) << false
-
 
 InventoryCtrl.m_depotInited = HL.Field(HL.Boolean) << false
 
-
 InventoryCtrl.m_opened = HL.Field(HL.Boolean) << true
-
 
 InventoryCtrl.m_isFocusingInventory = HL.Field(HL.Boolean) << false
 
-
 InventoryCtrl.m_abandonItemDropHelper = HL.Field(HL.Forward('UIDropHelper'))
 
-
 InventoryCtrl.m_oriPaddingBottom = HL.Field(HL.Number) << 0
-
 
 InventoryCtrl.m_abandonValid = HL.Field(HL.Boolean) << true
 
 
 
-
 InventoryCtrl.m_waitInitNaviTarget = HL.Field(HL.Boolean) << true
 
-
 InventoryCtrl.m_naviGroupSwitcher = HL.Field(HL.Forward('NaviGroupSwitcher'))
-
-
-
 
 
 
@@ -217,9 +129,20 @@ InventoryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:BindInputPlayerAction("close_inventory", function()
         self:_OnClickClose()
     end)
+
+    self.m_moveModeBindingGroupId = InputManagerInst:CreateGroup(self.view.itemBag.itemBagContent.view.inputBindingGroupMonoTarget.groupId)
+    local exitModeBindingId = self:BindInputPlayerAction("common_cancel", function()
+        self:_ToggleMoveMode(false, true)
+    end, self.m_moveModeBindingGroupId)
+    InputManagerInst:SetBindingText(exitModeBindingId, Language.LUA_EXIT_INV_MOVE_MODE)
+
+    self.m_moveItemQuickMoveBindingId = self:BindInputPlayerAction("inv_item_bag_move_item_quick_move", function()
+        self:_MoveItemQuickMove()
+    end, self.m_moveModeBindingGroupId)
+    InputManagerInst:ToggleGroup(self.m_moveModeBindingGroupId, false)
+    self.view.moveHintItem.gameObject:SetActive(false)
+    self.view.moveItemFrame.gameObject:SetActive(false)
 end
-
-
 
 InventoryCtrl.OnClose = HL.Override() << function(self)
     if self.m_isFocusingInventory then
@@ -229,8 +152,6 @@ InventoryCtrl.OnClose = HL.Override() << function(self)
     self:_ResumeWorld()
 end
 
-
-
 InventoryCtrl.OnHide = HL.Override() << function(self)
     self:_ResetDragState()
     if self.m_isFocusingInventory then
@@ -239,8 +160,6 @@ InventoryCtrl.OnHide = HL.Override() << function(self)
     end
     self:_ResumeWorld()
 end
-
-
 
 InventoryCtrl.OnShow = HL.Override() << function(self)
     self.m_opened = true
@@ -280,8 +199,6 @@ InventoryCtrl.OnShow = HL.Override() << function(self)
     self:_InitControllerSideMenuBtn()
 end
 
-
-
 InventoryCtrl.OnAnimationInFinished = HL.Override() << function(self)
     if not string.isEmpty(self.m_targetItemId) then
         self:_GotoItem(self.m_targetItemId)
@@ -292,22 +209,19 @@ end
 
 
 
-
-
-
 InventoryCtrl.OpenInventoryPanel = HL.Method(HL.Opt(HL.String)) << function(self, itemId)
     if itemId then
         self.m_targetItemId = itemId
     end
     self:_Refresh()
     self:_ToggleDestroyMode(false, true)
+    self:_ToggleMoveMode(false)
     self.view.depot:ToggleDestroyMode(false, true)
 end
 
-
-
 InventoryCtrl.ResetOnClose = HL.Method() << function(self)
     self:_ToggleDestroyMode(false, true)
+    self:_ToggleMoveMode(false)
     self.view.depot:ToggleDestroyMode(false, true)
     InputManagerInst.controllerNaviManager:TryRemoveLayer(self.naviGroup)
 
@@ -328,9 +242,6 @@ InventoryCtrl.ResetOnClose = HL.Method() << function(self)
     self.view.depot.view.depotContent:StopUpdate(true)
 end
 
-
-
-
 InventoryCtrl.OnOtherStartDragItem = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if self:IsHide() then
         return
@@ -346,17 +257,12 @@ InventoryCtrl.OnOtherStartDragItem = HL.Method(HL.Forward('UIDragHelper')) << fu
     end
 end
 
-
-
-
 InventoryCtrl.OnOtherEndDragItem = HL.Method(HL.Opt(HL.Forward('UIDragHelper'))) << function(self, dragHelper)
     if self:IsHide() then
         return
     end
     self:_ResetDragState()
 end
-
-
 
 InventoryCtrl._ResetDragState = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -369,9 +275,6 @@ InventoryCtrl._ResetDragState = HL.Method() << function(self)
 end
 
 
-
-
-
 InventoryCtrl.OnChangeThrowMode = HL.Method(HL.Table) << function(self, args)
     local data = unpack(args)
     local inThrowMode = data.valid
@@ -380,34 +283,32 @@ InventoryCtrl.OnChangeThrowMode = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
-
 InventoryCtrl.OnSystemUnlock = HL.Method(HL.Table) << function(self, arg)
     local systemIndex = unpack(arg)
     if systemIndex == GEnums.UnlockSystemType.ManualCraft then
         self.view.manualCraftBtn.gameObject:SetActive(true)
+    elseif systemIndex == GEnums.UnlockSystemType.ColoredBagItem then
+        self:_RefreshQuickStashDataAndCell()
+        if self.view.depot.m_inInit then
+            self:_InitDepot()
+        end
     end
 end
-
-
 
 InventoryCtrl.AutoCloseSelfOnInterrupt = HL.Method(HL.Opt(HL.Any)) << function(self)
     if not self:IsShow(true) then
         return
     end
+    
+    
+    Notify(MessageConst.HIDE_NAVI_TARGET_ACTION_MENU)
     self:_OnClickClose()
 end
-
-
-
 
 InventoryCtrl.OnChangeSpaceshipDomainId = HL.Method(HL.Any) << function(self, _)
     self:_InitDepot()
     self:_RefreshSwitchDepotState()
 end
-
-
 
 
 
@@ -426,10 +327,6 @@ InventoryCtrl._UpdateMouseHint = HL.Method() << function(self)
     self.view.moveItemMouseHintNode.moveHalfHint:SetText(hasDepot and Language.LUA_INVENTORY_MOVE_HALT_WITH_DEPOT or Language.LUA_INVENTORY_MOVE_HALT_WITHOUT_DEPOT)
 end
 
-
-
-
-
 InventoryCtrl._ChangeFacQuickBarNaviPartner = HL.Method(HL.Any, HL.Boolean) << function(self, facQuickBarNaviGroup, isAdd)
     if not facQuickBarNaviGroup then
         return
@@ -441,8 +338,6 @@ InventoryCtrl._ChangeFacQuickBarNaviPartner = HL.Method(HL.Any, HL.Boolean) << f
     batNaviGroup:TryChangeNaviPartnerOnDown(facQuickBarNaviGroup, isAdd)
     depotNaviGroup:TryChangeNaviPartnerOnDown(facQuickBarNaviGroup, isAdd)
 end
-
-
 
 InventoryCtrl._Refresh = HL.Method() << function(self)
     self.m_waitInitNaviTarget = true
@@ -514,8 +409,6 @@ InventoryCtrl._Refresh = HL.Method() << function(self)
     self.m_naviGroupSwitcher:ChangeGroupInfos(naviGroupInfos)
 end
 
-
-
 InventoryCtrl._InitDepot = HL.Method() << function(self)
     self.view.depot:InitDepot(GEnums.ItemValuableDepotType.Factory, nil, {
         canPlace = true,
@@ -539,8 +432,6 @@ InventoryCtrl._InitDepot = HL.Method() << function(self)
     })
 end
 
-
-
 InventoryCtrl._RefreshSwitchDepotState = HL.Method() << function(self)
     if Utils.isInSpaceShip() then
         local depotInChapter = GameInstance.player.inventory.factoryDepot:GetOrFallback(Utils.getCurrentScope())
@@ -555,8 +446,6 @@ InventoryCtrl._RefreshSwitchDepotState = HL.Method() << function(self)
     end
 end
 
-
-
 InventoryCtrl._OnClickClose = HL.Method() << function(self)
     if not self.m_opened then
         
@@ -568,10 +457,6 @@ InventoryCtrl._OnClickClose = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 InventoryCtrl._OnDropItem = HL.Method(HL.Userdata, HL.Forward('UIDragHelper')) << function(self, eventData, dragHelper)
     local depotContent = self.view.depot.view.depotContent
     if depotContent.dropHelper:Accept(dragHelper) then
@@ -580,13 +465,17 @@ InventoryCtrl._OnDropItem = HL.Method(HL.Userdata, HL.Forward('UIDragHelper')) <
     end
 end
 
-
-
-
-
-
 InventoryCtrl._OnClickItem = HL.Method(HL.String, HL.Any, HL.Number) << function(self, itemId, cell, csIndex)
     cell.item:Read()
+
+    if self.m_inMoveMode then
+        local inventory = GameInstance.player.inventory
+        local itemBundle = self.view.itemBag.itemBagContent.m_itemBag.slots[self.m_moveSlotIndex]
+        UIUtils.playItemDropAudio(itemBundle.id)
+        inventory:MoveInItemBag(Utils.getCurrentScope(), self.m_moveSlotIndex, csIndex)
+        self:_ToggleMoveMode(false)
+        return
+    end
 
     if not self.m_inDestroyMode then
         if DeviceInfo.usingController then
@@ -625,13 +514,9 @@ InventoryCtrl._OnClickItem = HL.Method(HL.String, HL.Any, HL.Number) << function
     end
 end
 
-
-
 InventoryCtrl._OnClickSortBtn = HL.Method() << function(self)
     GameInstance.player.inventory:SortItemBag(Utils.getCurrentScope())
 end
-
-
 
 InventoryCtrl._OnClickSwitchDepot = HL.Method() << function(self)
     PhaseManager:OpenPhase(PhaseId.FacDepotSwitching)
@@ -640,24 +525,15 @@ end
 
 
 
-
 InventoryCtrl.m_quickStashSettingInfo = HL.Field(HL.Table)
 
-
 InventoryCtrl.m_quickStashCells = HL.Field(HL.Forward('UIListCache'))
-
-
 
 InventoryCtrl._InitQuickStash = HL.Method() << function(self)
     local quickStashNode = self.view.quickStashNode
 
     quickStashNode.settingCell.gameObject:SetActive(false)
 
-    
-    
-    
-    
-    
     quickStashNode.confirmBtn.onClick:AddListener(function()
         self:_QuickStash()
     end)
@@ -665,18 +541,6 @@ InventoryCtrl._InitQuickStash = HL.Method() << function(self)
         UIManager:Open(PanelId.InstructionBook, "item_bag_quick_stash")
     end)
     quickStashNode.settingBtn.onClick:AddListener(function()
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
         self:_ToggleQuickStashSetting(not self.view.quickStashNode.settingList.gameObject.activeSelf)
     end)
     quickStashNode.closeBtn.onClick:AddListener(function()
@@ -689,74 +553,102 @@ InventoryCtrl._InitQuickStash = HL.Method() << function(self)
         self:_ToggleQuickStashSetting(false)
     end)
 
-    self.m_quickStashSettingInfo = {
-        {
-            index = 1, 
-            name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_ORE_AND_PRODUCT,
-            icon = "icon_item_type_ore_and_product",
-            showingType = GEnums.ItemShowingType.Ore,
-            showingType2 = GEnums.ItemShowingType.Product, 
-            extraCheckFunc = function(itemId)
-                return not UIConst.ITEM_BAG_QUICK_STASH_USEFUL_ITEMS[itemId]
+    quickStashNode.naviGroup.onIsFocusedChange:AddListener(function(isFocused)
+        if not isFocused then
+            self:_ToggleQuickStashSetting(false)
+        end
+        quickStashNode.backHint.gameObject:SetActive(isFocused and DeviceInfo.usingController)
+    end)
+
+    self.m_quickStashCells = UIUtils.genCellCache(quickStashNode.settingCell)
+    self:_RefreshQuickStashDataAndCell()
+
+    self:_ToggleQuickStashSetting(false, true)
+end
+
+InventoryCtrl._RefreshQuickStashDataAndCell = HL.Method() << function(self)
+    self.m_quickStashSettingInfo = {}
+    table.insert(self.m_quickStashSettingInfo, {
+        index = 1, 
+        name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_ORE_AND_PRODUCT,
+        icon = "icon_item_type_ore_and_product",
+        showingType = GEnums.ItemShowingType.Ore,
+        showingType2 = GEnums.ItemShowingType.Product, 
+        extraCheckFunc = function(itemId)
+            return not UIConst.ITEM_BAG_QUICK_STASH_USEFUL_ITEMS[itemId]
+        end,
+        defaultIsOn = true,
+    })
+    table.insert(self.m_quickStashSettingInfo, {
+        index = 2, 
+        name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_PLANT,
+        showingType = GEnums.ItemShowingType.Plant,
+        defaultIsOn = true,
+    })
+    table.insert(self.m_quickStashSettingInfo, {
+        index = 8, 
+        name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_USEFUL_ITEMS,
+        icon = "icon_item_type_useful_items",
+        showingType = GEnums.ItemShowingType.Product,
+        extraCheckFunc = function(itemId)
+            return not Utils.isPortableDevice(itemId)
+        end,
+        extraCheckFunc = function(itemId)
+            return UIConst.ITEM_BAG_QUICK_STASH_USEFUL_ITEMS[itemId]
+        end,
+        defaultIsOn = false,
+    })
+    if Utils.isSystemUnlocked(GEnums.UnlockSystemType.ColoredBagItem) then
+        table.insert(self.m_quickStashSettingInfo, {
+            index = 9, 
+            name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_PORTABLE_DEVICE,
+            showingType = GEnums.ItemShowingType.PortableDevice,
+            extraCheckFunc = function(itemId, csIndex)
+                return Utils.isPortableDevice(itemId) and not self.view.itemBag.itemBagContent.m_itemBag:IsColoredSlotActive(itemId, csIndex)
             end,
-            defaultIsOn = true,
-        },
-        {
-            index = 2, 
-            name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_PLANT,
-            showingType = GEnums.ItemShowingType.Plant,
-            defaultIsOn = true,
-        },
-        {
-            index = 8, 
-            name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_USEFUL_ITEMS,
-            icon = "icon_item_type_useful_items",
-            showingType = GEnums.ItemShowingType.Product,
-            extraCheckFunc = function(itemId)
-                return UIConst.ITEM_BAG_QUICK_STASH_USEFUL_ITEMS[itemId]
-            end,
+            icon = "icon_item_type_portable_device",
             defaultIsOn = false,
-        },
-        {
-            index = 3, 
-            name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_DOODAD,
-            showingType = GEnums.ItemShowingType.Doodad,
-            defaultIsOn = true,
-        },
-        {
-            index = 4, 
-            name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_NURTURANCE,
-            showingType = GEnums.ItemShowingType.Nurturance,
-            defaultIsOn = true,
-        },
-        {
-            index = 5, 
-            name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_USABLE,
-            showingType = GEnums.ItemShowingType.Usable,
-            defaultIsOn = false,
-        },
-        {
-            index = 6, 
-            name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_PRODUCER,
-            showingType = GEnums.ItemShowingType.Producer,
-            extraCheckFunc = function(itemId)
-                local itemData = Tables.itemTable[itemId]
-                return itemData.type == GEnums.ItemType.NormalBuilding or itemData.type == GEnums.ItemType.SpecialBuilding
-            end,
-            defaultIsOn = true,
-        },
-        {
-            index = 7, 
-            name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_FUNC_BUILDING,
-            showingType = GEnums.ItemShowingType.Producer,
-            extraCheckFunc = function(itemId)
-                local itemData = Tables.itemTable[itemId]
-                return itemData.type == GEnums.ItemType.FuncBuilding
-            end,
-            icon = "icon_item_type_tools_building_func",
-            defaultIsOn = false,
-        },
-    }
+        })
+    end
+    table.insert(self.m_quickStashSettingInfo, {
+        index = 3, 
+        name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_DOODAD,
+        showingType = GEnums.ItemShowingType.Doodad,
+        defaultIsOn = true,
+    })
+    table.insert(self.m_quickStashSettingInfo, {
+        index = 4, 
+        name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_NURTURANCE,
+        showingType = GEnums.ItemShowingType.Nurturance,
+        defaultIsOn = true,
+    })
+    table.insert(self.m_quickStashSettingInfo, {
+        index = 5, 
+        name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_USABLE,
+        showingType = GEnums.ItemShowingType.Usable,
+        defaultIsOn = false,
+    })
+    table.insert(self.m_quickStashSettingInfo, {
+        index = 6, 
+        name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_PRODUCER,
+        showingType = GEnums.ItemShowingType.Producer,
+        extraCheckFunc = function(itemId)
+            local itemData = Tables.itemTable[itemId]
+            return itemData.type == GEnums.ItemType.NormalBuilding or itemData.type == GEnums.ItemType.SpecialBuilding
+        end,
+        defaultIsOn = true,
+    })
+    table.insert(self.m_quickStashSettingInfo, {
+        index = 7, 
+        name = Language.LUA_INVENTORY_QUICK_STASH_TYPE_FUNC_BUILDING,
+        showingType = GEnums.ItemShowingType.Producer,
+        extraCheckFunc = function(itemId)
+            local itemData = Tables.itemTable[itemId]
+            return itemData.type == GEnums.ItemType.FuncBuilding
+        end,
+        icon = "icon_item_type_tools_building_func",
+        defaultIsOn = false,
+    })
 
     local settingValue = GameInstance.player.inventory.itemBagBatchMoveFlag
     local useDefault = settingValue == 0
@@ -769,14 +661,6 @@ InventoryCtrl._InitQuickStash = HL.Method() << function(self)
         end
     end
 
-    quickStashNode.naviGroup.onIsFocusedChange:AddListener(function(isFocused)
-        if not isFocused then
-            self:_ToggleQuickStashSetting(false)
-        end
-        quickStashNode.backHint.gameObject:SetActive(isFocused and DeviceInfo.usingController)
-    end)
-
-    self.m_quickStashCells = UIUtils.genCellCache(quickStashNode.settingCell)
     self.m_quickStashCells:Refresh(#self.m_quickStashSettingInfo, function(cell, index)
         local info = self.m_quickStashSettingInfo[index]
         cell.toggle.isOn = info.isOn
@@ -796,18 +680,15 @@ InventoryCtrl._InitQuickStash = HL.Method() << function(self)
         cell.notSelectIcon:LoadSprite(UIConst.UI_SPRITE_INVENTORY, icon)
         cell.gameObject.name = "Cell_" .. index
     end)
-
-    self:_ToggleQuickStashSetting(false, true)
 end
-
-
 
 InventoryCtrl._RefreshQuickStash = HL.Method() << function(self)
     local canQuickStash = Utils.isInSafeZone()
     self.view.quickStashNode.gameObject:SetActive(canQuickStash)
+    if canQuickStash then
+        self:_RefreshQuickStashDataAndCell()
+    end
 end
-
-
 
 InventoryCtrl._QuickStash = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -842,18 +723,18 @@ InventoryCtrl._QuickStash = HL.Method() << function(self)
             end
         end
     end
-    for index, itemBundle in pairs(GameInstance.player.inventory.itemBag:GetOrFallback(Utils.getCurrentScope()).slots) do
+    for csIndex, itemBundle in pairs(self.view.itemBag.itemBagContent.m_itemBag.slots) do
         local id = itemBundle.id
         if not string.isEmpty(id) then
             local itemData = Tables.itemTable:GetValue(id)
             local valid = validTypes[itemData.showingType]
             if valid then
                 if valid == true then
-                    table.insert(stashItemIndexList, index)
+                    table.insert(stashItemIndexList, csIndex)
                 else
                     for _, func in ipairs(valid) do
-                        if func(id) then
-                            table.insert(stashItemIndexList, index)
+                        if func(id, csIndex) then
+                            table.insert(stashItemIndexList, csIndex)
                             break
                         end
                     end
@@ -871,10 +752,6 @@ InventoryCtrl._QuickStash = HL.Method() << function(self)
     EventLogManagerInst:GameEvent_BagBatchManage(typeList)
 end
 
-
-
-
-
 InventoryCtrl._ToggleQuickStashSettingCell = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, index, active)
     local info = self.m_quickStashSettingInfo[index]
     if active == nil then
@@ -882,10 +759,6 @@ InventoryCtrl._ToggleQuickStashSettingCell = HL.Method(HL.Number, HL.Opt(HL.Bool
     end
     info.isOn = active
 end
-
-
-
-
 
 InventoryCtrl._ToggleQuickStashSetting = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, noAnimation)
     local quickStashNode = self.view.quickStashNode
@@ -927,8 +800,6 @@ InventoryCtrl._ToggleQuickStashSetting = HL.Method(HL.Boolean, HL.Opt(HL.Boolean
     AudioAdapter.PostEvent(active and "au_ui_menu_sequence_open" or "au_ui_menu_sequence_close")
 end
 
-
-
 InventoryCtrl._SaveCurQuickStashSetting = HL.Method() << function(self)
     local value = 1
     for _, info in ipairs(self.m_quickStashSettingInfo) do
@@ -943,16 +814,11 @@ end
 
 
 
-
 InventoryCtrl.m_inDestroyMode = HL.Field(HL.Boolean) << false
-
 
 InventoryCtrl.m_showingDestroyItemCSIndex = HL.Field(HL.Number) << -1
 
-
 InventoryCtrl.m_destroyInfo = HL.Field(HL.Table) 
-
-
 
 InventoryCtrl._InitDestroyNode = HL.Method() << function(self)
     self.view.destroyBtn.onClick:AddListener(function()
@@ -977,17 +843,27 @@ InventoryCtrl._InitDestroyNode = HL.Method() << function(self)
     self:_ToggleDestroyMode(false, true)
 end
 
-
-
-
-
 InventoryCtrl._UpdateItemBlockMask = HL.Method(HL.Any, HL.Number) << function(self, cell, csIndex)
-    cell.view.dragItem.disableDrag = self.m_inDestroyMode
+    
+    if csIndex >= self.view.itemBag.itemBagContent.m_itemBag.slots.Count then
+        return
+    end
+    
     local button = cell.item.view.button
+    if self.m_inMoveMode then
+        local isTarget = csIndex == self.m_moveSlotIndex
+        cell.view.blockMask.gameObject:SetActiveIfNecessary(isTarget)
+        cell.item.view.destroySelectNode.gameObject:SetActive(false)
+        local itemBundle = self.view.itemBag.itemBagContent.m_itemBag.slots[csIndex]
+        button.clickHintTextId = (isTarget or string.isEmpty(itemBundle.id)) and "LUA_ITEM_ACTION_MOVE_IN_ITEM_BAG_PLACE" or "LUA_ITEM_ACTION_MOVE_IN_ITEM_BAG_SWAP"
+        InputManagerInst:SetBindingText(button.hoverConfirmBindingId, Language[button.clickHintTextId])
+        return
+    end
+    cell.view.dragItem.disableDrag = self.m_inDestroyMode
     local showMask = false
     if self.m_inDestroyMode then
         local inventory = GameInstance.player.inventory
-        local itemBundle = inventory.itemBag:GetOrFallback(Utils.getCurrentScope()).slots[csIndex]
+        local itemBundle = self.view.itemBag.itemBagContent.m_itemBag.slots[csIndex]
         if not string.isEmpty(itemBundle.id) then
             showMask = not inventory:CanDestroyItem(Utils.getCurrentScope(), itemBundle.id)
         end
@@ -1002,15 +878,9 @@ InventoryCtrl._UpdateItemBlockMask = HL.Method(HL.Any, HL.Number) << function(se
     cell.view.blockMask.gameObject:SetActiveIfNecessary(showMask)
 end
 
-
-
 InventoryCtrl._PreventEnterDestroyMode = HL.Method() << function(self)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_BLACKBOX_FORBID_DROP_ITEM)
 end
-
-
-
-
 
 InventoryCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, noAnimation)
     if active then
@@ -1050,7 +920,7 @@ InventoryCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << 
         self.view.destroyNode.confirmBtn.gameObject:SetActive(false)
 
         if DeviceInfo.usingController then
-            self:_RefreshShowingCellHoverTipsEnabledState()
+            self:_RefreshAllShowingCellsHoverTipsEnabledState()
 
             Notify(MessageConst.SHOW_AS_CONTROLLER_SMALL_MENU, {
                 panelId = PANEL_ID,
@@ -1060,9 +930,11 @@ InventoryCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << 
                 rectTransform = self.view.destroyNode.transform,
                 noHighlight = true,
             })
-        end
 
-        self:_NaviToPart(true, true)
+            if not self.view.itemBag.itemBagContent.view.itemListSelectableNaviGroup.IsTopLayer then
+                self:_NaviToPart(true, true)
+            end
+        end
     else
         local info = self.m_destroyInfo
         self.m_destroyInfo = {}
@@ -1071,7 +943,7 @@ InventoryCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << 
         end
 
         if DeviceInfo.usingController then
-            self:_RefreshShowingCellHoverTipsEnabledState()
+            self:_RefreshAllShowingCellsHoverTipsEnabledState()
 
             Notify(MessageConst.HIDE_ITEM_TIPS)
             Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.itemBagNodeInputBindingGroupMonoTarget.groupId)
@@ -1079,22 +951,17 @@ InventoryCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << 
     end
 
     
-    for k = 1, GameInstance.player.inventory.itemBag:GetOrFallback(Utils.getCurrentScope()).slotCount do
-        local cell = self.view.itemBag.itemBagContent:GetCell(k)
-        if cell then
-            self:_UpdateItemBlockMask(cell, CSIndex(k))
-            cell.item.canPlace = not active
-            cell.item.canSplit = not active
-            cell.item.canUse = not active
-        end
-    end
+    self.view.itemBag.itemBagContent.view.itemList:UpdateShowingCells(function(csIndex, obj)
+        local cell = self.view.itemBag.itemBagContent.m_getCell(obj)
+        self:_UpdateItemBlockMask(cell, csIndex)
+        cell.item.canPlace = not active
+        cell.item.canSplit = not active
+        cell.item.canUse = not active
+    end)
 
     self.m_naviGroupSwitcher:ToggleActive(not active and not self.m_weekRaidConvertRate)
     self:_UpdateMouseHint()
 end
-
-
-
 
 InventoryCtrl._OnClickItemInDestroyMode = HL.Method(HL.Number) << function(self, csIndex)
     local lastDestroyInfoEmpty = next(self.m_destroyInfo) == nil
@@ -1108,7 +975,7 @@ InventoryCtrl._OnClickItemInDestroyMode = HL.Method(HL.Number) << function(self,
         end
     else
         local inventory = GameInstance.player.inventory
-        local itemBundle = inventory.itemBag:GetOrFallback(Utils.getCurrentScope()).slots[csIndex]
+        local itemBundle = self.view.itemBag.itemBagContent.m_itemBag.slots[csIndex]
         if inventory:CanDestroyItem(Utils.getCurrentScope(), itemBundle.id) then
             self.m_destroyInfo[csIndex] = itemBundle.count
             self:_UpdateItemDestroySelect(csIndex)
@@ -1136,10 +1003,6 @@ InventoryCtrl._OnClickItemInDestroyMode = HL.Method(HL.Number) << function(self,
     end
 end
 
-
-
-
-
 InventoryCtrl._UpdateItemDestroySelect = HL.Method(HL.Number, HL.Opt(HL.Any)) << function(self, csIndex, cell)
     if not cell then
         cell = self.view.itemBag.itemBagContent:GetCell(LuaIndex(csIndex))
@@ -1147,33 +1010,21 @@ InventoryCtrl._UpdateItemDestroySelect = HL.Method(HL.Number, HL.Opt(HL.Any)) <<
             return
         end
     end
-    local itemBundle = GameInstance.player.inventory.itemBag:GetOrFallback(Utils.getCurrentScope()).slots[csIndex]
     local selectCount = self.m_destroyInfo[csIndex]
     if selectCount then
         cell.item.view.destroySelectNode.gameObject:SetActive(true)
-        
         cell.item.view.button.clickHintTextId = "key_hint_common_unselect"
     else
         cell.item.view.destroySelectNode.gameObject:SetActive(false)
-        
         cell.item.view.button.clickHintTextId = "key_hint_common_select"
     end
     InputManagerInst:SetBindingText(cell.item.view.button.hoverConfirmBindingId, Language[cell.item.view.button.clickHintTextId])
 end
 
-
-
-
-
 InventoryCtrl._OnChangeItemDestroyCount = HL.Method(HL.Number, HL.Number) << function(self, csIndex, newCount)
     self.m_destroyInfo[csIndex] = newCount
     self:_UpdateItemDestroySelect(csIndex)
 end
-
-
-
-
-
 
 InventoryCtrl._CustomOnUpdateItemBagCell = HL.Method(HL.Forward("ItemSlot"), HL.Opt(HL.Userdata, HL.Number)) << function(self, cell, itemBundle, csIndex)
     cell.view.cachedCommonQuickDropBindingId = nil 
@@ -1182,7 +1033,6 @@ InventoryCtrl._CustomOnUpdateItemBagCell = HL.Method(HL.Forward("ItemSlot"), HL.
         if csIndex == 0 then
             if self.m_waitInitNaviTarget then
                 self:_NaviToPart(true, false)
-                self:_RefreshNaviTargetItemState(csIndex, cell, itemBundle)
                 self.m_waitInitNaviTarget = false
             end
         end
@@ -1191,11 +1041,11 @@ InventoryCtrl._CustomOnUpdateItemBagCell = HL.Method(HL.Forward("ItemSlot"), HL.
             tipsPosType = UIConst.UI_TIPS_POS_TYPE.LeftTop,
             tipsPosTransform = self.view.itemBag.transform,
         })  
+
+        self:_RefreshNaviTargetItemState(csIndex, cell, cell.item.view.button.isNaviTarget, itemBundle)
     end
     cell.item.view.button.onIsNaviTargetChanged = function(active)
-        if active then
-            self:_RefreshNaviTargetItemState(csIndex, cell, itemBundle)
-        end
+        self:_RefreshNaviTargetItemState(csIndex, cell, active, itemBundle)
         if active and cell.view.cachedCommonQuickDropBindingId then
             InputManagerInst:ToggleBinding(cell.view.cachedCommonQuickDropBindingId, cell:IsQuickDropTargetValid())
         end
@@ -1206,15 +1056,18 @@ InventoryCtrl._CustomOnUpdateItemBagCell = HL.Method(HL.Forward("ItemSlot"), HL.
     cell.item.canSetQuickBar = true
     if cell.item.actionMenuArgs then
         cell.item.actionMenuArgs.extraButtons = { self.view.sortButton, self.view.destroyBtn }
+        if itemBundle then
+            cell.item.actionMenuArgs.startMoveAct = function()
+                self:_ToggleMoveMode(true)
+            end
+        end
     end
 
     cell.item.canPlace = not self.m_inDestroyMode
     cell.item.canSplit = not self.m_inDestroyMode
     cell.item.canUse = not self.m_inDestroyMode
 
-    if not itemBundle then
-        cell.view.weekRaidNode.gameObject:SetActive(false)
-        cell.item.view.destroySelectNode.gameObject:SetActive(false)
+    if not itemBundle then 
         return
     end
 
@@ -1233,39 +1086,42 @@ InventoryCtrl._CustomOnUpdateItemBagCell = HL.Method(HL.Forward("ItemSlot"), HL.
     end
 
     self:_UpdateItemBlockMask(cell, csIndex)
+    if self.m_inMoveMode and string.isEmpty(itemBundle.id) then
+        
+        
+        cell.item.view.button.enabled = true
+        cell.item.view.button.onClick:RemoveAllListeners()
+        cell.item.view.button.onClick:AddListener(function()
+            self:_OnClickItem("", cell, csIndex)
+        end)
+    end
     if not self.m_inDestroyMode then
         if itemBundle.count and itemBundle.count > 0 then
             cell.view.cachedCommonQuickDropBindingId = cell.item:AddHoverBinding("common_quick_drop", function()
                 cell:QuickDrop()
             end)
             InputManagerInst:ToggleBinding(cell.view.cachedCommonQuickDropBindingId, cell:IsQuickDropTargetValid())
+            cell.item:AddHoverBinding("inv_item_bag_start_move_item", function()
+                self:_ToggleMoveMode(true)
+            end)
         end
         return
     end
     self:_UpdateItemDestroySelect(csIndex, cell)
 end
 
-
-
-
-
 InventoryCtrl._TryDisableHoverBindingOnEmptyItem = HL.Method(HL.Forward("ItemSlot"), HL.Opt(HL.Userdata)) << function(self, cell, itemBundle)
+    if self.m_inMoveMode then
+        return
+    end
     if not itemBundle or not itemBundle.count or itemBundle.count == 0 then
         InputManagerInst:ToggleBinding(cell.item.view.button.hoverConfirmBindingId, false)
     end
 end
 
-
-
-
 InventoryCtrl._TryDisableItemHoverBindingOnDestroyMode = HL.Method(HL.Forward("ItemSlot")) << function(self, cell)
-    InputManagerInst:ToggleGroup(cell.item.view.button.hoverBindingGroupId, not self.m_inDestroyMode)
+    InputManagerInst:ToggleGroup(cell.item.view.button.hoverBindingGroupId, not self.m_inDestroyMode and not self.m_inMoveMode)
 end
-
-
-
-
-
 
 InventoryCtrl._ShowTipsOnNaviTargetInDestroyMode = HL.Method(HL.Number, HL.Forward("ItemSlot"), HL.Opt(HL.Any)) << function(self, csIndex, cell, itemBundle)
     if not self.m_inDestroyMode then
@@ -1296,8 +1152,6 @@ InventoryCtrl._ShowTipsOnNaviTargetInDestroyMode = HL.Method(HL.Number, HL.Forwa
     end
 end
 
-
-
 InventoryCtrl._ConfirmDestroy = HL.Method() << function(self)
     Notify(MessageConst.HIDE_ITEM_TIPS)
     local inventory = GameInstance.player.inventory
@@ -1307,9 +1161,6 @@ InventoryCtrl._ConfirmDestroy = HL.Method() << function(self)
     end
     inventory:AbandonItemInItemBag(Utils.getCurrentScope(), items)
 end
-
-
-
 
 InventoryCtrl._OnAbandonItem = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if not self.m_abandonValid then
@@ -1323,8 +1174,6 @@ InventoryCtrl._OnAbandonItem = HL.Method(HL.Forward('UIDragHelper')) << function
     inventory:AbandonItemInItemBag(Utils.getCurrentScope(), {dragHelper.info.csIndex})
 end
 
-
-
 InventoryCtrl.OnItemBagAbandonInBagSucc = HL.Method() << function(self)
     if self.m_inDestroyMode then
         self:_ToggleDestroyMode(false)
@@ -1333,9 +1182,6 @@ InventoryCtrl.OnItemBagAbandonInBagSucc = HL.Method() << function(self)
     AudioAdapter.PostEvent("Au_UI_Event_Inventory_Destory_Success")
     self:_RefreshWeekRaidBottomNode()
 end
-
-
-
 
 InventoryCtrl.OnToggleAbandonDropValid = HL.Method(HL.Any) << function(self, args)
     self.m_abandonValid = unpack(args)
@@ -1346,15 +1192,11 @@ end
 
 
 
-
 InventoryCtrl.m_targetItemId = HL.Field(HL.String) << ''
-
-
-
 
 InventoryCtrl._GotoItem = HL.Method(HL.String) << function(self, itemId)
     
-    local index = GameInstance.player.inventory.itemBag:GetOrFallback(Utils.getCurrentScope()):GetFirstSlotIndex(itemId)
+    local index = self.view.itemBag.itemBagContent.m_itemBag:GetFirstSlotIndex(itemId)
     if index >= 0 then
         local content = self.view.itemBag.itemBagContent
         local scrollList = content.view.itemList
@@ -1390,10 +1232,7 @@ end
 
 
 
-
 InventoryCtrl.m_missionItemIds = HL.Field(HL.Table)
-
-
 
 InventoryCtrl._RefreshMissionItemIds = HL.Method() << function(self)
     if Utils.isInBlackbox() then
@@ -1415,11 +1254,10 @@ end
 
 
 
-
-
 InventoryCtrl._InitControllerSideMenuBtn = HL.Method() << function(self)
     local extraBtnInfos = {}
     table.insert(extraBtnInfos, {
+        name = "InventoryItemBagAbandon",
         action = function()
             self:_ToggleDestroyMode(true)
         end,
@@ -1428,6 +1266,7 @@ InventoryCtrl._InitControllerSideMenuBtn = HL.Method() << function(self)
     })
     if Utils.isInSafeZone() then
         table.insert(extraBtnInfos, {
+            name = "InventoryDepotDestroy",
             action = function()
                 self.view.depot:ToggleDestroyMode(true, false)
             end,
@@ -1440,10 +1279,6 @@ InventoryCtrl._InitControllerSideMenuBtn = HL.Method() << function(self)
         extraBtnInfos = extraBtnInfos
     })
 end
-
-
-
-
 
 InventoryCtrl._NaviToPart = HL.Method(HL.Boolean, HL.Boolean) << function(self, toItemBag, toTop)
     if toItemBag then
@@ -1462,34 +1297,38 @@ InventoryCtrl._NaviToPart = HL.Method(HL.Boolean, HL.Boolean) << function(self, 
     end
 end
 
+InventoryCtrl._RefreshNaviTargetItemState = HL.Method(HL.Number, HL.Forward("ItemSlot"), HL.Boolean, HL.Opt(HL.Any)) << function(self, csIndex, cell, active, itemBundle)
+    if active then
+        self:_TryDisableHoverBindingOnEmptyItem(cell, itemBundle)
+        self:_TryDisableItemHoverBindingOnDestroyMode(cell)
+        self:_ShowTipsOnNaviTargetInDestroyMode(csIndex, cell, itemBundle)
+        self:_RefreshCellHoverTipsEnabledState(cell)
+    end
 
-
-
-
-
-InventoryCtrl._RefreshNaviTargetItemState = HL.Method(HL.Number, HL.Forward("ItemSlot"), HL.Opt(HL.Any)) << function(self, csIndex, cell, itemBundle)
-    self:_TryDisableHoverBindingOnEmptyItem(cell, itemBundle)
-    self:_TryDisableItemHoverBindingOnDestroyMode(cell)
-    self:_ShowTipsOnNaviTargetInDestroyMode(csIndex, cell, itemBundle)
-    self:_RefreshCellHoverTipsEnabledState(cell)
+    if self.m_inMoveMode then
+        local itemBag = self.view.itemBag.itemBagContent.m_itemBag
+        local moveItemId = itemBag.slots[self.m_moveSlotIndex].id
+        local itemId
+        if active then
+            self.view.moveHintItem.view.followerObject.target = cell.gameObject.transform
+            itemId = moveItemId
+        else
+            itemId = itemBag.slots[csIndex].id
+        end
+        cell:UpdateSlotColorBGByItemId(itemBag, csIndex, itemId, Utils.isPortableDevice(moveItemId))
+    end
 end
 
-
-
-InventoryCtrl._RefreshShowingCellHoverTipsEnabledState = HL.Method() << function(self)
+InventoryCtrl._RefreshAllShowingCellsHoverTipsEnabledState = HL.Method() << function(self)
     self.view.itemBag.itemBagContent.view.itemList:UpdateShowingCells(function(csIndex, obj)
         local cell = self.view.itemBag.itemBagContent.m_getCell(obj)
         self:_RefreshCellHoverTipsEnabledState(cell)
     end)
 end
 
-
-
-
 InventoryCtrl._RefreshCellHoverTipsEnabledState = HL.Method(HL.Forward("ItemSlot")) << function(self, cell)
-    cell.view.item:SetEnableHoverTips(not self.m_inDestroyMode)
+    cell.view.item:SetEnableHoverTips(not self.m_inDestroyMode and not self.m_inMoveMode)
 end
-
 
 
 
@@ -1498,13 +1337,11 @@ end
 
 InventoryCtrl.m_weekRaidConvertRate = HL.Field(HL.Any)
 
-
-
 InventoryCtrl._RefreshWeekRaidBottomNode = HL.Method() << function(self)
     if not self.m_weekRaidConvertRate then
         return
     end
-    local itemBag = GameInstance.player.inventory.itemBag:GetOrFallback(Utils.getCurrentScope())
+    local itemBag = self.view.itemBag.itemBagContent.m_itemBag
     local value = 0
     for _, itemBundle in pairs(itemBag.slots) do
         if itemBundle.count > 0 then
@@ -1518,10 +1355,7 @@ InventoryCtrl._RefreshWeekRaidBottomNode = HL.Method() << function(self)
 end
 
 
-
 InventoryCtrl.m_timeScaleHandler = HL.Field(HL.Number) << 0
-
-
 
 InventoryCtrl._FreezeWorld = HL.Method() << function(self)
     self:_ResumeWorld()
@@ -1529,14 +1363,123 @@ InventoryCtrl._FreezeWorld = HL.Method() << function(self)
     GameWorld.subGameManager:TryPauseGameTime(GEnums.GameTimeFreezeReason.UI)
 end
 
-
-
 InventoryCtrl._ResumeWorld = HL.Method() << function(self)
     if self.m_timeScaleHandler > 0 then
         Utils.ResumeWorldByUI(self.m_timeScaleHandler)
         self.m_timeScaleHandler = 0
         GameWorld.subGameManager:TryResumeGameTime(GEnums.GameTimeFreezeReason.UI)
     end
+end
+
+
+
+
+
+
+InventoryCtrl.m_inMoveMode = HL.Field(HL.Boolean) << false
+
+InventoryCtrl.m_moveSlotIndex = HL.Field(HL.Number) << -1
+
+InventoryCtrl.m_moveModeBindingGroupId = HL.Field(HL.Number) << -1
+
+InventoryCtrl.m_moveItemQuickMoveBindingId = HL.Field(HL.Number) << -1
+
+InventoryCtrl._ToggleMoveMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, isCancel)
+    if self.m_inMoveMode == active then
+        return
+    end
+
+    local itemBag = self.view.itemBag.itemBagContent.m_itemBag
+
+    local content = self.view.itemBag.itemBagContent
+    local itemList = content.view.itemList
+    content.view.itemListSelectableNaviGroup.enablePartner = not active
+
+    self.m_inMoveMode = active
+    local nextIndex = -1
+    local showColoredSlotDropHint = active
+    if active then
+        self.m_moveSlotIndex = itemList:GetNaviManagerTargetIndex()
+        if self.m_moveSlotIndex == -1 then
+            self.m_moveSlotIndex = 0
+            logger.error("InventoryCtrl._ToggleMoveMode self.m_moveSlotIndex is -1")
+        end
+        Notify(MessageConst.SHOW_AS_CONTROLLER_SMALL_MENU, {
+            panelId = PANEL_ID,
+            isGroup = true,
+            id = content.view.inputBindingGroupMonoTarget.groupId,
+            rectTransform = self.view.itemBag.itemBagContent.transform,
+            
+            noHighlight = true,
+            hintPlaceholder = self.view.controllerHintPlaceholder,
+        })
+        local itemBundle = itemBag.slots[self.m_moveSlotIndex]
+        InputManagerInst:ToggleBinding(self.m_moveItemQuickMoveBindingId, Utils.isPortableDevice(itemBundle.id))
+        showColoredSlotDropHint = Utils.isPortableDevice(itemBundle.id)
+        self.view.moveHintItem:InitItem(itemBundle)
+
+        nextIndex = self.m_moveSlotIndex + 1
+        if nextIndex == itemBag.slots.Count then
+            nextIndex = self.m_moveSlotIndex - 1
+        end
+    else
+        if isCancel then
+            nextIndex = self.m_moveSlotIndex
+        end
+        self.m_moveSlotIndex = -1
+        Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, content.view.inputBindingGroupMonoTarget.groupId)
+        self.view.moveHintItem.view.followerObject.target = nil
+    end
+    self.view.moveHintItem.gameObject:SetActive(active)
+    self.view.moveItemFrame.gameObject:SetActive(active)
+
+    
+    itemList:UpdateShowingCells(function(csIndex, obj)
+        local cell = self.view.itemBag.itemBagContent:GetCell(obj)
+        self:_UpdateItemBlockMask(cell, csIndex)
+        self:_RefreshCellHoverTipsEnabledState(cell)
+        if csIndex < itemBag.slots.Count then
+            local itemBundle = itemBag.slots[csIndex]
+            if string.isEmpty(itemBundle.id) then
+                
+                
+                cell.item.view.button.enabled = true
+                cell.item.view.button.onClick:RemoveAllListeners()
+                cell.item.view.button.onClick:AddListener(function()
+                    self:_OnClickItem("", cell, csIndex)
+                end)
+            end
+            cell:UpdateSlotColorBGByItemId(itemBag, csIndex, itemBundle.id, showColoredSlotDropHint)
+        end
+    end)
+
+    self.m_naviGroupSwitcher:ToggleActive(not active and not self.m_weekRaidConvertRate)
+    InputManagerInst:ToggleGroup(self.m_moveModeBindingGroupId, active)
+
+    if nextIndex >= 0 then
+        local cell = self.view.itemBag.itemBagContent:GetCell(LuaIndex(nextIndex))
+        if not cell then
+            self.view.itemBag.itemBagContent.view.itemList:ScrollToIndex(nextIndex, true)
+            cell = self.view.itemBag.itemBagContent:GetCell(LuaIndex(nextIndex))
+        end
+        if cell then
+            cell:SetAsNaviTarget()
+        end
+    elseif not active then
+        
+        
+        local naviIndex = itemList:GetNaviManagerTargetIndex()
+        if naviIndex >= 0 then
+            local cell = self.view.itemBag.itemBagContent:GetCell(LuaIndex(naviIndex))
+            if cell then
+                self:_TryDisableItemHoverBindingOnDestroyMode(cell)
+            end
+        end
+    end
+end
+
+InventoryCtrl._MoveItemQuickMove = HL.Method() << function(self)
+    self:_NaviToPart(true, true)
 end
 
 

@@ -1,48 +1,19 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ControllerHintBarCell = HL.Class('ControllerHintBarCell', UIWidgetBase)
-
 
 
 ControllerHintBarCell.args = HL.Field(HL.Table)
 
-
 ControllerHintBarCell.keyHintCells = HL.Field(HL.Forward('UIListCache'))
-
 
 ControllerHintBarCell.m_autoUpdate = HL.Field(HL.Boolean) << false
 
-
 ControllerHintBarCell.m_lateTickFunc = HL.Field(HL.Function)
-
 
 ControllerHintBarCell.m_virtualMouseLongPressFakeBindingId = HL.Field(HL.Number) << -1 
 
-
 ControllerHintBarCell.m_virtualMouseHoverTarget = HL.Field(CS.UnityEngine.UI.Selectable)
-
-
 
 
 
@@ -64,18 +35,12 @@ end
 
 
 
-
-
-
-
 ControllerHintBarCell.InitControllerHintBarCell = HL.Method(HL.Table, HL.Opt(HL.Boolean)) << function(self, args, autoUpdate)
     self:_FirstTimeInit()
 
     self.args = args
     self.m_autoUpdate = autoUpdate
 end
-
-
 
 ControllerHintBarCell.Clear = HL.Method() << function(self)
     self.args = nil
@@ -86,28 +51,19 @@ ControllerHintBarCell.Clear = HL.Method() << function(self)
     end)
 end
 
-
 ControllerHintBarCell.m_hasRegisterTick = HL.Field(HL.Boolean) << false
-
-
 
 ControllerHintBarCell._OnEnable = HL.Override() << function(self)
     self:_RegisterTick()
 end
 
-
-
 ControllerHintBarCell._OnDisable = HL.Override() << function(self)
     self:_UnRegisterTick()
 end
 
-
-
 ControllerHintBarCell._OnDestroy = HL.Override() << function(self)
     self:_UnRegisterTick()
 end
-
-
 
 ControllerHintBarCell._RegisterTick = HL.Method() << function(self)
     if self.m_lateTickFunc and not self.m_hasRegisterTick then
@@ -116,17 +72,12 @@ ControllerHintBarCell._RegisterTick = HL.Method() << function(self)
     end
 end
 
-
-
 ControllerHintBarCell._UnRegisterTick = HL.Method() << function(self)
     if self.m_lateTickFunc and self.m_hasRegisterTick then
         InputManagerInst.onInputLateTick = InputManagerInst.onInputLateTick - self.m_lateTickFunc
         self.m_hasRegisterTick = false
     end
 end
-
-
-
 
 
 ControllerHintBarCell.RefreshAll = HL.Method(HL.Boolean) << function(self, needMouseHint)
@@ -152,8 +103,6 @@ ControllerHintBarCell.RefreshAll = HL.Method(HL.Boolean) << function(self, needM
     end
 end
 
-
-
 ControllerHintBarCell.RefreshContentOnly = HL.Method() << function(self)
     
     self.keyHintCells:Update(function(cell)
@@ -170,9 +119,6 @@ ControllerHintBarCell.RefreshBarBgVisibleState = HL.Method() << function(self)
     end)
     self.view.bg.gameObject:SetActive(not allHidden)
 end
-
-
-
 
 ControllerHintBarCell.GetKeyHintInfos = HL.Method(HL.Boolean).Return(HL.Table) << function(self, needMouseHint)
     local args = self.args
@@ -255,10 +201,6 @@ ControllerHintBarCell.GetKeyHintInfos = HL.Method(HL.Boolean).Return(HL.Table) <
     return infoList
 end
 
-
-
-
-
 ControllerHintBarCell._UpdateCell = HL.Method(HL.Table, HL.Any) << function(self, cell, info)
     local actionId = info.actionId
     local hintView = info.hintView
@@ -292,9 +234,6 @@ ControllerHintBarCell._UpdateCell = HL.Method(HL.Table, HL.Any) << function(self
         cell.redDot.gameObject:SetActive(false)
     end
 end
-
-
-
 
 ControllerHintBarCell._ClearRedDot = HL.Method(HL.Any) << function(self, cell)
     if cell.redDotTarget then

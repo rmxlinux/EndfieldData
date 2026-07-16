@@ -2,13 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityCharacterGuideLine
 
-
-
-
-
-
 ActivityCharacterGuideLineCtrl = HL.Class('ActivityCharacterGuideLineCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -19,14 +13,9 @@ ActivityCharacterGuideLineCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 ActivityCharacterGuideLineCtrl.m_activityId = HL.Field(HL.String) << ''
 
-
 ActivityCharacterGuideLineCtrl.m_bgNode = HL.Field(HL.Any)
-
-
-
 
 
 ActivityCharacterGuideLineCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)

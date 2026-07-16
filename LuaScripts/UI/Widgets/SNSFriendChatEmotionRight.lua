@@ -1,11 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
 SNSFriendChatEmotionRight = HL.Class('SNSFriendChatEmotionRight', UIWidgetBase)
-
-
-
 
 
 SNSFriendChatEmotionRight.InitSNSFriendChatEmotionRight = HL.Method(HL.String) << function(self, imgPath)

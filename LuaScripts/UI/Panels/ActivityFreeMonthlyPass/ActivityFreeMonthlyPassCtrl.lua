@@ -2,30 +2,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityFreeMonthlyPass
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityFreeMonthlyPassCtrl = HL.Class('ActivityFreeMonthlyPassCtrl', uiCtrl.UICtrl)
 
-
 ActivityFreeMonthlyPassCtrl.m_havePlayOut = HL.Field(HL.Boolean) << false
-
 
 ActivityFreeMonthlyPassCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHECK_IN_REWARD] = '_OnRewardInfo',
@@ -34,21 +13,14 @@ ActivityFreeMonthlyPassCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 ActivityFreeMonthlyPassCtrl.m_activityId = HL.Field(HL.String) << ''
 
-
 ActivityFreeMonthlyPassCtrl.m_activityData = HL.Field(CS.Beyond.Gameplay.ActivityCalendarCheckin)
-
 
 ActivityFreeMonthlyPassCtrl.m_rewardData = HL.Field(HL.Table)
 
 
-
 ActivityFreeMonthlyPassCtrl.m_currUiTodayGetReward = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -72,12 +44,8 @@ ActivityFreeMonthlyPassCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     })
 end
 
-
-
 ActivityFreeMonthlyPassCtrl.OnHide = HL.Override() << function(self)
 end
-
-
 
 ActivityFreeMonthlyPassCtrl.OnClose = HL.Override() << function(self)
     
@@ -85,9 +53,6 @@ ActivityFreeMonthlyPassCtrl.OnClose = HL.Override() << function(self)
         UIManager:Close(PanelId.ActivityFreeMonthlyPass3D)
     end
 end
-
-
-
 
 ActivityFreeMonthlyPassCtrl.PlayAnimationOut = HL.Override(HL.Opt(HL.Number)) << function(self, outCompleteActionType)
     self.m_havePlayOut = true
@@ -112,8 +77,6 @@ end
 
 
 
-
-
 ActivityFreeMonthlyPassCtrl._BindUI = HL.Method() << function(self)
     self.view.btnReceive.button.onClick:AddListener(function()
         self:_OnGetRewardBtnClick()
@@ -121,8 +84,6 @@ ActivityFreeMonthlyPassCtrl._BindUI = HL.Method() << function(self)
 
     self.view.btnReceive.btnIntroMissionlRedDot:InitRedDot("ActivityCalendarCheckin", self.m_activityId)
 end
-
-
 
 ActivityFreeMonthlyPassCtrl._RefreshUI = HL.Method() << function(self)
     self.m_currUiTodayGetReward = self.m_activityData.curDayRewarded
@@ -155,8 +116,6 @@ ActivityFreeMonthlyPassCtrl._RefreshUI = HL.Method() << function(self)
     end
 end
 
-
-
 ActivityFreeMonthlyPassCtrl._OnGetRewardBtnClick = HL.Method() << function(self)
     local _, todayGetReward, allGetReward = ActivityUtils.CalendarCheckInGetCurDayNumber(self.m_activityId)
     if todayGetReward or allGetReward then
@@ -164,9 +123,6 @@ ActivityFreeMonthlyPassCtrl._OnGetRewardBtnClick = HL.Method() << function(self)
     end
     self.m_activityData:GainReward()
 end
-
-
-
 
 ActivityFreeMonthlyPassCtrl._OnRewardInfo = HL.Method(HL.Table) << function(self, args)
     local rewardPack = unpack(args)
@@ -180,9 +136,6 @@ ActivityFreeMonthlyPassCtrl._OnRewardInfo = HL.Method(HL.Table) << function(self
     self.m_rewardData = reward
     
 end
-
-
-
 
 ActivityFreeMonthlyPassCtrl._OnCheckIn = HL.Method(HL.Table) << function(self, args)
     local id = unpack(args)
@@ -209,9 +162,6 @@ ActivityFreeMonthlyPassCtrl._OnCheckIn = HL.Method(HL.Table) << function(self, a
         end
     end
 end
-
-
-
 
 ActivityFreeMonthlyPassCtrl._OnCalendarDataUpdate = HL.Method(HL.Table) << function(self, args)
     local id = unpack(args)

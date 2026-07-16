@@ -1,64 +1,30 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RedDot = HL.Class('RedDot', UIWidgetBase)
-
 
 
 RedDot.name = HL.Field(HL.String) << ''
 
-
 RedDot.needUpdateOnActive = HL.Field(HL.Boolean) << false
-
 
 RedDot.m_arg = HL.Field(HL.Any)
 
-
 RedDot.m_instId = HL.Field(HL.Number) << -1
-
 
 RedDot.m_readLike = HL.Field(HL.Boolean) << false
 
-
 RedDot.curIsActive = HL.Field(HL.Boolean) << false
-
 
 RedDot.curRdType = HL.Field(HL.Any)
 
-
 RedDot.keyHintRedDot = HL.Field(HL.Forward('RedDot'))
 
-
 RedDot.m_onAfterApplyState = HL.Field(HL.Function)
-
 
 RedDot.m_scrollRectEdgeRedDot = HL.Field(HL.Userdata)
 
 
-
 RedDot.m_index = HL.Field(HL.Number) << -1
-
-
 
 
 
@@ -71,12 +37,6 @@ RedDot._OnFirstTimeInit = HL.Override() << function(self)
         self.m_scrollRectEdgeRedDot:RegisterRedDot(redDotRoot, redDotNormal, redDotNew)
     end
 end
-
-
-
-
-
-
 
 RedDot.InitRedDot = HL.Method(HL.String, HL.Opt(HL.Any, HL.Function, HL.Userdata)) << function(self, redDotName, arg, onAfterApplySate, scrollRectEdgeRedDot)
     
@@ -127,8 +87,6 @@ RedDot.InitRedDot = HL.Method(HL.String, HL.Opt(HL.Any, HL.Function, HL.Userdata
     end
 end
 
-
-
 RedDot.Stop = HL.Method() << function(self)
     
     if self.m_scrollRectEdgeRedDot then
@@ -144,8 +102,6 @@ RedDot.Stop = HL.Method() << function(self)
     self.view.content.gameObject:SetActive(false)
 end
 
-
-
 RedDot._OnEnable = HL.Override() << function(self)
     if self.m_instId <= 0 or not self.needUpdateOnActive then
         return
@@ -154,19 +110,13 @@ RedDot._OnEnable = HL.Override() << function(self)
     self:UpdateState()
 end
 
-
-
 RedDot._OnDestroy = HL.Override() << function(self)
     self:Stop()
 end
 
-
-
 RedDot.GetActiveState = HL.Method().Return(HL.Boolean) << function(self)
     return self.gameObject.activeInHierarchy
 end
-
-
 
 RedDot.UpdateState = HL.Method().Return(HL.Boolean, HL.Opt(HL.Number, HL.Number)) << function(self)
     if string.isEmpty(self.name) then
@@ -177,11 +127,6 @@ RedDot.UpdateState = HL.Method().Return(HL.Boolean, HL.Opt(HL.Number, HL.Number)
     self:ApplyState(active, rdType, expireTs)
     return active, rdType, expireTs
 end
-
-
-
-
-
 
 RedDot.ApplyState = HL.Method(HL.Boolean, HL.Opt(HL.Number, HL.Number)) << function(self, active, rdType, expireTs)
     self.curIsActive = active
@@ -204,9 +149,6 @@ RedDot.ApplyState = HL.Method(HL.Boolean, HL.Opt(HL.Number, HL.Number)) << funct
     end
 end
 
-
-
-
 RedDot.SetKeyHintTarget = HL.Method(HL.Opt(HL.Forward('RedDot'))) << function(self, redDot)
     self.keyHintRedDot = redDot
     self.gameObject:SetActive(redDot == nil)
@@ -214,10 +156,6 @@ RedDot.SetKeyHintTarget = HL.Method(HL.Opt(HL.Forward('RedDot'))) << function(se
         redDot:InitRedDot(self.name, self.m_arg)
     end
 end
-
-
-
-
 
 RedDot._ToggleLimitTimeMarkNode = HL.Method(HL.Boolean, HL.Opt(HL.Number)) << function(self, active, expireTs)
     if not self.view.ltMarkNode then

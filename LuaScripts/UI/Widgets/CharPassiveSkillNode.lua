@@ -1,24 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 CharPassiveSkillNode = HL.Class('CharPassiveSkillNode', UIWidgetBase)
 
-
 CharPassiveSkillNode.m_passiveSkillCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 CharPassiveSkillNode._OnFirstTimeInit = HL.Override() << function(self)
     self.m_passiveSkillCellCache = UIUtils.genCellCache(self.view.passiveSkillCell)
     
 end
-
-
-
 
 
 

@@ -1,19 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacMainLeft
-
-
-
-
-
-
-
-
-
-
-
 FacMainLeftCtrl = HL.Class('FacMainLeftCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -29,11 +17,7 @@ FacMainLeftCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 FacMainLeftCtrl.showMachineTarget = HL.Field(HL.Boolean) << true
-
-
-
 
 
 
@@ -57,17 +41,12 @@ FacMainLeftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.topViewToggle.gameObject:SetActive(Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacTopView))
 end
 
-
-
-
 FacMainLeftCtrl.OnSystemUnlock = HL.Method(HL.Any) << function(self, arg)
     local systemIndex = unpack(arg)
     if systemIndex == GEnums.UnlockSystemType.FacTopView:GetHashCode() then
         self.view.topViewToggle.gameObject.gameObject:SetActive(Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacTopView))
     end
 end
-
-
 
 FacMainLeftCtrl._SwitchBuildingTargetToggle = HL.Method() << function(self)
     if not Utils.isInFacMainRegion() then
@@ -76,9 +55,6 @@ FacMainLeftCtrl._SwitchBuildingTargetToggle = HL.Method() << function(self)
     self.view.buildingTargetToggle.isOn = not self.showMachineTarget
 end
 
-
-
-
 FacMainLeftCtrl._ToggleMachineTarget = HL.Method(HL.Boolean) << function(self, isOn)
     self.showMachineTarget = isOn
     GameInstance.remoteFactoryManager:SwitchBuildingOutputVisible(self.showMachineTarget)
@@ -86,28 +62,18 @@ FacMainLeftCtrl._ToggleMachineTarget = HL.Method(HL.Boolean) << function(self, i
     Notify(MessageConst.SHOW_TOAST, Language[toastTextId])
 end
 
-
-
 FacMainLeftCtrl.OnShow = HL.Override() << function(self)
     local inMainRegion = Utils.isInFacMainRegion()
     self.view.main.gameObject:SetActive(inMainRegion)
 end
 
-
-
 FacMainLeftCtrl.OnSwitchBuildingTargetDisplayMode = HL.Method() << function(self)
     self:_SwitchBuildingTargetToggle()
 end
 
-
-
-
 FacMainLeftCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, active)
     self.view.topViewToggle:SetIsOnWithoutNotify(active)
 end
-
-
-
 
 FacMainLeftCtrl.OnInFacMainRegionChange = HL.Method(HL.Boolean) << function(self, inFacMain)
     self.view.main.gameObject:SetActive(inFacMain)

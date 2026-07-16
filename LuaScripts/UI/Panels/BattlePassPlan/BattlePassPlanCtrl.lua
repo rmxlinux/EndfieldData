@@ -2,63 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BattlePassPlan
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BattlePassPlanCtrl = HL.Class('BattlePassPlanCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -72,56 +16,37 @@ BattlePassPlanCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_BATTLE_PASS_ADVANCED_BUY_CLOSE] = '_TriggerBuyTrack'
 }
 
-
 BattlePassPlanCtrl.m_levelInfos = HL.Field(HL.Any)
-
 
 BattlePassPlanCtrl.m_levelInfoMap = HL.Field(HL.Any)
 
-
 BattlePassPlanCtrl.m_milestoneInfos = HL.Field(HL.Any)
-
 
 BattlePassPlanCtrl.m_buyHintInfos = HL.Field(HL.Table)
 
-
 BattlePassPlanCtrl.m_validTrack = HL.Field(HL.Table)
-
 
 BattlePassPlanCtrl.m_allTrack = HL.Field(HL.Table)
 
-
 BattlePassPlanCtrl.m_bannerInfos = HL.Field(HL.Any)
-
 
 BattlePassPlanCtrl.m_contentCellFunc = HL.Field(HL.Function)
 
-
 BattlePassPlanCtrl.m_focusIndex = HL.Field(HL.Number) << -1
-
 
 BattlePassPlanCtrl.m_milestoneIndex = HL.Field(HL.Number) << -1
 
-
 BattlePassPlanCtrl.m_isGainAll = HL.Field(HL.Boolean) << false
-
 
 BattlePassPlanCtrl.m_isGainMilestone = HL.Field(HL.Boolean) << false
 
-
 BattlePassPlanCtrl.m_buyHintType = HL.Field(HL.Any) << nil
-
 
 BattlePassPlanCtrl.m_seasonData = HL.Field(HL.Any)
 
-
 BattlePassPlanCtrl.m_naviTarget = HL.Field(HL.Any) << nil
 
-
 BattlePassPlanCtrl.m_trackBuyFlags = HL.Field(HL.Table) << nil
-
-
-
 
 
 BattlePassPlanCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -133,34 +58,22 @@ BattlePassPlanCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_TryRecoverSubPanel(arg and arg.panelArgs)
 end
 
-
-
 BattlePassPlanCtrl.OnShow = HL.Override() << function(self)
     self:_NaviResume()
     self.view.bannerNode:SetPause(false)
 end
 
-
-
 BattlePassPlanCtrl.OnHide = HL.Override() << function(self)
     self.view.bannerNode:SetPause(true)
 end
-
-
 
 BattlePassPlanCtrl.OnClose = HL.Override() << function(self)
     self.view.bannerNode:OnDestroy()
 end
 
-
-
-
 BattlePassPlanCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, arg)
     self.view.bannerNode:SetPause(false)
 end
-
-
-
 
 BattlePassPlanCtrl._InitViews = HL.Method(HL.Any) << function(self, arg)
     local naviGroupIds = {}
@@ -231,8 +144,6 @@ BattlePassPlanCtrl._InitViews = HL.Method(HL.Any) << function(self, arg)
     table.insert(self.m_allTrack, GEnums.BPTrackType.PAY)
 end
 
-
-
 BattlePassPlanCtrl._ScrollToDefault = HL.Method() << function(self)
     
     local hasAvail, firstAvailLevel = BattlePassUtils.CheckHasAvailBpPlanReward()
@@ -278,9 +189,6 @@ BattlePassPlanCtrl._ScrollToDefault = HL.Method() << function(self)
     end
 end
 
-
-
-
 BattlePassPlanCtrl._PlayTrackUnlockAnimOnCreate = HL.Method(HL.Table) << function(self, arg)
     if arg == nil then
         return
@@ -301,17 +209,12 @@ BattlePassPlanCtrl._PlayTrackUnlockAnimOnCreate = HL.Method(HL.Table) << functio
     end
 end
 
-
-
 BattlePassPlanCtrl._NaviResume = HL.Method() << function(self)
     local lastNaviTarget = self.m_naviTarget
     if lastNaviTarget ~= nil then
-        UIUtils.setAsNaviTargetInSilentModeIfPhaseIsTop(self.view.contentNaviGroup, lastNaviTarget, PhaseId.BattlePass)
+        self:SetNaviTarget(lastNaviTarget)
     end
 end
-
-
-
 
 BattlePassPlanCtrl._FindTrackDataByType = HL.Method(HL.Any).Return(HL.Any) << function(self, trackType)
     for _, trackData in pairs(Tables.battlePassTrackTable) do
@@ -321,8 +224,6 @@ BattlePassPlanCtrl._FindTrackDataByType = HL.Method(HL.Any).Return(HL.Any) << fu
     end
     return nil
 end
-
-
 
 BattlePassPlanCtrl._LoadData = HL.Method() << function(self)
     self.m_trackBuyFlags = {}
@@ -338,8 +239,6 @@ BattlePassPlanCtrl._LoadData = HL.Method() << function(self)
     self:_LoadLevelData()
     self:_LoadBannerData()
 end
-
-
 
 BattlePassPlanCtrl._LoadLevelData = HL.Method() << function(self)
     self.m_milestoneInfos = {}
@@ -399,9 +298,6 @@ BattlePassPlanCtrl._LoadLevelData = HL.Method() << function(self)
     table.sort(self.m_levelInfos, Utils.genSortFunction({"level"}, true))
     self:_RefreshLevelGain(true)
 end
-
-
-
 
 BattlePassPlanCtrl._RefreshLevelGain = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     local bpSystem = GameInstance.player.battlePassSystem
@@ -471,8 +367,6 @@ BattlePassPlanCtrl._RefreshLevelGain = HL.Method(HL.Opt(HL.Boolean)) << function
     end
 end
 
-
-
 BattlePassPlanCtrl._LoadBannerData = HL.Method() << function(self)
     self.m_bannerInfos = {}
     local bpSystem = GameInstance.player.battlePassSystem
@@ -530,8 +424,6 @@ BattlePassPlanCtrl._LoadBannerData = HL.Method() << function(self)
     self:_RefreshBannerGain()
 end
 
-
-
 BattlePassPlanCtrl._RefreshBannerGain = HL.Method() << function(self)
     local bpSystem = GameInstance.player.battlePassSystem
     for _, bannerInfo in ipairs(self.m_bannerInfos) do
@@ -546,9 +438,6 @@ BattlePassPlanCtrl._RefreshBannerGain = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 BattlePassPlanCtrl._RenderViews = HL.Method(HL.Opt(HL.Boolean)) << function(self, isRefresh)
     if isRefresh then
@@ -582,10 +471,6 @@ BattlePassPlanCtrl._RenderViews = HL.Method(HL.Opt(HL.Boolean)) << function(self
     end
 end
 
-
-
-
-
 BattlePassPlanCtrl._UpdateBannerCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local bannerInfo = self.m_bannerInfos[luaIndex]
     cell.button.onClick:RemoveAllListeners()
@@ -604,10 +489,6 @@ BattlePassPlanCtrl._UpdateBannerCell = HL.Method(HL.Any, HL.Number) << function(
     end)
 end
 
-
-
-
-
 BattlePassPlanCtrl._UpdateContentCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local levelInfo = self.m_levelInfos[luaIndex]
     local itemBundles = self:_ConstructItemBundles(levelInfo)
@@ -623,9 +504,6 @@ BattlePassPlanCtrl._UpdateContentCell = HL.Method(HL.Any, HL.Number) << function
         end)
     end
 end
-
-
-
 
 BattlePassPlanCtrl._ConstructItemBundles = HL.Method(HL.Any).Return(HL.Any) << function(self, levelInfo)
     local itemBundles = {}
@@ -650,9 +528,6 @@ BattlePassPlanCtrl._ConstructItemBundles = HL.Method(HL.Any).Return(HL.Any) << f
     end
     return itemBundles
 end
-
-
-
 
 BattlePassPlanCtrl._OnContentValueChanged = HL.Method(HL.Opt(HL.Boolean)) << function(self, forceRefresh)
     local selectIndex = self.view.contentList:GetCenterIndex()
@@ -691,10 +566,6 @@ BattlePassPlanCtrl._OnContentValueChanged = HL.Method(HL.Opt(HL.Boolean)) << fun
         self.view.leftNode:SetState("DoesNotExist")
     end
 end
-
-
-
-
 
 BattlePassPlanCtrl._OnBannerChange = HL.Method(HL.Number, HL.Number) << function(self, oldIndex, newIndex)
     if self.m_bannerInfos == nil then
@@ -759,8 +630,6 @@ BattlePassPlanCtrl._OnBannerChange = HL.Method(HL.Number, HL.Number) << function
     end
 end
 
-
-
 BattlePassPlanCtrl._OnClickPlanBtn = HL.Method() << function(self)
     if PhaseManager:CheckIsInTransition() then
         return
@@ -774,8 +643,6 @@ BattlePassPlanCtrl._OnClickPlanBtn = HL.Method() << function(self)
     end
     self:_OnOpenBuyPlan()
 end
-
-
 
 BattlePassPlanCtrl._OnClickOrgPlan = HL.Method() << function(self)
     if PhaseManager:CheckIsInTransition() then
@@ -791,8 +658,6 @@ BattlePassPlanCtrl._OnClickOrgPlan = HL.Method() << function(self)
     self:_OnOpenBuyPlan()
 end
 
-
-
 BattlePassPlanCtrl._OnClickPayPlan = HL.Method() << function(self)
     if BattlePassUtils.CheckBattlePassPurchaseBlock() then
         return
@@ -800,18 +665,12 @@ BattlePassPlanCtrl._OnClickPayPlan = HL.Method() << function(self)
     self:_OnOpenBuyPlan()
 end
 
-
-
 BattlePassPlanCtrl._OnOpenBuyPlan = HL.Method() << function(self)
     if PhaseManager:CheckIsInTransition() then
         return
     end
     PhaseManager:GoToPhase(PhaseId.BattlePassAdvancedPlanBuy)
 end
-
-
-
-
 
 BattlePassPlanCtrl._OnTakeReward = HL.Method(HL.String, HL.Number) << function(self, trackId, level)
     if string.isEmpty(trackId) then
@@ -836,8 +695,6 @@ BattlePassPlanCtrl._OnTakeReward = HL.Method(HL.String, HL.Number) << function(s
     self.m_buyHintType = GEnums.BPBuyHintType.None
     bpSystem:SendTakeRewards(msgData)
 end
-
-
 
 BattlePassPlanCtrl._OnTakeAllRewards = HL.Method() << function(self)
     local bpSystem = GameInstance.player.battlePassSystem
@@ -891,15 +748,11 @@ BattlePassPlanCtrl._OnTakeAllRewards = HL.Method() << function(self)
     bpSystem:SendTakeRewards(msgData)
 end
 
-
-
 BattlePassPlanCtrl._OnLevelUpdate = HL.Method() << function(self)
     self:_RefreshLevelGain()
     self:_RefreshBannerGain()
     self:_RenderViews(true)
 end
-
-
 
 BattlePassPlanCtrl._OnTrackUpdate = HL.Method() << function(self)
     if UIManager:IsOpen(PanelId.BattlePassAdvancedPlanBuy) then
@@ -907,8 +760,6 @@ BattlePassPlanCtrl._OnTrackUpdate = HL.Method() << function(self)
     end
     self:_TriggerBuyTrack()
 end
-
-
 
 BattlePassPlanCtrl._TriggerBuyTrack = HL.Method() << function(self)
     self:_RefreshLevelGain()
@@ -925,10 +776,6 @@ BattlePassPlanCtrl._TriggerBuyTrack = HL.Method() << function(self)
     self:_PlayBuyTrackAnim(isOrgBuy, isPayBuy)
 end
 
-
-
-
-
 BattlePassPlanCtrl._PlayBuyTrackAnim = HL.Method(HL.Boolean, HL.Boolean) << function(self, isOrgBuy, isPayBuy)
     if not isOrgBuy and not isPayBuy then
         return
@@ -944,16 +791,10 @@ BattlePassPlanCtrl._PlayBuyTrackAnim = HL.Method(HL.Boolean, HL.Boolean) << func
     AudioAdapter.PostEvent("Au_UI_Event_BPUnlockMotion")
 end
 
-
-
-
 BattlePassPlanCtrl._OnRewardShow = HL.Method(HL.Any) << function(self, args)
     local bundles = unpack(args)
     self:_ProcessRewardGain(bundles)
 end
-
-
-
 
 BattlePassPlanCtrl._ProcessRewardGain = HL.Method(HL.Any) << function(self, itemBundles)
     local weaponBoxId = self.m_seasonData.weaponBoxId
@@ -1000,9 +841,6 @@ BattlePassPlanCtrl._ProcessRewardGain = HL.Method(HL.Any) << function(self, item
     Notify(MessageConst.SHOW_SYSTEM_REWARDS, rewardPanelArg)
 end
 
-
-
-
 BattlePassPlanCtrl._OpenRecommend = HL.Method(HL.Any) << function(self, buyHintType)
     local rewardId = ''
     local recommendPlanName = ''
@@ -1029,10 +867,6 @@ BattlePassPlanCtrl._OpenRecommend = HL.Method(HL.Any) << function(self, buyHintT
     end
 end
 
-
-
-
-
 BattlePassPlanCtrl._OpenWeaponBox = HL.Method(HL.String, HL.Boolean) << function(self, itemId, isPreview)
     UIManager:Open(PanelId.BattlePassWeaponCase, {
         isAutoOpenWhenGet = true,
@@ -1040,8 +874,6 @@ BattlePassPlanCtrl._OpenWeaponBox = HL.Method(HL.String, HL.Boolean) << function
         itemId = itemId,
     })
 end
-
-
 
 BattlePassPlanCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     if PhaseManager:GetTopPhaseId() ~= PhaseId.BattlePass then
@@ -1060,9 +892,6 @@ BattlePassPlanCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << fu
         subPanelArg = subPanelArg,
     }
 end
-
-
-
 
 BattlePassPlanCtrl._TryRecoverSubPanel = HL.Method(HL.Opt(HL.Any)) << function(self, panelArgs)
     local subPanelArg = panelArgs and panelArgs.subPanelArg

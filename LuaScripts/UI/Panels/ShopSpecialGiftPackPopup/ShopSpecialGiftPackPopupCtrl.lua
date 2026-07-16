@@ -1,22 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopSpecialGiftPackPopup
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopSpecialGiftPackPopupCtrl = HL.Class('ShopSpecialGiftPackPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -28,17 +13,11 @@ ShopSpecialGiftPackPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 ShopSpecialGiftPackPopupCtrl.m_packId = HL.Field(HL.String) << ""
-
 
 ShopSpecialGiftPackPopupCtrl.m_info = HL.Field(HL.Table)
 
-
 ShopSpecialGiftPackPopupCtrl.m_fadeCor = HL.Field(HL.Thread)
-
-
-
 
 
 
@@ -50,25 +29,17 @@ ShopSpecialGiftPackPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
     self:_RefreshAllUI()
 end
 
-
-
 ShopSpecialGiftPackPopupCtrl.OnClose = HL.Override() << function(self)
     self.m_fadeCor = self:_ClearCoroutine(self.m_fadeCor)
 end
-
-
 
 ShopSpecialGiftPackPopupCtrl.OnShow = HL.Override() << function(self)
     self.m_fadeCor = self:_ClearCoroutine(self.m_fadeCor)
 end
 
-
-
 ShopSpecialGiftPackPopupCtrl.OnHide = HL.Override() << function(self)
     self.m_fadeCor = self:_ClearCoroutine(self.m_fadeCor)
 end
-
-
 
 
 
@@ -85,8 +56,6 @@ end
 
 
 
-
-
 ShopSpecialGiftPackPopupCtrl._InitUI = HL.Method() << function(self)
     self.view.jumpBtn.onClick:AddListener(function()
         if PhaseManager:GetTopPhaseId() == PhaseId.GachaWeaponPool then
@@ -100,13 +69,9 @@ ShopSpecialGiftPackPopupCtrl._InitUI = HL.Method() << function(self)
     end)
 end
 
-
-
 ShopSpecialGiftPackPopupCtrl._RefreshAllUI = HL.Method() << function(self)
     
 end
-
-
 
 
 
@@ -117,8 +82,6 @@ ShopSpecialGiftPackPopupCtrl.Fade = HL.Method() << function(self)
         self:Exit()
     end)
 end
-
-
 
 ShopSpecialGiftPackPopupCtrl.Exit = HL.Method() << function(self)
     self.m_fadeCor = self:_ClearCoroutine(self.m_fadeCor)

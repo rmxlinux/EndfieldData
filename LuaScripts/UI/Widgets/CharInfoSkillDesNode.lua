@@ -1,19 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 CharInfoSkillDesNode = HL.Class('CharInfoSkillDesNode', UIWidgetBase)
-
-
 
 
 CharInfoSkillDesNode._OnFirstTimeInit = HL.Override() << function(self)
     
 end
-
-
-
 
 CharInfoSkillDesNode.InitCharInfoSkillDesNode = HL.Method(HL.Table) << function(self, skillInfo)
     self:_FirstTimeInit()

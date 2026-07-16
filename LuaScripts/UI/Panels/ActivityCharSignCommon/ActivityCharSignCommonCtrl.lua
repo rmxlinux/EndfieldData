@@ -3,29 +3,15 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityCharSignCommon
 
-
-
-
-
-
-
-
-
 ActivityCharSignCommonCtrl = HL.Class('ActivityCharSignCommonCtrl', uiCtrl.UICtrl)
-
 
 ActivityCharSignCommonCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 ActivityCharSignCommonCtrl.m_checkInPrefab = HL.Field(HL.Any)
 
-
 ActivityCharSignCommonCtrl.m_checkInWidget = HL.Field(HL.Any)
-
-
-
 
 ActivityCharSignCommonCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     local suc,info = Tables.checkInInfoTable:TryGetValue(args.activityId)
@@ -43,14 +29,11 @@ ActivityCharSignCommonCtrl.OnCreate = HL.Override(HL.Any) << function(self, args
     
     local initArg = {
         activityId = args.activityId,
-        isPopup = false,
+        isPopup = args.hasPopupSpec or false, 
+        replayScrollAnimOnShow = args.replayScrollAnimOnShow or false 
     }
     self.m_checkInWidget:Init(initArg)
 end
-
-
-
-
 
 ActivityCharSignCommonCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     
@@ -58,9 +41,6 @@ ActivityCharSignCommonCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << fun
         self.m_checkInWidget:OnPanelInputBlocked(active)
     end
 end
-
-
-
 
 ActivityCharSignCommonCtrl.PlayAnimationOut = HL.Override(HL.Opt(HL.Number)) << function(self, outCompleteActionType)
     outCompleteActionType = outCompleteActionType or UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Close
@@ -72,8 +52,6 @@ ActivityCharSignCommonCtrl.PlayAnimationOut = HL.Override(HL.Opt(HL.Number)) << 
         end
     end)
 end
-
-
 
 ActivityCharSignCommonCtrl.OnActivityCenterNaviFailed = HL.Method() << function(self)
     self.m_checkInWidget:OnActivityCenterNaviFailed()

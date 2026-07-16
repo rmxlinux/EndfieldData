@@ -1,27 +1,11 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FriendListPopup
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 FriendListPopupCtrl = HL.Class('FriendListPopupCtrl', uiCtrl.UICtrl)
-
 
 FriendListPopupCtrl.m_friendList = HL.Field(HL.Table)
 
-
 FriendListPopupCtrl.friendSystem = HL.Field(CS.Beyond.Gameplay.FriendSystem)
-
 
 
 
@@ -32,22 +16,15 @@ FriendListPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FRIEND_CELL_INFO_CHANGE] = 'OnCellChange',
 }
 
-
-
 FriendListPopupCtrl.OnSync = HL.Method() << function(self)
     self:_UpdateCache()
     self:_Refresh()
 end
 
-
-
 FriendListPopupCtrl.OnCellChange = HL.Method() << function(self)
     self:_UpdateCache()
     self.view.friendList:RefreshInfoStayPos(self.m_friendList)
 end
-
-
-
 
 
 FriendListPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -106,8 +83,6 @@ FriendListPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:Loading();
 end
 
-
-
 FriendListPopupCtrl._StartInput = HL.Method() << function(self)
     if DeviceInfo.inputType ~= DeviceInfo.InputType.Controller then
         return
@@ -121,8 +96,6 @@ FriendListPopupCtrl._StartInput = HL.Method() << function(self)
     })
 end
 
-
-
 FriendListPopupCtrl._EndInput = HL.Method() << function(self)
     if DeviceInfo.inputType ~= DeviceInfo.InputType.Controller then
         return
@@ -131,22 +104,15 @@ FriendListPopupCtrl._EndInput = HL.Method() << function(self)
     self.view.inputField:OnDeselect(nil)
 end
 
-
-
 FriendListPopupCtrl.Loading = HL.Method() << function(self)
     self.m_friendList = {}
     self:_Refresh()
 end
 
-
-
-
 FriendListPopupCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, args)
     self:_UpdateCache()
     self:_Refresh()
 end
-
-
 
 FriendListPopupCtrl._UpdateCache = HL.Method() << function(self)
     self.m_friendList = {}
@@ -156,8 +122,6 @@ FriendListPopupCtrl._UpdateCache = HL.Method() << function(self)
         index = index + 1
     end
 end
-
-
 
 FriendListPopupCtrl._Refresh = HL.Method() << function(self)
     self.view.friendList:RefreshInfo(self.m_friendList ,true)

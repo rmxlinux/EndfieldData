@@ -4,96 +4,31 @@
 local stateBehaviour = require_ex('Phase/Core/StateBehaviour')
 local luaLoader = require_ex('Common/Utils/LuaResourceLoader')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseBase = HL.Class("PhaseBase", stateBehaviour.StateBehaviour)
-
 
 
 
 
 PhaseBase.phaseId = HL.Field(HL.Number) << -1
 
-
 PhaseBase.cfg = HL.Field(HL.Table)
-
 
 PhaseBase.systemId = HL.Field(HL.String) << ''
 
-
 PhaseBase.unlockSystemType = HL.Field(GEnums.UnlockSystemType)
-
 
 PhaseBase.redDotName = HL.Field(HL.String) << ''
 
 
-
 PhaseBase.m_phaseItems = HL.Field(HL.Table)
-
 
 PhaseBase.m_panel2Item = HL.Field(HL.Table)
 
-
 PhaseBase.m_gameObject2Item = HL.Field(HL.Table)
-
 
 PhaseBase.m_charInstId2LoadRequest = HL.Field(HL.Table)
 
-
 PhaseBase.m_charInstId2LoadCoroutine = HL.Field(HL.Table)
-
 
 PhaseBase.m_charInstId2Item = HL.Field(HL.Table)
 
@@ -102,19 +37,13 @@ PhaseBase.m_charInstId2Item = HL.Field(HL.Table)
 
 PhaseBase.m_inTransition = HL.Field(HL.Boolean) << false
 
-
 PhaseBase.m_resourceLoader = HL.Field(HL.Forward("LuaResourceLoader"))
-
 
 PhaseBase.panels = HL.Field(HL.Table)
 
-
 PhaseBase.modelLoader = HL.Field(CS.Beyond.UI.UIModelLoader)
 
-
 PhaseBase.m_destroyed = HL.Field(HL.Boolean) << false
-
-
 
 
 
@@ -134,9 +63,6 @@ PhaseBase._OnInit = HL.Override() << function(self)
     self.m_resourceLoader = luaLoader.LuaResourceLoader()
     self.m_destroyed = false
 end
-
-
-
 
 PhaseBase.InitWithCfg = HL.Method(HL.Table) << function(self, cfg)
     self.cfg = cfg
@@ -159,22 +85,14 @@ end
 
 
 
-
-
 PhaseBase._OnActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseBase._OnDeActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseBase._OnDestroy = HL.Override() << function(self)
 end
-
-
 
 PhaseBase._InnerDestroy = HL.Override() << function(self)
     if self.m_destroyed then
@@ -197,8 +115,6 @@ PhaseBase._InnerDestroy = HL.Override() << function(self)
     self.m_destroyed = true
 end
 
-
-
 PhaseBase._OnRefresh = HL.Virtual() << function(self)
     if self.m_destroyed then
         logger.critical("PhaseBase._OnRefresh 失败，Phase 已经销毁了", self.cfg.name)
@@ -209,17 +125,8 @@ PhaseBase._OnRefresh = HL.Virtual() << function(self)
     end
 end
 
-
-
-
-
-
 PhaseBase.PrepareTransition = HL.Virtual(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhaseBase._DoTransitionInCoroutine = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if self.m_destroyed then
@@ -234,16 +141,8 @@ PhaseBase._DoTransitionInCoroutine = HL.Override(HL.Boolean, HL.Opt(HL.Table)) <
     end
 end
 
-
-
-
-
 PhaseBase._DoPhaseTransitionIn = HL.Virtual(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 
 PhaseBase._DoTransitionOutCoroutine = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
@@ -259,23 +158,11 @@ PhaseBase._DoTransitionOutCoroutine = HL.Override(HL.Boolean, HL.Opt(HL.Table)) 
     self:_DoPhaseTransitionOutAfterItems(fastMode, args)
 end
 
-
-
-
-
 PhaseBase._DoPhaseTransitionOut = HL.Virtual(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseBase._DoPhaseTransitionOutAfterItems = HL.Virtual(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseBase._DoTransitionBehindCoroutine = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if self.m_destroyed then
@@ -289,16 +176,8 @@ PhaseBase._DoTransitionBehindCoroutine = HL.Override(HL.Boolean, HL.Opt(HL.Table
     end
 end
 
-
-
-
-
 PhaseBase._DoPhaseTransitionBehind = HL.Virtual(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 
 PhaseBase._DoTransitionBackToTopCoroutine = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
@@ -313,14 +192,8 @@ PhaseBase._DoTransitionBackToTopCoroutine = HL.Override(HL.Boolean, HL.Opt(HL.Ta
     end
 end
 
-
-
-
-
 PhaseBase._DoPhaseTransitionBackToTop = HL.Virtual(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
 
 PhaseBase._CheckAllTransitionDone = HL.Override().Return(HL.Boolean) << function(self)
     if self.m_destroyed then
@@ -342,8 +215,6 @@ PhaseBase._CheckAllTransitionDone = HL.Override().Return(HL.Boolean) << function
     return true
 end
 
-
-
 PhaseBase._GetTransitionCheckTypes = HL.Virtual().Return(HL.Table) << function(self)
     return {
         [PhaseConst.EPhaseState.TransitionIn] = true,
@@ -352,8 +223,6 @@ PhaseBase._GetTransitionCheckTypes = HL.Virtual().Return(HL.Table) << function(s
         [PhaseConst.EPhaseState.TransitionBackToTop] = true,
     }
 end
-
-
 
 PhaseBase.GetCurStateArg = HL.Virtual().Return(HL.Opt(HL.Any)) << function(self)
     if self.cfg.isSimpleUIPhase then
@@ -368,8 +237,6 @@ PhaseBase.GetCurStateArg = HL.Virtual().Return(HL.Opt(HL.Any)) << function(self)
         return lume.deepCopy(self.arg)
     end
 end
-
-
 
 
 
@@ -394,15 +261,9 @@ PhaseBase.CloseSelf = HL.Virtual() << function(self)
 
 end
 
-
-
 PhaseBase.ExitSelfFast = HL.Virtual() << function(self)
     PhaseManager:ExitPhaseFast(self.phaseId)
 end
-
-
-
-
 
 PhaseBase.LoadSprite = HL.Method(HL.String, HL.Opt(HL.String)).Return(Unity.Sprite) << function(self, path, name)
     local sprite = self.m_resourceLoader:LoadSprite(UIUtils.getSpritePath(path, name))
@@ -412,9 +273,6 @@ PhaseBase.LoadSprite = HL.Method(HL.String, HL.Opt(HL.String)).Return(Unity.Spri
     return sprite
 end
 
-
-
-
 PhaseBase.AutoOpen = HL.StaticMethod(HL.Number, HL.Table) << function(phaseId, arg)
     if arg.fast then
         PhaseManager:OpenPhaseFast(phaseId, arg)
@@ -422,9 +280,6 @@ PhaseBase.AutoOpen = HL.StaticMethod(HL.Number, HL.Table) << function(phaseId, a
         PhaseManager:OpenPhase(phaseId, arg, nil)
     end
 end
-
-
-
 
 PhaseBase.Refresh = HL.Method(HL.Any) << function(self, arg)
     if self.state ~= PhaseConst.EPhaseState.Activated then
@@ -434,8 +289,6 @@ PhaseBase.Refresh = HL.Method(HL.Any) << function(self, arg)
     self.arg = arg
     self:_OnRefresh()
 end
-
-
 
 
 
@@ -458,23 +311,13 @@ PhaseBase._InitAllPhaseItems = HL.Virtual() << function(self)
     end
 end
 
-
-
-
 PhaseBase._GetPanelPhaseItem = HL.Method(HL.Number).Return(HL.Forward("PhasePanelItem")) << function(self, panelId)
     return self.m_panel2Item[panelId]
 end
 
-
-
-
 PhaseBase._GetGOPhaseItem = HL.Method(HL.String).Return(HL.Forward("PhaseGameObjectItem")) << function(self, name)
     return self.m_gameObject2Item[name]
 end
-
-
-
-
 
 PhaseBase._GetCharPhaseItem = HL.Method(HL.Number, HL.Opt(HL.Number)).Return(HL.Forward("PhaseCharItem")) << function(self, charInstId, index)
     local items = self.m_charInstId2Item[charInstId]
@@ -485,13 +328,6 @@ PhaseBase._GetCharPhaseItem = HL.Method(HL.Number, HL.Opt(HL.Number)).Return(HL.
     end
     return item
 end
-
-
-
-
-
-
-
 
 
 
@@ -567,12 +403,6 @@ PhaseBase.CreatePhaseCharItem = HL.Method(HL.Table, HL.Any, HL.Function, HL.Opt(
     end)
 end
 
-
-
-
-
-
-
 PhaseBase.CreatePhaseGOItem = HL.Method(HL.String, HL.Opt(HL.Userdata, HL.Any, HL.String)).Return(HL.Forward("PhaseGameObjectItem")) << function(self, name, parent, arg, folderName)
     local goObj = PhaseManager:GetCachedGameObject(self.phaseId, name)
     local cacheName = ""
@@ -594,10 +424,6 @@ PhaseBase.CreatePhaseGOItem = HL.Method(HL.String, HL.Opt(HL.Userdata, HL.Any, H
     return phaseItem
 end
 
-
-
-
-
 PhaseBase.CreatePhasePanelItem = HL.Method(HL.Number, HL.Opt(HL.Any)).Return(HL.Forward("PhasePanelItem")) << function(self, panelId, arg)
     if self.m_panel2Item[panelId] then
         logger.critical("尝试重复 CreatePhasePanelItem", UIManager.m_names[panelId])
@@ -613,10 +439,6 @@ PhaseBase.CreatePhasePanelItem = HL.Method(HL.Number, HL.Opt(HL.Any)).Return(HL.
     return phaseItem
 end
 
-
-
-
-
 PhaseBase.CreateOrShowPhasePanelItem = HL.Method(HL.Number, HL.Opt(HL.Any)).Return(HL.Forward("PhasePanelItem")) << function(self, panelId, arg)
     local phaseItem = self:_GetPanelPhaseItem(panelId)
     if phaseItem then
@@ -626,10 +448,6 @@ PhaseBase.CreateOrShowPhasePanelItem = HL.Method(HL.Number, HL.Opt(HL.Any)).Retu
         return self:CreatePhasePanelItem(panelId, arg)
     end
 end
-
-
-
-
 
 PhaseBase.RemovePhasePanelItem = HL.Method(HL.Forward("PhasePanelItem"), HL.Opt(HL.Any)) << function(self, phasePanelItem, arg)
     if phasePanelItem then
@@ -652,20 +470,12 @@ PhaseBase.RemovePhasePanelItem = HL.Method(HL.Forward("PhasePanelItem"), HL.Opt(
 
 end
 
-
-
-
-
 PhaseBase.RemovePhasePanelItemById = HL.Method(HL.Number, HL.Opt(HL.Any)) << function(self, panelId, arg)
     local phaseItem = self:_GetPanelPhaseItem(panelId)
     if phaseItem then
         self:RemovePhasePanelItem(phaseItem, arg)
     end
 end
-
-
-
-
 
 PhaseBase.RemovePhaseCharItemByInstId = HL.Method(HL.Number, HL.Opt(HL.Number)) << function(self, charInstId, index)
     local phaseItems = self.m_charInstId2Item[charInstId]
@@ -695,8 +505,6 @@ PhaseBase.RemovePhaseCharItemByInstId = HL.Method(HL.Number, HL.Opt(HL.Number)) 
         end
     end
 end
-
-
 
 PhaseBase.RemoveAllPhaseCharItems = HL.Method() << function(self)
     for _, phaseItems in pairs(self.m_charInstId2Item) do

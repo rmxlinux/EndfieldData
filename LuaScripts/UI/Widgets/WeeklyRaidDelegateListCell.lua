@@ -1,27 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 WeeklyRaidDelegateListCell = HL.Class('WeeklyRaidDelegateListCell', UIWidgetBase)
-
 
 WeeklyRaidDelegateListCell.m_onClick = HL.Field(HL.Function) 
 
-
 WeeklyRaidDelegateListCell.m_genDifficultyCells = HL.Field(HL.Forward("UIListCache"))
-
 
 WeeklyRaidDelegateListCell.m_genRewardCells = HL.Field(HL.Forward("UIListCache"))
 
-
 WeeklyRaidDelegateListCell.m_genRewardBgCells = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 WeeklyRaidDelegateListCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -37,12 +24,6 @@ WeeklyRaidDelegateListCell._OnFirstTimeInit = HL.Override() << function(self)
     self.m_genRewardBgCells = UIUtils.genCellCache(self.view.itemBgCell)
 end
 
-
-
-
-
-
-
 WeeklyRaidDelegateListCell.InitWeeklyRaidDelegateListCell = HL.Method(HL.String, HL.String, HL.Boolean, HL.Function) << function(self, gameId, missionId, selected, onclick)
     self:_FirstTimeInit()
 
@@ -57,7 +38,7 @@ WeeklyRaidDelegateListCell.InitWeeklyRaidDelegateListCell = HL.Method(HL.String,
     end
 
     if selected and self.view.button.isNaviTarget == false and NotNull(self.view.gameObject) then
-        UIUtils.setAsNaviTarget(self.view.button)
+        self:SetNaviTarget(self.view.button)
     end
     self.view.uiState:SetState(selected and 'ContentSelect' or 'ContentNormal')
 

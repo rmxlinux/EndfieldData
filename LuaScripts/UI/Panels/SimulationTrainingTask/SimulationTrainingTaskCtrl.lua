@@ -120,7 +120,7 @@ SimulationTrainingTaskCtrl._RefreshAllUIs = HL.Method(HL.Boolean) << function(se
     if DeviceInfo.usingController then
         if self.m_isInit then
             self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.bindingGroup.groupId })
-            UIUtils.setAsNaviTarget(self.m_taskCells[1].cell.naviDecorator)
+            self:SetNaviTarget(self.m_taskCells[1].cell.naviDecorator)
         end
         
         InputManagerInst:ToggleGroup(self.view.receiveAllNode.bindingGroup.groupId, hasWaitToReceiveTasks)
@@ -254,13 +254,8 @@ SimulationTrainingTaskCtrl.OnClose = HL.Override() << function(self)
 end
 
 SimulationTrainingTaskCtrl._UpdateReadInfo = HL.Method() << function(self)
-    local ids = {}
     for id, _ in pairs(self.m_readTasks) do
-        ids[#ids + 1] = id
-    end
-    for i, id in ipairs(ids) do
-        local noSave = i < #ids
-        ActivityUtils.setSimulationTrainingTaskRead(self.m_activityId, id, noSave)
+        ActivityUtils.setSimulationTrainingTaskRead(self.m_activityId, id)
     end
 end
 

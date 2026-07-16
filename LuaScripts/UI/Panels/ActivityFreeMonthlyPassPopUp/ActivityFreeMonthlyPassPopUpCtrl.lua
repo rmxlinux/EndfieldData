@@ -1,35 +1,15 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityFreeMonthlyPassPopUp
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityFreeMonthlyPassPopUpCtrl = HL.Class('ActivityFreeMonthlyPassPopUpCtrl', uiCtrl.UICtrl)
-
 
 ActivityFreeMonthlyPassPopUpCtrl.m_activityId = HL.Field(HL.String) << ''
 
-
 ActivityFreeMonthlyPassPopUpCtrl.m_activityData = HL.Field(CS.Beyond.Gameplay.ActivityCalendarCheckin)
-
 
 ActivityFreeMonthlyPassPopUpCtrl.m_closeCallback = HL.Field(HL.Function)
 
-
 ActivityFreeMonthlyPassPopUpCtrl.m_rewardData = HL.Field(HL.Table)
-
 
 ActivityFreeMonthlyPassPopUpCtrl.m_haveGotReward = HL.Field(HL.Boolean) << false
 
@@ -40,14 +20,10 @@ ActivityFreeMonthlyPassPopUpCtrl.m_fallbackTimerId = HL.Field(HL.Number) << -1
 
 
 
-
 ActivityFreeMonthlyPassPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHECK_IN_REWARD] = '_OnRewardInfo',
     [MessageConst.ON_ACTIVITY_CALENDAR_CHECK_IN] = '_OnCheckIn',
 }
-
-
-
 
 
 ActivityFreeMonthlyPassPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -85,13 +61,9 @@ ActivityFreeMonthlyPassPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self
     end, self, self.m_activityId)
 end
 
-
-
 ActivityFreeMonthlyPassPopUpCtrl.OnClose = HL.Override() << function(self)
     UIManager:Close(PanelId.ActivityFreeMonthlyPass3D)
 end
-
-
 
 
 
@@ -100,8 +72,6 @@ ActivityFreeMonthlyPassPopUpCtrl._BindUICallback = HL.Method() << function(self)
         self:_OnBgClick()
     end)
 end
-
-
 
 ActivityFreeMonthlyPassPopUpCtrl._OnBgClick = HL.Method() << function(self)
     local _, serverTodayGot, _ = ActivityUtils.CalendarCheckInGetCurDayNumber(self.m_activityId)
@@ -125,8 +95,6 @@ end
 
 
 
-
-
 ActivityFreeMonthlyPassPopUpCtrl._RefreshUI = HL.Method() << function(self)
     local receiveStateNode = self.view.receiveStateNode
 
@@ -144,9 +112,6 @@ end
 
 
 
-
-
-
 ActivityFreeMonthlyPassPopUpCtrl._OnRewardInfo = HL.Method(HL.Table) << function(self, args)
     local rewardPack = unpack(args)
     self.m_rewardData = {
@@ -159,9 +124,6 @@ ActivityFreeMonthlyPassPopUpCtrl._OnRewardInfo = HL.Method(HL.Table) << function
         end
     }
 end
-
-
-
 
 ActivityFreeMonthlyPassPopUpCtrl._OnCheckIn = HL.Method(HL.Table) << function(self, args)
     local id = unpack(args)

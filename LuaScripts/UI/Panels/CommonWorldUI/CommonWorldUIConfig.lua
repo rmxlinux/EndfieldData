@@ -23,4 +23,13 @@ CommonWorldUIConfig = {
     ["COOLER_UNIT_TOTAL_PROGRESS_BAR"] = {
         path = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/WaterGunCoolerUnit/CoolerUnitTotalProgressBarUI.prefab"
     },
+    ["FACTORY_GAS_CORE_SCAN_UI"] = {
+        path = "Assets/Beyond/DynamicAssets/Gameplay/UI/SceneUIPrefabs/Interactives/DoodadCoreScanUI/DoodadGasMineCoreScanUI.prefab"
+    },
+    ["FACTORY_GAS_SCAN_UI"] = {
+        path = "Assets/Beyond/DynamicAssets/Gameplay/UI/SceneUIPrefabs/Interactives/DoodadCoreScanUI/DoodadGasScanUI.prefab"
+    },
+    ["RIFT_SCAN_UI"] = {
+        path = "Assets/Beyond/DynamicAssets/Gameplay/UI/SceneUIPrefabs/Interactives/DoodadCoreScanUI/RiftScanUI.prefab"
+    },
 }

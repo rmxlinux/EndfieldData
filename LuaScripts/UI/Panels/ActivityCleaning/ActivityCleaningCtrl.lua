@@ -2,23 +2,13 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityCleaning
 
-
-
-
-
-
 ActivityCleaningCtrl = HL.Class('ActivityCleaningCtrl', uiCtrl.UICtrl)
-
 
 ActivityCleaningCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_PREPARE_TRANSITION_BACK_TO_TOP] = '_OnBackToTop',
 }
 
-
 ActivityCleaningCtrl.m_activityId = HL.Field(HL.String) << ''
-
-
-
 
 ActivityCleaningCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_activityId = args.activityId
@@ -40,8 +30,6 @@ ActivityCleaningCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     local redDot = self.view.activityCommonInfo.view.gotoNode.btnDetailRedDot
     redDot:InitRedDot("ActivityGraffitiCleaning", self.m_activityId)
 end
-
-
 
 ActivityCleaningCtrl._OnBackToTop = HL.Method() << function(self)
     self.view.main:SampleClipAtPercent("activitycleaning_transition", 0)

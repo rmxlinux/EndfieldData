@@ -1,18 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 CharEliteMarker = HL.Class('CharEliteMarker', UIWidgetBase)
 
 
 
-
 CharEliteMarker.m_markerQueue = HL.Field(HL.Table)
-
-
 
 CharEliteMarker._OnFirstTimeInit = HL.Override() << function(self)
     self.m_markerQueue = {}
@@ -30,10 +22,6 @@ CharEliteMarker._OnFirstTimeInit = HL.Override() << function(self)
     
 end
 
-
-
-
-
 CharEliteMarker.InitCharEliteMarker = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, charInstId, hideMarker)
     self:_FirstTimeInit()
 
@@ -42,10 +30,6 @@ CharEliteMarker.InitCharEliteMarker = HL.Method(HL.Number, HL.Opt(HL.Boolean)) <
 
     self:InitCharEliteMarkerByBreakStage(breakStage, hideMarker)
 end
-
-
-
-
 
 CharEliteMarker.InitCharEliteMarkerByBreakStage = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, breakStage, hideMarker)
     self:_FirstTimeInit()

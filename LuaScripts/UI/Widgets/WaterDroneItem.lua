@@ -1,23 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 WaterDroneItem = HL.Class('WaterDroneItem', UIWidgetBase)
-
-
 
 
 WaterDroneItem._OnFirstTimeInit = HL.Override() << function(self)
     
 end
-
-
-
-
-
-
-
 
 WaterDroneItem.InitWaterDroneItem = HL.Method(HL.Opt(HL.String, HL.Number, HL.String, HL.String, HL.Any)) <<
 function(self, itemId, itemCount, emptyBottleId, liquidId, onClick)

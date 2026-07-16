@@ -1,22 +1,18 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 PlayInfoCell = HL.Class('PlayInfoCell', UIWidgetBase)
 
+PlayInfoCell.m_birthdayTipsThread = HL.Field(HL.Thread)
 
+local HAS_BIRTHDAY_TIPS_SHOWED = "HasBirthdayTipsShowed"
 
 
 PlayInfoCell._OnFirstTimeInit = HL.Override() << function(self)
     
 end
 
-
-
 PlayInfoCell.InitPlayInfoCell = HL.Method() << function(self)
-    self.view.redDot:InitRedDot("NewBusinessCard")
+    self.view.redDot:InitRedDot("PlayInfoCell")
     
     self:RegisterMessage(MessageConst.ON_FRIEND_BUSINESS_INFO_CHANGE, function()
         self:RefreshAdventureInfo()
@@ -32,9 +28,9 @@ PlayInfoCell.InitPlayInfoCell = HL.Method() << function(self)
     self.view.rightBtn.onClick:AddListener(function()
         PhaseManager:OpenPhase(PhaseId.AdventureReward)
     end)
+
+    self:RefreshBirthdayTips()
 end
-
-
 
 PlayInfoCell.RefreshAdventureInfo = HL.Method() << function(self)
     
@@ -61,6 +57,37 @@ PlayInfoCell.RefreshAdventureInfo = HL.Method() << function(self)
     self.view.managerNumber.text = string.format("UID:%s", GameInstance.player.playerInfoSystem.roleId)
     self.view.levelSlider.fillAmount = fillAmount
     self.view.progressTxt.text = progressTxt
+end
+
+PlayInfoCell.RefreshBirthdayTips = HL.Method() << function(self)
+    if not RedDotManager:GetRedDotState("SetBirthday") then
+        return
+    end
+    local _, hasShowed = ClientDataManagerInst:GetBool(HAS_BIRTHDAY_TIPS_SHOWED, false, false)
+    if hasShowed then
+        return
+    end
+    self.m_birthdayTipsThread = self:_ClearCoroutine(self.m_birthdayTipsThread)
+    self.view.birthdayTipsNode.gameObject:SetActiveIfNecessary(true)
+    self.m_birthdayTipsThread = self:_StartCoroutine(function()
+        coroutine.wait(Tables.birthdayConst.setBirthdayTipsDuration)
+        self.view.birthdayTipsNode.gameObject:SetActiveIfNecessary(false)
+    end)
+end
+
+PlayInfoCell.OnHide = HL.Method() << function(self)
+    self:_CleanBirthdayTips();
+end
+
+PlayInfoCell.OnDestroy = HL.Method() << function(self)
+    self:_CleanBirthdayTips();
+end
+
+PlayInfoCell._CleanBirthdayTips = HL.Method() << function(self)
+    if self.m_birthdayTipsThread ~= nil then
+        ClientDataManagerInst:SetBool(HAS_BIRTHDAY_TIPS_SHOWED, true, false)
+    end
+    self.m_birthdayTipsThread = self:_ClearCoroutine(self.m_birthdayTipsThread)
 end
 
 HL.Commit(PlayInfoCell)

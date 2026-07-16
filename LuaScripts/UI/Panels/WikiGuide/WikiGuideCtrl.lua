@@ -253,7 +253,10 @@ WikiGuideCtrl.InitView = HL.Method() << function(self)
     local lut = {}
     
     for i = 1, realCnt do
-        lut[latestUnlockEntryIds[CSIndex(i)]] = realCnt - i + 1
+        local entryId = latestUnlockEntryIds[CSIndex(i)]
+        if entryId then
+            lut[entryId] = realCnt - i + 1
+        end
     end
 
     
@@ -280,7 +283,7 @@ WikiGuideCtrl.InitView = HL.Method() << function(self)
         cell.toggle.onValueChanged:RemoveAllListeners()
         cell.toggle.onValueChanged:AddListener(function(isOn)
             if isOn then
-                self:SwitchToGroup(groupData.wikiGroupData.groupId)
+                self:SwitchToGroup(groupData.wikiGroupData.groupId, nil, true)
                 self:_RefreshTypeCellLineImg(luaIndex)
             end
         end)
@@ -291,7 +294,7 @@ WikiGuideCtrl.InitView = HL.Method() << function(self)
     self.view.typeCellAll.toggle.onValueChanged:RemoveAllListeners()
     self.view.typeCellAll.toggle.onValueChanged:AddListener(function(isOn)
         if isOn then
-            self:SwitchToGroup()
+            self:SwitchToGroup(nil, nil, true)
         end
     end)
     self.view.typeCellAll.redDot:InitRedDot("WikiCategory", WikiConst.EWikiCategoryType.Tutorial)
@@ -393,7 +396,7 @@ WikiGuideCtrl._GetCurrentGroupId = HL.Method().Return(HL.String) << function(sel
     return self.m_currentGroupId or ""
 end
 
-WikiGuideCtrl.SwitchToGroup = HL.Method(HL.Opt(HL.String, HL.Boolean)) << function(self, groupId, setNaviTarget)
+WikiGuideCtrl.SwitchToGroup = HL.Method(HL.Opt(HL.String, HL.Boolean, HL.Boolean)) << function(self, groupId, setNaviTarget, selectFirst)
     self:_MarkWikiEntryRead()
     self.m_selectedIndex = -1
     self.m_currentGroupId = groupId or ""
@@ -402,7 +405,7 @@ WikiGuideCtrl.SwitchToGroup = HL.Method(HL.Opt(HL.String, HL.Boolean)) << functi
 
     local entryListToShow = groupId and self.m_entryListByGroup[groupId] or self.m_allGroupEntryList
     local selectIndex = 1
-    if not groupId or self.m_showingEntryData.wikiGroupData.groupId == groupId then
+    if not selectFirst and (not groupId or self.m_showingEntryData.wikiGroupData.groupId == groupId) then
         
         for index, entryData in pairs(entryListToShow) do
             if entryData.wikiEntryData.id == self.m_showingEntryData.wikiEntryData.id then
@@ -448,7 +451,7 @@ WikiGuideCtrl._TryNaviToSelectedEntry = HL.Method(HL.Opt(HL.Number)).Return(HL.B
         return false
     end
     self.m_pendingNaviTargetIndex = 0
-    InputManagerInst.controllerNaviManager:SetTarget(entryCell.wikiTutorialTab.view.btn)
+    self:SetNaviTarget(entryCell.wikiTutorialTab.view.btn)
     return true
 end
 
@@ -559,7 +562,7 @@ WikiGuideCtrl._OnUpdateCurrentPageIndex = HL.Method(HL.Number) << function(self,
     local pageData = self.m_showingPageList[LuaIndex(csIndex)]
     local mediaNode = self.view.guideMediaNode
     
-    Notify(MessageConst.HIDE_HYPERLINK_TIPS)
+    Notify(MessageConst.ON_STOP_HOVER_LINK)
     mediaNode.titleTxt:SetAndResolveTextStyle(pageData.title)
     mediaNode.contentTxt:SetAndResolveTextStyle(InputManager.ParseTextActionId(pageData.content))
     

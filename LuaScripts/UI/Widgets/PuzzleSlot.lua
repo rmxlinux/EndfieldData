@@ -8,110 +8,43 @@ local PuzzleState = {
     Drag = 1,
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PuzzleSlot = HL.Class('PuzzleSlot', UIWidgetBase)
-
 
 PuzzleSlot.m_puzzleGame = HL.Field(HL.Userdata)
 
-
 PuzzleSlot.m_instId = HL.Field(HL.String) << ""
-
 
 PuzzleSlot.m_puzzleData = HL.Field(HL.Table)
 
-
 PuzzleSlot.m_puzzleCells = HL.Field(HL.Forward("UIListCache"))
-
 
 PuzzleSlot.m_puzzleCellSize = HL.Field(HL.Number) << -1
 
-
 PuzzleSlot.m_currentState = HL.Field(HL.Number) << PuzzleState.Normal
-
 
 PuzzleSlot.m_cells = HL.Field(HL.Table)
 
-
 PuzzleSlot.m_puzzleCtrl = HL.Field(HL.Forward("PuzzleCtrl"))
-
 
 PuzzleSlot.m_luaIndex = HL.Field(HL.Number) << -1
 
-
 PuzzleSlot.m_rawSizeDelta = HL.Field(Vector2)
-
 
 PuzzleSlot.m_dragPivot = HL.Field(Vector2)
 
-
 PuzzleSlot.m_rawPivot = HL.Field(Vector2)
-
 
 PuzzleSlot.m_tweenCore = HL.Field(HL.Any)
 
-
 PuzzleSlot.m_placeholderCell = HL.Field(HL.Any)
 
-
 PuzzleSlot.m_canDrag = HL.Field(HL.Boolean) << false
-
-
 
 PuzzleSlot._OnDestroy = HL.Override() << function(self)
     if self.m_tweenCore then
         self.m_tweenCore:Kill()
     end
 end
-
-
 
 
 PuzzleSlot._OnFirstTimeInit = HL.Override() << function(self)
@@ -121,14 +54,6 @@ PuzzleSlot._OnFirstTimeInit = HL.Override() << function(self)
     self.m_rawSizeDelta = self.view.viewRect.sizeDelta
     self.m_rawPivot = self.view.viewRect.pivot
 end
-
-
-
-
-
-
-
-
 
 PuzzleSlot.InitPuzzleSlot = HL.Method(HL.Table, HL.Number, HL.Number, HL.Forward("PuzzleCtrl"), HL.Any, HL.Boolean)
         << function(self, data, size, luaIndex, puzzleCtrl, placeholderCell, chessboardLock)
@@ -225,18 +150,10 @@ PuzzleSlot.InitPuzzleSlot = HL.Method(HL.Table, HL.Number, HL.Number, HL.Forward
     self:_ToggleCellsOrViewRaycast(false)
 end
 
-
-
-
-
-
 PuzzleSlot._UpdateCells = HL.Method(HL.Any, HL.Number, HL.Opt(HL.Boolean)) << function(self, cell, index, lock)
     table.insert(self.m_cells, cell.rectTransform)
     cell.puzzleCellDrag:Init(self.view.puzzleDrag)
 end
-
-
-
 
 PuzzleSlot._OnBeginDrag = HL.Method(HL.Userdata) << function(self, eventData)
     if not self.m_canDrag then
@@ -267,9 +184,6 @@ PuzzleSlot._OnBeginDrag = HL.Method(HL.Userdata) << function(self, eventData)
     AudioAdapter.PostEvent("Au_UI_Event_Piece_Drag")
 end
 
-
-
-
 PuzzleSlot._OnDrag = HL.Method(HL.Userdata) << function(self, eventData)
     
     if self.m_currentState ~= PuzzleState.Drag then
@@ -281,10 +195,6 @@ PuzzleSlot._OnDrag = HL.Method(HL.Userdata) << function(self, eventData)
     local pos = Vector3(dataPosition.x, dataPosition.y, panel.planeDistance)
     self.view.transform.position = panel.uiCamera:ScreenToWorldPoint(pos)
 end
-
-
-
-
 
 PuzzleSlot._OnEndDrag = HL.Method(HL.Userdata, HL.Opt(HL.Boolean)) << function(self, eventData, overrideResetToPlaceholder)
     if self.m_currentState ~= PuzzleState.Drag then
@@ -313,8 +223,6 @@ PuzzleSlot._OnEndDrag = HL.Method(HL.Userdata, HL.Opt(HL.Boolean)) << function(s
         self:_SlotMoveToGridPos()
     end
 end
-
-
 
 PuzzleSlot._SlotMoveToGridPos = HL.Method() << function(self)
     self.m_puzzleCtrl:PuzzleSlotInMovement()
@@ -350,16 +258,12 @@ PuzzleSlot._SlotMoveToGridPos = HL.Method() << function(self)
     self.m_puzzleCtrl:SetShadowCellVisibleById(self.m_puzzleData.id, false)
 end
 
-
-
 PuzzleSlot._SlotIllegalLocate = HL.Method() << function(self)
     self.m_currentState = PuzzleState.Float
 
     self.m_puzzleCtrl:SetCurActionBlock(self.m_puzzleData.id, self)
     self.m_puzzleCtrl:SetOtherBlocksFading(self.m_puzzleData.id, true)
 end
-
-
 
 PuzzleSlot._SlotLegalLocate = HL.Method() << function(self)
     self.m_currentState = PuzzleState.Normal
@@ -371,22 +275,13 @@ PuzzleSlot._SlotLegalLocate = HL.Method() << function(self)
     GameInstance.mobileMotionManager:PostEventCommonShort()
 end
 
-
-
-
 PuzzleSlot._OnPointerDown = HL.Method(HL.Userdata) << function(self, eventData)
     self.m_puzzleCtrl:SetOtherGraphicRaycasts(self.m_puzzleData.id, false)
 end
 
-
-
-
 PuzzleSlot._OnPointerUp = HL.Method(HL.Userdata) << function(self, eventData)
     self.m_puzzleCtrl:SetOtherGraphicRaycasts(self.m_puzzleData.id, true)
 end
-
-
-
 
 PuzzleSlot._OnPointerClick = HL.Method(HL.Userdata) << function(self, eventData)
     local blockId = self.m_puzzleData.id
@@ -402,9 +297,6 @@ PuzzleSlot._OnPointerClick = HL.Method(HL.Userdata) << function(self, eventData)
     end
 end
 
-
-
-
 PuzzleSlot._OnPointerEnter = HL.Method(HL.Userdata) << function(self, eventData)
     local blockId = self.m_puzzleData.id
     local succ, block = self.m_puzzleGame.currentChessboard.blocks:TryGetValue(blockId)
@@ -414,9 +306,6 @@ PuzzleSlot._OnPointerEnter = HL.Method(HL.Userdata) << function(self, eventData)
 
     self.view.viewSelected.gameObject:SetActiveIfNecessary(true)
 end
-
-
-
 
 PuzzleSlot._OnPointerExit = HL.Method(HL.Userdata) << function(self, eventData)
     local blockId = self.m_puzzleData.id
@@ -431,9 +320,6 @@ PuzzleSlot._OnPointerExit = HL.Method(HL.Userdata) << function(self, eventData)
 
     self.view.viewSelected.gameObject:SetActiveIfNecessary(false)
 end
-
-
-
 
 PuzzleSlot._TryToFloatSlot = HL.Method(HL.String) << function(self, blockId)
     self.m_currentState = PuzzleState.Float
@@ -450,9 +336,6 @@ PuzzleSlot._TryToFloatSlot = HL.Method(HL.String) << function(self, blockId)
     self.m_puzzleCtrl:UpdateNoActionNoticeTimer()
 end
 
-
-
-
 PuzzleSlot._Rotate = HL.Method(HL.String) << function(self, blockId)
     local puzzleGame = self.m_puzzleGame
     local block = puzzleGame.currentChessboard.blocks:get_Item(blockId)
@@ -464,9 +347,6 @@ PuzzleSlot._Rotate = HL.Method(HL.String) << function(self, blockId)
 
     AudioAdapter.PostEvent("Au_UI_Event_Piece_Rotation")
 end
-
-
-
 
 PuzzleSlot._RotateAndPutOnChessboard = HL.Method(HL.String) << function(self, blockId)
     self:_Rotate(blockId)
@@ -492,9 +372,6 @@ PuzzleSlot._RotateAndPutOnChessboard = HL.Method(HL.String) << function(self, bl
     end
 end
 
-
-
-
 PuzzleSlot._RebuildDragCell = HL.Method(HL.Opt(HL.Number)) << function(self, factor)
     local _, block = self.m_puzzleGame.currentChessboard.blocks:TryGetValue(self.m_puzzleData.id)
     for i = 1, #self.m_cells do
@@ -503,16 +380,10 @@ PuzzleSlot._RebuildDragCell = HL.Method(HL.Opt(HL.Number)) << function(self, fac
     end
 end
 
-
-
-
 PuzzleSlot._ToggleCellsOrViewRaycast = HL.Method(HL.Boolean) << function(self, isCells)
     self.view.cells.gameObject:SetActiveIfNecessary(isCells)
     self.view.viewPuzzleCellDrag.gameObject:SetActiveIfNecessary(not isCells)
 end
-
-
-
 
 PuzzleSlot.Rotate = HL.Method(HL.String) << function(self, blockId)
     if self.m_currentState == PuzzleState.Normal then
@@ -526,14 +397,9 @@ PuzzleSlot.Rotate = HL.Method(HL.String) << function(self, blockId)
     end
 end
 
-
-
 PuzzleSlot.ResetState = HL.Method() << function(self)
     self.m_currentState = PuzzleState.Normal
 end
-
-
-
 
 PuzzleSlot.ResetToPlaceholder = HL.Method(HL.Boolean) << function(self, byChangeCurActionBlock)
     self.m_currentState = PuzzleState.Normal
@@ -578,10 +444,6 @@ PuzzleSlot.ResetToPlaceholder = HL.Method(HL.Boolean) << function(self, byChange
     self.view.viewRect.localPosition = Vector3.zero
 end
 
-
-
-
-
 PuzzleSlot.SetBlockFading = HL.Method(HL.String, HL.Boolean) << function(self, blockId, isOn)
     if self.m_puzzleData.id == blockId then
         return
@@ -591,42 +453,26 @@ PuzzleSlot.SetBlockFading = HL.Method(HL.String, HL.Boolean) << function(self, b
     self.view.viewSelected.gameObject:SetActiveIfNecessary(false)
 end
 
-
-
 PuzzleSlot.IsStateDragging = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_currentState == PuzzleState.Drag
 end
 
-
-
 PuzzleSlot.GetInstId = HL.Method().Return(HL.String) << function(self)
     return self.m_instId
 end
-
-
-
 
 PuzzleSlot.ToggleInteractable = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.canvasGroup.blocksRaycasts = isOn
     self.view.canvasGroup.interactable = isOn
 end
 
-
-
-
 PuzzleSlot.ToggleHover = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.controllerHover.gameObject:SetActiveIfNecessary(isOn)
 end
 
-
-
-
 PuzzleSlot.ToggleCanDrag = HL.Method(HL.Boolean) << function(self, isOn)
     self.m_canDrag = isOn
 end
-
-
-
 
 PuzzleSlot.RecoverToChessboard = HL.Method(Transform) << function(self, gridCellTransform)
     local _, block = self.m_puzzleGame.currentChessboard.blocks:TryGetValue(self.m_puzzleData.id)
@@ -648,9 +494,6 @@ PuzzleSlot.RecoverToChessboard = HL.Method(Transform) << function(self, gridCell
     self:_RebuildDragCell()
 end
 
-
-
-
 PuzzleSlot.RecoverToChessboardAsFloat = HL.Method(Transform) << function(self, gridCellTransform)
     local _, block = self.m_puzzleGame.currentChessboard.blocks:TryGetValue(self.m_puzzleData.id)
 
@@ -671,9 +514,6 @@ PuzzleSlot.RecoverToChessboardAsFloat = HL.Method(Transform) << function(self, g
     self:_ToggleCellsOrViewRaycast(true)
     self:_RebuildDragCell()
 end
-
-
-
 
 PuzzleSlot.RecoverRotation = HL.Method(HL.Number) << function(self, rotateCount)
     self.view.viewRect.localRotation = Quaternion.Euler(0, 0, -90 * (rotateCount % 4))

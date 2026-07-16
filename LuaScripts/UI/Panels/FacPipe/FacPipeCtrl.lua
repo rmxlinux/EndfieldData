@@ -1,23 +1,8 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacPipe
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacPipeCtrl = HL.Class('FacPipeCtrl', uiCtrl.UICtrl)
 
 local PIPE_SPEED_OVERRIDE = 1000.0
-
 
 
 
@@ -27,20 +12,13 @@ FacPipeCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacPipeCtrl.m_buildingInfo = HL.Field(HL.Userdata)
-
 
 FacPipeCtrl.m_index = HL.Field(HL.Number) << -1
 
-
 FacPipeCtrl.m_updateThread = HL.Field(HL.Thread)
 
-
 FacPipeCtrl.m_currentItemId = HL.Field(HL.String) << ""
-
-
-
 
 FacPipeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_buildingInfo = arg.uiInfo
@@ -68,13 +46,9 @@ FacPipeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitPipeUpdateThread()
 end
 
-
-
 FacPipeCtrl.OnClose = HL.Override() << function(self)
     self.m_updateThread = self:_ClearCoroutine(self.m_updateThread)
 end
-
-
 
 FacPipeCtrl._InitPipeUpdateThread = HL.Method() << function(self)
     
@@ -91,8 +65,6 @@ FacPipeCtrl._InitPipeUpdateThread = HL.Method() << function(self)
     end)
 end
 
-
-
 FacPipeCtrl._RefreshPipeBasicDisplayContent = HL.Method() << function(self)
     local buildingCommonView = self.view.buildingCommon.view
 
@@ -108,9 +80,6 @@ FacPipeCtrl._RefreshPipeBasicDisplayContent = HL.Method() << function(self)
     buildingCommonView.stopLine.gameObject:SetActive(self.m_buildingInfo.speed <= 0)
     buildingCommonView.normalLine.gameObject:SetActive(self.m_buildingInfo.speed > 0)
 end
-
-
-
 
 FacPipeCtrl._RefreshPipeItem = HL.Method(HL.Opt(HL.Boolean)) << function(self, forceRefresh)
     local itemId = self.m_buildingInfo.pipeComponentPayload.itemId
@@ -134,7 +103,7 @@ FacPipeCtrl._RefreshPipeItem = HL.Method(HL.Opt(HL.Boolean)) << function(self, f
     else
         self.view.pipeItem.gameObject:SetActiveIfNecessary(false)
         if self.view.inputGroup.internalEnabled then
-            UIUtils.setAsNaviTarget(self.view.emptyItem)
+            self:SetNaviTarget(self.view.emptyItem)
         end
     end
 
@@ -154,8 +123,6 @@ FacPipeCtrl._RefreshPipeItem = HL.Method(HL.Opt(HL.Boolean)) << function(self, f
     self.m_currentItemId = itemId
 end
 
-
-
 FacPipeCtrl._RefreshLiquidBg = HL.Method() << function(self)
     local height = 0
     if self.m_buildingInfo.totalVolume > 0 then
@@ -163,9 +130,6 @@ FacPipeCtrl._RefreshLiquidBg = HL.Method() << function(self)
     end
     self.view.buildingCommon.view.liquidBg:RefreshLiquidHeight(height)
 end
-
-
-
 
 FacPipeCtrl._OnDeletePipeButtonClicked = HL.Method(HL.Opt(HL.Boolean)) << function(self, isAll)
     if not FactoryUtils.canDelBuilding(self.m_buildingInfo.nodeId, true) then
@@ -178,8 +142,6 @@ FacPipeCtrl._OnDeletePipeButtonClicked = HL.Method(HL.Opt(HL.Boolean)) << functi
         GameInstance.remoteFactoryManager:DismantleUnitFromConveyor(Utils.getCurrentChapterId(), self.m_buildingInfo.nodeId, self.m_index)
     end
 end
-
-
 
 FacPipeCtrl._OnReversePipeButtonClicked = HL.Method() << function(self)
     PhaseManager:ExitPhaseFast(PhaseId.FacMachine)

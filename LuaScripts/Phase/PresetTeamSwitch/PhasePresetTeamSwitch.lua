@@ -8,35 +8,11 @@ local PhaseFuncState = {
     PresetTeamDungeon = 3,
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhasePresetTeamSwitch = HL.Class('PhasePresetTeamSwitch', phaseBase.PhaseBase)
-
 
 PhasePresetTeamSwitch.m_currFuncState = HL.Field(HL.Any)
 
-
 PhasePresetTeamSwitch.m_dungeonId = HL.Field(HL.String) << ""
-
 
 
 
@@ -47,13 +23,17 @@ PhasePresetTeamSwitch.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SHOW_ENTER_PRESET_TEAM_DUNGEON_CONFIRM] = {'ShowEnterPresetTeamDungeonConfirm', false}
 }
 
-
-
 PhasePresetTeamSwitch.ShowEnterFocusModeConfirm = HL.StaticMethod(HL.Table) << function(arg)
     local focusModeInstId, onConfirm = unpack(arg)
     local _, focusModeData = GameInstance.dataManager.focusModeInstDataTable:TryGetValue(focusModeInstId)
     if not focusModeData then
         logger.error('Focus mode data not found for ID: %s', focusModeInstId)
+        return
+    end
+    if focusModeData.skipEnterConfirm then
+        if onConfirm then
+            onConfirm()
+        end
         return
     end
     PhaseManager:GoToPhase(PHASE_ID, {
@@ -63,8 +43,6 @@ PhasePresetTeamSwitch.ShowEnterFocusModeConfirm = HL.StaticMethod(HL.Table) << f
         onConfirm = onConfirm
     })
 end
-
-
 
 PhasePresetTeamSwitch.ShowEnterPresetTeamDungeonConfirm = HL.StaticMethod(HL.Table) << function(arg)
     local dungeonSeriesId = unpack(arg)
@@ -113,13 +91,9 @@ end
 
 
 
-
-
 PhasePresetTeamSwitch._OnInit = HL.Override() << function(self)
     PhasePresetTeamSwitch.Super._OnInit(self)
 end
-
-
 
 PhasePresetTeamSwitch._InitAllPhaseItems = HL.Override() << function(self)
     
@@ -132,6 +106,15 @@ PhasePresetTeamSwitch._InitAllPhaseItems = HL.Override() << function(self)
         self.m_currFuncState = PhaseFuncState.DungeonCharacter
         arg = self:_CreateDungeonCharArg()
     elseif self.arg.focusModeInstId ~= nil then
+        local _, focusModeData = GameInstance.dataManager.focusModeInstDataTable:TryGetValue(self.arg.focusModeInstId)
+        if focusModeData and focusModeData.skipEnterConfirm then
+            local onConfirmCallback = FocusModeUtils.GetEnterFocusModeConfirmAction(self.arg.focusModeInstId, "DialogSkipUI")
+            if onConfirmCallback then
+                onConfirmCallback()
+            end
+            self:CloseSelf()
+            return
+        end
         self.m_currFuncState = PhaseFuncState.PresetTeamSwitch
         arg = self:_CreateEnterFocusModeArg()
     else
@@ -141,8 +124,6 @@ PhasePresetTeamSwitch._InitAllPhaseItems = HL.Override() << function(self)
 
     self:CreatePhasePanelItem(PanelId.PresetTeamSwitch, arg)
 end
-
-
 
 PhasePresetTeamSwitch._CheckIsDungeonCharacter = HL.Method().Return(HL.Boolean) << function(self)
     if self.arg.dungeonSeriesId == nil then
@@ -157,8 +138,6 @@ PhasePresetTeamSwitch._CheckIsDungeonCharacter = HL.Method().Return(HL.Boolean) 
     self.m_dungeonId = dungeonId
     return DungeonUtils.isDungeonChar(dungeonId)
 end
-
-
 
 PhasePresetTeamSwitch._CreatePresetTeamDungeonArg = HL.Method().Return(HL.Table) << function(self)
     local dunSeriesId = self.arg.dungeonSeriesId
@@ -196,8 +175,6 @@ PhasePresetTeamSwitch._CreatePresetTeamDungeonArg = HL.Method().Return(HL.Table)
     return arg
 end
 
-
-
 PhasePresetTeamSwitch._CreateTeamSwitchArg = HL.Method().Return(HL.Table) << function(self)
     local arg = {
         title = self.arg.title,
@@ -220,8 +197,6 @@ PhasePresetTeamSwitch._CreateTeamSwitchArg = HL.Method().Return(HL.Table) << fun
     }
     return arg
 end
-
-
 
 PhasePresetTeamSwitch._CreateDungeonCharArg = HL.Method().Return(HL.Table) << function(self)
     local dungeonId = self.m_dungeonId
@@ -253,9 +228,9 @@ PhasePresetTeamSwitch._CreateDungeonCharArg = HL.Method().Return(HL.Table) << fu
                 GameInstance.player.charBag:ClearAllClientCharAndItemData()
             else
                 GameInstance.player.charBag:ClearAllClientCharAndItemData()
+                Notify(MessageConst.DIALOG_CHANGE_NEXT_INDEX, { phaseId = PHASE_ID, nextIndex = 0 })
                 PhaseManager:ExitPhaseFast(PHASE_ID)
                 PhaseManager:GoToPhase(PhaseId.CharFormation, { dungeonId = dungeonId })
-                Notify(MessageConst.DIALOG_CLOSE_UI, {PanelId.PresetTeamSwitch, PHASE_ID, 0})
             end
         end,
         onCancel = function()
@@ -268,8 +243,6 @@ PhasePresetTeamSwitch._CreateDungeonCharArg = HL.Method().Return(HL.Table) << fu
     }
     return arg
 end
-
-
 
 PhasePresetTeamSwitch._CreateEnterFocusModeArg = HL.Method().Return(HL.Table) << function(self)
     local focusModeInstId = self.arg.focusModeInstId
@@ -305,38 +278,17 @@ end
 
 
 
-
-
-
-
-
 PhasePresetTeamSwitch.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhasePresetTeamSwitch._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhasePresetTeamSwitch._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhasePresetTeamSwitch._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhasePresetTeamSwitch._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
@@ -346,17 +298,11 @@ end
 
 
 
-
-
 PhasePresetTeamSwitch._OnActivated = HL.Override() << function(self)
 end
 
-
-
 PhasePresetTeamSwitch._OnDeActivated = HL.Override() << function(self)
 end
-
-
 
 PhasePresetTeamSwitch._OnDestroy = HL.Override() << function(self)
     PhasePresetTeamSwitch.Super._OnDestroy(self)

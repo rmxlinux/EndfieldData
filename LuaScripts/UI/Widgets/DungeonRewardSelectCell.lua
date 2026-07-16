@@ -1,36 +1,18 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 DungeonRewardSelectCell = HL.Class('DungeonRewardSelectCell', UIWidgetBase)
-
 
 DungeonRewardSelectCell.m_index = HL.Field(HL.Number) << 0
 
-
 DungeonRewardSelectCell.m_rewardId = HL.Field(HL.String) << ""
-
 
 DungeonRewardSelectCell.m_rewardList = HL.Field(HL.Table)
 
-
 DungeonRewardSelectCell.m_currSelected = HL.Field(HL.Boolean) << false
-
 
 DungeonRewardSelectCell.m_clickCallback = HL.Field(HL.Function)
 
-
 DungeonRewardSelectCell.m_rewardCells = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 DungeonRewardSelectCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -44,11 +26,6 @@ DungeonRewardSelectCell._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
 end
-
-
-
-
-
 
 DungeonRewardSelectCell.InitDungeonRewardSelectCell = HL.Method(HL.String, HL.Boolean, HL.Function)
     << function(self, rewardId, isSelected, clickCallback)
@@ -70,8 +47,6 @@ DungeonRewardSelectCell.InitDungeonRewardSelectCell = HL.Method(HL.String, HL.Bo
     local btnStateCtrl = self.view.root
     btnStateCtrl:SetState(self.m_currSelected and "DisableState" or "YellowState")
 end
-
-
 
 DungeonRewardSelectCell._InitRewardData = HL.Method() << function(self)
     local hasCfg, rewardsCfg = Tables.rewardTable:TryGetValue(self.m_rewardId)

@@ -1,19 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 GemSkillEnhanceCell = HL.Class('GemSkillEnhanceCell', UIWidgetBase)
-
-
 
 
 GemSkillEnhanceCell._OnFirstTimeInit = HL.Override() << function(self)
 
 end
-
-
-
 
 
 

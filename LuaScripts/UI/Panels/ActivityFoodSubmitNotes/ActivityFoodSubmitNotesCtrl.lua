@@ -1,26 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityFoodSubmitNotes
 local PHASE_ID = PhaseId.ActivityFoodSubmitNotes
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityFoodSubmitNotesCtrl = HL.Class('ActivityFoodSubmitNotesCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -31,21 +12,15 @@ ActivityFoodSubmitNotesCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 ActivityFoodSubmitNotesCtrl.m_getScrollListCell = HL.Field(HL.Function)
-
 
 ActivityFoodSubmitNotesCtrl.m_luaIndex2Cell = HL.Field(HL.Table)
 
-
 ActivityFoodSubmitNotesCtrl.m_luaIndex2StageId = HL.Field(HL.Table)
-
 
 ActivityFoodSubmitNotesCtrl.m_selectedLuaIndex = HL.Field(HL.Number) << -1
 
-
 ActivityFoodSubmitNotesCtrl.m_activityId = HL.Field(HL.String) << ""
-
 
 ActivityFoodSubmitNotesCtrl.m_mainCtrl = HL.Field(HL.Any) << nil
 
@@ -56,9 +31,6 @@ local ShowStatus = {
     Completed = 2,
     Rewarded = 3,
 }
-
-
-
 
 
 ActivityFoodSubmitNotesCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -114,9 +86,6 @@ ActivityFoodSubmitNotesCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
 
 end
 
-
-
-
 ActivityFoodSubmitNotesCtrl.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, csIndex)
     local luaIndex = LuaIndex(csIndex)
     local stageId = self.m_luaIndex2StageId[luaIndex]
@@ -138,10 +107,6 @@ ActivityFoodSubmitNotesCtrl.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Nu
         end
     end
 end
-
-
-
-
 
 
 ActivityFoodSubmitNotesCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, csIndex)
@@ -188,7 +153,7 @@ ActivityFoodSubmitNotesCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << func
             if DeviceInfo.usingController then
                 local preCell = self.m_luaIndex2Cell[luaIndex-1]
                 if preCell ~= nil and preCell.showState ~= ShowStatus.Locked then
-                    InputManagerInst.controllerNaviManager:SetTarget(preCell.clickBtn)
+                    self:SetNaviTarget(preCell.clickBtn)
                 else
                     local nextId = luaIndex + 1
                     if nextId > #self.m_luaIndex2StageId then
@@ -196,7 +161,7 @@ ActivityFoodSubmitNotesCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << func
                     end
                     local nextCell = self.m_luaIndex2Cell[nextId]
                     if nextCell ~= nil and nextCell.showState ~= ShowStatus.Locked then
-                        InputManagerInst.controllerNaviManager:SetTarget(nextCell.clickBtn)
+                        self:SetNaviTarget(nextCell.clickBtn)
                     end
                 end
             end
@@ -206,11 +171,6 @@ ActivityFoodSubmitNotesCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << func
         self:_SelectCell(luaIndex)
     end)
 end
-
-
-
-
-
 
 ActivityFoodSubmitNotesCtrl._UpdateRedDot = HL.Method(HL.Any, HL.Any, HL.Any) << function(self, cell, stageId, mode)
     if cell.showState == ShowStatus.Locked then
@@ -229,9 +189,6 @@ ActivityFoodSubmitNotesCtrl._UpdateRedDot = HL.Method(HL.Any, HL.Any, HL.Any) <<
         end
     end
 end
-
-
-
 
 ActivityFoodSubmitNotesCtrl._UpdateStageId = HL.Method(HL.String) << function(self, activityId)
     local stageTable = {}
@@ -272,9 +229,6 @@ ActivityFoodSubmitNotesCtrl._UpdateStageId = HL.Method(HL.String) << function(se
 end
 
 
-
-
-
 ActivityFoodSubmitNotesCtrl.GetNoteShowState = HL.Method(HL.Any).Return(HL.Any) << function(self, stageId)
     local status = ActivityUtils.GetFoodSubmitStageState(self.m_activityId, stageId)
     local showNote = ShowStatus.Locked
@@ -292,9 +246,6 @@ ActivityFoodSubmitNotesCtrl.GetNoteShowState = HL.Method(HL.Any).Return(HL.Any) 
 end
 
 
-
-
-
 ActivityFoodSubmitNotesCtrl._SelectCell = HL.Method(HL.Number) << function(self, luaIndex)
     if self.m_selectedLuaIndex == luaIndex then
         return
@@ -310,7 +261,7 @@ ActivityFoodSubmitNotesCtrl._SelectCell = HL.Method(HL.Number) << function(self,
     if cell ~= nil then
         self:_UpdateCellSelectedState(cell)
         cell.selectedNodeAnim:PlayInAnimation()
-        InputManagerInst.controllerNaviManager:SetTarget(cell.clickBtn)
+        self:SetNaviTarget(cell.clickBtn)
     end
 
     local stageId = self.m_luaIndex2StageId[luaIndex]
@@ -337,9 +288,6 @@ ActivityFoodSubmitNotesCtrl._SelectCell = HL.Method(HL.Number) << function(self,
     end
 end
 
-
-
-
 ActivityFoodSubmitNotesCtrl._UpdateCellSelectedState = HL.Method(HL.Any) << function(self, cell)
     if cell == nil then
         return
@@ -354,9 +302,6 @@ ActivityFoodSubmitNotesCtrl._UpdateCellSelectedState = HL.Method(HL.Any) << func
         self:_SetCellState(cell, "SelectedFinish")
     end
 end
-
-
-
 
 ActivityFoodSubmitNotesCtrl._UpdateCellNormalState = HL.Method(HL.Any) << function(self, cell)
     if cell == nil then
@@ -373,10 +318,6 @@ ActivityFoodSubmitNotesCtrl._UpdateCellNormalState = HL.Method(HL.Any) << functi
         self:_SetCellState(cell, "Finish")
     end
 end
-
-
-
-
 
 ActivityFoodSubmitNotesCtrl._SetCellState = HL.Method(HL.Any, HL.String) << function(self, cell, state)
     cell.nodeState:SetState(state)

@@ -2,16 +2,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopChoicenessGiftBag
 
-
-
-
-
-
 ShopChoicenessGiftBagCtrl = HL.Class('ShopChoicenessGiftBagCtrl', uiCtrl.UICtrl)
 
-
 ShopChoicenessGiftBagCtrl.m_tabData = HL.Field(HL.Table)
-
 
 
 
@@ -20,9 +13,6 @@ ShopChoicenessGiftBagCtrl.m_tabData = HL.Field(HL.Table)
 ShopChoicenessGiftBagCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 ShopChoicenessGiftBagCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -56,8 +46,6 @@ ShopChoicenessGiftBagCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.cashShopKrTips:InitCashShopKrTips()
 end
-
-
 
 ShopChoicenessGiftBagCtrl.OnShow = HL.Override() << function(self)
     GameInstance.player.cashShopSystem:ReadCashGoods(self.m_tabData.cashGoodsIds[1])

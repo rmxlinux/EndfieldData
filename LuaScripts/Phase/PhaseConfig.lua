@@ -11,6 +11,20 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 config = {
     
     CharInfo = {
@@ -19,7 +33,6 @@ config = {
         systemId = "system_character",
         fov = 15.3818,
         redDotName = "AllCharInfo",
-        systemId = "system_character",
         disableEffectLodControl = true,
         haveSceneCamera = true,
         checkCanOpen = function(arg)
@@ -52,6 +65,7 @@ config = {
         fov = 15.3818,
         cannotForbid = true,
         notCreateDummyNaviLayer = true,
+        sceneVisible = true, 
     },
     
     Dialog = {
@@ -62,6 +76,7 @@ config = {
             PanelId.HeadLabelInDialog,
         },
         cannotForbid = true,
+        sceneVisible = true, 
     },
     
     DialogTimeline = {
@@ -73,6 +88,7 @@ config = {
         },
         isSimpleUIPhase = false,
         cannotForbid = true,
+        sceneVisible = true, 
     },
     
     Watch = {
@@ -131,6 +147,14 @@ config = {
         isSimpleUIPhase = true,
     },
     
+    RiftDetailInfo = {
+
+        panels = {
+            PanelId.RiftDetailInfo,
+        },
+        isSimpleUIPhase = true,
+    },
+    
     Mission = {
 
         panels = {
@@ -147,6 +171,7 @@ config = {
             PanelId.BigLogo,
         },
         cannotForbid = true,
+        sceneVisible = true,
     },
     
     WeaponInfo = {
@@ -245,12 +270,25 @@ config = {
         end
     },
     
+    ChangePortableDevice = {
+        panels = {
+            PanelId.ChangePortableDevice,
+        },
+        isSimpleUIPhase = true,
+    },
+    
     Wiki = {
 
         panels = {},
         systemId = "system_wiki",
         disableEffectLodControl = true,
         haveSceneCamera = true,
+        checkCanOpen = function(arg)
+            if GameInstance.player.spaceship.isViewingFriend then
+                return false, Language.LUA_FRIEND_SOCIAL_BUILDING_JUMP_SPACESHIP_TIP
+            end
+            return true
+        end
     },
     
     Shop = {
@@ -326,6 +364,7 @@ config = {
 
         panels = {},
         isSimpleUIPhase = false,
+        sceneVisible = true,
     },
     
     FacBuildListSelect = {
@@ -347,8 +386,22 @@ config = {
                     end
                 end
             end
+            if GameInstance.player.spaceship.isViewingFriend then
+                return false, Language.LUA_FRIEND_SOCIAL_BUILDING_JUMP_SPACESHIP_TIP
+            end
             return true
         end
+    },
+    FacDecoObtainWays = {
+
+        checkCanOpen = function(arg)
+            local result, text = PhaseManager:CheckCanOpenPhase(PhaseId.FacBuildListSelect)
+            return result, text
+        end,
+        panels = {
+            PanelId.FacDecoObtainWays,
+        },
+        isSimpleUIPhase = true,
     },
     
     FacTechTree = {
@@ -779,6 +832,7 @@ config = {
 
         isSimpleUIPhase = false,
         fov = 15.3818,
+        sceneVisible = true, 
         
     },
     
@@ -1078,6 +1132,7 @@ config = {
 
         panels = {},
         isSimpleUIPhase = false,
+        sceneVisible = true,
     },
     
     Friend = {
@@ -1198,6 +1253,10 @@ config = {
                 local curSceneInfo = GameInstance.remoteFactoryManager.currentSceneInfo
                 return CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryUtil.IsHubEquipCraftEnabledInBlackbox(curSceneInfo)
             else
+                if arg and arg.isEnhance then
+                    return Utils.isSystemUnlocked(GEnums.UnlockSystemType.EquipEnhance)
+                end
+
                 return true
             end
         end,
@@ -1208,7 +1267,7 @@ config = {
         panels = {
            PanelId.KiteStation,
         },
-        isSimpleUIPhase = true,
+        isSimpleUIPhase = false,
         unlockSystemType = GEnums.UnlockSystemType.KiteStation,
     },
     
@@ -1540,6 +1599,183 @@ config = {
         },
         isSimpleUIPhase = true,
         unlockSystemType = GEnums.UnlockSystemType.WeaponWishList,
+    },
+    
+    
+
+    
+    GasCollection = {
+        panels = {
+            PanelId.GasCollection,
+        },
+        isSimpleUIPhase = true,
+    },
+    BalloonInteractive = {
+        panels = {
+            PanelId.BalloonInteractive,
+        },
+        isSimpleUIPhase = true,
+    },
+    Balloon = {
+        panels = {
+            PanelId.BalloonMiniGame,
+            PanelId.BalloonMiniGameRotatePlate,
+        },
+        isSimpleUIPhase = false,
+        unlockSystemType = GEnums.UnlockSystemType.MinigameBalloon,
+        fov = 90,
+    },
+    MusicPlayer = {
+        panels = {
+            PanelId.MusicPlayer,
+        },
+        isSimpleUIPhase = false,
+    },
+    SeasonTowerMainHud = {
+        panels = {
+            PanelId.SeasonTowerMainHud,
+        },
+        isSimpleUIPhase = true,
+        checkCanOpen = function(arg)
+            if GameInstance.player.gameSettingSystem.forbiddenSeasonTower then
+                return false, Language.LUA_SWITCH_TYPE_FORBIDDEN_TOAST
+            end
+            if GameInstance.player.seasonTowerSystem.currentSeasonId <= 0 then
+                return false, Language.LUA_SWITCH_TYPE_FORBIDDEN_TOAST
+            end
+            return true
+        end,
+    },
+    SeasonTowerSucc = {
+
+        panels = {
+            PanelId.SeasonTowerSucc,
+        },
+        isSimpleUIPhase = true,
+    },
+    SeasonTowerAchieve = {
+        panels = {
+            PanelId.SeasonTowerAchieve,
+        },
+        isSimpleUIPhase = true,
+    },
+    SeasonTowerDungeonEntry = {
+        panels = {
+            PanelId.SeasonTowerDungeonEntry,
+        },
+        isSimpleUIPhase = true,
+        checkCanOpen = function(arg)
+            if SeasonTowerUtils.getShouldRefresh() then
+                return false
+            end
+            return true
+        end,
+    },
+
+    
+    
+    ActivityCoinMilestone = {
+
+        panels = {
+           PanelId.ActivityCoinMilestone,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    ActivityImportantPopup = {
+
+        panels = {
+           PanelId.ActivityImportantPopup,
+        },
+        isSimpleUIPhase = false,
+    },
+    
+    
+    ActivityCoinRanking = {
+
+        panels = {
+           PanelId.ActivityCoinRanking,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    ActivityCoinReward = {
+
+        panels = {
+           PanelId.ActivityCoinReward,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    
+    
+
+    
+    
+    SeasonTowerAllScore = {
+
+        panels = {
+           PanelId.SeasonTowerAllScore,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    SeasonTowerScoreReview = {
+
+        panels = {
+           PanelId.SeasonTowerScoreReview,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+
+    
+    
+    ReflowPopup = {
+
+        panels = {
+
+        },
+        isSimpleUIPhase = false,
+    },
+
+    ReflowFormalReconnect = {
+
+        panels = {
+
+        },
+        isSimpleUIPhase = false,
+    },
+    
+    
+
+    
+    
+    ShopStar = {
+
+        panels = {
+            PanelId.ShopStar,
+        },
+        isSimpleUIPhase = false,
+        unlockSystemType = GEnums.UnlockSystemType.TrstarShop,
+        redDotName = "StarShop",
+    },
+    
+    
+
+    
+    
+    DungeonCustomEntry = {
+
+        panels = {
+           PanelId.DungeonCustomEntry,
+        },
+        isSimpleUIPhase = true,
     },
     
     

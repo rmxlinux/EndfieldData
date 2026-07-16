@@ -1,22 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DoodadPlantCoreScanUI
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DoodadPlantCoreScanUICtrl = HL.Class('DoodadPlantCoreScanUICtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -28,17 +13,11 @@ DoodadPlantCoreScanUICtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 DoodadPlantCoreScanUICtrl.m_doodadPlantCoreObjDict = HL.Field(HL.Table)
-
 
 DoodadPlantCoreScanUICtrl.m_doodadPlantCoreObjPool = HL.Field(HL.Table)
 
-
 DoodadPlantCoreScanUICtrl.m_doodadPlantCoreLogicIdDict = HL.Field(HL.Table)
-
-
-
 
 
 DoodadPlantCoreScanUICtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -46,8 +25,6 @@ DoodadPlantCoreScanUICtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_doodadPlantCoreObjPool = {}
     self.m_doodadPlantCoreLogicIdDict = {}
 end
-
-
 
 
 
@@ -70,18 +47,11 @@ DoodadPlantCoreScanUICtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 DoodadPlantCoreScanUICtrl._OnAddDoodadPlantCoreUI = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = DoodadPlantCoreScanUICtrl.AutoOpen(PANEL_ID, args, false)
     local entity, coreName, size = unpack(args)
     ctrl:_AddDoodadPlantCore(entity, coreName, size)
 end
-
-
-
-
-
 
 DoodadPlantCoreScanUICtrl._AddDoodadPlantCore = HL.Method(HL.Any, HL.String, HL.String) << function(self, targetObject, coreName, size)
     if self.m_doodadPlantCoreObjDict[targetObject] == nil then
@@ -96,12 +66,6 @@ DoodadPlantCoreScanUICtrl._AddDoodadPlantCore = HL.Method(HL.Any, HL.String, HL.
     self.m_doodadPlantCoreLogicIdDict[doodadPlantCore.entityLogicId] = doodadPlantCore
 end
 
-
-
-
-
-
-
 DoodadPlantCoreScanUICtrl._InitDoodadPlantCore = HL.Method(HL.Any, HL.Any, HL.String, HL.String) << function(self, doodadPlantCore, target, coreName, size)
     if not target or not doodadPlantCore then
         return
@@ -109,8 +73,6 @@ DoodadPlantCoreScanUICtrl._InitDoodadPlantCore = HL.Method(HL.Any, HL.Any, HL.St
 
     doodadPlantCore.doodadPlantCore:SetCoreInfo(coreName, size)
 end
-
-
 
 DoodadPlantCoreScanUICtrl._CreateDoodadPlantCore = HL.Method().Return(HL.Table) << function(self)
     if self.m_doodadPlantCoreObjPool ~= nil and #self.m_doodadPlantCoreObjPool > 0 then
@@ -123,8 +85,6 @@ DoodadPlantCoreScanUICtrl._CreateDoodadPlantCore = HL.Method().Return(HL.Table) 
         return result
     end
 end
-
-
 
 DoodadPlantCoreScanUICtrl._OnRemoveDoodadPlantCoreUI = HL.StaticMethod(HL.Any) << function(args)
     local opened, ctrl = UIManager:IsOpen(PANEL_ID)
@@ -142,8 +102,6 @@ DoodadPlantCoreScanUICtrl._OnRemoveDoodadPlantCoreUI = HL.StaticMethod(HL.Any) <
     end
 end
 
-
-
 DoodadPlantCoreScanUICtrl._OnUpdateDoodadPlantCoreUI = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = DoodadPlantCoreScanUICtrl.AutoOpen(PANEL_ID, args, false)
     local entity, name, size = unpack(args)
@@ -152,8 +110,6 @@ DoodadPlantCoreScanUICtrl._OnUpdateDoodadPlantCoreUI = HL.StaticMethod(HL.Any) <
         cell.doodadPlantCore:SetCoreInfo(name, size)
     end
 end
-
-
 
 DoodadPlantCoreScanUICtrl._OnRefreshDoodadPlantCoreUI = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = DoodadPlantCoreScanUICtrl.AutoOpen(PANEL_ID, args, false)

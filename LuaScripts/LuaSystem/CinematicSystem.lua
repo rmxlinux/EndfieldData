@@ -1,29 +1,11 @@
 
 local AdventureLevelUpCtrl = require_ex('UI/Panels/AdventureLevelUp/AdventureLevelUpCtrl').AdventureLevelUpCtrl
 local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
-
-
-
-
-
-
-
-
-
-
 CinematicSystem = HL.Class('CinematicSystem', LuaSystemBase.LuaSystemBase)
-
 
 CinematicSystem.m_queueItems = HL.Field(HL.Table)
 
-
 CinematicSystem.m_waitPlayQueueItems = HL.Field(HL.Table)
-
-
-CinematicSystem.m_dialogWaitCoroutine = HL.Field(HL.Thread) << nil
-
-
-
 
 CinematicSystem.CinematicSystem = HL.Constructor() << function(self)
     self:RegisterMessage(MessageConst.ADD_CINEMATIC_ITEM_TO_QUEUE, function(arg)
@@ -40,11 +22,9 @@ CinematicSystem.CinematicSystem = HL.Constructor() << function(self)
     end)
 end
 
-
-
-
 CinematicSystem.AddCinematic2Queue = HL.Method(HL.Any) << function(self, handle)
     if handle.data.playImmediately then
+        self:AddCinematicBlocker()
         self:_DoAction(handle)
         return
     end
@@ -80,21 +60,11 @@ CinematicSystem.AddCinematic2Queue = HL.Method(HL.Any) << function(self, handle)
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "CinematicSystem.AddCinematic2Queue", data.id)
 end
 
-
-
-
 CinematicSystem._DoAction = HL.Method(HL.Any) << function(self, handle)
     local data = handle.data
     local id = handle.id
     local queueItemType = data.queueItemType
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "CinematicSystem._DoAction", queueItemType, id)
-
-    if queueItemType == Const.CinematicQueueItemTypeEnum.Dialog and GameWorld.dialogManager.isPlaying then
-        
-        CoroutineManager:ClearCoroutine(self.m_dialogWaitCoroutine)
-        self.m_dialogWaitCoroutine = CoroutineManager:StartCoroutine(function() self:_WaitCurrentDialogFinishThenStart(handle) end, self)
-        return
-    end
 
     local res
     if not self.m_waitPlayQueueItems[id] then
@@ -120,26 +90,6 @@ CinematicSystem._DoAction = HL.Method(HL.Any) << function(self, handle)
         self.m_waitPlayQueueItems[id] = nil
     end
 end
-
-
-
-
-CinematicSystem._WaitCurrentDialogFinishThenStart = HL.Method(HL.Any) << function(self, handle)
-    while true do
-        if not GameWorld.dialogManager.isPlaying then
-            self:_DoAction(handle)
-            break
-        else
-            coroutine.step()
-        end
-    end
-
-    CoroutineManager:ClearCoroutine(self.m_dialogWaitCoroutine)
-    self.m_dialogWaitCoroutine = nil
-end
-
-
-
 
 CinematicSystem.EndCinematicQueueItem = HL.Method(HL.Any) << function(self, handle)
     local id = handle.id
@@ -175,33 +125,46 @@ CinematicSystem.EndCinematicQueueItem = HL.Method(HL.Any) << function(self, hand
             end
         end
     end
+
+    
+    self:RemoveCinematicBlocker()
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "CinematicSystem.EndCinematicQueueItem", needNotify, id)
 end
-
-
-
 
 CinematicSystem.ToggleIgnoreCinematicQueue = HL.Method(HL.Boolean) << function(self, toggle)
     LuaSystemManager.mainHudActionQueue:ToggleActionPlayIgnoreMainHud("Cinematic", toggle)
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "CinematicSystem.ToggleIgnoreCinematicQueue", toggle)
 end
 
-
-
 CinematicSystem.OnInit = HL.Override() << function(self)
     self.m_queueItems = {}
     self.m_waitPlayQueueItems = {}
 end
 
-
-
 CinematicSystem.OnRelease = HL.Override() << function(self)
     self.m_queueItems = {}
     self.m_waitPlayQueueItems = {}
-
-    CoroutineManager:ClearCoroutine(self.m_dialogWaitCoroutine)
-    self.m_dialogWaitCoroutine = nil
 end
+
+
+CinematicSystem.AddCinematicBlocker = HL.Method() << function(self)
+    
+    if LuaSystemManager.mainHudActionQueue:HasRequest("CinematicBlocker") then
+        logger.error("CinematicBlocker 已存在！应该同时只有一个，多个则说明有问题！")
+        return
+    end
+    LuaSystemManager.mainHudActionQueue:AddRequest("CinematicBlocker", function()
+    end, nil, true)
+end
+
+CinematicSystem.RemoveCinematicBlocker = HL.Method() << function(self)
+    if not LuaSystemManager.mainHudActionQueue:HasRequest("CinematicBlocker") then
+        return
+    end
+    
+    LuaSystemManager.mainHudActionQueue:RemoveActionsOfType("CinematicBlocker")
+end
+
 
 HL.Commit(CinematicSystem)
 return CinematicSystem

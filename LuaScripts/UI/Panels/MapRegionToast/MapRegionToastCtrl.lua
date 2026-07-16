@@ -2,15 +2,6 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapRegionToast
 local ELevelAreaPriority = CS.Beyond.Gameplay.ELevelAreaPriority
 
-
-
-
-
-
-
-
-
-
 MapRegionToastCtrl = HL.Class('MapRegionToastCtrl', uiCtrl.UICtrl)
 
 
@@ -26,12 +17,9 @@ local MAP_REGION_MAIN_HUD_TOAST_TYPE = "MapRegionToast"
 
 
 
-
 MapRegionToastCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.INTERRUPT_MAIN_HUD_ACTION_QUEUE] = "OnToastInterrupted",
 }
-
-
 
 MapRegionToastCtrl.RequestShowMapRegionToast = HL.StaticMethod(HL.Table) << function(args)
     if GameWorld.worldInfo.curLevelId == Tables.spaceshipConst.visitSceneName then
@@ -51,7 +39,6 @@ MapRegionToastCtrl.RequestShowMapRegionToast = HL.StaticMethod(HL.Table) << func
     end)
 end
 
-
 MapRegionToastCtrl.ClearAllMapRegionToast = HL.StaticMethod() << function()
     
     if LuaSystemManager.mainHudActionQueue then
@@ -59,15 +46,11 @@ MapRegionToastCtrl.ClearAllMapRegionToast = HL.StaticMethod() << function()
     end
 end
 
-
-
 MapRegionToastCtrl._OnShowMapRegionToast = HL.StaticMethod(HL.Table) << function(toastInfo)
     
     local self = UIManager:AutoOpen(PANEL_ID)
     self:DisplayToast(toastInfo)
 end
-
-
 
 MapRegionToastCtrl.OnToastInterrupted = HL.Method() << function(self)
     
@@ -76,20 +59,12 @@ MapRegionToastCtrl.OnToastInterrupted = HL.Method() << function(self)
 end
 
 
-
-
-
 MapRegionToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
 end
-
-
 
 MapRegionToastCtrl.OnClose = HL.Override() << function(self)
 
 end
-
-
-
 
 
 MapRegionToastCtrl.DisplayToast = HL.Method(HL.Table) << function(self, toastInfo)

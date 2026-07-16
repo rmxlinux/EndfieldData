@@ -1,32 +1,14 @@
 
 
-
-
-
-
-
-
-
-
-
-
-
-
 CoroutineManager = HL.Class('CoroutineManager')
-
 
 CoroutineManager.m_defaultGroupKey = HL.Field(HL.Table)
 
-
 CoroutineManager.m_coroutineGroups = HL.Field(HL.Table) 
-
 
 CoroutineManager.m_coroutineKeyMap = HL.Field(HL.Table) 
 
-
 CoroutineManager.m_parentsInfo = HL.Field(HL.Table) 
-
-
 
 CoroutineManager.CoroutineManager = HL.Constructor() << function(self)
     self.m_defaultGroupKey = {}
@@ -34,10 +16,6 @@ CoroutineManager.CoroutineManager = HL.Constructor() << function(self)
     self.m_coroutineKeyMap = setmetatable({}, { __mode = "kv" })
     self.m_parentsInfo = setmetatable({}, { __mode = "k" })
 end
-
-
-
-
 
 CoroutineManager.StartCoroutine = HL.Method(HL.Function, HL.Opt(HL.Any)).Return(HL.Thread) << function(self, action, groupKey)
     local co = coroutine.start(action)
@@ -53,9 +31,6 @@ CoroutineManager.StartCoroutine = HL.Method(HL.Function, HL.Opt(HL.Any)).Return(
 
     return co
 end
-
-
-
 
 CoroutineManager.ClearCoroutine = HL.Method(HL.Opt(HL.Thread)) << function(self, co)
     if co == nil then
@@ -73,9 +48,6 @@ CoroutineManager.ClearCoroutine = HL.Method(HL.Opt(HL.Thread)) << function(self,
     coroutine.stop(co)
 end
 
-
-
-
 CoroutineManager.IsCorCleared = HL.Method(HL.Thread).Return(HL.Boolean) << function(self, co)
     
     if not co then
@@ -84,10 +56,6 @@ CoroutineManager.IsCorCleared = HL.Method(HL.Thread).Return(HL.Boolean) << funct
 
     return not self.m_coroutineKeyMap[co]
 end
-
-
-
-
 
 CoroutineManager.ClearAllCoroutine = HL.Method(HL.Any, HL.Opt(HL.Table)) << function(self, groupKey, checkedKeys)
     checkedKeys = checkedKeys or {}
@@ -113,10 +81,6 @@ CoroutineManager.ClearAllCoroutine = HL.Method(HL.Any, HL.Opt(HL.Table)) << func
     end
 end
 
-
-
-
-
 CoroutineManager.RegisterParent = HL.Method(HL.Any, HL.Any) << function(self, sonGroupKey, parentGroupKey)
     if sonGroupKey == nil or parentGroupKey == nil then
         return
@@ -129,10 +93,6 @@ CoroutineManager.RegisterParent = HL.Method(HL.Any, HL.Any) << function(self, so
     end
     map[sonGroupKey] = true
 end
-
-
-
-
 
 CoroutineManager.UnregisterParent = HL.Method(HL.Any, HL.Any) << function(self, sonGroupKey, parentGroupKey)
     if sonGroupKey == nil or parentGroupKey == nil then

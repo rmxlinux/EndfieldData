@@ -1,31 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacRouterCtrl = HL.Class('FacRouterCtrl', uiCtrl.UICtrl)
 
 local MAX_ROUTER_PORT_COUNT = 4
@@ -33,47 +8,31 @@ local SINGLE_ROUTER_PORT_INDEX = 1
 local NON_SINGLE_ROUTER_PORT_INDEX_OFFSET = -1
 local SINGLE_ROUTER_ITEM_INDEX = 0
 
-
 FacRouterCtrl.m_buildingInfo = HL.Field(HL.Userdata)
-
 
 FacRouterCtrl.m_isSinglePortIn = HL.Field(HL.Boolean) << false
 
-
 FacRouterCtrl.m_routerItems = HL.Field(HL.Table)
-
 
 FacRouterCtrl.m_lastValidRouterItems = HL.Field(HL.Table)
 
-
 FacRouterCtrl.m_updateThread = HL.Field(HL.Thread)
-
 
 FacRouterCtrl.m_inBeltInfoList = HL.Field(HL.Table)
 
-
 FacRouterCtrl.m_outBeltInfoList = HL.Field(HL.Table)
-
 
 FacRouterCtrl.m_inBindingAnimMap = HL.Field(HL.Table)
 
-
 FacRouterCtrl.m_outBindingAnimMap = HL.Field(HL.Table)
-
 
 FacRouterCtrl.m_inItemAnimMap = HL.Field(HL.Table)
 
-
 FacRouterCtrl.m_outItemAnimMap = HL.Field(HL.Table)
-
 
 FacRouterCtrl.m_itemSpriteCache = HL.Field(HL.Table)
 
-
 FacRouterCtrl.m_initialNaviTarget = HL.Field(HL.Forward("Item"))
-
-
-
 
 FacRouterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_buildingInfo = arg.uiInfo
@@ -106,20 +65,14 @@ FacRouterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 FacRouterCtrl.OnClose = HL.Override() << function(self)
     self:_ClearConveyorEvent()
     self.m_updateThread = self:_ClearCoroutine(self.m_updateThread)
     self.m_itemSpriteCache = nil
 end
 
-
-
 FacRouterCtrl._InitRouterPortData = HL.Virtual() << function(self)
 end
-
-
 
 FacRouterCtrl._InitConveyorEvent = HL.Method() << function(self)
     self.m_inBeltInfoList, self.m_outBeltInfoList = FactoryUtils.getBuildingPortState(self.m_buildingInfo.nodeId, false)
@@ -144,8 +97,6 @@ FacRouterCtrl._InitConveyorEvent = HL.Method() << function(self)
     end, self)
 end
 
-
-
 FacRouterCtrl._ClearConveyorEvent = HL.Method() << function(self)
     if self.m_inBeltInfoList ~= nil then
         for _, inBeltInfo in pairs(self.m_inBeltInfoList) do
@@ -165,8 +116,6 @@ FacRouterCtrl._ClearConveyorEvent = HL.Method() << function(self)
     MessageManager:UnregisterAll(self)
 end
 
-
-
 FacRouterCtrl._InitRouterUpdateThread = HL.Method() << function(self)
     
     self:_UpdateRouterItems()
@@ -177,8 +126,6 @@ FacRouterCtrl._InitRouterUpdateThread = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 
 
@@ -218,10 +165,6 @@ FacRouterCtrl._UpdateRouterItems = HL.Method() << function(self)
         self:_RefreshRouterItemState(index, itemId)
     end
 end
-
-
-
-
 
 FacRouterCtrl._RefreshRouterItemState = HL.Method(HL.Number, HL.String) << function(self, index, itemId)
     local viewItemName = string.format("itemLogistics%d", index)
@@ -268,8 +211,6 @@ FacRouterCtrl._RefreshRouterItemState = HL.Method(HL.Number, HL.String) << funct
     end
 end
 
-
-
 FacRouterCtrl._OnDeleteRouterButtonClicked = HL.Method() << function(self)
     if not FactoryUtils.canDelBuilding(self.m_buildingInfo.nodeId, true) then
         return
@@ -277,9 +218,6 @@ FacRouterCtrl._OnDeleteRouterButtonClicked = HL.Method() << function(self)
     PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
     GameInstance.player.remoteFactory.core:Message_OpDismantle(Utils.getCurrentChapterId(), self.m_buildingInfo.nodeId)
 end
-
-
-
 
 FacRouterCtrl._GetRouterItemSprite = HL.Method(HL.String).Return(HL.Userdata) << function(self, itemId)
     if self.m_itemSpriteCache[itemId] == nil then
@@ -290,8 +228,6 @@ FacRouterCtrl._GetRouterItemSprite = HL.Method(HL.String).Return(HL.Userdata) <<
     end
     return self.m_itemSpriteCache[itemId]
 end
-
-
 
 
 
@@ -313,9 +249,6 @@ FacRouterCtrl._InitConveyorBindingAnim = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 FacRouterCtrl._OnConveyorChanged = HL.Method(HL.Any) << function(self, args)
     local bindingNodeId, componentId, isIn, itemList = unpack(args)

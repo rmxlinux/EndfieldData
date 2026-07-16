@@ -1,31 +1,9 @@
 
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.DungeonWeeklyRaid
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseDungeonWeeklyRaid = HL.Class('PhaseDungeonWeeklyRaid', phaseBase.PhaseBase)
 
-
 PhaseDungeonWeeklyRaid.m_panelStack = HL.Field(HL.Forward("Stack"))
-
 
 
 
@@ -37,23 +15,17 @@ PhaseDungeonWeeklyRaid.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_WEEKLY_RAID_QUIT] = { "_OnWeekRaidGameQuit", false },
 }
 
-
 PhaseDungeonWeeklyRaid._OnInteractWeekRaidEntry = HL.StaticMethod() << function()
     PhaseManager:OpenPhase(PhaseId.CharFormation, { weekRaidArg = {} })
 end
-
-
 
 PhaseDungeonWeeklyRaid._OnWeekRaidGameEntry = HL.StaticMethod(HL.Any) << function(arg)
     UIManager:ToggleBlockObtainWaysJump("WeeklyRaidGame", true, {})
 end
 
-
 PhaseDungeonWeeklyRaid._OnWeekRaidGameQuit = HL.StaticMethod() << function()
     UIManager:ToggleBlockObtainWaysJump("WeeklyRaidGame", false)
 end
-
-
 
 
 PhaseDungeonWeeklyRaid._OnInit = HL.Override() << function(self)
@@ -64,17 +36,8 @@ end
 
 
 
-
-
-
-
-
 PhaseDungeonWeeklyRaid.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhaseDungeonWeeklyRaid._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local topPanelId = PanelId.RaidMain
@@ -102,30 +65,14 @@ PhaseDungeonWeeklyRaid._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.
     self:_TryRecoverInstructionBook()
 end
 
-
-
-
-
 PhaseDungeonWeeklyRaid._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseDungeonWeeklyRaid._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseDungeonWeeklyRaid._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 
 
@@ -137,8 +84,6 @@ PhaseDungeonWeeklyRaid.TryOpenPanel = HL.Method(HL.Number, HL.Opt(HL.Table)) << 
     self:CreateOrShowPhasePanelItem(panelId, args)
     self.m_panelStack:Push(panelId)
 end
-
-
 
 PhaseDungeonWeeklyRaid.TryCloseTopPanel = HL.Method() << function(self)
     if self.m_panelStack:Count() == 1 then
@@ -154,8 +99,6 @@ PhaseDungeonWeeklyRaid.TryCloseTopPanel = HL.Method() << function(self)
         end)
     end
 end
-
-
 
 PhaseDungeonWeeklyRaid.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}
@@ -205,8 +148,6 @@ PhaseDungeonWeeklyRaid.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << 
     return arg
 end
 
-
-
 PhaseDungeonWeeklyRaid._TryRecoverRaidTechPopup = HL.Method() << function(self)
     if self.arg == nil or self.arg.raidTechPopupOpen ~= true then
         return
@@ -227,8 +168,6 @@ PhaseDungeonWeeklyRaid._TryRecoverRaidTechPopup = HL.Method() << function(self)
     self.arg.raidTechPopupOpen = nil
 end
 
-
-
 PhaseDungeonWeeklyRaid._TryRecoverCommonIntro = HL.Method() << function(self)
     if self.arg == nil or self.arg.commonIntroState == nil then
         return
@@ -248,8 +187,6 @@ PhaseDungeonWeeklyRaid._TryRecoverCommonIntro = HL.Method() << function(self)
     UIManager:Open(PanelId.CommonIntro, self.arg.commonIntroState)
     self.arg.commonIntroState = nil
 end
-
-
 
 PhaseDungeonWeeklyRaid._TryRecoverInstructionBook = HL.Method() << function(self)
     if self.arg == nil or self.arg.instructionBookArg == nil then
@@ -273,17 +210,11 @@ end
 
 
 
-
-
 PhaseDungeonWeeklyRaid._OnActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseDungeonWeeklyRaid._OnDeActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseDungeonWeeklyRaid._OnDestroy = HL.Override() << function(self)
     PhaseDungeonWeeklyRaid.Super._OnDestroy(self)

@@ -2,34 +2,16 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopMonthlyPass
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopMonthlyPassCtrl = HL.Class('ShopMonthlyPassCtrl', uiCtrl.UICtrl)
 
-
 ShopMonthlyPassCtrl.m_shopGoodsId = HL.Field(HL.String) << ""
-
 
 ShopMonthlyPassCtrl.m_cashShopId = HL.Field(HL.String) << ""
 
 
-
 ShopMonthlyPassCtrl.m_isRecommend = HL.Field(HL.Boolean) << true
 
-
 ShopMonthlyPassCtrl.m_recommendId = HL.Field(HL.String) << ""
-
 
 
 
@@ -38,9 +20,6 @@ ShopMonthlyPassCtrl.m_recommendId = HL.Field(HL.String) << ""
 ShopMonthlyPassCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SYNC_MONTHLY_CARD_DATA] = '_OnSyncData',
 }
-
-
-
 
 
 ShopMonthlyPassCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -105,13 +84,9 @@ ShopMonthlyPassCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 ShopMonthlyPassCtrl.OnShow = HL.Override() << function(self)
     GameInstance.player.cashShopSystem:ReadCashGoods(self.m_shopGoodsId)
 end
-
-
 
 
 
@@ -149,13 +124,9 @@ ShopMonthlyPassCtrl._RefreshUI = HL.Method() << function(self)
     end
 end
 
-
-
 ShopMonthlyPassCtrl._OnDetailBtnClick = HL.Method() << function(self)
     self.m_phase:OpenGiftpackCategoryAndOpenDetailPanel(self.m_shopGoodsId, self.m_recommendId, false)
 end
-
-
 
 ShopMonthlyPassCtrl._OnBuyBtnClick = HL.Method() << function(self)
     if self.m_isRecommend then
@@ -168,12 +139,9 @@ ShopMonthlyPassCtrl._OnBuyBtnClick = HL.Method() << function(self)
 
 end
 
-
-
 ShopMonthlyPassCtrl._OnSyncData = HL.Method() << function(self)
     self:_RefreshUI()
 end
-
 
 ShopMonthlyPassCtrl.OnSyncMonthlyCardData = HL.StaticMethod() << function()
     

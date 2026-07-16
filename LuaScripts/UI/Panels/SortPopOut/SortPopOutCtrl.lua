@@ -1,65 +1,33 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SortPopOut
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SortPopOutCtrl = HL.Class('SortPopOutCtrl', uiCtrl.UICtrl)
-
 
 
 SortPopOutCtrl.m_canSort = HL.Field(HL.Boolean) << false
 
-
 SortPopOutCtrl.m_sortCurIndex = HL.Field(HL.Number) << -1
-
 
 SortPopOutCtrl.m_sortOptions = HL.Field(HL.Table)
 
-
 SortPopOutCtrl.m_onSortConfirm = HL.Field(HL.Function)
-
 
 SortPopOutCtrl.m_sortCellCache = HL.Field(HL.Forward("UIListCache"))
 
 
 
-
 SortPopOutCtrl.m_canSelect = HL.Field(HL.Boolean) << false
-
 
 SortPopOutCtrl.m_selectCurIndexes = HL.Field(HL.Table)
 
-
 SortPopOutCtrl.m_selectOptions = HL.Field(HL.Table)
-
 
 SortPopOutCtrl.m_selectStates = HL.Field(HL.Table)
 
-
 SortPopOutCtrl.m_onSelectToggle = HL.Field(HL.Function)
-
 
 SortPopOutCtrl.m_onSelectConfirm = HL.Field(HL.Function)
 
-
 SortPopOutCtrl.m_selectCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 
 
@@ -69,9 +37,6 @@ SortPopOutCtrl.m_selectCellCache = HL.Field(HL.Forward("UIListCache"))
 SortPopOutCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 SortPopOutCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -107,8 +72,6 @@ end
 
 
 
-
-
 SortPopOutCtrl._ShowSelf = HL.StaticMethod(HL.Table) << function(args)
     if args == nil then
         return
@@ -124,12 +87,6 @@ SortPopOutCtrl._ShowSelf = HL.StaticMethod(HL.Table) << function(args)
         self:InitSelectOption(args.selectOptions, args.onSelectToggle, args.onSelectConfirm)
     end
 end
-
-
-
-
-
-
 
 SortPopOutCtrl.InitSortOption = HL.Method(HL.Table, HL.Function, HL.Opt(HL.Number, HL.Boolean)) <<
 function(self, sortOptions, onSortConfirm, curIndex, curIsAscending)
@@ -174,11 +131,6 @@ function(self, sortOptions, onSortConfirm, curIndex, curIsAscending)
     self.view.sortNaviGroup:NaviToThisGroup()
 end
 
-
-
-
-
-
 SortPopOutCtrl.InitSelectOption = HL.Method(HL.Table, HL.Function, HL.Function) <<
 function(self, selectOptions, onSelectToggle, onSelectConfirm)
     self.m_selectOptions = selectOptions
@@ -212,8 +164,6 @@ function(self, selectOptions, onSelectToggle, onSelectConfirm)
     end)
     self.view.selectNaviGroup:NaviToThisGroup()
 end
-
-
 
 SortPopOutCtrl.RefreshPanelState = HL.Method() << function(self)
     

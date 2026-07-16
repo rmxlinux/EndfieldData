@@ -1,21 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BlackBoxTargetAndReward
-
-
-
-
-
-
-
-
-
-
-
-
-
 BlackBoxTargetAndRewardCtrl = HL.Class('BlackBoxTargetAndRewardCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -27,23 +13,15 @@ BlackBoxTargetAndRewardCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 BlackBoxTargetAndRewardCtrl.m_warningCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 BlackBoxTargetAndRewardCtrl.m_mainGoalCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 BlackBoxTargetAndRewardCtrl.m_extraGoalCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 BlackBoxTargetAndRewardCtrl.m_mainRewardCellsCache = HL.Field(HL.Forward("UIListCache"))
 
-
 BlackBoxTargetAndRewardCtrl.m_extraRewardCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 BlackBoxTargetAndRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -58,9 +36,6 @@ BlackBoxTargetAndRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self:_Refresh(arg)
     self:_InitController()
 end
-
-
-
 
 BlackBoxTargetAndRewardCtrl._Refresh = HL.Method(HL.Table) << function(self, args)
     local dungeonId = args.dungeonId
@@ -135,9 +110,6 @@ BlackBoxTargetAndRewardCtrl._Refresh = HL.Method(HL.Table) << function(self, arg
     end)
 end
 
-
-
-
 BlackBoxTargetAndRewardCtrl._RefreshWarnings = HL.Method(HL.Table) << function(self, warningInfo)
     self.view.warningRoot.gameObject:SetActive(#warningInfo > 0)
     if #warningInfo > 0 then
@@ -147,8 +119,6 @@ BlackBoxTargetAndRewardCtrl._RefreshWarnings = HL.Method(HL.Table) << function(s
         end)
     end
 end
-
-
 
 BlackBoxTargetAndRewardCtrl._OnBtnExitClick = HL.Method() << function(self)
     self:Notify(MessageConst.SHOW_POP_UP, {
@@ -163,13 +133,9 @@ BlackBoxTargetAndRewardCtrl._OnBtnExitClick = HL.Method() << function(self)
 
 end
 
-
-
 BlackBoxTargetAndRewardCtrl._OnBtnCloseClick = HL.Method() << function(self)
     self:PlayAnimationOut(UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Close)
 end
-
-
 
 
 

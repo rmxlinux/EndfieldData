@@ -1,32 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SnapshotChallengeMainInfoCommon = HL.Class('SnapshotChallengeMainInfoCommon', UIWidgetBase)
 
 
@@ -41,40 +14,27 @@ local PANEL_ID = PanelId.SnapshotChallenge
 
 
 
-
 SnapshotChallengeMainInfoCommon.StageStateEnum = HL.Field(HL.Table)
-
 
 SnapshotChallengeMainInfoCommon.m_snapshotCtrl = HL.Field(HL.Any)
 
-
 SnapshotChallengeMainInfoCommon.m_info = HL.Field(HL.Table)
-
 
 SnapshotChallengeMainInfoCommon.m_stageNodeList = HL.Field(HL.Table)
 
-
 SnapshotChallengeMainInfoCommon.m_stageProgressBarList = HL.Field(HL.Table)
-
 
 SnapshotChallengeMainInfoCommon.m_updateCor = HL.Field(HL.Thread)
 
-
 SnapshotChallengeMainInfoCommon.m_rewardCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 SnapshotChallengeMainInfoCommon.m_identifyDescCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 SnapshotChallengeMainInfoCommon.m_activityId = HL.Field(HL.String) << ""
-
 
 SnapshotChallengeMainInfoCommon.m_defaultStageId = HL.Field(HL.String) << ""
 
-
 SnapshotChallengeMainInfoCommon.m_readStageIds = HL.Field(HL.Table)
-
-
 
 
 
@@ -103,11 +63,6 @@ SnapshotChallengeMainInfoCommon._OnFirstTimeInit = HL.Override() << function(sel
 end
 
 
-
-
-
-
-
 SnapshotChallengeMainInfoCommon.InitSnapshotChallengeMainInfo = HL.Virtual(HL.Any, HL.String, HL.String) << function(self, snapshotCtrl, activityId, stageId)
     self:_FirstTimeInit()
     self.m_snapshotCtrl = snapshotCtrl
@@ -122,8 +77,6 @@ SnapshotChallengeMainInfoCommon.InitSnapshotChallengeMainInfo = HL.Virtual(HL.An
     end
 end
 
-
-
 SnapshotChallengeMainInfoCommon.OnClose = HL.Virtual() << function(self)
     if self.view.config:HasValue("AUDIO_OUT_EVENT") then
         AudioAdapter.PostEvent(self.view.config.AUDIO_OUT_EVENT)
@@ -132,13 +85,10 @@ SnapshotChallengeMainInfoCommon.OnClose = HL.Virtual() << function(self)
     
     for _, stageId in pairs(self.m_readStageIds) do
         if ActivityUtils.isNewActivityConditionalStage(stageId) then
-            ActivityUtils.setFalseNewActivityConditionalStage(stageId, true)
+            ActivityUtils.setFalseNewActivityConditionalStage(stageId)
         end
     end
-    ClientDataManagerInst:SaveUserData(ClientDataManagerInst.defaultCategory) 
 end
-
-
 
 
 
@@ -225,9 +175,6 @@ SnapshotChallengeMainInfoCommon._InitData = HL.Virtual() << function(self)
     end)
 end
 
-
-
-
 SnapshotChallengeMainInfoCommon._UpdateData = HL.Virtual(HL.Boolean) << function(self, isInit)
     self.m_info.nextStageUnlockTime = -1
     local firstCompleteStageIndex = -1
@@ -263,9 +210,6 @@ SnapshotChallengeMainInfoCommon._UpdateData = HL.Virtual(HL.Boolean) << function
     end
 end
 
-
-
-
 SnapshotChallengeMainInfoCommon._UpdateStageInfo = HL.Virtual(HL.Table) << function(self, stageInfo)
     local activityId = self.m_info.activityId
     local stageId = stageInfo.stageId
@@ -298,8 +242,6 @@ SnapshotChallengeMainInfoCommon._UpdateStageInfo = HL.Virtual(HL.Table) << funct
     stageInfo.state = state
     stageInfo.identifyComplete = state == self.StageStateEnum.Complete or state == self.StageStateEnum.Rewarded
 end
-
-
 
 
 
@@ -362,15 +304,11 @@ SnapshotChallengeMainInfoCommon._InitUI = HL.Virtual() << function(self)
     end)
 end
 
-
-
 SnapshotChallengeMainInfoCommon._RefreshAllUI = HL.Virtual() << function(self)
     self:_RefreshTitle()
     self:_RefreshStageCell()
     self:_RefreshContentUI(self.m_info.curSelectStage)
 end
-
-
 
 SnapshotChallengeMainInfoCommon._RefreshTitle = HL.Virtual() << function(self)
     local viewNode = self.view
@@ -394,8 +332,6 @@ SnapshotChallengeMainInfoCommon._RefreshTitle = HL.Virtual() << function(self)
         viewNode.commonTitle.timeTxtNode.gameObject:SetActive(false)
     end
 end
-
-
 
 SnapshotChallengeMainInfoCommon._RefreshStageCell = HL.Virtual() << function(self)
     local viewNode = self.view
@@ -463,9 +399,6 @@ SnapshotChallengeMainInfoCommon._RefreshStageCell = HL.Virtual() << function(sel
     finalBar.progressImg.fillAmount = completeCount == infoCount and 1 or 0
 end
 
-
-
-
 SnapshotChallengeMainInfoCommon._RefreshContentUI = HL.Virtual(HL.Number) << function(self, stageIndex)
     local viewNode = self.view
     self.m_info.curSelectStage = stageIndex
@@ -530,9 +463,6 @@ SnapshotChallengeMainInfoCommon._RefreshContentUI = HL.Virtual(HL.Number) << fun
     table.insert(self.m_readStageIds, stageInfo.stageId)
 end
 
-
-
-
 SnapshotChallengeMainInfoCommon._ChangeSelectStage = HL.Virtual(HL.Number) << function(self, stageIndex)
     local oldIndex = self.m_info.curSelectStage
     local oldStageNode = self.m_stageNodeList[oldIndex]
@@ -540,7 +470,7 @@ SnapshotChallengeMainInfoCommon._ChangeSelectStage = HL.Virtual(HL.Number) << fu
     local oldStageInfo = self.m_info.stageInfoList[oldIndex]
     
     if ActivityUtils.isNewActivityConditionalStage(oldStageInfo.stageId) then
-        ActivityUtils.setFalseNewActivityConditionalStage(oldStageInfo.stageId, true)
+        ActivityUtils.setFalseNewActivityConditionalStage(oldStageInfo.stageId)
     end
     if oldStageInfo.state ~= self.StageStateEnum.Complete then
         oldStageNode.stateCtrl:SetState("NoRedDot")
@@ -553,19 +483,14 @@ SnapshotChallengeMainInfoCommon._ChangeSelectStage = HL.Virtual(HL.Number) << fu
     self:_RefreshContentUI(stageIndex)
     
     if ActivityUtils.isNewActivityConditionalStage(curStageInfo.stageId) then
-        ActivityUtils.setFalseNewActivityConditionalStage(curStageInfo.stageId, true)
+        ActivityUtils.setFalseNewActivityConditionalStage(curStageInfo.stageId)
     end
     if curStageInfo.state == self.StageStateEnum.Complete then
         curStageNode.stateCtrl:SetState("HasRedDot")
     else
         curStageNode.stateCtrl:SetState("NoRedDot")
     end
-    
-    ClientDataManagerInst:SaveUserData(ClientDataManagerInst.defaultCategory) 
 end
-
-
-
 
 
 
@@ -577,9 +502,6 @@ SnapshotChallengeMainInfoCommon._OnMultiStageUpdate = HL.Virtual(HL.Any) << func
     self:_UpdateData(false)
     self:_RefreshAllUI()
 end
-
-
-
 
 SnapshotChallengeMainInfoCommon._OnClickStageBtn = HL.Virtual(HL.Number) << function(self, luaIndex)
     local stageInfo = self.m_info.stageInfoList[luaIndex]
@@ -596,8 +518,6 @@ SnapshotChallengeMainInfoCommon._OnClickStageBtn = HL.Virtual(HL.Number) << func
         end
     end
 end
-
-
 
 SnapshotChallengeMainInfoCommon._Close = HL.Virtual() << function(self)
     PhaseManager:PopPhase(PHASE_ID)

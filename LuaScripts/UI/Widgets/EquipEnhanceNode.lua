@@ -1,29 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 EquipEnhanceNode = HL.Class('EquipEnhanceNode', UIWidgetBase)
 
 EquipEnhanceNode.customNormalBgColor = HL.Field(HL.Any)
 
-
 EquipEnhanceNode.m_enhancedLevel = HL.Field(HL.Number) << 0
 
-
 EquipEnhanceNode.m_maxEnhancedLevel = HL.Field(HL.Number) << 0
-
-
 
 EquipEnhanceNode._OnFirstTimeInit = HL.Override() << function(self)
 
 end
-
-
-
 
 EquipEnhanceNode.InitEquipEnhanceNode = HL.Method(HL.Table) << function(self, args)
     self:_FirstTimeInit()
@@ -57,8 +44,6 @@ EquipEnhanceNode.InitEquipEnhanceNode = HL.Method(HL.Table) << function(self, ar
     self.view.img.color = isMaxEnhanced and self.config.COLOR_ENHANCED or
         (self.customNormalBgColor == nil and self.config.COLOR_NORMAL or self.customNormalBgColor)
 end
-
-
 
 EquipEnhanceNode.GetEnhanceLevel = HL.Method().Return(HL.Number, HL.Number) << function(self)
     return self.m_enhancedLevel, self.m_maxEnhancedLevel

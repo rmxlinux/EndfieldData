@@ -2,79 +2,7 @@ local QuickBarItemType = FacConst.QuickBarItemType
 
 local autoCalcOrderUICtrl = require_ex('UI/Panels/Base/AutoCalcOrderUICtrl')
 local PANEL_ID = PanelId.FacQuickBar
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacQuickBarCtrl = HL.Class('FacQuickBarCtrl', autoCalcOrderUICtrl.AutoCalcOrderUICtrl)
-
 
 
 
@@ -111,20 +39,14 @@ FacQuickBarCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHANGE_SPACESHIP_DOMAIN_ID] = 'OnChangeSpaceshipDomainId',
 }
 
-
 FacQuickBarCtrl.m_typeCells = HL.Field(HL.Forward("UIListCache"))
-
 
 FacQuickBarCtrl.m_itemCells = HL.Field(HL.Forward("UIListCache"))
 
 
 FacQuickBarCtrl.maxItemCount = HL.Const(HL.Number) << 9
 
-
 FacQuickBarCtrl.m_useActiveAction = HL.Field(HL.Boolean) << false
-
-
-
 
 
 FacQuickBarCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -138,15 +60,11 @@ FacQuickBarCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.facQuickBarClearDropZone:InitFacQuickBarClearDropZone()
 end
 
-
-
 FacQuickBarCtrl.OnShow = HL.Override() << function(self)
     FacQuickBarCtrl.Super.OnShow(self)
     self.view.dropHint.gameObject:SetActive(false)
     self.view.facQuickBarClearDropZone.gameObject:SetActive(false)
 end
-
-
 
 FacQuickBarCtrl.OnHide = HL.Override() << function(self)
     FacQuickBarCtrl.Super.OnHide(self)
@@ -157,22 +75,24 @@ FacQuickBarCtrl.OnHide = HL.Override() << function(self)
         
         
         self:_ToggleCellActionOnSetNaviTarget(true)
+        if self.m_useActiveAction then
+            
+            
+            
+            
+            
+            
+            self.view.main:ManuallyStopFocus()
+        end
     end
 end
-
-
 
 FacQuickBarCtrl.OnClose = HL.Override() << function(self)
     FacQuickBarCtrl.Super.OnClose(self)
 end
 
-
-
-
 FacQuickBarCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, isActive)
 end
-
-
 
 FacQuickBarCtrl._RefreshContent = HL.Method() << function(self)
     self:_InitDataInfo()
@@ -182,10 +102,7 @@ end
 
 
 
-
 FacQuickBarCtrl.m_typeInfos = HL.Field(HL.Table)
-
-
 
 FacQuickBarCtrl._InitDataInfo = HL.Method() << function(self)
     local remoteFactoryCore = GameInstance.player.remoteFactory.core
@@ -215,6 +132,17 @@ FacQuickBarCtrl._InitDataInfo = HL.Method() << function(self)
     local needShowPipe = self.m_arg.showPipe and not isInSettlementDefenseDefending and FactoryUtils.canShowPipe()
     self.view.pipeNode.gameObject:SetActive(needShowPipe)
     self.view.decoLine.gameObject:SetActive(needShowBelt or needShowPipe)
+
+    local needShowBuildBtn = self.m_arg.showBuildBtn
+        and (GameInstance.mode.modeType == GEnums.GameModeType.Default or Utils.isInBlackbox())
+        and Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacHub)
+    self.view.buildBtn.gameObject:SetActive(needShowBuildBtn)
+    self.view.buildBtn.onClick:RemoveAllListeners()
+    if needShowBuildBtn then
+        self.view.buildBtn.onClick:AddListener(function()
+            self:_OpenBuildList()
+        end)
+    end
 
     local typeData = Tables.factoryQuickBarTypeTable:GetValue("custom")
     local typeInfo = {
@@ -256,10 +184,7 @@ end
 
 
 
-
 FacQuickBarCtrl.m_selectedTypeIndex = HL.Field(HL.Number) << 1
-
-
 FacQuickBarCtrl._RefreshTypes = HL.Method() << function(self)
     if not self.m_typeInfos then
         return
@@ -288,15 +213,10 @@ FacQuickBarCtrl._RefreshTypes = HL.Method() << function(self)
     self:_RefreshItemList()
 end
 
-
-
-
 FacQuickBarCtrl._OnClickType = HL.Method(HL.Number) << function(self, index)
     self.m_selectedTypeIndex = index
     self:_RefreshItemList()
 end
-
-
 
 
 
@@ -313,10 +233,6 @@ FacQuickBarCtrl._RefreshItemList = HL.Method() << function(self)
         self:_UpdateCell(cell, index)
     end)
 end
-
-
-
-
 
 FacQuickBarCtrl._UpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local item = self.m_typeInfos[self.m_selectedTypeIndex].items[index]
@@ -399,8 +315,16 @@ FacQuickBarCtrl._UpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cel
 
     cell.item.view.button.onDoubleClick:RemoveAllListeners()
     if isBuilding then
+        local isSkipBuilding = FactoryUtils.isSkipBuildingInvalidInDomainByItemId(itemId)
         local hasCraft = Tables.FactoryItemAsHubCraftOutcomeTable:TryGetValue(itemId)
-        if hasCraft then
+        if isSkipBuilding then
+            
+            cell.item.view.button.onDoubleClick:AddListener(function()
+                if count == 0 then
+                    Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_SKIP_BUILDING_CANNOT_CRAFT_IN_DOMAIN)
+                end
+            end)
+        elseif hasCraft then
             cell.item.view.button.onDoubleClick:AddListener(function()
                 if count == 0 then
                     Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { selectedId = itemId })
@@ -409,7 +333,7 @@ FacQuickBarCtrl._UpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cel
         elseif FactoryUtils.isDecoBuildingItem(itemId) then
             cell.item.view.button.onDoubleClick:AddListener(function()
                 if count == 0 then
-                    Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_DECO_BUILDING_ZERO_NO_CRAFT)
+                    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { selectedId = itemId })
                 end
             end)
         end
@@ -508,10 +432,6 @@ FacQuickBarCtrl._UpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cel
     cell.item.view.nameNode.gameObject:SetActive(false)
 end
 
-
-
-
-
 FacQuickBarCtrl._RefreshCellHoverBinding = HL.Method(HL.Forward("ItemSlot"), HL.Number) << function(self, cell, index)
     local button = cell.item.view.button
     local item = self.m_typeInfos[self.m_selectedTypeIndex].items[index]
@@ -544,17 +464,9 @@ FacQuickBarCtrl._RefreshCellHoverBinding = HL.Method(HL.Forward("ItemSlot"), HL.
     InputManagerInst:SetBindingText(button.hoverConfirmBindingId, Language.LUA_ITEM_ACTION_PLACE)
 end
 
-
-
-
-
 FacQuickBarCtrl._OnClickItem = HL.Method(HL.Number, HL.Opt(Vector2)) << function(self, index, mousePosition)
     self:_BuildItem(index, mousePosition)
 end
-
-
-
-
 
 FacQuickBarCtrl._BuildItem = HL.Method(HL.Number, HL.Opt(Vector2)) << function(self, index, mousePosition)
     local item = self.m_typeInfos[self.m_selectedTypeIndex].items[index]
@@ -581,9 +493,20 @@ FacQuickBarCtrl._BuildItem = HL.Method(HL.Number, HL.Opt(Vector2)) << function(s
             Notify(MessageConst.FAC_ENTER_BUILDING_MODE, args)
             return
         else
-            local hasCraft = Tables.FactoryItemAsHubCraftOutcomeTable:TryGetValue(itemId)
-            local showJumpToast = hasCraft and not DeviceInfo.usingController  
-            Notify(MessageConst.SHOW_TOAST, showJumpToast and Language.LUA_FAC_QUICK_BAR_COUNT_ZERO or Language.LUA_FAC_QUICK_BAR_COUNT_ZERO_NO_JUMP)
+            if FactoryUtils.isSkipUnlockedBuildingByItemId(itemId) then
+                
+                Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_COUNT_ZERO_NO_JUMP)
+            else
+                local hasCraft = Tables.FactoryItemAsHubCraftOutcomeTable:TryGetValue(itemId)
+                local showJumpToast = hasCraft and not DeviceInfo.usingController  
+                local isDecoBuilding = FactoryUtils.isDecoBuildingItem(itemId)
+                local text = DeviceInfo.usingTouch and Language.LUA_FAC_QUICK_BAR_COUNT_ZERO_TOUCH or Language.LUA_FAC_QUICK_BAR_COUNT_ZERO
+                if isDecoBuilding then
+                    showJumpToast = not DeviceInfo.usingController
+                    text = DeviceInfo.usingTouch and Language.LUA_FAC_QUICK_BAR_DECO_COUNT_ZERO_TOUCH or Language.LUA_FAC_QUICK_BAR_DECO_COUNT_ZERO
+                end
+                Notify(MessageConst.SHOW_TOAST, showJumpToast and text or Language.LUA_FAC_QUICK_BAR_COUNT_ZERO_NO_JUMP)
+            end
             return
         end
     else
@@ -599,14 +522,9 @@ end
 
 
 
-
-
 FacQuickBarCtrl._CanDrop = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_typeInfos[self.m_selectedTypeIndex].canDrop == true
 end
-
-
-
 
 FacQuickBarCtrl.OnOtherStartDragItem = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if not self:IsShow() then
@@ -615,24 +533,26 @@ FacQuickBarCtrl.OnOtherStartDragItem = HL.Method(HL.Forward('UIDragHelper')) << 
     if not self:_CanDrop() then
         return
     end
-    if UIUtils.isTypeDropValid(dragHelper, UIConst.FACTORY_QUICK_BAR_DROP_ACCEPT_INFO) then
+    if not dragHelper.cantDrop and UIUtils.isTypeDropValid(dragHelper, UIConst.FACTORY_QUICK_BAR_DROP_ACCEPT_INFO) then
         if dragHelper.source ~= UIConst.UI_DRAG_DROP_SOURCE_TYPE.QuickBar then
             self.view.dropHint.gameObject:SetActive(true)
             self.view.dropHint.transform:SetAsLastSibling()
         end
     else
         self.view.cantDropHint.gameObject:SetActive(true)
+        if string.isEmpty(dragHelper.cantDropText) then
+            self.view.cantDropText.text = Language["ui_fac_quick_bar_notport"]
+        else
+            self.view.cantDropText.text = dragHelper.cantDropText
+        end
         self.view.cantDropHint.transform:SetAsLastSibling()
     end
     self.view.beltNode.notDropHint.gameObject:SetActive(true)
     self.view.pipeNode.notDropHint.gameObject:SetActive(true)
 end
 
-
-
-
 FacQuickBarCtrl.OnOtherEndDragItem = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
-    if UIUtils.isTypeDropValid(dragHelper, UIConst.FACTORY_QUICK_BAR_DROP_ACCEPT_INFO) then
+    if not dragHelper.cantDrop and UIUtils.isTypeDropValid(dragHelper, UIConst.FACTORY_QUICK_BAR_DROP_ACCEPT_INFO) then
         self.view.dropHint.gameObject:SetActive(false)
     else
         self.view.cantDropHint.gameObject:SetActive(false)
@@ -640,10 +560,6 @@ FacQuickBarCtrl.OnOtherEndDragItem = HL.Method(HL.Forward('UIDragHelper')) << fu
     self.view.beltNode.notDropHint.gameObject:SetActive(false)
     self.view.pipeNode.notDropHint.gameObject:SetActive(false)
 end
-
-
-
-
 
 FacQuickBarCtrl._OnDropItem = HL.Method(HL.Number, HL.Forward('UIDragHelper')) << function(self, index, dragHelper)
     local csIndex = CSIndex(index)
@@ -658,7 +574,10 @@ FacQuickBarCtrl._OnDropItem = HL.Method(HL.Number, HL.Forward('UIDragHelper')) <
         else
             GameInstance.player.remoteFactory:SendMoveQuickBar(fcType, 0, fromCSIndex, csIndex)
         end
-    else
+
+        UIUtils.playItemDropAudio(dragHelper:GetId())
+        AudioAdapter.PostEvent("au_ui_common_put_down")
+    elseif not dragHelper.cantDrop then
         
         local itemId = dragHelper:GetId()
         if remoteFactoryCore.isTempQuickBarActive then
@@ -666,13 +585,11 @@ FacQuickBarCtrl._OnDropItem = HL.Method(HL.Number, HL.Forward('UIDragHelper')) <
         else
             GameInstance.player.remoteFactory:SendSetQuickBar(fcType, 0, csIndex, itemId)
         end
+
+        UIUtils.playItemDropAudio(dragHelper:GetId())
+        AudioAdapter.PostEvent("au_ui_common_put_down")
     end
-
-    UIUtils.playItemDropAudio(dragHelper:GetId())
-    AudioAdapter.PostEvent("au_ui_common_put_down")
 end
-
-
 
 FacQuickBarCtrl.OnQuickBarChanged = HL.Method() << function(self)
     if not self.m_arg then 
@@ -681,12 +598,6 @@ FacQuickBarCtrl.OnQuickBarChanged = HL.Method() << function(self)
     self:_InitDataInfo()
     self:_RefreshTypes()
 end
-
-
-
-
-
-
 
 FacQuickBarCtrl._OnQuickBarEndDrag = HL.Method(HL.Number, HL.Opt(HL.Userdata, HL.Forward('UIDropHelper'), HL.Any)) << function(self, index, enterObj, enterDrop, eventData)
     if not eventData then
@@ -706,10 +617,7 @@ end
 
 
 
-
 FacQuickBarCtrl.m_arg = HL.Field(HL.Table)
-
-
 
 FacQuickBarCtrl.ShowFacQuickBar = HL.StaticMethod(HL.Table) << function(arg)
     if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacMode) then
@@ -731,25 +639,15 @@ FacQuickBarCtrl.ShowFacQuickBar = HL.StaticMethod(HL.Table) << function(arg)
     self:_RefreshControllerSettingOnShow()
 end
 
-
-
-
 FacQuickBarCtrl.HideFacQuickBar = HL.Method(HL.Number) << function(self, panelId)
     self:_CustomHide(panelId)
 end
-
-
-
-
 
 FacQuickBarCtrl.CustomSetPanelOrder = HL.Override(HL.Opt(HL.Number, HL.Table)) << function(self, maxOrder, args)
     self.m_curArgs = args
     self:SetSortingOrder(maxOrder, false)
     self:UpdateInputGroupState()
 end
-
-
-
 
 
 
@@ -762,9 +660,6 @@ FacQuickBarCtrl.OnSetInSafeZone = HL.Method(HL.Opt(HL.Any)) << function(self, ar
     self:_InitDataInfo()
     self:_RefreshItemList()
 end
-
-
-
 
 FacQuickBarCtrl.OnItemCountChanged = HL.Method(HL.Table) << function(self, args)
     if not self.m_typeInfos then
@@ -783,9 +678,6 @@ FacQuickBarCtrl.OnItemCountChanged = HL.Method(HL.Table) << function(self, args)
         end
     end
 end
-
-
-
 
 FacQuickBarCtrl._OnQuickDropItemToQuickBar = HL.Method(HL.Any) << function(self, itemId)
     if type(itemId) == "table" then
@@ -831,14 +723,9 @@ FacQuickBarCtrl._OnQuickDropItemToQuickBar = HL.Method(HL.Any) << function(self,
     end
 end
 
-
-
-
 FacQuickBarCtrl._OnNewScopeInfoReceived = HL.Method(HL.Any) << function(self, scopeName)
     self:_RefreshContent()
 end
-
-
 
 
 
@@ -852,21 +739,15 @@ FacQuickBarCtrl.OnBeltUnlocked = HL.Method() << function(self)
     end
 end
 
-
-
 FacQuickBarCtrl._InitBeltNode = HL.Method() << function(self)
     self:_InitLogisticNode(self.view.beltNode, FacConst.BELT_ITEM_ID, function()
         self:_OnClickBelt()
     end)
-    end
-
-
+end
 
 FacQuickBarCtrl._OnClickBelt = HL.Method() << function(self)
     Notify(MessageConst.FAC_ENTER_BELT_MODE, { beltId = FacConst.BELT_ID })
 end
-
-
 
 
 
@@ -880,24 +761,15 @@ FacQuickBarCtrl.OnPipeUnlocked = HL.Method() << function(self)
     end
 end
 
-
-
 FacQuickBarCtrl._InitPipeNode = HL.Method() << function(self)
     self:_InitLogisticNode(self.view.pipeNode, FacConst.PIPE_ITEM_ID, function()
         self:_OnClickPipe()
     end)
 end
 
-
-
 FacQuickBarCtrl._OnClickPipe = HL.Method() << function(self)
     Notify(MessageConst.FAC_ENTER_BELT_MODE, { beltId = FacConst.PIPE_ID })
 end
-
-
-
-
-
 
 FacQuickBarCtrl._InitLogisticNode = HL.Method(HL.Table, HL.String, HL.Function) << function(self, node, itemId, onClick)
     node.notDropHint.gameObject:SetActive(false)
@@ -937,13 +809,9 @@ end
 
 
 
-
 FacQuickBarCtrl.m_setBuildingBindingGroupId = HL.Field(HL.Number) << -1
 
-
 FacQuickBarCtrl.m_isSetSlot = HL.Field(HL.Boolean) << false
-
-
 
 FacQuickBarCtrl._InitSetBindings = HL.Method() << function(self)
     self.m_setBuildingBindingGroupId = InputManagerInst:CreateGroup(self.view.mainInputBindingGroupMonoTarget.groupId)
@@ -956,8 +824,6 @@ FacQuickBarCtrl._InitSetBindings = HL.Method() << function(self)
     InputManagerInst:ToggleGroup(self.m_setBuildingBindingGroupId, false)
 end
 
-
-
 FacQuickBarCtrl._OnConfirmSetInController = HL.Method() << function(self)
     AudioAdapter.PostEvent("Au_UI_Item_Put_Producer")
     if self.m_isSetSlot then
@@ -967,8 +833,6 @@ FacQuickBarCtrl._OnConfirmSetInController = HL.Method() << function(self)
     end
 end
 
-
-
 FacQuickBarCtrl._OnCancelSetInController = HL.Method() << function(self)
     if self.m_isSetSlot then
         self:_OnCancelSwitchSlot()
@@ -977,13 +841,10 @@ FacQuickBarCtrl._OnCancelSetInController = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacQuickBarCtrl._OnEnterSetModeInController = HL.Method(HL.Table) << function(self, args)
     UIUtils.changeAndTrySetNaviBindingType(self.view.main, CS.UnityEngine.UI.NavigationBindingType.HorizontalOnly)
-
     InputManagerInst:ToggleGroup(self.m_setBuildingBindingGroupId, true)
+    InputManagerInst:ToggleGroup(self.view.buildBtnInputBindingGroupMonoTarget.groupId, false)
 
     Notify(MessageConst.SHOW_AS_CONTROLLER_SMALL_MENU, {
         panelId = PANEL_ID,
@@ -997,20 +858,15 @@ FacQuickBarCtrl._OnEnterSetModeInController = HL.Method(HL.Table) << function(se
     self:_RefreshContent()
 end
 
-
-
-
 FacQuickBarCtrl._OnExitSetModeInController = HL.Method(HL.Boolean) << function(self, removeLayer)
     Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.mainInputBindingGroupMonoTarget.groupId)
     if removeLayer then
         InputManagerInst.controllerNaviManager:TryRemoveLayer(self.naviGroup)
     end
     InputManagerInst:ToggleGroup(self.m_setBuildingBindingGroupId, false)
+    InputManagerInst:ToggleGroup(self.view.buildBtnInputBindingGroupMonoTarget.groupId, true)
     UIUtils.changeAndTrySetNaviBindingType(self.view.main, CS.UnityEngine.UI.NavigationBindingType.AllDirections)
 end
-
-
-
 
 FacQuickBarCtrl._OnDefaultNaviFailed = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, dir)
     if not string.isEmpty(self.m_curSettingBuildingItemId) then
@@ -1021,11 +877,7 @@ FacQuickBarCtrl._OnDefaultNaviFailed = HL.Method(CS.UnityEngine.UI.NaviDirection
     end
 end
 
-
 FacQuickBarCtrl.m_curSettingBuildingItemId = HL.Field(HL.String) << ''
-
-
-
 
 FacQuickBarCtrl.StartSetBuildingOnFacQuickBar = HL.Method(HL.Table) << function(self, args)
     local itemId = args.itemId
@@ -1047,8 +899,6 @@ FacQuickBarCtrl.StartSetBuildingOnFacQuickBar = HL.Method(HL.Table) << function(
     cell:SetAsNaviTarget()
 end
 
-
-
 FacQuickBarCtrl._SetBuildingOnFacQuickBar = HL.Method() << function(self)
     if string.isEmpty(self.m_curSettingBuildingItemId) then
         
@@ -1062,8 +912,6 @@ FacQuickBarCtrl._SetBuildingOnFacQuickBar = HL.Method() << function(self)
     self:_ExitSetBuilding()
 end
 
-
-
 FacQuickBarCtrl._ExitSetBuilding = HL.Method() << function(self)
     self:_OnExitSetModeInController(true)
 
@@ -1072,11 +920,7 @@ FacQuickBarCtrl._ExitSetBuilding = HL.Method() << function(self)
     self:_RefreshContent()
 end
 
-
 FacQuickBarCtrl.m_switchSlotFromIndex = HL.Field(HL.Number) << -1
-
-
-
 
 FacQuickBarCtrl.StartSwitchSlotOnFacQuickBar = HL.Method(HL.Table) << function(self, args)
     self.m_isSetSlot = true
@@ -1093,9 +937,6 @@ FacQuickBarCtrl.StartSwitchSlotOnFacQuickBar = HL.Method(HL.Table) << function(s
     initNaviCell.item:SetAsNaviTarget()
 end
 
-
-
-
 FacQuickBarCtrl._ExitSwitchSlot = HL.Method(HL.Boolean) << function(self, isConfirm)
     self:_OnExitSetModeInController(false)
 
@@ -1108,20 +949,16 @@ FacQuickBarCtrl._ExitSwitchSlot = HL.Method(HL.Boolean) << function(self, isConf
         local currCell = self.m_itemCells:GetItem(self.m_currentNaviIndex)
         InputManagerInst:ToggleBinding(currCell.item.view.button.hoverConfirmBindingId, true)
     else
-        UIUtils.setAsNaviTarget(fromCell.item.view.button)
+        self:SetNaviTarget(fromCell.item.view.button)
         InputManagerInst:ToggleBinding(fromCell.item.view.button.hoverConfirmBindingId, true)
     end
 end
-
-
 
 FacQuickBarCtrl._OnConfirmSwitchSlot = HL.Method() << function(self)
     local fcType = self.m_typeInfos[self.m_selectedTypeIndex].fcType
     GameInstance.player.remoteFactory:SendMoveQuickBar(fcType, 0, CSIndex(self.m_switchSlotFromIndex), CSIndex(self.m_currentNaviIndex))
     self:_ExitSwitchSlot(true)
 end
-
-
 
 FacQuickBarCtrl._OnCancelSwitchSlot = HL.Method() << function(self)
     self:_ExitSwitchSlot(false)
@@ -1132,25 +969,17 @@ end
 
 
 
-
 FacQuickBarCtrl.m_manualFocusBindingId = HL.Field(HL.Number) << -1
-
 
 FacQuickBarCtrl.m_manualUnFocusBindingId = HL.Field(HL.Number) << -1
 
-
 FacQuickBarCtrl.m_currentNaviIndex = HL.Field(HL.Number) << -1
-
 
 FacQuickBarCtrl.m_zoomCamGroupId = HL.Field(HL.Number) << 0
 
-
 FacQuickBarCtrl.m_lastCellsActionOnSetNaviTarget = HL.Field(HL.Table)
 
-
 FacQuickBarCtrl.m_lastAttachPanelId = HL.Field(HL.Number) << -1
-
-
 
 FacQuickBarCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -1188,9 +1017,6 @@ FacQuickBarCtrl._InitController = HL.Method() << function(self)
     self:_InitSetBindings()
 end
 
-
-
-
 FacQuickBarCtrl._ToggleCellActionOnSetNaviTarget = HL.Method(HL.Boolean) << function(self, active)
     if not active or self.m_lastCellsActionOnSetNaviTarget == nil or next(self.m_lastCellsActionOnSetNaviTarget) == nil then
         self.m_lastCellsActionOnSetNaviTarget = {}
@@ -1206,9 +1032,6 @@ FacQuickBarCtrl._ToggleCellActionOnSetNaviTarget = HL.Method(HL.Boolean) << func
         cell.item.view.button:ChangeActionOnSetNaviTarget(action)
     end
 end
-
-
-
 
 FacQuickBarCtrl._OnIsTopLayerChanged = HL.Method(HL.Boolean) << function(self, isTopLayer)
     InputManagerInst:ToggleGroup(self.m_zoomCamGroupId, isTopLayer and self.m_useActiveAction)
@@ -1243,8 +1066,6 @@ FacQuickBarCtrl._OnIsTopLayerChanged = HL.Method(HL.Boolean) << function(self, i
     end
 end
 
-
-
 FacQuickBarCtrl._RefreshControllerSettingOnShow = HL.Method() << function(self)
     if DeviceInfo.usingTouch then
         return
@@ -1261,9 +1082,6 @@ FacQuickBarCtrl._RefreshControllerSettingOnShow = HL.Method() << function(self)
     UIUtils.changeAndTrySetNaviBindingType(self.view.main, naviType)
 end
 
-
-
-
 FacQuickBarCtrl.ToggleCanDeactiveQuickBar = HL.Method(HL.Table) << function(self, args)
     local canDeactive = unpack(args)
     if not self.m_useActiveAction then
@@ -1275,8 +1093,6 @@ FacQuickBarCtrl.ToggleCanDeactiveQuickBar = HL.Method(HL.Table) << function(self
     end
 end
 
-
-
 FacQuickBarCtrl.NaviToFacQuickBar = HL.Method() << function(self)
     if not self:IsShow() then
         return
@@ -1287,11 +1103,12 @@ end
 
 
 
-
-
-
 FacQuickBarCtrl.OnChangeSpaceshipDomainId = HL.Method(HL.Any) << function(self, _)
     self:OnQuickBarChanged()
+end
+
+FacQuickBarCtrl._OpenBuildList = HL.Method() << function(self)
+    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, {showLastType = true})
 end
 
 HL.Commit(FacQuickBarCtrl)

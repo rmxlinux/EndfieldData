@@ -9,7 +9,6 @@ MapTransitionMaskCtrl = HL.Class('MapTransitionMaskCtrl', uiCtrl.UICtrl)
 
 
 
-
 MapTransitionMaskCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }

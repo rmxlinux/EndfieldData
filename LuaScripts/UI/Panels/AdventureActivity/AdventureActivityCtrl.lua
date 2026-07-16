@@ -2,30 +2,14 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.AdventureActivity
 
-
-
-
-
-
-
-
-
-
-
-
-
 AdventureActivityCtrl = HL.Class('AdventureActivityCtrl', uiCtrl.UICtrl)
 
-
 AdventureActivityCtrl.m_dataList = HL.Field(HL.Table)
-
 
 AdventureActivityCtrl.m_getCellFunc = HL.Field(HL.Function)
 
 
-
 AdventureActivityCtrl.m_cellRewardCellsDict = HL.Field(HL.Table)
-
 
 
 
@@ -36,21 +20,16 @@ AdventureActivityCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 AdventureActivityCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitData()
     self:_BindUI()
     self:_RefreshUI()
 end
 
-
-
 AdventureActivityCtrl.OnShow = HL.Override() << function(self)
     local firstCell = self.m_getCellFunc(self.view.itemScrollList:Get(0))
     if firstCell then
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.naviGroup, firstCell.normalNode)
+        self:SetNaviTarget(firstCell.normalNode)
     end
 
     
@@ -68,13 +47,9 @@ end
 
 
 
-
-
 AdventureActivityCtrl._InitData = HL.Method() << function(self)
     self.m_dataList = AdventureBookUtils.InitActivityDataList()
 end
-
-
 
 AdventureActivityCtrl._BindUI = HL.Method() << function(self)
     self.m_getCellFunc = UIUtils.genCachedCellFunction(self.view.itemScrollList)
@@ -86,15 +61,9 @@ AdventureActivityCtrl._BindUI = HL.Method() << function(self)
     self.m_cellRewardCellsDict = {}
 end
 
-
-
 AdventureActivityCtrl._RefreshUI = HL.Method() << function(self)
     self.view.itemScrollList:UpdateCount(#self.m_dataList)
 end
-
-
-
-
 
 AdventureActivityCtrl._SetupCellUI = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local data = self.m_dataList[luaIndex]
@@ -139,10 +108,6 @@ AdventureActivityCtrl._SetupCellUI = HL.Method(HL.Any, HL.Number) << function(se
     cell.clickBtn.onClick:RemoveAllListeners()
     cell.clickBtn.onClick:AddListener(data.ClickFunc)
 end
-
-
-
-
 
 AdventureActivityCtrl.SetRewardUI = HL.Method(HL.Any, HL.Any) << function(self, cell, rewardInfo)
     cell:InitItem(rewardInfo, function()

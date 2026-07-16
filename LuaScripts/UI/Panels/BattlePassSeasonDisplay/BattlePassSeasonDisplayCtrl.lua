@@ -2,15 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BattlePassSeasonDisplay
 
-
-
-
-
-
-
-
 BattlePassSeasonDisplayCtrl = HL.Class('BattlePassSeasonDisplayCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -21,20 +13,26 @@ BattlePassSeasonDisplayCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 BattlePassSeasonDisplayCtrl.m_isVideoReady = HL.Field(HL.Boolean) << false
 
-
 BattlePassSeasonDisplayCtrl.m_videoDelayTimer = HL.Field(HL.Number) << 0
-
 
 BattlePassSeasonDisplayCtrl.m_preloadVideoTime = HL.Field(HL.Number) << -1
 
 
-
-
-
 BattlePassSeasonDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    local videoAspectRatio
+    if Utils.checkIsPSDevice() then
+        videoAspectRatio = self.view.config.VIDEO_ASPECT_RATIO_PS5
+    elseif DeviceInfo.isMobile then
+        videoAspectRatio = self.view.config.VIDEO_ASPECT_RATIO_MOBILE
+    else
+        videoAspectRatio = self.view.config.VIDEO_ASPECT_RATIO_PC
+    end
+    if videoAspectRatio then
+        self.view.videoPlayer.view.aspectRatioFitter.aspectRatio = videoAspectRatio
+    end
+
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
     local curServerTime = DateTimeUtils.GetCurrentTimestampBySeconds()
     local leftSec = GameInstance.player.battlePassSystem.seasonData.closeTime - curServerTime
@@ -86,8 +84,6 @@ BattlePassSeasonDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
 
     self.m_preloadVideoTime = Time.unscaledTime
 end
-
-
 
 
 

@@ -2,30 +2,13 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FriendBlackList
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 FriendBlackListCtrl = HL.Class('FriendBlackListCtrl', uiCtrl.UICtrl)
-
 
 FriendBlackListCtrl.m_friendList = HL.Field(HL.Table)
 
-
 FriendBlackListCtrl.m_isPsnFriend = HL.Field(HL.Boolean) << false
 
-
 FriendBlackListCtrl.m_recoverState = HL.Field(HL.Table)
-
 
 
 
@@ -35,9 +18,6 @@ FriendBlackListCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_BLACK_LIST_INFO_SYNC] = 'OnSync',
     [MessageConst.ON_FRIEND_CELL_INFO_CHANGE] = 'OnCellChange',
 }
-
-
-
 
 
 FriendBlackListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -70,8 +50,6 @@ FriendBlackListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_ApplyRecoverState()
 end
 
-
-
 FriendBlackListCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = {}
     arg.blackListState = {
@@ -80,21 +58,15 @@ FriendBlackListCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) <
     return arg
 end
 
-
-
 FriendBlackListCtrl.OnSync = HL.Method() << function(self)
     self:_UpdateCache()
     self:_Refresh()
 end
 
-
-
 FriendBlackListCtrl.OnCellChange = HL.Method() << function(self)
     self:_UpdateCache()
     self:_Refresh(true)
 end
-
-
 
 FriendBlackListCtrl._UpdateCache = HL.Method() << function(self)
     self.m_friendList = {}
@@ -106,10 +78,6 @@ FriendBlackListCtrl._UpdateCache = HL.Method() << function(self)
         index = index + 1
     end
 end
-
-
-
-
 
 FriendBlackListCtrl._Refresh = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, stayTop, loading)
     local friendSystem = GameInstance.player.friendSystem
@@ -130,16 +98,12 @@ FriendBlackListCtrl._Refresh = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << func
     end
 end
 
-
-
 FriendBlackListCtrl._ApplyRecoverState = HL.Method() << function(self)
     local sortNode = self.view and self.view.friendList and self.view.friendList.view and self.view.friendList.view.sortNode
     if sortNode then
         sortNode:UpdateDeviceState()
     end
 end
-
-
 
 
 

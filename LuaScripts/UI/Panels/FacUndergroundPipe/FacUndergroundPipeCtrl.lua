@@ -2,51 +2,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacUndergroundPipe
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacUndergroundPipeCtrl = HL.Class('FacUndergroundPipeCtrl', uiCtrl.UICtrl)
 
 local UDPIPE_CONTROLLER_STATE_MAP = {
@@ -56,6 +11,8 @@ local UDPIPE_CONTROLLER_STATE_MAP = {
     ["udpipe_unloader_2"] = "AdvancedOutlet",
 }
 
+local GASLIQUID_UNLOCK_TECH_NODE_ID = "tech_jinlong_4_gas_pump_1"
+
 local UDPIPE_NODE_STATE = {
     Disconnect = "DisconnectState",
     Normal = "InOperationState",
@@ -64,51 +21,37 @@ local UDPIPE_NODE_STATE = {
     Limited = "FlowRateLimitState",
 }
 
-
 FacUndergroundPipeCtrl.m_buildingInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo)
-
 
 FacUndergroundPipeCtrl.m_curConnectNode = HL.Field(HL.Table)
 
-
 FacUndergroundPipeCtrl.m_curStateName = HL.Field(HL.String) << ""
-
 
 FacUndergroundPipeCtrl.m_isSpeedLimited = HL.Field(HL.Boolean) << false
 
-
 FacUndergroundPipeCtrl.m_maxSpeed = HL.Field(HL.Number) << 0
-
 
 FacUndergroundPipeCtrl.m_templateId = HL.Field(HL.String) << ""
 
-
 FacUndergroundPipeCtrl.m_isLoader = HL.Field(HL.Boolean) << false
-
 
 FacUndergroundPipeCtrl.m_updateThread = HL.Field(HL.Thread)
 
-
 FacUndergroundPipeCtrl.m_dropHelper = HL.Field(HL.Forward('UIDropHelper'))
-
 
 FacUndergroundPipeCtrl.m_capacityCount = HL.Field(HL.Number) << 0
 
-
 FacUndergroundPipeCtrl.m_lastConveyorItemId = HL.Field(HL.String) << ""
-
 
 FacUndergroundPipeCtrl.m_lastItemId = HL.Field(HL.String) << ""
 
-
 FacUndergroundPipeCtrl.m_itemCountZero = HL.Field(HL.Boolean) << false
-
 
 FacUndergroundPipeCtrl.m_cachedSprite = HL.Field(HL.Table)
 
-
 FacUndergroundPipeCtrl.m_needRefreshPortState = HL.Field(HL.Boolean) << false
 
+FacUndergroundPipeCtrl.m_cacheType = HL.Field(HL.Number) << 0
 
 
 
@@ -122,14 +65,15 @@ FacUndergroundPipeCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 FacUndergroundPipeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_buildingInfo = arg.uiInfo
     self.m_templateId = self.m_buildingInfo.nodeHandler.templateId
     self:_InitCfgData()
 
+    self.m_cacheType = GameInstance.player.facTechTreeSystem:NodeIsHidden(GASLIQUID_UNLOCK_TECH_NODE_ID) and FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid or FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid
+    self.view.liquidItemSlot:SetItemType(self.m_cacheType)
+    self.view.liquidItemSlot.view.cacheTypeCtrl:SetState(FacConst.FAC_CACHE_SLOT_TYPE_CTRL_STATE[self.m_cacheType])
+    self.view.buildingCommon:InitBuildingCommon(self.m_buildingInfo)
     self.view.mainUIController:SetState(UDPIPE_CONTROLLER_STATE_MAP[self.m_templateId])
     self.m_isLoader = FacConst.UDPIPE_PORT_LOAD_TYPE_MAP[self.m_templateId]
     self.m_curConnectNode = self.m_isLoader and self.view.exportInfo or self.view.entranceInfo
@@ -158,38 +102,31 @@ FacUndergroundPipeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self:_RefreshNaviGroupSwitcherInfos()
         end,
         hasFluidInCache = true,
+        hasGasInCache = self.m_cacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid,
     })
     self:_InitUndergroundPipeUpdateThread()
     self:_InitFacMachineCrafterController()
 
-    self.view.liquidItemSlot.view.facLiquidBg:InitFacLiquidBg()
     self.view.liquidItemSlot.view.liquidNaviGroup:NaviToThisGroup()
 
     GameInstance.remoteFactoryManager:RegisterInterestedUnitId(self.m_buildingInfo.nodeId)
 end
 
-
-
 FacUndergroundPipeCtrl.OnClose = HL.Override() << function(self)
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_buildingInfo.nodeId)
 end
 
-
-
 FacUndergroundPipeCtrl.OnShow = HL.Override() << function(self)
-    if self.m_needRefreshPortState then
+    if self.m_needRefreshPortState and self.m_buildingInfo.nodeHandler.valid then
         self.m_needRefreshPortState = false
+        self.m_buildingInfo:Update()
         self:_UpdateUdPipeConnectNode()
     end
 end
 
-
-
 FacUndergroundPipeCtrl.OnHide = HL.Override() << function(self)
     self.m_needRefreshPortState = true
 end
-
-
 
 FacUndergroundPipeCtrl._OnClickViewMapBtn = HL.Method() << function(self)
     local connect = self.m_buildingInfo.udPipe.connectComponent
@@ -201,8 +138,6 @@ FacUndergroundPipeCtrl._OnClickViewMapBtn = HL.Method() << function(self)
         MapUtils.openMap(mapInstId)
     end
 end
-
-
 
 FacUndergroundPipeCtrl._OnClickDisconnectBtn = HL.Method() << function(self)
     Notify(MessageConst.SHOW_POP_UP, {
@@ -228,29 +163,6 @@ FacUndergroundPipeCtrl._OnClickDisconnectBtn = HL.Method() << function(self)
     })
 end
 
-
-
-
-FacUndergroundPipeCtrl._OnPortBlockStateChange = HL.Method(HL.Table) << function(self, args)
-    local buildingNodeId = unpack(args)
-    local connect = self.m_buildingInfo.udPipe.connectComponent
-    if self.m_isLoader and connect == nil then
-        return
-    end
-
-    local nodeId = self.m_isLoader and connect.belongNode.nodeId or self.m_buildingInfo.nodeId
-    if buildingNodeId == nodeId then
-        
-        self:_StartCoroutine(function()
-            coroutine.wait(UIConst.FAC_COMMON_UI_MIDDLE_UPDATE_INTERVAL)
-            self:_UpdateUdPipeConnectNode()
-        end)
-    end
-end
-
-
-
-
 FacUndergroundPipeCtrl._OnConveyorChange = HL.Method(HL.Table) << function(self, args)
     if self.m_curConnectNode.itemAnim.curState == CS.Beyond.UI.UIConst.AnimationState.In then
         return
@@ -269,9 +181,6 @@ FacUndergroundPipeCtrl._OnConveyorChange = HL.Method(HL.Table) << function(self,
     end
 end
 
-
-
-
 FacUndergroundPipeCtrl._GetItemSprite = HL.Method(HL.String).Return(HL.Userdata) << function(self, itemId)
     if not self.m_cachedSprite then
         self.m_cachedSprite = {}
@@ -286,8 +195,6 @@ FacUndergroundPipeCtrl._GetItemSprite = HL.Method(HL.String).Return(HL.Userdata)
     end
     return itemSprite
 end
-
-
 
 FacUndergroundPipeCtrl._UpdateUdPipeConnectNode = HL.Method() << function(self)
     local connect = self.m_buildingInfo.udPipe.connectComponent
@@ -306,6 +213,7 @@ FacUndergroundPipeCtrl._UpdateUdPipeConnectNode = HL.Method() << function(self)
     self.view.buildingCommon.view.controllerSideMenuBtn:InitControllerSideMenuBtn({
         extraBtnInfos = {
             {
+                name = "UdpipeViewMap",
                 textId = "ui_fac_udpipe_map_button",
                 sprite = self.m_curConnectNode.mapIcon.sprite,
                 priority = 3.1,
@@ -314,6 +222,7 @@ FacUndergroundPipeCtrl._UpdateUdPipeConnectNode = HL.Method() << function(self)
                 end
             },
             {
+                name = "UdpipeDisconnect",
                 textId = "ui_fac_udpipe_disconnect_button",
                 sprite = self.m_curConnectNode.disconnectIcon.sprite,
                 priority = 3.2,
@@ -323,10 +232,9 @@ FacUndergroundPipeCtrl._UpdateUdPipeConnectNode = HL.Method() << function(self)
             },
         }
     })
-    local bData = Tables.factoryBuildingTable:GetValue(connect.belongNode.templateId)
-    self.m_curConnectNode.titleText.text = bData.name
-    self.m_curConnectNode.titleIcon:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, bData.iconOnPanel)
-    self.m_curConnectNode.btnNaviGroup:SetFocusBindingText(bData.name)
+    local bdata = Tables.factoryBuildingTable:GetValue(connect.belongNode.templateId)
+    self.m_curConnectNode.titleText.text = bdata.name
+    self.m_curConnectNode.btnNaviGroup:SetFocusBindingText(bdata.name)
     self.m_isSpeedLimited = FacConst.UDPIPE_PORT_LAYOUT_STATE_MAP[connect.belongNode.templateId] and not FacConst.UDPIPE_PORT_LAYOUT_STATE_MAP[self.m_templateId]
     local dstState = FactoryUtils.getBuildingStateType(self.m_buildingInfo.nodeId)
     local targetState
@@ -347,8 +255,6 @@ FacUndergroundPipeCtrl._UpdateUdPipeConnectNode = HL.Method() << function(self)
     self.m_curStateName = targetState
 end
 
-
-
 FacUndergroundPipeCtrl._UpdateConnectPassSpeed = HL.Method() << function(self)
     local connect = self.m_buildingInfo.udPipe.connectComponent
     if connect ~= nil then
@@ -356,8 +262,6 @@ FacUndergroundPipeCtrl._UpdateConnectPassSpeed = HL.Method() << function(self)
         self.m_curConnectNode.speedTxt.text = tostring(curSpeed)
     end
 end
-
-
 
 FacUndergroundPipeCtrl._InitUndergroundPipeUpdateThread = HL.Method() << function(self)
     self:_RefreshUndergroundPipeContainerCount()
@@ -376,8 +280,6 @@ FacUndergroundPipeCtrl._InitUndergroundPipeUpdateThread = HL.Method() << functio
     end)
 end
 
-
-
 FacUndergroundPipeCtrl._InitCfgData = HL.Method() << function(self)
     local success, storagerData = Tables.factoryUndergroundPipeTable:TryGetValue(self.m_templateId)
     if not success then
@@ -388,8 +290,6 @@ FacUndergroundPipeCtrl._InitCfgData = HL.Method() << function(self)
     self.m_maxSpeed = 1000 / storagerData.msPerRound
 end
 
-
-
 FacUndergroundPipeCtrl._RefreshUndergroundPipeContainerCount = HL.Method() << function(self)
     local itemCount = self.m_buildingInfo.fluidContainer.holdItemCount
 
@@ -398,9 +298,6 @@ FacUndergroundPipeCtrl._RefreshUndergroundPipeContainerCount = HL.Method() << fu
     local itemView = self.view.liquidItemSlot.view.item.view
     itemView.count.color = countColor
 end
-
-
-
 
 FacUndergroundPipeCtrl._RefreshLiquidItemSlot = HL.Method(HL.Boolean) << function(self, firstInit)
     local itemId = self.m_buildingInfo.fluidContainer.holdItemId
@@ -435,24 +332,29 @@ FacUndergroundPipeCtrl._RefreshLiquidItemSlot = HL.Method(HL.Boolean) << functio
             itemSlot.gameObject.name = "Item_" .. itemId
             itemSlot.item.view.button.clickHintTextId = "virtual_mouse_hint_item_tips"
             itemSlot.item.actionMenuArgs = {}
+            local isLiquid = Tables.liquidTable:ContainsKey(itemId)
             itemSlot.item.customChangeActionMenuFunc = function(actionMenuInfos)
                 table.insert(actionMenuInfos, 1, {
-                    text = Language.LUA_ITEM_ACTION_CACHE_SELECT_DUMP_LIQUID,
+                    text = isLiquid and Language.LUA_ITEM_ACTION_CACHE_SELECT_DUMP_LIQUID or Language.LUA_ITEM_ACTION_CACHE_SELECT_DUMP_GAS,
                     action = function()
                         Notify(MessageConst.ON_NAVI_INVENTORY_SELECT_FLUID, {
                             componentId = self.m_buildingInfo.fluidContainer.componentId,
+                            slotIndex = 0,
                             fluidId = itemId,
-                            sourceItem = itemSlot.item
+                            sourceItem = itemSlot.item,
+                            cacheType = isLiquid and FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid or FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas
                         })
                     end
                 })
                 table.insert(actionMenuInfos, 1, {
-                    text = Language.LUA_ITEM_ACTION_CACHE_SELECT_FILL_LIQUID,
+                    text = isLiquid and Language.LUA_ITEM_ACTION_CACHE_SELECT_FILL_LIQUID or Language.LUA_ITEM_ACTION_CACHE_SELECT_FILL_GAS,
                     action = function()
                         Notify(MessageConst.ON_NAVI_INVENTORY_SELECT_FLUID, {
                             componentId = self.m_buildingInfo.fluidContainer.componentId,
+                            slotIndex = 0,
                             fluidId = "",
-                            sourceItem = itemSlot.item
+                            sourceItem = itemSlot.item,
+                            cacheType = isLiquid and FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid or FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas
                         })
                     end
                 })
@@ -460,11 +362,12 @@ FacUndergroundPipeCtrl._RefreshLiquidItemSlot = HL.Method(HL.Boolean) << functio
             InputManagerInst:SetBindingText(itemSlot.item.view.button.hoverConfirmBindingId, Language["key_hint_item_open_action_menu"])
         end
         itemSlot.view.dragItem.enabled = false  
+        itemSlot.view.emptyIcon.gameObject:SetActiveIfNecessary(isEmpty)
 
         self.m_dropHelper = UIUtils.initUIDropHelper(self.view.liquidItemSlot.view.dropItem, {
             acceptTypes = UIConst.FACTORY_LIQUID_STORAGER_DROP_ACCEPT_INFO,
             onDropItem = function(eventData, dragHelper)
-                if self:_ShouldAcceptDrop(dragHelper) then
+                if self:_CanDrop(dragHelper) then
                     self:_OnDropItem(dragHelper)
                 end
             end,
@@ -476,11 +379,14 @@ FacUndergroundPipeCtrl._RefreshLiquidItemSlot = HL.Method(HL.Boolean) << functio
     if self.m_itemCountZero ~= countZero or self.m_lastItemId ~= itemId or firstInit then
         if not isEmpty then
             if not countZero then
+                local isLiquid = Tables.liquidTable:ContainsKey(itemId)
                 local selectFillLiquidId = itemSlot.item:AddHoverBinding("common_quick_drop", function()
                     Notify(MessageConst.ON_NAVI_INVENTORY_SELECT_FLUID, {
                         componentId = self.m_buildingInfo.fluidContainer.componentId,
+                        slotIndex = 0,
                         fluidId = "",
-                        sourceItem = itemSlot.item
+                        sourceItem = itemSlot.item,
+                        cacheType = isLiquid and FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid or FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas
                     })
                 end)
                 InputManagerInst:SetBindingText(selectFillLiquidId, Language.LUA_ITEM_ACTION_CACHE_SELECT_FILL_LIQUID)
@@ -506,9 +412,6 @@ FacUndergroundPipeCtrl._RefreshLiquidItemSlot = HL.Method(HL.Boolean) << functio
     itemSlot.item:UpdateCountSimple(itemCount)
 end
 
-
-
-
 FacUndergroundPipeCtrl._OnClickItemSlot = HL.Method(HL.Forward('ItemSlot')) << function(self, itemSlot)
     if DeviceInfo.usingController then
         itemSlot.item:ShowActionMenu()
@@ -521,15 +424,11 @@ FacUndergroundPipeCtrl._OnClickItemSlot = HL.Method(HL.Forward('ItemSlot')) << f
     end)
 end
 
-
-
 FacUndergroundPipeCtrl._TryDisableHoverBindingOnEmptyItem = HL.Method() << function(self)
     if string.isEmpty(self.m_lastItemId) then
         InputManagerInst:ToggleBinding(self.view.liquidItemSlot.item.view.button.hoverConfirmBindingId, false)
     end
 end
-
-
 
 FacUndergroundPipeCtrl._RefreshLiquidBg = HL.Method() << function(self)
     local itemSlot = self.view.liquidItemSlot
@@ -544,12 +443,8 @@ FacUndergroundPipeCtrl._RefreshLiquidBg = HL.Method() << function(self)
         end
     end
 
-    itemSlot.view.facLiquidBg:RefreshLiquidHeight(height)
+    itemSlot:RefreshLiquidHeight(height)
 end
-
-
-
-
 
 FacUndergroundPipeCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) << function(self, cell, itemBundle)
     if cell == nil or itemBundle == nil then
@@ -571,16 +466,17 @@ FacUndergroundPipeCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any
     end
 
     if isBottle then
+        local isGasJar = FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas) or FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
         cell.item.customChangeActionMenuFunc = function(actionMenuInfos)
             local dropAction = {}
             if isEmptyBottle then
-                dropAction.text = Language.LUA_ITEM_ACTION_FILL_LIQUID
+                dropAction.text = isGasJar and Language.LUA_ITEM_ACTION_FILL_GAS or Language.LUA_ITEM_ACTION_FILL_LIQUID
             else
-                dropAction.text = Language.LUA_ITEM_ACTION_DUMP_LIQUID
+                dropAction.text = isGasJar and Language.LUA_ITEM_ACTION_DUMP_GAS or Language.LUA_ITEM_ACTION_DUMP_LIQUID
             end
             dropAction.action = function()
                 local dragHelper = cell.item.actionMenuArgs.dragHelper
-                if self:_ShouldAcceptDrop(dragHelper) then
+                if self:_CanDrop(dragHelper) then
                     self:_OnDropItem(dragHelper)
                 end
             end
@@ -589,22 +485,13 @@ FacUndergroundPipeCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any
     end
 end
 
-
-
-
 FacUndergroundPipeCtrl._IsEmptyBottleDrop = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
-    return Tables.emptyBottleTable:ContainsKey(itemId)
+    return FactoryUtils.isEmptyBottleOrJarItem(itemId, self.m_cacheType)
 end
-
-
-
 
 FacUndergroundPipeCtrl._IsFullBottleDrop = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
-    return Tables.fullBottleTable:ContainsKey(itemId)
+    return FactoryUtils.isFullBottleOrJarItem(itemId, self.m_cacheType)
 end
-
-
-
 
 FacUndergroundPipeCtrl._ShouldAcceptDrop = HL.Method(HL.Forward('UIDragHelper')).Return(HL.Boolean) << function(self, dragHelper)
     if not self.m_dropHelper:Accept(dragHelper) then
@@ -625,8 +512,26 @@ FacUndergroundPipeCtrl._ShouldAcceptDrop = HL.Method(HL.Forward('UIDragHelper'))
     return true
 end
 
+FacUndergroundPipeCtrl._CanDrop = HL.Method(HL.Forward('UIDragHelper')).Return(HL.Boolean) << function(self, dragHelper)
+    if not self:_ShouldAcceptDrop(dragHelper) then
+        return false
+    end
 
+    local itemId = dragHelper.info.itemId
+    
+    if Tables.liquidTable:ContainsKey(self.m_buildingInfo.fluidContainer.holdItemId) then
+        if FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas) or FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas) then
+            return false
+        end
+    end
+    if Tables.gasTable:ContainsKey(self.m_buildingInfo.fluidContainer.holdItemId) then
+        if FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid) or FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid) then
+            return false
+        end
+    end
 
+    return true
+end
 
 FacUndergroundPipeCtrl._OnDropItem = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     local source = dragHelper.source
@@ -634,16 +539,13 @@ FacUndergroundPipeCtrl._OnDropItem = HL.Method(HL.Forward('UIDragHelper')) << fu
     local core = GameInstance.player.remoteFactory.core
     local componentId = self.m_buildingInfo.fluidContainer.componentId
     if source == UIConst.UI_DRAG_DROP_SOURCE_TYPE.ItemBag then
-        core:Message_OpFillingFluidComWithBag(Utils.getCurrentChapterId(), componentId, dragInfo.csIndex)
+        core:Message_OpFillingFluidComWithBag(Utils.getCurrentChapterId(), componentId, dragInfo.csIndex, 0)
         FactoryUtils.playAudioWhenFillingItem(dragInfo.itemId, self.m_buildingInfo.fluidContainer.holdItemId, self.m_buildingInfo.fluidContainer.holdItemCount)
     elseif source == UIConst.UI_DRAG_DROP_SOURCE_TYPE.FactoryDepot then
-        core:Message_OpFillingFluidComWithDepot(Utils.getCurrentChapterId(), componentId, dragInfo.itemId)
+        core:Message_OpFillingFluidComWithDepot(Utils.getCurrentChapterId(), componentId, dragInfo.itemId, 0)
         FactoryUtils.playAudioWhenFillingItem(dragInfo.itemId, self.m_buildingInfo.fluidContainer.holdItemId, self.m_buildingInfo.fluidContainer.holdItemCount)
     end
 end
-
-
-
 
 FacUndergroundPipeCtrl._OnStartUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if dragHelper == nil then
@@ -651,37 +553,26 @@ FacUndergroundPipeCtrl._OnStartUiDrag = HL.Method(HL.Forward('UIDragHelper')) <<
     end
 
     if self:_ShouldAcceptDrop(dragHelper) then
-        self.view.liquidItemSlot.view.dropItem.enabled = true
-        self.view.liquidItemSlot.view.dropHintImg.gameObject:SetActiveIfNecessary(true)
-        local isEmptyBottle, isFullBottle = self:_IsEmptyBottleDrop(dragHelper.info.itemId), self:_IsFullBottleDrop(dragHelper.info.itemId)
-        if isEmptyBottle or isFullBottle then
-            self.view.liquidItemSlot.view.dropHintText.text = isEmptyBottle and Language["ui_fac_pipe_common_fill"] or Language["ui_fac_pipe_common_dump"]
-        end
+        self.view.liquidItemSlot:SetAcceptDrop(true, dragHelper.info.itemId, self.m_cacheType)
     else
-        self.view.liquidItemSlot.view.dropItem.enabled = false
+        self.view.liquidItemSlot:SetAcceptDrop(false)
     end
 end
-
-
-
 
 FacUndergroundPipeCtrl._OnEndUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if dragHelper == nil then
         return
     end
 
-    self.view.liquidItemSlot.view.dropItem.enabled = false
+    self.view.liquidItemSlot:SetAcceptDrop(false)
     if self:_ShouldAcceptDrop(dragHelper) then
-        self.view.liquidItemSlot.view.dropHintImg.gameObject:SetActiveIfNecessary(false)
+        self.view.liquidItemSlot:SetHintActive(false)
     end
 end
 
 
 
-
 FacUndergroundPipeCtrl.m_naviGroupSwitcher = HL.Field(HL.Forward('NaviGroupSwitcher'))
-
-
 
 FacUndergroundPipeCtrl._InitFacMachineCrafterController = HL.Method() << function(self)
     local NaviGroupSwitcher = require_ex("Common/Utils/UI/NaviGroupSwitcher").NaviGroupSwitcher
@@ -689,8 +580,6 @@ FacUndergroundPipeCtrl._InitFacMachineCrafterController = HL.Method() << functio
 
     self:_RefreshNaviGroupSwitcherInfos()
 end
-
-
 
 FacUndergroundPipeCtrl._RefreshNaviGroupSwitcherInfos = HL.Method() << function(self)
     if self.m_naviGroupSwitcher == nil then

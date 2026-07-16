@@ -2,25 +2,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WikiGuideTips
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiGuideTipsCtrl = HL.Class('WikiGuideTipsCtrl', uiCtrl.UICtrl)
 
 local WIKI_TIP_TYPE_NAMES = {
@@ -32,26 +13,18 @@ local WIKI_TIP_TYPE_NAMES = {
 
 
 
-
 WikiGuideTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.HIDE_WIKI_REF_TIPS] = 'CloseTips',
     [MessageConst.ON_SYSTEM_DISPLAY_SIZE_CHANGED] = '_OnSystemDisplaySizeChanged',
 }
 
-
 WikiGuideTipsCtrl.m_wikiEntryId = HL.Field(HL.String) << ""
-
 
 WikiGuideTipsCtrl.m_onClose = HL.Field(HL.Function)
 
-
 WikiGuideTipsCtrl.m_key = HL.Field(HL.Any)
 
-
 WikiGuideTipsCtrl.m_tipsTransform = HL.Field(HL.Userdata)
-
-
-
 
 
 WikiGuideTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -70,15 +43,10 @@ end
 
 
 
-
-
 WikiGuideTipsCtrl.ShowTips = HL.StaticMethod(HL.Table) << function(args)
     local self = UIManager:AutoOpen(PANEL_ID)
     self:_ShowTips(args)
 end
-
-
-
 
 WikiGuideTipsCtrl._ShowTips = HL.Method(HL.Table) << function(self, args)
     
@@ -132,8 +100,6 @@ WikiGuideTipsCtrl._ShowTips = HL.Method(HL.Table) << function(self, args)
     self:_UpdateTipsPosition()
 end
 
-
-
 WikiGuideTipsCtrl._UpdateTipsPosition = HL.Method() << function(self)
     local padding = { bottom = 50 + (self:_IsFullScreen() and 50 or 0 ) }
     local notchSize = CS.Beyond.DeviceInfoManager.NotchPaddingInCanvas(self.view.transform).x
@@ -142,8 +108,6 @@ WikiGuideTipsCtrl._UpdateTipsPosition = HL.Method() << function(self)
     
     UIUtils.updateTipsPosition(self.view.content, self.m_tipsTransform, self.view.rectTransform, self.uiCamera, nil, padding)
 end
-
-
 
 WikiGuideTipsCtrl._OnSystemDisplaySizeChanged = HL.Method() << function(self)
     self:_StartCoroutine(function()
@@ -154,19 +118,11 @@ WikiGuideTipsCtrl._OnSystemDisplaySizeChanged = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 WikiGuideTipsCtrl._ConfigTutorialDisplay = HL.Method(HL.Userdata, HL.Userdata) << function(self, entryShowData, pageData)
     self.view.nameTxt.text = entryShowData.desc
     self.view.decoTxt:SetAndResolveTextStyle(InputManager.ParseTextActionId(pageData.content))
     self.view.itemTypeTxt.text = I18nUtils.GetText(WIKI_TIP_TYPE_NAMES.TUTORIAL)
 end
-
-
-
-
 
 WikiGuideTipsCtrl._ConfigMonsterDisplay = HL.Method(HL.Userdata, HL.Userdata) << function(self, entryShowData, monsterData)
     self.view.nameTxt.text = monsterData.name
@@ -175,22 +131,16 @@ WikiGuideTipsCtrl._ConfigMonsterDisplay = HL.Method(HL.Userdata, HL.Userdata) <<
 end
 
 
-
-
 WikiGuideTipsCtrl.CloseTips = HL.Method() << function(self)
     if self.view.autoCloseArea.toggleObj.activeSelf then
         self.view.autoCloseArea:CloseSelf()
     end
 end
 
-
-
 WikiGuideTipsCtrl.ShowWiki = HL.Method() << function(self)
     Notify(MessageConst.SHOW_WIKI_ENTRY, { wikiEntryId = self.m_wikiEntryId })
     self.view.autoCloseArea:CloseSelf()
 end
-
-
 
 
 WikiGuideTipsCtrl.ClearOnClose = HL.Method() << function(self)
@@ -202,19 +152,13 @@ WikiGuideTipsCtrl.ClearOnClose = HL.Method() << function(self)
     self.m_wikiEntryId = ""
 end
 
-
-
 WikiGuideTipsCtrl._IsFullScreen = HL.Method().Return(HL.Boolean) << function(self)
     return InputManagerInst.usingController
 end
 
-
-
 WikiGuideTipsCtrl.OnHide = HL.Override() << function(self)
     self:ClearOnClose()
 end
-
-
 WikiGuideTipsCtrl.OnClose = HL.Override() << function(self)
     self:ClearOnClose()
 end

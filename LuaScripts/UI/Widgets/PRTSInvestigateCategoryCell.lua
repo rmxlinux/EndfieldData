@@ -1,44 +1,21 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PRTSInvestigateCategoryCell = HL.Class('PRTSInvestigateCategoryCell', UIWidgetBase)
-
 
 
 
 PRTSInvestigateCategoryCell.m_genCollCell = HL.Field(HL.Forward("UIListCache"))
 
 
-PRTSInvestigateCategoryCell.m_genNoteCell = HL.Field(HL.Forward("UIListCache"))
 
 
 PRTSInvestigateCategoryCell.m_infoBundle = HL.Field(HL.Table)
 
-
 PRTSInvestigateCategoryCell.m_isNoteShown = HL.Field(HL.Boolean) << false
-
 
 PRTSInvestigateCategoryCell.m_clientHasReadTrick = HL.Field(HL.Boolean) << false
 
-
 PRTSInvestigateCategoryCell.m_onCollFocusChanged = HL.Field(HL.Function)
-
-
 
 
 
@@ -46,7 +23,6 @@ PRTSInvestigateCategoryCell._OnFirstTimeInit = HL.Override() << function(self)
     
     self.m_forbidTitleInputGroupRecord = {}
     self.m_genCollCell = UIUtils.genCellCache(self.view.collCell)
-    self.m_genNoteCell = UIUtils.genCellCache(self.view.noteCell)
     self.view.noteBtn.onClick:RemoveAllListeners()
     self.view.noteBtn.onClick:AddListener(function()
         
@@ -56,11 +32,6 @@ PRTSInvestigateCategoryCell._OnFirstTimeInit = HL.Override() << function(self)
         self:_ForbidTitleInputGroupController("Navi", true)
     end
 end
-
-
-
-
-
 
 PRTSInvestigateCategoryCell.InitPRTSInvestigateCategoryCell = HL.Method(HL.Table, HL.String, HL.Opt(HL.Function)) << function(self, infoBundle, investId, onCollFocusChanged)
     self:_FirstTimeInit()
@@ -73,7 +44,8 @@ PRTSInvestigateCategoryCell.InitPRTSInvestigateCategoryCell = HL.Method(HL.Table
     
     
     viewRef.titleTxt.text = infoBundle.title
-    local noteCountText = string.format(Language.LUA_PRTS_NOTE_COUNT_FORMAT, #infoBundle.noteInfos)
+    local noteCnt = #infoBundle.noteInfos
+    local noteCountText = string.format(Language.LUA_PRTS_NOTE_COUNT_FORMAT, noteCnt)
     viewRef.noteCountTxt1.text = noteCountText
     viewRef.noteCountTxt2.text = noteCountText
     viewRef.noteCountTxt3.text = noteCountText
@@ -83,31 +55,31 @@ PRTSInvestigateCategoryCell.InitPRTSInvestigateCategoryCell = HL.Method(HL.Table
     self.m_genCollCell:Refresh(#infoBundle.collInfos, function(cell, luaIndex)
         self:_OnRefreshCollCell(cell, luaIndex)
     end)
-    self.m_genNoteCell:Refresh(#infoBundle.noteInfos, function(cell, luaIndex)
-        self:_OnRefreshNoteCell(cell, luaIndex)
-    end)
+
+    if not self.m_infoBundle.showNote and self:_HasNoteUnread() and not self.m_clientHasReadTrick then
+        self.view.animationNode.gameObject:SetActiveIfNecessary(true)
+        self.view.animationNode:PlayInAnimation()
+    else
+        self.view.animationNode.gameObject:SetActiveIfNecessary(false)
+    end
+
+    if noteCnt == 0 then
+        self.view.noteBtnState:SetState("NoNote")
+    end
+    self.view.noteBtn.interactable = noteCnt ~= 0
+    self:_ForbidTitleInputGroupController("ShowNote", infoBundle.showNote or noteCnt == 0)
 end
-
-
-
 
 PRTSInvestigateCategoryCell.ForceRefreshNoteCell = HL.Method(HL.Table) << function(self, noteInfos)
     self.m_infoBundle.noteInfos = noteInfos
     self:RefreshUINoteShowState(self.m_infoBundle.showNote, false)
-    self.m_genNoteCell:Refresh(#noteInfos, function(cell, luaIndex)
-        self:_OnRefreshNoteCell(cell, luaIndex)
-    end)
 end
-
-
-
-
 
 PRTSInvestigateCategoryCell._OnRefreshCollCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     cell.gameObject.name = "CollCell" .. luaIndex
     local info = self.m_infoBundle.collInfos[luaIndex]
     cell.iconImg:LoadSprite(UIConst.UI_SPRITE_PRTS_ICON, info.imgPath)
-    cell.nameTxt:SetAndResolveTextStyle(info.name)
+    cell.nameTxt:SetAndResolveTextStyle(UIUtils.resolveTextCinematic(info.name or ""))
     cell.gotoBtn.onClick:RemoveAllListeners()
     cell.gotoBtn.onClick:AddListener(function()
         if self.m_onCollFocusChanged then
@@ -141,10 +113,6 @@ PRTSInvestigateCategoryCell._OnRefreshCollCell = HL.Method(HL.Any, HL.Number) <<
     cell.redDot:InitRedDot("PRTSItem", info.collId)
 end
 
-
-
-
-
 PRTSInvestigateCategoryCell._OnRefreshNoteCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     cell.gameObject.name = "NoteCell" .. luaIndex
     local info = self.m_infoBundle.noteInfos[luaIndex]
@@ -154,20 +122,13 @@ PRTSInvestigateCategoryCell._OnRefreshNoteCell = HL.Method(HL.Any, HL.Number) <<
     info.hasRead = true
 end
 
-
-
-
-
 PRTSInvestigateCategoryCell.RefreshUINoteShowState = HL.Method(HL.Boolean, HL.Boolean) << function(self, isShow, playAni)
     self.m_isNoteShown = isShow
     
     if isShow then
-        self.view.noteState:SetState("ShowNote")
         
         
         self.m_clientHasReadTrick = true
-    else
-        self.view.noteState:SetState("HideNote")
     end
     self:_ForbidTitleInputGroupController("ShowNote", isShow)
     
@@ -180,8 +141,6 @@ PRTSInvestigateCategoryCell.RefreshUINoteShowState = HL.Method(HL.Boolean, HL.Bo
     end
 end
 
-
-
 PRTSInvestigateCategoryCell._HasNoteUnread = HL.Method().Return(HL.Boolean) << function(self)
     for _, info in pairs(self.m_infoBundle.noteInfos) do
         if GameInstance.player.prts:IsNoteUnread(info.noteId) then
@@ -191,12 +150,7 @@ PRTSInvestigateCategoryCell._HasNoteUnread = HL.Method().Return(HL.Boolean) << f
     return false
 end
 
-
 PRTSInvestigateCategoryCell.m_forbidTitleInputGroupRecord = HL.Field(HL.Table)
-
-
-
-
 
 PRTSInvestigateCategoryCell._ForbidTitleInputGroupController = HL.Method(HL.String, HL.Boolean) << function(self, key, isForbid)
     if not DeviceInfo.usingController then

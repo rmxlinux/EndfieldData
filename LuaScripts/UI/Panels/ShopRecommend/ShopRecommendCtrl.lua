@@ -223,34 +223,18 @@ local tabDataPrototypeList = {
     },
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopRecommendCtrl = HL.Class('ShopRecommendCtrl', uiCtrl.UICtrl)
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -260,15 +244,11 @@ ShopRecommendCtrl.m_tabDataList = HL.Field(HL.Table)
 
 ShopRecommendCtrl.m_showTabDataList = HL.Field(HL.Table)
 
-
 ShopRecommendCtrl.m_currTabId = HL.Field(HL.String) << ""
-
 
 ShopRecommendCtrl.m_getTabCellFunc = HL.Field(HL.Function)
 
-
 ShopRecommendCtrl.m_goRightGroup = HL.Field(HL.Any)
-
 
 
 
@@ -284,85 +264,20 @@ ShopRecommendCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 ShopRecommendCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    self.m_getTabCellFunc = UIUtils.genCachedCellFunction(self.view.cashShopVerticalTabList.scrollList)
-    self.view.cashShopVerticalTabList.scrollList.onUpdateCell:AddListener(function(obj, index)
-        local cell = self.m_getTabCellFunc(obj)
-        local tabData = self.m_showTabDataList[LuaIndex(index)]
-        cell.cellNameTxt.text = tabData.Name
-        cell.cellNameShadownTxt.text = tabData.Name
-        cell.toggle.onValueChanged:RemoveAllListeners()
-        cell.toggle.onValueChanged:AddListener(function(isOn)
-            if isOn then
-                self:_OnTabClick(tabData)
-            end
-        end)
-
-        cell.stateController:SetState("NOIcon")
-
-        
-        
-        
-        local isNew = false
-        if tabData.CheckRedDotFunc then
-            isNew = tabData.CheckRedDotFunc(tabData)
-            cell.cellTagNode.tagNew.gameObject:SetActive(isNew)
-        elseif tabData.isCashGoods then
-            local goodsIds = { }
-            for _, goodsId in ipairs(tabData.cashGoodsIds) do
-                local canBuy = CashShopUtils.CheckCanBuyCashShopGoods(goodsId) and
-                    CashShopUtils.CheckCashShopGoodsIsOpen(goodsId)
-                if canBuy then
-                    table.insert(goodsIds, goodsId)
-                end
-            end
-            isNew = CashShopUtils.CheckCashShopNewCashGoodsRedDot(goodsIds)
-            cell.cellTagNode.tagNew.gameObject:SetActive(isNew)
-        end
-        
-        if isNew then
-            return
-        end
-        local tagList = tabData.tagList
-        local tagRoot = cell.cellTagNode
-        for _, tagId in pairs(tagList) do
-            local tagData = Tables.CashShopGiftPackTagTable[tagId]
-            local style = tagData.style
-            local value = tagData.value
-            local tagCell = tagRoot[style]
-            if tagCell ~= nil then
-                tagCell.gameObject:SetActive(true)
-                
-                local haveValue = not string.isEmpty(value)
-                local tagText = tagCell.tagText
-                local line = tagCell.lineImg
-                if tagText ~= nil then
-                    tagText.gameObject:SetActive(haveValue)
-                    tagText.text = value
-                end
-                if line ~= nil then
-                    line.gameObject:SetActive(haveValue)
-                end
-            end
-        end
-    end)
-
+    self:_BindUI()
     self:_InitTabData()
     self:_InitShortCut()
     self:_RefreshShowTabData()
+    
     self:_ProcessArg(arg)
 end
-
-
 
 ShopRecommendCtrl.OnShow = HL.Override() << function(self)
     Notify(MessageConst.CASH_SHOP_SHOW_WALLET_BAR, {
         moneyIds = {Tables.globalConst.originiumItemId, Tables.globalConst.diamondItemId},
     })
 end
-
-
 
 
 
@@ -374,7 +289,26 @@ end
 
 
 
+ShopRecommendCtrl._BindUI = HL.Method() << function(self)
+    self.m_getTabCellFunc = UIUtils.genCachedCellFunction(self.view.cashShopVerticalTabList.scrollList)
+    self.view.cashShopVerticalTabList.scrollList.onUpdateCell:AddListener(function(obj, index)
+        local cell = self.m_getTabCellFunc(obj)
+        local tabData = self.m_showTabDataList[LuaIndex(index)]
+        self:_SetupUIVerticalTab(cell, tabData)
+    end)
+end
 
+ShopRecommendCtrl._InitShortCut = HL.Method() << function(self)
+    self.m_goRightGroup = InputManagerInst:CreateGroup(self.view.inputGroup.groupId)
+
+    self:BindInputPlayerAction("cashshop_giftpack_goto_right", function()
+        self:_OnGoRight()
+    end, self.m_goRightGroup)
+
+    self:BindInputPlayerAction("cashshop_giftpack_goto_right_2", function()
+        self:_OnGoRight()
+    end, self.m_goRightGroup)
+end
 
 ShopRecommendCtrl._ProcessArg = HL.Method(HL.Table) << function(self, arg)
     
@@ -395,110 +329,71 @@ ShopRecommendCtrl._ProcessArg = HL.Method(HL.Table) << function(self, arg)
 end
 
 
-
-
-ShopRecommendCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, arg)
-    arg.CategoryRecommendTabId = self.m_currTabId
-end
-
-
-
-ShopRecommendCtrl.OnAfterCategoryTopOrdered = HL.Method() << function(self)
-end
-
-
-
-ShopRecommendCtrl._InitShortCut = HL.Method() << function(self)
-    self.m_goRightGroup = InputManagerInst:CreateGroup(self.view.inputGroup.groupId)
-
-    self:BindInputPlayerAction("cashshop_giftpack_goto_right", function()
-        self:_OnGoRight()
-    end, self.m_goRightGroup)
-
-    self:BindInputPlayerAction("cashshop_giftpack_goto_right_2", function()
-        self:_OnGoRight()
-    end, self.m_goRightGroup)
-end
-
-
-
-ShopRecommendCtrl._OnGoRight = HL.Method() << function(self)
-    local ret = false
-
-    local tabData = self:_GetTabDataById(self.m_currTabId)
-    if tabData.OnNaviGoRightFunc then
-        ret = tabData.OnNaviGoRightFunc(self)
-    end
-
-    if ret then
-        InputManagerInst:ToggleGroup(self.m_goRightGroup, false)
-    end
-end
-
-
-
-ShopRecommendCtrl._CheckCanGoRight = HL.Method().Return(HL.Boolean) << function(self)
-    local ret = false
-
-    local tabData = self:_GetTabDataById(self.m_currTabId)
-    if tabData.CheckNaviGoRightFunc then
-        ret = tabData.CheckNaviGoRightFunc(self)
-    end
-
-    return ret
-end
-
-
-
-
-ShopRecommendCtrl._GetTabDataById = HL.Method(HL.String).Return(HL.Table) << function(self, id)
-    for _, tabData in ipairs(self.m_tabDataList) do
-        if tabData.id == id then
-            return tabData
-        end
-    end
-    return nil
-end
-
-
-
 ShopRecommendCtrl._InitTabData = HL.Method() << function(self)
     self.m_tabDataList = {}
     for id, data in pairs(Tables.CashShopRecommendTable) do
-        local foundPrototype = tabDataPrototypeList[data.type]
-        if foundPrototype == nil then
-            logger.error("[CashShop]配置了没有实现的类型: " .. id)
-        else
-            local cashGoodsIds = {}
-            for _, goodsId in pairs(data.cashGoodsIdList) do
-                table.insert(cashGoodsIds, goodsId)
-            end
-            
-            local haveCfgTabData, cfgTabData = Tables.CashshopShopTabDataTable:TryGetValue(id)
-            local tagList = {}
-            if haveCfgTabData then
-                for _, tag in pairs(cfgTabData.tagList) do
-                    table.insert(tagList, tag)
-                end
-            end
-            
-            local tabData = {
-                id = id,
-                type = data.type,
-                Name = data.name,
-                cashGoodsIds = cashGoodsIds,
-                Priority = data.priority,
-                tagList = tagList,
-                prefabName = data.prefabName,
-            }
-            for k, v in pairs(foundPrototype) do
-                tabData[k] = v
-            end
+        
+        local tabData = self:_CreateRumtimeTabData(id, data)
+        if tabData then
             table.insert(self.m_tabDataList, tabData)
         end
     end
 end
 
+
+ShopRecommendCtrl._CreateRumtimeTabData = HL.Method(HL.Any, HL.Any).Return(HL.Any) << function(self, id, data)
+    if data == nil then
+        _, data = Tables.cashShopRecommendTable:TryGetValue(id)
+        if data == nil then
+            logger.error("ShopRecommendCtrl._CreateRumtimeTabData: 检查id传入是否有问题: " .. id)
+            return nil
+        end
+    end
+    
+    data = data
+
+    local foundPrototype = tabDataPrototypeList[data.type]
+    if foundPrototype == nil then
+        logger.error("[CashShop]配置了没有实现的类型: " .. id)
+        return nil
+    end
+    
+    local cashGoodsIds = {}
+    for _, goodsId in pairs(data.cashGoodsIdList) do
+        table.insert(cashGoodsIds, goodsId)
+    end
+    
+    local setNewPriorityCashGoodsIdList = {}
+    for _, goodsId in pairs(data.setNewPriorityCashGoodsIdList) do
+        table.insert(setNewPriorityCashGoodsIdList, goodsId)
+    end
+    
+    local haveCfgTabData, cfgTabData = Tables.CashshopShopTabDataTable:TryGetValue(id)
+    local tagList = {}
+    if haveCfgTabData then
+        for _, tag in pairs(cfgTabData.tagList) do
+            table.insert(tagList, tag)
+        end
+    end
+    
+    
+    local tabData = {
+        id = id,
+        type = data.type,
+        Name = data.name,
+        cashGoodsIds = cashGoodsIds,
+        Priority = data.priority,
+        tagList = tagList,
+        prefabName = data.prefabName,
+        setNewPriorityCashGoodsIdList = setNewPriorityCashGoodsIdList,
+        newPriority = data.newPriority,
+    }
+    for k, v in pairs(foundPrototype) do
+        tabData[k] = v
+    end
+
+    return tabData
+end
 
 
 ShopRecommendCtrl._RefreshShowTabData = HL.Method() << function(self)
@@ -515,9 +410,17 @@ ShopRecommendCtrl._RefreshShowTabData = HL.Method() << function(self)
                 table.insert(bottomShowList, tabData)
             end
         else
-            logger.info(string.format("[ShopRecommendCtrl] id:[%s] CheckShowFunc未通过，不显示", tabData.id))
+            logger.info(string.format("[ShopRecommendCtrl] id:[%s] Name:[%s] CheckShowFunc未通过，不显示", tabData.id, tabData.Name))
         end
     end
+    
+    for _, tabData in ipairs(topShowList) do
+        self:_TryChangeTabDataPriority(tabData)
+    end
+    for _, tabData in ipairs(bottomShowList) do
+        self:_TryChangeTabDataPriority(tabData)
+    end
+
     table.sort(topShowList, Utils.genSortFunction({ "Priority" }, true))
     table.sort(bottomShowList, Utils.genSortFunction({ "Priority" }, true))
     for _, tabData in ipairs(topShowList) do
@@ -549,28 +452,109 @@ ShopRecommendCtrl._RefreshShowTabData = HL.Method() << function(self)
 end
 
 
+ShopRecommendCtrl._TryChangeTabDataPriority = HL.Method(HL.Any) << function(self, tabData)
+    
+    tabData = tabData
+    local setNewPriorityCashGoodsIdList = tabData.setNewPriorityCashGoodsIdList
+    if #setNewPriorityCashGoodsIdList == 0 then
+        return
+    end
 
-ShopRecommendCtrl._RefreshUI = HL.Method() << function(self)
-    self.view.cashShopVerticalTabList.scrollList:UpdateCount(#self.m_showTabDataList)
+    
+    local haveCanBuy = false
+    for _, goodsId in ipairs(setNewPriorityCashGoodsIdList) do
+        local canBuy = CashShopUtils.CheckCanBuyCashShopGoods(goodsId) and
+            CashShopUtils.CheckCashShopGoodsIsOpen(goodsId)
+        if canBuy then
+            haveCanBuy = true
+            break
+        end
+    end
+
+    if haveCanBuy then
+        local newPriority = tabData.newPriority
+        logger.info(string.format("ShopRecommendCtrl: tabData: %s 的priority发生变化: %s -> %s", tabData.id, tabData.Priority, newPriority))
+        tabData.Priority = newPriority
+    end
 end
 
 
 
 
-ShopRecommendCtrl._SetTabByIndex = HL.Method(HL.Int) << function(self, index)
-    if #self.m_showTabDataList >= index then
-        local obj = self.view.cashShopVerticalTabList.scrollList:Get(CSIndex(index))
-        local cell = self.m_getTabCellFunc(obj)
-        if DeviceInfo.usingController then
-            UIUtils.setAsNaviTarget(cell.toggle)
-        else
-            cell.toggle:SetIsOnWithoutNotify(true)
-            self:_OnTabClick(self.m_showTabDataList[index])
+
+ShopRecommendCtrl._SetupUIVerticalTab = HL.Method(HL.Any, HL.Any) << function(self, cell, tabData)
+    
+    tabData = tabData
+    cell.cellNameTxt.text = tabData.Name
+    cell.cellNameShadownTxt.text = tabData.Name
+    cell.toggle.onValueChanged:RemoveAllListeners()
+    cell.toggle.onValueChanged:AddListener(function(isOn)
+        if isOn then
+            self:_OnTabClick(tabData)
+        end
+    end)
+
+    cell.stateController:SetState("NOIcon")
+
+    
+    
+    
+    local isNew = false
+    if tabData.CheckRedDotFunc then
+        isNew = tabData.CheckRedDotFunc(tabData)
+        cell.cellTagNode.tagNew.gameObject:SetActive(isNew)
+    elseif tabData.isCashGoods then
+        local goodsIds = { }
+        for _, goodsId in ipairs(tabData.cashGoodsIds) do
+            local canBuy = CashShopUtils.CheckCanBuyCashShopGoods(goodsId) and
+                CashShopUtils.CheckCashShopGoodsIsOpen(goodsId)
+            if canBuy then
+                table.insert(goodsIds, goodsId)
+            end
+        end
+        isNew = CashShopUtils.CheckCashShopNewCashGoodsRedDot(goodsIds)
+        cell.cellTagNode.tagNew.gameObject:SetActive(isNew)
+    end
+    
+    if isNew then
+        return
+    end
+    local tagList = tabData.tagList
+    local tagRoot = cell.cellTagNode
+    for _, tagId in pairs(tagList) do
+        local tagData = Tables.CashShopGiftPackTagTable[tagId]
+        local style = tagData.style
+        local value = tagData.value
+        local tagCell = tagRoot[style]
+        if tagCell ~= nil then
+            tagCell.gameObject:SetActive(true)
+            
+            local haveValue = not string.isEmpty(value)
+            local tagText = tagCell.tagText
+            local line = tagCell.lineImg
+            if tagText ~= nil then
+                tagText.gameObject:SetActive(haveValue)
+                tagText.text = value
+            end
+            if line ~= nil then
+                line.gameObject:SetActive(haveValue)
+            end
         end
     end
 end
 
 
+
+
+
+ShopRecommendCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, arg)
+    arg.CategoryRecommendTabId = self.m_currTabId
+end
+
+
+
+ShopRecommendCtrl.OnAfterCategoryTopOrdered = HL.Method() << function(self)
+end
 
 ShopRecommendCtrl.NaviTargetCurrTab = HL.Method() << function(self)
     InputManagerInst:ToggleGroup(self.m_goRightGroup, true)
@@ -592,12 +576,95 @@ ShopRecommendCtrl.NaviTargetCurrTab = HL.Method() << function(self)
     if foundTabData ~= nil then
         local obj = self.view.cashShopVerticalTabList.scrollList:Get(CSIndex(foundIndex))
         local cell = self.m_getTabCellFunc(obj)
-        UIUtils.setAsNaviTarget(cell.toggle)
+        self:SetNaviTarget(cell.toggle)
+    end
+end
+
+ShopRecommendCtrl.GetCurrTabId = HL.Method().Return(HL.String) << function(self)
+    return self.m_currTabId
+end
+
+ShopRecommendCtrl.SetCurrTabId = HL.Method(HL.String) << function(self, tabId)
+    local foundTabData = nil
+    local foundIndex = 0
+    for i = 1, #self.m_showTabDataList do
+        local tabData = self.m_showTabDataList[i]
+        if tabData.id == tabId then
+            foundTabData = tabData
+            foundIndex = i
+            break
+        end
+        if foundTabData ~= nil then
+            break
+        end
+    end
+    if foundTabData ~= nil then
+        self:_SetTabByIndex(foundIndex)
+    end
+end
+
+ShopRecommendCtrl.ForceAddRuntimeTabDataToBottom = HL.Method(HL.Any) << function(self, id)
+    logger.info("ShopRecommendCtrl: ForceAddRuntimeTabDataToBottom: " .. id)
+    local tabData = self:_CreateRumtimeTabData(id)
+    if tabData then
+        table.insert(self.m_showTabDataList, tabData)
+        self:_RefreshUI()
     end
 end
 
 
 
+
+
+ShopRecommendCtrl._OnGoRight = HL.Method() << function(self)
+    local ret = false
+
+    local tabData = self:_GetTabDataById(self.m_currTabId)
+    if tabData.OnNaviGoRightFunc then
+        ret = tabData.OnNaviGoRightFunc(self)
+    end
+
+    if ret then
+        InputManagerInst:ToggleGroup(self.m_goRightGroup, false)
+    end
+end
+
+ShopRecommendCtrl._CheckCanGoRight = HL.Method().Return(HL.Boolean) << function(self)
+    local ret = false
+
+    local tabData = self:_GetTabDataById(self.m_currTabId)
+    if tabData.CheckNaviGoRightFunc then
+        ret = tabData.CheckNaviGoRightFunc(self)
+    end
+
+    return ret
+end
+
+ShopRecommendCtrl._GetTabDataById = HL.Method(HL.String).Return(HL.Table) << function(self, id)
+    for _, tabData in ipairs(self.m_tabDataList) do
+        if tabData.id == id then
+            return tabData
+        end
+    end
+    return nil
+end
+
+ShopRecommendCtrl._RefreshUI = HL.Method() << function(self)
+    self.view.cashShopVerticalTabList.scrollList:UpdateCount(#self.m_showTabDataList)
+end
+
+ShopRecommendCtrl._SetTabByIndex = HL.Method(HL.Int) << function(self, index)
+    if #self.m_showTabDataList >= index then
+        local obj = self.view.cashShopVerticalTabList.scrollList:Get(CSIndex(index))
+        local cell = self.m_getTabCellFunc(obj)
+        if DeviceInfo.usingController then
+            self:SetNaviTarget(cell.toggle)
+        else
+            cell.toggle:SetIsOnWithoutNotify(true)
+            self:_OnTabClick(self.m_showTabDataList[index])
+        end
+    end
+end
 
 ShopRecommendCtrl._OnTabClick = HL.Method(HL.Table) << function(self, tabData)
     if self.m_currTabId == tabData.id then
@@ -666,55 +733,6 @@ ShopRecommendCtrl._OnTabClick = HL.Method(HL.Table) << function(self, tabData)
     end
 end
 
-
-
-ShopRecommendCtrl.GetCurrTabId = HL.Method().Return(HL.String) << function(self)
-    return self.m_currTabId
-end
-
-
-
-
-ShopRecommendCtrl.SetCurrTabId = HL.Method(HL.String) << function(self, tabId)
-    local foundTabData = nil
-    local foundIndex = 0
-    for i = 1, #self.m_showTabDataList do
-        local tabData = self.m_showTabDataList[i]
-        if tabData.id == tabId then
-            foundTabData = tabData
-            foundIndex = i
-            break
-        end
-        if foundTabData ~= nil then
-            break
-        end
-    end
-    if foundTabData ~= nil then
-        self:_SetTabByIndex(foundIndex)
-    end
-end
-
-
-
-ShopRecommendCtrl._OnReceiveRefreshMsg = HL.Method() << function(self)
-    logger.info("ShopRecommendCtrl: 收到msg，刷新页面")
-    self:_InitTabData()
-    self:_RefreshShowTabData()
-    self:_RefreshUI()
-end
-
-
-
-
-ShopRecommendCtrl._OnShopGoodsSeeGoodsInfoChanged = HL.Method(HL.Any) << function(self, arg)
-    logger.info("ShopRecommendCtrl: 收到msg ON_SHOP_GOODS_SEE_GOODS_INFO_CHANGE，刷新页面")
-    self:_InitTabData()
-    self:_RefreshShowTabData()
-    self:_RefreshUI()
-end
-
-
-
 ShopRecommendCtrl._RefreshControllerHintPlaceHolder = HL.Method() << function(self)
     local args = {
         self.view.inputGroup.groupId,
@@ -739,5 +757,28 @@ ShopRecommendCtrl._RefreshControllerHintPlaceHolder = HL.Method() << function(se
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder(args)
 end
+
+
+
+
+
+ShopRecommendCtrl._OnReceiveRefreshMsg = HL.Method() << function(self)
+    logger.info("ShopRecommendCtrl: 收到msg，刷新页面")
+    self:_InitTabData()
+    self:_RefreshShowTabData()
+    self:_RefreshUI()
+end
+
+ShopRecommendCtrl._OnShopGoodsSeeGoodsInfoChanged = HL.Method(HL.Any) << function(self, arg)
+    logger.info("ShopRecommendCtrl: 收到msg ON_SHOP_GOODS_SEE_GOODS_INFO_CHANGE，刷新页面")
+    self:_InitTabData()
+    self:_RefreshShowTabData()
+    self:_RefreshUI()
+end
+
+
+
+
+
 
 HL.Commit(ShopRecommendCtrl)

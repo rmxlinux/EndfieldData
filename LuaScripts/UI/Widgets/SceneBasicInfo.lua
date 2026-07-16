@@ -1,19 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 SceneBasicInfo = HL.Class('SceneBasicInfo', UIWidgetBase)
-
-
 
 
 SceneBasicInfo._OnFirstTimeInit = HL.Override() << function(self)
 
 end
-
-
-
 
 
 

@@ -1,21 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 WeaponUpgradeAttributeNode = HL.Class('WeaponUpgradeAttributeNode', UIWidgetBase)
-
 
 WeaponUpgradeAttributeNode.m_mainAttributeCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WeaponUpgradeAttributeNode.m_subAttributeCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 WeaponUpgradeAttributeNode.InitWeaponUpgradeAttributeNode = HL.Method(HL.Table) << function(self, arg)
     self:_FirstTimeInit()
@@ -42,11 +31,6 @@ WeaponUpgradeAttributeNode.InitWeaponUpgradeAttributeNode = HL.Method(HL.Table) 
     end)
 end
 
-
-
-
-
-
 WeaponUpgradeAttributeNode._RefreshAttributeCell = HL.Method(HL.Table, HL.Table, HL.Table) << function(self, cell, attributeInfo, targetAttributeInfo)
     local attributeKey = Const.ATTRIBUTE_TYPE_2_ATTRIBUTE_DATA_KEY[attributeInfo.attributeType]
 
@@ -55,8 +39,6 @@ WeaponUpgradeAttributeNode._RefreshAttributeCell = HL.Method(HL.Table, HL.Table,
     cell.fromValue.text = "+" .. attributeInfo.showValue
     cell.toValue.text = "+" .. targetAttributeInfo.showValue
 end
-
-
 
 WeaponUpgradeAttributeNode._OnFirstTimeInit = HL.Override() << function(self)
     self.m_mainAttributeCellCache = UIUtils.genCellCache(self.view.mainAttributeCell)

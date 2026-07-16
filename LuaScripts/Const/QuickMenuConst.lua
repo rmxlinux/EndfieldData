@@ -22,6 +22,7 @@ QUICK_MENU_ITEM_ID_GETTER = {
     battlePass = "battlePass",
     cashShop = "cashShop",
     weekRaidTipInfo = "weekRaidTipInfo",
+    dungeonRacing = "dungeonRacing",
     hubData = "hubData",
 }
 
@@ -125,6 +126,11 @@ QUICK_MENU_ITEM_CONFIG = {
         nameTextId = "ui_weekraid_main_intro",
         iconId = "racing_answer_btn",
     },
+    [QUICK_MENU_ITEM_ID_GETTER.dungeonRacing] = {
+        mainHudId = "dungeonRacing",
+        nameTextId = "ui_activity_racingdungeon_center_task",
+        iconId = "btn_coin_task",
+    },
     [QUICK_MENU_ITEM_ID_GETTER.hub] = {
         mainHudId = "hub",
         nameTextId = "LUA_QUICK_MENU_ITEM_HUB_NAME",
@@ -173,7 +179,7 @@ QUICK_MENU_CENTER_ITEM_LIST = {
     QUICK_MENU_ITEM_ID_GETTER.adventureBook,
     QUICK_MENU_ITEM_ID_GETTER.domain,
     QUICK_MENU_ITEM_ID_GETTER.sns,
-    { QUICK_MENU_ITEM_ID_GETTER.weekRaid, QUICK_MENU_ITEM_ID_GETTER.mission },
+    { QUICK_MENU_ITEM_ID_GETTER.weekRaid, QUICK_MENU_ITEM_ID_GETTER.dungeonRacing, QUICK_MENU_ITEM_ID_GETTER.mission },
     QUICK_MENU_ITEM_ID_GETTER.formation,
 }
 

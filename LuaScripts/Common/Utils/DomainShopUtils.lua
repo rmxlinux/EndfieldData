@@ -90,6 +90,9 @@ function DomainShopUtils.openDomainFriendShop(friendRoleId)
             logger.error("打开好友地区商店发生错误！收到服务端消息但客户端找不到对应friendRoleId商店数据：" .. friendRoleId)
             return
         end
+        if PhaseManager:IsOpen(PhaseId.ShopTrade) then
+            return
+        end
         PhaseManager:OpenPhase(PhaseId.ShopTrade, {
             friendRoleId = friendRoleId
         })
@@ -104,6 +107,42 @@ function DomainShopUtils.getDomainIdByDomainShopId(domainShopId)
     else
         return ""
     end
+end
+
+function DomainShopUtils.GetPhotoAnimCharacterIdByItemId(itemId)
+    if string.isEmpty(itemId) then
+        return ""
+    end
+    local snapshotSystem = GameInstance.player.snapshotSystem
+    snapshotSystem:InitActionConfig()
+    local entry = snapshotSystem:GetActionEntryByItemId(itemId)
+    if not entry then
+        return ""
+    end
+    local characterIds = snapshotSystem:GetCharacterIdsByActionId(entry.actionId)
+    if not characterIds then
+        return ""
+    end
+    for i = 0, characterIds.Count - 1 do
+        local characterId = characterIds[i]
+        if Tables.characterTable:ContainsKey(characterId) then
+            return characterId
+        end
+    end
+    return ""
+end
+
+function DomainShopUtils.IsPhotoAnimActionStatic(itemId)
+    if string.isEmpty(itemId) then
+        return true
+    end
+    local snapshotSystem = GameInstance.player.snapshotSystem
+    snapshotSystem:InitActionConfig()
+    local entry = snapshotSystem:GetActionEntryByItemId(itemId)
+    if not entry then
+        return true
+    end
+    return entry.isStatic
 end
 
 

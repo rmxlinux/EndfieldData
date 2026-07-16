@@ -3,27 +3,7 @@ local PANEL_ID = PanelId.CommonToast
 
 local CommonToastConfig = require_ex('UI/Panels/CommonToast/CommonToastConfig')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonToastCtrl = HL.Class('CommonToastCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -34,26 +14,18 @@ CommonToastCtrl = HL.Class('CommonToastCtrl', uiCtrl.UICtrl)
 CommonToastCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
-
 CommonToastCtrl.m_showingToasts = HL.Field(HL.Forward("Queue"))
-
 
 CommonToastCtrl.m_pendingToasts = HL.Field(HL.Forward("Queue"))
 
-
 CommonToastCtrl.m_cacheToasts = HL.Field(HL.Forward("Stack"))
 
-
 CommonToastCtrl.m_maxCount = HL.Field(HL.Number) << 5
-
 
 CommonToastCtrl.OnShowToast = HL.StaticField(HL.Any) << function (arg)
     local ctrl = CommonToastCtrl.AutoOpen(PANEL_ID, nil, false)
     ctrl:ShowToast(arg)
 end
-
-
-
 
 
 
@@ -67,21 +39,14 @@ CommonToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.systemToast:InitToast()
 end
 
-
-
 CommonToastCtrl.OnShow = HL.Override() << function(self)
     self:_InitMaxCount()
     self:_TryShowPendingToast()
 end
 
-
-
 CommonToastCtrl._InitMaxCount = HL.Method() << function (self)
     self.m_maxCount = self.view.config.MAX_TOAST_COUNT or 10
 end
-
-
-
 
 CommonToastCtrl._GetCurTextToast = HL.Method(HL.String).Return(HL.Table, HL.Number) << function (self, text)
     if self.m_showingToasts:Empty() then
@@ -96,17 +61,12 @@ CommonToastCtrl._GetCurTextToast = HL.Method(HL.String).Return(HL.Table, HL.Numb
     return nil, -1
 end
 
-
-
 CommonToastCtrl._TryShowPendingToast = HL.Method() << function (self)
     while not self.m_pendingToasts:Empty() and self.m_showingToasts:Size() < self.m_maxCount do
         local arg = self.m_pendingToasts:Pop()
         self:ShowToast(arg)
     end
 end
-
-
-
 
 CommonToastCtrl.ShowToast = HL.Method(HL.Any) << function (self, arg)
     local text, duration, codeId, paramList = nil, nil, nil, nil
@@ -160,9 +120,6 @@ CommonToastCtrl.ShowToast = HL.Method(HL.Any) << function (self, arg)
     end
 end
 
-
-
-
 CommonToastCtrl._HideToast = HL.Method(HL.Table) << function(self, toast)
     toast.animation:PlayOutAnimation(function()
         self:_CacheToast(toast)
@@ -173,8 +130,6 @@ CommonToastCtrl._HideToast = HL.Method(HL.Table) << function(self, toast)
         self:_TryShowPendingToast()
     end)
 end
-
-
 
 CommonToastCtrl._GetToast = HL.Method().Return(HL.Table) << function(self)
     if self.m_cacheToasts:Count() > 0 then
@@ -188,17 +143,11 @@ CommonToastCtrl._GetToast = HL.Method().Return(HL.Table) << function(self)
     return toast
 end
 
-
-
-
 CommonToastCtrl._CacheToast = HL.Method(HL.Table) << function (self, toast)
     toast.gameObject:SetActive(false)
     toast.timerId = -1
     self.m_cacheToasts:Push(toast)
 end
-
-
-
 
 CommonToastCtrl._PlayToastSound = HL.Method(HL.Any) << function(self, codeId)
     
@@ -206,7 +155,6 @@ CommonToastCtrl._PlayToastSound = HL.Method(HL.Any) << function(self, codeId)
         AudioManager.PostEvent("au_sfx_ui_alarm_bag_full")
     end
 end
-
 
 CommonToastCtrl.OnShowSystemToast = HL.StaticField(HL.Any) << function (arg)
     local ctrl = CommonToastCtrl.AutoOpen(PANEL_ID, nil, false)
@@ -216,9 +164,6 @@ CommonToastCtrl.OnShowSystemToast = HL.StaticField(HL.Any) << function (arg)
 
     ctrl:ShowSystemToast(arg)
 end
-
-
-
 
 CommonToastCtrl.ShowSystemToast = HL.Method(HL.Any) << function (self, arg)
     local systemToastText = arg

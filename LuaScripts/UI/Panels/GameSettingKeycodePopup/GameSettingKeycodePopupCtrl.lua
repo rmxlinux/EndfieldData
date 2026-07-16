@@ -3,21 +3,7 @@ local PANEL_ID = PanelId.GameSettingKeycodePopup
 
 local KeyboardKeyCode = CS.Beyond.Input.KeyboardKeyCode 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 GameSettingKeycodePopupCtrl = HL.Class('GameSettingKeycodePopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -27,29 +13,19 @@ GameSettingKeycodePopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
-
 GameSettingKeycodePopupCtrl.CheckArgs = HL.StaticMethod(HL.Table).Return(HL.Boolean) << function(args)
     return true
 end
 
-
 GameSettingKeycodePopupCtrl.m_settingItemData = HL.Field(HL.Userdata)
-
 
 GameSettingKeycodePopupCtrl.m_isPrimary = HL.Field(HL.Boolean) << false
 
-
 GameSettingKeycodePopupCtrl.m_onKeyCodeInput = HL.Field(HL.Function)
-
 
 GameSettingKeycodePopupCtrl.m_actionScopes = HL.Field(HL.Table)
 
-
 GameSettingKeycodePopupCtrl.m_listenInputTick = HL.Field(HL.Number) << -1
-
-
-
 
 
 GameSettingKeycodePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -69,13 +45,9 @@ GameSettingKeycodePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self.m_actionScopes = actionScopes
 end
 
-
-
 GameSettingKeycodePopupCtrl.OnClose = HL.Override() << function(self)
     self.m_listenInputTick = LuaUpdate:Remove(self.m_listenInputTick)
 end
-
-
 
 GameSettingKeycodePopupCtrl.OnShow = HL.Override() << function(self)
     self:_UpdateView()
@@ -85,8 +57,6 @@ GameSettingKeycodePopupCtrl.OnShow = HL.Override() << function(self)
     end)
 end
 
-
-
 GameSettingKeycodePopupCtrl._UpdateView = HL.Method() << function(self)
     local settingItemData = self.m_settingItemData
     self.view.actionNameText.text = settingItemData.settingText
@@ -94,8 +64,6 @@ GameSettingKeycodePopupCtrl._UpdateView = HL.Method() << function(self)
     local actionPriorityTextId = self.m_isPrimary and "ui_set_gamesetting_keyhint1" or "ui_set_gamesetting_keyhint2"
     self.view.actionPriorityText.text = Language[actionPriorityTextId]
 end
-
-
 
 GameSettingKeycodePopupCtrl._ListenInput = HL.Method() << function(self)
     if not self.view.inputGroup.groupEnabled then

@@ -2,23 +2,11 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 local BLACKBOX_SELECT_IN_ANIM = "blackboxselection_in"
 local BLACKBOX_SELECT_OUT_ANIM = "blackboxselection_out"
 
-
-
-
-
-
 BlackboxSelectionCell = HL.Class('BlackboxSelectionCell', UIWidgetBase)
-
-
 
 
 BlackboxSelectionCell._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
-
-
 
 BlackboxSelectionCell.InitBlackboxSelectionCell = HL.Method(HL.String, HL.Function, HL.String)
         << function(self, blackboxId, onClickFunc, redDotName)
@@ -27,10 +15,6 @@ BlackboxSelectionCell.InitBlackboxSelectionCell = HL.Method(HL.String, HL.Functi
     FactoryUtils.updateBlackboxCell(self.view, blackboxId, onClickFunc)
     self.view.redDot:InitRedDot(redDotName, blackboxId, nil, self:GetUICtrl().view.redDotScrollRect)
 end
-
-
-
-
 
 BlackboxSelectionCell.SetSelected = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, selected, ignoreEffect)
     if ignoreEffect == true then
@@ -46,8 +30,6 @@ BlackboxSelectionCell.SetSelected = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) <<
         end
     end
 end
-
-
 
 BlackboxSelectionCell.PlayAnimationIn = HL.Method() << function(self)
     self.view.animationWrapper:PlayInAnimation()

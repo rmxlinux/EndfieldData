@@ -1,35 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
 PinBtn = HL.Class('PinBtn', UIWidgetBase)
-
 
 PinBtn.m_pinSystem = HL.Field(HL.Any)
 
-
 PinBtn.m_pinId = HL.Field(HL.String) << ""
-
 
 PinBtn.m_pinType = HL.Field(HL.Any)
 
-
 PinBtn.m_pinChangedCallback = HL.Field(HL.Function)
 
-
 PinBtn.pinIsOn = HL.Field(HL.Boolean) << false
-
-
 
 
 PinBtn._OnFirstTimeInit = HL.Override() << function(self)
@@ -42,11 +23,6 @@ PinBtn._OnFirstTimeInit = HL.Override() << function(self)
         self:_OnPinBtnToggleValueChanged(isOn)
     end)
 end
-
-
-
-
-
 
 PinBtn.InitPinBtn = HL.Method(HL.String, HL.Any, HL.Opt(HL.Function)) << function(self, pinId, pinType, pinChangedCallback)
     self:_FirstTimeInit()
@@ -73,10 +49,6 @@ PinBtn.InitPinBtn = HL.Method(HL.String, HL.Any, HL.Opt(HL.Function)) << functio
     self.pinIsOn = self.view.pinToggle.isOn
 end
 
-
-
-
-
 PinBtn._RefreshPinBtnState = HL.Method(HL.String, HL.Any) << function(self, pinId, pinType)
     if pinId ~= self.m_pinId and self.view.pinToggle.isOn and self.m_pinType == pinType then
         self.view.pinToggle:SetIsOnWithoutNotify(false)
@@ -89,9 +61,6 @@ PinBtn._RefreshPinBtnState = HL.Method(HL.String, HL.Any) << function(self, pinI
         self:_InvokePinChangedCallback()
     end
 end
-
-
-
 
 PinBtn._OnPinBtnToggleValueChanged = HL.Method(HL.Boolean) << function(self, isOn)
     local curScopeIndex = ScopeUtil.GetCurrentScope():GetHashCode()
@@ -119,15 +88,11 @@ PinBtn._OnPinBtnToggleValueChanged = HL.Method(HL.Boolean) << function(self, isO
     self:_InvokePinChangedCallback()
 end
 
-
-
 PinBtn._InvokePinChangedCallback = HL.Method() << function(self)
     if self.m_pinChangedCallback ~= nil then
         self.m_pinChangedCallback()
     end
 end
-
-
 
 PinBtn.TogglePinBtn = HL.Method() << function(self)
     self.view.pinToggle.isOn = not self.view.pinToggle.isOn

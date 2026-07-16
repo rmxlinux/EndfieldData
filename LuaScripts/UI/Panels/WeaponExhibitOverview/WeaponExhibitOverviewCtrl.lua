@@ -1,36 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WeaponExhibitOverview
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WeaponExhibitOverviewCtrl = HL.Class('WeaponExhibitOverviewCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -40,26 +11,17 @@ WeaponExhibitOverviewCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ITEM_LOCKED_STATE_CHANGED] = 'OnItemLockedStateChanged',
 }
 
-
 WeaponExhibitOverviewCtrl.m_arg = HL.Field(HL.Table)
-
 
 WeaponExhibitOverviewCtrl.m_weaponInfo = HL.Field(HL.Table)
 
-
 WeaponExhibitOverviewCtrl.m_rotateTickKey = HL.Field(HL.Number) << -1
-
-
-
 
 WeaponExhibitOverviewCtrl.OnItemLockedStateChanged = HL.Method(HL.Table) << function (self, arg)
     local weaponInfo = self.m_weaponInfo
 
     self.view.weaponIntroduction:InitWeaponIntroduction(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)
 end
-
-
-
 
 WeaponExhibitOverviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_arg = arg
@@ -73,8 +35,6 @@ WeaponExhibitOverviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitController()
 end
 
-
-
 WeaponExhibitOverviewCtrl.OnShow = HL.Override() << function(self)
     local weaponInfo = self.m_weaponInfo
 
@@ -85,13 +45,9 @@ WeaponExhibitOverviewCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 WeaponExhibitOverviewCtrl.OnClose = HL.Override() << function(self)
     LuaUpdate:Remove(self.m_rotateTickKey)
 end
-
-
 
 WeaponExhibitOverviewCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.btnBack.onClick:AddListener(function()
@@ -157,16 +113,12 @@ WeaponExhibitOverviewCtrl._InitActionEvent = HL.Method() << function(self)
     end)
 end
 
-
-
 WeaponExhibitOverviewCtrl._PlayCustomAnimationOut = HL.Method() << function(self)
     UIUtils.PlayAnimationAndToggleActive(self.view.leftNode, false) 
     UIUtils.PlayAnimationAndToggleActive(self.view.rightNode, false, function()
         PhaseManager:ExitPhaseFast(PhaseId.WeaponInfo)
     end)
 end
-
-
 
 WeaponExhibitOverviewCtrl._OnClickUpgradeButton = HL.Method() << function(self)
     local weaponExhibitInfo = CharInfoUtils.getWeaponExhibitBasicInfo(self.m_weaponInfo.weaponTemplateId, self.m_weaponInfo.weaponInstId)
@@ -192,8 +144,6 @@ WeaponExhibitOverviewCtrl._OnClickUpgradeButton = HL.Method() << function(self)
     })
 end
 
-
-
 WeaponExhibitOverviewCtrl._GetOverviewHintId = HL.Method().Return(HL.String) << function(self)
     local weaponTemplateId = self.m_weaponInfo.weaponTemplateId
     local weaponInstId = self.m_weaponInfo.weaponInstId
@@ -209,21 +159,15 @@ WeaponExhibitOverviewCtrl._GetOverviewHintId = HL.Method().Return(HL.String) << 
     return isBreak and "LUA_CHAR_BREAK" or "ui_wpn_exhibit_overview_upgrade"
 end
 
-
-
 WeaponExhibitOverviewCtrl._GetGemHintId = HL.Method().Return(HL.String) << function(self)
     return "ui_wpn_exhibit_gem_add"
 end
-
-
 
 WeaponExhibitOverviewCtrl._OnClickOverviewTab = HL.Method() << function(self)
     self:Notify(MessageConst.WEAPON_EXHIBIT_PAGE_CHANGE, {
         pageType = UIConst.WEAPON_EXHIBIT_PAGE_TYPE.OVERVIEW,
     })
 end
-
-
 
 WeaponExhibitOverviewCtrl._OnClickGemTab = HL.Method() << function(self)
     
@@ -232,23 +176,15 @@ WeaponExhibitOverviewCtrl._OnClickGemTab = HL.Method() << function(self)
     })
 end
 
-
-
 WeaponExhibitOverviewCtrl._OnClickTalentTab = HL.Method() << function(self)
     self:Notify(MessageConst.SHOW_TOAST, Language.LUA_FEATURE_NOT_AVAILABLE)
 end
-
-
 
 WeaponExhibitOverviewCtrl._OnClickDocumentTab = HL.Method() << function(self)
     self:Notify(MessageConst.WEAPON_EXHIBIT_PAGE_CHANGE, {
         pageType = UIConst.WEAPON_EXHIBIT_PAGE_TYPE.DOCUMENT,
     })
 end
-
-
-
-
 
 WeaponExhibitOverviewCtrl._RefreshOverviewPanel = HL.Method(HL.Number, HL.String) << function(self, weaponInstId, weaponTemplateId)
     local _, weaponItemCfg = Tables.itemTable:TryGetValue(weaponTemplateId)
@@ -290,9 +226,6 @@ WeaponExhibitOverviewCtrl._RefreshOverviewPanel = HL.Method(HL.Number, HL.String
 end
 
 
-
-
-
 WeaponExhibitOverviewCtrl._RefreshTrailWeapon = HL.Method(HL.Number) << function(self, weaponInstId)
     local isTrailWeapon = CharInfoUtils.checkIsWeaponInTrail(weaponInstId)
     if isTrailWeapon then
@@ -302,10 +235,6 @@ WeaponExhibitOverviewCtrl._RefreshTrailWeapon = HL.Method(HL.Number) << function
         self.view.btnDocument.gameObject:SetActive(false)
     end
 end
-
-
-
-
 
 WeaponExhibitOverviewCtrl._RefreshBasicNode = HL.Method(HL.Number, HL.String) << function(self, weaponInstId, weaponTemplateId)
     local basicNode = self.view.basicNode
@@ -320,35 +249,19 @@ WeaponExhibitOverviewCtrl._RefreshBasicNode = HL.Method(HL.Number, HL.String) <<
     basicNode.btnBreakthroughPreview.gameObject:SetActive(weaponExhibitInfo.curBreakthroughLv < weaponExhibitInfo.maxBreakthroughLv)
 end
 
-
-
-
-
 WeaponExhibitOverviewCtrl._RefreshGemNode = HL.Method(HL.Number, HL.String) << function(self, weaponInstId, weaponTemplateId)
     local weaponExhibitInfo = CharInfoUtils.getWeaponExhibitBasicInfo(weaponTemplateId, weaponInstId)
 
     self.view.weaponGemNode:InitWeaponGemNode(weaponExhibitInfo.gemInst and weaponExhibitInfo.gemInst.instId or 0)
 end
 
-
-
-
-
 WeaponExhibitOverviewCtrl._RefreshAttributeNode = HL.Method(HL.Number, HL.String) << function(self, weaponInstId, weaponTemplateId)
     self.view.weaponAttributeNode:InitWeaponAttributeNode(weaponInstId)
 end
 
-
-
-
-
 WeaponExhibitOverviewCtrl._RefreshSkillNode = HL.Method(HL.Number, HL.String) << function(self, weaponInstId, weaponTemplateId)
     self.view.weaponSkillNode:InitWeaponSkillNode(weaponInstId)
 end
-
-
-
-
 
 WeaponExhibitOverviewCtrl._RefreshAttributeCell = HL.Method(HL.Table, HL.Table) << function(self, cell, attributeInfo)
     local attributeKey = Const.ATTRIBUTE_TYPE_2_ATTRIBUTE_DATA_KEY[attributeInfo.attributeType]
@@ -357,8 +270,6 @@ WeaponExhibitOverviewCtrl._RefreshAttributeCell = HL.Method(HL.Table, HL.Table) 
     cell.attribute.numText.text = "+" .. attributeInfo.showValue
     cell.attribute.attributeIcon:LoadSprite(UIConst.UI_SPRITE_ATTRIBUTE_ICON, attributeInfo.iconName)
 end
-
-
 
 
 WeaponExhibitOverviewCtrl._ToggleUI = HL.Method(HL.Boolean) << function(self, isOn)
@@ -396,8 +307,6 @@ WeaponExhibitOverviewCtrl._ToggleUI = HL.Method(HL.Boolean) << function(self, is
     end
 end
 
-
-
 WeaponExhibitOverviewCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     self.view.leftTopNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
@@ -405,8 +314,6 @@ WeaponExhibitOverviewCtrl._InitController = HL.Method() << function(self)
     end)
     UIUtils.bindHyperlinkPopup(self, "WeaponSkill", self.view.mainInputGroup.groupId)
 end
-
-
 
 WeaponExhibitOverviewCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     local arg = {

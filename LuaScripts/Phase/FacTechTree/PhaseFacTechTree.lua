@@ -3,28 +3,11 @@ local PHASE_ID = PhaseId.FacTechTree
 
 local DEFAULT_FAC_TECH_PACKAGE_ID = "tech_group_tundra"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseFacTechTree = HL.Class('PhaseFacTechTree', phaseBase.PhaseBase)
-
 
 PhaseFacTechTree.m_currentPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseFacTechTree.m_subPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 
 
@@ -38,15 +21,9 @@ PhaseFacTechTree.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
-
 PhaseFacTechTree._OnInit = HL.Override() << function(self)
     PhaseFacTechTree.Super._OnInit(self)
 end
-
-
-
-
 
 
 
@@ -124,23 +101,11 @@ PhaseFacTechTree._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)
     end
 end
 
-
-
-
-
 PhaseFacTechTree._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseFacTechTree._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseFacTechTree._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode,
                                                                                                      args)
@@ -151,23 +116,15 @@ end
 
 
 
-
-
 PhaseFacTechTree._OnActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseFacTechTree._OnDeActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseFacTechTree._OnDestroy = HL.Override() << function(self)
     PhaseFacTechTree.Super._OnDestroy(self)
 end
-
-
 
 
 
@@ -178,9 +135,6 @@ PhaseFacTechTree._OnRefresh = HL.Override() << function(self)
 
     self.m_currentPanelItem.uiCtrl:AutoSelect(self.arg.techId)
 end
-
-
-
 
 PhaseFacTechTree.OpenTreePanel = HL.Method(HL.Any) << function(self, args)
     local arg = unpack(args)
@@ -193,9 +147,6 @@ PhaseFacTechTree.OpenTreePanel = HL.Method(HL.Any) << function(self, args)
     subItem.uiCtrl:Hide()
 end
 
-
-
-
 PhaseFacTechTree.OpenPackagePanel = HL.Method(HL.Table) << function(self, args)
     self:RemovePhasePanelItem(self.m_subPanelItem)
     local subItem = self.m_currentPanelItem
@@ -204,8 +155,6 @@ PhaseFacTechTree.OpenPackagePanel = HL.Method(HL.Table) << function(self, args)
 
     subItem.uiCtrl:Hide()
 end
-
-
 
 PhaseFacTechTree.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}

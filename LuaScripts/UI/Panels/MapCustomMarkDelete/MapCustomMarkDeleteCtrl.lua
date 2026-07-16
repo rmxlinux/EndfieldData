@@ -2,38 +2,17 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapCustomMarkDelete
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MapCustomMarkDeleteCtrl = HL.Class('MapCustomMarkDeleteCtrl', uiCtrl.UICtrl)
-
 
 MapCustomMarkDeleteCtrl.m_selectDeleteMarkTable = HL.Field(HL.Table)
 
-
 MapCustomMarkDeleteCtrl.m_selectDeleteMarkCount = HL.Field(HL.Number) << 0
-
 
 MapCustomMarkDeleteCtrl.m_argsInstId = HL.Field(HL.String) << ""
 
-
 MapCustomMarkDeleteCtrl.m_selectLevelId = HL.Field(HL.String) << ""
 
-
 MapCustomMarkDeleteCtrl.m_trackMark = HL.Field(HL.Userdata)
-
 
 
 
@@ -43,9 +22,6 @@ MapCustomMarkDeleteCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CUSTOM_MARK_MULTI_DELETE_SELECT] = '_OnSelectMark',
     [MessageConst.ON_MAP_MARK_RUNTIME_DATA_CHANGED] = '_OnDataChanged',
 }
-
-
-
 
 
 MapCustomMarkDeleteCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -74,14 +50,9 @@ MapCustomMarkDeleteCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 MapCustomMarkDeleteCtrl.OnClose = HL.Override() << function(self)
     self:_OnClearMultiSelect()
 end
-
-
-
 
 MapCustomMarkDeleteCtrl._OnSelectMark = HL.Method(HL.Table) << function(self, args)
     local instId = args.instId
@@ -109,8 +80,6 @@ MapCustomMarkDeleteCtrl._OnSelectMark = HL.Method(HL.Table) << function(self, ar
     })
 end
 
-
-
 MapCustomMarkDeleteCtrl._RefreshSelectText = HL.Method() << function(self)
     local curNum = self.m_selectDeleteMarkCount
     local maxNum = GameInstance.player.mapManager:GetQuickSearchCustomMarkCountByLevel(self.m_selectLevelId)
@@ -125,15 +94,10 @@ MapCustomMarkDeleteCtrl._RefreshSelectText = HL.Method() << function(self)
     self.view.isSelectText.text = string.format("%d/%d", curNum, maxNum)
 end
 
-
-
-
 MapCustomMarkDeleteCtrl._OnDataChanged = HL.Method(HL.Table) << function(self, args)
     local instId, isAdd = unpack(args)
     self:_RefreshSelectText()
 end
-
-
 
 MapCustomMarkDeleteCtrl._OnClickDelete = HL.Method() << function(self)
     if not self.m_selectDeleteMarkTable then
@@ -156,8 +120,6 @@ MapCustomMarkDeleteCtrl._OnClickDelete = HL.Method() << function(self)
     self:_RefreshSelectText()
 end
 
-
-
 MapCustomMarkDeleteCtrl._OnClearMultiSelect = HL.Method() << function(self)
     if not self.m_selectDeleteMarkTable or not next(self.m_selectDeleteMarkTable) then
         return
@@ -172,9 +134,6 @@ MapCustomMarkDeleteCtrl._OnClearMultiSelect = HL.Method() << function(self)
     self.m_selectDeleteMarkTable = {}
     self.m_selectDeleteMarkCount = 0
 end
-
-
-
 
 MapCustomMarkDeleteCtrl.IsCustomMarkSelectedToDelete = HL.Method(HL.String).Return(HL.Boolean) << function(self, markInstId)
     return self.m_selectDeleteMarkTable[markInstId] ~= nil

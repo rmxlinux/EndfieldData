@@ -1,70 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityCheckInBase = HL.Class('ActivityCheckInBase', UIWidgetBase)
 
 local FIRST_CELL_POSITION_CAL_FINE_TUNE = 1
@@ -77,25 +12,16 @@ local stateTable = {
 
 
 
-
-ActivityCheckInBase.m_startAnimTime = HL.Field(HL.Number) << 0
-
-
 ActivityCheckInBase.m_animation = HL.Field(HL.Any)
-
 
 ActivityCheckInBase.m_animNameList = HL.Field(HL.Any)
 
-
-
-
 ActivityCheckInBase._InitAnim = HL.Method(HL.Table) << function(self, args)
-    self.m_startAnimTime = args.startAnimTime
     self.m_animation = args.animation
     self.m_animNameList = args.animNameList
+    
+    self.m_replayScrollAnimOnShow = args.replayScrollAnimOnShow or false
 end
-
-
 
 ActivityCheckInBase._PlayCarouselAnim = HL.Method() << function(self)
     local animName = self.m_animNameList[self.m_bigRewardIndex]
@@ -104,40 +30,23 @@ end
 
 
 
-
 ActivityCheckInBase.m_activityId = HL.Field(HL.String) << ""
-
 
 ActivityCheckInBase.m_activity = HL.Field(HL.Any)
 
-
 ActivityCheckInBase.m_totalDays = HL.Field(HL.Number) << -1
-
 
 ActivityCheckInBase.m_rewards = HL.Field(HL.Userdata)
 
-
 ActivityCheckInBase.m_getRewardCell = HL.Field(HL.Function)
-
 
 ActivityCheckInBase.m_genCellFunc = HL.Field(HL.Function)
 
-
 ActivityCheckInBase.m_isPopup = HL.Field(HL.Boolean) << false
 
-
-ActivityCheckInBase.m_isInit = HL.Field(HL.Boolean) << true
-
-
-
+ActivityCheckInBase.m_replayScrollAnimOnShow = HL.Field(HL.Boolean) << false
 
 ActivityCheckInBase._InitActivityInfo = HL.Method(HL.Table) << function(self, args)
-    self.m_isInit = true
-    self:_StartCoroutine(function()
-        coroutine.wait(self.m_startAnimTime)
-        self.m_isInit = false
-    end)
-
     
     self.m_isPopup = args.isPopup or false
 
@@ -164,6 +73,11 @@ ActivityCheckInBase._InitActivityInfo = HL.Method(HL.Table) << function(self, ar
     self:_RefreshRewardDays()
 
     
+    if self.view.descTxt then
+        self.view.descTxt:SetAndResolveTextStyle(Tables.checkInInfoTable[self.m_activityId].checkinDes)
+    end
+
+    
     self.m_rewards = Tables.CheckInRewardTable[self.m_activityId].stageList
     self.m_totalDays = #self.m_rewards
 
@@ -177,10 +91,12 @@ ActivityCheckInBase._InitActivityInfo = HL.Method(HL.Table) << function(self, ar
     end
 
     self.m_canGetReward = self.m_activity.loginDays ~= self.m_activity.rewardDays.Count
-    self.view.activityCommonInfo:InitActivityCommonInfo(args)
-    
-    if self.m_isPopup then
-        self.view.activityCommonInfo.view.infoNode.descriptionLayout.gameObject:SetActive(false)
+    if self.view.activityCommonInfo then
+        self.view.activityCommonInfo:InitActivityCommonInfo(args)
+        
+        if self.m_isPopup then
+            self.view.activityCommonInfo.view.infoNode.descriptionLayout.gameObject:SetActive(false)
+        end
     end
 
     
@@ -208,26 +124,17 @@ end
 
 
 
-
 ActivityCheckInBase.m_rewardCell = HL.Field(HL.Any)
-
 
 ActivityCheckInBase.m_scrollList = HL.Field(HL.Any)
 
-
 ActivityCheckInBase.m_scrollRect = HL.Field(HL.Any)
-
 
 ActivityCheckInBase.m_scrollRectTransform = HL.Field(HL.Any)
 
-
 ActivityCheckInBase.m_scrollNaviGroup = HL.Field(HL.Any)
 
-
 ActivityCheckInBase.m_Force2digits = HL.Field(HL.Boolean) << false
-
-
-
 
 ActivityCheckInBase._InitScrollList = HL.Method(HL.Table) << function(self, args)
     self.m_rewardCell = args.rewardCell
@@ -240,11 +147,7 @@ end
 
 
 
-
 ActivityCheckInBase.m_listCells = HL.Field(HL.Any)
-
-
-
 
 ActivityCheckInBase._InitTipPoints = HL.Method(HL.Table) << function(self, args)
     
@@ -257,11 +160,7 @@ end
 
 
 
-
 ActivityCheckInBase.m_receiveAllBtn = HL.Field(HL.Any)
-
-
-
 ActivityCheckInBase._InitReceiveAll = HL.Method(HL.Table) << function(self,args)
     self.m_receiveAllBtn = args.receiveAllBtn
     self.m_receiveAllBtn.gameObject:SetActive(self.m_canGetReward)
@@ -281,10 +180,7 @@ end
 
 
 
-
 ActivityCheckInBase.m_firstCanReceiveDay = HL.Field(HL.Number) << 1
-
-
 
 ActivityCheckInBase._InitPosition = HL.Method() << function(self)
     
@@ -299,14 +195,9 @@ end
 
 local SCROLL_ANIM_TIME = 0.3
 
-
 ActivityCheckInBase.m_canFocus = HL.Field(HL.Boolean) << false
 
-
 ActivityCheckInBase.m_focusBtn = HL.Field(HL.Any)
-
-
-
 
 ActivityCheckInBase._InitFocus = HL.Method(HL.Table) << function(self,args)
     self.m_canFocus = true
@@ -318,10 +209,12 @@ ActivityCheckInBase._InitFocus = HL.Method(HL.Table) << function(self,args)
         
         local day = self.m_bigRewards[self.m_bigRewardIndex].day
         
-        UIUtils.setAsNaviTarget(nil)
+        self:ClearNaviTarget()
         self.m_scrollList:ScrollToIndex(day)
-        self:_StartCoroutine(function()
-            coroutine.wait(SCROLL_ANIM_TIME)
+        self.m_scrollList.onScrollEnd:RemoveAllListeners()
+        self.m_scrollList.onScrollEnd:AddListener(function()
+            
+            self.m_scrollList.onScrollEnd:RemoveAllListeners()
             local cell = self:_GetCell(day)
             if cell then
                 self:_SetNaviTarget(day)
@@ -333,14 +226,11 @@ end
 
 
 
-
 ActivityCheckInBase.m_focusIndex = HL.Field(HL.Number) << 0
-
 
 ActivityCheckInBase.m_needDisableFirstCell = HL.Field(HL.Boolean) << true
 
-
-
+ActivityCheckInBase.m_setNaviTargetIndex = HL.Field(HL.Number) << 0
 
 ActivityCheckInBase._InitController = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     if args and args.needDisableFirstCell then
@@ -350,9 +240,16 @@ ActivityCheckInBase._InitController = HL.Method(HL.Opt(HL.Table)) << function(se
     if DeviceInfo.usingController then
         if self.m_isPopup then
             
-            self:_StartCoroutine(function()
-                coroutine.wait(self.m_startAnimTime)
-                self:_SetNaviTarget(self.m_firstCanReceiveDay)
+            if not self.luaPanel then
+                self:GetLuaPanel()
+            end
+            self.m_setNaviTargetIndex = self.m_firstCanReceiveDay
+            
+            self.luaPanel.onAnimationInFinished:AddListener(function()
+                self:_SetNaviTarget(self.m_setNaviTargetIndex)
+            end)
+            self.m_scrollList.onGraduallyShowFinish:AddListener(function()
+                self:_SetNaviTarget(self.m_setNaviTargetIndex)
             end)
         else
             
@@ -370,9 +267,6 @@ ActivityCheckInBase._InitController = HL.Method(HL.Opt(HL.Table)) << function(se
     end
 end
 
-
-
-
 ActivityCheckInBase._SetNaviTarget = HL.Method(HL.Number) << function(self, index)
     if index == 0 or not DeviceInfo.usingController  then
         return
@@ -385,49 +279,41 @@ ActivityCheckInBase._SetNaviTarget = HL.Method(HL.Number) << function(self, inde
     if cell then
         local target = cell.button
         self:_ToggleCell(index, true)
-        UIUtils.setAsNaviTarget(target)
+        self:SetNaviTarget(target)
     else
         logger.error(string.format("SetNaviTarget Fail!Cell %d Not Found!", index))
     end
 end
 
-
-
 ActivityCheckInBase._OnEnable = HL.Override() << function(self)
-    if self.m_activity and DeviceInfo.usingController then
-        self:_StartCoroutine(function()
-            coroutine.step()
+    
+    if self.m_replayScrollAnimOnShow then
+        
+        self.m_scrollList:UpdateCount(self.m_totalDays, true)
+        self.m_setNaviTargetIndex = self.m_firstCanReceiveDay
+    else
+        if self.m_activity and DeviceInfo.usingController then
             self.m_scrollList:UpdateShowingCells(function(csIndex, obj)
                 self:_OnUpdateCell(self.m_getRewardCell(obj), LuaIndex(csIndex))
             end)
-            coroutine.wait(self.m_startAnimTime)
-            self:_SetNaviTarget(self.m_focusIndex)
-        end)
+            self.m_setNaviTargetIndex = self.m_focusIndex
+        end
     end
 end
 
 
 
-
 ActivityCheckInBase.m_bigRewards = HL.Field(HL.Table)
-
 
 ActivityCheckInBase.m_bigRewardIndex = HL.Field(HL.Number) << 0
 
-
 ActivityCheckInBase.m_carouselCoroutine = HL.Field(HL.Any)
-
 
 ActivityCheckInBase.m_dayTxt = HL.Field(HL.Any)
 
-
 ActivityCheckInBase.m_nameTxt = HL.Field(HL.Any)
 
-
 ActivityCheckInBase.m_tipsTxt = HL.Field(HL.Any)
-
-
-
 
 ActivityCheckInBase._InitBigRewards = HL.Method(HL.Table) << function(self, args)
     
@@ -453,9 +339,6 @@ ActivityCheckInBase._InitBigRewards = HL.Method(HL.Table) << function(self, args
     self:_LoadBigReward(true)
 end
 
-
-
-
 ActivityCheckInBase._InitBigRewardsCarousel = HL.Method(HL.Table) << function(self, args)
     
     args.leftBtn.onClick:AddListener(function()
@@ -471,8 +354,6 @@ ActivityCheckInBase._InitBigRewardsCarousel = HL.Method(HL.Table) << function(se
     self:_RestartCarousel()
 end
 
-
-
 ActivityCheckInBase._RestartCarousel = HL.Method() << function(self)
     if self.m_carouselCoroutine then
         self:_ClearCoroutine(self.m_carouselCoroutine)
@@ -484,9 +365,6 @@ ActivityCheckInBase._RestartCarousel = HL.Method() << function(self)
         end
     end)
 end
-
-
-
 
 ActivityCheckInBase._LoadBigReward = HL.Method(HL.Boolean) << function(self, next)
     
@@ -541,18 +419,11 @@ end
 
 
 
-
 ActivityCheckInBase.m_getIfRewarded = HL.Field(HL.Table)
-
 
 ActivityCheckInBase.m_allRewardDays = HL.Field(HL.Table)
 
-
 ActivityCheckInBase.m_canGetReward = HL.Field(HL.Boolean) << false
-
-
-
-
 
 ActivityCheckInBase._RefreshDots = HL.Method(HL.Any,HL.Number) << function(self,cell,index)
     
@@ -590,9 +461,6 @@ ActivityCheckInBase._RefreshDots = HL.Method(HL.Any,HL.Number) << function(self,
     cell.stateController:SetState(today)
 end
 
-
-
-
 ActivityCheckInBase._GetState = HL.Method(HL.Number).Return(HL.Number) << function(self,index)
     local state = stateTable.NotComplete
     if self.m_getIfRewarded[index] then
@@ -606,17 +474,11 @@ end
 
 
 
-
 ActivityCheckInBase.m_canSearch = HL.Field(HL.Boolean) << false
-
 
 ActivityCheckInBase.m_searchInfo = HL.Field(HL.Table)
 
-
 ActivityCheckInBase.m_searchBtn = HL.Field(HL.Any)
-
-
-
 
 ActivityCheckInBase._InitSearch = HL.Method(HL.Table) << function(self, args)
     self.m_canSearch = true
@@ -625,8 +487,6 @@ ActivityCheckInBase._InitSearch = HL.Method(HL.Table) << function(self, args)
         self:_Search()
     end)
 end
-
-
 
 ActivityCheckInBase._Search = HL.Method() << function(self)
     
@@ -656,9 +516,6 @@ end
 
 
 
-
-
-
 ActivityCheckInBase.OnRewardInfo = HL.Method(HL.Table) << function(self, args)
     local rewardPack = unpack(args)
     local reward = {
@@ -672,9 +529,6 @@ ActivityCheckInBase.OnRewardInfo = HL.Method(HL.Table) << function(self, args)
     }
     Notify(MessageConst.SHOW_SYSTEM_REWARDS, reward)
 end
-
-
-
 
 ActivityCheckInBase._OnActivityCheckIn = HL.Method(HL.Any) << function(self, args)
     
@@ -701,10 +555,6 @@ ActivityCheckInBase._OnActivityCheckIn = HL.Method(HL.Any) << function(self, arg
         self:_SetNaviTarget(self.m_focusIndex)
     end
 end
-
-
-
-
 
 
 
@@ -783,15 +633,9 @@ ActivityCheckInBase._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(s
             self:_ToggleCell(index, isTarget)
         end
     else
-        self:_StartCoroutine(function()
-            coroutine.wait(self.m_startAnimTime)
-            cell.inputBindingGroupMonoTarget.enabled = true
-        end)
+        cell.inputBindingGroupMonoTarget.enabled = true
     end
 end
-
-
-
 
 ActivityCheckInBase._GainReward = HL.Method(HL.Table) << function(self, rewardDays)
     local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
@@ -803,17 +647,10 @@ ActivityCheckInBase._GainReward = HL.Method(HL.Table) << function(self, rewardDa
     end
 end
 
-
-
-
 ActivityCheckInBase._GetCell = HL.Method(HL.Number).Return(HL.Any) << function(self, index)
     local oriCell = self.m_scrollList:Get(CSIndex(index))
     return oriCell and self.m_getRewardCell(oriCell)
 end
-
-
-
-
 
 ActivityCheckInBase._ToggleCell = HL.Method(HL.Number, HL.Boolean) << function(self, index, active)
     local cell = self:_GetCell(index)
@@ -849,8 +686,6 @@ ActivityCheckInBase.OnPanelInputBlocked = HL.Method(HL.Boolean) << function(self
 end
 
 
-
-
 ActivityCheckInBase._RefreshRewardDays = HL.Method() << function(self)
     self.m_getIfRewarded = {}
     for i = 1,self.m_activity.rewardDays.Count do
@@ -865,9 +700,7 @@ ActivityCheckInBase._RefreshRewardDays = HL.Method() << function(self)
     end
 end
 
-
-
-ActivityCheckInBase.OnActivityCenterNaviFailed = HL.Method() << function(self)
+ActivityCheckInBase.OnActivityCenterNaviFailed = HL.Virtual() << function(self)
     if self.view.container then
         local left = math.floor((- self.view.container.anchoredPosition.x - FIRST_CELL_POSITION_CAL_FINE_TUNE)/(self.m_rewardCell.gameObject:GetComponent("RectTransform").rect.width + self.m_scrollList.space.x)) + 1
         self:_SetNaviTarget(LuaIndex(left))

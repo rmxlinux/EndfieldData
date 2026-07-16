@@ -11,70 +11,25 @@ local HelpedStateByRoomType = {
     [GEnums.SpaceshipRoomType.GuestRoomClueExtension] = "ExtraRewards",
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipControlCenterCtrl = HL.Class('SpaceshipControlCenterCtrl', uiCtrl.UICtrl)
-
-
-SpaceshipControlCenterCtrl.m_roomId = HL.Field(HL.String) << ""
-
-
-SpaceshipControlCenterCtrl.m_moveCam = HL.Field(HL.Boolean) << false
-
-
-SpaceshipControlCenterCtrl.m_clearScreenKey = HL.Field(HL.Number) << -1
-
 
 SpaceshipControlCenterCtrl.m_roomCells = HL.Field(HL.Forward('UIListCache'))
 
-
 SpaceshipControlCenterCtrl.m_roomIndexTab = HL.Field(HL.Table)
-
 
 SpaceshipControlCenterCtrl.m_nowNaviRoomCell = HL.Field(HL.Table)
 
-
 SpaceshipControlCenterCtrl.m_visitorHelpBindingId = HL.Field(HL.Number) << -1
-
 
 SpaceshipControlCenterCtrl.m_isFriend = HL.Field(HL.Boolean) << false
 
+SpaceshipControlCenterCtrl.m_isFirstShow = HL.Field(HL.Boolean) << true
+
+SpaceshipControlCenterCtrl.m_roomId = HL.Field(HL.String) << ""
+
+SpaceshipControlCenterCtrl.m_moveCam = HL.Field(HL.Boolean) << false
+
+SpaceshipControlCenterCtrl.m_clearScreenKey = HL.Field(HL.Number) << -1
 
 
 
@@ -94,13 +49,9 @@ SpaceshipControlCenterCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SPACESHIP_ONE_KEY_HARVEST_FINISH] = "OnSpaceshipOneKeyHarvestFinish",
 }
 
-
 SpaceshipControlCenterCtrl.OpenControlCenter = HL.StaticMethod() << function()
     PhaseManager:OpenPhase(PhaseId.SpaceshipControlCenter)
 end
-
-
-
 
 
 SpaceshipControlCenterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -142,12 +93,10 @@ SpaceshipControlCenterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             end
         end)
     end
-    self:SetNaviTarget()
+    self:SetDefaultNaviTarget()
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     self:_TryRecoverFriendHelpPopup(arg and arg.friendHelpPopupState or nil)
 end
-
-
 
 SpaceshipControlCenterCtrl.OnClose = HL.Override() << function(self)
     local clearScreenKey
@@ -165,13 +114,8 @@ SpaceshipControlCenterCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 SpaceshipControlCenterCtrl.OnShow = HL.Override() << function(self)
 end
-
-
-
 
 SpaceshipControlCenterCtrl._TryRecoverFriendHelpPopup = HL.Method(HL.Opt(HL.Any)) << function(self, popupState)
     if popupState == nil or string.isEmpty(popupState.roomId) then
@@ -187,20 +131,13 @@ SpaceshipControlCenterCtrl._TryRecoverFriendHelpPopup = HL.Method(HL.Opt(HL.Any)
 end
 
 
-
-
-SpaceshipControlCenterCtrl.SetNaviTarget = HL.Method() << function(self)
+SpaceshipControlCenterCtrl.SetDefaultNaviTarget = HL.Method() << function(self)
     if not GameInstance.player.spaceship.isViewingFriend then
-        InputManagerInst.controllerNaviManager:SetTarget(self.view.control_center.ownerButton)
+        self:SetNaviTarget(self.view.control_center.ownerButton)
     else
-        InputManagerInst.controllerNaviManager:SetTarget(self.view.control_center.visitorsNodeInputBindingGroupNaviDecorator)
+        self:SetNaviTarget(self.view.control_center.visitorsNodeInputBindingGroupNaviDecorator)
     end
 end
-
-
-
-
-
 
 
 SpaceshipControlCenterCtrl.OnRoomCellNaviTargetChange = HL.Method(HL.Opt(HL.Table, HL.Boolean, HL.String))
@@ -209,10 +146,6 @@ SpaceshipControlCenterCtrl.OnRoomCellNaviTargetChange = HL.Method(HL.Opt(HL.Tabl
     self.m_nowNaviRoomCell.roomId = roomId
     self:_RefreshBinding(canHelp, roomId)
 end
-
-
-
-
 
 SpaceshipControlCenterCtrl._RefreshBinding = HL.Method(HL.Boolean, HL.String) << function(self, canHelp, roomId)
     if not self.m_nowNaviRoomCell or self.m_nowNaviRoomCell.roomId ~= roomId then
@@ -229,16 +162,12 @@ SpaceshipControlCenterCtrl._RefreshBinding = HL.Method(HL.Boolean, HL.String) <<
 end
 
 
-
-
 SpaceshipControlCenterCtrl._SetSelfState = HL.Method() << function(self)
     if GameInstance.player.spaceship.isViewingFriend then
         return
     end
     self.view.friendAssistNode:InitFriendAssistNode(Tables.spaceshipConst.controlCenterRoomId)
 end
-
-
 
 
 SpaceshipControlCenterCtrl._SetFriendState = HL.Method() << function(self)
@@ -277,9 +206,6 @@ SpaceshipControlCenterCtrl._SetFriendState = HL.Method() << function(self)
     self.view.assistHintNode.assistTimesTxt.text = string.format("%d/%d", spaceship.helpOtherRemainCount, Tables.spaceshipConst.helpOthersCountLimit)
 end
 
-
-
-
 SpaceshipControlCenterCtrl.OnSSHelpRoom = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     local roomId = arg and arg[1] or Tables.spaceshipConst.controlCenterRoomId
     local success = arg and arg[2] or false
@@ -287,15 +213,9 @@ SpaceshipControlCenterCtrl.OnSSHelpRoom = HL.Method(HL.Opt(HL.Table)) << functio
     self:_SetFriendState()
 end
 
-
-
-
 SpaceshipControlCenterCtrl.OnUseHelpCredit = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     self:_SetSelfState()
 end
-
-
-
 
 SpaceshipControlCenterCtrl.OnRefreshFriendData = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     if not self.m_isFriend then
@@ -304,9 +224,6 @@ SpaceshipControlCenterCtrl.OnRefreshFriendData = HL.Method(HL.Opt(HL.Any)) << fu
     self:_SetFriendState()
     self:_RefreshRooms()
 end
-
-
-
 
 SpaceshipControlCenterCtrl.OnSpaceshipGuestRoomClueRewardItem = HL.Method(HL.Any) << function(self, args)
     if GameInstance.player.spaceship:IsWaitingForHandleOneKeyHarvest() then
@@ -317,9 +234,6 @@ SpaceshipControlCenterCtrl.OnSpaceshipGuestRoomClueRewardItem = HL.Method(HL.Any
     SpaceshipUtils.ShowClueOutcomePopup(items, sources, self.view.moneyCell, nil)
 end
 
-
-
-
 SpaceshipControlCenterCtrl.OnSpaceshipOneKeyHarvestFinish = HL.Method(HL.Any) << function(self, args)
     local items = unpack(args)
     if not items or items.Count == 0 then
@@ -327,10 +241,6 @@ SpaceshipControlCenterCtrl.OnSpaceshipOneKeyHarvestFinish = HL.Method(HL.Any) <<
     end
     self:_ShowOutcomePopupForOneKeyHarvest("", items)
 end
-
-
-
-
 
 SpaceshipControlCenterCtrl._ShowOutcomePopupForOneKeyHarvest = HL.Method(HL.String, HL.Any) << function(self, title, csItems)
     local items = {}
@@ -351,10 +261,6 @@ SpaceshipControlCenterCtrl._ShowOutcomePopupForOneKeyHarvest = HL.Method(HL.Stri
         items = items,
     })
 end
-
-
-
-
 
 SpaceshipControlCenterCtrl._RefreshGainNode = HL.Method(HL.String, HL.Boolean) << function(self, roomId, success)
     if success then
@@ -381,11 +287,6 @@ SpaceshipControlCenterCtrl._RefreshGainNode = HL.Method(HL.String, HL.Boolean) <
     end
 end
 
-
-
-
-
-
 SpaceshipControlCenterCtrl._RefreshRoomGainNode = HL.Method(HL.Table, HL.String, HL.Opt(HL.Boolean)) << function(self, cell, roomId, refreshNode)
     cell.visitorsNode.gainNode.gameObject:SetActive(true)
 
@@ -408,8 +309,6 @@ SpaceshipControlCenterCtrl._RefreshRoomGainNode = HL.Method(HL.Table, HL.String,
     end
 end
 
-
-
 SpaceshipControlCenterCtrl._SetTimeText = HL.Method() << function(self)
     local targetTime = Utils.getNextCommonServerRefreshTime()
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()
@@ -417,14 +316,9 @@ SpaceshipControlCenterCtrl._SetTimeText = HL.Method() << function(self)
     self.view.assistHintNode.refreshTimesTxt.text = UIUtils.getLeftTimeToSecond(leftSec)
 end
 
-
-
 SpaceshipControlCenterCtrl.OnSyncRoomStation = HL.Method() << function(self)
     self:_RefreshRooms()
 end
-
-
-
 
 SpaceshipControlCenterCtrl._RefreshRooms = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     local roomCount = GameInstance.player.spaceship.rooms.Count - 1
@@ -466,10 +360,6 @@ SpaceshipControlCenterCtrl._RefreshRooms = HL.Method(HL.Opt(HL.Any)) << function
 end
 
 
-
-
-
-
 SpaceshipControlCenterCtrl._UpdateRoomCell = HL.Method(HL.Table, HL.String) << function(self, cell, roomId)
     local succ, roomInfo = GameInstance.player.spaceship:TryGetRoom(roomId)
     if not succ or not cell then
@@ -483,7 +373,11 @@ SpaceshipControlCenterCtrl._UpdateRoomCell = HL.Method(HL.Table, HL.String) << f
             PhaseManager:OpenPhase(PhaseId.SpaceshipStation, { roomId = roomId })
         else
             local phaseId = PhaseId[SpaceshipConst.ROOM_PHASE_ID_NAME_MAP_BY_TYPE[roomInfo.type]]
-            PhaseManager:OpenPhase(phaseId, { roomId = roomId, moveCam = false, })
+            PhaseManager:OpenPhase(phaseId, {
+                roomId = roomId,
+                moveCam = true,
+                isRemoteCamera = true
+            })
         end
     end)
 
@@ -518,10 +412,6 @@ SpaceshipControlCenterCtrl._UpdateRoomCell = HL.Method(HL.Table, HL.String) << f
     end
     self:_RefreshVisitorNode(cell, roomId)
 end
-
-
-
-
 
 SpaceshipControlCenterCtrl._RefreshVisitorNode = HL.Method(HL.Table, HL.String) << function(self, cell, roomId)
     local spaceship = GameInstance.player.spaceship
@@ -570,9 +460,6 @@ SpaceshipControlCenterCtrl._RefreshVisitorNode = HL.Method(HL.Table, HL.String) 
     end
 end
 
-
-
-
 SpaceshipControlCenterCtrl.OnSpaceshipGrowCabinHelped = HL.Method(HL.Any) << function(self, args)
     if not GameInstance.player.spaceship.isViewingFriend then
         self:OnSpaceshipGrowCabinOneKeyHarvest(args)
@@ -582,10 +469,6 @@ SpaceshipControlCenterCtrl.OnSpaceshipGrowCabinHelped = HL.Method(HL.Any) << fun
     local items = unpack(args)
     self:_ShowOutcomePopup(title, items)
 end
-
-
-
-
 
 
 SpaceshipControlCenterCtrl._ShowOutcomePopup = HL.Method(HL.String, HL.Any) << function(self, title, csItems)
@@ -634,10 +517,6 @@ end
 
 
 
-
-
-
-
 SpaceshipControlCenterCtrl._UpdateRoomCellStation = HL.Method(HL.Table, CS.Beyond.Gameplay.SpaceshipSystem.Room) << function(self, cell, roomInfo)
     local node = cell.contentNode
     if not node.m_charCells then
@@ -665,18 +544,12 @@ SpaceshipControlCenterCtrl._UpdateRoomCellStation = HL.Method(HL.Table, CS.Beyon
 end
 
 
-
-
-
 SpaceshipControlCenterCtrl.OnSpaceshipManufacturingStationCollectOneKeyHarvest = HL.Method(HL.Any) << function(self, args)
     local _, itemId, count = unpack(args)
     if GameInstance.player.spaceship:IsWaitingForHandleOneKeyHarvest() then
         GameInstance.player.spaceship:AddHarvestItem(itemId, count)
     end
 end
-
-
-
 
 SpaceshipControlCenterCtrl.OnSpaceshipGrowCabinOneKeyHarvest = HL.Method(HL.Any) << function(self, args)
     if not GameInstance.player.spaceship:IsWaitingForHandleOneKeyHarvest() then

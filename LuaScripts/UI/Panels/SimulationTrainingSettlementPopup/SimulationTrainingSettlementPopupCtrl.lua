@@ -37,6 +37,8 @@ SimulationTrainingSettlementPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ALL_CHARACTER_DEAD] = 'OnAllCharacterDead',
 }
 
+SimulationTrainingSettlementPopupCtrl.s_lastIsUnlimitedMode = HL.StaticField(HL.Boolean) << false
+
 
 SimulationTrainingSettlementPopupCtrl.m_getRewardItemCellFunc = HL.Field(HL.Function)
 
@@ -188,7 +190,7 @@ SimulationTrainingSettlementPopupCtrl._UpdateRewardsState = HL.Method() << funct
     self.view.emptyRewardNode.gameObject:SetActiveIfNecessary(rewardsCount == 0)
     if rewardsCount == 0 then
         local system = GameInstance.player.simulationTrainingSystem
-        if system.unlimitedMode then
+        if SimulationTrainingSettlementPopupCtrl.s_lastIsUnlimitedMode then
             self.view.emptyRewardNodeStateController:SetState("Infinity")
         else
             self.view.emptyRewardNodeStateController:SetState("Standard")
@@ -231,16 +233,7 @@ SimulationTrainingSettlementPopupCtrl._OnBtnRestartClick = HL.Method() << functi
         self.m_isClose = true
         self:PlayAnimationOutWithCallback(function()
             self:Close()
-
-            if system.unlimitedMode then
-                Notify(MessageConst.ON_OPEN_SIMULATION_TRAINING_DRAW_PANEL)
-            else
-                if system.dailyPlayCnt == 0 then
-                    Notify(MessageConst.SHOW_TOAST, Language.LUA_SIMULATION_TRAINING_PLAY_CNT_EXHAUSTED_TOAST)
-                    return
-                end
-                Notify(MessageConst.ON_OPEN_SIMULATION_TRAINING_DRAW_PANEL)
-            end
+            Notify(MessageConst.ON_OPEN_SIMULATION_TRAINING_DRAW_PANEL)
         end)
     end
 end

@@ -1,37 +1,20 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
 CraftCell = HL.Class('CraftCell', UIWidgetBase)
-
 
 CraftCell.incomeCache = HL.Field(HL.Forward('UIListCache'))
 
-
 CraftCell.outcomeItemsCache = HL.Field(HL.Forward('UIListCache'))
-
 
 CraftCell.inAddCache = HL.Field(HL.Forward("UIListCache"))
 
-
 CraftCell.outAddCache = HL.Field(HL.Forward("UIListCache"))
-
 
 CraftCell.craftInfo = HL.Field(HL.Table)
 
-
 CraftCell.m_itemTipsPosInfo = HL.Field(HL.Table)
 
-
 CraftCell.m_onClickItem = HL.Field(HL.Function)
-
-
 
 
 CraftCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -54,11 +37,6 @@ CraftCell._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
-
-
 CraftCell.InitCraftCell = HL.Method(HL.Any, HL.Opt(HL.Table, HL.Function)) << function(self, craftInfo, itemTipsPosInfo, onClickItem)
     self:_FirstTimeInit()
 
@@ -72,8 +50,6 @@ CraftCell.InitCraftCell = HL.Method(HL.Any, HL.Opt(HL.Table, HL.Function)) << fu
     self.craftInfo = craftInfo
     self:_RefreshCraftCell()
 end
-
-
 
 CraftCell._RefreshCraftCell = HL.Method() << function(self)
     local craftInfo = self.craftInfo
@@ -207,11 +183,33 @@ CraftCell._RefreshCraftCell = HL.Method() << function(self)
     
     self.view.sewageNode.gameObject:SetActive(craftInfo.isSewageCraft == true)
     self.view.timeNode.gameObject:SetActive(craftInfo.isSewageCraft ~= true)
+
+    
+    if craftInfo.env and craftInfo.env ~= GEnums.FacEnvGenEnvType.None then
+        self.view.envTitleNode.gameObject:SetActive(true)
+        self.view.envTitleStateController:SetState(craftInfo.env:ToString())
+    else
+        self.view.envTitleNode.gameObject:SetActive(false)
+    end
+
+    
+    if craftInfo.genEnv and craftInfo.genEnv ~= GEnums.FacEnvGenEnvType.None then
+        self.view.outcomeEnv.gameObject:SetActive(true)
+        self.view.envGenBg.gameObject:SetActive(true)
+        self.view.outcomeEnv:SetState(craftInfo.genEnv:ToString())
+    else
+        self.view.outcomeEnv.gameObject:SetActive(false)
+        self.view.envGenBg.gameObject:SetActive(false)
+    end
+    if craftInfo.consumeRate then
+        self.view.middleNode.gameObject:SetActive(false)
+        self.view.envTipsNode.gameObject:SetActive(true)
+        self.view.genEnvTimeTxt.text = I18nUtils.CombineStringWithLanguageSpilt(craftInfo.consumeRate, Language["ui_fac_common_minute_speed"])
+    else
+        self.view.middleNode.gameObject:SetActive(true)
+        self.view.envTipsNode.gameObject:SetActive(false)
+    end
 end
-
-
-
-
 
 CraftCell.SetSelectedState = HL.Method(HL.Boolean, HL.Boolean) << function(self, isSelected, isBlocked)
     self.view.normalNode.gameObject:SetActive(not isSelected)

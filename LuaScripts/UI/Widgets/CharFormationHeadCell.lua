@@ -1,54 +1,22 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharFormationHeadCell = HL.Class('CharFormationHeadCell', UIWidgetBase)
-
 
 CharFormationHeadCell.info = HL.Field(HL.Table)
 
-
 CharFormationHeadCell.exInfo = HL.Field(HL.Table)
-
 
 CharFormationHeadCell.charInfo = HL.Field(HL.Userdata)
 
-
 CharFormationHeadCell.characterData = HL.Field(HL.Userdata)
-
 
 CharFormationHeadCell.isDead = HL.Field(HL.Boolean) << false
 
-
 CharFormationHeadCell.isUnavailable = HL.Field(HL.Boolean) << false
-
 
 CharFormationHeadCell.m_singleModeSelected = HL.Field(HL.Boolean) << false
 
-
 CharFormationHeadCell.m_charPresetData = HL.Field(HL.Userdata)
-
-
 
 
 CharFormationHeadCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -59,12 +27,6 @@ CharFormationHeadCell._OnFirstTimeInit = HL.Override() << function(self)
         self:_OnPotentialChanged(args)
     end)
 end
-
-
-
-
-
-
 
 CharFormationHeadCell.InitCharFormationHeadCell = HL.Method(HL.Table, HL.Opt(HL.Function, HL.Boolean, HL.Boolean)) << function(self, info, onClick, ignoreDead, needHover)
     self:_FirstTimeInit()
@@ -108,14 +70,16 @@ CharFormationHeadCell.InitCharFormationHeadCell = HL.Method(HL.Table, HL.Opt(HL.
                     rarity = self.characterData.rarity,
                 })
             else
-                Notify(MessageConst.HIDE_COMMON_HOVER_TIP)
+                
+                
+                
+                if not DeviceInfo.usingController or InputManagerInst.controllerNaviManager:IsNaviTarget(self.view.button) then
+                    Notify(MessageConst.HIDE_COMMON_HOVER_TIP)
+                end
             end
         end)
     end
 end
-
-
-
 
 
 
@@ -127,9 +91,6 @@ CharFormationHeadCell._OnLevelChanged = HL.Method(HL.Table) << function(self, ar
     end
 end
 
-
-
-
 CharFormationHeadCell._OnPotentialChanged = HL.Method(HL.Table) << function(self, args)
     local charInstId, potential = unpack(args)
 
@@ -140,15 +101,9 @@ end
 
 
 
-
-
-
 CharFormationHeadCell.RefreshExInfo = HL.Method(HL.Table) << function(self, exInfo)
     self.exInfo = exInfo
 end
-
-
-
 
 CharFormationHeadCell._InitData = HL.Method(HL.Table) << function(self, info)
     self.info = info
@@ -164,8 +119,6 @@ CharFormationHeadCell._InitData = HL.Method(HL.Table) << function(self, info)
     end
 
 end
-
-
 
 CharFormationHeadCell._InitCharBaseInfo = HL.Method() << function(self)
     local spriteName = UIConst.UI_CHAR_HEAD_SQUARE_PREFIX .. self.info.templateId
@@ -189,10 +142,6 @@ CharFormationHeadCell._InitCharBaseInfo = HL.Method() << function(self)
     self.gameObject.name = "CharHeadCell_" .. self.info.templateId
 end
 
-
-
-
-
 CharFormationHeadCell.SetMultiSelect = HL.Method(HL.Any, HL.Opt(HL.Boolean)) << function(self, num, playAnim)
     self.view.selectedBG.gameObject:SetActiveIfNecessary(false)
     if num ~= nil and num > 0 then
@@ -210,10 +159,6 @@ CharFormationHeadCell.SetMultiSelect = HL.Method(HL.Any, HL.Opt(HL.Boolean)) << 
         self.view.button.clickHintTextId = "key_hint_common_confirm"
     end
 end
-
-
-
-
 
 CharFormationHeadCell.SetSingleSelect = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, singleSelect, playAnim)
     if DeviceInfo.usingController then
@@ -236,10 +181,6 @@ CharFormationHeadCell.SetSingleSelect = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)
     end
 end
 
-
-
-
-
 CharFormationHeadCell.SetSingleModeSelected = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, selected, playAnim)
     self.view.selectedMarkMulti.gameObject:SetActive(not selected)
     self.view.selectedMarkSingle.gameObject:SetActive(selected)
@@ -249,15 +190,9 @@ CharFormationHeadCell.SetSingleModeSelected = HL.Method(HL.Boolean, HL.Opt(HL.Bo
 end
 
 
-
-
-
 CharFormationHeadCell.SetDead = HL.Method(HL.Boolean) << function(self, dead)
     self.view.disableMask.gameObject:SetActive(dead)
 end
-
-
-
 
 CharFormationHeadCell.SetUnavailable = HL.Method(HL.Boolean) << function(self, unavailable)
     self.isUnavailable = unavailable
@@ -267,8 +202,6 @@ CharFormationHeadCell.SetUnavailable = HL.Method(HL.Boolean) << function(self, u
         self:SetDead(false)
     end
 end
-
-
 
 CharFormationHeadCell.RefreshCharInfo = HL.Method() << function(self)
     if self.charInfo then

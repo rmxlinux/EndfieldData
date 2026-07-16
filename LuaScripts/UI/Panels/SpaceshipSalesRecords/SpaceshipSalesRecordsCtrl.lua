@@ -1,43 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipSalesRecords
 local PHASE_ID = PhaseId.SpaceshipSalesRecords
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipSalesRecordsCtrl = HL.Class('SpaceshipSalesRecordsCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -48,70 +12,47 @@ SpaceshipSalesRecordsCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SPACESHIP_RECV_QUERY_VISIT_INFO] = 'OnRecvQueryVisitInfo',
 }
 
-
 SpaceshipSalesRecordsCtrl.m_getScrollListCell = HL.Field(HL.Function)
-
 
 SpaceshipSalesRecordsCtrl.m_showCellInfo = HL.Field(HL.Table)
 
-
 SpaceshipSalesRecordsCtrl.m_spaceship = HL.Field(HL.Any)
-
 
 SpaceshipSalesRecordsCtrl.m_visitRecord = HL.Field(HL.Any)
 
-
 SpaceshipSalesRecordsCtrl.m_queryVisitInfo = HL.Field(HL.Boolean) << false
-
 
 SpaceshipSalesRecordsCtrl.m_haveFriendInfo = HL.Field(HL.Boolean) << false
 
-
 SpaceshipSalesRecordsCtrl.m_bindFriendHeadAction = HL.Field(HL.Table)
-
 
 SpaceshipSalesRecordsCtrl.m_bindExitFocusAction = HL.Field(HL.Table)
 
-
 SpaceshipSalesRecordsCtrl.m_bindContentJumpInAction = HL.Field(HL.Number) << -1
-
 
 SpaceshipSalesRecordsCtrl.m_csIndex2Cell = HL.Field(HL.Table)
 
-
 SpaceshipSalesRecordsCtrl.m_readTickHandle = HL.Field(HL.Number) << -1
-
 
 SpaceshipSalesRecordsCtrl.m_contentJumpIn = HL.Field(HL.Boolean) << false
 
-
 SpaceshipSalesRecordsCtrl.autoSelectNaviCell = HL.Field(HL.Boolean) << false
-
 
 SpaceshipSalesRecordsCtrl.m_requestHandle = HL.Field(HL.Number) << -1
 
-
 SpaceshipSalesRecordsCtrl.m_requestTime = HL.Field(HL.Number) << 1
-
 
 SpaceshipSalesRecordsCtrl.m_requestCount = HL.Field(HL.Number) << 0
 
-
 SpaceshipSalesRecordsCtrl.m_requestTodayIds = HL.Field(HL.Table)
-
 
 SpaceshipSalesRecordsCtrl.m_requestTodayIndex = HL.Field(HL.Number) << 1
 
-
 SpaceshipSalesRecordsCtrl.m_requestYesterdayIds = HL.Field(HL.Table)
-
 
 SpaceshipSalesRecordsCtrl.m_requestYesterdayIndex = HL.Field(HL.Number) << 1
 
 local RequestBatchNum = 10
-
-
-
 
 
 SpaceshipSalesRecordsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -158,15 +99,11 @@ SpaceshipSalesRecordsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
 end
 
-
-
 SpaceshipSalesRecordsCtrl.OnRecvQueryVisitInfo = HL.Method() << function(self)
     self.m_queryVisitInfo = true
     self.m_visitRecord = self.m_spaceship:GetRoomVisitRecord()
     self:_HandleFriendInfo()
 end
-
-
 
 SpaceshipSalesRecordsCtrl._HandleFriendInfo = HL.Method() << function(self)
     self.m_requestTodayIds = {}
@@ -209,9 +146,6 @@ SpaceshipSalesRecordsCtrl._HandleFriendInfo = HL.Method() << function(self)
 
 end
 
-
-
-
 SpaceshipSalesRecordsCtrl._RequestTick = HL.Method(HL.Number) << function(self, deltaTime)
     self.m_requestTime = self.m_requestTime + deltaTime
     if self.m_requestTime < 1 then
@@ -229,8 +163,6 @@ SpaceshipSalesRecordsCtrl._RequestTick = HL.Method(HL.Number) << function(self, 
     GameInstance.player.friendSystem:SyncSocialFriendInfo(ids)
 end
 
-
-
 SpaceshipSalesRecordsCtrl._GetNextPageNotInitIds = HL.Method().Return(HL.Table) << function(self)
     self.m_requestCount = self.m_requestCount + 1
     local ids = {}
@@ -241,9 +173,6 @@ SpaceshipSalesRecordsCtrl._GetNextPageNotInitIds = HL.Method().Return(HL.Table) 
     return ids
 end
 
-
-
-
 SpaceshipSalesRecordsCtrl.AddTodayYesterdayId = HL.Method(HL.Table) << function(self, ids)
     if self.m_requestTodayIndex <= #self.m_requestTodayIds then
         table.insert(ids, self.m_requestTodayIds[self.m_requestTodayIndex])
@@ -253,8 +182,6 @@ SpaceshipSalesRecordsCtrl.AddTodayYesterdayId = HL.Method(HL.Table) << function(
         self.m_requestYesterdayIndex = self.m_requestYesterdayIndex + 1
     end
 end
-
-
 
 SpaceshipSalesRecordsCtrl.UpdateFriendCells = HL.Method() << function(self)
     self.m_haveFriendInfo = true
@@ -373,10 +300,6 @@ SpaceshipSalesRecordsCtrl.UpdateFriendCells = HL.Method() << function(self)
     self.view.scrollList:UpdateCount(#self.m_showCellInfo)
 end
 
-
-
-
-
 SpaceshipSalesRecordsCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, csIndex)
     self.m_csIndex2Cell[csIndex] = cell
 
@@ -432,9 +355,6 @@ SpaceshipSalesRecordsCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << func
 
 end
 
-
-
-
 SpaceshipSalesRecordsCtrl.UpdateEmptyInfo = HL.Method(HL.Any) << function(self, cell)
     cell.salesRecordsCell:InitSpaceshipSalesRecordsCell(true, 0, nil)
     local groupId = cell.salesRecordsCell.view.normalInputGroup.groupId
@@ -444,10 +364,6 @@ SpaceshipSalesRecordsCtrl.UpdateEmptyInfo = HL.Method(HL.Any) << function(self, 
         self.m_bindFriendHeadAction[groupId] = nil
     end
 end
-
-
-
-
 
 SpaceshipSalesRecordsCtrl.UpdateNormalInfo = HL.Method(HL.Any, HL.Any) << function(self, cell, showCellInfo)
     cell.isNaviContent = true
@@ -490,11 +406,6 @@ SpaceshipSalesRecordsCtrl.UpdateNormalInfo = HL.Method(HL.Any, HL.Any) << functi
 
 end
 
-
-
-
-
-
 SpaceshipSalesRecordsCtrl.UpdateTitleTimeInfo = HL.Method(HL.Any, HL.Any, HL.Any) << function(self, cell, showCellInfo, expireTime)
     local allCreditCnt = 0
     for _, creditData in pairs(Tables.SpaceshipCreditTable) do
@@ -518,9 +429,6 @@ SpaceshipSalesRecordsCtrl.UpdateTitleTimeInfo = HL.Method(HL.Any, HL.Any, HL.Any
     cell.recvedCreditTxt.text = showCellInfo.recvedCreditCnt
     cell.totalCreditTxt.text = allCreditCnt
 end
-
-
-
 
 SpaceshipSalesRecordsCtrl._ReadTick = HL.Method(HL.Number) << function(self, deltaTime)
     if not self.m_haveFriendInfo then
@@ -557,11 +465,9 @@ SpaceshipSalesRecordsCtrl._ReadTick = HL.Method(HL.Number) << function(self, del
     if naviCell and self.autoSelectNaviCell then
         self.autoSelectNaviCell = false
         InputManagerInst:ToggleBinding(self.m_bindContentJumpInAction, false)
-        InputManagerInst.controllerNaviManager:SetTarget(naviCell.salesRecordsCell.view.normalNaviDeco)
+        self:SetNaviTarget(naviCell.salesRecordsCell.view.normalNaviDeco)
     end
 end
-
-
 
 SpaceshipSalesRecordsCtrl.OnClose = HL.Override() << function(self)
 

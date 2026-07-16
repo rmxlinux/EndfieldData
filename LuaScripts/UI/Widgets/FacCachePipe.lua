@@ -1,45 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacCachePipe = HL.Class('FacCachePipe', UIWidgetBase)
 
 local ARROW_ANIMATION_NAME_DEFAULT = "pipecell_decoarrow_defult%d"
@@ -55,59 +15,44 @@ local ITEM_CHANGED_ANIMATION_OVERRIDE_NAME = "OVERRIDE_PIPE_ITEM_CHANGED%d"
 local MESSAGE_ITEM_INDEX = 0
 local SINGLE_ANIM_INDEX_OFFSET = 4
 
+local SINGLE_LIQUID_CACHE_SLOT_SPACING_Y = 114
+local MULTI_LIQUID_CACHE_SLOT_SPACING_Y = 204
+local SINGLE_REPO_PIPE_COLOR = "EEEEEE"
 local MULTI_REPO_PIPE_COLOR_1 = "B1773D"
 local MULTI_REPO_PIPE_COLOR_2 = "A29D3E"
 
-
 FacCachePipe.m_buildingInfo = HL.Field(HL.Userdata)
-
 
 FacCachePipe.m_buildingNodeId = HL.Field(HL.Number) << -1
 
-
 FacCachePipe.m_inPipeInfoList = HL.Field(HL.Table)
-
 
 FacCachePipe.m_outPipeInfoList = HL.Field(HL.Table)
 
 
-
 FacCachePipe.m_needInversePipe = HL.Field(HL.Boolean) << false
-
 
 FacCachePipe.m_inBindingPipeDataMap = HL.Field(HL.Table)
 
-
 FacCachePipe.m_outBindingPipeDataMap = HL.Field(HL.Table)
-
 
 FacCachePipe.m_inPipeList = HL.Field(HL.Table)
 
-
 FacCachePipe.m_outPipeList = HL.Field(HL.Table)
-
 
 FacCachePipe.m_isInPipeMode = HL.Field(HL.Boolean) << false
 
-
 FacCachePipe.m_useSinglePipe = HL.Field(HL.Boolean) << false
-
 
 FacCachePipe.m_needModeSwitch = HL.Field(HL.Boolean) << false
 
-
 FacCachePipe.m_cachedSprite = HL.Field(HL.Table)
-
 
 FacCachePipe.m_isInSingleState = HL.Field(HL.Boolean) << false
 
-
 FacCachePipe.m_stateRefreshCallback = HL.Field(HL.Function)
 
-
 FacCachePipe.m_needRefreshPortState = HL.Field(HL.Boolean) << false
-
-
 
 
 FacCachePipe._OnFirstTimeInit = HL.Override() << function(self)
@@ -123,14 +68,10 @@ FacCachePipe._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 FacCachePipe._OnDestroy = HL.Override() << function(self)
     self:_UnRegisterInterested()
     self.m_cachedSprite = nil
 end
-
-
 
 FacCachePipe._OnEnable = HL.Override() << function(self)
     if self.m_needRefreshPortState then
@@ -139,15 +80,9 @@ FacCachePipe._OnEnable = HL.Override() << function(self)
     end
 end
 
-
-
 FacCachePipe._OnDisable = HL.Override() << function(self)
     self.m_needRefreshPortState = true
 end
-
-
-
-
 
 
 
@@ -166,9 +101,6 @@ FacCachePipe.InitFacCachePipe = HL.Method(HL.Userdata, HL.Opt(HL.Table)) << func
     self:_FirstTimeInit()
 end
 
-
-
-
 FacCachePipe._ParseCustomInfo = HL.Method(HL.Table) << function(self, customInfo)
     if customInfo == nil then
         return
@@ -180,8 +112,6 @@ FacCachePipe._ParseCustomInfo = HL.Method(HL.Table) << function(self, customInfo
     self.m_stateRefreshCallback = customInfo.stateRefreshCallback or function()end
 end
 
-
-
 FacCachePipe._RefreshCachePipe = HL.Method() << function(self)
     if self.m_useSinglePipe then
         self.m_isInPipeMode = true  
@@ -192,7 +122,7 @@ FacCachePipe._RefreshCachePipe = HL.Method() << function(self)
                 return
             end
 
-            local isInPipeMode = self.m_buildingInfo.formulaMan.currentMode == FacConst.FAC_FORMULA_MODE_MAP.LIQUID
+            local isInPipeMode = self.m_buildingInfo.formulaMan.currentMode ~= FacConst.FAC_FORMULA_MODE_MAP.NORMAL
             self.m_isInPipeMode = isInPipeMode
         else
             self.m_isInPipeMode = true
@@ -210,8 +140,6 @@ FacCachePipe._RefreshCachePipe = HL.Method() << function(self)
     end
 end
 
-
-
 FacCachePipe._GetPipeInfoList = HL.Method() << function(self)
     self.m_inPipeInfoList, self.m_outPipeInfoList = FactoryUtils.getBuildingPortState(self.m_buildingNodeId, true)
 
@@ -220,16 +148,19 @@ FacCachePipe._GetPipeInfoList = HL.Method() << function(self)
         local temp = self.m_inPipeInfoList[1]
         self.m_inPipeInfoList[1] = self.m_inPipeInfoList[2]
         self.m_inPipeInfoList[2] = temp
+        temp = self.m_inPipeInfoList[1].index
+        self.m_inPipeInfoList[1].index = self.m_inPipeInfoList[2].index
+        self.m_inPipeInfoList[2].index = temp
     end
     if self.m_needInversePipe and self.m_outPipeInfoList ~= nil and #self.m_outPipeInfoList > 1 then
         local temp = self.m_outPipeInfoList[1]
         self.m_outPipeInfoList[1] = self.m_outPipeInfoList[2]
         self.m_outPipeInfoList[2] = temp
+        temp = self.m_outPipeInfoList[1].index
+        self.m_outPipeInfoList[1].index = self.m_outPipeInfoList[2].index
+        self.m_outPipeInfoList[2].index = temp
     end
 end
-
-
-
 
 FacCachePipe._GetItemSprite = HL.Method(HL.String).Return(HL.Userdata) << function(self, itemId)
     local itemSprite = self.m_cachedSprite[itemId]
@@ -242,10 +173,6 @@ FacCachePipe._GetItemSprite = HL.Method(HL.String).Return(HL.Userdata) << functi
     end
     return itemSprite
 end
-
-
-
-
 
 FacCachePipe._GetIsPipeBlocked = HL.Method(HL.Number, HL.Boolean).Return(HL.Boolean) << function(self, nodeId, isIn)
     local infoList = isIn and self.m_inPipeInfoList or self.m_outPipeInfoList
@@ -262,8 +189,6 @@ end
 
 
 
-
-
 FacCachePipe._InitPipeList = HL.Method() << function(self)
     if self.m_useSinglePipe then
         self.m_inPipeList = { self.view.singleInCell }
@@ -277,6 +202,13 @@ FacCachePipe._InitPipeList = HL.Method() << function(self)
             self.view.pipeCell3,
             self.view.pipeCell4,
         }
+        
+        if self.view.expendPipeIn ~= nil then
+            table.insert(self.m_inPipeList, self.view.expendPipeIn)
+        end
+        if self.view.expendPipeOut ~= nil then
+            table.insert(self.m_inPipeList, self.view.expendPipeOut)
+        end
     end
 
     self.m_outPipeList = {
@@ -295,21 +227,28 @@ FacCachePipe._InitPipeList = HL.Method() << function(self)
     end
 
     for index, inPipeInfo in ipairs(self.m_inPipeInfoList) do
-        local inPipe = self.m_inPipeList[index]
+        local inPipe
+        if inPipeInfo.index ~= nil then
+            inPipe = self.m_inPipeList[LuaIndex(inPipeInfo.index)]
+            if inPipe == nil then
+                inPipe = self.m_inPipeList[index]
+            end
+        end
         inPipe.gameObject:SetActive(true)
         self:_InitPipeCell(inPipe, inPipeInfo, self.m_inBindingPipeDataMap)
     end
     for index, outPipeInfo in ipairs(self.m_outPipeInfoList) do
-        local outPipe = self.m_outPipeList[index]
+        local outPipe
+        if outPipeInfo.index ~= nil then
+            outPipe = self.m_outPipeList[LuaIndex(outPipeInfo.index)]
+            if outPipe == nil then
+                outPipe = self.m_outPipeList[index]
+            end
+        end
         outPipe.gameObject:SetActive(true)
         self:_InitPipeCell(outPipe, outPipeInfo, self.m_outBindingPipeDataMap)
     end
 end
-
-
-
-
-
 
 FacCachePipe._InitPipeCell = HL.Method(HL.Any, HL.Table, HL.Table) << function(self, cell, info, bindingMap)
     if cell == nil or info == nil then
@@ -335,10 +274,7 @@ end
 
 
 
-
 FacCachePipe.m_registered = HL.Field(HL.Boolean) << false
-
-
 
 FacCachePipe._RegisterInterested = HL.Method() << function(self)
     if self.m_registered then
@@ -360,8 +296,6 @@ FacCachePipe._RegisterInterested = HL.Method() << function(self)
     self.m_registered = true
 end
 
-
-
 FacCachePipe._UnRegisterInterested = HL.Method() << function(self)
     if not self.m_registered then
         return
@@ -381,10 +315,6 @@ FacCachePipe._UnRegisterInterested = HL.Method() << function(self)
 
     self.m_registered = false
 end
-
-
-
-
 
 
 
@@ -416,9 +346,6 @@ FacCachePipe._RefreshPipeCellState = HL.Method(HL.Any, HL.Table) << function(sel
     end
 end
 
-
-
-
 FacCachePipe._RefreshPipeCellBlockState = HL.Method(HL.Number) << function(self, buildingNodeId)
     if not self.m_isInPipeMode then
         return
@@ -431,20 +358,26 @@ FacCachePipe._RefreshPipeCellBlockState = HL.Method(HL.Number) << function(self,
     self:_GetPipeInfoList()
 
     for index, inPipeInfo in ipairs(self.m_inPipeInfoList) do
-        local inPipe = self.m_inPipeList[index]
+        local inPipe
+        if inPipeInfo.index ~= nil then
+            inPipe = self.m_inPipeList[LuaIndex(inPipeInfo.index)]
+            if inPipe == nil then
+                inPipe = self.m_inPipeList[index]
+            end
+        end
         self:_RefreshPipeCellState(inPipe, inPipeInfo)
     end
     for index, outPipeInfo in ipairs(self.m_outPipeInfoList) do
-        local outPipe = self.m_outPipeList[index]
+        local outPipe
+        if outPipeInfo.index ~= nil then
+            outPipe = self.m_outPipeList[LuaIndex(outPipeInfo.index)]
+            if outPipe == nil then
+                outPipe = self.m_outPipeList[index]
+            end
+        end
         self:_RefreshPipeCellState(outPipe, outPipeInfo)
     end
 end
-
-
-
-
-
-
 
 FacCachePipe._RefreshPipeCellConveyorAnimation = HL.Method(HL.Boolean, HL.Number, HL.Number, HL.String) << function(
     self, isIn, nodeId, compId, itemId)
@@ -489,26 +422,33 @@ end
 
 
 
-
-
 FacCachePipe.RefreshCachePipe = HL.Method() << function(self)
     self:_RefreshCachePipe()
 end
-
-
-
 
 FacCachePipe.SetCachePipeSingleState = HL.Method(HL.Boolean) << function(self, useSingleState)
     
 
     for index, inPipeInfo in ipairs(self.m_inPipeInfoList) do
-        local inPipe = self.m_inPipeList[index]
+        local inPipe
+        if inPipeInfo.index ~= nil then
+            inPipe = self.m_inPipeList[LuaIndex(inPipeInfo.index)]
+            if inPipe == nil then
+                inPipe = self.m_inPipeList[index]
+            end
+        end
         inPipe.bindingNode.blockNode.gameObject:SetActiveIfNecessary(not useSingleState)
         inPipe.bindingNode.itemNode.gameObject:SetActiveIfNecessary(not useSingleState)
     end
 
     for index, outPipeInfo in ipairs(self.m_outPipeInfoList) do
-        local outPipe = self.m_outPipeList[index]
+        local outPipe
+        if outPipeInfo.index ~= nil then
+            outPipe = self.m_outPipeList[LuaIndex(outPipeInfo.index)]
+            if outPipe == nil then
+                outPipe = self.m_outPipeList[index]
+            end
+        end
         outPipe.bindingNode.blockNode.gameObject:SetActiveIfNecessary(not useSingleState)
         outPipe.bindingNode.itemNode.gameObject:SetActiveIfNecessary(not useSingleState)
     end
@@ -516,30 +456,38 @@ FacCachePipe.SetCachePipeSingleState = HL.Method(HL.Boolean) << function(self, u
     self.m_isInSingleState = useSingleState
 end
 
-
-
 FacCachePipe.RefreshPipeCellsState = HL.Method() << function(self)
     if not self.m_isInPipeMode then
         return
     end
 
     for index, inPipeInfo in ipairs(self.m_inPipeInfoList) do
-        local inPipe = self.m_inPipeList[index]
+        local inPipe
+        if inPipeInfo.index ~= nil then
+            inPipe = self.m_inPipeList[LuaIndex(inPipeInfo.index)]
+            if inPipe == nil then
+                inPipe = self.m_inPipeList[index]
+            end
+        end
         self:_RefreshPipeCellState(inPipe, inPipeInfo)
     end
     for index, outPipeInfo in ipairs(self.m_outPipeInfoList) do
-        local outPipe = self.m_outPipeList[index]
+        local outPipe
+        if outPipeInfo.index ~= nil then
+            outPipe = self.m_outPipeList[LuaIndex(outPipeInfo.index)]
+            if outPipe == nil then
+                outPipe = self.m_outPipeList[index]
+            end
+        end
         self:_RefreshPipeCellState(outPipe, outPipeInfo)
     end
 end
 
 
 
+FacCachePipe.ChangePipeSpacingY = HL.Method(HL.Boolean, HL.Boolean) << function(self, isIn, single)
+    local halfSpacing = single and SINGLE_LIQUID_CACHE_SLOT_SPACING_Y or MULTI_LIQUID_CACHE_SLOT_SPACING_Y
 
-
-
-
-FacCachePipe.ChangePipeSpacingY = HL.Method(HL.Number, HL.Boolean) << function(self, halfSpacing, isIn)
     if isIn then
         self.view.pipeCell1.transform.anchoredPosition = Vector2(self.view.pipeCell1.transform.anchoredPosition.x, halfSpacing)
         self.view.pipeCell2.transform.anchoredPosition = Vector2(self.view.pipeCell2.transform.anchoredPosition.x, -halfSpacing)
@@ -552,16 +500,23 @@ end
 
 
 
-
-
-
-FacCachePipe.ChangePipeLineColor = HL.Method(HL.Boolean) << function(self, isIn)
+FacCachePipe.ChangePipeLineColor = HL.Method(HL.Boolean, HL.Boolean) << function(self, isIn, single)
     if isIn then
-        self.view.pipeCell1.decoLine.color = UIUtils.getColorByString(MULTI_REPO_PIPE_COLOR_1)
-        self.view.pipeCell2.decoLine.color = UIUtils.getColorByString(MULTI_REPO_PIPE_COLOR_2)
+        if single then
+            self.view.pipeCell1.decoLine.color = UIUtils.getColorByString(SINGLE_REPO_PIPE_COLOR)
+            self.view.pipeCell2.decoLine.color = UIUtils.getColorByString(SINGLE_REPO_PIPE_COLOR)
+        else
+            self.view.pipeCell1.decoLine.color = UIUtils.getColorByString(MULTI_REPO_PIPE_COLOR_1)
+            self.view.pipeCell2.decoLine.color = UIUtils.getColorByString(MULTI_REPO_PIPE_COLOR_2)
+        end
     else
-        self.view.pipeCell3.decoLine.color = UIUtils.getColorByString(MULTI_REPO_PIPE_COLOR_1)
-        self.view.pipeCell4.decoLine.color = UIUtils.getColorByString(MULTI_REPO_PIPE_COLOR_2)
+        if single then
+            self.view.pipeCell3.decoLine.color = UIUtils.getColorByString(SINGLE_REPO_PIPE_COLOR)
+            self.view.pipeCell4.decoLine.color = UIUtils.getColorByString(SINGLE_REPO_PIPE_COLOR)
+        else
+            self.view.pipeCell3.decoLine.color = UIUtils.getColorByString(MULTI_REPO_PIPE_COLOR_1)
+            self.view.pipeCell4.decoLine.color = UIUtils.getColorByString(MULTI_REPO_PIPE_COLOR_2)
+        end
     end
 end
 

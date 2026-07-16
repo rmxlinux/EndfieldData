@@ -2,48 +2,19 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Dialog2D
 local PHASE_ID = PhaseId.Dialog2D
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 Dialog2DCtrl = HL.Class('Dialog2DCtrl', uiCtrl.UICtrl)
-
 
 Dialog2DCtrl.m_trunkNodeData = HL.Field(CS.Beyond.Gameplay.DTTrunkNodeData)
 
-
 Dialog2DCtrl.m_optionCells = HL.Field(HL.Forward("UIListCache"))
-
 
 Dialog2DCtrl.m_optionCount = HL.Field(HL.Number) << 0
 
-
 Dialog2DCtrl.m_textContent = HL.Field(HL.String) << ''
-
 
 Dialog2DCtrl.m_typeWriterCor = HL.Field(HL.Thread)
 
-
 Dialog2DCtrl.m_autoNext = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -57,14 +28,10 @@ Dialog2DCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_EXIT_DIALOG] = 'OnExitDialog',
 }
 
-
-
-
 Dialog2DCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_optionCells = UIUtils.genCellCache(self.view.panelOptionCell)
     self.m_textContent = ''
 end
-
 
 
 
@@ -80,41 +47,27 @@ Dialog2DCtrl.OnDialogStart2D = HL.StaticMethod() << function()
     end
 end
 
-
-
 Dialog2DCtrl.OnExitDialog = HL.Method(HL.Opt(HL.Table)) << function(self)
     PhaseManager:ExitPhaseFast(PHASE_ID)
 end
-
-
-
 
 Dialog2DCtrl.OnPlayDialogTrunk = HL.Method(HL.Table) << function(self, data)
     local trunkNodeData, fastMode, npcId, npcGroupId = unpack(data)
     self:SetTrunk(trunkNodeData, fastMode, npcId, npcGroupId)
 end
 
-
-
-
 Dialog2DCtrl.OnShowDialogOption = HL.Method(HL.Table) << function(self, data)
     local options = unpack(data)
     self:SetTrunkOption(options)
 end
-
-
-
 
 Dialog2DCtrl.OnPlayDialog2DContent = HL.Method(HL.Table) << function(self, data)
     local trunkId, completeCallback = unpack(data)
     self:Set2DContentText(trunkId, completeCallback)
 end
 
-
-
-
 Dialog2DCtrl.OpenUI = HL.Method(HL.Table) << function(self, arg)
-    local panelIdStr, paramStr = unpack(arg)
+    local panelIdStr, paramStr, _ = unpack(arg)
     local panelId = PanelId[panelIdStr]
     local phaseId = PhaseId[panelIdStr]
     local param = not string.isEmpty(paramStr) and Utils.stringJsonToTable(paramStr) or {}
@@ -149,9 +102,6 @@ Dialog2DCtrl.OpenUI = HL.Method(HL.Table) << function(self, arg)
     GameWorld.dialogManager:TryRecoverVoiceManager()
 end
 
-
-
-
 Dialog2DCtrl.CloseUI = HL.Method(HL.Table) << function(self, arg)
     
     local panelId, phaseId, nextIndex, notFastMode = unpack(arg)
@@ -164,18 +114,12 @@ end
 
 
 
-
-
 Dialog2DCtrl.OnClose = HL.Override() << function(self)
     if self.m_typeWriterCor ~= nil then
         self.m_typeWriterCor = self:_ClearCoroutine(self.m_typeWriterCor)
     end
     Dialog2DCtrl.Super.OnClose(self)
 end
-
-
-
-
 
 Dialog2DCtrl.SetTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean)) << function(self, trunkNodeData, fastMode)
     self.m_trunkNodeData = trunkNodeData
@@ -225,9 +169,6 @@ Dialog2DCtrl.SetTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean)) << function(s
     end
 end
 
-
-
-
 Dialog2DCtrl.SetTrunkOption = HL.Method(HL.Userdata) << function(self, optionData)
     if self:IsHide() then
         self:Show()
@@ -261,17 +202,9 @@ Dialog2DCtrl.SetTrunkOption = HL.Method(HL.Userdata) << function(self, optionDat
     end
 end
 
-
-
-
-
 Dialog2DCtrl.OnOptionClick = HL.Method(HL.Number, HL.Any) << function(self, index, data)
     GameWorld.dialogManager:SelectIndex(CSIndex(index))
 end
-
-
-
-
 
 Dialog2DCtrl.Set2DContentText = HL.Method(HL.String, HL.Boolean) << function(self, trunkId, autoNext)
     self.m_autoNext = autoNext
@@ -327,8 +260,6 @@ Dialog2DCtrl.Set2DContentText = HL.Method(HL.String, HL.Boolean) << function(sel
         end)
     end
 end
-
-
 
 Dialog2DCtrl.OnTextPlayComplete = HL.Method() << function(self)
     self.view.scrollView.disableScroll = false

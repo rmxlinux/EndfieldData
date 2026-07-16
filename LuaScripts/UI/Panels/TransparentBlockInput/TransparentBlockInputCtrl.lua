@@ -1,20 +1,12 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.TransparentBlockInput
-
-
-
-
-
-
 TransparentBlockInputCtrl = HL.Class('TransparentBlockInputCtrl', uiCtrl.UICtrl)
 
 do
 
-    
     TransparentBlockInputCtrl.m_timerId = HL.Field(HL.Number) << 0
 end
-
 
 
 
@@ -25,8 +17,6 @@ end
 TransparentBlockInputCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
 
 TransparentBlockInputCtrl.OnShowBlockInputPanel = HL.StaticMethod(HL.Any) << function(arg)
     local time
@@ -42,14 +32,8 @@ TransparentBlockInputCtrl.OnShowBlockInputPanel = HL.StaticMethod(HL.Any) << fun
 end
 
 
-
-
-
 TransparentBlockInputCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
-
-
-
 
 TransparentBlockInputCtrl.SetDuration = HL.Method(HL.Number) << function(self, time)
     if self.m_timerId ~= 0 then

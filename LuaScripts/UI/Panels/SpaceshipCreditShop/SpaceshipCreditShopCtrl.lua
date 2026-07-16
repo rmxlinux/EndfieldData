@@ -6,37 +6,11 @@ local PHASE_ID = PhaseId.SpaceshipCreditShop
 local shopGroupId = "shop_spaceship_credit"
 local shopSystem = GameInstance.player.shopSystem
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipCreditShopCtrl = HL.Class('SpaceshipCreditShopCtrl', SpaceshipShopBaseCtrl.SpaceshipShopBaseCtrl)
-
 
 SpaceshipCreditShopCtrl.m_moneyId = HL.Field(HL.String) << ""
 
-
 SpaceshipCreditShopCtrl.m_haveOpenRefreshPopup = HL.Field(HL.Boolean) << false
-
 
 SpaceshipCreditShopCtrl.m_refreshBtnCallback = HL.Field(HL.Function)
 
@@ -44,13 +18,9 @@ SpaceshipCreditShopCtrl.m_refreshBtnCallback = HL.Field(HL.Function)
 
 SpaceshipCreditShopCtrl.m_pendingAfterTopOrdered = HL.Field(HL.Table)
 
-
 SpaceshipCreditShopCtrl.OpenSpaceshipCreditShopPanel = HL.StaticMethod() << function()
     PhaseManager:GoToPhase(PhaseId.CashShop, { shopGroupId = CashShopConst.CashShopCategoryType.Credit })
 end
-
-
-
 
 
 SpaceshipCreditShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -87,15 +57,13 @@ SpaceshipCreditShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     local firstCell = self.m_getCellFunc(self.view.scrollList:Get(0))
     if firstCell ~= nil then
-        UIUtils.setAsNaviTarget(firstCell.view.inputBindingGroupNaviDecorator)
+        self:SetNaviTarget(firstCell.view.inputBindingGroupNaviDecorator)
     end
 
     self.m_phase:HidePsStore()
 
     self:_ProcessArg(arg)
 end
-
-
 
 SpaceshipCreditShopCtrl.OnShow = HL.Override() << function(self)
     if self.m_phase.m_needGameEvent then
@@ -112,17 +80,11 @@ SpaceshipCreditShopCtrl.OnShow = HL.Override() << function(self)
     GameInstance.player.spaceship:QueryVisitInfo()
 end
 
-
-
 SpaceshipCreditShopCtrl.OnHide = HL.Override() << function(self)
 end
 
-
-
 SpaceshipCreditShopCtrl.OnClose = HL.Override() << function(self)
 end
-
-
 
 SpaceshipCreditShopCtrl._RefreshUI = HL.Method() << function(self)
     local getCreditBtnStateCtrl = self.view.creditBtn.btnState
@@ -135,14 +97,10 @@ SpaceshipCreditShopCtrl._RefreshUI = HL.Method() << function(self)
     end
 end
 
-
-
 SpaceshipCreditShopCtrl._OnShopRefresh = HL.Override() << function(self)
     SpaceshipCreditShopCtrl.Super._OnShopRefresh(self)
     self.view.creditBtn.redDot:InitRedDot("CashShopCreditShopGetCredit")
 end
-
-
 
 SpaceshipCreditShopCtrl._InitData = HL.Method() << function(self)
     if not shopSystem:CheckShopGroupUnlocked(shopGroupId) then
@@ -178,8 +136,6 @@ SpaceshipCreditShopCtrl._InitData = HL.Method() << function(self)
     self:_RefreshSheetTabs(self.m_shopId)
 end
 
-
-
 SpaceshipCreditShopCtrl._RefreshTimeCountDown = HL.Override() << function(self)
     
     local shopTableData = Tables.shopTable[self.m_shopId]
@@ -192,8 +148,6 @@ SpaceshipCreditShopCtrl._RefreshTimeCountDown = HL.Override() << function(self)
         end)
     end
 end
-
-
 
 SpaceshipCreditShopCtrl._SetWalletBarAndTime = HL.Method() << function(self)
     local numberLimit = Tables.MoneyConfigTable:GetValue(Tables.CashShopConst.CreditTabMoneyId).MoneyClearLimit
@@ -211,9 +165,6 @@ SpaceshipCreditShopCtrl._SetWalletBarAndTime = HL.Method() << function(self)
         end
     })
 end
-
-
-
 
 SpaceshipCreditShopCtrl._RefreshSheetTabs = HL.Override(HL.String) << function(self, curShopId)
     self.m_shopId = curShopId
@@ -264,19 +215,12 @@ SpaceshipCreditShopCtrl._RefreshSheetTabs = HL.Override(HL.String) << function(s
     self.view.noCreditPoint.gameObject:SetActive(not canGetCredit)
 end
 
-
-
-
 SpaceshipCreditShopCtrl._GetRefreshCost = HL.Method(HL.Userdata).Return(HL.Number, HL.Number)
     << function(self, tableData)
     local costCount = tableData.costItemCount1
     local haveCount = Utils.getItemCount(tableData.costItemId1)
     return costCount, haveCount
 end
-
-
-
-
 
 SpaceshipCreditShopCtrl._ManualRefreshGoods = HL.Method(HL.Number, HL.Userdata) << function(self, remainCount, tableData)
     local costItemData = Tables.itemTable:GetValue(tableData.costItemId1)
@@ -305,8 +249,6 @@ SpaceshipCreditShopCtrl._ManualRefreshGoods = HL.Method(HL.Number, HL.Userdata) 
     })
 end
 
-
-
 SpaceshipCreditShopCtrl._OnShopGoodsManualRefresh = HL.Override() << function(self)
     local manualRefreshTable = Tables.ShopManualRefreshTable:GetValue(self.m_shopGroupId)
     local limitCount = manualRefreshTable.list.Count
@@ -332,9 +274,6 @@ SpaceshipCreditShopCtrl._OnShopGoodsManualRefresh = HL.Override() << function(se
     end
 end
 
-
-
-
 SpaceshipCreditShopCtrl._OnWalletChanged = HL.Override(HL.Table) << function(self, args)
     logger.info("[shop] 货币变化，重刷UI")
     
@@ -347,8 +286,6 @@ SpaceshipCreditShopCtrl._OnWalletChanged = HL.Override(HL.Table) << function(sel
     self.view.noCreditPoint.gameObject:SetActive(not canGetCredit)
 end
 
-
-
 SpaceshipCreditShopCtrl._OnReceiveVisitInfo = HL.Override() << function(self)
     logger.info("[shop] 访客数据变化，重刷UI")
     
@@ -357,15 +294,9 @@ SpaceshipCreditShopCtrl._OnReceiveVisitInfo = HL.Override() << function(self)
     self.view.noCreditPoint.gameObject:SetActive(not canGetCredit)
 end
 
-
-
-
 SpaceshipCreditShopCtrl._OnGetCredit = HL.Override(HL.Table) << function(self, args)
     GameInstance.player.spaceship:QueryVisitInfo()
 end
-
-
-
 
 SpaceshipCreditShopCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
     if arg and not string.isEmpty(arg.goodsId) then
@@ -397,9 +328,6 @@ SpaceshipCreditShopCtrl.OnAfterCategoryTopOrdered = HL.Method() << function(self
         action()
     end
 end
-
-
-
 
 SpaceshipCreditShopCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, arg)
     

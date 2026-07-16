@@ -730,6 +730,9 @@ SimulationTrainingCtrl._OnClickChallengeBtn = HL.Method() << function(self)
             maskData.fadeInTime = 0.1
             maskData.fadeWaitTime = 30
             Notify(MessageConst.ON_COMMON_MASK_HIGH_START, {maskData})
+
+            local settlementCtrl = require_ex("UI/Panels/SimulationTrainingSettlementPopup/SimulationTrainingSettlementPopupCtrl").SimulationTrainingSettlementPopupCtrl
+            settlementCtrl.s_lastIsUnlimitedMode = self.m_unlimitedMode
         end,
         startBtnText = Language.LUA_SIMULATION_TRAINING_CHAR_FORMATION_CHALLENGE_BTN,
     })

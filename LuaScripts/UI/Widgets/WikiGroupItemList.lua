@@ -1,73 +1,32 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiGroupItemList = HL.Class('WikiGroupItemList', UIWidgetBase)
 
 local CELL_COUNT_PER_ROW = 3
 local ITEM_ROW_SIZE = 130
 local TITLE_ROW_SIZE = 68
 
-
 WikiGroupItemList.m_getGroupItemsCell = HL.Field(HL.Function)
-
 
 WikiGroupItemList.m_wikiGroupShowDataList = HL.Field(HL.Table)
 
-
 WikiGroupItemList.m_onItemClicked = HL.Field(HL.Function)
-
 
 WikiGroupItemList.m_onGetSelectedEntryShowData = HL.Field(HL.Function)
 
-
 WikiGroupItemList.m_lastSelectedEntryId = HL.Field(HL.Any)
-
 
 WikiGroupItemList.m_btnExpandList = HL.Field(HL.Userdata)
 
-
 WikiGroupItemList.m_btnClose = HL.Field(HL.Userdata)
-
 
 WikiGroupItemList.m_isRefreshed = HL.Field(HL.Boolean) << false
 
-
 WikiGroupItemList.m_wikiItemInfo = HL.Field(HL.Userdata)
-
 
 WikiGroupItemList.m_isPreviewMode = HL.Field(HL.Boolean) << false
 
-
 WikiGroupItemList.m_isClosing = HL.Field(HL.Boolean) << false
-
-
 
 
 WikiGroupItemList._OnFirstTimeInit = HL.Override() << function(self)
@@ -113,7 +72,7 @@ WikiGroupItemList._OnFirstTimeInit = HL.Override() << function(self)
             end, self.m_readWikiEntries, self.m_isPreviewMode)
         if selectedItemWidget then
             self:_SetItemSelected(selectedItemWidget)
-            UIUtils.setAsNaviTarget(selectedItemWidget.view.button)
+            self:SetNaviTarget(selectedItemWidget.view.button)
         end
     end)
 
@@ -150,9 +109,6 @@ end
 
 
 
-
-
-
 WikiGroupItemList.InitWikiGroupItemList = HL.Method(HL.Table) << function(self, args)
     self.m_btnExpandList = args.btnExpandList
     self.m_onItemClicked = args.onItemClicked
@@ -171,8 +127,6 @@ WikiGroupItemList.InitWikiGroupItemList = HL.Method(HL.Table) << function(self, 
     self.m_isClosing = false
 end
 
-
-
 WikiGroupItemList.GetResumeState = HL.Method().Return(HL.Table) << function(self)
     local selectedEntryShowData = self.m_onGetSelectedEntryShowData and self.m_onGetSelectedEntryShowData() or nil
     return {
@@ -180,9 +134,6 @@ WikiGroupItemList.GetResumeState = HL.Method().Return(HL.Table) << function(self
         selectedEntryId = selectedEntryShowData and selectedEntryShowData.wikiEntryData.id or self.m_lastSelectedEntryId,
     }
 end
-
-
-
 
 WikiGroupItemList.ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
     if not resumeState or resumeState.isExpanded ~= true or not self.m_btnExpandList then
@@ -196,20 +147,13 @@ WikiGroupItemList.ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self,
     end
 end
 
-
-
 WikiGroupItemList._OnDisable = HL.Override() << function(self)
     self:_MarkWikiEntryRead()
 end
 
-
-
 WikiGroupItemList._OnDestroy = HL.Override() << function(self)
     self:_MarkWikiEntryRead()
 end
-
-
-
 
 WikiGroupItemList._ProcessWikiGroupShowDataList = HL.Method(HL.Table) << function(self, wikiGroupShowDataList)
     self.m_wikiGroupShowDataList = wikiGroupShowDataList
@@ -217,8 +161,6 @@ WikiGroupItemList._ProcessWikiGroupShowDataList = HL.Method(HL.Table) << functio
         wikiGroupShowData.uiCellCount = math.ceil(#wikiGroupShowData.wikiEntryShowDataList / CELL_COUNT_PER_ROW) + 1
     end
 end
-
-
 
 WikiGroupItemList._Refresh = HL.Method() << function(self)
     if self.m_isRefreshed then
@@ -233,7 +175,7 @@ WikiGroupItemList._Refresh = HL.Method() << function(self)
             if itemCell then
                 self:_SetItemSelected(itemCell)
                 if DeviceInfo.usingController then
-                    UIUtils.setAsNaviTarget(itemCell.view.button)
+                    self:SetNaviTarget(itemCell.view.button)
                 end
             end
         else
@@ -256,8 +198,6 @@ WikiGroupItemList._Refresh = HL.Method() << function(self)
     self.m_isRefreshed = true
 end
 
-
-
 WikiGroupItemList._GetScrollToIndex = HL.Method().Return(HL.Number) << function(self)
     local selectedEntryShowData = self.m_onGetSelectedEntryShowData and self.m_onGetSelectedEntryShowData()
     if selectedEntryShowData then
@@ -274,15 +214,9 @@ WikiGroupItemList._GetScrollToIndex = HL.Method().Return(HL.Number) << function(
     return 0
 end
 
-
-
 WikiGroupItemList._ScrollToSelected = HL.Method() << function(self)
     self.view.scrollList:ScrollToIndex(self:_GetScrollToIndex(), true, CS.Beyond.UI.UIScrollList.ScrollAlignType.Top)
 end
-
-
-
-
 
 WikiGroupItemList._OnItemClicked = HL.Method(HL.Userdata, HL.Table) << function(self, itemWidget, wikiEntryShowData)
     self.m_lastSelectedEntryId = wikiEntryShowData.wikiEntryData.id
@@ -293,11 +227,7 @@ WikiGroupItemList._OnItemClicked = HL.Method(HL.Userdata, HL.Table) << function(
     GameInstance.player.wikiSystem:MarkWikiEntryRead({ wikiEntryShowData.wikiEntryData.id })
 end
 
-
 WikiGroupItemList.m_selectedItem = HL.Field(HL.Userdata)
-
-
-
 
 WikiGroupItemList._SetItemSelected = HL.Method(HL.Userdata) << function(self, itemWidget)
     if self.m_selectedItem then
@@ -308,9 +238,6 @@ WikiGroupItemList._SetItemSelected = HL.Method(HL.Userdata) << function(self, it
         self.m_selectedItem = itemWidget
     end
 end
-
-
-
 
 WikiGroupItemList._OnCloseBtnClicked = HL.Method(HL.Opt(HL.Boolean)) << function(self, isFast)
     local function close()
@@ -342,10 +269,7 @@ end
 
 
 
-
 WikiGroupItemList.m_readWikiEntries = HL.Field(HL.Table)
-
-
 
 WikiGroupItemList._MarkWikiEntryRead = HL.Method() << function(self)
     if self.m_readWikiEntries and not self.m_isPreviewMode then

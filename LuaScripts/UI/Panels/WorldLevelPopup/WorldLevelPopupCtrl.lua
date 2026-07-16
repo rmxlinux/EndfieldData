@@ -1,29 +1,16 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WorldLevelPopup
 
-
-
-
-
-
-
-
-
 WorldLevelPopupCtrl = HL.Class('WorldLevelPopupCtrl', uiCtrl.UICtrl)
-
 
 WorldLevelPopupCtrl.m_targetWorldLevel = HL.Field(HL.Number) << 0
 
-
 WorldLevelPopupCtrl.m_isUp = HL.Field(HL.Boolean) << false
-
 
 WorldLevelPopupCtrl.m_genTipCells = HL.Field(HL.Forward("UIListCache"))
 
 
-
 WorldLevelPopupCtrl.m_textKeyTable = HL.Field(HL.Userdata)
-
 
 
 
@@ -34,20 +21,21 @@ WorldLevelPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 WorldLevelPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     arg = arg or {}
 
     self.view.closeBtn.onClick:RemoveAllListeners()
     self.view.closeBtn.onClick:AddListener(function()
-        self:PlayAnimationOutAndClose()
+        self:PlayAnimationOutWithCallback(function()
+            self.m_phase:BackToTips()
+        end)
     end)
 
     self.view.bg.onClick:RemoveAllListeners()
     self.view.bg.onClick:AddListener(function()
-        self:PlayAnimationOutAndClose()
+        self:PlayAnimationOutWithCallback(function()
+            self.m_phase:BackToTips()
+        end)
     end)
 
     self.m_isUp = arg.isUp or false
@@ -94,14 +82,14 @@ WorldLevelPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.confirmBtn.onClick:RemoveAllListeners()
     self.view.confirmBtn.onClick:AddListener(function()
         GameInstance.player.adventure:SetWorldLevel(self.m_targetWorldLevel)
-        self:PlayAnimationOutAndClose()
+        self.m_phase:CloseSelf()
         
     end)
 
     self.view.restoreBtn.onClick:RemoveAllListeners()
     self.view.restoreBtn.onClick:AddListener(function()
         GameInstance.player.adventure:SetWorldLevel(self.m_targetWorldLevel)
-        self:PlayAnimationOutAndClose()
+        self.m_phase:CloseSelf()
         
     end)
 
@@ -142,16 +130,12 @@ WorldLevelPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.exploreLvNode:RefreshLayout(count, initialIndex)
 end
 
-
-
 WorldLevelPopupCtrl.GetPopupState = HL.Method().Return(HL.Table) << function(self)
     return {
         isUp = self.m_isUp,
         targetWorldLevel = self.m_targetWorldLevel,
     }
 end
-
-
 
 WorldLevelPopupCtrl._UpdateTipText = HL.Method() << function(self)
     

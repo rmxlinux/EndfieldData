@@ -2,13 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DialogMask
 
-
-
-
-
-
 DialogMaskCtrl = HL.Class('DialogMaskCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -20,13 +14,8 @@ DialogMaskCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 DialogMaskCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
-
-
 
 DialogMaskCtrl._InitBorderMask = HL.Method() << function(self, arg)
     local useBlack = true
@@ -57,8 +46,6 @@ DialogMaskCtrl._InitBorderMask = HL.Method() << function(self, arg)
         self.view.rightBorder.gameObject:SetActive(false)
     end
 end
-
-
 
 DialogMaskCtrl.OnShow = HL.Override() << function(self)
     self:_InitBorderMask()

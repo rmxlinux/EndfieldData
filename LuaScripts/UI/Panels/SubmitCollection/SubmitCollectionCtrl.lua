@@ -9,33 +9,7 @@ local ICON_FOLDER = "ItemIcon"
 local ICON_MAP_FOLDER = "Inventory"
 local ICON_ETHER_FOLDER = "ItemIconBig"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SubmitCollectionCtrl = HL.Class('SubmitCollectionCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -45,36 +19,28 @@ SubmitCollectionCtrl.s_messages = HL.StaticField(HL.Table) << {
      [MessageConst.ON_SUBMIT_ETHER_SUCC] = 'OnSubmitEtherSucc',
 }
 
-
 SubmitCollectionCtrl.m_curLevelCellIndex = HL.Field(HL.Number) << -1
-
 
 SubmitCollectionCtrl.m_mapId = HL.Field(HL.String) << ""
 
-
 SubmitCollectionCtrl.m_maxLv = HL.Field(HL.Number) << 0
-
 
 SubmitCollectionCtrl.m_getLvCellFunc = HL.Field(HL.Function)
 
-
 SubmitCollectionCtrl.m_oldLv = HL.Field(HL.Number) << -1
-
 
 SubmitCollectionCtrl.m_redDotOldLv = HL.Field(HL.Number) << -1
 
-
 SubmitCollectionCtrl.m_redDotNewLv = HL.Field(HL.Number) << -1
-
 
 SubmitCollectionCtrl.m_buffCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
-
+SubmitCollectionCtrl.m_maxDashCount = HL.Field(HL.Number) << -1
 
 
 
 SubmitCollectionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_maxDashCount = GameInstance.playerController.maxDashCount
     self:UpdateDomainInfo()
     self.view.closeBtn.onClick:AddListener(function()
         PhaseManager:PopPhase(PhaseId.SubmitCollection)
@@ -128,8 +94,6 @@ SubmitCollectionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 SubmitCollectionCtrl.UpdateBuffShow = HL.Method() << function(self)
     local curLevelBuffList = self:GetEffectBuffList(self.m_mapId, self.m_redDotNewLv)
     local maxLevelBuffList = self:GetEffectBuffList(self.m_mapId, self.m_maxLv)
@@ -161,8 +125,6 @@ SubmitCollectionCtrl.UpdateBuffShow = HL.Method() << function(self)
     end)
 end
 
-
-
 SubmitCollectionCtrl.OnClickDetailsBtn = HL.Method() << function(self)
     PhaseManager:OpenPhase(PhaseId.AreaBuffPopup,{
         domainId = self.m_mapId,
@@ -175,8 +137,6 @@ SubmitCollectionCtrl.OnClickDetailsBtn = HL.Method() << function(self)
     self.m_redDotOldLv = self.m_redDotNewLv
     self:UpdateRedDot()
 end
-
-
 
 SubmitCollectionCtrl.UpdateDomainInfo = HL.Method() << function(self)
     self.m_mapId = GameUtil.GetSystemMapIdByLevelId(GameWorld.worldInfo.curLevelId)
@@ -194,27 +154,20 @@ SubmitCollectionCtrl.UpdateDomainInfo = HL.Method() << function(self)
     end
 end
 
-
-
 SubmitCollectionCtrl.OnAnimationInFinished = HL.Override() << function(self)
     if DeviceInfo.usingController then
         local csIndex = self.m_curLevelCellIndex
         local obj = self.view.lvScrollList:Get(csIndex)
         local cell = self.m_getLvCellFunc(obj)
         if cell ~= nil then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.view.submitCollectionLevelCell)
+            self:SetNaviTarget(cell.view.submitCollectionLevelCell)
         end
     end
 end
 
-
-
 SubmitCollectionCtrl.ShowSubmitEther = HL.StaticMethod(HL.Opt(HL.Table)) << function(args)
     PhaseManager:OpenPhase(PhaseId.SubmitCollection)
 end
-
-
-
 
 SubmitCollectionCtrl._RefreshLvInfo = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     self:_RefreshContent(isInit)
@@ -226,13 +179,9 @@ SubmitCollectionCtrl._RefreshLvInfo = HL.Method(HL.Opt(HL.Boolean)) << function(
     if not isInit and DeviceInfo.usingController then
         local obj = self.view.lvScrollList:Get(csIndex)
         local cell = self.m_getLvCellFunc(obj)
-        InputManagerInst.controllerNaviManager:SetTarget(cell.view.submitCollectionLevelCell)
+        self:SetNaviTarget(cell.view.submitCollectionLevelCell)
     end
 end
-
-
-
-
 
 SubmitCollectionCtrl._OnRefreshLvCell = HL.Method(HL.Any, HL.Number) << function(self, cell, csIndex)
     cell:InitSubmitCollectionLevelCell(self.view, csIndex)
@@ -241,9 +190,6 @@ SubmitCollectionCtrl._OnRefreshLvCell = HL.Method(HL.Any, HL.Number) << function
         cell:SetMaxLevel()
     end
 end
-
-
-
 
 SubmitCollectionCtrl._RefreshContent = HL.Method(HL.Boolean) << function(self, isInit)
     local curLv = GameInstance.player.inventory:CurEtherLevel()
@@ -263,23 +209,16 @@ SubmitCollectionCtrl._RefreshContent = HL.Method(HL.Boolean) << function(self, i
 end
 
 
-
-
 SubmitCollectionCtrl._OnClickSubmit = HL.Method() << function(self)
     self.m_oldLv = GameInstance.player.inventory:CurEtherLevel()
     GameInstance.player.inventory:SubmitEther(self.m_mapId)
 end
-
-
-
 
 SubmitCollectionCtrl._DoCurLevelCellProgressSliderTween = HL.Method(HL.Number) << function(self, startValue)
     
     local cell = self:_GetCurLevelCell()
     cell:DoProgressSliderTween(startValue)
 end
-
-
 
 SubmitCollectionCtrl._GetCurLevelCell = HL.Method().Return(HL.Forward("SubmitCollectionLevelCell")) << function(self)
     local csIndex = self.m_curLevelCellIndex
@@ -289,8 +228,6 @@ SubmitCollectionCtrl._GetCurLevelCell = HL.Method().Return(HL.Forward("SubmitCol
     return cell
 end
 
-
-
 SubmitCollectionCtrl.OnSubmitEtherSucc = HL.Method() << function(self)
     self.m_redDotOldLv = self.m_redDotNewLv
     self.m_redDotNewLv = GameInstance.player.inventory:CurEtherLevel()
@@ -298,14 +235,24 @@ SubmitCollectionCtrl.OnSubmitEtherSucc = HL.Method() << function(self)
     self:UpdateBuffShow()
 
     self.m_curLevelCellIndex = math.min(GameInstance.player.inventory:CurEtherLevel(), self.m_maxLv - 1)
+    local currentDashCount = GameInstance.playerController.maxDashCount
+    local maxDashCount = Tables.globalConst.maxDashEnergyLimit / Tables.globalConst.dashCostEnergyValue
+    local maxShowCount = maxDashCount - self.m_maxDashCount
 
     local items = {}
     local isEmpty = true
     for i = self.m_oldLv + 1, GameInstance.player.inventory:CurEtherLevel() do
         local rewardID = GameInstance.player.inventory:CurSubmitEtherRewardID(i)
         local rewardData = Tables.rewardTable[rewardID]
-        for _, v in pairs(rewardData.itemBundles) do
-            table.insert(items, v)
+        for _, itemBundle in pairs(rewardData.itemBundles) do
+            if itemBundle.id == "item_add_endurance" then
+                if self.m_maxDashCount < maxDashCount and maxShowCount > 0 then
+                    maxShowCount = maxShowCount - 1
+                    table.insert(items, itemBundle)
+                end
+            else
+                table.insert(items, itemBundle)
+            end
             isEmpty = false
         end
     end
@@ -341,15 +288,18 @@ SubmitCollectionCtrl.OnSubmitEtherSucc = HL.Method() << function(self)
         end
     end
     self:_RefreshLvInfo(false)
+
+    if self.m_maxDashCount < maxDashCount and currentDashCount >= maxDashCount then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_SUBMIT_ETHER_STAMINA_MAX_TOAST)
+    end
+    self.m_maxDashCount = currentDashCount
 end
-
-
 
 SubmitCollectionCtrl.UpdateRedDot = HL.Method() << function(self)
     local lastLevelBuffList = self:GetEffectBuffList(self.m_mapId, self.m_redDotOldLv)
     local curLevelBuffList = self:GetEffectBuffList(self.m_mapId, self.m_redDotNewLv)
     local haveNewBuff = false
-    if curLevelBuffList then
+    if curLevelBuffList and self.m_redDotNewLv > self.m_redDotOldLv then
         for curKey, curBuff in pairs(curLevelBuffList) do
             local isHave = false
             local curBuffInfo = Tables.etherSubmitBuffShowTable[curBuff]
@@ -380,10 +330,6 @@ SubmitCollectionCtrl.UpdateRedDot = HL.Method() << function(self)
         self.view.detailsBtnRedDot.gameObject:SetActive(false)
     end
 end
-
-
-
-
 
 SubmitCollectionCtrl.GetEffectBuffList = HL.Method(HL.String, HL.Number).Return(HL.Any) << function(self, domainId, level)
     for key, value in pairs(Tables.etherSubmitInfoTable) do

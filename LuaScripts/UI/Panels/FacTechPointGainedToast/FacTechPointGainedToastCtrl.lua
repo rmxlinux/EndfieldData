@@ -4,18 +4,9 @@ local PANEL_ID = PanelId.FacTechPointGainedToast
 
 local SHOWING_EFFECT_CLIP = "factechpoint_gained"
 
-
-
-
-
-
-
-
 FacTechPointGainedToastCtrl = HL.Class('FacTechPointGainedToastCtrl', uiCtrl.UICtrl)
 
-
 FacTechPointGainedToastCtrl.m_showingCor = HL.Field(HL.Thread)
-
 
 
 
@@ -24,8 +15,6 @@ FacTechPointGainedToastCtrl.m_showingCor = HL.Field(HL.Thread)
 FacTechPointGainedToastCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.INTERRUPT_MAIN_HUD_ACTION_QUEUE] = 'InterruptMainHudActionQueue',
 }
-
-
 
 FacTechPointGainedToastCtrl.OnFacTechPointGained = HL.StaticMethod(HL.Any) << function(arg)
     LuaSystemManager.mainHudActionQueue:AddRequest("FacTechPointGained", function()
@@ -38,16 +27,9 @@ FacTechPointGainedToastCtrl.OnFacTechPointGained = HL.StaticMethod(HL.Any) << fu
 end
 
 
-
-
-
 FacTechPointGainedToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
 end
-
-
-
-
 
 FacTechPointGainedToastCtrl.StartToast = HL.Method(HL.Table, HL.Function) << function(self, arg, finishCb)
     local itemBundleList = unpack(arg)
@@ -80,8 +62,6 @@ FacTechPointGainedToastCtrl.StartToast = HL.Method(HL.Table, HL.Function) << fun
     end)
     AudioAdapter.PostEvent("Au_UI_Toast_FacTechPointGainedToastPanel_Open")
 end
-
-
 
 FacTechPointGainedToastCtrl.InterruptMainHudActionQueue = HL.Method() << function(self)
     self.m_showingCor = self:_ClearCoroutine(self.m_showingCor)

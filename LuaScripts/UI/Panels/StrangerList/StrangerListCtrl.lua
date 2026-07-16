@@ -1,31 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.StrangerList
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 StrangerListCtrl = HL.Class('StrangerListCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -39,18 +15,11 @@ StrangerListCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHANGE_INPUT_DEVICE_TYPE_FINISHED] = '_OnChangeInputDeviceTypeFinished',
 }
 
-
 StrangerListCtrl.m_strangerList = HL.Field(HL.Table)
-
 
 StrangerListCtrl.m_recoverState = HL.Field(HL.Table)
 
-
-
 StrangerListCtrl.m_switchCooldownDeadline = HL.Field(HL.Number) << 0
-
-
-
 
 
 StrangerListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -121,8 +90,6 @@ StrangerListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_ApplyRecoverState(self.m_recoverState)
 end
 
-
-
 StrangerListCtrl._StartInput = HL.Method() << function(self)
     if DeviceInfo.inputType ~= DeviceInfo.InputType.Controller then
         return
@@ -137,8 +104,6 @@ StrangerListCtrl._StartInput = HL.Method() << function(self)
     self.m_phase:SetTabBlockState(true)
 end
 
-
-
 StrangerListCtrl._EndInput = HL.Method() << function(self)
     if DeviceInfo.inputType ~= DeviceInfo.InputType.Controller then
         return
@@ -148,8 +113,6 @@ StrangerListCtrl._EndInput = HL.Method() << function(self)
     self.view.friendList:NaviToFirstCell()
     self.m_phase:SetTabBlockState(false)
 end
-
-
 
 StrangerListCtrl._UpdateCache = HL.Method() << function(self)
     self.m_strangerList = {}
@@ -162,10 +125,6 @@ StrangerListCtrl._UpdateCache = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 StrangerListCtrl._Refresh = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, loading, stayPos)
     loading = loading or false
 
@@ -176,8 +135,6 @@ StrangerListCtrl._Refresh = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << functio
     end
     self.view.friendList:OnChangeInputField(self.view.inputField.text)
 end
-
-
 
 StrangerListCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.m_phase and self.m_phase.arg and lume.deepCopy(self.m_phase.arg) or {}
@@ -199,9 +156,6 @@ StrangerListCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << f
     arg.phase = nil
     return arg
 end
-
-
-
 
 StrangerListCtrl._ApplyRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
@@ -226,9 +180,6 @@ StrangerListCtrl._ApplyRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self
     self:_RestoreSearchInput(recoverState)
 end
 
-
-
-
 StrangerListCtrl._StartSwitchCooldown = HL.Method(HL.Opt(HL.Number)) << function(self, deadline)
     deadline = deadline or (DateTimeUtils.GetCurrentTimestampBySeconds() + 10)
     self.m_switchCooldownDeadline = deadline
@@ -241,8 +192,6 @@ StrangerListCtrl._StartSwitchCooldown = HL.Method(HL.Opt(HL.Number)) << function
     end, UIUtils.getSecondsLeftTime)
 end
 
-
-
 StrangerListCtrl._EndSwitchCooldown = HL.Method() << function(self)
     self.m_switchCooldownDeadline = 0
     self.view.switchBtn.gameObject:SetActive(true)
@@ -250,9 +199,6 @@ StrangerListCtrl._EndSwitchCooldown = HL.Method() << function(self)
     self.view.countDownText.gameObject:SetActive(false)
     self.view.rootUIState:SetState('NormalState')
 end
-
-
-
 
 StrangerListCtrl._RestoreSwitchCooldown = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
@@ -265,9 +211,6 @@ StrangerListCtrl._RestoreSwitchCooldown = HL.Method(HL.Opt(HL.Any)) << function(
         self:_EndSwitchCooldown()
     end
 end
-
-
-
 
 StrangerListCtrl._RestoreSearchInput = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
@@ -285,29 +228,19 @@ StrangerListCtrl._RestoreSearchInput = HL.Method(HL.Opt(HL.Any)) << function(sel
     end
 end
 
-
-
 StrangerListCtrl.OnCellChange = HL.Method() << function(self)
     self:_UpdateCache()
     self:_Refresh(false, true)
 end
-
-
 
 StrangerListCtrl.OnSync = HL.Method() << function(self)
     self:_UpdateCache()
     self:_Refresh(false, false)
 end
 
-
-
-
 StrangerListCtrl.OnSearchChange = HL.Method(HL.String) << function(self, str)
     self.view.inputField.text = str
 end
-
-
-
 
 StrangerListCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, args)
     self.m_recoverState = args and args.strangerListState or nil
@@ -315,9 +248,6 @@ StrangerListCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, 
     self:_Refresh()
     self:_ApplyRecoverState(self.m_recoverState)
 end
-
-
-
 
 StrangerListCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Table) << function(self, args)
     if not self:IsShow() then
@@ -328,8 +258,6 @@ StrangerListCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Table) << funct
         sortNode:UpdateDeviceState()
     end
 end
-
-
 
 
 
@@ -349,8 +277,6 @@ StrangerListCtrl.OnShow = HL.Override() << function(self)
     end
     InputManagerInst:ToggleGroup(self.view.textInputBindingGroup.groupId, true)
 end
-
-
 
 StrangerListCtrl.OnClose = HL.Override() << function(self)
     GameInstance.player.friendSystem:ClearSyncCallback()

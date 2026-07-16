@@ -2,16 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonTitleTips
 
-
-
-
-
-
-
-
-
 CommonTitleTipsCtrl = HL.Class('CommonTitleTipsCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -22,28 +13,19 @@ CommonTitleTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
-
 CommonTitleTipsCtrl.ShowTitleTips = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = UIManager:AutoOpen(PANEL_ID)
     ctrl:ShowTips(args)
 end
-
 
 CommonTitleTipsCtrl.HideTitleTips = HL.StaticMethod() << function()
     UIManager:Close(PANEL_ID)
 end
 
 
-
-
-
 CommonTitleTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitViews()
 end
-
-
-
 
 
 
@@ -69,17 +51,12 @@ CommonTitleTipsCtrl.ShowTips = HL.Method(HL.Any) << function(self, args)
     self:_RefreshPos(args)
 end
 
-
-
 CommonTitleTipsCtrl._InitViews = HL.Method() << function(self)
     self.view.backButton.onClick:RemoveAllListeners()
     self.view.backButton.onClick:AddListener(function()
         self:PlayAnimationOut()
     end)
 end
-
-
-
 
 CommonTitleTipsCtrl._RefreshPos = HL.Method(HL.Any) << function(self, args)
     local finalXPosType = UIConst.UI_TIPS_X_POS_TYPE.Right

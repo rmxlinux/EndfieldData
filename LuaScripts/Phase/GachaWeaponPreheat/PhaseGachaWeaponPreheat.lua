@@ -1,22 +1,7 @@
 
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.GachaWeaponPreheat
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseGachaWeaponPreheat = HL.Class('PhaseGachaWeaponPreheat', phaseBase.PhaseBase)
-
 
 
 
@@ -28,16 +13,11 @@ PhaseGachaWeaponPreheat.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 PhaseGachaWeaponPreheat.m_preheatObjItem = HL.Field(HL.Forward('PhaseGameObjectItem'))
-
 
 PhaseGachaWeaponPreheat.m_preheatDirector = HL.Field(CS.UnityEngine.Playables.PlayableDirector)
 
-
 PhaseGachaWeaponPreheat.m_cutsceneData = HL.Field(HL.Any)
-
-
 
 
 
@@ -49,17 +29,8 @@ end
 
 
 
-
-
-
-
-
 PhaseGachaWeaponPreheat.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhaseGachaWeaponPreheat._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     
@@ -90,10 +61,6 @@ PhaseGachaWeaponPreheat._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL
     LuaSystemManager.gachaSystem:UpdateGachaWeaponSettingState()
 end
 
-
-
-
-
 PhaseGachaWeaponPreheat._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if self.m_cutsceneData then
         for _, v in pairs(self.m_cutsceneData.audioEvents) do
@@ -104,21 +71,11 @@ PhaseGachaWeaponPreheat._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(H
     GameInstance.player.gacha.curPlayingTimelineMaxRarity = 0
 end
 
-
-
-
-
 PhaseGachaWeaponPreheat._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseGachaWeaponPreheat._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
 
 
 
@@ -129,13 +86,9 @@ PhaseGachaWeaponPreheat._OnActivated = HL.Override() << function(self)
     LuaSystemManager.gachaSystem:UpdateGachaWeaponSettingState()
 end
 
-
-
 PhaseGachaWeaponPreheat._OnDeActivated = HL.Override() << function(self)
     LuaSystemManager.gachaSystem:UpdateGachaWeaponSettingState()
 end
-
-
 
 PhaseGachaWeaponPreheat._OnDestroy = HL.Override() << function(self)
     PhaseGachaWeaponPreheat.Super._OnDestroy(self)

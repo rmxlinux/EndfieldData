@@ -1,22 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Reading
 local PHASE_ID = PhaseId.Reading
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ReadingCtrl = HL.Class('ReadingCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -27,27 +12,18 @@ ReadingCtrl = HL.Class('ReadingCtrl', uiCtrl.UICtrl)
 ReadingCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
-
 ReadingCtrl.m_tabCells = HL.Field(HL.Forward("UIListCache"))
-
 
 ReadingCtrl.m_selectIndex = HL.Field(HL.Number) << -1
 
-
 ReadingCtrl.m_readingData = HL.Field(HL.Userdata)
 
-
 ReadingCtrl.m_readingDataList = HL.Field(HL.Table)
-
-
 
 ReadingCtrl.OnOpenReadingPhase = HL.StaticMethod(HL.Table) << function(args)
     local readingId = unpack(args)
     PhaseManager:OpenPhase(PHASE_ID, {readingId = readingId})
 end
-
-
-
 
 
 ReadingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -69,17 +45,13 @@ ReadingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 
-
-
 ReadingCtrl.OnShow = HL.Override() << function(self)
     self:RefreshReading()
     local cell = self.m_tabCells:Get(1)
     if cell then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.button)
+        self:SetNaviTarget(cell.button)
     end
 end
-
-
 
 ReadingCtrl.OnClose = HL.Override() << function(self)
     local oldData = self.m_readingDataList[self.m_selectIndex]
@@ -88,9 +60,6 @@ ReadingCtrl.OnClose = HL.Override() << function(self)
         EventLogManagerInst:GameEvent_CloseNarrativeContent(oldData.contentId, stayTime)
     end
 end
-
-
-
 
 ReadingCtrl._OnTabClick = HL.Method(HL.Number) << function(self, index)
     if self.m_selectIndex ~= index then
@@ -125,10 +94,6 @@ ReadingCtrl._OnTabClick = HL.Method(HL.Number) << function(self, index)
     end
 end
 
-
-
-
-
 ReadingCtrl.RefreshTabSelect = HL.StaticMethod(HL.Table, HL.Boolean, HL.Boolean) << function(cell, select, isInit)
     local aniName = select and "reading_leftcell_slcin" or "reading_leftcell_slcout"
     if isInit then
@@ -137,8 +102,6 @@ ReadingCtrl.RefreshTabSelect = HL.StaticMethod(HL.Table, HL.Boolean, HL.Boolean)
         cell.animationWrapper:Play(aniName)
     end
 end
-
-
 
 ReadingCtrl._RefreshContent = HL.Method() << function(self)
     local readingData = self.m_readingDataList[self.m_selectIndex]
@@ -153,7 +116,7 @@ ReadingCtrl._RefreshContent = HL.Method() << function(self)
         if hasCfg then
             self.view.richContent.gameObject:SetActive(false)
             self.view.prtsRadio.gameObject:SetActive(true)
-            self.view.prtsRadio:InitPRTSRadio(contentId, "")    
+            self.view.prtsRadio:InitPRTSRadio(contentId, "", readingData.overrideRadioId)    
             self.view.prtsRadio:SetPlayRadio(true)
         else
             self.view.richContent.gameObject:SetActive(false)
@@ -161,8 +124,6 @@ ReadingCtrl._RefreshContent = HL.Method() << function(self)
         end
     end
 end
-
-
 
 ReadingCtrl.RefreshReading = HL.Method() << function(self)
     local list = {}

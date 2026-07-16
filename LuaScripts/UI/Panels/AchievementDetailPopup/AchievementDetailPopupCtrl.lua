@@ -2,22 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.AchievementDetailPopup
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AchievementDetailPopupCtrl = HL.Class('AchievementDetailPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -28,9 +13,7 @@ AchievementDetailPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 AchievementDetailPopupCtrl.m_viewModel = HL.Field(HL.Any) << nil
-
 
 AchievementDetailPopupCtrl.m_levelCellCache = HL.Field(HL.Any) << nil
 
@@ -42,9 +25,6 @@ local LEVEL_CONFIGS = {
         title = "ui_achv_list_evolute_method_3",
     }
 }
-
-
-
 
 
 AchievementDetailPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -67,8 +47,6 @@ end
 
 
 
-
-
 AchievementDetailPopupCtrl._InitViews = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
     self.view.closeBtn.onClick:RemoveAllListeners()
@@ -78,9 +56,6 @@ AchievementDetailPopupCtrl._InitViews = HL.Method() << function(self)
 
     self.m_levelCellCache = UIUtils.genCellCache(self.view.levelCell)
 end
-
-
-
 
 AchievementDetailPopupCtrl._LoadData = HL.Method(HL.String) << function(self, achievementId)
     self.m_viewModel = nil
@@ -145,10 +120,6 @@ AchievementDetailPopupCtrl._LoadData = HL.Method(HL.String) << function(self, ac
     end
 end
 
-
-
-
-
 AchievementDetailPopupCtrl._LoadInitLevel = HL.Method(HL.Any, HL.Any) << function(self, playerAchievement, initLevelInfo)
     local isFinished = self.m_viewModel.level >= initLevelInfo.achieveLevel
     local levelViewModel = {
@@ -160,10 +131,6 @@ AchievementDetailPopupCtrl._LoadInitLevel = HL.Method(HL.Any, HL.Any) << functio
     }
     table.insert(self.m_viewModel.levelInfos, levelViewModel)
 end
-
-
-
-
 
 AchievementDetailPopupCtrl._LoadUpgradedInfo = HL.Method(HL.Any, HL.Any) << function(self, playerAchievement, achievementData)
     local overrideProgress = -1
@@ -214,10 +181,6 @@ AchievementDetailPopupCtrl._LoadUpgradedInfo = HL.Method(HL.Any, HL.Any) << func
     end
 end
 
-
-
-
-
 AchievementDetailPopupCtrl._LoadPlatedInfo = HL.Method(HL.Any, HL.Any) << function(self, playerAchievement, achievementData)
     local isObtained = self.m_viewModel.level >= achievementData.initLevel
     local showProgress = isObtained and not self.m_viewModel.isPlated
@@ -230,12 +193,6 @@ AchievementDetailPopupCtrl._LoadPlatedInfo = HL.Method(HL.Any, HL.Any) << functi
     }
     table.insert(self.m_viewModel.levelInfos, plateViewModel)
 end
-
-
-
-
-
-
 
 AchievementDetailPopupCtrl._GetConditionDesc = HL.Method(HL.Any, HL.Any, HL.Boolean, HL.Opt(HL.Number)).Return(HL.String)
     << function(self, conditions, playerAchievement, showProgress, overrideProgress)
@@ -269,8 +226,6 @@ AchievementDetailPopupCtrl._GetConditionDesc = HL.Method(HL.Any, HL.Any, HL.Bool
         progress, target)
     return resultDesc
 end
-
-
 
 AchievementDetailPopupCtrl._RenderViews = HL.Method() << function(self)
     if self.m_viewModel == nil then
@@ -326,10 +281,6 @@ AchievementDetailPopupCtrl._RenderViews = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 AchievementDetailPopupCtrl._RenderLevel = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local levelInfo = self.m_viewModel.levelInfos[luaIndex]
     if levelInfo == nil then
@@ -348,8 +299,6 @@ AchievementDetailPopupCtrl._RenderLevel = HL.Method(HL.Any, HL.Number) << functi
     cell.stateCtrl:SetState(self.m_viewModel.isGained and (levelInfo.isFinished and "Finish" or "UnFinished") or "Unattained")
     cell.title.text = levelInfo.title
 end
-
-
 
 AchievementDetailPopupCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     if self.m_viewModel == nil or string.isEmpty(self.m_viewModel.achievementId) then

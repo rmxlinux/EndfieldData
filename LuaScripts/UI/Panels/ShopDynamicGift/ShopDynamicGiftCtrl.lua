@@ -2,22 +2,11 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopDynamicGift
 
-
-
-
-
-
-
-
-
 ShopDynamicGiftCtrl = HL.Class('ShopDynamicGiftCtrl', uiCtrl.UICtrl)
-
 
 ShopDynamicGiftCtrl.m_tabData = HL.Field(HL.Table)
 
-
 ShopDynamicGiftCtrl.m_go = HL.Field(HL.Any)
-
 
 
 
@@ -26,9 +15,6 @@ ShopDynamicGiftCtrl.m_go = HL.Field(HL.Any)
 ShopDynamicGiftCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 ShopDynamicGiftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -63,15 +49,17 @@ ShopDynamicGiftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     self.view.cashShopKrTips:InitCashShopKrTips()
+
+    if CashShopUtils.IsPS() and CashShopUtils.TabDataShowPsStore(self.m_tabData) then
+        self.view.stateController:SetState("InPsStore")
+    else
+        self.view.stateController:SetState("NoPsStore")
+    end
 end
-
-
 
 ShopDynamicGiftCtrl.OnShow = HL.Override() << function(self)
     GameInstance.player.cashShopSystem:ReadCashGoods(self.m_tabData.cashGoodsIds[1])
 end
-
-
 
 ShopDynamicGiftCtrl._OnPlayAnimationOut = HL.Override() << function(self)
     ShopDynamicGiftCtrl.Super._OnPlayAnimationOut(self)
@@ -82,9 +70,6 @@ ShopDynamicGiftCtrl._OnPlayAnimationOut = HL.Override() << function(self)
         end
     end
 end
-
-
-
 
 
 

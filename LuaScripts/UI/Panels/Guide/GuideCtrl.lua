@@ -10,77 +10,7 @@ local InfoAtFirstHighlightStyle = {
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Guide
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GuideCtrl = HL.Class('GuideCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -106,41 +36,27 @@ local USE_LEFT_HAND_WIDTH_RATIO = 0.06
 
 local RIGHT_ARROW_MODIFIED_OFFSET = -9
 
-
 GuideCtrl.m_curStepInfo = HL.Field(CS.Beyond.Gameplay.GuideStepInfo)
-
 
 GuideCtrl.m_isCurForceStep = HL.Field(HL.Boolean) << false
 
-
 GuideCtrl.m_waitClickUIHighlight = HL.Field(HL.Boolean) << false
-
 
 GuideCtrl.m_stepStartTime = HL.Field(HL.Number) << -1
 
-
 GuideCtrl.m_curUIHighlightInfos = HL.Field(HL.Table)
-
 
 GuideCtrl.m_uiHighlightCells = HL.Field(HL.Forward('UIListCache'))
 
-
 GuideCtrl.m_firstHighlightUICell = HL.Field(HL.Table)
-
 
 GuideCtrl.m_dialogNodeMap = HL.Field(HL.Table)
 
-
 GuideCtrl.m_highlightDialogPadding = HL.Field(HL.Table)
-
 
 GuideCtrl.m_hasFinishCondition = HL.Field(HL.Boolean) << false
 
-
 GuideCtrl.m_guideStepInterval = HL.Field(HL.Number) << 0
-
-
-
 
 
 GuideCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -173,23 +89,15 @@ GuideCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitDialogControllerHint()
 end
 
-
-
 GuideCtrl.OnShow = HL.Override() << function(self)
     self:_AddTick()
 end
-
-
 GuideCtrl.OnHide = HL.Override() << function(self)
     self:_Clear()
 end
-
-
 GuideCtrl.OnClose = HL.Override() << function(self)
     self:_Clear()
 end
-
-
 
 GuideCtrl._HideAllOnCreate = HL.Method() << function(self)
     self.view.helperNode.gameObject:SetActive(false)
@@ -201,10 +109,7 @@ end
 
 
 
-
 GuideCtrl.m_lateTickKey = HL.Field(HL.Number) << -1
-
-
 
 GuideCtrl._AddTick = HL.Method() << function(self)
     if self.m_lateTickKey > 0 then
@@ -214,8 +119,6 @@ GuideCtrl._AddTick = HL.Method() << function(self)
         self:_LateTick()
     end)
 end
-
-
 
 GuideCtrl._Clear = HL.Method() << function(self)
     LuaUpdate:Remove(self.m_lateTickKey)
@@ -227,8 +130,6 @@ GuideCtrl._Clear = HL.Method() << function(self)
     CS.Beyond.UI.UIActionKeyHint.s_stopCheckBindingEnabledForGuide = false
     CS.Beyond.UI.UIAutoCloseArea.s_stopCheckShouldClose = false
 end
-
-
 
 GuideCtrl._LateTick = HL.Method() << function(self)
     if self.m_curUIHighlightInfos then
@@ -295,8 +196,6 @@ GuideCtrl._LateTick = HL.Method() << function(self)
         self:_RefreshHelperTrackPointDistance()
     end
 end
-
-
 
 
 
@@ -383,9 +282,6 @@ GuideCtrl.ShowGuideStep = HL.StaticMethod(HL.Table) << function(args)
     end
 end
 
-
-
-
 GuideCtrl.HideGuideStep = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     args = args or {}
     local groupInfo, isClientInterrupt = unpack(args)
@@ -440,49 +336,31 @@ GuideCtrl.HideGuideStep = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     self.view.uiHighlightNode.gameObject:SetActiveIfNecessary(false)
 end
 
-
 GuideCtrl.ShowGuideEmptyMask = HL.StaticMethod() << function()
     local self = UIManager:AutoOpen(PANEL_ID)
     self.view.main.gameObject:SetActiveIfNecessary(false)
     self:_RefreshEmptyMaskState(true)
 end
 
-
-
-
 GuideCtrl.OnPanelOpened = HL.Method(HL.String) << function(self, panelName)
     self:_RefreshHelperVisibleStateByPanelOrPhaseState(panelName, true, true)
 end
-
-
-
 
 GuideCtrl.OnPanelClosed = HL.Method(HL.String) << function(self, panelName)
     self:_RefreshHelperVisibleStateByPanelOrPhaseState(panelName, false, true)
 end
 
-
-
-
 GuideCtrl.OnPhaseOpened = HL.Method(HL.String) << function(self, phaseName)
     self:_RefreshHelperVisibleStateByPanelOrPhaseState(phaseName, true, false)
 end
-
-
-
 
 GuideCtrl.OnPhaseExited = HL.Method(HL.String) << function(self, phaseName)
     self:_RefreshHelperVisibleStateByPanelOrPhaseState(phaseName, false, false)
 end
 
-
-
 GuideCtrl.OnInterruptGuide = HL.Method() << function(self)
     self:Hide()
 end
-
-
-
 
 GuideCtrl.OnCompleteGuide = HL.Method(HL.Any) << function(self, args)
     
@@ -501,18 +379,12 @@ end
 
 
 
-
-
-
 GuideCtrl._RefreshEmptyMaskState = HL.Method(HL.Boolean) << function(self, needShow)
     self.view.emptyMask.gameObject:SetActiveIfNecessary(needShow)
     CS.Beyond.UI.UIActionKeyHint.s_stopCheckBindingEnabledForGuide = needShow
     CS.Beyond.UI.UIAutoCloseArea.s_stopCheckShouldClose = needShow
     self:ChangeCurPanelBlockSetting(needShow)
 end
-
-
-
 
 GuideCtrl._StopShowWeakGuideIfNeed = HL.Method(HL.Userdata).Return(HL.Boolean) << function(self, highlightInfos)
     if highlightInfos == nil or highlightInfos.Count == 0 then
@@ -530,17 +402,12 @@ GuideCtrl._StopShowWeakGuideIfNeed = HL.Method(HL.Userdata).Return(HL.Boolean) <
     return false
 end
 
-
-
 GuideCtrl._OnClickFakeButton = HL.Method() << function(self)
     if self.m_waitClickUIHighlight and not self.m_hasFinishCondition then
         self.m_waitClickUIHighlight = false
         self:_TryGotoNextStep(false)
     end
 end
-
-
-
 
 GuideCtrl._TryGotoNextStep = HL.Method(HL.Boolean) << function(self, checkInterval)
     
@@ -557,8 +424,6 @@ GuideCtrl._TryGotoNextStep = HL.Method(HL.Boolean) << function(self, checkInterv
 
     GameInstance.player.guide:OnGuideStepUIClicked()
 end
-
-
 
 GuideCtrl._ClearStep = HL.Method() << function(self)
     self.m_waitClickUIHighlight = false
@@ -580,11 +445,7 @@ end
 
 
 
-
 GuideCtrl.m_hasInfoAtUI = HL.Field(HL.Boolean) << false
-
-
-
 
 GuideCtrl._RefreshDialog = HL.Method(HL.Userdata) << function(self, textInfos)
     
@@ -620,17 +481,11 @@ GuideCtrl._RefreshDialog = HL.Method(HL.Userdata) << function(self, textInfos)
     end
 end
 
-
-
-
 GuideCtrl._RefreshDialogHintNode = HL.Method(HL.Boolean) << function(self, needFullScreenBtn)
     for _, dialogNode in pairs(self.m_dialogNodeMap) do
         dialogNode.hintNode.gameObject:SetActiveIfNecessary(needFullScreenBtn and not DeviceInfo.usingController)
     end
 end
-
-
-
 
 GuideCtrl._SyncInfoAtFirstUIHighlight = HL.Method(HL.Table) << function(self, info)
     if not info or not self.m_hasInfoAtUI then
@@ -663,10 +518,6 @@ GuideCtrl._SyncInfoAtFirstUIHighlight = HL.Method(HL.Table) << function(self, in
         end
     end
 end
-
-
-
-
 
 GuideCtrl._RefreshInfoAtFirstUIHighlightStyle = HL.Method(HL.Boolean, HL.Boolean) << function(self, needFullScreenBtn, isForce)
     
@@ -704,9 +555,6 @@ GuideCtrl._RefreshInfoAtFirstUIHighlightStyle = HL.Method(HL.Boolean, HL.Boolean
         end
     end
 end
-
-
-
 
 GuideCtrl._SyncUIHighlightDialogArrowState = HL.Method(HL.Userdata) << function(self, highlightRectTransform)
     if highlightRectTransform == nil then
@@ -749,9 +597,6 @@ GuideCtrl._SyncUIHighlightDialogArrowState = HL.Method(HL.Userdata) << function(
     dialogNode.forceArrow.localScale = Vector3(right and -1 or 1, 1, 1)
 end
 
-
-
-
 GuideCtrl._TryHideGuidePanel = HL.Method(HL.String) << function(self, lastGroupId)
     local curGroupId = GameInstance.player.guide.curGuideGroupId
     local pendingGroupId = GameInstance.player.guide.pendingGuideGroupId
@@ -769,13 +614,9 @@ end
 
 
 
-
 GuideCtrl.m_curHideMediaTime = HL.Field(HL.Number) << -1
 
 local FORCE_HIDE_MEDIA_TIMER_DURATION = 3
-
-
-
 
 GuideCtrl._RefreshMedia = HL.Method(HL.Userdata).Return(HL.Boolean) << function(self, mediaInfos)
     local count = mediaInfos.Count
@@ -795,8 +636,6 @@ GuideCtrl._RefreshMedia = HL.Method(HL.Userdata).Return(HL.Boolean) << function(
     })
     return true
 end
-
-
 
 GuideCtrl._ForceHideMediaIfNeed = HL.Method().Return(HL.Boolean) << function(self)
     
@@ -820,16 +659,11 @@ end
 
 
 
-
 GuideCtrl.m_needRefreshTrackPoint = HL.Field(HL.Boolean) << false
-
 
 GuideCtrl.m_curTrackPointKey = HL.Field(HL.String) << ""
 
-
 GuideCtrl.m_helperCoverVisible = HL.Field(HL.Boolean) << false
-
-
 
 GuideCtrl._RefreshHelper = HL.Method().Return(HL.Boolean) << function(self)
     if self.m_curStepInfo.type ~= GuideStepType.ForceHelper then
@@ -871,8 +705,6 @@ GuideCtrl._RefreshHelper = HL.Method().Return(HL.Boolean) << function(self)
     return true
 end
 
-
-
 GuideCtrl._RefreshHelperTrackPointDistance = HL.Method() << function(self)
     if string.isEmpty(self.m_curTrackPointKey) then
         return
@@ -887,9 +719,6 @@ GuideCtrl._RefreshHelperTrackPointDistance = HL.Method() << function(self)
     end
 end
 
-
-
-
 GuideCtrl._RefreshHelperCoverVisibleState = HL.Method(HL.Boolean) << function(self, isVisible)
     if isVisible then
         self.view.helperNode.cover:PlayInAnimation()
@@ -900,13 +729,8 @@ GuideCtrl._RefreshHelperCoverVisibleState = HL.Method(HL.Boolean) << function(se
     self.m_helperCoverVisible = isVisible
 end
 
-
-
-
-
-
 GuideCtrl._RefreshHelperVisibleStateByPanelOrPhaseState = HL.Method(HL.String, HL.Boolean, HL.Boolean) << function(self, name, isOpened, isPanel)
-    if not self:IsShow() or not self.view.helperNode.gameObject.activeSelf then
+    if not self:IsShow() or IsNull(self.view.helperNode.gameObject) or not self.view.helperNode.gameObject.activeSelf then
         return
     end
 
@@ -926,10 +750,6 @@ GuideCtrl._RefreshHelperVisibleStateByPanelOrPhaseState = HL.Method(HL.String, H
         end
     end
 end
-
-
-
-
 
 
 
@@ -966,11 +786,6 @@ GuideCtrl._RefreshUIHighlight = HL.Method(HL.Userdata, HL.Boolean) << function(s
         self.view.dragHint.hand:DOMove(self.view.dragHint.toPosition, 1.3, false):SetEase(CS.DG.Tweening.Ease.OutFlash):SetLoops(-1, CS.DG.Tweening.LoopType.Restart)
     end
 end
-
-
-
-
-
 
 GuideCtrl._HighlightUITarget = HL.Method(HL.Table, HL.Userdata, HL.Boolean)
         << function(self, cell, info, needMask)
@@ -1081,15 +896,12 @@ GuideCtrl._HighlightUITarget = HL.Method(HL.Table, HL.Userdata, HL.Boolean)
     if DeviceInfo.usingController and info.autoNaviToThisTarget then
         local selectable = button or toggle or dropdown
         if selectable then
-            InputManagerInst.controllerNaviManager:SetTarget(selectable)
+            self:SetNaviTarget(selectable)
         else
             logger.error(ELogChannel.Guide, "引导", GameInstance.player.guide.curGuideGroupId, "找不到 Selectable，无法自动手柄Navi", path)
         end
     end
 end
-
-
-
 
 GuideCtrl._GetHighlightTarget = HL.Method(HL.String).Return(HL.Userdata, HL.Boolean) << function(self, path)
     local trans = UIManager.uiRoot.transform:Find(path)
@@ -1103,9 +915,6 @@ GuideCtrl._GetHighlightTarget = HL.Method(HL.String).Return(HL.Userdata, HL.Bool
     end
     return trans, is3DUI
 end
-
-
-
 
 GuideCtrl._GetClickTarget = HL.Method(Transform).Return(HL.Opt(HL.Any, HL.Any, HL.Any, HL.Any)) << function(self, trans)
     local targets = {}
@@ -1138,12 +947,6 @@ GuideCtrl._GetClickTarget = HL.Method(Transform).Return(HL.Opt(HL.Any, HL.Any, H
         end
     end
 end
-
-
-
-
-
-
 
 GuideCtrl._SyncUIHighlightTargetRect = HL.Method(HL.Table, Unity.Rect, HL.Boolean, HL.Boolean) << function(self, cell, targetRect, needMask, isCircle)
     if DeviceInfo.usingController then
@@ -1218,20 +1021,10 @@ GuideCtrl._SyncUIHighlightTargetRect = HL.Method(HL.Table, Unity.Rect, HL.Boolea
     end
 end
 
-
-
-
-
-
 GuideCtrl._AdjustVerticalTargetMasks = HL.Method(HL.Table, HL.Table, HL.Number) << function(self, upCell, downCell, height)
     upCell.down.sizeDelta = Vector2(upCell.down.sizeDelta.x, height)
     downCell.up.sizeDelta = Vector2.zero
 end
-
-
-
-
-
 
 GuideCtrl._AdjustHorizontalTargetMasks = HL.Method(HL.Table, HL.Table, HL.Number)
         << function(self, rightCell, leftCell, uiWidth)
@@ -1256,10 +1049,6 @@ GuideCtrl._AdjustHorizontalTargetMasks = HL.Method(HL.Table, HL.Table, HL.Number
     leftCell.right.sizeDelta = Vector2.zero
 end
 
-
-
-
-
 GuideCtrl._SetHighlightTargetMask = HL.Method(HL.Table, HL.Boolean) << function(self, cell, enable)
     cell.upImage.raycastTarget = enable
     cell.downImage.raycastTarget = enable
@@ -1272,15 +1061,9 @@ end
 
 
 
-
 GuideCtrl.m_controllerHintTextList = HL.Field(HL.Table)
 
-
 GuideCtrl.m_controllerHintNodeList = HL.Field(HL.Table)
-
-
-
-
 
 GuideCtrl._ConvertTextInfosStyle = HL.Method(HL.Userdata, HL.Userdata) << function(self, textInfos, uiHighlightInfos)
     
@@ -1307,8 +1090,6 @@ GuideCtrl._ConvertTextInfosStyle = HL.Method(HL.Userdata, HL.Userdata) << functi
     end
 end
 
-
-
 GuideCtrl._InitDialogControllerHint = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
@@ -1333,8 +1114,6 @@ GuideCtrl._InitDialogControllerHint = HL.Method() << function(self)
     self:_RefreshDialogControllerHintNodeList(false)
 end
 
-
-
 GuideCtrl._RefreshControllerHintText = HL.Method() << function(self)
     if self.m_controllerHintTextList == nil then
         return
@@ -1348,15 +1127,9 @@ GuideCtrl._RefreshControllerHintText = HL.Method() << function(self)
     end
 end
 
-
-
-
 GuideCtrl._OnControllerTypeChanged = HL.Method(HL.Any) << function(self, args)
     self:_RefreshControllerHintText()
 end
-
-
-
 
 GuideCtrl._RefreshDialogControllerHintNodeList = HL.Method(HL.Boolean) << function(self, active)
     if not DeviceInfo.usingController then
@@ -1373,10 +1146,6 @@ GuideCtrl._RefreshDialogControllerHintNodeList = HL.Method(HL.Boolean) << functi
         end
     end
 end
-
-
-
-
 
 GuideCtrl._RefreshDialogControllerHint = HL.Method(HL.Userdata, HL.Boolean) << function(self, stepInfo, hasFinishCondition)
     self:_RefreshDialogControllerHintNodeList(false)
@@ -1406,8 +1175,6 @@ end
 
 
 if BEYOND_DEBUG then
-    
-    
     GuideCtrl._ShowCompleteGuidePopup = HL.Method() << function(self)
         local offset = 5
         local guideSortingOrder = self:GetSortingOrder()

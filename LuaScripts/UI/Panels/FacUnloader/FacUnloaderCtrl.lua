@@ -2,25 +2,6 @@ local LogisticPortLinkageStatus = FacCoreNS.FactoryGridLogisticSystem.LogisticPo
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacUnloader
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacUnloaderCtrl = HL.Class('FacUnloaderCtrl', uiCtrl.UICtrl)
 
 local INVALID_COUNT_TEXT = "--"
@@ -33,32 +14,21 @@ local INVALID_SUB_INDEX = -1
 
 
 
-
 FacUnloaderCtrl.s_messages = HL.StaticField(HL.Table) << {}
-
 
 FacUnloaderCtrl.m_nodeId = HL.Field(HL.Any)
 
-
 FacUnloaderCtrl.m_isHUBPort = HL.Field(HL.Boolean) << false
-
 
 FacUnloaderCtrl.m_subIndex = HL.Field(HL.Number) << 1
 
-
 FacUnloaderCtrl.m_uiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo)
-
 
 FacUnloaderCtrl.m_selector = HL.Field(CS.Beyond.Gameplay.RemoteFactory.FBUtil.Selector)
 
-
 FacUnloaderCtrl.m_isSelectorLocked = HL.Field(HL.Boolean) << false
 
-
 FacUnloaderCtrl.m_cacheShowItemTipsBindingId = HL.Field(HL.Number) << -1
-
-
-
 
 
 FacUnloaderCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -78,19 +48,17 @@ FacUnloaderCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end)
 
+    self:SetNaviTarget(self.view.unloadingInfo)
+
     CS.Beyond.Gameplay.Conditions.OnOpenFacUnloaderPanel.Trigger(self.m_selector.selectItemId)
     GameInstance.player.remoteFactory.core:Message_HSFB(Utils.getCurrentChapterId(), false, {1})
     GameInstance.remoteFactoryManager:RegisterInterestedUnitId(nodeId)
 end
 
-
-
 FacUnloaderCtrl.OnClose = HL.Override() << function(self)
     GameInstance.player.remoteFactory.core:Message_HSFB(Utils.getCurrentChapterId(), true, {1})
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_nodeId)
 end
-
-
 
 FacUnloaderCtrl._InitUnloaderBuildingInfo = HL.Method() << function(self)
     local subIndex = self.m_subIndex
@@ -138,12 +106,11 @@ FacUnloaderCtrl._InitUnloaderBuildingInfo = HL.Method() << function(self)
         })
         self.view.buildingCommon.view.wikiButton.gameObject:SetActiveIfNecessary(false)
         self.view.buildingCommon.view.controllerSideMenuBtn.gameObject:SetActive(false)
+        self.view.buildingCommon.view.earlyAccessNode.gameObject:SetActiveIfNecessary(false)
     end
 
     self:_RefreshSelectorLockState()
 end
-
-
 
 FacUnloaderCtrl._InitUnloadingSelectNode = HL.Method() << function(self)
     self.view.unloadingEmptyNode.onClick:AddListener(function()
@@ -163,11 +130,9 @@ FacUnloaderCtrl._InitUnloadingSelectNode = HL.Method() << function(self)
         if itemExist then
             self.view.unloadingItem:ShowTips()
         end
-    end, self.view.inputGroup.groupId)
+    end, self.view.unloadingInfoGroup.groupId)
     InputManagerInst:ToggleBinding(self.m_cacheShowItemTipsBindingId, not itemEmpty)
 end
-
-
 
 FacUnloaderCtrl._ShowSelectPanel = HL.Method() << function(self)
     if self.m_isSelectorLocked then
@@ -184,8 +149,6 @@ FacUnloaderCtrl._ShowSelectPanel = HL.Method() << function(self)
         end,
     })
 end
-
-
 
 FacUnloaderCtrl._UpdateTransferItem = HL.Method() << function(self)
     if IsNull(self.view.gameObject) then
@@ -224,9 +187,6 @@ FacUnloaderCtrl._UpdateTransferItem = HL.Method() << function(self)
     self.view.decoIcon.gameObject:SetActiveIfNecessary(not itemExist)
 end
 
-
-
-
 FacUnloaderCtrl._SelectItem = HL.Method(HL.String) << function(self, itemId)
     if itemId == self.m_selector.selectItemId then
         itemId = ""
@@ -249,25 +209,16 @@ FacUnloaderCtrl._SelectItem = HL.Method(HL.String) << function(self, itemId)
     InputManagerInst:ToggleBinding(self.m_cacheShowItemTipsBindingId, not itemEmpty)
 end
 
-
-
-
 FacUnloaderCtrl._RefreshBlockState = HL.Method(HL.Boolean) << function(self, isBlock)
     local state = isBlock and GEnums.FacBuildingState.Blocked or GEnums.FacBuildingState.Normal
     self.view.buildingCommon:ChangeBuildingStateDisplay(state)
 end
-
-
-
-
 
 FacUnloaderCtrl._RefreshItemCount = HL.Method(HL.String, HL.Any) << function(self, countText, color)
     self.view.infoShadowNode.countText.text = countText
     self.view.infoNode.countText.text = countText
     self.view.infoNode.countText.color = color
 end
-
-
 
 FacUnloaderCtrl._RefreshSelectorLockState = HL.Method() << function(self)
     local node = FactoryUtils.getBuildingNodeHandler(self.m_uiInfo.nodeId)

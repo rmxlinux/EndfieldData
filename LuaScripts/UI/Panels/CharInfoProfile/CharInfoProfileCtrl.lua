@@ -1,56 +1,5 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharInfoProfile
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharInfoProfileCtrl = HL.Class('CharInfoProfileCtrl', uiCtrl.UICtrl)
 
 
@@ -108,7 +57,6 @@ local TAB_COUNT = 3
 
 
 
-
 CharInfoProfileCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.CHAR_INFO_SELECT_CHAR_CHANGE] = '_OnSelectedCharChange',
@@ -116,34 +64,23 @@ CharInfoProfileCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHAR_FRIENDSHIP_CHANGED] = '_OnCharFriendshipChanged',
 }
 
-
 CharInfoProfileCtrl.m_charTemplateId = HL.Field(HL.String) << ''
-
 
 CharInfoProfileCtrl.m_charInstId = HL.Field(HL.Number) << -1
 
-
 CharInfoProfileCtrl.m_charBagSystem = HL.Field(CS.Beyond.Gameplay.CharBagSystem)
-
 
 CharInfoProfileCtrl.m_watchingFriendship = HL.Field(HL.Boolean) << false
 
-
 CharInfoProfileCtrl.m_frienshipBindingID = HL.Field(HL.Number) << -1
-
 
 CharInfoProfileCtrl.m_dungeonId = HL.Field(HL.String) << ""
 
 
 
-
 CharInfoProfileCtrl.m_viewStartTs = HL.Field(HL.Number) << 0
 
-
 CharInfoProfileCtrl.m_viewEndTs = HL.Field(HL.Number) << 0
-
-
-
 
 
 
@@ -209,8 +146,6 @@ CharInfoProfileCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     args.stateArg = nil
 end
 
-
-
 CharInfoProfileCtrl.OnClose = HL.Override() << function(self)
     self:_SendProfileRead()
     self:_ClearVoice()
@@ -226,8 +161,6 @@ end
 
 
 
-
-
 CharInfoProfileCtrl._OpenFriendship = HL.Method() << function(self)
     if not self.m_watchingFriendship and not self.m_playingVoice then
         self.m_watchingFriendship = true
@@ -237,8 +170,6 @@ CharInfoProfileCtrl._OpenFriendship = HL.Method() << function(self)
         InputManagerInst:ToggleBinding(self.m_frienshipBindingID,false)
     end
 end
-
-
 
 CharInfoProfileCtrl._CloseFriendship = HL.Method() << function(self)
     self.m_watchingFriendship = false
@@ -250,8 +181,6 @@ CharInfoProfileCtrl._CloseFriendship = HL.Method() << function(self)
     InputManagerInst:ToggleBinding(self.m_frienshipBindingID,true)
 end
 
-
-
 CharInfoProfileCtrl._Return = HL.Method() << function(self)
     if not self.m_phase.m_charItemInitComplete then
         return
@@ -261,9 +190,6 @@ CharInfoProfileCtrl._Return = HL.Method() << function(self)
     })
     self.view.bgAnimWrapper:PlayOutAnimation()
 end
-
-
-
 CharInfoProfileCtrl._OnSelectedCharChange = HL.Method(HL.Table) << function(self, charInfo)
     self.m_charTemplateId = charInfo.templateId
     self.m_charInstId = charInfo.instId
@@ -272,13 +198,9 @@ CharInfoProfileCtrl._OnSelectedCharChange = HL.Method(HL.Table) << function(self
     self:RefreshAll()
 end
 
-
-
 CharInfoProfileCtrl._OnCharFriendshipChanged = HL.Method() << function(self)
     self:_RefreshFriendship()
 end
-
-
 
 
 
@@ -295,13 +217,9 @@ end
 
 
 
-
 CharInfoProfileCtrl.m_tabSelectedIndex = HL.Field(HL.Number) << 1
 
-
 CharInfoProfileCtrl.m_tabRefreshFunction = HL.Field(HL.Table)
-
-
 
 CharInfoProfileCtrl._InitTab = HL.Method() << function(self)
     for i = 1, TAB_COUNT do
@@ -329,9 +247,6 @@ CharInfoProfileCtrl._InitTab = HL.Method() << function(self)
     }
 end
 
-
-
-
 CharInfoProfileCtrl._ChangeTab = HL.Method(HL.Number) << function(self,index)
     local tab = self.view[string.format("tab%02d", index)]
     if index == self.m_tabSelectedIndex then
@@ -356,8 +271,6 @@ CharInfoProfileCtrl._ChangeTab = HL.Method(HL.Number) << function(self,index)
     self:_RefreshCurrentTab()
 end
 
-
-
 CharInfoProfileCtrl._RefreshCurrentTab = HL.Method() << function(self)
     self:_SendProfileRead()
     self:_ClearVoice()
@@ -372,13 +285,9 @@ end
 
 
 
-
 CharInfoProfileCtrl.m_profile = HL.Field(HL.Table)
 
-
 CharInfoProfileCtrl.m_charTagDescData = HL.Field(HL.Userdata)
-
-
 
 
 
@@ -410,10 +319,6 @@ CharInfoProfileCtrl._RefreshCharData = HL.Method() << function(self)
     self.m_profile.profileMessage = profileMessage
 end
 
-
-
-
-
 CharInfoProfileCtrl._AddTagShowData = HL.Method(HL.Userdata, HL.Table) << function(self, tagIds, profileMessage)
     local count = #tagIds
     for i = 1, count do
@@ -429,9 +334,6 @@ CharInfoProfileCtrl._AddTagShowData = HL.Method(HL.Userdata, HL.Table) << functi
         end
     end
 end
-
-
-
 
 CharInfoProfileCtrl._GetTagShowData = HL.Method(HL.String).Return(HL.Table) << function(self, tagId)
     
@@ -455,10 +357,6 @@ end
 
 
 
-
-
-
-
 CharInfoProfileCtrl._GetLockedDesc = HL.Method(GEnums.CharDocUnlockType, HL.Number).Return(HL.String) << function(self, unlockType, unlockValue)
     if unlockType == GEnums.CharDocUnlockType.ReachFavorability then
         local friendshipLv = CSPlayerDataUtil.GetFriendshipLevel(unlockValue)
@@ -469,10 +367,7 @@ end
 
 
 
-
 CharInfoProfileCtrl.m_messageCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 CharInfoProfileCtrl._RefreshMessage = HL.Method() << function(self)
     if not self.m_messageCellCache then
@@ -515,10 +410,7 @@ end
 
 
 
-
 CharInfoProfileCtrl.m_recordCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 CharInfoProfileCtrl._RefreshRecord = HL.Method() << function(self)
     if not self.m_recordCellCache then
@@ -591,13 +483,9 @@ end
 
 
 
-
 CharInfoProfileCtrl.m_getVoiceCell = HL.Field(HL.Function)
 
-
 CharInfoProfileCtrl.m_voiceSelectIndex = HL.Field(HL.Number) << -1
-
-
 
 CharInfoProfileCtrl._RefreshVoice = HL.Method() << function(self)
     if not self.m_getVoiceCell then
@@ -610,12 +498,8 @@ CharInfoProfileCtrl._RefreshVoice = HL.Method() << function(self)
     self.m_voiceSelectIndex = -1
     self.view.voiceList:UpdateCount(self.m_profile.profileVoice.Count, true, true)
     local firstCell = self.m_getVoiceCell(self.view.voiceList:Get(0))
-    UIUtils.setAsNaviTarget(firstCell.btnOpenVoice)
+    self:SetNaviTarget(firstCell.btnOpenVoice)
 end
-
-
-
-
 
 CharInfoProfileCtrl._VoiceOnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, luaIndex)
     local isSelected = self.m_voiceSelectIndex == luaIndex
@@ -662,10 +546,6 @@ CharInfoProfileCtrl._VoiceOnUpdateCell = HL.Method(HL.Table, HL.Number) << funct
     end
 end
 
-
-
-
-
 CharInfoProfileCtrl._SetVoiceCellIsPlaying = HL.Method(HL.Table, HL.Boolean) << function(self, cell, isPlaying)
     
     
@@ -677,16 +557,11 @@ CharInfoProfileCtrl._SetVoiceCellIsPlaying = HL.Method(HL.Table, HL.Boolean) << 
     UIUtils.PlayAnimationAndToggleActive(cell.isOnNode, isPlaying)
 end
 
-
 CharInfoProfileCtrl.m_stopVoiceTimerId = HL.Field(HL.Number) << -1
-
 
 CharInfoProfileCtrl.m_voiceHandleId = HL.Field(HL.Number) << -1
 
-
 CharInfoProfileCtrl.m_playingVoice = HL.Field(HL.Boolean) << false
-
-
 
 CharInfoProfileCtrl._PlayVoice = HL.Method() << function(self)
     self.m_playingVoice = true
@@ -719,8 +594,6 @@ CharInfoProfileCtrl._PlayVoice = HL.Method() << function(self)
     end
 end
 
-
-
 CharInfoProfileCtrl._ClearVoice = HL.Method() << function(self)
     self:_StopVoice()
 
@@ -736,8 +609,6 @@ CharInfoProfileCtrl._ClearVoice = HL.Method() << function(self)
     self.view.voiceInformation.gameObject:SetActive(false)
     self.view.roleInformation.gameObject:SetActive(true)
 end
-
-
 
 CharInfoProfileCtrl._StopVoice = HL.Method() << function(self)
     self.m_playingVoice = false
@@ -769,10 +640,7 @@ end
 
 
 
-
 CharInfoProfileCtrl.m_starCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 CharInfoProfileCtrl._RefreshFriendship = HL.Method() << function(self)
     
@@ -809,13 +677,9 @@ end
 
 
 
-
 CharInfoProfileCtrl.m_readVoices = HL.Field(HL.Table)
 
-
 CharInfoProfileCtrl.m_readDocs = HL.Field(HL.Table)
-
-
 
 CharInfoProfileCtrl._SendProfileRead = HL.Method() << function(self)
     if self.m_readVoices then
@@ -843,17 +707,12 @@ end
 
 
 
-
-
 CharInfoProfileCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     local arg = {
         tabSelectedIndex = self.m_tabSelectedIndex,
     }
     return arg
 end
-
-
-
 
 CharInfoProfileCtrl._ProcessStateArg = HL.Method(HL.Table) << function(self, arg)
     if not arg then

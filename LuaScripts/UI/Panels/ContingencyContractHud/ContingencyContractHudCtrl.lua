@@ -168,7 +168,6 @@ ContingencyContractHudCtrl.OnEndToastStart = HL.Method(HL.String) << function(se
         return
     end
     self:_ToggleTopMainHud(false)
-    PhaseManager:SetForbidInputDeviceChange("ContingencyContract.Settlement", true)
     self:Close()
 end
 
@@ -240,13 +239,7 @@ ContingencyContractHudCtrl._TryClearSwitchTimer = HL.Method() << function(self)
 end
 
 ContingencyContractHudCtrl._ToggleTopMainHud = HL.Method(HL.Boolean) << function(self, isOn)
-    
-
-    
-    local isOpen, ctrl = UIManager:IsOpen(PanelId.MainHud)
-    if isOpen then
-        ctrl:ForbidAllTopBtn(not isOn)
-    end
+    GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "ContingencyContractSettlement", not isOn)
 end
 
 HL.Commit(ContingencyContractHudCtrl)

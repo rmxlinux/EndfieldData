@@ -2,28 +2,13 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DungeonRewardSelectPopup
 
-
-
-
-
-
-
-
-
-
-
-
 DungeonRewardSelectPopupCtrl = HL.Class('DungeonRewardSelectPopupCtrl', uiCtrl.UICtrl)
-
 
 DungeonRewardSelectPopupCtrl.m_dungeonId = HL.Field(HL.String) << ""
 
-
 DungeonRewardSelectPopupCtrl.m_currSelectIdx = HL.Field(HL.Number) << 0
 
-
 DungeonRewardSelectPopupCtrl.m_rewardIdList = HL.Field(HL.Table)
-
 
 
 
@@ -32,9 +17,6 @@ DungeonRewardSelectPopupCtrl.m_rewardIdList = HL.Field(HL.Table)
 DungeonRewardSelectPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 DungeonRewardSelectPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -47,11 +29,9 @@ DungeonRewardSelectPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
     self:_RefreshUI()
     local firstCell = self.view.dungeonRewardSelectCell
     if firstCell then
-        InputManagerInst.controllerNaviManager:SetTarget(firstCell.view.inputBindingGroupNaviDecorator)
+        self:SetNaviTarget(firstCell.view.inputBindingGroupNaviDecorator)
     end
 end
-
-
 
 
 
@@ -64,8 +44,6 @@ DungeonRewardSelectPopupCtrl._BindBtnCallbacks = HL.Method() << function(self)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
 
 DungeonRewardSelectPopupCtrl._InitData = HL.Method() << function(self)
     local haveDungeon, dungeonData = Tables.DungeonTable:TryGetValue(self.m_dungeonId)
@@ -80,8 +58,6 @@ DungeonRewardSelectPopupCtrl._InitData = HL.Method() << function(self)
     local hasRecord, subGameRecord = GameInstance.player.subGameSys:TryGetSubGameRecord(self.m_dungeonId)
     self.m_currSelectIdx = hasRecord and LuaIndex(subGameRecord.customRewardIndex) or 1
 end
-
-
 
 DungeonRewardSelectPopupCtrl._RefreshUI = HL.Method() << function(self)
     if (#self.m_rewardIdList < 2) then
@@ -104,14 +80,9 @@ end
 
 
 
-
-
 DungeonRewardSelectPopupCtrl._OnCloseBtnClick = HL.Method() << function(self)
     self:PlayAnimationOutAndClose()
 end
-
-
-
 
 DungeonRewardSelectPopupCtrl._SelectRewardIndex = HL.Method(HL.Number) << function(self, luaIndex)
     if self.m_currSelectIdx == luaIndex then

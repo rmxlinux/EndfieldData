@@ -2,16 +2,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonBook
 
-
-
-
-
-
 CommonBookCtrl = HL.Class('CommonBookCtrl', uiCtrl.UICtrl)
 
-
 CommonBookCtrl.m_onCloseCallback = HL.Field(HL.Function)
-
 
 
 
@@ -20,9 +13,6 @@ CommonBookCtrl.m_onCloseCallback = HL.Field(HL.Function)
 CommonBookCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 CommonBookCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -49,8 +39,6 @@ CommonBookCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
 
 
 

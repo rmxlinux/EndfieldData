@@ -1,93 +1,9 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharInfoTalent
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharInfoTalentCtrl = HL.Class('CharInfoTalentCtrl', uiCtrl.UICtrl)
 
 local LAYER_SCORE = 100
-
 
 
 
@@ -102,94 +18,64 @@ CharInfoTalentCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHAR_INFO_TALENT_REMOTE_EXCHANGE_TO_SKILL] = "_ExchangeToSkill",
     [MessageConst.CHAR_INFO_TALENT_EXIT_EXPAND_NODE] = "_ExternalExitExpandNode",
     [MessageConst.ON_CHAR_INFO_TALENT_SKILL_NEXT_EXPAND] = "_OnTalentSkillNextExpand",
+    [MessageConst.ON_CHAR_DECK_ATTR_CHANGED] = "_OnCharDeckAttrChanged",
 }
-
 
 CharInfoTalentCtrl.m_attributeStageCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 CharInfoTalentCtrl.m_passiveStageCellCacheA = HL.Field(HL.Forward("UIListCache"))
-
 
 CharInfoTalentCtrl.m_passiveStageCellCacheB = HL.Field(HL.Forward("UIListCache"))
 
-
 CharInfoTalentCtrl.m_shipSkillStageCellCacheA = HL.Field(HL.Forward("UIListCache"))
-
 
 CharInfoTalentCtrl.m_shipSkillStageCellCacheB = HL.Field(HL.Forward("UIListCache"))
 
-
 CharInfoTalentCtrl.m_skillLayoutCache = HL.Field(HL.Forward("UIListCache"))
-
 
 CharInfoTalentCtrl.m_attributeCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 CharInfoTalentCtrl.m_passiveCellCacheA = HL.Field(HL.Forward("UIListCache"))
-
 
 CharInfoTalentCtrl.m_passiveCellCacheB = HL.Field(HL.Forward("UIListCache"))
 
-
 CharInfoTalentCtrl.m_passiveLineCacheA = HL.Field(HL.Forward("UIListCache"))
-
 
 CharInfoTalentCtrl.m_passiveLineCacheB = HL.Field(HL.Forward("UIListCache"))
 
-
 CharInfoTalentCtrl.m_shipLineCacheA = HL.Field(HL.Forward("UIListCache"))
-
 
 CharInfoTalentCtrl.m_shipLineCacheB = HL.Field(HL.Forward("UIListCache"))
 
-
 CharInfoTalentCtrl.m_shipCellCacheA = HL.Field(HL.Forward("UIListCache"))
-
 
 CharInfoTalentCtrl.m_shipCellCacheB = HL.Field(HL.Forward("UIListCache"))
 
-
 CharInfoTalentCtrl.m_eliteCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 CharInfoTalentCtrl.m_maxRankCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 CharInfoTalentCtrl.m_lvFillCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 CharInfoTalentCtrl.m_charInfo = HL.Field(HL.Table)
 
-
 CharInfoTalentCtrl.m_attrNodeList = HL.Field(HL.Table)
-
 
 CharInfoTalentCtrl.m_passiveSkillNodeList = HL.Field(HL.Table)
 
-
 CharInfoTalentCtrl.m_shipSkillNodeList = HL.Field(HL.Table)
-
 
 CharInfoTalentCtrl.m_curSelectedMark = HL.Field(HL.Userdata)
 
-
 CharInfoTalentCtrl.m_curSelectedCell = HL.Field(HL.Any)
-
 
 CharInfoTalentCtrl.m_isShowSkill = HL.Field(HL.Boolean) << false
 
-
 CharInfoTalentCtrl.m_isExpanding = HL.Field(HL.Boolean) << false
-
 
 CharInfoTalentCtrl.m_arg = HL.Field(HL.Any)
 
-
 CharInfoTalentCtrl.m_isInInitTransition = HL.Field(HL.Boolean) << false
-
-
-
 
 
 CharInfoTalentCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -208,8 +94,6 @@ CharInfoTalentCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.animation:SeekToPercent(enterAnimName, 0)
     
 end
-
-
 
 CharInfoTalentCtrl.OnShow = HL.Override() << function(self)
     local charInfo = self.m_charInfo
@@ -231,9 +115,6 @@ CharInfoTalentCtrl.OnShow = HL.Override() << function(self)
     self.view.skillDragPanel.gameObject:SetActive(false)
     self.view.talentDragPanel.gameObject:SetActive(false)
 end
-
-
-
 
 CharInfoTalentCtrl.PhaseCharInfoPanelShowFinal = HL.Method(HL.Any) << function(self, arg)
     local charInfo = arg.initCharInfo
@@ -281,10 +162,6 @@ CharInfoTalentCtrl.PhaseCharInfoPanelShowFinal = HL.Method(HL.Any) << function(s
     InputManagerInst:ToggleBinding(self.m_detailSkillBindingId, not self.m_isExpanding)
 end
 
-
-
-
-
 CharInfoTalentCtrl._CheckIsPanelFastEnter = HL.Method(HL.Table, HL.Table).Return(HL.Boolean, HL.Opt(HL.String)) << function(self, charInfo, arg)
     if not arg then
         return false
@@ -312,8 +189,6 @@ CharInfoTalentCtrl._CheckIsPanelFastEnter = HL.Method(HL.Table, HL.Table).Return
     end
 end
 
-
-
 CharInfoTalentCtrl._GetEnterAnimName = HL.Method().Return(HL.String) << function(self)
     local isEndmin = CharInfoUtils.isEndmin(self.m_charInfo.templateId)
     if isEndmin then
@@ -323,9 +198,6 @@ CharInfoTalentCtrl._GetEnterAnimName = HL.Method().Return(HL.String) << function
     end
 end
 
-
-
-
 CharInfoTalentCtrl._RefreshPanelScale = HL.Method(HL.Table) << function(self, charInfo)
     local templateId = charInfo.templateId
     local charDisplayData = CharInfoUtils.getCharDisplayData(templateId)
@@ -333,19 +205,14 @@ CharInfoTalentCtrl._RefreshPanelScale = HL.Method(HL.Table) << function(self, ch
 end
 
 
-
-
-
-
-
-CharInfoTalentCtrl._SelectSkillGroupType = HL.Method(HL.Table, HL.Any, HL.Opt(HL.Boolean)) << function(self, charInfo, showSkillGroupType, isFast)
+CharInfoTalentCtrl._SelectSkillGroupType = HL.Method(HL.Table, HL.Any, HL.Opt(HL.Boolean, HL.Number)) << function(self, charInfo, showSkillGroupType, isFast, curConditionIdx)
     self.m_isShowSkill = true
     for i = 1, self.m_skillLayoutCache:GetCount() do
         local cell = self.m_skillLayoutCache:Get(i)
         if cell.skillGroupType == showSkillGroupType then
             self:_OnClickCellDefault(cell.btnSkill.view.imageSelect, cell, isFast)
             if DeviceInfo.usingController and isFast then
-                UIUtils.setAsNaviTarget(cell.btnSkill.view.button)
+                self:SetNaviTarget(cell.btnSkill.view.button)
             end
         end
     end
@@ -359,13 +226,9 @@ CharInfoTalentCtrl._SelectSkillGroupType = HL.Method(HL.Table, HL.Any, HL.Opt(HL
         skillGroupType = showSkillGroupType,
         curSkillLv = skillInfo.level,
         forceUpdate = true,
+        curConditionIdx = curConditionIdx,
     })
 end
-
-
-
-
-
 
 
 CharInfoTalentCtrl._SelectCharBreakNodeId = HL.Method(HL.Table, HL.String, HL.Opt(HL.Boolean)) << function(self, charInfo, nodeId, isFast)
@@ -378,7 +241,7 @@ CharInfoTalentCtrl._SelectCharBreakNodeId = HL.Method(HL.Table, HL.String, HL.Op
             nodeCfg = validNode.nodeCfg
             self:_OnClickCellDefault(validNode.selected, cell, isFast)
             if DeviceInfo.usingController and isFast then
-                UIUtils.setAsNaviTarget(validNode.button)
+                self:SetNaviTarget(validNode.button)
             end
         end
     end
@@ -399,18 +262,13 @@ CharInfoTalentCtrl._SelectCharBreakNodeId = HL.Method(HL.Table, HL.String, HL.Op
     end
 end
 
-
-
-
-
-
 CharInfoTalentCtrl._SelectPassiveSkillNodeId = HL.Method(HL.Table, HL.String, HL.Opt(HL.Boolean)) << function(self, charInfo, nodeId, isFast)
     for i = 1, self.m_passiveCellCacheA:GetCount() do
         local cell = self.m_passiveCellCacheA:Get(i)
         if cell.nodeCfg.nodeId == nodeId then
             self:_OnClickCellDefault(cell.selected, cell, isFast)
             if DeviceInfo.usingController and isFast then
-                UIUtils.setAsNaviTarget(cell.button)
+                self:SetNaviTarget(cell.button)
             end
         end
     end
@@ -420,7 +278,7 @@ CharInfoTalentCtrl._SelectPassiveSkillNodeId = HL.Method(HL.Table, HL.String, HL
         if cell.nodeCfg.nodeId == nodeId then
             self:_OnClickCellDefault(cell.selected, cell, isFast)
             if DeviceInfo.usingController and isFast then
-                UIUtils.setAsNaviTarget(cell.button)
+                self:SetNaviTarget(cell.button)
             end
         end
     end
@@ -437,18 +295,13 @@ CharInfoTalentCtrl._SelectPassiveSkillNodeId = HL.Method(HL.Table, HL.String, HL
     })
 end
 
-
-
-
-
-
 CharInfoTalentCtrl._SelectAttributeSkillNodeId = HL.Method(HL.Table, HL.String, HL.Opt(HL.Boolean)) << function(self, charInfo, nodeId, isFast)
     for i = 1, self.m_attributeCellCache:GetCount() do
         local cell = self.m_attributeCellCache:Get(i)
         if cell.nodeCfg.nodeId == nodeId then
             self:_OnClickCellDefault(cell.selected, cell, isFast)
             if DeviceInfo.usingController and isFast then
-                UIUtils.setAsNaviTarget(cell.button)
+                self:SetNaviTarget(cell.button)
             end
         end
     end
@@ -461,18 +314,13 @@ CharInfoTalentCtrl._SelectAttributeSkillNodeId = HL.Method(HL.Table, HL.String, 
     })
 end
 
-
-
-
-
-
 CharInfoTalentCtrl._SelectShipSkillNodeId = HL.Method(HL.Table, HL.String, HL.Opt(HL.Boolean)) << function(self, charInfo, nodeId, isFast)
     for i = 1, self.m_shipCellCacheA:GetCount() do
         local cell = self.m_shipCellCacheA:Get(i)
         if cell.nodeCfg.nodeId == nodeId then
             self:_OnClickCellDefault(cell.selected, cell, isFast)
             if DeviceInfo.usingController and isFast then
-                UIUtils.setAsNaviTarget(cell.button)
+                self:SetNaviTarget(cell.button)
             end
         end
     end
@@ -482,7 +330,7 @@ CharInfoTalentCtrl._SelectShipSkillNodeId = HL.Method(HL.Table, HL.String, HL.Op
         if cell.nodeCfg.nodeId == nodeId then
             self:_OnClickCellDefault(cell.selected, cell, isFast)
             if DeviceInfo.usingController and isFast then
-                UIUtils.setAsNaviTarget(cell.button)
+                self:SetNaviTarget(cell.button)
             end
         end
     end
@@ -502,8 +350,6 @@ CharInfoTalentCtrl._SelectShipSkillNodeId = HL.Method(HL.Table, HL.String, HL.Op
 end
 
 
-
-
 CharInfoTalentCtrl.TryClose = HL.Method() << function(self)
     if self.m_isExpanding then
         self:_ToggleExpandNode(false)
@@ -514,9 +360,6 @@ CharInfoTalentCtrl.TryClose = HL.Method() << function(self)
         })
     end
 end
-
-
-
 
 CharInfoTalentCtrl.OnCharTalentUpgrade = HL.Method(HL.Table) << function(self, arg)
     local charInstId, nodeId = unpack(arg)
@@ -554,9 +397,6 @@ CharInfoTalentCtrl.OnCharTalentUpgrade = HL.Method(HL.Table) << function(self, a
     })
 end
 
-
-
-
 CharInfoTalentCtrl.OnCloseSkillUpgradePopup = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     local _, skillGroupId = unpack(arg)
     local charInst = CharInfoUtils.getPlayerCharInfoByInstId(self.m_charInfo.instId)
@@ -574,9 +414,6 @@ CharInfoTalentCtrl.OnCloseSkillUpgradePopup = HL.Method(HL.Opt(HL.Any)) << funct
     end
 end
 
-
-
-
 CharInfoTalentCtrl._getNextCharBreakStageNodeId = HL.Method(HL.Number).Return(HL.Opt(HL.String)) << function(self, charInstId)
     local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
     local charBreakCostMap = CharInfoUtils.getCharGrowthData(charInst.templateId).charBreakCostMap
@@ -588,8 +425,6 @@ CharInfoTalentCtrl._getNextCharBreakStageNodeId = HL.Method(HL.Number).Return(HL
 end
 
 
-
-
 CharInfoTalentCtrl._RebuildAllLayout = HL.Method() << function(self)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.skillRoot.transform)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.attributeNode.transform)
@@ -598,8 +433,6 @@ CharInfoTalentCtrl._RebuildAllLayout = HL.Method() << function(self)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.shipNodeA.transform)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.shipNodeB.transform)
 end
-
-
 
 CharInfoTalentCtrl._InitActionEvent = HL.Method() << function(self)
     self.m_skillLayoutCache = UIUtils.genCellCache(self.view.skillLayout)
@@ -668,10 +501,6 @@ CharInfoTalentCtrl._InitActionEvent = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 CharInfoTalentCtrl._RefreshTalentPanel = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(self, charInfo, arg)
     local attrNodes, passiveSkillNodeList, shipSkillNodeList =  CharInfoUtils.classifyTalentNode(charInfo.templateId)
 
@@ -701,15 +530,10 @@ CharInfoTalentCtrl._RefreshTalentPanel = HL.Method(HL.Table, HL.Opt(HL.Table)) <
     self:_RefreshNodeNavigation()
 end
 
-
-
 CharInfoTalentCtrl._RefreshTrail = HL.Method() << function(self)
     local isTrailCard = not CharInfoUtils.isCharDevAvailable(self.m_charInfo.instId)
     self.view.btnUpgrade.gameObject:SetActive(not isTrailCard)
 end
-
-
-
 
 CharInfoTalentCtrl._RefreshFacSkillLine = HL.Method(HL.Table) << function(self, charInfo)
     local lineInfoGroupA = self:_GenerateNodeLineInfo(self.m_shipCellCacheA, charInfo.instId, self._CheckIfShowShipLine, CharInfoUtils.getShipSkillNodeStatus)
@@ -726,9 +550,6 @@ CharInfoTalentCtrl._RefreshFacSkillLine = HL.Method(HL.Table) << function(self, 
     end)
 end
 
-
-
-
 CharInfoTalentCtrl._RefreshPassiveSkillLine = HL.Method(HL.Table) << function(self, charInfo)
     local lineInfoGroupA = self:_GenerateNodeLineInfo(self.m_passiveCellCacheA, charInfo.instId, self._CheckIfShowPassiveLine, CharInfoUtils.getPassiveSkillNodeStatus)
     local lineInfoGroupB = self:_GenerateNodeLineInfo(self.m_passiveCellCacheB, charInfo.instId, self._CheckIfShowPassiveLine, CharInfoUtils.getPassiveSkillNodeStatus)
@@ -743,12 +564,6 @@ CharInfoTalentCtrl._RefreshPassiveSkillLine = HL.Method(HL.Table) << function(se
         self:_RefreshNodeLineDefault(cell, lineInfo)
     end)
 end
-
-
-
-
-
-
 
 CharInfoTalentCtrl._GenerateNodeLineInfo = HL.Method(HL.Userdata, HL.Number, HL.Function, HL.Function).Return(HL.Table) << function(self, cellCache, charInstId, checkLineFunc, checkNodeFunc)
     local lineInfoGroup = {}
@@ -780,25 +595,13 @@ CharInfoTalentCtrl._GenerateNodeLineInfo = HL.Method(HL.Userdata, HL.Number, HL.
     return lineInfoGroup
 end
 
-
-
-
-
 CharInfoTalentCtrl._CheckIfShowPassiveLine = HL.Method(HL.Userdata, HL.Userdata).Return(HL.Boolean) << function(self, nodeCfg, nextNodeCfg)
     return nodeCfg.passiveSkillNodeInfo.index == nextNodeCfg.passiveSkillNodeInfo.index
 end
 
-
-
-
-
 CharInfoTalentCtrl._CheckIfShowShipLine = HL.Method(HL.Userdata, HL.Userdata).Return(HL.Boolean) << function(self, nodeCfg, nextNodeCfg)
     return true
 end
-
-
-
-
 
 CharInfoTalentCtrl._RefreshNodeLineDefault = HL.Method(HL.Table, HL.Table) << function(self, cell, lineInfo)
     local width = lineInfo.endX - lineInfo.startX
@@ -811,9 +614,6 @@ CharInfoTalentCtrl._RefreshNodeLineDefault = HL.Method(HL.Table, HL.Table) << fu
     cell.canActiveLine.gameObject:SetActive(lineInfo.isActive and not lineInfo.nextIsActive)
     cell.defaultLine.gameObject:SetActive(not lineInfo.isActive)
 end
-
-
-
 
 CharInfoTalentCtrl._RefreshCharMaxRankNode = HL.Method(HL.Table) << function(self, charInfo)
     local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInfo.instId)
@@ -837,10 +637,6 @@ CharInfoTalentCtrl._RefreshCharMaxRankNode = HL.Method(HL.Table) << function(sel
     end)
 end
 
-
-
-
-
 CharInfoTalentCtrl._RefreshMainSkillNode = HL.Method(HL.Table, HL.Opt(HL.Boolean)) << function(self, charInfo, isInSkillUpgrade)
     local mainSkills, showOrderList = CharInfoUtils.classifyMainSkillUpgradeNodes(charInfo.instId)
     self.m_skillLayoutCache:Refresh(#showOrderList, function(cell, index)
@@ -852,13 +648,6 @@ CharInfoTalentCtrl._RefreshMainSkillNode = HL.Method(HL.Table, HL.Opt(HL.Boolean
     end)
     self:_RefreshCharMaxRankNode(charInfo)
 end
-
-
-
-
-
-
-
 
 CharInfoTalentCtrl._RefreshMainSkillLayout = HL.Method(HL.Table, HL.Table, HL.String, HL.Userdata, HL.Boolean) << function(self, cell, charInfo, skillGroupId, skillGroupType, isInSkillUpgrade)
     local skillInfo = CharInfoUtils.getCharSkillLevelInfo(charInfo, skillGroupId)
@@ -932,10 +721,41 @@ CharInfoTalentCtrl._RefreshMainSkillLayout = HL.Method(HL.Table, HL.Table, HL.St
     cell.elitePolygon:InitElitePolygon(curSkillLv - UIConst.CHAR_MAX_SKILL_NORMAL_LV)
     cell.normalNode.gameObject:SetActive(canUpgradeToElite)
     cell.emptyNodeShadow.gameObject:SetActive(not canUpgradeToElite)
+
+    local skillGroupCfg = CharInfoUtils.getSkillGroupCfg(charInfo.templateId, skillGroupId)
+    self:_RefreshStanceSwitchSkill(cell, charInfo, skillGroupCfg)
 end
 
 
+CharInfoTalentCtrl._RefreshStanceSwitchSkill = HL.Method(HL.Table, HL.Table, HL.Userdata) << function(self, cell, charInfo, skillGroupCfg)
+    local stance = cell.btnSkill.view.stanceSwitchSkill
+    if not skillGroupCfg or not CharInfoUtils.hasBothSkillGroupConditions(skillGroupCfg) then
+        stance.gameObject:SetActive(false)
+        return
+    end
+    stance.gameObject:SetActive(true)
+    local activeIdx = CharInfoUtils.getActiveSkillGroupConditionIdx(charInfo.instId, skillGroupCfg)
+    stance.yangImg.gameObject:SetActive(activeIdx == 1)
+    stance.yinImg.gameObject:SetActive(activeIdx == 2)
+end
 
+CharInfoTalentCtrl._OnCharDeckAttrChanged = HL.Method(HL.Table) << function(self, arg)
+    local instId = unpack(arg)
+    if instId ~= self.m_charInfo.instId then
+        return
+    end
+    local templateId = self.m_charInfo.templateId
+    for i = 1, self.m_skillLayoutCache:GetCount() do
+        local cell = self.m_skillLayoutCache:Get(i)
+        if cell.gameObject.activeSelf and cell.skillGroupType then
+            local skillGroupCfg = CharInfoUtils.getCharSkillGroupCfgByType(templateId, cell.skillGroupType)
+            if skillGroupCfg then
+                cell.btnSkill:RefreshSkillIcon()
+                self:_RefreshStanceSwitchSkill(cell, self.m_charInfo, skillGroupCfg)
+            end
+        end
+    end
+end
 
 CharInfoTalentCtrl._RefreshPassiveSkillNode = HL.Method(HL.Table) << function(self, charInfo)
     local passiveSkillNodeListA = self.m_passiveSkillNodeList[0] or {}
@@ -953,9 +773,6 @@ CharInfoTalentCtrl._RefreshPassiveSkillNode = HL.Method(HL.Table) << function(se
         table.insert(self.m_nodeNaviTargetList, cell.button)
     end)
 end
-
-
-
 
 
 CharInfoTalentCtrl._RefreshFacSkillNode = HL.Method(HL.Table) << function(self, charInfo)
@@ -986,10 +803,6 @@ CharInfoTalentCtrl._RefreshFacSkillNode = HL.Method(HL.Table) << function(self, 
     end)
 end
 
-
-
-
-
 CharInfoTalentCtrl._RefreshTalentBg = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(self, charInfo, arg)
     local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInfo.instId)
     local breakStage = charInst.breakStage
@@ -1017,9 +830,6 @@ CharInfoTalentCtrl._RefreshTalentBg = HL.Method(HL.Table, HL.Opt(HL.Table)) << f
         end
     end
 end
-
-
-
 
 CharInfoTalentCtrl._RefreshEliteNode = HL.Method(HL.Table) << function(self, charInfo)
     local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInfo.instId)
@@ -1180,12 +990,6 @@ CharInfoTalentCtrl._RefreshEliteNode = HL.Method(HL.Table) << function(self, cha
     eliteNode.stageLv.text = string.format(Language.LUA_CHAR_INFO_TALENT_LEVEL_POSTFIX, maxLevel)
 end
 
-
-
-
-
-
-
 CharInfoTalentCtrl._RefreshEliteFillCell = HL.Method(HL.Table, HL.Number, HL.Number, HL.Boolean) << function(self, cell, curLv, breakStage, reachStage)
     local breakStageCfg = Tables.charBreakStageTable[breakStage]
     local gap = breakStageCfg.maxCharLevel - breakStageCfg.minCharLevel
@@ -1196,15 +1000,8 @@ CharInfoTalentCtrl._RefreshEliteFillCell = HL.Method(HL.Table, HL.Number, HL.Num
     cell.curLvFill.gameObject:SetActive(reachStage and curLvGap >= 0)
 end
 
-
-
-
-
-
 CharInfoTalentCtrl._RefreshAttributeCell = HL.Method(HL.Table, HL.Userdata, HL.Any) << function(self, cell, talentCfg, breakCellCache)
     local attrNodeInfo = talentCfg.attributeNodeInfo
-    local attrType = attrNodeInfo.attributeModifier.attrType
-
 
     local charInst = CharInfoUtils.getPlayerCharInfoByInstId(self.m_charInfo.instId)
     local isActive, isLock = CharInfoUtils.getAttributeNodeStatus(charInst.instId, talentCfg.nodeId)
@@ -1220,8 +1017,14 @@ CharInfoTalentCtrl._RefreshAttributeCell = HL.Method(HL.Table, HL.Userdata, HL.A
         nodeCfg = talentCfg,
     })
 
-    local attrKey = Const.ATTRIBUTE_TYPE_2_ATTRIBUTE_DATA_KEY[attrType]
-    cell.activated.icon:LoadSprite(UIConst.UI_SPRITE_ATTRIBUTE_ICON, UIConst.UI_ATTRIBUTE_ICON_PREFIX .. attrKey)
+    
+    local iconName = attrNodeInfo.customIcon or ""
+    if string.isEmpty(iconName) then
+        local attrType = CharInfoUtils.getTalentAttributeNodeDisplayAttrType(self.m_charInfo.templateId, attrNodeInfo)
+        local attrKey = Const.ATTRIBUTE_TYPE_2_ATTRIBUTE_DATA_KEY[attrType]
+        iconName = UIConst.UI_ATTRIBUTE_ICON_PREFIX .. attrKey
+    end
+    cell.activated.icon:LoadSprite(UIConst.UI_SPRITE_ATTRIBUTE_ICON, iconName)
 
     cell.button.onClick:RemoveAllListeners()
     cell.button.onClick:AddListener(function()
@@ -1235,12 +1038,6 @@ CharInfoTalentCtrl._RefreshAttributeCell = HL.Method(HL.Table, HL.Userdata, HL.A
     end)
     cell.redDot:InitRedDot("CharAttrNode", { charInstId, talentCfg.nodeId })
 end
-
-
-
-
-
-
 
 CharInfoTalentCtrl._RefreshPassiveSkillCell = HL.Method(HL.Table, HL.Userdata, HL.Any, HL.Number) << function(self, cell, talentNode, breakCellCache, breakCellOffset)
     local passiveSkillNodeInfo = talentNode.passiveSkillNodeInfo
@@ -1273,13 +1070,6 @@ CharInfoTalentCtrl._RefreshPassiveSkillCell = HL.Method(HL.Table, HL.Userdata, H
     end)
     cell.redDot:InitRedDot("PassiveSkillNode", { charInst.instId, talentNode.nodeId })
 end
-
-
-
-
-
-
-
 
 CharInfoTalentCtrl._RefreshShipSkillCell = HL.Method(HL.Table, HL.Userdata, HL.Any, HL.Number, HL.Boolean) << function(
     self, cell, talentNode, breakCellCache, skillIndex, isLast)
@@ -1334,9 +1124,6 @@ CharInfoTalentCtrl._RefreshShipSkillCell = HL.Method(HL.Table, HL.Userdata, HL.A
     cell.redDot:InitRedDot("ShipSkillNode", { charInst.instId, talentNode.nodeId })
 end
 
-
-
-
 CharInfoTalentCtrl._RefreshNodeCellDefault = HL.Method(HL.Table) << function(self, arg)
     local cell = arg.cell
     local isActive = arg.isActive
@@ -1381,10 +1168,6 @@ CharInfoTalentCtrl._RefreshNodeCellDefault = HL.Method(HL.Table) << function(sel
         cell.transform:Reset()
     end
 end
-
-
-
-
 
 CharInfoTalentCtrl._ToggleExpandNode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isExpand, isFast)
     if isFast == nil then
@@ -1465,19 +1248,12 @@ CharInfoTalentCtrl._ToggleExpandNode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean))
     self.m_isExpanding = isExpand
 end
 
-
-
 CharInfoTalentCtrl._CancelSelect = HL.Method() << function(self)
     if self.m_curSelectedMark then
         self.m_curSelectedMark.gameObject:SetActive(false)
         self.m_curSelectedMark = nil
     end
 end
-
-
-
-
-
 
 CharInfoTalentCtrl._OnClickCellDefault = HL.Method(HL.Userdata, HL.Any, HL.Opt(HL.Boolean)) << function(
     self, selectedMark, selectedCell, isFast)
@@ -1493,8 +1269,6 @@ CharInfoTalentCtrl._OnClickCellDefault = HL.Method(HL.Userdata, HL.Any, HL.Opt(H
     self.m_curSelectedCell = selectedCell
 end
 
-
-
 CharInfoTalentCtrl._ExternalExitExpandNode = HL.Method() << function(self)
     
     
@@ -1503,9 +1277,6 @@ CharInfoTalentCtrl._ExternalExitExpandNode = HL.Method() << function(self)
         self:_ToggleExpandNode(false)
     end)
 end
-
-
-
 
 CharInfoTalentCtrl._ExchangeToSkill = HL.Method(HL.Boolean) << function(self, isSkill)
     if isSkill == self.m_isShowSkill then
@@ -1541,19 +1312,13 @@ end
 
 
 
-
 CharInfoTalentCtrl.m_firstNaviTargetEliteBtn = HL.Field(HL.Userdata)
-
 
 CharInfoTalentCtrl.m_detailBindingId = HL.Field(HL.Number) << -1
 
-
 CharInfoTalentCtrl.m_detailSkillBindingId = HL.Field(HL.Number) << -1
 
-
 CharInfoTalentCtrl.m_nodeNaviTargetList = HL.Field(HL.Table)
-
-
 
 CharInfoTalentCtrl._InitController = HL.Method() << function(self)
     Notify(MessageConst.ON_CHAR_INFO_TALENT_INIT_CONTROLLER, {
@@ -1561,14 +1326,14 @@ CharInfoTalentCtrl._InitController = HL.Method() << function(self)
     })
     self.m_detailBindingId = self:BindInputPlayerAction("char_info_talent_detail", function()
         local naviTarget = self.m_firstNaviTargetEliteBtn or self.m_skillLayoutCache:Get(1).btnSkill.view.button
-        InputManagerInst.controllerNaviManager:SetTarget(naviTarget)
+        self:SetNaviTarget(naviTarget)
         AudioAdapter.PostEvent("Au_UI_Button_Common")
     end)
     InputManagerInst:ToggleBinding(self.m_detailBindingId, false)
 
     self.m_detailSkillBindingId = self:BindInputPlayerAction("char_info_talent_detail_skill", function()
         local naviTarget = self.m_skillLayoutCache:Get(1).btnSkill.view.button
-        InputManagerInst.controllerNaviManager:SetTarget(naviTarget)
+        self:SetNaviTarget(naviTarget)
         AudioAdapter.PostEvent("Au_UI_Button_Common")
     end)
     InputManagerInst:ToggleBinding(self.m_detailSkillBindingId, false)
@@ -1576,7 +1341,7 @@ CharInfoTalentCtrl._InitController = HL.Method() << function(self)
     self.view.eliteNodeNaviGroup.onDefaultNaviFailed:AddListener(function(dir)
         if self.m_isShowSkill and dir == Unity.UI.NaviDirection.Up then
             local lastSkillSelectable = self.m_skillLayoutCache:Get(self.m_skillLayoutCache:GetCount()).btnSkill.view.button
-            UIUtils.setAsNaviTarget(lastSkillSelectable)
+            self:SetNaviTarget(lastSkillSelectable)
             return
         end
         self:_NaviToBestTarget(dir, true)
@@ -1587,18 +1352,11 @@ CharInfoTalentCtrl._InitController = HL.Method() << function(self)
     end)
 end
 
-
-
-
 CharInfoTalentCtrl._OnTalentSkillNextExpand = HL.Method(HL.Boolean) << function(self, isOn)
     if DeviceInfo.usingController then
         self.view.inputGroup.enabled = not isOn
     end
 end
-
-
-
-
 
 CharInfoTalentCtrl._NaviToBestTarget = HL.Method(HL.Userdata, HL.Opt(HL.Boolean)) << function(self, dir, useParent)
     local dirVector
@@ -1650,11 +1408,9 @@ CharInfoTalentCtrl._NaviToBestTarget = HL.Method(HL.Userdata, HL.Opt(HL.Boolean)
         end
     end
     if bestTarget then
-        UIUtils.setAsNaviTarget(bestTarget)
+        self:SetNaviTarget(bestTarget)
     end
 end
-
-
 
 CharInfoTalentCtrl._RefreshNodeNavigation = HL.Method() << function(self)
     
@@ -1678,9 +1434,6 @@ CharInfoTalentCtrl._RefreshNodeNavigation = HL.Method() << function(self)
     end
 end
 
-
-
-
 CharInfoTalentCtrl._SetNaviWhenExchangeToSkill = HL.Method(HL.Boolean) << function(self, isSkill)
     local naviTarget
     if isSkill then
@@ -1691,11 +1444,9 @@ CharInfoTalentCtrl._SetNaviWhenExchangeToSkill = HL.Method(HL.Boolean) << functi
         end
     end
     if naviTarget then
-        InputManagerInst.controllerNaviManager:SetTarget(naviTarget)
+        self:SetNaviTarget(naviTarget)
     end
 end
-
-
 
 CharInfoTalentCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     local arg = {}
@@ -1719,14 +1470,10 @@ CharInfoTalentCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(sel
     return arg
 end
 
-
-
-
-
 CharInfoTalentCtrl._ProcessStateArg = HL.Method(HL.Any, HL.Table) << function(self, charInfo, arg)
     self.m_isShowSkill = arg.isShowSkill or false
     if arg.skillGroupType ~= nil then
-        self:_SelectSkillGroupType(charInfo, arg.skillGroupType, true)
+        self:_SelectSkillGroupType(charInfo, arg.skillGroupType, true, arg.curConditionIdx)
         local panelItem = self.m_phase:_GetPanelPhaseItem(PanelId.CharInfoTalentUpgrade)
         if panelItem and arg.isSkillExpanding then
             panelItem.uiCtrl:_ToggleSkillNextInfo(true)

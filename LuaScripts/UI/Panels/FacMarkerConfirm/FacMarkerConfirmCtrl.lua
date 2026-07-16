@@ -2,62 +2,27 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacMarkerConfirm
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacMarkerConfirmCtrl = HL.Class('FacMarkerConfirmCtrl', uiCtrl.UICtrl)
-
 
 FacMarkerConfirmCtrl.s_lastSelectIconKey = HL.StaticField(HL.Table)
 
-
 FacMarkerConfirmCtrl.m_curTypeIndex = HL.Field(HL.Number) << -1
-
 
 FacMarkerConfirmCtrl.m_iconTabInfo = HL.Field(HL.Table)
 
-
 FacMarkerConfirmCtrl.m_typeCells = HL.Field(HL.Forward('UIListCache'))
-
 
 FacMarkerConfirmCtrl.m_showIconList = HL.Field(HL.Table)
 
-
 FacMarkerConfirmCtrl.m_selectedIconKey = HL.Field(HL.Table)
-
 
 FacMarkerConfirmCtrl.m_selectedIconNode = HL.Field(HL.Table)
 
-
 FacMarkerConfirmCtrl.m_getCell = HL.Field(HL.Function)
-
 
 FacMarkerConfirmCtrl.m_waitingNaviFirst = HL.Field(HL.Boolean) << false
 
-
 FacMarkerConfirmCtrl.m_hideKey = HL.Field(HL.Number) << -1
-
 
 
 
@@ -76,24 +41,18 @@ FacMarkerConfirmCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 FacMarkerConfirmCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local onConfirm = arg.onConfirm
     local onClose = arg.onClose
     local reset = arg.reset
     self.view.closeButton.onClick:AddListener(function()
-        if self.m_hideKey ~= -1 then
-            self:_RecoverSpecificPanel()
-        end
         if reset and FacMarkerConfirmCtrl.s_lastSelectIconKey ~= nil then
             local icon1 = FacMarkerConfirmCtrl.s_lastSelectIconKey[1] or 0
             local icon2 = FacMarkerConfirmCtrl.s_lastSelectIconKey[2] or 0
             local icon3 = FacMarkerConfirmCtrl.s_lastSelectIconKey[3] or 0
             GameInstance.remoteFactoryManager:SetPreviewSignBuildingIcon(icon1, icon2, icon3)
         end
-        self:PlayAnimationOutWithCallback(function()
+        self:_SafePlayOut(function()
             self:Close()
             if onClose then
                 onClose()
@@ -104,12 +63,9 @@ FacMarkerConfirmCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         if #self.m_selectedIconKey == 0 then
             return
         end
-        if self.m_hideKey ~= -1 then
-            self:_RecoverSpecificPanel()
-        end
         FacMarkerConfirmCtrl.s_lastSelectIconKey = lume.clone(self.m_selectedIconKey)
         GameInstance.remoteFactoryManager.interact:SyncBuildSignIconParam(self.m_selectedIconKey)
-        self:PlayAnimationOutWithCallback(function()
+        self:_SafePlayOut(function()
             self:Close()
             if onConfirm then
                 onConfirm()
@@ -147,34 +103,32 @@ end
 
 
 
-
+FacMarkerConfirmCtrl._SafePlayOut = HL.Method(HL.Function) << function(self, callback)
+    if self:IsPlayingAnimationOut() then
+        return
+    end
+    if self.m_hideKey ~= -1 then
+        self:_RecoverSpecificPanel()
+    end
+    self:PlayAnimationOutWithCallback(callback)
+end
 
 FacMarkerConfirmCtrl.OnSquadInfightChanged = HL.Method(HL.Opt(HL.Any)) << function(self)
     local inFight = Utils.isInFight()
     if inFight then
-        if self.m_hideKey ~= -1 then
-            self:_RecoverSpecificPanel()
-        end
-        self:PlayAnimationOutWithCallback(function()
+        self:_SafePlayOut(function()
             self:Close()
             Notify(MessageConst.FAC_BUILD_EXIT_CUR_MODE, true)
         end)
     end
 end
 
-
-
 FacMarkerConfirmCtrl.ExitPanelForCS = HL.Method(HL.Opt(HL.Any)) << function(self)
-    if self.m_hideKey ~= -1 then
-        self:_RecoverSpecificPanel()
-    end
-    self:PlayAnimationOutWithCallback(function()
+    self:_SafePlayOut(function()
         self:Close()
         Notify(MessageConst.FAC_BUILD_EXIT_CUR_MODE, true)
     end)
 end
-
-
 
 FacMarkerConfirmCtrl._ClearSpecificPanel = HL.Method() << function(self)
     if self.m_hideKey ~= -1 then
@@ -190,13 +144,9 @@ FacMarkerConfirmCtrl._ClearSpecificPanel = HL.Method() << function(self)
     self.m_hideKey = UIManager:ClearScreen(exceptedPanels)
 end
 
-
-
 FacMarkerConfirmCtrl._RecoverSpecificPanel = HL.Method() << function(self)
     self.m_hideKey = UIManager:RecoverScreen(self.m_hideKey)
 end
-
-
 
 FacMarkerConfirmCtrl._InitTypeData = HL.Method() << function(self)
     self.m_curTypeIndex = 1
@@ -240,8 +190,6 @@ FacMarkerConfirmCtrl._InitTypeData = HL.Method() << function(self)
     end
 end
 
-
-
 FacMarkerConfirmCtrl._InitTypeList = HL.Method() << function(self)
     self.m_typeCells = UIUtils.genCellCache(self.view.typeCell)
     self.m_typeCells:Refresh(#self.m_iconTabInfo, function(cell, index)
@@ -276,9 +224,6 @@ FacMarkerConfirmCtrl._InitTypeList = HL.Method() << function(self)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.typesNode.transform)
 end
 
-
-
-
 FacMarkerConfirmCtrl._OnClickShowingType = HL.Method(HL.Number) << function(self, index)
     self.m_curTypeIndex = index
     self.m_showIconList = self.m_iconTabInfo[index].items
@@ -297,10 +242,6 @@ FacMarkerConfirmCtrl._OnClickShowingType = HL.Method(HL.Number) << function(self
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.typesNode.transform)
 end
 
-
-
-
-
 FacMarkerConfirmCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local iconData = self.m_showIconList[index]
     local iconKey = iconData.id
@@ -317,13 +258,9 @@ FacMarkerConfirmCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(se
     self:_UpdateSelectedCell(cell, iconKey)
     if self.m_waitingNaviFirst and index == 1 then
         self.m_waitingNaviFirst = false
-        UIUtils.setAsNaviTarget(cell.button)
+        self:SetNaviTarget(cell.button)
     end
 end
-
-
-
-
 
 FacMarkerConfirmCtrl._UpdateSelectedCell = HL.Method(HL.Any, HL.Number) << function(self, cell, iconKey)
     local selectedIndex = lume.find(self.m_selectedIconKey, iconKey)
@@ -341,9 +278,6 @@ FacMarkerConfirmCtrl._UpdateSelectedCell = HL.Method(HL.Any, HL.Number) << funct
     end
 end
 
-
-
-
 FacMarkerConfirmCtrl._OnCellClick = HL.Method(HL.Number) << function(self, iconKey)
     local index = lume.find(self.m_selectedIconKey, iconKey)
     if index ~= nil then
@@ -360,8 +294,6 @@ FacMarkerConfirmCtrl._OnCellClick = HL.Method(HL.Number) << function(self, iconK
     GameInstance.remoteFactoryManager:SetPreviewSignBuildingIcon(icon1, icon2, icon3)
     self:_UpdateSelectedIcon()
 end
-
-
 
 FacMarkerConfirmCtrl._UpdateSelectedIcon = HL.Method() << function(self)
     local combineText = ""

@@ -4,29 +4,9 @@ local GameSettingHelper = CS.Beyond.Gameplay.GameSettingHelper
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GameSettingVoiceManagePopup
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GameSettingVoiceManagePopupCtrl = HL.Class('GameSettingVoiceManagePopupCtrl', uiCtrl.UICtrl)
 
-local LANGUAGE_TAB_ID = "gameSetting_language"
 local MB = 1024 * 1024
-
 
 
 
@@ -36,20 +16,13 @@ GameSettingVoiceManagePopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 GameSettingVoiceManagePopupCtrl.m_getVoiceCell = HL.Field(HL.Function)
-
 
 GameSettingVoiceManagePopupCtrl.m_voiceInfos = HL.Field(HL.Table)
 
-
 GameSettingVoiceManagePopupCtrl.m_selectedVoices = HL.Field(HL.Table)
 
-
 GameSettingVoiceManagePopupCtrl.m_selectedVoiceCount = HL.Field(HL.Number) << 0
-
-
-
 
 
 GameSettingVoiceManagePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -72,13 +45,9 @@ GameSettingVoiceManagePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     self:_InitController()
 end
 
-
-
 GameSettingVoiceManagePopupCtrl.OnShow = HL.Override() << function(self)
     self:_UpdateView()
 end
-
-
 
 GameSettingVoiceManagePopupCtrl._UpdateView = HL.Method() << function(self)
     self:_UpdateVoiceInfos()
@@ -90,20 +59,16 @@ GameSettingVoiceManagePopupCtrl._UpdateView = HL.Method() << function(self)
     self:_SetNaviTarget()
 end
 
-
-
 GameSettingVoiceManagePopupCtrl._UpdateSelectingState = HL.Method() << function(self)
     local isAnySelected = self.m_selectedVoiceCount > 0
     self.view.btnDelete.gameObject:SetActive(isAnySelected)
     self.view.btnNotSelected.gameObject:SetActive(not isAnySelected)
 end
 
-
-
 GameSettingVoiceManagePopupCtrl._UpdateVoiceInfos = HL.Method() << function(self)
     lume.clear(self.m_voiceInfos)
 
-    local settingTabExists, settingTabData = Tables.settingTabTable:TryGetValue(LANGUAGE_TAB_ID)
+    local settingTabExists, settingTabData = Tables.settingTabTable:TryGetValue(GameSettingConst.TAB_ID_LANGUAGE)
     if not settingTabExists then
         return
     end
@@ -119,13 +84,14 @@ GameSettingVoiceManagePopupCtrl._UpdateVoiceInfos = HL.Method() << function(self
             break
         end
         local languageAudio = Utils.intToEnum(typeof(GameSetting.GameSettingLanguageAudio), LuaIndex(i)) 
-        local vfsBlockType = GameSettingHelper.ToVFSBlockType(languageAudio)
-        local isDownloaded = GameInstance.resPrefManager:GetResourcePreferred(vfsBlockType)
+        local vfsBlockType = GameSettingUtils.ToVFSBlockType(languageAudio)
+        local isDownloaded = GameInstance.resPrefManager:IsVoiceResourceReady(vfsBlockType)
         if isDownloaded then
             
             local resourceSize = GameInstance.resPrefManager:GetResourceSize(vfsBlockType)
             local voiceInfo = {
                 languageAudio = languageAudio,
+                languageStr = GameSettingHelper.ToLanguageStr(languageAudio),
                 languageName = languageName,
                 resourceSize = resourceSize,
             }
@@ -134,10 +100,6 @@ GameSettingVoiceManagePopupCtrl._UpdateVoiceInfos = HL.Method() << function(self
     end
 end
 
-
-
-
-
 GameSettingVoiceManagePopupCtrl._SelectVoice = HL.Method(HL.Number, HL.Boolean) << function(self, luaIndex, isOn)
     local voiceInfo = self.m_voiceInfos[luaIndex]
     self.m_selectedVoices[voiceInfo.languageAudio] = isOn
@@ -145,32 +107,41 @@ GameSettingVoiceManagePopupCtrl._SelectVoice = HL.Method(HL.Number, HL.Boolean) 
     self:_UpdateSelectingState()
 end
 
-
-
 GameSettingVoiceManagePopupCtrl._ResetSelectedVoices = HL.Method() << function(self)
     self.m_selectedVoices = {}
     self.m_selectedVoiceCount = 0
 end
 
-
-
 GameSettingVoiceManagePopupCtrl._DeleteSelectedVoices = HL.Method() << function(self)
-    local deleted = false
-    for languageAudio, selected in pairs(self.m_selectedVoices) do
-        if selected then
-            local vfsBlockType = GameSettingHelper.ToVFSBlockType(languageAudio)
+    if self.m_selectedVoiceCount <= 0 then
+        return
+    end
+
+    
+    local deleteLanguageList = {}
+    local currentLanguageList = {}
+    for i, voiceInfo in ipairs(self.m_voiceInfos) do
+        local languageAudio = voiceInfo.languageAudio
+        if self.m_selectedVoices[languageAudio] then
+            
+            local vfsBlockType = GameSettingUtils.ToVFSBlockType(languageAudio)
             GameInstance.resPrefManager:DeleteVocResources(vfsBlockType)
-            deleted = true
+            
+            table.insert(deleteLanguageList, voiceInfo.languageStr)
+        else
+            
+            table.insert(currentLanguageList, voiceInfo.languageStr)
         end
     end
-    if deleted then
-        self:_ResetSelectedVoices()
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_GAME_SETTING_VOICE_DELETE_SUCCESS)
-        Notify(MessageConst.GAME_SETTING_VOICE_RESOURCE_STATE_CHANGED)
-    end
+
+    
+    local currentLanguage = GameSettingHelper.ToLanguageStr(GameSetting.languageAudio)
+    EventLogManagerInst:GameEvent_VoiceManage(currentLanguage, currentLanguageList, deleteLanguageList)
+
+    self:_ResetSelectedVoices()
+    Notify(MessageConst.SHOW_TOAST, Language.LUA_GAME_SETTING_VOICE_DELETE_SUCCESS)
+    Notify(MessageConst.GAME_SETTING_VOICE_RESOURCE_STATE_CHANGED)
 end
-
-
 
 GameSettingVoiceManagePopupCtrl._OnDeleteBtnClicked = HL.Method() << function(self)
     if self.m_selectedVoiceCount <= 0 then
@@ -196,10 +167,6 @@ GameSettingVoiceManagePopupCtrl._OnDeleteBtnClicked = HL.Method() << function(se
         end
     })
 end
-
-
-
-
 
 GameSettingVoiceManagePopupCtrl._OnUpdateVoiceCell = HL.Method(HL.Table, HL.Number) << function(self, cell, luaIndex)
     local voiceInfo = self.m_voiceInfos[luaIndex]
@@ -230,13 +197,9 @@ GameSettingVoiceManagePopupCtrl._OnUpdateVoiceCell = HL.Method(HL.Table, HL.Numb
     cell.voiceSizeTxt.text = string.format("(%.2fMB)", voiceInfo.resourceSize / MB)
 end
 
-
-
 GameSettingVoiceManagePopupCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
 
 GameSettingVoiceManagePopupCtrl._SetNaviTarget = HL.Method() << function(self)
     local focusIndex
@@ -255,7 +218,7 @@ GameSettingVoiceManagePopupCtrl._SetNaviTarget = HL.Method() << function(self)
         if cellObject then
             local cell = self.m_getVoiceCell(cellObject)
             if cell then
-                InputManagerInst.controllerNaviManager:SetTarget(cell.toggle)
+                self:SetNaviTarget(cell.toggle)
             end
         end
     end

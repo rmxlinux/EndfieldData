@@ -120,6 +120,10 @@ local _conditionHandlers = {
         local ret = GameConditionUtils.CheckEquipTierLevelNumCharNum(arg1, arg2, arg3)
         return ret
     end,
+    [GEnums.ConditionType.CheckDomainKiteStationUnlockCount] = function(params)
+        local ret = GameConditionUtils.CheckDomainKiteStationUnlockCount()
+        return ret
+    end,
 }
 
 function LuaGameConditionUtils.getConditionValueByParameters(conditionType, parameters)

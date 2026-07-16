@@ -2,29 +2,9 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.KiteStation
 local INSTRUCTION_BOOK_ID = "kite_station"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 KiteStationCtrl = HL.Class('KiteStationCtrl', uiCtrl.UICtrl)
 
-
 KiteStationCtrl.m_getCellFunc = HL.Field(HL.Function)
-
 
 
 
@@ -35,35 +15,24 @@ KiteStationCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_KITE_STATION_WEEKLY_RESET] = 'ShowRefreshToast',
 }
 
-
 KiteStationCtrl.m_updateFuncTable = HL.Field(HL.Table)
-
 
 KiteStationCtrl.m_id = HL.Field(HL.String) << ""
 
-
 KiteStationCtrl.m_selectKiteStationIndex = HL.Field(HL.Number) << 1
-
 
 KiteStationCtrl.m_kiteStationEntrustIds = HL.Field(HL.Userdata)
 
 
-
 KiteStationCtrl.m_selectCellIndex = HL.Field(HL.Number) << 1
 
-
 KiteStationCtrl.m_nextRefreshTimeStamp = HL.Field(HL.Number) << 0
-
-
 
 KiteStationCtrl.ShowKiteStation = HL.StaticMethod(HL.Table) << function(args)
     PhaseManager:OpenPhase(PhaseId.KiteStation, {
         kiteStationId = args[1],
     })
 end
-
-
-
 
 
 KiteStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -113,9 +82,7 @@ KiteStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.rewardBtn.onClick:RemoveAllListeners()
     self.view.rewardBtn.onClick:AddListener(function()
-        UIManager:Open(PanelId.KiteStationCollectionReward, {
-            insId = self.m_id,
-        })
+        self.m_phase:OpenCollectionReward(self.m_id)
     end)
 
     self.m_getCellFunc = UIUtils.genCachedCellFunction(self.view.settlementList)
@@ -150,6 +117,7 @@ KiteStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.view.settlementList:UpdateCount(kiteStationMapList.Count)
         self.m_id = kiteStationMapList[CSIndex(self.m_selectKiteStationIndex)].Item1
         self:_OnKiteStationClick()
+        self.view.redDot:InitRedDot("KiteStationCollectionReward", self.m_id)
     end, self.view.inputBindingGroupMonoTarget.groupId)
 
     self:BindInputPlayerAction("kiteStation_preview", function()
@@ -160,6 +128,7 @@ KiteStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.view.settlementList:UpdateCount(kiteStationMapList.Count)
         self.m_id = kiteStationMapList[CSIndex(self.m_selectKiteStationIndex)].Item1
         self:_OnKiteStationClick()
+        self.view.redDot:InitRedDot("KiteStationCollectionReward", self.m_id)
     end, self.view.inputBindingGroupMonoTarget.groupId)
 
     self.view.settlementList:UpdateCount(kiteStationMapList.Count)
@@ -172,17 +141,14 @@ KiteStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     for i = 1, 3 do
         local cell = self.view["kiteStationDelegation" .. i]
         if cell ~= nil and cell.inputBindingGroupNaviDecorator ~= nil and cell.inputBindingGroupNaviDecorator.enabled then
-            UIUtils.setAsNaviTarget(cell.inputBindingGroupNaviDecorator)
+            self:SetNaviTarget(cell.inputBindingGroupNaviDecorator)
             break
         end
     end
 
     self:_TryRecoverInstructionBook(arg)
-    self:_TryRecoverCollectionReward(arg)
+    
 end
-
-
-
 
 KiteStationCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
     local kiteStationMapList = GameInstance.player.kiteStationSystem:GetKiteStationMapList()
@@ -190,8 +156,6 @@ KiteStationCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, a
     self:_OnKiteStationClick()
     self.view.redDot:InitRedDot("KiteStationCollectionReward", self.m_id)
 end
-
-
 
 KiteStationCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local recoverState = {
@@ -205,23 +169,13 @@ KiteStationCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << fu
         }
     end
 
-    local isRewardOpen, rewardCtrl = UIManager:IsOpen(PanelId.KiteStationCollectionReward)
-    if isRewardOpen and rewardCtrl:IsShow() and PhaseManager:GetTopPhaseId() == PhaseId.KiteStation then
-        recoverState.collectionRewardArg = {
-            insId = self.m_id,
-        }
-    end
-
+    
     return recoverState
 end
-
 
 KiteStationCtrl.ShowRefreshToast = HL.Method() << function()
     Notify(MessageConst.SHOW_TOAST, Language.LUA_KITE_STATION_WEEKLY_RESET)
 end
-
-
-
 
 KiteStationCtrl._TryRecoverInstructionBook = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil or recoverState.instructionBookArg == nil then
@@ -236,24 +190,6 @@ KiteStationCtrl._TryRecoverInstructionBook = HL.Method(HL.Opt(HL.Any)) << functi
     end
     UIManager:Open(PanelId.InstructionBook, recoverState.instructionBookArg)
     recoverState.instructionBookArg = nil
-end
-
-
-
-
-KiteStationCtrl._TryRecoverCollectionReward = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
-    if recoverState == nil or recoverState.collectionRewardArg == nil then
-        return
-    end
-    if PhaseManager:GetTopPhaseId() ~= PhaseId.KiteStation then
-        return
-    end
-    local isOpen, rewardCtrl = UIManager:IsOpen(PanelId.KiteStationCollectionReward)
-    if isOpen and rewardCtrl:IsShow() then
-        return
-    end
-    UIManager:Open(PanelId.KiteStationCollectionReward, recoverState.collectionRewardArg)
-    recoverState.collectionRewardArg = nil
 end
 
 
@@ -298,9 +234,6 @@ KiteStationCtrl._OnKiteStationClick = HL.Method() << function(self)
         self:_UpdateKiteStationDelegationCell(i)
     end
 end
-
-
-
 
 KiteStationCtrl._UpdateKiteStationDelegationCell = HL.Method(HL.Number) << function(self,index)
     local cell = self.view["kiteStationDelegation" .. index]

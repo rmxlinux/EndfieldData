@@ -1,34 +1,6 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.FacRegionUpgrade
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseFacRegionUpgrade = HL.Class('PhaseFacRegionUpgrade', phaseBase.PhaseBase)
-
 
 
 
@@ -39,44 +11,28 @@ PhaseFacRegionUpgrade.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.OPEN_FAC_REGION_UPGRADE_PANEL] = { '_OnOpenFacRegionUpgradePanel', false },
 }
 
-
 PhaseFacRegionUpgrade.m_loadAsyncActionHelper = HL.Field(HL.Forward("AsyncActionHelper"))
-
 
 PhaseFacRegionUpgrade.m_cameraData = HL.Field(HL.Userdata)
 
-
 PhaseFacRegionUpgrade.m_inBlendCamera = HL.Field(HL.Boolean) << false
-
 
 PhaseFacRegionUpgrade.m_waitLoadRegionEffectCount = HL.Field(HL.Number) << -1
 
-
 PhaseFacRegionUpgrade.m_loadedRegionEffectList = HL.Field(HL.Table)
-
 
 PhaseFacRegionUpgrade.m_waitLoadBusEffectCount = HL.Field(HL.Number) << -1
 
-
 PhaseFacRegionUpgrade.m_loadedBusEffectList = HL.Field(HL.Table)
-
 
 PhaseFacRegionUpgrade.m_panelCtrl = HL.Field(HL.Forward("FacRegionUpgradeCtrl"))
 
-
 PhaseFacRegionUpgrade.s_glitchCoroutine = HL.StaticField(HL.Thread)
-
-
 
 
 PhaseFacRegionUpgrade._OnInit = HL.Override() << function(self)
     PhaseFacRegionUpgrade.Super._OnInit(self)
 end
-
-
-
-
-
 
 
 
@@ -108,10 +64,6 @@ PhaseFacRegionUpgrade.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.
     end
 end
 
-
-
-
-
 PhaseFacRegionUpgrade._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if self.m_loadAsyncActionHelper == nil then
         self.m_loadAsyncActionHelper = require_ex("Common/Utils/AsyncActionHelper")(true)
@@ -124,29 +76,14 @@ PhaseFacRegionUpgrade._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.T
     self:_EnterFacRegionUpgradeState(fastMode)
 end
 
-
-
-
-
 PhaseFacRegionUpgrade._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self:_LeaveFacRegionUpgradeState(fastMode)
 end
 
-
-
-
-
 PhaseFacRegionUpgrade._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseFacRegionUpgrade._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args) end
-
-
-
 
 PhaseFacRegionUpgrade._EnterFacRegionUpgradeState = HL.Method(HL.Boolean) << function(self, fastMode)
     local levelId = self.arg and self.arg.levelId
@@ -230,9 +167,6 @@ PhaseFacRegionUpgrade._EnterFacRegionUpgradeState = HL.Method(HL.Boolean) << fun
     self.m_loadAsyncActionHelper:Start()
 end
 
-
-
-
 PhaseFacRegionUpgrade._LeaveFacRegionUpgradeState = HL.Method(HL.Boolean) << function(self, fastMode)
     local internalLeave = function()
         
@@ -298,25 +232,17 @@ end
 
 
 
-
-
 PhaseFacRegionUpgrade._OnActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseFacRegionUpgrade._OnDeActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseFacRegionUpgrade._OnDestroy = HL.Override() << function(self)
     PhaseFacRegionUpgrade.Super._OnDestroy(self)
     self.m_loadAsyncActionHelper:Clear()
     self.m_loadAsyncActionHelper = nil
 end
-
-
 
 PhaseFacRegionUpgrade.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}
@@ -331,15 +257,9 @@ end
 
 
 
-
-
-
 PhaseFacRegionUpgrade._GetFullEffectPath = HL.Method(HL.String).Return(HL.String) << function(self, relativePath)
     return string.format("%s%s.prefab", CS.Beyond.Gameplay.View.FacRegionUpgradeEffectConfig.EFFECT_FOLDER_PATH, relativePath)
 end
-
-
-
 
 PhaseFacRegionUpgrade._AsyncLoadRegionEffects = HL.Method(HL.Function) << function(self, onComplete)
     self.m_loadedRegionEffectList = {}
@@ -372,17 +292,12 @@ PhaseFacRegionUpgrade._AsyncLoadRegionEffects = HL.Method(HL.Function) << functi
     end
 end
 
-
-
 PhaseFacRegionUpgrade._DisposeRegionEffects = HL.Method() << function(self)
     for _, effect in pairs(self.m_loadedRegionEffectList) do
         GameObject.Destroy(effect.effectObject)
     end
     self.m_loadedRegionEffectList = nil
 end
-
-
-
 
 PhaseFacRegionUpgrade._AsyncLoadBusEffects = HL.Method(HL.Function) << function(self, onComplete)
     local instKeyList = self.m_panelCtrl:GetBusEffectInstKeyList()
@@ -425,8 +340,6 @@ PhaseFacRegionUpgrade._AsyncLoadBusEffects = HL.Method(HL.Function) << function(
     end
 end
 
-
-
 PhaseFacRegionUpgrade._DisposeBusEffects = HL.Method() << function(self)
     local disposedHandlerKeyList = {}
     for _, effect in pairs(self.m_loadedBusEffectList) do
@@ -438,8 +351,6 @@ PhaseFacRegionUpgrade._DisposeBusEffects = HL.Method() << function(self)
     end
     self.m_loadedRegionEffectList = nil
 end
-
-
 
 
 

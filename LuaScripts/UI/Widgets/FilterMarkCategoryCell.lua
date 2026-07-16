@@ -1,14 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 local MarkInfoType = GEnums.MarkInfoType
-
-
-
-
-
-
-
-
-
 FilterMarkCategoryCell = HL.Class('FilterMarkCategoryCell', UIWidgetBase)
 
 local IGNORE_TYPE_ICON_COLOR_LIST = {
@@ -19,16 +10,11 @@ local IGNORE_TYPE_ICON_COLOR_LIST = {
     [MarkInfoType.BlocMission:GetHashCode()] = true,
 }
 
-
 FilterMarkCategoryCell.m_category = HL.Field(HL.Number) << -1
-
 
 FilterMarkCategoryCell.m_typeDataList = HL.Field(HL.Table)
 
-
 FilterMarkCategoryCell.m_typeCells = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 FilterMarkCategoryCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -37,9 +23,6 @@ FilterMarkCategoryCell._OnFirstTimeInit = HL.Override() << function(self)
         self:_RefreshCateGoryTypeCellsSelectState()
     end)
 end
-
-
-
 
 FilterMarkCategoryCell.InitFilterMarkCategoryCell = HL.Method(HL.Number) << function(self, category)
     self:_FirstTimeInit()
@@ -51,8 +34,6 @@ FilterMarkCategoryCell.InitFilterMarkCategoryCell = HL.Method(HL.Number) << func
     self:_InitCategoryTypeCells()
 end
 
-
-
 FilterMarkCategoryCell._InitCategoryBasicContent = HL.Method() << function(self)
     local success, categoryData = Tables.mapMarkCategoryTable:TryGetValue(self.m_category)
     if not success then
@@ -61,27 +42,28 @@ FilterMarkCategoryCell._InitCategoryBasicContent = HL.Method() << function(self)
     self.view.titleText.text = categoryData.name
 end
 
-
-
 FilterMarkCategoryCell._InitCategoryTypeDataList = HL.Method() << function(self)
     self.m_typeDataList = {}
     for filterType, filterData in pairs(Tables.mapMarkTypeTable) do
         if filterData.category:GetHashCode() == self.m_category then
-            table.insert(self.m_typeDataList, {
-                type = filterType,
-                name = filterData.name,
-                icon = filterData.icon,
-                sortId = filterData.sortId,
-            })
+            local unlockSystemType = filterData.unlockSystemType
+            local filterValid = unlockSystemType == nil or unlockSystemType == GEnums.UnlockSystemType.None or Utils.isSystemUnlocked(unlockSystemType)
+            if filterValid then
+                table.insert(self.m_typeDataList, {
+                    type = filterType,
+                    name = filterData.name,
+                    icon = filterData.icon,
+                    sortId = filterData.sortId,
+                })
+            end
         end
     end
     table.sort(self.m_typeDataList, Utils.genSortFunction({ "sortId" }, true))
 end
 
-
-
 FilterMarkCategoryCell._InitCategoryTypeCells = HL.Method() << function(self)
     if self.m_typeDataList == nil or #self.m_typeDataList == 0 then
+        self.view.gameObject:SetActive(false)
         return
     end
 
@@ -100,11 +82,10 @@ FilterMarkCategoryCell._InitCategoryTypeCells = HL.Method() << function(self)
 
         cell.gameObject.name = "MarkFilter"..data.type
     end)
+    self.view.gameObject:SetActive(true)
 
     self:_RefreshCateGoryTypeCellsSelectState()
 end
-
-
 
 FilterMarkCategoryCell._RefreshCateGoryTypeCellsSelectState = HL.Method() << function(self)
     local count = self.m_typeCells:GetCount()

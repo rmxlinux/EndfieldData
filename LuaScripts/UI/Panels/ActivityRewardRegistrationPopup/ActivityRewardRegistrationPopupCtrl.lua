@@ -2,27 +2,13 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 
-
-
-
-
-
-
-
-
-
 ActivityRewardRegistrationPopupCtrl = HL.Class('ActivityRewardRegistrationPopupCtrl', uiCtrl.UICtrl)
-
 
 ActivityRewardRegistrationPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_UPDATED] = 'OnActivityUpdate',
 }
 
-
 ActivityRewardRegistrationPopupCtrl.m_closeCallback = HL.Field(HL.Function)
-
-
-
 
 
 ActivityRewardRegistrationPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -50,9 +36,6 @@ ActivityRewardRegistrationPopupCtrl.OnCreate = HL.Override(HL.Any) << function(s
     self.view.activityRewardRegistrationInfo:Init(initArg)
 end
 
-
-
-
 ActivityRewardRegistrationPopupCtrl.OnActivityUpdate = HL.Method(HL.Table) << function(self, args)
     local id = unpack(args)
     if id == self.view.config.ACTIVITY_ID and not GameInstance.player.activitySystem:GetActivity(id) then
@@ -61,10 +44,7 @@ ActivityRewardRegistrationPopupCtrl.OnActivityUpdate = HL.Method(HL.Table) << fu
     end
 end
 
-
 ActivityRewardRegistrationPopupCtrl.m_waitingForClose = HL.Field(HL.Boolean) << false
-
-
 
 ActivityRewardRegistrationPopupCtrl._Close = HL.Method() << function(self)
     if self.view.animationWrapper.curState == UIConst.UI_ANIMATION_WRAPPER_STATE.Out then
@@ -82,17 +62,12 @@ ActivityRewardRegistrationPopupCtrl._Close = HL.Method() << function(self)
     end)
 end
 
-
-
-
 ActivityRewardRegistrationPopupCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     
     if self.view.activityRewardRegistrationInfo then
         self.view.activityRewardRegistrationInfo:OnPanelInputBlocked(active)
     end
 end
-
-
 
 ActivityRewardRegistrationPopupCtrl.OnShow = HL.Override() << function(self)
     if self.m_waitingForClose then

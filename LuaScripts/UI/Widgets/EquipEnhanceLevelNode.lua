@@ -1,30 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 EquipEnhanceLevelNode = HL.Class('EquipEnhanceLevelNode', UIWidgetBase)
-
 
 EquipEnhanceLevelNode.m_levelCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 EquipEnhanceLevelNode.enabled = HL.Field(HL.Boolean) << false
 
-
 EquipEnhanceLevelNode.isEnhanced = HL.Field(HL.Boolean) << false
-
-
 
 EquipEnhanceLevelNode._OnFirstTimeInit = HL.Override() << function(self)
     self.m_levelCellCache = UIUtils.genCellCache(self.view.lvDotCell)
 end
-
-
-
 
 
 

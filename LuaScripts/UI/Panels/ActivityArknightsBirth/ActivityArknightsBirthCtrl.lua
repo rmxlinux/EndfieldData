@@ -2,29 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityArknightsBirth
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityArknightsBirthCtrl = HL.Class('ActivityArknightsBirthCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -36,47 +14,31 @@ ActivityArknightsBirthCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_PROGRESS_CHANGE] = 'OnStageChange',
 }
 
-
 ActivityArknightsBirthCtrl.m_activityId = HL.Field(HL.String) << ''
-
 
 ActivityArknightsBirthCtrl.m_activityData = HL.Field(CS.Beyond.Gameplay.ActivityArknightsBirth)
 
-
 ActivityArknightsBirthCtrl.m_stageInfoList = HL.Field(HL.Table)
-
 
 ActivityArknightsBirthCtrl.m_prefabNode = HL.Field(HL.Any)
 
-
 ActivityArknightsBirthCtrl.m_prefabName = HL.Field(HL.String) << ''
-
 
 ActivityArknightsBirthCtrl.m_arknightsBirthCenter = HL.Field(HL.Any)
 
-
 ActivityArknightsBirthCtrl.m_timeOffset = HL.Field(HL.Int) << 0
-
 
 ActivityArknightsBirthCtrl.m_rewardItemIdList = HL.Field(HL.Table) 
 
-
 ActivityArknightsBirthCtrl.m_rewardBundles = HL.Field(HL.Table) 
-
 
 ActivityArknightsBirthCtrl.m_jumpIdList = HL.Field(HL.Table) 
 
-
 ActivityArknightsBirthCtrl.m_curStage = HL.Field(HL.Int) << 0 
-
 
 ActivityArknightsBirthCtrl.m_curStagePage = HL.Field(HL.Int) << 1 
 
-
 ActivityArknightsBirthCtrl.m_stampClickGen = HL.Field(HL.Int) << 0 
-
-
-
 
 
 ActivityArknightsBirthCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -87,8 +49,6 @@ ActivityArknightsBirthCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:RefreshInfo()
     self:RefreshAchievement()
 end
-
-
 
 ActivityArknightsBirthCtrl.RefreshInfo = HL.Method() << function(self)
     self.m_rewardItemIdList = {}
@@ -267,8 +227,6 @@ ActivityArknightsBirthCtrl.RefreshInfo = HL.Method() << function(self)
     end
 end
 
-
-
 ActivityArknightsBirthCtrl.RefreshAchievement = HL.Method() << function(self)
     
     
@@ -307,8 +265,6 @@ ActivityArknightsBirthCtrl.RefreshAchievement = HL.Method() << function(self)
     
     
 end
-
-
 
 ActivityArknightsBirthCtrl.RefreshReward = HL.Method() << function(self)
     
@@ -398,8 +354,6 @@ ActivityArknightsBirthCtrl.RefreshReward = HL.Method() << function(self)
     end
 end
 
-
-
 ActivityArknightsBirthCtrl.RefreshRedDot = HL.Method() << function(self)
     self.view.activityCommonInfoLuaReference.gotoNode.btnDetailRedDot:InitRedDot("ActivityArknightsBirthStageButton", {
         activityId = self.m_activityId,
@@ -414,9 +368,6 @@ ActivityArknightsBirthCtrl.RefreshRedDot = HL.Method() << function(self)
         })
     end
 end
-
-
-
 
 ActivityArknightsBirthCtrl.OnStageChange = HL.Method(HL.Any) << function(self, args)
     local id = unpack(args)

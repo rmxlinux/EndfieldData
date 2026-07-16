@@ -1,38 +1,13 @@
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 Stack = HL.Class('Stack')
-
 
 Stack.m_bottomIndex = HL.Field(HL.Number) << 1
 
-
 Stack.m_topIndex = HL.Field(HL.Number) << 1
-
 
 Stack.m_count = HL.Field(HL.Number) << 1
 
-
 Stack.m_array = HL.Field(HL.Table)
-
-
 
 Stack.Stack = HL.Constructor() << function(self)
     self.m_bottomIndex = -1
@@ -40,9 +15,6 @@ Stack.Stack = HL.Constructor() << function(self)
     self.m_count = 0
     self.m_array = {}
 end
-
-
-
 
 Stack.Push = HL.Method(HL.Any) << function(self, item)
     if self.m_count < 0 then
@@ -64,8 +36,6 @@ Stack.Push = HL.Method(HL.Any) << function(self, item)
     end
 end
 
-
-
 Stack.Pop = HL.Method().Return(HL.Any) << function(self)
     if self.m_count > 0 then
         local item = self.m_array[self.m_topIndex]
@@ -81,8 +51,6 @@ Stack.Pop = HL.Method().Return(HL.Any) << function(self)
     end
 end
 
-
-
 Stack.Peek = HL.Method().Return(HL.Any) << function(self)
     if self.m_count > 0 then
         return self.m_array[self.m_topIndex]
@@ -91,8 +59,6 @@ Stack.Peek = HL.Method().Return(HL.Any) << function(self)
     end
 end
 
-
-
 Stack.PeekBottom = HL.Method().Return(HL.Any) << function(self)
     if self.m_count > 0 then
         return self.m_array[self.m_bottomIndex]
@@ -100,8 +66,6 @@ Stack.PeekBottom = HL.Method().Return(HL.Any) << function(self)
         return nil
     end
 end
-
-
 
 Stack.Clear = HL.Method() << function(self)
     if self.m_count > 0 then
@@ -114,15 +78,9 @@ Stack.Clear = HL.Method() << function(self)
     end
 end
 
-
-
-
 Stack.Contains = HL.Method(HL.Any).Return(HL.Boolean) << function(self, item)
     return self:IndexOf(item) ~= nil
 end
-
-
-
 
 Stack.IndexOf = HL.Method(HL.Any).Return(HL.Opt(HL.Number)) << function(self, item)
     if self.m_count > 0 then
@@ -133,9 +91,6 @@ Stack.IndexOf = HL.Method(HL.Any).Return(HL.Opt(HL.Number)) << function(self, it
         end
     end
 end
-
-
-
 
 Stack.Delete = HL.Method(HL.Any) << function(self, item)
     local index = self:IndexOf(item)
@@ -154,32 +109,21 @@ Stack.Delete = HL.Method(HL.Any) << function(self, item)
     end
 end
 
-
-
 Stack.Count = HL.Method().Return(HL.Number) << function(self)
     return self.m_count
 end
-
-
 
 Stack.Empty = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_count <= 0
 end
 
-
-
 Stack.TopIndex = HL.Method().Return(HL.Number) << function(self)
     return self.m_topIndex
 end
 
-
-
 Stack.BottomIndex = HL.Method().Return(HL.Number) << function(self)
     return self.m_bottomIndex
 end
-
-
-
 
 Stack.Get = HL.Method(HL.Number).Return(HL.Any) << function(self, index)
     return self.m_array[index]

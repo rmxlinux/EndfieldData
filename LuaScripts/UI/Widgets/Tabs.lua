@@ -1,30 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 Tabs = HL.Class('Tabs', UIWidgetBase)
-
 
 
 Tabs.m_tabCells = HL.Field(HL.Forward('UIListCache'))
 
-
 Tabs.m_tabList = HL.Field(HL.Table)
-
-
 
 
 Tabs._OnFirstTimeInit = HL.Override() << function(self)
     self.m_tabCells = UIUtils.genCellCache(self.view.tabCell)
 end
-
-
-
 
 Tabs.InitTabs = HL.Method(HL.Table) << function(self, tabList)
     self:_FirstTimeInit()
@@ -34,10 +20,6 @@ Tabs.InitTabs = HL.Method(HL.Table) << function(self, tabList)
         self:_Refresh(cell,index)
     end)
 end
-
-
-
-
 
 Tabs._Refresh = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local tabInfo = self.m_tabList[index]
@@ -71,9 +53,6 @@ Tabs._Refresh = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
         self:ClickTab(index)
     end)
 end
-
-
-
 
 Tabs.ClickTab = HL.Method(HL.Number) << function(self, index)
     local tabInfo = self.m_tabList[index]

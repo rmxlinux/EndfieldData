@@ -2,54 +2,23 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WorldEnergyPointCustomReward
 local PHASE_ID = PhaseId.WorldEnergyPointCustomReward
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WorldEnergyPointCustomRewardCtrl = HL.Class('WorldEnergyPointCustomRewardCtrl', uiCtrl.UICtrl)
-
 
 WorldEnergyPointCustomRewardCtrl.m_groupId = HL.Field(HL.String) << ""
 
-
 WorldEnergyPointCustomRewardCtrl.m_awardGameId = HL.Field(HL.String) << ""
-
 
 WorldEnergyPointCustomRewardCtrl.m_gemCustomItemId = HL.Field(HL.String) << ""
 
-
 WorldEnergyPointCustomRewardCtrl.m_hasSelectTerms = HL.Field(HL.Boolean) << false
-
 
 WorldEnergyPointCustomRewardCtrl.m_hasBpDoubleRewardItemEver = HL.Field(HL.Boolean) << false
 
-
 WorldEnergyPointCustomRewardCtrl.m_attrInfos = HL.Field(HL.Table)
-
 
 WorldEnergyPointCustomRewardCtrl.m_curSelectRadio = HL.Field(HL.Number) << -1
 
-
 WorldEnergyPointCustomRewardCtrl.m_gemCustomToggleOn = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -58,8 +27,6 @@ WorldEnergyPointCustomRewardCtrl.m_gemCustomToggleOn = HL.Field(HL.Boolean) << f
 WorldEnergyPointCustomRewardCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_STAMINA_CHANGED] = 'OnStaminaChanged',
 }
-
-
 
 WorldEnergyPointCustomRewardCtrl.TryStartSettlement = HL.StaticMethod(HL.Table) << function(args)
     local isReset, groupId, awardGameId = unpack(args)
@@ -106,9 +73,6 @@ WorldEnergyPointCustomRewardCtrl.TryStartSettlement = HL.StaticMethod(HL.Table) 
 end
 
 
-
-
-
 WorldEnergyPointCustomRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.btnAward.onClick:AddListener(function()
         self:_OnClickBtnAward()
@@ -128,14 +92,9 @@ WorldEnergyPointCustomRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self
     self.view.customRewardRadioComp:SetDefaultTarget()
 end
 
-
-
 WorldEnergyPointCustomRewardCtrl.OnStaminaChanged = HL.Method() << function(self)
     self:_RefreshState()
 end
-
-
-
 
 
 
@@ -195,8 +154,6 @@ WorldEnergyPointCustomRewardCtrl._InitData = HL.Method(HL.Table) << function(sel
     self.m_gemCustomToggleOn = self.m_hasSelectTerms and hasGemCustomItem and not gemCustomizationManuallyOff
 end
 
-
-
 WorldEnergyPointCustomRewardCtrl._InitView = HL.Method() << function(self)
     if self.m_hasSelectTerms then
         local primAttr = self.m_attrInfos.primAttr
@@ -247,8 +204,6 @@ WorldEnergyPointCustomRewardCtrl._InitView = HL.Method() << function(self)
     self:_RefreshState()
 end
 
-
-
 WorldEnergyPointCustomRewardCtrl._OnClickBtnAward = HL.Method() << function(self)
     local costStamina = self.m_curSelectRadio * Tables.worldEnergyPointTable[self.m_awardGameId].costStamina
     local realCost = ActivityUtils.getRealStaminaCost(costStamina)
@@ -260,8 +215,6 @@ WorldEnergyPointCustomRewardCtrl._OnClickBtnAward = HL.Method() << function(self
         PhaseManager:OpenPhase(PhaseId.StaminaPopUp)
     end
 end
-
-
 
 WorldEnergyPointCustomRewardCtrl._RefreshState = HL.Method() << function(self)
     local hasSelectRadio = self.m_curSelectRadio > 0
@@ -304,22 +257,14 @@ WorldEnergyPointCustomRewardCtrl._RefreshState = HL.Method() << function(self)
     self.view.consumeStrength.gameObject:SetActive(showConsume)
 end
 
-
-
 WorldEnergyPointCustomRewardCtrl._OnClickBtnCancel = HL.Method() << function(self)
     PhaseManager:PopPhase(PHASE_ID)
 end
-
-
-
 
 WorldEnergyPointCustomRewardCtrl._OnRewardRadioChanged = HL.Method(HL.Number) << function(self, radioIndex)
     self.m_curSelectRadio = radioIndex
     self:_RefreshState()
 end
-
-
-
 
 WorldEnergyPointCustomRewardCtrl._OnGemCustomToggleChanged = HL.Method(HL.Boolean) << function(self, isOn)
     self.m_gemCustomToggleOn = isOn
@@ -332,8 +277,6 @@ WorldEnergyPointCustomRewardCtrl._OnGemCustomToggleChanged = HL.Method(HL.Boolea
         GameInstance.player.worldEnergyPointSystem:SendReqAddGemCustomizationOff(self.m_groupId)
     end
 end
-
-
 
 WorldEnergyPointCustomRewardCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then

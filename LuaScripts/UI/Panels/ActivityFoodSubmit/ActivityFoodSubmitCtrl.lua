@@ -1,57 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityFoodSubmit
 local PHASE_ID = PhaseId.ActivityFoodSubmit
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityFoodSubmitCtrl = HL.Class('ActivityFoodSubmitCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -69,69 +19,47 @@ ActivityFoodSubmitCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = '_OnMultiStageUpdate',
 }
 
-
 ActivityFoodSubmitCtrl.m_getScrollListCell = HL.Field(HL.Function)
-
 
 ActivityFoodSubmitCtrl.m_getHaveListCell = HL.Field(HL.Function)
 
-
 ActivityFoodSubmitCtrl.m_getRewardListCell = HL.Field(HL.Function)
-
 
 ActivityFoodSubmitCtrl.m_luaIndex2Cell = HL.Field(HL.Table)
 
-
 ActivityFoodSubmitCtrl.m_luaIndex2StageId = HL.Field(HL.Table)
-
 
 ActivityFoodSubmitCtrl.m_luaIndex2ShowState = HL.Field(HL.Table)
 
-
 ActivityFoodSubmitCtrl.m_selectedLuaIndex = HL.Field(HL.Number) << -1
-
 
 ActivityFoodSubmitCtrl.m_controllerCurLuaIndex = HL.Field(HL.Number) << -1
 
-
 ActivityFoodSubmitCtrl.m_selectedCell = HL.Field(HL.Any) << nil
-
 
 ActivityFoodSubmitCtrl.m_submitItemId = HL.Field(HL.String) << ""
 
-
 ActivityFoodSubmitCtrl.m_submitNeedNum = HL.Field(HL.Number) << 0
-
 
 ActivityFoodSubmitCtrl.m_submitHaveNum = HL.Field(HL.Number) << 0
 
-
 ActivityFoodSubmitCtrl.m_submitHaveCell = HL.Field(HL.Any) << nil
-
 
 ActivityFoodSubmitCtrl.m_activityId = HL.Field(HL.String) << ""
 
-
 ActivityFoodSubmitCtrl.m_rewardItems = HL.Field(HL.Table)
-
 
 ActivityFoodSubmitCtrl.m_luaIndex2RewardCell = HL.Field(HL.Table)
 
-
 ActivityFoodSubmitCtrl.m_inMainPanel = HL.Field(HL.Boolean) << true
-
 
 ActivityFoodSubmitCtrl.m_inSubmitting = HL.Field(HL.Boolean) << false
 
-
 ActivityFoodSubmitCtrl.m_haveSucceedSubmit = HL.Field(HL.Boolean) << false
-
 
 ActivityFoodSubmitCtrl.m_fromDialog = HL.Field(HL.Boolean) << false
 
-
 ActivityFoodSubmitCtrl.m_foodDetailsState = HL.Field(HL.String) << ""
-
 
 ActivityFoodSubmitCtrl.m_exitFoodFocusFlag = HL.Field(HL.Boolean) << false
 
@@ -141,9 +69,6 @@ local ShowStatus = {
     Completed = 2,
     Rewarded = 3,
 }
-
-
-
 
 
 
@@ -157,8 +82,6 @@ ActivityFoodSubmitCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
 
     self:UpdateAllData()
 end
-
-
 
 ActivityFoodSubmitCtrl.UpdateAllData = HL.Method() << function(self)
     if not self:CheckHaveActivityData() then
@@ -251,7 +174,7 @@ ActivityFoodSubmitCtrl.UpdateAllData = HL.Method() << function(self)
     self.view.foodList.foodItemScrollList.onGraduallyShowFinish:AddListener(function()
         if DeviceInfo.usingController then
             if self.m_luaIndex2Cell[controllerFocusLuaIndex] ~= nil then
-                InputManagerInst.controllerNaviManager:SetTarget(self.m_luaIndex2Cell[controllerFocusLuaIndex].clickBtn)
+                self:SetNaviTarget(self.m_luaIndex2Cell[controllerFocusLuaIndex].clickBtn)
             end
         end
     end)
@@ -262,8 +185,6 @@ ActivityFoodSubmitCtrl.UpdateAllData = HL.Method() << function(self)
     Notify(MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE)
     self:_UpdateNotesBtnRedDot()
 end
-
-
 
 
 ActivityFoodSubmitCtrl._OnClickCloseBtn = HL.Method() << function(self)
@@ -279,15 +200,10 @@ ActivityFoodSubmitCtrl._OnClickCloseBtn = HL.Method() << function(self)
 end
 
 
-
-
 ActivityFoodSubmitCtrl._BackToMainPanel = HL.Method() << function(self)
     self.view.main:SetState("FoodList")
     self.m_inMainPanel = true
 end
-
-
-
 
 ActivityFoodSubmitCtrl._UpdateStageId = HL.Method(HL.String) << function(self, activityId)
     local stageTable = {}
@@ -334,9 +250,6 @@ ActivityFoodSubmitCtrl._UpdateStageId = HL.Method(HL.String) << function(self, a
     end
 end
 
-
-
-
 ActivityFoodSubmitCtrl._OnMultiStageUpdate = HL.Method(HL.Any) << function(self, arg)
     local id = unpack(arg)
     if id ~= self.m_activityId then
@@ -347,9 +260,6 @@ ActivityFoodSubmitCtrl._OnMultiStageUpdate = HL.Method(HL.Any) << function(self,
         self:_ForceUpdatePanel()
     end
 end
-
-
-
 
 
 ActivityFoodSubmitCtrl._OnActivityUpdated = HL.Method(HL.Any) << function(self, arg)
@@ -371,8 +281,6 @@ ActivityFoodSubmitCtrl._OnActivityUpdated = HL.Method(HL.Any) << function(self, 
     end
 end
 
-
-
 ActivityFoodSubmitCtrl._ForceUpdatePanel = HL.Method() << function(self)
     local topPhaseId = PhaseManager:GetTopPhaseId()
     if topPhaseId == PhaseId.ActivityFoodSubmitNotes then
@@ -391,8 +299,6 @@ ActivityFoodSubmitCtrl._ForceUpdatePanel = HL.Method() << function(self)
         end)
     end
 end
-
-
 
 ActivityFoodSubmitCtrl._UpdateNotesBtnRedDot = HL.Method() << function(self)
     if self.m_luaIndex2StageId == nil then
@@ -415,9 +321,6 @@ ActivityFoodSubmitCtrl._UpdateNotesBtnRedDot = HL.Method() << function(self)
     self.view.notesBtnRedDot.gameObject:SetActive(unReadNum > 0)
 end
 
-
-
-
 ActivityFoodSubmitCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     if not self:CheckHaveActivityData() then
         return
@@ -425,18 +328,12 @@ ActivityFoodSubmitCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << functio
     self:_UpdateNotesBtnRedDot()
 end
 
-
-
 ActivityFoodSubmitCtrl.OnUpdateNodeRedDot = HL.Method() << function(self)
     if not self:CheckHaveActivityData() then
         return
     end
     self:_UpdateNotesBtnRedDot()
 end
-
-
-
-
 
 ActivityFoodSubmitCtrl._OnUpdateMainCell = HL.Method(HL.Any, HL.Number) << function(self, cell, csIndex)
     local luaIndex = LuaIndex(csIndex)
@@ -486,10 +383,6 @@ ActivityFoodSubmitCtrl._OnUpdateMainCell = HL.Method(HL.Any, HL.Number) << funct
     end
 end
 
-
-
-
-
 ActivityFoodSubmitCtrl._OnUpdateMainCellNodeState = HL.Method(HL.Any, HL.Number).Return(HL.Any) << function(self, cell, luaIndex)
     local stageId = self.m_luaIndex2StageId[luaIndex]
     local showStatus = self:GetStageShowState(stageId)
@@ -516,9 +409,6 @@ ActivityFoodSubmitCtrl._OnUpdateMainCellNodeState = HL.Method(HL.Any, HL.Number)
     return showStatus
 end
 
-
-
-
 ActivityFoodSubmitCtrl.GetStageShowState = HL.Method(HL.Any).Return(HL.Any) << function(self, stageId)
     local activityData = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     local stageData = activityData:GetStageData(stageId)
@@ -540,8 +430,6 @@ ActivityFoodSubmitCtrl.GetStageShowState = HL.Method(HL.Any).Return(HL.Any) << f
 
     return showStatus
 end
-
-
 
 ActivityFoodSubmitCtrl.initFoodDetails = HL.Method() << function(self)
     local stageId = self.m_luaIndex2StageId[self.m_selectedLuaIndex]
@@ -594,8 +482,6 @@ ActivityFoodSubmitCtrl.initFoodDetails = HL.Method() << function(self)
     self.view.foodDetails.haveScrollList:UpdateCount(1)
 end
 
-
-
 ActivityFoodSubmitCtrl.UpdateSubmitNum = HL.Method() << function(self)
     local hasItemCfg, itemCfg = Tables.SubmitItem:TryGetValue(self.m_submitItemId)
     if hasItemCfg then
@@ -607,8 +493,6 @@ ActivityFoodSubmitCtrl.UpdateSubmitNum = HL.Method() << function(self)
     end
 end
 
-
-
 ActivityFoodSubmitCtrl.CheckHaveActivityData = HL.Method().Return(HL.Boolean) << function(self)
     local activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     if activity then
@@ -617,8 +501,6 @@ ActivityFoodSubmitCtrl.CheckHaveActivityData = HL.Method().Return(HL.Boolean) <<
         return false
     end
 end
-
-
 
 ActivityFoodSubmitCtrl.UpdateFoodDetailsState = HL.Method() << function(self)
     local stageId = self.m_luaIndex2StageId[self.m_selectedLuaIndex]
@@ -643,16 +525,10 @@ ActivityFoodSubmitCtrl.UpdateFoodDetailsState = HL.Method() << function(self)
     end
 end
 
-
-
-
 ActivityFoodSubmitCtrl.SetFoodDetailsState = HL.Method(HL.Any) << function(self, state)
     self.view.foodDetails.foodState:SetState(state)
     self.m_foodDetailsState = state
 end
-
-
-
 
 ActivityFoodSubmitCtrl.OnSubmitItem = HL.Method(HL.Any) << function(self, submitId)
     if (submitId[1] == self.m_submitItemId) then
@@ -669,8 +545,6 @@ ActivityFoodSubmitCtrl.OnSubmitItem = HL.Method(HL.Any) << function(self, submit
         self:_BackToMainPanel()
     end
 end
-
-
 
 ActivityFoodSubmitCtrl.OnManualCraftPanelClose = HL.Method() << function(self)
     if not self:CheckHaveActivityData() then
@@ -696,8 +570,6 @@ ActivityFoodSubmitCtrl.OnManualCraftPanelClose = HL.Method() << function(self)
     end
 end
 
-
-
 ActivityFoodSubmitCtrl.OnManualCraftPopupPanelClose = HL.Method() << function(self)
     if not self:CheckHaveActivityData() then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_ACTIVITY_FORBIDDEN)
@@ -712,10 +584,6 @@ ActivityFoodSubmitCtrl.OnManualCraftPopupPanelClose = HL.Method() << function(se
         self.m_exitFoodFocusFlag = true
     end
 end
-
-
-
-
 
 ActivityFoodSubmitCtrl._OnUpdateHaveCell = HL.Method(HL.Any, HL.Number) << function(self, cell, csIndex)
     
@@ -752,10 +620,6 @@ ActivityFoodSubmitCtrl._OnUpdateHaveCell = HL.Method(HL.Any, HL.Number) << funct
     end
 end
 
-
-
-
-
 ActivityFoodSubmitCtrl._OnUpdateHaveNumCell = HL.Method(HL.Any, HL.Number) << function(self, cell, submitHaveNum)
     cell.numTxt.text = self.m_submitHaveNum
     if self.m_foodDetailsState == "Dissatisfied" then
@@ -768,10 +632,6 @@ ActivityFoodSubmitCtrl._OnUpdateHaveNumCell = HL.Method(HL.Any, HL.Number) << fu
         cell.numLayout.gameObject:SetActive(false)
     end
 end
-
-
-
-
 
 ActivityFoodSubmitCtrl._OnUpdateRewardCell = HL.Method(HL.Any, HL.Number) << function(self, cell, csIndex)
     local luaIndex = LuaIndex(csIndex)

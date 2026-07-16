@@ -6,39 +6,15 @@ local State = {
     Default = 0,
     SecondCheck = 1,
 }
+local Type = {
+    SetName = 0,
+    ResetName = 1,
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+local function UsingVirtualKeyboard()
+    return DeviceInfo.isMobile or CS.Beyond.CloudGame.enabled
+end
 PlayerRenameCtrl = HL.Class('PlayerRenameCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -50,49 +26,57 @@ PlayerRenameCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SET_PLAYER_NAME] = '_OnNameSetSuccess',
 }
 
-
 PlayerRenameCtrl.m_input = HL.Field(HL.String) << ""
-
 
 PlayerRenameCtrl.m_isValid = HL.Field(HL.Boolean) << true
 
-
 PlayerRenameCtrl.m_checked = HL.Field(HL.Boolean) << false
-
 
 PlayerRenameCtrl.m_state = HL.Field(HL.Number) << 0
 
+PlayerRenameCtrl.m_type = HL.Field(HL.Any) << Type.SetName
 
 PlayerRenameCtrl.m_select = HL.Field(HL.Boolean) << true
 
-
 PlayerRenameCtrl.m_onFinish = HL.Field(HL.Any)
-
 
 PlayerRenameCtrl.m_inited = HL.Field(HL.Boolean) << false
 
-
 PlayerRenameCtrl.m_caret = HL.Field(HL.Any)
-
 
 PlayerRenameCtrl.m_tailTickId = HL.Field(HL.Number) << -1
 
+PlayerRenameCtrl.m_itemId = HL.Field(HL.String) << ""
+
+PlayerRenameCtrl.m_instId = HL.Field(HL.Number) << 0
 
 PlayerRenameCtrl.m_updateThread = HL.Field(HL.Thread)
 
-
-
 PlayerRenameCtrl.OnSetPlayerNameStart = HL.StaticMethod(HL.Table) << function(arg)
-    PhaseManager:OpenPhaseFast(PHASE_ID, arg)
+    local onFinish = unpack(arg)
+    local openArg = {}
+    openArg.onFinish = onFinish
+    openArg.type = Type.SetName
+    PhaseManager:OpenPhaseFast(PHASE_ID, openArg)
+end
+
+PlayerRenameCtrl.OnResetPlayerNameStart = HL.StaticMethod(HL.Table) << function(arg)
+    local onFinish, itemId, instId = unpack(arg)
+    local openArg = {}
+    openArg.onFinish = onFinish
+    openArg.type = Type.ResetName
+    openArg.itemId = itemId
+    openArg.instId = instId
+    PhaseManager:OpenPhaseFast(PHASE_ID, openArg)
 end
 
 
-
-
-
 PlayerRenameCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
-    local onFinish = unpack(arg)
+    local onFinish = arg.onFinish
     self.m_onFinish = onFinish
+    self.m_type = arg.type
+    self.m_itemId = arg.itemId or ""
+    self.m_instId = arg.instId or 0
     self.m_caret = nil
 
     self.view.userRoleInputField.characterLimit = UIConst.INPUT_FIELD_PLAYER_NAME_CHARACTER_LIMIT
@@ -118,7 +102,7 @@ PlayerRenameCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     if self.view.renameTipsTextKeyBoard ~= nil then
-        local isPCController = DeviceInfo.usingController and DeviceInfo.isPC
+        local isPCController = DeviceInfo.usingController and DeviceInfo.isPCUser
         self.view.renameTipsTextKeyBoard.gameObject:SetActive(isPCController)
     end
 
@@ -126,8 +110,12 @@ PlayerRenameCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnSureBtnClicked()
     end)
 
+    self.view.cancelBtn.onClick:AddListener(function()
+        self:_OnCancelBtnClicked()
+    end)
+
     self.view.againBtn.onClick:AddListener(function()
-        if UNITY_PS4 or UNITY_PS5 or RENAME_PS_DEBUG or (DeviceInfo.isMobile and DeviceInfo.usingController) then
+        if UNITY_PS4 or UNITY_PS5 or RENAME_PS_DEBUG or (UsingVirtualKeyboard() and DeviceInfo.usingController) then
             self:_SwitchState(State.Default)
             self:_DeselectInputField()
             self:_ToggleSelectBtn(true)
@@ -139,7 +127,7 @@ PlayerRenameCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end)
 
-    if UNITY_PS4 or UNITY_PS5 or RENAME_PS_DEBUG or (DeviceInfo.isMobile and DeviceInfo.usingController) then
+    if UNITY_PS4 or UNITY_PS5 or RENAME_PS_DEBUG or (UsingVirtualKeyboard() and DeviceInfo.usingController) then
         self.view.userRoleInputField.onEndEdit:AddListener(function()
             self.view.keyHintPS.gameObject:SetActive(true)
             self.view.invisibleSelectBtn.gameObject:SetActive(false)
@@ -151,10 +139,15 @@ PlayerRenameCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     self.view.sureSecondBtn.onClick:AddListener(function()
-        GameInstance.player.playerInfoSystem:SetPlayerName(self.m_input)
+        if self.m_type == Type.ResetName then
+            GameInstance.player.inventory:UseRenameCard(
+                self.m_itemId, self.m_instId, self.m_input)
+        else
+            GameInstance.player.playerInfoSystem:SetPlayerName(self.m_input)
+        end
     end)
 
-    if UNITY_PS4 or UNITY_PS5 or RENAME_PS_DEBUG or (DeviceInfo.isMobile and DeviceInfo.usingController) then
+    if UNITY_PS4 or UNITY_PS5 or RENAME_PS_DEBUG or (UsingVirtualKeyboard() and DeviceInfo.usingController) then
         self.view.invisibleCancelBtn.onClick:AddListener(function()
             self:_DeselectInputField()
         end)
@@ -185,20 +178,14 @@ PlayerRenameCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
-
 PlayerRenameCtrl._ToggleSelectBtn = HL.Method(HL.Boolean) << function(self, canSelect)
-    if UNITY_PS4 or UNITY_PS5 or RENAME_PS_DEBUG or (DeviceInfo.isMobile and DeviceInfo.usingController) then
+    if UNITY_PS4 or UNITY_PS5 or RENAME_PS_DEBUG or (UsingVirtualKeyboard() and DeviceInfo.usingController) then
         self.view.keyHintPS.gameObject:SetActive(canSelect)
         self.view.invisibleSelectBtn.gameObject:SetActive(canSelect)
         self.view.invisibleCancelBtn.gameObject:SetActive(not canSelect)
         self.view.controllerHintPlaceholder.gameObject:SetActive(not canSelect)
     end
 end
-
-
-
 
 PlayerRenameCtrl._SelectToEnd = HL.Method(HL.Opt(HL.Boolean)) << function(self, force)
     self.m_select = true
@@ -212,8 +199,6 @@ PlayerRenameCtrl._SelectToEnd = HL.Method(HL.Opt(HL.Boolean)) << function(self, 
     self:_RefreshInputField()
 end
 
-
-
 PlayerRenameCtrl._DeselectInputField = HL.Method() << function(self)
     self.m_select = false
     self.view.userRoleInputField:DeactivateInputField(true)
@@ -223,14 +208,9 @@ PlayerRenameCtrl._DeselectInputField = HL.Method() << function(self)
     self:_RefreshInputField()
 end
 
-
-
-
 PlayerRenameCtrl.TailTick = HL.Method(HL.Number) << function(self, deltaTime)
     self:_RefreshCaret()
 end
-
-
 
 PlayerRenameCtrl.OnShow = HL.Override() << function(self)
     self.view.keyHintPS.gameObject:SetActive(false)
@@ -240,9 +220,14 @@ PlayerRenameCtrl.OnShow = HL.Override() << function(self)
 
     self.m_select = false
     if DeviceInfo.inputType == DeviceInfo.InputType.Keyboard then
-        self:_SelectToEnd(true)
+        if UsingVirtualKeyboard() then
+            self:_ToggleSelectBtn(true)
+            self:_DeselectInputField()
+        else
+            self:_SelectToEnd(true)
+        end
     elseif DeviceInfo.inputType == DeviceInfo.InputType.Controller then
-        if UNITY_PS4 or UNITY_PS5 or RENAME_PS_DEBUG or (DeviceInfo.isMobile and DeviceInfo.usingController) then
+        if UNITY_PS4 or UNITY_PS5 or RENAME_PS_DEBUG or (UsingVirtualKeyboard() and DeviceInfo.usingController) then
             
             self:_ToggleSelectBtn(true)
             self:_DeselectInputField()
@@ -257,7 +242,7 @@ PlayerRenameCtrl.OnShow = HL.Override() << function(self)
     self.view.idPlayerTxt.text = string.format("UID: %s", GameInstance.player.playerInfoSystem.roleId)
     self:_RefreshHint()
 
-    if not DeviceInfo.isMobile then
+    if not UsingVirtualKeyboard() then
         self.m_updateThread = self:_StartCoroutine(function()
             while true do
                 coroutine.wait(UIConst.UI_PLAYER_RENAME_UPDATE_INTERVAL)
@@ -277,21 +262,15 @@ PlayerRenameCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 PlayerRenameCtrl.OnHide = HL.Override() << function(self)
-    if not DeviceInfo.usingTouch then
+    if self.m_updateThread then
         self.m_updateThread = self:_ClearCoroutine(self.m_updateThread)
     end
 end
 
-
-
 PlayerRenameCtrl.OnClose = HL.Override() << function(self)
     self.m_tailTickId = LuaUpdate:Remove(self.m_tailTickId)
 end
-
-
 
 PlayerRenameCtrl._RefreshInputField = HL.Method() << function(self)
     local default = self.m_state == State.Default
@@ -302,16 +281,31 @@ PlayerRenameCtrl._RefreshInputField = HL.Method() << function(self)
     self.view.mobileRenameText.gameObject:SetActive(needActive)
 end
 
-
-
 PlayerRenameCtrl._OnSureBtnClicked = HL.Method() << function(self)
     local count = UIUtils.getStringLength(self.m_input)
     if self.m_isValid and count > 0 then
-        GameInstance.player.playerInfoSystem:CheckPlayerName(self.m_input)
+        GameInstance.player.playerInfoSystem:CheckPlayerName(self.m_input, self.m_type == Type.ResetName)
     end
 end
 
+PlayerRenameCtrl._OnCancelBtnClicked = HL.Method() << function(self)
+    self:_ExitAndNotifyRenameResult(Language.LUA_RENAME_CANCEL_TOAST)
+end
 
+PlayerRenameCtrl._ExitAndNotifyRenameResult = HL.Method(HL.String) << function(self, toastText)
+    AudioAdapter.PostEvent("Au_UI_Event_PlayerRename_End")
+    self:PlayAnimationOutWithCallback(function()
+        
+        PhaseManager:ExitPhaseFast(PHASE_ID)
+        local onFinish = self.m_onFinish
+        if onFinish then
+            onFinish()
+        end
+        if self.m_type == Type.ResetName and toastText then
+            Notify(MessageConst.SHOW_TOAST, toastText)
+        end
+    end)
+end
 
 PlayerRenameCtrl._RefreshHint = HL.Method() << function(self)
     self.m_isValid = UIUtils.checkInputValid(self.m_input)
@@ -323,8 +317,6 @@ PlayerRenameCtrl._RefreshHint = HL.Method() << function(self)
     UIUtils.PlayAnimationAndToggleActive(self.view.warnNode, not self.m_isValid)
     self.view.renameTipsTxt.gameObject:SetActive(self.m_isValid)
 end
-
-
 
 PlayerRenameCtrl._RefreshCaret = HL.Method() << function(self)
     
@@ -342,14 +334,9 @@ PlayerRenameCtrl._RefreshCaret = HL.Method() << function(self)
     end
 end
 
-
-
 PlayerRenameCtrl._RefreshMobileView = HL.Method() << function(self)
 
 end
-
-
-
 
 PlayerRenameCtrl._SwitchState = HL.Method(HL.Number) << function(self, state)
     local default = state == State.Default
@@ -361,10 +348,9 @@ PlayerRenameCtrl._SwitchState = HL.Method(HL.Number) << function(self, state)
     self.view.againBtn.gameObject:SetActive(not default)
     self.view.touchBtn.gameObject:SetActive(default)
     self.view.bgNode.gameObject:SetActive(default)
+
+    self.view.cancelBtn.gameObject:SetActive(self.m_type == Type.ResetName and default)
 end
-
-
-
 
 PlayerRenameCtrl._OnValueChanged = HL.Method(HL.String) << function(self, input)
     if self.m_state ~= State.Default then
@@ -381,8 +367,6 @@ PlayerRenameCtrl._OnValueChanged = HL.Method(HL.String) << function(self, input)
     self.m_checked = false
 end
 
-
-
 PlayerRenameCtrl._OnNameCheckSuccess = HL.Method() << function(self)
     self.m_checked = true
     self.m_select = false
@@ -390,7 +374,7 @@ PlayerRenameCtrl._OnNameCheckSuccess = HL.Method() << function(self)
     self:_SwitchState(State.SecondCheck)
     self:_DeselectInputField()
 
-    if UNITY_PS4 or UNITY_PS5 or RENAME_PS_DEBUG or (DeviceInfo.isMobile and DeviceInfo.usingController) then
+    if UNITY_PS4 or UNITY_PS5 or RENAME_PS_DEBUG or (UsingVirtualKeyboard() and DeviceInfo.usingController) then
         self.view.keyHintPS.gameObject:SetActive(false)
         self.view.invisibleSelectBtn.gameObject:SetActive(false)
         self.view.invisibleCancelBtn.gameObject:SetActive(false)
@@ -398,24 +382,12 @@ PlayerRenameCtrl._OnNameCheckSuccess = HL.Method() << function(self)
     end
 end
 
-
-
 PlayerRenameCtrl._OnNameCheckFailed = HL.Method() << function(self)
     self.view.userRoleInputField:Select()
 end
 
-
-
 PlayerRenameCtrl._OnNameSetSuccess = HL.Method() << function(self)
-    AudioAdapter.PostEvent("Au_UI_Event_PlayerRename_End")
-    self:PlayAnimationOutWithCallback(function()
-        
-        PhaseManager:ExitPhaseFast(PHASE_ID)
-        local onFinish = self.m_onFinish
-        if onFinish then
-            onFinish()
-        end
-    end)
+    self:_ExitAndNotifyRenameResult(Language.LUA_RENAME_SUCC_TOAST)
 end
 
 HL.Commit(PlayerRenameCtrl)

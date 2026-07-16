@@ -53,96 +53,40 @@ local WeaponRootName = {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GachaWeaponCtrl = HL.Class('GachaWeaponCtrl', uiCtrl.UICtrl)
-
 
 
 
 
 GachaWeaponCtrl.m_args = HL.Field(HL.Table)
 
-
 GachaWeaponCtrl.m_curInfo = HL.Field(HL.Table)
-
 
 GachaWeaponCtrl.m_curIndex = HL.Field(HL.Number) << -1
 
-
 GachaWeaponCtrl.m_rarityEffect = HL.Field(HL.Table)
-
 
 GachaWeaponCtrl.m_rarityEffectRoot = HL.Field(Transform)
 
 
 
-
 GachaWeaponCtrl.m_isSkipped = HL.Field(HL.Boolean) << false
 
-
 GachaWeaponCtrl.m_lastSkipTime = HL.Field(HL.Number) << 0
-
 
 GachaWeaponCtrl.m_stage = HL.Field(HL.Number) << -1
 
 
 
-
 GachaWeaponCtrl.m_weaponCount = HL.Field(HL.Number) << -1
-
 
 GachaWeaponCtrl.m_curWeaponType = HL.Field(GEnums.WeaponType)
 
-
 GachaWeaponCtrl.m_weaponRootCache = HL.Field(HL.Table)
-
 
 GachaWeaponCtrl.m_curWeaponObjList = HL.Field(HL.Table)
 
-
 GachaWeaponCtrl.m_modelRequestList = HL.Field(HL.Table)
-
 
 
 
@@ -150,18 +94,13 @@ GachaWeaponCtrl.m_startTimelineCor = HL.Field(HL.Thread)
 
 
 
-
 GachaWeaponCtrl.m_weaponTlInfos = HL.Field(HL.Table)
-
 
 GachaWeaponCtrl.m_curPlayTlInfo = HL.Field(HL.Table)
 
-
 GachaWeaponCtrl.m_isInLoopTrack = HL.Field(HL.Boolean) << false
 
-
 GachaWeaponCtrl.m_updateCheckTlKey = HL.Field(HL.Number) << -1
-
 
 
 
@@ -172,9 +111,6 @@ GachaWeaponCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 GachaWeaponCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     
     self.view.fullScreenBtn.onClick:AddListener(function()
@@ -183,7 +119,6 @@ GachaWeaponCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.skipBtn.onClick:AddListener(function()
         self:_Skip()
     end)
-    self.view.transitions.gameObject:SetActive(true)
     
     self.m_args = args
     self.m_weaponCount = #self.m_args.weapons
@@ -193,9 +128,6 @@ GachaWeaponCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
-
 GachaWeaponCtrl._PlayWeaponAt = HL.Method(HL.Number) << function(self, index)
     self.m_curIndex = index
     self.m_curInfo = self.m_args.weapons[index]
@@ -203,8 +135,6 @@ GachaWeaponCtrl._PlayWeaponAt = HL.Method(HL.Number) << function(self, index)
     logger.info("GachaWeaponCtrl._PlayWeaponAt", index, self.m_curInfo)
     self:_PlayStarAnimationStage()
 end
-
-
 
 
 
@@ -228,7 +158,6 @@ GachaWeaponCtrl._PlayStarAnimationStage = HL.Method() << function(self)
     
     local rarity = self.m_curInfo.rarity
     local ani = StarAnimations[rarity]
-    self.view.transitions:ResetVideo()
     self.view.starNode:Play(ani)
     
     local delayTime = rarity >= 6 and self.view.config["TIMELINE_DELAY_TIME_" .. rarity] or self.view.config["UI_DELAY_TIME_" .. rarity]
@@ -262,8 +191,6 @@ GachaWeaponCtrl._PlayStarAnimationStage = HL.Method() << function(self)
     AudioManager.PostEvent(StarAudios[info.rarity])
 end
 
-
-
 GachaWeaponCtrl._PlayWeaponCloseUpStage = HL.Method() << function(self)
     logger.info("GachaWeaponCtrl._PlayWeaponCloseUpStage")
     self.m_stage = GachaStage.CloseUp
@@ -277,8 +204,6 @@ GachaWeaponCtrl._PlayWeaponCloseUpStage = HL.Method() << function(self)
         end)
     end)
 end
-
-
 
 GachaWeaponCtrl._PlayRevealStage = HL.Method() << function(self)
     logger.info("GachaWeaponCtrl._PlayRevealStage")
@@ -335,18 +260,12 @@ GachaWeaponCtrl._PlayRevealStage = HL.Method() << function(self)
     end
 end
 
-
-
 GachaWeaponCtrl._JumpToRevealStage = HL.Method() << function(self)
     self.m_updateCheckTlKey = LuaUpdate:Remove(self.m_updateCheckTlKey)
     local time = self.m_curPlayTlInfo.loopStartTime
     self:_SetTimeline(time, true)
     self:_PlayRevealStage()
 end
-
-
-
-
 
 GachaWeaponCtrl._SetTimeline = HL.Method(HL.Number, HL.Boolean) << function(self, time, isPlay)
     local tlInfo = self.m_curPlayTlInfo
@@ -358,9 +277,6 @@ GachaWeaponCtrl._SetTimeline = HL.Method(HL.Number, HL.Boolean) << function(self
         dir:Evaluate()
     end
 end
-
-
-
 
 GachaWeaponCtrl._ShowRarityEffect = HL.Method(HL.Number) << function(self, rarity)
     if self.m_rarityEffect == nil then
@@ -376,8 +292,6 @@ GachaWeaponCtrl._ShowRarityEffect = HL.Method(HL.Number) << function(self, rarit
     end
 end
 
-
-
 GachaWeaponCtrl._HideAllRarityEffect = HL.Method() << function(self)
     if self.m_rarityEffect == nil then
         self:_LoadRarityEffect()
@@ -388,19 +302,12 @@ GachaWeaponCtrl._HideAllRarityEffect = HL.Method() << function(self)
     end
 end
 
-
-
-
-
-
 GachaWeaponCtrl._UpdateItemCell = HL.Method(HL.Table, HL.String, HL.Number) << function(self, cell, itemId, count)
     local itemData = Tables.itemTable[itemId]
     cell.itemIcon:LoadSprite(UIConst.UI_SPRITE_ITEM, itemData.iconId)
     cell.countTxt.text = string.format("×%d", count)
     cell.rarityImg.color = UIUtils.getItemRarityColor(itemData.rarity)
 end
-
-
 
 GachaWeaponCtrl._Exit = HL.Method() << function(self)
     logger.info("GachaWeaponCtrl._Exit")
@@ -411,8 +318,6 @@ GachaWeaponCtrl._Exit = HL.Method() << function(self)
         onComplete()
     end
 end
-
-
 
 
 
@@ -447,8 +352,6 @@ GachaWeaponCtrl._InitAllWeaponRoot = HL.Method() << function(self)
         end
     end
 end
-
-
 
 GachaWeaponCtrl._InitAllTimeline = HL.Method() << function(self)
     self.m_weaponTlInfos = {}
@@ -506,10 +409,6 @@ GachaWeaponCtrl._InitAllTimeline = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 GachaWeaponCtrl._LoadWeaponModelAsset = HL.Method(HL.String, GEnums.WeaponType) << function(self, weaponId, weaponType)
     logger.info("GachaWeaponCtrl._LoadWeaponModelAsset")
     
@@ -549,11 +448,6 @@ GachaWeaponCtrl._LoadWeaponModelAsset = HL.Method(HL.String, GEnums.WeaponType) 
     end
 end
 
-
-
-
-
-
 GachaWeaponCtrl._LoadModelAsync = HL.Method(HL.Number, HL.String, HL.Function) << function(self, loadKey, modelPath, callback)
     
     local modelManager = GameInstance.modelManager
@@ -569,8 +463,6 @@ GachaWeaponCtrl._LoadModelAsync = HL.Method(HL.Number, HL.String, HL.Function) <
         end
     end)
 end
-
-
 
 GachaWeaponCtrl._LoadWeaponTimeline = HL.Method() << function(self)
     if self.m_weaponTlInfos == nil then
@@ -594,8 +486,6 @@ GachaWeaponCtrl._LoadWeaponTimeline = HL.Method() << function(self)
     self:_SetTimeline(0, false)
 end
 
-
-
 GachaWeaponCtrl._LoadRarityEffect = HL.Method() << function(self)
     local displayView = self.m_phase.m_displayObjItem.view
     self.m_rarityEffectRoot = displayView.rarityEffectRoot
@@ -605,8 +495,6 @@ GachaWeaponCtrl._LoadRarityEffect = HL.Method() << function(self)
         [6] = displayView.rarityEffect6.gameObject,
     }
 end
-
-
 
 GachaWeaponCtrl._ClearCurAsset = HL.Method() << function(self)
     
@@ -623,8 +511,6 @@ GachaWeaponCtrl._ClearCurAsset = HL.Method() << function(self)
         self.m_modelRequestList[key] = nil
     end
 end
-
-
 
 
 
@@ -648,8 +534,6 @@ GachaWeaponCtrl._GoToNext = HL.Method() << function(self)
     end
 end
 
-
-
 GachaWeaponCtrl._Skip = HL.Method() << function(self)
     logger.info("GachaWeaponCtrl._Skip")
 
@@ -662,8 +546,6 @@ GachaWeaponCtrl._Skip = HL.Method() << function(self)
         self:_GoToNext()
     end
 end
-
-
 
 GachaWeaponCtrl._OnClickScreen = HL.Method() << function(self)
     if Time.unscaledTime < self.m_lastSkipTime + self.view.config.SKIP_CD then
@@ -684,9 +566,6 @@ GachaWeaponCtrl._OnClickScreen = HL.Method() << function(self)
         self:_GoToNext()
     end
 end
-
-
-
 
 
 

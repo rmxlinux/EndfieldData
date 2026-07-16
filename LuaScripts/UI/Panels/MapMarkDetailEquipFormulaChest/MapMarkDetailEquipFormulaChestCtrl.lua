@@ -2,13 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailEquipFormulaChest
 
-
-
-
-
-
 MapMarkDetailEquipFormulaChestCtrl = HL.Class('MapMarkDetailEquipFormulaChestCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -19,14 +13,9 @@ MapMarkDetailEquipFormulaChestCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 MapMarkDetailEquipFormulaChestCtrl.m_rewardItemCache = HL.Field(HL.Forward("UIListCache"))
 
-
 MapMarkDetailEquipFormulaChestCtrl.m_markInstId = HL.Field(HL.String) << ""
-
-
-
 
 
 MapMarkDetailEquipFormulaChestCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -56,8 +45,6 @@ MapMarkDetailEquipFormulaChestCtrl.OnCreate = HL.Override(HL.Any) << function(se
         })
     end)
 end
-
-
 
 MapMarkDetailEquipFormulaChestCtrl._InitController = HL.Method() << function(self)
     self.view.itemGridNaviGroup.onIsFocusedChange:AddListener(function(isFocused)

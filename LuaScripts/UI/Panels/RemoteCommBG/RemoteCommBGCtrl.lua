@@ -7,7 +7,6 @@ RemoteCommBGCtrl = HL.Class('RemoteCommBGCtrl', uiCtrl.UICtrl)
 
 
 
-
 RemoteCommBGCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }

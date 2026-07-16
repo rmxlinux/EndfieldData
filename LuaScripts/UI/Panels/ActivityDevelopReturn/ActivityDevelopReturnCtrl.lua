@@ -2,78 +2,38 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityDevelopReturn
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityDevelopReturnCtrl = HL.Class('ActivityDevelopReturnCtrl', uiCtrl.UICtrl)
-
 
 ActivityDevelopReturnCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = 'OnStageChange',
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_PROGRESS_CHANGE] = 'OnStageChange',
 }
 
-
 ActivityDevelopReturnCtrl.m_activityId = HL.Field(HL.String) << ''
-
 
 ActivityDevelopReturnCtrl.m_activity = HL.Field(HL.Any)
 
-
 ActivityDevelopReturnCtrl.m_curTabIndex = HL.Field(HL.Number) << 0
-
 
 ActivityDevelopReturnCtrl.m_tabCells = HL.Field(HL.Any)
 
-
 ActivityDevelopReturnCtrl.m_tabTotalCount = HL.Field(HL.Number) << 0
-
 
 ActivityDevelopReturnCtrl.m_tasks = HL.Field(HL.Table)
 
-
 ActivityDevelopReturnCtrl.m_getTaskCell = HL.Field(HL.Function)
-
 
 ActivityDevelopReturnCtrl.m_curShowingTasks = HL.Field(HL.Table)
 
-
 ActivityDevelopReturnCtrl.m_canReward = HL.Field(HL.Boolean) << false
-
 
 ActivityDevelopReturnCtrl.m_allRewarded = HL.Field(HL.Boolean) << true
 
-
 ActivityDevelopReturnCtrl.m_rewardTab = HL.Field(HL.Table)
-
 
 ActivityDevelopReturnCtrl.m_rewardAll = HL.Field(HL.Table)
 
-
 ActivityDevelopReturnCtrl.m_receiveAllBindingId = HL.Field(HL.Number) << -1
-
-
-
 
 ActivityDevelopReturnCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_activityId = args.activityId
@@ -144,8 +104,6 @@ ActivityDevelopReturnCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end)
 
 end
-
-
 
 ActivityDevelopReturnCtrl._RefreshInfo = HL.Method() << function(self)
     self.m_activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
@@ -276,11 +234,6 @@ ActivityDevelopReturnCtrl._RefreshInfo = HL.Method() << function(self)
     
 end
 
-
-
-
-
-
 ActivityDevelopReturnCtrl._OnUpdateRewardCell = HL.Method(HL.Table, HL.Any, HL.Number) << function(self, taskCell, rewardCell, rewardIndex)
     local rewardBundles = taskCell.m_rewardBundles
     if not rewardBundles or not rewardBundles[rewardIndex] then
@@ -305,10 +258,6 @@ ActivityDevelopReturnCtrl._OnUpdateRewardCell = HL.Method(HL.Table, HL.Any, HL.N
         rewardCell.view.selectedBG.gameObject:SetActive(isTarget)
     end
 end
-
-
-
-
 
 ActivityDevelopReturnCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     
@@ -358,9 +307,6 @@ ActivityDevelopReturnCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << func
     end)
 end
 
-
-
-
 ActivityDevelopReturnCtrl._SetNaviTarget = HL.Method(HL.Number) << function(self,index)
     if index == 0 or not DeviceInfo.usingController  then
         return
@@ -372,13 +318,9 @@ ActivityDevelopReturnCtrl._SetNaviTarget = HL.Method(HL.Number) << function(self
     end
     local cell = oriCell and self.m_getTaskCell(oriCell)
     if cell then
-        UIUtils.setAsNaviTarget(cell.naviDecorator)
+        self:SetNaviTarget(cell.naviDecorator)
     end
 end
-
-
-
-
 
 ActivityDevelopReturnCtrl._ChangeTab = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, newIndex, forceRefresh)
     
@@ -435,15 +377,10 @@ ActivityDevelopReturnCtrl._ChangeTab = HL.Method(HL.Number, HL.Opt(HL.Boolean)) 
     end
 end
 
-
-
 ActivityDevelopReturnCtrl.OnActivityCenterNaviFailed = HL.Method() << function(self)
     local firstCell = self.view.scrollList:GetRangeInView().x
     self:_SetNaviTarget(LuaIndex(firstCell))
 end
-
-
-
 
 ActivityDevelopReturnCtrl.OnStageChange = HL.Method(HL.Any) << function(self, args)
     local id = unpack(args)

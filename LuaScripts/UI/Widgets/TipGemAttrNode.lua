@@ -1,24 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 TipGemAttrNode = HL.Class('TipGemAttrNode', UIWidgetBase)
-
 
 
 TipGemAttrNode.m_gemAttrCellCache = HL.Field(HL.Forward("UIListCache"))
 
 
-
-
 TipGemAttrNode._OnFirstTimeInit = HL.Override() << function(self)
     self.m_gemAttrCellCache = UIUtils.genCellCache(self.view.attrCell)
 end
-
-
-
 
 TipGemAttrNode.InitTipGemAttrNode = HL.Method(HL.Number) << function(self, gemInstId)
     self:_FirstTimeInit()

@@ -3,91 +3,40 @@ local PANEL_ID = PanelId.WeeklyRaidTaskTrackHud
 
 local OPTIONAL_TEXT_COLOR = "C7EC59"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WeeklyRaidTaskTrackHudCtrl = HL.Class('WeeklyRaidTaskTrackHudCtrl', uiCtrl.UICtrl)
-
 
 WeeklyRaidTaskTrackHudCtrl.m_game = HL.Field(HL.Userdata)
 
-
 WeeklyRaidTaskTrackHudCtrl.m_genGoalCells = HL.Field(HL.Forward("UIListCache"))
-
 
 WeeklyRaidTaskTrackHudCtrl.m_startCountDown = HL.Field(HL.Boolean) << false
 
-
 WeeklyRaidTaskTrackHudCtrl.m_isFrozen = HL.Field(HL.Boolean) << false
-
 
 WeeklyRaidTaskTrackHudCtrl.m_tickKey = HL.Field(HL.Any) << 0
 
-
 WeeklyRaidTaskTrackHudCtrl.m_countDownTickKey = HL.Field(HL.Any) << 0
-
 
 WeeklyRaidTaskTrackHudCtrl.m_countDown = HL.Field(HL.Number) << 0
 
-
 WeeklyRaidTaskTrackHudCtrl.m_targetPercent = HL.Field(HL.Number) << 0
-
 
 WeeklyRaidTaskTrackHudCtrl.m_animQueue = HL.Field(HL.Forward("Queue"))
 
-
 WeeklyRaidTaskTrackHudCtrl.m_currentShowQuestId = HL.Field(HL.String) << "" 
-
 
 WeeklyRaidTaskTrackHudCtrl.m_objectStateTable = HL.Field(HL.Table)
 
-
 WeeklyRaidTaskTrackHudCtrl.m_playAnimCount = HL.Field(HL.Number) << 0
 
-
 WeeklyRaidTaskTrackHudCtrl.m_isPlayCountDown = HL.Field(HL.Boolean) << false
-
 
 WeeklyRaidTaskTrackHudCtrl.m_playedAnimHashTable = HL.Field(HL.Table)
 
 
-WeeklyRaidTaskTrackHudCtrl.m_deltaTime = HL.Field(HL.Number) << 0
-
-
-WeeklyRaidTaskTrackHudCtrl.m_frozenBias = HL.Field(HL.Number) << 0
-
+WeeklyRaidTaskTrackHudCtrl.m_lastDisplaySec = HL.Field(HL.Number) << -1
 
 WeeklyRaidTaskTrackHudCtrl.m_freezeRefCount = HL.Field(HL.Number) << 0
-
 
 
 
@@ -105,9 +54,6 @@ WeeklyRaidTaskTrackHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_EXIT_TRAVEL_MODE] = '_ShowMission',
     [MessageConst.ON_GAME_TIME_FREEZE_STATE_CHANGED] = 'OnFreezeWorld',
 }
-
-
-
 
 
 WeeklyRaidTaskTrackHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -167,9 +113,6 @@ WeeklyRaidTaskTrackHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:UpdateWeekRaidTaskTrackHudDangerInfo(nil)
     self:UpdateWeekRaidTaskTrackHudObjectiveInfo(nil)
 end
-
-
-
 WeeklyRaidTaskTrackHudCtrl.UpdateWeekRaidTaskTrackHudDangerInfo = HL.Method(HL.Any) << function(self, args)
     
     local game = self.m_game
@@ -220,9 +163,6 @@ WeeklyRaidTaskTrackHudCtrl.UpdateWeekRaidTaskTrackHudDangerInfo = HL.Method(HL.A
         end
     end
 end
-
-
-
 
 WeeklyRaidTaskTrackHudCtrl.UpdateWeekRaidTaskTrackHudObjectiveInfo = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     
@@ -337,9 +277,6 @@ WeeklyRaidTaskTrackHudCtrl.UpdateWeekRaidTaskTrackHudObjectiveInfo = HL.Method(H
     
 end
 
-
-
-
 WeeklyRaidTaskTrackHudCtrl.OnQuestStateChange = HL.Method(HL.Any) << function(self, arg)
     
 
@@ -356,9 +293,6 @@ WeeklyRaidTaskTrackHudCtrl.OnQuestStateChange = HL.Method(HL.Any) << function(se
     
     self:UpdateWeekRaidTaskTrackHudObjectiveInfo()
     end
-
-
-
 
 WeeklyRaidTaskTrackHudCtrl._UpdateCells = HL.Method(HL.Boolean) << function(self, allUpdate)
     local questInfo = GameInstance.player.mission:GetQuestInfo(self.m_currentShowQuestId)
@@ -464,8 +398,6 @@ end
     })
 end
 
-
-
 WeeklyRaidTaskTrackHudCtrl._UpdateDangerValue = HL.Method() << function(self)
     local currentPercent = self.view.slider.value
     if currentPercent >= self.m_targetPercent then
@@ -495,44 +427,40 @@ WeeklyRaidTaskTrackHudCtrl._UpdateDangerValue = HL.Method() << function(self)
     self.view.handleNode.anchoredPosition = Vector2(startX, self.view.handleNode.anchoredPosition.y)
 end
 
-
-
-
 WeeklyRaidTaskTrackHudCtrl.CountDownTime = HL.Method(HL.Number) << function(self, countDown)
     
+    
+    self.m_countDown = countDown
     if self.m_startCountDown then
-        self.m_countDown = countDown
-        self.m_frozenBias = 0
         return
     end
     self.m_startCountDown = true
-    self.m_countDown = countDown
 
     self.view.countdownNode.gameObject:SetActive(true)
-    self.view.countDownText.view.text.text = tostring(math.floor(math.max(self.m_countDown - DateTimeUtils.GetCurrentTimestampBySeconds() + self.m_frozenBias, 0)))
+    local initSec = math.floor(math.max(self.m_countDown - DateTimeUtils.GetCurrentTimestampBySeconds(), 0))
+    self.m_lastDisplaySec = initSec
+    self.view.countDownText.view.text.text = tostring(initSec)
     self.view.countdownNodeAnim.gameObject:SetActiveIfNecessary(true)
     self.view.countdownNodeAnimationWrapper:Play("weeklyraidtask_changenumb")
     self.view.countdownNodeAnimationWrapper:PlayOpenAudio()
     self.m_countDownTickKey = self:_StartUpdate(function()
-        if self.m_isFrozen or self.m_deltaTime < 1 then
-            if not self.m_isFrozen then
-                self.m_deltaTime = self.m_deltaTime + Time.deltaTime
-            elseif self.m_countDown - DateTimeUtils.GetCurrentTimestampBySeconds() + self.m_frozenBias > 0 then
-                self.m_frozenBias = self.m_frozenBias + Time.deltaTime
-            end
+        
+        if self.m_isFrozen then
             return
         end
-        self.m_deltaTime = self.m_deltaTime - 1
-        local dispVal = math.floor(math.max(self.m_countDown - DateTimeUtils.GetCurrentTimestampBySeconds() + self.m_frozenBias, 0))
+        local dispVal = math.floor(math.max(self.m_countDown - DateTimeUtils.GetCurrentTimestampBySeconds(), 0))
+        if dispVal == self.m_lastDisplaySec then
+            return
+        end
+        self.m_lastDisplaySec = dispVal
         self.view.countDownText.view.text.text = tostring(dispVal)
-        self.view.countdownNodeAnim.gameObject:SetActiveIfNecessary(true)
-        self.view.countdownNodeAnimationWrapper:Play("weeklyraidtask_changenumb")
-        self.view.countdownNodeAnimationWrapper:PlayOpenAudio()
+        if dispVal > 0 then
+            self.view.countdownNodeAnim.gameObject:SetActiveIfNecessary(true)
+            self.view.countdownNodeAnimationWrapper:Play("weeklyraidtask_changenumb")
+            self.view.countdownNodeAnimationWrapper:PlayOpenAudio()
+        end
     end)
 end
-
-
-
 
 WeeklyRaidTaskTrackHudCtrl._GetObjectiveHashCode = HL.Method(HL.Any).Return(HL.Number) << function(self, objective)
     
@@ -548,9 +476,6 @@ WeeklyRaidTaskTrackHudCtrl._GetObjectiveHashCode = HL.Method(HL.Any).Return(HL.N
     return hash
 end
 
-
-
-
 WeeklyRaidTaskTrackHudCtrl.OnFreezeWorld = HL.Method(HL.Any) << function(self, args)
     local isFrozen, reason = unpack(args)
     if isFrozen then
@@ -558,40 +483,27 @@ WeeklyRaidTaskTrackHudCtrl.OnFreezeWorld = HL.Method(HL.Any) << function(self, a
     else
         self.m_freezeRefCount = math.max(self.m_freezeRefCount - 1, 0)
     end
-    local wasFrozen = self.m_isFrozen
     self.m_isFrozen = self.m_freezeRefCount > 0
-    if self.m_isFrozen and not wasFrozen then
-        self.m_frozenBias = 0
-    end
 end
 
-
-
 WeeklyRaidTaskTrackHudCtrl.OnShow = HL.Override() << function(self)
+    
     self.m_freezeRefCount = 0
     self.m_isFrozen = false
-    self.m_frozenBias = 0
     if self.m_startCountDown then
-        local dispVal = math.floor(math.max(self.m_countDown - DateTimeUtils.GetCurrentTimestampBySeconds() + self.m_frozenBias, 0))
+        local dispVal = math.floor(math.max(self.m_countDown - DateTimeUtils.GetCurrentTimestampBySeconds(), 0))
+        self.m_lastDisplaySec = dispVal
         self.view.countDownText.view.text.text = tostring(dispVal)
     end
 end
-
-
 WeeklyRaidTaskTrackHudCtrl.OnClose = HL.Override() << function(self)
     self:_RemoveUpdate(self.m_tickKey)
     self:_RemoveUpdate(self.m_countDownTickKey)
 end
 
-
-
-
 WeeklyRaidTaskTrackHudCtrl._HideMission = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     self.view.targetPanel.gameObject:SetActive(false)
 end
-
-
-
 
 WeeklyRaidTaskTrackHudCtrl._ShowMission = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     if not WeeklyRaidUtils.IsInWeeklyRaidIntro() then

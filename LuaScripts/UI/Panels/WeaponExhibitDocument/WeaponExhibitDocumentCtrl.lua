@@ -1,15 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WeaponExhibitDocument
-
-
-
-
-
-
-
 WeaponExhibitDocumentCtrl = HL.Class('WeaponExhibitDocumentCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -19,11 +11,7 @@ WeaponExhibitDocumentCtrl = HL.Class('WeaponExhibitDocumentCtrl', uiCtrl.UICtrl)
 
 WeaponExhibitDocumentCtrl.m_weaponInfo = HL.Field(HL.Table)
 
-
 WeaponExhibitDocumentCtrl.s_messages = HL.StaticField(HL.Table) << {}
-
-
-
 
 
 WeaponExhibitDocumentCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -38,15 +26,11 @@ WeaponExhibitDocumentCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
 WeaponExhibitDocumentCtrl.OnShow = HL.Override() << function(self)
     local weaponInfo = self.m_weaponInfo
 
     self:_RefreshDocumentPanel(weaponInfo)
 end
-
-
 
 
 WeaponExhibitDocumentCtrl._InitActionEvent = HL.Method() << function(self)
@@ -56,9 +40,6 @@ WeaponExhibitDocumentCtrl._InitActionEvent = HL.Method() << function(self)
         })
     end)
 end
-
-
-
 
 WeaponExhibitDocumentCtrl._RefreshDocumentPanel = HL.Method(HL.Table) << function(self, weaponInfo)
     local exhibitInfo = CharInfoUtils.getWeaponExhibitBasicInfo(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)

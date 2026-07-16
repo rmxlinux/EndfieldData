@@ -1,17 +1,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WorldLevelPreview
 
-
-
-
-
-
-
 WorldLevelPreviewCtrl = HL.Class('WorldLevelPreviewCtrl', uiCtrl.UICtrl)
 
-
 WorldLevelPreviewCtrl.m_fromMainHudActionQueue = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -20,8 +12,6 @@ WorldLevelPreviewCtrl.m_fromMainHudActionQueue = HL.Field(HL.Boolean) << false
 WorldLevelPreviewCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.INTERRUPT_MAIN_HUD_ACTION_QUEUE] = "OnToastInterrupted",
 }
-
-
 
 WorldLevelPreviewCtrl.ShowPreview = HL.StaticMethod(HL.Any) << function(args)
     
@@ -54,25 +44,26 @@ WorldLevelPreviewCtrl.ShowPreview = HL.StaticMethod(HL.Any) << function(args)
 end
 
 
-
-
-
 WorldLevelPreviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
     self.m_fromMainHudActionQueue = arg and arg.fromMainHudActionQueue == true
     self.view.closeBtn.onClick:RemoveAllListeners()
     self.view.closeBtn.onClick:AddListener(function()
-        self:PlayAnimationOutAndClose()
-        if self.m_fromMainHudActionQueue then
-            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "WorldLevelPreview")
-        end
+        self:PlayAnimationOutWithCallback(function()
+            self:Close()
+            if self.m_fromMainHudActionQueue then
+                Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "WorldLevelPreview")
+            end
+        end)
     end)
 
     self:BindInputPlayerAction("common_cancel_no_hint", function()
-        self:PlayAnimationOutAndClose()
-        if self.m_fromMainHudActionQueue then
-            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "WorldLevelPreview")
-        end
+        self:PlayAnimationOutWithCallback(function()
+            self:Close()
+            if self.m_fromMainHudActionQueue then
+                Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "WorldLevelPreview")
+            end
+        end)
     end)
 
     if arg then
@@ -158,8 +149,6 @@ WorldLevelPreviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
 end
-
-
 
 WorldLevelPreviewCtrl.OnToastInterrupted = HL.Method() << function(self)
     

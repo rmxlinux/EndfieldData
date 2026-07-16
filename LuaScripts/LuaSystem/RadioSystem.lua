@@ -1,54 +1,11 @@
 local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RadioSystem = HL.Class('RadioSystem', LuaSystemBase.LuaSystemBase)
 
 RADIO_DATA_SORT_KEYS = { "priorityKey", "needResumeKey", "addTimeKey" }
 CONTINUE_RADIO_PRIORITY = -1000
 
+
+local EMOTION_VOICE_PLAY_INTERVAL = 2
 
 
 
@@ -92,37 +49,25 @@ CONTINUE_RADIO_PRIORITY = -1000
 
 RadioSystem.s_radioIndexCache = HL.StaticField(HL.Table) << {}
 
-
 RadioSystem.m_curShow = HL.Field(HL.Any)
-
 
 RadioSystem.m_waitingQueue = HL.Field(HL.Table)
 
-
 RadioSystem.m_queueSortFunc = HL.Field(HL.Function)
-
 
 RadioSystem.m_pauseRefCount = HL.Field(HL.Number) << 0
 
-
 RadioSystem.inMainHud = HL.Field(HL.Boolean) << false
-
 
 RadioSystem.m_forcePlayRadio = HL.Field(HL.Boolean) << false
 
-
 RadioSystem.m_radioOnlySound = HL.Field(HL.Boolean) << false
-
 
 RadioSystem.m_enableDebugLog = HL.Field(HL.Boolean) << false
 
-
 RadioSystem.m_lastPlayedEmotionVoiceId = HL.Field(HL.String) << ""
 
-
 RadioSystem.m_globalTagHandle = HL.Field(CS.Beyond.Gameplay.Core.GlobalTagHandle)
-
-
 
 RadioSystem.RadioSystem = HL.Constructor() << function(self)
     self.inMainHud = GameWorld.worldInfo.inMainHud
@@ -218,10 +163,13 @@ RadioSystem.RadioSystem = HL.Constructor() << function(self)
             
             if not forcePlayRadio and not self:_CheckCanPlay() then
                 if self.m_curShow and not string.isEmpty(self.m_curShow.radioId) then
-                    local errorLog = string.format("RadioSystem forcePlayRadio changed to FALSE but CheckCanPlay FALSE, CutCurRadio: %s!!!!", self.m_curShow.radioId)
+                    local errorLog = string.format(
+                    "RadioSystem forcePlayRadio changed to FALSE but CheckCanPlay FALSE, CutCurRadio: %s!!!!",
+                        self.m_curShow.radioId)
                     logger.warn(errorLog)
                     if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
-                        local toast = string.format("【EditorOnly】Radio:【%s】 被UI打断，目前效果可以找负责策划反馈是否符合预期!!!", self.m_curShow.radioId)
+                        local toast = string.format("【EditorOnly】Radio:【%s】 被UI打断，目前效果可以找负责策划反馈是否符合预期!!!",
+                            self.m_curShow.radioId)
                         Notify(MessageConst.SHOW_TOAST, toast)
                     end
                 end
@@ -304,9 +252,6 @@ RadioSystem.RadioSystem = HL.Constructor() << function(self)
     
 end
 
-
-
-
 RadioSystem.ManualStopRadio = HL.Method(HL.Any) << function(self, radioId)
     if self.m_curShow == nil then
         return
@@ -325,16 +270,11 @@ RadioSystem.ManualStopRadio = HL.Method(HL.Any) << function(self, radioId)
     end
 end
 
-
-
 RadioSystem._ClearCurTimer = HL.Method() << function(self)
     if self.m_curShow and self.m_curShow.timerId and self.m_curShow.timerId > 0 then
         self:_ClearTimer(self.m_curShow.timerId)
     end
 end
-
-
-
 
 RadioSystem._AddCurExitTimer = HL.Method(HL.Number) << function(self, existTime)
     self:_ClearCurTimer()
@@ -344,7 +284,24 @@ RadioSystem._AddCurExitTimer = HL.Method(HL.Number) << function(self, existTime)
     self.m_curShow.timerId = timerId
 end
 
+RadioSystem._StopCurAudioEvent = HL.Method() << function(self)
+    if self.m_curShow and self.m_curShow.audioEventPlayingId and self.m_curShow.audioEventPlayingId > 0 then
+        AudioAdapter.StopByPlayingId(self.m_curShow.audioEventPlayingId, 0)
+        self.m_curShow.audioEventPlayingId = 0
+    end
+end
 
+RadioSystem._PauseCurAudioEvent = HL.Method() << function(self)
+    if self.m_curShow and self.m_curShow.audioEventPlayingId and self.m_curShow.audioEventPlayingId > 0 then
+        AudioAdapter.PauseByPlayingId(self.m_curShow.audioEventPlayingId, 0)
+    end
+end
+
+RadioSystem._ResumeCurAudioEvent = HL.Method() << function(self)
+    if self.m_curShow and self.m_curShow.audioEventPlayingId and self.m_curShow.audioEventPlayingId > 0 then
+        AudioAdapter.ResumeByPlayingId(self.m_curShow.audioEventPlayingId, 0)
+    end
+end
 
 RadioSystem._TryPauseAndHide = HL.Method() << function(self)
     self:_RemoveGlobalTag()
@@ -362,6 +319,7 @@ RadioSystem._TryPauseAndHide = HL.Method() << function(self)
                 end
                 self:_ClearCurTimer()
             end
+            self:_PauseCurAudioEvent()
         end
 
         self.m_pauseRefCount = self.m_pauseRefCount + 1
@@ -371,13 +329,9 @@ RadioSystem._TryPauseAndHide = HL.Method() << function(self)
     self:_Exit()
 end
 
-
-
 RadioSystem._IsSoundOnly = HL.Method().Return(HL.Boolean) << function(self)
     return GameWorld.narrativeManager.radioOnlySound
 end
-
-
 
 RadioSystem._TryResumeAndShow = HL.Method() << function(self)
     local panel = self:_GetUICtrl()
@@ -396,6 +350,11 @@ RadioSystem._TryResumeAndShow = HL.Method() << function(self)
             VoiceManager:ResumeVoice(self.m_curShow.voiceHandleId)
             local exitTime = self:_GetExistTime(self.m_curShow.voiceId, self.m_curShow.voiceHandleId)
             self:_AddCurExitTimer(exitTime)
+        end
+        
+        
+        if self.m_curShow and self.m_pauseRefCount == 0 then
+            self:_ResumeCurAudioEvent()
         end
     end
     if self:_CheckCanPlay() then
@@ -430,16 +389,10 @@ RadioSystem._TryResumeAndShow = HL.Method() << function(self)
     end
 end
 
-
-
-
 RadioSystem._Exit = HL.Method(HL.Opt(HL.Boolean)) << function(self, useAnim)
     self:_RemoveGlobalTag()
     self:_HideUI(useAnim)
 end
-
-
-
 
 RadioSystem._HideUI = HL.Method(HL.Opt(HL.Boolean)) << function(self, useAnim)
     local panel = self:_GetUICtrl()
@@ -447,9 +400,6 @@ RadioSystem._HideUI = HL.Method(HL.Opt(HL.Boolean)) << function(self, useAnim)
         panel:HideSelf(useAnim)
     end
 end
-
-
-
 
 RadioSystem._TryPlayRadio = HL.Method(CS.Beyond.Gameplay.Actions.GameAction.RadioRuntimeData) << function(self, data)
     local radioId = data.radioId
@@ -554,8 +504,6 @@ RadioSystem._TryPlayRadio = HL.Method(CS.Beyond.Gameplay.Actions.GameAction.Radi
     end
 end
 
-
-
 RadioSystem._ContinueCurRadio = HL.Method() << function(self)
     if self.m_pauseRefCount == 0 then
         local panel = self:_GetUICtrl()
@@ -584,14 +532,12 @@ RadioSystem._ContinueCurRadio = HL.Method() << function(self)
     end
 end
 
-
-
-
 RadioSystem._TryGetContinueExRadio = HL.Method(HL.Table).Return(HL.Any) << function(self, curData)
     local interruptedVoiceId = curData.interruptedVoiceId
     local data
     if not string.isEmpty(interruptedVoiceId) then
-        local res, continueRadioId = VoiceUtils.TryGetRadioContinueId(interruptedVoiceId, VoiceUtils.GetDefaultContinueRadioSpeakers())
+        local res, continueRadioId = VoiceUtils.TryGetRadioContinueId(interruptedVoiceId,
+            VoiceUtils.GetDefaultContinueRadioSpeakers())
         if res then
             data = {
                 radioId = continueRadioId,
@@ -604,8 +550,6 @@ RadioSystem._TryGetContinueExRadio = HL.Method(HL.Table).Return(HL.Any) << funct
     end
     return data
 end
-
-
 
 RadioSystem._TryShowNextRadio = HL.Method().Return(HL.Boolean) << function(self)
     if #self.m_waitingQueue <= 0 then
@@ -629,7 +573,7 @@ RadioSystem._TryShowNextRadio = HL.Method().Return(HL.Boolean) << function(self)
     
     local continueRadioData = self:_TryGetContinueExRadio(data)
     if continueRadioData then
-        continueRadioData.continueSourceRadioId  = data.radioId
+        continueRadioData.continueSourceRadioId = data.radioId
         self:_DoShowRadio(continueRadioData)
         
         if self.m_curShow then
@@ -658,9 +602,6 @@ RadioSystem._TryShowNextRadio = HL.Method().Return(HL.Boolean) << function(self)
     return true
 end
 
-
-
-
 RadioSystem._CheckRadioInQueue = HL.Method(HL.String).Return(HL.Number) << function(self, radioId)
     for index, v in pairs(self.m_waitingQueue) do
         if v.radioId == radioId then
@@ -670,12 +611,8 @@ RadioSystem._CheckRadioInQueue = HL.Method(HL.String).Return(HL.Number) << funct
     return -1
 end
 
-
-
-
-
-
-RadioSystem._TryAddRadio2Queue = HL.Method(HL.String, HL.Opt(HL.Table, HL.Boolean)) << function(self, radioId, extraData, resume)
+RadioSystem._TryAddRadio2Queue = HL.Method(HL.String, HL.Opt(HL.Table, HL.Boolean)) <<
+function(self, radioId, extraData, resume)
     if self:_CheckRadioInQueue(radioId) <= 0 then
         local res, radioData = Tables.radioTable:TryGetValue(radioId)
         if res then
@@ -706,10 +643,6 @@ RadioSystem._TryAddRadio2Queue = HL.Method(HL.String, HL.Opt(HL.Table, HL.Boolea
     end
 end
 
-
-
-
-
 RadioSystem._CutCurRadio = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, doCallback, tryFinishRadio)
     local curShow = self.m_curShow
     local callback
@@ -736,6 +669,7 @@ RadioSystem._CutCurRadio = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function
                 VoiceManager:StopVoice(curShow.voiceHandleId)
             end
         end
+        self:_StopCurAudioEvent()
     end
     self:_ClearCurTimer()
     self.m_curShow = nil
@@ -750,8 +684,6 @@ RadioSystem._CutCurRadio = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function
 
     NarrativeUtils.SetRadioId("")
 end
-
-
 
 RadioSystem._UpdateVoiceInfo = HL.Method() << function(self)
     self.m_curShow.voiceDurations = {}
@@ -777,16 +709,19 @@ end
 
 
 
+RadioSystem._IsPureAudioEventRow = HL.Method(HL.Userdata).Return(HL.Boolean) << function(self, singleData)
+    if singleData == nil then
+        return false
+    end
+    if string.isEmpty(singleData.audioEvent) then
+        return false
+    end
+    return string.isEmpty(singleData.radioText)
+end
 
 RadioSystem._DoShowRadio = HL.Method(HL.Table) << function(self, data)
     local panel = self:_GetUICtrl()
     local needShow = not self:_IsSoundOnly()
-    if needShow then
-        panel.animationWrapper:ClearTween()
-        panel:PlayAnimationIn()
-    else
-        self:_HideUI()
-    end
     local radioId = data.radioId
     local curIndex = data.curIndex
     local callback = data.callback
@@ -794,6 +729,24 @@ RadioSystem._DoShowRadio = HL.Method(HL.Table) << function(self, data)
     local isContinueExRadio = data.isContinueExRadio
     local continueSourceRadioId = data.continueSourceRadioId
     local res, radioData = Tables.radioTable:TryGetValue(radioId)
+
+    
+    local firstIsPureAudioEvent = false
+    if res and radioData and radioData.radioSingleDataList then
+        local firstIndex = (curIndex or 0) + 1
+        if firstIndex <= radioData.radioSingleDataList.Count then
+            local firstSingle = radioData.radioSingleDataList[CSIndex(firstIndex)]
+            firstIsPureAudioEvent = self:_IsPureAudioEventRow(firstSingle)
+        end
+    end
+
+    if needShow and not firstIsPureAudioEvent then
+        panel.animationWrapper:ClearTween()
+        panel:PlayAnimationIn()
+    elseif not needShow then
+        self:_HideUI()
+    end
+
     if res then
         local canStop = false
         local radioType = radioData.radioType
@@ -823,9 +776,10 @@ RadioSystem._DoShowRadio = HL.Method(HL.Table) << function(self, data)
                 enableAdvancedOptions = data.enableAdvancedOptions,
                 voOffset = data.voOffset,
                 reverbOffset = data.reverbOffset,
-                interruptFinish = data.interruptFinish,
                 attenuationType = data.attenuationType,
                 noFlushAfterLoading = data.noFlushAfterLoading,
+                audioEventPlayingId = 0,
+                emotionVoiceSkipRemaining = 0,
             }
             self:_UpdateVoiceInfo()
             self:_ShowSingleRadio()
@@ -833,15 +787,10 @@ RadioSystem._DoShowRadio = HL.Method(HL.Table) << function(self, data)
         else
             logger.error("_DoShowRadio radioType error, only wireless supported, radioId: " .. radioId .. "!!!")
         end
-
     else
         logger.error("_DoShowRadio data error, radioId: " .. radioId .. "!!!")
     end
 end
-
-
-
-
 
 RadioSystem._GetExistTime = HL.Method(HL.String, HL.Number).Return(HL.Number) << function(self, voiceId, voiceHandleId)
     local existTime = -1
@@ -856,23 +805,56 @@ RadioSystem._GetExistTime = HL.Method(HL.String, HL.Number).Return(HL.Number) <<
     return existTime
 end
 
-
-
 RadioSystem._ShowSingleRadio = HL.Method() << function(self)
     local panel = self:_GetUICtrl()
     local isShow = panel:IsShow()
     local needShow = not self:_IsSoundOnly()
-    if isShow and not needShow then
-        self:_HideUI()
-    elseif not isShow and needShow then
-        panel:ShowSelf()
-    end
+
+    
+    self:_StopCurAudioEvent()
+
     if self.m_curShow then
         local nextIndex = self.m_curShow.curIndex + 1
         
         if nextIndex <= self.m_curShow.radioSingleDataList.Count then
-            panel.view.infoNode:ClearTween()
             local nextSingleData = self.m_curShow.radioSingleDataList[CSIndex(nextIndex)]
+            local isPureAudioEvent = self:_IsPureAudioEventRow(nextSingleData)
+
+            
+            if isPureAudioEvent then
+                self:_ClearCurTimer()
+
+                
+                if isShow then
+                    panel:TryPlayInfoNodeOut()
+                    panel:HideSelf(true)
+                end
+
+                local audioEvent = nextSingleData.audioEvent
+                local playingId = AudioAdapter.PostEvent(audioEvent)
+                if playingId and playingId > 0 then
+                    self.m_curShow.audioEventPlayingId = playingId
+                end
+
+                local duration = nextSingleData.audioEventDuration
+                if not duration or duration <= 0 then
+                    
+                    duration = Tables.cinematicConst.radioTextMinDuration
+                end
+                self:_AddCurExitTimer(duration)
+
+                self.m_curShow.curIndex = nextIndex
+                self.m_curShow.cacheCallbackVoiceHandleId = -1
+                return
+            end
+
+            
+            if isShow and not needShow then
+                self:_HideUI()
+            elseif not isShow and needShow then
+                panel:ShowSelf()
+            end
+            panel.view.infoNode:ClearTween()
             local num = panel:ShowRadioUI(self.m_curShow, nextSingleData, nextIndex)
             num = num / I18nUtils.GetTextSpeedFactor()
             local voiceId = nextSingleData.audioOverride
@@ -886,7 +868,8 @@ RadioSystem._ShowSingleRadio = HL.Method() << function(self)
 
             self:_ClearCurTimer()
 
-            local durationOnText = lume.clamp(num * Tables.cinematicConst.textShowDurationPerWord, Tables.cinematicConst.radioMinWaitTime, Tables.cinematicConst.radioMaxWaitTime)
+            local durationOnText = lume.clamp(num * Tables.cinematicConst.textShowDurationPerWord,
+                Tables.cinematicConst.radioMinWaitTime, Tables.cinematicConst.radioMaxWaitTime)
 
             local entity = self.m_curShow.entity
             local cfg = CS.Beyond.Gameplay.Audio.NarrativeVoiceConfig(audioEffect, 1)
@@ -919,24 +902,44 @@ RadioSystem._ShowSingleRadio = HL.Method() << function(self)
                 local nameId = DialogUtils.GetRealActorNameId(nextSingleData.actorNameId)
                 local emotionType = nextSingleData.emotionType
                 local voiceHandleId = -1
-                local getRes, emotionVoiceId = VoiceUtils.TryGetCommonEmotionVoiceId(
-                    nameId, emotionType, CSUtils.GetStringHash(nextSingleData.id), {self.m_lastPlayedEmotionVoiceId}
-                )
-                if getRes then
-                    if is3D and entity then
-                        voiceHandleId = VoiceManager:SpeakNarrative(emotionVoiceId, entity, cfg)
-                    else
-                        voiceHandleId = VoiceManager:SpeakNarrative(emotionVoiceId, nil, cfg)
+
+                if self.m_curShow.emotionVoiceSkipRemaining > 0 then
+                    
+                    self.m_curShow.emotionVoiceSkipRemaining = self.m_curShow.emotionVoiceSkipRemaining - 1
+                else
+                    local getRes, emotionVoiceId = VoiceUtils.TryGetCommonEmotionVoiceId(
+                        nameId, emotionType, CSUtils.GetStringHash(nextSingleData.id), { self.m_lastPlayedEmotionVoiceId }
+                    )
+                    if getRes then
+                        if is3D and entity then
+                            voiceHandleId = VoiceManager:SpeakNarrative(emotionVoiceId, entity, cfg)
+                        else
+                            voiceHandleId = VoiceManager:SpeakNarrative(emotionVoiceId, nil, cfg)
+                        end
+                        
+                        
+                        if voiceHandleId > 0 and VoiceManager:IsVoicePlaying(voiceHandleId) then
+                            self.m_curShow.emotionVoiceSkipRemaining = EMOTION_VOICE_PLAY_INTERVAL - 1
+                        end
                     end
                     
+                    self.m_lastPlayedEmotionVoiceId = emotionVoiceId
                 end
 
-                self.m_lastPlayedEmotionVoiceId = emotionVoiceId
                 
                 local minDuration = Tables.cinematicConst.radioTextMinDuration
                 local finalTime = math.max(minDuration, durationOnText)
                 self:_AddCurExitTimer(finalTime)
             end
+
+            
+            if not string.isEmpty(nextSingleData.audioEvent) then
+                local playingId = AudioAdapter.PostEvent(nextSingleData.audioEvent)
+                if playingId and playingId > 0 then
+                    self.m_curShow.audioEventPlayingId = playingId
+                end
+            end
+
             self.m_curShow.curIndex = nextIndex
             self.m_curShow.cacheCallbackVoiceHandleId = -1
         else
@@ -952,9 +955,6 @@ RadioSystem._ShowSingleRadio = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 RadioSystem._CheckCanPlay = HL.Method(HL.Opt(HL.String)).Return(HL.Boolean) << function(self, radioId)
     
@@ -973,8 +973,6 @@ RadioSystem._CheckCanPlay = HL.Method(HL.Opt(HL.String)).Return(HL.Boolean) << f
     return self.inMainHud
 end
 
-
-
 RadioSystem._UpdateLog = HL.Method() << function(self)
     if self.m_enableDebugLog then
         local text = ""
@@ -988,8 +986,6 @@ RadioSystem._UpdateLog = HL.Method() << function(self)
     end
 end
 
-
-
 RadioSystem._GetUICtrl = HL.Method().Return(HL.Forward("UICtrl")) << function(self)
     local _, panel = UIManager:IsOpen(PanelId.Radio)
     return panel
@@ -997,23 +993,17 @@ end
 
 
 
-
-
 RadioSystem._AddGlobalTag = HL.Method() << function(self)
     self:_RemoveGlobalTag()
-    self.m_globalTagHandle = GameInstance.player.globalTagsSystem:AddGlobalTag(CS.Beyond.Gameplay.Core.GameplayTag(CS.Beyond.GlobalTagConsts.TAG_RADIO_PATH))
+    self.m_globalTagHandle = GameInstance.player.globalTagsSystem:AddGlobalTag(CS.Beyond.Gameplay.Core.GameplayTag(CS
+    .Beyond.GlobalTagConsts.TAG_RADIO_PATH))
 end
-
-
 
 RadioSystem._RemoveGlobalTag = HL.Method() << function(self)
     if self.m_globalTagHandle then
         self.m_globalTagHandle:RemoveTag()
     end
 end
-
-
-
 
 
 
@@ -1044,8 +1034,6 @@ RadioSystem._OnDialogStart = HL.Method(HL.Opt(HL.Table)) << function(self, data)
         self:_CutCurRadio(true)
     end
 end
-
-
 
 RadioSystem._TryGetContinueIndex = HL.Method().Return(HL.Boolean, HL.Number) << function(self)
     local nextIndex = self.m_curShow.curIndex
@@ -1100,9 +1088,6 @@ end
 
 
 
-
-
-
 RadioSystem._TryFlushAllWhenLoading = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     
     if self.m_curShow and self.m_curShow.noFlushAfterLoading then
@@ -1113,24 +1098,15 @@ RadioSystem._TryFlushAllWhenLoading = HL.Method(HL.Opt(HL.Any)) << function(self
 end
 
 
-
-
-
 RadioSystem._FlushAll = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     self:_DoFlushRadio()
     self:_Exit(true)
 end
 
-
-
-
-
 RadioSystem._SetLastFinishRadio = HL.Method(HL.String, HL.String) << function(self, radioId, reason)
     GameWorld.narrativeManager:SetLastFinishRadio(radioId)
     logger.info(string.format("RadioSystem _SetLastFinishRadio: %s, Reason: %s", radioId, reason))
 end
-
-
 
 RadioSystem._DoFlushRadio = HL.Method() << function(self)
     
@@ -1163,8 +1139,6 @@ end
 
 
 
-
-
 RadioSystem.OnInit = HL.Override() << function(self)
     RadioSystem.s_radioIndexCache = {}
     self.m_waitingQueue = {}
@@ -1172,14 +1146,15 @@ RadioSystem.OnInit = HL.Override() << function(self)
     self.m_curShow = nil
 end
 
-
-
 RadioSystem.OnRelease = HL.Override() << function(self)
-    self:_CutCurRadio(true)
+    
+    
+    
     RadioSystem.s_radioIndexCache = {}
     self.m_waitingQueue = {}
     self.m_curShow = nil
     self.m_queueSortFunc = nil
+    self.m_pauseRefCount = 0
 end
 
 HL.Commit(RadioSystem)

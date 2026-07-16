@@ -1,19 +1,8 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
 ShopItem = HL.Class('ShopItem', UIWidgetBase)
 
-
 ShopItem.m_info = HL.Field(HL.Table)
-
-
 
 
 ShopItem._OnFirstTimeInit = HL.Override() << function(self)
@@ -30,9 +19,6 @@ ShopItem._OnFirstTimeInit = HL.Override() << function(self)
         self:UpdateMoney()
     end)
 end
-
-
-
 
 
 
@@ -110,8 +96,6 @@ ShopItem.InitShopItem = HL.Virtual(HL.Table) << function(self, info)
     self:UpdateMoney()
 end
 
-
-
 ShopItem._OnClick = HL.Method() << function(self)
     local info = self.m_info
     if info.isSoldOut then
@@ -126,8 +110,6 @@ ShopItem._OnClick = HL.Method() << function(self)
     })
 end
 
-
-
 ShopItem.PlayLockAnimation = HL.Method() << function(self)
     self.view.lockedNode:Play("shop_lockedout", function()
         self.view.lockedNode:SampleToInAnimationBegin()
@@ -135,8 +117,6 @@ ShopItem.PlayLockAnimation = HL.Method() << function(self)
         self.m_info.isLocked = false
     end)
 end
-
-
 
 ShopItem.UpdateMoney = HL.Method() << function(self)
     local info = self.m_info
@@ -163,8 +143,6 @@ ShopItem.UpdateMoney = HL.Method() << function(self)
         self.view.price.color = self.view.config.NORMAL_COLOR
     end
 end
-
-
 
 ShopItem.PlaySoldOutAnimation = HL.Method() << function(self)
     self.view.soldOutNode.gameObject:SetActive(true)

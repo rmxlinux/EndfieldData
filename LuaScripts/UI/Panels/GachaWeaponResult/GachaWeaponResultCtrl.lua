@@ -1,13 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaWeaponResult
 local PHASE_ID = PhaseId.GachaWeaponResult
-
-
-
-
-
 GachaWeaponResultCtrl = HL.Class('GachaWeaponResultCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -18,11 +12,7 @@ GachaWeaponResultCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 GachaWeaponResultCtrl.m_curFocusCell = HL.Field(HL.Any)
-
-
-
 
 
 GachaWeaponResultCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -121,12 +111,10 @@ GachaWeaponResultCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
     self.view.weaponNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
         if isFocused then
-            InputManagerInst.controllerNaviManager:SetTarget(self.view.gachaWeaponResultCell10.button)
+            self:SetNaviTarget(self.view.gachaWeaponResultCell10.button)
         end
     end)
 end
-
-
 
 GachaWeaponResultCtrl._OnClickExit = HL.Method() << function(self)
     local arg = self.m_phase.arg

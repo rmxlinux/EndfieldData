@@ -57,7 +57,7 @@ LuaCfg.Types = Types
 
 
 hg.curEnvLang = CS.Beyond.I18n.I18nUtils.curEnvLang:GetHashCode()
-local function I18nGetText(id, text)
+local function I18nGetText(id, text, ...)
     if UNITY_EDITOR then
         CS.Beyond.I18n.I18nUtils.RecordTextId(id)
     end
@@ -65,6 +65,12 @@ local function I18nGetText(id, text)
     if BEYOND_DEBUG_COMMAND then
         if CS.Beyond.I18n.I18nUtils.GetShowTextIdMode() then
             local hex = string.format("%X", id)
+            return hex
+        end
+        local args = {...}
+        local in_recursion = args[1] or false
+        if CS.Beyond.I18n.I18nUtils.GetReplaceLangMode() and not in_recursion then
+            local hex = string.format("#*%X*#%s", id, I18nGetText(id, text, true))
             return hex
         end
     end

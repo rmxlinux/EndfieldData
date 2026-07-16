@@ -1,25 +1,12 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
 AdventureTaskCell = HL.Class('AdventureTaskCell', UIWidgetBase)
-
 
 AdventureTaskCell.m_itemRewardCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 AdventureTaskCell.m_taskId = HL.Field(HL.String) << ""
 
-
 AdventureTaskCell.m_delayShowCoroutine = HL.Field(HL.Thread)
-
-
 
 
 AdventureTaskCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -36,15 +23,9 @@ AdventureTaskCell._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 AdventureTaskCell._OnDisable = HL.Override() << function(self)
     self:_ClearCoroutine(self.m_delayShowCoroutine)
 end
-
-
-
-
 
 AdventureTaskCell.InitAdventureTaskCell = HL.Method(HL.Table, HL.Opt(HL.Number)) << function(self, info, delayShowTime)
     self:_FirstTimeInit()
@@ -59,11 +40,13 @@ AdventureTaskCell.InitAdventureTaskCell = HL.Method(HL.Table, HL.Opt(HL.Number))
     end
 
     self.m_taskId = info.taskId
+    local state = info.state or AdventureBookUtils.StageTaskDisplayState.InProgress
 
     
-    local isNormal = not info.isComplete and not info.isRewarded
-    local isFinish = info.isComplete and not info.isRewarded
-    local isRewarded = info.isRewarded
+    local isNormal = state == AdventureBookUtils.StageTaskDisplayState.InProgress
+    local isFinish = state == AdventureBookUtils.StageTaskDisplayState.Complete
+    local isRewarded = state == AdventureBookUtils.StageTaskDisplayState.Rewarded
+        or state == AdventureBookUtils.StageTaskDisplayState.OtherDomainRewarded
 
     local taskCfg = Tables.AdventureTaskTable[info.taskId]
     local rewardId = taskCfg.rewardId
@@ -95,11 +78,10 @@ AdventureTaskCell.InitAdventureTaskCell = HL.Method(HL.Table, HL.Opt(HL.Number))
         cell:SetExtraInfo({ isSideTips = DeviceInfo.usingController })
     end)
     local taskData = Tables.adventureTaskTable[info.taskId]
-    local taskProgress = adventure:GetTaskProgress(info.taskId)
     local isCompleted = adventure:IsTaskComplete(info.taskId)
-    local value = AdventureBookUtils.GetTaskCurrProgress(taskData)
+    local taskProgress = AdventureBookUtils.GetTaskCurrProgress(taskData)
     local maxProgress = AdventureBookUtils.GetTaskMaxProgress(taskData)
-    curProgress = (isRewarded or isCompleted) and maxProgress or value
+    local curProgress = (isRewarded or isCompleted) and maxProgress or taskProgress
 
     
     local stateAniName
@@ -116,8 +98,24 @@ AdventureTaskCell.InitAdventureTaskCell = HL.Method(HL.Table, HL.Opt(HL.Number))
     end
     self.view.aniWrapper:Play(stateAniName) 
 
-    self.view.contentNode.text.text = string.format("%d/%d", curProgress, maxProgress)
+    if state == AdventureBookUtils.StageTaskDisplayState.OtherDomainRewarded then
+        self.view.contentNode.text.text = "-/-"
+    else
+        self.view.contentNode.text.text = string.format("%d/%d", curProgress, maxProgress)
+    end
     self.view.contentNode.taskDesc.text = taskData.taskDesc
+    self.view.contentNode.otherDomainCompleteNode.gameObject:SetActiveIfNecessary(
+        state == AdventureBookUtils.StageTaskDisplayState.OtherDomainRewarded)
+    if state == AdventureBookUtils.StageTaskDisplayState.OtherDomainRewarded then
+        self.view.contentNode.otherDomainCompleteText.text =
+            string.format(Language.LUA_ADVENTURE_BOOK_OTHER_DOMAIN_COMPLETE, info.otherDomainName or "")
+    end
+
+    local showDomainBadge = info.showDomainBadge
+    self.view.domainBadge.gameObject:SetActiveIfNecessary(showDomainBadge)
+    if showDomainBadge and not string.isEmpty(info.badgeIcon) then
+        self.view.domainBadgeIcon:LoadSprite(UIConst.UI_SPRITE_ADVENTURE, info.badgeIcon)
+    end
 
     
     if isNormal then
@@ -136,11 +134,8 @@ AdventureTaskCell.InitAdventureTaskCell = HL.Method(HL.Table, HL.Opt(HL.Number))
     end
 
     
-    self.view.redDot:InitRedDot("AdventureBookTabStageTaskCell", info.taskId)
+    self.view.redDot:InitRedDot("AdventureBookTabStageTaskCell", info.redDotArg)
 end
-
-
-
 
 AdventureTaskCell.PlayInAniAndDelayTime = HL.Method(HL.Number) << function(self, delayTime)
     self.view.aniWrapper:ClearTween(false)

@@ -19,8 +19,26 @@ function FactoryUtils.getBuildingStateType(nodeId)
 end
 
 
-function FactoryUtils.getCraftNeedTime(craftData)
-    local formulaGroupId = craftData.formulaGroupId
+function FactoryUtils.getFormulaGroupId(craftId)
+    local craftData = Tables.factoryMachineCraftTable:GetValue(craftId)
+    local machineModeList = FactoryUtils.getBuildingModeListCovered(craftData.machineId)
+    for index, mapData in ipairs(machineModeList) do
+        local success, groupData = Tables.factoryMachineCraftGroupTable:TryGetValue(mapData.groupName)
+        if success then
+            for _, id in pairs(groupData.craftList) do
+                if id == craftId then
+                    return mapData.groupName
+                end
+            end
+        end
+    end
+    return nil
+end
+
+function FactoryUtils.getCraftNeedTime(craftData, formulaGroupId)
+    if formulaGroupId == nil then
+        formulaGroupId = FactoryUtils.getFormulaGroupId(craftData.id)
+    end
     local machineCraftGroupData = Tables.factoryMachineCraftGroupTable:GetValue(formulaGroupId)
     return craftData.progressRound * machineCraftGroupData.msPerRound * 0.001
 end
@@ -202,9 +220,26 @@ function FactoryUtils.canMoveBuilding(nodeId, needToast)
         return false
     end
 
+    local isInvalidBuilding = FactoryUtils.isInvalidBuilding(nodeId)
+    if isInvalidBuilding then
+        if needToast then
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_FACTORY_INVALID_BUILDING_OP_DISABLE_TOAST)
+        end
+        return false 
+    end
+
     local isOthersSocialBuilding = FactoryUtils.isOthersSocialBuilding(nodeId)
     if isOthersSocialBuilding then
         return false 
+    end
+
+    local _, bData = Tables.factoryBuildingTable:TryGetValue(node.templateId)
+    if bData and not bData.allowPlayerMove then
+        
+        if needToast then
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_FACTORY_BUILDING_MOVE_NOT_ALLOWED)
+        end
+        return false
     end
 
     local pdp = node.predefinedParam
@@ -256,6 +291,9 @@ function FactoryUtils.canDelBuilding(nodeId, needToast, chapterId)
 
     local _, bData = Tables.factoryBuildingTable:TryGetValue(node.templateId)
     if bData and not bData.canDelete then
+        if needToast then
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_FACTORY_BUILDING_DELETE_NOT_ALLOWED)
+        end
         return false
     end
     local isDelLocked = CSFactoryUtil.CheckIsBuildingMoveAndDelLocked(node.templateId, node.instKey, needToast == true)
@@ -279,7 +317,7 @@ function FactoryUtils.canDelBuilding(nodeId, needToast, chapterId)
     return true
 end
 
-function FactoryUtils.delBuilding(nodeId, onComplete, noConfirm, hintText, chapterId)
+function FactoryUtils.delBuilding(nodeId, onComplete, noConfirm, hintText, chapterId, backToDepot)
     chapterId = chapterId or Utils.getCurrentChapterId()
 
     local clearAct
@@ -311,7 +349,7 @@ function FactoryUtils.delBuilding(nodeId, onComplete, noConfirm, hintText, chapt
         if clearAct then
             clearAct()
         end
-        GameInstance.player.remoteFactory.core:Message_OpDismantle(chapterId, nodeId, function()
+        GameInstance.player.remoteFactory.core:Message_OpDismantle(chapterId, nodeId, backToDepot and true or false, function()
             if onComplete then
                 onComplete()
             end
@@ -703,6 +741,29 @@ function FactoryUtils.getItemAsInputRecipeIds(itemId, ignoreUnlock)
         end
     end
 
+    do
+        
+        local buildingId = "vaporizer_1"
+        local envGenSuccess, envGenData = Tables.factoryVaporizerTable:TryGetValue(buildingId)
+        if envGenSuccess then
+            for _, groupData in pairs(envGenData.groups) do
+                if groupData.consumeItem == itemId then
+                    local buildingItemId = FactoryUtils.getBuildingItemId(buildingId)
+                    local isBuildingUnlocked = WikiUtils.canShowWikiEntry(buildingItemId)
+                    local info = {
+                        incomes = { { id = itemId } },
+                        buildingId = buildingId,
+                        consumeRate = groupData.consumeRate,
+                        genEnv = groupData.genEnv,
+                        craftId = buildingId .. groupData.genEnv:ToString(),
+                        isUnlock = isBuildingUnlocked,
+                    }
+                    table.insert(recipeIds, info)
+                end
+            end
+        end
+    end
+
     return recipeIds, canCraft
 end
 
@@ -712,7 +773,7 @@ end
 
 
 
-function FactoryUtils.getBuildingCrafts(buildingId, ignoreUnlock, justId, producerMode)
+function FactoryUtils.getBuildingCrafts(buildingId, ignoreUnlock, justId, producerMode, allModes)
     local bData = Tables.factoryBuildingTable:GetValue(buildingId)
     local bType = bData.type
     local crafts = {}
@@ -765,22 +826,26 @@ function FactoryUtils.getBuildingCrafts(buildingId, ignoreUnlock, justId, produc
                 end
             end
         end
-    elseif bType == GEnums.FacBuildingType.MachineCrafter or bType == GEnums.FacBuildingType.FluidReaction then
+    elseif bType == GEnums.FacBuildingType.MachineCrafter
+        or bType == GEnums.FacBuildingType.FluidReaction
+        or bType == GEnums.FacBuildingType.MachineWithActivator then
         local machineCrafterData = Tables.factoryMachineCrafterTable:GetValue(buildingId)
         for i = 0, machineCrafterData.modeMap.Count - 1 do
             local curModeItem = machineCrafterData.modeMap[i]
-            if not producerMode or curModeItem.modeName == producerMode then
+            local isModeUnlocked = GameInstance.player.remoteFactory.core:IsBuildingModeUnlocked(curModeItem.modeName, buildingId)
+            local addOtherMode = allModes and isModeUnlocked
+            if not producerMode or curModeItem.modeName == producerMode or addOtherMode then
                 local machineCrafterGroupData = Tables.factoryMachineCraftGroupTable:GetValue(curModeItem.groupName)
                 for _, craftId in pairs(machineCrafterGroupData.craftList) do
                     if ignoreUnlock or facCore:IsFormulaVisible(craftId) then
                         if justId then
                             table.insert(crafts, craftId)
                         else
-                            table.insert(crafts, FactoryUtils.parseMachineCraftData(craftId))
+                            table.insert(crafts, FactoryUtils.parseMachineCraftData(craftId, curModeItem.groupName))
                         end
                     end
                 end
-                if producerMode then
+                if producerMode and not allModes then
                     break
                 end
             end
@@ -873,11 +938,50 @@ function FactoryUtils.getBuildingCrafts(buildingId, ignoreUnlock, justId, produc
                 isSewageCraft = true,
             })
         end
+    elseif bType == GEnums.FacBuildingType.EnvGenWithActivator then
+        local envGenSuccess, envGenData = Tables.factoryVaporizerTable:TryGetValue(buildingId)
+        if envGenSuccess then
+            for _, groupData in pairs(envGenData.groups) do
+                table.insert(crafts, {
+                    incomes = { { id = groupData.consumeItem } },
+                    consumeRate = groupData.consumeRate,
+                    genEnv = groupData.genEnv,
+                    craftId = buildingId .. groupData.genEnv:ToString()
+                })
+        end
+    end
+    elseif bType == GEnums.FacBuildingType.GasMiner then
+        local success, gasMinerData = Tables.factoryGasMinerTable:TryGetValue(buildingId)
+        if success then
+            local time = gasMinerData.msPerRound * 0.001
+            for i = 0, gasMinerData.mineable.Count - 1 do
+                local gasItemId = gasMinerData.mineable[i].miningItemId
+                local gasPreFix = "gas"
+                local gasItemSubString = string.sub(gasItemId, string.find(gasItemId, gasPreFix) + #gasPreFix)
+                local gasPointItemId = string.format("item_gaspoint%s", gasItemSubString)
+                local gasPointSuccess, gasPointItemData = Tables.itemTable:TryGetValue(gasPointItemId)
+                if gasPointSuccess then
+                    if justId then
+                        table.insert(crafts, gasPointItemId)
+                    else
+                        local incomesId = gasPointItemId
+                        local info = {
+                            time = time,
+                            incomes = { { id = incomesId, count = 1 } },
+                            outcomes = { { id = gasItemId, count = 1 } },
+                            buildingId = buildingId,
+                            craftId = gasItemId,
+                        }
+                        table.insert(crafts, info)
+                    end
+                end
+            end
+        end
     end
     return crafts, bType
 end
 
-function FactoryUtils.getBuildingCraftsWithNodeId(nodeId, ignoreUnlock, justId)
+function FactoryUtils.getBuildingCraftsWithNodeId(nodeId, ignoreUnlock, justId, allModes)
     local node = FactoryUtils.getBuildingNodeHandler(nodeId)
     local buildingId = node.templateId
     local formulaManComponentPosition = GEnums.FCComponentPos.FormulaMan:GetHashCode()
@@ -913,38 +1017,202 @@ function FactoryUtils.getBuildingCraftsWithNodeId(nodeId, ignoreUnlock, justId)
         end
     end
     if not result then
-        result = FactoryUtils.getBuildingCrafts(buildingId, ignoreUnlock, justId, currentMode)
+        result = FactoryUtils.getBuildingCrafts(buildingId, ignoreUnlock, justId, currentMode, allModes)
     end
 
     return result
 end
 
-function FactoryUtils.checkBuildingHasModeSwitch(buildingId, mode)
+function FactoryUtils.checkBuildingHasModeSwitch(buildingId, skipModeUnlockChecking)
+    
     if not FactoryUtils.isDomainSupportPipe() then
-        return false
+        return false, "", ""
     end
 
-    local buildingModeUnlocked = GameInstance.player.remoteFactory.core:IsBuildingModeUnlocked(
-        FacConst.FAC_FORMULA_MODE_MAP.LIQUID,
-        buildingId
-    )
-    if not buildingModeUnlocked then
-        return false
+    
+    local hasCrafterData, crafterData = Tables.factoryMachineCrafterTable:TryGetValue(buildingId)
+    if not hasCrafterData or crafterData.modeMap.Count <= 1 then
+        return false, "", ""
     end
 
-    local crafterData = Tables.factoryMachineCrafterTable:GetValue(buildingId)
-    if crafterData.modeMap.Count <= 1 then
-        return false
-    end
+    
+    local baseMode, switchMode = "", ""
+    local modeMap = {}
+    local modeArray = {}
     for index = 0, crafterData.modeMap.Count - 1 do
         local mapData = crafterData.modeMap[index]
-        if mapData ~= nil and
-            mapData.modeName == FacConst.FAC_FORMULA_MODE_MAP.LIQUID then
-            return true
+        if crafterData.modeUnlockDefaultMap[mapData.modeName] then
+            modeMap[mapData.modeName] = index
+        else
+            local unlockMode = true
+            if not skipModeUnlockChecking then
+                unlockMode = GameInstance.player.remoteFactory.core:IsBuildingModeUnlocked(mapData.modeName, buildingId)
+            end
+            if unlockMode then
+                modeMap[mapData.modeName] = index
+            end
+        end
+    end
+    for modeName, index in pairs(modeMap) do
+        if index ~= -1 then
+            local success, coverModeData = Tables.factoryMachineCraftModeCoverTable:TryGetValue(modeName)
+            if success then
+                for i = 0, coverModeData.list.Count - 1 do
+                    local coverMode = coverModeData.list[i]
+                    if modeMap[coverMode.machineModeCoverType] then
+                        modeMap[coverMode.machineModeCoverType] = -1
+                    end
+                end
+            end
+        end
+    end
+    for modeName, index in pairs(modeMap) do
+        if index ~= -1 then
+            table.insert(modeArray, {
+                name = modeName,
+                sort = index,
+            })
+        end
+    end
+    table.sort(modeArray, Utils.genSortFunction({"sort"}, true))
+    if modeArray[1] ~= nil then
+        baseMode = modeArray[1].name
+    end
+    if modeArray[2] ~= nil then
+        switchMode = modeArray[2].name
+    end
+
+    if string.isEmpty(baseMode) then
+        logger.error("错误！在建筑模式对应关系表里，" .. buildingId .. "这个建筑没有默认解锁的模式")
+        return false, baseMode, switchMode
+    end
+
+    if string.isEmpty(switchMode) then
+        return false, baseMode, switchMode
+    end
+
+    return true, baseMode, switchMode
+end
+
+local SWITCH_LIQUID_MODE_POPUP_TITLE_TEXT_ID = "ui_fac_pipe_mode_close_info_title"
+local SWITCH_LIQUID_MODE_POPUP_DESC_TEXT_ID = "ui_fac_pipe_mode_close_info_des"
+local SWITCH_LIQUID_MODE_POPUP_TOGGLE_TEXT_ID = "ui_fac_pipe_mode_close_info_choose"
+local SWITCH_LIQUID_MODE_POPUP_LOCAL_DATA_KEY = "hide_fac_machine_crafter_mode_switch_pop_up"
+
+function FactoryUtils.checkSwitchBuildingMode(buildingId, currentModeName, baseModeName, switchModeName, onConfirm, onCancel)
+    local _, ignorePopUp = ClientDataManagerInst:GetBool(SWITCH_LIQUID_MODE_POPUP_LOCAL_DATA_KEY, false)
+    if ignorePopUp or Utils.isInBlackbox() then
+        return true
+    end
+
+    local showPopup = FactoryUtils.checkSwitchBuildingModePopup(buildingId, currentModeName, baseModeName, switchModeName)
+    if not showPopup then
+        return true
+    end
+
+    local suppressModeSwitchPopUp = false 
+    Notify(MessageConst.SHOW_POP_UP, {
+        content = Language[SWITCH_LIQUID_MODE_POPUP_TITLE_TEXT_ID],
+        subContent = string.format(UIConst.COLOR_STRING_FORMAT,
+            UIConst.COUNT_RED_COLOR_STR,
+            Language[SWITCH_LIQUID_MODE_POPUP_DESC_TEXT_ID]),
+        onConfirm = function()
+            if suppressModeSwitchPopUp then
+                ClientDataManagerInst:SetBool(SWITCH_LIQUID_MODE_POPUP_LOCAL_DATA_KEY, true, false)
+            end
+            onConfirm()
+        end,
+        onCancel = onCancel,
+        toggle = {
+            onValueChanged = function(isOn)
+                suppressModeSwitchPopUp = isOn
+            end,
+            toggleText = Language[SWITCH_LIQUID_MODE_POPUP_TOGGLE_TEXT_ID],
+            isOn = false,
+        },
+    })
+    return false
+end
+
+function FactoryUtils.checkSwitchBuildingModePopup(buildingId, currentModeName, baseModeName, switchModeName)
+    local success, machineCrafterData = Tables.factoryMachineCrafterTable:TryGetValue(buildingId)
+    if not success then
+        return false
+    end
+
+    
+    local baseCountData = { 0, 0, 0, 0 }
+    local switchCountData = { 0, 0, 0, 0 }
+    for i = 0, machineCrafterData.modeMap.Count - 1 do
+        local curModeItem = machineCrafterData.modeMap[i]
+        local countData
+        if curModeItem.modeName == baseModeName then
+            countData = baseCountData
+        elseif curModeItem.modeName == switchModeName then
+            countData = switchCountData
+        end
+        if countData then
+            local groupData = Tables.factoryMachineCraftGroupTable:GetValue(curModeItem.groupName)
+            if groupData.craftList.Count > 0 then
+                local craftData = Tables.factoryMachineCraftTable:GetValue(groupData.craftList[0])
+                for _, itemBundleGroup in pairs(craftData.ingredients) do
+                    for _, itemBundle in pairs(itemBundleGroup.group) do
+                        local cacheType = FactoryUtils.getFactoryItemCacheState(itemBundle.id)
+                        if cacheType == GEnums.FCItemCacheType.Liquid then
+                            countData[1] = countData[1] + 1
+                        elseif cacheType == GEnums.FCItemCacheType.Gas then
+                            countData[2] = countData[2] + 1
+                        end
+                    end
+                end
+                for _, itemBundleGroup in pairs(craftData.outcomes) do
+                    for _, itemBundle in pairs(itemBundleGroup.group) do
+                        local cacheType = FactoryUtils.getFactoryItemCacheState(itemBundle.id)
+                        if cacheType == GEnums.FCItemCacheType.Liquid then
+                            countData[3] = countData[3] + 1
+                        elseif cacheType == GEnums.FCItemCacheType.Gas then
+                            countData[4] = countData[4] + 1
+                        end
+                    end
+                end
+            end
         end
     end
 
+    for i = 1, 4 do
+        if baseCountData[i] > switchCountData[i] and currentModeName == baseModeName then
+            return true
+        elseif baseCountData[i] < switchCountData[i] and currentModeName == switchModeName then
+            return true
+        end
+    end
     return false
+end
+
+function FactoryUtils.checkIsBuildingModeEnvRelated(buildingId, modeName)
+    local crafterData = Tables.factoryMachineCrafterTable:GetValue(buildingId)
+    for i = 0, crafterData.modeMap.Count -1 do
+        local modeMapItem = crafterData.modeMap[i]
+        if modeMapItem.modeName == modeName then
+            return modeMapItem.isEnvMode
+        end
+    end
+    return false
+end
+
+
+
+function FactoryUtils.getBuildingCurrentEnvironment(nodeHandler)
+    if nodeHandler == nil then
+        return 0, false
+    end
+
+    local envComponent = nodeHandler:GetComponentInPosition(GEnums.FCComponentPos.EnvReceiver:GetHashCode())
+    if envComponent == nil then
+        return 0, false
+    end
+
+    return envComponent.envReceiver.currentEnv, true
 end
 
 function FactoryUtils.getMachineCraftGroupData(buildingId, modeName)
@@ -955,6 +1223,29 @@ function FactoryUtils.getMachineCraftGroupData(buildingId, modeName)
             return Tables.factoryMachineCraftGroupTable:GetValue(modeMapItem.groupName)
         end
     end
+end
+
+
+
+
+
+function FactoryUtils.isMachineCraftInMode(buildingId, modeName, craftId)
+    if craftId == nil or string.isEmpty(craftId) then
+        return true
+    end
+    local groupData = FactoryUtils.getMachineCraftGroupData(buildingId, modeName)
+    if groupData == nil then
+        logger.error(string.format(
+            "[Factory] isMachineCraftInMode: no craft group buildingId=%s modeName=%s craftId=%s",
+            tostring(buildingId), tostring(modeName), tostring(craftId)))
+        return false
+    end
+    for _, id in pairs(groupData.craftList) do
+        if id == craftId then
+            return true
+        end
+    end
+    return false
 end
 
 function FactoryUtils.getMachineCraftGroupDataFromNodeHandler(nodeHandler)
@@ -971,7 +1262,7 @@ end
 
 
 
-function FactoryUtils.getItemCrafts(itemId, ignoreUnlock, includeMiner, includeFluidPumpIn)
+function FactoryUtils.getItemCrafts(itemId, ignoreUnlock, includeMiner, includeFluidPumpIn, includeGas)
     local crafts = {}
     local canCraft = false
 
@@ -985,10 +1276,18 @@ function FactoryUtils.getItemCrafts(itemId, ignoreUnlock, includeMiner, includeF
         local hasCraft, craftIds = Tables.factoryItemAsMachineCrafterOutcomeTable:TryGetValue(itemId)
         if hasCraft then
             canCraft = true
+            local sortList = {}
             for _, craftId in pairs(craftIds.list) do
                 if ignoreUnlock or facCore:IsFormulaVisible(craftId) then
-                    table.insert(crafts, FactoryUtils.parseMachineCraftData(craftId))
+                    local suc, craftCfgData = Tables.factoryMachineCraftTable:TryGetValue(craftId)
+                    if suc then
+                        table.insert(sortList, {id = craftId, sortId1 = craftCfgData.sortId})
+                    end
                 end
+            end
+            table.sort(sortList, buildingSortFunc)
+            for sortIdx, sortData in ipairs(sortList) do
+                table.insert(crafts, FactoryUtils.parseMachineCraftData(sortData.id))
             end
         end
     end
@@ -1048,6 +1347,41 @@ function FactoryUtils.getItemCrafts(itemId, ignoreUnlock, includeMiner, includeF
             end
             table.sort(minerSortData, buildingSortFunc)
             for sortIdx, sortData in ipairs(minerSortData) do
+                table.insert(crafts, sortData.data)
+            end
+        end
+    end
+
+    do
+        
+        if includeGas then
+            local gasSortData = {}
+            for buildingId, gasMinerData in pairs(Tables.factoryGasMinerTable) do
+                local buildingItemId = FactoryUtils.getBuildingItemId(buildingId)
+                local isUnlock = inventory:IsItemFound(buildingItemId)
+                local _, itemData = Tables.itemTable:TryGetValue(buildingItemId)
+                if itemData then
+                    for idx = 0, gasMinerData.mineable.Count - 1 do
+                        local mineable = gasMinerData.mineable[idx]
+                        if mineable.miningItemId == itemId then
+                            if ignoreUnlock or isUnlock then
+                                local info = FactoryUtils.parseGasMinerCraftData(buildingId, itemId)
+                                if info then
+                                    canCraft = true
+                                    table.insert(gasSortData, {
+                                        sortId1 = itemData.sortId1,
+                                        sortId2 = itemData.sortId2,
+                                        data = info,
+                                    })
+                                end
+                                break
+                            end
+                        end
+                    end
+                end
+            end
+            table.sort(gasSortData, buildingSortFunc)
+            for sortIdx, sortData in ipairs(gasSortData) do
                 table.insert(crafts, sortData.data)
             end
         end
@@ -1163,9 +1497,15 @@ end
 
 
 
-function FactoryUtils.parseMachineCraftData(craftId)
+
+function FactoryUtils.parseMachineCraftData(craftId, formulaGroupId)
     local craftData = Tables.factoryMachineCraftTable:GetValue(craftId)
-    local formulaGroupId = craftData.formulaGroupId
+    if formulaGroupId == nil then
+        formulaGroupId = FactoryUtils.getFormulaGroupId(craftId)
+    end
+    if formulaGroupId == nil and not string.isEmpty(craftData.formulaGroupId) then
+        formulaGroupId = craftData.formulaGroupId
+    end
     local machineCraftGroupData = Tables.factoryMachineCraftGroupTable:GetValue(formulaGroupId)
     local machineCraftData = Tables.factoryMachineCrafterTable:GetValue(craftData.machineId)
     local formulaMode = FacConst.FAC_FORMULA_MODE_MAP.NORMAL
@@ -1185,6 +1525,7 @@ function FactoryUtils.parseMachineCraftData(craftId)
         buildingId = craftData.machineId,
         craftId = craftId,
         isUnlock = GameInstance.player.remoteFactory.core:IsFormulaVisible(craftId),
+        env = craftData.gasEnv,
     }
     for _, itemBundleGroup in pairs(craftData.ingredients) do
         for _, itemBundle in pairs(itemBundleGroup.group) do
@@ -1288,6 +1629,32 @@ function FactoryUtils.parseLiquidCraftData(buildingId, liquidItemId)
         outcomes = { { id = liquidItemId, count = 1 } },
         buildingId = buildingId,
         craftId = string.format("%s_%s", liquidItemId, buildingId),
+    }
+    return info
+end
+
+
+
+
+
+function FactoryUtils.parseGasMinerCraftData(buildingId, gasItemId)
+    local _, gasMinerData = Tables.factoryGasMinerTable:TryGetValue(buildingId)
+    if not gasMinerData then
+        return nil
+    end
+    local gasPreFix = "gas"
+    local gasItemSubString = string.sub(gasItemId, string.find(gasItemId, gasPreFix) + #gasPreFix)
+    local gasPointItemId = string.format("item_gaspoint%s", gasItemSubString)
+    local hasPoint = Tables.itemTable:TryGetValue(gasPointItemId)
+    if not hasPoint then
+        return nil
+    end
+    local info = {
+        time = gasMinerData.msPerRound * 0.001,
+        incomes = { { id = gasPointItemId, count = 1 } },
+        outcomes = { { id = gasItemId, count = 1 } },
+        buildingId = buildingId,
+        craftId = string.format("%s_%s", gasItemId, buildingId),
     }
     return info
 end
@@ -1515,7 +1882,7 @@ function FactoryUtils.getBuildingPortState(nodeId, isPipePort)
 
     for index = 0, complexPortFragment.ports.length - 1 do
         local portData = complexPortFragment.ports:GetValue(index)
-        if portData.valid and portData.isPipe == isPipePort then
+        if portData.isUsable and portData.isPipe == isPipePort then
             local infoList = portData.isInput and inPortInfoList or outPortInfoList
             table.insert(infoList, {
                 index = portData.idx,
@@ -1593,6 +1960,18 @@ function FactoryUtils.getBuildingProcessingCraft(buildingInfo)
         for _, craftInfo in pairs(crafts) do
             if craftInfo.outcomes ~= nil then
                 return craftInfo  
+            end
+        end
+    elseif buildingType == GEnums.FacBuildingType.GasMiner then
+        for _, craftInfo in pairs(crafts) do
+            if craftInfo.outcomes ~= nil and craftInfo.outcomes[1].id == buildingInfo.collectingItemId then
+                return craftInfo
+            end
+        end
+    elseif buildingType == GEnums.FacBuildingType.EnvGenWithActivator then
+        for _, craftInfo in pairs(crafts) do
+            if craftInfo.incomes[1].id == buildingInfo.activatorCost.currentItemId then
+                return craftInfo
             end
         end
     else
@@ -1709,13 +2088,26 @@ function FactoryUtils.getLogisticData(templateId)
     logger.error("No LogisticData", templateId)
 end
 
-function FactoryUtils.isFactoryItemFluid(itemId)
+
+
+function FactoryUtils.getFactoryItemCacheState(itemId)
     local success, factoryItemData = Tables.factoryItemTable:TryGetValue(itemId)
     if success == false then
-        return false
+        return nil
     end
 
-    return factoryItemData.itemState
+    return factoryItemData.phaseType
+end
+
+
+function FactoryUtils.isFactoryItemNormal(itemId)
+    local state = FactoryUtils.getFactoryItemCacheState(itemId)
+    return state == GEnums.FCItemCacheType.Normal
+end
+
+function FactoryUtils.isFactoryItemFluid(itemId)
+    local state = FactoryUtils.getFactoryItemCacheState(itemId)
+    return state == GEnums.FCItemCacheType.Liquid
 end
 
 
@@ -1743,14 +2135,20 @@ function FactoryUtils.getMachineCraftCacheLayoutData(nodeId)
 
     local layoutData = {}
     layoutData.normalIncomeCaches = {}
-    layoutData.fluidIncomeCaches = {}
+    layoutData.liquidIncomeCaches = {}
     layoutData.normalOutcomeCaches = {}
-    layoutData.fluidOutcomeCaches = {}
+    layoutData.liquidOutcomeCaches = {}
 
     local firstCraft = crafts[1]
     for _, income in ipairs(firstCraft.incomes) do
         local itemId = income.id
-        local cacheData = FactoryUtils.isFactoryItemFluid(itemId) and layoutData.fluidIncomeCaches or layoutData.normalIncomeCaches
+        local cacheData
+        local cacheType = FactoryUtils.getFactoryItemCacheState(itemId)
+        if cacheType == GEnums.FCItemCacheType.Normal then
+            cacheData = layoutData.normalIncomeCaches
+        else
+            cacheData = layoutData.liquidIncomeCaches
+        end
         local bufferId = LuaIndex(income.buffer)
         if cacheData[bufferId] == nil then
             local data = {
@@ -1764,7 +2162,13 @@ function FactoryUtils.getMachineCraftCacheLayoutData(nodeId)
     end
     for _, outcome in ipairs(firstCraft.outcomes) do
         local itemId = outcome.id
-        local cacheData = FactoryUtils.isFactoryItemFluid(itemId) and layoutData.fluidOutcomeCaches or layoutData.normalOutcomeCaches
+        local cacheData
+        local cacheType = FactoryUtils.getFactoryItemCacheState(itemId)
+        if cacheType == GEnums.FCItemCacheType.Normal then
+            cacheData = layoutData.normalOutcomeCaches
+        else
+            cacheData = layoutData.liquidOutcomeCaches
+        end
         local bufferId = LuaIndex(outcome.buffer)
         if cacheData[bufferId] == nil then
             local data = {
@@ -1777,13 +2181,14 @@ function FactoryUtils.getMachineCraftCacheLayoutData(nodeId)
         end
     end
 
-    local bindingCollector = function(bindingDataList, caches)
+    local bindingCollector = function(bindingDataList, caches, cacheTypeSlotCount)
         if caches == nil or #caches == 0 then
             return
         end
 
+        local cacheIndex = 1
         for index = 0, bindingDataList.Count - 1 do
-            local cacheData = caches[LuaIndex(index)]
+            local cacheData = caches[cacheIndex]
             if cacheData == nil then
                 logger.error("配方道具数据与建筑数据不匹配")
                 return
@@ -1791,13 +2196,37 @@ function FactoryUtils.getMachineCraftCacheLayoutData(nodeId)
             local bindingData = bindingDataList[index]
             cacheData.portCount = bindingData.bindingPortIndices.Count
             cacheData.ports = bindingData.bindingPortIndices
+            if bindingData.pipePortPhaseType.Count > 0 then
+                cacheData.cacheType = 0
+                for i = 0, bindingData.pipePortPhaseType.Count - 1 do
+                    cacheData.cacheType = cacheData.cacheType + bindingData.pipePortPhaseType[i]:GetHashCode()
+                end
+            else
+                cacheData.cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal
+            end
+            cacheTypeSlotCount[cacheData.cacheType] = cacheTypeSlotCount[cacheData.cacheType] + cacheData.slotCount
+            cacheIndex = cacheIndex + 1
         end
     end
 
-    bindingCollector(groupData.ingredientBufferBinding, layoutData.normalIncomeCaches)
-    bindingCollector(groupData.outcomeBufferBinding, layoutData.normalOutcomeCaches)
-    bindingCollector(groupData.pipeIngredientBufferBinding, layoutData.fluidIncomeCaches)
-    bindingCollector(groupData.pipeOutcomeBufferBinding, layoutData.fluidOutcomeCaches)
+    local inSlotCount = {
+        [FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal] = 0,
+        [FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid] = 0,
+        [FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas] = 0,
+        [FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid] = 0,
+    }
+    local outSlotCount = {
+        [FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal] = 0,
+        [FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid] = 0,
+        [FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas] = 0,
+        [FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid] = 0,
+    }
+    bindingCollector(groupData.ingredientBufferBinding, layoutData.normalIncomeCaches, inSlotCount)
+    bindingCollector(groupData.outcomeBufferBinding, layoutData.normalOutcomeCaches, outSlotCount)
+    bindingCollector(groupData.pipeIngredientBufferBinding, layoutData.liquidIncomeCaches, inSlotCount)
+    bindingCollector(groupData.pipeOutcomeBufferBinding, layoutData.liquidOutcomeCaches, outSlotCount)
+    layoutData.inSlotCountByType = inSlotCount
+    layoutData.outSlotCountByType = outSlotCount
 
     return layoutData
 end
@@ -1808,32 +2237,6 @@ function FactoryUtils.getNodeWorldPos(nodeId)
     return worldPos
 end
 
-
-local EvtRendererClass = CS.Beyond.Gameplay.Factory.EvtLogisticFigureRenderer
-
-function FactoryUtils.stopLogisticFigureRenderer()
-    FactoryUtils.changeLogisticFigureRenderer(EvtRendererClass.S_NONE)
-end
-
-function FactoryUtils.startBeltFigureRenderer()
-    FactoryUtils.changeLogisticFigureRenderer(EvtRendererClass.S_CONVEYOR)
-end
-
-function FactoryUtils.startPipeFigureRenderer()
-    FactoryUtils.changeLogisticFigureRenderer(EvtRendererClass.S_PIPE)
-end
-
-function FactoryUtils.changeLogisticFigureRenderer(figureBit)
-    GameInstance.remoteFactoryManager:ToggleLogisticFigure(figureBit)
-end
-
-function FactoryUtils.isBeltInSimpleFigure()
-    return GameInstance.remoteFactoryManager:IsConveyorInSimpleFigure()
-end
-
-function FactoryUtils.isPipeInSimpleFigure()
-    return GameInstance.remoteFactoryManager:IsPipeInSimpleFigure()
-end
 
 
 function FactoryUtils.updateFacTechTreeTechPointNode(view, facTechPackageId)
@@ -1868,7 +2271,7 @@ function FactoryUtils.updateFacTechTreeTechPointCount(view, facTechPackageId)
     view.textResourceNumber.text = Utils.getItemCount(packageData.costPointType)
 end
 
-function FactoryUtils.updateBlackboxCell(view, blackboxId, onClickFunc)
+function FactoryUtils.updateBlackboxCell(view, blackboxId, onClickFunc, fromTechTree)
     local BlackboxCellState = {
         Complete = "complete",
         ManuallyComplete = "manullycomplete",
@@ -1887,8 +2290,8 @@ function FactoryUtils.updateBlackboxCell(view, blackboxId, onClickFunc)
     local isActive = DungeonUtils.isDungeonActive(blackboxId)
     local manuallyComplete = GameInstance.dungeonManager:IsDungeonManuallyPassed(blackboxId)
 
-   view.nameTxtS.text = blackboxName
-   view.nameTxtN.text = blackboxName
+    view.nameTxtS.text = blackboxName
+    view.nameTxtN.text = blackboxName
 
     local state1
     if isActive then
@@ -1899,7 +2302,7 @@ function FactoryUtils.updateBlackboxCell(view, blackboxId, onClickFunc)
     view.stateController:SetState(state1)
 
     local state2
-    if manuallyComplete then
+    if manuallyComplete and not fromTechTree then
         state2 = BlackboxCellState.ManuallyComplete
     elseif isComplete then
         state2 = BlackboxCellState.Complete
@@ -2168,7 +2571,7 @@ function FactoryUtils.getCraftTimeStr(time, forceFloor)
     end
 end
 
-function FactoryUtils.getMatchedFormulaIdByItemList(buildingId, mode, itemList)
+function FactoryUtils.getMatchedFormulaIdByItemList(buildingId, mode, itemList, env)
     if itemList == nil or #itemList == 0 then
         return ""
     end
@@ -2190,8 +2593,10 @@ function FactoryUtils.getMatchedFormulaIdByItemList(buildingId, mode, itemList)
         return ""
     end
 
-    for formulaId, formulaData in pairs(Tables.factoryMachineCraftTable) do
-        if formulaData.formulaGroupId == groupId and GameInstance.player.remoteFactory.core:IsFormulaVisible(formulaId) then
+    local craftGroupData = Tables.factoryMachineCraftGroupTable:GetValue(groupId)
+    for _, formulaId in pairs(craftGroupData.craftList) do
+        if GameInstance.player.remoteFactory.core:IsFormulaVisible(formulaId) then
+            local formulaData = Tables.factoryMachineCraftTable:GetValue(formulaId)
             local searchMap = {}
             local totalSearchCount = 0
             for _, itemId in ipairs(itemList) do
@@ -2218,7 +2623,13 @@ function FactoryUtils.getMatchedFormulaIdByItemList(buildingId, mode, itemList)
                 end
             end
 
-            if totalDataCount == totalSearchCount and not next(searchMap) then
+            local envMatched = true
+            if env ~= nil then
+                local envEnum = Utils.intToEnum(typeof(GEnums.FacEnvGenEnvType), env)
+                envMatched = envEnum == formulaData.gasEnv
+            end
+
+            if totalDataCount == totalSearchCount and not next(searchMap) and envMatched then
                 return formulaId
             end
         end
@@ -2462,6 +2873,48 @@ function FactoryUtils.addBuildingDomainSortFilterInfo(info, data, domainId)
         end
     end
     info.domainReverseSort = -info.domainSortGroup
+end
+
+function FactoryUtils.checkBuildingDomainSupportByItemId(itemId)
+    local data = FactoryUtils.getItemBuildingData(itemId)
+    if data == nil then
+        return false
+    end
+
+    local domainId = Utils.getCurDomainId()
+    
+    local allowModes = domainAllowModes[domainId]
+    if not allowModes then
+        allowModes = {}
+        local _, domainData = Tables.domainDataTable:TryGetValue(domainId)
+        if domainData then
+            for _, v in pairs(domainData.machineModeTypeGroup) do
+                allowModes[v] = true
+            end
+        end
+        domainAllowModes[domainId] = allowModes
+    end
+
+    if #data.placeDomains > 0 and lume.find(data.placeDomains, domainId) == nil then
+        return true
+    end
+    if next(allowModes) then
+        local succ, crafterData = Tables.factoryMachineCrafterTable:TryGetValue(data.id)
+        if succ then
+            local allow = false
+            for index = 0, crafterData.modeMap.Count - 1 do
+                local mapData = crafterData.modeMap[index]
+                if mapData ~= nil and allowModes[mapData.modeName]then
+                    allow = true
+                    break
+                end
+            end
+            if not allow then
+                return true
+            end
+        end
+    end
+    return false
 end
 
 local allowPipeDoamins
@@ -2717,6 +3170,139 @@ function FactoryUtils.refreshStateNodeByState(stateNode, progressNode, state, po
     return stateText ~= nil
 end
 
+function FactoryUtils.refreshEnvIcon(env, envIconController)
+    if env and env ~= GEnums.FacEnvGenEnvType.None then
+        envIconController.gameObject:SetActive(true)
+        envIconController:SetState(env:ToString())
+    else
+        envIconController.gameObject:SetActive(false)
+    end
+end
+
+
+
+
+local s_envReceiverBuildingSet = nil
+
+
+
+
+function FactoryUtils.isEnvReceiverBuilding(buildingId)
+    if string.isEmpty(buildingId) then
+        return false
+    end
+    if s_envReceiverBuildingSet == nil then
+        s_envReceiverBuildingSet = {}
+        for _, craftData in pairs(Tables.factoryMachineCraftTable) do
+            if craftData.gasEnv ~= GEnums.FacEnvGenEnvType.None then
+                s_envReceiverBuildingSet[craftData.machineId] = true
+            end
+        end
+    end
+    return s_envReceiverBuildingSet[buildingId] == true
+end
+
+
+
+
+function FactoryUtils.isBlueprintProductIconGasEnv(productIcon)
+    if string.isEmpty(productIcon) then
+        return false
+    end
+    local prefix = FacConst.FAC_BLUEPRINT_PRODUCT_ICON_GAS_PREFIX
+    return string.sub(productIcon, 1, #prefix) == prefix
+end
+
+
+
+function FactoryUtils.blueprintProductIconGasEnvToSpriteName(productIcon)
+    if not FactoryUtils.isBlueprintProductIconGasEnv(productIcon) then
+        return nil
+    end
+    local prefix = FacConst.FAC_BLUEPRINT_PRODUCT_ICON_GAS_PREFIX
+    local envName = string.sub(productIcon, #prefix + 1)
+    if string.isEmpty(envName) then
+        return nil
+    end
+    return string.format("icon_gas_env_%s", string.lower(envName))
+end
+
+
+
+
+
+function FactoryUtils.blueprintProductIconGasEnvToEffectedSpriteName(productIcon)
+    if not FactoryUtils.isBlueprintProductIconGasEnv(productIcon) then
+        return nil
+    end
+    local prefix = FacConst.FAC_BLUEPRINT_PRODUCT_ICON_GAS_PREFIX
+    local envName = string.sub(productIcon, #prefix + 1)
+    if string.isEmpty(envName) then
+        return nil
+    end
+    return string.format("icon_gas_env_effected_%s", string.lower(envName))
+end
+
+
+
+
+function FactoryUtils.getEnvGenBlueprintGasProductIconEntries(buildingId)
+    local list = {}
+    local ok, data = Tables.factoryVaporizerTable:TryGetValue(buildingId)
+    if not ok then
+        return list
+    end
+    local seen = {}
+    for _, groupData in pairs(data.groups) do
+        local genEnv = groupData.genEnv
+        if genEnv and genEnv ~= GEnums.FacEnvGenEnvType.None then
+            local itemId = FacConst.FAC_BLUEPRINT_PRODUCT_ICON_GAS_PREFIX .. genEnv:ToString()
+            if not seen[itemId] then
+                seen[itemId] = true
+                local sortId1 = enum_to_int(genEnv) or 0
+                table.insert(list, {
+                    itemId = itemId,
+                    sortId1 = sortId1,
+                    sortId2 = 0,
+                })
+            end
+        end
+    end
+    table.sort(list, Utils.genSortFunction({ "sortId1", "sortId2", "itemId" }))
+    return list
+end
+
+function FactoryUtils.isEmptyBottleOrJarItem(itemId, targetCacheType)
+    local isEmpty = false
+    if targetCacheType == nil or targetCacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid then
+        isEmpty = Tables.emptyBottleTable:ContainsKey(itemId) or Tables.emptyGasJarTable:ContainsKey(itemId)
+    elseif targetCacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid then
+        isEmpty = Tables.emptyBottleTable:ContainsKey(itemId)
+    elseif targetCacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas then
+        isEmpty = Tables.emptyGasJarTable:ContainsKey(itemId)
+    end
+    return isEmpty
+end
+
+function FactoryUtils.isFullBottleOrJarItem(itemId, targetCacheType)
+    local isFull = false
+    if targetCacheType == nil or targetCacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.GasLiquid then
+        isFull = Tables.fullBottleTable:ContainsKey(itemId) or Tables.fullGasJarTable:ContainsKey(itemId)
+    elseif targetCacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid then
+        isFull = Tables.fullBottleTable:ContainsKey(itemId)
+    elseif targetCacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas then
+        isFull = Tables.fullGasJarTable:ContainsKey(itemId)
+    end
+    return isFull
+end
+
+function FactoryUtils.isCacheTypeAcceptItemType(cacheType, itemType)
+    if type(itemType) == "number" then
+        return (cacheType & itemType) > 0
+    end
+    return (cacheType & itemType:GetHashCode()) > 0
+end
+
 
 
 function FactoryUtils.getSewageTreatPlantLevel(plantId)
@@ -2870,6 +3456,34 @@ function FactoryUtils.isDecoBuildingItem(itemId)
     return false
 end
 
+function FactoryUtils.isDecoBuildingVisible(itemId)
+    local decoBuildingInfo = Tables.FactoryDecoBuildingTable[itemId]
+    local _, gotCnt, placedCnt = GameInstance.player.remoteFactory.core:GetDecoBuildingCount(decoBuildingInfo.buildingId)
+    if gotCnt > 0 or placedCnt > 0 then
+        return true
+    end
+
+    if decoBuildingInfo.hideOnNotGet then
+        if gotCnt + placedCnt == 0 then
+            return false
+        end
+    end
+    if #decoBuildingInfo.visibleConditions == 0 then
+        return true
+    end
+
+    for _, conditionId in pairs(decoBuildingInfo.visibleConditions) do
+        local condition = Tables.DecoBuildingObtainConditionTable[conditionId]
+        local success, value = LuaGameConditionUtils.getConditionValueByParameters(
+            condition.conditionType,
+            condition.parameters)
+        if not success or value < condition.progressToCompare then
+            return false
+        end
+    end
+    return true
+end
+
 function FactoryUtils.playAudioWhenFillingItem(fillingItemId, targetItemId, targetItemCount)
     if Tables.emptyBottleTable:ContainsKey(fillingItemId) then
         if targetItemCount > 0 then
@@ -2889,6 +3503,24 @@ function FactoryUtils.playAudioWhenFillingItem(fillingItemId, targetItemId, targ
         end
         return
     end
+
+    if Tables.emptyGasJarTable:ContainsKey(fillingItemId) then
+        if targetItemCount > 0 then
+            AudioAdapter.PostEvent("Au_UI_Event_GasDown_Small")
+        end
+        return
+    end
+    if Tables.fullGasJarTable:ContainsKey(fillingItemId) then
+        if string.isEmpty(targetItemId) then
+            AudioAdapter.PostEvent("Au_UI_Event_GasUp_Small")
+        else
+            local success, data = Tables.factoryItemTable:TryGetValue(targetItemId)
+            if success and targetItemCount < data.buildingBufferStackLimit then
+                AudioAdapter.PostEvent("Au_UI_Event_GasUp_Small")
+            end
+        end
+        return
+    end
 end
 
 function FactoryUtils.isCreatingBlueprint()
@@ -2897,6 +3529,227 @@ function FactoryUtils.isCreatingBlueprint()
         return false
     end
     return ctrl:GetIsCreating()
+end
+
+
+
+local SkipChapterBuildingStatus = CS.Beyond.Gameplay.Factory.SkipChapterBuildingStatus
+
+
+
+
+function FactoryUtils.isSkipUnlockedBuilding(buildingId)
+    return GameInstance.player.remoteFactory.core.progressStatus:IsSkipUnlockedBuilding(buildingId)
+end
+
+
+
+
+
+function FactoryUtils.getSkipChapterBuildingStatus(buildingId, domainId)
+    domainId = domainId or ScopeUtil.GetCurrentChapterIdAsStr()
+    return CSFactoryUtil.GetSkipChapterBuildingStatus(buildingId, domainId)
+end
+
+
+
+
+
+function FactoryUtils.isSkipBuildingInvalidInDomain(buildingId, domainId)
+    local status = FactoryUtils.getSkipChapterBuildingStatus(buildingId, domainId)
+    return status == SkipChapterBuildingStatus.SkipUnlockedButInvalid
+end
+
+
+
+
+
+function FactoryUtils.isSkipBuildingValidInDomain(buildingId, domainId)
+    local status = FactoryUtils.getSkipChapterBuildingStatus(buildingId, domainId)
+    return status == SkipChapterBuildingStatus.SkipUnlocked
+end
+
+
+
+
+
+
+function FactoryUtils.isLogisticUnlocked(id, domainId)
+    if FactoryUtils.isSkipBuildingValidInDomain(id, domainId) then
+        return true
+    end
+    local us = GameInstance.remoteFactoryManager.unlockSystem
+    if Tables.factoryGridBeltTable:TryGetValue(id) then
+        return us.systemUnlockedBelt
+    end
+    if Tables.FactoryBoxValveTable:TryGetValue(id) then
+        return us.systemUnlockedBelt and us.systemUnlockedValve
+    end
+    if Tables.factoryGridConnecterTable:TryGetValue(id) then
+        return us.systemUnlockedBridge
+    end
+    if Tables.factoryGridRouterTable:TryGetValue(id) then
+        local unlockType = FacConst.LOGISTIC_UNLOCK_SYSTEM_MAP[id]
+        if unlockType == GEnums.UnlockSystemType.FacMerger then return us.systemUnlockedConverger
+        elseif unlockType == GEnums.UnlockSystemType.FacSplitter then return us.systemUnlockedSplitter
+        elseif unlockType == GEnums.UnlockSystemType.FacValve then return us.systemUnlockedValve
+        end
+    end
+    if Tables.factoryLiquidPipeTable:TryGetValue(id) then
+        return us.systemUnlockedPipe
+    end
+    if Tables.factoryFluidValveTable:TryGetValue(id) then
+        return us.systemUnlockedPipe and us.systemUnlockedPipeValve
+    end
+    if Tables.factoryLiquidConnectorTable:TryGetValue(id) then
+        return us.systemUnlockedPipeConnector
+    end
+    if Tables.factoryLiquidRouterTable:TryGetValue(id) then
+        local unlockType = FacConst.LOGISTIC_UNLOCK_SYSTEM_MAP[id]
+        if unlockType == GEnums.UnlockSystemType.FacPipeConverger then return us.systemUnlockedPipeConverger
+        elseif unlockType == GEnums.UnlockSystemType.FacPipeSplitter then return us.systemUnlockedPipeSplitter
+        elseif unlockType == GEnums.UnlockSystemType.FacPipeValve then return us.systemUnlockedPipeValve
+        end
+    end
+    return false
+end
+
+
+
+
+function FactoryUtils.isSkipUnlockedBuildingByItemId(itemId)
+    local buildingId = FactoryUtils.getItemBuildingId(itemId)
+    if buildingId then
+        return FactoryUtils.isSkipUnlockedBuilding(buildingId)
+    end
+    local _, logisticId = FactoryUtils.isLogistic(itemId)
+    if logisticId then
+        return FactoryUtils.isSkipUnlockedBuilding(logisticId)
+    end
+    return false
+end
+
+
+
+
+
+function FactoryUtils.getSkipChapterBuildingStatusByItemId(itemId, domainId)
+    local buildingId = FactoryUtils.getItemBuildingId(itemId)
+    if buildingId then
+        return FactoryUtils.getSkipChapterBuildingStatus(buildingId, domainId)
+    end
+    local _, logisticId = FactoryUtils.isLogistic(itemId)
+    if logisticId then
+        return FactoryUtils.getSkipChapterBuildingStatus(logisticId, domainId)
+    end
+    return SkipChapterBuildingStatus.NotUnlocked
+end
+
+
+
+
+
+function FactoryUtils.isSkipBuildingInvalidInDomainByItemId(itemId, domainId)
+    local status = FactoryUtils.getSkipChapterBuildingStatusByItemId(itemId, domainId)
+    return status == SkipChapterBuildingStatus.SkipUnlockedButInvalid
+end
+
+
+
+
+
+function FactoryUtils.isSkipBuildingValidInDomainByItemId(itemId, domainId)
+    local status = FactoryUtils.getSkipChapterBuildingStatusByItemId(itemId, domainId)
+    return status == SkipChapterBuildingStatus.SkipUnlocked
+end
+
+
+
+function FactoryUtils.getValveSpeedLimitedCount()
+    local domainId = FactoryUtils.getCurAndAutoTransferBlackBoxToDomainId()
+    local domainCfg = Tables.domainDataTable:GetValue(domainId)
+    local allCount = GameInstance.remoteFactoryManager:GetValveSpeedLimitedCountByScene()
+    return allCount, domainCfg.domainSpeedLimitCount
+end
+
+function FactoryUtils.getValveSpeedLimitedInfo()
+    local allCount, valveInfo = GameInstance.remoteFactoryManager:GetValveSpeedLimitedCountByScene()
+    local result = {}
+
+    if allCount > 0 then
+        local mapId = GameWorld.worldInfo.curMapIdStr
+        local mapSucc, mapConfig = DataManager.mapConfigTable:TryGetValue(mapId)
+        if mapSucc then
+            for i = 0, mapConfig.levelStrIds.Length - 1 do
+                local levelId = mapConfig.levelStrIds[i]
+                local levelSucc, levelData = valveInfo:TryGetValue(levelId)
+                if levelSucc then
+                    if levelData[GEnums.FCNodeType.BoxValve:GetHashCode()] > 0 then
+                        table.insert(result, {
+                            levelId = mapConfig.levelStrIds[i],
+                            nodeType = GEnums.FCNodeType.BoxValve:GetHashCode(),
+                            count = levelData[GEnums.FCNodeType.BoxValve:GetHashCode()],
+                        })
+                    end
+                    if levelData[GEnums.FCNodeType.FluidValve:GetHashCode()] > 0 then
+                        table.insert(result, {
+                            levelId = mapConfig.levelStrIds[i],
+                            nodeType = GEnums.FCNodeType.FluidValve:GetHashCode(),
+                            count = levelData[GEnums.FCNodeType.FluidValve:GetHashCode()],
+                        })
+                    end
+                end
+            end
+        end
+    end
+
+    return result
+end
+
+
+function FactoryUtils.isInvalidBuilding(nodeId, chapterId)
+    chapterId = chapterId or Utils.getCurrentChapterId()
+    return CSFactoryUtil.IsInvalidBuilding(nodeId, chapterId)
+end
+
+
+function FactoryUtils.getBuildingModeListCovered(machineId)
+    local modeList = {}
+    local modeMap = {}
+    local succ, machineCraftData = Tables.factoryMachineCrafterTable:TryGetValue(machineId)
+    if not succ then
+        return modeList
+    end
+    for index = 0, machineCraftData.modeMap.Count - 1 do
+        local mapData = machineCraftData.modeMap[index]
+        modeMap[mapData.modeName] = mapData
+    end
+
+    for modeName, modeData in pairs(modeMap) do
+        if modeData ~= -1 then
+            local success, coverModeData = Tables.factoryMachineCraftModeCoverTable:TryGetValue(modeName)
+            if success then
+                local unlockMode = GameInstance.player.remoteFactory.core:IsBuildingModeUnlocked(modeName, machineId)
+                if unlockMode then
+                    for i = 0, coverModeData.list.Count - 1 do
+                        local coverMode = coverModeData.list[i]
+                        if modeMap[coverMode.machineModeCoverType] then
+                            modeMap[coverMode.machineModeCoverType] = -1
+                        end
+                    end
+                else
+                    modeMap[modeName] = -1
+                end
+            end
+        end
+    end
+    for modeName, modeData in pairs(modeMap) do
+        if modeData ~= -1 then
+            table.insert(modeList, modeData)
+        end
+    end
+
+    return modeList
 end
 
 

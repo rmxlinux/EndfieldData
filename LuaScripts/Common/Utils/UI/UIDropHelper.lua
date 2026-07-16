@@ -1,42 +1,17 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 UIDropHelper = HL.Class('UIDropHelper')
-
 
 
 UIDropHelper.info = HL.Field(HL.Table)
 
-
 UIDropHelper.uiDropItem = HL.Field(CS.Beyond.UI.UIDropItem)
-
 
 UIDropHelper.acceptTypes = HL.Field(HL.Table)
 
-
 UIDropHelper.isDropArea = HL.Field(HL.Boolean) << false
-
 
 UIDropHelper.dropPriority = HL.Field(HL.Number) << 0
 
-
 UIDropHelper.s_dropAreas = HL.StaticField(HL.Table) << {}
-
-
-
-
 
 
 
@@ -61,9 +36,6 @@ UIDropHelper.UIDropHelper = HL.Constructor(CS.Beyond.UI.UIDropItem, HL.Table) <<
     self:RefreshInfo(info)
 end
 
-
-
-
 UIDropHelper.RefreshInfo = HL.Method(HL.Table) << function(self, info)
     self.info = info
     self.acceptTypes = info.acceptTypes
@@ -86,9 +58,6 @@ UIDropHelper.RefreshInfo = HL.Method(HL.Table) << function(self, info)
     end
 end
 
-
-
-
 UIDropHelper.OnDropItem = HL.Method(CS.UnityEngine.EventSystems.PointerEventData) << function(self, eventData)
     
     if IsNull(eventData.pointerDrag) then
@@ -105,24 +74,15 @@ UIDropHelper.OnDropItem = HL.Method(CS.UnityEngine.EventSystems.PointerEventData
     end
 end
 
-
-
-
 UIDropHelper.OnToggleHighlight = HL.Method(HL.Boolean) << function(self, active)
     if self.info.onToggleHighlight then
         self.info.onToggleHighlight(active)
     end
 end
 
-
-
-
 UIDropHelper.IsTypeValid = HL.Method(HL.Forward('UIDragHelper')).Return(HL.Boolean) << function(self, dragHelper)
     return UIUtils.isTypeDropValid(dragHelper, self.acceptTypes)
 end
-
-
-
 
 UIDropHelper.Accept = HL.Method(HL.Forward('UIDragHelper')).Return(HL.Boolean) << function(self, dragHelper)
     if self:IsTypeValid(dragHelper) then
@@ -134,17 +94,11 @@ UIDropHelper.Accept = HL.Method(HL.Forward('UIDragHelper')).Return(HL.Boolean) <
     return false
 end
 
-
-
-
-
 UIDropHelper.RegisterMessage = HL.Method(HL.Number, HL.Function) << function(self, msg, action)
     MessageManager:Register(msg, function(msgArg)
         action(msgArg)
     end, self)
 end
-
-
 
 UIDropHelper._OnDestroy = HL.Method() << function(self)
     UIDropHelper.s_dropAreas[self] = nil

@@ -1,23 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.RewardsPopupCenter
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RewardsPopupCenterCtrl = HL.Class('RewardsPopupCenterCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -28,31 +12,21 @@ RewardsPopupCenterCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 RewardsPopupCenterCtrl.m_itemList = HL.Field(HL.Forward('UIListCache'))
-
 
 RewardsPopupCenterCtrl.m_startIndex = HL.Field(HL.Number) << 1
 
-
 RewardsPopupCenterCtrl.m_items = HL.Field(HL.Table)
-
 
 RewardsPopupCenterCtrl.m_args = HL.Field(HL.Table)
 
-
 RewardsPopupCenterCtrl.m_count = HL.Field(HL.Number) << -1
-
-
-
 
 
 
 RewardsPopupCenterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_itemList = UIUtils.genCellCache(self.view.item)
 end
-
-
 
 
 
@@ -84,8 +58,6 @@ end
 
 
 
-
-
 RewardsPopupCenterCtrl.ShowRewardsPopupCenterByRewardId = HL.StaticMethod(HL.Any) << function(args)
     local rewardId
     if type(args) == "table" then
@@ -108,8 +80,6 @@ RewardsPopupCenterCtrl.ShowRewardsPopupCenterByRewardId = HL.StaticMethod(HL.Any
         end
     end
 end
-
-
 
 RewardsPopupCenterCtrl.InterruptMainHudActionQueue = HL.Method() << function(self)
     local args = self.m_args
@@ -139,9 +109,6 @@ RewardsPopupCenterCtrl.InterruptMainHudActionQueue = HL.Method() << function(sel
     self:_ClearArgs()
     self:Hide()
 end
-
-
-
 
 
 RewardsPopupCenterCtrl._ShowRewardsPopupCenter = HL.Method(HL.Table) << function(self, args)
@@ -187,8 +154,6 @@ RewardsPopupCenterCtrl._ShowRewardsPopupCenter = HL.Method(HL.Table) << function
     self:_ContinueShowRewards()
 end
 
-
-
 RewardsPopupCenterCtrl._ContinueShowRewards = HL.Method() << function(self)
     local items = self.m_items
     local count = self.m_count
@@ -224,10 +189,6 @@ RewardsPopupCenterCtrl._ContinueShowRewards = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 RewardsPopupCenterCtrl._OnAnimationFinished = HL.Method(HL.Number, HL.Number) << function(self, endIndex, count)
     if endIndex >= count then
         self:_ClearArgs()
@@ -238,8 +199,6 @@ RewardsPopupCenterCtrl._OnAnimationFinished = HL.Method(HL.Number, HL.Number) <<
         self:_ContinueShowRewards()
     end
 end
-
-
 
 
 RewardsPopupCenterCtrl._ClearArgs = HL.Method() << function(self)

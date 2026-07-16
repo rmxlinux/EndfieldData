@@ -1,24 +1,13 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DomainDepotGoodsSettle
 
-
-
-
-
-
-
-
 DomainDepotGoodsSettleCtrl = HL.Class('DomainDepotGoodsSettleCtrl', uiCtrl.UICtrl)
-
 
 DomainDepotGoodsSettleCtrl.m_domainDepotId = HL.Field(HL.String) << ""
 
-
 DomainDepotGoodsSettleCtrl.m_deliverInstId = HL.Field(HL.Number) << 0
 
-
 DomainDepotGoodsSettleCtrl.m_stateName = HL.Field(HL.String) << ""
-
 
 
 
@@ -27,9 +16,6 @@ DomainDepotGoodsSettleCtrl.m_stateName = HL.Field(HL.String) << ""
 DomainDepotGoodsSettleCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 DomainDepotGoodsSettleCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -59,8 +45,6 @@ DomainDepotGoodsSettleCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
     self.view.bgBtn.gameObject:SetActive(true)
 end
-
-
 
 
 DomainDepotGoodsSettleCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)

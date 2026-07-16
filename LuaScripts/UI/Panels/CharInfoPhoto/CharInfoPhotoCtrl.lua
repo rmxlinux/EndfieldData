@@ -2,28 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharInfoPhoto
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharInfoPhotoCtrl = HL.Class('CharInfoPhotoCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -42,26 +21,17 @@ CharInfoPhotoCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 CharInfoPhotoCtrl.m_arg = HL.Field(HL.Table)
-
 
 CharInfoPhotoCtrl.m_isFlipped = HL.Field(HL.Boolean) << false
 
-
 CharInfoPhotoCtrl.m_pictureIds = HL.Field(HL.Table)
-
 
 CharInfoPhotoCtrl.m_curPicIndex = HL.Field(HL.Number) << 0
 
-
 CharInfoPhotoCtrl.m_curPicId = HL.Field(HL.String) << ""
 
-
 CharInfoPhotoCtrl.m_charInfo = HL.Field(CS.Beyond.Gameplay.CharInfo)
-
-
-
 
 
 
@@ -129,25 +99,17 @@ CharInfoPhotoCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 CharInfoPhotoCtrl.OnShow = HL.Override() << function(self)
     UIManager:Hide(PanelId.UIDPanel)
 end
-
-
 
 CharInfoPhotoCtrl.OnHide = HL.Override() << function (self)
     UIManager:Show(PanelId.UIDPanel)
 end
 
-
-
 CharInfoPhotoCtrl.OnClose = HL.Override() << function (self)
     UIManager:Show(PanelId.UIDPanel)
 end
-
-
 
 CharInfoPhotoCtrl._InitAction = HL.Method() << function(self)
     self.view.btnClose.onClick:AddListener(function()
@@ -186,8 +148,6 @@ CharInfoPhotoCtrl._InitAction = HL.Method() << function(self)
     self:_InitController()
 end
 
-
-
 CharInfoPhotoCtrl._PreviousPicture = HL.Method() << function(self)
     local newIndex = self.m_curPicIndex - 1
     if newIndex < 1 then
@@ -197,8 +157,6 @@ CharInfoPhotoCtrl._PreviousPicture = HL.Method() << function(self)
     self:_RefreshPicture(newIndex)
 end
 
-
-
 CharInfoPhotoCtrl._NextPicture = HL.Method() << function(self)
     local newIndex = self.m_curPicIndex + 1
     if newIndex > #self.m_pictureIds then
@@ -207,9 +165,6 @@ CharInfoPhotoCtrl._NextPicture = HL.Method() << function(self)
     end
     self:_RefreshPicture(newIndex)
 end
-
-
-
 
 CharInfoPhotoCtrl._RefreshPicture = HL.Method(HL.Number) << function(self, pictureIndex)
     if pictureIndex < 1 or pictureIndex > #self.m_pictureIds then
@@ -276,9 +231,6 @@ CharInfoPhotoCtrl._RefreshPicture = HL.Method(HL.Number) << function(self, pictu
     self.view.txtMsg.text = msg
 end
 
-
-
-
 CharInfoPhotoCtrl.Flip = HL.Method(HL.Boolean) << function(self, isFlipped)
     self.view.luaPanel:BlockAllInput()
     local animName = isFlipped and 'charinfo_photo_flip_in' or 'charinfo_photo_flip_out'
@@ -294,9 +246,6 @@ CharInfoPhotoCtrl.Flip = HL.Method(HL.Boolean) << function(self, isFlipped)
     AudioAdapter.PostEvent("Au_UI_Event_PhotoFlip")
 end
 
-
-
-
 CharInfoPhotoCtrl._OnCharSetPotentialCg = HL.Method(HL.Table) << function(self, args)
     local charInstId, potentialLevel, pictureId = unpack(args)
     if charInstId ~= self.m_arg.charInstId or potentialLevel ~= self.m_arg.potentialLevel then
@@ -308,13 +257,9 @@ end
 
 
 
-
-
 CharInfoPhotoCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
 
 CharInfoPhotoCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     

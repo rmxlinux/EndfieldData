@@ -2,25 +2,11 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WaterMarkGrid
 
-
-
-
-
-
-
-
-
-
-
-
 WaterMarkGridCtrl = HL.Class('WaterMarkGridCtrl', uiCtrl.UICtrl)
-
 
 WaterMarkGridCtrl.m_waterMarkCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WaterMarkGridCtrl.m_uid = HL.Field(HL.String) << ""
-
 
 
 
@@ -30,7 +16,6 @@ WaterMarkGridCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHANGE_WATER_MARK_GRID] = 'ChangeWaterMarkGrid',
     [MessageConst.ON_COMMON_BLEND_IN] = 'ChangeWaterMarkGrid',
 }
-
 
 WaterMarkGridCtrl.OnEnterMainGame = HL.StaticMethod() << function()
     local enableWaterMark = CS.Beyond.Cfg.RemoteGameCfg.instance.data.enableMobileFullScreenWaterMark
@@ -42,9 +27,6 @@ WaterMarkGridCtrl.OnEnterMainGame = HL.StaticMethod() << function()
 end
 
 
-
-
-
 WaterMarkGridCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_waterMarkCellCache = UIUtils.genCellCache(self.view.waterMarkCell)
     self.m_uid = GameInstance.player.playerInfoSystem.roleId
@@ -52,13 +34,9 @@ WaterMarkGridCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitWaterMarkCell()
 end
 
-
-
 WaterMarkGridCtrl.ChangeWaterMarkGrid = HL.Method() << function(self)
     self:UpdateWaterMarkCell()
 end
-
-
 
 WaterMarkGridCtrl.UpdateWaterMarkCell = HL.Method() << function(self)
     local positionX, positionY, rotationZ = self:_GetRandomTrans()
@@ -71,10 +49,6 @@ WaterMarkGridCtrl.UpdateWaterMarkCell = HL.Method() << function(self)
         })
     end)
 end
-
-
-
-
 
 WaterMarkGridCtrl._InitWaterMarkCell = HL.Method() << function(self)
     local gridLayout = self.view.gridWaterMarkRootGridLayoutGroup
@@ -105,8 +79,6 @@ WaterMarkGridCtrl._InitWaterMarkCell = HL.Method() << function(self)
 
 end
 
-
-
 WaterMarkGridCtrl._GetRandomTrans = HL.Method().Return(HL.Number, HL.Number, HL.Number) << function(self)
     local posRangeX = self.view.config.POSITIONX_RANDOM_RANGE
     local posRangeY = self.view.config.POSITIONY_RANDOM_RANGE
@@ -117,10 +89,6 @@ WaterMarkGridCtrl._GetRandomTrans = HL.Method().Return(HL.Number, HL.Number, HL.
 
     return positionX, positionY, rotationZ
 end
-
-
-
-
 
 WaterMarkGridCtrl._UpdateMarkCellTrans = HL.Method(HL.Any, HL.Table) << function(self, cell, info)
     if info.hasUid then

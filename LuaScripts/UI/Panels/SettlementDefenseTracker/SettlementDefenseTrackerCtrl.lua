@@ -4,52 +4,25 @@ local LuaNodeCache = require_ex('Common/Utils/LuaNodeCache')
 local STANDARD_HORIZONTAL_RESOLUTION = CS.Beyond.UI.UIConst.CUR_STANDARD_HORIZONTAL_RESOLUTION
 local STANDARD_VERTICAL_RESOLUTION = CS.Beyond.UI.UIConst.CUR_STANDARD_VERTICAL_RESOLUTION
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SettlementDefenseTrackerCtrl = HL.Class('SettlementDefenseTrackerCtrl', uiCtrl.UICtrl)
 
 local TRACKER_CORE_ATTACKED_IN_ANIMATION_NAME = "defense_tracker_core_attacked_in"
 
-
 SettlementDefenseTrackerCtrl.m_towerDefenseGame = HL.Field(HL.Userdata)
-
 
 SettlementDefenseTrackerCtrl.m_spawnerTrackerCache = HL.Field(LuaNodeCache)
 
-
 SettlementDefenseTrackerCtrl.m_coreTrackerCache = HL.Field(LuaNodeCache)
-
 
 SettlementDefenseTrackerCtrl.m_spawnerTrackerDataList = HL.Field(HL.Table)
 
-
 SettlementDefenseTrackerCtrl.m_coreTrackerDataList = HL.Field(HL.Table)
-
 
 SettlementDefenseTrackerCtrl.m_xEdgeRadius = HL.Field(HL.Number) << -1
 
-
 SettlementDefenseTrackerCtrl.m_yEdgeRadius = HL.Field(HL.Number) << -1
 
-
 SettlementDefenseTrackerCtrl.m_updateThread = HL.Field(HL.Thread)
-
 
 SettlementDefenseTrackerCtrl.m_hpChangeCallbackList = HL.Field(HL.Table)
 
@@ -57,12 +30,8 @@ SettlementDefenseTrackerCtrl.m_hpChangeCallbackList = HL.Field(HL.Table)
 
 
 
-
 SettlementDefenseTrackerCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
-
-
-
 
 
 SettlementDefenseTrackerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -83,8 +52,6 @@ SettlementDefenseTrackerCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
     self:_InitTrackerTargets()
 end
 
-
-
 SettlementDefenseTrackerCtrl.OnClose = HL.Override() << function(self)
     self.m_updateThread = self:_ClearCoroutine(self.m_updateThread)
 
@@ -97,10 +64,6 @@ SettlementDefenseTrackerCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
-
-
 SettlementDefenseTrackerCtrl._BuildTrackerData = HL.Method(Vector3, HL.Any).Return(HL.Table) << function(self, worldPos, tracker)
     return {
         worldPos = worldPos,
@@ -109,8 +72,6 @@ SettlementDefenseTrackerCtrl._BuildTrackerData = HL.Method(Vector3, HL.Any).Retu
         visible = true,
     }
 end
-
-
 
 SettlementDefenseTrackerCtrl._InitTrackerTargets = HL.Method() << function(self)
     local towerDefenseGame = GameInstance.player.towerDefenseSystem.towerDefenseGame
@@ -164,8 +125,6 @@ SettlementDefenseTrackerCtrl._InitTrackerTargets = HL.Method() << function(self)
     end)
 end
 
-
-
 SettlementDefenseTrackerCtrl._UpdateTrackersThread = HL.Method() << function(self)
     for _, coreData in ipairs(self.m_coreTrackerDataList) do
         self:_UpdateTrackerScreenPosition(coreData)
@@ -177,9 +136,6 @@ SettlementDefenseTrackerCtrl._UpdateTrackersThread = HL.Method() << function(sel
         self:_RefreshTrackerState(spawnerData)
     end
 end
-
-
-
 
 SettlementDefenseTrackerCtrl._UpdateTrackerScreenPosition = HL.Method(HL.Table) << function(self, data)
     if data == nil or data.worldPos == nil then
@@ -200,9 +156,6 @@ SettlementDefenseTrackerCtrl._UpdateTrackerScreenPosition = HL.Method(HL.Table) 
     data.angle = uiAngle
     data.isInBound = not isOutBound
 end
-
-
-
 
 SettlementDefenseTrackerCtrl._RefreshTrackerState = HL.Method(HL.Table) << function(self, data)
     if not data.visible then

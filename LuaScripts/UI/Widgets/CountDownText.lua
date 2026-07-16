@@ -1,17 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
 CountDownText = HL.Class('CountDownText', UIWidgetBase)
-
-
 
 
 CountDownText._OnFirstTimeInit = HL.Override() << function(self)
@@ -19,22 +8,13 @@ CountDownText._OnFirstTimeInit = HL.Override() << function(self)
 end
 
 
-
 CountDownText.m_cor = HL.Field(HL.Thread)
-
 
 CountDownText.m_onComplete = HL.Field(HL.Function)
 
-
 CountDownText.m_timeFormatFunc = HL.Field(HL.Function)
 
-
 CountDownText.m_targetTime = HL.Field(HL.Number) << -1
-
-
-
-
-
 
 
 CountDownText.InitCountDownText = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Function)) << function(self, targetTime, onComplete, timeFormatFunc)
@@ -54,15 +34,11 @@ CountDownText.InitCountDownText = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Fu
     end)
 end
 
-
-
 CountDownText.StopCountDown = HL.Method() << function(self)
     if self.m_cor then
         self.m_cor = self:_ClearCoroutine(self.m_cor)
     end
 end
-
-
 
 CountDownText._Update = HL.Method() << function(self)
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()

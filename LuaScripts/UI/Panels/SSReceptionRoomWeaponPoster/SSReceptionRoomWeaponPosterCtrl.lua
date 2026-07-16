@@ -4,11 +4,7 @@ local PANEL_ID = PanelId.SSReceptionRoomWeaponPoster
 local PHASE_ID = PhaseId.SSReceptionRoomWeaponPoster
 
 
-
-
 SSReceptionRoomWeaponPosterCtrl = HL.Class('SSReceptionRoomWeaponPosterCtrl', SSReceptionRoomPosterCtrl.SSReceptionRoomPosterCtrl)
-
-
 
 SSReceptionRoomWeaponPosterCtrl.OpenReceptionRoomPosterPanel = HL.StaticMethod(HL.Opt(HL.Any)) << function(arg)
     local weaponType

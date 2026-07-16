@@ -2,14 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopMonthlyPassPopUp
 
-
-
-
-
-
-
 ShopMonthlyPassPopUpCtrl = HL.Class('ShopMonthlyPassPopUpCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -19,9 +12,6 @@ ShopMonthlyPassPopUpCtrl = HL.Class('ShopMonthlyPassPopUpCtrl', uiCtrl.UICtrl)
 ShopMonthlyPassPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 ShopMonthlyPassPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -45,21 +35,15 @@ end
 
 
 
-
-
 ShopMonthlyPassPopUpCtrl._BindUICallback = HL.Method() << function(self)
     self.view.emptyClick.onClick:AddListener(function()
         self:_OnBgClick()
     end)
 end
 
-
-
 ShopMonthlyPassPopUpCtrl._OnBgClick = HL.Method() << function(self)
     self.m_phase:OnClickBg()
 end
-
-
 
 
 

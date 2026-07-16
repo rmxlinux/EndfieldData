@@ -1,56 +1,28 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MachineSmartAlertNode = HL.Class('MachineSmartAlertNode', UIWidgetBase)
-
 
 MachineSmartAlertNode.m_SmartAlertStableTime = HL.Field(HL.Number) << 0
 
-
 MachineSmartAlertNode.m_curCondition = HL.Field(GEnums.FacSmartAlertType)
-
 
 MachineSmartAlertNode.m_cacheCondition = HL.Field(GEnums.FacSmartAlertType)
 
-
 MachineSmartAlertNode.m_curCheck = HL.Field(HL.Any) << nil
-
 
 MachineSmartAlertNode.m_curDefaultOpen = HL.Field(HL.Boolean) << false
 
-
 MachineSmartAlertNode.m_targetTransform = HL.Field(HL.Userdata)
-
 
 MachineSmartAlertNode.m_showDetailAnimState = HL.Field(HL.Boolean) << false
 
-
 MachineSmartAlertNode.m_activeAnimState = HL.Field(HL.Boolean) << false
-
 
 MachineSmartAlertNode.m_playingAnimation = HL.Field(HL.Boolean) << false
 
+MachineSmartAlertNode.m_animationPostfix = HL.Field(HL.String) << ""
 
 MachineSmartAlertNode.m_buildingData = HL.Field(HL.Table)
-
-
 
 
 MachineSmartAlertNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -68,10 +40,6 @@ MachineSmartAlertNode._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
-
 MachineSmartAlertNode.InitMachineSmartAlertNode = HL.Method(HL.String, HL.Number) << function(self, buildingId, nodeId)
     self:_FirstTimeInit()
 
@@ -85,16 +53,12 @@ MachineSmartAlertNode.InitMachineSmartAlertNode = HL.Method(HL.String, HL.Number
     self.m_buildingData.domain = Utils.getCurDomainId()
 end
 
-
-
-
-
 MachineSmartAlertNode._ShowDetailInfo = HL.Method(HL.Boolean, HL.Opt(HL.Function)) << function(self, show, onComplete)
     if self.m_showDetailAnimState ~= show then
         self.m_showDetailAnimState = show
         self.view.maskBtn.gameObject:SetActiveIfNecessary(show)
         self.m_playingAnimation = true
-        self.view.animationWrapper:Play(show and "machinesmartalert_in" or "machinesmartalert_out", function()
+        self.view.animationWrapper:Play(show and ("machinesmartalert_in" .. self.m_animationPostfix) or ("machinesmartalert_out" .. self.m_animationPostfix), function()
             if onComplete then
                 onComplete()
             end
@@ -105,10 +69,6 @@ MachineSmartAlertNode._ShowDetailInfo = HL.Method(HL.Boolean, HL.Opt(HL.Function
         end
     end
 end
-
-
-
-
 
 MachineSmartAlertNode._CheckToRefreshState = HL.Method(HL.Table, HL.Number).Return(HL.Boolean, HL.Opt(HL.String)) << function(self, alertInfo, detlaTime)
     local newCondition = alertInfo.condition
@@ -159,6 +119,8 @@ MachineSmartAlertNode._CheckToRefreshState = HL.Method(HL.Table, HL.Number).Retu
                 alertText = string.format(alertText, unpack(newArgs))
             end
 
+            self.m_animationPostfix = FacConst.SMARTALERT_ANIMATION_NAME_POSTFIX[self.m_curCondition] or ""
+
             if self.m_buildingData ~= nil then
                 EventLogManagerInst:GameEvent_FactorySmartAlertPopUp(
                     self.m_buildingData.tid,
@@ -172,10 +134,6 @@ MachineSmartAlertNode._CheckToRefreshState = HL.Method(HL.Table, HL.Number).Retu
 
     return refreshTag, alertText
 end
-
-
-
-
 
 MachineSmartAlertNode.UpdateSmartAlertState = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(self, detlaTime, alertInfo)
     if alertInfo == nil then
@@ -195,7 +153,7 @@ MachineSmartAlertNode.UpdateSmartAlertState = HL.Method(HL.Number, HL.Opt(HL.Tab
             else
                 self.m_playingAnimation = true
                 AudioAdapter.PostEvent("Au_UI_Toast_FactoryTips_Open")
-                self.view.animationWrapper:Play("machinesmartalert_frist_in", function()
+                self.view.animationWrapper:Play("machinesmartalert_frist_in" .. self.m_animationPostfix, function()
                     self:_ShowDetailInfo(self.m_curDefaultOpen)
                     self.m_playingAnimation = false
                 end)
@@ -214,7 +172,7 @@ MachineSmartAlertNode.UpdateSmartAlertState = HL.Method(HL.Number, HL.Opt(HL.Tab
             if self.m_showDetailAnimState then
                 self:_ShowDetailInfo(false, function()
                     AudioAdapter.PostEvent("Au_UI_Toast_FactoryTips_Close")
-                    self.view.animationWrapper:Play("machinesmartalert_frist_out", function()
+                    self.view.animationWrapper:Play("machinesmartalert_frist_out" .. self.m_animationPostfix, function()
                         self.gameObject:SetActiveIfNecessary(false)
                     end)
                     self.m_activeAnimState = false
@@ -222,7 +180,7 @@ MachineSmartAlertNode.UpdateSmartAlertState = HL.Method(HL.Number, HL.Opt(HL.Tab
             else
                 self.m_playingAnimation = true
                 AudioAdapter.PostEvent("Au_UI_Toast_FactoryTips_Close")
-                self.view.animationWrapper:Play("machinesmartalert_frist_out", function()
+                self.view.animationWrapper:Play("machinesmartalert_frist_out" .. self.m_animationPostfix, function()
                     self.gameObject:SetActiveIfNecessary(false)
                     self.m_playingAnimation = false
                 end)
@@ -231,8 +189,6 @@ MachineSmartAlertNode.UpdateSmartAlertState = HL.Method(HL.Number, HL.Opt(HL.Tab
         end
     end
 end
-
-
 
 MachineSmartAlertNode.RestoreAlertState = HL.Method() << function(self)
     self.m_curCondition = GEnums.FacSmartAlertType.DoNotShow
@@ -243,8 +199,6 @@ MachineSmartAlertNode.RestoreAlertState = HL.Method() << function(self)
     self.m_showDetailAnimState = false
     self.m_activeAnimState = false
 end
-
-
 
 MachineSmartAlertNode.ForceUpdateAlertPosition = HL.Method() << function(self)
     if self.m_targetTransform == nil or

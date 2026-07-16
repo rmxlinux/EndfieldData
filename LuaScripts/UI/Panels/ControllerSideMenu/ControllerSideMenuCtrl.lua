@@ -1,18 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ControllerSideMenu
-
-
-
-
-
-
-
-
-
-
 ControllerSideMenuCtrl = HL.Class('ControllerSideMenuCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -22,17 +11,11 @@ ControllerSideMenuCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 ControllerSideMenuCtrl.m_cells = HL.Field(HL.Forward('UIListCache'))
-
 
 ControllerSideMenuCtrl.m_menuListCpt = HL.Field(CS.Beyond.UI.ControllerSideMenuItemList)
 
-
 ControllerSideMenuCtrl.m_infos = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -52,7 +35,7 @@ ControllerSideMenuCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_cells:Refresh(#self.m_infos, function(cell, index)
         self:_RefreshCell(cell, index)
         if index == 1 then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.button)
+            self:SetNaviTarget(cell.button)
         end
     end)
     local targetScreenRect = UIUtils.getTransformScreenRect(self.m_menuListCpt.contentPosTrans, self.uiCamera) 
@@ -65,9 +48,6 @@ ControllerSideMenuCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_ShowControllerHint(arg.hintPlaceholder)
 end
 
-
-
-
 ControllerSideMenuCtrl._ShowControllerHint = HL.Method(HL.Forward('ControllerHintPlaceholder')) << function(self, hintPlaceholder)
     local hintArgs = hintPlaceholder:GetArgs()
     hintArgs.panelId = PANEL_ID
@@ -78,15 +58,9 @@ ControllerSideMenuCtrl._ShowControllerHint = HL.Method(HL.Forward('ControllerHin
 end
 
 
-
-
 ControllerSideMenuCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.HIDE_CONTROLLER_HINT, { panelId = PANEL_ID, })
 end
-
-
-
-
 
 ControllerSideMenuCtrl._RefreshCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     cell.button.onClick:RemoveAllListeners()
@@ -97,8 +71,18 @@ ControllerSideMenuCtrl._RefreshCell = HL.Method(HL.Any, HL.Number) << function(s
     local cellName
     if type(info) == "table" then
         cell.icon.sprite = info.sprite
-        cell.text.text = Language[info.textId]
-        cellName = info.textId .. info.priority  
+        if info.getText ~= nil then
+            cell.text.text = info.getText()
+        else
+            cell.text.text = Language[info.textId]
+        end
+        if info.name then
+            cellName = info.name
+        elseif info.button then
+            cellName = info.button.gameObject.name
+        else
+            logger.error("[ControllerSideMenu] 第 %d 个 extra item 缺少 'name' 字段，请为该 item 指定一个稳定的 name", index)
+        end
     else
         cell.icon.sprite = info:GetSprite()
         cell.text.text = info:GetText()
@@ -107,9 +91,6 @@ ControllerSideMenuCtrl._RefreshCell = HL.Method(HL.Any, HL.Number) << function(s
     cell.icon.gameObject:SetActive(cell.icon.sprite ~= nil)
     cell.gameObject.name = cellName
 end
-
-
-
 
 ControllerSideMenuCtrl._OnClickBtn = HL.Method(HL.Number) << function(self, index)
     self:PlayAnimationOutWithCallback(function()

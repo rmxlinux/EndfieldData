@@ -1,14 +1,5 @@
 local CommonCache = require_ex("Common/Utils/CommonCache")
-
-
 LuaNodeCache = HL.Class('LuaNodeCache', CommonCache)
-
-
-
-
-
-
-
 
 LuaNodeCache.LuaNodeCache = HL.Constructor(HL.Any, HL.Any, HL.Opt(HL.Function, HL.Function, HL.Function))
 << function(self, template, uiRoot, onCreate, onUse, onCache)

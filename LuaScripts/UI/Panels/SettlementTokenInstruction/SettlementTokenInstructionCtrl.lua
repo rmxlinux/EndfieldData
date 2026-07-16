@@ -3,28 +3,7 @@ local PANEL_ID = PanelId.SettlementTokenInstruction
 
 local settlementSystem = GameInstance.player.settlementSystem
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SettlementTokenInstructionCtrl = HL.Class('SettlementTokenInstructionCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -37,23 +16,15 @@ SettlementTokenInstructionCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 SettlementTokenInstructionCtrl.m_stlId = HL.Field(HL.String) << ""
-
 
 SettlementTokenInstructionCtrl.m_curLevel = HL.Field(HL.Number) << 0
 
-
 SettlementTokenInstructionCtrl.m_info = HL.Field(HL.Table)
-
 
 SettlementTokenInstructionCtrl.m_tickTimeKey = HL.Field(HL.Number) << -1
 
-
 SettlementTokenInstructionCtrl.m_isFirstBuffNode = HL.Field(HL.Boolean) << true
-
-
-
 
 
 
@@ -68,8 +39,6 @@ SettlementTokenInstructionCtrl.OnCreate = HL.Override(HL.Any) << function(self, 
     self:_RefreshAllUI()
 end
 
-
-
 SettlementTokenInstructionCtrl.OnShow = HL.Override() << function(self)
     self.m_tickTimeKey = LuaUpdate:Add("Tick", function(deltaTime)
         self:_RefreshTimeText()
@@ -77,15 +46,10 @@ SettlementTokenInstructionCtrl.OnShow = HL.Override() << function(self)
     settlementSystem:AddSettlementSyncRequest(self.view.transform.name)
 end
 
-
-
 SettlementTokenInstructionCtrl.OnClose = HL.Override() << function(self)
     LuaUpdate:Remove(self.m_tickTimeKey)
     settlementSystem:RemoveSettlementSyncRequest(self.view.transform.name)
 end
-
-
-
 
 
 
@@ -153,8 +117,6 @@ SettlementTokenInstructionCtrl._InitData = HL.Method(HL.Any) << function(self, a
     
 end
 
-
-
 SettlementTokenInstructionCtrl._UpdateDefenseGainEffect = HL.Method() << function(self)
     local settlementData = settlementSystem:GetUnlockSettlementData(self.m_stlId)
     if settlementData == nil then
@@ -175,8 +137,6 @@ end
 
 
 
-
-
 SettlementTokenInstructionCtrl._InitUI = HL.Method() << function(self)
     self.view.closeBtn.onClick:AddListener(function()
         self:PlayAnimationOutAndClose()
@@ -186,8 +146,6 @@ SettlementTokenInstructionCtrl._InitUI = HL.Method() << function(self)
     end)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
 
 SettlementTokenInstructionCtrl._RefreshAllUI = HL.Method() << function(self)
     self.view.curOwnMoneyTxt.text = self.m_info.curMoney
@@ -229,8 +187,6 @@ SettlementTokenInstructionCtrl._RefreshAllUI = HL.Method() << function(self)
     self:_RefreshTimeText()
 end
 
-
-
 SettlementTokenInstructionCtrl._RefreshTimeText = HL.Method() << function(self)
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()
     local leftSec = self:_GetFilledMoneyTime() - curTime
@@ -245,8 +201,6 @@ SettlementTokenInstructionCtrl._RefreshTimeText = HL.Method() << function(self)
 end
 
 
-
-
 SettlementTokenInstructionCtrl._GetFilledMoneyTime = HL.Method().Return(HL.Number) << function(self)
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()
     local leftMoney = self.m_info.maxMoney - self.m_info.curMoney
@@ -257,8 +211,6 @@ SettlementTokenInstructionCtrl._GetFilledMoneyTime = HL.Method().Return(HL.Numbe
     local leftTime = leftMoney * 3600 / self.m_info.totalProduceSpeed
     return curTime + leftTime
 end
-
-
 
 SettlementTokenInstructionCtrl._RefreshGainEffect = HL.Method() << function(self)
     self.view.manualDefenseNode.gameObject:SetActive(false)
@@ -288,9 +240,6 @@ end
 
 
 
-
-
-
 SettlementTokenInstructionCtrl._OnRemainMoneyModify = HL.Method(HL.Any) << function(self, arg)
     local stlId, curMoney = unpack(arg)
     if self.m_stlId ~= stlId or self.m_info == nil then
@@ -301,9 +250,6 @@ SettlementTokenInstructionCtrl._OnRemainMoneyModify = HL.Method(HL.Any) << funct
     self.m_info.filledMoneyTime = self:_GetFilledMoneyTime()
     self.view.curOwnMoneyTxt.text = curMoney
 end
-
-
-
 
 SettlementTokenInstructionCtrl._GetLevelGroupName = HL.Method(HL.String).Return(HL.String) << function(self, tdId)
     local levelName = ""
@@ -316,9 +262,6 @@ SettlementTokenInstructionCtrl._GetLevelGroupName = HL.Method(HL.String).Return(
     end
     return levelName
 end
-
-
-
 
 SettlementTokenInstructionCtrl._TryHandleFirstBuffNode = HL.Method(HL.Any) << function(self, node)
     if not self.m_isFirstBuffNode then

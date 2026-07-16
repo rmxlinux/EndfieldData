@@ -4,90 +4,35 @@ local PANEL_ID = PanelId.BlackboxEntry
 local PHASE_ID = PhaseId.BlackboxEntry
 local RewardSourceType = CS.Beyond.GEnums.RewardSourceType
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BlackboxEntryCtrl = HL.Class('BlackboxEntryCtrl', uiCtrl.UICtrl)
-
 
 BlackboxEntryCtrl.m_arg = HL.Field(HL.Any)
 
-
 BlackboxEntryCtrl.m_rewardCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 BlackboxEntryCtrl.m_mainGoalCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 BlackboxEntryCtrl.m_extraGoalCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 BlackboxEntryCtrl.m_preDependencyCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 BlackboxEntryCtrl.m_preDependenciesListFoldOut = HL.Field(HL.Boolean) << false
-
 
 BlackboxEntryCtrl.m_packageId = HL.Field(HL.String) << ""
 
-
 BlackboxEntryCtrl.m_allBlackboxInfos = HL.Field(HL.Table)
-
 
 BlackboxEntryCtrl.m_curBlackboxInfos = HL.Field(HL.Table)
 
-
 BlackboxEntryCtrl.m_curSelectCell = HL.Field(HL.Any)
-
 
 BlackboxEntryCtrl.m_curSelectedBlackboxId = HL.Field(HL.String) << ""
 
-
 BlackboxEntryCtrl.m_genBlackboxCellFunc = HL.Field(HL.Function)
-
 
 BlackboxEntryCtrl.m_cachedSelectedTags = HL.Field(HL.Table)
 
-
 BlackboxEntryCtrl.m_filterArgs = HL.Field(HL.Table)
-
 
 
 
@@ -96,9 +41,6 @@ BlackboxEntryCtrl.m_filterArgs = HL.Field(HL.Table)
 BlackboxEntryCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_DUNGEON_DIRECTLY_GET_REWARD] = 'OnBlackboxDirectlyGetReward',
 }
-
-
-
 
 
 BlackboxEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -187,13 +129,9 @@ BlackboxEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 BlackboxEntryCtrl._OnBtnCloseClick = HL.Method() << function(self)
     PhaseManager:PopPhase(PHASE_ID)
 end
-
-
 
 BlackboxEntryCtrl._Init = HL.Method() << function(self)
     local packageCfg = Tables.facSTTGroupTable[self.m_packageId]
@@ -220,8 +158,6 @@ BlackboxEntryCtrl._Init = HL.Method() << function(self)
     self:_RefreshPreDependencies()
     self:_PreDependenciesFoldOut(false)
 end
-
-
 
 BlackboxEntryCtrl._RefreshDetails = HL.Method() << function(self)
     local gameMechanicData = Tables.gameMechanicTable[self.m_curSelectedBlackboxId]
@@ -348,8 +284,6 @@ BlackboxEntryCtrl._RefreshDetails = HL.Method() << function(self)
     self.view.detailsContent:SetState(state)
 end
 
-
-
 BlackboxEntryCtrl._RefreshPreDependencies = HL.Method() << function(self)
     local blackboxData = Tables.dungeonFactoryTable[self.m_curSelectedBlackboxId]
     local preDependencies = FactoryUtils.getBlackboxInfoTbl(blackboxData.preDependencies, true)
@@ -365,19 +299,12 @@ BlackboxEntryCtrl._RefreshPreDependencies = HL.Method() << function(self)
     self.view.preDependenciesNode.gameObject:SetActiveIfNecessary(hasPreDependencies and isUnlock and isActive)
 end
 
-
-
-
-
 BlackboxEntryCtrl._OnUpdatePreDependencyCell = HL.Method(HL.Forward("BlackboxSelectionCell"), HL.Table)
         << function(self, cell, info)
     cell:InitBlackboxSelectionCell(info.blackboxId, function()
         self:_OnPreDependencyCellClick(info.blackboxId)
     end, "BlackboxSelectionCellPassed")
 end
-
-
-
 
 BlackboxEntryCtrl._FindLuaIndexInBlackboxInfos = HL.Method(HL.String).Return(HL.Opt(HL.Number))
         << function(self, blackboxId)
@@ -389,9 +316,6 @@ BlackboxEntryCtrl._FindLuaIndexInBlackboxInfos = HL.Method(HL.String).Return(HL.
     end
     return luaIndex
 end
-
-
-
 
 
 
@@ -414,9 +338,6 @@ BlackboxEntryCtrl.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << f
         return 0  
     end
 end
-
-
-
 
 BlackboxEntryCtrl._OnPreDependencyCellClick = HL.Method(HL.String) << function(self, blackboxId)
     local luaIndex = self:_FindLuaIndexInBlackboxInfos(blackboxId)
@@ -441,11 +362,9 @@ BlackboxEntryCtrl._OnPreDependencyCellClick = HL.Method(HL.String) << function(s
     end
 
     if DeviceInfo.usingController then
-        UIUtils.setAsNaviTarget(cell.view.button)
+        self:SetNaviTarget(cell.view.button)
     end
 end
-
-
 
 BlackboxEntryCtrl._OnBtnEnterClick = HL.Method() << function(self)
     if Utils.isCurSquadAllDead() then
@@ -486,21 +405,15 @@ BlackboxEntryCtrl._OnBtnEnterClick = HL.Method() << function(self)
     end
 end
 
-
-
 BlackboxEntryCtrl._OnBtnMapClick = HL.Method() << function(self)
     local dungeonCfg = Tables.dungeonTable[self.m_curSelectedBlackboxId]
     local _, instId = GameInstance.player.mapManager:GetMapMarkInstId(GEnums.MarkType.BlackBox, dungeonCfg.dungeonSeriesId)
     MapUtils.openMap(instId)
 end
 
-
-
 BlackboxEntryCtrl._OnBtnPreDependenciesClick = HL.Method() << function(self)
     self:_PreDependenciesFoldOut(not self.m_preDependenciesListFoldOut)
 end
-
-
 
 BlackboxEntryCtrl._OnClickDirectlyGetRewardBtn = HL.Method() << function(self)
     
@@ -520,9 +433,6 @@ BlackboxEntryCtrl._OnClickDirectlyGetRewardBtn = HL.Method() << function(self)
     })
 end
 
-
-
-
 BlackboxEntryCtrl._PreDependenciesFoldOut = HL.Method(HL.Boolean) << function(self, foldOut)
     self.m_preDependenciesListFoldOut = foldOut
 
@@ -537,11 +447,6 @@ BlackboxEntryCtrl._PreDependenciesFoldOut = HL.Method(HL.Boolean) << function(se
     end
 end
 
-
-
-
-
-
 BlackboxEntryCtrl._UpdateGoalCell = HL.Method(HL.Any, HL.String, HL.Boolean)
         << function(self, cell, text, done)
     
@@ -551,10 +456,6 @@ BlackboxEntryCtrl._UpdateGoalCell = HL.Method(HL.Any, HL.String, HL.Boolean)
     cell.done.gameObject:SetActiveIfNecessary(done)
     cell.undone.gameObject:SetActiveIfNecessary(not done)
 end
-
-
-
-
 
 BlackboxEntryCtrl._UpdateBlackboxCell = HL.Method(GameObject, HL.Number) << function(self, gameObject, csIndex)
     
@@ -573,20 +474,14 @@ BlackboxEntryCtrl._UpdateBlackboxCell = HL.Method(GameObject, HL.Number) << func
     end
 end
 
-
-
 BlackboxEntryCtrl._OnGraduallyShowFinish = HL.Method() << function(self)
     if DeviceInfo.usingController then
         local luaIndex = self:_FindLuaIndexInBlackboxInfos(self.m_curSelectedBlackboxId)
         
         local cell = self.m_genBlackboxCellFunc(luaIndex)
-        UIUtils.setAsNaviTarget(cell.view.button)
+        self:SetNaviTarget(cell.view.button)
     end
 end
-
-
-
-
 
 BlackboxEntryCtrl._OnBlackboxCellClick = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local blackboxInfo = self.m_curBlackboxInfos[luaIndex]
@@ -613,15 +508,10 @@ BlackboxEntryCtrl._OnBlackboxCellClick = HL.Method(HL.Any, HL.Number) << functio
     wrapper:Play("blackboxentry_change")
 end
 
-
-
 BlackboxEntryCtrl._OnBtnFilterClick = HL.Method() << function(self)
     self.m_filterArgs.selectedTags = self.m_cachedSelectedTags
     self:Notify(MessageConst.SHOW_COMMON_FILTER, self.m_filterArgs)
 end
-
-
-
 
 BlackboxEntryCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, selectedTags)
 
@@ -643,7 +533,7 @@ BlackboxEntryCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, selec
     end
     if DeviceInfo.usingController then
         
-        UIUtils.setAsNaviTarget(nil)
+        self:ClearNaviTarget()
     end
     self.view.blackboxScrollList:UpdateCount(#self.m_curBlackboxInfos, luaIndex > 0 and CSIndex(luaIndex) or -1)
     
@@ -673,9 +563,6 @@ BlackboxEntryCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, selec
     end
 end
 
-
-
-
 BlackboxEntryCtrl._ReadBlackbox = HL.Method(HL.String) << function(self, blackboxId)
     local dungeonMgr = GameInstance.dungeonManager
     if not dungeonMgr:IsDungeonActive(blackboxId) then
@@ -688,9 +575,6 @@ BlackboxEntryCtrl._ReadBlackbox = HL.Method(HL.String) << function(self, blackbo
 
     dungeonMgr:ReadBlackbox(blackboxId)
 end
-
-
-
 
 BlackboxEntryCtrl.OnBlackboxDirectlyGetReward = HL.Method(HL.Table) << function(self, arg)
     self:_RefreshDetails()
@@ -795,8 +679,6 @@ BlackboxEntryCtrl.OnBlackboxDirectlyGetReward = HL.Method(HL.Table) << function(
     })
 end
 
-
-
 BlackboxEntryCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = lume.deepCopy(self.m_arg)
     arg.resumeBlackboxId = self.m_curSelectedBlackboxId
@@ -811,8 +693,6 @@ BlackboxEntryCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << 
     end
     return arg
 end
-
-
 
 
 

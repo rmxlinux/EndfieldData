@@ -1,55 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacCacheBelt = HL.Class('FacCacheBelt', UIWidgetBase)
 
 local MAX_VIEW_PORT_COUNT = 6
@@ -57,46 +7,31 @@ local LUT_COLOR_IN_START_ID = 0
 local LUT_COLOR_OUT_START_ID = 3
 local MESSAGE_ITEM_INDEX = 0
 
-
 FacCacheBelt.m_buildingNodeId = HL.Field(HL.Number) << -1
-
 
 FacCacheBelt.m_buildingNode = HL.Field(HL.Any)
 
-
 FacCacheBelt.m_buildingId = HL.Field(HL.String) << ""
-
 
 FacCacheBelt.m_inBeltList = HL.Field(HL.Forward('UIListCache'))
 
-
 FacCacheBelt.m_outBeltList = HL.Field(HL.Forward('UIListCache'))
-
 
 FacCacheBelt.m_inBindingBeltDataMap = HL.Field(HL.Table)
 
-
 FacCacheBelt.m_outBindingBeltDataMap = HL.Field(HL.Table)
-
 
 FacCacheBelt.m_inBeltInfoList = HL.Field(HL.Table)
 
-
 FacCacheBelt.m_outBeltInfoList = HL.Field(HL.Table)
-
 
 FacCacheBelt.m_cachedSprite = HL.Field(HL.Table)
 
-
 FacCacheBelt.m_isInSingleState = HL.Field(HL.Boolean) << false
-
 
 FacCacheBelt.m_onInitializeFinished = HL.Field(HL.Function)
 
-
 FacCacheBelt.m_needRefreshPortState = HL.Field(HL.Boolean) << false
-
-
 
 
 FacCacheBelt._OnFirstTimeInit = HL.Override() << function(self)
@@ -115,14 +50,10 @@ FacCacheBelt._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 FacCacheBelt._OnDestroy = HL.Override() << function(self)
     self:_UnRegisterInterested()
     self.m_cachedSprite = nil
 end
-
-
 
 FacCacheBelt._OnEnable = HL.Override() << function(self)
     if self.m_needRefreshPortState then
@@ -131,15 +62,9 @@ FacCacheBelt._OnEnable = HL.Override() << function(self)
     end
 end
 
-
-
 FacCacheBelt._OnDisable = HL.Override() << function(self)
     self.m_needRefreshPortState = true
 end
-
-
-
-
 
 
 
@@ -170,9 +95,6 @@ FacCacheBelt.InitFacCacheBelt = HL.Method(HL.Userdata, HL.Table) << function(sel
     end
 end
 
-
-
-
 FacCacheBelt._RefreshCacheBelt = HL.Method(HL.Opt(HL.Boolean)) << function(self, needDelayRefresh)
     self:_GetBeltInfoList()
 
@@ -187,8 +109,6 @@ FacCacheBelt._RefreshCacheBelt = HL.Method(HL.Opt(HL.Boolean)) << function(self,
     self:_RegisterInterested()
 end
 
-
-
 FacCacheBelt._GetBeltInfoList = HL.Method() << function(self)
     self.m_inBeltInfoList, self.m_outBeltInfoList = FactoryUtils.getBuildingPortState(self.m_buildingNodeId, false)
 
@@ -199,9 +119,6 @@ FacCacheBelt._GetBeltInfoList = HL.Method() << function(self)
         self.m_outBeltInfoList = self:_FilterBeltInfoList(self.m_outBeltInfoList, outIndexList)
     end
 end
-
-
-
 
 FacCacheBelt._GetItemSprite = HL.Method(HL.String).Return(HL.Userdata) << function(self, itemId)
     local itemSprite = self.m_cachedSprite[itemId]
@@ -215,10 +132,6 @@ FacCacheBelt._GetItemSprite = HL.Method(HL.String).Return(HL.Userdata) << functi
     return itemSprite
 end
 
-
-
-
-
 FacCacheBelt._GetIsBeltBlocked = HL.Method(HL.Number, HL.Boolean).Return(HL.Boolean) << function(self, nodeId, isIn)
     local infoList = isIn and self.m_inBeltInfoList or self.m_outBeltInfoList
     if infoList == nil then
@@ -231,9 +144,6 @@ FacCacheBelt._GetIsBeltBlocked = HL.Method(HL.Number, HL.Boolean).Return(HL.Bool
     end
     return false
 end
-
-
-
 
 FacCacheBelt._GetBeltHeightAndSpaceByPortCount = HL.Method(HL.Number).Return(HL.Number, HL.Number) << function(self, portCount)
     local config = self.view.config
@@ -252,10 +162,6 @@ FacCacheBelt._GetBeltHeightAndSpaceByPortCount = HL.Method(HL.Number).Return(HL.
     end
 end
 
-
-
-
-
 FacCacheBelt._FilterBeltInfoList = HL.Method(HL.Table, HL.Table).Return(HL.Table) << function(self, resource, filter)
     filter = lume.invert(filter)
     local result = {}
@@ -271,15 +177,16 @@ end
 
 
 
-
-
 FacCacheBelt._InitInBeltList = HL.Method() << function(self)
     local inPortCount = #self.m_inBeltInfoList
     self.m_inBindingBeltDataMap = {}
     self.m_inEndSlotGroup = self.m_inEndSlotGroupGetter() or {}
 
     if inPortCount == 0 then
+        self.view.inBeltGroup.gameObject:SetActiveIfNecessary(false)
         return
+    else
+        self.view.inBeltGroup.gameObject:SetActiveIfNecessary(true)
     end
 
     local inBeltHeight, inBeltSpacing = self:_GetBeltHeightAndSpaceByPortCount(inPortCount)
@@ -305,15 +212,16 @@ FacCacheBelt._InitInBeltList = HL.Method() << function(self)
     self:_InitBeltGroupLine(true)
 end
 
-
-
 FacCacheBelt._InitOutBeltList = HL.Method() << function(self)
     local outPortCount = #self.m_outBeltInfoList
     self.m_outBindingBeltDataMap = {}
     self.m_outEndSlotGroup = self.m_outEndSlotGroupGetter() or {}
 
     if outPortCount == 0 then
+        self.view.outBeltGroup.gameObject:SetActiveIfNecessary(false)
         return
+    else
+        self.view.outBeltGroup.gameObject:SetActiveIfNecessary(true)
     end
 
     local outBeltHeight, outBeltSpacing = self:_GetBeltHeightAndSpaceByPortCount(outPortCount)
@@ -338,9 +246,6 @@ FacCacheBelt._InitOutBeltList = HL.Method() << function(self)
 
     self:_InitBeltGroupLine(false)
 end
-
-
-
 
 FacCacheBelt._InitBeltGroupLine = HL.Method(HL.Boolean) << function(self, isIn)
     local endLineGroup = self:_GetEndLineGroup(isIn)
@@ -382,9 +287,8 @@ FacCacheBelt._InitBeltGroupLine = HL.Method(HL.Boolean) << function(self, isIn)
         local portColor = CSFactoryUtil.GetPedestalLUTColor(colorStartId + index - 1)
         if cache.ports.Count == #infoList then
             for i = 0, cache.ports.Count - 1 do
-                local portIndex = cache.ports[i]
-                local beltCell = beltList:GetItem(LuaIndex(portIndex))
-                local beltInfo = infoList[LuaIndex(portIndex)]
+                local beltCell = beltList:GetItem(LuaIndex(i))
+                local beltInfo = infoList[LuaIndex(i)]
                 local bindingData = bindingMap[beltInfo.touchNodeId]
                 self:_RefreshBeltCellColor(beltCell, portColor)
                 self:_DrawBeltGroupLine({
@@ -401,9 +305,6 @@ FacCacheBelt._InitBeltGroupLine = HL.Method(HL.Boolean) << function(self, isIn)
         end
     end
 end
-
-
-
 
 
 
@@ -439,8 +340,6 @@ FacCacheBelt._DrawBeltGroupLine = HL.Method(HL.Table) << function(self, drawInfo
     end
 end
 
-
-
 FacCacheBelt._RefreshBeltShownState = HL.Method() << function(self)
     
     local needShow = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedBelt and
@@ -465,32 +364,21 @@ local DELAY_ANIM_SLOT_PLAY_TIMER = "timerItemPut"
 local DELAY_ANIM_LINE_PLAY_TIMER = "timerItemPut"
 local DELAY_ANIM_ITEM_PUT_PLAY_TIMER = "timerItemPut"
 
-
 FacCacheBelt.m_noGroup = HL.Field(HL.Boolean) << false
-
 
 FacCacheBelt.m_inEndSlotGroup = HL.Field(HL.Table)
 
-
 FacCacheBelt.m_inEndSlotGroupGetter = HL.Field(HL.Function)
-
 
 FacCacheBelt.m_outEndSlotGroup = HL.Field(HL.Table)
 
-
 FacCacheBelt.m_outEndSlotGroupGetter = HL.Field(HL.Function)
-
 
 FacCacheBelt.m_inIndexList = HL.Field(HL.Table)
 
-
 FacCacheBelt.m_outIndexList = HL.Field(HL.Table)
 
-
 FacCacheBelt.m_stateRefreshCallback = HL.Field(HL.Function)
-
-
-
 
 FacCacheBelt._ParseCustomInfo = HL.Method(HL.Table) << function(self, customInfo)
     if customInfo == nil then
@@ -505,9 +393,6 @@ FacCacheBelt._ParseCustomInfo = HL.Method(HL.Table) << function(self, customInfo
     self.m_stateRefreshCallback = customInfo.stateRefreshCallback or function()end
     self.m_onInitializeFinished = customInfo.onInitializeFinished or function()end
 end
-
-
-
 
 FacCacheBelt._GetEndLineGroup = HL.Method(HL.Boolean).Return(HL.Table) << function(self, isIn)
     if self.m_noGroup then
@@ -532,10 +417,7 @@ end
 
 
 
-
 FacCacheBelt.m_registered = HL.Field(HL.Boolean) << false
-
-
 
 FacCacheBelt._RegisterInterested = HL.Method() << function(self)
     if self.m_registered then
@@ -556,8 +438,6 @@ FacCacheBelt._RegisterInterested = HL.Method() << function(self)
 
     self.m_registered = true
 end
-
-
 
 FacCacheBelt._UnRegisterInterested = HL.Method() << function(self)
     if not self.m_registered then
@@ -584,10 +464,6 @@ end
 
 
 
-
-
-
-
 FacCacheBelt._RefreshBeltCellColor = HL.Method(HL.Any, HL.Any) << function(self, cell, color)
     if cell == nil or color == nil then
         return
@@ -595,10 +471,6 @@ FacCacheBelt._RefreshBeltCellColor = HL.Method(HL.Any, HL.Any) << function(self,
 
     cell.decoLine.color = color
 end
-
-
-
-
 
 FacCacheBelt._RefreshBeltCellState = HL.Method(HL.Any, HL.Table) << function(self, cell, info)
     if cell == nil or info == nil then
@@ -618,12 +490,6 @@ FacCacheBelt._RefreshBeltCellState = HL.Method(HL.Any, HL.Table) << function(sel
         self.m_stateRefreshCallback(info)
     end
 end
-
-
-
-
-
-
 
 FacCacheBelt._RefreshBeltCellConveyorAnimation = HL.Method(HL.Boolean, HL.Number, HL.Number, HL.String) << function(
     self, isIn, nodeId, compId, itemId)
@@ -668,7 +534,15 @@ FacCacheBelt._RefreshBeltCellConveyorAnimation = HL.Method(HL.Boolean, HL.Number
         cell.liquidIcon.sprite = liquidSprite
         cell.liquidIcon.gameObject:SetActive(true)
     else
-        cell.liquidIcon.gameObject:SetActive(false)
+        local jarSuccess, gasJarData = Tables.fullGasJarTable:TryGetValue(itemId)
+        if jarSuccess then
+            local gasItemId = gasJarData.gasId
+            local gasSprite = self:_GetItemSprite(gasItemId)
+            cell.liquidIcon.sprite = gasSprite
+            cell.liquidIcon.gameObject:SetActive(true)
+        else
+            cell.liquidIcon.gameObject:SetActive(false)
+        end
     end
 
     local targetLineIndex = 1
@@ -725,9 +599,6 @@ FacCacheBelt._RefreshBeltCellConveyorAnimation = HL.Method(HL.Boolean, HL.Number
     end
 end
 
-
-
-
 FacCacheBelt._RefreshBeltCellBlockState = HL.Method(HL.Number) << function(self, buildingNodeId)
     if self.m_buildingNodeId ~= buildingNodeId then
         return
@@ -753,16 +624,11 @@ end
 
 
 
-
-
 FacCacheBelt.RefreshCacheBelt = HL.Method() << function(self)
     self.view.inFacLineDrawer:ClearDrawer()
     self.view.outFacLineDrawer:ClearDrawer()
     self:_RefreshCacheBelt()
 end
-
-
-
 
 FacCacheBelt.SetCacheBeltSingleState = HL.Method(HL.Boolean) << function(self, useSingleState)
     
@@ -785,8 +651,6 @@ FacCacheBelt.SetCacheBeltSingleState = HL.Method(HL.Boolean) << function(self, u
 
     self.m_isInSingleState = useSingleState
 end
-
-
 
 
 FacCacheBelt.RefreshBeltCellsState = HL.Method() << function(self)

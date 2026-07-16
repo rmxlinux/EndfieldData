@@ -1,72 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.HyperlinkPopup
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 HyperlinkPopupCtrl = HL.Class('HyperlinkPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -78,43 +13,30 @@ HyperlinkPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 HyperlinkPopupCtrl.IsRestore = HL.StaticField(HL.Boolean) << false
-
 
 HyperlinkPopupCtrl.m_args = HL.Field(HL.Table)
 
-
 HyperlinkPopupCtrl.m_genTermCells = HL.Field(HL.Forward("UIListCache"))
 
-
 HyperlinkPopupCtrl.m_genOriginalTxtCells = HL.Field(HL.Forward("UIListCache"))
-
 
 HyperlinkPopupCtrl.m_maxTermCellCount = HL.Field(HL.Number) << 0
 
 
-
 HyperlinkPopupCtrl.m_termDataStack = HL.Field(HL.Forward("Stack"))
-
 
 HyperlinkPopupCtrl.m_originalTextDataList = HL.Field(HL.Table)
 
-
 HyperlinkPopupCtrl.m_targetUITextIndex = HL.Field(HL.Number) << 0
-
 
 HyperlinkPopupCtrl.m_baseLinkId = HL.Field(HL.String) << ""
 
-
 HyperlinkPopupCtrl.m_refreshTermCellFunc = HL.Field(HL.Function)
-
 
 HyperlinkPopupCtrl.m_clickTargetTextLinkFunc = HL.Field(HL.Function)
 
-
 HyperlinkPopupCtrl.m_onOriginalTxtHoverLinkChangeFunc = HL.Field(HL.Function)
-
 
 HyperlinkPopupCtrl.m_clickTermTextLinkFunc = HL.Field(HL.Function)
 
@@ -126,23 +48,15 @@ local LayerType = {
     TermList = 2,
 }
 
-
 HyperlinkPopupCtrl.m_curFocusLayer = HL.Field(HL.Number) << LayerType.None
-
 
 HyperlinkPopupCtrl.m_hyperlinkConfirmBindId = HL.Field(HL.Number) << 0
 
-
 HyperlinkPopupCtrl.m_isNavi = HL.Field(HL.Boolean) << false
-
 
 HyperlinkPopupCtrl.m_updateNaviKey = HL.Field(HL.Number) << 0
 
-
 HyperlinkPopupCtrl.m_isTemporaryHideNavi = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -159,8 +73,6 @@ HyperlinkPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end)
 end
 
-
-
 HyperlinkPopupCtrl.OnShow = HL.Override() << function(self)
     if self.m_isTemporaryHideNavi then
         self.m_isTemporaryHideNavi = false
@@ -169,8 +81,6 @@ HyperlinkPopupCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 HyperlinkPopupCtrl.OnHide = HL.Override() << function(self)
     if not self.m_isTemporaryHideNavi then
         self.m_isTemporaryHideNavi = true
@@ -178,8 +88,6 @@ HyperlinkPopupCtrl.OnHide = HL.Override() << function(self)
         self:_ChangeNavi(nil)
     end
 end
-
-
 
 HyperlinkPopupCtrl.OnClose = HL.Override() << function(self)
     HyperlinkPopupCtrl.IsRestore = false
@@ -196,11 +104,9 @@ HyperlinkPopupCtrl.OnClose = HL.Override() << function(self)
         end
     end
     
-    Notify(MessageConst.HIDE_HYPERLINK_TIPS)
+    Notify(MessageConst.ON_STOP_HOVER_LINK)
     AudioAdapter.PostEvent("Au_UI_Popup_DetailsPanel_Close")
 end
-
-
 
 HyperlinkPopupCtrl.OnAnimationInFinished = HL.Override() << function(self)
     if HyperlinkPopupCtrl.IsRestore then
@@ -223,9 +129,6 @@ HyperlinkPopupCtrl.OnAnimationInFinished = HL.Override() << function(self)
     end
 end
 
-
-
-
 HyperlinkPopupCtrl.ShowPopup = HL.Method(HL.Any) << function(self, args)
     UIManager:SetTopOrder(PANEL_ID)
     self:_InitData(args)
@@ -236,32 +139,33 @@ end
 
 
 
-
-
 HyperlinkPopupCtrl.ShowHyperlinkPopupSingle = HL.StaticMethod(HL.Any) << function(args)
+    local targetUIText, baseLinkId = unpack(args)
+    local linkType = UIUtils.resolveLinkTypeFromId(baseLinkId)
+    if linkType ~= UIConst.UI_TEXT_LINK_TYPE.Hyperlink then
+        return
+    end
+    
     if UIManager:IsShow(PANEL_ID) then
         return
     end
-    Notify(MessageConst.HIDE_HYPERLINK_TIPS)
+    Notify(MessageConst.ON_STOP_HOVER_LINK)
     local isOpened = UIManager:IsOpen(PANEL_ID)
     local self = UIManager:AutoOpen(PANEL_ID)
     if isOpened then
         self:_ClearStack()
     end
-    local targetUIText, baseLinkId = unpack(args)
     self:ShowPopup({
         targetUIText = targetUIText,
         baseLinkId = baseLinkId,
     })
 end
 
-
-
 HyperlinkPopupCtrl.ShowHyperlinkPopupByGroupId = HL.StaticMethod(HL.String) << function(arg)
     if UIManager:IsShow(PANEL_ID) then
         return
     end
-    Notify(MessageConst.HIDE_HYPERLINK_TIPS)
+    Notify(MessageConst.ON_STOP_HOVER_LINK)
     local isOpened = UIManager:IsOpen(PANEL_ID)
     local self = UIManager:AutoOpen(PANEL_ID)
     if isOpened then
@@ -271,9 +175,6 @@ HyperlinkPopupCtrl.ShowHyperlinkPopupByGroupId = HL.StaticMethod(HL.String) << f
         hyperlinkUITextGroupId = arg,
     })
 end
-
-
-
 
 
 
@@ -311,8 +212,6 @@ HyperlinkPopupCtrl._InitData = HL.Method(HL.Table) << function(self, args)
         end
     end
 end
-
-
 
 HyperlinkPopupCtrl._WrapHyperTextData = HL.StaticMethod(CS.Beyond.UI.UIText).Return(HL.Table) << function(uiText)
     local textData = {
@@ -378,11 +277,8 @@ HyperlinkPopupCtrl._WrapHyperTextData = HL.StaticMethod(CS.Beyond.UI.UIText).Ret
     return textData
 end
 
-
-
-
 HyperlinkPopupCtrl._WrapTermData = HL.StaticMethod(HL.String, HL.Number).Return(HL.Table) << function(linkId, stackIndex)
-    local cfg = Utils.tryGetTableCfg(Tables.hyperlinkTextTable, linkId)
+    local cfg = Utils.tryGetTableCfg(Tables.hyperlinkTextTable, string.gsub(linkId, CS.Beyond.UI.UIText.HYPERLINK_ID_PREFIX, ""))
     if cfg then
         local data = {
             id = linkId,
@@ -399,14 +295,18 @@ end
 
 
 
-
-
 HyperlinkPopupCtrl._InitUI = HL.Method() << function(self)
-    self.view.closeBtn.onClick:AddListener(function()
-        self:_ChangeNavi(nil)
-        self:PlayAnimationOutAndClose()
-        AudioManager.PostEvent("Au_Ul_Popup_DetailsPanel_Close")
-    end)
+    if DeviceInfo.usingController then
+        
+        self.view.closeBtn.gameObject:SetActive(false)
+    else
+        self.view.closeBtn.gameObject:SetActive(true)
+        self.view.closeBtn.onClick:AddListener(function()
+            self:_ChangeNavi(nil)
+            self:PlayAnimationOutAndClose()
+            AudioManager.PostEvent("Au_Ul_Popup_DetailsPanel_Close")
+        end)
+    end
     
     self.m_genTermCells = UIUtils.genCellCache(self.view.termCell)
     self.m_genOriginalTxtCells = UIUtils.genCellCache(self.view.originalTxtCell)
@@ -428,9 +328,9 @@ HyperlinkPopupCtrl._InitUI = HL.Method() << function(self)
     end
     self.m_onOriginalTxtHoverLinkChangeFunc = function(linkId, isShow)
         if not isShow then
-            Notify(MessageConst.HIDE_HYPERLINK_TIPS)
+            Notify(MessageConst.ON_STOP_HOVER_LINK)
         else
-            Notify(MessageConst.SHOW_HYPERLINK_TIPS, { linkId })
+            Notify(MessageConst.ON_START_HOVER_LINK, { linkId })
         end
     end
     
@@ -517,26 +417,17 @@ HyperlinkPopupCtrl._InitUI = HL.Method() << function(self)
     })
 end
 
-
-
 HyperlinkPopupCtrl._RefreshAllUI = HL.Method() << function(self)
     self.m_genOriginalTxtCells:Refresh(#self.m_originalTextDataList, function(cell, luaIndex)
         self:_OnRefreshOriginalTxtCell(cell, luaIndex)
     end)
 end
 
-
-
-
 HyperlinkPopupCtrl._ForceRefreshBaseLink = HL.Method(HL.String) << function(self, newBaseLink)
     self.m_baseLinkId = newBaseLink
     self:_ClearStack()
     self:_PushTerm(self.m_baseLinkId)
 end
-
-
-
-
 
 HyperlinkPopupCtrl._OnRefreshOriginalTxtCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local originalTextData = self.m_originalTextDataList[luaIndex]
@@ -549,10 +440,6 @@ HyperlinkPopupCtrl._OnRefreshOriginalTxtCell = HL.Method(HL.Any, HL.Number) << f
     local showLine = luaIndex ~= #self.m_originalTextDataList
     cell.lineImg.gameObject:SetActive(showLine)
 end
-
-
-
-
 
 HyperlinkPopupCtrl._OnRefreshTermCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     if luaIndex < 1 or luaIndex > self.m_termDataStack:Count() then
@@ -609,13 +496,10 @@ end
 
 
 
-
-
-
 HyperlinkPopupCtrl._PushTerm = HL.Method(HL.String) << function(self, linkId)
     self:_ChangeNavi(nil)   
     
-    Notify(MessageConst.HIDE_HYPERLINK_TIPS)
+    Notify(MessageConst.ON_STOP_HOVER_LINK)
     
     local preLastIndex = self.m_termDataStack:Count()
     for i = 1, preLastIndex do
@@ -676,9 +560,6 @@ HyperlinkPopupCtrl._PushTerm = HL.Method(HL.String) << function(self, linkId)
     end
     AudioManager.PostEvent("Au_UI_Popup_WikiTipsPanel_Open")
 end
-
-
-
 
 HyperlinkPopupCtrl._PopTerm = HL.Method(HL.Number) << function(self, popCount)
     self:_ChangeNavi(nil)   
@@ -748,14 +629,10 @@ HyperlinkPopupCtrl._PopTerm = HL.Method(HL.Number) << function(self, popCount)
     AudioManager.PostEvent("Au_UI_Popup_WikiTipsPanel_Open")
 end
 
-
-
 HyperlinkPopupCtrl._ClearStack = HL.Method() << function(self)
     self.m_termDataStack:Clear()
     self.m_genTermCells:Refresh(0, self.m_refreshTermCellFunc)
 end
-
-
 
 HyperlinkPopupCtrl._OnMoveNaviRight = HL.Method() << function(self)
     if self.m_isNavi == false then
@@ -793,8 +670,6 @@ HyperlinkPopupCtrl._OnMoveNaviRight = HL.Method() << function(self)
     end
 end
 
-
-
 HyperlinkPopupCtrl._OnMoveNaviLeft = HL.Method() << function(self)
     if self.m_isNavi == false then
         return
@@ -831,8 +706,6 @@ HyperlinkPopupCtrl._OnMoveNaviLeft = HL.Method() << function(self)
         end
     end
 end
-
-
 
 HyperlinkPopupCtrl._OnMoveNaviDown = HL.Method() << function(self)
     if self.m_isNavi == false then
@@ -872,8 +745,6 @@ HyperlinkPopupCtrl._OnMoveNaviDown = HL.Method() << function(self)
     end
 end
 
-
-
 HyperlinkPopupCtrl._OnMoveNaviUp = HL.Method() << function(self)
     if self.m_isNavi == false then
         return
@@ -912,8 +783,6 @@ HyperlinkPopupCtrl._OnMoveNaviUp = HL.Method() << function(self)
         end
     end
 end
-
-
 
 HyperlinkPopupCtrl._GetNextLinkIndexDown = HL.StaticMethod(HL.Table).Return(HL.Number) << function(textData)
     local curFocusLinkData = textData.linkDataList[textData.curFocusIndex]
@@ -956,8 +825,6 @@ HyperlinkPopupCtrl._GetNextLinkIndexDown = HL.StaticMethod(HL.Table).Return(HL.N
     return nextIndex
 end
 
-
-
 HyperlinkPopupCtrl._GetNextLinkIndexUp = HL.StaticMethod(HL.Table).Return(HL.Number) << function(textData)
     local curFocusLinkData = textData.linkDataList[textData.curFocusIndex]
     if not curFocusLinkData then
@@ -999,10 +866,11 @@ HyperlinkPopupCtrl._GetNextLinkIndexUp = HL.StaticMethod(HL.Table).Return(HL.Num
     return nextIndex
 end
 
-
-
-
 HyperlinkPopupCtrl._ChangeNavi = HL.Method(HL.Table) << function(self, textData)
+    if self.m_isTemporaryHideNavi then
+        Notify(MessageConst.HIDE_CONTROLLER_NAVI_TEXT_HINT)
+        return
+    end
     if not DeviceInfo.usingController then
         self.m_isNavi = false
         Notify(MessageConst.HIDE_CONTROLLER_NAVI_TEXT_HINT)
@@ -1020,19 +888,19 @@ HyperlinkPopupCtrl._ChangeNavi = HL.Method(HL.Table) << function(self, textData)
             }
             self.m_isNavi = true
             Notify(MessageConst.SHOW_CONTROLLER_NAVI_TEXT_HINT, arg)
-            logger.info("[Hyper] show navi: " .. textData.linkDataList[textData.curFocusIndex].linkId)
             return
         end
     end
     self.m_isNavi = false
     InputManagerInst:ToggleBinding(self.m_hyperlinkConfirmBindId, false)
     Notify(MessageConst.HIDE_CONTROLLER_NAVI_TEXT_HINT)
-    logger.info("[Hyper] hide navi")
 end
 
-
-
 HyperlinkPopupCtrl._AutoRefreshNavi = HL.Method() << function(self)
+    if self.m_isTemporaryHideNavi then
+        self:_ChangeNavi(nil)
+        return
+    end
     if self.m_curFocusLayer == LayerType.OriginalText then
         local originalTextData = self.m_originalTextDataList[self.m_targetUITextIndex]
         self:_ChangeNavi(originalTextData.hyperTextData)
@@ -1051,10 +919,10 @@ HyperlinkPopupCtrl._AutoRefreshNavi = HL.Method() << function(self)
     end
 end
 
-
-
-
 HyperlinkPopupCtrl._OnJumpToWiki = HL.Method(HL.String) << function(self, jumpWikiId)
+    if PhaseManager:CheckIsInTransition() then
+        return
+    end
     Notify(MessageConst.HIDE_ITEM_TIPS)
     if PhaseManager:IsOpen(PhaseId.Wiki) then
         
@@ -1084,8 +952,6 @@ HyperlinkPopupCtrl._OnJumpToWiki = HL.Method(HL.String) << function(self, jumpWi
     end
 end
 
-
-
 HyperlinkPopupCtrl._EnableAllTermCellPreviousBtn = HL.Method() << function(self)
     local cellCount = self.m_genTermCells:GetCount()
     for i = 1, cellCount do
@@ -1100,30 +966,19 @@ end
 
 
 
-
 HyperlinkPopupCtrl.m_cellAniLengthUpIn = HL.Field(HL.Number) << 0
-
 
 HyperlinkPopupCtrl.m_cellAniLengthUpOut = HL.Field(HL.Number) << 0
 
-
 HyperlinkPopupCtrl.m_cellAniLengthDownIn = HL.Field(HL.Number) << 0
-
 
 HyperlinkPopupCtrl.m_cellAniLengthDownOut = HL.Field(HL.Number) << 0
 
-
 HyperlinkPopupCtrl.m_cellVertLayoutGroupPaddingBottom = HL.Field(HL.Number) << 0
-
 
 HyperlinkPopupCtrl.m_remainTermAniCount = HL.Field(HL.Number) << 0
 
-
 HyperlinkPopupCtrl.m_onAllTermAniDone = HL.Field(HL.Function)
-
-
-
-
 
 HyperlinkPopupCtrl._TermAniUpOut = HL.Method(HL.Table, HL.Number) << function(self, cell, dataIndex)
     self.m_remainTermAniCount = self.m_remainTermAniCount + 1
@@ -1148,10 +1003,6 @@ HyperlinkPopupCtrl._TermAniUpOut = HL.Method(HL.Table, HL.Number) << function(se
     end)
 end
 
-
-
-
-
 HyperlinkPopupCtrl._TermAniUpIn = HL.Method(HL.Table, HL.Number) << function(self, cell, dataIndex)
     self.m_remainTermAniCount = self.m_remainTermAniCount + 1
     cell.previousBtn.enabled = false
@@ -1168,10 +1019,6 @@ HyperlinkPopupCtrl._TermAniUpIn = HL.Method(HL.Table, HL.Number) << function(sel
         logger.info(string.format("[HyperlinkPopup:_TermAniUpIn] index: %d; cellName: %s; contentPreferredHeight: %.3f", dataIndex, cell.gameObject.name, contentPreferredHeight))
     end)
 end
-
-
-
-
 
 HyperlinkPopupCtrl._TermAniCollapse = HL.Method(HL.Table, HL.Number) << function(self, cell, dataIndex)
     self.m_remainTermAniCount = self.m_remainTermAniCount + 2
@@ -1198,10 +1045,6 @@ HyperlinkPopupCtrl._TermAniCollapse = HL.Method(HL.Table, HL.Number) << function
     end)
 end
 
-
-
-
-
 HyperlinkPopupCtrl._TermAniDownIn = HL.Method(HL.Table, HL.Number) << function(self, cell, dataIndex)
     self.m_remainTermAniCount = self.m_remainTermAniCount + 1
     cell.previousBtn.enabled = false
@@ -1224,10 +1067,6 @@ HyperlinkPopupCtrl._TermAniDownIn = HL.Method(HL.Table, HL.Number) << function(s
     end)
 end
 
-
-
-
-
 HyperlinkPopupCtrl._TermAniDownOut = HL.Method(HL.Table, HL.Number) << function(self, cell, dataIndex)
     self.m_remainTermAniCount = self.m_remainTermAniCount + 1
     cell.previousBtn.enabled = false
@@ -1240,10 +1079,6 @@ HyperlinkPopupCtrl._TermAniDownOut = HL.Method(HL.Table, HL.Number) << function(
         self:_OnOneTermAniDone()
     end)
 end
-
-
-
-
 
 HyperlinkPopupCtrl._TermAniExpand = HL.Method(HL.Table, HL.Number) << function(self, cell, dataIndex)
     self.m_remainTermAniCount = self.m_remainTermAniCount + 2
@@ -1269,8 +1104,6 @@ HyperlinkPopupCtrl._TermAniExpand = HL.Method(HL.Table, HL.Number) << function(s
     end)
 end
 
-
-
 HyperlinkPopupCtrl._NaviTermCellWaitForRenderDone = HL.Method() << function(self)
     self:_StartCoroutine(function()
         coroutine.waitForRenderDone()
@@ -1282,8 +1115,6 @@ HyperlinkPopupCtrl._NaviTermCellWaitForRenderDone = HL.Method() << function(self
         end
     end)
 end
-
-
 
 HyperlinkPopupCtrl._OnOneTermAniDone = HL.Method() << function(self)
     self.m_remainTermAniCount = self.m_remainTermAniCount - 1

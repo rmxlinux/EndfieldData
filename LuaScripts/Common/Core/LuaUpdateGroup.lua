@@ -1,41 +1,21 @@
 
 
-
-
-
-
-
-
-
-
-
-
-
 LuaUpdateGroup = HL.Class('LuaUpdateGroup')
-
 
 
 LuaUpdateGroup.updateName = HL.Field(HL.String) << ''
 
-
 LuaUpdateGroup.m_bindingActions = HL.Field(HL.Table)
 
 if ENABLE_PROFILER then
-    
     LuaUpdateGroup.m_bindingActionDebugInfos = HL.Field(HL.Table)
 end
 
-
 LuaUpdateGroup.m_bindingTimeSliceActions = HL.Field(HL.Table)
-
 
 LuaUpdateGroup.m_timeSliceTickCount = HL.Field(HL.Number) << 0
 
-
 LuaUpdateGroup.m_lazyDelActions = HL.Field(HL.Table)
-
-
-
 
 
 LuaUpdateGroup.LuaUpdateGroup = HL.Constructor(HL.String) << function(self, updateName)
@@ -48,9 +28,6 @@ LuaUpdateGroup.LuaUpdateGroup = HL.Constructor(HL.String) << function(self, upda
     self.m_timeSliceTickCount = 0
     self.m_lazyDelActions = {}
     end
-
-
-
 
 LuaUpdateGroup._ExecActions = HL.Method(HL.Number) << function(self, deltaTime)
     local actions = self.m_bindingActions
@@ -136,11 +113,6 @@ LuaUpdateGroup._ExecActions = HL.Method(HL.Number) << function(self, deltaTime)
     end
 end
 
-
-
-
-
-
 LuaUpdateGroup.Add = HL.Method(HL.Number, HL.Function, HL.Opt(HL.Boolean)) << function(self, key, action, useTimeSlice)
 
     if useTimeSlice then
@@ -171,9 +143,6 @@ LuaUpdateGroup.Add = HL.Method(HL.Number, HL.Function, HL.Opt(HL.Boolean)) << fu
         end
     end
 end
-
-
-
 
 LuaUpdateGroup.Remove = HL.Method(HL.Opt(HL.Number)) << function(self, key)
     if key == nil then

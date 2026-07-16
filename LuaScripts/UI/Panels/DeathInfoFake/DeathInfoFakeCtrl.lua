@@ -1,23 +1,12 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DeathInfoFake
-
-
-
-
-
-
-
-
+local DisplayMode = CS.Beyond.Gameplay.Core.DeathPerformance.CommonDeathPanelDisplayMode
 
 DeathInfoFakeCtrl = HL.Class('DeathInfoFakeCtrl', uiCtrl.UICtrl)
 
 
-
 DeathInfoFakeCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
-
-
-
 
 DeathInfoFakeCtrl._TryGetRandomTrainingTip = HL.Method(HL.String).Return(HL.Opt(HL.String)) << function(self, trainingType)
     local trainingTipGroupWrapper = Tables.trainingDeathTips[trainingType]
@@ -31,11 +20,6 @@ DeathInfoFakeCtrl._TryGetRandomTrainingTip = HL.Method(HL.String).Return(HL.Opt(
     local tipIndex = CSIndex(math.random(#tipGroup))
     return tipGroup[tipIndex]
 end
-
-
-
-
-
 
 DeathInfoFakeCtrl._TryShowTrainingTip = HL.Method(HL.Userdata, HL.Userdata, HL.Table).Return(HL.Boolean) << function(self, trainingStd, trainingTypeInfo, deathInfo)
     local trainingType = trainingTypeInfo.trainingType
@@ -60,12 +44,6 @@ DeathInfoFakeCtrl._TryShowTrainingTip = HL.Method(HL.Userdata, HL.Userdata, HL.T
     self.view.trainingProgress.fillAmount = degree
     return true
 end
-
-
-
-
-
-
 
 DeathInfoFakeCtrl._ShowTips = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Number), HL.Opt(HL.Number)).Return(HL.Boolean) << function(self, tipGroup, indexOffset, index1, index2)
     if not tipGroup or #tipGroup == 0 then
@@ -93,11 +71,6 @@ DeathInfoFakeCtrl._ShowTips = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Number
     return true
 end
 
-
-
-
-
-
 DeathInfoFakeCtrl._TryShowInDungeonMode = HL.Method(HL.Table, HL.Opt(HL.Number), HL.Opt(HL.Number)).Return(HL.Boolean) << function(self, deathInfo, index1, index2)
     local dungeonId = deathInfo.dungeonId
     if not dungeonId then
@@ -114,11 +87,6 @@ DeathInfoFakeCtrl._TryShowInDungeonMode = HL.Method(HL.Table, HL.Opt(HL.Number),
     self.view.commonTipsHeader.gameObject:SetActive(true)
     return true
 end
-
-
-
-
-
 
 DeathInfoFakeCtrl._TryShowInEnemyMode = HL.Method(HL.Table, HL.Opt(HL.Number), HL.Opt(HL.Number)).Return(HL.Boolean) << function(self, deathInfo, index1, index2)
     if not deathInfo.enemyId or deathInfo.enemyLv < 0 then
@@ -141,14 +109,18 @@ DeathInfoFakeCtrl._TryShowInEnemyMode = HL.Method(HL.Table, HL.Opt(HL.Number), H
     return true
 end
 
-
-
+DeathInfoFakeCtrl._ShowCommonFallback = HL.Method(HL.Opt(HL.Number, HL.Number)) << function(self, index1, index2)
+    self:_ShowTips(Tables.commonDeathTips, 0, index1, index2)
+    self.view.enemyTipsHeader.gameObject:SetActive(false)
+    self.view.commonTipsHeader.gameObject:SetActive(true)
+end
 
 
 DeathInfoFakeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local deathInfo = arg.deathInfo
     local index1 = arg.index1
     local index2 = arg.index2
+    local displayMode = arg.displayMode or DisplayMode.WorldDeath
 
     self.view.tipNode02.gameObject:SetActive(false)
     self.view.trainingTips.gameObject:SetActive(false)
@@ -173,17 +145,32 @@ DeathInfoFakeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end
 
-    if self:_TryShowInDungeonMode(deathInfo, index1, index2) then
+    
+    if displayMode == DisplayMode.Miasma then
+        if not self:_ShowTips(Tables.miasmaDeathTips, 0, index1, index2) then
+            self:_ShowTips(Tables.commonDeathTips, 0, index1, index2)
+        end
+        self.view.enemyTipsHeader.gameObject:SetActive(false)
+        self.view.commonTipsHeader.gameObject:SetActive(true)
         return
     end
 
+    if displayMode == DisplayMode.DungeonFail then
+        if self:_TryShowInDungeonMode(deathInfo, index1, index2) then
+            return
+        end
+        if self:_TryShowInEnemyMode(deathInfo, index1, index2) then
+            return
+        end
+        self:_ShowCommonFallback(index1, index2)
+        return
+    end
+
+    
     if self:_TryShowInEnemyMode(deathInfo, index1, index2) then
         return
     end
-
-    self:_ShowTips(Tables.commonDeathTips, 0, index1, index2)
-    self.view.enemyTipsHeader.gameObject:SetActive(false)
-    self.view.commonTipsHeader.gameObject:SetActive(true)
+    self:_ShowCommonFallback(index1, index2)
 end
 
 HL.Commit(DeathInfoFakeCtrl)

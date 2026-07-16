@@ -1,24 +1,5 @@
 local GachaPoolCellBase = require_ex('UI/Widgets/GachaPoolCellBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GachaPoolCellStarter = HL.Class('GachaPoolCellStarter', GachaPoolCellBase)
 
 
@@ -30,19 +11,13 @@ local csGachaSystem = GameInstance.player.gacha
 
 
 
-
 GachaPoolCellStarter.m_missionCellListCache = HL.Field(HL.Forward("UIListCache"))
-
 
 GachaPoolCellStarter.m_activityInfo = HL.Field(HL.Table)
 
-
 GachaPoolCellStarter.m_isMissionListExpand = HL.Field(HL.Boolean) << false
 
-
 GachaPoolCellStarter.m_waitCumulateRewardMsg = HL.Field(HL.Boolean) << false
-
-
 
 
 
@@ -61,8 +36,6 @@ GachaPoolCellStarter._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
 end
-
-
 
 GachaPoolCellStarter._InnerInitGachaPoolCell = HL.Override() << function(self)
     logger.info("初始化 GachaPoolCellStarter")
@@ -96,16 +69,11 @@ GachaPoolCellStarter._InnerInitGachaPoolCell = HL.Override() << function(self)
     end)
 end
 
-
-
 GachaPoolCellStarter._InnerUpdateGachaPoolCell = HL.Override() << function(self)
     logger.info("更新 GachaPoolCellStarter")
     self:_UpdateData()
     self:_RefreshAllUI()
 end
-
-
-
 
 GachaPoolCellStarter.UpdateMoneyNodeOnlyGachaTicket = HL.Override(HL.Any) << function(self, moneyNode)
     moneyNode.gachaItem1.view.gameObject:SetActiveIfNecessary(false)
@@ -115,14 +83,10 @@ GachaPoolCellStarter.UpdateMoneyNodeOnlyGachaTicket = HL.Override(HL.Any) << fun
     moneyNode.gachaItem3:InitMoneyCell(singlePullItemId)
 end
 
-
-
 GachaPoolCellStarter._OnEnable = HL.Override() << function(self)
     GachaPoolCellStarter.Super._OnEnable(self)
     self:_RefreshRedDot()
 end
-
-
 
 
 
@@ -149,8 +113,6 @@ GachaPoolCellStarter._InitData = HL.Method() << function(self)
     end
 end
 
-
-
 GachaPoolCellStarter._UpdateData = HL.Method() << function(self)
     local activityData = activitySystem:GetActivity(Tables.charGachaConst.gachaBeginnerActivityId)
     
@@ -170,8 +132,6 @@ GachaPoolCellStarter._UpdateData = HL.Method() << function(self)
     end
     self.m_activityInfo.canGetRewardCount = canGetRewardCount
 end
-
-
 
 
 
@@ -196,8 +156,6 @@ GachaPoolCellStarter._InitUI = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 GachaPoolCellStarter._RefreshAllUI = HL.Method() << function(self)
     
@@ -228,8 +186,6 @@ GachaPoolCellStarter._RefreshAllUI = HL.Method() << function(self)
     self:_RefreshRedDot()
 end
 
-
-
 GachaPoolCellStarter._RefreshActivityNode = HL.Method() << function(self)
     local canGetRewardCount = self.m_activityInfo.canGetRewardCount
     if canGetRewardCount > 0 then
@@ -240,15 +196,11 @@ GachaPoolCellStarter._RefreshActivityNode = HL.Method() << function(self)
     end
 end
 
-
-
 GachaPoolCellStarter._RefreshRedDot = HL.Method() << function(self)
     
     local gachaTenTicketId = self.m_baseInfo.gachaCostInfos.tenPullItemInfos[1].itemId
     self.view.gachaTenBtn.redDot.gameObject:SetActive(Utils.getItemCount(gachaTenTicketId) > 0)
 end
-
-
 
 
 
@@ -266,8 +218,6 @@ GachaPoolCellStarter._TryJumpToActivity = HL.Method() << function(self)
     PhaseManager:GoToPhase(PhaseId.ActivityCenter, { activityId = Tables.charGachaConst.gachaBeginnerActivityId, gotoCenter = true})
 end
 
-
-
 GachaPoolCellStarter.GetSubPanelArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local isOpen, ctrl = UIManager:IsOpen(PanelId.BattlePassWeaponCase)
     if isOpen then
@@ -279,9 +229,6 @@ GachaPoolCellStarter.GetSubPanelArg = HL.Override().Return(HL.Opt(HL.Any)) << fu
     end
     return GachaPoolCellStarter.Super.GetSubPanelArg(self)
 end
-
-
-
 
 GachaPoolCellStarter.HandleSubPanelArg = HL.Override(HL.Any) << function(self, subPanelArg)
     if subPanelArg.isBattlePassWeaponCase then

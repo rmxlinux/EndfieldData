@@ -2,15 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaWeaponPreheat
 
-
-
-
-
-
-
-
 GachaWeaponPreheatCtrl = HL.Class('GachaWeaponPreheatCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -23,11 +15,7 @@ GachaWeaponPreheatCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 GachaWeaponPreheatCtrl.m_sortedRarityList = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -37,8 +25,6 @@ GachaWeaponPreheatCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnClickSkip()
     end)
 end
-
-
 
 GachaWeaponPreheatCtrl.Start = HL.Method() << function(self)
     self:_UpdateData()
@@ -69,8 +55,6 @@ GachaWeaponPreheatCtrl.Start = HL.Method() << function(self)
     end)
 end
 
-
-
 GachaWeaponPreheatCtrl._UpdateData = HL.Method() << function(self)
     self.m_sortedRarityList = {}
     local arg = self.m_phase.arg
@@ -86,8 +70,6 @@ GachaWeaponPreheatCtrl._UpdateData = HL.Method() << function(self)
     table.sort(self.m_sortedRarityList, function(a, b) return a > b end) 
     logger.info("sortedRarityList", self.m_sortedRarityList)
 end
-
-
 
 GachaWeaponPreheatCtrl._OnClickSkip = HL.Method() << function(self)
     local arg = self.m_phase.arg

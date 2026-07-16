@@ -2,26 +2,13 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 local OBJECTIVE_PROGRESS_TEXT_FORMAT = "%d/%d"
 
-
-
-
-
-
-
-
-
 BlackBoxTaskCell = HL.Class('BlackBoxTaskCell', UIWidgetBase)
-
 
 BlackBoxTaskCell.m_index = HL.Field(HL.Number) << -1
 
-
 BlackBoxTaskCell.m_taskType = HL.Field(CS.Beyond.Gameplay.LevelScriptTaskType)
 
-
 BlackBoxTaskCell.m_tracking = HL.Field(CS.Beyond.Gameplay.Core.LevelScriptTaskTracking)
-
-
 
 
 BlackBoxTaskCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -30,10 +17,6 @@ BlackBoxTaskCell._OnFirstTimeInit = HL.Override() << function(self)
         self:OnGoalProgressChange(args)
     end)
 end
-
-
-
-
 
 BlackBoxTaskCell.InitBlackBoxTaskCell = HL.Method(HL.Number, CS.Beyond.Gameplay.LevelScriptTaskType) << function(self, index, taskType)
     self.m_index = index
@@ -44,9 +27,6 @@ BlackBoxTaskCell.InitBlackBoxTaskCell = HL.Method(HL.Number, CS.Beyond.Gameplay.
     self:_UpdateContent()
 end
 
-
-
-
 BlackBoxTaskCell.OnGoalProgressChange = HL.Method(HL.Any) << function(self, args)
     local taskType, csIndex = unpack(args)
     if self.m_taskType ~= taskType or self.m_index ~= LuaIndex(csIndex) then
@@ -55,8 +35,6 @@ BlackBoxTaskCell.OnGoalProgressChange = HL.Method(HL.Any) << function(self, args
 
     self:_UpdateContent()
 end
-
-
 
 BlackBoxTaskCell._UpdateContent = HL.Method() << function(self)
     if not self.m_tracking then

@@ -1,19 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 PuzzleChessboardConditionCell = HL.Class('PuzzleChessboardConditionCell', UIWidgetBase)
-
-
 
 
 PuzzleChessboardConditionCell._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
-
 
 PuzzleChessboardConditionCell.InitPuzzleChessboardConditionCell = HL.Method(HL.Any, HL.Table) << function(self, eColor, data)
     self:_FirstTimeInit()

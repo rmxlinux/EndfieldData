@@ -1,53 +1,12 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Mail
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MailCtrl = HL.Class('MailCtrl', uiCtrl.UICtrl)
 
 local ASYNC_TEXTINFO_LINKINFO = 0.1
 
+local MAIL_CELL_PREFAB_PATH = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Mail/%s_MailCellBg.prefab"
+local MAIL_TITLE_PNG_PATH = "Mail/DynamicBg/%s_mailtitlebg"
+local MAIL_CONTENT_PNG_PATH = "Mail/DynamicBg/%s_mailcontentbg"
 
 
 
@@ -68,32 +27,21 @@ MailCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 MailCtrl.m_inLoading = HL.Field(HL.Boolean) << false
-
 
 MailCtrl.m_getMailCell = HL.Field(HL.Function)
 
-
 MailCtrl.m_curMails = HL.Field(HL.Table)
-
 
 MailCtrl.m_curMailIndex = HL.Field(HL.Number) << 1
 
-
 MailCtrl.m_curMailId = HL.Field(HL.Number) << -1
-
 
 MailCtrl.m_naviToHyperLinkBindingId = HL.Field(HL.Number) << -1
 
-
 MailCtrl.m_skipClickOnce = HL.Field(HL.Boolean) << false
 
-
 MailCtrl.m_waitingForNavi = HL.Field(HL.Boolean) << true
-
-
-
 
 
 
@@ -172,27 +120,18 @@ MailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RecoverByArgs(arg)
 end
 
-
-
 MailCtrl.OnShow = HL.Override() << function(self)
     self:RefreshLostAndFoundBtn()
     self:_RefreshMailListSelectedAnim()
 end
 
-
-
-
 MailCtrl.OnGetLostAndFound = HL.Method(HL.Table) << function(self, args)
     self:RefreshLostAndFoundBtn()
 end
 
-
-
 MailCtrl.OnAddLostAndFound = HL.Method() << function(self)
     self:RefreshLostAndFoundBtn()
 end
-
-
 
 MailCtrl.RefreshLostAndFoundBtn = HL.Method() << function(self)
     local lostAndFound = GameInstance.player.inventory.lostAndFound
@@ -206,19 +145,13 @@ MailCtrl.RefreshLostAndFoundBtn = HL.Method() << function(self)
     end
 end
 
-
-
 MailCtrl._OnClickClose = HL.Method() << function(self)
     self.view.mailContentNode:ClearTween()
     PhaseManager:PopPhase(PhaseId.Mail)
 end
 
-
-
 MailCtrl.OnAnimationInFinished = HL.Override() << function(self)
 end
-
-
 
 
 
@@ -227,10 +160,6 @@ MailCtrl._OnLoadingFinished = HL.Method() << function(self)
     self:_ToggleLoading(false)
     self:_OnClickTab(nil, nil)
 end
-
-
-
-
 
 MailCtrl._OnClickTab = HL.Method(HL.Opt(HL.Number, HL.Any)) << function(self, mailIndex, mailId)
     self.m_curMails = {}
@@ -327,6 +256,34 @@ end
 
 
 
+MailCtrl.m_cacheMailCellBg = HL.Field(HL.Table)
+
+MailCtrl._GetMailSkinPrefix = HL.Method(HL.Table, HL.Boolean).Return(HL.String) << function(self, info, upper)
+    local prefix = ""
+    if info.mail.subType == GEnums.MailSubType.Birthday then
+        prefix = "birthday"
+    else
+        prefix = "default"
+    end
+    if upper then
+        prefix = string.upperFirst(prefix)
+    end
+    return prefix
+end
+
+MailCtrl._GetMailCellBgPrefab = HL.Method(HL.Table).Return(CS.UnityEngine.GameObject) << function(self, info)
+    if self.m_cacheMailCellBg == nil then
+        self.m_cacheMailCellBg = {}
+    end
+
+    local prefix = self:_GetMailSkinPrefix(info, true)
+    if self.m_cacheMailCellBg[prefix] == nil then
+        self.m_cacheMailCellBg[prefix] = self:LoadGameObject(string.format(MAIL_CELL_PREFAB_PATH, prefix))
+    end
+    return self.m_cacheMailCellBg[prefix]
+end
+
+
 
 
 
@@ -335,8 +292,27 @@ MailCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, in
     local info = self.m_curMails[index]
 
     cell.title.text = info.mail.title
-    cell.iconSelected:LoadSprite(info.senderIcon)
-    cell.iconUnselected:LoadSprite(info.senderIcon)
+    cell.senderIcon:LoadSprite(info.senderIcon)
+
+    do 
+        if cell.dynamicBgAnimMap == nil then
+            cell.dynamicBgAnimMap = {}
+        end
+        local bgName = self:_GetMailSkinPrefix(info, true)
+        if cell.dynamicBgAnimMap[bgName] == nil then
+            local prefab = self:_GetMailCellBgPrefab(info)
+            local obj = CSUtils.CreateObject(prefab, cell.dynamicBg)
+            cell.dynamicBgAnimMap[bgName] = obj:GetComponent("UIAnimationWrapper")
+        end
+
+        if cell.curDynamicBgName ~= bgName then
+            if cell.curDynamicBgName ~= nil and cell.dynamicBgAnimMap[cell.curDynamicBgName] ~= nil then
+                cell.dynamicBgAnimMap[cell.curDynamicBgName].gameObject:SetActive(false)
+            end
+            cell.curDynamicBgName = bgName
+            cell.dynamicBgAnimMap[cell.curDynamicBgName].gameObject:SetActive(true)
+        end
+    end
 
     if DeviceInfo.usingController then
         cell.button.onIsNaviTargetChanged = function(isTarget, isGroupChanged)
@@ -350,7 +326,7 @@ MailCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, in
         end
         if self.m_waitingForNavi and info.id == self.m_curMailId then
             self.m_waitingForNavi = false
-            UIUtils.setAsNaviTarget(cell.button)
+            self:SetNaviTarget(cell.button)
         end
     else
         cell.button.onClick:RemoveAllListeners()
@@ -381,7 +357,13 @@ MailCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, in
         cell.star.gameObject:SetActive(false)
     end
 
+    if info.id == self.m_curMailId then
+        cell.dynamicBgAnimMap[cell.curDynamicBgName]:PlayInAnimation()
+    else
+        cell.dynamicBgAnimMap[cell.curDynamicBgName]:PlayOutAnimation()
+    end
     cell.animator:SetBool("IsSelected", info.id == self.m_curMailId)
+    cell.senderAvatar:SetState(info.id == self.m_curMailId and "Select" or "UnSelect")
     cell.readMask.gameObject:SetActive(info.isRead and info.collected)
 
     cell.redDot:InitRedDot("SingleMail", info.id)
@@ -389,33 +371,36 @@ MailCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, in
     cell.gameObject.name = "MailCell-" .. index
 end
 
-
-
 MailCtrl._RefreshMailListSelectedAnim = HL.Method() << function(self)
     self.m_waitingForNavi = true
     self.view.mailList:UpdateShowingCells(function(index, obj)
         local cell = self.m_getMailCell(obj)
         local info = self.m_curMails[LuaIndex(index)]
         if cell ~= nil and info ~= nil then
+            if info.id == self.m_curMailId then
+                cell.dynamicBgAnimMap[cell.curDynamicBgName]:PlayInAnimation()
+            else
+                cell.dynamicBgAnimMap[cell.curDynamicBgName]:PlayOutAnimation()
+            end
             cell.animator:SetBool("IsSelected", info.id == self.m_curMailId)
+            cell.senderAvatar:SetState(info.id == self.m_curMailId and "Select" or "UnSelect")
             if DeviceInfo.usingController then
                 if self.m_waitingForNavi and info.id == self.m_curMailId then
                     self.m_waitingForNavi = false
-                    UIUtils.setAsNaviTarget(cell.button)
+                    self:SetNaviTarget(cell.button)
                 end
             end
         end
     end)
 end
 
-
-
-
 MailCtrl._OnClickMail = HL.Method(HL.Number) << function(self, index)
     if self.m_curMailIndex ~= index then
         local oldCell = self.m_getMailCell(self.m_curMailIndex)
         if oldCell then
+            oldCell.dynamicBgAnimMap[oldCell.curDynamicBgName]:PlayOutAnimation()
             oldCell.animator:SetBool("IsSelected", false)
+            oldCell.senderAvatar:SetState("UnSelect")
         end
     end
 
@@ -423,13 +408,12 @@ MailCtrl._OnClickMail = HL.Method(HL.Number) << function(self, index)
     self.m_curMailId = self.m_curMails[index].id
     local cell = self.m_getMailCell(index)
     if cell then
+        cell.dynamicBgAnimMap[cell.curDynamicBgName]:PlayInAnimation()
         cell.animator:SetBool("IsSelected", true)
+        cell.senderAvatar:SetState("Select")
     end
     self:_ShowContent(index)
 end
-
-
-
 
 MailCtrl._ShowContent = HL.Method(HL.Number) << function(self, index)
     local info = self.m_curMails[index]
@@ -437,6 +421,12 @@ MailCtrl._ShowContent = HL.Method(HL.Number) << function(self, index)
     self.view.mailName.text = info.mail.title
     self.view.sendTimeTxt.text = os.date("!" .. Language.LUA_MAIL_SEND_TIME_FORMAT, info.sendTime + Utils.getClientTimeZoneOffsetSeconds())
     self.view.senderNameTxt.text = string.format(Language.LUA_MAIL_SENDER_FORMAT, info.senderName)
+
+    do 
+        local prefix = self:_GetMailSkinPrefix(info, false)
+        self.view.contentNodeState:SetState(prefix)
+    end
+
     local analyzedContentInfo = MailUtils.AnalyzeMailContent(info.mail)
     self.view.contentTxt:SetAndResolveTextStyle(analyzedContentInfo.content)
     self.view.contentTxt:ShrinkLinkTags()
@@ -488,10 +478,6 @@ MailCtrl._ShowContent = HL.Method(HL.Number) << function(self, index)
     self.view.mailContentNode:ClearTween()
     self.view.mailContentNode:PlayInAnimation()
 end
-
-
-
-
 
 MailCtrl._RefreshContentGachaPoolNode = HL.Method(CS.Beyond.Gameplay.MailSystem.Mail, HL.Any) << function(self, mail, specialParamTable)
     local gachaPoolNode = self.view.gachaPoolNode
@@ -547,10 +533,6 @@ MailCtrl._RefreshContentGachaPoolNode = HL.Method(CS.Beyond.Gameplay.MailSystem.
     end)
 end
 
-
-
-
-
 MailCtrl._RefreshContentGachaWeaponPoolNode = HL.Method(CS.Beyond.Gameplay.MailSystem.Mail, HL.Any) << function(self, mail, specialParamTable)
     local gachaPoolNode = self.view.gachaWeaponPoolNode
     gachaPoolNode.jumpGachaPoolBtn.onClick:RemoveAllListeners()
@@ -601,8 +583,6 @@ end
 
 
 
-
-
 MailCtrl._OnClickGet = HL.Method() << function(self)
     local canPutInItemBagAndFactoryDepot = true 
     local canPutInValuableDepot = true 
@@ -647,8 +627,6 @@ MailCtrl._OnClickGet = HL.Method() << function(self)
     end
 end
 
-
-
 MailCtrl._OnClickGetAll = HL.Method() << function(self)
     for _, v in pairs(self.m_curMails) do
         if not v.collected then
@@ -659,8 +637,6 @@ MailCtrl._OnClickGetAll = HL.Method() << function(self)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_MAIL_NO_ATTACHMENT)
     AudioAdapter.PostEvent("au_ui_g_confirm_button_get_all_mail")
 end
-
-
 
 MailCtrl._OnClickDel = HL.Method() << function(self)
     local info = self.m_curMails[self.m_curMailIndex]
@@ -685,8 +661,6 @@ MailCtrl._OnClickDel = HL.Method() << function(self)
     self.m_skipClickOnce = true
 end
 
-
-
 MailCtrl._OnClickDelAll = HL.Method() << function(self)
     Notify(MessageConst.SHOW_POP_UP, {
         content = Language.LUA_MAIL_HINT_DEL_ALL,
@@ -708,21 +682,15 @@ MailCtrl._OnClickDelAll = HL.Method() << function(self)
     })
 end
 
-
-
 MailCtrl._OnClickLostAndFound = HL.Method() << function(self)
     PhaseManager:OpenPhase(PhaseId.LostAndFound)
     self.m_skipClickOnce = true
 end
 
-
-
 MailCtrl._OnClickStar = HL.Method() << function(self)
     local info = self.m_curMails[self.m_curMailIndex]
     GameInstance.player.mail:StarMail(info.id, not info.isStar)
 end
-
-
 
 MailCtrl._OnClickMonthlyPassBtn = HL.Method() << function(self)
     PhaseManager:OpenPhase(PhaseId.CashShop, {
@@ -730,8 +698,6 @@ MailCtrl._OnClickMonthlyPassBtn = HL.Method() << function(self)
         cashShopId = "MCard",
     })
 end
-
-
 
 
 
@@ -750,9 +716,6 @@ MailCtrl.OnAllMailInited = HL.Method() << function(self)
     end
 end
 
-
-
-
 MailCtrl.OnReadMail = HL.Method(HL.Table) << function(self, args)
     local id = unpack(args)
     for k, v in ipairs(self.m_curMails) do
@@ -765,9 +728,6 @@ MailCtrl.OnReadMail = HL.Method(HL.Table) << function(self, args)
         end
     end
 end
-
-
-
 
 MailCtrl.OnGetMailAttachment = HL.Method(HL.Table) << function(self, args)
     
@@ -794,9 +754,6 @@ MailCtrl.OnGetMailAttachment = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
-
 MailCtrl.OnStarMail = HL.Method(HL.Table) << function(self, args)
     local id = unpack(args)
     for k, v in ipairs(self.m_curMails) do
@@ -820,8 +777,6 @@ MailCtrl.OnStarMail = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
 MailCtrl.OnDelMails = HL.Method() << function(self)
     self:_OnClickTab(self.m_curMailIndex, nil)
 
@@ -831,14 +786,9 @@ MailCtrl.OnDelMails = HL.Method() << function(self)
     end
 end
 
-
-
 MailCtrl.OnGetNewMails = HL.Method() << function(self)
     GameInstance.player.mail:GetAllMails()
 end
-
-
-
 
 
 
@@ -850,15 +800,10 @@ MailCtrl._ToggleLoading = HL.Method(HL.Boolean) << function(self, active)
     self.view.loadingNode.gameObject:SetActive(active)
 end
 
-
-
-
 MailCtrl._OnClickLink = HL.Method(HL.String) << function(self, value)
     logger.info("_OnClickLink", value)
     CS.Beyond.UI.WebApplication.StartHGBrowser(value)
 end
-
-
 
 MailCtrl._CheckExpiredMail = HL.Method() << function(self)
     if not self.m_curMails then
@@ -872,8 +817,6 @@ MailCtrl._CheckExpiredMail = HL.Method() << function(self)
         end
     end
 end
-
-
 
 MailCtrl._NaviToHyperLink = HL.Method() << function(self)
     local textInfo = self.view.contentTxt.textInfo
@@ -904,9 +847,6 @@ MailCtrl._NaviToHyperLink = HL.Method() << function(self)
     end
 end
 
-
-
-
 MailCtrl._RecoverByArgs = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     if not args then
         return
@@ -917,7 +857,7 @@ MailCtrl._RecoverByArgs = HL.Method(HL.Opt(HL.Any)) << function(self, args)
         if DeviceInfo.usingController then
             local cell = self.m_getMailCell(args.curMailIndex)
             if cell then
-                UIUtils.setAsNaviTarget(cell.button)
+                self:SetNaviTarget(cell.button)
             end
         else
             self:_OnClickMail(args.curMailIndex)
@@ -928,8 +868,6 @@ MailCtrl._RecoverByArgs = HL.Method(HL.Opt(HL.Any)) << function(self, args)
         UIManager:Open(PanelId.InstructionBook, "mail")
     end
 end
-
-
 
 MailCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)

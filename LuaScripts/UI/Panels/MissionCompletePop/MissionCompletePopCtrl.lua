@@ -23,6 +23,17 @@ local ChapterConfig = {
 local STATE_CHAPTER_START = 0
 local STATE_CHAPTER_FINISH = 1
 
+local function _ToBoolean(value)
+    if type(value) == "boolean" then
+        return value
+    end
+    if type(value) ~= "string" then
+        return false
+    end
+    return string.lower(value) == "true"
+end
+
+
 
 
 
@@ -313,6 +324,21 @@ MissionCompletePopCtrl.OnShowPanelDirectly = HL.StaticMethod(HL.Table) << functi
         end
     end)
 end
+
+
+
+MissionCompletePopCtrl.OnShowPanelDirectlyStringParam = HL.StaticMethod(HL.Table) << function(arg)
+    local chapterId, isComplete, needTbc, tbcVersion = unpack(arg)
+    local state = _ToBoolean(isComplete) and STATE_CHAPTER_FINISH or STATE_CHAPTER_START
+    local tbc = false
+    if state == STATE_CHAPTER_FINISH and _ToBoolean(needTbc) and not string.isEmpty(tbcVersion) then
+        local branchVersion = CS.Beyond.Gameplay.GameInstance.player.playerInfoSystem.branchVersion
+        tbc = CS.Beyond.GlobalOptions.CheckVersionBefore(branchVersion, tbcVersion) or
+            CS.Beyond.GlobalOptions.CheckVersionEqual(branchVersion, tbcVersion)
+    end
+    UIManager:Open(PANEL_ID, {chapterId, state, tbc})
+end
+
 
 
 

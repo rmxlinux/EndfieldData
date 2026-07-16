@@ -3,49 +3,7 @@ local CommonPopUpCtrl = require_ex('UI/Panels/CommonPopUp/CommonPopUpCtrl')
 local PANEL_ID = PanelId.StaminaPopUp
 local PHASE_ID = PhaseId.StaminaPopUp
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 StaminaPopUpCtrl = HL.Class('StaminaPopUpCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -66,42 +24,28 @@ local ExchangeStateEnum = {
     ExchangeOfOriginium = 2,
 }
 
-
 StaminaPopUpCtrl.m_arg = HL.Field(HL.Table)
-
 
 
 StaminaPopUpCtrl.m_exchangeState = HL.Field(HL.Number) << 0
 
-
 StaminaPopUpCtrl.m_coroutineRecover = HL.Field(HL.Thread)
-
 
 StaminaPopUpCtrl.m_totalExchangeStamina = HL.Field(HL.Number) << 0
 
-
 StaminaPopUpCtrl.m_genItemCells = HL.Field(HL.Forward("UIListCache"))
-
 
 StaminaPopUpCtrl.m_allItemTableInfoList = HL.Field(HL.Table)
 
-
 StaminaPopUpCtrl.m_invItemInfoList = HL.Field(HL.Table)
-
 
 StaminaPopUpCtrl.m_quickExchangeItemInfo = HL.Field(HL.Table)
 
-
 StaminaPopUpCtrl.m_staminaCloseFun = HL.Field(HL.Function)
-
 
 StaminaPopUpCtrl.m_curSelItemIndex = HL.Field(HL.Number) << 1
 
-
 StaminaPopUpCtrl.m_isClosing = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -171,23 +115,15 @@ StaminaPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     AudioManager.PostEvent("au_ui_menu_side_open")
 end
 
-
-
 StaminaPopUpCtrl.OnClose = HL.Override() << function(self)
     self:_StopTickRecover()
     self.view.quickExchangeNode.ltItemMark:EndTickLimitTime()
 end
 
 
-
-
-
 StaminaPopUpCtrl.SetStaminaCloseFun = HL.Method(HL.Function) << function(self, staminaCloseFun)
     self.m_staminaCloseFun = staminaCloseFun
 end
-
-
-
 
 
 StaminaPopUpCtrl._OnItemCountChangedImm = HL.Method(HL.Table) << function(self, eventData)
@@ -221,9 +157,6 @@ StaminaPopUpCtrl._OnItemCountChangedImm = HL.Method(HL.Table) << function(self, 
 
 end
 
-
-
-
 StaminaPopUpCtrl._OnWalletChanged = HL.Method(HL.Table) << function(self, eventData)
     if not eventData then
         return
@@ -236,14 +169,10 @@ StaminaPopUpCtrl._OnWalletChanged = HL.Method(HL.Table) << function(self, eventD
     end
 end
 
-
-
 StaminaPopUpCtrl._OnStaminaChanged = HL.Method() << function(self)
     self:_TryStartTickRecover()
     self:_RefreshUICurrentAndTargetStamina()
 end
-
-
 
 StaminaPopUpCtrl._OnRecoverApByMoneyCountRestored = HL.Method() << function(self)
     
@@ -259,8 +188,6 @@ StaminaPopUpCtrl._OnRecoverApByMoneyCountRestored = HL.Method() << function(self
         self:_RefreshUIExchangeCostOriginium()
     end
 end
-
-
 
 StaminaPopUpCtrl._OnConfirm = HL.Method() << function(self)
     AudioAdapter.PostEvent("au_ui_item_ap_supply_use")
@@ -376,7 +303,7 @@ StaminaPopUpCtrl._OnConfirm = HL.Method() << function(self)
             msg.ExpectMoneyBuyCount = nextBuyCount  
             GameInstance.player.inventory:SendUIMsg(msg)
             
-            ClientDataManagerInst:SetInt(serializedHintKeyExchange, requiredOriginiumNum, false, "StaminaPopUp", true, EClientDataTimeValidType.Permanent)
+            ClientDataManagerInst:SetInt(serializedHintKeyExchange, requiredOriginiumNum, false, "StaminaPopUp", EClientDataTimeValidType.Permanent)
             
             self:_DoClose()
             return 
@@ -395,14 +322,14 @@ StaminaPopUpCtrl._OnConfirm = HL.Method() << function(self)
                 },
                 onConfirm = function()
                     
-                    ClientDataManagerInst:SetBool(serializedHintKeyHide, hideTodayToggle, false, "StaminaPopUp", true, EClientDataTimeValidType.CurrentDay)
+                    ClientDataManagerInst:SetBool(serializedHintKeyHide, hideTodayToggle, false, "StaminaPopUp", EClientDataTimeValidType.CurrentDay)
                     
                     local msg = CS.Proto.CS_DUNGEON_RECOVER_AP()
                     msg.UseMoney = true  
                     msg.ExpectMoneyBuyCount = nextBuyCount  
                     GameInstance.player.inventory:SendUIMsg(msg)
                     
-                    ClientDataManagerInst:SetInt(serializedHintKeyExchange, requiredOriginiumNum, false, "StaminaPopUp", true, EClientDataTimeValidType.Permanent)
+                    ClientDataManagerInst:SetInt(serializedHintKeyExchange, requiredOriginiumNum, false, "StaminaPopUp", EClientDataTimeValidType.Permanent)
                     
                     self:_DoClose()
                 end,
@@ -451,8 +378,6 @@ StaminaPopUpCtrl._OnConfirm = HL.Method() << function(self)
     end
 end
 
-
-
 StaminaPopUpCtrl._DoClose = HL.Method() << function(self)
     if self.m_isClosing then
         return
@@ -475,9 +400,6 @@ StaminaPopUpCtrl._DoClose = HL.Method() << function(self)
     AudioManager.PostEvent("au_ui_menu_side_close")
 end
 
-
-
-
 StaminaPopUpCtrl._InitQuickExchange = HL.Method(HL.Any) << function(self, arg)
     self.m_quickExchangeItemInfo = {
         itemId = arg.itemId,
@@ -492,8 +414,6 @@ StaminaPopUpCtrl._InitQuickExchange = HL.Method(HL.Any) << function(self, arg)
     self:_UpdateQuickExchangeItemData()
     self:_RefreshUIQuickExchange()
 end
-
-
 
 StaminaPopUpCtrl._InitNormalExchange = HL.Method() << function(self)
     self.view.exchangeState:SetState("ExchangeState")
@@ -517,8 +437,6 @@ StaminaPopUpCtrl._InitNormalExchange = HL.Method() << function(self)
     end
 end
 
-
-
 StaminaPopUpCtrl._InitBasicUI = HL.Method() << function(self)
     
     local originiumItemCfg = Utils.tryGetTableCfg(Tables.itemTable, Tables.dungeonConst.recoverApMoneyId)
@@ -532,8 +450,6 @@ StaminaPopUpCtrl._InitBasicUI = HL.Method() << function(self)
     self.view.exchangeNode.costOriginiumTxt2.text = tabName
 end
 
-
-
 StaminaPopUpCtrl._InitItemTableData = HL.Method() << function(self)
     self.m_allItemTableInfoList = {}
     for id, cfg in pairs(Tables.recoverApItemTable) do
@@ -544,8 +460,6 @@ StaminaPopUpCtrl._InitItemTableData = HL.Method() << function(self)
         }
     end
 end
-
-
 
 StaminaPopUpCtrl._UpdateItemData = HL.Method() << function(self)
     
@@ -640,8 +554,6 @@ StaminaPopUpCtrl._UpdateItemData = HL.Method() << function(self)
     end)
 end
 
-
-
 StaminaPopUpCtrl._UpdateQuickExchangeItemData = HL.Method() << function(self)
     
     local info = self.m_quickExchangeItemInfo
@@ -686,8 +598,6 @@ StaminaPopUpCtrl._UpdateQuickExchangeItemData = HL.Method() << function(self)
     self.m_arg.quickExchangeSelectCount = nil
 end
 
-
-
 StaminaPopUpCtrl._HasItemForExchange = HL.Method().Return(HL.Boolean) << function(self)
     if not self.m_invItemInfoList or (#self.m_invItemInfoList <= 0) then
         return false
@@ -695,8 +605,6 @@ StaminaPopUpCtrl._HasItemForExchange = HL.Method().Return(HL.Boolean) << functio
 
     return true
 end
-
-
 
 StaminaPopUpCtrl._RefreshUIExchangeCostItem = HL.Method() << function(self)
     self.view.exchangeNode.keyHintDown.gameObject:SetActive(true)
@@ -722,7 +630,7 @@ StaminaPopUpCtrl._RefreshUIExchangeCostItem = HL.Method() << function(self)
     end
     
     if #self.m_invItemInfoList ~= 0 then
-        InputManagerInst.controllerNaviManager:SetTarget(nil)   
+        self:ClearNaviTarget()   
     end
     self.m_genItemCells:Refresh(#self.m_invItemInfoList, function(cell, luaIndex)
         local info = self.m_invItemInfoList[luaIndex]
@@ -742,7 +650,7 @@ StaminaPopUpCtrl._RefreshUIExchangeCostItem = HL.Method() << function(self)
         cell:InitItemCellForSelect(args)
 
         if luaIndex == self.m_curSelItemIndex then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.view.item.view.button)
+            self:SetNaviTarget(cell.view.item.view.button)
         end
         
         local btn = cell.view.item.view.button
@@ -765,8 +673,6 @@ StaminaPopUpCtrl._RefreshUIExchangeCostItem = HL.Method() << function(self)
     self:_RefreshUICurrentAndTargetStamina()
 end
 
-
-
 StaminaPopUpCtrl._RefreshUIExchangeCostItemStaminaState = HL.Method() << function(self)
     if self.m_totalExchangeStamina <= 0 then
         self.view.buttonOperateState:SetState("NotSelectItemState")
@@ -776,8 +682,6 @@ StaminaPopUpCtrl._RefreshUIExchangeCostItemStaminaState = HL.Method() << functio
         self.view.costItemTipTxt:SetAndResolveTextStyle(string.format(formatString, self.m_totalExchangeStamina))
     end
 end
-
-
 
 StaminaPopUpCtrl._RefreshUIExchangeCostOriginium = HL.Method() << function(self)
     self.view.exchangeNode.keyHintDown.gameObject:SetActive(false)
@@ -900,11 +804,9 @@ StaminaPopUpCtrl._RefreshUIExchangeCostOriginium = HL.Method() << function(self)
             self.view.exchangeNode.costOriginiumNode.costChangeAnim:Play("staminapopup_costoriginium_digitaljump")
         end
 	    
-        ClientDataManagerInst:SetInt(serializedHintKeyExchange, onceCostOriginiumNum, false, "StaminaPopUp", true, EClientDataTimeValidType.Permanent)
+        ClientDataManagerInst:SetInt(serializedHintKeyExchange, onceCostOriginiumNum, false, "StaminaPopUp", EClientDataTimeValidType.Permanent)
     end
 end
-
-
 
 StaminaPopUpCtrl._RefreshUIQuickExchange = HL.Method() << function(self)
     local node = self.view.quickExchangeNode
@@ -924,8 +826,6 @@ StaminaPopUpCtrl._RefreshUIQuickExchange = HL.Method() << function(self)
     self:_RefreshUICurrentAndTargetStamina()
 end
 
-
-
 StaminaPopUpCtrl._CalculateExchangeStaminaOfItemList = HL.Method() << function(self)
     self.m_totalExchangeStamina = 0
     if not self.m_invItemInfoList then
@@ -936,8 +836,6 @@ StaminaPopUpCtrl._CalculateExchangeStaminaOfItemList = HL.Method() << function(s
         self.m_totalExchangeStamina = self.m_totalExchangeStamina + v.recoverValue * v.selectCount
     end
 end
-
-
 
 StaminaPopUpCtrl._RefreshUICurrentAndTargetStamina = HL.Method() << function(self)
     local cur = GameInstance.player.inventory.curStamina
@@ -954,8 +852,6 @@ StaminaPopUpCtrl._RefreshUICurrentAndTargetStamina = HL.Method() << function(sel
         self.view.targetStaminaTxt.color = self.view.config.NUM_TEXT_COLOR_CHANGE
     end
 end
-
-
 
 StaminaPopUpCtrl._TryStartTickRecover = HL.Method() << function(self)
     if self.m_coroutineRecover then
@@ -981,8 +877,6 @@ StaminaPopUpCtrl._TryStartTickRecover = HL.Method() << function(self)
     end)
 end
 
-
-
 StaminaPopUpCtrl._StopTickRecover = HL.Method() << function(self)
     self.view.recoverTimeNode.gameObject:SetActive(false)
     self.view.fullRecoverTimeNode.gameObject:SetActive(false)
@@ -992,8 +886,6 @@ StaminaPopUpCtrl._StopTickRecover = HL.Method() << function(self)
     end
 end
 
-
-
 StaminaPopUpCtrl._RefreshTickRecoverTxt = HL.Method() << function(self)
     local nextLeftTime = Utils.nextStaminaRecoverLeftTime()
     local fullLeftTime = Utils.fullStaminaRecoverLeftTime()
@@ -1001,14 +893,11 @@ StaminaPopUpCtrl._RefreshTickRecoverTxt = HL.Method() << function(self)
     self.view.fullRecoverTimeTxt.text = UIUtils.getLeftTimeToSecond(fullLeftTime)
 end
 
-
 StaminaPopUpCtrl._IsStaminaMax = HL.StaticMethod().Return(HL.Boolean) << function()
     local cur = GameInstance.player.inventory.curStamina
     local max = GameInstance.player.inventory.maxStamina
     return cur >= max
 end
-
-
 
 StaminaPopUpCtrl._InitItemScrollController = HL.Method() << function(self)
     
@@ -1026,8 +915,6 @@ StaminaPopUpCtrl._InitItemScrollController = HL.Method() << function(self)
         end)
     end
 end
-
-
 
 StaminaPopUpCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     self.m_arg.exchangeState = self.m_exchangeState

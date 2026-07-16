@@ -1,26 +1,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DomainUpgrade
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainUpgradeCtrl = HL.Class('DomainUpgradeCtrl', uiCtrl.UICtrl)
 
 local MAIN_HUD_TOAST_TYPE = "DomainUpgrade"
-
 
 
 
@@ -33,20 +16,13 @@ DomainUpgradeCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 DomainUpgradeCtrl.m_levelUpInfoQueue = HL.Field(HL.Forward("Queue"))
-
 
 DomainUpgradeCtrl.m_aniPlayInfo = HL.Field(HL.Table)
 
-
 DomainUpgradeCtrl.m_domainInfo = HL.Field(HL.Table)
 
-
 DomainUpgradeCtrl.m_showToastInfo = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -55,16 +31,12 @@ DomainUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_levelUpInfoQueue = require_ex("Common/Utils/DataStructure/Queue")()
 end
 
-
-
 DomainUpgradeCtrl.OnClose = HL.Override() << function(self)
     if self.m_showToastInfo ~= nil then
         Notify(MessageConst.ON_SHOW_DOMAIN_TOAST, self.m_showToastInfo)
         self.m_showToastInfo = nil
     end
 end
-
-
 
 DomainUpgradeCtrl.ShowUpgrade = HL.StaticMethod(HL.Any) << function(arg)
     if LuaSystemManager.mainHudActionQueue:HasRequestWaiting(MAIN_HUD_TOAST_TYPE) then
@@ -81,29 +53,17 @@ DomainUpgradeCtrl.ShowUpgrade = HL.StaticMethod(HL.Any) << function(arg)
     end)
 end
 
-
-
-
-
-
 DomainUpgradeCtrl._StartShow = HL.Method(HL.String, HL.Number, HL.Number) << function(self, domainId, preLv, preExp)
     self:_UpdateData(domainId, preLv, preExp)
     self.view.domainIconImg:LoadSprite(UIConst.UI_SPRITE_SETTLEMENT_ICON_BIG, self.m_domainInfo.domainIcon)
     self:_TryPlayUpgrade()
 end
 
-
-
 DomainUpgradeCtrl.InterruptMainHudActionQueue = HL.Method() << function(self)
     self.animationWrapper:ClearTween(false)
     self:_ClearCache()
     self:Close()
 end
-
-
-
-
-
 
 
 
@@ -167,8 +127,6 @@ DomainUpgradeCtrl._UpdateData = HL.Method(HL.String, HL.Number, HL.Number) << fu
     end
 end
 
-
-
 DomainUpgradeCtrl._ClearCache = HL.Method() << function(self)
     if self.m_aniPlayInfo and self.m_aniPlayInfo.tween then
         self.m_aniPlayInfo.tween:Kill()
@@ -177,8 +135,6 @@ DomainUpgradeCtrl._ClearCache = HL.Method() << function(self)
     self.m_aniPlayInfo = nil
     self.m_levelUpInfoQueue:Clear()
 end
-
-
 
 
 
@@ -265,8 +221,6 @@ end
 
 
 
-
-
 DomainUpgradeCtrl._TryPlayUpgrade = HL.Method() << function(self)
     if self.m_levelUpInfoQueue:Count() <= 0 then
         self:_CompleteCloseSelf()
@@ -281,8 +235,6 @@ DomainUpgradeCtrl._TryPlayUpgrade = HL.Method() << function(self)
     
     self:_StartPlayUpgradeAni()
 end
-
-
 
 DomainUpgradeCtrl._CompleteCloseSelf = HL.Method() << function(self)
     self.view.animationWrapper:PlayOutAnimation(function()

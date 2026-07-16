@@ -2,13 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonBottomToast
 
-
-
-
-
-
 CommonBottomToastCtrl = HL.Class('CommonBottomToastCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -18,8 +12,6 @@ CommonBottomToastCtrl = HL.Class('CommonBottomToastCtrl', uiCtrl.UICtrl)
 CommonBottomToastCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
 
 CommonBottomToastCtrl.OnShowToast = HL.StaticMethod(HL.Any) << function(text)
     local isOpen, ctrl = UIManager:IsOpen(PANEL_ID)
@@ -34,7 +26,6 @@ CommonBottomToastCtrl.OnShowToast = HL.StaticMethod(HL.Any) << function(text)
     UIManager:Open(PANEL_ID, text)
 end
 
-
 CommonBottomToastCtrl.OnCloseToast = HL.StaticMethod() << function()
     local isOpen, ctrl = UIManager:IsOpen(PANEL_ID)
     if isOpen then
@@ -44,9 +35,6 @@ CommonBottomToastCtrl.OnCloseToast = HL.StaticMethod() << function()
     end
 
 end
-
-
-
 
 
 CommonBottomToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)

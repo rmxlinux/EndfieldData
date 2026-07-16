@@ -2,21 +2,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.HighDifficultyMainHud
 local PHASE_ID = PhaseId.HighDifficultyMainHud
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 HighDifficultyMainHudCtrl = HL.Class('HighDifficultyMainHudCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -27,27 +13,19 @@ HighDifficultyMainHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 HighDifficultyMainHudCtrl.m_listCells = HL.Field(HL.Any)
-
 
 HighDifficultyMainHudCtrl.m_seriesCount = HL.Field(HL.Number) << 0
 
-
 HighDifficultyMainHudCtrl.m_allSeries = HL.Field(HL.Table)
-
 
 HighDifficultyMainHudCtrl.m_firstCell = HL.Field(HL.Any)
 
-
 HighDifficultyMainHudCtrl.m_focusCell = HL.Field(HL.Any)
-
 
 HighDifficultyMainHudCtrl.m_initSeriesId = HL.Field(HL.String) << ""
 
-
 HighDifficultyMainHudCtrl.m_fromDialog = HL.Field(HL.Boolean) << false
-
 
 HighDifficultyMainHudCtrl.m_latestSeries = HL.Field(HL.Table)
 
@@ -56,15 +34,13 @@ local MAX_SHOW_COUNT = 3
 local CELL_GRADUALLY_SHOW_TIME = 0.1
 
 
-
-
-
 HighDifficultyMainHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     
     self.view.btnClose.onClick:AddListener(function()
         PhaseManager:PopPhase(PHASE_ID)
     end)
-    self.m_fromDialog = args and args.fromDialog or false
+    args = args or {}
+    self.m_fromDialog = args.fromDialog or false
 
     
     local activityId = HighDifficultyUtils.getHighDifficultyActivityId()
@@ -130,15 +106,11 @@ HighDifficultyMainHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
 end
 
 
-
-
-
-
 HighDifficultyMainHudCtrl._UpdateCell = HL.Method(HL.Any,HL.Number) << function(self,cell,index)
     
     if string.isEmpty(self.m_initSeriesId) and index == 1 and not self.m_firstCell then
         self.m_firstCell = cell
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.levelsScrollListNaviGroup, cell.cellNaviDeco)
+        self:SetNaviTarget(cell.cellNaviDeco)
     end
     cell.cellNaviDeco.onIsNaviTargetChanged = function(isTarget)
         if isTarget then
@@ -156,7 +128,7 @@ HighDifficultyMainHudCtrl._UpdateCell = HL.Method(HL.Any,HL.Number) << function(
     local seriesId = self.m_allSeries[index].seriesId
     if seriesId == self.m_initSeriesId then
         self.m_firstCell = cell
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.levelsScrollListNaviGroup, cell.cellNaviDeco)
+        self:SetNaviTarget(cell.cellNaviDeco)
     end
     local unlocked = GameInstance.player.highDifficultySystem:IsHighDiffilcultySeriesUnlock(seriesId)
     if unlocked and index <= self.m_seriesCount then
@@ -223,12 +195,9 @@ HighDifficultyMainHudCtrl._UpdateCell = HL.Method(HL.Any,HL.Number) << function(
     cell.eventOpen.gameObject:SetActive(self.m_latestSeries[seriesId] or false)
 end
 
-
-
-
 HighDifficultyMainHudCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     if active and DeviceInfo.usingController then
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.levelsScrollListNaviGroup, self.m_focusCell and self.m_focusCell.cellNaviDeco or self.m_firstCell.cellNaviDeco)
+        self:SetNaviTarget(self.m_focusCell and self.m_focusCell.cellNaviDeco or self.m_firstCell.cellNaviDeco)
     end
 end
 

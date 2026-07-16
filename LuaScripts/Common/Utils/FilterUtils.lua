@@ -272,6 +272,15 @@ function FilterUtils.processEquipProduce(equipFormulaData)
     end
     infoDefault.isUnlocked = FactoryUtils.isEquipFormulaUnlocked(equipFormulaData.formulaId)
     infoDefault.equipFormulaData = equipFormulaData
+
+    local costItemId = EquipTechUtils.GetDefaultCostMaterial(equipFormulaData.formulaId)
+    local hasValue, curMaterialInfo = Tables.EquipCostMaterialTable:TryGetValue(costItemId)
+    if curMaterialInfo then
+        infoDefault.costItemSortId = curMaterialInfo.sortId
+    else
+        infoDefault.costItemSortId = 0
+    end
+
     return infoDefault
 end
 
@@ -697,7 +706,8 @@ function FilterUtils.generateConfig_EQUIP_PRODUCE()
     table.insert(filterConfig, FilterUtils._generateEquipExtraAttrFilterGroup())
     table.insert(filterConfig, FilterUtils._generateEquipSuitFilterGroup())
     table.insert(filterConfig, FilterUtils._generateEquipPartTypeFilterGroup())
-    table.insert(filterConfig, FilterUtils._generateEquipRarityFilterGroup(1, 5))
+    table.insert(filterConfig, FilterUtils._generateEquipCurFormulaFilterGroup())
+    table.insert(filterConfig, FilterUtils._generateEquipDefaultFormulaFilterGroup())
 
     return filterConfig
 end
@@ -755,6 +765,48 @@ end
 
 
 
+function FilterUtils._generateEquipCurFormulaFilterGroup()
+    local tbHighLevelMaterialList = EquipTechUtils.GetCostMaterialList()
+    local group = {
+        title = Language.LUA_EQUIP_PRODUCE_FILTER_GROUP_CUR_FORMULA,
+        tags = {},
+    }
+
+    for _, materialInfo in ipairs(tbHighLevelMaterialList) do
+        table.insert(group.tags, {
+            groupType = "EquipCurFormula",
+            name = materialInfo.name,
+            funcName = "_filterByEquipCurFormula",
+            param = materialInfo.itemId,
+        })
+    end
+
+    return group
+end
+
+
+
+function FilterUtils._generateEquipDefaultFormulaFilterGroup()
+    local tbHighLevelMaterialList = EquipTechUtils.GetCostMaterialList()
+    local group = {
+        title = Language.LUA_EQUIP_PRODUCE_FILTER_GROUP_DEFAULT_FORMULA,
+        tags = {},
+    }
+
+    for _, materialInfo in ipairs(tbHighLevelMaterialList) do
+        table.insert(group.tags, {
+            groupType = "EquipDefaultFormula",
+            name = materialInfo.name,
+            funcName = "_filterByEquipDefaultFormula",
+            param = materialInfo.itemId,
+        })
+    end
+
+    return group
+end
+
+
+
 function FilterUtils._generateEquipPartTypeFilterGroup()
     local group = {
         title = Language.LUA_DEPOT_FILTER_GROUP_TITLE_EQUIP_TYPE,
@@ -798,6 +850,8 @@ function FilterUtils._generateEquipExtraAttrFilterGroup()
         FilterUtils.getEquipExtraAttrFilterList(),
         Language.LUA_DEPOT_FILTER_GROUP_TITLE_EQUIP_EXTRA_ATTR_TYPE)
 end
+
+
 
 
 
@@ -1064,14 +1118,19 @@ end
 
 function FilterUtils._filterByAttrType(info, attrFilterData)
     local isCompositeAttr = type(attrFilterData.attrKey) == "string"
+    local maxAttrIndex = attrFilterData.maxAttrIndex
+    local minAttrIndex = attrFilterData.minAttrIndex
     local attrModifiers = info.equipData.displayAttrModifiers
     for i = 0, attrModifiers.Count - 1 do
         local attrModifier = attrModifiers[i]
-        local isModifierMatch = attrFilterData.modifier == nil or attrModifier.modifierType == attrFilterData.modifier
-        local isAttrKeyMach = (isCompositeAttr and attrModifier.compositeAttr == attrFilterData.attrKey) or
-                                (not isCompositeAttr and attrModifier.attrType == attrFilterData.attrKey)
-        if isModifierMatch and isAttrKeyMach then
-            return true
+        if (maxAttrIndex == nil or attrModifier.attrIndex <= maxAttrIndex) and
+           (minAttrIndex == nil or attrModifier.attrIndex >= minAttrIndex) then
+            local isModifierMatch = attrFilterData.modifier == nil or attrModifier.modifierType == attrFilterData.modifier
+            local isAttrKeyMatch = (isCompositeAttr and attrModifier.compositeAttr == attrFilterData.attrKey) or
+                                    (not isCompositeAttr and attrModifier.attrType == attrFilterData.attrKey)
+            if isModifierMatch and isAttrKeyMatch then
+                return true
+            end
         end
     end
     return false
@@ -1119,6 +1178,28 @@ end
 
 function FilterUtils._filterByEquipSuit(info, suitId)
     return info.suitId == suitId
+end
+
+function FilterUtils._filterByEquipCurFormula(info, materialItemId)
+    local formulaData = info.equipFormulaData
+    local formulaId = formulaData and formulaData.formulaId or nil
+    if not formulaId then
+        return false
+    end
+
+    local itemId = EquipTechUtils.GetCurCostMaterial(formulaId)
+    return itemId == materialItemId
+end
+
+function FilterUtils._filterByEquipDefaultFormula(info, materialItemId)
+    local formulaData = info.equipFormulaData
+    local formulaId = formulaData and formulaData.formulaId or nil
+    if not formulaId then
+        return false
+    end
+
+    local itemId = EquipTechUtils.GetDefaultCostMaterial(formulaId)
+    return itemId == materialItemId
 end
 
 function FilterUtils._filterByGemSkill(info, gemTermId)
@@ -1313,7 +1394,7 @@ function FilterUtils.getEquipExtraAttrFilterList()
             local attrKey = not string.isEmpty(filterData.compositeAttr) and filterData.compositeAttr or filterData.attributeType
             if not attrKeyTable[attrKey] then
                 attrKeyTable[attrKey] = true
-                table.insert(equipExtraAttrFilterList, { attrKey = attrKey, ignoreModifier = true })
+                table.insert(equipExtraAttrFilterList, { attrKey = attrKey, ignoreModifier = true, minAttrIndex = 3 })
             end
         end
     end
@@ -1328,11 +1409,12 @@ local equipMainAttrFilterList = nil
 function FilterUtils.getEquipMainAttrFilterList()
     if not equipMainAttrFilterList then
         equipMainAttrFilterList = {
-            { attrKey = GEnums.AttributeType.Str, ignoreModifier = true },
-            { attrKey = GEnums.AttributeType.Agi, ignoreModifier = true },
-            { attrKey = GEnums.AttributeType.Wisd, ignoreModifier = true },
-            { attrKey = GEnums.AttributeType.Will, ignoreModifier = true },
-            { attrKey = "All", ignoreModifier = true },
+            { attrKey = GEnums.AttributeType.Str, ignoreModifier = true, maxAttrIndex = 2 },
+            { attrKey = GEnums.AttributeType.Agi, ignoreModifier = true, maxAttrIndex = 2 },
+            { attrKey = GEnums.AttributeType.Wisd, ignoreModifier = true, maxAttrIndex = 2 },
+            { attrKey = GEnums.AttributeType.Will, ignoreModifier = true, maxAttrIndex = 2 },
+            { attrKey = "Main", ignoreModifier = true, maxAttrIndex = 2 },
+            { attrKey = "Sub", ignoreModifier = true, maxAttrIndex = 2 },
         }
     end
     return equipMainAttrFilterList

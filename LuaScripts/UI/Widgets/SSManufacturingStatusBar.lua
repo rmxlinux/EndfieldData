@@ -1,15 +1,5 @@
 local SSStatusBarBase = require_ex('UI/Widgets/SSStatusBarBase')
 
-
-
-
-
-
-
-
-
-
-
 SSManufacturingStatusBar = HL.Class('SSManufacturingStatusBar', SSStatusBarBase)
 
 
@@ -25,8 +15,6 @@ local MFR_STATUS_BAR_CONST = {
     },
 }
 
-
-
 SSManufacturingStatusBar.SetupSwitchStateHandleFunctions = HL.Override() << function(self)
     local RoomState = CS.Beyond.Gameplay.SpaceshipSystem.RoomState
     self.m_stateHandleFuncLut = { }
@@ -37,8 +25,6 @@ SSManufacturingStatusBar.SetupSwitchStateHandleFunctions = HL.Override() << func
     self.m_stateHandleFuncLut[RoomState.Stopped] = SSManufacturingStatusBar.SwitchStoppedState
     self.m_stateHandleFuncLut[RoomState.Idle] = SSManufacturingStatusBar.SwitchIdleState
 end
-
-
 
 SSManufacturingStatusBar.SetupView = HL.Override() << function(self)
     
@@ -52,8 +38,6 @@ SSManufacturingStatusBar.SetupView = HL.Override() << function(self)
     self.view.lockedStatusText.text = Language.LUA_SS_MFR_STATUS_BAR_LOCKED
 end
 
-
-
 SSManufacturingStatusBar.SwitchLockedState = HL.Method() << function(self)
     self.view.notUnlocked.gameObject:SetActive(true)
     self.view.statusBar.gameObject:SetActive(false)
@@ -61,8 +45,6 @@ SSManufacturingStatusBar.SwitchLockedState = HL.Method() << function(self)
     local animator = self.view.statusBar
     animator:SetInteger(MFR_STATUS_BAR_CONST.ANIMATOR_STATE_NAME, MFR_STATUS_BAR_CONST.ANIMATOR_STATE_VAL.LOCKED)
 end
-
-
 
 SSManufacturingStatusBar.SwitchUnlocked = HL.Method() << function(self)
     if self.m_currentState == CS.Beyond.Gameplay.SpaceshipSystem.RoomState.Locked then
@@ -72,8 +54,6 @@ SSManufacturingStatusBar.SwitchUnlocked = HL.Method() << function(self)
     end
 end
 
-
-
 SSManufacturingStatusBar.SwitchNotBuildState = HL.Method() << function(self)
     self:SwitchUnlocked()
     self.view.statusText.text = Language.LUA_SS_MFR_STATUS_BAR_NOT_BUILD
@@ -81,8 +61,6 @@ SSManufacturingStatusBar.SwitchNotBuildState = HL.Method() << function(self)
     local animator = self.view.statusBar
     animator:SetInteger(MFR_STATUS_BAR_CONST.ANIMATOR_STATE_NAME, MFR_STATUS_BAR_CONST.ANIMATOR_STATE_VAL.NOT_BUILD)
 end
-
-
 SSManufacturingStatusBar.SwitchWorkingState = HL.Method() << function(self)
     self:SwitchUnlocked()
     self.view.statusText.text = Language.LUA_SS_MFR_STATUS_BAR_WORKING
@@ -90,8 +68,6 @@ SSManufacturingStatusBar.SwitchWorkingState = HL.Method() << function(self)
     local animator = self.view.statusBar
     animator:SetInteger(MFR_STATUS_BAR_CONST.ANIMATOR_STATE_NAME, MFR_STATUS_BAR_CONST.ANIMATOR_STATE_VAL.WORKING)
 end
-
-
 SSManufacturingStatusBar.SwitchCanCollectState = HL.Method() << function(self)
     self:SwitchUnlocked()
     self.view.statusText.text = Language.LUA_SS_MFR_STATUS_BAR_CAN_COLLECT
@@ -99,8 +75,6 @@ SSManufacturingStatusBar.SwitchCanCollectState = HL.Method() << function(self)
     local animator = self.view.statusBar
     animator:SetInteger(MFR_STATUS_BAR_CONST.ANIMATOR_STATE_NAME, MFR_STATUS_BAR_CONST.ANIMATOR_STATE_VAL.CAN_COLLECT)
 end
-
-
 SSManufacturingStatusBar.SwitchStoppedState = HL.Method() << function(self)
     self:SwitchUnlocked()
     self.view.statusText.text = Language.LUA_SS_MFR_STATUS_BAR_STOPPED
@@ -108,8 +82,6 @@ SSManufacturingStatusBar.SwitchStoppedState = HL.Method() << function(self)
     local animator = self.view.statusBar
     animator:SetInteger(MFR_STATUS_BAR_CONST.ANIMATOR_STATE_NAME, MFR_STATUS_BAR_CONST.ANIMATOR_STATE_VAL.STOPPED)
 end
-
-
 SSManufacturingStatusBar.SwitchIdleState = HL.Method() << function(self)
     self:SwitchUnlocked()
     self.view.statusText.text = Language.LUA_SS_MFR_STATUS_BAR_IDLE

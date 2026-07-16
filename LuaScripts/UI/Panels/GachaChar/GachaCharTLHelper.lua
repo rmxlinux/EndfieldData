@@ -1,68 +1,29 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GachaCharTLHelper = HL.Class('GachaCharTLHelper')
-
 
 
 GachaCharTLHelper.m_directors = HL.Field(HL.Table)
 
-
 GachaCharTLHelper.m_actorDirector = HL.Field(CS.UnityEngine.Playables.PlayableDirector)
-
 
 GachaCharTLHelper.m_root = HL.Field(Transform)
 
-
 GachaCharTLHelper.m_updateKey = HL.Field(HL.Number) << -1
-
 
 GachaCharTLHelper.m_loopStartTime = HL.Field(HL.Number) << -1
 
-
 GachaCharTLHelper.m_loopEndTime = HL.Field(HL.Number) << -1
-
 
 GachaCharTLHelper.m_args = HL.Field(HL.Table)
 
-
 GachaCharTLHelper.m_exCamera = HL.Field(Transform)
-
 
 GachaCharTLHelper.showNameTime = HL.Field(HL.Number) << -1
 
-
 GachaCharTLHelper.showContentTime  = HL.Field(HL.Number) << -1
-
 
 GachaCharTLHelper.m_triggerOnceTime = HL.Field(HL.Number) << -1
 
-
 GachaCharTLHelper.m_triggerOnceTimeCallback = HL.Field(HL.Function)
-
-
-
-
 
 
 GachaCharTLHelper.GachaCharTLHelper = HL.Constructor(CS.UnityEngine.Transform, HL.Table) << function(self, root, args)
@@ -131,10 +92,7 @@ GachaCharTLHelper.GachaCharTLHelper = HL.Constructor(CS.UnityEngine.Transform, H
     end
 end
 
-
 GachaCharTLHelper.inLoopTrack = HL.Field(HL.Boolean) << false
-
-
 
 GachaCharTLHelper.PlayFromStart = HL.Method() << function(self)
     self.inLoopTrack = false
@@ -143,8 +101,6 @@ GachaCharTLHelper.PlayFromStart = HL.Method() << function(self)
     end
     self:SetTime(0, true)
 end
-
-
 
 GachaCharTLHelper.SampleToBeginning = HL.Method() << function(self)
     self.inLoopTrack = false
@@ -156,15 +112,9 @@ GachaCharTLHelper.SampleToBeginning = HL.Method() << function(self)
     self:TailTick(0)
 end
 
-
-
 GachaCharTLHelper.GetTime = HL.Method().Return(HL.Number) << function(self)
     return self.m_actorDirector.time
 end
-
-
-
-
 
 
 GachaCharTLHelper.SetTime = HL.Method(HL.Number, HL.Boolean) << function(self, time, play)
@@ -181,30 +131,18 @@ GachaCharTLHelper.SetTime = HL.Method(HL.Number, HL.Boolean) << function(self, t
 end
 
 
-
-
 GachaCharTLHelper.OnDispose = HL.Method() << function(self)
     self.m_updateKey = LuaUpdate:Remove(self.m_updateKey)
 end
-
-
-
 
 GachaCharTLHelper.JumpToLoopSection = HL.Method(HL.Opt(HL.Number)) << function(self, offset)
     self:SetTime(self.m_loopStartTime + (offset or 0), true)
 end
 
-
-
-
-
 GachaCharTLHelper.SetTriggerOnceTimer = HL.Method(HL.Number, HL.Function) << function(self, time, callback)
     self.m_triggerOnceTime = time
     self.m_triggerOnceTimeCallback = callback
 end
-
-
-
 
 GachaCharTLHelper.TailTick = HL.Method(HL.Number) << function(self, deltaTime)
     if not self.inLoopTrack then

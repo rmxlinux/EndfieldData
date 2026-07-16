@@ -1,138 +1,59 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SNSFriend
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SNSFriendCtrl = HL.Class('SNSFriendCtrl', uiCtrl.UICtrl)
-
 
 SNSFriendCtrl.m_getFriendCell = HL.Field(HL.Function)
 
-
 SNSFriendCtrl.m_csIndex2friendInfo = HL.Field(HL.Table)
-
 
 SNSFriendCtrl.m_csIndex2friendCell = HL.Field(HL.Table)
 
-
 SNSFriendCtrl.m_selectedCsIndex = HL.Field(HL.Number) << -1
-
 
 SNSFriendCtrl.m_selectedRoleId = HL.Field(HL.Number) << -1
 
-
 SNSFriendCtrl.m_nextOpenRoleId = HL.Field(HL.Number) << -1
 
-
 SNSFriendCtrl.friendSystem = HL.Field(CS.Beyond.Gameplay.FriendSystem)
-
 
 SNSFriendCtrl.m_infoTickHandle = HL.Field(HL.Number) << -1
 
 
-
 SNSFriendCtrl.m_initSetTarget = HL.Field(HL.Boolean) << false
-
 
 SNSFriendCtrl.messageSendAreaJumpIn = HL.Field(HL.Number) << -1
 
-
 SNSFriendCtrl.messageSendAreaJumpOut = HL.Field(HL.Number) << -1
-
 
 SNSFriendCtrl.messageSendAreaUseArrowJumpIn = HL.Field(HL.Number) << -1
 
-
 SNSFriendCtrl.messageSendAreaUseArrowJumpOut = HL.Field(HL.Number) << -1
-
 
 SNSFriendCtrl.messageItemJumpIn = HL.Field(HL.Number) << -1
 
-
 SNSFriendCtrl.messageItemJumpOut = HL.Field(HL.Number) << -1
-
 
 SNSFriendCtrl.messageItemPrev = HL.Field(HL.Number) << -1
 
-
 SNSFriendCtrl.messageItemPost = HL.Field(HL.Number) << -1
-
 
 SNSFriendCtrl.controllerInRightArea = HL.Field(HL.Boolean) << false
 
-
 SNSFriendCtrl.controllerInMessageItem = HL.Field(HL.Boolean) << false
-
 
 SNSFriendCtrl.m_requestFriendInfoIds = HL.Field(HL.Table)
 
-
 SNSFriendCtrl.m_requestInfoIndex = HL.Field(HL.Number) << 1
-
 
 SNSFriendCtrl.m_requestHandle = HL.Field(HL.Number) << -1
 
-
 SNSFriendCtrl.m_requestTime = HL.Field(HL.Number) << 1
-
 
 SNSFriendCtrl.m_onPlayerAddListCell = HL.Field(HL.Boolean) << false
 
-
 SNSFriendCtrl.m_onPlayerDeleteListCell = HL.Field(HL.Boolean) << false
 
-
 SNSFriendCtrl.m_controllerBackFlag = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -153,9 +74,6 @@ local LeftFriendState = {
 }
 
 local RequestBatchNum = 10
-
-
-
 
 
 SNSFriendCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -298,8 +216,6 @@ SNSFriendCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
 end
 
-
-
 SNSFriendCtrl._PreUpdateLeftFriendCell = HL.Method() << function(self)
     self.m_requestFriendInfoIds = {}
     self.m_requestInfoIndex = 1
@@ -327,8 +243,6 @@ SNSFriendCtrl._PreUpdateLeftFriendCell = HL.Method() << function(self)
         self:_UpdateFriendScrollList()
     end
 end
-
-
 
 SNSFriendCtrl._UpdateFriendScrollList = HL.Method() << function(self)
     self.m_csIndex2friendInfo = {}
@@ -383,16 +297,12 @@ SNSFriendCtrl._UpdateFriendScrollList = HL.Method() << function(self)
     end
 end
 
-
-
 SNSFriendCtrl.ExitMessageItemNaviGroup = HL.Method() << function(self)
     self.controllerInMessageItem = false
     self.view.friendDialogContent.view.dialogContentNaviGroup:ManuallyStopFocus()
     InputManagerInst:ToggleBinding(self.messageItemJumpOut, false)
     self.view.friendDialogContent.view.dialogScrollRect.controllerScrollEnabled = true
 end
-
-
 
 SNSFriendCtrl._ExitRightAreaNaviGroup = HL.Method() << function(self)
     self.view.rightMask.gameObject:SetActive(false)
@@ -402,8 +312,6 @@ SNSFriendCtrl._ExitRightAreaNaviGroup = HL.Method() << function(self)
     self.view.rightAreaNaviGroup:ManuallyStopFocus()
     InputManagerInst:ToggleBinding(self.messageSendAreaJumpOut, false)
 end
-
-
 
 SNSFriendCtrl._GetNextPageNotInitIds = HL.Method().Return(HL.Table) << function(self)
     local ids = {}
@@ -416,9 +324,6 @@ SNSFriendCtrl._GetNextPageNotInitIds = HL.Method().Return(HL.Table) << function(
 
     return ids
 end
-
-
-
 
 SNSFriendCtrl._RequestTick = HL.Method(HL.Number) << function(self, deltaTime)
     self.m_requestTime = self.m_requestTime + deltaTime
@@ -439,9 +344,6 @@ SNSFriendCtrl._RequestTick = HL.Method(HL.Number) << function(self, deltaTime)
     GameInstance.player.friendSystem:SyncFriendInfo(friendDicIndex, ids)
 end
 
-
-
-
 SNSFriendCtrl.GetRoleIdByCsIndex = HL.Method(HL.Number).Return(HL.Any) << function(self, csIndex)
     if csIndex < 0 then
         return nil
@@ -452,10 +354,6 @@ SNSFriendCtrl.GetRoleIdByCsIndex = HL.Method(HL.Number).Return(HL.Any) << functi
     end
     return nil
 end
-
-
-
-
 
 SNSFriendCtrl._UpdateLeftFriendCell = HL.Method(HL.Any, HL.Number) << function(self, cell, csIndex)
     self.m_csIndex2friendCell[csIndex] = cell
@@ -487,14 +385,11 @@ SNSFriendCtrl._UpdateLeftFriendCell = HL.Method(HL.Any, HL.Number) << function(s
     if csIndex == 0 and not self.m_initSetTarget then
         self.m_initSetTarget = true
         self.view.rightMask.gameObject:SetActive(false)
-        InputManagerInst.controllerNaviManager:SetTarget(cell.view.button)
+        self:SetNaviTarget(cell.view.button)
     end
     cell.view.animationWrapper:PlayInAnimation()
 
 end
-
-
-
 
 SNSFriendCtrl.OnClickLeftFriendCell = HL.Method(HL.Number) << function(self, csIndex)
     if csIndex < 0 then
@@ -523,7 +418,7 @@ SNSFriendCtrl.OnClickLeftFriendCell = HL.Method(HL.Number) << function(self, csI
                     local selectCell = self.m_csIndex2friendCell[self.m_selectedCsIndex]
                     if selectCell then
                         self.view.rightMask.gameObject:SetActive(false)
-                        InputManagerInst.controllerNaviManager:SetTarget(selectCell.view.button)
+                        self:SetNaviTarget(selectCell.view.button)
                     end
                 end
             end
@@ -534,7 +429,7 @@ SNSFriendCtrl.OnClickLeftFriendCell = HL.Method(HL.Number) << function(self, csI
                 local selectCell = self.m_csIndex2friendCell[self.m_selectedCsIndex]
                 if selectCell then
                     self.view.rightMask.gameObject:SetActive(false)
-                    InputManagerInst.controllerNaviManager:SetTarget(selectCell.view.button)
+                    self:SetNaviTarget(selectCell.view.button)
                 end
             end
             self.m_controllerBackFlag = false
@@ -573,7 +468,7 @@ SNSFriendCtrl.OnClickLeftFriendCell = HL.Method(HL.Number) << function(self, csI
             local selectCell = self.m_csIndex2friendCell[self.m_selectedCsIndex]
             if selectCell then
                 self.view.rightMask.gameObject:SetActive(false)
-                InputManagerInst.controllerNaviManager:SetTarget(selectCell.view.button)
+                self:SetNaviTarget(selectCell.view.button)
             end
         end
     end
@@ -588,9 +483,6 @@ SNSFriendCtrl.OnClickLeftFriendCell = HL.Method(HL.Number) << function(self, csI
         end
     end
 end
-
-
-
 
 
 SNSFriendCtrl.OpenFriendChatByRoleId = HL.Method(HL.Any) << function(self, openRoleId)
@@ -611,14 +503,9 @@ SNSFriendCtrl.OpenFriendChatByRoleId = HL.Method(HL.Any) << function(self, openR
     end
 end
 
-
-
-
 SNSFriendCtrl.OnMsgReadChange = HL.Method(HL.Any) << function(self, args)
     self:UpdateNumRedDot()
 end
-
-
 
 SNSFriendCtrl.OnFriendRemakeNameModify = HL.Method() << function(self)
     if not self.m_csIndex2friendCell then
@@ -632,20 +519,13 @@ SNSFriendCtrl.OnFriendRemakeNameModify = HL.Method() << function(self)
 end
 
 
-
-
 SNSFriendCtrl.OnPlayerDeleteListCell = HL.Method() << function(self)
     self.m_onPlayerDeleteListCell = true
 end
 
-
-
 SNSFriendCtrl.OnPlayerAddListCell = HL.Method() << function(self)
     self.m_onPlayerAddListCell = true
 end
-
-
-
 
 SNSFriendCtrl.OnSwitchOn = HL.Method(HL.Boolean) << function(self, isOn)
     if DeviceInfo.usingController then
@@ -656,7 +536,7 @@ SNSFriendCtrl.OnSwitchOn = HL.Method(HL.Boolean) << function(self, isOn)
         if isOn and self.m_selectedCsIndex ~= nil then
             local selectCell = self.m_csIndex2friendCell[self.m_selectedCsIndex]
             if selectCell then
-                InputManagerInst.controllerNaviManager:SetTarget(selectCell.view.button)
+                self:SetNaviTarget(selectCell.view.button)
             end
         end
 
@@ -667,8 +547,6 @@ SNSFriendCtrl.OnSwitchOn = HL.Method(HL.Boolean) << function(self, isOn)
         end
     end
 end
-
-
 
 SNSFriendCtrl.UpdateNumRedDot = HL.Method() << function(self)
     if not self.m_csIndex2friendCell then
@@ -703,9 +581,6 @@ SNSFriendCtrl.UpdateNumRedDot = HL.Method() << function(self)
     end
 end
 
-
-
-
 SNSFriendCtrl.OnClickOpenFriendChat = HL.Method(HL.Any) << function(self, args)
     local openRoleId = unpack(args)
 
@@ -715,20 +590,13 @@ SNSFriendCtrl.OnClickOpenFriendChat = HL.Method(HL.Any) << function(self, args)
 end
 
 
-
-
 SNSFriendCtrl.OnSyncFriendChatAllInfo = HL.Method() << function(self)
     self:_PreUpdateLeftFriendCell()
 end
 
-
-
 SNSFriendCtrl.OnShow = HL.Override() << function(self)
     SNSFriendCtrl.Super.OnShow(self)
 end
-
-
-
 
 
 SNSFriendCtrl._UpdateInfoTick = HL.Method(HL.Number) << function(self, deltaTime)
@@ -741,19 +609,13 @@ SNSFriendCtrl._UpdateInfoTick = HL.Method(HL.Number) << function(self, deltaTime
     end
 end
 
-
-
 SNSFriendCtrl.OnShow = HL.Override() << function(self)
     self.view.friendDialogContent:CustomOnShow()
 end
 
-
-
 SNSFriendCtrl.OnHide = HL.Override() << function(self)
     self.view.friendDialogContent:CustomOnHide()
 end
-
-
 
 SNSFriendCtrl.OnClose = HL.Override() << function(self)
     GameInstance.player.friendChatSystem:ClearLuaShowRoleId()

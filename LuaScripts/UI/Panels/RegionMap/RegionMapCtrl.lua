@@ -1,34 +1,12 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local MapSpaceshipNode = require_ex('UI/Widgets/MapSpaceshipNode')
 local PANEL_ID = PanelId.RegionMap
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RegionMapCtrl = HL.Class('RegionMapCtrl', uiCtrl.UICtrl)
 
 local MINI_POWER_HOVER_TEXT_ID = "ui_mappanel_collection_electricity"
 
 local RED_DOT_DOMAIN_ID = "domain_2"
 local MAX_DOMAIN_COUNT = 2
-
 
 
 
@@ -43,11 +21,7 @@ RegionMapCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SYSTEM_UNLOCK_CHANGED] = '_OnSystemUnlock',
 }
 
-
 RegionMapCtrl.m_mapManager = HL.Field(HL.Userdata)
-
-
-
 
 
 
@@ -78,15 +52,10 @@ end
 
 
 
-
-
 RegionMapCtrl._OnClickLevelBtn = HL.Method() << function(self)
     self:ChangePanelCfg("gyroscopeEffect", Types.EPanelGyroscopeEffect.Disable)
     self:PlayAnimationOutWithCallback()
 end
-
-
-
 
 
 RegionMapCtrl._SwitchToLevelMap = HL.Method(HL.Table) << function(self, args)
@@ -98,11 +67,7 @@ end
 
 
 
-
 RegionMapCtrl.domainId = HL.Field(HL.String) << ""
-
-
-
 
 RegionMapCtrl.SwitchDomain = HL.Method(HL.String) << function(self, domainId)
     local lastDomainId = self.domainId
@@ -115,22 +80,15 @@ end
 
 
 
-
 RegionMapCtrl.m_domainDataList = HL.Field(HL.Table)
-
 
 RegionMapCtrl.m_trackIconCellCache = HL.Field(HL.Table)
 
-
 RegionMapCtrl.m_selectIndex = HL.Field(HL.Number) << -1
-
 
 RegionMapCtrl.m_switchBtnCells = HL.Field(HL.Forward("UIListCache"))
 
-
 RegionMapCtrl.m_secondDomainFirstLevelId = HL.Field(HL.String) << ""
-
-
 
 
 
@@ -260,9 +218,6 @@ RegionMapCtrl._InitDomainSwitchCells = HL.Method() << function(self)
     
 end
 
-
-
-
 RegionMapCtrl._OnDomainSwitchCellClick = HL.Method(HL.Number) << function(self, index)
     if index == self.m_selectIndex or index > #self.m_domainDataList or index <= 0 then
         return
@@ -285,8 +240,6 @@ end
 
 
 
-
-
 RegionMapCtrl._InitMapRemindTip = HL.Method() << function(self)
     
     
@@ -306,8 +259,6 @@ RegionMapCtrl._InitMapRemindTip = HL.Method() << function(self)
     
     
 end
-
-
 
 RegionMapCtrl._RefreshBasicInfo = HL.Method() << function(self)
     local hasValue, _
@@ -346,9 +297,6 @@ RegionMapCtrl._RefreshBasicInfo = HL.Method() << function(self)
     self.view.mapTrackingInfo:InitMapTrackingInfo({ domainId = self.domainId})
 end
 
-
-
-
 RegionMapCtrl._OnClickRegionMapLevelBtn = HL.Method(HL.Userdata) << function(self, markData)
     if markData == nil then
         return
@@ -365,9 +313,6 @@ RegionMapCtrl._OnClickRegionMapLevelBtn = HL.Method(HL.Userdata) << function(sel
     Notify(MessageConst.ON_CLICK_REGIONMAP_LEVEL_BTN, data)
 end
 
-
-
-
 RegionMapCtrl._OnSystemUnlock = HL.Method(HL.Table) << function(self, args)
     local systemIndex = unpack(args)
     if systemIndex == GEnums.UnlockSystemType.Dungeon:GetHashCode() then
@@ -375,13 +320,9 @@ RegionMapCtrl._OnSystemUnlock = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
 RegionMapCtrl._RefreshWalletNodeVisibleState = HL.Method() << function(self)
     self.view.walletBarPlaceholder.gameObject:SetActive(Utils.isSystemUnlocked(GEnums.UnlockSystemType.Dungeon))
 end
-
-
 
 
 
@@ -400,12 +341,17 @@ RegionMapCtrl._InitRegionMapController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
-
 RegionMapCtrl._OnControllerSwitchDomain = HL.Method(HL.Boolean) << function(self, next)
+    local count = #self.m_domainDataList
+    if count <= 1 then
+        return
+    end
     local index = next and self.m_selectIndex - 1 or self.m_selectIndex + 1
-    index = lume.clamp(index, 1, MAX_DOMAIN_COUNT)
+    if index < 1 then
+        index = count
+    elseif index > count then
+        index = 1
+    end
     if index == self.m_selectIndex then
         return
     end

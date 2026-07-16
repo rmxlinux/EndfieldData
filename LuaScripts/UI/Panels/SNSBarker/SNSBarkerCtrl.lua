@@ -22,72 +22,21 @@ local ChatTypeFilter = {
     },
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SNSBarkerCtrl = HL.Class('SNSBarkerCtrl', uiCtrl.UICtrl)
-
 
 SNSBarkerCtrl.m_getContactNpcCellFunc = HL.Field(HL.Function)
 
-
 SNSBarkerCtrl.m_curSelectedSubDialogCell = HL.Field(HL.Forward("SNSSubDialogCell"))
-
 
 SNSBarkerCtrl.m_curSelectedSubDialogId = HL.Field(HL.String) << ""
 
-
 SNSBarkerCtrl.m_curSelectedChatId = HL.Field(HL.String) << ""
-
 
 SNSBarkerCtrl.m_chatVOs = HL.Field(HL.Table)
 
-
 SNSBarkerCtrl.m_cachedSelectedTags = HL.Field(HL.Table)
 
-
 SNSBarkerCtrl.m_filterArgs = HL.Field(HL.Table)
-
 
 
 
@@ -96,9 +45,6 @@ SNSBarkerCtrl.m_filterArgs = HL.Field(HL.Table)
 SNSBarkerCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 SNSBarkerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -130,9 +76,6 @@ end
 
 
 
-
-
-
 SNSBarkerCtrl.OnClickContactNpcCell = HL.Method(HL.Number) << function(self, csIndex)
     local chatVO = self.m_chatVOs[LuaIndex(csIndex)]
     self.m_curSelectedChatId = chatVO and chatVO.chatId or ""
@@ -147,16 +90,11 @@ SNSBarkerCtrl.OnClickContactNpcCell = HL.Method(HL.Number) << function(self, csI
         local cell = self.m_getContactNpcCellFunc(LuaIndex(csIndex))
         
         local subCell = cell.m_subDialogCellCache:Get(1)
-        UIUtils.setAsNaviTarget(subCell.view.button)
+        self:SetNaviTarget(subCell.view.button)
 
         self:_ToggleSubCellNavi(true)
     end
 end
-
-
-
-
-
 
 SNSBarkerCtrl.OnClickDialogCell = HL.Method(HL.String, HL.String, HL.Forward("SNSSubDialogCell"))
         << function(self, chatId, dialogId, subDialogCell)
@@ -175,9 +113,6 @@ SNSBarkerCtrl.OnClickDialogCell = HL.Method(HL.String, HL.String, HL.Forward("SN
     self:_RefreshContent()
 end
 
-
-
-
 SNSBarkerCtrl._InitData = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     local dialogId = arg and arg.dialogId
     if not string.isEmpty(dialogId) and Tables.sNSDialogTable:ContainsKey(dialogId) then
@@ -192,8 +127,6 @@ SNSBarkerCtrl._InitData = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     self.m_cachedSelectedTags = arg and arg.selectedTags and lume.deepCopy(arg.selectedTags) or {}
 end
 
-
-
 SNSBarkerCtrl._RefreshContactNpcListAfterFilter = HL.Method() << function(self)
     local hasResult = #self.m_chatVOs > 0
     self.view.contactNpcScrollList.gameObject:SetActive(hasResult)
@@ -204,8 +137,6 @@ SNSBarkerCtrl._RefreshContactNpcListAfterFilter = HL.Method() << function(self)
         self:_RefreshNaviTarget()
     end
 end
-
-
 
 SNSBarkerCtrl._RefreshContactNpcList = HL.Method() << function(self)
     local nonSelectSubDialog = string.isEmpty(self.m_curSelectedSubDialogId)
@@ -274,10 +205,6 @@ SNSBarkerCtrl._RefreshContactNpcList = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 SNSBarkerCtrl._OnUpdateContactNpcCell = HL.Method(GameObject, HL.Number) << function(self, go, csIndex)
     local npcVO = self.m_chatVOs[LuaIndex(csIndex)]
     
@@ -297,12 +224,6 @@ SNSBarkerCtrl._OnUpdateContactNpcCell = HL.Method(GameObject, HL.Number) << func
     end
 end
 
-
-
-
-
-
-
 SNSBarkerCtrl._RefreshSubCell = HL.Method(HL.Forward("SNSSubDialogCell"), HL.String, HL.String, HL.Number)
         << function(self, cell, chatId, dialogId, luaIndex)
     cell:InitSNSSubDialogCell(chatId, dialogId,
@@ -321,9 +242,6 @@ SNSBarkerCtrl._RefreshSubCell = HL.Method(HL.Forward("SNSSubDialogCell"), HL.Str
         end
     end
 end
-
-
-
 
 SNSBarkerCtrl._GenContactNpcVOs = HL.Method(HL.Table) << function(self, selectedTags)
     local sns = GameInstance.player.sns
@@ -428,8 +346,6 @@ SNSBarkerCtrl._GenContactNpcVOs = HL.Method(HL.Table) << function(self, selected
     self.m_chatVOs = chatVOs
 end
 
-
-
 SNSBarkerCtrl._RefreshContent = HL.Method() << function(self)
     local hasSelect = not string.isEmpty(self.m_curSelectedSubDialogId)
     if hasSelect then
@@ -441,8 +357,6 @@ SNSBarkerCtrl._RefreshContent = HL.Method() << function(self)
     self.view.nonSelected.gameObject:SetActive(not hasSelect)
     self.view.selected.gameObject:SetActive(hasSelect)
 end
-
-
 
 SNSBarkerCtrl._InitFilterArgs = HL.Method() << function(self)
     local filterArgs = {}
@@ -474,16 +388,11 @@ SNSBarkerCtrl._InitFilterArgs = HL.Method() << function(self)
     self.m_filterArgs = filterArgs
 end
 
-
-
 SNSBarkerCtrl._RefreshFilterBtnState = HL.Method() << function(self)
     local hasFilter = #self.m_cachedSelectedTags > 0
     self.view.btnCommonFilter.normalNode.gameObject:SetActiveIfNecessary(not hasFilter)
     self.view.btnCommonFilter.existNode.gameObject:SetActiveIfNecessary(hasFilter)
 end
-
-
-
 
 SNSBarkerCtrl._TryRecoverScrollToNpcCell = HL.Method(HL.Number) << function(self, targetNpcCSIndex)
     local targetNpcLuaIndex = LuaIndex(targetNpcCSIndex)
@@ -501,9 +410,6 @@ SNSBarkerCtrl._TryRecoverScrollToNpcCell = HL.Method(HL.Number) << function(self
     end)
 end
 
-
-
-
 SNSBarkerCtrl._ShouldFoldOutNpcCell = HL.Method(HL.String).Return(HL.Boolean) << function(self, chatId)
     if not string.isEmpty(self.m_curSelectedSubDialogId) then
         return Tables.sNSDialogTable[self.m_curSelectedSubDialogId].chatId == chatId
@@ -511,9 +417,6 @@ SNSBarkerCtrl._ShouldFoldOutNpcCell = HL.Method(HL.String).Return(HL.Boolean) <<
 
     return not string.isEmpty(self.m_curSelectedChatId) and self.m_curSelectedChatId == chatId
 end
-
-
-
 
 SNSBarkerCtrl._IsFilterChange = HL.Method(HL.Table).Return(HL.Boolean) << function(self, selectedTags)
     if #self.m_cachedSelectedTags ~= #selectedTags then
@@ -542,9 +445,6 @@ SNSBarkerCtrl._IsFilterChange = HL.Method(HL.Table).Return(HL.Boolean) << functi
     return changed
 end
 
-
-
-
 SNSBarkerCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, selectedTags)
     selectedTags = selectedTags or {}
     if not self:_IsFilterChange(selectedTags) then
@@ -565,14 +465,10 @@ SNSBarkerCtrl._OnFilterConfirm = HL.Method(HL.Table) << function(self, selectedT
     self:_ManuallyResetControllerState()
 end
 
-
-
 SNSBarkerCtrl._OnBtnFilterClick = HL.Method() << function(self)
     self.m_filterArgs.selectedTags = self.m_cachedSelectedTags
     self:Notify(MessageConst.SHOW_COMMON_FILTER, self.m_filterArgs)
 end
-
-
 
 SNSBarkerCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local selectedChatId = self.m_curSelectedChatId
@@ -587,30 +483,21 @@ SNSBarkerCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << functio
     }
 end
 
-
-
 SNSBarkerCtrl.GetPanelType = HL.Method().Return(HL.Number) << function(self)
     return SNSUtils.PanelType.FullScreenPanel
 end
 
 
 
-
 SNSBarkerCtrl.m_curFocusNpcCellCSIndex = HL.Field(HL.Number) << -1
-
 
 SNSBarkerCtrl.m_curFocusSubCellLuaIndex = HL.Field(HL.Number) << -1
 
-
 SNSBarkerCtrl.m_focusSubCellReturnToNpcCellBindId = HL.Field(HL.Number) << -1
-
 
 SNSBarkerCtrl.m_loseSubCellFocusFlag = HL.Field(HL.Boolean) << false
 
-
 SNSBarkerCtrl.m_returnToNpcCellBindActionFlag = HL.Field(HL.Boolean) << false
-
-
 
 SNSBarkerCtrl._RefreshNaviTarget = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -682,18 +569,16 @@ SNSBarkerCtrl._RefreshNaviTarget = HL.Method() << function(self)
     local cell = self.m_getContactNpcCellFunc(LuaIndex(self.m_curFocusNpcCellCSIndex))
     if cell then
         if nonSelectSubDialog then
-            UIUtils.setAsNaviTarget(cell.view.foldOut)
+            self:SetNaviTarget(cell.view.foldOut)
         else
             
             local subCell = cell.m_subDialogCellCache:Get(self.m_curFocusSubCellLuaIndex)
-            UIUtils.setAsNaviTarget(subCell.view.button)
+            self:SetNaviTarget(subCell.view.button)
         end
     else
-        UIUtils.setAsNaviTarget(nil)
+        self:ClearNaviTarget()
     end
 end
-
-
 
 SNSBarkerCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -705,7 +590,7 @@ SNSBarkerCtrl._InitController = HL.Method() << function(self)
 
         
         local cell = self.m_getContactNpcCellFunc(LuaIndex(self.m_curFocusNpcCellCSIndex))
-        UIUtils.setAsNaviTarget(cell.view.foldOut)
+        self:SetNaviTarget(cell.view.foldOut)
 
         self:_ToggleSubCellNavi(false)
 
@@ -716,9 +601,6 @@ SNSBarkerCtrl._InitController = HL.Method() << function(self)
     
     InputManagerInst:ToggleBinding(self.m_focusSubCellReturnToNpcCellBindId, not string.isEmpty(self.m_curSelectedSubDialogId))
 end
-
-
-
 
 SNSBarkerCtrl._OnSubContentDefaultNaviFailed = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, dir)
     if dir == NaviDirection.Left or dir == NaviDirection.Right then
@@ -757,13 +639,10 @@ SNSBarkerCtrl._OnSubContentDefaultNaviFailed = HL.Method(CS.UnityEngine.UI.NaviD
 
     
     local firstSubCell = preCell.m_subDialogCellCache:Get(1)
-    UIUtils.setAsNaviTarget(firstSubCell.view.button)
+    self:SetNaviTarget(firstSubCell.view.button)
 
     self.m_curFocusNpcCellCSIndex = nextFocusCellCSIndex
 end
-
-
-
 
 SNSBarkerCtrl._ToggleSubCellNavi = HL.Method(HL.Boolean) << function(self, isOn)
     
@@ -773,24 +652,17 @@ SNSBarkerCtrl._ToggleSubCellNavi = HL.Method(HL.Boolean) << function(self, isOn)
     InputManagerInst:ToggleBinding(self.m_focusSubCellReturnToNpcCellBindId, isOn)
 end
 
-
-
 SNSBarkerCtrl.ReturnToFocusCell = HL.Method() << function(self)
     
     local cell = self.m_getContactNpcCellFunc(LuaIndex(self.m_curFocusNpcCellCSIndex))
     if self.m_curFocusSubCellLuaIndex > 0 then
         
         local subCell = cell.m_subDialogCellCache:Get(self.m_curFocusSubCellLuaIndex)
-        UIUtils.setAsNaviTarget(subCell.view.button)
+        self:SetNaviTarget(subCell.view.button)
     else
-        UIUtils.setAsNaviTarget(cell.view.foldOut)
+        self:SetNaviTarget(cell.view.foldOut)
     end
 end
-
-
-
-
-
 
 SNSBarkerCtrl._OnIsNaviTargetChangedNpcCell = HL.Method(HL.Number, HL.Boolean, HL.Boolean) << function(self, csIndex, isTarget, isGroupChange)
     if not isTarget then
@@ -819,7 +691,7 @@ SNSBarkerCtrl._OnIsNaviTargetChangedNpcCell = HL.Method(HL.Number, HL.Boolean, H
         npcCell:ToggleFoldOut()
         
         local subCell = npcCell.m_subDialogCellCache:Get(1)
-        UIUtils.setAsNaviTarget(subCell.view.button)
+        self:SetNaviTarget(subCell.view.button)
     else
         
         if self.m_returnToNpcCellBindActionFlag then
@@ -846,7 +718,7 @@ SNSBarkerCtrl._OnIsNaviTargetChangedNpcCell = HL.Method(HL.Number, HL.Boolean, H
                 local subCellCache = npcCell.m_subDialogCellCache
                 
                 local subCell = subCellCache:Get(subCellCache:GetCount())
-                UIUtils.setAsNaviTarget(subCell.view.button)
+                self:SetNaviTarget(subCell.view.button)
 
                 
                 self.m_curFocusNpcCellCSIndex = nextNpcCellCSIndex
@@ -856,7 +728,7 @@ SNSBarkerCtrl._OnIsNaviTargetChangedNpcCell = HL.Method(HL.Number, HL.Boolean, H
                 local npcCell = self.m_getContactNpcCellFunc(LuaIndex(preFocusNpcCellCSIndex))
                 
                 local subCell = npcCell.m_subDialogCellCache:Get(1)
-                UIUtils.setAsNaviTarget(subCell.view.button)
+                self:SetNaviTarget(subCell.view.button)
             end
         end
     end
@@ -868,11 +740,6 @@ SNSBarkerCtrl._OnIsNaviTargetChangedNpcCell = HL.Method(HL.Number, HL.Boolean, H
     
     
 end
-
-
-
-
-
 
 SNSBarkerCtrl._OnIsNaviTargetChangedSubCell = HL.Method(HL.Number, HL.Boolean, HL.Boolean) << function(self, luaIndex, isTarget, isGroupChange)
     if isTarget then
@@ -890,21 +757,14 @@ SNSBarkerCtrl._OnIsNaviTargetChangedSubCell = HL.Method(HL.Number, HL.Boolean, H
     
 end
 
-
-
 SNSBarkerCtrl._ManuallyResetControllerState = HL.Method() << function(self)
     self:_ToggleSubCellNavi(false)
     self.view.snsDialogContentCore:ToggleContentCoreFocusable(false)
 end
 
-
-
 SNSBarkerCtrl.TryContinueDialog = HL.Method() << function(self)
     self:_RefreshContent()
 end
-
-
-
 
 SNSBarkerCtrl.OnSwitchOn = HL.Method(HL.Boolean) << function(self, isOn)
     if not isOn then
@@ -912,7 +772,7 @@ SNSBarkerCtrl.OnSwitchOn = HL.Method(HL.Boolean) << function(self, isOn)
         return
     end
 
-    ClientDataManagerInst:SetBool(SNSUtils.NORMAL_TAB_READ, true, false, SNSUtils.SNS_CATEGORY, true)
+    ClientDataManagerInst:SetBool(SNSUtils.NORMAL_TAB_READ, true, false, SNSUtils.SNS_CATEGORY)
     Notify(MessageConst.ON_SNS_BARKER_TAB_READ_STATE_CHANGE)
 
     if not DeviceInfo.usingController then
@@ -931,11 +791,11 @@ SNSBarkerCtrl.OnSwitchOn = HL.Method(HL.Boolean) << function(self, isOn)
     subCell = npcCell and npcCell.m_subDialogCellCache:Get(self.m_curFocusSubCellLuaIndex)
 
     if subCell then
-        UIUtils.setAsNaviTarget(subCell.view.button)
+        self:SetNaviTarget(subCell.view.button)
     elseif npcCell then
-        UIUtils.setAsNaviTarget(npcCell.view.foldOut)
+        self:SetNaviTarget(npcCell.view.foldOut)
     else
-        UIUtils.setAsNaviTarget(nil)
+        self:ClearNaviTarget()
     end
     
     local phase = self.m_phase

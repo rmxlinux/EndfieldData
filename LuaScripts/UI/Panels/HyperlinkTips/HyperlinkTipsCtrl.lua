@@ -1,23 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.HyperlinkTips
 local PHASE_ID = PhaseId.HyperlinkTips
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 HyperlinkTipsCtrl = HL.Class('HyperlinkTipsCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -30,23 +14,15 @@ HyperlinkTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 HyperlinkTipsCtrl.WaitShowCoroutine = HL.StaticField(HL.Thread)
-
 
 HyperlinkTipsCtrl.WaitShowCoroutineKey = HL.StaticField(HL.String) << "HyperlinkTipsCtrl"
 
-
 HyperlinkTipsCtrl.m_curLinkId = HL.Field(HL.String) << ""
-
 
 HyperlinkTipsCtrl.m_targetPos = HL.Field(HL.Any)
 
-
 HyperlinkTipsCtrl.m_args = HL.Field(HL.Any)
-
-
-
 
 
 
@@ -62,9 +38,13 @@ end
 
 
 
-
-
 HyperlinkTipsCtrl.ShowHyperlinkTips = HL.StaticMethod(HL.Any) << function(args)
+    local linkId = unpack(args)
+    local linkType = UIUtils.resolveLinkTypeFromId(linkId)
+    if linkType ~= UIConst.UI_TEXT_LINK_TYPE.Hyperlink then
+        return
+    end
+    
     logger.info("[HyperlinkTipsCtrl] Show Event")
     CoroutineManager:ClearCoroutine(HyperlinkTipsCtrl.WaitShowCoroutine)
     local isOpen, self = UIManager:IsOpen(PANEL_ID)
@@ -79,8 +59,7 @@ HyperlinkTipsCtrl.ShowHyperlinkTips = HL.StaticMethod(HL.Any) << function(args)
     end, HyperlinkTipsCtrl.WaitShowCoroutineKey)
 end
 
-
-HyperlinkTipsCtrl.HideHyperlinkTips = HL.StaticMethod() << function()
+HyperlinkTipsCtrl.HideHyperlinkTips = HL.StaticMethod(HL.Opt(HL.Any)) << function(args)
     logger.info("[HyperlinkTipsCtrl] Hide Event")
     CoroutineManager:ClearCoroutine(HyperlinkTipsCtrl.WaitShowCoroutine)
     local isOpen, self = UIManager:IsOpen(PANEL_ID)
@@ -88,9 +67,6 @@ HyperlinkTipsCtrl.HideHyperlinkTips = HL.StaticMethod() << function()
         self:_HideTips()
     end
 end
-
-
-
 
 
 
@@ -124,15 +100,11 @@ HyperlinkTipsCtrl._ShowTips = HL.Method(HL.Any) << function(self, args)
     end
 end
 
-
-
 HyperlinkTipsCtrl._HideTips = HL.Method() << function(self)
     logger.info("[HyperlinkTipsCtrl] Hide")
     self:_ClearData()
     self:Hide()
 end
-
-
 
 HyperlinkTipsCtrl._ClearData = HL.Method() << function(self)
     self.m_args = nil
@@ -140,10 +112,9 @@ HyperlinkTipsCtrl._ClearData = HL.Method() << function(self)
     self.m_targetPos = nil
 end
 
-
-
 HyperlinkTipsCtrl._UpdateData = HL.Method() << function(self)
     self.m_curLinkId = unpack(self.m_args)
+    self.m_curLinkId = string.gsub(self.m_curLinkId, CS.Beyond.UI.UIText.HYPERLINK_ID_PREFIX, "")
     local mousePos = InputManager.mousePosition
     
     self.m_targetPos = Unity.Rect(
@@ -151,8 +122,6 @@ HyperlinkTipsCtrl._UpdateData = HL.Method() << function(self)
         2 * self.view.config.OFFSET_X, 2 * self.view.config.OFFSET_Y
     )
 end
-
-
 
 HyperlinkTipsCtrl._RefreshUI = HL.Method() << function(self)
     local cfgExist, hyperlinkCfg = Tables.hyperlinkTextTable:TryGetValue(self.m_curLinkId)

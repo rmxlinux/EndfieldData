@@ -20,22 +20,11 @@ local tabConfig = {
         hideIfDeliverLocked = true,
     },
 }
-
-
-
-
-
-
-
-
 DomainDepotTabCtrl = HL.Class('DomainDepotTabCtrl', uiCtrl.UICtrl)
-
 
 DomainDepotTabCtrl.m_index = HL.Field(HL.Number) << 0
 
-
 DomainDepotTabCtrl.m_domainId = HL.Field(HL.String) << ''
-
 
 
 
@@ -44,9 +33,6 @@ DomainDepotTabCtrl.m_domainId = HL.Field(HL.String) << ''
 DomainDepotTabCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHANGE_DOMAIN_DEPOT_TAB] = 'ChangeTab',
 }
-
-
-
 
 
 
@@ -109,10 +95,13 @@ DomainDepotTabCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     self.view.tabToggleGroup.enabled = isDeliverUnlocked
+
+    CS.Beyond.Gameplay.Conditions.OnDomainDepotMainPanelOpen.Trigger(self.m_domainId, false)
 end
 
-
-
+DomainDepotTabCtrl.OnAnimationInFinished = HL.Override() << function(self)
+    CS.Beyond.Gameplay.Conditions.OnDomainDepotMainPanelOpen.Trigger(self.m_domainId, true)
+end
 
 DomainDepotTabCtrl.ChangeTab = HL.Method(HL.Any) << function(self, arg)
     if arg == nil then
@@ -130,9 +119,6 @@ DomainDepotTabCtrl.ChangeTab = HL.Method(HL.Any) << function(self, arg)
 
     self:_OnTabChange(arg.index)
 end
-
-
-
 
 DomainDepotTabCtrl._OnTabChange = HL.Method(HL.Number) << function(self, index)
     if index < 1 or index > #tabConfig then
@@ -152,8 +138,6 @@ DomainDepotTabCtrl._OnTabChange = HL.Method(HL.Number) << function(self, index)
     local tabInfo = tabConfig[index]
     self.m_phase:OnTabChange(tabInfo.panelId)
 end
-
-
 
 DomainDepotTabCtrl.ForceResetTab = HL.Method() << function(self)
     self.m_index = 1

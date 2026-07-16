@@ -15,66 +15,24 @@ local USE_CASH_SHOP_IDS ={
     SP_weapon_supply = 5,
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopGiftPackEmptyCtrl = HL.Class('ShopGiftPackEmptyCtrl', uiCtrl.UICtrl)
-
 
 ShopGiftPackEmptyCtrl.m_tabDataList = HL.Field(HL.Table)
 
-
 ShopGiftPackEmptyCtrl.m_currTabCashShopId = HL.Field(HL.String) << ""
-
 
 
 ShopGiftPackEmptyCtrl.m_isControllerTarget = HL.Field(HL.Boolean) << false
 
 
-
 ShopGiftPackEmptyCtrl.m_allGiftPackGoodsByGroup = HL.Field(HL.Table)
 
-
 ShopGiftPackEmptyCtrl.m_getTabCellFunc = HL.Field(HL.Function)
-
 
 ShopGiftPackEmptyCtrl.m_needNaviGoodsId = HL.Field(HL.String) << ""
 
 
-
 ShopGiftPackEmptyCtrl.m_isInTabClickFunc = HL.Field(HL.Boolean) << false
-
 
 
 ShopGiftPackEmptyCtrl.m_haveSeenGoodsId = HL.Field(HL.Table)
@@ -89,16 +47,13 @@ ShopGiftPackEmptyCtrl.m_pendingAfterTopOrdered = HL.Field(HL.Table)
 
 
 
-
 ShopGiftPackEmptyCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SDK_PRODUCT_INFO_UPDATE] = '_OnSdkProductInfoUpdate',
     [MessageConst.ON_CASH_SHOP_PLATFORM_DATA_REFRESH] = '_OnCashShopPlatformDataRefresh',
+    [MessageConst.ON_SC_PAY_FREQUENCY_LIMIT_MODIFY] = '_OnCashShopFrequencyLimitDataRefresh',
     [MessageConst.CASH_SHOP_NEW_OPEN_GOODS] = '_OnCashShopNewOpenGoods',
     [MessageConst.ON_READ_CASH_SHOP_GOODS] = '_OnReadCashShopGoods',
 }
-
-
-
 
 
 ShopGiftPackEmptyCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -132,11 +87,8 @@ ShopGiftPackEmptyCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_ProcessArg(arg)
 end
 
-
-
-
 ShopGiftPackEmptyCtrl._ProcessArg = HL.Method(HL.Table) << function(self, arg)
-    if arg ~= nil and arg.goodsId ~= nil then
+    if arg ~= nil and arg.goodsId ~= nil and not string.isEmpty(arg.goodsId) then
         local goodsId = arg.goodsId
         arg.goodsId = nil
         local cashShopId = arg.cashShopId
@@ -147,10 +99,10 @@ ShopGiftPackEmptyCtrl._ProcessArg = HL.Method(HL.Table) << function(self, arg)
         table.insert(self.m_pendingAfterTopOrdered, function()
             self:ChooseTabByGoodsId(goodsId, true, cashShopId)
         end)
-    elseif arg ~= nil and arg.cashShopId ~= nil then
+    elseif arg ~= nil and arg.cashShopId ~= nil and not string.isEmpty(arg.cashShopId) then
         local cashShopId = arg.cashShopId
         arg.cashShopId = nil
-        self:ChooseTabByCashShopId(cashShopId, nil, true)
+        self:ChooseTabByCashShopId(cashShopId, nil, true, arg.cashGoodsId)
 
         
         if arg.showInstructionBook then
@@ -166,9 +118,6 @@ ShopGiftPackEmptyCtrl._ProcessArg = HL.Method(HL.Table) << function(self, arg)
         end
     end
 end
-
-
-
 
 ShopGiftPackEmptyCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, arg)
     local isDetailOpen, detailCtrl = UIManager:IsOpen(PanelId.ShopGiftPackDetails)
@@ -206,10 +155,6 @@ ShopGiftPackEmptyCtrl.OnAfterCategoryTopOrdered = HL.Method() << function(self)
         action()
     end
 end
-
-
-
-
 
 ShopGiftPackEmptyCtrl._SetupTabTag = HL.Method(HL.Any, HL.Table) << function(self, cell, tabData)
     
@@ -249,8 +194,6 @@ ShopGiftPackEmptyCtrl._SetupTabTag = HL.Method(HL.Any, HL.Table) << function(sel
 end
 
 
-
-
 ShopGiftPackEmptyCtrl._InitShortCut = HL.Method() << function(self)
     self:BindInputPlayerAction("cashshop_giftpack_goto_right", function()
         self:_OnGoRight()
@@ -260,8 +203,6 @@ ShopGiftPackEmptyCtrl._InitShortCut = HL.Method() << function(self)
         self:_OnGoRight()
     end, self.view.cashShopVerticalTabList.groupTarget.groupId)
 end
-
-
 
 ShopGiftPackEmptyCtrl._InitData = HL.Method() << function(self)
     self.m_allGiftPackGoodsByGroup = CashShopUtils.GetAllGiftPackGoodsByGroup()
@@ -342,7 +283,7 @@ ShopGiftPackEmptyCtrl._InitData = HL.Method() << function(self)
             local soldOutCount = 0
             for _, goodsInfo in ipairs(tabData.cashGoodsInfos) do
                 local goodsId = goodsInfo.goodsId
-                local limitGoodsData = GameInstance.player.cashShopSystem:GetPlatformLimitGoodsData(goodsId)
+                local limitGoodsData = CashShopUtils.GetGoodsLimitData(goodsId)
                 if limitGoodsData ~= nil and limitGoodsData.limitType == CS.Beyond.Gameplay.CashShopSystem.EPlatformLimitGoodsType.Common then
                     local limitCount = limitGoodsData.limitCount
                     local purchaseCount = limitGoodsData.purchaseCount
@@ -365,13 +306,9 @@ ShopGiftPackEmptyCtrl._InitData = HL.Method() << function(self)
     self.m_tabDataList = cashShopTabList
 end
 
-
-
 ShopGiftPackEmptyCtrl._RefreshUI = HL.Method() << function(self)
     self.view.cashShopVerticalTabList.scrollList:UpdateCount(#self.m_tabDataList)
 end
-
-
 
 ShopGiftPackEmptyCtrl._UpdateTabList = HL.Method() << function(self)
     self.view.cashShopVerticalTabList.scrollList:UpdateShowingCells(function(index, obj)
@@ -382,13 +319,8 @@ ShopGiftPackEmptyCtrl._UpdateTabList = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
-
-ShopGiftPackEmptyCtrl._SetTabByIndex = HL.Method(HL.Int, HL.Opt(HL.Boolean, HL.Boolean))
-    << function(self, index, naviTarget, onCreate)
+ShopGiftPackEmptyCtrl._SetTabByIndex = HL.Method(HL.Int, HL.Opt(HL.Boolean, HL.Boolean, HL.String))
+    << function(self, index, naviTarget, onCreate, cashGoodsId)
     if naviTarget == nil then
         naviTarget = true  
     end
@@ -397,20 +329,15 @@ ShopGiftPackEmptyCtrl._SetTabByIndex = HL.Method(HL.Int, HL.Opt(HL.Boolean, HL.B
         local cell = self.m_getTabCellFunc(obj)
         self.m_isControllerTarget = true
         cell.toggle:SetIsOnWithoutNotify(true)
-        self:_OnTabClick(self.m_tabDataList[index], false, onCreate)
+        self:_OnTabClick(self.m_tabDataList[index], false, onCreate, cashGoodsId)
         if naviTarget then
-            UIUtils.setAsNaviTarget(cell.toggle)
+            self:SetNaviTarget(cell.toggle)
         end
     end
 end
 
 
-
-
-
-
-
-ShopGiftPackEmptyCtrl._OnTabClick = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, tabData, userClick, onCreate)
+ShopGiftPackEmptyCtrl._OnTabClick = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Boolean, HL.String)) << function(self, tabData, userClick, onCreate, cashGoodsId)
     if self.m_currTabCashShopId == tabData.cashShopId then
         logger.info("click same tab")
         return
@@ -474,6 +401,7 @@ ShopGiftPackEmptyCtrl._OnTabClick = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Bo
                 emptyCtrl = self,
                 naviGoodsId = self.m_needNaviGoodsId,
                 playAnimationIn = onCreate and true or false,
+                cashGoodsId = cashGoodsId,
             })
         self.m_needNaviGoodsId = ""
     end
@@ -509,9 +437,6 @@ ShopGiftPackEmptyCtrl._OnTabClick = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Bo
     self.m_isInTabClickFunc = false
 end
 
-
-
-
 ShopGiftPackEmptyCtrl._GetTabDataByCashShopId = HL.Method(HL.String).Return(HL.Any) << function(self, cashShopId)
     for _, tabData in ipairs(self.m_tabDataList) do
         if tabData.cashShopId == cashShopId then
@@ -520,11 +445,6 @@ ShopGiftPackEmptyCtrl._GetTabDataByCashShopId = HL.Method(HL.String).Return(HL.A
     end
     return nil
 end
-
-
-
-
-
 
 
 
@@ -564,7 +484,6 @@ ShopGiftPackEmptyCtrl.ChooseTabByGoodsId = HL.Method(HL.String, HL.Boolean, HL.O
         end
     end
 
-    
     if foundTabData ~= nil then
         self:_SetTabByIndex(foundTabIndex)
         
@@ -598,13 +517,8 @@ ShopGiftPackEmptyCtrl.ChooseTabByGoodsId = HL.Method(HL.String, HL.Boolean, HL.O
     return ""
 end
 
-
-
-
-
-
-ShopGiftPackEmptyCtrl.ChooseTabByCashShopId = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean))
-    << function(self, cashShopId, naviTarget, onCreate)
+ShopGiftPackEmptyCtrl.ChooseTabByCashShopId = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean, HL.String))
+    << function(self, cashShopId, naviTarget, onCreate, cashGoodsId)
     local foundTabData = nil
     local foundTabIndex = 0
     for i = 2, #self.m_tabDataList do
@@ -620,14 +534,12 @@ ShopGiftPackEmptyCtrl.ChooseTabByCashShopId = HL.Method(HL.String, HL.Opt(HL.Boo
     end
     
     if foundTabData ~= nil then
-        self:_SetTabByIndex(foundTabIndex, naviTarget, onCreate)
+        self:_SetTabByIndex(foundTabIndex, naviTarget, onCreate, cashGoodsId)
     else
         
-        self:_SetTabByIndex(1, naviTarget, onCreate)
+        self:_SetTabByIndex(1, naviTarget, onCreate, cashGoodsId)
     end
 end
-
-
 
 ShopGiftPackEmptyCtrl._OnReceiveRefreshMsg = HL.Method() << function(self)
     logger.info("ShopGiftPackEmptyCtrl: 收到msg，刷新页面")
@@ -666,8 +578,6 @@ ShopGiftPackEmptyCtrl._OnReceiveRefreshMsg = HL.Method() << function(self)
     Notify(MessageConst.ON_CASH_SHOP_RECEIVE_REFRESH_MSG)
 end
 
-
-
 ShopGiftPackEmptyCtrl._OnGoRight = HL.Method() << function(self)
     
     if self.m_phase.m_panel2Item[PanelId.ShopPackage] then
@@ -681,8 +591,6 @@ ShopGiftPackEmptyCtrl._OnGoRight = HL.Method() << function(self)
     end
 
 end
-
-
 
 ShopGiftPackEmptyCtrl.NaviTargetCurrTab = HL.Method() << function(self)
     logger.info("ShopGiftPackEmptyCtrl: NaviTargetCurrTab")
@@ -713,12 +621,10 @@ ShopGiftPackEmptyCtrl.NaviTargetCurrTab = HL.Method() << function(self)
         if foundTabData ~= nil then
             local obj = self.view.cashShopVerticalTabList.scrollList:Get(CSIndex(foundTabIndex))
             local cell = self.m_getTabCellFunc(obj)
-            UIUtils.setAsNaviTarget(cell.toggle)
+            self:SetNaviTarget(cell.toggle)
         end
     end)
 end
-
-
 
 
 ShopGiftPackEmptyCtrl.OnShow = HL.Override() << function(self)
@@ -726,8 +632,6 @@ ShopGiftPackEmptyCtrl.OnShow = HL.Override() << function(self)
         moneyIds = {Tables.globalConst.originiumItemId, Tables.globalConst.diamondItemId},
     })
 end
-
-
 
 
 
@@ -740,25 +644,21 @@ end
 
 
 
-
-
 ShopGiftPackEmptyCtrl._OnSdkProductInfoUpdate = HL.Method() << function(self)
     self:_OnReceiveRefreshMsg()
 end
-
-
 
 ShopGiftPackEmptyCtrl._OnCashShopPlatformDataRefresh = HL.Method() << function(self)
     self:_OnReceiveRefreshMsg()
 end
 
-
+ShopGiftPackEmptyCtrl._OnCashShopFrequencyLimitDataRefresh = HL.Method() << function(self)
+    self:_OnReceiveRefreshMsg()
+end
 
 ShopGiftPackEmptyCtrl._OnCashShopNewOpenGoods = HL.Method() << function(self)
     self:_OnReceiveRefreshMsg()
 end
-
-
 
 ShopGiftPackEmptyCtrl._OnReadCashShopGoods = HL.Method() << function(self)
     self:_UpdateTabList()

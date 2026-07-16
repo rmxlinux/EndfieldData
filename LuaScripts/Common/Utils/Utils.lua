@@ -300,6 +300,11 @@ function Utils.getItemCount(itemId, forceIncludeCurDepot, allDepot)
         return inventory:GetItemCountInWallet(itemId)
     end
 
+    if itemData.type == CS.Beyond.GEnums.ItemType.APGameplay then
+        local count = inventory.curStamina
+        return count, count, count
+    end
+
     local valuableDepotType = itemData.valuableTabType
     local isValuableItem = valuableDepotType ~= GEnums.ItemValuableDepotType.Factory
 
@@ -711,23 +716,72 @@ function Utils.csList2Table(list)
     return t
 end
 
+function Utils.checkNeedShowTpWarningPopup(targetSceneId, targetPosition)
+    local checkResult = {
+        needShow = false,
+        warningText = ""
+    }
+
+    local linkBrain = GameWorld.gameMechManager.linkWireBrain
+    if linkBrain.isLinking and linkBrain.linkType == CS.Beyond.Gameplay.Core.GameMech.LinkWireBrain.LinkType.Udpipe then
+        local success, levelConfig = Utils.getLevelConfig(targetSceneId)
+        if success then
+            local targetMapId = levelConfig.mapIdStr
+            local curMapId = GameWorld.worldInfo.curMapIdStr
+            if targetMapId ~= curMapId then
+                checkResult.needShow = true
+                checkResult.warningText = Language.LUA_MAP_TP_WARNING_OTHER_MAP
+            else
+                local willBreak, distance = linkBrain:CheckBreakableBeforeTeleport(targetMapId, targetPosition)
+                if willBreak then
+                    checkResult.needShow = true
+                    checkResult.warningText = string.format(
+                        Language.LUA_MAP_TP_WARNING_CURRENT_MAP,
+                        math.ceil(distance)
+                    )
+                end
+            end
+        end
+    end
+
+    return checkResult
+end
+
 function Utils.teleportToPositionByValidationId(teleportValidationId, callback)
     if string.isEmpty(teleportValidationId) then
         logger.error("teleportToPosition failed, invalid teleportValidationId")
         return
     end
-    GameAction.TeleportToPositionByValidationId(teleportValidationId, callback)
-    logger.important(CS.Beyond.EnableLogType.DevOnly, "[LuaTeleport] teleportToPositionByValidationId", teleportValidationId)
+
+    local success, validationData = GameInstance.dataManager.teleportValidationDatas:TryGetValue(teleportValidationId)
+    if not success then
+        logger.error("teleportToPositionByValidationId failed, validation data not found", teleportValidationId)
+        return
+    end
+
+    local function doTeleport()
+        GameAction.TeleportToPositionByValidationId(teleportValidationId, callback)
+        logger.important(CS.Beyond.EnableLogType.DevOnly, "[LuaTeleport] teleportToPositionByValidationId", teleportValidationId)
+    end
+
+    local checkResult = Utils.checkNeedShowTpWarningPopup(validationData.sceneId, validationData.position)
+    if checkResult.needShow then
+        Notify(MessageConst.SHOW_POP_UP, {
+            content = checkResult.warningText,
+            onConfirm = doTeleport,
+        })
+    else
+        doTeleport()
+    end
 end
 
-function Utils.teleportToPosition(sceneId, position, rotation, teleportReason, callback, uiType,hubNodeId)
+function Utils.teleportToPosition(sceneId, position, rotation, teleportReason, callback, uiType, hubNodeId)
     if string.isEmpty(sceneId) or position == nil then
         logger.error("teleportToPosition failed, invalid sceneId or position")
         return
     end
 
     if Utils.isCurSquadAllDead() then
-        
         Notify(MessageConst.SHOW_TOAST, Language.LUA_GAME_MODE_FORBID_FACTORY_WATCH)
         return
     end
@@ -735,14 +789,26 @@ function Utils.teleportToPosition(sceneId, position, rotation, teleportReason, c
     teleportReason = teleportReason or GEnums.C2STeleportReason.ServerTpGM
     uiType = uiType or CS.Beyond.Gameplay.TeleportUIType.Default
     hubNodeId = hubNodeId or 0
-    local tpOptions = CS.Beyond.Gameplay.TeleportOptions.None
-    if rotation ~= nil then
-        GameAction.TeleportToPosition(teleportReason, sceneId, position, rotation, uiType, tpOptions, callback,hubNodeId)
-    else
-        GameAction.TeleportToPosition(teleportReason, sceneId, position, Vector3.zero, uiType, tpOptions, callback,hubNodeId)
+
+    local function doTeleport()
+        local tpOptions = CS.Beyond.Gameplay.TeleportOptions.None
+        if rotation ~= nil then
+            GameAction.TeleportToPosition(teleportReason, sceneId, position, rotation, uiType, tpOptions, callback, hubNodeId)
+        else
+            GameAction.TeleportToPosition(teleportReason, sceneId, position, Vector3.zero, uiType, tpOptions, callback, hubNodeId)
+        end
+        logger.important(CS.Beyond.EnableLogType.DevOnly, "[LuaTeleport] teleportToPosition", sceneId, position, teleportReason, uiType)
     end
 
-    logger.important(CS.Beyond.EnableLogType.DevOnly, "[LuaTeleport] teleportToPosition", sceneId, position, teleportReason, uiType)
+    local checkResult = Utils.checkNeedShowTpWarningPopup(sceneId, position)
+    if checkResult.needShow then
+        Notify(MessageConst.SHOW_POP_UP, {
+            content = checkResult.warningText,
+            onConfirm = doTeleport,
+        })
+    else
+        doTeleport()
+    end
 end
 
 function Utils.teleportToEntity(teleportValidationId, callback)
@@ -752,14 +818,30 @@ function Utils.teleportToEntity(teleportValidationId, callback)
     end
 
     if Utils.isCurSquadAllDead() then
-        
         Notify(MessageConst.SHOW_TOAST, Language.LUA_GAME_MODE_FORBID_FACTORY_WATCH)
         return
     end
 
-    GameAction.TeleportToPositionByValidationId(teleportValidationId, callback)
+    local success, validationData = GameInstance.dataManager.teleportValidationDatas:TryGetValue(teleportValidationId)
+    if not success then
+        logger.error("teleportToEntity failed, validation data not found", teleportValidationId)
+        return
+    end
 
-    logger.important(CS.Beyond.EnableLogType.DevOnly, "[LuaTeleport] teleportToEntity", teleportValidationId)
+    local function doTeleport()
+        GameAction.TeleportToPositionByValidationId(teleportValidationId, callback)
+        logger.important(CS.Beyond.EnableLogType.DevOnly, "[LuaTeleport] teleportToEntity", teleportValidationId)
+    end
+
+    local checkResult = Utils.checkNeedShowTpWarningPopup(validationData.sceneId, validationData.position)
+    if checkResult.needShow then
+        Notify(MessageConst.SHOW_POP_UP, {
+            content = checkResult.warningText,
+            onConfirm = doTeleport,
+        })
+    else
+        doTeleport()
+    end
 end
 
 function Utils.getCurDomainId()
@@ -1135,23 +1217,66 @@ function Utils.canJumpToSystem(jumpId)
     return false
 end
 
-function Utils.jumpToSystem(jumpId)
+function Utils.jumpToSystem(jumpId, callback)
+    Utils.jumpToSystemWithItem(jumpId, callback, nil)
+end
+
+function Utils.jumpToSystemWithItem(jumpId, callback, itemId)
     local cfg = Tables.systemJumpTable[jumpId]
     local isUnlock = Utils.isSystemUnlocked(cfg.bindSystem)
     if not isUnlock then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_SYSTEM_LOCK)
         return
     end
+
+    local jumpChain = {}
+    local curId = cfg.preJumpId
+    local visited = {}
+    while not string.isEmpty(curId) do
+        if visited[curId] then
+            break
+        end
+        visited[curId] = true
+        local _, preCfg = Tables.systemJumpTable:TryGetValue(curId)
+        if not preCfg then
+            break
+        end
+        table.insert(jumpChain, preCfg)
+        curId = preCfg.preJumpId
+    end
+
+    for i = #jumpChain, 1, -1 do
+        local preCfg = jumpChain[i]
+        local prePhaseId = PhaseId[preCfg.phaseId]
+        if prePhaseId then
+            local preArgs
+            preArgs = Utils.buildSystemJumpPhaseArgsWithItem(preCfg, itemId)
+            PhaseManager:OpenPhaseFast(prePhaseId, preArgs)
+        end
+    end
+
     local phaseId = PhaseId[cfg.phaseId]
+    local phaseArgs
+    phaseArgs = Utils.buildSystemJumpPhaseArgsWithItem(cfg, itemId)
+    if phaseId == PhaseId.CharInfo then
+        CharInfoUtils.openCharInfoBestWay(phaseArgs, callback)
+    else
+        PhaseManager:GoToPhase(phaseId, phaseArgs, callback)
+    end
+end
+
+function Utils.buildSystemJumpPhaseArgsWithItem(cfg, itemId)
     local phaseArgs
     if not string.isEmpty(cfg.phaseArgs) then
         phaseArgs = Json.decode(cfg.phaseArgs)
     end
-    if phaseId == PhaseId.CharInfo then
-        CharInfoUtils.openCharInfoBestWay(phaseArgs)
-    else
-        PhaseManager:GoToPhase(phaseId, phaseArgs)
+    if not string.isEmpty(itemId) then
+        if cfg.autoUseItemArg then
+            phaseArgs = phaseArgs or {}
+            phaseArgs.itemId = itemId
+        end
     end
+    return phaseArgs
 end
 
 function Utils.unlockCraft(itemId)
@@ -1218,7 +1343,7 @@ function Utils.getImgGenderDiffPath(imgText)
 end
 
 function Utils.isCurSquadAllDead()
-    return GameInstance.player.squadManager:IsCurSquadAllDead()
+    return GameInstance.player.squadManager:IsAllDead()
 end
 
 function Utils.zoomCamera(delta)
@@ -1316,33 +1441,36 @@ function Utils.getLTItemExpireInfo(itemId, instId)
     return info
 end
 
-function Utils.isSettlementDefenseGuideCompleted()
-    if string.isEmpty(Tables.settlementConst.defenseGuideMissionId) then
+function Utils.isSettlementDefenseGuideCompleted(mapId)
+    local missionIds = Tables.settlementConst.defenseGuideMissionIds
+    if mapId and mapId == Tables.settlementConst.specialDefenseGuideMapId then
+        missionIds = Tables.settlementConst.specialDefenseGuideMissionIds
+    end
+    if #missionIds == 0 then
         return true
     end
-    return GameInstance.player.mission:GetMissionState(Tables.settlementConst.defenseGuideMissionId) ==
-        CS.Beyond.Gameplay.MissionSystem.MissionState.Completed
+    for _, missionId in pairs(missionIds) do
+        if GameInstance.player.mission:GetMissionState(missionId) ==
+            CS.Beyond.Gameplay.MissionSystem.MissionState.Completed then
+            return true
+        end
+    end
+    return false
 end
 
 function Utils.getCurMissionIdAndDesc(descType)
     local missionSystem = GameInstance.player.mission
-    local csMissionViewType = GEnums.MissionViewType
-    local curMissionId = ""
+    local curMissionId = missionSystem:GetLatestMainMissionId()
     local curMissionDesc = Language.LUA_GACHA_STARTER_ALL_MISSION_COMPLETE
-    for missionId, _ in pairs(missionSystem.missions) do
-        local missionInfo = missionSystem:GetMissionInfo(missionId)
-        if missionInfo.viewType == csMissionViewType.MissionViewMain then
-            local curMissionState = missionSystem:GetMissionState(missionId)
-            if curMissionState == CS.Beyond.Gameplay.MissionSystem.MissionState.Processing then
-                curMissionId = missionId
-                local chapterId = missionSystem:GetChapterIdByMissionId(missionId)
-                local chapterInfo = missionSystem:GetChapterInfo(chapterId)
-                if descType == "gacha" then
-                    curMissionDesc = string.format(Language.LUA_GACHA_STARTER_CUR_MISSION_DESC, chapterInfo.chapterNum:GetText(), chapterInfo.episodeNum:GetText())
-                elseif descType == "activity" then
-                    curMissionDesc = string.format(Language.LUA_ACTIVITY_UNLOCK_CUR_MISSION_DESC, chapterInfo.chapterNum:GetText(), chapterInfo.episodeNum:GetText(), missionSystem:GetMissionInfo(curMissionId).missionName:GetText())
-                end
-                break
+    if not string.isEmpty(curMissionId) then
+        local curMissionState = missionSystem:GetMissionState(curMissionId)
+        if curMissionState == CS.Beyond.Gameplay.MissionSystem.MissionState.Processing then
+            local chapterId = missionSystem:GetChapterIdByMissionId(curMissionId)
+            local chapterInfo = missionSystem:GetChapterInfo(chapterId)
+            if descType == "gacha" then
+                curMissionDesc = string.format(Language.LUA_GACHA_STARTER_CUR_MISSION_DESC, chapterInfo.chapterNum:GetText(), chapterInfo.episodeNum:GetText())
+            elseif descType == "activity" then
+                curMissionDesc = string.format(Language.LUA_ACTIVITY_UNLOCK_CUR_MISSION_DESC, chapterInfo.chapterNum:GetText(), chapterInfo.episodeNum:GetText(), missionSystem:GetMissionInfo(curMissionId).missionName:GetText())
             end
         end
     end
@@ -1390,12 +1518,38 @@ function Utils.reportPlacementEvent(eventType)
     GameInstance.player.gameDataReportSystem:ReportPlacementEvent(eventType)
 end
 
-function Utils.getCommonSettingValueBool(settingId)
-    local hasValue, value = CS.Beyond.GameSetting.GameSettingGetBool(settingId)
-    if hasValue then
-        return value
+function Utils.isPortableDevice(itemId)
+    return not string.isEmpty(itemId) and Tables.itemPortableDeviceTable:ContainsKey(itemId)
+end
+
+
+
+
+
+function Utils.getColoredSlotHigherLvActiveDeviceName(itemBag, deactivatedItemId)
+    if not itemBag or not Utils.isPortableDevice(deactivatedItemId) then
+        return nil
     end
-    return CS.Beyond.GameSetting.GetGameSettingDefaultValueFromTableBool(settingId)
+    local pdData = Tables.itemPortableDeviceTable[deactivatedItemId]
+    local winnerItemId, winnerLv, winnerSlot
+    for slotIndex = 0, itemBag.coloredSlotNum - 1 do
+        local otherId = itemBag[slotIndex].id
+        if Utils.isPortableDevice(otherId) then
+            local otherPd = Tables.itemPortableDeviceTable[otherId]
+            if otherPd.type == pdData.type and otherPd.isMainDevice == pdData.isMainDevice then
+                if not winnerItemId or otherPd.lv > winnerLv
+                    or (otherPd.lv == winnerLv and slotIndex < winnerSlot) then
+                    winnerItemId, winnerLv, winnerSlot = otherId, otherPd.lv, slotIndex
+                end
+            end
+        end
+    end
+    
+    if winnerItemId and winnerLv > pdData.lv then
+        local iData = Tables.itemTable[winnerItemId]
+        return iData and iData.name or nil
+    end
+    return nil
 end
 
 function Utils.getLevelConfig(levelId)

@@ -2,19 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipControlCenterRoom
 
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipControlCenterRoomCtrl = HL.Class('SpaceshipControlCenterRoomCtrl', uiCtrl.UICtrl)
-
 
 
 SpaceshipControlCenterRoomCtrl.m_moveCam = HL.Field(HL.Boolean) << false
@@ -24,13 +12,9 @@ SpaceshipControlCenterRoomCtrl.m_moveCam = HL.Field(HL.Boolean) << false
 
 
 
-
 SpaceshipControlCenterRoomCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SPACESHIP_ON_ROOM_LEVEL_UP] = 'OnRoomLevelUp',
 }
-
-
-
 
 
 SpaceshipControlCenterRoomCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -49,22 +33,15 @@ SpaceshipControlCenterRoomCtrl.OnCreate = HL.Override(HL.Any) << function(self, 
     
 end
 
-
-
-
 SpaceshipControlCenterRoomCtrl.OnRoomLevelUp = HL.Method(HL.Any) << function(self, _)
     self:RefreshAll()
 end
-
-
 
 SpaceshipControlCenterRoomCtrl.RefreshAll = HL.Method() << function(self)
     self:_RefreshCCRoom()
     self:_RefreshOtherRooms()
     self:_RefreshUnlockArea()
 end
-
-
 
 SpaceshipControlCenterRoomCtrl._RefreshCCRoom = HL.Method() << function(self)
     local roomId = Tables.spaceshipConst.controlCenterRoomId
@@ -77,11 +54,12 @@ SpaceshipControlCenterRoomCtrl._RefreshCCRoom = HL.Method() << function(self)
     end)
     node.upgradeBtn.onClick:RemoveAllListeners()
     node.upgradeBtn.onClick:AddListener(function()
-        if self.m_phase.arg and self.m_phase.arg.fromMainHud then
-            Notify(MessageConst.SHOW_TOAST, Language.LUA_SPACESHIP_CC_ROOM_NO_UPGRADE)
-            return
-        end
-        PhaseManager:OpenPhase(PhaseId.SpaceshipRoomUpgrade, { roomId = roomId, moveCam = self.m_moveCam })
+        GameInstance.player.spaceship:SetCurSpaceshipRoomCamConfig(roomId, CS.Beyond.Gameplay.SpaceshipSystem.UPGRADE_CAM_BLEND_KEY)
+        PhaseManager:OpenPhase(PhaseId.SpaceshipRoomUpgrade, {
+            roomId = roomId,
+            moveCam = true,
+            isRemoteCamera = true
+        })
     end)
 
     node.icon:LoadSprite(UIConst.UI_SPRITE_SPACESHIP_ROOM, roomTypeData.icon)
@@ -100,8 +78,6 @@ SpaceshipControlCenterRoomCtrl._RefreshCCRoom = HL.Method() << function(self)
     end
 end
 
-
-
 SpaceshipControlCenterRoomCtrl._RefreshOtherRooms = HL.Method() << function(self)
     for roomId, _ in pairs(Tables.spaceshipEmptyRoomTable) do
         if roomId ~= Tables.spaceshipConst.controlCenterRoomId then
@@ -111,8 +87,6 @@ SpaceshipControlCenterRoomCtrl._RefreshOtherRooms = HL.Method() << function(self
         end
     end
 end
-
-
 
 SpaceshipControlCenterRoomCtrl._RefreshUnlockArea = HL.Method() << function(self)
     local succ, roomInfo = GameInstance.player.spaceship:TryGetRoom(Tables.spaceshipConst.controlCenterRoomId)
@@ -124,10 +98,6 @@ SpaceshipControlCenterRoomCtrl._RefreshUnlockArea = HL.Method() << function(self
     self.view.lockNode.gameObject:SetActive(ccLv < ccNeedLv)
     self.view.unlockNameTxt.text = string.format(Language.LUA_SPACESHIP_UNLOCK_AREA_LEVEL, ccNeedLv)
 end
-
-
-
-
 
 SpaceshipControlCenterRoomCtrl._UpdateRoomCell = HL.Method(HL.Table, HL.String) << function(self, cell, roomId)
     local succ, roomInfo = GameInstance.player.spaceship:TryGetRoom(roomId)
@@ -150,7 +120,12 @@ SpaceshipControlCenterRoomCtrl._UpdateRoomCell = HL.Method(HL.Table, HL.String) 
                 PhaseManager:OpenPhase(PhaseId.SpaceshipStation, { roomId = roomId })
             else
                 local phaseId = PhaseId[SpaceshipConst.ROOM_PHASE_ID_NAME_MAP_BY_TYPE[roomInfo.type]]
-                PhaseManager:OpenPhase(phaseId, { roomId = roomId, moveCam = false, })
+                PhaseManager:OpenPhase(phaseId,
+                    {
+                        roomId = roomId,
+                        moveCam = true,
+                        isRemoteCamera = true
+                    })
             end
         end)
         local roomTypeData = Tables.spaceshipRoomTypeTable[roomInfo.type]
@@ -163,8 +138,6 @@ SpaceshipControlCenterRoomCtrl._UpdateRoomCell = HL.Method(HL.Table, HL.String) 
         end)
     end
 end
-
-
 
 SpaceshipControlCenterRoomCtrl.OnClose = HL.Override() << function(self)
     if self.m_moveCam then

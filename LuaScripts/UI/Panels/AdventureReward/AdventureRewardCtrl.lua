@@ -1,43 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.AdventureReward
 local PHASE_ID = PhaseId.AdventureReward
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AdventureRewardCtrl = HL.Class('AdventureRewardCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -48,41 +12,27 @@ AdventureRewardCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ADVENTURE_REWARD_RECEIVE] = "OnAdventureRewardReceive",
 }
 
-
 AdventureRewardCtrl.m_levelListCellFunc = HL.Field(HL.Function)
-
 
 AdventureRewardCtrl.m_rewardCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 AdventureRewardCtrl.m_docCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 AdventureRewardCtrl.m_levelRewardData = HL.Field(HL.Table)
 
-
 AdventureRewardCtrl.m_currRewards = HL.Field(HL.Any) << nil
-
 
 AdventureRewardCtrl.m_currIndex = HL.Field(HL.Number) << -1
 
-
 AdventureRewardCtrl.m_currSelectPos = HL.Field(HL.Number) << -1
-
 
 AdventureRewardCtrl.m_isDragging = HL.Field(HL.Boolean) << false
 
-
 AdventureRewardCtrl.m_drawOutTween = HL.Field(HL.Userdata)
-
 
 AdventureRewardCtrl.m_drawOutPos = HL.Field(HL.Number) << 1
 
-
 AdventureRewardCtrl.m_selectSwitchTween = HL.Field(HL.Any) << nil
-
-
-
 
 
 AdventureRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -90,9 +40,6 @@ AdventureRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitView()
     self:_RestoreStateByArg(arg)
 end
-
-
-
 
 AdventureRewardCtrl._InitWidget = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
@@ -109,10 +56,7 @@ AdventureRewardCtrl._InitWidget = HL.Method(HL.Opt(HL.Any)) << function(self, ar
     self.m_levelRewardData = self:_ProcessRewardData()
     local rewardCount = #self.m_levelRewardData
     local adventureLevelData = GameInstance.player.adventure.adventureLevelData
-    
-    
-    local defaultLevel = adventureLevelData.lv
-    local targetLevel = defaultLevel
+    local targetLevel = adventureLevelData.lv
     if type(arg) == "table" and type(arg.viewingLevel) == "number" then
         local restoredIndex = self:_FindLevelIndex(self.m_levelRewardData, arg.viewingLevel)
         if restoredIndex ~= nil and restoredIndex > 0 then
@@ -159,15 +103,11 @@ AdventureRewardCtrl._InitWidget = HL.Method(HL.Opt(HL.Any)) << function(self, ar
             local view = self.view.levelAdapter:GetView(initDataIndex - 1)
             if view ~= nil then
                 local cell = self.m_levelListCellFunc(view)
-                UIUtils.setAsNaviTarget(cell.view.button)
+                self:SetNaviTarget(cell.view.button)
             end
         end)
     end
 end
-
-
-
-
 
 AdventureRewardCtrl._FindLevelIndex = HL.Method(HL.Any, HL.Number).Return(HL.Number) << function(self, rewardDataList, level)
     if rewardDataList == nil then
@@ -180,8 +120,6 @@ AdventureRewardCtrl._FindLevelIndex = HL.Method(HL.Any, HL.Number).Return(HL.Num
     end
     return -1
 end
-
-
 
 AdventureRewardCtrl._InitView = HL.Method() << function(self)
     local adventureLevelData = GameInstance.player.adventure.adventureLevelData
@@ -198,9 +136,6 @@ AdventureRewardCtrl._InitView = HL.Method() << function(self)
     end
 end
 
-
-
-
 AdventureRewardCtrl._RestoreStateByArg = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     if type(arg) ~= "table" or not arg.isAdventureRewardInstructionShown then
         return
@@ -209,8 +144,6 @@ AdventureRewardCtrl._RestoreStateByArg = HL.Method(HL.Opt(HL.Any)) << function(s
         UIManager:Open(PanelId.InstructionBook, "adventure_reward")
     end)
 end
-
-
 
 AdventureRewardCtrl._ProcessRewardData = HL.Method().Return(HL.Table) << function(self)
     local rewardData = {}
@@ -243,10 +176,6 @@ AdventureRewardCtrl._ProcessRewardData = HL.Method().Return(HL.Table) << functio
     return rewardData
 end
 
-
-
-
-
 AdventureRewardCtrl._UpdateLevelScrollCell = HL.Method(HL.Any, HL.Number) << function(self, cell, csIndex)
     local luaIndex = LuaIndex(csIndex)
     cell:InitAdventureRewardShortInfoCell(self.m_levelRewardData[luaIndex], luaIndex, function(luaIndex)
@@ -254,16 +183,10 @@ AdventureRewardCtrl._UpdateLevelScrollCell = HL.Method(HL.Any, HL.Number) << fun
     end)
 end
 
-
-
-
 AdventureRewardCtrl._OnUpdateDrag = HL.Method(HL.Boolean) << function(self, isDragging)
     self.m_isDragging = isDragging
     self:_StartDrawOutTween(isDragging)
 end
-
-
-
 
 AdventureRewardCtrl._UpdateCurrIndex = HL.Method(HL.Number) << function(self, curIndex)
     local clampedIndex = math.max(math.min(curIndex, #self.m_levelRewardData), 1)
@@ -277,9 +200,6 @@ AdventureRewardCtrl._UpdateCurrIndex = HL.Method(HL.Number) << function(self, cu
         end)
     end
 end
-
-
-
 
 AdventureRewardCtrl._OnLevelScrollValueChanged = HL.Method(Vector2) << function(self, val)
     local scrollIndex = self.view.nodeLevel.currentScrollIndex
@@ -318,10 +238,6 @@ AdventureRewardCtrl._OnLevelScrollValueChanged = HL.Method(Vector2) << function(
     end
 end
 
-
-
-
-
 AdventureRewardCtrl._OnLevelScrollEffect = HL.Method(GameObject, HL.Number) << function(self, gameObject, effectVal)
     local cell = self.m_levelListCellFunc(gameObject)
     if cell ~= nil then
@@ -329,15 +245,9 @@ AdventureRewardCtrl._OnLevelScrollEffect = HL.Method(GameObject, HL.Number) << f
     end
 end
 
-
-
-
 AdventureRewardCtrl._OnLevelRewardCellClick = HL.Method(HL.Number) << function(self, luaIndex)
     self.view.nodeLevel:MoveToPage(CSIndex(luaIndex))
 end
-
-
-
 
 AdventureRewardCtrl._RefreshRewardPanel = HL.Method(HL.Any) << function(self, rewardInfo)
     local adventureLevelData = GameInstance.player.adventure.adventureLevelData
@@ -376,10 +286,6 @@ AdventureRewardCtrl._RefreshRewardPanel = HL.Method(HL.Any) << function(self, re
     self.view.toStamina.text = rewardInfo.toStaminaLimit
 end
 
-
-
-
-
 AdventureRewardCtrl._UpdateRewardCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local reward = self.m_currRewards[luaIndex]
     cell:InitItem({ id = reward.id, count = reward.count, gained = reward.gained }, true)
@@ -391,18 +297,11 @@ AdventureRewardCtrl._UpdateRewardCell = HL.Method(HL.Any, HL.Number) << function
     cell.view.rewardedCover.gameObject:SetActiveIfNecessary(reward.gained)
 end
 
-
-
-
-
 AdventureRewardCtrl._UpdateDocCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local csIndex = CSIndex(luaIndex) - self.view.config.LEVEL_DOC_EXPAND_COUNT + self.m_currIndex - 1
     local doc = self.m_levelRewardData[LuaIndex(csIndex)]
     cell:InitAdventureRewardDocCell(doc, csIndex, self.m_currSelectPos, self.m_drawOutPos, self.view.config.LEVEL_DOC_EXPAND_COUNT)
 end
-
-
-
 
 AdventureRewardCtrl._UpdateDrawOut = HL.Method(HL.Number) << function(self, drawOutPos)
     self.m_drawOutPos = drawOutPos
@@ -411,16 +310,10 @@ AdventureRewardCtrl._UpdateDrawOut = HL.Method(HL.Number) << function(self, draw
     end
 end
 
-
-
-
 AdventureRewardCtrl._ResetDrawOut = HL.Method(HL.Boolean) << function(self, isDrag)
     self:_UpdateDrawOut(isDrag and 0 or 1)
     self.m_selectSwitchTween:Reset(not isDrag)
 end
-
-
-
 
 AdventureRewardCtrl._StartDrawOutTween = HL.Method(HL.Boolean) << function(self, isDrag)
     self:_StopTweenIfNeeded()
@@ -438,8 +331,6 @@ AdventureRewardCtrl._StartDrawOutTween = HL.Method(HL.Boolean) << function(self,
     end
 end
 
-
-
 AdventureRewardCtrl._StopTweenIfNeeded = HL.Method() << function(self)
     if self.m_drawOutTween ~= nil then
         self.m_drawOutTween:Kill(false)
@@ -447,16 +338,12 @@ AdventureRewardCtrl._StopTweenIfNeeded = HL.Method() << function(self)
     end
 end
 
-
-
 AdventureRewardCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local isOpen, instructionCtrl = UIManager:IsOpen(PanelId.InstructionBook)
     local isAdventureRewardInstructionShown = false
     if isOpen and instructionCtrl:IsShow() and instructionCtrl.id == "adventure_reward" then
         isAdventureRewardInstructionShown = true
     end
-    
-    
     local viewingLevel = nil
     if self.m_levelRewardData ~= nil and self.m_currIndex ~= nil and self.m_currIndex > 0 then
         local clampedIndex = math.max(math.min(self.m_currIndex, #self.m_levelRewardData), 1)
@@ -471,14 +358,9 @@ AdventureRewardCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) <
     }
 end
 
-
-
 AdventureRewardCtrl.OnClose = HL.Override() << function(self)
     self:_StopTweenIfNeeded()
 end
-
-
-
 
 AdventureRewardCtrl.OnAdventureRewardReceive = HL.Method(HL.Any) << function(self, args)
     local rewardLevels = unpack(args)

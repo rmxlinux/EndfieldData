@@ -48,6 +48,9 @@ ACTIVITY_TABLE = {
     [ActivityType.VersionGuide] = {
         redDot = "ActivityVersionGuide",
     },
+    [ActivityType.ScratchOffLottery] = {
+        redDot = "ActivityScratchOffLottery",
+    },
     [ActivityType.RewardOverview] = {
         redDot = "ActivityRewardOverview",
     },
@@ -66,6 +69,9 @@ ACTIVITY_TABLE = {
     [ActivityType.ArknightsXEndfieldLightWeight] = {
         redDot = "ActivityArknightsBirth",
 	},
+    [ActivityType.SeasonTower] = {
+        redDot = "ActivitySeasonTower",
+    },
     [ActivityType.ContingencyContract] = {
         redDot = "ActivityContingencyContract",
     },
@@ -74,6 +80,21 @@ ACTIVITY_TABLE = {
     },
     [ActivityType.GamblingBattle] = {
         redDot = "ActivitySimulationTrainingTask",
+    },
+    [ActivityType.DoubleBattle] = {
+        redDot = "ActivityDoubleBattle",
+    },
+    [ActivityType.SkipChapter] = {
+        redDot = "ActivitySkipChapter",
+    },
+    [ActivityType.RacingDungeon] = {
+        redDot = "ActivityRacingDungeon",
+    },
+    [ActivityType.ReflowNew] = {
+        redDot = "ActivityReflowNew",
+    },
+    [ActivityType.InviteBack] = {
+        redDot = "ActivityBasic",
     },
     
 }
@@ -90,16 +111,22 @@ ACTIVITY_COMMON_SONS = {
     ActivityCharacterGuideLine = false,
     ActivityItemSubmission = false,
     ActivityVersionGuide = false,
-    ActivityRandomReward = false,
+    ActivityScratchOffLottery = false,
     ActivityRewardOverview = false,
     ActivityWeeklyTask = false,
     ActivityGraffitiCleaning = false,
     ActivityDungeon = false,
+    ActivityDoubleBattle = false,
     ActivityLimitedFormula = false,
     ActivityArknightsBirth = false,
     ActivityCalendarCheckin = false,
     ActivityContingencyContract = false,
     ActivitySimulationTrainingTask = false,
+    ActivitySeasonTower = false,
+    ActivitySkipChapter = false,
+    ActivityRacingDungeon = false,
+    ActivityReflowNew = false,
+    ActivityWEB = false,
     
 }
 ACTIVITY_REMINDER_DRAW_MODE = {

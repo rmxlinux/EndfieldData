@@ -1,13 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 DungeonCategoryCell = HL.Class('DungeonCategoryCell', UIWidgetBase)
-
 
 
 
@@ -16,13 +9,8 @@ DungeonCategoryCell.m_dungeonInfos = HL.Field(HL.Table)
 
 
 
-
-
 DungeonCategoryCell._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
 
 
 DungeonCategoryCell.InitDungeonCategoryCell = HL.Method(HL.Table) << function(self, infosBundle)
@@ -30,13 +18,6 @@ DungeonCategoryCell.InitDungeonCategoryCell = HL.Method(HL.Table) << function(se
 
     infosBundle.hasRead = true
     self.m_dungeonInfos = infosBundle.infos
-    local category2ndType = GEnums.DungeonCategory2ndType.__CastFrom(infosBundle.category2ndType)
-    if (category2ndType == GEnums.DungeonCategory2ndType.None) then
-        self.view.titleState:SetState("HideTitle")
-    else
-        self.view.titleState:SetState("ShowTitle")
-        self.view.titleTxt.text = infosBundle.name
-    end
     
     for _, v in ipairs(self.m_dungeonInfos) do
         v.hasRead = true
@@ -45,14 +26,9 @@ DungeonCategoryCell.InitDungeonCategoryCell = HL.Method(HL.Table) << function(se
     self.view.dungeonCell:InitAdventureDungeonCell(cellInfo, true)
 end
 
-
-
 DungeonCategoryCell.GetFirstSubDungeonCellInCategory = HL.Method().Return(HL.Userdata) << function(self)
     return self.m_genDungeonCells:GetItem(1)
 end
-
-
-
 
 DungeonCategoryCell.UnionDungeonInfo = HL.Method(HL.Table).Return(HL.Table) << function(self, dungeonInfos)
     if not dungeonInfos or #dungeonInfos == 0 then
@@ -94,7 +70,10 @@ DungeonCategoryCell.UnionDungeonInfo = HL.Method(HL.Table).Return(HL.Table) << f
     if res.staminaMin and res.staminaMax and res.staminaMin ~= res.staminaMax then
         res.staminaTxt = res.staminaMin .. "~" .. res.staminaMax
     end
-    table.sort(res.rewardInfos, Utils.genSortFunction({ "gainedSortId", "rewardTypeSortId", "rarity", "type" }))
+    
+    if #dungeonInfos > 1 then
+        table.sort(res.rewardInfos, Utils.genSortFunction({ "gainedSortId", "rewardTypeSortId", "rarity", "type" }))
+    end
     return res
 end
 

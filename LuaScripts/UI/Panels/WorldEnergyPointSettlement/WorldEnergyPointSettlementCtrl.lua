@@ -7,42 +7,17 @@ local SERIALIZED_CATEGORY = "WEP"
 local WEP_STAMINA_LACK_START_CONFIRM_HINT_KEY = "wep_stamina_lack_start_confirm_hint"
 local WEP_GEM_CUSTOM_ITEM_LACK_CONFIRM_HINT_KEY = "wep_gem_custom_item_lack_confirm_hint"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WorldEnergyPointSettlementCtrl = HL.Class('WorldEnergyPointSettlementCtrl', uiCtrl.UICtrl)
-
 
 WorldEnergyPointSettlementCtrl.m_curLevelGameId = HL.Field(HL.String) << ""
 
-
 WorldEnergyPointSettlementCtrl.m_gameGroupId = HL.Field(HL.String) << ""
-
 
 WorldEnergyPointSettlementCtrl.m_entityLid = HL.Field(HL.Number) << -1
 
-
 WorldEnergyPointSettlementCtrl.m_rewardInfos = HL.Field(HL.Table)
 
-
 WorldEnergyPointSettlementCtrl.m_genRewardCellFunc = HL.Field(HL.Function)
-
 
 
 
@@ -52,8 +27,6 @@ WorldEnergyPointSettlementCtrl.m_genRewardCellFunc = HL.Field(HL.Function)
 WorldEnergyPointSettlementCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_STAMINA_CHANGED] = 'OnStaminaChanged',
 }
-
-
 WorldEnergyPointSettlementCtrl.OnShowWorldEnergyPointResult = HL.StaticMethod(HL.Table) << function(args)
     local rewardMultiplier, useStaminaReduce, curLevelGameId, entityLid = unpack(args)
     PhaseManager:OpenPhase(PHASE_ID, args)
@@ -63,9 +36,6 @@ WorldEnergyPointSettlementCtrl.OnShowWorldEnergyPointResult = HL.StaticMethod(HL
         ActivityUtils.showStaminaReduceProgress()
     end
 end
-
-
-
 
 
 WorldEnergyPointSettlementCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -100,15 +70,9 @@ end
 
 
 
-
-
 WorldEnergyPointSettlementCtrl.OnStaminaChanged = HL.Method() << function(self)
     self:_RefreshCostStamina()
 end
-
-
-
-
 
 WorldEnergyPointSettlementCtrl._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(self, go, csIndex)
     local rewardInfo = self.m_rewardInfos[LuaIndex(csIndex)]
@@ -127,8 +91,6 @@ WorldEnergyPointSettlementCtrl._OnUpdateCell = HL.Method(GameObject, HL.Number) 
     go.name = rewardInfo.id
 end
 
-
-
 WorldEnergyPointSettlementCtrl._OnGraduallyShowFinish = HL.Method() << function(self)
     if DeviceInfo.usingController then
         self.view.controllerHintPlaceholder.gameObject:SetActive(true)
@@ -142,8 +104,6 @@ WorldEnergyPointSettlementCtrl._OnGraduallyShowFinish = HL.Method() << function(
         end
     end
 end
-
-
 
 WorldEnergyPointSettlementCtrl._OnClickBtnRestart = HL.Method() << function(self)
     local curIsFull = GameInstance.player.worldEnergyPointSystem.isFull
@@ -174,7 +134,7 @@ WorldEnergyPointSettlementCtrl._OnClickBtnRestart = HL.Method() << function(self
                         content = Language.LUA_WEP_ONCE_AGAIN_BUT_CUSTOM_ON_WITHOUT_CUSTOM_ITEM_HINT,
                         onConfirm = function()
                             ClientDataManagerInst:SetBool(WEP_GEM_CUSTOM_ITEM_LACK_CONFIRM_HINT_KEY, closuresIsOn, false,
-                                                          SERIALIZED_CATEGORY, true,
+                                                          SERIALIZED_CATEGORY,
                                                           EClientDataTimeValidType.CurrentDay)
                             self:_TryStartWorldEnergyPoint()
                         end,
@@ -201,7 +161,7 @@ WorldEnergyPointSettlementCtrl._OnClickBtnRestart = HL.Method() << function(self
                     content = Language.LUA_WEP_ONCE_AGAIN_BUT_NOT_ENOUGH_STAMINA_HINT,
                     onConfirm = function()
                         ClientDataManagerInst:SetBool(WEP_STAMINA_LACK_START_CONFIRM_HINT_KEY, closuresIsOn, false,
-                                                      SERIALIZED_CATEGORY, true,
+                                                      SERIALIZED_CATEGORY,
                                                       EClientDataTimeValidType.CurrentDay)
                         self:_TryStartWorldEnergyPoint()
                     end,
@@ -218,21 +178,14 @@ WorldEnergyPointSettlementCtrl._OnClickBtnRestart = HL.Method() << function(self
     end
 end
 
-
-
 WorldEnergyPointSettlementCtrl._TryStartWorldEnergyPoint = HL.Method() << function(self)
     GameInstance.player.worldEnergyPointSystem:SendReqStartWorldEnergyPoint(self.m_curLevelGameId, self.m_entityLid)
     PhaseManager:PopPhase(PHASE_ID)
 end
 
-
-
 WorldEnergyPointSettlementCtrl._OnClickBtnEnd = HL.Method() <<function(self)
     PhaseManager:PopPhase(PHASE_ID)
 end
-
-
-
 
 WorldEnergyPointSettlementCtrl._InitData = HL.Method(HL.Table) << function(self, args)
     local rewardMultiplier, useStaminaReduce, curLevelGameId, entityLid = unpack(args)
@@ -241,8 +194,6 @@ WorldEnergyPointSettlementCtrl._InitData = HL.Method(HL.Table) << function(self,
     local gameCfg = Tables.worldEnergyPointTable[curLevelGameId]
     self.m_gameGroupId = gameCfg.gameGroupId
 end
-
-
 
 WorldEnergyPointSettlementCtrl._InitView = HL.Method() << function(self)
     local sourceType = CS.Beyond.GEnums.RewardSourceType.EnergyPoint
@@ -289,8 +240,6 @@ WorldEnergyPointSettlementCtrl._InitView = HL.Method() << function(self)
     self.view.staminaNode.gameObject:SetActiveIfNecessary(showStaminaNode)
 end
 
-
-
 WorldEnergyPointSettlementCtrl._RefreshCostStamina = HL.Method() << function(self)
     local costStamina = Tables.worldEnergyPointTable[self.m_curLevelGameId].costStamina
     UIUtils.updateStaminaNode(self.view.staminaNode, {
@@ -299,8 +248,6 @@ WorldEnergyPointSettlementCtrl._RefreshCostStamina = HL.Method() << function(sel
         delStamina = ActivityUtils.hasStaminaReduceCount() and costStamina or nil
     })
 end
-
-
 
 WorldEnergyPointSettlementCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then

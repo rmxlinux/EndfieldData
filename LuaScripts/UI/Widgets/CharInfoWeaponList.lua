@@ -1,41 +1,18 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharInfoWeaponList = HL.Class('CharInfoWeaponList', UIWidgetBase)
-
 
 CharInfoWeaponList.m_charInfo = HL.Field(HL.Table)
 
-
 CharInfoWeaponList.m_curWeaponInstId = HL.Field(HL.Int) << 0
-
 
 CharInfoWeaponList.m_curSelectIndex = HL.Field(HL.Number) << 0
 
-
 CharInfoWeaponList.m_getWeaponCell = HL.Field(HL.Function)
-
 
 CharInfoWeaponList.m_onClickWeaponItem = HL.Field(HL.Function)
 
-
 CharInfoWeaponList.m_weaponList = HL.Field(HL.Table)
-
-
-
-
 
 CharInfoWeaponList.SetCurSelect = HL.Method(HL.Int, HL.Opt(HL.Number)) << function(self, curWeaponInstId, luaIndex)
     self.m_curWeaponInstId = curWeaponInstId
@@ -64,20 +41,12 @@ CharInfoWeaponList.SetCurSelect = HL.Method(HL.Int, HL.Opt(HL.Number)) << functi
 end
 
 
-
-
 CharInfoWeaponList._OnFirstTimeInit = HL.Override() << function(self)
     self.m_getWeaponCell = UIUtils.genCachedCellFunction(self.view.weaponList)
     self.view.weaponList.onUpdateCell:AddListener(function(object, csIndex)
         self:_RefreshWeaponCell(object, LuaIndex(csIndex))
     end)
 end
-
-
-
-
-
-
 
 CharInfoWeaponList.InitCharInfoWeaponList = HL.Method(HL.Table, HL.Function, HL.Opt(HL.Userdata, HL.Boolean)) << function
 (self,
@@ -105,8 +74,6 @@ CharInfoWeaponList.InitCharInfoWeaponList = HL.Method(HL.Table, HL.Function, HL.
     self:_RefreshWeaponList()
 end
 
-
-
 CharInfoWeaponList._RefreshWeaponList = HL.Method() << function(self)
     if not self.m_weaponList then
         return
@@ -115,10 +82,6 @@ CharInfoWeaponList._RefreshWeaponList = HL.Method() << function(self)
     local weaponCount = #self.m_weaponList
     self.view.weaponList:UpdateCount(weaponCount, false, false, false, true)
 end
-
-
-
-
 
 CharInfoWeaponList._RefreshWeaponCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, index)
     local cell = self.m_getWeaponCell(object)
@@ -157,10 +120,6 @@ CharInfoWeaponList._RefreshWeaponCell = HL.Method(HL.Userdata, HL.Number) << fun
         cell.imageChar:LoadSprite(UIConst.UI_SPRITE_CHAR_HEAD, spriteName)
     end
 end
-
-
-
-
 
 CharInfoWeaponList._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(self, optData, isIncremental)
     local sortKeys = optData.keys

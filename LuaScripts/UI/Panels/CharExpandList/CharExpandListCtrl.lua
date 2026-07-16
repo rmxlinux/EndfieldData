@@ -2,26 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharExpandList
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharExpandListCtrl = HL.Class('CharExpandListCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -31,29 +12,19 @@ CharExpandListCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 CharExpandListCtrl.m_getCharHeadCell = HL.Field(HL.Function)
-
 
 CharExpandListCtrl.m_charInfoList = HL.Field(HL.Table)
 
-
 CharExpandListCtrl.m_onCharListChanged = HL.Field(HL.Function)
-
 
 CharExpandListCtrl.m_charInfo = HL.Field(HL.Table)
 
-
 CharExpandListCtrl.m_skipGraduallyShow = HL.Field(HL.Boolean) << false
-
 
 CharExpandListCtrl.m_args = HL.Field(HL.Table)
 
-
 CharExpandListCtrl.m_naviTargetInitialized = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -109,17 +80,10 @@ CharExpandListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
 CharExpandListCtrl.OnShow = HL.Override() << function(self)
     self.m_naviTargetInitialized = false
     self:RefreshCharExpandList(self.m_charInfo, self.m_charInfoList)
 end
-
-
-
-
-
 
 
 
@@ -130,8 +94,6 @@ CharExpandListCtrl.RefreshCharExpandList = HL.Method(HL.Opt(HL.Table, HL.Table, 
 
     self.view.sortNode:SortCurData()
 end
-
-
 
 CharExpandListCtrl._RefreshCharList = HL.Method() << function(self)
     if self.m_skipGraduallyShow then
@@ -147,17 +109,13 @@ CharExpandListCtrl._RefreshCharList = HL.Method() << function(self)
             end
         end
         if DeviceInfo.usingController then
-            UIUtils.setAsNaviTarget(nil)
+            self.naviGroup:SetLayerSelectedTarget(nil, true)
             self.m_naviTargetInitialized = false
         end
         self.view.charScrollList:UpdateCount(#self.m_charInfoList, fastScrollToIndex, false, false, self.m_skipGraduallyShow)
     end
     self.m_skipGraduallyShow = false
 end
-
-
-
-
 
 CharExpandListCtrl._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(self, optData, isIncremental)
     if self.m_charInfoList then
@@ -166,20 +124,12 @@ CharExpandListCtrl._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(
     end
 end
 
-
-
-
-
 CharExpandListCtrl._SortData = HL.Method(HL.Table, HL.Boolean) << function(self, keys, isIncremental)
     if self.m_charInfoList then
         table.sort(self.m_charInfoList, Utils.genSortFunction(keys, isIncremental))
         self:_RefreshCharList()
     end
 end
-
-
-
-
 
 CharExpandListCtrl._UpdateCharScrollListCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, csIndex)
     local info = self.m_charInfoList[LuaIndex(csIndex)]
@@ -210,13 +160,10 @@ CharExpandListCtrl._UpdateCharScrollListCell = HL.Method(HL.Userdata, HL.Number)
     end
 
     if DeviceInfo.usingController and not self.m_naviTargetInitialized and charInst.instId == self.m_charInfo.instId then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.view.button)
+        self:SetNaviTarget(cell.view.button)
         self.m_naviTargetInitialized = true
     end
 end
-
-
-
 
 CharExpandListCtrl._OnClickCell = HL.Method(HL.Number) << function(self, csIndex)
     local info = self.m_charInfoList[LuaIndex(csIndex)]
@@ -224,8 +171,6 @@ CharExpandListCtrl._OnClickCell = HL.Method(HL.Number) << function(self, csIndex
         self.m_args.onClickCell(info)
     end
 end
-
-
 
 CharExpandListCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     local arg = {}

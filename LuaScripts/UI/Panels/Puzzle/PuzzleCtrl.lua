@@ -3,129 +3,7 @@ local EPreBlockType = CS.Beyond.Gameplay.EPreBlockType
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Puzzle
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PuzzleCtrl = HL.Class('PuzzleCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -135,122 +13,83 @@ PuzzleCtrl = HL.Class('PuzzleCtrl', uiCtrl.UICtrl)
 
 PuzzleCtrl.m_cellSize = HL.Field(HL.Number) << -1
 
-
 PuzzleCtrl.m_info = HL.Field(HL.Table)
-
 
 PuzzleCtrl.m_spacing = HL.Field(HL.Number) << -1
 
-
 PuzzleCtrl.m_puzzleGame = HL.Field(HL.Userdata)
-
 
 PuzzleCtrl.m_chessboardWidthGridNum = HL.Field(HL.Number) << -1
 
-
 PuzzleCtrl.m_chessboardHeightGridNum = HL.Field(HL.Number) << -1
-
 
 PuzzleCtrl.m_chessboardGridCells = HL.Field(HL.Forward("UIListCache"))
 
-
 PuzzleCtrl.m_chessboardRawData = HL.Field(HL.Userdata)
-
 
 PuzzleCtrl.m_chessboardGridData = HL.Field(HL.Table)
 
-
 PuzzleCtrl.m_rowConditions = HL.Field(HL.Table)
-
 
 PuzzleCtrl.m_chessboardRowConditionItems = HL.Field(HL.Forward("UIListCache"))
 
-
 PuzzleCtrl.m_columnConditions = HL.Field(HL.Table)
-
 
 PuzzleCtrl.m_chessboardColumnConditionItems = HL.Field(HL.Forward("UIListCache"))
 
-
 PuzzleCtrl.m_attachPuzzleData = HL.Field(HL.Table)
-
 
 PuzzleCtrl.m_puzzleRootCells = HL.Field(HL.Forward("UIListCache"))
 
-
 PuzzleCtrl.m_puzzleBlockShadowCells = HL.Field(HL.Forward("UIListCache"))
-
 
 PuzzleCtrl.m_id2BlockShadowIndex = HL.Field(HL.Table)
 
-
 PuzzleCtrl.m_chessboardLock = HL.Field(HL.Boolean) << false
-
 
 PuzzleCtrl.m_totalPuzzlesNum = HL.Field(HL.Number) << -1
 
-
 PuzzleCtrl.m_placeholderCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 PuzzleCtrl.m_playerNotHoldBlocks = HL.Field(HL.Table)
 
-
 PuzzleCtrl.m_curActionBlockId = HL.Field(HL.String) << ""
-
 
 PuzzleCtrl.m_curActionBlockSlot = HL.Field(HL.Forward("PuzzleSlot"))
 
-
 PuzzleCtrl.m_cachedGridVec = HL.Field(HL.Table)
-
 
 PuzzleCtrl.m_cachedGridPos = HL.Field(Vector3)
 
-
 PuzzleCtrl.m_refAnswerGridCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 PuzzleCtrl.m_noActionNoticeThreshold = HL.Field(HL.Number) << -1
 
-
 PuzzleCtrl.m_noActionNoticeTimerId = HL.Field(HL.Number) << -1
-
 
 PuzzleCtrl.m_stayNoticeThreshold = HL.Field(HL.Number) << -1
 
-
 PuzzleCtrl.m_stayNoticeTimerId = HL.Field(HL.Number) << -1
 
-
 PuzzleCtrl.m_conditionStyleRectangle = HL.Field(HL.Boolean) << true
-
 
 PuzzleCtrl.m_canScrollPuzzleList = HL.Field(HL.Boolean) << false
 
 
-
 PuzzleCtrl.m_inMovementSlotCount = HL.Field(HL.Number) << 0
-
 
 PuzzleCtrl.m_componentsInteractable = HL.Field(HL.Boolean) << false
 
-
 PuzzleCtrl.m_succ = HL.Field(HL.Boolean) << false
-
 
 PuzzleCtrl.m_isHotSwitch = HL.Field(HL.Boolean) << false
 
-
 PuzzleCtrl.m_shouldCloseAfterRecover = HL.Field(HL.Boolean) << false
-
 
 PuzzleCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.PUZZLE_UNIT_COMPLETE] = 'PuzzleUnitComplete',
     [MessageConst.ON_CHANGE_INPUT_DEVICE_TYPE_FINISHED] = '_OnChangeInputDeviceTypeFinished',
 }
-
-
 
 PuzzleCtrl.OpenPuzzlePanel = HL.StaticMethod(HL.Table) << function(args)
     local callback = unpack(args)
@@ -258,9 +97,6 @@ PuzzleCtrl.OpenPuzzlePanel = HL.StaticMethod(HL.Table) << function(args)
     finalArgs.callback = callback
     PhaseManager:OpenPhase(PhaseId.Puzzle, finalArgs)
 end
-
-
-
 
 
 PuzzleCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -342,8 +178,6 @@ PuzzleCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self:_ResetControllerState()
 end
 
-
-
 PuzzleCtrl.OnClose = HL.Override() << function(self)
     self.m_puzzleGame.onChessboardStateChange:RemoveAllListeners()
     self.m_puzzleGame.onBlockStateChange:RemoveAllListeners()
@@ -356,8 +190,6 @@ PuzzleCtrl.OnClose = HL.Override() << function(self)
     end
     self.m_isHotSwitch = false
 end
-
-
 
 PuzzleCtrl._RefreshContent = HL.Method() << function(self)
 
@@ -406,8 +238,6 @@ PuzzleCtrl._RefreshContent = HL.Method() << function(self)
     self:ToggleRotateBtnState(false, true)
 end
 
-
-
 PuzzleCtrl._UpdateNoticeTimer = HL.Method() << function(self)
     self.view.refAnswerGrid.gameObject:SetActiveIfNecessary(false)
     self.view.noticeNode.gameObject:SetActiveIfNecessary(false)
@@ -425,8 +255,6 @@ PuzzleCtrl._UpdateNoticeTimer = HL.Method() << function(self)
     self:UpdateNoActionNoticeTimer()
 end
 
-
-
 PuzzleCtrl._ShowNoticeEntry = HL.Method() << function(self)
     self:_ClearNoticeTimer()
 
@@ -437,14 +265,10 @@ PuzzleCtrl._ShowNoticeEntry = HL.Method() << function(self)
     self.m_hasHint = true
 end
 
-
-
 PuzzleCtrl._ClearNoticeTimer = HL.Method() << function(self)
     self.m_stayNoticeTimerId = self:_ClearTimer(self.m_stayNoticeTimerId)
     self.m_noActionNoticeTimerId = self:_ClearTimer(self.m_noActionNoticeTimerId)
 end
-
-
 
 PuzzleCtrl._OnClickReset = HL.Method() << function(self)
     self:Notify(MessageConst.SHOW_POP_UP, {
@@ -466,8 +290,6 @@ PuzzleCtrl._OnClickReset = HL.Method() << function(self)
     self:UpdateNoActionNoticeTimer()
 end
 
-
-
 PuzzleCtrl._OnClickNoticeBtn = HL.Method() << function(self)
     self.view.refAnswerGrid.gameObject:SetActiveIfNecessary(true)
 
@@ -476,8 +298,6 @@ PuzzleCtrl._OnClickNoticeBtn = HL.Method() << function(self)
     self.m_isHintUse = true
     self.m_useHintTs = DateTimeUtils.GetCurrentTimestampBySeconds()
 end
-
-
 
 PuzzleCtrl._OnClickNextBtn = HL.Method() << function(self)
     local wrapper = self.view.chessboardAnimationWrapper
@@ -502,8 +322,6 @@ PuzzleCtrl._OnClickNextBtn = HL.Method() << function(self)
     end)
 end
 
-
-
 PuzzleCtrl._OnClickClose = HL.Method() << function(self)
     if self.m_chessboardLock then
         self:_DoExitGame()
@@ -517,23 +335,15 @@ PuzzleCtrl._OnClickClose = HL.Method() << function(self)
     end
 end
 
-
-
 PuzzleCtrl._DoExitGame = HL.Method() << function(self)
     self.m_puzzleUnitEndTs = DateTimeUtils.GetCurrentTimestampBySeconds()
     self:_EventLogPuzzleUnitEnd()
     PhaseManager:PopPhase(PhaseId.Puzzle)
 end
 
-
-
 PuzzleCtrl._OnClickGameSucc = HL.Method() << function(self)
     PhaseManager:PopPhase(PhaseId.Puzzle)
 end
-
-
-
-
 
 PuzzleCtrl._UpdateChessboardGrid = HL.Method(HL.Forward("PuzzleChessboardGrid"), HL.Number)
         << function(self, cell, index)
@@ -566,20 +376,12 @@ PuzzleCtrl._UpdateChessboardGrid = HL.Method(HL.Forward("PuzzleChessboardGrid"),
     end
 end
 
-
-
-
-
 PuzzleCtrl._SetCachedGridInfo = HL.Method(HL.Forward("PuzzleChessboardGrid"), HL.Number)
         << function(self, cell, luaIndex)
     local gridData = self.m_chessboardGridData[luaIndex]
     self.m_cachedGridVec = gridData
     self.m_cachedGridPos = cell.transform.position
 end
-
-
-
-
 
 PuzzleCtrl._UpdateRefAnswerGridCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local gridData = self.m_chessboardGridData[index]
@@ -603,8 +405,6 @@ PuzzleCtrl._UpdateRefAnswerGridCell = HL.Method(HL.Any, HL.Number) << function(s
         cell.grid.color = colorTrans
     end
 end
-
-
 
 PuzzleCtrl._OnSlotEnterChessboardGrid = HL.Method() << function(self)
     if not self.m_cachedGridVec or not self.m_cachedGridPos then
@@ -633,8 +433,6 @@ PuzzleCtrl._OnSlotEnterChessboardGrid = HL.Method() << function(self)
     end
 end
 
-
-
 PuzzleCtrl._OnSlotOutChessboardGrid = HL.Method() << function(self)
     if not self.m_curActionBlockSlot or not self.m_curActionBlockSlot:IsStateDragging() then
         return
@@ -642,8 +440,6 @@ PuzzleCtrl._OnSlotOutChessboardGrid = HL.Method() << function(self)
 
     self:SetShadowCellVisibleById(self.m_curActionBlockId, false)
 end
-
-
 
 PuzzleCtrl._ProcessChessboardGridsData = HL.Method().Return(HL.Table) << function(self)
     local tbl = {}
@@ -675,9 +471,6 @@ PuzzleCtrl._ProcessChessboardGridsData = HL.Method().Return(HL.Table) << functio
 
     return tbl
 end
-
-
-
 
 PuzzleCtrl._ProcessChessboardCondition = HL.Method(HL.Boolean).Return(HL.Table) << function(self, isRow)
     local resultConditions = {}
@@ -728,10 +521,6 @@ PuzzleCtrl._ProcessChessboardCondition = HL.Method(HL.Boolean).Return(HL.Table) 
     return resultConditions
 end
 
-
-
-
-
 PuzzleCtrl._UpdateChessboardRowCondition = HL.Method(HL.Forward("PuzzleChessboardConditionItem"), HL.Int) << function(self, cell, index)
     cell:InitPuzzleChessboardConditionItem(self.m_rowConditions[index],
                                            self.m_cellSize,
@@ -742,10 +531,6 @@ PuzzleCtrl._UpdateChessboardRowCondition = HL.Method(HL.Forward("PuzzleChessboar
     cell:Toggle(self.m_conditionStyleRectangle)
 end
 
-
-
-
-
 PuzzleCtrl._UpdateChessboardColumnCondition = HL.Method(HL.Forward("PuzzleChessboardConditionItem"), HL.Int) << function(self, cell, index)
     cell:InitPuzzleChessboardConditionItem(self.m_columnConditions[index],
                                            self.m_cellSize,
@@ -755,9 +540,6 @@ PuzzleCtrl._UpdateChessboardColumnCondition = HL.Method(HL.Forward("PuzzleChessb
     
     cell:Toggle(self.m_conditionStyleRectangle)
 end
-
-
-
 
 PuzzleCtrl._OnConditionStyleToggleChange = HL.Method(HL.Boolean) << function(self, rectangle)
     self.m_conditionStyleRectangle = rectangle
@@ -770,8 +552,6 @@ PuzzleCtrl._OnConditionStyleToggleChange = HL.Method(HL.Boolean) << function(sel
         cell:Toggle(rectangle)
     end)
 end
-
-
 
 PuzzleCtrl._ProcessAttachBlockData = HL.Method().Return(HL.Table, HL.Table) << function(self)
     local attachBlocks = {}
@@ -820,10 +600,6 @@ PuzzleCtrl._ProcessAttachBlockData = HL.Method().Return(HL.Table, HL.Table) << f
     return attachBlocks, playerNotHoldBlocks
 end
 
-
-
-
-
 PuzzleCtrl._UpdatePlaceholderCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local data = self.m_attachPuzzleData[index]
     if not data.playerHold then
@@ -855,10 +631,6 @@ PuzzleCtrl._UpdatePlaceholderCell = HL.Method(HL.Any, HL.Number) << function(sel
     end
 end
 
-
-
-
-
 PuzzleCtrl._UpdatePuzzleCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local data = self.m_attachPuzzleData[index]
     local placeholderCell = self.m_placeholderCellCache:GetItem(index)
@@ -867,18 +639,12 @@ PuzzleCtrl._UpdatePuzzleCell = HL.Method(HL.Any, HL.Number) << function(self, ce
     cell.gameObject:SetActiveIfNecessary(data.playerHold)
 end
 
-
-
-
-
 PuzzleCtrl._UpdatePuzzleBlockShadow = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local data = self.m_attachPuzzleData[index]
     cell:InitPuzzleBlockShadow(data)
 
     self.m_id2BlockShadowIndex[data.id] = index
 end
-
-
 
 PuzzleCtrl._OnChessboardStateChange = HL.Method() << function(self)
     self.m_rowConditions = self:_ProcessChessboardCondition(true)
@@ -891,8 +657,6 @@ PuzzleCtrl._OnChessboardStateChange = HL.Method() << function(self)
         cell:UpdateContent(self.m_columnConditions[index], self.m_cellSize, self.m_spacing, self.m_chessboardHeightGridNum)
     end)
 end
-
-
 
 PuzzleCtrl._UpdatePuzzleProgress = HL.Method() << function(self)
     self.m_chessboardGridData = {}
@@ -931,33 +695,21 @@ PuzzleCtrl._UpdatePuzzleProgress = HL.Method() << function(self)
     self.m_curPuzzleUnitComplete = false
 end
 
-
-
-
 PuzzleCtrl._ToggleComponentInput = HL.Method(HL.Boolean) << function(self, isOn)
-    self.view.btnClose.enabled = isOn
+    self.view.btnClose.interactable = isOn
     self.view.conditionStyleToggle.view.toggle.enabled = isOn
 end
-
-
 
 PuzzleCtrl.UpdateResetBtn = HL.Method() << function(self)
     local dirty = self.m_puzzleGame:IsPuzzleDirty()
     self.view.resetBtn.interactable = self.m_componentsInteractable and dirty
 end
 
-
-
-
-
 PuzzleCtrl.SetShadowCellVisibleById = HL.Method(HL.String, HL.Boolean) << function(self, blockId, visible)
     local index = self.m_id2BlockShadowIndex[blockId]
     local shadowCell = self.m_puzzleBlockShadowCells:GetItem(index)
     shadowCell:SetVisible(visible)
 end
-
-
-
 
 PuzzleCtrl.RotateShadowById = HL.Method(HL.String) << function(self, blockId)
     local index = self.m_id2BlockShadowIndex[blockId]
@@ -967,8 +719,6 @@ PuzzleCtrl.RotateShadowById = HL.Method(HL.String) << function(self, blockId)
     shadowCell:Rotate(block.rotateCount)
 end
 
-
-
 PuzzleCtrl.UpdateNoActionNoticeTimer = HL.Method() << function(self)
     self.m_noActionNoticeTimerId = self:_ClearTimer(self.m_noActionNoticeTimerId)
     self.m_noActionNoticeTimerId = self:_StartTimer(self.m_noActionNoticeThreshold, function()
@@ -977,10 +727,7 @@ PuzzleCtrl.UpdateNoActionNoticeTimer = HL.Method() << function(self)
 end
 
 
-
 PuzzleCtrl.PuzzleUnitComplete = HL.Method(HL.Any) << function(self)
-    self:_ClearNoticeTimer()
-    self:_ToggleComponentInput(false)
     self.view.btnClick.interactable = false
     local wrapper = self.view.chessboardAnimationWrapper
     wrapper:Play("puzzle_notice_completetips_in", function()
@@ -995,24 +742,11 @@ PuzzleCtrl.PuzzleUnitComplete = HL.Method(HL.Any) << function(self)
         self.m_succ = true
     end
     self:_EventLogPuzzleUnitEnd()
-
-    if DeviceInfo.usingController then
-        UIUtils.setAsNaviTarget(nil)
-        self:_ToggleAreaFocusActionId(false, false)
-        InputManagerInst:ToggleGroup(self.view.leftNode.groupId, false)
-    end
 end
-
-
-
 
 PuzzleCtrl.SetBlockOutScrollRect = HL.Method(Transform) << function(self, trans)
     trans:SetParent(self.view.outBlockArea)
 end
-
-
-
-
 
 PuzzleCtrl.SetOtherGraphicRaycasts = HL.Method(HL.String, HL.Boolean) << function(self, curBlockInstId, on)
     
@@ -1024,20 +758,12 @@ PuzzleCtrl.SetOtherGraphicRaycasts = HL.Method(HL.String, HL.Boolean) << functio
     end)
 end
 
-
-
-
-
 PuzzleCtrl.SetOtherBlocksFading = HL.Method(HL.String, HL.Boolean) << function(self, blockId, isOn)
     
     self.m_puzzleRootCells:Update(function(slot, _)
         slot:SetBlockFading(blockId, isOn)
     end)
 end
-
-
-
-
 
 PuzzleCtrl.SetCurActionBlock = HL.Method(HL.String, HL.Forward("PuzzleSlot")) << function(self, blockId, slot)
     if self.m_curActionBlockId == blockId then
@@ -1074,17 +800,12 @@ PuzzleCtrl.SetCurActionBlock = HL.Method(HL.String, HL.Forward("PuzzleSlot")) <<
     end
 end
 
-
-
 PuzzleCtrl.ClearCurActionBlock = HL.Method() << function(self)
     self.m_curActionBlockId = ""
     self.m_curActionBlockSlot = nil
 
     self.view.selectHighlight.gameObject:SetActiveIfNecessary(false)
 end
-
-
-
 
 PuzzleCtrl.RotateCurActionBlock = HL.Method(HL.Boolean) << function(self, isMouseClick)
     if self.m_curActionBlockSlot and
@@ -1094,14 +815,10 @@ PuzzleCtrl.RotateCurActionBlock = HL.Method(HL.Boolean) << function(self, isMous
     end
 end
 
-
-
 PuzzleCtrl.ResetCachedGridData = HL.Method() << function(self)
     self.m_cachedGridVec = nil
     self.m_cachedGridPos = nil
 end
-
-
 
 PuzzleCtrl.PuzzleSlotInMovement = HL.Method() << function(self)
     self.m_inMovementSlotCount = self.m_inMovementSlotCount + 1
@@ -1114,8 +831,6 @@ PuzzleCtrl.PuzzleSlotInMovement = HL.Method() << function(self)
     end)
 end
 
-
-
 PuzzleCtrl.PuzzleSlotOutMovement = HL.Method() << function(self)
     self.m_inMovementSlotCount = self.m_inMovementSlotCount - 1
     self.view.placeHolderScrollView.enabled = self.m_canScrollPuzzleList and self.m_inMovementSlotCount == 0
@@ -1126,8 +841,6 @@ PuzzleCtrl.PuzzleSlotOutMovement = HL.Method() << function(self)
         slotCell:ToggleInteractable(self.m_inMovementSlotCount == 0)
     end)
 end
-
-
 
 PuzzleCtrl.DisableComponentsInteractable = HL.Method() << function(self)
     self.m_componentsInteractable = false
@@ -1142,8 +855,6 @@ PuzzleCtrl.DisableComponentsInteractable = HL.Method() << function(self)
     self:UpdateResetBtn()
 end
 
-
-
 PuzzleCtrl.RecoverComponentsInteractable = HL.Method() << function(self)
     self.m_componentsInteractable = true
 
@@ -1157,27 +868,30 @@ PuzzleCtrl.RecoverComponentsInteractable = HL.Method() << function(self)
     self:UpdateResetBtn()
 end
 
-
-
-
-
-
-
 PuzzleCtrl.PutBlockOnChessboard = HL.Method(HL.String, HL.Number, HL.Number, Vector3).Return(HL.Boolean, HL.Boolean)
         << function(self, blockId, x, y, targetPos)
     local succ, complete = self.m_puzzleGame:PutBlockOnChessboard(blockId, x, y, targetPos)
     if complete then
-        self.m_puzzleRootCells:Update(function(cell, luaIndex)
-            cell:ToggleCanDrag(false)
-        end)
+        self:PuzzleUnitCompleteClient()
     end
 
     return succ, complete
 end
 
+PuzzleCtrl.PuzzleUnitCompleteClient = HL.Method() << function(self)
+    self.m_puzzleRootCells:Update(function(cell, luaIndex)
+        cell:ToggleCanDrag(false)
+    end)
 
-
-
+    self:_ClearNoticeTimer()
+    self:_ToggleComponentInput(false)
+    if DeviceInfo.usingController then
+        self:SetNaviTarget(nil)
+        self:_ToggleAreaFocusActionId(false, false)
+        InputManagerInst:ToggleGroup(self.view.leftNode.groupId, false)
+        InputManagerInst:ToggleGroup(self.view.gridInputBindingGroupMonoTarget.groupId, false)
+    end
+end
 
 
 
@@ -1205,28 +919,19 @@ end
 
 
 
-
 PuzzleCtrl.m_focusChessboardActionId = HL.Field(HL.Number) << -1
-
 
 PuzzleCtrl.m_focusBlockListActionId = HL.Field(HL.Number) << -1
 
-
 PuzzleCtrl.m_curCtrSlotResetToPlaceholderActionId = HL.Field(HL.Number) << -1
-
 
 PuzzleCtrl.m_curControllerSlotLuaIndex = HL.Field(HL.Number) << -1
 
-
 PuzzleCtrl.m_cachedReturnGridIndex = HL.Field(HL.Number) << -1
-
 
 PuzzleCtrl.m_curCtrlSlotResetToPreGridActionId = HL.Field(HL.Number) << -1
 
-
 PuzzleCtrl.m_curControllerHoverSlotLuaIndex = HL.Field(HL.Number) << -1
-
-
 
 PuzzleCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -1263,16 +968,9 @@ PuzzleCtrl._InitController = HL.Method() << function(self)
     self:_ToggleChessboardNaviToBlockList(true)
 end
 
-
-
-
-
 PuzzleCtrl._GetGridLuaIndexByVec = HL.Method(HL.Number, HL.Number).Return(HL.Number) << function(self, x, y)
     return y * self.m_chessboardWidthGridNum + x + 1
 end
-
-
-
 
 PuzzleCtrl._OnClickPlaceholderControllerBtn = HL.Method(HL.Number) << function(self, luaIndex)
     self.m_curControllerSlotLuaIndex = luaIndex
@@ -1298,7 +996,7 @@ PuzzleCtrl._OnClickPlaceholderControllerBtn = HL.Method(HL.Number) << function(s
 
     local chessboardCell = self.m_chessboardGridCells:Get(gridIndex)
     
-    UIUtils.setAsNaviTarget(chessboardCell.view.controllerBtn)
+    self:SetNaviTarget(chessboardCell.view.controllerBtn)
 
     
     
@@ -1307,10 +1005,6 @@ PuzzleCtrl._OnClickPlaceholderControllerBtn = HL.Method(HL.Number) << function(s
     self:_ToggleChessboardNaviToBlockList(false)
     self:_ToggleAreaFocusActionId(false, false)
 end
-
-
-
-
 
 PuzzleCtrl._OnClickChessboardControllerBtn = HL.Method(HL.Forward("PuzzleChessboardGrid"), HL.Number)
         << function(self, cell, luaIndex)
@@ -1337,7 +1031,7 @@ PuzzleCtrl._OnClickChessboardControllerBtn = HL.Method(HL.Forward("PuzzleChessbo
         
         if targetIndex then
             local cell = self.m_placeholderCellCache:Get(targetIndex)
-            UIUtils.setAsNaviTarget(cell.controllerBtn)
+            self:SetNaviTarget(cell.controllerBtn)
         else
             self:_TryHoverPuzzleSlot(cell.rectTransform, self.m_curControllerSlotLuaIndex)
         end
@@ -1374,10 +1068,10 @@ PuzzleCtrl._OnClickChessboardControllerBtn = HL.Method(HL.Forward("PuzzleChessbo
                 
                 
                 local grid = self.m_chessboardGridCells:Get(curLocationGridIndex)
-                UIUtils.setAsNaviTarget(nil)
+                self:SetNaviTarget(nil)
                 
                 
-                UIUtils.setAsNaviTarget(grid.view.controllerBtn)
+                self:SetNaviTarget(grid.view.controllerBtn)
             end
 
             self:_ToggleChessboardNaviToBlockList(false)
@@ -1385,12 +1079,6 @@ PuzzleCtrl._OnClickChessboardControllerBtn = HL.Method(HL.Forward("PuzzleChessbo
         end
     end
 end
-
-
-
-
-
-
 
 PuzzleCtrl._OnIsNaviTargetChangedChessboardGrid = HL.Method(HL.Forward("PuzzleChessboardGrid"), HL.Number, HL.Boolean, HL.Boolean)
         << function(self, cell, luaIndex, isTarget, isGroupChanged)
@@ -1420,10 +1108,6 @@ PuzzleCtrl._OnIsNaviTargetChangedChessboardGrid = HL.Method(HL.Forward("PuzzleCh
     self:_OnSlotEnterChessboardGrid()
 end
 
-
-
-
-
 PuzzleCtrl._TryHoverPuzzleSlot = HL.Method(Transform, HL.Opt(HL.Number)) << function(self, cellRectTransform, slotIndex)
     local slotLuaIndex = slotIndex or self.view.puzzleControllerHelper:TryGetPuzzleSlotIndexByPos(cellRectTransform)
     if self.m_curControllerHoverSlotLuaIndex == slotLuaIndex then
@@ -1447,11 +1131,6 @@ PuzzleCtrl._TryHoverPuzzleSlot = HL.Method(Transform, HL.Opt(HL.Number)) << func
     
 end
 
-
-
-
-
-
 PuzzleCtrl._OnIsNaviTargetChangedPlaceholder = HL.Method(HL.Number, HL.Boolean, HL.Boolean) << function(self, luaIndex, isTarget, isGroupChanged)
     if isTarget then
         if isGroupChanged then
@@ -1470,9 +1149,6 @@ PuzzleCtrl._OnIsNaviTargetChangedPlaceholder = HL.Method(HL.Number, HL.Boolean, 
     
 end
 
-
-
-
 PuzzleCtrl._OnDefaultNaviFailedChessboard = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, dir)
     if dir ~= Unity.UI.NaviDirection.Right then
         return
@@ -1486,19 +1162,14 @@ PuzzleCtrl._OnDefaultNaviFailedChessboard = HL.Method(CS.UnityEngine.UI.NaviDire
 end
 
 
-
-
-
 PuzzleCtrl._OnDefaultNaviFailedBlockArea = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, dir)
     if dir ~= Unity.UI.NaviDirection.Left then
         return
     end
 
     local chessboardCell = self.m_chessboardGridCells:Get(self.m_chessboardWidthGridNum)
-    UIUtils.setAsNaviTarget(chessboardCell.view.controllerBtn)
+    self:SetNaviTarget(chessboardCell.view.controllerBtn)
 end
-
-
 
 PuzzleCtrl._CurCtrlSlotResetToPlaceholder = HL.Method() << function(self)
     if self.m_curControllerSlotLuaIndex < 0 then
@@ -1520,36 +1191,25 @@ PuzzleCtrl._CurCtrlSlotResetToPlaceholder = HL.Method() << function(self)
     self.m_cachedReturnGridIndex = -1
 end
 
-
-
 PuzzleCtrl._FocusBlockList = HL.Method() << function(self)
     local placeholderCell = self.m_placeholderCellCache:Get(1)
-    UIUtils.setAsNaviTarget(placeholderCell.controllerBtn)
+    self:SetNaviTarget(placeholderCell.controllerBtn)
 
     self:_ToggleAreaFocusActionId(false, true)
 end
 
-
-
 PuzzleCtrl._FocusChessboard = HL.Method() << function(self)
     local gridIndex = self.m_chessboardGridCells:GetCount() // 2 + 1
     local chessboardCell = self.m_chessboardGridCells:Get(gridIndex)
-    UIUtils.setAsNaviTarget(chessboardCell.view.controllerBtn)
+    self:SetNaviTarget(chessboardCell.view.controllerBtn)
 
     self:_ToggleAreaFocusActionId(true, false)
 end
-
-
-
-
 
 PuzzleCtrl._ToggleAreaFocusActionId = HL.Method(HL.Boolean, HL.Boolean) << function(self, focusBlockListActionOn, focusChessboardActionOn)
     InputManagerInst:ToggleBinding(self.m_focusBlockListActionId, focusBlockListActionOn)
     InputManagerInst:ToggleBinding(self.m_focusChessboardActionId, focusChessboardActionOn)
 end
-
-
-
 
 PuzzleCtrl._ToggleChessboardNaviToBlockList = HL.Method(HL.Boolean) << function(self, isOn)
     InputManagerInst:ToggleBinding(self.m_curCtrSlotResetToPlaceholderActionId, not isOn)
@@ -1561,8 +1221,6 @@ PuzzleCtrl._ToggleChessboardNaviToBlockList = HL.Method(HL.Boolean) << function(
         UIManager:Hide(PanelId.ControllerNaviTarget)
     end
 end
-
-
 
 PuzzleCtrl._CurCtrlSlotResetToPreGrid = HL.Method() << function(self)
     if self.m_curControllerSlotLuaIndex < 0 then
@@ -1595,8 +1253,6 @@ PuzzleCtrl._CurCtrlSlotResetToPreGrid = HL.Method() << function(self)
     end
 end
 
-
-
 PuzzleCtrl._ResetControllerState = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
@@ -1606,14 +1262,13 @@ PuzzleCtrl._ResetControllerState = HL.Method() << function(self)
     self.m_cachedReturnGridIndex = -1
 
     local placeHolderCell = self.m_placeholderCellCache:Get(1)
-    UIUtils.setAsNaviTarget(placeHolderCell.controllerBtn)
+    self:SetNaviTarget(placeHolderCell.controllerBtn)
 
     InputManagerInst:ToggleGroup(self.view.leftNode.groupId, true)
+    InputManagerInst:ToggleGroup(self.view.gridInputBindingGroupMonoTarget.groupId, true)
     self:_ToggleAreaFocusActionId(false, true)
     self:_ToggleChessboardNaviToBlockList(true)
 end
-
-
 
 
 
@@ -1636,9 +1291,6 @@ PuzzleCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << functio
     }
     return arg
 end
-
-
-
 
 PuzzleCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
     if recoverState.conditionStyleRectangle ~= nil then
@@ -1687,8 +1339,6 @@ PuzzleCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState
     end
 end
 
-
-
 PuzzleCtrl._RecoverBlockPositions = HL.Method() << function(self)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.grid)
 
@@ -1726,8 +1376,6 @@ PuzzleCtrl._RecoverBlockPositions = HL.Method() << function(self)
     end
 end
 
-
-
 PuzzleCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Any) << function(self)
     if self.m_shouldCloseAfterRecover then
         self.m_shouldCloseAfterRecover = false
@@ -1739,25 +1387,17 @@ end
 
 
 
-
 PuzzleCtrl.m_hasHint = HL.Field(HL.Boolean) << false
-
 
 PuzzleCtrl.m_isHintUse = HL.Field(HL.Boolean) << false
 
-
 PuzzleCtrl.m_useHintTs = HL.Field(HL.Number) << 0
-
 
 PuzzleCtrl.m_puzzleUnitStartTs = HL.Field(HL.Number) << 0
 
-
 PuzzleCtrl.m_puzzleUnitEndTs = HL.Field(HL.Number) << 0
 
-
 PuzzleCtrl.m_curPuzzleUnitComplete = HL.Field(HL.Boolean) << false
-
-
 
 PuzzleCtrl._EventLogPuzzleUnitEnd = HL.Method() << function(self)
     if not GameWorld.gameMechManager.mainCharFixBrain then

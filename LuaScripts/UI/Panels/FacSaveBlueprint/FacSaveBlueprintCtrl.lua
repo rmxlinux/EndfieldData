@@ -1,38 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacSaveBlueprint
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacSaveBlueprintCtrl = HL.Class('FacSaveBlueprintCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -50,37 +19,25 @@ FacSaveBlueprintCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 FacSaveBlueprintCtrl.m_bpInst = HL.Field(CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintInstance)
-
 
 FacSaveBlueprintCtrl.m_csBP = HL.Field(CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprint)
 
-
 FacSaveBlueprintCtrl.m_isCreate = HL.Field(HL.Boolean) << false
-
 
 FacSaveBlueprintCtrl.m_isEditing = HL.Field(HL.Boolean) << false
 
 
-
 FacSaveBlueprintCtrl.m_isSharing = HL.Field(HL.Boolean) << false
-
 
 FacSaveBlueprintCtrl.m_isImporting = HL.Field(HL.Boolean) << false
 
 
-
 FacSaveBlueprintCtrl.m_blueprintID = HL.Field(HL.Any) << 0
-
 
 FacSaveBlueprintCtrl.m_shareCode = HL.Field(HL.Any)
 
-
 FacSaveBlueprintCtrl.m_fromFriend = HL.Field(HL.Boolean) << false
-
-
-
 
 
 FacSaveBlueprintCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -149,8 +106,6 @@ FacSaveBlueprintCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_TryRecoverState(recoverState)
 end
 
-
-
 FacSaveBlueprintCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     if not self.m_bpInst then
         return
@@ -167,14 +122,9 @@ FacSaveBlueprintCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << 
     }
 end
 
-
-
 FacSaveBlueprintCtrl.GetIsCreating = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_isCreate
 end
-
-
-
 
 FacSaveBlueprintCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if not recoverState then
@@ -182,8 +132,6 @@ FacSaveBlueprintCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(se
     end
     self.view.blueprintContent:RecoverState(recoverState)
 end
-
-
 
 FacSaveBlueprintCtrl._RefreshController = HL.Method() << function(self)
     
@@ -200,7 +148,7 @@ FacSaveBlueprintCtrl._RefreshController = HL.Method() << function(self)
         self:_SetActiveControllerMouse(not isFocused)
         self.view.blueprintContent:SetActiveControllerNode(isFocused and FacConst.FocusStateTable.Focused or FacConst.FocusStateTable.UnFocused)
         if isFocused then
-            UIUtils.setAsNaviTarget(self.view.blueprintContent.view.changeIconBtn)
+            self:SetNaviTarget(self.view.blueprintContent.view.changeIconBtn)
         end
     end)
     self.view.blueprintContent.view.content.onIsFocusedChange:RemoveAllListeners()
@@ -250,9 +198,6 @@ FacSaveBlueprintCtrl._RefreshController = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacSaveBlueprintCtrl._SetActiveControllerMouse = HL.Method(HL.Boolean) << function(self, active)
     self.view.blueprintPreview.mouseShow = active
     self.view.blueprintPreview.view.leftBottomNode.gameObject:SetActive(active)
@@ -260,8 +205,6 @@ FacSaveBlueprintCtrl._SetActiveControllerMouse = HL.Method(HL.Boolean) << functi
         self.view.blueprintPreview:_CancelHover()
     end
 end
-
-
 
 
 
@@ -292,8 +235,6 @@ FacSaveBlueprintCtrl._OnClickSave = HL.Method() << function(self)
     end)
 end
 
-
-
 FacSaveBlueprintCtrl._OnClickClose = HL.Method() << function(self)
     self:_CheckIsChangedAndDo(function()
         Notify(MessageConst.SHOW_POP_UP, {
@@ -307,14 +248,12 @@ FacSaveBlueprintCtrl._OnClickClose = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 FacSaveBlueprintCtrl._CheckIsChangedAndDo = HL.Method(HL.Function, HL.Opt(HL.Function)) << function(self, actionOnChange, actionOnNotChange)
     local contentView = self.view.blueprintContent.view
-    local name = contentView.nameInputField.text
-    name = string.isEmpty(name) and Language.LUA_FAC_BLUEPRINT_DEFAULT_NAME or name
+    local rawName = contentView.nameInputField.text
+    
+    
+    local name = string.isEmpty(rawName) and Language.LUA_FAC_BLUEPRINT_DEFAULT_NAME or rawName
     local desc = contentView.descInputField.text
     local icon = self.view.blueprintContent.curIcon
     local colorId = self.view.blueprintContent.curColorId
@@ -325,7 +264,11 @@ FacSaveBlueprintCtrl._CheckIsChangedAndDo = HL.Method(HL.Function, HL.Opt(HL.Fun
         isChanged = true 
     elseif self.m_isEditing then
         
-        if name ~= self.m_bpInst.info.name then
+        
+        
+        
+        
+        if rawName ~= self.m_bpInst.info.name then
             isChanged = true
         elseif desc ~= self.m_bpInst.info.desc then
             isChanged = true
@@ -357,15 +300,10 @@ FacSaveBlueprintCtrl._CheckIsChangedAndDo = HL.Method(HL.Function, HL.Opt(HL.Fun
     end
 end
 
-
-
-
 FacSaveBlueprintCtrl.FacOnModifyBlueprint = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BLUEPRINT_CHANGE_SAVED)
     self:PlayAnimationOutAndClose()
 end
-
-
 
 FacSaveBlueprintCtrl.FacOnSaveBlueprint = HL.Method() << function(self)
     Notify(MessageConst.FAC_EXIT_DESTROY_MODE, true)
@@ -374,15 +312,10 @@ FacSaveBlueprintCtrl.FacOnSaveBlueprint = HL.Method() << function(self)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BLUEPRINT_SAVED)
 end
 
-
-
-
 FacSaveBlueprintCtrl.FacOnFetchBlueprint = HL.Method(HL.Any) << function(self, arg)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BLUEPRINT_GIFT_SAVE_SUCCESS)
     self:PlayAnimationOutAndClose()
 end
-
-
 
 
 
@@ -419,15 +352,11 @@ FacSaveBlueprintCtrl._UpdateSceneView = HL.Method() << function(self)
     end)
 end
 
-
-
 FacSaveBlueprintCtrl._ResetSceneView = HL.Method() << function(self)
     local camCtrl = LuaSystemManager.factory.m_topViewCamCtrl
     camCtrl:ResetCameraAdjustForRange()
     CSFactoryUtil.ClearSelectGrids()
 end
-
-
 
 
 FacSaveBlueprintCtrl.FacOnGetGiftBlueprint = HL.Method() << function(self)
@@ -436,8 +365,6 @@ FacSaveBlueprintCtrl.FacOnGetGiftBlueprint = HL.Method() << function(self)
     end
     self:_RefreshImportState()
 end
-
-
 
 FacSaveBlueprintCtrl._RefreshImportState = HL.Method() << function(self)
     local found = false
@@ -472,8 +399,6 @@ FacSaveBlueprintCtrl._RefreshImportState = HL.Method() << function(self)
     end
 end
 
-
-
 FacSaveBlueprintCtrl._RefreshBlueprintContent = HL.Method() << function(self)
     local bpAbnormalIconHelper
     if not self.m_isEditing then
@@ -489,9 +414,6 @@ FacSaveBlueprintCtrl._RefreshBlueprintContent = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacSaveBlueprintCtrl.OnRefreshTechTree = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     if self:IsShow() then
         self:_RefreshBlueprintContent()
@@ -501,8 +423,6 @@ FacSaveBlueprintCtrl.OnRefreshTechTree = HL.Method(HL.Opt(HL.Any)) << function(s
     end
 end
 
-
-
 FacSaveBlueprintCtrl._GetTimeLimitedFormulas = HL.Method().Return(HL.Table) << function(self)
     local helper = self.view.blueprintPreview.m_bpAbnormalIconHelper
     local timeLimitedFormulas = {}
@@ -511,7 +431,7 @@ FacSaveBlueprintCtrl._GetTimeLimitedFormulas = HL.Method().Return(HL.Table) << f
         local buildingId = entry.templateId
         if Tables.factoryBuildingTable:ContainsKey(buildingId) then
             local itemId = changedProdIconDic[entry.nodeId] or entry.productIcon
-            if not string.isEmpty(itemId) then
+            if not string.isEmpty(itemId) and not FactoryUtils.isBlueprintProductIconGasEnv(itemId) then
                 local _, craftId = helper.GetAbnormalType(buildingId, itemId, true)
                 if craftId and FactoryUtils.isTimeLimitedFormula(craftId) then
                     timeLimitedFormulas[craftId] = true

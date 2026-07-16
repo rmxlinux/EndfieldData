@@ -1,18 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 GiftFeatureTagsNode = HL.Class('GiftFeatureTagsNode', UIWidgetBase)
-
-
 
 
 GiftFeatureTagsNode._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
 
 GiftFeatureTagsNode.InitGiftFeatureTagsNode = HL.Method(HL.Any).Return(HL.Boolean) << function(self, itemId)
     self:_FirstTimeInit()

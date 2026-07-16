@@ -6,191 +6,6 @@ local PANEL_ID = PanelId.Map
 local PHASE_ID = PhaseId.Map
 local STANDARD_SCREEN_WIDTH = CS.Beyond.UI.UIConst.STANDARD_HORIZONTAL_RESOLUTION
 local STANDARD_SCREEN_HEIGHT = CS.Beyond.UI.UIConst.STANDARD_VERTICAL_RESOLUTION
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MapCtrl = HL.Class('MapCtrl', uiCtrl.UICtrl)
 
 local COLLECTIONS_CONFIG = {
@@ -218,6 +33,11 @@ local COLLECTIONS_CONFIG = {
         viewName = "equipFormula",
         mergeId = "int_trchest_equip",
         hoverTextId = "ui_mappanel_collection_equip_formula",
+    },
+    ["trStar"] = {
+        viewName = "trStar",
+        mergeId = "int_collection_trstar",
+        hoverTextId = "ui_mappanel_collection_trstar",
     },
 }
 
@@ -251,153 +71,109 @@ local INITIAL_SELECT_OPTION_INDEX = 1
 
 local OPTION_MARK_HIGHLIGHT_DELAY_TIME = 0.05
 
+local TIER_CHECK_TOLERANCE_RADIUS = 3
 
 MapCtrl.s_initialSelectMarkInstId = HL.StaticField(HL.String) << ""
 
-
 MapCtrl.m_initialLevelId = HL.Field(HL.String) << ""
-
 
 MapCtrl.m_currLevelId = HL.Field(HL.String) << ""
 
-
 MapCtrl.m_currMapId = HL.Field(HL.String) << ""
-
 
 MapCtrl.m_ignoreOpenFocus = HL.Field(HL.Boolean) << false
 
-
 MapCtrl.m_selectMarkRectTransform = HL.Field(Unity.RectTransform)
-
 
 MapCtrl.m_isMarkDetailShowing = HL.Field(HL.Boolean) << false
 
-
 MapCtrl.m_addZoomTick = HL.Field(HL.Number) << -1
-
 
 MapCtrl.m_reduceZoomTick = HL.Field(HL.Number) << -1
 
-
 MapCtrl.m_zoomVisibleLayer = HL.Field(HL.Number) << -1
-
 
 MapCtrl.m_controllerRect = HL.Field(Unity.RectTransform)
 
-
 MapCtrl.m_controllerSizeTick = HL.Field(HL.Number) << -1
-
 
 MapCtrl.m_selectOptionCells = HL.Field(HL.Forward('UIListCache'))
 
-
 MapCtrl.m_selectNodeShowTimer = HL.Field(HL.Number) << -1
-
 
 MapCtrl.m_optionCloseCDTimer = HL.Field(HL.Number) << -1
 
-
 MapCtrl.m_optionCloseCD = HL.Field(HL.Boolean) << false
-
 
 MapCtrl.m_selectNodeTick = HL.Field(HL.Number) << -1
 
-
 MapCtrl.m_doingSelectNodeHide = HL.Field(HL.Boolean) << false
-
 
 MapCtrl.m_waitInitShowDetailMarkInstId = HL.Field(HL.String) << ""
 
-
 MapCtrl.m_selectOptionMarkIdList = HL.Field(HL.Table)
-
 
 MapCtrl.m_selectOptionMarkList = HL.Field(HL.Table)
 
-
 MapCtrl.m_nextOptionMainAnimState = HL.Field(HL.Boolean) << true
-
 
 MapCtrl.m_optionMainAnimState = HL.Field(HL.Boolean) << true
 
-
 MapCtrl.m_optionAnimPlayThread = HL.Field(HL.Thread)
-
 
 MapCtrl.m_optionMarkHighlightThread = HL.Field(HL.Thread)
 
-
 MapCtrl.m_currHighlightOption = HL.Field(HL.Number) << -1
-
 
 MapCtrl.m_buildingInfo = HL.Field(HL.Table)
 
-
 MapCtrl.m_collectionInfo = HL.Field(HL.Table)
-
 
 MapCtrl.m_multiDeletePanelShow = HL.Field(HL.Boolean) << false
 
-
 MapCtrl.m_selectMarkInstId = HL.Field(HL.String) << ""
-
 
 MapCtrl.m_tierCheckTick = HL.Field(HL.Number) << -1
 
-
 MapCtrl.m_currTierContainerId = HL.Field(HL.Number) << -1
-
 
 MapCtrl.m_currTierIdList = HL.Field(HL.Table)
 
-
 MapCtrl.m_currTierIndex = HL.Field(HL.Number) << -1
-
 
 MapCtrl.m_tierSwitcherCells = HL.Field(HL.Forward('UIListCache'))
 
-
 MapCtrl.m_tierSwitchersShowing = HL.Field(HL.Boolean) << false
-
 
 MapCtrl.m_waitRecoverTierId = HL.Field(HL.Number) << -1
 
-
 MapCtrl.m_controllerHoverMark = HL.Field(HL.Boolean) << false
-
 
 MapCtrl.m_controllerTierBindingGroup = HL.Field(HL.Number) << -1
 
-
 MapCtrl.m_needPlayMistsAnimation = HL.Field(HL.Boolean) << false
-
 
 MapCtrl.m_initZoomScalePercentage = HL.Field(HL.Number) << 1
 
-
 MapCtrl.m_nodeOnInitFocused = HL.Field(HL.Boolean) << false
-
 
 MapCtrl.m_trySwitchTierOnFocusMark = HL.Field(HL.Any)
 
-
 MapCtrl.m_waitAutoSwitchTierId = HL.Field(HL.Number) << -1
-
 
 MapCtrl.m_markClickLockThread = HL.Field(HL.Thread)
 
-
 MapCtrl.m_isResettingToTargetLevel = HL.Field(HL.Boolean) << false
 
+MapCtrl.m_isResettingToPlayer = HL.Field(HL.Boolean) << false  
 
 MapCtrl.m_remindTipInfo = HL.Field(HL.Any)
 
-
 MapCtrl.m_isRemindTipShowing = HL.Field(HL.Boolean) << false
-
 
 MapCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_LEVEL_MAP_MARK_CLICKED] = '_OnLevelMapMarkClicked',
+    [MessageConst.ON_JUMP_TO_TP_RELATED_MARK] = '_OnJumpToTpMark',
     [MessageConst.ON_TRACKING_MAP_MARK] = '_OnTrackingMapMarkChanged',
 
     [MessageConst.ON_TELEPORT_FINISH] = '_OnTeleportFinish',
@@ -411,15 +187,14 @@ MapCtrl.s_messages = HL.StaticField(HL.Table) << {
 
     [MessageConst.ON_SCREEN_SIZE_CHANGED] = '_OnScreenSizeChanged',
 
+    [MessageConst.FAC_ON_NODE_REMOVED] = '_OnFacNodeChanged',
+
     
     [MessageConst.SHOW_CUSTOM_MARK_MULTI_DELETE] = '_OnShowMarkMultiDelete',
     [MessageConst.HIDE_CUSTOM_MARK_MULTI_DELETE] = '_OnHideMarkMultiDelete',
     [MessageConst.TOGGLE_CUSTOM_MARK_MULTI_DELETE_STATE] = '_OnToggleCustomMarkMultiDeleteState',
     [MessageConst.ON_CUSTOM_MARK_MULTI_DELETE_SELECT_STATE_CHANGED] = '_OnCustomMarkMultiDeleteSelectStateChanged',
 }
-
-
-
 
 MapCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     args = args or {}
@@ -478,7 +253,7 @@ MapCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self:_InitTierSwitcherNode()
 
     
-    self:_SetDetectorState(markInstId, true, DataManager.uiLevelMapConfig.detectorZoomSliderPercent)
+    self:_SetDetectorState(markInstId, true, DataManager.uiLevelMapConfig.detectorZoomSliderPercent, args.isRecover)
 
     if needShowDetail and not self.m_forceDoNotShowDetail then
         self:_ShowMarkDetail(markInstId, true, false, true)
@@ -505,8 +280,6 @@ MapCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end
 end
 
-
-
 MapCtrl.OnClose = HL.Override() << function(self)
     if self.m_onMapPanelClose then
         self.m_onMapPanelClose()
@@ -526,9 +299,6 @@ MapCtrl.OnClose = HL.Override() << function(self)
     GameInstance.player.mapManager.forceShowFacMarkInRegionList:Clear()
     MapCtrl.s_initialSelectMarkInstId = ""
 end
-
-
-
 
 MapCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     
@@ -551,38 +321,27 @@ end
 
 
 
-
 MapCtrl.m_onMapPanelOpen = HL.Field(HL.Function)
-
 
 MapCtrl.m_onMapPanelClose = HL.Field(HL.Function)
 
-
 MapCtrl.m_expectedPanelNodes = HL.Field(HL.Table)
 
+MapCtrl.m_currNotExpectedPanelNodes = HL.Field(HL.Table)
 
 MapCtrl.m_expectedStaticElementTypes = HL.Field(HL.Table)
 
-
 MapCtrl.m_expectedMarks = HL.Field(HL.Table)
-
 
 MapCtrl.m_topOrderMarks = HL.Field(HL.Table)
 
-
 MapCtrl.m_noGeneralTracking = HL.Field(HL.Boolean) << false
-
 
 MapCtrl.m_noMissionTracking = HL.Field(HL.Boolean) << false
 
-
 MapCtrl.m_noCustomMark = HL.Field(HL.Boolean) << false
 
-
 MapCtrl.m_forceDoNotShowDetail = HL.Field(HL.Boolean) << false
-
-
-
 
 MapCtrl._ParseCustomArgs = HL.Method(HL.Any) << function(self, customArgs)
     if customArgs == nil then
@@ -610,9 +369,6 @@ MapCtrl._ParseCustomArgs = HL.Method(HL.Any) << function(self, customArgs)
     end
 end
 
-
-
-
 MapCtrl._HideNotExpectedNodes = HL.Method(HL.Opt(HL.Table)) << function(self, overrideExpectedPanelNodes)
     local typesToViewNodes = {
         [MapPanelNodeType.Remind] = self.view.transactionReminderNode,
@@ -639,17 +395,20 @@ MapCtrl._HideNotExpectedNodes = HL.Method(HL.Opt(HL.Table)) << function(self, ov
         expectedPanelNodes = MapConst.LEVEL_EXPECTED_PANEL_NODES_GETTER[self.m_currLevelId]
     end
 
+    self.m_currNotExpectedPanelNodes = {}
     local allVisible = false
     if expectedPanelNodes == nil or not next(expectedPanelNodes) then
         allVisible = true
     end
 
     for type, node in pairs(typesToViewNodes) do
-        node.gameObject:SetActive(allVisible or expectedPanelNodes[type] == true)
+        local visible = allVisible or expectedPanelNodes[type] == true
+        node.gameObject:SetActive(visible)
+        if not visible then
+            self.m_currNotExpectedPanelNodes[type] = true
+        end
     end
 end
-
-
 
 
 
@@ -678,15 +437,10 @@ MapCtrl.OnSelectMark = HL.StaticMethod(HL.Any) << function(arg)
     end
 end
 
-
-
 MapCtrl._OnTeleportFinish = HL.Method() << function(self)
     MapSpaceshipNode.ClearStaticFromData()
     Notify(MessageConst.RECOVER_PHASE_LEVEL)
 end
-
-
-
 
 MapCtrl._OnLevelSwitchBtnClicked = HL.Method(HL.Any) << function(self, args)
     if self:IsPlayingAnimationIn() then
@@ -719,9 +473,6 @@ MapCtrl._OnLevelSwitchBtnClicked = HL.Method(HL.Any) << function(self, args)
     end
 end
 
-
-
-
 MapCtrl._OnDataChanged = HL.Method(HL.Table) << function(self, args)
     local instId, isAdd = unpack(args)
     if not isAdd then
@@ -733,16 +484,22 @@ MapCtrl._OnDataChanged = HL.Method(HL.Table) << function(self, args)
     local mapController = self.view.levelMapController
     mapController:_ResetLoaderMarksVisibleStateByFilter()
     mapController:RefreshLoaderMarksVisibleStateByLayer(mapController.m_currentLayer)
+    local currLevelId = self.view.levelMapController:GetControllerCurrentLevelId()
+    self:_RefreshRemindTipInfo(currLevelId)
+    self:_RefreshHintTipsNode()
 end
-
-
 
 MapCtrl._OnScreenSizeChanged = HL.Method() << function(self)
     self:_RefreshMapRectMask()
 end
 
-
-
+MapCtrl._OnFacNodeChanged = HL.Method(HL.Any) << function(self, args)
+    self:_StartCoroutine(function()
+        
+        coroutine.step()
+        self:_RefreshBuildingInfos(self.m_currLevelId)
+    end)
+end
 
 
 
@@ -776,14 +533,10 @@ MapCtrl._RefreshTitle = HL.Method(HL.String) << function(self, levelId)
     end
 end
 
-
-
 MapCtrl._RefreshMapRectMask = HL.Method() << function(self)
     local isStandardScreenRatio = Screen.width * STANDARD_SCREEN_HEIGHT == STANDARD_SCREEN_WIDTH * Screen.height
     self.view.mapRectMask.enabled = not isStandardScreenRatio
 end
-
-
 
 
 
@@ -822,15 +575,9 @@ MapCtrl._InitLevelMapController = HL.Method() << function(self)
     end)
 end
 
-
-
-
 MapCtrl._OnLevelSwitch = HL.Method(HL.Table) << function(self, switchTargetInfo)
     self:_SetMapRectByTargetLevelInfo(switchTargetInfo)
 end
-
-
-
 
 MapCtrl._OnLevelSwitchStart = HL.Method(HL.Table) << function(self, switchTargetInfo)
     self.view.fullScreenMask.gameObject:SetActive(true)
@@ -850,8 +597,6 @@ MapCtrl._OnLevelSwitchStart = HL.Method(HL.Table) << function(self, switchTarget
     self:_ToggleControllerMoveAndZoom(false)
 end
 
-
-
 MapCtrl._OnLevelSwitchFinish = HL.Method() << function(self)
     self.view.fullScreenMask.gameObject:SetActive(false)
     self.view.touchPanel.enabled = true
@@ -869,9 +614,6 @@ MapCtrl._OnLevelSwitchFinish = HL.Method() << function(self)
     self:_TryPlayMistUnlockedAnimation()
 end
 
-
-
-
 MapCtrl._SetMapRectByTargetLevelInfo = HL.Method(HL.Table) << function(self, targetInfo)
     self.view.mapRect.pivot = Vector2(0.5, 1.0)  
     local resetPos = self:_GetTargetRelativeCenterPosition(self.view.mapRect, {
@@ -883,8 +625,6 @@ MapCtrl._SetMapRectByTargetLevelInfo = HL.Method(HL.Table) << function(self, tar
     self.view.mapRect.localScale = Vector3.one * targetInfo.scale
     self.view.mapRect.anchoredPosition = resetPos + targetInfo.initialOffset
 end
-
-
 
 MapCtrl._RefreshLevelMapContent = HL.Method() << function(self)
     local currLevelId = self.view.levelMapController:GetControllerCurrentLevelId()
@@ -907,11 +647,8 @@ MapCtrl._RefreshLevelMapContent = HL.Method() << function(self)
     CS.Beyond.Gameplay.Conditions.OnUILevelMapEnterLevel.Trigger(currLevelId)
 
     self:_HideNotExpectedNodes()
+    self:_RefreshHintTipsNode()
 end
-
-
-
-
 
 MapCtrl._GetTargetRelativeCenterPosition = HL.Method(Unity.RectTransform, HL.Table).Return(Vector2) << function(self, rectTransform, targetInfo)
     local parentRectTransform = rectTransform.parent:GetComponent("RectTransform")
@@ -940,8 +677,6 @@ end
 
 
 
-
-
 MapCtrl._LockMarkClick = HL.Method() << function(self)
     if self.m_markClickLockThread ~= nil then
         return
@@ -952,14 +687,9 @@ MapCtrl._LockMarkClick = HL.Method() << function(self)
     end)
 end
 
-
-
 MapCtrl._IsMarkClickLocked = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_markClickLockThread ~= nil
 end
-
-
-
 
 MapCtrl._OnLevelMapMarkClicked = HL.Method(HL.String) << function(self, markInstId)
     if self:_IsMarkClickLocked() then
@@ -988,8 +718,19 @@ MapCtrl._OnLevelMapMarkClicked = HL.Method(HL.String) << function(self, markInst
     end
 end
 
-
-
+MapCtrl._OnJumpToTpMark = HL.Method(HL.String) << function(self, tpMarkInstId)
+    if GameInstance.player.mapManager:IsTrackingRelatedMark(tpMarkInstId) then
+        local trackingMark, relatedMark = self.view.levelMapController:GetControllerTrackingMark(tpMarkInstId)
+        self:_OnTrackingMarkClicked(tpMarkInstId, trackingMark, relatedMark)
+    else
+        local tpMark = self.view.levelMapController:GetControllerMarkByInstId(tpMarkInstId, true)
+        if tpMark and tpMark.gameObject.activeSelf then
+            self:_ShowMarkDetail(tpMarkInstId, true, true)
+        else
+            self:ResetMapStateToTargetLevel({ instId = tpMarkInstId })
+        end
+    end
+end
 
 MapCtrl._ShowSelectIcon = HL.Method(HL.String) << function(self, markInstId)
     self.m_selectMarkRectTransform = self.view.levelMapController:GetControllerMarkRectTransform(markInstId)
@@ -998,11 +739,6 @@ MapCtrl._ShowSelectIcon = HL.Method(HL.String) << function(self, markInstId)
     self.view.selectIconAnim:ClearTween(true)  
     UIUtils.PlayAnimationAndToggleActive(self.view.selectIconAnim, true)
 end
-
-
-
-
-
 
 MapCtrl._HideSelectIcon = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean)) << function(self, markInstId, force, onlyHideNode)
     if onlyHideNode then
@@ -1022,9 +758,6 @@ MapCtrl._HideSelectIcon = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean)) <
     self:_ToggleSelectIconSyncTick(false)
 end
 
-
-
-
 MapCtrl._ToggleSelectIconSyncTick = HL.Method(HL.Boolean) << function(self, active)
     if self.m_selectNodeTick > 0 then
         self.m_selectNodeTick = LuaUpdate:Remove(self.m_selectNodeTick)
@@ -1036,8 +769,6 @@ MapCtrl._ToggleSelectIconSyncTick = HL.Method(HL.Boolean) << function(self, acti
     end
 end
 
-
-
 MapCtrl._SyncSelectIconPosition = HL.Method() << function(self)
     if IsNull(self.m_selectMarkRectTransform) then
         return
@@ -1045,17 +776,9 @@ MapCtrl._SyncSelectIconPosition = HL.Method() << function(self)
     self.view.selectIconNode.position = self.m_selectMarkRectTransform.position
 end
 
-
-
 MapCtrl._IsWaitingInitShowMarkDetail = HL.Method().Return(HL.Boolean) << function(self)
     return not string.isEmpty(self.m_waitInitShowDetailMarkInstId)
 end
-
-
-
-
-
-
 
 MapCtrl._ShowMarkDetail = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean)) << function(self, markInstId, needFocus, needFocusTween, isInit)
     local mark = self.view.levelMapController:GetControllerMarkByInstId(markInstId, true)
@@ -1145,12 +868,7 @@ MapCtrl._ShowMarkDetail = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean, HL
     self.m_selectMarkInstId = markInstId
 end
 
-
-
-
-
-
-MapCtrl._SetDetectorState = HL.Method(HL.Any, HL.Boolean, HL.Opt(HL.Number)) << function(self, instId, focus, percent)
+MapCtrl._SetDetectorState = HL.Method(HL.Any, HL.Boolean, HL.Opt(HL.Number, HL.Boolean)) << function(self, instId, focus, percent, skipAnim)
     if not instId then
         return
     end
@@ -1164,7 +882,7 @@ MapCtrl._SetDetectorState = HL.Method(HL.Any, HL.Boolean, HL.Opt(HL.Number)) << 
         return
     end
     local markType = templateData.markType
-    if markType == GEnums.MarkType.TreasureChest or markType == GEnums.MarkType.Coin then
+    if MapUtils.isDetectorMarkType(markType) then
         isDetector = true
     end
     local mark = self.view.levelMapController:GetControllerMarkByInstId(instId, true)
@@ -1172,7 +890,7 @@ MapCtrl._SetDetectorState = HL.Method(HL.Any, HL.Boolean, HL.Opt(HL.Number)) << 
         return
     end
     local loader = self.view.levelMapController.view.levelMapLoader
-    if isDetector then
+    if isDetector and not skipAnim then
         loader.view.detectorNode.gameObject:SetActive(focus)
         mark:RefreshDetectorNodeState(focus)
         if focus then
@@ -1194,9 +912,6 @@ MapCtrl._SetDetectorState = HL.Method(HL.Any, HL.Boolean, HL.Opt(HL.Number)) << 
     loader.view.detectorNode.gameObject:SetActive(false)
     mark:RefreshDetectorNodeState(false)
 end
-
-
-
 
 
 
@@ -1230,8 +945,6 @@ MapCtrl._OnShowMarkMultiDelete = HL.Method(HL.Table) << function(self, args)
     self:_HideNotExpectedNodes(MapConst.DELETE_MODE_MAP_EXPECTED_NODES)
 end
 
-
-
 MapCtrl._OnHideMarkMultiDelete = HL.Method() << function(self)
     self.m_multiDeletePanelShow = false
     local loader = self.view.levelMapController.view.levelMapLoader
@@ -1247,17 +960,11 @@ MapCtrl._OnHideMarkMultiDelete = HL.Method() << function(self)
     self:_HideNotExpectedNodes()
 end
 
-
-
-
 MapCtrl._OnToggleCustomMarkMultiDeleteState = HL.Method(HL.Table) << function(self, args)
     if DeviceInfo.usingController then
         self:_OnControllerCustomMarkMultiDeleteStateChange(args.isShow)
     end
 end
-
-
-
 
 MapCtrl._OnCustomMarkMultiDeleteSelectStateChanged = HL.Method(HL.Table) << function(self, args)
     if DeviceInfo.usingController then
@@ -1265,8 +972,6 @@ MapCtrl._OnCustomMarkMultiDeleteSelectStateChanged = HL.Method(HL.Table) << func
         InputManagerInst:SetBindingText(self.view.bigRectHelper.clickBindingId, bindingText)
     end
 end
-
-
 
 MapCtrl._InitCustomMark = HL.Method() << function(self)
     if self.m_noCustomMark then
@@ -1373,25 +1078,40 @@ end
 
 
 
-
-
 MapCtrl._InitMapRemindTip = HL.Method() << function(self)
     
     self.view.mapRemindBtn.onClick:RemoveAllListeners()
     self.view.mapRemindBtn.onClick:AddListener(function()
         self:_OnRemindTipBtnClick()
     end)
+
+    self:_RefreshHintTipsNode()
 end
 
+MapCtrl._RefreshHintTipsNode = HL.Method() << function(self)
+    if Utils.isInSpaceShip() then
+        self.view.hintTipsNode.gameObject:SetActiveIfNecessary(false)
+        return
+    end
 
-
+    local chapterId = ScopeUtil.GetChapterId(self.m_currLevelId)
+    if chapterId ~= Utils.getCurrentChapterId() then
+        self.view.hintTipsNode.gameObject:SetActiveIfNecessary(false)
+        return
+    end
+    local hasInvalidPlacedBuilding = GameInstance.player.remoteFactory:HasInvalidPlacedBuilding(chapterId)
+    self.view.hintTipsNode.gameObject:SetActiveIfNecessary(hasInvalidPlacedBuilding)
+    self.view.hintTipsNodeButton.onClick:RemoveAllListeners()
+    if hasInvalidPlacedBuilding then
+        self.view.hintTipsNodeButton.onClick:AddListener(function()
+            UIManager:Open(PanelId.MapWaitDeleteBuildingList, chapterId)
+        end)
+    end
+end
 
 MapCtrl._RefreshRemindTipInfo = HL.Method(HL.String) << function(self, levelId)
     self.m_remindTipInfo = MapUtils.getMapRemindTipInfo(levelId)
 end
-
-
-
 
 MapCtrl._OnRemindTipBtnClick = HL.Method(HL.Opt(HL.Number)) << function(self, initIndex)
     self.view.mapRemindBtn.gameObject:SetActiveIfNecessary(false)
@@ -1422,13 +1142,14 @@ MapCtrl._OnRemindTipBtnClick = HL.Method(HL.Opt(HL.Number)) << function(self, in
             self.view.mapRemindBtn.gameObject:SetActiveIfNecessary(true)
             self.view.mapTrackingInfo.gameObject:SetActiveIfNecessary(true)
             self.view.mapTransactionReminderPopUp.gameObject:SetActiveIfNecessary(false)
+            self:_RefreshHintTipsNode()
         end)
 
         self.m_isRemindTipShowing = false
     end, initIndex)
+
+    self.view.hintTipsNode.gameObject:SetActiveIfNecessary(false)
 end
-
-
 
 MapCtrl.GetRemindTipState = HL.Method().Return(HL.Table) << function(self)
     local tabIndex
@@ -1441,14 +1162,9 @@ MapCtrl.GetRemindTipState = HL.Method().Return(HL.Table) << function(self)
     }
 end
 
-
-
-
 MapCtrl.RecoverRemindTip = HL.Method(HL.Number) << function(self, initIndex)
     self:_OnRemindTipBtnClick(initIndex)
 end
-
-
 
 
 
@@ -1471,10 +1187,6 @@ MapCtrl._InitSelectOptionList = HL.Method() << function(self)
     end)
     self.view.selectOptionNode.gameObject:SetActive(false)
 end
-
-
-
-
 
 MapCtrl._RefreshSelectOptionList = HL.Method(HL.String, HL.Table) << function(self, markInstId, nearbyMarkList)
     local markRectTransform = self.view.levelMapController:GetControllerMarkRectTransform(markInstId)
@@ -1506,7 +1218,7 @@ MapCtrl._RefreshSelectOptionList = HL.Method(HL.String, HL.Table) << function(se
         
         if templateData.markType == GEnums.MarkType.CustomMark then
             cell.name.text = markRuntimeData.note
-        elseif templateData.markType == GEnums.MarkType.SnapshotActivity or templateData.markType == GEnums.MarkType.SnapshotActivityNew then
+        elseif templateData.markType == GEnums.MarkType.SnapshotActivity then
             cell.name.text = MapUtils.getActivitySnapShotMarkTitle(markRuntimeData)
         else
             cell.name.text = templateData.name
@@ -1547,17 +1259,11 @@ MapCtrl._RefreshSelectOptionList = HL.Method(HL.String, HL.Table) << function(se
     self:_LockMarkClick()
 end
 
-
-
-
 MapCtrl._OnSelectOptionClick = HL.Method(HL.Number) << function(self, index)
     local instId = self.m_selectOptionMarkIdList[index]
     self:_ShowMarkDetail(instId, true, true)
     self:_RefreshSelectOptionListShownState(false)
 end
-
-
-
 
 MapCtrl._RefreshSelectOptionListShownState = HL.Method(HL.Boolean) << function(self, isShown)
     self.view.bigSelectIcon.gameObject:SetActive(isShown)
@@ -1586,10 +1292,11 @@ MapCtrl._RefreshSelectOptionListShownState = HL.Method(HL.Boolean) << function(s
             Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.selectOptionNode.inputGroup.groupId)
         end
     end
+
+    if DeviceInfo.usingTouch then
+        self.view.touchPanel.enabled = not isShown
+    end
 end
-
-
-
 
 MapCtrl._RefreshSelectOptionMainAnimState = HL.Method(HL.Boolean) << function(self, showMain)
     self.m_nextOptionMainAnimState = showMain
@@ -1609,12 +1316,6 @@ MapCtrl._RefreshSelectOptionMainAnimState = HL.Method(HL.Boolean) << function(se
         end)
     end
 end
-
-
-
-
-
-
 
 MapCtrl._RefreshSelectOptionHighlightState = HL.Method(HL.Any, HL.Number, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, cell, index, isHighlight, delayRefreshMarkHighlight)
     local animName = isHighlight and "select_item_selected" or "select_item_normal"
@@ -1639,8 +1340,6 @@ MapCtrl._RefreshSelectOptionHighlightState = HL.Method(HL.Any, HL.Number, HL.Boo
         cell.keyHint.gameObject:SetActive(isHighlight)
     end
 end
-
-
 
 
 
@@ -1674,19 +1373,12 @@ MapCtrl._InitBigRectHelper = HL.Method() << function(self)
     end)
 end
 
-
-
 MapCtrl._ResetBigRectHelper = HL.Method() << function(self)
     self.view.bigRectHelper.enabled = true
     self.view.bigRectHelper:SetZoomRangeMax(self.view.levelMapController:GetControllerCurrentMaxScale())
     self.view.bigRectHelper:OverrideZoomRangeMin(self.view.levelMapController:GetControllerCurrentMinScale())
     self.view.bigRectHelper:Init()
 end
-
-
-
-
-
 
 MapCtrl._BigRectFocusNodeOnInit = HL.Method(RectTransform, HL.Boolean, HL.Opt(HL.Function)) << function(self, focusNode, needTween, callback)
     if self.m_ignoreOpenFocus then
@@ -1702,8 +1394,6 @@ MapCtrl._BigRectFocusNodeOnInit = HL.Method(RectTransform, HL.Boolean, HL.Opt(HL
     end)
     self.m_nodeOnInitFocused = true
 end
-
-
 
 
 
@@ -1766,9 +1456,6 @@ MapCtrl._InitZoomNode = HL.Method() << function(self)
     end
 end
 
-
-
-
 MapCtrl._ResetZoomSliderValue = HL.Method(HL.Boolean) << function(self, useMaxValue)
     local zoomSlider = self.view.zoomNode.zoomSlider
     zoomSlider.minValue = self.view.levelMapController:GetControllerCurrentMinScale()
@@ -1782,8 +1469,6 @@ MapCtrl._ResetZoomSliderValue = HL.Method(HL.Boolean) << function(self, useMaxVa
     self:_RefreshZoomVisibleLayer(initValue, true)
 end
 
-
-
 MapCtrl._RefreshZoomValue = HL.Method() << function(self)
     
     local current = self.view.bigRectHelper:GetCurrentZoomValue()
@@ -1792,11 +1477,11 @@ MapCtrl._RefreshZoomValue = HL.Method() << function(self)
     self:_RefreshZoomVisibleLayer(current)
 end
 
-
-
-
-
 MapCtrl._ChangeZoomValue = HL.Method(HL.Boolean, HL.Number) << function(self, isAdd, deltaPercent)
+    if self.m_isResettingToPlayer then
+        
+        return
+    end
     local zoomSlider = self.view.zoomNode.zoomSlider
     local current = zoomSlider.value
     local min, max = zoomSlider.minValue, zoomSlider.maxValue
@@ -1809,9 +1494,6 @@ MapCtrl._ChangeZoomValue = HL.Method(HL.Boolean, HL.Number) << function(self, is
 
     zoomSlider.value = targetValue
 end
-
-
-
 
 MapCtrl._StartTickChangZoomValue = HL.Method(HL.Boolean) << function(self, isAdd)
     if isAdd then
@@ -1827,9 +1509,6 @@ MapCtrl._StartTickChangZoomValue = HL.Method(HL.Boolean) << function(self, isAdd
     end
 end
 
-
-
-
 MapCtrl._StopTickChangZoomValue = HL.Method(HL.Boolean) << function(self, isAdd)
     if isAdd then
         self.m_addZoomTick = LuaUpdate:Remove(self.m_addZoomTick)
@@ -1838,9 +1517,6 @@ MapCtrl._StopTickChangZoomValue = HL.Method(HL.Boolean) << function(self, isAdd)
     end
 end
 
-
-
-
 MapCtrl._OnZoomValueChanged = HL.Method(HL.Number) << function(self, value)
     self.view.bigRectHelper:ResetPivotPositionToScreenCenter()
     local isPlayAnimationIn = self:IsPlayingAnimationIn()
@@ -1848,8 +1524,6 @@ MapCtrl._OnZoomValueChanged = HL.Method(HL.Number) << function(self, value)
     self:_RefreshZoomButtonInteractableState()
     self:_RefreshZoomVisibleLayer(value)
 end
-
-
 
 MapCtrl._RefreshZoomButtonInteractableState = HL.Method() << function(self)
     local zoomNode = self.view.zoomNode
@@ -1878,10 +1552,6 @@ MapCtrl._RefreshZoomButtonInteractableState = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 MapCtrl._RefreshZoomVisibleLayer = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, scaleValue, forceRefresh)
     local layer = DataManager.uiLevelMapConfig:GetVisibleLayerByScale(scaleValue)
     if layer == self.m_zoomVisibleLayer and not forceRefresh then
@@ -1892,9 +1562,6 @@ MapCtrl._RefreshZoomVisibleLayer = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << f
     self.m_zoomVisibleLayer = layer
 end
 
-
-
-
 MapCtrl._TryRecoverBigRectState = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     if args == nil or args.bigRectState == nil then
         return
@@ -1903,8 +1570,6 @@ MapCtrl._TryRecoverBigRectState = HL.Method(HL.Opt(HL.Any)) << function(self, ar
     self:_RefreshZoomValue()
     args.bigRectState = nil
 end
-
-
 
 
 
@@ -1959,14 +1624,9 @@ MapCtrl._InitBuildingAndCollectionHoverButton = HL.Method() << function(self)
     end)
 end
 
-
-
 MapCtrl._OnInfoPopupBtnClick = HL.Method() << function(self)
     UIManager:Open(PanelId.MapInfoPopup, self:GetPopupInfoState())
 end
-
-
-
 
 MapCtrl._RefreshBuildingInfos = HL.Method(HL.String) << function(self, levelId)
     self.m_buildingInfo = {}
@@ -1989,9 +1649,6 @@ MapCtrl._RefreshBuildingInfos = HL.Method(HL.String) << function(self, levelId)
         end
     end
 end
-
-
-
 
 MapCtrl._RefreshCollectionsInfo = HL.Method(HL.String) << function(self, levelId)
     self.m_collectionInfo = {}
@@ -2016,8 +1673,6 @@ end
 
 
 
-
-
 MapCtrl._InitRegionMapButton = HL.Method() << function(self)
     self.view.regionMapBtn.onClick:AddListener(function()
         MapUtils.switchFromLevelMapToRegionMap(self.m_currLevelId)
@@ -2029,14 +1684,9 @@ end
 
 
 
-
-
-
 MapCtrl._RefreshTrackingInfo = HL.Method(HL.String) << function(self, levelId)
     self.view.mapTrackingInfo:InitMapTrackingInfo({ levelId = levelId })
 end
-
-
 
 MapCtrl._OnTrackingMapMarkChanged = HL.Method(HL.Any) << function(self)
     if not self.m_isMarkDetailShowing then
@@ -2044,11 +1694,6 @@ MapCtrl._OnTrackingMapMarkChanged = HL.Method(HL.Any) << function(self)
     end
     Notify(MessageConst.HIDE_LEVEL_MAP_MARK_DETAIL)
 end
-
-
-
-
-
 
 MapCtrl._OnTrackingMarkClicked = HL.Method(HL.String, HL.Any, HL.Any) << function(self, instId, trackingMark, relatedMark)
     if trackingMark.view.levelMapLimitInRect.isLimitedInRect then
@@ -2073,8 +1718,6 @@ end
 
 
 
-
-
 MapCtrl._InitPlayerIcon = HL.Method() << function(self)
     local playerNode = self.view.levelMapController.view.levelMapLoader.view.element.player
 
@@ -2092,8 +1735,6 @@ MapCtrl._InitPlayerIcon = HL.Method() << function(self)
     end)
 end
 
-
-
 MapCtrl._RefreshPlayerIconNeedLimit = HL.Method() << function(self)
     if self.m_currLevelId == GameWorld.worldInfo.curLevelId then
         self:_StartPlayerIconLimit()
@@ -2102,14 +1743,10 @@ MapCtrl._RefreshPlayerIconNeedLimit = HL.Method() << function(self)
     end
 end
 
-
-
 MapCtrl._StartPlayerIconLimit = HL.Method() << function(self)
     local playerNode = self.view.levelMapController.view.levelMapLoader.view.element.player
     playerNode.levelMapLimitInRect:StartLimitMarkInRect()
 end
-
-
 
 MapCtrl._StopPlayerIconLimit = HL.Method() << function(self)
     local playerNode = self.view.levelMapController.view.levelMapLoader.view.element.player
@@ -2122,15 +1759,9 @@ end
 
 
 
-
-
-
 MapCtrl._RefreshSpaceshipNode = HL.Method(HL.String) << function(self, levelId)
     self.view.mapSpaceshipNode:InitMapSpaceshipNode({ levelId = levelId })
 end
-
-
-
 
 
 
@@ -2152,8 +1783,6 @@ end
 
 
 
-
-
 MapCtrl._InitCloseButton = HL.Method() << function(self)
     self.view.closeBtn.onClick:AddListener(function()
         self:_CloseMap()
@@ -2164,13 +1793,9 @@ MapCtrl._InitCloseButton = HL.Method() << function(self)
     end)
 end
 
-
-
 MapCtrl._CloseMap = HL.Method() << function(self)
     Notify(MessageConst.ON_CLICK_MAP_CLOSE_BTN)
 end
-
-
 
 
 
@@ -2184,8 +1809,6 @@ MapCtrl._InitFilterButton = HL.Method() << function(self)
     self:_RefreshFilterBtnState()
 end
 
-
-
 MapCtrl._OnFilterBtnClick = HL.Method() << function(self)
     self:_ToggleControllerMoveAndZoom(false)
     Notify(MessageConst.SHOW_LEVEL_MAP_FILTER, {
@@ -2195,15 +1818,11 @@ MapCtrl._OnFilterBtnClick = HL.Method() << function(self)
     })
 end
 
-
-
 MapCtrl._RefreshFilterBtnState = HL.Method() << function(self)
     local isFilterValid = GameInstance.player.mapManager:IsFilterValid()
     self.view.filterBtn.existNode.gameObject:SetActive(isFilterValid)
     self.view.filterBtn.normalNode.gameObject:SetActive(not isFilterValid)
 end
-
-
 
 MapCtrl._ResetFilterState = HL.Method() << function(self)
     local useServerFilterState = GameInstance.player.mapManager.useServerFilterState
@@ -2218,15 +1837,10 @@ end
 
 
 
-
-
 MapCtrl._InitWalletBar = HL.Method() << function(self)
     self.view.walletBarPlaceholder:InitWalletBarPlaceholder(UIConst.REGION_MAP_STAMINA_IDS)
     self:_RefreshWalletNodeVisibleState()
 end
-
-
-
 
 MapCtrl._OnSystemUnlock = HL.Method(HL.Table) << function(self, args)
     local systemIndex = unpack(args)
@@ -2235,13 +1849,9 @@ MapCtrl._OnSystemUnlock = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
 MapCtrl._RefreshWalletNodeVisibleState = HL.Method() << function(self)
     self.view.walletBarPlaceholder.gameObject:SetActive(Utils.isSystemUnlocked(GEnums.UnlockSystemType.Dungeon))
 end
-
-
 
 
 
@@ -2268,8 +1878,6 @@ MapCtrl._InitTierSwitcherNode = HL.Method() << function(self)
     end)
 end
 
-
-
 MapCtrl._CheckNeedShowTierSwitcherList = HL.Method() << function(self)
     local screenPos
     if DeviceInfo.usingController then
@@ -2284,7 +1892,11 @@ MapCtrl._CheckNeedShowTierSwitcherList = HL.Method() << function(self)
     )
     local worldPos = self.view.levelMapController.view.levelMapLoader:GetWorldPositionByRectPosition(rectPos)
     local isDirty = false
-    local success, regionId = GameWorld.mapRegionManager:CheckPosIsInTierContainerMap(self.m_currMapId, Vector2(worldPos.x, worldPos.z))
+    local success, regionId = GameWorld.mapRegionManager:CheckPosIsInTierContainerMap(
+        self.m_currMapId,
+        Vector2(worldPos.x, worldPos.z),
+        TIER_CHECK_TOLERANCE_RADIUS
+    )
     if success and GameWorld.mapRegionManager:GetRegionLevelId(regionId) ~= self.m_currLevelId then
         success = false  
     end
@@ -2304,8 +1916,6 @@ MapCtrl._CheckNeedShowTierSwitcherList = HL.Method() << function(self)
         self:_RefreshTierInfo()
     end
 end
-
-
 
 MapCtrl._RefreshTierInfo = HL.Method() << function(self)
     if self.m_currTierContainerId == MapConst.BASE_TIER_CONTAINER_ID then
@@ -2346,10 +1956,6 @@ MapCtrl._RefreshTierInfo = HL.Method() << function(self)
     self:_RefreshTierSwitcherNode(true, forceRefresh)
 end
 
-
-
-
-
 MapCtrl._RefreshTierSwitcherNode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, needShow, forceRefresh)
     local isShownStateDirty = self.m_tierSwitchersShowing ~= needShow
     local isPlayAnimationIn = self:IsPlayingAnimationIn()  
@@ -2373,17 +1979,12 @@ MapCtrl._RefreshTierSwitcherNode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << 
     self:_RefreshTierFocusNode()
 end
 
-
-
-
 MapCtrl._OnRefreshTierSwitcherNode = HL.Method(HL.Boolean) << function(self, needShow)
     self:_RefreshTierSwitcherCells()
     InputManagerInst:ToggleGroup(self.m_controllerTierBindingGroup, needShow)
     self.view.tierSwitcherNode.topNode.gameObject:SetActive(needShow)
     self.view.tierSwitcherNode.bottomNode.gameObject:SetActive(needShow)
 end
-
-
 
 MapCtrl._RefreshTierSwitcherCells = HL.Method() << function(self)
     if self.m_tierSwitchersShowing then
@@ -2482,17 +2083,12 @@ MapCtrl._RefreshTierSwitcherCells = HL.Method() << function(self)
     end
 end
 
-
-
 MapCtrl._RefreshTierFocusNode = HL.Method() << function(self)
     if DeviceInfo.usingController then
         return
     end
     self.view.tierFocusNode.focusImg.color = self.m_tierSwitchersShowing and Color.white or self.view.config.TIER_FOCUS_NORMAL_COLOR
 end
-
-
-
 
 MapCtrl._SelectTierByTierId = HL.Method(HL.Number).Return(HL.Boolean) << function(self, targetTierId)
     if not next(self.m_currTierIdList) then
@@ -2522,9 +2118,6 @@ MapCtrl._SelectTierByTierId = HL.Method(HL.Number).Return(HL.Boolean) << functio
     return false
 end
 
-
-
-
 MapCtrl._OnSelectTier = HL.Method(HL.Number) << function(self, index)
     if self.m_currTierIndex > 0 then
         local lastCell = self.m_tierSwitcherCells:GetItem(self.m_currTierIndex)
@@ -2546,29 +2139,18 @@ MapCtrl._OnSelectTier = HL.Method(HL.Number) << function(self, index)
     self:_SwitchToTargetTier(self.m_currTierIdList[index])
 end
 
-
-
-
 MapCtrl._SwitchToTargetTier = HL.Method(HL.Number) << function(self, tierId)
     self.view.levelMapController:SetLoaderTierStateWithTierId(tierId, true)
 end
-
-
-
 
 MapCtrl._StartCheckSwitchTierOnFocus = HL.Method(HL.String) << function(self, markInstId)
     self:_StopCheckSwitchTierOnFocus()
     self.m_trySwitchTierOnFocusMark = self.view.levelMapController:GetControllerMarkByInstId(markInstId, true)
 end
 
-
-
 MapCtrl._StopCheckSwitchTierOnFocus = HL.Method() << function(self)
     self.m_trySwitchTierOnFocusMark = nil
 end
-
-
-
 
 MapCtrl._TrySwitchTierOnFocus = HL.Method(HL.Any).Return(HL.Boolean) << function(self, mark)
     if mark == nil then
@@ -2584,22 +2166,15 @@ end
 
 
 
-
-
 MapCtrl._CheckAndRefreshNeedPlayMistUnlockedAnimationState = HL.Method() << function(self)
     self:_RefreshNeedPlayMistUnlockedAnimationState(self.view.levelMapController:NeedPlayMistsUnlockedAnimation())
 end
-
-
-
 
 MapCtrl._RefreshNeedPlayMistUnlockedAnimationState = HL.Method(HL.Boolean) << function(self, needPlay)
     self.m_needPlayMistsAnimation = needPlay
     self.view.blockMask.gameObject:SetActive(needPlay)
     InputManagerInst:ToggleGroup(self.view.mainInputGroup.groupId, not needPlay)
 end
-
-
 
 MapCtrl._TryPlayMistUnlockedAnimation = HL.Method() << function(self)
     if not self.m_needPlayMistsAnimation then
@@ -2616,8 +2191,6 @@ end
 
 
 
-
-
 MapCtrl._TryPlayMapMaskAnimation = HL.Method() << function(self)
     if self:_IsWaitingInitShowMarkDetail() then
         return  
@@ -2625,24 +2198,15 @@ MapCtrl._TryPlayMapMaskAnimation = HL.Method() << function(self)
     self.view.mapMaskAnimWrapper:PlayWithTween("map_masklevelmapcontroller_in")
 end
 
-
-
-
 MapCtrl._PlayRightZoomNodeAnimation = HL.Method(HL.Boolean) << function(self, isIn)
     local animName = isIn and "map_mainui_rightzoom_in" or "map_mainui_rightzoom_out"
     self.view.rightAnim:PlayWithTween(animName)
 end
 
-
-
-
 MapCtrl._PlayRightSpaceshipNodeAnimation = HL.Method(HL.Boolean) << function(self, isIn)
     local animName = isIn and "map_mainui_rightssnode_in" or "map_mainui_rightssnode_out"
     self.view.rightAnim:PlayWithTween(animName)
 end
-
-
-
 
 MapCtrl._PlayTopNodeAnimation = HL.Method(HL.Boolean) << function(self, isIn)
     local animName = isIn and "map_mainui_topnode_in" or "map_mainui_topnode_out"
@@ -2652,52 +2216,30 @@ MapCtrl._PlayTopNodeAnimation = HL.Method(HL.Boolean) << function(self, isIn)
     end)
 end
 
-
-
-
 MapCtrl._PlayLeftNodeAnimation = HL.Method(HL.Boolean) << function(self, isIn)
     local animName = isIn and "map_trackinginfo_in" or "map_trackinginfo_out"
     self.view.leftAnim:PlayWithTween(animName)
 end
-
-
-
 
 MapCtrl._PlayRightNodeAnimation = HL.Method(HL.Boolean) << function(self, isIn)
     local animName = isIn and "map_mainui_rightssnode_in" or "map_mainui_rightssnode_out"
     self.view.topAnim:PlayWithTween(animName)
 end
 
-
-
-
-
 MapCtrl._PlayMapResetAnimation = HL.Method(HL.Boolean, HL.Opt(HL.Function)) << function(self, isIn, callback)
     local animName = isIn and "map_mask_switch_in" or "map_mask_switch_out"
     self.view.mapMaskAnimWrapper:PlayWithTween(animName, callback)
 end
-
-
-
-
 
 MapCtrl._PlayTrackingNodeAnimation = HL.Method(HL.Boolean, HL.Opt(HL.Function)) << function(self, isIn, callback)
     local animName = isIn and "map_trackinginfo_in" or "map_trackinginfo_out"
     self.view.leftAnim:PlayWithTween(animName, callback)
 end
 
-
-
-
-
 MapCtrl._PlayFilterBtnAnimation = HL.Method(HL.Boolean, HL.Opt(HL.Function)) << function(self, isIn, callback)
     local animName = isIn and "map_mainui_filterbtn_in" or "map_mainui_filterbtn_out"
     self.view.leftAnim:PlayWithTween(animName, callback)
 end
-
-
-
-
 
 MapCtrl._PlayAndSetMainNodeVisibleState = HL.Method(HL.Boolean, HL.Opt(HL.Function)) << function(self, isIn, onComplete)
     UIUtils.PlayAnimationAndToggleActive(self.view.topAnim, isIn, function()
@@ -2711,14 +2253,11 @@ MapCtrl._PlayAndSetMainNodeVisibleState = HL.Method(HL.Boolean, HL.Opt(HL.Functi
 
     if isIn then
         
-        self.view.walletBarPlaceholder.gameObject:SetActive(true)
+        self.view.walletBarPlaceholder.gameObject:SetActive(not self.m_currNotExpectedPanelNodes[MapPanelNodeType.WalletBar])
     else
         self.view.walletBarPlaceholder.gameObject:SetActive(false)
     end
 end
-
-
-
 
 
 
@@ -2740,13 +2279,9 @@ MapCtrl._ForceSetMapStateToTargetLevel = HL.Method(HL.Table) << function(self, a
     self:_ResetZoomSliderValue(false)
 end
 
-
-
 MapCtrl.GetBigRectRecoverStateArg = HL.Method().Return(HL.Any) << function(self)
     return self.view.bigRectHelper:GetRecoverState()
 end
-
-
 
 MapCtrl.GetTierRecoverId = HL.Method().Return(HL.Number) << function(self)
     if self.m_currTierIdList == nil or next(self.m_currTierIdList) == nil then
@@ -2755,16 +2290,12 @@ MapCtrl.GetTierRecoverId = HL.Method().Return(HL.Number) << function(self)
     return self.m_currTierIdList[self.m_currTierIndex]
 end
 
-
-
 MapCtrl.GetPopupInfoState = HL.Method().Return(HL.Table) << function(self)
     return {
         self.m_buildingInfo,
         self.m_collectionInfo
     }
 end
-
-
 
 MapCtrl.GetCurrState = HL.Method().Return(HL.Table) << function(self)
     return {
@@ -2774,14 +2305,9 @@ MapCtrl.GetCurrState = HL.Method().Return(HL.Table) << function(self)
     }
 end
 
-
-
 MapCtrl.OpenFilterPanel = HL.Method() << function(self)
     self:_OnFilterBtnClick()
 end
-
-
-
 
 MapCtrl.ResetMapStateToTargetLevel = HL.Method(HL.Table) << function(self, args)
     if self.m_isResettingToTargetLevel then
@@ -2851,8 +2377,6 @@ end
 
 
 
-
-
 MapCtrl._InitMapController = HL.Method() << function(self)
     
     local optionGroup = self.view.selectOptionNode.inputGroup
@@ -2903,29 +2427,58 @@ end
 
 
 
+
+
+
 MapCtrl._ControllerResetToPlayer = HL.Method() << function(self)
+    if self.m_isResettingToPlayer then
+        return
+    end
+    self.m_isResettingToPlayer = true
+
     local playerNode = self.view.levelMapController.view.levelMapLoader.view.element.player
+
+    
+    local function freezeInput()
+        self:_StopTickChangZoomValue(true)
+        self:_StopTickChangZoomValue(false)
+        self.view.bigRectHelper:ClearAllTween()
+        self.view.bigRectHelper.controllerMoveEnabled = false
+        self.view.bigRectHelper.controllerZoomEnabled = false
+    end
+
+    
+    local function unfreezeAndFinish()
+        self.view.bigRectHelper.controllerMoveEnabled = true
+        self.view.bigRectHelper.controllerZoomEnabled = true
+        self.m_isResettingToPlayer = false
+    end
+
+    
+    local function onFocusComplete()
+        UIUtils.PlayAnimationAndToggleActive(self.view.controllerFocusAnim, true)
+        self.view.focusArrowNode.position = playerNode.rectTransform.position
+        unfreezeAndFinish()
+    end
+
+    freezeInput()
+
     UIUtils.PlayAnimationAndToggleActive(self.view.controllerFocusAnim, false, function()
         if GameWorld.worldInfo.curLevelId == self.m_currLevelId then
-            self.view.bigRectHelper:FocusNode(playerNode.rectTransform, true, function()
-                UIUtils.PlayAnimationAndToggleActive(self.view.controllerFocusAnim, true)
-                self.view.focusArrowNode.position = playerNode.rectTransform.position
-            end)
+            
+            self.view.bigRectHelper:FocusNode(playerNode.rectTransform, true, onFocusComplete)
         else
+            
             self:ResetMapStateToTargetLevel({
                 levelId = GameWorld.worldInfo.curLevelId,
                 onComplete = function()
-                    UIUtils.PlayAnimationAndToggleActive(self.view.controllerFocusAnim, true)
                     self.view.bigRectHelper:FocusNode(playerNode.rectTransform, false)
-                    self.view.focusArrowNode.position = playerNode.rectTransform.position
+                    onFocusComplete()
                 end
             })
         end
     end)
 end
-
-
-
 
 MapCtrl._OnControllerSelectOption = HL.Method(HL.Boolean) << function(self, next)
     local nextIndex = next and self.m_currHighlightOption + 1 or self.m_currHighlightOption - 1
@@ -2942,9 +2495,6 @@ MapCtrl._OnControllerSelectOption = HL.Method(HL.Boolean) << function(self, next
     AudioAdapter.PostEvent("Au_UI_Hover_ControllerSelect")
 end
 
-
-
-
 MapCtrl._ToggleControllerMoveAndZoom = HL.Method(HL.Boolean) << function(self, enabled)
     if not DeviceInfo.usingController then
         return
@@ -2955,14 +2505,9 @@ MapCtrl._ToggleControllerMoveAndZoom = HL.Method(HL.Boolean) << function(self, e
     self:_RefreshControllerClickBindingState()
 end
 
-
-
 MapCtrl._RefreshControllerClickBindingState = HL.Method() << function(self)
     InputManagerInst:ToggleBinding(self.view.bigRectHelper.clickBindingId, self.view.bigRectHelper.controllerMoveEnabled)
 end
-
-
-
 
 MapCtrl._OnControllerSelectTier = HL.Method(HL.Boolean) << function(self, next)
     local index = next and self.m_currTierIndex + 1 or self.m_currTierIndex - 1
@@ -2970,9 +2515,6 @@ MapCtrl._OnControllerSelectTier = HL.Method(HL.Boolean) << function(self, next)
     self:_OnSelectTier(index)
     AudioAdapter.PostEvent("Au_UI_Toggle_MapLayerSelect")
 end
-
-
-
 
 MapCtrl._OnControllerCustomMarkMultiDeleteStateChange = HL.Method(HL.Boolean) << function(self, isShow)
     self:_RefreshControllerClickBindingState()
@@ -2988,8 +2530,6 @@ MapCtrl._OnControllerCustomMarkMultiDeleteStateChange = HL.Method(HL.Boolean) <<
     end
 end
 
-
-
 MapCtrl._RefreshControllerClickHoverText = HL.Method() << function(self)
     if self.m_multiDeletePanelShow then
         return
@@ -2997,10 +2537,6 @@ MapCtrl._RefreshControllerClickHoverText = HL.Method() << function(self)
     local bindingText = (not self.m_controllerHoverMark and not self.m_noCustomMark) and Language.LUA_MAP_CUSTOM_MARK_ADD or ""
     InputManagerInst:SetBindingText(self.view.bigRectHelper.clickBindingId, bindingText)
 end
-
-
-
-
 
 MapCtrl._OnControllerMarkHover = HL.Method(HL.String, HL.Boolean) << function(self, markInstId, isHover)
     if self.m_multiDeletePanelShow then
@@ -3022,11 +2558,8 @@ end
 
 
 if BEYOND_DEBUG_COMMAND or BEYOND_DEBUG then
-    
     MapCtrl.m_isDebugMode = HL.Field(HL.Boolean) << false
 
-    
-    
     MapCtrl._InitDebugMode = HL.Method() << function(self)
         self.view.levelMapController:InitLevelMapController(MapConst.LEVEL_MAP_CONTROLLER_MODE.DEBUG)
         self.view.infoNode.gameObject:SetActive(false)
@@ -3046,8 +2579,6 @@ if BEYOND_DEBUG_COMMAND or BEYOND_DEBUG then
         self:_InitDebugTeleport()
     end
 
-    
-    
     MapCtrl._InitDebugTeleport = HL.Method() << function(self)
         self.view.touchPanel.onClick:AddListener(function(eventData)
             if not self.view.debugToggle.isOn then
@@ -3064,9 +2595,6 @@ if BEYOND_DEBUG_COMMAND or BEYOND_DEBUG then
         self.view.debugToggle.gameObject:SetActive(true)
     end
 
-    
-    
-    
     MapCtrl._DebugTeleport = HL.Method(HL.Any) << function(self, position)
         local rectPos = UIUtils.screenPointToUI(
             position,

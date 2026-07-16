@@ -1,21 +1,6 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.GachaDropBin
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseGachaDropBin = HL.Class('PhaseGachaDropBin', phaseBase.PhaseBase)
-
 
 
 
@@ -27,16 +12,11 @@ PhaseGachaDropBin.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 PhaseGachaDropBin.m_outsideObjItem = HL.Field(HL.Forward('PhaseGameObjectItem'))
-
 
 PhaseGachaDropBin.m_outsideDirector = HL.Field(CS.UnityEngine.Playables.PlayableDirector)
 
-
 PhaseGachaDropBin.m_cutsceneData = HL.Field(HL.Any)
-
-
 
 
 
@@ -48,17 +28,8 @@ end
 
 
 
-
-
-
-
-
 PhaseGachaDropBin.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhaseGachaDropBin._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     GameInstance.player.gacha.curPlayingDropBinCount = #self.arg.chars
@@ -95,10 +66,6 @@ PhaseGachaDropBin._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table
     LuaSystemManager.gachaSystem:UpdateGachaSettingState()
 end
 
-
-
-
-
 PhaseGachaDropBin._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if self.m_cutsceneData then
         for _, v in pairs(self.m_cutsceneData.audioEvents) do
@@ -110,21 +77,11 @@ PhaseGachaDropBin._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Tabl
     GameInstance.player.gacha.curPlayingTimelineMaxRarity = 0
 end
 
-
-
-
-
 PhaseGachaDropBin._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseGachaDropBin._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
 
 
 
@@ -135,13 +92,9 @@ PhaseGachaDropBin._OnActivated = HL.Override() << function(self)
     LuaSystemManager.gachaSystem:UpdateGachaSettingState()
 end
 
-
-
 PhaseGachaDropBin._OnDeActivated = HL.Override() << function(self)
     LuaSystemManager.gachaSystem:UpdateGachaSettingState()
 end
-
-
 
 PhaseGachaDropBin._OnDestroy = HL.Override() << function(self)
     PhaseGachaDropBin.Super._OnDestroy(self)

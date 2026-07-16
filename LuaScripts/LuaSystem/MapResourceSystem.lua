@@ -1,39 +1,19 @@
 local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
 local LuaResourceLoader = require_ex('Common/Utils/LuaResourceLoader')
-
-
-
-
-
-
-
-
-
-
-
 MapResourceSystem = HL.Class('MapResourceSystem', LuaSystemBase.LuaSystemBase)
-
 
 MapResourceSystem.m_resourceLoader = HL.Field(HL.Forward("LuaResourceLoader"))
 
-
 MapResourceSystem.m_singleMarkIconCache = HL.Field(HL.Table)  
-
 
 MapResourceSystem.m_markDynamicNodePrefabCache = HL.Field(HL.Table)
 
-
 MapResourceSystem.m_markObjPrefabCache = HL.Field(HL.Table)
-
 
 MapResourceSystem.m_markObjCache = HL.Field(HL.Table)
 
-
-
 MapResourceSystem.MapResourceSystem = HL.Constructor() << function(self)
 end
-
-
 
 MapResourceSystem.OnInit = HL.Override() << function(self)
     self.m_resourceLoader = LuaResourceLoader.LuaResourceLoader()
@@ -44,13 +24,9 @@ MapResourceSystem.OnInit = HL.Override() << function(self)
     self:_LoadMarkDynamicNodePrefabs()
 end
 
-
-
 MapResourceSystem.OnRelease = HL.Override() << function(self)
     self.m_resourceLoader:DisposeAllHandles()
 end
-
-
 
 MapResourceSystem._LoadMarkDynamicNodePrefabs = HL.Method() << function(self)
     local prefabRootPath = MapConst.MARK_DYNAMIC_NODE_PREFAB_ROOT_PATH
@@ -62,9 +38,6 @@ end
 
 
 
-
-
-
 MapResourceSystem.GetSingleMarkIconSprite = HL.Method(HL.String).Return(HL.Userdata) << function(self, iconName)
     if self.m_singleMarkIconCache[iconName] == nil then
         local sprite = self.m_resourceLoader:LoadSprite(UIUtils.getSpritePath(UIConst.UI_SPRITE_MAP_MARK_ICON, iconName))
@@ -72,9 +45,6 @@ MapResourceSystem.GetSingleMarkIconSprite = HL.Method(HL.String).Return(HL.Userd
     end
     return self.m_singleMarkIconCache[iconName]
 end
-
-
-
 
 MapResourceSystem.GetMarkDynamicNodePrefab = HL.Method(HL.String).Return(HL.Userdata) << function(self, prefabKey)
     return self.m_markDynamicNodePrefabCache[prefabKey]

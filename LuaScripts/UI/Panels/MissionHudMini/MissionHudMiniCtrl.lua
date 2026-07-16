@@ -4,14 +4,7 @@ local PANEL_ID = PanelId.MissionHudMini
 local ANIMATION_IN_STRETCH = "missionhudmini_in_stretch"
 local ANIMATION_OUT_EXTEND = "missionhudmini_out_extend"
 
-
-
-
-
-
-
 MissionHudMiniCtrl = HL.Class('MissionHudMiniCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -22,9 +15,6 @@ MissionHudMiniCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_TRACK_MISSION_CHANGE] = '_OnTrackMissionChange',
 }
-
-
-
 
 
 MissionHudMiniCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -49,15 +39,11 @@ MissionHudMiniCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 MissionHudMiniCtrl._OnTrackMissionChange = HL.Method() << function(self)
     local trackMission = GameInstance.player.mission.trackMissionId
     local trackingValid = (trackMission ~= nil and trackMission ~= "")
     self.view.miniPanel.gameObject:SetActive(trackingValid)
 end
-
-
 
 MissionHudMiniCtrl._ShrinkPanel = HL.Method() << function(self)
     self.view.animationWrapper:SetAnimationOutClip(ANIMATION_OUT_EXTEND)
@@ -72,8 +58,6 @@ MissionHudMiniCtrl._ShrinkPanel = HL.Method() << function(self)
         missionHud:SkipMissionBtnAnimIn()
     end)
 end
-
-
 
 MissionHudMiniCtrl.OnFacTopViewChanged = HL.StaticMethod(HL.Boolean) << function(uselessParam)
     if not DeviceInfo.usingTouch then

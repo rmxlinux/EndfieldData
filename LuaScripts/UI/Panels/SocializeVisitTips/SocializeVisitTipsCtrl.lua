@@ -2,17 +2,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SocializeVisitTips
 
-
-
-
-
-
-
 SocializeVisitTipsCtrl = HL.Class('SocializeVisitTipsCtrl', uiCtrl.UICtrl)
 
-
 SocializeVisitTipsCtrl.m_isInit = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -22,13 +14,8 @@ SocializeVisitTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 SocializeVisitTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
-
-
 
 SocializeVisitTipsCtrl.OnCellChange = HL.Method() << function(self)
     local friendInfo = GameInstance.player.spaceship:GetFriendRoleInfo()
@@ -36,8 +23,6 @@ SocializeVisitTipsCtrl.OnCellChange = HL.Method() << function(self)
         self.view.socializeFriendName:InitSocializeFriendName(friendInfo.roleId)
     end
 end
-
-
 
 SocializeVisitTipsCtrl.OnShow = HL.Override() << function(self)
     self:OnCellChange()

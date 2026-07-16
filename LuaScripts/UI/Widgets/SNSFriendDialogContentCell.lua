@@ -1,80 +1,35 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 local ChatType = CS.Beyond.Gameplay.SNSFriendChatSystem.ChatType
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SNSFriendDialogContentCell = HL.Class('SNSFriendDialogContentCell', UIWidgetBase)
-
 
 SNSFriendDialogContentCell.m_curActiveGo = HL.Field(GameObject)
 
-
 SNSFriendDialogContentCell.m_curActiveWeight = HL.Field(HL.Any)
-
 
 SNSFriendDialogContentCell.m_widgetTextLeft = HL.Field(HL.Any)
 
-
 SNSFriendDialogContentCell.m_widgetTextRight = HL.Field(HL.Any)
-
 
 SNSFriendDialogContentCell.m_widgetEmotionLeft = HL.Field(HL.Any)
 
-
 SNSFriendDialogContentCell.m_widgetEmotionRight = HL.Field(HL.Any)
-
 
 SNSFriendDialogContentCell.m_widgetBlueprintLeft = HL.Field(HL.Any)
 
-
 SNSFriendDialogContentCell.m_widgetBlueprintRight = HL.Field(HL.Any)
-
 
 SNSFriendDialogContentCell.m_widgetSocialBuildingLeft = HL.Field(HL.Any)
 
-
 SNSFriendDialogContentCell.m_widgetSocialBuildingRight = HL.Field(HL.Any)
-
 
 SNSFriendDialogContentCell.m_showLeft = HL.Field(HL.Boolean) << false
 
-
 SNSFriendDialogContentCell.m_message = HL.Field(HL.Any)
-
 
 SNSFriendDialogContentCell.m_msgIndex = HL.Field(HL.Number) << -1
 
-
 SNSFriendDialogContentCell.m_inAnimationType = HL.Field(HL.Any) << ""
-
-
-
-
-
-
 
 SNSFriendDialogContentCell.InitSNSFriendDialogContentCell = HL.Method(HL.Number, HL.Any, HL.Any, HL.Function) << function(
     self, showRoleId, message, dialogContentNaviGroup, callback)
@@ -242,9 +197,6 @@ SNSFriendDialogContentCell.InitSNSFriendDialogContentCell = HL.Method(HL.Number,
 end
 
 
-
-
-
 SNSFriendDialogContentCell.UpdateInfoFromServer = HL.Method(HL.Any)<< function(self, showRoleId)
     if showRoleId == nil then
         return
@@ -255,8 +207,6 @@ SNSFriendDialogContentCell.UpdateInfoFromServer = HL.Method(HL.Any)<< function(s
         GameInstance.player.friendChatSystem:QueryAdd(showRoleId, msg.msgIndex, msg.type, msg.bpSharedCode, msg.sbCreatorId)
     end
 end
-
-
 
 
 SNSFriendDialogContentCell.CheckCanJumpIn = HL.Method().Return(HL.Boolean)<< function(self)
@@ -272,16 +222,12 @@ SNSFriendDialogContentCell.CheckCanJumpIn = HL.Method().Return(HL.Boolean)<< fun
 end
 
 
-
-
 SNSFriendDialogContentCell.SetTargetNode = HL.Method()<< function(self)
     if not self.m_curActiveWeight then
         return
     end
     self.m_curActiveWeight:SetTargetNode()
 end
-
-
 
 SNSFriendDialogContentCell.PlayInAnimation = HL.Method()<< function(self)
     if not self.m_curActiveWeight then
@@ -296,8 +242,6 @@ SNSFriendDialogContentCell.PlayInAnimation = HL.Method()<< function(self)
     end
 end
 
-
-
 SNSFriendDialogContentCell.UpdateDataShowInfo = HL.Method()<< function(self)
     if not self.m_curActiveWeight then
         return
@@ -308,8 +252,6 @@ SNSFriendDialogContentCell.UpdateDataShowInfo = HL.Method()<< function(self)
         self.m_curActiveWeight:UpdateSocialBuildingShow(self.m_message)
     end
 end
-
-
 
 
 SNSFriendDialogContentCell._CloseAllChildWidget = HL.Method()<< function(self)
@@ -325,10 +267,6 @@ SNSFriendDialogContentCell._CloseAllChildWidget = HL.Method()<< function(self)
 end
 
 
-
-
-
-
 SNSFriendDialogContentCell._CloseOneChildWidget = HL.Method(HL.Any, HL.Boolean)<< function(self, widget, isObj)
     if widget then
         if isObj then
@@ -340,19 +278,11 @@ SNSFriendDialogContentCell._CloseOneChildWidget = HL.Method(HL.Any, HL.Boolean)<
 end
 
 
-
-
-
-
 SNSFriendDialogContentCell._CreateWidget = HL.Method(HL.String, HL.Any).Return(HL.Any)
     << function(self, widgetName, parentNode)
     local go = self:_CreateGameObject(widgetName, parentNode)
     return Utils.wrapLuaNode(go)
 end
-
-
-
-
 
 SNSFriendDialogContentCell._CreateGameObject = HL.Method(HL.String, HL.Any).Return(GameObject)
     << function(self, widgetName, parentNode)

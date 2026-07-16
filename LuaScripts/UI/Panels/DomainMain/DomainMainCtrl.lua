@@ -1,55 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DomainMain
 local PHASE_ID = PhaseId.DomainMain
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainMainCtrl = HL.Class('DomainMainCtrl', uiCtrl.UICtrl)
 
 
@@ -71,7 +22,6 @@ local dateStateNameMap = {
 
 
 
-
 DomainMainCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SYNC_DAILY_SOURCE_MONEY_RECORD] = '_OnSyncBulletinData',
     
@@ -82,58 +32,41 @@ DomainMainCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 DomainMainCtrl.m_curDomainId = HL.Field(HL.String) << ""
-
 
 DomainMainCtrl.m_unlockDomainIds = HL.Field(HL.Table)
 
-
 DomainMainCtrl.m_curDomainInfo = HL.Field(HL.Table)
-
 
 DomainMainCtrl.m_bulletinInfoList = HL.Field(HL.Table)
 
-
 DomainMainCtrl.m_genPoiCells = HL.Field(HL.Forward("UIListCache"))
-
 
 DomainMainCtrl.m_genDateCells = HL.Field(HL.Forward("UIListCache"))
 
-
 DomainMainCtrl.m_genIncomeDetailCells = HL.Field(HL.Forward("UIListCache"))
-
 
 DomainMainCtrl.m_genExpendDetailCells = HL.Field(HL.Forward("UIListCache"))
 
-
 DomainMainCtrl.m_curSelectBulletinIndex = HL.Field(HL.Number) << 0
-
 
 DomainMainCtrl.s_lastBulletinSyncTimestamp = HL.StaticField(HL.Number) << 0
 
-
 DomainMainCtrl.m_waitShowBulletin = HL.Field(HL.Boolean) << false
 
+DomainMainCtrl.m_waitSyncBulletinData = HL.Field(HL.Boolean) << false
 
 DomainMainCtrl.m_bindIdPreDate = HL.Field(HL.Number) << 0
 
-
 DomainMainCtrl.m_bindIdNextDate = HL.Field(HL.Number) << 0
 
-
 DomainMainCtrl.m_interactiveLock = HL.Field(HL.Boolean) << false
-
 
 
 DomainMainCtrl.m_stlActivityInfo = HL.Field(HL.Table)
 
 
-
 DomainMainCtrl.m_resumeArg = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -151,16 +84,12 @@ DomainMainCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 DomainMainCtrl.OnShow = HL.Override() << function(self)
     if self.m_resumeArg then
         return
     end
     self:_TryShowDomainVersionDiff()
 end
-
-
 
 DomainMainCtrl.OnAnimationInFinished = HL.Override() << function(self)
     self:SetNavi(true)
@@ -173,21 +102,13 @@ DomainMainCtrl.OnAnimationInFinished = HL.Override() << function(self)
     end
 end
 
-
-
 DomainMainCtrl.OnHide = HL.Override() << function(self)
     self:_ShowBulletin(false)
 end
 
-
-
-
 DomainMainCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
     self:_ShowBulletin(false)
 end
-
-
-
 
 
 
@@ -218,8 +139,6 @@ DomainMainCtrl.InitData = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
         end
     end
 end
-
-
 
 DomainMainCtrl.UpdateData = HL.Method() << function(self)
     
@@ -273,8 +192,6 @@ DomainMainCtrl.UpdateData = HL.Method() << function(self)
     
 end
 
-
-
 DomainMainCtrl._UpdateSettlementInfo = HL.Method() << function(self)
     
     if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.Settlement) then
@@ -294,8 +211,6 @@ DomainMainCtrl._UpdateSettlementInfo = HL.Method() << function(self)
     end
 end
 
-
-
 DomainMainCtrl._UpdateBulletinInfo = HL.Method() << function(self)
     self.m_bulletinInfoList = {}
     local moneyId = self.m_curDomainInfo.moneyId
@@ -313,9 +228,6 @@ DomainMainCtrl._UpdateBulletinInfo = HL.Method() << function(self)
     end
     self.m_curSelectBulletinIndex = LuaIndex(todayIndex)
 end
-
-
-
 
 DomainMainCtrl._CreateDailyBulletinInfo = HL.Method(HL.Any).Return(HL.Any) << function(self, dailySourceGroup)
     local info = {
@@ -353,13 +265,17 @@ end
 
 
 
-
-
 DomainMainCtrl.InitUI = HL.Method() << function(self)
     self.view.domainTopMoneyTitle.view.closeBtn.onClick:AddListener(function()
+        if self.m_interactiveLock then
+            return
+        end
         PhaseManager:PopPhase(PHASE_ID)
     end)
     self:BindInputPlayerAction("mainhud_open_domain", function()
+        if self.m_interactiveLock then
+            return
+        end
         PhaseManager:PopPhase(PHASE_ID)
     end, self.view.domainTopMoneyTitle.view.closeBtn.groupId)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
@@ -452,9 +368,6 @@ DomainMainCtrl.InitUI = HL.Method() << function(self)
     end)
 end
 
-
-
-
 DomainMainCtrl._OpenSwitchRegionPopup = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
     if UIManager:IsOpen(PanelId.SettlementSwitchRegionPopup) then
         return
@@ -471,9 +384,6 @@ DomainMainCtrl._OpenSwitchRegionPopup = HL.Method(HL.Opt(HL.Any)) << function(se
     })
 end
 
-
-
-
 DomainMainCtrl._OnChangeDomainConfirm = HL.Method(HL.String) << function(self, newDomainId)
     if self.m_curDomainId ~= newDomainId then
         self.view.domainTopMoneyTitle.view.walletBarPlaceholder.view.gameObject:SetActive(false)
@@ -487,12 +397,10 @@ DomainMainCtrl._OnChangeDomainConfirm = HL.Method(HL.String) << function(self, n
         self.animationWrapper:SampleClipAtPercent("domainmain_in_part_0", 1)
         self.animationWrapper:PlayInAnimation(function()
             self.m_interactiveLock = false
-            UIUtils.setAsNaviTarget(self.view.settlementPOICell.btn)    
+            self:SetNaviTarget(self.view.settlementPOICell.btn)    
         end)
     end
 end
-
-
 
 DomainMainCtrl.RefreshAllUI = HL.Method() << function(self)
     local domainInfo = self.m_curDomainInfo
@@ -522,13 +430,9 @@ DomainMainCtrl.RefreshAllUI = HL.Method() << function(self)
     self.view.poiOverviewRedDot:InitRedDot("DomainPOIOverview", self.m_curDomainId)
 end
 
-
-
 DomainMainCtrl._RefreshTitleMoneyUI = HL.Method() << function(self)
     self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(self.m_curDomainId)
 end
-
-
 
 DomainMainCtrl._RefreshSettlementCell = HL.Method() << function(self)
     local stlPOICell = self.view.settlementPOICell
@@ -546,10 +450,6 @@ DomainMainCtrl._RefreshSettlementCell = HL.Method() << function(self)
     end
     
 end
-
-
-
-
 
 DomainMainCtrl._OnRefreshPoiCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local poiInfo = self.m_curDomainInfo.poiInfoList[luaIndex]
@@ -607,8 +507,6 @@ DomainMainCtrl._OnRefreshPoiCell = HL.Method(HL.Any, HL.Number) << function(self
     end
 end
 
-
-
 DomainMainCtrl._RefreshBulletinUI = HL.Method() << function(self)
     
     self.m_genDateCells:Refresh(bulletinDayCount, function(cell, luaIndex)
@@ -617,9 +515,6 @@ DomainMainCtrl._RefreshBulletinUI = HL.Method() << function(self)
     
     self:_RefreshBulletinDetailUI(self.m_curSelectBulletinIndex)
 end
-
-
-
 
 DomainMainCtrl._RefreshBulletinDetailUI = HL.Method(HL.Number) << function(self, luaIndex)
     local bulletinInfo = self.m_bulletinInfoList[luaIndex]
@@ -679,10 +574,6 @@ DomainMainCtrl._RefreshBulletinDetailUI = HL.Method(HL.Number) << function(self,
     end
 end
 
-
-
-
-
 DomainMainCtrl._OnRefreshDateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     cell.normalBtn.onClick:RemoveAllListeners()
     if luaIndex > #self.m_bulletinInfoList then
@@ -704,9 +595,6 @@ DomainMainCtrl._OnRefreshDateCell = HL.Method(HL.Any, HL.Number) << function(sel
     end)
 end
 
-
-
-
 DomainMainCtrl._OnChangeSelectBulletinDate = HL.Method(HL.Number) << function(self, newLuaIndex)
     local oldCell = self.m_genDateCells:Get(self.m_curSelectBulletinIndex)
     if oldCell then
@@ -726,8 +614,6 @@ DomainMainCtrl._OnChangeSelectBulletinDate = HL.Method(HL.Number) << function(se
     self.view.bulletinNode.keyHintPre.enabled = enablePre
     self.view.bulletinNode.keyHintNext.enabled = enableNext
 end
-
-
 
 DomainMainCtrl._TryShowDomainVersionDiff = HL.Method() << function(self)
     logger.info("尝试显示版本差异信息：", self.m_curDomainId)
@@ -754,9 +640,8 @@ end
 
 
 
-
-
 DomainMainCtrl._ShowBulletinDirect = HL.Method() << function(self)
+    self.m_waitShowBulletin = false
     self.view.bulletinNode.gameObject:SetActive(true)
     InputManagerInst:ToggleBinding(self.m_bindIdPreDate, true)
     InputManagerInst:ToggleBinding(self.m_bindIdNextDate, true)
@@ -770,13 +655,9 @@ DomainMainCtrl._ShowBulletinDirect = HL.Method() << function(self)
         self.view.poiOverviewKeyHint.gameObject:SetActive(false)
         
         
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.selectableNaviGroup, self.view.bulletinNode.dateCell.normalBtn)
+        self:SetNaviTarget(self.view.bulletinNode.dateCell.normalBtn)
     end
 end
-
-
-
-
 
 DomainMainCtrl._ShowBulletin = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isShow, forceSkipRequire)
     
@@ -785,11 +666,15 @@ DomainMainCtrl._ShowBulletin = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << func
             self:_ShowBulletinDirect()
             return
         end
-        self.m_waitShowBulletin = true
+        if self.m_waitSyncBulletinData then
+            return
+        end
         local lastTime = DomainMainCtrl.s_lastBulletinSyncTimestamp
         local nowTime = DateTimeUtils.GetCurrentTimestampBySeconds()
         if lastTime + bulletinRequireTimeInterval >= nowTime then
             
+            self:_UpdateBulletinInfo()
+            self:_RefreshBulletinUI()
             self:_ShowBulletinDirect()
         else
             
@@ -816,9 +701,6 @@ DomainMainCtrl._ShowBulletin = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << func
     end
 end
 
-
-
-
 DomainMainCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
     if not resumeState then
         return
@@ -834,56 +716,40 @@ DomainMainCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, r
     end
 end
 
-
-
 DomainMainCtrl._RequireBulletinData = HL.Method() << function(self)
+    self.m_waitSyncBulletinData = true
     DomainMainCtrl.s_lastBulletinSyncTimestamp = DateTimeUtils.GetCurrentTimestampBySeconds()
     inventorySystem:SendWalletRecordRequire(self.m_curDomainInfo.moneyId)
 end
 
-
-
-
 DomainMainCtrl._OnSyncBulletinData = HL.Method(HL.Any) << function(self, arg)
+    self.m_waitSyncBulletinData = false
     local moneyId = unpack(arg)
     logger.info("[OnSyncBulletinData] money id", moneyId)
-    if string.isEmpty(moneyId) then
-        if self.m_waitShowBulletin then
-            self:_ShowBulletin(true)
+    if not string.isEmpty(moneyId) then
+        if moneyId == self.m_curDomainInfo.moneyId then
+            self:_UpdateBulletinInfo()
+            self:_RefreshBulletinUI()
         end
-        return
-    end
-    if moneyId == self.m_curDomainInfo.moneyId then
-        self:_UpdateBulletinInfo()
-        self:_RefreshBulletinUI()
     end
     if self.m_waitShowBulletin then
         self:_ShowBulletin(true)
     end
 end
 
-
-
-
 DomainMainCtrl._OnSettlementModify = HL.Method(HL.Any) << function(self, arg)
     self:_UpdateSettlementInfo()
     self:_RefreshSettlementCell()
 end
 
-
-
-
 DomainMainCtrl.SetNavi = HL.Method(HL.Boolean) << function(self, enable)
     self.m_interactiveLock = not enable
     if enable then
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.selectableNaviGroup, self.view.settlementPOICell.btn)
+        self:SetNaviTarget(self.view.settlementPOICell.btn)
     else
-        UIUtils.setAsNaviTarget(nil)
+        self:SetNaviTarget(nil)
     end
 end
-
-
-
 
 DomainMainCtrl._OnActivityStageUpdate = HL.Method(HL.Any) << function(self, arg)
     local activityId = unpack(arg)
@@ -893,8 +759,6 @@ DomainMainCtrl._OnActivityStageUpdate = HL.Method(HL.Any) << function(self, arg)
     self:UpdateData()
     self:RefreshAllUI()
 end
-
-
 
 DomainMainCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = {}

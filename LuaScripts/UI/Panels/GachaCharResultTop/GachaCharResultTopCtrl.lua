@@ -1,14 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaCharResultTop
 
-
-
-
-
-
-
 GachaCharResultTopCtrl = HL.Class('GachaCharResultTopCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -19,11 +12,7 @@ GachaCharResultTopCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 GachaCharResultTopCtrl.m_args = HL.Field(HL.Table)
-
-
-
 
 
 GachaCharResultTopCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -70,9 +59,6 @@ GachaCharResultTopCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId, gachaCharResult.view.inputGroup.groupId })
 end
 
-
-
-
 GachaCharResultTopCtrl._UpdateChar = HL.Method(HL.Number) << function(self, index)
     local cell = self.view["charCell" .. index]
     local char = self.m_args.chars[index]
@@ -112,8 +98,6 @@ GachaCharResultTopCtrl._UpdateChar = HL.Method(HL.Number) << function(self, inde
     local stateName = char.rarity >= UIConst.CHAR_MAX_RARITY and "SixStar" or "Normal"
     cell.simpleStateController:SetState(stateName)
 end
-
-
 
 
 

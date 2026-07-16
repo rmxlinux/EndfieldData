@@ -1,18 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.RaidMain
 
-
-
-
-
-
-
-
-
-
-
 RaidMainCtrl = HL.Class('RaidMainCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -25,9 +14,7 @@ RaidMainCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 RaidMainCtrl.s_needReOpen = HL.StaticField(HL.Boolean) << false
-
 
 RaidMainCtrl.OnWeeklyRaidQuit = HL.StaticMethod() << function()
     
@@ -36,16 +23,12 @@ RaidMainCtrl.OnWeeklyRaidQuit = HL.StaticMethod() << function()
     end
 end
 
-
 RaidMainCtrl.OnPhaseLevelOnTop = HL.StaticMethod() << function()
     if RaidMainCtrl.s_needReOpen then
         PhaseManager:OpenPhase(PhaseId.DungeonWeeklyRaid, nil, nil, true)
         RaidMainCtrl.s_needReOpen = false
     end
 end
-
-
-
 
 
 RaidMainCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -81,20 +64,14 @@ RaidMainCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 RaidMainCtrl.OnShow = HL.Override() << function(self)
     self:_UpdateView()
 end
-
-
 
 RaidMainCtrl._UpdateView = HL.Method() << function(self)
     self:_UpdateCommissionView()
     self:_UpdateBattlePassView()
 end
-
-
 
 RaidMainCtrl._UpdateCommissionView = HL.Method() << function(self)
     
@@ -114,8 +91,6 @@ RaidMainCtrl._UpdateCommissionView = HL.Method() << function(self)
     end
     self.view.commissionTips.gameObject:SetActive(showCommissionTips)
 end
-
-
 
 RaidMainCtrl._UpdateBattlePassView = HL.Method() << function(self)
     

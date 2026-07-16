@@ -31,73 +31,20 @@ local TITLE_FAIL_ANIM = "titlefail_in"
 
 local STAGE_TEXT_FORMAT = "%d/%d"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SimulationTrainingTrackHudCtrl = HL.Class('SimulationTrainingTrackHudCtrl', uiCtrl.UICtrl)
-
 
 
 SimulationTrainingTrackHudCtrl.m_curPhase = HL.Field(HL.Number) << Phase.Normal
 
-
 SimulationTrainingTrackHudCtrl.m_subGameId = HL.Field(HL.String) << ""
 
-
 SimulationTrainingTrackHudCtrl.m_isShowCustomTask = HL.Field(HL.Boolean) << false
-
 
 SimulationTrainingTrackHudCtrl.m_resetBtnVisible = HL.Field(HL.Boolean) << false
 
 
 
-
 SimulationTrainingTrackHudCtrl.m_contentShowingCor = HL.Field(HL.Thread)
-
 
 SimulationTrainingTrackHudCtrl.taskGoalShowing = HL.Field(HL.Boolean) << false
 
@@ -105,35 +52,25 @@ SimulationTrainingTrackHudCtrl.taskGoalShowing = HL.Field(HL.Boolean) << false
 
 
 
-
 SimulationTrainingTrackHudCtrl.m_canScrollContent = HL.Field(HL.Boolean) << false
-
 
 SimulationTrainingTrackHudCtrl.m_showArrow = HL.Field(HL.Boolean) << true
 
-
 SimulationTrainingTrackHudCtrl.m_canFold = HL.Field(HL.Boolean) << false
-
 
 SimulationTrainingTrackHudCtrl.m_isFold = HL.Field(HL.Boolean) << true
 
-
 SimulationTrainingTrackHudCtrl.m_scrollState = HL.Field(HL.Number) << -1
-
 
 SimulationTrainingTrackHudCtrl.m_rectFoldHeight = HL.Field(HL.Number) << 0
 
-
 SimulationTrainingTrackHudCtrl.m_rectUnfoldHeight = HL.Field(HL.Number) << 0
-
 
 SimulationTrainingTrackHudCtrl.m_tween = HL.Field(HL.Any)
 
 
 
-
 SimulationTrainingTrackHudCtrl.m_canFoldThresholdOffsetY = HL.Field(HL.Number) << -1
-
 
 
 
@@ -152,9 +89,7 @@ SimulationTrainingTrackHudCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 SimulationTrainingTrackHudCtrl.s_trackHudFinishState = HL.StaticField(HL.Number) << Phase.Normal
-
 
 SimulationTrainingTrackHudCtrl.OnSwitchLanguage = HL.StaticMethod() << function()
     if GameInstance.dungeonManager.curDungeonLikeSubGame == nil and GameWorld.worldInfo.subGame == nil then
@@ -172,8 +107,6 @@ SimulationTrainingTrackHudCtrl.OnSwitchLanguage = HL.StaticMethod() << function(
         return
     end
 end
-
-
 
 
 
@@ -203,8 +136,6 @@ SimulationTrainingTrackHudCtrl.OnOpenSubGameTrackings = HL.StaticMethod(HL.Any) 
     
 end
 
-
-
 SimulationTrainingTrackHudCtrl.OnCloseSubGameTrack = HL.StaticMethod(HL.Table) << function(args)
     local subGameId, isReset = unpack(args)
     local action = function()
@@ -231,8 +162,6 @@ end
 
 
 
-
-
 SimulationTrainingTrackHudCtrl.OnDeactivateCommonTaskTrackHud = HL.StaticMethod(HL.Table) << function(args)
     local ignoreCloseAnim = unpack(args)
     local opened, commonTaskTrackCtrl = UIManager:IsOpen(PANEL_ID)
@@ -253,9 +182,6 @@ end
 
 
 
-
-
-
 SimulationTrainingTrackHudCtrl.InitSubGameTrack = HL.Method(HL.Any) << function(self, args)
     self.m_subGameId = SIMULATION_TRAINING_SUB_GAME_ID
     self.m_isShowCustomTask = false
@@ -263,9 +189,6 @@ SimulationTrainingTrackHudCtrl.InitSubGameTrack = HL.Method(HL.Any) << function(
 
     self:RefreshAll()
 end
-
-
-
 
 SimulationTrainingTrackHudCtrl.StopSubGameTrack = HL.Method(HL.Boolean) << function(self, isReset)
     self.m_subGameId = ""
@@ -278,16 +201,11 @@ end
 
 
 
-
-
-
 SimulationTrainingTrackHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.btnStop.onClick:AddListener(function()
         self:_OnBtnStopClick()
     end)
 end
-
-
 
 SimulationTrainingTrackHudCtrl.OnClose = HL.Override() << function(self)
     if self.m_contentShowingCor then
@@ -295,14 +213,10 @@ SimulationTrainingTrackHudCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 SimulationTrainingTrackHudCtrl.OnShow = HL.Override() << function(self)
     
 
 end
-
-
 
 SimulationTrainingTrackHudCtrl.RefreshAll = HL.Method() << function(self)
     self:_RefreshSubGameTrack()
@@ -316,8 +230,6 @@ SimulationTrainingTrackHudCtrl.RefreshAll = HL.Method() << function(self)
     wrapper:SampleClip(CONTENT_REFRESH_ANIM, 1)
     wrapper:PlayInAnimation()
 end
-
-
 
 
 SimulationTrainingTrackHudCtrl._RefreshSubGameTrack = HL.Method() << function(self)
@@ -348,15 +260,10 @@ SimulationTrainingTrackHudCtrl._RefreshSubGameTrack = HL.Method() << function(se
 end
 
 
-
-
-
 SimulationTrainingTrackHudCtrl.OnGameMechanicsSyncCustomTarget = HL.Method(HL.Any) << function(self, args)
     local gameId, targetValue, currentValue = unpack(args)
     self.view.mainGoalCell.progressTxt.text = string.format(Language.LUA_SIMULATION_TRAINING_HUD_GOAL_NUMBER, currentValue,targetValue)
 end
-
-
 
 SimulationTrainingTrackHudCtrl._RefreshMainTask = HL.Method() << function(self)
     self.view.mainGoalCell.goalTxt.text = Language.LUA_SIMULATION_TRAINING_HUD_GOAL_TEXT  
@@ -384,8 +291,6 @@ SimulationTrainingTrackHudCtrl._RefreshMainTask = HL.Method() << function(self)
     self.view.mainGoalRewardCell.goalTxt.text = string.format(Language.LUA_SIMULATION_TRAINING_HUD_REWARD_NUMBER, rewardNum) 
     self.view.mainGoalRewardCell.progressTxt.text = ""
 end
-
-
 
 
 SimulationTrainingTrackHudCtrl.OnSubGameStageFinish = HL.Method() << function(self)
@@ -431,8 +336,6 @@ SimulationTrainingTrackHudCtrl.OnSubGameStageFinish = HL.Method() << function(se
     
 end
 
-
-
 SimulationTrainingTrackHudCtrl.OnSubGameStageChange = HL.Method() << function(self)
     local action = function()
         local subGameId = SIMULATION_TRAINING_SUB_GAME_ID
@@ -452,9 +355,6 @@ SimulationTrainingTrackHudCtrl.OnSubGameStageChange = HL.Method() << function(se
     
     
 end
-
-
-
 
 SimulationTrainingTrackHudCtrl.OnSubGameFinishStateChange = HL.Method(HL.Any) << function(self, args)
     local subGameId, phase = unpack(args)
@@ -501,14 +401,9 @@ SimulationTrainingTrackHudCtrl.OnSubGameFinishStateChange = HL.Method(HL.Any) <<
     self.m_curPhase = phase
 end
 
-
-
 SimulationTrainingTrackHudCtrl._ShowEndEffect = HL.Method().Return(HL.Boolean) << function(self)
     return false
 end
-
-
-
 
 SimulationTrainingTrackHudCtrl._DoFailContentShowing = HL.Method(HL.Number) << function(self, phase)
     self:_ToggleBtnVisible(false)
@@ -534,9 +429,6 @@ SimulationTrainingTrackHudCtrl._DoFailContentShowing = HL.Method(HL.Number) << f
     end)
 end
 
-
-
-
 SimulationTrainingTrackHudCtrl._DoSuccContentShowing = HL.Method(HL.Number) << function(self, phase)
     self:_ToggleBtnVisible(false)
     self.m_contentShowingCor = self:_StartCoroutine( function()
@@ -560,10 +452,6 @@ SimulationTrainingTrackHudCtrl._DoSuccContentShowing = HL.Method(HL.Number) << f
     end)
 end
 
-
-
-
-
 SimulationTrainingTrackHudCtrl._SafelyPlayAnimAsync = HL.Method(HL.Any, HL.String) << function(self, animWrapper, animName)
     if self.m_isClosed then
         return
@@ -574,20 +462,13 @@ SimulationTrainingTrackHudCtrl._SafelyPlayAnimAsync = HL.Method(HL.Any, HL.Strin
     coroutine.wait(stateTime)
 end
 
-
-
 SimulationTrainingTrackHudCtrl._TrackFinish = HL.Method() << function(self)
     self:Hide()
 end
 
-
-
 SimulationTrainingTrackHudCtrl._ManuSetFailState = HL.Method() << function(self)
 
 end
-
-
-
 
 SimulationTrainingTrackHudCtrl._ToggleTitleState = HL.Method(HL.Number) << function(self, phase)
     
@@ -600,24 +481,17 @@ SimulationTrainingTrackHudCtrl._ToggleTitleState = HL.Method(HL.Number) << funct
 end
 
 
-
-
 SimulationTrainingTrackHudCtrl._RefreshFailInfo = HL.Method() << function(self)
     local success, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.m_subGameId)
     local failInfo = success and subGameData.failInfo:GetText() or self.m_subGameId
     self.view.goalRoot.gameObject:SetActive(false)
 end
 
-
-
-
 SimulationTrainingTrackHudCtrl._ProcessTitleText = HL.Method(HL.String) << function(self, title)
     self.view.titleDefaultTxt:SetAndResolveTextStyle(title)
     self.view.titleFailTxt:SetAndResolveTextStyle(title)
     self.view.titleFinishTxt:SetAndResolveTextStyle(title)
 end
-
-
 
 SimulationTrainingTrackHudCtrl._ProcessTitleIcon = HL.Method() << function(self)
     local success, gameTblData = Tables.gameMechanicTable:TryGetValue(self.m_subGameId)
@@ -643,17 +517,11 @@ SimulationTrainingTrackHudCtrl._ProcessTitleIcon = HL.Method() << function(self)
 end
 
 
-
-
 SimulationTrainingTrackHudCtrl._OnBtnStopClick = HL.Method() << function(self)
     self:_ShowConfirmPopup(Language.LUA_SIMULATION_TRAINING_HUD_EXIT_POPUP_TEXT, function()   
         GameWorld.worldInfo.subGame:SendQuit()
     end)
 end
-
-
-
-
 
 
 SimulationTrainingTrackHudCtrl._ShowConfirmPopup = HL.Method(HL.String, HL.Function) << function(self, content, confirmFunc)
@@ -674,9 +542,6 @@ SimulationTrainingTrackHudCtrl._ShowConfirmPopup = HL.Method(HL.String, HL.Funct
         }
     })
 end
-
-
-
 
 
 SimulationTrainingTrackHudCtrl._ToggleBtnVisible = HL.Method(HL.Boolean) << function(self, isOn)

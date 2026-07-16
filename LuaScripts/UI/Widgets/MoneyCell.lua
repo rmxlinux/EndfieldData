@@ -1,104 +1,42 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 local AutoTriggerOnClick = CS.Beyond.Input.ActionOnSetNaviTarget.AutoTriggerOnClick
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MoneyCell = HL.Class('MoneyCell', UIWidgetBase)
 
 local TIPS_SHOW_PADDING_TOP = 100
 
-
 MoneyCell.m_itemId = HL.Field(HL.String) << ""
-
 
 MoneyCell.m_itemInstId = HL.Field(HL.Number) << 0
 
-
 MoneyCell.m_isMoneyType = HL.Field(HL.Boolean) << false
-
 
 MoneyCell.m_coroutine = HL.Field(HL.Thread)
 
-
 MoneyCell.m_lastStamina = HL.Field(HL.Number) << 0
-
 
 MoneyCell.m_controllerBindingId = HL.Field(HL.Number) << -1
 
-
 MoneyCell.m_useItemIcon = HL.Field(HL.Boolean) << false
-
 
 MoneyCell.m_needNumberLimit = HL.Field(HL.Boolean) << true
 
-
 MoneyCell.m_customLimitNumber = HL.Field(HL.Number) << -1
-
 
 MoneyCell.m_staminaCloseFun = HL.Field(HL.Function)
 
-
 MoneyCell.m_staminaClickFun = HL.Field(HL.Function)
-
 
 MoneyCell.m_rawPreferredWidth = HL.Field(HL.Number) << -1
 
-
 MoneyCell.m_cellPreferredWidth = HL.Field(HL.Number) << -1
 
-
 MoneyCell.m_staminaShowItemTips = HL.Field(HL.Boolean) << false
-
 
 MoneyCell.m_isItemTipsShowing = HL.Field(HL.Boolean) << false
 
 
 local HOT_AREA_ADJUST_POSITION_X = 10
-
-
 
 
 MoneyCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -127,13 +65,9 @@ MoneyCell._OnFirstTimeInit = HL.Override() << function(self)
     self.m_rawPreferredWidth = self.view.contentNode.preferredWidth
 end
 
-
-
 MoneyCell._OnDestroy = HL.Override() << function(self)
     self:_StopTick()
 end
-
-
 
 MoneyCell._OnEnable = HL.Override() << function(self)
     if self:IsStamina() then
@@ -141,22 +75,12 @@ MoneyCell._OnEnable = HL.Override() << function(self)
     end
 end
 
-
-
 MoneyCell._OnDisable = HL.Override() << function(self)
     self:_StopTick()
     if self:IsStamina() then
         self.view.tip.gameObject:SetActive(false)
     end
 end
-
-
-
-
-
-
-
-
 
 MoneyCell.InitMoneyCell = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean, HL.Number, HL.Number))
         << function(self, itemId, useAction, useItemIcon, needNumberLimit, limitNumber, cellPreferredWidth)
@@ -187,42 +111,25 @@ MoneyCell.InitMoneyCell = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean, HL
 end
 
 
-
-
-
 MoneyCell.SetStaminaCloseFun = HL.Method(HL.Function) << function(self, staminaCloseFun)
     self.m_staminaCloseFun = staminaCloseFun
 end
-
-
-
 
 MoneyCell.SetStaminaClickFun = HL.Method(HL.Function) << function(self, staminaClickFun)
     self.m_staminaClickFun = staminaClickFun
 end
 
-
-
-
 MoneyCell.SetStaminaShowItemTips = HL.Method(HL.Boolean) << function(self, staminaShowItemTips)
     self.m_staminaShowItemTips = staminaShowItemTips
 end
-
-
-
 
 MoneyCell.SetItemInstId = HL.Method(HL.Number) << function(self, instId)
     self.m_itemInstId = instId
 end
 
-
-
-
 MoneyCell.SetAddBtnKeyHintText = HL.Method(HL.String) << function(self, keyHintText)
     self.view.addBtn.customBindingViewLabelText = keyHintText
 end
-
-
 
 MoneyCell._RegisterMessages = HL.Method() << function(self)
     self:RegisterMessage(MessageConst.ON_STAMINA_CHANGED, function()
@@ -239,8 +146,6 @@ MoneyCell._RegisterMessages = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 MoneyCell._RefreshUI = HL.Method() << function(self)
     local itemData = Tables.itemTable:GetValue(self.m_itemId)
@@ -262,8 +167,6 @@ MoneyCell._RefreshUI = HL.Method() << function(self)
     end
     self:_UpdateCount()
 end
-
-
 
 MoneyCell._UpdateCount = HL.Method() << function(self)
     if self:IsStamina() then
@@ -292,13 +195,9 @@ MoneyCell._UpdateCount = HL.Method() << function(self)
     end
 end
 
-
-
 MoneyCell._ShouldShowAddButton = HL.Method().Return(HL.Boolean) << function(self)
     return self:IsStamina() or self:_IsDiamond() or self:_IsOriginium() or self:_IsWeaponGacha()
 end
-
-
 
 MoneyCell._OnClickItem = HL.Method() << function(self)
     if self:IsStamina() then
@@ -328,8 +227,6 @@ MoneyCell._OnClickItem = HL.Method() << function(self)
         self:_OnClickItem2ShowItemTips()
     end
 end
-
-
 
 MoneyCell._OnClickItem2ShowItemTips = HL.Method() << function(self)
     if UIManager:IsShow(PanelId.RewardsPopUpForSystem) then
@@ -361,8 +258,6 @@ MoneyCell._OnClickItem2ShowItemTips = HL.Method() << function(self)
     })
     self.view.selected.gameObject:SetActive(true)
 end
-
-
 
 MoneyCell._OnClickAddItem = HL.Method() << function(self)
     if self:IsStamina() then
@@ -398,8 +293,6 @@ MoneyCell._OnClickAddItem = HL.Method() << function(self)
     Notify(MessageConst.HIDE_ITEM_TIPS)
 end
 
-
-
 MoneyCell._OnStaminaChanged = HL.Method() << function(self)
     if self:IsStamina() then
         self:_UpdateCount()
@@ -410,9 +303,6 @@ MoneyCell._OnStaminaChanged = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 MoneyCell._OnWalletChanged = HL.Method(HL.Table) << function(self, args)
     if self:IsStamina() then
@@ -425,9 +315,6 @@ MoneyCell._OnWalletChanged = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
-
 MoneyCell._OnItemCountChanged = HL.Method(HL.Table) << function(self, arg)
     if string.isEmpty(self.m_itemId) then
         return
@@ -438,37 +325,25 @@ MoneyCell._OnItemCountChanged = HL.Method(HL.Table) << function(self, arg)
     end
 end
 
-
-
 MoneyCell.IsStamina = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_itemId == Tables.globalConst.apItemId
 end
-
-
 
 MoneyCell._IsDiamond = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_itemId == Tables.globalConst.diamondItemId
 end
 
-
-
 MoneyCell._IsWeaponGacha = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_itemId == Tables.globalConst.gachaWeaponItemId
 end
-
-
 
 MoneyCell._IsOriginium = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_itemId == Tables.globalConst.originiumItemId and not UIManager:IsShow(PanelId.ShopRecharge)
 end
 
-
-
 MoneyCell.IsOriginium = HL.Method().Return(HL.Boolean) << function(self)
     return self:_IsOriginium()
 end
-
-
 
 MoneyCell._StartTick = HL.Method() << function(self)
     if self.m_coroutine then
@@ -484,15 +359,11 @@ MoneyCell._StartTick = HL.Method() << function(self)
     end)
 end
 
-
-
 MoneyCell._StopTick = HL.Method() << function(self)
     if self.m_coroutine then
         self.m_coroutine = self:_ClearCoroutine(self.m_coroutine)
     end
 end
-
-
 
 MoneyCell._UpdateStamina = HL.Method() << function(self)
     local curStamina = GameInstance.player.inventory.curStamina
@@ -501,8 +372,6 @@ MoneyCell._UpdateStamina = HL.Method() << function(self)
         self.m_lastStamina = curStamina
     end
 end
-
-
 
 MoneyCell._ClearControllerBinding = HL.Method() << function(self)
     if self.m_controllerBindingId == -1 then

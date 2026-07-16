@@ -3,27 +3,7 @@ local MAX_REPORT_COUNT = 3
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipDailyReport
 local PHASE_ID = PhaseId.SpaceshipDailyReport
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipDailyReportCtrl = HL.Class('SpaceshipDailyReportCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -34,29 +14,19 @@ SpaceshipDailyReportCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 SpaceshipDailyReportCtrl.m_reportInfos = HL.Field(HL.Table) 
-
 
 SpaceshipDailyReportCtrl.m_reportBackBindingIds = HL.Field(HL.Table)
 
-
 SpaceshipDailyReportCtrl.m_isScrollInit = HL.Field(HL.Boolean) << false
-
 
 SpaceshipDailyReportCtrl.m_curIndex = HL.Field(HL.Number) << -1
 
-
 SpaceshipDailyReportCtrl.m_dayTabCache = HL.Field(HL.Forward('UIListCache'))
-
 
 SpaceshipDailyReportCtrl.m_focusBindingIds = HL.Field(HL.Table)
 
-
 SpaceshipDailyReportCtrl.m_getReportCell = HL.Field(HL.Function)
-
-
-
 
 
 
@@ -85,8 +55,6 @@ SpaceshipDailyReportCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
 SpaceshipDailyReportCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     return {
         recoverState = {
@@ -94,9 +62,6 @@ SpaceshipDailyReportCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.An
         }
     }
 end
-
-
-
 
 SpaceshipDailyReportCtrl._GetRecoverDayIndex = HL.Method(HL.Table).Return(HL.Number) << function(self, recoverState)
     local dayCount = #self.m_reportInfos
@@ -112,8 +77,6 @@ SpaceshipDailyReportCtrl._GetRecoverDayIndex = HL.Method(HL.Table).Return(HL.Num
     end
     return recoverDayIndex
 end
-
-
 
 SpaceshipDailyReportCtrl._InitData = HL.Method() << function(self)
     self.m_reportInfos = {}
@@ -180,9 +143,6 @@ SpaceshipDailyReportCtrl._InitData = HL.Method() << function(self)
     self:_ChangeToDay(1)
 end
 
-
-
-
 SpaceshipDailyReportCtrl._ChangeToDay = HL.Method(HL.Number) << function(self, index)
     if self.m_curIndex == index and not self.m_isScrollInit then
         return
@@ -194,8 +154,6 @@ SpaceshipDailyReportCtrl._ChangeToDay = HL.Method(HL.Number) << function(self, i
     self:_RefreshBottom()
 end
 
-
-
 SpaceshipDailyReportCtrl._RefreshRoomCells = HL.Method() << function(self)
     local info = self.m_reportInfos[self.m_curIndex]
     self.view.scrollViewScrollList.onUpdateCell:AddListener(function(obj, csIndex)
@@ -204,8 +162,6 @@ SpaceshipDailyReportCtrl._RefreshRoomCells = HL.Method() << function(self)
     end)
     self.view.scrollViewScrollList:UpdateCount(#info.roomReports, true)
 end
-
-
 
 SpaceshipDailyReportCtrl._RefreshBottom = HL.Method() << function(self)
     local info = self.m_reportInfos[self.m_curIndex]
@@ -232,10 +188,6 @@ SpaceshipDailyReportCtrl._RefreshBottom = HL.Method() << function(self)
         dateNode.curTimeTxt.text = cutTxt
     end
 end
-
-
-
-
 
 SpaceshipDailyReportCtrl._OnUpdateRoomCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local info = self.m_reportInfos[self.m_curIndex].roomReports[index]
@@ -316,7 +268,7 @@ SpaceshipDailyReportCtrl._OnUpdateRoomCell = HL.Method(HL.Table, HL.Number) << f
     self.m_reportBackBindingIds[index] = self:BindInputPlayerAction("common_back", function()
         Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, cell.targetInputBindingGroupMonoTarget.groupId)
         InputManagerInst:ToggleBinding(self.m_reportBackBindingIds[index], false)
-        InputManagerInst.controllerNaviManager:SetTarget(cell.inputBindingGroupNaviDecorator)
+        self:SetNaviTarget(cell.inputBindingGroupNaviDecorator)
         Notify(MessageConst.HIDE_ITEM_TIPS)
         Notify(MessageConst.HIDE_SPACESHIP_CHAR_TIPS)
     end, cell.targetInputBindingGroupMonoTarget.groupId)
@@ -413,18 +365,13 @@ SpaceshipDailyReportCtrl._OnUpdateRoomCell = HL.Method(HL.Table, HL.Number) << f
         end
     end
     if index == 1 and self.m_isScrollInit then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.inputBindingGroupNaviDecorator)
+        self:SetNaviTarget(cell.inputBindingGroupNaviDecorator)
         cell.charNode.controllerScrollEnabled = true
         self.m_isScrollInit = false
     else
         cell.charNode.controllerScrollEnabled = false
     end
 end
-
-
-
-
-
 
 SpaceshipDailyReportCtrl._OnUpdateCharCell = HL.Method(HL.Table, HL.Table, HL.Table) << function(self, charCell, info, roomReport)
     charCell.friendshipChangeNode.gameObject:SetActive(false)
@@ -505,9 +452,6 @@ SpaceshipDailyReportCtrl._OnUpdateCharCell = HL.Method(HL.Table, HL.Table, HL.Ta
     charCell.friendshipTxt.text = string.format(Language.LUA_SPACESHIP_CHAR_FRIENDSHIP_FORMAT, finalPercent)
     charCell.addedFriendshipTxt.text = string.format(Language.LUA_SPACESHIP_CHAR_FRIENDSHIP_FORMAT, startPercent) 
 end
-
-
-
 
 SpaceshipDailyReportCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     if DeviceInfo.usingController then

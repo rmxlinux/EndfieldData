@@ -1,46 +1,18 @@
 local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GachaSystem = HL.Class('GachaSystem', LuaSystemBase.LuaSystemBase)
-
 
 
 GachaSystem.m_camCullingEnabled = HL.Field(HL.Boolean) << false
 
-
 GachaSystem.m_camEnableSettingKeys = HL.Field(HL.Table)
 
-
 GachaSystem.m_curIVPath = HL.Field(HL.Any)
-
-
 
 
 GachaSystem.GachaSystem = HL.Constructor() << function(self)
     self.m_camEnableSettingKeys = {}
 end
-
-
 
 
 GachaSystem.UpdateGachaSettingState = HL.Method() << function(self)
@@ -58,8 +30,6 @@ GachaSystem.UpdateGachaSettingState = HL.Method() << function(self)
     self:UpdateGachaMusicState()
     self:_UpdateIsInGacha()
 end
-
-
 
 
 GachaSystem.UpdateGachaWeaponSettingState = HL.Method() << function(self)
@@ -90,8 +60,6 @@ local GachaPhaseIds = {
     PhaseId.GachaWeapon,
     PhaseId.GachaWeaponResult,
 }
-
-
 
 GachaSystem._UpdateIsInGacha = HL.Method() << function(self)
     local inGacha = false
@@ -127,8 +95,6 @@ local NeedGachaCamPhaseIds = {
     [PhaseId.GachaWeapon] = true,
 }
 
-
-
 GachaSystem.UpdateGachaMusicState = HL.Method() << function(self)
     local topPhaseId = PhaseManager:GetTopOpenAndValidPhaseId()
     if topPhaseId == PhaseId.GachaDropBin then
@@ -153,31 +119,20 @@ GachaSystem.UpdateGachaMusicState = HL.Method() << function(self)
     end
 end
 
-
-
-
 GachaSystem._IsInCharGacha = HL.Method(HL.Opt(HL.Number)).Return(HL.Boolean) << function(self, topPhaseId)
     topPhaseId = topPhaseId or PhaseManager:GetTopOpenAndValidPhaseId()
     return GachaCharPhaseIds[topPhaseId] == true
 end
-
-
-
 
 GachaSystem._IsInWeaponGacha = HL.Method(HL.Opt(HL.Number)).Return(HL.Boolean) << function(self, topPhaseId)
     topPhaseId = topPhaseId or PhaseManager:GetTopOpenAndValidPhaseId()
     return GachaWeaponPhaseIds[topPhaseId] == true
 end
 
-
-
 GachaSystem._IsInNeedGachaCamPhase = HL.Method().Return(HL.Boolean) << function(self)
     local topPhaseId = PhaseManager:GetTopOpenAndValidPhaseId()
     return NeedGachaCamPhaseIds[topPhaseId] == true
 end
-
-
-
 
 GachaSystem._UpdateGachaCharIV = HL.Method(HL.Boolean) << function(self, active)
     if active == (self.m_curIVPath ~= nil) then
@@ -185,14 +140,11 @@ GachaSystem._UpdateGachaCharIV = HL.Method(HL.Boolean) << function(self, active)
     end
     local ivPath
     if active then
-        local platformPathName =  CS.Beyond.Resource.PathConsts.GetCurrentAssetPlatformName()
+        local platformPathName =  CS.Beyond.Resource.PathConsts.GetCurrentDataSceneAssetFolderName()
         ivPath = "Data/IrradianceVolume/" .. platformPathName .. "/gacha/character"
     end
     self:SetGachaIV(ivPath)
 end
-
-
-
 
 GachaSystem._UpdateGachaWeaponIV = HL.Method(HL.Boolean) << function(self, active)
     if active == (self.m_curIVPath ~= nil) then
@@ -200,14 +152,11 @@ GachaSystem._UpdateGachaWeaponIV = HL.Method(HL.Boolean) << function(self, activ
     end
     local ivPath
     if active then
-        local platformPathName =  CS.Beyond.Resource.PathConsts.GetCurrentAssetPlatformName()
+        local platformPathName =  CS.Beyond.Resource.PathConsts.GetCurrentDataSceneAssetFolderName()
         ivPath = "Data/IrradianceVolume/" .. platformPathName .. "/gacha/weapon"
     end
     self:SetGachaIV(ivPath)
 end
-
-
-
 
 GachaSystem.SetGachaIV = HL.Method(HL.Opt(HL.String)) << function(self, ivPath)
     if self.m_curIVPath == ivPath then
@@ -225,10 +174,6 @@ GachaSystem.SetGachaIV = HL.Method(HL.Opt(HL.String)) << function(self, ivPath)
     end
 end
 
-
-
-
-
 GachaSystem.ToggleGachaCamSetting = HL.Method(HL.String, HL.Boolean) << function(self, key, active)
     logger.info("ToggleGachaCamSetting", key, active)
     if active then
@@ -238,8 +183,6 @@ GachaSystem.ToggleGachaCamSetting = HL.Method(HL.String, HL.Boolean) << function
     end
     self:_UpdateGachaCamSettingEnabled()
 end
-
-
 
 GachaSystem._UpdateGachaCamSettingEnabled = HL.Method() << function(self)
     local active = next(self.m_camEnableSettingKeys) ~= nil
@@ -258,25 +201,17 @@ GachaSystem._UpdateGachaCamSettingEnabled = HL.Method() << function(self)
 end
 
 
-
-
 GachaSystem.PreloadDropBin = HL.Method() << function(self)
     
     
     
 end
 
-
-
 GachaSystem.GetDropBin = HL.Method() << function(self)
 end
 
-
-
 GachaSystem.DesDropBin = HL.Method() << function(self)
 end
-
-
 
 GachaSystem.OnRelease = HL.Override() << function(self)
     

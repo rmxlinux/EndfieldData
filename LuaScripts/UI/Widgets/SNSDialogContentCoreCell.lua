@@ -26,48 +26,20 @@ local ContentType2WidgetName = {
 
 local EndLineWidgetName = "EndLine"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SNSDialogContentCoreCell = HL.Class('SNSDialogContentCoreCell', UIWidgetBase)
-
 
 SNSDialogContentCoreCell.m_endLineWidget = HL.Field(HL.Any)
 
-
 SNSDialogContentCoreCell.m_curActiveWidget = HL.Field(HL.Forward("SNSContentBase"))
-
 
 SNSDialogContentCoreCell.m_contentType2Widget = HL.Field(HL.Table)
 
-
 SNSDialogContentCoreCell.m_contentInfo = HL.Field(HL.Table)
-
-
 
 
 SNSDialogContentCoreCell._OnFirstTimeInit = HL.Override() << function(self)
     self.m_contentType2Widget = {}
 end
-
-
-
 
 SNSDialogContentCoreCell.InitSNSDialogContentCoreCell = HL.Method(HL.Table) << function(self, contentInfo)
     self:_FirstTimeInit()
@@ -150,12 +122,6 @@ SNSDialogContentCoreCell.InitSNSDialogContentCoreCell = HL.Method(HL.Table) << f
     end
 end
 
-
-
-
-
-
-
 SNSDialogContentCoreCell.ShowAdditiveResult = HL.Method(HL.String, HL.Number, HL.Boolean, HL.Function).Return(HL.Number)
         << function(self, dialogId, additiveResultIndex, skipAnim, onCellSizeChange)
     if not self.m_curActiveWidget then
@@ -185,8 +151,6 @@ SNSDialogContentCoreCell.ShowAdditiveResult = HL.Method(HL.String, HL.Number, HL
     return duration
 end
 
-
-
 SNSDialogContentCoreCell.ShowEmojiCommentOption = HL.Method() << function(self)
     if self.m_curActiveWidget then
         
@@ -195,13 +159,9 @@ SNSDialogContentCoreCell.ShowEmojiCommentOption = HL.Method() << function(self)
     end
 end
 
-
-
 SNSDialogContentCoreCell.ShowLoadingNode = HL.Method() << function(self)
     self.view.otherNode.loadingNode.gameObject:SetActive(true)
 end
-
-
 
 SNSDialogContentCoreCell.InitContent = HL.Method() << function(self)
     self.view.otherNode.loadingNode.gameObject:SetActive(false)
@@ -297,9 +257,6 @@ SNSDialogContentCoreCell.InitContent = HL.Method() << function(self)
     end
 end
 
-
-
-
 SNSDialogContentCoreCell.GetLoadingTime = HL.Method(HL.Number).Return(HL.Number) << function(self, ratio)
     local contentInfo = self.m_contentInfo
     local dialogId = contentInfo.dialogId
@@ -327,34 +284,20 @@ SNSDialogContentCoreCell.GetLoadingTime = HL.Method(HL.Number).Return(HL.Number)
     return loadingTime / ratio
 end
 
-
-
-
 SNSDialogContentCoreCell.GetContentInTime = HL.Method(HL.Number).Return(HL.Number) << function(self, ratio)
     
     return 0.3 / ratio
 end
 
-
-
-
 SNSDialogContentCoreCell.GetIntervalTime = HL.Method(HL.Number).Return(HL.Number) << function(self, ratio)
     return self.config.INTERVAL_TIME_BETWEEN_CONTENT / ratio
 end
-
-
-
-
 
 SNSDialogContentCoreCell._CreateWidget = HL.Method(HL.String, HL.Any).Return(HL.Any)
         << function(self, widgetName, parentNode)
     local go = self:_CreateGameObject(widgetName, parentNode.transform)
     return Utils.wrapLuaNode(go)
 end
-
-
-
-
 
 SNSDialogContentCoreCell._CreateGameObject = HL.Method(HL.String, Transform).Return(GameObject)
         << function(self, widgetName, parentNode)
@@ -368,8 +311,6 @@ SNSDialogContentCoreCell._CreateGameObject = HL.Method(HL.String, Transform).Ret
     return go
 end
 
-
-
 SNSDialogContentCoreCell._DisableAllWidgets = HL.Method() << function(self)
     for contentType, widget in pairs(self.m_contentType2Widget) do
         widget.gameObject:SetActive(false)
@@ -382,8 +323,6 @@ end
 
 
 
-
-
 SNSDialogContentCoreCell.CanSetTarget = HL.Method().Return(HL.Boolean) << function(self)
     if not self.m_curActiveWidget then
         return false
@@ -391,8 +330,6 @@ SNSDialogContentCoreCell.CanSetTarget = HL.Method().Return(HL.Boolean) << functi
 
     return self.m_curActiveWidget:GetNaviTarget() ~= nil
 end
-
-
 
 SNSDialogContentCoreCell.GetNaviTarget = HL.Method().Return(HL.Any) << function(self)
     if not self.m_curActiveWidget then

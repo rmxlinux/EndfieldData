@@ -2,26 +2,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaLauncher
 local PHASE_ID = PhaseId.GachaLauncher
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GachaLauncherCtrl = HL.Class('GachaLauncherCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -39,23 +20,15 @@ local timelineStageEnum = {
 }
 
 
-
 GachaLauncherCtrl.m_dirPlayInfo = HL.Field(HL.Table)
-
 
 GachaLauncherCtrl.m_directors = HL.Field(HL.Table)
 
-
 GachaLauncherCtrl.m_updateKey = HL.Field(HL.Number) << -1
-
 
 GachaLauncherCtrl.m_nextShowGuideTime = HL.Field(HL.Number) << 0
 
-
 GachaLauncherCtrl.m_controllerTriggerSettingHandlerId = HL.Field(HL.Number) << -1
-
-
-
 
 
 
@@ -63,8 +36,6 @@ GachaLauncherCtrl.m_controllerTriggerSettingHandlerId = HL.Field(HL.Number) << -
 GachaLauncherCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitUI()
 end
-
-
 
 
 GachaLauncherCtrl.Start = HL.Method() << function(self)
@@ -98,8 +69,6 @@ GachaLauncherCtrl.Start = HL.Method() << function(self)
     AudioAdapter.SetRtpc("au_rtpc_gacha_lever_speed", 0, CS.Beyond.Audio.AudioConstants.AUDIO_GLOBAL_GAME_OBJECT);
 end
 
-
-
 GachaLauncherCtrl.OnClose = HL.Override() << function(self)
     AudioAdapter.PostEvent("Au_UI_Gacha_Lever_stop")
     self.m_updateKey = LuaUpdate:Remove(self.m_updateKey)
@@ -108,8 +77,6 @@ GachaLauncherCtrl.OnClose = HL.Override() << function(self)
         self.m_controllerTriggerSettingHandlerId = -1
     end
 end
-
-
 
 
 
@@ -170,8 +137,6 @@ end
 
 
 
-
-
 GachaLauncherCtrl._InitUI = HL.Method() << function(self)
     self.view.skipBtn.onClick:AddListener(function()
         self:_CloseSelf(true)
@@ -229,10 +194,6 @@ GachaLauncherCtrl._InitUI = HL.Method() << function(self)
 end
 
 
-
-
-
-
 GachaLauncherCtrl._SetTime = HL.Method(HL.Number, HL.Boolean) << function(self, time, isPlay)
     self.m_directors.mainDir.time = time
     self.m_directors.mainDir:Evaluate()
@@ -242,14 +203,9 @@ GachaLauncherCtrl._SetTime = HL.Method(HL.Number, HL.Boolean) << function(self, 
     self:_CheckUpdateStage()
 end
 
-
-
 GachaLauncherCtrl._GetTime = HL.Method().Return(HL.Number) << function(self)
     return self.m_directors.mainDir.time
 end
-
-
-
 
 GachaLauncherCtrl._CloseSelf = HL.Method(HL.Boolean) << function(self, isSkip)
     self.m_updateKey = LuaUpdate:Remove(self.m_updateKey)
@@ -260,9 +216,6 @@ GachaLauncherCtrl._CloseSelf = HL.Method(HL.Boolean) << function(self, isSkip)
     end
     PhaseManager:ExitPhaseFast(PHASE_ID)
 end
-
-
-
 
 GachaLauncherCtrl.TickMove = HL.Method(HL.Number) << function(self, deltaTime)
     local dirPlayInfo = self.m_dirPlayInfo
@@ -349,8 +302,6 @@ GachaLauncherCtrl.TickMove = HL.Method(HL.Number) << function(self, deltaTime)
     
 end
 
-
-
 GachaLauncherCtrl._CheckUpdateStage = HL.Method() << function(self)
     local dirPlayInfo = self.m_dirPlayInfo
     local curDirTime = self:_GetTime()
@@ -385,10 +336,6 @@ GachaLauncherCtrl._CheckUpdateStage = HL.Method() << function(self)
         dirPlayInfo.curStage = timelineStageEnum.CanDrag
     end
 end
-
-
-
-
 
 GachaLauncherCtrl._SetAudioValue = HL.Method(HL.Number, HL.Number) << function(self, progress, speed)
     AudioAdapter.SetRtpc("au_rtpc_gacha_lever_progress", progress, CS.Beyond.Audio.AudioConstants.AUDIO_GLOBAL_GAME_OBJECT);

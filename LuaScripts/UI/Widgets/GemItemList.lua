@@ -7,67 +7,30 @@ local LIST_CONFIG = {
         getDepotFunc = "_GetWeaponGemDepot"
     },
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GemItemList = HL.Class('GemItemList', UIWidgetBase)
-
 
 GemItemList.m_getItemCell = HL.Field(HL.Function)
 
-
 GemItemList.m_itemInfoList = HL.Field(HL.Table)
-
 
 GemItemList.m_filteredInfoList = HL.Field(HL.Table)
 
-
 GemItemList.m_selectedTags = HL.Field(HL.Table)
-
 
 GemItemList.m_curSelectIndex = HL.Field(HL.Number) << 0
 
-
 GemItemList.m_curSelectId = HL.Field(HL.Any) << 0
-
 
 GemItemList.m_filterTagGroups = HL.Field(HL.Table)
 
 
-
 GemItemList.m_onClickItem = HL.Field(HL.Function)
-
 
 GemItemList.m_onLongPressItem = HL.Field(HL.Function)
 
-
 GemItemList.m_refreshItemAddOn = HL.Field(HL.Function)
 
-
 GemItemList.m_isItemSelected = HL.Field(HL.Function)
-
-
 
 
 
@@ -85,9 +48,6 @@ GemItemList._OnFirstTimeInit = HL.Override() << function(self)
         self.view.commonFilterList.gameObject:SetActive(true)
     end)
 end
-
-
-
 
 GemItemList.InitGemItemList = HL.Method(HL.Table) << function(self, arg)
     self:_FirstTimeInit()
@@ -119,9 +79,6 @@ GemItemList.InitGemItemList = HL.Method(HL.Table) << function(self, arg)
     self:_RefreshItemList(filteredList, skipGraduallyShow)
 end
 
-
-
-
 GemItemList.SetSelectedId = HL.Method(HL.Opt(HL.Any)) << function(self, id)
     if not id then
         self:SetSelectedIndex(1)
@@ -136,9 +93,6 @@ GemItemList.SetSelectedId = HL.Method(HL.Opt(HL.Any)) << function(self, id)
     end
     self:SetSelectedIndex(1)
 end
-
-
-
 
 GemItemList.SetSelectedIndex = HL.Method(HL.Opt(HL.Number)) << function(self, luaIndex)
     if luaIndex == nil then
@@ -174,9 +128,6 @@ GemItemList.SetSelectedIndex = HL.Method(HL.Opt(HL.Number)) << function(self, lu
     end
 end
 
-
-
-
 GemItemList._InitSortNode = HL.Method(HL.Table) << function(self, listConfig)
     local sortOption = listConfig.sortOption or {}
     self.view.sortNode:InitSortNode(sortOption, function(optData, isIncremental)
@@ -192,9 +143,6 @@ GemItemList._InitSortNode = HL.Method(HL.Table) << function(self, listConfig)
         self:SetSelectedId(self.m_curSelectId)
     end)
 end
-
-
-
 
 GemItemList._InitFilterNode = HL.Method(HL.Table) << function(self, listConfig)
     local filterTagGroups = {}
@@ -222,18 +170,10 @@ GemItemList._InitFilterNode = HL.Method(HL.Table) << function(self, listConfig)
     end, self.m_selectedTags)
 end
 
-
-
-
-
 GemItemList._RefreshItemList = HL.Method(HL.Table, HL.Opt(HL.Boolean)) << function(self, filteredList, skipGraduallyShow)
     self.view.emptyNode.gameObject:SetActive(#filteredList == 0)
     self.view.itemList:UpdateCount(#filteredList, false, false, false, skipGraduallyShow == true)
 end
-
-
-
-
 
 GemItemList._RefreshItemCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, index)
     local itemCell = self.m_getItemCell(object)
@@ -266,10 +206,6 @@ GemItemList._RefreshItemCell = HL.Method(HL.Userdata, HL.Number) << function(sel
     end
 end
 
-
-
-
-
 GemItemList._ApplyFilter = HL.Method(HL.Table, HL.Table).Return(HL.Table) << function(self, itemInfoList, selectedTags)
     if not selectedTags or not next(selectedTags) then
         return itemInfoList
@@ -285,11 +221,6 @@ GemItemList._ApplyFilter = HL.Method(HL.Table, HL.Table).Return(HL.Table) << fun
     return filteredList
 end
 
-
-
-
-
-
 GemItemList._ApplySort = HL.Method(HL.Table, HL.Table, HL.Boolean).Return(HL.Table) << function(self, itemInfoList, optData, isIncremental)
     if not optData or not next(optData) then
         return itemInfoList
@@ -301,9 +232,6 @@ GemItemList._ApplySort = HL.Method(HL.Table, HL.Table, HL.Boolean).Return(HL.Tab
     table.sort(itemInfoList, Utils.genSortFunction(optData.keys, isIncremental))
     return itemInfoList
 end
-
-
-
 
 GemItemList._CollectItemInfoList = HL.Method(HL.Table).Return(HL.Table) << function(self, listConfig)
     local itemInfoList = {}
@@ -338,8 +266,6 @@ GemItemList._CollectItemInfoList = HL.Method(HL.Table).Return(HL.Table) << funct
 
     return itemInfoList
 end
-
-
 
 GemItemList._GetWeaponGemDepot = HL.Method().Return(HL.Userdata) << function(self)
     local gemDepot = GameInstance.player.inventory.valuableDepots[GEnums.ItemValuableDepotType.WeaponGem]:GetOrFallback(Utils.getCurrentScope())

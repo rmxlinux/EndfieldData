@@ -2,17 +2,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CashShopToast
 
-
-
-
-
-
-
 CashShopToastCtrl = HL.Class('CashShopToastCtrl', uiCtrl.UICtrl)
 
-
 CashShopToastCtrl.m_timerId = HL.Field(HL.Number) << 0
-
 
 
 
@@ -22,21 +14,14 @@ CashShopToastCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 CashShopToastCtrl.OnShowToast = HL.StaticField(HL.Any) << function (arg)
     local ctrl = CashShopToastCtrl.AutoOpen(PANEL_ID, nil, false)
     ctrl:ShowToast(arg)
 end
 
 
-
-
-
 CashShopToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
-
-
-
 
 
 

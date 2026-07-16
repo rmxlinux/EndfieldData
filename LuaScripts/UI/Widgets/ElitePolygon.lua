@@ -1,15 +1,8 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 ElitePolygon = HL.Class('ElitePolygon', UIWidgetBase)
 
-
 ElitePolygon.m_eliteCells = HL.Field(HL.Table)
-
-
 
 
 ElitePolygon._OnFirstTimeInit = HL.Override() << function(self)
@@ -19,9 +12,6 @@ ElitePolygon._OnFirstTimeInit = HL.Override() << function(self)
     self.m_eliteCells[2] = self.view.cell2
     self.m_eliteCells[3] = self.view.cell3
 end
-
-
-
 
 ElitePolygon.InitElitePolygon = HL.Method(HL.Number) << function(self, eliteLevel)
     self:_FirstTimeInit()

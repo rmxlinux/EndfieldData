@@ -4,35 +4,7 @@ local PANEL_ID = PanelId.DungeonWeeklyRaid
 local OPTIONAL_TEXT_COLOR = "C7EC59"
 local tabConfig = WeeklyRaidUtils.TabConfig
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DungeonWeeklyRaidCtrl = HL.Class('DungeonWeeklyRaidCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -45,41 +17,27 @@ DungeonWeeklyRaidCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_WEEK_RAID_TECH_MODIFY] = '_UpdateTech',
 }
 
-
 DungeonWeeklyRaidCtrl.m_currentTab = HL.Field(HL.Number) << WeeklyRaidUtils.DungeonWeeklyRaidType.Normal
-
 
 DungeonWeeklyRaidCtrl.m_genTabCells = HL.Field(HL.Forward("UIListCache"))
 
-
 DungeonWeeklyRaidCtrl.m_genLevelCells = HL.Field(HL.Forward("UIListCache"))
-
 
 DungeonWeeklyRaidCtrl.m_genObjectiveCells = HL.Field(HL.Forward("UIListCache"))
 
-
 DungeonWeeklyRaidCtrl.m_genRewardCells = HL.Field(HL.Forward("UIListCache"))
-
 
 DungeonWeeklyRaidCtrl.m_genRewardBgCells = HL.Field(HL.Forward("UIListCache"))
 
-
 DungeonWeeklyRaidCtrl.m_genTechCells = HL.Field(HL.Forward("UIListCache"))
-
 
 DungeonWeeklyRaidCtrl.m_cacheDelegate = HL.Field(HL.Any)
 
-
 DungeonWeeklyRaidCtrl.m_selectIndex = HL.Field(HL.Number) << 0
-
 
 DungeonWeeklyRaidCtrl.m_getCell = HL.Field(HL.Function)
 
-
 DungeonWeeklyRaidCtrl.m_isPreview = HL.Field(HL.Boolean) << false
-
-
-
 
 
 DungeonWeeklyRaidCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -290,8 +248,6 @@ DungeonWeeklyRaidCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 DungeonWeeklyRaidCtrl._GetDefaultTabIndex = HL.Method().Return(HL.Number) << function(self)
     for i = 1, #tabConfig do
         local delegates = tabConfig[i].getDelegate()
@@ -301,9 +257,6 @@ DungeonWeeklyRaidCtrl._GetDefaultTabIndex = HL.Method().Return(HL.Number) << fun
     end
     return WeeklyRaidUtils.DungeonWeeklyRaidType.Normal
 end
-
-
-
 
 DungeonWeeklyRaidCtrl._GetRecoverSelectIndex = HL.Method(HL.Table).Return(HL.Number) << function(self, recoverState)
     if recoverState == nil then
@@ -331,9 +284,6 @@ DungeonWeeklyRaidCtrl._GetRecoverSelectIndex = HL.Method(HL.Table).Return(HL.Num
     return recoverSelectIndex
 end
 
-
-
-
 DungeonWeeklyRaidCtrl._RecoverState = HL.Method(HL.Table) << function(self, recoverState)
     self.m_selectIndex = self:_GetRecoverSelectIndex(recoverState)
     self:_OnSelectCellChange()
@@ -341,9 +291,6 @@ DungeonWeeklyRaidCtrl._RecoverState = HL.Method(HL.Table) << function(self, reco
         self.view.scrollList:ScrollToIndex(self.m_selectIndex)
     end
 end
-
-
-
 
 DungeonWeeklyRaidCtrl._UpdateTech = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     local showTypeTable = {}
@@ -404,8 +351,6 @@ DungeonWeeklyRaidCtrl._UpdateTech = HL.Method(HL.Opt(HL.Table)) << function(self
     end)
 end
 
-
-
 DungeonWeeklyRaidCtrl._OnWeeklyRaidDelegateCellChange = HL.Method() << function(self)
     
     for i = 0, self.m_cacheDelegate.Count - 1 do
@@ -418,8 +363,6 @@ DungeonWeeklyRaidCtrl._OnWeeklyRaidDelegateCellChange = HL.Method() << function(
     self:_OnSelectCellChange()
 end
 
-
-
 DungeonWeeklyRaidCtrl._OnSelectCellChange = HL.Method() << function(self)
     
     if self.m_selectIndex < 0 or self.m_selectIndex >= self:_GetCurrentCellCount() then
@@ -430,8 +373,6 @@ DungeonWeeklyRaidCtrl._OnSelectCellChange = HL.Method() << function(self)
     self:_UpdateDetailInfo()
 end
 
-
-
 DungeonWeeklyRaidCtrl._GetCurrentCellCount = HL.Method().Return(HL.Number) << function(self)
     if self.m_currentTab == WeeklyRaidUtils.DungeonWeeklyRaidType.Week and self.m_isPreview ~= true and self.m_cacheDelegate.Count ~= WeeklyRaidUtils.MAX_WEEKLY_ENTRUST_COUNT then
         return self.m_cacheDelegate.Count + 1
@@ -439,8 +380,6 @@ DungeonWeeklyRaidCtrl._GetCurrentCellCount = HL.Method().Return(HL.Number) << fu
         return self.m_cacheDelegate.Count
     end
 end
-
-
 
 DungeonWeeklyRaidCtrl._OnTabChange = HL.Method() << function(self)
     self.view.contentLeftState:SetState(self.m_currentTab == WeeklyRaidUtils.DungeonWeeklyRaidType.Week and 'IsWeekEntrust' or 'NotWeekEntrust')
@@ -464,8 +403,6 @@ DungeonWeeklyRaidCtrl._OnTabChange = HL.Method() << function(self)
     self:_UpdateDetailInfo()
 end
 
-
-
 DungeonWeeklyRaidCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
     local recoverState = {
         tabIndex = self.m_currentTab,
@@ -477,17 +414,12 @@ DungeonWeeklyRaidCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << funct
     return recoverState
 end
 
-
-
-
 DungeonWeeklyRaidCtrl._SetFinishAreaState = HL.Method(HL.String) << function(self, state)
     if self.m_isPreview then
         return
     end
     self.view.contentRight.finishAreaState:SetState(state)
 end
-
-
 
 DungeonWeeklyRaidCtrl._UpdateDetailInfo = HL.Method() << function(self)
     local missionNode = self.view.contentRight
@@ -696,13 +628,9 @@ DungeonWeeklyRaidCtrl._UpdateDetailInfo = HL.Method() << function(self)
     Notify(MessageConst.REFRESH_CONTROLLER_HINT)
 end
 
-
-
 DungeonWeeklyRaidCtrl.OnShow = HL.Override() << function(self)
     self.view.scrollListNaviGroup:NaviToThisGroup()
 end
-
-
 
 
 DungeonWeeklyRaidCtrl.OnClose = HL.Override() << function(self)

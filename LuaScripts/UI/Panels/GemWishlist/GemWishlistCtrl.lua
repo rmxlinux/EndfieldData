@@ -204,7 +204,7 @@ GemWishlistCtrl._BindUI = HL.Method() << function(self)
 
         if not self.m_haveInitNaviTarget and DeviceInfo.usingController then
             self.m_haveInitNaviTarget = true
-            UIUtils.setAsNaviTarget(cell.itemBig.view.button)
+            self:SetNaviTarget(cell.itemBig.view.button)
         end
     end)
 
@@ -385,7 +385,7 @@ GemWishlistCtrl._SyncSelectionAfterListChange = HL.Method() << function(self)
         if DeviceInfo.usingController then
             local cell = self.m_getCellFunc(targetIndex)
             if cell then
-                UIUtils.setAsNaviTarget(cell.itemBig.view.button)
+                self:SetNaviTarget(cell.itemBig.view.button)
             end
         end
     end
@@ -440,8 +440,6 @@ GemWishlistCtrl._OnClickWeapon = HL.Method(HL.Number) << function(self, luaIndex
         return
     end
 
-    AudioAdapter.PostEvent("Au_UI_Button_Item")
-
     if self.m_checkedWeapons[info.id] then
         self.m_checkedWeapons[info.id] = nil
     else
@@ -475,7 +473,6 @@ GemWishlistCtrl._RefreshItemInfo = HL.Method() << function(self)
     node.itemObtainWays:InitItemObtainWays(self.m_selectedWeaponId, nil)
     node.lockToggle.gameObject:SetActive(false)
     node.trashToggle.gameObject:SetActive(false)
-    node.itemFlagControllerFocusHintNode.gameObject:SetActive(false)
     node.wikiBtn.gameObject:SetActive(WikiUtils.canShowWikiEntry(self.m_selectedWeaponId))
 end
 
@@ -698,8 +695,6 @@ GemWishlistCtrl._OnControllerToggleCheck = HL.Method() << function(self)
     if not self.m_selectedWeaponId or self.m_selectedWeaponId == "" then
         return
     end
-
-    AudioAdapter.PostEvent("Au_UI_Button_Item")
 
     if self.m_checkedWeapons[self.m_selectedWeaponId] then
         self.m_checkedWeapons[self.m_selectedWeaponId] = nil

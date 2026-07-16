@@ -1,74 +1,26 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharInfoEquipSlot
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharInfoEquipSlotCtrl = HL.Class('CharInfoEquipSlotCtrl', uiCtrl.UICtrl)
-
 
 CharInfoEquipSlotCtrl.m_charInfo = HL.Field(HL.Table)
 
-
 CharInfoEquipSlotCtrl.m_curMainControlTab = HL.Field(HL.Number) << UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
-
 
 CharInfoEquipSlotCtrl.m_equipType2equipCell = HL.Field(HL.Table)
 
-
 CharInfoEquipSlotCtrl.m_curSelectSlotIndex = HL.Field(HL.Number) << -1
-
 
 CharInfoEquipSlotCtrl.m_scMainAttrCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 CharInfoEquipSlotCtrl.m_fcAttrCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 CharInfoEquipSlotCtrl.m_extraAttrCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 CharInfoEquipSlotCtrl.m_tryAttributes = HL.Field(HL.Any)
-
 
 CharInfoEquipSlotCtrl.m_inSlotMode = HL.Field(HL.Boolean) << true
 
-
 CharInfoEquipSlotCtrl.state = HL.Field(HL.Number) << UIConst.CHAR_INFO_EQUIP_STATE.Normal
-
 
 
 
@@ -90,9 +42,6 @@ CharInfoEquipSlotCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 CharInfoEquipSlotCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitController()
     self:_InitActionEvent()
@@ -112,16 +61,11 @@ CharInfoEquipSlotCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 CharInfoEquipSlotCtrl.OnClose = HL.Override() << function(self)
     if DeviceInfo.usingController then
         self.m_phase:_ActiveEquipPageNavi(self, false)
     end
 end
-
-
-
 
 CharInfoEquipSlotCtrl._ToggleSlotNode = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.centerNode.gameObject:SetActive(isOn)
@@ -130,8 +74,6 @@ CharInfoEquipSlotCtrl._ToggleSlotNode = HL.Method(HL.Boolean) << function(self, 
     self.m_inSlotMode = isOn
     InputManagerInst:ToggleGroup(self.m_changeEquipTypeInputGroupId, not isOn)
 end
-
-
 
 CharInfoEquipSlotCtrl._InitActionEvent = HL.Method() << function(self)
     local equipType2equipCell = {}
@@ -183,9 +125,6 @@ CharInfoEquipSlotCtrl._InitActionEvent = HL.Method() << function(self)
     end, self.m_changeEquipTypeInputGroupId)
 end
 
-
-
-
 CharInfoEquipSlotCtrl._GetLoopedSlotIndex = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
     
     if index < UIConst.CHAR_INFO_EQUIP_SLOT_MAP.BODY then
@@ -196,10 +135,6 @@ CharInfoEquipSlotCtrl._GetLoopedSlotIndex = HL.Method(HL.Number).Return(HL.Numbe
 
     return index
 end
-
-
-
-
 
 CharInfoEquipSlotCtrl._RefreshEquipSlotGroup = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, curSelectSlotIndex, needRefresh)
     local instId = self.m_charInfo.instId
@@ -222,10 +157,6 @@ CharInfoEquipSlotCtrl._RefreshEquipSlotGroup = HL.Method(HL.Number, HL.Opt(HL.Bo
         end
     end
 end
-
-
-
-
 
 CharInfoEquipSlotCtrl._RefreshTacticalSlot = HL.Method(HL.Table, HL.Opt(HL.Boolean)) << function(self, cell, isSelectSlot)
     if not cell then
@@ -262,12 +193,6 @@ CharInfoEquipSlotCtrl._RefreshTacticalSlot = HL.Method(HL.Table, HL.Opt(HL.Boole
 
     cell.count.text = itemCount
 end
-
-
-
-
-
-
 
 CharInfoEquipSlotCtrl._RefreshEquipSlot = HL.Method(HL.Table, HL.Opt(HL.Number, HL.Boolean, HL.Boolean))
     << function(self, cell, equipInstId, isSelectSlot, needRefresh)
@@ -323,16 +248,10 @@ CharInfoEquipSlotCtrl._RefreshEquipSlot = HL.Method(HL.Table, HL.Opt(HL.Number, 
 end
 
 
-
-
-
 CharInfoEquipSlotCtrl.RefreshCharInfo = HL.Method(HL.Table) << function(self, charInfo)
     self.m_charInfo = charInfo
     self:_RefreshEquipSlotGroup(self.m_curSelectSlotIndex)
 end
-
-
-
 
 CharInfoEquipSlotCtrl.OnPutOnEquip = HL.Method(HL.Table) << function(self, arg)
     self:_RefreshEquipSlotGroup(self.m_curSelectSlotIndex, true)
@@ -340,17 +259,11 @@ CharInfoEquipSlotCtrl.OnPutOnEquip = HL.Method(HL.Table) << function(self, arg)
     self.view.detailNodeAnimation:Play("charinfoequipslot_replacementequip_in")
 end
 
-
-
-
 CharInfoEquipSlotCtrl.OnPutOffEquip = HL.Method(HL.Table) << function(self, arg)
     self:_RefreshEquipSlotGroup(self.m_curSelectSlotIndex, true)
 
     self.view.detailNodeAnimation:Play("charinfoequipslot_replacementequip_in")
 end
-
-
-
 
 CharInfoEquipSlotCtrl.OnTacticalItemChange = HL.Method(HL.Table) << function(self, arg)
     local itemId = unpack(arg)
@@ -359,15 +272,9 @@ CharInfoEquipSlotCtrl.OnTacticalItemChange = HL.Method(HL.Table) << function(sel
 end
 
 
-
-
-
 CharInfoEquipSlotCtrl.OnSelectSlotChange = HL.Method(HL.Number) << function(self, index)
     self:_OnClickSlotCell(index)
 end
-
-
-
 
 CharInfoEquipSlotCtrl.OnSelectTacticalItemChange = HL.Method(HL.Table) << function(self, arg)
     local itemId = arg.itemId
@@ -392,9 +299,6 @@ CharInfoEquipSlotCtrl.OnSelectTacticalItemChange = HL.Method(HL.Table) << functi
     self.view.tacticalNode.tacticalNameTxt.text = itemCfg.name
 end
 
-
-
-
 CharInfoEquipSlotCtrl.OnEquipToggleCompareMask = HL.Method(HL.Boolean) << function(self, isOn)
     
     
@@ -406,9 +310,6 @@ CharInfoEquipSlotCtrl.OnEquipToggleCompareMask = HL.Method(HL.Boolean) << functi
         UIUtils.PlayAnimationAndToggleActive(self.view.detailNode, not isOn)
     end
 end
-
-
-
 
 CharInfoEquipSlotCtrl.OnSelectEquipChange = HL.Method(HL.Table) << function(self, arg)
     local equipInstId = arg.equipInstId
@@ -498,11 +399,6 @@ CharInfoEquipSlotCtrl.OnSelectEquipChange = HL.Method(HL.Table) << function(self
     end)
 end
 
-
-
-
-
-
 CharInfoEquipSlotCtrl._RefreshAttrCell = HL.Method(HL.Table, HL.Table, HL.Table) << function(self, cell, fromAttrInfo, toAttrInfo)
     local hasIconName = not string.isEmpty(fromAttrInfo.iconName)
     cell.icon.gameObject:SetActive(hasIconName == true)
@@ -557,30 +453,18 @@ CharInfoEquipSlotCtrl._RefreshAttrCell = HL.Method(HL.Table, HL.Table, HL.Table)
     end
 end
 
-
-
-
 CharInfoEquipSlotCtrl.OnCharInfoToggleExpandList = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.commonEmptyButton.gameObject:SetActive(isOn)
 end
-
-
-
 
 CharInfoEquipSlotCtrl.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInfo)
     self.m_charInfo = charInfo
     self:_RefreshEquipSlotGroup(self.m_curSelectSlotIndex)
 end
 
-
-
-
 CharInfoEquipSlotCtrl.OnSelectWhenEnabled = HL.Method(HL.Number) << function(self, tabType)
     self:_OnClickSlotCell(UIConst.CHAR_INFO_EQUIP_SLOT_MAP.BODY)
 end
-
-
-
 
 CharInfoEquipSlotCtrl._OnClickSlotCell = HL.Method(HL.Number) << function(self, slotIndex)
     local isInFight = Utils.isInFight()
@@ -621,9 +505,6 @@ CharInfoEquipSlotCtrl._OnClickSlotCell = HL.Method(HL.Number) << function(self, 
     self:_RefreshEquipSlotGroup(slotIndex)
 end
 
-
-
-
 CharInfoEquipSlotCtrl.SetState = HL.Method(HL.Number) << function(self, state)
     if self.state == state  then
         return
@@ -644,18 +525,16 @@ CharInfoEquipSlotCtrl.SetState = HL.Method(HL.Number) << function(self, state)
 end
 
 
-
-
 CharInfoEquipSlotCtrl.OnShow = HL.Override() << function(self)
+    if self.state == UIConst.CHAR_INFO_EQUIP_STATE.Detail then
+        self.animationWrapper:SkipInAnimation()
+    end
     self:RefreshCharInfo(self.m_charInfo)
 end
 
 
 
-
 CharInfoEquipSlotCtrl.m_changeEquipTypeInputGroupId = HL.Field(HL.Number) << -1
-
-
 
 CharInfoEquipSlotCtrl._InitController = HL.Method() << function(self)
     self.m_changeEquipTypeInputGroupId = InputManagerInst:CreateGroup(self.view.inputGroup.groupId)

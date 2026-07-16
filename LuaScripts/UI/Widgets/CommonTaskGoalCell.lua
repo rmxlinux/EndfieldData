@@ -12,58 +12,27 @@ local TRACK_GOAL_CELL_ANIM_FAIL = "tasktrackhud_cellfail"
 local TRACK_GOAL_CELL_ANIM_FINISH = "tasktrackhud_cellfinish"
 local TRACK_GOAL_CELL_ANIM_UPDATE = "tasktrackhud_cellupdate"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonTaskGoalCell = HL.Class('CommonTaskGoalCell', UIWidgetBase)
-
 
 CommonTaskGoalCell.m_index = HL.Field(HL.Number) << -1
 
-
 CommonTaskGoalCell.m_taskState = HL.Field(HL.Number) << TaskState.None
-
 
 CommonTaskGoalCell.m_animationWrapper = HL.Field(CS.Beyond.UI.UIAnimationWrapper)
 
-
 CommonTaskGoalCell.m_taskType = HL.Field(CS.Beyond.Gameplay.LevelScriptTaskType)
-
 
 CommonTaskGoalCell.m_taskTracking = HL.Field(CS.Beyond.Gameplay.Core.LevelScriptTaskTracking)
 
-
 CommonTaskGoalCell.m_taskTrackingObjective = HL.Field(CS.Beyond.Gameplay.Core.LevelScriptTaskTracking.Objective)
-
 
 CommonTaskGoalCell.m_commonTrackingSystem = HL.Field(CS.Beyond.Gameplay.CommonTrackingSystem)
 
-
 CommonTaskGoalCell.m_taskTrackPointId = HL.Field(HL.String) << ""
-
 
 CommonTaskGoalCell.m_updateDistanceTick = HL.Field(HL.Number) << -1
 
-
 CommonTaskGoalCell.m_showingCor = HL.Field(HL.Thread)
-
-
 
 
 CommonTaskGoalCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -74,8 +43,6 @@ CommonTaskGoalCell._OnFirstTimeInit = HL.Override() << function(self)
     self.m_animationWrapper = self.view.animationWrapper
     self.m_commonTrackingSystem = GameInstance.player.commonTrackingSystem
 end
-
-
 
 CommonTaskGoalCell._OnDestroy = HL.Override() << function(self)
     if self.m_updateDistanceTick > 0 then
@@ -92,16 +59,13 @@ CommonTaskGoalCell._OnDestroy = HL.Override() << function(self)
     end
 end
 
-
-
-
-
 CommonTaskGoalCell.InitCommonTaskGoalCell = HL.Method(HL.Number, CS.Beyond.Gameplay.LevelScriptTaskType)
         << function(self, index, taskType)
     self:_FirstTimeInit()
 
     self.m_taskType = taskType
     self.m_index = index
+    self.m_taskState = TaskState.None
 
     local trackingMgr = GameWorld.levelScriptTaskTrackingManager
     local trackingTask = trackingMgr:GetTaskByType(self.m_taskType)
@@ -127,9 +91,6 @@ CommonTaskGoalCell.InitCommonTaskGoalCell = HL.Method(HL.Number, CS.Beyond.Gamep
     self:_Refresh(true)
 end
 
-
-
-
 CommonTaskGoalCell.OnGoalProgressChange = HL.Method(HL.Any) << function(self, args)
     local taskType, csIndex = unpack(args)
     if self.m_taskType ~= taskType or self.m_index ~= LuaIndex(csIndex) then
@@ -139,16 +100,11 @@ CommonTaskGoalCell.OnGoalProgressChange = HL.Method(HL.Any) << function(self, ar
     self:_Refresh(false)
 end
 
-
-
 CommonTaskGoalCell.TrySetStateFail = HL.Method() << function(self)
     if self.m_taskState ~= TaskState.Finish then
         self:_CustomPlayAnimation(TRACK_GOAL_CELL_ANIM_FAIL)
     end
 end
-
-
-
 
 CommonTaskGoalCell._Refresh = HL.Method(HL.Boolean) << function(self, isInit)
     if not self.m_taskTrackingObjective then
@@ -172,8 +128,8 @@ CommonTaskGoalCell._Refresh = HL.Method(HL.Boolean) << function(self, isInit)
     local isCompleted = self.m_taskTrackingObjective.isCompleted
     local isFail = self.m_taskTrackingObjective.inFailStyle
 
-    self.view.finishedIcon.gameObject:SetActiveIfNecessary(isCompleted)
-    self.view.unfinishedIcon.gameObject:SetActiveIfNecessary(not isCompleted)
+    
+    
     local preState = self.m_taskState
     self.m_taskState = isCompleted and TaskState.Finish or (isFail and TaskState.Fail or TaskState.Normal)
     if preState ~= self.m_taskState then
@@ -191,8 +147,6 @@ CommonTaskGoalCell._Refresh = HL.Method(HL.Boolean) << function(self, isInit)
     end
 end
 
-
-
 CommonTaskGoalCell._UpdateDistance = HL.Method() << function(self)
     if IsNull(self.view.gameObject) then
         logger.error("[CommonTaskGoalCell] _UdpateDistance but go is destroyed")
@@ -204,16 +158,13 @@ CommonTaskGoalCell._UpdateDistance = HL.Method() << function(self)
     self.view.distanceNode.gameObject:SetActiveIfNecessary(succ)
 end
 
-
-
-
 CommonTaskGoalCell._CustomPlayAnimation = HL.Method(HL.String) << function(self, anim)
     local succ, ctrl = UIManager:IsOpen(PanelId.CommonTaskTrackHud)
     if succ then
         ctrl.taskGoalShowing = true
+        self.m_animationWrapper:Play(anim)
         self.m_showingCor = self:_ClearCoroutine(self.m_showingCor)
         self.m_showingCor = self:_StartCoroutine(function()
-            self.m_animationWrapper:Play(anim)
             local clipLength = self.m_animationWrapper:GetClipLength(anim)
             coroutine.wait(clipLength)
             ctrl.taskGoalShowing = false

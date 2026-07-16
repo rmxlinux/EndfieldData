@@ -1,20 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WikiModelShow
-
-
-
-
-
-
-
-
-
-
-
-
 WikiModelShowCtrl = HL.Class('WikiModelShowCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -24,17 +11,11 @@ WikiModelShowCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 WikiModelShowCtrl.m_rotateTickKey = HL.Field(HL.Number) << -1
-
 
 WikiModelShowCtrl.m_starListCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WikiModelShowCtrl.m_wikiEntryShowData = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -103,13 +84,9 @@ WikiModelShowCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 WikiModelShowCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     return self.m_wikiEntryShowData
 end
-
-
 
 WikiModelShowCtrl.OnClose = HL.Override() << function(self)
     LuaUpdate:Remove(self.m_rotateTickKey)
@@ -117,14 +94,10 @@ WikiModelShowCtrl.OnClose = HL.Override() << function(self)
     self.m_phase:ResetModelRotation()
 end
 
-
-
 WikiModelShowCtrl._OnPlayAnimationOut = HL.Override() << function(self)
     WikiModelShowCtrl.Super._OnPlayAnimationOut(self)
     self:_PlayBgAnim(false)
 end
-
-
 
 
 
@@ -140,9 +113,6 @@ WikiModelShowCtrl._SampleBgAnim = HL.Method() << function(self)
     end
 end
 
-
-
-
 WikiModelShowCtrl._PlayBgAnim = HL.Method(HL.Boolean) << function(self, isIn)
     local animName = isIn and "wiki_modeltoshow_in" or "wiki_modeltoshow_out"
     if self.m_wikiEntryShowData.wikiCategoryType == WikiConst.EWikiCategoryType.Monster then
@@ -154,8 +124,6 @@ WikiModelShowCtrl._PlayBgAnim = HL.Method(HL.Boolean) << function(self, isIn)
         self.m_phase:PlayBgAnim(animName)
     end
 end
-
-
 
 WikiModelShowCtrl._PlayDecoAnim = HL.Method() << function(self)
     local animName = "wiki_uideco_modelshow_common"

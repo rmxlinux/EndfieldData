@@ -1,20 +1,7 @@
 
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.GachaWeapon
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseGachaWeapon = HL.Class('PhaseGachaWeapon', phaseBase.PhaseBase)
-
 
 
 
@@ -24,10 +11,7 @@ PhaseGachaWeapon.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 PhaseGachaWeapon.m_displayObjItem = HL.Field(HL.Forward('PhaseGameObjectItem'))
-
-
 
 
 PhaseGachaWeapon._OnInit = HL.Override() << function(self)
@@ -37,20 +21,11 @@ end
 
 
 
-
-
-
-
-
 PhaseGachaWeapon.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
     if transitionType == PhaseConst.EPhaseState.TransitionIn and not fastMode then
         UIManager:PreloadPanelAsset(PanelId.GachaWeapon, PHASE_ID)
     end
 end
-
-
-
-
 
 PhaseGachaWeapon._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     LuaSystemManager.gachaSystem:UpdateGachaWeaponSettingState()
@@ -72,29 +47,15 @@ PhaseGachaWeapon._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)
     LuaSystemManager.gachaSystem:UpdateGachaWeaponSettingState()
 end
 
-
-
-
-
 PhaseGachaWeapon._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     LuaSystemManager.gachaSystem:UpdateGachaWeaponSettingState()
 end
 
-
-
-
-
 PhaseGachaWeapon._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseGachaWeapon._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
 
 
 
@@ -108,16 +69,12 @@ PhaseGachaWeapon._OnActivated = HL.Override() << function(self)
     LuaSystemManager.gachaSystem:UpdateGachaWeaponSettingState()
 end
 
-
-
 PhaseGachaWeapon._OnDeActivated = HL.Override() << function(self)
     if self.m_displayObjItem then
         self.m_displayObjItem.view.gameObject:SetActive(false)
     end
     LuaSystemManager.gachaSystem:UpdateGachaWeaponSettingState()
 end
-
-
 
 PhaseGachaWeapon._OnDestroy = HL.Override() << function(self)
     PhaseGachaWeapon.Super._OnDestroy(self)

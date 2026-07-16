@@ -1,133 +1,56 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 local ChatType = CS.Beyond.Gameplay.SNSFriendChatSystem.ChatType
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FriendDialogContent = HL.Class('FriendDialogContent', UIWidgetBase)
-
 
 
 FriendDialogContent.m_mainPanel = HL.Field(HL.Any)
 
-
 FriendDialogContent.m_friendInfo = HL.Field(HL.Any)
-
 
 FriendDialogContent.m_getDialogCellFunc = HL.Field(HL.Function)
 
-
 FriendDialogContent.m_showRoleId = HL.Field(HL.Number) << 0
-
 
 FriendDialogContent.m_messages = HL.Field(HL.Any)
 
-
 FriendDialogContent.m_csIndex2DialogCell = HL.Field(HL.Table)
-
 
 FriendDialogContent.m_msgIndex2DialogCell = HL.Field(HL.Table)
 
-
 FriendDialogContent.m_updateShareInfoTime = HL.Field(HL.Table)
-
 
 FriendDialogContent.m_readTickHandle = HL.Field(HL.Number) << -1
 
-
 FriendDialogContent.m_readTickTime = HL.Field(HL.Number) << 0
-
 
 FriendDialogContent.m_showRangeX = HL.Field(HL.Number) << 0
 
-
 FriendDialogContent.m_showRangeY = HL.Field(HL.Number) << 0
-
 
 FriendDialogContent.m_canJumpIn = HL.Field(HL.Boolean) << false
 
-
 FriendDialogContent.m_canManuallyFocus = HL.Field(HL.Table)
-
 
 FriendDialogContent.m_nextManuallyFocusIndex = HL.Field(HL.Number) << -1
 
-
 FriendDialogContent.m_executeJumpIn = HL.Field(HL.Boolean) << false
-
 
 FriendDialogContent.m_nextToBottomRoleId = HL.Field(HL.Number) << -1
 
-
 FriendDialogContent.m_curShowMessageCount = HL.Field(HL.Number) << 0
-
 
 FriendDialogContent.m_curShowMaxMsgIndex = HL.Field(HL.Number) << 0
 
-
 FriendDialogContent.m_curWindowMsgMaxIndex = HL.Field(HL.Number) << -1
-
 
 FriendDialogContent.m_updateAllMessagesInShow = HL.Field(HL.Boolean) << false
 
-
 FriendDialogContent.m_addTopMsgFlag = HL.Field(HL.Boolean) << false
-
 
 FriendDialogContent.m_addTopMsgTime = HL.Field(HL.Number) << 0
 
-
 FriendDialogContent.m_curRootState = HL.Field(HL.Any)
-
 
 FriendDialogContent.m_playAnimMsgIndex = HL.Field(HL.Number) << -1
 
@@ -139,8 +62,6 @@ local AllContent = {
     NotSelected = "NotSelected", 
     NoMessages = "NoMessages", 
 }
-
-
 
 
 FriendDialogContent._OnFirstTimeInit = HL.Override() << function(self)
@@ -174,18 +95,12 @@ FriendDialogContent._OnFirstTimeInit = HL.Override() << function(self)
 
 end
 
-
-
-
 FriendDialogContent._FriendChatUpdateBlueprint = HL.Method(HL.Any) << function(self, args)
     local targetRoleId, msgIndex = unpack(args)
     if targetRoleId == self.m_showRoleId then
         self:UpdateMessagesByMsgIndex(msgIndex)
     end
 end
-
-
-
 
 
 FriendDialogContent._FriendChatUpdateSocialBuilding = HL.Method(HL.Any) << function(self, args)
@@ -196,15 +111,9 @@ FriendDialogContent._FriendChatUpdateSocialBuilding = HL.Method(HL.Any) << funct
 end
 
 
-
-
-
 FriendDialogContent._DialogScrollToIndex = HL.Method(HL.Number) << function(self, index)
     self.view.dialogScrollList:ScrollToIndex(index)
 end
-
-
-
 
 FriendDialogContent._OnRecvFriendChatContent = HL.Method(HL.Any) << function(self, args)
     local targetRoleId = unpack(args)
@@ -214,18 +123,12 @@ FriendDialogContent._OnRecvFriendChatContent = HL.Method(HL.Any) << function(sel
 end
 
 
-
-
-
 FriendDialogContent._OnRecvLuaShowMessages = HL.Method(HL.Any) << function(self, args)
     local targetRoleId = unpack(args)
     if targetRoleId == self.m_showRoleId then
         self:UpdateAllMessages("RecvLuaShowMessages")
     end
 end
-
-
-
 
 FriendDialogContent._OnRecvSendChatNotify = HL.Method(HL.Any) << function(self, args)
     local targetRoleId = unpack(args)
@@ -234,14 +137,9 @@ FriendDialogContent._OnRecvSendChatNotify = HL.Method(HL.Any) << function(self, 
     end
 end
 
-
-
 FriendDialogContent.OnFriendRemakeNameModify = HL.Method() << function(self)
     self:UpdateNameInfos()
 end
-
-
-
 
 
 FriendDialogContent.InitFriendDialogContent = HL.Method(HL.Any) << function(self, mainPanel)
@@ -270,15 +168,11 @@ FriendDialogContent.InitFriendDialogContent = HL.Method(HL.Any) << function(self
 
 end
 
-
-
 FriendDialogContent.ClearDialogScrollListData = HL.Method() << function(self)
     self.m_csIndex2DialogCell = {}
     self.m_canManuallyFocus = {}
     self.m_msgIndex2DialogCell = {}
 end
-
-
 
 FriendDialogContent.InitDialogScrollList = HL.Method() << function(self)
     
@@ -313,17 +207,11 @@ FriendDialogContent.InitDialogScrollList = HL.Method() << function(self)
     self:UpdateAllMessages("normal")
 end
 
-
-
-
 FriendDialogContent.UpdateMessagesByMsgIndex = HL.Method(HL.Number) << function(self, msgIndex)
     if self.m_msgIndex2DialogCell ~= nil and self.m_msgIndex2DialogCell[msgIndex] ~= nil then
         self.m_msgIndex2DialogCell[msgIndex]:UpdateDataShowInfo()
     end
 end
-
-
-
 
 FriendDialogContent.UpdateAllMessages = HL.Method(HL.String) << function(self, updateMode)
     if self.m_showRoleId == 0 then
@@ -405,23 +293,15 @@ FriendDialogContent.UpdateAllMessages = HL.Method(HL.String) << function(self, u
     end
 end
 
-
-
-
 FriendDialogContent.UpdateContentState = HL.Method(HL.String) << function(self, state)
     self.m_curRootState = state
     self.view.rootStateController:SetState(state)
 end
 
-
-
-
 FriendDialogContent.UpdateFriendInfo = HL.Method(HL.Any) << function(self, friendInfo)
     self.m_friendInfo = friendInfo
     self:UpdateNameInfos()
 end
-
-
 
 
 FriendDialogContent.UpdateNameInfos = HL.Method() << function(self)
@@ -465,8 +345,6 @@ FriendDialogContent.UpdateNameInfos = HL.Method() << function(self)
         self.view.personalityTxt.text = friendInfo.signature
     end
 end
-
-
 
 FriendDialogContent._ClickNameDetailsBtn = HL.Method() << function(self)
     if self.m_showRoleId == 0 then
@@ -518,9 +396,6 @@ FriendDialogContent._ClickNameDetailsBtn = HL.Method() << function(self)
     end
     Notify(MessageConst.SHOW_NAVI_TARGET_ACTION_MENU, args)
 end
-
-
-
 
 
 FriendDialogContent._ReadTick = HL.Method(HL.Number) << function(self, deltaTime)
@@ -618,14 +493,10 @@ FriendDialogContent._ReadTick = HL.Method(HL.Number) << function(self, deltaTime
 end
 
 
-
-
 FriendDialogContent._TryQueryAddMessage = HL.Method() << function(self)
     self.view.loadingMessageNode.gameObject:SetActive(false)
     GameInstance.player.friendChatSystem:TopAddLuaShowMessages()
 end
-
-
 
 
 FriendDialogContent._ClickNewMessageBtn = HL.Method() << function(self)
@@ -639,8 +510,6 @@ FriendDialogContent._ClickNewMessageBtn = HL.Method() << function(self)
 
     self:UpdateAllMessages("normal")
 end
-
-
 
 
 FriendDialogContent.FocusFirstMessage = HL.Method() << function(self)
@@ -657,8 +526,6 @@ FriendDialogContent.FocusFirstMessage = HL.Method() << function(self)
     end
 end
 
-
-
 FriendDialogContent.ManuallyFocusMessageUp = HL.Method() << function(self)
     local searchMin = math.max(self.m_showRangeX - 50, 0)
     for csIndex = self.m_showRangeX, searchMin, -1 do
@@ -669,8 +536,6 @@ FriendDialogContent.ManuallyFocusMessageUp = HL.Method() << function(self)
         end
     end
 end
-
-
 
 FriendDialogContent.ManuallyFocusMessageDown = HL.Method() << function(self)
     local searchMax = math.min(self.m_showRangeY + 50, self.m_messages.Count - 1)
@@ -683,8 +548,6 @@ FriendDialogContent.ManuallyFocusMessageDown = HL.Method() << function(self)
     end
 end
 
-
-
 FriendDialogContent.CustomOnShow = HL.Method() << function(self)
     if self.m_updateAllMessagesInShow then
         self.m_updateAllMessagesInShow = false
@@ -692,13 +555,9 @@ FriendDialogContent.CustomOnShow = HL.Method() << function(self)
     end
 end
 
-
-
 FriendDialogContent.CustomOnHide = HL.Method() << function(self)
 
 end
-
-
 
 
 FriendDialogContent.CustomOnClose = HL.Method() << function(self)

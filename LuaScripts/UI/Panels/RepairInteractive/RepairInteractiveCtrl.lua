@@ -1,32 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.RepairInteractive
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RepairInteractiveCtrl = HL.Class('RepairInteractiveCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -48,9 +23,7 @@ local STATE_NAME = {
 
 
 
-
 RepairInteractiveCtrl.m_submitItems = HL.Field(HL.Table)
-
 
 
 
@@ -59,20 +32,13 @@ RepairInteractiveCtrl.m_submitItems = HL.Field(HL.Table)
 
 RepairInteractiveCtrl.m_info = HL.Field(HL.Table)
 
-
 RepairInteractiveCtrl.m_unlockType = HL.Field(HL.Any)
-
 
 RepairInteractiveCtrl.m_onComplete = HL.Field(HL.Function)
 
-
 RepairInteractiveCtrl.m_costItemCache = HL.Field(HL.Forward("UIListCache"))
 
-
 RepairInteractiveCtrl.m_isClosing = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -89,8 +55,6 @@ RepairInteractiveCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
 RepairInteractiveCtrl.OnShow = HL.Override() << function(self)
     if not GameWorld.gameMechManager.mainCharFixBrain.isPanelExpectedShowing then
         RepairInteractiveCtrl.ForceCloseRepairInteractive()
@@ -98,9 +62,6 @@ RepairInteractiveCtrl.OnShow = HL.Override() << function(self)
         self:PlayAnimationOutAndClose()
     end
 end
-
-
-
 
 RepairInteractiveCtrl._ParsePanelInfoFromLockData = HL.Method(HL.Userdata).Return(HL.Table) << function(self, lockData)
     
@@ -133,10 +94,6 @@ RepairInteractiveCtrl._ParsePanelInfoFromLockData = HL.Method(HL.Userdata).Retur
     return panelInfo
 end
 
-
-
-
-
 RepairInteractiveCtrl._SwitchPanelDisplay = HL.Method(HL.Boolean, HL.Boolean) << function(self, hasDesc, hasCost)
     if self.m_unlockType == GEnums.InteractiveUnlockType.Submit then
         self.view.stateController:SetState(hasCost and STATE_NAME.SUBMIT_WITH_COST or STATE_NAME.SUBMIT_NO_COST)
@@ -144,9 +101,6 @@ RepairInteractiveCtrl._SwitchPanelDisplay = HL.Method(HL.Boolean, HL.Boolean) <<
         self.view.stateController:SetState(hasDesc and STATE_NAME.MINIGAME_WITH_DESC or STATE_NAME.MINIGAME_NO_DESC)
     end
 end
-
-
-
 
 RepairInteractiveCtrl._OnCreateMinigame = HL.Method(HL.Table) << function(self, args)
     self.view.closeButton.onClick:AddListener(function()
@@ -177,9 +131,6 @@ RepairInteractiveCtrl._OnCreateMinigame = HL.Method(HL.Table) << function(self, 
 
     self:_SwitchPanelDisplay(hasDesc, false)
 end
-
-
-
 
 RepairInteractiveCtrl._OnCreateSubmit = HL.Method(HL.Table) << function(self, args)
     self.view.closeButton.onClick:AddListener(function()
@@ -243,9 +194,6 @@ end
 
 
 
-
-
-
 RepairInteractiveCtrl._FillPanelInfo = HL.Method(HL.Table) << function(self, args)
     self.view.machineNameText.text = args.machineNameText
     self.view.descText.text = args.descText
@@ -264,8 +212,6 @@ RepairInteractiveCtrl._FillPanelInfo = HL.Method(HL.Table) << function(self, arg
     end
 end
 
-
-
 RepairInteractiveCtrl._OnClickRepair = HL.Method() << function(self)
     if self.m_unlockType == GEnums.InteractiveUnlockType.Submit then
         if self.m_info ~= nil and self.m_info.callback ~= nil then
@@ -274,6 +220,11 @@ RepairInteractiveCtrl._OnClickRepair = HL.Method() << function(self)
             self:_CloseRepairInteractive()
         end
     elseif self.m_unlockType == GEnums.InteractiveUnlockType.MiniGame then
+        
+        if PhaseManager:CheckIsInTransition() then
+            return
+        end
+
         local finalArgs = {}
         finalArgs.callback = self.m_info.callback
         finalArgs.seamlessBlendToPerf = self.m_info.lockData.seamlessBlendToPerf
@@ -287,9 +238,6 @@ RepairInteractiveCtrl._OnClickRepair = HL.Method() << function(self)
         PhaseManager:OpenPhaseFast(PhaseId.Puzzle, finalArgs)
     end
 end
-
-
-
 
 RepairInteractiveCtrl.UpdateCount = HL.Method(HL.Boolean) << function(self, isInit)
     local items = self.m_submitItems
@@ -323,8 +271,6 @@ RepairInteractiveCtrl.UpdateCount = HL.Method(HL.Boolean) << function(self, isIn
     self.view.notEnoughHint.gameObject:SetActive(not isEnough)
 end
 
-
-
 RepairInteractiveCtrl.ShowRepairInteractive = HL.StaticMethod(HL.Table) << function(args)
     local lockData, callback = unpack(args)
     
@@ -338,8 +284,6 @@ RepairInteractiveCtrl.ShowRepairInteractive = HL.StaticMethod(HL.Table) << funct
         callback(true)
     end
 end
-
-
 
 RepairInteractiveCtrl.ShowRepairInteractiveByMinigame = HL.StaticMethod(HL.Table) << function(args)
     local callback, lockData = unpack(args)
@@ -355,8 +299,6 @@ RepairInteractiveCtrl.ShowRepairInteractiveByMinigame = HL.StaticMethod(HL.Table
     end
 end
 
-
-
 RepairInteractiveCtrl._CloseRepairInteractive = HL.Method() << function(self)
     if self.m_isClosing == true then
         return
@@ -364,14 +306,19 @@ RepairInteractiveCtrl._CloseRepairInteractive = HL.Method() << function(self)
     self.m_isClosing = true
     local inTransition = PhaseManager:CheckIsInTransition()
     if inTransition then
-        self:PlayAnimationOutWithCallback(function()
-            PhaseManager:ExitPhaseFast(PhaseId.RepairInteractive)
+        self:_StartCoroutine(function()
+            coroutine.waitCondition(function()
+                return self.m_isClosed or not PhaseManager:CheckIsInTransition()
+            end)
+            if self.m_isClosed then
+                return
+            end
+            PhaseManager:PopPhase(PhaseId.RepairInteractive)
         end)
     else
         PhaseManager:PopPhase(PhaseId.RepairInteractive)
     end
 end
-
 
 RepairInteractiveCtrl.ForceCloseRepairInteractive = HL.StaticMethod() << function()
     if PhaseManager:GetTopPhaseId() == PhaseId.RepairInteractive then
@@ -380,8 +327,6 @@ RepairInteractiveCtrl.ForceCloseRepairInteractive = HL.StaticMethod() << functio
         end
     end
 end
-
-
 
 RepairInteractiveCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     if self.m_info == nil then
@@ -393,8 +338,6 @@ RepairInteractiveCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any))
         callback = self.m_info.callback,
     }
 end
-
-
 
 RepairInteractiveCtrl.OnClose = HL.Override() << function(self)
     if InputManagerInst.inChangingInputDevice then
@@ -414,8 +357,6 @@ RepairInteractiveCtrl.OnClose = HL.Override() << function(self)
         end
     end
 end
-
-
 
 
 

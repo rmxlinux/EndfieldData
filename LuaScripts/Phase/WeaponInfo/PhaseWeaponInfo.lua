@@ -39,82 +39,24 @@ local PHASE_ITEMS = {
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseWeaponInfo = HL.Class('PhaseWeaponInfo', phaseBase.PhaseBase)
-
 PhaseWeaponInfo.m_weaponExhibitInfo = HL.Field(HL.Table)
-
 
 PhaseWeaponInfo.m_curPageType = HL.Field(HL.Number) << -1
 
-
 PhaseWeaponInfo.m_weaponDecoBundleList = HL.Field(HL.Table)
-
 
 PhaseWeaponInfo.m_effectCor = HL.Field(HL.Thread)
 
-
 PhaseWeaponInfo.m_cameraGroup = HL.Field(HL.Userdata)
-
 
 PhaseWeaponInfo.m_blendTransitionCor = HL.Field(HL.Thread)
 
-
 PhaseWeaponInfo.m_hideCamCor = HL.Field(HL.Thread)
-
 
 PhaseWeaponInfo.m_isBlendExit = HL.Field(HL.Boolean) << false
 
-
 PhaseWeaponInfo.m_isPanelsInit = HL.Field(HL.Boolean) << false
-
 
 PhaseWeaponInfo.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.WEAPON_EXHIBIT_PAGE_CHANGE] = { 'OnSelectPageChange', true },
@@ -125,17 +67,12 @@ PhaseWeaponInfo.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_WEAPON_ATTACH_GEM_ENHANCE_MAX] = { 'OnWeaponAttachGemEnhanceMax', true },
 }
 
-
-
-
 PhaseWeaponInfo.RotateWeapon = HL.Method(HL.Number) << function(self, deltaX)
     local sceneObject = self.m_gameObject2Item[PHASE_WEAPON_INFO_GAME_OBJECT]
     local sensitivity = 0.1
     local weaponRotateRoot = sceneObject.view.weaponRotateRoot
     weaponRotateRoot.transform:Rotate(weaponRotateRoot.transform.up, - deltaX * sensitivity)
 end
-
-
 
 PhaseWeaponInfo.ResetWeaponRotation = HL.Method() << function(self)
     local sceneObject = self.m_gameObject2Item[PHASE_WEAPON_INFO_GAME_OBJECT]
@@ -145,10 +82,6 @@ end
 PhaseWeaponInfo._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     CameraManager:EnableUIModelCullingMask(true, "weaponInfo")
 end
-
-
-
-
 
 PhaseWeaponInfo._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if PhaseManager:IsPhaseHaveSceneCamera(args and args.anotherPhaseId) then
@@ -166,11 +99,6 @@ PhaseWeaponInfo._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Tab
         self:_ToggleSceneLight(false)
     end)
 end
-
-
-
-
-
 
 PhaseWeaponInfo.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
     if transitionType == PhaseConst.EPhaseState.TransitionBackToTop then
@@ -191,9 +119,6 @@ PhaseWeaponInfo.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL
         UIManager:PreloadPanelAsset(PanelId.WeaponExhibitEmpty, PHASE_ID)
     end
 end
-
-
-
 
 PhaseWeaponInfo._InitPanels = HL.Method(HL.Table) << function(self, arg)
     if self.m_isPanelsInit then
@@ -231,9 +156,6 @@ PhaseWeaponInfo._InitPanels = HL.Method(HL.Table) << function(self, arg)
     self:_RefreshGridDeco(pageType)
     self.m_isPanelsInit = true
 end
-
-
-
 
 PhaseWeaponInfo.OnSelectPageChange = HL.Method(HL.Table) << function(self, arg)
     local pageType = arg.pageType
@@ -290,9 +212,6 @@ PhaseWeaponInfo.OnSelectPageChange = HL.Method(HL.Table) << function(self, arg)
     end)
 end
 
-
-
-
 PhaseWeaponInfo._BlendExitPhase = HL.Method(HL.Table) << function(self, arg)
     local curActiveCam = CameraManager.curVirtualCam
     local sceneObject = self.m_gameObject2Item[PHASE_WEAPON_INFO_GAME_OBJECT]
@@ -326,9 +245,6 @@ PhaseWeaponInfo._BlendExitPhase = HL.Method(HL.Table) << function(self, arg)
     end)
 end
 
-
-
-
 PhaseWeaponInfo._BlendEnterPhase = HL.Method(HL.Number) << function(self, pageType)
     local sceneObject = self.m_gameObject2Item[PHASE_WEAPON_INFO_GAME_OBJECT]
     local blendCamera = sceneObject.view.weaponExhibitBlendCamera
@@ -351,19 +267,12 @@ PhaseWeaponInfo._BlendEnterPhase = HL.Method(HL.Number) << function(self, pageTy
     end)
 end
 
-
-
-
 PhaseWeaponInfo.CloseCharInfoPanel = HL.Method(HL.Number) << function(self, panelId)
     if not self.m_panel2Item[panelId] then
         return
     end
     self:RemovePhasePanelItemById(panelId)
 end
-
-
-
-
 
 PhaseWeaponInfo._ToggleWeaponPotential = HL.Method(HL.Boolean, HL.Boolean) << function(self, isOn, isFast)
     local sceneObject = self.m_gameObject2Item[PHASE_WEAPON_INFO_GAME_OBJECT]
@@ -394,17 +303,11 @@ PhaseWeaponInfo._ToggleWeaponPotential = HL.Method(HL.Boolean, HL.Boolean) << fu
     end
 end
 
-
-
-
 PhaseWeaponInfo._RefreshGridDeco = HL.Method(HL.Number) << function(self, pageType)
     local isOn = not HIDE_GRID_PAGE_TYPE[pageType]
     local sceneObject = self.m_gameObject2Item[PHASE_WEAPON_INFO_GAME_OBJECT]
     UIUtils.PlayAnimationAndToggleActive(sceneObject.view.weaponGridDeco, isOn)
 end
-
-
-
 
 PhaseWeaponInfo._ToggleWeaponUpgradeDeco = HL.Method(HL.Boolean) << function(self, isOn)
     local sceneObject = self.m_gameObject2Item[PHASE_WEAPON_INFO_GAME_OBJECT]
@@ -412,22 +315,13 @@ PhaseWeaponInfo._ToggleWeaponUpgradeDeco = HL.Method(HL.Boolean) << function(sel
     UIUtils.PlayAnimationAndToggleActive(sceneObject.view.weaponUpgradeDeco, isOn)
 end
 
-
-
-
 PhaseWeaponInfo.OnGemAttach = HL.Method(HL.Table) << function(self, arg)
     self:_ReloadWeaponEffect()
 end
 
-
-
-
 PhaseWeaponInfo.OnGemDetach = HL.Method(HL.Table) << function(self, arg)
     self:_ReloadWeaponEffect()
 end
-
-
-
 
 PhaseWeaponInfo.OnWeaponAttachGemEnhanceMax = HL.Method(HL.Table) << function(self, arg)
     local weaponInstId = unpack(arg)
@@ -435,8 +329,6 @@ PhaseWeaponInfo.OnWeaponAttachGemEnhanceMax = HL.Method(HL.Table) << function(se
         self:_ReloadWeaponEffect()
     end
 end
-
-
 
 PhaseWeaponInfo._ReloadWeaponEffect = HL.Method() << function(self)
     local weaponExhibitInfo = self.m_weaponExhibitInfo
@@ -449,9 +341,6 @@ PhaseWeaponInfo._ReloadWeaponEffect = HL.Method() << function(self)
     end
 end
 
-
-
-
 PhaseWeaponInfo.OnWeaponRefine = HL.Method(HL.Table) << function(self, arg)
     local weaponExhibitInfoBefore = self.m_weaponExhibitInfo
     local weaponTemplateId = weaponExhibitInfoBefore.weaponInst.templateId
@@ -462,8 +351,6 @@ PhaseWeaponInfo.OnWeaponRefine = HL.Method(HL.Table) << function(self, arg)
     self:_InitWeaponModel(self.m_weaponExhibitInfo)
 end
 
-
-
 PhaseWeaponInfo._OnInit = HL.Override() << function(self)
     PhaseWeaponInfo.Super._OnInit(self)
 
@@ -471,14 +358,9 @@ PhaseWeaponInfo._OnInit = HL.Override() << function(self)
     UIManager:Open(PanelId.WeaponExhibitEmpty)
 end
 
-
 PhaseWeaponInfo.OnPreLevelStart = HL.StaticMethod() << function()
     PhaseManager:TryCacheGOByName(PHASE_ID, PHASE_WEAPON_INFO_GAME_OBJECT)
 end
-
-
-
-
 
 PhaseWeaponInfo._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     
@@ -492,8 +374,6 @@ PhaseWeaponInfo._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table))
     self:_InitWeaponModel(weaponExhibitInfo)
     self:_InitVCamController(weaponTemplateId)
 end
-
-
 
 PhaseWeaponInfo._OnActivated = HL.Override() << function(self)
     CameraManager:EnableUIModelCullingMask(true, "weaponInfo")
@@ -551,15 +431,11 @@ PhaseWeaponInfo._OnActivated = HL.Override() << function(self)
     end
 end
 
-
-
 PhaseWeaponInfo._OnDeActivated = HL.Override() << function(self)
     Utils.disableCameraDOF()
 
     UIManager:Hide(PanelId.WeaponExhibitEmpty)
 end
-
-
 
 PhaseWeaponInfo._OnDestroy = HL.Override() << function(self)
     CameraManager:EnableUIModelCullingMask(false, "weaponInfo")
@@ -570,15 +446,10 @@ PhaseWeaponInfo._OnDestroy = HL.Override() << function(self)
     UIManager:Show(PanelId.Touch)
 end
 
-
-
-
 PhaseWeaponInfo._ToggleSceneLight = HL.Method(HL.Boolean) << function(self, isOn)
     local sceneObject = self.m_gameObject2Item[PHASE_WEAPON_INFO_GAME_OBJECT]
     sceneObject.view.light.gameObject:SetActive(isOn)
 end
-
-
 
 PhaseWeaponInfo._SetListCameraDOF = HL.Method() << function(self)
     local sceneObject = self.m_gameObject2Item[PHASE_WEAPON_INFO_GAME_OBJECT]
@@ -594,9 +465,6 @@ PhaseWeaponInfo._SetListCameraDOF = HL.Method() << function(self)
     )
     Utils.enableCameraDOF(data)
 end
-
-
-
 
 PhaseWeaponInfo._InitWeaponModel = HL.Method(HL.Table) << function(self, weaponExhibitInfo)
     self:_CleanUpWeapon()
@@ -651,9 +519,6 @@ PhaseWeaponInfo._InitWeaponModel = HL.Method(HL.Table) << function(self, weaponE
     end
 end
 
-
-
-
 PhaseWeaponInfo._InitVCamController = HL.Method(HL.String) << function(self, weaponTemplateId)
     local _, weaponConfig = Tables.weaponBasicTable:TryGetValue(weaponTemplateId)
     if not weaponConfig then
@@ -679,8 +544,6 @@ PhaseWeaponInfo._InitVCamController = HL.Method(HL.String) << function(self, wea
     self.m_cameraGroup = cameraGroup
 end
 
-
-
 PhaseWeaponInfo._ResetVCam = HL.Method() << function(self)
     local camGroup = self.m_cameraGroup
     if not camGroup then
@@ -690,9 +553,6 @@ PhaseWeaponInfo._ResetVCam = HL.Method() << function(self)
         camGroup.view[camName].gameObject:SetActive(false)
     end
 end
-
-
-
 
 PhaseWeaponInfo._RefreshWeaponEquipped = HL.Method(HL.Table) << function(self, weaponExhibitInfo)
     local sceneObject = self.m_gameObject2Item[PHASE_WEAPON_INFO_GAME_OBJECT]
@@ -708,9 +568,6 @@ PhaseWeaponInfo._RefreshWeaponEquipped = HL.Method(HL.Table) << function(self, w
     end
 end
 
-
-
-
 PhaseWeaponInfo._RefreshVCam = HL.Method(HL.Number) << function(self, targetPageType)
     local camName = UIConst.WEAPON_EXHIBIT_PAGE_TYPE_2_CAM_NAME[targetPageType]
     local cameraGroup = self.m_cameraGroup
@@ -725,9 +582,6 @@ PhaseWeaponInfo._RefreshVCam = HL.Method(HL.Number) << function(self, targetPage
     cameraGroup.view[camName].gameObject:SetActive(true)
 end
 
-
-
-
 PhaseWeaponInfo._ToggleWeaponEquippedMarker = HL.Method(HL.Boolean) << function(self, isOn)
     local sceneObject = self.m_gameObject2Item[PHASE_WEAPON_INFO_GAME_OBJECT]
     local weaponEquipMarker = sceneObject.view.weaponEquipMarker
@@ -735,23 +589,15 @@ PhaseWeaponInfo._ToggleWeaponEquippedMarker = HL.Method(HL.Boolean) << function(
     UIUtils.PlayAnimationAndToggleActive(weaponEquipMarker.weaponEquipped, isOn)
 end
 
-
-
-
-
 PhaseWeaponInfo._InitGameObject = HL.Method(HL.Number, HL.Table) << function(self, pageType, arg)
     for _, name in ipairs(PHASE_ITEMS) do
         self:CreatePhaseGOItem(name)
     end
 end
 
-
-
 PhaseWeaponInfo._CleanUpWeapon = HL.Method() << function(self)
     self:_CleanUpWeaponEffect()
 end
-
-
 
 PhaseWeaponInfo._CleanUpWeaponEffect = HL.Method() << function(self)
     if self.m_weaponDecoBundleList then
@@ -762,14 +608,8 @@ PhaseWeaponInfo._CleanUpWeaponEffect = HL.Method() << function(self)
     end
 end
 
-
-
 PhaseWeaponInfo._RemoveCameraController = HL.Method() << function(self)
 end
-
-
-
-
 
 PhaseWeaponInfo._RefreshWeaponDecoEffect = HL.Method(HL.Userdata, HL.Number) << function(self, weaponGo, weaponInstId)
     
@@ -778,8 +618,6 @@ PhaseWeaponInfo._RefreshWeaponDecoEffect = HL.Method(HL.Userdata, HL.Number) << 
     local weaponDecoBundle = CS.Beyond.Gameplay.WeaponUtil.SetWeaponDecoEffect(weaponGo.transform, decoDataList)
     table.insert(self.m_weaponDecoBundleList, weaponDecoBundle)
 end
-
-
 
 PhaseWeaponInfo.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}

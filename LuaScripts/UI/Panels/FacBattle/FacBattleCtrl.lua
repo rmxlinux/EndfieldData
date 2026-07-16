@@ -1,42 +1,5 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacBattle
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacBattleCtrl = HL.Class('FacBattleCtrl', uiCtrl.UICtrl)
 
 local ChargingMode = FacConst.BattleBuildingChargingMode
@@ -61,51 +24,35 @@ local CHARGING_SHARED_STATE_TEXT_ID = "ui_fac_battle_building_energy_source_shar
 
 local FILL_AMOUNT_TWEEN_DURATION = 0.5
 
-
 FacBattleCtrl.m_buildingInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_Battle)
-
 
 FacBattleCtrl.m_currentChargingMode = HL.Field(HL.Number) << 0
 
-
 FacBattleCtrl.m_initialRefreshChargingMode = HL.Field(HL.Number) << -1
-
 
 FacBattleCtrl.m_currentBuildingState = HL.Field(GEnums.FacBuildingState)
 
-
 FacBattleCtrl.m_lastChargingEnergy = HL.Field(HL.Number) << 0
-
 
 FacBattleCtrl.m_lastBatteryEnergy = HL.Field(HL.Number) << 0
 
-
 FacBattleCtrl.m_chargingTweenInitialized = HL.Field(HL.Boolean) << false
-
 
 FacBattleCtrl.m_chargingTween = HL.Field(HL.Userdata)
 
-
 FacBattleCtrl.m_batteryTweenInitialized = HL.Field(HL.Boolean) << false
-
 
 FacBattleCtrl.m_batteryTween = HL.Field(HL.Userdata)
 
-
 FacBattleCtrl.m_batteryItemIdMap = HL.Field(HL.Table)
-
 
 FacBattleCtrl.m_normalDescription = HL.Field(HL.String) << ""
 
-
 FacBattleCtrl.m_overloadDescription = HL.Field(HL.String) << ""
-
 
 FacBattleCtrl.m_updateThread = HL.Field(HL.Thread)
 
-
 FacBattleCtrl.m_isInCharging = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -115,9 +62,6 @@ FacBattleCtrl.m_isInCharging = HL.Field(HL.Boolean) << false
 FacBattleCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 FacBattleCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -160,8 +104,6 @@ FacBattleCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitBattleController()
 end
 
-
-
 FacBattleCtrl.OnClose = HL.Override() << function(self)
     self.m_updateThread = self:_ClearCoroutine(self.m_updateThread)
 
@@ -175,8 +117,6 @@ FacBattleCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 FacBattleCtrl._InitBattleBasicContent = HL.Method() << function(self)
     local buildingId = self.m_buildingInfo.nodeHandler.templateId
     local success, battleBuildingData = Tables.factoryBattleTable:TryGetValue(buildingId)
@@ -188,8 +128,6 @@ FacBattleCtrl._InitBattleBasicContent = HL.Method() << function(self)
 
     self:_RefreshBatteryText()
 end
-
-
 
 FacBattleCtrl._InitBattleStaticData = HL.Method() << function(self)
     
@@ -204,8 +142,6 @@ FacBattleCtrl._InitBattleStaticData = HL.Method() << function(self)
         self.m_overloadDescription = battleBuildingData.overloadDesc
     end
 end
-
-
 
 
 
@@ -224,8 +160,6 @@ FacBattleCtrl._InitBattleUpdateThread = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 FacBattleCtrl._GetNextChargingMode = HL.Method().Return(HL.Number) << function(self)
     local nextChargingMode = self.m_currentChargingMode
@@ -269,16 +203,11 @@ FacBattleCtrl._GetNextChargingMode = HL.Method().Return(HL.Number) << function(s
     return nextChargingMode
 end
 
-
-
-
 FacBattleCtrl._GetIsBatteryCacheEnabledState = HL.Method(HL.Number).Return(HL.Boolean) << function(self, mode)
     local isInBatteryMode = mode == ChargingMode.Battery
     local isClosed = mode == ChargingMode.Closed
     return isInBatteryMode or isClosed
 end
-
-
 
 FacBattleCtrl._UpdateAndRefreshBattleChargingState = HL.Method() << function(self)
     local nextChargingMode = self:_GetNextChargingMode()
@@ -304,9 +233,6 @@ FacBattleCtrl._UpdateAndRefreshBattleChargingState = HL.Method() << function(sel
     self:_RefreshIsInChargingState()
     self:_RefreshChargingAnimState()
 end
-
-
-
 
 FacBattleCtrl._RefreshChargingMode = HL.Method(HL.Number) << function(self, mode)
     local isInBatteryMode = mode == ChargingMode.Battery
@@ -370,9 +296,6 @@ FacBattleCtrl._RefreshChargingMode = HL.Method(HL.Number) << function(self, mode
     end
 end
 
-
-
-
 FacBattleCtrl._RefreshBatteryState = HL.Method(HL.Opt(HL.Boolean)) << function(self, forceRefresh)
     local energyCurrent = self.m_buildingInfo.batteryBurn.energyCurrent
     local energyLoaded = self.m_buildingInfo.batteryBurn.energyLoaded
@@ -410,8 +333,6 @@ FacBattleCtrl._RefreshBatteryState = HL.Method(HL.Opt(HL.Boolean)) << function(s
     self.m_lastBatteryEnergy = energyCurrent
 end
 
-
-
 FacBattleCtrl._RefreshBatteryText = HL.Method() << function(self)
     local items = self.m_buildingInfo.cache.items
     local textId = CHARGING_BATTERY_EMPTY_STATE_TEXT_ID
@@ -436,8 +357,6 @@ FacBattleCtrl._RefreshBatteryText = HL.Method() << function(self)
     self.view.chargingStateText.text = Language[textId]
     self.view.normalTipsStateCtrl:SetState(normalTipsStateName)
 end
-
-
 
 FacBattleCtrl._RefreshChargingEnergy = HL.Method() << function(self)
     local energyCurrent = self.m_buildingInfo.battle.energyCurrent
@@ -484,8 +403,6 @@ FacBattleCtrl._RefreshChargingEnergy = HL.Method() << function(self)
     self.view.maxEnergyText.text = string.format("%d", energyMax)
 end
 
-
-
 FacBattleCtrl._RefreshIsInChargingState = HL.Method() << function(self)
     local isRunning = self.view.buildingCommon.lastState == GEnums.FacBuildingState.Normal
     self.m_isInCharging = false
@@ -507,15 +424,11 @@ FacBattleCtrl._RefreshIsInChargingState = HL.Method() << function(self)
     self.m_isInCharging = true
 end
 
-
-
 FacBattleCtrl._RefreshChargingAnimState = HL.Method() << function(self)
     self.view.overloadNode.iconElectricCircle.gameObject:SetActive(self.m_isInCharging)
     self.view.powerNetNode.iconElectricCircle.gameObject:SetActive(self.m_isInCharging)
     self.view.batteryNode.iconElectricCircle.gameObject:SetActive(self.m_isInCharging)
 end
-
-
 
 
 
@@ -528,10 +441,6 @@ FacBattleCtrl._OnAutoFillButtonClicked = HL.Method() << function(self)
         self.m_buildingInfo.cache.componentId
     )
 end
-
-
-
-
 
 
 
@@ -551,8 +460,6 @@ FacBattleCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) << func
     cell.view.dropItem.enabled = isBattery or isEmpty
 end
 
-
-
 FacBattleCtrl._RefreshInventoryItemCellsOnStateChange = HL.Method() << function(self)
     self.view.inventoryArea.view.itemBag.view.itemBagContent:Refresh()
     if self.view.inventoryArea.inSafeZone then
@@ -565,18 +472,13 @@ end
 
 
 
-
 FacBattleCtrl.m_naviGroupSwitcher = HL.Field(HL.Forward('NaviGroupSwitcher'))
-
-
 
 FacBattleCtrl._InitBattleController = HL.Method() << function(self)
     local NaviGroupSwitcher = require_ex("Common/Utils/UI/NaviGroupSwitcher").NaviGroupSwitcher
     self.m_naviGroupSwitcher = NaviGroupSwitcher(self.view.inputGroup.groupId, nil, true)
     self:_RefreshNaviGroupSwitcherInfos()
 end
-
-
 
 FacBattleCtrl._RefreshNaviGroupSwitcherInfos = HL.Method() << function(self)
     if self.m_naviGroupSwitcher == nil then

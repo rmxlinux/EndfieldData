@@ -6,74 +6,33 @@ local GUEST_ROOM_CLUE_TYPE =
     [2] = CS.Beyond.Gameplay.GuestRoomClueType.Receive,
     [3] = CS.Beyond.Gameplay.GuestRoomClueType.PreReceive,
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipGuestroomInventory = HL.Class('SpaceshipGuestroomInventory', UIWidgetBase)
-
 
 SpaceshipGuestroomInventory.m_onIndexChange = HL.Field(HL.Function)
 
-
 SpaceshipGuestroomInventory.m_clueToggleTab = HL.Field(HL.Number) << 0
-
 
 SpaceshipGuestroomInventory.m_indexTab = HL.Field(HL.Number) << 0
 
-
 SpaceshipGuestroomInventory.m_currentClueInstId = HL.Field(HL.Number) << 0
-
 
 SpaceshipGuestroomInventory.m_cacheData = HL.Field(HL.Table)
 
-
 SpaceshipGuestroomInventory.m_cellInstId2Index = HL.Field(HL.Table)
-
 
 SpaceshipGuestroomInventory.m_Index2Cell = HL.Field(HL.Table)
 
-
 SpaceshipGuestroomInventory.m_batches = HL.Field(HL.Table)
-
 
 SpaceshipGuestroomInventory.m_currentBatchIndex = HL.Field(HL.Number) << 0
 
-
 SpaceshipGuestroomInventory.m_isOpen = HL.Field(HL.Boolean) << false
-
 
 SpaceshipGuestroomInventory.m_getCellFunc = HL.Field(HL.Function)
 
-
 SpaceshipGuestroomInventory.m_lastNaviTargetIndex = HL.Field(HL.Number) << 1
 
-
 SpaceshipGuestroomInventory.m_loadingFinish = HL.Field(HL.Boolean) << false
-
-
 
 
 
@@ -201,12 +160,6 @@ SpaceshipGuestroomInventory._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
-
-
-
 SpaceshipGuestroomInventory.InitSpaceshipGuestroomInventory = HL.Method(HL.Opt(HL.Function, HL.Number, HL.Number, HL.Number)) << function(self, onIndexChange, toggleTab, indexTab, currentClueInstId)
     self:_FirstTimeInit()
     self:FadeIn()
@@ -232,7 +185,7 @@ SpaceshipGuestroomInventory.InitSpaceshipGuestroomInventory = HL.Method(HL.Opt(H
     local added = {}
     for _, id in ipairs(allRoleIds) do
         local success , friendInfo = GameInstance.player.friendSystem:TryGetFriendInfo(id)
-        if not added[id] and (not success or not friendInfo.shortId) then
+        if not added[id] and (not success or string.isEmpty(friendInfo.name)) then
             table.insert(uniqueRoleIds, id)
             added[id] = true
         end
@@ -254,8 +207,6 @@ SpaceshipGuestroomInventory.InitSpaceshipGuestroomInventory = HL.Method(HL.Opt(H
     self:_ProcessNextBatch()
 end
 
-
-
 SpaceshipGuestroomInventory._ProcessNextBatch = HL.Method() << function(self)
     self.m_currentBatchIndex = self.m_currentBatchIndex + 1
     if self.m_currentBatchIndex > #self.m_batches then
@@ -268,8 +219,6 @@ SpaceshipGuestroomInventory._ProcessNextBatch = HL.Method() << function(self)
         self:_ProcessNextBatch()
     end)
 end
-
-
 
 SpaceshipGuestroomInventory._OnAllBatchesCompleted = HL.Method() << function(self)
     self.view.loadingNode.gameObject:SetActive(false)
@@ -291,8 +240,6 @@ SpaceshipGuestroomInventory._OnAllBatchesCompleted = HL.Method() << function(sel
 end
 
 
-
-
 SpaceshipGuestroomInventory.NaviToFirstCell = HL.Method() << function(self)
     if not DeviceInfo.usingController or not self.m_isOpen then
         return
@@ -301,10 +248,8 @@ SpaceshipGuestroomInventory.NaviToFirstCell = HL.Method() << function(self)
     if not cell then
         return
     end
-    InputManagerInst.controllerNaviManager:SetTarget(cell.view.inputBindingGroupNaviDecorator)
+    self:SetNaviTarget(cell.view.inputBindingGroupNaviDecorator)
 end
-
-
 
 
 SpaceshipGuestroomInventory.Navi2LastNaviTarget = HL.Method() << function(self)
@@ -314,14 +259,12 @@ SpaceshipGuestroomInventory.Navi2LastNaviTarget = HL.Method() << function(self)
     while self.m_lastNaviTargetIndex > 0 do
         local cell = self.m_Index2Cell[self.m_lastNaviTargetIndex]
         if cell then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.view.inputBindingGroupNaviDecorator)
+            self:SetNaviTarget(cell.view.inputBindingGroupNaviDecorator)
             return
         end
         self.m_lastNaviTargetIndex = self.m_lastNaviTargetIndex - 1
     end
 end
-
-
 
 SpaceshipGuestroomInventory._UpdateCacheData = HL.Method() << function(self)
     self.m_cacheData = {}
@@ -388,8 +331,6 @@ SpaceshipGuestroomInventory._UpdateCacheData = HL.Method() << function(self)
     end)
 end
 
-
-
 SpaceshipGuestroomInventory._RefreshCacheData = HL.Method() << function(self)
     if not self.m_cacheData then
         self:_UpdateCacheData()
@@ -409,9 +350,6 @@ SpaceshipGuestroomInventory._RefreshCacheData = HL.Method() << function(self)
     end
     self.m_cacheData = tempCacheData
 end
-
-
-
 
 
 SpaceshipGuestroomInventory._UpdateView = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
@@ -439,8 +377,6 @@ SpaceshipGuestroomInventory._UpdateView = HL.Method(HL.Opt(HL.Boolean)) << funct
     self.view.countTxt.text = string.format("%d/%d", count, Tables.spaceshipConst.selfClueStorageMaxCount)
 end
 
-
-
 SpaceshipGuestroomInventory.FadeIn = HL.Method() << function(self)
     if self.m_isOpen then
         return
@@ -449,8 +385,6 @@ SpaceshipGuestroomInventory.FadeIn = HL.Method() << function(self)
     self.view.gameObject:SetActive(true)
     self.view.animationWrapper:PlayInAnimation()
 end
-
-
 
 SpaceshipGuestroomInventory.FadeOut = HL.Method() << function(self)
     if not self.m_isOpen then
@@ -464,8 +398,6 @@ SpaceshipGuestroomInventory.FadeOut = HL.Method() << function(self)
         self.view.gameObject:SetActive(false)
     end)
 end
-
-
 
 SpaceshipGuestroomInventory._OnDestroy = HL.Override() << function(self)
     GameInstance.player.friendSystem:ClearSyncCallback()

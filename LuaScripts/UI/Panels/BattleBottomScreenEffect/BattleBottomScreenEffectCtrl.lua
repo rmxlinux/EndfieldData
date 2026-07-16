@@ -7,7 +7,6 @@ BattleBottomScreenEffectCtrl = HL.Class('BattleBottomScreenEffectCtrl', uiCtrl.U
 
 
 
-
 BattleBottomScreenEffectCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }

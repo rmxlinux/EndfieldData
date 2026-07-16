@@ -1,36 +1,18 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 WikiSearchGroupItems = HL.Class('WikiSearchGroupItems', UIWidgetBase)
-
 
 WikiSearchGroupItems.m_itemCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WikiSearchGroupItems.m_monsterCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WikiSearchGroupItems.m_wikiSearchResult = HL.Field(HL.Table)
-
-
 
 
 WikiSearchGroupItems._OnFirstTimeInit = HL.Override() << function(self)
     self.m_itemCache = UIUtils.genCellCache(self.view.itemBigBlack)
     self.m_monsterCache = UIUtils.genCellCache(self.view.monsterBigBlack)
 end
-
-
-
-
-
-
 
 WikiSearchGroupItems.InitWikiSearchGroupItems = HL.Method(HL.Table, HL.Function, HL.Table, HL.Opt(HL.Boolean)) << function(
     self, wikiSearchResult, onItemClicked, readWikiEntries, isFirstClicked)
@@ -77,7 +59,7 @@ WikiSearchGroupItems.InitWikiSearchGroupItems = HL.Method(HL.Table, HL.Function,
             if onItemClicked then
                 onItemClicked(cell, entryShowData)
             end
-            InputManagerInst.controllerNaviManager:SetTarget(cell.view.button)
+            self:SetNaviTarget(cell.view.button)
         end
     end
 
@@ -89,9 +71,6 @@ WikiSearchGroupItems.InitWikiSearchGroupItems = HL.Method(HL.Table, HL.Function,
         self.m_itemCache:Refresh(#wikiSearchResult.categoryResult, refreshFunc)
     end
 end
-
-
-
 
 WikiSearchGroupItems.GetCellByEntryId = HL.Method(HL.String).Return(HL.Opt(HL.Any, HL.Table)) << function(self, entryId)
     if string.isEmpty(entryId) or not self.m_wikiSearchResult then

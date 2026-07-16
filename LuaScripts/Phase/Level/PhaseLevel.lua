@@ -3,101 +3,7 @@ local PHASE_ID = PhaseId.Level
 local HGCamera = CS.HG.Rendering.Runtime.HGCamera
 local PhaseLevelConfig = require_ex("Phase/Level/PhaseLevelConfig")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseLevel = HL.Class('PhaseLevel', phaseBase.PhaseBase)
-
 
 
 
@@ -115,6 +21,7 @@ PhaseLevel.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SET_PHASE_LEVEL_TRANSITION_RESERVE_PANELS] = {'SetPhaseLevelTransitionReservePanels', true },
 
     [MessageConst.RECOVER_PHASE_LEVEL] = {'RecoverPhaseLevel', true },
+    [MessageConst.ON_SCENE_REPATRIATE_NEED_UNSTUCK] = {'OnSceneRepatriateNeedUnstuck', true },
 
     
     [MessageConst.ON_ENTER_TOWER_DEFENSE_PREPARING_PHASE ] = { 'OnEnterTowerDefensePreparingPhase', true },
@@ -131,6 +38,7 @@ PhaseLevel.s_messages = HL.StaticField(HL.Table) << {
     
 
     [MessageConst.GAME_MODE_ENABLE] = { 'OnGameModeEnable', true },
+    [MessageConst.GAME_MODE_DISABLE] = { '_OnGameModeDisable', true },
 
     [MessageConst.SET_FAC_TOP_VIEW_CUSTOM_RANGE] = { 'SetFacTopViewCustomRange', true },
 
@@ -147,8 +55,11 @@ PhaseLevel.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_REPATRIATE] = { 'OnRepatriate', true },
 
     [MessageConst.CURRENT_LEVEL_CHANGE] = { 'OnCurrentLevelChanged', true },
-}
+    [MessageConst.ON_GAME_LEVEL_LOADING_FINISH] = { 'OnGameLevelLoadingFinish', true },
+    [MessageConst.ON_GACHA_POOL_ALL_REWARDS_SHOWN] = { '_OnGachaPoolAllRewardsShown', true },
 
+    [MessageConst.ON_SYSTEM_UNLOCK_CHANGED] = { '_OnSystemUnlockForImportantActivity', true },
+}
 
 
 PhaseLevel.OpenLevelPhase = HL.StaticMethod() << function()
@@ -157,6 +68,8 @@ PhaseLevel.OpenLevelPhase = HL.StaticMethod() << function()
     else
         if not PhaseManager:IsOpen(PHASE_ID) then
             PhaseManager:OpenPhaseFast(PHASE_ID) 
+        elseif GameWorld.levelLoader.isSeamlessLoading then
+            Notify(MessageConst.ON_OPEN_LEVEL_PHASE_SEAMLESS_LOADING)
         end
     end
 end
@@ -166,22 +79,15 @@ end
 
 
 
-
 PhaseLevel.m_updateKey = HL.Field(HL.Number) << -1
-
 
 PhaseLevel.m_headLabelCtrl = HL.Field(HL.Forward("HeadLabelCtrl"))
 
-
 PhaseLevel.m_missionTrackerPanel = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseLevel.m_generalTrackerPanel = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseLevel.s_forceTransitionBehindFastMode = HL.StaticField(HL.Boolean) << false
-
-
 
 
 
@@ -192,13 +98,8 @@ PhaseLevel._OnInit = HL.Override() << function(self)
     self:_InitInMainHudMessageList()
 end
 
-
-
-
 PhaseLevel.onSceneLoadStart = HL.Method(HL.Any) << function(self, arg)
 end
-
-
 
 PhaseLevel.OpenLevelPanels = HL.Method() << function(self)
     
@@ -268,8 +169,6 @@ local BlackBoxGuideNeedClosePanel = {
     PanelId.ControllerSideMenu, 
 }
 
-
-
 PhaseLevel.RecoverPhaseLevel = HL.Method() << function(self)
     if PhaseManager.m_transCor then
         
@@ -304,26 +203,17 @@ end
 
 
 
-
 PhaseLevel.m_lastLevelIdNum = HL.Field(HL.Number) << -1
-
 
 PhaseLevel.m_lastInFacMainRegion = HL.Field(HL.Boolean) << false
 
-
 PhaseLevel.mainRegionPanelIndex = HL.Field(HL.Number) << -1 
-
 
 PhaseLevel.mainRegionLocalRect = HL.Field(CS.UnityEngine.Rect)
 
-
 PhaseLevel.mainRegionLocalRectWithMovePadding = HL.Field(CS.UnityEngine.Rect)
 
-
 PhaseLevel.customFacTopViewRangeInWorld = HL.Field(CS.UnityEngine.Rect)
-
-
-
 
 
 PhaseLevel.SetFacTopViewCustomRange = HL.Method(HL.Table) << function(self, args)
@@ -335,15 +225,11 @@ PhaseLevel.SetFacTopViewCustomRange = HL.Method(HL.Table) << function(self, args
     self.customFacTopViewRangeInWorld = customRangeRect
 end
 
-
-
 PhaseLevel.ForceUpdateMainRegionInfo = HL.Method() << function(self)
     logger.info("PhaseLevel.ForceUpdateMainRegionInfo")
     local inMainRegion, panelIndex = Utils.isInFacMainRegionAndGetIndex()
     self:_UpdateCurMainRegionInfo(panelIndex)
 end
-
-
 
 PhaseLevel.OnExitTravelMode = HL.Method() << function(self)
     local inMainRegion, panelIndex = Utils.isInFacMainRegionAndGetIndex()
@@ -354,14 +240,9 @@ PhaseLevel.OnExitTravelMode = HL.Method() << function(self)
     self:_TryAutoToggleFacMode(inMainRegion)
 end
 
-
 PhaseLevel.m_enterFacMainRegionCamState = HL.Field(HL.Any)
 
-
 PhaseLevel.m_waitInitFacMode = HL.Field(HL.Boolean) << true
-
-
-
 
 PhaseLevel._UpdateFactoryMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     if isInit then
@@ -437,9 +318,6 @@ PhaseLevel._UpdateFactoryMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, 
     self:_RefreshFacModeAndMainRegion(nil)
 end
 
-
-
-
 PhaseLevel._RefreshFacModeAndMainRegion = HL.Method(HL.Opt(HL.Any)) << function(self, reason)
     local inMainRegion, panel = GameInstance.remoteFactoryManager:IsPlayerPositionInMainRegionAndGetIndex()
     local panelIndex = -1
@@ -486,9 +364,6 @@ PhaseLevel._RefreshFacModeAndMainRegion = HL.Method(HL.Opt(HL.Any)) << function(
     GameWorld.worldInfo.inFacMainRegion = inMainRegion
 end
 
-
-
-
 PhaseLevel.OnCurrentLevelChanged = HL.Method(HL.Any) << function(self, arg)
     if self.m_waitInitFacMode then
         return
@@ -496,9 +371,6 @@ PhaseLevel.OnCurrentLevelChanged = HL.Method(HL.Any) << function(self, arg)
     local reason = unpack(arg)
     self:_RefreshFacModeAndMainRegion(reason)
 end
-
-
-
 
 PhaseLevel._UpdateCurMainRegionInfo = HL.Method(HL.Opt(HL.Number)) << function(self, panelIndex)
     if panelIndex and panelIndex >= 0 then
@@ -512,9 +384,6 @@ PhaseLevel._UpdateCurMainRegionInfo = HL.Method(HL.Opt(HL.Number)) << function(s
         self.mainRegionLocalRectWithMovePadding = nil
     end
 end
-
-
-
 
 PhaseLevel._TryAutoToggleFacMode = HL.Method(HL.Boolean) << function(self, inMainRegion)
     if inMainRegion then
@@ -530,8 +399,6 @@ PhaseLevel._TryAutoToggleFacMode = HL.Method(HL.Boolean) << function(self, inMai
     end
 end
 
-
-
 PhaseLevel.OnSquadInfightChanged = HL.Method(HL.Opt(HL.Any)) << function(self)
     local inFight = Utils.isInFight()
     if inFight then
@@ -541,10 +408,7 @@ PhaseLevel.OnSquadInfightChanged = HL.Method(HL.Opt(HL.Any)) << function(self)
     end
 end
 
-
 PhaseLevel.isPlayerOutOfRangeManual = HL.Field(HL.Boolean) << false
-
-
 
 PhaseLevel._UpdatePlayerPosFacInfo = HL.Method() << function(self)
     local succ, outOfRangeManual = GameInstance.remoteFactoryManager:TrySampleCurrentSceneGridStatusWithPlayerPosition()
@@ -572,27 +436,19 @@ end
 
 
 
-
-
 PhaseLevel._AddRegisters = HL.Method() << function(self)
     self.m_updateKey = LuaUpdate:Add("Tick", function()
         self:_Update()
     end, true)
 end
 
-
-
 PhaseLevel._ClearRegisters = HL.Method() << function(self)
     self.m_updateKey = LuaUpdate:Remove(self.m_updateKey)
 end
 
-
-
 PhaseLevel._Update = HL.Method() << function(self)
     self:_UpdateFactoryMode()
 end
-
-
 
 
 
@@ -607,18 +463,12 @@ PhaseLevel._OnActivated = HL.Override() << function(self)
 end
 
 
-
-
 PhaseLevel._OnDeActivated = HL.Override() << function(self)
     self:_ClearRegisters()
     GameWorld.ppEffectLoader:PauseTick()
-    if GameWorld.worldInfo.inMainHud then
-        self:_OnInternalInMainHudStateChanged(false)
-    end
+    self:_OnInternalInMainHudStateChanged(false)
     Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = self, enabled = true})
 end
-
-
 
 PhaseLevel._OnDestroy = HL.Override() << function(self)
     if not InputManagerInst.inChangingInputDevice then 
@@ -656,10 +506,6 @@ PhaseLevel._OnDestroy = HL.Override() << function(self)
     Notify(MessageConst.ON_PHASE_LEVEL_DESTROYED)
 end
 
-
-
-
-
 PhaseLevel._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, transArgs)
     Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = self, enabled = false})
     if DeviceInfo.isMobile then
@@ -680,6 +526,10 @@ PhaseLevel._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << f
     end
     
     self:TryRestoreTowerDefense()
+    
+    if GameWorld.battle.seasonTowerState ~= CS.Beyond.Gameplay.Core.BattleManager.SeasonTowerState.None then
+        UIManager:AutoOpen(PanelId.SeasonTowerBuff)
+    end
     
     
     if not Utils.isInDungeon() then
@@ -728,12 +578,7 @@ PhaseLevel._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << f
 end
 
 
-
 PhaseLevel.m_hidePanelKey = HL.Field(HL.Number) << -1
-
-
-
-
 
 PhaseLevel._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = self, enabled = false})
@@ -749,11 +594,6 @@ PhaseLevel._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table
     self:_OnInternalInMainHudStateChanged(true)
 end
 
-
-
-
-
-
 PhaseLevel.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
     if transitionType == PhaseConst.EPhaseState.TransitionBehind then
         
@@ -761,11 +601,7 @@ PhaseLevel.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Numb
     end
 end
 
-
 PhaseLevel.m_transitionReservePanelIds = HL.Field(HL.Table)
-
-
-
 
 PhaseLevel.SetPhaseLevelTransitionReservePanels = HL.Method(HL.Table) << function(self, ids)
     
@@ -773,10 +609,6 @@ PhaseLevel.SetPhaseLevelTransitionReservePanels = HL.Method(HL.Table) << functio
     
     self.m_transitionReservePanelIds = ids
 end
-
-
-
-
 
 PhaseLevel._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local usingBT = UIUtils.usingBlockTransition()
@@ -805,10 +637,6 @@ PhaseLevel._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) 
     logger.info("ON_PHASE_LEVEL_NOT_ON_TOP")
     Notify(MessageConst.ON_PHASE_LEVEL_NOT_ON_TOP)
 end
-
-
-
-
 
 PhaseLevel._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self:_OnInternalInMainHudStateChanged(false)
@@ -857,34 +685,23 @@ local DEFENSE_TASK_TRACK_HUD_OFFSET = Vector2(0, -120)
 local DEFENSE_CLEAR_DELAY_TIMER = 1.5
 local DEFENSE_MAIN_CHAR_EFFECT_NAME = "P_fxfac_interactive_holocast_2101"
 
-
 PhaseLevel.m_defensePrepareCtrl = HL.Field(HL.Forward("SettlementDefensePrepareHudCtrl"))
-
 
 PhaseLevel.m_defenseTrackerCtrl = HL.Field(HL.Forward("SettlementDefenseTrackerCtrl"))
 
-
 PhaseLevel.m_defenseInGamePanelItem = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseLevel.m_defenseTrackerPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseLevel.m_defenseMiniMapPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseLevel.m_defenseInGameClearScreenKey = HL.Field(HL.Number) << -1
 
-
 PhaseLevel.m_defenseFinishClearScreenKey = HL.Field(HL.Number) << -1
-
 
 PhaseLevel.m_defenseClearTimer = HL.Field(HL.Number) << -1
 
-
 PhaseLevel.m_defenseMainCharEffect = HL.Field(HL.Userdata)
-
-
 
 PhaseLevel.TryRestoreTowerDefense = HL.Method() << function(self)
     if GameInstance.player.towerDefenseSystem.hudState == CS.Beyond.Gameplay.TowerDefenseSystem.HUDState.Preparing then
@@ -897,9 +714,6 @@ PhaseLevel.TryRestoreTowerDefense = HL.Method() << function(self)
         self:OnTowerDefenseDefendingTransitFinished()
     end
 end
-
-
-
 
 PhaseLevel.TryRestoreSimulationTrainingTrackHud = HL.Method() << function(self)
     
@@ -919,16 +733,12 @@ PhaseLevel.TryRestoreSimulationTrainingTrackHud = HL.Method() << function(self)
 end
 
 
-
 PhaseLevel.OnEnterTowerDefensePreparingPhase = HL.Method() << function(self)
     GameInstance.player.towerDefenseSystem.hudState = CS.Beyond.Gameplay.TowerDefenseSystem.HUDState.Preparing
     LuaSystemManager.factory:AddFactoryModeRequest({ true, "TowerDefensePrepare" })
     self.m_defensePrepareCtrl = UIManager:AutoOpen(PanelId.SettlementDefensePrepareHud)
     self.m_defenseTrackerCtrl = UIManager:AutoOpen(PanelId.SettlementDefenseTracker)
 end
-
-
-
 
 PhaseLevel.OnLeaveTowerDefensePreparingPhase = HL.Method(HL.Any) << function(self, args)
     GameInstance.player.towerDefenseSystem.hudState = CS.Beyond.Gameplay.TowerDefenseSystem.HUDState.None
@@ -944,9 +754,6 @@ PhaseLevel.OnLeaveTowerDefensePreparingPhase = HL.Method(HL.Any) << function(sel
     self.m_defenseTrackerCtrl = nil
 end
 
-
-
-
 PhaseLevel.OnEnterTowerDefenseDefendingPhase = HL.Method(HL.Opt(HL.Boolean)) << function(self, isRestore)
     self.m_defenseInGameClearScreenKey = UIManager:ClearScreen(lume.concat(defenseExpectedPanels, Const.BATTLE_MODE_ONLY_PANELS))
     Notify(MessageConst.TOGGLE_HIDE_INTERACT_OPTION_LIST, { "TowerDefense", true })
@@ -958,8 +765,6 @@ PhaseLevel.OnEnterTowerDefenseDefendingPhase = HL.Method(HL.Opt(HL.Boolean)) << 
     end
 end
 
-
-
 PhaseLevel.OnTowerDefenseDefendingTransitFinished = HL.Method() << function(self)
     GameInstance.player.towerDefenseSystem.hudState = CS.Beyond.Gameplay.TowerDefenseSystem.HUDState.Defending
     self.m_defenseInGamePanelItem = self:CreatePhasePanelItem(PanelId.SettlementDefenseInGameHud)
@@ -968,8 +773,6 @@ PhaseLevel.OnTowerDefenseDefendingTransitFinished = HL.Method() << function(self
 
     AudioManager.PostAudioCue("au_cue_music_base_mode_defense_main_start")
 end
-
-
 
 PhaseLevel.OnLeaveTowerDefenseDefendingPhase = HL.Method() << function(self)
     GameInstance.player.towerDefenseSystem.hudState = CS.Beyond.Gameplay.TowerDefenseSystem.HUDState.WaitingFinished
@@ -1011,8 +814,6 @@ PhaseLevel.OnLeaveTowerDefenseDefendingPhase = HL.Method() << function(self)
     self:ClearTowerDefenseMainCharEffect()
 end
 
-
-
 PhaseLevel.OnTowerDefenseDefendingRewardsFinished = HL.Method() << function(self)
     Notify(MessageConst.TOGGLE_HIDE_INTERACT_OPTION_LIST, { "TowerDefense", false })
     self.m_defenseInGameClearScreenKey = UIManager:RecoverScreen(self.m_defenseInGameClearScreenKey)
@@ -1021,8 +822,6 @@ PhaseLevel.OnTowerDefenseDefendingRewardsFinished = HL.Method() << function(self
         UIManager:AutoOpen(PanelId.MissionHud)
     end
 end
-
-
 
 PhaseLevel.PlayTowerDefenseMainCharEffect = HL.Method() << function(self)
     local activeTdId = GameInstance.player.towerDefenseSystem.activeTdId
@@ -1042,27 +841,52 @@ PhaseLevel.PlayTowerDefenseMainCharEffect = HL.Method() << function(self)
     if entityRenderHelper then
         self.m_defenseMainCharEffect = GameInstance.effectManager:CreateVFXEffectOnTransform(
             DEFENSE_MAIN_CHAR_EFFECT_NAME, entityRenderHelper)
-        self.m_defenseMainCharEffect:LoadImmediately()
+        self.m_defenseMainCharEffect:Lock():LoadImmediately()
     end
 end
 
-
-
 PhaseLevel.ClearTowerDefenseMainCharEffect = HL.Method() << function(self)
-    if self.m_defenseMainCharEffect then
-        self.m_defenseMainCharEffect:Finish()
+    if self.m_defenseMainCharEffect and self.m_defenseMainCharEffect:Lock() ~= nil then
+        self.m_defenseMainCharEffect:Lock():Finish()
         self.m_defenseMainCharEffect = nil
     end
 end
-
-
 
 PhaseLevel.OnRepatriate = HL.Method() << function(self)
     
     self:PlayTowerDefenseMainCharEffect()
 end
 
-
+PhaseLevel.OnSceneRepatriateNeedUnstuck = HL.Method(HL.Table) << function(self, args)
+    local sceneNumId = unpack(args)
+    local content = Language.LUA_GAME_SETTING_REPATRIATE_NEED_UNSTUCK_POPUP_CONTENT
+    local confirmText = Language.LUA_GAME_SETTING_REPATRIATE_NEED_UNSTUCK_POPUP_CONFIRM_TEXT
+    local cancelText = Language.LUA_GAME_SETTING_REPATRIATE_NEED_UNSTUCK_POPUP_CANCEL_TEXT
+    local popupConfig = GameInstance.dataManager.repatriateConfig.needUnstuckPopupConfig
+    if popupConfig ~= nil then
+        if not popupConfig.content.isEmpty then
+            content = popupConfig.content:GetText()
+        end
+        if not popupConfig.confirmText.isEmpty then
+            confirmText = popupConfig.confirmText:GetText()
+        end
+        if not popupConfig.cancelText.isEmpty then
+            cancelText = popupConfig.cancelText:GetText()
+        end
+    end
+    Notify(MessageConst.SHOW_POP_UP, {
+        content = content,
+        confirmText = confirmText,
+        cancelText = cancelText,
+        freezeWorld = true,
+        onConfirm = function()
+            GameInstance.player.gameSettingSystem:RequestGetUnstuck(sceneNumId)
+        end,
+        onCancel = function()
+            GameWorld.repatriateManager:SendRepatriateFromSelfRescuePanel()
+        end,
+    })
+end
 
 
 
@@ -1075,20 +899,13 @@ PhaseLevel._ShowDomainDepotPackHudPanelIfNeed = HL.Method() << function(self)
     end
 end
 
-
-
-
 PhaseLevel._ShowDomainDepotPackHudPanel = HL.Method(HL.Boolean) << function(self, needShowAllInfo)
     UIManager:AutoOpen(PanelId.DomainDepotPackHud, { needShowAllInfo = needShowAllInfo })
 end
 
-
-
 PhaseLevel._HideDomainDepotPackHudPanel = HL.Method() << function(self)
     UIManager:Close(PanelId.DomainDepotPackHud)
 end
-
-
 
 PhaseLevel._RefreshDomainDepotPackHudOnGameModeChange = HL.Method() << function(self)
     local isOpen = UIManager:IsOpen(PanelId.DomainDepotPackHud)
@@ -1109,14 +926,9 @@ PhaseLevel._RefreshDomainDepotPackHudOnGameModeChange = HL.Method() << function(
     end
 end
 
-
-
 PhaseLevel.OnStartDomainDepotDeliver = HL.Method() << function(self)
     self:_ShowDomainDepotPackHudPanel(false)
 end
-
-
-
 
 PhaseLevel.OnFinishDomainDepotDeliver = HL.Method(HL.Any) << function(self, args)
     local selfComplete = unpack(args)  
@@ -1130,12 +942,9 @@ end
 
 local GameModeHideUIKey = "GameMode"
 
-
-
-
 PhaseLevel.OnGameModeEnable = HL.Method(HL.Table) << function(self, args)
-    logger.info("PhaseLevel.OnGameModeEnable", args)
     local modeType, mode = unpack(args)
+    logger.info("PhaseLevel.OnGameModeEnable", tostring(modeType), tostring(mode))
     if mode.hideSquadIcon then
         UIManager:HideWithKey(PanelId.SquadIcon, GameModeHideUIKey)
     else
@@ -1174,9 +983,6 @@ end
 
 local ForbidSystemHideUIKey = "PhaseLevelForbid"
 
-
-
-
 PhaseLevel.OnForbidSystemChanged = HL.Method(HL.Table) << function(self, args)
     local forbidType, isForbidden = unpack(args)
     if forbidType == ForbidType.HideSquadIcon then
@@ -1185,17 +991,20 @@ PhaseLevel.OnForbidSystemChanged = HL.Method(HL.Table) << function(self, args)
         else
             UIManager:ShowWithKey(PanelId.SquadIcon, ForbidSystemHideUIKey)
         end
-    end
-    if forbidType == ForbidType.ForbidAttack then
+    elseif forbidType == ForbidType.ForbidAttack then
         if isForbidden then
             UIManager:HideWithKey(PanelId.BattleAction, ForbidSystemHideUIKey)
         else
             UIManager:ShowWithKey(PanelId.BattleAction, ForbidSystemHideUIKey)
         end
+    elseif forbidType == ForbidType.HideSNSHud then
+        if isForbidden then
+            UIManager:HideWithKey(PanelId.SNSHud, ForbidSystemHideUIKey)
+        else
+            UIManager:ShowWithKey(PanelId.SNSHud, ForbidSystemHideUIKey)
+        end
     end
 end
-
-
 
 PhaseLevel._RefreshUIForbidState = HL.Method() << function(self)
     
@@ -1212,6 +1021,12 @@ PhaseLevel._RefreshUIForbidState = HL.Method() << function(self)
     else
         UIManager:ShowWithKey(PanelId.BattleAction, ForbidSystemHideUIKey)
     end
+    
+    if forbidSys:IsForbidden(ForbidType.HideSNSHud) then
+        UIManager:HideWithKey(PanelId.SNSHud, ForbidSystemHideUIKey)
+    else
+        UIManager:ShowWithKey(PanelId.SNSHud, ForbidSystemHideUIKey)
+    end
 end
 
 
@@ -1220,16 +1035,11 @@ end
 
 local INTERNAL_OUT_MAIN_HUD_KEY = "otherPhase"
 
-
 PhaseLevel.m_inMainHudMessageConfig = HL.Field(HL.Table)
-
 
 PhaseLevel.m_inMainHudMessageDataList = HL.Field(HL.Table)
 
-
 PhaseLevel.m_outMainHudKeyList = HL.Field(HL.Table)
-
-
 
 PhaseLevel._InitInMainHudMessageList = HL.Method() << function(self)
     
@@ -1290,8 +1100,6 @@ PhaseLevel._InitInMainHudMessageList = HL.Method() << function(self)
     end
 end
 
-
-
 PhaseLevel._ClearInMainHudMessageList = HL.Method() << function(self)
     for _, info in ipairs(self.m_inMainHudMessageDataList) do
         MessageManager:Unregister(info.inKey)
@@ -1302,14 +1110,9 @@ PhaseLevel._ClearInMainHudMessageList = HL.Method() << function(self)
     self.m_outMainHudKeyList = {}
 end
 
-
-
 PhaseLevel._GetIsOutMainHud = HL.Method().Return(HL.Boolean) << function(self)
     return next(self.m_outMainHudKeyList) ~= nil
 end
-
-
-
 
 PhaseLevel.OnToggleInMainHudMessageNotified = HL.Method(HL.Table) << function(self, args)
     local key, isInMainHud
@@ -1322,10 +1125,6 @@ PhaseLevel.OnToggleInMainHudMessageNotified = HL.Method(HL.Table) << function(se
     self:_OnInMainHudMessageNotified(key, isInMainHud)
 end
 
-
-
-
-
 PhaseLevel._OnInMainHudMessageNotified = HL.Method(HL.String, HL.Boolean) << function(self, key, isInMainHud)
     if isInMainHud then
         self.m_outMainHudKeyList[key] = nil
@@ -1337,9 +1136,6 @@ PhaseLevel._OnInMainHudMessageNotified = HL.Method(HL.String, HL.Boolean) << fun
     logger.important(CS.Beyond.EnableLogType.DevOnly, "当前有其他行为导致是否处于MainHud状态发生改变, 来源", key, ", isIn", isInMainHud, ", 当前是否MainHud", GameWorld.worldInfo.inMainHud)
 end
 
-
-
-
 PhaseLevel._OnInternalInMainHudStateChanged = HL.Method(HL.Boolean) << function(self, isIn)
     if isIn then
         self.m_outMainHudKeyList[INTERNAL_OUT_MAIN_HUD_KEY] = nil
@@ -1347,17 +1143,19 @@ PhaseLevel._OnInternalInMainHudStateChanged = HL.Method(HL.Boolean) << function(
         self.m_outMainHudKeyList[INTERNAL_OUT_MAIN_HUD_KEY] = true
     end
 
+    if InputManagerInst.inChangingInputDevice then
+        
+        
+        return
+    end
+
     self:_OnInMainHudStateChanged()
     logger.important(CS.Beyond.EnableLogType.DevOnly, "当前因为打开了其他Phase导致是否处于MainHud状态发生改变, isIn", isIn, ", 当前是否MainHud", GameWorld.worldInfo.inMainHud)
 end
 
-
-
 PhaseLevel._OnInMainHudStateChanged = HL.Method() << function(self)
     GameWorld.worldInfo.inMainHud = not self:_GetIsOutMainHud()
 end
-
-
 
 
 
@@ -1372,19 +1170,12 @@ end
 
 
 
-
 PhaseLevel.m_forceEnableUISceneBlurKeys = HL.Field(HL.Table)
-
-
-
 
 PhaseLevel._SetUISceneBlurEnabled = HL.Method(HL.Boolean) << function(self, enabled)
     local hgCamera = HGCamera.GetOrCreate(GameInstance.cameraManager.mainCamera)
     hgCamera:SetEnableUpdatingSceneFrostedGlass(enabled)
 end
-
-
-
 
 PhaseLevel.OnForceEnableUISceneBlur = HL.Method(HL.Table) << function(self, args)
     if not args.key then
@@ -1402,15 +1193,11 @@ PhaseLevel.OnForceEnableUISceneBlur = HL.Method(HL.Table) << function(self, args
     self:_SetUISceneBlurEnabled(shouldEnable)
 end
 
-
-
-
 PhaseLevel.OnInputDeviceTypeChanged = HL.Method(HL.Table) << function(self, args)
     if DeviceInfo.isMobile then
         Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = "MobileController", enabled = DeviceInfo.usingController})
     end
 end
-
 
 
 
@@ -1423,9 +1210,52 @@ local Name_LoginCheck_CashShopOrderSettle = "LoginCheck_CashShopOrderSettle"
 local Name_LoginCheck_MonthlypassPopup = "LoginCheck_MonthlypassPopup"
 local Name_LoginCheck_StartGuide = "LoginCheck_StartGuide"
 local Name_LoginCheck_ForceSNS = "LoginCheck_ForceSNS"
+local Name_LoginCheck_Reflow = "LoginCheck_Reflow"
 local Name_LoginCheck_ActivityCheckIn = "LoginCheck_ActivityCheckIn"
+local Name_LoginCheck_ImportantActivity_WaitCinematic = "LoginCheck_ImportantActivity_WaitCinematic"
+local Name_LoginCheck_ImportantActivity_Top = "LoginCheck_ImportantActivity_Top"
+local Name_LoginCheck_ImportantActivity_Fallback = "LoginCheck_ImportantActivity_Fallback"
 
 
+
+PhaseLevel._CanTopImportantActivity = HL.Method().Return(HL.Boolean) << function(self)
+    
+    if GameInstance.player.guide:HasPendingForceGuide() then
+        return false
+    end
+    
+    if GameInstance.player.sns:HasPendingForceSNS() then
+        return false
+    end
+    
+    local q = LuaSystemManager.mainHudActionQueue
+    if q:HasRequest("Cinematic") or q:HasRequest("CinematicBlocker") then
+        return false
+    end
+    return true
+end
+
+PhaseLevel.OnGameLevelLoadingFinish = HL.Method() << function(self)
+    local q = LuaSystemManager.mainHudActionQueue
+    if not q:HasRequest(Name_LoginCheck_ImportantActivity_WaitCinematic) then
+        return
+    end
+
+    
+    
+    local requestKey = self:_CanTopImportantActivity()
+            and Name_LoginCheck_ImportantActivity_Top
+            or Name_LoginCheck_ImportantActivity_Fallback
+    LuaSystemManager.mainHudActionQueue:AddRequest(requestKey, function(_)
+        if not ActivityUtils.findImportantCheckinActivity() then
+            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, requestKey)
+            return
+        end
+        PhaseManager:OpenPhaseFast(PhaseId.ActivityImportantPopup, { requestKey = requestKey })
+    end)
+
+    Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, Name_LoginCheck_ImportantActivity_WaitCinematic)
+end
 
 PhaseLevel.PerformLoginCheck = HL.Method() << function(self)
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "PhaseLevel.PerformLoginCheck")
@@ -1438,6 +1268,33 @@ PhaseLevel.PerformLoginCheck = HL.Method() << function(self)
         LuaSystemManager.mainHudActionQueue:ToggleActionPlayIgnoreMainHud(Name_LoginCheck_MonthlypassPopup, true)
         LuaSystemManager.mainHudActionQueue:ToggleActionPlayIgnoreMainHud(Name_LoginCheck_StartGuide, true)
         LuaSystemManager.mainHudActionQueue:ToggleActionPlayIgnoreMainHud(Name_LoginCheck_ForceSNS, true)
+        LuaSystemManager.mainHudActionQueue:ToggleActionPlayIgnoreMainHud(Name_LoginCheck_ImportantActivity_WaitCinematic, true)
+        LuaSystemManager.mainHudActionQueue:ToggleActionPlayIgnoreMainHud(Name_LoginCheck_ImportantActivity_Top, true)
+        
+        
+    end
+
+    
+    if PhaseManager:IsPhaseUnlocked(PhaseId.ActivityPopup) then
+        PhaseLevel.s_LoginCheckFinishedInfo.activityPopupAlreadyUnlocked = true
+    end
+
+    
+    
+    
+    local importantActivityId = nil
+    if not (UNITY_EDITOR and BEYOND_DEBUG and CS.Beyond.DebugDefines.disableCheckInLoginCheck)
+            and not Utils.isInDungeon() and not Utils.isInFocusMode() then
+        importantActivityId = ActivityUtils.findImportantCheckinActivity()
+    end
+    if not PhaseLevel.s_LoginCheckFinishedInfo[Name_LoginCheck_ImportantActivity_Top]
+            and not PhaseLevel.s_LoginCheckFinishedInfo[Name_LoginCheck_ImportantActivity_Fallback]
+            and importantActivityId then
+        PhaseLevel.s_LoginCheckFinishedInfo[Name_LoginCheck_ImportantActivity_Top] = true
+        PhaseLevel.s_LoginCheckFinishedInfo[Name_LoginCheck_ImportantActivity_Fallback] = true
+
+        
+        LuaSystemManager.mainHudActionQueue:AddRequest(Name_LoginCheck_ImportantActivity_WaitCinematic, function(_) end)
     end
 
     
@@ -1512,20 +1369,21 @@ PhaseLevel.PerformLoginCheck = HL.Method() << function(self)
     end
 
     
+    self:_PerformReflowPopup()
+
+    
     self:_PerformLoginActivityCheck()
 
     logger.important(CS.Beyond.EnableLogType.MainHudActionQueue, "PhaseLevel.PerformLoginCheck END")
 end
 
-
-
-PhaseLevel._PerformLoginActivityCheck = HL.Method() << function(self)
+PhaseLevel._PerformLoginActivityCheck = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipFocusModeCheck)
     
     if UNITY_EDITOR and BEYOND_DEBUG and CS.Beyond.DebugDefines.disableCheckInLoginCheck then
         return
     end
     
-    if Utils.isInDungeon() or Utils.isInFocusMode() then
+    if Utils.isInDungeon() or (not skipFocusModeCheck and Utils.isInFocusMode()) then
         return
     end
 
@@ -1565,6 +1423,116 @@ PhaseLevel._PerformLoginActivityCheck = HL.Method() << function(self)
 end
 
 
+
+PhaseLevel._PerformImportantActivityPopup = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipFocusModeCheck)
+    if PhaseLevel.s_LoginCheckFinishedInfo[Name_LoginCheck_ImportantActivity_Top]
+            or PhaseLevel.s_LoginCheckFinishedInfo[Name_LoginCheck_ImportantActivity_Fallback] then
+        return
+    end
+    if Utils.isInDungeon() or (not skipFocusModeCheck and Utils.isInFocusMode()) then
+        return
+    end
+    if UNITY_EDITOR and BEYOND_DEBUG and CS.Beyond.DebugDefines.disableCheckInLoginCheck then
+        return
+    end
+    local importantActivityId = ActivityUtils.findImportantCheckinActivity()
+    if not importantActivityId then
+        return
+    end
+    
+    PhaseLevel.s_LoginCheckFinishedInfo[Name_LoginCheck_ImportantActivity_Top] = true
+    PhaseLevel.s_LoginCheckFinishedInfo[Name_LoginCheck_ImportantActivity_Fallback] = true
+
+    LuaSystemManager.mainHudActionQueue:AddRequest(Name_LoginCheck_ImportantActivity_Fallback, function(_)
+        if not ActivityUtils.findImportantCheckinActivity() then
+            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, Name_LoginCheck_ImportantActivity_Fallback)
+            return
+        end
+        PhaseManager:OpenPhaseFast(PhaseId.ActivityImportantPopup, { requestKey = Name_LoginCheck_ImportantActivity_Fallback })
+    end)
+end
+
+
+
+PhaseLevel._PerformReflowPopup = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipFocusModeCheck)
+    if UNITY_EDITOR and BEYOND_DEBUG and CS.Beyond.DebugDefines.disableCheckInLoginCheck then
+        return
+    end
+    if Utils.isInDungeon() or (not skipFocusModeCheck and Utils.isInFocusMode()) then
+        return
+    end
+    
+    if PhaseLevel.s_LoginCheckFinishedInfo[Name_LoginCheck_Reflow] then
+        return
+    end
+    PhaseLevel.s_LoginCheckFinishedInfo[Name_LoginCheck_Reflow] = true
+    for id, _ in pairs(Tables.activityReflowTable) do
+        local activity = GameInstance.player.activitySystem:GetActivity(id)
+        if activity and ActivityUtils.shouldPopup(id) then
+            LuaSystemManager.mainHudActionQueue:AddRequest(Name_LoginCheck_Reflow, function(_)
+                ActivityUtils.recordPopup(id)
+                local activity = GameInstance.player.activitySystem:GetActivity(id)
+                if not activity or activity.oneTimeRewardReceived then
+                    Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, Name_LoginCheck_Reflow)
+                    return
+                end
+                local success = PhaseManager:OpenPhaseFast(PhaseId.ReflowPopup, {
+                    activityId = id,
+                    closeCallback = function()
+                        Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, Name_LoginCheck_Reflow)
+                    end
+                })
+                if not success then
+                    logger.error("PhaseLevel._PerformReflowPopup: 打开回流Popup失败!")
+                    Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, Name_LoginCheck_Reflow)
+                end
+            end, nil, true)
+            break
+        end
+    end
+end
+
+
+
+PhaseLevel._OnSystemUnlockForImportantActivity = HL.Method(HL.Table) << function(self, _)
+    if not PhaseLevel.s_LoginCheckFinishedInfo then
+        return
+    end
+    if PhaseLevel.s_LoginCheckFinishedInfo.activityPopupAlreadyUnlocked then
+        return
+    end
+    if not PhaseManager:IsPhaseUnlocked(PhaseId.ActivityPopup) then
+        return
+    end
+    PhaseLevel.s_LoginCheckFinishedInfo.activityPopupAlreadyUnlocked = true
+    self:_PerformImportantActivityPopup()
+end
+
+PhaseLevel._OnGameModeDisable = HL.Method(HL.Table) << function(self, args)
+    local modeType, _ = unpack(args)
+    
+    
+    if modeType == GEnums.GameModeType.Focus then
+        self:_PerformImportantActivityPopup(true)
+        self:_PerformReflowPopup(true)
+        self:_PerformLoginActivityCheck(true)
+    end
+end
+
+
+
+
+
+
+PhaseLevel._OnGachaPoolAllRewardsShown = HL.Method() << function(self)
+    if not PhaseLevel.s_LoginCheckFinishedInfo or not PhaseLevel.s_LoginCheckFinishedInfo.CashShopOrderSettleDeferredToGachaPool then
+        return
+    end
+    PhaseLevel.s_LoginCheckFinishedInfo.CashShopOrderSettleDeferredToGachaPool = nil
+    if CashShopUtils.haveRemainOrders() then
+        CashShopUtils.tryShowRemainOrderList()
+    end
+end
 
 
 

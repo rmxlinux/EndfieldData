@@ -1,20 +1,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DomainDepotMyOrder
 
-
-
-
-
-
-
-
-
-
 DomainDepotMyOrderCtrl = HL.Class('DomainDepotMyOrderCtrl', uiCtrl.UICtrl)
 
-
 DomainDepotMyOrderCtrl.m_getCellFunc = HL.Field(HL.Function)
-
 
 
 
@@ -24,9 +13,6 @@ DomainDepotMyOrderCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_COLLECT_DELEGATE_REWARD] = 'OnSync',
     [MessageConst.ON_DOMAIN_DEPOT_DELIVERY_REWARD] = 'OnReward',
 }
-
-
-
 
 
 DomainDepotMyOrderCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -63,8 +49,6 @@ DomainDepotMyOrderCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.scrollList:UpdateCount(GameInstance.player.domainDepotSystem.myDelegateDeliverList.Count)
 end
 
-
-
 DomainDepotMyOrderCtrl.OnSync = HL.Method() << function(self)
     self.view.scrollList:UpdateCount(GameInstance.player.domainDepotSystem.myDelegateDeliverList.Count)
     self.view.selectableNaviGroup:NaviToThisGroup()
@@ -72,8 +56,6 @@ DomainDepotMyOrderCtrl.OnSync = HL.Method() << function(self)
     self.view.orderNode:SetState(GameInstance.player.domainDepotSystem.myDelegateDeliverList.Count == 0 and 'empty' or 'normal')
     self:_UpdateGetAllBtn()
 end
-
-
 
 DomainDepotMyOrderCtrl._UpdateGetAllBtn = HL.Method() << function(self)
     local canReceive = false
@@ -88,9 +70,6 @@ DomainDepotMyOrderCtrl._UpdateGetAllBtn = HL.Method() << function(self)
 
     self.view.getBtn.gameObject:SetActiveIfNecessary(canReceive)
 end
-
-
-
 
 DomainDepotMyOrderCtrl.OnReward = HL.Method(HL.Any) << function(self, map)
     local kv = unpack(map)
@@ -109,14 +88,10 @@ DomainDepotMyOrderCtrl.OnReward = HL.Method(HL.Any) << function(self, map)
     end
 end
 
-
-
 DomainDepotMyOrderCtrl.OnShow = HL.Override() << function(self)
     self.view.selectableNaviGroup:NaviToThisGroup()
     self.view.scrollList:UpdateCount(GameInstance.player.domainDepotSystem.myDelegateDeliverList.Count)
 end
-
-
 DomainDepotMyOrderCtrl.OnHide = HL.Override() << function(self)
     self.view.scrollList:UpdateShowingCells(function(csIndex, obj)
         local cell = self.m_getCellFunc(obj)

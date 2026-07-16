@@ -1,28 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonNewToast
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonNewToastCtrl = HL.Class('CommonNewToastCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -35,19 +13,14 @@ CommonNewToastCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_UNLOCK_PRTS] = 'OnFirstGotPRTSItem',
     [MessageConst.ON_SHOW_DOMAIN_TOAST] = 'OnShowDomainUpgrade',
     [MessageConst.INTERRUPT_MAIN_HUD_ACTION_QUEUE] = 'InterruptMainHudActionQueue',
+    [MessageConst.ON_FIRST_GOT_MUSIC] = "OnFirstGotMusic",
 }
-
 
 CommonNewToastCtrl.m_curNewItemDatas = HL.Field(HL.Forward("Queue"))
 
-
 CommonNewToastCtrl.m_curPlayingNewItemData = HL.Field(HL.Table)
 
-
 CommonNewToastCtrl.m_domainDescTxtCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 
@@ -75,14 +48,10 @@ CommonNewToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_domainDescTxtCellCache = UIUtils.genCellCache(self.view.newItemNode.domainNode.descCell)
 end
 
-
-
 CommonNewToastCtrl.OnShow = HL.Override() << function(self)
     self:_OnPlayNewItemFinished()
     self.view.newItemNode.canvasGroup.blocksRaycasts = true
 end
-
-
 
 CommonNewToastCtrl.OnClose = HL.Override() << function(self)
     LuaSystemManager.mainHudActionQueue:RemoveActionsOfType("FirstGotItem")
@@ -90,14 +59,9 @@ CommonNewToastCtrl.OnClose = HL.Override() << function(self)
     LuaSystemManager.mainHudActionQueue:RemoveActionsOfType("DomainUpgradeToast")
 end
 
-
-
 CommonNewToastCtrl.OnHide = HL.Override() << function(self)
     self:_ClearAllAni() 
 end
-
-
-
 
 
 CommonNewToastCtrl.OnFirstGotItem = HL.Method(HL.Table) << function(self, args)
@@ -113,9 +77,6 @@ CommonNewToastCtrl.OnFirstGotItem = HL.Method(HL.Table) << function(self, args)
         end
     end)
 end
-
-
-
 
 CommonNewToastCtrl.OnFirstGotPRTSItem = HL.Method(HL.Table) << function(self, args)
     if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.PRTS) then
@@ -146,9 +107,6 @@ CommonNewToastCtrl.OnFirstGotPRTSItem = HL.Method(HL.Table) << function(self, ar
     end)
 end
 
-
-
-
 CommonNewToastCtrl.OnShowDomainUpgrade = HL.Method(HL.Any) << function(self, args)
     if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.DomainDevelopment) then
         return
@@ -170,8 +128,6 @@ CommonNewToastCtrl.OnShowDomainUpgrade = HL.Method(HL.Any) << function(self, arg
     end)
 end
 
-
-
 CommonNewToastCtrl.InterruptMainHudActionQueue = HL.Method() << function(self)
     local node = self.view.newItemNode
     self:_ClearAllAni()
@@ -179,7 +135,19 @@ CommonNewToastCtrl.InterruptMainHudActionQueue = HL.Method() << function(self)
     node.gameObject:SetActive(false)
 end
 
+CommonNewToastCtrl.OnFirstGotMusic = HL.Method(HL.Table) << function(self, args)
+    local data = {
+        musicId = unpack(args),
+    }
 
+    LuaSystemManager.mainHudActionQueue:AddRequest("UnlockPRTS", function()
+        if self:IsShow() and not self.m_curPlayingNewItemData then
+            self:_StartPlayNewItem(data)
+        else
+            self.m_curNewItemDatas:Push(data)
+        end
+    end)
+end
 
 CommonNewToastCtrl._ClearAllAni = HL.Method() << function(self)
     local node = self.view.newItemNode
@@ -188,9 +156,6 @@ CommonNewToastCtrl._ClearAllAni = HL.Method() << function(self)
     node.domainNode.animationWrapper:ClearTween(false)
     node.animationWrapper:ClearTween(false)
 end
-
-
-
 
 
 
@@ -258,10 +223,16 @@ CommonNewToastCtrl._StartPlayNewItem = HL.Method(HL.Table) << function(self, dat
     elseif data.domainId then
         self.view.toastState:SetState("Domain")
         self:_PlayDomainUpgrade(data)
+    elseif data.musicId then
+        self.view.toastState:SetState("Music")
+        self:_ShowMusicToast(data.musicId)
+        node.animationWrapper:PlayInAnimation(function()
+            if self:IsShow() then
+                self:_OnPlayNewItemFinished()
+            end
+        end)
     end
 end
-
-
 
 CommonNewToastCtrl._OnPlayNewItemFinished = HL.Method() << function(self)
     local node = self.view.newItemNode
@@ -275,9 +246,6 @@ CommonNewToastCtrl._OnPlayNewItemFinished = HL.Method() << function(self)
         self:_StartPlayNewItem(data)
     end
 end
-
-
-
 
 CommonNewToastCtrl._PlayDomainUpgrade = HL.Method(HL.Any) << function(self, data)
     
@@ -318,8 +286,17 @@ CommonNewToastCtrl._PlayDomainUpgrade = HL.Method(HL.Any) << function(self, data
     end)
 end
 
+CommonNewToastCtrl._ShowMusicToast = HL.Method(HL.String) << function(self, musicId)
+    local hasValue, itemCfg = Tables.itemTable:TryGetValue(musicId)
+    if not hasValue then
+        return
+    end
+    self.view.newItemNode.musicNode.nameTxt.text = itemCfg.name
 
-
+    local musicData = Tables.spaceshipMusicTable[musicId]
+    local albumData = Tables.spaceshipAlbumTable[musicData.albumId]
+    self.view.newItemNode.musicNode.descTxt.text = string.format(Language.LUA_MUSIC_TOAST_DESC, albumData.albumName)
+end
 
 
 CommonNewToastCtrl._OnClickNewItem = HL.Method() << function(self)
@@ -330,8 +307,6 @@ CommonNewToastCtrl._OnClickNewItem = HL.Method() << function(self)
     self:_OnPlayNewItemFinished()
     Notify(MessageConst.SHOW_WIKI_ENTRY, { itemId = itemId })
 end
-
-
 
 CommonNewToastCtrl._OnClickStoryItem = HL.Method() << function(self)
     local prtsId = self.m_curPlayingNewItemData.prtsId
@@ -366,8 +341,6 @@ CommonNewToastCtrl._OnClickStoryItem = HL.Method() << function(self)
     end
 end
 
-
-
 CommonNewToastCtrl._OnClickInvestItem = HL.Method() << function(self)
     local investId = self.m_curPlayingNewItemData.investId
     self:_OnPlayNewItemFinished()
@@ -376,8 +349,6 @@ CommonNewToastCtrl._OnClickInvestItem = HL.Method() << function(self)
         PhaseManager:OpenPhase(PhaseId.PRTSInvestigateDetail, { id = investId })
     end
 end
-
-
 
 CommonNewToastCtrl._OnClickDomainToast = HL.Method() << function(self)
     local data = self.m_curPlayingNewItemData

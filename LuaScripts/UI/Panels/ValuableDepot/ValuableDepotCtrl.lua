@@ -417,6 +417,15 @@ ValuableDepotCtrl._GetSubPanelArg = HL.Method().Return(HL.Opt(HL.Any)) << functi
         subPanelArg.isStaminaPotion = true
         return subPanelArg
     end
+    isOpen, ctrl = UIManager:IsOpen(PanelId.MapDetectPopUp)
+    if isOpen then
+        local subPanelArg = ctrl:GetCurPhaseStateArg()
+        if not subPanelArg then
+            return
+        end
+        subPanelArg.isMapDetectPopUp = true
+        return subPanelArg
+    end
 end
 
 ValuableDepotCtrl._ProcessSubPanelArg = HL.Method(HL.Opt(HL.Any)) << function(self, subPanelArg)
@@ -429,6 +438,8 @@ ValuableDepotCtrl._ProcessSubPanelArg = HL.Method(HL.Opt(HL.Any)) << function(se
         UIManager:Open(PanelId.BattlePassWeaponCase, subPanelArg)
     elseif subPanelArg.isStaminaPotion then
         UIManager:Open(PanelId.StaminaPotion, subPanelArg)
+    elseif subPanelArg.isMapDetectPopUp then
+        UIManager:Open(PanelId.MapDetectPopUp, subPanelArg)
     end
 end
 
@@ -617,8 +628,9 @@ ValuableDepotCtrl._OnClickTab = HL.Method(HL.Number, HL.Opt(HL.String, HL.Any, H
         end
     end
 
-    self:_RefreshItemList(true, true, isFast)
-    self:_TryRecoverScrollToSelectedItem(recoverScrollIndex)
+    local skipGradullyShow = recoverState and recoverState.inDestroyMode == true and recoverState.destroyState and recoverState.destroyState.isExpandOpen == true
+    self:_RefreshItemList(true, true, isFast, skipGradullyShow)
+    self:_TryRecoverScrollToSelectedItem(recoverScrollIndex, skipGradullyShow)
     self:_TryRecoverDestroyState(recoverState)
 end
 
@@ -764,7 +776,7 @@ ValuableDepotCtrl._GetContentFilterResultCount = HL.Method(HL.Table).Return(HL.N
     return count
 end
 
-ValuableDepotCtrl._RefreshItemList = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean)) << function(self, noRead, setTop, isFast)
+ValuableDepotCtrl._RefreshItemList = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean, HL.Boolean)) << function(self, noRead, setTop, isFast, skipGradullyShow)
     logger.info("_RefreshItemList")
     local count = #self.m_curShowItemList
     local isEmpty = count == 0
@@ -772,7 +784,7 @@ ValuableDepotCtrl._RefreshItemList = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL
     if isFast then
         self.view.itemScrollList:UpdateCount(count, self.m_curItemIndex, false, false, true)
     else
-        self.view.itemScrollList:UpdateCount(count, setTop == true)
+        self.view.itemScrollList:UpdateCount(count, setTop == true, false, false, skipGradullyShow == true)
     end
     self.view.emptyNode.gameObject:SetActive(isEmpty)
     self.view.itemScrollList.gameObject:SetActive(not isEmpty)
@@ -798,12 +810,12 @@ ValuableDepotCtrl._RefreshItemList = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL
     end
 end
 
-ValuableDepotCtrl._TryRecoverScrollToSelectedItem = HL.Method(HL.Number) << function(self, recoverScrollIndex)
+ValuableDepotCtrl._TryRecoverScrollToSelectedItem = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, recoverScrollIndex, skipGradullyShow)
     if recoverScrollIndex <= 0 then
         return
     end
     local csIndex = CSIndex(recoverScrollIndex)
-    self.view.itemScrollList:ScrollToIndex(csIndex, true, CS.Beyond.UI.UIScrollList.ScrollAlignType.Center, true)
+    self.view.itemScrollList:ScrollToIndex(csIndex, true, CS.Beyond.UI.UIScrollList.ScrollAlignType.Center,  skipGradullyShow ~= true)
 end
 
 ValuableDepotCtrl._TryRecoverDestroyState = HL.Method(HL.Opt(HL.Table)) << function(self, recoverState)
@@ -813,7 +825,13 @@ ValuableDepotCtrl._TryRecoverDestroyState = HL.Method(HL.Opt(HL.Table)) << funct
 
     local destroyState = recoverState.destroyState or {}
     local recoverDestroyTargetRealId = destroyState.expandSelectedRealId or ""
-    self:_ToggleDestroyMode(true, false)
+    self.m_recoverSelectIndex = recoverState.waitRecoverSelectIndex or -1
+    self:_ToggleDestroyMode(true, false, destroyState.isExpandOpen == true)
+    if self.m_recoverSelectIndex > self.m_curShowCount then
+        self.m_recoverSelectIndex = -1
+    elseif self.m_recoverSelectIndex > 0 then
+        self:_TryRecoverScrollToSelectedItem(self.m_recoverSelectIndex, destroyState.isExpandOpen == true) 
+    end
 
     self.m_destroyInfo = {}
     for tabIndex = 1, #self.m_tabsInfo do
@@ -884,7 +902,7 @@ ValuableDepotCtrl._TryRecoverDestroySelectExpandState = HL.Method(HL.Opt(HL.Tabl
     self:_SetDestroyCountTarget(targetInfo.realId)
     local cell = self.m_getExpandItemCell(targetIndex)
     if DeviceInfo.usingController and cell then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.view.button)
+        self:SetNaviTarget(cell.view.button)
     end
 end
 
@@ -925,8 +943,9 @@ ValuableDepotCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self,
         cell:SetSelected(isSelected)
         if index == self.m_recoverSelectIndex then
             if DeviceInfo.usingController then
-                self:SetAsNaviTargetInSilentModeIfNecessary(self.view.itemListNaviGroup, cell.view.button)
+                self:SetNaviTarget(cell.view.button)
             end
+            self.m_curItemIndex = self.m_recoverSelectIndex
             self:_RefreshItemInfo(false)
             self.m_recoverSelectIndex = -1
         end
@@ -935,7 +954,7 @@ ValuableDepotCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self,
         if isSelected and cell.view.button ~= InputManagerInst.controllerNaviManager.curTarget then
             if DeviceInfo.usingController then
                 self.m_suppressSelectedCell = true
-                self:SetAsNaviTargetInSilentModeIfNecessary(self.view.itemListNaviGroup, cell.view.button)
+                self:SetNaviTarget(cell.view.button)
                 self.m_suppressSelectedCell = false
             end
         end
@@ -988,7 +1007,7 @@ ValuableDepotCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self,
     cell.gameObject.name = "Item-" .. info.id
     
     if info.data.valuableDepotRedDot then
-        cell:UpdateRedDot("ValuableDepotItem", info.id)
+        cell:UpdateRedDot("ValuableDepotItem", { id = info.id, instId = info.instId })
     else
         cell:UpdateRedDot()
     end
@@ -996,7 +1015,7 @@ ValuableDepotCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self,
     cell.view.button:ChangeActionOnSetNaviTarget(self.m_inDestroyMode and ActionOnSetNaviTarget.PressConfirmTriggerOnClick or ActionOnSetNaviTarget.AutoTriggerOnClick)
     if self.m_pendingDestroyNaviFirst and index == 1 then
         self.m_pendingDestroyNaviFirst = false
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.itemListNaviGroup, cell.view.button)
+        self:SetNaviTarget(cell.view.button)
     end
     cell.view.button.onHoverChange:RemoveAllListeners()
     cell.view.button.onHoverChange:AddListener(function(isHover)
@@ -1043,7 +1062,7 @@ ValuableDepotCtrl._OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Bool
         if cell then
             cell:SetSelected(true and not DeviceInfo.usingController)
             if DeviceInfo.usingController then
-                self:SetAsNaviTargetInSilentModeIfNecessary(self.view.itemListNaviGroup, cell.view.button)
+                self:SetNaviTarget(cell.view.button)
             end
         end
         if self.m_inDestroyMode then
@@ -1067,15 +1086,6 @@ ValuableDepotCtrl._OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Bool
     if Tables.itemTable:TryGetValue(id) and Tables.itemTable[id].valuableDepotRedDot then
         RedDotUtils.setNewObtainedImportantValuableDepotItem(id, false)
     end
-end
-
-
-ValuableDepotCtrl._GetDestroyMaxCount = HL.Method().Return(HL.Number) << function(self)
-    local info = self.m_tabsInfo[self.m_curTabIndex]
-    if info and info.type == GEnums.ItemValuableDepotType.Equip then
-        return 100
-    end
-    return Tables.GlobalConst.depotDestroyMaxCount
 end
 
 ValuableDepotCtrl._AutoFillDestroyList = HL.Method(HL.Number) << function(self, tabIndex)
@@ -1414,7 +1424,7 @@ ValuableDepotCtrl._UpdateItemBlockMask = HL.Method(HL.Any, HL.Table) << function
     cell.view.blockMask.gameObject:SetActiveIfNecessary(showMask)
 end
 
-ValuableDepotCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Boolean) << function(self, active, noAnimation)
+ValuableDepotCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, noAnimation, skipGradullyShow)
     local node = self.view.destroyNode
     local infos = self.m_tabsInfo[self.m_curTabIndex]
     local depotConfig = ItemType2DepotConfig[infos.type]
@@ -1502,7 +1512,7 @@ ValuableDepotCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Boolean) << func
         if shouldFilterDestroyList then
             self:_ApplyDestroySelectableFilter()
             self.m_pendingDestroyNaviFirst = DeviceInfo.usingController and self.m_curShowCount > 0
-            self:_RefreshItemList(true, true)
+            self:_RefreshItemList(true, true, nil, skipGradullyShow == true)
         end
         if not DeviceInfo.usingController then
             self:_OnClickItem(-1)
@@ -1742,6 +1752,23 @@ ValuableDepotCtrl._UpdateItemCountInExpandList = HL.Method(HL.String) << functio
     end
 end
 
+ValuableDepotCtrl._GetDestroyMaxCount = HL.Method().Return(HL.Number) << function(self)
+    local tabInfo = self.m_tabsInfo[self.m_curTabIndex]
+    if tabInfo then
+        local depotConfig = ItemType2DepotConfig[tabInfo.type]
+        if depotConfig then
+            if depotConfig.isGemDestroy then
+                return Tables.GlobalConst.depotDestroyMaxCountGem
+            elseif depotConfig.isEquipDestroy then
+                return Tables.GlobalConst.depotDestroyMaxCountEquip
+            elseif depotConfig.isWeaponDestroy then
+                return Tables.GlobalConst.depotDestroyMaxCountWeapon
+            end
+        end
+    end
+    return 100
+end
+
 ValuableDepotCtrl._UpdateDestroySelectTotalCount = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     local node = self.view.destroyNode
     node.selectCountTxt.text = string.format(Language.LUA_DEPOT_DESTROY_COUNT, self.m_destroyCount, self:_GetDestroyMaxCount())
@@ -1805,22 +1832,30 @@ ValuableDepotCtrl._GetDesEquipReturnItems = HL.Method(HL.Number).Return(HL.Table
     local destroyItemInfos = self.m_destroyInfo[tabIndex]
     for _, info in pairs(destroyItemInfos) do
         local formulaId = Tables.equipFormulaReverseTable[info.id]
-        local formulaData = Tables.equipFormulaTable[formulaId]
-        if not string.isEmpty(formulaData.costGoldId) and formulaData.costGoldNum > 0 then
-            local itemId = formulaData.costGoldId
-            local itemCount = formulaData.costGoldNum
-            if itemMap[itemId] then
-                itemMap[itemId] = itemMap[itemId] + itemCount
+        local equipInst = info.instId and info.instId > 0 and CharInfoUtils.getEquipByInstId(info.instId) or nil
+        if equipInst then
+            local costGoldStringId = equipInst.craftCostGoldId
+            local craftCostGoldNum = equipInst.craftCostGoldNum
+            if craftCostGoldNum <= 0 or costGoldStringId == nil then       
+                local chainInfo = EquipTechUtils.GetDefaultFormulaChain(formulaId)
+                if chainInfo then
+                    costGoldStringId = chainInfo.costGoldId
+                    craftCostGoldNum = chainInfo.costGoldNum
+                end
+            end
+
+            if itemMap[costGoldStringId] then
+                itemMap[costGoldStringId] = itemMap[costGoldStringId] + craftCostGoldNum
             else
-                itemMap[itemId] = itemCount
+                itemMap[costGoldStringId] = craftCostGoldNum
             end
         end
     end
     local items = {}
     for itemId, count in pairs(itemMap) do
-        count = count * ratio
-        if count > 0 then
-            table.insert(items, { id = itemId, count = count })
+        local newCount = math.floor(count * ratio)
+        if newCount > 0 then
+            table.insert(items, { id = itemId, count = newCount })
         end
     end
     return items
@@ -1942,11 +1977,11 @@ ValuableDepotCtrl._ToggleDestroySelectExpand = HL.Method(HL.Boolean, HL.Opt(HL.B
     if active then
         local cell = self.m_getExpandItemCell(1)
         if cell then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.view.button)
+            self:SetNaviTarget(cell.view.button)
             self:_SetDestroyCountTarget(self.m_destroyExpandItemList[1].realId)
         else
             
-            InputManagerInst.controllerNaviManager:SetTarget(node.itemCell.view.button)
+            self:SetNaviTarget(node.itemCell.view.button)
         end
     end
 end
@@ -2043,7 +2078,7 @@ ValuableDepotCtrl._OnClickExpandItemDelBtn = HL.Method(HL.Number) << function(se
                     self.view.destroyNode.selectScrollList:ScrollToIndex(newTargetIndex, true)
                     local cell = self.m_getExpandItemCell(newTargetIndex)
                     if cell then
-                        InputManagerInst.controllerNaviManager:SetTarget(cell.view.button)
+                        self:SetNaviTarget(cell.view.button)
                     end
                 end
             end
@@ -2393,6 +2428,13 @@ ValuableDepotCtrl._CheckIfCanUse = HL.Method(HL.String, HL.Int).Return(HL.Boolea
         end
         local useFunc = function()
             BattlePassUtils.TryUseBattlePassItem(itemId, instId)
+        end
+        return true, useFunc
+    end
+    
+    if itemType == GEnums.ItemType.RenameCardItem then
+        local useFunc = function()
+            UIManager:Open(PanelId.RenameCardPopup, { itemId = itemId, instId = instId })
         end
         return true, useFunc
     end

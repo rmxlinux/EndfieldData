@@ -1,20 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacRepairBuilding
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacRepairBuildingCtrl = HL.Class('FacRepairBuildingCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -24,20 +10,13 @@ FacRepairBuildingCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_ON_BUILDING_REPAIRED] = 'OnBuildingRepaired',
 }
 
-
 FacRepairBuildingCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 FacRepairBuildingCtrl.m_repairId = HL.Field(HL.String) << ""
 
-
 FacRepairBuildingCtrl.m_repairNeedItem = HL.Field(HL.Any) << ""
 
-
 FacRepairBuildingCtrl.m_costItemCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 
@@ -74,17 +53,12 @@ FacRepairBuildingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
 FacRepairBuildingCtrl._OnClickRepair = HL.Method() << function(self)
     local chapterId = Utils.getCurrentChapterId()
     GameInstance.player.remoteFactory.core:Message_OpRepairNode(chapterId, self.m_nodeId, function(op, ret)
         self:OnBuildingRepaired()
     end)
 end
-
-
-
 
 FacRepairBuildingCtrl.UpdateCount = HL.Method(HL.Boolean) << function(self, isInit)
     local repairItems = self.m_repairNeedItem
@@ -124,16 +98,11 @@ FacRepairBuildingCtrl.UpdateCount = HL.Method(HL.Boolean) << function(self, isIn
     self.view.notEnoughHint.gameObject:SetActive(not isEnough)
 end
 
-
-
 FacRepairBuildingCtrl.OnBuildingRepaired = HL.Method() << function(self)
     self:_ShowRepairEffect()
 end
 
-
 FacRepairBuildingCtrl.m_inRepairEffect = HL.Field(HL.Boolean) << false
-
-
 
 FacRepairBuildingCtrl._ShowRepairEffect = HL.Method() << function(self)
     AudioAdapter.PostEvent("au_ui_fac_repair_complete")
@@ -147,8 +116,6 @@ FacRepairBuildingCtrl._ShowRepairEffect = HL.Method() << function(self)
 
     self:_CloseRepairPanel()
 end
-
-
 
 FacRepairBuildingCtrl._CloseRepairPanel = HL.Method() << function(self)
     

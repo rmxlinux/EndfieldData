@@ -1,34 +1,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MiniMap
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MiniMapCtrl = HL.Class('MiniMapCtrl', uiCtrl.UICtrl)
 
 
 local DefenseState = CS.Beyond.Gameplay.TowerDefenseSystem.DefenseState
-
 
 
 
@@ -49,16 +24,13 @@ MiniMapCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.TRAVEL_POLE_ENTER_TRAVEL_MODE] = '_HideMainButtonInTravelMode',
     [MessageConst.TRAVEL_POLE_TRIGGER_CLOSE_PANEL] = '_ShowMainButtonInTravelMode',
     [MessageConst.TRAVEL_POLE_TRIGGER_FORCE_CLOSE_PANEL] = '_ShowMainButtonInTravelMode',
-}
 
+    [MessageConst.ON_OPEN_LEVEL_PHASE_SEAMLESS_LOADING] = '_OnOpenLevelPhaseSeamlessLoading',
+}
 
 MiniMapCtrl.m_isControllerInitialized = HL.Field(HL.Boolean) << false
 
-
 MiniMapCtrl.m_isInTravelMode = HL.Field(HL.Boolean) << false
-
-
-
 
 
 MiniMapCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -85,21 +57,14 @@ MiniMapCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitMapControllerIfNeed()
 end
 
-
-
 MiniMapCtrl.OnClose = HL.Override() << function(self)
 end
-
-
 
 MiniMapCtrl.OnShow = HL.Override() << function(self)
     self:_InitMapControllerIfNeed()
     self:_RefreshMaskState()
     self:_RecoverTrackingMarAnimation()
 end
-
-
-
 
 MiniMapCtrl._OnSystemUnlock = HL.Method(HL.Table) << function(self, arg)
     local systemIndex = unpack(arg)
@@ -110,19 +75,14 @@ MiniMapCtrl._OnSystemUnlock = HL.Method(HL.Table) << function(self, arg)
     self:_RefreshMaskState()
 end
 
-
-
-
 MiniMapCtrl._ShowMiniMap = HL.Method(HL.Table) << function(self, args)
     local isShow = unpack(args)
     self:_RefreshMiniMapShownState(isShow)
 end
 
-
-
-MiniMapCtrl._InitMapControllerIfNeed = HL.Method() << function(self)
+MiniMapCtrl._InitMapControllerIfNeed = HL.Method(HL.Opt(HL.Boolean)) << function(self, forceInitialize)
     local isSystemUnlocked = Utils.isSystemUnlocked(GEnums.UnlockSystemType.Map)
-    if isSystemUnlocked and not self.m_isControllerInitialized then
+    if isSystemUnlocked and (not self.m_isControllerInitialized or forceInitialize) then
         local viewScale = DataManager.uiLevelMapConfig.miniMapViewScale
         if viewScale > 0 then
             local controllerView = self.view.levelMapController.view
@@ -130,7 +90,6 @@ MiniMapCtrl._InitMapControllerIfNeed = HL.Method() << function(self)
             local viewSizeWidth, viewSizeHeight = controllerView.levelMapLoader:GetLoaderViewRectWidthAndHeight(false)
             controllerView.levelMapLoader.view.viewRect.sizeDelta = Vector2(viewSizeWidth / viewScale, viewSizeHeight / viewScale)
         end
-
         self.view.levelMapController.view.gameObject:SetActive(true)
         self.view.levelMapController:InitLevelMapController(MapConst.LEVEL_MAP_CONTROLLER_MODE.FOLLOW_CHARACTER, {
             expectedStaticElements = MapConst.MINI_MAP_EXPECTED_STATIC_ELEMENT_TYPES,
@@ -139,28 +98,19 @@ MiniMapCtrl._InitMapControllerIfNeed = HL.Method() << function(self)
     end
 end
 
-
-
-
 MiniMapCtrl._HideMainButtonInTravelMode = HL.Method(HL.Any) << function(self, arg)
     self.m_isInTravelMode = true
     UIManager:ToggleBlockObtainWaysJump("PowerPoleFastTravel", true)
 end
-
-
 
 MiniMapCtrl._ShowMainButtonInTravelMode = HL.Method() << function(self)
     self.m_isInTravelMode = false
     UIManager:ToggleBlockObtainWaysJump("PowerPoleFastTravel", false)
 end
 
-
-
 MiniMapCtrl._RecoverTrackingMarAnimation = HL.Method() << function(self)
     self.view.levelMapController:RecoverTrackingMarkAnimation()
 end
-
-
 
 
 
@@ -169,34 +119,22 @@ MiniMapCtrl._IsInForbiddenState = HL.Method().Return(HL.Boolean) << function(sel
         PhaseManager:IsPhaseForbidden(PhaseId.Map)
 end
 
-
-
 MiniMapCtrl._IsInContentHiddenState = HL.Method().Return(HL.Boolean) << function(self)
     return LuaSystemManager.factory.inTopView
 end
-
-
 
 MiniMapCtrl._IsInFocusState = HL.Method().Return(HL.Boolean) << function(self)
     return Utils.isInFocusMode()
 end
 
-
-
 MiniMapCtrl._IsForbidTypeHideMiniMap = HL.Method().Return(HL.Boolean) << function(self)
     return Utils.isForbidden(ForbidType.HideMiniMap)
 end
-
-
-
 
 MiniMapCtrl._RefreshMiniMapShownState = HL.Method(HL.Boolean) << function(self, isShow)
     local isMapUnlocked = Utils.isSystemUnlocked(GEnums.UnlockSystemType.Map)
     self.view.main.gameObject:SetActiveIfNecessary(isMapUnlocked and isShow)
 end
-
-
-
 
 MiniMapCtrl._RefreshMaskState = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     self.view.settlementDefenseNode.gameObject:SetActive(false)
@@ -225,9 +163,6 @@ MiniMapCtrl._RefreshMaskState = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     end
 end
 
-
-
-
 MiniMapCtrl._OnForbidSystemChanged = HL.Method(HL.Table) << function(self, args)
     local forbidType, isForbidden = unpack(args)
     if forbidType ~= ForbidType.HideMiniMap then
@@ -242,17 +177,13 @@ end
 
 
 
-
 MiniMapCtrl.m_settlementDefenseNoticeCo = HL.Field(HL.Thread)
-
 
 MiniMapCtrl.m_settlementDefenseNoticeNoWait = HL.Field(HL.Boolean) << false
 
-
-
 MiniMapCtrl._StartSettlementDefenseNotice = HL.Method() << function(self)
     self:_ClearCoroutine(self.m_settlementDefenseNoticeCo)
-    if not Utils.isSettlementDefenseGuideCompleted() then
+    if not Utils.isSettlementDefenseGuideCompleted(GameWorld.worldInfo.curMapIdStr) then
         return
     end
     self.m_settlementDefenseNoticeCo = self:_StartCoroutine(function()
@@ -286,9 +217,6 @@ MiniMapCtrl._StartSettlementDefenseNotice = HL.Method() << function(self)
     end)
 end
 
-
-
-
 MiniMapCtrl._OnSettlementUpgrade = HL.Method(HL.Table) << function(self, args)
     local settlementId = unpack(args)
     local level = GameInstance.player.settlementSystem:GetSettlementLevel(settlementId)
@@ -317,6 +245,13 @@ MiniMapCtrl._OnSettlementUpgrade = HL.Method(HL.Table) << function(self, args)
 end
 
 
+
+MiniMapCtrl._OnOpenLevelPhaseSeamlessLoading = HL.Method() << function(self)
+    GameInstance.player.mapManager.characterFollowerInstance = nil
+    self:_InitMapControllerIfNeed(true)
+    self:_RefreshMaskState()
+    self:_RecoverTrackingMarAnimation()
+end
 
 
 HL.Commit(MiniMapCtrl)

@@ -1,28 +1,12 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
 CharSkillNode = HL.Class('CharSkillNode', UIWidgetBase)
-
 
 CharSkillNode.m_skillCells = HL.Field(HL.Forward("UIListCache"))
 
-
 CharSkillNode.m_isSkillSelectable = HL.Field(HL.Boolean) << false
 
-
 CharSkillNode.m_showMode = HL.Field(HL.Number) << 1
-
-
 
 
 CharSkillNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -33,18 +17,10 @@ end
 
 
 
-
-
 CharSkillNode.InitCharSkillNode = HL.Method() << function(self)
     
     self:_FirstTimeInit()
 end
-
-
-
-
-
-
 
 CharSkillNode.RefreshSkills = HL.Method(HL.Number, HL.String, HL.Opt(HL.Number, HL.Table)) << function(self, instId, templateId, teamIndex, selectCache)
     local skillDataDict = CharInfoUtils.getPlayerCharCurSkills(instId, templateId, teamIndex)
@@ -90,9 +66,6 @@ CharSkillNode.RefreshSkills = HL.Method(HL.Number, HL.String, HL.Opt(HL.Number, 
     self.view.mainSkillBg.gameObject:SetActive(extraSkill)
 end
 
-
-
-
 CharSkillNode.SetShowMode = HL.Method(HL.Number) << function(self, mode)
     self.m_showMode = mode
     if mode == UIConst.CHAR_SKILL_MODE.ShowSkillTypeName then
@@ -101,9 +74,6 @@ CharSkillNode.SetShowMode = HL.Method(HL.Number) << function(self, mode)
         self.view.skillType.gameObject:SetActive(false)
     end
 end
-
-
-
 
 CharSkillNode.RefreshSkillSelect = HL.Method(HL.Opt(HL.Number)) << function(self, selectIndex)
     local count = self.m_skillCells:GetCount()
@@ -125,17 +95,10 @@ CharSkillNode.RefreshSkillSelect = HL.Method(HL.Opt(HL.Number)) << function(self
     end
 end
 
-
-
-
-
 CharSkillNode.OnSkillClick = HL.Method(HL.Table, HL.Number) << function(self, skillInfo, index)
     self:_ShowSkillTips(skillInfo)
     self:RefreshSkillSelect(index)
 end
-
-
-
 
 
 CharSkillNode._ShowSkillTips = HL.Method(HL.Table) << function(self, skillInfo)

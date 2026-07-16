@@ -6,52 +6,21 @@ local PHASE_ID = PhaseId.ActivityCleaningDetails
 
 local activitySystem = GameInstance.player.activitySystem
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityCleaningDetailsCtrl = HL.Class('ActivityCleaningDetailsCtrl', uiCtrl.UICtrl)
-
 
 ActivityCleaningDetailsCtrl.m_activityId = HL.Field(HL.String) << ""
 
-
 ActivityCleaningDetailsCtrl.m_activityData = HL.Field(CS.Beyond.Gameplay.ActivityGraffitiCleaning)
-
 
 ActivityCleaningDetailsCtrl.m_stageInfoList = HL.Field(HL.Table)
 
-
 ActivityCleaningDetailsCtrl.m_getCellFunc = HL.Field(HL.Function)
-
 
 ActivityCleaningDetailsCtrl.m_currIndex = HL.Field(HL.Number) << 1
 
-
 ActivityCleaningDetailsCtrl.m_rewardCells = HL.Field(HL.Forward('UIListCache'))
 
-
 ActivityCleaningDetailsCtrl.m_haveSetTabNavi = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -62,9 +31,6 @@ ActivityCleaningDetailsCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_PROGRESS_CHANGE] = '_OnMultiStageUpdate',
     [MessageConst.ON_ACTIVITY_UPDATED] = '_OnActivityUpdated',
 }
-
-
-
 
 
 ActivityCleaningDetailsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -80,8 +46,6 @@ ActivityCleaningDetailsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self:_SetDefaultTabIndex()
     self:_RefreshUI(true)
 end
-
-
 
 
 
@@ -113,7 +77,7 @@ ActivityCleaningDetailsCtrl._BindUI = HL.Method() << function(self)
 
         if LuaIndex(index) == self.m_currIndex and self.m_haveSetTabNavi == false then
             self.m_haveSetTabNavi = true
-            UIUtils.setAsNaviTarget(cell.button)
+            self:SetNaviTarget(cell.button)
         end
     end)
 
@@ -156,8 +120,6 @@ ActivityCleaningDetailsCtrl._BindUI = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 ActivityCleaningDetailsCtrl._InitData = HL.Method() << function(self)
     self.m_stageInfoList = {}
     local currTs = DateTimeUtils.GetCurrentTimestampBySeconds()
@@ -198,9 +160,6 @@ ActivityCleaningDetailsCtrl._InitData = HL.Method() << function(self)
     table.sort(self.m_stageInfoList, Utils.genSortFunction({"sortId"}, true))
 end
 
-
-
-
 ActivityCleaningDetailsCtrl._RefreshUI = HL.Method(HL.Opt(HL.Boolean))
     << function(self, onCreate)
     if onCreate then
@@ -214,8 +173,6 @@ ActivityCleaningDetailsCtrl._RefreshUI = HL.Method(HL.Opt(HL.Boolean))
 
     self:_SetupViewRightNode()
 end
-
-
 
 ActivityCleaningDetailsCtrl._SetDefaultTabIndex = HL.Method() << function(self)
     
@@ -246,13 +203,6 @@ ActivityCleaningDetailsCtrl._SetDefaultTabIndex = HL.Method() << function(self)
     
     self.m_currIndex = 1
 end
-
-
-
-
-
-
-
 
 ActivityCleaningDetailsCtrl._SetupViewStageCell = HL.Method(HL.Any, HL.Number, HL.Boolean, HL.Opt(HL.Boolean, HL.Boolean))
     << function(self, cell, luaIndex, onCreate, playSelectAnim, playNoSelectAnim)
@@ -305,9 +255,6 @@ ActivityCleaningDetailsCtrl._SetupViewStageCell = HL.Method(HL.Any, HL.Number, H
         stageId = stageInfo.stageId,
     }, nil, self.view.leftNode.redDotScrollRect)
 end
-
-
-
 
 ActivityCleaningDetailsCtrl._SetupViewRightNode = HL.Method(HL.Opt(HL.Boolean)) << function(self, playAnim)
     if playAnim then
@@ -372,9 +319,6 @@ ActivityCleaningDetailsCtrl._SetupViewRightNode = HL.Method(HL.Opt(HL.Boolean)) 
     rightNode.activityStartReminder.decoText.text = stageInfo.lockDesc
 end
 
-
-
-
 ActivityCleaningDetailsCtrl._ClickTab = HL.Method(HL.Number) << function(self, newIndex)
     local prevIndex = self.m_currIndex
     if prevIndex == newIndex then
@@ -395,9 +339,6 @@ ActivityCleaningDetailsCtrl._ClickTab = HL.Method(HL.Number) << function(self, n
     self:_SetupViewRightNode(true)
 end
 
-
-
-
 ActivityCleaningDetailsCtrl._OnGotoBtnClick = HL.Method(HL.Any) << function(self, stageInfo)
     local taskId = stageInfo.missionId
     local taskState = GameInstance.player.mission:GetMissionState(taskId)
@@ -411,8 +352,6 @@ ActivityCleaningDetailsCtrl._OnGotoBtnClick = HL.Method(HL.Any) << function(self
         Utils.jumpToSystem(stageInfo.mapJumpId)
     end
 end
-
-
 
 ActivityCleaningDetailsCtrl._OnLockBtnClick = HL.Method() << function(self)
     if self.m_currIndex <= 1 then
@@ -428,9 +367,6 @@ ActivityCleaningDetailsCtrl._OnLockBtnClick = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 ActivityCleaningDetailsCtrl._OnMultiStageUpdate = HL.Method(HL.Any) << function(self, arg)
     local activityId = unpack(arg)
@@ -477,9 +413,6 @@ ActivityCleaningDetailsCtrl._OnMultiStageUpdate = HL.Method(HL.Any) << function(
     end
 end
 
-
-
-
 ActivityCleaningDetailsCtrl._OnActivityUpdated = HL.Method(HL.Any) << function(self, arg)
     local id = unpack(arg)
     if id ~= self.m_activityId then
@@ -487,25 +420,13 @@ ActivityCleaningDetailsCtrl._OnActivityUpdated = HL.Method(HL.Any) << function(s
     end
     local activity = GameInstance.player.activitySystem:GetActivity(id)
     if not activity then
-        GameInstance.player.guide:OnActivityDisabled()
-        Notify(MessageConst.SHOW_POP_UP,{
-            content = Language.LUA_ACTIVITY_MODIFY_QUIT_TO_MENU,
-            hideCancel = true,
-            onConfirm = function()
-                PhaseManager:ExitPhaseFastTo(PhaseId.Level, true)
-            end
-        })
+        ActivityUtils.backToMainHud()
     end
 end
-
-
 
 ActivityCleaningDetailsCtrl._OnProgressUpdate = HL.Method() << function(self)
     self:_InitData()
 end
-
-
-
 
 ActivityCleaningDetailsCtrl.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
     local luaIndex = LuaIndex(index)

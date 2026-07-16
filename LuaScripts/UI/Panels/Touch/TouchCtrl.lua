@@ -6,7 +6,6 @@ TouchCtrl = HL.Class('TouchCtrl', uiCtrl.UICtrl)
 
 
 
-
 TouchCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }

@@ -2,51 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.AchievementList
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AchievementListCtrl = HL.Class('AchievementListCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -57,42 +13,29 @@ AchievementListCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 AchievementListCtrl.m_filterCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 AchievementListCtrl.m_getCategoryCellFunc = HL.Field(HL.Function)
 
-
 AchievementListCtrl.m_getAchievementCellFunc = HL.Field(HL.Function)
-
 
 AchievementListCtrl.m_categoryDataSource = HL.Field(HL.Any) << nil
 
-
 AchievementListCtrl.m_categoryFilteredData = HL.Field(HL.Any) << nil
-
 
 AchievementListCtrl.m_filteredDataCount = HL.Field(HL.Number) << 0
 
-
 AchievementListCtrl.m_filteredAchievementMap = HL.Field(HL.Any) << nil
-
 
 AchievementListCtrl.m_selectCategoryIndex = HL.Field(HL.Number) << 1
 
-
 AchievementListCtrl.m_selectGroupIndex = HL.Field(HL.Number) << 1
-
 
 AchievementListCtrl.m_filterType = HL.Field(HL.Number) << 1
 
-
 AchievementListCtrl.m_searchKey = HL.Field(HL.String) << ''
 
-
 AchievementListCtrl.m_viewedAchievements = HL.Field(HL.Any) << nil
-
 
 AchievementListCtrl.m_isFold = HL.Field(HL.Boolean) << false
 
@@ -134,9 +77,6 @@ local FILTER_CONFIGS = {
 local SHOWING_RED_DOT = 1
 
 
-
-
-
 AchievementListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local recoverState = self:_ProcessRecoverStateArg(arg)
     self:_InitViews()
@@ -152,13 +92,9 @@ end
 
 
 
-
-
 AchievementListCtrl.OnClose = HL.Override() << function(self)
     self:_ClearShowedRedDot()
 end
-
-
 
 
 
@@ -174,8 +110,6 @@ AchievementListCtrl.ShowAchievement = HL.StaticMethod(HL.Opt(HL.String)) << func
         logger.error("[Achievement] AchievementListCtrl: Cannot Find Achievement To Focus " .. tostring(arg))
     end
 end
-
-
 
 AchievementListCtrl._InitViews = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
@@ -275,6 +209,9 @@ AchievementListCtrl._InitViews = HL.Method() << function(self)
     end
 
     self.view.categoryRedDotScrollRect.getRedDotStateAt = function(csIndex)
+        if FILTER_CONFIGS[self.m_filterType].hideRedDot then
+            return 0
+        end
         local categoryInfo = self.m_categoryFilteredData[LuaIndex(csIndex)]
         local suc, categoryData = Tables.achievementTypeTable:TryGetValue(categoryInfo.data.categoryId)
         if not suc then
@@ -294,6 +231,9 @@ AchievementListCtrl._InitViews = HL.Method() << function(self)
     end
 
     self.view.contentRedDotScrollRect.getRedDotStateAt = function(csIndex)
+        if FILTER_CONFIGS[self.m_filterType].hideRedDot then
+            return 0
+        end
         local categoryInfo = self.m_categoryFilteredData[self.m_selectCategoryIndex]
         if categoryInfo == nil then
             return 0
@@ -322,8 +262,6 @@ AchievementListCtrl._InitViews = HL.Method() << function(self)
     end, self.view.rightListScroll.groupId)
 end
 
-
-
 AchievementListCtrl._LoadData = HL.Method() << function(self)
     self.m_categoryDataSource = {}
 
@@ -333,17 +271,12 @@ AchievementListCtrl._LoadData = HL.Method() << function(self)
     self:_ResetSelectIndex()
 end
 
-
-
 AchievementListCtrl._LoadFilteredData = HL.Method() << function(self)
     self.m_filteredDataCount = 0
     self.m_categoryFilteredData, self.m_filteredAchievementMap = AchievementUtils.filterAchievementData(self.m_categoryDataSource, function(achievementInfo, filteredInfos, showNoObtain)
         return self:_FilterAchievement(achievementInfo, filteredInfos, showNoObtain)
     end)
 end
-
-
-
 
 AchievementListCtrl._ProcessRecoverStateArg = HL.Method(HL.Opt(HL.Any)).Return(HL.Opt(HL.Any)) << function(self, arg)
     if type(arg) ~= "table" then
@@ -357,9 +290,6 @@ AchievementListCtrl._ProcessRecoverStateArg = HL.Method(HL.Opt(HL.Any)).Return(H
     end
     return arg
 end
-
-
-
 
 AchievementListCtrl._RecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
@@ -387,11 +317,6 @@ AchievementListCtrl._RecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, 
     self.m_selectGroupIndex = math.max(1, math.min(recoverGroupIndex, groupCount))
 end
 
-
-
-
-
-
 AchievementListCtrl._FilterAchievement = HL.Method(HL.Any, HL.Any, HL.Boolean).Return(HL.Boolean) << function(self, achievementInfo, filteredInfos, showNoObtain)
     local isObtained = achievementInfo.achievementPlayerInfo ~= nil
         and achievementInfo.achievementPlayerInfo.level >= achievementInfo.achievementData.initLevel
@@ -416,16 +341,11 @@ AchievementListCtrl._FilterAchievement = HL.Method(HL.Any, HL.Any, HL.Boolean).R
     return true
 end
 
-
-
 AchievementListCtrl._ResetSelectIndex = HL.Method() << function(self)
     self.m_selectCategoryIndex = 1
     self.m_selectGroupIndex = 1
     self.m_isFold = false
 end
-
-
-
 
 AchievementListCtrl._RecoverSearchNode = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
@@ -434,8 +354,6 @@ AchievementListCtrl._RecoverSearchNode = HL.Method(HL.Opt(HL.Any)) << function(s
     self.view.inputField.text = self.m_searchKey
 end
 
-
-
 AchievementListCtrl._GetDetailPopupRecoverState = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local isOpen, ctrl = UIManager:IsOpen(PanelId.AchievementDetailPopup)
     if not isOpen or not ctrl:IsShow() then
@@ -443,9 +361,6 @@ AchievementListCtrl._GetDetailPopupRecoverState = HL.Method().Return(HL.Opt(HL.A
     end
     return ctrl:GetRecoverStateArg()
 end
-
-
-
 
 AchievementListCtrl._TryRecoverDetailPopup = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil or recoverState.detailPopupArg == nil then
@@ -458,9 +373,6 @@ AchievementListCtrl._TryRecoverDetailPopup = HL.Method(HL.Opt(HL.Any)) << functi
     UIManager:Open(PanelId.AchievementDetailPopup, recoverState.detailPopupArg)
 end
 
-
-
-
 AchievementListCtrl._TryRecoverCategoryScroll = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil or recoverState.categoryIndex == nil then
         return
@@ -470,9 +382,6 @@ AchievementListCtrl._TryRecoverCategoryScroll = HL.Method(HL.Opt(HL.Any)) << fun
         self:_RenderCategory(self.m_getCategoryCellFunc(obj), LuaIndex(csIndex))
     end)
 end
-
-
-
 
 AchievementListCtrl._IsFilteredBySearchKey = HL.Method(HL.String).Return(HL.Boolean, HL.String) << function(self, name)
     if string.isEmpty(self.m_searchKey) then
@@ -492,10 +401,6 @@ AchievementListCtrl._IsFilteredBySearchKey = HL.Method(HL.String).Return(HL.Bool
     return false, name
 end
 
-
-
-
-
 AchievementListCtrl._RenderViews = HL.Method(HL.Opt(HL.Boolean, HL.Number)) << function(self, isInit, focusIndex)
     isInit = isInit == true
     local achievementSystem = GameInstance.player.achievementSystem
@@ -513,7 +418,9 @@ AchievementListCtrl._RenderViews = HL.Method(HL.Opt(HL.Boolean, HL.Number)) << f
     self.view.categoryList:UpdateCount(filteredDataCount, isInit, true)
     if filteredDataCount ~= 0 then
         if DeviceInfo.usingController then
-            self.view.categoryList:FoldAll(true)
+            if isInit then
+                self.view.categoryList:FoldAll(true)
+            end
         else
             self.view.categoryList:FoldAll(false)
             self.view.categoryList:ToggleByState(CSIndex(self.m_selectCategoryIndex), true, true)
@@ -555,7 +462,7 @@ AchievementListCtrl._RenderViews = HL.Method(HL.Opt(HL.Boolean, HL.Number)) << f
                 local cell = self.m_getAchievementCellFunc(obj)
                 self:_RenderAchievement(cell, luaIndex)
                 if luaIndex == focusIndex then
-                    UIUtils.setAsNaviTarget(cell.button)
+                    self:SetNaviTarget(cell.button)
                 end
             end)
         end
@@ -564,18 +471,11 @@ AchievementListCtrl._RenderViews = HL.Method(HL.Opt(HL.Boolean, HL.Number)) << f
     end
 end
 
-
-
 AchievementListCtrl._RefreshViews = HL.Method() << function(self)
     self.view.categoryList:UpdateShowingCells(function(csIndex, obj)
         self:_RenderCategory(self.m_getCategoryCellFunc(obj), LuaIndex(csIndex), true)
     end)
 end
-
-
-
-
-
 
 AchievementListCtrl._RenderCategory = HL.Method(HL.Any, HL.Number, HL.Opt(HL.Boolean)) << function(self, cell, luaIndex, isRefresh)
     local categoryInfo = self.m_categoryFilteredData[luaIndex]
@@ -628,15 +528,11 @@ AchievementListCtrl._RenderCategory = HL.Method(HL.Any, HL.Number, HL.Opt(HL.Boo
     })
     cell.view.redDot:InitRedDot("AchievementCategory", categoryInfo.data.categoryId, nil, self.view.categoryRedDotScrollRect)
     if isSearchMode or hideRedDot then
-        cell.view.redDotHolder.alpha = 0
+        cell.view.redDotHolder.gameObject:SetActive(false)
     else
-        cell.view.redDotHolder.alpha = 1
+        cell.view.redDotHolder.gameObject:SetActive(true)
     end
 end
-
-
-
-
 
 AchievementListCtrl._RenderAchievement = HL.Method(HL.Table, HL.Number) << function(self, cell, luaIndex)
     local achievementSystem = GameInstance.player.achievementSystem
@@ -685,11 +581,12 @@ AchievementListCtrl._RenderAchievement = HL.Method(HL.Table, HL.Number) << funct
         end
         UIManager:Open(PanelId.AchievementDetailPopup, {achievementId = achievementId})
     end)
+    local hideRedDot = FILTER_CONFIGS[self.m_filterType].hideRedDot == true
     cell.redDot:InitRedDot("AchievementItem", achievementId, nil, self.view.contentRedDotScrollRect)
-    if isSearchMode then
-        cell.redDotHolder.alpha = 0
+    if isSearchMode or hideRedDot then
+        cell.redDotHolder.gameObject:SetActive(false)
     else
-        cell.redDotHolder.alpha = 1
+        cell.redDotHolder.gameObject:SetActive(true)
     end
     if isObtained then
         local medalBundle = {
@@ -747,11 +644,6 @@ AchievementListCtrl._RenderAchievement = HL.Method(HL.Table, HL.Number) << funct
     cell.moreCondition.gameObject:SetActive(not isObtained and (achievementData.canBeUpgraded or achievementData.canBePlated))
 end
 
-
-
-
-
-
 AchievementListCtrl._CalcAchievementCondition = HL.Method(HL.Any, HL.Any, HL.Any).Return(HL.Number, HL.Number) << function(self, conditions, playerInfo, isSpecial)
     local progress = 0
     local target = 0
@@ -770,18 +662,12 @@ AchievementListCtrl._CalcAchievementCondition = HL.Method(HL.Any, HL.Any, HL.Any
     return progress, target
 end
 
-
-
-
 AchievementListCtrl._SetFilter = HL.Method(HL.Number) << function(self, filterType)
     self.m_filterType = filterType
     self:_LoadFilteredData()
     self:_ResetSelectIndex()
     self:_RenderViews(true)
 end
-
-
-
 
 AchievementListCtrl._SetSearchKey = HL.Method(HL.String) << function(self, searchKey)
     if self.m_searchKey == searchKey then
@@ -793,16 +679,9 @@ AchievementListCtrl._SetSearchKey = HL.Method(HL.String) << function(self, searc
     self:_RenderViews(true)
 end
 
-
-
 AchievementListCtrl._ResetSearch = HL.Method() << function(self)
     self.view.inputField.text = ''
 end
-
-
-
-
-
 
 AchievementListCtrl._SetSelectIndex = HL.Method(HL.Number, HL.Number, HL.Opt(HL.Number)) << function(self, categoryIndex, groupIndex, achievementIndex)
     if achievementIndex == nil and categoryIndex == self.m_selectCategoryIndex and groupIndex == self.m_selectGroupIndex then
@@ -829,9 +708,6 @@ AchievementListCtrl._SetSelectIndex = HL.Method(HL.Number, HL.Number, HL.Opt(HL.
     end
 end
 
-
-
-
 AchievementListCtrl._TryFocusAchievement = HL.Method(HL.String).Return(HL.Boolean) << function(self, achievementId)
     local needReset = false
     if self.m_filterType ~= ALL_FILTER_TYPE then
@@ -853,17 +729,12 @@ AchievementListCtrl._TryFocusAchievement = HL.Method(HL.String).Return(HL.Boolea
     return true
 end
 
-
-
-
 AchievementListCtrl._CollectShowedRedDot = HL.Method(HL.String) << function(self, achievementId)
     if self.m_viewedAchievements == nil then
         self.m_viewedAchievements = {}
     end
     self.m_viewedAchievements[achievementId] = SHOWING_RED_DOT
 end
-
-
 
 AchievementListCtrl._ClearShowedRedDot = HL.Method() << function(self)
     if self.m_viewedAchievements == nil then
@@ -877,8 +748,6 @@ AchievementListCtrl._ClearShowedRedDot = HL.Method() << function(self)
     end
     self.m_viewedAchievements = {}
 end
-
-
 
 AchievementListCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
     return {

@@ -1,35 +1,15 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DomainDepotPackageSell
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainDepotPackageSellCtrl = HL.Class('DomainDepotPackageSellCtrl', uiCtrl.UICtrl)
-
 
 DomainDepotPackageSellCtrl.m_buyerInfos = HL.Field(HL.Table)
 
-
 DomainDepotPackageSellCtrl.GetCell = HL.Field(HL.Function)
-
 
 DomainDepotPackageSellCtrl.m_selectId = HL.Field(HL.String) << ""
 
-
 DomainDepotPackageSellCtrl.m_domainDepotId = HL.Field(HL.String) << ""
-
 
 DomainDepotPackageSellCtrl.m_resumeState = HL.Field(HL.Table)
 
@@ -37,12 +17,8 @@ DomainDepotPackageSellCtrl.m_resumeState = HL.Field(HL.Table)
 
 
 
-
 DomainDepotPackageSellCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
-
-
-
 
 
 DomainDepotPackageSellCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -130,8 +106,6 @@ DomainDepotPackageSellCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 
-
-
 DomainDepotPackageSellCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     return {
         domainDepotId = self.m_domainDepotId,
@@ -141,8 +115,6 @@ DomainDepotPackageSellCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << func
         }
     }
 end
-
-
 
 DomainDepotPackageSellCtrl.OnCellChange = HL.Method() << function(self)
     
@@ -157,17 +129,12 @@ DomainDepotPackageSellCtrl.OnCellChange = HL.Method() << function(self)
     end
 end
 
-
-
 DomainDepotPackageSellCtrl.OnSelectBuyerEnd = HL.Method() << function(self)
     
     
     
     
 end
-
-
-
 
 DomainDepotPackageSellCtrl._GetCellByIndex = HL.Method(HL.Number).Return(HL.Forward("DomainDepotPriceListCell")) << function(self, cellIndex)
     local go = self.view.goodsScrollView:Get(CSIndex(cellIndex))
@@ -178,8 +145,6 @@ DomainDepotPackageSellCtrl._GetCellByIndex = HL.Method(HL.Number).Return(HL.Forw
 
     return cell
 end
-
-
 
 DomainDepotPackageSellCtrl._GetSelectedBuyerIndex = HL.Method().Return(HL.Number) << function(self)
     if string.isEmpty(self.m_selectId) then
@@ -193,8 +158,6 @@ DomainDepotPackageSellCtrl._GetSelectedBuyerIndex = HL.Method().Return(HL.Number
     return 1
 end
 
-
-
 DomainDepotPackageSellCtrl.OnShow = HL.Override() << function(self)
     if self.m_resumeState then
         self:_ApplyResumeState(self.m_resumeState)
@@ -202,9 +165,6 @@ DomainDepotPackageSellCtrl.OnShow = HL.Override() << function(self)
     end
     self.view.goodsScrollViewSelectableNaviGroup:NaviToThisGroup()
 end
-
-
-
 
 
 DomainDepotPackageSellCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)

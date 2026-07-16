@@ -1,19 +1,12 @@
 local readingPopUpCtrl = require_ex('UI/Panels/ReadingPopUp/ReadingPopUpCtrl')
 local PANEL_ID = PanelId.ReadingPopUpPaper
 
-
-
-
 ReadingPopUpPaperCtrl = HL.Class('ReadingPopUpPaperCtrl', readingPopUpCtrl.ReadingPopUpCtrl)
-
-
 
 ReadingPopUpPaperCtrl._ShowContent = HL.Override() << function(self)
     ReadingPopUpPaperCtrl.Super._ShowContent(self)
     self:_RefreshIcon()
 end
-
-
 
 ReadingPopUpPaperCtrl._RefreshIcon = HL.Virtual() << function(self)
     local iconType = self.m_arg.iconType

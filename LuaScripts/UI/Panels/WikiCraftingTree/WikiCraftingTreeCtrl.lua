@@ -2,66 +2,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WikiCraftingTree
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiCraftingTreeCtrl = HL.Class('WikiCraftingTreeCtrl', uiCtrl.UICtrl)
 
 
@@ -86,9 +26,15 @@ local LINE_THICKNESS = {
 local CONTENT_PADDING = Vector2(100, 100)
 
 local MORE_CRAFT_CELL_GAP_HEIGHT = 130
-
+local CONTROLLER_ZOOM_SPEED = 300
 
 local START_ITEM_CRAFT_KEY = "original"
+
+local GESTURE_TYPE = {
+    NORMAL = "Normal",      
+    GESTURE = "gesture",    
+    SINGLE = "single",      
+}
 
 
 
@@ -101,14 +47,27 @@ WikiCraftingTreeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHANGE_WIKI_CRAFTING_TREE] = '_ChangeWikiCraftingTree',
 }
 
-
 WikiCraftingTreeCtrl.m_wikiEntryShowData = HL.Field(HL.Table)
-
 
 WikiCraftingTreeCtrl.m_forceShowBackBtn = HL.Field(HL.Any)
 
+WikiCraftingTreeCtrl.m_zoomScale = HL.Field(HL.Number) << 1
+
+WikiCraftingTreeCtrl.m_zoomInTickKey = HL.Field(HL.Number) << -1
+
+WikiCraftingTreeCtrl.m_zoomOutTickKey = HL.Field(HL.Number) << -1
+
+WikiCraftingTreeCtrl.m_zoomBindingGroupId = HL.Field(HL.Number) << -1
+
+WikiCraftingTreeCtrl.m_zoomRatioTimerId = HL.Field(HL.Number) << -1
+
+WikiCraftingTreeCtrl.m_originSizeDelta = HL.Field(HL.Any) << Vector2.zero
 
 
+WikiCraftingTreeCtrl.m_zoomGestureState = HL.Field(HL.String) << GESTURE_TYPE.NORMAL
+WikiCraftingTreeCtrl.m_zoomLastLocal = HL.Field(HL.Any)                 
+WikiCraftingTreeCtrl.m_zoomSingleLastLocal = HL.Field(HL.Any)           
+WikiCraftingTreeCtrl.m_zoomGestureTickKey = HL.Field(HL.Number) << -1
 
 
 
@@ -122,6 +81,8 @@ WikiCraftingTreeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_jumpCraftId = args.craftId
     self.m_forceShowBackBtn = args.forceShowBackBtn
     self.view.scrollView.disableScroll = true
+
+    self:_InitZoom()
 
     ITEM_CELL_HEIGHT = self.view.config.ITEM_CELL_HEIGHT_CT
     MORE_CRAFT_CELL_GAP_HEIGHT = self.view.config.MORE_CRAFT_CELL_GAP_HEIGHT
@@ -143,8 +104,6 @@ WikiCraftingTreeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_PlayBgDecoAnim(true)
 end
 
-
-
 WikiCraftingTreeCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     return {
         wikiEntryShowData = self.m_wikiEntryShowData,
@@ -152,16 +111,12 @@ WikiCraftingTreeCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) 
     }
 end
 
-
-
 WikiCraftingTreeCtrl.OnShow = HL.Override() << function (self)
     if self.m_phase then
         self.m_phase:ActiveCommonSceneItem(true)
     end
     self:_PlayBgDecoAnim(true)
 end
-
-
 
 WikiCraftingTreeCtrl.OnClose = HL.Override() << function(self)
     if self.m_tweenCraftAlpha then
@@ -172,9 +127,13 @@ WikiCraftingTreeCtrl.OnClose = HL.Override() << function(self)
         self.m_tweenCraftExpand:Kill()
         self.m_tweenCraftExpand = nil
     end
+    LuaUpdate:Remove(self.m_zoomInTickKey)
+    LuaUpdate:Remove(self.m_zoomOutTickKey)
+    LuaUpdate:Remove(self.m_zoomGestureTickKey)
+    self.m_zoomGestureTickKey = -1
+    self.m_zoomGestureState = GESTURE_TYPE.NORMAL
+    self:_CloseZoomRatioTimer()
 end
-
-
 
 WikiCraftingTreeCtrl._OnPlayAnimationOut = HL.Override() << function(self)
     WikiCraftingTreeCtrl.Super._OnPlayAnimationOut(self)
@@ -183,8 +142,6 @@ WikiCraftingTreeCtrl._OnPlayAnimationOut = HL.Override() << function(self)
         self:_PlayBgDecoAnim(false)
     end
 end
-
-
 
 
 
@@ -206,25 +163,17 @@ end
 
 
 
-
 WikiCraftingTreeCtrl.m_itemCellCache = HL.Field(HL.Forward("UIGoCache"))
-
 
 WikiCraftingTreeCtrl.m_buildingCellCache = HL.Field(HL.Forward("UIGoCache"))
 
-
 WikiCraftingTreeCtrl.m_moreCraftCellCache = HL.Field(HL.Forward("UIGoCache"))
-
 
 WikiCraftingTreeCtrl.m_lineCellCacheTable = HL.Field(HL.Table)
 
-
 WikiCraftingTreeCtrl.m_curveLeftCellCacheTable = HL.Field(HL.Table)
 
-
 WikiCraftingTreeCtrl.m_curveRightCellCacheTable = HL.Field(HL.Table)
-
-
 
 WikiCraftingTreeCtrl._RecycleAllCell = HL.Method() << function(self)
     self.m_itemCellCache:RecycleAll()
@@ -240,8 +189,6 @@ WikiCraftingTreeCtrl._RecycleAllCell = HL.Method() << function(self)
         curveRightCellCache:RecycleAll()
     end
 end
-
-
 
 WikiCraftingTreeCtrl._InitAllCellCache = HL.Method() << function(self)
     self.m_itemCellCache = UIUtils.genGoCache(self.view.itemCell, nil, self.view.rootNode)
@@ -268,68 +215,45 @@ end
 
 
 
-
 WikiCraftingTreeCtrl.m_rowCountLeft = HL.Field(HL.Number) << 0
-
 
 WikiCraftingTreeCtrl.m_rowCountRight = HL.Field(HL.Number) << 0
 
-
 WikiCraftingTreeCtrl.m_columnCountLeft = HL.Field(HL.Number) << 0
-
 
 WikiCraftingTreeCtrl.m_columnCountRight = HL.Field(HL.Number) << 0
 
-
 WikiCraftingTreeCtrl.m_craftItemIds = HL.Field(HL.Table)
-
 
 WikiCraftingTreeCtrl.m_sourceItemCell = HL.Field(HL.Userdata)
 
-
 WikiCraftingTreeCtrl.m_debugCounter = HL.Field(HL.Number) << 0
-
 
 WikiCraftingTreeCtrl.m_selectedCell = HL.Field(HL.Any)
 
-
 WikiCraftingTreeCtrl.m_tweenCraftAlpha = HL.Field(HL.Userdata)
-
 
 WikiCraftingTreeCtrl.m_tweenCraftExpand = HL.Field(HL.Userdata)
 
-
 WikiCraftingTreeCtrl.m_repeatedItemExpandStates = HL.Field(HL.Table)
-
 
 WikiCraftingTreeCtrl.m_repeatedItemIds = HL.Field(HL.Table)
 
-
 WikiCraftingTreeCtrl.m_mainItemId = HL.Field(HL.String) << ''
-
 
 WikiCraftingTreeCtrl.m_pinnedCraftId = HL.Field(HL.Any)
 
-
 WikiCraftingTreeCtrl.m_jumpCraftId = HL.Field(HL.Any)
-
 
 WikiCraftingTreeCtrl.m_itemCraftExpandStates = HL.Field(HL.Table)
 
-
 WikiCraftingTreeCtrl.m_collapsedCraftKey = HL.Field(HL.String) << ''
-
 
 WikiCraftingTreeCtrl.m_collapsedBuildingCell = HL.Field(HL.Userdata)
 
-
 WikiCraftingTreeCtrl.m_toggledCraftKey = HL.Field(HL.String) << ''
 
-
 WikiCraftingTreeCtrl.m_toggledItemCell = HL.Field(HL.Userdata)
-
-
-
 
 WikiCraftingTreeCtrl._RefreshCraft = HL.Method(HL.String) << function(self, itemId)
     self.m_mainItemId = itemId
@@ -374,11 +298,12 @@ WikiCraftingTreeCtrl._RefreshCraft = HL.Method(HL.String) << function(self, item
     end
     contentSize = contentSize + extraPadding * 2
     self.view.content.sizeDelta = contentSize
+
+    self.m_originSizeDelta = contentSize
+    self:_AdjustContentSizeByZoom()
+
     self.view.content.localPosition = Vector3.zero
-    self.view.rootNode.localPosition = Vector3(
-        -(self.m_columnCountRight * (ITEM_CELL_WIDTH + ITEM_CELL_GAP_WIDTH) + ITEM_CELL_WIDTH / 2 + CONTENT_PADDING.x + extraPadding.x),
-        -(ITEM_CELL_HEIGHT / 2 + CONTENT_PADDING.y + extraPadding.y),
-        0)
+    self:_SetRootNodePosOnLayout(extraPadding)
 
     local viewMaskPadding = self.view.viewportMask.padding
     viewMaskPadding.z = viewportSize.x / 2
@@ -404,11 +329,9 @@ WikiCraftingTreeCtrl._RefreshCraft = HL.Method(HL.String) << function(self, item
     end, 1, self.view.config.ALPHA_ANIM_TIME):SetEase(self.view.config.ALPHA_ANIM_CURVE)
 
     if DeviceInfo.usingController then
-        UIUtils.setAsNaviTarget(self.m_sourceItemCell.view.itemBlack.view.button)
+        self:SetNaviTarget(self.m_sourceItemCell.view.itemBlack.view.button)
     end
 end
-
-
 
 WikiCraftingTreeCtrl._RefreshCraftAfterExpand = HL.Method() << function(self)
     self.m_debugCounter = 0
@@ -429,10 +352,10 @@ WikiCraftingTreeCtrl._RefreshCraftAfterExpand = HL.Method() << function(self)
     self:_CreateRightCraft(self.m_mainItemId, false)
     if DeviceInfo.usingController then
         if self.m_collapsedBuildingCell then
-            UIUtils.setAsNaviTarget(self.m_collapsedBuildingCell.view.button)
+            self:SetNaviTarget(self.m_collapsedBuildingCell.view.button)
         end
         if self.m_toggledItemCell then
-            UIUtils.setAsNaviTarget(self.m_toggledItemCell.view.itemBlack.view.button)
+            self:SetNaviTarget(self.m_toggledItemCell.view.itemBlack.view.button)
         end
     end
 
@@ -450,20 +373,25 @@ WikiCraftingTreeCtrl._RefreshCraftAfterExpand = HL.Method() << function(self)
     end
     contentSize = contentSize + extraPadding * 2
     self.view.content.sizeDelta = contentSize
+    self.m_originSizeDelta = contentSize
+    self:_AdjustContentSizeByZoom()
     
-    self.view.rootNode.localPosition = Vector3(
-        -(self.m_columnCountRight * (ITEM_CELL_WIDTH + ITEM_CELL_GAP_WIDTH) + ITEM_CELL_WIDTH / 2 + CONTENT_PADDING.x + extraPadding.x),
-        -(ITEM_CELL_HEIGHT / 2 + CONTENT_PADDING.y + extraPadding.y),
-        0)
+    self:_SetRootNodePosOnLayout(extraPadding)
+    
+    self:_ClampZoomContent()
 end
 
+WikiCraftingTreeCtrl._SetRootNodePosOnLayout = HL.Method(Vector2) << function(self, extraPadding)
+    
+    local posX = -(self.m_columnCountRight * (ITEM_CELL_WIDTH + ITEM_CELL_GAP_WIDTH) + ITEM_CELL_WIDTH / 2 + CONTENT_PADDING.x + extraPadding.x)
+    local posY = -(ITEM_CELL_HEIGHT / 2 + CONTENT_PADDING.y + extraPadding.y)
 
+    
+    local extraX = self.view.content.sizeDelta.x - self.m_originSizeDelta.x
+    local extraY = self.view.content.sizeDelta.y - self.m_originSizeDelta.y
 
-
-
-
-
-
+    self.view.rootNode.localPosition = Vector3(posX - extraX / 2, posY - extraY / 2, 0)
+end
 
 WikiCraftingTreeCtrl._CreateLeftCraft = HL.Method(HL.String, HL.Number, Vector2, HL.Number, HL.String, HL.Boolean).Return(HL.Any) << function(
     self, itemId, columnCount, sourcePos, lineType, itemCraftKey, playInAnimation)
@@ -511,7 +439,7 @@ WikiCraftingTreeCtrl._CreateLeftCraft = HL.Method(HL.String, HL.Number, Vector2,
     end
 
     
-    local craftInfoList = FactoryUtils.getItemCrafts(itemId, false, true, true)
+    local craftInfoList = FactoryUtils.getItemCrafts(itemId, false, true, true, true)
 
     local craftCount = craftInfoList and #craftInfoList or 0
     if craftCount == 0 then
@@ -608,6 +536,7 @@ WikiCraftingTreeCtrl._CreateLeftCraft = HL.Method(HL.String, HL.Number, Vector2,
             
             
             local moreCraftCell = self.m_moreCraftCellCache:Get()
+            moreCraftCell.transform:SetAsFirstSibling()
             moreCraftCell.toggle.onValueChanged:RemoveAllListeners()
             moreCraftCell.toggle.isOn = true
             moreCraftCell.toggle.onValueChanged:AddListener(function(isOn)
@@ -670,6 +599,7 @@ WikiCraftingTreeCtrl._CreateLeftCraft = HL.Method(HL.String, HL.Number, Vector2,
             
             
             local moreCraftCell = self.m_moreCraftCellCache:Get()
+            moreCraftCell.transform:SetAsFirstSibling()
             moreCraftCell.transform.localPosition = Vector3(
                 -(ITEM_CELL_WIDTH + ITEM_CELL_GAP_WIDTH) * columnCount - (ITEM_CELL_WIDTH + ITEM_CELL_GAP_WIDTH) / 2,
                 -ITEM_CELL_HEIGHT * self.m_rowCountLeft - MORE_CRAFT_CELL_GAP_HEIGHT,
@@ -750,9 +680,6 @@ end
 
 
 
-
-
-
 WikiCraftingTreeCtrl._CreateLeftItemOneCraft = HL.Method(HL.Table).Return(HL.Userdata) << function(self, arg)
     
     
@@ -810,10 +737,6 @@ WikiCraftingTreeCtrl._CreateLeftItemOneCraft = HL.Method(HL.Table).Return(HL.Use
 
     return buildingCell
 end
-
-
-
-
 
 WikiCraftingTreeCtrl._CreateRightCraft = HL.Method(HL.String, HL.Boolean) << function(self, itemId, playInAnimation)
     
@@ -911,10 +834,6 @@ WikiCraftingTreeCtrl._CreateRightCraft = HL.Method(HL.String, HL.Boolean) << fun
     end
 end
 
-
-
-
-
 WikiCraftingTreeCtrl._OnCraftItemClicked = HL.Method(HL.String, HL.Forward("WikiCraftingTreeItem")) << function(
     self, itemId, itemCell)
     logger.info('itemId:', itemId)
@@ -929,10 +848,6 @@ WikiCraftingTreeCtrl._OnCraftItemClicked = HL.Method(HL.String, HL.Forward("Wiki
     self:_ActivateBottom(true, true)
     self:_RefreshBottom(itemId)
 end
-
-
-
-
 
 WikiCraftingTreeCtrl._OnCraftBuildingClicked = HL.Method(HL.String, HL.Forward("WikiCraftingTreeBuilding")) << function(
     self, buildingId, buildingCell)
@@ -954,12 +869,6 @@ end
 
 
 
-
-
-
-
-
-
 WikiCraftingTreeCtrl._CreateLeftLink = HL.Method(Vector2, Vector2, HL.Number, HL.Opt(HL.Number)) << function(
     self, leftPoint, rightPoint, lineType, offset)
     if math.abs(leftPoint.y - rightPoint.y) < CREATE_LINE_THRESHOLD then
@@ -969,12 +878,6 @@ WikiCraftingTreeCtrl._CreateLeftLink = HL.Method(Vector2, Vector2, HL.Number, HL
     end
 end
 
-
-
-
-
-
-
 WikiCraftingTreeCtrl._CreateRightLink = HL.Method(Vector2, Vector2, HL.Number, HL.Opt(HL.Number)) << function(
     self, leftPoint, rightPoint, lineType, offset)
     if math.abs(leftPoint.y - rightPoint.y) < CREATE_LINE_THRESHOLD then
@@ -983,11 +886,6 @@ WikiCraftingTreeCtrl._CreateRightLink = HL.Method(Vector2, Vector2, HL.Number, H
         self:_CreateRightCurve(leftPoint, rightPoint, lineType, offset)
     end
 end
-
-
-
-
-
 
 WikiCraftingTreeCtrl._CreateLine = HL.Method(Vector2, Vector2, HL.Number) << function(self, pointStart, pointEnd, lineType)
     local lineCell = self.m_lineCellCacheTable[lineType]:Get()
@@ -999,12 +897,6 @@ end
 local CURVE_WIDTH = 47
 local CURVE_HEIGHT = 47
 
-
-
-
-
-
-
 WikiCraftingTreeCtrl._CreateLeftCurve = HL.Method(Vector2, Vector2, HL.Number, HL.Opt(HL.Number)) << function(
     self, pointLeft, pointRight, lineType, offset)
     local curveCell = self.m_curveLeftCellCacheTable[lineType]:Get()
@@ -1013,12 +905,6 @@ WikiCraftingTreeCtrl._CreateLeftCurve = HL.Method(Vector2, Vector2, HL.Number, H
         LINE_THICKNESS[lineType],  offset)
 end
 
-
-
-
-
-
-
 WikiCraftingTreeCtrl._CreateRightCurve = HL.Method(Vector2, Vector2, HL.Number, HL.Opt(HL.Number)) << function(
     self, pointLeft, pointRight, lineType, offset)
     local curveCell = self.m_curveRightCellCacheTable[lineType]:Get()
@@ -1026,14 +912,6 @@ WikiCraftingTreeCtrl._CreateRightCurve = HL.Method(Vector2, Vector2, HL.Number, 
     self:_SetCurveCell(curveCell, pointLeft, pointRight, pointLeft.x + offset + CURVE_WIDTH,
         LINE_THICKNESS[lineType], offset)
 end
-
-
-
-
-
-
-
-
 
 WikiCraftingTreeCtrl._SetCurveCell = HL.Method(HL.Table, Vector2, Vector2, HL.Number, HL.Number, HL.Number) << function(
     self, curveCell, pointLeft, pointRight, posX, lineThickness, offset)
@@ -1044,10 +922,6 @@ WikiCraftingTreeCtrl._SetCurveCell = HL.Method(HL.Table, Vector2, Vector2, HL.Nu
     curveCell.bottomLine.sizeDelta = Vector2(lineWidth - offset, lineThickness)
     curveCell.transform.localPosition = Vector3(posX, (pointLeft.y + pointRight.y) / 2, 0)
 end
-
-
-
-
 
 
 
@@ -1064,6 +938,8 @@ WikiCraftingTreeCtrl._ActivateBottom = HL.Method(HL.Boolean, HL.Opt(HL.Boolean))
             self.view.bottom.selectableNaviGroup:ManuallyFocus()
             self.view.controllerHintLayoutElement.ignoreLayout = true
         end
+        self:_ChangeZoomInputGroup(false)
+        self.view.tipInfoAniWrapper:PlayWithTween("wiki_craftingtree_tipinfo_in")
     else
         if playAnim then
             if self.view.bottom.gameObject.activeSelf then
@@ -1092,6 +968,8 @@ WikiCraftingTreeCtrl._ActivateBottom = HL.Method(HL.Boolean, HL.Opt(HL.Boolean))
                 self.view.controllerHintLayoutElement.ignoreLayout = false
             end
         end
+        self:_ChangeZoomInputGroup(true)
+        self.view.tipInfoAniWrapper:PlayWithTween("wiki_craftingtree_tipinfo_out")
     end
     local viewSizeDelta = self.view.viewport.sizeDelta
     viewSizeDelta.y = -paddingBottom
@@ -1100,9 +978,6 @@ WikiCraftingTreeCtrl._ActivateBottom = HL.Method(HL.Boolean, HL.Opt(HL.Boolean))
         self.view.scrollView:ScrollToNaviTarget(self.m_selectedCell:GetButton())
     end
 end
-
-
-
 
 WikiCraftingTreeCtrl._RefreshBottom = HL.Method(HL.String) << function(self, itemId)
     local view = self.view.bottom
@@ -1123,6 +998,9 @@ WikiCraftingTreeCtrl._RefreshBottom = HL.Method(HL.String) << function(self, ite
     view.detailBtn.onClick:AddListener(function()
         Notify(MessageConst.SHOW_WIKI_ENTRY, { itemId = itemId })
     end)
+    if view.earlyAccessNode then
+        view.earlyAccessNode.gameObject:SetActiveIfNecessary(FactoryUtils.isSkipUnlockedBuildingByItemId(itemId))
+    end
     view.btnClose.onClick:RemoveAllListeners()
     view.btnClose.onClick:AddListener(function()
         self:_ActivateBottom(false, true)
@@ -1170,18 +1048,12 @@ WikiCraftingTreeCtrl._RefreshBottom = HL.Method(HL.String) << function(self, ite
     end
 end
 
-
-
-
 WikiCraftingTreeCtrl._ChangeWikiCraftingTree = HL.Method(HL.String) << function(self, itemId)
     self:_ActivateBottom(false, true)
     self.m_wikiEntryShowData = WikiUtils.getWikiEntryShowDataFromItemId(itemId)
     self:_RefreshTop()
     self:_RefreshCraft(itemId)
 end
-
-
-
 
 WikiCraftingTreeCtrl._GotoBlackbox = HL.Method(HL.String) << function(self, blackboxId)
     local packageId = self:_GetBlackboxPackageId(blackboxId)
@@ -1192,9 +1064,6 @@ WikiCraftingTreeCtrl._GotoBlackbox = HL.Method(HL.String) << function(self, blac
         PhaseManager:OpenPhase(PhaseId.BlackboxEntry, {packageId = packageId, blackboxId = blackboxId})
     end
 end
-
-
-
 
 WikiCraftingTreeCtrl._GetBlackboxPackageId = HL.Method(HL.String).Return(HL.Any) << function(self, blackboxId)
     local packageId
@@ -1211,21 +1080,264 @@ end
 
 
 
+WikiCraftingTreeCtrl._InitZoom = HL.Method() << function(self)
+    self.m_zoomScale = 1
+    self.m_zoomGestureState = GESTURE_TYPE.NORMAL
+    self.view.scrollView.enabled = true
+
+    self.view.scrollViewTouchPanel.onZoom:AddListener(function(delta)
+        self:_OnZoom(delta)
+    end)
+
+    
+    LuaUpdate:Remove(self.m_zoomGestureTickKey)
+    self.m_zoomGestureTickKey = LuaUpdate:Add("LateTick", function(deltaTime)
+        self:_OnZoomGestureTick()
+    end)
+
+    self.view.tipTextState:SetState(DeviceInfo.usingTouch and "Mobile" or "Other")
+    self.view.zoomRatioNode.gameObject:SetActive(false)
+end
+
+WikiCraftingTreeCtrl._GetZoomCenterScreenPos = HL.Method().Return(Vector2) << function(self)
+    if DeviceInfo.usingController then
+        local curTarget = InputManagerInst.controllerNaviManager.curTarget
+        if curTarget then
+            local worldPos = curTarget.transform.position
+            local screenPos = self.uiCamera:WorldToScreenPoint(worldPos)
+            return Vector2(screenPos.x, screenPos.y)
+        end
+    end
+    if DeviceInfo.usingTouch and CS.UnityEngine.Input.touchCount >= 2 then
+        local t0 = CS.UnityEngine.Input.GetTouch(0)
+        local t1 = CS.UnityEngine.Input.GetTouch(1)
+        return Vector2(
+            (t0.position.x + t1.position.x) * 0.5,
+            (t0.position.y + t1.position.y) * 0.5
+        )
+    end
+    local mousePos = InputManager.mousePosition
+    return Vector2(mousePos.x, mousePos.y)
+end
 
 
-WikiCraftingTreeCtrl._InitController = HL.Method() << function(self)
-    self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+WikiCraftingTreeCtrl._ScreenToViewportLocal = HL.Method(Vector2).Return(Vector2) << function(self, screenPos)
+    local _, localPos = Unity.RectTransformUtility.ScreenPointToLocalPointInRectangle(
+        self.view.viewport, screenPos, self.uiCamera)
+    return localPos
+end
+
+
+WikiCraftingTreeCtrl._IsInZoomGesture = HL.Method().Return(HL.Boolean) << function(self)
+    if not DeviceInfo.usingTouch then
+        return false
+    end
+    local touchPanel = self.view.scrollViewTouchPanel
+    if not touchPanel then
+        return false
+    end
+    return touchPanel.isInGestureZoom == true
+end
+
+WikiCraftingTreeCtrl._ClampZoomContent = HL.Method() << function(self)
+    self.view.scrollView:ClampContentToBounds()
+end
+
+
+WikiCraftingTreeCtrl._ApplyZoomToCenter = HL.Method(HL.Number, HL.Number) << function(self, newScale, oldScale)
+    local scaleFactor = newScale / oldScale
+    local centerInViewport = self:_ScreenToViewportLocal(self:_GetZoomCenterScreenPos())
+    local pivotScreenPos = self.uiCamera:WorldToScreenPoint(self.view.content.position)
+    local pivotInViewport = self:_ScreenToViewportLocal(Vector2(pivotScreenPos.x, pivotScreenPos.y))
+    local dist = centerInViewport - pivotInViewport
+    local compensation = dist * (1 - scaleFactor)
+    self.m_zoomScale = newScale
+    self:_AdjustContentSizeByZoom()
+
+    self.view.content.localScale = Vector3.one * newScale
+    self.view.content.anchoredPosition = self.view.content.anchoredPosition + compensation
 end
 
 
 
+
+
+WikiCraftingTreeCtrl._AdjustContentSizeByZoom = HL.Method() << function(self)
+    local origin = self.m_originSizeDelta
+    local scale = self.m_zoomScale
+    if scale <= 0 or origin.x <= 0 or origin.y <= 0 then
+        return
+    end
+    local viewportSize = self.view.viewport.rect.size
+    self.view.content.sizeDelta = Vector2(
+        math.max(origin.x, viewportSize.x / scale),
+        math.max(origin.y, viewportSize.y / scale))
+end
+
+WikiCraftingTreeCtrl._OnZoom = HL.Method(HL.Number) << function(self, delta)
+    local config = self.view.config
+    local newScale = lume.clamp(self.m_zoomScale - delta * config.ZOOM_SENSITIVITY, config.ZOOM_MIN, config.ZOOM_MAX)
+    local oldScale = self.m_zoomScale
+
+    self:_TrySetZoomRatioInfo(newScale)
+
+    if self:_IsInZoomGesture() then
+        
+        local centerLocal = self:_ScreenToViewportLocal(self:_GetZoomCenterScreenPos())
+        if self.m_zoomGestureState ~= GESTURE_TYPE.GESTURE then
+            if self.m_zoomGestureState == GESTURE_TYPE.NORMAL then
+                self.view.scrollView:StopMovement()
+                self.view.scrollView.enabled = false
+            end
+            self.m_zoomGestureState = GESTURE_TYPE.GESTURE
+        elseif self.m_zoomLastLocal then    
+            self.view.content.anchoredPosition = self.view.content.anchoredPosition +
+                Vector2(centerLocal.x - self.m_zoomLastLocal.x, centerLocal.y - self.m_zoomLastLocal.y)
+        end
+        self.m_zoomLastLocal = { x = centerLocal.x, y = centerLocal.y }
+
+        if newScale ~= oldScale then
+            self:_ApplyZoomToCenter(newScale, oldScale)
+        end
+        self:_ClampZoomContent()
+    else
+        
+        
+        if newScale ~= oldScale then
+            self.view.scrollView:StopMovement()
+            self:_ApplyZoomToCenter(newScale, oldScale)
+            self:_ClampZoomContent()
+        end
+    end
+end
+
+
+WikiCraftingTreeCtrl._OnZoomGestureTick = HL.Method() << function(self)
+    local state = self.m_zoomGestureState
+    if state == GESTURE_TYPE.NORMAL then
+        return
+    end
+
+    local touchCount = CS.UnityEngine.Input.touchCount
+
+    if state == GESTURE_TYPE.GESTURE and not self:_IsInZoomGesture() then
+        if touchCount >= 1 then
+            self.m_zoomGestureState = GESTURE_TYPE.SINGLE
+            self.m_zoomSingleLastLocal = nil
+            state = GESTURE_TYPE.SINGLE
+        else
+            self:_EndZoomGesture()
+            return
+        end
+    end
+
+    if state == GESTURE_TYPE.SINGLE then
+        if touchCount == 1 then     
+            local touch = CS.UnityEngine.Input.GetTouch(0)
+            local touchLocal = self:_ScreenToViewportLocal(Vector2(touch.position.x, touch.position.y))
+            if self.m_zoomSingleLastLocal then
+                self.view.content.anchoredPosition = self.view.content.anchoredPosition +
+                    Vector2(touchLocal.x - self.m_zoomSingleLastLocal.x, touchLocal.y - self.m_zoomSingleLastLocal.y)
+                self:_ClampZoomContent()
+            end
+            self.m_zoomSingleLastLocal = { x = touchLocal.x, y = touchLocal.y }
+        elseif touchCount == 0 then
+            self:_EndZoomGesture()
+        else
+            
+            self.m_zoomSingleLastLocal = nil
+        end
+    end
+end
+
+
+WikiCraftingTreeCtrl._EndZoomGesture = HL.Method() << function(self)
+    self.m_zoomGestureState = GESTURE_TYPE.NORMAL
+    self.m_zoomLastLocal = nil
+    self.m_zoomSingleLastLocal = nil
+    if self.view and self.view.scrollView then
+        self.view.scrollView.enabled = true
+        self.view.scrollView:StopMovement()
+        self:_ClampZoomContent()
+    end
+end
+
+
+
+
+
+WikiCraftingTreeCtrl._InitController = HL.Method() << function(self)
+    self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+    self:_InitControllerZoom()
+end
+
+WikiCraftingTreeCtrl._InitControllerZoom = HL.Method() << function(self)
+    if not DeviceInfo.usingController then
+        return
+    end
+
+    self.m_zoomBindingGroupId = InputManagerInst:CreateGroup(self.view.inputGroup.groupId)
+
+    self:BindInputPlayerAction("wiki_craftingtree_zoom_in_press", function()
+        LuaUpdate:Remove(self.m_zoomInTickKey)
+        self.m_zoomInTickKey = LuaUpdate:Add("LateTick", function(deltaTime)
+            self:_OnZoom(-deltaTime * CONTROLLER_ZOOM_SPEED)
+        end)
+    end, self.m_zoomBindingGroupId)
+    self:BindInputPlayerAction("wiki_craftingtree_zoom_in_release", function()
+        LuaUpdate:Remove(self.m_zoomInTickKey)
+        self.m_zoomInTickKey = -1
+    end, self.m_zoomBindingGroupId)
+    self:BindInputPlayerAction("wiki_craftingtree_zoom_out_press", function()
+        LuaUpdate:Remove(self.m_zoomOutTickKey)
+        self.m_zoomOutTickKey = LuaUpdate:Add("LateTick", function(deltaTime)
+            self:_OnZoom(deltaTime * CONTROLLER_ZOOM_SPEED)
+        end)
+    end, self.m_zoomBindingGroupId)
+    self:BindInputPlayerAction("wiki_craftingtree_zoom_out_release", function()
+        LuaUpdate:Remove(self.m_zoomOutTickKey)
+        self.m_zoomOutTickKey = -1
+    end, self.m_zoomBindingGroupId)
+end
+
+
+WikiCraftingTreeCtrl._TrySetZoomRatioInfo = HL.Method(HL.Number) << function(self, newScale)
+    self:_CloseZoomRatioTimer()
+
+    self.view.zoomRatioNode.gameObject:SetActive(true)
+    self.m_zoomRatioTimerId = self:_StartTimer(self.view.config.ZOOM_RATIO_TIP_HIDE_DELAY, function()
+        self.view.zoomRatioNode.gameObject:SetActive(false)
+        self.m_zoomRatioTimerId = self:_ClearTimer(self.m_zoomRatioTimerId)
+    end)
+
+    self.view.zoomRatioTxt.text = string.format(Language.LUA_WIKI_ZOOM_RATIO, math.floor(newScale / self.view.config.ZOOM_MAX * 100))
+end
+
+WikiCraftingTreeCtrl._CloseZoomRatioTimer = HL.Method() << function(self)
+    if self.m_zoomRatioTimerId > 0 then
+        self.m_zoomRatioTimerId = self:_ClearTimer(self.m_zoomRatioTimerId)
+    end
+end
 
 WikiCraftingTreeCtrl._SetBottomRelativeInputGroup = HL.Method(HL.Userdata) << function(self, inputGroup)
     InputManagerInst:ChangeParent(true, inputGroup.groupId, self.view.bottom.inputBindingGroupMonoTarget.groupId)
 end
 
+WikiCraftingTreeCtrl._ChangeZoomInputGroup = HL.Method(HL.Boolean) << function(self, bindRoot)
+    if not DeviceInfo.usingController then
+        return
+    end
 
+    if self.m_zoomBindingGroupId < 0 then
+        return
+    end
 
+    if bindRoot then
+        InputManagerInst:ChangeParent(true, self.m_zoomBindingGroupId, self.view.inputGroup.groupId)
+    else
+        InputManagerInst:ChangeParent(true, self.m_zoomBindingGroupId, self.view.bottom.inputBindingGroupMonoTarget.groupId)
+    end
+end
 
 
 

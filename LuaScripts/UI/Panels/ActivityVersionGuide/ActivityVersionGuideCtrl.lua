@@ -1,32 +1,17 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 
-
-
-
-
-
-
-
-
 ActivityVersionGuideCtrl = HL.Class('ActivityVersionGuideCtrl', uiCtrl.UICtrl)
-
 
 ActivityVersionGuideCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 ActivityVersionGuideCtrl.m_activityId = HL.Field(HL.String) << ''
-
 
 ActivityVersionGuideCtrl.m_prefabNode = HL.Field(HL.Any)
 
-
 ActivityVersionGuideCtrl.m_versionGuide = HL.Field(HL.Any)
-
-
-
 
 ActivityVersionGuideCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_activityId = args.activityId
@@ -44,14 +29,21 @@ ActivityVersionGuideCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end
 end
 
+ActivityVersionGuideCtrl.OnShow = HL.Override() << function(self)
+    if self.m_versionGuide then
+        self.m_versionGuide:OnShow()
+    end
+end
 
+ActivityVersionGuideCtrl.OnHide = HL.Override() << function(self)
+    if self.m_versionGuide then
+        self.m_versionGuide:OnHide()
+    end
+end
 
 ActivityVersionGuideCtrl.OnActivityCenterNaviFailed = HL.Method() << function(self)
     self.m_versionGuide:OnActivityCenterNaviFailed()
 end
-
-
-
 
 ActivityVersionGuideCtrl.PlayAnimationOut = HL.Override(HL.Opt(HL.Number)) << function(self, outCompleteActionType)
     outCompleteActionType = outCompleteActionType or UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Close

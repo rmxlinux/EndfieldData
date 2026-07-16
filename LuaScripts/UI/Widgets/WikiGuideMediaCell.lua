@@ -1,20 +1,12 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 WikiGuideMediaCell = HL.Class('WikiGuideMediaCell', UIWidgetBase)
 
 local GUIDE_VIDEO_PATH_FORMAT = "Guide/%s"
 
 
-
-
 WikiGuideMediaCell._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
 
 WikiGuideMediaCell.InitWikiGuideMediaCell = HL.Method(HL.String) << function(self, wikiTutorialPageId)
     self:_FirstTimeInit()

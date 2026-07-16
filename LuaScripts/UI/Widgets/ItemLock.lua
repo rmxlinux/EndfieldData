@@ -1,21 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 ItemLock = HL.Class('ItemLock', UIWidgetBase)
-
 
 ItemLock.itemId = HL.Field(HL.String) << ""
 
-
 ItemLock.instId = HL.Field(HL.Number) << 0
-
-
 
 
 ItemLock._OnFirstTimeInit = HL.Override() << function(self)
@@ -23,10 +12,6 @@ ItemLock._OnFirstTimeInit = HL.Override() << function(self)
         self:_OnItemFlagChanged(arg)
     end)
 end
-
-
-
-
 
 ItemLock.InitItemLock = HL.Method(HL.Opt(HL.String, HL.Number)) << function(self, itemId, instId)
     self.itemId = ""
@@ -58,9 +43,6 @@ ItemLock.InitItemLock = HL.Method(HL.Opt(HL.String, HL.Number)) << function(self
     self:_UpdateState(isLock, isTrash)
 end
 
-
-
-
 ItemLock._OnItemFlagChanged = HL.Method(HL.Table) << function(self, arg)
     if string.isEmpty(self.itemId) then
         return
@@ -76,10 +58,6 @@ ItemLock._OnItemFlagChanged = HL.Method(HL.Table) << function(self, arg)
     local isTrash = GameInstance.player.inventory:IsItemTrash(Utils.getCurrentScope(), itemId, instId)
     self:_UpdateState(isLock, isTrash)
 end
-
-
-
-
 
 ItemLock._UpdateState = HL.Method(HL.Boolean, HL.Boolean) << function(self, isLock, isTrash)
     local stateName = "normal"

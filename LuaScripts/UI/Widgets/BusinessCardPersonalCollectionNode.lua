@@ -1,18 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 BusinessCardPersonalCollectionNode = HL.Class('BusinessCardPersonalCollectionNode', UIWidgetBase)
-
-
 
 
 BusinessCardPersonalCollectionNode._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
 
 
 

@@ -1,20 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DomainDepotInstList
 
-
-
-
-
-
-
-
-
-
-
-
-
 DomainDepotInstListCtrl = HL.Class('DomainDepotInstListCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -24,20 +11,13 @@ DomainDepotInstListCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 DomainDepotInstListCtrl.m_instCellGetFunc = HL.Field(HL.Function)
-
 
 DomainDepotInstListCtrl.m_instIdList = HL.Field(HL.Table)
 
-
 DomainDepotInstListCtrl.m_resumeState = HL.Field(HL.Table)
 
-
 DomainDepotInstListCtrl.m_curNaviDepotId = HL.Field(HL.String) << ""
-
-
-
 
 
 DomainDepotInstListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -79,14 +59,10 @@ DomainDepotInstListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.instList:UpdateCount(#self.m_instIdList, true)
 end
 
-
-
 DomainDepotInstListCtrl.OnShow = HL.Override() << function(self)
     self:_ApplyResumeState(self.m_resumeState)
     self.m_resumeState = nil
 end
-
-
 
 
 DomainDepotInstListCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
@@ -98,32 +74,21 @@ DomainDepotInstListCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << functio
 end
 
 
-
-
 DomainDepotInstListCtrl.ResumeControllerNavi = HL.Method() << function(self)
     self:_ApplyResumeState({ selectedDepotId = self.m_curNaviDepotId })
 end
 
-
-
-
-
 DomainDepotInstListCtrl._OnUpdateInstCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     cell:InitDomainDepotInstCell(self.m_instIdList[index])
     
-    local originOnIsNaviTargetChanged = cell.view.confirmBtn.onIsNaviTargetChanged
-    cell.view.confirmBtn.onIsNaviTargetChanged = function(isNaviTarget)
-        if originOnIsNaviTargetChanged then
-            originOnIsNaviTargetChanged(isNaviTarget)
-        end
+    
+    
+    cell:SetOnNaviTargetChanged(function(isNaviTarget)
         if isNaviTarget then
             self.m_curNaviDepotId = self.m_instIdList[index]
         end
-    end
+    end)
 end
-
-
-
 
 
 DomainDepotInstListCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
@@ -145,7 +110,7 @@ DomainDepotInstListCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << functio
     end
     local targetCell = self.m_instCellGetFunc(targetIndex)
     if targetCell ~= nil then
-        UIUtils.setAsNaviTargetInSilentModeIfPhaseIsTop(self.view.selectableNaviGroup, targetCell.view.confirmBtn, PhaseId.DomainDepotPackage)
+        self:SetNaviTarget(targetCell.view.confirmBtn)
     else
         self.view.instList:ScrollToIndex(CSIndex(targetIndex), true)
     end

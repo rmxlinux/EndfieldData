@@ -1,30 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityStaminaDiscount
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityStaminaDiscountCtrl = HL.Class('ActivityStaminaDiscountCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -37,47 +14,35 @@ ActivityStaminaDiscountCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_UPDATED] = 'OnStageChange',
 }
 
-
 ActivityStaminaDiscountCtrl.m_activityId = HL.Field(HL.String) << ''
-
 
 ActivityStaminaDiscountCtrl.m_activity = HL.Field(HL.Any)
 
-
 ActivityStaminaDiscountCtrl.m_tasks = HL.Field(HL.Table)
-
 
 ActivityStaminaDiscountCtrl.m_getRewardCell = HL.Field(HL.Function)
 
-
 ActivityStaminaDiscountCtrl.m_canReward = HL.Field(HL.Boolean) << false
-
 
 ActivityStaminaDiscountCtrl.m_rewardStageIds = HL.Field(HL.Table)
 
-
 ActivityStaminaDiscountCtrl.m_receiveAllBindingId = HL.Field(HL.Number) << -1
 
-
 ActivityStaminaDiscountCtrl.m_refreshDirty = HL.Field(HL.Boolean) << false
-
-
-
 
 ActivityStaminaDiscountCtrl.OnBeforePanelActive = HL.Method(HL.Any) << function(self, args)
     self:_ApplyAudioOnOpen(args.activityId)
 end
 
-
-
-
 ActivityStaminaDiscountCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_activityId = args.activityId
 
     self:_ApplyAudioOnOpen(self.m_activityId)
-    local bgStateData = Tables.activityStaminaRefundBgStateTable and Tables.activityStaminaRefundBgStateTable[self.m_activityId]
-    if bgStateData and not string.isEmpty(bgStateData.bgStateName) then
-        self.view.bgLayout:SetState(bgStateData.bgStateName)
+    if Tables.activityStaminaRefundBgStateTable then
+        local has, bgStateData = Tables.activityStaminaRefundBgStateTable:TryGetValue(self.m_activityId)
+        if has and not string.isEmpty(bgStateData.bgStateName) then
+            self.view.bgLayout:SetState(bgStateData.bgStateName)
+        end
     end
 
     
@@ -89,14 +54,12 @@ ActivityStaminaDiscountCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
 
     
     self.view.activityCommonInfo:InitActivityCommonInfo(args)
-    self:_RefreshInfo()
 
     
     self.m_getRewardCell = UIUtils.genCachedCellFunction(self.view.rewardList)
     self.view.rewardList.onUpdateCell:AddListener(function(obj, csIndex)
         self:_OnUpdateCell(self.m_getRewardCell(obj), LuaIndex(csIndex))
     end)
-    self.view.rewardList:UpdateCount(#self.m_tasks)
 
     
     local viewBindingId = self:BindInputPlayerAction("common_view_item", function()
@@ -106,10 +69,8 @@ ActivityStaminaDiscountCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self.view.rightNaviGroup.onIsTopLayerChanged:AddListener(function(active)
         InputManagerInst:ToggleBinding(viewBindingId, not active)
     end)
+    self:_RefreshInfo()
 end
-
-
-
 
 ActivityStaminaDiscountCtrl._ApplyAudioOnOpen = HL.Method(HL.String) << function(self, activityId)
     local audioOnOpen = self:_GetAudioOnOpen(activityId)
@@ -118,21 +79,15 @@ ActivityStaminaDiscountCtrl._ApplyAudioOnOpen = HL.Method(HL.String) << function
     end
 end
 
-
-
-
 ActivityStaminaDiscountCtrl._GetAudioOnOpen = HL.Method(HL.String).Return(HL.String) << function(self, activityId)
-    local bgStateData = Tables.activityStaminaRefundBgStateTable and Tables.activityStaminaRefundBgStateTable[activityId]
-    return bgStateData and bgStateData.audioOnOpen or ""
+    if Tables.activityStaminaRefundBgStateTable then
+        local has, bgStateData = Tables.activityStaminaRefundBgStateTable:TryGetValue(activityId)
+        if has then
+            return bgStateData and bgStateData.audioOnOpen or ""
+        end
+    end
+    return ""
 end
-
-
-
-ActivityStaminaDiscountCtrl.OnShow = HL.Override() << function(self)
-    self:_RefreshInfo()
-end
-
-
 
 ActivityStaminaDiscountCtrl.OnClose = HL.Override() << function(self)
     
@@ -142,8 +97,6 @@ ActivityStaminaDiscountCtrl.OnClose = HL.Override() << function(self)
     
     ActivityUtils.setActivityDayAsRead(self.m_activityId)
 end
-
-
 
 ActivityStaminaDiscountCtrl._RefreshInfo = HL.Method() << function(self)
     self.m_activity = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
@@ -227,11 +180,6 @@ ActivityStaminaDiscountCtrl._RefreshInfo = HL.Method() << function(self)
     end
 end
 
-
-
-
-
-
 ActivityStaminaDiscountCtrl._OnUpdateRewardCell = HL.Method(HL.Table, HL.Any, HL.Number) << function(self, taskCell, rewardCell, rewardIndex)
     local rewardBundles = taskCell.m_rewardBundles
     if not rewardBundles or not rewardBundles[rewardIndex] then
@@ -256,10 +204,6 @@ ActivityStaminaDiscountCtrl._OnUpdateRewardCell = HL.Method(HL.Table, HL.Any, HL
         rewardCell.view.selectedBG.gameObject:SetActive(isTarget)
     end
 end
-
-
-
-
 
 ActivityStaminaDiscountCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local task = self.m_tasks[index]
@@ -302,12 +246,10 @@ ActivityStaminaDiscountCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << fu
     
     cell.notCompleteBtn.onClick:RemoveAllListeners()
     cell.notCompleteBtn.onClick:AddListener(function()
+        ActivityUtils.setActivityDayAsRead(self.m_activityId)
         Utils.jumpToSystem(task.mapJumpId)
     end)
 end
-
-
-
 
 ActivityStaminaDiscountCtrl._SetNaviTarget = HL.Method(HL.Number) << function(self, index)
     if index == 0 or not DeviceInfo.usingController then
@@ -320,19 +262,14 @@ ActivityStaminaDiscountCtrl._SetNaviTarget = HL.Method(HL.Number) << function(se
     end
     local cell = oriCell and self.m_getRewardCell(oriCell)
     if cell then
-        UIUtils.setAsNaviTarget(cell.naviDecorator)
+        self:SetNaviTarget(cell.naviDecorator)
     end
 end
-
-
 
 ActivityStaminaDiscountCtrl.OnActivityCenterNaviFailed = HL.Method() << function(self)
     local firstCell = self.view.rewardList:GetRangeInView().x
     self:_SetNaviTarget(LuaIndex(firstCell))
 end
-
-
-
 
 ActivityStaminaDiscountCtrl.OnStageChange = HL.Method(HL.Any) << function(self, args)
     local id = unpack(args)

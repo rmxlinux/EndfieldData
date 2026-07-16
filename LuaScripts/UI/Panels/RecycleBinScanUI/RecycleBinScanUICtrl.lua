@@ -1,21 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.RecycleBinScanUI
-
-
-
-
-
-
-
-
-
-
-
-
-
 RecycleBinScanUICtrl = HL.Class('RecycleBinScanUICtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -27,17 +13,11 @@ RecycleBinScanUICtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 RecycleBinScanUICtrl.m_recycleBinObjDict = HL.Field(HL.Table)
-
 
 RecycleBinScanUICtrl.m_recycleBinObjPool = HL.Field(HL.Table)
 
-
 RecycleBinScanUICtrl.m_recycleBinLogicIdDict = HL.Field(HL.Table)
-
-
-
 
 
 RecycleBinScanUICtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -45,8 +25,6 @@ RecycleBinScanUICtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_recycleBinObjPool = {}
     self.m_recycleBinLogicIdDict = {}
 end
-
-
 
 
 
@@ -69,20 +47,11 @@ RecycleBinScanUICtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 RecycleBinScanUICtrl._OnAddRecycleBinUI = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = RecycleBinScanUICtrl.AutoOpen(PANEL_ID, args, false)
     local entity, coreName, formName, nextRefresh, hpRatio = unpack(args)
     ctrl:_AddRecycleBin(entity, coreName, formName, nextRefresh, hpRatio)
 end
-
-
-
-
-
-
-
 
 RecycleBinScanUICtrl._AddRecycleBin = HL.Method(HL.Any, HL.String, HL.String, HL.Number, HL.Number) << function(self, targetObject, coreName, formName, nextRefresh, hpRatio)
     if self.m_recycleBinObjDict[targetObject] == nil then
@@ -98,12 +67,6 @@ RecycleBinScanUICtrl._AddRecycleBin = HL.Method(HL.Any, HL.String, HL.String, HL
     self.m_recycleBinLogicIdDict[recycleBin.entityLogicId] = recycleBin
 end
 
-
-
-
-
-
-
 RecycleBinScanUICtrl._InitRecycleBin = HL.Method(HL.Any, HL.Any, HL.String, HL.String) << function(self, recycleBin, target, coreName, formName)
     if not target or not recycleBin then
         return
@@ -112,8 +75,6 @@ RecycleBinScanUICtrl._InitRecycleBin = HL.Method(HL.Any, HL.Any, HL.String, HL.S
     recycleBin.doodadCoreName:SetText(coreName)
     recycleBin.typeName:SetText(formName)
 end
-
-
 
 RecycleBinScanUICtrl._CreateRecycleBin = HL.Method().Return(HL.Table) << function(self)
     if self.m_recycleBinObjPool ~= nil and #self.m_recycleBinObjPool > 0 then
@@ -126,8 +87,6 @@ RecycleBinScanUICtrl._CreateRecycleBin = HL.Method().Return(HL.Table) << functio
         return result
     end
 end
-
-
 
 RecycleBinScanUICtrl._OnRemoveRecycleBinUI = HL.StaticMethod(HL.Any) << function(args)
     local opened, ctrl = UIManager:IsOpen(PANEL_ID)
@@ -144,8 +103,6 @@ RecycleBinScanUICtrl._OnRemoveRecycleBinUI = HL.StaticMethod(HL.Any) << function
         ctrl.m_recycleBinObjDict[entity] = nil
     end
 end
-
-
 
 RecycleBinScanUICtrl._OnUpdateRecycleBinUI = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = RecycleBinScanUICtrl.AutoOpen(PANEL_ID, args, false)

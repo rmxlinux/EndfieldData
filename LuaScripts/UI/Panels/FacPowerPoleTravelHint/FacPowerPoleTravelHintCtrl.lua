@@ -1,32 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacPowerPoleTravelHint
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacPowerPoleTravelHintCtrl = HL.Class('FacPowerPoleTravelHintCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -38,41 +13,27 @@ FacPowerPoleTravelHintCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacPowerPoleTravelHintCtrl.m_inBuildingMode = HL.Field(HL.Boolean) << false
-
 
 FacPowerPoleTravelHintCtrl.m_buildingTypeId = HL.Field(HL.String) << ""
 
-
 FacPowerPoleTravelHintCtrl.m_buildModePosition = HL.Field(Vector3)
-
 
 FacPowerPoleTravelHintCtrl.m_moveModeNodeId = HL.Field(HL.Any)
 
-
 FacPowerPoleTravelHintCtrl.m_moveModePosition = HL.Field(Vector3)
-
 
 FacPowerPoleTravelHintCtrl.m_isShown = HL.Field(HL.Boolean) << false
 
-
 FacPowerPoleTravelHintCtrl.m_tempTargetInfoList = HL.Field(HL.Userdata) << nil
-
 
 FacPowerPoleTravelHintCtrl.m_trackers = HL.Field(HL.Table)
 
-
 FacPowerPoleTravelHintCtrl.m_trackersCache = HL.Field(HL.Table)
-
 
 FacPowerPoleTravelHintCtrl.m_currentLogicId = HL.Field(HL.Any) << 0
 
-
 FacPowerPoleTravelHintCtrl.m_lateTickKey = HL.Field(HL.Number) << -1
-
-
-
 
 
 FacPowerPoleTravelHintCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -86,13 +47,11 @@ FacPowerPoleTravelHintCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
 FacPowerPoleTravelHintCtrl.OnEnterBuildingMode = HL.StaticMethod(HL.Opt(HL.Any)) << function()
     local ctrl = FacPowerPoleTravelHintCtrl.AutoOpen(PANEL_ID, nil, false)
     ctrl.m_inBuildingMode = true
     
 end
-
 
 FacPowerPoleTravelHintCtrl.OnExitBuildingMode = HL.StaticMethod() << function()
     local ctrl = FacPowerPoleTravelHintCtrl.AutoOpen(PANEL_ID, nil, false)
@@ -115,16 +74,10 @@ FacPowerPoleTravelHintCtrl.OnExitBuildingMode = HL.StaticMethod() << function()
     end
 end
 
-
-
 FacPowerPoleTravelHintCtrl.OnBuild = HL.StaticMethod(HL.Table) << function(args)
     local ctrl = FacPowerPoleTravelHintCtrl.AutoOpen(PANEL_ID, nil, false)
     ctrl:OnBuildModeUpdated(args.buildingTypeId, args.position)
 end
-
-
-
-
 
 FacPowerPoleTravelHintCtrl.OnBuildModeUpdated = HL.Method(HL.String, Vector3) << function(self, buildingTypeId, position)
     if string.isEmpty(self.m_buildingTypeId) then
@@ -145,10 +98,6 @@ FacPowerPoleTravelHintCtrl.OnBuildModeUpdated = HL.Method(HL.String, Vector3) <<
         end
     end
 end
-
-
-
-
 
 FacPowerPoleTravelHintCtrl.OnBuildModeChanged = HL.Method(HL.String, Vector3) << function(self, buildingTypeId, position)
     self.m_buildingTypeId = buildingTypeId
@@ -173,17 +122,10 @@ FacPowerPoleTravelHintCtrl.OnBuildModeChanged = HL.Method(HL.String, Vector3) <<
     self.m_tempTargetInfoList = GameWorld.gameMechManager.travelPoleBrain:GetSurroundingTravelPoleBuildHintInfoList(self.m_buildingTypeId, self.m_buildModePosition)
 end
 
-
-
 FacPowerPoleTravelHintCtrl.OnMove = HL.StaticMethod(HL.Table) << function(args)
     local ctrl = FacPowerPoleTravelHintCtrl.AutoOpen(PANEL_ID, nil, false)
     ctrl:OnMoveModeUpdated(args.buildingTypeId, args.position, args.nodeId)
 end
-
-
-
-
-
 
 FacPowerPoleTravelHintCtrl.OnMoveModeUpdated = HL.Method(HL.String, Vector3, HL.Any) << function(self, buildingTypeId, position, nodeId)
     if string.isEmpty(self.m_moveModeNodeId) then
@@ -204,11 +146,6 @@ FacPowerPoleTravelHintCtrl.OnMoveModeUpdated = HL.Method(HL.String, Vector3, HL.
         end
     end
 end
-
-
-
-
-
 
 FacPowerPoleTravelHintCtrl.OnMoveModeChanged = HL.Method(HL.String, Vector3, HL.Any) << function(self, buildingTypeId, position, nodeId)
     self.m_buildingTypeId = buildingTypeId
@@ -233,8 +170,6 @@ FacPowerPoleTravelHintCtrl.OnMoveModeChanged = HL.Method(HL.String, Vector3, HL.
     self.m_isShown = true
     self.m_tempTargetInfoList = GameWorld.gameMechManager.travelPoleBrain:GetSurroundingTravelPoleBuildHintInfoListExclude(self.m_buildingTypeId, self.m_moveModePosition, self.m_moveModeNodeId)
 end
-
-
 
 
 FacPowerPoleTravelHintCtrl._UpdateTrackers = HL.Method() << function(self)
@@ -302,8 +237,6 @@ FacPowerPoleTravelHintCtrl._UpdateTrackers = HL.Method() << function(self)
         end
     end
 end
-
-
 
 FacPowerPoleTravelHintCtrl._CreateNewTracker = HL.Method().Return(HL.Table) << function(self)
     local cacheCount = #self.m_trackersCache

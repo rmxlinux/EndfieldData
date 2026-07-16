@@ -4,36 +4,19 @@ local PANEL_ID = PanelId.FriendRoleDisplay
 
 local charCount = 4
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 FriendRoleDisplayCtrl = HL.Class('FriendRoleDisplayCtrl', uiCtrl.UICtrl)
-
 
 FriendRoleDisplayCtrl.m_genDisplayCells = HL.Field(HL.Forward("UIListCache"))
 
-
 FriendRoleDisplayCtrl.m_charInfo = HL.Field(HL.Table)
-
 
 FriendRoleDisplayCtrl.m_index = HL.Field(HL.Number) << 1
 
-
 FriendRoleDisplayCtrl.m_arg = HL.Field(HL.Table)
-
 
 FriendRoleDisplayCtrl.m_selectCharInsIdList = HL.Field(HL.Table)
 
+FriendRoleDisplayCtrl.m_isClosing = HL.Field(HL.Boolean) << false
 
 
 
@@ -43,24 +26,18 @@ FriendRoleDisplayCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FRIEND_BUSINESS_INFO_CHANGE] = 'OnChange',
 }
 
-
-
 FriendRoleDisplayCtrl.OnChange = HL.Method() << function(self)
-    self:PlayAnimationOutAndClose()
-    Notify(MessageConst.HIDE_COMMON_HOVER_TIP)
+    self:_PlayAnimationOutAndCloseOnce()
 end
-
-
-
 
 
 FriendRoleDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_arg = arg or {}
+    self.m_isClosing = false
 
     self.view.btnBack.onClick:RemoveAllListeners()
     self.view.btnBack.onClick:AddListener(function()
-        self:PlayAnimationOutAndClose()
-        Notify(MessageConst.HIDE_COMMON_HOVER_TIP)
+        self:_PlayAnimationOutAndCloseOnce()
     end)
 
     self.view.applyBtn.onClick:RemoveAllListeners()
@@ -97,12 +74,6 @@ FriendRoleDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end
     self.view.charList:UpdateCharItems(CharInfoUtils.getAllCharInfoList())
-    
-    
-    
-    
-    
-    
     self:_ApplyRoleDisplaySortFilterState(recoverArg)
     self.view.charList:ShowSelectChars(self.m_selectCharInsIdList)
 
@@ -112,13 +83,24 @@ FriendRoleDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
+FriendRoleDisplayCtrl._PlayAnimationOutAndCloseOnce = HL.Method() << function(self)
+    if self.m_isClosing then
+        return
+    end
 
-
+    self.m_isClosing = true
+    local isOpen, commonFilterCtrl = UIManager:IsOpen(PanelId.CommonFilter)
+    if isOpen and commonFilterCtrl then
+        commonFilterCtrl:_CloseSelf()
+    end
+    self:PlayAnimationOutAndClose()
+    Notify(MessageConst.HIDE_COMMON_HOVER_TIP)
+end
 
 FriendRoleDisplayCtrl._ApplyRoleDisplaySortFilterState = HL.Method(HL.Table) << function(self, recoverArg)
     local charListView = self.view and self.view.charList and self.view.charList.view or nil
     local sortNode = charListView and charListView.sortNode or nil
-    if not sortNode then
+    if sortNode == nil then
         return
     end
 
@@ -147,8 +129,6 @@ FriendRoleDisplayCtrl._ApplyRoleDisplaySortFilterState = HL.Method(HL.Table) << 
     sortNode:UpdateDeviceState()
 end
 
-
-
 FriendRoleDisplayCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
     local selectCharInstIds = {}
@@ -172,10 +152,6 @@ FriendRoleDisplayCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any))
     return arg
 end
 
-
-
-
-
 FriendRoleDisplayCtrl._RefreshDisplayCells = HL.Method(HL.Table, HL.Number) << function(self, cell, luaIndex)
     cell.roleState:SetState(luaIndex <= #self.m_selectCharInsIdList and 'role' or 'add')
     
@@ -196,13 +172,6 @@ FriendRoleDisplayCtrl._RefreshDisplayCells = HL.Method(HL.Table, HL.Number) << f
         cell.charHeadCell:InitCharFormationHeadCell(item, nil, true)
     end
 end
-
-
-
-
-
-
-
 
 FriendRoleDisplayCtrl._CharListChangeSelectIndex = HL.Method(HL.Boolean, HL.Number, HL.Table, HL.Table, HL.Table) << function(self, select, cellIndex, charItem, charItemList, charInfoList)
     self.m_selectCharInsIdList = {}

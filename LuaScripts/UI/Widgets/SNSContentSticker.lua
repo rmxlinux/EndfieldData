@@ -1,10 +1,6 @@
 local SNSContentWithEmojiComp = require_ex('UI/Widgets/SNSContentWithEmojiComp')
 
-
-
 SNSContentSticker = HL.Class('SNSContentSticker', SNSContentWithEmojiComp)
-
-
 
 SNSContentSticker._OnSNSContentInit = HL.Override() << function(self)
     SNSContentSticker.Super._OnSNSContentInit(self)

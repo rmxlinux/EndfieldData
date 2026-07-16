@@ -1,42 +1,18 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonPlayerHead = HL.Class('CommonPlayerHead', UIWidgetBase)
-
 
 CommonPlayerHead.m_onClick = HL.Field(HL.Function)
 
-
 CommonPlayerHead.m_canClick = HL.Field(HL.Boolean) << false
-
 
 CommonPlayerHead.m_roleId = HL.Field(HL.Number) << 0
 
-
 CommonPlayerHead.m_hideSignature = HL.Field(HL.Any) << nil
-
 
 CommonPlayerHead.m_hideLevelTxt = HL.Field(HL.Any) << nil
 
-
 CommonPlayerHead.m_hidePlatformNode = HL.Field(HL.Boolean) << false
-
-
 
 
 CommonPlayerHead._OnFirstTimeInit = HL.Override() << function(self)
@@ -56,13 +32,19 @@ CommonPlayerHead._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
     self.view.levelTag.gameObject:SetActiveIfNecessary(false)
+    self.view.seasonTag.gameObject:SetActiveIfNecessary(false)
+
+    self.view.levelTag.onClick:AddListener(function()
+        if self.m_roleId ~= 0 then
+            UIManager:Open(PanelId.FriendBusinessRecordTips, { roleId = self.m_roleId, transform = self.view.levelTag.transform, posType = UIConst.UI_TIPS_POS_TYPE.LeftAlignBottom })
+        end
+    end)
+    self.view.seasonTag.onClick:AddListener(function()
+        if self.m_roleId ~= 0 then
+            UIManager:Open(PanelId.FriendBusinessRecordTips, { roleId = self.m_roleId, transform = self.view.seasonTag.transform, posType = UIConst.UI_TIPS_POS_TYPE.LeftAlignBottom })
+        end
+    end)
 end
-
-
-
-
-
-
 
 CommonPlayerHead.InitCommonPlayerHeadByRoleId = HL.Method(HL.Number, HL.Any, HL.Opt(HL.String, HL.Boolean)) << function(self, roleId, click, searchKey, needRemoveZeroRoleID)
     self:_FirstTimeInit()
@@ -113,36 +95,18 @@ CommonPlayerHead.InitCommonPlayerHeadByRoleId = HL.Method(HL.Number, HL.Any, HL.
     end
 end
 
-
-
-
 CommonPlayerHead.UpdateHidePlatformNode = HL.Method(HL.Boolean) << function(self, hidePlatformNode)
     self.m_hidePlatformNode = hidePlatformNode
 end
-
-
-
 
 CommonPlayerHead.UpdateHideSignature = HL.Method(HL.Any) << function(self, hideSignature)
     self.m_hideSignature = hideSignature
 end
 
 
-
-
-
 CommonPlayerHead.UpdateHideLevelTxt = HL.Method(HL.Any) << function(self, hideLevelTxt)
     self.m_hideLevelTxt = hideLevelTxt
 end
-
-
-
-
-
-
-
-
-
 
 CommonPlayerHead.InitCommonPlayerHead = HL.Method(HL.String, HL.String, HL.Any, HL.Opt(HL.Number, HL.String, HL.String, HL.String))
         << function(self, avatarPath, avatarFramePath, click, adventureLevel, name, signature, psName)
@@ -195,9 +159,6 @@ CommonPlayerHead.InitCommonPlayerHead = HL.Method(HL.String, HL.String, HL.Any, 
     end
 end
 
-
-
-
 CommonPlayerHead.SetClick = HL.Method(HL.Any) << function(self, click)
     if type(click) == 'function' then
         self.m_onClick = click
@@ -212,15 +173,11 @@ CommonPlayerHead.SetClick = HL.Method(HL.Any) << function(self, click)
     self.view.playerHeadBtn.enabled = self.m_canClick
 end
 
-
-
 CommonPlayerHead.OnClick = HL.Method() << function(self)
     if self.m_canClick and self.m_onClick then
         self.m_onClick()
     end
 end
-
-
 
 CommonPlayerHead.UpdateContingencyContractActivityState = HL.Method() << function(self)
     if self.m_roleId == 0 then
@@ -254,6 +211,25 @@ CommonPlayerHead.UpdateContingencyContractActivityState = HL.Method() << functio
     end
 end
 
+CommonPlayerHead.UpdateSeasonTowerActivityState = HL.Method() << function(self)
+    if self.m_roleId == 0 then
+        self.view.seasonTag.gameObject:SetActiveIfNecessary(false)
+        return
+    end
+
+    local success, playerInfo = GameInstance.player.friendSystem:TryGetFriendInfo(self.m_roleId)
+    local displayRecord = success and FriendUtils.getSeasonTowerDisplayRecord(playerInfo)
+    local rank = displayRecord and displayRecord.rank or 0
+    if displayRecord and FriendUtils.SEASON_TOWER_RANK_NAMES[rank] then
+        self.view.seasonTag.gameObject:SetActiveIfNecessary(true)
+        self.view.seasonTowerTagSmall:SetState(FriendUtils.SEASON_TOWER_RANK_NAMES[rank])
+    else
+        self.view.seasonTag.gameObject:SetActiveIfNecessary(false)
+    end
+
+    
+    self.view.lineImage.gameObject:SetActiveIfNecessary(self.view.levelTag.gameObject.activeSelf)
+end
+
 HL.Commit(CommonPlayerHead)
 return CommonPlayerHead
-

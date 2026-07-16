@@ -82,7 +82,6 @@ FacMiniPowerContent.ToggleCoroutine = HL.Method(HL.Boolean) << function(self, ac
         end
     else
         self.m_refreshCoroutine = self:_ClearCoroutine(self.m_refreshCoroutine)
-        self.m_softMaskResetCoroutine = self:_ClearCoroutine(self.m_softMaskResetCoroutine)
     end
 end
 
@@ -284,8 +283,6 @@ FacMiniPowerContent._HideBackupPower = HL.Method() << function(self)
     reserveNode.gameObject:SetActive(false)
 end
 
-FacMiniPowerContent.m_softMaskResetCoroutine = HL.Field(HL.Thread)
-
 FacMiniPowerContent._UpdateBackupPowerState = HL.Method() << function(self)
     if not (self.shouldShowBackupPower and self.m_canShowBackupPower) then
         return
@@ -336,14 +333,6 @@ FacMiniPowerContent._UpdateBackupPowerState = HL.Method() << function(self)
         
         if inUse then
             reserveNode.lineAnimationWrapper:Play(self.view.config.BACKUP_IN_USE)
-            
-            self:_ClearCoroutine(self.m_softMaskResetCoroutine)
-            self.m_softMaskResetCoroutine = self:_StartCoroutine(function()
-                coroutine.wait(0.2)
-                local currentPos = reserveNode.bgUseLineMask.anchoredPosition
-                reserveNode.bgUseLineMask.anchoredPosition = CS.UnityEngine.Vector2(currentPos.x, currentPos.y + 0.00001)
-                reserveNode.bgUseLineMask.anchoredPosition = CS.UnityEngine.Vector2(currentPos.x, currentPos.y)
-            end)
         end
     end
 
@@ -406,7 +395,7 @@ FacMiniPowerContent._MonitorPower = HL.Method() << function(self)
     end
 
     if not string.isEmpty(showText) then
-        if not Utils.isInDungeon() and self.m_showToastTimer < 0 then
+        if not Utils.isInDungeon() and not Utils.isForbidden(ForbidType.FacPowerToast) and self.m_showToastTimer < 0 then
             
             Notify(MessageConst.SHOW_SPECIAL_TOAST, showText)
             self.m_showToastTimer = self:_StartTimer(self.view.config.WARNING_TOAST_INTERVAL, function()
@@ -538,6 +527,14 @@ FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function
         delta = buildingMode.isMoving and 0 or 1
     elseif data.type == GEnums.FacBuildingType.MachineCrafter and data.id == XIRANITE_BUILDINGID then
         max = GameInstance.remoteFactoryManager:GetBuildingLimitsInChapter(data.id)
+        if max < 0 then
+            local domainId = FactoryUtils.getCurAndAutoTransferBlackBoxToDomainId()
+            for i = 0, data.placeDomains.Count - 1 do
+                if data.placeDomains[i] == domainId and data.placeDomainLimitCnt.Count > i then
+                    max = data.placeDomainLimitCnt[i]
+                end
+            end
+        end
         if max > 0 then
             buildingCountNodeActive = true
             cur = GameInstance.remoteFactoryManager:GetBuildingCountInCurMap(data.id)
@@ -561,7 +558,7 @@ FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function
         node.bandwidthNode.gameObject:SetActive(true)
         local max = 0
         local cur = 0
-        local delta
+        local delta = 0
         if bandwidth then
             max = bandwidth.max
             cur = bandwidth.current
@@ -577,7 +574,7 @@ FacMiniPowerContent.SwitchFacMiniPowerContent = HL.Method(HL.String) << function
         node.bandwidthNode.gameObject:SetActive(false)
     end
 
-    node.powerNode.gameObject:SetActive(data.powerConsume > 0)
+    node.powerNode.gameObject:SetActive(data.powerConsume > 0 and not GameInstance.remoteFactoryManager.system.core.progressStatus:IsBuildingPowerCostNoNeed(data.id))
     self:RefreshFacMiniPowerContent()
     self:_RefreshAnimState()
 end

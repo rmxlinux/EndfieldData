@@ -1,19 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 ItemSimple = HL.Class('ItemSimple', UIWidgetBase)
-
-
 
 
 ItemSimple._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
-
 
 ItemSimple.InitItemSimple = HL.Method(HL.String, HL.Number) << function(self, itemId, itemCount)
     self:_FirstTimeInit()

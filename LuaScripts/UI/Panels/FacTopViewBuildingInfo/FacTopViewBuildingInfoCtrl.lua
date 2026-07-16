@@ -2,41 +2,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacTopViewBuildingInfo
 local LuaNodeCache = require_ex("Common/Utils/LuaNodeCache")
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacTopViewBuildingInfoCtrl = HL.Class('FacTopViewBuildingInfoCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -55,35 +21,23 @@ FacTopViewBuildingInfoCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 FacTopViewBuildingInfoCtrl.m_isShowing = HL.Field(HL.Boolean) << false
-
 
 FacTopViewBuildingInfoCtrl.m_updateCor = HL.Field(HL.Thread)
 
-
 FacTopViewBuildingInfoCtrl.m_cellCache = HL.Field(LuaNodeCache)
-
 
 FacTopViewBuildingInfoCtrl.m_cells = HL.Field(HL.Table)
 
-
 FacTopViewBuildingInfoCtrl.m_onAddFunc = HL.Field(HL.Function)
-
 
 FacTopViewBuildingInfoCtrl.m_onRemoveFunc = HL.Field(HL.Function)
 
-
 FacTopViewBuildingInfoCtrl.m_onUpdateFunc = HL.Field(HL.Function)
-
 
 FacTopViewBuildingInfoCtrl.m_padding = HL.Field(HL.Any)
 
-
 FacTopViewBuildingInfoCtrl.m_iconCache = HL.Field(LuaNodeCache)
-
-
-
 
 
 
@@ -105,8 +59,6 @@ FacTopViewBuildingInfoCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_padding = CSFactoryUtil.Padding(self.view.config.PADDING_TOP, self.view.config.PADDING_LEFT,
             self.view.config.PADDING_RIGHT, self.view.config.PADDING_BOTTOM)
 end
-
-
 
 FacTopViewBuildingInfoCtrl.OnShow = HL.Override() << function(self)
     if UIManager:IsOpen(PanelId.GeneralTracker) then
@@ -133,21 +85,15 @@ FacTopViewBuildingInfoCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 FacTopViewBuildingInfoCtrl.OnHide = HL.Override() << function(self)
     self.view.main.gameObject:SetActive(false) 
     self.m_updateCor = self:_ClearCoroutine(self.m_updateCor)
 end
 
-
-
 FacTopViewBuildingInfoCtrl.OnClose = HL.Override() << function(self)
     self.m_updateCor = self:_ClearCoroutine(self.m_updateCor)
     self:_ClearCache()
 end
-
-
 
 FacTopViewBuildingInfoCtrl._ClearCache = HL.Method() << function(self)
     for _, cell in pairs(self.m_cells) do
@@ -159,9 +105,6 @@ FacTopViewBuildingInfoCtrl._ClearCache = HL.Method() << function(self)
     end
     self.m_cells = {}
 end
-
-
-
 
 FacTopViewBuildingInfoCtrl.ToggleTopViewBuildingInfo = HL.Method(HL.Boolean) << function(self, active)
     CSFactoryUtil.ClearTopViewBuildingInfos()
@@ -177,15 +120,9 @@ FacTopViewBuildingInfoCtrl.ToggleTopViewBuildingInfo = HL.Method(HL.Boolean) << 
     end
 end
 
-
-
-
 FacTopViewBuildingInfoCtrl.OnBuildingMoved = HL.Method(HL.Table) << function(self, arg)
     self:OnNodeRemoved(arg) 
 end
-
-
-
 
 FacTopViewBuildingInfoCtrl.OnPendingSlotsRemoved = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     local toRemoveNodeIds = arg[1]
@@ -194,9 +131,6 @@ FacTopViewBuildingInfoCtrl.OnPendingSlotsRemoved = HL.Method(HL.Opt(HL.Table)) <
         CSFactoryUtil.s_topViewBuildingInfos:Remove(nodeId)
     end
 end
-
-
-
 
 FacTopViewBuildingInfoCtrl.FacUpdateTopViewBuildingInfos = HL.Method(HL.Table) << function(self, batchSelectTargets)
     for nodeId, info in pairs(batchSelectTargets) do
@@ -208,16 +142,11 @@ FacTopViewBuildingInfoCtrl.FacUpdateTopViewBuildingInfos = HL.Method(HL.Table) <
     self:_UpdateInfos()
 end
 
-
-
-
 FacTopViewBuildingInfoCtrl.OnNodeRemoved = HL.Method(HL.Table) << function(self, arg)
     local nodeId = unpack(arg)
     self:_OnRemoveInfo(nodeId)
     CSFactoryUtil.s_topViewBuildingInfos:Remove(nodeId)
 end
-
-
 
 FacTopViewBuildingInfoCtrl._UpdateAllInfos = HL.Method() << function(self)
     
@@ -227,8 +156,6 @@ FacTopViewBuildingInfoCtrl._UpdateAllInfos = HL.Method() << function(self)
     end
 end
 
-
-
 FacTopViewBuildingInfoCtrl._UpdateInfos = HL.Method() << function(self)
     if lume.round(LuaSystemManager.factory.topViewCamTarget.transform.eulerAngles.y) % 90 ~= 0 then
         
@@ -236,9 +163,6 @@ FacTopViewBuildingInfoCtrl._UpdateInfos = HL.Method() << function(self)
     end
     CSFactoryUtil.UpdateTopViewBuildingInfos(self.m_padding, self.m_onAddFunc, self.m_onRemoveFunc, self.m_onUpdateFunc)
 end
-
-
-
 
 FacTopViewBuildingInfoCtrl._OnAddInfo = HL.Method(CS.Beyond.Gameplay.Factory.FactoryUtil.TopViewBuildingInfo) << function(self, info)
     local nodeId = info.nodeId
@@ -279,9 +203,6 @@ FacTopViewBuildingInfoCtrl._OnAddInfo = HL.Method(CS.Beyond.Gameplay.Factory.Fac
     self.m_cells[nodeId] = cell
 end
 
-
-
-
 FacTopViewBuildingInfoCtrl._OnRemoveInfo = HL.Method(HL.Number) << function(self, nodeId)
     logger.info("FacTopViewBuildingInfoCtrl._OnRemoveInfo", nodeId)
     local cell = self.m_cells[nodeId]
@@ -294,10 +215,6 @@ FacTopViewBuildingInfoCtrl._OnRemoveInfo = HL.Method(HL.Number) << function(self
         self.m_cells[nodeId] = nil
     end
 end
-
-
-
-
 
 FacTopViewBuildingInfoCtrl._OnUpdateInfo = HL.Method(CS.Beyond.Gameplay.Factory.FactoryUtil.TopViewBuildingInfo, HL.Opt(HL.Any)) << function(self, info, cell)
     local nodeId = info.nodeId
@@ -330,7 +247,8 @@ FacTopViewBuildingInfoCtrl._OnUpdateInfo = HL.Method(CS.Beyond.Gameplay.Factory.
         end
 
         
-        if info.itemCount > 0 then
+        local hasItem = info.itemCount > 0
+        if hasItem or (info.isEnvGenerator and info.envType ~= GEnums.FacEnvGenEnvType.None) then
             if cell.ignoreState then
                 cell.stateController:SetState("NoStateWithItem")
             else
@@ -340,12 +258,24 @@ FacTopViewBuildingInfoCtrl._OnUpdateInfo = HL.Method(CS.Beyond.Gameplay.Factory.
                 cell.productCells = UIUtils.genCellCache(cell.productCell)
                 cell.productCells.m_items[1] = cell.productCell 
             end
-            cell.productCells:Refresh(info.itemCount, function(productCell, luaIndex)
-                local itemId = info["item" .. CSIndex(luaIndex)]
-                local itemData = Tables.itemTable[itemId]
-                productCell.icon:LoadSprite(UIConst.UI_SPRITE_ITEM, itemData.iconId)
-                UIUtils.setItemRarityImage(productCell.rarityLine, itemData.rarity)
-                self:_UpdateLiquidIcon(productCell, itemId)
+            
+            local count = 1 
+            cell.productCells:Refresh(count, function(productCell, luaIndex)
+                if hasItem then
+                    local itemId = info["item" .. CSIndex(luaIndex)]
+                    local itemData = Tables.itemTable[itemId]
+                    productCell.icon:LoadSprite(UIConst.UI_SPRITE_ITEM, itemData.iconId)
+                    UIUtils.setItemRarityImage(productCell.rarityLine, itemData.rarity)
+                    productCell.rarityLine.gameObject:SetActive(true)
+                    self:_UpdateLiquidIcon(productCell, itemId)
+                else
+                    local iconName = string.format("icon_gas_env_%s", string.lower(info.envType:ToString()))
+                    productCell.icon:LoadSprite(UIConst.UI_SPRITE_FAC_GAS, iconName)
+                    productCell.rarityLine.gameObject:SetActive(false)
+                    if productCell.liquidIcon then
+                        productCell.liquidIcon.gameObject:SetActive(false)
+                    end
+                end
             end)
         else
             if cell.ignoreState then
@@ -353,6 +283,12 @@ FacTopViewBuildingInfoCtrl._OnUpdateInfo = HL.Method(CS.Beyond.Gameplay.Factory.
             else
                 cell.productNode.gameObject:SetActive(false)
             end
+        end
+        
+        if not info.isEnvGenerator and info.envType ~= GEnums.FacEnvGenEnvType.None then
+            cell.envBg:SetState(info.envType:ToString())
+        else
+            cell.envBg:SetState("None")
         end
     else
         
@@ -368,9 +304,6 @@ FacTopViewBuildingInfoCtrl._OnUpdateInfo = HL.Method(CS.Beyond.Gameplay.Factory.
     end
 end
 
-
-
-
 FacTopViewBuildingInfoCtrl.OnFacTopViewCamZoom = HL.Method(HL.Number) << function(self, zoomPercent)
     local scale = self.view.config.SIZE_ANIM_CURVE:Evaluate(zoomPercent)
     self.view.main.transform.localScale = Vector3(scale, scale, scale)
@@ -382,10 +315,7 @@ FacTopViewBuildingInfoCtrl.OnFacTopViewCamZoom = HL.Method(HL.Number) << functio
 end
 
 
-
 FacTopViewBuildingInfoCtrl.m_useMinNameSize = HL.Field(HL.Boolean) << false
-
-
 
 FacTopViewBuildingInfoCtrl._UpdateNameSize = HL.Method() << function(self)
     local mode = self.m_useMinNameSize and Unity.UI.ContentSizeFitter.FitMode.MinSize or Unity.UI.ContentSizeFitter.FitMode.PreferredSize
@@ -399,11 +329,7 @@ end
 
 
 
-
 FacTopViewBuildingInfoCtrl.m_curBPIconCells = HL.Field(HL.Table)
-
-
-
 
 FacTopViewBuildingInfoCtrl.SetBlueprintIcons = HL.Method(HL.Opt(CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprint)) << function(self, bp)
     if self.m_curBPIconCells then
@@ -418,7 +344,9 @@ FacTopViewBuildingInfoCtrl.SetBlueprintIcons = HL.Method(HL.Opt(CS.Beyond.Gamepl
     end
     self.m_curBPIconCells = {}
     for _, entry in pairs(bp.buildingNodes) do
-        if FacConst.FAC_VALVE_NODE_IDS[entry.templateId] and not string.isEmpty(entry.productIcon) and GameInstance.player.inventory:IsItemFound(entry.productIcon) then
+        if FacConst.FAC_VALVE_NODE_IDS[entry.templateId] and not string.isEmpty(entry.productIcon)
+                and not FactoryUtils.isBlueprintProductIconGasEnv(entry.productIcon)
+                and GameInstance.player.inventory:IsItemFound(entry.productIcon) then
             local cell = self.m_iconCache:Get()
             cell.m_isIcon = true
             local itemData = Tables.itemTable[entry.productIcon]
@@ -430,9 +358,6 @@ FacTopViewBuildingInfoCtrl.SetBlueprintIcons = HL.Method(HL.Opt(CS.Beyond.Gamepl
         end
     end
 end
-
-
-
 
 FacTopViewBuildingInfoCtrl.SetBlueprintIconPos = HL.Method(HL.Table) << function(self, args)
     local bpOriWorldPos, dir = unpack(args)
@@ -451,10 +376,6 @@ end
 
 
 
-
-
-
-
 FacTopViewBuildingInfoCtrl._UpdateLiquidIcon = HL.Method(HL.Table, HL.String) << function(self, cell, itemId)
     
     local liquidIcon
@@ -462,6 +383,12 @@ FacTopViewBuildingInfoCtrl._UpdateLiquidIcon = HL.Method(HL.Table, HL.String) <<
     if isFullBottle then
         local liquidData = Tables.itemTable[fullBottleData.liquidId]
         liquidIcon = liquidData.iconId
+    else
+        isFullBottle, fullBottleData = Tables.fullGasJarTable:TryGetValue(itemId)
+        if isFullBottle then
+            local gasData = Tables.itemTable[fullBottleData.gasId]
+            liquidIcon = gasData.iconId
+        end
     end
     if not cell.liquidIcon then
         if not liquidIcon then

@@ -1,25 +1,13 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WeeklyRaidSettlement
 
-
-
-
-
-
-
-
-
 WeeklyRaidSettlementCtrl = HL.Class('WeeklyRaidSettlementCtrl', uiCtrl.UICtrl)
-
 
 WeeklyRaidSettlementCtrl.m_genCharCells = HL.Field(HL.Forward("UIListCache"))
 
-
 WeeklyRaidSettlementCtrl.m_genValuableDepotCells = HL.Field(HL.Forward("UIListCache"))
 
-
 WeeklyRaidSettlementCtrl.m_genMoneyCells = HL.Field(HL.Forward("UIListCache"))
-
 
 
 
@@ -29,15 +17,10 @@ WeeklyRaidSettlementCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
-
 WeeklyRaidSettlementCtrl.OnWeekRaidSettlement = HL.StaticMethod(HL.Any) << function(arg)
     PhaseManager:ExitPhaseFastTo(PhaseId.Level)
     UIManager:Open(PANEL_ID, arg)
 end
-
-
-
 
 
 WeeklyRaidSettlementCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -179,8 +162,6 @@ WeeklyRaidSettlementCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
 end
-
-
 
 
 

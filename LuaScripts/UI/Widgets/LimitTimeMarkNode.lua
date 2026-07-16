@@ -1,53 +1,22 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 LimitTimeMarkNode = HL.Class('LimitTimeMarkNode', UIWidgetBase)
 
 
 local TICK_TIME_INTERVAL = 2
 
 
-
 LimitTimeMarkNode.m_isValid = HL.Field(HL.Boolean) << false
-
 
 LimitTimeMarkNode.m_expireTime = HL.Field(HL.Number) << 0
 
-
 LimitTimeMarkNode.m_almostExpireTime = HL.Field(HL.Number) << 0
-
 
 LimitTimeMarkNode.m_isExpire = HL.Field(HL.Boolean) << false
 
-
 LimitTimeMarkNode.m_updateGroupKey = HL.Field(HL.Number) << -1
 
-
 LimitTimeMarkNode.m_onExpire = HL.Field(HL.Function)
-
-
 
 
 
@@ -57,13 +26,9 @@ LimitTimeMarkNode._OnFirstTimeInit = HL.Override() << function(self)
     
 end
 
-
-
 LimitTimeMarkNode._OnDestroy = HL.Override() << function(self)
     self:EndTickLimitTime()
 end
-
-
 
 LimitTimeMarkNode._OnEnable = HL.Override() << function(self)
     if self.m_isValid and self.m_updateGroupKey <= 0 then
@@ -71,23 +36,14 @@ LimitTimeMarkNode._OnEnable = HL.Override() << function(self)
     end
 end
 
-
-
 LimitTimeMarkNode._OnDisable = HL.Override() << function(self)
     self.m_updateGroupKey = LimitTimeMarkNode._UnregisterUpdate(self.m_updateGroupKey)
 end
-
-
 
 LimitTimeMarkNode._OnDestroy = HL.Override() << function(self)
     self.m_updateGroupKey = LimitTimeMarkNode._UnregisterUpdate(self.m_updateGroupKey)
     self.m_isValid = false
 end
-
-
-
-
-
 
 
 
@@ -112,14 +68,10 @@ LimitTimeMarkNode.StartTickLimitTime = HL.Method(HL.Number, HL.Any, HL.Opt(HL.Fu
     self.m_isValid = true
 end
 
-
-
 LimitTimeMarkNode.EndTickLimitTime = HL.Method() << function(self)
     self.m_updateGroupKey = LimitTimeMarkNode._UnregisterUpdate(self.m_updateGroupKey)
     self.m_isValid = false
 end
-
-
 
 LimitTimeMarkNode._RefreshLimitedTime = HL.Method() << function(self)
     local markUI = self.view
@@ -158,25 +110,17 @@ end
 
 
 
-
 LimitTimeMarkNode._updateKey = HL.StaticField(HL.Number) << 0
-
 
 LimitTimeMarkNode._updateDeltaTime = HL.StaticField(HL.Number) << 0
 
-
 LimitTimeMarkNode._updateGroup = HL.StaticField(HL.Table)
-
 
 LimitTimeMarkNode._tempDeleteKeyMap = HL.StaticField(HL.Table)
 
-
 LimitTimeMarkNode._updateGroupNextKey = HL.StaticField(HL.Number) << 0
 
-
 LimitTimeMarkNode.m_isExpireWarningState = HL.Field(HL.Boolean) << false
-
-
 
 
 LimitTimeMarkNode._RegisterUpdate = HL.StaticMethod(LimitTimeMarkNode).Return(HL.Number) << function(widget)
@@ -212,8 +156,6 @@ LimitTimeMarkNode._RegisterUpdate = HL.StaticMethod(LimitTimeMarkNode).Return(HL
     end)
     return curKey
 end
-
-
 
 LimitTimeMarkNode._UnregisterUpdate = HL.StaticMethod(HL.Number).Return(HL.Number) << function(key)
     if LimitTimeMarkNode._updateGroup == nil or key <= 0 then

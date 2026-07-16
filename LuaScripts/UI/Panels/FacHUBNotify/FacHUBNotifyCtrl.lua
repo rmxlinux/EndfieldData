@@ -2,11 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacHUBNotify
 
-
-
-
 FacHUBNotifyCtrl = HL.Class('FacHUBNotifyCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -16,9 +12,6 @@ FacHUBNotifyCtrl = HL.Class('FacHUBNotifyCtrl', uiCtrl.UICtrl)
 FacHUBNotifyCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 

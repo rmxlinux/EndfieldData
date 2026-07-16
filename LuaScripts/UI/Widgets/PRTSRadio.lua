@@ -1,58 +1,27 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PRTSRadio = HL.Class('PRTSRadio', UIWidgetBase)
-
 
 
 
 
 PRTSRadio.m_genGotoBtnCells = HL.Field(HL.Forward("UIListCache"))
 
-
 PRTSRadio.m_gotoBtnCallback = HL.Field(HL.Function)
-
 
 PRTSRadio.m_getRadioTextCellFunc = HL.Field(HL.Function)
 
-
 PRTSRadio.m_gotoBtnNameList = HL.Field(HL.Table)
-
 
 
 PRTSRadio.m_radioBasicInfos = HL.Field(HL.Table)
 
 
-
 PRTSRadio.m_radioPlayInfos = HL.Field(HL.Table)
 
+PRTSRadio.m_overrideVoiceId = HL.Field(HL.String) << ""
 
+PRTSRadio.m_overrideVoiceHandle = HL.Field(HL.Number) << -1
 
 
 
@@ -69,21 +38,15 @@ PRTSRadio._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
-
-PRTSRadio.InitPRTSRadio = HL.Method(HL.String, HL.String) << function(self, radioId, title)
+PRTSRadio.InitPRTSRadio = HL.Method(HL.String, HL.String, HL.Opt(HL.String)) << function(self, radioId, title, overrideVoiceId)
     self:_FirstTimeInit()
     
     self:_StopRadio()
+    self.m_overrideVoiceId = overrideVoiceId or ""
     self:_InitRadioData(radioId, title)
     self:_InitRadio()
     self.view.gotoBtnListState:SetState("Hide")
 end
-
-
-
 
 PRTSRadio.SetPlayRadio = HL.Method(HL.Boolean) << function(self, isPlay)
     if isPlay then
@@ -92,10 +55,6 @@ PRTSRadio.SetPlayRadio = HL.Method(HL.Boolean) << function(self, isPlay)
         self:_StopRadio()
     end
 end
-
-
-
-
 
 PRTSRadio.SetGotoBtn = HL.Method(HL.Table, HL.Function) << function(self, btnNameList, gotoBtnCallback)
     local count = #btnNameList
@@ -116,27 +75,17 @@ PRTSRadio.SetGotoBtn = HL.Method(HL.Table, HL.Function) << function(self, btnNam
     end)
 end
 
-
-
 PRTSRadio._OnEnable = HL.Override() << function(self)
     self:_PlayRadio()
 end
-
-
 
 PRTSRadio._OnDisable = HL.Override() << function(self)
     self:_StopRadio()
 end
 
-
-
 PRTSRadio._OnDestroy = HL.Override() << function(self)
     self:_StopRadio()
 end
-
-
-
-
 
 
 
@@ -181,8 +130,6 @@ end
 
 
 
-
-
 PRTSRadio._InitRadio = HL.Method() << function(self)
     if self.m_radioBasicInfos == nil then
         self.view.title.text = ""
@@ -192,10 +139,6 @@ PRTSRadio._InitRadio = HL.Method() << function(self)
     self.view.title.text = self.m_radioBasicInfos.radioTitle
     self.view.radioTextList:UpdateCount(#self.m_radioBasicInfos.infos, true)
 end
-
-
-
-
 
 PRTSRadio._OnRefreshRadioTextCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local info = self.m_radioBasicInfos.infos[luaIndex]
@@ -208,10 +151,6 @@ PRTSRadio._OnRefreshRadioTextCell = HL.Method(HL.Any, HL.Number) << function(sel
     local isPlaying = playInfos and playInfos.updateKey > 0 and playInfos.curLuaIndex == luaIndex
     cell.colorStateCtrl:SetState(isPlaying and "Playing" or "Normal")
 end
-
-
-
-
 
 PRTSRadio._SetRadioTextHighlight = HL.Method(HL.Number, HL.Boolean) << function(self, luaIndex, isHighlight)
     if luaIndex < 1 or luaIndex > #self.m_radioBasicInfos.infos then
@@ -226,16 +165,11 @@ PRTSRadio._SetRadioTextHighlight = HL.Method(HL.Number, HL.Boolean) << function(
     cell.colorStateCtrl:SetState(isHighlight and "Playing" or "Normal")
 end
 
-
-
-
 PRTSRadio._OnClickGotoBtn = HL.Method(HL.Number) << function(self, luaIndex)
     if self.m_gotoBtnCallback then
         self.m_gotoBtnCallback(luaIndex)
     end
 end
-
-
 
 
 
@@ -267,8 +201,6 @@ PRTSRadio._InitRadioPlayData = HL.Method() << function(self)
     info.autoScrollText = true
 end
 
-
-
 PRTSRadio._PlayRadio = HL.Method() << function(self)
     if not self.m_radioBasicInfos or #self.m_radioBasicInfos.infos <= 0 then
         return
@@ -279,13 +211,14 @@ PRTSRadio._PlayRadio = HL.Method() << function(self)
     self:_InitRadioPlayData()
     
     
+    if not string.isEmpty(self.m_overrideVoiceId) then
+        local cfg = CS.Beyond.Gameplay.Audio.NarrativeVoiceConfig(0, 1)
+        self.m_overrideVoiceHandle = VoiceManager:SpeakNarrative(self.m_overrideVoiceId, nil, cfg)
+    end
     self.m_radioPlayInfos.updateKey = LuaUpdate:Add("Tick", function(deltaTime)
         self:_OnUpdateRadio(deltaTime)
     end)
 end
-
-
-
 
 PRTSRadio._OnUpdateRadio = HL.Method(HL.Number) << function(self, deltaTime)
     
@@ -311,7 +244,7 @@ PRTSRadio._OnUpdateRadio = HL.Method(HL.Number) << function(self, deltaTime)
         self:_EndCurIndexRadio(curLuaIdx)
         local isShow = self:_TryShowCurIndexRadio(curLuaIdx + 1)
         if not isShow then
-            self:_StopRadio()
+            self:_StopLastRadio()
             playInfos.curTime = basicInfos.totalDuration
             self:_RefreshRadioTimeProgress()
             return
@@ -319,9 +252,15 @@ PRTSRadio._OnUpdateRadio = HL.Method(HL.Number) << function(self, deltaTime)
     end
 end
 
-
-
 PRTSRadio._StopRadio = HL.Method() << function(self)
+    self:_StopLastRadio()
+    if self.m_overrideVoiceHandle > 0 then
+        VoiceManager:StopVoice(self.m_overrideVoiceHandle)
+        self.m_overrideVoiceHandle = -1
+    end
+end
+
+PRTSRadio._StopLastRadio = HL.Method() << function(self)
     if not (self.m_radioPlayInfos and self.m_radioPlayInfos.updateKey > 0) then
         return
     end
@@ -334,8 +273,6 @@ PRTSRadio._StopRadio = HL.Method() << function(self)
     self.m_radioPlayInfos.updateKey = -1
 end
 
-
-
 PRTSRadio._RefreshRadioTimeProgress = HL.Method() << function(self)
     local duration = self.m_radioBasicInfos.totalDuration
     local curTime = math.min(self.m_radioPlayInfos.curTime, duration)
@@ -344,9 +281,6 @@ PRTSRadio._RefreshRadioTimeProgress = HL.Method() << function(self)
     self.view.timeTxt.text = UIUtils.getRemainingText(curTime) .. "/" .. UIUtils.getRemainingText(duration)
     self.view.timeBar.fillAmount = percent
 end
-
-
-
 
 PRTSRadio._TryShowCurIndexRadio = HL.Method(HL.Number).Return(HL.Boolean) << function(self, luaIndex)
     if luaIndex < 1 or luaIndex > #self.m_radioBasicInfos.infos then
@@ -359,8 +293,10 @@ PRTSRadio._TryShowCurIndexRadio = HL.Method(HL.Number).Return(HL.Boolean) << fun
     playInfos.curTime = singleInfo.startTime    
     playInfos.curLuaIndex = luaIndex
     
-    local cfg = CS.Beyond.Gameplay.Audio.NarrativeVoiceConfig(singleInfo.audioEffect, 1)
-    playInfos.voiceHandleId = VoiceManager:SpeakNarrative(singleInfo.voiceId, nil, cfg)
+    if string.isEmpty(self.m_overrideVoiceId) then
+        local cfg = CS.Beyond.Gameplay.Audio.NarrativeVoiceConfig(singleInfo.audioEffect, 1)
+        playInfos.voiceHandleId = VoiceManager:SpeakNarrative(singleInfo.voiceId, nil, cfg)
+    end
     
     if playInfos.autoScrollText then
         local showRange = self.view.radioTextList:GetShowRange()
@@ -372,9 +308,6 @@ PRTSRadio._TryShowCurIndexRadio = HL.Method(HL.Number).Return(HL.Boolean) << fun
     self:_SetRadioTextHighlight(luaIndex, true)
     return true
 end
-
-
-
 
 PRTSRadio._EndCurIndexRadio = HL.Method(HL.Number) << function(self, luaIndex)
     if luaIndex < 1 or luaIndex > #self.m_radioBasicInfos.infos then
@@ -388,8 +321,6 @@ PRTSRadio._EndCurIndexRadio = HL.Method(HL.Number) << function(self, luaIndex)
         self.m_radioPlayInfos.voiceHandleId = -1
     end
 end
-
-
 
 PRTSRadio._OnManualDragRadioTextList = HL.Method() << function(self)
     if self.m_radioPlayInfos and self.m_radioPlayInfos.updateKey > 0 then

@@ -1,4 +1,4 @@
-
+local CommonPopUpCtrl = require_ex('UI/Panels/CommonPopUp/CommonPopUpCtrl')
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Mission
 local PHASE_ID = PhaseId.Mission
@@ -11,6 +11,8 @@ local OPTIONAL_TEXT_COLOR = "C7EC59"
 
 local QuestState = CS.Beyond.Gameplay.MissionSystem.QuestState
 local MissionState = CS.Beyond.Gameplay.MissionSystem.MissionState
+local TrackAction = CS.Beyond.Gameplay.MissionSystem.TrackAction
+local TrackJumpType = CS.Beyond.Gameplay.MissionSystem.TrackJumpType
 local MissionImportance = GEnums.MissionImportance
 local ChapterType = CS.Beyond.Gameplay.ChapterType
 local MissionExternalSystemType = GEnums.MissionExternalSystemType
@@ -27,13 +29,47 @@ local MissionSystem = CS.Beyond.Gameplay.MissionSystem
 
 local MissionFilterType_All = -1
 
+local SKIP_CHAPTER_ACTIVITY_ID = "activity_skipchapter_1"
+local SKIP_CHAPTER_JUMP_ID = "jump_center_activity_skipchapter_1"
+local SKIP_CHAPTER_GLOBAL_VAR_KEY = "mission_panel_skip_bubble_off"
+local ActivityStatus = GEnums.ActivityStatus
+
 local MissionImportanceColorMap = {
     [MissionImportance.High] = "Yellow",
     [MissionImportance.Mid] = "Green",
     [MissionImportance.Low] = "Blue",
 }
 
+
+local MISSION_BADGE_PRIORITY_EXPIRE = 1
+local MissionBadgePriorityMap = {
+    [GEnums.MissionExtraInfoType.Unlock] = 4,
+    [GEnums.MissionExtraInfoType.UnlockRegion] = 3,
+    [GEnums.MissionExtraInfoType.NarrativeImportant] = 2,
+}
+
 local BlockConditionListType = CS.System.Collections.Generic.List(CS.Beyond.Gameplay.MissionRuntimeAsset.BlockCondition)
+
+local function getHighestBit(n)
+    if n <= 0 then return 0 end
+    local bit = 0
+    while n > 1 do
+        n = math.floor(n / 2)
+        bit = bit + 1
+    end
+    return bit
+end
+
+local function getMissionBadgePriority(missionInfo, missionId)
+    local p = MissionBadgePriorityMap[missionInfo.extraInfoType]
+    if p then
+        return p
+    end
+    if MissionSystem.GetMissionExpireInfo(missionId) then
+        return MISSION_BADGE_PRIORITY_EXPIRE
+    end
+    return 0
+end
 
 local MissionFilterCellConfig = {
     [1] = {
@@ -118,6 +154,14 @@ local MissionFilterCellConfig = {
 
 
 
+
+
+
+
+
+
+
+
 MissionCtrl = HL.Class('MissionCtrl', uiCtrl.UICtrl)
 
 
@@ -130,6 +174,7 @@ MissionCtrl = HL.Class('MissionCtrl', uiCtrl.UICtrl)
 MissionCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_TRACK_MISSION_CHANGE] = 'OnTrackMissionChange',
+    [MessageConst.ON_TRACK_MISSION_JUMP_READY] = '_OnTrackMissionJumpReady',
     [MessageConst.ON_QUEST_OBJECTIVE_UPDATE] = 'OnObjectiveUpdate',
 
     [MessageConst.ON_SYNC_ALL_MISSION] = 'OnSyncAllMission',
@@ -185,6 +230,9 @@ MissionCtrl.m_openMissionFilter = HL.Field(HL.Any) << MissionFilterType_All
 
 
 MissionCtrl.m_doNotPostAudio = HL.Field(HL.Boolean) << false
+
+
+MissionCtrl.m_pendingTrackJumpMissionId = HL.Field(HL.Any) << nil
 
 
 
@@ -250,9 +298,31 @@ MissionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.blackMask.gameObject:SetActive(true)
 
+    
+    
+    self:_RefreshSkipChapterBubble()
+    LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.skipChapterBubble.transform.parent)
+
     self:_RefreshMissionList()
+
+    if arg and arg.selectChapter then
+        local success, data = Tables.missionSelectChapterTable:TryGetValue(arg.selectChapter)
+        if not success or data == nil then
+            logger.error("MissionCtrl._GetMissionChapterBitmaskBySelectChapter: missing config, selectChapter = " .. tostring(arg.selectChapter))
+            return 0
+        end
+        local targetBitmask = data.missionChapter:ToInt()
+        if targetBitmask > 0 then
+            self.m_selectedMissionId = self:_FindMissionByChapterBitmask(targetBitmask)
+        end
+    end
+
     self:_AutoSelectMission(true)
     self:_RefreshMissionInfo()
+
+    self.view.skipChapterBubble.onClick:AddListener(function()
+        self:_OnClickSkipChapterBubble()
+    end)
 
     self:_ChangeSelectedMission(0)
     self:_RefreshNaviSelected()
@@ -266,11 +336,6 @@ MissionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
-
-    
-    self:BindInputEvent(CS.Beyond.Input.KeyboardKeyCode.J, function()
-        PhaseManager:PopPhase(PHASE_ID)
-    end)
 
     self:_StartCoroutine(function()
         while true do
@@ -382,7 +447,19 @@ MissionCtrl._SetMissionFilterType = HL.Method(HL.Any) << function(self, filterTy
             break
         end
     end
+    
+    
+    
+    
+    
+    self:_RefreshSkipChapterBubble()
+    LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.skipChapterBubble.transform.parent)
     self:_RefreshMissionList()
+
+    local trackId = self.m_missionSystem.trackMissionId
+    if not string.isEmpty(trackId) then
+        self.m_selectedMissionId = trackId
+    end
 
     self:_AutoSelectMission(false)
     self:_ChangeSelectedMission(0)
@@ -771,14 +848,10 @@ MissionCtrl._CompareMissionPriority = HL.Method(HL.Any, HL.String, HL.Any, HL.St
         return aRec
     end
 
-    if missionInfoA.extraInfoType ~= missionInfoB.extraInfoType then
-        return missionInfoA.extraInfoType:GetHashCode() > missionInfoB.extraInfoType:GetHashCode()
-    end
-
-    local aWillExpire = MissionSystem.GetMissionExpireInfo(missionIdA)
-    local bWillExpire = MissionSystem.GetMissionExpireInfo(missionIdB)
-    if aWillExpire ~= bWillExpire then
-        return aWillExpire
+    local aBadgePriority = getMissionBadgePriority(missionInfoA, missionIdA)
+    local bBadgePriority = getMissionBadgePriority(missionInfoB, missionIdB)
+    if aBadgePriority ~= bBadgePriority then
+        return aBadgePriority > bBadgePriority
     end
 
     return nil
@@ -815,6 +888,13 @@ MissionCtrl._SortMissions = HL.Method(HL.Any, HL.Any).Return(HL.Boolean) << func
         local missionTypeOrderA = aTypeInfo.typePriority
         local missionTypeOrderB = bTypeInfo.typePriority
         if missionTypeOrderA == missionTypeOrderB then
+            local aBitmask = missionA.missionChapterBitmaskInt
+            local bBitmask = missionB.missionChapterBitmaskInt
+            local aHighBit = getHighestBit(aBitmask)
+            local bHighBit = getHighestBit(bBitmask)
+            if aHighBit ~= bHighBit then
+                return aHighBit > bHighBit
+            end
             if missionDataA.acceptTime == missionDataB.acceptTime then
                 return missionA.missionId > missionB.missionId  
             else
@@ -826,6 +906,36 @@ MissionCtrl._SortMissions = HL.Method(HL.Any, HL.Any).Return(HL.Boolean) << func
     else
         return aTypeInfo == nil
     end
+end
+
+
+
+
+MissionCtrl._FindMissionByChapterBitmask = HL.Method(HL.Number).Return(HL.String) << function(self, targetBitmask)
+    local fallbackMainMissionId = ""
+    for _, viewInfo in pairs(self.m_missionViewInfo) do
+        local missionIds = {}
+        if viewInfo.type == MissionListCellType_Chapter then
+            for _, m in ipairs(viewInfo.missionList) do
+                table.insert(missionIds, m.id)
+            end
+        elseif viewInfo.type == MissionListCellType_Mission then
+            table.insert(missionIds, viewInfo.id)
+        end
+        for _, missionId in ipairs(missionIds) do
+            local info = self.m_missionSystem:GetMissionInfo(missionId)
+            if info and info.viewType == MissionViewType.MissionViewMain then
+                local bitmask = info.missionChapterBitmaskInt
+                if bitmask == targetBitmask then
+                    return missionId
+                end
+                if string.isEmpty(fallbackMainMissionId) then
+                    fallbackMainMissionId = missionId
+                end
+            end
+        end
+    end
+    return fallbackMainMissionId
 end
 
 
@@ -853,7 +963,7 @@ MissionCtrl._RefreshNaviSelected = HL.Method() << function(self)
     self:_TraverseAllMissionCell(function(missionId, missionCell)
         local isSelected = missionId == self.m_selectedMissionId
         if isSelected then
-            UIUtils.setAsNaviTarget(missionCell.selectBtn)
+            self:SetNaviTarget(missionCell.selectBtn)
         end
     end)
 end
@@ -1354,16 +1464,26 @@ MissionCtrl._RefreshTrackBtn = HL.Method() << function(self)
             missionInfoNode.stopBtn.gameObject:SetActive(false)
         end
         missionInfoNode.trackBtn.onClick:AddListener(function()
+            
+            if self.m_isClosing then
+                return
+            end
             local id = self.m_selectedMissionId
             local sys = self.m_missionSystem
-            sys:PushSkipNextTrackInOrOut(self.m_selectedMissionId)
+            local alreadyTracking = (sys:GetTrackMissionId() == id)
+            sys:PushSkipNextTrackInOrOut(id)
             sys:TrackMission(id)
-            self.m_isClosing = true
-            self:PlayAnimationOutWithCallback(function()
-                Notify(MessageConst.RECOVER_PHASE_LEVEL)    
-            end)
+            if alreadyTracking then
+                self:_DoTrackJumpAfterServerConfirm(id)
+            else
+                self.m_pendingTrackJumpMissionId = id
+            end
         end)
         missionInfoNode.stopBtn.onClick:AddListener(function()
+            
+            if self.m_isClosing then
+                return
+            end
             local sys = self.m_missionSystem
             sys:PushSkipNextTrackInOrOut(self.m_selectedMissionId)
             self.m_missionSystem:StopTrackMission()
@@ -1401,6 +1521,24 @@ MissionCtrl.OnTrackMissionChange = HL.Method() << function(self)
     self:_RefreshTrackBtn()
     self:_RefreshMissionTrackTip()
     self:_UpdateCurrentDisplayTrackBtn()
+end
+
+
+
+MissionCtrl._OnTrackMissionJumpReady = HL.Method() << function(self)
+    if not self.m_pendingTrackJumpMissionId then
+        return
+    end
+
+    local id = self.m_pendingTrackJumpMissionId
+    self.m_pendingTrackJumpMissionId = nil
+
+    local trackMissionId = self.m_missionSystem:GetTrackMissionId()
+    if trackMissionId ~= id then
+        return
+    end
+
+    self:_DoTrackJumpAfterServerConfirm(id)
 end
 
 
@@ -1475,6 +1613,8 @@ MissionCtrl.OnQuestStateChange = HL.Method(HL.Any) << function(self, arg)
         return
     end
 
+    self:_RefreshMissionTrackTip()
+
     if missionId == self.m_selectedMissionId then
         self:_RefreshMissionInfo()
     end
@@ -1492,6 +1632,9 @@ end
 
 
 
+MissionCtrl.OnShow = HL.Override() << function(self)
+    self:_RefreshSkipChapterBubble()
+end
 
 
 
@@ -1553,7 +1696,7 @@ end
 
 MissionCtrl._GetLevelId = HL.Method(HL.Any).Return(HL.String) << function(self, missionInfo)
     if (not missionInfo.isWrapperMission) or (not missionInfo.useLevelIdWrapper) then
-        return missionInfo.levelId or ""
+        return missionInfo:GetLevelId() or ""
     end
     local externalType = missionInfo.externalSystemType
     local externalId = missionInfo.externalSystemId
@@ -1574,6 +1717,117 @@ MissionCtrl._UpdateExpireTime = HL.Method() << function(self)
         local timeTxt = UIUtils.getLeftTime(leftTime)
         self.view.missionInfoNode.timerTxt:SetAndResolveTextStyle(timeTxt)
     end
+end
+
+
+
+
+MissionCtrl._ExitAllPhasesExcept = HL.Method(HL.Table) << function(self, keepPhaseIds)
+    local keepSet = {}
+    for _, pid in ipairs(keepPhaseIds) do keepSet[pid] = true end
+    local exitList = {}
+    for k = PhaseManager.m_phaseStack:TopIndex(), PhaseManager.m_phaseStack:BottomIndex(), -1 do
+        local p = PhaseManager.m_phaseStack:Get(k)
+        if not keepSet[p.phaseId] then
+            table.insert(exitList, p.phaseId)
+        end
+    end
+    for _, v in ipairs(exitList) do
+        if PhaseManager:IsOpen(v) then
+            PhaseManager:ExitPhaseFast(v)
+        end
+    end
+end
+
+
+
+
+MissionCtrl._DoTrackJumpAfterServerConfirm = HL.Method(HL.String) << function(self, missionId)
+    
+    
+    
+    if self.m_isClosing then
+        return
+    end
+
+    local jumpInfo = self.m_missionSystem:GetTrackJumpInfoForMission(missionId)
+    self.m_isClosing = true
+    self:PlayAnimationOutWithCallback(function()
+        if jumpInfo.jumpType == TrackJumpType.MapTracker then
+            local instId = GameInstance.player.mapManager:GetMissionTrackingMarkInstIdByTrackId(jumpInfo.mapTrackerId)
+            local levelId = GameWorld.worldInfo.curLevelId
+            if not string.isEmpty(instId) then
+                local _, markRuntimeData = GameInstance.player.mapManager:GetMarkInstRuntimeData(instId)
+                levelId = markRuntimeData.levelId
+            end
+            
+            
+            local canOpen, toast = MapUtils.checkCanOpenMapAndParseArgs({instId = instId, levelId = levelId})
+            if canOpen then
+                
+                
+                
+                PhaseManager:GoToPhase(PhaseId.Map, {instId = instId, levelId = levelId}, function()
+                    self:_ExitAllPhasesExcept({PhaseId.Level, PhaseId.Map, PhaseId.Dialog})
+                end, true)
+            else
+                Notify(MessageConst.SHOW_TOAST, toast)
+                self:_ExitAllPhasesExcept({PhaseId.Level, PhaseId.Dialog})
+            end
+            return
+        elseif jumpInfo.jumpType == TrackJumpType.SNS then
+            if PhaseManager:CheckCanOpenPhaseAndToast(PhaseId.SNS, {dialogId = jumpInfo.snsDialogId}) then
+                
+                PhaseManager:GoToPhase(PhaseId.SNS, {dialogId = jumpInfo.snsDialogId}, function()
+                    self:_ExitAllPhasesExcept({PhaseId.Level, PhaseId.SNS, PhaseId.Dialog})
+                end, true)
+                return
+            end
+        end
+        self:_ExitAllPhasesExcept({PhaseId.Level, PhaseId.Dialog})
+    end)
+end
+
+
+
+MissionCtrl._RefreshSkipChapterBubble = HL.Method() << function(self)
+    local show = false
+    if self.m_missionFilterType == MissionFilterType_All
+        or self.m_missionFilterType == MissionViewType.MissionViewMain then
+        local status = GameInstance.player.activitySystem:GetActivityStatus(SKIP_CHAPTER_ACTIVITY_ID)
+        if status == ActivityStatus.InProgress then
+            local hasVar, value = GameInstance.player.globalVar:TryGetClientVar(SKIP_CHAPTER_GLOBAL_VAR_KEY)
+            if not hasVar or value ~= 1 then
+                show = true
+            end
+        end
+    end
+    self.view.skipChapterBubble.gameObject:SetActiveIfNecessary(show)
+end
+
+
+
+MissionCtrl._OnClickSkipChapterBubble = HL.Method() << function(self)
+    local dontShowAgain = false
+    Notify(MessageConst.SHOW_POP_UP, {
+        content = Language.LUA_MISSION_SKIP_CHAPTER_POPUP_CONTENT,
+        toggle = {
+            toggleText = Language.LUA_MISSION_SKIP_CHAPTER_POPUP_TOGGLE,
+            isOn = false,
+            onValueChanged = function(isOn)
+                dontShowAgain = isOn
+            end,
+            styleType = CommonPopUpCtrl.EToggleStyle.Square,
+            onHintTextId = "key_hint_mission_skipchapter_popup_toggle",
+            offHintTextId = "key_hint_mission_skipchapter_popup_toggle"
+        },
+        onConfirm = function()
+            if dontShowAgain then
+                GameInstance.player.globalVar:SetClientVar(SKIP_CHAPTER_GLOBAL_VAR_KEY, 1)
+            end
+            Utils.jumpToSystem(SKIP_CHAPTER_JUMP_ID)
+        end,
+    })
 end
 
 HL.Commit(MissionCtrl)

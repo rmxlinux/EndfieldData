@@ -1,54 +1,21 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacLiquidStorager
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacLiquidStoragerCtrl = HL.Class('FacLiquidStoragerCtrl', uiCtrl.UICtrl)
-
 
 FacLiquidStoragerCtrl.m_buildingInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_FluidContainer)
 
+FacLiquidStoragerCtrl.m_cacheType = HL.Field(HL.Number) << 0
 
 FacLiquidStoragerCtrl.m_updateThread = HL.Field(HL.Thread)
 
-
 FacLiquidStoragerCtrl.m_dropHelper = HL.Field(HL.Forward('UIDropHelper'))
-
 
 FacLiquidStoragerCtrl.m_capacityCount = HL.Field(HL.Number) << 0
 
-
 FacLiquidStoragerCtrl.m_lastItemId = HL.Field(HL.String) << ""
 
-
 FacLiquidStoragerCtrl.m_itemCountZero = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -61,9 +28,6 @@ FacLiquidStoragerCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 FacLiquidStoragerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_buildingInfo = arg.uiInfo
     self.view.buildingCommon:InitBuildingCommon(self.m_buildingInfo)
@@ -72,6 +36,8 @@ FacLiquidStoragerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         useSinglePipe = true,
     })
 
+    self:_RefreshLiquidStoragerBasicContent()
+
     self.view.inventoryArea:InitInventoryArea({
         customOnUpdateCell = function(cell, itemBundle)
             self:_RefreshInventoryItemCell(cell, itemBundle)
@@ -79,19 +45,17 @@ FacLiquidStoragerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         onStateChange = function()
             self:_RefreshNaviGroupSwitcherInfos()
         end,
-        hasFluidInCache = true,
+        hasFluidInCache = self.m_cacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid,
+        hasGasInCache = self.m_cacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas,
     })
 
     self:_InitLiquidStoragerUpdateThread()
     self:_InitFacMachineCrafterController()
 
-    self.view.liquidItemSlot.view.facLiquidBg:InitFacLiquidBg()
     self.view.liquidItemSlot.view.liquidNaviGroup:NaviToThisGroup()
 
     GameInstance.remoteFactoryManager:RegisterInterestedUnitId(self.m_buildingInfo.nodeId)
 end
-
-
 
 FacLiquidStoragerCtrl.OnClose = HL.Override() << function(self)
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_buildingInfo.nodeId)
@@ -100,12 +64,10 @@ end
 
 
 
-
-
 FacLiquidStoragerCtrl._InitLiquidStoragerUpdateThread = HL.Method() << function(self)
-    self:_RefreshLiquidStoragerBasicContent()
     self:_RefreshLiquidStoragerContainerCount()
     self:_RefreshLiquidItemSlot(true)
+    self.view.liquidItemSlot:SetItemType(self.m_cacheType)
     self:_RefreshLiquidBg()
 
     self.m_updateThread = self:_StartCoroutine(function()
@@ -118,19 +80,23 @@ FacLiquidStoragerCtrl._InitLiquidStoragerUpdateThread = HL.Method() << function(
     end)
 end
 
-
-
 FacLiquidStoragerCtrl._RefreshLiquidStoragerBasicContent = HL.Method() << function(self)
     local success, storagerData = Tables.factoryFluidContainerTable:TryGetValue(self.m_buildingInfo.nodeHandler.templateId)
     if not success then
-        return
+        success, storagerData = Tables.factoryGasContainerTable:TryGetValue(self.m_buildingInfo.nodeHandler.templateId)
+        if not success then
+            return
+        end
+        self.m_cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas
+    else
+        self.m_cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid
     end
+
+    self.view.liquidItemSlot.view.cacheTypeCtrl:SetState(FacConst.FAC_CACHE_SLOT_TYPE_CTRL_STATE[self.m_cacheType])
 
     self.m_capacityCount = storagerData.capacity
     self.view.totalText.text = string.format("%d", self.m_capacityCount)
 end
-
-
 
 FacLiquidStoragerCtrl._RefreshLiquidStoragerContainerCount = HL.Method() << function(self)
     local itemCount = self.m_buildingInfo.fluidContainer.holdItemCount
@@ -142,9 +108,6 @@ FacLiquidStoragerCtrl._RefreshLiquidStoragerContainerCount = HL.Method() << func
     self.view.numberNode.color = countColor
     itemView.count.color = countColor
 end
-
-
-
 
 FacLiquidStoragerCtrl._RefreshLiquidItemSlot = HL.Method(HL.Boolean) << function(self, firstInit)
     local itemId = self.m_buildingInfo.fluidContainer.holdItemId
@@ -177,22 +140,26 @@ FacLiquidStoragerCtrl._RefreshLiquidItemSlot = HL.Method(HL.Boolean) << function
             itemSlot.item.actionMenuArgs = {}
             itemSlot.item.customChangeActionMenuFunc = function(actionMenuInfos)
                 table.insert(actionMenuInfos, 1, {
-                    text = Language.LUA_ITEM_ACTION_CACHE_SELECT_DUMP_LIQUID,
+                    text = self.m_cacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid and Language.LUA_ITEM_ACTION_CACHE_SELECT_DUMP_LIQUID or Language.LUA_ITEM_ACTION_CACHE_SELECT_DUMP_GAS,
                     action = function()
                         Notify(MessageConst.ON_NAVI_INVENTORY_SELECT_FLUID, {
                             componentId = self.m_buildingInfo.fluidContainer.componentId,
+                            slotIndex = 0,
                             fluidId = itemId,
-                            sourceItem = itemSlot.item
+                            sourceItem = itemSlot.item,
+                            cacheType = self.m_cacheType
                         })
                     end
                 })
                 table.insert(actionMenuInfos, 1, {
-                    text = Language.LUA_ITEM_ACTION_CACHE_SELECT_FILL_LIQUID,
+                    text = self.m_cacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid and Language.LUA_ITEM_ACTION_CACHE_SELECT_FILL_LIQUID or Language.LUA_ITEM_ACTION_CACHE_SELECT_FILL_GAS,
                     action = function()
                         Notify(MessageConst.ON_NAVI_INVENTORY_SELECT_FLUID, {
                             componentId = self.m_buildingInfo.fluidContainer.componentId,
+                            slotIndex = 0,
                             fluidId = "",
-                            sourceItem = itemSlot.item
+                            sourceItem = itemSlot.item,
+                            cacheType = self.m_cacheType
                         })
                     end
                 })
@@ -200,6 +167,7 @@ FacLiquidStoragerCtrl._RefreshLiquidItemSlot = HL.Method(HL.Boolean) << function
             InputManagerInst:SetBindingText(itemSlot.item.view.button.hoverConfirmBindingId, Language["key_hint_item_open_action_menu"])
         end
         itemSlot.view.dragItem.enabled = false  
+        itemSlot.view.emptyIcon.gameObject:SetActiveIfNecessary(isEmpty)
 
         self.m_dropHelper = UIUtils.initUIDropHelper(self.view.liquidItemSlot.view.dropItem, {
             acceptTypes = UIConst.FACTORY_LIQUID_STORAGER_DROP_ACCEPT_INFO,
@@ -219,8 +187,10 @@ FacLiquidStoragerCtrl._RefreshLiquidItemSlot = HL.Method(HL.Boolean) << function
                 local selectFillLiquidId = itemSlot.item:AddHoverBinding("common_quick_drop", function()
                     Notify(MessageConst.ON_NAVI_INVENTORY_SELECT_FLUID, {
                         componentId = self.m_buildingInfo.fluidContainer.componentId,
+                        slotIndex = 0,
                         fluidId = "",
-                        sourceItem = itemSlot.item
+                        sourceItem = itemSlot.item,
+                        cacheType = self.m_cacheType
                     })
                 end)
                 InputManagerInst:SetBindingText(selectFillLiquidId, Language.LUA_ITEM_ACTION_CACHE_SELECT_FILL_LIQUID)
@@ -246,9 +216,6 @@ FacLiquidStoragerCtrl._RefreshLiquidItemSlot = HL.Method(HL.Boolean) << function
     itemSlot.item:UpdateCountSimple(itemCount)
 end
 
-
-
-
 FacLiquidStoragerCtrl._OnClickItemSlot = HL.Method(HL.Forward('ItemSlot')) << function(self, itemSlot)
     if DeviceInfo.usingController then
         itemSlot.item:ShowActionMenu()
@@ -261,30 +228,13 @@ FacLiquidStoragerCtrl._OnClickItemSlot = HL.Method(HL.Forward('ItemSlot')) << fu
     end)
 end
 
-
-
 FacLiquidStoragerCtrl._TryDisableHoverBindingOnEmptyItem = HL.Method() << function(self)
-    if string.isEmpty(self.m_lastItemId) then
+    local itemId = self.m_buildingInfo.fluidContainer.holdItemId
+    local itemCount = self.m_buildingInfo.fluidContainer.holdItemCount
+    if string.isEmpty(itemId) or itemCount == 0 then
         InputManagerInst:ToggleBinding(self.view.liquidItemSlot.item.view.button.hoverConfirmBindingId, false)
     end
 end
-
-
-
-
-FacLiquidStoragerCtrl._RefreshLiquidItemSlotDropHintText = HL.Method(HL.String) << function(self, itemId)
-    local isEmptyBottle, isFullBottle = self:_IsEmptyBottleDrop(itemId), self:_IsFullBottleDrop(itemId)
-    if not isEmptyBottle and not isFullBottle then
-        return
-    end
-
-    local text = isEmptyBottle and Language.LUA_ITEM_ACTION_FILL_LIQUID or Language.LUA_ITEM_ACTION_DUMP_LIQUID
-    self.view.liquidItemSlot.view.dropHintText.text = text
-end
-
-
-
-
 
 FacLiquidStoragerCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) << function(self, cell, itemBundle)
     if cell == nil or itemBundle == nil then
@@ -293,7 +243,7 @@ FacLiquidStoragerCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any)
 
     
     local itemId = itemBundle.id
-    local isEmptyBottle, isFullBottle = self:_IsEmptyBottleDrop(itemId), self:_IsFullBottleDrop(itemId)
+    local isEmptyBottle, isFullBottle = self:_IsEmptyBottleOrJarDrop(itemId), self:_IsFullBottleOrJarDrop(itemId)
     local isBottle = isEmptyBottle or isFullBottle
     local isEmpty = string.isEmpty(itemBundle.id)
     
@@ -309,9 +259,9 @@ FacLiquidStoragerCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any)
         cell.item.customChangeActionMenuFunc = function(actionMenuInfos)
             local dropAction = {}
             if isEmptyBottle then
-                dropAction.text = Language.LUA_ITEM_ACTION_FILL_LIQUID
+                dropAction.text = self.m_cacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid and Language.LUA_ITEM_ACTION_FILL_LIQUID or Language.LUA_ITEM_ACTION_FILL_GAS
             else
-                dropAction.text = Language.LUA_ITEM_ACTION_DUMP_LIQUID
+                dropAction.text = self.m_cacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid and Language.LUA_ITEM_ACTION_DUMP_LIQUID or Language.LUA_ITEM_ACTION_DUMP_GAS
             end
             dropAction.action = function()
                 local dragHelper = cell.item.actionMenuArgs.dragHelper
@@ -323,8 +273,6 @@ FacLiquidStoragerCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any)
         end
     end
 end
-
-
 
 FacLiquidStoragerCtrl._RefreshLiquidBg = HL.Method() << function(self)
     local itemSlot = self.view.liquidItemSlot
@@ -339,11 +287,8 @@ FacLiquidStoragerCtrl._RefreshLiquidBg = HL.Method() << function(self)
         end
     end
 
-    itemSlot.view.facLiquidBg:RefreshLiquidHeight(height)
+    itemSlot:RefreshLiquidHeight(height)
 end
-
-
-
 
 
 
@@ -356,16 +301,11 @@ FacLiquidStoragerCtrl._OnStartUiDrag = HL.Method(HL.Forward('UIDragHelper')) << 
     end
 
     if self:_ShouldAcceptDrop(dragHelper) then
-        self.view.liquidItemSlot.view.dropItem.enabled = true
-        self.view.liquidItemSlot.view.dropHintImg.gameObject:SetActiveIfNecessary(true)
-        self:_RefreshLiquidItemSlotDropHintText(dragHelper.info.itemId)
+        self.view.liquidItemSlot:SetAcceptDrop(true, dragHelper.info.itemId, self.m_cacheType)
     else
-        self.view.liquidItemSlot.view.dropItem.enabled = false
+        self.view.liquidItemSlot:SetAcceptDrop(false)
     end
 end
-
-
-
 
 FacLiquidStoragerCtrl._OnEndUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if dragHelper == nil then
@@ -374,26 +314,17 @@ FacLiquidStoragerCtrl._OnEndUiDrag = HL.Method(HL.Forward('UIDragHelper')) << fu
 
     self.view.liquidItemSlot.view.dropItem.enabled = false
     if self:_ShouldAcceptDrop(dragHelper) then
-        self.view.liquidItemSlot.view.dropHintImg.gameObject:SetActiveIfNecessary(false)
+        self.view.liquidItemSlot:SetHintActive(false)
     end
 end
 
-
-
-
-FacLiquidStoragerCtrl._IsEmptyBottleDrop = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
-    return Tables.emptyBottleTable:ContainsKey(itemId)
+FacLiquidStoragerCtrl._IsEmptyBottleOrJarDrop = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
+    return FactoryUtils.isEmptyBottleOrJarItem(itemId, self.m_cacheType)
 end
 
-
-
-
-FacLiquidStoragerCtrl._IsFullBottleDrop = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
-    return Tables.fullBottleTable:ContainsKey(itemId)
+FacLiquidStoragerCtrl._IsFullBottleOrJarDrop = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
+    return FactoryUtils.isFullBottleOrJarItem(itemId, self.m_cacheType)
 end
-
-
-
 
 FacLiquidStoragerCtrl._ShouldAcceptDrop = HL.Method(HL.Forward('UIDragHelper')).Return(HL.Boolean) << function(self, dragHelper)
     if not self.m_dropHelper:Accept(dragHelper) then
@@ -401,7 +332,7 @@ FacLiquidStoragerCtrl._ShouldAcceptDrop = HL.Method(HL.Forward('UIDragHelper')).
     end
 
     local itemId = dragHelper.info.itemId
-    local isEmptyBottle, isFullBottle = self:_IsEmptyBottleDrop(itemId), self:_IsFullBottleDrop(itemId)
+    local isEmptyBottle, isFullBottle = self:_IsEmptyBottleOrJarDrop(itemId), self:_IsFullBottleOrJarDrop(itemId)
     if not isEmptyBottle and not isFullBottle then
         return false
     end
@@ -414,19 +345,16 @@ FacLiquidStoragerCtrl._ShouldAcceptDrop = HL.Method(HL.Forward('UIDragHelper')).
     return true
 end
 
-
-
-
 FacLiquidStoragerCtrl._OnDropItem = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     local source = dragHelper.source
     local dragInfo = dragHelper.info
     local core = GameInstance.player.remoteFactory.core
     local componentId = self.m_buildingInfo.fluidContainer.componentId
     if source == UIConst.UI_DRAG_DROP_SOURCE_TYPE.ItemBag then
-        core:Message_OpFillingFluidComWithBag(Utils.getCurrentChapterId(), componentId, dragInfo.csIndex)
+        core:Message_OpFillingFluidComWithBag(Utils.getCurrentChapterId(), componentId, dragInfo.csIndex, 0)
         FactoryUtils.playAudioWhenFillingItem(dragInfo.itemId, self.m_buildingInfo.fluidContainer.holdItemId, self.m_buildingInfo.fluidContainer.holdItemCount)
     elseif source == UIConst.UI_DRAG_DROP_SOURCE_TYPE.FactoryDepot then
-        core:Message_OpFillingFluidComWithDepot(Utils.getCurrentChapterId(), componentId, dragInfo.itemId)
+        core:Message_OpFillingFluidComWithDepot(Utils.getCurrentChapterId(), componentId, dragInfo.itemId, 0)
         FactoryUtils.playAudioWhenFillingItem(dragInfo.itemId, self.m_buildingInfo.fluidContainer.holdItemId, self.m_buildingInfo.fluidContainer.holdItemCount)
     end
 end
@@ -436,10 +364,7 @@ end
 
 
 
-
 FacLiquidStoragerCtrl.m_naviGroupSwitcher = HL.Field(HL.Forward('NaviGroupSwitcher'))
-
-
 
 FacLiquidStoragerCtrl._InitFacMachineCrafterController = HL.Method() << function(self)
     local NaviGroupSwitcher = require_ex("Common/Utils/UI/NaviGroupSwitcher").NaviGroupSwitcher
@@ -447,8 +372,6 @@ FacLiquidStoragerCtrl._InitFacMachineCrafterController = HL.Method() << function
 
     self:_RefreshNaviGroupSwitcherInfos()
 end
-
-
 
 FacLiquidStoragerCtrl._RefreshNaviGroupSwitcherInfos = HL.Method() << function(self)
     if self.m_naviGroupSwitcher == nil then

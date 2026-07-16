@@ -1,39 +1,15 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ItemSlot = HL.Class('ItemSlot', UIWidgetBase)
-
 
 ItemSlot.item = HL.Field(HL.Forward('Item'))
 
-
 ItemSlot.supportQuickMovingHalfItem = HL.Field(HL.Boolean) << false
-
-
 
 
 ItemSlot._OnFirstTimeInit = HL.Override() << function(self)
     self.item = self.view.item
 end
-
-
-
-
-
-
 
 ItemSlot.InitItemSlot = HL.Method(HL.Opt(HL.Any, HL.Any, HL.String, HL.Boolean)) <<
 function(self, itemBundle, onClick, limitId, clickableEvenEmpty)
@@ -74,8 +50,6 @@ function(self, itemBundle, onClick, limitId, clickableEvenEmpty)
     end)
 end
 
-
-
 ItemSlot.InitLockSlot = HL.Method() << function(self)
     self:_FirstTimeInit()
 
@@ -99,15 +73,11 @@ ItemSlot.InitLockSlot = HL.Method() << function(self)
     self.view.dragItem.onUpdateDragObject:RemoveAllListeners()
 end
 
-
-
 ItemSlot.InitPressDrag = HL.Method() << function(self)
     if DeviceInfo.usingTouch then
         self:InitPressDragForTouch()
     end
 end
-
-
 
 ItemSlot.InitPressDragForTouch = HL.Method() << function(self)
     self.item.view.button.longPressImg = self.view.pressHintImg
@@ -169,8 +139,6 @@ ItemSlot.InitPressDragForTouch = HL.Method() << function(self)
     end)
 end
 
-
-
 ItemSlot._GetQuickDropTarget = HL.Method().Return(HL.Opt(HL.Userdata)) << function(self)
     if not self.view.dragItem.luaTable then
         return
@@ -194,8 +162,6 @@ ItemSlot._GetQuickDropTarget = HL.Method().Return(HL.Opt(HL.Userdata)) << functi
     return targetDropHelper
 end
 
-
-
 ItemSlot.QuickDrop = HL.Method() << function(self)
     if DeviceInfo.usingController and GameInstance.player.guide.isInForceGuide and not GameInstance.player.guide.isInHelperGuideStep then
         if not InputManager.instance.guideUseActionIds:Contains("common_quick_drop") then
@@ -213,32 +179,23 @@ ItemSlot.QuickDrop = HL.Method() << function(self)
             
             local args = self.item.actionMenuArgs
             if args.cacheArea and args.dragHelper then
-                args.cacheArea:NaviTargetMoveToInCacheSlot(self.item, args.dragHelper, false)
+                args.cacheArea:NaviTargetMoveToInCacheSlot(self.item, args.dragHelper, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal)
             end
         end
     end
 end
 
-
-
 ItemSlot.IsQuickDropTargetValid = HL.Method().Return(HL.Boolean) << function(self)
     return self:_GetQuickDropTarget() ~= nil
 end
-
-
 
 ItemSlot.SetAsNaviTarget = HL.Method() << function(self)
     self.item:SetAsNaviTarget()
 end
 
-
-
 ItemSlot.PlayDropAnimation = HL.Method() << function(self)
     self.view.animationWrapper:Play("itemslot_item_drop")
 end
-
-
-
 
 ItemSlot.SetDropHighlighted = HL.Method(HL.Boolean) << function(self, active)
     Notify(MessageConst.ON_TOGGLE_ITEM_SLOT_DROP_HIGHLIGHT, {
@@ -249,6 +206,33 @@ ItemSlot.SetDropHighlighted = HL.Method(HL.Boolean) << function(self, active)
         self,
     })
 end
+
+
+
+
+ItemSlot.m_colorSlotActivated = HL.Field(HL.Boolean) << false
+
+ItemSlot.UpdateSlotColorBGByItemId = HL.Method(CS.Beyond.Gameplay.InventorySystem.ItemBag, HL.Number, HL.String, HL.Boolean) << function(self, itemBag, csIndex, itemId, showDropHint)
+    local isColoredSlot = csIndex >= 0 and csIndex < itemBag.coloredSlotNum
+    local controller = self.view.coloredSlotStateController
+    if not isColoredSlot then
+        self.m_colorSlotActivated = false
+        controller:SetState("NotColored") 
+        controller:SetState("NotInDrop")
+        return
+    end
+    local isActive = itemBag:IsColoredSlotActive(itemId, csIndex)
+    self.m_colorSlotActivated = isActive
+    controller:SetState(isActive and "ColoredActive" or "ColoredNormal") 
+    controller:SetState(showDropHint and "InDrop" or "NotInDrop") 
+end
+
+
+ItemSlot.PlayColoredSlotActivatedAnimation = HL.Method() << function(self)
+    self.item.view.spTypeIconNode.animationWrapper:PlayInAnimation()
+end
+
+
 
 
 HL.Commit(ItemSlot)

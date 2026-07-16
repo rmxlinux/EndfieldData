@@ -2,50 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharInfoPotential
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharInfoPotentialCtrl = HL.Class('CharInfoPotentialCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -67,29 +24,19 @@ local MAIN_STATE_NAME =
 
 local MAX_SKILL_COUNT = 5
 
-
 CharInfoPotentialCtrl.m_arg = HL.Field(HL.Table)
-
 
 CharInfoPotentialCtrl.m_charTemplateId = HL.Field(HL.String) << ''
 
-
 CharInfoPotentialCtrl.m_charInstId = HL.Field(HL.Number) << -1
-
 
 CharInfoPotentialCtrl.m_potentialList= HL.Field(HL.Userdata)
 
-
 CharInfoPotentialCtrl.m_isTrailChar = HL.Field(HL.Boolean) << false
-
 
 CharInfoPotentialCtrl.m_isChangingChar = HL.Field(HL.Boolean) << false
 
-
 CharInfoPotentialCtrl.m_isLevelUpActivated = HL.Field(HL.Boolean) << false
-
-
-
 
 
 CharInfoPotentialCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -112,20 +59,20 @@ end
 
 CharInfoPotentialCtrl.OnClose = HL.Override() << function(self)
     if self.m_isLevelUpActivated then
+        self.view.rightNode.animWrapper.gameObject:SetActive(false)
+        self:_ActiveLevelUp(false)
+    end
+    if self.isPhotoMode then
+        self:_ActivePhotoMode(false)
         self:_ActiveLevelUp(false)
     end
 end
-
-
 
 CharInfoPotentialCtrl._OnPlayAnimationOut = HL.Override() << function(self)
     local sceneDeco = self.m_phase:GetPotentialDecoView()
     sceneDeco.animationWrapper:ClearTween()
     sceneDeco.animationWrapper:PlayInAnimation()
 end
-
-
-
 
 
 
@@ -215,9 +162,6 @@ CharInfoPotentialCtrl._OnCharPotentialUnlock = HL.Method(HL.Table) << function(s
     end)
 end
 
-
-
-
 CharInfoPotentialCtrl._OnSelectCharChange = HL.Method(HL.Table) << function(self, charInfo)
     self.m_isChangingChar = true
     self.view.animWrapper:PlayOutAnimation(function()
@@ -230,9 +174,6 @@ CharInfoPotentialCtrl._OnSelectCharChange = HL.Method(HL.Table) << function(self
     end)
 end
 
-
-
-
 CharInfoPotentialCtrl._OnItemCountChange = HL.Method(HL.Table) << function(self, arg)
     if self.view.rightNode.gameObject.activeSelf then
         self:_RefreshRightNode(self.m_curShowPotentialLevel)
@@ -243,14 +184,9 @@ end
 
 
 
-
-
 CharInfoPotentialCtrl._OnLevelUpClicked = HL.Method() << function(self)
     GameInstance.player.charBag:CharPotentialUnlock(self.m_charInstId, self.m_selectedItemId, self.m_potentialLevel + 1)
 end
-
-
-
 
 
 
@@ -283,8 +219,6 @@ CharInfoPotentialCtrl.RefreshAll = HL.Method(HL.Opt(HL.Number)) << function(self
         self.view.currentPotentialNode.btnGoToLevelUp.gameObject:SetActive(false)
     end
 end
-
-
 
 
 
@@ -339,11 +273,6 @@ CharInfoPotentialCtrl._InitAction = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
-
 CharInfoPotentialCtrl._ActiveLevelUp = HL.Method(HL.Boolean, HL.Opt(HL.Boolean, HL.Number)) << function(self, active, selectCurrent, selectedIndex)
     self.m_isLevelUpActivated = active
     if active then
@@ -360,7 +289,7 @@ CharInfoPotentialCtrl._ActiveLevelUp = HL.Method(HL.Boolean, HL.Opt(HL.Boolean, 
                         naviIndex = 1
                     end
                     local skillNode = self.view[string.format("skill%02d", naviIndex)]
-                    UIUtils.setAsNaviTarget(skillNode.button)
+                    self:SetNaviTarget(skillNode.button)
                 end
             end
         end)
@@ -379,21 +308,19 @@ CharInfoPotentialCtrl._ActiveLevelUp = HL.Method(HL.Boolean, HL.Opt(HL.Boolean, 
         self.m_selectedSkillIndex = 0
     end
     self.m_phase:ActivePotentialFocusCamera(active)
-    self.m_phase:GetPotentialDecoView().btnViewDetails.gameObject:SetActive(not active)
+    local decoView = self.m_phase:GetPotentialDecoView()
+    if decoView and not IsNull(decoView.gameObject) then    
+        decoView.btnViewDetails.gameObject:SetActive(not active)
+    end
     InputManagerInst:ToggleBinding(self.m_focusPhotoBindingId, active and self.m_potentialLevel > 1 and not self.m_isTrailChar)
     self.view.controllerSideMenuBtn.gameObject:SetActive(not active)
 end
 
-
 CharInfoPotentialCtrl.m_potentialLevel = HL.Field(HL.Number) << 0
-
 
 CharInfoPotentialCtrl.m_isPotentialMax = HL.Field(HL.Boolean) << false
 
-
 CharInfoPotentialCtrl.m_maxPotentialLevel = HL.Field(HL.Number) << 0
-
-
 
 CharInfoPotentialCtrl._RefreshPotentialData = HL.Method() << function(self)
     
@@ -401,8 +328,6 @@ CharInfoPotentialCtrl._RefreshPotentialData = HL.Method() << function(self)
     self.m_potentialLevel = charInfo.potentialLevel
     self.m_isPotentialMax = self.m_potentialLevel >= self.m_maxPotentialLevel
 end
-
-
 
 CharInfoPotentialCtrl._RefreshAllPotentialLevel = HL.Method() << function(self)
     self.view.detailPotentialNode.charPotential:InitCharPotential(self.m_potentialLevel)
@@ -420,10 +345,6 @@ CharInfoPotentialCtrl._RefreshAllPotentialLevel = HL.Method() << function(self)
     self.view.glowHUD.maxLevel.text = self.m_isPotentialMax and "MAX" or string.format("%02d", self.m_maxPotentialLevel)
 end
 
-
-
-
-
 CharInfoPotentialCtrl._ShowSkill = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, index, playAnim)
     if index == self.m_selectedSkillIndex then
         return
@@ -432,7 +353,7 @@ CharInfoPotentialCtrl._ShowSkill = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << f
         if index > 0 then
             InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.skillNaviGroup)
         else
-            UIUtils.setAsNaviTarget(self.view[string.format("skill%02d", self.m_selectedSkillIndex)].button)
+            self:SetNaviTarget(self.view[string.format("skill%02d", self.m_selectedSkillIndex)].button)
         end
     end
     self:_SetSkillSelected(index)
@@ -443,9 +364,6 @@ CharInfoPotentialCtrl._ShowSkill = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << f
     InputManagerInst:ToggleBinding(self.m_focusPhotoBindingId, index == 0 and self.m_potentialLevel > 1 and not self.m_isTrailChar)
 end
 
-
-
-
 CharInfoPotentialCtrl._BlockUIInput = HL.Method(HL.Boolean) << function(self, isBlock)
     if isBlock then
         self.view.luaPanel:BlockAllInput()
@@ -455,8 +373,6 @@ CharInfoPotentialCtrl._BlockUIInput = HL.Method(HL.Boolean) << function(self, is
     self.m_phase:GetPotentialDecoView().inputBindingGroup.enabled = not isBlock
     self.view.unlockAnimMask.gameObject:SetActive(isBlock)
 end
-
-
 
 
 
@@ -491,9 +407,6 @@ CharInfoPotentialCtrl._InitPotentialSkills = HL.Method() << function(self)
     end
 end
 
-
-
-
 CharInfoPotentialCtrl._RefreshPotentialSkills = HL.Method(HL.Opt(HL.Number)) << function(self, unlockedLv)
     for i = 1, self.m_maxPotentialLevel do
         
@@ -523,11 +436,7 @@ CharInfoPotentialCtrl._RefreshPotentialSkills = HL.Method(HL.Opt(HL.Number)) << 
     end
 end
 
-
 CharInfoPotentialCtrl.m_selectedSkillIndex = HL.Field(HL.Number) << 0
-
-
-
 
 CharInfoPotentialCtrl._SetSkillSelected = HL.Method(HL.Number) << function(self, index)
     local lastSelectedNode = self.view[string.format("skill%02d", self.m_selectedSkillIndex)]
@@ -549,17 +458,12 @@ end
 
 
 
-
 CharInfoPotentialCtrl.m_selectedItemId = HL.Field(HL.String) << ''
-
 
 CharInfoPotentialCtrl.m_curShowPotentialLevel = HL.Field(HL.Number) << 0
 
-
-
-
 CharInfoPotentialCtrl._RefreshRightNode = HL.Method(HL.Number) << function(self, potentialLevel)
-    Notify(MessageConst.HIDE_HYPERLINK_TIPS)
+    Notify(MessageConst.ON_STOP_HOVER_LINK)
     self.m_curShowPotentialLevel = potentialLevel
     local potentialDataCount = self.m_potentialList.potentialUnlockBundle.Count
     if potentialLevel < 1 or potentialLevel > potentialDataCount then
@@ -568,7 +472,7 @@ CharInfoPotentialCtrl._RefreshRightNode = HL.Method(HL.Number) << function(self,
     local view = self.view.rightNode
     local potentialData = self.m_potentialList.potentialUnlockBundle[CSIndex(potentialLevel)]
     view.name.text = potentialData.name
-    local potentialDesc = CS.Beyond.Gameplay.PotentialUtil.GetPotentialDescription(self.m_charTemplateId, potentialLevel)
+    local potentialDesc = CS.Beyond.Gameplay.PotentialUtil.GetPotentialDescription(self.m_charTemplateId, potentialLevel, self.m_charInstId)
     view.textDesc:SetAndResolveTextStyle(potentialDesc)
     local itemId = potentialData.itemIds[0]
     local itemCount = Utils.getItemCount(itemId)
@@ -693,9 +597,6 @@ end
 
 
 
-
-
-
 CharInfoPotentialCtrl.ShowPhotoByLevel = HL.Method(HL.Number) << function(self, potentialLevel)
     if self.m_isChangingChar then
         return
@@ -737,11 +638,6 @@ CharInfoPotentialCtrl.ShowPhotoByLevel = HL.Method(HL.Number) << function(self, 
     end)
 end
 
-
-
-
-
-
 CharInfoPotentialCtrl.ShowPhoto = HL.Method(HL.String, HL.Number, HL.Opt(HL.Function)) << function(self, pictureId, potentialLevel, onClose)
     UIManager:Open(PanelId.CharInfoPhoto, {
         charInstId = self.m_charInstId,
@@ -755,10 +651,7 @@ end
 
 
 
-
 CharInfoPotentialCtrl.m_focusPhotoBindingId = HL.Field(HL.Number) << 0
-
-
 
 CharInfoPotentialCtrl._InitController = HL.Method() << function(self)
     local charInfoPanelPhaseItem = self.m_phase:_GetPanelPhaseItem(PanelId.CharInfo)
@@ -805,8 +698,6 @@ CharInfoPotentialCtrl._InitController = HL.Method() << function(self)
     UIUtils.bindHyperlinkPopup(self, "CharInfoPotential", self.view.inputGroup.groupId)
 end
 
-
-
 CharInfoPotentialCtrl._InitControllerSideMenuBtn = HL.Method() << function(self)
     local extraBtnInfos = {
         {
@@ -828,12 +719,7 @@ CharInfoPotentialCtrl._InitControllerSideMenuBtn = HL.Method() << function(self)
     })
 end
 
-
 CharInfoPotentialCtrl.isPhotoMode = HL.Field(HL.Boolean) << false
-
-
-
-
 
 CharInfoPotentialCtrl._ActivePhotoMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isActive, playAnim)
     self.isPhotoMode = isActive
@@ -841,7 +727,7 @@ CharInfoPotentialCtrl._ActivePhotoMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean
         self.view.animWrapper:PlayOutAnimation(function()
             self.view.stateController:SetState(MAIN_STATE_NAME.LevelUp)
             self:Notify(MessageConst.TOGGLE_CHAR_INFO_FOCUS_MODE, true)
-            UIUtils.setAsNaviTarget(self.view.skill01.button)
+            self:SetNaviTarget(self.view.skill01.button)
             self:_ActiveAllSkillNode(false)
             self.m_phase:NaviToPotentialPhoto(1)
         end)
@@ -861,9 +747,6 @@ CharInfoPotentialCtrl._ActivePhotoMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean
     self.m_phase:RefreshFocusPhotoBtn()
 end
 
-
-
-
 CharInfoPotentialCtrl._ActiveAllSkillNode = HL.Method(HL.Boolean) << function(self, isActive)
     for i = 1, MAX_SKILL_COUNT do
         local skillNode = self.view[string.format("skill%02d", i)]
@@ -872,8 +755,6 @@ CharInfoPotentialCtrl._ActiveAllSkillNode = HL.Method(HL.Boolean) << function(se
         end
     end
 end
-
-
 
 CharInfoPotentialCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     local arg =
@@ -893,9 +774,6 @@ CharInfoPotentialCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(
     end
     return arg
 end
-
-
-
 
 CharInfoPotentialCtrl._ProcessStateArg = HL.Method(HL.Table) << function(self, arg)
     if arg == nil then

@@ -1,19 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
 GameSettingItemCell = HL.Class('GameSettingItemCell', UIWidgetBase)
-
 
 
 
@@ -25,19 +12,13 @@ GameSettingItemCell = HL.Class('GameSettingItemCell', UIWidgetBase)
 
 GameSettingItemCell.itemData = HL.Field(HL.Any) 
 
-
 GameSettingItemCell.m_itemControlConfigs = HL.Field(HL.Table) 
-
 
 GameSettingItemCell.m_extraArgs = HL.Field(HL.Table)
 
-
 GameSettingItemCell.itemControl = HL.Field(HL.Any) 
 
-
 GameSettingItemCell.m_itemControlCache = HL.Field(HL.Table) 
-
-
 
 
 GameSettingItemCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -47,11 +28,6 @@ GameSettingItemCell._OnFirstTimeInit = HL.Override() << function(self)
 
     self.m_itemControlCache = {}
 end
-
-
-
-
-
 
 GameSettingItemCell.InitGameSettingItemCell = HL.Method(HL.Any, HL.Table, HL.Opt(HL.Table))
     << function(self, itemData, itemControlConfigs, extraArgs)
@@ -63,8 +39,6 @@ GameSettingItemCell.InitGameSettingItemCell = HL.Method(HL.Any, HL.Table, HL.Opt
 
     self:Refresh()
 end
-
-
 
 GameSettingItemCell.Refresh = HL.Method() << function(self)
     local itemData = self.itemData
@@ -99,9 +73,6 @@ GameSettingItemCell.Refresh = HL.Method() << function(self)
     end
 end
 
-
-
-
 GameSettingItemCell._GetItemState = HL.Method(HL.String).Return(HL.String) << function(self, settingId)
     local itemStateGetter = self.m_extraArgs.itemStateGetter
     if itemStateGetter == nil then
@@ -119,8 +90,6 @@ GameSettingItemCell._GetItemState = HL.Method(HL.String).Return(HL.String) << fu
     end
     return itemState
 end
-
-
 
 GameSettingItemCell._InitItemControl = HL.Method() << function(self)
     local itemData = self.itemData
@@ -150,8 +119,6 @@ GameSettingItemCell._InitItemControl = HL.Method() << function(self)
 
     itemControlConfig.initializer(self)
 end
-
-
 
 GameSettingItemCell._OnDisabledBtnClicked = HL.Method() << function(self)
     local onDisabledItemClicked = self.m_extraArgs.onDisabledItemClicked

@@ -2,79 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BattlePassTask
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BattlePassTaskCtrl = HL.Class('BattlePassTaskCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -88,9 +16,6 @@ BattlePassTaskCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 BattlePassTaskCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitViews(arg)
     self:_LoadData(true)
@@ -99,83 +24,55 @@ BattlePassTaskCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RecoverScrollPosition()
 end
 
-
 BattlePassTaskCtrl.m_labelInfos = HL.Field(HL.Any)
-
 
 BattlePassTaskCtrl.m_subLabelInfos = HL.Field(HL.Any)
 
-
 BattlePassTaskCtrl.m_showInGroup = HL.Field(HL.Boolean) << false
-
 
 BattlePassTaskCtrl.m_taskGroups = HL.Field(HL.Any)
 
-
 BattlePassTaskCtrl.m_taskViewModels = HL.Field(HL.Any)
-
 
 BattlePassTaskCtrl.m_taskForecastTipId = HL.Field(HL.String) << ''
 
-
 BattlePassTaskCtrl.m_taskForecastTipPriority = HL.Field(HL.Number) << -99999
-
 
 BattlePassTaskCtrl.m_selectedLabelIndex = HL.Field(HL.Number) << -1
 
-
 BattlePassTaskCtrl.m_selectedSubLabelIndex = HL.Field(HL.Number) << -1
-
 
 BattlePassTaskCtrl.m_isLifeTime = HL.Field(HL.Boolean) << false
 
-
 BattlePassTaskCtrl.m_isLifeTimeComplete = HL.Field(HL.Boolean) << false
-
 
 BattlePassTaskCtrl.m_labelCacheFunc = HL.Field(HL.Function)
 
-
 BattlePassTaskCtrl.m_subLabelCacheFunc = HL.Field(HL.Function)
-
 
 BattlePassTaskCtrl.m_subLabelNaviGroupId = HL.Field(HL.Number) << 1
 
-
 BattlePassTaskCtrl.m_taskCacheFunc = HL.Field(HL.Function)
-
 
 BattlePassTaskCtrl.m_viewedTasks = HL.Field(HL.Any) << nil
 
-
 BattlePassTaskCtrl.m_subLabelFocus = HL.Field(HL.Boolean) << false
-
 
 BattlePassTaskCtrl.m_naviTaskTarget = HL.Field(HL.Any) << nil
 
-
 BattlePassTaskCtrl.m_naviTaskId = HL.Field(HL.String) << ""
-
-
 
 BattlePassTaskCtrl.OnShow = HL.Override() << function(self)
     self:_NaviResume()
 end
 
-
-
 BattlePassTaskCtrl.OnHide = HL.Override() << function(self)
     self:_ReadShowingTasks()
 end
 
-
-
 BattlePassTaskCtrl.OnClose = HL.Override() << function(self)
     self:_ReadShowingTasks()
 end
-
-
-
 
 BattlePassTaskCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, arg)
     
@@ -186,9 +83,6 @@ local TASK_VIEW_TYPE = {
     TASK = 2,
     FORECAST = 3,
 }
-
-
-
 
 BattlePassTaskCtrl._InitViews = HL.Method(HL.Any) << function(self, arg)
     local naviGroupIds = {}
@@ -262,8 +156,6 @@ BattlePassTaskCtrl._InitViews = HL.Method(HL.Any) << function(self, arg)
     self:_InitSubLabelNavi()
 end
 
-
-
 BattlePassTaskCtrl._InitSubLabelNavi = HL.Method() << function(self)
     self.m_subLabelNaviGroupId = InputManagerInst:CreateGroup(self.view.inputGroup.groupId)
     UIUtils.bindInputPlayerAction("bp_task_sublabel_next", function()
@@ -323,15 +215,12 @@ BattlePassTaskCtrl._InitSubLabelNavi = HL.Method() << function(self)
             if curTarget == nil or curTarget.naviGroup ~= self.view.labelScrollListSelectableNaviGroup then
                 local selectedLabelCell = self.m_labelCacheFunc(self.m_selectedLabelIndex)
                 if selectedLabelCell ~= nil and selectedLabelCell.button ~= nil and selectedLabelCell.button.gameObject.activeInHierarchy then
-                    UIUtils.setAsNaviTarget(selectedLabelCell.button)
+                    self:SetNaviTarget(selectedLabelCell.button)
                 end
             end
         end
     end, self.view.taskScrollListInputBindingGroupMonoTarget.groupId)
 end
-
-
-
 
 BattlePassTaskCtrl._NaviToTargetIndex = HL.Method(HL.Number) << function(self, targetIndex)
     self:_OnSelectSubTab(targetIndex)
@@ -353,13 +242,11 @@ BattlePassTaskCtrl._NaviToTargetIndex = HL.Method(HL.Number) << function(self, t
             local cell = self.m_taskCacheFunc(obj)
             self:_RenderTask(cell, luaIndex)
             if luaIndex == firstTaskIndex then
-                UIUtils.setAsNaviTarget(cell.naviDecorator)
+                self:SetNaviTarget(cell.naviDecorator)
             end
         end)
     end
 end
-
-
 
 
 
@@ -384,11 +271,9 @@ BattlePassTaskCtrl._EnsureLabelNaviLayer = HL.Method() << function(self)
     if selectedLabelCell ~= nil
         and selectedLabelCell.button ~= nil
         and selectedLabelCell.button.gameObject.activeInHierarchy then
-        UIUtils.setAsNaviTargetInSilentModeIfNecessary(labelNaviGroup, selectedLabelCell.button)
+        self:SetNaviTarget(selectedLabelCell.button)
     end
 end
-
-
 
 BattlePassTaskCtrl._NaviResume = HL.Method() << function(self)
     local lastNaviTarget = self.m_naviTaskTarget
@@ -412,7 +297,7 @@ BattlePassTaskCtrl._NaviResume = HL.Method() << function(self)
             local cell = self.m_taskCacheFunc(targetIndex)
             if cell ~= nil and cell.naviDecorator ~= nil then
                 self:_EnsureLabelNaviLayer()
-                UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.taskScrollListSelectableNaviGroup, cell.naviDecorator)
+                self:SetNaviTarget(cell.naviDecorator)
                 self.m_naviTaskTarget = cell.naviDecorator
                 return
             end
@@ -421,7 +306,7 @@ BattlePassTaskCtrl._NaviResume = HL.Method() << function(self)
     
     if lastNaviTarget ~= nil then
         self:_EnsureLabelNaviLayer()
-        UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.taskScrollListSelectableNaviGroup, lastNaviTarget)
+        self:SetNaviTarget(lastNaviTarget)
         return
     end
     
@@ -432,7 +317,7 @@ BattlePassTaskCtrl._NaviResume = HL.Method() << function(self)
         if selectedLabelCell ~= nil
             and selectedLabelCell.button ~= nil
             and selectedLabelCell.button.gameObject.activeInHierarchy then
-            UIUtils.setAsNaviTargetInSilentModeIfNecessary(self.view.labelScrollListSelectableNaviGroup, selectedLabelCell.button)
+            self:SetNaviTarget(selectedLabelCell.button)
         end
     end
 end
@@ -465,9 +350,6 @@ end
 
 
 
-
-
-
 BattlePassTaskCtrl._LoadData = HL.Method(HL.Opt(HL.Boolean)) << function(self, needReset)
     self:_LoadLabelData()
     if needReset == true then
@@ -476,8 +358,6 @@ BattlePassTaskCtrl._LoadData = HL.Method(HL.Opt(HL.Boolean)) << function(self, n
     self:_LoadSubLabelData()
     self:_LoadGroupData()
 end
-
-
 
 BattlePassTaskCtrl._LoadLabelData = HL.Method() << function(self)
     self.m_labelInfos = {}
@@ -540,10 +420,6 @@ BattlePassTaskCtrl._LoadLabelData = HL.Method() << function(self)
     table.sort(self.m_labelInfos, Utils.genSortFunction({"statusSortId", "sortId"}, true))
 end
 
-
-
-
-
 BattlePassTaskCtrl._LoadLabelInfo = HL.Method(HL.Any, HL.Any).Return(HL.Table) << function(self, labelData, playerLabel)
     local labelId = labelData.labelId
     local isLabelValid, isTimeVisible, isConditionVisible = BattlePassUtils.CheckLabelVisible(labelId)
@@ -600,8 +476,6 @@ BattlePassTaskCtrl._LoadLabelInfo = HL.Method(HL.Any, HL.Any).Return(HL.Table) <
     return labelInfo
 end
 
-
-
 BattlePassTaskCtrl._ResetSelectLabel = HL.Method() << function(self)
     if self.m_labelInfos ~= nil and #self.m_labelInfos > 0 then
         self.m_selectedLabelIndex = 1
@@ -610,9 +484,6 @@ BattlePassTaskCtrl._ResetSelectLabel = HL.Method() << function(self)
     end
     self.m_selectedSubLabelIndex = 1
 end
-
-
-
 
 BattlePassTaskCtrl._RecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
@@ -639,8 +510,6 @@ BattlePassTaskCtrl._RecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, r
     self:_LoadGroupData()
 end
 
-
-
 BattlePassTaskCtrl._RecoverScrollPosition = HL.Method() << function(self)
     if self.m_selectedLabelIndex > 0 then
         self.view.labelScrollList:ScrollToIndex(CSIndex(self.m_selectedLabelIndex), true)
@@ -649,8 +518,6 @@ BattlePassTaskCtrl._RecoverScrollPosition = HL.Method() << function(self)
         self.view.subLabelScrollList:ScrollToIndex(CSIndex(self.m_selectedSubLabelIndex), true)
     end
 end
-
-
 
 BattlePassTaskCtrl._LoadSubLabelData = HL.Method() << function(self)
     self.m_subLabelInfos = {}
@@ -663,8 +530,6 @@ BattlePassTaskCtrl._LoadSubLabelData = HL.Method() << function(self)
     end
     self.m_subLabelInfos = parentLabelInfo.subLabelInfos
 end
-
-
 
 BattlePassTaskCtrl._LoadGroupData = HL.Method() << function(self)
     self.m_taskGroups = {}
@@ -699,9 +564,6 @@ BattlePassTaskCtrl._LoadGroupData = HL.Method() << function(self)
     self:_GenerateTaskViewModels()
 end
 
-
-
-
 BattlePassTaskCtrl._LoadGroupDataImpl = HL.Method(HL.Any).Return(HL.Table, HL.String, HL.Number) << function(self, labelInfo)
     local taskGroups = {}
     local taskForecastTipId = ''
@@ -727,10 +589,6 @@ BattlePassTaskCtrl._LoadGroupDataImpl = HL.Method(HL.Any).Return(HL.Table, HL.St
     table.sort(taskGroups, Utils.genSortFunction({"defaultSortId", "sortId"}, true))
     return taskGroups, taskForecastTipId, taskForecastTipPriority
 end
-
-
-
-
 
 BattlePassTaskCtrl._LoadGroupInfo = HL.Method(HL.Any, HL.Any).Return(HL.Table, HL.String, HL.Number) << function(self, groupData, playerGroup)
     local groupId = groupData.groupId
@@ -778,10 +636,6 @@ BattlePassTaskCtrl._LoadGroupInfo = HL.Method(HL.Any, HL.Any).Return(HL.Table, H
     return groupInfo, taskForecastTipId, taskForecastTipPriority
 end
 
-
-
-
-
 BattlePassTaskCtrl._LoadTaskInfo = HL.Method(HL.Any, HL.Any).Return(HL.Table, HL.String) << function(self, taskData, playerTask)
     local taskId = taskData.taskId
     local isValid, isTimeVisible, isConditionVisible = BattlePassUtils.CheckTaskVisible(taskId)
@@ -822,8 +676,6 @@ BattlePassTaskCtrl._LoadTaskInfo = HL.Method(HL.Any, HL.Any).Return(HL.Table, HL
     return taskInfo, ''
 end
 
-
-
 BattlePassTaskCtrl._GenerateTaskViewModels = HL.Method() << function(self)
     self.m_taskViewModels = {}
     for _, groupInfo in ipairs(self.m_taskGroups) do
@@ -853,10 +705,6 @@ BattlePassTaskCtrl._GenerateTaskViewModels = HL.Method() << function(self)
         end
     end
 end
-
-
-
-
 
 BattlePassTaskCtrl._CheckTaskCondition = HL.Method(HL.Any, HL.Any).Return(HL.Number, HL.Number) << function(self, taskData, playerTask)
     local taskTarget = 0
@@ -893,11 +741,6 @@ BattlePassTaskCtrl._CheckTaskCondition = HL.Method(HL.Any, HL.Any).Return(HL.Num
 
     return taskVal, taskTarget
 end
-
-
-
-
-
 
 
 
@@ -950,15 +793,13 @@ BattlePassTaskCtrl._RenderViews = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL.Bo
             if viewModel.viewType == TASK_VIEW_TYPE.TASK then
                 local firstCell = self.m_taskCacheFunc(index)
                 if firstCell ~= nil then
-                    UIUtils.setAsNaviTarget(firstCell.naviDecorator)
+                    self:SetNaviTarget(firstCell.naviDecorator)
                     break
                 end
             end
         end
     end
 end
-
-
 
 BattlePassTaskCtrl._RenderDailyPart = HL.Method() << function(self)
     local bpSystem = GameInstance.player.battlePassSystem
@@ -986,13 +827,9 @@ BattlePassTaskCtrl._RenderDailyPart = HL.Method() << function(self)
     self.view.goBtn.gameObject:SetActive(Utils.isSystemUnlocked(GEnums.UnlockSystemType.AdventureBook))
 end
 
-
-
 BattlePassTaskCtrl._UpdateLabels = HL.Method() << function(self)
     self.view.labelScrollList:UpdateCount(#self.m_labelInfos, true)
 end
-
-
 
 BattlePassTaskCtrl._RefreshLabels = HL.Method() << function(self)
     self.view.labelScrollList:UpdateShowingCells(function(csIndex, obj)
@@ -1000,13 +837,9 @@ BattlePassTaskCtrl._RefreshLabels = HL.Method() << function(self)
     end)
 end
 
-
-
 BattlePassTaskCtrl._UpdateSubLabels = HL.Method() << function(self)
     self.view.subLabelScrollList:UpdateCount(#self.m_subLabelInfos, true)
 end
-
-
 
 BattlePassTaskCtrl._RefreshSubLabels = HL.Method() << function(self)
     self.view.subLabelScrollList:UpdateShowingCells(function(csIndex, obj)
@@ -1019,22 +852,13 @@ BattlePassTaskCtrl._RefreshSubLabels = HL.Method() << function(self)
     end)
 end
 
-
-
 BattlePassTaskCtrl._UpdateTasks = HL.Method() << function(self)
     self.view.taskScrollList:UpdateCount(#self.m_taskViewModels, true, true)
 end
 
-
-
 BattlePassTaskCtrl._RefreshTasks = HL.Method() << function(self)
     self.view.taskScrollList:UpdateCount(#self.m_taskViewModels, false, true)
 end
-
-
-
-
-
 
 BattlePassTaskCtrl._RenderLabel = HL.Method(HL.Any, HL.Number, HL.Opt(HL.Boolean)) << function(self, cell, luaIndex, isRefresh)
     local isSelected = self.m_selectedLabelIndex == luaIndex
@@ -1045,9 +869,11 @@ BattlePassTaskCtrl._RenderLabel = HL.Method(HL.Any, HL.Number, HL.Opt(HL.Boolean
         cell.titleText.text = labelInfo.name
         cell.describeText.text = labelInfo.subName
         cell.lockImage.gameObject:SetActive(not isUnlock)
+        cell.redDot:InitRedDot("BattlePassTaskLabel", labelInfo.labelId)
+    else
+        logger.error("[battlepass] labelInfo is nil!!!")
     end
     cell.lineImage.gameObject:SetActive(luaIndex ~= #self.m_labelInfos)
-    cell.redDot:InitRedDot("BattlePassTaskLabel", labelInfo.labelId)
     cell.button.onClick:RemoveAllListeners()
     cell.button.onClick:AddListener(function()
         if self.m_selectedLabelIndex == luaIndex then
@@ -1060,31 +886,23 @@ BattlePassTaskCtrl._RenderLabel = HL.Method(HL.Any, HL.Number, HL.Opt(HL.Boolean
         self:_RenderViews(true)
     end)
     if isSelected and DeviceInfo.usingController and not isRefresh == true then
-        UIUtils.setAsNaviTarget(cell.button)
+        self:SetNaviTarget(cell.button)
     end
 end
-
-
-
-
 
 BattlePassTaskCtrl._RenderSubLabel = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local subLabelInfo = self.m_subLabelInfos[luaIndex]
     if subLabelInfo ~= nil then
         cell.titleTxt.text = subLabelInfo.name
+        cell.redDot:InitRedDot("BattlePassTaskLabel", subLabelInfo.labelId)
     end
 
-    cell.redDot:InitRedDot("BattlePassTaskLabel", subLabelInfo.labelId)
     cell.stateController:SetState(luaIndex == self.m_selectedSubLabelIndex and "On" or "Off")
     cell.button.onClick:RemoveAllListeners()
     cell.button.onClick:AddListener(function()
         self:_OnSelectSubTab(luaIndex)
     end)
 end
-
-
-
-
 
 BattlePassTaskCtrl._RenderTask = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local viewModel = self.m_taskViewModels[luaIndex]
@@ -1105,10 +923,6 @@ BattlePassTaskCtrl._RenderTask = HL.Method(HL.Any, HL.Number) << function(self, 
     end
 end
 
-
-
-
-
 BattlePassTaskCtrl._RenderTaskGroupTitle = HL.Method(HL.Any, HL.Any) << function(self, cell, groupInfo)
     cell.groupNameTxt.text = groupInfo.name
     if self.m_isLifeTime then
@@ -1119,10 +933,6 @@ BattlePassTaskCtrl._RenderTaskGroupTitle = HL.Method(HL.Any, HL.Any) << function
         cell.groupTimeTxt.text = string.format(Language.LUA_BATTLEPASS_TASK_GROUP_TIME_LEFT_FORMAT, UIUtils.getLeftTime(leftSec))
     end
 end
-
-
-
-
 
 
 BattlePassTaskCtrl._RenderTaskCell = HL.Method(HL.Any, HL.Any) << function(self, cell, taskInfo)
@@ -1163,17 +973,10 @@ BattlePassTaskCtrl._RenderTaskCell = HL.Method(HL.Any, HL.Any) << function(self,
 end
 
 
-
-
-
-
 BattlePassTaskCtrl._RenderTaskForecast = HL.Method(HL.Any, HL.Any) << function(self, cell, forecastInfo)
     cell.descText.text = forecastInfo.desc
     cell.subDescTxt.text = forecastInfo.subDesc
 end
-
-
-
 
 BattlePassTaskCtrl._CollectShowedRedDot = HL.Method(HL.String) << function(self, id)
     if self.m_viewedTasks == nil then
@@ -1181,8 +984,6 @@ BattlePassTaskCtrl._CollectShowedRedDot = HL.Method(HL.String) << function(self,
     end
     self.m_viewedTasks[id] = true
 end
-
-
 
 BattlePassTaskCtrl._ClearShowedRedDot = HL.Method() << function(self)
     if self.m_viewedTasks == nil then
@@ -1202,9 +1003,6 @@ BattlePassTaskCtrl._ClearShowedRedDot = HL.Method() << function(self)
     bpSystem:ReadTasks(taskIds)
 end
 
-
-
-
 BattlePassTaskCtrl._OnSelectSubTab = HL.Method(HL.Number) << function(self, luaIndex)
     if self.m_selectedSubLabelIndex == luaIndex then
         return
@@ -1214,9 +1012,6 @@ BattlePassTaskCtrl._OnSelectSubTab = HL.Method(HL.Number) << function(self, luaI
     self:_LoadGroupData()
     self:_RenderViews(true, true)
 end
-
-
-
 
 BattlePassTaskCtrl._TakeTaskReward = HL.Method(HL.String) << function(self, taskId)
     if string.isEmpty(taskId) then
@@ -1231,8 +1026,6 @@ BattlePassTaskCtrl._TakeTaskReward = HL.Method(HL.String) << function(self, task
     table.insert(taskIds, taskId)
     self:_TakeTaskRewards(taskIds)
 end
-
-
 
 BattlePassTaskCtrl._QueryAllCanTakeTaskIds = HL.Method().Return(HL.Table) << function(self)
     local taskIds = {}
@@ -1259,8 +1052,6 @@ BattlePassTaskCtrl._QueryAllCanTakeTaskIds = HL.Method().Return(HL.Table) << fun
     return taskIds
 end
 
-
-
 BattlePassTaskCtrl._ReadShowingTasks = HL.Method() << function(self)
     if self.m_taskViewModels == nil or #self.m_taskViewModels <= 0 then
         return
@@ -1268,14 +1059,10 @@ BattlePassTaskCtrl._ReadShowingTasks = HL.Method() << function(self)
     self:_ClearShowedRedDot()
 end
 
-
-
 BattlePassTaskCtrl._OnTaskUpdate = HL.Method() << function(self)
     self:_LoadData()
     self:_RenderViews(true, true, true)
 end
-
-
 
 BattlePassTaskCtrl._OnBasicInfoUpdate = HL.Method() << function(self)
     Notify(MessageConst.SHOW_POP_UP, {
@@ -1288,21 +1075,14 @@ BattlePassTaskCtrl._OnBasicInfoUpdate = HL.Method() << function(self)
     })
 end
 
-
-
 BattlePassTaskCtrl._OnDailyActivationModify = HL.Method() << function(self)
     self:_RenderDailyPart()
 end
-
-
 
 BattlePassTaskCtrl._TakeAllTaskReward = HL.Method() << function(self)
     local taskIds = self:_QueryAllCanTakeTaskIds()
     self:_TakeTaskRewards(taskIds)
 end
-
-
-
 
 BattlePassTaskCtrl._TakeTaskRewards = HL.Method(HL.Table) << function(self, taskIds)
     local bpSystem = GameInstance.player.battlePassSystem
@@ -1317,8 +1097,6 @@ BattlePassTaskCtrl._TakeTaskRewards = HL.Method(HL.Table) << function(self, task
         bpSystem:ReadTasks(needReadTasks)
     end
 end
-
-
 
 BattlePassTaskCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
     return {

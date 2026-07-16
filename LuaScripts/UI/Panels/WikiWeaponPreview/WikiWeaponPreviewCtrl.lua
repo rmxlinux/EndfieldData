@@ -2,31 +2,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WikiWeaponPreview
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiWeaponPreviewCtrl = HL.Class('WikiWeaponPreviewCtrl', uiCtrl.UICtrl)
 
 local WeaponState = {
@@ -39,25 +14,17 @@ local WeaponState = {
 
 
 
-
 WikiWeaponPreviewCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 WikiWeaponPreviewCtrl.m_wikiEntryShowData = HL.Field(HL.Table)
-
 
 WikiWeaponPreviewCtrl.m_arg = HL.Field(HL.Table)
 
-
 WikiWeaponPreviewCtrl.m_wikiGroupShowDataList = HL.Field(HL.Table)
 
-
 WikiWeaponPreviewCtrl.m_curWeaponState = HL.Field(HL.Number) << 0
-
-
-
 
 
 WikiWeaponPreviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -77,14 +44,10 @@ WikiWeaponPreviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_PlayDecoAnim()
 end
 
-
-
 WikiWeaponPreviewCtrl.OnShow = HL.Override() << function(self)
     self:_RefreshModel()
     self:_PlayDecoAnim()
 end
-
-
 
 WikiWeaponPreviewCtrl.OnHide = HL.Override() << function(self)
     if self.m_phase then
@@ -92,23 +55,16 @@ WikiWeaponPreviewCtrl.OnHide = HL.Override() << function(self)
     end
 end
 
-
-
 WikiWeaponPreviewCtrl.OnClose = HL.Override() << function (self)
     if self.m_phase then
         self.m_phase:DestroyModel()
     end
 end
 
-
-
 WikiWeaponPreviewCtrl._OnPlayAnimationOut = HL.Override() << function(self)
     WikiWeaponPreviewCtrl.Super._OnPlayAnimationOut(self)
     self.m_phase:PlayBgAnim("wiki_plane_toweapon_out")
 end
-
-
-
 
 WikiWeaponPreviewCtrl._ProcessArg = HL.Method(HL.Table) << function(self, arg)
     
@@ -149,8 +105,6 @@ WikiWeaponPreviewCtrl._ProcessArg = HL.Method(HL.Table) << function(self, arg)
     self.m_wikiGroupShowDataList = detailArgs.wikiGroupShowDataList
 end
 
-
-
 WikiWeaponPreviewCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
     arg.weaponId = self.m_wikiEntryShowData and self.m_wikiEntryShowData.wikiEntryData.refItemId or arg.weaponId
@@ -160,8 +114,6 @@ WikiWeaponPreviewCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any))
     }
     return arg
 end
-
-
 
 WikiWeaponPreviewCtrl._InitAction = HL.Method() << function(self)
     local defaultWeaponStateIndex = self.m_arg.resumeState and self.m_arg.resumeState.weaponState or WeaponState.Gem
@@ -187,9 +139,6 @@ WikiWeaponPreviewCtrl._InitAction = HL.Method() << function(self)
     self:_RefreshWeaponState(defaultWeaponStateIndex, false)
 end
 
-
-
-
 WikiWeaponPreviewCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
     if not resumeState then
         return
@@ -198,10 +147,6 @@ WikiWeaponPreviewCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(
         self.view.left:ApplyResumeState(resumeState.groupItemList)
     end
 end
-
-
-
-
 
 WikiWeaponPreviewCtrl._RefreshWeaponState = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, weaponState, playAnim)
     if self.m_curWeaponState == weaponState then
@@ -220,9 +165,6 @@ WikiWeaponPreviewCtrl._RefreshWeaponState = HL.Method(HL.Number, HL.Opt(HL.Boole
     end
 end
 
-
-
-
 WikiWeaponPreviewCtrl._RefreshModel = HL.Method(HL.Opt(HL.Boolean)) << function(self, playInAnim)
     if self.m_phase then
         self.m_phase:ShowModel(self.m_wikiEntryShowData, {
@@ -233,8 +175,6 @@ WikiWeaponPreviewCtrl._RefreshModel = HL.Method(HL.Opt(HL.Boolean)) << function(
         self.m_phase:ActiveEntryVirtualCamera(true)
     end
 end
-
-
 
 WikiWeaponPreviewCtrl._RefreshLeft = HL.Method() << function(self)
     
@@ -257,8 +197,6 @@ WikiWeaponPreviewCtrl._RefreshLeft = HL.Method() << function(self)
     self.view.left:InitWikiGroupItemList(wikiGroupItemListArgs)
 end
 
-
-
 WikiWeaponPreviewCtrl._RefreshCenter = HL.Method() << function(self)
     
     local args = {
@@ -274,9 +212,6 @@ WikiWeaponPreviewCtrl._RefreshCenter = HL.Method() << function(self)
     self:_RefreshModel()
 end
 
-
-
-
 WikiWeaponPreviewCtrl._RefreshRight = HL.Method(HL.Opt(HL.Boolean)) << function(self, playAnim)
     if playAnim then
         self.view.right.recipeNodeAnimWrapper:PlayOutAnimation(function()
@@ -287,9 +222,6 @@ WikiWeaponPreviewCtrl._RefreshRight = HL.Method(HL.Opt(HL.Boolean)) << function(
         self:_RefreshWeaponShowInfo(self:_GetWeaponShowData(self.m_curWeaponState))
     end
 end
-
-
-
 
 WikiWeaponPreviewCtrl._GetWeaponShowData = HL.Method(HL.Number).Return(HL.Table) << function(self, weaponState)
     local templateId = self.m_wikiEntryShowData.wikiEntryData.refItemId
@@ -326,9 +258,6 @@ WikiWeaponPreviewCtrl._GetWeaponShowData = HL.Method(HL.Number).Return(HL.Table)
     return weaponShowData
 end
 
-
-
-
 WikiWeaponPreviewCtrl._RefreshWeaponShowInfo = HL.Method(HL.Table) << function(self, weaponShowData)
     local view = self.view.right
     local isMax = weaponShowData.level == weaponShowData.maxLevel
@@ -349,14 +278,10 @@ WikiWeaponPreviewCtrl._RefreshWeaponShowInfo = HL.Method(HL.Table) << function(s
     view.weaponGemSlimNode:InitWeaponGemSlimeNodeByInst(gemInst)
 end
 
-
-
 WikiWeaponPreviewCtrl._InitController = HL.Virtual() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     UIUtils.bindHyperlinkPopup(self, "wiki_detail_right", self.view.inputGroup.groupId)
 end
-
-
 
 WikiWeaponPreviewCtrl._PlayDecoAnim = HL.Method() << function(self)
     if self.m_phase then

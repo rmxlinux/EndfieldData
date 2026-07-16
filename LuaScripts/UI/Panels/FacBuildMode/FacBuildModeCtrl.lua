@@ -2,128 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacBuildMode
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacBuildModeCtrl = HL.Class('FacBuildModeCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -140,85 +19,62 @@ FacBuildModeCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 FacBuildModeCtrl.s_enableContinueBuild = HL.StaticField(HL.Boolean) << false 
-
 
 FacBuildModeCtrl.m_onClickScreen = HL.Field(HL.Function)
 
-
 FacBuildModeCtrl.m_onPressScreen = HL.Field(HL.Function)
-
 
 FacBuildModeCtrl.m_onReleaseScreen = HL.Field(HL.Function)
 
-
 FacBuildModeCtrl.m_mode = HL.Field(HL.Number) << FacConst.FAC_BUILD_MODE.Normal
-
 
 FacBuildModeCtrl.m_buildArgs = HL.Field(HL.Table)
 
-
 FacBuildModeCtrl.m_itemData = HL.Field(HL.Userdata)
-
 
 FacBuildModeCtrl.m_buildingNodeId = HL.Field(HL.Any)
 
-
 FacBuildModeCtrl.m_buildingId = HL.Field(HL.String) << ""
-
 
 FacBuildModeCtrl.m_beltId = HL.Field(HL.String) << ""
 
-
 FacBuildModeCtrl.m_lastMouseWorldPos = HL.Field(HL.Userdata)
-
 
 FacBuildModeCtrl.m_tickCor = HL.Field(HL.Thread)
 
-
 FacBuildModeCtrl.m_sizeIndicator = HL.Field(HL.Table)
-
 
 FacBuildModeCtrl.m_beltStartPreviewMark = HL.Field(HL.Table)
 
-
 FacBuildModeCtrl.m_pipePreviewMark = HL.Field(HL.Table)
-
 
 FacBuildModeCtrl.m_hideKey = HL.Field(HL.Number) << -1
 
-
-FacBuildModeCtrl.m_powerPoleRange = HL.Field(HL.Table)
-
+FacBuildModeCtrl.m_workingRange = HL.Field(HL.Table)
 
 FacBuildModeCtrl.m_fluidSprayRange = HL.Field(HL.Table)
 
-
 FacBuildModeCtrl.m_battleRange = HL.Field(HL.Table)
-
 
 FacBuildModeCtrl.m_isDragging = HL.Field(HL.Boolean) << false
 
-
 FacBuildModeCtrl.m_draggingOffset = HL.Field(Vector3) 
-
 
 FacBuildModeCtrl.m_camState = HL.Field(HL.Any)
 
-
 FacBuildModeCtrl.m_signResetBindingId = HL.Field(HL.Number) << -1
-
 
 FacBuildModeCtrl.m_rpgBuildBindingGroupId = HL.Field(HL.Number) << -1
 
-
 FacBuildModeCtrl.m_topViewBuildBindingGroupId = HL.Field(HL.Number) << -1
 
+
+FacBuildModeCtrl.m_simpleFigureBackupValid = HL.Field(HL.Boolean) << false
+
+FacBuildModeCtrl.m_simpleFigureModeBeforeBeltBuild = HL.Field(HL.Number) << FacConst.SIMPLE_FIGURE_MODE.None
+
 FacBuildModeCtrl.s_radioTagHandle = HL.StaticField(HL.Any)
-
-
-
 
 
 
@@ -384,9 +240,8 @@ FacBuildModeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 FacBuildModeCtrl._Tick = HL.Method() << function(self)
+    if not CS.UnityEngine.Application.isFocused then return end
     if self.m_mode == FacConst.FAC_BUILD_MODE.Normal then
         return
     end
@@ -512,6 +367,7 @@ FacBuildModeCtrl._Tick = HL.Method() << function(self)
             end
         end
         customGridCenter = Unity.Vector3(curMode.preparedPosition.x, curMode.preparedPosition.y, curMode.preparedPosition.z)
+        Notify(MessageConst.ON_BLUEPRINT_UPDATE)
     end
 
     if curMode then
@@ -582,8 +438,6 @@ FacBuildModeCtrl._Tick = HL.Method() << function(self)
     end
 end
 
-
-
 FacBuildModeCtrl.OnShow = HL.Override() << function(self)
     self:_AddRegister()
     CS.HG.Rendering.ScriptBridge.TAAUControlBridge.taauFastConverge = true
@@ -591,9 +445,8 @@ FacBuildModeCtrl.OnShow = HL.Override() << function(self)
     self:FacLockBuildPos({ false })
     self.view.continueBuildToggle.isOn = FacBuildModeCtrl.s_enableContinueBuild
     self.view.actionButtonsAsOption.signResetButton.gameObject:SetActiveIfNecessary(false)
+    self.view.miasmaIndicator:InitMiasmaIndicator()
 end
-
-
 
 FacBuildModeCtrl.OnHide = HL.Override() << function(self)
     self:FacLockBuildPos({ false })
@@ -609,8 +462,6 @@ FacBuildModeCtrl.OnHide = HL.Override() << function(self)
 
     GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.FacBuildSystemActionConflictName)
 end
-
-
 
 FacBuildModeCtrl.OnClose = HL.Override() << function(self)
     self:_ExitCurMode(false, true, true)
@@ -629,8 +480,6 @@ FacBuildModeCtrl.OnClose = HL.Override() << function(self)
 
     GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.FacBuildSystemActionConflictName)
 end
-
-
 
 FacBuildModeCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     if self.m_keyHintCells == nil and self.m_sizeIndicator == nil and self.m_beltStartPreviewMark == nil and self.m_pipePreviewMark == nil and self.m_fluidSprayRange == nil then
@@ -652,9 +501,6 @@ FacBuildModeCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.A
     return state
 end
 
-
-
-
 FacBuildModeCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function(self, state)
     if not state then
         return
@@ -669,14 +515,9 @@ end
 
 
 
-
-
 FacBuildModeCtrl.EnterBlueprintMode = HL.StaticMethod(HL.Table) << function(args)
     FacBuildModeCtrl._EnterMode(args, FacConst.FAC_BUILD_MODE.Blueprint)
 end
-
-
-
 
 FacBuildModeCtrl._EnterMode = HL.StaticMethod(HL.Table, HL.Number) << function(args, mode)
     if Utils.isCurSquadAllDead() then
@@ -755,7 +596,7 @@ FacBuildModeCtrl._EnterMode = HL.StaticMethod(HL.Table, HL.Number) << function(a
             
             self:_StartCoroutine(function()
                 coroutine.step() 
-                if self:IsShow() then
+                if self:IsShow() and InputManager.IsLeftMouseDown(true) then
                     self:_OnPressScreen()
                 end
             end)
@@ -778,8 +619,6 @@ FacBuildModeCtrl._EnterMode = HL.StaticMethod(HL.Table, HL.Number) << function(a
     GameInstance.remoteFactoryManager.inBuildMode = true
 end
 
-
-
 FacBuildModeCtrl.EnterBuildingMode = HL.StaticMethod(HL.Table) << function(args)
     if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacMode) then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_PLACE_BUILDING_LOCKED)
@@ -788,18 +627,13 @@ FacBuildModeCtrl.EnterBuildingMode = HL.StaticMethod(HL.Table) << function(args)
     FacBuildModeCtrl._EnterMode(args, FacConst.FAC_BUILD_MODE.Building)
 end
 
-
-
 FacBuildModeCtrl.EnterLogisticMode = HL.StaticMethod(HL.Table) << function(args)
     FacBuildModeCtrl._EnterMode(args, FacConst.FAC_BUILD_MODE.Logistic)
 end
 
-
-
 FacBuildModeCtrl.EnterBeltMode = HL.StaticMethod(HL.Table) << function(args)
     FacBuildModeCtrl._EnterMode(args, FacConst.FAC_BUILD_MODE.Belt)
 end
-
 
 FacBuildModeCtrl._BeforeEnterBuildMode = HL.StaticMethod(HL.Boolean) << function(skipMainHudAnim)
     Notify(MessageConst.HIDE_ITEM_TIPS)
@@ -807,7 +641,6 @@ FacBuildModeCtrl._BeforeEnterBuildMode = HL.StaticMethod(HL.Boolean) << function
     PhaseManager:ExitPhaseFastTo(PhaseId.Level, true)
     Notify(MessageConst.BEFORE_ENTER_BUILD_MODE, skipMainHudAnim)
 end
-
 
 FacBuildModeCtrl.CheckCanEnterAndShowToast = HL.StaticMethod().Return(HL.Boolean)<< function()
     local level = PhaseManager.m_openedPhaseSet[PhaseId.Level]
@@ -835,10 +668,7 @@ end
 
 
 
-
 FacBuildModeCtrl.m_needCloseMiniPower = HL.Field(HL.Boolean) << false
-
-
 
 FacBuildModeCtrl._AddRegister = HL.Method() << function(self)
     
@@ -859,8 +689,6 @@ FacBuildModeCtrl._AddRegister = HL.Method() << function(self)
     end)
 end
 
-
-
 FacBuildModeCtrl._ClearRegister = HL.Method() << function(self)
     
     self.m_tickCor = self:_ClearCoroutine(self.m_tickCor)
@@ -875,8 +703,6 @@ end
 
 
 
-
-
 FacBuildModeCtrl._OnClickScreen = HL.Method() << function(self)
     if not DeviceInfo.usingTouch then
         self:_OnClickConfirm()
@@ -884,8 +710,6 @@ FacBuildModeCtrl._OnClickScreen = HL.Method() << function(self)
         self.view.actionHint:Play("facbuildmodeerrorhint_blink")
     end
 end
-
-
 
 FacBuildModeCtrl._OnClickConfirm = HL.Method() << function(self)
     if not FacBuildModeCtrl.s_enableConfirmBuild then
@@ -932,8 +756,6 @@ FacBuildModeCtrl._OnClickConfirm = HL.Method() << function(self)
         self:_ConfirmBlueprint()
     end
 end
-
-
 
 FacBuildModeCtrl._OnPressScreen = HL.Method() << function(self)
     self.m_mobileDragBeltChecker = self:_ClearCoroutine(self.m_mobileDragBeltChecker)
@@ -1077,10 +899,7 @@ FacBuildModeCtrl._OnPressScreen = HL.Method() << function(self)
 end
 
 
-
 FacBuildModeCtrl.m_mobileDragBeltChecker = HL.Field(HL.Any)
-
-
 
 
 FacBuildModeCtrl._OnReleaseScreen = HL.Method() << function(self)
@@ -1110,9 +929,6 @@ end
 
 
 
-
-
-
 FacBuildModeCtrl.OnInFacMainRegionChange = HL.Method(HL.Boolean) << function(self, inMainRegion)
     if inMainRegion then
         return
@@ -1135,9 +951,6 @@ FacBuildModeCtrl.OnInFacMainRegionChange = HL.Method(HL.Boolean) << function(sel
     self:_ExitCurMode(false, true)
 end
 
-
-
-
 FacBuildModeCtrl._SetCamState = HL.Method(HL.Opt(HL.String)) << function(self, camStateName)
     if LuaSystemManager.factory.inTopView then
         return
@@ -1155,22 +968,14 @@ FacBuildModeCtrl._SetCamState = HL.Method(HL.Opt(HL.String)) << function(self, c
     self.m_camState = FactoryUtils.enterFacCamera(camStateName)
 end
 
-
-
-
 FacBuildModeCtrl._OnChangeHideToggle = HL.Method(HL.Boolean) << function(self, isOn)
+    local fac = LuaSystemManager.factory
+    local mode = FacConst.SIMPLE_FIGURE_MODE.None
     if isOn then
-        if self:_IsPipe() then
-            FactoryUtils.startBeltFigureRenderer()
-        else
-            FactoryUtils.startPipeFigureRenderer()
-        end
-    else
-        FactoryUtils.stopLogisticFigureRenderer()
+        mode = self:_IsPipe() and FacConst.SIMPLE_FIGURE_MODE.SimpleBeltFigure or FacConst.SIMPLE_FIGURE_MODE.SimplePipeFigure
     end
+    fac:SetSimpleFigureMode(mode)
 end
-
-
 
 
 
@@ -1180,8 +985,6 @@ end
 FacBuildModeCtrl.ExitCurModeForCS = HL.StaticMethod(HL.Opt(HL.Any)) << function()
     FacBuildModeCtrl.ExitCurMode(true)
 end
-
-
 
 FacBuildModeCtrl.ExitCurMode = HL.StaticMethod(HL.Opt(HL.Boolean)) << function(skipAnim)
     
@@ -1196,8 +999,6 @@ FacBuildModeCtrl.ExitCurMode = HL.StaticMethod(HL.Opt(HL.Boolean)) << function(s
     self:_ExitCurMode(false, skipAnim, true)
 end
 
-
-
 FacBuildModeCtrl._OnClickExitIcon = HL.Method() << function(self)
     if self.m_mode == FacConst.FAC_BUILD_MODE.Belt and self:_InDragMode() then
         
@@ -1209,11 +1010,6 @@ FacBuildModeCtrl._OnClickExitIcon = HL.Method() << function(self)
         self:_ExitCurMode(true)
     end
 end
-
-
-
-
-
 
 FacBuildModeCtrl._ExitCurMode = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean)) << function(self, fromClick, skipAnim, forceExit)
     if not FacBuildModeCtrl.s_enableExitBuildMode and not forceExit then
@@ -1266,8 +1062,6 @@ FacBuildModeCtrl._ExitCurMode = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL.Bool
     AudioAdapter.PostEvent("au_sfx_ui_fac_buiding_off")
 end
 
-
-
 FacBuildModeCtrl._ClearArgs = HL.Method() << function(self)
     self.m_buildArgs = nil
     self.m_itemData = nil
@@ -1277,9 +1071,6 @@ FacBuildModeCtrl._ClearArgs = HL.Method() << function(self)
     self.m_lastMouseWorldPos = nil
     self:_SetCamState()
 end
-
-
-
 
 FacBuildModeCtrl._ExitMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAnim)
     local oldMode = self.m_mode
@@ -1322,9 +1113,13 @@ FacBuildModeCtrl._ExitMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, ski
         elseif oldMode == FacConst.FAC_BUILD_MODE.Belt then
             Notify(MessageConst.ON_EXIT_BELT_MODE)
         elseif oldMode == FacConst.FAC_BUILD_MODE.Blueprint then
+            Notify(MessageConst.ON_EXIT_BLUEPRINT_MODE)
         end
         Notify(MessageConst.ON_BUILD_MODE_CHANGE, self.m_mode)
         GameInstance.remoteFactoryManager.inBuildMode = false
+        if LuaSystemManager.factory.inTopView then
+            LuaSystemManager.factory:ApplySimpleFigureToRenderer()
+        end
     end
     if not skipAnim then
         self:PlayAnimationOutWithCallback(exitAct)
@@ -1332,8 +1127,6 @@ FacBuildModeCtrl._ExitMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, ski
         exitAct()
     end
 end
-
-
 
 FacBuildModeCtrl._UpdateCommonNodesOnEnterMode = HL.Method() << function(self)
     local isBuilding = self.m_mode == FacConst.FAC_BUILD_MODE.Building
@@ -1360,14 +1153,35 @@ FacBuildModeCtrl._UpdateCommonNodesOnEnterMode = HL.Method() << function(self)
         node.confirmText.text = isBelt and Language.LUA_FAC_BUILD_MODE_CONFIRM_BELT_START or Language.LUA_FAC_BUILD_CONFIRM_NORMAL
     end
 
-    local showHideToggle = inTopView and isBelt and FactoryUtils.canShowPipe()
+    local beltUnlocked = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedBelt
+    
+    local showHideToggle = inTopView and (isBelt or isPipe)
+    if showHideToggle then
+        if isBelt then
+            showHideToggle = FactoryUtils.canShowPipe()
+        else
+            showHideToggle = beltUnlocked
+        end
+    end
     self.view.hideToggle.gameObject:SetActive(showHideToggle)
-    if self.m_buildArgs.isFromChangeInputDevice then 
-        local isToggleOn = isPipe and FactoryUtils.isBeltInSimpleFigure() or FactoryUtils.isPipeInSimpleFigure()
-        self.view.hideToggle.toggle:SetIsOnWithoutNotify(isToggleOn)
+    if showHideToggle then
+        if self.m_buildArgs.isFromChangeInputDevice then 
+            local rMode = LuaSystemManager.factory:GetSimpleFigureModeFromRenderer()
+            local isToggleOn = isPipe and rMode == FacConst.SIMPLE_FIGURE_MODE.SimpleBeltFigure
+                or (not isPipe) and rMode == FacConst.SIMPLE_FIGURE_MODE.SimplePipeFigure
+            self.view.hideToggle.toggle:SetIsOnWithoutNotify(isToggleOn)
+            LuaSystemManager.factory:SetSimpleFigureMode(rMode, true)
+        else
+            local fac = LuaSystemManager.factory
+            local wantOn = isPipe and fac.simpleFigureMode == FacConst.SIMPLE_FIGURE_MODE.SimpleBeltFigure
+                or (not isPipe) and fac.simpleFigureMode == FacConst.SIMPLE_FIGURE_MODE.SimplePipeFigure
+            self.view.hideToggle.toggle:SetIsOnWithoutNotify(wantOn)
+            self:_OnChangeHideToggle(wantOn)
+        end
     else
-        self.view.hideToggle.toggle:SetIsOnWithoutNotify(showHideToggle)
-        self:_OnChangeHideToggle(showHideToggle)
+        self.view.hideToggle.toggle:SetIsOnWithoutNotify(false)
+        
+        LuaSystemManager.factory:ClearSimpleFigureEcsOnly()
     end
     self.view.hideToggle.beltIcon.gameObject:SetActive(isPipe)
     self.view.hideToggle.pipeIcon.gameObject:SetActive(not isPipe)
@@ -1412,8 +1226,6 @@ FacBuildModeCtrl._UpdateCommonNodesOnEnterMode = HL.Method() << function(self)
     InputManagerInst:ToggleGroup(self.m_topViewBuildBindingGroupId, inTopView)
     InputManagerInst:ToggleGroup(self.m_rpgBuildBindingGroupId, not inTopView)
 end
-
-
 
 FacBuildModeCtrl._UpdatePendingHint = HL.Method() << function(self)
     local isBlueprint = self.m_mode == FacConst.FAC_BUILD_MODE.Blueprint
@@ -1509,17 +1321,11 @@ local KeyHints = {
     },
 }
 
-
 FacBuildModeCtrl.m_keyHintCells = HL.Field(HL.Forward('UIListCache'))
-
-
 
 FacBuildModeCtrl._InitKeyHint = HL.Method() << function(self)
     self.m_keyHintCells = self.m_keyHintCells or UIUtils.genCellCache(self.view.keyHintCell)
 end
-
-
-
 
 FacBuildModeCtrl._RefreshKeyHint = HL.Method(HL.Opt(HL.Table)) << function(self, keyHint)
     if not keyHint then
@@ -1568,17 +1374,15 @@ end
 
 
 
-
 FacBuildModeCtrl.m_curBuildIsValid = HL.Field(HL.Boolean) << true
-
-
-
 
 FacBuildModeCtrl._GetBuildingCheckResultHint = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.String)) << function(self, checkResult)
     local valid, hint = checkResult.success, nil
 
     if not valid then
-        if checkResult.busLimited then
+        if checkResult.skipChapterInvalidInDomain then
+            hint = Language.LUA_FAC_BUILD_MODE_SKIP_CHAPTER_INVALID_IN_DOMAIN
+        elseif checkResult.busLimited then
             hint = Language.LUA_FAC_BUILD_MODE_ROAD_ATTACH
         elseif checkResult.buildableInChapterLimitedTemplates and checkResult.buildableInChapterLimitedTemplates.Count > 0 then
             local tempId = checkResult.buildableInChapterLimitedTemplates[0].Item1
@@ -1662,6 +1466,8 @@ FacBuildModeCtrl._GetBuildingCheckResultHint = HL.Method(HL.Userdata).Return(HL.
             hint = Language.LUA_FAC_BUILD_MODE_ON_WRONG_MINE_TYPE
         elseif checkResult.mineLevelLimited then
             hint = Language.LUA_FAC_BUILD_MODE_MINE_LEVEL_LIMITED
+        elseif checkResult.buildableRiftLimited then
+            hint = Language.LUA_FAC_BUILD_MODE_IN_RIFT_LIMITED
         elseif checkResult.buildableWaterLimited then
             hint = Language.LUA_FAC_BUILD_MODE_IN_WATER_LIMITED
         elseif checkResult.buildableLimited then 
@@ -1705,7 +1511,15 @@ FacBuildModeCtrl._GetBuildingCheckResultHint = HL.Method(HL.Userdata).Return(HL.
                 hint = Language.LUA_FAC_BUILD_MODE_PUMP_LIQUID_TYPE_NOT_MATCH_DEFAULT
             end
         elseif checkResult.dumpReachLiquidLimited then
-            hint = Language.LUA_FAC_BUILD_MODE_DUMP_MUST_REACH_LIQUID
+            if GameInstance.remoteFactoryManager.system.core.progressStatus.riftFilling.enableRiftFilling then
+                hint = Language.LUA_FAC_BUILD_MODE_DUMP_MUST_REACH_LIQUID_0N_RIFT_FILLING_UNLOCK
+            else
+                hint = Language.LUA_FAC_BUILD_MODE_DUMP_MUST_REACH_LIQUID
+            end
+        elseif checkResult.riftFillingNotEnabled then
+            hint = Language.LUA_FAC_BUILD_MODE_RIFT_FILLING_NOT_ENABLED
+        elseif checkResult.riftIsNotSuppressedYet then
+            hint = Language.LUA_FAC_BUILD_MODE_RIFT_IS_NOT_SUPPRESSED_YET
         elseif checkResult.noSoilForWaterSpray then
             hint = Language.LUA_FAC_BUILD_MODE_NO_SOIL_IN_SPRAY
         elseif checkResult.moveAcrossScene then
@@ -1736,10 +1550,6 @@ FacBuildModeCtrl._GetBuildingCheckResultHint = HL.Method(HL.Userdata).Return(HL.
     return valid, hint
 end
 
-
-
-
-
 FacBuildModeCtrl._GetConveyorCheckResultHint = HL.Method(HL.Userdata, HL.Boolean).Return(HL.Boolean, HL.Opt(HL.String)) << function(self, checkResult, isPipe)
     local valid, hint = checkResult.success, nil
 
@@ -1754,6 +1564,8 @@ FacBuildModeCtrl._GetConveyorCheckResultHint = HL.Method(HL.Userdata, HL.Boolean
             hint = Language.LUA_FAC_BUILD_MODE_IN_BUILDABLE_RANGE_BUT_HAS_INVALID_GRID
         elseif checkResult.occludedByArea then
             hint = Language.LUA_FAC_BUILD_MODE_OCCLUDED_BY_AREA
+        elseif checkResult.linkingNodeInvalidPlaced then
+            hint = isPipe and Language.LUA_FAC_BUILD_MODE_PIPE_LINK_INVALID_PLACED_NODE or Language.LUA_FAC_BUILD_MODE_BELT_LINK_INVALID_PLACED_NODE
         elseif checkResult.hasSelfOverlay then
             hint = isPipe and Language.LUA_FAC_BUILD_MODE_PIPE_SELF_OVERLAP or Language.LUA_FAC_BUILD_MODE_BELT_SELF_OVERLAP
         elseif checkResult.pipeAngleLimited then
@@ -1791,8 +1603,6 @@ FacBuildModeCtrl._GetConveyorCheckResultHint = HL.Method(HL.Userdata, HL.Boolean
     return valid, hint
 end
 
-
-
 FacBuildModeCtrl._UpdateValidResult = HL.Method() << function(self)
     if self.m_mode == FacConst.FAC_BUILD_MODE.Normal then
         return
@@ -1801,6 +1611,7 @@ FacBuildModeCtrl._UpdateValidResult = HL.Method() << function(self)
     local inDragMode = self:_InDragMode()
     local valid, errorHint, moving = false, nil, false
     local actionHint, warningHint, normalHint
+    local actionColor = "Black"
     if self.m_mode == FacConst.FAC_BUILD_MODE.Building or self.m_mode == FacConst.FAC_BUILD_MODE.Logistic then
         local rst = GameInstance.remoteFactoryManager.interact.currentBuildingMode.addBuildingCheckResult
         valid, errorHint = self:_GetBuildingCheckResultHint(rst)
@@ -1829,6 +1640,24 @@ FacBuildModeCtrl._UpdateValidResult = HL.Method() << function(self)
 
             if not self:_CheckSignCanBuild() then
                 actionHint = Language.LUA_MARKER_BUILD_COUNT_MAX
+            end
+            local envRel = buildingMode.envRelationInfo
+            if envRel:NotFullyCovered() then
+                if envRel:NotFullyCoveredPartial() then
+                    actionHint = Language.LUA_BUILDING_ENV_NOT_FULLY_COVERED_BUT_PARTIAL
+                    actionColor = "Yellow"
+                end
+            elseif envRel:FullyCovered() then
+                local env = envRel:FullyCoveredEnv()
+                local envDisplayConfig = FacConst.FAC_ENV_DISPLAY_CONFIG[env]
+                local envText = Language.LUA_BUILDING_ENV_NONE
+                if envDisplayConfig.textKey then
+                    local envI18nResult, envI18nText = CS.Beyond.I18n.I18nUtils.TryGetText(envDisplayConfig.textKey)
+                    if envI18nResult then
+                        envText = envI18nText
+                    end
+                end
+                actionHint = string.format(Language.LUA_BUILDING_ENV_FULLY_COVERED, envDisplayConfig.icon, envDisplayConfig.color, envText)
             end
         end
         moving = GameInstance.remoteFactoryManager.interact.currentBuildingMode.isMoving
@@ -1923,6 +1752,7 @@ FacBuildModeCtrl._UpdateValidResult = HL.Method() << function(self)
                 UIUtils.PlayAnimationAndToggleActive(self.view.actionHint, true)
             end
             self.view.actionHintTxt:SetAndResolveTextStyle(actionHint)
+            self.view.actionColorCtrl:SetState(actionColor)
         else
             if self.view.actionHint.gameObject.activeInHierarchy and self.view.actionHint.curState ~= UIConst.UI_ANIMATION_WRAPPER_STATE.Out then
                 UIUtils.PlayAnimationAndToggleActive(self.view.actionHint, false)
@@ -1953,41 +1783,51 @@ FacBuildModeCtrl._UpdateValidResult = HL.Method() << function(self)
     GameInstance.remoteFactoryManager:SetPreviewUnitState(valid, moving)
 end
 
-
-
 FacBuildModeCtrl._UpdateAutoConnectExtraHint = HL.Method() << function(self)
     
     local buildingMode = GameInstance.remoteFactoryManager.interact.currentBuildingMode
     if not buildingMode then
         return
     end
-    if FacConst.NEED_AUTO_CONNECT_EXTRA_HINT_BUILDING[self.m_buildingId] == nil then
-        return
-    end
-    local autoConnect = buildingMode.autoConnectCandidateList
-    if not autoConnect then
-        return
-    end
-    local status = CS.Beyond.Gameplay.Factory.PowerAutoConnectStatus
-    local notInPower, noPower = true, false
-    for i = 0, autoConnect.Count - 1 do
-        local info = autoConnect[i]
-        if info.Item5 == status.Outage then
-            noPower = true
-            notInPower = false
-            break
-        elseif info.Item5 ~= status.LocalLink and info.Item5 ~= status.DistLimit then
-            notInPower = false
+    local notInPower, noPower = false, false
+    if FacConst.NEED_AUTO_CONNECT_EXTRA_HINT_BUILDING[self.m_buildingId] then
+        local autoConnect = buildingMode.autoConnectCandidateList
+        if autoConnect then
+            notInPower = true
+            local status = CS.Beyond.Gameplay.Factory.PowerAutoConnectStatus
+            for i = 0, autoConnect.Count - 1 do
+                local info = autoConnect[i]
+                if info.Item5 == status.Outage then
+                    noPower = true
+                    notInPower = false
+                    break
+                elseif info.Item5 ~= status.LocalLink and info.Item5 ~= status.DistLimit then
+                    notInPower = false
+                end
+            end
         end
     end
-    local moving = GameInstance.remoteFactoryManager.interact.currentBuildingMode.isMoving
-    self.view.moveBuildingHint.gameObject:SetActiveIfNecessary(moving or notInPower or noPower)
+    local udpipeKeepConnect, udpipeNoConnect = false, false
+    if buildingMode.isMoving then
+        local udpipeConnectEntry = buildingMode.udpipeConnectEntry
+        if udpipeConnectEntry then
+            udpipeNoConnect = udpipeConnectEntry.outOfRange
+            udpipeKeepConnect = not udpipeNoConnect
+        end
+    end
+
+    local moving = buildingMode.isMoving
+    self.view.moveBuildingHint.gameObject:SetActiveIfNecessary(moving or notInPower or noPower or udpipeNoConnect or udpipeKeepConnect)
     self.view.rebuildInfoTxt.gameObject:SetActiveIfNecessary(moving)
     self.view.noPowerTxt.gameObject:SetActiveIfNecessary(notInPower)
     self.view.noElectricity.gameObject:SetActiveIfNecessary(noPower)
+    if self.view.keepConnected then
+        self.view.keepConnected.gameObject:SetActiveIfNecessary(udpipeKeepConnect)
+    end
+    if self.view.noConnected then
+        self.view.noConnected.gameObject:SetActiveIfNecessary(udpipeNoConnect)
+    end
 end
-
-
 
 
 
@@ -2020,9 +1860,6 @@ FacBuildModeCtrl.GetRecoverBuildStateOnChangeDevice = HL.Method().Return(HL.Opt(
     end
     return nil
 end
-
-
-
 
 FacBuildModeCtrl._EnterBuildingMode = HL.Method(HL.Table) << function(self, args)
     if self.m_mode == FacConst.FAC_BUILD_MODE.Building then
@@ -2110,19 +1947,27 @@ FacBuildModeCtrl._EnterBuildingMode = HL.Method(HL.Table) << function(self, args
     self:_UpdateAutoConnectExtraHint()
 
     self.m_mode = FacConst.FAC_BUILD_MODE.Building
+    local bData = Tables.factoryBuildingTable[self.m_buildingId]
 
     do 
-        if self.m_powerPoleRange then
-            if self.m_powerPoleRange.gameObject then
-                GameObject.Destroy(self.m_powerPoleRange.gameObject)
+        if self.m_workingRange then
+            if self.m_workingRange.gameObject then
+                GameObject.Destroy(self.m_workingRange.gameObject)
             end
-            self.m_powerPoleRange = nil
+            self.m_workingRange = nil
         end
-        local effectPath = FacConst.POLE_RANGE_EFFECT_MAP[self.m_buildingId]
+        local effectPath = nil
+        if bData then
+            if bData.type == GEnums.FacBuildingType.PowerPole or bData.type == GEnums.FacBuildingType.PowerDiffuser then
+                effectPath = FacConst.POLE_RANGE_EFFECT_MAP[self.m_buildingId]
+            elseif bData.type == GEnums.FacBuildingType.EnvGenWithActivator then
+                effectPath = FacConst.VAPORIZER_RANGE_EFFECT
+            end
+        end
         if effectPath then
             local prefab = self.loader:LoadGameObject(effectPath)
             local obj = self:_CreateWorldGameObject(prefab)
-            self.m_powerPoleRange = Utils.wrapLuaNode(obj)
+            self.m_workingRange = Utils.wrapLuaNode(obj)
             obj.gameObject:SetActive(false)
         end
     end
@@ -2145,7 +1990,6 @@ FacBuildModeCtrl._EnterBuildingMode = HL.Method(HL.Table) << function(self, args
     end
     self:_UpdateBuildingFollowerState(true)
 
-    local bData = Tables.factoryBuildingTable[self.m_buildingId]
     self:_SetCamState(bData.buildCamState)
 
     Notify(MessageConst.ON_BUILD_MODE_CHANGE, self.m_mode)
@@ -2162,9 +2006,6 @@ FacBuildModeCtrl._EnterBuildingMode = HL.Method(HL.Table) << function(self, args
     self:_ProcessSignBuildSetting()
 end
 
-
-
-
 FacBuildModeCtrl._ExitBuildingMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAnim)
     if self.m_mode ~= FacConst.FAC_BUILD_MODE.Building then
         return
@@ -2172,12 +2013,12 @@ FacBuildModeCtrl._ExitBuildingMode = HL.Method(HL.Opt(HL.Boolean)) << function(s
     
     self.m_sizeIndicator.followerObject.getTargetPosInfo = nil
     self.m_sizeIndicator.gameObject:SetActiveIfNecessary(false)
-    if self.m_powerPoleRange then
-        self.m_powerPoleRange.followerObject.getTargetPosInfo = nil
-        if self.m_powerPoleRange.gameObject then
-            GameObject.Destroy(self.m_powerPoleRange.gameObject)
+    if self.m_workingRange then
+        self.m_workingRange.followerObject.getTargetPosInfo = nil
+        if self.m_workingRange.gameObject then
+            GameObject.Destroy(self.m_workingRange.gameObject)
         end
-        self.m_powerPoleRange = nil
+        self.m_workingRange = nil
     end
     if self.m_battleRange then
         self.m_battleRange.followerObject.getTargetPosInfo = nil
@@ -2193,16 +2034,34 @@ FacBuildModeCtrl._ExitBuildingMode = HL.Method(HL.Opt(HL.Boolean)) << function(s
     self:_ExitMode(skipAnim)
 end
 
-
-
 FacBuildModeCtrl._ResetMoveBuildingHintState = HL.Method() << function(self)
     self.view.moveBuildingHint.gameObject:SetActiveIfNecessary(false)
     self.view.rebuildInfoTxt.gameObject:SetActive(true)
     self.view.noPowerTxt.gameObject:SetActive(false)
     self.view.noElectricity.gameObject:SetActive(false)
+    if self.view.keepConnected then
+        self.view.keepConnected.gameObject:SetActiveIfNecessary(false)
+    end
+    if self.view.noConnected then
+        self.view.noConnected.gameObject:SetActiveIfNecessary(false)
+    end
 end
 
 
+FacBuildModeCtrl._TryExitLinkWireOnBuildingMove = HL.Method(HL.Any) << function(self, moveTarget)
+    local linkBrain = GameWorld.gameMechManager.linkWireBrain
+    if not linkBrain.isLinking then
+        return
+    end
+    local sourceNodeId = linkBrain.currentLinkSourceNodeId
+    if sourceNodeId == 0 then
+        return
+    end
+    if (type(moveTarget) == "number" and sourceNodeId == moveTarget)
+        or (type(moveTarget) == "table" and moveTarget[sourceNodeId]) then
+        linkBrain:EndLinkWithCancel(true)
+    end
+end
 
 FacBuildModeCtrl._NotifyPowerPoleTravelHint = HL.Method() << function(self)
     if self.m_mode ~= FacConst.FAC_BUILD_MODE.Building then
@@ -2223,8 +2082,6 @@ FacBuildModeCtrl._NotifyPowerPoleTravelHint = HL.Method() << function(self)
         })
     end
 end
-
-
 
 FacBuildModeCtrl._ConfirmBuilding = HL.Method() << function(self)
     if not self:_CheckSignCanBuild() then
@@ -2265,9 +2122,6 @@ FacBuildModeCtrl._ConfirmBuilding = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacBuildModeCtrl._CancelBuilding = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAnim)
     local onCancel = self.m_buildArgs.onCancel
     if onCancel then
@@ -2277,19 +2131,15 @@ FacBuildModeCtrl._CancelBuilding = HL.Method(HL.Opt(HL.Boolean)) << function(sel
     self:_ExitBuildingMode(skipAnim)
 end
 
-
-
 FacBuildModeCtrl._DelBuilding = HL.Method() << function(self)
     if not self:_CanDelBuilding() then
         return
     end
 
-    GameInstance.player.remoteFactory.core:Message_OpDismantle(Utils.getCurrentChapterId(), self.m_buildingNodeId, function()
+    GameInstance.player.remoteFactory.core:Message_OpDismantle(Utils.getCurrentChapterId(), self.m_buildingNodeId, false, function()
         self:_ExitBuildingMode()
     end)
 end
-
-
 
 FacBuildModeCtrl._CanDelBuilding = HL.Method().Return(HL.Boolean) << function(self)
     if self.m_mode ~= FacConst.FAC_BUILD_MODE.Building then
@@ -2303,8 +2153,6 @@ FacBuildModeCtrl._CanDelBuilding = HL.Method().Return(HL.Boolean) << function(se
 
     return FactoryUtils.canDelBuilding(self.m_buildingNodeId)
 end
-
-
 
 FacBuildModeCtrl._RotateUnit = HL.Method() << function(self)
     if not self:_CanRotate() then
@@ -2321,8 +2169,6 @@ FacBuildModeCtrl._RotateUnit = HL.Method() << function(self)
     end
 end
 
-
-
 FacBuildModeCtrl._CanRotate = HL.Method().Return(HL.Boolean) << function(self)
     if self.m_mode == FacConst.FAC_BUILD_MODE.Normal then
         return false
@@ -2333,9 +2179,6 @@ FacBuildModeCtrl._CanRotate = HL.Method().Return(HL.Boolean) << function(self)
     end
     return true
 end
-
-
-
 
 FacBuildModeCtrl._UpdateAutoMoveTopViewCamState = HL.Method(HL.Opt(HL.Any)) << function(self, extraPadding)
     if not LuaSystemManager.factory.inTopView then
@@ -2369,9 +2212,6 @@ FacBuildModeCtrl._UpdateAutoMoveTopViewCamState = HL.Method(HL.Opt(HL.Any)) << f
     LuaSystemManager.factory:ToggleAutoMoveTopViewCam(size, extraPadding)
 end
 
-
-
-
 FacBuildModeCtrl._UpdateBuildingFollowerState = HL.Method(HL.Boolean) << function(self, isInit)
     if self.m_mode ~= FacConst.FAC_BUILD_MODE.Building then
         return
@@ -2391,18 +2231,26 @@ FacBuildModeCtrl._UpdateBuildingFollowerState = HL.Method(HL.Boolean) << functio
     end)
 
     if isInit then
-        if self.m_powerPoleRange then
+        if self.m_workingRange then
+            local extSizeW = 0
+            local extSizeH = 0
             local powerPoleData = GameInstance.remoteFactoryManager.staticData:QueryPowerPoleData(self.m_buildingId)
             if powerPoleData and GameInstance.remoteFactoryManager.powerPoleConditionQuery:QueryDiffuserEnabled(powerPoleData) then
                 local poleData = Tables.factoryPowerPoleTable[self.m_buildingId]
-                local extSizeW = poleData.rangeExtend.x
-                local extSizeH = poleData.rangeExtend.z
-                if extSizeW > 0 or extSizeH > 0 then
-                    self.m_powerPoleRange.gameObject:SetActive(true)
-                    self.m_powerPoleRange.followerObject.getTargetPosInfo = function(pos, rot)
-                        pos, rot = GameInstance.remoteFactoryManager.interact.currentBuildingMode:GetPreviewRenderInfo()
-                        return pos, rot
-                    end
+                extSizeW = poleData.rangeExtend.x
+                extSizeH = poleData.rangeExtend.z
+            else
+                local vaporizerData = GameInstance.remoteFactoryManager.staticData:QueryVaporizerData(self.m_buildingId)
+                if vaporizerData then
+                    extSizeW = vaporizerData.rangeExtend.x
+                    extSizeH = vaporizerData.rangeExtend.z
+                end
+            end
+            if extSizeW > 0 or extSizeH > 0 then
+                self.m_workingRange.gameObject:SetActive(true)
+                self.m_workingRange.followerObject.getTargetPosInfo = function(pos, rot)
+                    pos, rot = GameInstance.remoteFactoryManager.interact.currentBuildingMode:GetPreviewRenderInfo()
+                    return pos, rot
                 end
             end
         end
@@ -2457,8 +2305,6 @@ end
 
 
 
-
-
 FacBuildModeCtrl._ProcessSignBuildSetting = HL.Method() << function(self)
     local isSign = FacConst.SIGN_BUILDING_EXTRA_SETTING_PANEL[self.m_buildingId] or false
     local isMoving = self.m_buildingNodeId ~= nil
@@ -2474,9 +2320,6 @@ FacBuildModeCtrl._ProcessSignBuildSetting = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 FacBuildModeCtrl._OpenSignSettingPanel = HL.Method(HL.Boolean) << function(self, reset)
     self.m_lockBuildPos = true
@@ -2521,8 +2364,6 @@ FacBuildModeCtrl._OpenSignSettingPanel = HL.Method(HL.Boolean) << function(self,
     end
 end
 
-
-
 FacBuildModeCtrl._CheckSignCanBuild = HL.Method().Return(HL.Boolean) << function(self)
     local isSign = FacConst.SIGN_BUILDING_EXTRA_SETTING_PANEL[self.m_buildingId]
     if isSign then
@@ -2547,9 +2388,6 @@ FacBuildModeCtrl._CheckBanAndToastSignInTopView = HL.StaticMethod().Return(HL.Bo
     end
     return ban
 end
-
-
-
 
 
 
@@ -2623,6 +2461,7 @@ FacBuildModeCtrl._EnterBlueprintMode = HL.Method(HL.Table) << function(self, arg
         mode.onPlaceBlueprint = self.m_onPlaceFinish
     end
 
+    self:_ResetMoveBuildingHintState()
     self.view.moveBuildingHint.gameObject:SetActive(args.isMove == true)
 
     self:_AdjustCameraForBlueprint(true)
@@ -2632,6 +2471,9 @@ FacBuildModeCtrl._EnterBlueprintMode = HL.Method(HL.Table) << function(self, arg
     Notify(MessageConst.ON_BUILD_MODE_CHANGE, self.m_mode)
     Notify(MessageConst.ON_ENTER_BLUEPRINT_MODE)
     self:_NotifyPowerPoleTravelHint()
+    if args.isMove then
+        self:_TryExitLinkWireOnBuildingMove(args.batchSelectTargets)
+    end
     self:_UpdateCommonNodesOnEnterMode()
 
     if not self:_InDragMode() then
@@ -2640,9 +2482,6 @@ FacBuildModeCtrl._EnterBlueprintMode = HL.Method(HL.Table) << function(self, arg
         self:_Tick()
     end
 end
-
-
-
 
 FacBuildModeCtrl._AdjustCameraForBlueprint = HL.Method(HL.Boolean) << function(self, isEnterBlueprint)
     local camCtrl = LuaSystemManager.factory.m_topViewCamCtrl
@@ -2661,16 +2500,11 @@ FacBuildModeCtrl._AdjustCameraForBlueprint = HL.Method(HL.Boolean) << function(s
     end)
 end
 
-
-
-
 FacBuildModeCtrl._ExitBlueprintMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAnim)
     Notify(MessageConst.FAC_TOP_VIEW_SET_BLUEPRINT_ICONS)
     self:_ExitMode(skipAnim)
     self:_AdjustCameraForBlueprint(false)
 end
-
-
 
 FacBuildModeCtrl.FacOnBuildingBatchMoved = HL.Method() << function(self)
     if not self.m_buildArgs then
@@ -2682,8 +2516,6 @@ FacBuildModeCtrl.FacOnBuildingBatchMoved = HL.Method() << function(self)
         Notify(MessageConst.FAC_UPDATE_TOP_VIEW_BUILDING_INFOS, targets)
     end
 end
-
-
 
 FacBuildModeCtrl._ConfirmBlueprint = HL.Method() << function(self)
     self:_Tick()
@@ -2697,11 +2529,7 @@ FacBuildModeCtrl._ConfirmBlueprint = HL.Method() << function(self)
     GameInstance.remoteFactoryManager:GridPositionTriggered(mousePos, 0)
 end
 
-
 FacBuildModeCtrl.m_lastBPGridPos = HL.Field(HL.Any)
-
-
-
 
 FacBuildModeCtrl._SetBluePrintSelectGrids = HL.Method(CS.UnityEngine.Vector2Int) << function(self, gridPos)
     self.m_lastBPGridPos = gridPos
@@ -2726,9 +2554,6 @@ FacBuildModeCtrl._SetBluePrintSelectGrids = HL.Method(CS.UnityEngine.Vector2Int)
     end
     Notify(MessageConst.FAC_TOP_VIEW_SET_BLUEPRINT_ICON_POS, { bpOriWorldPos, dir })
 end
-
-
-
 
 
 
@@ -2807,14 +2632,9 @@ FacBuildModeCtrl._EnterLogisticMode = HL.Method(HL.Table) << function(self, args
     self:_UpdateCommonNodesOnEnterMode()
 end
 
-
-
-
 FacBuildModeCtrl._ExitLogisticMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAnim)
     self:_ExitMode(skipAnim)
 end
-
-
 
 FacBuildModeCtrl._ConfirmLogistic = HL.Method() << function(self)
     self:_Tick()
@@ -2832,9 +2652,6 @@ FacBuildModeCtrl._ConfirmLogistic = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacBuildModeCtrl._CancelLogistic = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAnim)
     local onCancel = self.m_buildArgs.onCancel
     if onCancel then
@@ -2849,10 +2666,8 @@ end
 
 
 
-
-
-
 FacBuildModeCtrl._EnterBeltMode = HL.Method(HL.Table) << function(self, args)
+    local prevBuildMode = self.m_mode
     if self.m_mode == FacConst.FAC_BUILD_MODE.Belt then
         if self.m_buildArgs.onExit then
             self.m_buildArgs.onExit()
@@ -2891,6 +2706,17 @@ FacBuildModeCtrl._EnterBeltMode = HL.Method(HL.Table) << function(self, args)
 
     self:_UpdateValidResult()
 
+    if LuaSystemManager.factory.inTopView then
+        if prevBuildMode ~= FacConst.FAC_BUILD_MODE.Belt then
+            self.m_simpleFigureBackupValid = true
+            self.m_simpleFigureModeBeforeBeltBuild = LuaSystemManager.factory.simpleFigureMode
+            local autoMode = isPipe and FacConst.SIMPLE_FIGURE_MODE.SimpleBeltFigure or FacConst.SIMPLE_FIGURE_MODE.SimplePipeFigure
+            LuaSystemManager.factory.simpleFigureMode = autoMode
+        end
+    else
+        self.m_simpleFigureBackupValid = false
+    end
+
     Notify(MessageConst.ON_BUILD_MODE_CHANGE, self.m_mode)
     Notify(MessageConst.ON_ENTER_BELT_MODE)
     self:_UpdateCommonNodesOnEnterMode()
@@ -2910,16 +2736,18 @@ FacBuildModeCtrl._EnterBeltMode = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
-
 FacBuildModeCtrl._ExitBeltMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAnim)
     local mark = self:_IsPipe() and self.m_pipePreviewMark or self.m_beltStartPreviewMark
     mark.transform:DOKill()
     mark.gameObject:SetActive(false)
 
     if not InputManagerInst.inChangingInputDevice then
-        FactoryUtils.stopLogisticFigureRenderer()
+        if LuaSystemManager.factory.inTopView and self.m_simpleFigureBackupValid then
+            self.m_simpleFigureBackupValid = false
+            LuaSystemManager.factory:SetSimpleFigureMode(self.m_simpleFigureModeBeforeBeltBuild)
+        else
+            LuaSystemManager.factory:ApplySimpleFigureToRenderer()
+        end
     end
 
     if DeviceInfo.usingTouch then
@@ -2930,15 +2758,9 @@ FacBuildModeCtrl._ExitBeltMode = HL.Method(HL.Opt(HL.Boolean)) << function(self,
 end
 
 
-
 FacBuildModeCtrl.m_bpStartPreviewMarkLastPos = HL.Field(HL.Userdata)
 
-
 FacBuildModeCtrl.m_bpStartPreviewMarkLastColor = HL.Field(Color)
-
-
-
-
 
 
 FacBuildModeCtrl._UpdateBPStartPreviewMark = HL.Method(Vector3, HL.Opt(HL.Boolean)) << function(self, curMousePos, isInit)
@@ -2946,10 +2768,6 @@ FacBuildModeCtrl._UpdateBPStartPreviewMark = HL.Method(Vector3, HL.Opt(HL.Boolea
     local _, worldPos = CSFactoryUtil.SampleLevelRegionPointWithRay(camRay)
     self:_UpdateBPStartPreviewMarkWithWorldPos(worldPos, isInit)
 end
-
-
-
-
 
 FacBuildModeCtrl._UpdateBPStartPreviewMarkWithWorldPos = HL.Method(Vector3, HL.Opt(HL.Boolean)) << function(self, worldPos, isInit)
     local visual = GameInstance.remoteFactoryManager.visual
@@ -2998,9 +2816,6 @@ FacBuildModeCtrl._UpdateBPStartPreviewMarkColor = HL.Method(HL.Opt(HL.Boolean)) 
 end
 
 
-
-
-
 FacBuildModeCtrl.OnInteractConveyorLocalCheckingFailed = HL.Method(HL.Table) << function(self, args)
     self:_UpdateValidResult()
 
@@ -3010,10 +2825,7 @@ FacBuildModeCtrl.OnInteractConveyorLocalCheckingFailed = HL.Method(HL.Table) << 
 end
 
 
-
 FacBuildModeCtrl.m_beltHasStartLastTick = HL.Field(HL.Boolean) << false
-
-
 
 FacBuildModeCtrl._UpdateOnBeltHasStartChanged = HL.Method() << function(self)
     local hasStart = GameInstance.remoteFactoryManager.interact.currentConveyorMode.hasStart
@@ -3044,8 +2856,6 @@ end
 
 
 
-
-
 FacBuildModeCtrl._GetCurPointerPressPos = HL.Method().Return(Vector3) << function(self)
     
     if self.m_lockBuildPos then
@@ -3065,20 +2875,14 @@ FacBuildModeCtrl._GetCurPointerPressPos = HL.Method().Return(Vector3) << functio
     end
 end
 
-
-
 FacBuildModeCtrl._InDragMode = HL.Method().Return(HL.Boolean) << function(self)
     
     return DeviceInfo.usingTouch and LuaSystemManager.factory.inTopView
 end
 
-
-
 FacBuildModeCtrl._IsPipe = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_beltId == FacConst.PIPE_ID
 end
-
-
 
 FacBuildModeCtrl.DebugOutputPrepareBuildingPosInfo = HL.Method() << function(self)
     local id, pos, dir
@@ -3111,31 +2915,21 @@ end
 
 
 
-
 FacBuildModeCtrl.s_enableConfirmBuild = HL.StaticField(HL.Boolean) << true
-
-
 
 FacBuildModeCtrl.SetEnableConfirmBuild = HL.StaticMethod(HL.Table) << function(args)
     local enable = unpack(args)
     FacBuildModeCtrl.s_enableConfirmBuild = enable
 end
 
-
 FacBuildModeCtrl.s_enableExitBuildMode = HL.StaticField(HL.Boolean) << true
-
-
 
 FacBuildModeCtrl.SetEnableExitBuildMode = HL.StaticMethod(HL.Table) << function(args)
     local enable = unpack(args)
     FacBuildModeCtrl.s_enableExitBuildMode = enable
 end
 
-
 FacBuildModeCtrl.m_lockBuildPos = HL.Field(HL.Boolean) << false
-
-
-
 
 FacBuildModeCtrl.FacLockBuildPos = HL.Method(HL.Table) << function(self, arg)
     local isLock = unpack(arg)
@@ -3147,15 +2941,10 @@ end
 
 
 
-
-
-
 FacBuildModeCtrl._OnChangeContinueToggle = HL.Method(HL.Boolean) << function(self, isOn)
     FacBuildModeCtrl.s_enableContinueBuild = isOn
     UIUtils.PlayAnimationAndToggleActive(self.view.actionButtonsAsIcon.continueBuildHint, isOn)
 end
-
-
 
 FacBuildModeCtrl._EnableContinueBuild = HL.Method().Return(HL.Boolean) << function(self)
     if not LuaSystemManager.factory.inTopView then
@@ -3170,10 +2959,7 @@ FacBuildModeCtrl._EnableContinueBuild = HL.Method().Return(HL.Boolean) << functi
 end
 
 
-
 FacBuildModeCtrl.m_onPlaceFinish = HL.Field(HL.Function)
-
-
 
 FacBuildModeCtrl._OnPlaceFinish = HL.Method() << function(self)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BUILD_CONTINUOUS_SUCCESS)
@@ -3188,8 +2974,6 @@ FacBuildModeCtrl._OnPlaceFinish = HL.Method() << function(self)
     self:_UpdatePendingHint()
     GameInstance.remoteFactoryManager:SyncJobFence()
 end
-
-
 
 FacBuildModeCtrl._AutoMoveOnContinueBuildSucc = HL.Method() << function(self)
     if not DeviceInfo.usingTouch or not GameInstance.remoteFactoryManager.interact.currentBuildingMode then

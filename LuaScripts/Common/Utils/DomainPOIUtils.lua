@@ -179,7 +179,8 @@ DomainPOIUtils.GetPoiUpgradeCtrlInfo = {
             table.insert(info.descList, nextLvChannelCfg.upgradeDesc)
         end
         
-        info.upgradeQuestId = Tables.shopDomainConst.domainShopUnlockQuestId
+        local canSkipPreconditions = DomainPOIUtils._CanSkipDomainShopChannelPreconditions(shopChannelCfg)
+        info.upgradeQuestId = canSkipPreconditions and "" or Tables.shopDomainConst.domainShopUnlockQuestId
         info.upgradeQuestDesc = Language.LUA_DOMAIN_SHOP_UNLOCK_QUEST_DESC
         info.upgradeCostMoney = costMoney
         
@@ -1285,8 +1286,16 @@ DomainPOIUtils.POICanUpgrade = {
 function DomainPOIUtils.GetAllCanUpDomainShopChannelIds(levelId, isCheckUnlock)
     local channelIds = {}
     
+    local hasCfg, cfg = Tables.shopChannelLevelPOIMapTable:TryGetValue(levelId)
+    if not hasCfg then
+        return channelIds
+    end
+    local channelId = cfg.channelPartner
+    local _, shopChannelCfg = Tables.shopChannelDevelopmentTable:TryGetValue(channelId)
+    local canSkipPreconditions = DomainPOIUtils._CanSkipDomainShopChannelPreconditions(shopChannelCfg)
+    
     local level001Id = "map01_lv001"
-    if levelId ~= level001Id then
+    if not canSkipPreconditions and levelId ~= level001Id then
         local hasCfg, cfg = Tables.shopChannelLevelPOIMapTable:TryGetValue(level001Id)
         if not hasCfg then
             return channelIds
@@ -1300,12 +1309,6 @@ function DomainPOIUtils.GetAllCanUpDomainShopChannelIds(levelId, isCheckUnlock)
         end
     end
     
-    local hasCfg, cfg = Tables.shopChannelLevelPOIMapTable:TryGetValue(levelId)
-    if not hasCfg then
-        return channelIds
-    end
-    local channelId = cfg.channelPartner
-    
     local info = DomainPOIUtils.GetPoiUpgradeCtrlInfo[GEnums.DomainPoiType.DomainShop](channelId, false)
     
     if (isCheckUnlock and info.curLevel > 0) 
@@ -1314,7 +1317,9 @@ function DomainPOIUtils.GetAllCanUpDomainShopChannelIds(levelId, isCheckUnlock)
         return channelIds
     end
     
-    if string.isEmpty(info.upgradeQuestId) then
+    if canSkipPreconditions then
+        info.questState = CS.Beyond.Gameplay.MissionSystem.QuestState.Completed
+    elseif string.isEmpty(info.upgradeQuestId) then
         info.questState = CS.Beyond.Gameplay.MissionSystem.QuestState.Completed
     else
         info.questState = GameInstance.player.mission:GetQuestState(info.upgradeQuestId)
@@ -1336,6 +1341,7 @@ function DomainPOIUtils.GetAllCanUpDomainShopChannelIds(levelId, isCheckUnlock)
     end
     return channelIds
 end
+
 
 
 
@@ -1542,6 +1548,19 @@ function DomainPOIUtils.resolveOpenGradeArgs(arg)
         tableArg.domainId = domainId
     end
     return tableArg, domainId
+end
+
+
+function DomainPOIUtils._CanSkipDomainShopChannelPreconditions(shopChannelCfg)
+    if shopChannelCfg == nil or shopChannelCfg.skipToMissionChapter == nil then
+        return false
+    end
+    local skipToMissionChapter = shopChannelCfg.skipToMissionChapter
+    if (skipToMissionChapter:GetHashCode() or 0) <= 0 then
+        return false
+    end
+    local earlyAcceptChapterMask = GameInstance.player.mission.earlyAcceptChapterMask
+    return earlyAcceptChapterMask:HasFlag(skipToMissionChapter)
 end
 
 

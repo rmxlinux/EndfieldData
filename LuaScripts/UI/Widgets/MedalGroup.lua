@@ -1,71 +1,28 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MedalGroup = HL.Class('MedalGroup', UIWidgetBase)
-
 
 MedalGroup.m_getMedalSlotCell = HL.Field(HL.Function)
 
-
 MedalGroup.m_medalMap = HL.Field(HL.Any)
-
 
 MedalGroup.m_medalSlotList = HL.Field(HL.Any)
 
-
 MedalGroup.m_maxSlot = HL.Field(HL.Number) << 10
-
 
 MedalGroup.m_minU = HL.Field(HL.Number) << 0
 
-
 MedalGroup.m_maxU = HL.Field(HL.Number) << 0
-
 
 MedalGroup.m_minV = HL.Field(HL.Number) << 0
 
-
 MedalGroup.m_maxV = HL.Field(HL.Number) << 0
-
 
 MedalGroup.m_cellCount = HL.Field(HL.Number) << 0
 
-
 MedalGroup.m_dragOptions = HL.Field(HL.Any) << nil
 
-
 MedalGroup.m_dragMedalSlot = HL.Field(HL.Number) << -1
-
 
 MedalGroup.m_inNaviDrag = HL.Field(HL.Boolean) << false
 
@@ -101,8 +58,6 @@ local MEDAL_SLOT_CONFIG = {
     
 }
 
-
-
 MedalGroup._OnFirstTimeInit = HL.Override() << function(self)
     self.m_getMedalSlotCell = UIUtils.genCachedCellFunction(self.view.slotList)
     self.view.slotList.onUpdateCell:AddListener(function(object, csIndex)
@@ -110,9 +65,6 @@ MedalGroup._OnFirstTimeInit = HL.Override() << function(self)
         self:_OnUpdateCell(cell, csIndex)
     end)
 end
-
-
-
 
 MedalGroup._GetMedalSlotByIndex = HL.Method(HL.Number).Return(HL.Number) << function(self, csIndex)
     local rowCount = self.m_maxV - self.m_minV + 1
@@ -134,9 +86,6 @@ MedalGroup._GetMedalSlotByIndex = HL.Method(HL.Number).Return(HL.Number) << func
     return slotIndex
 end
 
-
-
-
 MedalGroup._GetMedalPosBySlot = HL.Method(HL.Number).Return(HL.Number, HL.Number) << function(self, slotIndex)
     local slotConfig = MEDAL_SLOT_CONFIG[slotIndex]
     if slotConfig ~= nil then
@@ -145,19 +94,12 @@ MedalGroup._GetMedalPosBySlot = HL.Method(HL.Number).Return(HL.Number, HL.Number
     return nil, nil
 end
 
-
-
-
-
 MedalGroup._GetMedalIndexByPos = HL.Method(HL.Number, HL.Number).Return(HL.Number) << function(self, posU, posV)
     local rowCount = self.m_maxV - self.m_minV + 1
     local colIndex = posU - self.m_minU
     local rowIndex = posV - self.m_minV
     return rowIndex + colIndex * rowCount
 end
-
-
-
 
 MedalGroup._GetMedalIndexBySlot = HL.Method(HL.Number).Return(HL.Number) << function(self, slotIndex)
     local posU, posV = self:_GetMedalPosBySlot(slotIndex)
@@ -166,9 +108,6 @@ MedalGroup._GetMedalIndexBySlot = HL.Method(HL.Number).Return(HL.Number) << func
     end
     return self:_GetMedalIndexByPos(posU, posV)
 end
-
-
-
 
 MedalGroup._InitSlotCells = HL.Method(HL.Number) << function(self, maxSlot)
     
@@ -219,16 +158,10 @@ MedalGroup._InitSlotCells = HL.Method(HL.Number) << function(self, maxSlot)
     self.m_medalSlotList = cellList
 end
 
-
-
-
 MedalGroup._InitGroupSize = HL.Method(HL.Number) << function(self, rowCount)
     local groupHeight = rowCount * self.config.MEDAL_GROUP_CELL_HEIGHT + (rowCount + 1) * self.config.MEDAL_GROUP_CELL_SPACEY
     UIUtils.setSizeDeltaY(self.view.transform, groupHeight)
 end
-
-
-
 
 MedalGroup._UpdateSlotCells = HL.Method(HL.Opt(HL.Any)) << function(self, medalMap)
     if medalMap == nil then
@@ -246,11 +179,6 @@ MedalGroup._UpdateSlotCells = HL.Method(HL.Opt(HL.Any)) << function(self, medalM
     end
 end
 
-
-
-
-
-
 MedalGroup.InitMedalGroup = HL.Method(HL.Opt(HL.Any, HL.Number, HL.Any)) << function(self, medalMap, maxSlot, dragOptions)
     
     
@@ -265,8 +193,6 @@ MedalGroup.InitMedalGroup = HL.Method(HL.Opt(HL.Any, HL.Number, HL.Any)) << func
     self.view.slotList:UpdateCount(self.m_cellCount, false, false, false, true)
 end
 
-
-
 MedalGroup.GetFirstEmptySlot = HL.Method().Return(HL.Number, HL.Number) << function(self)
     for i = 1, self.m_maxSlot do
         local slotCellIndex = self:_GetMedalIndexBySlot(i)
@@ -280,18 +206,12 @@ MedalGroup.GetFirstEmptySlot = HL.Method().Return(HL.Number, HL.Number) << funct
     return -1, -1
 end
 
-
-
 MedalGroup._RefreshMedalGroup = HL.Method() << function(self)
     self.view.slotList:UpdateShowingCells(function(csIndex, obj)
         local cell = self.m_getMedalSlotCell(obj)
         self:_OnUpdateCell(cell, csIndex)
     end)
 end
-
-
-
-
 
 MedalGroup._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, csIndex)
     local medalSlotList = self.m_medalSlotList
@@ -314,23 +234,15 @@ MedalGroup._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cell, 
     end
 end
 
-
-
-
 MedalGroup.OnDragMedal = HL.Method(HL.Number) << function(self, slotIndex)
     self.m_dragMedalSlot = slotIndex
     self:_RefreshMedalGroup()
 end
 
-
-
 MedalGroup.CancelDragMedal = HL.Method() << function(self)
     self.m_dragMedalSlot = -1
     self:_RefreshMedalGroup()
 end
-
-
-
 
 
 MedalGroup.InitNaviDragMedal = HL.Method(HL.Opt(HL.Number)) << function(self, slotIndex)
@@ -355,14 +267,11 @@ MedalGroup.InitNaviDragMedal = HL.Method(HL.Opt(HL.Number)) << function(self, sl
         local cell = self.m_getMedalSlotCell(obj)
         self:_OnUpdateCell(cell, csIndex)
         if csIndex == cellIndex then
-            UIUtils.setAsNaviTarget(cell.view.medalSlot.view.button)
+            self:SetNaviTarget(cell.view.medalSlot.view.button)
         end
     end)
     self:_UpdateNaviDragView()
 end
-
-
-
 
 MedalGroup.ClearNaviDragMedal = HL.Method(HL.Opt(HL.Number)) << function(self, slotIndex)
     self.m_inNaviDrag = false
@@ -377,23 +286,17 @@ MedalGroup.ClearNaviDragMedal = HL.Method(HL.Opt(HL.Number)) << function(self, s
         local cell = self.m_getMedalSlotCell(obj)
         self:_OnUpdateCell(cell, csIndex)
         if csIndex == cellIndex then
-            UIUtils.setAsNaviTarget(cell.view.medalSlot.view.button)
+            self:SetNaviTarget(cell.view.medalSlot.view.button)
         end
     end)
     self:_UpdateNaviDragView()
 end
-
-
 
 MedalGroup._UpdateNaviDragView = HL.Method() << function(self)
     if self.view.stateController ~= nil then
         self.view.stateController:SetState(self.m_inNaviDrag and "Drag" or "Normal")
     end
 end
-
-
-
-
 
 MedalGroup.OnNavigate = HL.Method(CS.UnityEngine.UI.NaviDirection, HL.Number) << function(self, direction, slotIndex)
     local posU, posV = self:_GetMedalPosBySlot(slotIndex)
@@ -415,7 +318,7 @@ MedalGroup.OnNavigate = HL.Method(CS.UnityEngine.UI.NaviDirection, HL.Number) <<
         local cell = self.view.slotList:Get(cellIndex)
         if cell ~= nil then
             local medalSlotHolder = Utils.wrapLuaNode(cell)
-            UIUtils.setAsNaviTarget(medalSlotHolder.view.medalSlot.view.button)
+            self:SetNaviTarget(medalSlotHolder.view.medalSlot.view.button)
         end
     elseif not self.m_inNaviDrag then
         InputManagerInst.controllerNaviManager:Navigate(direction)

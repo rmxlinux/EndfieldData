@@ -9,229 +9,8 @@ local PosValueState = CS.Beyond.Gameplay.PosValueState
 local ChunkLODType = CS.Beyond.Gameplay.ChunkLoadConfigInfo.ChunkLODType
 local MistLoadType = MapConst.MapMistLoadType
 local Stack = require_ex("Common/Utils/DataStructure/Stack")
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+local RootLevel = CS.Beyond.Gameplay.StaticElementRootLevel
+local CommonPhaseStateType = CS.Beyond.Gameplay.CommonElementPhaseStateType
 
 LevelMapLoader = HL.Class('LevelMapLoader', UIWidgetBase)
 
@@ -259,107 +38,75 @@ local MIST_DRAW_MATERIAL_PATH = "Assets/Beyond/DynamicAssets/Gameplay/UI/Materia
 local TEXTURE_LOAD_PATH_FORMAT = "%s/%s.png"
 
 
-
 LevelMapLoader.m_initialized = HL.Field(HL.Boolean) << false
-
 
 LevelMapLoader.m_mapManager = HL.Field(CS.Beyond.Gameplay.MapManager)
 
-
 LevelMapLoader.m_levelMapConfig = HL.Field(CS.Beyond.Gameplay.UILevelMapConfig)
-
 
 LevelMapLoader.m_mistSystem = HL.Field(CS.Beyond.Gameplay.MistMapSystem)
 
-
 LevelMapLoader.m_regionManager = HL.Field(CS.Beyond.Gameplay.MapRegionManager)
-
 
 LevelMapLoader.m_dataUpdateInterval = HL.Field(HL.Number) << LOADER_DEFAULT_UPDATE_INTERVAL
 
-
 LevelMapLoader.m_baseUpdateTick = HL.Field(HL.Number) << -1
-
 
 LevelMapLoader.m_gridMaskUpdateTick = HL.Field(HL.Number) << -1
 
-
 LevelMapLoader.m_animMistShowTimer = HL.Field(HL.Number) << -1
-
 
 LevelMapLoader.m_mapId = HL.Field(HL.String) << ""
 
-
 LevelMapLoader.m_levelId = HL.Field(HL.String) << ""
-
 
 LevelMapLoader.m_markCache = HL.Field(Stack)
 
-
 LevelMapLoader.m_customMarkCache = HL.Field(Stack)
-
 
 LevelMapLoader.m_trackingMarkCache = HL.Field(Stack)
 
-
 LevelMapLoader.m_tierCache = HL.Field(LuaNodeCache)
-
 
 LevelMapLoader.m_posTween = HL.Field(HL.Userdata)
 
-
 LevelMapLoader.m_sizeTween = HL.Field(HL.Userdata)
-
 
 LevelMapLoader.m_onMarkInstDataChangedCallback = HL.Field(HL.Function)
 
-
 LevelMapLoader.m_markStaticDataMap = HL.Field(HL.Table)
-
 
 LevelMapLoader.m_delayActionList = HL.Field(HL.Table)
 
-
 LevelMapLoader.m_gridsMaskFollowTarget = HL.Field(RectTransform)
-
 
 LevelMapLoader.m_isLowMemoryDevice = HL.Field(HL.Boolean) << false
 
 
 
-
 LevelMapLoader.m_needUpdate = HL.Field(HL.Boolean) << true
-
 
 LevelMapLoader.m_needOptimizePerformance = HL.Field(HL.Boolean) << false
 
-
 LevelMapLoader.m_needExtraLowScaleRT = HL.Field(HL.Boolean) << false
-
 
 LevelMapLoader.m_extraView = HL.Field(HL.Number) << 0
 
-
 LevelMapLoader.m_needShowOtherLevelTracking = HL.Field(HL.Boolean) << false
-
 
 LevelMapLoader.m_onMarkHover = HL.Field(HL.Function)
 
-
 LevelMapLoader.m_onGridsLoadedStateChange = HL.Field(HL.Function)
-
 
 LevelMapLoader.m_expectedStaticElementTypes = HL.Field(HL.Table)
 
-
 LevelMapLoader.m_needListenMarkStateChange = HL.Field(HL.Boolean) << false
-
 
 LevelMapLoader.m_needInteractableMark = HL.Field(HL.Boolean) << false
 
-
 LevelMapLoader.m_retainTextureAfterDraw = HL.Field(HL.Boolean) << false
 
+LevelMapLoader.m_useChunkGODrawer = HL.Field(HL.Boolean) << false
 
 LevelMapLoader.m_initialMarkScale = HL.Field(Vector3)
 
@@ -367,63 +114,45 @@ LevelMapLoader.m_initialMarkScale = HL.Field(Vector3)
 
 
 
-
 LevelMapLoader.m_rtDrawerDataPool = HL.Field(HL.Table)  
 
+LevelMapLoader.m_chunkRTDrawers = HL.Field(HL.Table)  
 
-LevelMapLoader.m_chunkDrawers = HL.Field(HL.Table)  
-
+LevelMapLoader.m_chunkGODrawers = HL.Field(HL.Table)  
 
 LevelMapLoader.m_loadedChunkViewDataMap = HL.Field(HL.Table)  
 
-
 LevelMapLoader.m_chunkResourceLoadDataPool = HL.Field(HL.Table)  
-
 
 LevelMapLoader.m_lateHideChunkLODType = HL.Field(HL.Any)
 
-
 LevelMapLoader.m_delayDisposeResourceThread = HL.Field(HL.Thread)
-
 
 LevelMapLoader.m_chunkResourcePathCache = HL.Field(HL.Table)
 
-
 LevelMapLoader.m_tierResourcePathCache = HL.Field(HL.Table)
-
 
 LevelMapLoader.m_mistResourcePathCache = HL.Field(HL.Table)
 
-
 LevelMapLoader.m_lodScaleCache = HL.Field(HL.Table)
-
 
 LevelMapLoader.m_mistLODScaleCache = HL.Field(HL.Table)
 
-
 LevelMapLoader.m_loadedTierViewDataMap = HL.Field(HL.Table)
-
 
 LevelMapLoader.m_mistDrawers = HL.Field(HL.Table)  
 
-
 LevelMapLoader.m_loadedGridViewDataMap = HL.Field(HL.Table)  
-
 
 LevelMapLoader.m_gridMistSingleTextureLength = HL.Field(HL.Number) << 0
 
-
 LevelMapLoader.m_forbidMistRefreshAfterGridChange = HL.Field(HL.Boolean) << false
-
 
 LevelMapLoader.m_waitMistRefreshAfterGridChange = HL.Field(HL.Boolean) << false
 
-
 LevelMapLoader.m_tierId = HL.Field(HL.Number) << 0
 
-
 LevelMapLoader.m_tierIndex = HL.Field(HL.Number) << 0
-
 
 LevelMapLoader.m_needShowMarkTier = HL.Field(HL.Boolean) << false
 
@@ -431,69 +160,47 @@ LevelMapLoader.m_needShowMarkTier = HL.Field(HL.Boolean) << false
 
 
 
-
 LevelMapLoader.m_staticElementInitializer = HL.Field(HL.Table)  
-
 
 LevelMapLoader.m_lineCaches = HL.Field(HL.Table)  
 
-
 LevelMapLoader.m_lineRoots = HL.Field(HL.Table)  
-
 
 LevelMapLoader.m_loadedLineViewDataMap = HL.Field(HL.Table)  
 
-
 LevelMapLoader.m_loadedPowerLineCount = HL.Field(HL.Number)  << 0
-
 
 LevelMapLoader.m_buildElementsLevels = HL.Field(HL.Table)  
 
-
 LevelMapLoader.m_loadedStaticElementViewDataMap = HL.Field(HL.Table)  
-
 
 LevelMapLoader.m_loadedMarkViewDataMap = HL.Field(HL.Table)  
 
-
 LevelMapLoader.m_missionTrackingAreaCache = HL.Field(LuaNodeCache)
-
 
 LevelMapLoader.m_loadedMissionTrackingMarks = HL.Field(HL.Table)  
 
-
 LevelMapLoader.m_loadedMissionTrackingAreas = HL.Field(HL.Table)  
-
 
 LevelMapLoader.m_loadedGeneralTrackingMarkId = HL.Field(HL.String) << ""
 
-
 LevelMapLoader.m_gameplayAreaCache = HL.Field(LuaNodeCache)
-
 
 LevelMapLoader.m_loadedGameplayAreas = HL.Field(HL.Table)  
 
-
 LevelMapLoader.m_tryLoadElementsList = HL.Field(HL.Table)
-
 
 LevelMapLoader.m_switchMaskCells = HL.Field(HL.Forward("UIListCache"))
 
-
 LevelMapLoader.m_waitVisibleInMistMarks = HL.Field(HL.Table)
-
 
 LevelMapLoader.m_connectNodeLineGetter = HL.Field(HL.Table)  
 
 
 
-
 LevelMapLoader.m_gridRectLength = HL.Field(HL.Number) << -1  
 
-
 LevelMapLoader.m_gridWorldLength = HL.Field(HL.Number) << -1  
-
-
 
 
 LevelMapLoader._OnFirstTimeInit = HL.Override() << function(self)
@@ -538,9 +245,15 @@ LevelMapLoader._OnFirstTimeInit = HL.Override() << function(self)
     self:RegisterMessage(MessageConst.ON_MAP_TRACKING_DIFF_LEVEL_PORT_CHANGED, function(args)
         self:_RefreshCustomMarkOrderActiveState(true)
     end)
+    self:RegisterMessage(MessageConst.ON_COMMON_STATIC_ELEMENT_STATE_CHANGED, function(args)
+        local elementId, isVisible = unpack(args)
+        self:_OnCommonStaticElementStateChanged(elementId, isVisible)
+    end)
+    self:RegisterMessage(MessageConst.ON_NARRATIVE_TEXT_STATE_CHANGED, function(args)
+        local elementId, textId = unpack(args)
+        self:_OnNarrativeTextStateChanged(elementId, textId)
+    end)
 end
-
-
 
 LevelMapLoader._OnDestroy = HL.Override() << function(self)
     if not self.m_initialized then
@@ -551,13 +264,23 @@ LevelMapLoader._OnDestroy = HL.Override() << function(self)
     self.m_animMistShowTimer = self:_ClearTimer(self.m_animMistShowTimer)
     self:_StopDelayDisposeChunkResourceThread()
     self:_RemoveAllDelayActions()
+    self:_DestroyChunkGODrawers()
     self:_DisposeAllChunkResources()
     self:_ClearAllDrawersRT()
 end
 
-
-
-
+LevelMapLoader._DestroyChunkGODrawers = HL.Method() << function(self)
+    if not self.m_useChunkGODrawer or self.m_chunkGODrawers == nil then
+        return
+    end
+    self:_RecycleAllGOChunkCells()
+    for _, drawer in pairs(self.m_chunkGODrawers) do
+        if drawer.stencilMaterial ~= nil then
+            Unity.Object.Destroy(drawer.stencilMaterial)
+            drawer.stencilMaterial = nil
+        end
+    end
+end
 
 LevelMapLoader.InitLevelMapLoader = HL.Method(HL.String, HL.Opt(HL.Table)) << function(self, levelId, customInfo)
     self.m_initialized = false
@@ -606,8 +329,6 @@ end
 
 
 
-
-
 LevelMapLoader._InitLoaderComponent = HL.Method() << function(self)
     local loader = self.view.loader
     loader:InitLoader(self.m_levelId)
@@ -627,9 +348,6 @@ LevelMapLoader._InitLoaderComponent = HL.Method() << function(self)
     end)
 end
 
-
-
-
 LevelMapLoader._InitCustomInfo = HL.Method(HL.Table) << function(self, customInfo)
     customInfo = customInfo or {}
     self.m_extraView = customInfo.extraView or 0
@@ -644,6 +362,7 @@ LevelMapLoader._InitCustomInfo = HL.Method(HL.Table) << function(self, customInf
     self.m_needListenMarkStateChange = customInfo.needListenMarkStateChange or false
     self.m_onGridsLoadedStateChange = customInfo.onGridsLoadedStateChange or nil
     self.m_retainTextureAfterDraw = customInfo.retainTextureAfterDraw or false
+    self.m_useChunkGODrawer = customInfo.useChunkGODrawer or false
     if customInfo.needUpdate ~= nil then
         self.m_needUpdate = customInfo.needUpdate
     end
@@ -658,9 +377,6 @@ LevelMapLoader._InitCustomInfo = HL.Method(HL.Table) << function(self, customInf
         configScale / self.m_initialMarkScale.z
     )
 end
-
-
-
 
 LevelMapLoader._InitTableFields = HL.Method(HL.Opt(HL.Boolean)) << function(self, ignoreGlobal)
     self.m_buildElementsLevels = {}
@@ -695,8 +411,6 @@ LevelMapLoader._InitTableFields = HL.Method(HL.Opt(HL.Boolean)) << function(self
     end
 end
 
-
-
 LevelMapLoader._InitMarkStaticDataMap = HL.Method() << function(self)
     self.m_markStaticDataMap = {}
     for templateId, templateData in pairs(Tables.mapMarkTempTable) do
@@ -709,8 +423,6 @@ LevelMapLoader._InitMarkStaticDataMap = HL.Method() << function(self)
         }
     end
 end
-
-
 
 LevelMapLoader._InitLoaderCache = HL.Method() << function(self)
     local source = self.view.source
@@ -754,8 +466,6 @@ LevelMapLoader._InitLoaderCache = HL.Method() << function(self)
     self:_InitLoaderMarkCache()
 end
 
-
-
 LevelMapLoader._InitLoaderMarkCache = HL.Method() << function(self)
     if self.m_needInteractableMark then
         self.m_customMarkCache = Stack()
@@ -763,8 +473,6 @@ LevelMapLoader._InitLoaderMarkCache = HL.Method() << function(self)
     self.m_markCache = Stack()
     self.m_trackingMarkCache = Stack()
 end
-
-
 
 LevelMapLoader._InitStaticElementInitializer = HL.Method() << function(self)
     
@@ -794,8 +502,11 @@ LevelMapLoader._InitStaticElementInitializer = HL.Method() << function(self)
         },
         [ElementType.NarrativeAreaText] = {
             cache = LuaNodeCache(staticElements.narrativeAreaText, backRoot.narrativeAreaText),
-            initializer = function(staticElement, settlementElementData)
-                staticElement.text.text = Language[settlementElementData.textId]
+            initializer = function(staticElement, elementData)
+                staticElement.narrativeAreaText:InitNarrativeAreaText(elementData)
+            end,
+            componentGetter = function(staticElement)
+                return staticElement.narrativeAreaText
             end,
             needHideInTier = true,
         },
@@ -854,16 +565,34 @@ LevelMapLoader._InitStaticElementInitializer = HL.Method() << function(self)
                 return CS.Beyond.UI.UILevelMapMisty.IsMistyVisible()
             end,
         },
+        [ElementType.Common] = {
+            cacheMap = {
+                [RootLevel.GridRoot] = LuaNodeCache(staticElements.commonStaticElement, gridRoot.common),
+                [RootLevel.BottomRoot] = LuaNodeCache(staticElements.commonStaticElement, bottomRoot.common),
+                [RootLevel.BackRoot] = LuaNodeCache(staticElements.commonStaticElement, backRoot.common),
+                [RootLevel.FrontRoot] = LuaNodeCache(staticElements.commonStaticElement, frontRoot.common),
+            },
+            getCache = function(elementData)
+                local cacheMap = self.m_staticElementInitializer[ElementType.Common].cacheMap
+                return cacheMap[elementData.rootLevel] or cacheMap[RootLevel.BackRoot]
+            end,
+            initializer = function(staticElement, elementData)
+                staticElement.commonStaticElement:InitCommonStaticElement(elementData)
+            end,
+            componentGetter = function(staticElement)
+                return staticElement.commonStaticElement
+            end,
+            isVisible = function(elementData)
+                return true
+            end,
+            needHideInTier = true,
+        },
     }
 end
-
-
 
 LevelMapLoader._InitPermanentElementsInCurrentMap = HL.Method() << function(self)
     self:_InitGameplayAreasInCurrentMap()
 end
-
-
 
 LevelMapLoader._InitGameplayAreasInCurrentMap = HL.Method() << function(self)
     local success, areaDataDict = self.m_mapManager:GetGameplayAreaDataDictByMapId(self.m_mapId)
@@ -876,8 +605,6 @@ LevelMapLoader._InitGameplayAreasInCurrentMap = HL.Method() << function(self)
     end
 end
 
-
-
 LevelMapLoader._InitLoaderUpdateThread = HL.Method() << function(self)
     local uiCtrl = self:GetUICtrl()
 
@@ -887,8 +614,6 @@ LevelMapLoader._InitLoaderUpdateThread = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 LevelMapLoader._InitGridsMask = HL.Method() << function(self)
     if not NotNull(self.m_gridsMaskFollowTarget) then
@@ -906,9 +631,6 @@ LevelMapLoader._InitGridsMask = HL.Method() << function(self)
     end)
 end
 
-
-
-
 LevelMapLoader._IsExpectedStaticElementType = HL.Method(HL.Userdata).Return(HL.Boolean) << function(self, type)
     if not next(self.m_expectedStaticElementTypes) then
         return true
@@ -921,20 +643,13 @@ end
 
 
 
-
-
-
 LevelMapLoader._OnLoadStateChanged = HL.Method(HL.Userdata) << function(self, hitStateChangeEventData)
     
-
     
     self:_RefreshChunksLoadedState(hitStateChangeEventData.addChunks, hitStateChangeEventData.removeChunks)
     
     self:_RefreshElementsLoadedState(hitStateChangeEventData.addGrids, hitStateChangeEventData.removeGrids)
 end
-
-
-
 
 LevelMapLoader._OnMarkInstDataModified = HL.Method(HL.String) << function(self, markInstId)
     local success, markRuntimeData = self.m_mapManager:GetMarkInstRuntimeData(markInstId)
@@ -948,10 +663,6 @@ LevelMapLoader._OnMarkInstDataModified = HL.Method(HL.String) << function(self, 
     end
     self:_RefreshGridMark(markInstId, markRuntimeData, markRuntimeData.isVisible)
 end
-
-
-
-
 
 LevelMapLoader._OnMarkInstDataChanged = HL.Method(HL.String, HL.Boolean) << function(self, markInstId, isAdd)
     local success, markRuntimeData = self.m_mapManager:GetMarkInstRuntimeData(markInstId)
@@ -969,9 +680,6 @@ LevelMapLoader._OnMarkInstDataChanged = HL.Method(HL.String, HL.Boolean) << func
         self.m_onMarkInstDataChangedCallback()
     end
 end
-
-
-
 
 LevelMapLoader._OnMarkLineInstDataChanged = HL.Method(LineType) << function(self, lineType)
     local needRefreshLines = {}
@@ -1023,9 +731,22 @@ LevelMapLoader._OnMarkLineInstDataChanged = HL.Method(LineType) << function(self
     end
 end
 
+LevelMapLoader._OnCommonStaticElementStateChanged = HL.Method(HL.String, HL.Boolean) << function(self, elementId, isVisible)
+    local viewData = self.m_loadedStaticElementViewDataMap[elementId]
+    if viewData == nil then
+        return
+    end
+    self:_RefreshStaticElementVisibleState(viewData, "Condition", isVisible)
+end
 
-
-
+LevelMapLoader._OnNarrativeTextStateChanged = HL.Method(HL.String, HL.String) << function(self, elementId, textId)
+    local viewData = self.m_loadedStaticElementViewDataMap[elementId]
+    if viewData == nil then
+        return
+    end
+    local shouldShow = textId ~= nil and textId ~= ""
+    self:_RefreshStaticElementVisibleState(viewData, "Condition", shouldShow)
+end
 
 
 
@@ -1045,18 +766,24 @@ LevelMapLoader._RefreshGridStaticElements = HL.Method(HL.Userdata, HL.Boolean) <
                     local isVisible = initializer.isVisible == nil or initializer.isVisible(staticElementData)
                     if isVisible then
                         if self.m_loadedStaticElementViewDataMap[staticElementId] == nil then
-                            
-                            local staticElement = initializer.cache:Get()
+                            local cache = initializer.getCache and initializer.getCache(staticElementData) or initializer.cache
+                            local staticElement = cache:Get()
                             staticElement.gameObject:SetActive(true)
-                            initializer.initializer(staticElement, staticElementData)
                             staticElement.rectTransform.anchoredPosition = self:_GetRectPosByWorldPos(staticElementData.position)
-                            self.m_loadedStaticElementViewDataMap[staticElementId] = {
+                            local viewData = {
                                 elementObj = staticElement,
                                 initializer = initializer,
+                                cache = cache,
+                                displayTierId = staticElementData.displayTierId,
                             }
+                            self.m_loadedStaticElementViewDataMap[staticElementId] = viewData
+                            initializer.initializer(staticElement, staticElementData)
                         else
-                            
-                            self:_RefreshStaticElementVisibleState(self.m_loadedStaticElementViewDataMap[staticElementId], "GridRefresh", true)
+                            local existingViewData = self.m_loadedStaticElementViewDataMap[staticElementId]
+                            self:_RefreshStaticElementVisibleState(existingViewData, "GridRefresh", true)
+                            if initializer.initializer ~= nil then
+                                initializer.initializer(existingViewData.elementObj, staticElementData)
+                            end
                         end
                         self:_RefreshLoadedStaticElementStateWithTier(self.m_loadedStaticElementViewDataMap[staticElementId])
                     end
@@ -1064,18 +791,18 @@ LevelMapLoader._RefreshGridStaticElements = HL.Method(HL.Userdata, HL.Boolean) <
             else
                 local elementViewData = self.m_loadedStaticElementViewDataMap[staticElementId]
                 if elementViewData ~= nil then
-                    
+                    if elementViewData.initializer.componentGetter ~= nil then
+                        local component = elementViewData.initializer.componentGetter(elementViewData.elementObj)
+                        if component ~= nil and component.ClearComponent ~= nil then
+                            component:ClearComponent()
+                        end
+                    end
                     self:_RefreshStaticElementVisibleState(elementViewData, "GridRefresh", false)
                 end
             end
         end
     end
 end
-
-
-
-
-
 
 LevelMapLoader._RefreshStaticElementVisibleState = HL.Method(HL.Table, HL.String, HL.Boolean) << function(self, elementViewData, key, isVisible)
     if elementViewData == nil then
@@ -1092,10 +819,6 @@ LevelMapLoader._RefreshStaticElementVisibleState = HL.Method(HL.Table, HL.String
     elementViewData.elementObj.gameObject:SetActive(not next(elementViewData.hideKeyList))
 end
 
-
-
-
-
 LevelMapLoader._RefreshGridLines = HL.Method(HL.Userdata, HL.Boolean) << function(self, loaderData, needShow)
     local lines = loaderData.lines
     if lines == nil or lines.Count == 0 then
@@ -1110,9 +833,6 @@ LevelMapLoader._RefreshGridLines = HL.Method(HL.Userdata, HL.Boolean) << functio
         end
     end
 end
-
-
-
 
 LevelMapLoader._ShowGridLine = HL.Method(HL.Userdata) << function(self, lineData)
     local lineType = lineData.lineType
@@ -1152,10 +872,6 @@ LevelMapLoader._ShowGridLine = HL.Method(HL.Userdata) << function(self, lineData
     end
 end
 
-
-
-
-
 LevelMapLoader._HideGridLine = HL.Method(HL.String, LineType) << function(self, lineId, lineType)
     if self.m_loadedLineViewDataMap[lineId] == nil then
         return
@@ -1181,10 +897,6 @@ LevelMapLoader._HideGridLine = HL.Method(HL.String, LineType) << function(self, 
     end
 end
 
-
-
-
-
 LevelMapLoader._RefreshLineBasicTransform = HL.Method(HL.Any, HL.Userdata) << function(self, line, lineData)
     if line == nil or lineData == nil then
         return
@@ -1204,10 +916,6 @@ LevelMapLoader._RefreshLineBasicTransform = HL.Method(HL.Any, HL.Userdata) << fu
         line.levelMapLine:Init(length)
     end
 end
-
-
-
-
 
 LevelMapLoader._RefreshGameplayArea = HL.Method(HL.String, HL.Boolean) << function(self, areaId, needShow)
     if needShow then
@@ -1233,22 +941,25 @@ LevelMapLoader._RefreshGameplayArea = HL.Method(HL.String, HL.Boolean) << functi
     end
 end
 
-
-
-
 LevelMapLoader._RefreshLoadedStaticElementStateWithTier = HL.Method(HL.Table) << function(self, elementViewData)
     local isInTier = self:_GetIsInTier()
     local color = isInTier and self.m_levelMapConfig.gridBaseTierColor or Color.white
     local elementObj = elementViewData.elementObj
     local initializer = elementViewData.initializer
+
+    local displayTierId = elementViewData.displayTierId
+    if displayTierId ~= nil and displayTierId > 0 then
+        local shouldShow = isInTier and self.m_tierId == displayTierId
+        self:_RefreshStaticElementVisibleState(elementViewData, "Tier", shouldShow)
+        return
+    end
+
     if initializer.needHideInTier then
         self:_RefreshStaticElementVisibleState(elementViewData, "Tier", not isInTier)
     elseif initializer.refreshWithTier ~= nil then
         initializer.refreshWithTier(elementObj, self.m_tierIndex, color)
     end
 end
-
-
 
 LevelMapLoader._RefreshLoadedStaticElementsStateWithTier = HL.Method() << function(self)
     for _, elementViewData in pairs(self.m_loadedStaticElementViewDataMap) do
@@ -1258,8 +969,6 @@ LevelMapLoader._RefreshLoadedStaticElementsStateWithTier = HL.Method() << functi
     local isInTier = self:_GetIsInTier()
     self.view.element.staticElementBottomRoot.switchMask.gameObject:SetActive(not isInTier)
 end
-
-
 
 LevelMapLoader._RefreshLoadedMarksWithTier = HL.Method() << function(self)
     for _, markViewData in pairs(self.m_loadedMarkViewDataMap) do
@@ -1272,16 +981,12 @@ LevelMapLoader._RefreshLoadedMarksWithTier = HL.Method() << function(self)
     self:_RefreshGeneralTrackingMarkWithTier()
 end
 
-
-
 LevelMapLoader._RefreshMissionTrackingMarksWithTier = HL.Method() << function(self)
     for _, missionTrackingMarkObj in pairs(self.m_loadedMissionTrackingMarks) do
         local missionMarkObj = missionTrackingMarkObj
         self:_RefreshGridMarkTierState(missionMarkObj)
     end
 end
-
-
 
 LevelMapLoader._RefreshGeneralTrackingMarkWithTier = HL.Method() << function(self)
     self:_GetGeneralTrackingMarkIfNeed()
@@ -1291,8 +996,6 @@ LevelMapLoader._RefreshGeneralTrackingMarkWithTier = HL.Method() << function(sel
     self:_RefreshGridMarkTierState(self.view.element.trackingMarkRoot.generalTrackingMark)
 end
 
-
-
 LevelMapLoader._RefreshGridsMask = HL.Method() << function(self)
     if not self.view.element.gridsMask.gameObject.activeSelf then
         return
@@ -1301,8 +1004,6 @@ LevelMapLoader._RefreshGridsMask = HL.Method() << function(self)
     self.view.element.gridsMask.sizeDelta = Vector2(targetRect.width, targetRect.height)
     self.view.element.gridsMask.position = self.m_gridsMaskFollowTarget.position
 end
-
-
 
 LevelMapLoader._RefreshPermanentStaticElementsLoadedState = HL.Method() << function(self)
     for elementLoaderData in cs_pairs(self.view.loader.permanentStaticElements) do
@@ -1342,26 +1043,20 @@ end
 
 
 
-
-
-
 LevelMapLoader._GetChunkResourcePath = HL.Method(HL.Userdata).Return(HL.String) << function(self, loaderData)
     local chunkId = loaderData.chunkId
     local levelId = loaderData.levelId
     if self.m_chunkResourcePathCache[levelId] == nil then
         self.m_chunkResourcePathCache[levelId] = UILevelMapUtils.GetUILevelMapChunksFolderByLevelId(
-            levelId, true
+            levelId, false
         )
     end
     if self.m_chunkResourcePathCache[chunkId] == nil then
         local folderPath = self.m_chunkResourcePathCache[levelId]
-        self.m_chunkResourcePathCache[chunkId] = string.format(TEXTURE_LOAD_PATH_FORMAT, folderPath, chunkId)
+        self.m_chunkResourcePathCache[chunkId] = UIUtils.getSpritePath(folderPath, chunkId)
     end
     return self.m_chunkResourcePathCache[chunkId]
 end
-
-
-
 
 LevelMapLoader._GetTierResourcePath = HL.Method(HL.Userdata).Return(HL.String) << function(self, loaderData)
     local tierLoadId = loaderData.tierLoadId
@@ -1378,9 +1073,6 @@ LevelMapLoader._GetTierResourcePath = HL.Method(HL.Userdata).Return(HL.String) <
     return self.m_tierResourcePathCache[tierLoadId]
 end
 
-
-
-
 LevelMapLoader._GetMistResourcePath = HL.Method(HL.Userdata).Return(HL.String) << function(self, loaderData)
     local mistLoadId = loaderData.mistLoadId
     local levelId = loaderData.levelId
@@ -1395,10 +1087,6 @@ LevelMapLoader._GetMistResourcePath = HL.Method(HL.Userdata).Return(HL.String) <
     end
     return self.m_mistResourcePathCache[mistLoadId]
 end
-
-
-
-
 
 LevelMapLoader._GetChunkResourceLoadDataFromPool = HL.Method(HL.Any, HL.Function).Return(HL.Table) << function(self, loadKey, onComplete)
     if self.m_chunkResourceLoadDataPool[loadKey] == nil then
@@ -1424,22 +1112,12 @@ LevelMapLoader._GetChunkResourceLoadDataFromPool = HL.Method(HL.Any, HL.Function
     return resourceLoadData
 end
 
-
-
-
 LevelMapLoader._GetChunkResourceByLoadKey = HL.Method(HL.Any).Return(HL.Userdata) << function(self, loadKey)
     if self.m_chunkResourceLoadDataPool[loadKey] == nil then
         return nil
     end
     return self.m_chunkResourceLoadDataPool[loadKey].resource
 end
-
-
-
-
-
-
-
 
 LevelMapLoader._LoadChunkResource = HL.Method(HL.Any, HL.String, HL.Boolean, HL.Function, HL.Opt(HL.Boolean)) << function(
     self, loadKey, path, isTexture, onComplete, forceSync
@@ -1478,10 +1156,6 @@ LevelMapLoader._LoadChunkResource = HL.Method(HL.Any, HL.String, HL.Boolean, HL.
     end
 end
 
-
-
-
-
 LevelMapLoader._DisposeChunkResource = HL.Method(HL.Any, HL.Opt(HL.Boolean)) << function(self, loadKey, disposeImmediately)
     if self.m_chunkResourceLoadDataPool[loadKey] == nil then
         return
@@ -1501,9 +1175,6 @@ LevelMapLoader._DisposeChunkResource = HL.Method(HL.Any, HL.Opt(HL.Boolean)) << 
     end
 end
 
-
-
-
 LevelMapLoader._DoDisposeChunkResource = HL.Method(HL.Any) << function(self, loadKey)
     if self.m_chunkResourceLoadDataPool[loadKey] == nil then
         logger.error("卸载的资源不在池中", loadKey)
@@ -1517,16 +1188,12 @@ LevelMapLoader._DoDisposeChunkResource = HL.Method(HL.Any) << function(self, loa
     self.m_chunkResourceLoadDataPool[loadKey] = nil
 end
 
-
-
 LevelMapLoader._DisposeAllChunkResources = HL.Method() << function(self)
     local disposeKeys = lume.keys(self.m_chunkResourceLoadDataPool)
     for _, loadKey in ipairs(disposeKeys) do
         self:_DisposeChunkResource(loadKey, true)
     end
 end
-
-
 
 LevelMapLoader._StartDelayDisposeChunkResourceThread = HL.Method() << function(self)
     self.m_delayDisposeResourceThread = self:_StartCoroutine(function()
@@ -1553,15 +1220,9 @@ LevelMapLoader._StartDelayDisposeChunkResourceThread = HL.Method() << function(s
     end)
 end
 
-
-
 LevelMapLoader._StopDelayDisposeChunkResourceThread = HL.Method() << function(self)
     self.m_delayDisposeResourceThread = self:_ClearCoroutine(self.m_delayDisposeResourceThread)
 end
-
-
-
-
 
 
 
@@ -1591,6 +1252,7 @@ LevelMapLoader._GetRTDrawerDataFromPool = HL.Method(HL.Any, HL.Table).Return(HL.
             drawResourcePathGetFunc = drawerInfo.drawResourcePathGetFunc,
             drawResourceSortFunc = drawerInfo.drawResourceSortFunc,
             extraScale = drawerInfo.extraDrawScale,  
+            isTextureResource = drawerInfo.isTextureResource ~= false,  
 
             
             lodType = nil,
@@ -1608,18 +1270,12 @@ LevelMapLoader._GetRTDrawerDataFromPool = HL.Method(HL.Any, HL.Table).Return(HL.
     return self.m_rtDrawerDataPool[drawerKey]
 end
 
-
-
-
 LevelMapLoader._GetRTDrawerData = HL.Method(HL.Any).Return(HL.Table) << function(self, drawerKey)
     if self.m_rtDrawerDataPool[drawerKey] == nil then
         logger.error("需要先从Pool中获取一次DrawerData")
     end
     return self.drawerPool[drawerKey]
 end
-
-
-
 
 LevelMapLoader._ClearDrawerLoadState = HL.Method(HL.Table) << function(self, drawerData)
     if next(drawerData.drawList) ~= nil and next(drawerData.waitList) ~= nil then
@@ -1630,10 +1286,6 @@ LevelMapLoader._ClearDrawerLoadState = HL.Method(HL.Table) << function(self, dra
     drawerData.drawList = {}
     drawerData.waitList = {}
 end
-
-
-
-
 
 LevelMapLoader._StartDrawRT = HL.Method(HL.Table, HL.Opt(HL.Function)) << function(self, drawerData, onRefreshFinish)
     local drawList = drawerData.drawList
@@ -1650,7 +1302,7 @@ LevelMapLoader._StartDrawRT = HL.Method(HL.Table, HL.Opt(HL.Function)) << functi
 
         for loadId, loaderData in pairs(drawList) do
             local texturePath = drawResourcePathGetFunc(loaderData)
-            self:_LoadChunkResource(loadId, texturePath, true, function()
+            self:_LoadChunkResource(loadId, texturePath, drawerData.isTextureResource, function()
                 waitList[loadId] = nil
                 if next(waitList) == nil then
                     self:_DrawRT(drawerData)
@@ -1663,11 +1315,6 @@ LevelMapLoader._StartDrawRT = HL.Method(HL.Table, HL.Opt(HL.Function)) << functi
     end
 end
 
-
-
-
-
-
 LevelMapLoader._FinishDrawRT = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Function)) << function(self, drawerData, drawValid, onRefreshFinish)
     drawerData.isDrawing = false
     if drawerData.needSetActiveNodeAfterDraw then
@@ -1677,9 +1324,6 @@ LevelMapLoader._FinishDrawRT = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Functio
         onRefreshFinish()
     end
 end
-
-
-
 
 LevelMapLoader._DrawRT = HL.Method(HL.Table) << function(self, drawerData)
     local drawList = drawerData.drawList
@@ -1734,9 +1378,6 @@ LevelMapLoader._DrawRT = HL.Method(HL.Table) << function(self, drawerData)
     end
 end
 
-
-
-
 LevelMapLoader._RefreshRTBasicState = HL.Method(HL.Table) << function(self, drawerData)
     if drawerData == nil then
         return
@@ -1771,9 +1412,6 @@ LevelMapLoader._RefreshRTBasicState = HL.Method(HL.Table) << function(self, draw
     drawNode.rectTransform.anchoredPosition = Vector2(left + nodeSize.x * scaleRatio / 2, top - nodeSize.y * scaleRatio / 2)
 end
 
-
-
-
 LevelMapLoader._ClearRTDrawState = HL.Method(HL.Table) << function(self, drawerData)
     if drawerData == nil then
         return
@@ -1787,10 +1425,6 @@ LevelMapLoader._ClearRTDrawState = HL.Method(HL.Table) << function(self, drawerD
     CustomDrawRTManager.Instance:ClearTexture(rt)
 end
 
-
-
-
-
 LevelMapLoader._RefreshRTDrawState = HL.Method(HL.String, HL.Table) << function(self, loadId, drawerData)
     if drawerData == nil then
         return
@@ -1798,7 +1432,8 @@ LevelMapLoader._RefreshRTDrawState = HL.Method(HL.String, HL.Table) << function(
 
     local transformData = drawerData.transformData
     local loaderData = drawerData.drawList[loadId]
-    local texture = self:_GetChunkResourceByLoadKey(loadId)
+    local resource = self:_GetChunkResourceByLoadKey(loadId)
+    local texture = drawerData.isTextureResource and resource or resource.texture
     local totalScaleRatio = 1 / transformData.scale.x
     local extraScaleRatio = drawerData.extraScale
     local targetRect = Rect(
@@ -1825,8 +1460,6 @@ LevelMapLoader._RefreshRTDrawState = HL.Method(HL.String, HL.Table) << function(
     end
 end
 
-
-
 LevelMapLoader._ClearAllDrawersRT = HL.Method() << function(self)
     for _, drawerData in pairs(self.m_rtDrawerDataPool) do
         self:_ReleaseRT(drawerData.rt)
@@ -1834,9 +1467,6 @@ LevelMapLoader._ClearAllDrawersRT = HL.Method() << function(self)
         drawerData.drawNode.gameObject:SetActive(false)
     end
 end
-
-
-
 
 LevelMapLoader._ReleaseRT = HL.Method(HL.Userdata) << function(self, rt)
     if IsNull(rt) then
@@ -1848,10 +1478,6 @@ LevelMapLoader._ReleaseRT = HL.Method(HL.Userdata) << function(self, rt)
     end
     rtManager:ReleaseRenderTexture(rt)
 end
-
-
-
-
 
 LevelMapLoader._SetDrawNodeActiveState = HL.Method(HL.Table, HL.Boolean) << function(self, drawerData, active)
     if drawerData.isDrawing then
@@ -1867,13 +1493,271 @@ end
 
 
 
+LevelMapLoader._RefreshGOChunkCells = HL.Method(HL.Table, HL.Table, ChunkLODType, HL.Boolean) << function(self, drawer, loadEntries, lodType, activateParentOnComplete)
+    local batchWaitList = {}
+    local batchCells = {}
+
+    for chunkId, loaderData in pairs(loadEntries) do
+        drawer.chunkSortMap[chunkId] = { levelId = loaderData.levelId, levelNumId = loaderData.levelNumId }
+
+        local chunkCell = drawer.nodeCache:Get()
+        chunkCell.image.material = drawer.stencilMaterial
+        chunkCell.gameObject:SetActive(false)
+
+        local spritePath = drawer.resourcePathGetFunc(loaderData)
+        batchWaitList[chunkId] = true
+        batchCells[chunkId] = {
+            chunkCell = chunkCell,
+            rectPos = loaderData.rectPos,
+        }
+
+        drawer.chunkCellMap[chunkId] = chunkCell
+
+        self:_LoadChunkResource(chunkId, spritePath, false, function(sprite)
+            if batchWaitList[chunkId] == nil then
+                return
+            end
+            batchWaitList[chunkId] = nil
+
+            local cellInfo = batchCells[chunkId]
+            if drawer.chunkCellMap[chunkId] == cellInfo.chunkCell then
+                cellInfo.sprite = sprite
+            end
+
+            
+            for key, _ in pairs(batchWaitList) do
+                if drawer.chunkCellMap[key] ~= batchCells[key].chunkCell then
+                    batchWaitList[key] = nil
+                end
+            end
+
+            if next(batchWaitList) == nil then
+                for key, info in pairs(batchCells) do
+                    if drawer.chunkCellMap[key] == info.chunkCell and info.sprite ~= nil then
+                        info.chunkCell.image.sprite = info.sprite
+                        info.chunkCell.image:SetNativeSize()
+                        info.chunkCell.rectTransform.localScale = self:_GetNativeScaleByLODType(lodType)
+                        info.chunkCell.rectTransform.anchoredPosition = info.rectPos
+                        info.chunkCell.gameObject:SetActive(true)
+                    end
+                end
+                self:_ReorderGOChunkCells(drawer)
+                if activateParentOnComplete then
+                    drawer.parentNode.gameObject:SetActive(true)
+                end
+            end
+        end)
+    end
+end
+
+
+LevelMapLoader._RecycleGOChunkCell = HL.Method(HL.Table, HL.String, HL.Boolean) << function(self, drawer, chunkId, disposeResource)
+    local chunkCell = drawer.chunkCellMap[chunkId]
+    if chunkCell ~= nil then
+        if disposeResource then
+            self:_DisposeChunkResource(chunkId)
+        end
+        chunkCell.image.sprite = nil
+        drawer.nodeCache:Cache(chunkCell)
+    end
+    drawer.chunkCellMap[chunkId] = nil
+    drawer.chunkSortMap[chunkId] = nil
+end
+
+
+LevelMapLoader._ClearGOChunkDrawer = HL.Method(HL.Table, HL.Boolean) << function(self, drawer, disposeResource)
+    for chunkId, chunkCell in pairs(drawer.chunkCellMap) do
+        if disposeResource then
+            self:_DisposeChunkResource(chunkId, true)
+        end
+        chunkCell.image.sprite = nil
+        drawer.nodeCache:Cache(chunkCell)
+    end
+    drawer.chunkCellMap = {}
+    drawer.chunkSortMap = {}
+    drawer.overlapEntryPool = {}
+    drawer.parentNode.gameObject:SetActive(false)
+end
+
+
+LevelMapLoader._CacheGOChunkCells = HL.Method(HL.Table, HL.Table) << function(self, drawer, visibleChunkIds)
+    local recycleList = {}
+    for chunkId, _ in pairs(drawer.chunkCellMap) do
+        if visibleChunkIds[chunkId] ~= true then
+            table.insert(recycleList, chunkId)
+        end
+    end
+    for _, chunkId in ipairs(recycleList) do
+        self:_RecycleGOChunkCell(drawer, chunkId, false)
+    end
+end
+
+
+
+LevelMapLoader._ReorderGOChunkCells = HL.Method(HL.Table) << function(self, drawer)
+    local sortList = {}
+    for chunkId, _ in pairs(drawer.chunkCellMap) do
+        local info = drawer.chunkSortMap[chunkId]
+        local sortKey = info and (info.levelId == self.m_levelId and -1 or info.levelNumId) or 0
+        table.insert(sortList, {
+            chunkId = chunkId,
+            sortKey = sortKey,
+        })
+    end
+    table.sort(sortList, function(a, b)
+        if a.sortKey ~= b.sortKey then
+            return a.sortKey < b.sortKey
+        end
+        return a.chunkId < b.chunkId
+    end)
+    
+    for _, entry in ipairs(sortList) do
+        local cell = drawer.chunkCellMap[entry.chunkId]
+        if cell ~= nil then
+            cell.rectTransform:SetAsLastSibling()
+            cell.gameObject.name = entry.chunkId
+        end
+    end
+end
+
+LevelMapLoader._ReorderAllGOChunkDrawers = HL.Method() << function(self)
+    if not self.m_useChunkGODrawer or self.m_chunkGODrawers == nil then
+        return
+    end
+    for _, drawer in pairs(self.m_chunkGODrawers) do
+        self:_ReorderGOChunkCells(drawer)
+    end
+end
+
+LevelMapLoader._ProcessChunksWithCurrentLevelPriority = HL.Method(HL.Userdata, HL.Function) << function(self, chunks, action)
+    
+    for loaderData in cs_pairs(chunks) do
+        if loaderData.levelId == self.m_levelId then
+            action(loaderData)
+        end
+    end
+    
+    for loaderData in cs_pairs(chunks) do
+        if loaderData.levelId ~= self.m_levelId then
+            action(loaderData)
+        end
+    end
+end
+
+
+
+
+
+
+
+
+LevelMapLoader._ProcessAddChunks = HL.Method(HL.Userdata, ChunkLODType) << function(self, addChunks, lodType)
+    local drawer = self.m_chunkGODrawers[lodType]
+    if drawer == nil then
+        return
+    end
+
+    local isHighLOD = lodType == ChunkLODType.High
+    local loadEntries = {}
+    local hasEntries = false
+
+    if isHighLOD then
+        
+        self:_ProcessChunksWithCurrentLevelPriority(addChunks, function(loaderData)
+            local globalId = loaderData.globalId
+            if globalId ~= 0 then
+                local overlapEntry = drawer.overlapEntryPool[globalId]
+                if overlapEntry ~= nil then
+                    overlapEntry.refCount = overlapEntry.refCount + 1
+                else
+                    drawer.overlapEntryPool[globalId] = { refCount = 1, ownerChunkId = loaderData.chunkId }
+                    loadEntries[loaderData.chunkId] = loaderData
+                    hasEntries = true
+                end
+            else
+                loadEntries[loaderData.chunkId] = loaderData
+                hasEntries = true
+            end
+        end)
+    else
+        for loaderData in cs_pairs(addChunks) do
+            loadEntries[loaderData.chunkId] = loaderData
+            hasEntries = true
+        end
+    end
+
+    if hasEntries then
+        self:_RefreshGOChunkCells(drawer, loadEntries, lodType, true)
+    else
+        drawer.parentNode.gameObject:SetActive(true)
+    end
+end
+
+
+
+
+
+LevelMapLoader._ProcessRemoveChunks = HL.Method(HL.Userdata, ChunkLODType) << function(self, removeChunks, lodType)
+    local drawer = self.m_chunkGODrawers[lodType]
+    if drawer == nil then
+        return
+    end
+
+    local isHighLOD = lodType == ChunkLODType.High
+
+    for loaderData in cs_pairs(removeChunks) do
+        if isHighLOD then
+            local globalId = loaderData.globalId
+            if globalId ~= 0 then
+                local overlapEntry = drawer.overlapEntryPool[globalId]
+                if overlapEntry ~= nil then
+                    overlapEntry.refCount = overlapEntry.refCount - 1
+                    if overlapEntry.refCount <= 0 then
+                        
+                        local ownerChunkId = overlapEntry.ownerChunkId
+                        self:_RecycleGOChunkCell(drawer, ownerChunkId, true)
+                        drawer.overlapEntryPool[globalId] = nil
+                    end
+                    
+                end
+            else
+                
+                local chunkId = loaderData.chunkId
+                self:_RecycleGOChunkCell(drawer, chunkId, true)
+            end
+        else
+            
+            local chunkId = loaderData.chunkId
+            self:_RecycleGOChunkCell(drawer, chunkId, true)
+        end
+    end
+end
+
+
+
+LevelMapLoader._RecycleAllGOChunkCells = HL.Method() << function(self)
+    if not self.m_useChunkGODrawer or self.m_chunkGODrawers == nil then
+        return
+    end
+    for _, drawer in pairs(self.m_chunkGODrawers) do
+        self:_ClearGOChunkDrawer(drawer, false)
+    end
+end
+
+
+
 
 
 LevelMapLoader._RefreshChunksLoadedState = HL.Method(HL.Userdata, HL.Userdata) << function(self, addChunks, removeChunks)
     local chunks, lodType = self.view.loader.hitChunks, self.view.loader.checkLODType
 
     
-    self:_RefreshLoadedChunks(chunks, lodType)
+    if self.m_useChunkGODrawer then
+        self:_ProcessRemoveChunks(removeChunks, lodType)
+        self:_ProcessAddChunks(addChunks, lodType)
+    else
+        self:_RefreshLoadedChunks(chunks, lodType)
+    end
 
     
     self:_RefreshLoadedChunksTiers()
@@ -1887,10 +1771,6 @@ LevelMapLoader._RefreshChunksLoadedState = HL.Method(HL.Userdata, HL.Userdata) <
         self.m_waitMistRefreshAfterGridChange = false
     end
 end
-
-
-
-
 
 LevelMapLoader._RefreshElementsLoadedState = HL.Method(HL.Userdata, HL.Userdata) << function(self, addGrids, removeGrids)
     
@@ -1910,10 +1790,6 @@ LevelMapLoader._RefreshElementsLoadedState = HL.Method(HL.Userdata, HL.Userdata)
     end
 end
 
-
-
-
-
 LevelMapLoader._RefreshGridsElements = HL.Method(HL.Userdata, HL.Boolean) << function(self, loaderData, isAdd)
     if isAdd then
         self:_RefreshGrid(loaderData, true)
@@ -1928,10 +1804,6 @@ LevelMapLoader._RefreshGridsElements = HL.Method(HL.Userdata, HL.Boolean) << fun
     end
 end
 
-
-
-
-
 LevelMapLoader._GetNativeScaleByLODType = HL.Method(ChunkLODType, HL.Opt(HL.Boolean)).Return(Vector3) << function(self, lodType, isMist)
     local cache = isMist and self.m_mistLODScaleCache or self.m_lodScaleCache
     if cache[lodType] == nil then
@@ -1944,8 +1816,6 @@ LevelMapLoader._GetNativeScaleByLODType = HL.Method(ChunkLODType, HL.Opt(HL.Bool
     return cache[lodType]
 end
 
-
-
 LevelMapLoader._GetExtraLowScale = HL.Method().Return(HL.Number) << function(self)
     if self.m_needExtraLowScaleRT then
         return DeviceInfo.isMobile and EXTRA_LOW_RT_DRAW_SCALE_MOBILE or EXTRA_LOW_RT_DRAW_SCALE_DEFAULT
@@ -1954,76 +1824,137 @@ LevelMapLoader._GetExtraLowScale = HL.Method().Return(HL.Number) << function(sel
     end
 end
 
-
-
 LevelMapLoader._InitChunkDrawer = HL.Method() << function(self)
     local loadedChunks = self.view.element.loadedChunks
-    local drawNodes = {
+    local chunkSources = self.view.source.chunks
+    local lodParentNodes = {
         [ChunkLODType.Low] = loadedChunks.lowLODChunks,
         [ChunkLODType.Medium] = loadedChunks.mediumLODChunks,
         [ChunkLODType.High] = loadedChunks.highLODChunks,
     }
 
-    self.m_chunkDrawers = {}
-    for lodType, drawNode in pairs(drawNodes) do
-        self.m_chunkDrawers[lodType] = self:_GetRTDrawerDataFromPool(
-            string.format(CHUNK_DRAWER_KEY_FORMAT, lodType:GetHashCode()),
-            {
-                drawNode = drawNode,
-                needSetActiveNodeAfterDraw = true,
-                drawMaterialPath = CHUNK_DRAW_MATERIAL_PATH,
-                drawResourcePathGetFunc = function(loaderData)
+    if self.m_useChunkGODrawer then
+        local goChunkSource = chunkSources.goChunk
+
+        self.m_chunkGODrawers = {}
+        for lodType, parentNode in pairs(lodParentNodes) do
+            local stencilMat = self:_CreateChunkStencilMaterial(goChunkSource.image.material, lodType)
+            self.m_chunkGODrawers[lodType] = {
+                parentNode = parentNode,
+                nodeCache = LuaNodeCache(goChunkSource, parentNode),
+                overlapEntryPool = {},
+                chunkCellMap = {},
+                chunkSortMap = {},
+                resourcePathGetFunc = function(loaderData)
                     return self:_GetChunkResourcePath(loaderData)
                 end,
-                drawResourceSortFunc = function(drawList)
-                    local sortTempList = {}
-                    for loadId, loaderData in pairs(drawList) do
-                        
-                        table.insert(sortTempList, {
-                            loadId = loadId,
-                            sortId = loaderData.levelId == self.m_levelId and -1 or loaderData.levelNumId
-                        })
-                    end
-                    table.sort(sortTempList, Utils.genSortFunction({ "sortId" }, false))
-                    local sortedDrawList = {}
-                    for _, sortTempData in ipairs(sortTempList) do
-                        table.insert(sortedDrawList, sortTempData.loadId)
-                    end
-                    return sortedDrawList
-                end,
-                extraDrawScale = self:_GetExtraLowScale()
+                stencilMaterial = stencilMat,
             }
-        )
-        drawNode.gameObject:SetActive(false)
+            parentNode.gameObject:SetActive(false)
+        end
+        self.m_chunkRTDrawers = {}
+    else
+        local rtChunkSource = chunkSources.rtChunk
+
+        self.m_chunkRTDrawers = {}
+        for lodType, parentNode in pairs(lodParentNodes) do
+            
+            local rtNodeCache = LuaNodeCache(rtChunkSource, parentNode)
+            local rtChunkCell = rtNodeCache:Get()
+
+            self.m_chunkRTDrawers[lodType] = self:_GetRTDrawerDataFromPool(
+                string.format(CHUNK_DRAWER_KEY_FORMAT, lodType:GetHashCode()),
+                {
+                    drawNode = rtChunkCell,
+                    needSetActiveNodeAfterDraw = true,
+                    drawMaterialPath = CHUNK_DRAW_MATERIAL_PATH,
+                    isTextureResource = false,
+                    drawResourcePathGetFunc = function(loaderData)
+                        return self:_GetChunkResourcePath(loaderData)
+                    end,
+                    drawResourceSortFunc = function(drawList)
+                        local sortTempList = {}
+                        for loadId, loaderData in pairs(drawList) do
+                            table.insert(sortTempList, {
+                                loadId = loadId,
+                                sortId = loaderData.levelId == self.m_levelId and -1 or loaderData.levelNumId
+                            })
+                        end
+                        table.sort(sortTempList, Utils.genSortFunction({ "sortId" }, false))
+                        local sortedDrawList = {}
+                        for _, sortTempData in ipairs(sortTempList) do
+                            table.insert(sortedDrawList, sortTempData.loadId)
+                        end
+                        return sortedDrawList
+                    end,
+                    extraDrawScale = self:_GetExtraLowScale()
+                }
+            )
+            
+            rtChunkCell.gameObject:SetActive(false)
+        end
     end
 end
 
 
+local LOD_STENCIL_BITS = {
+    [ChunkLODType.Low] = 1,     
+    [ChunkLODType.Medium] = 2,  
+    [ChunkLODType.High] = 4,    
+}
 
-
-LevelMapLoader._GetChunkNodeByLODType = HL.Method(ChunkLODType).Return(HL.Any) << function(self, lodType)
-    return self.m_chunkDrawers[lodType].drawNode
+LevelMapLoader._CreateChunkStencilMaterial = HL.Method(HL.Userdata, ChunkLODType).Return(HL.Userdata) << function(self, sourceMaterial, lodType)
+    local stencilBit = LOD_STENCIL_BITS[lodType]
+    local mat = Unity.Material(sourceMaterial)
+    mat:SetFloat("_Stencil", stencilBit)
+    mat:SetFloat("_StencilComp", 6)         
+    mat:SetFloat("_StencilOp", 2)           
+    mat:SetFloat("_StencilReadMask", stencilBit)
+    mat:SetFloat("_StencilWriteMask", stencilBit)
+    return mat
 end
 
-
+LevelMapLoader._GetChunkNodeByLODType = HL.Method(ChunkLODType).Return(HL.Any) << function(self, lodType)
+    if self.m_useChunkGODrawer then
+        return self.m_chunkGODrawers[lodType].parentNode
+    end
+    return self.m_chunkRTDrawers[lodType].drawNode
+end
 
 
 
 
 LevelMapLoader._RefreshLoadedChunks = HL.Method(HL.Userdata, ChunkLODType, HL.Opt(HL.Function)) << function(self, chunks, lodType, onRefreshFinish)
-    local drawerData = self.m_chunkDrawers[lodType]
+    local drawerData = self.m_chunkRTDrawers[lodType]
+    if drawerData == nil then
+        return
+    end
     self:_ClearDrawerLoadState(drawerData)
     drawerData.lodType = lodType
     drawerData.nativeScale = self:_GetNativeScaleByLODType(lodType)
+
+    
+    local isHighLOD = lodType == ChunkLODType.High
+    local dedupGlobalIds = isHighLOD and {} or nil
     for loaderData in cs_pairs(chunks) do
-        drawerData.drawList[loaderData.chunkId] = loaderData
+        if isHighLOD then
+            local globalId = loaderData.globalId
+            if globalId ~= 0 then
+                if dedupGlobalIds[globalId] then
+                    
+                else
+                    dedupGlobalIds[globalId] = true
+                    drawerData.drawList[loaderData.chunkId] = loaderData
+                end
+            else
+                drawerData.drawList[loaderData.chunkId] = loaderData
+            end
+        else
+            drawerData.drawList[loaderData.chunkId] = loaderData
+        end
     end
     self:_StartDrawRT(drawerData, onRefreshFinish)
 end
-
-
-
-
 
 LevelMapLoader._RefreshGrid = HL.Method(HL.Userdata, HL.Boolean) << function(self, loaderData, needShow)
     if needShow then
@@ -2034,8 +1965,6 @@ LevelMapLoader._RefreshGrid = HL.Method(HL.Userdata, HL.Boolean) << function(sel
         self.m_loadedGridViewDataMap[loaderData.gridId] = nil
     end
 end
-
-
 
 
 
@@ -2099,17 +2028,24 @@ LevelMapLoader._RefreshLoadedChunksTiers = HL.Method() << function(self)
     end
 end
 
-
-
-
 LevelMapLoader._RefreshLoaderChunksTierColorState = HL.Method(HL.Boolean) << function(self, inTier)
     local color = inTier and self.m_levelMapConfig.gridBaseTierColor or Color.white
-    UIUtils.changeColorExceptAlpha(self:_GetChunkNodeByLODType(ChunkLODType.Low).image, color)
-    UIUtils.changeColorExceptAlpha(self:_GetChunkNodeByLODType(ChunkLODType.Medium).image, color)
-    UIUtils.changeColorExceptAlpha(self:_GetChunkNodeByLODType(ChunkLODType.High).image, color)
+    if self.m_useChunkGODrawer then
+        if self.m_chunkGODrawers == nil then
+            return
+        end
+        for _, drawer in pairs(self.m_chunkGODrawers) do
+            local canvasGroup = drawer.parentNode.canvasGroup
+            if canvasGroup ~= nil then
+                UIUtils.changeColorExceptAlpha(canvasGroup, color)
+            end
+        end
+    else
+        UIUtils.changeColorExceptAlpha(self:_GetChunkNodeByLODType(ChunkLODType.Low).image, color)
+        UIUtils.changeColorExceptAlpha(self:_GetChunkNodeByLODType(ChunkLODType.Medium).image, color)
+        UIUtils.changeColorExceptAlpha(self:_GetChunkNodeByLODType(ChunkLODType.High).image, color)
+    end
 end
-
-
 
 
 
@@ -2140,11 +2076,6 @@ LevelMapLoader._InitMistDrawer = HL.Method() << function(self)
         drawNode.gameObject:SetActive(false)
     end
 end
-
-
-
-
-
 
 LevelMapLoader._RefreshLoadedChunksMists = HL.Method(HL.Number, HL.Opt(HL.Table, HL.Function)) << function(
     self, mistLoadType, customRefreshInfo, onRefreshFinish
@@ -2199,27 +2130,104 @@ end
 
 
 
-
-
-
-
 LevelMapLoader._RefreshChunksCullingLOD = HL.Method(ChunkLODType, ChunkLODType) << function(self, lastLODType, currLODType)
-    if lastLODType == ChunkLODType.Medium and currLODType == ChunkLODType.High and self.m_chunkDrawers[currLODType].isDrawing then
+    if self.m_useChunkGODrawer then
+        if lastLODType ~= ChunkLODType.Low then
+            self.m_chunkGODrawers[lastLODType].parentNode.gameObject:SetActive(false)
+        end
+        if currLODType ~= ChunkLODType.Low then
+            self.m_chunkGODrawers[currLODType].parentNode.gameObject:SetActive(true)
+        end
+        self.m_lateHideChunkLODType = nil
+        return
+    end
+
+    if lastLODType == ChunkLODType.Medium and currLODType == ChunkLODType.High and self.m_chunkRTDrawers[currLODType].isDrawing then
         self.m_lateHideChunkLODType = ChunkLODType.Medium  
         return
     end
 
     if lastLODType ~= ChunkLODType.Low then
-        self:_SetDrawNodeActiveState(self.m_chunkDrawers[lastLODType], false)
+        self:_SetDrawNodeActiveState(self.m_chunkRTDrawers[lastLODType], false)
     end
     if currLODType ~= ChunkLODType.Low then
-        self:_SetDrawNodeActiveState(self.m_chunkDrawers[currLODType], true)
+        self:_SetDrawNodeActiveState(self.m_chunkRTDrawers[currLODType], true)
     end
 
     self.m_lateHideChunkLODType = nil
 end
 
 
+
+
+
+
+LevelMapLoader._RefreshGODrawerCullingChunks = HL.Method(HL.Userdata, ChunkLODType) << function(self, chunks, lodType)
+    local drawer = self.m_chunkGODrawers[lodType]
+    if drawer == nil then
+        return
+    end
+
+    local isHighLOD = lodType == ChunkLODType.High
+    local visibleChunkIds = {}
+    local newEntries = {}
+
+    if isHighLOD then
+        
+        local dedupGlobalIds = {}
+        self:_ProcessChunksWithCurrentLevelPriority(chunks, function(loaderData)
+            local chunkId = loaderData.chunkId
+            local globalId = loaderData.globalId
+            local shouldProcess = true
+            if globalId ~= 0 then
+                if dedupGlobalIds[globalId] then
+                    shouldProcess = false
+                else
+                    dedupGlobalIds[globalId] = true
+                end
+            end
+            if shouldProcess then
+                visibleChunkIds[chunkId] = true
+                if drawer.chunkCellMap[chunkId] == nil then
+                    newEntries[chunkId] = loaderData
+                end
+            end
+        end)
+    else
+        for loaderData in cs_pairs(chunks) do
+            local chunkId = loaderData.chunkId
+            visibleChunkIds[chunkId] = true
+            if drawer.chunkCellMap[chunkId] == nil then
+                newEntries[chunkId] = loaderData
+            end
+        end
+    end
+
+    
+    self:_CacheGOChunkCells(drawer, visibleChunkIds)
+
+    if next(newEntries) ~= nil then
+        self:_RefreshGOChunkCells(drawer, newEntries, lodType, false)
+    end
+end
+
+
+LevelMapLoader._RefreshCullingChunks = HL.Method(HL.Userdata, ChunkLODType) << function(self, chunks, lodType)
+    if self.m_useChunkGODrawer then
+        self:_RefreshGODrawerCullingChunks(chunks, lodType)
+        if self.m_lateHideChunkLODType ~= nil then
+            self.m_chunkGODrawers[self.m_lateHideChunkLODType].parentNode.gameObject:SetActive(false)
+            self.m_lateHideChunkLODType = nil
+        end
+    else
+        self:_RefreshLoadedChunks(chunks, lodType, function()
+            if self.m_lateHideChunkLODType ~= nil then
+                self:_SetDrawNodeActiveState(self.m_chunkRTDrawers[self.m_lateHideChunkLODType], false)
+                self.m_lateHideChunkLODType = nil
+            end
+        end)
+    end
+end
 
 LevelMapLoader._RefreshChunksCullingState = HL.Method() << function(self)
     local chunks, lodType = self.view.loader.cullingVisibleChunks, self.view.loader.cullingLODType
@@ -2228,12 +2236,7 @@ LevelMapLoader._RefreshChunksCullingState = HL.Method() << function(self)
     self.m_needOptimizePerformance = true
 
     if lodType ~= ChunkLODType.Low then
-        self:_RefreshLoadedChunks(chunks, lodType, function()
-            if self.m_lateHideChunkLODType ~= nil then
-                self:_SetDrawNodeActiveState(self.m_chunkDrawers[self.m_lateHideChunkLODType], false)
-                self.m_lateHideChunkLODType = nil
-            end
-        end)
+        self:_RefreshCullingChunks(chunks, lodType)
     end
 
     self:_RefreshLoadedChunksTiers()
@@ -2241,9 +2244,6 @@ LevelMapLoader._RefreshChunksCullingState = HL.Method() << function(self)
 
     self.m_needOptimizePerformance = lastNeedOptimizePerformance
 end
-
-
-
 
 
 
@@ -2263,18 +2263,12 @@ LevelMapLoader._GetMarkCache = HL.Method(HL.Table).Return(Stack) << function(sel
     return cache
 end
 
-
-
-
 LevelMapLoader._GetIsCustomMarkByViewData = HL.Method(HL.Table).Return(HL.Boolean) << function(self, markViewData)
     if markViewData == nil then
         return false
     end
     return markViewData.sortOrder == CUSTOM_MARK_ORDER
 end
-
-
-
 
 LevelMapLoader._GetMarkSourceObj = HL.Method(HL.Table).Return(HL.Any) << function(self, markViewData)
     local sourceObj
@@ -2287,9 +2281,6 @@ LevelMapLoader._GetMarkSourceObj = HL.Method(HL.Table).Return(HL.Any) << functio
     end
     return sourceObj
 end
-
-
-
 
 LevelMapLoader._GetMarkFromCache = HL.Method(HL.Table).Return(HL.Any) << function(self, markViewData)
     local orderRoot = self:_GetMarkRootByOrder(markViewData.sortOrder)
@@ -2312,19 +2303,12 @@ LevelMapLoader._GetMarkFromCache = HL.Method(HL.Table).Return(HL.Any) << functio
     return markObj
 end
 
-
-
-
-
 LevelMapLoader._CacheMark = HL.Method(HL.Table, HL.Any) << function(self, markViewData, markObj)
     local markCache = self:_GetMarkCache(markViewData)
     markObj:ClearLevelMapMark()
     markObj.gameObject:SetActive(false)
     markCache:Push(markObj)
 end
-
-
-
 
 LevelMapLoader._GetTrackingMarkFromCache = HL.Method(HL.Boolean).Return(HL.Any) << function(self, isMissionTracking)
     local trackingRoot = self.view.element.trackingMarkRoot
@@ -2348,18 +2332,11 @@ LevelMapLoader._GetTrackingMarkFromCache = HL.Method(HL.Boolean).Return(HL.Any) 
     return trackingMarkObj
 end
 
-
-
-
 LevelMapLoader._CacheTrackingMark = HL.Method(HL.Any) << function(self, trackingMarkObj)
     trackingMarkObj:ClearLevelMapMark()
     trackingMarkObj.gameObject:SetActive(false)
     self.m_trackingMarkCache:Push(trackingMarkObj)
 end
-
-
-
-
 
 LevelMapLoader._RefreshGridMarks = HL.Method(HL.Userdata, HL.Boolean) << function(self, loaderData, needShow)
     local marks = loaderData.marks
@@ -2370,11 +2347,6 @@ LevelMapLoader._RefreshGridMarks = HL.Method(HL.Userdata, HL.Boolean) << functio
         self:_RefreshGridMark(markInstId, markRuntimeData, needShow)
     end
 end
-
-
-
-
-
 
 LevelMapLoader._RefreshGridMark = HL.Method(HL.String, HL.Userdata, HL.Boolean) << function(self, markInstId, markRuntimeData, needShow)
     local invisibleInMist = not markRuntimeData.visibleInMist and markRuntimeData:IsInMist()
@@ -2465,9 +2437,6 @@ LevelMapLoader._RefreshGridMark = HL.Method(HL.String, HL.Userdata, HL.Boolean) 
     end
 end
 
-
-
-
 LevelMapLoader._RefreshNonConstantStateMark = HL.Method(HL.String) << function(self, markInstId)
     if self.m_loadedMarkViewDataMap[markInstId] then
         local markObj = self.m_loadedMarkViewDataMap[markInstId].markObj
@@ -2477,9 +2446,6 @@ LevelMapLoader._RefreshNonConstantStateMark = HL.Method(HL.String) << function(s
     end
 end
 
-
-
-
 LevelMapLoader._RefreshGridMarkTierState = HL.Method(HL.Any) << function(self, mark)
     if mark == nil then
         return
@@ -2487,16 +2453,12 @@ LevelMapLoader._RefreshGridMarkTierState = HL.Method(HL.Any) << function(self, m
     mark:RefreshMarkTierState(self.m_tierIndex, not self.m_needShowMarkTier)
 end
 
-
-
 LevelMapLoader._GetGeneralTrackingMarkIfNeed = HL.Method() << function(self)
     if self.view.element.trackingMarkRoot.generalTrackingMark ~= nil then
         return
     end
     self.view.element.trackingMarkRoot.generalTrackingMark = self:_GetTrackingMarkFromCache(false)
 end
-
-
 
 
 LevelMapLoader._RefreshMissionTrackingMarksLevelState = HL.Method() << function(self)
@@ -2540,8 +2502,6 @@ LevelMapLoader._RefreshMissionTrackingMarksLevelState = HL.Method() << function(
     end
 end
 
-
-
 LevelMapLoader._RefreshGeneralTrackingMarkLevelState = HL.Method() << function(self)
     self:_GetGeneralTrackingMarkIfNeed()
 
@@ -2571,8 +2531,6 @@ LevelMapLoader._RefreshGeneralTrackingMarkLevelState = HL.Method() << function(s
     end
 end
 
-
-
 LevelMapLoader._RefreshMissionTrackingMarksOffset = HL.Method() << function(self)
     local offsetPosition = Vector2(
         self.view.config.MISSION_TRACKING_MARK_OFFSET_X,
@@ -2586,8 +2544,6 @@ LevelMapLoader._RefreshMissionTrackingMarksOffset = HL.Method() << function(self
         end
     end
 end
-
-
 
 LevelMapLoader._RefreshMissionTrackingMarksPosition = HL.Method() << function(self)
     if not self.m_mapManager.needRefreshMissionTrackingMarkPos then
@@ -2603,8 +2559,6 @@ LevelMapLoader._RefreshMissionTrackingMarksPosition = HL.Method() << function(se
         end
     end
 end
-
-
 
 LevelMapLoader._RefreshWaitVisibleInMistMarksState = HL.Method() << function(self)
     if self.m_waitVisibleInMistMarks == nil or next(self.m_waitVisibleInMistMarks) == nil then
@@ -2625,9 +2579,6 @@ LevelMapLoader._RefreshWaitVisibleInMistMarksState = HL.Method() << function(sel
     end
 end
 
-
-
-
 LevelMapLoader._RefreshCustomMarkOrderActiveState = HL.Method(HL.Boolean) << function(self, state)
     for order = 1, CUSTOM_MARK_ORDER - 1 do
         self:SetMarkOrderState(order, state)
@@ -2639,21 +2590,13 @@ end
 
 
 
-
-
-
 LevelMapLoader._GetMarkRootByOrder = HL.Method(HL.Number).Return(RectTransform) << function(self, order)
     return self.view.element.markRoot[string.format(MARK_ORDER_VIEW_NAME_FORMAT, order)]
 end
 
-
-
 LevelMapLoader._GetIsInTier = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_tierId ~= MapConst.BASE_TIER_ID and self.m_tierIndex ~= MapConst.BASE_TIER_INDEX
 end
-
-
-
 
 LevelMapLoader._GetGridSpriteIdWithTier = HL.Method(HL.String).Return(HL.String, HL.Boolean) << function(self, gridId)
     local gridData = self.m_loadedGridViewDataMap[gridId]
@@ -2677,10 +2620,6 @@ LevelMapLoader._GetGridSpriteIdWithTier = HL.Method(HL.String).Return(HL.String,
     end
 end
 
-
-
-
-
 LevelMapLoader._GetRectPosByWorldPos = HL.Method(HL.Any, HL.Opt(HL.Boolean)).Return(Vector2) << function(self, worldPos, ignoreInverse)
     local rectPos = UILevelMapUtils.ConvertUILevelMapWorldPosToRectPos(worldPos, self.m_gridWorldLength, self.m_gridRectLength)
     if not ignoreInverse then
@@ -2691,10 +2630,6 @@ LevelMapLoader._GetRectPosByWorldPos = HL.Method(HL.Any, HL.Opt(HL.Boolean)).Ret
     end
     return rectPos
 end
-
-
-
-
 
 
 
@@ -2713,8 +2648,6 @@ LevelMapLoader._ClearLoaderCache = HL.Method(HL.Table, LuaNodeCache) << function
     nodeTable = {}
 end
 
-
-
 LevelMapLoader._ClearLoaderMarkCache = HL.Method() << function(self)
     for _, markViewData in pairs(self.m_loadedMarkViewDataMap) do
         self:_CacheMark(markViewData, markViewData.markObj)
@@ -2722,8 +2655,6 @@ LevelMapLoader._ClearLoaderMarkCache = HL.Method() << function(self)
 
     self.m_loadedMarkViewDataMap = {}
 end
-
-
 
 LevelMapLoader._ClearLoaderStaticElementCache = HL.Method() << function(self)
     for _, staticElementViewData in pairs(self.m_loadedStaticElementViewDataMap) do
@@ -2734,13 +2665,12 @@ LevelMapLoader._ClearLoaderStaticElementCache = HL.Method() << function(self)
                 component:ClearComponent()
             end
         end
-        initializer.cache:Cache(staticElementViewData.elementObj)
+        local cache = staticElementViewData.cache or initializer.cache
+        cache:Cache(staticElementViewData.elementObj)
     end
 
     self.m_loadedStaticElementViewDataMap = {}
 end
-
-
 
 LevelMapLoader._ClearLoaderGameplayAreaCache = HL.Method() << function(self)
     if self.m_loadedGameplayAreas == nil then
@@ -2754,8 +2684,6 @@ LevelMapLoader._ClearLoaderGameplayAreaCache = HL.Method() << function(self)
 
     self.m_loadedGameplayAreas = {}
 end
-
-
 
 LevelMapLoader._ClearLoaderLinesCache = HL.Method() << function(self)
     for _, lineViewData in pairs(self.m_loadedLineViewDataMap) do
@@ -2771,20 +2699,18 @@ LevelMapLoader._ClearLoaderLinesCache = HL.Method() << function(self)
     self.m_loadedLineViewDataMap = {}
 end
 
-
-
 LevelMapLoader._ClearLoaderCachesState = HL.Method() << function(self)
     self:_ClearLoaderStaticElementCache()
     self:_ClearLoaderMarkCache()
     self:_ClearLoaderGameplayAreaCache()
     self:_ClearLoaderLinesCache()
 
+    if self.m_useChunkGODrawer then
+        self:_RecycleAllGOChunkCells()
+    end
+
     
 end
-
-
-
-
 
 
 
@@ -2810,9 +2736,6 @@ LevelMapLoader._AddMapDelayAction = HL.Method(HL.String, HL.Function).Return(HL.
     return key
 end
 
-
-
-
 LevelMapLoader._RemoveMapDelayAction = HL.Method(HL.String) << function(self, key)
     local action = self.m_delayActionList[key]
     if action == nil then
@@ -2822,17 +2745,12 @@ LevelMapLoader._RemoveMapDelayAction = HL.Method(HL.String) << function(self, ke
     self.m_delayActionList[key] = nil
 end
 
-
-
 LevelMapLoader._RemoveAllDelayActions = HL.Method() << function(self)
     for _, action in pairs(self.m_delayActionList) do
         action.timer = self:_ClearTimer(action.timer)
     end
     self.m_delayActionList = {}
 end
-
-
-
 
 LevelMapLoader._InvokeMapDelayAction = HL.Method(HL.String) << function(self, key)
     local action = self.m_delayActionList[key]
@@ -2842,9 +2760,6 @@ LevelMapLoader._InvokeMapDelayAction = HL.Method(HL.String) << function(self, ke
     action.callback()
     self:_RemoveMapDelayAction(key)
 end
-
-
-
 
 LevelMapLoader._LoadPermanentStaticElement = HL.Method(HL.Userdata) << function(self, permanentElementData)
     if permanentElementData == nil then
@@ -2866,19 +2781,20 @@ LevelMapLoader._LoadPermanentStaticElement = HL.Method(HL.Userdata) << function(
     end
 
     local staticElementId = staticElementData.id
-    local staticElement = initializer.cache:Get()
+    local cache = initializer.getCache and initializer.getCache(staticElementData) or initializer.cache
+    local staticElement = cache:Get()
     staticElement.gameObject:SetActive(true)
     staticElement.rectTransform.anchoredPosition = permanentElementData.rectPos
-    initializer.initializer(staticElement, staticElementData)
-    self.m_loadedStaticElementViewDataMap[staticElementId] = {
+    local viewData = {
         elementObj = staticElement,
         initializer = initializer,
+        cache = cache,
+        displayTierId = staticElementData.displayTierId,
     }
-    self:_RefreshLoadedStaticElementStateWithTier(self.m_loadedStaticElementViewDataMap[staticElementId])
+    self.m_loadedStaticElementViewDataMap[staticElementId] = viewData
+    initializer.initializer(staticElement, staticElementData)
+    self:_RefreshLoadedStaticElementStateWithTier(viewData)
 end
-
-
-
 
 LevelMapLoader._UnloadPermanentStaticElement = HL.Method(HL.String) << function(self, staticElementId)
     local elementViewData = self.m_loadedStaticElementViewDataMap[staticElementId]
@@ -2886,12 +2802,15 @@ LevelMapLoader._UnloadPermanentStaticElement = HL.Method(HL.String) << function(
         return
     end
 
-    GameObject.Destroy(elementViewData.elementObj.gameObject)  
+    if elementViewData.initializer.componentGetter ~= nil then
+        local component = elementViewData.initializer.componentGetter(elementViewData.elementObj)
+        if component ~= nil and component.ClearComponent ~= nil then
+            component:ClearComponent()
+        end
+    end
+    GameObject.Destroy(elementViewData.elementObj.gameObject)
     self.m_loadedStaticElementViewDataMap[staticElementId] = nil
 end
-
-
-
 
 LevelMapLoader._AddDelayLoadPermanentStaticElement = HL.Method(HL.Userdata) << function(self, staticElementData)
     if staticElementData == nil then
@@ -2914,15 +2833,11 @@ end
 
 
 
-
-
-
 LevelMapLoader.SetLoaderLevel = HL.Method(HL.String) << function(self, levelId)
     self.m_levelId = levelId
+    
+    self:_ReorderAllGOChunkDrawers()
 end
-
-
-
 
 LevelMapLoader.SetLoaderWithMarkPosition = HL.Method(HL.String) << function(self, markInstId)
     local success, markRuntimeData = GameInstance.player.mapManager:GetMarkInstRuntimeData(markInstId)
@@ -2931,11 +2846,6 @@ LevelMapLoader.SetLoaderWithMarkPosition = HL.Method(HL.String) << function(self
     end
     self.view.viewRect.anchoredPosition = self:_GetRectPosByWorldPos(markRuntimeData.position)
 end
-
-
-
-
-
 
 LevelMapLoader.SetLoaderWithLevelCenterPosition = HL.Method(HL.String, Vector2, HL.Opt(HL.Table)).Return(HL.Userdata) << function(
     self, levelId, offset, tweenInfo)
@@ -2957,11 +2867,6 @@ LevelMapLoader.SetLoaderWithLevelCenterPosition = HL.Method(HL.String, Vector2, 
     end
 end
 
-
-
-
-
-
 LevelMapLoader.SetLoaderViewSizeByGridsCount = HL.Method(HL.Number, HL.Number, HL.Opt(HL.Table)).Return(HL.Userdata) << function(
     self, horizontalCount, verticalCount, tweenInfo)
     local size = Vector2(
@@ -2977,15 +2882,9 @@ LevelMapLoader.SetLoaderViewSizeByGridsCount = HL.Method(HL.Number, HL.Number, H
     end
 end
 
-
-
-
 LevelMapLoader.SetLoaderDataUpdateInterval = HL.Method(HL.Number) << function(self, interval)
     self.m_dataUpdateInterval = interval
 end
-
-
-
 
 LevelMapLoader.SetLoaderElementsShownState = HL.Method(HL.Boolean) << function(self, isShown)
     local element = self.view.element
@@ -2999,16 +2898,9 @@ LevelMapLoader.SetLoaderElementsShownState = HL.Method(HL.Boolean) << function(s
     element.player.gameObject:SetActive(isShown)
 end
 
-
-
-
-
 LevelMapLoader.SetMarkOrderState = HL.Method(HL.Number, HL.Boolean) << function(self, orderNum, state)
     self:_GetMarkRootByOrder(orderNum).gameObject:SetActive(state)
 end
-
-
-
 
 LevelMapLoader.SetGeneralTrackingMarkState = HL.Method(HL.String) << function(self, markInstId)
     self:_GetGeneralTrackingMarkIfNeed()
@@ -3053,9 +2945,6 @@ LevelMapLoader.SetGeneralTrackingMarkState = HL.Method(HL.String) << function(se
     self:_RefreshGeneralTrackingMarkLevelState()
     self:_RefreshGeneralTrackingMarkWithTier()
 end
-
-
-
 
 LevelMapLoader.SetMissionTrackingMarkState = HL.Method(HL.Table) << function(self, markInstIdList)
     for _, missionTrackingMarkObj in pairs(self.m_loadedMissionTrackingMarks) do
@@ -3119,10 +3008,6 @@ LevelMapLoader.SetMissionTrackingMarkState = HL.Method(HL.Table) << function(sel
     end
 end
 
-
-
-
-
 LevelMapLoader.SetLoaderLineVisibleStateByType = HL.Method(HL.Userdata, HL.Boolean) << function(self, lineType, isVisible)
     local root = self.m_lineRoots[lineType]
     if root == nil then
@@ -3131,25 +3016,15 @@ LevelMapLoader.SetLoaderLineVisibleStateByType = HL.Method(HL.Userdata, HL.Boole
     root.gameObject:SetActive(isVisible)
 end
 
-
-
-
 LevelMapLoader.SetLoaderLineVisibleState = HL.Method(HL.Boolean) << function(self, isVisible)
     for _, root in pairs(self.m_lineRoots) do
         root.gameObject:SetActive(isVisible)
     end
 end
 
-
-
-
 LevelMapLoader.SetLoaderPlayerVisibleState = HL.Method(HL.Boolean) << function(self, isVisible)
     self.view.element.player.gameObject:SetActive(isVisible)
 end
-
-
-
-
 
 LevelMapLoader.SetLoaderTierId = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, tierId, needAnim)
     local lastTierIndex = self.m_tierIndex
@@ -3179,23 +3054,14 @@ LevelMapLoader.SetLoaderTierId = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << fun
     end
 end
 
-
-
-
 LevelMapLoader.SetNeedOptimizePerformance = HL.Method(HL.Boolean) << function(self, active)
     self.m_needOptimizePerformance = active
 end
-
-
-
 
 LevelMapLoader.ToggleLoaderNeedShowMarkTier = HL.Method(HL.Boolean) << function(self, needShowTier)
     self.m_needShowMarkTier = needShowTier
     self:_RefreshLoadedMarksWithTier()
 end
-
-
-
 
 LevelMapLoader.ToggleLoaderGeneralTrackingVisibleState = HL.Method(HL.Boolean) << function(self, visible)
     self.view.element.trackingMarkRoot.general.gameObject:SetActive(visible)
@@ -3208,46 +3074,28 @@ LevelMapLoader.ToggleLoaderGeneralTrackingVisibleState = HL.Method(HL.Boolean) <
     end
 end
 
-
-
-
 LevelMapLoader.ToggleLoaderMissionTrackingVisibleState = HL.Method(HL.Boolean) << function(self, visible)
     self.view.element.trackingMarkRoot.mission.gameObject:SetActive(visible)
 end
-
-
-
 
 LevelMapLoader.ToggleLoaderSwitchMaskVisibleState = HL.Method(HL.Boolean) << function(self, visible)
     self.view.element.staticElementBottomRoot.switchMask.gameObject:SetActive(visible)
     self.view.element.staticElementBackRoot.switchButton.gameObject:SetActive(visible)
 end
 
-
-
-
 LevelMapLoader.ToggleLoaderLineRootVisibleState = HL.Method(HL.Boolean) << function(self, visible)
     self.view.element.lineRoot.gameObject:SetActive(visible)
     self.view.element.frontLineRoot.gameObject:SetActive(visible)
 end
-
-
-
 
 LevelMapLoader.ToggleLoaderGamePlayAreaVisibleState = HL.Method(HL.Boolean) << function(self, visible)
     self.view.element.gameplayArea.gameObject:SetActive(visible)
 end
 
 
-
-
-
 LevelMapLoader.ToggleLoaderMissionAreaVisibleState = HL.Method(HL.Boolean) << function(self, visible)
     self.view.element.missionArea.gameObject:SetActive(visible)
 end
-
-
-
 
 LevelMapLoader.GetLoaderViewRectWidthAndHeight = HL.Method(HL.Boolean).Return(HL.Number, HL.Number) << function(self, getTarget)
     if getTarget and self.m_sizeTween ~= nil and self.m_sizeTween:IsPlaying() then
@@ -3259,15 +3107,9 @@ LevelMapLoader.GetLoaderViewRectWidthAndHeight = HL.Method(HL.Boolean).Return(HL
     end
 end
 
-
-
-
 LevelMapLoader.GetWorldPositionByRectPosition = HL.Method(Vector2).Return(Vector3) << function(self, rectPos)
     return UILevelMapUtils.ConvertUILevelMapRectPosToWorldPos(rectPos, self.m_gridWorldLength, self.m_gridRectLength)
 end
-
-
-
 
 LevelMapLoader.GetMarkRectTransformByInstId = HL.Method(HL.String).Return(Unity.RectTransform) << function(self, instId)
     local markViewData = self.m_loadedMarkViewDataMap[instId]
@@ -3277,21 +3119,13 @@ LevelMapLoader.GetMarkRectTransformByInstId = HL.Method(HL.String).Return(Unity.
     return markViewData.mark.rectTransform
 end
 
-
-
-
 LevelMapLoader.GetMarkOrderRoot = HL.Method(HL.Number).Return(RectTransform) << function(self, order)
     return self:_GetMarkRootByOrder(order)
 end
 
-
-
 LevelMapLoader.GetLoadedMarkViewDataMap = HL.Method().Return(HL.Table) << function(self)
     return self.m_loadedMarkViewDataMap
 end
-
-
-
 
 LevelMapLoader.GetLoadedMarkViewDataByInstId = HL.Method(HL.String).Return(HL.Table) << function(self, instId)
     if not self.m_loadedMarkViewDataMap or not next(self.m_loadedMarkViewDataMap) then
@@ -3299,9 +3133,6 @@ LevelMapLoader.GetLoadedMarkViewDataByInstId = HL.Method(HL.String).Return(HL.Ta
     end
     return self.m_loadedMarkViewDataMap[instId]
 end
-
-
-
 
 LevelMapLoader.GetLoadedMarkByInstId = HL.Method(HL.String).Return(HL.Any) << function(self, instId)
     local markViewData = self.m_loadedMarkViewDataMap[instId]
@@ -3311,14 +3142,10 @@ LevelMapLoader.GetLoadedMarkByInstId = HL.Method(HL.String).Return(HL.Any) << fu
     return markViewData.markObj
 end
 
-
-
 LevelMapLoader.GetGeneralTrackingMark = HL.Method().Return(HL.Any) << function(self)
     
     return self.view.element.trackingMarkRoot.generalTrackingMark
 end
-
-
 
 LevelMapLoader.GetMissionTrackingMarks = HL.Method().Return(HL.Any) << function(self)
     local marks = {}
@@ -3333,13 +3160,9 @@ LevelMapLoader.GetMissionTrackingMarks = HL.Method().Return(HL.Any) << function(
     return marks
 end
 
-
-
 LevelMapLoader.UpdateAndRefreshAll = HL.Method() << function(self)
     self.view.loader:DoLoaderHitCheck(true)
 end
-
-
 
 LevelMapLoader.RefreshMarkStateAfterMistUnlocked = HL.Method() << function(self)
     self:_RefreshWaitVisibleInMistMarksState()
@@ -3350,16 +3173,12 @@ LevelMapLoader.RefreshMarkStateAfterMistUnlocked = HL.Method() << function(self)
     end
 end
 
-
-
 LevelMapLoader.RefreshCharacterPosition = HL.Method() << function(self)
     local playerNode = self.view.element.player
     playerNode.rectTransform.anchoredPosition = self.m_mapManager.characterRectPosition
     playerNode.playerArrow.localEulerAngles = Vector3(0.0, 0.0, -self.m_mapManager.characterForwardAngle)
     playerNode.playerView.localEulerAngles = Vector3(0.0, 0.0, -self.m_mapManager.characterViewForwardAngle)
 end
-
-
 
 LevelMapLoader.RefreshElementsHiddenStateInOtherLevel = HL.Method() << function(self)
     for loaderData in cs_pairs(self.view.loader.hitGrids) do
@@ -3442,9 +3261,6 @@ LevelMapLoader.RefreshElementsHiddenStateInOtherLevel = HL.Method() << function(
     end
 end
 
-
-
-
 LevelMapLoader.RefreshLevelSwitchMaskState = HL.Method(HL.String) << function(self, levelId)
     local success, cfg = self.m_mapManager:GetLoaderLevelDataByLevelId(levelId)
     if not success then
@@ -3491,9 +3307,6 @@ LevelMapLoader.RefreshLevelSwitchMaskState = HL.Method(HL.String) << function(se
     end)
 end
 
-
-
-
 LevelMapLoader.ToggleForbidMistRefreshAfterGridChange = HL.Method(HL.Boolean) << function(self, forbid)
     self.m_forbidMistRefreshAfterGridChange = forbid
     if forbid then
@@ -3506,9 +3319,6 @@ LevelMapLoader.ToggleForbidMistRefreshAfterGridChange = HL.Method(HL.Boolean) <<
     self.m_waitMistRefreshAfterGridChange = false
 end
 
-
-
-
 LevelMapLoader.RefreshMistState = HL.Method(HL.Opt(HL.Function)) << function(self, onRefreshFinish)
     self:_RefreshLoadedChunksMists(MistLoadType.Normal, nil, function()
         if onRefreshFinish ~= nil then
@@ -3517,25 +3327,15 @@ LevelMapLoader.RefreshMistState = HL.Method(HL.Opt(HL.Function)) << function(sel
     end)
 end
 
-
-
-
-
 LevelMapLoader.RefreshAnimationMistState = HL.Method(HL.Table, HL.Opt(HL.Function)) << function(self, mistList, onRefreshFinish)
     self:_RefreshLoadedChunksMists(MistLoadType.Animation, {
         overrideMistIdList = mistList
     }, onRefreshFinish)
 end
 
-
-
-
 LevelMapLoader.ToggleAnimationMistNodeVisibleState = HL.Method(HL.Boolean) << function(self, isVisible)
     self.view.element.animMist.gameObject:SetActive(isVisible)
 end
-
-
-
 
 LevelMapLoader.PlayMistsUnlockedAnimation = HL.Method(HL.Opt(HL.Function)) << function(self, onComplete)
     local animMist = self.view.element.animMist
@@ -3564,8 +3364,6 @@ LevelMapLoader.PlayMistsUnlockedAnimation = HL.Method(HL.Opt(HL.Function)) << fu
     end)
 end
 
-
-
 LevelMapLoader.ForceDisposeAllTextureResources = HL.Method() << function(self)
     local needDisposeKeys = {}
     for loadKey, loadData in pairs(self.m_chunkResourceLoadDataPool) do
@@ -3580,11 +3378,42 @@ end
 
 
 
+LevelMapLoader.DisposeChunkResourcesByLODTypes = HL.Method(HL.Table) << function(self, disposeChunkLODTypes)
+    if self.m_useChunkGODrawer then
+        
+        for _, lodType in ipairs(disposeChunkLODTypes) do
+            local drawer = self.m_chunkGODrawers[lodType]
+            if drawer ~= nil then
+                self:_ClearGOChunkDrawer(drawer, true)
+            end
+        end
+    else
+        
+        for _, lodType in ipairs(disposeChunkLODTypes) do
+            local drawerData = self.m_chunkRTDrawers[lodType]
+            if drawerData ~= nil then
+                for loadId, _ in pairs(drawerData.drawList) do
+                    self:_DisposeChunkResource(loadId, true)
+                end
+            end
+        end
+    end
+end
 
 LevelMapLoader.ResetToTargetMapAndLevel = HL.Method(HL.String) << function(self, levelId)
     local success, levelConfig = Utils.getLevelConfig(levelId)
     if not success then
         return
+    end
+
+    
+    if self.m_posTween ~= nil then
+        self.m_posTween:Kill(false)
+        self.m_posTween = nil
+    end
+    if self.m_sizeTween ~= nil then
+        self.m_sizeTween:Kill(false)
+        self.m_sizeTween = nil
     end
 
     self.m_mapId = levelConfig.mapIdStr
@@ -3611,9 +3440,6 @@ end
 
 
 if BEYOND_DEBUG_COMMAND then
-    
-    
-    
     LevelMapLoader._InitDebugMode = HL.Method(HL.String) << function(self, levelId)
         local success, levelConfig = Utils.getLevelConfig(levelId)
         if not success then

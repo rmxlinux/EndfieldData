@@ -2,12 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.RaidTechPopup
 
-
-
-
-
 RaidTechPopupCtrl = HL.Class('RaidTechPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -18,11 +13,7 @@ RaidTechPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 RaidTechPopupCtrl.m_getCellFunc = HL.Field(HL.Function)
-
-
-
 
 
 RaidTechPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)

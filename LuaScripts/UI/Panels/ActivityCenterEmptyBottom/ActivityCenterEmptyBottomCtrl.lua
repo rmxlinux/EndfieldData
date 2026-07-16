@@ -9,7 +9,6 @@ ActivityCenterEmptyBottomCtrl = HL.Class('ActivityCenterEmptyBottomCtrl', uiCtrl
 
 
 
-
 ActivityCenterEmptyBottomCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }

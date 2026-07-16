@@ -1,15 +1,6 @@
 local GachaPoolCellBase = require_ex('UI/Widgets/GachaPoolCellBase')
 
-
-
-
-
-
-
-
 GachaPoolCellLimited = HL.Class('GachaPoolCellLimited', GachaPoolCellBase)
-
-
 
 
 
@@ -21,21 +12,15 @@ GachaPoolCellLimited._OnFirstTimeInit = HL.Override() << function(self)
     self:_InitUI()
 end
 
-
-
 GachaPoolCellLimited._InnerInitGachaPoolCell = HL.Override() << function(self)
     logger.info("初始化 GachaPoolCellLimited")
     self.view.gachaTenBtn.redDot:InitRedDot("GachaCharTenLtTicket", self.m_poolId)
 end
 
-
-
 GachaPoolCellLimited._InnerUpdateGachaPoolCell = HL.Override() << function(self)
     logger.info("更新 GachaPoolCellLimited")
     self:_RefreshAllUI()
 end
-
-
 
 
 
@@ -71,8 +56,6 @@ GachaPoolCellLimited._InitUI = HL.Method() << function(self)
         UIManager:Open(PanelId.GachaItemInstructionPopup, arg)
     end)
 end
-
-
 
 GachaPoolCellLimited._RefreshAllUI = HL.Method() << function(self)
     local baseInfo = self.m_baseInfo
@@ -125,8 +108,6 @@ GachaPoolCellLimited._RefreshAllUI = HL.Method() << function(self)
         end
     end
 end
-
-
 
 
 

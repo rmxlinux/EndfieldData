@@ -3,24 +3,7 @@ local PANEL_ID = PanelId.DomainVersionInfoPopup
 
 local domainSystem = GameInstance.player.domainDevelopmentSystem
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainVersionInfoPopupCtrl = HL.Class('DomainVersionInfoPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -32,17 +15,11 @@ DomainVersionInfoPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 DomainVersionInfoPopupCtrl.m_info = HL.Field(HL.Table)
-
 
 DomainVersionInfoPopupCtrl.m_focusItemKeyHintHasInit = HL.Field(HL.Boolean) << false
 
-
 DomainVersionInfoPopupCtrl.m_closeCallback = HL.Field(HL.Function)
-
-
-
 
 
 
@@ -65,16 +42,12 @@ DomainVersionInfoPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshAllUI()
 end
 
-
-
 DomainVersionInfoPopupCtrl.OnClose = HL.Override() << function(self)
     if self.m_closeCallback then
         self.m_closeCallback()
         self.m_closeCallback = nil
     end
 end
-
-
 
 
 
@@ -94,22 +67,16 @@ DomainVersionInfoPopupCtrl._InitUI = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 DomainVersionInfoPopupCtrl._RefreshAllUI = HL.Method() << function(self)
     self:_RefreshBasicUI()
     self:_RefreshVersionContentUI()
 end
-
-
 
 DomainVersionInfoPopupCtrl._RefreshBasicUI = HL.Method() << function(self)
     local info = self.m_info
     self.view.subTitleDomainIcon:LoadSprite(UIConst.UI_SPRITE_SETTLEMENT, info.domainIcon)
     self.view.subTitleTxt.text = string.format(Language.LUA_DOMAIN_VERSION_DEVELOPMENT_MAX_LEVEL_DIFF, info.domainName, info.domainCurMaxLv)
 end
-
-
 
 DomainVersionInfoPopupCtrl._RefreshVersionContentUI = HL.Method() << function(self)
     
@@ -128,9 +95,6 @@ DomainVersionInfoPopupCtrl._RefreshVersionContentUI = HL.Method() << function(se
 end
 
 
-
-
-
 DomainVersionInfoPopupCtrl._RefreshVersionPOITitleCell = HL.Method(HL.Table) << function(self, info)
     local contentParent = self.view.content
     
@@ -139,9 +103,6 @@ DomainVersionInfoPopupCtrl._RefreshVersionPOITitleCell = HL.Method(HL.Table) << 
     cell.titleTxt.text = info.poiName
 end
 
-
-
-
 DomainVersionInfoPopupCtrl._RefreshVersionLevelTitleCell = HL.Method(HL.Table) << function(self, info)
     local contentParent = self.view.content
     
@@ -149,9 +110,6 @@ DomainVersionInfoPopupCtrl._RefreshVersionLevelTitleCell = HL.Method(HL.Table) <
     cell.poiNameTxt.text = info.levelPoiName
     cell.levelNameTxt.text = info.levelName
 end
-
-
-
 
 DomainVersionInfoPopupCtrl._RefreshVersionTextCell = HL.Method(HL.Table) << function(self, info)
     if info.poiCurVersionMaxLv < 0 then
@@ -162,9 +120,6 @@ DomainVersionInfoPopupCtrl._RefreshVersionTextCell = HL.Method(HL.Table) << func
     local cell = DomainVersionInfoPopupCtrl._GenCacheContent(contentParent.versionTextCell.gameObject, contentParent.gameObject)
     cell.descTxt.text = string.format(Language.LUA_DOMAIN_VERSION_POI_MAX_LEVEL_DIFF, info.poiCurVersionMaxLv)
 end
-
-
-
 
 DomainVersionInfoPopupCtrl._RefreshVersionRewardListCell = HL.Method(HL.Table) << function(self, info)
     if #info.rewardList <= 0 then
@@ -198,9 +153,6 @@ DomainVersionInfoPopupCtrl._RefreshVersionRewardListCell = HL.Method(HL.Table) <
         end
     end
 end
-
-
-
 
 
 

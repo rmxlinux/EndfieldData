@@ -1,27 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacTechTreePopUp
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacTechTreePopUpCtrl = HL.Class('FacTechTreePopUpCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -34,30 +14,20 @@ FacTechTreePopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CLOSE_TECH_TREE_POP_UP] = 'CloseUI',
 }
 
-
-
 FacTechTreePopUpCtrl.ShowPopUp = HL.StaticMethod(HL.Table) << function(args)
     local ctrl = FacTechTreePopUpCtrl.AutoOpen(PANEL_ID, nil, false)
     ctrl:_ShowPopUp(args)
 end
 
-
 FacTechTreePopUpCtrl.m_getItemCell = HL.Field(HL.Function)
-
 
 FacTechTreePopUpCtrl.m_unlockItems = HL.Field(HL.Forward('UIListCache'))
 
-
 FacTechTreePopUpCtrl.m_args = HL.Field(HL.Table)
-
 
 FacTechTreePopUpCtrl.m_onStageFinishCb = HL.Field(HL.Function)
 
-
 FacTechTreePopUpCtrl.m_disableClick = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -76,13 +46,9 @@ FacTechTreePopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitController()
 end
 
-
-
 FacTechTreePopUpCtrl.OnHide = HL.Override() << function(self)
     self.m_args = nil
 end
-
-
 
 FacTechTreePopUpCtrl._OnClickUI = HL.Method() << function(self)
     if self.m_disableClick then
@@ -92,9 +58,6 @@ FacTechTreePopUpCtrl._OnClickUI = HL.Method() << function(self)
         self.m_onStageFinishCb()
     end
 end
-
-
-
 
 FacTechTreePopUpCtrl.HideUI = HL.Method(HL.Table) << function(self, args)
     local onHide = args.onHide
@@ -106,14 +69,9 @@ FacTechTreePopUpCtrl.HideUI = HL.Method(HL.Table) << function(self, args)
     end)
 end
 
-
-
 FacTechTreePopUpCtrl.CloseUI = HL.Method() << function(self)
     self:Close()
 end
-
-
-
 
 FacTechTreePopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
     self.m_args = args
@@ -162,8 +120,6 @@ FacTechTreePopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
 FacTechTreePopUpCtrl._ShowUnlock = HL.Method() << function(self)
     local node = self.view.unlockNode
     local unlockItems = self.m_args.unlockItems
@@ -183,8 +139,6 @@ FacTechTreePopUpCtrl._ShowUnlock = HL.Method() << function(self)
     local techData = Tables.facSTTNodeTable:GetValue(techId)
     self.view.desc:SetAndResolveTextStyle(techData.unlockDesc)
 end
-
-
 
 FacTechTreePopUpCtrl._ShowLevelUp = HL.Method() << function(self)
     local node = self.view.upgradeNode
@@ -246,8 +200,6 @@ FacTechTreePopUpCtrl._ShowLevelUp = HL.Method() << function(self)
     self.view.desc:SetAndResolveTextStyle(techData.unlockDesc)
 end
 
-
-
 FacTechTreePopUpCtrl._ShowRewards = HL.Method() << function(self)
     local node = self.view.rewardNode
     local rewardsItems = self.m_args.rewardsItems
@@ -255,10 +207,6 @@ FacTechTreePopUpCtrl._ShowRewards = HL.Method() << function(self)
     node.rewardsList:UpdateCount(#rewardsItems)
     self.view.desc.text = Language.LUA_FAC_TECHTREE_REWARDS_TIPS
 end
-
-
-
-
 
 FacTechTreePopUpCtrl._OnUpdateItemCell = HL.Method(HL.Userdata, HL.Number) << function(self, cell, index)
     local rewardsItems = self.m_args.rewardsItems
@@ -273,8 +221,6 @@ FacTechTreePopUpCtrl._OnUpdateItemCell = HL.Method(HL.Userdata, HL.Number) << fu
                           })
     end
 end
-
-
 
 
 FacTechTreePopUpCtrl._InitController = HL.Method() << function(self)

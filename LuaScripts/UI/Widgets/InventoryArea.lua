@@ -1,64 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 InventoryArea = HL.Class('InventoryArea', UIWidgetBase)
-
 
 
 
@@ -71,31 +13,21 @@ InventoryArea = HL.Class('InventoryArea', UIWidgetBase)
 
 InventoryArea.m_opening = HL.Field(HL.Boolean) << false
 
-
 InventoryArea.m_dataInited = HL.Field(HL.Boolean) << false
-
 
 InventoryArea.m_isItemBag = HL.Field(HL.Boolean) << true
 
-
 InventoryArea.m_args = HL.Field(HL.Table)
-
 
 InventoryArea.m_cellValidStateCache = HL.Field(HL.Table)
 
-
 InventoryArea.m_isDepotLocked = HL.Field(HL.Boolean) << false
-
 
 InventoryArea.m_cacheAllQuickDropBindingIds = HL.Field(HL.Table)
 
-
 InventoryArea.m_allQuickDropBindingSetGray = HL.Field(HL.Boolean) << false
 
-
 InventoryArea.inSafeZone = HL.Field(HL.Boolean) << false
-
-
 
 
 InventoryArea._OnFirstTimeInit = HL.Override() << function(self)
@@ -167,9 +99,6 @@ InventoryArea._OnFirstTimeInit = HL.Override() << function(self)
     node.anchoredPosition = Vector2.zero
 end
 
-
-
-
 InventoryArea.InitInventoryArea = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     self:_FirstTimeInit()
 
@@ -197,8 +126,6 @@ InventoryArea.InitInventoryArea = HL.Method(HL.Opt(HL.Table)) << function(self, 
     self:_InitDepotLockInBlackbox()
 end
 
-
-
 InventoryArea._Hide = HL.Method() << function(self)
     self.m_opening = false
     self.view.content.gameObject:SetActive(false)
@@ -208,10 +135,6 @@ InventoryArea._Hide = HL.Method() << function(self)
         uiCtrl.view.blockMask.gameObject:SetActive(false)
     end
 end
-
-
-
-
 
 InventoryArea._Show = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isItemBag, forceUpdate)
     if not isItemBag and not self.inSafeZone then
@@ -247,10 +170,6 @@ InventoryArea._Show = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self
 end
 
 
-
-
-
-
 InventoryArea._SwitchTo = HL.Method(HL.Boolean, HL.Boolean) << function(self, isItemBag, fastMode)
     local anim
     if self.inSafeZone then
@@ -282,8 +201,6 @@ InventoryArea._SwitchTo = HL.Method(HL.Boolean, HL.Boolean) << function(self, is
         AudioAdapter.PostEvent("Au_UI_Button_SelectSourceBag")
     end
 end
-
-
 
 InventoryArea._InitData = HL.Method() << function(self)
     if self.m_dataInited then
@@ -343,14 +260,25 @@ InventoryArea._InitData = HL.Method() << function(self)
                         InputManagerInst:ForceBindingKeyhintToGray(quickDropId, true)
                     end
                 end
-                if self.m_args.hasFluidInCache then
+                if self.m_args.hasFluidInCache or self.m_args.hasGasInCache then
                     local itemId = itemBundle.id
-                    local isEmptyBottle = Tables.emptyBottleTable:ContainsKey(itemId)
-                    local isFullBottle = Tables.fullBottleTable:ContainsKey(itemId)
-                    local isBottle = isEmptyBottle or isFullBottle
-                    if isBottle then
-                        local quickDropText = isEmptyBottle and Language.LUA_ITEM_ACTION_FILL_LIQUID or Language.LUA_ITEM_ACTION_DUMP_LIQUID
-                        InputManagerInst:SetBindingText(quickDropId, quickDropText)
+                    if self.m_args.hasFluidInCache then
+                        local isEmptyBottle = FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+                        local isFullBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+                        local isBottle = isEmptyBottle or isFullBottle
+                        if isBottle then
+                            local quickDropText = isEmptyBottle and Language.LUA_ITEM_ACTION_FILL_LIQUID or Language.LUA_ITEM_ACTION_DUMP_LIQUID
+                            InputManagerInst:SetBindingText(quickDropId, quickDropText)
+                        end
+                    end
+                    if self.m_args.hasGasInCache then
+                        local isEmptyGasJar = FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+                        local isFullGasJar = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+                        local isGasJar = isEmptyGasJar or isFullGasJar
+                        if isGasJar then
+                            local quickDropText = isEmptyGasJar and Language.LUA_ITEM_ACTION_FILL_GAS or Language.LUA_ITEM_ACTION_DUMP_GAS
+                            InputManagerInst:SetBindingText(quickDropId, quickDropText)
+                        end
                     end
                 else
                     local quickDropBindingText = self.m_args.itemBagQuickDropBindingText
@@ -376,8 +304,6 @@ InventoryArea._InitData = HL.Method() << function(self)
     self.m_dataInited = true
 end
 
-
-
 InventoryArea._GetRecoverDepotState = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local recoverState = self.m_args and self.m_args.recoverState
     if recoverState == nil then
@@ -385,8 +311,6 @@ InventoryArea._GetRecoverDepotState = HL.Method().Return(HL.Opt(HL.Any)) << func
     end
     return recoverState.depotState
 end
-
-
 
 InventoryArea._GetDepotInitArgs = HL.Method().Return(HL.Table) << function(self)
     return {
@@ -439,14 +363,25 @@ InventoryArea._GetDepotInitArgs = HL.Method().Return(HL.Table) << function(self)
                         InputManagerInst:ForceBindingKeyhintToGray(quickDropBindingId, true)
                     end
                 end
-                if self.m_args.hasFluidInCache then
+                if self.m_args.hasFluidInCache or self.m_args.hasGasInCache then
                     local itemId = itemBundle.id
-                    local isEmptyBottle = Tables.emptyBottleTable:ContainsKey(itemId)
-                    local isFullBottle = Tables.fullBottleTable:ContainsKey(itemId)
-                    local isBottle = isEmptyBottle or isFullBottle
-                    if isBottle then
-                        local quickDropText = isEmptyBottle and Language.LUA_ITEM_ACTION_FILL_LIQUID or Language.LUA_ITEM_ACTION_DUMP_LIQUID
-                        InputManagerInst:SetBindingText(quickDropBindingId, quickDropText)
+                    if self.m_args.hasFluidInCache then
+                        local isEmptyBottle = FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+                        local isFullBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+                        local isBottle = isEmptyBottle or isFullBottle
+                        if isBottle then
+                            local quickDropText = isEmptyBottle and Language.LUA_ITEM_ACTION_FILL_LIQUID or Language.LUA_ITEM_ACTION_DUMP_LIQUID
+                            InputManagerInst:SetBindingText(quickDropBindingId, quickDropText)
+                        end
+                    end
+                    if self.m_args.hasGasInCache then
+                        local isEmptyGasJar = FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+                        local isFullGasJar = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+                        local isGasJar = isEmptyGasJar or isFullGasJar
+                        if isGasJar then
+                            local quickDropText = isEmptyGasJar and Language.LUA_ITEM_ACTION_FILL_GAS or Language.LUA_ITEM_ACTION_DUMP_GAS
+                            InputManagerInst:SetBindingText(quickDropBindingId, quickDropText)
+                        end
                     end
                 else
                     local quickDropBindingText = self.m_args.depotQuickDropBindingText
@@ -466,16 +401,11 @@ InventoryArea._GetDepotInitArgs = HL.Method().Return(HL.Table) << function(self)
     }
 end
 
-
-
 InventoryArea._InitDepot = HL.Method() << function(self)
     self.view.depot:InitDepot(GEnums.ItemValuableDepotType.Factory, function(itemId, cell)
         self:_OnClickItem(itemId, cell)
     end, self:_GetDepotInitArgs())
 end
-
-
-
 
 InventoryArea._OnValueChanged = HL.Method(HL.Boolean) << function(self, isOn)
     if isOn == self.m_opening then
@@ -489,9 +419,6 @@ InventoryArea._OnValueChanged = HL.Method(HL.Boolean) << function(self, isOn)
     end
 end
 
-
-
-
 InventoryArea._OnDropOnArea = HL.Method(HL.Boolean) << function(self, isItemBag)
     if isItemBag ~= self.m_isItemBag then
         self:_Show(isItemBag)
@@ -503,14 +430,12 @@ InventoryArea._OnDropOnArea = HL.Method(HL.Boolean) << function(self, isItemBag)
     end
 end
 
-
-
 InventoryArea._OnDestroy = HL.Override() << function(self)
     if not self.m_dataInited then
         return
     end
     if self.m_curNaviSelectComponentId ~= -1 then
-        self:_ClearSelectFluidBinding()
+        self:_ClearSelectFluidBinding(true)
     end
     self.view.itemBag.itemBagContent:ReadCurShowingItems()
     if self.inSafeZone then
@@ -518,16 +443,9 @@ InventoryArea._OnDestroy = HL.Override() << function(self)
     end
 end
 
-
-
 InventoryArea.PlayAnimationOut = HL.Override() << function(self)
     self:_Hide()
 end
-
-
-
-
-
 
 InventoryArea._OnClickItem = HL.Method(HL.String, HL.Forward('ItemSlot'), HL.Opt(HL.Number)) << function(self, itemId, cell, csIndex)
     cell.item:Read()
@@ -592,7 +510,7 @@ InventoryArea._OnClickItem = HL.Method(HL.String, HL.Forward('ItemSlot'), HL.Opt
                             if not facCacheRepository then
                                 return
                             end
-                            if facCacheRepository.m_isFluidCache then
+                            if facCacheRepository:GetRepoCacheType() ~= FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal then
                                 Notify(MessageConst.SHOW_TOAST, Language.LUA_QUICK_DROP_INVALID)
                                 return
                             end
@@ -611,10 +529,6 @@ InventoryArea._OnClickItem = HL.Method(HL.String, HL.Forward('ItemSlot'), HL.Opt
     end
     cell.item:ShowTips()
 end
-
-
-
-
 
 InventoryArea._RefreshItemSlotCellValidState = HL.Method(HL.Userdata, HL.Any) << function(self, cell, itemBundle)
     if itemBundle == nil then
@@ -641,9 +555,6 @@ InventoryArea._RefreshItemSlotCellValidState = HL.Method(HL.Userdata, HL.Any) <<
     cell.view.dropItem.enabled = isValid
 end
 
-
-
-
 InventoryArea._IsItemValid = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
     if string.isEmpty(itemId) then
         return true
@@ -667,8 +578,6 @@ InventoryArea._IsItemValid = HL.Method(HL.String).Return(HL.Boolean) << function
 end
 
 
-
-
 InventoryArea._InitDepotLockInBlackbox = HL.Method() << function(self)
     local isLocked = Utils.isDepotManualInOutLocked()
     self.view.depot.view.forbiddenMask.gameObject:SetActive(isLocked)
@@ -679,9 +588,6 @@ InventoryArea._InitDepotLockInBlackbox = HL.Method() << function(self)
         self.view.moveItemMouseHintNode.gameObject:SetActive(false)
     end
 end
-
-
-
 
 InventoryArea.LockInventoryArea = HL.Method(HL.Boolean) << function(self, isLocked)
     local isDepotLocked = isLocked or self.m_isDepotLocked  
@@ -696,9 +602,6 @@ InventoryArea.LockInventoryArea = HL.Method(HL.Boolean) << function(self, isLock
     self.m_depotNaviGroup.enabled = not isDepotLocked
 end
 
-
-
-
 InventoryArea.SetState = HL.Method(HL.String) << function(self, stateName)
     self.view.stateCtrl:SetState(stateName)
 end
@@ -706,11 +609,7 @@ end
 
 
 
-
 InventoryArea.m_lockFormulaId = HL.Field(HL.String) << ""
-
-
-
 
 InventoryArea._CheckIsValidItemInLockFormula = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
     if string.isEmpty(self.m_lockFormulaId) then
@@ -744,28 +643,23 @@ end
 
 
 
-
 InventoryArea.m_itemBagNaviGroup = HL.Field(HL.Userdata)
-
 
 InventoryArea.m_depotNaviGroup = HL.Field(HL.Userdata)
 
-
 InventoryArea.m_confirmSelectFluidBindingId = HL.Field(HL.Number) << -1
-
 
 InventoryArea.m_cancelSelectFluidBindingId = HL.Field(HL.Number) << -1
 
-
 InventoryArea.m_curNaviSelectComponentId = HL.Field(HL.Number) << -1
 
+InventoryArea.m_curNaviSelectSlotIndex = HL.Field(HL.Number) << -1
 
 InventoryArea.m_curNaviSelectFluidId = HL.Field(HL.String) << ""
 
-
 InventoryArea.m_curNaviSourceItem = HL.Field(HL.Any)
 
-
+InventoryArea.m_curNaviCacheType = HL.Field(HL.Number) << -1
 
 InventoryArea._InitInventoryAreaController = HL.Method() << function(self)
     self.m_itemBagNaviGroup = self.view.itemBag.view.itemBagContent.view.itemListSelectableNaviGroup
@@ -797,14 +691,12 @@ InventoryArea._InitInventoryAreaController = HL.Method() << function(self)
     InputManagerInst:ToggleBinding(self.m_cancelSelectFluidBindingId, false)
 end
 
-
-
 InventoryArea._OnNaviTargetToSelectFluidConfirm = HL.Method() << function(self)
     if self.m_isItemBag then
         local csIndex, slot = self.view.itemBag.itemBagContent:GetCurNaviTargetSlot()
         if csIndex ~= -1 and self:_CheckBottleDrop(slot.item.id) then
             local core = GameInstance.player.remoteFactory.core
-            core:Message_OpFillingFluidComWithBag(Utils.getCurrentChapterId(), self.m_curNaviSelectComponentId, csIndex)
+            core:Message_OpFillingFluidComWithBag(Utils.getCurrentChapterId(), self.m_curNaviSelectComponentId, csIndex, self.m_curNaviSelectSlotIndex)
             if self.m_curNaviSourceItem ~= nil then
                 FactoryUtils.playAudioWhenFillingItem(slot.item.id, self.m_curNaviSourceItem.id, self.m_curNaviSourceItem.count)
             end
@@ -815,7 +707,7 @@ InventoryArea._OnNaviTargetToSelectFluidConfirm = HL.Method() << function(self)
         local csIndex, slot = self.view.depot.depotContent:GetCurNaviTargetSlot()
         if csIndex ~= -1 and self:_CheckBottleDrop(slot.item.id) then
             local core = GameInstance.player.remoteFactory.core
-            core:Message_OpFillingFluidComWithDepot(Utils.getCurrentChapterId(), self.m_curNaviSelectComponentId, slot.item.id)
+            core:Message_OpFillingFluidComWithDepot(Utils.getCurrentChapterId(), self.m_curNaviSelectComponentId, slot.item.id, self.m_curNaviSelectSlotIndex)
             if self.m_curNaviSourceItem ~= nil then
                 FactoryUtils.playAudioWhenFillingItem(slot.item.id, self.m_curNaviSourceItem.id, self.m_curNaviSourceItem.count)
             end
@@ -825,16 +717,18 @@ InventoryArea._OnNaviTargetToSelectFluidConfirm = HL.Method() << function(self)
     end
 end
 
-
-
-InventoryArea._ClearSelectFluidBinding = HL.Method() << function(self)
+InventoryArea._ClearSelectFluidBinding = HL.Method(HL.Opt(HL.Boolean)) << function(self, destroy)
     self.m_curNaviSelectComponentId = -1
     self.m_curNaviSelectFluidId = ""
+    self.view.naviTargetToSelectDeco.gameObject:SetActiveIfNecessary(false)
     if self.m_curNaviSourceItem ~= nil then
         self.m_curNaviSourceItem:SetSelected(false)
-        UIUtils.setAsNaviTarget(self.m_curNaviSourceItem.view.button)
+        if not destroy then
+            self:SetNaviTarget(self.m_curNaviSourceItem.view.button)
+        end
         self.m_curNaviSourceItem = nil
     end
+    self.m_curNaviCacheType = -1
     self.m_itemBagNaviGroup.enablePartner = true
     self.m_depotNaviGroup.enablePartner = true
     InputManagerInst:ToggleBinding(self.m_confirmSelectFluidBindingId, false)
@@ -847,29 +741,33 @@ InventoryArea._ClearSelectFluidBinding = HL.Method() << function(self)
     Notify(MessageConst.FAC_ON_MOVE_HIDE_CONTROLLER_MODE_HINT)
 end
 
-
-
-
 InventoryArea._CheckBottleDrop = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
     if string.isEmpty(self.m_curNaviSelectFluidId) then
-        return Tables.emptyBottleTable:ContainsKey(itemId)
+        return FactoryUtils.isEmptyBottleOrJarItem(itemId, self.m_curNaviCacheType)
     else
-        local fullBottleSuccess, fullBottleData = Tables.fullBottleTable:TryGetValue(itemId)
-        if fullBottleSuccess then
-            return fullBottleData.liquidId == self.m_curNaviSelectFluidId
+        if self.m_curNaviCacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid then
+            local fullBottleSuccess, fullBottleData = Tables.fullBottleTable:TryGetValue(itemId)
+            if fullBottleSuccess then
+                return fullBottleData.liquidId == self.m_curNaviSelectFluidId
+            end
+        elseif self.m_curNaviCacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas then
+            local fullGasJarSuccess, fullGasJarData = Tables.fullGasJarTable:TryGetValue(itemId)
+            if fullGasJarSuccess then
+                return fullGasJarData.gasId == self.m_curNaviSelectFluidId
+            end
         end
     end
     return false
 end
 
-
-
-
 InventoryArea._OnNaviTargetToSelectFluid = HL.Method(HL.Table) << function(self, args)
     self.m_curNaviSelectComponentId = args.componentId
+    self.m_curNaviSelectSlotIndex = args.slotIndex
     self.m_curNaviSelectFluidId = args.fluidId
     self.m_curNaviSourceItem = args.sourceItem
+    self.m_curNaviCacheType = args.cacheType
     self.m_curNaviSourceItem:SetSelected(true)
+    self.view.naviTargetToSelectDeco.gameObject:SetActiveIfNecessary(true)
     InputManagerInst:ToggleBinding(self.m_confirmSelectFluidBindingId, true)
     InputManagerInst:ToggleBinding(self.m_cancelSelectFluidBindingId, true)
     local ctrl = self:GetUICtrl()
@@ -881,7 +779,12 @@ InventoryArea._OnNaviTargetToSelectFluid = HL.Method(HL.Table) << function(self,
         noHighlight = true,
         rectTransform = self.view.rectTransform,
     })
-    local textId = string.isEmpty(args.fluidId) and "LUA_ITEM_ACTION_CACHE_SELECT_FILL_LIQUID" or "LUA_ITEM_ACTION_CACHE_SELECT_DUMP_LIQUID"
+    local textId
+    if self.m_curNaviCacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid then
+        textId = string.isEmpty(args.fluidId) and "LUA_ITEM_ACTION_CACHE_SELECT_FILL_LIQUID" or "LUA_ITEM_ACTION_CACHE_SELECT_DUMP_LIQUID"
+    elseif self.m_curNaviCacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas then
+        textId = string.isEmpty(args.fluidId) and "LUA_ITEM_ACTION_CACHE_SELECT_FILL_GAS" or "LUA_ITEM_ACTION_CACHE_SELECT_DUMP_GAS"
+    end
     Notify(MessageConst.FAC_ON_MOVE_SHOW_CONTROLLER_MODE_HINT, Language[textId])
 
     self.view.itemBag.itemBagContent:Refresh(true)
@@ -902,9 +805,6 @@ InventoryArea._OnNaviTargetToSelectFluid = HL.Method(HL.Table) << function(self,
     self.m_depotNaviGroup.enablePartner = false
 end
 
-
-
-
 InventoryArea.AddNaviGroupSwitchInfo = HL.Method(HL.Table) << function(self, naviGroupInfos)
     if self.m_isItemBag then
         table.insert(naviGroupInfos, self:GetItemBagNaviGroupSwitchInfo())
@@ -914,8 +814,6 @@ InventoryArea.AddNaviGroupSwitchInfo = HL.Method(HL.Table) << function(self, nav
         end
     end
 end
-
-
 
 InventoryArea.GetItemBagNaviGroupSwitchInfo = HL.Method().Return(HL.Table) << function(self)
     return {
@@ -928,8 +826,6 @@ InventoryArea.GetItemBagNaviGroupSwitchInfo = HL.Method().Return(HL.Table) << fu
     }
 end
 
-
-
 InventoryArea.GetDepotNaviGroupSwitchInfo = HL.Method().Return(HL.Table) << function(self)
     return {
         naviGroup = self.m_depotNaviGroup,
@@ -941,8 +837,6 @@ InventoryArea.GetDepotNaviGroupSwitchInfo = HL.Method().Return(HL.Table) << func
     }
 end
 
-
-
 InventoryArea.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local recoverState = {
         isItemBag = self.m_isItemBag,
@@ -952,9 +846,6 @@ InventoryArea.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << functio
     end
     return recoverState
 end
-
-
-
 
 InventoryArea.TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
@@ -982,8 +873,6 @@ InventoryArea.TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, reco
     self:_Show(recoverIsItemBag, true)
 end
 
-
-
 InventoryArea._RefreshItemBagGetDefaultNaviTargetFunc = HL.Method() << function(self)
     self.m_itemBagNaviGroup.getDefaultSelectableFunc = function()
         local itemList = self.view.itemBag.view.itemBagContent.view.itemList
@@ -999,21 +888,12 @@ InventoryArea._RefreshItemBagGetDefaultNaviTargetFunc = HL.Method() << function(
     end
 end
 
-
-
-
-
 InventoryArea._TryDisableHoverBindingOnEmptyItem = HL.Method(HL.Forward("ItemSlot"), HL.Opt(HL.Any)) << function(self, cell, itemBundle)
-    if self:_GetIsValidControllerNaviTarget(cell, itemBundle, false) then
+    if self:_GetIsValidControllerNaviTarget(cell, itemBundle, true) then
         return
     end
     InputManagerInst:ToggleBinding(cell.item.view.button.hoverConfirmBindingId, false)
 end
-
-
-
-
-
 
 InventoryArea._GetIsValidControllerNaviTarget = HL.Method(HL.Forward("ItemSlot"), HL.Any, HL.Boolean).Return(HL.Boolean) << function(self, cell, itemBundle, considerForbidden)
     
@@ -1034,10 +914,6 @@ InventoryArea._GetIsValidControllerNaviTarget = HL.Method(HL.Forward("ItemSlot")
     return false
 end
 
-
-
-
-
 InventoryArea._RefreshForbiddenItemActionMenuArgs = HL.Method(HL.Forward("ItemSlot"), HL.Any) << function(self, cell, itemBundle)
     
     if itemBundle == nil then
@@ -1049,10 +925,6 @@ InventoryArea._RefreshForbiddenItemActionMenuArgs = HL.Method(HL.Forward("ItemSl
     end
 end
 
-
-
-
-
 InventoryArea.NaviToPart = HL.Method(HL.Boolean, HL.Boolean) << function(self, toItemBag, toTop)
     if toItemBag then
         if toTop then
@@ -1062,16 +934,13 @@ InventoryArea.NaviToPart = HL.Method(HL.Boolean, HL.Boolean) << function(self, t
         if cell then
             cell:SetAsNaviTarget()
         end
-    else
+    elseif self.inSafeZone then
         if toTop then
             self.view.depot.depotContent.view.itemList:SetTop()
         end
         self.view.depot:SetAsNaviTarget()
     end
 end
-
-
-
 
 InventoryArea.IsNaviGroupTopLayer = HL.Method(HL.Boolean).Return(HL.Boolean) << function(self, isItemBag)
     if isItemBag then
@@ -1080,8 +949,12 @@ InventoryArea.IsNaviGroupTopLayer = HL.Method(HL.Boolean).Return(HL.Boolean) << 
     return self.m_depotNaviGroup.IsTopLayer
 end
 
-
-
+InventoryArea.GetNaviGroup = HL.Method(HL.Boolean).Return(HL.Userdata) << function(self, isItemBag)
+    if isItemBag then
+        return self.m_itemBagNaviGroup
+    end
+    return self.m_depotNaviGroup
+end
 
 InventoryArea.ToggleAllQuickDropBindings = HL.Method(HL.Boolean) << function(self, active)
     if not self.m_cacheAllQuickDropBindingIds then
@@ -1091,9 +964,6 @@ InventoryArea.ToggleAllQuickDropBindings = HL.Method(HL.Boolean) << function(sel
         InputManagerInst:ToggleBinding(bindingId, active)
     end
 end
-
-
-
 
 InventoryArea.SetAllQuickDropBindingGray = HL.Method(HL.Boolean) << function(self, grayState)
     if not self.m_args.adaptForceQuickDropKeyhintToGray then
@@ -1106,15 +976,18 @@ InventoryArea.SetAllQuickDropBindingGray = HL.Method(HL.Boolean) << function(sel
 end
 
 
-
-
-
 InventoryArea.SetBuildingHasFluidCache = HL.Method(HL.Opt(HL.Boolean)) << function(self, hasFluidCache)
     self.m_args.hasFluidInCache = hasFluidCache
+    
     self.view.itemBag.itemBagContent:Refresh(true)
     if self.inSafeZone then
         self.view.depot.depotContent:RefreshAll(true)
     end
+end
+
+InventoryArea.SetBuildingNoNormalCache = HL.Method(HL.Opt(HL.Boolean)) << function(self, noNormalCache)
+    self.m_args.noNormalCache = noNormalCache
+    self.view.moveItemMouseHintNode.gameObject:SetActive(not noNormalCache)
 end
 
 

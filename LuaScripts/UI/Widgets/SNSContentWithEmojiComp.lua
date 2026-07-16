@@ -1,34 +1,16 @@
 local SNSContentBase = require_ex('UI/Widgets/SNSContentBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
 SNSContentWithEmojiComp = HL.Class('SNSContentWithEmojiComp', SNSContentBase)
-
 
 SNSContentWithEmojiComp.m_emojiResultCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 SNSContentWithEmojiComp.m_emojiCommentCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 SNSContentWithEmojiComp._OnFirstTimeInit = HL.Override() << function(self)
     self.m_emojiResultCellCache = UIUtils.genCellCache(self.view.emojiResultCell)
     self.m_emojiCommentCellCache = UIUtils.genCellCache(self.view.emojiCommentCell)
 end
-
-
 
 SNSContentWithEmojiComp._OnSNSContentInit = HL.Override() << function(self)
     self:_InitEmojiComponent()
@@ -38,8 +20,6 @@ SNSContentWithEmojiComp._OnSNSContentInit = HL.Override() << function(self)
         self:ShowEmojiCommentResult(dialogId, additiveCSIndex, true)
     end
 end
-
-
 
 SNSContentWithEmojiComp._InitEmojiComponent = HL.Method() << function(self)
     local showResult = self.m_contentInfo.additiveCSIndex ~= nil
@@ -56,7 +36,7 @@ SNSContentWithEmojiComp._InitEmojiComponent = HL.Method() << function(self)
                 self.view.emojiCommentBubbleNode.gameObject:SetActive(false)
                 AudioAdapter.PostEvent("Au_UI_Popup_SNSDialogContent_SelectEmoji_Open")
                 if DeviceInfo.usingController then
-                    UIUtils.setAsNaviTarget(self.m_emojiCommentCellCache:Get(1).button)
+                    self:SetNaviTarget(self.m_emojiCommentCellCache:Get(1).button)
                 end
             end)
 
@@ -66,7 +46,7 @@ SNSContentWithEmojiComp._InitEmojiComponent = HL.Method() << function(self)
                 self.view.emojiCommentBubbleNode.gameObject:SetActive(true)
                 AudioAdapter.PostEvent("Au_UI_Popup_SNSDialogContent_SelectEmoji_Close")
                 if DeviceInfo.usingController then
-                    UIUtils.setAsNaviTarget(self.view.emojiBubbleBtn)
+                    self:SetNaviTarget(self.view.emojiBubbleBtn)
                 end
             end)
 
@@ -85,11 +65,6 @@ SNSContentWithEmojiComp._InitEmojiComponent = HL.Method() << function(self)
         self.view.emojiCommentBubbleNode.gameObject:SetActive(showBubble)
     end
 end
-
-
-
-
-
 
 SNSContentWithEmojiComp._UpdateEmojiResultCell = HL.Method(HL.Any, HL.Table, HL.String) << function(self, cell, emojiInfo,
                                                                                            selectEmojiId)
@@ -118,18 +93,10 @@ SNSContentWithEmojiComp._UpdateEmojiResultCell = HL.Method(HL.Any, HL.Table, HL.
     cell.resultTxt.text = text
 end
 
-
-
 SNSContentWithEmojiComp.TryShowEmojiComment = HL.Method() << function(self)
     AudioAdapter.PostEvent("Au_UI_Popup_SNSDialogContent_Options_Open")
     self:_InitEmojiComponent()
 end
-
-
-
-
-
-
 
 SNSContentWithEmojiComp.ShowEmojiCommentResult = HL.Method(HL.String, HL.Number, HL.Opt(HL.Boolean, HL.Function)).Return(HL.Number)
         << function(self, dialogId, additiveResultIndex, skipAnim, onCellSizeChange)
@@ -217,21 +184,15 @@ SNSContentWithEmojiComp.ShowEmojiCommentResult = HL.Method(HL.String, HL.Number,
     return duration
 end
 
-
-
 SNSContentWithEmojiComp.HasEmojiComp = HL.Override().Return(HL.Boolean) << function(self)
     return true
 end
-
-
 
 
 SNSContentWithEmojiComp.CanSetTarget = HL.Override().Return(HL.Boolean) << function(self)
     return self.view.emojiCommentListNode.gameObject.activeInHierarchy or
             self.view.emojiCommentBubbleNode.gameObject.activeInHierarchy
 end
-
-
 
 SNSContentWithEmojiComp.GetNaviTarget = HL.Override().Return(HL.Any) << function(self)
     if self.view.emojiCommentBubbleNode.gameObject.activeInHierarchy then

@@ -4,17 +4,7 @@ local PANEL_ID = PanelId.GenderSelectController
 
 local FIRST_IN_ANIM_DELAY = 1
 
-
-
-
-
-
-
-
-
-
 GenderSelectControllerCtrl = HL.Class('GenderSelectControllerCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -25,9 +15,7 @@ GenderSelectControllerCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 GenderSelectControllerCtrl.m_hasInited = HL.Field(HL.Boolean) << false
-
 
 GenderSelectControllerCtrl.m_animTimer = HL.Field(HL.Number) << 0
 
@@ -38,9 +26,6 @@ GenderSelectControllerCtrl.m_hoveringMale = HL.Field(HL.Boolean) << false
 
 
 GenderSelectControllerCtrl.m_canHoverAgain = HL.Field(HL.Boolean) << true
-
-
-
 
 
 
@@ -90,19 +75,17 @@ GenderSelectControllerCtrl.HoverBtn = HL.Method(HL.Boolean) << function(self, ho
     if hoverMale then
         self.view.btnFemale.enabled = false
         self.view.btnMale.enabled = true
-        UIUtils.setAsNaviTarget(self.view.btnMale)
+        self:SetNaviTarget(self.view.btnMale)
     else
         self.view.btnFemale.enabled = true
         self.view.btnMale.enabled = false
-        UIUtils.setAsNaviTarget(self.view.btnFemale)
+        self:SetNaviTarget(self.view.btnFemale)
     end
 end
 
 GenderSelectControllerCtrl.OnClose = HL.Override() << function(self)
     self.m_updateKey = LuaUpdate:Remove(self.m_updateKey)
 end
-
-
 
 GenderSelectControllerCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.btnFemale.onClick:AddListener(function()
@@ -141,8 +124,6 @@ GenderSelectControllerCtrl._InitActionEvent = HL.Method() << function(self)
     end)
 end
 
-
-
 GenderSelectControllerCtrl._DoPlayInAnim = HL.Method() << function(self)
     if self.m_animTimer > 0 then
         self:_ClearTimer(self.m_animTimer)
@@ -162,15 +143,11 @@ GenderSelectControllerCtrl._DoPlayInAnim = HL.Method() << function(self)
     end
 end
 
-
-
 GenderSelectControllerCtrl.OnShow = HL.Override() << function(self)
     self:_DoPlayInAnim()
     self:Notify(MessageConst.ON_GENDER_HOVER_ANIM, {true, not self.m_hasInited})
     self.m_hasInited = true
 end
-
-
 
 GenderSelectControllerCtrl.OnHide = HL.Override() << function(self)
     self:Notify(MessageConst.ON_GENDER_HOVER_ANIM, {false, false})

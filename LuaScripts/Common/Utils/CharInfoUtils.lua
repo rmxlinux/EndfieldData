@@ -2,12 +2,12 @@ local CharInfoUtils = {}
 local CharUtils = CS.Beyond.Gameplay.CharUtils
 
 
-function CharInfoUtils.openCharInfoBestWay(arg)
+function CharInfoUtils.openCharInfoBestWay(arg, callback)
     if PhaseManager:IsOpen(PhaseId.CharInfo) then
         PhaseManager:ExitPhaseFast(PhaseId.CharInfo)
-        PhaseManager:OpenPhase(PhaseId.CharInfo, arg)
+        PhaseManager:OpenPhase(PhaseId.CharInfo, arg, callback)
     else
-        PhaseManager:OpenPhase(PhaseId.CharInfo, arg)
+        PhaseManager:OpenPhase(PhaseId.CharInfo, arg, callback)
     end
 end
 
@@ -369,7 +369,15 @@ function CharInfoUtils.getCharExpInfo(charInstId)
     return curExp, levelUpExp, curLevel, stageLv, availableExpItems
 end
 
-function CharInfoUtils.getSkillGroupSubDescList(charTemplateId, skillGroupId, skillGroupLv)
+
+
+
+
+
+
+
+
+function CharInfoUtils.getSkillGroupSubDescList(charTemplateId, skillGroupId, skillGroupLv, charInstId, selectedConditionId)
     local skillGroupCfg = CharInfoUtils.getSkillGroupCfg(charTemplateId, skillGroupId)
     local skillIdList = skillGroupCfg.skillIdList
 
@@ -389,26 +397,37 @@ function CharInfoUtils.getSkillGroupSubDescList(charTemplateId, skillGroupId, sk
         if skillCfg and isValid then
             
             if i == 1 or isEndmin then
-                local skillExtraInfoList = CharInfoUtils.getSkillExtraInfoList(skillCfg.skillId, skillCfg.level)
+                local skillExtraInfoList = CharInfoUtils.getSkillExtraInfoList(
+                    skillCfg.skillId, skillCfg.level, charInstId, selectedConditionId)
                 for _, extraInfo in ipairs(skillExtraInfoList) do
                     table.insert(skillDescNameList, extraInfo.name)
                     table.insert(skillDescList, extraInfo.value)
                 end
             end
 
-            for j = 1, #skillCfg.subDescNameList do
-                local descName = skillCfg.subDescNameList[CSIndex(j)]
-                if descName == nil or string.isEmpty(descName) then
+            for j = 1, #skillCfg.subDescDataList do
+                local subDescData = skillCfg.subDescDataList[CSIndex(j)]
+                if subDescData == nil or string.isEmpty(subDescData.name) then
                     break
                 end
-                table.insert(skillDescNameList, skillCfg.subDescNameList[CSIndex(j)])
-            end
-            for j = 1, #skillCfg.subDescList do
-                local desc = skillCfg.subDescList[CSIndex(j)]
-                if desc == nil or string.isEmpty(desc) then
+
+                if string.isEmpty(subDescData.desc) then
                     break
                 end
-                table.insert(skillDescList, skillCfg.subDescList[CSIndex(j)])
+
+                local shouldShow = true
+                if selectedConditionId ~= nil then
+                    if not string.isEmpty(subDescData.conditionId) then
+                        shouldShow = subDescData.conditionId == selectedConditionId
+                    end
+                elseif not string.isEmpty(subDescData.conditionId) and charInstId ~= nil then
+                    shouldShow = CS.Beyond.Gameplay.SkillUtil.CheckSkillCondition(subDescData.conditionId, charInstId)
+                end
+
+                if shouldShow then
+                    table.insert(skillDescNameList, subDescData.name)
+                    table.insert(skillDescList, subDescData.desc)
+                end
             end
         end
     end
@@ -1016,6 +1035,10 @@ function CharInfoUtils.getCharInfoListWithLockedTeamData(lockedTeamData)
                 isLocked = char.isLocked,
                 isTrail = char.isTrail,
                 isReplaceable = char.isReplaceable,
+                
+                replaceablePriority = 0,
+                replaceablePriorityReverse = 1,
+                singleSelect = true,
             }
             table.insert(charInfoList, item)
             allCount = allCount + 1
@@ -1046,6 +1069,9 @@ function CharInfoUtils.getCharInfoListWithLockedTeamData(lockedTeamData)
                 slotReverseIndex = -1,
                 isLocked = isLock,
                 isReplaceable = isReplaceable,
+                
+                replaceablePriority = isReplaceable and 1 or 0,
+                replaceablePriorityReverse = isReplaceable and 0 or 1,
             }
             table.insert(charInfoList, item)
             if not isReplaceable and not charInfo.isDead then
@@ -1080,6 +1106,9 @@ function CharInfoUtils.getCharInfoListWithLockedTeamData(lockedTeamData)
                         isTrail = true,
                         isLocked = isLock,
                         isReplaceable = isReplaceable,
+                        
+                        replaceablePriority = isReplaceable and 1 or 0,
+                        replaceablePriorityReverse = isReplaceable and 0 or 1,
                     }
                     table.insert(charInfoList, item)
                     if not isReplaceable then
@@ -1910,8 +1939,8 @@ function CharInfoUtils.classifyTalentNode(templateId, potentialLevel)
             return a.attributeNodeInfo.breakStage < b.attributeNodeInfo.breakStage
 
         else
-            local attrTypeA = a.attributeNodeInfo.attributeModifier.attrType
-            local attrTypeB = b.attributeNodeInfo.attributeModifier.attrType
+            local attrTypeA = CharInfoUtils.getTalentAttributeNodeDisplayAttrType(templateId, a.attributeNodeInfo)
+            local attrTypeB = CharInfoUtils.getTalentAttributeNodeDisplayAttrType(templateId, b.attributeNodeInfo)
             return attrTypeA:ToInt() < attrTypeB:ToInt()
         end
     end)
@@ -2254,14 +2283,158 @@ function CharInfoUtils.getShipSkillCfg(skillId)
     return skillCfg
 end
 
-function CharInfoUtils.getSkillGroupCfg(charId, skillGroupId)
+function CharInfoUtils.getSkillGroupCfg(charId, skillGroupId, logError)
     local charGrowthData = CharInfoUtils.getCharGrowthData(charId)
     local get, skillGroupData = charGrowthData.skillGroupMap:TryGetValue(skillGroupId)
-    
-    
-    
+    if not get and logError then
+       logger.error("skillGroupId not found in CharGrowthTable, skillGroupId = " .. tostring(skillGroupId))
+    end
 
     return skillGroupData
+end
+
+
+function CharInfoUtils.getSkillGroupConditionDisplayData(charInstId, skillGroupCfg)
+    if skillGroupCfg == nil or charInstId == nil then
+        return nil
+    end
+
+    for conditionIdx = 1, 2 do
+        local conditionDisplayData = CharInfoUtils.getSkillGroupConditionDisplayDataByIndex(charInstId, skillGroupCfg, conditionIdx)
+        if conditionDisplayData and conditionDisplayData.isActive then
+            return conditionDisplayData
+        end
+    end
+
+    return nil
+end
+
+function CharInfoUtils.getSkillGroupConditionDisplayDataByIndex(charInstId, skillGroupCfg, conditionIdx)
+    if skillGroupCfg == nil or charInstId == nil then
+        return nil
+    end
+
+    local conditionId
+    local conditionName
+    local conditionIcon
+    local conditionDesc
+    local conditionDescInactive
+    local conditionPostDesc
+    if conditionIdx == 1 then
+        conditionId = skillGroupCfg.conditionId1
+        conditionName = skillGroupCfg.conditionName1
+        conditionIcon = skillGroupCfg.conditionIcon1
+        conditionDesc = skillGroupCfg.conditionDesc1
+        conditionDescInactive = skillGroupCfg.conditionDescInactive1
+        conditionPostDesc = skillGroupCfg.conditionPostDesc1
+    elseif conditionIdx == 2 then
+        conditionId = skillGroupCfg.conditionId2
+        conditionName = skillGroupCfg.conditionName2
+        conditionIcon = skillGroupCfg.conditionIcon2
+        conditionDesc = skillGroupCfg.conditionDesc2
+        conditionDescInactive = skillGroupCfg.conditionDescInactive2
+        conditionPostDesc = skillGroupCfg.conditionPostDesc2
+    else
+        return nil
+    end
+
+    if conditionId == nil or string.isEmpty(conditionId) then
+        return nil
+    end
+
+    local conditionToast = ""
+    local _, conditionCfg = Tables.skillConditionTable:TryGetValue(conditionId)
+    if conditionCfg then
+        local cfgToastText = conditionCfg.toastText
+        conditionToast = CharInfoUtils.formatDeckAttrText(cfgToastText, charInstId)
+    end
+
+    return {
+        index = conditionIdx,
+        conditionId = conditionId,
+        name = conditionName,
+        icon = conditionIcon,
+        desc = conditionDesc,
+        descInactive = conditionDescInactive,
+        postDesc = conditionPostDesc,
+        toast = conditionToast, 
+        isActive = CS.Beyond.Gameplay.SkillUtil.CheckSkillCondition(conditionId, charInstId),
+    }
+end
+
+function CharInfoUtils.formatDeckAttrText(text, charInstId)
+    if string.isEmpty(text) then
+        return text
+    end
+
+    local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
+    if charInst == nil then
+        return text
+    end
+
+    local formatData = CS.Beyond.Gameplay.DeckAttrFormatData(charInst)
+    local ret = CS.Beyond.Gameplay.FormatUtils.FormatBattleText(text, formatData)
+    return ret
+end
+
+
+
+function CharInfoUtils.getActiveSkillGroupConditionIdx(charInstId, skillGroupCfg)
+    local data = CharInfoUtils.getSkillGroupConditionDisplayData(charInstId, skillGroupCfg)
+    if data and data.isActive then
+        return data.index
+    end
+    return nil
+end
+
+
+
+function CharInfoUtils.generateSkillGroupConditionDescText(charInstId, skillGroupCfg, conditionIdx)
+    local data = CharInfoUtils.getSkillGroupConditionDisplayDataByIndex(charInstId, skillGroupCfg, conditionIdx)
+    if data == nil then
+        return nil
+    end
+    local state = data.isActive
+        and Language.LUA_CHAR_INFO_TALENT_UPGRADE_CONDITION_ACTIVE
+        or Language.LUA_CHAR_INFO_TALENT_UPGRADE_CONDITION_INACTIVE
+    local originText = data.isActive
+        and CharInfoUtils.formatDeckAttrText(data.desc, charInstId)
+        or CharInfoUtils.formatDeckAttrText(data.descInactive, charInstId)
+    
+    if not data.isActive then
+        originText = CharInfoUtils.getTextWithoutRichStyle(originText)
+    end
+    return state .. originText, data.isActive, originText
+end
+
+function CharInfoUtils.getTextWithoutRichStyle(richText)
+    if string.isEmpty(richText) then
+        return richText
+    end
+    return string.gsub(richText, "<[^<>]->", "")
+end
+
+function CharInfoUtils.generateSkillGroupConditionPostDescText(charInstId, skillGroupCfg, conditionIdx)
+    local data = CharInfoUtils.getSkillGroupConditionDisplayDataByIndex(charInstId, skillGroupCfg, conditionIdx)
+    if data == nil then
+        return nil
+    end
+    return data.postDesc
+end
+
+function CharInfoUtils.generateSkillGroupConditionIcon(charInstId, skillGroupCfg, conditionIdx)
+    local data = CharInfoUtils.getSkillGroupConditionDisplayDataByIndex(charInstId, skillGroupCfg, conditionIdx)
+    if data == nil then
+        return nil
+    end
+    return data.icon
+end
+
+
+function CharInfoUtils.hasBothSkillGroupConditions(skillGroupCfg)
+    local cid1 = skillGroupCfg.conditionId1
+    local cid2 = skillGroupCfg.conditionId2
+    return cid1 ~= nil and not string.isEmpty(cid1) and cid2 ~= nil and not string.isEmpty(cid2)
 end
 
 function CharInfoUtils.getTalentNodeCfg(charTemplateId, nodeId)
@@ -2628,11 +2801,12 @@ function CharInfoUtils.getGroupSkillExtraInfoList(skillGroupId, skillLv)
 
 end
 
-function CharInfoUtils.getSkillExtraInfoList(skillId, skillLv)
+function CharInfoUtils.getSkillExtraInfoList(skillId, skillLv, charInstId, selectedConditionId)
     local skillExtraInfoList = {}
     local _, skillPatchData = DataManager:TryGetSkillPatchData(skillId, skillLv)
 
-    local cooldownTime = skillPatchData.coolDown
+    local cooldownTime = CS.Beyond.Gameplay.SkillUtil.ApplyCoolDownDisplayModifiers(
+        skillId, skillPatchData.coolDown, charInstId or 0, selectedConditionId)
     local costType = skillPatchData.costType
     local costValue = skillPatchData.costValue
     local hasUspCost = false
@@ -2825,8 +2999,18 @@ end
 
 
 function CharInfoUtils.getLockedFormationData(teamConfigId, createClientCharInfo)
+    
+    local lockedTeamData = {
+        teamConfigId = "",
+        maxTeamMemberCount = Const.BATTLE_SQUAD_MAX_CHAR_NUM,
+        lockedTeamMemberCount = 0,
+        hasReplaceable = false,
+        shouldShowTrailTips = false,
+        chars = {},
+    }
+
     if string.isEmpty(teamConfigId) then
-        return nil
+        return lockedTeamData
     end
 
     local hasValue
@@ -2835,7 +3019,7 @@ function CharInfoUtils.getLockedFormationData(teamConfigId, createClientCharInfo
     local charTeamData
     hasValue, charTeamData = Tables.charTeamTable:TryGetValue(teamConfigId)
     if not hasValue then
-        return nil
+        return lockedTeamData
     end
 
     
@@ -2846,8 +3030,6 @@ function CharInfoUtils.getLockedFormationData(teamConfigId, createClientCharInfo
         end
     end
 
-    
-    local lockedTeamData = {}
     lockedTeamData.teamConfigId = teamConfigId
     lockedTeamData.maxTeamMemberCount = charTeamData.maxMemberCount
 
@@ -3245,6 +3427,7 @@ function CharInfoUtils.GetAllCharPotentialInfos()
     for i, info in pairs(charInfos) do
         local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(info.instId)
         local level = charInfo.potentialLevel
+        local charUnlockTime = charInfo.potentialUnlockTs
         local success, characterPotentialList = Tables.characterPotentialTable:TryGetValue(info.templateId)
         if success then
             local photoCount = 0
@@ -3269,6 +3452,9 @@ function CharInfoUtils.GetAllCharPotentialInfos()
                         local _, posterId = Tables.pictureItemTable:TryGetValue(itemId)
                         local _, posterData = Tables.pictureTable:TryGetValue(posterId)
                         local _, charCfg = Tables.characterTable:TryGetValue(charInfo.templateId)
+                        local photoRealLevel = LuaIndex(j)
+                        local _, unlockTime = charUnlockTime:TryGetValue(photoRealLevel)
+                        unlockTime = unlockTime or 0
                         local posterInfo = {
                             posterData = posterData,
                             charInfo = charInfo,
@@ -3278,10 +3464,12 @@ function CharInfoUtils.GetAllCharPotentialInfos()
                             charRarityReversal = math.maxinteger - charCfg.rarity,
                             charPhotoCount = photoCount,
                             charPhotoCountReversal = math.maxinteger - photoCount,
-                            photoLevel = LuaIndex(j),
-                            photoLevelReversal = math.maxinteger - LuaIndex(j),
+                            photoLevel = photoRealLevel,
+                            photoLevelReversal = math.maxinteger - photoRealLevel,
                             innerIndex = innerIndex,
                             innerIndexReversal = math.maxinteger - innerIndex,
+                            unlockTime = unlockTime,
+                            unlockTimeReversal = math.maxinteger - unlockTime,
                         }
                         table.insert(charPotentialIndex2Infos, posterInfo)
                         charPotentialPicId2Index[posterId] = index
@@ -3347,6 +3535,24 @@ function CharInfoUtils.getAttrExtraDefault(charInstId, attrType)
         fromSpecificSystem = UIConst.CHAR_INFO_ATTRIBUTE_SPECIFIC_SYSTEM.CHAR_FULL_ATTR
     })
     return attrShowInfo.showValue, finalAttr - baseAttr
+end
+
+function CharInfoUtils.getTalentAttributeNodeDisplayAttrType(templateId, attrNodeInfo)
+    local attributeModifiers = attrNodeInfo.attributeModifiers
+    if attributeModifiers == nil or attributeModifiers.Count <= 0 then
+        return
+    end
+
+    local modifier = attributeModifiers[0]
+    if modifier.modifyAttributeType == GEnums.ModifyAttributeType.Main then
+        local charGrowthCfg = Tables.charGrowthTable[templateId]
+        return charGrowthCfg and charGrowthCfg.mainAttrType
+    elseif modifier.modifyAttributeType == GEnums.ModifyAttributeType.Sub then
+        local charGrowthCfg = Tables.charGrowthTable[templateId]
+        return charGrowthCfg and charGrowthCfg.subAttrType
+    end
+
+    return modifier.attrType
 end
 
 

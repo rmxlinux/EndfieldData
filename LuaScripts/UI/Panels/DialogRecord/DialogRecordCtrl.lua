@@ -1,31 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DialogRecord
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DialogRecordCtrl = HL.Class('DialogRecordCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -37,29 +13,23 @@ DialogRecordCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 DialogRecordCtrl.m_getCell = HL.Field(HL.Function)
-
 
 DialogRecordCtrl.m_voiceHandleId = HL.Field(HL.Number) << -1
 
-
 DialogRecordCtrl.m_timer = HL.Field(HL.Number) << -1
-
 
 DialogRecordCtrl.m_cellSizes = HL.Field(HL.Table)
 
-
 DialogRecordCtrl.m_curPlayingIndex = HL.Field(HL.Number) << -1
-
 
 DialogRecordCtrl.m_focusInfo = HL.Field(HL.Table)
 
+DialogRecordCtrl.m_curEntryLinks = HL.Field(HL.Userdata) << nil
 
 DialogRecordCtrl.m_playVoiceBindingId = HL.Field(HL.Number) << -1
 
-
-
+DialogRecordCtrl.m_openGlossaryBindingId = HL.Field(HL.Number) << -1
 
 
 DialogRecordCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -92,16 +62,20 @@ DialogRecordCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     if DeviceInfo.usingController then
         self.m_playVoiceBindingId = self:BindInputPlayerAction("dialog_play_log_voice", function()
+            AudioAdapter.PostEvent("Au_UI_Button_Common")
             self:_ToggleVoicePlay(self.m_focusInfo)
         end)
-
         InputManagerInst:ToggleBinding(self.m_playVoiceBindingId, false)
+
+        self.m_openGlossaryBindingId = self:BindInputPlayerAction("dialog_open_log_note", function()
+            self:_OpenGlossaryPopUp(self.m_curEntryLinks)
+        end)
+        InputManagerInst:ToggleBinding(self.m_openGlossaryBindingId, false)
+        InputManagerInst:SetBindingText(self.m_openGlossaryBindingId, Language["ui_mis_dlg_note_title"])
     end
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
 
 DialogRecordCtrl._UpdateCellSize = HL.Method() << function(self)
     self.m_cellSizes = {}
@@ -114,11 +88,6 @@ DialogRecordCtrl._UpdateCellSize = HL.Method() << function(self)
     end
     cell.gameObject:SetActive(false)
 end
-
-
-
-
-
 
 
 DialogRecordCtrl._RefreshCell = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean)) << function(self, cell, index,
@@ -146,11 +115,17 @@ DialogRecordCtrl._RefreshCell = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean
     if isTrunk then
         local actorName = UIUtils.removePattern(trunkTbData.actorName, UIConst.NARRATIVE_ANONYMITY_PATTERN)
         trunkNode.characterNameText:SetAndResolveTextStyle(UIUtils.resolveTextCinematic(actorName))
-        trunkNode.text:SetAndResolveTextStyle(UIUtils.resolveTextCinematic(trunkTbData.dialogText))
+
+        local text, entryLinks = UIUtils.resolveNarrativeTextWithEntryLinks(trunkTbData.dialogText)
+        trunkNode.text:SetAndResolveTextStyle(UIUtils.resolveTextCinematic(text))
+
+        trunkNode.text.onClickLink:RemoveAllListeners()
+        trunkNode.text.onClickLink:AddListener(function(linkId)
+            self:_OnCellLinkClicked(linkId, entryLinks)
+        end)
 
         trunkNode.playingAudioButton.gameObject:SetActive(false)
         trunkNode.audioButton.gameObject:SetActive(hasVoice)
-        trunkNode.audioButtonEx.gameObject:SetActive(hasVoice)
 
         self:_SetCellIsPlaying(cell, isPlaying)
 
@@ -176,6 +151,7 @@ DialogRecordCtrl._RefreshCell = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean
                 if isNaviTarget and DeviceInfo.usingController then
                     self.m_focusInfo = { index, voiceId, duration }
                     InputManagerInst:ToggleBinding(self.m_playVoiceBindingId, true)
+                    self:_SetCurFocusEntryLinks(entryLinks)
                 end
             end
         else
@@ -183,6 +159,7 @@ DialogRecordCtrl._RefreshCell = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean
                 if isNaviTarget and DeviceInfo.usingController then
                     self.m_focusInfo = {}
                     InputManagerInst:ToggleBinding(self.m_playVoiceBindingId, false)
+                    self:_SetCurFocusEntryLinks(entryLinks)
                 end
             end
         end
@@ -194,6 +171,7 @@ DialogRecordCtrl._RefreshCell = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean
             if isNaviTarget and DeviceInfo.usingController then
                 self.m_focusInfo = {}
                 InputManagerInst:ToggleBinding(self.m_playVoiceBindingId, false)
+                self:_SetCurFocusEntryLinks(nil)
             end
         end
 
@@ -203,9 +181,6 @@ DialogRecordCtrl._RefreshCell = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean
 
     LayoutRebuilder.ForceRebuildLayoutImmediate(cell.transform)
 end
-
-
-
 
 DialogRecordCtrl._ToggleVoicePlay = HL.Method(HL.Table) << function(self, info)
     if next(info) == nil then
@@ -222,17 +197,10 @@ DialogRecordCtrl._ToggleVoicePlay = HL.Method(HL.Table) << function(self, info)
     end
 end
 
-
-
-
-
 DialogRecordCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, object, index)
     local cell = self.m_getCell(object)
     self:_RefreshCell(cell, index)
 end
-
-
-
 
 DialogRecordCtrl._GetCellByIndex = HL.Method(HL.Number).Return(HL.Any) << function(self, luaIndex)
     local cell
@@ -244,10 +212,6 @@ DialogRecordCtrl._GetCellByIndex = HL.Method(HL.Number).Return(HL.Any) << functi
     end
     return cell
 end
-
-
-
-
 
 DialogRecordCtrl._SetCellIsPlaying = HL.Method(HL.Any, HL.Boolean) << function(self, cell, isPlaying)
     if not cell then
@@ -269,9 +233,6 @@ DialogRecordCtrl._SetCellIsPlaying = HL.Method(HL.Any, HL.Boolean) << function(s
     end
 end
 
-
-
-
 DialogRecordCtrl._RefreshPlayingCell = HL.Method(HL.Number) << function(self, newIndex)
     if self.m_curPlayingIndex == newIndex then
         return
@@ -285,10 +246,6 @@ DialogRecordCtrl._RefreshPlayingCell = HL.Method(HL.Number) << function(self, ne
     self.m_curPlayingIndex = newIndex
 end
 
-
-
-
-
 DialogRecordCtrl._TryPlayAudio = HL.Method(HL.String, HL.Number) << function(self, voiceId, duration)
     GameWorld.dialogManager:TryStopCurVoice()
     self:_StopAudio()
@@ -299,8 +256,6 @@ DialogRecordCtrl._TryPlayAudio = HL.Method(HL.String, HL.Number) << function(sel
     end)
     GameWorld.dialogManager:SetCurRecordVoicePlaying(true)
 end
-
-
 
 DialogRecordCtrl._StopAudio = HL.Method() << function(self)
     if self.m_voiceHandleId > 0 then
@@ -315,7 +270,37 @@ DialogRecordCtrl._StopAudio = HL.Method() << function(self)
     GameWorld.dialogManager:SetCurRecordVoicePlaying(false)
 end
 
+DialogRecordCtrl._OnCellLinkClicked = HL.Method(HL.String, HL.Userdata) << function(self, linkId, entryLinks)
+    if UIUtils.resolveLinkTypeFromId(linkId) ~= UIConst.UI_TEXT_LINK_TYPE.Narrative then
+        return
+    end
 
+    self:_OpenGlossaryPopUp(entryLinks)
+end
+
+DialogRecordCtrl._OpenGlossaryPopUp = HL.Method(HL.Userdata) << function(self, entryLinks)
+    if self.m_phase == nil or entryLinks == nil or entryLinks.Count == 0 then
+        return
+    end
+
+    AudioAdapter.PostEvent("Au_UI_Button_Common")
+    self.m_phase:CreatePhasePanelItem(PanelId.DialogGlossaryPopUp, { entryLinks })
+end
+
+DialogRecordCtrl._SetCurFocusEntryLinks = HL.Method(HL.Userdata) << function(self, entryLinks)
+    if self.m_openGlossaryBindingId < 0 then
+        return
+    end
+
+    self.m_curEntryLinks = entryLinks
+
+    local glossaryPopUpEnable = true
+    if self.m_phase == nil or entryLinks == nil or entryLinks.Count == 0 then
+        glossaryPopUpEnable = false
+    end
+
+    InputManagerInst:ToggleBinding(self.m_openGlossaryBindingId, glossaryPopUpEnable)
+end
 
 
 DialogRecordCtrl.OnShow = HL.Override() << function(self)
@@ -327,14 +312,10 @@ DialogRecordCtrl.OnShow = HL.Override() << function(self)
 end
 
 
-
-
 DialogRecordCtrl.OnClose = HL.Override() << function(self)
     self:_StopAudio()
     self.view.scrollListNaviGroup:ManuallyStopFocus()
 end
-
-
 
 DialogRecordCtrl._Update = HL.Method() << function(self)
     local firstCellShowing = self.view.scrollList:IsCellShowing(CSIndex(1))
@@ -342,8 +323,6 @@ DialogRecordCtrl._Update = HL.Method() << function(self)
     self.view.backTopButton.gameObject:SetActive(not firstCellShowing)
     self.view.backBottomButton.gameObject:SetActive(not lastCellShowing)
 end
-
-
 
 DialogRecordCtrl.OnHide = HL.Override() << function(self)
     self:_RefreshPlayingCell(-1)

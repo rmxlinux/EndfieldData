@@ -1,39 +1,15 @@
 
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.ShopMonthlyPassPopUp
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseShopMonthlyPassPopUp = HL.Class('PhaseShopMonthlyPassPopUp', phaseBase.PhaseBase)
-
 
 PhaseShopMonthlyPassPopUp.m_showTimeStamps = HL.Field(HL.Table)
 
-
 PhaseShopMonthlyPassPopUp.m_currShowTimeStampIndex = HL.Field(HL.Number) << 1
-
 
 PhaseShopMonthlyPassPopUp.m_endCallback = HL.Field(HL.Any)
 
-
 PhaseShopMonthlyPassPopUp.m_haveGotReward = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -45,13 +21,9 @@ PhaseShopMonthlyPassPopUp.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
-
 PhaseShopMonthlyPassPopUp._OnInit = HL.Override() << function(self)
     PhaseShopMonthlyPassPopUp.Super._OnInit(self)
 end
-
-
 
 PhaseShopMonthlyPassPopUp._InitAllPhaseItems = HL.Override() << function(self)
     if self.arg.ShowTimeStamps ~= nil then
@@ -65,8 +37,6 @@ PhaseShopMonthlyPassPopUp._InitAllPhaseItems = HL.Override() << function(self)
     self:_CreatePanel()
 end
 
-
-
 PhaseShopMonthlyPassPopUp._CreatePanel = HL.Method() << function(self)
     local timestamp = self.m_showTimeStamps[self.m_currShowTimeStampIndex]
     local day = GameInstance.player.monthlyPassSystem:GetRemainValidDaysByTimeStamp(timestamp)
@@ -78,8 +48,6 @@ PhaseShopMonthlyPassPopUp._CreatePanel = HL.Method() << function(self)
             remainDayNumber = day,
         })
 end
-
-
 
 PhaseShopMonthlyPassPopUp.OnClickBg = HL.Method() << function(self)
     if self.m_haveGotReward == false then
@@ -109,8 +77,6 @@ PhaseShopMonthlyPassPopUp.OnClickBg = HL.Method() << function(self)
     end
 end
 
-
-
 PhaseShopMonthlyPassPopUp._PlayNext = HL.Method() << function(self)
     
     self.m_currShowTimeStampIndex = self.m_currShowTimeStampIndex + 1
@@ -126,38 +92,17 @@ end
 
 
 
-
-
-
-
-
 PhaseShopMonthlyPassPopUp.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhaseShopMonthlyPassPopUp._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseShopMonthlyPassPopUp._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseShopMonthlyPassPopUp._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseShopMonthlyPassPopUp._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
@@ -167,17 +112,11 @@ end
 
 
 
-
-
 PhaseShopMonthlyPassPopUp._OnActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseShopMonthlyPassPopUp._OnDeActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseShopMonthlyPassPopUp._OnDestroy = HL.Override() << function(self)
     PhaseShopMonthlyPassPopUp.Super._OnDestroy(self)

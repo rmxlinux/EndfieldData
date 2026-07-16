@@ -2,57 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.AchievementDepot
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AchievementDepotCtrl = HL.Class('AchievementDepotCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -63,65 +13,43 @@ AchievementDepotCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 AchievementDepotCtrl.m_getCategoryCellFunc = HL.Field(HL.Function)
-
 
 AchievementDepotCtrl.m_getAchievementCellFunc = HL.Field(HL.Function)
 
-
 AchievementDepotCtrl.m_filterArgs = HL.Field(HL.Table)
-
 
 AchievementDepotCtrl.m_categoryDataSource = HL.Field(HL.Any) << nil
 
-
 AchievementDepotCtrl.m_sourceAchievementMap = HL.Field(HL.Any) << nil
-
 
 AchievementDepotCtrl.m_categoryFilteredData = HL.Field(HL.Any) << nil
 
-
 AchievementDepotCtrl.m_filteredDataCount = HL.Field(HL.Number) << 0
-
 
 AchievementDepotCtrl.m_filteredAchievementMap = HL.Field(HL.Any) << nil
 
-
 AchievementDepotCtrl.m_selectCategoryIndex = HL.Field(HL.Number) << 1
-
 
 AchievementDepotCtrl.m_selectGroupIndex = HL.Field(HL.Number) << 1
 
-
 AchievementDepotCtrl.m_searchKey = HL.Field(HL.String) << ''
-
 
 AchievementDepotCtrl.m_selectedFilterTags = HL.Field(HL.Table)
 
-
 AchievementDepotCtrl.m_editSelected = HL.Field(HL.Table)
-
 
 AchievementDepotCtrl.m_selectCount = HL.Field(HL.Number) << 0
 
-
 AchievementDepotCtrl.m_categorySelectCountInfo = HL.Field(HL.Table)
-
 
 AchievementDepotCtrl.m_groupSelectCountInfo = HL.Field(HL.Table)
 
-
 AchievementDepotCtrl.m_depotLimit = HL.Field(HL.Number) << 0
-
 
 AchievementDepotCtrl.m_args = HL.Field(HL.Any)
 
-
 AchievementDepotCtrl.m_isFold = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -134,8 +62,6 @@ AchievementDepotCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self:_TryRecoverState(recoverState)
     self:_RenderViews(true)
 end
-
-
 
 
 
@@ -241,20 +167,21 @@ AchievementDepotCtrl._InitViews = HL.Method() << function(self)
     end
     self.view.focusHelperLeft.onIsNaviTargetChanged = function(isTarget)
         if isTarget then
+            self.view.rightListScroll:ManuallyFocus()
+        end
+    end
+    self.view.rightListScroll.onIsFocusedChange:AddListener(function(isFocused)
+        if not isFocused then
             local categoryCell = self.m_getCategoryCellFunc(self.m_selectCategoryIndex)
             local naviTarget = categoryCell.view.button
             local categoryInfo = self.m_categoryFilteredData[self.m_selectCategoryIndex]
             if categoryInfo.haveSub then
                 naviTarget = categoryCell.m_cacheCell:Get(self.m_selectGroupIndex).button
             end
-            self.view.rightListScroll:ManuallyFocus()
-            InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(self.view.leftListScroll, naviTarget)
+            self:SetNaviTarget(naviTarget)
         end
-    end
+    end)
 end
-
-
-
 
 AchievementDepotCtrl._LoadData = HL.Method(HL.Any) << function(self, currDepot)
     self.m_categoryDataSource = {}
@@ -274,9 +201,6 @@ AchievementDepotCtrl._LoadData = HL.Method(HL.Any) << function(self, currDepot)
     self:_ResetSelectIndex()
 end
 
-
-
-
 AchievementDepotCtrl._LoadDepot = HL.Method(HL.Any) << function(self, currDepot)
     for _, achievementId in pairs(currDepot) do
         if self.m_editSelected[achievementId] == nil then
@@ -285,8 +209,6 @@ AchievementDepotCtrl._LoadDepot = HL.Method(HL.Any) << function(self, currDepot)
         end
     end
 end
-
-
 
 AchievementDepotCtrl._UpdateEditSelectCountInfo = HL.Method() << function(self)
     self.m_groupSelectCountInfo = {}
@@ -325,8 +247,6 @@ AchievementDepotCtrl._UpdateEditSelectCountInfo = HL.Method() << function(self)
     end
 end
 
-
-
 AchievementDepotCtrl._LoadFilteredData = HL.Method() << function(self)
     self.m_filteredDataCount = 0
     self.m_categoryFilteredData, self.m_filteredAchievementMap = AchievementUtils.filterAchievementData(self.m_categoryDataSource, function(achievementInfo, filteredInfos, showNoObtain)
@@ -335,24 +255,15 @@ AchievementDepotCtrl._LoadFilteredData = HL.Method() << function(self)
     self:_UpdateEditSelectCountInfo()
 end
 
-
-
 AchievementDepotCtrl._ResetEditSelect = HL.Method() << function(self)
     self.m_editSelected = {}
     self.m_selectCount = 0
 end
 
-
-
 AchievementDepotCtrl._ResetSelectIndex = HL.Method() << function(self)
     self.m_selectCategoryIndex = 1
     self.m_selectGroupIndex = 1
 end
-
-
-
-
-
 
 AchievementDepotCtrl._FilterAchievement = HL.Method(HL.Any, HL.Any, HL.Boolean).Return(HL.Boolean) << function(self, achievementInfo, filteredInfos, showNoObtain)
     local isObtained = achievementInfo.achievementPlayerInfo ~= nil
@@ -379,9 +290,6 @@ AchievementDepotCtrl._FilterAchievement = HL.Method(HL.Any, HL.Any, HL.Boolean).
     return true
 end
 
-
-
-
 AchievementDepotCtrl._IsFilteredBySearchKey = HL.Method(HL.String).Return(HL.Boolean, HL.String) << function(self, name)
     if string.isEmpty(self.m_searchKey) then
         return true, name
@@ -400,9 +308,6 @@ AchievementDepotCtrl._IsFilteredBySearchKey = HL.Method(HL.String).Return(HL.Boo
     return false, name
 end
 
-
-
-
 AchievementDepotCtrl._RenderViews = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     local isSearchMode = not string.isEmpty(self.m_searchKey)
     if isSearchMode then
@@ -416,7 +321,9 @@ AchievementDepotCtrl._RenderViews = HL.Method(HL.Opt(HL.Boolean)) << function(se
     self.view.categoryList:UpdateCount(filteredDataCount, isInit, true)
     if filteredDataCount ~= 0 then
         if DeviceInfo.usingController then
-            self.view.categoryList:FoldAll(true)
+            if isInit then
+                self.view.categoryList:FoldAll(true)
+            end
         else
             self.view.categoryList:FoldAll(false)
             self.view.categoryList:ToggleByState(CSIndex(self.m_selectCategoryIndex), true, true)
@@ -450,8 +357,6 @@ AchievementDepotCtrl._RenderViews = HL.Method(HL.Opt(HL.Boolean)) << function(se
     self.view.selectTxt.text = string.format(Language.LUA_ACHIEVEMENT_DEPOT_SELECT_TEXT_FORMAT, self.m_selectCount)
 end
 
-
-
 AchievementDepotCtrl._RefreshViews = HL.Method() << function(self)
     self:_RefreshCategoryView()
     self.view.achievementList:UpdateShowingCells(function(csIndex, obj)
@@ -460,18 +365,11 @@ AchievementDepotCtrl._RefreshViews = HL.Method() << function(self)
     self.view.selectTxt.text = string.format(Language.LUA_ACHIEVEMENT_DEPOT_SELECT_TEXT_FORMAT, self.m_selectCount, self.m_depotLimit)
 end
 
-
-
 AchievementDepotCtrl._RefreshCategoryView = HL.Method() << function(self)
     self.view.categoryList:UpdateShowingCells(function(csIndex, obj)
         self:_RenderCategory(self.m_getCategoryCellFunc(obj), LuaIndex(csIndex), true)
     end)
 end
-
-
-
-
-
 
 AchievementDepotCtrl._RenderCategory = HL.Method(HL.Any, HL.Number, HL.Opt(HL.Boolean)) << function(self, cell, luaIndex, isRefresh)
     local categoryInfo = self.m_categoryFilteredData[luaIndex]
@@ -534,10 +432,6 @@ AchievementDepotCtrl._RenderCategory = HL.Method(HL.Any, HL.Number, HL.Opt(HL.Bo
     end
 end
 
-
-
-
-
 AchievementDepotCtrl._RenderAchievement = HL.Method(HL.Table, HL.Number) << function(self, cell, luaIndex)
     local categoryInfo = self.m_categoryFilteredData[self.m_selectCategoryIndex]
     if categoryInfo == nil then
@@ -581,9 +475,6 @@ AchievementDepotCtrl._RenderAchievement = HL.Method(HL.Table, HL.Number) << func
     cell.stateCtrl:SetState(isSelected and "Select" or "Normal")
 end
 
-
-
-
 AchievementDepotCtrl._OnAchievementSelect = HL.Method(HL.String) << function(self, achievementId)
     local isSelected = self.m_editSelected[achievementId] ~= nil and self.m_editSelected[achievementId] == true
     if isSelected then
@@ -600,9 +491,6 @@ AchievementDepotCtrl._OnAchievementSelect = HL.Method(HL.String) << function(sel
     self:_RefreshViews()
 end
 
-
-
-
 AchievementDepotCtrl._SetSearchKey = HL.Method(HL.String) << function(self, searchKey)
     if self.m_searchKey == searchKey then
         return
@@ -612,10 +500,6 @@ AchievementDepotCtrl._SetSearchKey = HL.Method(HL.String) << function(self, sear
     self:_ResetSelectIndex()
     self:_RenderViews(true)
 end
-
-
-
-
 
 AchievementDepotCtrl._SetSelectIndex = HL.Method(HL.Number, HL.Number) << function(self, categoryIndex, groupIndex)
     if categoryIndex == self.m_selectCategoryIndex and groupIndex == self.m_selectGroupIndex then
@@ -638,8 +522,6 @@ AchievementDepotCtrl._SetSelectIndex = HL.Method(HL.Number, HL.Number) << functi
     end
 end
 
-
-
 AchievementDepotCtrl._GenFilterArgs = HL.Method().Return(HL.Any) << function(self)
     return {
         tagGroups = FilterUtils.generateConfig_ACHIEVEMENT_MEDAL(),
@@ -657,9 +539,6 @@ AchievementDepotCtrl._GenFilterArgs = HL.Method().Return(HL.Any) << function(sel
     }
 end
 
-
-
-
 AchievementDepotCtrl._GetFilteredCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tags)
     if not tags or not next(tags) then
         return
@@ -673,8 +552,6 @@ AchievementDepotCtrl._GetFilteredCount = HL.Method(HL.Table).Return(HL.Number) <
     return count
 end
 
-
-
 AchievementDepotCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     return {
         selectedAchievementIds = self:_GetSelectedAchievementRecoverState(),
@@ -684,8 +561,6 @@ AchievementDepotCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << 
         selectedFilterTags = lume.deepCopy(self.m_selectedFilterTags),
     }
 end
-
-
 
 AchievementDepotCtrl._GetSelectedAchievementRecoverState = HL.Method().Return(HL.Table) << function(self)
     local selectedAchievementIds = {}
@@ -697,9 +572,6 @@ AchievementDepotCtrl._GetSelectedAchievementRecoverState = HL.Method().Return(HL
     return selectedAchievementIds
 end
 
-
-
-
 AchievementDepotCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
         return
@@ -708,9 +580,6 @@ AchievementDepotCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(se
     self:_TryRecoverFilterState(recoverState)
     self:_TryRecoverSelectIndex(recoverState)
 end
-
-
-
 
 AchievementDepotCtrl._TryRecoverEditSelected = HL.Method(HL.Opt(HL.Any)) << function(self, selectedAchievementIds)
     if selectedAchievementIds == nil then
@@ -727,9 +596,6 @@ AchievementDepotCtrl._TryRecoverEditSelected = HL.Method(HL.Opt(HL.Any)) << func
     self:_UpdateEditSelectCountInfo()
 end
 
-
-
-
 AchievementDepotCtrl._TryRecoverFilterState = HL.Method(HL.Any) << function(self, recoverState)
     self.m_searchKey = recoverState.searchKey or ''
     self.view.inputField.text = self.m_searchKey
@@ -737,9 +603,6 @@ AchievementDepotCtrl._TryRecoverFilterState = HL.Method(HL.Any) << function(self
     self.m_filterArgs.selectedTags = self.m_selectedFilterTags
     self:_LoadFilteredData()
 end
-
-
-
 
 AchievementDepotCtrl._TryRecoverSelectIndex = HL.Method(HL.Any) << function(self, recoverState)
     local categoryCount = #self.m_categoryFilteredData
@@ -757,8 +620,6 @@ AchievementDepotCtrl._TryRecoverSelectIndex = HL.Method(HL.Any) << function(self
     self.m_selectGroupIndex = math.min(math.max(recoverState.selectGroupIndex or 1, 1), groupCount)
 end
 
-
-
 AchievementDepotCtrl._ResetDepot = HL.Method() << function(self)
     Notify(MessageConst.SHOW_POP_UP, {
         content = I18nUtils.GetText("ui_achv_edit_reset_choose_confirm"),
@@ -769,8 +630,6 @@ AchievementDepotCtrl._ResetDepot = HL.Method() << function(self)
         end,
     })
 end
-
-
 
 AchievementDepotCtrl._SaveEditData = HL.Method() << function(self)
     if self.m_args ~= nil and self.m_args.onConfirm ~= nil then

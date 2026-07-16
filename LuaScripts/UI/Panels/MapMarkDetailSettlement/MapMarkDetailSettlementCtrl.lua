@@ -2,14 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailSettlement
 
-
-
-
-
-
-
 MapMarkDetailSettlementCtrl = HL.Class('MapMarkDetailSettlementCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -20,11 +13,7 @@ MapMarkDetailSettlementCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 MapMarkDetailSettlementCtrl.m_markRuntimeData = HL.Field(HL.Any)
-
-
-
 
 
 MapMarkDetailSettlementCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -74,14 +63,10 @@ MapMarkDetailSettlementCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self.view.detailCommon:InitMapMarkDetailCommon(commonArgs)
 end
 
-
-
 MapMarkDetailSettlementCtrl._Teleport = HL.Method() << function(self)
     local markRuntimeData = self.m_markRuntimeData
     MapUtils.teleportToHubByHubMark(markRuntimeData, markRuntimeData.settlementHubNodeId)
 end
-
-
 
 MapMarkDetailSettlementCtrl._OpenDetailPanel = HL.Method() << function(self)
     PhaseManager:OpenPhase(PhaseId.SettlementMain,self.m_markRuntimeData.levelId)

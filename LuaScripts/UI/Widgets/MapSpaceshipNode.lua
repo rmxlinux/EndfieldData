@@ -1,36 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 MapSpaceshipNode = HL.Class('MapSpaceshipNode', UIWidgetBase)
-
 
 MapSpaceshipNode.m_isSpaceshipMap = HL.Field(HL.Boolean) << false
 
-
 MapSpaceshipNode.m_domainId = HL.Field(HL.String) << ""
-
 
 MapSpaceshipNode.m_levelId = HL.Field(HL.String) << ""
 
-
 MapSpaceshipNode.s_fromLevelId = HL.StaticField(HL.String) << ""
 
-
 MapSpaceshipNode.s_fromDomainId = HL.StaticField(HL.String) << ""
-
-
 
 
 MapSpaceshipNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -49,9 +29,6 @@ MapSpaceshipNode._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
 end
-
-
-
 
 
 
@@ -139,15 +116,10 @@ MapSpaceshipNode.InitMapSpaceshipNode = HL.Method(HL.Table) << function(self, ar
     self.view.btn.customBindingViewLabelText = self.m_isSpaceshipMap and Language.LUA_MAP_BACK_FROM_SPACESHIP or Language.LUA_MAP_JUMP_TO_SPACESHIP
 end
 
-
-
-
 MapSpaceshipNode._ToggleVisibleState = HL.Method(HL.Boolean) << function(self, isVisible)
     self.view.content.gameObject:SetActive(isVisible)
     self.view.btn.enabled = isVisible
 end
-
-
 
 MapSpaceshipNode._RecordStaticFromData = HL.Method() << function(self)
     if self.m_isSpaceshipMap then
@@ -157,15 +129,9 @@ MapSpaceshipNode._RecordStaticFromData = HL.Method() << function(self)
     MapSpaceshipNode.s_fromDomainId = self.m_domainId
 end
 
-
-
-
 MapSpaceshipNode._ReturnToRegionMap = HL.Method(HL.String) << function(self, targetDomainId)
     MapUtils.switchFromLevelMapToRegionMap(nil, targetDomainId)
 end
-
-
-
 
 MapSpaceshipNode._ReturnToLevelMap = HL.Method(HL.String) << function(self, targetLevelId)
     if string.isEmpty(self.m_domainId) then
@@ -177,7 +143,6 @@ MapSpaceshipNode._ReturnToLevelMap = HL.Method(HL.String) << function(self, targ
         MapUtils.switchFromRegionMapToLevelMap(nil, targetLevelId)
     end
 end
-
 
 MapSpaceshipNode.ClearStaticFromData = HL.StaticMethod() << function()
     MapSpaceshipNode.s_fromLevelId = ""

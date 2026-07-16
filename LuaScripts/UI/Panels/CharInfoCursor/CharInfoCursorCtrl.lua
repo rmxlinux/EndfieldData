@@ -7,7 +7,6 @@ CharInfoCursorCtrl = HL.Class('CharInfoCursorCtrl', uiCtrl.UICtrl)
 
 
 
-
 CharInfoCursorCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }

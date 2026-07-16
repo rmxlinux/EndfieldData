@@ -1,36 +1,17 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SettlementDefensePrepareHud
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SettlementDefensePrepareHudCtrl = HL.Class('SettlementDefensePrepareHudCtrl', uiCtrl.UICtrl)
 
 local LEAVE_AREA_TOAST_TEXT_ID = "ui_fac_settlement_defence_prepare_stage_quit"
 local WAIT_ANIMATION_PLAY_COUNT = 2
 
-
 SettlementDefensePrepareHudCtrl.m_levelId = HL.Field(HL.String) << ""
-
 
 SettlementDefensePrepareHudCtrl.m_updateTick = HL.Field(HL.Number) << -1
 
-
 SettlementDefensePrepareHudCtrl.m_taskTrackCtrl = HL.Field(HL.Forward("UICtrl"))
 
-
 SettlementDefensePrepareHudCtrl.m_outAnimPlayCount = HL.Field(HL.Number) << 0
-
 
 SettlementDefensePrepareHudCtrl.m_btnLock = HL.Field(HL.Boolean) << false
 
@@ -39,12 +20,8 @@ SettlementDefensePrepareHudCtrl.m_btnLock = HL.Field(HL.Boolean) << false
 
 
 
-
 SettlementDefensePrepareHudCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
-
-
-
 
 
 SettlementDefensePrepareHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -92,14 +69,10 @@ SettlementDefensePrepareHudCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     self.view.prepareToast:SetState("prepare")
 end
 
-
-
 SettlementDefensePrepareHudCtrl.OnClose = HL.Override() << function(self)
     self.m_updateTick = LuaUpdate:Remove(self.m_updateTick)
     GameInstance.player.systemActionConflictManager:OnSystemActionEnd(Const.TowerDefenseSystemActionConflictName)
 end
-
-
 
 SettlementDefensePrepareHudCtrl._RefreshPcNodePosition = HL.Method() << function(self)
     if not self.view.pcNode.gameObject.activeInHierarchy then
@@ -120,8 +93,6 @@ SettlementDefensePrepareHudCtrl._RefreshPcNodePosition = HL.Method() << function
     end
 end
 
-
-
 SettlementDefensePrepareHudCtrl._TryInvokeCloseCallback = HL.Method() << function(self)
     self.m_outAnimPlayCount = self.m_outAnimPlayCount - 1
     if self.m_outAnimPlayCount > 0 then
@@ -131,8 +102,6 @@ SettlementDefensePrepareHudCtrl._TryInvokeCloseCallback = HL.Method() << functio
     self:Close()
 end
 
-
-
 SettlementDefensePrepareHudCtrl._PlayBtnGroupAnimOut = HL.Method() << function(self)
     self.view.btnGroupAnim:PlayOutAnimation(function()
         self.view.btnGroupAnim.gameObject:SetActive(false)
@@ -140,17 +109,11 @@ SettlementDefensePrepareHudCtrl._PlayBtnGroupAnimOut = HL.Method() << function(s
     end)
 end
 
-
-
 SettlementDefensePrepareHudCtrl._PlayTitleAnimOut = HL.Method() << function(self)
     self.view.mainTitle:PlayOutAnimation(function()
         self:_TryInvokeCloseCallback()
     end)
 end
-
-
-
-
 
 SettlementDefensePrepareHudCtrl.CloseDefensePrepareHud = HL.Method(HL.Boolean, HL.Boolean) << function(self, needAreaLeave, closeDirectly)
     if closeDirectly then

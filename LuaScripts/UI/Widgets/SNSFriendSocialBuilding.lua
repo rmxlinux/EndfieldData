@@ -1,24 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
 SNSFriendSocialBuilding = HL.Class('SNSFriendSocialBuilding', UIWidgetBase)
-
 
 SNSFriendSocialBuilding.m_isValid = HL.Field(HL.Boolean) << false
 
-
 SNSFriendSocialBuilding.m_message = HL.Field(HL.Any)
-
 
 SNSFriendSocialBuilding.curState = HL.Field(HL.Any) << nil
 
@@ -27,10 +13,6 @@ local SynchronizedState = {
     Synchronized = "Synchronized",
     InValid = "InValid",
 }
-
-
-
-
 
 SNSFriendSocialBuilding.InitSNSFriendSocialBuilding = HL.Method(HL.Any, HL.Any) << function(self, message, dialogContentNaviGroup)
     self.curState = nil
@@ -46,14 +28,9 @@ SNSFriendSocialBuilding.InitSNSFriendSocialBuilding = HL.Method(HL.Any, HL.Any) 
     end)
 end
 
-
-
 SNSFriendSocialBuilding.SetTargetNode = HL.Method() << function(self)
-    InputManagerInst.controllerNaviManager:SetTarget(self.view.inputBindingGroupNaviDecorator)
+    self:SetNaviTarget(self.view.inputBindingGroupNaviDecorator)
 end
-
-
-
 
 SNSFriendSocialBuilding.UpdateSocialBuildingShow = HL.Method(HL.Any) << function(self, message)
     self.m_message = message
@@ -121,8 +98,6 @@ SNSFriendSocialBuilding.UpdateSocialBuildingShow = HL.Method(HL.Any) << function
 end
 
 
-
-
 SNSFriendSocialBuilding.CheckCanJumpIn = HL.Method().Return(HL.Boolean)<< function(self)
     if not self.m_message then
         return false
@@ -137,20 +112,20 @@ SNSFriendSocialBuilding.CheckCanJumpIn = HL.Method().Return(HL.Boolean)<< functi
     return false
 end
 
-
-
-
 SNSFriendSocialBuilding.SetState = HL.Method(HL.String) << function(self, state)
     self.curState = state
     self.view.stateController:SetState(state)
 end
 
 
-
-
 SNSFriendSocialBuilding._OnClickBtn = HL.Method() << function(self)
     if not GameInstance.player.systemUnlockManager:IsSystemUnlockByType(GEnums.UnlockSystemType.FacSocial) then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_CHAT_JUMP_UNLOCK_SOCIAL_BUILDING_TOAST)
+        return
+    end
+
+    if GameInstance.player.spaceship.isViewingFriend then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_FRIEND_SOCIAL_BUILDING_JUMP_SPACESHIP_TIP)
         return
     end
 
@@ -229,8 +204,6 @@ SNSFriendSocialBuilding._OnClickBtn = HL.Method() << function(self)
         end
     end
 end
-
-
 
 
 SNSFriendSocialBuilding._OnClickExpiredBtn = HL.Method() << function(self)

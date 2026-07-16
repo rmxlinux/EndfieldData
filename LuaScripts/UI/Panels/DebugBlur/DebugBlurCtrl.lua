@@ -1,16 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DebugBlur
-
-
-
-
-
-
-
-
-
 DebugBlurCtrl = HL.Class('DebugBlurCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -24,14 +14,9 @@ DebugBlurCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ADD_UI_BLUR_RANDOM] = "AddUIBlurRandom"
 }
 
-
 DebugBlurCtrl.m_orderLayerOffset = HL.Field(HL.Number) << 1
 
-
 DebugBlurCtrl.m_rootSortingOrder = HL.Field(HL.Number) << -1
-
-
-
 
 
 DebugBlurCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -51,13 +36,9 @@ end
 
 
 
-
 DebugBlurCtrl.ShowDebugBlur = HL.StaticMethod() << function()
     DebugBlurCtrl.AutoOpen(PANEL_ID, nil, false)
 end
-
-
-
 
 DebugBlurCtrl.AddUIBlur = HL.Method(HL.Table) << function(self, args)
     local w, h, x, y = unpack(args)
@@ -66,8 +47,6 @@ DebugBlurCtrl.AddUIBlur = HL.Method(HL.Table) << function(self, args)
     logger.warn(string.format("raqinyuan===> width:%s,height:%s; x:%s, y:%s", w, h, x, y))
     logger.warn(string.format("屏幕宽高：%d * %d", Screen.width, Screen.height))
 end
-
-
 
 DebugBlurCtrl.AddUIBlurRandom = HL.Method() << function(self)
     local halfScreenWidth = Screen.width / 2
@@ -82,12 +61,6 @@ DebugBlurCtrl.AddUIBlurRandom = HL.Method() << function(self)
     logger.warn(string.format("raqinyuan===> width:%s,height:%s; x:%s, y:%s", w, h, x, y))
     logger.warn(string.format("屏幕宽高：%d * %d", Screen.width, Screen.height))
 end
-
-
-
-
-
-
 
 DebugBlurCtrl._ProcessUIBlur = HL.Method(HL.Number, HL.Number, HL.Number, HL.Number) << function(self, w, h, x, y)
     local go = CSUtils.CreateObject(self.view.blurWithUICanvas.gameObject, self.view.transform)

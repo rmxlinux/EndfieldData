@@ -13,87 +13,7 @@ local BTN_ANIM_NAME = {
 local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
 local CHAR_FORMATION_BLOCK_OBTAIN_WAYS_JUMP = "CharFormationBlockObtainWaysJump"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharFormationCtrl = HL.Class('CharFormationCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -107,63 +27,46 @@ CharFormationCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHANGE_ACTIVE_SQUAD] = '_OnActiveSquadChange',
 }
 
-
 CharFormationCtrl.m_args = HL.Field(HL.Table)
-
 
 CharFormationCtrl.m_teamCells = HL.Field(HL.Forward("UIListCache"))
 
-
 CharFormationCtrl.m_curTeamIndex = HL.Field(HL.Number) << -1
-
 
 CharFormationCtrl.m_teamSet = HL.Field(HL.Number) << -1
 
-
 CharFormationCtrl.preState = HL.Field(HL.Number) << -1
-
 
 CharFormationCtrl.state = HL.Field(HL.Number) << -1
 
-
 CharFormationCtrl.singleState = HL.Field(HL.Number) << -1
-
 
 CharFormationCtrl.m_index2Char = HL.Field(HL.Table)
 
-
 CharFormationCtrl.m_singleCharIndex = HL.Field(HL.Number) << -1
-
 
 CharFormationCtrl.m_singleCharInfo = HL.Field(HL.Table)
 
-
 CharFormationCtrl.m_genStars = HL.Field(HL.Forward('UIListCache'))
-
 
 CharFormationCtrl.m_charTagCellCache = HL.Field(HL.Forward('UIListCache'))
 
-
 CharFormationCtrl.m_empty = HL.Field(HL.Boolean) << false
-
 
 CharFormationCtrl.m_dungeonId = HL.Field(HL.Any)
 
-
 CharFormationCtrl.m_subGameData = HL.Field(HL.Userdata)
-
 
 CharFormationCtrl.m_enterDungeonCallback = HL.Field(HL.Function)
 
+CharFormationCtrl.m_enterConfirmCallback = HL.Field(HL.Function)
+
+CharFormationCtrl.m_onCloseCallback = HL.Field(HL.Function)
 
 
 CharFormationCtrl.m_weekRaidArg = HL.Field(HL.Table)
 
-
 CharFormationCtrl.m_curSelectTakeItemCount = HL.Field(HL.Number) << 0
-
-
-
 
 
 
@@ -178,15 +81,10 @@ CharFormationCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.bannerMidNode.gameObject:SetActive(false)
 end
 
-
-
-
 CharFormationCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, args)
     self:_ProcessArgs(args)
     self:_Init()
 end
-
-
 
 CharFormationCtrl.OnShow = HL.Override() << function(self)
     AudioAdapter.PostEvent("au_ui_menu_formation_open")
@@ -204,8 +102,6 @@ CharFormationCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 CharFormationCtrl.OnHide = HL.Override() << function(self)
     AudioAdapter.PostEvent("au_ui_menu_formation_close")
 
@@ -219,18 +115,21 @@ CharFormationCtrl.OnHide = HL.Override() << function(self)
     end
 end
 
-
-
 CharFormationCtrl.OnClose = HL.Override() << function(self)
     AudioAdapter.PostEvent("au_ui_menu_formation_close")
     AudioAdapter.PostEvent("Au_UI_Menu_CharFormationPanel_Close")
 
+    Notify(MessageConst.HIDE_COMMON_HOVER_TIP, { noAnimation = true })
+
     if not string.isEmpty(self.m_dungeonId) or self.m_weekRaidArg then
         UIManager:ToggleBlockObtainWaysJump(CHAR_FORMATION_BLOCK_OBTAIN_WAYS_JUMP, false)
     end
+    
+    if self.m_onCloseCallback and not InputManagerInst.inChangingInputDevice then
+        self.m_onCloseCallback()
+        self.m_onCloseCallback = nil
+    end
 end
-
-
 
 
 
@@ -249,36 +148,54 @@ CharFormationCtrl._OnChangeTeamNameClicked = HL.Method() << function(self)
         inputName = name,
         closeOnConfirm = false,
         onConfirm = function(changedName)
-            GameInstance.player.charBag:SetTeamName(CSIndex(self.m_curTeamIndex), changedName)
+            self:_OnConfirmChangeTeamName(changedName)
         end
     })
 end
 
+CharFormationCtrl._OnConfirmChangeTeamName = HL.Method(HL.String) << function(self, changedName)
+    if I18nUtils.GetTextRealLength(changedName) > UIConst.INPUT_FIELD_CHARACTER_LIMIT then
+        Notify(MessageConst.SHOW_TOAST, Language.ui_char_common_popup_input_upper_limit)
+        return
+    end
+    GameInstance.player.charBag:SetTeamName(CSIndex(self.m_curTeamIndex), changedName)
+end
 
-
+CharFormationCtrl._OnConfirmCharNotFullEnterDungeon = HL.Method() << function(self)
+    local charInfos = {}
+    for _, charInfo in ipairs(self.m_lockedTeamData.chars) do
+        table.insert(charInfos, CharInfoUtils.getPlayerCharInfoByInstId(charInfo.charInstId))
+    end
+    self:_EnterDungeon(self.m_dungeonId, charInfos)
+end
 
 CharFormationCtrl._OnCharInfoClicked = HL.Method(HL.Table) << function(self, charInfo)
-    local isShowFixed, isShowTrail = CharInfoUtils.getLockedFormationCharTipsShow(charInfo)
+    
     CharInfoUtils.openCharInfoBestWay({
-        initCharInfo = {
-            instId = charInfo.charInstId,
-            templateId = charInfo.charId,
-            isSingleChar = true,
-            isTrail = true,
-            isShowFixed = isShowFixed,
-            isShowTrail = isShowTrail,
-        },
+        initCharInfoCreator = function(initCharTemplateId)
+            local initCharInfo
+            local _, ctrl = UIManager:IsOpen(PANEL_ID)
+            if not ctrl then
+                return nil
+            end
+            initCharInfo = ctrl.m_singleCharInfo
+            local isShowFixed, isShowTrail = CharInfoUtils.getLockedFormationCharTipsShow(initCharInfo)
+            return {
+                instId = initCharInfo.charInstId,
+                templateId = initCharInfo.charId,
+                isSingleChar = true,
+                isTrail = true,
+                isShowFixed = isShowFixed,
+                isShowTrail = isShowTrail,
+            }
+        end,
         forceSkipIn = true,
     })
 end
 
-
-
 CharFormationCtrl._OnBtnMixConfirmClicked = HL.Method() << function(self)
     self:Notify(MessageConst.ON_CHAR_FORMATION_LIST_CONFIRM, self.m_curTeamIndex)
 end
-
-
 
 CharFormationCtrl._OnBtnConfirmClicked = HL.Method() << function(self)
     if Utils.isCurSquadAllDead() then
@@ -300,7 +217,8 @@ CharFormationCtrl._OnBtnConfirmClicked = HL.Method() << function(self)
     end
 
     if self.m_dungeonId then
-        if self.m_isFormationLocked then
+        local specialTeamType = DungeonUtils.getSpecialTeamType(self.m_dungeonId)
+        if self.m_isFormationLocked and not specialTeamType then
             local charInfos = {}
             for _, charInfo in ipairs(self.m_lockedTeamData.chars) do
                 table.insert(charInfos, CharInfoUtils.getPlayerCharInfoByInstId(charInfo.charInstId))
@@ -324,7 +242,7 @@ CharFormationCtrl._OnBtnConfirmClicked = HL.Method() << function(self)
                 self:Notify(MessageConst.SHOW_POP_UP, {
                     content = Language.LUA_TEAM_FORMATION_CHAR_NOT_FULL_TIPS,
                     onConfirm = function()
-                        self:_EnterDungeon(self.m_dungeonId, charInfos)
+                        self:_OnConfirmCharNotFullEnterDungeon()
                     end
                 })
             else
@@ -365,9 +283,6 @@ end
 
 
 
-
-
-
 CharFormationCtrl.InitSelectTeam = HL.Method(HL.Opt(HL.Number)) << function(self, selectedTeamIndex)
     self.m_teamSet = self:_GetCurTeamIndex()
     local index = self.m_teamSet
@@ -380,8 +295,6 @@ CharFormationCtrl.InitSelectTeam = HL.Method(HL.Opt(HL.Number)) << function(self
     self.view.infoNoe.gameObject:SetActive(not self:_IsSpecialFormation())
 end
 
-
-
 CharFormationCtrl.UpdateTeamSet = HL.Method() << function(self)
     self.m_teamSet = LuaIndex(GameInstance.player.charBag.curTeamIndex)
     if self.m_curTeamIndex == self.m_teamSet then
@@ -391,17 +304,11 @@ CharFormationCtrl.UpdateTeamSet = HL.Method() << function(self)
     end
 end
 
-
-
-
 CharFormationCtrl.SetSingleCharIndex = HL.Method(HL.Number) << function(self, index)
     self.m_singleCharIndex = index
     local charInfo = self.m_index2Char[index]
     self:RefreshCharInformation(charInfo)
 end
-
-
-
 
 CharFormationCtrl.RefreshTeamCharInfo = HL.Method(HL.Table) << function(self, team)
     local index = 1
@@ -418,17 +325,10 @@ CharFormationCtrl.RefreshTeamCharInfo = HL.Method(HL.Table) << function(self, te
     self:_UpdateSlotConfirmBinding()
 end
 
-
-
-
-
 CharFormationCtrl.UpdateChar = HL.Method(HL.Number, HL.Table) << function(self, index, charInfo)
     self:Notify(MessageConst.ON_CHAR_FORMATION_REFRESH_SLOT, { index, charInfo })
     self.m_index2Char[index] = charInfo
 end
-
-
-
 
 CharFormationCtrl.SetState = HL.Method(HL.Number) << function(self, state)
     local needRefresh = self.state ~= state
@@ -509,10 +409,6 @@ CharFormationCtrl.SetState = HL.Method(HL.Number) << function(self, state)
     self.state = state
 end
 
-
-
-
-
 CharFormationCtrl.RefreshSingleBtns = HL.Method(HL.Number, HL.Table) << function(self, singleState, charInfo)
     self:_PlayBtnSingleAnim(singleState)
 
@@ -551,9 +447,6 @@ CharFormationCtrl.RefreshSingleBtns = HL.Method(HL.Number, HL.Table) << function
     end
 end
 
-
-
-
 CharFormationCtrl.RefreshEmpty = HL.Method(HL.Boolean) << function(self, empty)
     if self.m_empty == empty then
         return
@@ -575,9 +468,6 @@ CharFormationCtrl.RefreshEmpty = HL.Method(HL.Boolean) << function(self, empty)
     self.m_empty = empty
 end
 
-
-
-
 CharFormationCtrl.RefreshTeamName = HL.Method(HL.Opt(HL.String)) << function(self, name)
     if self:_IsSpecialFormation() then
         return
@@ -593,10 +483,6 @@ CharFormationCtrl.RefreshTeamName = HL.Method(HL.Opt(HL.String)) << function(sel
 
     self.view.textName.text = name
 end
-
-
-
-
 
 CharFormationCtrl.RefreshCharInformation = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(self, charInfo, selectTable)
     local needRefresh = false
@@ -632,7 +518,7 @@ CharFormationCtrl.RefreshCharInformation = HL.Method(HL.Table, HL.Opt(HL.Table))
             itemId = charInst.tacticalItemId,
             isLocked = charInfo.isTrail,
             isForbidden = not string.isEmpty(dungeonId) and
-                UIUtils.isItemTypeForbidden(dungeonId, GEnums.ItemType.TacticalItem),
+                UIUtils.isItemForbidden(dungeonId, charInst.tacticalItemId),
             isClickable = true,
             charTemplateId = charInfo.charId,
             charInstId = charInfo.charInstId,
@@ -681,17 +567,12 @@ end
 
 
 
-
-
 CharFormationCtrl._GetCurTeamIndex = HL.Method().Return(HL.Number) << function(self)
     if self.m_customTeamIndex > 0 then
         return self.m_customTeamIndex
     end
     return LuaIndex(GameInstance.player.charBag.curTeamIndex)
 end
-
-
-
 
 CharFormationCtrl._ProcessArgs = HL.Method(HL.Table) << function(self, args)
     self.m_args = args
@@ -701,6 +582,8 @@ CharFormationCtrl._ProcessArgs = HL.Method(HL.Table) << function(self, args)
     self.m_isFormationLocked = args.lockedTeamData ~= nil
     self.m_lockedTeamData = args.lockedTeamData
     self.m_enterDungeonCallback = args.enterDungeonCallback
+    self.m_enterConfirmCallback = args.enterConfirmCallback
+    self.m_onCloseCallback = args.onCloseCallback
     self.m_index2Char = {}
     self.m_teamSet = self:_GetCurTeamIndex()
     if not string.isEmpty(self.m_dungeonId) then
@@ -710,8 +593,6 @@ CharFormationCtrl._ProcessArgs = HL.Method(HL.Table) << function(self, args)
         self.m_subGameData = nil
     end
 end
-
-
 
 CharFormationCtrl._Init = HL.Method() << function(self)
     if self.m_dungeonId then
@@ -735,6 +616,11 @@ CharFormationCtrl._Init = HL.Method() << function(self)
         end
     else
         self.view.dungeonInfoBtn.gameObject:SetActive(false)
+    end
+    
+    self.view.infoBtn.gameObject:SetActive(self.m_args.infoBtnCallback ~= nil)
+    if self.m_args.infoBtnCallback ~= nil then
+        self.view.infoBtn.onClick:AddListener(self.m_args.infoBtnCallback)
     end
 
     if not string.isEmpty(self.m_args.customTitle) then
@@ -782,8 +668,6 @@ CharFormationCtrl._Init = HL.Method() << function(self)
     self:_UpdateWeekRaid()
     self:_UpdateContingencyContract()
 end
-
-
 
 CharFormationCtrl._InitAction = HL.Method() << function(self)
     
@@ -847,9 +731,6 @@ CharFormationCtrl._InitAction = HL.Method() << function(self)
     end)
 end
 
-
-
-
 CharFormationCtrl._SetTeamSelect = HL.Method(HL.Number) << function(self, index)
     if self.m_curTeamIndex ~= index then
         local oldCell = self.m_teamCells:GetItem(self.m_curTeamIndex)
@@ -873,9 +754,6 @@ CharFormationCtrl._SetTeamSelect = HL.Method(HL.Number) << function(self, index)
     self:RefreshTeamName()
 end
 
-
-
-
 CharFormationCtrl._WrapTeamIndex = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
     local totalSquadNum = Tables.globalConst.totalSquadNum
     if index > totalSquadNum then
@@ -885,10 +763,6 @@ CharFormationCtrl._WrapTeamIndex = HL.Method(HL.Number).Return(HL.Number) << fun
     end
     return index
 end
-
-
-
-
 
 CharFormationCtrl._SetSlotCharInfo = HL.Method(HL.Table, HL.Table) << function(self, slot, info)
     local characterTable = Tables.characterTable
@@ -915,9 +789,6 @@ CharFormationCtrl._SetSlotCharInfo = HL.Method(HL.Table, HL.Table) << function(s
     slot.tryoutTips.gameObject:SetActive(isTrail)
     slot.fixedTips.gameObject:SetActive(isFixed)
 end
-
-
-
 
 CharFormationCtrl._PlayBtnSingleAnim = HL.Method(HL.Number) << function(self, singleState)
     if singleState == self.singleState then
@@ -950,9 +821,6 @@ CharFormationCtrl._PlayBtnSingleAnim = HL.Method(HL.Number) << function(self, si
 
 end
 
-
-
-
 CharFormationCtrl._RefreshLeftRightBtns = HL.Method(HL.Boolean) << function(self, visible)
     self.view.midNodeAnim:ClearTween(false)
     if visible then
@@ -971,9 +839,6 @@ CharFormationCtrl._RefreshLeftRightBtns = HL.Method(HL.Boolean) << function(self
     end
 
 end
-
-
-
 
 CharFormationCtrl._PlayBtnMultiAnim = HL.Method(HL.Number) << function(self, state)
     if state == self.state then
@@ -995,9 +860,6 @@ CharFormationCtrl._PlayBtnMultiAnim = HL.Method(HL.Number) << function(self, sta
     end
 end
 
-
-
-
 CharFormationCtrl._OnActiveSquadChange = HL.Method(HL.Table) << function(self, args)
     local curTeamIndex = unpack(args)
     self:UpdateTeamSet()
@@ -1013,30 +875,37 @@ CharFormationCtrl._OnActiveSquadChange = HL.Method(HL.Table) << function(self, a
     FilterUtils.setCharInstIdIndexDirty()
 end
 
-
-
-
-
 CharFormationCtrl._EnterDungeon = HL.Method(HL.String, HL.Opt(HL.Table)) << function(self, dungeonId, charInfos)
-    local entered = false
+    local dungeonMrg = GameInstance.dungeonManager
+    local entered = dungeonMrg:CheckCanEnterDungeonAndToast(dungeonId)
+    if not entered then
+        return
+    end
+
     if charInfos then
-        entered = GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId, charInfos)
-    else
-        entered = GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId)
-    end
-    if entered then
-        
-        GameWorld.dialogManager:Next(0)
-        if self.m_enterDungeonCallback then
-            self.m_enterDungeonCallback(dungeonId)
+        for _, charInfo in ipairs(charInfos) do
+            if charInfo and charInfo.isDead then
+                Notify(MessageConst.SHOW_TOAST, Language.LUA_CHAR_FORMATION_DEAD_TOAST)
+                return
+            end
         end
-        Utils.reportPlacementEvent(GEnums.ClientPlacementEventType.DungeonBattleFirst)
     end
+
+    if self.m_enterConfirmCallback and self.m_enterConfirmCallback(dungeonId) == false then
+        return
+    end
+    
+    GameWorld.dialogManager:Next(0)
+    if charInfos then
+        GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId, charInfos, self.m_args.presetTeamId or "")
+    else
+       GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId, self.m_args.presetTeamId or "")
+    end
+    if self.m_enterDungeonCallback then
+        self.m_enterDungeonCallback(dungeonId)
+    end
+    Utils.reportPlacementEvent(GEnums.ClientPlacementEventType.DungeonBattleFirst)
 end
-
-
-
-
 
 
 
@@ -1072,38 +941,27 @@ CharFormationCtrl.OpenCharList = HL.Method(HL.Number, HL.Opt(HL.Int)) << functio
     self:_ActiveTeamInfo(false)
 end
 
-
-
 CharFormationCtrl.CloseCharList = HL.Method() << function(self)
+    
+    Notify(MessageConst.HIDE_COMMON_HOVER_TIP, { noAnimation = true })
     UIUtils.PlayAnimationAndToggleActive(self.view.charList.view.animationWrapper, false)
     self:_ActiveTeamInfo(true)
     InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.charList.view.naviGroup)
 end
-
-
-
 
 CharFormationCtrl._ActiveTeamInfo = HL.Method(HL.Boolean) << function(self, active)
     self.view.charTittleNode.gameObject:SetActive(active)
     self.view.infoNoe.gameObject:SetActive(active and not self:_IsSpecialFormation())
 end
 
-
-
-
-
 CharFormationCtrl.SetCharListMode = HL.Method(HL.Number, HL.Opt(HL.Number)) << function(self, mode, charInstId)
     self.view.charList:SetMode(mode, charInstId)
     self.m_charListMode = mode
 end
 
-
-
 CharFormationCtrl.GetCharListEmpty = HL.Method().Return(HL.Boolean) << function(self)
     return self.view.charList:GetEmpty()
 end
-
-
 
 CharFormationCtrl.GetCurCharList = HL.Method().Return(HL.Table) << function(self)
     
@@ -1122,9 +980,6 @@ CharFormationCtrl.GetCurCharList = HL.Method().Return(HL.Table) << function(self
     return charList
 end
 
-
-
-
 CharFormationCtrl.GetCharListItemByInstId = HL.Method(HL.Number).Return(HL.Opt(HL.Table)) << function(self, charInstId)
     for _, charItem in ipairs(self.m_tmpCharItems or {}) do
         if charItem.instId == charInstId then
@@ -1133,9 +988,6 @@ CharFormationCtrl.GetCharListItemByInstId = HL.Method(HL.Number).Return(HL.Opt(H
     end
     return nil
 end
-
-
-
 
 CharFormationCtrl.RecoverMultiCharListSelection = HL.Method(HL.Table).Return(HL.Table, HL.Table) << function(self, charInstIds)
     local selectedCharItems = {}
@@ -1161,8 +1013,6 @@ CharFormationCtrl.RecoverMultiCharListSelection = HL.Method(HL.Table).Return(HL.
     return charItemList, charInfoList
 end
 
-
-
 CharFormationCtrl.CollectCharListSortFilterState = HL.Method().Return(HL.Table) << function(self)
     local recoverState = {}
     local charListView = self.view and self.view.charList and self.view.charList.view or nil
@@ -1176,9 +1026,6 @@ CharFormationCtrl.CollectCharListSortFilterState = HL.Method().Return(HL.Table) 
     end
     return recoverState
 end
-
-
-
 
 CharFormationCtrl.ApplyCharListSortFilterState = HL.Method(HL.Table) << function(self, recoverState)
     if not recoverState then
@@ -1215,24 +1062,17 @@ CharFormationCtrl.ApplyCharListSortFilterState = HL.Method(HL.Table) << function
     sortNode:UpdateDeviceState()
 end
 
-
 CharFormationCtrl.m_charListMode = HL.Field(HL.Number) << 0
-
 
 CharFormationCtrl.m_charListSingleCharInstId = HL.Field(HL.Int) << 0
 
-
 CharFormationCtrl.m_tmpCharItems = HL.Field(HL.Table) 
-
-
 
 CharFormationCtrl._OnEnterMultiSelect = HL.Method() << function(self)
     self:OpenCharList(UIConst.CharListMode.MultiSelect)
     self:SetState(UIConst.UI_CHAR_FORMATION_STATE.CharChange)
     self:Notify(MessageConst.ON_CHAR_FORMATION_ENTER_MULTI_SELECT)
 end
-
-
 
 CharFormationCtrl._RefreshCharList = HL.Method() << function(self)
     if self.m_lockedTeamData then
@@ -1243,13 +1083,6 @@ CharFormationCtrl._RefreshCharList = HL.Method() << function(self)
     self.view.charList:UpdateCharItems(self.m_tmpCharItems)
 end
 
-
-
-
-
-
-
-
 CharFormationCtrl._CharListChangeSelectIndex = HL.Method(HL.Boolean, HL.Number, HL.Table, HL.Table, HL.Table) << function
 (self, select, cellIndex, charItem, charItemList, charInfoList)
     if self.m_charListMode == UIConst.UIConst.CharListMode.MultiSelect then
@@ -1258,8 +1091,6 @@ CharFormationCtrl._CharListChangeSelectIndex = HL.Method(HL.Boolean, HL.Number, 
         self:Notify(MessageConst.ON_CHAR_FORMATION_LIST_SINGLE_SELECT, { cellIndex, charItem })
     end
 end
-
-
 
 CharFormationCtrl._GetShowSelectChars = HL.Method().Return(HL.Table) << function(self)
     local showSelectChars = {}
@@ -1279,17 +1110,12 @@ end
 
 
 
-
 CharFormationCtrl.m_isFormationLocked = HL.Field(HL.Boolean) << false
-
 
 CharFormationCtrl.m_lockedTeamData = HL.Field(HL.Table)
 
 
-
 CharFormationCtrl.m_customTeamIndex = HL.Field(HL.Number) << -1
-
-
 
 CharFormationCtrl._IsSpecialFormation = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_lockedTeamData ~= nil or self.m_customTeamIndex > 0
@@ -1299,16 +1125,11 @@ end
 
 
 
-
 CharFormationCtrl.m_equipTacticalItemBindingId = HL.Field(HL.Number) << -1
-
 
 CharFormationCtrl.m_isCharInfoNaviGroupFocused = HL.Field(HL.Boolean) << false
 
-
 CharFormationCtrl.m_slotConfirmBindingId = HL.Field(HL.Number) << -1
-
-
 
 CharFormationCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
@@ -1338,8 +1159,6 @@ CharFormationCtrl._InitController = HL.Method() << function(self)
     end)
 end
 
-
-
 CharFormationCtrl._UpdateSlotConfirmBinding = HL.Method() << function(self)
     local isLocked = false
     local isEmpty = false
@@ -1354,8 +1173,6 @@ CharFormationCtrl._UpdateSlotConfirmBinding = HL.Method() << function(self)
     InputManagerInst:SetBindingText(self.m_slotConfirmBindingId, (isEmpty or isLocked) and
          Language.key_hint_char_formation_slot_confirm_no_char or Language.key_hint_char_formation_slot_confirm)
 end
-
-
 
 
 
@@ -1390,8 +1207,6 @@ CharFormationCtrl._UpdateWeekRaid = HL.Method() << function(self)
     end
 end
 
-
-
 CharFormationCtrl._AdjustSelectTakeItemCount = HL.Method() << function(self)
     local maxCount = GameInstance.player.weekRaidSystem.techTypeValue[GEnums.WeekRaidTechType.BombLimit]
     UIManager:Open(PanelId.CommonItemNumSelect,{
@@ -1410,8 +1225,6 @@ CharFormationCtrl._AdjustSelectTakeItemCount = HL.Method() << function(self)
         end
     })
 end
-
-
 
 CharFormationCtrl._UpdateTakeItemInfo = HL.Method() << function(self)
     if self.m_isClosed then
@@ -1435,10 +1248,7 @@ end
 
 
 
-
 CharFormationCtrl.m_isContingencyContract = HL.Field(HL.Boolean) << false
-
-
 
 CharFormationCtrl._UpdateContingencyContract = HL.Method() << function(self)
     self.m_isContingencyContract = false
@@ -1478,6 +1288,32 @@ CharFormationCtrl._UpdateContingencyContract = HL.Method() << function(self)
             tagIds = tagIds,
         })
     end)
+end
+
+
+
+
+
+
+CharFormationCtrl._TryRecoverCommonPopUp = HL.Method(HL.Table) << function(self, commonPopUpArg)
+    if commonPopUpArg == nil or type(commonPopUpArg) ~= "table" or string.isEmpty(commonPopUpArg.content) then
+        return
+    end
+    local isOpen, commonPopUpCtrl = UIManager:IsOpen(PanelId.CommonPopUp)
+    if isOpen and commonPopUpCtrl:IsShow() then
+        return
+    end
+    if commonPopUpArg.content == Language.LUA_CHANGE_TEAM_NAME then
+        commonPopUpArg.onConfirm = function(changedName)
+            self:_OnConfirmChangeTeamName(changedName)
+        end
+        Notify(MessageConst.SHOW_POP_UP, commonPopUpArg)
+    elseif commonPopUpArg.content == Language.LUA_TEAM_FORMATION_CHAR_NOT_FULL_TIPS then
+        commonPopUpArg.onConfirm = function()
+            self:_OnConfirmCharNotFullEnterDungeon()
+        end
+        self:Notify(MessageConst.SHOW_POP_UP, commonPopUpArg)
+    end
 end
 
 

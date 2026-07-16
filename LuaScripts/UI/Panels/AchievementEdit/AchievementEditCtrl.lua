@@ -680,7 +680,7 @@ AchievementEditCtrl._SetNaviTarget = HL.Method(HL.Userdata, HL.Userdata, HL.Any)
     if target == nil then
         return
     end
-    self:SetAsNaviTargetInSilentModeIfNecessary(naviGroup, target)
+    self:SetNaviTarget(target)
     self:_UpdateNaviFocusMedal(focusMedal)
 end
 
@@ -1028,7 +1028,7 @@ AchievementEditCtrl._OnNaviDragCancel = HL.Method() << function(self)
                 local luaIndex = LuaIndex(csIndex)
                 self:_RenderDepotCell(cell, luaIndex)
                 if luaIndex == depotIndex then
-                    UIUtils.setAsNaviTarget(cell.view.button)
+                    self:SetNaviTarget(cell.view.button)
                     self:_UpdateNaviFocusMedal(self.m_editDepot[luaIndex])
                 end
             end)

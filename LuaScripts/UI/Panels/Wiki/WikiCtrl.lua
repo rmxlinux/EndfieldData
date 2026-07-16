@@ -1,19 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Wiki
-
-
-
-
-
-
-
-
-
-
-
-
 WikiCtrl = HL.Class('WikiCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -38,14 +25,9 @@ local WIKI_CATEGORY_TO_Node_NAME = {
 
 
 
-
 WikiCtrl.m_selectedNodeAnim = HL.Field(HL.Userdata)
 
-
 WikiCtrl.m_arg = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -103,13 +85,9 @@ WikiCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     AudioManager.PostEvent("au_ui_menu_wiki_open")
 end
 
-
-
 WikiCtrl.OnClose = HL.Override() << function(self)
     AudioManager.PostEvent("au_ui_menu_wiki_close")
 end
-
-
 
 WikiCtrl.OnShow = HL.Override() << function(self)
     if self.m_phase then
@@ -133,12 +111,10 @@ WikiCtrl.OnShow = HL.Override() << function(self)
         end
         local targetBtn = self:_GetCategoryBtn(categoryType) or self.m_firstCategoryBtn
         if targetBtn then
-            InputManagerInst.controllerNaviManager:SetTarget(targetBtn)
+            self:SetNaviTarget(targetBtn)
         end
     end
 end
-
-
 
 WikiCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.m_arg and lume.deepCopy(self.m_arg) or {}
@@ -153,9 +129,6 @@ WikiCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(
     return arg
 end
 
-
-
-
 WikiCtrl._GetCategoryBtn = HL.Method(HL.Opt(HL.String)).Return(HL.Opt(HL.Userdata)) << function(self, categoryType)
     if string.isEmpty(categoryType) then
         return nil
@@ -169,15 +142,12 @@ end
 
 
 
-
 WikiCtrl.m_firstCategoryBtn = HL.Field(HL.Userdata)
-
-
 
 WikiCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     if self.m_firstCategoryBtn then
-        InputManagerInst.controllerNaviManager:SetTarget(self.m_firstCategoryBtn)
+        self:SetNaviTarget(self.m_firstCategoryBtn)
     end
 end
 

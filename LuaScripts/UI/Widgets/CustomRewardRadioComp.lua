@@ -6,34 +6,15 @@ local Index2Radio = {
     [2] = 2,
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 CustomRewardRadioComp = HL.Class('CustomRewardRadioComp', UIWidgetBase)
-
 
 CustomRewardRadioComp.m_costStamina = HL.Field(HL.Number) << -1
 
-
 CustomRewardRadioComp.m_onRadioChangedFunc = HL.Field(HL.Function)
-
 
 CustomRewardRadioComp.m_curSelectRadioIndex = HL.Field(HL.Number) << -1
 
-
 CustomRewardRadioComp.m_isStaminaActivityOn = HL.Field(HL.Boolean) << false
-
-
 
 
 CustomRewardRadioComp._OnFirstTimeInit = HL.Override() << function(self)
@@ -50,10 +31,6 @@ CustomRewardRadioComp._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
-
 CustomRewardRadioComp.InitCustomRewardRadioComp = HL.Method(HL.Number, HL.Function)
         << function(self, costStamina, onRadioChangedFunc)
     self:_FirstTimeInit()
@@ -64,8 +41,6 @@ CustomRewardRadioComp.InitCustomRewardRadioComp = HL.Method(HL.Number, HL.Functi
     self:_InitData()
     self:_RefreshView()
 end
-
-
 
 CustomRewardRadioComp._InitData = HL.Method() << function(self)
     
@@ -78,8 +53,6 @@ CustomRewardRadioComp._InitData = HL.Method() << function(self)
 
     self.m_curSelectRadioIndex = doubleStaminaTickedEnough and -1 or 1
 end
-
-
 
 CustomRewardRadioComp._RefreshView = HL.Method() << function(self)
     self.view.stateController:SetState(self.m_isStaminaActivityOn and "ActivityOn" or "ActivityOff")
@@ -102,8 +75,6 @@ CustomRewardRadioComp._RefreshView = HL.Method() << function(self)
     self.m_onRadioChangedFunc(self.m_isStaminaActivityOn and 1 or Index2Radio[self.m_curSelectRadioIndex])
 end
 
-
-
 CustomRewardRadioComp._OnClickPartOneBtn = HL.Method() << function(self)
     
     if self.m_curSelectRadioIndex == 1 then
@@ -121,8 +92,6 @@ CustomRewardRadioComp._OnClickPartOneBtn = HL.Method() << function(self)
     end
     self.m_onRadioChangedFunc(Index2Radio[self.m_curSelectRadioIndex])
 end
-
-
 
 CustomRewardRadioComp._OnClickPartTwoBtn = HL.Method() << function(self)
     
@@ -142,9 +111,6 @@ CustomRewardRadioComp._OnClickPartTwoBtn = HL.Method() << function(self)
     self.m_onRadioChangedFunc(Index2Radio[self.m_curSelectRadioIndex])
 end
 
-
-
-
 CustomRewardRadioComp._OnItemCountChanged = HL.Method(HL.Table) << function(self, args)
     local changedItemId2DiffCount = unpack(args)
     local itemId = Tables.dungeonConst.doubleStaminaTicketItemId
@@ -155,14 +121,12 @@ CustomRewardRadioComp._OnItemCountChanged = HL.Method(HL.Table) << function(self
     self:_RefreshView()
 end
 
-
-
 CustomRewardRadioComp.SetDefaultTarget = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
     end
 
-    UIUtils.setAsNaviTarget(self.view.radioPartOneBtn)
+    self:SetNaviTarget(self.view.radioPartOneBtn)
 end
 
 HL.Commit(CustomRewardRadioComp)

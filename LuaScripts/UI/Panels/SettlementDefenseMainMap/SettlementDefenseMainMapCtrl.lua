@@ -1,26 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SettlementDefenseMainMap
 local PHASE_ID = PhaseId.SettlementDefenseMainMap
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SettlementDefenseMainMapCtrl = HL.Class('SettlementDefenseMainMapCtrl', uiCtrl.UICtrl)
 
 local ENEMY_COUNT_FORMAT = "%d/%d"
@@ -29,30 +9,21 @@ local CORE_HP_TEXT_FORMAT = "%d%%"
 
 local TOP_CORE_ATTACKED_IN_ANIMATION_NAME = "defense_main_map_top_core_attacked_in"
 
-
 SettlementDefenseMainMapCtrl.m_towerDefenseGame = HL.Field(HL.Userdata)
-
 
 SettlementDefenseMainMapCtrl.m_coreInfoCells = HL.Field(HL.Forward("UIListCache"))
 
-
 SettlementDefenseMainMapCtrl.m_enemyCells = HL.Field(HL.Forward("UIListCache"))
-
 
 SettlementDefenseMainMapCtrl.m_enemyInfoList = HL.Field(HL.Table)
 
-
 SettlementDefenseMainMapCtrl.m_enemyAbilityCells = HL.Field(HL.Forward("UIListCache"))
-
 
 SettlementDefenseMainMapCtrl.m_coreDataList = HL.Field(HL.Table)
 
-
 SettlementDefenseMainMapCtrl.m_selectEnemyIndex = HL.Field(HL.Number) << -1
 
-
 SettlementDefenseMainMapCtrl.m_hpChangeCallbackList = HL.Field(HL.Table)
-
 
 
 
@@ -61,9 +32,6 @@ SettlementDefenseMainMapCtrl.m_hpChangeCallbackList = HL.Field(HL.Table)
 SettlementDefenseMainMapCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_TOWER_DEFENSE_DEFENDING_ENEMY_KILLED] = '_RefreshEnemyCount',
 }
-
-
-
 
 
 SettlementDefenseMainMapCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -94,8 +62,6 @@ SettlementDefenseMainMapCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
     self:_InitCoreInfos()
 end
 
-
-
 SettlementDefenseMainMapCtrl.OnClose = HL.Override() << function(self)
     if self.m_towerDefenseGame ~= nil then
         local coreAbilitySystems = self.m_towerDefenseGame.tdCoreAbilitySystems
@@ -105,8 +71,6 @@ SettlementDefenseMainMapCtrl.OnClose = HL.Override() << function(self)
         end
     end
 end
-
-
 
 
 
@@ -145,10 +109,6 @@ SettlementDefenseMainMapCtrl._InitCoreInfos = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 SettlementDefenseMainMapCtrl._OnCoreHpChanged = HL.Method(HL.Number, HL.Number) << function(self, index, changedHp)
     local coreData = self.m_coreDataList[index]
     local cell = self.m_coreInfoCells:Get(index)
@@ -171,8 +131,6 @@ end
 
 
 
-
-
 SettlementDefenseMainMapCtrl._RefreshEnemyCount = HL.Method() << function(self)
     self.view.enemyCount.text = string.format(
         ENEMY_COUNT_FORMAT,
@@ -180,8 +138,6 @@ SettlementDefenseMainMapCtrl._RefreshEnemyCount = HL.Method() << function(self)
         self.m_towerDefenseGame.totalEnemyCount
     )
 end
-
-
 
 SettlementDefenseMainMapCtrl._RefreshEnemyList = HL.Method() << function(self)
     local tdId = GameInstance.player.towerDefenseSystem.activeTdId
@@ -215,9 +171,6 @@ SettlementDefenseMainMapCtrl._RefreshEnemyList = HL.Method() << function(self)
     end)
 end
 
-
-
-
 SettlementDefenseMainMapCtrl._OnEnemyCellClick = HL.Method(HL.Number) << function(self, index)
     local lastCell = self.m_enemyCells:GetItem(self.m_selectEnemyIndex)
     local currCell = self.m_enemyCells:GetItem(index)
@@ -230,9 +183,6 @@ SettlementDefenseMainMapCtrl._OnEnemyCellClick = HL.Method(HL.Number) << functio
     self.m_selectEnemyIndex = index
     self:_ShowAndRefreshEnemyTips(index)
 end
-
-
-
 
 SettlementDefenseMainMapCtrl._ShowAndRefreshEnemyTips = HL.Method(HL.Number) << function(self, index)
     local enemyInfo = self.m_enemyInfoList[index]
@@ -260,8 +210,6 @@ SettlementDefenseMainMapCtrl._ShowAndRefreshEnemyTips = HL.Method(HL.Number) << 
     UIUtils.PlayAnimationAndToggleActive(enemyTipsNode.animationWrapper, true)
 end
 
-
-
 SettlementDefenseMainMapCtrl._HideEnemyTips = HL.Method() << function(self)
     local currCell = self.m_enemyCells:GetItem(self.m_selectEnemyIndex)
     if currCell ~= nil then
@@ -270,8 +218,6 @@ SettlementDefenseMainMapCtrl._HideEnemyTips = HL.Method() << function(self)
 
     UIUtils.PlayAnimationAndToggleActive(self.view.enemyTipsNode.animationWrapper, false)
 end
-
-
 
 
 

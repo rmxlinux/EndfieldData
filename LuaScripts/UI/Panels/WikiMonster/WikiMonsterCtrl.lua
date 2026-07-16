@@ -1,35 +1,15 @@
 
 local wikiDetailBaseCtrl = require_ex('UI/Panels/WikiDetailBase/WikiDetailBaseCtrl')
 local PANEL_ID = PanelId.WikiMonster
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiMonsterCtrl = HL.Class('WikiMonsterCtrl', wikiDetailBaseCtrl.WikiDetailBaseCtrl)
-
 
 WikiMonsterCtrl.m_abilityListCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WikiMonsterCtrl.m_distributionListCache = HL.Field(HL.Forward("UIListCache"))
-
 
 WikiMonsterCtrl.m_dropListCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WikiMonsterCtrl.m_dropItemSortFunc = HL.Field(HL.Function) << nil
-
-
-
 
 WikiMonsterCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_abilityListCache = UIUtils.genCellCache(self.view.right.abilityDescNode)
@@ -41,22 +21,15 @@ WikiMonsterCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self:_PlayDecoAnim()
 end
 
-
-
 WikiMonsterCtrl.OnShow = HL.Override() << function(self)
     WikiMonsterCtrl.Super.OnShow(self)
     self:_RefreshModel()
     self:_PlayDecoAnim()
 end
 
-
-
 WikiMonsterCtrl.GetPanelId = HL.Override().Return(HL.Number) << function(self)
     return PANEL_ID
 end
-
-
-
 
 WikiMonsterCtrl._RefreshModel = HL.Method(HL.Opt(HL.Boolean)) << function(self, playInAnim)
     if self.m_phase then
@@ -67,14 +40,10 @@ WikiMonsterCtrl._RefreshModel = HL.Method(HL.Opt(HL.Boolean)) << function(self, 
     end
 end
 
-
-
 WikiMonsterCtrl._RefreshCenter = HL.Override() << function(self)
     WikiMonsterCtrl.Super._RefreshCenter(self)
     self:_RefreshModel()
 end
-
-
 
 WikiMonsterCtrl._RefreshRight = HL.Override() << function(self)
     
@@ -176,8 +145,6 @@ WikiMonsterCtrl._RefreshRight = HL.Override() << function(self)
     self.view.right.naviGroup.enabled = canFocus
     self.view.right.controllerFocusHintNode.gameObject:SetActive(canFocus)
 end
-
-
 
 WikiMonsterCtrl._PlayDecoAnim = HL.Method() << function(self)
     if self.m_phase then

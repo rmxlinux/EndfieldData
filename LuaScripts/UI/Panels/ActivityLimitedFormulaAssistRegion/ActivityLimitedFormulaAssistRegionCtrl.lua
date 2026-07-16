@@ -2,27 +2,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityLimitedFormulaAssistRegion
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityLimitedFormulaAssistRegionCtrl = HL.Class('ActivityLimitedFormulaAssistRegionCtrl', uiCtrl.UICtrl)
 
 local ACHIEVEMENT_ID = "achv_event_formula"
@@ -36,7 +15,6 @@ local STAGE_STATE_TO_POINT_STATE_MAP = {
     [GEnums.ActivityConditionalStageState.Rewarded] = "Done",
 }
 
-
 ActivityLimitedFormulaAssistRegionCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_UPDATED] = '_OnActivityUpdated',
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = '_OnActivityUpdated',
@@ -44,38 +22,25 @@ ActivityLimitedFormulaAssistRegionCtrl.s_messages = HL.StaticField(HL.Table) << 
     [MessageConst.ON_WALLET_CHANGED] = '_OnWalletChanged',
 }
 
-
 ActivityLimitedFormulaAssistRegionCtrl.m_activityId = HL.Field(HL.String) << ''
-
 
 ActivityLimitedFormulaAssistRegionCtrl.m_activityCfgData = HL.Field(HL.Any)
 
-
 ActivityLimitedFormulaAssistRegionCtrl.m_achievementCfgData = HL.Field(HL.Any)
-
 
 ActivityLimitedFormulaAssistRegionCtrl.m_achievementState = HL.Field(HL.String) << ""
 
-
 ActivityLimitedFormulaAssistRegionCtrl.m_activityData = HL.Field(CS.Beyond.Gameplay.ActivityLimitedFormula)
-
 
 ActivityLimitedFormulaAssistRegionCtrl.m_stageList = HL.Field(HL.Table)
 
-
 ActivityLimitedFormulaAssistRegionCtrl.m_curStageIndex = HL.Field(HL.Number) << 0
-
 
 ActivityLimitedFormulaAssistRegionCtrl.m_curStageState = HL.Field(GEnums.ActivityConditionalStageState)
 
-
 ActivityLimitedFormulaAssistRegionCtrl.m_isEndStage = HL.Field(HL.Boolean) << false
 
-
 ActivityLimitedFormulaAssistRegionCtrl.m_completeTitleCor = HL.Field(HL.Thread)
-
-
-
 
 ActivityLimitedFormulaAssistRegionCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_activityId = args.activityId
@@ -172,20 +137,13 @@ ActivityLimitedFormulaAssistRegionCtrl.OnCreate = HL.Override(HL.Any) << functio
     self:_UpdateActivityNode()
 end
 
-
-
 ActivityLimitedFormulaAssistRegionCtrl.OnClose = HL.Override() << function(self)
     self.m_completeTitleCor = self:_ClearCoroutine(self.m_completeTitleCor)
 end
 
-
-
 ActivityLimitedFormulaAssistRegionCtrl.OnShow = HL.Override() << function(self)
 
 end
-
-
-
 
 ActivityLimitedFormulaAssistRegionCtrl._OnActivityUpdated = HL.Method(HL.Any) << function(self, arg)
     local id = unpack(arg)
@@ -196,9 +154,6 @@ ActivityLimitedFormulaAssistRegionCtrl._OnActivityUpdated = HL.Method(HL.Any) <<
     self:_UpdateActivityData()
     self:_UpdateActivityNode()
 end
-
-
-
 
 ActivityLimitedFormulaAssistRegionCtrl._OnAchievementUpdated = HL.Method(HL.Any) << function(self, arg)
     if arg == nil then
@@ -235,15 +190,10 @@ ActivityLimitedFormulaAssistRegionCtrl._OnAchievementUpdated = HL.Method(HL.Any)
     end
 end
 
-
-
-
 ActivityLimitedFormulaAssistRegionCtrl._OnWalletChanged = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     
     self.view.shopEntryNode.shopNumTxt.text = Utils.getItemCount(self.m_activityCfgData.moneyId)
 end
-
-
 
 ActivityLimitedFormulaAssistRegionCtrl._UpdateActivityData = HL.Method() << function(self)
     for i = #self.m_stageList, 1, -1 do
@@ -274,8 +224,6 @@ ActivityLimitedFormulaAssistRegionCtrl._UpdateActivityData = HL.Method() << func
         end
     end
 end
-
-
 
 ActivityLimitedFormulaAssistRegionCtrl._UpdateActivityNode = HL.Method() << function(self)
     
@@ -357,9 +305,6 @@ ActivityLimitedFormulaAssistRegionCtrl._UpdateActivityNode = HL.Method() << func
     
     self.view.shopEntryNode.shopNumTxt.text = Utils.getItemCount(self.m_activityCfgData.moneyId)
 end
-
-
-
 
 ActivityLimitedFormulaAssistRegionCtrl._UpdateCompleteTitleThread = HL.Method(HL.String) << function(self, rawText)
     self.m_completeTitleCor = self:_ClearCoroutine(self.m_completeTitleCor)

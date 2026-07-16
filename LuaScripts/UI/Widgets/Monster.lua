@@ -1,22 +1,7 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 Monster = HL.Class('Monster', UIWidgetBase)
-
-
 
 
 Monster._OnFirstTimeInit = HL.Override() << function(self)
@@ -25,22 +10,15 @@ end
 
 
 
-
 Monster.redDot = HL.Field(HL.Forward("RedDot"))
-
 
 Monster.id = HL.Field(HL.String) << ""
 
-
 Monster.m_isSelected = HL.Field(HL.Boolean) << false
-
 
 Monster.m_showingHover = HL.Field(HL.Boolean) << false
 
-
 Monster.m_enableHoverTips = HL.Field(HL.Boolean) << true
-
-
 
 
 
@@ -53,11 +31,6 @@ Monster._ResetOnInit = HL.Method() << function(self)
         self.redDot:Stop()
     end
 end
-
-
-
-
-
 
 
 
@@ -148,10 +121,6 @@ Monster.InitMonster = HL.Method(HL.Opt(HL.Any, HL.Any, HL.String, HL.Boolean))
     end
 end
 
-
-
-
-
 Monster.SetSelected = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, isSelected, forceUpdate)
     self.m_isSelected = isSelected == true
     if isSelected and self.view.config.SHOW_HOVER_TIP then
@@ -161,9 +130,6 @@ Monster.SetSelected = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self
     self.view.selectedBG.gameObject:SetActive(isSelected)
     self.view.selectedNode.gameObject:SetActive(isSelected)
 end
-
-
-
 
 Monster.SetEnableHoverTips = HL.Method(HL.Boolean) << function(self, enabled)
     self.m_enableHoverTips = enabled
@@ -177,15 +143,10 @@ end
 
 
 
-
-
-
 Monster._UpdateIcon = HL.Method(HL.Opt(HL.Any)) << function(self, data)
     local loadPath = self.view.config.USE_BIG_ICON and UIConst.UI_SPRITE_MONSTER_ICON_BIG or UIConst.UI_SPRITE_MONSTER_ICON
     self.view.icon:LoadSprite(loadPath, data.templateId)
 end
-
-
 
 Monster._OnDestroy = HL.Override() << function(self)
     if self.m_showingHover then

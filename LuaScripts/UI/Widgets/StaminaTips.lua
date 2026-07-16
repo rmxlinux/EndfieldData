@@ -1,45 +1,25 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
 StaminaTips = HL.Class('StaminaTips', UIWidgetBase)
 
-
 StaminaTips.m_coroutine = HL.Field(HL.Thread)
-
-
 
 
 StaminaTips._OnFirstTimeInit = HL.Override() << function(self)
     self:_RefreshTickRecover()
 end
 
-
-
 StaminaTips.InitStaminaTips = HL.Method() << function(self)
     self:_FirstTimeInit()
 end
-
-
 
 StaminaTips._OnEnable = HL.Override() << function(self)
     self:_StartTickRecover()
 end
 
-
-
 StaminaTips._OnDisable = HL.Override() << function(self)
     self:_StopTickRecover()
 end
-
-
 
 StaminaTips._StartTickRecover = HL.Method() << function(self)
     self:_StopTickRecover()
@@ -53,15 +33,11 @@ StaminaTips._StartTickRecover = HL.Method() << function(self)
     end)
 end
 
-
-
 StaminaTips._StopTickRecover = HL.Method() << function(self)
     if self.m_coroutine then
         self:_ClearCoroutine(self.m_coroutine)
     end
 end
-
-
 
 StaminaTips._RefreshTickRecover = HL.Method() << function(self)
     local curStamina = GameInstance.player.inventory.curStamina

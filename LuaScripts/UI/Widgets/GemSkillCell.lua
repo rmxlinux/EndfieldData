@@ -1,24 +1,12 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 GemSkillCell = HL.Class('GemSkillCell', UIWidgetBase)
 
-
 GemSkillCell.m_notchCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 GemSkillCell._OnFirstTimeInit = HL.Override() << function(self)
     self.m_notchCellCache = UIUtils.genCellCache(self.view.notchCell)
 end
-
-
-
-
-
 
 GemSkillCell.InitGemSkillCell = HL.Method(HL.String, HL.Number, HL.Opt(HL.Boolean)) << function(self, termId, skillLevel, isActive)
     self:_FirstTimeInit()

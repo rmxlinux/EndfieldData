@@ -1,21 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharacterFootBarUpgrade
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharacterFootBarUpgradeCtrl = HL.Class('CharacterFootBarUpgradeCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -26,20 +12,13 @@ CharacterFootBarUpgradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.INTERRUPT_MAIN_HUD_ACTION_QUEUE] = 'InterruptMainHudActionQueue',
 }
 
-
 CharacterFootBarUpgradeCtrl.m_oldCellNum = HL.Field(HL.Number) << 0
-
 
 CharacterFootBarUpgradeCtrl.m_newCellNum = HL.Field(HL.Number) << 0
 
-
 CharacterFootBarUpgradeCtrl.m_cells = HL.Field(HL.Table)
 
-
 CharacterFootBarUpgradeCtrl.m_coroutine = HL.Field(HL.Thread)
-
-
-
 
 
 CharacterFootBarUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -62,13 +41,9 @@ CharacterFootBarUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self.view.splitLineCell.localScale = Vector3.zero 
 end
 
-
-
 CharacterFootBarUpgradeCtrl.OnShow = HL.Override() << function(self)
     Notify(MessageConst.TOGGLE_FORBID_CHAR_FOOT_BAR, {"footBarUpgradeCtrl", true} )
 end
-
-
 
 CharacterFootBarUpgradeCtrl.OnAnimationInFinished = HL.Override() << function(self)
     self.m_coroutine = coroutine.create(function()
@@ -103,14 +78,11 @@ CharacterFootBarUpgradeCtrl.OnAnimationInFinished = HL.Override() << function(se
     coroutine.resume(self.m_coroutine)
 end
 
-
-
 CharacterFootBarUpgradeCtrl._ResumeCoroutine = HL.Method() << function(self)
     if self.m_coroutine ~= nil then
         coroutine.resume(self.m_coroutine)
     end
 end
-
 
 CharacterFootBarUpgradeCtrl.OnDashCountMaxChanged = HL.StaticMethod() << function()
     local isOpen, ctrl = UIManager:IsOpen(PANEL_ID)
@@ -131,17 +103,20 @@ CharacterFootBarUpgradeCtrl.OnDashCountMaxChanged = HL.StaticMethod() << functio
             Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "DashBarUpgrade")
             return
         end
+
+        local maxDashCount = Tables.globalConst.maxDashEnergyLimit / Tables.globalConst.dashCostEnergyValue
+        if old >= maxDashCount then
+            Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, "DashBarUpgrade")
+            return
+        end
+
         UIManager:Open(PANEL_ID, {old, current})
     end)
 end
 
-
-
 CharacterFootBarUpgradeCtrl.InterruptMainHudActionQueue = HL.Method() << function(self)
     self:Close()
 end
-
-
 
 CharacterFootBarUpgradeCtrl.OnClose = HL.Override() << function(self)
     self.m_coroutine = nil

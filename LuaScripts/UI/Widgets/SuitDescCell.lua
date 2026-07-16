@@ -1,23 +1,12 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 SuitDescCell = HL.Class('SuitDescCell', UIWidgetBase)
 
-
 SuitDescCell.m_descCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 SuitDescCell._OnFirstTimeInit = HL.Override() << function(self)
     self.m_descCellCache = UIUtils.genCellCache(self.view.descCell)
 end
-
-
-
 
 
 SuitDescCell.InitSuitDescCellByEquipTemplateId = HL.Method(HL.String) << function(self, equipTemplateId)
@@ -53,12 +42,6 @@ SuitDescCell.InitSuitDescCellByEquipTemplateId = HL.Method(HL.String) << functio
 
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.transform)
 end
-
-
-
-
-
-
 SuitDescCell.InitSuitDescCell = HL.Method(HL.String, HL.Number, HL.Function, HL.Opt(HL.Boolean)) << function(self,
                                                                                                            suitId,
                                                                                                  suitCount,

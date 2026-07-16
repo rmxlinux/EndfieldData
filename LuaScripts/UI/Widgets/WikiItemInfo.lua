@@ -1,24 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiItemInfo = HL.Class('WikiItemInfo', UIWidgetBase)
 
 
@@ -34,22 +15,15 @@ local CATEGORY_TYPE_TO_REFRESH_FUNC = {
 
 
 
-
 WikiItemInfo.m_tagListCache = HL.Field(HL.Forward("UIListCache"))
-
 
 WikiItemInfo.m_starListCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WikiItemInfo.m_descListCache = HL.Field(HL.Forward("UIListCache"))
-
 
 WikiItemInfo.m_itemData = HL.Field(HL.Userdata)
 
-
 WikiItemInfo.m_onDetailBtnClicked = HL.Field(HL.Function)
-
-
 
 WikiItemInfo._OnFirstTimeInit = HL.Override() << function(self)
     self.view.tglExpand.toggle.isOn = false
@@ -73,9 +47,6 @@ end
 
 
 
-
-
-
 WikiItemInfo.InitWikiItemInfo = HL.Method(HL.Table) << function(self, args)
     self:_FirstTimeInit()
     self.m_onDetailBtnClicked = args.onDetailBtnClick
@@ -87,6 +58,10 @@ WikiItemInfo.InitWikiItemInfo = HL.Method(HL.Table) << function(self, args)
     self.view.equipTypeNode.gameObject:SetActive(false)
     self.view.tglExpand.gameObject:SetActive(false)
     self.view.collectionTagNode.gameObject:SetActive(false)
+    self.view.portableDeviceTagNode.gameObject:SetActive(false)
+    if self.view.earlyAccessNode then
+        self.view.earlyAccessNode.gameObject:SetActive(false)
+    end
 
     local hasValue
     hasValue, self.m_itemData = Tables.itemTable:TryGetValue(args.wikiEntryShowData.wikiEntryData.refItemId)
@@ -105,17 +80,11 @@ WikiItemInfo.InitWikiItemInfo = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
-
 WikiItemInfo._RefreshWeapon = HL.Method(HL.Table) << function(self, args)
     self:_InitItemInfo(args)
     self.view.star.gameObject:SetActive(true)
     self.m_starListCache:Refresh(self.m_itemData.rarity)
 end
-
-
-
 
 WikiItemInfo._RefreshEquip = HL.Method(HL.Table) << function(self, args)
     self.view.detailBtn.gameObject:SetActive(false)
@@ -132,17 +101,12 @@ WikiItemInfo._RefreshEquip = HL.Method(HL.Table) << function(self, args)
     self.view.equipTypeIcon:LoadSprite(UIConst.UI_SPRITE_EQUIP_PART_ICON, partSpriteName)
 end
 
-
-
-
 WikiItemInfo._RefreshItem = HL.Method(HL.Table) << function(self, args)
     self.view.detailBtn.gameObject:SetActive(false)
     self:_InitItemInfo(args)
     self:_InitTags(self:_GetItemTags())
+    self.view.portableDeviceTagNode:InitPortableDeviceTagNode(args.wikiEntryShowData.wikiEntryData.refItemId)
 end
-
-
-
 
 WikiItemInfo._RefreshMonster = HL.Method(HL.Table) << function(self, args)
     self.view.star.gameObject:SetActive(false)
@@ -189,9 +153,6 @@ WikiItemInfo._RefreshMonster = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
-
 WikiItemInfo._RefreshBuilding = HL.Method(HL.Table) << function(self, args)
     local isShowImg = lume.find(WikiConst.BUILDING_SHOW_IMG_GROUP_ID_LIST, args.wikiEntryShowData.wikiGroupData.groupId)
     self.view.detailBtn.gameObject:SetActive(not isShowImg)
@@ -202,14 +163,11 @@ WikiItemInfo._RefreshBuilding = HL.Method(HL.Table) << function(self, args)
     if buildingId then
         powerNumber = FactoryUtils.getBuildingConsumePower(buildingId)
     end
-    if powerNumber > 0 then
+    if powerNumber > 0 and not GameInstance.remoteFactoryManager.system.core.progressStatus:IsBuildingPowerCostNoNeed(buildingId) then
         self.view.powerNode.gameObject:SetActive(true)
         self.view.powerTxt.text = tostring(powerNumber)
     end
 end
-
-
-
 
 WikiItemInfo._RefreshTutorial = HL.Method(HL.Table) << function(self, args)
     self.view.nameTxt.text = args.wikiEntryShowData.wikiEntryData.desc
@@ -248,9 +206,6 @@ WikiItemInfo._RefreshTutorial = HL.Method(HL.Table) << function(self, args)
         end)
     end
 end
-
-
-
 
 WikiItemInfo._InitItemInfo = HL.Method(HL.Table) << function(self, args)
     self.view.typeTxt.text = args.wikiEntryShowData.wikiGroupData.groupName
@@ -311,7 +266,7 @@ WikiItemInfo._InitItemInfo = HL.Method(HL.Table) << function(self, args)
                 table.insert(desc, args.wikiEntryShowData.wikiEntryData.desc)
             end
             if args.wikiEntryShowData.wikiCategoryType == WikiConst.EWikiCategoryType.Item and
-                not FactoryUtils.isFactoryItemFluid(self.m_itemData.id) then
+                FactoryUtils.isFactoryItemNormal(self.m_itemData.id) then
                 local storageDesc
                 local _, itemTypeData = Tables.itemTypeTable:TryGetValue(self.m_itemData.type)
                 if itemTypeData then
@@ -333,10 +288,12 @@ WikiItemInfo._InitItemInfo = HL.Method(HL.Table) << function(self, args)
         UIUtils.setItemRarityImage(self.view.circleLightImg, self.m_itemData.rarity)
         UIUtils.setItemRarityImage(self.view.circleImg, self.m_itemData.rarity)
         UIUtils.displayGiftItemTags(self.view.collectionTagNode, self.m_itemData.id)
+        if self.view.earlyAccessNode then
+            self.view.earlyAccessNode.gameObject:SetActiveIfNecessary(
+                FactoryUtils.isSkipUnlockedBuildingByItemId(self.m_itemData.id))
+        end
     end
 end
-
-
 
 WikiItemInfo._GetItemTags = HL.Method().Return(HL.Table) << function(self)
     local tags = {}
@@ -353,9 +310,6 @@ WikiItemInfo._GetItemTags = HL.Method().Return(HL.Table) << function(self)
     return tags
 end
 
-
-
-
 WikiItemInfo._InitTags = HL.Method(HL.Table) << function(self, tags)
     if tags == nil or #tags == 0 then
         return
@@ -367,11 +321,7 @@ WikiItemInfo._InitTags = HL.Method(HL.Table) << function(self, tags)
     end)
 end
 
-
 WikiItemInfo.m_expandGoTable = HL.Field(HL.Table)
-
-
-
 
 WikiItemInfo._ExpandItemInfo = HL.Method(HL.Boolean) << function(self, expand)
     if not self.m_expandGoTable then

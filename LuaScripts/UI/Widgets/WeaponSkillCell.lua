@@ -1,25 +1,12 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 WeaponSkillCell = HL.Class('WeaponSkillCell', UIWidgetBase)
 
-
 WeaponSkillCell.m_skillNotchCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 WeaponSkillCell._OnFirstTimeInit = HL.Override() << function(self)
     self.m_skillNotchCellCache = UIUtils.genCellCache(self.view.weaponSkillNotchCell)
 end
-
-
-
-
-
-
 
 WeaponSkillCell.InitWeaponSkillCell = HL.Method(HL.Userdata, HL.Userdata, HL.String, HL.Opt(HL.Boolean)) << function(self, toLevelInfo, fromLevelInfo, skillDesc, onlyShowDiff)
     self:_FirstTimeInit()

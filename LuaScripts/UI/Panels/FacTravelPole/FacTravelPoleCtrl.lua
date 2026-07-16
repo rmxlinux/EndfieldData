@@ -1,20 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacTravelPole
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacTravelPoleCtrl = HL.Class('FacTravelPoleCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -24,23 +10,15 @@ FacTravelPoleCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacTravelPoleCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 FacTravelPoleCtrl.m_isUpgraded = HL.Field(HL.Boolean) << false
 
-
 FacTravelPoleCtrl.m_hasDefaultNext = HL.Field(HL.Boolean) << false
-
 
 FacTravelPoleCtrl.m_currPoleMarkInstId = HL.Field(HL.String) << ""
 
-
 FacTravelPoleCtrl.m_uiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_TravelPole)
-
-
-
 
 
 FacTravelPoleCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -53,9 +31,9 @@ FacTravelPoleCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitMapNode()
     self:_RefreshBasicContent()
     self:_RefreshTravelPoleMapOrder()
+
+    self.view.buildingCommon.view.buttonsNaviGroup:NaviToThisGroup()
 end
-
-
 
 FacTravelPoleCtrl._InitMapNode = HL.Method() << function(self)
     self.view.mapMask.gameObject:SetActive(false)
@@ -84,10 +62,6 @@ FacTravelPoleCtrl._InitMapNode = HL.Method() << function(self)
     self.view.levelMapController.view.levelMapLoader.view.element.frontLineRoot.udPipeLine.gameObject:SetActive(false)
 end
 
-
-
-
-
 FacTravelPoleCtrl._GetAllRegionTravelPolesCount = HL.Method(HL.Any, HL.Any)
                                                     .Return(HL.Number)
     << function(self, isInFacRegion, isOthersSocialBuilding)
@@ -105,8 +79,6 @@ FacTravelPoleCtrl._GetAllRegionTravelPolesCount = HL.Method(HL.Any, HL.Any)
     end
     return count
 end
-
-
 
 FacTravelPoleCtrl._RefreshBasicContent = HL.Method() << function(self)
     self.m_isUpgraded = GameWorld.gameMechManager.travelPoleBrain:CheckTravelPoleIsUpgraded(self.m_nodeId)
@@ -144,15 +116,10 @@ FacTravelPoleCtrl._RefreshBasicContent = HL.Method() << function(self)
     end
 end
 
-
-
 FacTravelPoleCtrl._RefreshTravelPoleMapOrder = HL.Method() << function(self)
     
     self.view.levelMapController.view.travelLine:SetParent(self.view.levelMapController.view.staticElementBackRoot)
 end
-
-
-
 
 FacTravelPoleCtrl._RefreshTravelPoleMapMark = HL.Method(HL.Table) << function(self, markViewData)
     if markViewData == nil then

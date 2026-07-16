@@ -2,12 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WeekRaidLeaveConfirm
 
-
-
-
-
 WeekRaidLeaveConfirmCtrl = HL.Class('WeekRaidLeaveConfirmCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -18,13 +13,9 @@ WeekRaidLeaveConfirmCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 WeekRaidLeaveConfirmCtrl.ShowPopUp = HL.StaticMethod() << function()
     UIManager:Open(PANEL_ID)
 end
-
-
-
 
 
 WeekRaidLeaveConfirmCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)

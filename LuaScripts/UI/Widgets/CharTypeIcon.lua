@@ -1,11 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
 CharTypeIcon = HL.Class('CharTypeIcon', UIWidgetBase)
-
-
-
 
 
 

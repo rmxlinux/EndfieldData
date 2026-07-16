@@ -66,6 +66,7 @@ local DefaultConfig = {
         PanelId.BattleComboSkillUse,
         PanelId.BattleBossInfo,
         PanelId.BattleBottomScreenEffect,
+        PanelId.EnvironmentalPrompt,
     },
     specialPanels = {
         PanelId.GeneralTracker,
@@ -163,6 +164,15 @@ function PhaseLevelConfig.GetCurrentConfig()
         end
     end
     return DefaultConfig
+end
+
+function PhaseLevelConfig.GetWhitelistPanelSet(config)
+    local set = {}
+    for _, pid in ipairs(config.open or {}) do set[pid] = true end
+    for _, pid in ipairs(config.preload or {}) do set[pid] = true end
+    for _, pid in ipairs(config.preOpen or {}) do set[pid] = true end
+    for _, pid in ipairs(config.specialPanels or {}) do set[pid] = true end
+    return set
 end
 
 

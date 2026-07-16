@@ -1,26 +1,13 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 CharTalentNode = HL.Class('CharTalentNode', UIWidgetBase)
 
-
 CharTalentNode.m_talentCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 CharTalentNode._OnFirstTimeInit = HL.Override() << function(self)
     self.m_talentCellCache = UIUtils.genCellCache(self.view.talentCell)
 end
-
-
-
 
 CharTalentNode.InitCharTalentNodeByInstId = HL.Method(HL.Number) << function(self, charInstId)
     self:_FirstTimeInit()
@@ -28,10 +15,6 @@ CharTalentNode.InitCharTalentNodeByInstId = HL.Method(HL.Number) << function(sel
     local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
     self:InitCharTalentNodeByTemplateId(charInfo.templateId, charInfo.breakStage)
 end
-
-
-
-
 
 CharTalentNode.InitCharTalentNodeByTemplateId = HL.Method(HL.String, HL.Number) << function(self, templateId, breakStage)
     self:_FirstTimeInit()
@@ -57,11 +40,6 @@ CharTalentNode.InitCharTalentNodeByTemplateId = HL.Method(HL.String, HL.Number) 
     
 end
 
-
-
-
-
-
 CharTalentNode._OnTalentClicked = HL.Method(HL.Number, HL.Table, HL.Table) << function(self, index, cell, talentInfo)
     local arg = {
         skillId = talentInfo.skillId,
@@ -75,9 +53,6 @@ CharTalentNode._OnTalentClicked = HL.Method(HL.Number, HL.Table, HL.Table) << fu
 
     Notify(MessageConst.SHOW_CHAR_SKILL_TIP, arg)
 end
-
-
-
 
 CharTalentNode.RefreshTalentSelect = HL.Method(HL.Opt(HL.Number)) << function(self, selectIndex)
     local count = self.m_talentCellCache:GetCount()

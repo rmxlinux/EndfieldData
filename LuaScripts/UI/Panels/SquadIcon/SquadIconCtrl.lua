@@ -1,36 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SquadIcon
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SquadIconCtrl = HL.Class('SquadIconCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -52,25 +23,20 @@ SquadIconCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SWITCH_MAIN_CHAR_ENABLE_CONFIG_CHANGED] = 'OnSwitchMainCharEnableConfigChanged',
     [MessageConst.ON_SQUAD_ICON_ACTIVE_CONFIG_CHANGED] = 'OnSquadIconActiveConfigChanged',
     [MessageConst.ON_SQUAD_DISABLE_TIPS_CHANGED] = 'OnDisableTipsChanged',
+    [MessageConst.TOGGLE_DEBUG_SQUAD_ICON_BUFF_MODE] = 'OnToggleDebugSquadIconBuffMode',
 }
-
 
 SquadIconCtrl.m_listItems = HL.Field(HL.Table)
 
-
 SquadIconCtrl.m_indicatorShowing = HL.Field(HL.Boolean) << false
-
 
 SquadIconCtrl.m_teamSwitchUnlocked = HL.Field(HL.Boolean) << false
 
-
 SquadIconCtrl.m_teamSwitchEnabled = HL.Field(HL.Boolean) << false
 
+SquadIconCtrl.m_gpuiBuffEnabled = HL.Field(HL.Boolean) << true
 
 SquadIconCtrl.m_disableTipList = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 SquadIconCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -78,6 +44,10 @@ SquadIconCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     if self.isControllerPanel then
         for i = 1, Const.BATTLE_SQUAD_MAX_CHAR_NUM do
             self.m_listItems[i] = self.view["squadIcon" .. i]
+            if self.view.buffIconSync ~= nil then
+                self.m_listItems[i]:SetGPUIBuffSync(self.view.buffIconSync)
+            end
+            self.m_listItems[i]:SetGPUIBuffMode(self.m_gpuiBuffEnabled)
             self.m_listItems[i]:FirstTimeInit(CSIndex(i), self.isDefaultPanel, self.isControllerPanel)
         end
     else
@@ -88,6 +58,10 @@ SquadIconCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self.m_listItems[i] = cell
         end
         for i = 1, Const.BATTLE_SQUAD_MAX_CHAR_NUM do
+            if self.view.buffIconSync ~= nil then
+                self.m_listItems[i]:SetGPUIBuffSync(self.view.buffIconSync)
+            end
+            self.m_listItems[i]:SetGPUIBuffMode(self.m_gpuiBuffEnabled)
             self.m_listItems[i]:FirstTimeInit(CSIndex(i), self.isDefaultPanel, self.isControllerPanel)
         end
     end
@@ -113,22 +87,18 @@ SquadIconCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:OnDisableTipsChanged({GameWorld.battle.squadDisableTips})
 end
 
-
-
 SquadIconCtrl.OnShow = HL.Override() << function(self)
     for _, item in ipairs(self.m_listItems) do
         item.enabled = true
     end
     self:_OnTeamChange()
-    if InputManagerInst:GetControllerIndicatorState() then
+    if CS.Beyond.UI.BattleControllerInputController.instance:GetControllerIndicatorState() then
         self:OnToggleControllerIndicator(true)
     end
     if self.isControllerPanel then
         self.view.hudFadeController:OnShow()
     end
 end
-
-
 
 SquadIconCtrl.OnHide = HL.Override() << function(self)
     self:OnToggleControllerIndicator(false)
@@ -137,15 +107,19 @@ SquadIconCtrl.OnHide = HL.Override() << function(self)
     end
 end
 
-
+SquadIconCtrl.OnToggleDebugSquadIconBuffMode = HL.Method() << function(self)
+    self.m_gpuiBuffEnabled = not self.m_gpuiBuffEnabled
+    GameAction.ShowUIToast("已切换到" .. (self.m_gpuiBuffEnabled and "GPUI Buff模式" or "普通Buff模式"))
+    for _, item in ipairs(self.m_listItems) do
+        item:SetGPUIBuffMode(self.m_gpuiBuffEnabled)
+    end
+end
 
 SquadIconCtrl.OnClose = HL.Override() << function(self)
     for i, item in ipairs(self.m_listItems) do
         item:Close()
     end
 end
-
-
 
 SquadIconCtrl._GetCount = HL.Method().Return(HL.Number) << function(self)
     local count = 0
@@ -157,34 +131,22 @@ SquadIconCtrl._GetCount = HL.Method().Return(HL.Number) << function(self)
     return count
 end
 
-
-
-
 SquadIconCtrl._GetItem = HL.Method(HL.Number).Return(HL.Any) << function(self, index)
     return self.m_listItems[index]
 end
-
-
-
 
 SquadIconCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     if not active and self:IsShow() then
         self:OnToggleControllerIndicator(false)
     end
-    if active and self:IsShow() and InputManagerInst:GetControllerIndicatorState() then
+    if active and self:IsShow() and CS.Beyond.UI.BattleControllerInputController.instance:GetControllerIndicatorState() then
         self:OnToggleControllerIndicator(true)
     end
 end
 
-
-
-
 SquadIconCtrl.OnToggleUiAction = HL.Method(HL.Table) << function(self, arg)
     self:_OnPanelInputBlocked(self.view.inputGroup.groupEnabled)
 end
-
-
-
 
 
 SquadIconCtrl._OnTeamChange = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
@@ -226,9 +188,6 @@ SquadIconCtrl._OnTeamChange = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
 end
 
 
-
-
-
 SquadIconCtrl._OnLevelChange = HL.Method(HL.Table) << function(self, args)
     local instId, _ = unpack(args)
     local squadSlots = GameInstance.player.squadManager.curSquad.slots
@@ -241,9 +200,6 @@ SquadIconCtrl._OnLevelChange = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
-
 SquadIconCtrl._OnCharacterDead = HL.Method(HL.Table) << function(self, args)
     local luaIndex = LuaIndex(unpack(args))
     local item = self:_GetItem(luaIndex)
@@ -251,9 +207,6 @@ SquadIconCtrl._OnCharacterDead = HL.Method(HL.Table) << function(self, args)
         item:SetDeadState(true)
     end
 end
-
-
-
 
 SquadIconCtrl.OnToggleControllerIndicator = HL.Method(HL.Boolean) << function(self, active)
     if self.isControllerPanel then
@@ -273,9 +226,6 @@ SquadIconCtrl.OnToggleControllerIndicator = HL.Method(HL.Boolean) << function(se
     end
 end
 
-
-
-
 SquadIconCtrl._OnSquadTacticalItemChange = HL.Method(HL.Table) << function(self, args)
     local index, itemId = unpack(args)
     local luaIndex = LuaIndex(index)
@@ -284,9 +234,6 @@ SquadIconCtrl._OnSquadTacticalItemChange = HL.Method(HL.Table) << function(self,
         item:OnTacticalItemChange()
     end
 end
-
-
-
 
 SquadIconCtrl._OnManualCraftItemLevelUp = HL.Method(HL.Table) << function(self, args)
     local items = unpack(args)
@@ -306,9 +253,6 @@ SquadIconCtrl._OnManualCraftItemLevelUp = HL.Method(HL.Table) << function(self, 
     end
 end
 
-
-
-
 SquadIconCtrl.OnSystemUnlock = HL.Method(HL.Any) << function(self, arg)
     local systemIndex = unpack(arg)
     if systemIndex == GEnums.UnlockSystemType.TeamSwitch:GetHashCode() then
@@ -321,24 +265,16 @@ SquadIconCtrl.OnSystemUnlock = HL.Method(HL.Any) << function(self, arg)
     end
 end
 
-
-
-
 SquadIconCtrl.OnSquadIconActiveConfigChanged = HL.Method(HL.Any) << function(self, arg)
     local active = unpack(arg)
     self.view.main.gameObject:SetActive(active)
 end
-
-
-
 
 SquadIconCtrl.OnSwitchMainCharEnableConfigChanged = HL.Method(HL.Any) << function(self, arg)
     local enable = unpack(arg)
     self.m_teamSwitchEnabled = enable
     self.view.nextBtn.gameObject:SetActive(self:_ShowNextBtn())
 end
-
-
 
 
 SquadIconCtrl._OnNextBtnClick = HL.Method() << function(self)
@@ -358,9 +294,6 @@ SquadIconCtrl._OnNextBtnClick = HL.Method() << function(self)
     self:OnSwitchCenterBtnClick()
 end
 
-
-
-
 SquadIconCtrl.OnSwitchCenterBtnClick = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     local count = self:_GetCount()
     for i = 1, count do
@@ -369,14 +302,9 @@ SquadIconCtrl.OnSwitchCenterBtnClick = HL.Method(HL.Opt(HL.Any)) << function(sel
     end
 end
 
-
-
 SquadIconCtrl._ShowNextBtn = HL.Method().Return(HL.Boolean) << function(self)
     return self:_GetCount() > 1 and self.m_teamSwitchUnlocked and self.m_teamSwitchEnabled
 end
-
-
-
 
 SquadIconCtrl.OnDisableTipsChanged = HL.Method(HL.Table) << function(self, arg)
     if DeviceInfo.isMobile or self.view.disableTipTemp == nil then

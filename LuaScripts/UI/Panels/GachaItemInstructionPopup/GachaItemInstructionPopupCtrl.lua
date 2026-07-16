@@ -2,15 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaItemInstructionPopup
 
-
-
-
-
-
-
-
 GachaItemInstructionPopupCtrl = HL.Class('GachaItemInstructionPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -22,11 +14,7 @@ GachaItemInstructionPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 GachaItemInstructionPopupCtrl.m_info = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -46,13 +34,9 @@ GachaItemInstructionPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
     self:_RefreshAllUI()
 end
 
-
-
 GachaItemInstructionPopupCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     return self.m_info
 end
-
-
 
 
 
@@ -72,8 +56,6 @@ GachaItemInstructionPopupCtrl._InitUI = HL.Method() << function(self)
     end)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
 
 GachaItemInstructionPopupCtrl._RefreshAllUI = HL.Method() << function(self)
     self.view.titleTxt.text = self.m_info.title

@@ -3,60 +3,7 @@ local PANEL_ID = PanelId.RemoteComm
 local AUDIO_AMPLITUDE_TICK_INTERVAL = 0.1
 local CHAR_CELL_DELAY_ANIM_IN = "remotecomm_charcell_in"
 local BG_CELL_DELAY_ANIM_IN = "remotecomm_bannercell_first_in"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RemoteCommCtrl = HL.Class('RemoteCommCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -69,65 +16,43 @@ RemoteCommCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.REMOTE_COMM_RESUME] = 'RemoteCommResume',
 }
 
-
 RemoteCommCtrl.m_singleData = HL.Field(Cfg.Types.RemoteCommonSingleData)
-
 
 RemoteCommCtrl.m_charCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 RemoteCommCtrl.m_actorList = HL.Field(HL.Table)
-
 
 RemoteCommCtrl.m_midId = HL.Field(HL.String) << ""
 
-
 RemoteCommCtrl.m_updateKey = HL.Field(HL.Number) << -1
-
 
 RemoteCommCtrl.m_rightList = HL.Field(HL.Table)
 
-
 RemoteCommCtrl.m_rightNum = HL.Field(HL.Number) << 0
-
 
 RemoteCommCtrl.m_cellRealRefreshFunc = HL.Field(HL.Table)
 
-
 RemoteCommCtrl.m_cellTimer = HL.Field(HL.Table)
-
 
 RemoteCommCtrl.m_playingId = HL.Field(HL.Number) << -1
 
-
 RemoteCommCtrl.m_voiceHandleId = HL.Field(HL.Number) << -1
-
 
 RemoteCommCtrl.m_voiceTimer = HL.Field(HL.Number) << -1
 
-
 RemoteCommCtrl.m_aSynActionHelpers = HL.Field(HL.Table)
-
 
 RemoteCommCtrl.m_timer = HL.Field(HL.Number) << 0
 
-
 RemoteCommCtrl.m_inited = HL.Field(HL.Boolean) << false
-
 
 RemoteCommCtrl.m_rightPosTable = HL.Field(HL.Table)
 
-
 RemoteCommCtrl.m_audioId = HL.Field(HL.String) << ""
-
 
 RemoteCommCtrl.m_musicId = HL.Field(HL.String) << ""
 
-
 RemoteCommCtrl.m_voiceId = HL.Field(HL.String) << ""
-
-
-
 
 
 RemoteCommCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -141,9 +66,6 @@ RemoteCommCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_charCellCache = UIUtils.genCellCache(self.view.defaultCell)
 end
 
-
-
-
 RemoteCommCtrl.RefreshInfo = HL.Method(Cfg.Types.RemoteCommonSingleData) << function(self, singleData)
     if not self.m_inited then
         self:_InitRightPos()
@@ -156,8 +78,6 @@ RemoteCommCtrl.RefreshInfo = HL.Method(Cfg.Types.RemoteCommonSingleData) << func
     self.m_inited = true
 end
 
-
-
 RemoteCommCtrl._InitRightPos = HL.Method() << function(self)
     for i = 1, self.view.config.RIGHT_CELL_MAX_NUM do
         local cell = self.view[string.format("bannerCell%d", i)]
@@ -165,11 +85,6 @@ RemoteCommCtrl._InitRightPos = HL.Method() << function(self)
         table.insert(self.m_rightPosTable, posY)
     end
 end
-
-
-
-
-
 
 RemoteCommCtrl._TryPlayCellIn = HL.Method(HL.Table, HL.Opt(HL.Number, HL.String)) << function(self, cell, delay, anim)
     local animationWrapper = cell.animationWrapper
@@ -202,13 +117,6 @@ RemoteCommCtrl._TryPlayCellIn = HL.Method(HL.Table, HL.Opt(HL.Number, HL.String)
     end
 end
 
-
-
-
-
-
-
-
 RemoteCommCtrl._RefreshCellWithAnim = HL.Method(HL.Table, HL.Boolean, HL.Boolean, HL.Opt(HL.Number, HL.String)) <<
     function(self, cell, outAnim, inAnim, inDelay, anim)
         local animationWrapper = cell.animationWrapper
@@ -234,10 +142,6 @@ RemoteCommCtrl._RefreshCellWithAnim = HL.Method(HL.Table, HL.Boolean, HL.Boolean
         end
     end
 
-
-
-
-
 RemoteCommCtrl._RefreshSingleActor = HL.Method(HL.Table, HL.Any) << function(self, cell, actorId)
     if string.isEmpty(actorId) then
         cell.gameObject:SetActive(false)
@@ -255,10 +159,6 @@ RemoteCommCtrl._RefreshSingleActor = HL.Method(HL.Table, HL.Any) << function(sel
     end
 end
 
-
-
-
-
 RemoteCommCtrl._RefreshSingleBG = HL.Method(HL.Table, HL.Any) << function(self, cell, imageId)
     if imageId then
         local spritePath = UIUtils.getSpritePath(UIConst.UI_SPRITE_VIDEO_COVER, imageId)
@@ -272,16 +172,12 @@ RemoteCommCtrl._RefreshSingleBG = HL.Method(HL.Table, HL.Any) << function(self, 
     end
 end
 
-
-
 RemoteCommCtrl._IsVideo = HL.Method().Return(HL.Boolean, HL.Any) << function(self)
     local middleId = self.m_singleData.middleId
     local videoKey = "Narrative/RemoteComm/" .. middleId
     local isVideo, path = CS.Beyond.Gameplay.View.VideoManager.TryGetVideoPlayFullPath(videoKey)
     return isVideo, path
 end
-
-
 
 RemoteCommCtrl._RefreshMidContent = HL.Method() << function(self)
     local isVideo, path = self:_IsVideo()
@@ -363,14 +259,6 @@ RemoteCommCtrl._RefreshMidContent = HL.Method() << function(self)
 
 end
 
-
-
-
-
-
-
-
-
 RemoteCommCtrl._TryRefreshCell = HL.Method(HL.Table, HL.Any, HL.Any, HL.Function, HL.Opt(HL.Number, HL.String)) << function(self,
                                                                                                                             cell,
                                                                                                                             actorId,
@@ -398,8 +286,6 @@ RemoteCommCtrl._TryRefreshCell = HL.Method(HL.Table, HL.Any, HL.Any, HL.Function
         end
     end
 end
-
-
 
 RemoteCommCtrl._RefreshLeft = HL.Method() << function(self)
     local actorList = self.m_singleData.actorList
@@ -453,8 +339,6 @@ RemoteCommCtrl._RefreshLeft = HL.Method() << function(self)
     end
 end
 
-
-
 RemoteCommCtrl._StopVoice = HL.Method() << function(self)
     if self.m_voiceHandleId > 0 then
         VoiceManager:StopVoice(self.m_voiceHandleId)
@@ -465,8 +349,6 @@ RemoteCommCtrl._StopVoice = HL.Method() << function(self)
     self:_ClearVoiceTimer()
 end
 
-
-
 RemoteCommCtrl._StopAudio = HL.Method() << function(self)
     if self.m_playingId > 0 then
         GameAction.StopAudio(self.m_playingId)
@@ -474,15 +356,10 @@ RemoteCommCtrl._StopAudio = HL.Method() << function(self)
     end
 end
 
-
-
-
 RemoteCommCtrl._SwitchSelectedCellAnim = HL.Method(HL.Boolean) << function(self, enable)
     local talkLight = self.view.selectedCell.talkLight
     talkLight.gameObject:SetActive(enable)
 end
-
-
 
 RemoteCommCtrl._ClearVoiceTimer = HL.Method() << function(self)
     if self.m_voiceTimer > 0 then
@@ -490,11 +367,6 @@ RemoteCommCtrl._ClearVoiceTimer = HL.Method() << function(self)
     end
     self.m_voiceTimer = -1
 end
-
-
-
-
-
 
 RemoteCommCtrl._DoPlayAudio = HL.Method(HL.String, HL.String, HL.String) << function(self, voiceId, audioId, musicId)
     if not string.isEmpty(voiceId) then
@@ -522,8 +394,6 @@ RemoteCommCtrl._DoPlayAudio = HL.Method(HL.String, HL.String, HL.String) << func
     end
 end
 
-
-
 RemoteCommCtrl._TryPlayAudio = HL.Method() << function(self)
     
     self:_StopVoice()
@@ -546,8 +416,6 @@ RemoteCommCtrl._TryPlayAudio = HL.Method() << function(self)
         end
     end
 end
-
-
 
 RemoteCommCtrl._RefreshMiddle = HL.Method() << function(self)
     local lastMid = self.m_midId
@@ -588,17 +456,12 @@ RemoteCommCtrl._RefreshMiddle = HL.Method() << function(self)
     self.m_midId = self.m_singleData.middleId
 end
 
-
-
-
 RemoteCommCtrl._GetTargetPos = HL.Method(HL.Number).Return(HL.Number) << function(self, i)
     local firstNum = self.m_rightNum - #self.m_rightList + 1
     local firstPos = self.view.bannerCell1.transform.anchoredPosition
     local targetPosY = firstPos.y - (i - firstNum - 1) * self.view.config.RIGHT_CELL_HEIGHT
     return targetPosY
 end
-
-
 
 RemoteCommCtrl._RightNext = HL.Method() << function(self)
     local imageList = self.m_singleData.imageList
@@ -629,16 +492,12 @@ RemoteCommCtrl._RightNext = HL.Method() << function(self)
     end
 end
 
-
-
 RemoteCommCtrl._ClearRight = HL.Method() << function(self)
     for i = 1, self.view.config.RIGHT_CELL_MAX_NUM do
         local cell = self.view[string.format("bannerCell%d", i)]
         cell.transform:DOKill()
     end
 end
-
-
 
 RemoteCommCtrl._InitRight = HL.Method() << function(self)
     local imageList = self.m_singleData.imageList
@@ -664,8 +523,6 @@ RemoteCommCtrl._InitRight = HL.Method() << function(self)
     self.m_rightNum = count
 end
 
-
-
 RemoteCommCtrl._RefreshRight = HL.Method() << function(self)
     local imageList = self.m_singleData.imageList
     local count = imageList.Count
@@ -689,8 +546,6 @@ RemoteCommCtrl._RefreshRight = HL.Method() << function(self)
     end
 end
 
-
-
 RemoteCommCtrl.OnShow = HL.Override() << function(self)
     self.m_charCellCache:Refresh(UIConst.REMOTE_COMM_CELL_MAX_NUM - 1, nil, true, function(cell, index)
         cell.transform:DOKill()
@@ -713,8 +568,6 @@ RemoteCommCtrl.OnShow = HL.Override() << function(self)
     end)
 end
 
-
-
 RemoteCommCtrl.RemoteCommPause = HL.Method(HL.Opt(HL.Any)) << function(self)
     if self.m_playingId >= 0 then
         GameAction.PauseAudio(self.m_playingId)
@@ -731,8 +584,6 @@ RemoteCommCtrl.RemoteCommPause = HL.Method(HL.Opt(HL.Any)) << function(self)
         self.view.videoImage.player:Pause(true)
     end
 end
-
-
 
 RemoteCommCtrl.RemoteCommResume = HL.Method(HL.Opt(HL.Any)) << function(self)
     if self.m_playingId >= 0 then
@@ -751,8 +602,6 @@ RemoteCommCtrl.RemoteCommResume = HL.Method(HL.Opt(HL.Any)) << function(self)
     end
 end
 
-
-
 RemoteCommCtrl._AddRegisters = HL.Method() << function(self)
     self.m_updateKey = LuaUpdate:Add("Tick", function(deltaTime)
         self.m_timer = self.m_timer + deltaTime
@@ -767,19 +616,13 @@ RemoteCommCtrl._AddRegisters = HL.Method() << function(self)
     end)
 end
 
-
-
 RemoteCommCtrl._ClearRegisters = HL.Method() << function(self)
     self.m_updateKey = LuaUpdate:Remove(self.m_updateKey)
 end
 
-
-
 RemoteCommCtrl._Update = HL.Method() << function(self)
     self:_UpdateAudioAmplitude()
 end
-
-
 
 RemoteCommCtrl._UpdateAudioAmplitude = HL.Method() << function(self)
     local res, amplitude = VoiceUtils.GetNarratingVoiceVolume()
@@ -788,8 +631,6 @@ RemoteCommCtrl._UpdateAudioAmplitude = HL.Method() << function(self)
         self.view.voice.material:SetFloat("_GramScale", amplitude + 0.1)
     end
 end
-
-
 
 RemoteCommCtrl.OnClose = HL.Override() << function(self)
     self:_StopVoice()

@@ -1,30 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 PageController = HL.Class('PageController', UIWidgetBase)
-
 
 PageController.curIndex = HL.Field(HL.Int) << 0
 
-
 PageController.m_pageCount = HL.Field(HL.Int) << 0
-
 
 PageController.m_onMovePage = HL.Field(HL.Function)
 
-
 PageController.m_imageIndexCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 
@@ -42,11 +26,6 @@ PageController._OnFirstTimeInit = HL.Override() << function(self)
 
 end
 
-
-
-
-
-
 PageController.InitPageController = HL.Method(HL.Number, HL.Function, HL.Opt(HL.Int)) << function(self,pageCount,onMovePage,defaultIndex)
     self:_FirstTimeInit()
 
@@ -62,16 +41,10 @@ PageController.InitPageController = HL.Method(HL.Number, HL.Function, HL.Opt(HL.
 
 end
 
-
-
-
 PageController._MovePage = HL.Method(HL.Int) << function(self,deltaPage)
     local newPageIndex = self.curIndex + deltaPage
     self:MoveToPage(newPageIndex)
 end
-
-
-
 
 PageController.MoveToPage = HL.Method(HL.Int) << function(self,index)
     local pageCount = self.m_pageCount
@@ -92,9 +65,6 @@ PageController.MoveToPage = HL.Method(HL.Int) << function(self,index)
         end
     end
 end
-
-
-
 
 PageController.SetPage = HL.Method(HL.Int) << function(self,index)
     local cell = self.m_imageIndexCache:GetItem(index)

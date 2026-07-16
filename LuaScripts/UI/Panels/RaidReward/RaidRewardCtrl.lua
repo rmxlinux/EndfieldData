@@ -3,22 +3,7 @@ local BattlePassNodeUnlockState = CS.Beyond.Gameplay.WeekRaidSystem.BattlePassNo
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.RaidReward
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RaidRewardCtrl = HL.Class('RaidRewardCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -29,17 +14,11 @@ RaidRewardCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_WEEK_RAID_BATTLE_PASS_UPDATE] = "_UpdateView", 
 }
 
-
 RaidRewardCtrl.m_getRewardCell = HL.Field(HL.Function)
-
 
 RaidRewardCtrl.m_focusRewardIndex = HL.Field(HL.Number) << -1
 
-
 RaidRewardCtrl.m_system = HL.Field(CS.Beyond.Gameplay.WeekRaidSystem)
-
-
-
 
 
 RaidRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -71,13 +50,9 @@ RaidRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_system:SetBattlePassVersionRead()
 end
 
-
-
 RaidRewardCtrl.OnShow = HL.Override() << function(self)
     self:_UpdateView()
 end
-
-
 
 RaidRewardCtrl._UpdateView = HL.Method() << function(self)
     
@@ -92,6 +67,7 @@ RaidRewardCtrl._UpdateView = HL.Method() << function(self)
 
     
     self:_UpdateNodes()
+    self.view.mainScrollRect.naviGroup:SetLayerSelectedTarget(nil, false)
 
     
     local isAnyReceivable = self.m_system:IsAnyBattlePassRewardReceivable()
@@ -108,8 +84,6 @@ RaidRewardCtrl._UpdateView = HL.Method() << function(self)
     end
 end
 
-
-
 RaidRewardCtrl._UpdateNodes = HL.Method() << function(self)
     local nodeCount = self.m_system.battlePassNodeCount
     self.view.mainScrollView:UpdateCount(nodeCount)
@@ -119,8 +93,6 @@ RaidRewardCtrl._UpdateNodes = HL.Method() << function(self)
         self.view.mainScrollView:ScrollToIndex(self.m_focusRewardIndex, true, CS.Beyond.UI.UIScrollList.ScrollAlignType.Center, true)
     end
 end
-
-
 
 RaidRewardCtrl._CalculateFocusIndex = HL.Method().Return(HL.Number) << function(self)
     local nodeCount = self.m_system.battlePassNodeCount
@@ -146,21 +118,15 @@ RaidRewardCtrl._CalculateFocusIndex = HL.Method().Return(HL.Number) << function(
     return focusCSIndex or 0
 end
 
-
-
 RaidRewardCtrl._SetNaviTarget = HL.Method() << function(self)
     if self.m_focusRewardIndex >= 0 then
         local cellObject = self.view.mainScrollView:Get(self.m_focusRewardIndex)
         local cell = self.m_getRewardCell(cellObject)
         if cell then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.contentNode.inputBindingGroupNaviDecorator)
+            self:SetNaviTarget(cell.contentNode.inputBindingGroupNaviDecorator)
         end
     end
 end
-
-
-
-
 
 RaidRewardCtrl._UpdateNodeCell = HL.Method(GameObject, HL.Number) << function(self, obj, csIndex)
     local cell = self.m_getRewardCell(obj)
@@ -322,14 +288,9 @@ RaidRewardCtrl._UpdateNodeCell = HL.Method(GameObject, HL.Number) << function(se
     content.disableTxt.text = disableTips
 end
 
-
-
-
 RaidRewardCtrl._ReceiveReward = HL.Method(HL.Number) << function(self, nodeId)
     self.m_system:WeekRaidBattlePassReceiveReward(nodeId)
 end
-
-
 
 RaidRewardCtrl._ReceiveAllRewards = HL.Method() << function(self)
     self.m_system:WeekRaidBattlePassReceiveAllRewards()

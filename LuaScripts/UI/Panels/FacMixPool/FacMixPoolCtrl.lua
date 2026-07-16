@@ -62,74 +62,10 @@ local EXPANSION_FIND_DEFAULT_CACHE_NAVI_TARGET_PRIORITY = { 3, 5, 1, 7, 2, 8, 4,
 local SELECTOR_LEFT_CACHE_TARGET_MAP = { 3, 3, 3 }
 local EXPANSION_SELECTOR_LEFT_CACHE_TARGET_MAP = { 4, 6, 4 }
 
+local BUILDINGCOMMON_MOVE_BTN_NAVI_DOWN = 1
+local BUILDINGCOMMON_DEL_BTN_NAVI_DOWN = 2
+
 local DEFAULT_SELECTOR_NAVI_INDEX_PRIORITY = { 3, 1, 2 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 FacMixPoolCtrl = HL.Class('FacMixPoolCtrl', uiCtrl.UICtrl)
 
@@ -150,57 +86,39 @@ local ARROW_NODE_ANIM_REFRESH_VIEW_NAME_FORMAT = "arrow%d"
 
 local EXPANSION_MIX_POOL_TEMPLATE_ID = "mix_pool_2"
 
-
 FacMixPoolCtrl.m_buildingInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_FluidReaction)
-
 
 FacMixPoolCtrl.m_onCacheChanged = HL.Field(HL.Function)
 
-
 FacMixPoolCtrl.m_cacheItemDataList = HL.Field(HL.Table)
-
 
 FacMixPoolCtrl.m_cacheItemIdToIndexMap = HL.Field(HL.Table)
 
-
 FacMixPoolCtrl.m_nextValidIndex = HL.Field(HL.Number) << -1
-
 
 FacMixPoolCtrl.m_inputItemList = HL.Field(HL.Table)
 
-
 FacMixPoolCtrl.m_outputItemList = HL.Field(HL.Table)
-
 
 FacMixPoolCtrl.m_selectorConfig = HL.Field(HL.Table)
 
-
 FacMixPoolCtrl.m_selectModeIndex = HL.Field(HL.Number) << -1
-
 
 FacMixPoolCtrl.m_selectModeItemId = HL.Field(HL.String) << ""
 
-
 FacMixPoolCtrl.m_lastHoverTipsItemTag = HL.Field(HL.String) << ""
-
 
 FacMixPoolCtrl.m_stopHoverTips = HL.Field(HL.Boolean) << false
 
-
 FacMixPoolCtrl.m_isInSelectMode = HL.Field(HL.Boolean) << false
-
 
 FacMixPoolCtrl.m_formulaIdList = HL.Field(HL.Table)
 
-
 FacMixPoolCtrl.m_blockedFormulaIdList = HL.Field(HL.Table)
-
 
 FacMixPoolCtrl.m_isExpansionPool = HL.Field(HL.Boolean) << false  
 
-
 FacMixPoolCtrl.m_cacheNode = HL.Field(HL.Table)
-
 
 
 
@@ -209,9 +127,6 @@ FacMixPoolCtrl.m_cacheNode = HL.Field(HL.Table)
 FacMixPoolCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_NAVI_TO_MIXPOOL_TARGET_ITEM] = "_OnActionNaviToTarget",
 }
-
-
-
 
 
 FacMixPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -247,13 +162,9 @@ FacMixPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_TryRecoverState(arg and arg.recoverState)
 end
 
-
-
 FacMixPoolCtrl.OnClose = HL.Override() << function(self)
     self:_ClearPoolCache()
 end
-
-
 
 FacMixPoolCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     if not self.m_isInSelectMode or self.m_selectorConfig == nil or self.m_selectorConfig[self.m_selectModeIndex] == nil then
@@ -264,9 +175,6 @@ FacMixPoolCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << functi
         selectModeItemId = self.m_selectModeItemId,
     }
 end
-
-
-
 
 FacMixPoolCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
@@ -284,7 +192,7 @@ FacMixPoolCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, re
         local cacheIndex = self.m_cacheItemIdToIndexMap[selectItemId]
         local itemSlot = cacheIndex and self:_GetPoolCacheItemSlotByIndex(cacheIndex) or nil
         if itemSlot ~= nil then
-            UIUtils.setAsNaviTarget(itemSlot.button)
+            self:SetNaviTarget(itemSlot.button)
         end
     end
 end
@@ -299,8 +207,6 @@ FacMixPoolCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, 
     end
     self.m_stopHoverTips = not active
 end
-
-
 
 FacMixPoolCtrl._UpdateAndRefreshAll = HL.Method() << function(self)
     self:_UpdatePoolFormulaDataList()
@@ -322,13 +228,9 @@ end
 
 
 
-
-
 FacMixPoolCtrl._GetPoolMaxSlotCount = HL.Method().Return(HL.Number) << function(self)
     return self.m_isExpansionPool and MAX_EXPANSION_POOL_CACHE_SLOT_COUNT or MAX_POOL_CACHE_SLOT_COUNT
 end
-
-
 
 FacMixPoolCtrl._InitPoolCache = HL.Method() << function(self)
     self.m_onCacheChanged = function(changedItems, hasNewOrRemove)
@@ -377,14 +279,10 @@ FacMixPoolCtrl._InitPoolCache = HL.Method() << function(self)
     self:_ClearPoolCacheItemDataList()
 end
 
-
-
 FacMixPoolCtrl._ClearPoolCache = HL.Method() << function(self)
     self.m_buildingInfo.cache.onCacheChanged:RemoveListener(self.m_onCacheChanged)
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_buildingInfo.nodeId)
 end
-
-
 
 FacMixPoolCtrl._ClearPoolCacheItemDataList = HL.Method() << function(self)
     for index = 1, self:_GetPoolMaxSlotCount() do
@@ -397,15 +295,9 @@ FacMixPoolCtrl._ClearPoolCacheItemDataList = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 FacMixPoolCtrl._OnPoolCacheChanged = HL.Method(HL.Userdata, HL.Boolean) << function(self, changedItems, hasNewOrRemove)
     self:_UpdateAndRefreshAll()
 end
-
-
 
 FacMixPoolCtrl._UpdatePoolCacheItemDataList = HL.Method() << function(self)
     local items = self.m_buildingInfo.cache.items
@@ -465,8 +357,6 @@ FacMixPoolCtrl._UpdatePoolCacheItemDataList = HL.Method() << function(self)
     self:_RecordItemIdToIndexMap()  
 end
 
-
-
 FacMixPoolCtrl._RecordItemIdToIndexMap = HL.Method() << function(self)
     self.m_cacheItemIdToIndexMap = {}
     local maxIndex = self.m_buildingInfo.cache.size + 1
@@ -487,17 +377,12 @@ FacMixPoolCtrl._RecordItemIdToIndexMap = HL.Method() << function(self)
     end
 end
 
-
-
 FacMixPoolCtrl._RefreshPoolCacheItemSlotList = HL.Method() << function(self)
     for index = 1, self:_GetPoolMaxSlotCount() do
         self:_RefreshPoolCacheItemSlot(index)
         self:_RefreshPoolCacheArrowState(index)
     end
 end
-
-
-
 
 FacMixPoolCtrl._RefreshPoolCacheItemSlot = HL.Method(HL.Number) << function(self, index)
     local itemData = self.m_cacheItemDataList[index]
@@ -544,9 +429,6 @@ FacMixPoolCtrl._RefreshPoolCacheItemSlot = HL.Method(HL.Number) << function(self
     end
 end
 
-
-
-
 FacMixPoolCtrl._RefreshPoolCacheArrowState = HL.Method(HL.Number) << function(self, index)
     local itemData = self.m_cacheItemDataList[index]
     if itemData == nil then
@@ -577,8 +459,6 @@ FacMixPoolCtrl._RefreshPoolCacheArrowState = HL.Method(HL.Number) << function(se
     self:_RefreshPoolCacheArrowRunningState(index)
 end
 
-
-
 FacMixPoolCtrl._RefreshPoolCacheArrowsRunningState = HL.Method() << function(self)
     for index = 1, self:_GetPoolMaxSlotCount() do
         if index <= self.m_buildingInfo.cache.size then
@@ -586,9 +466,6 @@ FacMixPoolCtrl._RefreshPoolCacheArrowsRunningState = HL.Method() << function(sel
         end
     end
 end
-
-
-
 
 FacMixPoolCtrl._RefreshPoolCacheArrowRunningState = HL.Method(HL.Number) << function(self, index)
     local inputArrow = self.m_cacheNode.inputArrowList[string.format(CACHE_INPUT_ARROW_VIEW_NAME_FORMAT, index)]
@@ -626,10 +503,6 @@ FacMixPoolCtrl._RefreshPoolCacheArrowRunningState = HL.Method(HL.Number) << func
     end
 end
 
-
-
-
-
 FacMixPoolCtrl._RefreshPoolCacheItemState = HL.Method(HL.Number, HL.String) << function(self, index, state)
     local cacheItemList = self.m_cacheNode.cacheItemList
     local itemSlot = cacheItemList[string.format(CACHE_ITEM_SLOT_VIEW_NAME_FORMAT, index)]
@@ -658,15 +531,9 @@ FacMixPoolCtrl._RefreshPoolCacheItemState = HL.Method(HL.Number, HL.String) << f
         Color.white
 end
 
-
-
-
 FacMixPoolCtrl._GetPoolCacheItemSlotByIndex = HL.Method(HL.Number).Return(HL.Any) << function(self, index)
     return self.m_cacheNode.cacheItemList[string.format(CACHE_ITEM_SLOT_VIEW_NAME_FORMAT, index)]
 end
-
-
-
 
 FacMixPoolCtrl._GetPoolCacheItemDataById = HL.Method(HL.String).Return(HL.Any) << function(self, itemId)
     for _, itemData in pairs(self.m_cacheItemDataList) do
@@ -676,9 +543,6 @@ FacMixPoolCtrl._GetPoolCacheItemDataById = HL.Method(HL.String).Return(HL.Any) <
     end
     return nil
 end
-
-
-
 
 FacMixPoolCtrl._OnClickPoolCacheItemSlot = HL.Method(HL.Number) << function(self, index)
     local itemData = self.m_cacheItemDataList[index]
@@ -705,10 +569,6 @@ FacMixPoolCtrl._OnClickPoolCacheItemSlot = HL.Method(HL.Number) << function(self
         end)
     end
 end
-
-
-
-
 
 FacMixPoolCtrl._OnHoverPoolCacheItemSlot = HL.Method(HL.Number, HL.Boolean) << function(self, index, isHover)
     if not isHover then
@@ -744,8 +604,6 @@ end
 
 
 
-
-
 FacMixPoolCtrl._InitPoolFormula = HL.Method() << function(self)
     self.m_cacheNode.formulaButton.onClick:AddListener(function()
         Notify(MessageConst.FAC_SHOW_FORMULA, {
@@ -755,6 +613,7 @@ FacMixPoolCtrl._InitPoolFormula = HL.Method() << function(self)
             belongingCanvasGroup = self.view.canvasGroup,
             highlightFormulaIdList = self.m_formulaIdList,
             blockFormulaIdList = self.m_blockedFormulaIdList,
+            machineCrafterFormulaMode = "liquid",
         })
     end)
 
@@ -768,8 +627,6 @@ FacMixPoolCtrl._InitPoolFormula = HL.Method() << function(self)
         self.m_cacheNode.redDot.gameObject:SetActive(false)
     end
 end
-
-
 
 FacMixPoolCtrl._UpdatePoolFormulaDataList = HL.Method() << function(self)
     local formulaList = self.m_buildingInfo.fluidReaction.formulas
@@ -811,8 +668,6 @@ FacMixPoolCtrl._UpdatePoolFormulaDataList = HL.Method() << function(self)
     end
 end
 
-
-
 FacMixPoolCtrl._RefreshPoolFormulaState = HL.Method() << function(self)
     local state = next(self.m_blockedFormulaIdList) == nil and CenterState.Normal or CenterState.Blocked
     if self.m_cacheNode.centerController.curStateName ~= nil and self.m_cacheNode.centerController.curStateName ~= state then
@@ -823,8 +678,6 @@ FacMixPoolCtrl._RefreshPoolFormulaState = HL.Method() << function(self)
     end
     self.m_cacheNode.centerController:SetState(state)
 end
-
-
 
 FacMixPoolCtrl._RefreshPoolFormulaRunningAnimState = HL.Method() << function(self)
     local isRunning = self.view.buildingCommon.lastState == GEnums.FacBuildingState.Normal
@@ -837,15 +690,11 @@ end
 
 
 
-
-
 FacMixPoolCtrl._InitPoolSelector = HL.Method() << function(self)
     self:_InitPoolSelectorConfig()
     self:_InitPoolSelectorButtons()
     self.view.mainController:SetState(MainState.Normal)
 end
-
-
 
 FacMixPoolCtrl._InitPoolSelectorConfig = HL.Method() << function(self)
     
@@ -890,8 +739,6 @@ FacMixPoolCtrl._InitPoolSelectorConfig = HL.Method() << function(self)
     }
 end
 
-
-
 FacMixPoolCtrl._InitPoolSelectorButtons = HL.Method() << function(self)
     for selectorIndex, selectorInfo in ipairs(self.m_selectorConfig) do
         local viewSelector = selectorInfo.viewSelector
@@ -920,8 +767,6 @@ FacMixPoolCtrl._InitPoolSelectorButtons = HL.Method() << function(self)
     end)
 end
 
-
-
 FacMixPoolCtrl._OnClickSelectModeConfirmBtn = HL.Method() << function(self)
     local selectorInfo = self.m_selectorConfig[self.m_selectModeIndex]
     if selectorInfo == nil then
@@ -939,10 +784,6 @@ FacMixPoolCtrl._OnClickSelectModeConfirmBtn = HL.Method() << function(self)
         end
     )
 end
-
-
-
-
 
 FacMixPoolCtrl._OnHoverSelectorSelectButton = HL.Method(HL.Number, HL.Boolean) << function(self, selectorIndex, isHover)
     if not isHover then
@@ -969,17 +810,12 @@ FacMixPoolCtrl._OnHoverSelectorSelectButton = HL.Method(HL.Number, HL.Boolean) <
     end
 end
 
-
-
 FacMixPoolCtrl._RefreshPoolSelectorList = HL.Method() << function(self)
     for selectorIndex = 1, #self.m_selectorConfig do
         self:_RefreshPoolSelectorState(selectorIndex)
         self:_RefreshPoolSelectorButtonController(selectorIndex)
     end
 end
-
-
-
 
 FacMixPoolCtrl._RefreshPoolSelectorState = HL.Method(HL.Number) << function(self, selectorIndex)
     local selectorInfo = self.m_selectorConfig[selectorIndex]
@@ -1017,9 +853,6 @@ FacMixPoolCtrl._RefreshPoolSelectorState = HL.Method(HL.Number) << function(self
     viewSelector.lineCell:ChangeLineColor(self.view.config.ACTIVE_SELECTOR_LINE_COLOR)
     viewSelector.stateController:SetState(SelectorState.Normal)
 end
-
-
-
 
 FacMixPoolCtrl._OnEnterPoolSelectMode = HL.Method(HL.Number) << function(self, selectorIndex)
     local currSelectorInfo = self.m_selectorConfig[selectorIndex]
@@ -1069,8 +902,6 @@ FacMixPoolCtrl._OnEnterPoolSelectMode = HL.Method(HL.Number) << function(self, s
     self.m_isInSelectMode = true
 end
 
-
-
 FacMixPoolCtrl._OnLeavePoolSelectMode = HL.Method() << function(self)
     for _, selectorInfo in ipairs(self.m_selectorConfig) do
         for _, node in ipairs(selectorInfo.viewPortNodeList) do
@@ -1099,10 +930,6 @@ FacMixPoolCtrl._OnLeavePoolSelectMode = HL.Method() << function(self)
 
     self.m_isInSelectMode = false
 end
-
-
-
-
 
 FacMixPoolCtrl._RefreshPoolCacheSelectModeState = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isInSelectMode, forceRefresh)
     local currSelectorInfo = self.m_selectorConfig[self.m_selectModeIndex]
@@ -1162,9 +989,6 @@ FacMixPoolCtrl._RefreshPoolCacheSelectModeState = HL.Method(HL.Boolean, HL.Opt(H
     end
 end
 
-
-
-
 FacMixPoolCtrl._SetAndRefreshPoolSelectModeSelectorState = HL.Method(HL.String) << function(self, selectItemId)
     local currSelectorInfo = self.m_selectorConfig[self.m_selectModeIndex]
     if currSelectorInfo == nil then
@@ -1199,8 +1023,6 @@ FacMixPoolCtrl._SetAndRefreshPoolSelectModeSelectorState = HL.Method(HL.String) 
     selectModeNode.empty.gameObject:SetActive(false)
 end
 
-
-
 FacMixPoolCtrl._RefreshPoolCacheSlotHighlightState = HL.Method() << function(self)
     if not self.m_isInSelectMode then
         return
@@ -1219,23 +1041,41 @@ end
 
 
 
-
 FacMixPoolCtrl.m_disableNaviCache = HL.Field(HL.Boolean) << false
-
 
 FacMixPoolCtrl.m_showItemTipsBindingId = HL.Field(HL.Number) << -1
 
-
 FacMixPoolCtrl.m_naviCacheSlotIndex = HL.Field(HL.Number) << -1
 
-
 FacMixPoolCtrl.m_naviSelectorIndex = HL.Field(HL.Number) << -1
-
-
 
 FacMixPoolCtrl._InitMixPoolController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
+    end
+
+    
+    if self.m_isExpansionPool then
+        local moveDownSlot = self:_GetPoolCacheItemSlotByIndex(BUILDINGCOMMON_MOVE_BTN_NAVI_DOWN)
+        local delDownSlot = self:_GetPoolCacheItemSlotByIndex(BUILDINGCOMMON_DEL_BTN_NAVI_DOWN)
+        self.view.buildingCommon.view.moveButton:SetExplicitSelectOnDown(moveDownSlot.button)
+        self.view.buildingCommon.view.delButton:SetExplicitSelectOnDown(delDownSlot.button)
+    else
+        local downSlot = self:_GetPoolCacheItemSlotByIndex(BUILDINGCOMMON_MOVE_BTN_NAVI_DOWN)
+        self.view.buildingCommon.view.moveButton:SetExplicitSelectOnDown(downSlot.button)
+        self.view.buildingCommon.view.delButton:SetExplicitSelectOnDown(downSlot.button)
+    end
+    self.view.buildingCommon.view.moveButton.onIsNaviTargetChanged = function(isNaviTarget)
+        if isNaviTarget then
+            self.m_naviCacheSlotIndex = -1
+            self.m_naviSelectorIndex = -1
+        end
+    end
+    self.view.buildingCommon.view.delButton.onIsNaviTargetChanged = function(isNaviTarget)
+        if isNaviTarget then
+            self.m_naviCacheSlotIndex = -1
+            self.m_naviSelectorIndex = -1
+        end
     end
 
     local targetMap = self.m_isExpansionPool and EXPANSION_SELECTOR_LEFT_CACHE_TARGET_MAP or SELECTOR_LEFT_CACHE_TARGET_MAP
@@ -1264,7 +1104,7 @@ FacMixPoolCtrl._InitMixPoolController = HL.Method() << function(self)
         end
     end
     if self.m_selectorConfig[findNavi] then
-        UIUtils.setAsNaviTarget(self.m_selectorConfig[findNavi].viewSelector.selectButton)
+        self:SetNaviTarget(self.m_selectorConfig[findNavi].viewSelector.selectButton)
     end
 
     for cacheIndex = 1, self:_GetPoolMaxSlotCount() do
@@ -1291,8 +1131,6 @@ FacMixPoolCtrl._InitMixPoolController = HL.Method() << function(self)
     end)
 end
 
-
-
 FacMixPoolCtrl._RefreshShowItemTipsBindingState = HL.Method() << function(self)
     local itemEmpty = true
     if self.m_naviCacheSlotIndex > 0 then
@@ -1305,9 +1143,6 @@ FacMixPoolCtrl._RefreshShowItemTipsBindingState = HL.Method() << function(self)
     end
     InputManagerInst:ToggleBinding(self.m_showItemTipsBindingId, not self.m_isInSelectMode and not itemEmpty)
 end
-
-
-
 
 FacMixPoolCtrl._OnActionNaviToTarget = HL.Method(HL.Any) << function(self, args)
     local targetIndex = unpack(args)
@@ -1333,9 +1168,6 @@ FacMixPoolCtrl._OnActionNaviToTarget = HL.Method(HL.Any) << function(self, args)
     self.m_naviCacheSlotIndex = targetIndex
 end
 
-
-
-
 FacMixPoolCtrl._FindFittingCacheToNaviOnSwitchMode = HL.Method(HL.Boolean) << function(self, enterSelectMode)
     if not DeviceInfo.usingController then
         return
@@ -1356,7 +1188,7 @@ FacMixPoolCtrl._FindFittingCacheToNaviOnSwitchMode = HL.Method(HL.Boolean) << fu
                 local typeMatched = isFluid == FactoryUtils.isFactoryItemFluid(itemData.id) and not string.isEmpty(itemData.id)
                 if typeMatched then
                     InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.selectorNode.naviGroup)
-                    UIUtils.setAsNaviTarget(itemSlot.button)
+                    self:SetNaviTarget(itemSlot.button)
                     return
                 end
             end
@@ -1365,14 +1197,11 @@ FacMixPoolCtrl._FindFittingCacheToNaviOnSwitchMode = HL.Method(HL.Boolean) << fu
         UIUtils.changeAndTrySetNaviBindingType(self.view.selectorNode.naviGroup, CS.UnityEngine.UI.NavigationBindingType.InValid)
         self.m_disableNaviCache = true
     else
-        InputManagerInst.controllerNaviManager:SetTarget(currSelectorInfo.viewSelector.selectButton)
+        self:SetNaviTarget(currSelectorInfo.viewSelector.selectButton)
         UIUtils.changeAndTrySetNaviBindingType(self.view.selectorNode.naviGroup, CS.UnityEngine.UI.NavigationBindingType.AllDirections)
         self.m_disableNaviCache = false
     end
 end
-
-
-
 
 FacMixPoolCtrl._RefreshPoolSelectorButtonController = HL.Method(HL.Number) << function(self, selectorIndex)
     local selectorInfo = self.m_selectorConfig[selectorIndex]

@@ -5,6 +5,7 @@ BackgroundMessage = HL.Class('BackgroundMessage')
 
 
 
+
 BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     
     ['AIBark'] = {
@@ -61,6 +62,11 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_SHOW_DIALOG_SIGN_OPTION] = 'OnShowDialogSignOption',
     },
     
+    ['DialogGlossaryPopUp'] = {
+        
+        [MessageConst.OPEN_DIALOG_GLOSSARY_PANEL] = 'OnOpenDialogGlossaryPopUp',
+    },
+    
     ['CharJoinToast'] = {
         
         [MessageConst.ON_CHAR_JOIN_BY_MAINLINE] = 'ShowCharJoinToast',
@@ -78,6 +84,8 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_GET_NEW_MAILS] = 'OnShowMailToast',
         
         [MessageConst.SHOW_SPECIAL_TOAST] = 'OnShowSpecialToast',
+        
+        [MessageConst.SHOW_BATTLE_WARNING_TOAST] = 'OnShowBattleWarningToast',
     },
 
     
@@ -119,6 +127,14 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.SHOW_POP_UP_CS] = 'ShowPopUpCS',
     },
     
+    
+    
+    ['ActivityPopUp'] = {
+        
+        [MessageConst.SHOW_ACTIVITY_POP_UP] = 'ShowActivityPopUp',
+        [MessageConst.SHOW_ACTIVITY_POP_UP_CS] = 'ShowActivityPopUpCS',
+    },
+    
     ['WeekRaidLeaveConfirm'] = {
         
         [MessageConst.SHOW_WEEK_RAID_LEAVE_CONFIRM] = 'ShowPopUp',
@@ -141,6 +157,11 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.SHOW_TOAST] = 'OnShowToast',
         
         [MessageConst.SHOW_SYSTEM_TOAST] = 'OnShowSystemToast',
+    },
+    
+    ['EquipToast'] = {
+        
+        [MessageConst.SHOW_EQUIP_TOAST] = 'OnShowToast',
     },
     
     ['DungeonCommonToast'] = {
@@ -223,6 +244,8 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     ['DungeonInfoPopup'] = {
         
         [MessageConst.ON_DUNGEON_GAME_INIT] = "TryToShow",
+        
+        [MessageConst.SHOW_DUNGEON_INFO_POPUP] = "OnShowDungeonInfoPopup",
     },
     
     ['DungeonCharTutorialStepHud'] = {
@@ -248,6 +271,20 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_OPEN_SUB_GAME_TRACKINGS] = "OnOpenSubGameTrackings",
         
         [MessageConst.ON_CLOSE_SUB_GAME_TRACKINGS] = "OnCloseSubGameTrackings",
+    },
+
+    
+    ['CoinActivityHud'] = {
+        
+        [MessageConst.ON_DUNGEON_GAME_INIT] = "OnDungeonGameInit",
+        
+        [MessageConst.ON_SUB_GAME_RESET] = "OnSubGameReset",
+        
+        [MessageConst.ON_OPEN_SUB_GAME_TRACKINGS] = "OnOpenSubGameTrackings",
+        
+        [MessageConst.ON_CLOSE_SUB_GAME_TRACKINGS] = "OnCloseSubGameTrackings",
+        
+        [MessageConst.ON_RACING_DUNGEON_BATTLE_ROOM_ENTER_INTRO] = "OnBattleRoomEnterIntro",
     },
 
     
@@ -296,6 +333,13 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
 
         
         [MessageConst.ON_DUNGEON_COMPLETE] = "OnDungeonComplete",
+
+        
+        [MessageConst.ON_SHOW_COMMON_TASK_TOAST_START_WITHOUT_ID] = "OnShowCommonTaskStartToastWithoutId",
+        
+        [MessageConst.ON_SHOW_COMMON_TASK_TOAST_FINISH_WITHOUT_ID] = "OnShowCommonTaskFinishToastWithoutId",
+        
+        [MessageConst.ON_SHOW_COMMON_TASK_TOAST_FAIL_WITHOUT_ID] = "OnShowCommonTaskFailToastWithoutId",
     },
     
     ['CommonTaskTrackCountdown'] = {
@@ -413,9 +457,19 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         
         [MessageConst.ON_EXIT_BUILDING_MODE] = 'OnExitBuildingMode',
         
+        [MessageConst.ON_ENTER_BLUEPRINT_MODE] = 'OnEnterBlueprintMode',
+        
+        [MessageConst.ON_EXIT_BLUEPRINT_MODE] = 'OnExitBlueprintMode',
+        
         [MessageConst.ON_BUILD_POWER_POLE_TRAVEL_HINT] = 'OnBuild',
         
         [MessageConst.ON_MOVE_POWER_POLE_TRAVEL_HINT] = 'OnMove',
+        
+        [MessageConst.ON_BLUEPRINT_UPDATE] = 'OnBlueprint',
+        
+        [MessageConst.LINK_WIRE_MODE_UDPIPE_TRACKER_SHOW] = 'LinkWireModeUdpipeTrackerShow',
+        
+        [MessageConst.LINK_WIRE_MODE_UDPIPE_TRACKER_HIDE] = 'LinkWireModeUdpipeTrackerHide',
     },
 
     
@@ -503,8 +557,8 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     
     ['HyperlinkTips'] = {
         
-        [MessageConst.SHOW_HYPERLINK_TIPS] = 'ShowHyperlinkTips',
-        [MessageConst.HIDE_HYPERLINK_TIPS] = 'HideHyperlinkTips',
+        [MessageConst.ON_START_HOVER_LINK] = 'ShowHyperlinkTips',
+        [MessageConst.ON_STOP_HOVER_LINK] = 'HideHyperlinkTips',
     },
     
     ['HyperlinkPopup'] = {
@@ -573,6 +627,7 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_CHAPTER_COMPLETED] = 'OnChapterCompleted',
         
         [MessageConst.ON_SHOW_CHAPTER_PANEL_DIRECT] = 'OnShowPanelDirectly',
+        [MessageConst.ON_SHOW_CHAPTER_PANEL_DIRECT_STRING_PARAM] = 'OnShowPanelDirectlyStringParam',
     },
 
     
@@ -619,6 +674,11 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.SHOW_REPAIR_INTERACTIVE_BY_MINIGAME] = 'ShowRepairInteractiveByMinigame',
         
         [MessageConst.FORCE_CLOSE_REPAIR_INTERACTIVE] = 'ForceCloseRepairInteractive',
+    },
+    
+    ['BalloonInteractive'] = {
+        
+        [MessageConst.OPEN_MINIGAME_BALLOON] = 'ShowBalloonInteractive',
     },
     
     ['InteractOption'] = {
@@ -670,6 +730,17 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_SKILL_UPGRADE_SUCCESS] = 'OnSkillLevelUpgraded',
         [MessageConst.ON_CHAR_TALENT_UPGRADE] = 'OnTalentLevelUpgraded',
 
+    },
+    
+    ['EnvironmentalPrompt'] = {
+        
+        [MessageConst.ON_BLIGHT_MIASMA_AREA_ENTER] = 'ShowMiasmaIndicator',
+        
+        [MessageConst.ON_PLAYER_FAC_ENVIRONMENTAL_CHANGED] = 'ShowFacEnvironmental',
+        
+        [MessageConst.ON_SWITCH_LANGUAGE] = 'TryShowEnvironmentalPrompt',
+        
+        [MessageConst.ON_INPUT_DEVICE_TYPE_CHANGED] = 'TryShowEnvironmentalPrompt',
     },
     
     ['SubmitCollection'] = {
@@ -950,6 +1021,27 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         
         [MessageConst.SHOW_CONTINGENCY_CONTRACT_SETTLEMENT] = 'ShowSettlement',
     },
+    ['CoinActivityBuffToast'] = {
+        
+        
+        [MessageConst.SHOW_DUNGEON_RACING_BUFF_TOAST] = 'ShowToast',
+    },
+    ['CoinTaskFinishToast'] = {
+        
+        
+        [MessageConst.SHOW_DUNGEON_RACING_TASK_FINISH_TOAST] = 'ShowToast',
+    },
+    ['CoinActivitySettlement'] = {
+        
+        
+        [MessageConst.SHOW_RACING_DUNGEON_SETTLEMENT_PANEL] = 'ShowSettlement',
+    },
+    ['SeasonTowerSucc'] = {
+        
+        [MessageConst.ON_SEASON_TOWER_SETTLEMENT] = 'OnSettlement',
+        
+        [MessageConst.ON_SEASON_TOWER_RANK_UP] = 'OnRankUpgraded',
+    },
     
     ['ImportantRewardPopup'] = {
         
@@ -965,6 +1057,7 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     ['PlayerRename'] = {
         
         [MessageConst.SET_PLAYER_NAME_START] = 'OnSetPlayerNameStart',
+        [MessageConst.RESET_PLAYER_NAME_START] = 'OnResetPlayerNameStart',
     },
     
     ['FacTechPointGainedToast'] = {
@@ -1050,6 +1143,19 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     ['GenderChange'] = {
         
         [MessageConst.GENDER_CHANGE_START] = "OnGenderChangeStart",
+    },
+    
+    ['XiraniteNexusAim'] = {
+        
+        [MessageConst.OPEN_XIRANITE_NEXUS_AIM] = 'OnOpenXiraniteNexusAim',
+        
+        [MessageConst.ON_BLIGHT_MIASMA_AREA_ENTER] = 'TryActiveAbility',
+        
+        [MessageConst.ON_ITEM_BAG_COLORED_ITEM_CHANGED] = 'OnItemBagColoredItemChanged',
+        
+        [MessageConst.CURRENT_LEVEL_CHANGE] = 'OnCurrentLevelChanged',
+        
+        [MessageConst.CLOSE_LOADING_PANEL] = 'OnCloseLoadingPanel',
     },
     
     ['WaterDroneAim'] = {
@@ -1197,16 +1303,12 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.SHOW_FOCUS_MODE_TOAST] = "ShowToast",
     },
     ["StoryModeToast"] = {
-        [MessageConst.GAME_MODE_ENABLE] = "OnGameModeEnable",
-        [MessageConst.GAME_MODE_DISABLE] = "OnGameModeDisable",
+        [MessageConst.STORY_MODE_CHANGED] = "OnStoryModeChanged",
     },
     ["SpaceshipReceptionDisplay"] = {
         [MessageConst.ON_INT_SS_SCREEN_POSTER] = "OnIntScreen",
         
         [MessageConst.ON_CONFIRM_GENDER] = 'ResetPicture',
-    },
-    ["InputDeviceChangePopup"] = {
-        [MessageConst.SHOW_INPUT_DEVICE_CHANGE_POPUP] = "OnShowInputDeviceChangePopup",
     },
     
     ["WorldEnergyPointCustomReward"] = {
@@ -1272,6 +1374,26 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     ['FacUnlockFormulaToast'] = {
         
         [MessageConst.SHOW_FORMULA_TOAST] = 'OnShowFormulaToast',
+    },
+    
+    ['GasCollection'] = {
+        
+        [MessageConst.SHOW_GAS_COLLECTION_PANEL] = 'ShowGasCollection',
+    },
+    
+    ['RiftDetailInfo'] = {
+        
+        [MessageConst.OPEN_RIFT_DETAIL_PANEL] = 'ShowRiftPanel',
+    },
+    
+    ['BattleLiino'] = {
+        
+        [MessageConst.ON_BATTLE_LIINO_NORMAL_SKILL_EVENT] = 'OnBattleLiinoNormalSkillEvent',
+    },
+    
+    ['SeasonTowerBuff'] = {
+        
+        [MessageConst.ON_SEASON_TOWER_BUFF_UPDATE] = 'OnSeasonTowerBuffUpdate',
     },
 }
 

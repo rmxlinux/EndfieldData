@@ -7,20 +7,6 @@ local PackState = {
 }
 local ReducePackageCompletenessReason = GEnums.ReducePackageCompletenessReason
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainDepotPackHudCtrl = HL.Class('DomainDepotPackHudCtrl', uiCtrl.UICtrl)
 
 local ReduceReasonHintNodeViewCfg = {
@@ -33,29 +19,20 @@ local ReduceReasonHintNodeViewCfg = {
 
 
 
-
 DomainDepotPackHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_PACK_INTEGRITY_CHANGED] = '_RefreshIntegrityState',
     [MessageConst.ON_PHASE_LEVEL_ON_TOP] = '_OnPhaseLevelOnTop',
 }
 
-
 DomainDepotPackHudCtrl.m_lastIntegrity = HL.Field(HL.Number) << -1
-
 
 DomainDepotPackHudCtrl.m_allInfoShowTimer = HL.Field(HL.Number) << -1
 
-
 DomainDepotPackHudCtrl.m_attackedIntegrityTimeCache = HL.Field(HL.Table)
-
 
 DomainDepotPackHudCtrl.m_attackedTween = HL.Field(HL.Userdata)
 
-
 DomainDepotPackHudCtrl.m_needRefreshBackToPhaseLevel = HL.Field(HL.Boolean) << false
-
-
-
 
 
 DomainDepotPackHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -79,8 +56,6 @@ DomainDepotPackHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshIntegrityState()
 end
 
-
-
 DomainDepotPackHudCtrl.OnClose = HL.Override() << function(self)
     if self.m_allInfoShowTimer > 0 then
         TimerManager:ClearTimer(self.m_allInfoShowTimer)
@@ -93,8 +68,6 @@ DomainDepotPackHudCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 DomainDepotPackHudCtrl._OnPhaseLevelOnTop = HL.Method() << function(self)
     if not self.m_needRefreshBackToPhaseLevel then
         return
@@ -102,8 +75,6 @@ DomainDepotPackHudCtrl._OnPhaseLevelOnTop = HL.Method() << function(self)
     self.m_needRefreshBackToPhaseLevel = false
     self:_RefreshIntegrityState()
 end
-
-
 
 DomainDepotPackHudCtrl._InitPackIntegrityReduceReasonNode = HL.Method() << function(self)
     local domainDepotSystem = GameInstance.player.domainDepotSystem
@@ -126,8 +97,6 @@ DomainDepotPackHudCtrl._InitPackIntegrityReduceReasonNode = HL.Method() << funct
     end
 end
 
-
-
 DomainDepotPackHudCtrl._ShowAllIntegrityInfo = HL.Method() << function(self)
     self.view.reasonNode.gameObject:SetActive(true)
     self.view.integrityTextLayout.gameObject:SetActive(false)
@@ -138,9 +107,6 @@ DomainDepotPackHudCtrl._ShowAllIntegrityInfo = HL.Method() << function(self)
         self.m_allInfoShowTimer = -1
     end)
 end
-
-
-
 
 DomainDepotPackHudCtrl._RefreshPackDisplayStateByIntegrity = HL.Method(HL.Number) << function(self, integrity)
     local state
@@ -153,8 +119,6 @@ DomainDepotPackHudCtrl._RefreshPackDisplayStateByIntegrity = HL.Method(HL.Number
     end
     self.view.integrityIconNode:SetState(state)
 end
-
-
 
 DomainDepotPackHudCtrl._RefreshIntegrityState = HL.Method() << function(self)
      if PhaseManager:GetTopPhaseId() ~= PhaseId.Level then

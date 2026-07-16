@@ -1,18 +1,6 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.GameSetting
-
-
-
-
-
-
-
-
-
-
-
 PhaseGameSetting = HL.Class('PhaseGameSetting', phaseBase.PhaseBase)
-
 
 
 
@@ -26,8 +14,6 @@ PhaseGameSetting.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
-
 PhaseGameSetting._OnInit = HL.Override() << function(self)
     PhaseGameSetting.Super._OnInit(self)
 end
@@ -35,43 +21,20 @@ end
 
 
 
-
-
-
-
-
 PhaseGameSetting.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhaseGameSetting._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseGameSetting._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseGameSetting._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseGameSetting._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
 
 
 
@@ -83,17 +46,15 @@ PhaseGameSetting._OnActivated = HL.Override() << function(self)
     local isLoading = UIManager:IsOpen(PanelId.Loading) or UIManager:IsOpen(PanelId.TeleportLoading)
     if isLoading then
         self:_StartCoroutine(function()
-            self:ExitSelfFast()
+            if PhaseManager:IsOpen(PHASE_ID) then
+                self:ExitSelfFast()
+            end
         end)
     end
 end
 
-
-
 PhaseGameSetting._OnDeActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseGameSetting._OnDestroy = HL.Override() << function(self)
     PhaseGameSetting.Super._OnDestroy(self)

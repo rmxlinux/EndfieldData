@@ -5,20 +5,7 @@ local PANEL_ID = PanelId.SmallEnergyPointScanUI
 local MAX_SHOW_ENEMY_COUNT = 10
 
 local DISPLAY_ENEMY_TYPE = GEnums.DisplayEnemyType
-
-
-
-
-
-
-
-
-
-
-
-
 SmallEnergyPointScanUICtrl = HL.Class('SmallEnergyPointScanUICtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -29,16 +16,12 @@ SmallEnergyPointScanUICtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
-
 SmallEnergyPointScanUICtrl.OnAddSmallEnergyPointUI = HL.StaticMethod(HL.Any) << function(args)
     
     local ctrl = SmallEnergyPointScanUICtrl.AutoOpen(PANEL_ID, args)
     local entity, enemyLv, enemyId2Count = unpack(args)
     ctrl:AddSmallEnergyPoint(entity, enemyLv, enemyId2Count)
 end
-
-
 
 SmallEnergyPointScanUICtrl.OnRemoveSmallEnergyPointUI = HL.StaticMethod(HL.Any) << function(args)
     local opened, ctrl = UIManager:IsOpen(PANEL_ID)
@@ -55,17 +38,11 @@ SmallEnergyPointScanUICtrl.OnRemoveSmallEnergyPointUI = HL.StaticMethod(HL.Any) 
     end
 end
 
-
 SmallEnergyPointScanUICtrl.m_smallEnergyPointObjDict = HL.Field(HL.Table)
-
 
 SmallEnergyPointScanUICtrl.m_smallEnergyPointObjPool = HL.Field(HL.Table)
 
-
 SmallEnergyPointScanUICtrl.m_smallEnergyPointLogicIdDict = HL.Field(HL.Table)
-
-
-
 
 
 SmallEnergyPointScanUICtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -73,8 +50,6 @@ SmallEnergyPointScanUICtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_smallEnergyPointObjPool = {}
     self.m_smallEnergyPointLogicIdDict = {}
 end
-
-
 
 SmallEnergyPointScanUICtrl.OnClose = HL.Override() << function(self)
     if self.m_smallEnergyPointObjDict ~= nil then
@@ -97,11 +72,6 @@ SmallEnergyPointScanUICtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
-
-
-
 SmallEnergyPointScanUICtrl.AddSmallEnergyPoint = HL.Method(HL.Any, HL.Any, HL.Any)
         << function(self, targetObject, enemyLv, enemyId2Count)
     if self.m_smallEnergyPointObjDict[targetObject] == nil then
@@ -115,12 +85,6 @@ SmallEnergyPointScanUICtrl.AddSmallEnergyPoint = HL.Method(HL.Any, HL.Any, HL.An
 
     self:_InitSmallEnergyPoint(self.m_smallEnergyPointObjDict[targetObject], targetObject, enemyLv, enemyId2Count)
 end
-
-
-
-
-
-
 
 SmallEnergyPointScanUICtrl._InitSmallEnergyPoint = HL.Method(HL.Any, HL.Any, HL.Any, HL.Any)
         << function(self, smallEnergyPoint, target, enemyLv, enemyId2Count)
@@ -160,10 +124,15 @@ SmallEnergyPointScanUICtrl._InitSmallEnergyPoint = HL.Method(HL.Any, HL.Any, HL.
         cell.typeImgLevel3.gameObject:SetActive(DISPLAY_ENEMY_TYPE.HighLevel == enemyVO.displayType)
     end)
 
-    smallEnergyPoint.levelTxt:SetText(string.format("Lv.%s", enemyLv))
+    local dangerous = CS.Beyond.Lua.UtilsForLua.CheckExtremeDangerousByLevel(enemyLv)
+    if dangerous then
+        smallEnergyPoint.nameNode:SetState("Warn")
+        smallEnergyPoint.lvText.text = enemyLv
+    else
+        smallEnergyPoint.nameNode:SetState("Normal")
+        smallEnergyPoint.levelTxt:SetText(string.format(Language.LUA_SMALL_ENERGY_POINT_LEVEL, enemyLv))
+    end
 end
-
-
 
 SmallEnergyPointScanUICtrl._CreateSmallEnergyPoint = HL.Method().Return(HL.Table) << function(self)
     if self.m_smallEnergyPointObjPool ~= nil and #self.m_smallEnergyPointObjPool > 0 then

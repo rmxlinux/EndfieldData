@@ -1,17 +1,8 @@
 local WeaponInfo = require_ex('UI/Widgets/WeaponInfo')
 
-
-
-
-
-
-
 UpgradeWeaponInfo = HL.Class('UpgradeWeaponInfo', WeaponInfo)
 
-
 UpgradeWeaponInfo.m_sliderTween = HL.Field(HL.Any)
-
-
 
 UpgradeWeaponInfo._OnFirstTimeInit = HL.Override() << function(self)
     self.view.upgradeLevelNode.addExp.text = 0
@@ -19,9 +10,6 @@ UpgradeWeaponInfo._OnFirstTimeInit = HL.Override() << function(self)
 
     self.view.upgradeLevelNode.addExpBar.fillAmount = 0
 end
-
-
-
 
 UpgradeWeaponInfo.InitUpgradeWeaponInfo = HL.Method(HL.Table) << function(self, arg)
     self:_FirstTimeInit()
@@ -83,9 +71,6 @@ UpgradeWeaponInfo.InitUpgradeWeaponInfo = HL.Method(HL.Table) << function(self, 
     })
 end
 
-
-
-
 UpgradeWeaponInfo.InitBreakWeaponInfo = HL.Method(HL.Table) << function(self, arg)
     self:_FirstTimeInit()
 
@@ -119,8 +104,6 @@ UpgradeWeaponInfo.InitBreakWeaponInfo = HL.Method(HL.Table) << function(self, ar
         tryRefineLv = weaponInst.refineLv,
     })
 end
-
-
 
 UpgradeWeaponInfo._OnDestroy = HL.Override() << function(self)
     if self.m_sliderTween then

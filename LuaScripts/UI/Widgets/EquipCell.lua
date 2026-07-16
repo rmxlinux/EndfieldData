@@ -1,29 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 EquipCell = HL.Class('EquipCell', UIWidgetBase)
 
-
 EquipCell.equipId = HL.Field(HL.Int) << -1
-
 
 EquipCell.equipData = HL.Field(HL.Userdata)
 
 
 
 
-
-
 EquipCell._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
-
 
 EquipCell.InitEquipCell = HL.Method(HL.Any, HL.Opt(HL.Function)) << function(self, equip, onClick)
     self:_FirstTimeInit()

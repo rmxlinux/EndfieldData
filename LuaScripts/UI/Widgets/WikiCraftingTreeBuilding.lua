@@ -1,39 +1,18 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiCraftingTreeBuilding = HL.Class('WikiCraftingTreeBuilding', UIWidgetBase)
 
 local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
 
-
 WikiCraftingTreeBuilding.m_args = HL.Field(HL.Table)
-
 
 WikiCraftingTreeBuilding.m_isDefaultCraft = HL.Field(HL.Boolean) << false
 
-
 WikiCraftingTreeBuilding.m_isPinnedCraft = HL.Field(HL.Boolean) << false
-
 
 WikiCraftingTreeBuilding.m_hasWiki = HL.Field(HL.Boolean) << false
 
-
 WikiCraftingTreeBuilding.m_isTimeLimitedFormula = HL.Field(HL.Boolean) << false
-
-
 
 
 WikiCraftingTreeBuilding._OnFirstTimeInit = HL.Override() << function(self)
@@ -57,9 +36,6 @@ WikiCraftingTreeBuilding._OnFirstTimeInit = HL.Override() << function(self)
         Notify(MessageConst.CHANGE_WIKI_CRAFTING_TREE, FactoryUtils.getBuildingItemId(self.m_args.craftInfo.buildingId))
     end)
 end
-
-
-
 
 
 
@@ -99,6 +75,10 @@ WikiCraftingTreeBuilding.InitWikiCraftingTreeBuilding = HL.Method(HL.Table) << f
         end
     end
     local itemId = buildingId and FactoryUtils.getBuildingItemId(buildingId)
+    if self.view.earlyAccessNode then
+        self.view.earlyAccessNode.gameObject:SetActiveIfNecessary(
+            not string.isEmpty(itemId) and FactoryUtils.isSkipUnlockedBuildingByItemId(itemId))
+    end
     self.m_hasWiki = WikiUtils.getWikiEntryIdFromItemId(itemId) ~= nil
     self.view.stateController:SetState(self.m_hasWiki and "Selectable" or "Unselectable")
     self.view.button:ChangeActionOnSetNaviTarget(self.m_hasWiki and ActionOnSetNaviTarget.PressConfirmTriggerOnClick or ActionOnSetNaviTarget.None)
@@ -149,12 +129,13 @@ WikiCraftingTreeBuilding.InitWikiCraftingTreeBuilding = HL.Method(HL.Table) << f
         end
     end
 
+    
+    FactoryUtils.refreshEnvIcon(args.craftInfo.env, self.view.envTitleController)
+
     self:_InitController()
 
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.transform)
 end
-
-
 
 WikiCraftingTreeBuilding.RefreshDefaultNode = HL.Method() << function(self)
     local defaultCraftId = WikiUtils.getItemDefaultCraftId(self.m_args.itemId)
@@ -178,9 +159,6 @@ WikiCraftingTreeBuilding.RefreshDefaultNode = HL.Method() << function(self)
     end
 end
 
-
-
-
 WikiCraftingTreeBuilding.SetSelected = HL.Method(HL.Boolean) << function(self, isSelected)
     self.view.selectNode.gameObject:SetActive(isSelected)
     if not self.m_isTimeLimitedFormula then
@@ -188,29 +166,19 @@ WikiCraftingTreeBuilding.SetSelected = HL.Method(HL.Boolean) << function(self, i
     end
 end
 
-
-
 WikiCraftingTreeBuilding.GetButton = HL.Method().Return(HL.Userdata) << function(self)
     return self.view.button
 end
-
-
-
 
 WikiCraftingTreeBuilding.GetLeftMountPoint = HL.Method(Transform).Return(Vector2) << function(self, relativeTo)
     local pos = relativeTo:InverseTransformPoint(self.view.leftMountPoint.transform.position)
     return Vector2(pos.x, pos.y)
 end
 
-
-
-
 WikiCraftingTreeBuilding.GetRightMountPoint = HL.Method(Transform).Return(Vector2) << function(self, relativeTo)
     local pos = relativeTo:InverseTransformPoint(self.view.rightMountPoint.transform.position)
     return Vector2(pos.x, pos.y)
 end
-
-
 
 WikiCraftingTreeBuilding._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -235,7 +203,7 @@ WikiCraftingTreeBuilding._InitController = HL.Method() << function(self)
                 if self.m_args.moreCraftCell.btnLess.gameObject.activeSelf then
                     self.view.setDefaultNode.lineImage.gameObject:SetActive(canSetDefault)
                     self.m_args.moreCraftCell.gameObject:SetActive(true)
-                    self.m_args.moreCraftCell.transform:SetParent(self.view.setDefaultNode.lessNode.transform, false)
+                    self.m_args.moreCraftCell.transform.parent = self.view.setDefaultNode.lessNode.transform
                     self.m_args.moreCraftCell.transform.localPosition = Vector3.zero
                 end
             end

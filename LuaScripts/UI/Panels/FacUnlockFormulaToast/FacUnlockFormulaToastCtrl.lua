@@ -2,13 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacUnlockFormulaToast
 
-
-
-
-
-
 FacUnlockFormulaToastCtrl = HL.Class('FacUnlockFormulaToastCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -20,14 +14,9 @@ FacUnlockFormulaToastCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 FacUnlockFormulaToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.specialToast:InitToast()
 end
-
-
 
 
 
@@ -51,9 +40,6 @@ FacUnlockFormulaToastCtrl.OnShowFormulaToast = HL.StaticMethod(HL.Any) << functi
 
     ctrl:ShowFormulaToast(text)
 end
-
-
-
 
 FacUnlockFormulaToastCtrl.ShowFormulaToast = HL.Method(HL.String) << function(self, text)
     self.view.specialToast.view.specialToastText:SetAndResolveTextStyle(text)

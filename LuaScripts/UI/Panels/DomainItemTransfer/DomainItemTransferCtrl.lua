@@ -16,39 +16,7 @@ local SEC_PER_MIN = 60
 local NORMAL_TRANSMISSION_STATE = "WarehouseTransfer"
 local LOSSLESS_TRANSMISSION_STATE = "NoConsumptionTransfer"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainItemTransferCtrl = HL.Class('DomainItemTransferCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -59,22 +27,15 @@ DomainItemTransferCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FAC_TRANS_ROUTE_CHANGE] = 'OnNotifyRouteInfoChange',
 }
 
-
 DomainItemTransferCtrl.m_domainInfoList = HL.Field(HL.Table)
-
 
 DomainItemTransferCtrl.m_transmissionCellCache = HL.Field(HL.Forward("UIListCache"))
 
 
 
-
 DomainItemTransferCtrl.m_curFocusCellLuaIndex = HL.Field(HL.Number) << 1
 
-
 DomainItemTransferCtrl.m_controllerInit = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -101,8 +62,6 @@ DomainItemTransferCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
 DomainItemTransferCtrl.OnAnimationInFinished = HL.Override() << function(self)
     if DeviceInfo.usingController and not self.m_controllerInit then
         self:_InitControllerAbility()
@@ -110,29 +69,21 @@ DomainItemTransferCtrl.OnAnimationInFinished = HL.Override() << function(self)
     end
 end
 
-
-
 DomainItemTransferCtrl.OnClose = HL.Override() << function(self)
     if UIManager:IsOpen(PanelId.DomainItemTransferSelect) then
         UIManager:Close(PanelId.DomainItemTransferSelect)
     end
 end
 
-
-
 DomainItemTransferCtrl.OnNotifyRouteInfoChange = HL.Method() << function(self)
     self:_RebuildAll()
 end
-
-
 
 DomainItemTransferCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     return {
         domainItemTransferSelectState = self:_GetDomainItemTransferSelectRecoverState(),
     }
 end
-
-
 
 DomainItemTransferCtrl._RebuildAll = HL.Method() << function(self)
     self.m_domainInfoList = {}
@@ -141,8 +92,6 @@ DomainItemTransferCtrl._RebuildAll = HL.Method() << function(self)
     self:_SetPlatformInfo()
     self:_BuildRoutes()
 end
-
-
 
 DomainItemTransferCtrl._SetPlatformInfo = HL.Method() << function(self)
     
@@ -153,8 +102,6 @@ DomainItemTransferCtrl._SetPlatformInfo = HL.Method() << function(self)
     self.view.platformBottomCell.destinationTxt.text = lowerText
 end
 
-
-
 DomainItemTransferCtrl._BuildDomainList = HL.Method() << function(self)
     
     self.m_domainInfoList = {}
@@ -163,8 +110,6 @@ DomainItemTransferCtrl._BuildDomainList = HL.Method() << function(self)
     end
     table.sort(self.m_domainInfoList, Utils.genSortFunction({"sortId"}, true))
 end
-
-
 
 DomainItemTransferCtrl._GetDomainRouteInfo = HL.Method().Return(HL.Table) << function(self)
     
@@ -175,8 +120,6 @@ DomainItemTransferCtrl._GetDomainRouteInfo = HL.Method().Return(HL.Table) << fun
     end
     return ret
 end
-
-
 
 DomainItemTransferCtrl._BuildRoutes = HL.Method() << function(self)
     local domainRouteInfo = self:_GetDomainRouteInfo()
@@ -204,10 +147,6 @@ DomainItemTransferCtrl._BuildRoutes = HL.Method() << function(self)
     end)
     self:_RefreshAllCell()
 end
-
-
-
-
 
 DomainItemTransferCtrl._BuildRouteTransmissionCellView = HL.Method(HL.Any, HL.Any) << function(self, cell, info)
     
@@ -280,8 +219,6 @@ DomainItemTransferCtrl._BuildRouteTransmissionCellView = HL.Method(HL.Any, HL.An
     end
 end
 
-
-
 DomainItemTransferCtrl._RefreshAllCell = HL.Method() << function(self)
     self.m_transmissionCellCache:Update(function(cell, index)
         self:_RefreshCellTimeText(cell)
@@ -290,17 +227,11 @@ DomainItemTransferCtrl._RefreshAllCell = HL.Method() << function(self)
     end)
 end
 
-
-
-
 DomainItemTransferCtrl._RefreshCellTimeText = HL.Method(HL.Any) << function(self, cell)
     local info = cell.info
     cell.transmittingRoot.timeText.text = self:_GetTimeTextV2(info)
     cell.retryRoot.retryText.text = self:_GetTimeTextV2(info)
 end
-
-
-
 
 DomainItemTransferCtrl._RefreshCellBlockState = HL.Method(HL.Any) << function(self, cell)
     local info = cell.info
@@ -321,9 +252,6 @@ DomainItemTransferCtrl._RefreshCellBlockState = HL.Method(HL.Any) << function(se
     cell.restartBtn.gameObject:SetActive(canPut)
 end
 
-
-
-
 DomainItemTransferCtrl._RefreshItemCount = HL.Method(HL.Any) << function(self, cell)
     local info = cell.info
     local isTransmitting = info.status == RouteStatus.working or info.status == RouteStatus.notFill
@@ -343,10 +271,6 @@ DomainItemTransferCtrl._RefreshItemCount = HL.Method(HL.Any) << function(self, c
     end
 end
 
-
-
-
-
 DomainItemTransferCtrl._SetSideCell = HL.Method(HL.Any, HL.Any) << function(self, sideCell, domainId)
     local selected = not string.isEmpty(domainId)
     sideCell.selectedRoot.gameObject:SetActive(selected)
@@ -358,10 +282,6 @@ DomainItemTransferCtrl._SetSideCell = HL.Method(HL.Any, HL.Any) << function(self
             UIConst.FAC_TRANS_DOMAIN_ICONS[domainId])
     end
 end
-
-
-
-
 
 DomainItemTransferCtrl._BuildTrackView = HL.Method(HL.Any, CS.Beyond.Gameplay.RemoteFactorySystem.FactoryHubTransportRouteData)
         << function(self, track, routeInfo)
@@ -397,15 +317,9 @@ DomainItemTransferCtrl._BuildTrackView = HL.Method(HL.Any, CS.Beyond.Gameplay.Re
     track.noTargetRoot.gameObject:SetActive(false)
 end
 
-
-
-
 DomainItemTransferCtrl._GetRouteInfo = HL.Method(HL.String).Return(HL.Any) << function(self, domainId)
     return GameInstance.player.remoteFactory:GetFacHubTransData(domainId, INDEX_CONST)
 end
-
-
-
 
 DomainItemTransferCtrl._GetTimeTextV2 = HL.Method(HL.Userdata).Return(HL.String) << function(self, info)
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()
@@ -415,9 +329,6 @@ DomainItemTransferCtrl._GetTimeTextV2 = HL.Method(HL.Userdata).Return(HL.String)
     local curNeedTimeSec = needTime - curProgress
     return UIUtils.getLeftTimeToSecond(curNeedTimeSec)
 end
-
-
-
 
 DomainItemTransferCtrl._GetTimeText = HL.Method(HL.Any).Return(HL.String) << function(self, info)
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()
@@ -449,15 +360,9 @@ DomainItemTransferCtrl._GetTimeText = HL.Method(HL.Any).Return(HL.String) << fun
     return text
 end
 
-
-
-
 DomainItemTransferCtrl._ReqRestartRoute = HL.Method(HL.Any) << function(self, routeInfo)
     GameInstance.player.remoteFactory:SendReqRestartHubTransRoute(routeInfo.fromDomain, routeInfo.index)
 end
-
-
-
 
 DomainItemTransferCtrl._OpenEditPanel = HL.Method(HL.Any) << function(self, routeInfo)
     local args = {
@@ -465,8 +370,6 @@ DomainItemTransferCtrl._OpenEditPanel = HL.Method(HL.Any) << function(self, rout
     }
     UIManager:Open(PanelId.DomainItemTransferSelect, args)
 end
-
-
 
 DomainItemTransferCtrl._GetDomainItemTransferSelectRecoverState = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
@@ -478,9 +381,6 @@ DomainItemTransferCtrl._GetDomainItemTransferSelectRecoverState = HL.Method().Re
     end
     return ctrl:GetRecoverStateArg()
 end
-
-
-
 
 DomainItemTransferCtrl._TryRecoverDomainItemTransferSelect = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil or string.isEmpty(recoverState.routeFromDomain) then
@@ -499,8 +399,6 @@ DomainItemTransferCtrl._TryRecoverDomainItemTransferSelect = HL.Method(HL.Opt(HL
         recoverState = recoverState,
     })
 end
-
-
 
 
 
@@ -532,14 +430,11 @@ end
 
 
 
-
-
-
 DomainItemTransferCtrl._SetFocusTargetByIndex = HL.Method(HL.Number) << function(self, index)
     self.m_curFocusCellLuaIndex = index
 
     local firstCell = self.m_transmissionCellCache:Get(index)
-    self:SetAsNaviTargetInSilentModeIfNecessary(self.view.infoNodeNaviGroup, firstCell.domainItemTransferInfoCell)
+    self:SetNaviTarget(firstCell.domainItemTransferInfoCell)
 end
 
 

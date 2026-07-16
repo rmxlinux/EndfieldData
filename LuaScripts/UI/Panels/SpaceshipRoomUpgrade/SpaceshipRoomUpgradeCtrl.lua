@@ -36,6 +36,8 @@ SpaceshipRoomUpgradeCtrl.m_moveCam = HL.Field(HL.Boolean) << false
 
 SpaceshipRoomUpgradeCtrl.m_clearScreenKey = HL.Field(HL.Number) << -1
 
+SpaceshipRoomUpgradeCtrl.m_isRemoteCamera = HL.Field(HL.Boolean) << false
+
 SpaceshipRoomUpgradeCtrl.m_roomInfo = HL.Field(CS.Beyond.Gameplay.SpaceshipSystem.Room)
 
 SpaceshipRoomUpgradeCtrl.m_roomTypeData = HL.Field(Cfg.Types.SpaceshipRoomTypeData)
@@ -95,9 +97,6 @@ SpaceshipRoomUpgradeCtrl.OnIntSSRoom = HL.StaticMethod(HL.Any) << function(args)
                 and PhaseManager:CheckCanOpenPhase(phaseId, phaseArgs, true)
             if not canOpenPhase then
                 GameInstance.player.spaceship:UndoMoveCamToSpaceshipRoom(roomId)
-                if clearScreenKey and clearScreenKey ~= -1 then
-                    UIManager:RecoverScreen(clearScreenKey)
-                end
                 return
             end
             PhaseManager:OpenPhase(phaseId, phaseArgs)
@@ -176,18 +175,21 @@ SpaceshipRoomUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_upgradeEffectCells = UIUtils.genCellCache(self.view.upgradeEffectCell)
     self.m_portNodeCells = UIUtils.genCellCache(self.view.buildNode.portImage)
 
-    local roomId, moveCam, clearScreenKey
+    local roomId, moveCam, clearScreenKey, isRemoteCamera
     if type(arg) == "string" then
         roomId = arg
         moveCam = false
+        isRemoteCamera = false
     else
         roomId = arg.roomId
         moveCam = arg.moveCam
         clearScreenKey = arg.clearScreenKey
+        isRemoteCamera = arg.isRemoteCamera
     end
     self.m_roomId = roomId
     self.m_moveCam = moveCam == true
     self.m_clearScreenKey = clearScreenKey or -1
+    self.m_isRemoteCamera = isRemoteCamera == true
 
     local unlocked, roomData = GameInstance.player.spaceship:TryGetRoom(self.m_roomId)
     if unlocked then
@@ -212,32 +214,81 @@ SpaceshipRoomUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_InitBuildInfo()
     end
 
-    if self.m_moveCam then
+    if self.m_moveCam or self.m_isRemoteCamera then
         local succ, config = GameInstance.player.spaceship:GetAndSetCurSpaceshipRoomCamConfig(roomId, "upgrade")
         if succ then
-            GameInstance.player.spaceship:MoveCamToSpaceshipRoom(roomId, self.m_clearScreenKey)
+            GameInstance.player.spaceship:MoveCamToSpaceshipRoom(roomId, self.m_clearScreenKey, self.m_isRemoteCamera)
         end
     end
-
+    if self.m_isRemoteCamera then
+        local _, level = GameUtil.SpaceshipUtils.TryGetSpaceshipLevel()
+        local succ, cabinPos = GameInstance.player.spaceship:TryGetCabinEntityTransform(self.m_roomId)
+        level:HideCharacters(cabinPos)
+        local maskData = CS.Beyond.Gameplay.UICommonMaskData()
+        maskData.maskType = UIConst.UI_COMMON_MASK_TYPE.BlackScreen
+        maskData.fadeInTime = 0
+        maskData.waitHide = true
+        if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
+            maskData.extraData = CS.Beyond.Gameplay.CommonMaskExtraData()
+            maskData.extraData.desc = "SpaceshipRoomUpgrade Create"
+        end
+        GameAction.ShowBlackScreen(maskData)
+        level:LoadExtraAtPosWithCallback(cabinPos, function()
+            GameAction.BlackScreenFadeOut(0.2, true, false)
+        end)
+    end
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
 SpaceshipRoomUpgradeCtrl.OnShow = HL.Override() << function(self)
-    if self.m_state == States.Upgrade then
-        self:_RefreshUpgradeInfo()
-    elseif self.m_state == States.Build then
+    if self.m_state == States.Build then
         self:_RefreshBuildInfo(self.m_roomType)
+        return
+    end
+    local lv = self.m_roomInfo.lv
+    local maxLv = self.m_roomInfo.maxLv
+    local isMax = lv >= maxLv
+    self.m_state = isMax and States.Max or States.Upgrade
+    self.view.content:SetState(self.m_state)
+    if isMax then
+        self.m_curSelectedLv = lv
+        self:_RefreshMaxInfo()
+    else
+        self.m_curSelectedLv = lv + 1
+        self:_RefreshUpgradeInfo()
     end
 end
 
 SpaceshipRoomUpgradeCtrl.OnClose = HL.Override() << function(self)
     
-    if self.m_moveCam then
-        local clearScreenKey = GameInstance.player.spaceship:UndoMoveCamToSpaceshipRoom(self.m_roomId)
+    if self.m_moveCam or self.m_isRemoteCamera then
+        local clearScreenKey = GameInstance.player.spaceship:UndoMoveCamToSpaceshipRoom(self.m_roomId, self.m_isRemoteCamera)
         if clearScreenKey and clearScreenKey ~= -1 then
             UIManager:RecoverScreen(clearScreenKey)
         end
+        if self.m_clearScreenKey ~= -1 then
+            if self.m_clearScreenKey ~= clearScreenKey then
+                UIManager:RecoverScreen(self.m_clearScreenKey)
+            end
+            self.m_clearScreenKey = -1
+        end
         self.m_moveCam = false
+    end
+    if self.m_isRemoteCamera then
+        local _, level = GameUtil.SpaceshipUtils.TryGetSpaceshipLevel()
+        level:ShowCharacters()
+        local maskData = CS.Beyond.Gameplay.UICommonMaskData()
+        maskData.maskType = UIConst.UI_COMMON_MASK_TYPE.BlackScreen
+        maskData.fadeInTime = 0
+        maskData.waitHide = true
+        if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
+            maskData.extraData = CS.Beyond.Gameplay.CommonMaskExtraData()
+            maskData.extraData.desc = "SpaceshipRoomUpgrade Close"
+        end
+        GameAction.ShowBlackScreen(maskData)
+        level:ClearExtraLoadWithCallback(function()
+            GameAction.BlackScreenFadeOut(0.2, true, false)
+        end)
     end
 end
 
@@ -279,7 +330,8 @@ SpaceshipRoomUpgradeCtrl.OnRoomAdded = HL.Method(HL.Table) << function(self, arg
     if roomId ~= self.m_roomId then
         return
     end
-    self:_Exit(true)
+    
+    self:_Exit(true, true, self.m_state == States.Build)
 end
 
 SpaceshipRoomUpgradeCtrl._InitBuildInfo = HL.Method() << function(self)
@@ -653,7 +705,7 @@ SpaceshipRoomUpgradeCtrl._OnClickConfirm = HL.Method() << function(self)
     end
 end
 
-SpaceshipRoomUpgradeCtrl._Exit = HL.Method(HL.Opt(HL.Boolean)) << function(self, needDialog)
+SpaceshipRoomUpgradeCtrl._Exit = HL.Method(HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean)) << function(self, needDialog, needClosePanel, forceClose)
     
     if not PhaseManager:CanPopPhase(PHASE_ID) then
         return
@@ -668,25 +720,37 @@ SpaceshipRoomUpgradeCtrl._Exit = HL.Method(HL.Opt(HL.Boolean)) << function(self,
         dialogId = commonLvData.upgradeDialogId
     end
     if string.isEmpty(dialogId) then
-        if self.m_moveCam then
-            local clearScreenKey = GameInstance.player.spaceship:UndoMoveCamToSpaceshipRoom(roomId)
+        if self.m_moveCam and not self.m_isRemoteCamera then
+            local clearScreenKey = GameInstance.player.spaceship:UndoMoveCamToSpaceshipRoom(roomId, self.m_isRemoteCamera)
             if clearScreenKey and clearScreenKey ~= -1 then
                 UIManager:RecoverScreen(clearScreenKey)
+            end
+            if self.m_clearScreenKey ~= -1 then
+                if self.m_clearScreenKey ~= clearScreenKey then
+                    UIManager:RecoverScreen(self.m_clearScreenKey)
+                end
+                self.m_clearScreenKey = -1
             end
             self.m_moveCam = false
         end
         PhaseManager:PopPhase(PHASE_ID)
         return
     end
-    if self.m_moveCam then
-        local clearScreenKey = GameInstance.player.spaceship:UndoMoveCamToSpaceshipRoom(roomId)
+    if (self.m_moveCam and needClosePanel) or forceClose then
+        local clearScreenKey = GameInstance.player.spaceship:UndoMoveCamToSpaceshipRoom(roomId, self.m_isRemoteCamera)
         if clearScreenKey and clearScreenKey ~= -1 then
             UIManager:RecoverScreen(clearScreenKey)
         end
+        if self.m_clearScreenKey ~= -1 then
+            if self.m_clearScreenKey ~= clearScreenKey then
+                UIManager:RecoverScreen(self.m_clearScreenKey)
+            end
+            self.m_clearScreenKey = -1
+        end
         self.m_moveCam = false
+        PhaseManager:ExitPhaseFast(PHASE_ID)
     end
     SpaceshipUtils.playSSDialog(self.m_roomId, dialogId)
-    PhaseManager:ExitPhaseFast(PHASE_ID)
 end
 
 

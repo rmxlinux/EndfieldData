@@ -4,49 +4,7 @@ local TIMEOUT_TIME = 15
 
 local SINGLE_CELL_TEXT_HEIGHT_LIMIT = 92
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AIBarkCtrl = HL.Class('AIBarkCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -70,27 +28,19 @@ AIBarkCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ULTIMATE_SKILL_END] = 'StopAllAIBark',
 }
 
-
 AIBarkCtrl.s_inMainHud = HL.StaticField(HL.Boolean) << false
-
 
 AIBarkCtrl.s_uniqueId = HL.StaticField(HL.Number) << 0
 
-
 AIBarkCtrl.m_cellCache = HL.Field(HL.Table)
-
 
 AIBarkCtrl.m_waitingCacheCells = HL.Field(HL.Table)
 
-
 AIBarkCtrl.m_waitingTable = HL.Field(HL.Table)
-
 
 AIBarkCtrl.m_timeoutTimer = HL.Field(HL.Number) << -1
 
-
 AIBarkCtrl.m_tween = HL.Field(HL.Any)
-
 
 AIBarkCtrl.s_showByExecute = HL.StaticField(HL.Boolean) << false
 
@@ -104,10 +54,7 @@ AIBarkCtrl.s_showByExecute = HL.StaticField(HL.Boolean) << false
 
 
 
-
 AIBarkCtrl.m_curPlayingBarks = HL.Field(HL.Table)
-
-
 
 AIBarkCtrl.OnInMainHudChanged = HL.StaticMethod(HL.Table) << function(arg)
     local inMainHud = unpack(arg)
@@ -119,11 +66,9 @@ AIBarkCtrl.OnInMainHudChanged = HL.StaticMethod(HL.Table) << function(arg)
 end
 
 
-
 AIBarkCtrl.OnEnterMainHud = HL.StaticMethod() << function()
     AIBarkCtrl.s_inMainHud = true
 end
-
 
 AIBarkCtrl.OnLeaveMainHud = HL.StaticMethod() << function()
     AIBarkCtrl.s_inMainHud = false
@@ -132,8 +77,6 @@ AIBarkCtrl.OnLeaveMainHud = HL.StaticMethod() << function()
         ctrl:StopAllAIBark()
     end
 end
-
-
 
 AIBarkCtrl.ShowAIBark = HL.StaticMethod(HL.Table) << function(arg)
     AIBarkCtrl.s_showByExecute = true
@@ -144,9 +87,6 @@ AIBarkCtrl.ShowAIBark = HL.StaticMethod(HL.Table) << function(arg)
 end
 
 
-
-
-
 AIBarkCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_cellCache = {}
     self.m_curPlayingBarks = {}
@@ -154,9 +94,6 @@ AIBarkCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_waitingTable = {}
     self.m_tween = nil
 end
-
-
-
 
 AIBarkCtrl.StopAllAIBark = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     logger.info("StopAllAIBark, count: ", #self.m_curPlayingBarks)
@@ -172,8 +109,6 @@ AIBarkCtrl.StopAllAIBark = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     end
 end
 
-
-
 AIBarkCtrl.OnShow = HL.Override() << function(self)
     
     if DeviceInfo.usingTouch then
@@ -186,14 +121,9 @@ AIBarkCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 AIBarkCtrl.OnHide = HL.Override() << function(self)
     self:_Reset()
 end
-
-
-
 
 
 
@@ -201,17 +131,11 @@ AIBarkCtrl._ClearStopTimer = HL.Method(HL.Number) << function(self, index)
     self:_ClearTimer(index)
 end
 
-
-
-
-
 AIBarkCtrl._StartStopTimer = HL.Method(HL.Number, HL.Number).Return(HL.Number) << function(self, duration, uniqueId)
     return self:_StartTimer(duration, function()
         self:_StopLastAIBark(uniqueId)
     end)
 end
-
-
 
 AIBarkCtrl._StartTimeoutTimer = HL.Method() << function(self)
     self:_ClearTimeoutTimer()
@@ -221,8 +145,6 @@ AIBarkCtrl._StartTimeoutTimer = HL.Method() << function(self)
     end)
 end
 
-
-
 AIBarkCtrl._ClearTimeoutTimer = HL.Method() << function(self)
     if self.m_timeoutTimer > 0 then
         self:_ClearTimer(self.m_timeoutTimer)
@@ -231,25 +153,15 @@ AIBarkCtrl._ClearTimeoutTimer = HL.Method() << function(self)
     self.m_timeoutTimer = -1
 end
 
-
-
-
 AIBarkCtrl.StopAIBarkUI = HL.Method(HL.Table) << function(self, arg)
     local barkTextId, audioStop = unpack(arg)
     self:StopSingleAIBark(barkTextId, audioStop)
 end
 
-
-
-
 AIBarkCtrl.AudioStopSingleAIBark = HL.Method(HL.Table) << function(self, arg)
     local barkTextId, audioStop, audioInterrupt = unpack(arg)
     self:StopSingleAIBark(barkTextId, audioInterrupt)
 end
-
-
-
-
 
 AIBarkCtrl.StopSingleAIBark = HL.Method(HL.Any, HL.Opt(HL.Boolean)) << function(self, voId, audioInterrupt)
     local removeIndex = 0
@@ -281,20 +193,13 @@ AIBarkCtrl.StopSingleAIBark = HL.Method(HL.Any, HL.Opt(HL.Boolean)) << function(
     end
 end
 
-
-
 AIBarkCtrl.OnBarkStopped = HL.StaticMethod(HL.String) << function(barkId)
     GameWorld.aiBarkManager:UpdateBarkEndTime(barkId)
 end
 
-
-
 AIBarkCtrl._CheckHeight = HL.Method().Return(HL.Boolean) << function(self)
     return self.view.content.transform.rect.height <= self.view.mask.rect.height
 end
-
-
-
 
 AIBarkCtrl._TryShowSingleBark = HL.Method(CS.Beyond.Gameplay.AIBarkManager.AIBarkRuntimeData) << function(self, aiBarkData)
     local barkId = aiBarkData.barkId
@@ -365,10 +270,6 @@ AIBarkCtrl._TryShowSingleBark = HL.Method(CS.Beyond.Gameplay.AIBarkManager.AIBar
     end
 end
 
-
-
-
-
 AIBarkCtrl._StopLastAIBark = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, uniqueId, audioInterrupt)
     local index = self:_GetIndexByUniqueId(uniqueId)
     logger.info("_StopLastAIBark: ", uniqueId, ", index: ", index, ", totalCount: ", #self.m_curPlayingBarks)
@@ -382,9 +283,6 @@ AIBarkCtrl._StopLastAIBark = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << functio
     end
 end
 
-
-
-
 AIBarkCtrl._GetIndexByUniqueId = HL.Method(HL.Number).Return(HL.Number) << function(self, uniqueId)
     local index = -1
     for i, cell in pairs(self.m_curPlayingBarks) do
@@ -396,21 +294,12 @@ AIBarkCtrl._GetIndexByUniqueId = HL.Method(HL.Number).Return(HL.Number) << funct
     return index
 end
 
-
-
-
-
 AIBarkCtrl._DoStopSingleAIBarkByUniqueId = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, uniqueId, heightRemove)
     local index = self:_GetIndexByUniqueId(uniqueId)
     if index > 0 then
         self:_DoStopSingleAIBark(index, heightRemove)
     end
 end
-
-
-
-
-
 
 AIBarkCtrl._DoStopSingleAIBark = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Boolean)) << function(self, index, heightRemove, audioInterrupt)
     logger.info("_DoStopSingleAIBark start: index: ", index, ", totalCount: ", #self.m_curPlayingBarks)
@@ -445,10 +334,6 @@ AIBarkCtrl._DoStopSingleAIBark = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Bool
     logger.info("_DoStopSingleAIBark finish: index: ", index, ", totalCount: ", #self.m_curPlayingBarks)
 end
 
-
-
-
-
 AIBarkCtrl._CacheCell = HL.Method(HL.Table, HL.Boolean) << function(self, cell, lastCell)
     if not self.m_waitingCacheCells[cell] then
         self.m_waitingCacheCells[cell] = true
@@ -457,8 +342,6 @@ AIBarkCtrl._CacheCell = HL.Method(HL.Table, HL.Boolean) << function(self, cell, 
 
     self:_StartTween(lastCell)
 end
-
-
 
 AIBarkCtrl._CacheAllWaiting = HL.Method() << function(self)
     if #self.m_waitingTable > 0 then
@@ -472,17 +355,12 @@ AIBarkCtrl._CacheAllWaiting = HL.Method() << function(self)
     self.m_waitingTable = {}
 end
 
-
-
 AIBarkCtrl._ClearTween = HL.Method() << function(self)
     if self.m_tween then
         self.m_tween:Kill()
     end
     self.m_tween = nil
 end
-
-
-
 
 AIBarkCtrl._StartTween = HL.Method(HL.Boolean) << function(self, lastCell)
     self:_ClearTween()
@@ -517,15 +395,11 @@ AIBarkCtrl._StartTween = HL.Method(HL.Boolean) << function(self, lastCell)
     end
 end
 
-
-
 AIBarkCtrl._Reset = HL.Method() << function(self)
     self:_ClearTween()
     self:_CacheAllWaiting()
     self.view.content.transform.anchoredPosition = Vector2.zero
 end
-
-
 
 AIBarkCtrl._GenCell = HL.Method().Return(HL.Table) << function(self)
     local cell
@@ -544,9 +418,6 @@ AIBarkCtrl._GenCell = HL.Method().Return(HL.Table) << function(self)
     return cell
 end
 
-
-
-
 AIBarkCtrl.DoShowAIBark = HL.Method(CS.Beyond.Gameplay.AIBarkManager.AIBarkRuntimeData) << function(self, aiBarkData)
     if not self:_CheckCanPlay() then
         self:Hide()
@@ -555,8 +426,6 @@ AIBarkCtrl.DoShowAIBark = HL.Method(CS.Beyond.Gameplay.AIBarkManager.AIBarkRunti
 
     self:_TryShowSingleBark(aiBarkData)
 end
-
-
 
 AIBarkCtrl._CheckCanPlay = HL.Method().Return(HL.Boolean) << function(self)
     if Utils.isInNarrative() then

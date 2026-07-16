@@ -9,82 +9,29 @@ local tabAniStrLeftFormat = "gemcustombox_slccell_left_%sto%s"
 
 local tabAniStrRightFormat = "gemcustombox_slccell_right_%sto%s"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GemCustomizationBoxCtrl = HL.Class('GemCustomizationBoxCtrl', uiCtrl.UICtrl)
-
 
 GemCustomizationBoxCtrl.m_boxItemId = HL.Field(HL.String) << ""
 
-
 GemCustomizationBoxCtrl.m_boxNumber = HL.Field(HL.Number) << 5
-
 
 GemCustomizationBoxCtrl.m_tabNum = HL.Field(HL.Number) << 3
 
-
 GemCustomizationBoxCtrl.m_termGroupList = HL.Field(HL.Table)
-
 
 GemCustomizationBoxCtrl.m_termGroupNum = HL.Field(HL.Number) << 3
 
-
 GemCustomizationBoxCtrl.m_genTermGroupCellFunc = HL.Field(HL.Function)
-
 
 GemCustomizationBoxCtrl.m_genTagGroupCellFunc = HL.Field(HL.Function)
 
-
 GemCustomizationBoxCtrl.m_selectTabCells = HL.Field(HL.Forward("UIListCache"))
-
 
 GemCustomizationBoxCtrl.m_currCanCustomizeTermTypeIndexList = HL.Field(HL.Table)
 
-
 GemCustomizationBoxCtrl.m_currSelectInfo = HL.Field(HL.Table)
 
-
 GemCustomizationBoxCtrl.m_lastRefreshUICurrTabIndex = HL.Field(HL.Number) << 0
-
 
 
 
@@ -94,9 +41,6 @@ GemCustomizationBoxCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_GEMCUSTOMIZATIONBOX_TERM_SELECT] = '_OnTermClick',
     [MessageConst.ON_SC_ITEM_BAG_USE_ITEM_GEMLOCKEDTERMBOX] = '_OnReceiveServer',
 }
-
-
-
 
 
 GemCustomizationBoxCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -112,13 +56,9 @@ GemCustomizationBoxCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 GemCustomizationBoxCtrl.OnShow = HL.Override() << function(self)
     
 end
-
-
 
 
 
@@ -187,16 +127,12 @@ GemCustomizationBoxCtrl._InitData = HL.Method() << function(self)
     self.m_currSelectInfo["useBoxMaxNumber"] = math.min(itemNum, config_max_use_num)
 end
 
-
-
 GemCustomizationBoxCtrl._InitUIData = HL.Method() << function(self)
     self.m_selectTabCells = UIUtils.genCellCache(self.view.gemCustomizationBoxSelectTabCell)
     self:_InitTermGroups()
     self:_InitUITagGroups()
     self.view.numberSelector:InitNumberSelector(1, 1, self.m_currSelectInfo["useBoxMaxNumber"])
 end
-
-
 
 GemCustomizationBoxCtrl._BindBtnCallbacks = HL.Method() << function(self)
     self.view.closeButton.onClick:AddListener(function()
@@ -224,8 +160,6 @@ GemCustomizationBoxCtrl._BindBtnCallbacks = HL.Method() << function(self)
     end)
 end
 
-
-
 GemCustomizationBoxCtrl._RefreshUI = HL.Method() << function(self)
     if self.m_currSelectInfo["seeAllTermGroup"] then
         
@@ -237,8 +171,6 @@ GemCustomizationBoxCtrl._RefreshUI = HL.Method() << function(self)
         self:_RefreshUISelectMode()
     end
 end
-
-
 
 GemCustomizationBoxCtrl._RefreshUISelectMode = HL.Method() << function(self)
     local haveChangeTab = self.m_currSelectInfo["selectTabIndex"] ~= self.m_lastRefreshUICurrTabIndex
@@ -292,8 +224,6 @@ GemCustomizationBoxCtrl._RefreshUISelectMode = HL.Method() << function(self)
     end
 end
 
-
-
 GemCustomizationBoxCtrl._RefreshUIPreviewMode = HL.Method() << function(self)
     local viewListNode = self.view.viewListNode;
     if self.m_currSelectInfo["haveRefreshPreviewMode"] == false then
@@ -302,13 +232,9 @@ GemCustomizationBoxCtrl._RefreshUIPreviewMode = HL.Method() << function(self)
     end
 end
 
-
-
 GemCustomizationBoxCtrl._InitItemBoxData = HL.Method() << function(self)
 
 end
-
-
 
 GemCustomizationBoxCtrl._InitTermGroups = HL.Method() << function(self)
     self.m_genTermGroupCellFunc = UIUtils.genCachedCellFunction(self.view.scrollListFilter)
@@ -316,10 +242,6 @@ GemCustomizationBoxCtrl._InitTermGroups = HL.Method() << function(self)
         self:_OnTermGroupScrollUpdateCell(obj, csIndex)
     end)
 end
-
-
-
-
 
 GemCustomizationBoxCtrl._OnTermGroupScrollUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, obj, csIndex)
     local luaIndex = LuaIndex(csIndex)
@@ -352,8 +274,6 @@ GemCustomizationBoxCtrl._OnTermGroupScrollUpdateCell = HL.Method(HL.Any, HL.Numb
     self:_UpdateTermGroupCell(termGroupCell, trueIndex)
 end
 
-
-
 GemCustomizationBoxCtrl._InitUITagGroups = HL.Method() << function(self)
     local scrollList = self.view.viewListNode.scrollListFilter
     self.m_genTagGroupCellFunc = UIUtils.genCachedCellFunction(scrollList)
@@ -373,28 +293,17 @@ GemCustomizationBoxCtrl._InitUITagGroups = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 GemCustomizationBoxCtrl._UpdateTermGroupCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     cell:InitGemCustomizationBoxTermGroupCell(false)
     local termIdList = self.m_termGroupList[luaIndex]
     cell:UpdateTermGroupUI(luaIndex, termIdList, self.m_currSelectInfo)
 end
 
-
-
-
-
 GemCustomizationBoxCtrl._UpdateTagGroupCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     cell:InitGemCustomizationBoxTermGroupCell(true)
     local termIdList = self.m_termGroupList[luaIndex]
     cell:UpdateTagGroupUI(luaIndex, termIdList)
 end
-
-
-
 
 GemCustomizationBoxCtrl._CreateTermGroups = HL.Method(HL.Boolean) << function(self, haveChangeTab)
     
@@ -422,8 +331,6 @@ GemCustomizationBoxCtrl._CreateTermGroups = HL.Method(HL.Boolean) << function(se
     end
 end
 
-
-
 GemCustomizationBoxCtrl._UpdateSelectTab = HL.Method() << function(self)
     
     self.m_selectTabCells:Refresh(MAX_SHOW_TAB_NUM, function(cell, index)
@@ -437,10 +344,6 @@ GemCustomizationBoxCtrl._UpdateSelectTab = HL.Method() << function(self)
     local canScrollByController = self.m_tabNum == 0
     self.view.scrollListFilterRect.controllerScrollEnabled = canScrollByController
 end
-
-
-
-
 
 GemCustomizationBoxCtrl._UpdateSelectTabCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     cell:InitGemCustomizationBoxSelectTabCell()
@@ -462,8 +365,6 @@ GemCustomizationBoxCtrl._UpdateSelectTabCell = HL.Method(HL.Any, HL.Number) << f
     end
 end
 
-
-
 GemCustomizationBoxCtrl._UpdateConfirmBtnUI = HL.Method() << function(self)
     local allSelect = true
     for i = 1, self.m_tabNum do
@@ -479,12 +380,12 @@ GemCustomizationBoxCtrl._UpdateConfirmBtnUI = HL.Method() << function(self)
     self.view.confirmBtnYes.root:SetState("NormalState")
 end
 
-
-
-
-
 GemCustomizationBoxCtrl._OnTabChange = HL.Method(HL.Number, HL.Opt(HL.Boolean))
     << function(self, tabIndex, callByShortcut)
+    local prevTabIndex = self.m_currSelectInfo["selectTabIndex"]
+    if prevTabIndex == tabIndex then
+        return
+    end
     
     local originTabIndex = self.m_currSelectInfo["selectTabIndex"]
     local curr = CS.Beyond.Input.InputManager.instance.controllerNaviManager.curTarget
@@ -497,7 +398,6 @@ GemCustomizationBoxCtrl._OnTabChange = HL.Method(HL.Number, HL.Opt(HL.Boolean))
         end
     end
     
-    local prevTabIndex = self.m_currSelectInfo["selectTabIndex"]
     self.m_currSelectInfo["selectTabIndex"] = tabIndex
     
     if callByShortcut then
@@ -526,7 +426,7 @@ GemCustomizationBoxCtrl._OnTabChange = HL.Method(HL.Number, HL.Opt(HL.Boolean))
                         local termId = termLua:GetTermId()
                         if termId == targetTermId then
                             local btn = termLua.view.tagBtn
-                            UIUtils.setAsNaviTarget(btn)
+                            self:SetNaviTarget(btn)
                         end
                     end
                 end
@@ -536,12 +436,9 @@ GemCustomizationBoxCtrl._OnTabChange = HL.Method(HL.Number, HL.Opt(HL.Boolean))
         local firstTermGroupGo = self.view.scrollListFilter:Get(0)
         local firstTerm = firstTermGroupGo.transform:Find("GemCustomizationBoxTermCell(Clone)")
         local firstBtn = firstTerm:Find("TagBtn")
-        UIUtils.setAsNaviTarget(firstBtn.transform:GetComponent("UIButton"))
+        self:SetNaviTarget(firstBtn.transform:GetComponent("UIButton"))
     end
 end
-
-
-
 
 
 
@@ -610,8 +507,6 @@ GemCustomizationBoxCtrl._OnTermClick = HL.Method(HL.String) << function(self, te
     end
 end
 
-
-
 GemCustomizationBoxCtrl._OnConfirmBtnClick = HL.Method() << function(self)
     local selectTermIdList = {}
     for i = 1, self.m_tabNum do
@@ -623,9 +518,6 @@ GemCustomizationBoxCtrl._OnConfirmBtnClick = HL.Method() << function(self)
     GameInstance.player.inventory:OpenGemCustomizationBox(
         self.m_boxItemId, self.view.numberSelector.curNumber, selectTermIdList)
 end
-
-
-
 
 GemCustomizationBoxCtrl._OnReceiveServer = HL.Method(HL.Table) << function(self, args)
     local serverOpenBoxNum = 0
@@ -686,9 +578,6 @@ GemCustomizationBoxCtrl._OnReceiveServer = HL.Method(HL.Table) << function(self,
     end
 end
 
-
-
-
 GemCustomizationBoxCtrl._CheckTermGroupIndexCanSelect = HL.Method(HL.Number).Return(HL.Boolean) << function(self, index)
     local currTabCanSelectTermTypeIndexes = self.m_currSelectInfo["eachTabCanSelectTermTypeIndex"][self.m_currSelectInfo["selectTabIndex"]]
     for _, v in ipairs(currTabCanSelectTermTypeIndexes) do
@@ -698,8 +587,6 @@ GemCustomizationBoxCtrl._CheckTermGroupIndexCanSelect = HL.Method(HL.Number).Ret
     end
     return false
 end
-
-
 
 GemCustomizationBoxCtrl._TabMoveRight = HL.Method() << function(self)
     if (self.m_tabNum <= 1) then
@@ -716,8 +603,6 @@ GemCustomizationBoxCtrl._TabMoveRight = HL.Method() << function(self)
     
 end
 
-
-
 GemCustomizationBoxCtrl._TabMoveLeft = HL.Method() << function(self)
     if (self.m_tabNum <= 1) then
         return
@@ -732,9 +617,6 @@ GemCustomizationBoxCtrl._TabMoveLeft = HL.Method() << function(self)
     
     
 end
-
-
-
 
 GemCustomizationBoxCtrl._GetTermWidgetByTermId = HL.Method(HL.String).Return(HL.Any) << function(self, targetTermId)
     for i = 0, MAX_TERM_GROUP_INDEX - 1 do
@@ -756,8 +638,6 @@ GemCustomizationBoxCtrl._GetTermWidgetByTermId = HL.Method(HL.String).Return(HL.
     return nil
 end
 
-
-
 GemCustomizationBoxCtrl._TermType2LuaIndex = HL.StaticMethod(HL.Any).Return(HL.Number) << function(termType)
     if termType == CS.Beyond.GEnums.GemTermType.PrimAttrTerm then
         return 1
@@ -767,9 +647,6 @@ GemCustomizationBoxCtrl._TermType2LuaIndex = HL.StaticMethod(HL.Any).Return(HL.N
         return 3
     end
 end
-
-
-
 
 
 GemCustomizationBoxCtrl.CheckTermIdIsSelected = HL.StaticMethod(HL.String, HL.Table).Return(HL.Number)

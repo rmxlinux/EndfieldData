@@ -1,22 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
 GemCustomizationBoxSelectTabCell = HL.Class('GemCustomizationBoxSelectTabCell', UIWidgetBase)
-
 
 GemCustomizationBoxSelectTabCell.m_data = HL.Field(HL.Table)
 
-
 GemCustomizationBoxSelectTabCell.m_btnClickCallback = HL.Field(HL.Function)
-
-
 
 
 GemCustomizationBoxSelectTabCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -25,8 +13,6 @@ GemCustomizationBoxSelectTabCell._OnFirstTimeInit = HL.Override() << function(se
     end)
 end
 
-
-
 GemCustomizationBoxSelectTabCell.InitGemCustomizationBoxSelectTabCell = HL.Method() << function(self)
     self:_FirstTimeInit()
 
@@ -34,15 +20,9 @@ GemCustomizationBoxSelectTabCell.InitGemCustomizationBoxSelectTabCell = HL.Metho
     self.m_btnClickCallback = nil
 end
 
-
-
-
 GemCustomizationBoxSelectTabCell.SetBtnClickCallback = HL.Method(HL.Function) << function(self, callback)
     self.m_btnClickCallback = callback
 end
-
-
-
 
 GemCustomizationBoxSelectTabCell.SetupView = HL.Method(HL.Table) << function(self, data)
     self.m_data = data
@@ -87,8 +67,6 @@ GemCustomizationBoxSelectTabCell.SetupView = HL.Method(HL.Table) << function(sel
         end
     end
 end
-
-
 
 GemCustomizationBoxSelectTabCell._OnBtnClick = HL.Method() << function(self)
     if self.m_btnClickCallback ~= nil then

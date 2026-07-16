@@ -1,11 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailWeekRaid
 
-
-
-
 MapMarkDetailWeekRaidCtrl = HL.Class('MapMarkDetailWeekRaidCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -15,9 +11,6 @@ MapMarkDetailWeekRaidCtrl = HL.Class('MapMarkDetailWeekRaidCtrl', uiCtrl.UICtrl)
 MapMarkDetailWeekRaidCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 MapMarkDetailWeekRaidCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)

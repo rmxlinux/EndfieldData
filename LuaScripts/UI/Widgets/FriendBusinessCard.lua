@@ -1,36 +1,18 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 FriendBusinessCard = HL.Class('FriendBusinessCard', UIWidgetBase)
-
 
 FriendBusinessCard.m_roleId = HL.Field(HL.Number) << 0 
 
-
 FriendBusinessCard.m_preview = HL.Field(HL.Boolean) << false 
-
 
 FriendBusinessCard.m_hideUI = HL.Field(HL.Boolean) << false 
 
-
 FriendBusinessCard.m_isExpanded = HL.Field(HL.Boolean) << false 
-
 
 FriendBusinessCard.m_themeChange = HL.Field(HL.Boolean) << false 
 
-
 FriendBusinessCard.m_bId = HL.Field(HL.Any)
-
-
 
 
 FriendBusinessCard._OnFirstTimeInit = HL.Override() << function(self)
@@ -144,13 +126,6 @@ FriendBusinessCard._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
-
-
-
-
 FriendBusinessCard.InitFriendBusinessCard = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean, HL.String)) << function(self, roleId, preview, forceShare, themeChange, topicId)
     self:_FirstTimeInit()
 
@@ -208,8 +183,6 @@ FriendBusinessCard.InitFriendBusinessCard = HL.Method(HL.Number, HL.Opt(HL.Boole
     end
 end
 
-
-
 FriendBusinessCard._UpdateAllInfo = HL.Method() << function(self)
 
     
@@ -228,6 +201,7 @@ FriendBusinessCard._UpdateAllInfo = HL.Method() << function(self)
 
     self.view.businessCardRoleNode:InitBusinessCardRoleNode(self.m_roleId, self.m_preview or self.m_hideUI)
     self.view.businessCardMedalNode:InitBusinessCardMedalNode(self.m_roleId, roleType == CS.Beyond.Gameplay.RoleType.Self and not self.m_preview)
+    self.view.seasonTowerNode:InitSeasonTowerNode(self.m_roleId)
 
     local success, friendInfo = GameInstance.player.friendSystem:TryGetFriendInfo(self.m_roleId)
     if not success then
@@ -251,6 +225,10 @@ FriendBusinessCard._UpdateAllInfo = HL.Method() << function(self)
     end
 
     self.view.bgCloseBtn.gameObject:SetActiveIfNecessary(self.m_isExpanded or self.m_hideUI)
+end
+
+FriendBusinessCard.RefreshBirthdayInfo = HL.Method() << function(self)
+    self.view.personalInfoNode:RefreshBirthdayInfo()
 end
 
 HL.Commit(FriendBusinessCard)

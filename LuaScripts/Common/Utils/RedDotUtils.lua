@@ -338,7 +338,10 @@ function RedDotUtils.hasGachaJointPoolRedDot(poolId)
 end
 
 function RedDotUtils.hasGachaTenLtTicketRedDot(poolId)
-    local poolCfg = Tables.gachaCharPoolTable[poolId]
+    local hasCfg, poolCfg = Tables.gachaCharPoolTable:TryGetValue(poolId)
+    if not hasCfg then
+        return false
+    end
     if Utils.getItemCount(poolCfg.ticketGachaTenLt) > 0 then
         return true, UIConst.RED_DOT_TYPE.Normal
     end
@@ -465,6 +468,12 @@ function RedDotUtils.isValuableDepotTabHasNewObtainedImportantItem(type)
             return true, UIConst.RED_DOT_TYPE.Normal
         end
     end
+    for instId, bundle in cs_pairs(commercialItemList.instItems) do
+        local hasItemData, itemData = Tables.itemTable:TryGetValue(bundle.id)
+        if hasItemData and itemData.valuableDepotRedDot and GameInstance.player.inventory:IsNewItem(bundle.id, instId) then
+            return true, UIConst.RED_DOT_TYPE.Normal
+        end
+    end
 
     return false
 end
@@ -505,6 +514,49 @@ function RedDotUtils.hasContingencyContractTagHasRedDot(activityId, stageId, tag
     return true, UIConst.RED_DOT_TYPE.Normal
 end
 
+
+
+local newObtainedMusicText = "NewObtainedMusic"
+function RedDotUtils.checkMusicIsRead(musicId)
+    if string.isEmpty(musicId) then
+        return false
+    end
+
+    local _, value = ClientDataManagerInst:GetBool(newObtainedMusicText .. musicId, false, false)
+    return value
+end
+
+function RedDotUtils.setMusicRead(musicId)
+    ClientDataManagerInst:SetBool(newObtainedMusicText .. musicId, true, false)
+end
+
+
+
+local decoBuildingNew = "DecoBuildingNew-"
+function RedDotUtils.checkDecoBuildingNewIsRead(itemId)
+    local _, value = ClientDataManagerInst:GetBool(decoBuildingNew .. itemId, false, false)
+    return value
+end
+
+function RedDotUtils.setDecoBuildingNewRead(itemId)
+    if RedDotUtils.checkDecoBuildingNewIsRead(itemId) then
+        return
+    end
+    ClientDataManagerInst:SetBool(decoBuildingNew .. itemId, true, false)
+end
+
+local decoBuildingFirstGet = "DecoBuildingFirstGet-"
+function RedDotUtils.checkDecoBuildingFirstGetIsRead(itemId)
+    local _, value = ClientDataManagerInst:GetBool(decoBuildingFirstGet .. itemId, false, false)
+    return value
+end
+
+function RedDotUtils.setDecoBuildingFirstGetRead(itemId)
+    if RedDotUtils.checkDecoBuildingFirstGetIsRead(itemId) then
+        return
+    end
+    ClientDataManagerInst:SetBool(decoBuildingFirstGet .. itemId, true, false)
+end
 
 
 

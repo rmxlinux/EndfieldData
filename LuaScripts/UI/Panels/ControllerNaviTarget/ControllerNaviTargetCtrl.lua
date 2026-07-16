@@ -1,30 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local LuaNodeCache = require_ex('Common/Utils/LuaNodeCache')
 local PANEL_ID = PanelId.ControllerNaviTarget
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ControllerNaviTargetCtrl = HL.Class('ControllerNaviTargetCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -36,20 +13,13 @@ ControllerNaviTargetCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_PANEL_ORDER_RECALCULATED] = 'OnPanelOrderRecalculated',
 }
 
-
 ControllerNaviTargetCtrl.m_lateTickKey = HL.Field(HL.Number) << -1
-
 
 ControllerNaviTargetCtrl.m_currHintRect = HL.Field(HL.Any)
 
-
 ControllerNaviTargetCtrl.m_hintRectCache = HL.Field(LuaNodeCache)
 
-
 ControllerNaviTargetCtrl.m_lastSetParentPath = HL.Field(HL.String) << ""
-
-
-
 
 
 ControllerNaviTargetCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -57,25 +27,17 @@ ControllerNaviTargetCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_hintRectCache = LuaNodeCache(self.view.hintRect, self.view)
 end
 
-
-
 ControllerNaviTargetCtrl.OnShow = HL.Override() << function(self)
     self:StartTick()
 end
-
-
 
 ControllerNaviTargetCtrl.OnHide = HL.Override() << function(self)
     self:StopTick()
 end
 
-
-
 ControllerNaviTargetCtrl.OnClose = HL.Override() << function(self)
     self:StopTick()
 end
-
-
 
 ControllerNaviTargetCtrl.OnInputDeviceTypeChanged = HL.StaticMethod(HL.Opt(HL.Any)) << function(arg)
     if DeviceInfo.usingController then
@@ -89,14 +51,10 @@ ControllerNaviTargetCtrl.OnInputDeviceTypeChanged = HL.StaticMethod(HL.Opt(HL.An
     end
 end
 
-
-
 ControllerNaviTargetCtrl.RecoverHintParent = HL.Method() << function(self)
     local hintRectNode = self:_GetHintRectNode()
     hintRectNode.rectTransform:SetParent(self.view.rectTransform)
 end
-
-
 
 ControllerNaviTargetCtrl.StartTick = HL.Method() << function(self)
     self:_SyncHintRect()
@@ -105,19 +63,13 @@ ControllerNaviTargetCtrl.StartTick = HL.Method() << function(self)
     end)
 end
 
-
-
 ControllerNaviTargetCtrl.StopTick = HL.Method() << function(self)
     self.m_lateTickKey = LuaUpdate:Remove(self.m_lateTickKey)
 end
 
-
-
 ControllerNaviTargetCtrl.OnPanelOrderRecalculated = HL.Method() << function(self)
     self:_CalcCanvasOrder()
 end
-
-
 
 ControllerNaviTargetCtrl.OnControllerNaviTargetChanged = HL.Method() << function(self)
     self:_CalcCanvasOrder()
@@ -125,8 +77,6 @@ ControllerNaviTargetCtrl.OnControllerNaviTargetChanged = HL.Method() << function
     self:_SyncHintRect()
     self:_PlayHintRectAnimation()
 end
-
-
 
 ControllerNaviTargetCtrl._CalcCanvasOrder = HL.Method() << function(self)
     local target = InputManagerInst.controllerNaviManager.curTarget
@@ -136,8 +86,6 @@ ControllerNaviTargetCtrl._CalcCanvasOrder = HL.Method() << function(self)
     local canvas = target.transform:GetComponentInParent(typeof(Unity.Canvas), true)
     self:SetSortingOrder(canvas.sortingOrder + 1, false)
 end
-
-
 
 
 
@@ -153,8 +101,6 @@ ControllerNaviTargetCtrl._GetHintRectNode = HL.Method().Return(HL.Any) << functi
     self.m_currHintRect = self.m_hintRectCache:Get()
     return self.m_currHintRect
 end
-
-
 
 ControllerNaviTargetCtrl._SyncHintRect = HL.Method() << function(self)
     local hintRectNode = self:_GetHintRectNode()
@@ -201,8 +147,6 @@ ControllerNaviTargetCtrl._SyncHintRect = HL.Method() << function(self)
     end
 end
 
-
-
 ControllerNaviTargetCtrl._PlayHintRectAnimation = HL.Method() << function(self)
     local hintRectNode = self:_GetHintRectNode()
     if not hintRectNode.rectTransform.gameObject.activeSelf then
@@ -211,8 +155,6 @@ ControllerNaviTargetCtrl._PlayHintRectAnimation = HL.Method() << function(self)
     hintRectNode.animationWrapper:ClearTween()
     hintRectNode.animationWrapper:PlayInAnimation()
 end
-
-
 
 ControllerNaviTargetCtrl._SyncHintRectTransformParent = HL.Method() << function(self)
     local hintRectNode = self:_GetHintRectNode()
@@ -243,8 +185,6 @@ ControllerNaviTargetCtrl._SyncHintRectTransformParent = HL.Method() << function(
     end
     hintRectNode.confirmKeyHint.transform.localScale = Vector3.one / hint.localScale.x
 end
-
-
 
 
 

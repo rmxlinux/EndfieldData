@@ -2,21 +2,12 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 local CHAPTER_ICON_PATH = "Mission/ChapterIconNew"
 local CHAPTER_BG_ICON_PATH = "Mission/ChapterBgIconNew"
 
-
-
-
-
 BusinessCardProcessNode = HL.Class('BusinessCardProcessNode', UIWidgetBase)
-
-
 
 
 BusinessCardProcessNode._OnFirstTimeInit = HL.Override() << function(self)
     
 end
-
-
-
 
 BusinessCardProcessNode.InitBusinessCardProcessNodeByRoleId = HL.Method(HL.Number) << function(self, roleId)
     self:_FirstTimeInit()
@@ -33,9 +24,6 @@ BusinessCardProcessNode.InitBusinessCardProcessNodeByRoleId = HL.Method(HL.Numbe
         logger.error("未找到角色信息，roleId: " .. roleId)
     end
 end
-
-
-
 
 
 

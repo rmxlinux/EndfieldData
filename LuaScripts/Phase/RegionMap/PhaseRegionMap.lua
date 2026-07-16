@@ -1,30 +1,8 @@
 
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.RegionMap
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseRegionMap = HL.Class('PhaseRegionMap', phaseBase.PhaseBase)
 local Panels = { PanelId.RegionMap, PanelId.RegionMap3D }
-
 
 
 
@@ -34,8 +12,6 @@ PhaseRegionMap.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CLICK_REGIONMAP_LEVEL_BTN] = { 'OnClickRegionMapLevelBtn' ,true},
     [MessageConst.ON_CLICK_REGIONMAP_LOCK] = { 'OnClickRegionMapLock' ,true},
 }
-
-
 
 
 
@@ -63,11 +39,6 @@ PhaseRegionMap._OnInit = HL.Override() << function(self)
     end
 end
 
-
-
-
-
-
 PhaseRegionMap.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
     if transitionType == PhaseConst.EPhaseState.TransitionIn then
         UIManager:PreloadPanelAsset(PanelId.RegionMap3D, PHASE_ID)
@@ -90,17 +61,11 @@ end
 
 
 
-
-
-
-
 PhaseRegionMap._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if not fastMode then
         Notify(MessageConst.SHOW_BLOCK_GLITCH_TRANSITION)
     end
 end
-
-
 
 
 PhaseRegionMap._OnActivated = HL.Override() << function(self)
@@ -109,17 +74,11 @@ PhaseRegionMap._OnActivated = HL.Override() << function(self)
 end
 
 
-
-
 PhaseRegionMap._OnDeActivated = HL.Override() << function(self)
     if not self.m_behindPopupPhase then
         self:_ClearCameraCfg()
     end
 end
-
-
-
-
 
 
 PhaseRegionMap._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
@@ -143,14 +102,14 @@ PhaseRegionMap._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table))
                 wrapper:ClearTween(false)
             end
         end
+        
+        
+        
+        CameraManager:RemoveMainCamCullingMaskConfig("RegionMap")
         Notify(MessageConst.SHOW_BLOCK_GLITCH_TRANSITION)
     end
     Notify(MessageConst.HIDE_COMMON_HOVER_TIP)
 end
-
-
-
-
 
 
 PhaseRegionMap._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
@@ -159,23 +118,19 @@ PhaseRegionMap._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Tabl
 end
 
 
-
-
-
-
 PhaseRegionMap._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self.m_behindPopupPhase = false
     self:_InitCameraCfg()
 end
 
 
-
-
 PhaseRegionMap._OnDestroy = HL.Override() << function(self)
     UIManager:Show(PanelId.Touch)
+    
+    
+    
+    CameraManager:RemoveMainCamCullingMaskConfig("RegionMap")
 end
-
-
 
 
 
@@ -188,17 +143,11 @@ PhaseRegionMap.OnCommonBackClicked = HL.Method() << function (self)
     MapUtils.closeMapRelatedPhase()
 end
 
-
 PhaseRegionMap.m_closeLock = HL.Field(HL.Boolean) << false
-
-
 
 PhaseRegionMap.OnClickRegionMapLock = HL.Method() << function (self)
     self.m_closeLock = true
 end
-
-
-
 
 PhaseRegionMap.OnClickRegionMapLevelBtn = HL.Method(HL.Table) << function (self, data)
     self.m_RegionMap3DPanel.uiCtrl:OnClickLevelBtn(data.levelId, data.insId)
@@ -206,19 +155,13 @@ end
 
 
 
-
 PhaseRegionMap.m_RegionMap3DPanel = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseRegionMap.m_RegionMapPanel = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseRegionMap.m_inited = HL.Field(HL.Boolean) << false
 
-
 PhaseRegionMap.m_behindPopupPhase = HL.Field(HL.Boolean) << false
-
-
 
 PhaseRegionMap._InitPhaseItems = HL.Method() << function(self)
     if not self.m_inited then
@@ -237,22 +180,19 @@ PhaseRegionMap._InitPhaseItems = HL.Method() << function(self)
     self.m_closeLock = false
 end
 
-
-
 PhaseRegionMap._InitCameraCfg = HL.Method() << function(self)
-    UIManager:ChangeHideCameraPanelState(self.m_RegionMap3DPanel.uiCtrl.panelId, UIConst.HIDE_CAMERA_PANEL_STATE.In) 
     CameraManager:SetUICameraPostProcess(true)
     CameraManager:AddUICamCullingMaskConfig("RegionMap", UIConst.LAYERS.UIPP)
+    
+    
+    
+    CameraManager:AddMainCamCullingMaskConfig("RegionMap", UIConst.LAYERS.Nothing)
 end
-
-
 
 PhaseRegionMap._ClearCameraCfg = HL.Method() << function(self)
     CameraManager:SetUICameraPostProcess(false)
     CameraManager:RemoveUICamCullingMaskConfig("RegionMap")
 end
-
-
 
 PhaseRegionMap.GetCurStateArg = HL.Override().Return(HL.Any) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}

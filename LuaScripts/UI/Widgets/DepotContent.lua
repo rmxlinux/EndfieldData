@@ -1,184 +1,79 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DepotContent = HL.Class('DepotContent', UIWidgetBase)
-
 
 
 
 
 DepotContent.canDrag = HL.Field(HL.Boolean) << false
 
-
 DepotContent.canPlace = HL.Field(HL.Boolean) << false
-
 
 DepotContent.canSplit = HL.Field(HL.Boolean) << false
 
-
 DepotContent.canClear = HL.Field(HL.Boolean) << false
-
 
 DepotContent.m_showEmptyChoice = HL.Field(HL.Boolean) << false
 
-
 DepotContent.m_showHistory = HL.Field(HL.Boolean) << false
-
 
 DepotContent.isIncremental = HL.Field(HL.Boolean) << false
 
-
 DepotContent.sortKeys = HL.Field(HL.Table)
-
 
 DepotContent.m_allItemInfoList = HL.Field(HL.Table)
 
-
 DepotContent.m_allItemInfoMap = HL.Field(HL.Table)
-
 
 DepotContent.m_curDropHighlightId = HL.Field(HL.String) << ''
 
-
 DepotContent.m_customItemInfoListPreProcess = HL.Field(HL.Function)
-
 
 DepotContent.m_customOnUpdateCell = HL.Field(HL.Function)
 
-
 DepotContent.m_customSetActionMenuArgs = HL.Field(HL.Function)
-
 
 DepotContent.m_customItemInfoListPostProcess = HL.Field(HL.Function)
 
-
 DepotContent.m_insertCustomListData = HL.Field(HL.Function)
-
 
 DepotContent.m_beforeFindAndHighlightForDrop = HL.Field(HL.Function)
 
-
 DepotContent.m_itemCellExtraInfo = HL.Field(HL.Table)
-
 
 DepotContent.m_itemInfoCount = HL.Field(HL.Number) << 0
 
-
 DepotContent.m_itemInfoList = HL.Field(HL.Table)
-
 
 DepotContent.m_onClickItemAction = HL.Field(HL.Function)
 
-
 DepotContent.m_valuableDepotType = HL.Field(GEnums.ItemValuableDepotType)
-
 
 DepotContent.m_acceptDrop = HL.Field(HL.Boolean) << false
 
-
 DepotContent.m_acceptQuickDrop = HL.Field(HL.Boolean) << false
-
 
 DepotContent.m_disableAutoHighlightForDrop = HL.Field(HL.Boolean) << false
 
-
 DepotContent.m_isFactoryDepot = HL.Field(HL.Boolean) << false
-
 
 DepotContent.m_updateStopped = HL.Field(HL.Boolean) << false
 
-
 DepotContent.m_dragSourceType = HL.Field(HL.Number) << -1
-
 
 DepotContent.dropHelper = HL.Field(HL.Forward('UIDropHelper'))
 
-
 DepotContent.m_getCell = HL.Field(HL.Function)
-
 
 DepotContent.m_itemIndexMap = HL.Field(HL.Table) 
 
-
 DepotContent.m_nonValidShowTypes = HL.Field(HL.Table)
-
 
 DepotContent.m_showingTypes = HL.Field(HL.Table)
 
-
 DepotContent.m_domainId = HL.Field(HL.String) << ""
 
-
 DepotContent.m_missionItemIds = HL.Field(HL.Table)
-
-
 
 
 
@@ -245,8 +140,6 @@ DepotContent._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 DepotContent._GetDepot = HL.Method().Return(CS.Beyond.Gameplay.InventorySystem.ItemDepot) << function(self)
     if self.m_isFactoryDepot then
         local factoryDepot = GameInstance.player.inventory.factoryDepot
@@ -260,11 +153,6 @@ DepotContent._GetDepot = HL.Method().Return(CS.Beyond.Gameplay.InventorySystem.I
         return GameInstance.player.inventory.valuableDepots[self.m_valuableDepotType]:GetOrFallback(Utils.getCurrentScope())
     end
 end
-
-
-
-
-
 
 DepotContent.InitDepotContent = HL.Method(GEnums.ItemValuableDepotType, HL.Opt(HL.Function, HL.Table)) <<
 function(self, valuableDepotType, onClickItemAction, otherArgs)
@@ -348,9 +236,6 @@ function(self, valuableDepotType, onClickItemAction, otherArgs)
     self:RefreshAll()
 end
 
-
-
-
 DepotContent.StopUpdate = HL.Method(HL.Boolean) << function(self, cacheAllCell)
     self.m_updateStopped = true
     if cacheAllCell then
@@ -361,8 +246,6 @@ DepotContent.StopUpdate = HL.Method(HL.Boolean) << function(self, cacheAllCell)
     end
 end
 
-
-
 DepotContent.StartUpdate = HL.Method() << function(self)
     if not self.m_updateStopped then
         return
@@ -370,12 +253,6 @@ DepotContent.StartUpdate = HL.Method() << function(self)
     self.m_updateStopped = false
     self:RefreshAll()
 end
-
-
-
-
-
-
 
 DepotContent._CreateItemInfo = HL.Method(HL.String, HL.Opt(HL.Number, HL.Number, HL.Boolean)).Return(HL.Table) <<
 function(self, id, count, instId, isInfinite)
@@ -400,10 +277,6 @@ function(self, id, count, instId, isInfinite)
     return info
 end
 
-
-
-
-
 DepotContent._IsInfiniteItemInDepot = HL.Method(HL.String, HL.Any).Return(HL.Boolean) << function(self, itemId, depot)
     if not self.m_isFactoryDepot then
         return false
@@ -421,25 +294,15 @@ DepotContent._IsInfiniteItemInDepot = HL.Method(HL.String, HL.Any).Return(HL.Boo
     return isInfinite
 end
 
-
-
-
 DepotContent.ToggleAcceptDrop = HL.Method(HL.Boolean) << function(self, active)
     self.m_acceptDrop = active
 end
-
-
-
 
 DepotContent.ToggleQuickAcceptDrop = HL.Method(HL.Boolean) << function(self, active)
     self.m_acceptQuickDrop = active
 end
 
-
 DepotContent.m_curDraggingDragHelper = HL.Field(HL.Forward('UIDragHelper'))
-
-
-
 
 DepotContent.OnStartUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if self.m_updateStopped then
@@ -468,9 +331,6 @@ DepotContent.OnStartUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(s
     end
 end
 
-
-
-
 DepotContent.OnEndUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     self.view.dragMask.gameObject:SetActive(false)
 
@@ -493,9 +353,6 @@ DepotContent.OnEndUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(sel
         Notify(MessageConst.HIDE_ITEM_DRAG_HELPER)
     end
 end
-
-
-
 
 
 DepotContent.RefreshAll = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGraduallyShow)
@@ -568,10 +425,6 @@ DepotContent.RefreshAll = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGr
     self:ChangeShowingType(self.m_showingTypes, skipGraduallyShow)
 end
 
-
-
-
-
 DepotContent.ChangeShowingType = HL.Method(HL.Table, HL.Opt(HL.Boolean)) <<
 function(self, showingTypes, skipGraduallyShow)
     local itemInfoList = {}
@@ -586,9 +439,6 @@ function(self, showingTypes, skipGraduallyShow)
     self.m_itemInfoList = itemInfoList
     self:OnSortChanged(skipGraduallyShow)
 end
-
-
-
 
 DepotContent.OnSortChanged = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGraduallyShow)
     local list = self.m_itemInfoList
@@ -633,15 +483,9 @@ DepotContent.OnSortChanged = HL.Method(HL.Opt(HL.Boolean)) << function(self, ski
     self.view.emptyTarget.gameObject:SetActive(self.m_itemInfoCount == 0)
 end
 
-
-
-
 DepotContent.GetItemIndex = HL.Method(HL.String).Return(HL.Opt(HL.Number)) << function(self, itemId)
     return self.m_itemIndexMap[itemId]
 end
-
-
-
 
 DepotContent.GetItemCount = HL.Method(HL.String).Return(HL.Number) << function(self, itemId)
     local index = self.m_itemIndexMap[itemId]
@@ -649,15 +493,9 @@ DepotContent.GetItemCount = HL.Method(HL.String).Return(HL.Number) << function(s
     return info.count
 end
 
-
-
-
 DepotContent.GetCell = HL.Method(HL.Any).Return(HL.Opt(HL.Forward("ItemSlot"))) << function(self, objOrIndex)
     return self.m_getCell(objOrIndex)
 end
-
-
-
 
 DepotContent.CheckAndNaviToTargetCell = HL.Method(HL.Function) << function(self, checkFunc)
     local findTag = false
@@ -677,8 +515,6 @@ DepotContent.CheckAndNaviToTargetCell = HL.Method(HL.Function) << function(self,
     end
 end
 
-
-
 DepotContent.GetCurNaviTargetSlot = HL.Method().Return(HL.Number, HL.Opt(HL.Forward("ItemSlot"))) << function(self)
     local count = self.view.itemList.count
     for i = 1, count do
@@ -693,17 +529,11 @@ DepotContent.GetCurNaviTargetSlot = HL.Method().Return(HL.Number, HL.Opt(HL.Forw
     return -1
 end
 
-
-
 DepotContent.GetAllItemInfo = HL.Method().Return(HL.Opt(HL.Table)) << function(self)
     if self.m_allItemInfoList ~= nil then
         return self.m_allItemInfoList
     end
 end
-
-
-
-
 
 DepotContent._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(self, object, luaIndex)
     local cell = self.m_getCell(object)
@@ -801,9 +631,6 @@ DepotContent._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(self, 
     end
 end
 
-
-
-
 DepotContent._OnClickItem = HL.Method(HL.Number) << function(self, luaIndex)
     local item = self.m_itemInfoList[luaIndex]
     if not item then
@@ -818,9 +645,6 @@ DepotContent._OnClickItem = HL.Method(HL.Number) << function(self, luaIndex)
         cell.item:Read()
     end
 end
-
-
-
 
 
 DepotContent.OnDropItem = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
@@ -844,10 +668,6 @@ DepotContent.OnDropItem = HL.Method(HL.Forward('UIDragHelper')) << function(self
         GameInstance.player.inventory:ItemBagMoveToFactoryDepot(Utils.getCurrentScope(), Utils.getCurrentChapterId(), dragInfo.csIndex, mode)
     end
 end
-
-
-
-
 
 DepotContent._OnDepotChanged = HL.Method(HL.Opt(CS.Beyond.Gameplay.InventorySystem.DepotCachedChange, HL.Boolean)) <<
 function(self, depotChange, refreshAll)
@@ -886,10 +706,6 @@ function(self, depotChange, refreshAll)
     end
 end
 
-
-
-
-
 DepotContent._RefreshSingleItemCount = HL.Method(HL.Number, HL.Number) << function(self, slotIndex, count)
     
     local info = self.m_itemInfoList[slotIndex]
@@ -905,8 +721,6 @@ DepotContent._RefreshSingleItemCount = HL.Method(HL.Number, HL.Number) << functi
         self:_OnUpdateCell(obj, slotIndex)
     end
 end
-
-
 
 DepotContent._FindAndHighlightForDrop = HL.Method() << function(self)
     if self.m_disableAutoHighlightForDrop or not self.m_curDraggingDragHelper then
@@ -937,8 +751,6 @@ DepotContent._FindAndHighlightForDrop = HL.Method() << function(self)
     self.view.itemList:ScrollToIndex(CSIndex(index))
 end
 
-
-
 DepotContent._CancelDropHighlight = HL.Method() << function(self)
     if self.m_disableAutoHighlightForDrop then
         return
@@ -964,10 +776,7 @@ DepotContent._CancelDropHighlight = HL.Method() << function(self)
     end
 end
 
-
 DepotContent.m_readItemIds = HL.Field(HL.Table)
-
-
 
 DepotContent.ReadCurShowingItems = HL.Method() << function(self)
     if not self.m_readItemIds or not next(self.m_readItemIds) then
@@ -980,9 +789,6 @@ DepotContent.ReadCurShowingItems = HL.Method() << function(self)
     self.m_readItemIds = {}
     GameInstance.player.inventory:ReadNewItems(ids)
 end
-
-
-
 
 
 DepotContent._ShowMobileDragHelper = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
@@ -1055,9 +861,6 @@ DepotContent._ShowMobileDragHelper = HL.Method(HL.Forward('UIDragHelper')) << fu
     end
     Notify(MessageConst.SHOW_ITEM_DRAG_HELPER, args)
 end
-
-
-
 
 
 DepotContent._PlayDropAnimation = HL.Method(HL.Table) << function(self, args)

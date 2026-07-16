@@ -3,137 +3,63 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PHASE_ID = PhaseId.FriendShipPresent
 local INSTRUCTION_ID = "spaceship_gift_send"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FriendShipPresentCtrl = HL.Class('FriendShipPresentCtrl', uiCtrl.UICtrl)
-
 
 FriendShipPresentCtrl.m_charId = HL.Field(HL.String) << ""
 
-
 FriendShipPresentCtrl.m_level = HL.Field(HL.Number) << 1
-
 
 FriendShipPresentCtrl.m_charTagData = HL.Field(HL.Userdata)
 
-
 FriendShipPresentCtrl.m_gifts = HL.Field(HL.Table)
-
 
 FriendShipPresentCtrl.m_filteredGifts = HL.Field(HL.Table)
 
-
 FriendShipPresentCtrl.m_sentGifts = HL.Field(HL.Table)
-
 
 FriendShipPresentCtrl.m_selected = HL.Field(HL.Table)
 
-
 FriendShipPresentCtrl.m_curSelectedNum = HL.Field(HL.Number) << 0
-
 
 FriendShipPresentCtrl.m_curSelectedIncrease = HL.Field(HL.Number) << 0
 
-
 FriendShipPresentCtrl.m_curIncreaseInfo = HL.Field(HL.Table)
-
 
 FriendShipPresentCtrl.m_getGiftItemCell = HL.Field(HL.Function)
 
-
 FriendShipPresentCtrl.m_getSentGiftItemCell = HL.Field(HL.Function)
-
 
 FriendShipPresentCtrl.m_itemTagCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 FriendShipPresentCtrl.m_charTagCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 FriendShipPresentCtrl.m_successCor = HL.Field(HL.Thread)
 
-
 FriendShipPresentCtrl.s_sortInfo = HL.StaticField(HL.Table) << {}
-
 
 FriendShipPresentCtrl.m_selectedFilterTags = HL.Field(HL.Table)
 
 
 
-
 FriendShipPresentCtrl.m_decreaseButtonBindingId = HL.Field(HL.Number) << -1
 
+FriendShipPresentCtrl.m_decreaseButtonLongPressBindingId = HL.Field(HL.Number) << -1
+
+FriendShipPresentCtrl.m_decreaseButtonReleaseBindingId = HL.Field(HL.Number) << -1
+
+FriendShipPresentCtrl.m_increaseButtonLongPressBindingId = HL.Field(HL.Number) << -1
+
+FriendShipPresentCtrl.m_increaseButtonReleaseBindingId = HL.Field(HL.Number) << -1
 
 FriendShipPresentCtrl.m_focusItemId = HL.Field(HL.String) << ""
 
-
 FriendShipPresentCtrl.m_focusLuaIndex = HL.Field(HL.Number) << -1
-
 
 FriendShipPresentCtrl.m_tipsItemId = HL.Field(HL.String) << ""
 
-
 FriendShipPresentCtrl.m_tipsLogicVisible = HL.Field(HL.Boolean) << false
 
+FriendShipPresentCtrl.m_itemFillCor = HL.Field(HL.Thread)
 
 
 
@@ -146,22 +72,14 @@ FriendShipPresentCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHAR_FRIENDSHIP_SEND_CHAR_GIFT_SUCCESS] = '_OnCharSendPresentSuccess',
 }
 
-
-
-
 FriendShipPresentCtrl._OnItemRefresh = HL.Method(HL.Table) << function(self, _)
     
     self:_RefreshGiftList()
 end
 
-
-
 FriendShipPresentCtrl._OnCharPresentRefresh = HL.Method() << function(self)
     self:_RefreshFriendshipInfo(true)
 end
-
-
-
 
 FriendShipPresentCtrl._OnCharSendPresentSuccess = HL.Method(HL.Table) << function(self, data)
     local level = CSPlayerDataUtil.GetFriendshipLevelByChar(self.m_charId)
@@ -175,9 +93,6 @@ FriendShipPresentCtrl._OnCharSendPresentSuccess = HL.Method(HL.Table) << functio
     })
     self.m_level = level
 end
-
-
-
 
 
 FriendShipPresentCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -265,7 +180,9 @@ FriendShipPresentCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
+FriendShipPresentCtrl.OnClose = HL.Override() << function(self)
+    self:_StopFillTimer()
+end
 
 
 
@@ -296,9 +213,6 @@ FriendShipPresentCtrl.InitFilterButton = HL.Method() << function(self)
     self.view.filterBtn:InitFilterBtn(filterConfig)
 end
 
-
-
-
 FriendShipPresentCtrl.OnFilterChanged = HL.Method(HL.Table) << function(self, selectedTags)
     self.m_selectedFilterTags = selectedTags
     local filteredGifts = self:GetFilterResult(self.m_selectedFilterTags, true)
@@ -322,16 +236,9 @@ FriendShipPresentCtrl.OnFilterChanged = HL.Method(HL.Table) << function(self, se
     end
 end
 
-
-
-
 FriendShipPresentCtrl.GetFilterResultCount = HL.Method(HL.Table).Return(HL.Number) << function(self, selectedTags)
     return #self:GetFilterResult(selectedTags)
 end
-
-
-
-
 
 FriendShipPresentCtrl.GetFilterResult = HL.Method(HL.Table, HL.Opt(HL.Boolean)).Return(HL.Table) << function(self, selectedTags, withSelected)
     if selectedTags == nil or #selectedTags == 0 then
@@ -373,16 +280,12 @@ end
 
 
 
-
-
 FriendShipPresentCtrl.OnShow = HL.Override() << function(self)
     self:_RefreshCharInfo()
     self:_RefreshFriendshipInfo(true)
     self:_RefreshGiftList()
     self:_RefreshButtonState()
 end
-
-
 
 FriendShipPresentCtrl._RefreshCharInfo = HL.Method() << function(self)
     local charId = self.m_charId
@@ -423,8 +326,6 @@ FriendShipPresentCtrl._RefreshCharInfo = HL.Method() << function(self)
     end
 end
 
-
-
 FriendShipPresentCtrl.InitFriendshipNode = HL.Method() << function(self)
     local rightTrustNode = self.view.rightTrustNode
     local giftGainRatioLevels = Tables.spaceshipCharGiftGainRatio
@@ -433,9 +334,6 @@ FriendShipPresentCtrl.InitFriendshipNode = HL.Method() << function(self)
     rightTrustNode.midSmiley:InitCircularProgressBar(giftGainRatioLevels[2].maxLimit - giftGainRatioLevels[1].maxLimit)
     rightTrustNode.smallSmiley:InitCircularProgressBar(giftGainRatioLevels[3].maxLimit - giftGainRatioLevels[2].maxLimit)
 end
-
-
-
 
 FriendShipPresentCtrl._RefreshFriendshipInfo = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     isInit = isInit or false
@@ -511,9 +409,6 @@ FriendShipPresentCtrl._RefreshFriendshipInfo = HL.Method(HL.Opt(HL.Boolean)) << 
     rightTrustNode.sendText.text = sendTips
 end
 
-
-
-
 FriendShipPresentCtrl._GetCharLike = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
     local giftData = Tables.giftItemTable:GetValue(itemId)
     local tagList = giftData.tagList
@@ -529,9 +424,6 @@ FriendShipPresentCtrl._GetCharLike = HL.Method(HL.String).Return(HL.Boolean) << 
     return like
 end
 
-
-
-
 FriendShipPresentCtrl._GetIsPopularGift = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
     local giftData = Tables.giftItemTable:GetValue(itemId)
     if not giftData.isPopular then
@@ -540,9 +432,6 @@ FriendShipPresentCtrl._GetIsPopularGift = HL.Method(HL.String).Return(HL.Boolean
 
     return Utils.isCurTimeInTimeIdRange(giftData.finishPopularTimeId)
 end
-
-
-
 
 FriendShipPresentCtrl._GetIsShowPopularLeftTime = HL.Method(HL.String).Return(HL.Boolean, HL.Number) << function(self, itemId)
     local giftData = Tables.giftItemTable:GetValue(itemId)
@@ -566,9 +455,6 @@ FriendShipPresentCtrl._GetIsShowPopularLeftTime = HL.Method(HL.String).Return(HL
     return true, closeTs
 end
 
-
-
-
 FriendShipPresentCtrl._GetCharPreferTagMatch = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
     local giftData = Tables.giftItemTable:GetValue(itemId)
     local giftPreferTag = giftData.giftPreferTag
@@ -576,8 +462,6 @@ FriendShipPresentCtrl._GetCharPreferTagMatch = HL.Method(HL.String).Return(HL.Bo
     local charPreferTags = charTagData.giftPreferTagId
     return lume.find(charPreferTags, giftPreferTag) ~= nil
 end
-
-
 
 FriendShipPresentCtrl._RefreshSentGifts = HL.Method() << function(self)
     self.m_sentGifts = {}
@@ -616,8 +500,6 @@ FriendShipPresentCtrl._RefreshSentGifts = HL.Method() << function(self)
     self.view.bottomList.sentGiftScrollList:UpdateCount(#self.m_sentGifts)
     self.view.sentGiftNaviGroup:NaviToThisGroup(true)
 end
-
-
 
 FriendShipPresentCtrl._RefreshGiftList = HL.Method() << function(self)
     if self:_IsMax() then
@@ -664,9 +546,6 @@ FriendShipPresentCtrl._RefreshGiftList = HL.Method() << function(self)
 end
 
 
-
-
-
 FriendShipPresentCtrl._GetCurFriendshipPercent = HL.Method(HL.Opt(HL.Number)).Return(HL.Number, HL.Number) << function(self, tmpValue)
     tmpValue = tmpValue or 0
     local curLevel = CSPlayerDataUtil.GetFriendshipLevelByChar(self.m_charId)
@@ -694,9 +573,6 @@ FriendShipPresentCtrl._GetCurFriendshipPercent = HL.Method(HL.Opt(HL.Number)).Re
 end
 
 
-
-
-
 FriendShipPresentCtrl._IsMax = HL.Method(HL.Opt(HL.Number)).Return(HL.Boolean) << function(self, tmpNum)
     local isMax
     if tmpNum then
@@ -712,16 +588,10 @@ FriendShipPresentCtrl._IsMax = HL.Method(HL.Opt(HL.Number)).Return(HL.Boolean) <
     return isMax
 end
 
-
-
 FriendShipPresentCtrl._IsTodayMax = HL.Method().Return(HL.Boolean) << function(self)
     local friendShipIncreaseRemain = CSPlayerDataUtil.GetCharDailyRemainFriendshipIncrease(self.m_charId)
     return friendShipIncreaseRemain <= 0
 end
-
-
-
-
 
 
 FriendShipPresentCtrl._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(self, optData, isIncremental)
@@ -731,9 +601,6 @@ FriendShipPresentCtrl._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << functi
     self.view.normalNaviGroup:NaviToThisGroup(true)
 end
 
-
-
-
 FriendShipPresentCtrl._GetPreferTagIcon = HL.Method(HL.String).Return(HL.String) << function(self, preferTagId)
     local success, data = Tables.giftPreferTagConfigTable:TryGetValue(preferTagId)
     if success then
@@ -742,10 +609,6 @@ FriendShipPresentCtrl._GetPreferTagIcon = HL.Method(HL.String).Return(HL.String)
         return ""
     end
 end
-
-
-
-
 
 FriendShipPresentCtrl._RefreshGiftItemCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, luaIndex)
     local itemId = self.m_filteredGifts[luaIndex].itemId
@@ -761,7 +624,17 @@ FriendShipPresentCtrl._RefreshGiftItemCell = HL.Method(HL.Userdata, HL.Number) <
 
     itemCell.item:SetEnableHoverTips(false)
     itemCell.item:InitItem(data, function()
-        self:_OnItemSelectClicked(itemId, luaIndex)
+        self:_OnItemSelectClicked(itemId, luaIndex, 1)
+    end)
+
+    itemCell.item.view.button.onLongPress:RemoveAllListeners()
+    itemCell.item.view.button.onLongPress:AddListener(function()
+        self:_StartFillTimer(itemId, luaIndex, 10)
+    end)
+
+    itemCell.item.view.button.onPressEnd:RemoveAllListeners()
+    itemCell.item.view.button.onPressEnd:AddListener(function()
+        self:_StopFillTimer()
     end)
 
     itemCell.item.view.button.onIsNaviTargetChanged = function(isNaviTarget)
@@ -789,13 +662,19 @@ FriendShipPresentCtrl._RefreshGiftItemCell = HL.Method(HL.Userdata, HL.Number) <
 
     itemCell.btnMinus.onClick:RemoveAllListeners()
     itemCell.btnMinus.onClick:AddListener(function()
-        self:_OnItemMinusClicked(itemId, luaIndex)
+        self:_OnItemMinusClicked(itemId, luaIndex, 1)
+    end)
+
+    itemCell.btnMinus.onLongPress:RemoveAllListeners()
+    itemCell.btnMinus.onLongPress:AddListener(function()
+        self:_StartFillTimer(itemId, luaIndex, -10)
+    end)
+
+    itemCell.btnMinus.onPressEnd:RemoveAllListeners()
+    itemCell.btnMinus.onPressEnd:AddListener(function()
+        self:_StopFillTimer()
     end)
 end
-
-
-
-
 
 FriendShipPresentCtrl._RefreshSentGiftItemCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, luaIndex)
     local itemId = self.m_sentGifts[luaIndex].itemId
@@ -839,10 +718,6 @@ FriendShipPresentCtrl._RefreshSentGiftItemCell = HL.Method(HL.Userdata, HL.Numbe
 end
 
 
-
-
-
-
 FriendShipPresentCtrl._OnItemFocused = HL.Method(HL.String, HL.Number) << function(self, itemId, luaIndex)
     if not DeviceInfo.usingController then
         return
@@ -853,16 +728,16 @@ FriendShipPresentCtrl._OnItemFocused = HL.Method(HL.String, HL.Number) << functi
         return
     end
 
+    if self.m_focusItemId ~= itemId or self.m_focusLuaIndex ~= luaIndex then
+        self:_StopFillTimer()
+    end
+
     self.m_focusItemId = itemId
     self.m_focusLuaIndex = luaIndex
 
     self:_RefreshInputKeyHint(itemId, luaIndex)
     self:_RefreshTips(true, itemId)
 end
-
-
-
-
 
 FriendShipPresentCtrl._RefreshInputKeyHint = HL.Method(HL.String, HL.Number) << function(self, itemId, luaIndex)
     if not DeviceInfo.usingController then
@@ -881,30 +756,52 @@ FriendShipPresentCtrl._RefreshInputKeyHint = HL.Method(HL.String, HL.Number) << 
 
     if self.m_decreaseButtonBindingId < 0 then
         self.m_decreaseButtonBindingId = self:BindInputPlayerAction("gift_send_decrease_item_count", function()
-            self:_OnItemMinusClicked(self.m_focusItemId, self.m_focusLuaIndex)
+            self:_OnItemMinusClicked(self.m_focusItemId, self.m_focusLuaIndex, 1)
         end)
 
         InputManagerInst:SetBindingText(self.m_decreaseButtonBindingId, Language.LUA_GIFT_COUNT_DECREASE)
+    end
+
+    if self.m_decreaseButtonLongPressBindingId < 0 then
+        self.m_decreaseButtonLongPressBindingId = self:BindInputPlayerAction("gift_send_decrease_item_count_long_press", function()
+            self:_StartFillTimer(self.m_focusItemId, self.m_focusLuaIndex, -10)
+        end)
+    end
+
+    if self.m_decreaseButtonReleaseBindingId < 0 then
+        self.m_decreaseButtonReleaseBindingId = self:BindInputPlayerAction("gift_send_decrease_item_count_release", function()
+            self:_StopFillTimer()
+        end)
+    end
+
+    if self.m_increaseButtonLongPressBindingId < 0 then
+        self.m_increaseButtonLongPressBindingId = self:BindInputPlayerAction("gift_send_increase_item_count_long_press", function()
+            self:_StartFillTimer(self.m_focusItemId, self.m_focusLuaIndex, 10)
+        end)
+    end
+
+    if self.m_increaseButtonReleaseBindingId < 0 then
+        self.m_increaseButtonReleaseBindingId = self:BindInputPlayerAction("gift_send_increase_item_count_release", function()
+            self:_StopFillTimer()
+        end)
     end
 
     local itemCell = cell.listCellFriendshipUpgrade
     if selectNum > 0 then
         InputManagerInst:SetBindingText(itemCell.item.view.button.hoverConfirmBindingId, Language.LUA_GIFT_COUNT_ADD)
         InputManagerInst:ToggleBinding(self.m_decreaseButtonBindingId, true)
+        InputManagerInst:ToggleBinding(self.m_decreaseButtonLongPressBindingId, true)
     else
         InputManagerInst:SetBindingText(itemCell.item.view.button.hoverConfirmBindingId, Language.LUA_GIFT_SELECT_ITEM)
         InputManagerInst:ToggleBinding(self.m_decreaseButtonBindingId, false)
+        InputManagerInst:ToggleBinding(self.m_decreaseButtonLongPressBindingId, false)
     end
 end
 
-
-
-
-
-FriendShipPresentCtrl._OnItemSelectClicked = HL.Method(HL.String, HL.Number) << function(self, itemId, luaIndex)
+FriendShipPresentCtrl._OnItemSelectClicked = HL.Method(HL.String, HL.Number, HL.Number) << function(self, itemId, luaIndex, addCount)
     local count = Utils.getItemCount(itemId)
     local selectNum = self.m_selected[itemId] or 0
-    local tmpSelectNum = selectNum + 1
+    local tmpSelectNum = selectNum + addCount
 
     if not DeviceInfo.usingController then
         self:_RefreshTips(true, itemId)
@@ -939,13 +836,26 @@ FriendShipPresentCtrl._OnItemSelectClicked = HL.Method(HL.String, HL.Number) << 
 
     
     if count < tmpSelectNum then
-        self:Notify(MessageConst.SHOW_TOAST, Language.LUA_SPACESHIP_GIFT_EMPTY)
-        return
+        if count > selectNum then
+            tmpSelectNum = count
+        else
+            self:Notify(MessageConst.SHOW_TOAST, Language.LUA_SPACESHIP_GIFT_EMPTY)
+            return
+        end
     end
 
     if friendShipIncreaseRemain == 0 or self.m_curSelectedIncrease >= friendShipIncreaseRemain then
         self:Notify(MessageConst.SHOW_TOAST, Language.LUA_GIFT_DAILY_FRIENDSHIP_INCREASE_LIMITED)
         return
+    end
+
+    local realAddCount = tmpSelectNum - selectNum
+    if realAddCount > 1 then
+        local maxMoreSendCount = self:_GetGiftMaxMoreSendCount(itemId)
+        if realAddCount > maxMoreSendCount then
+            tmpSelectNum = selectNum + maxMoreSendCount
+            self:Notify(MessageConst.SHOW_TOAST, Language.LUA_GIFT_DAILY_FRIENDSHIP_INCREASE_LIMITED)
+        end
     end
 
     if self:_IsMax(self.m_curSelectedIncrease) then
@@ -964,7 +874,23 @@ FriendShipPresentCtrl._OnItemSelectClicked = HL.Method(HL.String, HL.Number) << 
     self:_RefreshButtonState()
 end
 
+FriendShipPresentCtrl._StartFillTimer = HL.Method(HL.String, HL.Number, HL.Number) << function(self, itemId, luaIndex, count)
+    self.m_itemFillCor = self:_ClearCoroutine(self.m_itemFillCor)
+    self.m_itemFillCor = self:_StartCoroutine(function()
+        while true do
+            if count > 0 then
+                self:_OnItemSelectClicked(itemId, luaIndex, count)
+            else
+                self:_OnItemMinusClicked(itemId, luaIndex, -count)
+            end
+            coroutine.wait(0.35)
+        end
+    end)
+end
 
+FriendShipPresentCtrl._StopFillTimer = HL.Method() << function(self)
+    self.m_itemFillCor = self:_ClearCoroutine(self.m_itemFillCor)
+end
 
 
 FriendShipPresentCtrl._RefreshSelectedFriendshipIncrease = HL.Method() << function(self)
@@ -1049,11 +975,54 @@ FriendShipPresentCtrl._RefreshSelectedFriendshipIncrease = HL.Method() << functi
     self:_RefreshFriendshipInfo()
 end
 
+FriendShipPresentCtrl._GetGiftMaxMoreSendCount = HL.Method(HL.String).Return(HL.Number) << function(self, giftId)
+    local giftData = Tables.giftItemTable:GetValue(giftId)
+    local isPreferTagMatch = self:_GetCharPreferTagMatch(giftId)
+    local isPopular = self:_GetIsPopularGift(giftId)
+    local ratio = (isPreferTagMatch or isPopular) and 1 or Tables.spaceshipConst.notMatchDomainGiftRatio
+    local giftPoint = lume.round(giftData.favorablePoint * ratio)
 
+    local dailyFriendshipIncrease = CSPlayerDataUtil.GetCharDailyFriendshipIncrease(self.m_charId) + self.m_curSelectedIncrease
+    local giftGainRatioLevel = CSPlayerDataUtil.GetGiftGainRatioLevelByChar(self.m_charId, self.m_curSelectedIncrease)
 
+    local validSendNum = 0
+    local dailyFriendshipIncreaseMaxLevel = CSPlayerDataUtil.dailyFriendshipIncreaseMaxLevel
+    if giftGainRatioLevel > 0 and giftGainRatioLevel <= dailyFriendshipIncreaseMaxLevel then
+        
+        local giftLeftPoint = 0
+        for i = giftGainRatioLevel, dailyFriendshipIncreaseMaxLevel do
+            local levelData = Tables.spaceshipCharGiftGainRatio[i]
+            local levelRealRemain = levelData.maxLimit - dailyFriendshipIncrease
+            local levelRealIncrease = 0
+            local levelTotalRemain = levelRealRemain / levelData.gainRatio
 
+            while levelTotalRemain > 0 do
+                local point = giftLeftPoint
+                point = point + giftPoint
+                validSendNum = validSendNum + 1
 
-FriendShipPresentCtrl._OnItemMinusClicked = HL.Method(HL.String, HL.Number) << function(self, itemId, luaIndex)
+                giftLeftPoint = 0
+
+                if point >= levelTotalRemain then
+                    levelRealIncrease = levelRealIncrease + levelRealRemain
+                    giftLeftPoint = point - levelTotalRemain
+                    levelRealRemain = 0
+                    levelTotalRemain = 0
+                else
+                    local giftRealIncrease =  lume.round(point * levelData.gainRatio)
+                    levelRealIncrease = levelRealIncrease + giftRealIncrease
+                    levelRealRemain = levelRealRemain - giftRealIncrease
+                    levelTotalRemain = levelRealRemain / levelData.gainRatio
+                end
+            end
+            dailyFriendshipIncrease = dailyFriendshipIncrease + levelRealIncrease
+        end
+    end
+
+    return validSendNum
+end
+
+FriendShipPresentCtrl._OnItemMinusClicked = HL.Method(HL.String, HL.Number, HL.Number) << function(self, itemId, luaIndex, count)
     local isMax = self:_IsMax()
     if isMax then
         return
@@ -1061,8 +1030,8 @@ FriendShipPresentCtrl._OnItemMinusClicked = HL.Method(HL.String, HL.Number) << f
 
     local selectNum = self.m_selected[itemId]
     if selectNum and selectNum > 0 then
-        self.m_selected[itemId] = self.m_selected[itemId] - 1
-        self.m_curSelectedNum = self.m_curSelectedNum - 1
+        self.m_selected[itemId] = math.max(self.m_selected[itemId] - count, 0)
+        self.m_curSelectedNum = math.max(self.m_curSelectedNum - count, 0)
 
         if self.m_selected[itemId] == 0 then
             self:OnFilterChanged(self.m_selectedFilterTags)
@@ -1078,9 +1047,6 @@ FriendShipPresentCtrl._OnItemMinusClicked = HL.Method(HL.String, HL.Number) << f
     self:_RefreshButtonState()
 end
 
-
-
-
 FriendShipPresentCtrl._SelectOnlyOneCell = HL.Method(HL.Number) << function(self, luaIndex)
     local isMax = self:_IsMax()
     if isMax then
@@ -1092,9 +1058,6 @@ FriendShipPresentCtrl._SelectOnlyOneCell = HL.Method(HL.Number) << function(self
         end
     end
 end
-
-
-
 
 FriendShipPresentCtrl._GetCellByIndex = HL.Method(HL.Number).Return(HL.Any) << function(self, luaIndex)
     local cell
@@ -1108,9 +1071,6 @@ FriendShipPresentCtrl._GetCellByIndex = HL.Method(HL.Number).Return(HL.Any) << f
 end
 
 
-
-
-
 FriendShipPresentCtrl._RefreshSingleItemSelect = HL.Method(HL.Table) << function(self, itemCell)
     local itemId = itemCell.item.id
     local selectNum = self.m_selected[itemId] or 0
@@ -1121,10 +1081,6 @@ FriendShipPresentCtrl._RefreshSingleItemSelect = HL.Method(HL.Table) << function
     itemCell.hotIcon.gameObject:SetActive(self:_GetIsPopularGift(itemId))
 end
 
-
-
-
-
 FriendShipPresentCtrl._RefreshTips = HL.Method(HL.Boolean, HL.Opt(HL.String)) << function(self, visible, itemId)
     local describeTips = self.view.bottomList.describeTips
 
@@ -1134,6 +1090,7 @@ FriendShipPresentCtrl._RefreshTips = HL.Method(HL.Boolean, HL.Opt(HL.String)) <<
         if visible then
             describeTips.animationWrapper:ClearTween(true)
             describeTips.gameObject:SetActive(visible)
+            self.m_tipsItemId = itemId
         else
             describeTips.animationWrapper:PlayOutAnimation(function()
                 describeTips.gameObject:SetActive(visible)
@@ -1222,8 +1179,6 @@ FriendShipPresentCtrl._RefreshTips = HL.Method(HL.Boolean, HL.Opt(HL.String)) <<
 end
 
 
-
-
 FriendShipPresentCtrl._ClearSelected = HL.Method() << function(self)
     self.m_selected = {}
     self.m_curSelectedNum = 0
@@ -1241,8 +1196,6 @@ FriendShipPresentCtrl._ClearSelected = HL.Method() << function(self)
     self:_RefreshSelectedFriendshipIncrease()
     self:_RefreshButtonState()
 end
-
-
 
 
 FriendShipPresentCtrl._RefreshButtonState = HL.Method() << function(self)
@@ -1275,8 +1228,6 @@ FriendShipPresentCtrl._RefreshButtonState = HL.Method() << function(self)
         self:_RefreshInputKeyHint(self.m_focusItemId, self.m_focusLuaIndex)
     end
 end
-
-
 
 FriendShipPresentCtrl._SendPresentToChar = HL.Method() << function(self)
     if self.m_curSelectedNum <= 0 then

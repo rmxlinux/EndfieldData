@@ -1,13 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacRegionUnlockPopup
-
-
-
-
-
 FacRegionUnlockPopupCtrl = HL.Class('FacRegionUnlockPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -17,9 +11,6 @@ FacRegionUnlockPopupCtrl = HL.Class('FacRegionUnlockPopupCtrl', uiCtrl.UICtrl)
 
 FacRegionUnlockPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
-
-
-
 
 
 FacRegionUnlockPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, areaId)
@@ -37,17 +28,10 @@ FacRegionUnlockPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, areaId
     end)
 end
 
-
-
-
-
-
 FacRegionUnlockPopupCtrl._UpdateContent = HL.Method(HL.Table, HL.Number, HL.Number) << function(self, node, curMax, addedNum)
     node.beforeTxt.text = curMax - addedNum
     node.afterTxt.text = curMax
 end
-
-
 
 FacRegionUnlockPopupCtrl.OnRegionUnlocked = HL.StaticMethod(HL.Table) << function(arg)
     local areaId = unpack(arg)

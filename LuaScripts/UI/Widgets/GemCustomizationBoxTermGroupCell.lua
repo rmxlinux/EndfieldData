@@ -1,27 +1,12 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 GemCustomizationBoxTermGroupCell = HL.Class('GemCustomizationBoxTermGroupCell', UIWidgetBase)
-
 
 GemCustomizationBoxTermGroupCell.m_isPreview = HL.Field(HL.Boolean) << false
 
-
 GemCustomizationBoxTermGroupCell.m_genTermCells = HL.Field(HL.Forward("UIListCache"))
 
-
 GemCustomizationBoxTermGroupCell.m_test = HL.Field(HL.Number) << 1
-
-
 
 
 GemCustomizationBoxTermGroupCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -32,18 +17,10 @@ GemCustomizationBoxTermGroupCell._OnFirstTimeInit = HL.Override() << function(se
     end
 end
 
-
-
-
 GemCustomizationBoxTermGroupCell.InitGemCustomizationBoxTermGroupCell = HL.Method(HL.Boolean) << function(self, isPreview)
     self.m_isPreview = isPreview
     self:_FirstTimeInit()
 end
-
-
-
-
-
 
 GemCustomizationBoxTermGroupCell.UpdateTermGroupUI = HL.Method(HL.Number, HL.Table, HL.Table)
     << function(self, luaIndex, termList, currSelectInfo)
@@ -63,10 +40,6 @@ GemCustomizationBoxTermGroupCell.UpdateTermGroupUI = HL.Method(HL.Number, HL.Tab
     end)
 end
 
-
-
-
-
 GemCustomizationBoxTermGroupCell.UpdateTagGroupUI = HL.Method(HL.Number, HL.Table) << function(self, luaIndex, termList)
     self:_RefreshViewTitle(luaIndex)
     self.m_genTermCells:Refresh(#termList, function(termCell, index)
@@ -75,9 +48,6 @@ GemCustomizationBoxTermGroupCell.UpdateTagGroupUI = HL.Method(HL.Number, HL.Tabl
         termCell:RefreshUIInPreviewMode(termId)
     end)
 end
-
-
-
 
 GemCustomizationBoxTermGroupCell.GetTermIdByTransform = HL.Method(HL.Any) << function(self, trans)
     local termCellItems = self.m_genTermCells:GetItems()
@@ -89,9 +59,6 @@ GemCustomizationBoxTermGroupCell.GetTermIdByTransform = HL.Method(HL.Any) << fun
     end
     return ""
 end
-
-
-
 
 GemCustomizationBoxTermGroupCell._RefreshViewTitle = HL.Method(HL.Number) << function(self, luaIndex)
     self.view.titleTxt.text = Language["LUA_GEMCUSTOMIZATIONBOX_TAB_GROUP_ATTR_GROUP_NAME" .. luaIndex]

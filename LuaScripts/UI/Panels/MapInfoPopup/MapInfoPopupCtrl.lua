@@ -4,13 +4,7 @@ local PANEL_ID = PanelId.MapInfoPopup
 
 local TOTAL_COUNT_FORMAT = "/%d"
 
-
-
-
-
-
 MapInfoPopupCtrl = HL.Class('MapInfoPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -20,9 +14,6 @@ MapInfoPopupCtrl = HL.Class('MapInfoPopupCtrl', uiCtrl.UICtrl)
 MapInfoPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 MapInfoPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -40,15 +31,9 @@ MapInfoPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
 MapInfoPopupCtrl._OnBtnCloseClick = HL.Method() << function(self)
     self:PlayAnimationOutAndClose()
 end
-
-
-
-
 
 MapInfoPopupCtrl._RefreshContent = HL.Method(HL.Table, HL.Table) << function(self, buildingInfo, collectionInfo)
     for buildingCfgId, buildingInfo in pairs(buildingInfo) do

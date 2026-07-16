@@ -1,20 +1,5 @@
 local wikiDetailBaseCtrl = require_ex('UI/Panels/WikiDetailBase/WikiDetailBaseCtrl')
 local PANEL_ID = PanelId.WikiBuilding
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiBuildingCtrl = HL.Class('WikiBuildingCtrl', wikiDetailBaseCtrl.WikiDetailBaseCtrl)
 
 
@@ -36,7 +21,9 @@ local HIDE_CRAFT_TREE_GROUP_TABLE =
 
 
 
-
+WikiBuildingCtrl.s_overrideMessages = HL.StaticField(HL.Table) << {
+    [MessageConst.FAC_ON_UNLOCK_TECH_TREE_UI] = '_FacOnUnlockTechTreeUI',
+}
 
 
 
@@ -49,15 +36,11 @@ WikiBuildingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_PlayBgDecoAnim()
 end
 
-
-
 WikiBuildingCtrl.OnShow = HL.Override() << function(self)
     WikiBuildingCtrl.Super.OnShow(self)
     self:_RefreshModel()
     self:_PlayBgDecoAnim()
 end
-
-
 
 WikiBuildingCtrl.OnClose = HL.Override() << function(self)
     WikiBuildingCtrl.Super.OnClose(self)
@@ -72,30 +55,25 @@ WikiBuildingCtrl.OnClose = HL.Override() << function(self)
     GameAction.FacScheduleUISystemSkipAfterGraceFrames()
 end
 
-
+WikiBuildingCtrl._FacOnUnlockTechTreeUI = HL.Method(HL.Table) << function(self, args)
+    self:_RefreshRight()
+end
 
 WikiBuildingCtrl._OnPlayAnimationOut = HL.Override() << function(self)
     WikiBuildingCtrl.Super._OnPlayAnimationOut(self)
     self.m_phase:PlayBgAnim("wiki_plane_tobuilding_out")
 end
 
-
-
 WikiBuildingCtrl.GetPanelId = HL.Override().Return(HL.Number) << function(self)
     return PANEL_ID
 end
-
-
 
 WikiBuildingCtrl._RefreshCenter = HL.Override() << function(self)
     WikiBuildingCtrl.Super._RefreshCenter(self)
     self:_RefreshModel()
 end
 
-
 WikiBuildingCtrl.m_isBtnInited = HL.Field(HL.Boolean) << false
-
-
 
 WikiBuildingCtrl._RefreshRight = HL.Override() << function(self)
     local view = self.view.right
@@ -120,19 +98,15 @@ WikiBuildingCtrl._RefreshRight = HL.Override() << function(self)
     self:_RefreshDetail(itemId)
 
     local isFocusEnabled = self.m_obtainCellCache:GetCount() > 0 or
-        (view.itemObtainWaysForWiki.m_obtainCells:GetCount() > 0 and view.itemObtainWaysForWiki.view.gameObject.activeSelf)
+        ((view.itemObtainWaysForWiki.m_obtainCells:GetCount() > 0 or view.itemObtainWaysForWiki.view.emptyNode.gameObject.activeSelf) and
+        view.itemObtainWaysForWiki.view.gameObject.activeSelf)
     view.naviGroup.enabled = isFocusEnabled
     self.view.right.controllerFocusHintNode.gameObject:SetActive(isFocusEnabled)
 end
 
-
 WikiBuildingCtrl.m_craftCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WikiBuildingCtrl.m_obtainCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 
@@ -159,9 +133,9 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
     
     local buildingData = FactoryUtils.getItemBuildingData(itemId)
     if buildingData then
-        local _, machineCrafterData = Tables.factoryMachineCrafterTable:TryGetValue(buildingData.id)
-        if machineCrafterData and #machineCrafterData.modeMap > 0 then
-            for _, modeData in pairs(machineCrafterData.modeMap) do
+        local machineModeList = FactoryUtils.getBuildingModeListCovered(buildingData.id)
+        if next(machineModeList) ~= nil then
+            for _, modeData in ipairs(machineModeList) do
                 local craftInfos = FactoryUtils.getBuildingCrafts(buildingData.id, nil, nil, modeData.modeName)
                 local _, modeTypeData = Tables.factoryMachineCraftModeTable:TryGetValue(modeData.modeName)
                 if modeTypeData and craftInfos and next(craftInfos) then
@@ -199,6 +173,7 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
         obtainCell.titleNode.gameObject:SetActive(modeInfoCount > 1)
         obtainCell.titleNodeToggle:SetIsOnWithoutNotify(true)
         obtainCell.content.gameObject:SetActive(true)
+        
         if modeInfoCount > 1 then
             local _, modeData = Tables.factoryMachineCraftModeTable:TryGetValue(modeInfo.modeType)
             if modeData then
@@ -206,7 +181,7 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
                 local hasIcon = not string.isEmpty(modeData.iconId)
                 obtainCell.titleImg.gameObject:SetActive(hasIcon)
                 if hasIcon then
-                    obtainCell.titleImg:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, modeData.iconId)
+                    obtainCell.titleImg:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_COMMON, modeData.iconId)
                 end
             end
         end
@@ -272,6 +247,8 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
                 self:_OnClickRightItemCell(cell, craftCell.view)
             end)
 
+            local useBGNode = false
+
             
             if craftCell.view.stateController then
                 if craftInfo.craftId ~= nil then
@@ -280,10 +257,20 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
                     FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.view.timeLimitedColorTag1, craftInfo.craftId)
                     FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.view.timeLimitedColorTag2, craftInfo.craftId)
                     FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.view.timeLimitedColorTag3, craftInfo.craftId)
+                    if timeLimited then
+                        useBGNode = true
+                    end
                 else
                     craftCell.view.stateController:SetState("Normal")
                 end
             end
+
+            
+            if craftInfo.env ~= nil and craftInfo.env ~= GEnums.FacEnvGenEnvType.None then
+                useBGNode = true
+            end
+
+            craftCell.view.bg.gameObject:SetActive(useBGNode)
 
             if DeviceInfo.usingController then
                 InputManagerInst:ToggleBinding(craftCell.view.pinBtn.view.pinToggle.toggleBindingId, false)
@@ -356,9 +343,6 @@ WikiBuildingCtrl._RefreshDetail = HL.Method(HL.String) << function(self, itemId)
     view.descTxt:SetAndResolveTextStyle(desc)
 end
 
-
-
-
 WikiBuildingCtrl._RefreshModel = HL.Method(HL.Opt(HL.Boolean)) << function(self, playInAnim)
     if self.m_phase then
         local isShowImg = lume.find(WikiConst.BUILDING_SHOW_IMG_GROUP_ID_LIST, self.m_wikiEntryShowData.wikiGroupData.groupId) ~= nil
@@ -387,8 +371,6 @@ WikiBuildingCtrl._RefreshModel = HL.Method(HL.Opt(HL.Boolean)) << function(self,
         self.m_phase:ActiveEntryVirtualCamera(true)
     end
 end
-
-
 
 
 

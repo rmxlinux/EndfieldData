@@ -2,17 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaWeaponExtraRewardPopup
 
-
-
-
-
-
-
-
-
-
 GachaWeaponExtraRewardPopupCtrl = HL.Class('GachaWeaponExtraRewardPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -24,14 +14,9 @@ GachaWeaponExtraRewardPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 GachaWeaponExtraRewardPopupCtrl.m_info = HL.Field(HL.Table)
 
-
 GachaWeaponExtraRewardPopupCtrl.m_itemInfo = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -53,8 +38,6 @@ GachaWeaponExtraRewardPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     self:_RefreshAllUI()
 end
 
-
-
 GachaWeaponExtraRewardPopupCtrl.OnClose = HL.Override() << function(self)
     local onComplete = self.m_info.onComplete
     self.m_info = nil
@@ -62,8 +45,6 @@ GachaWeaponExtraRewardPopupCtrl.OnClose = HL.Override() << function(self)
         onComplete()
     end
 end
-
-
 
 
 
@@ -110,16 +91,12 @@ end
 
 
 
-
-
 GachaWeaponExtraRewardPopupCtrl._InitUI = HL.Method() << function(self)
     self.view.fullScreenCloseBtn.onClick:AddListener(function()
         self:PlayAnimationOutAndClose()
     end)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
 
 GachaWeaponExtraRewardPopupCtrl._RefreshAllUI = HL.Method() << function(self)
     if self.m_itemInfo.weaponInfo then

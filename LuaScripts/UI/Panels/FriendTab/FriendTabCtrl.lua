@@ -2,32 +2,15 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FriendTab
 
-
-
-
-
-
-
-
-
-
-
-
-
 FriendTabCtrl = HL.Class('FriendTabCtrl', uiCtrl.UICtrl)
-
 
 FriendTabCtrl.m_genTabCells = HL.Field(HL.Forward("UIListCache"))
 
-
 FriendTabCtrl.m_tabInfos = HL.Field(HL.Table)
-
 
 FriendTabCtrl.m_curTabIndex = HL.Field(HL.Number) << -1
 
-
 FriendTabCtrl.m_createArg = HL.Field(HL.Table)
-
 
 
 
@@ -36,9 +19,6 @@ FriendTabCtrl.m_createArg = HL.Field(HL.Table)
 FriendTabCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHANGE_FRIEND_TAB] = 'ChangeTab',
 }
-
-
-
 
 
 FriendTabCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -50,8 +30,6 @@ FriendTabCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_createArg = arg
     self:_InitTabs()
 end
-
-
 
 FriendTabCtrl._InitTabs = HL.Method() << function(self)
     self:_InitTabInfos()
@@ -78,9 +56,6 @@ FriendTabCtrl._InitTabs = HL.Method() << function(self)
     end)
 end
 
-
-
-
 FriendTabCtrl.ChangeTab = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     if arg and arg.panelId then
         
@@ -92,8 +67,6 @@ FriendTabCtrl.ChangeTab = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     cell.toggle.isOn = true
     self:_OnTabClick(self.m_curTabIndex, true , arg)
 end
-
-
 
 FriendTabCtrl._InitTabInfos = HL.Method() << function(self)
     self.m_tabInfos = {
@@ -117,11 +90,6 @@ FriendTabCtrl._InitTabInfos = HL.Method() << function(self)
     }
 end
 
-
-
-
-
-
 FriendTabCtrl._OnTabClick = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Table)) << function(self, luaIndex, isInit, arg)
     if self.m_curTabIndex == luaIndex and not isInit then
         return
@@ -133,9 +101,6 @@ FriendTabCtrl._OnTabClick = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Table)) <
     
     UIManager:SetTopOrder(PANEL_ID)
 end
-
-
-
 
 FriendTabCtrl._GetCurTabIndexByPanelId = HL.Method(HL.Number).Return(HL.Number) << function(self, panelId)
     local index = 1

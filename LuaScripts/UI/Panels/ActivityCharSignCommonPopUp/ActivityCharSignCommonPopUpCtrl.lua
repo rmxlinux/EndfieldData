@@ -3,39 +3,19 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityCharSignCommonPopUp
 
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityCharSignCommonPopUpCtrl = HL.Class('ActivityCharSignCommonPopUpCtrl', uiCtrl.UICtrl)
-
 
 ActivityCharSignCommonPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_UPDATED] = 'OnActivityUpdate',
 }
 
-
 ActivityCharSignCommonPopUpCtrl.m_checkInPrefab = HL.Field(HL.Any)
-
 
 ActivityCharSignCommonPopUpCtrl.m_checkInWidget = HL.Field(HL.Any)
 
-
 ActivityCharSignCommonPopUpCtrl.m_closeCallback = HL.Field(HL.Function)
 
-
 ActivityCharSignCommonPopUpCtrl.m_activityId = HL.Field(HL.String) << ""
-
-
-
 
 ActivityCharSignCommonPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_closeCallback = args.closeCallback or function()
@@ -73,9 +53,6 @@ ActivityCharSignCommonPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     self.m_checkInWidget.view.info:Init(initArg)
 end
 
-
-
-
 ActivityCharSignCommonPopUpCtrl.OnActivityUpdate = HL.Method(HL.Table) << function(self, args)
     local id = unpack(args)
     if id == self.m_activityId and not GameInstance.player.activitySystem:GetActivity(id) then
@@ -84,10 +61,7 @@ ActivityCharSignCommonPopUpCtrl.OnActivityUpdate = HL.Method(HL.Table) << functi
     end
 end
 
-
 ActivityCharSignCommonPopUpCtrl.m_waitingForClose = HL.Field(HL.Boolean) << false
-
-
 
 ActivityCharSignCommonPopUpCtrl._Close = HL.Method() << function(self)
     if self.m_checkInWidget.view.info.view.animationWrapper.curState == UIConst.UI_ANIMATION_WRAPPER_STATE.Out then
@@ -107,17 +81,12 @@ ActivityCharSignCommonPopUpCtrl._Close = HL.Method() << function(self)
     end)
 end
 
-
-
-
 ActivityCharSignCommonPopUpCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     
     if self.m_checkInWidget and self.m_checkInWidget.view and self.m_checkInWidget.view.info then
         self.m_checkInWidget.view.info:OnPanelInputBlocked(active)
     end
 end
-
-
 
 ActivityCharSignCommonPopUpCtrl.OnShow = HL.Override() << function(self)
     if self.m_waitingForClose then

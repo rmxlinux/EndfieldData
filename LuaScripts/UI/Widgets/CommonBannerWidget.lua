@@ -1,64 +1,26 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonBannerWidget = HL.Class('CommonBannerWidget', UIWidgetBase)
-
 
 
 
 CommonBannerWidget.m_genPageTabCells = HL.Field(HL.Forward("UIListCache"))
 
-
 CommonBannerWidget.m_getBannerCellFunc = HL.Field(HL.Function)
-
 
 CommonBannerWidget.m_onUpdateCellFunc = HL.Field(HL.Function)
 
-
 CommonBannerWidget.m_onPageChangeFunc = HL.Field(HL.Function)
-
 
 CommonBannerWidget.m_curPageIndex = HL.Field(HL.Number) << 1
 
-
 CommonBannerWidget.m_bannerCount = HL.Field(HL.Number) << 0
-
 
 CommonBannerWidget.m_scrollHoldTime = HL.Field(HL.Number) << 0
 
-
 CommonBannerWidget.m_isPause = HL.Field(HL.Boolean) << false
 
-
 CommonBannerWidget.m_isWrappedLoop = HL.Field(HL.Boolean) << false
-
-
 
 
 
@@ -83,9 +45,6 @@ CommonBannerWidget._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
 CommonBannerWidget.InitCommonBannerWidget = HL.Method(HL.Any) << function(self, options)
     
 
@@ -104,49 +63,31 @@ CommonBannerWidget.InitCommonBannerWidget = HL.Method(HL.Any) << function(self, 
     self:_StartAutoScroll()
 end
 
-
-
-
 CommonBannerWidget.UpdateCount = HL.Method(HL.Number) << function(self, count)
     self.m_bannerCount = count
     self:_RefreshAllUI()
 end
 
-
-
 CommonBannerWidget.Refresh = HL.Method() << function(self)
     self:_RefreshAllUI(true)
 end
-
-
-
 
 CommonBannerWidget.ScrollToIndex = HL.Method(HL.Number) << function(self, luaIndex)
     self.view.bannerList:ScrollToIndex(CSIndex(luaIndex))
     self:_ScrollPageTabToIndex(luaIndex)
 end
 
-
-
 CommonBannerWidget.OnDestroy = HL.Method() << function(self)
     self:_StopAutoScroll()
 end
-
-
-
 
 CommonBannerWidget.SetPause = HL.Method(HL.Boolean) << function(self, isPause)
     self.m_isPause = isPause
 end
 
-
-
 CommonBannerWidget._OnDestroy = HL.Override() << function(self)
     self:_StopAutoScroll()
 end
-
-
-
 
 CommonBannerWidget._RefreshAllUI = HL.Method(HL.Opt(HL.Boolean)) << function(self, isRefresh)
     self.view.bannerList:UpdateCount(self.m_bannerCount, isRefresh ~= true)
@@ -155,15 +96,9 @@ CommonBannerWidget._RefreshAllUI = HL.Method(HL.Opt(HL.Boolean)) << function(sel
     end)
 end
 
-
-
-
-
 CommonBannerWidget._OnRefreshPageTabCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     cell.toggle.isOn = luaIndex == self.m_curPageIndex
 end
-
-
 
 CommonBannerWidget._OnManualScroll = HL.Method() << function(self)
     self.m_scrollHoldTime = 0
@@ -174,9 +109,6 @@ CommonBannerWidget._OnManualScroll = HL.Method() << function(self)
     end
 end
 
-
-
-
 CommonBannerWidget._ScrollPageTabToIndex = HL.Method(HL.Number) << function(self, index)
     self.m_scrollHoldTime = 0
     for idx, cell in pairs(self.m_genPageTabCells:GetItems()) do
@@ -186,10 +118,7 @@ end
 
 
 
-
 CommonBannerWidget.m_updateKey = HL.Field(HL.Number) << -1
-
-
 
 CommonBannerWidget._StartAutoScroll = HL.Method() << function(self)
     if self.m_updateKey > 0 then
@@ -201,9 +130,6 @@ CommonBannerWidget._StartAutoScroll = HL.Method() << function(self)
         self:_UpdateAutoScroll(deltaTime)
     end)
 end
-
-
-
 
 CommonBannerWidget._UpdateAutoScroll = HL.Method(HL.Number) << function(self, deltaTime)
     if self.m_isPause or self.m_bannerCount == 0 then
@@ -225,8 +151,6 @@ CommonBannerWidget._UpdateAutoScroll = HL.Method(HL.Number) << function(self, de
     self:_ScrollPageTabToIndex(self.m_curPageIndex)
 end
 
-
-
 CommonBannerWidget._StopAutoScroll = HL.Method() << function(self)
     if self.m_updateKey <= 0 then
         return
@@ -235,9 +159,6 @@ CommonBannerWidget._StopAutoScroll = HL.Method() << function(self)
     LuaUpdate:Remove(self.m_updateKey)
     self.m_updateKey = -1
 end
-
-
-
 
 CommonBannerWidget.PageUpOrDown = HL.Method(HL.Boolean) << function(self, pageDown)
     if self.m_isPause then

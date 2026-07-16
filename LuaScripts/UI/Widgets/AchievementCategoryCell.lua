@@ -1,34 +1,17 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 AchievementCategoryCell = HL.Class('AchievementCategoryCell', UIWidgetBase)
-
 
 AchievementCategoryCell.m_cacheCell = HL.Field(HL.Forward("UIListCache"))
 
-
 AchievementCategoryCell.m_isSelected = HL.Field(HL.Boolean) << false
 
-
 AchievementCategoryCell.m_haveSub = HL.Field(HL.Boolean) << false
-
-
 
 
 AchievementCategoryCell._OnFirstTimeInit = HL.Override() << function(self)
     self.m_cacheCell = UIUtils.genCellCache(self.view.cell)
 end
-
-
-
-
-
 
 AchievementCategoryCell.InitAchievementCategoryCell = HL.Method(HL.Any, HL.Number, HL.Any) << function(self, categoryInfo, categoryIndex, options)
     
@@ -89,16 +72,13 @@ AchievementCategoryCell.InitAchievementCategoryCell = HL.Method(HL.Any, HL.Numbe
             options.onGroupCellRender(groupCell, groupIndex)
         end
         if DeviceInfo.usingController and needSetNavi and groupSelected and self.m_isSelected then
-            UIUtils.setAsNaviTarget(groupCell.button)
+            self:SetNaviTarget(groupCell.button)
         end
     end)
     if DeviceInfo.usingController and needSetNavi and self.m_isSelected and not self.m_haveSub then
-        UIUtils.setAsNaviTarget(self.view.button)
+        self:SetNaviTarget(self.view.button)
     end
 end
-
-
-
 
 AchievementCategoryCell.UpdateArrow = HL.Method(HL.Boolean) << function(self, isFold)
     local needExpand = (self.m_isSelected and self.m_haveSub) or DeviceInfo.usingController

@@ -1,68 +1,5 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.Dialog
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseDialog = HL.Class('PhaseDialog', phaseBase.PhaseBase)
 
 local clearPhases = {
@@ -74,11 +11,11 @@ local clearPhases = {
 
 
 
-
 PhaseDialog.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_DIALOG_START] = { 'OnDirectDialogStart', false },
     [MessageConst.IS_DIALOG_PHASE_OPENED] = { 'IsDialogPhaseOpened', false },
+
     [MessageConst.ON_EXIT_DIALOG] = { 'OnExitDialog', true },
     [MessageConst.ON_PLAY_DIALOG_TRUNK] = { 'OnPlayDialogTrunk', true },
     [MessageConst.ON_SHOW_DIALOG_OPTION] = { 'OnShowDialogOption', true },
@@ -102,53 +39,41 @@ PhaseDialog.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SKIP_DIALOG] = { '_SkipDialog', true },
 }
 
-
 PhaseDialog.m_panelItem = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseDialog.m_targetGroup = HL.Field(HL.Forward("PhaseGameObjectItem"))
 
-
 PhaseDialog.m_inited = HL.Field(HL.Boolean) << false
-
 
 PhaseDialog.doingOut = HL.Field(HL.Boolean) << false
 
-
 PhaseDialog.m_onRightMouseButtonPress = HL.Field(HL.Function)
-
 
 PhaseDialog.m_onDrag = HL.Field(HL.Function)
 
-
 PhaseDialog.m_hasListened = HL.Field(HL.Boolean) << false
-
 
 PhaseDialog.s_nextDialog = HL.StaticField(HL.String) << ""
 
-
 PhaseDialog.s_nextIndexConfig = HL.StaticField(HL.Table)
-
 
 PhaseDialog.m_tempNextIndex = HL.Field(HL.Number) << -1
 
-
 PhaseDialog.m_openedPhaseId = HL.Field(HL.Number) << -1
-
 
 PhaseDialog.m_pendingExitDialogArg = HL.Field(HL.Any)
 
-
 PhaseDialog.m_hasPendingExitDialog = HL.Field(HL.Boolean) << false
 
+PhaseDialog.m_deferredExitCoroutine = HL.Field(HL.Thread)
 
+PhaseDialog.m_needStartNextDialogAfterDeferredExit = HL.Field(HL.Boolean) << false
 
 
 PhaseDialog._OnInit = HL.Override() << function(self)
     PhaseDialog.Super._OnInit(self)
     UIManager:ToggleBlockObtainWaysJump("IN_CINEMATIC", true)
 end
-
 
 PhaseDialog._InitNextIndex = HL.StaticMethod() << function()
     PhaseDialog.s_nextIndexConfig = {}
@@ -157,22 +82,15 @@ PhaseDialog._InitNextIndex = HL.StaticMethod() << function()
     end
 end
 
-
-
 PhaseDialog.GetOpenedPhaseId = HL.Method().Return(HL.Number) << function(self)
     return self.m_openedPhaseId
 end
-
-
-
 
 PhaseDialog.ChangeNextIndex = HL.Method(HL.Table) << function(self, args)
     if args.phaseId == self.m_openedPhaseId then
         self.m_tempNextIndex = args.nextIndex
     end
 end
-
-
 
 PhaseDialog.GetNextIndex = HL.StaticMethod(HL.Number).Return(HL.Number) << function(phaseId)
     local suc, phaseDialog = PhaseManager:IsOpen(PHASE_ID)
@@ -188,8 +106,6 @@ PhaseDialog.GetNextIndex = HL.StaticMethod(HL.Number).Return(HL.Number) << funct
     return PhaseDialog.s_nextIndexConfig[phaseId] or 0
 end
 
-
-
 PhaseDialog.ClearPhasesWithCam = HL.StaticMethod(HL.Opt(HL.Any)) << function(_)
     for _, phaseId in pairs(clearPhases) do
         local isOpen, phase = PhaseManager:IsOpen(phaseId)
@@ -198,8 +114,6 @@ PhaseDialog.ClearPhasesWithCam = HL.StaticMethod(HL.Opt(HL.Any)) << function(_)
         end
     end
 end
-
-
 
 PhaseDialog.OnDialogStart = HL.StaticMethod(HL.Table) << function(arg)
     arg.fast = true
@@ -214,8 +128,6 @@ PhaseDialog.OnDialogStart = HL.StaticMethod(HL.Table) << function(arg)
         end
     end
 end
-
-
 
 PhaseDialog.OnDirectDialogStart = HL.StaticMethod(HL.Opt(HL.Table)) << function(data)
     local arg = {
@@ -243,8 +155,6 @@ PhaseDialog.OnDirectDialogStart = HL.StaticMethod(HL.Opt(HL.Table)) << function(
     end
 end
 
-
-
 PhaseDialog.IsDialogPhaseOpened = HL.StaticMethod(HL.Table) << function(arg)
     local isOpenedContext = unpack(arg)
     local isOpen, phase = PhaseManager:IsOpenAndValid(PHASE_ID)
@@ -255,16 +165,10 @@ PhaseDialog.IsDialogPhaseOpened = HL.StaticMethod(HL.Table) << function(arg)
     end
 end
 
-
-
-
 PhaseDialog.OnShowDialogFullBg = HL.Method(HL.Table) << function(self, data)
     local actionData = unpack(data)
     self:_DoShowFullBg(actionData)
 end
-
-
-
 
 PhaseDialog.OnShowPostProcessEffect = HL.Method(HL.Table) << function(self, data)
     local actionData = unpack(data)
@@ -273,28 +177,18 @@ PhaseDialog.OnShowPostProcessEffect = HL.Method(HL.Table) << function(self, data
     self.m_inited = true
 end
 
-
-
-
 PhaseDialog.OnShowDialogLeftSubtitle = HL.Method(HL.Table) << function(self, data)
     local actionData = unpack(data)
     self:_DoShowLeftSubtitle(actionData)
 end
 
-
-
 PhaseDialog.OnExitDialogLeftSubtitle = HL.Method() << function(self)
     self:_DoExitLeftSubtitle()
 end
 
-
-
-
 PhaseDialog.OnDialogEnvTalkChanged = HL.Method(HL.Table) << function(self, arg)
     self:_GetPanelPhaseItem(PanelId.HeadLabelInDialog).uiCtrl:RefreshEnvTalk(arg)
 end
-
-
 
 
 PhaseDialog._InitAllPhaseItems = HL.Override() << function(self)
@@ -302,13 +196,8 @@ PhaseDialog._InitAllPhaseItems = HL.Override() << function(self)
     self.m_panelItem = self:_GetPanelPhaseItem(PanelId.Dialog)
 end
 
-
-
 PhaseDialog.OnCommonBackClicked = HL.Method() << function(self)
 end
-
-
-
 
 PhaseDialog.OnExitDialog = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     
@@ -330,22 +219,75 @@ PhaseDialog.OnExitDialog = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     if not fast then
         self.doingOut = true
         self.m_panelItem.uiCtrl:PlayAnimationOutWithCallback(function()
-            if PhaseManager:IsOpenAndValid(PHASE_ID) then
-                self:ExitSelfFast()
-            end
-
-            if not string.isEmpty(PhaseDialog.s_nextDialog) then
-                PhaseDialog.s_nextDialog = ""
-                PhaseDialog.OnDirectDialogStart()
-            end
+            self:_ExitSelfFastSafely(true)
         end)
     else
-        self:ExitSelfFast()
+        self:_ExitSelfFastSafely(false)
     end
 end
 
+PhaseDialog._CanExitSelfFastImmediately = HL.Method().Return(HL.Boolean) << function(self)
+    return PhaseManager.m_curState == Const.PhaseState.Idle and not PhaseManager:CheckIsInTransition()
+end
 
+PhaseDialog._ExitSelfFastSafely = HL.Method(HL.Boolean) << function(self, startNextDialog)
+    if not PhaseManager:IsOpenAndValid(PHASE_ID) then
+        if startNextDialog then
+            PhaseDialog._TryStartNextDialog()
+        end
+        return
+    end
 
+    
+    if not self:_CanExitSelfFastImmediately() then
+        self.doingOut = true
+        self.m_needStartNextDialogAfterDeferredExit = self.m_needStartNextDialogAfterDeferredExit or startNextDialog
+        self:_StartDeferredExitCoroutine()
+        return
+    end
+
+    self:ExitSelfFast()
+    if startNextDialog then
+        PhaseDialog._TryStartNextDialog()
+    end
+end
+
+PhaseDialog._StartDeferredExitCoroutine = HL.Method() << function(self)
+    if self.m_deferredExitCoroutine then
+        return
+    end
+
+    self.m_deferredExitCoroutine = self:_StartCoroutine(function()
+        coroutine.waitCondition(function()
+            return self.m_destroyed
+                or not PhaseManager:IsOpenAndValid(PHASE_ID)
+                or self:_CanExitSelfFastImmediately()
+        end)
+
+        self.m_deferredExitCoroutine = nil
+        local startNextDialog = self.m_needStartNextDialogAfterDeferredExit
+        self.m_needStartNextDialogAfterDeferredExit = false
+
+        if self.m_destroyed or not PhaseManager:IsOpenAndValid(PHASE_ID) then
+            if startNextDialog or not string.isEmpty(PhaseDialog.s_nextDialog) then
+                PhaseDialog._TryStartNextDialog()
+            end
+            return
+        end
+
+        self:ExitSelfFast()
+        if startNextDialog or not string.isEmpty(PhaseDialog.s_nextDialog) then
+            PhaseDialog._TryStartNextDialog()
+        end
+    end)
+end
+
+PhaseDialog._TryStartNextDialog = HL.StaticMethod() << function()
+    if not string.isEmpty(PhaseDialog.s_nextDialog) then
+        PhaseDialog.s_nextDialog = ""
+        PhaseDialog.OnDirectDialogStart()
+    end
+end
 
 
 PhaseDialog.OnPlayDialogTrunk = HL.Method(HL.Table) << function(self, data)
@@ -353,19 +295,10 @@ PhaseDialog.OnPlayDialogTrunk = HL.Method(HL.Table) << function(self, data)
     self:_DoPlayDialogTrunk(trunkNodeData, fastMode, npcId, npcGroupId)
 end
 
-
-
-
 PhaseDialog.OnShowDialogOption = HL.Method(HL.Table) << function(self, data)
     local options = unpack(data)
     self:_DoShowDialogOption(options)
 end
-
-
-
-
-
-
 
 PhaseDialog._DoPlayDialogTrunk = HL.Method(CS.Beyond.Gameplay.DTTrunkNodeData, HL.Opt(HL.Boolean, HL.Any, HL.Any)) <<
     function
@@ -375,17 +308,11 @@ PhaseDialog._DoPlayDialogTrunk = HL.Method(CS.Beyond.Gameplay.DTTrunkNodeData, H
         self.m_inited = true
     end
 
-
-
-
 PhaseDialog._DoShowDialogOption = HL.Method(HL.Userdata) << function
 (self, options)
     self.m_panelItem.uiCtrl:SetTrunkOption(options)
     self.m_inited = true
 end
-
-
-
 
 PhaseDialog._DoShowFullBg = HL.Method(CS.Beyond.Gameplay.DialogFullBgActionData) << function(self, actionData)
     self.m_panelItem.uiCtrl:SetFullBg(actionData)
@@ -393,22 +320,15 @@ PhaseDialog._DoShowFullBg = HL.Method(CS.Beyond.Gameplay.DialogFullBgActionData)
     self.m_inited = true
 end
 
-
-
-
 PhaseDialog._DoShowLeftSubtitle = HL.Method(CS.Beyond.Gameplay.DialogLeftSubtitleActionData) << function(self, actionData)
     self.m_panelItem.uiCtrl:Show()
     self.m_panelItem.uiCtrl:SetLeftSubtitle(actionData)
     self.m_inited = true
 end
 
-
-
 PhaseDialog._DoExitLeftSubtitle = HL.Method() << function(self)
     self.m_panelItem.uiCtrl:ExitLeftSubtitle()
 end
-
-
 
 PhaseDialog._AddRegisters = HL.Method() << function(self)
     local touchPanel = self.m_panelItem.uiCtrl:GetTouchPanel()
@@ -438,8 +358,6 @@ PhaseDialog._AddRegisters = HL.Method() << function(self)
     self.m_hasListened = true
 end
 
-
-
 PhaseDialog._ClearRegisters = HL.Method() << function(self)
     if not self.m_panelItem then
         return
@@ -460,14 +378,9 @@ PhaseDialog._ClearRegisters = HL.Method() << function(self)
     self.m_hasListened = false
 end
 
-
-
-
 PhaseDialog._MoveCamera = HL.Method(HL.Userdata) << function(self, delta)
     CameraManager:OnInput(UIUtils.getNormalizedScreenX(delta.x), UIUtils.getNormalizedScreenY(delta.y))
 end
-
-
 
 
 
@@ -493,8 +406,6 @@ PhaseDialog._OnActivated = HL.Override() << function(self)
 end
 
 
-
-
 PhaseDialog._OnDeActivated = HL.Override() << function(self)
     self:_ClearRegisters()
     self:_ClearPhaseDialogController()
@@ -502,8 +413,6 @@ PhaseDialog._OnDeActivated = HL.Override() << function(self)
     
     self:RemovePhasePanelItemById(PanelId.DialogRecord)
 end
-
-
 
 PhaseDialog._TryShowTrunk = HL.Method() << function(self)
     local mainFlowHandle = GameWorld.dialogManager.mainFlowHandle
@@ -515,8 +424,6 @@ PhaseDialog._TryShowTrunk = HL.Method() << function(self)
 
 end
 
-
-
 PhaseDialog._TryShowOptions = HL.Method() << function(self)
     local options = GameWorld.dialogManager.options
     if not self.m_inited and options.Count > 0 then
@@ -525,21 +432,17 @@ PhaseDialog._TryShowOptions = HL.Method() << function(self)
 end
 
 
-
-
 PhaseDialog._OnDestroy = HL.Override() << function(self)
     UIManager:ToggleBlockObtainWaysJump("IN_CINEMATIC", false)
     self.m_panelItem = nil
 end
 
-
-
-
 PhaseDialog.OpenUI = HL.Method(HL.Table) << function(self, arg)
-    local panelIdStr, paramStr = unpack(arg)
+    local panelIdStr, paramStr, actionData = unpack(arg)
     local phaseId = PhaseId[panelIdStr]
     local param = not string.isEmpty(paramStr) and Utils.stringJsonToTable(paramStr) or {}
     param.fromDialog = true
+    param.actionData = actionData
     if param.blockWhitePhaseName ~= nil then
         local exceptIds = {}
         for _, whitePhaseName in pairs(param.blockWhitePhaseName) do
@@ -572,15 +475,9 @@ PhaseDialog.OpenUI = HL.Method(HL.Table) << function(self, arg)
     end)
 end
 
-
-
-
-
 PhaseDialog._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self:OnDialogPhaseTransitionBackToTop()
 end
-
-
 
 PhaseDialog.OnDialogPhaseTransitionBackToTop = HL.Method() << function(self)
     if self.doingOut or self.m_openedPhaseId == -1 then
@@ -627,9 +524,6 @@ PhaseDialog.OnDialogPhaseTransitionBackToTop = HL.Method() << function(self)
     end
 end
 
-
-
-
 PhaseDialog.OnSendPresentEnd = HL.Method(HL.Table) << function(self, data)
     local success = data.success
     local deltaFav = data.deltaFav
@@ -644,16 +538,10 @@ PhaseDialog.OnSendPresentEnd = HL.Method(HL.Table) << function(self, data)
 end
 
 
-
-
-
 PhaseDialog.Next = HL.Method(HL.Opt(HL.Number)) << function(self, num)
     num = num or -1
     GameWorld.dialogManager:Next(num)
 end
-
-
-
 
 
 PhaseDialog.SetCtrlButtonVisible = HL.Method(HL.Boolean) << function(self, visible)
@@ -662,8 +550,6 @@ PhaseDialog.SetCtrlButtonVisible = HL.Method(HL.Boolean) << function(self, visib
         panelItem.uiCtrl:SetCtrlButtonVisible(visible)
     end
 end
-
-
 
 
 PhaseDialog._OpenDialogRecord = HL.Method() << function(self)
@@ -675,16 +561,12 @@ PhaseDialog._OpenDialogRecord = HL.Method() << function(self)
     panelItem.uiCtrl:Show()
 end
 
-
-
 PhaseDialog._HideDialogRecord = HL.Method() << function(self)
     local panelItem = self:_GetPanelPhaseItem(PanelId.DialogRecord)
     if panelItem then
         panelItem.uiCtrl:Hide()
     end
 end
-
-
 
 
 
@@ -731,16 +613,12 @@ PhaseDialog._OpenDialogSkipPopUp = HL.Method() << function(self)
     end
 end
 
-
-
 PhaseDialog._HideDialogSkipPopUp = HL.Method() << function(self)
     local panelItem = self:_GetPanelPhaseItem(PanelId.DialogSkipPopUp)
     if panelItem then
         panelItem.uiCtrl:Hide()
     end
 end
-
-
 
 PhaseDialog._SkipDialog = HL.Method() << function(self)
     self:_HideDialogSkipPopUp()
@@ -753,10 +631,7 @@ end
 
 
 
-
 PhaseDialog.m_dialogControllerThread = HL.Field(HL.Thread)
-
-
 
 PhaseDialog._InitPhaseDialogController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -771,15 +646,11 @@ PhaseDialog._InitPhaseDialogController = HL.Method() << function(self)
     end)
 end
 
-
-
 PhaseDialog._ClearPhaseDialogController = HL.Method() << function(self)
     if self.m_dialogControllerThread ~= nil then
         self.m_dialogControllerThread = self:_ClearCoroutine(self.m_dialogControllerThread)
     end
 end
-
-
 
 PhaseDialog._UpdateControllerMoveCamera = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -797,8 +668,6 @@ PhaseDialog._UpdateControllerMoveCamera = HL.Method() << function(self)
 
     self:_MoveCamera(JsonConst.CONTROLLER_DIALOG_CAMERA_MOVE_SPEED[1] * stickValue)
 end
-
-
 
 PhaseDialog._GetIsControllerDialogCameraValid = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_panelItem.uiCtrl.view.inputGroup.groupEnabled

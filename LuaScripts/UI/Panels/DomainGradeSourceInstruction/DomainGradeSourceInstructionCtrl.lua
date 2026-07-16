@@ -2,17 +2,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DomainGradeSourceInstruction
 
-
-
-
-
-
-
-
 DomainGradeSourceInstructionCtrl = HL.Class('DomainGradeSourceInstructionCtrl', uiCtrl.UICtrl)
 
 local domainDevelopmentSystem = GameInstance.player.domainDevelopmentSystem
-
 
 
 
@@ -24,17 +16,11 @@ DomainGradeSourceInstructionCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 DomainGradeSourceInstructionCtrl.m_domainId = HL.Field(HL.String) << ""
-
 
 DomainGradeSourceInstructionCtrl.m_DegreeSourceInfo = HL.Field(HL.Table)
 
-
 DomainGradeSourceInstructionCtrl.m_genSourceCells = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 
@@ -77,8 +63,6 @@ DomainGradeSourceInstructionCtrl.OnCreate = HL.Override(HL.Any) << function(self
     
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
 
 
 

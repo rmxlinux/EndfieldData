@@ -1,15 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DebugPhase
-
-
-
-
-
-
-
 DebugPhaseCtrl = HL.Class('DebugPhaseCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -24,12 +16,8 @@ DebugPhaseCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 DebugPhaseCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
-
 
 DebugPhaseCtrl.ShowDebugPhase = HL.StaticMethod() << function()
     if not BEYOND_DEBUG_COMMAND then
@@ -39,18 +27,13 @@ DebugPhaseCtrl.ShowDebugPhase = HL.StaticMethod() << function()
     ctrl:UpdateDebugText()
 end
 
-
 DebugPhaseCtrl.HideDebugPhase = HL.Method() << function()
     UIManager:Close(PANEL_ID)
 end
 
-
-
 DebugPhaseCtrl.UpdateDebugText = HL.Method() << function(self)
     self.view.text.text = self:_GetPhaseStackInfo()
 end
-
-
 
 DebugPhaseCtrl._GetPhaseStackInfo = HL.Method().Return(HL.String) << function(self)
     local phaseStack = PhaseManager:GetPhaseStack()

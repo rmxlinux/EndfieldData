@@ -2,21 +2,11 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopRecommendEmptyGiftPack
 
-
-
-
-
-
-
-
 ShopRecommendEmptyGiftPackCtrl = HL.Class('ShopRecommendEmptyGiftPackCtrl', uiCtrl.UICtrl)
-
 
 ShopRecommendEmptyGiftPackCtrl.m_tabData = HL.Field(HL.Table)
 
-
 ShopRecommendEmptyGiftPackCtrl.m_go = HL.Field(HL.Any)
-
 
 
 
@@ -25,9 +15,6 @@ ShopRecommendEmptyGiftPackCtrl.m_go = HL.Field(HL.Any)
 ShopRecommendEmptyGiftPackCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 ShopRecommendEmptyGiftPackCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -50,10 +37,9 @@ ShopRecommendEmptyGiftPackCtrl.OnCreate = HL.Override(HL.Any) << function(self, 
     self.view.cashShopKrTips:InitCashShopKrTips()
 end
 
-
-
-
-
+ShopRecommendEmptyGiftPackCtrl.OnShow = HL.Override() << function(self)
+    GameInstance.player.cashShopSystem:ReadCashGoods(self.m_tabData.cashGoodsIds[1])
+end
 
 
 
@@ -66,8 +52,6 @@ ShopRecommendEmptyGiftPackCtrl._CreateGO = HL.Method(HL.String).Return(GameObjec
     local go = CSUtils.CreateObject(goAsset, self.view.widgetRoot.transform)
     return go
 end
-
-
 
 ShopRecommendEmptyGiftPackCtrl._SetupUI = HL.Method() << function(self)
     local widget = {}

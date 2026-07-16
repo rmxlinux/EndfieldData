@@ -4,47 +4,21 @@ local PANEL_ID = PanelId.DomainGradePopup
 
 local SHOW_REWARD_ITEM_COUNT = 5
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainGradePopupCtrl = HL.Class('DomainGradePopupCtrl', uiCtrl.UICtrl)
-
 
 DomainGradePopupCtrl.m_domainId = HL.Field(HL.String) << ""
 
-
 DomainGradePopupCtrl.m_lv = HL.Field(HL.Number) << -1
-
 
 DomainGradePopupCtrl.m_genLevelEffectCellFunc = HL.Field(HL.Function)
 
-
 DomainGradePopupCtrl.m_rewardItemCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 DomainGradePopupCtrl.m_levelEffectInfo = HL.Field(HL.Table)
 
-
 DomainGradePopupCtrl.m_isGet = HL.Field(HL.Boolean) << false
 
-
 DomainGradePopupCtrl.m_isReachedLevel = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -53,9 +27,6 @@ DomainGradePopupCtrl.m_isReachedLevel = HL.Field(HL.Boolean) << false
 DomainGradePopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_DOMAIN_DEVELOPMENT_LEVEL_REWARD_GET] = 'OnDomainDevelopmentLevelRewardGet',
 }
-
-
-
 
 
 DomainGradePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -89,8 +60,6 @@ DomainGradePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
 DomainGradePopupCtrl._UpdateState = HL.Method() << function(self)
     local domainDevelopmentSys = GameInstance.player.domainDevelopmentSystem
     local domainData = domainDevelopmentSys.domainDevDataDic:get_Item(self.m_domainId)
@@ -99,13 +68,9 @@ DomainGradePopupCtrl._UpdateState = HL.Method() << function(self)
     self.m_isGet = domainDevelopmentSys:IsLevelRewarded(self.m_domainId, self.m_lv)
 end
 
-
-
 DomainGradePopupCtrl._UpdateTitleInfo = HL.Method() << function(self)
     DomainDevelopmentUtils.updateLevelCellTitle(self.view.titleNode, self.m_domainId, self.m_lv)
 end
-
-
 
 DomainGradePopupCtrl._UpdateLevelRewardsInfo = HL.Method() << function(self)
     local domainCfg = Tables.domainDataTable[self.m_domainId]
@@ -118,16 +83,10 @@ DomainGradePopupCtrl._UpdateLevelRewardsInfo = HL.Method() << function(self)
     end)
 end
 
-
-
 DomainGradePopupCtrl._UpdateLevelEffectInfo = HL.Method() << function(self)
     self.m_levelEffectInfo = DomainDevelopmentUtils.genLevelEffectInfo(self.m_domainId, self.m_lv)
     self.view.levelEffectScrollList:UpdateCount(#self.m_levelEffectInfo)
 end
-
-
-
-
 
 DomainGradePopupCtrl._UpdateLevelEffectCell = HL.Method(GameObject, HL.Number) << function(self, gameObject, csIndex)
     local cell = self.m_genLevelEffectCellFunc(gameObject)
@@ -135,20 +94,13 @@ DomainGradePopupCtrl._UpdateLevelEffectCell = HL.Method(GameObject, HL.Number) <
     DomainDevelopmentUtils.updateLevelEffectCell(cell, levelEffectInfoUnit, self.m_isReachedLevel)
 end
 
-
-
 DomainGradePopupCtrl._OnClickCloseBtn = HL.Method() << function(self)
     self:PlayAnimationOutAndClose()
 end
 
-
-
 DomainGradePopupCtrl._OnClickReceiveBtn = HL.Method() << function(self)
     GameInstance.player.domainDevelopmentSystem:TakeLevelReward(self.m_domainId, self.m_lv)
 end
-
-
-
 
 DomainGradePopupCtrl.OnDomainDevelopmentLevelRewardGet = HL.Method(HL.Any) << function(self, args)
     self:_UpdateState()

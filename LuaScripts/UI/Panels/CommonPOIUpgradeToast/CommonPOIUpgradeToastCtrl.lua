@@ -26,61 +26,25 @@ local GetArgsFunc = {
     end
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonPOIUpgradeToastCtrl = HL.Class('CommonPOIUpgradeToastCtrl', uiCtrl.UICtrl)
 
 local MAIN_HUD_TOAST_TYPE = "CommonPOIUpgradeToast"
 
-
 CommonPOIUpgradeToastCtrl.m_args = HL.Field(HL.Table)
-
 
 CommonPOIUpgradeToastCtrl.m_state = HL.Field(HL.String) << ""
 
-
 CommonPOIUpgradeToastCtrl.m_domainPOIType = HL.Field(GEnums.DomainPoiType)
-
 
 CommonPOIUpgradeToastCtrl.m_preLv = HL.Field(HL.Number) << 0
 
-
 CommonPOIUpgradeToastCtrl.m_instId = HL.Field(HL.String) << ""
-
 
 CommonPOIUpgradeToastCtrl.m_lv = HL.Field(HL.Number) << 0
 
-
 CommonPOIUpgradeToastCtrl.m_descTxtCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 CommonPOIUpgradeToastCtrl.m_showCor = HL.Field(HL.Thread)
-
 
 
 
@@ -90,8 +54,6 @@ CommonPOIUpgradeToastCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.INTERRUPT_MAIN_HUD_ACTION_QUEUE] = 'InterruptMainHudActionQueue',
 }
-
-
 
 CommonPOIUpgradeToastCtrl.OnCommonPOIUnlocked = HL.StaticMethod(HL.Opt(HL.Table)) << function(arg)
     if arg == nil then
@@ -103,8 +65,6 @@ CommonPOIUpgradeToastCtrl.OnCommonPOIUnlocked = HL.StaticMethod(HL.Opt(HL.Table)
         UIManager:Open(PANEL_ID, { domainPOIType, instId, 0, 1})
     end)
 end
-
-
 
 CommonPOIUpgradeToastCtrl.OnCommonPOILevelUp = HL.StaticMethod(HL.Opt(HL.Table)) << function(arg)
     if arg == nil then
@@ -125,23 +85,16 @@ end
 
 
 
-
-
 CommonPOIUpgradeToastCtrl.OnSewageTreatPlantUnlock = HL.StaticMethod(HL.Table) << function(arg)
     local instId = unpack(arg)
     UIManager:Open(PANEL_ID, { GEnums.DomainPoiType.SewageTreatPlant, instId, 0, 1})
 end
-
-
 
 CommonPOIUpgradeToastCtrl.OnSewageTreatPlantLevelUp = HL.StaticMethod(HL.Table) << function(arg)
     local instId = unpack(arg)
     local currLevel = FactoryUtils.getSewageTreatPlantLevel(instId)
     UIManager:Open(PANEL_ID, { GEnums.DomainPoiType.SewageTreatPlant, instId, currLevel - 1, currLevel})
 end
-
-
-
 
 
 
@@ -167,21 +120,15 @@ end
 
 
 
-
-
 CommonPOIUpgradeToastCtrl.OnClose = HL.Override() << function(self)
     if self.m_showCor then
         self.m_showCor = self:_ClearCoroutine(self.m_showCor)
     end
 end
 
-
-
 CommonPOIUpgradeToastCtrl._IsStateUnlock = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_preLv == 0 and self.m_lv == 1
 end
-
-
 
 CommonPOIUpgradeToastCtrl._StartToastShowingProcess = HL.Method() << function(self)
     local animWrapper = self.animationWrapper
@@ -210,8 +157,6 @@ CommonPOIUpgradeToastCtrl._StartToastShowingProcess = HL.Method() << function(se
     end
 end
 
-
-
 CommonPOIUpgradeToastCtrl._InitBaseInfo = HL.Method() << function(self)
     self.view.content:SetState(self.m_state)
 
@@ -229,8 +174,6 @@ CommonPOIUpgradeToastCtrl._InitBaseInfo = HL.Method() << function(self)
         self.view.icon:LoadSprite(UIConst.UI_SPRITE_COMMON_POI_UPGRADE_TOAST, domainPOITypeCfg.upgradeToastIcon)
     end
 end
-
-
 
 CommonPOIUpgradeToastCtrl._InitDesc = HL.Method() << function(self)
     local funcName = GetDescFunc[self.m_domainPOIType]
@@ -251,8 +194,6 @@ CommonPOIUpgradeToastCtrl._InitDesc = HL.Method() << function(self)
     end)
 end
 
-
-
 CommonPOIUpgradeToastCtrl._GetDescRecycleBin = HL.Method().Return(HL.Table) << function(self)
     local descList = {}
     if self.m_state == PANEL_STATE.Unlock then
@@ -269,8 +210,6 @@ CommonPOIUpgradeToastCtrl._GetDescRecycleBin = HL.Method().Return(HL.Table) << f
     return descList
 end
 
-
-
 CommonPOIUpgradeToastCtrl._GetDescDomainShop = HL.Method().Return(HL.Table)  << function(self)
     local descList = {}
     
@@ -282,8 +221,6 @@ CommonPOIUpgradeToastCtrl._GetDescDomainShop = HL.Method().Return(HL.Table)  << 
 
     return descList
 end
-
-
 
 CommonPOIUpgradeToastCtrl._GetDescKiteStation = HL.Method().Return(HL.Table) << function(self)
     local descList = {}
@@ -304,8 +241,6 @@ CommonPOIUpgradeToastCtrl._GetDescKiteStation = HL.Method().Return(HL.Table) << 
 
     return descList
 end
-
-
 
 CommonPOIUpgradeToastCtrl._GetDescDomainDepot = HL.Method().Return(HL.Table) << function(self)
     local descList = {}
@@ -354,8 +289,6 @@ CommonPOIUpgradeToastCtrl._GetDescDomainDepot = HL.Method().Return(HL.Table) << 
 end
 
 
-
-
 CommonPOIUpgradeToastCtrl._GetDescSimulationTraining = HL.Method().Return(HL.Table) << function(self)
     local descList = {}
 
@@ -370,8 +303,6 @@ CommonPOIUpgradeToastCtrl._GetDescSimulationTraining = HL.Method().Return(HL.Tab
 
     return descList
 end
-
-
 CommonPOIUpgradeToastCtrl._GetDescSewageTreatPlant = HL.Method().Return(HL.Table) << function(self)
     local descList = {}
 
@@ -385,8 +316,6 @@ CommonPOIUpgradeToastCtrl._GetDescSewageTreatPlant = HL.Method().Return(HL.Table
 
     return descList
 end
-
-
 
 CommonPOIUpgradeToastCtrl.InterruptMainHudActionQueue = HL.Method() << function(self)
     self:Close()

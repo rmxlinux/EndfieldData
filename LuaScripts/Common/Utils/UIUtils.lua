@@ -89,7 +89,7 @@ function UIUtils.initLuaCustomConfig(self)
     end
 end
 
-function UIUtils.genCachedCellFunction(list, onMiss)
+function UIUtils.genCachedCellFunction(list, onMiss, isTitle)
     onMiss = onMiss or function(obj)
         return Utils.wrapLuaNode(obj)
     end
@@ -116,7 +116,11 @@ function UIUtils.genCachedCellFunction(list, onMiss)
             end
             local luaIndex = object
             
-            object = list:Get(CSIndex(luaIndex))
+            if isTitle then
+                object = list:GetGroupTitle(CSIndex(luaIndex))
+            else
+                object = list:Get(CSIndex(luaIndex))
+            end
         end
         if object then
             return getCell(object)
@@ -204,29 +208,42 @@ function UIUtils.getGamepadKeyImageText(keyCode, isLongPress, scale, color)
 end
 
 
+
 function UIUtils.setAsNaviTarget(targetSelectable)
-    InputManagerInst.controllerNaviManager:SetTarget(targetSelectable)
+    logger.error("[UIUtils] setAsNaviTarget 已废弃，请使用 self:SetNaviTarget(selectable)")
+    InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetSelectable)
 end
+
 
 
 
 
 function UIUtils.setAsNaviTargetInSilentModeIfPhaseIsTop(targetNaviGroup, targetSelectable, needTopPhaseId)
-    UIUtils.setAsNaviTargetInSilentModeIfNecessary(targetNaviGroup, targetSelectable, PhaseManager:GetPhaseDummyNaviLayerName(needTopPhaseId))
+    logger.error("[UIUtils] setAsNaviTargetInSilentModeIfPhaseIsTop 已废弃，请使用 self:SetNaviTarget(selectable)")
+    local key = PhaseManager:GetPhaseDummyNaviLayerName(needTopPhaseId)
+    if not string.isEmpty(key) then
+        local needTopDummyLayer = LuaSystemManager.dummyNaviLayerSystem:GetDummyNaviLayerByKey(key)
+        if needTopDummyLayer ~= nil then
+            InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetSelectable, needTopDummyLayer)
+        end
+    else
+        InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetSelectable)
+    end
 end
 
 
 
 
+
 function UIUtils.setAsNaviTargetInSilentModeIfNecessary(targetNaviGroup, targetSelectable, needTopDummyLayerKey)
+    logger.error("[UIUtils] setAsNaviTargetInSilentModeIfNecessary 已废弃，请使用 self:SetNaviTarget(selectable)")
     if string.isEmpty(needTopDummyLayerKey) then
-        InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetNaviGroup, targetSelectable)
+        InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetSelectable)
         return
     end
     local needTopDummyLayer = LuaSystemManager.dummyNaviLayerSystem:GetDummyNaviLayerByKey(needTopDummyLayerKey)
     if needTopDummyLayer ~= nil then
-        
-        InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetNaviGroup, targetSelectable, needTopDummyLayer)
+        InputManagerInst.controllerNaviManager:SetTargetInSilentModeIfNecessary(targetSelectable, needTopDummyLayer)
     end
 end
 
@@ -290,7 +307,7 @@ function UIUtils.playItemDragAudio(itemId)
     end
     local _, itemData = Tables.itemTable:TryGetValue(itemId)
     if itemData then
-        local audioTypeData = Tables.audioItemTypeDragAndDrop[itemData.showingType]
+        local _, audioTypeData = Tables.audioItemTypeDragAndDrop:TryGetValue(itemData.showingType)
         if audioTypeData ~= nil and not string.isEmpty(audioTypeData.audioDrag) then
             AudioAdapter.PostEvent(audioTypeData.audioDrag)
         end
@@ -308,7 +325,7 @@ function UIUtils.playItemDropAudio(itemId)
     end
     local _, itemData = Tables.itemTable:TryGetValue(itemId)
     if itemData then
-        local audioTypeData = Tables.audioItemTypeDragAndDrop[itemData.showingType]
+        local _, audioTypeData = Tables.audioItemTypeDragAndDrop:TryGetValue(itemData.showingType)
         if audioTypeData ~= nil and not string.isEmpty(audioTypeData.audioDrop) then
             AudioAdapter.PostEvent(audioTypeData.audioDrop)
         end
@@ -780,6 +797,11 @@ function UIUtils.updateTipsPositionWithScreenRect(contentRectTrans, targetScreen
     elseif posType == UIConst.UI_TIPS_POS_TYPE.FacSmartAlertTop then
         screenPos.y = targetScreenRect.yMin - halfHeightInScreen
         screenPos.x = targetScreenRect.center.x
+    elseif posType == UIConst.UI_TIPS_POS_TYPE.LeftAlignBottom then
+        screenPos.x = targetScreenRect.xMin + halfWidthInScreen
+        screenPos.y = targetScreenRect.yMax + halfHeightInScreen
+        finalXPos = UIConst.UI_TIPS_X_POS_TYPE.Left
+        finalYPos = UIConst.UI_TIPS_Y_POS_TYPE.Bottom
     elseif posType == UIConst.UI_TIPS_POS_TYPE.AdaptiveRightTop then
         
         local downHeight = screenSize.y - targetScreenRect.yMin
@@ -1069,11 +1091,12 @@ function UIUtils.setSizeDeltaY(rect, value)
     rect.sizeDelta = size
 end
 
-function UIUtils.mapScreenPosToEllipseEdge (screenPos, ellipseXRadius, ellipseYRadius)
+function UIUtils.mapScreenPosToEllipseEdge (screenPos, ellipseXRadius, ellipseYRadius, ellipseYOffset)
+    ellipseYOffset = ellipseYOffset or 0
     local x = screenPos.x
-    local y = screenPos.y
+    local y = screenPos.y - ellipseYOffset
 
-    local angle = math.atan(y, x)
+    local angle = math.atan(screenPos.y, screenPos.x)
     local k = y / x
     local uiPos = Vector2.zero
     local a = ellipseXRadius
@@ -1084,7 +1107,9 @@ function UIUtils.mapScreenPosToEllipseEdge (screenPos, ellipseXRadius, ellipseYR
     end
     uiPos.y = uiPos.x * k
 
-    if uiPos.magnitude < screenPos.magnitude then
+    local shiftedScreenPos = Vector2(x, y)
+    if uiPos.magnitude < shiftedScreenPos.magnitude then
+        uiPos.y = uiPos.y + ellipseYOffset
         return uiPos, math.deg(angle), true
     end
 
@@ -1103,6 +1128,25 @@ function UIUtils.resolveTextCinematic(text)
     return UIUtils.resolveText(text, cfg)
 end
 
+function UIUtils.resolveNarrativeEntryLinks(text)
+    return CS.Beyond.Gameplay.GameplayUIUtils.ResolveNarrativeEntryLinks(text)
+end
+
+function UIUtils.resolveNarrativeTextWithEntryLinks(text)
+    local rawText, entryLinks = UIUtils.resolveNarrativeEntryLinks(text)
+    return UIUtils.resolveTextCinematic(rawText), entryLinks
+end
+
+function UIUtils.resolveLinkTypeFromId(linkId)
+    if string.startWith(linkId, CS.Beyond.Gameplay.GameplayUIUtils.NARRATIVE_LINK_PREFIX) then
+        return UIConst.UI_TEXT_LINK_TYPE.Narrative
+    elseif string.startWith(linkId, CS.Beyond.UI.UIText.HYPERLINK_ID_PREFIX) then
+        return UIConst.UI_TEXT_LINK_TYPE.Hyperlink
+    else
+        return UIConst.UI_TEXT_LINK_TYPE.Default
+    end
+end
+
 
 
 function UIUtils.resolveText(text, cfg)
@@ -1118,7 +1162,8 @@ function UIUtils.resolveTextGender(text)
 end
 
 function UIUtils.resolveTextGenderWithNpcGender(text, gender)
-    return CS.Beyond.Gameplay.GameplayUIUtils.ResolveTextGenderWithGender(text, gender:ToInt())
+    local genderInt = gender and gender:ToInt() or 0
+    return CS.Beyond.Gameplay.GameplayUIUtils.ResolveTextGenderWithNpcGender(text, genderInt)
 end
 
 function UIUtils.genDynamicBlackScreenMaskData(systemName, fadeInTime, fadeOutTime, fadeInCallback)
@@ -1583,7 +1628,7 @@ function UIUtils.useItemOnTip(itemId)
         Notify(MessageConst.SHOW_TOAST, Language.LUA_ITEM_BAR_TAG_FORBIDDEN)
         return false
     end
-    if GameInstance.mode:IsItemForbidden(itemId) then
+    if GameInstance.player.forbidSystem:IsItemForbidden(itemId) then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_ITEM_BAR_TOAST_GAME_MODE_FORBID)
         return false
     end
@@ -1839,6 +1884,17 @@ function UIUtils.getSoilRewardFirstItem(rewardId)
     return rewardTableData.itemBundles[0]
 end
 
+
+
+function UIUtils.getAvatarIconByItemId(itemId)
+    for _, avatarData in pairs(Tables.userAvatarTable) do
+        if avatarData.itemId == itemId then
+            return avatarData.icon
+        end
+    end
+    return nil
+end
+
 function UIUtils.getRewardItems(rewardId, items)
     
     local _, rewardTableData = Tables.rewardTable:TryGetValue(rewardId)
@@ -1985,7 +2041,7 @@ end
 
 
 
-function UIUtils.isItemTypeForbidden(dungeonId, itemType)
+function UIUtils.isItemForbidden(dungeonId, itemId)
     local _, subGameInstData = DataManager.subGameInstDataTable:TryGetValue(dungeonId)
     if not subGameInstData then
         return false
@@ -1996,6 +2052,12 @@ function UIUtils.isItemTypeForbidden(dungeonId, itemType)
         return false
     end
 
+    local _, itemData = Tables.itemTable:TryGetValue(itemId)
+    if not itemData then
+        return false
+    end
+    local _, itemUseData = Tables.useItemTable:TryGetValue(itemId)
+
     if not gameModeData.functionSettings then
         return false
     end
@@ -2004,14 +2066,24 @@ function UIUtils.isItemTypeForbidden(dungeonId, itemType)
         if functionSetting.modeFuncType == GEnums.GameModeFuncType.ForbidUseItemType then
             local funcParams = functionSetting.funcParams
             if funcParams and funcParams.itemTypes and
-                funcParams.itemTypes:Contains(itemType) then
+                funcParams.itemTypes:Contains(itemData.type) then
                 return true
+            end
+        elseif functionSetting.modeFuncType == GEnums.GameModeFuncType.ForbidUseItemGameModeTagType then
+            local funcParams = functionSetting.funcParams
+            if funcParams and funcParams.itemTags and itemUseData then
+                for _, tag in pairs(itemUseData.gameModeForbidTagList) do
+                    if funcParams.itemTags:Contains(tag) then
+                        return true
+                    end
+                end
             end
         end
     end
 
     return false
 end
+
 
 
 function UIUtils.convertRewardItemBundlesToDataList(itemBundles, isIncremental)
@@ -2022,6 +2094,34 @@ function UIUtils.convertRewardItemBundlesToDataList(itemBundles, isIncremental)
     end
 
     for index = 0, itemBundles.Count - 1 do
+        local rewardItem = itemBundles[index]
+        local itemId = rewardItem.id
+        local success, itemData = Tables.itemTable:TryGetValue(itemId)
+        if success then
+            table.insert(rewardItemDataList, {
+                id = itemId,
+                count = rewardItem.count,
+                rarity = itemData.rarity,
+                sortId1 = itemData.sortId1,
+                sortId2 = itemData.sortId2,
+            })
+        end
+    end
+
+    table.sort(rewardItemDataList, Utils.genSortFunction({ "rarity", "sortId1", "sortId2", "id" }, isIncremental))
+
+    return rewardItemDataList
+end
+
+
+function UIUtils.convertLuaRewardItemBundlesToDataList(itemBundles, isIncremental)
+    local rewardItemDataList = {}
+
+    if itemBundles == nil or itemBundles.Count == 0 then
+        return rewardItemDataList
+    end
+
+    for index = 1, #itemBundles do
         local rewardItem = itemBundles[index]
         local itemId = rewardItem.id
         local success, itemData = Tables.itemTable:TryGetValue(itemId)
@@ -2201,13 +2301,14 @@ function UIUtils.getSettlementEnhanceEffectDesc(enhanceMoneyProduceSpeedRate, en
 end
 
 
-function UIUtils.showItemSideTips(itemCell, tipsPosType, tipsPosTransform)
+function UIUtils.showItemSideTips(itemCell, tipsPosType, tipsPosTransform, onBeforeJump)
     local posInfo
     if DeviceInfo.usingController then
         posInfo = {
             tipsPosType = tipsPosType or UIConst.UI_TIPS_POS_TYPE.RightDown,
             tipsPosTransform = tipsPosTransform or itemCell.transform,
             isSideTips = true,
+            onBeforeJump = onBeforeJump,
         }
         itemCell:SetExtraInfo({ isSideTips = DeviceInfo.usingController })
     end

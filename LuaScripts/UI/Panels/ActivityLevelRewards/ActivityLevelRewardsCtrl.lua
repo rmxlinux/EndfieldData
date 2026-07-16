@@ -2,29 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityLevelRewards
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ActivityLevelRewardsCtrl = HL.Class('ActivityLevelRewardsCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -37,41 +15,27 @@ ActivityLevelRewardsCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 ActivityLevelRewardsCtrl.m_rewardCount = HL.Field(HL.Number) << 0
-
 
 ActivityLevelRewardsCtrl.m_activityId = HL.Field(HL.String) << ""
 
-
 ActivityLevelRewardsCtrl.m_rewardedID = HL.Field(HL.String) << ""
-
 
 ActivityLevelRewardsCtrl.m_getRewardCell = HL.Field(HL.Function)
 
-
 ActivityLevelRewardsCtrl.m_completeStageList = HL.Field(HL.Table)
-
 
 ActivityLevelRewardsCtrl.m_receiveStageList = HL.Field(HL.Table)
 
-
 ActivityLevelRewardsCtrl.m_gainRewardIndex = HL.Field(HL.Number) << 0
-
 
 ActivityLevelRewardsCtrl.MAX_REWARD_COUNT = HL.Field(HL.Number) << 2
 
-
 ActivityLevelRewardsCtrl.m_genCellFunc = HL.Field(HL.Function)
-
 
 ActivityLevelRewardsCtrl.m_listCells = HL.Field(HL.Table)
 
-
 ActivityLevelRewardsCtrl.m_rewardList = HL.Field(HL.Table)
-
-
-
 
 
 ActivityLevelRewardsCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -112,24 +76,15 @@ ActivityLevelRewardsCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
         end)
     end
 end
-
-
-
 ActivityLevelRewardsCtrl._SetAsNaviTarget = HL.Method(HL.Number) << function(self, index)
     local csIndex = CSIndex(index)
     self.m_genCellFunc = self.m_genCellFunc or UIUtils.genCachedCellFunction(self.view.rewardNode)
-    UIUtils.setAsNaviTarget(self.m_genCellFunc(self.view.rewardList:Get(self.view.config.REVERSE_REWARDS and CSIndex(self.m_rewardCount) - csIndex or csIndex)).focusRect)
+    self:SetNaviTarget(self.m_genCellFunc(self.view.rewardList:Get(self.view.config.REVERSE_REWARDS and CSIndex(self.m_rewardCount) - csIndex or csIndex)).focusRect)
 end
-
-
 
 ActivityLevelRewardsCtrl.OnActivityCenterNaviFailed = HL.Method() << function(self)
     self:_SetAsNaviTarget(1)
 end
-
-
-
-
 
 ActivityLevelRewardsCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     
@@ -208,8 +163,6 @@ ActivityLevelRewardsCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << funct
     end
 end
 
-
-
 ActivityLevelRewardsCtrl._RefreshRewards = HL.Method() << function(self)
     local activityLevelRewardsCS = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     local completeStageList = activityLevelRewardsCS.completeStageList
@@ -223,15 +176,9 @@ ActivityLevelRewardsCtrl._RefreshRewards = HL.Method() << function(self)
     self.view.rewardList:UpdateCount(self.m_rewardCount)
 end
 
-
-
-
 ActivityLevelRewardsCtrl._OnLevelRewardUpdate= HL.Method(HL.Table) << function(self,args)
     self:_RefreshRewards()
 end
-
-
-
 ActivityLevelRewardsCtrl._OnActivityUpdate = HL.Method(HL.Table) << function(self,args)
     local id = unpack(args)
     if id == self.m_activityId and GameInstance.player.activitySystem:GetActivity(id) then
@@ -242,9 +189,6 @@ ActivityLevelRewardsCtrl._OnActivityUpdate = HL.Method(HL.Table) << function(sel
         end
     end
 end
-
-
-
 
 ActivityLevelRewardsCtrl._LevelReward = HL.Method(HL.Number) << function(self,level)
     activityLevelRewardsCS = GameInstance.player.activitySystem:GetActivity(self.m_activityId)

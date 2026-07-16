@@ -1,10 +1,6 @@
 local pipeRouterCtrl = require_ex('UI/Panels/FacPipeRouter/FacPipeRouterCtrl')
 local PANEL_ID = PanelId.FacPipeSplitter
-
-
-
 FacPipeSplitterCtrl = HL.Class('FacPipeSplitterCtrl', pipeRouterCtrl.FacPipeRouterCtrl)
-
 
 
 
@@ -15,8 +11,6 @@ FacPipeSplitterCtrl = HL.Class('FacPipeSplitterCtrl', pipeRouterCtrl.FacPipeRout
 FacPipeSplitterCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
 
 FacPipeSplitterCtrl._InitRouterPortData = HL.Override() << function(self)
     self.m_isSinglePortIn = true
@@ -71,6 +65,15 @@ FacPipeSplitterCtrl._InitRouterPortData = HL.Override() << function(self)
         }
     }
 
+    
+    local naviBridgeBtn
+    if self.view.buildingCommon.view.delButton.gameObject.activeSelf then
+        naviBridgeBtn = self.view.buildingCommon.view.delButton
+    else
+        naviBridgeBtn = self.view.buildingCommon.view.forbiddenDelButton
+    end
+    self.view.itemLogistics2.view.button:SetExplicitSelectOnRight(naviBridgeBtn)
+    self.view.itemLogistics3.view.button:SetExplicitSelectOnLeft(naviBridgeBtn)
     self.m_initialNaviTarget = self.view.itemLogistics2
 end
 

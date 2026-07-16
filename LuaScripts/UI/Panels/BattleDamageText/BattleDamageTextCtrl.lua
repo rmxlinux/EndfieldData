@@ -6,13 +6,7 @@ local PANEL_ID = PanelId.BattleDamageText
 
 
 
-
-
-
-
-
 BattleDamageTextCtrl = HL.Class('BattleDamageTextCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -30,9 +24,6 @@ BattleDamageTextCtrl.m_isGPUModeInited = HL.Field(HL.Boolean) << false
 BattleDamageTextCtrl.m_isCPUModeInited = HL.Field(HL.Boolean) << false
 
 
-
-
-
 BattleDamageTextCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     if self.m_isGPUMode then
         self.view.damageTextCtrlV2:OnCreate()
@@ -44,8 +35,6 @@ BattleDamageTextCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.m_isCPUModeInited = true
     end
 end
-
-
 
 BattleDamageTextCtrl.OnClose = HL.Override() << function(self)
     if self.m_isGPUModeInited then
@@ -64,8 +53,6 @@ BattleDamageTextCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 BattleDamageTextCtrl.OnShow = HL.Override() << function(self)
     if self.m_isGPUMode then
         self.view.damageTextCtrlV2:OnShow()
@@ -74,8 +61,6 @@ BattleDamageTextCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 BattleDamageTextCtrl.OnHide = HL.Override() << function(self)
     if self.m_isGPUMode then
         self.view.damageTextCtrlV2:OnHide()
@@ -83,8 +68,6 @@ BattleDamageTextCtrl.OnHide = HL.Override() << function(self)
         self.view.damageTextCtrl:OnHide()
     end
 end
-
-
 
 
 BattleDamageTextCtrl.OnToggleDebugDamageTextMode = HL.Method() << function(self)

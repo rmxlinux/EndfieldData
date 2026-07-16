@@ -10,44 +10,7 @@ local ITEM_SLOT_DISABLED = 1
 local ITEM_SLOT_SELECTED = 2
 local ITEM_SLOT_UNSELECTED = 3
 local MAX_OPEN_CHEST_COUNT = 100
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 UsableItemChestCtrl = HL.Class('UsableItemChestCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -59,47 +22,31 @@ UsableItemChestCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_BLOCK_KEYBOARD_EVENT_PANEL_ORDER_CHANGED] = '_OnBlockKeyboardEventPanelOrderChanged',
 }
 
-
 UsableItemChestCtrl.m_itemId = HL.Field(HL.String) << ""
-
 
 UsableItemChestCtrl.m_selectedRewardId = HL.Field(HL.String) << ""
 
-
 UsableItemChestCtrl.m_chestData = HL.Field(HL.Any)
-
 
 UsableItemChestCtrl.m_optionsCount = HL.Field(HL.Number) << 0
 
-
 UsableItemChestCtrl.m_chosenRewardIds = HL.Field(HL.Table)
-
 
 UsableItemChestCtrl.m_itemSlotConditions = HL.Field(HL.Table)
 
-
 UsableItemChestCtrl.m_chosenRewardsCount = HL.Field(HL.Number) << 0
-
 
 UsableItemChestCtrl.m_maxChosenRewardCount = HL.Field(HL.Number) << 0
 
-
 UsableItemChestCtrl.m_chooseItemPageBuild = HL.Field(HL.Boolean) << false
-
 
 UsableItemChestCtrl.m_charCellInfos = HL.Field(HL.Table)
 
-
 UsableItemChestCtrl.m_curSelectCharIndex = HL.Field(HL.Number) << 0
-
 
 UsableItemChestCtrl.m_firstRandomItemId = HL.Field(HL.String) << ""
 
-
 UsableItemChestCtrl.m_currNaviRandomIndex = HL.Field(HL.Number) << 0
-
-
-
 
 
 UsableItemChestCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -173,14 +120,9 @@ UsableItemChestCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
         { self.view.inputGroup.groupId })
 end
 
-
-
-
 UsableItemChestCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
     self.view.chooseChestCountPageRoot.popNode:ManuallyStopFocus()
 end
-
-
 
 UsableItemChestCtrl._OnNumberChange = HL.Method() << function(self)
     if self.m_chestData.type ~= GEnums.ItemCaseType.SelfSelected then
@@ -228,8 +170,6 @@ UsableItemChestCtrl._OnNumberChange = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 UsableItemChestCtrl._OpenRandomChestPanel = HL.Method() << function(self)
     self.view.main:SetState("RandomPage")
@@ -323,9 +263,6 @@ UsableItemChestCtrl._OpenRandomChestPanel = HL.Method() << function(self)
     self.view.btnConfirm.gameObject:SetActive(false)
 end
 
-
-
-
 UsableItemChestCtrl._OpenChooseItemPage = HL.Method(HL.Opt(HL.Table)) << function(self, selectedRewardIds)
     self.view.main:SetState("NormalPage")
     if self.m_chooseItemPageBuild == false then
@@ -344,9 +281,6 @@ UsableItemChestCtrl._OpenChooseItemPage = HL.Method(HL.Opt(HL.Table)) << functio
 
     self:_RefreshSelectItemPage()
 end
-
-
-
 
 UsableItemChestCtrl._OpenChooseCharPotentialPage = HL.Method(HL.Opt(HL.String)) << function(self, selectedCharRewardId)
     self.view.main:SetState("CharPotentialPage")
@@ -437,8 +371,6 @@ UsableItemChestCtrl._OpenChooseCharPotentialPage = HL.Method(HL.Opt(HL.String)) 
     
 end
 
-
-
 UsableItemChestCtrl._RefreshCharPotentialSelectionState = HL.Method() << function(self)
     local selectedInfo = self.m_charCellInfos and self.m_charCellInfos[self.m_curSelectCharIndex] or nil
     if selectedInfo and selectedInfo.isOwned then
@@ -460,10 +392,6 @@ UsableItemChestCtrl._RefreshCharPotentialSelectionState = HL.Method() << functio
     self.view.btnConfirm.gameObject:SetActive(false)
 end
 
-
-
-
-
 UsableItemChestCtrl._RefreshCharCellSelectState = HL.Method(HL.Any, HL.Table) << function(self, cell, info)
     if info.isOwned then
         if info.isSelected then
@@ -475,11 +403,6 @@ UsableItemChestCtrl._RefreshCharCellSelectState = HL.Method(HL.Any, HL.Table) <<
         cell.stateController:SetState("NotOwned")
     end
 end
-
-
-
-
-
 
 UsableItemChestCtrl._OnClickCharCell = HL.Method(HL.Number, HL.Any, HL.Table) << function(self, luaIndex, cell, info)
     if not info.isOwned then
@@ -515,10 +438,6 @@ UsableItemChestCtrl._OnClickCharCell = HL.Method(HL.Number, HL.Any, HL.Table) <<
     self:_RefreshCharPotentialSelectionState()
 end
 
-
-
-
-
 UsableItemChestCtrl._RefreshCharCell = HL.Method(HL.Any, HL.Number) << function(self, inCell, luaIndex)
     
     local cell = inCell
@@ -541,9 +460,6 @@ UsableItemChestCtrl._RefreshCharCell = HL.Method(HL.Any, HL.Number) << function(
     end)
     
 end
-
-
-
 
 UsableItemChestCtrl._BuildChooseItemPage = HL.Method(HL.Opt(HL.Table)) << function(self, selectedRewardIds)
     self.m_chooseItemPageBuild = true
@@ -637,8 +553,6 @@ UsableItemChestCtrl._BuildChooseItemPage = HL.Method(HL.Opt(HL.Table)) << functi
     end)
 end
 
-
-
 UsableItemChestCtrl._RefreshSelectItemPage = HL.Method() << function(self)
     local chosenCountFull = (self.m_chosenRewardsCount == self.m_maxChosenRewardCount)
     self.view.chooseItemPageRoot.m_cellCache:Update(function(itemCell, index)
@@ -680,8 +594,6 @@ UsableItemChestCtrl._RefreshSelectItemPage = HL.Method() << function(self)
     self.view.btnConfirm.gameObject:SetActive(chosenCountFull)
     self.view.btnConfirmX.gameObject:SetActive(false)
 end
-
-
 
 UsableItemChestCtrl._OpenChooseChestCountPage = HL.Method() << function(self)
     
@@ -765,8 +677,6 @@ UsableItemChestCtrl._OpenChooseChestCountPage = HL.Method() << function(self)
     end)
 end
 
-
-
 UsableItemChestCtrl._DoSendReqToServerChoosableChest = HL.Method() << function(self)
     local chosenCountFull = (self.m_chosenRewardsCount == self.m_maxChosenRewardCount)
 
@@ -782,15 +692,10 @@ UsableItemChestCtrl._DoSendReqToServerChoosableChest = HL.Method() << function(s
     GameInstance.player.inventory:OpenUsableItemChest(self.m_itemId, chestCount, rewardIdList)
 end
 
-
-
 UsableItemChestCtrl._DoSendReqToServerRandomChest = HL.Method() << function(self)
     local chestCount = self.view.numberSelector.curNumber
     GameInstance.player.inventory:OpenUsableItemChest(self.m_itemId, chestCount, {})
 end
-
-
-
 
 UsableItemChestCtrl._OnSCOpenInventoryChest = HL.Method(HL.Table) << function(self, args)
 
@@ -841,9 +746,6 @@ UsableItemChestCtrl._OnSCOpenInventoryChest = HL.Method(HL.Table) << function(se
     Notify(MessageConst.SHOW_SYSTEM_REWARDS, rewardPanelArgs)
 end
 
-
-
-
 UsableItemChestCtrl._GetItemInfoFromRewardId = HL.Method(HL.String).Return(HL.Table) << function(self, rewardId)
     local findReward, rewardData = Tables.rewardTable:TryGetValue(rewardId or "")
     local ret = {}
@@ -859,8 +761,6 @@ UsableItemChestCtrl._GetItemInfoFromRewardId = HL.Method(HL.String).Return(HL.Ta
     return ret
 end
 
-
-
 UsableItemChestCtrl._FillLeftBigItem = HL.Method() << function(self)
     local _, itemData = Tables.itemTable:TryGetValue(self.m_itemId)
     self.view.itemIconBig:LoadSprite(UIConst.UI_SPRITE_ITEM_BIG, itemData.iconId)
@@ -868,8 +768,6 @@ UsableItemChestCtrl._FillLeftBigItem = HL.Method() << function(self)
     local chestCount = Utils.getItemCount(self.m_itemId, true, true)
     self.view.chestCountText.text = tostring(chestCount)
 end
-
-
 
 UsableItemChestCtrl._OnBlockKeyboardEventPanelOrderChanged = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -883,11 +781,6 @@ UsableItemChestCtrl._OnBlockKeyboardEventPanelOrderChanged = HL.Method() << func
     self.view.numberSelector.view.reduceBtnKeyHint.transform:GetComponent("CustomUIStyle").overrideValidState = state
     self.view.numberSelector.view.addBtnKeyHint.transform:GetComponent("CustomUIStyle").overrideValidState = state
 end
-
-
-
-
-
 
 UsableItemChestCtrl._ProcessExpectedRewardItem = HL.Method(HL.Any, HL.Any, HL.Number) << function(self, itemId, itemCount, chestCount)
     if string.isEmpty(self.m_selectedRewardId) or  string.isEmpty(itemId) or itemCount == nil or itemCount < 0 then
@@ -910,8 +803,6 @@ UsableItemChestCtrl._ProcessExpectedRewardItem = HL.Method(HL.Any, HL.Any, HL.Nu
     self:_OpenChooseChestCountPage()
     self.view.numberSelector:RefreshNumber(needChestCount)
 end
-
-
 
 UsableItemChestCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = {

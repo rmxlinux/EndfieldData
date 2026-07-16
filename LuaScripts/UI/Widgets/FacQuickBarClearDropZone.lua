@@ -1,19 +1,9 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 FacQuickBarClearDropZone = HL.Class('FacQuickBarClearDropZone', UIWidgetBase)
 
 
-
 FacQuickBarClearDropZone.m_clearAreaDropHelper = HL.Field(HL.Forward('UIDropHelper'))
-
-
 
 
 
@@ -41,15 +31,10 @@ FacQuickBarClearDropZone._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 FacQuickBarClearDropZone.InitFacQuickBarClearDropZone = HL.Method() << function(self)
     self:_FirstTimeInit()
     self.gameObject:SetActive(false)
 end
-
-
-
 
 FacQuickBarClearDropZone.OnStartDrag = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if DeviceInfo.usingController then
@@ -60,18 +45,12 @@ FacQuickBarClearDropZone.OnStartDrag = HL.Method(HL.Forward('UIDragHelper')) << 
     end
 end
 
-
-
-
 FacQuickBarClearDropZone.OnEndDrag = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if DeviceInfo.usingController then
         return
     end
     UIUtils.PlayAnimationAndToggleActive(self.view.animationWrapper, false)
 end
-
-
-
 
 FacQuickBarClearDropZone._OnDropItemToClearArea = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if dragHelper.source ~= UIConst.UI_DRAG_DROP_SOURCE_TYPE.QuickBar then

@@ -3,35 +3,43 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SNSBasic
 local PHASE_ID = PhaseId.SNS
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+local TabConfigs = {
+    {
+        icon = "sns_icon_chat",
+        titleName = Language.LUA_SNS_BARKER_TITLE,
+        panelId = PanelId.SNSBarker,
+        redDot = "SNSBarkerTabCell",
+        forceHide = function()
+            return GameInstance.player.spaceship.isViewingFriend
+        end
+    },
+    {
+        icon = "sns_icon_task",
+        titleName = Language.LUA_SNS_MISSION_TITLE,
+        panelId = PanelId.SNSMission,
+        redDot = "SNSMissionTabCell",
+        forceHide = function()
+            return GameInstance.player.spaceship.isViewingFriend
+        end
+    },
+    {
+        icon = "sns_icon_friend",
+        titleName = Language.LUA_SNS_CHAT_TITLE,
+        panelId = PanelId.SNSFriend,
+        redDot = "FriendChatUnRead",
+        separation = false,
+    },
+}
 
 SNSBasicCtrl = HL.Class('SNSBasicCtrl', uiCtrl.UICtrl)
 
-
 SNSBasicCtrl.m_genTabCells = HL.Field(HL.Forward("UIListCache"))
-
 
 SNSBasicCtrl.m_curTabIndex = HL.Field(HL.Number) << -1
 
-
 SNSBasicCtrl.m_tabInfos = HL.Field(HL.Table)
 
-
 SNSBasicCtrl.m_args = HL.Field(HL.Table)
-
 
 
 
@@ -40,9 +48,6 @@ SNSBasicCtrl.m_args = HL.Field(HL.Table)
 SNSBasicCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 SNSBasicCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -68,41 +73,20 @@ end
 
 
 
-
-
 SNSBasicCtrl._OnClickBtnClose = HL.Method() << function(self)
     
 
     PhaseManager:PopPhase(PHASE_ID)
 end
 
-
-
 SNSBasicCtrl._InitTabInfos = HL.Method() << function(self)
-    self.m_tabInfos = {
-        {
-            icon = "sns_icon_chat",
-            titleName = Language.LUA_SNS_BARKER_TITLE,
-            panelId = PanelId.SNSBarker,
-            redDot = "SNSBarkerTabCell",
-        },
-        {
-            icon = "sns_icon_task",
-            titleName = Language.LUA_SNS_MISSION_TITLE,
-            panelId = PanelId.SNSMission,
-            redDot = "SNSMissionTabCell",
-        },
-        {
-            icon = "sns_icon_friend",
-            titleName = Language.LUA_SNS_CHAT_TITLE,
-            panelId = PanelId.SNSFriend,
-            redDot = "FriendChatUnRead",
-            separation = false,
-        },
-    }
+    self.m_tabInfos = {}
+    for _, tabConfig in ipairs(TabConfigs) do
+        if not tabConfig.forceHide or not tabConfig.forceHide() then
+            table.insert(self.m_tabInfos, tabConfig)
+        end
+    end
 end
-
-
 
 SNSBasicCtrl._InitTabs = HL.Method() << function(self)
     local defaultPanelId = self.m_args and (self.m_args.defaultPanelId or unpack(self.m_args))
@@ -127,11 +111,8 @@ SNSBasicCtrl._InitTabs = HL.Method() << function(self)
     end)
 
     self.view.title.text = self.m_tabInfos[self.m_curTabIndex].titleName
+    self.view.tabs.inputBindingGroupMonoTarget.enabled = #self.m_tabInfos > 1
 end
-
-
-
-
 
 SNSBasicCtrl._OnUpdateTabCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local info = self.m_tabInfos[luaIndex]
@@ -153,9 +134,6 @@ SNSBasicCtrl._OnUpdateTabCell = HL.Method(HL.Any, HL.Number) << function(self, c
     end
 end
 
-
-
-
 SNSBasicCtrl._OnTabClick = HL.Method(HL.Number) << function(self, luaIndex)
     if self.m_curTabIndex == luaIndex then
         return
@@ -168,8 +146,6 @@ SNSBasicCtrl._OnTabClick = HL.Method(HL.Number) << function(self, luaIndex)
     local phase = self.m_phase
     phase:OnTabChange({ panelId = curTabInfo.panelId })
 end
-
-
 
 SNSBasicCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local curTabInfo = self.m_tabInfos and self.m_tabInfos[self.m_curTabIndex] or nil
@@ -186,15 +162,9 @@ end
 
 
 
-
-
-
 SNSBasicCtrl.ToggleTitleBindGroup = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.content.enabled = isOn
 end
-
-
-
 
 SNSBasicCtrl.ToggleCloseBtn = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.btnClose.enabled = isOn

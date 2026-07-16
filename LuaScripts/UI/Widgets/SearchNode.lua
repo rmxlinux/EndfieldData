@@ -1,10 +1,5 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 SearchNode = HL.Class('SearchNode', UIWidgetBase)
 
 
@@ -19,11 +14,7 @@ SearchNode = HL.Class('SearchNode', UIWidgetBase)
 
 
 
-
 SearchNode.m_lastInput = HL.Field(HL.String) << ""
-
-
-
 
 SearchNode.InitSearchNode = HL.Method(HL.Table) << function(self, initInfo)
     local inputField = self.view.inputField
@@ -97,9 +88,6 @@ SearchNode.InitSearchNode = HL.Method(HL.Table) << function(self, initInfo)
     end)
 end
 
-
-
-
 SearchNode.SetInputFieldActive = HL.Method(HL.Boolean) << function(self, active)
     
     
@@ -117,8 +105,6 @@ SearchNode.SetInputFieldActive = HL.Method(HL.Boolean) << function(self, active)
         end
     end
 end
-
-
 
 SearchNode.Clear = HL.Method() << function(self)
     

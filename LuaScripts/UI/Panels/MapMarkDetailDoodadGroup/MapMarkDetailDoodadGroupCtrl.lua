@@ -2,17 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailDoodadGroup
 
-
-
-
-
-
-
-
-
-
 MapMarkDetailDoodadGroupCtrl = HL.Class('MapMarkDetailDoodadGroupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -24,14 +14,9 @@ MapMarkDetailDoodadGroupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 MapMarkDetailDoodadGroupCtrl.m_markInstId = HL.Field(HL.String) << ''
 
-
 MapMarkDetailDoodadGroupCtrl.m_tickCoroutine = HL.Field(HL.Thread)
-
-
-
 
 
 MapMarkDetailDoodadGroupCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -64,13 +49,9 @@ MapMarkDetailDoodadGroupCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
     self.view.detailCommon:InitMapMarkDetailCommon(commonArgs)
 end
 
-
-
 MapMarkDetailDoodadGroupCtrl.OnClose = HL.Override() << function(self)
     self:_StopTickIfNecessary()
 end
-
-
 
 MapMarkDetailDoodadGroupCtrl._StopTickIfNecessary = HL.Method() << function(self)
     if self.m_tickCoroutine ~= nil then
@@ -78,9 +59,6 @@ MapMarkDetailDoodadGroupCtrl._StopTickIfNecessary = HL.Method() << function(self
         self.m_tickCoroutine = nil
     end
 end
-
-
-
 
 MapMarkDetailDoodadGroupCtrl._RenderDoodadPart = HL.Method(HL.String) << function(self, markInstId)
     self:_StopTickIfNecessary()
@@ -96,8 +74,6 @@ MapMarkDetailDoodadGroupCtrl._RenderDoodadPart = HL.Method(HL.String) << functio
         end
     end)
 end
-
-
 
 MapMarkDetailDoodadGroupCtrl._RefreshDoodadPart = HL.Method() << function(self)
     local doodadSystem = GameInstance.player.doodadSystem

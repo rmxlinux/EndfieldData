@@ -1,21 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 WikiTutorialTab = HL.Class('WikiTutorialTab', UIWidgetBase)
-
-
 
 
 WikiTutorialTab._OnFirstTimeInit = HL.Override() << function(self)
 
 end
-
-
-
-
 
 WikiTutorialTab.InitWikiTutorialTab = HL.Method(HL.Table, HL.Function) << function(self, wikiEntryShowData, onItemClicked)
     self:_FirstTimeInit()
@@ -30,10 +20,6 @@ WikiTutorialTab.InitWikiTutorialTab = HL.Method(HL.Table, HL.Function) << functi
     self.view.titleSelectTxt.text = wikiEntryShowData.wikiEntryData.desc
     self:SetSelected(false)
 end
-
-
-
-
 
 WikiTutorialTab.SetSelected = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isSelected, playAnim)
     self.view.normalNode.gameObject:SetActive(not isSelected)

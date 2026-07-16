@@ -1,21 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 SSCharHeadCell = HL.Class('SSCharHeadCell', UIWidgetBase)
-
-
 
 
 SSCharHeadCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -57,13 +42,7 @@ SSCharHeadCell._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
 SSCharHeadCell.m_hoverTipsTimerId = HL.Field(HL.Number) << -1
-
-
-
-
-
 
 SSCharHeadCell.ShowTips = HL.Method(HL.Opt(HL.Any, HL.Any, HL.Boolean)) << function(self, posType, padding, isHover)
     Notify(MessageConst.SHOW_SPACESHIP_CHAR_TIPS, {
@@ -80,20 +59,13 @@ SSCharHeadCell.ShowTips = HL.Method(HL.Opt(HL.Any, HL.Any, HL.Boolean)) << funct
 end
 
 
-
 SSCharHeadCell.m_charId = HL.Field(HL.String) << ''
-
 
 SSCharHeadCell.m_args = HL.Field(HL.Table)
 
-
 SSCharHeadCell.m_tipsPositionTrans = HL.Field(CS.UnityEngine.Transform)
 
-
 SSCharHeadCell.m_skillCells = HL.Field(HL.Forward('UIListCache'))
-
-
-
 
 
 
@@ -144,16 +116,11 @@ SSCharHeadCell.InitSSCharHeadCell = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
 SSCharHeadCell._OnClick = HL.Method() << function(self)
     if self.m_args.onClick then
         self.m_args.onClick()
     end
 end
-
-
-
 
 
 SSCharHeadCell.SetChooseState = HL.Method(HL.Any) << function(self, state)
@@ -172,15 +139,9 @@ SSCharHeadCell.SetChooseState = HL.Method(HL.Any) << function(self, state)
     end
 end
 
-
-
-
 SSCharHeadCell.SetSelectState = HL.Method(HL.Boolean) << function(self, state)
     self.view.selectNode.gameObject:SetActive(state)
 end
-
-
-
 
 
 SSCharHeadCell.UpdateSSCharPreStamina = HL.Method(HL.Any) << function(self, preAddStamina)

@@ -3,16 +3,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Marquee
 local SCROLL_SPEED = 120
 
-
-
-
-
-
-
-
-
 MarqueeCtrl = HL.Class('MarqueeCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -23,11 +14,7 @@ MarqueeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_MARQUEE_STOP] = '_OnMarqueeStop',
 }
 
-
 MarqueeCtrl.m_tweenCore = HL.Field(HL.Any)
-
-
-
 
 
 MarqueeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -37,15 +24,10 @@ end
 
 
 
-
-
 MarqueeCtrl.OnClose = HL.Override() << function(self)
     self.m_tweenCore:Kill()
     self.m_tweenCore = nil
 end
-
-
-
 
 MarqueeCtrl._PlayMarquee = HL.Method(HL.Table) << function(self, arg)
     if self.m_tweenCore then
@@ -66,8 +48,6 @@ MarqueeCtrl._PlayMarquee = HL.Method(HL.Table) << function(self, arg)
     EventLogManagerInst:GameEvent_MarqueeStart()
 end
 
-
-
 MarqueeCtrl._OnMarqueeStop = HL.Method() << function(self)
     
     if self.m_tweenCore then
@@ -75,8 +55,6 @@ MarqueeCtrl._OnMarqueeStop = HL.Method() << function(self)
     end
     self:PlayAnimationOutAndClose()
 end
-
-
 
 MarqueeCtrl.OnMarqueeStart = HL.StaticMethod(HL.Table) << function(arg)
     local isOpen, ctrl = UIManager:IsOpen(PANEL_ID)

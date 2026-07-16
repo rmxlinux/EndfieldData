@@ -3,96 +3,41 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FriendList = HL.Class('FriendList', UIWidgetBase)
-
 
 FriendList.m_friendCellList = HL.Field(HL.Table)
 
-
 FriendList.m_friendList = HL.Field(HL.Table)
-
 
 FriendList.m_sortOptions = HL.Field(HL.Table)
 
-
 FriendList.GetCell = HL.Field(HL.Function)
-
 
 FriendList.m_searchKey = HL.Field(HL.String) << ""
 
-
 FriendList.SearchSort = HL.Field(HL.Function)
-
 
 FriendList.UpdateFunc = HL.Field(HL.Function)
 
-
 FriendList.SearchFunc = HL.Field(HL.Function)
-
 
 FriendList.m_isPsnTab = HL.Field(HL.Boolean) << false
 
-
 FriendList.m_arg = HL.Field(HL.Table)
-
 
 FriendList.m_endIndex = HL.Field(HL.Number) << -1
 
-
 FriendList.m_needLoadingItem = HL.Field(HL.Boolean) << false
-
 
 FriendList.m_clueGiftNaviModel = HL.Field(HL.Boolean) << false
 
-
 FriendList.m_clueGiftBindCache = HL.Field(HL.Table)
-
 
 FriendList.m_blueprintID = HL.Field(HL.Any)
 
-
 FriendList.m_noInfoTip = HL.Field(HL.Any)
 
-
 FriendList.m_rawIdList = HL.Field(HL.Table)
-
-
-
 
 
 FriendList.InitFriendListCtrl = HL.Method(HL.Any) << function(self, arg)
@@ -166,8 +111,6 @@ FriendList.InitFriendListCtrl = HL.Method(HL.Any) << function(self, arg)
     self:_FirstTimeInit()
 end
 
-
-
 FriendList.clueGiftExitNavi = HL.Method() << function(self)
     self.view.scrollListSelectableNaviGroup:ManuallyStopFocus()
     self.view.selectableNaviGroup:ManuallyStopFocus()
@@ -175,8 +118,6 @@ FriendList.clueGiftExitNavi = HL.Method() << function(self)
         self.m_arg.clueGiftNaviFun()
     end
 end
-
-
 
 
 
@@ -241,13 +182,6 @@ FriendList._OnFirstTimeInit = HL.Override() << function(self)
         self:_OnUpdateCell(object, LuaIndex(index))
     end)
 end
-
-
-
-
-
-
-
 
 FriendList.RefreshInfo = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.String, HL.Boolean, HL.Boolean)) << function(self, info, needLoadingItem, noInfoTip, loading, needUpdateSearchCache)
     UIManager:Close(PanelId.NaviTargetActionMenu)
@@ -321,6 +255,7 @@ FriendList.RefreshInfo = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.String, HL.Bo
                 end
                 self.view.scrollList:UpdateCount(endIndex - del, true)
                 
+                
                 if self:_CanRecordNaviTarget() then
                     self:NaviToFirstCell()
                 end
@@ -344,6 +279,7 @@ FriendList.RefreshInfo = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.String, HL.Bo
                 end
                 self.view.scrollList:UpdateCount(endIndex - del, true)
                 
+                
                 if self:_CanRecordNaviTarget() then
                     self:NaviToFirstCell()
                 end
@@ -356,9 +292,6 @@ FriendList.RefreshInfo = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.String, HL.Bo
         end
     end
 end
-
-
-
 
 FriendList.RefreshInfoStayPos = HL.Method(HL.Table) << function(self, info)
     UIManager:Close(PanelId.NaviTargetActionMenu)
@@ -400,15 +333,7 @@ FriendList.RefreshInfoStayPos = HL.Method(HL.Table) << function(self, info)
     end
     self.view.noUsersText.transform.parent.gameObject:SetActiveIfNecessary(false)
 
-    if #info > self.view.scrollList.count then
-        self.view.scrollList:UpdateCount(#self.m_friendList, false, false, false, true)
-
-    else
-        self.view.scrollList:UpdateCount(#self.m_friendList, false, false, false, true)
-        
-        
-        
-    end
+    self.view.scrollList:UpdateCount(#self.m_friendList, false, false, false, true)
     if self:_CanRecordNaviTarget() then
         if wasEmpty or InputManagerInst.controllerNaviManager.curTarget == nil then
             self:NaviToFirstCell()
@@ -425,14 +350,10 @@ FriendList.RefreshInfoStayPos = HL.Method(HL.Table) << function(self, info)
     end
 end
 
-
-
 FriendList.NaviToFirstCell = HL.Method() << function(self)
     local go = self.view.scrollList:Get(0)
     self:_SetCellAsNaviTarget(go)
 end
-
-
 
 FriendList._CanRecordNaviTarget = HL.Method().Return(HL.Boolean) << function(self)
     if not DeviceInfo.usingController then
@@ -442,22 +363,11 @@ FriendList._CanRecordNaviTarget = HL.Method().Return(HL.Boolean) << function(sel
     if ctrl == nil or ctrl.view == nil or IsNull(ctrl.view.gameObject) or not ctrl.view.gameObject.activeInHierarchy then
         return false
     end
-    
     if ctrl.view.inputGroup.groupEnabled then
         return true
     end
-    
-    
-    
-    
-    
-    
-    
     return ctrl.m_phase ~= nil
 end
-
-
-
 
 FriendList._SetCellAsNaviTarget = HL.Method(HL.Opt(HL.Userdata)) << function(self, go)
     if IsNull(go) then
@@ -471,29 +381,15 @@ FriendList._SetCellAsNaviTarget = HL.Method(HL.Opt(HL.Userdata)) << function(sel
         end
 
         local ctrl = self:GetUICtrl()
-        
-        
-        
-        
-        
-        
-        
-        
-        
         local isForeground = ctrl ~= nil and ctrl.view ~= nil
             and ctrl.view.inputGroup ~= nil and ctrl.view.inputGroup.groupEnabled
-        if isForeground then
-            InputManagerInst.controllerNaviManager:SetTarget(target)
-        elseif ctrl ~= nil and ctrl.m_phase ~= nil and target.naviGroup ~= nil then
-            ctrl:SetAsNaviTargetInSilentModeIfNecessary(target.naviGroup, target)
+        if ctrl ~= nil then
+            ctrl:SetNaviTarget(target)
         else
-            InputManagerInst.controllerNaviManager:SetTarget(target)
+            self:SetNaviTarget(target)
         end
     end
 end
-
-
-
 
 FriendList.OnChangeInputField = HL.Method(HL.String) << function(self, str)
     if self.SearchFunc then
@@ -504,9 +400,6 @@ FriendList.OnChangeInputField = HL.Method(HL.String) << function(self, str)
         self:_OnInputFieldChange(str)
     end
 end
-
-
-
 
 FriendList._GetNextPageNotInitIds = HL.Method(HL.Number).Return(HL.Table, HL.Number) << function(self, startLuaIndex)
     local ids = {}
@@ -525,6 +418,10 @@ FriendList._GetNextPageNotInitIds = HL.Method(HL.Number).Return(HL.Table, HL.Num
                 success, info = GameInstance.player.friendSystem:GetDictInfo(self.m_arg.infoDicIndex):TryGetValue(self.m_friendList[i].roleId)
             end
             if not success then
+                
+                if GameInstance.player.spaceship.isViewingFriend then
+                    goto continue
+                end
                 logger.error(CS.Beyond.ELogChannel.Friend, "未找到好友数据 " .. self.m_friendList[i].roleId .. "isPsnTab:" .. tostring(self.m_isPsnTab))
                 return ids, i
             end
@@ -538,7 +435,7 @@ FriendList._GetNextPageNotInitIds = HL.Method(HL.Number).Return(HL.Table, HL.Num
                     table.insert(ids, self.m_friendList[i].roleId)
                 end
             end
-
+            :: continue ::
         else
             return ids, i - 1
         end
@@ -546,14 +443,9 @@ FriendList._GetNextPageNotInitIds = HL.Method(HL.Number).Return(HL.Table, HL.Num
     return ids, endIndex
 end
 
-
-
-
 FriendList._SearchSort = HL.Method(HL.Table).Return(HL.Number) << function(self, info)
     return string.find(info.name, self.m_searchKey)
 end
-
-
 
 FriendList.GetClueGiftNaviToFirstCell = HL.Method().Return(HL.Any) << function(self)
     local go = self.view.scrollList:Get(0)
@@ -563,9 +455,6 @@ FriendList.GetClueGiftNaviToFirstCell = HL.Method().Return(HL.Any) << function(s
 
     return go:GetComponent("InputBindingGroupNaviDecorator")
 end
-
-
-
 
 
 FriendList._GetCellByIndex = HL.Method(HL.Number).Return(HL.Forward("FriendListCell")) << function(self, cellIndex)
@@ -578,10 +467,6 @@ FriendList._GetCellByIndex = HL.Method(HL.Number).Return(HL.Forward("FriendListC
     return cell
 end
 
-
-
-
-
 FriendList._OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function)) << function(self, object, index)
     local needLoadingItem = false
     if self.m_needLoadingItem and index <= #self.m_friendList then
@@ -592,6 +477,14 @@ FriendList._OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function)
         else
             success, info = GameInstance.player.friendSystem:GetDictInfo(self.m_arg.infoDicIndex):TryGetValue(self.m_friendList[index].roleId)
         end
+
+        
+
+        if GameInstance.player.spaceship.isViewingFriend and self.m_friendList[index].roleId == GameInstance.player.spaceship:GetFriendRoleInfo().roleId then
+            self.UpdateFunc(index, false)
+            return
+        end
+
         needLoadingItem = not success or not info.init
     end
 
@@ -645,13 +538,6 @@ FriendList._OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function)
     self.UpdateFunc(index, false)
 end
 
-
-
-
-
-
-
-
 FriendList._OnSortChanged = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Boolean, HL.String, HL.Boolean)) << function(self, optData, isIncremental, needLoadingItem, noInfoTip, needUpdateSearchCache)
     if self.m_arg.customSortFun then
         if self.m_friendList then
@@ -665,9 +551,6 @@ FriendList._OnSortChanged = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Boolean, H
         end
     end
 end
-
-
-
 
 FriendList._OnInputFieldChange = HL.Method(HL.String) << function(self, searchKey)
     self.m_friendList = {}
@@ -684,10 +567,9 @@ FriendList._OnInputFieldChange = HL.Method(HL.String) << function(self, searchKe
     self.view.scrollList:UpdateCount(#self.m_friendList, true)
 end
 
-
-
 FriendList._OnDisable = HL.Override() << function(self)
 end
 
 HL.Commit(FriendList)
 return FriendList
+

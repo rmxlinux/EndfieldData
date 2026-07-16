@@ -1,27 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 DialogOptionCell = HL.Class('DialogOptionCell', UIWidgetBase)
 
-
 DialogOptionCell.info = HL.Field(HL.Table)
-
 
 DialogOptionCell.optionOnClickFunc = HL.Field(HL.Function)
 
 
-
-
 DialogOptionCell._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
-
 
 DialogOptionCell.InitDialogOptionCell = HL.Method(HL.Any, HL.Opt(HL.Function)) << function(self, info, onClick)
     self:_FirstTimeInit()

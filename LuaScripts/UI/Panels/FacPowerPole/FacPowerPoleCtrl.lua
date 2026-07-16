@@ -1,27 +1,5 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacPowerPole
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacPowerPoleCtrl = HL.Class('FacPowerPoleCtrl', uiCtrl.UICtrl)
 
 local FAC_NOT_SHOW_TEMPLATE_ID_MINER = "miner_1"
@@ -32,41 +10,28 @@ local ADVANCED_BUILDING_ID = "power_pole_3"
 
 
 
-
 FacPowerPoleCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
 
-
 FacPowerPoleCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 FacPowerPoleCtrl.m_uiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_PowerPole)
 
-
 FacPowerPoleCtrl.m_powerInfo = HL.Field(HL.Userdata)
-
 
 FacPowerPoleCtrl.m_driverInfos = HL.Field(HL.Table)
 
-
 FacPowerPoleCtrl.m_diffuserInfos = HL.Field(HL.Table)
-
 
 FacPowerPoleCtrl.m_poleInfos = HL.Field(HL.Table)
 
-
 FacPowerPoleCtrl.m_diffuserCacheList = HL.Field(HL.Forward('UIListCache'))
-
 
 FacPowerPoleCtrl.m_poleCacheList = HL.Field(HL.Forward('UIListCache'))
 
-
 FacPowerPoleCtrl.m_isAdvancedBuilding = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -102,10 +67,9 @@ FacPowerPoleCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.contentRect)
     local scrollRectYEnable = self.view.scrollRect.rect.size.y < self.view.contentRect.rect.size.y
     self.view.controllerHint.gameObject:SetActiveIfNecessary(scrollRectYEnable)
+
+    self.view.buildingCommon.view.buttonsNaviGroup:NaviToThisGroup()
 end
-
-
-
 
 FacPowerPoleCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, isActive)
     self.view.controllerHint.enabled = isActive
@@ -113,8 +77,6 @@ FacPowerPoleCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self
         InputManagerInst:ToggleBinding(self.view.naviGroup.FocusBindingId, false)
     end
 end
-
-
 
 FacPowerPoleCtrl._RefreshLinkedInfo = HL.Method() << function(self)
     local infos = {}
@@ -178,16 +140,12 @@ FacPowerPoleCtrl._RefreshLinkedInfo = HL.Method() << function(self)
     end)
 end
 
-
-
 FacPowerPoleCtrl._InitPowerInfo = HL.Method() << function(self)
     self.m_powerInfo = FactoryUtils.getCurRegionPowerInfo()
     local powerStorageCapacity = self.m_powerInfo.powerSaveMax
     self.view.maxRestPowerText.text = string.format("/%s", UIUtils.getNumString(powerStorageCapacity))
     self:_RefreshPowerInfo()
 end
-
-
 
 FacPowerPoleCtrl._RefreshPowerInfo = HL.Method() << function(self)
     local powerInfo = self.m_powerInfo
@@ -199,10 +157,6 @@ FacPowerPoleCtrl._RefreshPowerInfo = HL.Method() << function(self)
     
     self.view.restPowerText.text = UIUtils.getNumString(restPower)
 end
-
-
-
-
 
 FacPowerPoleCtrl._OnUpdateDiffuserCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local info = self.m_diffuserInfos[index]
@@ -227,10 +181,6 @@ FacPowerPoleCtrl._OnUpdateDiffuserCell = HL.Method(HL.Table, HL.Number) << funct
     self:_RefreshDriverPower(cell, info)
 end
 
-
-
-
-
 FacPowerPoleCtrl._OnUpdatePoleCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local info = self.m_poleInfos[index]
     local data = Tables.factoryBuildingTable:GetValue(info.templateId)
@@ -243,9 +193,6 @@ FacPowerPoleCtrl._OnUpdatePoleCell = HL.Method(HL.Table, HL.Number) << function(
     cell.power.text = tostring(info.nodeCount)
 end
 
-
-
-
 FacPowerPoleCtrl._RefreshMachineCellToggleState = HL.Method(HL.Any) << function(self, cell)
     if cell == nil then
         return
@@ -254,8 +201,6 @@ FacPowerPoleCtrl._RefreshMachineCellToggleState = HL.Method(HL.Any) << function(
     local isOn = cell.toggle.toggle.isOn
     cell.machineInfoNode.color = isOn and self.view.config.COLOR_MACHINE_OPENED or self.view.config.COLOR_MACHINE_CLOSED
 end
-
-
 
 FacPowerPoleCtrl._RefreshAllDriversPower = HL.Method() << function(self)
     
@@ -273,19 +218,10 @@ FacPowerPoleCtrl._RefreshAllDriversPower = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 FacPowerPoleCtrl._RefreshDriverPower = HL.Method(HL.Table, HL.Table) << function(self, cell, info)
     cell.power.text = FactoryUtils.getCurBuildingConsumePower(info.nodeId)
     cell.stateIcon:LoadSprite(FactoryUtils.getBuildingStateIconName(info.nodeId))
 end
-
-
-
-
-
 
 FacPowerPoleCtrl._OnToggleMachine = HL.Method(HL.Table, HL.Table, HL.Boolean) << function(self, cell, info, isOn)
     GameInstance.player.remoteFactory.core:Message_OpEnableNode(Utils.getCurrentChapterId(), info.nodeId, isOn)

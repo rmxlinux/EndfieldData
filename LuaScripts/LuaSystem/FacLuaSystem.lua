@@ -25,6 +25,7 @@ FacLuaSystem.FacLuaSystem = HL.Constructor() << function(self)
         if self.inTopView then
             self:ToggleTopView(false, true)
         end
+        self:SetFacBuildListSelectDecoBuilding(false)
     end)
     self:RegisterMessage(MessageConst.ALL_CHARACTER_DEAD, function(arg)
         if self.inTopView then
@@ -75,6 +76,8 @@ FacLuaSystem.FacLuaSystem = HL.Constructor() << function(self)
     self:_InitFacBackupViewedState()
 
     self.batchSelectTargets = {}
+    self.m_pipeHighlightRequests = {}
+    self.m_activePipeHighlights = {}
 
     self.m_disableSwitchModeParams = CS.Beyond.Gameplay.DisableSwitchModeForbidParams(CS.Beyond.Gameplay.DisableSwitchModeForbidParams.ForbidStyle.ShowEmptyBtn)
 end
@@ -83,6 +86,8 @@ FacLuaSystem.OnInit = HL.Override() << function(self)
 end
 
 FacLuaSystem.OnRelease = HL.Override() << function(self)
+    self.m_pipeHighlightRequests = {}
+    self:_ApplyPipeHighlight()
     self:ToggleTopView(false, true)
     if self.m_topViewCamCtrl then
         self.m_topViewCamCtrl.onZoom = nil
@@ -162,6 +167,7 @@ FacLuaSystem._InternalToggleTopView = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) 
     Notify(MessageConst.FAC_BUILD_EXIT_CUR_MODE)
 
     self.inTopView = active
+    self:ResetSimpleFigureForTopView()
     if self.isTopViewHideUIMode then
         self:ToggleTopViewHideUIMode(false)
     end
@@ -255,6 +261,65 @@ FacLuaSystem.ToggleTopViewHideUIMode = HL.Method(HL.Boolean) << function(self, a
     Notify(MessageConst.ON_FAC_TOP_VIEW_HIDE_UI_MODE_CHANGE, active)
 end
 
+FacLuaSystem.simpleFigureMode = HL.Field(HL.Number) << FacConst.SIMPLE_FIGURE_MODE.None
+
+FacLuaSystem.SetSimpleFigureMode = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, mode, skipNotify)
+    self.simpleFigureMode = mode
+    self:ApplySimpleFigureToRenderer()
+    if not skipNotify then
+        Notify(MessageConst.ON_FAC_SIMPLE_FIGURE_MODE_CHANGE, mode)
+    end
+end
+
+FacLuaSystem._PushSimpleFigureModeToEcs = HL.Method(HL.Number) << function(self, mode)
+    local Evt = CS.Beyond.Gameplay.Factory.EvtLogisticFigureRenderer
+    local bit
+    if mode == FacConst.SIMPLE_FIGURE_MODE.None then
+        bit = Evt.S_NONE
+    elseif mode == FacConst.SIMPLE_FIGURE_MODE.SimplePipeFigure then
+        bit = Evt.S_PIPE
+    else
+        bit = Evt.S_CONVEYOR
+    end
+    GameInstance.remoteFactoryManager:ToggleLogisticFigure(bit)
+end
+
+FacLuaSystem.ApplySimpleFigureToRenderer = HL.Method() << function(self)
+    self:_PushSimpleFigureModeToEcs(self.simpleFigureMode)
+end
+
+
+FacLuaSystem.ClearSimpleFigureEcsOnly = HL.Method() << function(self)
+    self:_PushSimpleFigureModeToEcs(FacConst.SIMPLE_FIGURE_MODE.None)
+end
+
+
+FacLuaSystem.ResetSimpleFigureForTopView = HL.Method() << function(self)
+    self.simpleFigureMode = FacConst.SIMPLE_FIGURE_MODE.None
+    self:_PushSimpleFigureModeToEcs(FacConst.SIMPLE_FIGURE_MODE.None)
+    Notify(MessageConst.ON_FAC_SIMPLE_FIGURE_MODE_CHANGE, self.simpleFigureMode)
+end
+
+
+FacLuaSystem.GetSimpleFigureModeFromRenderer = HL.Method().Return(HL.Number) << function(self)
+    local simpleConveyor, simplePipe = GameInstance.remoteFactoryManager:GetSimpleFigureInfo()
+    if simplePipe and simpleConveyor then
+        return FacConst.SIMPLE_FIGURE_MODE.None
+    end
+    if simplePipe then
+        return FacConst.SIMPLE_FIGURE_MODE.SimplePipeFigure
+    end
+    if simpleConveyor then
+        return FacConst.SIMPLE_FIGURE_MODE.SimpleBeltFigure
+    end
+    return FacConst.SIMPLE_FIGURE_MODE.None
+end
+
+
+FacLuaSystem.GetSimpleFigureExcludeBeltPipeForBatchSelect = HL.Method().Return(HL.Boolean, HL.Boolean) << function(self)
+    return GameInstance.remoteFactoryManager:GetSimpleFigureInfo()
+end
+
 
 
 
@@ -271,7 +336,7 @@ FacLuaSystem.MoveTopViewCamTarget = HL.Method(Vector2) << function(self, dir)
     if dir == Vector2.zero then
         return
     end
-    if not self.m_topViewCamCtrl or IsNull(self.m_topViewCamCtrl) then
+    if IsNull(self.m_topViewCamCtrl) then
         return
     end
     if not self.canMoveCamTarget then
@@ -282,7 +347,7 @@ FacLuaSystem.MoveTopViewCamTarget = HL.Method(Vector2) << function(self, dir)
         return
     end
     if DeviceInfo.usingController then
-        if not InputManagerInst.customControllerMouseTrans then
+        if IsNull(InputManagerInst.customControllerMouseTrans) then
             return
         end
     end
@@ -370,6 +435,7 @@ FacLuaSystem.ToggleAutoMoveTopViewCam = HL.Method(HL.Opt(Vector2, Vector4)) << f
 end
 
 FacLuaSystem._CalcAutoMoveTopViewCam = HL.Method() << function(self)
+    if not CS.UnityEngine.Application.isFocused then return end
     if self.m_stopAutoMoveTopViewCamOnce then
         self.m_stopAutoMoveTopViewCamOnce = false
         return
@@ -674,6 +740,71 @@ end
 
 
 
+
+FacLuaSystem.m_pipeHighlightRequests = HL.Field(HL.Table)
+
+FacLuaSystem.m_activePipeHighlights = HL.Field(HL.Table)
+
+FacLuaSystem.RequestPipeHighlight = HL.Method(HL.String, HL.Number, HL.Number) << function(self, source, nodeId, unitIndex)
+    self.m_pipeHighlightRequests[source] = { nodeId = nodeId, unitIndex = unitIndex }
+    self:_ApplyPipeHighlight()
+end
+
+FacLuaSystem.ReleasePipeHighlight = HL.Method(HL.String) << function(self, source)
+    self.m_pipeHighlightRequests[source] = nil
+    self:_ApplyPipeHighlight()
+end
+
+FacLuaSystem._ApplyPipeHighlight = HL.Method() << function(self)
+    
+    local wanted = {}
+    for _, req in pairs(self.m_pipeHighlightRequests) do
+        local t = wanted[req.nodeId]
+        if not t then
+            t = {}
+            wanted[req.nodeId] = t
+        end
+        t[req.unitIndex] = true
+    end
+
+    local allNodeIds = {}
+    for nodeId in pairs(self.m_activePipeHighlights) do allNodeIds[nodeId] = true end
+    for nodeId in pairs(wanted) do allNodeIds[nodeId] = true end
+
+    for nodeId in pairs(allNodeIds) do
+        local oldUnits = self.m_activePipeHighlights[nodeId]
+        local newUnits = wanted[nodeId]
+        local same = true
+        if oldUnits and newUnits then
+            for ui in pairs(oldUnits) do
+                if not newUnits[ui] then same = false; break end
+            end
+            if same then
+                for ui in pairs(newUnits) do
+                    if not oldUnits[ui] then same = false; break end
+                end
+            end
+        else
+            same = false
+        end
+        if not same then
+            if oldUnits then
+                GameInstance.remoteFactoryManager:SoloSelect(nodeId, false)
+            end
+            if newUnits then
+                for unitIndex in pairs(newUnits) do
+                    GameInstance.remoteFactoryManager:SoloSelect(nodeId, true, unitIndex)
+                end
+            end
+        end
+    end
+
+    self.m_activePipeHighlights = wanted
+end
+
+
+
+
 local BACKUP_POWER_TOAST_MAIN_HUD_QUEUE_TYPE = "BackupPowerCheck"
 
 FacLuaSystem.m_backupPowerViewed = HL.Field(HL.Table)
@@ -800,6 +931,20 @@ FacLuaSystem.SetBackupPowerToasted = HL.Method(HL.Number, HL.Boolean) << functio
     end
     self.m_backupPowerInUseToasted[id] = true
 end
+
+
+
+
+FacLuaSystem.m_facBuildListSelectIsShowDecoBuilding = HL.Field(HL.Boolean) << false
+
+FacLuaSystem.SetFacBuildListSelectDecoBuilding = HL.Method(HL.Boolean) << function(self, isShowDecoBuilding)
+    self.m_facBuildListSelectIsShowDecoBuilding = isShowDecoBuilding
+end
+
+FacLuaSystem.FacBuildListSelectIsShowDecoBuilding = HL.Method().Return(HL.Boolean) << function(self)
+    return self.m_facBuildListSelectIsShowDecoBuilding
+end
+
 
 
 

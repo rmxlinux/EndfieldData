@@ -2,20 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DesEquipPopUp
 
-
-
-
-
-
-
-
-
-
-
-
-
 DesEquipPopUpCtrl = HL.Class('DesEquipPopUpCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -27,20 +14,13 @@ DesEquipPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 DesEquipPopUpCtrl.m_args = HL.Field(HL.Table)
-
 
 DesEquipPopUpCtrl.m_getItemCell = HL.Field(HL.Function)
 
-
 DesEquipPopUpCtrl.m_getReturnItemCell = HL.Field(HL.Function)
 
-
 DesEquipPopUpCtrl.m_isKeyHintPosSet = HL.Field(HL.Boolean) << false
-
-
-
 
 
 DesEquipPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -90,10 +70,6 @@ DesEquipPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.returnOverHint.gameObject:SetActive(needReturnOverHint)
 end
 
-
-
-
-
 DesEquipPopUpCtrl._OnUpdateItemCell = HL.Method(HL.Forward("Item"), HL.Number) << function(self, cell, index)
     cell:InitItem(self.m_args.items[index], true)
     cell:SetExtraInfo({
@@ -103,10 +79,6 @@ DesEquipPopUpCtrl._OnUpdateItemCell = HL.Method(HL.Forward("Item"), HL.Number) <
         cell:SetEnableHoverTips(false)
     end
 end
-
-
-
-
 
 DesEquipPopUpCtrl._OnUpdateReturnItemCell = HL.Method(HL.Forward("Item"), HL.Number) << function(self, cell, index)
     cell:InitItem(self.m_args.returnItems[index], true)
@@ -118,8 +90,6 @@ DesEquipPopUpCtrl._OnUpdateReturnItemCell = HL.Method(HL.Forward("Item"), HL.Num
     end
 end
 
-
-
 DesEquipPopUpCtrl._OnClickConfirm = HL.Method() << function(self)
     local args = self.m_args
     self:PlayAnimationOutWithCallback(function()
@@ -130,8 +100,6 @@ DesEquipPopUpCtrl._OnClickConfirm = HL.Method() << function(self)
     end)
 end
 
-
-
 DesEquipPopUpCtrl._OnClickCancel = HL.Method() << function(self)
     local onCancel = self.m_args.onCancel
     self:PlayAnimationOutWithCallback(function()
@@ -141,8 +109,6 @@ DesEquipPopUpCtrl._OnClickCancel = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 DesEquipPopUpCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})

@@ -2,33 +2,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacConditioner
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacConditionerCtrl = HL.Class('FacConditionerCtrl', uiCtrl.UICtrl)
 
 local NAVI_STATE = {
@@ -41,56 +14,38 @@ local NAVI_STATE = {
 
 
 
-
 FacConditionerCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_FACTORY_DEPOT_CHANGED] = "OnDepotChange",
 }
 
-
 FacConditionerCtrl.m_curTypeIndex = HL.Field(HL.Number) << -1
-
 
 FacConditionerCtrl.m_itemShowingTypeInfos = HL.Field(HL.Table)
 
-
 FacConditionerCtrl.m_materialMap = HL.Field(HL.Table)
-
 
 FacConditionerCtrl.m_showItemList = HL.Field(HL.Table)
 
-
 FacConditionerCtrl.m_showItemMap = HL.Field(HL.Table)
-
 
 FacConditionerCtrl.m_onClickItem = HL.Field(HL.Function)
 
-
 FacConditionerCtrl.m_selectItemId = HL.Field(HL.String) << ""
-
 
 FacConditionerCtrl.m_typeCells = HL.Field(HL.Forward('UIListCache'))
 
-
 FacConditionerCtrl.m_getCell = HL.Field(HL.Function)
-
 
 FacConditionerCtrl.m_isFluid = HL.Field(HL.Boolean) << false
 
-
 FacConditionerCtrl.m_sortOptions = HL.Field(HL.Table)
-
 
 FacConditionerCtrl.m_sortData = HL.Field(HL.Table)
 
-
 FacConditionerCtrl.m_sortIncremental = HL.Field(HL.Boolean) << false
 
-
 FacConditionerCtrl.m_waitingNaviState = HL.Field(HL.String) << NAVI_STATE.NONE
-
-
-
 
 
 FacConditionerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -121,9 +76,6 @@ FacConditionerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
-
 FacConditionerCtrl.OnDepotChange = HL.Method(HL.Table) << function(self, args)
     local depotChange = unpack(args)
     for _, itemId in pairs(depotChange.normalItemIds) do
@@ -141,8 +93,6 @@ FacConditionerCtrl.OnDepotChange = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
 FacConditionerCtrl._InitSortNode = HL.Method() << function(self)
     self.m_sortOptions = UIConst.FAC_DEPOT_SORT_OPTIONS
     self.view.sortNode:InitSortNode(self.m_sortOptions, function(optData, isIncremental)
@@ -151,10 +101,6 @@ FacConditionerCtrl._InitSortNode = HL.Method() << function(self)
     self.m_sortData = self.m_sortOptions[1]
     self.m_sortIncremental = self.view.sortNode.isIncremental
 end
-
-
-
-
 
 FacConditionerCtrl._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(self, optData, isIncremental)
     if self.m_showItemList == nil or #self.m_showItemList == 0 then
@@ -177,17 +123,17 @@ FacConditionerCtrl._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(
     for index, item in ipairs(self.m_showItemList) do
         self.m_showItemMap[item.id] = index
     end
-    if self.m_waitingNaviState == NAVI_STATE.SELECTED and self.m_showItemMap[self.m_selectItemId] == nil then
+    if (self.m_waitingNaviState == NAVI_STATE.SELECTED and self.m_showItemMap[self.m_selectItemId] == nil) or self.m_waitingNaviState == NAVI_STATE.NONE then
         self.m_waitingNaviState = NAVI_STATE.FIRST
     end
     self.view.itemList:UpdateCount(#self.m_showItemList)
-    if self.m_selectItemId ~= nil and self.m_showItemMap[self.m_selectItemId] ~= nil then
+    if self.m_waitingNaviState == NAVI_STATE.FIRST then
+        self.view.itemList:ScrollToIndex(0, true)
+    elseif self.m_waitingNaviState == NAVI_STATE.SELECTED and self.m_selectItemId ~= nil and self.m_showItemMap[self.m_selectItemId] ~= nil then
         local targetIndex = self.m_showItemMap[self.m_selectItemId]
         self.view.itemList:ScrollToIndex(CSIndex(targetIndex), true)
     end
 end
-
-
 
 FacConditionerCtrl._InitTypeData = HL.Method() << function(self)
     self.m_curTypeIndex = 1
@@ -226,8 +172,6 @@ FacConditionerCtrl._InitTypeData = HL.Method() << function(self)
     self.m_itemShowingTypeInfos = resultTypeInfos
 end
 
-
-
 FacConditionerCtrl._InitAllItemData = HL.Method() << function(self)
     local materialMap = {}
     local itemIdList
@@ -240,7 +184,7 @@ FacConditionerCtrl._InitAllItemData = HL.Method() << function(self)
     end
 
     for _, itemId in pairs(itemIdList) do
-        if not Tables.liquidTable:ContainsKey(itemId) and GameInstance.player.inventory:IsItemFound(itemId) then
+        if not Tables.liquidTable:ContainsKey(itemId) and not Tables.gasTable:ContainsKey(itemId) and GameInstance.player.inventory:IsItemFound(itemId) then
             local showItem = false 
             if FactoryUtils.isTimeLimitedItem(itemId) then
                 local craftInfoList, canCraft = FactoryUtils.getItemCrafts(itemId)
@@ -266,8 +210,6 @@ FacConditionerCtrl._InitAllItemData = HL.Method() << function(self)
 
     self.m_materialMap = materialMap
 end
-
-
 
 FacConditionerCtrl._InitTypeList = HL.Method() << function(self)
     self.m_typeCells = UIUtils.genCellCache(self.view.typeCell)
@@ -302,17 +244,12 @@ FacConditionerCtrl._InitTypeList = HL.Method() << function(self)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.typesNode.transform)
 end
 
-
-
 FacConditionerCtrl._InitItemList = HL.Method() << function(self)
     self.m_getCell = UIUtils.genCachedCellFunction(self.view.itemList)
     self.view.itemList.onUpdateCell:AddListener(function(object, csIndex)
         self:_OnUpdateCell(object, LuaIndex(csIndex))
     end)
 end
-
-
-
 
 FacConditionerCtrl._OnClickShowingType = HL.Method(HL.Number) << function(self, index)
     self.m_curTypeIndex = index
@@ -335,10 +272,6 @@ FacConditionerCtrl._OnClickShowingType = HL.Method(HL.Number) << function(self, 
 
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.typesNode.transform)
 end
-
-
-
-
 
 FacConditionerCtrl._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(self, object, luaIndex)
     local cell = self.m_getCell(object)
@@ -363,7 +296,7 @@ FacConditionerCtrl._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(
     if DeviceInfo.usingController then
         if (self.m_waitingNaviState == NAVI_STATE.SELECTED and isSelected)
             or (self.m_waitingNaviState == NAVI_STATE.FIRST and luaIndex == 1) then
-            UIUtils.setAsNaviTarget(cell.view.button)
+            self:SetNaviTarget(cell.view.button)
             self.m_waitingNaviState = NAVI_STATE.NONE
         end
         local confirmTextId = isSelected and "key_hint_fac_unloader_cancel_select" or "key_hint_fac_unloader_confirm_select"
@@ -371,8 +304,6 @@ FacConditionerCtrl._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(
     end
 
 end
-
-
 
 FacConditionerCtrl._InitFluidData = HL.Method() << function(self)
     local materialMap = {}
@@ -389,6 +320,21 @@ FacConditionerCtrl._InitFluidData = HL.Method() << function(self)
                 rarity = itemData.rarity
             }
             materialMap[liquidId] = itemInfo
+            table.insert(self.m_showItemList, itemInfo)
+        end
+    end
+    for gasId, gasData in pairs(Tables.gasTable) do
+        if GameInstance.player.inventory:IsItemFound(gasId) then
+            local itemData = Tables.itemTable[gasId]
+            local itemInfo = {
+                id = gasId,
+                data = itemData,
+                showingType = itemData.showingType:GetHashCode(),
+                sortId1 = -itemData.sortId1,
+                sortId2 = itemData.sortId2,
+                rarity = itemData.rarity
+            }
+            materialMap[gasId] = itemInfo
             table.insert(self.m_showItemList, itemInfo)
         end
     end

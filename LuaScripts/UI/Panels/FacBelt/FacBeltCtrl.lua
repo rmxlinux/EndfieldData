@@ -1,69 +1,32 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacBelt
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacBeltCtrl = HL.Class('FacBeltCtrl', uiCtrl.UICtrl)
 
 local EMPTY_ITEM_ICON_ALPHA = 0.6
 local MAX_DISPLAY_WHOLE_ITEMS_COUNT = 3
 local SELF_ITEM_INDEX = 0
 
-
 FacBeltCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacBeltCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 FacBeltCtrl.m_index = HL.Field(HL.Number) << -1
 
-
 FacBeltCtrl.m_buildingInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.ConveyorUIInfo)
-
 
 FacBeltCtrl.m_selfItem = HL.Field(HL.String) << ""
 
-
 FacBeltCtrl.m_lastSelfValidItem = HL.Field(HL.String) << ""
-
 
 FacBeltCtrl.m_wholeBeltItems = HL.Field(HL.Table)
 
-
 FacBeltCtrl.m_wholeBeltItemsCells = HL.Field(HL.Forward("UIListCache"))
-
 
 FacBeltCtrl.m_wholeBeltLength = HL.Field(HL.Number) << -1
 
-
 FacBeltCtrl.m_updateThread = HL.Field(HL.Thread)
-
-
-
 
 
 
@@ -98,13 +61,9 @@ FacBeltCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitBeltController()
 end
 
-
-
 FacBeltCtrl.OnClose = HL.Override() << function(self)
     self.m_updateThread = self:_ClearCoroutine(self.m_updateThread)
 end
-
-
 
 FacBeltCtrl._InitBeltBasicContent = HL.Method() << function(self)
     local success, tableData = Tables.factoryGridBeltTable:TryGetValue(self.m_buildingInfo.nodeHandler.templateId)
@@ -124,8 +83,6 @@ end
 
 
 
-
-
 FacBeltCtrl._InitBeltUpdateThread = HL.Method() << function(self)
     self:_RefreshSelfItem(true) 
 
@@ -139,8 +96,6 @@ FacBeltCtrl._InitBeltUpdateThread = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 FacBeltCtrl._UpdateBeltItems = HL.Method() << function(self)
     
@@ -190,9 +145,6 @@ FacBeltCtrl._UpdateBeltItems = HL.Method() << function(self)
     self:_RefreshWholeItems()
 end
 
-
-
-
 FacBeltCtrl._RefreshSelfItem = HL.Method(HL.Boolean) << function(self, isEmpty)
     if string.isEmpty(self.m_lastSelfValidItem) then
         self.view.selfItem:InitItem({ id = ""})
@@ -226,8 +178,6 @@ FacBeltCtrl._RefreshSelfItem = HL.Method(HL.Boolean) << function(self, isEmpty)
     end
 end
 
-
-
 FacBeltCtrl._RefreshWholeItems = HL.Method() << function(self)
     if #self.m_wholeBeltItems == 0 then
         self.view.wholeItems.gameObject:SetActiveIfNecessary(false)
@@ -257,8 +207,6 @@ FacBeltCtrl._RefreshWholeItems = HL.Method() << function(self)
     end
 end
 
-
-
 FacBeltCtrl._RefreshBeltAnimState = HL.Method() << function(self)
     local isRunning = not string.isEmpty(self.m_selfItem)
     local beltAnimName = isRunning and "beltnode_loop" or "beltnode_default"
@@ -267,8 +215,6 @@ FacBeltCtrl._RefreshBeltAnimState = HL.Method() << function(self)
     end
     self.view.arrowAnim:PlayWithTween(beltAnimName)
 end
-
-
 
 
 
@@ -285,8 +231,6 @@ FacBeltCtrl._InitBeltButtons = HL.Method() << function(self)
     end)
 end
 
-
-
 FacBeltCtrl._OnGetSelfItemButtonClicked = HL.Method() << function(self)
     self.m_buildingInfo.sender:Message_OpMoveItemConveyorToBag(Utils.getCurrentChapterId(),
         self.m_buildingInfo.conveyorComponentId,
@@ -294,8 +238,6 @@ FacBeltCtrl._OnGetSelfItemButtonClicked = HL.Method() << function(self)
         false
     )
 end
-
-
 
 FacBeltCtrl._OnGetWholeItemsButtonClicked = HL.Method() << function(self)
     self.m_buildingInfo.sender:Message_OpMoveItemConveyorToBag(Utils.getCurrentChapterId(),
@@ -305,21 +247,15 @@ FacBeltCtrl._OnGetWholeItemsButtonClicked = HL.Method() << function(self)
     )
 end
 
-
-
 FacBeltCtrl._OnDeleteBeltButtonClicked = HL.Method() << function(self)
     GameInstance.remoteFactoryManager:DismantleUnitFromConveyor(Utils.getCurrentChapterId(), self.m_nodeId, self.m_index)
     PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
 end
 
-
-
 FacBeltCtrl._OnDeleteWholeBeltsButtonClicked = HL.Method() << function(self)
     GameInstance.player.remoteFactory.core:Message_OpDismantle(Utils.getCurrentChapterId(), self.m_nodeId)
     PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
 end
-
-
 
 
 

@@ -1,19 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GemTermOverviewPopup
 
-
-
-
-
-
-
-
-
-
-
-
 GemTermOverviewPopupCtrl = HL.Class('GemTermOverviewPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -25,17 +13,11 @@ GemTermOverviewPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 GemTermOverviewPopupCtrl.m_info = HL.Field(HL.Table)
-
 
 GemTermOverviewPopupCtrl.m_weaponItemCellListCache = HL.Field(HL.Forward("UIListCache"))
 
-
 GemTermOverviewPopupCtrl.m_termGroupCellListCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 
@@ -45,9 +27,6 @@ GemTermOverviewPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitData(arg)
     self:_RefreshAllUI()
 end
-
-
-
 
 
 
@@ -154,8 +133,6 @@ end
 
 
 
-
-
 GemTermOverviewPopupCtrl._InitUI = HL.Method() << function(self)
     self.view.closeBtn.onClick:AddListener(function()
         self:PlayAnimationOutAndClose()
@@ -176,8 +153,6 @@ GemTermOverviewPopupCtrl._InitUI = HL.Method() << function(self)
     end)
 end
 
-
-
 GemTermOverviewPopupCtrl._RefreshAllUI = HL.Method() << function(self)
     self.m_termGroupCellListCache:Refresh(#self.m_info.termGroupInfos, function(cell, luaIndex)
         self:_RefreshTermGroupCell(cell, luaIndex)
@@ -186,10 +161,6 @@ GemTermOverviewPopupCtrl._RefreshAllUI = HL.Method() << function(self)
         self:_RefreshWeaponItemCell(cell, luaIndex)
     end)
 end
-
-
-
-
 
 GemTermOverviewPopupCtrl._RefreshTermGroupCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     
@@ -203,10 +174,6 @@ GemTermOverviewPopupCtrl._RefreshTermGroupCell = HL.Method(HL.Any, HL.Number) <<
         termCell.nameTxt.text = groupInfo.termInfos[termCellIndex].termName
     end)
 end
-
-
-
-
 
 GemTermOverviewPopupCtrl._RefreshWeaponItemCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local weaponInfo = self.m_info.weaponInfos[luaIndex]

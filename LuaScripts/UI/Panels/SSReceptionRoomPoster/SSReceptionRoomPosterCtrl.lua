@@ -41,73 +41,25 @@ local TOP_BAR_STATE = {
     [GEnums.WeaponType.Pistol] = "Pistol",
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SSReceptionRoomPosterCtrl = HL.Class('SSReceptionRoomPosterCtrl', uiCtrl.UICtrl)
-
 
 SSReceptionRoomPosterCtrl.m_curState = HL.Field(HL.String) << ""
 
-
 SSReceptionRoomPosterCtrl.m_curWeaponType = HL.Field(GEnums.WeaponType)
-
 
 SSReceptionRoomPosterCtrl.m_cameraSlotInfos = HL.Field(HL.Table)
 
-
 SSReceptionRoomPosterCtrl.m_selectInsIdList = HL.Field(HL.Table)
-
 
 SSReceptionRoomPosterCtrl.m_curSlotIndex = HL.Field(HL.Number) << 1
 
-
 SSReceptionRoomPosterCtrl.m_unSaveInsIdList = HL.Field(HL.Table)
-
 
 SSReceptionRoomPosterCtrl.m_isSave = HL.Field(HL.Boolean) << true
 
-
 SSReceptionRoomPosterCtrl.m_switchRoleThread = HL.Field(HL.Thread)
 
-
 SSReceptionRoomPosterCtrl.m_level = HL.Field(CS.Beyond.Gameplay.Core.SpaceShipGameLevel)
-
 
 
 
@@ -118,9 +70,6 @@ SSReceptionRoomPosterCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SPACESHIP_GUEST_ROOM_WEAPON_CHANGE] = '_OnSaveWeapon',
     [MessageConst.ON_SPACESHIP_GUEST_ROOM_CHAR_CHANGE] = '_OnSaveChar',
 }
-
-
-
 
 
 
@@ -181,8 +130,6 @@ SSReceptionRoomPosterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 SSReceptionRoomPosterCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local listWidget = self.m_curState == PANEL_STATE.WEAPON and self.view.weaponScrollList or self.view.charScrollList
     local sortNode = listWidget and listWidget.view and listWidget.view.sortNode or nil
@@ -213,21 +160,15 @@ SSReceptionRoomPosterCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.A
 end
 
 
-
-
 SSReceptionRoomPosterCtrl.OnShow = HL.Override() << function(self)
     if self.m_curWeaponType then
         self.m_level:SetWeaponWallActiveState(self.m_curWeaponType, true)
     end
 end
 
-
-
 SSReceptionRoomPosterCtrl.OnHide = HL.Override() << function(self)
 
 end
-
-
 
 SSReceptionRoomPosterCtrl.OnClose = HL.Override() << function(self)
     self:_ClearCamera()
@@ -237,8 +178,6 @@ SSReceptionRoomPosterCtrl.OnClose = HL.Override() << function(self)
         self.m_level:SetWeaponWallActiveState(self.m_curWeaponType, false)
     end
 end
-
-
 
 
 SSReceptionRoomPosterCtrl._SetMainState = HL.Method() << function(self)
@@ -259,8 +198,6 @@ SSReceptionRoomPosterCtrl._SetMainState = HL.Method() << function(self)
     end
     self:SetSaveState(true)
 end
-
-
 
 SSReceptionRoomPosterCtrl._InitCamera = HL.Method() << function(self)
     self.m_cameraSlotInfos = {}
@@ -301,8 +238,6 @@ SSReceptionRoomPosterCtrl._InitCamera = HL.Method() << function(self)
 end
 
 
-
-
 SSReceptionRoomPosterCtrl._ClearCamera = HL.Method() << function(self)
     local cameraConfig = GameInstance.dataManager.spaceshipCameraConfig
     if self.m_curState == PANEL_STATE.WEAPON then
@@ -319,9 +254,6 @@ SSReceptionRoomPosterCtrl._ClearCamera = HL.Method() << function(self)
         )
     end
 end
-
-
-
 
 
 SSReceptionRoomPosterCtrl._OnClickSwitchBtn = HL.Method(HL.Boolean) <<function(self, isLeft)
@@ -355,8 +287,6 @@ SSReceptionRoomPosterCtrl._OnClickSwitchBtn = HL.Method(HL.Boolean) <<function(s
 end
 
 
-
-
 SSReceptionRoomPosterCtrl._RefreshArrowState = HL.Method() << function(self)
     self.view.leftArrowBtn.gameObject:SetActive(self.m_curSlotIndex > 1)
     self.view.rightArrowBtn.gameObject:SetActive(self.m_curSlotIndex < MAX_WEAPON_INDEX)
@@ -366,8 +296,6 @@ SSReceptionRoomPosterCtrl._RefreshArrowState = HL.Method() << function(self)
     self.m_level:SetWeaponWallActiveState(self.m_curWeaponType, true)
     self:RefreshWeaponScroll()
 end
-
-
 
 SSReceptionRoomPosterCtrl.RefreshWeaponScroll = HL.Method() << function(self)
     if self.m_curState ~= PANEL_STATE.WEAPON then
@@ -379,7 +307,6 @@ SSReceptionRoomPosterCtrl.RefreshWeaponScroll = HL.Method() << function(self)
     if ids then
         for i = 1, ids.Count do
             local res, itemBundle = GameInstance.player.inventory:TryGetWeaponInst(Utils.getCurrentScope(), ids[CSIndex(i)])
-            
             if res then
                 local templateId = itemBundle.id
                 local instId = itemBundle.instId or 0
@@ -409,9 +336,6 @@ SSReceptionRoomPosterCtrl.RefreshWeaponScroll = HL.Method() << function(self)
     self.m_unSaveInsIdList = lume.deepCopy(self.m_selectInsIdList)
 end
 
-
-
-
 SSReceptionRoomPosterCtrl.SetSaveState = HL.Method(HL.Boolean) << function(self, isSave)
     if self.m_isSave == isSave then
         self.view.saveBtn.gameObject:SetActive(not self.m_isSave)
@@ -425,8 +349,6 @@ SSReceptionRoomPosterCtrl.SetSaveState = HL.Method(HL.Boolean) << function(self,
     end
     self.m_isSave = isSave
 end
-
-
 
 
 SSReceptionRoomPosterCtrl.RefreshCharScroll = HL.Method() << function(self)
@@ -457,13 +379,6 @@ SSReceptionRoomPosterCtrl.RefreshCharScroll = HL.Method() << function(self)
     self.m_unSaveInsIdList = lume.deepCopy(self.m_selectInsIdList)
 end
 
-
-
-
-
-
-
-
 SSReceptionRoomPosterCtrl._CharListChangeSelectIndex = HL.Method(HL.Boolean, HL.Number, HL.Table, HL.Table, HL.Table)
     << function(self, select, cellIndex, charItem, charItemList, charInfoList)
     self:_SetCharPoster(charItemList)
@@ -474,9 +389,6 @@ SSReceptionRoomPosterCtrl._CharListChangeSelectIndex = HL.Method(HL.Boolean, HL.
     self.view.charScrollList:ShowSelectChars(self.m_selectInsIdList)
     self:SetSaveState(false)
 end
-
-
-
 
 SSReceptionRoomPosterCtrl._SetCharPoster = HL.Method(HL.Table) << function(self, targetItemList)
     if self.m_switchRoleThread ~= nil then
@@ -499,9 +411,6 @@ SSReceptionRoomPosterCtrl._SetCharPoster = HL.Method(HL.Table) << function(self,
     end)
 end
 
-
-
-
 SSReceptionRoomPosterCtrl._SetWeaponPoster = HL.Method(HL.Table) << function(self, targetItemList)
     for index = 1, WEAPON_MAX_NUM[self.m_curWeaponType] do
         local info = {}
@@ -514,9 +423,6 @@ SSReceptionRoomPosterCtrl._SetWeaponPoster = HL.Method(HL.Table) << function(sel
     end
 end
 
-
-
-
 SSReceptionRoomPosterCtrl._WeaponListChangeSelectIndex = HL.Method(HL.Table) << function(self, itemList)
     self:_SetWeaponPoster(itemList)
     self.m_selectInsIdList = {}
@@ -525,8 +431,6 @@ SSReceptionRoomPosterCtrl._WeaponListChangeSelectIndex = HL.Method(HL.Table) << 
     end
     self:SetSaveState(false)
 end
-
-
 
 SSReceptionRoomPosterCtrl._UpdateCameraState = HL.Method() << function(self)
     local targetData = self.m_cameraSlotInfos[self.m_curSlotIndex]
@@ -540,8 +444,6 @@ SSReceptionRoomPosterCtrl._UpdateCameraState = HL.Method() << function(self)
         false, false
     )
 end
-
-
 
 SSReceptionRoomPosterCtrl._OnClickSaveBtn = HL.Method() << function(self)
     local ids = {}
@@ -603,19 +505,13 @@ SSReceptionRoomPosterCtrl._OnClickSaveBtn = HL.Method() << function(self)
     self:SetSaveState(true)
 end
 
-
-
 SSReceptionRoomPosterCtrl._OnSaveWeapon = HL.Method() << function(self)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_SS_POSTER_SAVE_POPUP)
 end
 
-
-
 SSReceptionRoomPosterCtrl._OnSaveChar = HL.Method() << function(self)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_SS_POSTER_SAVE_POPUP)
 end
-
-
 
 SSReceptionRoomPosterCtrl._OnClickResetBtn = HL.Method() << function(self)
     if #self.m_selectInsIdList == 0 then
@@ -638,9 +534,6 @@ SSReceptionRoomPosterCtrl._OnClickResetBtn = HL.Method() << function(self)
     self:SetSaveState(false)
 end
 
-
-
-
 SSReceptionRoomPosterCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
     if self.m_curState == PANEL_STATE.WEAPON and recoverState.weaponType ~= nil and recoverState.weaponType ~= self.m_curWeaponType then
         self.m_curWeaponType = recoverState.weaponType
@@ -659,10 +552,6 @@ SSReceptionRoomPosterCtrl._TryRecoverState = HL.Method(HL.Table) << function(sel
         self:SetSaveState(true)
     end
 end
-
-
-
-
 
 SSReceptionRoomPosterCtrl._BuildRecoverSelectedItemList = HL.Method(HL.Opt(HL.Table, HL.Table)).Return(HL.Table) << function(self, sourceItems, selectedInstIdList)
     local selectedItems = {}
@@ -683,10 +572,6 @@ SSReceptionRoomPosterCtrl._BuildRecoverSelectedItemList = HL.Method(HL.Opt(HL.Ta
     end
     return selectedItems
 end
-
-
-
-
 
 SSReceptionRoomPosterCtrl._RestoreListSortFilterState = HL.Method(HL.Any, HL.Table) << function(self, listWidget, recoverState)
     if not listWidget or not listWidget.view then
@@ -714,9 +599,6 @@ SSReceptionRoomPosterCtrl._RestoreListSortFilterState = HL.Method(HL.Any, HL.Tab
     end
 end
 
-
-
-
 SSReceptionRoomPosterCtrl._RecoverWeaponPosterState = HL.Method(HL.Table) << function(self, recoverState)
     local listWidget = self.view.weaponScrollList
     local selectedItems = self:_BuildRecoverSelectedItemList(listWidget and listWidget.m_itemInfoList or nil, recoverState.selectedInstIdList)
@@ -727,9 +609,6 @@ SSReceptionRoomPosterCtrl._RecoverWeaponPosterState = HL.Method(HL.Table) << fun
     listWidget:_OnFilterConfirm(listWidget.m_selectedTags)
     listWidget:ShowSelectItems(selectedItems)
 end
-
-
-
 
 SSReceptionRoomPosterCtrl._RecoverCharPosterState = HL.Method(HL.Table) << function(self, recoverState)
     local listWidget = self.view.charScrollList

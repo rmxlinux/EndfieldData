@@ -1,24 +1,13 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 FacTechTreeCategoryLineCell = HL.Class('FacTechTreeCategoryLineCell', UIWidgetBase)
 
-
 FacTechTreeCategoryLineCell.m_layerId = HL.Field(HL.String) << ""
-
-
 
 
 FacTechTreeCategoryLineCell._OnFirstTimeInit = HL.Override() << function(self)
     
 end
-
-
-
 
 FacTechTreeCategoryLineCell.InitFacTechTreeCategoryLineCell = HL.Method(HL.Table) << function(self, categoryLine)
     self:_FirstTimeInit()
@@ -35,8 +24,6 @@ FacTechTreeCategoryLineCell.InitFacTechTreeCategoryLineCell = HL.Method(HL.Table
 
     self:Refresh()
 end
-
-
 
 FacTechTreeCategoryLineCell.Refresh = HL.Method() << function(self)
     local layerLocked = GameInstance.player.facTechTreeSystem:LayerIsLocked(self.m_layerId)

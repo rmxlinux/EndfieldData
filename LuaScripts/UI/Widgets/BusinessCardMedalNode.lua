@@ -1,15 +1,8 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 BusinessCardMedalNode = HL.Class('BusinessCardMedalNode', UIWidgetBase)
 
-
 BusinessCardMedalNode.m_canJumpTo = HL.Field(HL.Boolean) << false
-
-
 
 
 BusinessCardMedalNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -21,10 +14,6 @@ BusinessCardMedalNode._OnFirstTimeInit = HL.Override() << function(self)
         PhaseManager:OpenPhase(PhaseId.AchievementMain)
     end)
 end
-
-
-
-
 
 BusinessCardMedalNode.InitBusinessCardMedalNode = HL.Method(HL.Any, HL.Boolean) << function(self, roleId, canJumpTo)
     self:_FirstTimeInit()

@@ -7,16 +7,7 @@ local PHASE_ID = PhaseId.SnapshotChallenge
 local activitySystem = GameInstance.player.activitySystem
 
 
-
-
-
-
-
-
-
-
 SnapshotChallengeCtrl = HL.Class('SnapshotChallengeCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -28,16 +19,11 @@ SnapshotChallengeCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 SnapshotChallengeCtrl.m_activityId = HL.Field(HL.String) << ""
-
 
 SnapshotChallengeCtrl.m_defaultStageId = HL.Field(HL.String) << ""
 
 local WAIT_FOR_ANIM_TIME = 0.5
-
-
-
 
 
 
@@ -64,9 +50,6 @@ SnapshotChallengeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.animationWrapper:PlayInAnimation()
 end
 
-
-
-
 SnapshotChallengeCtrl._InitArg = HL.Method(HL.Any) << function(self, arg)
     if type(arg) == "string" then
         self.m_activityId = arg
@@ -75,8 +58,6 @@ SnapshotChallengeCtrl._InitArg = HL.Method(HL.Any) << function(self, arg)
         self.m_defaultStageId = arg.stageId or ""
     end
 end
-
-
 
 SnapshotChallengeCtrl._CheckActivityExist = HL.Method().Return(HL.Boolean) << function(self)
     
@@ -90,8 +71,6 @@ SnapshotChallengeCtrl._CheckActivityExist = HL.Method().Return(HL.Boolean) << fu
     end
     return true
 end
-
-
 
 SnapshotChallengeCtrl.OnClose = HL.Override() << function(self)
     self.view.main:OnClose()

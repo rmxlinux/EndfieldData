@@ -1,28 +1,15 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 SkillUpgradeNode = HL.Class('SkillUpgradeNode', UIWidgetBase)
-
 
 SkillUpgradeNode.m_itemCells = HL.Field(HL.Forward("UIListCache"))
 
-
 SkillUpgradeNode.m_skillLevelUpData = HL.Field(HL.Any)
-
-
 
 
 SkillUpgradeNode._OnFirstTimeInit = HL.Override() << function(self)
     self.m_itemCells = UIUtils.genCellCache(self.view.itemCell)
 end
-
-
-
-
 
 SkillUpgradeNode.InitSkillUpgradeNode = HL.Method(HL.Userdata, HL.Opt(HL.Function)) << function(self,
                                                                                                 skillLevelUpData,

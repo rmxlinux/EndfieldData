@@ -1,40 +1,18 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ItemSelectList = HL.Class('ItemSelectList', UIWidgetBase)
-
 
 ItemSelectList.m_sortOptions = HL.Field(HL.Table)
 
-
 ItemSelectList.items = HL.Field(HL.Table)
-
 
 ItemSelectList.getItemCell = HL.Field(HL.Function)
 
-
 ItemSelectList.m_onClickItem = HL.Field(HL.Function)
-
 
 ItemSelectList.m_selectedItems = HL.Field(HL.Table)
 
-
 ItemSelectList.m_onUnlockItem = HL.Field(HL.Function)
-
-
 
 
 ItemSelectList._OnFirstTimeInit = HL.Override() << function(self)
@@ -62,13 +40,6 @@ ItemSelectList._OnFirstTimeInit = HL.Override() << function(self)
         self:_OnItemLockedStateChanged(arg)
     end)
 end
-
-
-
-
-
-
-
 
 ItemSelectList.InitItemSelectList = HL.Method(
     HL.Table, HL.Table, HL.Function, HL.Opt(HL.String, HL.Function)) << function(
@@ -161,27 +132,15 @@ ItemSelectList.InitItemSelectList = HL.Method(
 
 end
 
-
-
-
-
 ItemSelectList._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(self, optData, isIncremental)
     Notify(MessageConst.HIDE_ITEM_TIPS)
     self:_SortData(optData.keys, isIncremental)
     self.view.itemList:UpdateCount(#self.items)
 end
 
-
-
-
-
 ItemSelectList._SortData = HL.Method(HL.Table, HL.Boolean) << function(self, keys, isIncremental)
     table.sort(self.items, Utils.genSortFunctionWithIgnore(keys, isIncremental,{"notSelected"}))
 end
-
-
-
-
 
 ItemSelectList._OnUpdateItemList = HL.Method(HL.Userdata, HL.Number) << function(self, object, index)
     local cell = self.getItemCell(object)
@@ -224,10 +183,6 @@ ItemSelectList._OnUpdateItemList = HL.Method(HL.Userdata, HL.Number) << function
     end
 end
 
-
-
-
-
 ItemSelectList._OnClickItem = HL.Method(HL.Userdata, HL.Number) << function(self, object, index)
     local cell = self.getItemCell(object)
 
@@ -243,9 +198,6 @@ ItemSelectList._OnClickItem = HL.Method(HL.Userdata, HL.Number) << function(self
         self.m_onClickItem(itemBundle, cell, index)
     end
 end
-
-
-
 
 ItemSelectList._OnItemLockedStateChanged = HL.Method(HL.Table) << function(self, arg)
     local itemId, instId, isLock = unpack(arg)

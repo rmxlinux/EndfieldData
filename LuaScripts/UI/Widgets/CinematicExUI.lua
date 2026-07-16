@@ -1,36 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CinematicExUI = HL.Class('CinematicExUI', UIWidgetBase)
-
 
 CinematicExUI.m_exNodeExistTime = HL.Field(HL.Number) << -1
 
-
 CinematicExUI.m_pause = HL.Field(HL.Boolean) << false
-
 
 CinematicExUI.m_tickKey = HL.Field(HL.Number) << -1
 
-
 CinematicExUI.m_exNodeTween = HL.Field(HL.Any)
-
-
 
 
 CinematicExUI._OnFirstTimeInit = HL.Override() << function(self)
@@ -44,15 +22,11 @@ CinematicExUI._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 CinematicExUI.InitCinematicExUI = HL.Method() << function(self)
     self:_FirstTimeInit()
     self:Clear()
     self:_EnableControllerKeyCheckTick()
 end
-
-
 
 CinematicExUI.Clear = HL.Method() << function(self)
     self.m_pause = false
@@ -63,22 +37,13 @@ CinematicExUI.Clear = HL.Method() << function(self)
     self:_DisableControllerKeyCheckTick()
 end
 
-
-
-
 CinematicExUI.RefreshExistTime = HL.Method(HL.Number) << function(self, existTime)
     self.m_exNodeExistTime = existTime
 end
 
-
-
-
 CinematicExUI.SetPause = HL.Method(HL.Boolean) << function(self, pause)
     self.m_pause = pause
 end
-
-
-
 
 CinematicExUI._TrySwitchExNode = HL.Method(HL.Boolean) << function(self, show)
     if self.m_exNodeTween then
@@ -121,16 +86,12 @@ CinematicExUI._TrySwitchExNode = HL.Method(HL.Boolean) << function(self, show)
     end
 end
 
-
-
 CinematicExUI._ClearExNodeTween = HL.Method() << function(self)
     if self.m_exNodeTween then
         self.m_exNodeTween:Kill()
     end
     self.m_exNodeTween = nil
 end
-
-
 
 CinematicExUI._ClearTickUpdate = HL.Method() << function(self)
     if self.m_tickKey > 0 then
@@ -141,10 +102,7 @@ end
 
 
 
-
 CinematicExUI.m_controllerKeyCheckTick = HL.Field(HL.Number) << -1
-
-
 
 CinematicExUI._EnableControllerKeyCheckTick = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -161,8 +119,6 @@ CinematicExUI._EnableControllerKeyCheckTick = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 CinematicExUI._DisableControllerKeyCheckTick = HL.Method() << function(self)
     if self.m_controllerKeyCheckTick > 0 then

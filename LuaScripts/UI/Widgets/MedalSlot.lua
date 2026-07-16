@@ -1,47 +1,22 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MedalSlot = HL.Class('MedalSlot', UIWidgetBase)
-
 
 MedalSlot.isEmpty = HL.Field(HL.Boolean) << false
 
-
 MedalSlot.slotIndex = HL.Field(HL.Number) << -1
-
 
 MedalSlot.m_dragEnterObj = HL.Field(GameObject)
 
-
 MedalSlot.m_dragEnterDropItem = HL.Field(HL.Userdata)
-
 
 MedalSlot.m_dragOptions = HL.Field(HL.Any)
 
-
 MedalSlot.m_achievementId = HL.Field(HL.String) << ''
-
-
 
 MedalSlot._OnFirstTimeInit = HL.Override() << function(self)
     if self.slotIndex == 1 then
-        UIUtils.setAsNaviTarget(self.view.button)
+        self:SetNaviTarget(self.view.button)
     end
     if self.view.button ~= nil then
         self.view.button.onClick:RemoveAllListeners()
@@ -50,12 +25,6 @@ MedalSlot._OnFirstTimeInit = HL.Override() << function(self)
         end)
     end
 end
-
-
-
-
-
-
 
 MedalSlot.InitMedalSlot = HL.Method(HL.Opt(HL.Any, HL.Any, HL.Number, HL.Boolean)) << function(self, medalBundle, dragOptions, slotIndex, isNaviDrag)
     if slotIndex ~= nil then
@@ -129,24 +98,15 @@ MedalSlot.InitMedalSlot = HL.Method(HL.Opt(HL.Any, HL.Any, HL.Number, HL.Boolean
     end
 end
 
-
-
-
 MedalSlot.SetDragState = HL.Method(HL.Boolean) << function(self, isDrag)
     if self.view.stateController ~= nil then
         self.view.stateController:SetState(isDrag and "Drag" or "Normal")
     end
 end
 
-
-
 MedalSlot._OnDestroy = HL.Override() << function(self)
     self:_ClearLastDropIfNeeded()
 end
-
-
-
-
 
 MedalSlot._InitDragInfo = HL.Method(HL.String, HL.Any) << function(self, achievementId, dragOptions)
     if self.view.dragItem ~= nil then
@@ -170,10 +130,6 @@ MedalSlot._InitDragInfo = HL.Method(HL.String, HL.Any) << function(self, achieve
         self.view.dropItem.luaTable[1].slotIndex = dragOptions.slotIndex
     end
 end
-
-
-
-
 
 MedalSlot._OnDragMedal = HL.Method(CS.UnityEngine.EventSystems.PointerEventData, HL.Function) << function(self, eventData, onDragMedal)
     local curDragObj = self.view.dragItem.curDragObj
@@ -211,10 +167,6 @@ MedalSlot._OnDragMedal = HL.Method(CS.UnityEngine.EventSystems.PointerEventData,
     end
 end
 
-
-
-
-
 MedalSlot._OnBeginDrag = HL.Method(CS.UnityEngine.EventSystems.PointerEventData, HL.Function) << function(self, eventData, onBeginDrag)
     self:_ClearLastDropIfNeeded()
     if onBeginDrag then
@@ -222,20 +174,12 @@ MedalSlot._OnBeginDrag = HL.Method(CS.UnityEngine.EventSystems.PointerEventData,
     end
 end
 
-
-
-
-
 MedalSlot._OnEndDrag = HL.Method(CS.UnityEngine.EventSystems.PointerEventData, HL.Function) << function(self, eventData, onEndDrag)
     self:_ClearLastDropIfNeeded()
     if onEndDrag then
         onEndDrag(self.view.dragItem.luaTable[1])
     end
 end
-
-
-
-
 
 MedalSlot._OnDropMedal = HL.Method(CS.UnityEngine.EventSystems.PointerEventData, HL.Function) << function(self, eventData, onDropMedal)
     if IsNull(eventData.pointerDrag) then
@@ -251,8 +195,6 @@ MedalSlot._OnDropMedal = HL.Method(CS.UnityEngine.EventSystems.PointerEventData,
         end
     end
 end
-
-
 
 MedalSlot._ClearLastDropIfNeeded = HL.Method() << function(self)
     if self.m_dragEnterDropItem ~= nil then

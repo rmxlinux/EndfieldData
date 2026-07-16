@@ -2,15 +2,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DramaticPerformanceBag
 local PHASE_ID = PhaseId.DramaticPerformanceBag
 
-
-
-
-
-
-
-
 DramaticPerformanceBagCtrl = HL.Class('DramaticPerformanceBagCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -30,9 +22,6 @@ local actionMenuRemoveText = {
 
 
 
-
-
-
 DramaticPerformanceBagCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitUI()
     local text = InputManager.ParseTextActionId(self.view.tipsText.text)
@@ -40,12 +29,10 @@ DramaticPerformanceBagCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     AudioManager.PostEvent("Au_UI_Menu_PureWhiteHub_Open")
     self:PlayAnimation("dramaticperformancebag_in_part_0", function()
         self:PlayAnimation("dramaticperformancebag_in_part_1", function()
-            InputManagerInst.controllerNaviManager:SetTarget(self.view.bagItemSlot.view.itemSlot.view.item.view.button)
+            self:SetNaviTarget(self.view.bagItemSlot.view.itemSlot.view.item.view.button)
         end)
     end)
 end
-
-
 
 DramaticPerformanceBagCtrl.ShowBag = HL.StaticMethod(HL.Any) << function(arg)
     local isOpen = PhaseManager:OpenPhase(PHASE_ID)
@@ -54,8 +41,6 @@ DramaticPerformanceBagCtrl.ShowBag = HL.StaticMethod(HL.Any) << function(arg)
         callback(isOpen)
     end
 end
-
-
 
 
 
@@ -81,7 +66,7 @@ DramaticPerformanceBagCtrl._InitUI = HL.Method() << function(self)
             hasNormalCacheIn = true,
             NaviTargetMoveToInCacheSlot = function(_, _, dragHelper, _)
                 self.view.facItemSlot:_OnDropItem(dragHelper)
-                InputManagerInst.controllerNaviManager:SetTarget(nil)
+                self:ClearNaviTarget()
             end,
         }
     })
@@ -100,8 +85,6 @@ DramaticPerformanceBagCtrl._InitUI = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 DramaticPerformanceBagCtrl._CompletePerformance = HL.Method() << function(self)
     AudioManager.PostEvent("Au_UI_Menu_PureWhiteHub_Close")
     self.view.bagItemSlot:ForbidDrag()
@@ -112,9 +95,6 @@ DramaticPerformanceBagCtrl._CompletePerformance = HL.Method() << function(self)
         GameAction.NotifyDramaticPerformanceBagFinish()
     end)
 end
-
-
-
 
 DramaticPerformanceBagCtrl.SetScreenCaptureImg = HL.Method(HL.Userdata) << function(self, renderTexture)
     self.view.screenCaptureImg.texture = renderTexture

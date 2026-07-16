@@ -1,28 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
 BusinessCardRoleNode = HL.Class('BusinessCardRoleNode', UIWidgetBase)
-
 
 BusinessCardRoleNode.m_charInstanceIdList = HL.Field(HL.Table)
 
-
 BusinessCardRoleNode.m_isPreview = HL.Field(HL.Boolean) << false
-
 
 BusinessCardRoleNode.m_firstCharIsEmpty = HL.Field(HL.Boolean) << true
 
-
 BusinessCardRoleNode.m_roleId = HL.Field(HL.Number) << 0
-
-
 
 
 BusinessCardRoleNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -31,10 +17,6 @@ BusinessCardRoleNode._OnFirstTimeInit = HL.Override() << function(self)
         UIManager:Open(PanelId.FriendRoleDisplay)
     end)
 end
-
-
-
-
 
 BusinessCardRoleNode.InitBusinessCardRoleNode = HL.Method(HL.Number, HL.Boolean) << function(self, roleId, preview)
     self:_FirstTimeInit()
@@ -100,11 +82,9 @@ BusinessCardRoleNode.InitBusinessCardRoleNode = HL.Method(HL.Number, HL.Boolean)
     end
 end
 
-
-
 BusinessCardRoleNode.NaviToFirstChar = HL.Method() << function(self)
     if self.view.roleLayout.groupEnabled and self.view.naviGroup.IsTopLayer == false then
-        InputManagerInst.controllerNaviManager:SetTarget(self.m_firstCharIsEmpty and self.view['friendBusinessCardRoleCell1'].addBtn or self.view['friendBusinessCardRoleCell1'].charHeadCell.view.button)
+        self:SetNaviTarget(self.m_firstCharIsEmpty and self.view['friendBusinessCardRoleCell1'].addBtn or self.view['friendBusinessCardRoleCell1'].charHeadCell.view.button)
     end
 end
 

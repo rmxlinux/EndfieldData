@@ -1,38 +1,19 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SettlementDefenseTransit
 
-
-
-
-
-
-
-
-
-
-
-
-
 SettlementDefenseTransitCtrl = HL.Class('SettlementDefenseTransitCtrl', uiCtrl.UICtrl)
-
 
 SettlementDefenseTransitCtrl.m_time = HL.Field(HL.Number) << 0
 
-
 SettlementDefenseTransitCtrl.m_timeUpdateTick = HL.Field(HL.Number) << -1
-
 
 SettlementDefenseTransitCtrl.m_playFinished = HL.Field(HL.Boolean) << false
 
-
 SettlementDefenseTransitCtrl.m_defendingReady = HL.Field(HL.Boolean) << false
-
 
 SettlementDefenseTransitCtrl.m_isNormal = HL.Field(HL.Boolean) << true
 
-
 SettlementDefenseTransitCtrl.m_progressText = HL.Field(HL.Userdata)
-
 
 
 
@@ -41,9 +22,6 @@ SettlementDefenseTransitCtrl.m_progressText = HL.Field(HL.Userdata)
 SettlementDefenseTransitCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_TOWER_DEFENSE_DEFENDING_READY] = '_OnTowerDefenseDefendingReady',
 }
-
-
-
 
 
 SettlementDefenseTransitCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -71,19 +49,14 @@ SettlementDefenseTransitCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
     AudioManager.PostAudioCue("au_cue_music_base_mode_defense_loading")
 end
 
-
 SettlementDefenseTransitCtrl.OnEnterTowerDefenseDefendingPhase = HL.StaticMethod() << function()
     PhaseManager:OpenPhaseFast(PhaseId.SettlementDefenseTransit)
 end
-
-
 
 SettlementDefenseTransitCtrl._OnTowerDefenseDefendingReady = HL.Method() << function(self)
     self.m_defendingReady = true
     self:_TryPopPhase()
 end
-
-
 
 SettlementDefenseTransitCtrl._TryPopPhase = HL.Method() << function(self)
     if not self.m_playFinished then

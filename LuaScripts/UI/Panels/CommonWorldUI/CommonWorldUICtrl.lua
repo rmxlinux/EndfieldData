@@ -1,28 +1,13 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonWorldUI
 local config = require_ex('UI/Panels/CommonWorldUI/CommonWorldUIConfig')
-
-
-
-
-
-
-
-
-
-
-
 CommonWorldUICtrl = HL.Class('CommonWorldUICtrl', uiCtrl.UICtrl)
-
 
 CommonWorldUICtrl.m_gameObjectPool = HL.Field(HL.Table) 
 
-
 CommonWorldUICtrl.m_showingGameObjects = HL.Field(HL.Table) 
 
-
 CommonWorldUICtrl.m_prefabCache = HL.Field(HL.Table) 
-
 
 
 
@@ -35,24 +20,17 @@ CommonWorldUICtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 CommonWorldUICtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_gameObjectPool = {}
     self.m_showingGameObjects = {}
     self.m_prefabCache = {}
 end
 
-
-
 CommonWorldUICtrl.OnClose = HL.Override() << function(self)
     self.m_gameObjectPool = {}
     self.m_showingGameObjects = {}
     self.m_prefabCache = {}
 end
-
-
 
 
 CommonWorldUICtrl._OnAddWorldUI = HL.StaticMethod(HL.Table) << function(args)
@@ -74,11 +52,6 @@ CommonWorldUICtrl._OnAddWorldUI = HL.StaticMethod(HL.Table) << function(args)
     end
 end
 
-
-
-
-
-
 CommonWorldUICtrl._GetOrCreateGameObject = HL.Method(HL.Number, HL.String, HL.Number).Return(HL.Any) << function(self, id, path, typeSegment)
     if self.m_showingGameObjects[typeSegment] == nil then
         self.m_showingGameObjects[typeSegment] = {}
@@ -92,9 +65,6 @@ CommonWorldUICtrl._GetOrCreateGameObject = HL.Method(HL.Number, HL.String, HL.Nu
     self.m_showingGameObjects[typeSegment][id][path] = self:_GetGameObject(path)
     return self.m_showingGameObjects[typeSegment][id][path]
 end
-
-
-
 
 CommonWorldUICtrl._GetGameObject = HL.Method(HL.String).Return(HL.Any) << function(self, path)
     if self.m_gameObjectPool[path] ~= nil and #self.m_gameObjectPool[path] > 0 then
@@ -114,8 +84,6 @@ end
 
 
 
-
-
 CommonWorldUICtrl._OnRemoveWorldUI = HL.StaticMethod(HL.Table) << function(args)
     local self = UIManager:AutoOpen(PANEL_ID)
     local id, typeSegment, path = unpack(args)
@@ -123,6 +91,13 @@ CommonWorldUICtrl._OnRemoveWorldUI = HL.StaticMethod(HL.Table) << function(args)
     if self.m_showingGameObjects[typeSegment] ~= nil and self.m_showingGameObjects[typeSegment][id] ~= nil then
         for key, obj in pairs(self.m_showingGameObjects[typeSegment][id]) do
             if path == nil or path == key then
+                if obj ~= nil then
+                    local comp = obj:GetComponent("WorldUIController")
+                    if comp ~= nil then
+                        comp:DoRelease()
+                    end
+                end
+
                 if self.m_gameObjectPool[key] == nil then
                     self.m_gameObjectPool[key] = {}
                 end

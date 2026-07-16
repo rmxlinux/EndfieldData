@@ -2,15 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharInfoTips
 
-
-
-
-
-
-
-
 CharInfoTipsCtrl = HL.Class('CharInfoTipsCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -20,9 +12,6 @@ CharInfoTipsCtrl = HL.Class('CharInfoTipsCtrl', uiCtrl.UICtrl)
 CharInfoTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHAR_INFO_CLOSE_INFO_TIP] = '_CloseTips',
 }
-
-
-
 
 
 
@@ -46,15 +35,10 @@ end
 
 
 
-
-
 CharInfoTipsCtrl.ShowCharTacticalItemTips = HL.StaticMethod(HL.Table) << function(args)
     local self = UIManager:AutoOpen(PANEL_ID)
     self:_ShowTacticalItemTips(args)
 end
-
-
-
 
 
 
@@ -97,9 +81,6 @@ CharInfoTipsCtrl._ShowTacticalItemTips = HL.Method(HL.Table) << function(self, a
     self:_UpdateLayoutAndPosition(args)
 end
 
-
-
-
 CharInfoTipsCtrl._UpdateLayoutAndPosition = HL.Method(HL.Table) << function(self, args)
     
     
@@ -117,8 +98,6 @@ CharInfoTipsCtrl._UpdateLayoutAndPosition = HL.Method(HL.Table) << function(self
     UIUtils.updateTipsPosition(self.view.content, args.targetTransform,
         self.view.rectTransform, self.uiCamera, args.tipPosType)
 end
-
-
 
 CharInfoTipsCtrl._CloseTips = HL.Method() << function(self)
     self:Close()

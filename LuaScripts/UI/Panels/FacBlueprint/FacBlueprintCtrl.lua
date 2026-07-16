@@ -5,101 +5,7 @@ local PHASE_ID = PhaseId.FacBlueprint
 local lastTabIndexSaveKey = "FAC_BP_LAST_TAB_INDEX"
 local FAC_BLUEPRINT_INSTRUCTION_BOOK_ID = "fac_blueprint_statement"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacBlueprintCtrl = HL.Class('FacBlueprintCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -119,53 +25,38 @@ FacBlueprintCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_ON_REFRESH_TECH_TREE_UI] = 'OnRefreshTechTree',
     [MessageConst.FAC_QUERY_BLUEPRINT_TIME_OUT] = 'OnQueryFailed',
     [MessageConst.FAC_ON_UPDATE_FRIEND_CHAT_STATE] = 'OnUpdateFriendChatState',
+    [MessageConst.FAC_RESET_BLUEPRINT_FILTER] = 'ResetFilter',
 }
-
 
 FacBlueprintCtrl.m_getCell = HL.Field(HL.Function)
 
-
 FacBlueprintCtrl.m_typeCells = HL.Field(HL.Forward('UIListCache'))
-
 
 FacBlueprintCtrl.m_typeInfos = HL.Field(HL.Table) 
 
-
 FacBlueprintCtrl.m_showingInsts = HL.Field(HL.Table) 
-
 
 FacBlueprintCtrl.m_selectedTypeIndex = HL.Field(HL.Number) << 1
 
-
 FacBlueprintCtrl.m_selectedIndex = HL.Field(HL.Number) << 1
-
 
 FacBlueprintCtrl.m_inShareMode = HL.Field(HL.Boolean) << false
 
-
 FacBlueprintCtrl.m_bpAbnormalIconHelper = HL.Field(HL.Table)
-
 
 FacBlueprintCtrl.m_giftBlueprintLoaded = HL.Field(HL.Boolean) << false
 
-
 FacBlueprintCtrl.m_waitingForSearching = HL.Field(HL.Boolean) << false
-
 
 FacBlueprintCtrl.m_friendSharing = HL.Field(HL.Boolean) << false
 
-
 FacBlueprintCtrl.m_friendChatState = HL.Field(HL.Boolean) << false
-
 
 FacBlueprintCtrl.m_fetchingGift = HL.Field(HL.Boolean) << false
 
-
 FacBlueprintCtrl.m_shareCode = HL.Field(HL.Any)
 
-
 FacBlueprintCtrl.m_friendRoleId = HL.Field(HL.Any)
-
 
 FacBlueprintCtrl.m_gettingShareCode = HL.Field(HL.Boolean) << false
 
@@ -174,9 +65,6 @@ local sourceTypeTable = {
     Sys = 2,
     Gift = 3,
 }
-
-
-
 
 
 
@@ -216,9 +104,6 @@ FacBlueprintCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitDebug()
 end
 
-
-
-
 FacBlueprintCtrl._InitArg = HL.Method(HL.Table) << function(self, arg)
     if not arg then
         return
@@ -239,8 +124,6 @@ FacBlueprintCtrl._InitArg = HL.Method(HL.Table) << function(self, arg)
     end
 end
 
-
-
 FacBlueprintCtrl._InitButtons = HL.Method() << function(self)
     self.view.helpBtn.onClick:AddListener(function()
         self:_OpenInstructionBook()
@@ -254,6 +137,10 @@ FacBlueprintCtrl._InitButtons = HL.Method() << function(self)
     end)
     self.view.bottomBtns.useBtn.onClick:AddListener(function()
         self:_OnClickUseBtn()
+    end)
+
+    self.view.bottomBtns.lackNode.onClick:AddListener(function()
+        self.view.blueprintContent:LocateFirstLackTech()
     end)
 
     self.view.delBtn.onClick:AddListener(function()
@@ -283,8 +170,6 @@ FacBlueprintCtrl._InitButtons = HL.Method() << function(self)
     end)
 end
 
-
-
 FacBlueprintCtrl._InitDebug = HL.Method() << function(self)
     if BEYOND_DEBUG_COMMAND then
         UIUtils.bindInputEvent(CS.Beyond.Input.KeyboardKeyCode.C, function()
@@ -302,8 +187,6 @@ FacBlueprintCtrl._InitDebug = HL.Method() << function(self)
     end
 end
 
-
-
 FacBlueprintCtrl._ChooseEnterMode = HL.Method() << function(self)
     
     if self.m_fetchingGift and self.m_shareCode then
@@ -316,17 +199,12 @@ FacBlueprintCtrl._ChooseEnterMode = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacBlueprintCtrl._TryRecoverSaveBlueprintPanel = HL.Method(HL.Opt(HL.Any)) << function(self, facSaveBlueprintState)
     if not facSaveBlueprintState then
         return
     end
     UIManager:Open(PanelId.FacSaveBlueprint, facSaveBlueprintState)
 end
-
-
 
 FacBlueprintCtrl._OpenInstructionBook = HL.Method() << function(self)
     UIManager:Open(PanelId.InstructionBook, {
@@ -343,8 +221,6 @@ FacBlueprintCtrl._OpenInstructionBook = HL.Method() << function(self)
     })
 end
 
-
-
 FacBlueprintCtrl._NeedRecoverInstructionBook = HL.Method().Return(HL.Boolean) << function(self)
     if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
         return false
@@ -353,17 +229,12 @@ FacBlueprintCtrl._NeedRecoverInstructionBook = HL.Method().Return(HL.Boolean) <<
     return isOpen and instructionCtrl:IsShow() and instructionCtrl.id == FAC_BLUEPRINT_INSTRUCTION_BOOK_ID
 end
 
-
-
-
 FacBlueprintCtrl._TryRecoverInstructionBook = HL.Method(HL.Boolean) << function(self, needRecoverInstructionBook)
     if not needRecoverInstructionBook then
         return
     end
     self:_OpenInstructionBook()
 end
-
-
 
 FacBlueprintCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = {}
@@ -428,19 +299,13 @@ end
 
 
 
-
-
 FacBlueprintCtrl.GetTypeInfos = HL.Method().Return(HL.Table) << function(self)
     return self.m_typeInfos or {}
 end
 
-
-
 FacBlueprintCtrl.GetBPAbnormalIconHelper = HL.Method().Return(HL.Table) << function(self)
     return self.m_bpAbnormalIconHelper
 end
-
-
 
 FacBlueprintCtrl._GetCommonPopUpRecoverState = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     if PhaseManager:GetTopPhaseId() ~= PHASE_ID then
@@ -457,9 +322,6 @@ FacBlueprintCtrl._GetCommonPopUpRecoverState = HL.Method().Return(HL.Opt(HL.Any)
     return recoverArg
 end
 
-
-
-
 FacBlueprintCtrl._IsFacBlueprintCommonPopUpArg = HL.Method(HL.Opt(HL.Any)).Return(HL.Boolean) << function(self, arg)
     if arg == nil or type(arg) ~= "table" or string.isEmpty(arg.content) then
         return false
@@ -467,9 +329,6 @@ FacBlueprintCtrl._IsFacBlueprintCommonPopUpArg = HL.Method(HL.Opt(HL.Any)).Retur
     return arg.content == Language.LUA_FAC_BLUEPRINT_DEL_HINT
         or arg.content == Language.LUA_FAC_BLUEPRINT_IMPORT_POPUP
 end
-
-
-
 
 FacBlueprintCtrl._TryRecoverCommonPopUp = HL.Method(HL.Opt(HL.Any)) << function(self, commonPopUpArg)
     if commonPopUpArg == nil then
@@ -499,12 +358,7 @@ FacBlueprintCtrl._OnClickImportConfirm = HL.Method(HL.String) << function(self, 
     GameInstance.player.remoteFactory.blueprint:SendQuerySharedBlueprint(shareCode)
 end
 
-
 FacBlueprintCtrl.m_filterTags = HL.Field(HL.Table) 
-
-
-
-
 
 FacBlueprintCtrl._GetRecoverFilterTags = HL.Method(HL.Table, HL.Opt(HL.Any)).Return(HL.Table) << function(self, filterTagGroups, recoverState)
     if not recoverState or not recoverState.filterTags or #recoverState.filterTags == 0 then
@@ -525,9 +379,6 @@ FacBlueprintCtrl._GetRecoverFilterTags = HL.Method(HL.Table, HL.Opt(HL.Any)).Ret
     end
     return recoverFilterTags
 end
-
-
-
 
 FacBlueprintCtrl._InitSortAndFilter = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     local inited = false
@@ -593,8 +444,6 @@ FacBlueprintCtrl._InitSortAndFilter = HL.Method(HL.Opt(HL.Any)) << function(self
     inited = true
 end
 
-
-
 FacBlueprintCtrl._ApplyFilter = HL.Method() << function(self)
     local allInsts = self.m_typeInfos[self.m_selectedTypeIndex].insts
     if not self.m_filterTags or not next(self.m_filterTags) then
@@ -617,10 +466,6 @@ FacBlueprintCtrl._ApplyFilter = HL.Method() << function(self)
     self:_SortData(sortData, sort.isIncremental)
 end
 
-
-
-
-
 FacBlueprintCtrl._CheckPassFilter = HL.Method(HL.Table, HL.Table).Return(HL.Boolean) << function(self, filterTags, inst)
     for _, tagList in pairs(filterTags) do
         local foundTag
@@ -636,9 +481,6 @@ FacBlueprintCtrl._CheckPassFilter = HL.Method(HL.Table, HL.Table).Return(HL.Bool
     end
     return true
 end
-
-
-
 
 FacBlueprintCtrl._GetContentFilterResultCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tags)
     local tagGroups = {}
@@ -668,9 +510,16 @@ FacBlueprintCtrl._GetContentFilterResultCount = HL.Method(HL.Table).Return(HL.Nu
     end
 end
 
+FacBlueprintCtrl.ResetFilter = HL.Method() << function(self)
+    if not self.m_typeInfos or not self.m_typeInfos[self.m_selectedTypeIndex] then
+        return
+    end
 
-
-
+    self.m_filterTags = nil
+    self.view.filterBtn:_UpdateState({})
+    self:_ApplyFilter()
+    self:_RefreshList()
+end
 
 FacBlueprintCtrl._SortData = HL.Method(HL.Table, HL.Boolean) << function(self, sortData, isIncremental)
     
@@ -680,8 +529,6 @@ FacBlueprintCtrl._SortData = HL.Method(HL.Table, HL.Boolean) << function(self, s
     end
     table.sort(self.m_showingInsts, Utils.genSortFunction(sortData.keys, isIncremental))
 end
-
-
 
 
 
@@ -739,10 +586,6 @@ FacBlueprintCtrl._InitInfos = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 FacBlueprintCtrl._ConvertCS2LuaBPMap = HL.Method(HL.Any, HL.Opt(HL.Boolean)).Return(HL.Table, HL.Number) << function(self, csBPs, isGift)
     if not csBPs then
         return {}, 0
@@ -770,9 +613,6 @@ end
 
 
 
-
-
-
 FacBlueprintCtrl._GetRecoverTypeIndex = HL.Method(HL.Opt(HL.Table)).Return(HL.Number) << function(self, initArg)
     local recoverState = initArg and initArg.recoverState
     local recoverType = recoverState and recoverState.selectedType or nil
@@ -786,9 +626,6 @@ FacBlueprintCtrl._GetRecoverTypeIndex = HL.Method(HL.Opt(HL.Table)).Return(HL.Nu
     end
     return 0
 end
-
-
-
 
 FacBlueprintCtrl._RefreshTypeCells = HL.Method(HL.Opt(HL.Table)) << function(self, initArg)
     
@@ -840,17 +677,10 @@ FacBlueprintCtrl._RefreshTypeCells = HL.Method(HL.Opt(HL.Table)) << function(sel
     self:_OnClickTypeCell(self.m_selectedTypeIndex, true, initArg)
 end
 
-
-
 FacBlueprintCtrl._RefreshCreateAndImportBtn = HL.Method() << function(self)
     self.view.createBtn.gameObject:SetActive(self.m_selectedTypeIndex == sourceTypeTable.Mine and not self.m_inShareMode and not Utils.isInBlackbox() and not self.m_isDeleting and not self.m_friendSharing)
     self.view.importBtn.gameObject:SetActive(self.m_selectedTypeIndex == sourceTypeTable.Gift and not self.m_inShareMode and not Utils.isInBlackbox() and not self.m_isDeleting and not self.m_friendSharing)
 end
-
-
-
-
-
 FacBlueprintCtrl._OnClickTypeCell = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Table)) << function(self, index, forceUpdate, initArg)
     if self.m_selectedTypeIndex == index and not forceUpdate then
         return
@@ -858,6 +688,11 @@ FacBlueprintCtrl._OnClickTypeCell = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.T
     self.m_selectedTypeIndex = index
     local info = self.m_typeInfos[index]
     self:_RefreshDelBtn()
+
+    
+    if info and info.type then
+        CS.Beyond.Gameplay.Conditions.OnFacBlueprintTabOpen.Trigger(info.type)
+    end
 
     if info.maxCount then
         self.view.listTitleNode.gameObject:SetActive(true)
@@ -887,9 +722,6 @@ FacBlueprintCtrl._OnClickTypeCell = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.T
     self:_ApplyFilter()
     self:_RefreshList(initArg)
 end
-
-
-
 
 FacBlueprintCtrl._RefreshList = HL.Method(HL.Opt(HL.Table)) << function(self, initArg)
     local count = #self.m_showingInsts
@@ -932,8 +764,15 @@ FacBlueprintCtrl._RefreshList = HL.Method(HL.Opt(HL.Table)) << function(self, in
         end
         scrollList:UpdateCount(count, index, false, false, isInit)
         if DeviceInfo.usingController and not self.m_friendChatState then
+            
+            
+            
+            if initArg and (initArg.csBPInst ~= nil or initArg.blueprintId ~= nil) then
+                self.m_cellOnHide = nil
+                Notify(MessageConst.HIDE_ITEM_TIPS)
+            end
             local cell = self.m_getCell(index)
-            self:SetAsNaviTargetInSilentModeIfNecessary(self.view.containerSelectableNaviGroup, cell.view.button)
+            self:SetNaviTarget(cell.view.button)
         end
         self:_OnClickCell(index, true, true)
         local countPerLine = scrollList.countPerLine
@@ -967,11 +806,6 @@ FacBlueprintCtrl._RefreshList = HL.Method(HL.Opt(HL.Table)) << function(self, in
     end
 end
 
-
-
-
-
-
 FacBlueprintCtrl._OnUpdateCell = HL.Method(HL.Forward('BlueprintCell'), HL.Number, HL.Opt(HL.Table)) << function(self, cell, index, initArg)
     local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
     local action = (not self.m_isDeleting) and ActionOnSetNaviTarget.AutoTriggerOnClick or ActionOnSetNaviTarget.PressConfirmTriggerOnClick
@@ -994,11 +828,6 @@ FacBlueprintCtrl._OnUpdateCell = HL.Method(HL.Forward('BlueprintCell'), HL.Numbe
     cell.view.selected.gameObject:SetActive(index == self.m_selectedIndex)
     self.m_readBPIds[inst.id] = true
 end
-
-
-
-
-
 
 FacBlueprintCtrl._OnClickCell = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, index, onlyShow, isInit)
     if self.m_showingInsts[index] == nil then
@@ -1066,8 +895,6 @@ FacBlueprintCtrl._OnClickCell = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Boole
     end
 end
 
-
-
 FacBlueprintCtrl._UpdateInfoNode = HL.Method() << function(self)
     local inst = self.m_showingInsts[self.m_selectedIndex]
     if not inst then
@@ -1089,11 +916,9 @@ FacBlueprintCtrl._UpdateInfoNode = HL.Method() << function(self)
     local canEdit = inst.csInst.sourceType == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintSourceType.Mine
     content.view.rightActions.editBtn.gameObject:SetActive(canEdit)
     content.view.rightActions.previewBtn.gameObject:SetActive(not canEdit)
-    self.view.bottomBtns.useBtn.gameObject:SetActive(not content.haveLackTechs)
-    self.view.bottomBtns.lackNode.gameObject:SetActive(content.haveLackTechs)
+    self.view.bottomBtns.useBtn.gameObject:SetActive(content.canUseBP)
+    self.view.bottomBtns.lackNode.gameObject:SetActive(content.haveLackTechs and not content.canUseBP)
 end
-
-
 
 FacBlueprintCtrl._OnClickCreate = HL.Method() << function(self)
     if not Utils.isInFacMainRegion() then
@@ -1117,8 +942,6 @@ FacBlueprintCtrl._OnClickCreate = HL.Method() << function(self)
     UIManager:RecoverScreen(clearScreenKey)
 end
 
-
-
 FacBlueprintCtrl._OnClickCraftBtn = HL.Method() << function(self)
     if GameInstance.player.systemActionConflictManager.curProcessingSystemAction then
         return
@@ -1126,8 +949,6 @@ FacBlueprintCtrl._OnClickCraftBtn = HL.Method() << function(self)
     local deviceList = self.view.blueprintContent:GetAllDeviceIdAndCount()
     Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { bluePrintData = deviceList })
 end
-
-
 
 FacBlueprintCtrl._ExitOtherPhase = HL.Method() << function(self)
     
@@ -1142,8 +963,6 @@ FacBlueprintCtrl._ExitOtherPhase = HL.Method() << function(self)
         PhaseManager:ExitPhaseFast(v)
     end
 end
-
-
 
 FacBlueprintCtrl._OnClickUseBtn = HL.Method() << function(self)
     if not Utils.isInFacMainRegion() then
@@ -1183,9 +1002,6 @@ end
 
 
 
-
-
-
 FacBlueprintCtrl.FacOnModifyBlueprint = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     UIManager:Hide(PanelId.CommonPopUp)
     self.view.blueprintContent:Refresh()
@@ -1201,10 +1017,7 @@ end
 
 
 
-
 FacBlueprintCtrl.m_isDeleting = HL.Field(HL.Boolean) << false
-
-
 
 FacBlueprintCtrl._BuildDeleteRecoverState = HL.Method().Return(HL.Table) << function(self)
     if not self.m_isDeleting then
@@ -1221,9 +1034,6 @@ FacBlueprintCtrl._BuildDeleteRecoverState = HL.Method().Return(HL.Table) << func
     end
     return deleteState
 end
-
-
-
 
 FacBlueprintCtrl._TryRecoverDeleteState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if not recoverState or recoverState.inDeleteMode ~= true then
@@ -1259,10 +1069,6 @@ FacBlueprintCtrl._TryRecoverDeleteState = HL.Method(HL.Opt(HL.Any)) << function(
     end
     self:_UpdateDelCount()
 end
-
-
-
-
 
 FacBlueprintCtrl._ToggleDelete = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isDeleting, skipAni)
     self.m_isDeleting = isDeleting
@@ -1317,13 +1123,9 @@ FacBlueprintCtrl._ToggleDelete = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << fu
     self:_RefreshCreateAndImportBtn()
 end
 
-
-
 FacBlueprintCtrl._OnClickDeleteBtn = HL.Method() << function(self)
     self:_ToggleDelete(true)
 end
-
-
 
 FacBlueprintCtrl._OnClickConfirmDelBtn = HL.Method() << function(self)
     Notify(MessageConst.SHOW_POP_UP, {
@@ -1352,22 +1154,15 @@ FacBlueprintCtrl._OnClickConfirmDelBtn = HL.Method() << function(self)
     })
 end
 
-
-
 FacBlueprintCtrl._OnClickCancelDelBtn = HL.Method() << function(self)
     self:_ToggleDelete(false)
 end
-
-
-
 
 FacBlueprintCtrl.FacOnDeleteBlueprint = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     self:_ToggleDelete(false)
     self:_InitInfos()
     self:_OnClickTypeCell(self.m_selectedTypeIndex, true)
 end
-
-
 
 FacBlueprintCtrl._UpdateDelCount = HL.Method() << function(self)
     local count = 0
@@ -1393,10 +1188,7 @@ end
 
 
 
-
 FacBlueprintCtrl.m_readBPIds = HL.Field(HL.Table)
-
-
 
 FacBlueprintCtrl._ReadCurShowingBPs = HL.Method() << function(self)
     if not self.m_readBPIds or not next(self.m_readBPIds) then
@@ -1410,9 +1202,6 @@ FacBlueprintCtrl._ReadCurShowingBPs = HL.Method() << function(self)
     self:_ReadBPs(ids)
 end
 
-
-
-
 FacBlueprintCtrl._ReadBPs = HL.Method(HL.Table) << function(self, ids)
     local t = self.m_typeInfos[self.m_selectedTypeIndex].type
     if t == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintSourceType.Mine then
@@ -1423,8 +1212,6 @@ FacBlueprintCtrl._ReadBPs = HL.Method(HL.Table) << function(self, ids)
         GameInstance.player.remoteFactory.blueprint:SendReadGiftBlueprint(ids)
     end
 end
-
-
 
 
 
@@ -1454,9 +1241,6 @@ FacBlueprintCtrl._InitShare = HL.Method() << function(self)
     end)
 end
 
-
-
-
 FacBlueprintCtrl.FacOnQuerySharedBlueprint = HL.Method(HL.Any) << function(self, arg)
     
     if not self:IsShow() then
@@ -1468,10 +1252,7 @@ FacBlueprintCtrl.FacOnQuerySharedBlueprint = HL.Method(HL.Any) << function(self,
     self:_OnClickTypeCell(self.m_selectedTypeIndex, true)
 end
 
-
 FacBlueprintCtrl.m_queryFailed = HL.Field(HL.Boolean) << false
-
-
 
 FacBlueprintCtrl.OnQueryFailed = HL.Method() << function(self)
     
@@ -1483,10 +1264,7 @@ FacBlueprintCtrl.OnQueryFailed = HL.Method() << function(self)
     
 end
 
-
 FacBlueprintCtrl.m_importingInst = HL.Field(HL.Any)
-
-
 
 FacBlueprintCtrl._ImportBlueprint = HL.Method() << function(self)
     UIManager:Open(PanelId.FacSaveBlueprint, {
@@ -1501,23 +1279,15 @@ FacBlueprintCtrl._ImportBlueprint = HL.Method() << function(self)
     self.m_importingInst = nil
 end
 
-
-
-
 FacBlueprintCtrl.OnUpdateFriendChatState = HL.Method(HL.Any) << function(self, state)
     self.m_friendChatState = state
 end
-
-
-
 
 FacBlueprintCtrl.GetGiftBlueprint = HL.Method(HL.Any) << function(self, arg)
     self.view.loadingNode.gameObject:SetActive(true)
     local csBPSys = GameInstance.player.remoteFactory.blueprint
     csBPSys:GetGiftBlueprint()
 end
-
-
 
 FacBlueprintCtrl.FacOnGetGiftBlueprint = HL.Method() << function(self)
     
@@ -1560,16 +1330,11 @@ FacBlueprintCtrl.FacOnGetGiftBlueprint = HL.Method() << function(self)
     self:_RefreshDelBtn()
 end
 
-
-
 FacBlueprintCtrl._SendToFriend = HL.Method() << function(self)
     local inst = self.m_showingInsts[self.m_selectedIndex].csInst
     local id = self.m_showingInsts[self.m_selectedIndex].id
     self:_GetShareCode(inst, id)
 end
-
-
-
 
 FacBlueprintCtrl.RefreshShareState = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     local cell, index, reviewStatus
@@ -1593,7 +1358,11 @@ FacBlueprintCtrl.RefreshShareState = HL.Method(HL.Opt(HL.Any)) << function(self,
     end
 
     cell = self.m_getCell(index)
-    cell:RefreshCellState(reviewStatus)
+    
+    
+    if cell then
+        cell:RefreshCellState(reviewStatus)
+    end
     if self.m_selectedIndex == index then
         self.view.shareBtn.gameObject:SetActive(reviewStatus ~= CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.InProgress)
         self.view.needAuditHintNode.gameObject:SetActive(reviewStatus == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.InProgress)
@@ -1610,10 +1379,6 @@ FacBlueprintCtrl.RefreshShareState = HL.Method(HL.Opt(HL.Any)) << function(self,
     end
 end
 
-
-
-
-
 FacBlueprintCtrl._GetShareCode = HL.Method(HL.Any, HL.Any) << function(self, inst, id)
     self.m_gettingShareCode = true
     if inst.sourceType == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintSourceType.Mine then
@@ -1625,9 +1390,6 @@ FacBlueprintCtrl._GetShareCode = HL.Method(HL.Any, HL.Any) << function(self, ins
     end
 end
 
-
-
-
 FacBlueprintCtrl.FacOnShareBlueprint = HL.Method(HL.Table) << function(self, args)
     if self.m_gettingShareCode then
         self.m_gettingShareCode = false
@@ -1637,8 +1399,6 @@ FacBlueprintCtrl.FacOnShareBlueprint = HL.Method(HL.Table) << function(self, arg
         end)
     end
 end
-
-
 
 
 
@@ -1662,10 +1422,7 @@ end
 
 
 
-
 FacBlueprintCtrl.m_cellOnHide = HL.Field(HL.Any)
-
-
 
 FacBlueprintCtrl.OnHide = HL.Override() << function(self)
     if DeviceInfo.usingController and self.view.containerSelectableNaviGroup.IsTopLayer then
@@ -1673,12 +1430,10 @@ FacBlueprintCtrl.OnHide = HL.Override() << function(self)
     end
 end
 
-
-
 FacBlueprintCtrl.OnShow = HL.Override() << function(self)
     if DeviceInfo.usingController then
         if self.m_cellOnHide then
-            self:SetAsNaviTargetInSilentModeIfNecessary(self.view.containerSelectableNaviGroup, self.m_cellOnHide)
+            self:SetNaviTarget(self.m_cellOnHide)
             self.m_cellOnHide = nil
         end
         if Utils.isInBlackbox() then
@@ -1692,22 +1447,15 @@ FacBlueprintCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 FacBlueprintCtrl.OnClose = HL.Override() << function(self)
     self:_ReadCurShowingBPs()
 end
-
-
-
 
 FacBlueprintCtrl.OnItemCountChanged = HL.Method(HL.Table) << function(self, args)
     if self.m_selectedIndex > 0 then
         self.view.blueprintContent:UpdateCount()
     end
 end
-
-
 
 FacBlueprintCtrl.OnRefreshTechTree = HL.Method() << function(self)
     if self:IsShow() then
@@ -1716,20 +1464,15 @@ FacBlueprintCtrl.OnRefreshTechTree = HL.Method() << function(self)
     if DeviceInfo.usingController and #self.view.blueprintContent.m_lackTechIdInfos == 0 then
         local cell = self.m_getCell(self.m_selectedIndex)
         if cell then
-            self:SetAsNaviTargetInSilentModeIfNecessary(self.view.containerSelectableNaviGroup, cell.view.button)
+            self:SetNaviTarget(cell.view.button)
         end
     end
 end
-
-
 
 FacBlueprintCtrl._RefreshDelBtn = HL.Method() << function(self)
     local bpCanDelete = self.m_typeInfos[self.m_selectedTypeIndex].canDelete
     self.view.delBtn.gameObject:SetActive(bpCanDelete and not self.m_friendSharing and not self.m_isDeleting)
 end
-
-
-
 
 FacBlueprintCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, arg)
     if not arg then
@@ -1758,10 +1501,7 @@ end
 
 
 
-
 FacBlueprintCtrl.m_bpSearchInfos = HL.Field(HL.Any)
-
-
 
 FacBlueprintCtrl._Search = HL.Method() << function(self)
     
@@ -1774,8 +1514,6 @@ FacBlueprintCtrl._Search = HL.Method() << function(self)
     end
 end
 
-
-
 FacBlueprintCtrl._OpenSearch = HL.Method() << function(self)
     local searchInfos = self.m_bpSearchInfos
     if self.m_friendSharing then
@@ -1786,8 +1524,6 @@ FacBlueprintCtrl._OpenSearch = HL.Method() << function(self)
     UIManager:Open(PanelId.FacSearchBlueprint, searchInfos)
     self.m_bpSearchInfos = nil
 end
-
-
 
 
 
@@ -1809,6 +1545,7 @@ FacBlueprintCtrl._InitController = HL.Method() << function(self)
     
     local extraBtnInfos = {}
     table.insert(extraBtnInfos, {
+        name = "BlueprintInstructionBook",
         action = function()
             self:_OpenInstructionBook()
         end,

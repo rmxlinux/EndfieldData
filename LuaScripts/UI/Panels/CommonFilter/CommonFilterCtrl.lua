@@ -225,32 +225,45 @@ end
 
 CommonFilterCtrl._UpdateState = HL.Method() << function(self)
     if self.m_curSelectMode == SelectMode.Filter then
-        self.view.scrollListFilter:UpdateCount(#self.m_filterTagGroups)
         self:_UpdateResultCount()
-        if self.m_naviTargetInfo ~= nil then
-            local scrollIndex = CSIndex(self.m_naviTargetInfo.index)
-            self.m_naviTargetInfo = nil
-            self.m_naviTargetInitialized = false
-            self.view.scrollListFilter:ScrollToIndex(scrollIndex, true)
-            self.view.scrollListFilter:UpdateCount(#self.m_filterTagGroups)
+        self.m_naviTargetInfo = nil
+        if self.m_filterSelectedTags and next(self.m_filterSelectedTags) then
+            for groupIndex, groupInfo in ipairs(self.m_filterTagGroups) do
+                for tagIdx, tagInfo in ipairs(groupInfo.tags) do
+                    if self:_GetSelectedTagIndex(tagInfo) > 0 then
+                        if (self.m_naviTargetInfo and self.m_naviTargetInfo.groupIndex < groupIndex) or
+                            (self.m_naviTargetInfo and self.m_naviTargetInfo.groupIndex == groupIndex and self.m_naviTargetInfo.tagIndex < tagIdx) then
+                                goto continue
+                        end
+                        self.m_naviTargetInfo = { groupIndex = groupIndex, tagIndex = tagIdx }
+                        ::continue::
+                    end
+                end
+            end
         end
-        if self.m_naviTargetInfo ~= nil then
-            InputManagerInst.controllerNaviManager:SetTarget(self.m_naviTargetInfo.target)
-            self.m_naviTargetInfo = nil
+        if not self.m_naviTargetInfo then
+            self.m_naviTargetInfo = { groupIndex = 1, tagIndex = 1 }
         end
+        self.view.scrollListFilter:UpdateCount(#self.m_filterTagGroups)
+        self.m_naviTargetInitialized = false
+        self.view.scrollListFilter:ScrollToIndex(CSIndex(self.m_naviTargetInfo.groupIndex), true)
+        self.m_naviTargetInitialized = true
     elseif self.m_curSelectMode == SelectMode.Sort then
-        self.view.scrollListSort:UpdateCount(#self.m_sortTagGroups)
-        if self.m_naviTargetInfo ~= nil then
-            local scrollIndex = CSIndex(self.m_naviTargetInfo.index)
-            self.m_naviTargetInfo = nil
-            self.m_naviTargetInitialized = false
-            self.view.scrollListSort:ScrollToIndex(scrollIndex, true)
-            self.view.scrollListSort:UpdateCount(#self.m_sortTagGroups)
+        local targetIndex = 1
+        if self.m_sortSelectedTag then
+            for i, tagInfo in ipairs(self.m_sortTagGroups) do
+                if self.m_sortSelectedTag.name == tagInfo.name
+                    and self.m_sortSelectedTag.isIncremental == tagInfo.isIncremental then
+                    targetIndex = i
+                    break
+                end
+            end
         end
-        if self.m_naviTargetInfo ~= nil then
-            InputManagerInst.controllerNaviManager:SetTarget(self.m_naviTargetInfo.target)
-            self.m_naviTargetInfo = nil
-        end
+        self.view.scrollListSort:UpdateCount(#self.m_sortTagGroups, false, false, false, true)
+        self.m_naviTargetInfo = nil
+        self.m_naviTargetInitialized = false
+        self.view.scrollListSort:ScrollToIndex(CSIndex(targetIndex), true)
+        self.m_naviTargetInitialized = true
     end
 end
 
@@ -297,11 +310,19 @@ CommonFilterCtrl._OnUpdateSortTagGroupCell = HL.Method(HL.Table, HL.Number) << f
         cell.check.gameObject:SetActive(isOn)
         self:_OnCellSelectedChanged(cell, isOn, true)
     end)
-    self:_SetSortNaviTarget(index, tagInfo, cell)
+    if not self.m_naviTargetInitialized then
+        if index == 1 then
+            self:SetNaviTarget(cell.toggle)
+        end
+        if isOn then
+            self:SetNaviTarget(cell.toggle)
+        end
+    end
     cell.toggle.onIsNaviTargetChanged = function(active)
         self:_OnCellSelectedChanged(cell, cell.toggle.isOn, active)
     end
     self:_OnCellSelectedChanged(cell, cell.toggle.isOn, cell.toggle.isNaviTarget)
+
 end
 
 CommonFilterCtrl._UpdateModState = HL.Method() << function(self)
@@ -337,20 +358,6 @@ CommonFilterCtrl._UpdateModState = HL.Method() << function(self)
     self.view.filterModifiedMark.gameObject:SetActive(filterModState)
 end
 
-CommonFilterCtrl._SetSortNaviTarget = HL.Method(HL.Number, HL.Table, HL.Table)
-    << function(self, index, tagInfo, tagCell)
-    if self.m_naviTargetInitialized then
-        return
-    end
-    local isSelected = self.m_sortSelectedTag and self.m_sortSelectedTag.name == tagInfo.name and self.m_sortSelectedTag.isIncremental == tagInfo.isIncremental
-    if isSelected then
-        self.m_naviTargetInfo = {}
-        self.m_naviTargetInfo.target = tagCell.toggle
-        self.m_naviTargetInfo.index = index
-        self.m_naviTargetInitialized = true
-    end
-end
-
 CommonFilterCtrl._OnUpdateFilterTagGroupCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     if not self.m_filterTagGroups or self.m_curSelectMode ~= SelectMode.Filter then
         
@@ -371,29 +378,15 @@ CommonFilterCtrl._OnUpdateFilterTagGroupCell = HL.Method(HL.Table, HL.Number) <<
     cell.tagCells:Refresh(#tagGroupInfo.tags, function(tagCell, tagIndex)
         local tagInfo = tagGroupInfo.tags[tagIndex]
         self:_UpdateTagCell(tagCell, tagInfo)
-        self:_SetFilterNaviTarget(tagIndex, index, tagInfo, tagCell)
+        if not self.m_naviTargetInitialized
+            and self.m_naviTargetInfo
+            and self.m_naviTargetInfo.groupIndex == index
+            and self.m_naviTargetInfo.tagIndex == tagIndex then
+            self:SetNaviTarget(tagCell.toggle)
+        end
     end)
 end
 
-CommonFilterCtrl._SetFilterNaviTarget = HL.Method(HL.Number, HL.Number, HL.Table, HL.Table)
-    << function(self, tagIndex, index, tagInfo, tagCell)
-    if self.m_naviTargetInitialized then
-        return
-    end
-    local hasSelectedTags = self.m_filterSelectedTags and next(self.m_filterSelectedTags)
-    local setNavi = false
-    if hasSelectedTags then
-        setNavi = self:_GetSelectedTagIndex(tagInfo) > 0
-    else
-        setNavi = (tagIndex == 1 and index == 1)
-    end
-    if setNavi then
-        self.m_naviTargetInfo = {}
-        self.m_naviTargetInfo.target = tagCell.toggle
-        self.m_naviTargetInfo.index = index
-        self.m_naviTargetInitialized = true
-    end
-end
 
 CommonFilterCtrl._GetSelectedTagIndex = HL.Method(HL.Table).Return(HL.Number) << function(self, tagInfo)
     for index, selectedTagInfo in ipairs(self.m_filterSelectedTags) do

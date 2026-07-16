@@ -1,17 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ReportPlayer
 
-
-
-
-
-
-
-
-
-
 ReportPlayerCtrl = HL.Class('ReportPlayerCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -22,23 +12,15 @@ ReportPlayerCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 ReportPlayerCtrl.m_reportList = HL.Field(HL.Table)
-
 
 ReportPlayerCtrl.m_reportStrId = HL.Field(HL.String) << ""
 
-
 ReportPlayerCtrl.m_reportType = HL.Field(HL.Number) << 0
-
 
 ReportPlayerCtrl.m_isReport = HL.Field(HL.Boolean) << false
 
-
 ReportPlayerCtrl.m_arg = HL.Field(HL.Any)
-
-
-
 
 
 ReportPlayerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -142,8 +124,6 @@ ReportPlayerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.root:SetState('DisableState')
     self.view.reportItemListSelectableNaviGroup:NaviToThisGroup()
 end
-
-
 
 
 

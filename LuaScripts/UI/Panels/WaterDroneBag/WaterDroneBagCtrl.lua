@@ -2,30 +2,7 @@ local WaterDroneSourceType = CS.Beyond.Gameplay.WaterDroneSourceType
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WaterDroneBag
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WaterDroneBagCtrl = HL.Class('WaterDroneBagCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -34,9 +11,7 @@ WaterDroneBagCtrl = HL.Class('WaterDroneBagCtrl', uiCtrl.UICtrl)
 
 WaterDroneBagCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.HIDE_WATER_DRONE_BAG] = '_OnCloseWaterDroneBag',
-    [MessageConst.ON_CONFIRM_CHANGE_INPUT_DEVICE_TYPE] = '_OnChangeInputDeviceType',
 }
-
 
 
 
@@ -50,17 +25,12 @@ WaterDroneBagCtrl.m_getCell = HL.Field(HL.Function)
 WaterDroneBagCtrl.m_mergedFullBottleItems = HL.Field(HL.Table) 
 
 
-
 WaterDroneBagCtrl.m_curSelectedItemCsIndex = HL.Field(HL.Number) << -1 
 
 
 
 
-
 WaterDroneBagCtrl.m_itemBag = HL.Field(CS.Beyond.Gameplay.InventorySystem.ItemBag)
-
-
-
 
 
 
@@ -88,8 +58,6 @@ WaterDroneBagCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
 
 
 WaterDroneBagCtrl.Refresh = HL.Method() << function(self)
@@ -171,8 +139,6 @@ end
 
 
 
-
-
 WaterDroneBagCtrl.RefreshToggleAllCell = HL.Method() << function(self)
     local customAbilityCom = GameUtil.mainCharacter.customAbilityCom
     local waterDroneSourceType = customAbilityCom.waterDroneSourceType
@@ -204,9 +170,6 @@ WaterDroneBagCtrl.RefreshToggleAllCell = HL.Method() << function(self)
     self:RefreshToggleAfterSelectedCell(_showToggleCsIndex)
 end
 
-
-
-
 WaterDroneBagCtrl.RefreshToggleSingleCell = HL.Method(HL.Number) << function(self, luaIndex)
     local customAbilityCom = GameUtil.mainCharacter.customAbilityCom
     local waterDroneSourceType = customAbilityCom.waterDroneSourceType
@@ -235,24 +198,19 @@ WaterDroneBagCtrl.RefreshToggleSingleCell = HL.Method(HL.Number) << function(sel
     end
 end
 
-
-
-
 WaterDroneBagCtrl.RefreshToggleAfterSelectedCell = HL.Method(HL.Number) << function(self, showToggleCsIndex)
     self.m_curSelectedItemCsIndex = showToggleCsIndex
     local selectedCell = self.m_getCell(LuaIndex(showToggleCsIndex))
     if selectedCell then
         selectedCell.view.toggle.gameObject:SetActive(true)
-        InputManagerInst.controllerNaviManager:SetTarget(selectedCell.view.item.view.button)
+        self:SetNaviTarget(selectedCell.view.item.view.button)
     else
         local firstCell = self.m_getCell(1)
         if firstCell then
-            InputManagerInst.controllerNaviManager:SetTarget(firstCell.view.item.view.button)
+            self:SetNaviTarget(firstCell.view.item.view.button)
         end
     end
 end
-
-
 
 WaterDroneBagCtrl.OnShow = HL.Override() << function(self)
     
@@ -265,8 +223,6 @@ WaterDroneBagCtrl.OnShow = HL.Override() << function(self)
 end
 
 
-
-
 WaterDroneBagCtrl.OnClose = HL.Override() << function(self)
     
     self:_ToggleShowHideGeneralAbility(true)
@@ -277,9 +233,6 @@ WaterDroneBagCtrl.OnClose = HL.Override() << function(self)
 end
 
 
-
-
-
 WaterDroneBagCtrl._ToggleShowHideGeneralAbility = HL.Method(HL.Boolean) << function(self, active)
     if active then
         UIManager:ShowWithKey(PanelId.GeneralAbility, "WaterDroneBag")
@@ -287,9 +240,6 @@ WaterDroneBagCtrl._ToggleShowHideGeneralAbility = HL.Method(HL.Boolean) << funct
         UIManager:HideWithKey(PanelId.GeneralAbility, "WaterDroneBag")
     end
 end
-
-
-
 
 WaterDroneBagCtrl._ToggleShowHideBattleAction = HL.Method(HL.Boolean) << function(self, active)
     if active then
@@ -299,13 +249,10 @@ WaterDroneBagCtrl._ToggleShowHideBattleAction = HL.Method(HL.Boolean) << functio
     end
 end
 
-
 WaterDroneBagCtrl.OnShowWaterDroneBag = HL.StaticMethod() << function()
     local waterDroneBagPanel = UIManager:AutoOpen(PANEL_ID)
     
 end
-
-
 
 WaterDroneBagCtrl._OnCloseWaterDroneBag = HL.Method() << function(self)
     
@@ -314,16 +261,6 @@ WaterDroneBagCtrl._OnCloseWaterDroneBag = HL.Method() << function(self)
         self:PlayAnimationOutAndClose()
     end
 end
-
-
-
-
-WaterDroneBagCtrl._OnChangeInputDeviceType = HL.Method(HL.Any) << function(self, args)
-    local customAbilityCom = GameUtil.mainCharacter.customAbilityCom
-    customAbilityCom:TryEndAbility_ByChangeInputDeviceType()
-end
-
-
 
 
 WaterDroneBagCtrl._OnBack = HL.Method() << function(self)
@@ -360,10 +297,6 @@ WaterDroneBagCtrl._OnBack = HL.Method() << function(self)
     customAbilityCom:WaterDroneEnterAimModeOpenUI(WaterDroneSourceType.Item)
 end
 
-
-
-
-
 WaterDroneBagCtrl._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(self, gameObject, csIndex)
     local cell = self.m_getCell(gameObject)
 
@@ -380,14 +313,6 @@ WaterDroneBagCtrl._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(s
     end
 end
 
-
-
-
-
-
-
-
-
 WaterDroneBagCtrl._UpdateNormalSlot = HL.Method(HL.Userdata, HL.String, HL.Number, HL.String, HL.String, HL.Number) << function(self, cell, itemId, itemCount, emptyBottleId, liquidId, csIndex)
     cell:InitWaterDroneItem(itemId, itemCount, emptyBottleId, liquidId, function() 
         self:_OnClickItem(csIndex)
@@ -399,9 +324,6 @@ WaterDroneBagCtrl._UpdateNormalSlot = HL.Method(HL.Userdata, HL.String, HL.Numbe
     self:RefreshToggleAllCell()
     
 end
-
-
-
 
 
 

@@ -3,33 +3,7 @@ local GameSettingHelper = CS.Beyond.Gameplay.GameSettingHelper
 
 local autoCalcOrderUICtrl = require_ex('UI/Panels/Base/AutoCalcOrderUICtrl')
 local PANEL_ID = PanelId.WalletBar
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WalletBarCtrl = HL.Class('WalletBarCtrl', autoCalcOrderUICtrl.AutoCalcOrderUICtrl)
-
 
 
 
@@ -50,35 +24,23 @@ WalletBarCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 WalletBarCtrl.m_moneyCells = HL.Field(HL.Forward('UIListCache'))
-
 
 WalletBarCtrl.m_defaultPaddingTop = HL.Field(HL.Number) << -1
 
-
 WalletBarCtrl.m_defaultPaddingRight = HL.Field(HL.Number) << -1
-
 
 WalletBarCtrl.m_baseNotchPaddingPixel = HL.Field(HL.Number) << -1
 
-
 WalletBarCtrl.m_deltaNotchPaddingPixel = HL.Field(HL.Number) << -1
-
 
 WalletBarCtrl.m_countDownMoneyIndex = HL.Field(HL.Number) << -1
 
-
 WalletBarCtrl.m_moneyClearRule = HL.Field(GEnums.MoneyClearRuleType)
-
 
 WalletBarCtrl.m_resetMoneyCountDownCompleteFunc = HL.Field(HL.Function)
 
-
 WalletBarCtrl.m_timeFormatFunc = HL.Field(HL.Function)
-
-
-
 
 
 
@@ -128,8 +90,6 @@ WalletBarCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 WalletBarCtrl.OnShow = HL.Override() << function(self)
     WalletBarCtrl.Super.OnShow(self)
     
@@ -143,8 +103,6 @@ WalletBarCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 WalletBarCtrl.OnHide = HL.Override() << function(self)
     WalletBarCtrl.Super.OnHide(self)
     if self.m_curArgs == nil then
@@ -156,8 +114,6 @@ WalletBarCtrl.OnHide = HL.Override() << function(self)
 
     self.view.resetMoneyTimeTxt:StopCountDown()
 end
-
-
 
 
 WalletBarCtrl.OnAnimationInFinished = HL.Override() << function(self)
@@ -188,35 +144,22 @@ end
 
 
 
-
-
 WalletBarCtrl.ShowWalletBar = HL.StaticMethod(HL.Table) << function(args)
     local ctrl = WalletBarCtrl.AutoOpen(PANEL_ID, nil, true)
     ctrl:_AttachToPanel(args)
 end
 
-
-
-
 WalletBarCtrl.HideWalletBar = HL.Method(HL.Number) << function(self, panelId)
     self:_CustomHide(panelId)
 end
-
-
 
 WalletBarCtrl.HideWalletBarForce = HL.Method() << function(self)
     self:Hide()
 end
 
-
-
 WalletBarCtrl.ShowWalletBarForce = HL.Method() << function(self)
     self:Show()
 end
-
-
-
-
 
 WalletBarCtrl.CustomSetPanelOrder = HL.Override(HL.Opt(HL.Number, HL.Table)) << function(self, maxOrder, args)
     self:SetSortingOrder(maxOrder, false)
@@ -232,13 +175,9 @@ WalletBarCtrl.CustomSetPanelOrder = HL.Override(HL.Opt(HL.Number, HL.Table)) << 
     end
 end
 
-
-
 WalletBarCtrl.StopFocus = HL.Method() << function(self)
     self.view.contentNaviGroup:ManuallyStopFocus()
 end
-
-
 
 WalletBarCtrl._RefreshContent = HL.Method() << function(self)
     if not self.m_curArgs then
@@ -309,8 +248,6 @@ WalletBarCtrl._RefreshContent = HL.Method() << function(self)
     end
 end
 
-
-
 WalletBarCtrl._OnScreenSizeChanged = HL.Method() << function(self)
     
     
@@ -325,8 +262,6 @@ WalletBarCtrl._OnScreenSizeChanged = HL.Method() << function(self)
     self:_RefreshContent()
 end
 
-
-
 WalletBarCtrl._GetTargetTime = HL.Method().Return(HL.Number) << function(self)
     local targetTime = 0
     if self.m_moneyClearRule == GEnums.MoneyClearRuleType.Weekly then
@@ -338,8 +273,6 @@ WalletBarCtrl._GetTargetTime = HL.Method().Return(HL.Number) << function(self)
     end
     return targetTime
 end
-
-
 
 WalletBarCtrl._OnCountDownComplete = HL.Method() << function(self)
     local targetTime = self:_GetTargetTime()

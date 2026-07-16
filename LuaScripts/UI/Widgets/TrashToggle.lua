@@ -1,23 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
 TrashToggle = HL.Class('TrashToggle', UIWidgetBase)
-
 
 TrashToggle.itemId = HL.Field(HL.String) << ""
 
-
 TrashToggle.instId = HL.Field(HL.Number) << 0
-
-
 
 
 
@@ -30,10 +17,6 @@ TrashToggle._OnFirstTimeInit = HL.Override() << function(self)
         self:_TrashItem(isOn)
     end)
 end
-
-
-
-
 
 TrashToggle.InitTrashToggle = HL.Method(HL.String, HL.Number).Return(HL.Boolean) << function(self, itemId, instId)
     self:_FirstTimeInit()
@@ -64,9 +47,6 @@ TrashToggle.InitTrashToggle = HL.Method(HL.String, HL.Number).Return(HL.Boolean)
     return true
 end
 
-
-
-
 TrashToggle._TrashItem = HL.Method(HL.Boolean) << function(self, isOn)
     if string.isEmpty(self.itemId) then
         return
@@ -78,17 +58,12 @@ TrashToggle._TrashItem = HL.Method(HL.Boolean) << function(self, isOn)
     end
 end
 
-
-
-
 TrashToggle._OnItemTrashStateChanged = HL.Method(HL.Table) << function(self, args)
     if string.isEmpty(self.itemId) then
         return
     end
     self:_UpdateTrashState()
 end
-
-
 
 TrashToggle._UpdateTrashState = HL.Method() << function(self)
     local isTrash = GameInstance.player.inventory:IsItemTrash(Utils.getCurrentScope(), self.itemId, self.instId)
@@ -97,9 +72,6 @@ TrashToggle._UpdateTrashState = HL.Method() << function(self)
         self:_UpdateControllerKeyHint(isTrash)
     end
 end
-
-
-
 
 TrashToggle._UpdateControllerKeyHint = HL.Method(HL.Boolean) << function(self, isTrash)
     local bindingId = self.view.toggle.hoverConfirmBindingId

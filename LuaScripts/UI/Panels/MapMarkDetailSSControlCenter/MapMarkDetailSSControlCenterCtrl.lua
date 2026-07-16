@@ -2,11 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailSSControlCenter
 
-
-
-
 MapMarkDetailSSControlCenterCtrl = HL.Class('MapMarkDetailSSControlCenterCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -16,9 +12,6 @@ MapMarkDetailSSControlCenterCtrl = HL.Class('MapMarkDetailSSControlCenterCtrl', 
 MapMarkDetailSSControlCenterCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 MapMarkDetailSSControlCenterCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)

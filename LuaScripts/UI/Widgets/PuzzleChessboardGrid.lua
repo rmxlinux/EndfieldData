@@ -1,31 +1,16 @@
 local EColor = CS.Beyond.Gameplay.EColor
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 PuzzleChessboardGrid = HL.Class('PuzzleChessboardGrid', UIWidgetBase)
-
 
 PuzzleChessboardGrid.m_gridInfo = HL.Field(HL.Table)
 
-
 PuzzleChessboardGrid.m_puzzleGame = HL.Field(HL.Userdata)
-
-
 
 
 PuzzleChessboardGrid._OnFirstTimeInit = HL.Override() << function(self)
 
 end
-
-
-
-
-
-
 
 PuzzleChessboardGrid.InitPuzzleChessboardGrid = HL.Method(HL.Table, HL.Function, HL.Function, HL.Function)
         << function(self, gridInfo, dropFunc, pointerEnterFunc, pointerExitFunc)

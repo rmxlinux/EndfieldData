@@ -1,40 +1,16 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DramaticPerformanceBagItemSlot = HL.Class('DramaticPerformanceBagItemSlot', UIWidgetBase)
-
 
 
 
 DramaticPerformanceBagItemSlot.m_dragHelper = HL.Field(HL.Forward('UIDragHelper'))
 
-
 DramaticPerformanceBagItemSlot.m_dropHelper = HL.Field(HL.Forward('UIDropHelper'))
-
 
 DramaticPerformanceBagItemSlot.m_itemInfo = HL.Field(HL.Table)
 
-
 DramaticPerformanceBagItemSlot.m_onDropItemCallback = HL.Field(HL.Function)
-
-
 
 
 
@@ -44,9 +20,6 @@ DramaticPerformanceBagItemSlot._OnFirstTimeInit = HL.Override() << function(self
     self:_InitSlotDrag()
 end
 
-
-
-
 DramaticPerformanceBagItemSlot.InitDramaticPerformanceBagItemSlot = HL.Method(HL.Table) << function(self, args)
     self:_FirstTimeInit()
     self.m_itemInfo = args
@@ -54,8 +27,6 @@ DramaticPerformanceBagItemSlot.InitDramaticPerformanceBagItemSlot = HL.Method(HL
     self:_RefreshSlotContent()
     self:_InitDrop()
 end
-
-
 
 
 
@@ -90,14 +61,12 @@ DramaticPerformanceBagItemSlot._RefreshSlotContent = HL.Method() << function(sel
 
     itemSlot.item.actionMenuArgs = {
         source = sourceType,
-        isFluidCacheSlot = true,     
+        cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid,     
         dragHelper = self.m_dragHelper,
         cacheArea = self.m_itemInfo.cacheArea
     }
     itemSlot.item.customChangeActionMenuFunc = self.m_itemInfo.customChangeActionMenuFunc
 end
-
-
 
 
 
@@ -111,9 +80,6 @@ DramaticPerformanceBagItemSlot._InitSlotDrag = HL.Method() << function(self)
     end)
 end
 
-
-
-
 DramaticPerformanceBagItemSlot._OnStartUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if dragHelper == nil then
         return
@@ -126,9 +92,6 @@ DramaticPerformanceBagItemSlot._OnStartUiDrag = HL.Method(HL.Forward('UIDragHelp
     end
 end
 
-
-
-
 DramaticPerformanceBagItemSlot._OnEndUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if dragHelper == nil then
         return
@@ -140,14 +103,10 @@ DramaticPerformanceBagItemSlot._OnEndUiDrag = HL.Method(HL.Forward('UIDragHelper
     end
 end
 
-
-
 DramaticPerformanceBagItemSlot.ForbidDrag = HL.Method() << function(self)
     self.m_itemInfo.allowDrag = false
     self.view.itemSlot.view.dragItem.enabled = false
 end
-
-
 
 
 
@@ -174,9 +133,6 @@ DramaticPerformanceBagItemSlot._InitDrop = HL.Method() << function(self)
     })
 end
 
-
-
-
 DramaticPerformanceBagItemSlot._OnDropItem = HL.Method(HL.Forward('UIDragHelper'), HL.Opt(CS.Proto.ITEM_MOVE_MODE)) << function(self, dragHelper)
     local dragInfo = dragHelper.info
     local itemSlot = self.view.itemSlot
@@ -187,10 +143,6 @@ DramaticPerformanceBagItemSlot._OnDropItem = HL.Method(HL.Forward('UIDragHelper'
         self.m_onDropItemCallback()
     end
 end
-
-
-
-
 
 
 
@@ -209,15 +161,9 @@ DramaticPerformanceBagItemSlot._OnClickItemSlot = HL.Method(HL.Forward('ItemSlot
     self:_SetItemTipsFakeItemCount()
 end
 
-
-
-
 DramaticPerformanceBagItemSlot._CanAcceptDrop = HL.Method(HL.Forward('UIDragHelper')).Return(HL.Boolean) << function(self, dragHelper)
     return self.m_dropHelper:Accept(dragHelper)
 end
-
-
-
 
 DramaticPerformanceBagItemSlot._MobileRefreshDropHighlight = HL.Method(HL.Boolean) << function(self, active)
     if not DeviceInfo.usingTouch then
@@ -231,8 +177,6 @@ DramaticPerformanceBagItemSlot._MobileRefreshDropHighlight = HL.Method(HL.Boolea
 
     itemSlot.view.dropHintNode.gameObject:SetActiveIfNecessary(not active)
 end
-
-
 
 DramaticPerformanceBagItemSlot._SetItemTipsFakeItemCount = HL.Method() << function(self)
     local isOpen, itemTipsCtrl = UIManager:IsOpen(PanelId.ItemTips)

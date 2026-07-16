@@ -1,12 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.RaidUpgradePopup
 
-
-
-
-
 RaidUpgradePopupCtrl = HL.Class('RaidUpgradePopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -17,8 +12,6 @@ RaidUpgradePopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
-
 RaidUpgradePopupCtrl.OnRaidTechModify = HL.StaticMethod(HL.Table) << function(args)
     local techId, beforeValue, afterValue = unpack(args)
     
@@ -28,9 +21,6 @@ RaidUpgradePopupCtrl.OnRaidTechModify = HL.StaticMethod(HL.Table) << function(ar
         afterValue = afterValue,
     },false)
 end
-
-
-
 
 
 RaidUpgradePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)

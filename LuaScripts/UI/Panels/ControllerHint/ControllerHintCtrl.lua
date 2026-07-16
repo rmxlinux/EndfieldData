@@ -1,29 +1,6 @@
 local autoCalcOrderUICtrl = require_ex('UI/Panels/Base/AutoCalcOrderUICtrl')
 local PANEL_ID = PanelId.ControllerHint
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ControllerHintCtrl = HL.Class('ControllerHintCtrl', autoCalcOrderUICtrl.AutoCalcOrderUICtrl)
-
 
 
 
@@ -39,14 +16,9 @@ ControllerHintCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.PLAY_CONTROLLER_HINT_OUT_ANIM] = 'PlayOutAnim',
 }
 
-
 ControllerHintCtrl.m_barCellCache = HL.Field(HL.Forward('CommonCache'))
 
-
 ControllerHintCtrl.m_curBarCells = HL.Field(HL.Table) 
-
-
-
 
 
 
@@ -86,16 +58,15 @@ end
 
 
 
-
-
 ControllerHintCtrl.ShowControllerHint = HL.StaticMethod(HL.Table) << function(args)
+    
+    
+    args.placeHolderPath = NotNull(args.placeHolderObject) and args.placeHolderObject.transform:PathFromRoot() or tostring(args.panelId)
     
     local self = ControllerHintCtrl.AutoOpen(PANEL_ID, nil)
     local newPanelArgs = self:_AddPanelArgs(args)
     self:_AttachToPanel(newPanelArgs)
 end
-
-
 
 ControllerHintCtrl.ToggleControllerHint = HL.StaticMethod(HL.Any) << function(args)
     local needShow, key = unpack(args)
@@ -108,9 +79,6 @@ ControllerHintCtrl.ToggleControllerHint = HL.StaticMethod(HL.Any) << function(ar
         UIManager:HideWithKey(PANEL_ID, key)
     end
 end
-
-
-
 
 ControllerHintCtrl._AddPanelArgs = HL.Method(HL.Table).Return(HL.Table) << function(self, args)
     local panelId = args.panelId
@@ -129,9 +97,6 @@ ControllerHintCtrl._AddPanelArgs = HL.Method(HL.Table).Return(HL.Table) << funct
     panelArgs.subArgs[args.placeHolderObject] = args
     return panelArgs
 end
-
-
-
 
 ControllerHintCtrl.HideControllerHint = HL.Method(HL.Table) << function(self, args)
     local panelId = args.panelId
@@ -153,8 +118,6 @@ ControllerHintCtrl.HideControllerHint = HL.Method(HL.Table) << function(self, ar
     end
 end
 
-
-
 ControllerHintCtrl.RefreshControllerHint = HL.Method() << function(self)
     
     for _, barCell in pairs(self.m_curBarCells) do
@@ -163,10 +126,6 @@ ControllerHintCtrl.RefreshControllerHint = HL.Method() << function(self)
         end)
     end
 end
-
-
-
-
 
 ControllerHintCtrl.CustomSetPanelOrder = HL.Override(HL.Opt(HL.Number, HL.Table)) << function(self, maxOrder, args)
     self:SetSortingOrder(maxOrder, false)
@@ -179,14 +138,10 @@ ControllerHintCtrl.CustomSetPanelOrder = HL.Override(HL.Opt(HL.Number, HL.Table)
     self:_OnBarChanged(true)
 end
 
-
-
 ControllerHintCtrl.RefreshContentImmediately = HL.Method() << function(self)
     
     self:_OnBarChanged(false)
 end
-
-
 
 ControllerHintCtrl._OnBarChanged = HL.Method(HL.Boolean) << function(self)
     if not DeviceInfo.usingController then
@@ -227,8 +182,6 @@ ControllerHintCtrl._OnBarChanged = HL.Method(HL.Boolean) << function(self)
     self.m_curBarCells = newCells
 end
 
-
-
 ControllerHintCtrl._RefreshAllBars = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
@@ -245,10 +198,6 @@ ControllerHintCtrl._RefreshAllBars = HL.Method() << function(self)
         self:_RefreshSingleBarContent(barCell, false)
     end
 end
-
-
-
-
 
 ControllerHintCtrl._RefreshSingleBarContent = HL.Method(HL.Forward('ControllerHintBarCell'), HL.Boolean) << function(self, barCell, isInit)
     local args = barCell.args
@@ -283,14 +232,19 @@ ControllerHintCtrl._RefreshSingleBarContent = HL.Method(HL.Forward('ControllerHi
     end
 end
 
-
-
-
-
-
-
 ControllerHintCtrl._SetContentTransformState = HL.Method(HL.Forward('ControllerHintBarCell'), HL.Table, HL.Boolean, HL.Boolean) <<
 function(self, barCell, args, isInit, showBg)
+    if IsNull(args.transform) then
+        
+        
+        if not args.__hintTransformWarned then
+            args.__hintTransformWarned = true
+            logger.error(string.format(
+                "[ControllerHint] transform 缺失，跳过提示条定位。panelId=%s posType=%s placeHolder=%s",
+                tostring(args.panelId), tostring(args.posType), tostring(args.placeHolderPath)), args.groupIds)
+        end
+        return
+    end
     local targetScreenRect = UIUtils.getTransformScreenRect(args.transform, self.uiCamera) 
     local posType = args.posType
     local useFullBG = args.useFullBG
@@ -395,17 +349,12 @@ end
 
 
 
-
 ControllerHintCtrl.m_lateTickFunc = HL.Field(HL.Function)
-
-
 
 ControllerHintCtrl.OnShow = HL.Override() << function(self)
     ControllerHintCtrl.Super.OnShow(self)
     InputManagerInst.onInputLateTick = InputManagerInst.onInputLateTick + self.m_lateTickFunc
 end
-
-
 
 ControllerHintCtrl.OnHide = HL.Override() << function(self)
     ControllerHintCtrl.Super.OnHide(self)
@@ -413,15 +362,11 @@ ControllerHintCtrl.OnHide = HL.Override() << function(self)
     self:_ClearKeyHints()
 end
 
-
-
 ControllerHintCtrl.OnClose = HL.Override() << function(self)
     ControllerHintCtrl.Super.OnClose(self)
     InputManagerInst.onInputLateTick = InputManagerInst.onInputLateTick - self.m_lateTickFunc
     self:_ClearKeyHints()
 end
-
-
 
 ControllerHintCtrl._ClearKeyHints = HL.Method() << function(self)
     for _, barCell in pairs(self.m_curBarCells) do
@@ -434,8 +379,6 @@ ControllerHintCtrl._ClearKeyHints = HL.Method() << function(self)
     end
     self.m_curBarCells = {}
 end
-
-
 
 
 

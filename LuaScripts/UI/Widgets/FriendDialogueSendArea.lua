@@ -1,109 +1,48 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FriendDialogueSendArea = HL.Class('FriendDialogueSendArea', UIWidgetBase)
-
 
 FriendDialogueSendArea.friendDialogContent = HL.Field(HL.Any)
 
-
 FriendDialogueSendArea.m_getTextTabCell = HL.Field(HL.Function)
-
 
 FriendDialogueSendArea.m_getTextMessageCell = HL.Field(HL.Function)
 
-
 FriendDialogueSendArea.m_getEmotionTabCell = HL.Field(HL.Function)
-
 
 FriendDialogueSendArea.m_getEmotionListCell = HL.Field(HL.Function)
 
-
 FriendDialogueSendArea.m_getShareCell = HL.Field(HL.Function)
-
 
 FriendDialogueSendArea.m_openTextMessage = HL.Field(HL.Boolean) << false
 
-
 FriendDialogueSendArea.m_openEmoticon = HL.Field(HL.Boolean) << false
-
 
 FriendDialogueSendArea.m_openShare = HL.Field(HL.Boolean) << false
 
-
 FriendDialogueSendArea.m_showRoleId = HL.Field(HL.Number) << 0
-
 
 FriendDialogueSendArea.friendChatSystem = HL.Field(HL.Any)
 
-
 FriendDialogueSendArea.m_csIndex2textTabCell = HL.Field(HL.Table)
-
 
 FriendDialogueSendArea.m_curTextTabCsIndex = HL.Field(HL.Number) << -1
 
-
 FriendDialogueSendArea.m_curTextTabFocusCsIndex = HL.Field(HL.Number) << -1
-
 
 FriendDialogueSendArea.m_csIndex2emotionTabCell = HL.Field(HL.Table)
 
-
 FriendDialogueSendArea.m_recentTextUniqList = HL.Field(HL.Table)
-
 
 FriendDialogueSendArea.m_curEmotionTabCsIndex = HL.Field(HL.Number) << -1
 
-
 FriendDialogueSendArea.m_curEmotionTabFocusCsIndex = HL.Field(HL.Number) << -1
-
 
 FriendDialogueSendArea.m_backBinding = HL.Field(HL.Number) << -1
 
-
 FriendDialogueSendArea.m_recordTab2TextCsIndex = HL.Field(HL.Table)
 
-
 FriendDialogueSendArea.m_recordTab2EmotionCsIndex = HL.Field(HL.Table)
-
 
 FriendDialogueSendArea.m_recordShareIndex = HL.Field(HL.Number) << -1
 
@@ -122,9 +61,6 @@ local PanelBtnState = {
     Selected = "Selected",
     Normal = "Normal"
 }
-
-
-
 
 FriendDialogueSendArea.InitFriendDialogueSendArea = HL.Method(HL.Any) << function(self, friendDialogContent)
     self.friendDialogContent = friendDialogContent
@@ -164,20 +100,13 @@ FriendDialogueSendArea.InitFriendDialogueSendArea = HL.Method(HL.Any) << functio
     end)
 end
 
-
-
-
 FriendDialogueSendArea.UpdateShowRoleId = HL.Method(HL.Number) << function(self, roleId)
     self.m_showRoleId = roleId
 end
 
-
-
 FriendDialogueSendArea.CheckOpenSelectPanel = HL.Method().Return(HL.Boolean)<< function(self)
     return self.m_openTextMessage or self.m_openEmoticon or self.m_openShare
 end
-
-
 
 FriendDialogueSendArea._ClickTextMessage = HL.Method() << function(self)
     if self.m_openTextMessage then
@@ -201,8 +130,6 @@ FriendDialogueSendArea._ClickTextMessage = HL.Method() << function(self)
     end
 end
 
-
-
 FriendDialogueSendArea._ClickEmoticon = HL.Method() << function(self)
     if self.m_openEmoticon then
         self:CloseAllSelectPanel(true)
@@ -225,8 +152,6 @@ FriendDialogueSendArea._ClickEmoticon = HL.Method() << function(self)
     end
 end
 
-
-
 FriendDialogueSendArea._ClickShare = HL.Method() << function(self)
     if self.m_openShare then
         self:CloseAllSelectPanel(true)
@@ -243,9 +168,6 @@ FriendDialogueSendArea._ClickShare = HL.Method() << function(self)
         self.view.sharePanel.shareScrollList:UpdateCount(2)
     end
 end
-
-
-
 
 FriendDialogueSendArea.CloseAllSelectPanel = HL.Method(HL.Opt(HL.Boolean)) << function(self, playerAudio)
     local playerCloseAudio = playerAudio == true
@@ -284,8 +206,6 @@ FriendDialogueSendArea.CloseAllSelectPanel = HL.Method(HL.Opt(HL.Boolean)) << fu
     self.view.btnShareStateController:SetState(PanelBtnState.Normal)
     Notify(MessageConst.FAC_ON_UPDATE_FRIEND_CHAT_STATE, false)
 end
-
-
 
 
 
@@ -350,13 +270,10 @@ FriendDialogueSendArea.UpdateTextMessagePanelBind = HL.Method() << function(self
         
 
         if csIndex == self.m_curTextTabFocusCsIndex then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.button)
+            self:SetNaviTarget(cell.button)
         end
     end)
 end
-
-
-
 
 FriendDialogueSendArea._SelectTextTab = HL.Method(HL.Number) << function(self, csIndex)
     if csIndex == -1 then
@@ -411,10 +328,6 @@ FriendDialogueSendArea._SelectTextTab = HL.Method(HL.Number) << function(self, c
     end
 end
 
-
-
-
-
 FriendDialogueSendArea._OnUpdateTextTabCell = HL.Method(HL.Table, HL.Number) << function(self, cell, csIndex)
     
     if csIndex == 0 then
@@ -447,8 +360,6 @@ FriendDialogueSendArea._OnUpdateTextTabCell = HL.Method(HL.Table, HL.Number) << 
         self:_SelectTextTab(csIndex)
     end)
 end
-
-
 
 
 
@@ -496,15 +407,11 @@ FriendDialogueSendArea.UpdateEmotionPanelBind = HL.Method() << function(self)
         
 
         if csIndex == self.m_curEmotionTabFocusCsIndex then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.button)
+            self:SetNaviTarget(cell.button)
         end
     end)
 
 end
-
-
-
-
 
 FriendDialogueSendArea._OnUpdateEmotionTab = HL.Method(HL.Table, HL.Number) << function(self, cell, csIndex)
     
@@ -527,9 +434,6 @@ FriendDialogueSendArea._OnUpdateEmotionTab = HL.Method(HL.Table, HL.Number) << f
         self:_SelectEmotionTab(csIndex)
     end)
 end
-
-
-
 
 FriendDialogueSendArea._SelectEmotionTab = HL.Method(HL.Number) << function(self, csIndex)
     if csIndex == -1 then
@@ -565,8 +469,6 @@ end
 
 
 
-
-
 FriendDialogueSendArea.UpdateSharePanelBind = HL.Method() << function(self)
     self.m_getShareCell = UIUtils.genCachedCellFunction(self.view.sharePanel.shareScrollList)
     self.view.sharePanel.shareScrollList.onUpdateCell:AddListener(function(obj, csIndex)
@@ -598,12 +500,10 @@ FriendDialogueSendArea.UpdateSharePanelBind = HL.Method() << function(self)
         end
 
         if csIndex == self.m_recordShareIndex then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.button)
+            self:SetNaviTarget(cell.button)
         end
     end)
 end
-
-
 
 FriendDialogueSendArea._SelectBluePrint = HL.Method() << function(self)
     if not GameInstance.player.systemUnlockManager:IsSystemUnlockByType(GEnums.UnlockSystemType.FacBlueprint) then
@@ -615,8 +515,6 @@ FriendDialogueSendArea._SelectBluePrint = HL.Method() << function(self)
     end
     PhaseManager:GoToPhase(PhaseId.FacBlueprint,{ friendSharing = true, roleId = self.m_showRoleId })
 end
-
-
 
 FriendDialogueSendArea._SelectSocialBuilding = HL.Method() << function(self)
     if not GameInstance.player.systemUnlockManager:IsSystemUnlockByType(GEnums.UnlockSystemType.FacSocial) then

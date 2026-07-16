@@ -1,35 +1,20 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 SSRoomEffectInfoNode = HL.Class('SSRoomEffectInfoNode', UIWidgetBase)
-
 
 
 
 SSRoomEffectInfoNode.m_attrInfoList = HL.Field(HL.Table)
 
-
 SSRoomEffectInfoNode.m_cells = HL.Field(HL.Forward('UIListCache'))
 
-
 SSRoomEffectInfoNode.m_clueCells = HL.Field(HL.Forward('UIListCache'))
-
-
 
 
 
 SSRoomEffectInfoNode._OnFirstTimeInit = HL.Override() << function(self)
     self.m_cells = UIUtils.genCellCache(self.view.roomInfoCell)
 end
-
-
-
 
 
 
@@ -189,10 +174,6 @@ SSRoomEffectInfoNode.InitSSRoomEffectInfoNode = HL.Method(HL.Table) << function(
         end
     end)
 end
-
-
-
-
 
 SSRoomEffectInfoNode._GetNumStr = HL.Method(HL.Number, HL.Boolean).Return(HL.String) << function(self, num, isPercent)
     local sign = num > 0 and "+" or ""

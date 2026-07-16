@@ -616,7 +616,7 @@ function ContingencyContractUtils.CheckJoinedTagListValid(gameId, joinedTagIds, 
     
     local joinedTagIdMap = {}
     for _, tagId in pairs(joinedTagIds) do
-       joinedTagIdMap[tagId] = true
+        joinedTagIdMap[tagId] = true
     end
     local infosTable = ContingencyContractUtils.GetTagParseInfos(gameId)
     local allTagInfosMap = infosTable.allTagInfosMap

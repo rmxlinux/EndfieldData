@@ -51,187 +51,62 @@ local ContentType2CanNavi = {
     [SNSDialogContentType.Task] = true,
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SNSDialogContentCore = HL.Class('SNSDialogContentCore', UIWidgetBase)
-
 
 SNSDialogContentCore.m_textOptionCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 SNSDialogContentCore.m_stickerOptionCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 SNSDialogContentCore.m_getDialogContentCellFunc = HL.Field(HL.Function)
 
-
 SNSDialogContentCore.m_chatId = HL.Field(HL.String) << ""
-
 
 SNSDialogContentCore.m_curDialogId = HL.Field(HL.String) << ""
 
-
 SNSDialogContentCore.m_dialogIds = HL.Field(HL.Table)
-
 
 SNSDialogContentCore.m_dialogFinishCb = HL.Field(HL.Function)
 
 
-
 SNSDialogContentCore.m_targetUpdateCellLuaIndex = HL.Field(HL.Number) << -1
-
 
 SNSDialogContentCore.m_dialogProcessAction = HL.Field(HL.Table)
 
-
 SNSDialogContentCore.m_curDialogProcessActionStep = HL.Field(HL.Number) << 0
-
 
 SNSDialogContentCore.m_dialogContentInfo = HL.Field(HL.Table)
 
-
 SNSDialogContentCore.m_resetClickCounterTimer = HL.Field(HL.Number) << -1
-
 
 SNSDialogContentCore.m_clickCount = HL.Field(HL.Number) << 0
 
-
 SNSDialogContentCore.m_fastMode = HL.Field(HL.Boolean) << false
-
 
 SNSDialogContentCore.m_accelerateTick = HL.Field(HL.Number) << -1
 
-
 SNSDialogContentCore.m_firstTimeClickTime = HL.Field(HL.Number) << -1
-
 
 SNSDialogContentCore.m_showAccelerateHintTime = HL.Field(HL.Number) << -1
 
-
 SNSDialogContentCore.m_onLongPressStartTime = HL.Field(HL.Number) << -1
-
 
 SNSDialogContentCore.m_isTopic = HL.Field(HL.Boolean) << false
 
-
 SNSDialogContentCore.m_rawPaddingBottom = HL.Field(HL.Number) << -1
-
 
 SNSDialogContentCore.m_rawRectMask2DPadding = HL.Field(Vector4)
 
-
 SNSDialogContentCore.m_optionsBottomNodeHeight = HL.Field(HL.Number) << -1
-
 
 SNSDialogContentCore.m_isDialogInProcess = HL.Field(HL.Boolean) << false
 
-
 SNSDialogContentCore.m_contentTween = HL.Field(CS.DG.Tweening.Tween)
-
 
 SNSDialogContentCore.m_cellLoadingCor = HL.Field(HL.Thread)
 
 
 
-
 SNSDialogContentCore.m_startTs = HL.Field(HL.Number) << -1
-
-
 
 
 
@@ -296,23 +171,15 @@ SNSDialogContentCore._OnFirstTimeInit = HL.Override() << function(self)
     self.view.debugTxt.text = ""
 end
 
-
-
 SNSDialogContentCore._OnCreate = HL.Override() << function(self)
     self.view.debugNode.gameObject:SetActive(false)
 end
 
-
-
 SNSDialogContentCore._OnEnable = HL.Override() << function(self)
 end
 
-
-
 SNSDialogContentCore._OnDisable = HL.Override() << function(self)
 end
-
-
 
 SNSDialogContentCore._OnDestroy = HL.Override() << function(self)
     if self.m_accelerateTick > 0 then
@@ -328,11 +195,6 @@ SNSDialogContentCore._OnDestroy = HL.Override() << function(self)
     end
 end
 
-
-
-
-
-
 SNSDialogContentCore.InitSNSDialogContentCore = HL.Method(HL.String, HL.String, HL.Opt(HL.Function))
         << function(self, chatId, dialogId, finishCb)
     self:_FirstTimeInit()
@@ -346,15 +208,12 @@ SNSDialogContentCore.InitSNSDialogContentCore = HL.Method(HL.String, HL.String, 
     local missionRelated = not string.isEmpty(dialogCfg.relatedMissionId)
     local isTopic = not string.isEmpty(dialogCfg.topicId)
     local isGroup = chatCfg.chatType == GEnums.SNSChatType.Group
-    local hasMemberCount = chatCfg.memberRawNum > 0
 
     self.view.official.gameObject:SetActive(isGroup and chatCfg.tagType == SNSGroupDialogTagType.Official)
     self.view.external.gameObject:SetActive(isGroup and chatCfg.tagType == SNSGroupDialogTagType.External)
-    self.view.groupNumNode.gameObject:SetActive(isGroup and hasMemberCount)
     self.view.friendNode.gameObject:SetActive(not missionRelated)
     self.view.taskNode.gameObject:SetActive(missionRelated)
     self.view.nameTxt.text = chatCfg.name
-    self.view.groupNumberTxt.text = chatCfg.memberRawNum
 
     self.view.dialogScrollListRectMask2D.padding = self.m_rawRectMask2DPadding
     self.view.dialogScrollList:SetPaddingBottom(self.m_rawPaddingBottom)
@@ -381,9 +240,6 @@ SNSDialogContentCore.InitSNSDialogContentCore = HL.Method(HL.String, HL.String, 
     end)
 end
 
-
-
-
 SNSDialogContentCore.OnSNSDialogSetOption = HL.Method(HL.Any) << function(self, args)
     
     
@@ -394,7 +250,7 @@ SNSDialogContentCore.OnSNSDialogSetOption = HL.Method(HL.Any) << function(self, 
     if DeviceInfo.usingController then
         self:_TryToggleContentCoreFocus(false, self.view.dialogContentInputBindingGroupMonoTarget.groupId)
         InputManagerInst:ToggleGroup(self.view.dialogContentInputBindingGroupMonoTarget.groupId, false)
-        UIUtils.setAsNaviTarget(nil)
+        self:ClearNaviTarget()
 
         InputManagerInst:ToggleBinding(self.m_contentNaviPreActionId, false)
         InputManagerInst:ToggleBinding(self.m_contentNaviNextActionId, false)
@@ -424,14 +280,8 @@ SNSDialogContentCore.OnSNSDialogSetOption = HL.Method(HL.Any) << function(self, 
     end
 end
 
-
-
-
 SNSDialogContentCore.OnSNSDialogModify = HL.Method(HL.Table) << function(self, args)
 end
-
-
-
 
 SNSDialogContentCore.OnSNSContentCoreCellSizeChange = HL.Method(HL.Table) << function(self, args)
     
@@ -443,9 +293,6 @@ SNSDialogContentCore.OnSNSContentCoreCellSizeChange = HL.Method(HL.Table) << fun
     local csIndex, height = unpack(args)
     self.view.dialogScrollList:NotifyCellSizeChange(csIndex, height)
 end
-
-
-
 
 SNSDialogContentCore.OnUIPhaseExited = HL.Method(HL.String) << function(self, oldPhaseName)
     
@@ -463,10 +310,8 @@ SNSDialogContentCore.OnUIPhaseExited = HL.Method(HL.String) << function(self, ol
 
     local contentCSIndex = self.m_contentNaviTargetCSIndexes[self.m_curContentNaviTargetCSIndex]
     local cell = self.m_getDialogContentCellFunc(LuaIndex(contentCSIndex))
-    UIUtils.setAsNaviTarget(cell:GetNaviTarget())
+    self:SetNaviTarget(cell:GetNaviTarget())
 end
-
-
 
 SNSDialogContentCore._StartSNSDialog = HL.Method() << function(self)
     self.m_startTs = DateTimeUtils.GetCurrentTimestampBySeconds()
@@ -489,9 +334,6 @@ SNSDialogContentCore._StartSNSDialog = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 SNSDialogContentCore._ModifySNSDialogData = HL.Method(HL.Any) << function(self, args)
     local _, dialogId, curContentId = unpack(args)
@@ -568,8 +410,6 @@ SNSDialogContentCore._ModifySNSDialogData = HL.Method(HL.Any) << function(self, 
         end
     end
 end
-
-
 
 SNSDialogContentCore._InitSNSDialogData = HL.Method() << function(self)
     
@@ -729,8 +569,6 @@ SNSDialogContentCore._InitSNSDialogData = HL.Method() << function(self)
 
 end
 
-
-
 SNSDialogContentCore._PostProcessDialogData = HL.Method() << function(self)
     
     if self.m_isTopic and #self.m_dialogContentInfo > 0 then
@@ -745,16 +583,6 @@ SNSDialogContentCore._PostProcessDialogData = HL.Method() << function(self)
         end
     end
 end
-
-
-
-
-
-
-
-
-
-
 
 SNSDialogContentCore._GenDialogContentInfo = HL.Method(HL.String, HL.String, HL.Number, HL.Number, HL.Boolean,
                                                        HL.Number, HL.Number, HL.Boolean).Return(HL.Table)
@@ -774,11 +602,6 @@ SNSDialogContentCore._GenDialogContentInfo = HL.Method(HL.String, HL.String, HL.
         sendMsg = sendMsg,
     }
 end
-
-
-
-
-
 
 SNSDialogContentCore._ShowDialogOption = HL.Method(HL.String, HL.Number, HL.Number)
         << function(self, dialogId, contentLinkNodeCSIndex, cellLuaIndex)
@@ -883,8 +706,6 @@ SNSDialogContentCore._ShowDialogOption = HL.Method(HL.String, HL.Number, HL.Numb
     end
 end
 
-
-
 SNSDialogContentCore._OnBottomNodeShow = HL.Method() << function(self)
     local inClipTime = self.view.optionsNodeAnimationWrapper:GetInClipLength()
     local count = self.m_targetUpdateCellLuaIndex < 0 and #self.m_dialogContentInfo or self.m_targetUpdateCellLuaIndex
@@ -894,9 +715,6 @@ SNSDialogContentCore._OnBottomNodeShow = HL.Method() << function(self)
         self.view.dialogScrollRect.normalizedPosition = Vector2(0, 0)
     end)
 end
-
-
-
 
 SNSDialogContentCore._StartDialogProcessAction = HL.Method(HL.Number) << function(self, offset)
     self:_UpdateContentNodeFocusableState()
@@ -976,8 +794,6 @@ SNSDialogContentCore._StartDialogProcessAction = HL.Method(HL.Number) << functio
 
 end
 
-
-
 SNSDialogContentCore._CheckSNSDialogFinish = HL.Method() << function(self)
     local actionCount = #self.m_dialogProcessAction
     local lastAction = self.m_dialogProcessAction[actionCount]
@@ -1010,9 +826,6 @@ SNSDialogContentCore._CheckSNSDialogFinish = HL.Method() << function(self)
 
     self:_EventLogEndDialog()
 end
-
-
-
 
 SNSDialogContentCore._GetUpdateCellHeight = HL.Method(HL.Number).Return(HL.Number)
         << function(self, targetUpdateCellLuaIndex)
@@ -1061,10 +874,6 @@ SNSDialogContentCore._GetUpdateCellHeight = HL.Method(HL.Number).Return(HL.Numbe
     return height
 end
 
-
-
-
-
 SNSDialogContentCore._OnUpdateDialogCell = HL.Method(GameObject, HL.Number) << function(self, gameObject, csIndex)
     local luaIndex = LuaIndex(csIndex)
     if self.m_isDialogInProcess and self.m_targetUpdateCellLuaIndex ~= luaIndex then
@@ -1089,9 +898,6 @@ SNSDialogContentCore._OnUpdateDialogCell = HL.Method(GameObject, HL.Number) << f
     
 end
 
-
-
-
 SNSDialogContentCore._OnScrollValueChanged = HL.Method(Vector2) << function(self, normalizedPos)
     if DeviceInfo.usingController then
         local naviTarget = self:_GetShowingCellNaviTarget()
@@ -1100,19 +906,10 @@ SNSDialogContentCore._OnScrollValueChanged = HL.Method(Vector2) << function(self
     end
 end
 
-
-
-
-
 SNSDialogContentCore._OnCellSizeChangeAndScrollToBottom = HL.Method(HL.Number, HL.Number) << function(self, csIndex, size)
     self.view.dialogScrollList:NotifyCellSizeChange(csIndex, size)
     self:_ScrollToBottom(true)
 end
-
-
-
-
-
 
 SNSDialogContentCore._ScrollToBottom = HL.Method(HL.Boolean, HL.Opt(HL.Number, HL.Function))
         << function(self, noTween, duration, onComplete)
@@ -1139,13 +936,9 @@ SNSDialogContentCore._ScrollToBottom = HL.Method(HL.Boolean, HL.Opt(HL.Number, H
     end
 end
 
-
-
 SNSDialogContentCore._IsSidePanel = HL.Method().Return(HL.Boolean) << function(self)
     return self:GetUICtrl():GetPanelType() == SNSUtils.PanelType.SidePanel
 end
-
-
 
 
 
@@ -1173,8 +966,6 @@ SNSDialogContentCore._TryStartSNS = HL.Method() << function(self)
         self:_TryShowOptionsOfStartTopic()
     end
 end
-
-
 
 SNSDialogContentCore._TryShowOptionsOfStartTopic = HL.Method() << function(self)
     local showingTopicDialogInfos = SNSUtils.getShowingTopicDialogInfos(self.m_chatId)
@@ -1223,9 +1014,6 @@ SNSDialogContentCore._TryShowOptionsOfStartTopic = HL.Method() << function(self)
     end
 end
 
-
-
-
 SNSDialogContentCore._OnClickOptionOfStartTopicCell = HL.Method(HL.String) << function(self, dialogId)
     self.view.accelerateNode.gameObject:SetActive(true)
     self.view.dialogScrollRect.controllerScrollEnabled = false
@@ -1247,8 +1035,6 @@ end
 
 
 
-
-
 SNSDialogContentCore.ClearAsyncHandler = HL.Method() << function(self)
     self.m_cellLoadingCor = self:_ClearCoroutine(self.m_cellLoadingCor)
 
@@ -1257,16 +1043,11 @@ SNSDialogContentCore.ClearAsyncHandler = HL.Method() << function(self)
     end
 end
 
-
-
-
 SNSDialogContentCore._OnLoadingStateChange = HL.Method(HL.Number) << function(self, nextState)
     local contentInfo = self.m_dialogContentInfo[self.m_targetUpdateCellLuaIndex]
     contentInfo.loadingState = nextState
     self:_DoCellLoadingAction()
 end
-
-
 
 SNSDialogContentCore._DoCellLoadingAction = HL.Method() << function(self)
     if self.m_targetUpdateCellLuaIndex < 1 then
@@ -1335,9 +1116,6 @@ end
 
 
 
-
-
-
 SNSDialogContentCore._AccelerateTick = HL.Method(HL.Number) << function(self, deltaTime)
     if self.m_firstTimeClickTime > 0 and
             Time.unscaledTime - self.m_firstTimeClickTime > self.view.config.RESET_CLICK_COUNT_TIME then
@@ -1364,8 +1142,6 @@ SNSDialogContentCore._AccelerateTick = HL.Method(HL.Number) << function(self, de
     end
 end
 
-
-
 SNSDialogContentCore._OnClickAccelerateBtn = HL.Method() << function(self)
     self:_TrySkipCurCellLoadingState()
 
@@ -1378,8 +1154,6 @@ SNSDialogContentCore._OnClickAccelerateBtn = HL.Method() << function(self)
         self.m_showAccelerateHintTime = Time.unscaledTime
     end
 end
-
-
 
 SNSDialogContentCore._TrySkipCurCellLoadingState = HL.Method() << function(self)
     
@@ -1398,23 +1172,20 @@ SNSDialogContentCore._TrySkipCurCellLoadingState = HL.Method() << function(self)
     self:_OnLoadingStateChange(contentInfo.loadingState + 1)
 end
 
-
-
 SNSDialogContentCore._OnPressStartAccelerateBtn = HL.Method() << function(self)
     self.m_onLongPressStartTime = Time.unscaledTime
 end
-
-
 
 SNSDialogContentCore._OnPressEndAccelerateBtn = HL.Method() << function(self)
     self:_ResetAccelerating()
 end
 
-
-
 SNSDialogContentCore._ResetAccelerating = HL.Method() << function(self)
     self.m_onLongPressStartTime = -1
     self.m_fastMode = false
+    if not self.view.acceleratingTips.gameObject.activeSelf then
+        return
+    end
     self.view.acceleratingTips:PlayOutAnimation(function()
         self.view.acceleratingTips.gameObject:SetActive(false)
     end)
@@ -1426,9 +1197,6 @@ end
 
 local MissionState = CS.Beyond.Gameplay.MissionSystem.MissionState
 local MissionType = CS.Beyond.Gameplay.MissionSystem.MissionType
-
-
-
 
 SNSDialogContentCore._OnSNSContentWidgetClick = HL.Method(HL.Table) << function(self, args)
     
@@ -1461,9 +1229,6 @@ SNSDialogContentCore._OnSNSContentWidgetClick = HL.Method(HL.Table) << function(
     end
 end
 
-
-
-
 SNSDialogContentCore._OnClickSNSContentTask = HL.Method(HL.String) << function(self, missionId)
     local missionState = GameInstance.player.mission:GetMissionState(missionId)
     
@@ -1479,9 +1244,6 @@ SNSDialogContentCore._OnClickSNSContentTask = HL.Method(HL.String) << function(s
     end
 end
 
-
-
-
 SNSDialogContentCore._OnClickSNSContentPRTS = HL.Method(HL.Table) << function(self, prtsJumpArgs)
     local prts = GameInstance.player.prts
     local unlock = prtsJumpArgs.isFirstLvId and prts:IsFirstLvUnlock(prtsJumpArgs.id) or prts:IsPrtsUnlocked(prtsJumpArgs.id)
@@ -1496,41 +1258,28 @@ end
 
 
 
-
 SNSDialogContentCore.m_focusContentCoreActionId = HL.Field(HL.Number) << -1
-
 
 SNSDialogContentCore.m_focusContentCoreDirActionId = HL.Field(HL.Number) << -1
 
-
 SNSDialogContentCore.m_stopFocusContentCoreActionId = HL.Field(HL.Number) << -1
-
 
 SNSDialogContentCore.m_stopFocusContentCoreDirActionId = HL.Field(HL.Number) << -1
 
-
 SNSDialogContentCore.m_focusContentActionId = HL.Field(HL.Number) << -1
-
 
 SNSDialogContentCore.m_stopFocusContentActionId = HL.Field(HL.Number) << -1
 
 
-
 SNSDialogContentCore.m_contentNaviTargetCSIndexes = HL.Field(HL.Table)
-
 
 SNSDialogContentCore.m_curContentNaviTargetCSIndex = HL.Field(HL.Number) << -1
 
-
 SNSDialogContentCore.m_contentNaviPreActionId = HL.Field(HL.Number) << -1
-
 
 SNSDialogContentCore.m_contentNaviNextActionId = HL.Field(HL.Number) << -1
 
-
 SNSDialogContentCore.m_isFocusingContentCore = HL.Field(HL.Boolean) << false
-
-
 
 SNSDialogContentCore._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -1604,8 +1353,6 @@ SNSDialogContentCore._InitController = HL.Method() << function(self)
     end
 end
 
-
-
 SNSDialogContentCore._ManuallyFocusContentCore = HL.Method() << function(self)
     self.m_isFocusingContentCore = true
     self:_TryToggleContentCoreFocus(true, self.view.inputGroup.groupId)
@@ -1615,8 +1362,6 @@ SNSDialogContentCore._ManuallyFocusContentCore = HL.Method() << function(self)
     InputManagerInst:ToggleBinding(self.m_focusContentActionId, self.m_isFocusingContentCore and not self.m_isDialogInProcess and
             naviTarget ~= nil)
 end
-
-
 
 SNSDialogContentCore._ManuallyStopFocusContentCore = HL.Method() << function(self)
     self.m_isFocusingContentCore = false
@@ -1633,8 +1378,6 @@ SNSDialogContentCore._ManuallyStopFocusContentCore = HL.Method() << function(sel
     self:GetUICtrl():ReturnToFocusCell()
 end
 
-
-
 SNSDialogContentCore._ManuallyFocusContent = HL.Method() << function(self)
     self:_TryToggleContentCoreFocus(true, self.view.dialogContentInputBindingGroupMonoTarget.groupId)
     
@@ -1648,8 +1391,6 @@ SNSDialogContentCore._ManuallyFocusContent = HL.Method() << function(self)
     self.view.dialogScrollRect.controllerScrollEnabled = false
 end
 
-
-
 SNSDialogContentCore._ManuallyStopFocusContent = HL.Method() << function(self)
     self:_TryToggleContentCoreFocus(false, self.view.dialogContentInputBindingGroupMonoTarget.groupId)
     self.view.dialogContent:ManuallyStopFocus()
@@ -1662,10 +1403,6 @@ SNSDialogContentCore._ManuallyStopFocusContent = HL.Method() << function(self)
     
     self.view.dialogScrollRect.controllerScrollEnabled = true
 end
-
-
-
-
 
 SNSDialogContentCore._TryToggleContentCoreFocus = HL.Method(HL.Boolean, HL.Opt(HL.Number)) << function(self, isOn,
                                                                                                        bindGroupId)
@@ -1683,21 +1420,17 @@ SNSDialogContentCore._TryToggleContentCoreFocus = HL.Method(HL.Boolean, HL.Opt(H
     end
 end
 
-
-
 SNSDialogContentCore._TrySetOptionsNodeTarget = HL.Method() << function(self)
     if self.view.textOptions.gameObject.activeInHierarchy then
         local cell = self.m_textOptionCellCache:Get(1)
-        UIUtils.setAsNaviTarget(cell.button)
+        self:SetNaviTarget(cell.button)
     end
 
     if self.view.stickerOptions.gameObject.activeInHierarchy then
         local cell = self.m_stickerOptionCellCache:Get(1)
-        UIUtils.setAsNaviTarget(cell.button)
+        self:SetNaviTarget(cell.button)
     end
 end
-
-
 
 SNSDialogContentCore._TrySetEmojiCommentTarget = HL.Method() << function(self)
     if self.m_isDialogInProcess then
@@ -1730,8 +1463,6 @@ SNSDialogContentCore._TrySetEmojiCommentTarget = HL.Method() << function(self)
     self:_ManuallyFocusContent()
 end
 
-
-
 SNSDialogContentCore._UpdateContentNodeFocusableState = HL.Method() << function(self)
     
     InputManagerInst:ToggleBinding(self.m_focusContentCoreActionId, not self.m_isFocusingContentCore)
@@ -1741,11 +1472,8 @@ SNSDialogContentCore._UpdateContentNodeFocusableState = HL.Method() << function(
             naviTarget ~= nil)
 end
 
-
-
 SNSDialogContentCore._GetShowingCellNaviTarget = HL.Method().Return(HL.Any, HL.Number) << function(self)
-    local paddingBottom = self.view.dialogScrollList:GetPadding().bottom
-    local range = self.view.dialogScrollList:GetShowRange(-paddingBottom)
+    local range = self.view.dialogScrollList:GetShowRange()
     for i = range.y, range.x, -1 do
         
         local cell = self.m_getDialogContentCellFunc(LuaIndex(i))
@@ -1758,11 +1486,8 @@ SNSDialogContentCore._GetShowingCellNaviTarget = HL.Method().Return(HL.Any, HL.N
     return nil, -1
 end
 
-
-
 SNSDialogContentCore._UpdateNaviTargetIndexes = HL.Method() << function(self)
-    local paddingBottom = self.view.dialogScrollList:GetPadding().bottom
-    local range = self.view.dialogScrollList:GetShowRange(-paddingBottom)
+    local range = self.view.dialogScrollList:GetShowRange()
     for i = range.y, range.x, -1 do
         
         local cell = self.m_getDialogContentCellFunc(LuaIndex(i))
@@ -1787,9 +1512,6 @@ SNSDialogContentCore._UpdateNaviTargetIndexes = HL.Method() << function(self)
     table.sort(self.m_contentNaviTargetCSIndexes)
 end
 
-
-
-
 SNSDialogContentCore._ContentNaviTarget = HL.Method(HL.Number) << function(self, offset)
     local nextContentCSIndex = self.m_curContentNaviTargetCSIndex + offset
     if nextContentCSIndex > #self.m_contentNaviTargetCSIndexes then
@@ -1806,14 +1528,12 @@ SNSDialogContentCore._ContentNaviTarget = HL.Method(HL.Number) << function(self,
     local cell = self.m_getDialogContentCellFunc(LuaIndex(contentIndex))
     local naviTarget = cell:GetNaviTarget()
     
-    UIUtils.setAsNaviTarget(naviTarget)
+    self:SetNaviTarget(naviTarget)
     naviTarget:OnInteractableChanged()
 
 
     self.m_curContentNaviTargetCSIndex = nextContentCSIndex
 end
-
-
 
 SNSDialogContentCore.OnClickSidePanelFinishBtn = HL.Method() << function(self)
     if DeviceInfo.usingController and self:_IsSidePanel() then
@@ -1821,17 +1541,13 @@ SNSDialogContentCore.OnClickSidePanelFinishBtn = HL.Method() << function(self)
     end
 end
 
-
-
-
 SNSDialogContentCore._OnContentTargetDefaultNaviFailed = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, dir)
     if dir == NaviDirection.Left or dir == NaviDirection.Right then
         return
     end
 
     local startCSIndex, endCSIndex, offset
-    local paddingBottom = self.view.dialogScrollList:GetPadding().bottom
-    local range = self.view.dialogScrollList:GetShowRange(-paddingBottom)
+    local range = self.view.dialogScrollList:GetShowRange()
     if dir == NaviDirection.Up then
         startCSIndex = range.x - 1
         endCSIndex = 0
@@ -1849,15 +1565,12 @@ SNSDialogContentCore._OnContentTargetDefaultNaviFailed = HL.Method(CS.UnityEngin
             local cell = self.m_getDialogContentCellFunc(LuaIndex(i))
             local naviTarget = cell and cell:GetNaviTarget()
             if naviTarget ~= nil then
-                UIUtils.setAsNaviTarget(naviTarget)
+                self:SetNaviTarget(naviTarget)
                 break
             end
         end
     end
 end
-
-
-
 
 SNSDialogContentCore.ToggleContentCoreFocusable = HL.Method(HL.Boolean) << function(self, isOn)
     InputManagerInst:ToggleBinding(self.m_focusContentCoreActionId, isOn)
@@ -1870,17 +1583,12 @@ end
 
 
 
-
-
 SNSDialogContentCore._EventLogStartDialog = HL.Method() << function(self)
     local succ, cfg = Tables.sNSDialogTable:TryGetValue(self.m_curDialogId)
     if succ then
         EventLogManagerInst:GameEvent_SNSDialogStart(self.m_curDialogId, self:_EventLogGetDialogType())
     end
 end
-
-
-
 
 SNSDialogContentCore._EvenLogSetOption = HL.Method(HL.String) << function(self, optionId)
     local succ, cfg = Tables.sNSDialogTable:TryGetValue(self.m_curDialogId)
@@ -1889,8 +1597,6 @@ SNSDialogContentCore._EvenLogSetOption = HL.Method(HL.String) << function(self, 
     end
 end
 
-
-
 SNSDialogContentCore._EventLogEndDialog = HL.Method() << function(self)
     local succ, cfg = Tables.sNSDialogTable:TryGetValue(self.m_curDialogId)
     if succ then
@@ -1898,8 +1604,6 @@ SNSDialogContentCore._EventLogEndDialog = HL.Method() << function(self)
         EventLogManagerInst:GameEvent_SNSDialogEnd(self.m_curDialogId, self:_EventLogGetDialogType(), self.m_startTs, dialogTime)
     end
 end
-
-
 
 SNSDialogContentCore._EventLogGetDialogType = HL.Method().Return(HL.Number) << function(self)
     local succ, cfg = Tables.sNSDialogTable:TryGetValue(self.m_curDialogId)

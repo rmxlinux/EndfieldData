@@ -1,22 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.LostAndFound
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 LostAndFoundCtrl = HL.Class('LostAndFoundCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -31,14 +15,9 @@ LostAndFoundCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_LOST_AND_FOUND_NOTHING_GET] = 'OnLostAndFoundNothingGet'
 }
 
-
 LostAndFoundCtrl.m_getCell = HL.Field(HL.Function)
 
-
 LostAndFoundCtrl.m_allItemInfoList = HL.Field(HL.Table)
-
-
-
 
 
 LostAndFoundCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -60,15 +39,9 @@ LostAndFoundCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
 
-
-
 LostAndFoundCtrl.OnShow = HL.Override() << function(self)
     self:_Refresh()
 end
-
-
-
-
 
 LostAndFoundCtrl._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(self, object, csIndex)
     local cell = self.m_getCell(object)
@@ -82,14 +55,9 @@ LostAndFoundCtrl._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(se
     end
 end
 
-
-
 LostAndFoundCtrl._OnClickGetAll = HL.Method() << function(self)
     GameInstance.player.inventory:TakeLostAndFound(true)
 end
-
-
-
 
 LostAndFoundCtrl._OnClickGetItem = HL.Method(HL.Table) << function(self, bundle)
     local itemsDic = bundle.isInst and {} or { [bundle.id] = bundle.count }
@@ -97,11 +65,6 @@ LostAndFoundCtrl._OnClickGetItem = HL.Method(HL.Table) << function(self, bundle)
 
     GameInstance.player.inventorySystem:TakeLostAndFound(false, itemsDic, instIdsList)
 end
-
-
-
-
-
 
 LostAndFoundCtrl._ProcessItem = HL.Method(HL.String, HL.Number, HL.Opt(HL.Number)).Return(HL.Table)
         << function(self, id, count, instId)
@@ -120,8 +83,6 @@ LostAndFoundCtrl._ProcessItem = HL.Method(HL.String, HL.Number, HL.Opt(HL.Number
     }
     return info
 end
-
-
 
 LostAndFoundCtrl._Refresh = HL.Method() << function(self)
     local lostAndFound = GameInstance.player.inventory.lostAndFound
@@ -160,9 +121,6 @@ LostAndFoundCtrl._Refresh = HL.Method() << function(self)
 
 end
 
-
-
-
 LostAndFoundCtrl.OnGetLostAndFound = HL.Method(HL.Table) << function(self, args)
     
     local removedNormalItems, removedInstItems = unpack(args)
@@ -192,19 +150,13 @@ LostAndFoundCtrl.OnGetLostAndFound = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
 LostAndFoundCtrl.OnAddLostAndFound = HL.Method() << function(self)
     self:_Refresh()
 end
 
-
-
 LostAndFoundCtrl.OnLostAndFoundNothingGet = HL.Method() << function(self)
     self:_ProcessOverflowToast()
 end
-
-
 
 LostAndFoundCtrl._ProcessOverflowToast = HL.Method() << function(self)
     local lostAndFound = GameInstance.player.inventory.lostAndFound

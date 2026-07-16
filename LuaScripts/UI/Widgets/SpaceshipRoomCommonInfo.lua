@@ -1,43 +1,18 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipRoomCommonInfo = HL.Class('SpaceshipRoomCommonInfo', UIWidgetBase)
-
 
 SpaceshipRoomCommonInfo.m_genPersonnelCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 SpaceshipRoomCommonInfo.m_roomId = HL.Field(HL.String) << ""
-
 
 SpaceshipRoomCommonInfo.m_personnelInfo = HL.Field(HL.Table)
 
-
 SpaceshipRoomCommonInfo.m_personnelWorkTimeTick = HL.Field(HL.Thread)
-
 
 SpaceshipRoomCommonInfo.m_hasPersonStation = HL.Field(HL.Boolean) << false
 
-
 SpaceshipRoomCommonInfo.m_hasPersonStationButNoneWorking = HL.Field(HL.Boolean) << false
-
-
 
 
 
@@ -56,34 +31,22 @@ SpaceshipRoomCommonInfo._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
-
-SpaceshipRoomCommonInfo.InitSpaceshipRoomCommonInfo = HL.Method(HL.String, HL.Opt(HL.Boolean)) << function(self, roomId, moveCam)
+SpaceshipRoomCommonInfo.InitSpaceshipRoomCommonInfo = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean))
+    << function(self, roomId, isMoveCam, isRemoteCamera)
     self:_FirstTimeInit()
 
     self.m_roomId = roomId
-    local _, roomInfo = GameInstance.player.spaceship:TryGetRoom(self.m_roomId)
-    local notMaxLv = roomInfo.lv < roomInfo.maxLv
-
     local roomType = SpaceshipUtils.getRoomTypeByRoomId(roomId)
     local roomTypeData = Tables.spaceshipRoomTypeTable[roomType]
     self.view.icon:LoadSprite(UIConst.UI_SPRITE_SPACESHIP_ROOM, roomTypeData.icon)
     self.view.deco.color = UIUtils.getColorByString(roomTypeData.color)
 
     self.view.contentBtn.onClick:AddListener(function()
-        if not moveCam then
-            if notMaxLv then
-                Notify(MessageConst.SHOW_TOAST, Language.LUA_SPACESHIP_CC_ROOM_NO_UPGRADE)
-            else
-                Notify(MessageConst.SHOW_TOAST, Language.LUA_SPACESHIP_ROOM_NO_UPGRADE_MAX_LEVEL)
-            end
-            return
-        end
+        GameInstance.player.spaceship:SetCurSpaceshipRoomCamConfig(roomId, CS.Beyond.Gameplay.SpaceshipSystem.UPGRADE_CAM_BLEND_KEY)
         PhaseManager:OpenPhase(PhaseId.SpaceshipRoomUpgrade, {
             roomId = roomId,
-            moveCam = moveCam,
+            moveCam = isMoveCam,
+            isRemoteCamera = isRemoteCamera,
         })
     end)
 
@@ -97,8 +60,6 @@ SpaceshipRoomCommonInfo.InitSpaceshipRoomCommonInfo = HL.Method(HL.String, HL.Op
         end
     end)
 end
-
-
 
 SpaceshipRoomCommonInfo._UpdateCharTime = HL.Method() << function(self)
     local spaceship = GameInstance.player.spaceship
@@ -114,15 +75,11 @@ SpaceshipRoomCommonInfo._UpdateCharTime = HL.Method() << function(self)
 end
 
 
-
-
 SpaceshipRoomCommonInfo._UpdateStationState = HL.Method() << function(self)
     self:_UpdateLvInfo()
     self:_UpdateStationPersonnelInfo()
     self:_UpdateRoomAttrInfo()
 end
-
-
 
 SpaceshipRoomCommonInfo._UpdateLvInfo = HL.Method() << function(self)
     local _, roomInfo = GameInstance.player.spaceship:TryGetRoom(self.m_roomId)
@@ -132,8 +89,6 @@ SpaceshipRoomCommonInfo._UpdateLvInfo = HL.Method() << function(self)
             or Language.LUA_SPACESHIP_ROOM_NOT_MAX_LV_DESC
     self.view.lvStateTxt.text = showTxt
 end
-
-
 
 SpaceshipRoomCommonInfo._UpdateStationPersonnelInfo = HL.Method() << function(self)
     local spaceship = GameInstance.player.spaceship
@@ -228,13 +183,9 @@ SpaceshipRoomCommonInfo._UpdateStationPersonnelInfo = HL.Method() << function(se
 
 end
 
-
-
 SpaceshipRoomCommonInfo._OnPersonnelInfoClick = HL.Method() << function(self)
     PhaseManager:OpenPhase(PhaseId.SpaceshipStation, { roomId = self.m_roomId })
 end
-
-
 
 SpaceshipRoomCommonInfo._UpdateRoomAttrInfo = HL.Method() << function(self)
     local _, roomInfo = GameInstance.player.spaceship:TryGetRoom(self.m_roomId)
@@ -244,14 +195,9 @@ SpaceshipRoomCommonInfo._UpdateRoomAttrInfo = HL.Method() << function(self)
     })
 end
 
-
-
 SpaceshipRoomCommonInfo.OnSpaceshipSyncRoomStation = HL.Method() << function(self)
     self:_UpdateStationState()
 end
-
-
-
 
 SpaceshipRoomCommonInfo.OnSpaceshipLevelUp = HL.Method(HL.Any) << function(self, args)
     local roomId = unpack(args)

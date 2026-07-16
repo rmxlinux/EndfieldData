@@ -10,6 +10,8 @@ SpaceshipGuestRoomClueCtrl.m_spaceship = HL.Field(HL.Userdata)
 
 SpaceshipGuestRoomClueCtrl.m_moveCam = HL.Field(HL.Boolean) << false
 
+SpaceshipGuestRoomClueCtrl.m_isRemote = HL.Field(HL.Boolean) << false
+
 SpaceshipGuestRoomClueCtrl.m_clearScreenKey = HL.Field(HL.Number) << -1
 
 SpaceshipGuestRoomClueCtrl.m_panelStack = HL.Field(HL.Forward("Stack"))
@@ -33,6 +35,18 @@ SpaceshipGuestRoomClueCtrl.m_collectProgress = HL.Field(HL.Number) << -1
 SpaceshipGuestRoomClueCtrl.m_needSettleInfo = HL.Field(HL.Boolean) << false
 
 SpaceshipGuestRoomClueCtrl.m_isSettleInfo = HL.Field(HL.Boolean) << false
+
+SpaceshipGuestRoomClueCtrl.m_inventoryWidget = HL.Field(HL.Any)
+
+SpaceshipGuestRoomClueCtrl.m_inventoryGo = HL.Field(HL.Any)
+
+SpaceshipGuestRoomClueCtrl.m_collectWidget = HL.Field(HL.Any)
+
+SpaceshipGuestRoomClueCtrl.m_collectGo = HL.Field(HL.Any)
+
+SpaceshipGuestRoomClueCtrl.m_receiveWidget = HL.Field(HL.Any)
+
+SpaceshipGuestRoomClueCtrl.m_receiveGo = HL.Field(HL.Any)
 
 
 
@@ -66,7 +80,9 @@ SpaceshipGuestRoomClueCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_spaceship = GameInstance.player.spaceship
     self:InitRightTab()
     self.m_moveCam = arg.moveCam == true
+    self.m_isRemote = arg.isRemoteCamera == true
     self.m_clearScreenKey = arg.clearScreenKey or -1
+
     self.m_roomId = Tables.spaceshipConst.guestRoomClueExtensionId
     self.m_panelStack = require_ex("Common/Utils/DataStructure/Stack")()
     self:_InitRoomInfo()
@@ -77,7 +93,7 @@ SpaceshipGuestRoomClueCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             if not self.m_focusTabNode then
                 self.m_focusTabNode = self.view.collect.button
             end
-            InputManagerInst.controllerNaviManager:SetTarget(self.m_focusTabNode)
+            self:SetNaviTarget(self.m_focusTabNode)
         else
             if DeviceInfo.usingController then
                 AudioAdapter.PostEvent("Au_UI_Button_Back")
@@ -94,6 +110,7 @@ SpaceshipGuestRoomClueCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     GameInstance.player.spaceship:GetClueInfo()
+    self:PlayAnimationIn()
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 
     local recoverState = arg and arg.recoverState or nil
@@ -109,6 +126,8 @@ SpaceshipGuestRoomClueCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         UIManager:Open(PanelId.InstructionBook, arg.instructionBookId)
         arg.instructionBookId = nil
     end
+
+
 end
 
 SpaceshipGuestRoomClueCtrl.OnShow = HL.Override() << function(self)
@@ -136,8 +155,22 @@ SpaceshipGuestRoomClueCtrl.OnClose = HL.Override() << function(self)
         self.m_clearScreenKey = -1
     end
     self.m_spaceship:SetNeedTickExpiredClue(false)
+    if self.m_inventoryGo then
+        GameObject.Destroy(self.m_inventoryGo)
+        self.m_inventoryGo = nil
+        self.m_inventoryWidget = nil
+    end
+    if self.m_collectGo then
+        GameObject.Destroy(self.m_collectGo)
+        self.m_collectGo = nil
+        self.m_collectWidget = nil
+    end
+    if self.m_receiveGo then
+        GameObject.Destroy(self.m_receiveGo)
+        self.m_receiveGo = nil
+        self.m_receiveWidget = nil
+    end
 end
-
 SpaceshipGuestRoomClueCtrl.InitRightTab = HL.Method() << function(self)
     local clueData = self.m_spaceship:GetClueData()
     if not clueData then
@@ -180,7 +213,7 @@ end
 
 
 SpaceshipGuestRoomClueCtrl._InitRoomInfo = HL.Method() << function(self)
-    self.view.spaceshipRoomCommonInfo:InitSpaceshipRoomCommonInfo(self.m_roomId, self.m_moveCam)
+    self.view.spaceshipRoomCommonInfo:InitSpaceshipRoomCommonInfo(self.m_roomId, self.m_moveCam, self.m_isRemote)
     self.view.guestroomCluesCenterNode:InitGuestroomCluesCenterNode(function(isFocused)
         if isFocused then
             self.view.controllerFocusHintNode.gameObject:SetActive(false)
@@ -233,10 +266,12 @@ SpaceshipGuestRoomClueCtrl.RefreshWorkState = HL.Method() << function(self)
     local endDecoAnim = function()
         self.view.lightImage:PlayOutAnimation()
     end
+    local room = self.m_spaceship.rooms:get_Item(self.m_roomId)
+    local isCharInRoom = room.stationedCharList.Count > 0
     if self.m_spaceship:IsGuestRoomClueShutDown() then
         self.view.bottomTipsCellStateController:SetState("StatePause")
         endDecoAnim()
-    elseif self.m_spaceship:IsGuestRoomClueWorking() or self.m_spaceship:IsGuestRoomClueCannotAutoRecv()then
+    elseif isCharInRoom and (self.m_spaceship:IsGuestRoomClueWorking() or self.m_spaceship:IsGuestRoomClueCannotAutoRecv()) then
         self.view.bottomTipsCellStateController:SetState("Collect")
         playDecoAnim()
     else
@@ -249,7 +284,6 @@ SpaceshipGuestRoomClueCtrl.OnSpaceshipGuestRoomClueRewardItem = HL.Method(HL.Any
     local items, sources = unpack(args)
     self:_ShowOutcomePopup(items, sources)
 end
-
 SpaceshipGuestRoomClueCtrl._ShowOutcomePopup = HL.Method(HL.Any, HL.Any) << function(self, csItems, source)
     local itemMap = {}
     self.m_outComeCache = self.m_outComeCache or {}
@@ -364,6 +398,41 @@ SpaceshipGuestRoomClueCtrl.OnPushGuestRoomCluePanel = HL.Method(HL.Opt(HL.Table)
     self:_PushPanel(type, arg)
 end
 
+SpaceshipGuestRoomClueCtrl._LazyCreateWidget = HL.Method(HL.String).Return(HL.Any, HL.Userdata) << function(self, prefabName)
+    local path = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Spaceship/Widgets/" .. prefabName .. ".prefab"
+    local prefab = self:LoadGameObject(path)
+    local go = CSUtils.CreateObject(prefab, self.view.gameObject)
+    go.name = prefabName
+    go.transform.localScale = Vector3.one
+    go.transform:GetComponent("RectTransform").anchoredPosition = Vector2.zero
+    go:SetActive(false)
+    return Utils.wrapLuaNode(go), go
+end
+
+SpaceshipGuestRoomClueCtrl._GetOrCreateInventoryWidget = HL.Method().Return(HL.Any) << function(self)
+    if self.m_inventoryWidget then
+        return self.m_inventoryWidget
+    end
+    self.m_inventoryWidget, self.m_inventoryGo = self:_LazyCreateWidget("SpaceshipGuestroomInventory")
+    return self.m_inventoryWidget
+end
+
+SpaceshipGuestRoomClueCtrl._GetOrCreateCollectWidget = HL.Method().Return(HL.Any) << function(self)
+    if self.m_collectWidget then
+        return self.m_collectWidget
+    end
+    self.m_collectWidget, self.m_collectGo = self:_LazyCreateWidget("SpaceshipClueCollectNode")
+    return self.m_collectWidget
+end
+
+SpaceshipGuestRoomClueCtrl._GetOrCreateReceiveWidget = HL.Method().Return(HL.Any) << function(self)
+    if self.m_receiveWidget then
+        return self.m_receiveWidget
+    end
+    self.m_receiveWidget, self.m_receiveGo = self:_LazyCreateWidget("SpaceshipGuestroomReceiveClues")
+    return self.m_receiveWidget
+end
+
 SpaceshipGuestRoomClueCtrl._PushPanel = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(self, panelType, args)
     local panelTypeConst = SpaceshipConst.GUEST_ROOM_CLUE_PANEL_TYPE
     args = args or {}
@@ -375,37 +444,43 @@ SpaceshipGuestRoomClueCtrl._PushPanel = HL.Method(HL.Number, HL.Opt(HL.Table)) <
     end
     if panelType == panelTypeConst.Collect then
         self.view.closeArea.gameObject:SetActive(true)
-        self.view.spaceshipClueCollectNode.gameObject:SetActive(true)
-        self.view.spaceshipClueCollectNode:InitSpaceshipClueCollectNode()
+        local collectNode = self:_GetOrCreateCollectWidget()
+        collectNode.gameObject:SetActive(true)
+        collectNode:InitSpaceshipClueCollectNode()
         self:_SetNeedCacheOutCome(false)
-        self.m_subPanelGroupId = self.view.spaceshipClueCollectNode.view.inputBindingGroupMonoTarget.groupId
+        self.m_subPanelGroupId = collectNode.view.inputBindingGroupMonoTarget.groupId
     elseif panelType == panelTypeConst.Receive then
         self.view.closeArea.gameObject:SetActive(true)
-        self.view.spaceshipGuestroomReceiveClues.gameObject:SetActive(true)
-        self.view.spaceshipGuestroomReceiveClues:InitSpaceshipGuestroomReceiveClues()
+        local receiveClues = self:_GetOrCreateReceiveWidget()
+        receiveClues.gameObject:SetActive(true)
+        receiveClues:InitSpaceshipGuestroomReceiveClues()
         if self.view.stateController.currentStateName ~= "HalfScreen" then
             self.view.stateController:SetState("HalfScreen")
             self.view.animationWrapper:ClearTween()
             self.view.animationWrapper:PlayWithTween("spaceshipguestroomclue_change")
         end
-        self.m_subPanelGroupId = self.view.spaceshipGuestroomReceiveClues.view.inputBindingGroupMonoTarget.groupId
+        self.m_subPanelGroupId = receiveClues.view.inputBindingGroupMonoTarget.groupId
     elseif panelType == panelTypeConst.GiftClues then
+        if not PhaseManager:CheckCanOpenPhaseAndToast(PhaseId.SpaceshipRoomClueGift) or PhaseManager:CheckIsInTransition() then
+            return
+        end
         self.view.closeArea.gameObject:SetActive(true)
         Notify(MessageConst.SHOW_SPACESHIP_CLUE_GIFT)
     elseif panelType == panelTypeConst.Inventory then
         self:PopPanel(true, true)
         self.view.closeArea.gameObject:SetActive(true)
-        self.view.spaceshipGuestroomInventory.gameObject:SetActive(true)
+        local inventory = self:_GetOrCreateInventoryWidget()
+        inventory.gameObject:SetActive(true)
         local index, instId, clueToggleTab = unpack(args)
-        self.view.spaceshipGuestroomInventory:InitSpaceshipGuestroomInventory(function(index)
-            self.view.guestroomCluesCenterNode:SelectClueIndex(index)
+        inventory:InitSpaceshipGuestroomInventory(function(idx)
+            self.view.guestroomCluesCenterNode:SelectClueIndex(idx)
         end, clueToggleTab or 0 ,index or 0 , instId or 0)
         if self.view.stateController.currentStateName ~= "HalfScreen" then
             self.view.stateController:SetState("HalfScreen")
             self.view.animationWrapper:ClearTween()
             self.view.animationWrapper:PlayWithTween("spaceshipguestroomclue_change")
         end
-        self.m_subPanelGroupId = self.view.spaceshipGuestroomInventory.view.inputBindingGroupMonoTarget.groupId
+        self.m_subPanelGroupId = inventory.view.inputBindingGroupMonoTarget.groupId
     elseif panelType == panelTypeConst.Settlement then
         PhaseManager:OpenPhase(PhaseId.SpaceshipRoomClueSettlement,nil,nil, true)
         self:_SetNeedCacheOutCome(true)
@@ -461,19 +536,25 @@ SpaceshipGuestRoomClueCtrl.PopPanel = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) 
         self:_CloseSubPanelControllerSmallMenu()
 
         if self.m_nowNaviTarget then
-            InputManagerInst.controllerNaviManager:SetTarget(self.m_nowNaviTarget)
+            self:SetNaviTarget(self.m_nowNaviTarget)
             self.m_nowNaviTarget = nil
         end
     end
 
     if popPanel == panelTypeConst.Collect then
-        self.view.spaceshipClueCollectNode:FadeOut()
+        if self.m_collectWidget then
+            self.m_collectWidget:FadeOut()
+        end
     elseif popPanel == panelTypeConst.Receive then
-        self.view.spaceshipGuestroomReceiveClues:FadeOut()
+        if self.m_receiveWidget then
+            self.m_receiveWidget:FadeOut()
+        end
         self.view.guestroomCluesCenterNode:UnSelectClueIndex()
     elseif popPanel == panelTypeConst.Inventory then
         if not ignoreInventory then
-            self.view.spaceshipGuestroomInventory:FadeOut()
+            if self.m_inventoryWidget then
+                self.m_inventoryWidget:FadeOut()
+            end
             self.view.guestroomCluesCenterNode:UnSelectClueIndex()
         end
     elseif popPanel == panelTypeConst.Settlement then
@@ -529,10 +610,11 @@ SpaceshipGuestRoomClueCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.
     }
     local currentPanel = self.m_panelStack:Peek()
     if currentPanel == SpaceshipConst.GUEST_ROOM_CLUE_PANEL_TYPE.Inventory then
-        local inventory = self.view.spaceshipGuestroomInventory
+        local inventory = self.m_inventoryWidget
         if inventory and inventory.m_isOpen then
             arg.recoverState = {
                 currentPanel = currentPanel,
+                stateControllerStateName = self.view.stateController.currentStateName,
                 clueToggleTab = inventory.m_clueToggleTab,
                 indexTab = inventory.m_indexTab,
                 lastNaviTargetIndex = inventory.m_lastNaviTargetIndex,
@@ -541,10 +623,12 @@ SpaceshipGuestRoomClueCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.
     elseif currentPanel == SpaceshipConst.GUEST_ROOM_CLUE_PANEL_TYPE.Collect then
         arg.recoverState = {
             currentPanel = currentPanel,
+            stateControllerStateName = self.view.stateController.currentStateName,
         }
     elseif currentPanel == SpaceshipConst.GUEST_ROOM_CLUE_PANEL_TYPE.Receive then
         arg.recoverState = {
             currentPanel = currentPanel,
+            stateControllerStateName = self.view.stateController.currentStateName,
         }
     end
     local isTopPhase = PhaseManager:GetTopPhaseId() == PHASE_ID
@@ -570,7 +654,7 @@ SpaceshipGuestRoomClueCtrl._TryRecoverState = HL.Method(HL.Table) << function(se
             0,
             recoverState.clueToggleTab or 0,
         })
-        local inventory = self.view.spaceshipGuestroomInventory
+        local inventory = self.m_inventoryWidget
         if inventory and recoverState.lastNaviTargetIndex and recoverState.lastNaviTargetIndex > 1 then
             inventory.m_lastNaviTargetIndex = recoverState.lastNaviTargetIndex
         end

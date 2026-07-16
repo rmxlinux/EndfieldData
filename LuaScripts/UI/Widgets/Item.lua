@@ -1,183 +1,75 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+local SkipChapterBuildingStatus = CS.Beyond.Gameplay.Factory.SkipChapterBuildingStatus
 
 Item = HL.Class('Item', UIWidgetBase)
 local LT_ITEM_TICK_TIME_INTERVAL = 30
 
 
 
-
 Item.canPlace = HL.Field(HL.Boolean) << false
-
 
 Item.canSplit = HL.Field(HL.Boolean) << false
 
-
 Item.canUse = HL.Field(HL.Boolean) << false
-
 
 Item.canClear = HL.Field(HL.Boolean) << false
 
-
 Item.canDestroy = HL.Field(HL.Boolean) << false
-
 
 Item.canSetQuickBar = HL.Field(HL.Boolean) << false
 
-
 Item.fromDepot = HL.Field(HL.Boolean) << false
-
 
 Item.showingTips = HL.Field(HL.Boolean) << false
 
-
 Item.showingActionMenu = HL.Field(HL.Boolean) << false
-
 
 Item.hideItemObtainWays = HL.Field(HL.Boolean) << false
 
-
 Item.hideBottomInfo = HL.Field(HL.Boolean) << false
-
 
 Item.slotIndex = HL.Field(HL.Any) 
 
-
 Item.id = HL.Field(HL.String) << ''
-
 
 Item.count = HL.Field(HL.Number) << 0
 
-
 Item.instId = HL.Field(HL.Any)
-
 
 Item.extraInfo = HL.Field(HL.Table)
 
-
 Item.prefixDesc = HL.Field(HL.String) << ''
-
 
 Item.equipInfo = HL.Field(HL.Any) 
 
-
 Item.redDot = HL.Field(HL.Forward("RedDot"))
-
 
 Item.m_enableHoverTips = HL.Field(HL.Boolean) << true 
 
-
 Item.m_delayHoverTimer = HL.Field(HL.Number) << -1
-
 
 Item.m_showCount = HL.Field(HL.Boolean) << true
 
-
 Item.m_isSelected = HL.Field(HL.Boolean) << false
-
 
 Item.m_isInfinite = HL.Field(HL.Boolean) << false
 
-
 Item.m_showingHover = HL.Field(HL.Boolean) << false
-
 
 Item.m_needShowDeco1 = HL.Field(HL.Boolean) << false
 
-
 Item.m_limitTimeInfo = HL.Field(HL.Table)
-
 
 Item.m_itemTipsJumpExtraArgs = HL.Field(HL.Table)
 
-
 Item.customShowTipsFunc = HL.Field(HL.Function)
 
-
 Item.customHideTipsFunc = HL.Field(HL.Function)
-
-
 
 
 Item._OnFirstTimeInit = HL.Override() << function(self)
     self:SetSelected(false, true)
 end
-
-
 
 Item._ResetOnInit = HL.Method() << function(self)
     self.canPlace = false
@@ -207,15 +99,12 @@ Item._ResetOnInit = HL.Method() << function(self)
     self.customHideTipsFunc = nil
     self.m_itemTipsJumpExtraArgs = nil
 
+    self:_ToggleSkipChapterTagNode(false)
+    self:_ToggleSkipChapterInvalidNode(false)
+
     
     self.m_needShowDeco1 = self.view.deco1.gameObject.activeSelf
 end
-
-
-
-
-
-
 
 
 
@@ -349,6 +238,7 @@ Item.InitItem = HL.Method(HL.Opt(HL.Any, HL.Any, HL.String, HL.Boolean))
     self:_UpdateEquipAddon(itemBundle)
     self:_UpdateLimitTimeNode(itemBundle)
     self:_UpdateItemRewardTypeTagNode(itemBundle)
+    self:_UpdateSkipChapterBuildingNodes(itemBundle)
 
     if onClick then
         self.view.button.enabled = true
@@ -377,18 +267,12 @@ Item.InitItem = HL.Method(HL.Opt(HL.Any, HL.Any, HL.String, HL.Boolean))
     end
 end
 
-
-
 Item._OnDestroy = HL.Override() << function(self)
     self:_CloseHoverTips()
     if self.view.ltMarkNode then
         self.view.ltMarkNode:EndTickLimitTime()
     end
 end
-
-
-
-
 
 Item._UpdateIcon = HL.Method(HL.Opt(HL.Any, HL.Number)) << function(self, data, instId)
     if not data then
@@ -416,52 +300,45 @@ Item._UpdateIcon = HL.Method(HL.Opt(HL.Any, HL.Number)) << function(self, data, 
     end
 end
 
-
-
 Item._UpdateCompositeIconBG = HL.Method() << function(self)
     local active = not self.view.icon.showRarity
-    if not self.view.compositeIconBG then
-        if not active then
-            return
-        end
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.compositeIconBGPrefab, self.view.animationNode.transform)
-        obj.transform:SetSiblingIndex(0)
-        obj.name = "CompositeIconBG"
-        obj.transform.localScale = Vector3.one
-        obj.transform.pivot = Vector2.one / 2
-        obj.transform.anchorMin = Vector2.zero
-        obj.transform.anchorMax = Vector2.one
-        obj.transform.offsetMin = Vector2.zero
-        obj.transform.offsetMax = Vector2.zero
-        obj.transform.anchoredPosition3D = Vector3.zero
+    local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "CompositeIconBG",
+        LuaSystemManager.itemPrefabSystem.compositeIconBGPrefab, active,
+        function(o)
+            o.transform:SetSiblingIndex(0)
+            o.transform.localScale = Vector3.one
+            o.transform.pivot = Vector2.one / 2
+            o.transform.anchorMin = Vector2.zero
+            o.transform.anchorMax = Vector2.one
+            o.transform.offsetMin = Vector2.zero
+            o.transform.offsetMax = Vector2.zero
+            o.transform.anchoredPosition3D = Vector3.zero
+        end)
+    if obj then
         self.view.compositeIconBG = obj:GetComponent("UIImage")
     end
-    self.view.compositeIconBG.gameObject:SetActive(active)
 end
-
-
 
 Item._InitLockNode = HL.Method() << function(self)
-    if not self.view.lockNode then
-        if not self.instId or self.instId <= 0 then
-            return
-        end
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.lockNodePrefab, self.view.content.transform)
-        obj.name = "LockNode"
-        obj.transform.localScale = Vector3.one
-        obj.transform.pivot = Vector2.one / 2
-        obj.transform.anchorMin = Vector2.zero
-        obj.transform.anchorMax = Vector2.zero
-        
-        obj.transform.anchoredPosition = Vector2(15, 20)
-        obj.transform.sizeDelta = Vector2(20, 26)
+    local hasLock = self.instId and self.instId > 0
+    local obj = self:tryToggleDynamicNode(self.view.content.transform, "LockNode",
+        LuaSystemManager.itemPrefabSystem.lockNodePrefab, hasLock,
+        function(o)
+            o.transform.localScale = Vector3.one
+            o.transform.pivot = Vector2.one / 2
+            o.transform.anchorMin = Vector2.zero
+            o.transform.anchorMax = Vector2.zero
+            
+            o.transform.anchoredPosition = Vector2(15, 20)
+            o.transform.sizeDelta = Vector2(20, 26)
+        end)
+    if obj and not self.view.lockNode then
         self.view.lockNode = Utils.wrapLuaNode(obj)
     end
-    self.view.lockNode:InitItemLock(self.id, self.instId)
+    if hasLock and self.view.lockNode then
+        self.view.lockNode:InitItemLock(self.id, self.instId)
+    end
 end
-
-
-
 
 Item._UpdateWeaponAddon = HL.Method(HL.Opt(HL.Any)) << function(self, data)
     local itemCfg = Tables.itemTable:GetValue(data.id)
@@ -482,130 +359,139 @@ Item._UpdateWeaponAddon = HL.Method(HL.Opt(HL.Any)) << function(self, data)
     self:_ToggleGemEquipped(weaponInstData and weaponInstData.attachedGemInstId > 0)
 end
 
-
-
-
 Item._TogglePotentialStar = HL.Method(HL.Boolean) << function(self, active)
-    if not self.view.potentialStar then
-        if not active then
-            return
-        end
-
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.potentialStarPrefab, self.view.animationNode.transform)
-        obj.name = "PotentialStar"
-        obj.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
-        obj.transform.localScale = Vector3.one
-        local center = Vector2(0, 1)
-        obj.transform.pivot = center
-        obj.transform.anchorMin = center
-        obj.transform.anchorMax = center
-        
-        obj.transform.anchoredPosition = Vector2(0, 0)
-        obj.transform.sizeDelta = Vector2(40, 40)
-
+    local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "PotentialStar",
+        LuaSystemManager.itemPrefabSystem.potentialStarPrefab, active,
+        function(o)
+            o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
+            o.transform.localScale = Vector3.one
+            local center = Vector2(0, 1)
+            o.transform.pivot = center
+            o.transform.anchorMin = center
+            o.transform.anchorMax = center
+            
+            o.transform.anchoredPosition = Vector2(0, 0)
+            o.transform.sizeDelta = Vector2(40, 40)
+        end)
+    if obj and not self.view.potentialStar then
         self.view.potentialStar = Utils.wrapLuaNode(obj)
     end
-    self.view.potentialStar.gameObject:SetActive(active)
 end
-
-
-
 
 Item._ToggleGemEquipped = HL.Method(HL.Opt(HL.Boolean)) << function(self, active)
-    if not self.view.gemEquipped then
-        if not active then
-            return
-        end
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.gemEquippedNodePrefab, self.view.animationNode.transform)
-        obj.name = "GemEquipped"
-        obj.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
-        
+    local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "GemEquipped",
+        LuaSystemManager.itemPrefabSystem.gemEquippedNodePrefab, active,
+        function(o)
+            o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
+            
+        end)
+    if obj and not self.view.gemEquipped then
         self.view.gemEquipped = Utils.wrapLuaNode(obj)
     end
-    self.view.gemEquipped.gameObject:SetActive(active == true)
 end
 
-
-
-
 Item._ToggleEquipEnhanceNode = HL.Method(HL.Boolean) << function(self, active)
-    if not self.view.equipEnhanceNode then
-        if not active then
-            return
-        end
-
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.equipEnhanceNodePrefab, self.view.animationNode.transform)
-        obj.name = "EquipEnhanceNode"
-        obj.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
-        obj.transform.localScale = self.view.config.EQUIP_ENHANCE_NODE_SCALE
-        local leftUp = Vector2(0, 1)
-        obj.transform.pivot = leftUp
-        obj.transform.anchorMin = leftUp
-        obj.transform.anchorMax = leftUp
-        obj.transform.anchoredPosition = Vector2(0, 0)
-
+    local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "EquipEnhanceNode",
+        LuaSystemManager.itemPrefabSystem.equipEnhanceNodePrefab, active,
+        function(o)
+            o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
+            o.transform.localScale = self.view.config.EQUIP_ENHANCE_NODE_SCALE
+            local leftUp = Vector2(0, 1)
+            o.transform.pivot = leftUp
+            o.transform.anchorMin = leftUp
+            o.transform.anchorMax = leftUp
+            o.transform.anchoredPosition = Vector2(0, 0)
+        end)
+    if obj and not self.view.equipEnhanceNode then
         self.view.equipEnhanceNode = Utils.wrapLuaNode(obj)
         self.view.equipEnhanceNode.customNormalBgColor = self.view.config.EQUIP_ENHANCE_NODE_BG_COLOR
     end
-    self.view.equipEnhanceNode.gameObject:SetActive(active)
 end
 
-
-
-
 Item._ToggleItemLimitTimeMarkNode = HL.Method(HL.Boolean) << function(self, active)
-    if not self.view.ltMarkNode then
-        if not active then
-            return
-        end
-        
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.itemLimitTimeMarkNodePrefab, self.view.animationNode.transform)
-        obj.name = "LimitTimeMarkNode"
-        
-        local transform = obj.transform
-        transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
-        transform.localScale = Vector3.one
-        local leftUp = Vector2(0, 1)
-        transform.pivot = leftUp
-        transform.anchorMin = leftUp
-        transform.anchorMax = leftUp
-        transform.anchoredPosition = Vector2(0, 0)
-        transform:SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, self.view.transform.rect.width * 0.65)
-
+    local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "LimitTimeMarkNode",
+        LuaSystemManager.itemPrefabSystem.itemLimitTimeMarkNodePrefab, active,
+        function(o)
+            
+            local transform = o.transform
+            transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
+            transform.localScale = Vector3.one
+            local leftUp = Vector2(0, 1)
+            transform.pivot = leftUp
+            transform.anchorMin = leftUp
+            transform.anchorMax = leftUp
+            transform.anchoredPosition = Vector2(0, 0)
+            transform:SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, self.view.transform.rect.width * 0.65)
+        end)
+    if obj and not self.view.ltMarkNode then
         
         self.view.ltMarkNode = Utils.wrapLuaNode(obj)
     end
-    self.view.ltMarkNode.gameObject:SetActive(active)
 end
-
-
-
 
 Item._ToggleItemRewardTypeTagNode = HL.Method(HL.Boolean) << function(self, active)
-    if not self.view.rewardTypeTagNode then
-        if not active then
-            return
-        end
-        
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.itemRewardTypeTagPrefab, self.view.animationNode.transform)
-        obj.name = "ItemRewardTypeTag"
-        
-        local transform = obj.transform
-        transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
-        transform.localScale = Vector3.one
-        local leftUp = Vector2(0, 1)
-        transform.pivot = leftUp
-        transform.anchorMin = leftUp
-        transform.anchorMax = leftUp
-        transform.anchoredPosition = Vector2(-5, 3)
-
+    local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "ItemRewardTypeTag",
+        LuaSystemManager.itemPrefabSystem.itemRewardTypeTagPrefab, active,
+        function(o)
+            
+            local transform = o.transform
+            transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
+            transform.localScale = Vector3.one
+            local leftUp = Vector2(0, 1)
+            transform.pivot = leftUp
+            transform.anchorMin = leftUp
+            transform.anchorMax = leftUp
+            transform.anchoredPosition = Vector2(-5, 3)
+        end)
+    if obj and not self.view.rewardTypeTagNode then
         self.view.rewardTypeTagNode = Utils.wrapLuaNode(obj)
     end
-    self.view.rewardTypeTagNode.gameObject:SetActive(active)
 end
 
+Item.HideSkipChapterMarks = HL.Method() << function(self)
+    self:_ToggleSkipChapterTagNode(false)
+    self:_ToggleSkipChapterInvalidNode(false)
+end
 
+Item._ToggleSkipChapterTagNode = HL.Method(HL.Boolean) << function(self, active)
+    local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "SkipChapterTagNode",
+        LuaSystemManager.itemPrefabSystem.skipChapterTagNodePrefab, active,
+        function(o) o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1) end)
+    if obj then
+        self.view.skipChapterTagNode = obj.transform
+    end
+end
 
+Item._ToggleSkipChapterInvalidNode = HL.Method(HL.Opt(HL.Boolean)) << function(self, active)
+    local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "SkipChapterInvalidNode",
+        LuaSystemManager.itemPrefabSystem.skipChapterInvalidNodePrefab, active,
+        function(o) o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1) end)
+    if obj then
+        self.view.skipChapterInvalidNode = obj.transform
+    end
+end
+
+Item._UpdateSkipChapterBuildingNodes = HL.Method(HL.Opt(HL.Any)) << function(self, itemBundle)
+    local enableSkipChapterMarks = self.view.config.SHOW_SKIP_CHAPTER_BUILDING_MARKS == true
+    if not enableSkipChapterMarks or Utils.isInBlackbox() then
+        self:HideSkipChapterMarks()
+        return
+    end
+    local itemId = itemBundle and itemBundle.id or self.id
+    if string.isEmpty(itemId) then
+        self:HideSkipChapterMarks()
+        return
+    end
+    local status = FactoryUtils.getSkipChapterBuildingStatusByItemId(itemId)
+    local showTag = status == SkipChapterBuildingStatus.SkipUnlocked
+        or status == SkipChapterBuildingStatus.SkipUnlockedButInvalid
+    self:_ToggleSkipChapterTagNode(showTag)
+    local hideSkipChapterInvalidNode = self.view.config.HIDE_SKIP_CHAPTER_INVALID_MARK == true
+        or Utils.isInSpaceShip()
+        or Utils.isInDungeon()
+    local domainNotSupport = FactoryUtils.checkBuildingDomainSupportByItemId(itemId)
+    self:_ToggleSkipChapterInvalidNode(not hideSkipChapterInvalidNode and (status == SkipChapterBuildingStatus.SkipUnlockedButInvalid or domainNotSupport))
+end
 
 Item._UpdateEquipAddon = HL.Method(HL.Opt(HL.Any)) << function(self, data)
     local itemCfg = Tables.itemTable:GetValue(data.id)
@@ -631,33 +517,30 @@ Item._UpdateEquipAddon = HL.Method(HL.Opt(HL.Any)) << function(self, data)
     end
 end
 
-
-
-
 Item._UpdateLevelNode = HL.Method(HL.Opt(HL.Number)) << function(self, lv)
     if not self.view.levelNode then
-        if not lv then
-            return
+        local obj = self:tryToggleDynamicNode(self.view.countNode.transform.parent, "LevelNode",
+            LuaSystemManager.itemPrefabSystem.levelNodePrefab, lv ~= nil,
+            function(o)
+                
+                self.view.bottomTxtBgDecoLineActiveHelper.checkTargets:Add(o)
+            end)
+        if obj then
+            self.view.levelNode = obj.transform
+            
+            local lvTxt = obj.transform:Find("LvTxt"):GetComponent("UIText")
+            lvTxt.color = self.view.config.LEVEL_TEXT_COLOR
+            self.view.lvNumTxt = obj.transform:Find("LvNumTxt"):GetComponent("UIText")
+            self.view.lvNumTxt.color = self.view.config.LEVEL_TEXT_COLOR
         end
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.levelNodePrefab, self.view.countNode.transform.parent)
-        obj.name = "LevelNode"
-        self.view.levelNode = obj.transform
-        local lvTxt = obj.transform:Find("LvTxt"):GetComponent("UIText")
-        lvTxt.color = self.view.config.LEVEL_TEXT_COLOR
-        self.view.lvNumTxt = obj.transform:Find("LvNumTxt"):GetComponent("UIText")
-        self.view.lvNumTxt.color = self.view.config.LEVEL_TEXT_COLOR
-        self.view.bottomTxtBgDecoLineActiveHelper.checkTargets:Add(obj)
     end
     if lv then
         self.view.levelNode.gameObject:SetActive(true) 
         self.view.lvNumTxt.text = lv
-    else
+    elseif self.view.levelNode then
         self.view.levelNode.gameObject:SetActive(false)
     end
 end
-
-
-
 
 Item._UpdateLimitTimeNode = HL.Method(HL.Opt(HL.Any)) << function(self, itemBundle)
     self.m_limitTimeInfo = Utils.getLTItemExpireInfo(itemBundle.id, itemBundle.instId)
@@ -672,9 +555,6 @@ Item._UpdateLimitTimeNode = HL.Method(HL.Opt(HL.Any)) << function(self, itemBund
     end
 end
 
-
-
-
 Item._UpdateItemRewardTypeTagNode = HL.Method(HL.Opt(HL.Any)) << function(self, itemBundle)
     if not string.isEmpty(itemBundle.typeTag) then
         self:_ToggleItemRewardTypeTagNode(true)
@@ -685,23 +565,13 @@ Item._UpdateItemRewardTypeTagNode = HL.Method(HL.Opt(HL.Any)) << function(self, 
     end
 end
 
-
-
-
 Item.SetIconTransparent = HL.Method(HL.Number) << function(self, a)
     self.view.icon:SetAlpha(a)
 end
 
-
-
-
 Item.SetExtraInfo = HL.Method(HL.Table) << function(self, extraInfo)
     self.extraInfo = extraInfo
 end
-
-
-
-
 
 Item.ShowTips = HL.Method(HL.Opt(HL.Table, HL.Function)) << function(self, posInfo, onClose)
     posInfo = posInfo or self.extraInfo
@@ -738,6 +608,8 @@ Item.ShowTips = HL.Method(HL.Opt(HL.Table, HL.Function)) << function(self, posIn
         moveVirtualMouse = posInfo.moveVirtualMouse,
         onBeforeJump = posInfo.onBeforeJump,
 
+        keyHintGroupIds = posInfo.keyHintGroupIds,
+
         notPenetrate = self.config.NOT_PENETRATE_ITEM_TIPS_PANEL,
         forceShowOwnCount = self.config.ITEM_TIPS_FORCE_SHOW_OWN_COUNT,
 
@@ -764,9 +636,6 @@ Item.ShowTips = HL.Method(HL.Opt(HL.Table, HL.Function)) << function(self, posIn
     })
 end
 
-
-
-
 Item._OnTipsClosed = HL.Method(HL.Opt(HL.Function)) << function(self, onClose)
     if not self.showingTips then
         return
@@ -788,18 +657,10 @@ Item._OnTipsClosed = HL.Method(HL.Opt(HL.Function)) << function(self, onClose)
     end
 end
 
-
-
-
-
 Item.UpdateCountSimple = HL.Method(HL.Opt(HL.Number, HL.Boolean))
         << function(self, count, isLack)
     self:UpdateCount(count, nil, false, false, nil, isLack, self.m_isInfinite)
 end
-
-
-
-
 
 Item.UpdateCountWithColor = HL.Method(HL.Number, HL.String) << function(self, count, colorFormatter)
     if not self.m_showCount then
@@ -818,15 +679,6 @@ Item.UpdateCountWithColor = HL.Method(HL.Number, HL.String) << function(self, co
 
     self.view.count.gameObject:SetActive(true)
 end
-
-
-
-
-
-
-
-
-
 
 
 
@@ -874,10 +726,6 @@ Item.UpdateCount = HL.Method(HL.Opt(HL.Number, HL.Number, HL.Boolean, HL.Boolean
     end
 end
 
-
-
-
-
 Item.SetSelected = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, isSelected, forceUpdate)
     if self.m_isDestroyed then
         return
@@ -891,8 +739,6 @@ Item.SetSelected = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, i
     self.view.selectedBG.gameObject:SetActive(isSelected)
 end
 
-
-
 Item.OpenLongPressTips = HL.Method() << function(self)
     self.view.button.onLongPress:AddListener(function()
         self:ShowTips()
@@ -900,27 +746,26 @@ Item.OpenLongPressTips = HL.Method() << function(self)
     self.view.button.longPressHintTextId = "virtual_mouse_hint_item_tips"
 end
 
-
-
-
-
 Item.UpdateRedDot = HL.Method(HL.Opt(HL.String, HL.Any)) << function(self, name, arg)
     if not self.redDot then
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.redDotPrefab, self.view.animationNode.transform)
-        obj.name = "RedDot"
-        
-        obj.transform:SetAsLastSibling()
+        local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "RedDot",
+            LuaSystemManager.itemPrefabSystem.redDotPrefab, true,
+            function(o)
+                
+                o.transform:SetAsLastSibling()
 
-        obj.transform.localScale = Vector3.one
-        obj.transform.pivot = Vector2.one / 2
-        obj.transform.anchorMin = Vector2.one
-        obj.transform.anchorMax = Vector2.one
-        local cfg = self.view.config.RED_DOT_TRANS_INFO
-        obj.transform.anchoredPosition = Vector2(cfg.x, cfg.y)
-        obj.transform.sizeDelta = Vector2(cfg.z, cfg.w)
-
-        self.view.redDot = Utils.wrapLuaNode(obj)
-        self.redDot = self.view.redDot
+                o.transform.localScale = Vector3.one
+                o.transform.pivot = Vector2.one / 2
+                o.transform.anchorMin = Vector2.one
+                o.transform.anchorMax = Vector2.one
+                local cfg = self.view.config.RED_DOT_TRANS_INFO
+                o.transform.anchoredPosition = Vector2(cfg.x, cfg.y)
+                o.transform.sizeDelta = Vector2(cfg.z, cfg.w)
+            end)
+        if obj then
+            self.view.redDot = Utils.wrapLuaNode(obj)
+            self.redDot = self.view.redDot
+        end
     end
     if string.isEmpty(self.id) then
         self.redDot:Stop()
@@ -935,8 +780,6 @@ Item.UpdateRedDot = HL.Method(HL.Opt(HL.String, HL.Any)) << function(self, name,
     end
 end
 
-
-
 Item.Read = HL.Method() << function(self)
     if not self.redDot then
         return
@@ -950,9 +793,6 @@ Item.Read = HL.Method() << function(self)
         GameInstance.player.inventory:ReadNewItem(self.id)
     end
 end
-
-
-
 
 Item._UpdateInstData = HL.Method(HL.Opt(HL.Any)) << function(self, itemBundle)
     local hasInstId = itemBundle and itemBundle.instId and itemBundle.instId > 0
@@ -972,73 +812,73 @@ Item._UpdateInstData = HL.Method(HL.Opt(HL.Any)) << function(self, itemBundle)
     end
 end
 
-
-
-
 Item.ShowPickUpLogo = HL.Method(HL.Boolean) << function(self, isShow)
-    if not self.view.pickUpNode then
-        if not isShow then
-            return
-        end
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.pickupNodePrefab, self.view.animationNode.transform)
-        obj.name = "PickUpNode"
-        obj.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
-        obj.transform.localScale = Vector3.one
-        obj.transform.pivot = Vector2.up
-        obj.transform.anchorMin = Vector2.up
-        obj.transform.anchorMax = Vector2.up
-        obj.transform.anchoredPosition = Vector2(0, 0)
-        
-        local size = 60 * self.view.transform.rect.width / 180
-        obj.transform.sizeDelta = Vector2(size, size)
-        self.view.pickUpNode = Utils.wrapLuaNode(obj)
+    local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "SpTypeIconNode",
+        LuaSystemManager.itemPrefabSystem.spTypeIconNodePrefab, isShow,
+        function(o)
+            o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
+            o.transform.localScale = Vector3.one
+            o.transform.pivot = Vector2.up
+            o.transform.anchorMin = Vector2.up
+            o.transform.anchorMax = Vector2.up
+            o.transform.anchoredPosition = Vector2(0, 0)
+            local size = 156 * self.view.transform.rect.width / 180
+            o.transform.sizeDelta = Vector2(size, size)
+        end)
+    if obj and not self.view.spTypeIconNode then
+        self.view.spTypeIconNode = Utils.wrapLuaNode(obj)
+    end
+    if not self.view.spTypeIconNode then
+        return
     end
     if isShow then
+        
         local isPickUp, _ = Tables.useItemTable:TryGetValue(self.id)
-        self.view.pickUpNode.gameObject:SetActive(isPickUp)
+        if isPickUp then
+            self.view.spTypeIconNode.gameObject:SetActive(true)
+            self.view.spTypeIconNode.icon:LoadSprite(UIConst.UI_SPRITE_ITEM, "icon_pickupitems")
+            self.view.spTypeIconNode.stateController:SetState("Normal")
+        elseif Utils.isPortableDevice(self.id) then
+            self.view.spTypeIconNode.gameObject:SetActive(true)
+            self.view.spTypeIconNode.icon:LoadSprite(UIConst.UI_SPRITE_ITEM, "icon_portable_device")
+            self.view.spTypeIconNode.stateController:SetState("Normal")
+        else
+            self.view.spTypeIconNode.gameObject:SetActive(false)
+        end
     else
-        self.view.pickUpNode.gameObject:SetActive(isShow)
+        self.view.spTypeIconNode.gameObject:SetActive(false)
     end
 end
 
-
-
-
 Item.ShowGemPerfectIcon = HL.Method(HL.Boolean) << function(self, isShow)
-    if not self.view.gemPerfectIcon then
-        if not isShow then
-            return
-        end
-        local obj = CSUtils.CreateObject(LuaSystemManager.itemPrefabSystem.gemPerfectIconPrefab, self.view.animationNode.transform)
-        obj.name = "GemPerfectIcon"
-        obj.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
-        obj.transform.localScale = Vector3.one
-        local leftUp = Vector2(0, 1)
-        obj.transform.pivot = leftUp
-        obj.transform.anchorMin = leftUp
-        obj.transform.anchorMax = leftUp
-        obj.transform.anchoredPosition = Vector2(0, 0)
+    local obj = self:tryToggleDynamicNode(self.view.animationNode.transform, "GemPerfectIcon",
+        LuaSystemManager.itemPrefabSystem.gemPerfectIconPrefab, isShow,
+        function(o)
+            o.transform:SetSiblingIndex(self.view.content:GetSiblingIndex() + 1)
+            o.transform.localScale = Vector3.one
+            local leftUp = Vector2(0, 1)
+            o.transform.pivot = leftUp
+            o.transform.anchorMin = leftUp
+            o.transform.anchorMax = leftUp
+            o.transform.anchoredPosition = Vector2(0, 0)
+        end)
+    if obj then
         self.view.gemPerfectIcon = obj
+    elseif not isShow then
+        return
     end
-    self.view.gemPerfectIcon.gameObject:SetActive(isShow)
 
     
     self.view.deco1.gameObject:SetActive(not isShow and self.m_needShowDeco1) 
 end
 
-
-
 Item.SetAsNaviTarget = HL.Method() << function(self)
-    InputManagerInst.controllerNaviManager:SetTarget(self.view.button)
+    self:SetNaviTarget(self.view.button)
 end
-
-
-
 
 Item.SetItemTipsJumpExtraArgs = HL.Method(HL.Table) << function(self, args)
     self.m_itemTipsJumpExtraArgs = args
 end
-
 
 
 
@@ -1052,13 +892,9 @@ Item.m_actionMenuBindingId = HL.Field(HL.Number) << -1
 
 
 
-
 Item.actionMenuArgs = HL.Field(HL.Table)
 
-
 Item.customChangeActionMenuFunc = HL.Field(HL.Function)
-
-
 
 
 Item.InitActionMenu = HL.Method() << function(self)
@@ -1070,9 +906,6 @@ Item.InitActionMenu = HL.Method() << function(self)
     end, self.view.button.hoverBindingGroupId)
 end
 
-
-
-
 Item.ToggleActionMenu = HL.Method(HL.Boolean) << function(self, active)
     if self.m_actionMenuBindingId <= 0 then
         return
@@ -1080,13 +913,14 @@ Item.ToggleActionMenu = HL.Method(HL.Boolean) << function(self, active)
     InputManagerInst:ToggleBinding(self.m_actionMenuBindingId, active)
 end
 
-
-
-
-
 Item.ShowActionMenu = HL.Method(HL.Opt(HL.Boolean, HL.Number)) << function(self, noMask, posType)
     self:SetSelected(true)
     self.showingActionMenu = true
+    Notify(MessageConst.HIDE_ITEM_TIPS)
+    local initId = self.id
+    local checkActionValid = function()
+        return initId == self.id
+    end
     Notify(MessageConst.SHOW_NAVI_TARGET_ACTION_MENU, {
         transform = self.transform,
         actions = self:_GenActionMenuInfos(),
@@ -1096,10 +930,9 @@ Item.ShowActionMenu = HL.Method(HL.Opt(HL.Boolean, HL.Number)) << function(self,
         end,
         noMask = noMask,
         posType = posType,
+        checkActionValid = checkActionValid,
     })
 end
-
-
 
 Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
     local id = self.id
@@ -1119,8 +952,12 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
     local isSafeArea = args.ignoreInSafeZone or Utils.isInSafeZone()
     local isBuilding, buildingId = FactoryUtils.isBuilding(id)
     local isLogistic, logisticId = FactoryUtils.isLogistic(id)
-    local isEmptyBottle = Tables.emptyBottleTable:ContainsKey(id)
-    local isFullBottle = Tables.fullBottleTable:ContainsKey(id)
+    local isEmptyBottle = FactoryUtils.isEmptyBottleOrJarItem(id, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+    local isFullBottle = FactoryUtils.isFullBottleOrJarItem(id, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+    local isEmptyGasJar = FactoryUtils.isEmptyBottleOrJarItem(id, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+    local isFullGasJar = FactoryUtils.isFullBottleOrJarItem(id, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+    local isLiquid = Tables.liquidTable:ContainsKey(id)
+    local isGas = Tables.gasTable:ContainsKey(id)
 
     local itemMoveCheckFunc = args.itemMoveCheckFunc
     local itemMoveValid = itemMoveCheckFunc == nil or itemMoveCheckFunc()
@@ -1132,9 +969,39 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
     
     if itemMoveValid and count > 0 and (args.cacheArea or args.cacheRepo) and (isItemBag or (isFacDepot and depotMoveNotLocked)) then
         local cacheHasNormal = (args.cacheArea and args.cacheArea.hasNormalCacheIn) or
-                               (args.cacheRepo and not args.cacheRepo:GetIsFluidCache())
+                               (args.cacheRepo and args.cacheRepo:GetRepoCacheType() == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal)
         local cacheHasFluid = (args.cacheArea and args.cacheArea.hasFluidCacheIn) or
-                              (args.cacheRepo and args.cacheRepo:GetIsFluidCache())
+                              (args.cacheRepo and args.cacheRepo:GetRepoCacheType() == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+        local cacheHasGas = (args.cacheArea and args.cacheArea.hasGasCacheIn) or
+                            (args.cacheRepo and args.cacheRepo:GetRepoCacheType() == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+        
+        if isEmptyGasJar and cacheHasGas then
+            table.insert(actionMenuInfos, {
+                objName = "FillGas",
+                text = Language.LUA_ITEM_ACTION_FILL_GAS,
+                action = function()
+                    if args.cacheArea then
+                        args.cacheArea:NaviTargetMoveToInCacheSlot(self, args.dragHelper, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+                    elseif args.cacheRepo then
+                        args.cacheRepo:TryDropItemToRepository(args.dragHelper)
+                    end
+                end,
+            })
+        end
+        
+        if isFullGasJar and cacheHasGas then
+            table.insert(actionMenuInfos, {
+                objName = "DumpGas",
+                text = Language.LUA_ITEM_ACTION_DUMP_GAS,
+                action = function()
+                    if args.cacheArea then
+                        args.cacheArea:NaviTargetMoveToInCacheSlot(self, args.dragHelper, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+                    elseif args.cacheRepo then
+                        args.cacheRepo:TryDropItemToRepository(args.dragHelper)
+                    end
+                end,
+            })
+        end
         
         if isEmptyBottle and cacheHasFluid then
             table.insert(actionMenuInfos, {
@@ -1142,7 +1009,7 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
                 text = Language.LUA_ITEM_ACTION_FILL_LIQUID,
                 action = function()
                     if args.cacheArea then
-                        args.cacheArea:NaviTargetMoveToInCacheSlot(self, args.dragHelper, true)
+                        args.cacheArea:NaviTargetMoveToInCacheSlot(self, args.dragHelper, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
                     elseif args.cacheRepo then
                         args.cacheRepo:TryDropItemToRepository(args.dragHelper)
                     end
@@ -1156,7 +1023,7 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
                 text = Language.LUA_ITEM_ACTION_DUMP_LIQUID,
                 action = function()
                     if args.cacheArea then
-                        args.cacheArea:NaviTargetMoveToInCacheSlot(self, args.dragHelper, true)
+                        args.cacheArea:NaviTargetMoveToInCacheSlot(self, args.dragHelper, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
                     elseif args.cacheRepo then
                         args.cacheRepo:TryDropItemToRepository(args.dragHelper)
                     end
@@ -1170,7 +1037,7 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
                 text = Language.LUA_ITEM_ACTION_MOVE_TO_MACHINE,
                 action = function()
                     if args.cacheArea then
-                        args.cacheArea:NaviTargetMoveToInCacheSlot(self, args.dragHelper, false)
+                        args.cacheArea:NaviTargetMoveToInCacheSlot(self, args.dragHelper, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal)
                     elseif args.cacheRepo then
                         args.cacheRepo:TryDropItemToRepository(args.dragHelper)
                     end
@@ -1190,7 +1057,7 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
                 text = Language.LUA_CONTROLLER_ITEM_ACTION_MOVE_HALF,
                 action = function()
                     if args.cacheArea then
-                        args.cacheArea:DropItemToArea(args.dragHelper, false, CS.Proto.ITEM_MOVE_MODE.HalfGrid)
+                        args.cacheArea:DropItemToArea(args.dragHelper, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal, CS.Proto.ITEM_MOVE_MODE.HalfGrid)
                     elseif args.cacheRepo then
                         args.cacheRepo:TryDropItemToRepository(args.dragHelper, CS.Proto.ITEM_MOVE_MODE.HalfGrid)
                     end
@@ -1201,7 +1068,7 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
                 text = Language.LUA_CONTROLLER_ITEM_ACTION_MOVE_ALL,
                 action = function()
                     if args.cacheArea then
-                        args.cacheArea:DropItemToArea(args.dragHelper, false, CS.Proto.ITEM_MOVE_MODE.BatchItemId)
+                        args.cacheArea:DropItemToArea(args.dragHelper, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal, CS.Proto.ITEM_MOVE_MODE.BatchItemId)
                     elseif args.cacheRepo then
                         args.cacheRepo:TryDropItemToRepository(args.dragHelper, CS.Proto.ITEM_MOVE_MODE.BatchItemId)
                     end
@@ -1248,7 +1115,7 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
     
 
     
-    if itemMoveValid and count > 0 and ((isFacDepot and isSafeArea and depotMoveNotLocked) or isRepository or isStorage) and not args.isFluidCacheSlot then
+    if itemMoveValid and count > 0 and ((isFacDepot and isSafeArea and depotMoveNotLocked) or isRepository or isStorage) and (args.cacheType == nil or args.cacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal) then
         table.insert(actionMenuInfos, {
             objName = "MoveToBag",
             text = Language.LUA_ITEM_ACTION_MOVE_TO_ITEM_BAG,
@@ -1326,7 +1193,7 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
     
 
     
-    if itemMoveValid and depotMoveNotLocked and count > 0 and (isSafeArea and (isItemBag or isRepository or isStorage)) and not args.isFluidCacheSlot then
+    if itemMoveValid and depotMoveNotLocked and count > 0 and (isSafeArea and (isItemBag or isRepository or isStorage)) and (args.cacheType == nil or args.cacheType == FacConst.FAC_CACHE_SLOT_TYPE_STATE.Normal) then
         table.insert(actionMenuInfos, {
             objName = "MoveToDepot",
             text = Language.LUA_ITEM_ACTION_MOVE_TO_DEPOT,
@@ -1373,7 +1240,17 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
     
 
     
-    if itemMoveValid and isRepository and args.isFluidCacheSlot then
+    if count > 0 and isItemBag and args.startMoveAct then
+        table.insert(actionMenuInfos, {
+            objName = "MoveInItemBag",
+            text = Language.LUA_ITEM_ACTION_MOVE_IN_ITEM_BAG,
+            action = args.startMoveAct
+        })
+    end
+    
+
+    
+    if itemMoveValid and isRepository and isLiquid and (args.cacheType ~= nil and FactoryUtils.isCacheTypeAcceptItemType(args.cacheType, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)) then
         
         table.insert(actionMenuInfos, {
             objName = "SelectFillLiquid",
@@ -1381,8 +1258,10 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
             action = function()
                 Notify(MessageConst.ON_NAVI_INVENTORY_SELECT_FLUID, {
                     componentId = args.componentId,
+                    slotIndex = args.cacheGridIndex,
                     fluidId = "",
-                    sourceItem = self
+                    sourceItem = self,
+                    cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid
                 })
             end
         })
@@ -1393,8 +1272,44 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
                 action = function()
                     Notify(MessageConst.ON_NAVI_INVENTORY_SELECT_FLUID, {
                         componentId = args.componentId,
+                        slotIndex = args.cacheGridIndex,
                         fluidId = id,
-                        sourceItem = self
+                        sourceItem = self,
+                        cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid
+                    })
+                end
+            })
+        end
+    end
+    
+
+    
+    if itemMoveValid and isRepository and isGas and (args.cacheType ~= nil and FactoryUtils.isCacheTypeAcceptItemType(args.cacheType, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)) then
+        
+        table.insert(actionMenuInfos, {
+            objName = "SelectFillGas",
+            text = Language.LUA_ITEM_ACTION_CACHE_SELECT_FILL_GAS,
+            action = function()
+                Notify(MessageConst.ON_NAVI_INVENTORY_SELECT_FLUID, {
+                    componentId = args.componentId,
+                    slotIndex = args.cacheGridIndex,
+                    fluidId = "",
+                    sourceItem = self,
+                    cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas
+                })
+            end
+        })
+        if args.isInCacheSlot and not args.disableDump then
+            table.insert(actionMenuInfos, {
+                objName = "SelectDumpGas",
+                text = Language.LUA_ITEM_ACTION_CACHE_SELECT_DUMP_GAS,
+                action = function()
+                    Notify(MessageConst.ON_NAVI_INVENTORY_SELECT_FLUID, {
+                        componentId = args.componentId,
+                        slotIndex = args.cacheGridIndex,
+                        fluidId = id,
+                        sourceItem = self,
+                        cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas
                     })
                 end
             })
@@ -1530,6 +1445,23 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
     
 
     
+    if isFullGasJar and itemMoveValid and count > 0 and (isItemBag or isFacDepot) then
+        table.insert(actionMenuInfos, {
+            objName = "ClearGas",
+            text = Language.LUA_ITEM_ACTION_CLEAR_GAS,
+            action = function()
+                UIManager:Open(PanelId.ClearBottlePopUp, {
+                    slotIndex = self.slotIndex,
+                    fromDepot = isFacDepot,
+                    itemId = id,
+                    itemCount = count,
+                })
+            end,
+        })
+    end
+    
+
+    
     table.insert(actionMenuInfos, {
         objName = "ShowTips",
         text = Language.LUA_ITEM_ACTION_SHOW_TIPS,
@@ -1573,9 +1505,6 @@ Item._GenActionMenuInfos = HL.Method().Return(HL.Table) << function(self)
 
     return actionMenuInfos
 end
-
-
-
 
 
 
@@ -1633,9 +1562,6 @@ Item._OnHoverChange = HL.Method(HL.Boolean) << function(self, isHover)
     end
 end
 
-
-
-
 Item._CloseHoverTips = HL.Method(HL.Opt(HL.Boolean)) << function(self, noAnimation)
     if self.m_showingHover then
         Notify(MessageConst.HIDE_COMMON_HOVER_TIP, { noAnimation = noAnimation })
@@ -1643,16 +1569,16 @@ Item._CloseHoverTips = HL.Method(HL.Opt(HL.Boolean)) << function(self, noAnimati
     end
 end
 
-
-
-
-
 Item.AddHoverBinding = HL.Method(HL.String, HL.Function).Return(HL.Number) << function(self, actionId, action)
-    return InputManagerInst:CreateBindingByActionId(actionId, action, self.view.button.hoverBindingGroupId)
+    local groupId = self.view.button.hoverBindingGroupId
+    if groupId <= 0 then
+        
+        
+        
+        return -1
+    end
+    return InputManagerInst:CreateBindingByActionId(actionId, action, groupId)
 end
-
-
-
 
 Item.SetEnableHoverTips = HL.Method(HL.Boolean) << function(self, enabled)
     self.m_enableHoverTips = enabled

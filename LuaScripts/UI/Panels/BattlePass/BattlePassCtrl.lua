@@ -2,52 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BattlePass
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BattlePassCtrl = HL.Class('BattlePassCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -61,56 +16,37 @@ BattlePassCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHANGE_BATTLE_PASS_TAB] = '_OnChangeTab',
 }
 
-
 BattlePassCtrl.m_arg = HL.Field(HL.Table)
-
 
 BattlePassCtrl.m_tabInfos = HL.Field(HL.Table)
 
-
 BattlePassCtrl.m_curTabIndex = HL.Field(HL.Number) << -1
-
 
 BattlePassCtrl.m_genTabCells = HL.Field(HL.Forward("UIListCache"))
 
-
 BattlePassCtrl.m_seasonId = HL.Field(HL.String) << ''
-
 
 BattlePassCtrl.m_curLevel = HL.Field(HL.Number) << 0
 
-
 BattlePassCtrl.m_curShowLevel = HL.Field(HL.Number) << 0
-
 
 BattlePassCtrl.m_maxLevel = HL.Field(HL.Number) << 0
 
-
 BattlePassCtrl.m_curExp = HL.Field(HL.Number) << 0
-
 
 BattlePassCtrl.m_curShowExp = HL.Field(HL.Number) << 0
 
-
 BattlePassCtrl.m_openTime = HL.Field(HL.Number) << 0
-
 
 BattlePassCtrl.m_endTime = HL.Field(HL.Number) << 0
 
-
 BattlePassCtrl.m_buyLevelTime = HL.Field(HL.Number) << 0
-
 
 BattlePassCtrl.m_expBoost = HL.Field(HL.Number) << 0
 
-
 BattlePassCtrl.m_canBuyTime = HL.Field(HL.Number) << 0
 
-
 BattlePassCtrl.m_expTween = HL.Field(HL.Userdata)
-
-
-
 
 
 BattlePassCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -125,8 +61,6 @@ BattlePassCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_ChangeTab(self.m_curTabIndex, true)
 end
 
-
-
 BattlePassCtrl.OnShow = HL.Override() << function(self)
     
     if CashShopUtils.NoCashShopGoods() and CashShopUtils.IsPS() then
@@ -139,13 +73,9 @@ end
 
 
 
-
-
 BattlePassCtrl.OnClose = HL.Override() << function(self)
     self:_ClearExpTween()
 end
-
-
 
 BattlePassCtrl._InitViews = HL.Method() << function(self)
     self:_InitTabInfos()
@@ -179,8 +109,6 @@ BattlePassCtrl._InitViews = HL.Method() << function(self)
     self.m_genTabCells = UIUtils.genCellCache(self.view.tabPlanNode)
 end
 
-
-
 BattlePassCtrl._InitTabInfos = HL.Method() << function(self)
     
 
@@ -209,9 +137,6 @@ BattlePassCtrl._InitTabInfos = HL.Method() << function(self)
     })
 end
 
-
-
-
 BattlePassCtrl._InitTabIndex = HL.Method(HL.Any) << function(self, arg)
     if arg ~= nil and arg.panelId ~= nil then
         local panelId = PanelId[arg.panelId]
@@ -224,9 +149,6 @@ BattlePassCtrl._InitTabIndex = HL.Method(HL.Any) << function(self, arg)
     end
 end
 
-
-
-
 BattlePassCtrl._FindTabIndexByPanelId = HL.Method(HL.Number).Return(HL.Number) << function(self, panelId)
     for index, info in ipairs(self.m_tabInfos) do
         if info.panelId == panelId then
@@ -235,8 +157,6 @@ BattlePassCtrl._FindTabIndexByPanelId = HL.Method(HL.Number).Return(HL.Number) <
     end
     return -1
 end
-
-
 
 BattlePassCtrl._InitTabs = HL.Method() << function(self)
     self.m_genTabCells:Refresh(#self.m_tabInfos, function(cell, luaIndex)
@@ -264,9 +184,6 @@ BattlePassCtrl._InitTabs = HL.Method() << function(self)
     end)
 end
 
-
-
-
 BattlePassCtrl._LoadData = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     local bpSystem = GameInstance.player.battlePassSystem
     self.m_seasonId = bpSystem.seasonData.seasonId
@@ -290,8 +207,6 @@ BattlePassCtrl._LoadData = HL.Method(HL.Opt(HL.Boolean)) << function(self, isIni
     self.m_maxLevel = seasonData.maxLevel
 end
 
-
-
 BattlePassCtrl._RenderViews = HL.Method() << function(self)
     if not string.isEmpty(self.m_seasonId) then
         local hasSeason, seasonData = Tables.battlePassSeasonTable:TryGetValue(self.m_seasonId)
@@ -312,8 +227,6 @@ BattlePassCtrl._RenderViews = HL.Method() << function(self)
     self.view.percentageTxt.text = string.format("+%d%%", self.m_expBoost / 10)
 end
 
-
-
 BattlePassCtrl._RenderMaxLevel = HL.Method() << function(self)
     self.view.maxLevelNode:ClearTween()
     if self.m_curLevel == self.m_maxLevel then
@@ -322,10 +235,6 @@ BattlePassCtrl._RenderMaxLevel = HL.Method() << function(self)
         self.view.maxLevelNode:PlayWithTween(self.view.config.LEVEL_MAX_OVER_ANIMATION_NAME)
     end
 end
-
-
-
-
 
 BattlePassCtrl._QueryToNextExp = HL.Method(HL.Number, HL.Number).Return(HL.Number) << function(self, level, maxLevel)
     local hasSeason, seasonData = Tables.battlePassSeasonTable:TryGetValue(self.m_seasonId)
@@ -342,10 +251,6 @@ BattlePassCtrl._QueryToNextExp = HL.Method(HL.Number, HL.Number).Return(HL.Numbe
     end
 end
 
-
-
-
-
 BattlePassCtrl._RenderExp = HL.Method(HL.Number, HL.Number) << function(self, level, exp)
     local showLevel = math.min(level, self.m_maxLevel)
     local progress = 0
@@ -361,8 +266,6 @@ BattlePassCtrl._RenderExp = HL.Method(HL.Number, HL.Number) << function(self, le
     self.view.progressBar.value = progress
     self.view.progressTxt.text = string.format(Language.LUA_BATTLEPASS_PLAN_EXP_PROGRESS_FORMAT, showExp, toNextExp)
 end
-
-
 
 BattlePassCtrl._PlayExpTween = HL.Method() << function(self)
     local startPos = self.m_curShowExp
@@ -421,8 +324,6 @@ BattlePassCtrl._PlayExpTween = HL.Method() << function(self)
     self:_OnExpTweenStart()
 end
 
-
-
 BattlePassCtrl._ClearExpTween = HL.Method() << function(self)
     if self.m_expTween ~= nil then
         self.m_expTween:Kill(false)
@@ -431,21 +332,15 @@ BattlePassCtrl._ClearExpTween = HL.Method() << function(self)
     end
 end
 
-
-
 BattlePassCtrl._OnExpTweenStart = HL.Method() << function(self)
     if PhaseManager:GetTopPhaseId() == PhaseId.BattlePass then
         AudioAdapter.PostEvent("Au_UI_Event_BPLevelUp")
     end
 end
 
-
-
 BattlePassCtrl._OnExpTweenEnd = HL.Method() << function(self)
     AudioAdapter.PostEvent("Au_UI_Event_BPLevelUp_Stop")
 end
-
-
 
 BattlePassCtrl._OnExpTweenLevelUp = HL.Method() << function(self)
     if not string.isEmpty(self.view.config.LEVEL_UP_ANIMATION_NAME) then
@@ -455,8 +350,6 @@ BattlePassCtrl._OnExpTweenLevelUp = HL.Method() << function(self)
     AudioAdapter.PostEvent("Au_UI_Event_BPLevelUpgrade")
 end
 
-
-
 BattlePassCtrl._RenderTimeRelatedPart = HL.Method() << function(self)
     local curServerTime = DateTimeUtils.GetCurrentTimestampBySeconds()
     local leftSec = self.m_endTime - curServerTime
@@ -464,9 +357,6 @@ BattlePassCtrl._RenderTimeRelatedPart = HL.Method() << function(self)
     self.view.endTimeTxt.text = string.format(Language.LUA_BATTLEPASS_PLAN_END_TIME_HINT, UIUtils.getLeftTime(leftSec))
     self.view.buyNode:SetState(self.m_curLevel >= self.m_maxLevel and "Max" or (curServerTime >= self.m_canBuyTime and "CanBuy" or "CantBuy"))
 end
-
-
-
 
 BattlePassCtrl._OnChangeTab = HL.Method(HL.Any) << function(self, arg)
     if arg == nil or arg.panelId == nil then
@@ -479,10 +369,6 @@ BattlePassCtrl._OnChangeTab = HL.Method(HL.Any) << function(self, arg)
         toggleCell.toggle.isOn = true
     end
 end
-
-
-
-
 
 BattlePassCtrl._ChangeTab = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, luaIndex, isInit)
     if self.m_curTabIndex == luaIndex and not isInit then
@@ -514,8 +400,6 @@ BattlePassCtrl._ChangeTab = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function
     end
 end
 
-
-
 BattlePassCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
     local recoverState = {}
     if self.m_tabInfos ~= nil and self.m_curTabIndex > 0 then
@@ -533,16 +417,12 @@ BattlePassCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(sel
     return recoverState
 end
 
-
-
 BattlePassCtrl._OnLevelUpdate = HL.Method() << function(self)
     if UIManager:IsOpen(PanelId.BattlePassBuyLevel) then
         return
     end
     self:_OnLevelUpdateImpl()
 end
-
-
 
 BattlePassCtrl._OnLevelUpdateImpl = HL.Method() << function(self)
     local fromLevel = self.m_curLevel
@@ -568,15 +448,11 @@ BattlePassCtrl._OnLevelUpdateImpl = HL.Method() << function(self)
     end
 end
 
-
-
 BattlePassCtrl._OnTrackUpdate = HL.Method() << function(self)
     self.m_expBoost = BattlePassUtils.GetBattlePassExpBoost()
     self.view.percentageNode.gameObject:SetActive(self.m_expBoost > 0)
     self.view.percentageTxt.text = string.format("+%d%%", self.m_expBoost / 10)
 end
-
-
 
 BattlePassCtrl._OnBasicInfoUpdate = HL.Method() << function(self)
     self:_RenderTimeRelatedPart()

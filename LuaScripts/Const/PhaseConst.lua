@@ -20,154 +20,45 @@ PHASE_CHAR_ITEM_INIT_PARAM_NAME = "init"
 PHASE_CHAR_ITEM_FORMATION_PARAM_NAME = "formation"
 
 
-
-
-
-
-
-
-
-
-
-
-
-FORBID_INPUT_DEVICE_CHANGE_PANELS = {
-    "Loading",
-    "TeleportLoading",
-    "CommonMask", 
-
-    "PlayerRename", 
-    "DungeonSettlementPopup", 
-    "SimulationTrainingSettlementPopup", 
-    "WorldEnergyPointSettlement", 
-    "DeathInfo", 
-    "DramaticPerformanceBag", 
-    "ShopMonthlyPassPopUp", 
-    "SDKApplicationMask",   
-    "ActivityRewardRegistrationPopup", 
-
-    
-    "GachaDropBin",
-    "GachaChar",
-    "GachaChar",
-    "GachaWeaponPreheat",
-    "GachaWeapon",
-    "GachaWeaponResult",
-    "GachaSelCharTicPopup",
-    "GachaWeaponExtraRewardPopup",
-    "GachaImportantRewardPopup",
-    "GachaItemConvert",
-    "GachaPotentialPopup",
-
-    
-    "SettlementDefenseTransit",
-    "SettlementDefenseFinish",
-    "SettlementDefenseFinishFail",
-
-    
-    "RewardsPopUpForBlackBox",
-    "RewardsPopUpForSystem",
-    "RewardsPopupCenter",
-    "RewardsPopUpForCraft",
-    "EquipEnhanceResult",
-    "BattlePassRecommend",
-
-    
-    "ContingencyContractSettlement",
-
-    
-    "HudLayout",
-}
-
-
-FORBID_INPUT_DEVICE_CHANGE_PHASES = {
-    "GenderSelect",
-    "Dialog",
-
-    
-    "GachaChar",
-    "GachaLauncher",
-    "GachaDropBin",
-    "GachaWeaponPreheat",
-    "GachaWeapon",
-    "GachaWeaponResult",
-
-    
-    "ActivityPopup",
-}
-
-
-
-INPUT_DEVICE_CHANGE_FORCE_CLOSE_PANELS = {
-    "WalletBar",
-    "CommonTips",
-    "Guide", 
-}
-
-
-EXCEPT_CHANGE_DEVICE_CLOSE_PANEL = {
-    "CommonMask",
-    "SpaceShipCharPoster",
-    "InteractOption",
-    "CommonWorldUI",
-    "FacPowerPoleLinkingLabel",
-    "VideoPreloader",
-    "SpaceshipHudTips",
-    "SpaceshipCabinInfoDisplay",
-    "WatchBlur",
-    "CommonHudToast",
-
-    
-    "CommonTaskTrackHud",
-    "CommonTaskTrackToast",
-    "CommonTaskTrackCountdown",
-    "DungeonCharTutorialStepHud",
-    "ContingencyContractHud",
-
-    
-    "BombAim",
-    "WaterDroneAim",
-
-    
+DONT_DESTROY_ON_SEAMLESS_LOADING = {
     "MiniMap",
-    "FacTopViewBuildingInfo",
+    "MainHud",
+    "Joystick",
+    "MissionHud",
+    "InteractOption",
+    "FacBuildingInteract",
+    "HeadBar",
+    "BattleDamageText",
+    "RadioEmpty",
+    "GeneralAbility",
     "CommonItemToast",
     "CommonNewToast",
+    "SNSHud",
     "AIBark",
-    "BattleBottomScreenEffect",
-    "BattleComboSkillUse",
-    "BattleDamageText",
-    "ControllerHint",
-    "FacBuildingInteract",
-    "FacMiniPowerHud",
-    "GeneralAbility",
-    "GeneralTracker",
-    "Guide",
-    "GuideLimited",
-    "HeadBar",
-    "HeadLabel",
-    "ItemTips",
-    "Joystick",
-    "Radio",
-    "RadioEmpty",
+    "Watch",
+    "Inventory",
+    "ValuableDepot",
     "WalletBar",
+    "ControllerHint",
+    "CommonPopUp",
+    "Guide",
+    "FacMiniPowerHud",
+    "FacBuildMode",
+    "FacDestroyMode",
+    "WaterDroneAim",
+    "ItemTips",
+    "GuideLimited",
+    "FacMain",
+    "FacMainLeft",
+    "FacMainRight",
+    "FacQuickBar",
+    "BattleAction",
+    "SquadIcon",
+    "BattleComboSkill",
+    "BattleComboSkillUse",
+    "BattleBossInfo",
+    "BattleBottomScreenEffect",
+    "GeneralTracker",
+    "Radio",
+    "LevelCamera",
 }
-
-
-SUPPORT_REUSE_GO_ON_INPUT_CHANGE_PANELS = {
-    BattleBossInfo = true,
-    BattleComboSkill = true,
-    FacBuildMode = true,
-    FacDestroyMode = true,
-    
-    
-    
-    FacTopView = true,
-    MainHud = true,
-    MissionHud = true,
-    SNSHud = true,
-    SquadIcon = true,
-    
-}
-
-

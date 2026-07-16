@@ -2,93 +2,51 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 local LuaNodeCache = require_ex('Common/Utils/LuaNodeCache')
 local CommonCache = require_ex('Common/Utils/CommonCache')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BlueprintPreview = HL.Class('BlueprintPreview', UIWidgetBase)
 
 
 local uiSizePerUnit = 128
 
 
-
 BlueprintPreview.m_csBP = HL.Field(CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprint)
-
 
 BlueprintPreview.m_nodeCellCache = HL.Field(LuaNodeCache) 
 
-
 BlueprintPreview.m_conveyorCellCache = HL.Field(LuaNodeCache) 
-
 
 BlueprintPreview.m_showingCellDic = HL.Field(HL.Table) 
 
-
 BlueprintPreview.m_previewHelper = HL.Field(CS.Beyond.UI.BlueprintPreviewHelper)
-
 
 BlueprintPreview.m_canEdit = HL.Field(HL.Boolean) << false
 
-
 BlueprintPreview.m_updateId = HL.Field(HL.Number) << -1
-
 
 BlueprintPreview.m_nextTargetId = HL.Field(HL.Number) << 1
 
-
 BlueprintPreview.m_id2Cell = HL.Field(HL.Table)
 
+BlueprintPreview.m_nodeIdToTargetId = HL.Field(HL.Table) 
+
+
+
+BlueprintPreview.m_envGenCoverInfos = HL.Field(HL.Table)
+
+
+BlueprintPreview.m_pinnedUdpipeTargetId = HL.Field(HL.Any)
+BlueprintPreview.m_pinnedUdpipePeerTargetId = HL.Field(HL.Any)
+
+
+BlueprintPreview.m_lastHoveredUdpipeTargetId = HL.Field(HL.Any)
 
 BlueprintPreview.m_bpAbnormalIconHelper = HL.Field(HL.Table)
 
-
 BlueprintPreview.mouseShow = HL.Field(HL.Boolean) << true
+
+
+
+
+BlueprintPreview.m_viewConnBindingId = HL.Field(HL.Number) << 0
 
 
 
@@ -125,7 +83,32 @@ local Face2RotZForBuilding = {
     [3] = 90,
 }
 
+local function GetPortRenderKey(isPipe, isInput)
+    
+    if isPipe then
+        return isInput and "pipeIn" or "pipeOut"
+    end
+    return isInput and "beltIn" or "beltOut"
+end
 
+
+
+
+
+local function GetBuildingGridRect(entry, bData, extendX, extendZ)
+    local ex = extendX or 0
+    local ez = extendZ or 0
+    local w = bData.range.width + ex * 2
+    local d = bData.range.depth + ez * 2
+    
+    local swap = entry.spatial.face == 1 or entry.spatial.face == 3
+    local sw = swap and d or w
+    local sd = swap and w or d
+    local pos = entry.worldSpatial.worldPosition
+    local minX = lume.round(pos.x - sw / 2)
+    local minY = lume.round(pos.z - sd / 2)
+    return minX, minY, sw, sd
+end
 
 
 
@@ -139,22 +122,27 @@ BlueprintPreview._OnFirstTimeInit = HL.Override() << function(self)
     self:_InitChangeIconNode()
 
     
+    
+    local panelCtrl = self:GetUICtrl()
+    local panelInputGroup = panelCtrl and panelCtrl.view.inputGroup
+    if panelInputGroup then
+        self.m_viewConnBindingId = UIUtils.bindInputPlayerAction("fac_blueprint_view_connection", function()
+            self:_OnControllerViewConnection()
+        end, panelInputGroup.groupId) or 0
+        
+        self:_RefreshViewConnectionHint()
+    end
+
+    
     local secondCellObj = CSUtils.CreateObject(self.view.hoverTipsCell.gameObject, self.view.hoverTipsNode)
     secondCellObj.name = "HoverTipsCell2"
     secondCellObj.transform:SetAsLastSibling()
     self.view.hoverTipsCell2 = Utils.wrapLuaNode(secondCellObj)
 end
 
-
 BlueprintPreview.m_widthScale = HL.Field(HL.Number) << 1
 
-
 BlueprintPreview.m_heightScale = HL.Field(HL.Number) << 1
-
-
-
-
-
 
 BlueprintPreview.InitBlueprintPreview = HL.Method(CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprint, HL.Boolean, HL.Opt(HL.Table)) << function(self, csBP, canEdit, bpAbnormalIconHelper)
     self:_FirstTimeInit()
@@ -175,6 +163,11 @@ BlueprintPreview.InitBlueprintPreview = HL.Method(CS.Beyond.Gameplay.RemoteFacto
     self.m_changedIcons = {}
     self.m_canEdit = canEdit
     self.m_bpAbnormalIconHelper = bpAbnormalIconHelper
+    
+    self.m_pinnedUdpipeTargetId = nil
+    self.m_pinnedUdpipePeerTargetId = nil
+    self.m_lastHoveredUdpipeTargetId = nil
+    self.view.pipeConnectionLine.gameObject:SetActive(false)
     self:_CancelHover()
 
     
@@ -222,6 +215,42 @@ BlueprintPreview.InitBlueprintPreview = HL.Method(CS.Beyond.Gameplay.RemoteFacto
     end
 
     
+    
+    self.m_nodeIdToTargetId = {}
+    for _, info in pairs(self.m_showingCellDic) do
+        if info.type == NodeType.Building or info.type == NodeType.Logistic then
+            self.m_nodeIdToTargetId[info.entry.nodeId] = info.id
+        end
+    end
+
+    
+    
+    
+    
+    local invScale = 1 / scaleValue
+    for _, info in pairs(self.m_showingCellDic) do
+        if info.type == NodeType.Building or info.type == NodeType.Logistic then
+            local cell = self.m_id2Cell[info.id]
+            cell.iconNode.changeHint.transform.localScale = Vector3(invScale, invScale, 1)
+            if info.entry:IsUdpipe() then
+                local _, isConnected = self:_TryGetUdpipeConnection(info.id)
+                cell.udpipeStateStateController:SetState(isConnected and "NotSelected" or "NotConnect")
+                cell.nonScaledNode.transform.localScale = Vector3(invScale, invScale, 1)
+                if DeviceInfo.usingTouch then
+                    cell.udpipeState:SampleToInAnimationEnd()
+                else
+                    cell.udpipeState:SampleToInAnimationBegin()
+                end
+            end
+        end
+    end
+
+    
+    
+    self:_CollectEnvGenCoverInfos()
+    self:_RefreshAllEnvReceiverIcons()
+
+    
     for _, entry in pairs(self.m_csBP.conveyorNodes) do
         self:_GenPreviewConveyor(entry)
     end
@@ -247,9 +276,6 @@ end
 
 
 
-
-
-
 BlueprintPreview._GenPreviewBuilding = HL.Method(CS.Beyond.Gameplay.RemoteFactory.BlueprintBuildingEntry) << function(self, entry)
     local cell = self.m_nodeCellCache:Get()
     local info = {
@@ -265,15 +291,15 @@ BlueprintPreview._GenPreviewBuilding = HL.Method(CS.Beyond.Gameplay.RemoteFactor
 
     if self.m_canEdit then
         local _, iconData = Tables.factoryBlueprintMachineIconTable:TryGetValue(templateId)
-        if iconData then
-            info.canChangeIcon = iconData.canModify
-        else
-            info.canChangeIcon = false
-        end
+        info.canChangeIcon = iconData ~= nil and iconData.canModify
     else
         info.canChangeIcon = false
     end
     cell.selectedNode.gameObject:SetActive(false)
+    
+    cell.udpipeState.gameObject:SetActive(entry:IsUdpipe())
+    
+    cell.envNode.gameObject:SetActive(false)
 
     local spatial = entry.spatial
     local gridSize = Vector2(isBuilding and bData.range.width or 1, isBuilding and bData.range.depth or 1)
@@ -292,7 +318,10 @@ BlueprintPreview._GenPreviewBuilding = HL.Method(CS.Beyond.Gameplay.RemoteFactor
 
     local bgPath, isDefaultBuilding
     if isBuilding then
-        local spBGInfo = FacConst.BLUEPRINT_PREVIEW_SP_BUILDING_BG[bData.type]
+        
+        
+        local spBGInfo = FacConst.BLUEPRINT_PREVIEW_SP_BUILDING_BG_BY_TEMPLATE_ID[templateId]
+            or FacConst.BLUEPRINT_PREVIEW_SP_BUILDING_BG[bData.type]
         isDefaultBuilding = spBGInfo == nil
         bgPath = spBGInfo and spBGInfo[1] or FacConst.BLUEPRINT_PREVIEW_BUILDING_DEFAULT_BG
     else
@@ -324,12 +353,6 @@ BlueprintPreview._GenPreviewBuilding = HL.Method(CS.Beyond.Gameplay.RemoteFactor
 end
 
 
-
-
-
-
-
-
 BlueprintPreview._SetEdgeImgs = HL.Method(HL.Table, HL.Table, HL.String, HL.String) << function(self, edgeImgs, info, format, formatAlter)
     local count = info.count
     if count > 0 then
@@ -342,65 +365,56 @@ BlueprintPreview._SetEdgeImgs = HL.Method(HL.Table, HL.Table, HL.String, HL.Stri
     end
 end
 
-
-
-
-
-
 BlueprintPreview._GenDefaultBuildingBG = HL.Method(CS.Beyond.Gameplay.RemoteFactory.BlueprintBuildingEntry, HL.Table, HL.Any) << function(self, entry, cell, bData)
     local isBigBuilding = bData.range.width >= 3 and bData.range.depth >= 3 and (bData.range.width * bData.range.depth >= 9)
+    local portGroups = self:_BuildDefaultBuildingPortGroups(entry)
+    local edgeHasPort = {}
 
-    local edgeImgs = {}
-
-    
-    local inPorts = self:_GenDefaultBuildingPort(bData.inputPorts, true, bData.range.width, bData.range.depth)
-    local outPorts = self:_GenDefaultBuildingPort(bData.outputPorts, false, bData.range.width, bData.range.depth)
-
-    
-    self:_SetEdgeImgs(edgeImgs, inPorts.belt, FacConst.BLUEPRINT_PREVIEW_BELT_PORT_IN, FacConst.BLUEPRINT_PREVIEW_BELT_PORT_IN_ALTER)
-    self:_SetEdgeImgs(edgeImgs, outPorts.belt, FacConst.BLUEPRINT_PREVIEW_BELT_PORT_OUT, FacConst.BLUEPRINT_PREVIEW_BELT_PORT_OUT_ALTER)
-
-    
-    local formulaMode = entry:GetFormulaMode()
-    if not formulaMode or formulaMode == FacConst.FAC_FORMULA_MODE_MAP.LIQUID then
-        self:_SetEdgeImgs(edgeImgs, inPorts.pipe, FacConst.BLUEPRINT_PREVIEW_PIPE_PORT_IN, FacConst.BLUEPRINT_PREVIEW_PIPE_PORT_IN_ALTER)
-        self:_SetEdgeImgs(edgeImgs, outPorts.pipe, FacConst.BLUEPRINT_PREVIEW_PIPE_PORT_OUT, FacConst.BLUEPRINT_PREVIEW_PIPE_PORT_OUT_ALTER)
-    end
-
-    local needWaist = true
-    for face = 0, 3 do
-        local imgPath = edgeImgs[face]
-        local img
-        if not imgPath then
-            if face == 0 or face == 2 then
-                
-                img = cell.m_imgCache:Get()
-                img:LoadSpriteWithOutFormat(isBigBuilding and FacConst.BLUEPRINT_PREVIEW_BUILDING_DEFAULT_EDGE_BIG or FacConst.BLUEPRINT_PREVIEW_BUILDING_DEFAULT_EDGE_SMALL)
-                img.transform.sizeDelta = Vector2(bData.range.width * uiSizePerUnit, isBigBuilding and 140 or 40) 
-                img.type = CS.UnityEngine.UI.Image.Type.Sliced
-            end
-        else
-            img = cell.m_imgCache:Get()
+    for _, group in ipairs(portGroups) do
+        edgeHasPort[group.edgeFace] = true
+        local imgPath = self:_TryGetDefaultBuildingPortImgPath(group)
+        if imgPath then
+            
+            
+            local img = cell.m_imgCache:Get()
             img:LoadSpriteWithOutFormat(imgPath)
             img:SetNativeSizeIgnoreRefScale()
             img.type = CS.UnityEngine.UI.Image.Type.Simple
-        end
-        if img then
+
+            local centerPos = (group.minPos + group.maxPos + 1) / 2
+            if group.edgeFace == 0 then
+                img.transform.anchoredPosition = Vector2(centerPos, bData.range.depth) * uiSizePerUnit
+                img.transform.localEulerAngles = Vector3(0, 0, 0)
+            elseif group.edgeFace == 1 then
+                img.transform.anchoredPosition = Vector2(bData.range.width, centerPos) * uiSizePerUnit
+                img.transform.localEulerAngles = Vector3(0, 0, 270)
+            elseif group.edgeFace == 2 then
+                img.transform.anchoredPosition = Vector2(centerPos, 0) * uiSizePerUnit
+                img.transform.localEulerAngles = Vector3(0, 0, 180)
+            elseif group.edgeFace == 3 then
+                img.transform.anchoredPosition = Vector2(0, centerPos) * uiSizePerUnit
+                img.transform.localEulerAngles = Vector3(0, 0, 90)
+            end
+            table.insert(cell.m_showingImgs, img)
+        else
             
+            self:_GenDefaultBuildingFallbackPorts(cell, group, bData.range.width, bData.range.depth)
+        end
+    end
+
+    local needWaist = not edgeHasPort[1] and not edgeHasPort[3]
+    for face = 0, 3 do
+        if not edgeHasPort[face] and (face == 0 or face == 2) then
+            local img = cell.m_imgCache:Get()
+            img:LoadSpriteWithOutFormat(isBigBuilding and FacConst.BLUEPRINT_PREVIEW_BUILDING_DEFAULT_EDGE_BIG or FacConst.BLUEPRINT_PREVIEW_BUILDING_DEFAULT_EDGE_SMALL)
+            img.transform.sizeDelta = Vector2(bData.range.width * uiSizePerUnit, isBigBuilding and 140 or 40) 
+            img.type = CS.UnityEngine.UI.Image.Type.Sliced
             if face == 0 then
                 img.transform.anchoredPosition = Vector2(bData.range.width / 2, bData.range.depth) * uiSizePerUnit
                 img.transform.localEulerAngles = Vector3(0, 0, 0)
-            elseif face == 1 then
-                img.transform.anchoredPosition = Vector2(bData.range.width, bData.range.depth / 2) * uiSizePerUnit
-                img.transform.localEulerAngles = Vector3(0, 0, 270)
-                needWaist = false
-            elseif face == 2 then
+            else
                 img.transform.anchoredPosition = Vector2(bData.range.width / 2, 0) * uiSizePerUnit
                 img.transform.localEulerAngles = Vector3(0, 0, 180)
-            elseif face == 3 then
-                img.transform.anchoredPosition = Vector2(0, bData.range.depth / 2) * uiSizePerUnit
-                img.transform.localEulerAngles = Vector3(0, 0, 90)
-                needWaist = false
             end
             table.insert(cell.m_showingImgs, img)
         end
@@ -415,41 +429,195 @@ BlueprintPreview._GenDefaultBuildingBG = HL.Method(CS.Beyond.Gameplay.RemoteFact
     end
 end
 
-
-
-
-
-
-
-BlueprintPreview._GenDefaultBuildingPort = HL.Method(HL.Any, HL.Boolean, HL.Number, HL.Number).Return(HL.Table) << function(self, portsData, isInput, width, depth)
-    local ports = {
-        belt = { count = 0, edgeFace = -1, minPos = math.maxinteger, maxPos = math.mininteger },
-        pipe = { count = 0, edgeFace = -1, minPos = math.maxinteger, maxPos = math.mininteger },
-    }
-    for _, v in pairs(portsData) do
-        local info = v.isPipe and ports.pipe or ports.belt
-        info.count = info.count + 1
-        local portPosIsOnX = (v.trans.rotation.y / 90) % 2 == 0
-        local portPos = portPosIsOnX and v.trans.position.x or v.trans.position.z
-        info.minPos = math.min(portPos, info.minPos)
-        info.maxPos = math.max(portPos, info.maxPos)
-        info.edgeFace = (v.trans.rotation.y / 90 + (isInput and 2 or 0)) % 4
+local function ResolveDefaultBuildingPortEdge(point, side, width, depth)
+    local useZEdge = side == 0 or side == 2
+    
+    
+    
+    if useZEdge then
+        if depth > 0 and point.z == depth - 1 then
+            return 0, point.x
+        end
+        if point.z == 0 then
+            return 2, point.x
+        end
+    else
+        if width > 0 and point.x == width - 1 then
+            return 1, point.z
+        end
+        if point.x == 0 then
+            return 3, point.z
+        end
     end
-    for _, info in pairs(ports) do
-        if info.count > 0 then
-            info.size = info.maxPos - info.minPos + 1
+    if depth > 0 and point.z == depth - 1 then
+        return 0, point.x
+    end
+    if width > 0 and point.x == width - 1 then
+        return 1, point.z
+    end
+    if point.z == 0 then
+        return 2, point.x
+    end
+    if point.x == 0 then
+        return 3, point.z
+    end
+    return useZEdge and 0 or 1, useZEdge and point.x or point.z
+end
+
+BlueprintPreview._ResolveDefaultBuildingPorts = HL.Method(CS.Beyond.Gameplay.RemoteFactory.BlueprintBuildingEntry).Return(HL.Table) << function(self, entry)
+    local result = {}
+    local showPipePorts = false
+    local formulaMode = entry:GetFormulaMode()
+    if not formulaMode or formulaMode ~= FacConst.FAC_FORMULA_MODE_MAP.NORMAL then
+        
+        showPipePorts = true
+    end
+
+    local staticData = CS.Beyond.Gameplay.GameInstance.remoteFactoryManager and CS.Beyond.Gameplay.GameInstance.remoteFactoryManager.staticData
+    if not staticData then
+        return result
+    end
+
+    local buildingData = staticData:QueryBuildingData(entry.templateId)
+    if not buildingData then
+        return result
+    end
+
+    local width = buildingData.range.width
+    local depth = buildingData.range.depth
+    local function collectPorts(isInput, count)
+        for i = 0, count - 1 do
+            local port = isInput and buildingData:GetInputPort(i) or buildingData:GetOutputPort(i)
             
-            local buildingSize = info.edgeFace % 2 == 0 and width or depth
-            if (buildingSize - info.size) % 2 == 1 then
-                info.size = info.size + 1
+            
+            local isClosed = not string.isEmpty(formulaMode) and CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryUtil.IsPortClosedOfProducerInMode(staticData, entry.templateId, formulaMode, isInput, i)
+            if port and not isClosed and (showPipePorts or not port.isPipe) then
+                
+                
+                local edgeFace, edgePos = ResolveDefaultBuildingPortEdge(port.edge.point, port.edge.side, width, depth)
+                table.insert(result, {
+                    isInput = isInput,
+                    isPipe = port.isPipe,
+                    edgeFace = edgeFace,
+                    edgePos = edgePos,
+                    height = port.edge.point.y,
+                })
             end
         end
     end
-    return ports
+
+    collectPorts(true, buildingData.inputPortCount)
+    collectPorts(false, buildingData.outputPortCount)
+    return result
 end
 
+BlueprintPreview._BuildDefaultBuildingPortGroups = HL.Method(CS.Beyond.Gameplay.RemoteFactory.BlueprintBuildingEntry).Return(HL.Table) << function(self, entry)
+    local groupDic = {}
+    local result = {}
+    local ports = self:_ResolveDefaultBuildingPorts(entry)
+    for _, port in ipairs(ports) do
+        
+        
+        local key = string.format("%s_%d", GetPortRenderKey(port.isPipe, port.isInput), port.edgeFace)
+        local group = groupDic[key]
+        if not group then
+            group = {
+                isInput = port.isInput,
+                isPipe = port.isPipe,
+                edgeFace = port.edgeFace,
+                minPos = math.maxinteger,
+                maxPos = math.mininteger,
+                count = 0,
+                positions = {},
+            }
+            groupDic[key] = group
+            table.insert(result, group)
+        end
+        group.count = group.count + 1
+        group.minPos = math.min(group.minPos, port.edgePos)
+        group.maxPos = math.max(group.maxPos, port.edgePos)
+        table.insert(group.positions, port.edgePos)
+    end
 
+    for _, group in ipairs(result) do
+        table.sort(group.positions)
+        group.size = group.maxPos - group.minPos + 1
+        
+        group.isContinuous = group.count == group.size
+    end
+    table.sort(result, function(a, b)
+        if a.edgeFace ~= b.edgeFace then
+            return a.edgeFace < b.edgeFace
+        end
+        if a.isPipe ~= b.isPipe then
+            return a.isPipe == false
+        end
+        return a.isInput == true and b.isInput == false
+    end)
+    return result
+end
 
+BlueprintPreview._TryGetDefaultBuildingPortImgPath = HL.Method(HL.Table).Return(HL.Opt(HL.String)) << function(self, group)
+    if group.count <= 0 then
+        return
+    end
+
+    local normalPath
+    local alterPath
+    if group.isPipe then
+        normalPath = group.isInput and FacConst.BLUEPRINT_PREVIEW_PIPE_PORT_IN or FacConst.BLUEPRINT_PREVIEW_PIPE_PORT_OUT
+        alterPath = group.isInput and FacConst.BLUEPRINT_PREVIEW_PIPE_PORT_IN_ALTER or FacConst.BLUEPRINT_PREVIEW_PIPE_PORT_OUT_ALTER
+    else
+        normalPath = group.isInput and FacConst.BLUEPRINT_PREVIEW_BELT_PORT_IN or FacConst.BLUEPRINT_PREVIEW_BELT_PORT_OUT
+        alterPath = group.isInput and FacConst.BLUEPRINT_PREVIEW_BELT_PORT_IN_ALTER or FacConst.BLUEPRINT_PREVIEW_BELT_PORT_OUT_ALTER
+    end
+
+    if group.isContinuous then
+        return string.format(normalPath, group.count)
+    end
+
+    
+    
+    local supportMap = FacConst.BLUEPRINT_PREVIEW_EDGE_PORT_ALT_SUPPORT[GetPortRenderKey(group.isPipe, group.isInput)]
+    if supportMap and supportMap[group.size] and supportMap[group.size][group.count] then
+        return string.format(alterPath, group.size, group.count)
+    end
+end
+
+BlueprintPreview._GenDefaultBuildingFallbackPorts = HL.Method(HL.Table, HL.Table, HL.Number, HL.Number) << function(self, cell, group, width, depth)
+    local imgPathMap = {
+        beltIn = FacConst.BLUEPRINT_PREVIEW_BELT_PORT_IN_UNIT,
+        beltOut = FacConst.BLUEPRINT_PREVIEW_BELT_PORT_OUT_UNIT,
+        pipeIn = FacConst.BLUEPRINT_PREVIEW_PIPE_PORT_IN_UNIT,
+        pipeOut = FacConst.BLUEPRINT_PREVIEW_PIPE_PORT_OUT_UNIT,
+    }
+    local imgPath = imgPathMap[GetPortRenderKey(group.isPipe, group.isInput)]
+    if string.isEmpty(imgPath) then
+        return
+    end
+
+    for _, edgePos in ipairs(group.positions) do
+        
+        local img = cell.m_imgCache:Get()
+        img:LoadSpriteWithOutFormat(imgPath)
+        img:SetNativeSizeIgnoreRefScale()
+        img.type = CS.UnityEngine.UI.Image.Type.Simple
+        if group.edgeFace == 0 then
+            img.transform.anchoredPosition = Vector2(edgePos + 0.5, depth) * uiSizePerUnit
+            img.transform.localEulerAngles = Vector3(0, 0, 0)
+        elseif group.edgeFace == 1 then
+            img.transform.anchoredPosition = Vector2(width, edgePos + 0.5) * uiSizePerUnit
+            img.transform.localEulerAngles = Vector3(0, 0, 270)
+        elseif group.edgeFace == 2 then
+            img.transform.anchoredPosition = Vector2(edgePos + 0.5, 0) * uiSizePerUnit
+            img.transform.localEulerAngles = Vector3(0, 0, 180)
+        elseif group.edgeFace == 3 then
+            img.transform.anchoredPosition = Vector2(0, edgePos + 0.5) * uiSizePerUnit
+            img.transform.localEulerAngles = Vector3(0, 0, 90)
+        end
+        table.insert(cell.m_showingImgs, img)
+    end
+end
 
 
 
@@ -517,9 +685,6 @@ BlueprintPreview._GenPreviewConveyor = HL.Method(CS.Beyond.Gameplay.RemoteFactor
     end
 end
 
-
-
-
 BlueprintPreview._GetConveyorSegmentInfos = HL.Method(CS.Beyond.Gameplay.RemoteFactory.BlueprintConveyorEntry).Return(HL.Table) << function(self, entry)
     
     local spatialInfo = entry.spatial
@@ -561,22 +726,15 @@ end
 
 
 
-
 BlueprintPreview.m_iconCells = HL.Field(HL.Forward('UIListCache'))
-
 
 BlueprintPreview.m_changedIcons = HL.Field(HL.Table) 
 
-
 BlueprintPreview.m_curIconIndex = HL.Field(HL.Number) << -1
-
 
 BlueprintPreview.m_iconInfos = HL.Field(HL.Table)
 
-
 BlueprintPreview.m_curChangeIconTargetId = HL.Field(HL.Number) << -1
-
-
 
 
 BlueprintPreview._InitChangeIconNode = HL.Method() << function(self)
@@ -588,9 +746,6 @@ BlueprintPreview._InitChangeIconNode = HL.Method() << function(self)
     local ctrl = self:GetUICtrl()
     node.transform:SetParent(ctrl.view.transform.transform) 
 end
-
-
-
 
 BlueprintPreview._ShowChangeIconNode = HL.Method(HL.Number) << function(self, targetId)
     if self.m_curChangeIconTargetId == targetId then
@@ -620,7 +775,7 @@ BlueprintPreview._ShowChangeIconNode = HL.Method(HL.Number) << function(self, ta
         },
     }
     local _, curItemId = self:_GetTargetIconInfo(targetId)
-    if not string.isEmpty(curItemId) then
+    if not string.isEmpty(curItemId) and not FactoryUtils.isBlueprintProductIconGasEnv(curItemId) then
         
         local itemData = Tables.itemTable[curItemId]
         iconMap[curItemId] = {
@@ -654,6 +809,33 @@ BlueprintPreview._ShowChangeIconNode = HL.Method(HL.Number) << function(self, ta
             end
         end
     end
+    if bData.type == GEnums.FacBuildingType.EnvGenWithActivator then
+        local gasEntries = FactoryUtils.getEnvGenBlueprintGasProductIconEntries(templateId)
+        for _, ge in ipairs(gasEntries) do
+            if not iconMap[ge.itemId] then
+                local gasSprite = FactoryUtils.blueprintProductIconGasEnvToSpriteName(ge.itemId)
+                iconMap[ge.itemId] = {
+                    itemId = ge.itemId,
+                    icon = gasSprite,
+                    sortId1 = ge.sortId1,
+                    sortId2 = ge.sortId2,
+                    isGasBlueprintIcon = true,
+                }
+            end
+        end
+        if not string.isEmpty(curItemId) and FactoryUtils.isBlueprintProductIconGasEnv(curItemId) and not iconMap[curItemId] then
+            local gasSprite = FactoryUtils.blueprintProductIconGasEnvToSpriteName(curItemId)
+            if gasSprite then
+                iconMap[curItemId] = {
+                    itemId = curItemId,
+                    icon = gasSprite,
+                    sortId1 = 0,
+                    sortId2 = 0,
+                    isGasBlueprintIcon = true,
+                }
+            end
+        end
+    end
     self.m_iconInfos = {}
     for _, v in pairs(iconMap) do
         table.insert(self.m_iconInfos, v)
@@ -671,6 +853,11 @@ BlueprintPreview._ShowChangeIconNode = HL.Method(HL.Number) << function(self, ta
             iconCell.icon.view.icon:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, iconInfo.icon)
             iconCell.rarityLine.gameObject:SetActive(false)
             iconCell.rarityLight.gameObject:SetActive(false)
+        elseif iconInfo.isGasBlueprintIcon or FactoryUtils.isBlueprintProductIconGasEnv(iconInfo.itemId) then
+            iconCell.icon:InitItemIcon("item_gold")
+            iconCell.icon.view.icon:LoadSprite(UIConst.UI_SPRITE_FAC_GAS, iconInfo.icon or FactoryUtils.blueprintProductIconGasEnvToSpriteName(iconInfo.itemId))
+            iconCell.rarityLine.gameObject:SetActive(false)
+            iconCell.rarityLight.gameObject:SetActive(false)
         else
             iconCell.icon:InitItemIcon(iconInfo.itemId)
             iconCell.rarityLine.gameObject:SetActive(true)
@@ -679,7 +866,8 @@ BlueprintPreview._ShowChangeIconNode = HL.Method(HL.Number) << function(self, ta
             iconCell.rarityLine.color = color
             iconCell.rarityLight.color = color
         end
-        self:_UpdateAbnormalType(iconCell, templateId, iconInfo.itemId)
+        local abItemId = FactoryUtils.isBlueprintProductIconGasEnv(iconInfo.itemId) and "" or iconInfo.itemId
+        self:_UpdateAbnormalType(iconCell, templateId, abItemId)
 
         iconCell.button.onClick:RemoveAllListeners()
         iconCell.button.onClick:AddListener(function()
@@ -724,9 +912,6 @@ BlueprintPreview._ShowChangeIconNode = HL.Method(HL.Number) << function(self, ta
 end
 
 
-
-
-
 BlueprintPreview._OnClickIcon = HL.Method(HL.Number) << function(self, index)
     if index == self.m_curIconIndex then
         return
@@ -740,10 +925,9 @@ BlueprintPreview._OnClickIcon = HL.Method(HL.Number) << function(self, index)
 
     self.m_changedIcons[self.m_curChangeIconTargetId] = self.m_iconInfos[index].itemId
     self:_UpdateTargetIcon(self.m_curChangeIconTargetId)
+    
+    self:_OnEnvGenIconChanged(self.m_curChangeIconTargetId)
 end
-
-
-
 
 BlueprintPreview._HideChangeIconNode = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAni)
     local node = self.view.changeIconNode
@@ -769,9 +953,6 @@ BlueprintPreview._HideChangeIconNode = HL.Method(HL.Opt(HL.Boolean)) << function
     end
 end
 
-
-
-
 BlueprintPreview._GetTargetIconInfo = HL.Method(HL.Number).Return(HL.Opt(HL.String, HL.String, HL.Number)) << function(self, targetId)
     local itemId = self.m_changedIcons[targetId]
     local cell = self.m_id2Cell[targetId]
@@ -787,12 +968,20 @@ BlueprintPreview._GetTargetIconInfo = HL.Method(HL.Number).Return(HL.Opt(HL.Stri
         end
         return 
     end
+    if FactoryUtils.isBlueprintProductIconGasEnv(itemId) then
+        local gasSprite = FactoryUtils.blueprintProductIconGasEnvToSpriteName(itemId)
+        if gasSprite then
+            return gasSprite, itemId, 0
+        end
+        if info.type == NodeType.Building then
+            local data = Tables.factoryBuildingTable[info.entry.templateId]
+            return data.iconOnPanel, ""
+        end
+        return
+    end
     local itemData = Tables.itemTable[itemId]
     return itemData.iconId, itemId, itemData.rarity
 end
-
-
-
 
 BlueprintPreview._UpdateTargetIcon = HL.Method(HL.Number) << function(self, targetId)
     local cell = self.m_id2Cell[targetId]
@@ -804,23 +993,25 @@ BlueprintPreview._UpdateTargetIcon = HL.Method(HL.Number) << function(self, targ
     node.itemNode.gameObject:SetActive(false)
     if icon == nil then
         node.emptyNode.gameObject:SetActive(true)
+    elseif FactoryUtils.isBlueprintProductIconGasEnv(itemId) then
+        node.itemNode.gameObject:SetActive(true)
+        node.itemIcon:InitItemIcon("item_gold")
+        node.itemIcon.view.icon:LoadSprite(UIConst.UI_SPRITE_FAC_GAS, icon)
+        node.rarityIcon.gameObject:SetActiveIfNecessary(false)
+        self:_UpdateAbnormalType(node, info.entry.templateId, "")
     elseif string.isEmpty(itemId) then
         node.machineIcon.gameObject:SetActive(true)
         node.machineIcon:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, icon)
     else
         node.itemNode.gameObject:SetActive(true)
         node.itemIcon:InitItemIcon(itemId)
+        node.rarityIcon.gameObject:SetActiveIfNecessary(true)
         local color = UIUtils.getItemRarityColor(rarity)
         node.rarityIcon.color = color
         self:_UpdateAbnormalType(node, info.entry.templateId, itemId)
     end
     node.changeHint.gameObject:SetActive(info.canChangeIcon)
 end
-
-
-
-
-
 
 BlueprintPreview._UpdateAbnormalType = HL.Method(HL.Any, HL.String, HL.Opt(HL.String)) << function(self, node, machineId, itemId)
     local iconAbnormalType
@@ -837,8 +1028,6 @@ BlueprintPreview._UpdateAbnormalType = HL.Method(HL.Any, HL.String, HL.Opt(HL.St
     FactoryUtils.setTimeLimitedItemTagColor(node.timeLimitedColorTag, itemId)
 end
 
-
-
 BlueprintPreview.ApplyIconChanges = HL.Method() << function(self)
     for targetId, itemId in pairs(self.m_changedIcons) do
         local cell = self.m_id2Cell[targetId]
@@ -846,8 +1035,6 @@ BlueprintPreview.ApplyIconChanges = HL.Method() << function(self)
         info.entry.productIcon = itemId
     end
 end
-
-
 
 BlueprintPreview.GetChangedIcons = HL.Method().Return(HL.Opt(HL.Table)) << function(self)
     if not self:HasIconChanged() then
@@ -862,8 +1049,6 @@ BlueprintPreview.GetChangedIcons = HL.Method().Return(HL.Opt(HL.Table)) << funct
     return dic
 end
 
-
-
 BlueprintPreview.HasIconChanged = HL.Method().Return(HL.Boolean) << function(self)
     return next(self.m_changedIcons) ~= nil
 end
@@ -874,12 +1059,266 @@ end
 
 
 
-BlueprintPreview.m_curHoverTargetId = HL.Field(HL.Any)
 
+
+
+
+
+BlueprintPreview._CollectEnvGenCoverInfos = HL.Method() << function(self)
+    self.m_envGenCoverInfos = {}
+    for _, info in pairs(self.m_showingCellDic) do
+        if info.type == NodeType.Building then
+            local templateId = info.entry.templateId
+            local isBuilding, bData = Tables.factoryBuildingTable:TryGetValue(templateId)
+            if isBuilding and bData.type == GEnums.FacBuildingType.EnvGenWithActivator then
+                local ok, vapoData = Tables.factoryVaporizerTable:TryGetValue(templateId)
+                if ok then
+                    local extend = vapoData.rangeExtend
+                    local minX, minY, w, d = GetBuildingGridRect(info.entry, bData, extend.x, extend.z)
+                    table.insert(self.m_envGenCoverInfos, {
+                        targetId = info.id,
+                        minX = minX,
+                        minY = minY,
+                        w = w,
+                        d = d,
+                    })
+                end
+            end
+        end
+    end
+end
+
+
+
+
+BlueprintPreview._RefreshAllEnvReceiverIcons = HL.Method() << function(self)
+    for _, info in pairs(self.m_showingCellDic) do
+        if info.type == NodeType.Building and FactoryUtils.isEnvReceiverBuilding(info.entry.templateId) then
+            self:_UpdateEnvReceiverIcon(info.id)
+        end
+    end
+end
+
+
+BlueprintPreview._UpdateEnvReceiverIcon = HL.Method(HL.Number) << function(self, targetId)
+    local cell = self.m_id2Cell[targetId]
+    local info = self.m_showingCellDic[cell]
+    local gasSprite = self:_ResolveEnvReceiverGasSprite(info)
+    if gasSprite then
+        cell.envNode.gameObject:SetActive(true)
+        cell.envIcon:LoadSprite(UIConst.UI_SPRITE_FAC_GAS, gasSprite)
+    else
+        cell.envNode.gameObject:SetActive(false)
+    end
+end
+
+
+
+BlueprintPreview._ResolveEnvReceiverGasSprite = HL.Method(HL.Table).Return(HL.Opt(HL.String)) << function(self, info)
+    if self.m_envGenCoverInfos == nil then
+        return nil
+    end
+    local _, bData = Tables.factoryBuildingTable:TryGetValue(info.entry.templateId)
+    if not bData then
+        return nil
+    end
+    local devMinX, devMinY, devW, devD = GetBuildingGridRect(info.entry, bData)
+    local devMaxX = devMinX + devW
+    local devMaxY = devMinY + devD
+    for _, cover in ipairs(self.m_envGenCoverInfos) do
+        
+        if devMinX >= cover.minX and devMaxX <= cover.minX + cover.w
+            and devMinY >= cover.minY and devMaxY <= cover.minY + cover.d then
+            local _, sgItemId = self:_GetTargetIconInfo(cover.targetId)
+            if not string.isEmpty(sgItemId) and FactoryUtils.isBlueprintProductIconGasEnv(sgItemId) then
+                
+                return FactoryUtils.blueprintProductIconGasEnvToEffectedSpriteName(sgItemId)
+            end
+            return nil
+        end
+    end
+    return nil
+end
+
+
+
+BlueprintPreview._OnEnvGenIconChanged = HL.Method(HL.Number) << function(self, targetId)
+    local cell = self.m_id2Cell[targetId]
+    local info = cell and self.m_showingCellDic[cell]
+    if not info or info.type ~= NodeType.Building then
+        return
+    end
+    local isBuilding, bData = Tables.factoryBuildingTable:TryGetValue(info.entry.templateId)
+    if isBuilding and bData.type == GEnums.FacBuildingType.EnvGenWithActivator then
+        self:_RefreshAllEnvReceiverIcons()
+    end
+end
+
+
+
+
+
+
+BlueprintPreview.m_curHoverTargetId = HL.Field(HL.Any)
 
 BlueprintPreview.m_curHoverTargetId2 = HL.Field(HL.Any)
 
 
+
+
+
+
+
+
+BlueprintPreview._TryGetUdpipeConnection = HL.Method(HL.Number).Return(HL.Boolean, HL.Boolean, HL.Opt(HL.Number)) << function(self, targetId)
+    local cell = self.m_id2Cell[targetId]
+    local info = cell and self.m_showingCellDic[cell]
+    
+    if not info or (info.type ~= NodeType.Building and info.type ~= NodeType.Logistic) then
+        return false, false, nil
+    end
+    
+    if not info.entry:IsUdpipe() then
+        return false, false, nil
+    end
+    
+    local peerNodeId = info.entry:GetUdpipeConnectedNodeId()
+    if peerNodeId == 0 then
+        return true, false, nil
+    end
+    
+    
+    local peerTargetId = self.m_nodeIdToTargetId[peerNodeId]
+    if not peerTargetId then
+        return true, false, nil
+    end
+    return true, true, peerTargetId
+end
+
+
+
+
+
+BlueprintPreview._SetUdpipeCellSelected = HL.Method(HL.Number, HL.Boolean) << function(self, targetId, isSelected)
+    local cell = self.m_id2Cell[targetId]
+    if not cell then
+        return
+    end
+    cell.udpipeStateStateController:SetState(isSelected and "Selected" or "NotSelected")
+end
+
+
+
+
+
+BlueprintPreview._UpdatePipeConnectionLine = HL.Method() << function(self)
+    if not self.m_pinnedUdpipeTargetId or not self.m_pinnedUdpipePeerTargetId then
+        self.view.pipeConnectionLine.gameObject:SetActive(false)
+        return
+    end
+    local cell1 = self.m_id2Cell[self.m_pinnedUdpipeTargetId]
+    local cell2 = self.m_id2Cell[self.m_pinnedUdpipePeerTargetId]
+    local info1 = self.m_showingCellDic[cell1]
+    local cell1IsLoader = FacConst.UDPIPE_PORT_LOAD_TYPE_MAP[info1.entry.templateId]
+    local fromCell = cell1IsLoader and cell1 or cell2
+    local toCell = cell1IsLoader and cell2 or cell1
+    
+    local fromCenter = fromCell.transform.anchoredPosition
+    local toCenter = toCell.transform.anchoredPosition
+    local delta = toCenter - fromCenter
+    local len = delta.magnitude
+    local pl = self.view.pipeConnectionLine.transform
+    pl.gameObject:SetActive(true)
+    
+    pl.anchorMin = Vector2.zero
+    pl.anchorMax = Vector2.zero
+    pl.anchoredPosition = fromCenter
+    
+    pl.sizeDelta = Vector2(len, pl.sizeDelta.y)
+    pl.localEulerAngles = Vector3(0, 0, math.deg(math.atan(delta.y, delta.x)))
+    
+    pl:SetAsLastSibling()
+end
+
+
+BlueprintPreview._PinUdpipe = HL.Method(HL.Number, HL.Number) << function(self, targetId, peerTargetId)
+    if self.m_pinnedUdpipeTargetId then
+        
+        self:_SetUdpipeCellSelected(self.m_pinnedUdpipeTargetId, false)
+        self:_SetUdpipeCellSelected(self.m_pinnedUdpipePeerTargetId, false)
+    end
+    self.m_pinnedUdpipeTargetId = targetId
+    self.m_pinnedUdpipePeerTargetId = peerTargetId
+    self:_SetUdpipeCellSelected(targetId, true)
+    self:_SetUdpipeCellSelected(peerTargetId, true)
+    self:_UpdatePipeConnectionLine()
+    self:_RefreshViewConnectionHint()
+end
+
+
+BlueprintPreview._UnpinUdpipe = HL.Method() << function(self)
+    if not self.m_pinnedUdpipeTargetId then
+        return
+    end
+    self:_SetUdpipeCellSelected(self.m_pinnedUdpipeTargetId, false)
+    self:_SetUdpipeCellSelected(self.m_pinnedUdpipePeerTargetId, false)
+    self.m_pinnedUdpipeTargetId = nil
+    self.m_pinnedUdpipePeerTargetId = nil
+    self.view.pipeConnectionLine.gameObject:SetActive(false)
+    self:_RefreshViewConnectionHint()
+end
+
+
+
+
+
+
+BlueprintPreview._RefreshViewConnectionHint = HL.Method() << function(self)
+    if not DeviceInfo.usingController then
+        return
+    end
+    if self.m_viewConnBindingId <= 0 then
+        return
+    end
+    local enable = false
+    local targetId = self.m_curHoverTargetId
+    if targetId then
+        local isUdpipe, isConnected = self:_TryGetUdpipeConnection(targetId)
+        enable = isUdpipe and isConnected
+    end
+    InputManagerInst:ToggleBinding(self.m_viewConnBindingId, enable)
+    if enable then
+        
+        local isPinnedPair = (targetId == self.m_pinnedUdpipeTargetId)
+            or (targetId == self.m_pinnedUdpipePeerTargetId)
+        InputManagerInst:SetBindingText(self.m_viewConnBindingId,
+            isPinnedPair and Language.LUA_BLUEPRINT_PREVIEW_UDPIPE_KEYHINT_HIDE
+                or Language.LUA_BLUEPRINT_PREVIEW_UDPIPE_KEYHINT_SHOW)
+    end
+end
+
+
+
+
+
+
+BlueprintPreview._SetCurrentHoveredUdpipe = HL.Method(HL.Opt(HL.Number)) << function(self, newTargetId)
+    if self.m_lastHoveredUdpipeTargetId == newTargetId then
+        return
+    end
+    if not DeviceInfo.usingTouch then
+        local oldTargetId = self.m_lastHoveredUdpipeTargetId
+        if oldTargetId then
+            local oldCell = self.m_id2Cell[oldTargetId]
+            if oldCell then oldCell.udpipeState:PlayOutAnimation() end
+        end
+        if newTargetId then
+            local newCell = self.m_id2Cell[newTargetId]
+            if newCell then newCell.udpipeState:PlayInAnimation() end
+        end
+    end
+    self.m_lastHoveredUdpipeTargetId = newTargetId
+end
 
 
 BlueprintPreview._UpdateHoverPos = HL.Method() << function(self)
@@ -933,6 +1372,7 @@ BlueprintPreview._UpdateHoverPos = HL.Method() << function(self)
             self:_CancelHover()
         end
         self.view.controllerEditBtn.interactable = false
+        self:_RefreshViewConnectionHint()
         return
     end
 
@@ -944,8 +1384,6 @@ BlueprintPreview._UpdateHoverPos = HL.Method() << function(self)
         
         return
     end
-
-    self.view.controllerEditBtn.interactable = info1.canChangeIcon
 
     self.m_curHoverTargetId = id1
     if id2 == 0 then
@@ -974,49 +1412,80 @@ BlueprintPreview._UpdateHoverPos = HL.Method() << function(self)
         self.view.hoverHint.transform.sizeDelta = cell1.transform.sizeDelta
         self.view.hoverHint.transform.anchoredPosition = cell1.transform.anchoredPosition
     end
+
+    
+    local isUdpipe, isConnected = self:_TryGetUdpipeConnection(self.m_curHoverTargetId)
+    self:_SetCurrentHoveredUdpipe(isUdpipe and self.m_curHoverTargetId or nil)
+    
+    
+    self.view.controllerEditBtn.interactable = info1.canChangeIcon
+    self:_RefreshViewConnectionHint()
 end
-
-
 
 BlueprintPreview._CancelHover = HL.Method() << function(self)
     self.m_curHoverTargetId = nil
     self.m_curHoverTargetId2 = nil
     self.view.hoverHint.gameObject:SetActive(false)
     self.view.hoverTipsNode.gameObject:SetActive(false)
+    
+    self:_SetCurrentHoveredUdpipe(nil)
+    
+    self:_RefreshViewConnectionHint()
+    
+    
 end
 
-
-
 BlueprintPreview._OnClick = HL.Method() << function(self)
-    if not self.m_canEdit then
+    self:_UpdateHoverPos()
+
+    
+    if not self.m_curHoverTargetId then
         return
     end
 
-    self:_UpdateHoverPos()
+    local clickedTargetId = self.m_curHoverTargetId
+    local info = self.m_showingCellDic[self.m_id2Cell[clickedTargetId]]
 
-    if self.m_curHoverTargetId then
-        local info = self.m_showingCellDic[self.m_id2Cell[self.m_curHoverTargetId]]
-        if not info.canChangeIcon then
-            return
-        end
-        self:_ShowChangeIconNode(self.m_curHoverTargetId)
-        
+    
+    if self.m_canEdit and info.canChangeIcon then
+        self:_ShowChangeIconNode(clickedTargetId)
+        return
     end
-    if self.m_curHoverTargetId2 then
+
+    
+    self:_ToggleUdpipePin(clickedTargetId)
+end
+
+
+
+BlueprintPreview._ToggleUdpipePin = HL.Method(HL.Number) << function(self, clickedTargetId)
+    local isUdpipe, isConnected, peerTargetId = self:_TryGetUdpipeConnection(clickedTargetId)
+    if not (isUdpipe and isConnected) then
+        return
+    end
+    if self.m_pinnedUdpipeTargetId == clickedTargetId or self.m_pinnedUdpipePeerTargetId == clickedTargetId then
         
+        self:_UnpinUdpipe()
+    else
+        
+        self:_PinUdpipe(clickedTargetId, peerTargetId)
     end
 end
 
 
+
+BlueprintPreview._OnControllerViewConnection = HL.Method() << function(self)
+    self:_UpdateHoverPos()
+    if not self.m_curHoverTargetId then
+        return
+    end
+    self:_ToggleUdpipePin(self.m_curHoverTargetId)
+end
 
 BlueprintPreview._UpdateHoverTips = HL.Method() << function(self)
     self:_UpdateSingleHoverTips(self.view.hoverTipsCell, self.m_curHoverTargetId)
     self:_UpdateSingleHoverTips(self.view.hoverTipsCell2, self.m_curHoverTargetId2)
 end
-
-
-
-
 
 BlueprintPreview._UpdateSingleHoverTips = HL.Method(HL.Table, HL.Any) << function(self, cell, targetId)
     if not targetId then
@@ -1065,9 +1534,14 @@ BlueprintPreview._UpdateSingleHoverTips = HL.Method(HL.Table, HL.Any) << functio
     cell.nameTxt.text = name
     local itemData = Tables.itemTable[itemId]
     cell.rarityLine.color = UIUtils.getItemRarityColor(itemData.rarity)
+
+    
+    local isUdpipe, isConnected, _ = self:_TryGetUdpipeConnection(targetId)
+    cell.connectionStatusNode.gameObject:SetActive(isUdpipe)
+    if isUdpipe then
+        cell.connectionStatusNode:SetState(isConnected and "Connected" or "Disconnected")
+    end
 end
-
-
 
 
 
@@ -1083,15 +1557,11 @@ BlueprintPreview._OnEnable = HL.Override() << function(self)
     end
 end
 
-
-
 BlueprintPreview._OnDisable = HL.Override() << function(self)
     if self.m_updateId then
         self.m_updateId = LuaUpdate:Remove(self.m_updateId)
     end
 end
-
-
 
 BlueprintPreview._OnDestroy = HL.Override() << function(self)
     if self.m_updateId then
@@ -1099,16 +1569,11 @@ BlueprintPreview._OnDestroy = HL.Override() << function(self)
     end
 end
 
-
-
 BlueprintPreview._GetNextTargetId = HL.Method().Return(HL.Number) << function(self)
     local id = self.m_nextTargetId
     self.m_nextTargetId = self.m_nextTargetId + 1
     return id
 end
-
-
-
 
 BlueprintPreview._PrepareCellImgCache = HL.Method(HL.Any) << function(self, cell)
     if not cell.m_imgCache then

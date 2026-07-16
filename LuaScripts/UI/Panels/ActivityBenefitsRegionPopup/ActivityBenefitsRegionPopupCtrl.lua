@@ -2,19 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityBenefitsRegionPopup
 
-
-
-
-
-
-
-
-
-
-
-
 ActivityBenefitsRegionPopupCtrl = HL.Class('ActivityBenefitsRegionPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -25,12 +13,9 @@ ActivityBenefitsRegionPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_BENEFIT_REFRESH] = '_OnRefresh',
 }
 
-
 ActivityBenefitsRegionPopupCtrl.m_conditionCells = HL.Field(HL.Any)
 
-
 ActivityBenefitsRegionPopupCtrl.m_cells = HL.Field(HL.Any)
-
 
 ActivityBenefitsRegionPopupCtrl.m_firstCell = HL.Field(HL.Any)
 
@@ -38,9 +23,6 @@ local configName = {
     levelUp = 1,
     shop = 2,
 }
-
-
-
 
 
 ActivityBenefitsRegionPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -62,13 +44,10 @@ ActivityBenefitsRegionPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self,
 
     
     if DeviceInfo.usingController then
-        UIUtils.setAsNaviTarget(self.m_firstCell.button)
+        self:SetNaviTarget(self.m_firstCell.button)
         self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputBindingGroupMonoTarget.groupId })
     end
 end
-
-
-
 
 ActivityBenefitsRegionPopupCtrl._OnRefresh = HL.Method(HL.Table) << function(self, arg)
     self:_RefreshInfo(arg)
@@ -77,11 +56,7 @@ ActivityBenefitsRegionPopupCtrl._OnRefresh = HL.Method(HL.Table) << function(sel
     end)
 end
 
-
 ActivityBenefitsRegionPopupCtrl.m_benefitInfo = HL.Field(HL.Table)
-
-
-
 
 ActivityBenefitsRegionPopupCtrl._RefreshInfo = HL.Method(HL.Table) << function(self, arg)
     
@@ -149,10 +124,6 @@ ActivityBenefitsRegionPopupCtrl._RefreshInfo = HL.Method(HL.Table) << function(s
     table.sort(self.m_benefitInfo, Utils.genSortFunction({"sortId"}, true))
 end
 
-
-
-
-
 ActivityBenefitsRegionPopupCtrl._OnUpdateCell = HL.Method(HL.Any,HL.Number) << function(self, cell, index)
     local info = self.m_benefitInfo[index]
     if index == 1 then
@@ -214,8 +185,6 @@ ActivityBenefitsRegionPopupCtrl._OnUpdateCell = HL.Method(HL.Any,HL.Number) << f
         end)
     end
 end
-
-
 
 ActivityBenefitsRegionPopupCtrl._Close = HL.Method() << function(self)
     self:PlayAnimationOutAndClose()

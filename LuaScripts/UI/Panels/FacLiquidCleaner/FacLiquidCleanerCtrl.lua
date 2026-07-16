@@ -9,77 +9,29 @@ local InfoState = {
     Paused = "Paused",
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacLiquidCleanerCtrl = HL.Class('FacLiquidCleanerCtrl', uiCtrl.UICtrl)
-
 
 FacLiquidCleanerCtrl.m_buildingInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_FluidConsume)
 
-
 FacLiquidCleanerCtrl.m_updateThread = HL.Field(HL.Thread)
-
 
 FacLiquidCleanerCtrl.m_progressInitThread = HL.Field(HL.Thread)
 
-
 FacLiquidCleanerCtrl.m_progressUpdateThread = HL.Field(HL.Thread)
-
 
 FacLiquidCleanerCtrl.m_needRefreshProgress = HL.Field(HL.Boolean) << false
 
-
 FacLiquidCleanerCtrl.m_sewageItemData = HL.Field(HL.Table)
-
 
 FacLiquidCleanerCtrl.m_validLiquidIds = HL.Field(HL.Table)
 
-
 FacLiquidCleanerCtrl.m_infoState = HL.Field(HL.String) << ""
-
 
 FacLiquidCleanerCtrl.m_lastValidItemId = HL.Field(HL.String) << ""
 
-
 FacLiquidCleanerCtrl.m_isItemDirty = HL.Field(HL.Boolean) << false
 
-
 FacLiquidCleanerCtrl.m_isPipeBlocked = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -88,9 +40,6 @@ FacLiquidCleanerCtrl.m_isPipeBlocked = HL.Field(HL.Boolean) << false
 FacLiquidCleanerCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 FacLiquidCleanerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -114,7 +63,7 @@ FacLiquidCleanerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.facCacheRepository:InitFacCacheRepository({
         cache = self.m_buildingInfo.fluidCache,
         isInCache = true,
-        isFluidCache = true,
+        cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid,
         cacheIndex = 1,
         slotCount = 1,
         fakeFormulaDataList = FactoryUtils.getBuildingCrafts(self.m_buildingInfo.buildingId)
@@ -148,13 +97,9 @@ FacLiquidCleanerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitCleanerUpdateThread()
 end
 
-
-
 FacLiquidCleanerCtrl.OnClose = HL.Override() << function(self)
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_buildingInfo.nodeId)
 end
-
-
 
 FacLiquidCleanerCtrl._InitCleanerStaticData = HL.Method() << function(self)
     self.m_validLiquidIds = {}
@@ -169,8 +114,6 @@ FacLiquidCleanerCtrl._InitCleanerStaticData = HL.Method() << function(self)
 end
 
 
-
-
 FacLiquidCleanerCtrl._InitCleanerUpdateThread = HL.Method() << function(self)
     self:_UpdateAndRefreshAll()
     self.m_updateThread = self:_StartCoroutine(function()
@@ -180,8 +123,6 @@ FacLiquidCleanerCtrl._InitCleanerUpdateThread = HL.Method() << function(self)
         end
     end)
 end
-
-
 
 FacLiquidCleanerCtrl._UpdateAndRefreshAll = HL.Method() << function(self)
     self:_UpdateCleanerCacheItemData()
@@ -193,8 +134,6 @@ FacLiquidCleanerCtrl._UpdateAndRefreshAll = HL.Method() << function(self)
         self.m_isItemDirty = false
     end
 end
-
-
 
 
 
@@ -216,9 +155,6 @@ FacLiquidCleanerCtrl._UpdateCleanerCacheItemData = HL.Method() << function(self)
     self.m_lastValidItemId = self.m_sewageItemData.id
 end
 
-
-
-
 FacLiquidCleanerCtrl._OnPipeStateChanged = HL.Method(HL.Table) << function(self, pipeInfo)
     if pipeInfo == nil then
         return
@@ -227,9 +163,6 @@ FacLiquidCleanerCtrl._OnPipeStateChanged = HL.Method(HL.Table) << function(self,
     self.m_isPipeBlocked = pipeInfo.isBlock
     self:_RefreshCleanerTipsVisibleState()
 end
-
-
-
 
 FacLiquidCleanerCtrl._RefreshCleanerTipsVisibleState = HL.Method(HL.Opt(HL.Userdata)) << function(self, state)
     local cacheItemId = self:_GetCleanerCacheItemData()
@@ -245,8 +178,6 @@ FacLiquidCleanerCtrl._RefreshCleanerTipsVisibleState = HL.Method(HL.Opt(HL.Userd
     UIUtils.PlayAnimationAndToggleActive(self.view.tipsTextNode.animationWrapper, needShowTips)
 end
 
-
-
 FacLiquidCleanerCtrl._ClearCleanerItemData = HL.Method() << function(self)
     self.m_lastValidItemId = ""
     self.m_sewageItemData = {
@@ -256,16 +187,12 @@ FacLiquidCleanerCtrl._ClearCleanerItemData = HL.Method() << function(self)
     self.m_isItemDirty = true
 end
 
-
-
 FacLiquidCleanerCtrl._GetCleanerCacheItemData = HL.Method().Return(HL.String, HL.Number) << function(self)
     for itemId, itemCount in pairs(self.m_buildingInfo.fluidCache.items) do
         return itemId, itemCount
     end
     return "", 0
 end
-
-
 
 
 
@@ -305,14 +232,10 @@ end
 
 
 
-
-
 FacLiquidCleanerCtrl._InitCleanerFormulaNode = HL.Method() << function(self)
     self.view.formulaNode:InitFormulaNode(self.m_buildingInfo)
     self:_RefreshCleanerTargetFormula()
 end
-
-
 
 FacLiquidCleanerCtrl._RefreshCleanerTargetFormula = HL.Method(HL.Opt(HL.Userdata)) << function(self, state)
     local targetCraftInfo = FactoryUtils.getBuildingProcessingCraft(self.m_buildingInfo)
@@ -329,8 +252,6 @@ end
 
 
 
-
-
 FacLiquidCleanerCtrl._InitCleanerProgressInitThread = HL.Method() << function(self)
     self:_UpdateCleanerProgressInitializedState()
     self.m_progressInitThread = self:_StartCoroutine(function()
@@ -341,8 +262,6 @@ FacLiquidCleanerCtrl._InitCleanerProgressInitThread = HL.Method() << function(se
     end)
 end
 
-
-
 FacLiquidCleanerCtrl._InitCleanerProgressUpdateThread = HL.Method() << function(self)
     self:_RefreshCleanerProgress()
     self.m_progressUpdateThread = self:_StartCoroutine(function()
@@ -352,8 +271,6 @@ FacLiquidCleanerCtrl._InitCleanerProgressUpdateThread = HL.Method() << function(
         end
     end)
 end
-
-
 
 FacLiquidCleanerCtrl._UpdateCleanerProgressInitializedState = HL.Method() << function(self)
     if self.m_buildingInfo.fluidConsume.progressIncrPerMS == 0 then
@@ -369,8 +286,6 @@ FacLiquidCleanerCtrl._UpdateCleanerProgressInitializedState = HL.Method() << fun
     self.m_progressInitThread = self:_ClearCoroutine(self.m_progressInitThread)
 end
 
-
-
 FacLiquidCleanerCtrl._RefreshCleanerProgressNode = HL.Method() << function(self)
     if string.isEmpty(self.m_lastValidItemId) or self.m_buildingInfo.fluidConsume.progressIncrPerMS == 0 then
         self:_StopCleanerProgressRefresh()
@@ -382,8 +297,6 @@ FacLiquidCleanerCtrl._RefreshCleanerProgressNode = HL.Method() << function(self)
     end
 end
 
-
-
 FacLiquidCleanerCtrl._RefreshCleanerProgress = HL.Method() << function(self)
     if not self.m_needRefreshProgress then
         return
@@ -392,23 +305,14 @@ FacLiquidCleanerCtrl._RefreshCleanerProgress = HL.Method() << function(self)
     self.view.facProgressNode:UpdateProgress(self.m_buildingInfo.fluidConsume.currentProgress)
 end
 
-
-
 FacLiquidCleanerCtrl._StopCleanerProgressRefresh = HL.Method() << function(self)
     self.view.facProgressNode:InitFacProgressNode(0, 0)
     self.m_needRefreshProgress = false
 end
 
-
-
-
 FacLiquidCleanerCtrl._RefreshChangeState = HL.Method(HL.Userdata) << function(self, state)
     FactoryUtils.refreshStateNodeByState(self.view.facStateNode, self.view.facProgressNode, state)
 end
-
-
-
-
 
 
 
@@ -422,8 +326,8 @@ FacLiquidCleanerCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) 
 
     
     local itemId = itemBundle.id
-    local isEmptyBottle = Tables.emptyBottleTable:ContainsKey(itemId)
-    local isFullBottle = Tables.fullBottleTable:ContainsKey(itemId)
+    local isEmptyBottle = FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+    local isFullBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
     local isBottle = isEmptyBottle or isFullBottle
     local isEmpty = string.isEmpty(itemBundle.id)
     local needMask = not isBottle and not isEmpty
@@ -447,10 +351,7 @@ end
 
 
 
-
 FacLiquidCleanerCtrl.m_naviGroupSwitcher = HL.Field(HL.Forward('NaviGroupSwitcher'))
-
-
 
 FacLiquidCleanerCtrl._InitFacMachineCrafterController = HL.Method() << function(self)
     local NaviGroupSwitcher = require_ex("Common/Utils/UI/NaviGroupSwitcher").NaviGroupSwitcher
@@ -458,8 +359,6 @@ FacLiquidCleanerCtrl._InitFacMachineCrafterController = HL.Method() << function(
 
     self:_RefreshNaviGroupSwitcherInfos()
 end
-
-
 
 FacLiquidCleanerCtrl._RefreshNaviGroupSwitcherInfos = HL.Method() << function(self)
     if self.m_naviGroupSwitcher == nil then

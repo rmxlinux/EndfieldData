@@ -1,31 +1,15 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 SkillTipCell = HL.Class('SkillTipCell', UIWidgetBase)
-
-
 
 
 SkillTipCell._OnFirstTimeInit = HL.Override() << function(self)
     
 end
 
-
 SkillTipCell.info = HL.Field(HL.Table)
 
-
 SkillTipCell.onClick = HL.Field(HL.Function)
-
-
-
-
-
 
 SkillTipCell.InitSkillTipCell = HL.Method(HL.Any, HL.Boolean, HL.Opt(HL.Function)) << function(self, info, isSelectable, onClick)
     self:_FirstTimeInit()
@@ -47,8 +31,6 @@ SkillTipCell.InitSkillTipCell = HL.Method(HL.Any, HL.Boolean, HL.Opt(HL.Function
     end
     self:_InitBaseInfo()
 end
-
-
 
 SkillTipCell._InitBaseInfo = HL.Method() << function(self)
     local skillData = self.info.skillData
@@ -118,10 +100,6 @@ SkillTipCell._InitBaseInfo = HL.Method() << function(self)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.bottomButtons.transform)
 
 end
-
-
-
-
 
 SkillTipCell.PlayAnim = HL.Method(HL.String, HL.Opt(HL.Function)) << function(self, name, callback)
     if callback then

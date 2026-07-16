@@ -1,34 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SNSSubDialogCell = HL.Class('SNSSubDialogCell', UIWidgetBase)
-
 
 SNSSubDialogCell.m_chatId = HL.Field(HL.String) << ""
 
-
 SNSSubDialogCell.m_dialogId = HL.Field(HL.String) << ""
-
 
 SNSSubDialogCell.m_onClickSubCellFunc = HL.Field(HL.Function)
 
-
 SNSSubDialogCell.m_isTopic = HL.Field(HL.Boolean) << false
-
-
 
 
 SNSSubDialogCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -54,8 +34,6 @@ SNSSubDialogCell._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 SNSSubDialogCell._OnEnable = HL.Override() << function(self)
     if self.m_isFirstTimeInit then
         return
@@ -63,11 +41,6 @@ SNSSubDialogCell._OnEnable = HL.Override() << function(self)
 
     self:_RefreshTopicRedDotState()
 end
-
-
-
-
-
 
 SNSSubDialogCell._OnSNSDialogModify = HL.Method(HL.String, HL.String, HL.Number) << function(self, chatId, dialogId, contentId)
     
@@ -83,9 +56,6 @@ SNSSubDialogCell._OnSNSDialogModify = HL.Method(HL.String, HL.String, HL.Number)
     self:_RefreshDialogInfo(contentId)
 end
 
-
-
-
 SNSSubDialogCell._OnReadSNSDialog = HL.Method(HL.String) << function(self, dialogId)
     if not self.m_isTopic then
         return
@@ -98,9 +68,6 @@ SNSSubDialogCell._OnReadSNSDialog = HL.Method(HL.String) << function(self, dialo
 
     self:_RefreshTopicRedDotState()
 end
-
-
-
 
 SNSSubDialogCell._RefreshDialogInfo = HL.Method(HL.Opt(HL.Number)) << function(self, contentId)
     local isEnd
@@ -154,8 +121,6 @@ SNSSubDialogCell._RefreshDialogInfo = HL.Method(HL.Opt(HL.Number)) << function(s
     self.view.stateController:SetState(isEnd and "Finish" or "Progress")
 end
 
-
-
 SNSSubDialogCell._RefreshTopicRedDotState = HL.Method() << function(self)
     local redState = RedDotManager:GetRedDotState("SNSContactNpcCellTopic", self.m_chatId)
     local loopClip = self.view.topicNormalIcon.animationLoop
@@ -169,18 +134,11 @@ SNSSubDialogCell._RefreshTopicRedDotState = HL.Method() << function(self)
     end
 end
 
-
-
 SNSSubDialogCell._OnClickSubCell = HL.Method() << function(self)
     if self.m_onClickSubCellFunc then
         self.m_onClickSubCellFunc(self.m_chatId, self.m_dialogId, self)
     end
 end
-
-
-
-
-
 
 SNSSubDialogCell.InitSNSSubDialogCell = HL.Method(HL.String, HL.String, HL.Function)
         << function(self, chatId, dialogId, onClickSubCell)
@@ -205,10 +163,6 @@ SNSSubDialogCell.InitSNSSubDialogCell = HL.Method(HL.String, HL.String, HL.Funct
         self.view.redDot:InitRedDot("SNSNormalDialogSubCell", dialogId)
     end
 end
-
-
-
-
 
 SNSSubDialogCell.SetSelected = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, selected, isInit)
     if isInit == true then

@@ -1,21 +1,8 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 GemCustomizationBoxTermCell = HL.Class('GemCustomizationBoxTermCell', UIWidgetBase)
 
-
 GemCustomizationBoxTermCell.m_termId = HL.Field(HL.String) << ""
-
-
 
 
 GemCustomizationBoxTermCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -26,19 +13,11 @@ GemCustomizationBoxTermCell._OnFirstTimeInit = HL.Override() << function(self)
     end
 end
 
-
-
-
 GemCustomizationBoxTermCell.InitGemCustomizationBoxTermCell = HL.Method(HL.String) << function(self, termId)
     self:_FirstTimeInit()
 
     self.m_termId = termId
 end
-
-
-
-
-
 
 GemCustomizationBoxTermCell.RefreshUI = HL.Method(HL.String, HL.Table, HL.Boolean)
     << function(self, termId, currSelectInfo, canSelectGroup)
@@ -64,9 +43,6 @@ GemCustomizationBoxTermCell.RefreshUI = HL.Method(HL.String, HL.Table, HL.Boolea
     self:_SetupText();
 end
 
-
-
-
 GemCustomizationBoxTermCell.RefreshUIInPreviewMode = HL.Method(HL.String)
     << function(self, termId)
     self.m_termId = termId
@@ -74,13 +50,9 @@ GemCustomizationBoxTermCell.RefreshUIInPreviewMode = HL.Method(HL.String)
     self:_SetupText();
 end
 
-
-
 GemCustomizationBoxTermCell.GetTermId = HL.Method().Return(HL.String) << function(self)
     return self.m_termId
 end
-
-
 
 GemCustomizationBoxTermCell._SetupText = HL.Method() << function(self)
     local _, termCfg = Tables.gemTable:TryGetValue(self.m_termId)
@@ -93,14 +65,9 @@ GemCustomizationBoxTermCell._SetupText = HL.Method() << function(self)
     self.view.name:SetAndResolveTextStyle(string.format(skillNameFormat, termCfg.tagName))
 end
 
-
-
 GemCustomizationBoxTermCell._OnBtnClick = HL.Method() << function(self)
     Notify(MessageConst.ON_GEMCUSTOMIZATIONBOX_TERM_SELECT, self.m_termId)
 end
-
-
-
 
 
 GemCustomizationBoxTermCell.CheckTermIdIsSelected = HL.StaticMethod(HL.String, HL.Table).Return(HL.Number)

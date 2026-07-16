@@ -2,13 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonTips
 
-
-
-
-
-
 CommonTipsCtrl = HL.Class('CommonTipsCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -17,9 +11,6 @@ CommonTipsCtrl = HL.Class('CommonTipsCtrl', uiCtrl.UICtrl)
 
 CommonTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
-
-
-
 
 
 CommonTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -31,15 +22,10 @@ CommonTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder.gameObject:SetActive(false)
 end
 
-
-
 CommonTipsCtrl.ShowCommonTips = HL.StaticMethod(HL.Table) << function(args)
     local self = UIManager:AutoOpen(PANEL_ID)
     self:ShowTips(args)
 end
-
-
-
 
 
 

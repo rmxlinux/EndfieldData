@@ -1,19 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaCharResult
 
-
-
-
-
-
-
-
-
-
-
-
 GachaCharResultCtrl = HL.Class('GachaCharResultCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -24,17 +12,11 @@ GachaCharResultCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.INNER_GACHA_RESULT_ON_SHARE_CAPTURE] = '_OnInnerShareCapture',
 }
 
-
 GachaCharResultCtrl.m_args = HL.Field(HL.Table)
-
 
 GachaCharResultCtrl.m_resultTopInputGroupId = HL.Field(HL.Number) << 0
 
-
 GachaCharResultCtrl.m_curFocusCell = HL.Field(HL.Any)
-
-
-
 
 
 GachaCharResultCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -71,13 +53,10 @@ GachaCharResultCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     
     self.view.charBackNode.naviGroup.onIsFocusedChange:AddListener(function(isFocused)
         if isFocused then
-            InputManagerInst.controllerNaviManager:SetTarget(self.view.charBackNode.charCell1.button)
+            self:SetNaviTarget(self.view.charBackNode.charCell1.button)
         end
     end)
 end
-
-
-
 
 GachaCharResultCtrl._UpdateChar = HL.Method(HL.Number) << function(self, index)
     local name = "charCell" .. index
@@ -124,14 +103,9 @@ GachaCharResultCtrl._UpdateChar = HL.Method(HL.Number) << function(self, index)
     frontCell.simpleStateController:SetState(stateName)
 end
 
-
-
 GachaCharResultCtrl.OnClose = HL.Override() << function(self)
     UIManager:ToggleBlockObtainWaysJump("IN_GACHA", false)
 end
-
-
-
 
 GachaCharResultCtrl._ShowCharInfo = HL.Method(HL.String) << function(self, charId)
     if not UIManager:IsOpen(PANEL_ID) then
@@ -153,16 +127,11 @@ GachaCharResultCtrl._ShowCharInfo = HL.Method(HL.String) << function(self, charI
     })
 end
 
-
-
 GachaCharResultCtrl.InitControllerHintBar = HL.Method() << function(self)
     local isOpen, gachaCharResultTop = UIManager:IsOpen(PanelId.GachaCharResultTop)
     self.m_resultTopInputGroupId = gachaCharResultTop.view.inputGroup.groupId
     gachaCharResultTop.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId, gachaCharResultTop.view.inputGroup.groupId })
 end
-
-
-
 
 GachaCharResultCtrl._OnInnerShareCapture = HL.Method(HL.Boolean) << function(self, inShare)
     if self.m_curFocusCell then

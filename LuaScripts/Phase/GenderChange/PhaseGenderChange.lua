@@ -11,52 +11,21 @@ local Stage = {
     WAIT_FOR_CHARACTER_LOAD = 5,
     DONE = 6,
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseGenderChange = HL.Class('PhaseGenderChange', phaseBase.PhaseBase)
-
 
 PhaseGenderChange.m_Stage = HL.Field(HL.Number) << Stage.INIT
 
-
 PhaseGenderChange.m_targetGender = HL.Field(HL.Userdata)
-
 
 PhaseGenderChange.m_genderSelectPanel = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseGenderChange.m_waitCharLoadTick = HL.Field(HL.Number) << -1
-
 
 PhaseGenderChange.m_transportPos = HL.Field(HL.Userdata)
 
-
 PhaseGenderChange.m_transportRot = HL.Field(HL.Userdata)
 
-
 PhaseGenderChange.m_transportId = HL.Field(HL.String) << ""
-
 
 
 
@@ -69,16 +38,12 @@ PhaseGenderChange.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
-
 PhaseGenderChange._OnInit = HL.Override() << function(self)
     PhaseGenderChange.Super._OnInit(self)
     self.m_transportPos = self.arg[1]
     self.m_transportRot = self.arg[2]
     self.m_transportId = self.arg[3]
 end
-
-
 
 PhaseGenderChange._InitAllPhaseItems = HL.Override() << function(self)
     PhaseGenderChange.Super._InitAllPhaseItems(self)
@@ -88,38 +53,17 @@ end
 
 
 
-
-
-
-
-
 PhaseGenderChange.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhaseGenderChange._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseGenderChange._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseGenderChange._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseGenderChange._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
@@ -129,24 +73,15 @@ end
 
 
 
-
-
 PhaseGenderChange._OnActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseGenderChange._OnDeActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseGenderChange._OnDestroy = HL.Override() << function(self)
     PhaseGenderChange.Super._OnDestroy(self)
 end
-
-
-
 
 
 
@@ -180,9 +115,6 @@ PhaseGenderChange.ChangeStage = HL.Method(HL.Number) << function(self, stage)
     end
 end
 
-
-
-
 PhaseGenderChange._OnConfirmChangePlayerGender = HL.Method(HL.Boolean) << function(self, isChangeGender)
     if isChangeGender then
         
@@ -206,8 +138,6 @@ PhaseGenderChange._OnConfirmChangePlayerGender = HL.Method(HL.Boolean) << functi
     end
 end
 
-
-
 PhaseGenderChange._StartGenderChange = HL.Method() << function(self)
     self.m_targetGender = CS.Proto.GENDER.GenFemale
     if GameInstance.player.playerInfoSystem.gender == CS.Proto.GENDER.GenFemale then
@@ -220,8 +150,6 @@ PhaseGenderChange._StartGenderChange = HL.Method() << function(self)
     GameAction.ShowBlackScreen(maskData)
     GameInstance.player.playerInfoSystem:SetGender(self.m_targetGender, false)
 end
-
-
 PhaseGenderChange._OnConfirmGender = HL.Method() << function(self)
     self:ChangeStage(Stage.WAIT_FOR_CHARACTER_LOAD)
 end

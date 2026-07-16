@@ -1,20 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 WeaponGemNode = HL.Class('WeaponGemNode', UIWidgetBase)
-
-
 
 WeaponGemNode._OnFirstTimeInit = HL.Override() << function(self)
 
 end
-
-
-
-
-
 
 WeaponGemNode.InitWeaponGemNode = HL.Method(HL.Number, HL.Opt(HL.Boolean, HL.Function)) << function(self, gemInstId, showModifyBg, actionOnClick)
     self:_FirstTimeInit()

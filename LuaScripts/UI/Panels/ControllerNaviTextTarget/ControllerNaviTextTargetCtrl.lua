@@ -2,39 +2,19 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ControllerNaviTextTarget
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ControllerNaviTextTargetCtrl = HL.Class('ControllerNaviTextTargetCtrl', uiCtrl.UICtrl)
-
 
 
 
 ControllerNaviTextTargetCtrl.m_targetUIText = HL.Field(CS.Beyond.UI.UIText)
 
-
 ControllerNaviTextTargetCtrl.m_startPos = HL.Field(Vector2)
-
 
 ControllerNaviTextTargetCtrl.m_endPos = HL.Field(Vector2)
 
-
 ControllerNaviTextTargetCtrl.m_startHeight = HL.Field(HL.Number) << 0
 
-
 ControllerNaviTextTargetCtrl.m_endHeight = HL.Field(HL.Number) << 0
-
 
 
 
@@ -46,13 +26,10 @@ ControllerNaviTextTargetCtrl.m_endHeight = HL.Field(HL.Number) << 0
 ControllerNaviTextTargetCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
-
-
 ControllerNaviTextTargetCtrl.ShowHint = HL.StaticMethod(HL.Table) << function(arg)
     local ctrl = UIManager:AutoOpen(PANEL_ID)
     ctrl:_InnerShowHint(arg.uiText, arg.startCharIndex, arg.endCharIndex)
 end
-
 
 ControllerNaviTextTargetCtrl.HideHint = HL.StaticMethod() << function()
     UIManager:Hide(PANEL_ID)
@@ -62,19 +39,12 @@ end
 
 
 
-
-
-
 ControllerNaviTextTargetCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
-
-
 
 ControllerNaviTextTargetCtrl.OnHide = HL.Override() << function(self)
     self.m_targetUIText = nil
 end
-
-
 
 
 
@@ -86,11 +56,6 @@ ControllerNaviTextTargetCtrl._RefreshHint = HL.Method() << function(self)
     self.view.hintRightNode:SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, self.m_endHeight)
     self:_CalcCanvasOrder()
 end
-
-
-
-
-
 
 
 
@@ -122,8 +87,6 @@ ControllerNaviTextTargetCtrl._InnerShowHint = HL.Method(CS.Beyond.UI.UIText, HL.
     
     self:_RefreshHint()
 end
-
-
 
 ControllerNaviTextTargetCtrl._CalcCanvasOrder = HL.Method() << function(self)
     if IsNull(self.m_targetUIText) then

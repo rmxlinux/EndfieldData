@@ -14,31 +14,12 @@ local Category2Panel = {
     [DungeonConst.DUNGEON_CATEGORY.Train] = PanelId.DungeonTrainEntry,
     
     [DungeonConst.DUNGEON_CATEGORY.ActMonster] = PanelId.DungeonActivityEntry,
+    [DungeonConst.DUNGEON_CATEGORY.DoubleBattle] = PanelId.DungeonDoubleAssaultEntry,
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 PhaseDungeonEntry = HL.Class('PhaseDungeonEntry', phaseBase.PhaseBase)
 
-
 PhaseDungeonEntry.m_currentPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 
 
@@ -48,8 +29,6 @@ PhaseDungeonEntry.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_OPEN_DUNGEON_ENTRY_PANEL] = { 'OnOpenDungeonEntryPanel', false },
     [MessageConst.ENTER_DUNGEON_SKIP_PANEL] = { 'EnterDungeonSkipPanel', false },
 }
-
-
 
 PhaseDungeonEntry.OnOpenDungeonEntryPanel = HL.StaticMethod(HL.Any) << function(args)
     local id, enterDungeonCallback = unpack(args)
@@ -76,8 +55,6 @@ PhaseDungeonEntry.OnOpenDungeonEntryPanel = HL.StaticMethod(HL.Any) << function(
         enterDungeonCallback = enterDungeonCallback,
     })
 end
-
-
 
 PhaseDungeonEntry.EnterDungeonSkipPanel = HL.StaticMethod(HL.Any) << function(args)
     local dungeonId = unpack(args)
@@ -108,25 +85,14 @@ PhaseDungeonEntry.EnterDungeonSkipPanel = HL.StaticMethod(HL.Any) << function(ar
 end
 
 
-
-
 PhaseDungeonEntry._OnInit = HL.Override() << function(self)
     PhaseDungeonEntry.Super._OnInit(self)
 end
 
 
 
-
-
-
-
-
 PhaseDungeonEntry.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
 end
-
-
-
-
 
 PhaseDungeonEntry._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local openPanelArgs = self:_PrepareOpenPanelArgs()
@@ -145,23 +111,11 @@ PhaseDungeonEntry._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table
     self:_TryRecoverPopupState()
 end
 
-
-
-
-
 PhaseDungeonEntry._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseDungeonEntry._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseDungeonEntry._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
@@ -171,23 +125,15 @@ end
 
 
 
-
-
 PhaseDungeonEntry._OnActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseDungeonEntry._OnDeActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseDungeonEntry._OnDestroy = HL.Override() << function(self)
     PhaseDungeonEntry.Super._OnDestroy(self)
 end
-
-
 
 
 
@@ -207,8 +153,6 @@ PhaseDungeonEntry._OnRefresh = HL.Override() << function(self)
     })
     self:_TryRecoverPopupState()
 end
-
-
 
 PhaseDungeonEntry._PrepareOpenPanelArgs = HL.Method().Return(HL.Table) << function(self)
     local dungeonId = self.arg.dungeonId
@@ -230,8 +174,6 @@ PhaseDungeonEntry._PrepareOpenPanelArgs = HL.Method().Return(HL.Table) << functi
     }
 end
 
-
-
 PhaseDungeonEntry.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}
     arg.popupState = nil
@@ -246,8 +188,6 @@ PhaseDungeonEntry.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << funct
     end
     return arg
 end
-
-
 
 PhaseDungeonEntry._TryRecoverPopupState = HL.Method() << function(self)
     if self.arg == nil or self.arg.popupState == nil then

@@ -1,10 +1,6 @@
 local SNSContentWithEmojiComp = require_ex('UI/Widgets/SNSContentWithEmojiComp')
 
-
-
 SNSContentText = HL.Class('SNSContentText', SNSContentWithEmojiComp)
-
-
 
 SNSContentText._OnSNSContentInit = HL.Override() << function(self)
     SNSContentText.Super._OnSNSContentInit(self)

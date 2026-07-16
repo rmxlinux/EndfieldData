@@ -7,35 +7,7 @@ EToggleStyle = {
     Square = "Square",    
     Circle = "Circle"   
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonPopUpCtrl = HL.Class('CommonPopUpCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -49,20 +21,13 @@ CommonPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHANGE_INPUT_DEVICE_TYPE_FINISHED] = "_OnChangeInputDeviceFinished",
 }
 
-
 CommonPopUpCtrl.m_getItemCell = HL.Field(HL.Function)
-
 
 CommonPopUpCtrl.m_getCharIconCell = HL.Field(HL.Function)
 
-
 CommonPopUpCtrl.m_timeScaleHandler = HL.Field(HL.Number) << 0
 
-
 CommonPopUpCtrl.m_isInterrupted = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -167,16 +132,12 @@ CommonPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
 CommonPopUpCtrl.OnHide = HL.Override() << function(self)
     self:_TryProcessInterruptMessage(false)
     self:_ResumeWorld()
     Notify(MessageConst.TOGGLE_IN_MAIN_HUD_STATE, { key = "commonPopUp", isInMainHud = true })
     self.m_args = nil
 end
-
-
 
 CommonPopUpCtrl.OnClose = HL.Override() << function(self)
     self:_TryProcessInterruptMessage(false)
@@ -185,13 +146,9 @@ CommonPopUpCtrl.OnClose = HL.Override() << function(self)
     self.m_args = nil
 end
 
-
-
 CommonPopUpCtrl.OnStaminaChanged = HL.Method() << function(self)
     self:_RefreshCostStaminaInfo()
 end
-
-
 
 CommonPopUpCtrl._FreezeWorld = HL.Method() << function(self)
     self:_ResumeWorld()
@@ -201,8 +158,6 @@ CommonPopUpCtrl._FreezeWorld = HL.Method() << function(self)
         GameWorld.subGameManager:TryPauseGameTime(GEnums.GameTimeFreezeReason.UI)
     end
 end
-
-
 
 CommonPopUpCtrl._ResumeWorld = HL.Method() << function(self)
     if self.m_timeScaleHandler > 0 then
@@ -215,16 +170,12 @@ CommonPopUpCtrl._ResumeWorld = HL.Method() << function(self)
     end
 end
 
-
-
 CommonPopUpCtrl.ShowPopUp = HL.StaticMethod(HL.Table) << function(args)
     
     local ctrl = CommonPopUpCtrl.AutoOpen(PANEL_ID, nil, false)
     UIManager:SetTopOrder(PANEL_ID)
     ctrl:_ShowPopUp(args)
 end
-
-
 
 CommonPopUpCtrl.ShowPopUpCS = HL.StaticMethod(HL.Table) << function(args)
     
@@ -237,14 +188,9 @@ CommonPopUpCtrl.ShowPopUpCS = HL.StaticMethod(HL.Table) << function(args)
     })
 end
 
-
-
 CommonPopUpCtrl._HidePopUp = HL.Method() << function(self)
     self:PlayAnimationOutAndHide()
 end
-
-
-
 
 CommonPopUpCtrl._OnChangeInputDeviceFinished = HL.Method(HL.Any) << function(self, arg)
     
@@ -304,10 +250,8 @@ end
 
 
 
+
 CommonPopUpCtrl.m_args = HL.Field(HL.Table)
-
-
-
 CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
     Notify(MessageConst.HIDE_ITEM_TIPS)
 
@@ -367,16 +311,23 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
 
     self.view.inputHintMoreText.gameObject:SetActive(string.isEmpty(self.m_args.inputHintMoreText) == false)
     self.view.inputHintMoreText.text = self.m_args.inputHintMoreText or ""
-    self.view.inputHintText.gameObject:SetActive(string.isEmpty(self.m_args.inputHintText) == false or self.m_args.checkInputValid == true)
-    if string.isEmpty(self.m_args.inputHintText) == false then
+    local hasInputHintText = string.isEmpty(self.m_args.inputHintText) == false
+    local showInputHintText = hasInputHintText or self.m_args.checkInputValid == true
+    self.view.inputHintText.gameObject:SetActive(showInputHintText)
+    if showInputHintText then
         self.view.textInputStateController:SetState('max')
-        if self.m_args.checkInputValid == true then
-            logger.error("CommonPopUpCtrl: 输入提示文本和输入合法性检查不能同时存在，会导致提示文本被覆盖")
+        if hasInputHintText then
+            if self.m_args.checkInputValid == true then
+                logger.error("CommonPopUpCtrl: 输入提示文本和输入合法性检查不能同时存在，会导致提示文本被覆盖")
+            end
+            
+            self.view.inputHintText.text = self.m_args.inputHintText
         end
+    else
+        self.view.inputHintText.text = ""
     end
-    
-    self.view.inputHintText.text = self.m_args.inputHintText
 
+    self.view.confirmButton.interactable = true
     if self.m_args.input then
         self.view.inputField.text = self.m_args.inputName or ""
         self.view.textInput.gameObject:SetActive(true)
@@ -395,6 +346,7 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
         else
             self.view.pasteBtn.gameObject:SetActive(false)
         end
+        self:_OnInputFieldValueChanged(self.view.inputField.text)
     elseif self.m_args.inputMore then
         self.view.inputFieldMore.text = self.m_args.inputName or ""
         self.view.textInput.gameObject:SetActive(true)
@@ -417,7 +369,6 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
         self.view.textInput.gameObject:SetActive(false)
         self.view.pasteBtn.gameObject:SetActive(false)
     end
-    self.view.confirmButton.interactable = true
 
     self.view.equipNode.gameObject:SetActive(self.m_args.equipInstId ~= nil)
     if self.m_args.equipInstId then
@@ -558,15 +509,48 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
         self.view.setNode.gameObject:SetActive(false)
     end
 
+    
+    if self.m_args.showWorldUpgradeBtn then
+        self.view.worldUpgradeNode.gameObject:SetActive(true)
+        
+        local currentMaxWorldLevel = GameInstance.player.adventure.currentMaxWorldLevel
+        
+        local maxConfigWorldLevel = math.max(1, currentMaxWorldLevel)
+        while true do
+            local success = Tables.adventureWorldLevelTable:TryGetValue(maxConfigWorldLevel + 1)
+            if not success then
+                break
+            end
+            maxConfigWorldLevel = maxConfigWorldLevel + 1
+        end
+        local hasNextWorldLevel = currentMaxWorldLevel < maxConfigWorldLevel
+        local nextTargetWorldLevel = math.min(currentMaxWorldLevel + 1, maxConfigWorldLevel)
+        self.view.commonEntranceBtn.interactable = hasNextWorldLevel
+        self.view.commonEntranceBtn.onClick:RemoveAllListeners()
+        self.view.commonEntranceBtn.onClick:AddListener(function()
+            if not hasNextWorldLevel then
+                return
+            end
+            self:PlayAnimationOutWithCallback(function()
+                self:Hide()
+                
+                PhaseManager:OpenPhaseFast(PhaseId.WorldLevelPopup, {
+                    childPanelType = "Up",
+                    childPanelArg = { targetWorldLevel = nextTargetWorldLevel },
+                    isTipsMode = true,
+                    isFromCharUpgrade = true,
+                })
+            end)
+        end)
+    else
+        self.view.worldUpgradeNode.gameObject:SetActive(false)
+    end
+
     self:_TryProcessInterruptMessage(true)
 
     
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
-
-
 
 CommonPopUpCtrl._OnUpdateItemCell = HL.Method(HL.Forward("Item"), HL.Number) << function(self, cell, index)
     cell:InitItem(self.m_args.items[index], true)
@@ -590,15 +574,9 @@ CommonPopUpCtrl._OnUpdateItemCell = HL.Method(HL.Forward("Item"), HL.Number) << 
     end
 end
 
-
-
-
-
 CommonPopUpCtrl._OnUpdateCharIconCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     cell.headIcon.spriteName = UIConst.UI_ROUND_CHAR_HEAD_PREFIX .. self.m_args.charIcons[index]
 end
-
-
 
 CommonPopUpCtrl._OnClickConfirm = HL.Method() << function(self)
     local args = self.m_args
@@ -638,8 +616,6 @@ CommonPopUpCtrl._OnClickConfirm = HL.Method() << function(self)
     end
 end
 
-
-
 CommonPopUpCtrl._OnClickCancel = HL.Method() << function(self)
     local onCancel = self.m_args.onCancel
     if self.m_args.ignoreClickWhenPlayingAnimation and self:IsPlayingAnimationIn() then
@@ -659,9 +635,6 @@ CommonPopUpCtrl._OnClickCancel = HL.Method() << function(self)
         end)
     end
 end
-
-
-
 
 CommonPopUpCtrl._OnInputFieldValueChanged = HL.Method(HL.String) << function(self, inputText)
     if type(self.m_args.checkInputValid) and self.m_args.checkInputValid == true then
@@ -683,8 +656,6 @@ CommonPopUpCtrl._OnInputFieldValueChanged = HL.Method(HL.String) << function(sel
     end
 end
 
-
-
 CommonPopUpCtrl._RefreshCostStaminaInfo = HL.Method() << function(self)
     if not self.m_args then
         return
@@ -696,9 +667,6 @@ CommonPopUpCtrl._RefreshCostStaminaInfo = HL.Method() << function(self)
 
     UIUtils.updateStaminaNode(self.view.staminaNode, self.m_args.staminaInfo)
 end
-
-
-
 
 CommonPopUpCtrl._SetToggleStyle = HL.Method(HL.String) << function(self, styleType)
     
@@ -725,8 +693,6 @@ CommonPopUpCtrl._SetToggleStyle = HL.Method(HL.String) << function(self, styleTy
     end
 end
 
-
-
 CommonPopUpCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     if not self.m_args then
         return
@@ -739,9 +705,6 @@ CommonPopUpCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << fu
     end
     return arg
 end
-
-
-
 
 
 CommonPopUpCtrl._TryProcessInterruptMessage = HL.Method(HL.Boolean) << function(self, register)

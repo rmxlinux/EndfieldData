@@ -3,26 +3,11 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 local ANIM_SELECTED_IN = "spacessformulacell_selectedcell_in"
 local ANIM_SELECTED_OUT = "spacessformulacell_selectedcell_out"
 
-
-
-
-
-
-
-
-
-
-
-
 SSFormulaCell = HL.Class('SSFormulaCell', UIWidgetBase)
-
 
 SSFormulaCell.m_onClickFunc = HL.Field(HL.Function)
 
-
 SSFormulaCell.m_info = HL.Field(HL.Any)
-
-
 
 
 SSFormulaCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -37,10 +22,6 @@ SSFormulaCell._OnFirstTimeInit = HL.Override() << function(self)
     end)
 
 end
-
-
-
-
 
 SSFormulaCell.InitSSFormulaCell = HL.Method(HL.Table, HL.Function) << function(self, info, onClickFunc)
     self:_FirstTimeInit()
@@ -67,13 +48,9 @@ SSFormulaCell.InitSSFormulaCell = HL.Method(HL.Table, HL.Function) << function(s
     self:_TryUpdateBreedFormulaCell()
 end
 
-
-
-
-
 SSFormulaCell.SetSelected = HL.Method(HL.Boolean, HL.Boolean) << function(self, selected, isInit)
     if selected then
-        InputManagerInst.controllerNaviManager:SetTarget(self.view.button)
+        self:SetNaviTarget(self.view.button)
     end
     if isInit then
         if selected then
@@ -89,8 +66,6 @@ SSFormulaCell.SetSelected = HL.Method(HL.Boolean, HL.Boolean) << function(self, 
         end
     end
 end
-
-
 
 SSFormulaCell._UpdateCommonFormulaInfo = HL.Method() << function(self)
     local info = self.m_info
@@ -112,8 +87,6 @@ SSFormulaCell._UpdateCommonFormulaInfo = HL.Method() << function(self)
     end
 end
 
-
-
 SSFormulaCell._TryUpdateManufacturingFormulaCell = HL.Method() << function(self)
     local isMfg = self.m_info.isMfg == true
     self.view.manufactureNode.gameObject:SetActiveIfNecessary(isMfg)
@@ -131,8 +104,6 @@ SSFormulaCell._TryUpdateManufacturingFormulaCell = HL.Method() << function(self)
 
     self:_UpdateItemCount(false)
 end
-
-
 
 SSFormulaCell._TryUpdateSowFormulaCell = HL.Method() << function(self)
     local isSow = self.m_info.isSow == true
@@ -159,8 +130,6 @@ SSFormulaCell._TryUpdateSowFormulaCell = HL.Method() << function(self)
     self:_UpdateItemCount(false)
 end
 
-
-
 SSFormulaCell._TryUpdateBreedFormulaCell = HL.Method() << function(self)
     local isBreed = self.m_info.isBreed == true
     self.view.breedNode.gameObject:SetActiveIfNecessary(isBreed)
@@ -181,9 +150,6 @@ SSFormulaCell._TryUpdateBreedFormulaCell = HL.Method() << function(self)
 
     self:_UpdateItemCount(ownMaterialItemCount < breedFormulaCfg.materialItemCount)
 end
-
-
-
 
 SSFormulaCell._UpdateItemCount = HL.Method(HL.Boolean) << function(self, isLack)
     local itemCount = Utils.getItemCount(self.m_info.itemId)

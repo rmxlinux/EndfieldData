@@ -26,57 +26,23 @@ local StepNodeAnim = {
     Fail = "actionstepnormal_fail",
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DungeonCharTutorialStepHudCtrl = HL.Class('DungeonCharTutorialStepHudCtrl', uiCtrl.UICtrl)
-
 
 DungeonCharTutorialStepHudCtrl.m_dungeonId = HL.Field(HL.String) << ""
 
-
 DungeonCharTutorialStepHudCtrl.m_curStage = HL.Field(HL.Number) << 0
-
 
 DungeonCharTutorialStepHudCtrl.m_curStep = HL.Field(HL.Number) << 0
 
-
 DungeonCharTutorialStepHudCtrl.m_curStepIds = HL.Field(HL.Any)
-
 
 DungeonCharTutorialStepHudCtrl.m_actionStepCellCached = HL.Field(HL.Forward("UIListCache"))
 
-
 DungeonCharTutorialStepHudCtrl.m_failResetCor = HL.Field(HL.Thread)
-
 
 DungeonCharTutorialStepHudCtrl.m_inFailCor = HL.Field(HL.Boolean) << false
 
-
 DungeonCharTutorialStepHudCtrl.m_succScrollCor = HL.Field(HL.Thread)
-
-
 
 DungeonCharTutorialStepHudCtrl.OnDungeonGameStart = HL.StaticMethod(HL.Table) << function(args)
     local dungeonId = unpack(args)
@@ -85,8 +51,6 @@ DungeonCharTutorialStepHudCtrl.OnDungeonGameStart = HL.StaticMethod(HL.Table) <<
     end
     UIManager:Open(PANEL_ID, dungeonId)
 end
-
-
 
 DungeonCharTutorialStepHudCtrl.OpenCharTutorialStepHud = HL.StaticMethod(HL.Table) << function(args)
     local dungeonId = unpack(args)
@@ -106,7 +70,6 @@ end
 
 
 
-
 DungeonCharTutorialStepHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHAR_TUTORIAL_STEP_STATE_CHANGE] = 'OnTutorialStepStateChangeV2',
 
@@ -121,18 +84,12 @@ DungeonCharTutorialStepHudCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 DungeonCharTutorialStepHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_actionStepCellCached = UIUtils.genCellCache(self.view.actionStepCell)
     self.m_dungeonId = arg
 
     self:_RefreshStage()
 end
-
-
-
 
 
 
@@ -212,9 +169,6 @@ DungeonCharTutorialStepHudCtrl.OnTutorialStepStateChangeV2 = HL.Method(HL.Any) <
     self:_UpdateStepDesc()
 end
 
-
-
-
 DungeonCharTutorialStepHudCtrl.OnSubGameFinishStateChange = HL.Method(HL.Any) << function(self, args)
     
     
@@ -223,30 +177,21 @@ DungeonCharTutorialStepHudCtrl.OnSubGameFinishStateChange = HL.Method(HL.Any) <<
     self.view.stepDescNode.gameObject:SetActive(phase == Phase.Normal or phase == Phase.Fail)
 end
 
-
-
 DungeonCharTutorialStepHudCtrl.OnSubGameStageFinish = HL.Method() << function(self)
     self.view.finishNode.gameObject:SetActive(true)
     self.view.stepDescNode.gameObject:SetActive(false)
 end
-
-
 
 DungeonCharTutorialStepHudCtrl.OnSubGameStageChangeFinish = HL.Method() << function(self)
     
     
 end
 
-
-
-
 DungeonCharTutorialStepHudCtrl.OnLevelScriptPushStage = HL.Method(HL.Table) << function(self, args)
     
     local pushStage = unpack(args)
     self:_RefreshStage(pushStage)
 end
-
-
 
 DungeonCharTutorialStepHudCtrl.OnSubGameReset = HL.Method() << function(self)
     if self.m_failResetCor then
@@ -261,9 +206,6 @@ DungeonCharTutorialStepHudCtrl.OnSubGameReset = HL.Method() << function(self)
     self:_RefreshStage()
 end
 
-
-
-
 DungeonCharTutorialStepHudCtrl.ToggleCharTutorialStepHUD = HL.Method(HL.Table) << function(self, args)
     local isOn, closeHUD = unpack(args)
     if isOn then
@@ -274,9 +216,6 @@ DungeonCharTutorialStepHudCtrl.ToggleCharTutorialStepHUD = HL.Method(HL.Table) <
         self:Close()
     end
 end
-
-
-
 
 DungeonCharTutorialStepHudCtrl._RefreshStage = HL.Method(HL.Opt(HL.Number)) << function(self, pushStage)
     local charTutorialCfg = Tables.dungeonCharTutorialTable[self.m_dungeonId]
@@ -320,8 +259,6 @@ DungeonCharTutorialStepHudCtrl._RefreshStage = HL.Method(HL.Opt(HL.Number)) << f
     self:_ResetSubGameStageState()
 end
 
-
-
 DungeonCharTutorialStepHudCtrl._UpdateStepDesc = HL.Method() << function(self)
     local curStepId = self.m_curStepIds[CSIndex(self.m_curStep)]
     local curStepCfg = Tables.dungeonCharTutorialStepTable[curStepId]
@@ -329,14 +266,9 @@ DungeonCharTutorialStepHudCtrl._UpdateStepDesc = HL.Method() << function(self)
     self.view.stepDescTxt.text = curStepCfg.stepDesc
 end
 
-
-
 DungeonCharTutorialStepHudCtrl._ResetSubGameStageState = HL.Method() << function(self)
     self:OnSubGameFinishStateChange({self.m_dungeonId, Phase.Normal})
 end
-
-
-
 
 DungeonCharTutorialStepHudCtrl._ToggleResetHintNode = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.resetHintNode.gameObject:SetActive(isOn)

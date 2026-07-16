@@ -15,25 +15,7 @@ local Fertilize_Cell_Select_Out = "facfertilization_cell_select_out"
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacFertilizationCtrl = HL.Class('FacFertilizationCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -43,26 +25,18 @@ FacFertilizationCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacFertilizationCtrl.m_intFacSoilComponent = HL.Field(CS.Beyond.Gameplay.Core.IntFacSoilComponent)
 
 
 FacFertilizationCtrl.m_inventorySystem = HL.Field(CS.Beyond.Gameplay.InventorySystem)
 
-
 FacFertilizationCtrl.m_typeStateMap = HL.Field(HL.Table)
-
 
 FacFertilizationCtrl.m_itemCell = HL.Field(HL.Any)
 
-
 FacFertilizationCtrl.m_itemList = HL.Field(HL.Any)
 
-
 FacFertilizationCtrl.m_chosenIdx = HL.Field(HL.Any)
-
-
-
 
 
 FacFertilizationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -110,13 +84,9 @@ FacFertilizationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 FacFertilizationCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputBindingGroupMonoTarget.groupId })
 end
-
-
 
 
 FacFertilizationCtrl._LoadFertilization = HL.Method().Return(HL.Any) << function(self)
@@ -162,10 +132,6 @@ FacFertilizationCtrl._LoadFertilization = HL.Method().Return(HL.Any) << function
     return itemCount
 end
 
-
-
-
-
 FacFertilizationCtrl._UpdateItem = HL.Method(HL.Any, HL.Any) << function(self, item, index)
     local itemInfo = self.m_itemList[index]
     
@@ -180,12 +146,9 @@ FacFertilizationCtrl._UpdateItem = HL.Method(HL.Any, HL.Any) << function(self, i
     item.icon:LoadSprite(UIConst.UI_SPRITE_ITEM, itemInfo.iconId)
     UIUtils.setItemRarityImage(item.colorLine, itemInfo.rarity)
     if DeviceInfo.usingController and index == 1 then
-        UIUtils.setAsNaviTarget(item.button)
+        self:SetNaviTarget(item.button)
     end
 end
-
-
-
 
 FacFertilizationCtrl._ChooseItem = HL.Method(HL.Any) << function(self, index)
     if self.m_chosenIdx == index then
@@ -220,8 +183,6 @@ FacFertilizationCtrl._ChooseItem = HL.Method(HL.Any) << function(self, index)
     self:_UpdateContent()
 end
 
-
-
 FacFertilizationCtrl._UpdateContent = HL.Method() << function(self)
     if self.m_chosenIdx == -1 then
         return
@@ -255,8 +216,6 @@ FacFertilizationCtrl._UpdateContent = HL.Method() << function(self)
     self.view.richTxt.text = info.richText
 end
 
-
-
 FacFertilizationCtrl._DoFertilize = HL.Method() << function(self)
     if self.m_chosenIdx == -1 then
         return
@@ -275,15 +234,11 @@ FacFertilizationCtrl._DoFertilize = HL.Method() << function(self)
     
 end
 
-
-
 FacFertilizationCtrl._Exit = HL.Method() << function(self)
     self.view.animationWrapper:PlayOutAnimation(function()
         UIManager:Close(PANEL_ID)
     end)
 end
-
-
 
 
 

@@ -2,27 +2,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipCabinInfoDisplay
 local SSStatusBarBase = require_ex('UI/Widgets/SSStatusBarBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipCabinInfoDisplayCtrl = HL.Class('SpaceshipCabinInfoDisplayCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -62,17 +42,16 @@ SpaceshipCabinInfoDisplayCtrl.s_messages = HL.StaticField(HL.Table) << {
 
     
     [MessageConst.ON_SPACESHIP_CLUE_INFO_CHANGE] = 'OnGuestRoomStateChanged',
-}
 
+    
+    [MessageConst.ON_SPACESHIP_VISIT_FRIEND] = 'UpdateAllCharInfoPanelAndStatusBar',
+}
 
 
 SpaceshipCabinInfoDisplayCtrl.m_statusBars = HL.Field(HL.Table)
 
 
-
 SpaceshipCabinInfoDisplayCtrl.m_charInfoPanels = HL.Field(HL.Table)
-
-
 
 SpaceshipCabinInfoDisplayCtrl.RegisterStatusBar = HL.StaticMethod(HL.Table) << function(args)
     
@@ -85,8 +64,6 @@ SpaceshipCabinInfoDisplayCtrl.RegisterStatusBar = HL.StaticMethod(HL.Table) << f
     self:UpdateStatusBar(roomId)
 end
 
-
-
 SpaceshipCabinInfoDisplayCtrl.RegisterCharInfoPanel = HL.StaticMethod(HL.Table) << function(args)
     
     local roomId = args.roomId
@@ -98,20 +75,12 @@ SpaceshipCabinInfoDisplayCtrl.RegisterCharInfoPanel = HL.StaticMethod(HL.Table) 
     self:UpdateCharInfoPanel(roomId)
 end
 
-
-
-
 SpaceshipCabinInfoDisplayCtrl.UnregisterStatusBar = HL.Method(HL.String) << function(self, roomId)
     self.m_statusBars[roomId] = nil
 end
-
-
-
 SpaceshipCabinInfoDisplayCtrl.UnregisterCharInfoPanel = HL.Method(HL.String) << function(self, roomId)
     self.m_charInfoPanels[roomId] = nil
 end
-
-
 
 SpaceshipCabinInfoDisplayCtrl.UpdateRoomIds = HL.Method() << function(self)
     self.m_statusBars = self.m_statusBars or {}
@@ -122,9 +91,6 @@ SpaceshipCabinInfoDisplayCtrl.UpdateRoomIds = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 SpaceshipCabinInfoDisplayCtrl.UpdateCharInfoPanel = HL.Method(HL.String) << function(self, roomId)
     
@@ -139,9 +105,6 @@ SpaceshipCabinInfoDisplayCtrl.UpdateCharInfoPanel = HL.Method(HL.String) << func
     charInfoPanel:UpdateCharInfo(maxCharCnt, charList)
 end
 
-
-
-
 SpaceshipCabinInfoDisplayCtrl.UpdateStatusBar = HL.Method(HL.String) << function(self, roomId)
     
     local statusBar = self.m_statusBars[roomId]
@@ -155,9 +118,6 @@ SpaceshipCabinInfoDisplayCtrl.UpdateStatusBar = HL.Method(HL.String) << function
     statusBar:SwitchRoomState(roomId, roomStatus)
 end
 
-
-
-
 SpaceshipCabinInfoDisplayCtrl.OnRoomDataChanged = HL.Method(HL.Table) << function(self, args)
     self:UpdateRoomIds()
     local roomId = unpack(args)
@@ -165,16 +125,10 @@ SpaceshipCabinInfoDisplayCtrl.OnRoomDataChanged = HL.Method(HL.Table) << functio
     self:UpdateStatusBar(roomId)
 end
 
-
-
-
 SpaceshipCabinInfoDisplayCtrl.OnRoomStateChanged = HL.Method(HL.Table) << function(self, args)
     local roomId = unpack(args)
     self:UpdateStatusBar(roomId)
 end
-
-
-
 
 SpaceshipCabinInfoDisplayCtrl.OnGcStateChanged = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     local roomTypeInfos = GameInstance.player.spaceship.roomTypeInfos
@@ -186,17 +140,12 @@ SpaceshipCabinInfoDisplayCtrl.OnGcStateChanged = HL.Method(HL.Opt(HL.Table)) << 
     end
 end
 
-
-
 SpaceshipCabinInfoDisplayCtrl.OnGuestRoomStateChanged = HL.Method() << function(self)
     local hasValue, roomInfo = GameInstance.player.spaceship:TryGetRoom(Tables.spaceshipConst.guestRoomClueExtensionId)
     if hasValue then
         self:UpdateStatusBar(Tables.spaceshipConst.guestRoomClueExtensionId)
     end
 end
-
-
-
 
 SpaceshipCabinInfoDisplayCtrl.OnSystemUnlock = HL.Method(HL.Table) << function(self, arg)
     local systemIndex = unpack(arg)
@@ -209,8 +158,6 @@ SpaceshipCabinInfoDisplayCtrl.OnSystemUnlock = HL.Method(HL.Table) << function(s
     end
 end
 
-
-
 SpaceshipCabinInfoDisplayCtrl.UpdateAllStatusBar = HL.Method() << function(self)
     local spaceship = GameInstance.player.spaceship
     for roomId, statusBar in pairs(self.m_statusBars) do
@@ -221,9 +168,7 @@ SpaceshipCabinInfoDisplayCtrl.UpdateAllStatusBar = HL.Method() << function(self)
     end
 end
 
-
-
-SpaceshipCabinInfoDisplayCtrl.UpdateAllCharInfoPanelAndStatusBar = HL.Method() << function(self)
+SpaceshipCabinInfoDisplayCtrl.UpdateAllCharInfoPanelAndStatusBar = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     local spaceship = GameInstance.player.spaceship
     for roomId, charInfoPanel in pairs(self.m_charInfoPanels) do
         if charInfoPanel then
@@ -234,9 +179,6 @@ SpaceshipCabinInfoDisplayCtrl.UpdateAllCharInfoPanelAndStatusBar = HL.Method() <
     end
     self:UpdateAllStatusBar()
 end
-
-
-
 
 
 SpaceshipCabinInfoDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)

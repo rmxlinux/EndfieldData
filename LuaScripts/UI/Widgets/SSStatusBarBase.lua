@@ -1,42 +1,20 @@
 local LevelWorldUIBase = require_ex('UI/Widgets/LevelWorldUIBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 SSStatusBarBase = HL.Class('SSStatusBarBase', LevelWorldUIBase)
-
 
 SSStatusBarBase.m_stateHandleFuncLut = HL.Field(HL.Table)
 
-
 SSStatusBarBase.m_roomId = HL.Field(HL.String) << ""
 
-
 SSStatusBarBase.m_roomIds = HL.Field(HL.Table)
-
 
 
 SSStatusBarBase.m_currentState = HL.Field(CS.Beyond.Gameplay.SpaceshipSystem.RoomState)
 
 
-
-
 SSStatusBarBase._OnFirstTimeInit = HL.Override() << function(self)
     self:SetupSwitchStateHandleFunctions()
 end
-
-
-
 
 SSStatusBarBase.InitLevelWorldUi = HL.Override(HL.Any) << function(self, args)
     self:_FirstTimeInit()
@@ -58,8 +36,6 @@ SSStatusBarBase.InitLevelWorldUi = HL.Override(HL.Any) << function(self, args)
         self.gameObject:SetActiveIfNecessary(false)
     end
 end
-
-
 
 SSStatusBarBase.RefreshRoomId = HL.Virtual() << function(self)
     local spaceshipSystem = GameInstance.player.spaceship
@@ -95,27 +71,17 @@ end
 
 
 
-
-
 SSStatusBarBase.SetupSwitchStateHandleFunctions = HL.Virtual() << function(self)
     
 end
-
-
 
 SSStatusBarBase.SetupView = HL.Virtual() << function(self)
     
 end
 
-
-
 SSStatusBarBase.OnLevelWorldUiReleased = HL.Override() << function(self)
     Notify(MessageConst.SS_UNREGISTER_STATUS_BAR, self.m_roomId)
 end
-
-
-
-
 
 SSStatusBarBase.SwitchRoomState = HL.Method(HL.String, CS.Beyond.Gameplay.SpaceshipSystem.RoomState) << function(self, roomId, roomState)
     if self.m_stateHandleFuncLut and self.m_stateHandleFuncLut[roomState] then
@@ -126,10 +92,6 @@ SSStatusBarBase.SwitchRoomState = HL.Method(HL.String, CS.Beyond.Gameplay.Spaces
     end
     self.m_currentState = roomState
 end
-
-
-
-
 
 SSStatusBarBase.DefaultStateHandle = HL.Virtual(HL.String, CS.Beyond.Gameplay.SpaceshipSystem.RoomState) << function(self, roomId, roomState)
 

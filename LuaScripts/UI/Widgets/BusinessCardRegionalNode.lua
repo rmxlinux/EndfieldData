@@ -1,20 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 BusinessCardRegionalNode = HL.Class('RegionalNode', UIWidgetBase)
-
-
 
 
 BusinessCardRegionalNode._OnFirstTimeInit = HL.Override() << function(self)
     
 end
-
-
-
 
 BusinessCardRegionalNode.InitBusinessCardRegionalNodeByRoleId = HL.Method(HL.Number) << function(self, roleId)
     self:_FirstTimeInit()
@@ -22,9 +13,6 @@ BusinessCardRegionalNode.InitBusinessCardRegionalNodeByRoleId = HL.Method(HL.Num
 
     self:InitBusinessCardRegionalNode(friendInfo.domainInfos)
 end
-
-
-
 
 BusinessCardRegionalNode.InitBusinessCardRegionalNode = HL.Method(HL.Userdata) << function(self, domainInfos)
     self:_FirstTimeInit()

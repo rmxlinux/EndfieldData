@@ -16,82 +16,7 @@ local LOSSLESS_TRANSMISSION_STATE = "NoConsumptionTransfer"
 local DEPOT_SLOT_NORMAL_STYLE = "ShowStorageTag"
 local DEPOT_SLOT_TRANSMISSION_STYLE = "HideStorageTag"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainItemTransferSelectCtrl = HL.Class('DomainItemTransferSelectCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -103,41 +28,27 @@ DomainItemTransferSelectCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 DomainItemTransferSelectCtrl.m_targetDomain = HL.Field(HL.String) << ""
-
 
 DomainItemTransferSelectCtrl.m_chosenItemId = HL.Field(HL.String) << ""
 
-
 DomainItemTransferSelectCtrl.m_chosenItemCount = HL.Field(HL.Number) << 0
-
 
 DomainItemTransferSelectCtrl.m_chosenItemCell = HL.Field(HL.Any)
 
-
 DomainItemTransferSelectCtrl.m_waitingToClose = HL.Field(HL.Boolean) << false
-
 
 DomainItemTransferSelectCtrl.m_info = HL.Field(HL.Any)
 
-
 DomainItemTransferSelectCtrl.m_losslessTransmission = HL.Field(HL.Boolean) << false
-
 
 DomainItemTransferSelectCtrl.m_maxTransmissionValue = HL.Field(HL.Number) << 0
 
-
 DomainItemTransferSelectCtrl.m_losslessTransmissionUnlocked = HL.Field(HL.Boolean) << false
-
 
 DomainItemTransferSelectCtrl.m_allowSend = HL.Field(HL.Boolean) << false
 
-
 DomainItemTransferSelectCtrl.m_destinationCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 DomainItemTransferSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -197,14 +108,9 @@ DomainItemTransferSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
     end)
 end
 
-
-
-
 DomainItemTransferSelectCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     self.view.depotExtraRoot.numberSelector:UpdateKeyHintVisible(active)
 end
-
-
 
 DomainItemTransferSelectCtrl.OnHide = HL.Override() << function(self)
     if not DeviceInfo.usingController then
@@ -213,8 +119,6 @@ DomainItemTransferSelectCtrl.OnHide = HL.Override() << function(self)
 
     self:_ManuallyStopFocusLeftNode()
 end
-
-
 
 DomainItemTransferSelectCtrl.OnClose = HL.Override() << function(self)
     if DeviceInfo.usingController then
@@ -226,8 +130,6 @@ DomainItemTransferSelectCtrl.OnClose = HL.Override() << function(self)
         end
     end
 end
-
-
 
 DomainItemTransferSelectCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local recoverState = {
@@ -251,9 +153,6 @@ DomainItemTransferSelectCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.A
     end
     return recoverState
 end
-
-
-
 
 DomainItemTransferSelectCtrl._OpenDepot = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     AudioAdapter.PostEvent("Au_UI_Popup_DetailsPanel_Open")
@@ -336,8 +235,8 @@ DomainItemTransferSelectCtrl._OpenDepot = HL.Method(HL.Opt(HL.Any)) << function(
             local result = {}
             for _, info in ipairs(allItemInfoList) do
                 local id = info.id
-                local facSuccess, facItemData = Tables.factoryItemTable:TryGetValue(id)
-                if facSuccess and not facItemData.itemState then
+                if FactoryUtils.isFactoryItemNormal(id) then
+                    local facSuccess, facItemData = Tables.factoryItemTable:TryGetValue(id)
                     if self.m_losslessTransmission then
                         
                         for i = 0, facItemData.losslessDomainIds.Count - 1 do
@@ -394,9 +293,6 @@ DomainItemTransferSelectCtrl._OpenDepot = HL.Method(HL.Opt(HL.Any)) << function(
     end
 end
 
-
-
-
 DomainItemTransferSelectCtrl._TryGetCell = HL.Method(HL.String).Return(HL.Any) << function(self, itemId)
     local depot = self.view.depot
     local depotContent = depot.view.depotContent
@@ -404,8 +300,6 @@ DomainItemTransferSelectCtrl._TryGetCell = HL.Method(HL.String).Return(HL.Any) <
     local cell = depotContent:GetCell(depotCellIndex)
     return cell
 end
-
-
 
 DomainItemTransferSelectCtrl._RefreshLeftSideItem = HL.Method() << function(self)
     local view = self.view.leftItemSlotRoot
@@ -467,15 +361,9 @@ DomainItemTransferSelectCtrl._RefreshLeftSideItem = HL.Method() << function(self
     end
 end
 
-
-
 DomainItemTransferSelectCtrl._ClearSelectedItem = HL.Method() << function(self)
     self:_OnClickItem(nil, "")
 end
-
-
-
-
 
 DomainItemTransferSelectCtrl._OnClickItem = HL.Method(HL.Any, HL.String) << function(self, itemCell, itemId)
     
@@ -517,8 +405,6 @@ DomainItemTransferSelectCtrl._OnClickItem = HL.Method(HL.Any, HL.String) << func
     self:_UpdateTransmissionValue()
 end
 
-
-
 DomainItemTransferSelectCtrl._ClearChosenItem = HL.Method() << function(self)
     self.m_chosenItemId = self.m_info.itemId
     self:_ChangeCount(self.m_info.itemNumMax)
@@ -536,8 +422,6 @@ DomainItemTransferSelectCtrl._ClearChosenItem = HL.Method() << function(self)
     self:_UpdateTransmissionValue()
 end
 
-
-
 DomainItemTransferSelectCtrl._GetCurrentNeedAssignCount = HL.Method().Return(HL.Number) << function(self)
     if self:_IsCurrentTransmitting() then
         return self.view.depotExtraRoot.numberSelector.curNumber
@@ -551,8 +435,6 @@ DomainItemTransferSelectCtrl._GetCurrentNeedAssignCount = HL.Method().Return(HL.
     local value = math.floor(self.m_maxTransmissionValue / factoryItemCfg.value)
     return value
 end
-
-
 
 DomainItemTransferSelectCtrl._RefreshBtnAndText = HL.Method() << function(self)
     local itemModified = self:_IsItemModified()
@@ -582,8 +464,6 @@ DomainItemTransferSelectCtrl._RefreshBtnAndText = HL.Method() << function(self)
     self.view.depot.view.sortNode.gameObject:SetActive(hasNoChosenItem or not isFocusItemEqualChosen)
 end
 
-
-
 DomainItemTransferSelectCtrl._Close = HL.Method() << function(self)
     self:PlayAnimationOutAndClose()
 
@@ -594,8 +474,6 @@ DomainItemTransferSelectCtrl._Close = HL.Method() << function(self)
         InputManagerInst:ToggleBinding(self.m_unFocusLeftBindId, false)
     end
 end
-
-
 
 DomainItemTransferSelectCtrl._InitBtn = HL.Method() << function(self)
     self.view.changeTargetBtn.onClick:AddListener(function()
@@ -643,9 +521,6 @@ DomainItemTransferSelectCtrl._InitBtn = HL.Method() << function(self)
         end)
     end
 end
-
-
-
 
 DomainItemTransferSelectCtrl._OpenSelectTargetRoot = HL.Method(HL.Opt(HL.Boolean)) << function(self, clickBtn)
     self:_ToggleLosslessTabOrTag(false)
@@ -702,8 +577,6 @@ DomainItemTransferSelectCtrl._OpenSelectTargetRoot = HL.Method(HL.Opt(HL.Boolean
     end
 end
 
-
-
 DomainItemTransferSelectCtrl._UpdateNumber = HL.Method() << function(self)
     local view = self.view.leftItemSlotRoot
     local isFocusItemEqualChosen = self:_IsFocusItemEqualChosen()
@@ -736,9 +609,6 @@ DomainItemTransferSelectCtrl._UpdateNumber = HL.Method() << function(self)
     end
 end
 
-
-
-
 DomainItemTransferSelectCtrl._GetItemCount = HL.Method(HL.String).Return(HL.Number) << function(self, itemId)
     local factoryDepot = GameInstance.player.inventory.factoryDepot
     local depotInChapter = factoryDepot:GetOrFallback(Utils.getCurrentScope())
@@ -747,16 +617,10 @@ DomainItemTransferSelectCtrl._GetItemCount = HL.Method(HL.String).Return(HL.Numb
     return count
 end
 
-
-
-
 DomainItemTransferSelectCtrl._GetItemValue = HL.Method(HL.String).Return(HL.Number) << function(self, itemId)
     local factoryItemCfg = Tables.factoryItemTable[itemId]
     return factoryItemCfg.value
 end
-
-
-
 
 DomainItemTransferSelectCtrl._InitLeftSidePlatformInfo = HL.Method(HL.String) << function(self, targetDomainId)
     local fromDomainId = self.m_info.fromDomain
@@ -781,13 +645,9 @@ DomainItemTransferSelectCtrl._InitLeftSidePlatformInfo = HL.Method(HL.String) <<
     end
 end
 
-
-
 DomainItemTransferSelectCtrl._IsCurrentTransmitting = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_info.status ~= RouteStatus.idle
 end
-
-
 
 DomainItemTransferSelectCtrl._GetDefaultNumber = HL.Method().Return(HL.Number) << function(self)
     if self:_IsCurrentTransmitting() then
@@ -796,13 +656,9 @@ DomainItemTransferSelectCtrl._GetDefaultNumber = HL.Method().Return(HL.Number) <
     return INIT_NUMBER_SELECTOR_CUR_VALUE
 end
 
-
-
 DomainItemTransferSelectCtrl._IsItemModified = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_chosenItemId ~= self.m_info.itemId or self.m_chosenItemCount ~= self.m_info.itemNumMax
 end
-
-
 
 DomainItemTransferSelectCtrl._GiveUpItemSelect = HL.Method() << function(self)
     if self:_IsCurrentTransmitting() then
@@ -816,8 +672,6 @@ DomainItemTransferSelectCtrl._GiveUpItemSelect = HL.Method() << function(self)
     self.m_chosenItemCount = 0
 end
 
-
-
 DomainItemTransferSelectCtrl._DoChangeRoute = HL.Method() << function(self)
     local fromDomain = self.m_info.fromDomain
     local toDomain = self.m_targetDomain
@@ -829,24 +683,16 @@ DomainItemTransferSelectCtrl._DoChangeRoute = HL.Method() << function(self)
     self.m_waitingToClose = true
 end
 
-
-
-
 DomainItemTransferSelectCtrl._ChangeCount = HL.Method(HL.Number) << function(self, count)
     self.m_chosenItemCount = count
     self.view.depotExtraRoot.numberSelector:_Refresh(count)
 end
-
-
 
 DomainItemTransferSelectCtrl._DoResetRoute = HL.Method() << function(self)
     local routeInfo = self.m_info
     GameInstance.player.remoteFactory:SendReqResetHubTransRoute(routeInfo.fromDomain, routeInfo.index)
     self.m_waitingToClose = true
 end
-
-
-
 
 DomainItemTransferSelectCtrl._OnSelectTargetDomain = HL.Method(HL.String) << function(self, domainId)
     
@@ -871,15 +717,11 @@ DomainItemTransferSelectCtrl._OnSelectTargetDomain = HL.Method(HL.String) << fun
     self:_OpenDepot()
 end
 
-
-
 DomainItemTransferSelectCtrl._OnNotifyRouteInfoChange = HL.Method() << function(self)
     if self.m_waitingToClose then
         self:_Close()
     end
 end
-
-
 
 DomainItemTransferSelectCtrl._GetTimeText = HL.Method().Return(HL.String) << function(self)
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()
@@ -922,20 +764,13 @@ DomainItemTransferSelectCtrl._GetTimeText = HL.Method().Return(HL.String) << fun
     return text
 end
 
-
-
 DomainItemTransferSelectCtrl._OnClickLosslessTransmissionInfoBtn = HL.Method() << function(self)
     UIManager:Open(PanelId.InstructionBook, LOSSLESS_TRANSMISSION_INSTRUCTION_ID)
 end
 
-
-
 DomainItemTransferSelectCtrl._OnClickLosslessValueInstructionBtn = HL.Method() << function(self)
     UIManager:Open(PanelId.InstructionBook, LOSSLESS_VALUE_INSTRUCTION_ID)
 end
-
-
-
 
 DomainItemTransferSelectCtrl._CheckIsValueValidLosslessTransmissionToggle = HL.Method(HL.Boolean).Return(HL.Boolean)
         << function(self, isOn)
@@ -953,31 +788,21 @@ DomainItemTransferSelectCtrl._CheckIsValueValidLosslessTransmissionToggle = HL.M
 end
 
 
-
-
-
 DomainItemTransferSelectCtrl._ToggleLosslessTabOrTag = HL.Method(HL.Boolean) << function(self, isTag)
     
     self.view.transferTabNode.gameObject:SetActive(not isTag)
     self.view.transferTagNode.gameObject:SetActive(isTag)
 end
 
-
-
-
 DomainItemTransferSelectCtrl._OnLosslessTransmissionToggleChanged = HL.Method(HL.Boolean) << function(self, isOn)
     self:_UpdateLosslessTabView(isOn)
 end
-
-
 
 DomainItemTransferSelectCtrl._SetDepotSlotStyleByLossless = HL.Method() << function(self)
     
     local state = self.m_losslessTransmission and DEPOT_SLOT_TRANSMISSION_STYLE or DEPOT_SLOT_NORMAL_STYLE
     self.view.depotNode:SetState(state)
 end
-
-
 
 DomainItemTransferSelectCtrl._InitNumberSelector = HL.Method() << function(self)
     local maxValue = INIT_NUMBER_SELECTOR_CUR_VALUE
@@ -999,8 +824,6 @@ DomainItemTransferSelectCtrl._InitNumberSelector = HL.Method() << function(self)
             end)
 end
 
-
-
 DomainItemTransferSelectCtrl._UpdateNumberSelector = HL.Method() << function(self)
     if string.isEmpty(self.m_chosenItemId) then
         return
@@ -1016,8 +839,6 @@ DomainItemTransferSelectCtrl._UpdateNumberSelector = HL.Method() << function(sel
     self.view.depotExtraRoot.numberSelector:RefreshNumber(curValue, minValue, maxValue)
 end
 
-
-
 DomainItemTransferSelectCtrl._UpdateTransmissionValue = HL.Method() << function(self)
     local curTransmissionValue = 0
     if not string.isEmpty(self.m_chosenItemId) and self:_IsFocusItemEqualChosen() then
@@ -1027,8 +848,6 @@ DomainItemTransferSelectCtrl._UpdateTransmissionValue = HL.Method() << function(
 
     self.view.totalValueTxt.text = string.format("%d/%d", curTransmissionValue, self.m_maxTransmissionValue)
 end
-
-
 
 DomainItemTransferSelectCtrl._InitFromDomainInfo = HL.Method() << function(self)
     local fromDomainId = self.m_info.fromDomain
@@ -1078,18 +897,12 @@ DomainItemTransferSelectCtrl._InitFromDomainInfo = HL.Method() << function(self)
     end
 end
 
-
-
-
 DomainItemTransferSelectCtrl._ProcessRecoverStateArg = HL.Method(HL.Opt(HL.Any)).Return(HL.Opt(HL.Any)) << function(self, arg)
     if arg == nil then
         return nil
     end
     return arg
 end
-
-
-
 
 DomainItemTransferSelectCtrl._ApplyRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
@@ -1109,8 +922,6 @@ DomainItemTransferSelectCtrl._ApplyRecoverState = HL.Method(HL.Opt(HL.Any)) << f
     end
 end
 
-
-
 DomainItemTransferSelectCtrl._InitTransmissionMode = HL.Method() << function(self)
     
     self.view.transferTabNode:SetIsOnWithoutNotify(self.m_losslessTransmission)
@@ -1119,9 +930,6 @@ DomainItemTransferSelectCtrl._InitTransmissionMode = HL.Method() << function(sel
     self:_UpdateLosslessTabView(self.m_losslessTransmission)
     self:_UpdateTransmissionTag()
 end
-
-
-
 
 DomainItemTransferSelectCtrl._UpdateLosslessTabView = HL.Method(HL.Boolean) << function(self, losslessTransmission)
     if losslessTransmission then
@@ -1133,15 +941,11 @@ DomainItemTransferSelectCtrl._UpdateLosslessTabView = HL.Method(HL.Boolean) << f
     end
 end
 
-
-
 DomainItemTransferSelectCtrl._UpdateTransmissionTag = HL.Method() << function(self)
     
     self.view.warehouseTransferNode.gameObject:SetActive(not self.m_losslessTransmission)
     self.view.noConsumptionTransferNode.gameObject:SetActive(self.m_losslessTransmission)
 end
-
-
 
 DomainItemTransferSelectCtrl._GetCommonPopUpRecoverState = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     if PhaseManager:GetTopPhaseId() ~= PhaseId.DomainItemTransfer then
@@ -1158,9 +962,6 @@ DomainItemTransferSelectCtrl._GetCommonPopUpRecoverState = HL.Method().Return(HL
     return recoverArg
 end
 
-
-
-
 DomainItemTransferSelectCtrl._IsDomainItemTransferSelectCommonPopUpArg = HL.Method(HL.Opt(HL.Any)).Return(HL.Boolean) << function(self, arg)
     if arg == nil or type(arg) ~= "table" or string.isEmpty(arg.content) then
         return false
@@ -1169,9 +970,6 @@ DomainItemTransferSelectCtrl._IsDomainItemTransferSelectCommonPopUpArg = HL.Meth
         or arg.content == Language.LUA_FAC_TRANS_CONFIRM_MODIFY
         or arg.content == Language.LUA_FAC_TRANS_CONFIRM_MODIFY_LOSSLESS
 end
-
-
-
 
 DomainItemTransferSelectCtrl._TryRecoverInstructionBook = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil or recoverState.instructionBookArg == nil then
@@ -1188,9 +986,6 @@ DomainItemTransferSelectCtrl._TryRecoverInstructionBook = HL.Method(HL.Opt(HL.An
     recoverState.instructionBookArg = nil
 end
 
-
-
-
 DomainItemTransferSelectCtrl._TryRecoverCommonPopUp = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil or recoverState.commonPopUpArg == nil then
         return
@@ -1205,12 +1000,21 @@ DomainItemTransferSelectCtrl._TryRecoverCommonPopUp = HL.Method(HL.Opt(HL.Any)) 
     if isOpen and commonPopUpCtrl:IsShow() then
         return
     end
-    self:Notify(MessageConst.SHOW_POP_UP, recoverState.commonPopUpArg)
+    local commonPopUpArg = recoverState.commonPopUpArg
+    commonPopUpArg.onConfirm = function()
+        if commonPopUpArg.content == Language.LUA_FAC_TRANS_CONFIRM_RESET then
+            self:_DoResetRoute()
+        else
+            self:_DoChangeRoute()
+        end
+    end
+    commonPopUpArg.onCancel = function()
+        self:_ClearSelectedItem()
+        self:_UpdateNumber()
+    end
+    self:Notify(MessageConst.SHOW_POP_UP, commonPopUpArg)
     recoverState.commonPopUpArg = nil
 end
-
-
-
 
 DomainItemTransferSelectCtrl._TryRecoverDepotState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
@@ -1238,9 +1042,6 @@ DomainItemTransferSelectCtrl._TryRecoverDepotState = HL.Method(HL.Opt(HL.Any)) <
     self:_UpdateTransmissionValue()
 end
 
-
-
-
 DomainItemTransferSelectCtrl._GetRecoverNumberSelectorCount = HL.Method(HL.Any).Return(HL.Number) << function(self, recoverState)
     local numberSelectorCount = recoverState.numberSelectorCount
     if type(numberSelectorCount) ~= "number" then
@@ -1257,19 +1058,13 @@ end
 
 
 
-
 DomainItemTransferSelectCtrl.m_focusLeftBindId = HL.Field(HL.Number) << -1
-
 
 DomainItemTransferSelectCtrl.m_unFocusLeftBindId = HL.Field(HL.Number) << -1
 
-
 DomainItemTransferSelectCtrl.m_destinationFocusLuaIndex = HL.Field(HL.Number) << 1
 
-
 DomainItemTransferSelectCtrl.m_focusItemId = HL.Field(HL.String) << ""
-
-
 
 DomainItemTransferSelectCtrl._InitControllerAbility = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
@@ -1316,8 +1111,6 @@ DomainItemTransferSelectCtrl._InitControllerAbility = HL.Method() << function(se
     end)
 end
 
-
-
 DomainItemTransferSelectCtrl._ManuallyStopFocusLeftNode = HL.Method() << function(self)
     self:Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.leftNode.groupId)
     InputManagerInst:ToggleGroup(self.view.leftNode.groupId, false)
@@ -1332,17 +1125,12 @@ DomainItemTransferSelectCtrl._ManuallyStopFocusLeftNode = HL.Method() << functio
     self.view.changeTransNode.enabled = false
 end
 
-
-
-
 DomainItemTransferSelectCtrl._SetFocusTargetByIndex = HL.Method(HL.Number) << function(self, index)
     self.m_destinationFocusLuaIndex = index
 
     local firstCell = self.m_destinationCellCache:Get(index)
-    InputManagerInst.controllerNaviManager:SetTarget(firstCell.siteCell)
+    self:SetNaviTarget(firstCell.siteCell)
 end
-
-
 
 DomainItemTransferSelectCtrl._InitDepotItemFocus = HL.Method() << function(self)
     local focusLuaIndexIndex = 1
@@ -1358,10 +1146,10 @@ DomainItemTransferSelectCtrl._InitDepotItemFocus = HL.Method() << function(self)
     
     local itemSlot = self.view.depot.view.depotContent.m_getCell(focusLuaIndexIndex)
     if itemSlot then
-        InputManagerInst.controllerNaviManager:SetTarget(itemSlot.view.item.view.button)
+        self:SetNaviTarget(itemSlot.view.item.view.button)
         self.m_focusItemId = itemList[focusLuaIndexIndex].id
     else
-        InputManagerInst.controllerNaviManager:SetTarget(nil)
+        self:ClearNaviTarget()
         self.m_focusItemId = ""
     end
 
@@ -1369,11 +1157,6 @@ DomainItemTransferSelectCtrl._InitDepotItemFocus = HL.Method() << function(self)
     self:_RefreshBtnAndText()
     self:_UpdateTransmissionValue()
 end
-
-
-
-
-
 
 DomainItemTransferSelectCtrl._OnFocusTarget = HL.Method(HL.Forward("ItemSlot"), HL.Table, HL.Number)
         << function(self, cell, info, luaIndex)
@@ -1388,8 +1171,6 @@ DomainItemTransferSelectCtrl._OnFocusTarget = HL.Method(HL.Forward("ItemSlot"), 
     self:_RefreshBtnAndText()
     self:_UpdateTransmissionValue()
 end
-
-
 
 DomainItemTransferSelectCtrl._IsFocusItemEqualChosen = HL.Method().Return(HL.Boolean) << function(self)
     if DeviceInfo.usingController then

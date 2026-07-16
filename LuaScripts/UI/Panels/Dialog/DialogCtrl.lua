@@ -1,54 +1,7 @@
 local dialogCtrlBase = require_ex('UI/Panels/Dialog/DialogCtrlBase')
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Dialog
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DialogCtrl = HL.Class('DialogCtrl', dialogCtrlBase.DialogCtrlBase)
-
 
 
 
@@ -69,31 +22,22 @@ DialogCtrl.s_overrideMessages = HL.StaticField(HL.Table) << {
     [MessageConst.DIALOG_REFRESH_AUTO_MODE] = 'OnRefreshAutoMode',
 }
 
-
 DialogCtrl.m_trunkNodeData = HL.Field(CS.Beyond.Gameplay.DTTrunkNodeData)
-
 
 DialogCtrl.m_canSkip = HL.Field(HL.Boolean) << true
 
-
 DialogCtrl.m_centerImageTween = HL.Field(HL.Userdata)
-
 
 DialogCtrl.m_radioName = HL.Field(HL.String) << ""
 
-
 DialogCtrl.m_curTrunkId = HL.Field(HL.String) << ""
-
 
 DialogCtrl.m_hasShowedTrunkText = HL.Field(HL.Boolean) << false
 
-
 DialogCtrl.m_clickCount = HL.Field(HL.Number) << 0
 
-
-
-DialogCtrl.OnPreloadDialogPanel = HL.StaticMethod(HL.Table) << function(arg)
-    local preloadFinishCallback = unpack(arg)
+DialogCtrl.OnPreloadDialogPanel = HL.StaticMethod(HL.Opt(HL.Table)) << function(arg)
+    local preloadFinishCallback = arg and unpack(arg)
     
     UIManager:PreloadPanelAsset(PANEL_ID, PhaseId.Dialog, function()
         if preloadFinishCallback ~= nil then
@@ -102,14 +46,10 @@ DialogCtrl.OnPreloadDialogPanel = HL.StaticMethod(HL.Table) << function(arg)
     end)
 end
 
-
-
 DialogCtrl.OnShow = HL.Override() << function(self)
     self:OnDialogShow()
     self.view.debugNode.gameObject:SetActive(false)
 end
-
-
 
 DialogCtrl.RefreshDebugNode = HL.Method() << function(self)
     if NarrativeUtils.ShouldShowNarrativeDebugNode() then
@@ -123,13 +63,9 @@ DialogCtrl.RefreshDebugNode = HL.Method() << function(self)
 end
 
 
-
-
 DialogCtrl.GetCurDialogId = HL.Override().Return(HL.String) << function(self)
     return GameWorld.dialogManager.dialogId or ""
 end
-
-
 
 DialogCtrl.OnDialogShow = HL.Override() << function(self)
     DialogCtrl.Super.OnDialogShow(self)
@@ -148,8 +84,6 @@ DialogCtrl.OnDialogShow = HL.Override() << function(self)
     end
 end
 
-
-
 DialogCtrl.OnBtnNextClick = HL.Override() << function(self)
     self.m_clickCount = self.m_clickCount + 1
     if self:CheckTextPlaying() then
@@ -165,23 +99,16 @@ DialogCtrl.OnBtnNextClick = HL.Override() << function(self)
     end
 end
 
-
-
 DialogCtrl.OnDialogTextStopped = HL.Override() << function(self)
     self.view.optionList.gameObject:SetActive(true)
     local showWait = self.m_optionCells:GetCount() <= 0
     self:_TrySetWaitNode(showWait)
 end
 
-
-
 DialogCtrl.OnDialogDisableClickEnd = HL.Method() << function(self)
     local showWait = self.m_optionCells:GetCount() <= 0
     self:_TrySetWaitNode(showWait)
 end
-
-
-
 
 DialogCtrl.OnDialogTextFade = HL.Method(HL.Table) << function(self, arg)
     local duration, alpha = unpack(arg)
@@ -189,6 +116,7 @@ DialogCtrl.OnDialogTextFade = HL.Method(HL.Table) << function(self, arg)
     self:_UpdateClickRecord()
     self.m_clickCount = 0
     self.m_curTrunkId = GameWorld.dialogManager.trunkId
+    self:SetGlossaryPopUpEnable(alpha > 0)
 
     self.view.bottomLayout:DOKill()
     if duration == 0 then
@@ -207,9 +135,6 @@ DialogCtrl.OnDialogTextFade = HL.Method(HL.Table) << function(self, arg)
     end
 end
 
-
-
-
 DialogCtrl.OnDialogRadioFade = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     local radioNode = self.view.radioNode
     if radioNode.gameObject.activeSelf then
@@ -219,17 +144,12 @@ DialogCtrl.OnDialogRadioFade = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     end
 end
 
-
-
 DialogCtrl._ClearCenterImageTween = HL.Method() << function(self)
     if self.m_centerImageTween then
         self.m_centerImageTween:Kill()
         self.m_centerImageTween = nil
     end
 end
-
-
-
 
 DialogCtrl.OnDialogChangeCenterImage = HL.Method(HL.Table) << function(self, data)
     local enable, sprite = unpack(data)
@@ -252,30 +172,19 @@ DialogCtrl.OnDialogChangeCenterImage = HL.Method(HL.Table) << function(self, dat
     end
 end
 
-
-
-
 DialogCtrl.OnSwitchDialogCanSkip = HL.Method(HL.Table) << function(self, arg)
     self:_RefreshCanSkip()
 end
-
-
-
 
 DialogCtrl.OnSwitchDialogShowLog = HL.Method(HL.Table) << function(self, arg)
     local show = unpack(arg)
     self.view.buttonLog.gameObject:SetActive(show)
 end
 
-
-
 DialogCtrl._RefreshCanSkip = HL.Override() << function(self)
     self.m_canSkip = GameWorld.dialogManager.canSkip
     self.view.buttonSkip.gameObject:SetActive(self.m_canSkip)
 end
-
-
-
 
 DialogCtrl._TrySetWaitNode = HL.Override(HL.Boolean) << function(self, active)
     if active then
@@ -290,29 +199,18 @@ DialogCtrl._TrySetWaitNode = HL.Override(HL.Boolean) << function(self, active)
     end
 end
 
-
-
-
-
 DialogCtrl.OnOptionClick = HL.Override(HL.Number, HL.Any) << function(self, index, _)
     GameWorld.dialogManager:SelectIndex(CSIndex(index))
 end
-
-
 
 DialogCtrl.OnBtnSkipClick = HL.Override() << function(self)
     self:Notify(MessageConst.OPEN_DIALOG_SKIP_POP_UP)
 end
 
-
-
 DialogCtrl.OnBtnAutoClick = HL.Override() << function(self)
     local auto = not GameWorld.dialogManager.autoMode
     GameWorld.dialogManager:SetAutoMode(auto)
 end
-
-
-
 
 DialogCtrl._RefreshAutoMode = HL.Override(HL.Boolean) << function(self, autoMode)
     if not self.m_hasShowedTrunkText then
@@ -322,32 +220,19 @@ DialogCtrl._RefreshAutoMode = HL.Override(HL.Boolean) << function(self, autoMode
     DialogCtrl.Super._RefreshAutoMode(self, autoMode)
 end
 
-
-
 DialogCtrl.OnBtnBackClick = HL.Override() << function(self)
     self:Notify(MessageConst.ON_COMMON_BACK_CLICKED)
 end
 
-
-
 DialogCtrl.OnBtnStopClick = HL.Override() << function(self)
     self:Notify(MessageConst.SHOW_TOAST, Language.LUA_FEATURE_NOT_AVAILABLE)
 end
-
-
-
 
 DialogCtrl._CloseAutoMode = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     self.view.textAuto.gameObject:SetActive(false)
     GameWorld.dialogManager:SetAutoMode(false)
     self:_SwitchControllerAutoPlayHint()
 end
-
-
-
-
-
-
 
 DialogCtrl.SetTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean, HL.Any, HL.Any)) << function(self, trunkNodeData, fastMode,
                                                                                              npcId, npcGroupId)
@@ -377,8 +262,10 @@ DialogCtrl.SetTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean, HL.Any, HL.Any))
         end
     end
 
-    local text = UIUtils.resolveTextCinematic(dialogText)
+    local text, entryLinks = UIUtils.resolveNarrativeTextWithEntryLinks(dialogText)
     local singleTrunk = string.isEmpty(name)
+    self:SetCurEntryLinks(entryLinks)
+
     self.view.bottomLayout:DOKill()
     self.view.bottomLayout.alpha = 1
     self.view.textTalkCenterNode.alpha = 1
@@ -481,22 +368,15 @@ DialogCtrl.SetTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean, HL.Any, HL.Any))
     self:RefreshDebugNode()
 end
 
-
-
 DialogCtrl._UpdateClickRecord = HL.Method() << function(self)
     GameWorld.dialogManager:UpdateClickRecord(self.m_curTrunkId, self.m_clickCount)
     self.m_clickCount = 0
 end
 
-
-
 DialogCtrl.RefreshTrunk = HL.Method() << function(self)
     self.view.textTalk:Play()
     self.view.textTalkCenter:Play()
 end
-
-
-
 
 DialogCtrl.SetTrunkOption = HL.Override(HL.Userdata) << function(self, optionData)
     DialogCtrl.Super.SetTrunkOption(self, optionData)
@@ -510,15 +390,9 @@ DialogCtrl.SetTrunkOption = HL.Override(HL.Userdata) << function(self, optionDat
     end
 end
 
-
-
 DialogCtrl.GetTouchPanel = HL.Method().Return(CS.Beyond.UI.UITouchPanel) << function(self)
     return self.view.touchPanel
 end
-
-
-
-
 
 DialogCtrl._GetRealSprite = HL.Method(HL.String, HL.String).Return(HL.String) << function(self, folder, spriteName)
     local gender = Utils.getPlayerGender()
@@ -543,9 +417,6 @@ DialogCtrl._GetRealSprite = HL.Method(HL.String, HL.String).Return(HL.String) <<
     end
     return finalSprite
 end
-
-
-
 
 DialogCtrl.SetFullBg = HL.Method(CS.Beyond.Gameplay.DialogFullBgActionData) << function(self, actionData)
     local bgSprite = self:_GetRealSprite(UIConst.UI_SPRITE_DIALOG_BG, actionData.bgSprite)
@@ -647,9 +518,6 @@ DialogCtrl.SetFullBg = HL.Method(CS.Beyond.Gameplay.DialogFullBgActionData) << f
     end
 end
 
-
-
-
 DialogCtrl.SetPostProcessEffect = HL.Method(CS.Beyond.Gameplay.DialogUIPostProcessDesc) << function(self, postProcessDesc)
     local effectTexture = postProcessDesc.textureAsset
     local color = postProcessDesc.color
@@ -680,9 +548,6 @@ DialogCtrl.SetPostProcessEffect = HL.Method(CS.Beyond.Gameplay.DialogUIPostProce
     end
 end
 
-
-
-
 DialogCtrl.SetLeftSubtitle = HL.Method(CS.Beyond.Gameplay.DialogLeftSubtitleActionData) << function(self, actionData)
     self.view.leftSubtitlePanel:SetLeftSubTitle(
         (not actionData.text1.isEmpty) and actionData.text1:GetText() or nil,
@@ -693,23 +558,15 @@ DialogCtrl.SetLeftSubtitle = HL.Method(CS.Beyond.Gameplay.DialogLeftSubtitleActi
     self.view.leftSubtitlePanel:StartAutoPlay(actionData.textStayTime)
 end
 
-
-
 DialogCtrl.ExitLeftSubtitle = HL.Method() << function(self)
     self.view.leftSubtitlePanel:Exit()
 end
-
-
-
 
 DialogCtrl.SetCtrlButtonVisible = HL.Method(HL.Boolean) << function(self, visible)
     self.view.topRight.gameObject:SetActive(visible)
     self.view.topLeft.gameObject:SetActive(visible)
     self.view.top.gameObject:SetActive(visible)
 end
-
-
-
 
 
 
@@ -736,19 +593,11 @@ DialogCtrl._SwitchFriendshipShow = HL.Method(HL.Boolean) << function(self, visib
     end
 end
 
-
-
-
-
-
 DialogCtrl.ShowPresentSuccess = HL.Method(HL.Boolean, HL.Number, HL.Table) << function(self, levelChanged, deltaFav, selectedItems)
     self.view.friendshipRight.reliabilityCell:ShowPresentSuccessTips(levelChanged, deltaFav, selectedItems)
     local workFriendship = GameWorld.dialogManager.showSpaceshipCharFriendship
     self:_SwitchFriendshipShow(workFriendship)
 end
-
-
-
 
 DialogCtrl._RefreshRestCell = HL.Method(HL.String) << function(self, charId)
     local restCell = self.view.friendshipRight.restCell

@@ -1,20 +1,9 @@
 local GachaPoolCellBase = require_ex('UI/Widgets/GachaPoolCellBase')
 
-
-
-
-
-
-
-
-
 GachaPoolCellJoint = HL.Class('GachaPoolCellJoint', GachaPoolCellBase)
 
 
-
 GachaPoolCellJoint.m_choicePackJumpArg = HL.Field(HL.Table)
-
-
 
 
 
@@ -24,21 +13,15 @@ GachaPoolCellJoint._OnFirstTimeInit = HL.Override() << function(self)
     self:_InitUI()
 end
 
-
-
 GachaPoolCellJoint._InnerInitGachaPoolCell = HL.Override() << function(self)
     logger.info("初始化 GachaPoolCellJoint")
     self.view.gachaTenBtn.redDot:InitRedDot("GachaCharTenLtTicket", self.m_poolId)
 end
 
-
-
 GachaPoolCellJoint._InnerUpdateGachaPoolCell = HL.Override() << function(self)
     logger.info("更新 GachaPoolCellJoint")
     self:_RefreshAllUI()
 end
-
-
 
 
 
@@ -75,8 +58,6 @@ GachaPoolCellJoint._InitUI = HL.Method() << function(self)
         UIManager:Open(PanelId.GachaItemInstructionPopup, arg)
     end)
 end
-
-
 
 GachaPoolCellJoint._RefreshAllUI = HL.Method() << function(self)
     local baseInfo = self.m_baseInfo
@@ -145,8 +126,6 @@ GachaPoolCellJoint._RefreshAllUI = HL.Method() << function(self)
         end
     end
 end
-
-
 
 
 

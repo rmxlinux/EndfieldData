@@ -1,11 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
 ActivityBenefitsRewardCell = HL.Class('ActivityBenefitsRewardCell', UIWidgetBase)
-
-
-
 
 ActivityBenefitsRewardCell.InitActivityBenefitsRewardCell = HL.Method(HL.Table) << function(self, rewardInfo)
     

@@ -1,11 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CompositeToast
-
-
-
 CompositeToastCtrl = HL.Class('CompositeToastCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -16,9 +12,6 @@ CompositeToastCtrl = HL.Class('CompositeToastCtrl', uiCtrl.UICtrl)
 CompositeToastCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 CompositeToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)

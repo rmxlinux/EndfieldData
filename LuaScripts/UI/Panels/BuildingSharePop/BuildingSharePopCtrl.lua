@@ -1,23 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BuildingSharePop
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BuildingSharePopCtrl = HL.Class('BuildingSharePopCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -28,14 +12,9 @@ BuildingSharePopCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 BuildingSharePopCtrl.m_genBuildingCellFunc = HL.Field(HL.Function)
 
-
 BuildingSharePopCtrl.m_onClickReplace = HL.Field(HL.Function)
-
-
-
 
 
 BuildingSharePopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -58,13 +37,9 @@ BuildingSharePopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 BuildingSharePopCtrl.OnShow = HL.Override() << function(self)
     self:_UpdateView()
 end
-
-
 
 BuildingSharePopCtrl._UpdateView = HL.Method() << function(self)
     local remoteFactorySystem = GameInstance.player.remoteFactory
@@ -76,8 +51,6 @@ BuildingSharePopCtrl._UpdateView = HL.Method() << function(self)
     self:_SyncPlayerInfos()
 end
 
-
-
 BuildingSharePopCtrl._SetNaviTarget = HL.Method() << function(self)
     local remoteFactorySystem = GameInstance.player.remoteFactory
     local buildingCount = remoteFactorySystem.receivedSocialBuildingCount
@@ -85,14 +58,10 @@ BuildingSharePopCtrl._SetNaviTarget = HL.Method() << function(self)
         local firstObject = self.view.buildingList:Get(0)
         local firstCell = firstObject and self.m_genBuildingCellFunc(firstObject) or nil
         if firstCell then
-            InputManagerInst.controllerNaviManager:SetTarget(firstCell.naviDecorator)
+            self:SetNaviTarget(firstCell.naviDecorator)
         end
     end
 end
-
-
-
-
 
 BuildingSharePopCtrl._OnUpdateBuildingCell = HL.Method(HL.Table, HL.Number) << function(self, cell, luaIndex)
     local remoteFactorySystem = GameInstance.player.remoteFactory
@@ -146,10 +115,6 @@ BuildingSharePopCtrl._OnUpdateBuildingCell = HL.Method(HL.Table, HL.Number) << f
     cell.receiveDateTimeText.text = Utils.timestampToDateYMDHM(buildingInfo.createTimestamp)
 end
 
-
-
-
-
 BuildingSharePopCtrl._UpdatePlayerName = HL.Method(HL.Table, HL.Userdata) << function(self, cell, buildingInfo)
     self:_UpdatePlayerName_Internal(buildingInfo.ownerId, cell.ownerNameText,
         Language.LUA_FRIEND_NAME, Language.LUA_FRIEND_REMAKE_NAME)
@@ -160,12 +125,6 @@ BuildingSharePopCtrl._UpdatePlayerName = HL.Method(HL.Table, HL.Userdata) << fun
             Language.LUA_FRIEND_SOCIAL_BUILDING_SHARED_NAME, Language.LUA_FRIEND_SOCIAL_BUILDING_SHARED_REMAKE_NAME)
     end
 end
-
-
-
-
-
-
 
 BuildingSharePopCtrl._UpdatePlayerName_Internal = HL.Method(HL.Number, HL.Userdata, HL.String, HL.String)
     << function(self, roleId, nameText, nameFormat, remakeNameFormat)
@@ -186,8 +145,6 @@ end
 
 
 local SYNC_BATCH_SIZE = 10
-
-
 
 BuildingSharePopCtrl._SyncPlayerInfos = HL.Method() << function(self)
     local remoteFactorySystem = GameInstance.player.remoteFactory
@@ -220,10 +177,6 @@ BuildingSharePopCtrl._SyncPlayerInfos = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 BuildingSharePopCtrl._SyncPlayerInfos_Internal = HL.Method(HL.Table, HL.Number) << function(self, roleIds, fromIndex)
     if fromIndex > #roleIds then
         return
@@ -244,8 +197,6 @@ BuildingSharePopCtrl._SyncPlayerInfos_Internal = HL.Method(HL.Table, HL.Number) 
     end)
 end
 
-
-
 BuildingSharePopCtrl._UpdatePlayerNames = HL.Method() << function(self)
     self.view.buildingList:UpdateShowingCells(function(csIndex, object)
         local cell = self.m_genBuildingCellFunc(object)
@@ -257,8 +208,6 @@ BuildingSharePopCtrl._UpdatePlayerNames = HL.Method() << function(self)
         self:_UpdatePlayerName(cell, buildingInfo)
     end)
 end
-
-
 
 BuildingSharePopCtrl.OnClose = HL.Override() << function(self)
     GameInstance.player.friendSystem:ClearSyncCallback()

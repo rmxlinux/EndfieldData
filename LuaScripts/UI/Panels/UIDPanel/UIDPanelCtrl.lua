@@ -3,28 +3,15 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.UIDPanel
 
 local NetClientInst = GameInstance.netClientManager
-
-
-
-
-
-
-
-
-
-
-
 UIDPanelCtrl = HL.Class('UIDPanelCtrl', uiCtrl.UICtrl)
-
 
 UIDPanelCtrl.m_updatePingValueCor = HL.Field(HL.Thread)
 
-
 UIDPanelCtrl.m_pingThresholdValueTbl = HL.Field(HL.Table)
-
 
 UIDPanelCtrl.m_pingColorStrTbl = HL.Field(HL.Table)
 
+UIDPanelCtrl.m_pingInProgress = HL.Field(HL.Boolean) << false
 
 
 
@@ -34,9 +21,6 @@ UIDPanelCtrl.m_pingColorStrTbl = HL.Field(HL.Table)
 
 UIDPanelCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
-
-
-
 
 
 UIDPanelCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -53,21 +37,18 @@ UIDPanelCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end)
 
-    if self:_EnablePing() then
+    local enablePing = self:_EnablePing()
+    self.view.pingCon.gameObject:SetActive(enablePing)
+    if enablePing then
         self:_ProcessPingCfg()
-        self.view.pingCon.gameObject:SetActive(true)
         self.m_updatePingValueCor = self:_StartCoroutine(function()
             while true do
                 self:_UpdatePingInfo()
                 coroutine.wait(UIConst.COMMON_UI_TIME_UPDATE_INTERVAL)
             end
         end)
-    else
-        self.view.pingCon.gameObject:SetActive(false)
     end
 end
-
-
 
 UIDPanelCtrl.OnClose = HL.Override() << function(self)
     if self.m_updatePingValueCor then
@@ -75,16 +56,12 @@ UIDPanelCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 UIDPanelCtrl._EnablePing = HL.Method().Return(HL.Boolean) << function(self)
     if CS.Beyond.CloudGame.enabled then
         return false 
     end
     return true
 end
-
-
 
 UIDPanelCtrl._ProcessPingCfg = HL.Method() << function(self)
     local splitChar = ","
@@ -96,11 +73,15 @@ UIDPanelCtrl._ProcessPingCfg = HL.Method() << function(self)
     self.m_pingColorStrTbl = string.split(self.view.config.PING_COLOR_STAGE, splitChar)
 end
 
-
-
 UIDPanelCtrl._UpdatePingInfo = HL.Method() << function(self)
     local pingValue = NetClientInst:GetPing()
-    local clampPingValue = lume.clamp(pingValue, 0, 999)
+    local pingWarning = pingValue < 0 or pingValue >= 999
+    local clampPingValue = pingWarning and 999 or pingValue
+    self.view.textNode:SetState(pingWarning and "Warning" or "Normal" )
+    self.view.pingNubTxt.text = string.format("%sms", clampPingValue)
+    if pingWarning then
+        return
+    end
 
     local stage = 1
     for i = #self.m_pingThresholdValueTbl, 1, -1 do
@@ -113,9 +94,7 @@ UIDPanelCtrl._UpdatePingInfo = HL.Method() << function(self)
 
     local color = self.m_pingColorStrTbl[stage]
     self.view.pingCon.color = UIUtils.getColorByString(color)
-    self.view.pingNubTxt.text = string.format("%sms", clampPingValue)
 end
-
 
 UIDPanelCtrl.OnEnterMainGame = HL.StaticMethod() << function()
     UIManager:Open(PANEL_ID)

@@ -1,57 +1,24 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipGuestroomReceiveClues = HL.Class('SpaceshipGuestroomReceiveClues', UIWidgetBase)
-
 
 SpaceshipGuestroomReceiveClues.m_onClose = HL.Field(HL.Function)
 
-
 SpaceshipGuestroomReceiveClues.m_getCellFunc = HL.Field(HL.Function)
-
 
 SpaceshipGuestroomReceiveClues.m_isOpen = HL.Field(HL.Boolean) << false
 
-
 SpaceshipGuestroomReceiveClues.m_data = HL.Field(HL.Table)
-
 
 SpaceshipGuestroomReceiveClues.m_batches = HL.Field(HL.Table)
 
-
 SpaceshipGuestroomReceiveClues.m_currentBatchIndex = HL.Field(HL.Number) << 0
-
 
 SpaceshipGuestroomReceiveClues.m_Index2Cell = HL.Field(HL.Table)
 
-
 SpaceshipGuestroomReceiveClues.m_cellInstId2Index = HL.Field(HL.Table)
 
-
 SpaceshipGuestroomReceiveClues.m_lastNaviTargetIndex = HL.Field(HL.Number) << 1
-
-
 
 
 SpaceshipGuestroomReceiveClues._OnFirstTimeInit = HL.Override() << function(self)
@@ -157,8 +124,6 @@ SpaceshipGuestroomReceiveClues._OnFirstTimeInit = HL.Override() << function(self
     end)
 end
 
-
-
 SpaceshipGuestroomReceiveClues.InitSpaceshipGuestroomReceiveClues = HL.Method() << function(self)
     self:_FirstTimeInit()
     GameInstance.player.spaceship:GetClueInfo()
@@ -197,8 +162,6 @@ SpaceshipGuestroomReceiveClues.InitSpaceshipGuestroomReceiveClues = HL.Method() 
     self:_ProcessNextBatch()
 end
 
-
-
 SpaceshipGuestroomReceiveClues._ProcessNextBatch = HL.Method() << function(self)
     self.m_currentBatchIndex = self.m_currentBatchIndex + 1
     if self.m_currentBatchIndex > #self.m_batches then
@@ -212,8 +175,6 @@ SpaceshipGuestroomReceiveClues._ProcessNextBatch = HL.Method() << function(self)
     end)
 end
 
-
-
 SpaceshipGuestroomReceiveClues._UpdateRecvNumber = HL.Method() << function(self)
     local isRecvCount = GameInstance.player.spaceship:GetRecvClueCount()
     local recvList = Tables.spaceshipConst.recvFriendClueAddCreditList
@@ -224,8 +185,6 @@ SpaceshipGuestroomReceiveClues._UpdateRecvNumber = HL.Method() << function(self)
     self.view.numberTxt.text = recvReward
 end
 
-
-
 SpaceshipGuestroomReceiveClues._OnAllBatchesCompleted = HL.Method() << function(self)
     self:_UpdateSpaceshipGuestroomReceiveCluesView(true)
     self.view.loadingNode.gameObject:SetActive(false)
@@ -233,8 +192,6 @@ SpaceshipGuestroomReceiveClues._OnAllBatchesCompleted = HL.Method() << function(
     self.m_batches = {}
     self.m_currentBatchIndex = 0
 end
-
-
 
 
 SpaceshipGuestroomReceiveClues._UpdateSpaceshipGuestroomReceiveCluesCache = HL.Method() << function(self)
@@ -256,9 +213,6 @@ SpaceshipGuestroomReceiveClues._UpdateSpaceshipGuestroomReceiveCluesCache = HL.M
     end)
 end
 
-
-
-
 SpaceshipGuestroomReceiveClues._UpdateSpaceshipGuestroomReceiveCluesView = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     self.m_Index2Cell = {}
     self.m_cellInstId2Index = {}
@@ -272,8 +226,6 @@ SpaceshipGuestroomReceiveClues._UpdateSpaceshipGuestroomReceiveCluesView = HL.Me
     end
 end
 
-
-
 SpaceshipGuestroomReceiveClues.Navi2LastNaviTarget = HL.Method() << function(self)
     if not DeviceInfo.usingController or not self.m_isOpen then
         return
@@ -281,24 +233,20 @@ SpaceshipGuestroomReceiveClues.Navi2LastNaviTarget = HL.Method() << function(sel
     while self.m_lastNaviTargetIndex > 0 do
         local cell = self.m_Index2Cell[self.m_lastNaviTargetIndex]
         if cell then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.view.inputBindingGroupNaviDecorator)
+            self:SetNaviTarget(cell.view.inputBindingGroupNaviDecorator)
             return
         end
         self.m_lastNaviTargetIndex = self.m_lastNaviTargetIndex - 1
     end
 end
 
-
-
 SpaceshipGuestroomReceiveClues.NaviToFirstCell = HL.Method() << function(self)
     local cell = self.m_getCellFunc(self.view.scrollList:Get(0))
     if not cell then
         return
     end
-    InputManagerInst.controllerNaviManager:SetTarget(cell.view.inputBindingGroupNaviDecorator)
+    self:SetNaviTarget(cell.view.inputBindingGroupNaviDecorator)
 end
-
-
 
 SpaceshipGuestroomReceiveClues.FadeIn = HL.Method() << function(self)
     if self.m_isOpen then
@@ -308,8 +256,6 @@ SpaceshipGuestroomReceiveClues.FadeIn = HL.Method() << function(self)
     self.view.animationWrapper:ClearTween()
     self.view.animationWrapper:PlayInAnimation()
 end
-
-
 
 SpaceshipGuestroomReceiveClues.FadeOut = HL.Method() << function(self)
     if not self.m_isOpen then
@@ -323,8 +269,6 @@ SpaceshipGuestroomReceiveClues.FadeOut = HL.Method() << function(self)
         self.view.gameObject:SetActive(false)
     end)
 end
-
-
 
 SpaceshipGuestroomReceiveClues._OnDestroy = HL.Override() << function(self)
     GameInstance.player.friendSystem:ClearSyncCallback()

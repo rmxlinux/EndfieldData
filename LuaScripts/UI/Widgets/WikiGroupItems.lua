@@ -1,45 +1,20 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
 WikiGroupItems = HL.Class('WikiGroupItems', UIWidgetBase)
-
 
 WikiGroupItems.m_entryIds = HL.Field(HL.Table)
 
-
 WikiGroupItems.m_rootNode = HL.Field(HL.Userdata)
-
 
 WikiGroupItems.m_itemCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WikiGroupItems.m_monsterCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WikiGroupItems.m_curCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 WikiGroupItems._OnFirstTimeInit = HL.Override() << function(self)
 
 end
-
-
-
-
-
-
-
-
-
 
 
 
@@ -131,9 +106,6 @@ WikiGroupItems.InitWikiGroupItems = HL.Method(HL.Table, HL.Number, HL.Number, HL
 
     return selectedCell
 end
-
-
-
 
 WikiGroupItems.GetCellByEntryId = HL.Method(HL.String).Return(HL.Any) << function(self, targetEntryId)
     for i, entryId in ipairs(self.m_entryIds) do

@@ -3,58 +3,7 @@ local PANEL_ID = PanelId.DomainDepotGoodsPack
 local DomainDepotDeliverItemType = GEnums.DomainDepotDeliverItemType
 local DeliverPackType = GEnums.DeliverPackType
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainDepotGoodsPackCtrl = HL.Class('DomainDepotGoodsPackCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -65,56 +14,37 @@ DomainDepotGoodsPackCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_DOMAIN_DEPOT_PACK_FAILED] = '_OnPackFailed',
 }
 
-
 DomainDepotGoodsPackCtrl.m_domainId = HL.Field(HL.String) << ""
-
 
 DomainDepotGoodsPackCtrl.m_depotId = HL.Field(HL.String) << ""
 
-
 DomainDepotGoodsPackCtrl.m_minLimitValue = HL.Field(HL.Number) << 0
-
 
 DomainDepotGoodsPackCtrl.m_maxLimitValue = HL.Field(HL.Number) << 0
 
-
 DomainDepotGoodsPackCtrl.m_itemType = HL.Field(DomainDepotDeliverItemType)
-
 
 DomainDepotGoodsPackCtrl.m_packType = HL.Field(DeliverPackType)
 
-
 DomainDepotGoodsPackCtrl.m_itemValueGetter = HL.Field(HL.Table)
-
 
 DomainDepotGoodsPackCtrl.m_itemCellGetFunc = HL.Field(HL.Function)
 
-
 DomainDepotGoodsPackCtrl.m_itemInfoList = HL.Field(HL.Table)
-
 
 DomainDepotGoodsPackCtrl.m_selectedItemList = HL.Field(HL.Table)
 
-
 DomainDepotGoodsPackCtrl.m_currSelectedItemIndex = HL.Field(HL.Number) << -1
-
 
 DomainDepotGoodsPackCtrl.m_lastSelectedItemId = HL.Field(HL.String) << ""
 
-
 DomainDepotGoodsPackCtrl.m_incomeRatio = HL.Field(HL.Number) << 1
-
 
 DomainDepotGoodsPackCtrl.m_pack = HL.Field(HL.Forward("DomainDepotPack"))
 
-
 DomainDepotGoodsPackCtrl.m_fillTween = HL.Field(HL.Userdata)
 
-
 DomainDepotGoodsPackCtrl.m_resumeState = HL.Field(HL.Table)
-
-
-
 
 
 DomainDepotGoodsPackCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -150,8 +80,6 @@ DomainDepotGoodsPackCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 
-
-
 DomainDepotGoodsPackCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     local currentSelectedItemId = self.m_lastSelectedItemId
     return {
@@ -168,27 +96,19 @@ DomainDepotGoodsPackCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << functi
     }
 end
 
-
-
 DomainDepotGoodsPackCtrl.OnShow = HL.Override() << function(self)
     GameInstance.player.remoteFactory.core:Message_HSFB(Utils.getCurrentChapterId(), false, {1})
 end
-
-
 
 DomainDepotGoodsPackCtrl.OnHide = HL.Override() << function(self)
     self:_ClearFillTween()
     GameInstance.player.remoteFactory.core:Message_HSFB(Utils.getCurrentChapterId(), true, {1})
 end
 
-
-
 DomainDepotGoodsPackCtrl.OnClose = HL.Override() << function(self)
     self:_ClearFillTween()
     GameInstance.player.remoteFactory.core:Message_HSFB(Utils.getCurrentChapterId(), true, {1})
 end
-
-
 
 DomainDepotGoodsPackCtrl._InitBasicNodes = HL.Method() << function(self)
     local packTypeCfg = Tables.domainDepotDeliverItemTypeTable[self.m_itemType]
@@ -203,8 +123,6 @@ DomainDepotGoodsPackCtrl._InitBasicNodes = HL.Method() << function(self)
     DomainDepotUtils.SetDomainColorToDepotNodes(self.m_domainId, { self.view.bgColorMask })
 end
 
-
-
 DomainDepotGoodsPackCtrl._OnNextBtnClick = HL.Method() << function(self)
     local currValue = self:_GetItemTotalValue()
     GameInstance.player.domainDepotSystem:PackDomainDepotItems(
@@ -217,8 +135,6 @@ DomainDepotGoodsPackCtrl._OnNextBtnClick = HL.Method() << function(self)
     self.view.nextBtn.enabled = false
 end
 
-
-
 DomainDepotGoodsPackCtrl._RefreshNextBtnState = HL.Method() << function(self)
     local currValue = self:_GetItemTotalValue()
     local enough = currValue >= self.m_minLimitValue
@@ -229,8 +145,6 @@ DomainDepotGoodsPackCtrl._RefreshNextBtnState = HL.Method() << function(self)
         self.view.nextBtn.customBindingViewLabelText = viewText
     end
 end
-
-
 
 DomainDepotGoodsPackCtrl._OnPackFailed = HL.Method() << function(self)
     self:_UpdatePackItemDataList()
@@ -243,9 +157,6 @@ DomainDepotGoodsPackCtrl._OnPackFailed = HL.Method() << function(self)
     self:_RefreshNextBtnState()
     self.view.nextBtn.enabled = true
 end
-
-
-
 
 
 DomainDepotGoodsPackCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
@@ -299,9 +210,6 @@ DomainDepotGoodsPackCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << functi
 end
 
 
-
-
-
 DomainDepotGoodsPackCtrl._RestoreControllerNavi = HL.Method(HL.String) << function(self, itemId)
     if string.isEmpty(itemId) then
         return
@@ -317,13 +225,10 @@ DomainDepotGoodsPackCtrl._RestoreControllerNavi = HL.Method(HL.String) << functi
         self.view.leftNaviGroup:ManuallyFocus()
         local cell = self.m_itemCellGetFunc(targetIndex)
         if cell ~= nil then
-            UIUtils.setAsNaviTarget(cell.item.view.button)
+            self:SetNaviTarget(cell.item.view.button)
         end
     end
 end
-
-
-
 
 
 DomainDepotGoodsPackCtrl._FindItemIndexById = HL.Method(HL.String).Return(HL.Number) << function(self, itemId)
@@ -334,8 +239,6 @@ DomainDepotGoodsPackCtrl._FindItemIndexById = HL.Method(HL.String).Return(HL.Num
     end
     return -1
 end
-
-
 
 
 
@@ -352,8 +255,6 @@ DomainDepotGoodsPackCtrl._InitPackItemList = HL.Method() << function(self)
     self:_UpdatePackItemDataList()
     self:_RefreshPackItemList()
 end
-
-
 
 DomainDepotGoodsPackCtrl._UpdatePackItemDataList = HL.Method() << function(self)
     local factoryDepot = GameInstance.player.inventory.factoryDepot
@@ -389,8 +290,6 @@ DomainDepotGoodsPackCtrl._UpdatePackItemDataList = HL.Method() << function(self)
     table.sort(self.m_itemInfoList, Utils.genSortFunction({ "count", "value", "sortId1", "sortId2", "id" }, false))
 end
 
-
-
 DomainDepotGoodsPackCtrl._RefreshPackItemList = HL.Method() << function(self)
     if #self.m_itemInfoList > 0 then
         self.view.itemList:UpdateCount(#self.m_itemInfoList, true)
@@ -399,10 +298,6 @@ DomainDepotGoodsPackCtrl._RefreshPackItemList = HL.Method() << function(self)
         self.view.main:SetState("Empty")
     end
 end
-
-
-
-
 
 DomainDepotGoodsPackCtrl._OnUpdateItemCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local itemInfo = self.m_itemInfoList[index]
@@ -434,8 +329,6 @@ DomainDepotGoodsPackCtrl._OnUpdateItemCell = HL.Method(HL.Any, HL.Number) << fun
     end
 end
 
-
-
 DomainDepotGoodsPackCtrl._UpdateSelectItemListAfterDataChange = HL.Method() << function(self)
     local waitUpdateItemList = {}
     for itemId, _ in pairs(self.m_selectedItemList) do
@@ -464,9 +357,6 @@ DomainDepotGoodsPackCtrl._UpdateSelectItemListAfterDataChange = HL.Method() << f
         self.m_lastSelectedItemId = ""
     end
 end
-
-
-
 
 DomainDepotGoodsPackCtrl._OnSelectItem = HL.Method(HL.Number) << function(self, index)
     local itemInfo = self.m_itemInfoList[index]
@@ -536,9 +426,6 @@ DomainDepotGoodsPackCtrl._OnSelectItem = HL.Method(HL.Number) << function(self, 
     self:_RefreshValueDisplayNode()
 end
 
-
-
-
 DomainDepotGoodsPackCtrl._GetItemNumberSelectorMaxCount = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
     local id = self.m_itemInfoList[index].id
     local count = self.m_itemInfoList[index].count
@@ -552,10 +439,6 @@ DomainDepotGoodsPackCtrl._GetItemNumberSelectorMaxCount = HL.Method(HL.Number).R
     return math.min(count, math.floor((self.m_maxLimitValue - currTotalValue) / singleValue))
 end
 
-
-
-
-
 DomainDepotGoodsPackCtrl._RefreshItemCellSelectNode = HL.Method(HL.String, HL.Any) << function(self, id, itemCell)
     if self.m_selectedItemList[id] then
         itemCell.selectNode.selectCountTxt.text = string.format("%d", self.m_selectedItemList[id])
@@ -565,8 +448,6 @@ DomainDepotGoodsPackCtrl._RefreshItemCellSelectNode = HL.Method(HL.String, HL.An
     end
 end
 
-
-
 DomainDepotGoodsPackCtrl._GetItemTotalValue = HL.Method().Return(HL.Number) << function(self)
     local totalValue = 0
     for id, count in pairs(self.m_selectedItemList) do
@@ -574,8 +455,6 @@ DomainDepotGoodsPackCtrl._GetItemTotalValue = HL.Method().Return(HL.Number) << f
     end
     return totalValue
 end
-
-
 
 
 
@@ -597,16 +476,12 @@ DomainDepotGoodsPackCtrl._InitValueNode = HL.Method() << function(self)
     self:_InitValueFillMinimumNode()
 end
 
-
-
 DomainDepotGoodsPackCtrl._InitValueFillMinimumNode = HL.Method() << function(self)
     local sliderHeight = self.view.fillSliderRectTransform.rect.height
     local minPercentage = self.m_minLimitValue / self.m_maxLimitValue
     local bottomHeight = minPercentage * sliderHeight
     self.view.fillMinimumNode.anchoredPosition = Vector2(0, -sliderHeight / 2 + bottomHeight)  
 end
-
-
 
 DomainDepotGoodsPackCtrl._RefreshValueDisplayNode = HL.Method() << function(self)
     local currTotalValue = self:_GetItemTotalValue()
@@ -633,8 +508,6 @@ DomainDepotGoodsPackCtrl._RefreshValueDisplayNode = HL.Method() << function(self
     self:_RefreshNextBtnState()
 end
 
-
-
 DomainDepotGoodsPackCtrl._ClearFillTween = HL.Method() << function(self)
     if self.m_fillTween == nil then
         return
@@ -642,8 +515,6 @@ DomainDepotGoodsPackCtrl._ClearFillTween = HL.Method() << function(self)
     self.m_fillTween:Kill(false)
     self.m_fillTween = nil
 end
-
-
 
 DomainDepotGoodsPackCtrl._RefreshAllValueState = HL.Method() << function(self)
     self.view.itemList:UpdateShowingCells(function(csIndex, obj)
@@ -665,10 +536,6 @@ DomainDepotGoodsPackCtrl._RefreshAllValueState = HL.Method() << function(self)
 
     self:_RefreshValueDisplayNode()
 end
-
-
-
-
 
 DomainDepotGoodsPackCtrl._AddSelectedItemToTargetValue = HL.Method(HL.Number, HL.Boolean) << function(self, fillValue, useFloor)
     local fillItemInfoList = {}  
@@ -732,9 +599,6 @@ DomainDepotGoodsPackCtrl._AddSelectedItemToTargetValue = HL.Method(HL.Number, HL
     self:_RefreshAllValueState()
 end
 
-
-
-
 DomainDepotGoodsPackCtrl._RemoveSelectedItemToTargetValue = HL.Method(HL.Number) << function(self, removeValue)
     local removeItemInfoList = {}  
     for _, itemInfo in ipairs(self.m_itemInfoList) do
@@ -773,8 +637,6 @@ DomainDepotGoodsPackCtrl._RemoveSelectedItemToTargetValue = HL.Method(HL.Number)
     self:_RefreshAllValueState()
 end
 
-
-
 DomainDepotGoodsPackCtrl._OnMinFillBtnClick = HL.Method() << function(self)
     local currValue = self:_GetItemTotalValue()
     if currValue == self.m_minLimitValue then
@@ -787,8 +649,6 @@ DomainDepotGoodsPackCtrl._OnMinFillBtnClick = HL.Method() << function(self)
     end
 end
 
-
-
 DomainDepotGoodsPackCtrl._OnMaxFillBtnClick = HL.Method() << function(self)
     local currValue = self:_GetItemTotalValue()
     if currValue == self.m_maxLimitValue then
@@ -796,8 +656,6 @@ DomainDepotGoodsPackCtrl._OnMaxFillBtnClick = HL.Method() << function(self)
     end
     self:_AddSelectedItemToTargetValue(self.m_maxLimitValue - currValue, true)
 end
-
-
 
 DomainDepotGoodsPackCtrl._OnResetBtnClick = HL.Method() << function(self)
     if self.m_currSelectedItemIndex > 0 then
@@ -807,8 +665,6 @@ DomainDepotGoodsPackCtrl._OnResetBtnClick = HL.Method() << function(self)
     self.m_lastSelectedItemId = ""
     self:_RefreshAllValueState()
 end
-
-
 
 
 

@@ -2,16 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopChoicenessWeapon
 
-
-
-
-
-
-
-
-
 ShopChoicenessWeaponCtrl = HL.Class('ShopChoicenessWeaponCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -23,14 +14,9 @@ ShopChoicenessWeaponCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 ShopChoicenessWeaponCtrl.m_boxData = HL.Field(HL.Any)
 
-
 ShopChoicenessWeaponCtrl.m_info = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -68,8 +54,6 @@ ShopChoicenessWeaponCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     })
 end
 
-
-
 ShopChoicenessWeaponCtrl.OnShow = HL.Override() << function(self)
     local goodsId = self.m_info.cashGoodsIds[1]
     GameInstance.player.shopSystem:RecordSeeGoodsId(goodsId)
@@ -79,15 +63,11 @@ end
 
 
 
-
-
 ShopChoicenessWeaponCtrl._InitUI = HL.Method() << function(self)
     self.view.gotoBtn.onClick:AddListener(function()
         self.m_phase:OpenWeaponCategoryAndOpenDetailPanel(self.m_boxData, self.m_info.id)
     end)
 end
-
-
 
 ShopChoicenessWeaponCtrl._RefreshAllUI = HL.Method() << function(self)
     

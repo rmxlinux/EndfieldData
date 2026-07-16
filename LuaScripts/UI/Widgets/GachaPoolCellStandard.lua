@@ -1,24 +1,9 @@
 local GachaPoolCellBase = require_ex('UI/Widgets/GachaPoolCellBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
 GachaPoolCellStandard = HL.Class('GachaPoolCellStandard', GachaPoolCellBase)
 
 
-
 GachaPoolCellStandard.m_choicePackJumpArg = HL.Field(HL.Table)
-
-
 
 
 
@@ -28,23 +13,16 @@ GachaPoolCellStandard._OnFirstTimeInit = HL.Override() << function(self)
     self:_InitUI()
 end
 
-
-
 GachaPoolCellStandard._InnerInitGachaPoolCell = HL.Override() << function(self)
     logger.info("初始化 GachaPoolCellStandard")
     self:_InitData()
 end
-
-
 
 GachaPoolCellStandard._InnerUpdateGachaPoolCell = HL.Override() << function(self)
     logger.info("更新 GachaPoolCellStandard")
     self:_UpdateData()
     self:_RefreshAllUI()
 end
-
-
-
 
 GachaPoolCellStandard.UpdateMoneyNodeOnlyGachaTicket = HL.Override(HL.Any) << function(self, moneyNode)
     moneyNode.gachaItem1.view.gameObject:SetActiveIfNecessary(false)
@@ -56,8 +34,6 @@ end
 
 
 
-
-
 GachaPoolCellStandard._InitData = HL.Method() << function(self)
     self.m_choicePackJumpArg = {
         poolId = self.m_poolId,
@@ -66,13 +42,9 @@ GachaPoolCellStandard._InitData = HL.Method() << function(self)
     }
 end
 
-
-
 GachaPoolCellStandard._UpdateData = HL.Method() << function(self)
     self.m_choicePackJumpArg.remainChoicePackProgress = self.m_baseInfo.cumulateChoicePackInfo.remainNeedPullCount
 end
-
-
 
 
 
@@ -89,8 +61,6 @@ GachaPoolCellStandard._InitUI = HL.Method() << function(self)
         self:_RefreshAllUI()
     end)
 end
-
-
 
 GachaPoolCellStandard._RefreshAllUI = HL.Method() << function(self)
     local choicePackInfo = self.m_baseInfo.cumulateChoicePackInfo
@@ -111,8 +81,6 @@ end
 
 
 
-
-
 GachaPoolCellStandard.GetSubPanelArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local isOpen, ctrl = UIManager:IsOpen(PanelId.GachaOptional)
     if isOpen then
@@ -124,9 +92,6 @@ GachaPoolCellStandard.GetSubPanelArg = HL.Override().Return(HL.Opt(HL.Any)) << f
     end
     return GachaPoolCellStandard.Super.GetSubPanelArg(self)
 end
-
-
-
 
 GachaPoolCellStandard.HandleSubPanelArg = HL.Override(HL.Any) << function(self, subPanelArg)
     if subPanelArg.isGachaOptional then

@@ -1,34 +1,19 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
+local OBTAIN_ENV_SPACEING = 10
 
 ItemAsInput = HL.Class('ItemAsInput', UIWidgetBase)
 
-
 ItemAsInput.m_obtainCells = HL.Field(HL.Forward('UIListCache'))
-
 
 ItemAsInput.m_itemTipsPosInfo = HL.Field(HL.Table)
 
-
 ItemAsInput.m_onClickItem = HL.Field(HL.Function)
-
-
 
 
 ItemAsInput._OnFirstTimeInit = HL.Override() << function(self)
     self.m_obtainCells = UIUtils.genCellCache(self.view.obtainCell)
 end
-
-
-
 
 
 
@@ -62,18 +47,16 @@ ItemAsInput.InitItemAsInput = HL.Method(HL.Table) << function(self, args)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.transform)
 end
 
-
-
-
-
-
 ItemAsInput._RefreshObtainCell = HL.Method(HL.Any, HL.Table, HL.Number) << function(self, obtainInfos, cell, index)
     local info = obtainInfos[index]
     cell.nameTxt.text = info.name
     local iconFolder = info.iconFolder or UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON
     cell.icon:LoadSprite(iconFolder, info.icon)
-
-
+    if cell.earlyAccessNode ~= nil then
+        local isEarlyAccessBuilding = not string.isEmpty(info.buildingId) and
+            FactoryUtils.isSkipUnlockedBuilding(info.buildingId)
+        cell.earlyAccessNode.gameObject:SetActive(isEarlyAccessBuilding)
+    end
 
     local canJump = info.crafts ~= nil and info.noJump ~= true
     if canJump then
@@ -102,10 +85,6 @@ ItemAsInput._RefreshObtainCell = HL.Method(HL.Any, HL.Table, HL.Number) << funct
 
     cell.gameObject.name = "ObtainWay-" .. index
 end
-
-
-
-
 
 ItemAsInput._InsertCrafts = HL.Method(HL.Table, HL.Table) << function(self, obtainInfos, craftInfos)
     local craftsByBuilding = {}
@@ -195,10 +174,6 @@ ItemAsInput._InsertCrafts = HL.Method(HL.Table, HL.Table) << function(self, obta
     end
 end
 
-
-
-
-
 ItemAsInput._UpdateCraftCellExpand = HL.Method(HL.Table, HL.Table) << function(self, cell, info)
     if not cell.craftCells then
         cell.craftCells = UIUtils.genCellCache(cell.craftCell)
@@ -213,6 +188,16 @@ ItemAsInput._UpdateCraftCellExpand = HL.Method(HL.Table, HL.Table) << function(s
     end
 
     local craftCount = #info.crafts
+    if craftCount == 1 then
+        local firstInfo = info.crafts[1]
+        if firstInfo.genEnv and firstInfo.genEnv ~= GEnums.FacEnvGenEnvType.None then
+            cell.verticalLayoutGroup.spacing = OBTAIN_ENV_SPACEING
+        else
+            cell.verticalLayoutGroup.spacing = 0
+        end
+    else
+        cell.verticalLayoutGroup.spacing = 0
+    end
     cell.craftCells:Refresh(craftCount, function(craftCell, craftIndex)
         
         local craftInfo = info.crafts[craftIndex]
@@ -288,10 +273,12 @@ ItemAsInput._UpdateCraftCellExpand = HL.Method(HL.Table, HL.Table) << function(s
             end
         end
 
+        local showLimitedFormulaTag = false
         
         if craftCell.limitedFormulaCtrl then
             if craftInfo.craftId ~= nil then
                 local timeLimited = FactoryUtils.isTimeLimitedFormula(craftInfo.craftId)
+                showLimitedFormulaTag = timeLimited
                 craftCell.limitedFormulaCtrl:SetState(timeLimited and "LimitedTimeEvent" or "Normal")
                 FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag1, craftInfo.craftId)
                 FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag2, craftInfo.craftId)
@@ -299,6 +286,36 @@ ItemAsInput._UpdateCraftCellExpand = HL.Method(HL.Table, HL.Table) << function(s
             else
                 craftCell.limitedFormulaCtrl:SetState("Normal")
             end
+        end
+
+        
+        if craftCell.envTitleNode ~= nil then
+            FactoryUtils.refreshEnvIcon(craftInfo.env, craftCell.envTitleNode)
+            if craftCell.envBG ~= nil then
+                craftCell.envBG.gameObject:SetActive(
+                    not showLimitedFormulaTag and
+                        craftInfo.env ~= nil and
+                        craftInfo.env ~= GEnums.FacEnvGenEnvType.None
+                )
+            end
+        end
+
+        
+        if craftInfo.genEnv and craftInfo.genEnv ~= GEnums.FacEnvGenEnvType.None then
+            craftCell.outcomeEnv.gameObject:SetActive(true)
+            craftCell.envGenBg.gameObject:SetActive(true)
+            craftCell.outcomeEnv:SetState(craftInfo.genEnv:ToString())
+        else
+            craftCell.outcomeEnv.gameObject:SetActive(false)
+            craftCell.envGenBg.gameObject:SetActive(false)
+        end
+        if craftInfo.consumeRate then
+            craftCell.arrow.gameObject:SetActive(false)
+            craftCell.envTipsNode.gameObject:SetActive(true)
+            craftCell.genEnvTimeTxt.text = I18nUtils.CombineStringWithLanguageSpilt(craftInfo.consumeRate, Language["ui_fac_common_minute_speed"])
+        else
+            craftCell.arrow.gameObject:SetActive(true)
+            craftCell.envTipsNode.gameObject:SetActive(false)
         end
 
         craftCell.gameObject.name = "Craft-" .. craftInfo.craftId

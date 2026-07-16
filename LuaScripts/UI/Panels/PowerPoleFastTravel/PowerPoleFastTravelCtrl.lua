@@ -8,60 +8,7 @@ local PANEL_ID = PanelId.PowerPoleFastTravel
 
 local ConflictName = "PowerPoleFastTravelCtrl"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PowerPoleFastTravelCtrl = HL.Class('PowerPoleFastTravelCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -83,65 +30,43 @@ PowerPoleFastTravelCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 PowerPoleFastTravelCtrl.m_linkInfoList = HL.Field(HL.Userdata)
-
 
 PowerPoleFastTravelCtrl.m_trackers = HL.Field(HL.Table)
 
-
 PowerPoleFastTravelCtrl.m_trackersCache = HL.Field(HL.Table)
-
 
 PowerPoleFastTravelCtrl.m_currentLogicId = HL.Field(HL.Any) << 0
 
-
 PowerPoleFastTravelCtrl.m_currentIsUpgraded = HL.Field(HL.Boolean) << false
-
 
 PowerPoleFastTravelCtrl.m_currentAimingLogicId = HL.Field(HL.Any) << 0
 
-
 PowerPoleFastTravelCtrl.m_lateTickKey = HL.Field(HL.Number) << -1
-
 
 PowerPoleFastTravelCtrl.m_isMoving = HL.Field(HL.Boolean) << false
 
-
 PowerPoleFastTravelCtrl.m_nextDestinationLogicId = HL.Field(HL.Any) << 0
-
 
 PowerPoleFastTravelCtrl.m_buttonConfirmTimer = HL.Field(HL.Number) << -1
 
-
 PowerPoleFastTravelCtrl.m_qteToggled = HL.Field(HL.Boolean) << false
-
 
 PowerPoleFastTravelCtrl.m_allowLeave = HL.Field(HL.Boolean) << false
 
-
 PowerPoleFastTravelCtrl.m_enterFinished = HL.Field(HL.Boolean) << false
-
 
 PowerPoleFastTravelCtrl.m_confirmEnabled = HL.Field(HL.Boolean) << true
 
-
 PowerPoleFastTravelCtrl.m_waitHideQte = HL.Field(HL.Boolean) << false
-
 
 PowerPoleFastTravelCtrl.m_isQteClickAnimPlaying = HL.Field(HL.Boolean) << false
 
-
 PowerPoleFastTravelCtrl.m_onClickLeave = HL.Field(HL.Boolean) << false
-
 
 PowerPoleFastTravelCtrl.m_args = HL.Field(HL.Any)
 
-
 PowerPoleFastTravelCtrl.m_onClickScreen = HL.Field(HL.Function)
-
-
-
 
 
 PowerPoleFastTravelCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -223,12 +148,8 @@ PowerPoleFastTravelCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 PowerPoleFastTravelCtrl.OnShow = HL.Override() << function(self)
 end
-
-
 
 PowerPoleFastTravelCtrl.OnClose = HL.Override() << function(self)
     if DeviceInfo.isPC then
@@ -240,10 +161,6 @@ PowerPoleFastTravelCtrl.OnClose = HL.Override() << function(self)
     self:Notify(MessageConst.ON_EXIT_TRAVEL_MODE)
 end
 
-
-
-
-
 PowerPoleFastTravelCtrl._SetButtonState = HL.Method(HL.Userdata, HL.Boolean) << function(self, button, enabled)
     if DeviceInfo.usingController then
         button.gameObject:SetActive(enabled)  
@@ -251,9 +168,6 @@ PowerPoleFastTravelCtrl._SetButtonState = HL.Method(HL.Userdata, HL.Boolean) << 
         button.interactable = enabled
     end
 end
-
-
-
 
 PowerPoleFastTravelCtrl._GetButtonState = HL.Method(HL.Userdata).Return(HL.Boolean) << function(self, button)
     if DeviceInfo.usingController then
@@ -263,18 +177,14 @@ PowerPoleFastTravelCtrl._GetButtonState = HL.Method(HL.Userdata).Return(HL.Boole
     end
 end
 
-
-
 PowerPoleFastTravelCtrl.OnEnterFinish = HL.Method() << function(self)
     self.m_enterFinished = true
     self.view.hintBar.gameObject:SetActive(true)
     self.view.nodeConfirm.gameObject:SetActive(true)
     self.m_allowLeave = GameWorld.gameMechManager.travelPoleBrain:GetTravelPoleAllowLeave(self.m_currentLogicId)
     self.view.nodeLeave.gameObject:SetActive(self.m_allowLeave)
+    self:_OnTravelPoleIdle()
 end
-
-
-
 
 PowerPoleFastTravelCtrl.OnReach = HL.Method(HL.Any) << function(self, args)
     local qteTriggered = unpack(args)
@@ -293,10 +203,9 @@ PowerPoleFastTravelCtrl.OnReach = HL.Method(HL.Any) << function(self, args)
 
     self:_RefreshQteToggled(qteTriggered)
     GameInstance.player.systemActionConflictManager:OnSystemActionEnd(ConflictName)
+
+    self:_OnTravelPoleIdle()
 end
-
-
-
 
 PowerPoleFastTravelCtrl._RefreshQteToggled = HL.Method(HL.Boolean) << function(self, qteTriggered)
     self.m_qteToggled = qteTriggered
@@ -310,13 +219,9 @@ PowerPoleFastTravelCtrl._RefreshQteToggled = HL.Method(HL.Boolean) << function(s
     end
 end
 
-
-
 PowerPoleFastTravelCtrl.OnReachRefresh = HL.Method() << function(self)
     self.m_linkInfoList = GameWorld.gameMechManager.travelPoleBrain:GetLinkedTravelPoleInfoList(self.m_currentLogicId)
 end
-
-
 
 PowerPoleFastTravelCtrl.OnTravelPoleExitFast = HL.Method() << function(self)
     AudioAdapter.PostEvent("au_ui_travel_pole_stop")
@@ -325,8 +230,6 @@ PowerPoleFastTravelCtrl.OnTravelPoleExitFast = HL.Method() << function(self)
     end
 end
 
-
-
 PowerPoleFastTravelCtrl.ShowQte = HL.Method() << function(self)
     self.view.qteNode.gameObject:SetActive(true)
     AudioAdapter.PostEvent("Au_UI_Popup_PoleButtonAppear")
@@ -334,8 +237,6 @@ PowerPoleFastTravelCtrl.ShowQte = HL.Method() << function(self)
     self.m_isQteClickAnimPlaying = false
     self.m_waitHideQte = false
 end
-
-
 
 PowerPoleFastTravelCtrl.HideQte = HL.Method() << function(self)
     if self.m_isQteClickAnimPlaying then
@@ -346,24 +247,15 @@ PowerPoleFastTravelCtrl.HideQte = HL.Method() << function(self)
     end
 end
 
-
-
-
 PowerPoleFastTravelCtrl.UpdateQteCountdown = HL.Method(HL.Table) << function(self, args)
     local value = unpack(args)
     self.view.qteNode.qteCountdown.fillAmount = value
 end
 
-
-
-
 PowerPoleFastTravelCtrl.TriggerDefaultNext = HL.Method(HL.Table) << function(self, args)
     local defaultNextLid = unpack(args)
     self:_BeginTravel(defaultNextLid)
 end
-
-
-
 
 PowerPoleFastTravelCtrl._InitFastTravelPanel = HL.Method(HL.Table) << function(self, args)
     local poleLogicId = unpack(args)
@@ -379,14 +271,16 @@ PowerPoleFastTravelCtrl._InitFastTravelPanel = HL.Method(HL.Table) << function(s
     self.m_linkInfoList = GameWorld.gameMechManager.travelPoleBrain:GetLinkedTravelPoleInfoList(self.m_currentLogicId)
 end
 
-
-
 PowerPoleFastTravelCtrl._UpdateTrackers = HL.Method() << function(self)
     if self.m_linkInfoList == nil then
         return
     end
 
     if not GameWorld.gameMechManager.travelPoleBrain:CheckCurrentTravelPoleValid() then
+        return
+    end
+
+    if GameWorld.gameMechManager.travelPoleBrain.isExiting then
         return
     end
 
@@ -545,8 +439,6 @@ PowerPoleFastTravelCtrl._UpdateTrackers = HL.Method() << function(self)
     end
 end
 
-
-
 PowerPoleFastTravelCtrl._CreateNewTracker = HL.Method().Return(HL.Table) << function(self)
     local cacheCount = #self.m_trackersCache
     if cacheCount > 0 then
@@ -562,9 +454,6 @@ PowerPoleFastTravelCtrl._CreateNewTracker = HL.Method().Return(HL.Table) << func
     item.tracker = obj:GetComponent(typeof(CS.Beyond.UI.UIPowerPoleFastTravelTracker))
     return item
 end
-
-
-
 
 PowerPoleFastTravelCtrl._OnConfirmButton = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipCursorVisibleCheck)
     
@@ -592,9 +481,6 @@ PowerPoleFastTravelCtrl._OnConfirmButton = HL.Method(HL.Opt(HL.Boolean)) << func
         self:_BeginTravel(self.m_currentAimingLogicId)
     end
 end
-
-
-
 
 PowerPoleFastTravelCtrl._BeginTravel = HL.Method(HL.Any) << function(self, nextLogicId)
     if not GameWorld.gameMechManager.travelPoleBrain.allowBeginTravel then
@@ -663,8 +549,6 @@ PowerPoleFastTravelCtrl._BeginTravel = HL.Method(HL.Any) << function(self, nextL
     end
 end
 
-
-
 PowerPoleFastTravelCtrl._OnButtonLink = HL.Method() << function(self)
     if self.m_isMoving ~= true and self.m_currentAimingLogicId ~= nil then
         local result = GameWorld.gameMechManager.travelPoleBrain:SetDefaultNext(self.m_currentAimingLogicId)
@@ -678,8 +562,6 @@ PowerPoleFastTravelCtrl._OnButtonLink = HL.Method() << function(self)
         end
     end
 end
-
-
 
 PowerPoleFastTravelCtrl._OnButtonQte = HL.Method() << function(self)
     if not GameWorld.gameMechManager.travelPoleBrain.allowButtonQte then
@@ -701,8 +583,6 @@ PowerPoleFastTravelCtrl._OnButtonQte = HL.Method() << function(self)
 
     self:_TryMotionOnMobileDevice(MotionType.SlightShort)
 end
-
-
 
 PowerPoleFastTravelCtrl._OnButtonLeave = HL.Method() << function(self)
     if not GameWorld.gameMechManager.travelPoleBrain.allowButtonLeave then
@@ -739,8 +619,6 @@ PowerPoleFastTravelCtrl._OnButtonLeave = HL.Method() << function(self)
     end
 end
 
-
-
 PowerPoleFastTravelCtrl.TriggerClosePanel = HL.Method() << function(self)
     UIManager:ShowWithKey(PanelId.MiniMap, PowerPoleFastTravelKey)
     GameInstance.player.systemActionConflictManager:OnSystemActionEnd(ConflictName)
@@ -753,7 +631,25 @@ PowerPoleFastTravelCtrl.TriggerClosePanel = HL.Method() << function(self)
     end
 end
 
-
+PowerPoleFastTravelCtrl._OnTravelPoleIdle = HL.Method() << function(self)
+    if self.m_isMoving then
+        return
+    end
+    local nodeId = CSFactoryUtil.GetNodeIdByLogicId(self.m_currentLogicId)
+    if nodeId == 0 or not FactoryUtils.isOthersSocialBuilding(nodeId) or not FactoryUtils.canLikeSocialBuilding(nodeId) then
+        return
+    end
+    FactoryUtils.likeSocialBuilding(nodeId, function()
+        if self.m_isMoving then
+            return
+        end
+        if not FactoryUtils.canLikeSocialBuilding(nodeId) then
+            UIUtils.PlayAnimationAndToggleActive(self.view.autoLikeNode, true, function()
+                self.view.autoLikeNode.gameObject:SetActive(false)
+            end)
+        end
+    end)
+end
 
 
 
@@ -767,8 +663,6 @@ PowerPoleFastTravelCtrl._OnConfirmBtnStateChange = HL.Method() << function(self)
     self.view.mobile.normalNode.gameObject:SetActive(isOn)
     self.view.mobile.disableNode.gameObject:SetActive(not isOn)
 end
-
-
 
 PowerPoleFastTravelCtrl._OnLinkHintStateChange = HL.Method() << function(self)
     if not DeviceInfo.usingTouch then
@@ -791,9 +685,6 @@ PowerPoleFastTravelCtrl._OnLinkHintStateChange = HL.Method() << function(self)
     end
 end
 
-
-
-
 PowerPoleFastTravelCtrl._TryMotionOnMobileDevice = HL.Method(HL.Number) << function(self, motionType)
     if not DeviceInfo.usingTouch then
         return
@@ -812,18 +703,11 @@ end
 
 
 
-
 PowerPoleFastTravelCtrl.m_controllerTriggerSettingHandlerId = HL.Field(HL.Number) << -1
-
 
 PowerPoleFastTravelCtrl.m_isControllerTriggerUsingVibration = HL.Field(HL.Boolean) << false
 
-
 PowerPoleFastTravelCtrl.m_controllerTriggerNeedRelease = HL.Field(HL.Boolean) << false
-
-
-
-
 
 PowerPoleFastTravelCtrl._ToggleControllerTriggerSetting = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, useVibration)
     local oldHandlerId = self.m_controllerTriggerSettingHandlerId
@@ -865,8 +749,6 @@ PowerPoleFastTravelCtrl._ToggleControllerTriggerSetting = HL.Method(HL.Boolean, 
         GameInstance.audioManager.gamePad.scePad:EndTriggerEffect(oldHandlerId)
     end
 end
-
-
 
 PowerPoleFastTravelCtrl._ControllerMoveTick = HL.Method() << function(self)
     if self.m_isMoving then

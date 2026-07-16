@@ -1,80 +1,36 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipRoomFormulaList = HL.Class('SpaceshipRoomFormulaList', UIWidgetBase)
-
 
 SpaceshipRoomFormulaList.m_tabCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 SpaceshipRoomFormulaList.m_curTabIndex = HL.Field(HL.Number) << -1
-
 
 SpaceshipRoomFormulaList.m_formulaTabInfos = HL.Field(HL.Table)
 
-
 SpaceshipRoomFormulaList.m_sortOptions = HL.Field(HL.Table)
-
 
 SpaceshipRoomFormulaList.m_onUpdateCell = HL.Field(HL.Function)
 
-
 SpaceshipRoomFormulaList.m_curFormulaList = HL.Field(HL.Table)
-
 
 SpaceshipRoomFormulaList.m_getFormulaCellFunc = HL.Field(HL.Function)
 
-
 SpaceshipRoomFormulaList.m_onRefreshFormulaListFunc = HL.Field(HL.Function)
-
 
 SpaceshipRoomFormulaList.m_onClickTabFunc = HL.Field(HL.Function)
 
-
 SpaceshipRoomFormulaList.m_curSelectId = HL.Field(HL.String) << ""
-
 
 SpaceshipRoomFormulaList.m_curSelectCell = HL.Field(HL.Any)
 
-
 SpaceshipRoomFormulaList.m_onCellClick = HL.Field(HL.Function)
-
 
 SpaceshipRoomFormulaList.m_onSortChanged = HL.Field(HL.Function)
 
-
 SpaceshipRoomFormulaList.m_setDefaultInfo = HL.Field(HL.Table)
 
-
 SpaceshipRoomFormulaList.m_isIniting = HL.Field(HL.Boolean) << false
-
-
 
 
 
@@ -105,9 +61,6 @@ SpaceshipRoomFormulaList._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
 end
-
-
-
 
 
 
@@ -179,15 +132,11 @@ SpaceshipRoomFormulaList.InitSpaceshipRoomFormulaList = HL.Method(HL.Table) << f
     end
 
     if isRecovery and self.m_curSelectCell and self.m_curSelectCell.view and self.m_curSelectCell.view.button then
-        InputManagerInst.controllerNaviManager:SetTarget(self.m_curSelectCell.view.button)
+        self:SetNaviTarget(self.m_curSelectCell.view.button)
     else
         self.view.formulaScrollListSelectableNaviGroup:NaviToThisGroup()
     end
 end
-
-
-
-
 
 SpaceshipRoomFormulaList._SetDefaultSelect = HL.Method(HL.Opt(HL.String, HL.Boolean)) << function(self, defaultSelectFormulaId, force)
     if self.m_setDefaultInfo and self.m_setDefaultInfo.needWaitGraduallyShow and not force then
@@ -215,10 +164,6 @@ SpaceshipRoomFormulaList._SetDefaultSelect = HL.Method(HL.Opt(HL.String, HL.Bool
     end
 end
 
-
-
-
-
 SpaceshipRoomFormulaList._OnFormulaTabCellUpdate = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local tabInfo = self.m_formulaTabInfos[luaIndex]
 
@@ -234,10 +179,6 @@ SpaceshipRoomFormulaList._OnFormulaTabCellUpdate = HL.Method(HL.Any, HL.Number) 
     end)
 end
 
-
-
-
-
 SpaceshipRoomFormulaList._OnFormulaCellUpdate = HL.Method(HL.Any, HL.Number) << function(self, gameObject, csIndex)
     local luaIndex = LuaIndex(csIndex)
     local cell = self.m_getFormulaCellFunc(gameObject)
@@ -252,10 +193,6 @@ SpaceshipRoomFormulaList._OnFormulaCellUpdate = HL.Method(HL.Any, HL.Number) << 
     end)
     cell:SetSelected(selected, true)
 end
-
-
-
-
 
 SpaceshipRoomFormulaList._OnClickCell = HL.Method(HL.Forward("SSFormulaCell"), HL.Table) << function(self, cell, info)
     if self.m_curSelectId == info.formulaId then
@@ -276,10 +213,6 @@ SpaceshipRoomFormulaList._OnClickCell = HL.Method(HL.Forward("SSFormulaCell"), H
     end
 end
 
-
-
-
-
 SpaceshipRoomFormulaList._OnClickTab = HL.Method(HL.Number, HL.Boolean) << function(self, luaIndex, isInit)
     self.m_curTabIndex = luaIndex
 
@@ -294,10 +227,6 @@ SpaceshipRoomFormulaList._OnClickTab = HL.Method(HL.Number, HL.Boolean) << funct
         self:RefreshFormulaList()
     end
 end
-
-
-
-
 
 SpaceshipRoomFormulaList.RefreshFormulaList = HL.Method(HL.Opt(HL.Boolean, HL.String)) << function(self, skipGraduallyShow, defaultSelectFormulaId)
     if self.m_isIniting then
@@ -331,10 +260,6 @@ SpaceshipRoomFormulaList.RefreshFormulaList = HL.Method(HL.Opt(HL.Boolean, HL.St
     end
 end
 
-
-
-
-
 SpaceshipRoomFormulaList._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(self, optionData, isIncremental)
     self:_SortData(optionData.keys, isIncremental)
 
@@ -345,10 +270,6 @@ SpaceshipRoomFormulaList._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << fun
         self.m_onSortChanged(curSelectedOptionsCsIndex, isIncremental)
     end
 end
-
-
-
-
 
 SpaceshipRoomFormulaList._SortData = HL.Method(HL.Table, HL.Boolean) << function(self, keys, isIncremental)
     
@@ -390,9 +311,6 @@ SpaceshipRoomFormulaList._SortData = HL.Method(HL.Table, HL.Boolean) << function
     end
 
 end
-
-
-
 
 SpaceshipRoomFormulaList.UpdateFormulaTabInfos = HL.Method(HL.Table) << function(self, newFormulaTabInfos)
     self.m_formulaTabInfos = newFormulaTabInfos

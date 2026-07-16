@@ -1,30 +1,13 @@
 local PlaceholderBaseWidget = require_ex('UI/Widgets/PlaceholderBaseWidget')
 
-
-
-
-
-
-
-
-
-
 ControllerHintPlaceholder = HL.Class('ControllerHintPlaceholder', PlaceholderBaseWidget)
-
 
 
 ControllerHintPlaceholder.m_groupIds = HL.Field(HL.Table)
 
-
 ControllerHintPlaceholder.m_optionalActionIds = HL.Field(HL.Table)
 
-
 ControllerHintPlaceholder.m_customGetKeyHintInfos = HL.Field(HL.Function)
-
-
-
-
-
 
 
 ControllerHintPlaceholder.InitControllerHintPlaceholder = HL.Method(HL.Table, HL.Opt(HL.Table, HL.Function))
@@ -36,9 +19,6 @@ ControllerHintPlaceholder.InitControllerHintPlaceholder = HL.Method(HL.Table, HL
     })
 end
 
-
-
-
 ControllerHintPlaceholder._InitPlaceholder = HL.Override(HL.Opt(HL.Table)) << function(self, args)
     self.m_playAnimationOutMsg = MessageConst.PLAY_CONTROLLER_HINT_OUT_ANIM
     self.m_showMsg = MessageConst.SHOW_CONTROLLER_HINT
@@ -49,8 +29,6 @@ ControllerHintPlaceholder._InitPlaceholder = HL.Override(HL.Opt(HL.Table)) << fu
 
     ControllerHintPlaceholder.Super._InitPlaceholder(self, args)
 end
-
-
 
 ControllerHintPlaceholder.GetArgs = HL.Override().Return(HL.Table) << function(self)
     return {
@@ -70,16 +48,12 @@ ControllerHintPlaceholder.GetArgs = HL.Override().Return(HL.Table) << function(s
     }
 end
 
-
-
 ControllerHintPlaceholder.GetHideArgs = HL.Override().Return(HL.Any) << function(self)
     return {
         panelId = self.m_panelId,
         placeHolderObject = self.gameObject,
     }
 end
-
-
 
 ControllerHintPlaceholder.PlayAnimationOut = HL.Override() << function(self)
     if not self.config.IS_MAIN then

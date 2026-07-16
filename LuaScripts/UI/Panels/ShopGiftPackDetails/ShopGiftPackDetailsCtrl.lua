@@ -2,42 +2,17 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopGiftPackDetails
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopGiftPackDetailsCtrl = HL.Class('ShopGiftPackDetailsCtrl', uiCtrl.UICtrl)
-
 
 ShopGiftPackDetailsCtrl.m_goodsId = HL.Field(HL.String) << ""
 
-
 ShopGiftPackDetailsCtrl.m_cashShopId = HL.Field(HL.String) << ""
-
 
 ShopGiftPackDetailsCtrl.m_getCellFunc = HL.Field(HL.Function)
 
-
 ShopGiftPackDetailsCtrl.m_rewardItemBundles = HL.Field(HL.Table)
 
-
 ShopGiftPackDetailsCtrl.m_targetTime = HL.Field(HL.Number) << 0
-
 
 
 
@@ -48,9 +23,6 @@ ShopGiftPackDetailsCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CASH_SHOP_OPEN_CATEGORY] = '_OnCashShopOpenCategory',
     [MessageConst.ON_CASH_SHOP_RECEIVE_REFRESH_MSG] = '_OnCashShopReceiveRefreshMsg',
 }
-
-
-
 
 
 ShopGiftPackDetailsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -64,19 +36,13 @@ ShopGiftPackDetailsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 ShopGiftPackDetailsCtrl.OnShow = HL.Override() << function(self)
     Notify(MessageConst.ON_OPEN_CASH_SHOP_DETAILS)
 end
 
-
-
 ShopGiftPackDetailsCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.ON_CLOSE_CASH_SHOP_DETAILS)
 end
-
-
 
 ShopGiftPackDetailsCtrl._BindUICallback = HL.Method() << function(self)
     self.view.closeButton.onClick:RemoveAllListeners()
@@ -110,8 +76,6 @@ ShopGiftPackDetailsCtrl._BindUICallback = HL.Method() << function(self)
     end
 end
 
-
-
 ShopGiftPackDetailsCtrl._InitRewardData = HL.Method() << function(self)
     self.m_rewardItemBundles = {}
     local succ, cfg = Tables.CashShopGoodsTable:TryGetValue(self.m_goodsId)
@@ -126,8 +90,6 @@ ShopGiftPackDetailsCtrl._InitRewardData = HL.Method() << function(self)
         end
     end
 end
-
-
 
 ShopGiftPackDetailsCtrl._RefreshView = HL.Method() << function(self)
     local goodsData = GameInstance.player.cashShopSystem:GetGoodsData(self.m_goodsId)
@@ -169,7 +131,7 @@ ShopGiftPackDetailsCtrl._RefreshView = HL.Method() << function(self)
     end
     
     local haveRestriction = false
-    local limitGoodsData = GameInstance.player.cashShopSystem:GetPlatformLimitGoodsData(self.m_goodsId)
+    local limitGoodsData = CashShopUtils.GetGoodsLimitData(self.m_goodsId)
     if limitGoodsData ~= nil and limitGoodsData.limitType == CS.Beyond.Gameplay.CashShopSystem.EPlatformLimitGoodsType.Common then
         local limitCount = limitGoodsData.limitCount
         local purchaseCount = limitGoodsData.purchaseCount
@@ -204,8 +166,6 @@ ShopGiftPackDetailsCtrl._RefreshView = HL.Method() << function(self)
     self.view.info.scrollList:UpdateCount(#self.m_rewardItemBundles)
 end
 
-
-
 ShopGiftPackDetailsCtrl.UpdateTimeByTargetTs = HL.Method() << function(self)
     local closeTimeStamp = self.m_targetTime
     local leftTime = closeTimeStamp - DateTimeUtils.GetCurrentTimestampBySeconds()
@@ -225,8 +185,6 @@ ShopGiftPackDetailsCtrl.UpdateTimeByTargetTs = HL.Method() << function(self)
     end
 end
 
-
-
 ShopGiftPackDetailsCtrl._TryBuyShop = HL.Method() << function(self)
     EventLogManagerInst:GameEvent_GoodsViewClick(
         "2",  
@@ -238,13 +196,9 @@ ShopGiftPackDetailsCtrl._TryBuyShop = HL.Method() << function(self)
     self:Close()
 end
 
-
-
 ShopGiftPackDetailsCtrl._OnSetTop = HL.Method() << function(self)
     UIManager:SetTopOrder(PanelId.ShopGiftPackDetails)
 end
-
-
 
 
 
@@ -256,15 +210,11 @@ ShopGiftPackDetailsCtrl._OnCashShopOpenCategory = HL.Method() << function(self)
     self:Close()
 end
 
-
-
 ShopGiftPackDetailsCtrl._OnCashShopReceiveRefreshMsg = HL.Method() << function(self)
     GameInstance.player.guide:OnShopRefreshItemInfo()
     Notify(MessageConst.SHOW_TOAST, Language.LUA_REFRESH_CLOSE_SHOP_TOAST)
     self:Close()
 end
-
-
 
 ShopGiftPackDetailsCtrl.GetGoodsId = HL.Method().Return(HL.String) << function(self)
     return self.m_goodsId

@@ -1,50 +1,5 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.LevelCamera
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 LevelCameraCtrl = HL.Class('LevelCameraCtrl', uiCtrl.UICtrl)
 
 
@@ -53,7 +8,6 @@ local CAM_SPEED_NO_CURSOR = {
     ['speed_x'] = 0.9,
     ['speed_y'] = 0.63
 }
-
 
 
 
@@ -80,38 +34,25 @@ LevelCameraCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 LevelCameraCtrl.m_curFreeLookCamCtrl = HL.Field(CS.Beyond.Gameplay.View.LevelCameraController)
-
 
 LevelCameraCtrl.m_onRightMouseButtonPress = HL.Field(HL.Function)
 
-
 LevelCameraCtrl.m_onDrag = HL.Field(HL.Function)
-
 
 LevelCameraCtrl.m_onZoom = HL.Field(HL.Function)
 
-
 LevelCameraCtrl.m_updateKey = HL.Field(HL.Number) << -1
-
 
 LevelCameraCtrl.m_disableCameraZoom = HL.Field(HL.Boolean) << false
 
-
 LevelCameraCtrl.m_disableCameraMoveKeys = HL.Field(HL.Table)
-
 
 LevelCameraCtrl.m_onStartSwipeTouchPanel = HL.Field(HL.Function)
 
-
 LevelCameraCtrl.m_onSwipeTouchPanel = HL.Field(HL.Function)
 
-
 LevelCameraCtrl.m_onEndSwipeTouchPanel = HL.Field(HL.Function)
-
-
-
 
 
 
@@ -122,25 +63,17 @@ LevelCameraCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_LoadLevelCamera()
 end
 
-
-
 LevelCameraCtrl.OnShow = HL.Override() << function(self)
     self:_AddRegisters()
 end
-
-
 
 LevelCameraCtrl.OnHide = HL.Override() << function(self)
     self:_ClearRegisters()
 end
 
-
-
 LevelCameraCtrl.OnClose = HL.Override() << function(self)
     self:_ClearRegisters()
 end
-
-
 
 
 
@@ -188,8 +121,6 @@ LevelCameraCtrl._AddRegisters = HL.Method() << function(self)
     InputManagerInst.onEndSwipeTouchPanel:Add(self.m_onEndSwipeTouchPanel)
 end
 
-
-
 LevelCameraCtrl._ClearRegisters = HL.Method() << function(self)
     self.m_updateKey = LuaUpdate:Remove(self.m_updateKey)
 
@@ -204,8 +135,6 @@ LevelCameraCtrl._ClearRegisters = HL.Method() << function(self)
     InputManagerInst.onSwipeTouchPanel:Remove(self.m_onSwipeTouchPanel)
     InputManagerInst.onEndSwipeTouchPanel:Remove(self.m_onEndSwipeTouchPanel)
 end
-
-
 
 
 
@@ -237,9 +166,6 @@ LevelCameraCtrl._LoadLevelCamera = HL.Method() << function(self)
     self.m_camConfig = self.m_camConfig.config
 end
 
-
-
-
 LevelCameraCtrl.ToggleCameraMove = HL.Method(HL.Table) << function(self, arg)
     local key, enable = unpack(arg)
     if enable then
@@ -249,14 +175,9 @@ LevelCameraCtrl.ToggleCameraMove = HL.Method(HL.Table) << function(self, arg)
     end
 end
 
-
-
 LevelCameraCtrl.CanMoveCam = HL.Method().Return(HL.Boolean) << function(self)
     return self.view.inputGroup.internalEnabled and next(self.m_disableCameraMoveKeys) == nil
 end
-
-
-
 
 LevelCameraCtrl.OnToggleInteractOptionScroll = HL.Method(HL.Boolean) << function(self, enable)
     if DeviceInfo.usingTouch then
@@ -265,19 +186,13 @@ LevelCameraCtrl.OnToggleInteractOptionScroll = HL.Method(HL.Boolean) << function
     self.m_disableCameraZoom = enable
 end
 
-
-
 LevelCameraCtrl.FacOnDragBeginInBathMode = HL.Method() << function(self)
     self.m_disableCameraZoom = true
 end
 
-
-
 LevelCameraCtrl.FacOnDragEndInBathMode = HL.Method() << function(self)
     self.m_disableCameraZoom = false
 end
-
-
 
 LevelCameraCtrl._UpdateCamera = HL.Method() << function(self)
     if InputManager.cursorVisible then
@@ -319,9 +234,6 @@ LevelCameraCtrl._UpdateCamera = HL.Method() << function(self)
     end
 end
 
-
-
-
 LevelCameraCtrl._MoveCamera = HL.Method(HL.Userdata) << function(self, delta)
     if UNITY_EDITOR and DeviceInfo.usingTouch then
         
@@ -355,9 +267,6 @@ LevelCameraCtrl._MoveCamera = HL.Method(HL.Userdata) << function(self, delta)
     end
 end
 
-
-
-
 LevelCameraCtrl._OnTouchPanelZoom = HL.Method(HL.Number) << function(self, delta)
     if LuaSystemManager.factory.inTopView then
         if DeviceInfo.usingKeyboard then
@@ -372,9 +281,6 @@ LevelCameraCtrl._OnTouchPanelZoom = HL.Method(HL.Number) << function(self, delta
 end
 
 
-
-
-
 LevelCameraCtrl.ZoomCamera = HL.Method(HL.Number) << function(self, delta)
     if not self:CanMoveCam() or self.m_disableCameraZoom then
         return
@@ -385,9 +291,7 @@ end
 
 
 
-
 LevelCameraCtrl.m_normalCameraBody = HL.Field(HL.Userdata)
-
 
 LevelCameraCtrl.m_normalCameraAim = HL.Field(HL.Userdata)
 
@@ -397,14 +301,9 @@ LevelCameraCtrl.m_normalCameraAim = HL.Field(HL.Userdata)
 
 
 
-
 LevelCameraCtrl.m_cameraOffsetXCor = HL.Field(HL.Thread)
 
-
 LevelCameraCtrl.m_camConfig = HL.Field(HL.Table)
-
-
-
 
 LevelCameraCtrl.ToggleHalfScreenPanelCameraOffset = HL.Method(HL.Boolean) << function(self, active)
     if LuaSystemManager.factory.inTopView then
@@ -430,9 +329,6 @@ LevelCameraCtrl.ToggleHalfScreenPanelCameraOffset = HL.Method(HL.Boolean) << fun
     end, self)
 end
 
-
-
-
 LevelCameraCtrl._SetCamerasOffset = HL.Method(HL.Number) << function(self, xValue)
     self:_SetCameraBodyOffset(self.m_normalCameraBody, xValue)
     self:_SetCameraAimOffset(self.m_normalCameraAim, xValue)
@@ -440,19 +336,11 @@ LevelCameraCtrl._SetCamerasOffset = HL.Method(HL.Number) << function(self, xValu
     
 end
 
-
-
-
-
 LevelCameraCtrl._SetCameraBodyOffset = HL.Method(HL.Userdata, HL.Number) << function(self, target, xValue)
     local offset = target.ShoulderOffset
     offset.x = xValue
     target.ShoulderOffset = offset
 end
-
-
-
-
 
 LevelCameraCtrl._SetCameraAimOffset = HL.Method(HL.Userdata, HL.Number) << function(self, target, xValue)
     local offset = target.m_TrackedObjectOffset
@@ -465,10 +353,7 @@ end
 
 
 
-
 LevelCameraCtrl.m_inHalfScreenPanelMode = HL.Field(HL.Boolean) << false
-
-
 
 LevelCameraCtrl.EnterLevelHalfScreenPanelMode = HL.Method() << function(self)
     if self.m_inHalfScreenPanelMode then
@@ -477,8 +362,6 @@ LevelCameraCtrl.EnterLevelHalfScreenPanelMode = HL.Method() << function(self)
     self.m_inHalfScreenPanelMode = true
     self:ToggleHalfScreenPanelCameraOffset(true)
 end
-
-
 
 LevelCameraCtrl.ExitLevelHalfScreenPanelMode = HL.Method() << function(self)
     if not self.m_inHalfScreenPanelMode then
@@ -493,17 +376,11 @@ end
 
 
 
-
 LevelCameraCtrl.m_touchPanelStartPos = HL.Field(Vector2)
-
 
 LevelCameraCtrl.m_touchPanelStarted = HL.Field(HL.Boolean) << false
 
-
 LevelCameraCtrl.m_lastTouchStartTime = HL.Field(HL.Number) << 0
-
-
-
 
 LevelCameraCtrl._OnStartSwipeTouchPanel = HL.Method(Vector2) << function(self, pos)
     
@@ -516,10 +393,6 @@ LevelCameraCtrl._OnStartSwipeTouchPanel = HL.Method(Vector2) << function(self, p
         self.m_lastTouchStartTime = Time.unscaledTime
     end
 end
-
-
-
-
 
 LevelCameraCtrl._OnSwipeTouchPanel = HL.Method(Vector2, Vector2) << function(self, delta, pos)
     
@@ -537,8 +410,6 @@ LevelCameraCtrl._OnSwipeTouchPanel = HL.Method(Vector2, Vector2) << function(sel
         end
     end
 end
-
-
 
 LevelCameraCtrl._OnEndSwipeTouchPanel = HL.Method() << function(self)
     

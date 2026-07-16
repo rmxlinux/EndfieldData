@@ -2,7 +2,6 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GameSetting
 local HGUtils = CS.HG.Rendering.Runtime.HGUtils
 local CloudGame = CS.Beyond.CloudGame
-local GameSettingSetter = CS.Beyond.Scripts.Entry.GameSettingSetter
 local GameSettingHelper = CS.Beyond.Gameplay.GameSettingHelper
 local GameSetting = CS.Beyond.GameSetting
 local GameSettingVideoQuality = CS.Beyond.GameSetting.GameSettingVideoQuality
@@ -17,251 +16,9 @@ local GamepadKeyCode = CS.Beyond.Input.GamepadKeyCode
 local STANDARD_HORIZONTAL_RESOLUTION = CS.Beyond.UI.UIConst.STANDARD_HORIZONTAL_RESOLUTION
 local STANDARD_VERTICAL_RESOLUTION = CS.Beyond.UI.UIConst.STANDARD_VERTICAL_RESOLUTION
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GameSettingCtrl = HL.Class('GameSettingCtrl', uiCtrl.UICtrl)
 
 local KEYICON_PATH = "Assets/Beyond/InitialAssets/UI/Sprites/KeyIcon/"
-local VIDEO_TAB_ID = "gameSetting_video"
 
 local SETTING_ICON_SPRITE_NAME_FORMAT = "icon_settings_%s"
 
@@ -300,10 +57,6 @@ local SubQualityOptionStateToDropdownOptionState = {
     [GameSettingSubQualityOptionState.Hidden] = DROPDOWN_OPTION_STATE_HIDDEN,
 }
 
-local LANGUAGE_TAB_ID = "gameSetting_language"
-local KEY_HINT_TAB_ID = "gameSetting_key_hint"
-local GAMEPAD_TAB_ID = "gameSetting_gamepad"
-
 
 local KEY_ACTION_STATE = {
     None = 0,
@@ -318,59 +71,109 @@ local function HasKeyActionState(value, target)
 end
 
 
-GameSettingCtrl.m_settingChanged = HL.Field(HL.Boolean) << false
 
+
+local GeneralFunctionRoutes = {
+    
+    ["ValidateVideoQualityMainSetting"] = "_ValidateTrue",
+    ["ValidatePSVideoQualityMainSetting"] = "_ValidateTrue",
+    ["ValidateVideoFullScreen"] = "_ValidateTrue",
+    ["ValidateVideoResolution"] = "_ValidateTrue",
+    ["ValidateHudLayout"] = "_ValidateTrue",
+    ["ValidateBackgroundMusic"] = "_ValidateTrue",
+    ["ValidateIsKeyboard"] = "_ValidateTrue",
+    ["ValidateWebView"] = "_ValidateTrue",
+    ["ValidateCDK"] = "_ValidateTrue",
+    
+    ["ToggleGetSuspendUnfocused"] = "_ToggleGetValue",
+    ["ToggleGetBackgroundMusic"] = "_ToggleGetValue",
+    ["ToggleGetAudioController"] = "_ToggleGetValue",
+    ["ToggleGetAudioSpatial"] = "_ToggleGetValue",
+    ["ToggleGetCameraReverseX"] = "_ToggleGetValue",
+    ["ToggleGetCameraReverseY"] = "_ToggleGetValue",
+    ["ToggleGetEnableAutoAttackTouch"] = "_ToggleGetValue",
+    ["ToggleGetEnableAutoAttackGamepad"] = "_ToggleGetValue",
+    ["ToggleGetAutoSprint"] = "_ToggleGetValue",
+    ["ToggleGetMotion"] = "_ToggleGetValue",
+    ["ToggleGetTriggerEffect"] = "_ToggleGetValue",
+    ["ToggleGetShowSmartAlert"] = "_ToggleGetValue",
+    ["ToggleGetStaminaRecover"] = "_ToggleGetValue",
+    ["ToggleGetStaminaDrugExpire"] = "_ToggleGetValue",
+    ["ToggleGetVideoFullScreen"] = "_ToggleGetValue",
+    ["ToggleGetFacTopViewEscExit"] = "_ToggleGetValue",
+    
+    ["ToggleSetSuspendUnfocused"] = "_ToggleSetValue",
+    ["ToggleSetBackgroundMusic"] = "_ToggleSetValue",
+    ["ToggleSetAudioController"] = "_ToggleSetValue",
+    ["ToggleSetAudioSpatial"] = "_ToggleSetValue",
+    ["ToggleSetCameraReverseX"] = "_ToggleSetValue",
+    ["ToggleSetCameraReverseY"] = "_ToggleSetValue",
+    ["ToggleSetEnableAutoAttackTouch"] = "_ToggleSetValue",
+    ["ToggleSetEnableAutoAttackGamepad"] = "_ToggleSetValue",
+    ["ToggleSetAutoSprint"] = "_ToggleSetValue",
+    ["ToggleSetMotion"] = "_ToggleSetValue",
+    ["ToggleSetTriggerEffect"] = "_ToggleSetValue",
+    ["ToggleSetShowSmartAlert"] = "_ToggleSetValue",
+    ["ToggleSetVideoFullScreen"] = "_ToggleSetValue",
+    ["ToggleSetFacTopViewEscExit"] = "_ToggleSetValue",
+    
+    ["SliderGetCameraSpeedX"] = "_SliderGetValue",
+    ["SliderGetCameraSpeedY"] = "_SliderGetValue",
+    ["SliderGetCameraTopViewSpeed"] = "_SliderGetValue",
+    ["SliderGetWalkRunRatio"] = "_SliderGetValue",
+    ["SliderGetCameraDistanceLevel"] = "_SliderGetValue",
+    
+    ["SliderSetCameraSpeedX"] = "_SliderSetValue",
+    ["SliderSetCameraSpeedY"] = "_SliderSetValue",
+    ["SliderSetCameraTopViewSpeed"] = "_SliderSetValue",
+    ["SliderSetWalkRunRatio"] = "_SliderSetValue",
+    ["SliderSetCameraDistanceLevel"] = "_SliderSetValue",
+    
+    ["DropdownGetIndexKeyboardType"] = "_DropdownGetOptionIndex",
+    
+    ["DropdownOnSelectAudioSuiteMode"] = "_DropdownOnSelectOption",
+    ["DropdownOnSelectControllerAutoLockTarget"] = "_DropdownOnSelectOption",
+    ["DropdownOnSelectComboSkillCameraAlpha"] = "_DropdownOnSelectOption",
+    ["DropdownOnSelectCameraImpulseLevel"] = "_DropdownOnSelectOption",
+    ["DropdownOnSelectKeyboardType"] = "_DropdownOnSelectOption",
+    ["DropdownOnSelectLanguageAudio"] = "_DropdownOnSelectOption",
+}
+
+GameSettingCtrl.m_settingChanged = HL.Field(HL.Boolean) << false
 
 GameSettingCtrl.m_tabIndex = HL.Field(HL.Number) << -1
 
-
 GameSettingCtrl.m_tabCells = HL.Field(HL.Forward('UIListCache'))
-
 
 GameSettingCtrl.m_tabDataList = HL.Field(HL.Table)
 
-
 GameSettingCtrl.m_itemCells = HL.Field(HL.Forward('UIListCache'))
-
 
 GameSettingCtrl.m_itemDataMap = HL.Field(HL.Table)
 
-
 GameSettingCtrl.m_itemDataList = HL.Field(HL.Table)
-
 
 GameSettingCtrl.m_itemCellMap = HL.Field(HL.Table)  
 
-
 GameSettingCtrl.m_currentDeviceNode = HL.Field(HL.Table)
-
 
 GameSettingCtrl.m_contentHeight = HL.Field(HL.Number) << -1
 
-
 GameSettingCtrl.m_itemCellHeight = HL.Field(HL.Number) << -1
-
 
 GameSettingCtrl.m_itemCellHeightWithoutTitle = HL.Field(HL.Number) << -1
 
-
 GameSettingCtrl.m_itemControlConfigs = HL.Field(HL.Table)
-
 
 GameSettingCtrl.m_itemCellExtraArgs = HL.Field(HL.Table)
 
-
 GameSettingCtrl.m_originalAudioSlide = HL.Field(HL.String) << ""
-
 
 GameSettingCtrl.m_sliderValueDataMap = HL.Field(HL.Table)  
 
-
 GameSettingCtrl.m_keyActionScope2ItemDataList = HL.Field(HL.Table) 
 
-
 GameSettingCtrl.m_keyActionStateMap = HL.Field(HL.Table) 
-
 
 
 
@@ -381,27 +184,19 @@ GameSettingCtrl.m_qualitySubSettingItemCellMap = HL.Field(HL.Table)
 
 
 
-
 GameSettingCtrl.m_notchPaddingViewTick = HL.Field(HL.Number) << -1
-
 
 GameSettingCtrl.m_notchPaddingViewTime = HL.Field(HL.Number) << -1
 
-
 GameSettingCtrl.m_rootCanvasHelper = HL.Field(HL.Userdata)
-
 
 GameSettingCtrl.m_worldRootCanvasHelper = HL.Field(HL.Userdata)
 
-
 GameSettingCtrl.m_rootCanvasWidth = HL.Field(HL.Number) << -1
-
 
 GameSettingCtrl.m_rootCanvasHeight = HL.Field(HL.Number) << -1
 
-
 GameSettingCtrl.m_isNotchPaddingChanged = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -416,9 +211,6 @@ GameSettingCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CLOSE_CUSTOMER_SERVICE] = "_OnCloseCustomerService",
     [MessageConst.GAME_SETTING_VOICE_RESOURCE_STATE_CHANGED] = "_OnVoiceResourceStateChanged",
 }
-
-
-
 
 
 GameSettingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -531,8 +323,6 @@ GameSettingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
 end
 
-
-
 GameSettingCtrl.OnClose = HL.Override() << function(self)
     self:_SliderClearNotchPaddingTick()
     self:_SliderTryApplyAllNotchPadding()
@@ -562,8 +352,6 @@ GameSettingCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 GameSettingCtrl._OnCloseBtnClick = HL.Method() << function(self)
     local callback = function()
         self.m_phase:CloseSelf()
@@ -573,24 +361,18 @@ GameSettingCtrl._OnCloseBtnClick = HL.Method() << function(self)
     end
 end
 
-
-
 GameSettingCtrl._OnResetBtnClick = HL.Method() << function(self)
     local tabData = self.m_tabDataList[self.m_tabIndex]
-    if tabData.tabId == VIDEO_TAB_ID then
+    if tabData.tabId == GameSettingConst.TAB_ID_VIDEO then
         self:_ResetQualitySetting()
-    elseif tabData.tabId == KEY_HINT_TAB_ID then
+    elseif tabData.tabId == GameSettingConst.TAB_ID_KEY_HINT then
         self:_KeyResetActions()
     end
 end
 
-
-
 GameSettingCtrl._OnSaveBtnClick = HL.Method() << function(self)
     self:_KeySaveActions()
 end
-
-
 
 GameSettingCtrl._BuildSettingDataList = HL.Method() << function(self)
     local tabDataMap = Tables.settingTabTable
@@ -623,9 +405,6 @@ GameSettingCtrl._BuildSettingDataList = HL.Method() << function(self)
     self.m_tabDataList = tabDataList
 end
 
-
-
-
 GameSettingCtrl._BuildSettingTabData = HL.Method(HL.Userdata).Return(HL.Table) << function(self, tabData)
     local itemDataList = {}
     for itemId, itemData in pairs(tabData.tabItems) do
@@ -635,10 +414,10 @@ GameSettingCtrl._BuildSettingTabData = HL.Method(HL.Userdata).Return(HL.Table) <
         end
     end
 
-    if tabData.tabId == VIDEO_TAB_ID then
+    if tabData.tabId == GameSettingConst.TAB_ID_VIDEO then
         
         self:_InsertSubQualityItemDataList(itemDataList)
-    elseif tabData.tabId == KEY_HINT_TAB_ID then
+    elseif tabData.tabId == GameSettingConst.TAB_ID_KEY_HINT then
         
         lume.clear(self.m_keyActionScope2ItemDataList)
         self:_InitKeyActionScopeMap(itemDataList)
@@ -653,22 +432,17 @@ end
 
 
 
-
-
-
-
 GameSettingCtrl._IsSettingTabValid = HL.Method(HL.String, HL.String)
                                        .Return(HL.Boolean)
     << function(self, settingTabId, validateFunction)
-    if not GameSetting.IsSettingTabValid(settingTabId) then
+    if not GameSetting.IsSettingTabVisible(settingTabId) then
         return false
     end
     if string.isEmpty(validateFunction) then
         return true
     end
-    validateFunction = self[self:_GetSettingFunctionName(validateFunction)]
+    validateFunction = self:_ResolveSettingFunction(validateFunction)
     if validateFunction == nil then
-        logger.error(ELogChannel.GameSetting, "Setting tab validate function not found, settingTabId: " .. tostring(settingTabId))
         return false
     end
     local success, result = xpcall(validateFunction, debug.traceback, self, settingTabId)
@@ -680,18 +454,12 @@ GameSettingCtrl._IsSettingTabValid = HL.Method(HL.String, HL.String)
 end
 
 
-
-
 GameSettingCtrl._InitSettingTabList = HL.Method() << function(self)
     self.m_tabCells:Refresh(#self.m_tabDataList, function(tabCell, tabIndex)
         self:_RefreshSettingTabCell(tabCell, tabIndex)
     end)
     self:_RefreshSettingTab(INITIAL_TAB_INDEX, true)
 end
-
-
-
-
 
 GameSettingCtrl._RefreshSettingTabCell = HL.Method(HL.Table, HL.Number) << function(self, tabCell, tabIndex)
     local tabData = self.m_tabDataList[tabIndex]
@@ -729,9 +497,6 @@ GameSettingCtrl._RefreshSettingTabCell = HL.Method(HL.Table, HL.Number) << funct
     end
 end
 
-
-
-
 GameSettingCtrl._ValidateClickSettingTab = HL.Method(HL.Table).Return(HL.Boolean) << function(self, tabCell)
     
     local callback = function()
@@ -740,26 +505,19 @@ GameSettingCtrl._ValidateClickSettingTab = HL.Method(HL.Table).Return(HL.Boolean
     return self:_CheckLeaveCurrentSettingTab(callback)
 end
 
-
-
-
 GameSettingCtrl._OnSettingTabClicked = HL.Method(HL.Number) << function(self, tabIndex)
     self:_RefreshSettingTab(tabIndex, true)
     self.view.animationWrapper:PlayWithTween("gamesetting_change")
     self:_SliderClearNotchPaddingTick()
 end
 
-
-
-
 GameSettingCtrl._CheckLeaveCurrentSettingTab = HL.Method(HL.Function).Return(HL.Boolean) << function(self, callback)
     local tabData = self.m_tabDataList[self.m_tabIndex]
-    local leaveFunctionName = self:_GetSettingFunctionName(tabData.tabLeaveFunction)
-    if string.isEmpty(leaveFunctionName) then
+    local leaveFunction = self:_ResolveSettingFunction(tabData.tabLeaveFunction)
+    if leaveFunction == nil then
         return true
     end
 
-    local leaveFunction = self[leaveFunctionName]
     local success, result = xpcall(leaveFunction, debug.traceback, self, tabData.tabId, callback)
     if not success then
         logger.error(ELogChannel.GameSetting, "Setting tab leave function error, message: " .. tostring(result))
@@ -767,10 +525,6 @@ GameSettingCtrl._CheckLeaveCurrentSettingTab = HL.Method(HL.Function).Return(HL.
     end
     return result
 end
-
-
-
-
 
 GameSettingCtrl._LeaveSettingTab_KeyHint = HL.Method(HL.String, HL.Function)
                                              .Return(HL.Boolean)
@@ -804,11 +558,6 @@ GameSettingCtrl._LeaveSettingTab_KeyHint = HL.Method(HL.String, HL.Function)
     })
     return false 
 end
-
-
-
-
-
 
 GameSettingCtrl._RefreshSettingTab = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, tabIndex, init, rebuildData)
     local tabData = self.m_tabDataList[tabIndex]
@@ -848,14 +597,14 @@ GameSettingCtrl._RefreshSettingTab = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.
     UIUtils.setSizeDeltaY(self.view.viewContent, self.m_contentHeight)
 
     
-    if tabData.tabId == VIDEO_TAB_ID then
+    if tabData.tabId == GameSettingConst.TAB_ID_VIDEO then
         if DeviceInfo.isConsole or CloudGame.enabled then
             self.view.bottomNode.gameObject:SetActive(false)
         else
             self.view.bottomNode.gameObject:SetActive(true)
             self.view.bottomNodeStateCtrl:SetState("Video")
         end
-    elseif tabData.tabId == KEY_HINT_TAB_ID then
+    elseif tabData.tabId == GameSettingConst.TAB_ID_KEY_HINT then
         self.view.bottomNode.gameObject:SetActive(true)
         self.view.bottomNodeStateCtrl:SetState("Key")
         local isAnyDirty = self:_IsAnyKeyActionStateDirty()
@@ -873,50 +622,25 @@ GameSettingCtrl._RefreshSettingTab = HL.Method(HL.Number, HL.Boolean, HL.Opt(HL.
     end
 end
 
-
-
-
 GameSettingCtrl._RefreshCurrentSettingTab = HL.Method(HL.Opt(HL.Boolean)) << function(self, rebuildData)
     self:_RefreshSettingTab(self.m_tabIndex, false, rebuildData)
 end
 
-
-
-
 GameSettingCtrl._ValidateAccount = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return not GameInstance.player.gameSettingSystem.forbiddenAccountPage 
-        and not UIUtils.inDungeonOrFocusMode() 
+    return not UIUtils.inDungeonOrFocusMode() 
 end
-
-
-
 
 GameSettingCtrl._ValidateController = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
     return not UIUtils.inDungeonOrFocusMode() 
 end
 
-
-
-
 GameSettingCtrl._ValidateKeyHint = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
     return not UIUtils.inDungeonOrFocusMode() 
 end
 
-
-
-
 GameSettingCtrl._ValidateGamepad = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    if UIUtils.inDungeonOrFocusMode() then
-        return false 
-    end
-    if DeviceInfo.isMobile then
-        return DeviceInfo.usingController 
-    end
-    return true
+    return not UIUtils.inDungeonOrFocusMode() 
 end
-
-
-
 
 GameSettingCtrl._ValidateLanguage = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
     if DeviceInfo.isIOS and CS.Beyond.GlobalOptions.instance.auditing then
@@ -924,9 +648,6 @@ GameSettingCtrl._ValidateLanguage = HL.Method(HL.String).Return(HL.Boolean) << f
     end
     return true
 end
-
-
-
 
 GameSettingCtrl._ValidateOther = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
     return not UIUtils.inDungeonOrFocusMode() 
@@ -937,12 +658,9 @@ end
 
 
 
-
-
-
 GameSettingCtrl._RefreshDeviceNode = HL.Method(HL.Boolean) << function(self, init)
     local tabData = self.m_tabDataList[self.m_tabIndex]
-    local showDeviceNode = tabData.tabId == GAMEPAD_TAB_ID
+    local showDeviceNode = tabData.tabId == GameSettingConst.TAB_ID_GAMEPAD
     self.view.deviceNode.gameObject:SetActive(showDeviceNode)
     if not showDeviceNode then
         return
@@ -956,7 +674,7 @@ GameSettingCtrl._RefreshDeviceNode = HL.Method(HL.Boolean) << function(self, ini
     self.view.xboxDeviceNode.gameObject:SetActive(isXboxController)
     if isPSController then
         self.m_currentDeviceNode = self.view.psDeviceNode
-        local layoutStateName = InputManager.isNonSupportPsController and "NoTouchpad" or "Touchpad"
+        local layoutStateName = DeviceInfo.isNonSupportPsController and "NoTouchpad" or "Touchpad"
         self.view.psDeviceNode.stateCtrl:SetState(layoutStateName)
     elseif isXboxController then
         self.m_currentDeviceNode = self.view.xboxDeviceNode
@@ -968,25 +686,16 @@ GameSettingCtrl._RefreshDeviceNode = HL.Method(HL.Boolean) << function(self, ini
     self:_SwitchDeviceMode(self.view.deviceModeToggle.toggle.isOn)
 end
 
-
-
-
 GameSettingCtrl._SwitchDeviceMode = HL.Method(HL.Boolean) << function(self, isOn)
     self:_ApplyGamepadSettingsToDevice(isOn)
     local deviceMode = isOn and "Battle" or "Factory"
     self.m_currentDeviceNode.stateCtrl:SetState(deviceMode)
 end
 
-
-
-
 GameSettingCtrl._ApplyGamepadSettingsToDevice = HL.Method(HL.Boolean) << function(self, isBattleMode)
     self:_ApplyGamepadActionSettingsToDevice(isBattleMode)
     self:_ApplyGamepadEnableUltimateMode2SettingToDevice()
 end
-
-
-
 
 GameSettingCtrl._ApplyGamepadActionSettingsToDevice = HL.Method(HL.Boolean) << function(self, isBattleMode)
     
@@ -1049,16 +758,10 @@ GameSettingCtrl._ApplyGamepadActionSettingsToDevice = HL.Method(HL.Boolean) << f
     self.m_currentDeviceNode.indicatorKeyIcon04:LoadSpriteWithOutFormat(indicatorKeyIconPath)
 end
 
-
-
 GameSettingCtrl._ApplyGamepadEnableUltimateMode2SettingToDevice = HL.Method() << function(self)
     local enableUltimateMode2 = GameSetting.gamepadCacheEnableUltimateMode2
     self.m_currentDeviceNode.useUltimateMode2StateCtrl:SetState(enableUltimateMode2 and "Enabled" or "Disabled")
 end
-
-
-
-
 
 
 
@@ -1071,12 +774,14 @@ GameSettingCtrl._IsSettingItemValid = HL.Method(HL.String, HL.String)
     if not GameSetting.IsSettingItemValid(settingId) then
         return false
     end
+    if not GameSetting.IsSettingItemVisible(settingId) then
+        return false
+    end
     if string.isEmpty(validateFunction) then
         return true
     end
-    validateFunction = self[self:_GetSettingFunctionName(validateFunction)]
+    validateFunction = self:_ResolveSettingFunction(validateFunction)
     if validateFunction == nil then
-        logger.error(ELogChannel.GameSetting, "Setting item validate function not found, settingId: " .. tostring(settingId))
         return false
     end
     local success, result = xpcall(validateFunction, debug.traceback, self, settingId)
@@ -1086,11 +791,6 @@ GameSettingCtrl._IsSettingItemValid = HL.Method(HL.String, HL.String)
     end
     return result
 end
-
-
-
-
-
 
 GameSettingCtrl._RefreshSettingItemCell = HL.Method(HL.Userdata, HL.Number, HL.Number) << function(self, itemCell, itemIndex, tabIndex)
     local itemDataList = self.m_itemDataList[tabIndex]
@@ -1136,9 +836,6 @@ GameSettingCtrl._RefreshSettingItemCell = HL.Method(HL.Userdata, HL.Number, HL.N
     )
 end
 
-
-
-
 GameSettingCtrl._InitSettingItemControlDropdown = HL.Method(HL.Userdata) << function(self, itemCell)
     local itemData = itemCell.itemData
     local itemControl = itemCell.itemControl
@@ -1147,33 +844,29 @@ GameSettingCtrl._InitSettingItemControlDropdown = HL.Method(HL.Userdata) << func
     local optionTextList = {}
     local optionStateList
 
+    local optionGetFunc, optionSelectFunc, optionValidateSelectFunc, textListGetFunc
+    if GameSettingHelper.IsQualitySubSetting(settingId) then
+        optionGetFunc = self._DropdownGetQualitySubSettingOptionIndex
+        optionSelectFunc = self._DropdownOnSelectQualitySubSettingOption
+        optionValidateSelectFunc = self._DropdownValidateSetQualitySubSettingOptionIndex
+        textListGetFunc = self._DropdownGetQualitySubSettingTextList
+    else
+        optionGetFunc = self:_ResolveSettingFunction(itemData.dropdownOptionGetFunction) or self._DropdownGetOptionIndex
+        optionSelectFunc = self:_ResolveSettingFunction(itemData.dropdownOptionSelectFunction) or self._DropdownOnSelectOption
+        optionValidateSelectFunc = self:_ResolveSettingFunction(itemData.dropdownOptionValidateSelectFunction) or self._DropdownOnValidateSelectOption
+        textListGetFunc = self:_ResolveSettingFunction(itemData.dropdownOptionTextListGetFunction) or self._DropdownGetOptionTextList
+    end
+
     itemControl.dropdown:ClearComponent()
     itemControl.dropdown:Init(function(csIndex, option, isSelected)
         local index = LuaIndex(csIndex)
         option:SetText(optionTextList[index])
         option:SetState(optionStateList and optionStateList[index] or DROPDOWN_OPTION_STATE_NORMAL)
     end, function(csIndex)
-        if GameSettingHelper.IsQualitySubSetting(settingId) then
-            local index = self:_DropdownGetQualitySubSettingOptionIndex(settingId)
-            if index ~= LuaIndex(csIndex) then
-                self:_DropdownSetQualitySubSettingOptionIndex(settingId, LuaIndex(csIndex))
-                self.m_settingChanged = true
-            end
-        else
-            local selectFunction = self:_GetSettingFunctionName(itemData.dropdownOptionSelectFunction)
-            local getFunction = self:_GetSettingFunctionName(itemData.dropdownOptionGetFunction)
-            if not string.isEmpty(selectFunction) then
-                local index = -1
-                if string.isEmpty(getFunction) then
-                    index = self:_DropdownGetOptionIndex(settingId)
-                else
-                    index = self[getFunction](self, settingId)
-                end
-                if index ~= LuaIndex(csIndex) then
-                    self[selectFunction](self, settingId, LuaIndex(csIndex))
-                    self.m_settingChanged = true
-                end
-            end
+        local index = optionGetFunc(self, settingId)
+        if index ~= LuaIndex(csIndex) then
+            optionSelectFunc(self, settingId, LuaIndex(csIndex))
+            self.m_settingChanged = true
         end
     end)
     itemControl.dropdown.onToggleOptList:AddListener(function(active)
@@ -1182,67 +875,32 @@ GameSettingCtrl._InitSettingItemControlDropdown = HL.Method(HL.Userdata) << func
             itemControl.dropdown:ScrollToSelected()
         end
     end)
-    itemControl.dropdown.onValidateSelectCell = function(csFromIndex, csToIndex)
-        local valid = true
-        local validateSelectFunction = self:_GetSettingFunctionName(itemData.dropdownOptionValidateSelectFunction)
-        if not string.isEmpty(validateSelectFunction) then
-            valid = self[validateSelectFunction](self, itemData, LuaIndex(csFromIndex), LuaIndex(csToIndex))
-        end
-        return valid
-    end
+    itemControl.dropdown.onValidateSelectCell = optionValidateSelectFunc and function(csFromIndex, csToIndex)
+        return optionValidateSelectFunc(self, itemData, LuaIndex(csFromIndex), LuaIndex(csToIndex))
+    end or nil
 
     
-    local isGamepad = itemData.settingTabId == GAMEPAD_TAB_ID
+    local isGamepad = itemData.settingTabId == GameSettingConst.TAB_ID_GAMEPAD
     itemControl.sizeStateCtrl:SetState(isGamepad and "Large" or "Normal")
 
-    local initIndex = 1
-    if GameSettingHelper.IsQualitySubSetting(settingId) then
-        initIndex = self:_DropdownGetQualitySubSettingOptionIndex(settingId)
-    else
-        local getFunction = self:_GetSettingFunctionName(itemData.dropdownOptionGetFunction)
-        initIndex = string.isEmpty(getFunction) and self:_DropdownGetOptionIndex(settingId) or self[getFunction](self, settingId)
-    end
+    local initIndex = optionGetFunc(self, settingId)
     self:_StartCoroutine(function()
         coroutine.step()
         
-        if GameSettingHelper.IsQualitySubSetting(settingId) then
-            optionTextList = itemData.optionTextList
-            optionStateList = itemData.optionStateList
-        else
-            if string.isEmpty(itemData.dropdownOptionTextListGetFunction) then
-                local optionTextData = itemData.dropdownOptionTextList
-                if optionTextData ~= nil then
-                    for i = 0, optionTextData.length - 1 do
-                        if not string.isEmpty(optionTextData[i]) then
-                            local text = optionTextData[i]
-                            table.insert(optionTextList, text)
-                        end
-                    end
-                end
-            else
-                local textListGetFunctionName = self:_GetSettingFunctionName(itemData.dropdownOptionTextListGetFunction)
-                if not string.isEmpty(textListGetFunctionName) then
-                    optionTextList, optionStateList = self[textListGetFunctionName](self, itemData)
-                end
-            end
-        end
-
+        optionTextList, optionStateList = textListGetFunc(self, itemData)
         itemControl.dropdown:Refresh(#optionTextList, CSIndex(initIndex), false)
     end)
 end
-
-
-
 
 GameSettingCtrl._InitSettingItemControlSlider = HL.Method(HL.Userdata) << function(self, itemCell)
     local itemData = itemCell.itemData
     local itemControl = itemCell.itemControl
     local settingId = itemData.settingId
 
-    local getFunctionName = self:_GetSettingFunctionName(itemData.sliderValueGetFunction)
-    local setFunctionName = self:_GetSettingFunctionName(itemData.sliderValueSetFunction)
-    local maxValueGetFunctionName = itemData.sliderMaxValueGetFunction
-    local iconOnClickFunction = itemData.sliderIconOnClickFunction
+    local valueGetFunc = self:_ResolveSettingFunction(itemData.sliderValueGetFunction) or self._SliderGetValue
+    local valueSetFunc = self:_ResolveSettingFunction(itemData.sliderValueSetFunction) or self._SliderSetValue
+    local maxValueGetFunc = self:_ResolveSettingFunction(itemData.sliderMaxValueGetFunction)
+    local iconOnClickFunc = self:_ResolveSettingFunction(itemData.sliderIconOnClickFunction)
 
     local iconListLength = itemData.sliderIconList and #itemData.sliderIconList or 0
     itemControl.sliderIconNode.gameObject:SetActive(iconListLength > 0)
@@ -1255,11 +913,10 @@ GameSettingCtrl._InitSettingItemControlSlider = HL.Method(HL.Userdata) << functi
     itemControl.slider.minValue = itemData.sliderMinValue
     itemControl.slider.snapStep = true
     itemControl.slider.stepValue = itemData.sliderStepValue
-    if string.isEmpty(maxValueGetFunctionName) then
+    if maxValueGetFunc == nil then
         itemControl.slider.maxValue = itemData.sliderMaxValue
     else
-        maxValueGetFunctionName = self:_GetSettingFunctionName(maxValueGetFunctionName)
-        local maxValue = self[maxValueGetFunctionName](self, settingId)
+        local maxValue = maxValueGetFunc(self, settingId)
         if itemData.sliderMinValue >= maxValue then
             itemCell.gameObject:SetActive(false)
             return
@@ -1275,19 +932,12 @@ GameSettingCtrl._InitSettingItemControlSlider = HL.Method(HL.Userdata) << functi
     }
 
     itemControl.slider.onValueChanged:AddListener(function(value)
-        if not string.isEmpty(setFunctionName) then
-            local currValue
-            if string.isEmpty(getFunctionName) then
-                currValue = self:_SliderGetValue(settingId)
-            else
-                currValue = self[getFunctionName](self, settingId)
-            end
-            if value ~= currValue then
-                self.m_settingChanged = true
-            end
-            self[setFunctionName](self, settingId, value)
-            self:_SliderRecordValue(settingId, value)
+        local currValue = valueGetFunc(self, settingId)
+        if value ~= currValue then
+            valueSetFunc(self, settingId, value)
+            self.m_settingChanged = true
         end
+        self:_SliderRecordValue(settingId, value)
 
         if iconListLength > 0 then
             local icon = self:_SliderGetIcon(value, itemData.sliderIconList, itemData.sliderIconRangeList)
@@ -1302,43 +952,36 @@ GameSettingCtrl._InitSettingItemControlSlider = HL.Method(HL.Userdata) << functi
         self:_SliderRefreshText(itemControl, value, wholeNumbersText)
     end)
 
-    if not string.isEmpty(getFunctionName) then
-        local initValue = self[getFunctionName](self, settingId)
-        itemControl.slider:SetValueWithoutNotify(initValue, false)
-        self:_SliderRefreshText(itemControl, initValue, wholeNumbersText)
-        self:_SliderRecordValue(settingId, initValue)
+    local initValue = valueGetFunc(self, settingId)
+    itemControl.slider:SetValueWithoutNotify(initValue, false)
+    self:_SliderRefreshText(itemControl, initValue, wholeNumbersText)
+    self:_SliderRecordValue(settingId, initValue)
 
-        if itemControl.slider.value == 0.0 then
-            
-            itemControl.slider.onValueChanged:Invoke(initValue)
-        end
+    if itemControl.slider.value == 0.0 then
+        
+        itemControl.slider.onValueChanged:Invoke(initValue)
     end
 
-    if not string.isEmpty(iconOnClickFunction) and iconListLength > 0 then
-        iconOnClickFunction = self:_GetSettingFunctionName(iconOnClickFunction)
+    if iconOnClickFunc and iconListLength > 0 then
         itemControl.sliderIconButton.onClick:AddListener(function()
-            self[iconOnClickFunction](self, settingId)
+            iconOnClickFunc(self, settingId)
         end)
     end
 
     itemControl.slider.audioSlide = self.m_originalAudioSlide  
 end
 
-
-
-
 GameSettingCtrl._InitSettingItemControlButton = HL.Method(HL.Userdata) << function(self, itemCell)
     local itemData = itemCell.itemData
     local itemControl = itemCell.itemControl
 
-    local getStateFunction = itemData.buttonGetStateFunction
-    if string.isEmpty(getStateFunction) then
+    local getStateFunc = self:_ResolveSettingFunction(itemData.buttonGetStateFunction)
+    if getStateFunc == nil then
         itemControl.buttonText.text = itemData.buttonText
         itemControl.buttonIcon.gameObject:SetActive(true)
         itemControl.stateCtrl:SetState("NormalState")
     else
-        getStateFunction = self[self:_GetSettingFunctionName(getStateFunction)]
-        local success, result = xpcall(getStateFunction, debug.traceback, self, itemData)
+        local success, result = xpcall(getStateFunc, debug.traceback, self, itemData)
         if success then
             itemControl.buttonText.text = result.currentText
             if string.isEmpty(result.currentIcon) then
@@ -1352,43 +995,35 @@ GameSettingCtrl._InitSettingItemControlButton = HL.Method(HL.Userdata) << functi
         end
     end
 
-    local clickFunctionName = self:_GetSettingFunctionName(itemData.buttonOnClickFunction)
-    if not string.isEmpty(clickFunctionName) then
+    local onClickFunc = self:_ResolveSettingFunction(itemData.buttonOnClickFunction)
+    if onClickFunc then
         itemControl.button.onClick:RemoveAllListeners()
         itemControl.button.onClick:AddListener(function()
-            self[clickFunctionName](self)
+            onClickFunc(self)
         end)
     end
 end
-
-
-
 
 GameSettingCtrl._InitSettingItemControlToggle = HL.Method(HL.Userdata) << function(self, itemCell)
     local itemData = itemCell.itemData
     local itemControl = itemCell.itemControl
     local settingId = itemData.settingId
 
-    local getFunctionName
-    local setFunctionName
-
-    local initialValue = false
-    local validateSetFunction
+    local valueGetFunc, valueSetFunc, validateSetFunction
     if GameSettingHelper.IsQualitySubSetting(settingId) then
-        initialValue = self:_ToggleGetQualitySubSettingValue(settingId)
-        validateSetFunction = function(value)
-            return self:_ToggleValidateSetQualitySubSettingValue(settingId, value)
-        end
+        valueGetFunc = self._ToggleGetQualitySubSettingValue
+        valueSetFunc = self._ToggleSetQualitySubSettingValue
+        validateSetFunction = self._ToggleValidateSetQualitySubSettingValue
     else
-        getFunctionName = self:_GetSettingFunctionName(itemData.toggleValueGetFunction)
-        setFunctionName = self:_GetSettingFunctionName(itemData.toggleValueSetFunction)
-
-        if not string.isEmpty(getFunctionName) then
-            initialValue = self[getFunctionName](self, settingId)
-        end
+        valueGetFunc = self:_ResolveSettingFunction(itemData.toggleValueGetFunction) or self._ToggleGetValue
+        valueSetFunc = self:_ResolveSettingFunction(itemData.toggleValueSetFunction) or self._ToggleSetValue
     end
-    itemControl.toggle.view.toggle.checkIsValueValid = validateSetFunction
 
+    itemControl.toggle.view.toggle.checkIsValueValid = validateSetFunction and function(value)
+        return validateSetFunction(self, settingId, value)
+    end or nil
+
+    local initialValue = valueGetFunc(self, settingId)
     local onText, offText
     if string.isEmpty(itemData.toggleOnText) and string.isEmpty(itemData.toggleOffText) then
         onText, offText = Language["ui_fac_common_machine_open"], Language["ui_fac_common_machine_close"]
@@ -1396,20 +1031,10 @@ GameSettingCtrl._InitSettingItemControlToggle = HL.Method(HL.Userdata) << functi
         onText, offText = itemData.toggleOnText, itemData.toggleOffText
     end
     itemControl.toggle:InitCommonToggle(function(isOn)
-        if GameSettingHelper.IsQualitySubSetting(settingId) then
-            initialValue = self:_ToggleSetQualitySubSettingValue(settingId, isOn)
-            self.m_settingChanged = true
-        else
-            if not string.isEmpty(setFunctionName) then
-                self[setFunctionName](self, settingId, isOn)
-                self.m_settingChanged = true
-            end
-        end
+        valueSetFunc(self, settingId, isOn)
+        self.m_settingChanged = true
     end, initialValue, true, { onText, offText })
 end
-
-
-
 
 GameSettingCtrl._InitSettingItemControlKey = HL.Method(HL.Userdata) << function(self, itemCell)
     local itemData = itemCell.itemData
@@ -1443,17 +1068,6 @@ GameSettingCtrl._InitSettingItemControlKey = HL.Method(HL.Userdata) << function(
         self:_RemoveKeyActionState(itemData.settingId, KEY_ACTION_STATE.Warning, false)
     end
 end
-
-
-
-
-
-
-
-
-
-
-
 
 GameSettingCtrl._InitSettingItemControlKeyAction = HL.Method(HL.Table, HL.Boolean, HL.Userdata, HL.Userdata, HL.Any, HL.Any, HL.Boolean, HL.Boolean, HL.Boolean)
                                                   .Return(HL.Boolean)
@@ -1545,28 +1159,31 @@ GameSettingCtrl._InitSettingItemControlKeyAction = HL.Method(HL.Table, HL.Boolea
     return isSet
 end
 
-
-
-
-GameSettingCtrl._GetSettingFunctionName = HL.Method(HL.String).Return(HL.String) << function(self, functionName)
-    if not string.isEmpty(functionName) then
-        functionName = "_" .. functionName
+GameSettingCtrl._ResolveSettingFunction = HL.Method(HL.Any).Return(HL.Function) << function(self, functionName)
+    if string.isEmpty(functionName) then
+        return nil
     end
 
-    return functionName
+    local route = GeneralFunctionRoutes[functionName]
+    if route then
+        return self[route]
+    end
+
+    functionName = "_" .. functionName
+    if not HL.TryGet(self, functionName) then
+        logger.error(ELogChannel.GameSetting, "Setting function not found: " .. functionName)
+        return nil
+    end
+    return self[functionName]
 end
 
-
-
+GameSettingCtrl._ValidateTrue = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
+    return true
+end
 
 GameSettingCtrl._ValidateVideoNotchPadding = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    local currentRatio = self.m_rootCanvasWidth / self.m_rootCanvasHeight
-    local standardRatio = STANDARD_HORIZONTAL_RESOLUTION / STANDARD_VERTICAL_RESOLUTION
-    if currentRatio > standardRatio then
-        return true 
-    end
-    local safeArea = DeviceInfo.safeArea
-    if safeArea.x > 0 or safeArea.y > 0 then
+    local notchPadding = CS.Beyond.DeviceInfoManager.NotchPadding()
+    if notchPadding.x > 0 then
         return true 
     end
     if CS.Beyond.UI.UIConst.IsPadDevice() then
@@ -1575,70 +1192,9 @@ GameSettingCtrl._ValidateVideoNotchPadding = HL.Method(HL.String).Return(HL.Bool
     return false
 end
 
-
-
-
 GameSettingCtrl._ValidateVideoQualitySubSetting = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    if CloudGame.enabled then
-        return false 
-    end
     return GameSettingHelper.IsQualitySubSettingValid(settingId)
 end
-
-
-
-
-
-GameSettingCtrl._ValidateVideoQualityMainSetting = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    if CloudGame.enabled then
-        return false 
-    end
-    return not UNITY_PS5
-end
-
-
-
-
-
-GameSettingCtrl._ValidatePSVideoQualityMainSetting = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    if CloudGame.enabled then
-        return false 
-    end
-    return UNITY_PS5
-end
-
-
-
-
-GameSettingCtrl._ValidateVideoFullScreen = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    if CloudGame.enabled then
-        return false 
-    end
-    return true
-end
-
-
-
-
-GameSettingCtrl._ValidateVideoResolution = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    if CloudGame.enabled then
-        return false 
-    end
-    return true
-end
-
-
-
-
-GameSettingCtrl._ValidateHudLayout = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    if DeviceInfo.usingController then
-        return false 
-    end
-    return true
-end
-
-
-
 
 GameSettingCtrl._ValidateLanguageTextChangeSetting = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
     if not GameWorld.worldInfo or not GameWorld.worldInfo.inSubGame then
@@ -1647,40 +1203,6 @@ GameSettingCtrl._ValidateLanguageTextChangeSetting = HL.Method(HL.String).Return
 
     return GameMechanicsUtils.isCurGameCanSwitchLanguage()
 end
-
-
-
-
-GameSettingCtrl._ValidateBackgroundMusic = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return CS.Beyond.GlobalOptions.instance.auditing 
-end
-
-
-
-
-GameSettingCtrl._ValidateIsKeyboard = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return DeviceInfo.usingKeyboard
-end
-
-
-
-
-GameSettingCtrl._ValidateWebView = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return not GameInstance.player.gameSettingSystem.forbiddenWebView
-end
-
-
-
-
-GameSettingCtrl._ValidateCDK = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    if GameInstance.player.gameSettingSystem.forbiddenCDK then
-        return false
-    end
-    return true
-end
-
-
-
 
 GameSettingCtrl._GetSettingItemState = HL.Method(HL.String).Return(HL.String) << function(self, settingId)
     if settingId == GameSetting.ID_GAMEPAD_ENABLE_ULTIMATE_MODE_2 then
@@ -1691,17 +1213,11 @@ GameSettingCtrl._GetSettingItemState = HL.Method(HL.String).Return(HL.String) <<
     return UIConst.GameSettingItemState.Normal
 end
 
-
-
-
 GameSettingCtrl._OnDisabledItemClicked = HL.Method(HL.String) << function(self, settingId)
     if settingId == GameSetting.ID_GAMEPAD_ENABLE_ULTIMATE_MODE_2 then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_GAME_SETTING_DISABLED_TOAST_CONTENT_KEY_SETTING_CONFLICT)
     end
 end
-
-
-
 
 
 
@@ -1739,21 +1255,38 @@ GameSettingCtrl._DropdownAdjustExpandDirection = HL.Method(HL.Userdata) << funct
     itemControl.layoutStateCtrl:SetState(isDownward and "Downward" or "Upward")
 end
 
-
-
-
 GameSettingCtrl._DropdownGetOptionIndex = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
-    local success, value = GameSetting.GameSettingGetInt(settingId)
-    if success then
-        return value
-    end
-
-    logger.error("GameSetting: 在打开界面时尝试获取一个尚未存在的设置项数值", settingId)
-    return 1
+    return GameSettingUtils.GetSettingValueInt(settingId)
 end
 
+GameSettingCtrl._DropdownOnValidateSelectOption = HL.Method(HL.Any, HL.Number, HL.Number)
+                                                    .Return(HL.Boolean)
+    << function(self, itemData, fromIndex, toIndex)
+    return GameSettingHelper.IsSettingOptionValid(itemData.settingId, toIndex)
+end
 
+GameSettingCtrl._DropdownOnSelectOption = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
+    GameSettingUtils.SetSettingValueInt(settingId, index)
+end
 
+GameSettingCtrl._DropdownGetOptionTextList = HL.Method(HL.Any).Return(HL.Table, HL.Table) << function(self, itemData)
+    local optionTextList = {}
+    local optionStateList = {}
+
+    local settingId = itemData.settingId
+    local dataOptionTextList = itemData.dropdownOptionTextList
+    if dataOptionTextList then
+        for i = 0, dataOptionTextList.length - 1 do
+            local optionText = dataOptionTextList[i]
+            if not string.isEmpty(optionText) then
+                table.insert(optionTextList, optionText)
+                local isValid = GameSettingHelper.IsSettingOptionValid(settingId, i + 1)
+                table.insert(optionStateList, isValid and DROPDOWN_OPTION_STATE_NORMAL or DROPDOWN_OPTION_STATE_DISABLED)
+            end
+        end
+    end
+    return optionTextList, optionStateList
+end
 
 
 
@@ -1769,9 +1302,6 @@ GameSettingCtrl._DropdownGetIndexVideoResolution = HL.Method(HL.String).Return(H
 
     return 1
 end
-
-
-
 
 GameSettingCtrl._DropdownGetVideoMainQualityTextList = HL.Method(HL.Any).Return(HL.Table, HL.Table) << function(self, itemData)
     local qualityTextList = {}
@@ -1806,9 +1336,6 @@ GameSettingCtrl._DropdownGetVideoMainQualityTextList = HL.Method(HL.Any).Return(
     return qualityTextList, qualityStateList
 end
 
-
-
-
 GameSettingCtrl._DropdownGetPSVideoMainQualityTextList = HL.Method(HL.Any).Return(HL.Table, HL.Table) << function(self, itemData)
     local qualityTextList = {}
     local qualityStateList = {}
@@ -1839,9 +1366,6 @@ GameSettingCtrl._DropdownGetPSVideoMainQualityTextList = HL.Method(HL.Any).Retur
     return qualityTextList, qualityStateList
 end
 
-
-
-
 GameSettingCtrl._DropdownGetVideoResolutionTextList = HL.Method(HL.Any).Return(HL.Table) << function(self, itemData)
     local resolutionList = GameSetting.availableScreenResolutionList
     local resolutionTextList = {}
@@ -1851,10 +1375,6 @@ GameSettingCtrl._DropdownGetVideoResolutionTextList = HL.Method(HL.Any).Return(H
     end
     return resolutionTextList
 end
-
-
-
-
 
 GameSettingCtrl._DropdownOnSelectVideoResolution = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
     local listIndex = index - 1
@@ -1868,15 +1388,11 @@ GameSettingCtrl._DropdownOnSelectVideoResolution = HL.Method(HL.String, HL.Numbe
         return
     end
 
-    GameSettingSetter.graphicsResolution:Set(resolution.width, resolution.height)
+    GameSetting.videoResolutionSetting:SetValue(resolution)
 
     
     self:_RefreshLoad(true)
 end
-
-
-
-
 
 GameSettingCtrl._DropdownOnSelectLanguageText = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
     local lastIndex = CSIndex(self:_DropdownGetIndexLanguageText(settingId))
@@ -1887,7 +1403,7 @@ GameSettingCtrl._DropdownOnSelectLanguageText = HL.Method(HL.String, HL.Number) 
         hideBlur = true,
         onConfirm = function()
             local lang = CS.Beyond.I18n.I18nUtils.GetLangByIndex(CSIndex(index))
-            GameSettingSetter.languageText:Set(lang:GetHashCode())
+            GameSetting.languageTextSetting:SetValue(lang)
         end,
         onCancel = function()
             if dropdown ~= nil then
@@ -1897,16 +1413,10 @@ GameSettingCtrl._DropdownOnSelectLanguageText = HL.Method(HL.String, HL.Number) 
     })
 end
 
-
-
-
 GameSettingCtrl._DropdownGetIndexLanguageText = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
     local languageText = LuaIndex(CS.Beyond.I18n.I18nUtils.GetLangShowOrder(GameSetting.languageText))
     return languageText
 end
-
-
-
 
 GameSettingCtrl._DropdownGetLanguageTextTextList = HL.Method(HL.Any).Return(HL.Table) << function(self, itemData)
     local textList = {}
@@ -1927,9 +1437,6 @@ GameSettingCtrl._DropdownGetLanguageTextTextList = HL.Method(HL.Any).Return(HL.T
     return textList
 end
 
-
-
-
 GameSettingCtrl._DropdownGetLanguageAudioTextList = HL.Method(HL.Any).Return(HL.Table) << function(self, itemData)
     local configTextList = itemData.dropdownOptionTextList
     local optionTextList = {}
@@ -1938,30 +1445,33 @@ GameSettingCtrl._DropdownGetLanguageAudioTextList = HL.Method(HL.Any).Return(HL.
         if string.isEmpty(optionText) then
             break
         end
-        local languageAudio = Utils.intToEnum(typeof(GameSetting.GameSettingLanguageAudio), i + 1)
-        local vfsBlockType = GameSettingHelper.ToVFSBlockType(languageAudio)
-        local isDownloaded = GameInstance.resPrefManager:GetResourcePreferred(vfsBlockType)
-        if not isDownloaded then
+        if UNITY_EDITOR then
             
-            local resourceSize = GameInstance.resPrefManager:GetResourceSize(vfsBlockType)
-            optionText = string.format("%1$s (%2$.2fMB)", optionText, resourceSize / MB)
+        else
+            local languageAudio = Utils.intToEnum(typeof(GameSetting.GameSettingLanguageAudio), i + 1)
+            local vfsBlockType = GameSettingUtils.ToVFSBlockType(languageAudio)
+            local isDownloaded = GameInstance.resPrefManager:IsVoiceResourceReady(vfsBlockType)
+            if not isDownloaded then
+                
+                local resourceSize = GameInstance.resPrefManager:GetResourceSize(vfsBlockType)
+                optionText = string.format("%1$s (%2$.2fMB)", optionText, resourceSize / MB)
+            end
         end
         table.insert(optionTextList, optionText)
     end
     return optionTextList
 end
 
-
-
-
-
-
 GameSettingCtrl._DropdownOnValidateSelectLanguageAudio = HL.Method(HL.Userdata, HL.Number, HL.Number)
                                                            .Return(HL.Boolean)
     << function(self, itemData, fromIndex, toIndex)
+    if UNITY_EDITOR then
+        return true 
+    end
+
     local languageAudio = Utils.intToEnum(typeof(GameSetting.GameSettingLanguageAudio), toIndex)
-    local vfsBlockType = GameSettingHelper.ToVFSBlockType(languageAudio)
-    local isDownloaded = GameInstance.resPrefManager:GetResourcePreferred(vfsBlockType)
+    local vfsBlockType = GameSettingUtils.ToVFSBlockType(languageAudio)
+    local isDownloaded = GameInstance.resPrefManager:IsVoiceResourceReady(vfsBlockType)
     if isDownloaded then
         return true 
     end
@@ -1973,47 +1483,12 @@ GameSettingCtrl._DropdownOnValidateSelectLanguageAudio = HL.Method(HL.Userdata, 
         content = string.format(Language.LUA_GAME_SETTING_VOICE_DOWNLOAD_POP_UP_CONTENT, languageName, resourceSize / MB),
         onConfirm = function()
             GameInstance.resPrefManager:SetVocResDownload(vfsBlockType)
-            GameSettingSetter.languageAudio:Set(languageAudio)
+            GameSetting.languageAudioSetting:SetValue(languageAudio)
             GameInstance.instance:ReturnToLogin()
         end
     })
     return false
 end
-
-
-
-
-
-GameSettingCtrl._DropdownOnSelectLanguageAudio = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
-    GameSettingSetter.languageAudio:Set(index)
-end
-
-
-
-
-
-GameSettingCtrl._DropdownOnSelectAudioSuiteMode = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
-    GameSettingSetter.audioSuiteMode:Set(index)
-end
-
-
-
-
-
-GameSettingCtrl._DropdownOnSelectControllerAutoLockTarget = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
-    GameSettingSetter.controllerAutoLockTarget:Set(index)
-end
-
-
-
-
-
-GameSettingCtrl._DropdownOnSelectComboSkillCameraAlpha = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
-    GameSettingSetter.comboSkillCameraAlpha:Set(index)
-end
-
-
-
 
 GameSettingCtrl._DropdownGetGamepadSettingTextList = HL.Method(HL.Any).Return(HL.Table) << function(self, itemData)
     local textList = {}
@@ -2048,41 +1523,14 @@ GameSettingCtrl._DropdownGetGamepadSettingTextList = HL.Method(HL.Any).Return(HL
     return textList
 end
 
-
-
-
 GameSettingCtrl._DropdownGetIndexGamepadSetting = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
     return GameInstance.player.gameSettingSystem:GetDropdownValue(settingId)
 end
-
-
-
-
 
 GameSettingCtrl._DropdownOnSelectGamepadSetting = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
     GameInstance.player.gameSettingSystem:SetDropdownValue(settingId, index)
     self:_RefreshCurrentSettingTab()
 end
-
-
-
-
-GameSettingCtrl._DropdownGetIndexKeyboardType = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
-    return GameSetting.keyboardType:GetHashCode()
-end
-
-
-
-
-
-GameSettingCtrl._DropdownOnSelectKeyboardType = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
-    GameSettingSetter.keyboardType:Set(index)
-end
-
-
-
-
-
 
 
 
@@ -2099,23 +1547,13 @@ GameSettingCtrl._SliderRefreshText = HL.Method(HL.Any, HL.Number, HL.Boolean) <<
     sliderItemCell.sliderValueText.text = valueText
 end
 
-
-
-
 GameSettingCtrl._SliderGetValue = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
-    local success, value = GameSetting.GameSettingGetFloat(settingId)
-    if success then
-        return value
-    end
-
-    logger.error("GameSetting: 在打开界面时尝试获取一个尚未存在的设置项数值", settingId)
-    return 0
+    return GameSettingUtils.GetSettingValueFloat(settingId)
 end
 
-
-
-
-
+GameSettingCtrl._SliderSetValue = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
+    GameSettingUtils.SetSettingValueFloat(settingId, value)
+end
 
 GameSettingCtrl._SliderGetIcon = HL.Method(HL.Number, HL.Any, HL.Any).Return(HL.Any) << function(self, value, iconList, rangeList)
     local listLength = math.min(#iconList, #rangeList)
@@ -2132,10 +1570,6 @@ GameSettingCtrl._SliderGetIcon = HL.Method(HL.Number, HL.Any, HL.Any).Return(HL.
     return self:LoadSprite(UIConst.UI_SPRITE_GAME_SETTING, iconList[listLength - 1])
 end
 
-
-
-
-
 GameSettingCtrl._SliderRecordValue = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
     local sliderValueData = self.m_sliderValueDataMap[settingId]
     if sliderValueData == nil then
@@ -2147,9 +1581,6 @@ GameSettingCtrl._SliderRecordValue = HL.Method(HL.String, HL.Number) << function
         sliderValueData.lastValidValue = value
     end
 end
-
-
-
 
 GameSettingCtrl._SliderOnAudioIconClicked = HL.Method(HL.String) << function(self, settingId)
     local valueData = self.m_sliderValueDataMap[settingId]
@@ -2167,9 +1598,6 @@ end
 
 
 
-
-
-
 GameSettingCtrl._SliderGetMaxNotchPadding = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
     local settingData = self.m_itemDataMap[settingId]
     local originalMaxValue = settingData.sliderMaxValue
@@ -2179,160 +1607,49 @@ GameSettingCtrl._SliderGetMaxNotchPadding = HL.Method(HL.String).Return(HL.Numbe
     return maxValue
 end
 
-
-
-
 GameSettingCtrl._SliderGetGlobalVolume = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
     return VOLUME_COEFFICIENT * self:_SliderGetValue(settingId)
 end
-
-
-
 
 GameSettingCtrl._SliderGetVoiceVolume = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
     return VOLUME_COEFFICIENT * self:_SliderGetValue(settingId)
 end
 
-
-
-
 GameSettingCtrl._SliderGetMusicVolume = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
     return VOLUME_COEFFICIENT * self:_SliderGetValue(settingId)
 end
-
-
-
 
 GameSettingCtrl._SliderGetSfxVolume = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
     return VOLUME_COEFFICIENT * self:_SliderGetValue(settingId)
 end
 
-
-
-
-GameSettingCtrl._SliderGetCameraSpeedX = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
-    return self:_SliderGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._SliderGetCameraSpeedY = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
-    return self:_SliderGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._SliderGetCameraTopViewSpeed = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
-    return self:_SliderGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._SliderGetWalkRunRatio = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
-    return self:_SliderGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._SliderGetCameraDistanceLevel = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
-    return GameSetting.cameraDistanceLevel
-end
-
-
-
-
 GameSettingCtrl._SliderGetNotchPadding = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
-    settingId = GameSetting.GetCurVideoNotchPaddingId()
     return GameSettingHelper.GetGameSettingCanvasPaddingFromNotchPadding(self:_SliderGetValue(settingId), self.m_rootCanvasWidth)
 end
 
-
-
-
-
 GameSettingCtrl._SliderSetGlobalVolume = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
     local systemValue = value / VOLUME_COEFFICIENT
-    GameSettingSetter.audioGlobalVolume:Set(systemValue)
+    GameSetting.audioGlobalVolumeSetting:SetValue(systemValue)
 end
-
-
-
-
 
 GameSettingCtrl._SliderSetVoiceVolume = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
     local systemValue = value / VOLUME_COEFFICIENT
-    GameSettingSetter.audioVoiceVolume:Set(systemValue)
+    GameSetting.audioVoiceVolumeSetting:SetValue(systemValue)
 end
-
-
-
-
 
 GameSettingCtrl._SliderSetMusicVolume = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
     local systemValue = value / VOLUME_COEFFICIENT
-    GameSettingSetter.audioMusicVolume:Set(systemValue)
+    GameSetting.audioMusicVolumeSetting:SetValue(systemValue)
 end
-
-
-
-
 
 GameSettingCtrl._SliderSetSfxVolume = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
     local systemValue = value / VOLUME_COEFFICIENT
-    GameSettingSetter.audioSfxVolume:Set(systemValue)
+    GameSetting.audioSfxVolumeSetting:SetValue(systemValue)
 end
-
-
-
-
-
-GameSettingCtrl._SliderSetCameraSpeedX = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
-    GameSettingSetter.controllerCameraSpeedX:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._SliderSetCameraSpeedY = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
-    GameSettingSetter.controllerCameraSpeedY:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._SliderSetCameraTopViewSpeed = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
-    GameSettingSetter.controllerCameraTopViewSpeed:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._SliderSetWalkRunRatio = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
-    GameSettingSetter.controllerWalkRunRatio:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._SliderSetCameraDistanceLevel = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
-    GameSettingSetter.cameraDistanceLevel:Set(value)
-end
-
-
-
-
 
 GameSettingCtrl._SliderSetNotchPadding = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
     local setValue = GameSettingHelper.GetGameSettingNotchPaddingFromCanvasPadding(value, self.m_rootCanvasWidth)
-    GameSettingSetter.graphicsNotchPadding:Set(setValue)
+    GameSetting.videoNotchPaddingSetting:SetValue(setValue)
     self.m_isNotchPaddingChanged = true
     self.view.notchAdapter:ApplyNewNotch()
 
@@ -2349,8 +1666,6 @@ GameSettingCtrl._SliderSetNotchPadding = HL.Method(HL.String, HL.Number) << func
     self.m_notchPaddingViewTime = 0
 end
 
-
-
 GameSettingCtrl._SliderClearNotchPaddingTick = HL.Method() << function(self)
     if self.m_notchPaddingViewTick < 0 then
         return
@@ -2358,8 +1673,6 @@ GameSettingCtrl._SliderClearNotchPaddingTick = HL.Method() << function(self)
     UIUtils.PlayAnimationAndToggleActive(self.view.mobileNotchPaddingNode.animationWrapper, false)
     self.m_notchPaddingViewTick = LuaUpdate:Remove(self.m_notchPaddingViewTick)
 end
-
-
 
 GameSettingCtrl._SliderTryApplyAllNotchPadding = HL.Method() << function(self)
     if not self.m_isNotchPaddingChanged then
@@ -2374,35 +1687,21 @@ GameSettingCtrl._SliderTryApplyAllNotchPadding = HL.Method() << function(self)
     end
 end
 
-
-
-
 GameSettingCtrl._SliderOnGlobalVolumeIconClicked = HL.Method(HL.String) << function(self, settingId)
     self:_SliderOnAudioIconClicked(settingId)
 end
-
-
-
 
 GameSettingCtrl._SliderOnVoiceVolumeIconClicked = HL.Method(HL.String) << function(self, settingId)
     self:_SliderOnAudioIconClicked(settingId)
 end
 
-
-
-
 GameSettingCtrl._SliderOnMusicVolumeIconClicked = HL.Method(HL.String) << function(self, settingId)
     self:_SliderOnAudioIconClicked(settingId)
 end
 
-
-
-
 GameSettingCtrl._SliderOnSfxVolumeIconClicked = HL.Method(HL.String) << function(self, settingId)
     self:_SliderOnAudioIconClicked(settingId)
 end
-
-
 
 
 
@@ -2423,19 +1722,13 @@ GameSettingCtrl._ButtonOnAccountCenterClick = HL.Method() << function(self)
 end
 
 
-
-
 GameSettingCtrl._ButtonOnGiftCodeClick = HL.Method() << function(self)
     CS.Beyond.SDK.SDKAccountUtils.OpenGiftCode()
 end
 
-
-
 GameSettingCtrl._ButtonOnCustomerServiceCenterClick = HL.Method() << function(self)
     CS.Beyond.Gameplay.AnnouncementSystem.OpenCustomService()
 end
-
-
 
 
 GameSettingCtrl._ButtonOnGameProtocolServiceClick = HL.Method() << function(self)
@@ -2443,13 +1736,9 @@ GameSettingCtrl._ButtonOnGameProtocolServiceClick = HL.Method() << function(self
 end
 
 
-
-
 GameSettingCtrl._ButtonOnGameProtocolServiceOverseaClick = HL.Method() << function(self)
     CS.Beyond.SDK.SDKAccountUtils.OpenGameProtocol(CS.Beyond.SDK.SDKGameProtocolType.OVERSEA_SERVICE)
 end
-
-
 
 
 GameSettingCtrl._ButtonOnGameProtocolPrivacyClick = HL.Method() << function(self)
@@ -2457,13 +1746,9 @@ GameSettingCtrl._ButtonOnGameProtocolPrivacyClick = HL.Method() << function(self
 end
 
 
-
-
 GameSettingCtrl._ButtonOnGameProtocolPrivacyOverseaClick = HL.Method() << function(self)
     CS.Beyond.SDK.SDKAccountUtils.OpenGameProtocol(CS.Beyond.SDK.SDKGameProtocolType.OVERSEA_PRIVACY)
 end
-
-
 
 
 GameSettingCtrl._ButtonOnGameProtocolChildrenPrivacyClick = HL.Method() << function(self)
@@ -2471,13 +1756,9 @@ GameSettingCtrl._ButtonOnGameProtocolChildrenPrivacyClick = HL.Method() << funct
 end
 
 
-
-
 GameSettingCtrl._ButtonOnGameProtocolPersonalInfoCollectionClick = HL.Method() << function(self)
     CS.Beyond.SDK.SDKAccountUtils.OpenGameProtocol(CS.Beyond.SDK.SDKGameProtocolType.PERSONAL_INFO_COLLECTION)
 end
-
-
 
 
 GameSettingCtrl._ButtonOnGameProtocolThirdPartySharedInfoClick = HL.Method() << function(self)
@@ -2485,19 +1766,13 @@ GameSettingCtrl._ButtonOnGameProtocolThirdPartySharedInfoClick = HL.Method() << 
 end
 
 
-
-
 GameSettingCtrl._ButtonOnDeleteAccountClick = HL.Method() << function(self)
     GameInstance.player.gameSettingSystem:OpenDeleteAccount()
 end
 
-
-
 GameSettingCtrl._ButtonOnHudLayoutClick = HL.Method() << function(self)
     UIManager:Open(PanelId.HudLayout)
 end
-
-
 
 GameSettingCtrl._ButtonOnGetUnstuckClick = HL.Method() << function(self)
     if GameInstance.player.forbidSystem:IsForbidden(ForbidType.ForbidMapTeleport) then
@@ -2506,8 +1781,6 @@ GameSettingCtrl._ButtonOnGetUnstuckClick = HL.Method() << function(self)
     end
     GameInstance.player.gameSettingSystem:RequestGetUnstuck()
 end
-
-
 
 GameSettingCtrl._ButtonOnAudioManageClick = HL.Method() << function(self)
     UIManager:Open(PanelId.GameSettingVoiceManagePopup)
@@ -2518,240 +1791,21 @@ end
 
 
 
-
-
-
 GameSettingCtrl._ToggleGetValue = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    local success, value = GameSetting.GameSettingGetBool(settingId)
-    if success then
-        return value
-    end
-
-    logger.error("GameSetting: 在打开界面时尝试获取一个尚未存在的设置项数值", settingId)
-    return false
+    return GameSettingUtils.GetSettingValueBool(settingId)
 end
 
-
-
-
-
-
-GameSettingCtrl._ToggleGetSuspendUnfocused = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
+GameSettingCtrl._ToggleSetValue = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
+    GameSettingUtils.SetSettingValueBool(settingId, value)
 end
-
-
-
-
-GameSettingCtrl._ToggleGetBackgroundMusic = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._ToggleGetAudioController = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._ToggleGetAudioSpatial = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._ToggleGetCameraReverseX = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._ToggleGetCameraReverseY = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._ToggleGetEnableAutoAttackTouch = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._ToggleGetEnableAutoAttackGamepad = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._ToggleGetAutoSprint = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._ToggleGetMotion = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._ToggleGetTriggerEffect = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._ToggleGetShowSmartAlert = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._ToggleGetStaminaRecover = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
-end
-
-
-
-
-GameSettingCtrl._ToggleGetStaminaDrugExpire = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return self:_ToggleGetValue(settingId)
-end
-
-
-
 
 GameSettingCtrl._ToggleGetEnableUltimateMode2 = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
     return GameInstance.player.gameSettingSystem:GetToggleValue(settingId)
 end
 
-
-
-
 GameSettingCtrl._ToggleGetPSNOnly = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
     return GameInstance.player.friendSystem.isPSNOnly
 end
-
-
-
-
-GameSettingCtrl._ToggleGetVideoFullScreen = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return GameSetting.videoFullScreen
-end
-
-
-
-
-
-GameSettingCtrl._ToggleSetSuspendUnfocused = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSettingSetter.audioSuspendUnfocused:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._ToggleSetBackgroundMusic = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSettingSetter.audioBackgroundMusic:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._ToggleSetAudioController = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSettingSetter.audioController:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._ToggleSetAudioSpatial = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSettingSetter.audioSpatial:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._ToggleSetCameraReverseX = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSettingSetter.controllerCameraReverseX:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._ToggleSetCameraReverseY = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSettingSetter.controllerCameraReverseY:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._ToggleSetEnableAutoAttackTouch = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSettingSetter.enableAutoAttackTouch:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._ToggleSetEnableAutoAttackGamepad = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSettingSetter.enableAutoAttackGamepad:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._ToggleSetAutoSprint = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSettingSetter.controllerAutoSprint:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._ToggleSetMotion = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSettingSetter.controllerMotion:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._ToggleSetTriggerEffect = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSettingSetter.controllerTriggerEffect:Set(value)
-end
-
-
-
-
-
-GameSettingCtrl._ToggleSetShowSmartAlert = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSettingSetter.otherShowSmartAlert:Set(value)
-end
-
-
-
-
-
 
 GameSettingCtrl._ToggleSetStaminaRecover = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
     if not GameInstance.player.notificationManager:HasNotificationPermission() and value then
@@ -2762,12 +1816,8 @@ GameSettingCtrl._ToggleSetStaminaRecover = HL.Method(HL.String, HL.Boolean) << f
         self:_OpenNotificationPopup()
         return
     end
-    GameSettingSetter.staminaRecover:Set(value)
+    GameSetting.staminaRecoverSetting:SetValue(value)
 end
-
-
-
-
 
 GameSettingCtrl._ToggleSetStaminaDrugExpire = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
     if not GameInstance.player.notificationManager:HasNotificationPermission() and value then
@@ -2778,10 +1828,8 @@ GameSettingCtrl._ToggleSetStaminaDrugExpire = HL.Method(HL.String, HL.Boolean) <
         self:_OpenNotificationPopup()
         return
     end
-    GameSettingSetter.staminaDrugExpire:Set(value)
+    GameSetting.staminaDrugExpireSetting:SetValue(value)
 end
-
-
 
 GameSettingCtrl._OpenNotificationPopup = HL.Method() << function(self)
     Notify(MessageConst.SHOW_POP_UP,{
@@ -2797,50 +1845,14 @@ GameSettingCtrl._OpenNotificationPopup = HL.Method() << function(self)
 end
 
 
-
-
-
-
 GameSettingCtrl._ToggleSetEnableUltimateMode2 = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
     GameInstance.player.gameSettingSystem:SetToggleValue(settingId, value)
     self:_ApplyGamepadEnableUltimateMode2SettingToDevice()
 end
 
-
-
-
-
 GameSettingCtrl._ToggleSetPSNOnly = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
     GameInstance.player.friendSystem:SetPsnOnly(value)
 end
-
-
-
-
-
-GameSettingCtrl._ToggleSetVideoFullScreen = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSettingSetter.graphicsFullScreen:Set(value)
-end
-
-
-
-
-GameSettingCtrl._ToggleGetFacTopViewEscExit = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    return Utils.getCommonSettingValueBool(settingId)
-end
-
-
-
-
-
-GameSettingCtrl._ToggleSetFacTopViewEscExit = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
-    GameSetting.GameSettingSetBool(settingId, value)
-end
-
-
-
-
-
 
 
 
@@ -2900,11 +1912,6 @@ GameSettingCtrl._KeyShowKeyCodePopup = HL.Method(HL.Userdata, HL.Userdata, HL.Bo
 end
 
 
-
-
-
-
-
 GameSettingCtrl._KeyCheckSettingConflict = HL.Method(HL.Userdata, HL.Userdata, CS.Beyond.Input.KeyboardKeyCode)
                                              .Return(HL.Boolean, HL.Opt(HL.Any))
     << function(self, itemData, actionIds, keyCode)
@@ -2939,13 +1946,6 @@ end
 
 
 
-
-
-
-
-
-
-
 GameSettingCtrl._KeyCheckActionsConflictAndDelete = HL.Method(HL.Userdata, HL.Userdata, HL.Userdata, CS.Beyond.Input.KeyboardKeyCode, HL.Boolean)
                                                       .Return(HL.Boolean)
     << function(self, itemData, srcActionIds, checkActionIds, keyCode, delete)
@@ -2970,21 +1970,10 @@ GameSettingCtrl._KeyCheckActionsConflictAndDelete = HL.Method(HL.Userdata, HL.Us
     return anyConflict
 end
 
-
-
-
-
-
 GameSettingCtrl._KeyDeleteActions = HL.Method(HL.Userdata, HL.Userdata, HL.Boolean).Return(HL.Boolean)
     << function(self, itemData, actionIds, isPrimary)
     return self:_KeyChangeActions(itemData, actionIds, KeyboardKeyCode.None, isPrimary)
 end
-
-
-
-
-
-
 
 GameSettingCtrl._KeyChangeActions = HL.Method(HL.Userdata, HL.Userdata, HL.Userdata, HL.Boolean).Return(HL.Boolean)
     << function(self, itemData, actionIds, keyCode, isPrimary)
@@ -2997,8 +1986,6 @@ GameSettingCtrl._KeyChangeActions = HL.Method(HL.Userdata, HL.Userdata, HL.Userd
     end
     return dirty 
 end
-
-
 
 GameSettingCtrl._KeyResetActions = HL.Method() << function(self)
     Notify(MessageConst.SHOW_POP_UP, {
@@ -3016,8 +2003,6 @@ GameSettingCtrl._KeyResetActions = HL.Method() << function(self)
     })
 end
 
-
-
 GameSettingCtrl._KeySaveActions = HL.Method() << function(self)
     local stateLevel = self:_GetKeyActionStateLevel()
     
@@ -3034,17 +2019,12 @@ GameSettingCtrl._KeySaveActions = HL.Method() << function(self)
     end
 end
 
-
-
 GameSettingCtrl._KeyClearPendingActions = HL.Method() << function(self)
     
     GameInstance.player.gameSettingSystem:ClearAllPendingKeySettings()
     
     self:_ClearAllKeyActionStates()
 end
-
-
-
 
 
 
@@ -3079,9 +2059,6 @@ local function UnpackKeyActionState(state)
     return (state & KEY_ACTION_STATE_MASK), ((state >> KEY_ACTION_STATE_BITS) & KEY_ACTION_STATE_MASK)
 end
 
-
-
-
 GameSettingCtrl._GetKeyActionState = HL.Method(HL.String)
                                        .Return(HL.Number, HL.Opt(HL.Number))
     << function(self, settingId)
@@ -3092,11 +2069,6 @@ GameSettingCtrl._GetKeyActionState = HL.Method(HL.String)
     local primaryState, secondaryState = UnpackKeyActionState(state)
     return primaryState, secondaryState
 end
-
-
-
-
-
 
 GameSettingCtrl._SetKeyActionState = HL.Method(HL.String, HL.Number, HL.Boolean)
     << function(self, settingId, newState, isPrimary)
@@ -3109,11 +2081,6 @@ GameSettingCtrl._SetKeyActionState = HL.Method(HL.String, HL.Number, HL.Boolean)
     self.m_keyActionStateMap[settingId] = PackKeyActionState(primaryState, secondaryState)
 end
 
-
-
-
-
-
 GameSettingCtrl._AddKeyActionState = HL.Method(HL.String, HL.Number, HL.Boolean)
     << function(self, settingId, state, isPrimary)
     local primaryState, secondaryState = self:_GetKeyActionState(settingId)
@@ -3124,11 +2091,6 @@ GameSettingCtrl._AddKeyActionState = HL.Method(HL.String, HL.Number, HL.Boolean)
     end
     self.m_keyActionStateMap[settingId] = PackKeyActionState(primaryState, secondaryState)
 end
-
-
-
-
-
 
 GameSettingCtrl._RemoveKeyActionState = HL.Method(HL.String, HL.Number, HL.Boolean)
     << function(self, settingId, state, isPrimary)
@@ -3147,8 +2109,6 @@ GameSettingCtrl._RemoveKeyActionState = HL.Method(HL.String, HL.Number, HL.Boole
     self.m_keyActionStateMap[settingId] = PackKeyActionState(primaryState, secondaryState)
 end
 
-
-
 GameSettingCtrl._GetKeyActionStateLevel = HL.Method().Return(HL.Number) << function(self)
     local stateLevel = KEY_ACTION_STATE.None
     for settingId, state in pairs(self.m_keyActionStateMap) do
@@ -3161,14 +2121,10 @@ GameSettingCtrl._GetKeyActionStateLevel = HL.Method().Return(HL.Number) << funct
     return stateLevel
 end
 
-
-
 GameSettingCtrl._IsAnyKeyActionStateDirty = HL.Method().Return(HL.Boolean) << function(self)
     local stateLevel = self:_GetKeyActionStateLevel()
     return stateLevel ~= KEY_ACTION_STATE.None
 end
-
-
 
 GameSettingCtrl._ClearAllKeyActionStates = HL.Method() << function(self)
     lume.clear(self.m_keyActionStateMap)
@@ -3179,12 +2135,8 @@ end
 
 
 
-
-
-
 GameSettingCtrl._InsertSubQualityItemDataList = HL.Method(HL.Table) << function(self, itemDataList)
     
-    local originalCount = #itemDataList
     for settingId, subQualityData in pairs(Tables.qualitySubSettingTable) do
         if self:_IsSettingItemValid(settingId, "ValidateVideoQualitySubSetting") then
             local itemData = {}
@@ -3205,7 +2157,7 @@ GameSettingCtrl._InsertSubQualityItemDataList = HL.Method(HL.Table) << function(
                     end
 
                     itemData.settingText = subQualityData.settingText
-                    itemData.settingSortOrder = originalCount + 1 + subQualityData.settingSortOrder
+                    itemData.settingSortOrder = subQualityData.settingSortOrder
                     itemData.refreshViewOnValueChanged = itemConfig.refreshViewOnValueChanged
                     itemData.ignoreMainChange = itemConfig.ignoreMainChange
 
@@ -3218,13 +2170,8 @@ GameSettingCtrl._InsertSubQualityItemDataList = HL.Method(HL.Table) << function(
     end
 end
 
-
-
-
-
 GameSettingCtrl._DropdownBuildQualitySubSettingItemData = HL.Method(HL.Table, HL.Userdata) << function(self, itemData, itemConfig)
     local settingId = itemData.settingId
-    itemData.dropdownOptionValidateSelectFunction = "DropdownValidateSetQualitySubSettingOptionIndex"
     local optionGroupConfig = itemConfig:DropdownGetOptionGroupConfig(QualityManagerInst.device.m_platform)
     local optionTextList = {}  
     local optionStateList = {}
@@ -3258,11 +2205,6 @@ GameSettingCtrl._DropdownBuildQualitySubSettingItemData = HL.Method(HL.Table, HL
     itemData.optionTextList = optionTextList
     itemData.optionStateList = optionStateList
 end
-
-
-
-
-
 
 GameSettingCtrl._DropdownOnValidateSelectVideoQuality = HL.Method(HL.Userdata, HL.Number, HL.Number)
                                                           .Return(HL.Boolean)
@@ -3298,11 +2240,6 @@ GameSettingCtrl._DropdownOnValidateSelectVideoQuality = HL.Method(HL.Userdata, H
     return true
 end
 
-
-
-
-
-
 GameSettingCtrl._DropdownOnValidateSelectPSVideoQuality = HL.Method(HL.Userdata, HL.Number, HL.Number)
                                                             .Return(HL.Boolean)
     << function(self, itemData, fromIndex, toIndex)
@@ -3310,20 +2247,12 @@ GameSettingCtrl._DropdownOnValidateSelectPSVideoQuality = HL.Method(HL.Userdata,
     return self:_DropdownOnValidateSelectVideoQuality(itemData, fromIndex + 1, toIndex + 1)
 end
 
-
-
-
-
 GameSettingCtrl._DropdownOnSelectPSVideoQuality = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
     local lastIndex = self:_DropdownGetIndexPSVideoQuality(settingId)
     local dropdown = self.m_itemCellMap[settingId].itemControl.dropdown
     
     self:_DoSelectVideoQuality(index + 1, lastIndex + 1, dropdown)
 end
-
-
-
-
 
 GameSettingCtrl._DropdownOnSelectVideoQuality = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
     local lastIndex = self:_DropdownGetIndexVideoQuality(settingId)
@@ -3336,11 +2265,6 @@ GameSettingCtrl._DropdownOnSelectVideoQuality = HL.Method(HL.String, HL.Number) 
     end
 end
 
-
-
-
-
-
 GameSettingCtrl._DoSelectVideoQuality = HL.Method(HL.Number, HL.Number, HL.Userdata) << function(self, index, lastIndex, dropdown)
     local qualityIndex = index - 1 
     if GameSettingHelper.IsValidQualityIndex(qualityIndex) then
@@ -3348,7 +2272,7 @@ GameSettingCtrl._DoSelectVideoQuality = HL.Method(HL.Number, HL.Number, HL.Userd
         
         
         GameSettingHelper.SetQualityCustomState(false)
-        GameSettingSetter.graphicsQuality:Set(qualityIndex, true)
+        GameSetting.videoQualitySetting:SetValue(qualityIndex, true)
         self:_UpdateAndRefreshQualitySubSettingsState() 
         self:_RefreshCurrentSettingTab(true)
 
@@ -3375,9 +2299,6 @@ GameSettingCtrl._DoSelectVideoQuality = HL.Method(HL.Number, HL.Number, HL.Userd
     end
 end
 
-
-
-
 GameSettingCtrl._DropdownGetIndexVideoQuality = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
     if GameSettingHelper.GetQualityCustomState() then
         return CUSTOM_QUALITY_SETTING_INDEX
@@ -3386,14 +2307,9 @@ GameSettingCtrl._DropdownGetIndexVideoQuality = HL.Method(HL.String).Return(HL.N
     end
 end
 
-
-
-
 GameSettingCtrl._DropdownGetIndexPSVideoQuality = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
     return GameSettingHelper.GetQualityIndex()
 end
-
-
 
 GameSettingCtrl._UpdateAndRefreshQualitySubSettingsState = HL.Method() << function(self)
     for settingId, itemCell in pairs(self.m_qualitySubSettingItemCellMap) do
@@ -3417,17 +2333,9 @@ GameSettingCtrl._UpdateAndRefreshQualitySubSettingsState = HL.Method() << functi
     end
 end
 
-
-
-
 GameSettingCtrl._DropdownGetQualitySubSettingOptionIndex = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
     return GameSettingHelper.GetQualitySubSettingTierBySettingId(settingId)
 end
-
-
-
-
-
 
 GameSettingCtrl._DropdownValidateSetQualitySubSettingOptionIndex = HL.Method(HL.Table, HL.Number, HL.Number)
                                                                      .Return(HL.Boolean)
@@ -3453,40 +2361,21 @@ GameSettingCtrl._DropdownValidateSetQualitySubSettingOptionIndex = HL.Method(HL.
     return false
 end
 
-
-
-
-
-GameSettingCtrl._DropdownSetQualitySubSettingOptionIndex = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
+GameSettingCtrl._DropdownOnSelectQualitySubSettingOption = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
     self:_SetQualitySubSettingTier(settingId, index)
 end
 
-
-
-
-
-GameSettingCtrl._DropdownOnSelectCameraImpulseLevel = HL.Method(HL.String, HL.Number) << function(self, settingId, index)
-    GameSettingSetter.cameraImpulseLevel:Set(index)
+GameSettingCtrl._DropdownGetQualitySubSettingTextList = HL.Method(HL.Any).Return(HL.Table, HL.Table) << function(self, itemData)
+    return itemData.optionTextList, itemData.optionStateList
 end
-
-
-
-
 
 GameSettingCtrl._ToggleBuildQualitySubSettingItemData = HL.Method(HL.Table, HL.Userdata) << function(self, itemData, itemConfig)
 
 end
 
-
-
-
 GameSettingCtrl._ToggleGetQualitySubSettingValue = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
     return GameSettingHelper.GetQualitySubSettingTierBySettingId(settingId) > 0
 end
-
-
-
-
 
 GameSettingCtrl._ToggleValidateSetQualitySubSettingValue = HL.Method(HL.String, HL.Boolean).Return(HL.Boolean) << function(self, settingId, value)
     local success, itemConfig = GameSettingHelper.GetQualitySubSettingConfigBySettingId(settingId)
@@ -3513,18 +2402,10 @@ GameSettingCtrl._ToggleValidateSetQualitySubSettingValue = HL.Method(HL.String, 
     return false
 end
 
-
-
-
-
 GameSettingCtrl._ToggleSetQualitySubSettingValue = HL.Method(HL.String, HL.Boolean) << function(self, settingId, value)
     local toggleTier = value and 1 or 0
     self:_SetQualitySubSettingTier(settingId, toggleTier)
 end
-
-
-
-
 
 GameSettingCtrl._SliderBuildQualitySubSettingItemData = HL.Method(HL.Table, HL.Userdata) << function(self, itemData, itemConfig)
     local settingId = itemData.settingId
@@ -3539,24 +2420,13 @@ GameSettingCtrl._SliderBuildQualitySubSettingItemData = HL.Method(HL.Table, HL.U
     itemData.sliderStepValue = itemConfig.sliderStepValue
 end
 
-
-
-
 GameSettingCtrl._SliderGetQualitySubSettingValue = HL.Method(HL.String).Return(HL.Number) << function(self, settingId)
     return GameSettingHelper.GetQualitySubSettingTierBySettingId(settingId)
 end
 
-
-
-
-
 GameSettingCtrl._SliderSetQualitySubSettingValue = HL.Method(HL.String, HL.Number) << function(self, settingId, value)
     self:_SetQualitySubSettingTier(settingId, value)
 end
-
-
-
-
 
 GameSettingCtrl._SetQualitySubSettingTier = HL.Method(HL.String, HL.Any) << function(self, settingId, tier)
     local itemCell = self.m_itemCellMap[settingId]
@@ -3578,9 +2448,6 @@ GameSettingCtrl._SetQualitySubSettingTier = HL.Method(HL.String, HL.Any) << func
     self:_OnQualitySubSettingTierChanged(itemData)
 end
 
-
-
-
 GameSettingCtrl._OnQualitySubSettingTierChanged = HL.Method(HL.Table) << function(self, itemData)
     
     if itemData.refreshViewOnValueChanged then
@@ -3597,8 +2464,6 @@ GameSettingCtrl._OnQualitySubSettingTierChanged = HL.Method(HL.Table) << functio
     self:_RefreshLoad(true)
 end
 
-
-
 GameSettingCtrl._ShowRebootTips = HL.Method() << function(self)
     Notify(MessageConst.SHOW_POP_UP, {
         content = Language[QUALITY_POP_UP_MOBILE_CONTENT_TEXT_ID],
@@ -3609,41 +2474,27 @@ GameSettingCtrl._ShowRebootTips = HL.Method() << function(self)
     })
 end
 
-
-
 GameSettingCtrl._IsQualitySettingDefault = HL.Method().Return(HL.Boolean) << function(self)
     
     if GameSettingHelper.GetQualityCustomState() then
         return false
     end
-    local currentIndex = GameSettingHelper.GetQualityIndex()
-    local defaultIndex = GameSettingHelper.GetDefaultVideoQualityIndex()
-    if currentIndex ~= defaultIndex then
-        return false
+
+    
+    local settingItems = Tables.settingTabTable[GameSettingConst.TAB_ID_VIDEO].tabItems
+    for settingId, settingItemData in pairs(settingItems) do
+        if GameSetting.IsSettingItemValid(settingId) and not GameSettingUtils.IsSettingDefault(settingId) then
+            return false
+        end
     end
     
-    local resolution = GameSetting.videoResolution
-    local displayWidth, displayHeight = DeviceInfo.GetDisplaySize()
-    if resolution.width ~= displayWidth or resolution.height ~= displayHeight then
-        return false
-    end
-    
-    for settingId, v in pairs(Tables.qualitySubSettingTable) do
-        if GameSetting.IsSettingItemValid(settingId) then
-            local success, itemConfig = GameSettingHelper.GetQualitySubSettingConfigBySettingId(settingId)
-            if success then
-                local currentTier = GameSettingHelper.GetQualitySubSettingTierBySettingId(settingId)
-                local defaultTier = QualityManagerInst:GetQualityComponentDefaultTier(itemConfig.qualityComponentType)
-                if currentTier ~= LuaIndex(defaultTier) then
-                    return false
-                end
-            end
+    for settingId, qualitySubSettingData in pairs(Tables.qualitySubSettingTable) do
+        if GameSetting.IsSettingItemValid(settingId) and not GameSettingUtils.IsSettingDefault(settingId) then
+            return false
         end
     end
     return true
 end
-
-
 
 GameSettingCtrl._ResetQualitySetting = HL.Method() << function(self)
     if self:_IsQualitySettingDefault() then
@@ -3656,24 +2507,21 @@ GameSettingCtrl._ResetQualitySetting = HL.Method() << function(self)
         subContent = Language.LUA_GAME_SETTING_RESET_QUALITY_SETTING_SUB_CONTENT,
         onConfirm = function()
             
-            for settingId, v in pairs(Tables.qualitySubSettingTable) do
+            GameSettingHelper.SetQualityCustomState(false)
+
+            
+            local settingItems = Tables.settingTabTable[GameSettingConst.TAB_ID_VIDEO].tabItems
+            for settingId, settingItemData in pairs(settingItems) do
                 if GameSetting.IsSettingItemValid(settingId) then
-                    local success, itemConfig = GameSettingHelper.GetQualitySubSettingConfigBySettingId(settingId)
-                    if success then
-                        local defaultTier = QualityManagerInst:GetQualityComponentDefaultTier(itemConfig.qualityComponentType)
-                        GameSettingHelper.SetQualitySubSettingTierBySettingId(settingId, LuaIndex(defaultTier))
-                    end
+                    GameSettingUtils.ResetSettingValue(settingId)
                 end
             end
             
-            local displayWidth, displayHeight = DeviceInfo.GetDisplaySize()
-            GameSettingSetter.graphicsResolution:Set(displayWidth, displayHeight)
-            
-            local defaultIndex = GameSettingHelper.GetDefaultVideoQualityIndex()
-            GameSettingHelper.SetQualityCustomState(false)
-            GameSettingSetter.graphicsQuality:Set(defaultIndex, true)
-            
-            GameSettingHelper.RemoveAllQualitySubSettingSaveValues()
+            for settingId, v in pairs(Tables.qualitySubSettingTable) do
+                if GameSetting.IsSettingItemValid(settingId) then
+                    GameSettingHelper.ResetQualitySubSettingTierBySettingId(settingId)
+                end
+            end
 
             
             self:_RefreshCurrentSettingTab(true)
@@ -3686,14 +2534,10 @@ end
 
 
 
-
-
 GameSettingCtrl._InitLoad = HL.Method() << function(self)
     self:_InitQualityLoad()
     self:_InitMemoryLoad()
 end
-
-
 
 GameSettingCtrl._InitQualityLoad = HL.Method() << function(self)
     local qualityConfig = GameInstance.dataManager.gameSettingSubQualityConfig
@@ -3716,14 +2560,12 @@ GameSettingCtrl._InitQualityLoad = HL.Method() << function(self)
             local oldRatio = math.max(0, previousProgress / maxQualityLoad)
             local newRatio = math.max(0, currentProgress / maxQualityLoad)
             if oldRatio > 0 and newRatio > 0 then
-                GameSetting.GameSettingSendEventLog("quality_load", oldRatio, newRatio)
+                GameSetting.SendEventLog("quality_load", tostring(oldRatio), tostring(newRatio))
             end
         end,
     } 
     self.view.qualityLoadBar:InitGameSettingLoadBar(args)
 end
-
-
 
 GameSettingCtrl._InitMemoryLoad = HL.Method() << function(self)
     local args = {
@@ -3738,12 +2580,9 @@ GameSettingCtrl._InitMemoryLoad = HL.Method() << function(self)
     self.view.memoryLoadBar:InitGameSettingLoadBar(args)
 end
 
-
-
-
 GameSettingCtrl._RefreshLoad = HL.Method(HL.Opt(HL.Boolean)) << function(self, playAnim)
     local tabData = self.m_tabDataList[self.m_tabIndex]
-    local show = tabData.tabId == VIDEO_TAB_ID
+    local show = tabData.tabId == GameSettingConst.TAB_ID_VIDEO
     self.view.loadNode.gameObject:SetActive(show)
     if not show then
         return
@@ -3752,9 +2591,6 @@ GameSettingCtrl._RefreshLoad = HL.Method(HL.Opt(HL.Boolean)) << function(self, p
     self:_RefreshQualityLoad(playAnim)
     self:_RefreshMemoryLoad(playAnim)
 end
-
-
-
 
 GameSettingCtrl._RefreshQualityLoad = HL.Method(HL.Opt(HL.Boolean)) << function(self, playAnim)
     local show = (DeviceInfo.isPC or DeviceInfo.isMobile) and not CloudGame.enabled
@@ -3766,9 +2602,6 @@ GameSettingCtrl._RefreshQualityLoad = HL.Method(HL.Opt(HL.Boolean)) << function(
     playAnim = playAnim == true
     self.view.qualityLoadBar:Refresh(playAnim, self.view.config.QUALITY_LOAD_BAR_TWEEN_DURATION)
 end
-
-
-
 
 GameSettingCtrl._RefreshMemoryLoad = HL.Method(HL.Opt(HL.Boolean)) << function(self, playAnim)
     local show = DeviceInfo.isPC and not CloudGame.enabled
@@ -3786,13 +2619,9 @@ end
 
 
 
-
-
 GameSettingCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
 
 GameSettingCtrl._SetSettingItemControllerNaviTarget = HL.Method() << function(self)
     local itemDataList = self.m_itemDataList[self.m_tabIndex]
@@ -3800,22 +2629,35 @@ GameSettingCtrl._SetSettingItemControllerNaviTarget = HL.Method() << function(se
         return
     end
 
-    InputManagerInst.controllerNaviManager:SetTarget(nil)
+    self:_ClearNaviTarget()
 
     
     if self.view.deviceNode.gameObject.activeInHierarchy then
-        InputManagerInst.controllerNaviManager:SetTarget(self.view.deviceNodeNaviDecorator)
+        self:_SetNaviTarget(self.view.deviceNodeNaviDecorator)
     else
         local itemCount = #itemDataList
         if itemCount > 0 then
             local firstCell = self.m_itemCells:Get(1)
-            InputManagerInst.controllerNaviManager:SetTarget(firstCell.view.naviDecorator)
+            self:_SetNaviTarget(firstCell.view.naviDecorator)
         end
     end
 end
 
+GameSettingCtrl._SetNaviTarget = HL.Method(HL.Userdata) << function(self, selectable)
+    if LuaSystemManager.dummyNaviLayerSystem then
+        self:SetNaviTarget(selectable)
+    else
+        InputManagerInst.controllerNaviManager:SetTarget(selectable)
+    end
+end
 
-
+GameSettingCtrl._ClearNaviTarget = HL.Method() << function(self)
+    if LuaSystemManager.dummyNaviLayerSystem then
+        self:ClearNaviTarget()
+    else
+        InputManagerInst.controllerNaviManager:SetTarget(nil)
+    end
+end
 
 GameSettingCtrl._OnTryChangeInputDeviceType = HL.Method(HL.Any) << function(self, args)
     if GameInstance.isInGameplay then
@@ -3825,16 +2667,13 @@ GameSettingCtrl._OnTryChangeInputDeviceType = HL.Method(HL.Any) << function(self
     Notify(MessageConst.SHOW_TOAST, Language.LUA_INPUT_DEVICE_CHANGE_FORBIDDEN)
 end
 
-
-
-
 GameSettingCtrl._OnControllerTypeChanged = HL.Method(HL.Any) << function(self, args)
     local controllerType = DeviceInfo.controllerType
     if controllerType == DeviceControllerType.None then
         return 
     end
     local tabData = self.m_tabDataList[self.m_tabIndex]
-    local isGamepadTab = tabData.tabId == GAMEPAD_TAB_ID
+    local isGamepadTab = tabData.tabId == GameSettingConst.TAB_ID_GAMEPAD
     if not isGamepadTab then
         return 
     end
@@ -3846,22 +2685,17 @@ end
 
 
 
-
-
-
 GameSettingCtrl._OnGameSettingChanged = HL.Method(HL.Number) << function(self, reason)
     if reason == UIConst.GameSettingChangeReason.Gamepad then
         
         local tabData = self.m_tabDataList[self.m_tabIndex]
-        local isGamepadTab = tabData.tabId == GAMEPAD_TAB_ID
+        local isGamepadTab = tabData.tabId == GameSettingConst.TAB_ID_GAMEPAD
         if not isGamepadTab then
             return 
         end
         self:_RefreshCurrentSettingTab()
     end
 end
-
-
 
 GameSettingCtrl._QueryUnreadMsg = HL.Method() << function(self)
     if UNITY_PS5 then
@@ -3870,19 +2704,15 @@ GameSettingCtrl._QueryUnreadMsg = HL.Method() << function(self)
     CS.Beyond.Gameplay.AnnouncementSystem.QueryUnreadMsg()
 end
 
-
-
 GameSettingCtrl._OnCloseCustomerService = HL.Method() << function(self)
     
     self:_QueryUnreadMsg()
 end
 
-
-
 GameSettingCtrl._OnVoiceResourceStateChanged = HL.Method() << function(self)
     
     local tabData = self.m_tabDataList[self.m_tabIndex]
-    if tabData.tabId ~= LANGUAGE_TAB_ID then
+    if tabData.tabId ~= GameSettingConst.TAB_ID_LANGUAGE then
         return
     end
     self:_RefreshCurrentSettingTab(true)
@@ -3891,25 +2721,19 @@ end
 
 
 
-
 GameSettingCtrl.OpenGameSettingPhase = HL.StaticMethod() << function()
     PhaseManager:OpenPhase(PhaseId.GameSetting)
 end
-
 
 GameSettingCtrl.OnSystemDisplaySizeChanged = HL.StaticMethod() << function()
     CoroutineManager:StartCoroutine(function()
         coroutine.waitForRenderDone()
 
-        if CS.Beyond.GameSetting.IsSettingNotSet(CS.Beyond.GameSetting.GetCurVideoNotchPaddingId()) then
-            local defaultPadding = CS.Beyond.Gameplay.GameSettingHelper.GetGameSettingDefaultNotchPadding(
-                UIManager.uiCanvasRect.rect.width,
-                STANDARD_HORIZONTAL_RESOLUTION
-            )
-            CS.Beyond.Scripts.Entry.GameSettingSetter.graphicsNotchPadding:Set(defaultPadding)
-        else
-            CS.Beyond.Scripts.Entry.GameSettingSetter.graphicsNotchPadding:Set(CS.Beyond.GameSetting.videoNotchPadding)
-        end
+        local defaultPadding = GameSettingHelper.GetGameSettingDefaultNotchPadding(
+            UIManager.uiCanvasRect.rect.width,
+            STANDARD_HORIZONTAL_RESOLUTION
+        )
+        GameSetting.videoNotchPaddingSetting.defaultValue = defaultPadding
 
         local rootCanvasHelper = UIManager.m_uiCanvasScaleHelper
         local worldRootCanvasHelper = UIManager.m_worldUICanvasScaleHelper

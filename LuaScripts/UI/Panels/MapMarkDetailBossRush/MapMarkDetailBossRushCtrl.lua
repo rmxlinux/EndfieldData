@@ -1,24 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailBossRush
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MapMarkDetailBossRushCtrl = HL.Class('MapMarkDetailBossRushCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -29,24 +12,17 @@ MapMarkDetailBossRushCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 MapMarkDetailBossRushCtrl.m_difficultyList = HL.Field(HL.Forward('UIListCache'))
-
 
 MapMarkDetailBossRushCtrl.m_type = HL.Field(HL.Any)
 
-
 MapMarkDetailBossRushCtrl.m_defaultLookDungeonId = HL.Field(HL.Any)
-
 
 MapMarkDetailBossRushCtrl.m_markInstId = HL.Field(HL.String) << ""
 
-
 MapMarkDetailBossRushCtrl.m_dungeonSeriesId = HL.Field(HL.String) << ""
 
-
 MapMarkDetailBossRushCtrl.m_difficulty2rewardList = HL.Field(HL.Table)
-
 
 MapMarkDetailBossRushCtrl.m_dungeonSeriesData = HL.Field(HL.Any)
 
@@ -54,9 +30,6 @@ MapMarkDetailBossRushCtrl.m_dungeonSeriesData = HL.Field(HL.Any)
 local FIRST_TEXT = "ui_dung_entry_new_tag_once"
 local FIRST_REWARD_LIST_TEXT = "ui_map_mark_dung_new_once"
 local hunter_REWARD_LIST_TEXT = "ui_map_mark_dung_new_regular"
-
-
-
 
 
 MapMarkDetailBossRushCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -108,9 +81,6 @@ MapMarkDetailBossRushCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self:_SetCommonWidget(markRuntimeData.isActive)
 end
 
-
-
-
 MapMarkDetailBossRushCtrl._SetCommonWidget = HL.Method(HL.Boolean) << function(self, isActive)
     self.view.detailCommon.gameObject:SetActive(true)
     local commonArgs = {}
@@ -132,11 +102,6 @@ MapMarkDetailBossRushCtrl._SetCommonWidget = HL.Method(HL.Boolean) << function(s
     end
     self.view.detailCommon:InitMapMarkDetailCommon(commonArgs)
 end
-
-
-
-
-
 
 MapMarkDetailBossRushCtrl._UpdateSingleDifficulty = HL.Method(HL.Number, HL.Any, HL.Any) << function(self, luaIndex, difficulty, dungeonId)
     if DeviceInfo.usingController then
@@ -217,9 +182,6 @@ MapMarkDetailBossRushCtrl._UpdateSingleDifficulty = HL.Method(HL.Number, HL.Any,
     self:_RefreshDifficultyFold(difficulty)
 end
 
-
-
-
 MapMarkDetailBossRushCtrl._RefreshDifficultyFold = HL.Method(HL.Any) << function(self, difficulty)
     if self.m_difficulty2rewardList[difficulty] ~= nil then
         for key, value in pairs(self.m_difficulty2rewardList[difficulty]) do
@@ -229,10 +191,6 @@ MapMarkDetailBossRushCtrl._RefreshDifficultyFold = HL.Method(HL.Any) << function
     difficulty.switchIconUp.gameObject:SetActive(difficulty.m_rewardActive)
     difficulty.switchIconDown.gameObject:SetActive(not difficulty.m_rewardActive)
 end
-
-
-
-
 
 
 MapMarkDetailBossRushCtrl._ProcessHunterRewards = HL.Method(HL.String, HL.Boolean).Return(HL.Table)
@@ -268,10 +226,6 @@ MapMarkDetailBossRushCtrl._ProcessHunterRewards = HL.Method(HL.String, HL.Boolea
     return rewardsTable
 end
 
-
-
-
-
 MapMarkDetailBossRushCtrl._ProcessNormalRewards = HL.Method(HL.String, HL.Boolean).Return(HL.Table)
         << function(self, rewardId, gained)
     local rewardsTable = {}
@@ -291,13 +245,6 @@ MapMarkDetailBossRushCtrl._ProcessNormalRewards = HL.Method(HL.String, HL.Boolea
     table.sort(rewardsTable, Utils.genSortFunction(UIConst.COMMON_ITEM_SORT_KEYS))
     return rewardsTable
 end
-
-
-
-
-
-
-
 
 MapMarkDetailBossRushCtrl._UpdateRewardCell = HL.Method(HL.Number, HL.Number, HL.Any, HL.Table, HL.Boolean) << function(self, luaIndex, rewardLuaIndex, cell, info, isFirstRewards)
     self.view.detailCommon:InitDetailItem(cell, info, {

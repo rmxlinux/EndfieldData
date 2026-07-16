@@ -1,36 +1,19 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 FacLiquidBg = HL.Class('FacLiquidBg', UIWidgetBase)
 
 local LIQUID_HEIGHT_TWEEN_DURATION = 0.2
 
-
 FacLiquidBg.m_liquidHeightTween = HL.Field(HL.Userdata)
-
 
 FacLiquidBg.m_lastLiquidHeight = HL.Field(HL.Number) << -1
 
-
 FacLiquidBg.m_runtimeMaterials = HL.Field(HL.Table)
-
-
 
 
 FacLiquidBg._OnFirstTimeInit = HL.Override() << function(self)
     self:_InitLiquidBgMaterial()
 end
-
-
 
 FacLiquidBg._OnDestroy = HL.Override() << function(self)
     if self.m_liquidHeightTween ~= nil then
@@ -46,13 +29,9 @@ FacLiquidBg._OnDestroy = HL.Override() << function(self)
     self.m_runtimeMaterials = nil
 end
 
-
-
 FacLiquidBg.InitFacLiquidBg = HL.Method() << function(self)
     self:_FirstTimeInit()
 end
-
-
 
 FacLiquidBg._InitLiquidBgMaterial = HL.Method() << function(self)
     local liquid1 = self.view.liquid1
@@ -66,9 +45,6 @@ FacLiquidBg._InitLiquidBgMaterial = HL.Method() << function(self)
 
     self.m_runtimeMaterials = { material1, material2 }
 end
-
-
-
 
 FacLiquidBg._RefreshLiquidHeight = HL.Method(HL.Number) << function(self, height)
     if self.m_runtimeMaterials == nil then
@@ -87,11 +63,6 @@ FacLiquidBg._RefreshLiquidHeight = HL.Method(HL.Number) << function(self, height
     if self.m_lastLiquidHeight < 0 then
         liquid1.material:SetFloat("_LiquidHeight", height)
         liquid2.material:SetFloat("_LiquidHeight", height)
-
-        if height == 0 then
-            liquid1.gameObject:SetActiveIfNecessary(false)
-            liquid2.gameObject:SetActiveIfNecessary(false)
-        end
     else
         self.m_liquidHeightTween = DOTween.To(function()
             return liquid1.material:GetFloat("_LiquidHeight")
@@ -106,24 +77,17 @@ FacLiquidBg._RefreshLiquidHeight = HL.Method(HL.Number) << function(self, height
                 if self.m_liquidHeightTween == nil or self.m_runtimeMaterials == nil then
                     return
                 end
-                if height == 0 then
-                    liquid1.gameObject:SetActiveIfNecessary(false)
-                    liquid2.gameObject:SetActiveIfNecessary(false)
-                end
+                liquid1.gameObject:SetActiveIfNecessary(height > 0)
+                liquid2.gameObject:SetActiveIfNecessary(height > 0)
             end
         )
     end
 
-    if height > 0 then
-        liquid1.gameObject:SetActiveIfNecessary(true)
-        liquid2.gameObject:SetActiveIfNecessary(true)
-    end
+    liquid1.gameObject:SetActiveIfNecessary(height > 0)
+    liquid2.gameObject:SetActiveIfNecessary(height > 0)
 
     self.m_lastLiquidHeight = height
 end
-
-
-
 
 FacLiquidBg.RefreshLiquidHeight = HL.Method(HL.Number) << function(self, height)
     self:_RefreshLiquidHeight(height)

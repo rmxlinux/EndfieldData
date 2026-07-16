@@ -1,74 +1,25 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FriendList
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FriendListCtrl = HL.Class('FriendListCtrl', uiCtrl.UICtrl)
-
 
 FriendListCtrl.m_friendList = HL.Field(HL.Table)
 
-
 FriendListCtrl.friendSystem = HL.Field(CS.Beyond.Gameplay.FriendSystem)
-
 
 FriendListCtrl.m_isPsnFriend = HL.Field(HL.Boolean) << false
 
-
 FriendListCtrl.m_isVisit = HL.Field(HL.Boolean) << false
-
 
 FriendListCtrl.m_needRefresh = HL.Field(HL.Boolean) << false
 
-
 FriendListCtrl.m_isInputFieldExpended = HL.Field(HL.Boolean) << false
-
 
 FriendListCtrl.m_skipClearInputOnShow = HL.Field(HL.Boolean) << false
 
-
 FriendListCtrl.m_pendingRecoverState = HL.Field(HL.Table)
 
-
 FriendListCtrl.m_forceRefreshWhenInputBlocked = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -84,20 +35,19 @@ FriendListCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FriendListCtrl.OpenVisitFriendList = HL.StaticMethod() << function()
     
     local friendInfo = GameInstance.player.spaceship:GetFriendRoleInfo()
-    if GameInstance.player.spaceship.isViewingFriend and not GameInstance.player.friendSystem.friendInfoDic:ContainsKey(friendInfo.roleId) then
-        Notify(MessageConst.SHOW_POP_UP, {
-            content = Language.LUA_SPACESHIP_FORCE_LEAVE_TOAST,
-            hideCancel = true,
-            onConfirm = function()
-                GameInstance.player.spaceship:LeaveVisitSpaceShip()
-            end
-        })
-        return
-    end
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     PhaseManager:GoToPhase(PhaseId.Friend, {
         panelId = PANEL_ID,
         needClose = true,
@@ -107,15 +57,11 @@ FriendListCtrl.OpenVisitFriendList = HL.StaticMethod() << function()
     })
 end
 
-
-
 FriendListCtrl.OnPSNError = HL.Method() << function(self)
     if self.m_isPsnFriend then
         self.friendSystem:SyncPsnFriendListSimple()
     end
 end
-
-
 
 FriendListCtrl.OnSync = HL.Method() << function(self)
     if self.m_isPsnFriend then
@@ -143,8 +89,6 @@ FriendListCtrl.OnSync = HL.Method() << function(self)
     self:_Refresh(false)
 end
 
-
-
 FriendListCtrl.OnPSNSync = HL.Method() << function(self)
     if self.m_isPsnFriend == false then
        return
@@ -162,8 +106,6 @@ FriendListCtrl.OnPSNSync = HL.Method() << function(self)
     self:_UpdateCache()
     self:_Refresh(false)
 end
-
-
 
 FriendListCtrl.OnCellChange = HL.Method() << function(self)
     if not self.view.gameObject.activeInHierarchy then
@@ -194,9 +136,6 @@ FriendListCtrl.OnCellChange = HL.Method() << function(self)
 end
 
 
-
-
-
 FriendListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.friendTipBtn.onClick:RemoveAllListeners()
     self.view.friendTipBtn.onClick:AddListener(function()
@@ -216,7 +155,6 @@ FriendListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.endFriendShipBtn.onClick:AddListener(function()
         self:_ConfirmLeaveVisitSpaceShip()
     end)
-
     self.view.returnBtn.onClick:AddListener(function()
         self:_ConfirmLeaveVisitSpaceShip(true)
     end)
@@ -254,9 +192,6 @@ FriendListCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     GameInstance.player.spaceship:GetClueInfo()
     self:Loading()
 end
-
-
-
 
 FriendListCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, arg)
     self.friendSystem = GameInstance.player.friendSystem
@@ -327,8 +262,6 @@ FriendListCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, arg)
     self:Loading()
 end
 
-
-
 FriendListCtrl._StartInput = HL.Method() << function(self)
     if DeviceInfo.inputType ~= DeviceInfo.InputType.Controller then
         return
@@ -343,8 +276,6 @@ FriendListCtrl._StartInput = HL.Method() << function(self)
     self.m_phase:SetTabBlockState(true)
 end
 
-
-
 FriendListCtrl._EndInput = HL.Method() << function(self)
     if DeviceInfo.inputType ~= DeviceInfo.InputType.Controller then
         return
@@ -355,14 +286,9 @@ FriendListCtrl._EndInput = HL.Method() << function(self)
     self.m_phase:SetTabBlockState(false)
 end
 
-
-
 FriendListCtrl._ClearInput = HL.Method() << function(self)
     self.view.inputField.text = ""
 end
-
-
-
 
 FriendListCtrl._RefreshInputFieldVisualState = HL.Method(HL.Boolean) << function(self, preferFocus)
     local hasText = not string.isEmpty(self.view.inputField.text)
@@ -387,8 +313,6 @@ FriendListCtrl._RefreshInputFieldVisualState = HL.Method(HL.Boolean) << function
     self.m_isInputFieldExpended = shouldExpand
 end
 
-
-
 FriendListCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.m_phase and self.m_phase.arg and lume.deepCopy(self.m_phase.arg) or {}
     local sortNode = self.view and self.view.friendList and self.view.friendList.view and self.view.friendList.view.sortNode
@@ -407,30 +331,45 @@ FriendListCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << fun
     return arg
 end
 
-
-
 FriendListCtrl.Loading = HL.Method() << function(self)
     self.m_friendList = {}
     self:_Refresh(true)
 end
 
-
-
 FriendListCtrl._UpdateCache = HL.Method() << function(self)
     self.m_friendList = {}
     local index = 1
     local infoDict = self.m_isPsnFriend and self.friendSystem.psnFriendList or self.friendSystem.friendInfoDic
-
+    local findCurrentVisitFriendInfo = false
     for _, friendInfo in cs_pairs(infoDict) do
         if not self.m_isVisit or friendInfo.guestRoomUnlock == true then
             self.m_friendList[index] = FriendUtils.friendInfo2SortInfo(friendInfo, self.view.friendList.SearchSort)
             index = index + 1
         end
+        if self.m_isVisit and GameInstance.player.spaceship.isViewingFriend and friendInfo.roleId == GameInstance.player.spaceship:GetFriendRoleInfo().roleId then
+            findCurrentVisitFriendInfo = true
+        end
+    end
+    
+    if self.m_isVisit and GameInstance.player.spaceship.isViewingFriend and not findCurrentVisitFriendInfo then
+        local friendInfo = GameInstance.player.spaceship:GetFriendRoleInfo()
+        if friendInfo ~= nil then
+            self.m_friendList[index] = {
+                roleId = friendInfo.roleId,
+                name = "",
+                lastDateTime = 0,
+                
+                addFriendTime = 0,
+                adventureLevel = 0,
+                roleType = CS.Beyond.Gameplay.RoleType.Unknown:GetHashCode(),
+                searchSort = self.view.friendList.SearchSort,
+                accountId = "",
+                helpFlag = 0,
+                isCurrentShip = 1,
+            }
+        end
     end
 end
-
-
-
 
 FriendListCtrl._ConfirmLeaveVisitSpaceShip = HL.Method(HL.Opt(HL.Boolean)) << function(self, backToSelf)
     local friendInfo = GameInstance.player.spaceship:GetFriendRoleInfo()
@@ -443,19 +382,13 @@ FriendListCtrl._ConfirmLeaveVisitSpaceShip = HL.Method(HL.Opt(HL.Boolean)) << fu
     end)
 end
 
-
-
 FriendListCtrl._OnBlackListBtnClick = HL.Method() << function(self)
     UIManager:AutoOpen(PanelId.FriendBlackList)
 end
 
-
-
 FriendListCtrl._OnFriendRequestBtnClick = HL.Method() << function(self)
     UIManager:AutoOpen(PanelId.FriendRequest)
 end
-
-
 
 
 FriendListCtrl._RefreshVisitCount = HL.Method() << function(self)
@@ -463,8 +396,6 @@ FriendListCtrl._RefreshVisitCount = HL.Method() << function(self)
     self.view.clueCountTxt.text = string.format("%d/%d", self.friendSystem.currentClueShareCount, self.friendSystem.maxClueShareCount)
     self.view.visitorHelpTxt.text = string.format("%d/%d", self.friendSystem.currentShipVisitorHelpCount, self.friendSystem.maxShipVisitorHelpCount)
 end
-
-
 
 FriendListCtrl._RefreshListHeader = HL.Method() << function(self)
     if self.m_isVisit or self.m_isPsnFriend then
@@ -479,10 +410,6 @@ FriendListCtrl._RefreshListHeader = HL.Method() << function(self)
     self.view.shipRoot.gameObject:SetActiveIfNecessary(hasValue)
 end
 
-
-
-
-
 FriendListCtrl._Refresh = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, loading, stayPos)
     self:_RefreshListHeader()
 
@@ -493,13 +420,11 @@ FriendListCtrl._Refresh = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(
     end
 
     
-    if not FriendUtils.isPsnPlatform() then
-        self.view.friendList:OnChangeInputField(self.view.inputField.text)
+    local inputText = self.view.inputField.text
+    if not FriendUtils.isPsnPlatform() and not string.isEmpty(inputText) then
+        self.view.friendList:OnChangeInputField(inputText)
     end
 end
-
-
-
 
 FriendListCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Table) << function(self, args)
     if not self:IsShow() then
@@ -513,9 +438,6 @@ FriendListCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Table) << functio
     local preferFocus = self.view.inputField.isFocused and inputType ~= DeviceInfo.InputType.Controller
     self:_RefreshInputFieldVisualState(preferFocus)
 end
-
-
-
 
 FriendListCtrl._ApplyRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
@@ -535,9 +457,6 @@ FriendListCtrl._ApplyRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, 
     end
 end
 
-
-
-
 FriendListCtrl._RestoreSearchInput = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
         return
@@ -552,8 +471,6 @@ FriendListCtrl._RestoreSearchInput = HL.Method(HL.Opt(HL.Any)) << function(self,
     end
 end
 
-
-
 FriendListCtrl.TryRefresh = HL.Method() << function(self)
     if self.view.gameObject.activeInHierarchy and self.m_needRefresh then
         self.m_needRefresh = false
@@ -563,13 +480,9 @@ FriendListCtrl.TryRefresh = HL.Method() << function(self)
     end
 end
 
-
-
 FriendListCtrl.OnFriendAddNotify = HL.Method() << function(self)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_NEW_FRIEND_ADD_TOAST)
 end
-
-
 
 FriendListCtrl.OnShow = HL.Override() << function(self)
     self.view.listFullPrompt.gameObject:SetActiveIfNecessary(self.friendSystem.isReadFullFriendRequestInfo == false and self.friendSystem.currentRequestFriendCount >= Tables.globalConst.friendRequestListLenMax)
@@ -592,17 +505,10 @@ FriendListCtrl.OnShow = HL.Override() << function(self)
 
     self:TryRefresh()
 end
-
-
 FriendListCtrl.OnHide = HL.Override() << function(self)
 end
-
-
 FriendListCtrl.OnClose = HL.Override() << function(self)
     GameInstance.player.friendSystem:ClearSyncCallback()
 end
-
-
-
 
 HL.Commit(FriendListCtrl)

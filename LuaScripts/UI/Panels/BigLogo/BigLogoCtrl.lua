@@ -2,15 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BigLogo
 
-
-
-
-
-
-
-
 BigLogoCtrl = HL.Class('BigLogoCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -23,13 +15,9 @@ BigLogoCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_LOAD_NEW_DLG_TIMELINE] = '_OnLoadNewDialogTimeline',
 }
 
-
 BigLogoCtrl.m_timelineHandle = HL.Field(HL.Userdata)
 
 BigLogoCtrl.m_onCanvasChangedClosure = HL.Field(HL.Function)
-
-
-
 
 
 
@@ -43,9 +31,6 @@ BigLogoCtrl.OnClose = HL.Override() << function(self)
         self.m_onCanvasChangedClosure = nil
     end
 end
-
-
-
 
 
 
@@ -84,6 +69,12 @@ BigLogoCtrl._OnShowBigLogo = HL.Method(HL.Table) << function(self, args)
         end
 
         self:_RefreshFitImageSize()
+
+        self.view.fitImageTop.transform.offsetMin = Vector2.zero
+        self.view.fitImageTop.transform.offsetMax = Vector2.zero
+        self.view.fitImageBottom.transform.offsetMin = Vector2.zero
+        self.view.fitImageBottom.transform.offsetMax = Vector2.zero
+
         if self.m_onCanvasChangedClosure == nil then
             self.m_onCanvasChangedClosure = function() self:_RefreshFitImageSize() end
             UIManager.m_uiCanvasScaleHelper.onCanvasChanged:AddListener(self.m_onCanvasChangedClosure)
@@ -113,14 +104,11 @@ BigLogoCtrl._RefreshFitImageSize = HL.Method() << function(self)
     local h = sprite.rect.height
 
     local offsetMin, offsetMax = NarrativeUtils.GetFitImageOffset(screenWidth, screenHeight, w, h)
-    self.view.fitImageTop.transform.offsetMin = offsetMin
-    self.view.fitImageTop.transform.offsetMax = offsetMax
-    self.view.fitImageBottom.transform.offsetMin = offsetMin
-    self.view.fitImageBottom.transform.offsetMax = offsetMax
+    self.view.fitNodeTop.transform.offsetMin = offsetMin
+    self.view.fitNodeTop.transform.offsetMax = offsetMax
+    self.view.fitNodeBottom.transform.offsetMin = offsetMin
+    self.view.fitNodeBottom.transform.offsetMax = offsetMax
 end
-
-
-
 
 BigLogoCtrl._OnLoadNewCutscene = HL.Method(HL.Any) << function(self, args)
     self.view.bigLogoMain.gameObject:SetActive(false)
@@ -129,9 +117,6 @@ BigLogoCtrl._OnLoadNewCutscene = HL.Method(HL.Any) << function(self, args)
     local cinematicMgr = GameWorld.cutsceneManager
     cinematicMgr:BindBigLogo(self.m_timelineHandle, self.view.bigLogoPanel)
 end
-
-
-
 
 BigLogoCtrl._OnLoadNewDialogTimeline = HL.Method(HL.Any) << function(self, args)
     self.view.bigLogoMain.gameObject:SetActive(false)

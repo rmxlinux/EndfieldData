@@ -1,88 +1,5 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ItemTips
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ItemTipsCtrl = HL.Class('ItemTipsCtrl', uiCtrl.UICtrl)
 
 local LIQUID_EMPTY_CAPACITY_TEXT_ID = "LUA_ITEM_TIPS_LIQUID_INFO_EMPTY_CAPACITY"
@@ -99,68 +16,44 @@ local UIAutoCloseArea = CS.Beyond.UI.UIAutoCloseArea
 
 
 
-
 ItemTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.HIDE_ITEM_TIPS] = 'HideItemTips',
     [MessageConst.TOGGLE_ITEM_TIPS_AUTO_CLOSE] = 'ToggleItemTipsAutoClose',
     [MessageConst.ON_ITEM_COUNT_CHANGED] = 'OnItemCountChanged',
     [MessageConst.ON_SYSTEM_DISPLAY_SIZE_CHANGED] = 'OnSystemSizeChange',
-    [MessageConst.REFRESH_CONTROLLER_HINT] = 'RefreshControllerHint',
 }
-
 
 ItemTipsCtrl.m_itemId = HL.Field(HL.String) << ""
 
-
 ItemTipsCtrl.m_itemCount = HL.Field(HL.Number) << -1
-
 
 ItemTipsCtrl.m_instId = HL.Field(HL.Number) << 0
 
-
 ItemTipsCtrl.m_data = HL.Field(HL.Userdata)
-
 
 ItemTipsCtrl.m_autoCloseTime = HL.Field(HL.Number) << -1
 
-
 ItemTipsCtrl.m_stopCheckClose = HL.Field(HL.Boolean) << false
-
 
 ItemTipsCtrl.m_args = HL.Field(HL.Table)
 
-
 ItemTipsCtrl.m_slotIndex = HL.Field(HL.Number) << -1
-
 
 ItemTipsCtrl.m_slotCount = HL.Field(HL.Number) << -1
 
-
 ItemTipsCtrl.m_productCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 ItemTipsCtrl.m_tagCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 ItemTipsCtrl.m_isShowBlueprintProduct = HL.Field(HL.Boolean) << true
-
 
 ItemTipsCtrl.m_closeBinding = HL.Field(HL.Number) << -1
 
-
 ItemTipsCtrl.m_isTipsClosing = HL.Field(HL.Boolean) << false
-
 
 ItemTipsCtrl.m_controllerSyncPosCor = HL.Field(HL.Thread)
 
-
 ItemTipsCtrl.m_lockToggleBindingId = HL.Field(HL.Number) << -1
-
-
-ItemTipsCtrl.m_isControllerHintBarInit = HL.Field(HL.Boolean) << false
-
-
-
 
 
 ItemTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -221,7 +114,7 @@ ItemTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end)
 
-    if BEYOND_DEBUG then
+    if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
         self:_InitTipsDebugBtn()
     else
         self.view.debugIDButton.gameObject:SetActive(false)
@@ -237,9 +130,15 @@ ItemTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
         self.view.itemFlagControllerFocusHintNode.gameObject:SetActive(not isTopLayer)
     end)
+
+    
+    
+    self.view.higherLvObtainWay.gameObject:SetActive(false)
+    local higherLvObtainWayObtainCellGO = CSUtils.CreateObject(self.view.itemObtainWays.view.obtainCell.gameObject, self.view.higherLvObtainWay)
+    self.view.higherLvObtainWayObtainCell = Utils.wrapLuaNode(higherLvObtainWayObtainCellGO)
+
+    self.view.itemDescNode.gameObject:SetActive(true) 
 end
-
-
 
 
 
@@ -304,18 +203,13 @@ ItemTipsCtrl.ShowItemTips = HL.StaticMethod(HL.Table) << function(args)
     end
 end
 
-
-
 ItemTipsCtrl.OnSystemSizeChange = HL.Method() << function(self)
     if self.m_args then
         self:_ShowTips(self.m_args)
     end
 end
 
-
 ItemTipsCtrl.m_cachedArgs = HL.Field(HL.Table)
-
-
 
 ItemTipsCtrl.HideItemTips = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     local cachedOnClose
@@ -332,21 +226,7 @@ end
 
 
 
-ItemTipsCtrl.RefreshControllerHint = HL.Method() << function(self)
-    if not DeviceInfo.usingController or not self.m_isControllerHintBarInit or UIManager:IsHide(PANEL_ID) or self.m_isTipsClosing then
-        return
-    end
-
-    self.view.controllerHintBarCell:RefreshContentOnly()
-end
-
-
-
-
 ItemTipsCtrl.m_autoClose = HL.Field(HL.Boolean) << true
-
-
-
 
 ItemTipsCtrl.ToggleItemTipsAutoClose = HL.Method(HL.Any) << function(self, autoClose)
     logger.info("ToggleItemTipsAutoClose", inspect(autoClose))
@@ -357,11 +237,7 @@ ItemTipsCtrl.ToggleItemTipsAutoClose = HL.Method(HL.Any) << function(self, autoC
     end
 end
 
-
 ItemTipsCtrl.m_firstShow = HL.Field(HL.Boolean) << true
-
-
-
 ItemTipsCtrl._ShowTips = HL.Method(HL.Table) << function(self, args)
     self:_ClearArgs()
 
@@ -428,8 +304,6 @@ ItemTipsCtrl._ShowTips = HL.Method(HL.Table) << function(self, args)
     self:_RefreshControllerKeyHint()
 end
 
-
-
 ItemTipsCtrl._RefreshControllerKeyHint = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         self.view.controllerHintBarCell.gameObject:SetActive(false)
@@ -449,17 +323,12 @@ ItemTipsCtrl._RefreshControllerKeyHint = HL.Method() << function(self)
         end
     end
     self.view.controllerHintBarCell:InitControllerHintBarCell({ groupIds = groupIds, }, true)
-    self.m_isControllerHintBarInit = true
 end
-
-
 
 
 ItemTipsCtrl._IsFullScreen = HL.Method().Return(HL.Boolean) << function(self)
     return InputManagerInst.usingController and not self.m_args.isSideTips
 end
-
-
 
 ItemTipsCtrl._ClearArgs = HL.Method() << function(self)
     if self.m_args then
@@ -479,27 +348,19 @@ ItemTipsCtrl._ClearArgs = HL.Method() << function(self)
     self.m_slotCount = -1
 end
 
-
-
 ItemTipsCtrl.OnShow = HL.Override() << function(self)
     self:_RegisterCallback()
 end
-
-
 
 ItemTipsCtrl.OnClose = HL.Override() << function(self)
     self:_ClearArgs()
     self:_ClearRegister()
 end
 
-
-
 ItemTipsCtrl.OnHide = HL.Override() << function(self)
     self:_ClearArgs()
     self:_ClearRegister()
 end
-
-
 
 ItemTipsCtrl._Update = HL.Method() << function(self)
     self:_CheckShouldAutoClose()
@@ -508,12 +369,7 @@ end
 
 
 
-
 ItemTipsCtrl.m_craftCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
-
 ItemTipsCtrl._RefreshContent = HL.Method(HL.String, HL.Number) << function(self, itemId, instId)
     local data = Tables.itemTable:GetValue(itemId)
     local itemType = data.type
@@ -525,15 +381,43 @@ ItemTipsCtrl._RefreshContent = HL.Method(HL.String, HL.Number) << function(self,
 
     UIUtils.displayItemBasicInfos(self.view, self.loader, itemId, instId)
 
+    self.view.portableDeviceTagNode:InitPortableDeviceTagNode(itemId)
+
     self.view.icon:InitItemIcon(itemId, true, instId)
     if self.view.icon.view.liquidIcon then 
         self.view.icon.view.liquidIcon.gameObject:SetActive(false)
     end
     self.view.iconImageBlur:OnChangeSprite()
+    self.view.earlyAccessNode.gameObject:SetActiveIfNecessary(not Utils.isInBlackbox() and FactoryUtils.isSkipUnlockedBuildingByItemId(itemId))
 
     self.view.itemObtainWays.gameObject:SetActive(true)
     self.view.itemObtainWays:InitItemObtainWays(itemId, instId, nil, nil,
         self.m_args.onBeforeJump, self.m_args.jumpExtraArgs)
+
+    
+    local isPD, pdData = Tables.itemPortableDeviceTable:TryGetValue(itemId)
+    local nextLvObtainInfo
+    if isPD and not string.isEmpty(pdData.nextLvItemId) then
+        local craftInfoList = FactoryUtils.getItemCrafts(pdData.nextLvItemId)
+        local cInfo = craftInfoList[1] 
+        if cInfo then
+            nextLvObtainInfo = {
+                name = Language.LUA_OBTAIN_WAYS_MANUAL_CRAFT_NAME,
+                crafts = { cInfo },
+                iconFolder = UIConst.UI_SPRITE_ITEM_TIPS,
+                iconId = UIConst.UI_MANUALCRAFT_ICON_ID,
+                phaseId = PhaseId.ManualCraft,
+                phaseArgs = { jumpId = cInfo.craftId },
+            }
+        end
+    end
+    if nextLvObtainInfo then
+        self.view.higherLvObtainWay.transform:SetAsLastSibling()
+        self.view.higherLvObtainWay.gameObject:SetActive(true)
+        self.view.itemObtainWays:RefreshObtainCell(self.view.higherLvObtainWayObtainCell, nextLvObtainInfo, -1)
+    else
+        self.view.higherLvObtainWay.gameObject:SetActive(false)
+    end
 
     self.view.stateCtrl:SetState("default")
     self.view.itemDescNode:InitItemDescNode(itemId)
@@ -546,7 +430,9 @@ ItemTipsCtrl._RefreshContent = HL.Method(HL.String, HL.Number) << function(self,
     self:_RefreshEmptyNode(itemId, itemType)
     self:_RefreshPickUpNode(itemId)
     self:_RefreshLiquidDischargeNode(itemId)
-    self:_RefreshLiquidInfoNode(itemId, self.m_itemCount)
+    self:_RefreshGasDischargeNode(itemId)
+    self:_RefreshLiquidInfoNode(itemId)
+    self:_RefreshGasInfoNode(itemId)
     self:_RefreshShareNode(itemId)
     self.view.tipsLimitedTimeNode:InitTipsLimitedTimeNode(itemId, instId or 0, nil)
     UIUtils.displayGiftItemTags(self.view.collectionTagNode, itemId)
@@ -583,13 +469,18 @@ ItemTipsCtrl._RefreshContent = HL.Method(HL.String, HL.Number) << function(self,
     local canPlace = self.m_args.canPlace and isBuilding and FactoryUtils.canPlaceBuildingOnCurRegion(buildingId)
     local canSplit = self.m_args.canSplit and maxBackpackStackCount > 1 and self.m_slotCount > 1
     local canJump = self:_CheckIfCanJump(itemId, itemType, instId)
-    local canClear = self.m_args.canClear and Tables.fullBottleTable:ContainsKey(itemId) and self.m_itemCount > 0
+    local isFullLiquidBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+    local isFullGasBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+    local canClear = self.m_args.canClear and (isFullLiquidBottle or isFullGasBottle) and self.m_itemCount > 0
     self.view.placeButton.gameObject:SetActive(canPlace)
     self.view.splitButton.gameObject:SetActive(canSplit)
     self.view.jumpButton.gameObject:SetActive(canJump)
     self.view.bottomController:SetState(canJump and "JumpState" or "NormalState")
     self.view.dropButton.gameObject:SetActive(false) 
     self.view.clearButton.gameObject:SetActive(canClear) 
+    if canClear then
+        self.view.clearText.text = isFullLiquidBottle and Language.LUA_ITEM_TIPS_CLEAR_BUTTON_LIQUID or Language.LUA_ITEM_TIPS_CLEAR_BUTTON_GAS
+    end
     hasBottomButton = canPlace or canSplit or canUse or canJump or canClear
     self.view.bottomButtons.gameObject:SetActive(hasBottomButton)
 
@@ -650,16 +541,11 @@ ItemTipsCtrl._RefreshContent = HL.Method(HL.String, HL.Number) << function(self,
     end
 end
 
-
-
-
 ItemTipsCtrl._RefreshPickUpNode = HL.Method(HL.String) << function(self, itemId)
     local isPickUp, _ = Tables.useItemTable:TryGetValue(itemId)
     self.view.pickUpNode.gameObject:SetActive(isPickUp)
+    self.view.portableDeviceNode.gameObject:SetActive(Utils.isPortableDevice(itemId))
 end
-
-
-
 
 ItemTipsCtrl._RefreshLiquidDischargeNode = HL.Method(HL.String) << function(self, itemId)
     local isLiquid = Tables.liquidTable:ContainsKey(itemId)
@@ -668,11 +554,17 @@ ItemTipsCtrl._RefreshLiquidDischargeNode = HL.Method(HL.String) << function(self
     self.view.emissionForbidNode.gameObject:SetActiveIfNecessary(isLiquid and not canBeDischarge)
 end
 
+ItemTipsCtrl._RefreshGasDischargeNode = HL.Method(HL.String) << function(self, itemId)
+    local isLiquid = Tables.liquidTable:ContainsKey(itemId)
+    if isLiquid then
+        return
+    end
 
-
-
-
-
+    local isGas = Tables.gasTable:ContainsKey(itemId)
+    local canBeDischarge = FactoryUtils.getLiquidCanBeDischarge(itemId)
+    self.view.emissionNode.gameObject:SetActiveIfNecessary(isGas and canBeDischarge)
+    self.view.emissionForbidNode.gameObject:SetActiveIfNecessary(isGas and not canBeDischarge)
+end
 
 ItemTipsCtrl._RefreshWeaponNode = HL.Method(HL.String, HL.Number, HL.Userdata) << function(self, itemId, instId, itemType)
     local isWeapon = itemType == GEnums.ItemType.Weapon
@@ -682,11 +574,6 @@ ItemTipsCtrl._RefreshWeaponNode = HL.Method(HL.String, HL.Number, HL.Userdata) <
     self.view.stateCtrl:SetState("weapon")
     UIUtils.displayWeaponInfo(self.view, self.loader, itemId, instId)
 end
-
-
-
-
-
 
 ItemTipsCtrl._RefreshEquipNode = HL.Method(HL.String, HL.Number, HL.Userdata) << function(self, itemId, instId, itemType)
     local isEquip = itemType == GEnums.ItemType.Equip
@@ -705,11 +592,6 @@ ItemTipsCtrl._RefreshEquipNode = HL.Method(HL.String, HL.Number, HL.Userdata) <<
     UIUtils.displayEquipInfo(self.view, self.loader, itemId, instId)
 end
 
-
-
-
-
-
 ItemTipsCtrl._RefreshGemNode = HL.Method(HL.String, HL.Number, HL.Userdata) << function(self, itemId, instId, itemType)
     local isGem = itemType == GEnums.ItemType.WeaponGem
     if not isGem then
@@ -720,11 +602,6 @@ ItemTipsCtrl._RefreshGemNode = HL.Method(HL.String, HL.Number, HL.Userdata) << f
     self.view.stateCtrl:SetState("weaponGem")
     UIUtils.displayWeaponGemInfo(self.view, self.loader, itemId, instId)
 end
-
-
-
-
-
 
 ItemTipsCtrl._RefreshCountNode = HL.Method(HL.String, HL.Userdata, HL.Boolean) << function(self, itemId, itemType, showAllDepotCount)
     local typeData = Tables.itemTypeTable[itemType:ToInt()]
@@ -788,10 +665,6 @@ ItemTipsCtrl._RefreshCountNode = HL.Method(HL.String, HL.Userdata, HL.Boolean) <
     self.view.countSpace.gameObject:SetActiveIfNecessary(true)
 end
 
-
-
-
-
 ItemTipsCtrl._RefreshProductNode = HL.Method(HL.String, HL.Boolean).Return(HL.Boolean) << function(self, itemId, skipItemTable)
     local productIds = FactoryUtils.getItemProductItemList(itemId, skipItemTable)
     if productIds then
@@ -815,19 +688,11 @@ ItemTipsCtrl._RefreshProductNode = HL.Method(HL.String, HL.Boolean).Return(HL.Bo
     return productIds ~= nil
 end
 
-
-
-
-
 ItemTipsCtrl._RefreshEmptyNode = HL.Method(HL.String, HL.Userdata) << function(self, itemId, itemType)
     local isShowEmptyNode = self:_CheckIfShowEmptyNode(itemId, itemType)
 
     self.view.emptyNode.gameObject:SetActive(isShowEmptyNode)
 end
-
-
-
-
 
 ItemTipsCtrl._RefreshTagInfoNode = HL.Method(HL.String, HL.Userdata) << function(self, itemId, itemType)
     local isShowTagNode, tagList = self:_TryGetTagList(itemId, itemType)
@@ -849,11 +714,7 @@ ItemTipsCtrl._RefreshTagInfoNode = HL.Method(HL.String, HL.Userdata) << function
     end
 end
 
-
-
-
-
-ItemTipsCtrl._RefreshLiquidInfoNode = HL.Method(HL.String, HL.Number) << function(self, itemId, itemCount)
+ItemTipsCtrl._RefreshLiquidInfoNode = HL.Method(HL.String) << function(self, itemId)
     local liquidInfoNode = self.view.liquidInfoNode
     liquidInfoNode.gameObject:SetActive(false)
     self.view.itemObtainWays.view.obtainTitle.text = Language[OBTAIN_WAYS_NORMAL_TITLE_TEXT_ID]
@@ -864,8 +725,8 @@ ItemTipsCtrl._RefreshLiquidInfoNode = HL.Method(HL.String, HL.Number) << functio
         return
     end
 
-    local isEmptyBottle = Tables.emptyBottleTable:ContainsKey(itemId)
-    local isFullBottle = Tables.fullBottleTable:ContainsKey(itemId)
+    local isEmptyBottle = FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+    local isFullBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
     if not isEmptyBottle and not isFullBottle then
         return
     end
@@ -910,15 +771,55 @@ ItemTipsCtrl._RefreshLiquidInfoNode = HL.Method(HL.String, HL.Number) << functio
     liquidInfoNode.gameObject:SetActive(true)
 end
 
+ItemTipsCtrl._RefreshGasInfoNode = HL.Method(HL.String) << function(self, itemId)
+    local isEmptyBottle = FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+    local isFullBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+    if not isEmptyBottle and not isFullBottle then
+        return
+    end
 
+    local liquidInfoNode = self.view.liquidInfoNode
+    liquidInfoNode.emptyIcon.gameObject:SetActive(isEmptyBottle)
+    liquidInfoNode.icon.gameObject:SetActive(isFullBottle)
+    liquidInfoNode.emptyLine.gameObject:SetActive(isEmptyBottle)
+    liquidInfoNode.rarityLine.gameObject:SetActive(isFullBottle)
 
+    if isEmptyBottle then
+        
+        local emptyBottleData = Tables.emptyGasJarTable[itemId]
+        local capacity = emptyBottleData.gasCapacity
+        liquidInfoNode.capacityTxt.text = string.format(Language[LIQUID_EMPTY_CAPACITY_TEXT_ID], capacity)
+        liquidInfoNode.nameTxt.text = Language.LUA_ITEM_TIPS_GAS_EMPTY_NAME
+    end
+
+    if isFullBottle then
+        local fullBottleData = Tables.fullGasJarTable[itemId]
+        local gasItemId = fullBottleData.gasId
+        local gasSuccess, gasItemData = Tables.itemTable:TryGetValue(gasItemId)
+        if gasSuccess then
+            liquidInfoNode.icon:LoadSprite(UIConst.UI_SPRITE_ITEM, gasItemData.iconId)
+            liquidInfoNode.nameTxt.text = gasItemData.name
+            local rarityColor = UIUtils.getItemRarityColor(gasItemData.rarity)
+            liquidInfoNode.rarityLine.color = rarityColor
+            
+            if not self:_RefreshProductNode(itemId, true) then
+                self.view.productNode.title.text = Language[PRODUCT_LIQUID_TITLE_TEXT_ID]
+                self:_RefreshProductNode(gasItemId, false)
+            end
+        end
+
+        
+        local gasCount = fullBottleData.gasCapacity
+        liquidInfoNode.capacityTxt.text = string.format(Language[LIQUID_FULL_CAPACITY_TEXT_ID], gasCount)
+    end
+
+    liquidInfoNode.gameObject:SetActive(true)
+end
 
 ItemTipsCtrl._RefreshShareNode = HL.Method(HL.String) << function(self, itemId)
     local showShareNode = FactoryUtils.isItemSocialBuilding(itemId)
     self.view.shareNode.gameObject:SetActive(showShareNode)
 end
-
-
 
 ItemTipsCtrl._OnDetailContentSizeChanged = HL.Method() << function(self)
     self.view.detailContentLayoutElement.enabled = false
@@ -934,8 +835,6 @@ ItemTipsCtrl._OnDetailContentSizeChanged = HL.Method() << function(self)
     end
 end
 
-
-
 ItemTipsCtrl._UpdateCount = HL.Method() << function(self)
     self.view.countNode.depotCountText.text = Utils.getDepotItemCount(self.m_itemId)
     self.view.countNode.bagCountText.text = Utils.getBagItemCount(self.m_itemId)
@@ -944,12 +843,8 @@ end
 
 
 
-
-
 ItemTipsCtrl._OnClickObtainCell = HL.Method() << function(self)
 end
-
-
 
 
 
@@ -993,8 +888,6 @@ ItemTipsCtrl._CheckShouldAutoClose = HL.Method() << function(self)
 end
 
 
-
-
 ItemTipsCtrl._HasActionOnOtherArea = HL.Method().Return(HL.Boolean, HL.Opt(HL.Boolean)) << function(self)
     if self.m_stopCheckClose then
         return false
@@ -1036,9 +929,6 @@ ItemTipsCtrl._HasActionOnOtherArea = HL.Method().Return(HL.Boolean, HL.Opt(HL.Bo
     return false
 end
 
-
-
-
 ItemTipsCtrl._CloseTips = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAnim)
     if UIManager:IsHide(PANEL_ID) or self.m_isTipsClosing then
         return
@@ -1079,18 +969,11 @@ ItemTipsCtrl._CloseTips = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAn
     end
 end
 
-
 ItemTipsCtrl.m_extraSafeAreas = HL.Field(HL.Table)
-
-
-
 
 ItemTipsCtrl._AddItemTipsSafeArea = HL.Method(RectTransform) << function(self, rect)
     self.m_extraSafeAreas[rect] = true
 end
-
-
-
 
 ItemTipsCtrl._RemoveItemTipsSafeArea = HL.Method(RectTransform) << function(self, rect)
     self.m_extraSafeAreas[rect] = nil
@@ -1101,10 +984,7 @@ end
 
 
 
-
 ItemTipsCtrl.m_updateCor = HL.Field(HL.Thread)
-
-
 ItemTipsCtrl._RegisterCallback = HL.Method() << function(self)
     self.m_updateCor = self:_StartCoroutine(function()
         coroutine.step()
@@ -1117,17 +997,12 @@ ItemTipsCtrl._RegisterCallback = HL.Method() << function(self)
     end)
 end
 
-
-
 ItemTipsCtrl._ClearRegister = HL.Method() << function(self)
     self:_ClearCoroutine(self.m_updateCor)
     self.m_updateCor = nil
     self:_ClearCoroutine(self.m_controllerSyncPosCor)
     self.m_controllerSyncPosCor = nil
 end
-
-
-
 
 ItemTipsCtrl.OnItemCountChanged = HL.Method(HL.Any) << function(self, arg)
     if string.isEmpty(self.m_itemId) then
@@ -1143,8 +1018,6 @@ end
 
 
 
-
-
 ItemTipsCtrl._StartPlace = HL.Method() << function(self)
     Notify(MessageConst.FAC_ENTER_BUILDING_MODE, {
         itemId = self.m_itemId,
@@ -1155,8 +1028,6 @@ ItemTipsCtrl._StartPlace = HL.Method() << function(self)
     })
     self:_CloseTips(true)
 end
-
-
 
 ItemTipsCtrl._TryJump = HL.Method() << function(self)
     local canJump, jumpFunction = self:_CheckIfCanJump(self.m_itemId, self.m_data.type, self.m_instId)
@@ -1174,22 +1045,16 @@ ItemTipsCtrl._TryJump = HL.Method() << function(self)
     end
 end
 
-
-
 ItemTipsCtrl._UseItem = HL.Method() << function(self)
     if UIUtils.useItemOnTip(self.m_itemId) then
         self:_CloseTips(true)
     end
 end
 
-
-
 ItemTipsCtrl._ShowSplit = HL.Method() << function(self)
     UIUtils.splitItem(self.m_slotIndex)
     self:Hide()
 end
-
-
 
 ItemTipsCtrl._ShowClearBottle = HL.Method() << function(self)
     UIManager:Open(PanelId.ClearBottlePopUp, {
@@ -1201,9 +1066,12 @@ ItemTipsCtrl._ShowClearBottle = HL.Method() << function(self)
     self:Hide()
 end
 
-
-
 ItemTipsCtrl._ShowWiki = HL.Method() << function(self)
+    if not PhaseManager:CheckCanOpenPhase(PhaseId.Wiki, {}, false) then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_OBTAIN_WAYS_JUMP_BLOCKED)
+        return
+    end
+
     if UIManager:ShouldBlockObtainWaysPhaseJump(PhaseId.Wiki) then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_OBTAIN_WAYS_JUMP_BLOCKED)
         return
@@ -1216,13 +1084,9 @@ ItemTipsCtrl._ShowWiki = HL.Method() << function(self)
     self:_CloseTips(true)
 end
 
-
-
 ItemTipsCtrl._GetShowWikiItemId = HL.Method().Return(HL.String) << function(self)
     return self.m_itemId
 end
-
-
 
 ItemTipsCtrl._GetNeedShowWikiBtn = HL.Method().Return(HL.Boolean) << function(self)
     local wikiItemId = self:_GetShowWikiItemId()
@@ -1231,18 +1095,9 @@ end
 
 
 
-
-
-
-
 ItemTipsCtrl._TryGetTagList = HL.Method(HL.Any, HL.Any).Return(HL.Boolean, HL.Opt(HL.Any)) << function(self, itemId, itemType)
     return UIUtils.tryGetTagList(itemId, itemType)
 end
-
-
-
-
-
 
 ItemTipsCtrl._CheckIfCanJump = HL.Method(HL.String, HL.Userdata, HL.Opt(HL.Number)).Return(HL.Boolean, HL.Opt(HL.Function)) << function(self, itemId, itemType, instId)
     if self.m_args and self.m_args.noJump then
@@ -1292,10 +1147,6 @@ ItemTipsCtrl._CheckIfCanJump = HL.Method(HL.String, HL.Userdata, HL.Opt(HL.Numbe
     return true, self._JumpToWeaponGem
 end
 
-
-
-
-
 ItemTipsCtrl._JumpToWeaponGem = HL.Method(HL.String, HL.Number) << function(self, gemTemplateId, gemInstId)
     local gemInst = CharInfoUtils.getGemByInstId(gemInstId)
     if not gemInst then
@@ -1320,20 +1171,12 @@ ItemTipsCtrl._JumpToWeaponGem = HL.Method(HL.String, HL.Number) << function(self
     })
 end
 
-
-
-
-
 ItemTipsCtrl._JumpToWeapon = HL.Method(HL.String, HL.Number) << function(self, weaponTemplateId, weaponInstId)
     CharInfoUtils.openWeaponInfoBestWay({
         weaponTemplateId = weaponTemplateId,
         weaponInstId = weaponInstId,
     })
 end
-
-
-
-
 
 ItemTipsCtrl._JumpToBusinessCardTopic = HL.Method(HL.String, HL.Number) << function(self, itemId, instId)
     
@@ -1347,28 +1190,19 @@ ItemTipsCtrl._JumpToBusinessCardTopic = HL.Method(HL.String, HL.Number) << funct
     Notify(MessageConst.SHOW_TOAST, Language.LUA_BUSINESS_CARD_TOPIC_NOT_FOUND)
 end
 
-
-
-
-
 ItemTipsCtrl._JumpToBattlePassWeaponCase = HL.Method(HL.String, HL.Number) << function(self, itemId, instId)
     UIManager:Open(PanelId.BattlePassWeaponCase, { itemId = itemId, isPreview = true })
 end
 
-
-
-
-
 ItemTipsCtrl._CheckIfShowEmptyNode = HL.Method(HL.Any, HL.Any).Return(HL.Boolean, HL.Opt(HL.Boolean, HL.Any, HL.Any)) << function(self, itemId, itemType)
-    local showShareNode = FactoryUtils.isItemSocialBuilding(itemId)
-    if showShareNode then
+    if FactoryUtils.isItemSocialBuilding(itemId) then
         return false
     end
 
     if itemType == GEnums.ItemType.Material or itemType == GEnums.ItemType.NormalBuilding or itemType == GEnums.ItemType.FuncBuilding then
         local isShowTagNode = self:_TryGetTagList(itemId, itemType)
-        local isLiquidRelated = self:_CheckIsLiquidRelatedBottleItem(itemId)
-        return not isShowTagNode and not isLiquidRelated
+        local isLiquidOrGasRelated = self:_CheckIsLiquidRelatedBottleItem(itemId) or self:_CheckIsGasRelatedBottleItem(itemId)
+        return not isShowTagNode and not isLiquidOrGasRelated
     end
 
     
@@ -1395,33 +1229,38 @@ ItemTipsCtrl._CheckIfShowEmptyNode = HL.Method(HL.Any, HL.Any).Return(HL.Boolean
         return false
     end
 
+    if itemType == GEnums.ItemType.PortableDevice then
+        return false
+    end
+
     return true
 end
-
-
-
 
 ItemTipsCtrl._CheckIsLiquidRelatedBottleItem = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
     if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.GeneralAbilityFluidInteract) then
         return false
     end
-    return Tables.emptyBottleTable:ContainsKey(itemId) or Tables.fullBottleTable:ContainsKey(itemId)
+    return FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+        or FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+end
+
+ItemTipsCtrl._CheckIsGasRelatedBottleItem = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
+    if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.GeneralAbilityFluidInteract) then
+        return false
+    end
+    return FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+        or FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
 end
 
 
 
-
 ItemTipsCtrl.m_detailContentTopPadding = HL.Field(HL.Number) << 0
-
-
 ItemTipsCtrl._OnDetailScroll = HL.Method() << function(self)
     local y = math.max(0, self.m_detailContentTopPadding - self.view.detailContent.anchoredPosition.y)
     local percent = 1 - (y / self.m_detailContentTopPadding)
     self.view.contentAnimationWrapper:SampleClipAtPercent("item_tips_scroll", percent)
     
 end
-
-
 
 ItemTipsCtrl._ToggleProductContent = HL.Method() << function(self)
     self.m_isShowBlueprintProduct = not self.m_isShowBlueprintProduct
@@ -1438,8 +1277,6 @@ end
 
 
 if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
-    
-    
     ItemTipsCtrl._InitTipsDebugBtn = HL.Method() << function(self)
         self.view.debugIDButton.gameObject:SetActive(true)
         self.view.debugIDButton.onClick:AddListener(function()
@@ -1488,11 +1325,9 @@ if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
         end
     end
 
-    
-    
     ItemTipsCtrl._RefreshTipsDebugBtn = HL.Method() << function(self)
-        self.view.debugIDButton.gameObject:SetActive(not self.m_args.isSideTips)
-        self.view.countNode.debugAddButton.gameObject:SetActive(not self.m_args.isSideTips)
+        self.view.debugIDButton.gameObject:SetActive(not self.m_args.isSideTips or not DeviceInfo.usingController)
+        self.view.countNode.debugAddButton.gameObject:SetActive(not self.m_args.isSideTips or not DeviceInfo.usingController)
     end
 end
 

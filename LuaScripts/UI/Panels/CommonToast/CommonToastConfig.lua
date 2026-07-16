@@ -28,6 +28,45 @@ function processFacOpDismantleBuildingOtherChapter(text, paramList, codeId)
     return string.format(text, chapterName)
 end
 
+function processItemIds(text, paramList, codeId)
+    local count = paramList.Count
+    local itemNameStr
+    local itemId = paramList[0]
+    itemNameStr = Tables.itemTable[itemId].name
+    if count > 1 then
+        itemNameStr = string.format(Language.LUA_COMMON_MULTI_ITEM_SHORTCUT_FORMATER, itemNameStr)
+    end
+    return string.format(text, itemNameStr)
+end
+
+function processFacBluePrintUseWithModeLower(text, paramList, codeId)
+    logger.info("processFacBluePrintUseWithModeLower", text, paramList, codeId)
+    if not paramList then
+        return Language.LUA_BLUEPRINT_USE_WITH_TECH_LOCKED
+    end
+    local techId = paramList[0]
+    local buildingId = paramList[1]
+    
+    
+    
+    local modeType = paramList[2]
+    local techData = Tables.facSTTNodeTable[techId]
+    local bData = Tables.factoryBuildingTable[buildingId]
+    local modeData = modeType and Tables.factoryMachineCraftModeTable[modeType]
+    local modeName = modeData and modeData.machineModeTypeName or ""
+    return string.format(text, techData.name, bData.name, modeName)
+end
+
+function processFacBluePrintUseWithModeLowerMulti(text, paramList, codeId)
+    logger.info("processFacBluePrintUseWithModeLowerMulti", text, paramList, codeId)
+    if not paramList then
+        return Language.LUA_BLUEPRINT_USE_WITH_TECH_LOCKED
+    end
+    local techIds = lume.split(paramList[0], ",")
+    local techData = Tables.facSTTNodeTable[techIds[1]]
+    return string.format(text, techData.name)
+end
+
 local cfg = {
     [CS.Proto.CODE.ErrItemBagBagOverflowToFactoryDepot] = processItemOverflow,
     [CS.Proto.CODE.ErrItemBagDestroyOverflowItems] = processItemOverflow,
@@ -49,5 +88,10 @@ local cfg = {
 
     
     [CS.Proto.CODE.ErrFactoryOpDismantleBuildingOtherChapter] = processFacOpDismantleBuildingOtherChapter,
+
+    [CS.Proto.CODE.ErrItemBagMoveToDepotByClearAction] = processItemIds,
+
+    [CS.Proto.CODE.ErrFactoryBluePrintUseWithModeLower] = processFacBluePrintUseWithModeLower,
+    [CS.Proto.CODE.ErrFactoryBluePrintUseWithModeLowerMulti] = processFacBluePrintUseWithModeLowerMulti,
 }
 return cfg

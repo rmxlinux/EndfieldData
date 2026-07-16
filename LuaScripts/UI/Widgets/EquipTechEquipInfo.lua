@@ -1,18 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 EquipTechEquipInfo = HL.Class('EquipTechEquipInfo', UIWidgetBase)
-
-
 
 
 EquipTechEquipInfo._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
 
 EquipTechEquipInfo.InitEquipTechEquipInfo = HL.Method(HL.String) << function(self, templateId)
     self:_FirstTimeInit()

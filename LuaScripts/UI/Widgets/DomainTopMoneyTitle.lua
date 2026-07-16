@@ -1,12 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 DomainTopMoneyTitle = HL.Class('DomainTopMoneyTitle', UIWidgetBase)
-
 
 
 DomainTopMoneyTitle.m_domainId = HL.Field(HL.String) << ""
@@ -15,14 +9,8 @@ DomainTopMoneyTitle.m_domainId = HL.Field(HL.String) << ""
 
 
 
-
-
 DomainTopMoneyTitle._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
-
 
 DomainTopMoneyTitle.InitDomainTopMoneyTitle = HL.Method(HL.String, HL.Opt(HL.Table)) << function(self, domainId, otherMoneyIds)
     self:_FirstTimeInit()
@@ -62,9 +50,6 @@ DomainTopMoneyTitle.InitDomainTopMoneyTitle = HL.Method(HL.String, HL.Opt(HL.Tab
     
     self.view.walletBarPlaceholder:InitWalletBarPlaceholderDetailed(moneyInfos)
 end
-
-
-
 
 
 

@@ -1,20 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 ItemDescNode = HL.Class('ItemDescNode', UIWidgetBase)
-
-
 
 
 ItemDescNode._OnFirstTimeInit = HL.Override() << function(self)
     
 end
-
-
-
-
 
 ItemDescNode.InitItemDescNode = HL.Method(HL.String, HL.Opt(HL.Table)) << function(self, itemId, args)
     self:_FirstTimeInit()

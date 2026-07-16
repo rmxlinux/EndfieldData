@@ -12,44 +12,7 @@ local Phase = {
     CompleteAllGoal = 4, 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BlackBoxDiffBtnCtrl = HL.Class('BlackBoxDiffBtnCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -69,8 +32,6 @@ BlackBoxDiffBtnCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_TOGGLE_FAC_TOP_VIEW] = "OnToggleFacTopView",
 }
 
-
-
 BlackBoxDiffBtnCtrl.OnOpenSubGameTrackings = HL.StaticMethod(HL.Any) << function(args)
     if not Utils.isInDungeonFactory() then
         return
@@ -86,7 +47,6 @@ BlackBoxDiffBtnCtrl.OnOpenSubGameTrackings = HL.StaticMethod(HL.Any) << function
     end)
 end
 
-
 BlackBoxDiffBtnCtrl.OnCloseSubGameTrackings = HL.StaticMethod() << function()
     local succ, ctrl = UIManager:IsOpen(PANEL_ID)
     if succ then
@@ -94,41 +54,27 @@ BlackBoxDiffBtnCtrl.OnCloseSubGameTrackings = HL.StaticMethod() << function()
     end
 end
 
-
 BlackBoxDiffBtnCtrl.m_curDungeonId = HL.Field(HL.String) << ""
-
 
 BlackBoxDiffBtnCtrl.m_curDungeonInfo = HL.Field(HL.Any)
 
-
 BlackBoxDiffBtnCtrl.m_curPhase = HL.Field(HL.Number) << Phase.Normal
-
 
 BlackBoxDiffBtnCtrl.m_isWarning = HL.Field(HL.Boolean) << false
 
-
 BlackBoxDiffBtnCtrl.m_warningInfo = HL.Field(HL.Table)
-
 
 BlackBoxDiffBtnCtrl.m_cacheWarningState = HL.Field(HL.Table)
 
-
 BlackBoxDiffBtnCtrl.m_failReason = HL.Field(HL.String) << ""
-
 
 BlackBoxDiffBtnCtrl.m_updateTick = HL.Field(HL.Number) << -1
 
-
 BlackBoxDiffBtnCtrl.m_taskTrackCtrl = HL.Field(HL.Forward("CommonTaskTrackHudCtrl"))
-
 
 BlackBoxDiffBtnCtrl.m_hadAddPosition = HL.Field(HL.Boolean) << false
 
-
 BlackBoxDiffBtnCtrl.m_hasObtainReward = HL.Field(HL.Boolean) << false
-
-
-
 
 
 BlackBoxDiffBtnCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -157,21 +103,15 @@ BlackBoxDiffBtnCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
 BlackBoxDiffBtnCtrl.OnClose = HL.Override() << function(self)
     self.m_updateTick = LuaUpdate:Remove(self.m_updateTick)
 end
-
-
 
 BlackBoxDiffBtnCtrl.ProcessIfIsInTopView = HL.Method() << function(self)
     if FactoryUtils.isInTopView() then
         LuaSystemManager.factory:ToggleTopView(false, true)
     end
 end
-
-
 
 BlackBoxDiffBtnCtrl._ShowGoalDetailsPanel = HL.Method() << function(self)
     if string.isEmpty(self.m_curDungeonId) then
@@ -181,8 +121,6 @@ BlackBoxDiffBtnCtrl._ShowGoalDetailsPanel = HL.Method() << function(self)
     UIManager:AutoOpen(PanelId.BlackBoxTargetAndReward,
                        { dungeonId = self.m_curDungeonId, warningInfo = self.m_warningInfo })
 end
-
-
 
 BlackBoxDiffBtnCtrl._CompleteWithoutExtraGoal = HL.Method() << function(self)
     local extraRewardData = Tables.rewardTable[self.m_curDungeonInfo.extraRewardId]
@@ -210,8 +148,6 @@ BlackBoxDiffBtnCtrl._CompleteWithoutExtraGoal = HL.Method() << function(self)
     })
 end
 
-
-
 BlackBoxDiffBtnCtrl._CompleteGoal = HL.Method() << function(self)
     self:ProcessIfIsInTopView()
 
@@ -223,8 +159,6 @@ BlackBoxDiffBtnCtrl._CompleteGoal = HL.Method() << function(self)
     
     GameInstance.player.systemActionConflictManager:TryStartSystemAction(SystemActionConflictId)
 end
-
-
 
 BlackBoxDiffBtnCtrl._OnBtnDiffStateClick = HL.Method() << function(self)
     if self.m_isWarning and self.m_curPhase ~= Phase.Fail or self.m_curPhase == Phase.Normal then
@@ -243,9 +177,6 @@ BlackBoxDiffBtnCtrl._OnBtnDiffStateClick = HL.Method() << function(self)
         Notify(MessageConst.ON_SHOW_BLACKBOX_RESULT, { self.m_curDungeonId, currentTimestampBySeconds + self.view.config.COUNTDOWN_DURATION, true, self.m_failReason })
     end
 end
-
-
-
 
 BlackBoxDiffBtnCtrl.OnSubGameFinishStateChange = HL.Method(HL.Any) << function(self, args)
     local subGameId, phase = unpack(args)
@@ -278,9 +209,6 @@ BlackBoxDiffBtnCtrl.OnSubGameFinishStateChange = HL.Method(HL.Any) << function(s
 
     self.m_curPhase = phase
 end
-
-
-
 
 BlackBoxDiffBtnCtrl.OnDungeonWarningStateChange = HL.Method(HL.Any) << function(self, args)
     if self.m_curPhase == Phase.Fail then
@@ -316,16 +244,11 @@ BlackBoxDiffBtnCtrl.OnDungeonWarningStateChange = HL.Method(HL.Any) << function(
     end
 end
 
-
-
-
 BlackBoxDiffBtnCtrl._GetWarningTextByConditionType = HL.Method(HL.Userdata).Return(HL.String) << function(self,
                                                                                                           condition)
     local str = GetEnumNameFunc(typeof(BlackboxCondition), condition)
     return Language["LUA_BLACKBOX_WARNING_" .. str]
 end
-
-
 
 BlackBoxDiffBtnCtrl._ProcessPlatformDiffText = HL.Method().Return(HL.String) << function(self)
     local text
@@ -336,8 +259,6 @@ BlackBoxDiffBtnCtrl._ProcessPlatformDiffText = HL.Method().Return(HL.String) << 
     end
     return text
 end
-
-
 
 BlackBoxDiffBtnCtrl._ProcessPosition = HL.Method() << function(self)
     local height = 156
@@ -367,8 +288,6 @@ BlackBoxDiffBtnCtrl._ProcessPosition = HL.Method() << function(self)
     end
 end
 
-
-
 BlackBoxDiffBtnCtrl._RefreshBtnPanelPosition = HL.Method() << function(self)
     if self.m_taskTrackCtrl == nil then
         local success, taskTrackCtrl = UIManager:IsOpen(PanelId.CommonTaskTrackHud)
@@ -389,13 +308,11 @@ BlackBoxDiffBtnCtrl._RefreshBtnPanelPosition = HL.Method() << function(self)
     end
 end
 
-
-
 BlackBoxDiffBtnCtrl._OnBtnResetClick = HL.Method() << function(self)
+    local curStatus = GameInstance.dungeonManager.curDungeonLikeSubGame:GetCurrentCompletionStatus()
     if self.m_curPhase == Phase.Fail then
-        self:_DoReset()
+        self:_DoReset(curStatus)
     else
-        local curStatus = GameInstance.dungeonManager.curDungeonLikeSubGame:GetCurrentCompletionStatus()
         self:Notify(MessageConst.SHOW_POP_UP, {
             content = Language.LUA_DUNGEON_RESET_BLACKBOX_CONFIRM,
             onConfirm = function()
@@ -407,9 +324,6 @@ BlackBoxDiffBtnCtrl._OnBtnResetClick = HL.Method() << function(self)
     end
 end
 
-
-
-
 BlackBoxDiffBtnCtrl._DoReset = HL.Method(HL.Any) << function(self, status)
     if status then
         GameInstance.dungeonManager.curDungeonLikeSubGame:UserSendReStartAtStatus(status)
@@ -419,22 +333,14 @@ BlackBoxDiffBtnCtrl._DoReset = HL.Method(HL.Any) << function(self, status)
 end
 
 
-
-
 BlackBoxDiffBtnCtrl.OnLeaveMainHud = HL.Method() << function(self)
     UIManager:Hide(PanelId.CommonPopUp)
 end
-
-
-
 
 BlackBoxDiffBtnCtrl.OnHudBtnVisibleChange = HL.Method(HL.Any) << function(self, arg)
     local isOn = unpack(arg)
     self.view.panel.gameObject:SetActive(isOn)
 end
-
-
-
 
 BlackBoxDiffBtnCtrl.OnShowBlackboxResult = HL.Method(HL.Any) << function(self, args)
     local dungeonId, levelTimestamp, isFail, failReason = unpack(args)
@@ -444,9 +350,6 @@ BlackBoxDiffBtnCtrl.OnShowBlackboxResult = HL.Method(HL.Any) << function(self, a
 
     self.m_hasObtainReward = true
 end
-
-
-
 
 BlackBoxDiffBtnCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, active)
     self:_UpdateDiffBtnBinding()
@@ -459,17 +362,13 @@ BlackBoxDiffBtnCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(self,
     end
 end
 
-
-
 BlackBoxDiffBtnCtrl._UpdateDiffBtnBinding = HL.Method() << function(self)
-    if DeviceInfo.usingKeyboard and LuaSystemManager.factory.inTopView and Utils.getCommonSettingValueBool("fac_top_view_esc_exit") then
+    if DeviceInfo.usingKeyboard and LuaSystemManager.factory.inTopView and GameSettingUtils.GetSettingValueBool(GameSettingConst.SETTING_ID_FAC_TOP_VIEW_ESC_EXIT) then
         self.view.blackboxDiffStateBtn.onClick:StopUseBinding()
     else
         self.view.blackboxDiffStateBtn.onClick:ChangeBindingPlayerAction("common_task_track_stop")
     end
 end
-
-
 
 BlackBoxDiffBtnCtrl.OnShow = HL.Override() << function(self)
     self:_UpdateDiffBtnBinding()

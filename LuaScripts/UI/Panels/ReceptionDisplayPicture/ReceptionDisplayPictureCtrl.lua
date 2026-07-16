@@ -1,35 +1,15 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ReceptionDisplayPicture
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ReceptionDisplayPictureCtrl = HL.Class('ReceptionDisplayPictureCtrl', uiCtrl.UICtrl)
-
 
 ReceptionDisplayPictureCtrl.m_charPotentialIndex2Infos = HL.Field(HL.Table)
 
-
 ReceptionDisplayPictureCtrl.m_charPotentialPicId2Index = HL.Field(HL.Table)
-
 
 ReceptionDisplayPictureCtrl.m_curIndex = HL.Field(HL.Number) << 1
 
-
 ReceptionDisplayPictureCtrl.m_getPictureCell = HL.Field(HL.Function)
-
 
 
 
@@ -38,9 +18,6 @@ ReceptionDisplayPictureCtrl.m_getPictureCell = HL.Field(HL.Function)
 ReceptionDisplayPictureCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 ReceptionDisplayPictureCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -91,25 +68,17 @@ ReceptionDisplayPictureCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 ReceptionDisplayPictureCtrl.OnShow = HL.Override() << function(self)
 
 end
-
-
 
 ReceptionDisplayPictureCtrl.OnHide = HL.Override() << function(self)
 
 end
 
-
-
 ReceptionDisplayPictureCtrl.OnClose = HL.Override() << function(self)
 
 end
-
-
 
 ReceptionDisplayPictureCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local info = self.m_charPotentialIndex2Infos and self.m_charPotentialIndex2Infos[self.m_curIndex]
@@ -121,9 +90,6 @@ ReceptionDisplayPictureCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.An
         pictureId = info.posterData.pictureId,
     }
 end
-
-
-
 
 ReceptionDisplayPictureCtrl._OnClickSwitchBtn = HL.Method(HL.Boolean) <<function(self, isLeft)
     if isLeft then
@@ -140,8 +106,6 @@ ReceptionDisplayPictureCtrl._OnClickSwitchBtn = HL.Method(HL.Boolean) <<function
     self.view.pictureLayout:ScrollToIndex(CSIndex(self.m_curIndex))
     self:_RefreshArrowState()
 end
-
-
 
 ReceptionDisplayPictureCtrl._RefreshCurPictureView = HL.Method() << function(self)
     local info = self.m_charPotentialIndex2Infos[self.m_curIndex]
@@ -162,16 +126,10 @@ ReceptionDisplayPictureCtrl._RefreshCurPictureView = HL.Method() << function(sel
 end
 
 
-
-
 ReceptionDisplayPictureCtrl._RefreshArrowState = HL.Method() << function(self)
     self.view.rightBtnNode.gameObject:SetActive(self.m_curIndex < #self.m_charPotentialIndex2Infos)
     self.view.leftBtnNode.gameObject:SetActive(self.m_curIndex > 1)
 end
-
-
-
-
 
 ReceptionDisplayPictureCtrl.UpdatePicture = HL.Method(GameObject, HL.Number) << function(self, obj, csIndex)
     local info = self.m_charPotentialIndex2Infos[LuaIndex(csIndex)]

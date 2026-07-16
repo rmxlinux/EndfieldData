@@ -1,19 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 EquipItem = HL.Class('EquipItem', UIWidgetBase)
-
-
 
 
 EquipItem._OnFirstTimeInit = HL.Override() << function(self)
 
 end
-
-
-
 
 
 

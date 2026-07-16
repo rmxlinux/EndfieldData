@@ -2,14 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharInfoProAndElement
 
-
-
-
-
-
-
 CharInfoProAndElementCtrl = HL.Class('CharInfoProAndElementCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -20,11 +13,7 @@ CharInfoProAndElementCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 CharInfoProAndElementCtrl.m_professionCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 
@@ -39,13 +28,9 @@ CharInfoProAndElementCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     UIUtils.bindHyperlinkPopup(self, "CharInfoProAndElement", self.view.inputGroup.groupId)
 end
 
-
-
 CharInfoProAndElementCtrl.OnShow = HL.Override() << function(self)
     self:_Refresh()
 end
-
-
 
 
 

@@ -1,13 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SimpleSystem
-
-
-
-
-
-
 SimpleSystemCtrl = HL.Class('SimpleSystemCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -19,11 +12,7 @@ SimpleSystemCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 SimpleSystemCtrl.m_selectIndex = HL.Field(HL.Number) << 1
-
-
-
 
 
 SimpleSystemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -45,8 +34,6 @@ SimpleSystemCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitSimpleSystemController()
 end
 
-
-
 SimpleSystemCtrl._InitSimpleSystemController = HL.Method() << function(self)
     self.view.selectableNaviGroup.onSetLayerSelectedTarget:AddListener(function(target)
         AudioManager.PostEvent("au_ui_btn_dlg_next")
@@ -54,9 +41,6 @@ SimpleSystemCtrl._InitSimpleSystemController = HL.Method() << function(self)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
-
 
 SimpleSystemCtrl._OnClick = HL.Method(HL.Number) << function(self, index)
     if index == 1 then

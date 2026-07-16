@@ -2,13 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaWeaponInsufficient
 
-
-
-
-
-
 GachaWeaponInsufficientCtrl = HL.Class('GachaWeaponInsufficientCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -20,11 +14,7 @@ GachaWeaponInsufficientCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 GachaWeaponInsufficientCtrl.m_onClickOriginiumExchange = HL.Field(HL.Function)
-
-
-
 
 
 
@@ -43,8 +33,6 @@ GachaWeaponInsufficientCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
         self.view.originiumExchangeBtn.gameObject:SetActive(self.m_onClickOriginiumExchange ~= nil)
     end
 end
-
-
 
 GachaWeaponInsufficientCtrl._InitUI = HL.Method() << function(self)
     self.view.mask.onClick:AddListener(function()

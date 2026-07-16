@@ -2,14 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailSettlementDefenseTerminal
 
-
-
-
-
-
-
 MapMarkDetailSettlementDefenseTerminalCtrl = HL.Class('MapMarkDetailSettlementDefenseTerminalCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -20,14 +13,9 @@ MapMarkDetailSettlementDefenseTerminalCtrl.s_messages = HL.StaticField(HL.Table)
     
 }
 
-
 MapMarkDetailSettlementDefenseTerminalCtrl.m_settlementId = HL.Field(HL.String) << ""
 
-
 MapMarkDetailSettlementDefenseTerminalCtrl.m_markInstId = HL.Field(HL.String) << ""
-
-
-
 
 
 MapMarkDetailSettlementDefenseTerminalCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -74,8 +62,6 @@ MapMarkDetailSettlementDefenseTerminalCtrl.OnCreate = HL.Override(HL.Any) << fun
         end, UIUtils.getLeftTimeToSecond)
     end
 end
-
-
 
 MapMarkDetailSettlementDefenseTerminalCtrl._RefreshDefenseState = HL.Method() << function(self)
     local defenseState = GameInstance.player.towerDefenseSystem:GetSettlementDefenseState(self.m_settlementId)

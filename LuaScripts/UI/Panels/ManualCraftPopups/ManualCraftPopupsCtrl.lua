@@ -2,173 +2,78 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ManualCraftPopups
 local PHASE_ID = PhaseId.ManualCraftPopups
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ManualCraftPopupsCtrl = HL.Class('ManualCraftPopupsCtrl', uiCtrl.UICtrl)
-
 
 ManualCraftPopupsCtrl.m_itemCellList = HL.Field(HL.Forward("UIListCache"))
 
-
 ManualCraftPopupsCtrl.m_unlockItemList = HL.Field(HL.Table)
-
 
 ManualCraftPopupsCtrl.m_unlockItemRewardMap = HL.Field(HL.Table)
 
-
 ManualCraftPopupsCtrl.m_unlockItemIdCellMap = HL.Field(HL.Table)
-
 
 ManualCraftPopupsCtrl.m_facManualCraftSystem = HL.Field(HL.Any)
 
-
 ManualCraftPopupsCtrl.m_inventorySystem = HL.Field(HL.Any)
-
 
 ManualCraftPopupsCtrl.m_selectIndex = HL.Field(HL.Number) << 0
 
-
 ManualCraftPopupsCtrl.m_previewIndex = HL.Field(HL.Number) << 0
-
 
 ManualCraftPopupsCtrl.m_controllerItemId = HL.Field(HL.Any) << nil
 
-
 ManualCraftPopupsCtrl.m_showTipsBindingId = HL.Field(HL.Number) << -1
-
 
 ManualCraftPopupsCtrl.m_rewardCellList = HL.Field(HL.Forward("UIListCache"))
 
-
 ManualCraftPopupsCtrl.m_previewCellList = HL.Field(HL.Forward("UIListCache"))
-
 
 ManualCraftPopupsCtrl.m_getDefaultCell = HL.Field(HL.Function)
 
-
 ManualCraftPopupsCtrl.m_getSelectCell = HL.Field(HL.Function)
-
 
 ManualCraftPopupsCtrl.m_needRefreshReward = HL.Field(HL.Boolean) << false
 
-
 ManualCraftPopupsCtrl.m_sortMode = HL.Field(HL.Number) << 1  
-
 
 ManualCraftPopupsCtrl.m_sortIncremental = HL.Field(HL.Boolean) << false
 
-
 ManualCraftPopupsCtrl.m_activeScroll = HL.Field(HL.Boolean) << false
 
-
 ManualCraftPopupsCtrl.m_jumpRewardFlag = HL.Field(HL.Boolean) << false
-
 
 ManualCraftPopupsCtrl.m_initControllerSelected = HL.Field(HL.Boolean) << false
 ManualCraftPopupsCtrl.m_getCurPhaseStateFlag = HL.Field(HL.Boolean) << false
 
-
 ManualCraftPopupsCtrl.m_bindSubCache = HL.Field(HL.Table)
-
 
 ManualCraftPopupsCtrl.m_filterSetting = HL.Field(HL.Table)
 
-
 ManualCraftPopupsCtrl.m_realData = HL.Field(HL.Table)
-
 
 ManualCraftPopupsCtrl.m_jumpItem = HL.Field(HL.String) << ""
 
-
 ManualCraftPopupsCtrl.m_jumpIndex = HL.Field(HL.Number) << 0
-
 
 ManualCraftPopupsCtrl.m_jumpUnLock = HL.Field(HL.Boolean) << false
 
-
 ManualCraftPopupsCtrl.m_listRedDotHandle = HL.Field(HL.Number) << -1
-
 
 ManualCraftPopupsCtrl.m_redDotUpCache = HL.Field(HL.Table)
 
-
 ManualCraftPopupsCtrl.m_redDotDownCache = HL.Field(HL.Table)
-
 
 ManualCraftPopupsCtrl.m_luaIndex2ItemCell = HL.Field(HL.Table)
 
-
 ManualCraftPopupsCtrl.m_mainCellInAnim = HL.Field(HL.Boolean) << false
-
 
 ManualCraftPopupsCtrl.m_tickValidTime = HL.Field(HL.Number) << 0
 
-
 ManualCraftPopupsCtrl.m_scrollToIndexFlag = HL.Field(HL.Boolean) << false
-
 
 ManualCraftPopupsCtrl.m_activeScrollTimer = HL.Field(HL.Number) << -1
 
-
 ManualCraftPopupsCtrl.m_inMainPanel = HL.Field(HL.Boolean) << true
-
 
 
 
@@ -192,9 +97,6 @@ local ShowRewardsType = {
 }
 
 local ACTIVE_TIMER_VALUE = 0.1
-
-
-
 
 
 ManualCraftPopupsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -418,8 +320,6 @@ ManualCraftPopupsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_tickValidTime = 0
 end
 
-
-
 ManualCraftPopupsCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     self.m_initControllerSelected = false
     self.m_getCurPhaseStateFlag = true
@@ -442,9 +342,6 @@ ManualCraftPopupsCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any))
     }
 end
 
-
-
-
 ManualCraftPopupsCtrl._RecoverState = HL.Method(HL.Opt(HL.Table)) << function(self, recoverState)
     if not recoverState then
         return
@@ -466,8 +363,6 @@ ManualCraftPopupsCtrl._RecoverState = HL.Method(HL.Opt(HL.Table)) << function(se
     end
 end
 
-
-
 ManualCraftPopupsCtrl._GetSelectedFilterTags = HL.Method().Return(HL.Table) << function(self)
     local selectedFilter = {}
     for _, filterInfo in ipairs(self.m_filterSetting) do
@@ -477,9 +372,6 @@ ManualCraftPopupsCtrl._GetSelectedFilterTags = HL.Method().Return(HL.Table) << f
     end
     return selectedFilter
 end
-
-
-
 
 ManualCraftPopupsCtrl._RecoverSelectPanelByItemId = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
     for index, item in ipairs(self.m_unlockItemList) do
@@ -496,8 +388,6 @@ ManualCraftPopupsCtrl._RecoverSelectPanelByItemId = HL.Method(HL.String).Return(
     return false
 end
 
-
-
 ManualCraftPopupsCtrl._UpdateActiveScroll = HL.Method() << function(self)
     self.m_activeScroll = true
     self.m_scrollToIndexFlag = true
@@ -508,9 +398,6 @@ ManualCraftPopupsCtrl._UpdateActiveScroll = HL.Method() << function(self)
     end)
 
 end
-
-
-
 
 
 ManualCraftPopupsCtrl._TickUpdate = HL.Method(HL.Number) << function(self, deltaTime)
@@ -524,8 +411,6 @@ ManualCraftPopupsCtrl._TickUpdate = HL.Method(HL.Number) << function(self, delta
     self:_UpdateListUpRedDot()
     self:_UpdateListDownRedDot()
 end
-
-
 
 ManualCraftPopupsCtrl._UpdateListUpRedDot = HL.Method() << function(self)
     if not self.view.itemList.gameObject.activeSelf then
@@ -563,8 +448,6 @@ ManualCraftPopupsCtrl._UpdateListUpRedDot = HL.Method() << function(self)
 
     self:_SetListUpRedDotVisible(false)
 end
-
-
 
 
 ManualCraftPopupsCtrl._UpdateListDownRedDot = HL.Method() << function(self)
@@ -605,9 +488,6 @@ ManualCraftPopupsCtrl._UpdateListDownRedDot = HL.Method() << function(self)
     self:_SetListDownRedDotVisible(false)
 end
 
-
-
-
 ManualCraftPopupsCtrl._SetListUpRedDotVisible = HL.Method(HL.Boolean) << function(self, visible)
     if visible then
         if not self.view.redDotListUp.gameObject.activeSelf then
@@ -620,9 +500,6 @@ ManualCraftPopupsCtrl._SetListUpRedDotVisible = HL.Method(HL.Boolean) << functio
     end
 end
 
-
-
-
 ManualCraftPopupsCtrl._SetListDownRedDotVisible = HL.Method(HL.Boolean) << function(self, visible)
     if visible then
         if not self.view.redDotListDown.gameObject.activeSelf then
@@ -634,9 +511,6 @@ ManualCraftPopupsCtrl._SetListDownRedDotVisible = HL.Method(HL.Boolean) << funct
         end
     end
 end
-
-
-
 
 
 ManualCraftPopupsCtrl._FilterBtnConfirm = HL.Method(HL.Any) << function(self, tags)
@@ -654,9 +528,6 @@ ManualCraftPopupsCtrl._FilterBtnConfirm = HL.Method(HL.Any) << function(self, ta
         end
     end
 end
-
-
-
 
 ManualCraftPopupsCtrl._FilterBtnGetResCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tags)
     local noSelect = #tags == 0
@@ -686,8 +557,6 @@ ManualCraftPopupsCtrl._FilterBtnGetResCount = HL.Method(HL.Table).Return(HL.Numb
     end
     return count
 end
-
-
 
 ManualCraftPopupsCtrl._SortAndFilter = HL.Method() << function(self)
     if not self.m_realData then
@@ -778,9 +647,6 @@ ManualCraftPopupsCtrl._SortAndFilter = HL.Method() << function(self)
 
 
 end
-
-
-
 
 
 ManualCraftPopupsCtrl._UpdateDefaultView = HL.Method(HL.Boolean) << function(self, needSortAndFilter)
@@ -894,10 +760,6 @@ ManualCraftPopupsCtrl._UpdateDefaultView = HL.Method(HL.Boolean) << function(sel
 
 end
 
-
-
-
-
 ManualCraftPopupsCtrl._UpdateDefaultCell = HL.Method(GameObject, HL.Number) << function(self, gameObject, csIndex)
     local index = LuaIndex(csIndex)
     local cell = self.m_getDefaultCell(gameObject)
@@ -979,19 +841,16 @@ ManualCraftPopupsCtrl._UpdateDefaultCell = HL.Method(GameObject, HL.Number) << f
 
     if self.m_initControllerSelected then
         if self.m_controllerItemId == item.itemId then
-            self:SetAsNaviTargetInSilentModeIfNecessary(self.view.contentNavi, cell.button)
+            self:SetNaviTarget(cell.button)
         end
     else
         if index == LUA_FIRST_INDEX then
             self.m_initControllerSelected = true
-            self:SetAsNaviTargetInSilentModeIfNecessary(self.view.contentNavi, cell.button)
+            self:SetNaviTarget(cell.button)
         end
     end
 
 end
-
-
-
 
 
 ManualCraftPopupsCtrl._UpdateSelectView = HL.Method(HL.Boolean) << function(self, needSortAndFilter)
@@ -1110,12 +969,12 @@ ManualCraftPopupsCtrl._UpdateSelectView = HL.Method(HL.Boolean) << function(self
 
         if self.m_jumpRewardFlag == false then
             if index == 0 then
-                self:SetAsNaviTargetInSilentModeIfNecessary(self.view.contentCardListNavi, cell.naviDecorator)
+                self:SetNaviTarget(cell.naviDecorator)
                 refreshKeyHint(cell.naviDecorator.isNaviTarget)
             end
             if showType == ShowRewardsType.AVAILABLE then
                 self.m_jumpRewardFlag = true
-                self:SetAsNaviTargetInSilentModeIfNecessary(self.view.contentCardListNavi, cell.naviDecorator)
+                self:SetNaviTarget(cell.naviDecorator)
                 refreshKeyHint(cell.naviDecorator.isNaviTarget)
             end
         end
@@ -1145,10 +1004,6 @@ ManualCraftPopupsCtrl._UpdateSelectView = HL.Method(HL.Boolean) << function(self
     self.view.previewScrollList:GetComponent(typeof(CS.UnityEngine.UI.ScrollRect)).horizontal = false
 
 end
-
-
-
-
 
 ManualCraftPopupsCtrl._UpdateSelectCell = HL.Method(GameObject, HL.Number) << function(self, cell, index)
     if cell == nil then
@@ -1209,11 +1064,6 @@ ManualCraftPopupsCtrl._UpdateSelectCell = HL.Method(GameObject, HL.Number) << fu
 
 end
 
-
-
-
-
-
 ManualCraftPopupsCtrl._UpdateProgress = HL.Method(HL.Any, HL.Any, HL.Number) << function(self, cell, unlockData, index)
     cell.gameObject:SetActive(true)
     cell.text.text = tostring(unlockData.unlockCondition[index])
@@ -1246,9 +1096,6 @@ ManualCraftPopupsCtrl._UpdateProgress = HL.Method(HL.Any, HL.Any, HL.Number) << 
     end
 end
 
-
-
-
 ManualCraftPopupsCtrl._GetItemCount = HL.Method(HL.String).Return(HL.Any) << function(self, itemId)
     if Utils.isInSafeZone() or self:_IsValuableItem(itemId) then
         return self.m_inventorySystem:GetItemCount(Utils.getCurrentScope(), Utils.getCurrentChapterId(), itemId)
@@ -1256,9 +1103,6 @@ ManualCraftPopupsCtrl._GetItemCount = HL.Method(HL.String).Return(HL.Any) << fun
         return self.m_inventorySystem:GetItemCountInBag(Utils.getCurrentScope(), itemId)
     end
 end
-
-
-
 
 ManualCraftPopupsCtrl._IsValuableItem = HL.Method(HL.String).Return(HL.Boolean) << function(self, itemId)
     local itemData = Tables.itemTable[itemId]
@@ -1270,9 +1114,6 @@ ManualCraftPopupsCtrl._IsValuableItem = HL.Method(HL.String).Return(HL.Boolean) 
     end
 end
 
-
-
-
 ManualCraftPopupsCtrl.OnGetNewItemLevelUp = HL.Method(HL.Any) << function(self, args)
     self.m_needRefreshReward = true
     PhaseManager:OpenPhase(PhaseId.ManualcraftUpgradePopup,{itemList = args})
@@ -1283,16 +1124,10 @@ ManualCraftPopupsCtrl.OnGetNewItemLevelUp = HL.Method(HL.Any) << function(self, 
     end
 end
 
-
-
-
 ManualCraftPopupsCtrl._OnGetReward = HL.Method(HL.Any) << function(self, newItems)
     self.m_needRefreshReward = true
     self:OnGetReward(newItems)
 end
-
-
-
 
 ManualCraftPopupsCtrl.OnGetReward = HL.Method(HL.Any) << function(self, newItems)
     local idList = newItems[1]
@@ -1339,8 +1174,6 @@ ManualCraftPopupsCtrl.OnGetReward = HL.Method(HL.Any) << function(self, newItems
         Notify(MessageConst.SHOW_SYSTEM_REWARDS, info)
     end
 end
-
-
 
 
 

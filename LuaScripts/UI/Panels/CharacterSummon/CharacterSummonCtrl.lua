@@ -1,92 +1,36 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharacterSummon
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharacterSummonCtrl = HL.Class('CharacterSummonCtrl', uiCtrl.UICtrl)
-
 
 CharacterSummonCtrl.m_headCellFunc = HL.Field(HL.Function)
 
-
 CharacterSummonCtrl.m_csIndex2HeadCell = HL.Field(HL.Table)
-
 
 CharacterSummonCtrl.m_charId2HeadCell = HL.Field(HL.Table)
 
-
 CharacterSummonCtrl.m_sortMode = HL.Field(HL.Number) << 1
-
 
 CharacterSummonCtrl.m_sortIncremental = HL.Field(HL.Boolean) << true
 
-
 CharacterSummonCtrl.m_sortKeys = HL.Field(HL.Table)
-
 
 CharacterSummonCtrl.m_selectedNum = HL.Field(HL.Number) << 0
 
-
 CharacterSummonCtrl.m_selectedNum2CharId = HL.Field(HL.Table)
-
 
 CharacterSummonCtrl.m_charId2ChooseState = HL.Field(HL.Table)
 
-
 CharacterSummonCtrl.m_cacheCharInfos = HL.Field(HL.Table)
-
 
 CharacterSummonCtrl.m_charId2Infos = HL.Field(HL.Table)
 
-
 CharacterSummonCtrl.m_allCharInfos = HL.Field(HL.Table)
-
 
 CharacterSummonCtrl.m_charId2show = HL.Field(HL.Table)
 
-
 CharacterSummonCtrl.m_allCharInfoReverseMap = HL.Field(HL.Table)
 
-
 CharacterSummonCtrl.m_selectedTags = HL.Field(HL.Table)
-
 
 CharacterSummonCtrl.m_initSetTarget = HL.Field(HL.Boolean) << false
 
@@ -109,12 +53,8 @@ local SummonBtnState = {
 
 
 
-
 CharacterSummonCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
-
-
-
 
 
 
@@ -150,8 +90,6 @@ CharacterSummonCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 CharacterSummonCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local recoverState = {
         selectedCharIdList = lume.clone(self.m_selectedNum2CharId),
@@ -166,15 +104,11 @@ CharacterSummonCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) <
     }
 end
 
-
-
 CharacterSummonCtrl._InitSelectInfos = HL.Method() << function(self)
     self:_SetSelectedNum(0)
     self.m_selectedNum2CharId = {}
     self.m_charId2ChooseState = {}
 end
-
-
 
 CharacterSummonCtrl._UpdateSelectInfos = HL.Method() << function(self)
     if not self.m_allCharInfos then
@@ -198,9 +132,6 @@ CharacterSummonCtrl._UpdateSelectInfos = HL.Method() << function(self)
     end
 end
 
-
-
-
 CharacterSummonCtrl._SetSelectedNum = HL.Method(HL.Number) << function(self, num)
     self.m_selectedNum = num
     if self.m_selectedNum == 0 then
@@ -211,8 +142,6 @@ CharacterSummonCtrl._SetSelectedNum = HL.Method(HL.Number) << function(self, num
         self.view.summonBtnRoot:SetState(SummonBtnState.NormalState)
     end
 end
-
-
 
 
 CharacterSummonCtrl._InitCharInfos = HL.Method() << function(self)
@@ -296,10 +225,13 @@ CharacterSummonCtrl._InitCharInfos = HL.Method() << function(self)
     self:_UpdateCharShowList()
     self.m_csIndex2HeadCell = {}
     self.m_charId2HeadCell = {}
+    if #self.m_allCharInfos > 0 then
+        self.view.rightNodeController:SetState("NormalState")
+    else
+        self.view.rightNodeController:SetState("EmptyState")
+    end
     self.view.headScrollList:UpdateCount(#self.m_allCharInfos)
 end
-
-
 
 CharacterSummonCtrl._UpdateCharShowList = HL.Method() << function(self)
     self.m_allCharInfoReverseMap = {}
@@ -319,9 +251,6 @@ CharacterSummonCtrl._UpdateCharShowList = HL.Method() << function(self)
     end
 end
 
-
-
-
 CharacterSummonCtrl._UpdateAllStageSort = HL.Method(HL.Table) << function(self, item)
     local downAllStageSort = 2
     local upStageSort = 2
@@ -337,17 +266,11 @@ CharacterSummonCtrl._UpdateAllStageSort = HL.Method(HL.Table) << function(self, 
     item.upStageSort = upStageSort
 end
 
-
-
 CharacterSummonCtrl._InitSortNode = HL.Method() << function(self)
     self.view.sortNodeUp:InitSortNode(UIConst.CharacterSummonSortOptions, function(optData, isIncremental)
         self:_ApplySort(optData, isIncremental)
     end, nil, false)
 end
-
-
-
-
 
 CharacterSummonCtrl._ApplySort = HL.Method(HL.Table, HL.Boolean) << function(self, optData, isIncremental)
     self:_UpdateSelectInfos()
@@ -366,12 +289,14 @@ CharacterSummonCtrl._ApplySort = HL.Method(HL.Table, HL.Boolean) << function(sel
         self.m_csIndex2HeadCell = {}
         self.m_charId2HeadCell = {}
         self:_UpdateCharShowList()
+        if #self.m_allCharInfos > 0 then
+            self.view.rightNodeController:SetState("NormalState")
+        else
+            self.view.rightNodeController:SetState("EmptyState")
+        end
         self.view.headScrollList:UpdateCount(#self.m_allCharInfos)
     end
 end
-
-
-
 
 CharacterSummonCtrl._ApplyFilter = HL.Method(HL.Table) << function(self, selectedTags)
     local itemInfoList = self.m_cacheCharInfos
@@ -398,8 +323,6 @@ CharacterSummonCtrl._ApplyFilter = HL.Method(HL.Table) << function(self, selecte
     self.m_allCharInfos = filteredList
 end
 
-
-
 CharacterSummonCtrl._InitFilterNode = HL.Method() << function(self)
     local filterArgs = {
         tagGroups = FilterUtils.generateConfigCharSummon(),
@@ -415,17 +338,11 @@ CharacterSummonCtrl._InitFilterNode = HL.Method() << function(self)
     self.view.filterBtn:InitFilterBtn(filterArgs)
 end
 
-
-
-
 CharacterSummonCtrl._OnFilterConfirm = HL.Method(HL.Any) << function(self, tags)
     self.m_selectedTags = tags or {}
     self:_ApplyFilter(self.m_selectedTags)
     self:_ApplySort(self.view.sortNodeUp:GetCurSortData(), self.view.sortNodeUp.isIncremental)
 end
-
-
-
 
 CharacterSummonCtrl._FilterBtnGetResCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tags)
     local resultCount = 0
@@ -436,9 +353,6 @@ CharacterSummonCtrl._FilterBtnGetResCount = HL.Method(HL.Table).Return(HL.Number
     end
     return resultCount
 end
-
-
-
 
 CharacterSummonCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
     local validSelectedCharIdList = {}
@@ -482,10 +396,6 @@ CharacterSummonCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, rec
     sortNode:UpdateDeviceState()
 end
 
-
-
-
-
 CharacterSummonCtrl._UpdateHeadCell = HL.Method(GameObject, HL.Number) << function(self, gameObject, luaIndex)
     local cell = self.m_headCellFunc(gameObject)
     self.m_csIndex2HeadCell[CSIndex(luaIndex)] = cell
@@ -521,12 +431,9 @@ CharacterSummonCtrl._UpdateHeadCell = HL.Method(GameObject, HL.Number) << functi
 
     if luaIndex == 1 and not self.m_initSetTarget then
         self.m_initSetTarget = true
-        InputManagerInst.controllerNaviManager:SetTarget(cell.ssCharHeadCell.view.groupNaviDecorator)
+        self:SetNaviTarget(cell.ssCharHeadCell.view.groupNaviDecorator)
     end
 end
-
-
-
 
 CharacterSummonCtrl._CheckCharDisableByCharIndex = HL.Method(HL.Number).Return(HL.Boolean) << function(self, luaIndex)
     local charId = self.m_allCharInfos[luaIndex].templateId
@@ -535,9 +442,6 @@ CharacterSummonCtrl._CheckCharDisableByCharIndex = HL.Method(HL.Number).Return(H
     end
     return true
 end
-
-
-
 
 CharacterSummonCtrl._OnClickCell = HL.Method(HL.String) << function(self, charId)
     if not self.m_charId2show[charId] then
@@ -568,9 +472,6 @@ CharacterSummonCtrl._OnClickCell = HL.Method(HL.String) << function(self, charId
     Notify(MessageConst.REFRESH_CONTROLLER_HINT)
 end
 
-
-
-
 CharacterSummonCtrl._AddSelect = HL.Method(HL.String) << function(self, charId)
     if self.m_selectedNum == MAX_SELECT_NUM then
         Notify(MessageConst.SHOW_TOAST, Language.LUA_SPACESHIP_SUMMON_MAX_SELECT_TOAST)
@@ -588,14 +489,9 @@ CharacterSummonCtrl._AddSelect = HL.Method(HL.String) << function(self, charId)
 end
 
 
-
-
 CharacterSummonCtrl.ShowCharacterSummon = HL.StaticMethod(HL.Opt(HL.Table)) << function(args)
     PhaseManager:OpenPhase(PhaseId.CharacterSummon)
 end
-
-
-
 
 
 CharacterSummonCtrl._DeleteSelect = HL.Method(HL.String) << function(self, charId)
@@ -630,8 +526,6 @@ CharacterSummonCtrl._DeleteSelect = HL.Method(HL.String) << function(self, charI
     table.remove(self.m_selectedNum2CharId, self.m_selectedNum)
     self:_SetSelectedNum(self.m_selectedNum - 1)
 end
-
-
 
 CharacterSummonCtrl.SummonChar = HL.Method() << function(self)
     if self.m_selectedNum == 0 then

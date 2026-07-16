@@ -2,35 +2,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DomainPOIOverview
 local PHASE_ID = PhaseId.DomainPOIOverview
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 DomainPOIOverviewCtrl = HL.Class('DomainPOIOverviewCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -50,20 +22,14 @@ local NOT_HAS_COMPLETE_STATE_POI_TYPE = {
     [GEnums.DomainPoiType.SewageTreatPlant] = true,
 }
 
-
 DomainPOIOverviewCtrl.m_info = HL.Field(HL.Table)
 
-
 DomainPOIOverviewCtrl.m_POICellCache = HL.Field(HL.Forward('UIListCache'))
-
 
 DomainPOIOverviewCtrl.m_closeCallback = HL.Field(HL.Function)
 
 
 DomainPOIOverviewCtrl.m_lastNaviContext = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -76,8 +42,6 @@ DomainPOIOverviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_FocusFirstContentCell()
 end
 
-
-
 DomainPOIOverviewCtrl.OnClose = HL.Override() << function(self)
     if self.m_closeCallback then
         self.m_closeCallback()
@@ -88,9 +52,6 @@ end
 DomainPOIOverviewCtrl._OnUIPhaseExited = HL.Method(HL.String) << function(self, _)
     self:_TryRefreshOnReturn()
 end
-
-
-
 
 
 
@@ -117,8 +78,6 @@ DomainPOIOverviewCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     }
     self.m_lastNaviContext = {}
 end
-
-
 
 DomainPOIOverviewCtrl._UpdateData = HL.Method() << function(self)
     
@@ -168,9 +127,6 @@ DomainPOIOverviewCtrl._UpdateData = HL.Method() << function(self)
     
     table.sort(self.m_info.poiInfos, Utils.genSortFunction({ "hasRemindSort", "sortId" }, false))
 end
-
-
-
 
 DomainPOIOverviewCtrl._CollectPOILevelContentInfos = HL.Method(GEnums.DomainPoiType).Return(HL.Table) << function(self, poiType)
     local _, domainPOICfg = Tables.domainPoiTable:TryGetValue(poiType)
@@ -248,9 +204,6 @@ DomainPOIOverviewCtrl._GetPOIIndexByType = HL.Method(GEnums.DomainPoiType).Retur
     return 0
 end
 
-
-
-
 DomainPOIOverviewCtrl._UpdateSinglePOIInfo = HL.Method(HL.Table) << function(self, poiInfo)
     local poiHasRemind = false
     for _, contentInfo in pairs(poiInfo.levelContentInfos) do
@@ -274,8 +227,6 @@ end
 
 
 
-
-
 DomainPOIOverviewCtrl._InitUI = HL.Method() << function(self)
     self.view.domainTopMoneyTitle.view.closeBtn.onClick:AddListener(function()
         PhaseManager:PopPhase(PHASE_ID)
@@ -293,8 +244,6 @@ DomainPOIOverviewCtrl._InitUI = HL.Method() << function(self)
     end
 end
 
-
-
 DomainPOIOverviewCtrl._RefreshAllUI = HL.Method() << function(self)
     local infoCount = #self.m_info.poiInfos
     self.view.main:SetState(infoCount > 0 and "Normal" or "Empty")
@@ -307,10 +256,6 @@ DomainPOIOverviewCtrl._RefreshAllUI = HL.Method() << function(self)
 
     self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(self.m_info.domainId)
 end
-
-
-
-
 
 DomainPOIOverviewCtrl._OnRefreshPOICell = HL.Method(HL.Any, HL.Number) << function(self, inCell, luaIndex)
     
@@ -354,11 +299,6 @@ DomainPOIOverviewCtrl._OnRefreshPOICell = HL.Method(HL.Any, HL.Number) << functi
         self:_OnRefreshContentCell(contentCell, luaIndex, contentIndex)
     end)
 end
-
-
-
-
-
 
 DomainPOIOverviewCtrl._OnRefreshContentCell = HL.Method(HL.Any, HL.Number, HL.Number) << function(self, inCell, poiIndex, contentIndex)
     
@@ -509,8 +449,6 @@ end
 
 
 
-
-
 DomainPOIOverviewCtrl._FocusFirstContentCell = HL.Method() << function(self)
     local infoCount = #self.m_info.poiInfos
     if infoCount <= 0 then
@@ -520,7 +458,7 @@ DomainPOIOverviewCtrl._FocusFirstContentCell = HL.Method() << function(self)
     
     local cell = poiInfo.contentCellCache:Get(1)
     if cell then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.naviDeco)
+        self:SetNaviTarget(cell.naviDeco)
     end
 end
 
@@ -578,7 +516,7 @@ DomainPOIOverviewCtrl._FocusContentCellByPoiId = HL.Method(HL.Number, HL.String)
     end
     local cell = poiInfo.contentCellCache:Get(targetContentIndex)
     if cell then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.naviDeco)
+        self:SetNaviTarget(cell.naviDeco)
     else
         self:_FocusFirstContentCell()
     end

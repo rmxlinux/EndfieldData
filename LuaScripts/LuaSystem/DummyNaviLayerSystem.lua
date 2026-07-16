@@ -1,17 +1,8 @@
 local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
 
-
-
-
-
-
-
 DummyNaviLayerSystem = HL.Class('DummyNaviLayerSystem', LuaSystemBase.LuaSystemBase)
 
-
 DummyNaviLayerSystem.m_dummyNaviLayers = HL.Field(HL.Table)
-
-
 
 DummyNaviLayerSystem.DummyNaviLayerSystem = HL.Constructor() << function(self)
     self.m_dummyNaviLayers = {}
@@ -22,9 +13,6 @@ DummyNaviLayerSystem.DummyNaviLayerSystem = HL.Constructor() << function(self)
         self:_DetachNaviDummyLayer(key)
     end)
 end
-
-
-
 
 DummyNaviLayerSystem._AttachNaviDummyLayer = HL.Method(HL.String) << function(self, key)
     if self.m_dummyNaviLayers[key] ~= nil then
@@ -40,9 +28,6 @@ DummyNaviLayerSystem._AttachNaviDummyLayer = HL.Method(HL.String) << function(se
     dummyLayer:NaviToThisGroup()
 end
 
-
-
-
 DummyNaviLayerSystem._DetachNaviDummyLayer = HL.Method(HL.String) << function(self, key)
     if self.m_dummyNaviLayers[key] == nil then
         return
@@ -51,9 +36,6 @@ DummyNaviLayerSystem._DetachNaviDummyLayer = HL.Method(HL.String) << function(se
     GameObject.DestroyImmediate(dummyLayer.gameObject)
     self.m_dummyNaviLayers[key] = nil
 end
-
-
-
 
 DummyNaviLayerSystem.GetDummyNaviLayerByKey = HL.Method(HL.String).Return(HL.Userdata) << function(self, key)
     return self.m_dummyNaviLayers[key]

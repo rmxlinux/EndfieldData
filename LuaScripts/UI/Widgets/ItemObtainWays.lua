@@ -21,51 +21,23 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 local ActionOnSetNaviTarget = CS.Beyond.Input.ActionOnSetNaviTarget
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ItemObtainWays = HL.Class('ItemObtainWays', UIWidgetBase)
-
 
 ItemObtainWays.hasObtainWay = HL.Field(HL.Boolean) << false
 
-
 ItemObtainWays.m_obtainCells = HL.Field(HL.Forward('UIListCache'))
-
 
 ItemObtainWays.m_exitNaviBindingId = HL.Field(HL.Number) << -1
 
-
 ItemObtainWays.m_itemTipsPosInfo = HL.Field(HL.Table)
-
 
 ItemObtainWays.m_itemId = HL.Field(HL.String) << ''
 
-
 ItemObtainWays.m_onClickItem = HL.Field(HL.Function)
-
 
 ItemObtainWays.m_onBeforeJump = HL.Field(HL.Function)
 
-
 ItemObtainWays.m_jumpExtraArgs = HL.Field(HL.Table)
-
-
 
 
 ItemObtainWays._OnFirstTimeInit = HL.Override() << function(self)
@@ -76,30 +48,19 @@ ItemObtainWays._OnFirstTimeInit = HL.Override() << function(self)
     InputManagerInst:ToggleBinding(self.m_exitNaviBindingId, false)
 end
 
-
-
-
 ItemObtainWays._ToggleNavi = HL.Method(HL.Boolean) << function(self, active)
     if active then
         if self.hasObtainWay then
             local cell = self.m_obtainCells:Get(1)
-            InputManagerInst.controllerNaviManager:SetTarget(cell.selectedTarget)
+            self:SetNaviTarget(cell.selectedTarget)
         else
-            InputManagerInst.controllerNaviManager:SetTarget(self.view.emptyNode.button)
+            self:SetNaviTarget(self.view.emptyNode.button)
         end
     else
         InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.selectableNaviGroup)
     end
     InputManagerInst:ToggleBinding(self.m_exitNaviBindingId, active)
 end
-
-
-
-
-
-
-
-
 
 ItemObtainWays.InitItemObtainWays = HL.Method(HL.String, HL.Opt(HL.Number, HL.Table, HL.Function, HL.Function, HL.Table)) << function(
     self, itemId, instId, itemTipsPosInfo, onClickItem, onBeforeJump, jumpExtraArgs)
@@ -112,28 +73,34 @@ ItemObtainWays.InitItemObtainWays = HL.Method(HL.String, HL.Opt(HL.Number, HL.Ta
     self.m_jumpExtraArgs = jumpExtraArgs
 
     local itemCfg = Tables.itemTable:GetValue(itemId)
+    local showWayOrNoWay = false
 
     local obtainInfoList = self:_GenerateObtainInfoList(itemId)
     self.hasObtainWay = next(obtainInfoList) ~= nil
+    if FactoryUtils.isSkipBuildingInvalidInDomainByItemId(itemId) then
+        
+        self.hasObtainWay = false
+    end
+    
     if self.hasObtainWay then
-        self.view.gameObject:SetActive(true)
-        self.view.emptyNode.gameObject:SetActive(false)
+        showWayOrNoWay = true
         self.m_obtainCells:Refresh(#obtainInfoList, function(cell, index)
             local obtainInfo = obtainInfoList[index]
-            self:_RefreshObtainCell(cell, obtainInfo, index)
+            self:RefreshObtainCell(cell, obtainInfo, index)
         end)
     else
-        if itemCfg.noObtainWayId == nil or itemCfg.noObtainWayId.Count == 0 then
-            
-            self.view.gameObject:SetActive(false)
-        else
+        self.m_obtainCells:Refresh(0)
+    end
+
+    self.view.emptyNode.gameObject:SetActive(false)
+    if not self.hasObtainWay or FactoryUtils.isSkipUnlockedBuildingByItemId(itemId) then
+        
+        if itemCfg.noObtainWayId ~= nil and itemCfg.noObtainWayId.Count > 0 then
             local find, showNoObtainWayId = self:_FindShowNoObtainWayId(itemCfg)
             if find then
-                self.view.gameObject:SetActive(true)
-                self.m_obtainCells:Refresh(0)
-                self.view.emptyNode.gameObject:SetActive(false)
                 local _, obtainWayCfg = Tables.systemJumpTable:TryGetValue(showNoObtainWayId)
                 if obtainWayCfg then
+                    showWayOrNoWay = true
                     self.view.emptyNode.gameObject:SetActive(true)
                     self.view.emptyNode.nameTxt:SetAndResolveTextStyle(obtainWayCfg.desc)
                     self.view.emptyNode.jumpNodeDeco.gameObject:SetActive(false)
@@ -141,15 +108,12 @@ ItemObtainWays.InitItemObtainWays = HL.Method(HL.String, HL.Opt(HL.Number, HL.Ta
                     local isUnlock = Utils.isSystemUnlocked(obtainWayCfg.bindSystem) and not Utils.isInBlackbox()
                     if isUnlock then
                         local phaseId = PhaseId[obtainWayCfg.phaseId]
-                        local phaseArgs
-                        if not string.isEmpty(obtainWayCfg.phaseArgs) then
-                            phaseArgs = Json.decode(obtainWayCfg.phaseArgs)
-                        end
+                        local phaseArgs = Utils.buildSystemJumpPhaseArgsWithItem(obtainWayCfg, itemId)
                         if phaseId ~= nil and PhaseManager:CheckCanOpenPhase(phaseId, phaseArgs) then
                             self.view.emptyNode.jumpNodeDeco.gameObject:SetActive(true)
                             self.view.emptyNode.button.onClick:AddListener(function()
                                 if self.m_onBeforeJump then
-                                    self.m_onBeforeJump()
+                                    self.m_onBeforeJump(phaseId, phaseArgs)
                                 end
                                 PhaseManager:GoToPhase(phaseId, phaseArgs)
                                 Notify(MessageConst.HIDE_ITEM_TIPS)
@@ -157,18 +121,14 @@ ItemObtainWays.InitItemObtainWays = HL.Method(HL.String, HL.Opt(HL.Number, HL.Ta
                         end
                     end
                 end
-            else
-                self.view.gameObject:SetActive(false)
             end
         end
     end
+    self.view.gameObject:SetActive(showWayOrNoWay)
 
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.transform)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.emptyNode.nameTxt.transform)
 end
-
-
-
 
 ItemObtainWays._FindShowNoObtainWayId = HL.Method(HL.Any).Return(HL.Boolean, HL.String) << function(self, itemCfg)
     if itemCfg == nil or itemCfg.noObtainWayId == nil or itemCfg.noObtainWayId.Count == 0 then
@@ -180,7 +140,7 @@ ItemObtainWays._FindShowNoObtainWayId = HL.Method(HL.Any).Return(HL.Boolean, HL.
             return true, itemCfg.noObtainWayId[csIndex]
         end
         local conditionId = itemCfg.noObtainWayConditionId[csIndex]
-        local unlockTag = self:_CheckObtainWayCondition(conditionId)
+        local unlockTag = ItemObtainWaysUtils.CheckObtainWayCondition(conditionId)
         if not unlockTag then
             return true, itemCfg.noObtainWayId[csIndex]
         end
@@ -188,38 +148,6 @@ ItemObtainWays._FindShowNoObtainWayId = HL.Method(HL.Any).Return(HL.Boolean, HL.
 
     return false, ""
 end
-
-
-
-
-
-ItemObtainWays._CheckObtainWayCondition = HL.Method(HL.String).Return(HL.Boolean) << function(self, conditionId)
-    local succ, conditionCfg = Tables.noObtainWayCondTable:TryGetValue(conditionId)
-    if not succ then
-        return false
-    end
-
-    local unlockTag = false
-    if conditionCfg.conditionType == GEnums.ConditionType.CheckWikiUnlocked then
-        unlockTag = WikiUtils.isWikiEntryUnlock(conditionCfg.checkId)
-    elseif conditionCfg.conditionType == GEnums.ConditionType.CheckFacTechTreeUnlocked then
-        unlockTag = not GameInstance.player.facTechTreeSystem:NodeIsLocked(conditionCfg.checkId)
-    elseif conditionCfg.conditionType == GEnums.ConditionType.CheckPlayerOwnItem then
-        local count = Utils.getItemCount(conditionCfg.checkId)
-        unlockTag = count > 0
-    elseif conditionCfg.conditionType == GEnums.ConditionType.CheckPlayerDungeonUnlocked then
-        unlockTag = GameInstance.dungeonManager:IsDungeonUnlocked(conditionCfg.checkId)
-    elseif conditionCfg.conditionType == GEnums.ConditionType.CheckDungeonEntryTouched then
-        unlockTag = GameInstance.dungeonManager:IsDungeonInteractiveActive(conditionCfg.checkId)
-    elseif conditionCfg.conditionType == GEnums.ConditionType.CheckDungeonEntryNotTouched then
-        unlockTag = not GameInstance.dungeonManager:IsDungeonInteractiveActive(conditionCfg.checkId)
-    end
-
-    return unlockTag
-end
-
-
-
 
 
 
@@ -236,15 +164,12 @@ ItemObtainWays._GenerateObtainInfoList = HL.Method(HL.String).Return(HL.Table) <
                 local isShowOrNoCondition = true
                 local showSucc, showCondition = Tables.obtainWayShowCondTable:TryGetValue(obtainWayId)
                 if showSucc then
-                    isShowOrNoCondition = self:_CheckObtainWayCondition(showCondition)
+                    isShowOrNoCondition = ItemObtainWaysUtils.CheckObtainWayCondition(showCondition)
                 end
                 local isUnlock = Utils.isSystemUnlocked(obtainWayCfg.bindSystem)
                 if isShowOrNoCondition and isUnlock then
                     local phaseId = PhaseId[obtainWayCfg.phaseId]
-                    local phaseArgs
-                    if not string.isEmpty(obtainWayCfg.phaseArgs) then
-                        phaseArgs = Json.decode(obtainWayCfg.phaseArgs)
-                    end
+                    local phaseArgs = Utils.buildSystemJumpPhaseArgsWithItem(obtainWayCfg, itemId)
                     if self.m_jumpExtraArgs then
                         phaseArgs = lume.merge(phaseArgs or {}, self.m_jumpExtraArgs)
                     end
@@ -256,6 +181,7 @@ ItemObtainWays._GenerateObtainInfoList = HL.Method(HL.String).Return(HL.Table) <
                             blockJumpToast = Language.LUA_OBTAIN_WAYS_JUMP_BLOCKED
                         end
                     end
+                    local sortWidget = (phaseId == nil) and -1000 or 0
                     table.insert(obtainInfoList, {
                         name = obtainWayCfg.desc,
                         iconFolder = UIConst.UI_SPRITE_ITEM_TIPS,
@@ -263,7 +189,7 @@ ItemObtainWays._GenerateObtainInfoList = HL.Method(HL.String).Return(HL.Table) <
                         phaseId = phaseId,
                         phaseArgs = phaseArgs,
                         blockJumpToast = blockJumpToast,
-                        sortId = -k / 1000,
+                        sortId = (-k / 1000) + sortWidget,
                     })
                 end
             end
@@ -275,6 +201,19 @@ ItemObtainWays._GenerateObtainInfoList = HL.Method(HL.String).Return(HL.Table) <
     local hasFormula = next(craftInfoList) ~= nil
     if canCraft and hasFormula then
         self:_InsertCrafts(obtainInfoList, craftInfoList)
+    end
+
+    
+    local manualConvertInfo, mapObtainBlock
+    for _, info in ipairs(obtainInfoList) do
+        if info.blockJumpToast == Language.LUA_OBTAIN_WAYS_MAP_JUMP_BLOCKED then
+            mapObtainBlock = true
+        elseif info.hasManualCraftConvert then
+            manualConvertInfo = info
+        end
+    end
+    if manualConvertInfo then
+        manualConvertInfo.sortId = mapObtainBlock and 1 or -1
     end
 
     
@@ -299,10 +238,6 @@ ItemObtainWays._GenerateObtainInfoList = HL.Method(HL.String).Return(HL.Table) <
     return obtainInfoList
 end
 
-
-
-
-
 ItemObtainWays._InsertCrafts = HL.Method(HL.Table, HL.Table) << function(self, obtainInfoList, craftInfoList)
     local manuSortId, sortId, curOpenedBuildingId
     local topPhaseId = PhaseManager:GetTopPhaseId()
@@ -319,9 +254,16 @@ ItemObtainWays._InsertCrafts = HL.Method(HL.Table, HL.Table) << function(self, o
 
     local craftsByBuilding = {}
     local manualCrafts = {}
+    local hasManualCraftConvert = false
     for _, info in pairs(craftInfoList) do
         local buildingId = info.buildingId
         if not buildingId then
+            if not hasManualCraftConvert then
+                local succ, craftData = Tables.factoryManualCraftTable:TryGetValue(info.craftId)
+                if succ and craftData.showingType == GEnums.CraftShowingType.ManualCraftConvert then
+                    hasManualCraftConvert = true
+                end
+            end
             table.insert(manualCrafts, info)
         else
             if not craftsByBuilding[buildingId] then
@@ -332,18 +274,17 @@ ItemObtainWays._InsertCrafts = HL.Method(HL.Table, HL.Table) << function(self, o
     end
 
     if next(manualCrafts) then
-        for _, data in pairs(manualCrafts) do
-            local info = {
-                name = Language.LUA_OBTAIN_WAYS_MANUAL_CRAFT_NAME,
-                crafts = manualCrafts,
-                iconFolder = UIConst.UI_SPRITE_ITEM_TIPS,
-                iconId = UIConst.UI_MANUALCRAFT_ICON_ID,
-                phaseId = PhaseId.ManualCraft,
-                phaseArgs = {jumpId = data.craftId},
-                sortId = manuSortId,
-            }
-            table.insert(obtainInfoList, info)
-        end
+        local info = {
+            name = Language.LUA_OBTAIN_WAYS_MANUAL_CRAFT_NAME,
+            crafts = manualCrafts,
+            iconFolder = UIConst.UI_SPRITE_ITEM_TIPS,
+            iconId = UIConst.UI_MANUALCRAFT_ICON_ID,
+            phaseId = PhaseId.ManualCraft,
+            phaseArgs = {jumpId = manualCrafts[1].craftId},
+            sortId = manuSortId,
+            hasManualCraftConvert = hasManualCraftConvert,
+        }
+        table.insert(obtainInfoList, info)
     end
 
     local buildingSortFunc = Utils.genSortFunction({"sortId1", "sortId2"}, true)
@@ -414,20 +355,29 @@ local jumpBlockWhiteMap = {
 }
 
 
-
-
-
-
-
-ItemObtainWays._RefreshObtainCell = HL.Method(HL.Any, HL.Table, HL.Number) << function(self, cell, info, index)
+ItemObtainWays.RefreshObtainCell = HL.Method(HL.Any, HL.Table, HL.Number) << function(self, cell, info, index)
     cell.selectedTarget = cell.normalNode.button
-
     cell.normalNode.nameTxt.text = info.name
     local iconId = info.iconId
     local iconFolder = info.iconFolder
     cell.normalNode.icon.gameObject:SetActive(iconId ~= nil and iconFolder ~= nil)
     if iconId ~= nil and iconFolder ~= nil then
         cell.normalNode.icon:LoadSprite(info.iconFolder, info.iconId)
+    end
+    if cell.normalNode.earlyAccessNode ~= nil then
+        if Utils.isInBlackbox() then
+            cell.normalNode.earlyAccessNode.gameObject:SetActive(false)
+        else
+            if info.buildingId == FacConst.HUB_DATA_ID then
+                local isEarlyAccessBuilding = not string.isEmpty(info.crafts[1].craftId) and
+                    FactoryUtils.isSkipUnlockedBuilding(info.crafts[1].craftId)
+                cell.normalNode.earlyAccessNode.gameObject:SetActive(isEarlyAccessBuilding)
+            else
+                local isEarlyAccessBuilding = not string.isEmpty(info.buildingId) and
+                    FactoryUtils.isSkipUnlockedBuilding(info.buildingId)
+                cell.normalNode.earlyAccessNode.gameObject:SetActive(isEarlyAccessBuilding)
+            end
+        end
     end
 
     self:_UpdateCraftCell(cell, info)
@@ -456,21 +406,37 @@ ItemObtainWays._RefreshObtainCell = HL.Method(HL.Any, HL.Table, HL.Number) << fu
                 Notify(MessageConst.SHOW_TOAST, info.blockJumpToast)
                 return
             end
-            Notify(MessageConst.HIDE_ITEM_TIPS)
-            if self.m_onBeforeJump then
-                self.m_onBeforeJump()
-            end
             if info.phaseId then
+                if PhaseManager:CheckCanOpenPhase(info.phaseId, info.phaseArgs, false) then
+                    Notify(MessageConst.HIDE_ITEM_TIPS)
+                end
+                if self.m_onBeforeJump then
+                    self.m_onBeforeJump(info.phaseId, info.phaseArgs)
+                end
                 
                 PhaseManager:GoToPhase(info.phaseId, info.phaseArgs)
             else
                 local firstCraft = info.crafts and info.crafts[1] or nil
                 if firstCraft and WikiUtils.canShowWikiEntry(self.m_itemId) then
-                    PhaseManager:GoToPhase(PhaseId.Wiki, {
+                    local phaseArgs = {
                         isItemCraft = true,
                         itemId = self.m_itemId,
-                        craftId = firstCraft.craftId })
+                        craftId = firstCraft.craftId
+                    }
+                    if self.m_onBeforeJump then
+                        self.m_onBeforeJump(PhaseId.Wiki, phaseArgs)
+                    end
+                    if PhaseManager:CheckCanOpenPhase(PhaseId.Wiki, phaseArgs, false) then
+                        Notify(MessageConst.HIDE_ITEM_TIPS)
+                    end
+                    PhaseManager:GoToPhase(PhaseId.Wiki, phaseArgs)
                 else
+                    if self.m_onBeforeJump then
+                        self.m_onBeforeJump()
+                    end
+                    if PhaseManager:CheckCanOpenPhase(PhaseId.Wiki, { buildingId = info.buildingId }, false) then
+                        Notify(MessageConst.HIDE_ITEM_TIPS)
+                    end
                     Notify(MessageConst.SHOW_WIKI_ENTRY, { buildingId = info.buildingId })
 
                 end
@@ -488,10 +454,6 @@ ItemObtainWays._RefreshObtainCell = HL.Method(HL.Any, HL.Table, HL.Number) << fu
     LayoutRebuilder.ForceRebuildLayoutImmediate(cell.transform)
     cell.gameObject.name = "ObtainWay-" .. index
 end
-
-
-
-
 
 ItemObtainWays._UpdateCraftCell = HL.Method(HL.Table, HL.Table) << function(self, cell, info)
     if not cell.craftCells then
@@ -544,34 +506,45 @@ ItemObtainWays._UpdateCraftCell = HL.Method(HL.Table, HL.Table) << function(self
             if showMode then
                 local _, modeData = Tables.factoryMachineCraftModeTable:TryGetValue(craftInfo.formulaMode)
                 if modeData then
-                    craftCell.modeLabel:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_PANEL_ICON, modeData.iconId)
+                    craftCell.modeLabel:LoadSprite(UIConst.UI_SPRITE_FAC_BUILDING_COMMON, modeData.iconId)
                 end
             end
         end
 
         craftCell.gameObject.name = "Craft-" .. craftInfo.craftId
 
+        local showLimitedFormulaTag = FactoryUtils.isTimeLimitedFormula(craftInfo.craftId)
         
         if craftCell.limitedFormulaNode then
             if craftInfo.craftId ~= nil then
-                craftCell.limitedFormulaNode.gameObject:SetActiveIfNecessary(FactoryUtils.isTimeLimitedFormula(craftInfo.craftId))
+                craftCell.limitedFormulaNode.gameObject:SetActiveIfNecessary(showLimitedFormulaTag)
                 FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag1, craftInfo.craftId)
                 FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag2, craftInfo.craftId)
             else
                 craftCell.limitedFormulaNode.gameObject:SetActiveIfNecessary(false)
             end
         end
-
         
         if craftCell.limitedFormulaCtrl then
             if craftInfo.craftId ~= nil then
-                local timeLimited = FactoryUtils.isTimeLimitedFormula(craftInfo.craftId)
-                craftCell.limitedFormulaCtrl:SetState(timeLimited and "LimitedTimeEvent" or "Normal")
+                craftCell.limitedFormulaCtrl:SetState(showLimitedFormulaTag and "LimitedTimeEvent" or "Normal")
                 FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag1, craftInfo.craftId)
                 FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag2, craftInfo.craftId)
                 FactoryUtils.setTimeLimitedFormulaTagColor(craftCell.timeLimitedColorTag3, craftInfo.craftId)
             else
                 craftCell.limitedFormulaCtrl:SetState("Normal")
+            end
+        end
+
+        
+        if craftCell.envNodeController ~= nil then
+            FactoryUtils.refreshEnvIcon(craftInfo.env, craftCell.envNodeController)
+            if craftCell.envGreyBG ~= nil then
+                craftCell.envGreyBG.gameObject:SetActive(
+                    not showLimitedFormulaTag and
+                        craftInfo.env ~= nil and
+                        craftInfo.env ~= GEnums.FacEnvGenEnvType.None
+                )
             end
         end
 

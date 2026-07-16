@@ -1,23 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
 SpaceshipClueCollectNode = HL.Class('SpaceshipClueCollectNode', UIWidgetBase)
-
 
 SpaceshipClueCollectNode.m_spaceship = HL.Field(HL.Userdata)
 
-
 SpaceshipClueCollectNode.m_isOpen = HL.Field(HL.Boolean) << false
-
-
 
 
 
@@ -70,15 +57,11 @@ SpaceshipClueCollectNode._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 SpaceshipClueCollectNode.InitSpaceshipClueCollectNode = HL.Method() << function(self)
     self:_FirstTimeInit()
     self:FadeIn()
     self:RefreshState()
 end
-
-
 
 SpaceshipClueCollectNode.RefreshState = HL.Method() << function(self)
     local clueData = self.m_spaceship:GetClueData()
@@ -130,9 +113,6 @@ SpaceshipClueCollectNode.RefreshState = HL.Method() << function(self)
 end
 
 
-
-
-
 SpaceshipClueCollectNode._TickProgress = HL.Method(HL.Number) << function(self, nowProgress)
     self.view.operator.slider.value = nowProgress / Tables.spaceshipConst.clueCollectPointMaxValue
     local time = self.m_spaceship:GetNextStationClueLeftTime()
@@ -144,8 +124,6 @@ SpaceshipClueCollectNode._TickProgress = HL.Method(HL.Number) << function(self, 
     end
 end
 
-
-
 SpaceshipClueCollectNode.FadeIn = HL.Method() << function(self)
     if self.m_isOpen then
         return
@@ -154,8 +132,6 @@ SpaceshipClueCollectNode.FadeIn = HL.Method() << function(self)
     self.view.animationWrapper:ClearTween()
     self.view.animationWrapper:PlayInAnimation()
 end
-
-
 
 
 SpaceshipClueCollectNode.FadeOut = HL.Method() << function(self)

@@ -1,32 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacPowerPoleLinkingLabel
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacPowerPoleLinkingLabelCtrl = HL.Class('FacPowerPoleLinkingLabelCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -43,23 +18,15 @@ FacPowerPoleLinkingLabelCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacPowerPoleLinkingLabelCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 FacPowerPoleLinkingLabelCtrl.m_linkType = HL.Field(HL.Number) << 0
 
-
 FacPowerPoleLinkingLabelCtrl.m_toastType = HL.Field(HL.Number) << 0
-
 
 FacPowerPoleLinkingLabelCtrl.m_timerId = HL.Field(HL.Number) << -1
 
-
 FacPowerPoleLinkingLabelCtrl.m_showToast = HL.Field(HL.Boolean) << false
-
-
-
 
 
 FacPowerPoleLinkingLabelCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -69,16 +36,11 @@ FacPowerPoleLinkingLabelCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
     end)
 end
 
-
-
 FacPowerPoleLinkingLabelCtrl.ShowLabel = HL.StaticMethod(HL.Table) << function(args)
     local ctrl = FacPowerPoleLinkingLabelCtrl.AutoOpen(PANEL_ID, nil, false)
     ctrl:_ShowLabel(args)
     LuaSystemManager.factory:AddFactoryModeRequest({ true, "FacPowerPole" })
 end
-
-
-
 
 FacPowerPoleLinkingLabelCtrl._ShowLabel = HL.Method(HL.Table) << function(self, args)
     self.m_showToast = true
@@ -90,21 +52,22 @@ FacPowerPoleLinkingLabelCtrl._ShowLabel = HL.Method(HL.Table) << function(self, 
     self.m_nodeId = nodeId
     self.m_linkType = linkType
 
-    if linkType == 1 then
+    if linkType == 1 then 
         self.view.textPrefixPowerPole.gameObject:SetActiveIfNecessary(true)
         self.view.textPrefixUdpipe.gameObject:SetActiveIfNecessary(false)
-    elseif linkType == 2 then
+    elseif linkType == 2 then 
         self.view.textPrefixPowerPole.gameObject:SetActiveIfNecessary(false)
         self.view.textPrefixUdpipe.gameObject:SetActiveIfNecessary(true)
+        Notify(MessageConst.LINK_WIRE_MODE_UDPIPE_TRACKER_SHOW)
     end
 
     self.view.main.gameObject:SetActiveIfNecessary(true)
     self.view.tipsTxtNode.gameObject:SetActiveIfNecessary(true)
     self.view.wireLengthNode.gameObject:SetActiveIfNecessary(false)
 
-    if linkType == 1 then
+    if linkType == 1 then 
         self:_ShowToast(FacConst.FAC_LINK_WIRE_TOAST_TYPE.Start)
-    elseif linkType == 2 then
+    elseif linkType == 2 then 
         self:_ShowToast(FacConst.FAC_LINK_WIRE_TOAST_TYPE.UdpipeStart)
     end
 
@@ -115,16 +78,14 @@ FacPowerPoleLinkingLabelCtrl._ShowLabel = HL.Method(HL.Table) << function(self, 
     end)
 end
 
-
-
 FacPowerPoleLinkingLabelCtrl.HideLabel = HL.StaticMethod(HL.Table) << function(args)
     local ctrl = FacPowerPoleLinkingLabelCtrl.AutoOpen(PANEL_ID, nil, false)
     ctrl:_HideLabel(args)
     LuaSystemManager.factory:RemoveFactoryModeRequest("FacPowerPole")
+    if ctrl.m_linkType == 2 then 
+        Notify(MessageConst.LINK_WIRE_MODE_UDPIPE_TRACKER_HIDE)
+    end
 end
-
-
-
 
 FacPowerPoleLinkingLabelCtrl._HideLabel = HL.Method(HL.Table) << function(self, args)
     self.m_showToast = false
@@ -142,9 +103,6 @@ FacPowerPoleLinkingLabelCtrl._HideLabel = HL.Method(HL.Table) << function(self, 
     end)
 end
 
-
-
-
 FacPowerPoleLinkingLabelCtrl._UpdateWireLengthLabel = HL.Method(HL.Table) << function(self, args)
     local curLength, maxLength, textColor = unpack(args)
     self.view.textMeter.text = UIUtils.ceilToTenthStr(curLength)
@@ -152,26 +110,15 @@ FacPowerPoleLinkingLabelCtrl._UpdateWireLengthLabel = HL.Method(HL.Table) << fun
     self.view.textMeterTotal.text = UIUtils.floorToTenthStr(maxLength)
 end
 
-
-
-
 FacPowerPoleLinkingLabelCtrl._OnMove = HL.Method(HL.Table) << function(self, args)
     self:OnMoveModeUpdated(args.buildingTypeId, args.position, args.nodeId)
 end
-
-
-
-
-
 
 FacPowerPoleLinkingLabelCtrl.OnMoveModeUpdated = HL.Method(HL.String, Vector3, HL.Any) << function(self, buildingTypeId, position, nodeId)
     if self.m_nodeId == nodeId then
         GameWorld.gameMechManager.linkWireBrain:EndLinkWithCancel(true)
     end
 end
-
-
-
 
 FacPowerPoleLinkingLabelCtrl._ShowToast = HL.Method(HL.Number) << function(self, type)
     self.view.animationWrapper:ClearTween(false)
@@ -197,8 +144,6 @@ FacPowerPoleLinkingLabelCtrl._ShowToast = HL.Method(HL.Number) << function(self,
     end
 end
 
-
-
 FacPowerPoleLinkingLabelCtrl._HideToast = HL.Method() << function(self)
     self.view.wireLengthNode.gameObject:SetActiveIfNecessary(true)
     self.view.animationWrapper:PlayWithTween("facpowerpolelink_text",function()
@@ -217,9 +162,6 @@ FacPowerPoleLinkingLabelCtrl._HideToast = HL.Method() << function(self)
     end)
 end
 
-
-
-
 FacPowerPoleLinkingLabelCtrl._ShowLinkToast = HL.Method(HL.Table) << function(self, args)
     if self.m_showToast == false then
         return
@@ -235,9 +177,6 @@ FacPowerPoleLinkingLabelCtrl._ShowLinkToast = HL.Method(HL.Table) << function(se
     end)
 end
 
-
-
-
 FacPowerPoleLinkingLabelCtrl._PlayAudio = HL.Method(HL.Number) << function(self, type)
     if type == FacConst.FAC_LINK_WIRE_TOAST_TYPE.Success then
         AudioManager.PostEvent("Au_UI_HUD_PowerTower_Connect")
@@ -245,9 +184,6 @@ FacPowerPoleLinkingLabelCtrl._PlayAudio = HL.Method(HL.Number) << function(self,
         AudioManager.PostEvent("Au_UI_HUD_PowerTower_Disconnect")
     end
 end
-
-
-
 
 FacPowerPoleLinkingLabelCtrl._PlayToastAnimation = HL.Method(HL.Function) << function(self, onAnimationOut)
     self.m_timerId = self:_StartTimer(self.view.config.TOAST_TIME, function()
@@ -257,13 +193,9 @@ FacPowerPoleLinkingLabelCtrl._PlayToastAnimation = HL.Method(HL.Function) << fun
     end)
 end
 
-
-
 FacPowerPoleLinkingLabelCtrl._IsWireLengthLabelShow = HL.Method().Return(HL.Boolean) << function(self)
     return self.view.wireLengthNode.gameObject.activeSelf
 end
-
-
 
 FacPowerPoleLinkingLabelCtrl.OnHide = HL.Override() << function(self)
     if self.m_timerId >= 0 then
@@ -272,8 +204,6 @@ FacPowerPoleLinkingLabelCtrl.OnHide = HL.Override() << function(self)
     end
     self.view.main.gameObject:SetActiveIfNecessary(false)
 end
-
-
 
 FacPowerPoleLinkingLabelCtrl.OnShow = HL.Override() << function(self)
     if self.m_timerId >= 0 then
@@ -290,9 +220,6 @@ FacPowerPoleLinkingLabelCtrl.OnShow = HL.Override() << function(self)
         end)
     end
 end
-
-
-
 
 FacPowerPoleLinkingLabelCtrl.OnToggleControllerSkillIndicator = HL.Method(HL.Boolean) << function(self, active)
     if active then

@@ -2,13 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.StoryModeToast
 
-
-
-
-
-
 StoryModeToastCtrl = HL.Class('StoryModeToastCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -19,32 +13,20 @@ StoryModeToastCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
-
-StoryModeToastCtrl.OnGameModeEnable = HL.StaticMethod(HL.Table) << function(args)
-    local modeType, mode = unpack(args)
-    if modeType == GEnums.GameModeType.Story then
-        UIManager:Close(PANEL_ID)
-        if mode.showEnterToast then
+StoryModeToastCtrl.OnStoryModeChanged = HL.StaticMethod(HL.Table) << function(args)
+    local enable = unpack(args)
+    local zoneData = GameWorld.functionAreaManager:GetCurrentStoryZoneData()
+    UIManager:Close(PANEL_ID)
+    if enable then
+        if zoneData and zoneData.showEnterToast then
             UIManager:AutoOpen(PANEL_ID, true)
         end
-    end
-end
-
-
-
-StoryModeToastCtrl.OnGameModeDisable = HL.StaticMethod(HL.Table) << function(args)
-    local modeType, mode = unpack(args)
-    if modeType == GEnums.GameModeType.Story then
-        UIManager:Close(PANEL_ID)
-        if mode.showLeaveToast then
+    else
+        if zoneData and zoneData.showLeaveToast then
             UIManager:AutoOpen(PANEL_ID, false)
         end
     end
 end
-
-
-
 
 
 StoryModeToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)

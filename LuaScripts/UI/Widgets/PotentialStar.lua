@@ -1,22 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
 PotentialStar = HL.Class('PotentialStar', UIWidgetBase)
-
 
 PotentialStar.m_potentialCellList = HL.Field(HL.Table)
 
-
 PotentialStar.m_effectCor = HL.Field(HL.Thread)
-
-
 
 
 
@@ -29,10 +17,6 @@ PotentialStar._OnFirstTimeInit = HL.Override() << function(self)
         self.m_potentialCellList[i] = cell
     end
 end
-
-
-
-
 
 PotentialStar.InitCharPotentialStar = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, charInstId, showMaxPotentialHint)
     self:_FirstTimeInit()
@@ -50,10 +34,6 @@ PotentialStar.InitCharPotentialStar = HL.Method(HL.Number, HL.Opt(HL.Boolean)) <
     self.view.finishGlowNode.gameObject:SetActive(isPotentialMax)
 end
 
-
-
-
-
 PotentialStar.InitCharPotentialStarByLevel = HL.Method(HL.Number, HL.Opt(HL.Boolean))
     << function(self, potentialLevel, showMaxPotentialHint)
     self:_FirstTimeInit()
@@ -67,10 +47,6 @@ PotentialStar.InitCharPotentialStarByLevel = HL.Method(HL.Number, HL.Opt(HL.Bool
     self.view.maxNode.gameObject:SetActive(showMaxPotentialHint and isPotentialMax)
     self.view.finishGlowNode.gameObject:SetActive(isPotentialMax)
 end
-
-
-
-
 
 
 PotentialStar.InitWeaponPotentialStar = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(self, toLv, args)
@@ -109,12 +85,6 @@ PotentialStar.InitWeaponPotentialStar = HL.Method(HL.Number, HL.Opt(HL.Table)) <
     self.view.maxNode.gameObject:SetActive(showMaxPotentialHint and isPotentialMax)
     self.view.finishGlowNode.gameObject:SetActive(isPotentialMax)
 end
-
-
-
-
-
-
 
 PotentialStar._InitPotentialCell = HL.Method(HL.Table, HL.Boolean, HL.Number, HL.Number) << function(self, cell, isPotentialMax, index, toLv)
     local stateName = "empty"

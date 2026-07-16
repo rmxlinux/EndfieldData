@@ -1,35 +1,14 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacTechTreeUnlockTierPopup
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacTechTreeUnlockTierPopupCtrl = HL.Class('FacTechTreeUnlockTierPopupCtrl', uiCtrl.UICtrl)
-
 
 FacTechTreeUnlockTierPopupCtrl.m_costItemCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 FacTechTreeUnlockTierPopupCtrl.m_pageCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 FacTechTreeUnlockTierPopupCtrl.m_curLayerIndex = HL.Field(HL.Number) << -1
 
-
 FacTechTreeUnlockTierPopupCtrl.m_lockedLayerIds = HL.Field(HL.Table)
-
 
 
 
@@ -39,9 +18,6 @@ FacTechTreeUnlockTierPopupCtrl.m_lockedLayerIds = HL.Field(HL.Table)
 FacTechTreeUnlockTierPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_ON_UNLOCK_TECH_TIER_UI] = 'OnUnlockTier',
 }
-
-
-
 
 
 FacTechTreeUnlockTierPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -89,8 +65,6 @@ FacTechTreeUnlockTierPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, 
     self:_InitController()
 end
 
-
-
 FacTechTreeUnlockTierPopupCtrl.GetCurState = HL.Method().Return(HL.Table) << function(self)
     return {
         layerId = self.m_lockedLayerIds[self.m_curLayerIndex],
@@ -98,14 +72,9 @@ FacTechTreeUnlockTierPopupCtrl.GetCurState = HL.Method().Return(HL.Table) << fun
     }
 end
 
-
-
-
 FacTechTreeUnlockTierPopupCtrl.OnUnlockTier = HL.Method(HL.Table) << function(self, args)
     self:_OnClickClose()
 end
-
-
 
 FacTechTreeUnlockTierPopupCtrl._Refresh = HL.Method() << function(self)
     local layerId = self.m_lockedLayerIds[self.m_curLayerIndex]
@@ -162,21 +131,14 @@ FacTechTreeUnlockTierPopupCtrl._Refresh = HL.Method() << function(self)
     self.view.contentNode:SetState(canUnlock and "CanUnlock" or "CantUnlock")
 end
 
-
-
 FacTechTreeUnlockTierPopupCtrl._OnClickClose = HL.Method() << function(self)
     self:PlayAnimationOutAndClose()
 end
-
-
 
 FacTechTreeUnlockTierPopupCtrl._OnClickConfirm = HL.Method() << function(self)
     local layerId = self.m_lockedLayerIds[self.m_curLayerIndex]
     GameInstance.player.facTechTreeSystem:SendUnlockTierMsg(layerId)
 end
-
-
-
 
 FacTechTreeUnlockTierPopupCtrl._OnClickSwitch = HL.Method(HL.Number) << function(self, offset)
     local nextIndex = self.m_curLayerIndex + offset
@@ -191,8 +153,6 @@ FacTechTreeUnlockTierPopupCtrl._OnClickSwitch = HL.Method(HL.Number) << function
     self:_UpdatePageNode()
 end
 
-
-
 FacTechTreeUnlockTierPopupCtrl._UpdateBtnState = HL.Method() << function(self)
     local canNext = self.m_curLayerIndex < #self.m_lockedLayerIds
     local canPre = self.m_curLayerIndex > 1
@@ -201,23 +161,17 @@ FacTechTreeUnlockTierPopupCtrl._UpdateBtnState = HL.Method() << function(self)
     self.view.preBtn.interactable = canPre
 end
 
-
-
 FacTechTreeUnlockTierPopupCtrl._InitPageNode = HL.Method() << function(self)
     self.m_pageCellCache:Refresh(#self.m_lockedLayerIds, function(cell, index)
         cell.stateController:SetState(self.m_curLayerIndex == index and "Select" or "Unselect")
     end)
 end
 
-
-
 FacTechTreeUnlockTierPopupCtrl._UpdatePageNode = HL.Method() << function(self)
     self.m_pageCellCache:Update(function(cell, index)
         cell.stateController:SetState(self.m_curLayerIndex == index and "Select" or "Unselect")
     end)
 end
-
-
 
 FacTechTreeUnlockTierPopupCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -230,9 +184,6 @@ FacTechTreeUnlockTierPopupCtrl._InitController = HL.Method() << function(self)
         self:_OnIsFocusedChange(isFocus)
     end)
 end
-
-
-
 
 FacTechTreeUnlockTierPopupCtrl._OnIsFocusedChange = HL.Method(HL.Boolean) << function(self, isFocus)
     self.view.preBtn.gameObject:SetActive(not isFocus)

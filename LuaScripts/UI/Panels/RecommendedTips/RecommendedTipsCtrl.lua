@@ -4,51 +4,21 @@ local PANEL_ID = PanelId.RecommendedTips
 
 local GROUP_NAME_TEXT_ID_FORMAT = "LUA_RECOMMENDED_TIPS_PANEL_GROUP_NAME_%s"  
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RecommendedTipsCtrl = HL.Class('RecommendedTipsCtrl', uiCtrl.UICtrl)
-
 
 RecommendedTipsCtrl.m_arg = HL.Field(HL.Any)
 
-
 RecommendedTipsCtrl.m_infos = HL.Field(HL.Table)
-
 
 RecommendedTipsCtrl.m_groupCells = HL.Field(HL.Forward("UIListCache"))
 
 
-
 RecommendedTipsCtrl.m_weaponCellsDict = HL.Field(HL.Table)
-
 
 RecommendedTipsCtrl.m_haveInitTarget = HL.Field(HL.Boolean) << false
 
 
-
 RecommendedTipsCtrl.m_curWeaponInfo = HL.Field(HL.Any)
-
 
 
 
@@ -60,9 +30,6 @@ RecommendedTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 RecommendedTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:ChangeCurPanelBlockSetting(DeviceInfo.usingController)
     self.m_arg = arg
@@ -71,22 +38,14 @@ RecommendedTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshUI()
 end
 
-
-
 RecommendedTipsCtrl.OnShow = HL.Override() << function(self)
 end
-
-
 
 RecommendedTipsCtrl.OnClose = HL.Override() << function(self)
 end
 
-
-
 RecommendedTipsCtrl.OnHide = HL.Override() << function(self)
 end
-
-
 
 
 
@@ -121,9 +80,6 @@ RecommendedTipsCtrl._InitData = HL.Method() << function(self)
     end
 end
 
-
-
-
 RecommendedTipsCtrl._ConvertListToTable = HL.Method(HL.Any).Return(HL.Table) << function(self, list)
     if list == nil then
         return {}
@@ -135,8 +91,6 @@ RecommendedTipsCtrl._ConvertListToTable = HL.Method(HL.Any).Return(HL.Table) << 
     end
     return ret
 end
-
-
 
 RecommendedTipsCtrl._InitTestData = HL.Method() << function(self)
     self.m_infos = {}
@@ -166,8 +120,6 @@ RecommendedTipsCtrl._InitTestData = HL.Method() << function(self)
     })
 end
 
-
-
 RecommendedTipsCtrl._BindUI = HL.Method() << function(self)
     self.view.btnClose.onClick:AddListener(function()
         self:_TryClose()
@@ -183,8 +135,6 @@ RecommendedTipsCtrl._BindUI = HL.Method() << function(self)
     end)
 end
 
-
-
 RecommendedTipsCtrl._RefreshUI = HL.Method() << function(self)
     self.view.titleText.text = Language.LUA_RECOMMENDED_TIPS_PANEL_TITLE
 
@@ -198,19 +148,13 @@ RecommendedTipsCtrl._RefreshUI = HL.Method() << function(self)
     end
 end
 
-
-
 RecommendedTipsCtrl._SetFirstNavi = HL.Method() << function(self)
     local firstWeaponCells = self.m_weaponCellsDict[1]
     if firstWeaponCells:GetCount() > 0 then
         local firstWeaponCell = firstWeaponCells:Get(1)
-        UIUtils.setAsNaviTarget(firstWeaponCell.inputBindingGroupNaviDecorator)
+        self:SetNaviTarget(firstWeaponCell.inputBindingGroupNaviDecorator)
     end
 end
-
-
-
-
 
 RecommendedTipsCtrl._SetupGroupCell = HL.Method(HL.Any, HL.Number) << function(self, groupCell, groupIndex)
     local nameTextId = string.format(GROUP_NAME_TEXT_ID_FORMAT, groupIndex)
@@ -228,10 +172,6 @@ RecommendedTipsCtrl._SetupGroupCell = HL.Method(HL.Any, HL.Number) << function(s
         self:_SetupWeaponCell(cell, weaponId)
     end)
 end
-
-
-
-
 
 RecommendedTipsCtrl._SetupWeaponCell = HL.Method(HL.Any, HL.String) << function(self, cell, weaponId)
     local item = cell.itemBigBlack
@@ -315,22 +255,15 @@ RecommendedTipsCtrl._SetupWeaponCell = HL.Method(HL.Any, HL.String) << function(
     end
 end
 
-
-
 RecommendedTipsCtrl._OnShowWikiEntry = HL.Method() << function(self)
     
     self:Close()
 end
 
-
-
-
 RecommendedTipsCtrl._OnWeaponListSelectItem = HL.Method(HL.Any) << function(self, arg)
     
     self:_TryClose()
 end
-
-
 
 RecommendedTipsCtrl._TryClose = HL.Method() << function(self)
     if not self:IsPlayingAnimationOut() then

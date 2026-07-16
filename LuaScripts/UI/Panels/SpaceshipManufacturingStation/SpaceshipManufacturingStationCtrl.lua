@@ -24,9 +24,11 @@ SpaceshipManufacturingStationCtrl.m_animationWrapper = HL.Field(HL.Userdata)
 
 SpaceshipManufacturingStationCtrl.m_moveCam = HL.Field(HL.Boolean) << false
 
+SpaceshipManufacturingStationCtrl.m_recoverState = HL.Field(HL.Table)
+SpaceshipManufacturingStationCtrl.m_isRemote = HL.Field(HL.Boolean) << false
+
 SpaceshipManufacturingStationCtrl.m_clearScreenKey = HL.Field(HL.Number) << -1
 
-SpaceshipManufacturingStationCtrl.m_recoverState = HL.Field(HL.Table)
 
 
 
@@ -51,6 +53,7 @@ SpaceshipManufacturingStationCtrl.OnCreate = HL.Override(HL.Any) << function(sel
     
     self.m_roomId = arg.roomId
     self.m_moveCam = arg.moveCam == true
+    self.m_isRemote = arg.isRemoteCamera == true
     self.m_clearScreenKey = arg.clearScreenKey or -1
     local spaceship = GameInstance.player.spaceship
 
@@ -93,7 +96,6 @@ SpaceshipManufacturingStationCtrl.OnCreate = HL.Override(HL.Any) << function(sel
     self:_InitRoomInfo()
     local recoverState = arg and arg.recoverState or nil
     self.m_recoverState = recoverState
-    self:_InitFormulaList()
     self:_InitFormulaPanel()
 
     if recoverState then
@@ -111,6 +113,7 @@ SpaceshipManufacturingStationCtrl.OnCreate = HL.Override(HL.Any) << function(sel
         end
     end)
 
+    self:PlayAnimationIn()
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     self:_TryRecoverFriendHelpPopup(arg and arg.friendHelpPopupState or nil)
 end
@@ -124,7 +127,7 @@ SpaceshipManufacturingStationCtrl._InitBG = HL.Method() << function(self)
 end
 
 SpaceshipManufacturingStationCtrl._InitRoomInfo = HL.Method() << function(self)
-    self.view.roomCommonInfo:InitSpaceshipRoomCommonInfo(self.m_roomId, self.m_moveCam)
+    self.view.roomCommonInfo:InitSpaceshipRoomCommonInfo(self.m_roomId, self.m_moveCam, self.m_isRemote)
 end
 
 SpaceshipManufacturingStationCtrl._InitFormulaList = HL.Method() << function(self)
@@ -228,6 +231,11 @@ SpaceshipManufacturingStationCtrl._InitFormulaPanel = HL.Method() << function(se
         self:_OnNumberSelectorChange(curNumber, isChangeByBtn)
     end)
 
+    local remainFormulaId = GameInstance.player.spaceship:GetManufacturingStationRemainFormulaId(self.m_roomId)
+    if not string.isEmpty(remainFormulaId) then
+        self.m_curSelectFormulaId = remainFormulaId
+    end
+
     self:_RefreshPanelTopNode()
     self:_RefreshNumberSelector()
     self:_RefreshFormulaInfoByRemain()
@@ -242,7 +250,7 @@ SpaceshipManufacturingStationCtrl._TickFormulaPanel = HL.Method() << function(se
     local isProducing = spaceship:IsManufacturingStateProducing(self.m_roomId)
 
     if string.isEmpty(remainFormulaId) or not isProducing
-            or self.m_showingFormulaList and self.m_curSelectFormulaId ~= remainFormulaId then
+        or self.m_showingFormulaList and self.m_curSelectFormulaId ~= remainFormulaId then
         return
     end
 
@@ -265,7 +273,7 @@ end
 SpaceshipManufacturingStationCtrl._RefreshFormulaOutcomeInfo = HL.Method() << function(self)
     local spaceship = GameInstance.player.spaceship
     local formulaId = self.m_showingFormulaList and self.m_curSelectFormulaId
-            or spaceship:GetManufacturingStationRemainFormulaId(self.m_roomId)
+        or spaceship:GetManufacturingStationRemainFormulaId(self.m_roomId)
 
     local hasFormulaId = not string.isEmpty(formulaId)
     self.view.formulaInfo.gameObject:SetActiveIfNecessary(hasFormulaId)
@@ -279,7 +287,7 @@ SpaceshipManufacturingStationCtrl._RefreshFormulaOutcomeInfo = HL.Method() << fu
         local ownCount = Utils.getItemCount(itemId)
         self.view.formulaNameTxt.text = itemCfg.name
         self.view.formulaStateTxt.text = string.format(Language.LUA_SPACESHIP_MANUFACTURING_STATION_OWN_OUTCOME_FORMAT,
-                                                       ownCount)
+            ownCount)
         self.view.itemBig:InitItem({ id = itemId }, true)
     end
 end
@@ -301,14 +309,14 @@ SpaceshipManufacturingStationCtrl._RefreshNumberSelector = HL.Method() << functi
     local defaultNum
     if selectUnlock then
         local remainFormulaSelectedShowCount = remainProduceCount > 0
-                and math.max(remainProduceCount + self.m_diffBetweenSelectAndRemain, 1) or remainProduceCount
+            and math.max(remainProduceCount + self.m_diffBetweenSelectAndRemain, 1) or remainProduceCount
         defaultNum = (isRemainFormulaSelected or not self.m_showingFormulaList) and remainFormulaSelectedShowCount or 1
     else
         defaultNum = 0
     end
     self.view.numberSelector:RefreshNumber(defaultNum, math.min(defaultNum, 1), maxNum)
     self.view.numberSelector.gameObject:SetActiveIfNecessary(self.m_showingFormulaList and selectUnlock
-                                                             or not self.m_showingFormulaList and hasRemainFormula)
+        or not self.m_showingFormulaList and hasRemainFormula)
 end
 
 SpaceshipManufacturingStationCtrl._RefreshFormulaTimeInfoBySelected = HL.Method() << function(self)
@@ -325,7 +333,7 @@ SpaceshipManufacturingStationCtrl._RefreshFormulaTimeInfoBySelected = HL.Method(
     self.view.schedule.fillAmount = 0
     self.view.countdownTxt.text = UIUtils.getLeftTimeToSecond(selectUnlock and (formulaData.totalProgress / roomProduceRate) or 0)
     self.view.capacityTxt.text = string.format(Language.LUA_SPACESHIP_MANUFACTURING_STATION_CAPACITY_FORMAT,
-                                               self.m_curSelectNumber * formulaData.perCapacity, machineCapacity)
+        self.m_curSelectNumber * formulaData.perCapacity, machineCapacity)
     self.view.timeTxt.text = UIUtils.getLeftTimeToSecond(self.m_curSelectNumber * formulaData.totalProgress / roomProduceRate)
 
     self.view.suspendImg.gameObject:SetActiveIfNecessary(false)
@@ -352,9 +360,9 @@ SpaceshipManufacturingStationCtrl._RefreshFormulaTimeInfoByRemain = HL.Method() 
         local realProgress = curProgress + diffProgress
         local curLeftProgress = math.max(0, formulaData.totalProgress - realProgress)
         self.view.formulaStateTxt.text = string.format(Language.LUA_SPACESHIP_MANUFACTURING_STATION_OWN_OUTCOME_FORMAT,
-                                                       Utils.getItemCount(formulaData.outcomeItemId))
+            Utils.getItemCount(formulaData.outcomeItemId))
         self.view.capacityTxt.text = string.format(Language.LUA_SPACESHIP_MANUFACTURING_STATION_CAPACITY_FORMAT,
-                                                   panelRemainCount * formulaData.perCapacity, machineCapacity)
+            panelRemainCount * formulaData.perCapacity, machineCapacity)
         self.view.schedule.fillAmount = remainProduceCount > 0 and realProgress / formulaData.totalProgress or 0
         self.view.countdownTxt.text = UIUtils.getLeftTimeToSecond(panelRemainCount > 0 and curLeftProgress / roomProduceRate or 0)
         self.view.timeTxt.text = UIUtils.getLeftTimeToSecond(panelRemainCount > 0 and (curLeftProgress + formulaData.totalProgress * math.max(0, panelRemainCount - 1)) / roomProduceRate or 0)
@@ -364,7 +372,7 @@ SpaceshipManufacturingStationCtrl._RefreshFormulaTimeInfoByRemain = HL.Method() 
         self.view.timeTxt.text = UIUtils.getLeftTimeToSecond(0)
         self.view.countdownTxt.text = UIUtils.getLeftTimeToSecond(0)
         self.view.capacityTxt.text = string.format(Language.LUA_SPACESHIP_MANUFACTURING_STATION_CAPACITY_FORMAT, 0,
-                                                   machineCapacity)
+            machineCapacity)
         self.view.overCapacityTag.gameObject:SetActiveIfNecessary(false)
         self.view.suspendImg.gameObject:SetActiveIfNecessary(false)
     end
@@ -394,7 +402,7 @@ SpaceshipManufacturingStationCtrl._RefreshFormulaBottomState = HL.Method() << fu
     elseif self.m_showingFormulaList and selectUnlock or self.m_diffBetweenSelectAndRemainDirty then
         self.view.changeFormulaNode.gameObject:SetActiveIfNecessary(true)
         local showHint = spaceship:GetManufacturingStationRemainProduceCount(self.m_roomId) > 0 and
-                not isRemainFormulaSelected and (isProducing or hasProduct)
+            not isRemainFormulaSelected and (isProducing or hasProduct)
         self.view.confirmHintNode.gameObject:SetActiveIfNecessary(showHint)
     elseif not self.m_showingFormulaList and hasProduct then
         AudioManager.PostEvent("Au_UI_Event_Manufacturing_Finish")
@@ -406,7 +414,7 @@ SpaceshipManufacturingStationCtrl._RefreshFormulaBottomState = HL.Method() << fu
         if self.m_showingFormulaList then
             local formulaCfg = Tables.spaceshipManufactureFormulaTable[self.m_curSelectFormulaId]
             self.view.stateTxt.text = string.format(
-                    Language.LUA_SPACESHIP_MANUFACTURING_STATION_FORMULA_UNLOCK_CONDITION_FORMAT, formulaCfg.level)
+                Language.LUA_SPACESHIP_MANUFACTURING_STATION_FORMULA_UNLOCK_CONDITION_FORMAT, formulaCfg.level)
         else
             local remainCount = spaceship:GetManufacturingStationRemainProduceCount(self.m_roomId)
             local lang
@@ -428,13 +436,13 @@ SpaceshipManufacturingStationCtrl._RefreshFormulaBottomState = HL.Method() << fu
 end
 
 SpaceshipManufacturingStationCtrl._OnNumberSelectorChange = HL.Method(HL.Number, HL.Boolean)
-        << function(self, curNumber, isChangeByBtn)
+    << function(self, curNumber, isChangeByBtn)
     self.m_curSelectNumber = curNumber
 
     local spaceship = GameInstance.player.spaceship
     local remainFormulaId = spaceship:GetManufacturingStationRemainFormulaId(self.m_roomId)
     if (not self.m_showingFormulaList or self.m_showingFormulaList and self.m_curSelectFormulaId == remainFormulaId) and
-            isChangeByBtn then
+        isChangeByBtn then
         local remainProduceCount = spaceship:GetManufacturingStationRemainProduceCount(self.m_roomId)
         self.m_diffBetweenSelectAndRemain = self.m_curSelectNumber - remainProduceCount
         self.m_diffBetweenSelectAndRemainDirty = true
@@ -465,7 +473,7 @@ SpaceshipManufacturingStationCtrl._RefreshOverCapacity = HL.Method(HL.String) <<
     if overCapacity then
         local reachMachineCapacity = formulaData.perCapacity * self.m_curSelectNumber == machineCapacity
         self.view.overCapacityTxt.text = reachMachineCapacity and Language.LUA_SPACESHIP_MANUFACTURING_STATION_OVER_CAPACITY
-                or Language.LUA_SPACESHIP_MANUFACTURING_STATION_NEARLY_OVER_CAPACITY
+            or Language.LUA_SPACESHIP_MANUFACTURING_STATION_NEARLY_OVER_CAPACITY
         self.view.overCapacityTag:ClearTween()
         self.view.overCapacityTag.gameObject:SetActiveIfNecessary(true)
     else
@@ -515,7 +523,7 @@ end
 
 SpaceshipManufacturingStationCtrl._OnFormulaChange = HL.Method() << function(self)
     if GameInstance.player.spaceship:GetManufacturingStationRemainFormulaId(self.m_roomId)
-            == self.m_curSelectFormulaId then
+        == self.m_curSelectFormulaId then
         self:_RefreshFormulaInfoByRemain()
     else
         self:_RefreshFormulaInfoBySelected()
@@ -603,7 +611,7 @@ SpaceshipManufacturingStationCtrl._ShowCancelFormulaToast = HL.Method() << funct
     local spaceship = GameInstance.player.spaceship
     local _, count = spaceship:GetManufacturingStationProduct(self.m_roomId)
     local content = count > 0 and Language.LUA_SPACESHIP_MANUFACTURING_STATION_CANCEL_FORMULA_COMMON_WITH_PRODUCT_DESC
-            or Language.LUA_SPACESHIP_MANUFACTURING_STATION_CANCEL_FORMULA_COMMON_WITHOUT_PRODUCT_DESC
+        or Language.LUA_SPACESHIP_MANUFACTURING_STATION_CANCEL_FORMULA_COMMON_WITHOUT_PRODUCT_DESC
     Notify(MessageConst.SHOW_POP_UP, {
         content = Language.LUA_SPACESHIP_MANUFACTURING_STATION_CANCEL_FORMULA_SUB_DESC .. "\n" .. content,
         onConfirm = function()
@@ -619,12 +627,12 @@ SpaceshipManufacturingStationCtrl._ShowExchangeFormulaToast = HL.Method() << fun
     local spaceship = GameInstance.player.spaceship
     local _, count = spaceship:GetManufacturingStationProduct(self.m_roomId)
     local content = count > 0 and Language.LUA_SPACESHIP_MANUFACTURING_STATION_CANCEL_FORMULA_COMMON_WITH_PRODUCT_DESC
-            or Language.LUA_SPACESHIP_MANUFACTURING_STATION_CANCEL_FORMULA_COMMON_WITHOUT_PRODUCT_DESC
+        or Language.LUA_SPACESHIP_MANUFACTURING_STATION_CANCEL_FORMULA_COMMON_WITHOUT_PRODUCT_DESC
     Notify(MessageConst.SHOW_POP_UP, {
         content = Language.LUA_SPACESHIP_MANUFACTURING_STATION_EXCHANGE_FORMULA_SUB_DESC .. "\n" .. content,
         onConfirm = function()
             GameInstance.player.spaceship:ManufacturingStationChangeFormula(self.m_roomId, self.m_curSelectFormulaId,
-                                                                            self.m_curSelectNumber)
+                self.m_curSelectNumber)
         end,
         onCancel = function()
         end

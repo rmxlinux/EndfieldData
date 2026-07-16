@@ -1,25 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GuideMedia
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GuideMediaCtrl = HL.Class('GuideMediaCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -32,23 +13,15 @@ GuideMediaCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 GuideMediaCtrl.m_mediaInfos = HL.Field(HL.Userdata)
-
 
 GuideMediaCtrl.m_getMediaCell = HL.Field(HL.Function)
 
-
 GuideMediaCtrl.m_onComplete = HL.Field(HL.Function)
-
 
 GuideMediaCtrl.m_loadedImgKeys = HL.Field(HL.Table)
 
-
 GuideMediaCtrl.m_isHideMissionHud = HL.Field(HL.Boolean) << false
-
-
-
 
 
 
@@ -78,15 +51,11 @@ GuideMediaCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 GuideMediaCtrl.OnShow = HL.Override() << function(self)
     Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = self.panelId, enabled = true})
     UIManager:HideWithKey(PanelId.MissionHud, "GuideMedia") 
     CameraManager:StopTick("GuideMediaCtrl")
 end
-
-
 
 GuideMediaCtrl.OnHide = HL.Override() << function(self)
     self:_DisposeLoadedGuideImages()
@@ -95,15 +64,11 @@ GuideMediaCtrl.OnHide = HL.Override() << function(self)
     CameraManager:ResumeTick("GuideMediaCtrl")
 end
 
-
-
 GuideMediaCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = self.panelId, enabled = false})
     UIManager:HideWithKey(PanelId.MissionHud, "GuideMedia") 
     CameraManager:ResumeTick("GuideMediaCtrl")
 end
-
-
 
 GuideMediaCtrl.ShowGuideMedia = HL.StaticMethod(HL.Table) << function(args)
     
@@ -116,8 +81,6 @@ GuideMediaCtrl.ShowGuideMedia = HL.StaticMethod(HL.Table) << function(args)
     
     VoiceManager:SetPause(true)
 end
-
-
 
 GuideMediaCtrl.HideGuideMedia = HL.Method() << function(self)
     if not self:IsShow() then
@@ -139,14 +102,9 @@ GuideMediaCtrl.HideGuideMedia = HL.Method() << function(self)
 end
 
 
-
-
 GuideMediaCtrl._OnClickClose = HL.Method() << function(self)
     self.m_onComplete()
 end
-
-
-
 
 GuideMediaCtrl._RefreshMedia = HL.Method(HL.Userdata) << function(self, mediaInfos) 
     local node = self.view.mediaNode
@@ -156,10 +114,6 @@ GuideMediaCtrl._RefreshMedia = HL.Method(HL.Userdata) << function(self, mediaInf
     node.mediaList:UpdateCount(count, true)
     node.animationWrapper:PlayInAnimation()
 end
-
-
-
-
 
 GuideMediaCtrl._OnUpdateImageCell = HL.Method(GameObject, HL.Number) << function(self, obj, csIndex)
     local info = self.m_mediaInfos[csIndex]
@@ -212,9 +166,6 @@ GuideMediaCtrl._OnUpdateImageCell = HL.Method(GameObject, HL.Number) << function
     end
 end
 
-
-
-
 GuideMediaCtrl._OnUpdateSelectImageIndex = HL.Method(HL.Number) << function(self, newIndex)
     local node = self.view.mediaNode
     local infos = self.m_mediaInfos
@@ -233,10 +184,8 @@ GuideMediaCtrl._OnUpdateSelectImageIndex = HL.Method(HL.Number) << function(self
         node.hint.gameObject:SetActive(false)
     end
 
-    Notify(MessageConst.HIDE_HYPERLINK_TIPS)
+    Notify(MessageConst.ON_STOP_HOVER_LINK)
 end
-
-
 
 GuideMediaCtrl._DisposeLoadedGuideImages = HL.Method() << function(self)
     for _, key in ipairs(self.m_loadedImgKeys) do

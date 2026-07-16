@@ -1,38 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ChallengeDungeon
 local PHASE_ID = PhaseId.ChallengeDungeon
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ChallengeDungeonCtrl = HL.Class('ChallengeDungeonCtrl', uiCtrl.UICtrl)
 
 
@@ -50,7 +18,6 @@ local DungeonStateEnum = {
 
 
 
-
 ChallengeDungeonCtrl.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.ON_SUB_GAME_UNLOCK] = '_OnSubGameUnlock',
@@ -60,29 +27,19 @@ ChallengeDungeonCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 ChallengeDungeonCtrl.m_info = HL.Field(HL.Table)
-
 
 ChallengeDungeonCtrl.m_getTabCellFunc = HL.Field(HL.Function)
 
-
 ChallengeDungeonCtrl.m_getDungeonCellFunc = HL.Field(HL.Function)
-
 
 ChallengeDungeonCtrl.m_batchMarkListCache = HL.Field(HL.Forward("UIListCache"))
 
-
 ChallengeDungeonCtrl.m_updateTimeCor = HL.Field(HL.Thread)
-
 
 ChallengeDungeonCtrl.m_readRedDotDungeonTempList = HL.Field(HL.Table)
 
-
 ChallengeDungeonCtrl.m_naviCellIndex = HL.Field(HL.Number) << 0
-
-
-
 
 
 
@@ -96,8 +53,6 @@ ChallengeDungeonCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     ActivityUtils.backToMainHudWhenActivityClosed(self, self.m_info.activityId)
 end
 
-
-
 ChallengeDungeonCtrl.OnClose = HL.Override() << function(self)
     self.m_updateTimeCor = self:_ClearCoroutine(self.m_updateTimeCor)
     
@@ -108,14 +63,20 @@ ChallengeDungeonCtrl.OnClose = HL.Override() << function(self)
     self:_TryClearReadDungeon()
 end
 
-
-
 ChallengeDungeonCtrl.OnAnimationInFinished = HL.Override() << function(self)
     self:_AutoNavi()
 end
 
-
-
+ChallengeDungeonCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
+    if not self.m_info then
+        return nil
+    end
+    return {
+        activityId = self.m_info.activityId,
+        defaultSeriesIndex = self.m_info.curSelectSeriesIndex,
+        defaultDungeonIndex = self.m_naviCellIndex,
+    }
+end
 
 
 
@@ -137,8 +98,6 @@ ChallengeDungeonCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     
     self:_InitSeriesInfo()
 end
-
-
 
 
 
@@ -196,9 +155,6 @@ ChallengeDungeonCtrl._InitSeriesInfo = HL.Method() << function(self)
     end
     table.sort(self.m_info.seriesInfos, Utils.genSortFunction({ "sortId" }, true))
 end
-
-
-
 
 
 
@@ -292,9 +248,6 @@ end
 
 
 
-
-
-
 ChallengeDungeonCtrl._InitDungeonBatchInfo = HL.Method(HL.Table) << function(self, seriesInfo)
     local curBatchTimeOffset = -1
     
@@ -320,8 +273,6 @@ ChallengeDungeonCtrl._InitDungeonBatchInfo = HL.Method(HL.Table) << function(sel
     end
 end
 
-
-
 ChallengeDungeonCtrl._UpdateData = HL.Method() << function(self)
     local latestUnlockSeriesIndex = 0
     for index, seriesInfo in pairs(self.m_info.seriesInfos) do
@@ -334,9 +285,6 @@ ChallengeDungeonCtrl._UpdateData = HL.Method() << function(self)
         self.m_info.curSelectSeriesIndex = math.max(1, latestUnlockSeriesIndex)
     end
 end
-
-
-
 
 ChallengeDungeonCtrl._UpdateSeriesInfo = HL.Method(HL.Table) << function(self, seriesInfo)
     local seriesId = seriesInfo.seriesId
@@ -361,9 +309,6 @@ ChallengeDungeonCtrl._UpdateSeriesInfo = HL.Method(HL.Table) << function(self, s
     
     self:_UpdateDungeonBatchInfo(seriesInfo)
 end
-
-
-
 
 ChallengeDungeonCtrl._UpdateAllDungeonInfo = HL.Method(HL.Table) << function(self, seriesInfo)
     seriesInfo.perfectCompleteCount = 0
@@ -412,9 +357,6 @@ ChallengeDungeonCtrl._UpdateAllDungeonInfo = HL.Method(HL.Table) << function(sel
     end
 end
 
-
-
-
 ChallengeDungeonCtrl._UpdateDungeonBatchInfo = HL.Method(HL.Table) << function(self, seriesInfo)
     local firstLockIndex = -1
     local batchCount = #seriesInfo.dungeonBatchInfos
@@ -430,8 +372,6 @@ ChallengeDungeonCtrl._UpdateDungeonBatchInfo = HL.Method(HL.Table) << function(s
     seriesInfo.hasBatchIsLock = firstLockIndex > 0
     seriesInfo.lockBatchIndex = firstLockIndex
 end
-
-
 
 
 
@@ -478,15 +418,10 @@ ChallengeDungeonCtrl._InitUI = HL.Method() << function(self)
     end)
 end
 
-
-
 ChallengeDungeonCtrl._RefreshAllUI = HL.Method() << function(self)
     self.view.tabList:UpdateCount(math.max(#self.m_info.seriesInfos, 2))
     self:_RefreshContentUI(self.m_info.curSelectSeriesIndex)
 end
-
-
-
 
 ChallengeDungeonCtrl._RefreshContentUI = HL.Method(HL.Number) << function(self, seriesIndex)
     self.m_info.curSelectSeriesIndex = seriesIndex
@@ -536,10 +471,6 @@ ChallengeDungeonCtrl._RefreshContentUI = HL.Method(HL.Number) << function(self, 
     end
 end
 
-
-
-
-
 ChallengeDungeonCtrl._RefreshTabCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     if luaIndex > #self.m_info.seriesInfos then
         cell.stateCtrl:SetState("Empty")
@@ -576,10 +507,6 @@ ChallengeDungeonCtrl._RefreshTabCell = HL.Method(HL.Any, HL.Number) << function(
     
     cell.redDot:InitRedDot("ActivityNormalChallengeSeries", seriesInfo.seriesId)
 end
-
-
-
-
 
 ChallengeDungeonCtrl._RefreshDungeonCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local seriesIndex = self.m_info.curSelectSeriesIndex
@@ -684,9 +611,6 @@ end
 
 
 
-
-
-
 ChallengeDungeonCtrl._OnSubGameUnlock = HL.Method(HL.Any) << function(self, arg)
     local dungeonId = unpack(arg)
     if DungeonUtils.isDungeonChallenge(dungeonId) then
@@ -694,9 +618,6 @@ ChallengeDungeonCtrl._OnSubGameUnlock = HL.Method(HL.Any) << function(self, arg)
         self:_RefreshAllUI()
     end
 end
-
-
-
 
 ChallengeDungeonCtrl._OnSeriesUnlock = HL.Method(HL.Any) << function(self, arg)
     local seriesId = unpack(arg)
@@ -708,9 +629,6 @@ ChallengeDungeonCtrl._OnSeriesUnlock = HL.Method(HL.Any) << function(self, arg)
         end
     end
 end
-
-
-
 
 ChallengeDungeonCtrl._OnChangeSeriesTab = HL.Method(HL.Number) << function(self, luaIndex)
     local oldIndex = self.m_info.curSelectSeriesIndex
@@ -734,8 +652,6 @@ ChallengeDungeonCtrl._OnChangeSeriesTab = HL.Method(HL.Number) << function(self,
     end
 end
 
-
-
 ChallengeDungeonCtrl._TryClearReadDungeon = HL.Method() << function(self)
     if #self.m_readRedDotDungeonTempList > 0 then
         GameInstance.player.subGameSys:SendSubGameListRead(self.m_readRedDotDungeonTempList)
@@ -743,13 +659,9 @@ ChallengeDungeonCtrl._TryClearReadDungeon = HL.Method() << function(self)
     self.m_readRedDotDungeonTempList = {}
 end
 
-
-
 ChallengeDungeonCtrl._OnDisplaySizeChanged = HL.Method() << function(self)
     self:_RefreshAllUI()
 end
-
-
 
 ChallengeDungeonCtrl._AutoNavi = HL.Method() << function(self)
     local seriesInfo = self.m_info.seriesInfos[self.m_info.curSelectSeriesIndex]
@@ -757,13 +669,10 @@ ChallengeDungeonCtrl._AutoNavi = HL.Method() << function(self)
         local obj = self.view.dungeonList:Get(self.m_naviCellIndex)
         local firstCell = self.m_getDungeonCellFunc(obj)
         if firstCell then
-            InputManagerInst.controllerNaviManager:SetTarget(firstCell.naviDecorator)
+            self:SetNaviTarget(firstCell.naviDecorator)
         end
     end
 end
-
-
-
 
 ChallengeDungeonCtrl._GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, csIndex)
     local luaIndex = CSIndex(csIndex)

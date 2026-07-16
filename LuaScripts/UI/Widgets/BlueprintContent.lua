@@ -4,106 +4,102 @@ local hiddenTechId = "hidden-tech"
 
 local BLUEPRINT_SHARE_STATEMENT_KEY = "blueprint_share_statement_key"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BlueprintContent = HL.Class('BlueprintContent', UIWidgetBase)
-
 
 
 BlueprintContent.m_deviceInfos = HL.Field(HL.Table)
 
-
 BlueprintContent.m_csBPInst = HL.Field(CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintInstance)
-
 
 BlueprintContent.m_csBP = HL.Field(CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprint)
 
-
 BlueprintContent.m_deviceCells = HL.Field(HL.Forward('UIListCache'))
-
 
 BlueprintContent.isEditing = HL.Field(HL.Boolean) << false
 
-
 BlueprintContent.isSharing = HL.Field(HL.Boolean) << false
-
 
 BlueprintContent.curIcon = HL.Field(HL.String) << 'blueprint_default_icon'
 
-
 BlueprintContent.curColorId = HL.Field(HL.Number) << -1
-
 
 BlueprintContent.m_bpAbnormalIconHelper = HL.Field(HL.Table)
 
 
-
 BlueprintContent.m_deviceCellMaxNumber = HL.Field(HL.Number) << 8
-
 
 BlueprintContent.m_isNaviDevice = HL.Field(HL.Boolean) << true
 
-
 BlueprintContent.m_inputFieldNum = HL.Field(HL.Number) << 1
-
 
 BlueprintContent.m_blueprintID = HL.Field(HL.Any) << 0
 
-
+BlueprintContent._BuildTechInfoList = HL.Method(HL.Any).Return(HL.Table) << function(self, techIds)
+    local infoMap = {}
+    local techSys = GameInstance.player.facTechTreeSystem
+    for _, techId in pairs(techIds) do
+        if techSys:NodeIsHidden(techId) then
+            if not infoMap[hiddenTechId] then
+                infoMap[hiddenTechId] = {
+                    icon = "icon_industrial_plan_unknown_node",
+                    name = Language.LUA_FAC_BLUEPRINT_HIDDEN_TECH_NAME,
+                    desc = Language.LUA_FAC_BLUEPRINT_HIDDEN_TECH_DESC,
+                    sortId1 = 3,
+                }
+            end
+        else
+            local techData = Tables.facSTTNodeTable[techId]
+            if techData then
+                if techSys:PackageIsLocked(techData.groupId) then
+                    if not infoMap[techData.groupId] then
+                        local data = Tables.facSTTGroupTable[techData.groupId]
+                        infoMap[techData.groupId] = {
+                            id = techData.groupId,
+                            isGroup = true,
+                            icon = data.icon,
+                            name = data.groupName,
+                            desc = data.desc,
+                            sortId1 = 2,
+                            sortId2 = techData.groupId,
+                        }
+                    end
+                elseif techSys:LayerIsLocked(techData.layer) then
+                    if not infoMap[techData.layer] then
+                        local data = Tables.facSTTLayerTable[techData.layer]
+                        infoMap[techData.layer] = {
+                            id = techData.layer,
+                            groupId = techData.groupId,
+                            layerId = techData.layer,
+                            isLayer = true,
+                            icon = data.icon,
+                            name = data.name,
+                            desc = data.desc,
+                            sortId1 = 1,
+                            sortId2 = data.order,
+                        }
+                    end
+                else
+                    if not infoMap[techId] then
+                        infoMap[techId] = {
+                            id = techId,
+                            icon = techData.icon,
+                            name = techData.name,
+                            desc = techData.desc,
+                            sortId1 = 0,
+                            sortId2 = techData.sortId,
+                        }
+                    end
+                end
+            end
+        end
+    end
+    local infoList = {}
+    for _, v in pairs(infoMap) do
+        table.insert(infoList, v)
+    end
+    table.sort(infoList, Utils.genSortFunction({ "sortId1", "sortId2", "id" }, true))
+    return infoList
+end
 
 
 BlueprintContent._OnFirstTimeInit = HL.Override() << function(self)
@@ -134,14 +130,6 @@ BlueprintContent._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
-
-
-
-
-
 BlueprintContent.InitBlueprintContent = HL.Method(HL.Opt(CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintInstance, HL.Any, CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprint, HL.Boolean, HL.Boolean, HL.Table)) << function(self, csBPInst, id, csBP, isEditing, isSharing, bpAbnormalIconHelper)
     self:_FirstTimeInit()
 
@@ -164,8 +152,6 @@ BlueprintContent.InitBlueprintContent = HL.Method(HL.Opt(CS.Beyond.Gameplay.Remo
     end
 end
 
-
-
 BlueprintContent._InitController = HL.Method() << function(self)
     
     self.view.content.onDefaultNaviFailed:RemoveAllListeners()
@@ -180,14 +166,25 @@ BlueprintContent._InitController = HL.Method() << function(self)
     self.view.content.onIsFocusedChange:RemoveAllListeners()
     self.view.content.onIsFocusedChange:AddListener(function(isFocused)
         if isFocused then
-            if #self.m_deviceInfos == 0 and #self.m_lackTechIdInfos == 0 then
+            if #self.m_deviceInfos == 0 and #self.m_lackTechIdInfos == 0 and #self.m_previewTechIdInfos == 0 then
                 Notify(MessageConst.SHOW_TOAST,Language.LUA_FAC_BLUEPRINT_NO_DETAIL_INFO)
                 self.view.content:ManuallyStopFocus()
-            elseif #self.m_lackTechIdInfos == 0 then
-            else
+            elseif #self.m_lackTechIdInfos > 0 then
                 self.m_techCells:Refresh(#self.m_lackTechIdInfos, function(cell, index)
                     if index == 1 then
-                        UIUtils.setAsNaviTarget(cell.button)
+                        self:SetNaviTarget(cell.button)
+                    end
+                end)
+            elseif #self.m_previewTechIdInfos > 0 then
+                self.m_previewTechCells:Refresh(#self.m_previewTechIdInfos, function(cell, index)
+                    if index == 1 then
+                        self:SetNaviTarget(cell.button)
+                    end
+                end)
+            elseif #self.m_deviceInfos > 0 then
+                self.m_deviceCells:Refresh(#self.m_deviceInfos, function(cell, index)
+                    if index == 1 then
+                        self:SetNaviTarget(cell.item.view.button)
                     end
                 end)
             end
@@ -207,9 +204,6 @@ BlueprintContent._InitController = HL.Method() << function(self)
     self:_InitControllerTopContainer()
 end
 
-
-
-
 BlueprintContent.SetActiveControllerNode = HL.Method(HL.Number) << function(self, state)
     if self.isEditing then
         self.view.saveBlueControllerNode.gameObject:SetActive(state == FacConst.FocusStateTable.Focused)
@@ -217,16 +211,12 @@ BlueprintContent.SetActiveControllerNode = HL.Method(HL.Number) << function(self
     end
 end
 
-
-
 BlueprintContent._DisableAllInputField = HL.Method() << function(self)
     self.view.nameInputFieldEditBgImage.gameObject:SetActive(false)
     self.view.descEditBgImage.gameObject:SetActive(false)
     InputManagerInst:ToggleBinding(self.view.nameInputField.activeInputBindingId, false)
     InputManagerInst:ToggleBinding(self.view.descInputField.activeInputBindingId, false)
 end
-
-
 
 BlueprintContent._InitControllerTopContainer = HL.Method() << function(self)
     self:_DisableAllInputField()
@@ -272,9 +262,6 @@ BlueprintContent._InitControllerTopContainer = HL.Method() << function(self)
     end
 end
 
-
-
-
 BlueprintContent._FindTechAndDevice = HL.Method(HL.Any) << function(self, dir)
     
     if not (dir == Unity.UI.NaviDirection.Left or dir == Unity.UI.NaviDirection.Right) then
@@ -291,49 +278,95 @@ BlueprintContent._FindTechAndDevice = HL.Method(HL.Any) << function(self, dir)
             currentTargetType = 1
         end
     end)
-    self.m_deviceCells:Refresh(#self.m_deviceInfos, function(cell, index)
-        if currentTarget == cell.item.view.button then
+    self.m_previewTechCells:Refresh(#self.m_previewTechIdInfos, function(cell, index)
+        if currentTarget == cell.button then
             currentTargetIndex = index
             currentTargetType = 2
         end
     end)
+    self.m_deviceCells:Refresh(#self.m_deviceInfos, function(cell, index)
+        if currentTarget == cell.item.view.button then
+            currentTargetIndex = index
+            currentTargetType = 3
+        end
+    end)
+
+    if currentTargetType < 0 then
+        return
+    end
+
+    local groups = {
+        { type = 1, count = #self.m_lackTechIdInfos },
+        { type = 2, count = #self.m_previewTechIdInfos },
+        { type = 3, count = #self.m_deviceInfos },
+    }
+    local currentGroupIndex = -1
+    for i, group in ipairs(groups) do
+        if group.type == currentTargetType then
+            currentGroupIndex = i
+            break
+        end
+    end
 
     
     local futureTargetIndex = currentTargetIndex + ((dir == Unity.UI.NaviDirection.Right) and 1 or -1)
     local futureTargetType = currentTargetType
-    if futureTargetType == 1 and futureTargetIndex > #self.m_lackTechIdInfos then
+
+    local function moveToNextAvailableGroup(step)
+        local groupIndex = currentGroupIndex
+        while true do
+            groupIndex = groupIndex + step
+            if groupIndex < 1 or groupIndex > #groups then
+                return nil
+            end
+            if groups[groupIndex].count > 0 then
+                return groups[groupIndex]
+            end
+        end
+    end
+
+    if futureTargetIndex > groups[currentGroupIndex].count then
+        local nextGroup = moveToNextAvailableGroup(1)
+        if not nextGroup then
+            return
+        end
         futureTargetIndex = 1
-        futureTargetType = 2
-    elseif futureTargetType == 2 and futureTargetIndex <= 0 then
-        futureTargetIndex = #self.m_lackTechIdInfos
-        futureTargetType = 1
+        futureTargetType = nextGroup.type
+    elseif futureTargetIndex <= 0 then
+        local prevGroup = moveToNextAvailableGroup(-1)
+        if not prevGroup then
+            return
+        end
+        futureTargetIndex = prevGroup.count
+        futureTargetType = prevGroup.type
     end
 
     
     if futureTargetType == 1 then
         self.m_techCells:Refresh(#self.m_lackTechIdInfos, function(cell, index)
             if index == futureTargetIndex then
-                UIUtils.setAsNaviTarget(cell.button)
+                self:SetNaviTarget(cell.button)
             end
         end)
-    else
+    elseif futureTargetType == 2 then
+        self.m_previewTechCells:Refresh(#self.m_previewTechIdInfos, function(cell, index)
+            if index == futureTargetIndex then
+                self:SetNaviTarget(cell.button)
+            end
+        end)
+    elseif futureTargetType == 3 then
         self.m_deviceCells:Refresh(#self.m_deviceInfos, function(cell, index)
             if index == futureTargetIndex then
-                UIUtils.setAsNaviTarget(cell.item.view.button)
+                self:SetNaviTarget(cell.item.view.button)
             end
         end)
     end
 end
 
-
-
-
 BlueprintContent.ChangeIsEditing = HL.Method(HL.Boolean) << function(self, isEditing)
     self.isEditing = isEditing
     self.view.stateController:SetState(isEditing and "Edit" or "View")
 end
-
-
 
 BlueprintContent.Refresh = HL.Method() << function(self)
     local deviceMap = {} 
@@ -364,7 +397,8 @@ BlueprintContent.Refresh = HL.Method() << function(self)
                 
                 deviceMap[buildingId] = 0
             end
-            if not self.isSharing and not self.isEditing and not inBlackbox and not string.isEmpty(entry.productIcon) then
+            if not self.isSharing and not self.isEditing and not inBlackbox and not string.isEmpty(entry.productIcon)
+                    and not FactoryUtils.isBlueprintProductIconGasEnv(entry.productIcon) then
                 if not GameInstance.player.inventory:IsItemFound(entry.productIcon) then
                     hasUnknowItem = true
                     hasAbnormal = true
@@ -416,11 +450,16 @@ BlueprintContent.Refresh = HL.Method() << function(self)
         FactoryUtils.SetCreatorName(self, false, self.m_csBPInst)
         self:_RefreshLackTech()
 
-        self.view.lackWarnNode.gameObject:SetActive(hasAbnormal)
-        if hasAbnormal then
-            self.view.lackWarnTxt.text = hasUnknowItem and Language.LUA_FAC_BLUEPRINT_LACK_ITEM or Language.LUA_FAC_BLUEPRINT_LACK_FORMULA
-        end
         self.view.expiredNode.gameObject:SetActive(hasExpired)
+
+        self.view.lowerTechWarnNode.gameObject:SetActive(self.haveLackTechs and self.canUseBP)
+
+        if hasAbnormal then
+            self.view.lackWarnNode.gameObject:SetActive(true)
+            self.view.lackWarnTxt.text = hasUnknowItem and Language.LUA_FAC_BLUEPRINT_LACK_ITEM or Language.LUA_FAC_BLUEPRINT_LACK_FORMULA
+        else
+            self.view.lackWarnNode.gameObject:SetActive(false)
+        end
     else
         
         local batchSelect = GameInstance.remoteFactoryManager.batchSelect
@@ -457,7 +496,10 @@ BlueprintContent.Refresh = HL.Method() << function(self)
         self.view.creatorNode.gameObject:SetActive(false)
 
         self.view.lackInfoNode.gameObject:SetActive(false)
+        self.view.previewTechNode.gameObject:SetActive(false)
+        self.m_previewTechIdInfos = {}
         self.haveLackTechs = false
+        self.canUseBP = false
 
         self.view.lackWarnNode.gameObject:SetActive(false)
     end
@@ -508,10 +550,6 @@ BlueprintContent.Refresh = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 BlueprintContent._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     if self.isSharing then
         if index == self.m_deviceCellMaxNumber and #self.m_deviceInfos - self.m_deviceCellMaxNumber > 0 then
@@ -528,6 +566,9 @@ BlueprintContent._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self
 
     local info = self.m_deviceInfos[index]
     cell.item:InitItem(info, true)
+    if self.isSharing then
+        cell.item:HideSkipChapterMarks()
+    end
     self:_UpdateCellCount(cell, index)
 
     if DeviceInfo.usingController then
@@ -538,10 +579,6 @@ BlueprintContent._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self
         })
     end
 end
-
-
-
-
 
 BlueprintContent._UpdateCellCount = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local info = self.m_deviceInfos[index]
@@ -555,8 +592,6 @@ BlueprintContent._UpdateCellCount = HL.Method(HL.Table, HL.Number) << function(s
     end
 end
 
-
-
 BlueprintContent.UpdateCount = HL.Method() << function(self)
     if not self.m_deviceCells then
         return
@@ -565,8 +600,6 @@ BlueprintContent.UpdateCount = HL.Method() << function(self)
         self:_UpdateCellCount(cell, index)
     end)
 end
-
-
 
 
 BlueprintContent.GetFirstLackItemIdAndCount = HL.Method().Return(HL.Opt(HL.String, HL.Number)) << function(self)
@@ -579,8 +612,6 @@ BlueprintContent.GetFirstLackItemIdAndCount = HL.Method().Return(HL.Opt(HL.Strin
         end
     end
 end
-
-
 
 BlueprintContent.GetAllDeviceIdAndCount = HL.Method().Return(HL.Table) << function(self)
     local ret = {}
@@ -601,19 +632,13 @@ end
 
 
 
-
 BlueprintContent.m_tagGroupCells = HL.Field(HL.Forward('UIListCache'))
-
 
 BlueprintContent.m_tagCells = HL.Field(HL.Forward('UIListCache'))
 
-
 BlueprintContent.curSelectedTags = HL.Field(HL.Table) 
 
-
 BlueprintContent.m_tagGroupInfos = HL.Field(HL.Table)
-
-
 
 
 BlueprintContent._InitTag = HL.Method() << function(self)
@@ -632,8 +657,6 @@ BlueprintContent._InitTag = HL.Method() << function(self)
     self.m_tagCells = UIUtils.genCellCache(self.view.tagNode.tagCell)
 end
 
-
-
 BlueprintContent._OnClickEditTag = HL.Method() << function(self)
     if self.view.selectTagNode.gameObject.activeInHierarchy then
         self:_ToggleSelectTag(false)
@@ -641,10 +664,6 @@ BlueprintContent._OnClickEditTag = HL.Method() << function(self)
         self:_ToggleSelectTag(true)
     end
 end
-
-
-
-
 
 BlueprintContent._ToggleSelectTag = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, skipAni)
     local node = self.view.selectTagNode
@@ -707,11 +726,6 @@ BlueprintContent._ToggleSelectTag = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) <<
     end
 end
 
-
-
-
-
-
 BlueprintContent._OnClickTagCell = HL.Method(HL.Table, HL.Table, HL.Table) << function(self, tagInfo, tagCell, groupCell)
     local newValue = not self.curSelectedTags[tagInfo.id]
     local curCount
@@ -761,8 +775,6 @@ BlueprintContent._OnClickTagCell = HL.Method(HL.Table, HL.Table, HL.Table) << fu
     self:_RefreshContentTagCells()
 end
 
-
-
 BlueprintContent._RefreshContentTagCells = HL.Method() << function(self)
     local tagList = {}
     for id, _ in pairs(self.curSelectedTags) do
@@ -791,8 +803,6 @@ BlueprintContent._RefreshContentTagCells = HL.Method() << function(self)
     end
 end
 
-
-
 BlueprintContent.GetSortedTagIds = HL.Method().Return(HL.Table) << function(self)
     local tagList = {}
     for id, _ in pairs(self.curSelectedTags) do
@@ -801,8 +811,6 @@ BlueprintContent.GetSortedTagIds = HL.Method().Return(HL.Table) << function(self
     table.sort(tagList)
     return tagList
 end
-
-
 
 BlueprintContent.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
     return {
@@ -816,9 +824,6 @@ BlueprintContent.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(s
         isChangeIconTab = self.view.changeIconNode:IsIconTabSelected(),
     }
 end
-
-
-
 
 BlueprintContent.RecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if not recoverState then
@@ -856,10 +861,6 @@ BlueprintContent.RecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, reco
         self:_ToggleSelectTag(true, true)
     end
 end
-
-
-
-
 
 
 
@@ -906,10 +907,6 @@ BlueprintContent._ToggleChangeIcon = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) <
     self.view.inChangeIconHint.gameObject:SetActive(active)
 end
 
-
-
-
-
 BlueprintContent._OnChangeIcon = HL.Method(HL.String, HL.Number) << function(self, iconId, colorId)
     self.curIcon = iconId
     self.curColorId = colorId
@@ -921,96 +918,39 @@ end
 
 
 
+BlueprintContent.canUseBP = HL.Field(HL.Boolean) << false
 
 BlueprintContent.m_lackTechIdInfos = HL.Field(HL.Table)
 
-
 BlueprintContent.m_techCells = HL.Field(HL.Forward('UIListCache'))
 
+BlueprintContent.m_previewTechIdInfos = HL.Field(HL.Table)
+
+BlueprintContent.m_previewTechCells = HL.Field(HL.Forward('UIListCache'))
 
 BlueprintContent.haveLackTechs = HL.Field(HL.Boolean) << false
 
-
-
 BlueprintContent._InitLackTechIdInfos = HL.Method() << function(self)
-    local lockedTechIds
+    local canUseBP, lockedTechIds, previewTechIds
     if Utils.isInBlackbox() then
+        canUseBP = true
         lockedTechIds = {}
+        previewTechIds = {}
     else
-        lockedTechIds = GameInstance.player.remoteFactory.blueprint:GetLockedTechIdsInBlueprint(self.m_csBP)
+        local domainId = ScopeUtil.GetCurrentChapterIdAsStr()
+        canUseBP, lockedTechIds, previewTechIds = GameInstance.player.remoteFactory.blueprint:GetLockedTechIdsInBlueprint(self.m_csBP, domainId)
     end
-    local infoMap = {}
-    local techSys = GameInstance.player.facTechTreeSystem
-    for _, techId in pairs(lockedTechIds) do
-        if techSys:NodeIsHidden(techId) then
-            
-            if not infoMap[hiddenTechId] then
-                infoMap[hiddenTechId] = {
-                    icon = "icon_industrial_plan_unknown_node",
-                    name = Language.LUA_FAC_BLUEPRINT_HIDDEN_TECH_NAME,
-                    desc = Language.LUA_FAC_BLUEPRINT_HIDDEN_TECH_DESC,
-                    sortId1 = 3, 
-                }
-            end
-        else
-            local techData = Tables.facSTTNodeTable[techId]
-            if techSys:PackageIsLocked(techData.groupId) then
-                
-                if not infoMap[techData.groupId] then
-                    local data = Tables.facSTTGroupTable[techData.groupId]
-                    infoMap[techData.groupId] = {
-                        id = techData.groupId,
-                        isGroup = true,
-                        icon = data.icon,
-                        name = data.groupName,
-                        desc = data.desc,
-                        sortId1 = 2,
-                        sortId2 = techData.groupId,
-                    }
-                end
-            elseif techSys:LayerIsLocked(techData.layer) then
-                
-                if not infoMap[techData.layer] then
-                    local data = Tables.facSTTLayerTable[techData.layer]
-                    infoMap[techData.layer] = {
-                        id = techData.layer,
-                        groupId = techData.groupId,
-                        layerId = techData.layer,
-                        isLayer = true,
-                        icon = data.icon,
-                        name = data.name,
-                        desc = data.desc,
-                        sortId1 = 1,
-                        sortId2 = data.order,
-                    }
-                end
-            else
-                
-                if not infoMap[techId] then
-                    infoMap[techId] = {
-                        id = techId,
-                        icon = techData.icon,
-                        name = techData.name,
-                        desc = techData.desc,
-                        sortId1 = 0,
-                        sortId2 = techData.sortId,
-                    }
-                end
-            end
-        end
-    end
-    self.m_lackTechIdInfos = {}
-    for _, v in pairs(infoMap) do
-        table.insert(self.m_lackTechIdInfos, v)
-    end
-    table.sort(self.m_lackTechIdInfos, Utils.genSortFunction({ "sortId1", "sortId2", "id" }, true))
+    self.m_lackTechIdInfos = self:_BuildTechInfoList(lockedTechIds)
+    
+    
+    self.m_previewTechIdInfos = {}
+    self.canUseBP = canUseBP
 end
-
-
 
 BlueprintContent._RefreshLackTech = HL.Method() << function(self)
     if self.isSharing then
         self.view.lackInfoNode.gameObject:SetActive(false)
+        self.view.previewTechNode.gameObject:SetActive(false)
         return
     end
 
@@ -1048,9 +988,42 @@ BlueprintContent._RefreshLackTech = HL.Method() << function(self)
         self.haveLackTechs = false
         self.view.lackInfoNode.gameObject:SetActive(false)
     end
+    self:_RefreshPreviewTech()
 end
 
-
+BlueprintContent._RefreshPreviewTech = HL.Method() << function(self)
+    if not self.m_previewTechCells then
+        self.m_previewTechCells = UIUtils.genCellCache(self.view.previewTechCell)
+    end
+    local count = #self.m_previewTechIdInfos
+    if count > 0 then
+        self.m_previewTechCells:Refresh(count, function(cell, index)
+            cell.button.onIsNaviTargetChanged = function(isTarget)
+                if isTarget then
+                    Notify(MessageConst.HIDE_ITEM_TIPS)
+                    self:_OnClickPreviewTechCell(index)
+                else
+                    cell.selectedBG.gameObject:SetActive(false)
+                    self:_CloseTechTips()
+                end
+            end
+            local info = self.m_previewTechIdInfos[index]
+            cell.button.onClick:RemoveAllListeners()
+            cell.button.onClick:AddListener(function()
+                if cell.selectedBG.gameObject.activeSelf then
+                    self:_CloseTechTips()
+                else
+                    self:_OnClickPreviewTechCell(index)
+                end
+            end)
+            cell.icon:LoadSprite(UIConst.UI_SPRITE_FAC_TECH_ICON, info.icon)
+            cell.selectedBG.gameObject:SetActive(false)
+        end)
+        self.view.previewTechNode.gameObject:SetActive(true)
+    else
+        self.view.previewTechNode.gameObject:SetActive(false)
+    end
+end
 
 BlueprintContent._InitLackTechNode = HL.Method() << function(self)
     self.m_techCells = UIUtils.genCellCache(self.view.lackInfoCell)
@@ -1063,35 +1036,42 @@ BlueprintContent._InitLackTechNode = HL.Method() << function(self)
     end)
 end
 
-
-
-
 BlueprintContent._CloseTechTips = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAni)
+    local tipsNode = self.view.techTipsNode
     if skipAni then
-        self.view.techTipsNode.animationWrapper:ClearTween(false)
-        self.view.techTipsNode.gameObject:SetActive(false)
+        tipsNode.animationWrapper:ClearTween(false)
+        tipsNode.gameObject:SetActive(false)
+        tipsNode.previewTagNode.gameObject:SetActive(false)
     else
-        UIUtils.PlayAnimationAndToggleActive(self.view.techTipsNode.animationWrapper, false)
+        UIUtils.PlayAnimationAndToggleActive(tipsNode.animationWrapper, false, function()
+            tipsNode.previewTagNode.gameObject:SetActive(false)
+        end)
     end
-    self.m_techCells:Update(function(cell)
-        cell.selectedBG.gameObject:SetActive(false)
-    end)
+    if self.m_techCells then
+        self.m_techCells:Update(function(cell)
+            cell.selectedBG.gameObject:SetActive(false)
+        end)
+    end
+    if self.m_previewTechCells then
+        self.m_previewTechCells:Update(function(cell)
+            cell.selectedBG.gameObject:SetActive(false)
+        end)
+    end
 end
 
-
-
-
-BlueprintContent._OnClickTechCell = HL.Method(HL.Number) << function(self, index)
-    if index > #self.m_lackTechIdInfos then
+BlueprintContent._ShowTechInfoTips = HL.Method(HL.Table, HL.Number, HL.Boolean) << function(self, info, index, isPreview)
+    local cellCache = isPreview and self.m_previewTechCells or self.m_techCells
+    local infoList = isPreview and self.m_previewTechIdInfos or self.m_lackTechIdInfos
+    if index > #infoList then
         self.view.content:ManuallyStopFocus()
         return
     end
     local tipsNode = self.view.techTipsNode
-    local info = self.m_lackTechIdInfos[index]
 
     tipsNode.titleTxt.text = info.name
-    tipsNode.descTxt.text = info.name
+    tipsNode.descTxt:SetAndResolveTextStyle(info.desc)
     tipsNode.iconImg:LoadSprite(UIConst.UI_SPRITE_FAC_TECH_ICON, info.icon .. "_big")
+    tipsNode.previewTagNode.gameObject:SetActive(isPreview)
 
     local lockedText
     tipsNode.jumpBtn.onClick:RemoveAllListeners()
@@ -1124,7 +1104,7 @@ BlueprintContent._OnClickTechCell = HL.Method(HL.Number) << function(self, index
     UIUtils.PlayAnimationAndToggleActive(tipsNode.animationWrapper, true)
 
     local curCell
-    self.m_techCells:Update(function(cell, k)
+    cellCache:Update(function(cell, k)
         if k == index then
             cell.selectedBG.gameObject:SetActive(true)
             curCell = cell
@@ -1138,7 +1118,37 @@ BlueprintContent._OnClickTechCell = HL.Method(HL.Number) << function(self, index
     UIUtils.updateTipsPosition(tipsNode.transform, curCell.transform, panelCtrl.view.transform, panelCtrl.uiCamera, UIConst.UI_TIPS_POS_TYPE.LeftTop)
 end
 
+BlueprintContent._OnClickTechCell = HL.Method(HL.Number) << function(self, index)
+    if index > #self.m_lackTechIdInfos then
+        self.view.content:ManuallyStopFocus()
+        return
+    end
+    self:_ShowTechInfoTips(self.m_lackTechIdInfos[index], index, false)
+end
 
+BlueprintContent._OnClickPreviewTechCell = HL.Method(HL.Number) << function(self, index)
+    if index > #self.m_previewTechIdInfos then
+        self.view.content:ManuallyStopFocus()
+        return
+    end
+    self:_ShowTechInfoTips(self.m_previewTechIdInfos[index], index, true)
+end
+
+BlueprintContent.LocateFirstLackTech = HL.Method() << function(self)
+    local info = self.m_lackTechIdInfos and self.m_lackTechIdInfos[1]
+    if not info then
+        return
+    end
+    if info.isLayer then
+        PhaseManager:OpenPhase(PhaseId.FacTechTree, { layerId = info.layerId })
+    elseif info.id and not info.isGroup then
+        PhaseManager:OpenPhase(PhaseId.FacTechTree, { techId = info.id })
+    else
+        
+        
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BLUEPRINT_LACK_TECH_NEED_MAINLINE)
+    end
+end
 
 
 
@@ -1157,9 +1167,6 @@ BlueprintContent._InitShare = HL.Method() << function(self)
     self:_RefreshShareState()
 end
 
-
-
-
 BlueprintContent._SeeMoreInfo = HL.Method(HL.Opt(HL.Any)) << function(self,arg)
     local onClose
     if arg and arg.onClose then
@@ -1177,8 +1184,6 @@ BlueprintContent._SeeMoreInfo = HL.Method(HL.Opt(HL.Any)) << function(self,arg)
     end
 
 end
-
-
 
 BlueprintContent._RefreshShareState = HL.Method() << function(self)
     if Utils.isInBlackbox() then
@@ -1226,8 +1231,6 @@ BlueprintContent._RefreshShareState = HL.Method() << function(self)
     end
 end
 
-
-
 BlueprintContent._PendingShare = HL.Method() << function(self)
     self.view.topContainer:ManuallyStopFocus()
     Notify(MessageConst.SHOW_POP_UP, {
@@ -1251,9 +1254,6 @@ BlueprintContent._PendingShare = HL.Method() << function(self)
     })
 end
 
-
-
-
 BlueprintContent.FacOnReviewBlueprint = HL.Method(HL.Table) << function(self, arg)
     local _, status = unpack(arg)
     if status == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.InProgress then
@@ -1261,8 +1261,6 @@ BlueprintContent.FacOnReviewBlueprint = HL.Method(HL.Table) << function(self, ar
     end
     self:_RefreshShareState()
 end
-
-
 
 BlueprintContent.SetFriendShareState = HL.Method() << function(self)
     self.view.rightActions.moreBtn.gameObject:SetActive(false)

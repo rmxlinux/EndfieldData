@@ -7,36 +7,16 @@ local State = {
     Unlocked = "Unlocked",
 }
 
-
-
-
-
-
-
-
-
-
 FacTechTreeLayerCell = HL.Class('FacTechTreeLayerCell', UIWidgetBase)
-
 
 FacTechTreeLayerCell.m_layerId = HL.Field(HL.String) << ""
 
-
 FacTechTreeLayerCell.m_state = HL.Field(HL.String) << State.None
-
-
 
 
 FacTechTreeLayerCell._OnFirstTimeInit = HL.Override() << function(self)
     
 end
-
-
-
-
-
-
-
 
 FacTechTreeLayerCell.InitFacTechTreeLayerCell = HL.Method(HL.String, HL.Number, HL.Number, HL.Number, HL.Function)
         << function(self, layerId, sizeX, sizeY, notchAdapterX, onClickFunc)
@@ -78,9 +58,6 @@ FacTechTreeLayerCell.InitFacTechTreeLayerCell = HL.Method(HL.String, HL.Number, 
     self:Refresh(true)
 end
 
-
-
-
 FacTechTreeLayerCell.Refresh = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     local layerData = Tables.facSTTLayerTable[self.m_layerId]
     
@@ -121,23 +98,15 @@ FacTechTreeLayerCell.Refresh = HL.Method(HL.Opt(HL.Boolean)) << function(self, i
     end
 end
 
-
-
-
 FacTechTreeLayerCell.OnLayerInputEnableChange = HL.Method(HL.Boolean) << function(self, isEnabled)
     self.view.stateController:SetState(isEnabled and "ControllerEnable" or "ControllerDisable")
 end
-
-
 
 FacTechTreeLayerCell.GetUnlockClipLength = HL.Method().Return(HL.Number) << function(self)
     
     local clipLength = self.view.animationWrapper:GetClipLength("factechtreelayer_unlock")
     return clipLength / 2
 end
-
-
-
 
 FacTechTreeLayerCell._OnHoverChangeCraftBtn = HL.Method(HL.Boolean) << function(self, isHover)
     if not isHover then

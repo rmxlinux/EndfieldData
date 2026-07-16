@@ -604,6 +604,7 @@ ShopTradeItemCtrl._InitSingleFriendItem = HL.Method(HL.Table, HL.Number) << func
                     return
                 end
                 GameInstance.player.spaceship:VisitFriendSpaceShip(friendRoleId)
+                self:Close()
             end})
         table.insert(args.actions, {
             text = Language.LUA_FRIEND_TIP_SHOW_BUSINESS_CARD,
@@ -619,7 +620,7 @@ ShopTradeItemCtrl._InitSingleFriendItem = HL.Method(HL.Table, HL.Number) << func
         end
     end)
     if not self.m_nowNaviFriendCell and index == 1 then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.inputBindingGroupNaviDecorator)
+        self:SetNaviTarget(cell.inputBindingGroupNaviDecorator)
         self:OnFriendCellNaviTargetChange(cell)
     end
 end

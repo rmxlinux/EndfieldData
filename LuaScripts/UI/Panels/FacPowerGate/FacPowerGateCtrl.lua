@@ -1,18 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacPowerGate
-
-
-
-
-
-
-
-
-
-
 FacPowerGateCtrl = HL.Class('FacPowerGateCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -24,14 +13,9 @@ FacPowerGateCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacPowerGateCtrl.m_toMapId = HL.Field(HL.String) << ""
 
-
 FacPowerGateCtrl.m_toIconId = HL.Field(HL.String) << ""
-
-
-
 
 
 FacPowerGateCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -45,8 +29,6 @@ FacPowerGateCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitActionEvent()
 end
 
-
-
 FacPowerGateCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.offlineNode.rightInfo.btnMap.onClick:AddListener(function()
         self:_ShowToMap()
@@ -56,9 +38,6 @@ FacPowerGateCtrl._InitActionEvent = HL.Method() << function(self)
     end)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
-
 
 FacPowerGateCtrl._RefreshPowerGate = HL.Method(HL.Number) << function(self, fromNodeId)
     local _, fromInstKey = GameAction.Factory.TryGetDpInstKey(fromNodeId)
@@ -99,16 +78,10 @@ FacPowerGateCtrl._RefreshPowerGate = HL.Method(HL.Number) << function(self, from
     self.view.offlineNode.gameObject:SetActive(not isNormal)
 end
 
-
-
-
-
 FacPowerGateCtrl._RefreshPositionInfo = HL.Method(HL.Table, HL.Userdata) << function(self, entranceCell, positionInfo)
     entranceCell.entranceNameTxt.text = positionInfo.positionDesc
     entranceCell.mapNameTxt.text = positionInfo.mapName
 end
-
-
 
 FacPowerGateCtrl._RefreshPowerInfo = HL.Method() << function(self)
     local powerInfo = FactoryUtils.getCurRegionPowerInfo()
@@ -121,8 +94,6 @@ FacPowerGateCtrl._RefreshPowerInfo = HL.Method() << function(self)
     self.view.restPowerText.color = restPower <= 0 and self.view.config.COLOR_POWER_SHORTAGE or self.view.config.COLOR_POWER_ENOUGH
     self.view.restPowerText.text = UIUtils.getNumString(restPower)
 end
-
-
 
 FacPowerGateCtrl._ShowToMap = HL.Method() << function(self)
     local isMapUnlock = self.m_toIconId and self.m_toMapId and

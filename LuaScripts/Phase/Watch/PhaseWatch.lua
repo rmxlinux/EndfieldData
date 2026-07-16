@@ -1,22 +1,6 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.Watch
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseWatch = HL.Class('PhaseWatch', phaseBase.PhaseBase)
-
 
 
 
@@ -25,16 +9,11 @@ PhaseWatch.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 PhaseWatch.m_watchPanel = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseWatch.m_watchBlurCtrl = HL.Field(HL.Forward("WatchBlurCtrl"))
 
-
 PhaseWatch.m_clearScreenKey = HL.Field(HL.Number) << -1
-
-
 
 
 
@@ -43,8 +22,6 @@ PhaseWatch._OnInit = HL.Override() << function(self)
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 end
-
-
 
 
 PhaseWatch._InitAllPhaseItems = HL.Override() << function(self)
@@ -57,11 +34,6 @@ PhaseWatch._InitAllPhaseItems = HL.Override() << function(self)
     end
     self.m_watchPanel = self:_GetPanelPhaseItem(PanelId.Watch)
 end
-
-
-
-
-
 
 
 
@@ -85,10 +57,6 @@ PhaseWatch.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Numb
         self.m_watchBlurCtrl:Show()
     end
 end
-
-
-
-
 
 
 PhaseWatch._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
@@ -115,38 +83,14 @@ PhaseWatch._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << f
     ctrl.view.animationWrapper.autoPlay = true
     ctrl:_SetCameraCfg()
 
-    local recoverArg = self.arg
-    local tipsState = recoverArg and recoverArg.worldLevelTipsPopupState
-    if tipsState and tipsState.isOpen then
-        local isTipsPopupOpen = UIManager:IsOpen(PanelId.WorldLevelTipsPopup)
-        if not isTipsPopupOpen then
-            UIManager:Open(PanelId.WorldLevelTipsPopup, {
-                isTipsMode = tipsState.isTipsMode,
-            })
-        end
-    end
-
-    local popupState = recoverArg and recoverArg.worldLevelPopupState
-    if popupState and popupState.isOpen then
-        local isPopupOpen = UIManager:IsOpen(PanelId.WorldLevelPopup)
-        if not isPopupOpen then
-            UIManager:Open(PanelId.WorldLevelPopup, {
-                isUp = popupState.isUp,
-                targetWorldLevel = popupState.targetWorldLevel,
-            })
-        end
-    end
 end
-
-
 
 
 PhaseWatch._OnActivated = HL.Override() << function(self)
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
+    CameraManager:AddMainCamCullingMaskConfig("Watch", UIConst.LAYERS.Nothing)
 end
-
-
 
 
 PhaseWatch._OnDeActivated = HL.Override() << function(self)
@@ -154,10 +98,8 @@ PhaseWatch._OnDeActivated = HL.Override() << function(self)
     if not needIgnoreHide then
         self.m_watchBlurCtrl:Hide()
     end
+    CameraManager:RemoveMainCamCullingMaskConfig("Watch")
 end
-
-
-
 
 PhaseWatch._ChangeBlurSetting = HL.Method(HL.Boolean) << function(self, isActive)
     local _, blurPanel = UIManager:IsOpen(PanelId.FullScreenSceneBlur)
@@ -166,10 +108,6 @@ PhaseWatch._ChangeBlurSetting = HL.Method(HL.Boolean) << function(self, isActive
     end
     self.m_watchBlurCtrl.view.gameObject:SetLayerRecursive(isActive and UIConst.UIPP_LAYER or UIConst.UI_LAYER)
 end
-
-
-
-
 
 
 PhaseWatch._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
@@ -183,15 +121,11 @@ PhaseWatch._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << 
 end
 
 
-
-
-
-
 PhaseWatch._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local usingBT = UIUtils.usingBlockTransition()
     local nextPhaseId = args.anotherPhaseId
-    local toCommonMoneyExchange = nextPhaseId == PhaseId.CommonMoneyExchange or nextPhaseId == PhaseId.StaminaPopUp
-    if not toCommonMoneyExchange then
+    local toOverlayPhase = self:_IsOverlayPhase(nextPhaseId)
+    if not toOverlayPhase then
         if not usingBT then
             self.m_watchPanel.uiCtrl.animationWrapper:ClearTween(true)
             self:_ChangeBlurSetting(false)
@@ -200,14 +134,10 @@ PhaseWatch._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) 
     end
 end
 
-
-
-
-
 PhaseWatch._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local nextPhaseId = args.anotherPhaseId
-    local toCommonMoneyExchange = tonumber(nextPhaseId) == PhaseId.CommonMoneyExchange or nextPhaseId == PhaseId.StaminaPopUp
-    if not toCommonMoneyExchange then
+    local toOverlayPhase = self:_IsOverlayPhase(nextPhaseId)
+    if not toOverlayPhase then
         self.m_watchPanel.uiCtrl.animationWrapper:PlayInAnimation()
         self.m_watchPanel.uiCtrl.view.content.gameObject:SetActive(true)
         self.m_watchPanel.uiCtrl:Show()
@@ -225,39 +155,18 @@ PhaseWatch._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table
     end
 end
 
+PhaseWatch._IsOverlayPhase = HL.Method(HL.Number).Return(HL.Boolean) << function(self, nextPhaseId)
+    return nextPhaseId == PhaseId.CommonMoneyExchange or nextPhaseId == PhaseId.StaminaPopUp or nextPhaseId == PhaseId.WorldLevelPopup
+end
 
 
 PhaseWatch.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local ret = self.arg and lume.deepCopy(self.arg) or {}
-    local isTipsPopupOpen, tipsPopupCtrl = UIManager:IsOpen(PanelId.WorldLevelTipsPopup)
-    if isTipsPopupOpen and tipsPopupCtrl then
-        ret.worldLevelTipsPopupState = {
-            isOpen = true,
-            isTipsMode = tipsPopupCtrl.isTipsMode,
-        }
-    else
-        ret.worldLevelTipsPopupState = nil
-    end
-
-    local isPopupOpen, popupCtrl = UIManager:IsOpen(PanelId.WorldLevelPopup)
-    if isPopupOpen and popupCtrl then
-        local popupState = popupCtrl:GetPopupState()
-        ret.worldLevelPopupState = {
-            isOpen = true,
-            isUp = popupState.isUp,
-            targetWorldLevel = popupState.targetWorldLevel,
-        }
-    else
-        ret.worldLevelPopupState = nil
-    end
-
     if next(ret) ~= nil then
         return ret
     end
     return nil
 end
-
-
 
 
 PhaseWatch._OnDestroy = HL.Override() << function(self)

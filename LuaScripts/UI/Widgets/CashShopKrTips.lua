@@ -1,11 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 CashShopKrTips = HL.Class('CashShopKrTips', UIWidgetBase)
-
-
 
 
 CashShopKrTips._OnFirstTimeInit = HL.Override() << function(self)
@@ -13,8 +8,6 @@ CashShopKrTips._OnFirstTimeInit = HL.Override() << function(self)
         CashShopUtils.ShowKrUrl()
     end)
 end
-
-
 
 CashShopKrTips.InitCashShopKrTips = HL.Method() << function(self)
     self:_FirstTimeInit()

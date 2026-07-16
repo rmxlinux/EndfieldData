@@ -2,15 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailMinePointTeam
 
-
-
-
-
-
-
-
 MapMarkDetailMinePointTeamCtrl = HL.Class('MapMarkDetailMinePointTeamCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -21,17 +13,11 @@ MapMarkDetailMinePointTeamCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 MapMarkDetailMinePointTeamCtrl.m_minePointList = HL.Field(HL.Forward("UIListCache"))
-
 
 MapMarkDetailMinePointTeamCtrl.HIGH_PURITY = HL.Field(HL.Number) << 2
 
-
 MapMarkDetailMinePointTeamCtrl.LOW_PURITY = HL.Field(HL.Number) << 1
-
-
-
 
 
 
@@ -70,10 +56,6 @@ MapMarkDetailMinePointTeamCtrl.OnCreate = HL.Override(HL.Any) << function(self, 
 
     self:_ProcessMinePoint(markRuntimeData, detail)
 end
-
-
-
-
 
 MapMarkDetailMinePointTeamCtrl._ProcessMinePoint = HL.Method(HL.Any, HL.Any) << function(self, markRuntimeData, detail)
     local minePointCount = detail.count
@@ -120,12 +102,6 @@ MapMarkDetailMinePointTeamCtrl._ProcessMinePoint = HL.Method(HL.Any, HL.Any) << 
         self:_FillSingleMinePoint(minePoint, state, miner, index)
     end)
 end
-
-
-
-
-
-
 
 MapMarkDetailMinePointTeamCtrl._FillSingleMinePoint = HL.Method(HL.Any, HL.Number, HL.Any, HL.Number) << function(self, minePoint, state, miner, indexNumber)
     minePoint.indexNumberText.text = indexNumber

@@ -1,27 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ContingencyContractDetailsPopup
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ContingencyContractDetailsPopupCtrl = HL.Class('ContingencyContractDetailsPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -34,26 +14,17 @@ ContingencyContractDetailsPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 ContingencyContractDetailsPopupCtrl.m_gameId = HL.Field(HL.String) << ""
-
 
 ContingencyContractDetailsPopupCtrl.m_tagIds = HL.Field(HL.Table)
 
-
 ContingencyContractDetailsPopupCtrl.m_tagInfos = HL.Field(HL.Table)
-
 
 ContingencyContractDetailsPopupCtrl.m_totalScore = HL.Field(HL.Number) << 0
 
-
 ContingencyContractDetailsPopupCtrl.m_dungeonInfo = HL.Field(HL.Table)
 
-
 ContingencyContractDetailsPopupCtrl.m_tagEffectCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 
@@ -85,9 +56,6 @@ end
 
 
 
-
-
-
 ContingencyContractDetailsPopupCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     self.m_gameId = arg.gameId
     self.m_tagIds = arg.tagIds
@@ -102,8 +70,6 @@ ContingencyContractDetailsPopupCtrl._InitData = HL.Method(HL.Any) << function(se
         enemyFeatureDesc = dungeonCfg.featureDesc,
     }
 end
-
-
 
 ContingencyContractDetailsPopupCtrl._UpdateData = HL.Method() << function(self)
     self.m_tagInfos = {}
@@ -126,9 +92,6 @@ ContingencyContractDetailsPopupCtrl._UpdateData = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 
 
@@ -163,9 +126,6 @@ ContingencyContractDetailsPopupCtrl._InitUI = HL.Method(HL.Opt(HL.Any)) << funct
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
-
 ContingencyContractDetailsPopupCtrl._OpenEnemyDetailsPopup = HL.Method(HL.Opt(HL.Number)) << function(self, initSelectEnemyLuaIndex)
     local popupArg = {
         title = self.m_dungeonInfo.enemyInfoTitle,
@@ -178,8 +138,6 @@ ContingencyContractDetailsPopupCtrl._OpenEnemyDetailsPopup = HL.Method(HL.Opt(HL
     end
     UIManager:AutoOpen(PanelId.CommonEnemyPopup, popupArg)
 end
-
-
 
 ContingencyContractDetailsPopupCtrl.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)
     local isOpen, enemyPopupCtrl = UIManager:IsOpen(PanelId.CommonEnemyPopup)
@@ -199,9 +157,6 @@ ContingencyContractDetailsPopupCtrl.GetRecoverPopupStateArg = HL.Method().Return
     return popupState
 end
 
-
-
-
 ContingencyContractDetailsPopupCtrl.TryRecoverPopupState = HL.Method(HL.Any) << function(self, popupState)
     if popupState == nil or string.isEmpty(popupState.popupType) then
         return
@@ -215,8 +170,6 @@ ContingencyContractDetailsPopupCtrl.TryRecoverPopupState = HL.Method(HL.Any) << 
     end
 end
 
-
-
 ContingencyContractDetailsPopupCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << function(self)
     return {
         sortSelectedIndex = self.view.sortNode:GetCurSelectedIndex(),
@@ -225,16 +178,12 @@ ContingencyContractDetailsPopupCtrl.GetRecoverStateArg = HL.Method().Return(HL.T
     }
 end
 
-
-
 ContingencyContractDetailsPopupCtrl._RefreshAllUI = HL.Method() << function(self)
     self.view.levelDetailTxt.text = self.m_dungeonInfo.dungeonDesc
     self.view.enemyDetailTxt.text = self.m_dungeonInfo.enemyFeatureDesc
     self.view.totalScoreTxt.text = self.m_totalScore
     self:_SortAndRefreshTagEffectList()
 end
-
-
 
 ContingencyContractDetailsPopupCtrl._SortAndRefreshTagEffectList = HL.Method() << function(self)
     local sortData = self.view.sortNode:GetCurSortData()
@@ -246,10 +195,6 @@ ContingencyContractDetailsPopupCtrl._SortAndRefreshTagEffectList = HL.Method() <
     end)
     self.view.rightNode:SetState(tagCount <= 0 and "Empty" or "NotEmpty")
 end
-
-
-
-
 
 ContingencyContractDetailsPopupCtrl._RefreshTagEffectCell = HL.Method(HL.Any, HL.Number) << function(self, inCell, luaIndex)
     

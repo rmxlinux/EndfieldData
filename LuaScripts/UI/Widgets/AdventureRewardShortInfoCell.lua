@@ -1,25 +1,12 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
 AdventureRewardShortInfoCell = HL.Class('AdventureRewardShortInfoCell', UIWidgetBase)
-
 
 AdventureRewardShortInfoCell.m_rewardInfo = HL.Field(HL.Table)
 
-
 AdventureRewardShortInfoCell.m_luaIndex = HL.Field(HL.Number) << -1
 
-
 AdventureRewardShortInfoCell.m_onClickFunc = HL.Field(HL.Function)
-
-
 
 
 AdventureRewardShortInfoCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -33,11 +20,6 @@ AdventureRewardShortInfoCell._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
 end
-
-
-
-
-
 
 AdventureRewardShortInfoCell.InitAdventureRewardShortInfoCell = HL.Method(HL.Table, HL.Number, HL.Function)
         << function(self, info, luaIndex, onClickFunction)
@@ -53,14 +35,9 @@ AdventureRewardShortInfoCell.InitAdventureRewardShortInfoCell = HL.Method(HL.Tab
     self:_UpdateInfo()
 end
 
-
-
-
 AdventureRewardShortInfoCell.SampleCellEffect = HL.Method(HL.Number) << function(self, effectVal)
     self.view.animationWrapper:SampleClipAtPercent("adv_reward_level_view_effect", effectVal)
 end
-
-
 
 AdventureRewardShortInfoCell._UpdateInfo = HL.Method() << function(self)
     self.view.stateCtrl:SetState(self.m_rewardInfo.hideReward and "CantReachState" or (self.m_rewardInfo.gainReward and "ReachState" or "NotReachState"))

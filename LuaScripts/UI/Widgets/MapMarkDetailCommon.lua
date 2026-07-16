@@ -1,54 +1,23 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MapMarkDetailCommon = HL.Class('MapMarkDetailCommon', UIWidgetBase)
-
 
 
 MapMarkDetailCommon.m_onLeftBtnClickFromOuterSide = HL.Field(HL.Function)
 
 
-
 MapMarkDetailCommon.m_onRightBtnClickFromOuterSide = HL.Field(HL.Function)
-
 
 
 MapMarkDetailCommon.m_onBigBtnClickFromOuterSide = HL.Field(HL.Function)
 
-
 MapMarkDetailCommon.m_markDetailData = HL.Field(HL.Any)
-
 
 MapMarkDetailCommon.m_template = HL.Field(HL.Any)
 
-
 MapMarkDetailCommon.m_instId = HL.Field(HL.String) << ""
 
-
 MapMarkDetailCommon.s_forbidAllBtn = HL.StaticField(HL.Boolean) << false
-
-
 
 
 MapMarkDetailCommon._OnFirstTimeInit = HL.Override() << function(self)
@@ -72,9 +41,6 @@ MapMarkDetailCommon._OnFirstTimeInit = HL.Override() << function(self)
         self:_OnBigBtnClick()
     end)
 end
-
-
-
 
 MapMarkDetailCommon.InitMapMarkDetailCommon = HL.Method(HL.Table) << function(self, args)
     self:_FirstTimeInit()
@@ -106,7 +72,13 @@ MapMarkDetailCommon.InitMapMarkDetailCommon = HL.Method(HL.Table) << function(se
     if args.titleText ~= nil then
         self.view.common.title.text.text = args.titleText
     else
-        self.view.common.title.text.text = template.name
+        
+        local overrideTitle = self.m_markDetailData:GetTitleOverrideText()
+        if not string.isEmpty(overrideTitle) then
+            self.view.common.title.text.text = overrideTitle
+        else
+            self.view.common.title.text.text = template.name
+        end
     end
 
     local levelId = self.m_markDetailData.levelId
@@ -158,6 +130,7 @@ MapMarkDetailCommon.InitMapMarkDetailCommon = HL.Method(HL.Table) << function(se
             self.view.rightBtnText.text = rightBtnText
             self.view.rightBtnIcon:LoadSprite(UIConst.UI_SPRITE_MAP_DETAIL_BTN_ICON, args.rightBtnIconName)
         else
+            self.view.rightBtn.hintTextId = ""
             self:_SetTracerBtn()
         end
     end
@@ -172,6 +145,7 @@ MapMarkDetailCommon.InitMapMarkDetailCommon = HL.Method(HL.Table) << function(se
             self.view.bigBtnText.text = bigBtnText
             self.view.bigBtnIcon:LoadSprite(UIConst.UI_SPRITE_MAP_DETAIL_BTN_ICON, args.bigBtnIconName)
         else
+            self.view.bigBtn.hintTextId = ""
             self:_SetTracerBtn()
         end
     end
@@ -184,10 +158,10 @@ MapMarkDetailCommon.InitMapMarkDetailCommon = HL.Method(HL.Table) << function(se
 
     self:_RefreshHeadIconSprite()
 
+    self:_RefreshJumpToTpBtnVisibleState()
+
     self:_InitDetailCommonController()
 end
-
-
 
 MapMarkDetailCommon._SetTracerBtn = HL.Method() << function(self)
     local tracking = self.m_instId == GameInstance.player.mapManager.trackingMarkInstId
@@ -204,8 +178,6 @@ MapMarkDetailCommon._SetTracerBtn = HL.Method() << function(self)
     end
 end
 
-
-
 MapMarkDetailCommon._RefreshHeadIconSprite = HL.Method() << function(self)
     local active = self.m_markDetailData.isActive
     if active == true then
@@ -215,28 +187,20 @@ MapMarkDetailCommon._RefreshHeadIconSprite = HL.Method() << function(self)
     end
 end
 
-
-
 MapMarkDetailCommon._SwitchTracerState = HL.Method() << function(self)
     local tracking = self.m_instId == GameInstance.player.mapManager.trackingMarkInstId
     GameInstance.player.mapManager:TrackMark(self.m_instId, not tracking)
 end
 
-
-
 MapMarkDetailCommon._Close = HL.Method() << function(self)
     Notify(MessageConst.HIDE_LEVEL_MAP_MARK_DETAIL)
 end
-
-
 
 MapMarkDetailCommon._OnLeftBtnClick = HL.Method() << function(self)
     if self.m_onLeftBtnClickFromOuterSide ~= nil then
         self:m_onLeftBtnClickFromOuterSide(self.m_instId)
     end
 end
-
-
 
 MapMarkDetailCommon._OnRightBtnClick = HL.Method() << function(self)
     if self.m_onRightBtnClickFromOuterSide ~= nil then
@@ -248,8 +212,6 @@ MapMarkDetailCommon._OnRightBtnClick = HL.Method() << function(self)
     end
 end
 
-
-
 MapMarkDetailCommon._OnBigBtnClick = HL.Method() << function(self)
     if self.m_onBigBtnClickFromOuterSide ~= nil then
         self:m_onBigBtnClickFromOuterSide(self.m_instId)
@@ -260,8 +222,14 @@ MapMarkDetailCommon._OnBigBtnClick = HL.Method() << function(self)
     end
 end
 
-
-
+MapMarkDetailCommon._OnJumpToTpBtnClick = HL.Method() << function(self)
+    local tpMarkInstId = GameInstance.player.mapManager:GetTargetMarkMostNearbyTpRelatedMark(self.m_instId)
+    if string.isEmpty(tpMarkInstId) then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_MAP_MARK_DETAIL_COMMON_JUMP_TO_TP_MARK_FAILED)
+        return
+    end
+    Notify(MessageConst.ON_JUMP_TO_TP_RELATED_MARK, tpMarkInstId)
+end
 
 MapMarkDetailCommon._RefreshHintAndJumpInfo = HL.Method(HL.Table) << function(self, args)
     if args.hintInfo then
@@ -325,13 +293,59 @@ MapMarkDetailCommon._RefreshHintAndJumpInfo = HL.Method(HL.Table) << function(se
     end
 end
 
+MapMarkDetailCommon._RefreshJumpToTpBtnVisibleState = HL.Method() << function(self)
+    if not self.m_template.showJumpTpBtn then
+        return
+    end
 
+    if self.view.jumpBtn.gameObject.activeSelf or self.view.hintNode.gameObject.activeSelf then
+        return  
+    end
+
+    if self.view.leftBtn.gameObject.activeSelf and self.view.rightBtn.gameObject.activeSelf then
+        logger.warn("当前图标按钮过多，不能使用跳转至附近传送点功能，请确认相关设计")
+        return
+    end
+
+    if self.view.bigBtn.gameObject.activeSelf then
+        
+        self.view.leftBtn.hintTextId = ""
+        self.view.leftBtn.text = Language.LUA_MAP_MARK_DETAIL_COMMON_JUMP_TO_TP_BTN_TEXT
+        self.view.leftBtnIcon:LoadSprite(UIConst.UI_SPRITE_MAP_ICON, "icon_jump_to_tp_mark")
+        self.view.leftBtnIcon:SetNativeSize()
+        self.view.leftBtn.onClick:RemoveAllListeners()
+        self.view.leftBtn.onClick:AddListener(function()
+            self:_OnJumpToTpBtnClick()
+        end)
+
+        self.view.rightBtn.hintTextId = ""
+        self.view.rightBtn.text = self.view.bigBtnText.text
+        self.view.rightBtnIcon.sprite = self.view.bigBtnIcon.sprite
+        self.view.rightBtnIcon:SetNativeSize()
+        self.view.rightBtn.onClick:RemoveAllListeners()
+        self.view.rightBtn.onClick:AddListener(function()
+            self:_OnBigBtnClick()
+        end)
+
+        self.view.leftBtn.gameObject:SetActive(true)
+        self.view.rightBtn.gameObject:SetActive(true)
+        self.view.bigBtn.gameObject:SetActive(false)
+    else
+        self.view.bigBtnText.hintTextId = ""
+        self.view.bigBtnText.text = Language.LUA_MAP_MARK_DETAIL_COMMON_JUMP_TO_TP_BTN_TEXT
+        self.view.bigBtnIcon:LoadSprite(UIConst.UI_SPRITE_MAP_ICON, "icon_jump_to_tp_mark")
+        self.view.bigBtnIcon:SetNativeSize()
+        self.view.bigBtn.onClick:RemoveAllListeners()
+        self.view.bigBtn.onClick:AddListener(function()
+            self:_OnJumpToTpBtnClick()
+        end)
+        self.view.bigBtn.gameObject:SetActive(true)
+    end
+end
 
 MapMarkDetailCommon.CloseDetail = HL.Method() << function(self)
     self:_Close()
 end
-
-
 
 
 
@@ -341,11 +355,6 @@ MapMarkDetailCommon._InitDetailCommonController = HL.Method() << function(self)
     ctrl.view.controllerHintPlaceholder = self.view.controllerHintPlaceholder
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ctrl.view.inputGroup.groupId})
 end
-
-
-
-
-
 
 
 
@@ -372,9 +381,6 @@ MapMarkDetailCommon.InitDetailItem = HL.Method(HL.Userdata, HL.Any, HL.Opt(HL.Ta
         itemCell:SetEnableHoverTips(false)
     end
 end
-
-
-
 
 MapMarkDetailCommon.ToggleEmptyMaskVisibleState = HL.Method(HL.Boolean) << function(self, visible)
     self.view.emptyMask.gameObject:SetActive(visible)

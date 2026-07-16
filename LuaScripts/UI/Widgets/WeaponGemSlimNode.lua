@@ -1,20 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 WeaponGemSlimNode = HL.Class('WeaponGemSlimNode', UIWidgetBase)
-
-
 
 
 WeaponGemSlimNode._OnFirstTimeInit = HL.Override() << function(self)
 
 end
-
-
-
 
 WeaponGemSlimNode.InitWeaponGemSlimNode = HL.Method(HL.Number) << function(self, gemInstId)
     self:_FirstTimeInit()
@@ -22,9 +13,6 @@ WeaponGemSlimNode.InitWeaponGemSlimNode = HL.Method(HL.Number) << function(self,
     local gemInst = CharInfoUtils.getGemByInstId(gemInstId)
     self:InitWeaponGemSlimeNodeByInst(gemInst)
 end
-
-
-
 
 WeaponGemSlimNode.InitWeaponGemSlimeNodeByInst = HL.Method(HL.Userdata) << function(self, gemInst)
     self:_FirstTimeInit()

@@ -1,21 +1,11 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SettlementCommonToast
 local settlementSystem = GameInstance.player.settlementSystem
-
-
-
-
-
-
-
-
 SettlementCommonToastCtrl = HL.Class('SettlementCommonToastCtrl', uiCtrl.UICtrl)
 
 local MAIN_HUD_TOAST_TYPE = "SettlementToast"
 
-
 SettlementCommonToastCtrl.m_timerId = HL.Field(HL.Any) << nil
-
 
 
 
@@ -27,13 +17,8 @@ SettlementCommonToastCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 SettlementCommonToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
-
-
 
 
 
@@ -50,9 +35,6 @@ SettlementCommonToastCtrl._OnShowLink = HL.StaticMethod(HL.Table) << function(ar
         SettlementCommonToastCtrl._InternalOnShowLink(args, false)
     end
 end
-
-
-
 
 SettlementCommonToastCtrl._InternalOnShowLink = HL.StaticMethod(HL.Table, HL.Boolean) << function(args, inQueue)
     local self = UIManager:AutoOpen(PANEL_ID)
@@ -85,8 +67,6 @@ end
 
 
 
-
-
 SettlementCommonToastCtrl._OnShowUpgrade = HL.StaticMethod(HL.Table) << function(args)
     local self = UIManager:AutoOpen(PANEL_ID)
     self.view.linkNode.gameObject:SetActiveIfNecessary(false)
@@ -110,8 +90,6 @@ SettlementCommonToastCtrl._OnShowUpgrade = HL.StaticMethod(HL.Table) << function
         end)
     end)
 end
-
-
 
 SettlementCommonToastCtrl.InterruptMainHudActionQueue = HL.Method() << function(self)
     self.animationWrapper:ClearTween(false)

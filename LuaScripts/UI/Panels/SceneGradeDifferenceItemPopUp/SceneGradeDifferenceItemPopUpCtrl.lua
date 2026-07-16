@@ -2,13 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SceneGradeDifferenceItemPopUp
 local PHASE_ID = PhaseId.SceneGradeDifferenceItemPopUp
-
-
-
-
-
 SceneGradeDifferenceItemPopUpCtrl = HL.Class('SceneGradeDifferenceItemPopUpCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -19,11 +13,7 @@ SceneGradeDifferenceItemPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 SceneGradeDifferenceItemPopUpCtrl.m_sceneGradeCellList = HL.Field(HL.Forward('UIListCache'))
-
-
-
 
 
 SceneGradeDifferenceItemPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -51,10 +41,6 @@ SceneGradeDifferenceItemPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(sel
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.scrollRect.content)
     self.view.scrollRect:ScrollToRectTransform(targetScrollToCell.gameObject.transform, true)
 end
-
-
-
-
 
 SceneGradeDifferenceItemPopUpCtrl._FillSceneGradeCellItem = HL.Method(HL.Any, HL.Any)
         << function(self, sceneGradeCell, displayList)

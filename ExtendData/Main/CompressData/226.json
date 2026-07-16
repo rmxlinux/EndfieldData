@@ -4,119 +4,518 @@
   "nodes": [
     {
       "_position": {
-        "x": -160.0,
-        "y": 100.0
+        "x": 220.0,
+        "y": -80.0
       },
       "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "0"
     },
     {
-      "childConditions": [
-        {
-          "weight": {
-            "_name": "weight1",
-            "_targetVariableID": "4e8f2544-a744-49fe-b600-c321ec9ca447"
-          },
-          "condition": {
-            "result": {
-              "_name": "weight1",
-              "_targetVariableID": "4e8f2544-a744-49fe-b600-c321ec9ca447"
-            },
-            "weight": 15,
-            "seqActionId": {
-              "_name": "行为循环Id1",
-              "_targetVariableID": "39cb926b-8d3e-4755-9c16-c1dd39173519"
-            },
-            "latestChangeWeight": {
-              "_name": "最近使用过权重修改值",
-              "_targetVariableID": "5a0db696-2821-4705-89fa-7d17f2f3c26e"
-            },
-            "holdChangeWeight": {
-              "_name": "被占用数量权重修改值",
-              "_targetVariableID": "1dcf9b6c-ed22-4221-bde5-18a7bd81c2d7"
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.NpcChangeSeqActionWeight"
-          }
-        },
-        {
-          "weight": {
-            "_name": "weight2",
-            "_targetVariableID": "a5aef12a-1130-4d57-a623-6a78170e49c4"
-          },
-          "condition": {
-            "result": {
-              "_name": "weight2",
-              "_targetVariableID": "a5aef12a-1130-4d57-a623-6a78170e49c4"
-            },
-            "weight": 10,
-            "seqActionId": {
-              "_name": "行为循环Id2",
-              "_targetVariableID": "0332efde-35fd-422e-a421-045aeaff490c"
-            },
-            "latestChangeWeight": {
-              "_name": "最近使用过权重修改值",
-              "_targetVariableID": "5a0db696-2821-4705-89fa-7d17f2f3c26e"
-            },
-            "holdChangeWeight": {
-              "_name": "被占用数量权重修改值",
-              "_targetVariableID": "1dcf9b6c-ed22-4221-bde5-18a7bd81c2d7"
-            },
-            "$type": "Beyond.Gameplay.AI.Condition.NpcChangeSeqActionWeight"
-          }
-        }
-      ],
-      "_position": {
-        "x": -160.0,
-        "y": 180.0
+      "filterMode": 0,
+      "maxCount": {
+        "_value": 1
       },
-      "$type": "Beyond.Gameplay.AI.Nodes.ConditionalProbabilitySelector",
+      "coolDownTime": {
+        "_value": 5.0
+      },
+      "additionalWidth": 57.0,
+      "_position": {
+        "x": -2480.0,
+        "y": 160.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.Filter",
       "$id": "1"
     },
     {
-      "_subTree": {
-        "_value": 1
+      "_action": {
+        "key": {
+          "_value": "jump"
+        },
+        "passTime": {},
+        "$type": "Beyond.Gameplay.AI.Action.StartTimer"
       },
-      "_variablesMap": [
-        {
-          "_targetSubGraphVariableID": "510cf188-ca67-4e3f-816d-7440ff6ce584",
-          "_canRead": true,
-          "_canWrite": true,
-          "_type": "System.Int32",
-          "_name": "行为循环Id1",
-          "_targetVariableID": "39cb926b-8d3e-4755-9c16-c1dd39173519"
-        }
-      ],
-      "additionalWidth": 201.0,
+      "additionalWidth": 132.0,
       "_position": {
-        "x": -600.0,
+        "x": -2520.0,
         "y": 300.0
       },
-      "_comment": "行为循环1——基础工作",
-      "$type": "NodeCanvas.BehaviourTrees.SubTree",
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "2"
     },
     {
-      "_subTree": {
-        "_value": 2
+      "_action": {
+        "saveTo": {
+          "_name": "Target",
+          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.GetMainCharacter"
       },
-      "_variablesMap": [
-        {
-          "_targetSubGraphVariableID": "510cf188-ca67-4e3f-816d-7440ff6ce584",
-          "_canRead": true,
-          "_canWrite": true,
-          "_type": "System.Int32",
-          "_name": "行为循环Id2",
-          "_targetVariableID": "0332efde-35fd-422e-a421-045aeaff490c"
-        }
-      ],
-      "additionalWidth": 202.0,
+      "additionalWidth": 72.0,
       "_position": {
-        "x": -100.0,
+        "x": -2320.0,
+        "y": 20.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "3"
+    },
+    {
+      "filterMode": 0,
+      "maxCount": {
+        "_value": 1
+      },
+      "coolDownTime": {
+        "_value": 5.0
+      },
+      "additionalWidth": 62.0,
+      "_position": {
+        "x": -1680.0,
+        "y": 140.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.Filter",
+      "$id": "4"
+    },
+    {
+      "_position": {
+        "x": -1700.0,
         "y": 300.0
       },
-      "_comment": "行为循环2——使用pad",
-      "$type": "NodeCanvas.BehaviourTrees.SubTree",
-      "$id": "3"
+      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
+      "$id": "5"
+    },
+    {
+      "_action": {
+        "key": {
+          "_value": "spawn_monster"
+        },
+        "success": {},
+        "result": {
+          "_name": "water",
+          "_targetVariableID": "3f5393ab-6c1a-421e-88be-f3a724ca6390"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.GetAITransData"
+      },
+      "additionalWidth": 266.0,
+      "_position": {
+        "x": -2200.0,
+        "y": 400.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "6"
+    },
+    {
+      "_action": {
+        "castSkillType": 1,
+        "skillData": {
+          "_value": {
+            "skillRange": 100.0,
+            "skillID": "eny_0114_jzmking_jumptowater_settlement"
+          }
+        },
+        "target": {
+          "_name": "Target",
+          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+        },
+        "targetPos": {
+          "_name": "water",
+          "_targetVariableID": "3f5393ab-6c1a-421e-88be-f3a724ca6390"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.CastSeqSkill"
+      },
+      "additionalWidth": 231.0,
+      "_position": {
+        "x": -1780.0,
+        "y": 400.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "7"
+    },
+    {
+      "_action": {
+        "key": {
+          "_value": "spawn"
+        },
+        "success": {},
+        "result": {
+          "_name": "spawn",
+          "_targetVariableID": "5c8b519a-e3b4-4e9d-868f-0278761ecb93"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.GetAITransData"
+      },
+      "additionalWidth": 252.0,
+      "_position": {
+        "x": -1560.0,
+        "y": 220.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "8"
+    },
+    {
+      "_action": {
+        "key": {
+          "_value": "base_core"
+        },
+        "success": {},
+        "result": {
+          "_name": "base_core",
+          "_targetVariableID": "9790bcc5-4ed2-4bfd-94a0-851636a0e1bc"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.GetAITransData"
+      },
+      "additionalWidth": 252.0,
+      "_position": {
+        "x": -1180.0,
+        "y": 220.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "9"
+    },
+    {
+      "_action": {
+        "key": {
+          "_value": "jump_1"
+        },
+        "success": {},
+        "result": {
+          "_name": "jump_1",
+          "_targetVariableID": "6011c060-b2ee-4d6d-b36d-29c4f361aebe"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.GetAITransData"
+      },
+      "additionalWidth": 237.0,
+      "_position": {
+        "x": -820.0,
+        "y": 200.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "10"
+    },
+    {
+      "_action": {
+        "key": {
+          "_value": "jump_2"
+        },
+        "success": {},
+        "result": {
+          "_name": "jump_2",
+          "_targetVariableID": "ace0d597-b078-491e-abfd-6447b2f045c8"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.GetAITransData"
+      },
+      "additionalWidth": 237.0,
+      "_position": {
+        "x": -440.0,
+        "y": 220.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "11"
+    },
+    {
+      "_action": {
+        "key": {
+          "_value": "jump_3"
+        },
+        "success": {},
+        "result": {
+          "_name": "jump_3",
+          "_targetVariableID": "2b717e29-0440-4db3-a45d-f4d77a1ca9b2"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.GetAITransData"
+      },
+      "additionalWidth": 237.0,
+      "_position": {
+        "x": -40.0,
+        "y": 220.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "12"
+    },
+    {
+      "_action": {
+        "key": {
+          "_value": "jump_4"
+        },
+        "success": {},
+        "result": {
+          "_name": "jump_4",
+          "_targetVariableID": "f5e6ed50-30e3-413e-8588-03d3df778b52"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.GetAITransData"
+      },
+      "additionalWidth": 237.0,
+      "_position": {
+        "x": 340.0,
+        "y": 220.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "13"
+    },
+    {
+      "_condition": {
+        "key": {
+          "_value": "jump"
+        },
+        "time": {
+          "_value": 40.0
+        },
+        "$type": "Beyond.Gameplay.AI.Condition.CheckTimer"
+      },
+      "additionalWidth": 108.0,
+      "_position": {
+        "x": 920.0,
+        "y": 100.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BinarySelector",
+      "$id": "14"
+    },
+    {
+      "conditionFailReturn": 1,
+      "_condition": {
+        "targetActor": {
+          "_name": "Target",
+          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+        },
+        "targetPoint": {},
+        "skillId": {
+          "_value": "eny_0114_jzmking_settlement"
+        },
+        "skillData": {},
+        "skipCheckDistance": {
+          "_value": true
+        },
+        "skipCheckAngle": {
+          "_value": true
+        },
+        "$type": "Beyond.Gameplay.AI.Condition.CheckCanCastSkill"
+      },
+      "additionalWidth": 257.0,
+      "_position": {
+        "x": 700.0,
+        "y": 240.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
+      "$id": "15"
+    },
+    {
+      "_action": {
+        "castSkillType": 1,
+        "skillData": {
+          "_value": {
+            "skillRange": 100.0,
+            "skillID": "eny_0114_jzmking_settlement"
+          }
+        },
+        "target": {
+          "_name": "Target",
+          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+        },
+        "targetPos": {
+          "_name": "spawn",
+          "_targetVariableID": "5c8b519a-e3b4-4e9d-868f-0278761ecb93"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.CastSeqSkill"
+      },
+      "additionalWidth": 199.0,
+      "_position": {
+        "x": 720.0,
+        "y": 380.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "16"
+    },
+    {
+      "filterMode": 0,
+      "maxCount": {
+        "_value": 1
+      },
+      "coolDownTime": {
+        "_value": 5.0
+      },
+      "additionalWidth": 62.0,
+      "_position": {
+        "x": 1300.0,
+        "y": 220.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.Filter",
+      "$id": "17"
+    },
+    {
+      "_position": {
+        "x": 1320.0,
+        "y": 360.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
+      "$id": "18"
+    },
+    {
+      "_action": {
+        "castSkillType": 1,
+        "skillData": {
+          "_value": {
+            "skillRange": 100.0,
+            "skillID": "eny_0114_jzmking_jumpto_settlement"
+          }
+        },
+        "target": {
+          "_name": "Target",
+          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+        },
+        "targetPos": {
+          "_name": "jump_2",
+          "_targetVariableID": "ace0d597-b078-491e-abfd-6447b2f045c8"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.CastSeqSkill"
+      },
+      "additionalWidth": 211.0,
+      "_position": {
+        "x": 780.0,
+        "y": 520.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "19"
+    },
+    {
+      "_action": {
+        "waitTime": {
+          "_value": 8.0
+        },
+        "$type": "Beyond.Gameplay.AI.Action.WaitSec"
+      },
+      "_position": {
+        "x": 1120.0,
+        "y": 520.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "20"
+    },
+    {
+      "_action": {
+        "castSkillType": 1,
+        "skillData": {
+          "_value": {
+            "skillRange": 100.0,
+            "skillID": "eny_0114_jzmking_jumpto_settlement"
+          }
+        },
+        "target": {
+          "_name": "Target",
+          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+        },
+        "targetPos": {
+          "_name": "jump_3",
+          "_targetVariableID": "2b717e29-0440-4db3-a45d-f4d77a1ca9b2"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.CastSeqSkill"
+      },
+      "additionalWidth": 211.0,
+      "_position": {
+        "x": 1260.0,
+        "y": 540.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "21"
+    },
+    {
+      "_action": {
+        "waitTime": {
+          "_value": 6.0
+        },
+        "$type": "Beyond.Gameplay.AI.Action.WaitSec"
+      },
+      "_position": {
+        "x": 1600.0,
+        "y": 540.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "22"
+    },
+    {
+      "_action": {
+        "castSkillType": 1,
+        "skillData": {
+          "_value": {
+            "skillRange": 100.0,
+            "skillID": "eny_0114_jzmking_jumpup_settlement"
+          }
+        },
+        "target": {
+          "_name": "Target",
+          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+        },
+        "targetPos": {
+          "_name": "jump_4",
+          "_targetVariableID": "f5e6ed50-30e3-413e-8588-03d3df778b52"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.CastSeqSkill"
+      },
+      "additionalWidth": 211.0,
+      "_position": {
+        "x": 1740.0,
+        "y": 520.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "23"
+    },
+    {
+      "_action": {
+        "waitTime": {
+          "_value": 5.0
+        },
+        "$type": "Beyond.Gameplay.AI.Action.WaitSec"
+      },
+      "_position": {
+        "x": 2060.0,
+        "y": 520.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "24"
+    },
+    {
+      "_action": {
+        "castSkillType": 1,
+        "skillData": {
+          "_value": {
+            "skillRange": 100.0,
+            "skillID": "eny_0114_jzmking_jumpup_settlement"
+          }
+        },
+        "target": {
+          "_name": "Target",
+          "_targetVariableID": "35948af8-c5fc-4dec-bb7a-fb20846230ec"
+        },
+        "targetPos": {
+          "_name": "base_core",
+          "_targetVariableID": "9790bcc5-4ed2-4bfd-94a0-851636a0e1bc"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.CastSeqSkill"
+      },
+      "additionalWidth": 211.0,
+      "_position": {
+        "x": 2200.0,
+        "y": 520.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "25"
+    },
+    {
+      "_action": {
+        "waitTime": {
+          "_value": 4.0
+        },
+        "$type": "Beyond.Gameplay.AI.Action.WaitSec"
+      },
+      "_position": {
+        "x": 2560.0,
+        "y": 520.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "26"
+    },
+    {
+      "_position": {
+        "x": 1220.0,
+        "y": 980.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.Sequencer"
     }
   ],
   "connections": [
@@ -131,6 +530,87 @@
     },
     {
       "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "3"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "4"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "8"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "9"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "10"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "11"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "12"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "13"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "0"
+      },
+      "_targetNode": {
+        "$ref": "14"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
         "$ref": "1"
       },
       "_targetNode": {
@@ -140,10 +620,136 @@
     },
     {
       "_sourceNode": {
-        "$ref": "1"
+        "$ref": "4"
       },
       "_targetNode": {
-        "$ref": "3"
+        "$ref": "5"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "5"
+      },
+      "_targetNode": {
+        "$ref": "6"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "5"
+      },
+      "_targetNode": {
+        "$ref": "7"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "14"
+      },
+      "_targetNode": {
+        "$ref": "15"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "14"
+      },
+      "_targetNode": {
+        "$ref": "17"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "15"
+      },
+      "_targetNode": {
+        "$ref": "16"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "17"
+      },
+      "_targetNode": {
+        "$ref": "18"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "18"
+      },
+      "_targetNode": {
+        "$ref": "19"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "18"
+      },
+      "_targetNode": {
+        "$ref": "20"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "18"
+      },
+      "_targetNode": {
+        "$ref": "21"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "18"
+      },
+      "_targetNode": {
+        "$ref": "22"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "18"
+      },
+      "_targetNode": {
+        "$ref": "23"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "18"
+      },
+      "_targetNode": {
+        "$ref": "24"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "18"
+      },
+      "_targetNode": {
+        "$ref": "25"
+      },
+      "$type": "NodeCanvas.BehaviourTrees.BTConnection"
+    },
+    {
+      "_sourceNode": {
+        "$ref": "18"
+      },
+      "_targetNode": {
+        "$ref": "26"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     }
@@ -151,39 +757,71 @@
   "canvasGroups": [],
   "localBlackboard": {
     "_variables": {
-      "被占用数量权重修改值": {
-        "_value": -5,
-        "_name": "被占用数量权重修改值",
-        "_id": "1dcf9b6c-ed22-4221-bde5-18a7bd81c2d7",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "part": {
+        "_value": 1.0,
+        "_name": "part",
+        "_id": "112895a9-b592-481f-83be-424721b8912d",
+        "$type": "NodeCanvas.Framework.Variable`1[[System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
       },
-      "最近使用过权重修改值": {
-        "_value": -5,
-        "_name": "最近使用过权重修改值",
-        "_id": "5a0db696-2821-4705-89fa-7d17f2f3c26e",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "Target": {
+        "_name": "Target",
+        "_id": "35948af8-c5fc-4dec-bb7a-fb20846230ec",
+        "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.AIEntity, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
       },
-      "行为循环Id1": {
-        "_value": 1,
-        "_name": "行为循环Id1",
-        "_id": "39cb926b-8d3e-4755-9c16-c1dd39173519",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "技能": {
+        "_name": "技能",
+        "_id": "c508f5fd-48e5-4baf-a191-698ac817bbdb",
+        "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.Config.EnemyAISkillData, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
       },
-      "行为循环Id2": {
-        "_value": 2,
-        "_name": "行为循环Id2",
-        "_id": "0332efde-35fd-422e-a421-045aeaff490c",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "EntityBB_MineCount": {
+        "_name": "EntityBB_MineCount",
+        "_id": "6efcb1ef-d1bc-468f-8654-4c710a868a5c",
+        "$type": "NodeCanvas.Framework.Variable`1[[System.Single, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
       },
-      "weight1": {
-        "_name": "weight1",
-        "_id": "4e8f2544-a744-49fe-b600-c321ec9ca447",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "Center": {
+        "_name": "Center",
+        "_id": "1ce540a7-79e3-4871-a965-e37eef2adbf8",
+        "$type": "NodeCanvas.Framework.Variable`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
       },
-      "weight2": {
-        "_name": "weight2",
-        "_id": "a5aef12a-1130-4d57-a623-6a78170e49c4",
-        "$type": "NodeCanvas.Framework.Variable`1[[System.Int32, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      "needToSwitchState": {
+        "_name": "needToSwitchState",
+        "_id": "3396fcfd-f6d5-409f-bddf-29f9eb2f81f5",
+        "$type": "NodeCanvas.Framework.Variable`1[[System.Boolean, mscorlib, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089]]"
+      },
+      "jump_1": {
+        "_name": "jump_1",
+        "_id": "6011c060-b2ee-4d6d-b36d-29c4f361aebe",
+        "$type": "NodeCanvas.Framework.Variable`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+      },
+      "jump_2": {
+        "_name": "jump_2",
+        "_id": "ace0d597-b078-491e-abfd-6447b2f045c8",
+        "$type": "NodeCanvas.Framework.Variable`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+      },
+      "jump_3": {
+        "_name": "jump_3",
+        "_id": "2b717e29-0440-4db3-a45d-f4d77a1ca9b2",
+        "$type": "NodeCanvas.Framework.Variable`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+      },
+      "jump_4": {
+        "_name": "jump_4",
+        "_id": "f5e6ed50-30e3-413e-8588-03d3df778b52",
+        "$type": "NodeCanvas.Framework.Variable`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+      },
+      "base_core": {
+        "_name": "base_core",
+        "_id": "9790bcc5-4ed2-4bfd-94a0-851636a0e1bc",
+        "$type": "NodeCanvas.Framework.Variable`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+      },
+      "water": {
+        "_name": "water",
+        "_id": "3f5393ab-6c1a-421e-88be-f3a724ca6390",
+        "$type": "NodeCanvas.Framework.Variable`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+      },
+      "spawn": {
+        "_name": "spawn",
+        "_id": "5c8b519a-e3b4-4e9d-868f-0278761ecb93",
+        "$type": "NodeCanvas.Framework.Variable`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
       }
     }
   },

@@ -7,46 +7,6 @@ local AbilityState = CS.Beyond.Gameplay.GeneralAbilitySystem.AbilityState
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.LiquidPool
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 LiquidPoolCtrl = HL.Class('LiquidPoolCtrl', uiCtrl.UICtrl)
 
 local ItemAnimType = {
@@ -59,32 +19,24 @@ local ItemAnimType = {
 
 
 
-
 LiquidPoolCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_GENERAL_ABILITY_STATE_CHANGE] = "_OnGeneralAbilityStateChange", 
 }
 
 
-
 LiquidPoolCtrl.m_nodeId = HL.Field(HL.Number) << -1
-
 
 LiquidPoolCtrl.m_isFilling = HL.Field(HL.Boolean) << true
 
-
 LiquidPoolCtrl.m_selectedItemList = HL.Field(HL.Table) 
-
 
 LiquidPoolCtrl.m_selectedItemMap = HL.Field(HL.Table) 
 
-
 LiquidPoolCtrl.m_csInfo = HL.Field(CS.Beyond.Gameplay.Factory.FactoryUtil.FluidContainerInfo)
-
 
 LiquidPoolCtrl.m_selectTargetLiquidId = HL.Field(HL.Any)
 
-
-
+LiquidPoolCtrl.m_deferExitCor = HL.Field(HL.Thread)
 
 
 LiquidPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -130,16 +82,15 @@ LiquidPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 LiquidPoolCtrl.OnClose = HL.Override() << function(self)
+    if self.m_deferExitCor then
+        self:_ClearCoroutine(self.m_deferExitCor)
+        self.m_deferExitCor = nil
+    end
     if self:_IsBagActive() then
         Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.bagNode.inputGroup.groupId)
     end
 end
-
-
-
 
 
 
@@ -168,16 +119,11 @@ LiquidPoolCtrl._ToggleContent = HL.Method(HL.Boolean) << function(self, isFillin
     end
 end
 
-
-
 LiquidPoolCtrl._UpdateActionTypeToggleBinding = HL.Method() << function(self)
     local actionTypeToggleBindingId = self.view.actionTypeToggle.toggleBindingId
     local textId = self.m_isFilling and "key_hint_liquid_pool_switch_to_dump" or "key_hint_liquid_pool_switch_to_fill"
     InputManagerInst:SetBindingText(actionTypeToggleBindingId, Language[textId])
 end
-
-
-
 
 LiquidPoolCtrl._UpdatePoolNode = HL.Method(HL.Table) << function(self, contentNode)
     local node = contentNode.poolNode
@@ -193,10 +139,6 @@ LiquidPoolCtrl._UpdatePoolNode = HL.Method(HL.Table) << function(self, contentNo
 
     node.storageTxt.text = info.isInfinite and Language.LUA_LIQUID_POOL_INFINITE_COUNT or string.format(Language.LUA_LIQUID_STORAGE_FORMAT, info.itemCount, info.maxAmount)
 end
-
-
-
-
 
 LiquidPoolCtrl._UpdateItemNode = HL.Method(HL.Table, HL.Number) << function(self, contentNode, animType)
     local node = contentNode.itemNode
@@ -239,8 +181,6 @@ LiquidPoolCtrl._UpdateItemNode = HL.Method(HL.Table, HL.Number) << function(self
     end
 end
 
-
-
 LiquidPoolCtrl._UpdateSelectItemBinding = HL.Method() << function(self)
     local contentNode = self.m_isFilling and self.view.fillContent or self.view.dumpContent
     local isEmpty = #self.m_selectedItemList == 0
@@ -249,8 +189,6 @@ LiquidPoolCtrl._UpdateSelectItemBinding = HL.Method() << function(self)
     contentNode.itemNode.content.customBindingViewLabelText = text
     contentNode.itemNode.keyHint:SetText(text)
 end
-
-
 
 LiquidPoolCtrl._UpdateBottomNode = HL.Method() << function(self)
     local count = #self.m_selectedItemList
@@ -278,23 +216,15 @@ LiquidPoolCtrl._UpdateBottomNode = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 LiquidPoolCtrl._OnUpdateCell = HL.Method(HL.Forward('Item'), HL.Number) << function(self, cell, index)
     local info = self.m_selectedItemList[index]
     cell:InitItem(info, true)
 end
 
-
-
 LiquidPoolCtrl._OnConfirmAction = HL.Method() << function(self)
     self:_SendActionMsg()
     
 end
-
-
 
 LiquidPoolCtrl._SendActionMsg = HL.Method() << function(self)
     local idList = {}
@@ -315,11 +245,6 @@ LiquidPoolCtrl._SendActionMsg = HL.Method() << function(self)
         end)
     end
 end
-
-
-
-
-
 
 
 LiquidPoolCtrl._OnActionReturn = HL.Method(HL.Boolean, CS.Proto.CS_FACTORY_OP, CS.Proto.SC_FACTORY_OP_RET) << function(self, isFilling, op, opRet)
@@ -350,11 +275,6 @@ LiquidPoolCtrl._OnActionReturn = HL.Method(HL.Boolean, CS.Proto.CS_FACTORY_OP, C
         self:_ShowReward(isFilling, opRet, retType)
     end)
 end
-
-
-
-
-
 
 LiquidPoolCtrl._ShowReward = HL.Method(HL.Boolean, CS.Proto.SC_FACTORY_OP_RET, CS.Proto.RET_FLUID_WITH_LIQUID_BODY) << function(self, isFilling, opRet, retType)
     if retType == CS.Proto.RET_FLUID_WITH_LIQUID_BODY.PartialByBag then
@@ -411,30 +331,19 @@ end
 
 
 
-
 LiquidPoolCtrl.m_bagNodeItemInfos = HL.Field(HL.Table) 
-
 
 LiquidPoolCtrl.m_bagNodeSelectedIndex = HL.Field(HL.Number) << 1
 
-
 LiquidPoolCtrl.m_selectedBottleLiquidCapacity = HL.Field(HL.Number) << 0
-
 
 LiquidPoolCtrl.m_getBagNodeItemCell = HL.Field(HL.Function)
 
-
 LiquidPoolCtrl.m_bagNodeSelectTargetLiquidId = HL.Field(HL.Any)
-
-
 
 LiquidPoolCtrl._IsBagActive = HL.Method().Return(HL.Boolean) << function(self)
     return self.view.bagNode.gameObject.activeInHierarchy
 end
-
-
-
-
 
 LiquidPoolCtrl._ToggleBag = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, isInit)
     local node = self.view.bagNode
@@ -450,7 +359,7 @@ LiquidPoolCtrl._ToggleBag = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << functio
 
     node.gameObject:SetActive(true)
     if not active then
-        InputManagerInst.controllerNaviManager:SetTarget(nil)
+        self:ClearNaviTarget()
         node.animationWrapper:PlayOutAnimation(function()
             node.gameObject:SetActive(false)
             Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.bagNode.inputGroup.groupId)
@@ -487,10 +396,6 @@ LiquidPoolCtrl._ToggleBag = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << functio
     node.itemScrollList:UpdateCount(#self.m_bagNodeItemInfos)
 end
 
-
-
-
-
 LiquidPoolCtrl._OnUpdateBagNodeItemCell = HL.Method(HL.Any, HL.Number) << function(self, cell, index)
     local info = self.m_bagNodeItemInfos[index]
     cell:InitItemCellForSelect({
@@ -525,13 +430,9 @@ LiquidPoolCtrl._OnUpdateBagNodeItemCell = HL.Method(HL.Any, HL.Number) << functi
     end
     cell.view.gameObject.name = info.id 
     if index == self.m_bagNodeSelectedIndex then
-        InputManagerInst.controllerNaviManager:SetTarget(cell.view.item.view.button)
+        self:SetNaviTarget(cell.view.item.view.button)
     end
 end
-
-
-
-
 
 LiquidPoolCtrl._OnSelectNumChanged = HL.Method(HL.Number, HL.Number) << function(self, index, newNum)
     local info = self.m_bagNodeItemInfos[index]
@@ -555,10 +456,6 @@ LiquidPoolCtrl._OnSelectNumChanged = HL.Method(HL.Number, HL.Number) << function
         end
     end
 end
-
-
-
-
 
 LiquidPoolCtrl._TryChangeSelectNum = HL.Method(HL.Number, HL.Number).Return(HL.Boolean, HL.Opt(HL.Number)) << function(self, index, newNum)
     local info = self.m_bagNodeItemInfos[index]
@@ -607,8 +504,6 @@ LiquidPoolCtrl._TryChangeSelectNum = HL.Method(HL.Number, HL.Number).Return(HL.B
     return true, newNum
 end
 
-
-
 LiquidPoolCtrl._UpdateBagNodeAllItemValidStateOnSelect = HL.Method() << function(self)
     local targetLiquidId = self.m_bagNodeSelectTargetLiquidId
     for k, v in ipairs(self.m_bagNodeItemInfos) do
@@ -619,8 +514,6 @@ LiquidPoolCtrl._UpdateBagNodeAllItemValidStateOnSelect = HL.Method() << function
         end
     end
 end
-
-
 
 LiquidPoolCtrl._PrepareBagData = HL.Method() << function(self)
     self.m_bagNodeItemInfos = {}
@@ -675,8 +568,6 @@ LiquidPoolCtrl._PrepareBagData = HL.Method() << function(self)
     table.sort(self.m_bagNodeItemInfos, Utils.genSortFunction({ "validSortId", "countSortId", "rarity", "sortId1", "sortId2", "id" }, false))
 end
 
-
-
 LiquidPoolCtrl._OnClickBagConfirm = HL.Method() << function(self)
     local prevCount = #self.m_selectedItemList
     local prevIsEmpty = prevCount == 0
@@ -698,13 +589,9 @@ LiquidPoolCtrl._OnClickBagConfirm = HL.Method() << function(self)
     self:_UpdateBottomNode()
 end
 
-
-
 LiquidPoolCtrl._CancelBagSelect = HL.Method() << function(self)
     self:_ToggleBag(false)
 end
-
-
 
 LiquidPoolCtrl._CalcCurBottleLiquidIdAndCapacity = HL.Method() << function(self)
     self.m_selectTargetLiquidId = nil
@@ -718,8 +605,6 @@ LiquidPoolCtrl._CalcCurBottleLiquidIdAndCapacity = HL.Method() << function(self)
 end
 
 
-
-
 LiquidPoolCtrl._HideLiquidPanelIfForbidden = HL.Method() << function(self)
     local abilityType = GeneralAbilityType.FluidInteract
     local abilityRuntimeData = GameInstance.player.generalAbilitySystem:GetAbilityRuntimeDataByType(abilityType)
@@ -730,9 +615,17 @@ LiquidPoolCtrl._HideLiquidPanelIfForbidden = HL.Method() << function(self)
 
     self:_CancelBagSelect()
 
-    if self:IsPlayingAnimationIn() then
+    
+    
+    if PhaseManager.isRecovering or PhaseManager.m_curState ~= Const.PhaseState.Idle then
+        self:_DeferExitLiquidPoolPhase()
+    elseif self:IsPlayingAnimationIn() then
         self:PlayAnimationOutWithCallback(function()
-            PhaseManager:ExitPhaseFast(PhaseId.LiquidPool)
+            if PhaseManager.isRecovering or PhaseManager.m_curState ~= Const.PhaseState.Idle then
+                self:_DeferExitLiquidPoolPhase()
+            else
+                PhaseManager:ExitPhaseFast(PhaseId.LiquidPool)
+            end
         end)
     else
         PhaseManager:PopPhase(PhaseId.LiquidPool)
@@ -742,7 +635,24 @@ LiquidPoolCtrl._HideLiquidPanelIfForbidden = HL.Method() << function(self)
     end
 end
 
-
+LiquidPoolCtrl._DeferExitLiquidPoolPhase = HL.Method() << function(self)
+    if self.m_deferExitCor then
+        return
+    end
+    self.m_deferExitCor = self:_StartCoroutine(function()
+        while PhaseManager.isRecovering or PhaseManager.m_curState ~= Const.PhaseState.Idle do
+            if not PhaseManager:IsOpen(PhaseId.LiquidPool) then
+                self.m_deferExitCor = nil
+                return
+            end
+            coroutine.yield()
+        end
+        if PhaseManager:IsOpen(PhaseId.LiquidPool) then
+            PhaseManager:ExitPhaseFast(PhaseId.LiquidPool)
+        end
+        self.m_deferExitCor = nil
+    end)
+end
 
 LiquidPoolCtrl._TryHideItemTips = HL.Method().Return(HL.Boolean) << function(self)
     local isShow = UIManager:IsShow(PanelId.ItemTips)
@@ -752,9 +662,6 @@ LiquidPoolCtrl._TryHideItemTips = HL.Method().Return(HL.Boolean) << function(sel
     return isShow
 end
 
-
-
-
 LiquidPoolCtrl._OnGeneralAbilityStateChange = HL.Method(HL.Table) << function(self, args)
     local abilityType = unpack(args)
     if abilityType ~= GeneralAbilityType.FluidInteract then
@@ -762,8 +669,6 @@ LiquidPoolCtrl._OnGeneralAbilityStateChange = HL.Method(HL.Table) << function(se
     end
     self:_HideLiquidPanelIfForbidden()
 end
-
-
 
 
 

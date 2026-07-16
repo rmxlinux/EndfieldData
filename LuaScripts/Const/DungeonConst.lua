@@ -18,8 +18,10 @@ DUNGEON_CATEGORY = {
     SS = "dungeon_ss",
     WorldLevel = "dungeon_worldlevel",
     HighDifficulty = "dungeon_highdifficulty",
+    SeasonTower = "dungeon_seasontower",
     ActMonster = "dungeon_actmonster",
     ContingencyContract = "dungeon_contract",
+    DoubleBattle = "dungeon_takestwo",
 }
 
 DUNGEON_REWARD_TAG_STATE = {
@@ -40,7 +42,8 @@ UI_RESTORE_DUNGEON_CATEGORY = {
 }
 
 GameMechanicsTypeToFormationTitleIcon = {
-    [GEnums.GameMechanicsType.DungeonContingencyContract] = "icon_formation_contingency"
+    [GEnums.GameMechanicsType.DungeonContingencyContract] = "icon_formation_contingency",
+    [GEnums.GameMechanicsType.DungeonRacing] = "icon_formation_racingdungeon",
 }
 
 

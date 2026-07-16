@@ -1,16 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
 FilterBtn = HL.Class('FilterBtn', UIWidgetBase)
-
-
 
 
 FilterBtn._OnFirstTimeInit = HL.Override() << function(self)
@@ -22,11 +12,7 @@ FilterBtn._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
 FilterBtn.m_args = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -50,17 +36,12 @@ FilterBtn.InitFilterBtn = HL.Method(HL.Table) << function(self, args)
     self:_UpdateState(args.selectedTags)
 end
 
-
-
 FilterBtn.GetSelectedTags = HL.Method().Return(HL.Table) << function(self)
     if not self.m_args or not self.m_args.selectedTags then
         return {}
     end
     return self.m_args.selectedTags
 end
-
-
-
 
 FilterBtn._UpdateState = HL.Method(HL.Table) << function(self, selectedTags)
     self.m_args.selectedTags = selectedTags
@@ -80,8 +61,6 @@ FilterBtn._UpdateState = HL.Method(HL.Table) << function(self, selectedTags)
         end
     end
 end
-
-
 
 FilterBtn._OpenFilterPanel = HL.Method() << function(self)
     Notify(MessageConst.SHOW_COMMON_FILTER, self.m_args)

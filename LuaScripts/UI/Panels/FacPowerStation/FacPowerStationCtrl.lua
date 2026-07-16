@@ -1,21 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacPowerStation
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacPowerStationCtrl = HL.Class('FacPowerStationCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -27,20 +12,13 @@ FacPowerStationCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacPowerStationCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 FacPowerStationCtrl.m_uiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_BurnPower)
 
-
 FacPowerStationCtrl.m_powerInfo = HL.Field(HL.Userdata)
 
-
 FacPowerStationCtrl.m_curBurningFuelId = HL.Field(HL.String) << ""
-
-
-
 
 
 
@@ -102,21 +80,15 @@ FacPowerStationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitPowerStationController()
 end
 
-
-
 FacPowerStationCtrl.OnClose = HL.Override() << function(self)
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_nodeId)
 end
-
-
 
 FacPowerStationCtrl._InitPowerInfo = HL.Method() << function(self)
     self.m_powerInfo = FactoryUtils.getCurRegionPowerInfo()
     self.view.maxRestPowerText.text = string.format("/%d", self.m_powerInfo.powerSaveMax)
     self:_RefreshPowerInfo()
 end
-
-
 
 FacPowerStationCtrl._RefreshPowerInfo = HL.Method() << function(self)
     local powerInfo = self.m_powerInfo
@@ -143,8 +115,6 @@ FacPowerStationCtrl._RefreshPowerInfo = HL.Method() << function(self)
     self.view.restPowerInfoNode.gameObject:SetActive(isPowerSaved)
     self.view.restPowerInfoEmptyNode.gameObject:SetActive(not isPowerSaved)
 end
-
-
 
 FacPowerStationCtrl._UpdateProgress = HL.Method() << function(self)
     local fuelId = self.m_uiInfo.burningItemId
@@ -187,18 +157,13 @@ end
 
 
 
-
 FacPowerStationCtrl.m_naviGroupSwitcher = HL.Field(HL.Forward('NaviGroupSwitcher'))
-
-
 
 FacPowerStationCtrl._InitPowerStationController = HL.Method() << function(self)
     local NaviGroupSwitcher = require_ex("Common/Utils/UI/NaviGroupSwitcher").NaviGroupSwitcher
     self.m_naviGroupSwitcher = NaviGroupSwitcher(self.view.inputGroup.groupId, nil, true)
     self:_RefreshNaviGroupSwitcherInfos()
 end
-
-
 
 FacPowerStationCtrl._RefreshNaviGroupSwitcherInfos = HL.Method() << function(self)
     if self.m_naviGroupSwitcher == nil then

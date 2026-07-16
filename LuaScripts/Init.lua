@@ -229,12 +229,15 @@ end
 
 
 LoadConst = function(reload)
+    
     Language = require_ex("Common/Utils/Language", reload)
     JsonConst = require_ex("Common/Utils/JsonConst", reload)
     Types = require_ex("Const/Types", reload)
     Const = require_ex("Const/Const", reload)
     UIConst = require_ex("Const/UIConst", reload)
     PhaseConst = require_ex("Const/PhaseConst", reload)
+    InputDeviceChangeConst = require_ex("Const/InputDeviceChangeConst", reload)
+    
     MessageConst = require_ex("Const/MessageConst", reload)
     LevelConst = require_ex("Const/LevelConst", reload)
     FacConst = require_ex("Const/FacConst", reload)
@@ -250,17 +253,14 @@ LoadConst = function(reload)
     CashShopConst = require_ex("Const/CashShopConst", reload)
     CharPotentialConst = require_ex("Const/CharPotentialConst", reload)
     DialogConst = require_ex("Const/DialogConst", reload)
+    GameSettingConst = require_ex("Const/GameSettingConst", reload)
 end
 LoadConst(false)
 
-
 LuaUpdate = require_ex("Common/Core/LuaUpdate")()
-
 TimerManager = require_ex("Common/Core/TimerManager")()
 require_ex("Common/Core/Coroutine")
-
 CoroutineManager = require_ex("Common/Core/CoroutineManager")()
-
 MessageManager = require_ex("Common/Core/MessageManager")()
 UIUtils = require_ex("Common/Utils/UIUtils")
 Utils = require_ex("Common/Utils/Utils")
@@ -272,11 +272,13 @@ LuaGameConditionUtils = require_ex("Common/Utils/GameConditionUtils")
 FilterUtils = require_ex("Common/Utils/FilterUtils")
 FactoryUtils = require_ex("Common/Utils/FactoryUtils")
 SpaceshipUtils = require_ex("Common/Utils/SpaceshipUtils")
+MiniGameBalloonUtils = require_ex("Common/Utils/MiniGameBalloonUtils")
 SNSUtils = require_ex("Common/Utils/SNSUtils")
 DungeonUtils = require_ex("Common/Utils/DungeonUtils")
 GameMechanicsUtils = require_ex("Common/Utils/GameMechanicsUtils")
 Json = require_ex("Common/Tools/json")
 RedDotUtils = require_ex("Common/Utils/RedDotUtils")
+ItemObtainWaysUtils = require_ex("Common/Utils/ItemObtainWaysUtils")
 EquipTechUtils = require_ex("Common/Utils/EquipTechUtils")
 WikiUtils = require_ex("Common/Utils/WikiUtils")
 MapUtils = require_ex("Common/Utils/MapUtils")
@@ -293,7 +295,8 @@ BattlePassUtils = require_ex("Common/Utils/BattlePassUtils")
 MailUtils = require_ex("Common/Utils/MailUtils")
 HighDifficultyUtils = require_ex("Common/Utils/HighDifficultyUtils")
 ContingencyContractUtils = require_ex("Common/Utils/ContingencyContractUtils")
-
+SeasonTowerUtils = require_ex("Common/Utils/SeasonTowerUtils")
+GameSettingUtils = require_ex("Common/Utils/GameSettingUtils")
 
 LuaObjectMemoryLeakChecker = require_ex("Common/Core/LuaObjectMemoryLeakChecker")()
 
@@ -316,23 +319,20 @@ Notify = function(msg, arg)
     MessageManager:Send(msg, arg)
 end
 
-
 UIManager = require_ex("Common/Core/UIManager")()
+
 PanelId = UIManager.ids
 
-
 PhaseManager = require_ex("Common/Core/PhaseManager")()
+
 PhaseId = PhaseManager.phaseIds
 
 
 UIManager:InitPanelConfigs()
-
 UIWorldFreezeManager = require_ex("Common/Core/UIWorldFreezeManager")()
 PhaseManager:InitPhaseConfigs()
 
-
 RedDotManager = require_ex("UI/RedDot/RedDotManager")()
-
 
 UIWidgetManager = require_ex("Common/Core/UIWidgetManager")()
 WrapUIWidget = function(t, name, component) 
@@ -349,8 +349,17 @@ CSBindLuaRef = function(t, name, luaRef)
     t[name] = ref
 end
 
-
 LuaSystemManager = require_ex("LuaSystem/LuaSystemManager")()
+
+
+
+
+local function _onDisposeLuaEnv()
+    PhaseManager:_Dispose()
+    LuaSystemManager:ReleaseSystems()
+end
+Register(MessageConst.ON_DISPOSE_LUA_ENV, _onDisposeLuaEnv)
+Register(MessageConst.ON_APPLICATION_QUIT, _onDisposeLuaEnv)
 
 LuaProfilerUtils = require_ex("Common/Core/LuaProfilerUtils")
 LuaHotFix = require_ex("Common/Core/LuaHotFix")

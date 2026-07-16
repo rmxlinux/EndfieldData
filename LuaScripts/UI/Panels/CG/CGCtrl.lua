@@ -3,55 +3,19 @@ local PANEL_ID = PanelId.CG
 
 local Status = CS.CriWare.CriMana.Player.Status
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CGCtrl = HL.Class('CGCtrl', uiCtrl.UICtrl)
 
 do
-    
     CGCtrl.m_time = HL.Field(HL.Number) << -1
 
-    
     CGCtrl.m_targetTime = HL.Field(HL.Number) << -1
 
-    
     CGCtrl.m_lateTickKey = HL.Field(HL.Number) << -1
 
-    
     CGCtrl.m_isPositivePausing = HL.Field(HL.Boolean) << false
 
-    
     CGCtrl.m_onCanvasChangedClosure = HL.Field(HL.Function)
 end
-
 
 
 
@@ -66,22 +30,15 @@ CGCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 CGCtrl.m_shouldClose = HL.Field(HL.Boolean) << false
 
-
 CGCtrl.m_afterMaskData = HL.Field(HL.Any) << nil
-
 
 CGCtrl.m_stopCoroutine = HL.Field(HL.Thread)
 
 CGCtrl.m_isInAfterMask = HL.Field(HL.Boolean) << false
 
-
 CGCtrl.m_volume = HL.Field(HL.Number) << 1.0
-
-
-
 
 
 CGCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -91,19 +48,17 @@ CGCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 end
 
-
-
 CGCtrl.OnShow = HL.Override() << function(self)
     self.view.image.gameObject:SetActive(false)
     self.view.exUINode:InitCinematicExUI()
     self:_HideBigLogo()
 end
 
-
-
 CGCtrl.OnClose = HL.Override() << function(self)
     self.view.exUINode.view.button.onClick:RemoveAllListeners()
     self.view.movieController.player.statusChangeCallback = nil
+    self.view.subtitleController:ReleaseAll()
+    self.view.subtitleController:UnbindMovieController()
     GameInstance.audioManager.music:ResumeMusic();
     LuaUpdate:Remove(self.m_lateTickKey)
     self.m_lateTickKey = -1
@@ -128,17 +83,9 @@ CGCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 CGCtrl.OnHide = HL.Override() << function(self)
     self.view.exUINode:Clear()
 end
-
-
-
-
-
-
 
 CGCtrl.PlayCG = HL.Method(HL.String, HL.String, HL.Opt(HL.Any, HL.Any)) << function(self, path, fmvId, beforeMaskData, afterMaskData)
     self.m_shouldClose = false
@@ -165,11 +112,6 @@ CGCtrl.PlayCG = HL.Method(HL.String, HL.String, HL.Opt(HL.Any, HL.Any)) << funct
     end
 end
 
-
-
-
-
-
 CGCtrl.LoadAndPlayCG = HL.Method(HL.String, HL.String, HL.Opt(HL.Any)) << function(self, path, fmvId, maskData)
     local canSkip = Utils.checkCGCanSkip(fmvId)
     if BEYOND_DEBUG then
@@ -180,6 +122,7 @@ CGCtrl.LoadAndPlayCG = HL.Method(HL.String, HL.String, HL.Opt(HL.Any)) << functi
     local isInitComplete = false
     self.view.exUINode.view.button.gameObject:SetActive(canSkip)
     self.view.subtitleController:PreloadFMVConfig(fmvId, function()
+        self.view.subtitleController:BindMovieController(self.view.movieController)
         self.view.movieController.player:SetFile(nil, path)
         self.view.movieController.player:Start()
         
@@ -233,9 +176,6 @@ CGCtrl.LoadAndPlayCG = HL.Method(HL.String, HL.String, HL.Opt(HL.Any)) << functi
     end)
 end
 
-
-
-
 CGCtrl.SetVideoImageOffset = HL.Method(HL.Boolean) << function(self, noSafeZone)
     if noSafeZone == nil then
         noSafeZone = false
@@ -261,14 +201,9 @@ CGCtrl.SetVideoImageOffset = HL.Method(HL.Boolean) << function(self, noSafeZone)
     self.view.movieController.transform.offsetMax = offsetMax
 end
 
-
-
 CGCtrl.SkipVideo = HL.Method() << function(self)
     self:OnVideoEnd(true)
 end
-
-
-
 
 CGCtrl.OnVideoEnd = HL.Method(HL.Opt(HL.Boolean)) << function(self, isSkip)
     if isSkip == nil then
@@ -296,9 +231,6 @@ CGCtrl.OnVideoEnd = HL.Method(HL.Opt(HL.Boolean)) << function(self, isSkip)
         VideoManager:OnPlayCGEnd(isSkip, true)
     end
 end
-
-
-
 
 CGCtrl.AsyncStop = HL.Method(HL.Any, HL.Boolean) << function(self, maskData, isSkip)
     local dynamicMaskData = UIUtils.genDynamicBlackScreenMaskData(
@@ -339,8 +271,6 @@ CGCtrl.AsyncStop = HL.Method(HL.Any, HL.Boolean) << function(self, maskData, isS
     VideoManager:OnPlayCGEnd(isSkip, false)
 end
 
-
-
 CGCtrl.OnSkipButtonClick = HL.Method() << function(self)
     self:_PauseEveryThing(true)
     self.m_isPositivePausing = true
@@ -358,31 +288,21 @@ CGCtrl.OnSkipButtonClick = HL.Method() << function(self)
     })
 end
 
-
-
 CGCtrl.OnPlayVideo = HL.StaticMethod(HL.Opt(HL.Any)) << function(arg)
     local ctrl = CGCtrl.AutoOpen(PANEL_ID, arg, true)
     local path, rawName, beforeMaskData, afterMaskData = unpack(arg)
     ctrl:PlayCG(path, rawName, beforeMaskData, afterMaskData)
 end
 
-
-
 CGCtrl._HideBigLogo = HL.Method() << function(self)
     self.view.bigLogoMain.gameObject:SetActive(false)
     self.view.stretchImageMain.gameObject:SetActive(false)
 end
 
-
-
-
 CGCtrl._OnShowBigLogo = HL.Method(HL.Table) << function(self, args)
     local spritePath, useStretchImage, showOnTop, hideBackground = unpack(args)
     self.view.subtitleController:SetBigLogoImage(spritePath, useStretchImage, showOnTop, hideBackground)
 end
-
-
-
 
 CGCtrl._OnApplicationPause = HL.Method(HL.Any) << function(self, arg)
     
@@ -405,9 +325,6 @@ CGCtrl._OnApplicationPause = HL.Method(HL.Any) << function(self, arg)
 end
 
 
-
-
-
 CGCtrl._PauseEveryThing = HL.Method(HL.Boolean) << function(self, isPause)
     self.view.movieController:Pause(isPause)
     self.view.exUINode:SetPause(isPause)
@@ -426,11 +343,8 @@ end
 
 
 if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
-    
     CGCtrl.m_debugCor = HL.Field(HL.Thread)
 
-    
-    
     CGCtrl._StartDisplayDebugInfo = HL.Method() << function(self)
         if DISABLE_VIDEO_DEBUG_INFO then
             return
@@ -443,6 +357,7 @@ if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
                 while true do
                     if self.view.movieController.player then
                         local info = VideoPlayer.GetDebugInfoStrFromPlayer(self.view.movieController.player)
+                        info = info .. string.format("DirectorTime: %.2f\n GameTime: %.2f", self.view.subtitleController.fmvDirector.time, Time.unscaledTime)
                         self.view.videoDebugNode.debugText.text = info
                     end
                     coroutine.step()
@@ -451,8 +366,6 @@ if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
         end
     end
 
-    
-    
     CGCtrl._StopDisplayDebugInfo = HL.Method() << function(self)
         if self.m_debugCor then
             self:_ClearCoroutine(self.m_debugCor)

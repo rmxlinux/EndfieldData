@@ -2,32 +2,13 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopMonthlyDetail
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopMonthlyDetailCtrl = HL.Class('ShopMonthlyDetailCtrl', uiCtrl.UICtrl)
-
 
 ShopMonthlyDetailCtrl.m_goodsId = HL.Field(HL.String) << ""
 
-
 ShopMonthlyDetailCtrl.m_goodsInfo = HL.Field(HL.Any)
 
-
 ShopMonthlyDetailCtrl.m_getCellFunc = HL.Field(HL.Function)
-
 
 
 
@@ -41,9 +22,6 @@ ShopMonthlyDetailCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 ShopMonthlyDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_goodsId = arg.goodsId
     self.m_goodsInfo = arg.goodsInfo
@@ -54,19 +32,13 @@ ShopMonthlyDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshView()
 end
 
-
-
 ShopMonthlyDetailCtrl.OnShow = HL.Override() << function(self)
     Notify(MessageConst.ON_OPEN_CASH_SHOP_DETAILS)
 end
 
-
-
 ShopMonthlyDetailCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.ON_CLOSE_CASH_SHOP_DETAILS)
 end
-
-
 
 ShopMonthlyDetailCtrl._BindUICallback = HL.Method() << function(self)
     self.view.closeButton.onClick:RemoveAllListeners()
@@ -112,8 +84,6 @@ ShopMonthlyDetailCtrl._BindUICallback = HL.Method() << function(self)
     end
 end
 
-
-
 ShopMonthlyDetailCtrl._RefreshView = HL.Method() << function(self)
     self.view.numeberTxt.text = 1
     self.view.costTotalTxt.text = CashShopUtils.getGoodsPriceText(self.m_goodsId)
@@ -158,8 +128,6 @@ end
 
 
 
-
-
 ShopMonthlyDetailCtrl._TryBuyShop = HL.Method() << function(self)
     EventLogManagerInst:GameEvent_GoodsViewClick(
         "2",  
@@ -171,27 +139,19 @@ ShopMonthlyDetailCtrl._TryBuyShop = HL.Method() << function(self)
     self:Close()
 end
 
-
-
 ShopMonthlyDetailCtrl._OnSetTop = HL.Method() << function(self)
     UIManager:SetTopOrder(PanelId.ShopMonthlyDetail)
 end
 
-
-
 ShopMonthlyDetailCtrl._OnCashShopOpenCategory = HL.Method() << function(self)
     self:Close()
 end
-
-
 
 ShopMonthlyDetailCtrl._OnCashShopReceiveRefreshMsg = HL.Method() << function(self)
     GameInstance.player.guide:OnShopRefreshItemInfo()
     Notify(MessageConst.SHOW_TOAST, Language.LUA_REFRESH_CLOSE_SHOP_TOAST)
     self:Close()
 end
-
-
 
 ShopMonthlyDetailCtrl.GetGoodsId = HL.Method().Return(HL.String) << function(self)
     return self.m_goodsId

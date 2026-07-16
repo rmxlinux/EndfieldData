@@ -1,58 +1,24 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SortNode = HL.Class('SortNode', UIWidgetBase)
-
 
 SortNode.isIncremental = HL.Field(HL.Boolean) << false
 
-
 SortNode.m_tmpNoCallback = HL.Field(HL.Boolean) << false
-
 
 SortNode.m_sortOptions = HL.Field(HL.Table)
 
-
 SortNode.m_onSortChanged = HL.Field(HL.Function)
-
 
 SortNode.m_curCSOptionIndex = HL.Field(HL.Number) << -1
 
-
 SortNode.m_filterBtn = HL.Field(HL.Userdata)
-
 
 SortNode.m_onToggleOptList = HL.Field(HL.Function)
 
-
 SortNode.m_changeIncrementalBindingId = HL.Field(HL.Number) << -1
 
-
 SortNode.m_enableFilterBtn = HL.Field(HL.Boolean) << true
-
-
 
 
 
@@ -76,16 +42,11 @@ SortNode._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 SortNode._ToggleIncremental = HL.Method() << function(self)
     self.isIncremental = not self.isIncremental
     self:RefreshIncremental()
     self:OnSortChanged()
 end
-
-
-
 
 SortNode._OnToggleOptList = HL.Method(HL.Boolean) << function(self, active)
     if not DeviceInfo.usingController then
@@ -131,14 +92,6 @@ SortNode._OnToggleOptList = HL.Method(HL.Boolean) << function(self, active)
     
 end
 
-
-
-
-
-
-
-
-
 SortNode.InitSortNode = HL.Method(HL.Table, HL.Function, HL.Opt(HL.Number, HL.Boolean, HL.Boolean, HL.Userdata)) <<
 function(self, sortOptions, onSortChanged, curCSOptionIndex, curIsIncremental, noCallback, filterBtn)
     self:_FirstTimeInit()
@@ -182,42 +135,28 @@ function(self, sortOptions, onSortChanged, curCSOptionIndex, curIsIncremental, n
     self:UpdateDeviceState()
 end
 
-
-
-
 SortNode.SetEnableFilterBtn = HL.Method(HL.Boolean) << function(self, enable)
     self.m_enableFilterBtn = enable
 end
-
-
-
 
 
 SortNode.SetOnToggleOptListCallback = HL.Method(HL.Function) << function(self, callback)
     self.m_onToggleOptList = callback
 end
 
-
-
 SortNode.OnSortChanged = HL.Method() << function(self)
     local sortOptData = self:GetCurSortData()
     self.m_onSortChanged(sortOptData, self.isIncremental)
 end
-
-
 
 SortNode.GetCurSortData = HL.Method().Return(HL.Table) << function(self)
     local data = self.m_sortOptions[LuaIndex(self.view.mobilePCNode.dropDown.selectedIndex)]
     return data
 end
 
-
-
 SortNode.GetCurSelectedIndex = HL.Method().Return(HL.Number) << function(self)
     return LuaIndex(self.view.mobilePCNode.dropDown.selectedIndex)
 end
-
-
 
 
 SortNode.GetCurSortKeys = HL.Method().Return(HL.Opt(HL.Table)) << function(self)
@@ -229,22 +168,16 @@ SortNode.GetCurSortKeys = HL.Method().Return(HL.Opt(HL.Table)) << function(self)
     end
 end
 
-
-
 SortNode.SortCurData = HL.Method() << function(self)
     if self.m_sortOptions then
         self:OnSortChanged()
     end
 end
 
-
-
 SortNode.RefreshIncremental = HL.Method() << function(self)
     self.view.mobilePCNode.isIncrementalButton.text = self.isIncremental and Language.LUA_SORT_NODE_UP or Language.LUA_SORT_NODE_DOWN
     self.view.mobilePCNode.orderImage.transform.localScale = Vector3(1, self.isIncremental and -1 or 1, 1)
 end
-
-
 
 SortNode.UpdateDeviceState = HL.Method() << function(self)
     if DeviceInfo.usingController then

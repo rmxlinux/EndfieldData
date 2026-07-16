@@ -1,33 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SettlementCommodity
 local PHASE_ID = PhaseId.SettlementCommodity
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SettlementCommodityCtrl = HL.Class('SettlementCommodityCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -41,36 +15,24 @@ SettlementCommodityCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 SettlementCommodityCtrl.m_genTradeItemCellFunc = HL.Field(HL.Function)
-
 
 SettlementCommodityCtrl.m_stlId = HL.Field(HL.String) << ""
 
-
 SettlementCommodityCtrl.m_stlLevel = HL.Field(HL.Number) << 0
-
 
 SettlementCommodityCtrl.m_curSelectedItemIndex = HL.Field(HL.Number) << 0
 
-
 SettlementCommodityCtrl.m_curSellItemId = HL.Field(HL.String) << ""
-
 
 SettlementCommodityCtrl.m_curRecommendItemId = HL.Field(HL.String) << ""
 
-
 SettlementCommodityCtrl.m_itemDataList = HL.Field(HL.Table)
-
 
 SettlementCommodityCtrl.m_onConfirmChangedCallback = HL.Field(HL.Function)
 
 
-
 SettlementCommodityCtrl.m_activityInfo = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -93,17 +55,12 @@ SettlementCommodityCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshAllUI()
 end
 
-
-
 SettlementCommodityCtrl.OnAnimationInFinished = HL.Override() << function(self)
     local firstCell = self.m_genTradeItemCellFunc(self.m_curSelectedItemIndex)
     if firstCell then
-        InputManagerInst.controllerNaviManager:SetTarget(firstCell.cellBtn)
+        self:SetNaviTarget(firstCell.cellBtn)
     end
 end
-
-
-
 
 
 
@@ -124,8 +81,6 @@ SettlementCommodityCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     local levelData = basicData.settlementLevelMap[self.m_stlLevel]
     self.m_curRecommendItemId = levelData.recoItemId
 end
-
-
 
 SettlementCommodityCtrl._UpdateData = HL.Method() << function(self)
     self.m_itemDataList = {}
@@ -211,8 +166,6 @@ end
 
 
 
-
-
 SettlementCommodityCtrl._InitUI = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
     
@@ -229,8 +182,6 @@ SettlementCommodityCtrl._InitUI = HL.Method() << function(self)
         self:_RefreshTradeItemCell(cell, LuaIndex(csIndex))
     end)
 end
-
-
 
 SettlementCommodityCtrl._RefreshAllUI = HL.Method() << function(self)
     local onePageCount = self.view.config.ONE_PAGE_ITEM_COUNT
@@ -250,10 +201,6 @@ SettlementCommodityCtrl._RefreshAllUI = HL.Method() << function(self)
     
     self.view.tradeItemList:UpdateCount(realCount, true)
 end
-
-
-
-
 
 SettlementCommodityCtrl._RefreshTradeItemCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     cell.tipsBtn.onClick:RemoveAllListeners()
@@ -332,13 +279,9 @@ end
 
 
 
-
-
 SettlementCommodityCtrl._CloseSelf = HL.Method() << function(self)
     PhaseManager:PopPhase(PHASE_ID)
 end
-
-
 
 SettlementCommodityCtrl._ConfirmChangeItem = HL.Method() << function(self)
     if self.m_onConfirmChangedCallback then
@@ -353,10 +296,6 @@ SettlementCommodityCtrl._ConfirmChangeItem = HL.Method() << function(self)
     self:_CloseSelf()
 end
 
-
-
-
-
 SettlementCommodityCtrl._OpenTradeItemTips = HL.Method(HL.String, Transform) << function(self, itemId, transform)
     Notify(MessageConst.SHOW_ITEM_TIPS, {
         transform = transform,
@@ -364,9 +303,6 @@ SettlementCommodityCtrl._OpenTradeItemTips = HL.Method(HL.String, Transform) << 
         itemId = itemId,
     })
 end
-
-
-
 
 SettlementCommodityCtrl._ChangeCurSelectedItem = HL.Method(HL.Number) << function(self, luaIndex)
     if self.m_curSelectedItemIndex == luaIndex then
@@ -384,9 +320,6 @@ SettlementCommodityCtrl._ChangeCurSelectedItem = HL.Method(HL.Number) << functio
     end
     self.m_curSelectedItemIndex = luaIndex
 end
-
-
-
 
 SettlementCommodityCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
     if not resumeState then
@@ -408,9 +341,6 @@ SettlementCommodityCtrl._ApplyResumeState = HL.Method(HL.Opt(HL.Any)) << functio
     end
 end
 
-
-
-
 SettlementCommodityCtrl._OnActivityStageUpdate = HL.Method(HL.Any) << function(self, arg)
     local activityId = unpack(arg)
     if self.m_activityInfo == nil or self.m_activityInfo.activityId ~= activityId then
@@ -419,8 +349,6 @@ SettlementCommodityCtrl._OnActivityStageUpdate = HL.Method(HL.Any) << function(s
     self:_UpdateData()
     self:_RefreshAllUI()
 end
-
-
 
 SettlementCommodityCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local curSelectedItem = self.m_itemDataList and self.m_itemDataList[self.m_curSelectedItemIndex] or nil

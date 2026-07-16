@@ -1,14 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharJoinToast
-
-
-
-
-
-
 CharJoinToastCtrl = HL.Class('CharJoinToastCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -18,9 +11,6 @@ CharJoinToastCtrl = HL.Class('CharJoinToastCtrl', uiCtrl.UICtrl)
 
 CharJoinToastCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
-
-
-
 
 
 CharJoinToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -42,8 +32,6 @@ end
 
 
 
-
-
 CharJoinToastCtrl.ShowCharJoinToast = HL.StaticMethod(HL.Any) << function(arg)
     
     local msg = unpack(arg)
@@ -52,9 +40,6 @@ CharJoinToastCtrl.ShowCharJoinToast = HL.StaticMethod(HL.Any) << function(arg)
         charId = charId,
     })
 end
-
-
-
 
 CharJoinToastCtrl.RefreshCharJoinToastInfo = HL.Method(HL.String) << function(self, charId)
     if string.isEmpty(charId) then
@@ -73,8 +58,6 @@ CharJoinToastCtrl.RefreshCharJoinToastInfo = HL.Method(HL.String) << function(se
     AudioManager.PostEvent("au_ui_popup_new_char")
     Utils.triggerVoice("chrbark_Introduce", charId)
 end
-
-
 
 CharJoinToastCtrl._OnCloseBtnClick = HL.Method() << function(self)
     if self:IsPlayingAnimationIn() then

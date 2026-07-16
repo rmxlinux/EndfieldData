@@ -1,37 +1,18 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
 DomainDepotDeliveryCell = HL.Class('DomainDepotDeliveryCell', UIWidgetBase)
-
 
 DomainDepotDeliveryCell.m_deliveryId = HL.Field(HL.String) << "" 
 
-
 DomainDepotDeliveryCell.m_roleId = HL.Field(HL.String) << "" 
-
 
 DomainDepotDeliveryCell.m_insId = HL.Field(HL.Number) << 0 
 
-
 DomainDepotDeliveryCell.m_canReceive = HL.Field(HL.Boolean) << false 
-
 
 DomainDepotDeliveryCell.m_deliveryOnClick = HL.Field(HL.Function)
 
-
 DomainDepotDeliveryCell.m_domainDepotId = HL.Field(HL.String) << "" 
-
-
 
 
 
@@ -69,9 +50,6 @@ DomainDepotDeliveryCell._OnFirstTimeInit = HL.Override() << function(self)
 
 end
 
-
-
-
 DomainDepotDeliveryCell.InitDomainDepotDeliveryCell = HL.Method(HL.Userdata) << function(self, info)
     self:_FirstTimeInit()
     
@@ -103,10 +81,6 @@ DomainDepotDeliveryCell.InitDomainDepotDeliveryCell = HL.Method(HL.Userdata) << 
     }, true)
     self.view.itemSmallCredit:SetExtraInfo({ isSideTips = DeviceInfo.usingController })
 end
-
-
-
-
 
 
 
@@ -147,6 +121,7 @@ DomainDepotDeliveryCell.InitSelfDomainDepotDeliveryCell = HL.Method(HL.Userdata,
     else
         logger.error("InitRegionSelfDeliveryCell: 未知的包裹进度 " .. info.packageProgress:ToString())
     end
+    self.view.bgBtn.interactable = self.m_canReceive or (not self.view.inputBindingGroupNaviDecorator.isNaviTarget)
     self.view.redDot.gameObject:SetActive(self.m_canReceive)
     self:_UpdateInfo(info)
     self.view.commonPlayerHead.view.nameText.gameObject:SetActiveIfNecessary(showPlayerName)
@@ -159,9 +134,6 @@ DomainDepotDeliveryCell.InitSelfDomainDepotDeliveryCell = HL.Method(HL.Userdata,
         end)
     end
 end
-
-
-
 
 DomainDepotDeliveryCell._UpdateInfo = HL.Method(HL.Userdata) << function(self, info)
     self.m_deliveryId = info.buyerInfo.targetId

@@ -1,28 +1,13 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopItemPopUp
-
-
-
-
-
-
-
-
-
-
-
 ShopItemPopUpCtrl = HL.Class('ShopItemPopUpCtrl', uiCtrl.UICtrl)
-
 
 
 ShopItemPopUpCtrl.m_info = HL.Field(HL.Table)
 
-
 ShopItemPopUpCtrl.m_onComplete = HL.Field(HL.Function)
 
-
 ShopItemPopUpCtrl.m_curPrice = HL.Field(HL.Number) << -1
-
 
 
 
@@ -34,9 +19,6 @@ ShopItemPopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SHOP_REFRESH] = 'PlayAnimationOutAndClose',
     [MessageConst.ON_SHOP_GOODS_CONDITION_REFRESH] = 'PlayAnimationOutAndClose',
 }
-
-
-
 
 
 ShopItemPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -61,8 +43,6 @@ ShopItemPopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
 
 ShopItemPopUpCtrl._UpdateContent = HL.Method() << function(self)
     local info = self.m_info
@@ -157,9 +137,6 @@ ShopItemPopUpCtrl._UpdateContent = HL.Method() << function(self)
     self.view.stockTxt.gameObject:SetActive(not isCharItem)
 end
 
-
-
-
 ShopItemPopUpCtrl._OnCountChanged = HL.Method(HL.Number) << function(self, number)
     local totalCost = self.m_curPrice * number
     self.view.costPriceTxt.text = totalCost
@@ -170,8 +147,6 @@ ShopItemPopUpCtrl._OnCountChanged = HL.Method(HL.Number) << function(self, numbe
         self.view.costPriceTxt.color = self.view.config.COST_COLOR_NORMAL
     end
 end
-
-
 
 ShopItemPopUpCtrl._OnClickConfirm = HL.Method() << function(self)
     local buyCount = self.view.numberSelector.curNumber
@@ -210,9 +185,6 @@ ShopItemPopUpCtrl._OnClickConfirm = HL.Method() << function(self)
     GameInstance.player.shopSystem:BuyGoods(info.shopId, info.goodsId, buyCount)
     Notify(MessageConst.SHOP_WAIT_ANIMATION, true)
 end
-
-
-
 
 ShopItemPopUpCtrl.OnBuyItemSucc = HL.Method(HL.Any) << function(self,arg)
     local info = self.m_info
@@ -282,8 +254,6 @@ ShopItemPopUpCtrl.OnBuyItemSucc = HL.Method(HL.Any) << function(self,arg)
         })
     end
 end
-
-
 
 ShopItemPopUpCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.SHOP_WAIT_ANIMATION, false)

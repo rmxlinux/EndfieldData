@@ -1,66 +1,27 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AttackButton = HL.Class('AttackButton', UIWidgetBase)
-
 
 
 AttackButton.root = HL.Field(HL.Userdata)
 
-
 AttackButton.m_isShowing = HL.Field(HL.Boolean) << false
-
 
 AttackButton.m_hasBindInput = HL.Field(HL.Boolean) << false
 
-
 AttackButton.m_pressScreen = HL.Field(HL.Function)
-
 
 AttackButton.m_releaseScreen = HL.Field(HL.Function)
 
-
 AttackButton.m_iconCache = HL.Field(HL.Table)
-
 
 AttackButton.m_forbidAttackKeys = HL.Field(HL.Table)
 
-
 AttackButton.m_castingAttack = HL.Field(HL.Boolean) << false
-
 
 AttackButton.m_isBreakingAttack = HL.Field(HL.Boolean) << false
 
-
 AttackButton.m_isBreakingAttackPressPlaying = HL.Field(HL.Boolean) << false
-
-
 
 
 AttackButton._OnFirstTimeInit = HL.Override() << function(self)
@@ -122,13 +83,9 @@ AttackButton._OnFirstTimeInit = HL.Override() << function(self)
     self:ToggleForbidAttack({"ForbidSystem", GameInstance.player.forbidSystem:IsForbidden(ForbidType.ForbidAttack)})
 end
 
-
-
 AttackButton.InitAttackButton = HL.Method() << function(self)
     self:_FirstTimeInit()
 end
-
-
 
 AttackButton.OnShow = HL.Method() << function(self)
     self:_RefreshShowing()
@@ -137,8 +94,6 @@ AttackButton.OnShow = HL.Method() << function(self)
     self.view.anim:SampleClipAtPercent("mobile_attackbtn_pressed", 0)
     self.view.attackPressedRing:SampleClipAtPercent("mobile_attackbtn_pressedring", 0)
 end
-
-
 
 AttackButton.OnHide = HL.Method() << function(self)
     self:_RefreshShowing()
@@ -149,8 +104,6 @@ AttackButton.OnHide = HL.Method() << function(self)
     end
 end
 
-
-
 AttackButton._OnDestroy = HL.Override() << function(self)
     local touchPanel = UIManager.commonTouchPanel
     if self.m_pressScreen then
@@ -160,8 +113,6 @@ AttackButton._OnDestroy = HL.Override() << function(self)
         touchPanel.onRelease:RemoveListener(self.m_releaseScreen)
     end
 end
-
-
 
 AttackButton._RefreshShowing = HL.Method() << function(self)
     local showing = self.root:IsShow() and self.view.gameObject.activeSelf
@@ -219,8 +170,6 @@ AttackButton._RefreshShowing = HL.Method() << function(self)
     end
 end
 
-
-
 AttackButton._ThrowByForceAndDir = HL.Method() << function(self)
     self.view.anim:PlayWithTween("mobile_attackbtn_release")
 
@@ -229,14 +178,10 @@ AttackButton._ThrowByForceAndDir = HL.Method() << function(self)
     end
 end
 
-
-
 AttackButton._ExecuteCustomAbility = HL.Method() << function(self)
     self.view.anim:PlayWithTween("mobile_attackbtn_release")
     GameInstance.playerController.mainCharacter.customAbilityCom:UseAbility()
 end
-
-
 
 AttackButton.BindNormalAttackInputEvent = HL.Method() << function(self)
     if self.m_hasBindInput then
@@ -275,8 +220,6 @@ AttackButton.BindNormalAttackInputEvent = HL.Method() << function(self)
     end
 end
 
-
-
 AttackButton.StartPressAttackBtn = HL.Method() << function(self)
     if Utils.isInThrowMode() then
         self.view.anim:PlayWithTween("mobile_attackbtn_pressed")
@@ -308,8 +251,6 @@ AttackButton.StartPressAttackBtn = HL.Method() << function(self)
     GameInstance.playerController:StartCastNormalAttack()
 end
 
-
-
 AttackButton.ReleaseNormalAttackBtn = HL.Method() << function(self)
     if Utils.isInCustomAbility() then
         GameInstance.playerController.mainCharacter.customAbilityCom:StopAbility();
@@ -323,15 +264,9 @@ AttackButton.ReleaseNormalAttackBtn = HL.Method() << function(self)
     end
 end
 
-
-
-
 AttackButton.ToggleControllerIndicator = HL.Method(HL.Boolean) << function(self, active)
     GameInstance.playerController:ToggleIndicatorAttack(active)
 end
-
-
-
 
 AttackButton.OnApplicationFocus = HL.Method(HL.Table) << function(self, args)
     local hasFocus = unpack(args)
@@ -348,8 +283,6 @@ local weaponNumToConfigIcon = {
     "ICON_ATTACK_LANCE",
     "ICON_ATTACK_PISTOL",
 }
-
-
 
 AttackButton._RefreshAttackIcon = HL.Method() << function(self)
     if not DeviceInfo.usingTouch then
@@ -396,9 +329,6 @@ AttackButton._RefreshAttackIcon = HL.Method() << function(self)
     end
 end
 
-
-
-
 AttackButton.OnSystemUnlock = HL.Method(HL.Table) << function(self, args)
     local system = unpack(args)
     system = GEnums.UnlockSystemType.__CastFrom(system)
@@ -406,9 +336,6 @@ AttackButton.OnSystemUnlock = HL.Method(HL.Table) << function(self, args)
         self:ToggleForbidAttack({"Unlock", false})
     end
 end
-
-
-
 
 AttackButton.ToggleForbidAttack = HL.Method(HL.Table) << function(self, args)
     local reason, forbid = unpack(args)

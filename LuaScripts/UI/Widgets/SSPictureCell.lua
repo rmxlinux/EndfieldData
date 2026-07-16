@@ -1,30 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 SSPictureCell = HL.Class('SSPictureCell', UIWidgetBase)
-
 
 SSPictureCell.m_pictureId = HL.Field(HL.String) << ""
 
-
 SSPictureCell.m_pictureList = HL.Field(HL.Table)
-
 
 SSPictureCell.m_isNew = HL.Field(HL.Boolean) << true
 
-
 SSPictureCell.m_onClickFunc = HL.Field(HL.Function)
-
-
 
 
 
@@ -43,11 +27,6 @@ SSPictureCell._OnFirstTimeInit = HL.Override() << function(self)
         end
     end
 end
-
-
-
-
-
 
 SSPictureCell.InitSSPictureCell = HL.Method(HL.String, HL.Table, HL.Function) << function(self, pictureId, pictureList, onClick)
     self.m_isNew = true
@@ -70,17 +49,12 @@ SSPictureCell.InitSSPictureCell = HL.Method(HL.String, HL.Table, HL.Function) <<
     self.view.picture.texture = self.loader:LoadTexture(string.format(UIConst.POSTER_TEXTURE_SUB_SIZE_PATH, posterData.imgId))
 end
 
-
-
 SSPictureCell.OpenPicturePanel = HL.Method() << function(self)
     UIManager:AutoOpen(PanelId.ReceptionDisplayPicture, {
         pictureId = self.m_pictureId,
         pictureList = self.m_pictureList
     })
 end
-
-
-
 
 SSPictureCell.SelectIndex = HL.Method(HL.Opt(HL.Number)) << function(self, index)
     if index then
@@ -90,9 +64,6 @@ SSPictureCell.SelectIndex = HL.Method(HL.Opt(HL.Number)) << function(self, index
         self.view.pictureSelectNode.gameObject:SetActive(false)
     end
 end
-
-
-
 
 SSPictureCell.UpdateRedDotState = HL.Method(HL.Boolean) << function(self, isNew)
     if not self.m_isNew then

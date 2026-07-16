@@ -1,27 +1,12 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonHoverTip
-
-
-
-
-
-
-
-
-
-
-
 CommonHoverTipCtrl = HL.Class('CommonHoverTipCtrl', uiCtrl.UICtrl)
-
 
 CommonHoverTipCtrl.m_coroutine = HL.Field(HL.Thread)
 
-
 CommonHoverTipCtrl.m_delayCoroutine = HL.Field(HL.Thread)
 
-
 CommonHoverTipCtrl.m_isShown = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -33,14 +18,9 @@ CommonHoverTipCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 CommonHoverTipCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.tipContent.gameObject:SetActive(false)
 end
-
-
 
 
 
@@ -79,9 +59,6 @@ CommonHoverTipCtrl._OnShowTip = HL.StaticMethod(HL.Table) << function(args)
 
     self:_ShowTip(args)
 end
-
-
-
 
 CommonHoverTipCtrl._ShowTip = HL.Method(HL.Table) << function(self, args)
     self.m_isShown = true
@@ -122,6 +99,7 @@ CommonHoverTipCtrl._ShowTip = HL.Method(HL.Table) << function(self, args)
     end
 
     self:_RefreshLiquidInfo(itemId)
+    self:_RefreshGasInfo(itemId)
 
     if self.m_coroutine ~= nil then
         self.m_coroutine = self:_ClearCoroutine(self.m_coroutine)
@@ -153,9 +131,6 @@ CommonHoverTipCtrl._ShowTip = HL.Method(HL.Table) << function(self, args)
     self:ToTop()
 end
 
-
-
-
 CommonHoverTipCtrl._OnHideTip = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     if self.m_delayCoroutine ~= nil then
         self:_ClearCoroutine(self.m_delayCoroutine)
@@ -177,17 +152,12 @@ CommonHoverTipCtrl._OnHideTip = HL.Method(HL.Opt(HL.Table)) << function(self, ar
     end
 end
 
-
-
 CommonHoverTipCtrl._HideTipContent = HL.Method() << function(self)
     self.view.tipContent.gameObject:SetActive(false)
     if self.m_coroutine ~= nil then
         self.m_coroutine = self:_ClearCoroutine(self.m_coroutine)
     end
 end
-
-
-
 
 
 
@@ -199,7 +169,7 @@ CommonHoverTipCtrl._RefreshLiquidInfo = HL.Method(HL.String) << function(self, i
         return
     end
 
-    local isFullBottle = Tables.fullBottleTable:ContainsKey(itemId)
+    local isFullBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
     if not isFullBottle then
         return
     end
@@ -216,5 +186,26 @@ CommonHoverTipCtrl._RefreshLiquidInfo = HL.Method(HL.String) << function(self, i
 end
 
 
+
+CommonHoverTipCtrl._RefreshGasInfo = HL.Method(HL.String) << function(self, itemId)
+    if string.isEmpty(itemId) then
+        return
+    end
+
+    local isFullBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Gas)
+    if not isFullBottle then
+        return
+    end
+
+    local fullBottleData = Tables.fullGasJarTable[itemId]
+    local gasItemId = fullBottleData.gasId
+    local gasSuccess, gasItemData = Tables.itemTable:TryGetValue(gasItemId)
+    if not gasSuccess then
+        return
+    end
+
+    self.view.liquidInfo.liquidInfoTxt.text = string.format(Language["LUA_ITEM_HOVER_TIP_LIQUID_INFO"], gasItemData.name)
+    self.view.liquidInfo.gameObject:SetActive(true)
+end
 
 HL.Commit(CommonHoverTipCtrl)

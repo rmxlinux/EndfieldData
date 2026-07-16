@@ -1,11 +1,6 @@
 local ActivityCharSignCommon = require_ex('UI/Widgets/ActivityCharSignCommon')
 
-
-
 ActivityCharSignUniverse = HL.Class('ActivityCharSignUniverse', ActivityCharSignCommon)
-
-
-
 
 ActivityCharSignUniverse.Init = HL.Override(HL.Table) << function(self, args)
     ActivityCharSignUniverse.Super.Init(self, args)

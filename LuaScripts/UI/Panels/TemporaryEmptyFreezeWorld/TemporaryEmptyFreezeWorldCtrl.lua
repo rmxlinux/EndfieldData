@@ -2,16 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.TemporaryEmptyFreezeWorld
 
-
-
-
-
-
-
-
-
 TemporaryEmptyFreezeWorldCtrl = HL.Class('TemporaryEmptyFreezeWorldCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -23,21 +14,14 @@ TemporaryEmptyFreezeWorldCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 TemporaryEmptyFreezeWorldCtrl.s_usages = HL.StaticField(HL.Table) << {}
-
 
 TemporaryEmptyFreezeWorldCtrl.s_usageCount = HL.StaticField(HL.Number) << 0
 
 
 
-
-
-
 TemporaryEmptyFreezeWorldCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
-
-
 
 TemporaryEmptyFreezeWorldCtrl.OpenFreezeWorldPanel = HL.StaticMethod(HL.String) << function(source)
     local freezeWorld = TemporaryEmptyFreezeWorldCtrl.s_usages[source]
@@ -53,8 +37,6 @@ TemporaryEmptyFreezeWorldCtrl.OpenFreezeWorldPanel = HL.StaticMethod(HL.String) 
     end
 end
 
-
-
 TemporaryEmptyFreezeWorldCtrl.CloseFreezeWorldPanel = HL.StaticMethod(HL.String) << function(source)
     local freezeWorld = TemporaryEmptyFreezeWorldCtrl.s_usages[source]
     if not freezeWorld then
@@ -68,8 +50,6 @@ TemporaryEmptyFreezeWorldCtrl.CloseFreezeWorldPanel = HL.StaticMethod(HL.String)
         UIWorldFreezeManager:_OnPanelDeActivate("TemporaryEmptyFreezeWorld")
     end
 end
-
-
 
 TemporaryEmptyFreezeWorldCtrl.OnApplicationPause = HL.StaticMethod(HL.Any) << function(arg)
     

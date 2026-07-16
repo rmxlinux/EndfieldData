@@ -1,21 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Radio
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RadioCtrl = HL.Class('RadioCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -27,23 +12,15 @@ RadioCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_TOGGLE_FAC_TOP_VIEW] = 'OnToggleFacTopView',
 }
 
-
 RadioCtrl.m_spriteName = HL.Field(HL.String) << ""
-
 
 RadioCtrl.m_needHide = HL.Field(HL.Boolean) << false
 
-
 RadioCtrl.m_isHiding = HL.Field(HL.Boolean) << false
-
 
 RadioCtrl.m_curShow = HL.Field(HL.Any)
 
-
 RadioCtrl.m_bottomMidOriY = HL.Field(HL.Number) << -1
-
-
-
 
 RadioCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, active)
     self.view.bottomMidMain.transform:DOKill()
@@ -64,11 +41,6 @@ RadioCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, active)
 
 
 end
-
-
-
-
-
 
 RadioCtrl.ShowRadioUI = HL.Method(HL.Any, HL.Userdata, HL.Number).Return(HL.Number) << function(self, curShowData, radioSingleData, index)
     self.m_curShow = curShowData
@@ -126,29 +98,21 @@ RadioCtrl.ShowRadioUI = HL.Method(HL.Any, HL.Userdata, HL.Number).Return(HL.Numb
     return num
 end
 
-
-
 RadioCtrl.OnShow = HL.Override() << function(self)
     if self.m_bottomMidOriY < 0 then
         self.m_bottomMidOriY = self.view.bottomMidMain.transform.localPosition.y
     end
 end
 
-
-
 RadioCtrl.OnHide = HL.Override() << function(self)
     self.m_isHiding = false
 end
-
-
 
 RadioCtrl.TryPlayInfoNodeOut = HL.Method() << function(self)
     if self.view.infoNode.gameObject.activeSelf then
         self.view.infoNode:PlayOutAnimation()
     end
 end
-
-
 
 RadioCtrl.ShowSelf = HL.Method() << function(self)
     self.m_needHide = false
@@ -158,9 +122,6 @@ RadioCtrl.ShowSelf = HL.Method() << function(self)
     end
     self:Show()
 end
-
-
-
 
 RadioCtrl.HideSelf = HL.Method(HL.Opt(HL.Boolean)) << function(self, useAnim)
     if self:IsHide() then

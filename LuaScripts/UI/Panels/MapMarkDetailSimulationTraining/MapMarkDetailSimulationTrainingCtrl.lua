@@ -1,12 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailSimulationTraining
 
-
-
-
-
 MapMarkDetailSimulationTrainingCtrl = HL.Class('MapMarkDetailSimulationTrainingCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -17,11 +12,7 @@ MapMarkDetailSimulationTrainingCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 MapMarkDetailSimulationTrainingCtrl.m_markInstId = HL.Field(HL.String) << ""
-
-
-
 
 
 MapMarkDetailSimulationTrainingCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)

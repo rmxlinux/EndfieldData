@@ -1,85 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 local ControllerMode = MapConst.LEVEL_MAP_CONTROLLER_MODE
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+local ChunkLODType = CS.Beyond.Gameplay.ChunkLoadConfigInfo.ChunkLODType
 
 LevelMapController = HL.Class('LevelMapController', UIWidgetBase)
 
@@ -91,23 +12,17 @@ local INVOKE_LEVEL_SWITCH_FINISH_DELAY = 0.2
 
 local NEED_UPDATE_LOADER_CHARACTER_SQR_MAGNITUDE = 0.002
 
-
 LevelMapController.m_mode = HL.Field(HL.Number) << -1
-
 
 LevelMapController.m_levelMapConfig = HL.Field(CS.Beyond.Gameplay.UILevelMapConfig)
 
-
 LevelMapController.m_currentLevelId = HL.Field(HL.String) << ""
-
 
 LevelMapController.m_currentIsSingleLevel = HL.Field(HL.Boolean) << false
 
 
 
-
 LevelMapController.m_fixedMarkInstId = HL.Field(HL.String) << ""
-
 
 LevelMapController.m_customRefreshMark = HL.Field(HL.Function)
 
@@ -115,63 +30,43 @@ LevelMapController.m_customRefreshMark = HL.Field(HL.Function)
 
 
 
-
 LevelMapController.m_onLevelSwitch = HL.Field(HL.Function)
-
 
 LevelMapController.m_onLevelSwitchStart = HL.Field(HL.Function)
 
-
 LevelMapController.m_onLevelSwitchFinish = HL.Field(HL.Function)
-
 
 LevelMapController.m_onTrackingMarkClicked = HL.Field(HL.Function)
 
-
 LevelMapController.m_switchTweenList = HL.Field(HL.Table)
-
 
 LevelMapController.m_delayInvokeTimer = HL.Field(HL.Number) << -1
 
-
 LevelMapController.m_currentMaxScale = HL.Field(HL.Number) << -1
-
 
 LevelMapController.m_currentMinScale = HL.Field(HL.Number) << -1
 
-
 LevelMapController.m_visibleMarks = HL.Field(HL.Table)
-
 
 LevelMapController.m_filteredMarks = HL.Field(HL.Table)
 
-
 LevelMapController.m_layeredMarks = HL.Field(HL.Table)
-
 
 LevelMapController.m_currentLayer = HL.Field(HL.Number) << -1
 
-
 LevelMapController.m_currFollowModeTrackingMarkId = HL.Field(HL.String) << ""
-
 
 LevelMapController.m_markVisibleRect = HL.Field(RectTransform)
 
-
 LevelMapController.m_expectedMarks = HL.Field(HL.Table)
-
 
 LevelMapController.m_topOrderMarks = HL.Field(HL.Table)
 
-
 LevelMapController.m_noGeneralTracking = HL.Field(HL.Boolean) << true
-
 
 LevelMapController.m_noMissionTracking = HL.Field(HL.Boolean) << true
 
-
 LevelMapController.m_currTopOrderMarkLastOrder = HL.Field(HL.Number) << -1
-
 
 LevelMapController.m_waitPlayUnlockedAnimMistList = HL.Field(HL.Table)
 
@@ -179,12 +74,9 @@ LevelMapController.m_waitPlayUnlockedAnimMistList = HL.Field(HL.Table)
 
 
 
-
 LevelMapController.m_waitPlayUnlockedAnimMistQueue = HL.Field(HL.Forward("Queue"))
 
-
 LevelMapController.m_isPlayingUnlockedAnimation = HL.Field(HL.Boolean) << false
-
 
 LevelMapController.m_lastPosChanged = HL.Field(HL.Boolean) << false
 
@@ -192,16 +84,11 @@ LevelMapController.m_lastPosChanged = HL.Field(HL.Boolean) << false
 
 
 
-
 LevelMapController.m_currTrackingMarkData = HL.Field(HL.Table)
-
 
 LevelMapController.m_lastTrackingMarkId = HL.Field(HL.String) << ""
 
-
 LevelMapController.m_trackingMissionMarkIdList = HL.Field(HL.Table)
-
-
 
 
 
@@ -254,8 +141,6 @@ LevelMapController._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
 LevelMapController._OnDestroy = HL.Override() << function(self)
     if self.m_mode == ControllerMode.FOLLOW_CHARACTER then
         GameInstance.player.mapManager.characterFollowerInstance = nil
@@ -270,10 +155,6 @@ LevelMapController._OnDestroy = HL.Override() << function(self)
         end
     end
 end
-
-
-
-
 
 
 
@@ -325,6 +206,7 @@ LevelMapController.InitLevelMapController = HL.Method(HL.Number, HL.Opt(HL.Table
             needUpdate = false,
             needShowOtherLevelTracking = false,
             needInteractableMark = true,
+            useChunkGODrawer = true,
             retainTextureAfterDraw = true,
             onMarkInstDataChangedCallback = function()
                 self:_ResetLoaderMarksVisibleStateByFilter()
@@ -383,9 +265,6 @@ LevelMapController.InitLevelMapController = HL.Method(HL.Number, HL.Opt(HL.Table
     self:_FirstTimeInit()
 end
 
-
-
-
 LevelMapController._SetCurrentLevelId = HL.Method(HL.String) << function(self, levelId)
     self.m_currentLevelId = levelId
     local configSuccess, levelConfig = GameInstance.player.mapManager:GetLoaderLevelBasicInfoByLevelId(levelId)
@@ -393,8 +272,6 @@ LevelMapController._SetCurrentLevelId = HL.Method(HL.String) << function(self, l
         self.m_currentIsSingleLevel = levelConfig.isSingleLevel
     end
 end
-
-
 
 
 
@@ -408,8 +285,6 @@ LevelMapController._InitControllerFixedMode = HL.Method() << function(self)
     self.view.levelMapLoader:SetLoaderPlayerVisibleState(false)
     self:_CustomRefreshFixedModeMarks()
 end
-
-
 
 LevelMapController._CustomRefreshFixedModeMarks = HL.Method() << function(self)
     local loadedMarkViewDataMap = self.view.levelMapLoader:GetLoadedMarkViewDataMap()
@@ -429,8 +304,6 @@ end
 
 
 
-
-
 LevelMapController._InitControllerSwitchMode = HL.Method() << function(self)
     self.view.markTopOrder:SetAsLastSibling()
     self.view.levelMapLoader:SetLoaderDataUpdateInterval(LEVEL_SWITCH_LOADER_UPDATE_THREAD_INTERVAL)
@@ -442,10 +315,6 @@ LevelMapController._InitControllerSwitchMode = HL.Method() << function(self)
     self.view.levelMapLoader:RefreshCharacterPosition()
     self.view.levelMapLoader:SetNeedOptimizePerformance(false)  
 end
-
-
-
-
 
 LevelMapController._RefreshLoaderStateByLevel = HL.Method(HL.String, HL.Boolean) << function(self, levelId, moveNeedTween)
     local basicInfoSuccess, configInfo = GameInstance.player.mapManager:GetLoaderLevelBasicInfoByLevelId(levelId)
@@ -473,7 +342,7 @@ LevelMapController._RefreshLoaderStateByLevel = HL.Method(HL.String, HL.Boolean)
     local inCurrentMap = GameWorld.worldInfo.curMapIdStr == levelConfig.mapIdStr
 
     if moveNeedTween then
-        levelMapLoader:ForceDisposeAllTextureResources()
+        levelMapLoader:DisposeChunkResourcesByLODTypes({ChunkLODType.Medium, ChunkLODType.High})
         levelMapLoader:SetLoaderElementsShownState(false)
     end
 
@@ -554,14 +423,10 @@ LevelMapController._RefreshLoaderStateByLevel = HL.Method(HL.String, HL.Boolean)
     end
 end
 
-
-
 LevelMapController._ResetLoaderMarksVisibleStateByFilter = HL.Method() << function(self)
     self:_UpdateLoaderMarksVisibleData()
     self:_RefreshLoaderMarksVisibleStateByFilter()
 end
-
-
 
 LevelMapController._UpdateLoaderMarksVisibleData = HL.Method() << function(self)
     local loadedMarkViewDataMap = self.view.levelMapLoader:GetLoadedMarkViewDataMap()
@@ -577,8 +442,6 @@ LevelMapController._UpdateLoaderMarksVisibleData = HL.Method() << function(self)
     self:_SetMarksToTopOrder()
 end
 
-
-
 LevelMapController._RefreshLoaderMarksVisibleStateByFilter = HL.Method() << function(self)
     self.m_filteredMarks = {}
     for instId, markViewData in pairs(self.m_visibleMarks) do
@@ -589,9 +452,6 @@ LevelMapController._RefreshLoaderMarksVisibleStateByFilter = HL.Method() << func
 
     self:_RefreshLoaderLineVisibleState()
 end
-
-
-
 
 LevelMapController._RefreshLoaderMarksVisibleStateByLayer = HL.Method(HL.Number) << function(self, layer)
     self.m_layeredMarks = {}
@@ -605,9 +465,6 @@ LevelMapController._RefreshLoaderMarksVisibleStateByLayer = HL.Method(HL.Number)
     self:_RefreshLoaderLineVisibleState()
 end
 
-
-
-
 LevelMapController._RefreshLoaderMarkVisibleState = HL.Method(HL.String) << function(self, markInstId)
     local markViewData = self.m_visibleMarks[markInstId]
     if markViewData == nil then
@@ -620,8 +477,6 @@ LevelMapController._RefreshLoaderMarkVisibleState = HL.Method(HL.String) << func
 
     markViewData.markObj:ToggleMarkHiddenState("PanelControl", not isVisible)
 end
-
-
 
 LevelMapController._RefreshLoaderLineVisibleState = HL.Method() << function(self)
     
@@ -656,8 +511,6 @@ LevelMapController._RefreshLoaderLineVisibleState = HL.Method() << function(self
     end
 end
 
-
-
 LevelMapController._SetTrackingMissionMarksOnClickedCallbackInSwitchMode = HL.Method() << function(self)
     local trackingMissionMarks = self.view.levelMapLoader:GetMissionTrackingMarks()
     if trackingMissionMarks == nil then
@@ -671,9 +524,6 @@ LevelMapController._SetTrackingMissionMarksOnClickedCallbackInSwitchMode = HL.Me
         end)
     end
 end
-
-
-
 
 LevelMapController._GetIsMarkRealVisible = HL.Method(HL.String).Return(HL.Boolean) << function(self, markInstId)
     local markViewData = self.m_visibleMarks[markInstId]
@@ -702,8 +552,6 @@ LevelMapController._GetIsMarkRealVisible = HL.Method(HL.String).Return(HL.Boolea
     return true
 end
 
-
-
 LevelMapController._SetMarksToTopOrder = HL.Method() << function(self)
     if not next(self.m_topOrderMarks) then
         return
@@ -720,8 +568,6 @@ LevelMapController._SetMarksToTopOrder = HL.Method() << function(self)
         end
     end
 end
-
-
 
 LevelMapController._RefreshAnimationMistsInSwitchMode = HL.Method() << function(self)
     local showList = {}
@@ -748,9 +594,6 @@ LevelMapController._RefreshAnimationMistsInSwitchMode = HL.Method() << function(
     end
 end
 
-
-
-
 LevelMapController.SetSingleMarkToTopOrder = HL.Method(HL.String) << function(self, markInstId)
     local markViewData = self.view.levelMapLoader:GetLoadedMarkViewDataByInstId(markInstId)
     if markViewData == nil then
@@ -761,9 +604,6 @@ LevelMapController.SetSingleMarkToTopOrder = HL.Method(HL.String) << function(se
     markRectTransform:SetParent(self.view.markTopOrder)
 end
 
-
-
-
 LevelMapController.ResetSingleMarkToOriginalOrder = HL.Method(HL.String) << function(self, markInstId)
     local markViewData = self.view.levelMapLoader:GetLoadedMarkViewDataByInstId(markInstId)
     if markViewData == nil then
@@ -773,8 +613,6 @@ LevelMapController.ResetSingleMarkToOriginalOrder = HL.Method(HL.String) << func
     markRectTransform:SetParent(self.view.levelMapLoader:GetMarkOrderRoot(markViewData.sortOrder))
     markRectTransform:SetSiblingIndex(self.m_currTopOrderMarkLastOrder)
 end
-
-
 
 
 
@@ -793,24 +631,17 @@ LevelMapController._InitControllerFollowMode = HL.Method() << function(self)
     self:_RefreshGeneralTrackingMarkInFollowMode()
 end
 
-
-
 LevelMapController._OnTeleportFinish = HL.Method() << function(self)
     self.view.levelMapLoader:SetNeedOptimizePerformance(false)  
     GameInstance.player.mapManager:ForceUpdateAndRefreshCharacterFollowerState(false)
     self.view.levelMapLoader:SetNeedOptimizePerformance(true)
 end
 
-
-
 LevelMapController._InitTierStateInFollowMode = HL.Method() << function(self)
     local needShowTier = GameWorld.mapRegionManager:GetCurrentCharInTierContainerId() > 0
     self:SetLoaderTierStateWithNeedShowMarkTier(needShowTier)
     self:SetLoaderTierStateWithTierId(GameWorld.mapRegionManager:GetCurrentCharInTierId())
 end
-
-
-
 
 LevelMapController._OnMistStateChangeInFollowMode = HL.Method(HL.Table) << function(self, args)
     if self.m_waitPlayUnlockedAnimMistQueue == nil then
@@ -819,8 +650,6 @@ LevelMapController._OnMistStateChangeInFollowMode = HL.Method(HL.Table) << funct
     self.m_waitPlayUnlockedAnimMistQueue:Push(unpack(args))
     self:_PlayMistUnlockedAnimationWithQueueInFollowMode()
 end
-
-
 
 LevelMapController._PlayMistUnlockedAnimationWithQueueInFollowMode = HL.Method() << function(self)
     if self.m_waitPlayUnlockedAnimMistQueue:Empty() or self.m_isPlayingUnlockedAnimation then
@@ -848,10 +677,6 @@ LevelMapController._PlayMistUnlockedAnimationWithQueueInFollowMode = HL.Method()
     end)
 end
 
-
-
-
-
 LevelMapController._OnCurrTierRegionStateChangeInFollowMode = HL.Method(HL.Number, HL.Boolean) << function(self, tierId, isIn)
     local tierIndex = GameWorld.mapRegionManager:GetTierIndex(tierId)
     if tierIndex == MapConst.BASE_TIER_INDEX then
@@ -859,8 +684,6 @@ LevelMapController._OnCurrTierRegionStateChangeInFollowMode = HL.Method(HL.Numbe
     end
     self:SetLoaderTierStateWithTierId(isIn and tierId or MapConst.BASE_TIER_ID)
 end
-
-
 
 
 
@@ -875,17 +698,12 @@ LevelMapController._OnTrackingStateChanged = HL.Method() << function(self)
     end
 end
 
-
-
-
 LevelMapController._RefreshGeneralTrackingMarkOnMarkDataModify = HL.Method(HL.String) << function(self, markInstId)
     if markInstId ~= GameInstance.player.mapManager.trackingMarkInstId then
         return
     end
     self:_OnTrackingStateChanged()
 end
-
-
 
 LevelMapController._RefreshGeneralTrackingMarkInSwitchMode = HL.Method() << function(self)
     local mapManager = GameInstance.player.mapManager
@@ -912,10 +730,6 @@ LevelMapController._RefreshGeneralTrackingMarkInSwitchMode = HL.Method() << func
     self.m_lastTrackingMarkId = trackingMarkInstId
 end
 
-
-
-
-
 LevelMapController._RefreshGeneralRelatedMarkVisibleState = HL.Method(HL.String, HL.String) << function(self, lastId, currId)
     local lastMark = self.view.levelMapLoader:GetLoadedMarkByInstId(lastId)
     local currMark = self.view.levelMapLoader:GetLoadedMarkByInstId(currId)
@@ -927,8 +741,6 @@ LevelMapController._RefreshGeneralRelatedMarkVisibleState = HL.Method(HL.String,
     end
 end
 
-
-
 LevelMapController._RefreshGeneralTrackingMarkInFollowMode = HL.Method() << function(self)
     local trackingMarkInstId = GameInstance.player.mapManager.trackingMarkInstId
     self:_RefreshGeneralRelatedMarkVisibleState(self.m_lastTrackingMarkId, trackingMarkInstId)
@@ -936,8 +748,6 @@ LevelMapController._RefreshGeneralTrackingMarkInFollowMode = HL.Method() << func
     self.m_lastTrackingMarkId = trackingMarkInstId
     self.m_currFollowModeTrackingMarkId = trackingMarkInstId
 end
-
-
 
 LevelMapController._RefreshMissionTrackingMarks = HL.Method() << function(self)
     self.m_trackingMissionMarkIdList = {}
@@ -952,8 +762,6 @@ LevelMapController._RefreshMissionTrackingMarks = HL.Method() << function(self)
     end
 end
 
-
-
 LevelMapController._RefreshMissionRelatedMarksVisibleState = HL.Method() << function(self)
     if self.m_trackingMissionMarkIdList == nil then
         return
@@ -965,8 +773,6 @@ LevelMapController._RefreshMissionRelatedMarksVisibleState = HL.Method() << func
         end
     end
 end
-
-
 
 LevelMapController._OnShowMissionMarks = HL.Method() << function(self)
     local trackingMissionMarks = self.view.levelMapLoader:GetMissionTrackingMarks()
@@ -981,27 +787,17 @@ end
 
 
 
-
-
 LevelMapController.GetControllerCurrentMaxScale = HL.Method().Return(HL.Number) << function(self)
     return self.m_currentMaxScale
 end
-
-
 
 LevelMapController.GetControllerCurrentMinScale = HL.Method().Return(HL.Number) << function(self)
     return self.m_currentMinScale
 end
 
-
-
 LevelMapController.GetControllerCurrentLevelId = HL.Method().Return(HL.String) << function(self)
     return self.m_currentLevelId
 end
-
-
-
-
 
 LevelMapController.GetControllerMarkRectTransform = HL.Method(HL.String, HL.Opt(HL.Boolean)).Return(Unity.RectTransform) << function(self, markInstId, ignoreTracking)
     local mark = self:GetControllerMarkByInstId(markInstId, ignoreTracking)
@@ -1010,12 +806,6 @@ LevelMapController.GetControllerMarkRectTransform = HL.Method(HL.String, HL.Opt(
     end
     return mark.rectTransform
 end
-
-
-
-
-
-
 
 LevelMapController.GetControllerNearbyMarkList = HL.Method(HL.String, HL.Number, HL.Number, HL.Opt(GEnums.MarkType)).Return(HL.Table) << function(self, targetInstId, length, scale, markTypeFilter)
     length = length / scale / 2.0
@@ -1093,10 +883,6 @@ LevelMapController.GetControllerNearbyMarkList = HL.Method(HL.String, HL.Number,
     return result
 end
 
-
-
-
-
 LevelMapController.GetControllerMarkByInstId = HL.Method(HL.String, HL.Opt(HL.Boolean)).Return(HL.Any) << function(self, instId, ignoreTracking)
     local originalMark = self.view.levelMapLoader:GetLoadedMarkByInstId(instId)
     if ignoreTracking then
@@ -1122,14 +908,28 @@ LevelMapController.GetControllerMarkByInstId = HL.Method(HL.String, HL.Opt(HL.Bo
     return originalMark
 end
 
-
+LevelMapController.GetControllerTrackingMark = HL.Method(HL.String).Return(HL.Any, HL.Any) << function(self, markInstId)
+    if GameInstance.player.mapManager.trackingMarkInstId == markInstId then
+        local trackingMark = self.view.levelMapLoader:GetGeneralTrackingMark()
+        local relatedMark = self.view.levelMapLoader:GetLoadedMarkByInstId(markInstId)
+        return trackingMark, relatedMark
+    else
+        local trackingMissionMarks = self.view.levelMapLoader:GetMissionTrackingMarks()
+        if trackingMissionMarks ~= nil then
+            for missionTrackingMarkInstId, trackingMark in pairs(trackingMissionMarks) do
+                if missionTrackingMarkInstId == markInstId then
+                    local relatedMark = self.view.levelMapLoader:GetLoadedMarkByInstId(missionTrackingMarkInstId)
+                    return trackingMark, relatedMark
+                end
+            end
+        end
+    end
+    return nil, nil
+end
 
 LevelMapController.NeedPlayMistsUnlockedAnimation = HL.Method().Return(HL.Boolean) << function(self)
     return next(self.m_waitPlayUnlockedAnimMistList) ~= nil
 end
-
-
-
 
 LevelMapController.TryPlayMistUnlockedAnimation = HL.Method(HL.Function) << function(self, onComplete)
     self.view.levelMapLoader:PlayMistsUnlockedAnimation(onComplete)
@@ -1137,15 +937,9 @@ LevelMapController.TryPlayMistUnlockedAnimation = HL.Method(HL.Function) << func
     self.m_waitPlayUnlockedAnimMistList = {}
 end
 
-
-
-
 LevelMapController.RefreshLoaderMarksVisibleStateByLayer = HL.Method(HL.Number) << function(self, layer)
     self:_RefreshLoaderMarksVisibleStateByLayer(layer)
 end
-
-
-
 
 LevelMapController.ResetSwitchModeToTargetLevelState = HL.Method(HL.String) << function(self, levelId)
     local targetSuccess, targetLevelConfig = Utils.getLevelConfig(levelId)
@@ -1159,34 +953,26 @@ LevelMapController.ResetSwitchModeToTargetLevelState = HL.Method(HL.String) << f
     end
 
     if targetLevelConfig.mapIdStr ~= currLevelConfig.mapIdStr then
+        
         self.view.levelMapLoader:ResetToTargetMapAndLevel(levelId)
+    else
+        
+        self.view.levelMapLoader:DisposeChunkResourcesByLODTypes({ChunkLODType.Medium, ChunkLODType.High})
     end
     self:_RefreshLoaderStateByLevel(levelId, false)
 end
-
-
-
-
 
 LevelMapController.SetLoaderTierStateWithTierId = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, tierId, needAnim)
     self.view.levelMapLoader:SetLoaderTierId(tierId, needAnim)
 end
 
-
-
-
 LevelMapController.SetLoaderTierStateWithNeedShowMarkTier = HL.Method(HL.Boolean) << function(self, needShow)
     self.view.levelMapLoader:ToggleLoaderNeedShowMarkTier(needShow)
 end
 
-
-
-
 LevelMapController.SwitchToTargetLevel = HL.Method(HL.String) << function(self, levelId)
     self:_RefreshLoaderStateByLevel(levelId, true)
 end
-
-
 
 LevelMapController.RecoverTrackingMarkAnimation = HL.Method() << function(self)
     local trackingMark = self.view.levelMapLoader:GetGeneralTrackingMark()

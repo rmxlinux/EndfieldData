@@ -14,16 +14,7 @@ local SEC_PER_DAY = 86400
 local SEC_PER_HOUR = 3600
 local SEC_PER_MINUTE = 60
 
-
-
-
-
-
-
-
-
 MapMarkDetailSSShopCtrl = HL.Class('MapMarkDetailSSShopCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -33,14 +24,9 @@ MapMarkDetailSSShopCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 MapMarkDetailSSShopCtrl.m_shopGroupCellList = HL.Field(HL.Forward("UIListCache"))
 
-
 MapMarkDetailSSShopCtrl.m_shopGroupList = HL.Field(HL.Any)
-
-
-
 
 
 MapMarkDetailSSShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -81,8 +67,6 @@ MapMarkDetailSSShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self:_FillTimeInfo()
 end
 
-
-
 MapMarkDetailSSShopCtrl._FillTimeInfo = HL.Method() << function(self)
     local nextRefreshTimeStamp = Utils.getNextWeeklyServerRefreshTime()
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()
@@ -112,8 +96,6 @@ MapMarkDetailSSShopCtrl._FillTimeInfo = HL.Method() << function(self)
     end
 end
 
-
-
 MapMarkDetailSSShopCtrl._GetUnlockGroupCount = HL.Method().Return(HL.Number) << function(self)
     local list = shopSystem:GetShopListByType(CS.Beyond.GEnums.ShopGroupType.Spaceship, false)
     self.m_shopGroupList = { }
@@ -130,10 +112,6 @@ MapMarkDetailSSShopCtrl._GetUnlockGroupCount = HL.Method().Return(HL.Number) << 
     end
     return ret
 end
-
-
-
-
 
 MapMarkDetailSSShopCtrl._FillSingleShop = HL.Method(HL.Any, HL.String).Return(HL.Boolean, HL.Boolean) << function(self, singleShop, shopGroupId)
     

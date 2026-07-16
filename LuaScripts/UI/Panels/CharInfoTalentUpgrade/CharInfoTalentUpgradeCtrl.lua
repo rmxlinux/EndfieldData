@@ -1,39 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharInfoTalentUpgrade
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharInfoTalentUpgradeCtrl = HL.Class('CharInfoTalentUpgradeCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -52,22 +20,34 @@ CharInfoTalentUpgradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHAR_INFO_TALENT_INIT_CONTROLLER] = '_InitControllerPlaceHolder',
     [MessageConst.ON_ITEM_COUNT_CHANGED] = '_RefreshCost',
     [MessageConst.ON_WALLET_CHANGED] = '_RefreshCost',
+    [MessageConst.ON_CHAR_DECK_ATTR_CHANGED] = '_OnCharDeckAttrChanged',
 }
-
 
 CharInfoTalentUpgradeCtrl.m_isSkillExpanding = HL.Field(HL.Boolean) << false
 
-
 CharInfoTalentUpgradeCtrl.m_curNodeId = HL.Field(HL.String) << ''
 
-
 CharInfoTalentUpgradeCtrl.m_curSkillId = HL.Field(HL.String) << ''
-
 
 CharInfoTalentUpgradeCtrl.m_refreshCostFunc = HL.Field(HL.Function)
 
 
 
+
+CharInfoTalentUpgradeCtrl.m_curConditionIdx = HL.Field(HL.Number) << 0
+
+
+
+
+
+
+CharInfoTalentUpgradeCtrl.m_cachedSkillGroupCfg = HL.Field(HL.Any)
+CharInfoTalentUpgradeCtrl.m_cachedCharInstId = HL.Field(HL.Number) << 0
+
+
+
+CharInfoTalentUpgradeCtrl.m_cachedCurSkillLv = HL.Field(HL.Number) << 0
+CharInfoTalentUpgradeCtrl.m_cachedIsMaxLv = HL.Field(HL.Boolean) << false
 
 
 CharInfoTalentUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -79,9 +59,6 @@ CharInfoTalentUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     wrapper:SampleToInAnimationBegin()
     UIUtils.bindHyperlinkPopup(self, "CharInfoTalentUpgrade", self.view.inputGroup.groupId)
 end
-
-
-
 
 CharInfoTalentUpgradeCtrl.PhaseCharInfoPanelShowFinal = HL.Method(HL.Any) << function(self, arg)
     self:Show()
@@ -97,15 +74,6 @@ CharInfoTalentUpgradeCtrl.PhaseCharInfoPanelShowFinal = HL.Method(HL.Any) << fun
     local wrapper = self.animationWrapper
     wrapper:PlayInAnimation()
 end
-
-
-
-
-
-
-
-
-
 
 CharInfoTalentUpgradeCtrl._RefreshNodeCommon = HL.Method(HL.Table, HL.Number, HL.Boolean, HL.Boolean, HL.Any, HL.Opt(HL.Function, HL.Function))
     << function(self, node, charInstId, isActive, isLock, costList, conditionShowFunc, conditionCheckFunc)
@@ -176,9 +144,7 @@ end
 
 
 local SKILL_GROUP_TYPE
-
-
-
+local SKILL_NODE_REFRESH_ANIM = "charInfoskillnodenew_refresh"
 CharInfoTalentUpgradeCtrl.ShowSkillUpgrade = HL.Method(HL.Table) << function(self, arg)
     self.m_curNodeId = ''
     if self.m_curSkillId == arg.skillGroupId and not arg.forceUpdate then
@@ -198,6 +164,7 @@ CharInfoTalentUpgradeCtrl.ShowSkillUpgrade = HL.Method(HL.Table) << function(sel
     local skillGroupType = arg.skillGroupType
     local curSkillLv = arg.curSkillLv
     local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
+    local skillGroupCfg = CharInfoUtils.getSkillGroupCfg(charInst.templateId, skillGroupId)
 
     local skillUpgradeNode = self.view.skillUpgrade
 
@@ -206,6 +173,25 @@ CharInfoTalentUpgradeCtrl.ShowSkillUpgrade = HL.Method(HL.Table) << function(sel
     local canUpgradeLv = skillInfo.maxLevel
     local isMaxLv = curSkillLv == canUpgradeLv and curSkillLv == UIConst.CHAR_MAX_SKILL_LV
     local isElite = curSkillLv >= UIConst.CHAR_MAX_SKILL_NORMAL_LV
+
+    
+    local hasBothConditions = CharInfoUtils.hasBothSkillGroupConditions(skillGroupCfg)
+    if hasBothConditions then
+        self.m_curConditionIdx = (arg.curConditionIdx == 1 or arg.curConditionIdx == 2)
+            and arg.curConditionIdx or CharInfoUtils.getActiveSkillGroupConditionIdx(charInst.instId, skillGroupCfg) or 1
+        
+        self.m_cachedSkillGroupCfg = skillGroupCfg
+        self.m_cachedCharInstId = charInst.instId
+        self.m_cachedCurSkillLv = curSkillLv
+        self.m_cachedIsMaxLv = isMaxLv
+    else
+        self.m_curConditionIdx = 0
+    end
+
+    skillUpgradeNode.stanceSwitchSkillNode.gameObject:SetActive(hasBothConditions)
+    if hasBothConditions then
+        self:_RefreshStanceSwitchSkillNode(skillGroupCfg, charInst.instId)
+    end
 
     self:_RefreshMainSkillUpgradeNode(skillUpgradeNode, charInst, skillGroupId, curSkillLv)
     if isMaxLv then
@@ -271,20 +257,31 @@ CharInfoTalentUpgradeCtrl.ShowSkillUpgrade = HL.Method(HL.Table) << function(sel
     end
 end
 
-
-
-
-
-
-
 CharInfoTalentUpgradeCtrl._RefreshMainSkillUpgradeNode = HL.Method(HL.Any, HL.Any, HL.String, HL.Number) << function(self, skillUpgradeNode, charInst, skillGroupId, curSkillLv)
-    local skillGroupCfg = CharInfoUtils.getSkillGroupCfg(charInst.templateId, skillGroupId)
+    local skillGroupCfg = CharInfoUtils.getSkillGroupCfg(charInst.templateId, skillGroupId, true)
+    if skillGroupCfg == nil then
+        return
+    end
     skillUpgradeNode.skillName.text = skillGroupCfg.name
-    skillUpgradeNode.skillIcon:LoadSprite(UIConst.UI_SPRITE_SKILL_ICON, skillGroupCfg.icon)
+
+    
+    local icon = CharInfoUtils.generateSkillGroupConditionIcon(
+            charInst.instId, skillGroupCfg, self.m_curConditionIdx)
+    skillUpgradeNode.skillIcon:LoadSprite(UIConst.UI_SPRITE_SKILL_ICON, icon and icon or skillGroupCfg.icon)
 
     local bgColor = CharInfoUtils.getCharInfoSkillGroupBgColor(skillGroupCfg)
     skillUpgradeNode.bgSkillColor2.color = bgColor
-    skillUpgradeNode.desc:SetAndResolveTextStyle(Utils.SkillUtil.GetSkillGroupDescription(charInst.templateId, skillGroupId, curSkillLv))
+
+    
+    local postDesc = CharInfoUtils.generateSkillGroupConditionPostDescText(
+        charInst.instId, skillGroupCfg, self.m_curConditionIdx)
+
+    local desc = Utils.SkillUtil.GetSkillGroupDescription(charInst.templateId, skillGroupId, curSkillLv, charInst.instId)
+    local combinedDesc = table.concat({desc, postDesc}, "\n"):gsub("^\n+", ""):gsub("\n+$", "")
+    skillUpgradeNode.desc:SetAndResolveTextStyle(combinedDesc)
+
+    
+    self:_RefreshStanceSwitchSkillDesc(skillUpgradeNode, charInst.instId, skillGroupCfg)
 
     local isElite = curSkillLv >= UIConst.CHAR_MAX_SKILL_NORMAL_LV
     local showSkillLv = lume.clamp(curSkillLv, 1, UIConst.CHAR_MAX_SKILL_NORMAL_LV)
@@ -301,7 +298,7 @@ CharInfoTalentUpgradeCtrl._RefreshMainSkillUpgradeNode = HL.Method(HL.Any, HL.An
         skillUpgradeNode.subDescCellCache = UIUtils.genCellCache(skillUpgradeNode.subDescCell)
     end
 
-    local skillDescNameList, skillDescList = self:_generateSkillGroupSubDescList(charInst.templateId, skillGroupId, curSkillLv)
+    local skillDescNameList, skillDescList = self:_generateSkillGroupSubDescList(charInst.templateId, skillGroupId, curSkillLv, charInst.instId)
     skillUpgradeNode.subDescCellCache:Refresh(#skillDescNameList, function(cell, index)
         if skillDescNameList[index] == nil then
             cell.gameObject:SetActive(false)
@@ -321,13 +318,16 @@ end
 
 
 
-
-CharInfoTalentUpgradeCtrl._generateSkillGroupSubDescList = HL.Method(HL.String, HL.String, HL.Number).Return(HL.Table, HL.Table) << function(self, charTemplateId, skillGroupId, skillGroupLv)
-    return CharInfoUtils.getSkillGroupSubDescList(charTemplateId, skillGroupId, skillGroupLv)
+CharInfoTalentUpgradeCtrl._generateSkillGroupSubDescList = HL.Method(HL.String, HL.String, HL.Number, HL.Number).Return(HL.Table, HL.Table) << function(self, charTemplateId, skillGroupId, skillGroupLv, charInstId)
+    local selectedConditionId
+    if self.m_curConditionIdx == 1 or self.m_curConditionIdx == 2 then
+        local skillGroupCfg = CharInfoUtils.getSkillGroupCfg(charTemplateId, skillGroupId)
+        if skillGroupCfg ~= nil then
+            selectedConditionId = self.m_curConditionIdx == 1 and skillGroupCfg.conditionId1 or skillGroupCfg.conditionId2
+        end
+    end
+    return CharInfoUtils.getSkillGroupSubDescList(charTemplateId, skillGroupId, skillGroupLv, charInstId, selectedConditionId)
 end
-
-
-
 
 CharInfoTalentUpgradeCtrl.ShowPassiveSkillUpgrade = HL.Method(HL.Table) << function(self, arg)
     local charInstId = arg.charInstId
@@ -370,27 +370,21 @@ CharInfoTalentUpgradeCtrl.ShowPassiveSkillUpgrade = HL.Method(HL.Table) << funct
         local selectedNodeCfg = CharInfoUtils.getPassiveSkillTalentNodeByIndex(charInst.templateId, nodeIndex, passiveSkillNodeData.level)
 
         local isActive, isLock = CharInfoUtils.getPassiveSkillNodeStatus(charInst.instId, selectedNodeCfg.nodeId)
-        local nodeDesc = CS.Beyond.Gameplay.TalentUtil.GetTalentNodeDescription(charInst.templateId, nodeCfg.nodeId)
+        local nodeDesc = CS.Beyond.Gameplay.TalentUtil.GetTalentNodeDescription(charInst.templateId, nodeCfg.nodeId, charInst.instId)
         cell.desc:SetAndResolveTextStyle(nodeDesc)
 
-        local textColor = self:_GetTextColor(isLock, isActive)
-        cell.title.color = textColor
-        cell.desc.color = textColor
-
-        cell.stageLevelCellGroup:InitStageLevelCellGroup(index, isLock)
+        cell.stageLevelCellGroup:InitStageLevelCellGroup(index, isLock, isActive)
         cell.selected.gameObject:SetActive(isSelectedNodeLv)
-        cell.activationLine.gameObject:SetActive(false)
 
         local isLastCell = #nodeDataList == index
         cell.defaultLine.gameObject:SetActive(not isLastCell)
-        cell.lock.gameObject:SetActive(isLock)
+        cell.activationLine.gameObject:SetActive(false)
 
+        cell.stateController:SetState(self:_GetStageTitleStateName(isActive, isLock))
         if cellBefore ~= nil and isActive then
-            cellBefore.defaultLine.gameObject:SetActive(false)
+            cellBefore.stateController:SetState("Replaced")
             cellBefore.activationLine.gameObject:SetActive(true)
-            cellBefore.title.color = self.view.config.TEXT_COLOR_ACTIVE_BEFORE
-            cellBefore.desc.color = self.view.config.TEXT_COLOR_ACTIVE_BEFORE
-            
+            cellBefore.stageLevelCellGroup:InitStageLevelCellGroup(index - 1, isLock)
         end
 
         cellBefore = cell
@@ -409,9 +403,6 @@ CharInfoTalentUpgradeCtrl.ShowPassiveSkillUpgrade = HL.Method(HL.Table) << funct
         self:_TryUnlockTalentNode(charInstId, selectedNodeCfg.nodeId)
     end)
 end
-
-
-
 
 CharInfoTalentUpgradeCtrl.ShowAttributeUpgrade = HL.Method(HL.Table) << function(self, arg)
     self.m_curSkillId = ''
@@ -439,9 +430,7 @@ CharInfoTalentUpgradeCtrl.ShowAttributeUpgrade = HL.Method(HL.Table) << function
 
     attributeNode.lockText.text = lockText
 
-    local attrType = attrCfg.attributeModifier.attrType
     local friendshipValue = CSPlayerDataUtil.GetCharFriendshipByInstId(charInst.instId)
-    local attrKey = Const.ATTRIBUTE_TYPE_2_ATTRIBUTE_DATA_KEY[attrType]
 
     local needFavorability = attrCfg.favorability ~= nil and attrCfg.favorability  or 0
     local pass = friendshipValue >= needFavorability
@@ -450,7 +439,14 @@ CharInfoTalentUpgradeCtrl.ShowAttributeUpgrade = HL.Method(HL.Table) << function
     local curValueText = string.format("%.0f%%", CharInfoUtils.getCharRelationShowValue(friendshipValue))
     local conditionText = string.format(conditionFormat, needValueText, curValueText)
 
-    attributeNode.icon:LoadSprite(UIConst.UI_SPRITE_ATTRIBUTE_ICON, UIConst.UI_ATTRIBUTE_ICON_PREFIX .. attrKey)
+    
+    local iconName = attrCfg.customIcon or ""
+    if string.isEmpty(iconName) then
+        local attrType = CharInfoUtils.getTalentAttributeNodeDisplayAttrType(charInst.templateId, attrCfg)
+        local attrKey = Const.ATTRIBUTE_TYPE_2_ATTRIBUTE_DATA_KEY[attrType]
+        iconName = UIConst.UI_ATTRIBUTE_ICON_PREFIX .. attrKey
+    end
+    attributeNode.icon:LoadSprite(UIConst.UI_SPRITE_ATTRIBUTE_ICON, iconName)
     attributeNode.activeIcon.gameObject:SetActive(pass)
     attributeNode.defaultIcon.gameObject:SetActive(not pass)
     attributeNode.condition:SetAndResolveTextStyle(conditionText)
@@ -467,9 +463,6 @@ CharInfoTalentUpgradeCtrl.ShowAttributeUpgrade = HL.Method(HL.Table) << function
         self:_TryUnlockTalentNode(charInstId, talentCfg.nodeId)
     end)
 end
-
-
-
 
 CharInfoTalentUpgradeCtrl.ShowShipSkillUpgrade = HL.Method(HL.Table) << function(self, arg)
     self.m_curNodeId = ''
@@ -516,26 +509,17 @@ CharInfoTalentUpgradeCtrl.ShowShipSkillUpgrade = HL.Method(HL.Table) << function
         cell.title.text = skillCfg.name
         cell.desc.text = skillCfg.desc
 
-        cell.activationLine.gameObject:SetActive(false)
-
         local isLastCell = #innerUpgradeList == index
         cell.defaultLine.gameObject:SetActive(not isLastCell)
+        cell.activationLine.gameObject:SetActive(false)
 
         cell.selected.gameObject:SetActive(isSelected)
-        cell.stageLevel.text = shipSkillCfg.skillNamePostfix
-
-        local textColor = self:_GetTextColor(isLock, isActive)
-        cell.title.first.color = textColor
-        cell.desc.color = textColor
-        cell.stageLevel.color = textColor
+        cell.stageLevelStateController:SetState(shipSkillCfg.skillNamePostfix)
+        cell.stateController:SetState(self:_GetStageTitleStateName(isActive, isLock))
 
         if cellBefore ~= nil and isActive then
-            cellBefore.defaultLine.gameObject:SetActive(false)
             cellBefore.activationLine.gameObject:SetActive(true)
-            cellBefore.title.first.color = self.view.config.TEXT_COLOR_ACTIVE_BEFORE
-            cellBefore.desc.color = self.view.config.TEXT_COLOR_ACTIVE_BEFORE
-            cellBefore.stageLevel.color = self.view.config.TEXT_COLOR_ACTIVE_BEFORE
-
+            cellBefore.stateController:SetState("Replaced")
         end
         cellBefore = cell
     end)
@@ -552,9 +536,6 @@ CharInfoTalentUpgradeCtrl.ShowShipSkillUpgrade = HL.Method(HL.Table) << function
         self:_TryUnlockTalentNode(charInstId, skillUpgradeCfg.nodeId)
     end)
 end
-
-
-
 
 CharInfoTalentUpgradeCtrl.ShowCharBreak = HL.Method(HL.Table) << function(self, arg)
     self.m_curSkillId = ''
@@ -638,9 +619,6 @@ CharInfoTalentUpgradeCtrl.ShowCharBreak = HL.Method(HL.Table) << function(self, 
 
 end
 
-
-
-
 CharInfoTalentUpgradeCtrl.ShowEquipBreak = HL.Method(HL.Table) << function(self, arg)
     self.m_curSkillId = ''
     if self.m_curNodeId == arg.nodeId and not arg.forceUpdate then
@@ -681,10 +659,6 @@ CharInfoTalentUpgradeCtrl.ShowEquipBreak = HL.Method(HL.Table) << function(self,
     equipBreakNode.lockText.text = string.format(Language.LUA_CHAR_INFO_TALENT_UPGRADE_BREAK_LOCK_HINT, charBreakDetail.breakStage)
 end
 
-
-
-
-
 CharInfoTalentUpgradeCtrl._GetTextColor = HL.Method(HL.Boolean, HL.Boolean).Return(HL.Any) << function(self, isLock, hadUpgraded)
     local textColor = self.view.config.TEXT_COLOR_DEFAULT
     if hadUpgraded then
@@ -695,7 +669,15 @@ CharInfoTalentUpgradeCtrl._GetTextColor = HL.Method(HL.Boolean, HL.Boolean).Retu
     return textColor
 end
 
-
+CharInfoTalentUpgradeCtrl._GetStageTitleStateName = HL.Method(HL.Boolean, HL.Boolean).Return(HL.String) << function(self, isActive, isLocked)
+    if isActive then
+        return "Active"
+    elseif isLocked then
+        return "Locked"
+    else
+        return "Normal"
+    end
+end
 
 CharInfoTalentUpgradeCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.btnClose.onClick:AddListener(function()
@@ -713,16 +695,13 @@ CharInfoTalentUpgradeCtrl._InitActionEvent = HL.Method() << function(self)
     end)
 end
 
-
-
-
 CharInfoTalentUpgradeCtrl._ToggleSkillNextInfo = HL.Method(HL.Boolean) << function(self, isOn)
     self.m_isSkillExpanding = isOn
     self.view.skillUpgradeAfter.gameObject:SetActive(isOn)
     self.view.btnExpand.gameObject:SetActive(not isOn)
     self.view.btnShrink.gameObject:SetActive(isOn)
     if DeviceInfo.usingController then
-        self.view.skillUpgrade.scrollInputGroup.enabled = not isOn
+        InputManagerInst:ToggleGroup(self.view.skillUpgrade.skillDescScrollInputBindingGroupMonoTarget.groupId, not isOn)
     end
     self.view.skillUpgrade.scrollEnableNode.gameObject:SetActive(not isOn)
     Notify(MessageConst.ON_CHAR_INFO_TALENT_SKILL_NEXT_EXPAND, isOn)
@@ -730,7 +709,95 @@ end
 
 
 
+
+
+
+CharInfoTalentUpgradeCtrl._RefreshStanceSwitchSkillNode = HL.Method(HL.Userdata, HL.Number) << function(self, skillGroupCfg, charInstId)
+    local stanceSwitchSkillNode = self.view.skillUpgrade.stanceSwitchSkillNode
+    stanceSwitchSkillNode.tab1Toggle.titleTxt:SetAndResolveTextStyle(skillGroupCfg.conditionName1)
+    stanceSwitchSkillNode.tab2Toggle.titleTxt:SetAndResolveTextStyle(skillGroupCfg.conditionName2)
+
+    
+    local displayData1 = CharInfoUtils.getSkillGroupConditionDisplayDataByIndex(charInstId, skillGroupCfg, 1)
+    local displayData2 = CharInfoUtils.getSkillGroupConditionDisplayDataByIndex(charInstId, skillGroupCfg, 2)
+    stanceSwitchSkillNode.tab1Toggle.nowNode.gameObject:SetActive(displayData1.isActive)
+    stanceSwitchSkillNode.tab2Toggle.nowNode.gameObject:SetActive(displayData2.isActive)
+
+    
+    stanceSwitchSkillNode.tab1Toggle.toggle.onValueChanged:RemoveAllListeners()
+    stanceSwitchSkillNode.tab2Toggle.toggle.onValueChanged:RemoveAllListeners()
+
+    stanceSwitchSkillNode.tab1Toggle.toggle.isOn = self.m_curConditionIdx == 1
+    stanceSwitchSkillNode.tab2Toggle.toggle.isOn = self.m_curConditionIdx == 2
+
+    stanceSwitchSkillNode.tab1Toggle.toggle.onValueChanged:AddListener(function(isOn)
+        if isOn then
+            self:_OnStanceTabChanged(1, charInstId, skillGroupCfg)
+        end
+    end)
+    stanceSwitchSkillNode.tab2Toggle.toggle.onValueChanged:AddListener(function(isOn)
+        if isOn then
+            self:_OnStanceTabChanged(2, charInstId, skillGroupCfg)
+        end
+    end)
+end
+
+
+
+
+
+
+CharInfoTalentUpgradeCtrl._OnStanceTabChanged = HL.Method(HL.Number, HL.Number, HL.Userdata) << function(self, conditionIdx, charInstId, skillGroupCfg)
+    self.m_curConditionIdx = conditionIdx
+    local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
+    if charInst == nil then
+        return
+    end
+    local skillGroupId = self.m_curSkillId
+    local curSkillLv = self.m_cachedCurSkillLv
+    self:_RefreshMainSkillUpgradeNode(self.view.skillUpgrade, charInst, skillGroupId, curSkillLv)
+    self.view.skillUpgrade.charInfoSkillNodeAnimation:Play(SKILL_NODE_REFRESH_ANIM)
+    
+    self.view.skillUpgrade.skillDescScroll.verticalNormalizedPosition = 1
+    if not self.m_cachedIsMaxLv then
+        self:_RefreshMainSkillUpgradeNode(self.view.skillUpgradeAfter, charInst, skillGroupId, curSkillLv + 1)
+        self.view.skillUpgradeAfter.charInfoSkillNodeAnimation:Play(SKILL_NODE_REFRESH_ANIM)
+        
+        self.view.skillUpgradeAfter.skillDescScroll.verticalNormalizedPosition = 1
+    end
+end
+
+
+
+CharInfoTalentUpgradeCtrl._RefreshStanceSwitchSkillDesc = HL.Method(HL.Any, HL.Number, HL.Userdata)
+    << function(self, skillUpgradeNode, charInstId, skillGroupCfg)
+    local desc, isActive = CharInfoUtils.generateSkillGroupConditionDescText(charInstId, skillGroupCfg, self.m_curConditionIdx)
+    if desc then
+        skillUpgradeNode.stanceSwitchSkillDesc:SetAndResolveTextStyle(desc)
+        skillUpgradeNode.stanceSwitchSkillDescStateController:SetState(isActive
+            and "Active" or "Inactive")
+        skillUpgradeNode.stanceSwitchSkillDesc.gameObject:SetActive(true)
+    else
+        skillUpgradeNode.stanceSwitchSkillDesc.gameObject:SetActive(false)
+    end
+end
+
+CharInfoTalentUpgradeCtrl._StopSkillNodeRefreshAnimations = HL.Method() << function(self)
+    local skillUpgradeAnim = self.view.skillUpgrade.charInfoSkillNodeAnimation
+    if skillUpgradeAnim.isPlaying then
+        skillUpgradeAnim:Stop()
+        skillUpgradeAnim:SeekToPercent(SKILL_NODE_REFRESH_ANIM, 1)
+    end
+
+    local skillUpgradeAfterAnim = self.view.skillUpgradeAfter.charInfoSkillNodeAnimation
+    if skillUpgradeAfterAnim.isPlaying then
+        skillUpgradeAfterAnim:Stop()
+        skillUpgradeAfterAnim:SeekToPercent(SKILL_NODE_REFRESH_ANIM, 1)
+    end
+end
+
 CharInfoTalentUpgradeCtrl._ResetUpgradePanel = HL.Method() << function(self)
+    self:_StopSkillNodeRefreshAnimations()
     self:_ToggleSkillNextInfo(false)
     self.view.skillUpgradeAfter.gameObject:SetActive(false)
     self.view.skillUpgrade.gameObject:SetActive(false)
@@ -741,12 +808,29 @@ CharInfoTalentUpgradeCtrl._ResetUpgradePanel = HL.Method() << function(self)
     self.view.passiveSkillNode.gameObject:SetActive(false)
     self.view.btnShrink.gameObject:SetActive(false)
     self.view.btnExpand.gameObject:SetActive(false)
+    self.m_curConditionIdx = 0
+    self.m_cachedSkillGroupCfg = nil
+    self.m_cachedCharInstId = 0
+    self.m_cachedCurSkillLv = 0
+    self.m_cachedIsMaxLv = false
 end
 
 
 
 
 
+
+CharInfoTalentUpgradeCtrl._OnCharDeckAttrChanged = HL.Method(HL.Table) << function(self, arg)
+    local instId = unpack(arg)
+    if instId ~= self.m_cachedCharInstId or not self.m_cachedSkillGroupCfg or string.isEmpty(self.m_curSkillId) then
+        return
+    end
+    local charInst = CharInfoUtils.getPlayerCharInfoByInstId(instId)
+    self:_RefreshMainSkillUpgradeNode(self.view.skillUpgrade, charInst, self.m_curSkillId, self.m_cachedCurSkillLv)
+    if self.view.skillUpgradeAfter.gameObject.activeSelf then
+        self:_RefreshMainSkillUpgradeNode(self.view.skillUpgradeAfter, charInst, self.m_curSkillId, self.m_cachedCurSkillLv)
+    end
+end
 
 CharInfoTalentUpgradeCtrl._RefreshItemCell = HL.Method(HL.Userdata, HL.String, HL.Number) << function(self, cell, itemId, needCount)
     cell:InitItem({
@@ -771,9 +855,6 @@ CharInfoTalentUpgradeCtrl._RefreshItemCell = HL.Method(HL.Userdata, HL.String, H
     end
 end
 
-
-
-
 CharInfoTalentUpgradeCtrl._ToggleExpandNode = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.rightNode:ClearTween()
     UIUtils.PlayAnimationAndToggleActive(self.view.rightNode, isOn)
@@ -786,12 +867,15 @@ CharInfoTalentUpgradeCtrl._ToggleExpandNode = HL.Method(HL.Boolean) << function(
         self.m_curNodeId = ''
         self.m_curSkillId = ''
         self.m_refreshCostFunc = nil
+        self.m_curConditionIdx = 0
+        self.m_cachedSkillGroupCfg = nil
+        self.m_cachedCharInstId = 0
+        self.m_cachedCurSkillLv = 0
+        self.m_cachedIsMaxLv = false
     end
     InputManagerInst:ToggleGroup(self.view.skillUpgrade.scrollInputGroup.groupId, not isOn)
     InputManagerInst:ToggleGroup(self.view.skillUpgradeAfter.scrollInputGroup.groupId, isOn)
 end
-
-
 
 CharInfoTalentUpgradeCtrl._ExternalExitExpandNode = HL.Method() << function(self)
     
@@ -801,10 +885,6 @@ CharInfoTalentUpgradeCtrl._ExternalExitExpandNode = HL.Method() << function(self
         self:_ToggleExpandNode(false)
     end)
 end
-
-
-
-
 
 CharInfoTalentUpgradeCtrl._TryUnlockTalentNode = HL.Method(HL.Number, HL.String) << function(self, charInstId, nodeId)
     local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
@@ -833,10 +913,6 @@ CharInfoTalentUpgradeCtrl._TryUnlockTalentNode = HL.Method(HL.Number, HL.String)
     GameInstance.player.charBag:UnlockTalentNode(charInstId, nodeId)
 end
 
-
-
-
-
 CharInfoTalentUpgradeCtrl._CheckIfRequiredItemEnough = HL.Method(HL.String, HL.String).Return(HL.Boolean) << function(self, templateId, nodeId)
     local nodeCfg = CharInfoUtils.getTalentNodeCfg(templateId, nodeId)
 
@@ -849,10 +925,6 @@ CharInfoTalentUpgradeCtrl._CheckIfRequiredItemEnough = HL.Method(HL.String, HL.S
 
     return true
 end
-
-
-
-
 
 CharInfoTalentUpgradeCtrl._CheckIfGoldEnough = HL.Method(HL.String, HL.String).Return(HL.Boolean) << function(self, templateId, nodeId)
     local nodeCfg = CharInfoUtils.getTalentNodeCfg(templateId, nodeId)
@@ -867,10 +939,6 @@ CharInfoTalentUpgradeCtrl._CheckIfGoldEnough = HL.Method(HL.String, HL.String).R
     return true
 end
 
-
-
-
-
 CharInfoTalentUpgradeCtrl._CheckIfFriendshipEnough = HL.Method(HL.Userdata, HL.String).Return(HL.Boolean) << function(self, charInst, nodeId)
     local nodeCfg = CharInfoUtils.getTalentNodeCfg(charInst.templateId, nodeId)
     
@@ -884,9 +952,6 @@ CharInfoTalentUpgradeCtrl._CheckIfFriendshipEnough = HL.Method(HL.Userdata, HL.S
     return true
 end
 
-
-
-
 CharInfoTalentUpgradeCtrl._RefreshCost = HL.Method(HL.Table) << function(self, args)
     if self.m_refreshCostFunc then
         self.m_refreshCostFunc()
@@ -895,19 +960,15 @@ end
 
 
 
-
-
-
 CharInfoTalentUpgradeCtrl._InitControllerPlaceHolder = HL.Method(HL.Table) << function(self, args)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder(
         {self.view.inputGroup.groupId, args.inputGroupId})
 end
 
-
-
 CharInfoTalentUpgradeCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     local arg = {}
     arg.isSkillExpanding = self.m_isSkillExpanding
+    arg.curConditionIdx = self.m_curConditionIdx
     return arg
 end
 

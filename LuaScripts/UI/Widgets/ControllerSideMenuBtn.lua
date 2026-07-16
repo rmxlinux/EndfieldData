@@ -1,17 +1,9 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 ControllerSideMenuBtn = HL.Class('ControllerSideMenuBtn', UIWidgetBase)
 
 
-
 ControllerSideMenuBtn.m_extraArgs = HL.Field(HL.Table)
-
-
 
 
 
@@ -21,15 +13,10 @@ ControllerSideMenuBtn._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
 ControllerSideMenuBtn.InitControllerSideMenuBtn = HL.Method(HL.Opt(HL.Table)) << function(self, extraArgs)
     self:_FirstTimeInit()
     self.m_extraArgs = extraArgs or {}
 end
-
-
 
 ControllerSideMenuBtn._OpenMenu = HL.Method() << function(self)
     local args = {
@@ -56,6 +43,10 @@ ControllerSideMenuBtn._OpenMenu = HL.Method() << function(self)
 
     if self.m_extraArgs then
         setmetatable(args, { __index = self.m_extraArgs })
+    end
+
+    if self.m_extraArgs.preOpenMenu then
+        self.m_extraArgs.preOpenMenu()
     end
     UIManager:Open(PanelId.ControllerSideMenu, args)
 end

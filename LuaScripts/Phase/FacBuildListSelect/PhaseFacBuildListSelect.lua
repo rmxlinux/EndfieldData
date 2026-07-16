@@ -1,19 +1,5 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.FacBuildListSelect
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseFacBuildListSelect = HL.Class('PhaseFacBuildListSelect', phaseBase.PhaseBase)
 
 local ReservePanelIds = {  
@@ -25,17 +11,13 @@ local ReservePanelIds = {
 
 
 
-
 PhaseFacBuildListSelect.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.OPEN_FAC_BUILD_MODE_SELECT] = { '_OnOpenFacBuildModeSelect', false },
 }
 
 
-
 PhaseFacBuildListSelect.m_radioTagHandle = HL.Field(HL.Any)
-
-
 
 
 
@@ -48,11 +30,6 @@ end
 
 
 
-
-
-
-
-
 PhaseFacBuildListSelect.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
     if transitionType == PhaseConst.EPhaseState.TransitionIn then
         if anotherPhaseId == PhaseId.Level then
@@ -61,34 +38,16 @@ PhaseFacBuildListSelect.PrepareTransition = HL.Override(HL.Number, HL.Boolean, H
     end
 end
 
-
-
-
-
 PhaseFacBuildListSelect._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseFacBuildListSelect._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseFacBuildListSelect._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseFacBuildListSelect._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args) end
-
-
 
 
 
@@ -101,8 +60,6 @@ PhaseFacBuildListSelect._OnActivated = HL.Override() << function(self)
     end
 end
 
-
-
 PhaseFacBuildListSelect._OnDeActivated = HL.Override() << function(self)
     if self.m_radioTagHandle then
         
@@ -114,13 +71,9 @@ PhaseFacBuildListSelect._OnDeActivated = HL.Override() << function(self)
     end
 end
 
-
-
 PhaseFacBuildListSelect._OnDestroy = HL.Override() << function(self)
     PhaseFacBuildListSelect.Super._OnDestroy(self)
 end
-
-
 
 
 
@@ -132,8 +85,6 @@ PhaseFacBuildListSelect.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) <<
     end
     return arg
 end
-
-
 
 PhaseFacBuildListSelect._OnOpenFacBuildModeSelect = HL.StaticMethod(HL.Opt(HL.Any)) << function(arg)
     if PhaseManager:CheckCanOpenPhaseAndToast(PHASE_ID, arg) then

@@ -1,15 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaPotentialPopup
 
-
-
-
-
-
-
-
 GachaPotentialPopupCtrl = HL.Class('GachaPotentialPopupCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -21,11 +13,7 @@ GachaPotentialPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 GachaPotentialPopupCtrl.m_info = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -44,8 +32,6 @@ GachaPotentialPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshAllUI()
 end
 
-
-
 GachaPotentialPopupCtrl.OnClose = HL.Override() << function(self)
     local onComplete = self.m_info.onComplete
     self.m_info = nil
@@ -56,16 +42,12 @@ end
 
 
 
-
-
 GachaPotentialPopupCtrl._InitUI = HL.Method() << function(self)
     self.view.fullScreenCloseBtn.onClick:AddListener(function()
         self:PlayAnimationOutAndClose()
     end)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
 
 GachaPotentialPopupCtrl._RefreshAllUI = HL.Method() << function(self)
     self.view.itemIcon:InitItemIcon(self.m_info.potentialItemId, true)

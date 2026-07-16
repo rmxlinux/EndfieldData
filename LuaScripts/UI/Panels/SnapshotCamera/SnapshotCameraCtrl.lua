@@ -2,45 +2,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SnapshotCamera
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SnapshotCameraCtrl = HL.Class('SnapshotCameraCtrl', uiCtrl.UICtrl)
 
 
@@ -57,7 +18,6 @@ local forbidToastColdDownTime = 3
 
 
 
-
 SnapshotCameraCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
@@ -65,20 +25,13 @@ SnapshotCameraCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 SnapshotCameraCtrl.m_curMoveDir = HL.Field(Vector3)
-
 
 SnapshotCameraCtrl.m_updateKey = HL.Field(HL.Number) << -1
 
-
 SnapshotCameraCtrl.m_isForbidCamMoveOrRotate = HL.Field(HL.Boolean) << false
 
-
 SnapshotCameraCtrl.m_forbidToastColdDown = HL.Field(HL.Number) << 0
-
-
-
 
 
 
@@ -89,36 +42,21 @@ SnapshotCameraCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_curMoveDir = Vector3.zero
 end
 
-
-
 SnapshotCameraCtrl.OnClose = HL.Override() << function(self)
     self:_ClearRegisters()
 end
-
-
 
 SnapshotCameraCtrl.OnShow = HL.Override() << function(self)
     self:_AddRegisters()
 end
 
-
-
 SnapshotCameraCtrl.OnHide = HL.Override() << function(self)
     self:_ClearRegisters()
 end
 
-
-
 SnapshotCameraCtrl._AddRegisters = HL.Method() << function(self)
     self.m_updateKey = LuaUpdate:Add("Tick", function()
         self:_UpdateCamera()
-    end)
-    
-    self:BindInputPlayerAction("snapshot_controller_cam_zoom_in", function()
-        self:ZoomCamera(4)
-    end)
-    self:BindInputPlayerAction("snapshot_controller_cam_zoom_out", function()
-        self:ZoomCamera(-4)
     end)
     
     if not self.m_onStartSwipeTouchPanel then
@@ -150,8 +88,6 @@ SnapshotCameraCtrl._AddRegisters = HL.Method() << function(self)
     end)
 end
 
-
-
 SnapshotCameraCtrl._ClearRegisters = HL.Method() << function(self)
     self.m_updateKey = LuaUpdate:Remove(self.m_updateKey)
     
@@ -159,8 +95,6 @@ SnapshotCameraCtrl._ClearRegisters = HL.Method() << function(self)
     InputManagerInst.onSwipeTouchPanel:Remove(self.m_onSwipeTouchPanel)
     InputManagerInst.onEndSwipeTouchPanel:Remove(self.m_onEndSwipeTouchPanel)
 end
-
-
 
 
 
@@ -189,9 +123,6 @@ end
 
 
 
-
-
-
 SnapshotCameraCtrl.MoveCameraInPlane = HL.Method(Vector2) << function(self, dir)
     if self.m_isForbidCamMoveOrRotate then
         if self.m_forbidToastColdDown < Time.time then
@@ -200,14 +131,11 @@ SnapshotCameraCtrl.MoveCameraInPlane = HL.Method(Vector2) << function(self, dir)
         end
         return
     end
-    self.m_curMoveDir.x = dir.x
-    self.m_curMoveDir.y = dir.y
+    local rollAlignedDir = self:GetRollAlignedDir(dir)
+    self.m_curMoveDir.x = rollAlignedDir.x
+    self.m_curMoveDir.y = rollAlignedDir.y
     
 end
-
-
-
-
 
 
 SnapshotCameraCtrl.RotateCamera = HL.Method(HL.Number, HL.Number) << function(self, deltaX, deltaY)
@@ -226,10 +154,6 @@ SnapshotCameraCtrl.RotateCamera = HL.Method(HL.Number, HL.Number) << function(se
 end
 
 
-
-
-
-
 SnapshotCameraCtrl.SurroundMoveCamera = HL.Method(HL.Number, HL.Number) << function(self, deltaX, deltaY)
     if self.m_isForbidCamMoveOrRotate then
         if self.m_forbidToastColdDown < Time.time then
@@ -241,11 +165,9 @@ SnapshotCameraCtrl.SurroundMoveCamera = HL.Method(HL.Number, HL.Number) << funct
     if not snapshotSystem.camController then
         return
     end
-    snapshotSystem.camController:OnInput(deltaX, deltaY)
+    local rollAlignedDir = self:GetRollAlignedDir(Vector2(deltaX, deltaY))
+    snapshotSystem.camController:OnInput(rollAlignedDir.x, rollAlignedDir.y)
 end
-
-
-
 
 
 SnapshotCameraCtrl.ZoomCamera = HL.Method(HL.Number) << function(self, delta)
@@ -256,18 +178,12 @@ SnapshotCameraCtrl.ZoomCamera = HL.Method(HL.Number) << function(self, delta)
 end
 
 
-
-
-
 SnapshotCameraCtrl.SetFocalLenCamera = HL.Method(HL.Number) << function(self, value)
     if not snapshotSystem.camController then
         return
     end
     CameraManager.mainCamera.focalLength = value
 end
-
-
-
 
 
 SnapshotCameraCtrl.SetApertureCamera = HL.Method(HL.Number) << function(self, value)
@@ -277,18 +193,12 @@ SnapshotCameraCtrl.SetApertureCamera = HL.Method(HL.Number) << function(self, va
     snapshotSystem.camController:SetAperture(value)
 end
 
-
-
 SnapshotCameraCtrl.GetCameraRotationState = HL.Method().Return(HL.Any) << function(self)
     if not snapshotSystem.camController then
         return nil
     end
     return snapshotSystem.camController:GetCameraRotation()
 end
-
-
-
-
 
 SnapshotCameraCtrl.SetCameraRotationState = HL.Method(HL.Any, HL.Boolean) << function(self, rotation, isResume)
     if not snapshotSystem.camController or rotation == nil then
@@ -297,17 +207,12 @@ SnapshotCameraCtrl.SetCameraRotationState = HL.Method(HL.Any, HL.Boolean) << fun
     snapshotSystem.camController:SetCameraRotation(rotation, isResume)
 end
 
-
-
 SnapshotCameraCtrl.GetCameraParamFullSnapshot = HL.Method().Return(HL.Any) << function(self)
     if not snapshotSystem.camController then
         return nil
     end
     return snapshotSystem.camController:GetCameraParamFullSnapshot()
 end
-
-
-
 
 SnapshotCameraCtrl.RestoreCameraParamFullSnapshot = HL.Method(HL.Any) << function(self, snapshot)
     if not snapshotSystem.camController or snapshot == nil then
@@ -316,19 +221,13 @@ SnapshotCameraCtrl.RestoreCameraParamFullSnapshot = HL.Method(HL.Any) << functio
     snapshotSystem.camController:RestoreCameraParamFullSnapshot(snapshot)
 end
 
-
-
 SnapshotCameraCtrl.GetFocalLen = HL.Method().Return(HL.Number) << function(self)
     return CameraManager.mainCamera.focalLength
 end
 
-
-
 SnapshotCameraCtrl.GetAperture = HL.Method().Return(HL.Number) << function(self)
     return CameraManager.mainCamAdditionalData.physicalParameters.aperture
 end
-
-
 
 SnapshotCameraCtrl.GetZoomScale = HL.Method().Return(HL.Number) << function(self)
     if not snapshotSystem.camController then
@@ -337,9 +236,6 @@ SnapshotCameraCtrl.GetZoomScale = HL.Method().Return(HL.Number) << function(self
     return snapshotSystem.camController:GetZoomScale()
 end
 
-
-
-
 SnapshotCameraCtrl.SetZoomScale = HL.Method(HL.Number) << function(self, value)
     if not snapshotSystem.camController then
         return
@@ -347,17 +243,12 @@ SnapshotCameraCtrl.SetZoomScale = HL.Method(HL.Number) << function(self, value)
     snapshotSystem.camController:SetZoomScale(value)
 end
 
-
-
 SnapshotCameraCtrl.GetCameraOffset = HL.Method().Return(Vector3) << function(self)
     if not snapshotSystem.camController then
         return Vector3.zero
     end
     return snapshotSystem.camController:GetCameraOffset()
 end
-
-
-
 
 SnapshotCameraCtrl.SetCameraOffset = HL.Method(Vector3) << function(self, offset)
     if not snapshotSystem.camController then
@@ -367,6 +258,25 @@ SnapshotCameraCtrl.SetCameraOffset = HL.Method(Vector3) << function(self, offset
 end
 
 
+SnapshotCameraCtrl.GetCameraRoll = HL.Method().Return(HL.Number) << function(self)
+    if not snapshotSystem.camController then return 0 end
+    return snapshotSystem.camController:GetCameraRoll()
+end
+
+
+SnapshotCameraCtrl.GetRollAlignedDir = HL.Method(Vector2).Return(Vector2) << function(self, dir)
+    local rollRad = math.rad(self:GetCameraRoll())
+    local cosRoll = math.cos(rollRad)
+    local sinRoll = math.sin(rollRad)
+    return Vector2(dir.x * cosRoll - dir.y * sinRoll, dir.x * sinRoll + dir.y * cosRoll)
+end
+
+
+SnapshotCameraCtrl.SetCameraRoll = HL.Method(HL.Number) << function(self, value)
+    if not snapshotSystem.camController then return end
+    snapshotSystem.camController:SetCameraRoll(value)
+end
+
 
 
 
@@ -374,23 +284,15 @@ end
 
 SnapshotCameraCtrl.m_onStartSwipeTouchPanel = HL.Field(HL.Function)
 
-
 SnapshotCameraCtrl.m_onSwipeTouchPanel = HL.Field(HL.Function)
-
 
 SnapshotCameraCtrl.m_onEndSwipeTouchPanel = HL.Field(HL.Function)
 
-
 SnapshotCameraCtrl.m_touchPanelStartPos = HL.Field(Vector2)
-
 
 SnapshotCameraCtrl.m_touchPanelStarted = HL.Field(HL.Boolean) << false
 
-
 SnapshotCameraCtrl.m_lastTouchStartTime = HL.Field(HL.Number) << 0
-
-
-
 
 SnapshotCameraCtrl._OnStartSwipeTouchPanel = HL.Method(Vector2) << function(self, pos)
     self.m_touchPanelStartPos = pos
@@ -402,10 +304,6 @@ SnapshotCameraCtrl._OnStartSwipeTouchPanel = HL.Method(Vector2) << function(self
         self.m_lastTouchStartTime = Time.unscaledTime
     end
 end
-
-
-
-
 
 SnapshotCameraCtrl._OnSwipeTouchPanel = HL.Method(Vector2, Vector2) << function(self, delta, pos)
     if not self.m_touchPanelStartPos then
@@ -421,15 +319,10 @@ SnapshotCameraCtrl._OnSwipeTouchPanel = HL.Method(Vector2, Vector2) << function(
     end
 end
 
-
-
 SnapshotCameraCtrl._OnEndSwipeTouchPanel = HL.Method() << function(self)
     self.m_touchPanelStartPos = nil
     self.m_touchPanelStarted = false
 end
-
-
-
 
 
 

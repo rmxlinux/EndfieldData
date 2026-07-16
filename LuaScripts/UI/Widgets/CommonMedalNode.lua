@@ -1,47 +1,23 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonMedalNode = HL.Class('CommonMedalNode', UIWidgetBase)
-
 
 CommonMedalNode.m_achievementData = HL.Field(HL.Any)
 
-
 CommonMedalNode.m_level = HL.Field(HL.Number) << 0
-
 
 CommonMedalNode.m_obtained = HL.Field(HL.Boolean) << false
 
-
 CommonMedalNode.m_plated = HL.Field(HL.Boolean) << false
-
 
 CommonMedalNode.m_maxLevel = HL.Field(HL.Number) << 0
 
-
 CommonMedalNode.m_state = HL.Field(HL.String) << ''
-
-
 
 
 CommonMedalNode._OnFirstTimeInit = HL.Override() << function(self)
     self:_InitViews()
 end
-
-
-
 
 CommonMedalNode.InitCommonMedalNode = HL.Method(HL.String) << function(self, achievementId)
     if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.Achievement) then
@@ -63,8 +39,6 @@ CommonMedalNode.InitCommonMedalNode = HL.Method(HL.String) << function(self, ach
     self:_RenderViews()
 end
 
-
-
 CommonMedalNode._InitViews = HL.Method() << function(self)
     self.view.button.onClick:RemoveAllListeners()
     self.view.button.onClick:AddListener(function()
@@ -78,9 +52,6 @@ CommonMedalNode._InitViews = HL.Method() << function(self)
         end
     end)
 end
-
-
-
 
 CommonMedalNode._LoadData = HL.Method(HL.String) << function(self, achievementId)
     local achievementSystem = GameInstance.player.achievementSystem
@@ -106,8 +77,6 @@ CommonMedalNode._LoadData = HL.Method(HL.String) << function(self, achievementId
     end
 end
 
-
-
 CommonMedalNode._RenderViews = HL.Method() << function(self)
     if self.m_obtained then
         local medalBundle = {
@@ -120,8 +89,6 @@ CommonMedalNode._RenderViews = HL.Method() << function(self)
     end
     self.view.stateCtrl:SetState(self.m_state)
 end
-
-
 
 CommonMedalNode._OnClick = HL.Method() << function(self)
     if self.m_achievementData == nil then

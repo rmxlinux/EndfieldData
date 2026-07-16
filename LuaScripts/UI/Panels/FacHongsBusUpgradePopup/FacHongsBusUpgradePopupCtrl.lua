@@ -2,13 +2,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacHongsBusUpgradePopup
 
-
-
-
-
-
-
-
 FacHongsBusUpgradePopupCtrl = HL.Class('FacHongsBusUpgradePopupCtrl', uiCtrl.UICtrl)
 
 local BUS_FREE_ID = "log_hongs_bus"
@@ -18,22 +11,15 @@ local BUS_START_ID = "log_hongs_bus_source"
 
 
 
-
 FacHongsBusUpgradePopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacHongsBusUpgradePopupCtrl.m_busFreeData = HL.Field(HL.Table)
-
 
 FacHongsBusUpgradePopupCtrl.m_popItemList = HL.Field(HL.Table)
 
-
 FacHongsBusUpgradePopupCtrl.m_popItemIndex = HL.Field(HL.Number) << 1
-
-
-
 
 
 FacHongsBusUpgradePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -58,8 +44,6 @@ FacHongsBusUpgradePopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
 
 
 

@@ -2,25 +2,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.PRTSInvestigateGallery
 local PHASE_ID = PhaseId.PRTSInvestigateGallery
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PRTSInvestigateGalleryCtrl = HL.Class('PRTSInvestigateGalleryCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -43,23 +25,15 @@ local InvestStateEnum = {
     IsCanReward = 3,
 }
 
-
 PRTSInvestigateGalleryCtrl.m_ongoingCount = HL.Field(HL.Number) << 0
-
 
 PRTSInvestigateGalleryCtrl.m_finishedCount = HL.Field(HL.Number) << 0
 
-
 PRTSInvestigateGalleryCtrl.m_investInfos = HL.Field(HL.Table)
-
 
 PRTSInvestigateGalleryCtrl.m_getInvestCellFunc = HL.Field(HL.Function)
 
-
 PRTSInvestigateGalleryCtrl.m_indexTextFormat = HL.Field(HL.String) << ""
-
-
-
 
 
 
@@ -71,46 +45,32 @@ PRTSInvestigateGalleryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     EventLogManagerInst:GameEvent_PRTSArchiveVisit(true, "research")
 end
 
-
-
 PRTSInvestigateGalleryCtrl.OnClose = HL.Override() << function(self)
     EventLogManagerInst:GameEvent_PRTSArchiveVisit(false, "research")
 end
-
-
 
 PRTSInvestigateGalleryCtrl.OnAnimationInFinished = HL.Override() << function(self)
     local firstObj = self.view.investList:Get(0)
     local firstCell = self.m_getInvestCellFunc(firstObj)
     if firstCell then
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.investListNaviGroup, firstCell.gotoBtn)
+        self:SetNaviTarget(firstCell.gotoBtn)
     end
 end
-
-
-
 
 PRTSInvestigateGalleryCtrl._OnUnlockStoryColl = HL.Method(HL.Table) << function(self, args)
     self:_UpdateData()
     self:_RefreshAllUI()
 end
 
-
-
-
 PRTSInvestigateGalleryCtrl._OnInvestigateFinished = HL.Method(HL.Table) << function(self, args)
     self:_UpdateData()
     self:_RefreshAllUI()
 end
 
-
-
 PRTSInvestigateGalleryCtrl._OnNoteStateChange = HL.Method() << function(self)
     
     
 end
-
-
 
 
 
@@ -182,8 +142,6 @@ end
 
 
 
-
-
 PRTSInvestigateGalleryCtrl._InitUI = HL.Method() << function(self)
     
     self.m_getInvestCellFunc = UIUtils.genCachedCellFunction(self.view.investList)
@@ -200,8 +158,6 @@ PRTSInvestigateGalleryCtrl._InitUI = HL.Method() << function(self)
     self.m_indexTextFormat = "%0" .. self.view.config.TITLE_INDEX_DIGITS .. "d"
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
 
 PRTSInvestigateGalleryCtrl._RefreshAllUI = HL.Method() << function(self)
     
@@ -227,10 +183,6 @@ PRTSInvestigateGalleryCtrl._RefreshAllUI = HL.Method() << function(self)
     
     self.view.investList:UpdateCount(#self.m_investInfos)
 end
-
-
-
-
 
 PRTSInvestigateGalleryCtrl._OnRefreshInvestCell = HL.Method(HL.Table, HL.Number) << function(self, cell, luaIndex)
     local info = self.m_investInfos[luaIndex]

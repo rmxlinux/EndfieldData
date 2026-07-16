@@ -3,26 +3,13 @@ local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 local CONTENT_TYPE_TEXT = 1
 local CONTENT_TYPE_IMAGE = 2
 
-
-
-
-
-
-
-
 RichContent = HL.Class('RichContent', UIWidgetBase)
 
-
 RichContent.m_contentCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 RichContent._OnCreate = HL.Override() << function(self)
     self.m_contentCellCache = UIUtils.genCellCache(self.view.contentCell)
 end
-
-
-
 
 
 
@@ -49,9 +36,6 @@ RichContent.SetContentById = HL.Method(HL.String) << function(self, contentId)
         logger.error("RichContent.SetContentById error: " .. contentId)
     end
 end
-
-
-
 
 RichContent.SetContent = HL.Method(HL.Any) << function(self, args)
     self.view.title:SetAndResolveTextStyle(UIUtils.resolveTextCinematic(args.title or ""))
@@ -91,9 +75,6 @@ RichContent.SetContent = HL.Method(HL.Any) << function(self, args)
     end)
 end
 
-
-
-
 RichContent._ParseContent = HL.Method(HL.String).Return(HL.Number, HL.Any) << function(self, text)
     local imgPatternIndex = string.find(text, "<image")
     if imgPatternIndex ~= nil then
@@ -105,8 +86,6 @@ RichContent._ParseContent = HL.Method(HL.String).Return(HL.Number, HL.Any) << fu
     end
     return CONTENT_TYPE_TEXT, text
 end
-
-
 
 RichContent._TrimWithZWSP = HL.StaticMethod(HL.String).Return(HL.String) << function(str)
     

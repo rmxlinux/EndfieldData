@@ -2,51 +2,19 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopEntry
 local PHASE_ID = PhaseId.ShopEntry
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopEntryCtrl = HL.Class('ShopEntryCtrl', uiCtrl.UICtrl)
-
 
 
 ShopEntryCtrl.m_top = HL.Field(HL.Any)
 
-
 ShopEntryCtrl.m_recommendList = HL.Field(HL.Table)
-
 
 ShopEntryCtrl.m_yellowPanel = HL.Field(HL.Any)
 
-
 ShopEntryCtrl.m_greenPanel = HL.Field(HL.Any)
-
 ShopEntryCtrl.m_cor = HL.Field(HL.Any)
 
-
 ShopEntryCtrl.m_arg = HL.Field(HL.Any)
-
 
 
 
@@ -55,11 +23,7 @@ ShopEntryCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 ShopEntryCtrl.m_getCellFunc = HL.Field(HL.Function)
-
-
-
 
 
 ShopEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -79,9 +43,6 @@ ShopEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:CheckTab()
     end)
 end
-
-
-
 
 ShopEntryCtrl.ProcessJumpArg = HL.Method(HL.Any) << function(self, arg)
     local tab = arg.tab
@@ -106,8 +67,6 @@ ShopEntryCtrl.ProcessJumpArg = HL.Method(HL.Any) << function(self, arg)
     Notify(MessageConst.ON_SHOP_JUMP_EVENT,{goods = goods, source = sourceId, targetId = targetId})
 end
 
-
-
 ShopEntryCtrl.CheckTab = HL.Method() << function(self)
     local index = self.view.main.centerIndex
     local data = self.m_recommendList[LuaIndex(index)]
@@ -117,8 +76,6 @@ ShopEntryCtrl.CheckTab = HL.Method() << function(self)
         self.m_top:SwitchTabBlackWhite(true)
     end
 end
-
-
 
 ShopEntryCtrl.Init = HL.Method() << function(self)
     
@@ -179,9 +136,6 @@ ShopEntryCtrl.Init = HL.Method() << function(self)
 
 end
 
-
-
-
 ShopEntryCtrl.PlayInAnimation = HL.Method(HL.Any) << function(self, cell)
     cell.rolePoolNode.animationWrapper:Play("shopentry_rolepool_in")
     cell.limitPoolNode.animationWrapper:Play("shopentry_limitpool_in")
@@ -189,17 +143,12 @@ ShopEntryCtrl.PlayInAnimation = HL.Method(HL.Any) << function(self, cell)
     cell.weaponDealNode.animationWrapper:Play("shopentry_weapondeal_in")
 end
 
-
-
-
 ShopEntryCtrl.PlayOutAnimation = HL.Method(HL.Any) << function(self, cell)
     cell.rolePoolNode.animationWrapper:Play("shopentry_rolepool_out")
     cell.limitPoolNode.animationWrapper:Play("shopentry_limitpool_out")
     cell.limitWeaponNode.animationWrapper:Play("shopentry_limitweapon_out")
     cell.weaponDealNode.animationWrapper:Play("shopentry_weapondeal_out")
 end
-
-
 
 
 ShopEntryCtrl.CheckHaveBeginPool = HL.Method().Return(HL.Boolean) << function(self)
@@ -211,9 +160,6 @@ ShopEntryCtrl.CheckHaveBeginPool = HL.Method().Return(HL.Boolean) << function(se
     end
     return false
 end
-
-
-
 
 ShopEntryCtrl.InitBeginPool = HL.Method(HL.Any) << function(self, go)
     go.rolePoolNode.gameObject:SetActive(true)
@@ -318,9 +264,6 @@ ShopEntryCtrl.InitBeginPool = HL.Method(HL.Any) << function(self, go)
 end
 
 
-
-
-
 ShopEntryCtrl.InitUpPool = HL.Method(HL.Any) << function(self, go)
     go.rolePoolNode.gameObject:SetActive(false)
     go.limitPoolNode.gameObject:SetActive(true)
@@ -362,9 +305,6 @@ ShopEntryCtrl.InitUpPool = HL.Method(HL.Any) << function(self, go)
     end)
 end
 
-
-
-
 ShopEntryCtrl.GetPoolData = HL.Method(HL.Any).Return(HL.Opt(HL.Any, HL.Number)) << function(self, checkFunc)
     local allPool = {}
     local csGacha = GameInstance.player.gacha
@@ -388,9 +328,6 @@ ShopEntryCtrl.GetPoolData = HL.Method(HL.Any).Return(HL.Opt(HL.Any, HL.Number)) 
     end
     return nowPool, index
 end
-
-
-
 
 ShopEntryCtrl.InitUpWeaponPool = HL.Method(HL.Any) << function(self, go)
     go.rolePoolNode.gameObject:SetActive(false)
@@ -434,9 +371,6 @@ ShopEntryCtrl.InitUpWeaponPool = HL.Method(HL.Any) << function(self, go)
 
 end
 
-
-
-
 ShopEntryCtrl.InitWeaponDealPool = HL.Method(HL.Any) << function(self, go)
     go.rolePoolNode.gameObject:SetActive(false)
     go.limitPoolNode.gameObject:SetActive(false)
@@ -451,16 +385,10 @@ ShopEntryCtrl.InitWeaponDealPool = HL.Method(HL.Any) << function(self, go)
     end)
 end
 
-
-
-
-
 ShopEntryCtrl.SwitchPage = HL.Method(HL.Any, HL.Any) << function(self, oldPage, newPage)
     oldPage.gameObject:SetActive(false)
     newPage.gameObject:SetActive(true)
 end
-
-
 
 
 ShopEntryCtrl.OnShow = HL.Override() << function(self)
@@ -470,17 +398,12 @@ ShopEntryCtrl.OnShow = HL.Override() << function(self)
 end
 
 
-
-
 ShopEntryCtrl.OnClose = HL.Override() << function(self)
     LuaSystemManager.gachaSystem:UpdateGachaWeaponSettingState()
     UIManager:ToggleBlockObtainWaysJump("shop_entry", false)
     UIManager:Close(PanelId.ShopTopNode)
     self.view.main.onScrollEnd:RemoveAllListeners()
 end
-
-
-
 
 ShopEntryCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
     if not self.m_arg and not arg then

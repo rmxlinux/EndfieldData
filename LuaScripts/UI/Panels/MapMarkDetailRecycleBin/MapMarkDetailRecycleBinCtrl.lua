@@ -1,35 +1,17 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailRecycleBin
 
-
-
-
-
-
-
-
-
-
-
-
-
 MapMarkDetailRecycleBinCtrl = HL.Class('MapMarkDetailRecycleBinCtrl', uiCtrl.UICtrl)
-
 
 MapMarkDetailRecycleBinCtrl.m_rewardItemCache = HL.Field(HL.Forward('UIListCache'))
 
-
 MapMarkDetailRecycleBinCtrl.m_markInstId = HL.Field(HL.String) << ""
-
 
 MapMarkDetailRecycleBinCtrl.m_recycleBinData = HL.Field(CS.Beyond.Gameplay.RecycleBinData)
 
-
 MapMarkDetailRecycleBinCtrl.m_domainId = HL.Field(HL.String) << ""
 
-
 MapMarkDetailRecycleBinCtrl.m_recyclingCor = HL.Field(HL.Thread)
-
 
 
 
@@ -38,9 +20,6 @@ MapMarkDetailRecycleBinCtrl.m_recyclingCor = HL.Field(HL.Thread)
 MapMarkDetailRecycleBinCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_RECYCLE_BIN_REMOTE_COLLECTED] = '_UpdateCanPickUp',
 }
-
-
-
 
 
 MapMarkDetailRecycleBinCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -55,15 +34,11 @@ end
 
 
 
-
-
 MapMarkDetailRecycleBinCtrl.OnClose = HL.Override() << function(self)
     if self.m_recyclingCor then
         self.m_recyclingCor = self:_ClearCoroutine(self.m_recyclingCor)
     end
 end
-
-
 
 MapMarkDetailRecycleBinCtrl._InitRecycleBinInfo = HL.Method() << function(self)
     local markInstId = self.m_markInstId
@@ -135,8 +110,6 @@ MapMarkDetailRecycleBinCtrl._InitRecycleBinInfo = HL.Method() << function(self)
     self.view.mapMarkDetailCommon:InitMapMarkDetailCommon(commonArgs)
 end
 
-
-
 MapMarkDetailRecycleBinCtrl._UpdateCanPickUp = HL.Method() << function(self)
     if not self.m_recycleBinData then
         return
@@ -166,8 +139,6 @@ MapMarkDetailRecycleBinCtrl._UpdateCanPickUp = HL.Method() << function(self)
         self.view.pickupNode.noRemotePickupText.text = string.format(Language.LUA_RECYCLE_BIN_MAP_NEED_UNLOCK_REMOTE_COLLECT, self.m_recycleBinData.remoteCollectLv)
     end
 end
-
-
 
 MapMarkDetailRecycleBinCtrl._InitController = HL.Method() << function(self)
     if DeviceInfo.usingController then

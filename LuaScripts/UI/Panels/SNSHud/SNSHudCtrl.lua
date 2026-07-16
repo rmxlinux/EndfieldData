@@ -2,52 +2,21 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SNSHud
 local RED_DOT_NAME = "SNSHudEntry"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SNSHudCtrl = HL.Class('SNSHudCtrl', uiCtrl.UICtrl)
-
 
 SNSHudCtrl.m_chatId = HL.Field(HL.String) << ""
 
-
 SNSHudCtrl.m_dialogId = HL.Field(HL.String) << ""
-
 
 SNSHudCtrl.m_friendChat = HL.Field(HL.Boolean) << false
 
-
 SNSHudCtrl.m_chatRoleId = HL.Field(HL.Number) << 0
-
 
 SNSHudCtrl.m_effectLoopCor = HL.Field(HL.Thread)
 
-
 SNSHudCtrl.m_newSNSNoticeQueue = HL.Field(HL.Forward("Queue"))
 
-
 SNSHudCtrl.m_curSNSNoticeShowingData = HL.Field(HL.Table)
-
 
 
 
@@ -59,9 +28,6 @@ SNSHudCtrl.s_messages = HL.StaticField(HL.Table) << {
 
     [MessageConst.RECV_FRIEND_SEND_CHAT_NOTIFY] = 'OnSNSFriendChatAdd',
 }
-
-
-
 
 
 SNSHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -83,8 +49,6 @@ SNSHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.entryBtn.gameObject:SetActive(self:_ShowEntryBtn())
 end
 
-
-
 SNSHudCtrl.OnShow = HL.Override() << function(self)
     if self.m_curSNSNoticeShowingData then
         return
@@ -94,16 +58,11 @@ SNSHudCtrl.OnShow = HL.Override() << function(self)
 end
 
 
-
-
 SNSHudCtrl.OnClose = HL.Override() << function(self)
     if self.m_effectLoopCor then
         self.m_effectLoopCor = self:_ClearCoroutine(self.m_effectLoopCor)
     end
 end
-
-
-
 
 SNSHudCtrl._StartShowingNotice = HL.Method(HL.Table) << function(self, data)
     self.m_curSNSNoticeShowingData = data
@@ -116,8 +75,6 @@ SNSHudCtrl._StartShowingNotice = HL.Method(HL.Table) << function(self, data)
     end
 end
 
-
-
 SNSHudCtrl._OnOneNoticeShowingFinished = HL.Method() << function(self)
     if self.m_newSNSNoticeQueue:Empty() then
         self.m_curSNSNoticeShowingData = nil
@@ -126,14 +83,12 @@ SNSHudCtrl._OnOneNoticeShowingFinished = HL.Method() << function(self)
         self.m_dialogId = ""
         self.m_friendChat = false
         self.m_chatRoleId = 0
+        self:_OnNewSNSNoticeQueueEmpty()
     else
         local data = self.m_newSNSNoticeQueue:Pop()
         self:_StartShowingNotice(data)
     end
 end
-
-
-
 
 SNSHudCtrl._CustomPlayAudio = HL.Method(HL.String) << function(self, audioEvent)
     if not UIManager:IsShow(PANEL_ID) then
@@ -141,9 +96,6 @@ SNSHudCtrl._CustomPlayAudio = HL.Method(HL.String) << function(self, audioEvent)
     end
     AudioAdapter.PostEvent(audioEvent)
 end
-
-
-
 
 SNSHudCtrl._ShowBarkerNotice = HL.Method(HL.Table) << function(self, data)
     RedDotManager:TriggerUpdate(RED_DOT_NAME)
@@ -211,9 +163,6 @@ SNSHudCtrl._ShowBarkerNotice = HL.Method(HL.Table) << function(self, data)
     end
 end
 
-
-
-
 SNSHudCtrl._ShowFriendNotice = HL.Method(HL.Table) << function(self, data)
     RedDotManager:TriggerUpdate(RED_DOT_NAME)
 
@@ -239,13 +188,9 @@ SNSHudCtrl._ShowFriendNotice = HL.Method(HL.Table) << function(self, data)
     end)
 end
 
-
-
 SNSHudCtrl._OnClickEntryBtn = HL.Method() << function(self)
     PhaseManager:OpenPhase(PhaseId.SNS)
 end
-
-
 
 SNSHudCtrl._OnClickJumpPhaseSNS = HL.Method() << function(self)
     local args
@@ -263,10 +208,9 @@ SNSHudCtrl._OnClickJumpPhaseSNS = HL.Method() << function(self)
         
         self.m_curSNSNoticeShowingData = nil
         self.m_newSNSNoticeQueue:Clear()
+        self:_OnNewSNSNoticeQueueEmpty()
     end)
 end
-
-
 
 SNSHudCtrl._ShowEntryBtn = HL.Method().Return(HL.Boolean) << function(self)
     
@@ -283,8 +227,9 @@ SNSHudCtrl._ShowEntryBtn = HL.Method().Return(HL.Boolean) << function(self)
     return true
 end
 
-
-
+SNSHudCtrl._OnNewSNSNoticeQueueEmpty = HL.Method() << function(self)
+    ClientDataManagerInst:SaveUserData("SNS")
+end
 
 SNSHudCtrl.OnSNSNormalDialogAdd = HL.Method(HL.Any) << function(self, args)
     if not PhaseManager:IsPhaseUnlocked(PhaseId.SNS) then
@@ -324,9 +269,6 @@ SNSHudCtrl.OnSNSNormalDialogAdd = HL.Method(HL.Any) << function(self, args)
     end)
 end
 
-
-
-
 SNSHudCtrl.OnSNSForceDialogAdd = HL.Method(HL.Any) << function(self, args)
     if not PhaseManager:IsPhaseUnlocked(PhaseId.SNS) then
         return
@@ -334,9 +276,6 @@ SNSHudCtrl.OnSNSForceDialogAdd = HL.Method(HL.Any) << function(self, args)
 
     RedDotManager:TriggerUpdate(RED_DOT_NAME)
 end
-
-
-
 
 SNSHudCtrl.OnSNSFriendChatAdd = HL.Method(HL.Any) << function(self, args)
     if not PhaseManager:IsPhaseUnlocked(PhaseId.SNS) then

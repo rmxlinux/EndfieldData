@@ -2,40 +2,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GemCustomization
 local PHASE_ID = PhaseId.GemCustomization
 local INSTRUCTION_BOOK_ID = "energy_point_target"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GemCustomizationCtrl = HL.Class('GemCustomizationCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -47,23 +14,15 @@ GemCustomizationCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 GemCustomizationCtrl.m_info = HL.Field(HL.Table)
-
 
 GemCustomizationCtrl.m_uiRelate = HL.Field(HL.Table)
 
-
 GemCustomizationCtrl.m_term1CellListCache = HL.Field(HL.Forward("UIListCache"))
-
 
 GemCustomizationCtrl.m_term2CellListCache = HL.Field(HL.Forward("UIListCache"))
 
-
 GemCustomizationCtrl.m_term3CellListCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 
@@ -74,9 +33,6 @@ GemCustomizationCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshAllUI()
     self:_ApplyRecoverState(self:_GetRecoverState(arg))
 end
-
-
-
 
 
 
@@ -158,9 +114,6 @@ GemCustomizationCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
-
 GemCustomizationCtrl._GetGameGroupId = HL.Method(HL.Any).Return(HL.Any) << function(self, arg)
     if type(arg) == "table" then
         return arg.gameGroupId
@@ -168,17 +121,12 @@ GemCustomizationCtrl._GetGameGroupId = HL.Method(HL.Any).Return(HL.Any) << funct
     return arg
 end
 
-
-
-
 GemCustomizationCtrl._GetRecoverState = HL.Method(HL.Any).Return(HL.Opt(HL.Any)) << function(self, arg)
     if type(arg) ~= "table" then
         return nil
     end
     return arg.recoverState
 end
-
-
 
 GemCustomizationCtrl._CollectRecoverState = HL.Method().Return(HL.Table) << function(self)
     local recoverState = {
@@ -197,8 +145,6 @@ GemCustomizationCtrl._CollectRecoverState = HL.Method().Return(HL.Table) << func
     end
     return recoverState
 end
-
-
 
 
 
@@ -235,8 +181,6 @@ GemCustomizationCtrl._InitUI = HL.Method() << function(self)
     self.m_term3CellListCache = UIUtils.genCellCache(self.view.multiTermGroup2.skillTermGroupCell.termCell)
 end
 
-
-
 GemCustomizationCtrl._RefreshAllUI = HL.Method() << function(self)
     self:_RefreshMultiTermGroup1UI()
     self:_RefreshMultiTermGroup2UI()
@@ -250,11 +194,9 @@ GemCustomizationCtrl._RefreshAllUI = HL.Method() << function(self)
     
     local firstCell = self.m_term1CellListCache:Get(1)
     if firstCell then
-        InputManagerInst.controllerNaviManager:SetTarget(firstCell.termBtn)
+        self:SetNaviTarget(firstCell.termBtn)
     end
 end
-
-
 
 GemCustomizationCtrl._RefreshMultiTermGroup1UI = HL.Method() << function(self)
     local count = #self.m_info.term1Infos
@@ -292,8 +234,6 @@ GemCustomizationCtrl._RefreshMultiTermGroup1UI = HL.Method() << function(self)
     self:_SetSelectMultiTermGroup(self.view.multiTermGroup1, false)
     self:_RefreshMultiTermGroup1CompleteState()
 end
-
-
 
 GemCustomizationCtrl._RefreshMultiTermGroup2UI = HL.Method() << function(self)
     local count = #self.m_info.term2Infos
@@ -364,13 +304,6 @@ GemCustomizationCtrl._RefreshMultiTermGroup2UI = HL.Method() << function(self)
     self:_RefreshMultiTermGroup2CompleteState()
 end
 
-
-
-
-
-
-
-
 GemCustomizationCtrl._RefreshTermCell = HL.Method(HL.Any, HL.Number, HL.Table, HL.Function, HL.Function) << function(self, cell, luaIndex, infos, onClick, onIsNaviTargetChanged)
     local info = infos[luaIndex]
     cell.stateCtrl:SetState("Unselect")
@@ -380,8 +313,6 @@ GemCustomizationCtrl._RefreshTermCell = HL.Method(HL.Any, HL.Number, HL.Table, H
     cell.termBtn.onIsNaviTargetChanged = onIsNaviTargetChanged
     InputManagerInst:SetBindingText(cell.termBtn.hoverConfirmBindingId, Language.LUA_GEM_CUSTOM_CONFIRM_TERM)
 end
-
-
 
 GemCustomizationCtrl._RefreshMultiTermGroup1CompleteState = HL.Method() << function(self)
     local multiGroup1 = self.view.multiTermGroup1
@@ -409,8 +340,6 @@ GemCustomizationCtrl._RefreshMultiTermGroup1CompleteState = HL.Method() << funct
     end
 end
 
-
-
 GemCustomizationCtrl._RefreshMultiTermGroup2CompleteState = HL.Method() << function(self)
     local multiGroup2 = self.view.multiTermGroup2
     local count = self.m_info.multiTermGroup2SelectTermData.termIndex > 0 and 1 or 0
@@ -436,8 +365,6 @@ GemCustomizationCtrl._RefreshMultiTermGroup2CompleteState = HL.Method() << funct
     end)
 end
 
-
-
 GemCustomizationCtrl._RefreshTermResult1UI = HL.Method() << function(self)
     local termResult1 = self.view.gemResultNode.termResult1
     for i = 1, self.m_info.multiTermGroup1MaxCount do
@@ -452,8 +379,6 @@ GemCustomizationCtrl._RefreshTermResult1UI = HL.Method() << function(self)
         end
     end
 end
-
-
 
 GemCustomizationCtrl._RefreshTermResult2UI = HL.Method() << function(self)
     local termResult2 = self.view.gemResultNode.termResult2
@@ -473,8 +398,6 @@ GemCustomizationCtrl._RefreshTermResult2UI = HL.Method() << function(self)
     end
 end
 
-
-
 GemCustomizationCtrl._RefreshGemResultState = HL.Method() << function(self)
     local termResult1Complete = #self.m_info.multiTermGroup1SelectTermIndexList >= self.m_info.multiTermGroup1MaxCount
     local termResult2Complete = self.m_info.multiTermGroup2SelectTermData.groupIndex > 0
@@ -488,9 +411,6 @@ GemCustomizationCtrl._RefreshGemResultState = HL.Method() << function(self)
     end
 end
 
-
-
-
 GemCustomizationCtrl._ApplyRecoverState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
         return
@@ -498,9 +418,6 @@ GemCustomizationCtrl._ApplyRecoverState = HL.Method(HL.Opt(HL.Any)) << function(
     self:_ApplyRecoverTermSelectState(recoverState)
     self:_TryRecoverInstructionBook(recoverState)
 end
-
-
-
 
 GemCustomizationCtrl._ApplyRecoverTermSelectState = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil then
@@ -558,9 +475,6 @@ GemCustomizationCtrl._ApplyRecoverTermSelectState = HL.Method(HL.Opt(HL.Any)) <<
     end
 end
 
-
-
-
 GemCustomizationCtrl._TryRecoverInstructionBook = HL.Method(HL.Opt(HL.Any)) << function(self, recoverState)
     if recoverState == nil or recoverState.instructionBookArg == nil then
         return
@@ -578,8 +492,6 @@ end
 
 
 
-
-
 GemCustomizationCtrl._GetSelectedMultiTermGroupIndex = HL.Method().Return(HL.Number) << function(self)
     local preSelectMultiTermGroup = self.m_uiRelate.preSelectMultiTermGroup
     if preSelectMultiTermGroup == self.view.multiTermGroup1 then
@@ -591,8 +503,6 @@ GemCustomizationCtrl._GetSelectedMultiTermGroupIndex = HL.Method().Return(HL.Num
     return -1
 end
 
-
-
 GemCustomizationCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     return {
         
@@ -600,10 +510,6 @@ GemCustomizationCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) 
         recoverState = self:_CollectRecoverState(),
     }
 end
-
-
-
-
 
 GemCustomizationCtrl._SetSelectMultiTermGroup = HL.Method(HL.Any, HL.Boolean) << function(self, multiTermGroup, isSelect)
     if self.m_uiRelate.preSelectMultiTermGroup == multiTermGroup then
@@ -630,8 +536,6 @@ GemCustomizationCtrl._SetSelectMultiTermGroup = HL.Method(HL.Any, HL.Boolean) <<
         termResult.stateCtrl:SetState("Unselect")
     end
 end
-
-
 
 
 
@@ -671,14 +575,10 @@ GemCustomizationCtrl._OnClickBtnClose = HL.Method() << function(self)
     end
 end
 
-
-
 GemCustomizationCtrl._OnClickConfirmBtn = HL.Method() << function(self)
     local selectTerms = self:_GetCurSelectTerms()
     GameInstance.player.worldEnergyPointSystem:SendReqSetTerms(self.m_info.gameGroupId, selectTerms)
 end
-
-
 
 GemCustomizationCtrl._GetCurSelectTerms = HL.Method().Return(HL.Table) << function(self)
     local selectTerms = {}
@@ -701,9 +601,6 @@ GemCustomizationCtrl._GetCurSelectTerms = HL.Method().Return(HL.Table) << functi
     end
     return selectTerms
 end
-
-
-
 
 GemCustomizationCtrl.OnWorldEnergyPointSelectTermsChanged = HL.Method(HL.Table) << function(self, args)
     local gameGroupId = unpack(args)

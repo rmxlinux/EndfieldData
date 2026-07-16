@@ -3,51 +3,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonItemToast
 local EXP_ITEM_ID = -1
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonItemToastCtrl = HL.Class('CommonItemToastCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -65,55 +21,37 @@ CommonItemToastCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 CommonItemToastCtrl.m_itemId2ItemInfo = HL.Field(HL.Table)
-
 
 CommonItemToastCtrl.m_waitingToastInfoCache = HL.Field(HL.Forward("MinHeap"))
 
-
 CommonItemToastCtrl.m_showingToastInfoCache = HL.Field(HL.Forward("Queue"))
-
 
 CommonItemToastCtrl.m_toastTimeSchedule = HL.Field(HL.Forward("Queue"))
 
-
 CommonItemToastCtrl.m_panelExitTimeMark = HL.Field(HL.Number) << -1
-
 
 CommonItemToastCtrl.m_curShowCount = HL.Field(HL.Number) << 0
 
-
 CommonItemToastCtrl.m_curListCount = HL.Field(HL.Number) << 0
-
 
 CommonItemToastCtrl.m_lastToastTime = HL.Field(HL.Number) << 0
 
-
 CommonItemToastCtrl.m_updateKey = HL.Field(HL.Number) << -1
-
 
 CommonItemToastCtrl.m_cacheToasts = HL.Field(HL.Forward("Stack"))
 
-
 CommonItemToastCtrl.m_maxCount = HL.Field(HL.Number) << 0
-
 
 CommonItemToastCtrl.m_autoScrollCor = HL.Field(HL.Any)
 
-
 CommonItemToastCtrl.m_getToastCell = HL.Field(HL.Function)
-
 
 
 CommonItemToastCtrl.s_isActive = HL.StaticField(HL.Boolean) << true
 
 
-
 CommonItemToastCtrl.s_isCommonToastEnable = HL.StaticField(HL.Boolean) << false
-
-
-
 
 
 CommonItemToastCtrl.OnShowExpToast = HL.Method(HL.Any) << function(self, arg)
@@ -123,9 +61,6 @@ CommonItemToastCtrl.OnShowExpToast = HL.Method(HL.Any) << function(self, arg)
     arg.isExp = true
     self:_AddToastRequest({ arg })
 end
-
-
-
 
 CommonItemToastCtrl.OnShowAdventureExpToast = HL.Method(HL.Any) << function(self, arg)
     if arg == nil then
@@ -145,9 +80,6 @@ CommonItemToastCtrl.OnShowAdventureExpToast = HL.Method(HL.Any) << function(self
     
     self:_AddToastRequest({info})
 end
-
-
-
 
 CommonItemToastCtrl.OnItemCountChangedImm = HL.Method(HL.Any) << function(self, arg)
     if not arg then
@@ -178,9 +110,6 @@ local WalletChangeBlackList = {
     ["item_spaceship_jinlong_gold"] = true,
 }
 
-
-
-
 CommonItemToastCtrl.OnWalletChangedImm = HL.Method(HL.Any) << function(self, arg)
     local itemId, curCount, diffCount = unpack(arg)
 
@@ -200,15 +129,12 @@ CommonItemToastCtrl.OnWalletChangedImm = HL.Method(HL.Any) << function(self, arg
     })
 end
 
-
-
 CommonItemToastCtrl.ToggleCommonItemToast = HL.StaticMethod(HL.Boolean) << function(active)
     CommonItemToastCtrl.s_isActive = active
     if not active then
         UIManager:Hide(PANEL_ID)
     end
 end
-
 
 CommonItemToastCtrl.OnDisableCommonToast = HL.StaticMethod() << function()
     CommonItemToastCtrl.s_isCommonToastEnable = false
@@ -217,13 +143,9 @@ CommonItemToastCtrl.OnDisableCommonToast = HL.StaticMethod() << function()
     end
 end
 
-
 CommonItemToastCtrl.OnEnableCommonToast = HL.StaticMethod() << function()
     CommonItemToastCtrl.s_isCommonToastEnable = true
 end
-
-
-
 
 
 
@@ -247,19 +169,13 @@ CommonItemToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:Hide()
 end
 
-
-
 CommonItemToastCtrl.OnHide = HL.Override() << function(self)
     self:_CleanUpCache()
 end
 
-
-
 CommonItemToastCtrl.OnClose = HL.Override() << function(self)
     self:_ClearRegister()
 end
-
-
 
 CommonItemToastCtrl._Update = HL.Method() << function(self)
     if not CommonItemToastCtrl.s_isCommonToastEnable then
@@ -271,8 +187,6 @@ CommonItemToastCtrl._Update = HL.Method() << function(self)
 
     self:_TryHidePanel()
 end
-
-
 
 CommonItemToastCtrl._TryHidePanel = HL.Method() << function(self)
     if self:IsHide() then
@@ -301,8 +215,6 @@ CommonItemToastCtrl._TryHidePanel = HL.Method() << function(self)
     self:PlayAnimationOut(UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Hide)
 end
 
-
-
 CommonItemToastCtrl._ScrollExit = HL.Method() << function(self)
     if self:IsHide() then
         return
@@ -328,8 +240,6 @@ CommonItemToastCtrl._ScrollExit = HL.Method() << function(self)
     self.view.list:ScrollToIndex(scrollIndex)
     
 end
-
-
 
 CommonItemToastCtrl._ShowNewToast = HL.Method() << function(self)
     local waitingToastCount = self.m_waitingToastInfoCache:Size()
@@ -373,13 +283,9 @@ CommonItemToastCtrl._ShowNewToast = HL.Method() << function(self)
     
 end
 
-
-
 CommonItemToastCtrl._ClearRegister = HL.Method() << function(self)
     self.m_updateKey = LuaUpdate:Remove(self.m_updateKey)
 end
-
-
 
 CommonItemToastCtrl._CleanUpCache = HL.Method() << function(self)
     
@@ -401,10 +307,6 @@ CommonItemToastCtrl._CleanUpCache = HL.Method() << function(self)
     
 end
 
-
-
-
-
 CommonItemToastCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(self, object, index)
     local toastCell = self.m_getToastCell(object)
     local data = self.m_showingToastInfoCache:AtIndex(index)
@@ -414,10 +316,6 @@ CommonItemToastCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(sel
         self:_UpdateItemCell(toastCell, data)
     end
 end
-
-
-
-
 
 CommonItemToastCtrl._UpdateExpCell = HL.Method(HL.Any, HL.Table) << function(self, toastCell, data)
     local info = unpack(data)
@@ -433,10 +331,6 @@ CommonItemToastCtrl._UpdateExpCell = HL.Method(HL.Any, HL.Table) << function(sel
     toastCell.num.text = string.format(" × %d", info.Exp)
 end
 
-
-
-
-
 CommonItemToastCtrl._UpdateItemCell = HL.Method(HL.Any, HL.Table) << function(self, toastCell, data)
     local itemData = Tables.itemTable:GetValue(data.itemId)
     local isShowRarityLight = itemData.rarity >= UIConst.COMMON_TOAST_SHOW_LIGHT_RARITY
@@ -445,7 +339,7 @@ CommonItemToastCtrl._UpdateItemCell = HL.Method(HL.Any, HL.Table) << function(se
     local itemTypeCfg = Tables.itemTypeTable:GetValue(itemType)
 
     toastCell.toItemBag.gameObject:SetActive(itemTypeCfg.storageSpace == GEnums.ItemStorageSpace.BagAndFactoryDepot)
-    toastCell.toValuableDepot.gameObject:SetActive(itemTypeCfg.storageSpace == GEnums.ItemStorageSpace.ValuableDepot)
+    toastCell.toValuableDepot.gameObject:SetActive(itemTypeCfg.storageSpace == GEnums.ItemStorageSpace.ValuableDepot and itemType ~= GEnums.ItemType.DecorateBuildingItem)
 
     toastCell.label.text = itemData.name
 
@@ -467,9 +361,8 @@ CommonItemToastCtrl._UpdateItemCell = HL.Method(HL.Any, HL.Table) << function(se
 
     local isPickUp, _ = Tables.useItemTable:TryGetValue(data.itemId)
     toastCell.pickUpNode.gameObject:SetActive(isPickUp)
+    toastCell.portableDeviceNode.gameObject:SetActive(Utils.isPortableDevice(data.itemId))
 end
-
-
 
 CommonItemToastCtrl._InitMaxCount = HL.Method() << function(self)
     local spacing = self.view.list.spacing
@@ -478,9 +371,6 @@ CommonItemToastCtrl._InitMaxCount = HL.Method() << function(self)
     local maxCount = math.floor((rect.height + spacing) / cellHeight)
     self.m_maxCount = maxCount
 end
-
-
-
 
 
 
@@ -504,9 +394,6 @@ CommonItemToastCtrl._AddToastRequest = HL.Method(HL.Any) << function(self, infoL
     end)
 end
 
-
-
-
 CommonItemToastCtrl._AddExpRequest = HL.Method(HL.Any) << function(self, info)
     local waitingToastInfoCache = self.m_waitingToastInfoCache
     local itemId2ItemInfo = self.m_itemId2ItemInfo
@@ -518,9 +405,6 @@ CommonItemToastCtrl._AddExpRequest = HL.Method(HL.Any) << function(self, info)
     waitingToastInfoCache:Add(info, Const.MAX_ITEM_RARITY)
     itemId2ItemInfo[EXP_ITEM_ID] = info
 end
-
-
-
 
 CommonItemToastCtrl._AddItemRequest = HL.Method(HL.Any) << function(self, info)
     if not self:_CheckIfBindingSystemUnlock(info.itemId) then
@@ -547,9 +431,6 @@ CommonItemToastCtrl._AddItemRequest = HL.Method(HL.Any) << function(self, info)
     itemId2ItemInfo[info.itemId] = info
 end
 
-
-
-
 CommonItemToastCtrl._CheckIfBindingSystemUnlock = HL.Method(HL.Any).Return(HL.Boolean) << function(self, itemId)
     local _, itemCfg = Tables.itemTable:TryGetValue(itemId)
     if not itemCfg then
@@ -573,11 +454,7 @@ CommonItemToastCtrl._CheckIfBindingSystemUnlock = HL.Method(HL.Any).Return(HL.Bo
 end
 
 
-
 CommonItemToastCtrl.m_cachedItemChangeCounts = HL.Field(HL.Table)
-
-
-
 
 CommonItemToastCtrl.ToggleItemNeedCache = HL.Method(HL.Table) << function(self, arg)
     local itemId, needCache = unpack(arg)

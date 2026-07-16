@@ -2,12 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipCollectHintInfo
 local PHASE_ID = PhaseId.SpaceshipCollectHintInfo
-
-
-
-
 SpaceshipCollectHintInfoCtrl = HL.Class('SpaceshipCollectHintInfoCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -17,9 +12,6 @@ SpaceshipCollectHintInfoCtrl = HL.Class('SpaceshipCollectHintInfoCtrl', uiCtrl.U
 SpaceshipCollectHintInfoCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 SpaceshipCollectHintInfoCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -61,10 +53,6 @@ SpaceshipCollectHintInfoCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
         self:_RefreshCell(cell, rooms[index])
     end)
 end
-
-
-
-
 
 SpaceshipCollectHintInfoCtrl._RefreshCell = HL.Method(HL.Table, HL.Table) << function(self, cell, info)
     local roomInfo = info.room

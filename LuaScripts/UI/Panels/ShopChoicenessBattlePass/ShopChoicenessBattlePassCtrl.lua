@@ -2,11 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ShopChoicenessBattlePass
 
-
-
-
 ShopChoicenessBattlePassCtrl = HL.Class('ShopChoicenessBattlePassCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -16,9 +12,6 @@ ShopChoicenessBattlePassCtrl = HL.Class('ShopChoicenessBattlePassCtrl', uiCtrl.U
 ShopChoicenessBattlePassCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 ShopChoicenessBattlePassCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)

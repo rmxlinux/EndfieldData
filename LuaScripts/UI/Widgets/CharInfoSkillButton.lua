@@ -1,35 +1,17 @@
 local skillBgPrefix = "decal_skillline_0%d"
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
 CharInfoSkillButton = HL.Class('FormationSkillButton', UIWidgetBase)
-
 
 CharInfoSkillButton.skillData = HL.Field(HL.Table)
 
-
 CharInfoSkillButton.m_charInfo = HL.Field(HL.Any)
-
 
 CharInfoSkillButton.m_skillGroupCfg = HL.Field(HL.Userdata)
 
 
-
-
 CharInfoSkillButton._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
-
 
 CharInfoSkillButton.InitCharInfoSkillButton = HL.Method(HL.Table, HL.Opt(HL.Function)) << function(self, skillData, onClick)
     
@@ -86,11 +68,6 @@ CharInfoSkillButton.InitCharInfoSkillButton = HL.Method(HL.Table, HL.Opt(HL.Func
     end
 end
 
-
-
-
-
-
 CharInfoSkillButton.InitCharInfoSkillButtonNew = HL.Method(HL.Any, HL.Any, HL.Opt(HL.Function)) << function(self, charInfo, skillGroupType, onClick)
     self:_OnFirstTimeInit()
     local charTemplateId = charInfo.templateId
@@ -122,7 +99,7 @@ CharInfoSkillButton.InitCharInfoSkillButtonNew = HL.Method(HL.Any, HL.Any, HL.Op
     self.view.elitepolygon:InitElitePolygon(skillLv - UIConst.CHAR_MAX_SKILL_NORMAL_LV)
     self.view.textSkill.text = skillGroupCfg.name
     self.view.rankText.text = string.format(Language.LUA_CHAR_INFO_TALENT_SKILL_LEVEL_PREFIX, skillLv)
-    self.view.skillIcon:LoadSprite(UIConst.UI_SPRITE_SKILL_ICON, skillGroupCfg.icon)
+    self:RefreshSkillIcon()
     self.view.button.onClick:RemoveAllListeners()
     if onClick then
         self.view.button.interactable = true
@@ -134,7 +111,20 @@ CharInfoSkillButton.InitCharInfoSkillButtonNew = HL.Method(HL.Any, HL.Any, HL.Op
     end
 end
 
-
+CharInfoSkillButton.RefreshSkillIcon = HL.Method() << function(self)
+    if not self.m_charInfo or not self.m_skillGroupCfg then
+        return
+    end
+    local icon
+    if CharInfoUtils.hasBothSkillGroupConditions(self.m_skillGroupCfg) then
+        local activeIdx = CharInfoUtils.getActiveSkillGroupConditionIdx(self.m_charInfo.instId, self.m_skillGroupCfg)
+        icon = CharInfoUtils.generateSkillGroupConditionIcon(self.m_charInfo.instId, self.m_skillGroupCfg, activeIdx)
+    end
+    if icon == nil or string.isEmpty(icon) then
+        icon = self.m_skillGroupCfg.icon
+    end
+    self.view.skillIcon:LoadSprite(UIConst.UI_SPRITE_SKILL_ICON, icon)
+end
 
 CharInfoSkillButton.RefreshRedDot = HL.Method() << function(self)
     if not self.m_charInfo or not self.m_skillGroupCfg then
@@ -142,9 +132,6 @@ CharInfoSkillButton.RefreshRedDot = HL.Method() << function(self)
     end
     self.view.redDot:InitRedDot("CharSkillNode", { self.m_charInfo.instId, self.m_skillGroupCfg.skillGroupId })
 end
-
-
-
 
 CharInfoSkillButton.SetSelect = HL.Method(HL.Boolean) << function(self, select)
     self.view.imageSelect.gameObject:SetActive(select)

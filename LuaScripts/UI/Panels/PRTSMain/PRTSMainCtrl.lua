@@ -1,25 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.PRTSMain
 local PHASE_ID = PhaseId.PRTS
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PRTSMainCtrl = HL.Class('PRTSMainCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -35,20 +17,13 @@ PRTSMainCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 PRTSMainCtrl.m_info = HL.Field(HL.Table)
-
 
 PRTSMainCtrl.m_textPageType = HL.Field(HL.String) << ""
 
-
 PRTSMainCtrl.m_documentPageType = HL.Field(HL.String) << ""
 
-
 PRTSMainCtrl.m_multimediaPageType = HL.Field(HL.String) << ""
-
-
-
 
 
 
@@ -59,19 +34,13 @@ PRTSMainCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitData()
     self:_UpdateData()
     self:_RefreshAllUI()
-    UIUtils.setAsNaviTargetInSilentModeIfPhaseIsTop(self.view.naviGroup, self.view.investigateTab.gotoBtn, PhaseId.PRTS)
+    self:SetNaviTarget(self.view.investigateTab.gotoBtn)
 end
-
-
-
 
 PRTSMainCtrl._OnUnlockStoryColl = HL.Method(HL.Table) << function(self, args)
     self:_UpdateData()
     self:_RefreshAllUI()
 end
-
-
-
 
 PRTSMainCtrl._OnInvestigateFinished = HL.Method(HL.Table) << function(self, args)
     self:_UpdateData()
@@ -80,15 +49,11 @@ end
 
 
 
-
-
 PRTSMainCtrl._InitData = HL.Method() << function(self)
     self.m_textPageType = "text"
     self.m_documentPageType = "document"
     self.m_multimediaPageType = "multi_media"
 end
-
-
 
 PRTSMainCtrl._UpdateData = HL.Method() << function(self)
     self.m_info = {
@@ -100,8 +65,6 @@ PRTSMainCtrl._UpdateData = HL.Method() << function(self)
     }
     self:_UpdateInvestigateInfo()
 end
-
-
 
 PRTSMainCtrl._UpdateInvestigateInfo = HL.Method() << function(self)
     local count = 0
@@ -119,8 +82,6 @@ PRTSMainCtrl._UpdateInvestigateInfo = HL.Method() << function(self)
     self.m_info.investFinishedCount = count
     self.m_info.investOnGoingCount = ongoingCount
 end
-
-
 
 
 
@@ -159,10 +120,6 @@ PRTSMainCtrl._InitUI = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
 PRTSMainCtrl._OnClickStoryCollTab = HL.Method(HL.String, HL.Number) << function(self, pageType, count)
     if count > 0 then
         PhaseManager:OpenPhase(PhaseId.PRTSStoryCollGallery, { pageType = pageType })
@@ -170,8 +127,6 @@ PRTSMainCtrl._OnClickStoryCollTab = HL.Method(HL.String, HL.Number) << function(
         self:Notify(MessageConst.SHOW_TOAST, Language.LUA_PRTS_INVESTIGATE_NOT_FOUND_COLL_TOAST)
     end
 end
-
-
 
 PRTSMainCtrl._RefreshAllUI = HL.Method() << function(self)
     local viewRef = self.view
@@ -201,17 +156,11 @@ PRTSMainCtrl._RefreshAllUI = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 PRTSMainCtrl._OnRefreshStoryCollTab = HL.Method(HL.Any, HL.Number) << function(self, uiRef, count)
     local color = count > 0 and self.view.config.NUM_COLOR_UNLOCK or self.view.config.NUM_COLOR_LOCK
     uiRef.countTxt.text = count
     uiRef.countTxt.color = color
 end
-
-
 
 PRTSMainCtrl._CloseWithAnimation = HL.Method() << function(self)
     PhaseManager:PopPhase(PHASE_ID)

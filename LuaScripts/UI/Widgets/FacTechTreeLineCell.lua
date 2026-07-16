@@ -1,25 +1,13 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 FacTechTreeLineCell = HL.Class('FacTechTreeLineCell', UIWidgetBase)
 
-
 FacTechTreeLineCell.m_lineInfo = HL.Field(HL.Table)
-
-
 
 
 FacTechTreeLineCell._OnFirstTimeInit = HL.Override() << function(self)
 
 end
-
-
-
 
 FacTechTreeLineCell.InitFacTechTreeLineCell = HL.Method(HL.Table) << function(self, lineInfo)
     self:_FirstTimeInit()
@@ -41,16 +29,11 @@ FacTechTreeLineCell.InitFacTechTreeLineCell = HL.Method(HL.Table) << function(se
     self.view.gameObject.name = "Line-"..lineInfo.techId
 end
 
-
-
 FacTechTreeLineCell.Refresh = HL.Method() << function(self)
     self:_Refresh(self.view.lineHorizonCell)
     self:_Refresh(self.view.lineUpCell)
     self:_Refresh(self.view.lineDownCell)
 end
-
-
-
 
 FacTechTreeLineCell._Refresh = HL.Method(HL.Table) << function(self, item)
     local lineInfo = self.m_lineInfo

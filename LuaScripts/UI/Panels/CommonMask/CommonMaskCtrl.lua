@@ -1,56 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonMask
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonMaskCtrl = HL.Class('CommonMaskCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -78,9 +29,7 @@ CommonMaskCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 CommonMaskCtrl.m_curMaskData = HL.Field(HL.Any)
-
 
 
 
@@ -90,37 +39,25 @@ CommonMaskCtrl.m_curMaskData = HL.Field(HL.Any)
 
 CommonMaskCtrl.m_extraData = HL.Field(HL.Table)
 
-
 CommonMaskCtrl.m_afterEndCallbacks = HL.Field(HL.Table)
-
 
 CommonMaskCtrl.m_state = HL.Field(HL.Number) << 0
 
-
 CommonMaskCtrl.m_clearWhenHide = HL.Field(HL.Boolean) << true
-
 
 CommonMaskCtrl.m_corKey = HL.Field(HL.Thread)
 
-
 CommonMaskCtrl.m_timeoutTimer = HL.Field(HL.Number) << -1
-
 
 CommonMaskCtrl.m_logicId = HL.Field(HL.Number) << 0
 
-
 CommonMaskCtrl.m_showingText = HL.Field(HL.Boolean) << false
-
 
 CommonMaskCtrl.m_handles = HL.Field(HL.Table)
 
-
 CommonMaskCtrl.m_entitySyncLoadModeEnabled = HL.Field(HL.Boolean) << false
 
-
 CommonMaskCtrl.m_burstModeEnabled = HL.Field(HL.Boolean) << false
-
-
 
 CommonMaskCtrl.OnCommonMaskStart = HL.StaticMethod(HL.Table) << function(arg)
     local ctrl = CommonMaskCtrl.AutoOpen(PANEL_ID, {}, true)
@@ -136,8 +73,6 @@ CommonMaskCtrl.OnCommonMaskStart = HL.StaticMethod(HL.Table) << function(arg)
     ctrl:TryStartCommonMask(commonMaskData)
 end
 
-
-
 CommonMaskCtrl.OnCommonMaskEnd = HL.StaticMethod(HL.Table) << function(arg)
     local ctrl = CommonMaskCtrl.AutoOpen(PANEL_ID, {}, true)
     local commonMaskData
@@ -151,9 +86,6 @@ CommonMaskCtrl.OnCommonMaskEnd = HL.StaticMethod(HL.Table) << function(arg)
     ctrl:AddCinematicQueueHandle(handle)
     ctrl:TryStartCommonMask(commonMaskData)
 end
-
-
-
 
 CommonMaskCtrl.OnCommonMaskShutDown = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     
@@ -171,16 +103,10 @@ CommonMaskCtrl.OnCommonMaskShutDown = HL.Method(HL.Opt(HL.Any)) << function(self
     self:Close()
 end
 
-
-
-
 CommonMaskCtrl.TryStartCommonMask = HL.Method(CS.Beyond.Gameplay.UICommonMaskData) << function(self, commonMaskData)
     self:_UpdateCurMaskData(commonMaskData)
     self:_Refresh()
 end
-
-
-
 
 CommonMaskCtrl.AddCinematicQueueHandle = HL.Method(HL.Any) << function(self, handle)
     if handle and not self.m_handles[handle] then
@@ -188,17 +114,12 @@ CommonMaskCtrl.AddCinematicQueueHandle = HL.Method(HL.Any) << function(self, han
     end
 end
 
-
-
 CommonMaskCtrl._ClearAllHandles = HL.Method() << function(self)
     for handle, _ in pairs(self.m_handles) do
         handle:Finish()
     end
     self.m_handles = {}
 end
-
-
-
 
 CommonMaskCtrl._UpdateTime = HL.Method(CS.Beyond.Gameplay.UICommonMaskData) << function(self, commonMaskData)
     self.m_curMaskData.fadeBeforeTime = math.max(self.m_curMaskData.fadeBeforeTime, commonMaskData.fadeBeforeTime)
@@ -215,9 +136,6 @@ CommonMaskCtrl._UpdateTime = HL.Method(CS.Beyond.Gameplay.UICommonMaskData) << f
         self.m_curMaskData.fadeWaitTime = 0
     end
 end
-
-
-
 
 CommonMaskCtrl._UpdateCurMaskData = HL.Method(CS.Beyond.Gameplay.UICommonMaskData) << function(self, commonMaskData)
     
@@ -243,6 +161,7 @@ CommonMaskCtrl._UpdateCurMaskData = HL.Method(CS.Beyond.Gameplay.UICommonMaskDat
             fadeInCallbacks = {},
             textEndCallbacks = {},
             callbacks = {},
+            debugContextList = {},
         }
         self.m_afterEndCallbacks = {}
     end
@@ -334,22 +253,15 @@ CommonMaskCtrl._UpdateCurMaskData = HL.Method(CS.Beyond.Gameplay.UICommonMaskDat
 
     if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
         if NarrativeUtils.ShouldShowNarrativeDebugNode() then
-            self.m_extraData.extraData = commonMaskData.extraData
+            self:_AppendDebugContext(commonMaskData.extraData)
             self:_ShowDebugInfo()
         end
     end
 end
 
-
-
-
 CommonMaskCtrl._TryAddAfterEndCallback = HL.Method(HL.Any) << function(self, afterEndCallback)
     table.insert(self.m_afterEndCallbacks, afterEndCallback)
 end
-
-
-
-
 
 CommonMaskCtrl._TryAddCallback = HL.Method(HL.Number, HL.Any) << function(self, state, callback)
     if not self.m_extraData.callbacks[state] then
@@ -358,7 +270,31 @@ CommonMaskCtrl._TryAddCallback = HL.Method(HL.Number, HL.Any) << function(self, 
     table.insert(self.m_extraData.callbacks[state], callback)
 end
 
+CommonMaskCtrl._AppendDebugContext = HL.Method(HL.Opt(HL.Any)) << function(self, extraData)
+    if not self.m_extraData then
+        return
+    end
 
+    if not self.m_extraData.debugContextList then
+        self.m_extraData.debugContextList = {}
+    end
+
+    self.m_extraData.extraData = extraData
+
+    local sourceText = "nil"
+    local desc = "nil"
+    if extraData then
+        if extraData.sourceType then
+            sourceText = extraData.sourceType:ToString()
+        end
+        desc = extraData.desc or ""
+    end
+
+    table.insert(self.m_extraData.debugContextList, {
+        sourceText = sourceText,
+        desc = desc,
+    })
+end
 
 CommonMaskCtrl._Refresh = HL.Method() << function(self)
     if self.m_state == UIConst.COMMON_MASK_STATE.None then
@@ -376,16 +312,11 @@ CommonMaskCtrl._Refresh = HL.Method() << function(self)
     end
 end
 
-
-
 CommonMaskCtrl._CheckNewCommonMask = HL.Method().Return(HL.Boolean) << function(self)
     if self.m_state == UIConst.COMMON_MASK_STATE.None then
         return true
     end
 end
-
-
-
 
 CommonMaskCtrl._SwitchState = HL.Method(HL.Number) << function(self, newState)
     local oldState = self.m_state
@@ -402,8 +333,6 @@ CommonMaskCtrl._SwitchState = HL.Method(HL.Number) << function(self, newState)
 
 end
 
-
-
 CommonMaskCtrl._SolveAllAfterEndCallbacks = HL.Method() << function(self)
     if not self.m_afterEndCallbacks then
         logger.info("CommonMaskCtrl _SolveAllAfterEndCallbacks no afterEndCallbacks")
@@ -416,8 +345,6 @@ CommonMaskCtrl._SolveAllAfterEndCallbacks = HL.Method() << function(self)
     end
     self.m_afterEndCallbacks = {}
 end
-
-
 
 CommonMaskCtrl._SolveCallbacks = HL.Method() << function(self)
     if not self.m_extraData or not self.m_extraData.callbacks then
@@ -456,8 +383,6 @@ CommonMaskCtrl._SolveCallbacks = HL.Method() << function(self)
     end
 end
 
-
-
 CommonMaskCtrl._RefreshMaskType = HL.Method().Return(HL.Any) << function(self)
     local maskType = self.m_curMaskData.maskType
     local maskCanvas
@@ -479,8 +404,6 @@ CommonMaskCtrl._RefreshMaskType = HL.Method().Return(HL.Any) << function(self)
     self.view.textWhite.gameObject:SetActive(false)
     return maskCanvas
 end
-
-
 
 CommonMaskCtrl._RefreshTextCor = HL.Method() << function(self)
     if self.m_showingText then
@@ -561,11 +484,6 @@ CommonMaskCtrl._RefreshTextCor = HL.Method() << function(self)
     self.m_showingText = false
 end
 
-
-
-
-
-
 CommonMaskCtrl._DoMaskFade = HL.StaticMethod(Unity.CanvasGroup, HL.Number, HL.Number, HL.Opt(Unity.AnimationCurve)) <<
     function(maskCanvas, alpha, duration, curve)
         if maskCanvas then
@@ -575,8 +493,6 @@ CommonMaskCtrl._DoMaskFade = HL.StaticMethod(Unity.CanvasGroup, HL.Number, HL.Nu
             end
         end
     end
-
-
 
 CommonMaskCtrl._CheckSync = HL.Method().Return(HL.Boolean) << function(self)
     if not self.m_curMaskData then
@@ -609,8 +525,6 @@ CommonMaskCtrl._CheckSync = HL.Method().Return(HL.Boolean) << function(self)
 
 end
 
-
-
 CommonMaskCtrl._DoCommonMaskSync = HL.Method() << function(self)
     logger.info("CommonMaskCtrl _DoCommonMaskSync")
     local logicId = self.m_logicId
@@ -636,12 +550,14 @@ CommonMaskCtrl._DoCommonMaskSync = HL.Method() << function(self)
         if logicId ~= self.m_logicId then
             return
         end
+        self:_SetCommonMaskFrameTagState(true)
         self:_SwitchState(UIConst.COMMON_MASK_STATE.Masking)
     end
 
     
     if not fadeIn or not self.m_extraData or not self.m_extraData.waitHide then
-        NarrativeUtils.UnMuteAudioBlackScreen()
+        self:_SetCommonMaskFrameTagState(false)
+        NarrativeUtils.UnMuteAudioBlackScreen(self.m_curMaskData.layerType)
         
         maskCanvas.alpha = 0
         if logicId ~= self.m_logicId then
@@ -673,17 +589,12 @@ CommonMaskCtrl._DoCommonMaskSync = HL.Method() << function(self)
     end
 end
 
-
-
 CommonMaskCtrl._ClearTimeoutTimer = HL.Method() << function(self)
     if self.m_timeoutTimer > 0 then
         self:_ClearTimer(self.m_timeoutTimer)
     end
     self.m_timeoutTimer = -1
 end
-
-
-
 
 CommonMaskCtrl._UpdatePlayerState = HL.Virtual(HL.Boolean) << function(self, inBlackScreen)
     local narrative = self.m_curMaskData and self.m_curMaskData.textDataList and self.m_curMaskData.textDataList.Count > 0 and not self.m_curMaskData.forceNotNarrative
@@ -698,9 +609,6 @@ CommonMaskCtrl._UpdatePlayerState = HL.Virtual(HL.Boolean) << function(self, inB
     Notify(message)
 end
 
-
-
-
 CommonMaskCtrl._SetMainHudState = HL.Method(HL.Boolean) << function(self, inBlackScreen)
     if inBlackScreen then
         Notify(MessageConst.NOTIFY_MAIN_HUD_BLACK_SCREEN_BEGIN)
@@ -709,8 +617,11 @@ CommonMaskCtrl._SetMainHudState = HL.Method(HL.Boolean) << function(self, inBlac
     end
 end
 
-
-
+CommonMaskCtrl._SetCommonMaskFrameTagState = HL.Method(HL.Boolean) << function(self, inBlackScreen)
+    if BEYOND_DEBUG_COMMAND then
+        GameWorld.narrativeManager:SetCommonMaskFrameTagState(inBlackScreen)
+    end
+end
 
 CommonMaskCtrl._SetBurstMode = HL.Method(HL.Boolean) << function(self, enable)
     if enable == self.m_burstModeEnabled then
@@ -724,9 +635,6 @@ CommonMaskCtrl._SetBurstMode = HL.Method(HL.Boolean) << function(self, enable)
     end
 end
 
-
-
-
 CommonMaskCtrl._SetEntitySyncLoadMode = HL.Method(HL.Boolean) << function(self, enable)
     if enable == self.m_entitySyncLoadModeEnabled then
         return
@@ -735,8 +643,6 @@ CommonMaskCtrl._SetEntitySyncLoadMode = HL.Method(HL.Boolean) << function(self, 
     GameWorld.narrativeManager:SetEntitySyncLoadModeByCommonMask(enable)
     self.m_entitySyncLoadModeEnabled = enable
 end
-
-
 
 CommonMaskCtrl._DoCommonMaskASync = HL.Method() << function(self)
     local fadeIn = self.m_curMaskData.fadeType == UIConst.UI_COMMON_MASK_FADE_TYPE.FadeIn
@@ -792,6 +698,7 @@ CommonMaskCtrl._DoCommonMaskASync = HL.Method() << function(self)
             if CoroutineManager:IsCorCleared(corKey) then
                 return
             end
+            self:_SetCommonMaskFrameTagState(true)
             self:_SwitchState(UIConst.COMMON_MASK_STATE.Masking)
             if CoroutineManager:IsCorCleared(corKey) then
                 return
@@ -909,7 +816,8 @@ CommonMaskCtrl._DoCommonMaskASync = HL.Method() << function(self)
             
             local maskCanvas = self:_RefreshMaskType()
             local fadeOutTime = self.m_curMaskData and self.m_curMaskData.fadeOutTime or 0
-            NarrativeUtils.UnMuteAudioBlackScreen(fadeOutTime);
+            self:_SetCommonMaskFrameTagState(false)
+            NarrativeUtils.UnMuteAudioBlackScreen(self.m_curMaskData.layerType, fadeOutTime);
             if fadeOutTime > 0 then
                 CommonMaskCtrl._DoMaskFade(maskCanvas, 0, fadeOutTime, curve)
             else
@@ -960,8 +868,6 @@ CommonMaskCtrl._DoCommonMaskASync = HL.Method() << function(self)
     end)
 end
 
-
-
 CommonMaskCtrl._StartCommonMask = HL.Method() << function(self)
     if self.m_curMaskData then
         self:ChangeCurPanelBlockSetting(self.m_curMaskData.isBlock)
@@ -1000,41 +906,63 @@ CommonMaskCtrl._StartCommonMask = HL.Method() << function(self)
 
 end
 
-
-
 CommonMaskCtrl._ShowDebugInfo = HL.Method() << function(self)
     self.view.extraNode.gameObject:SetActive(false)
     if BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
         if NarrativeUtils.ShouldShowNarrativeDebugNode() then
             if self.m_extraData and self.m_extraData.extraData then
+                local sourceText = ""
+                local sourceDesc = ""
+                local layerText = self.panelCfg and self.panelCfg.name == "CommonMaskLower" and "Low" or "High"
+                local debugContextList = self.m_extraData.debugContextList
+                if debugContextList and #debugContextList > 0 then
+                    local latestIndex = #debugContextList
+                    local lines = { string.format("<color=#FF5555>%s</color>", layerText) }
+                    local maxDisplayCount = 3
+                    local startIndex = math.max(1, latestIndex - maxDisplayCount + 1)
+                    if startIndex > 1 then
+                        table.insert(lines, string.format("<size=80%%><color=#888888>... %d earlier calls omitted</color></size>", startIndex - 1))
+                    end
+                    for index = startIndex, latestIndex do
+                        local data = debugContextList[index]
+                        if index == latestIndex then
+                            table.insert(lines, string.format("<color=#FFD166>[LAST %02d] %s</color>", index, data.desc))
+                        else
+                            table.insert(lines, string.format("[%02d] %s", index, data.desc))
+                        end
+                    end
+                    sourceDesc = table.concat(lines, "\n")
+                else
+                    sourceDesc = string.format("<color=#FF5555>%s</color>\n%s", layerText, self.m_extraData.extraData.desc or "")
+                end
                 self.view.extraNode.gameObject:SetActive(true)
-                self.view.extraNode.sourceText.text = self.m_extraData.extraData.sourceType:ToString()
-                self.view.extraNode.sourceDesc.text = self.m_extraData.extraData.desc
+                self.view.extraNode.sourceText.text = sourceText
+                self.view.extraNode.sourceDesc.text = sourceDesc
             end
         end
     end
 end
-
-
 
 CommonMaskCtrl._Clear = HL.Method() << function(self)
     logger.info("CommonMaskCtrl _Clear")
     self:_SetBurstMode(false)
     self:_SetEntitySyncLoadMode(false)
     self:_ClearTween()
+    self:_SetCommonMaskFrameTagState(false)
     self.m_showingText = false
     if self.m_curMaskData then
+        NarrativeUtils.UnMuteAudioBlackScreen(self.m_curMaskData.layerType)
         self.m_curMaskData:DisposeByLua()
+    else
+        NarrativeUtils.UnMuteAudioBlackScreen(UIConst.UI_COMMON_MASK_LAYER_TYPE.Low)
+        NarrativeUtils.UnMuteAudioBlackScreen(UIConst.UI_COMMON_MASK_LAYER_TYPE.High)
     end
     self.m_curMaskData = nil
     self.m_extraData = nil
     self.m_state = UIConst.COMMON_MASK_STATE.None
     self:_ClearTimeoutTimer()
     self:_ClearAllHandles()
-    NarrativeUtils.UnMuteAudioBlackScreen()
 end
-
-
 
 CommonMaskCtrl._ClearAndSolveCallBacks = HL.Method() << function(self)
     if not self.m_extraData or not self.m_extraData.callbacks then
@@ -1062,8 +990,6 @@ CommonMaskCtrl._ClearAndSolveCallBacks = HL.Method() << function(self)
     end
 end
 
-
-
 CommonMaskCtrl._ClearTween = HL.Method() << function(self)
     self.view.mask:DOKill()
     self.view.maskWhite:DOKill()
@@ -1076,14 +1002,9 @@ CommonMaskCtrl._ClearTween = HL.Method() << function(self)
     logger.info("CommonMaskCtrl _ClearTween Finish" .. tostring(corKey))
 end
 
-
-
-
 CommonMaskCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_handles = {}
 end
-
-
 
 CommonMaskCtrl.OnHide = HL.Override() << function(self)
     if self.m_clearWhenHide then
@@ -1091,8 +1012,6 @@ CommonMaskCtrl.OnHide = HL.Override() << function(self)
     end
     self:_ClearTimeoutTimer()
 end
-
-
 
 CommonMaskCtrl.OnClose = HL.Override() << function(self)
     self:_Clear()

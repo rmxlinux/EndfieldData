@@ -1,43 +1,18 @@
 local PlaceholderBaseWidget = require_ex('UI/Widgets/PlaceholderBaseWidget')
 
-
-
-
-
-
-
-
-
-
-
-
-
 WalletBarPlaceholder = HL.Class('WalletBarPlaceholder', PlaceholderBaseWidget)
-
 
 WalletBarPlaceholder.m_moneyInfos = HL.Field(HL.Table)
 
-
 WalletBarPlaceholder.m_useItemIcon = HL.Field(HL.Boolean) << false
-
 
 WalletBarPlaceholder.m_showLimit = HL.Field(HL.Boolean) << false
 
-
 WalletBarPlaceholder.m_stopFocusAfterCLick = HL.Field(HL.Boolean) << false
-
 
 WalletBarPlaceholder.m_closeCommonPopupAfterClickStamina = HL.Field(HL.Boolean) << false
 
-
 WalletBarPlaceholder.m_cellPreferredWidths = HL.Field(HL.Table)
-
-
-
-
-
-
-
 
 WalletBarPlaceholder.InitWalletBarPlaceholder = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean, HL.Table, HL.Boolean))
         << function(self, moneyIds, useItemIcon, showLimit, closeCommonPopupAfterClickStamina, cellPreferredWidths)
@@ -55,12 +30,6 @@ WalletBarPlaceholder.InitWalletBarPlaceholder = HL.Method(HL.Table, HL.Opt(HL.Bo
     self:InitWalletBarPlaceholderDetailed(moneyInfos, useItemIcon, closeCommonPopupAfterClickStamina, cellPreferredWidths)
 end
 
-
-
-
-
-
-
 WalletBarPlaceholder.InitWalletBarPlaceholderDetailed = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.Boolean, HL.Table))
         << function(self, moneyInfos, useItemIcon, closeCommonPopupAfterClickStamina, cellPreferredWidths)
     self:_InitPlaceholder({
@@ -70,9 +39,6 @@ WalletBarPlaceholder.InitWalletBarPlaceholderDetailed = HL.Method(HL.Table, HL.O
         cellPreferredWidths = cellPreferredWidths,
     })
 end
-
-
-
 
 
 WalletBarPlaceholder._InitPlaceholder = HL.Override(HL.Opt(HL.Table)) << function(self, args)
@@ -96,8 +62,6 @@ WalletBarPlaceholder._InitPlaceholder = HL.Override(HL.Opt(HL.Table)) << functio
     WalletBarPlaceholder.Super._InitPlaceholder(self, args)
 end
 
-
-
 WalletBarPlaceholder._RefreshWalletBarControllerFocus = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
@@ -110,8 +74,6 @@ WalletBarPlaceholder._RefreshWalletBarControllerFocus = HL.Method() << function(
 
     walletBarCtrl:StopFocus()
 end
-
-
 
 WalletBarPlaceholder.GetArgs = HL.Override().Return(HL.Table) << function(self)
     local trans = DeviceInfo.usingController and self.view.controllerPosition or self.view.transform

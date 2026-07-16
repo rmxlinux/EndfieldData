@@ -2,22 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailDungeon
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 MapMarkDetailDungeonCtrl = HL.Class('MapMarkDetailDungeonCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -28,26 +13,17 @@ MapMarkDetailDungeonCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 MapMarkDetailDungeonCtrl.m_difficultyList = HL.Field(HL.Forward('UIListCache'))
-
 
 MapMarkDetailDungeonCtrl.m_type = HL.Field(HL.Any)
 
-
 MapMarkDetailDungeonCtrl.m_defaultLookDungeonId = HL.Field(HL.Any)
-
 
 MapMarkDetailDungeonCtrl.m_markInstId = HL.Field(HL.String) << ""
 
-
 MapMarkDetailDungeonCtrl.m_dungeonSeriesId = HL.Field(HL.String) << ""
 
-
 MapMarkDetailDungeonCtrl.m_dungeonSeriesData = HL.Field(HL.Any)
-
-
-
 
 
 MapMarkDetailDungeonCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -118,9 +94,6 @@ MapMarkDetailDungeonCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end
 end
 
-
-
-
 MapMarkDetailDungeonCtrl._SetCommonWidget = HL.Method(HL.Boolean) << function(self, isActive)
     self.view.detailCommon.gameObject:SetActive(true)
     local commonArgs = {}
@@ -141,10 +114,6 @@ MapMarkDetailDungeonCtrl._SetCommonWidget = HL.Method(HL.Boolean) << function(se
     end
     self.view.detailCommon:InitMapMarkDetailCommon(commonArgs)
 end
-
-
-
-
 
 MapMarkDetailDungeonCtrl._FillSingleDifficulty = HL.Method(HL.Any, HL.Any) << function(self, difficulty, dungeonId)
     difficulty.m_rewardActive = dungeonId == self.m_defaultLookDungeonId or DeviceInfo.usingController 
@@ -230,9 +199,6 @@ MapMarkDetailDungeonCtrl._FillSingleDifficulty = HL.Method(HL.Any, HL.Any) << fu
     self:_RefreshDifficultyFold(difficulty)
 end
 
-
-
-
 MapMarkDetailDungeonCtrl._RefreshDifficultyFold = HL.Method(HL.Any) << function(self, difficulty)
     for i = 1, difficulty.m_rewardListGroup:GetCount() do
         difficulty.m_rewardListGroup:Get(i).gameObject:SetActive(difficulty.m_rewardActive)
@@ -240,10 +206,6 @@ MapMarkDetailDungeonCtrl._RefreshDifficultyFold = HL.Method(HL.Any) << function(
     difficulty.switchIconUp.gameObject:SetActive(difficulty.m_rewardActive)
     difficulty.switchIconDown.gameObject:SetActive(not difficulty.m_rewardActive)
 end
-
-
-
-
 
 MapMarkDetailDungeonCtrl._ProcessRewards = HL.Method(HL.String, HL.Boolean).Return(HL.Table)
         << function(self, rewardId, gained)
@@ -264,10 +226,6 @@ MapMarkDetailDungeonCtrl._ProcessRewards = HL.Method(HL.String, HL.Boolean).Retu
     table.sort(rewardsTbl, Utils.genSortFunction(UIConst.COMMON_ITEM_SORT_KEYS))
     return rewardsTbl
 end
-
-
-
-
 
 MapMarkDetailDungeonCtrl._UpdateRewardCell = HL.Method(HL.Any, HL.Table) << function(self, cell, info)
     self.view.detailCommon:InitDetailItem(cell, info, {

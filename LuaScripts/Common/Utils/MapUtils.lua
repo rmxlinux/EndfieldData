@@ -18,26 +18,34 @@ function MapUtils.checkCanOpenMapAndParseArgs(args)
     if PhaseManager:IsPhaseForbidden(PhaseId.Map) then
         return false, Language.LUA_MAP_OPEN_FORBID_CONDITION
     end
+
     if not string.isEmpty(args.templateId) then
         if not string.isEmpty(args.mapId) then
             if GameWorld.worldInfo.curMapIdStr == args.mapId then
                 
-                args.instId = GameInstance.player.mapManager:GetMainCharacterMostNearbyMarkByTemplateId(args.templateId)
+                args.instId = GameInstance.player.mapManager:GetMainCharacterMostNearbyMarkByTemplateId(
+                    args.templateId, args.ignoreActive, args.active, args.preferredMarkList)
             else
                 
-                args.instId = GameInstance.player.mapManager:GetFirstValidMarkByTemplateId(args.templateId, args.mapId)
+                args.instId = GameInstance.player.mapManager:GetFirstValidMarkByTemplateId(
+                    args.templateId, args.mapId, args.ignoreActive, args.active, args.preferredMarkList)
             end
         else
-            local mostNearbyId = GameInstance.player.mapManager:GetMainCharacterMostNearbyMarkByTemplateId(args.templateId)
+            local mostNearbyId = GameInstance.player.mapManager:GetMainCharacterMostNearbyMarkByTemplateId(
+                args.templateId, args.ignoreActive, args.active, args.preferredMarkList)
             if not string.isEmpty(mostNearbyId) then
                 
                 args.instId = mostNearbyId
             else
                 
-                args.instId = GameInstance.player.mapManager:GetFirstValidMarkByTemplateId(args.templateId)
+                args.instId = GameInstance.player.mapManager:GetFirstValidMarkByTemplateId(
+                    args.templateId, nil, args.ignoreActive, args.active, args.preferredMarkList)
             end
         end
         if string.isEmpty(args.instId) then
+            if args.active == false then
+                return false, Language.LUA_JUMP_TO_MAP_BY_TEMPLATE_ID_INACTIVE_FAILED
+            end
             return false, Language.LUA_JUMP_TO_MAP_BY_TEMPLATE_ID_FAILED
         end
     end
@@ -47,30 +55,42 @@ function MapUtils.checkCanOpenMapAndParseArgs(args)
             if GameWorld.worldInfo.curMapIdStr == args.mapId then
                 args.instId = GameInstance.player.mapManager:GetMainCharacterMostNearbyResourceMarkByTemplateId(
                     args.resourceTemplateId,
-                    args.resourceItemId
+                    args.resourceItemId,
+                    args.ignoreActive, args.active,
+                    args.preferredMarkList
                 )
             else
                 args.instId = GameInstance.player.mapManager:GetFirstValidResourceMarkByTemplateId(
                     args.resourceTemplateId,
                     args.resourceItemId,
-                    args.mapId
+                    args.mapId,
+                    args.ignoreActive, args.active,
+                    args.preferredMarkList
                 )
             end
         else
             local mostNearbyId = GameInstance.player.mapManager:GetMainCharacterMostNearbyResourceMarkByTemplateId(
                 args.resourceTemplateId,
-                args.resourceItemId
+                args.resourceItemId,
+                args.ignoreActive, args.active,
+                args.preferredMarkList
             )
             if not string.isEmpty(mostNearbyId) then
                 args.instId = mostNearbyId
             else
                 args.instId = GameInstance.player.mapManager:GetFirstValidResourceMarkByTemplateId(
                     args.resourceTemplateId,
-                    args.resourceItemId
+                    args.resourceItemId,
+                    nil,
+                    args.ignoreActive, args.active,
+                    args.preferredMarkList
                 )
             end
         end
         if string.isEmpty(args.instId) then
+            if args.active == false then
+                return false, Language.LUA_JUMP_TO_MAP_BY_TEMPLATE_ID_INACTIVE_FAILED
+            end
             return false, Language.LUA_JUMP_TO_MAP_BY_TEMPLATE_ID_FAILED
         end
     end
@@ -280,42 +300,39 @@ function MapUtils.getMapRemindTipInfo(levelId)
         local enumType = values[i]
 
         local success, cfg = Tables.mapRemindTable:TryGetValue(enumType)
-        if not success then
-            goto continue
-        end
-
-        local remindData = remindConfig[enumType]
-        if not remindData then
-            logger.warn("MapRemindConfig未找到类型: " .. enumType:ToString())
-            goto continue
-        end
-
-        if not remindData.Check then
-            logger.error("MapRemindConfig Check函数为空: " .. enumType:ToString())
-            goto continue
-        end
-        local markInsIds = {}
-        local checkResult = remindData.Check(levelId)
-        if type(checkResult) == "table" then
-            for _, instId in pairs(checkResult) do
-                processSingleInstance(instId, enumType, remindData, mapMrg, markInsIds)
-            end
-        elseif type(checkResult) == "userdata" then
-            if checkResult.Count ~= 0 then
-                for j = 0, checkResult.Count - 1 do
-                    processSingleInstance(checkResult[j], enumType, remindData, mapMrg, markInsIds)
+        if success then
+            local remindData = remindConfig[enumType]
+            if remindData then
+                if remindData.Check then
+                    local markInsIds = {}
+                    local checkResult = remindData.Check(levelId)
+                    if type(checkResult) == "table" then
+                        for _, instId in pairs(checkResult) do
+                            processSingleInstance(instId, enumType, remindData, mapMrg, markInsIds)
+                        end
+                    elseif type(checkResult) == "userdata" then
+                        if checkResult.Count ~= 0 then
+                            for j = 0, checkResult.Count - 1 do
+                                processSingleInstance(checkResult[j], enumType, remindData, mapMrg, markInsIds)
+                            end
+                        end
+                    end
+                    if #markInsIds > 0 then
+                        remandInfo[enumType] = {
+                            insIdList = markInsIds,
+                            redDotName = remindData.redDotName,
+                            useMarkIcon = remindData.useMarkIcon,
+                            state = remindData.state,
+                            onClick = remindData.onClick,
+                        }
+                    end
+                else
+                    logger.error("MapRemindConfig Check函数为空: " .. enumType:ToString())
                 end
+            else
+                logger.warn("MapRemindConfig未找到类型: " .. enumType:ToString())
             end
         end
-
-        if #markInsIds > 0 then
-            remandInfo[enumType] = {
-                insIdList = markInsIds,
-                redDotName = remindData.redDotName,
-                useMarkIcon = remindData.useMarkIcon
-            }
-        end
-        ::continue::
     end
 
     return remandInfo
@@ -501,6 +518,39 @@ function MapUtils.isTemporaryCustomMark(markInstId)
     end
     return markRuntimeData.isSelect
 end
+
+MapUtils.DETECTOR_TYPE_CONFIG = {
+    { markType = GEnums.MarkType.Coin, toastKey = "LUA_MAP_DETECT_SHOW_COIN_TOAST" },
+    { markType = GEnums.MarkType.TreasureChest, toastKey = "LUA_MAP_DETECT_SHOW_TREASURE_CHEST_TOAST" },
+    { markType = GEnums.MarkType.TrStar, toastKey = "LUA_MAP_DETECT_SHOW_TR_STAR_TOAST" },
+}
+
+function MapUtils.isDetectorMarkType(markType)
+    for _, cfg in ipairs(MapUtils.DETECTOR_TYPE_CONFIG) do
+        if cfg.markType == markType then
+            return true
+        end
+    end
+    return false
+end
+
+function MapUtils.getDetectorMarkTypes()
+    local types = {}
+    for _, cfg in ipairs(MapUtils.DETECTOR_TYPE_CONFIG) do
+        table.insert(types, cfg.markType)
+    end
+    return types
+end
+
+function MapUtils.getDetectorToastKey(markType)
+    for _, cfg in ipairs(MapUtils.DETECTOR_TYPE_CONFIG) do
+        if cfg.markType == markType then
+            return cfg.toastKey
+        end
+    end
+    return "LUA_MAP_DETECT_SHOW_TREASURE_CHEST_TOAST"
+end
+
 
 
 _G.MapUtils = MapUtils

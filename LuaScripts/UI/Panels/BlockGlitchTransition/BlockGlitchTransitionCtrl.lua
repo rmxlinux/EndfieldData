@@ -1,17 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BlockGlitchTransition
-
-
-
-
-
-
-
-
-
 BlockGlitchTransitionCtrl = HL.Class('BlockGlitchTransitionCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -21,9 +11,7 @@ BlockGlitchTransitionCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 BlockGlitchTransitionCtrl.s_renderTextureHandle = HL.StaticField(HL.Userdata)
-
 
 
 BlockGlitchTransitionCtrl.PrepareBlockGlitchTransition = HL.StaticMethod() << function()
@@ -31,14 +19,12 @@ BlockGlitchTransitionCtrl.PrepareBlockGlitchTransition = HL.StaticMethod() << fu
     BlockGlitchTransitionCtrl.s_renderTextureHandle = ScreenCaptureUtils.GetScreenCapture(math.floor(Screen.width), math.floor(Screen.height))
 end
 
-
 BlockGlitchTransitionCtrl._ReleaseRT = HL.StaticMethod() << function()
     if BlockGlitchTransitionCtrl.s_renderTextureHandle then
         BlockGlitchTransitionCtrl.s_renderTextureHandle:Release()
         BlockGlitchTransitionCtrl.s_renderTextureHandle = nil
     end
 end
-
 
 BlockGlitchTransitionCtrl.ShowBlockGlitchTransition = HL.StaticMethod() << function()
     if not BlockGlitchTransitionCtrl.s_renderTextureHandle then
@@ -53,19 +39,12 @@ BlockGlitchTransitionCtrl.ShowBlockGlitchTransition = HL.StaticMethod() << funct
 end
 
 
-
-
-
 BlockGlitchTransitionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
-
-
 
 BlockGlitchTransitionCtrl.OnShow = HL.Override() << function(self)
     UIUtils.changeAlpha(self.view.rawImage, 0)
 end
-
-
 
 BlockGlitchTransitionCtrl.Play = HL.Method() << function(self)
     self.view.rawImage.texture = BlockGlitchTransitionCtrl.s_renderTextureHandle.rt

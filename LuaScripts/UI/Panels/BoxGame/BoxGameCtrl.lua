@@ -1,14 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BoxGame
-
-
-
-
-
-
 BoxGameCtrl = HL.Class('BoxGameCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -22,9 +15,6 @@ BoxGameCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
-
 BoxGameCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.main.gameObject:SetActive(false)
     self.view.buttonCancel.onClick:AddListener(function()
@@ -32,19 +22,14 @@ BoxGameCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end)
 end
 
-
 BoxGameCtrl.ShowPanel = HL.StaticMethod() << function()
     local ctrl = BoxGameCtrl.AutoOpen(PANEL_ID, nil, false)
     ctrl:_ShowPanel()
 end
 
-
-
 BoxGameCtrl._ShowPanel = HL.Method() << function(self)
     self.view.main.gameObject:SetActiveIfNecessary(true)
 end
-
-
 
 BoxGameCtrl.HidePanel = HL.Method() << function(self)
     local ctrl = BoxGameCtrl.AutoOpen(PANEL_ID, nil, false)

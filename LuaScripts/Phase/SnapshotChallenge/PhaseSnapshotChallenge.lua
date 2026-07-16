@@ -1,19 +1,7 @@
 
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.GachaPool
-
-
-
-
-
-
-
-
-
-
-
 PhaseSnapshotChallenge = HL.Class('PhaseSnapshotChallenge', phaseBase.PhaseBase)
-
 
 
 
@@ -25,16 +13,9 @@ PhaseSnapshotChallenge.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
-
 PhaseSnapshotChallenge._OnInit = HL.Override() << function(self)
     PhaseSnapshotChallenge.Super._OnInit(self)
 end
-
-
-
-
-
 
 
 
@@ -57,30 +38,14 @@ PhaseSnapshotChallenge.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL
     end
 end
 
-
-
-
-
 PhaseSnapshotChallenge._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseSnapshotChallenge._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhaseSnapshotChallenge._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseSnapshotChallenge._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
@@ -90,17 +55,11 @@ end
 
 
 
-
-
 PhaseSnapshotChallenge._OnActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseSnapshotChallenge._OnDeActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseSnapshotChallenge._OnDestroy = HL.Override() << function(self)
     PhaseSnapshotChallenge.Super._OnDestroy(self)

@@ -1,8 +1,5 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.AdventureDungeon
-local EMPTY_APPEND_TAB_NAMES = {
-    GEnums.DungeonCategoryType.MiniBossRush:ToString(),
-}
 
 local SeriesTableFilterItem = {
     [GEnums.DungeonCategoryType.BasicResource] = {},
@@ -45,62 +42,7 @@ local TabDataList = {
     },
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AdventureDungeonCtrl = HL.Class('AdventureDungeonCtrl', uiCtrl.UICtrl)
-
-
 
 
 
@@ -116,49 +58,33 @@ AdventureDungeonCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 AdventureDungeonCtrl.m_genTabCells = HL.Field(HL.Forward("UIListCache"))
-
 
 AdventureDungeonCtrl.m_genCategoryCells = HL.Field(HL.Function)
 
-
-AdventureDungeonCtrl.m_genSingleCategoryCells = HL.Field(HL.Function)
-
-
 AdventureDungeonCtrl.m_curTabIndex = HL.Field(HL.Number) << 1
-
 
 AdventureDungeonCtrl.m_dungeonCategoryInfos = HL.Field(HL.Table)
 
+AdventureDungeonCtrl.m_displayDungeonInfosList = HL.Field(HL.Table)
 
 AdventureDungeonCtrl.m_forbidResetTabIndex = HL.Field(HL.Boolean) << false
 
-
 AdventureDungeonCtrl.m_onGotoDungeon = HL.Field(HL.Function)
 
-
-AdventureDungeonCtrl.m_useDungeonList = HL.Field(HL.Boolean) << true
-
-
 AdventureDungeonCtrl.m_naviOnLeft = HL.Field(HL.Boolean) << true
-
 
 
 AdventureDungeonCtrl.m_dropdownDomainIds = HL.Field(HL.Table)
 
 
-AdventureDungeonCtrl.m_filterdInfos = HL.Field(HL.Table)
-
-
-
 AdventureDungeonCtrl.m_currSelectDropdownIndex = HL.Field(HL.Number) << 0
 
+AdventureDungeonCtrl.m_reliefNode = HL.Field(HL.Any)
 
-AdventureDungeonCtrl.m_needResetSingleListTarget = HL.Field(HL.Boolean) << false
+AdventureDungeonCtrl.m_reliefNodeTimerId = HL.Field(HL.Number) << -1
 
-
-
+AdventureDungeonCtrl.m_pendingReliefNodeActive = HL.Field(HL.Boolean) << false
 
 
 
@@ -171,17 +97,13 @@ AdventureDungeonCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshAllUI()
 end
 
-
-
 AdventureDungeonCtrl.OnClose = HL.Override() << function(self)
+    self.m_reliefNodeTimerId = self:_ClearTimer(self.m_reliefNodeTimerId)
     
     if self.m_curTabIndex > 0 and self.m_curTabIndex <= self.m_genTabCells:GetCount() then
         self:_ReadTabRedDot(self.m_curTabIndex)
     end
 end
-
-
-
 
 AdventureDungeonCtrl._OnChangeTab = HL.Method(HL.Any) << function(self, arg)
     local dungeonTab = arg and arg.dungeonTab or nil
@@ -204,7 +126,7 @@ AdventureDungeonCtrl._OnChangeTab = HL.Method(HL.Any) << function(self, arg)
     self.m_curTabIndex = math.min(index, #self.m_dungeonCategoryInfos)
     local cell = self.m_genTabCells:Get(self.m_curTabIndex)
     cell.toggle:SetIsOnWithoutNotify(true)
-    self:SetAsNaviTargetInSilentModeIfNecessary(self.view.tabNaviGroup, cell.toggle)
+    self:SetNaviTarget(cell.toggle)
     if DeviceInfo.usingController then
         self.m_naviOnLeft = true
         InputManagerInst:ToggleGroup(self.view.slideNodeMonoTarget.groupId, not self.m_naviOnLeft)
@@ -218,14 +140,10 @@ AdventureDungeonCtrl._OnChangeTab = HL.Method(HL.Any) << function(self, arg)
     end
 end
 
-
-
 AdventureDungeonCtrl.GetCurTabName = HL.Method().Return(HL.String) << function(self)
     local curInfo = self.m_dungeonCategoryInfos[self.m_curTabIndex]
     return curInfo.tabJumpName
 end
-
-
 
 AdventureDungeonCtrl._OnBlockKeyboardEventPanelOrderChanged = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -247,8 +165,6 @@ AdventureDungeonCtrl._OnBlockKeyboardEventPanelOrderChanged = HL.Method() << fun
 end
 
 
-
-
 AdventureDungeonCtrl._InitUI = HL.Method() << function(self)
     
     self.m_genTabCells = UIUtils.genCellCache(self.view.tabTogCell)
@@ -264,27 +180,7 @@ AdventureDungeonCtrl._InitUI = HL.Method() << function(self)
             return firstCell.view.naviDecorator
         end
     end
-    
-    self.m_genSingleCategoryCells = UIUtils.genCachedCellFunction(self.view.singleCategoryNode.singleCategoryList)
-    self.view.singleCategoryNode.singleCategoryList.onUpdateCell:AddListener(function(obj, csIndex)
-        local cell = self.m_genSingleCategoryCells(obj)
-        self:_UpdateSingleDungeonCell(cell, LuaIndex(csIndex))
-    end)
-    self.view.singleCategoryNode.naviGroup.getDefaultSelectableFunc = function()
-        local firstCell = self.m_genSingleCategoryCells(1)
-        if firstCell ~= nil then
-            return firstCell.view.naviDecorator
-        end
-    end
-    
-    if self.view.singleCategoryListReddot then
-        self.view.singleCategoryListReddot.getRedDotStateAt = function(csIndex)
-            return self:GetRedDotStateAt(csIndex)
-        end
-    end
 end
-
-
 
 AdventureDungeonCtrl._InitData = HL.Method() << function(self)
     
@@ -304,8 +200,6 @@ AdventureDungeonCtrl._InitData = HL.Method() << function(self)
     
     self:_HandleStaminaDiscount()
 end
-
-
 
 AdventureDungeonCtrl.OnShow = HL.Override() << function(self)
     self.m_forbidResetTabIndex = false
@@ -328,14 +222,12 @@ AdventureDungeonCtrl.OnShow = HL.Override() << function(self)
             self.m_naviOnLeft = true
             InputManagerInst:ToggleGroup(self.view.slideNodeMonoTarget.groupId, not self.m_naviOnLeft)
             InputManagerInst:ToggleGroup(self.view.tabTogMonoTarget.groupId, self.m_naviOnLeft)
-            self:SetAsNaviTargetInSilentModeIfNecessary(self.view.tabNaviGroup, cell.toggle)
+            self:SetNaviTarget(cell.toggle)
         end
     end
 
     Notify(MessageConst.HIDE_ITEM_TIPS)
 end
-
-
 
 AdventureDungeonCtrl.OnHide = HL.Override() << function(self)
     if self.m_forbidResetTabIndex then
@@ -348,15 +240,11 @@ AdventureDungeonCtrl.OnHide = HL.Override() << function(self)
     end
 end
 
-
-
 AdventureDungeonCtrl._OnPhaseBehind = HL.Method() << function(self)
     if self.view.gameObject.activeSelf then
         self.m_forbidResetTabIndex = true
     end
 end
-
-
 
 AdventureDungeonCtrl._UpdateData = HL.Method() << function(self)
     self.m_dungeonCategoryInfos = {}
@@ -368,8 +256,6 @@ AdventureDungeonCtrl._UpdateData = HL.Method() << function(self)
     self.m_curTabIndex = math.min(self.m_curTabIndex, #self.m_dungeonCategoryInfos)
 end
 
-
-
 AdventureDungeonCtrl._RefreshAllUI = HL.Method() << function(self)
     self.m_genTabCells:Refresh(#self.m_dungeonCategoryInfos, function(cell, luaIndex)
         self:_RefreshUITabCell(cell, luaIndex)
@@ -377,19 +263,14 @@ AdventureDungeonCtrl._RefreshAllUI = HL.Method() << function(self)
     self:_OnClickTabToggle(self.m_curTabIndex, true)
     local cell = self.m_genTabCells:Get(1)
     if cell then
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.tabNaviGroup, cell.toggle)
+        self:SetNaviTarget(cell.toggle)
     end
 end
-
-
-
 
 AdventureDungeonCtrl._OnSceneGradeChangeNotify = HL.Method(HL.Table) << function(self, args)
     self:_UpdateData()
     self:_RefreshAllUI()
 end
-
-
 
 AdventureDungeonCtrl._InitShortCut = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -401,17 +282,12 @@ AdventureDungeonCtrl._InitShortCut = HL.Method() << function(self)
         self.m_naviOnLeft = false
         InputManagerInst:ToggleGroup(self.view.slideNodeMonoTarget.groupId, true)
         InputManagerInst:ToggleGroup(self.view.tabTogMonoTarget.groupId, false)
-        if self.m_useDungeonList then
-            self.view.dungeonCategoryListNaviGroup:NaviToThisGroup(true)
-        else
-            self.view.singleCategoryNode.naviGroup:NaviToThisGroup(true)
-        end
+        self.view.dungeonCategoryListNaviGroup:NaviToThisGroup(true)
         
         
         
         
-        local rightNaviGroup = self.m_useDungeonList and self.view.dungeonCategoryListNaviGroup or self.view.singleCategoryNode.naviGroup
-        if not rightNaviGroup.IsTopLayer then
+        if not self.view.dungeonCategoryListNaviGroup.IsTopLayer then
             self.m_naviOnLeft = true
             InputManagerInst:ToggleGroup(self.view.slideNodeMonoTarget.groupId, false)
             InputManagerInst:ToggleGroup(self.view.tabTogMonoTarget.groupId, true)
@@ -422,13 +298,8 @@ AdventureDungeonCtrl._InitShortCut = HL.Method() << function(self)
         self.m_naviOnLeft = false
         InputManagerInst:ToggleGroup(self.view.slideNodeMonoTarget.groupId, true)
         InputManagerInst:ToggleGroup(self.view.tabTogMonoTarget.groupId, false)
-        if self.m_useDungeonList then
-            self.view.dungeonCategoryListNaviGroup:NaviToThisGroup(true)
-        else
-            self.view.singleCategoryNode.naviGroup:NaviToThisGroup(true)
-        end
-        local rightNaviGroup = self.m_useDungeonList and self.view.dungeonCategoryListNaviGroup or self.view.singleCategoryNode.naviGroup
-        if not rightNaviGroup.IsTopLayer then
+        self.view.dungeonCategoryListNaviGroup:NaviToThisGroup(true)
+        if not self.view.dungeonCategoryListNaviGroup.IsTopLayer then
             self.m_naviOnLeft = true
             InputManagerInst:ToggleGroup(self.view.slideNodeMonoTarget.groupId, false)
             InputManagerInst:ToggleGroup(self.view.tabTogMonoTarget.groupId, true)
@@ -452,11 +323,6 @@ AdventureDungeonCtrl._InitShortCut = HL.Method() << function(self)
 
     InputManagerInst:ToggleGroup(self.view.slideNodeMonoTarget.groupId, false)
 end
-
-
-
-
-
 
 
 
@@ -537,10 +403,6 @@ AdventureDungeonCtrl._InitDataCommonDungeon = HL.Method(HL.Any, HL.String, HL.St
     table.insert(self.m_dungeonCategoryInfos, newCategoryInfo)
 end
 
-
-
-
-
 AdventureDungeonCtrl._HandleAndCreateSeriesInfo = HL.Method(HL.Any,  HL.Table).Return(HL.Table)
     << function(self, seriesCfg, categoryInfo)
     
@@ -619,8 +481,6 @@ AdventureDungeonCtrl._HandleAndCreateSeriesInfo = HL.Method(HL.Any,  HL.Table).R
     
     return nil
 end
-
-
 
 AdventureDungeonCtrl._InitDataMonsterSpawnPoint = HL.Method() << function(self)
     
@@ -703,8 +563,65 @@ AdventureDungeonCtrl._InitDataMonsterSpawnPoint = HL.Method() << function(self)
     table.insert(self.m_dungeonCategoryInfos, insertIndex, newCategoryInfo)
 end
 
+AdventureDungeonCtrl._GetDungeonCustomRewardId = HL.StaticMethod(HL.String).Return(HL.String) << function(dungeonId)
+    local hasCfg, dungeonCfg = Tables.dungeonTable:TryGetValue(dungeonId)
+    if hasCfg and not string.isEmpty(dungeonCfg.customRewardId) then
+        return dungeonCfg.customRewardId
+    end
+    return ""
+end
 
+AdventureDungeonCtrl._AddRewardItemsMerged = HL.StaticMethod(HL.String, HL.Table, HL.Number)
+    << function(rewardId, rewards, rewardTypeSortId)
+    if string.isEmpty(rewardId) then
+        return
+    end
+    local hasCfg, rewardsCfg = Tables.rewardTable:TryGetValue(rewardId)
+    if hasCfg then
+        for _, itemBundle in pairs(rewardsCfg.itemBundles) do
+            local itemId = itemBundle.id
+            local reward = rewards[itemId]
+            if not reward then
+                local itemCfg = Tables.itemTable[itemId]
+                reward = {
+                    id = itemId,
+                    rarity = itemCfg.rarity,
+                    type = itemCfg.type:ToInt(),
+                    
+                    gainedSortId = 1,
+                    rewardTypeSortId = rewardTypeSortId,
+                    gained = false,
+                }
+                rewards[itemId] = reward
+            end
+        end
+    end
+end
 
+AdventureDungeonCtrl._AddRewardItemsNoMerge = HL.StaticMethod(HL.String, HL.Table, HL.Boolean, HL.Boolean, HL.Number, HL.Number, HL.Boolean)
+    << function(rewardId, rewards, isFirst, isExtra, gainedSortId, rewardTypeSortId, gained)
+    if string.isEmpty(rewardId) then
+        return
+    end
+    local _, rewardsCfg = Tables.rewardTable:TryGetValue(rewardId)
+    if rewardsCfg then
+        for _, itemBundle in pairs(rewardsCfg.itemBundles) do
+            local itemCfg = Tables.itemTable[itemBundle.id]
+            local reward = {
+                id = itemBundle.id,
+                rarity = itemCfg.rarity,
+                type = itemCfg.type:ToInt(),
+                
+                isFirst = isFirst,
+                isExtra = isExtra,
+                gainedSortId = gainedSortId,
+                rewardTypeSortId = rewardTypeSortId,
+                gained = gained,
+            }
+            table.insert(rewards, reward)
+        end
+    end
+end
 
 
 
@@ -752,16 +669,12 @@ AdventureDungeonCtrl._RefreshUITabCell = HL.Method(HL.Table, HL.Number) << funct
     cell.reliefTab.gameObject:SetActive(ActivityUtils.hasStaminaReduceCount() and tabInfo.showRelief)
 end
 
-
-
-
-
 AdventureDungeonCtrl._OnClickTabToggle = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, luaIndex, isInit)
     local count = #self.m_dungeonCategoryInfos
     if count < luaIndex or luaIndex < 1 then
         return
     end
-    self.view.reliefNode.gameObject:SetActive((ActivityUtils.hasStaminaReduceCount() and self.m_dungeonCategoryInfos[luaIndex].showRelief))
+    self:_ToggleReliefNode(ActivityUtils.hasStaminaReduceCount() and self.m_dungeonCategoryInfos[luaIndex].showRelief)
     local preIndex = self.m_curTabIndex
     if (preIndex ~= luaIndex) then
         
@@ -772,34 +685,12 @@ AdventureDungeonCtrl._OnClickTabToggle = HL.Method(HL.Number, HL.Opt(HL.Boolean)
         AudioAdapter.PostEvent("Au_UI_Toggle_Common_On")
     end
     self.m_curTabIndex = luaIndex
-    local dungeonInfosList = self.m_dungeonCategoryInfos[luaIndex].dungeonInfosList
-    local listCount = #dungeonInfosList
-    
-    if listCount > 1 then
-        self.view.dungeonCategoryList.gameObject:SetActiveIfNecessary(true)
-        self.view.singleCategoryNode.gameObject:SetActiveIfNecessary(false)
-        
-        self.view.dungeonCategoryList:UpdateCount(listCount, true)
-        self.m_useDungeonList = true
-    elseif listCount == 1 then
-        local singleCategoryNode = self.view.singleCategoryNode
-        singleCategoryNode.gameObject:SetActiveIfNecessary(true)
-        self.view.dungeonCategoryList.gameObject:SetActiveIfNecessary(false)
-        
-        local infosBundle = dungeonInfosList[1]
-        infosBundle.hasRead = true
-        local category2ndType = GEnums.DungeonCategory2ndType.__CastFrom(infosBundle.category2ndType)
-        if (category2ndType == GEnums.DungeonCategory2ndType.None) then
-            singleCategoryNode.titleState:SetState("HideTitle")
-        else
-            singleCategoryNode.titleState:SetState("ShowTitle")
-            singleCategoryNode.titleTxt.text = infosBundle.name
-        end
-        self.m_filterdInfos = self:_BuildSingleCategoryInfos(infosBundle.infos)
-        local cellCount = #self.m_filterdInfos
-        self.view.singleCategoryNode.singleCategoryList:UpdateCount(cellCount, true)
-        self.m_useDungeonList = false
-    end
+    local categoryInfo = self.m_dungeonCategoryInfos[luaIndex]
+    local dungeonInfosList = categoryInfo.dungeonInfosList
+    self.m_displayDungeonInfosList = self:_ResolveDisplayDungeonInfosList(categoryInfo, dungeonInfosList)
+    local listCount = #self.m_displayDungeonInfosList
+    self.view.dungeonCategoryList.gameObject:SetActiveIfNecessary(listCount > 0)
+    self.view.dungeonCategoryList:UpdateCount(listCount, true)
     
     if listCount > 0 then
         local infoBundle = dungeonInfosList[1]
@@ -812,7 +703,7 @@ AdventureDungeonCtrl._OnClickTabToggle = HL.Method(HL.Number, HL.Opt(HL.Boolean)
         self.view.titleBgMask.gameObject:SetActiveIfNecessary(true)
     end
     
-    if self.m_dungeonCategoryInfos[luaIndex].tabJumpName == "EnemySpawner" then
+    if categoryInfo.tabJumpName == "EnemySpawner" then
         self.view.siltationPoint.gameObject:SetActive(true)
         self.view.dropDown:ClearComponent()
         self.view.dropDown:Init(
@@ -829,9 +720,6 @@ AdventureDungeonCtrl._OnClickTabToggle = HL.Method(HL.Number, HL.Opt(HL.Boolean)
         )
         local dropdownCsIdx = self.m_currSelectDropdownIndex > 0 and CSIndex(self.m_currSelectDropdownIndex) or 0
         self.view.dropDown:Refresh(#self.m_dropdownDomainIds, dropdownCsIdx, false)
-        if self.m_currSelectDropdownIndex > 0 then
-            self:_OnSelectFilter(self.m_currSelectDropdownIndex, true)
-        end
     else
         self.view.siltationPoint.gameObject:SetActive(false)
     end
@@ -842,65 +730,61 @@ AdventureDungeonCtrl._OnClickTabToggle = HL.Method(HL.Number, HL.Opt(HL.Boolean)
     end
 end
 
-
-
-
-AdventureDungeonCtrl._NeedAppendEmptyCell = HL.Method(HL.Table).Return(HL.Boolean) << function(self, categoryInfo)
-    if categoryInfo == nil then
-        return false
+AdventureDungeonCtrl._ResolveDisplayDungeonInfosList = HL.Method(HL.Table, HL.Table).Return(HL.Table) << function(self, categoryInfo, dungeonInfosList)
+    dungeonInfosList = dungeonInfosList or {}
+    if categoryInfo.tabJumpName == "EnemySpawner" then
+        local filterIndex = self.m_currSelectDropdownIndex > 0 and self.m_currSelectDropdownIndex or 1
+        return self:_BuildEnemySpawnerDisplayList(dungeonInfosList[1], self.m_dropdownDomainIds[filterIndex])
     end
-    for _, tabName in ipairs(EMPTY_APPEND_TAB_NAMES) do
-        if categoryInfo.tabJumpName == tabName then
-            return true
-        end
+    
+    if #dungeonInfosList == 1 and #dungeonInfosList[1].infos > 1 then
+        return self:_BuildSingleInfoDisplayList(dungeonInfosList[1])
     end
-    return false
+    return dungeonInfosList
 end
 
-
-
-
-AdventureDungeonCtrl._BuildSingleCategoryInfos = HL.Method(HL.Table).Return(HL.Table) << function(self, infos)
-    local displayInfos = {}
-    for _, info in ipairs(infos) do
-        table.insert(displayInfos, info)
+AdventureDungeonCtrl._BuildSingleInfoDisplayList = HL.Method(HL.Table).Return(HL.Table) << function(self, infosBundle)
+    local displayList = {}
+    infosBundle.hasRead = true
+    for _, info in ipairs(infosBundle.infos) do
+        table.insert(displayList, {
+            category2ndType = infosBundle.category2ndType,
+            name = infosBundle.name,
+            infos = { info },
+            hasRead = true,
+        })
     end
-    local categoryInfo = self.m_dungeonCategoryInfos[self.m_curTabIndex]
-    if self:_NeedAppendEmptyCell(categoryInfo) then
-        local lastInfo = displayInfos[#displayInfos]
-        if lastInfo == nil or not lastInfo.isEmpty then
-            table.insert(displayInfos, { isEmpty = true, subGameIds = {} })
-        end
-    end
-    return displayInfos
+    return displayList
 end
 
-
-
-
+AdventureDungeonCtrl._BuildEnemySpawnerDisplayList = HL.Method(HL.Table, HL.Opt(HL.String)).Return(HL.Table) << function(self, infosBundle, selectDomainId)
+    local displayList = {}
+    infosBundle.hasRead = true
+    for _, info in ipairs(infosBundle.infos) do
+        if selectDomainId == "All" or info.domainId == selectDomainId then
+            table.insert(displayList, {
+                category2ndType = infosBundle.category2ndType,
+                name = infosBundle.name,
+                infos = { info },
+                hasRead = true,
+            })
+        end
+    end
+    return displayList
+end
 
 AdventureDungeonCtrl._OnSelectFilter = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, index, forceSelect)
-    logger.info("[adventure] dropdown csIndex: " .. tostring(csIndex))
+    logger.info("[adventure] dropdown index: " .. tostring(index))
     if index == self.m_currSelectDropdownIndex and not forceSelect then
         return
     end
     self.m_currSelectDropdownIndex = index
-    self.view.singleCategoryNode.singleCategoryList:ScrollToIndex(0, true)
-    local infos = self.m_dungeonCategoryInfos[self.m_curTabIndex].dungeonInfosList[1].infos
+    self.view.dungeonCategoryList:ScrollToIndex(0, true)
+    local infosBundle = self.m_dungeonCategoryInfos[self.m_curTabIndex].dungeonInfosList[1]
     local selectDomainId = self.m_dropdownDomainIds[index]
-    local filtered = lume.filter(infos, function(x)
-        if selectDomainId == "All" then
-            return true
-        end
-        return x.domainId == selectDomainId
-    end)
-    self.m_filterdInfos = self:_BuildSingleCategoryInfos(filtered)
-    self.m_needResetSingleListTarget = true
-    self.view.singleCategoryNode.singleCategoryList:UpdateCount(#self.m_filterdInfos)
+    self.m_displayDungeonInfosList = self:_BuildEnemySpawnerDisplayList(infosBundle, selectDomainId)
+    self.view.dungeonCategoryList:UpdateCount(#self.m_displayDungeonInfosList, true)
 end
-
-
-
 
 AdventureDungeonCtrl._ReadTabRedDot = HL.Method(HL.Number) << function(self, luaIndex)
     if luaIndex <= 0 or luaIndex > #self.m_dungeonCategoryInfos then
@@ -925,8 +809,6 @@ AdventureDungeonCtrl._ReadTabRedDot = HL.Method(HL.Number) << function(self, lua
     end
 end
 
-
-
 AdventureDungeonCtrl.GetCurEnemySpawnerFilterIndex = HL.Method().Return(HL.Number) << function(self)
     return self.m_currSelectDropdownIndex
 end
@@ -934,45 +816,13 @@ end
 
 
 
-
-
-
-
 AdventureDungeonCtrl._UpdateDungeonCategory = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
-    local infosBundle = self.m_dungeonCategoryInfos[self.m_curTabIndex].dungeonInfosList[luaIndex]
-    cell:InitDungeonCategoryCell(infosBundle)
-end
-
-
-
-
-
-AdventureDungeonCtrl._UpdateSingleDungeonCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
-    local cellInfo = nil
-    if self.m_filterdInfos ~= nil then
-        cellInfo = self.m_filterdInfos[luaIndex]
-    else
-        local infosBundle = self.m_dungeonCategoryInfos[self.m_curTabIndex].dungeonInfosList[1]
-        cellInfo = infosBundle.infos[luaIndex]
-    end
-
-    if cellInfo == nil then
+    local infosBundle = self.m_displayDungeonInfosList and self.m_displayDungeonInfosList[luaIndex] or nil
+    if infosBundle == nil then
         return
     end
-    cell:InitAdventureDungeonCell(cellInfo)
-    if not cellInfo.isEmpty then
-        cellInfo.hasRead = true
-    end
-
-    if self.m_needResetSingleListTarget and luaIndex == 1 then
-        self.m_needResetSingleListTarget = false
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.dungeonCategoryListNaviGroup, cell.view.naviDecorator)
-    end
+    cell:InitDungeonCategoryCell(infosBundle)
 end
-
-
-
-
 
 AdventureDungeonCtrl._ProcessDungeonSeriesRewards = HL.Method(HL.String, HL.Boolean).Return(HL.Table) << function(self, seriesId, checkUnlocked)
     local dungeonSeriesCfg = Tables.dungeonSeriesTable[seriesId]
@@ -1011,11 +861,6 @@ AdventureDungeonCtrl._ProcessDungeonSeriesRewards = HL.Method(HL.String, HL.Bool
     return rewardList
 end
 
-
-
-
-
-
 AdventureDungeonCtrl._ProcessDungeonRewards = HL.Method(HL.String, HL.Table, HL.Boolean) << function(self, dungeonId, rewards, checkUnlocked)
     if checkUnlocked and not GameInstance.dungeonManager:IsDungeonUnlocked(dungeonId) then
         logger.info("[dungeon] 跳过了" .. tostring(dungeonId))
@@ -1025,7 +870,8 @@ AdventureDungeonCtrl._ProcessDungeonRewards = HL.Method(HL.String, HL.Table, HL.
     local gameMechanicCfg = Tables.gameMechanicTable[dungeonId]
 
     local hasFirstReward = not string.isEmpty(gameMechanicCfg.firstPassRewardId)
-    local hasRecycleReward = not string.isEmpty(gameMechanicCfg.rewardId)
+    local customRewardId = AdventureDungeonCtrl._GetDungeonCustomRewardId(dungeonId)
+    local hasRecycleReward = not string.isEmpty(gameMechanicCfg.rewardId) or not string.isEmpty(customRewardId)
     local hasExtraReward = not string.isEmpty(gameMechanicCfg.extraRewardId)
 
     
@@ -1054,27 +900,9 @@ AdventureDungeonCtrl._ProcessDungeonRewards = HL.Method(HL.String, HL.Table, HL.
 
     
     if hasRecycleReward then
-        local hasCfg, rewardsCfg = Tables.rewardTable:TryGetValue(gameMechanicCfg.rewardId)
-        if hasCfg then
-            for _, itemBundle in pairs(rewardsCfg.itemBundles) do
-                local itemId = itemBundle.id
-                local reward = rewards[itemId]
-                if not reward then
-                    local itemCfg = Tables.itemTable[itemId]
-                    reward = {
-                        id = itemId,
-                        rarity = itemCfg.rarity,
-                        type = itemCfg.type:ToInt(),
-                        
-                        gainedSortId = 1,
-                        rewardTypeSortId = 1,
-                        gained = false,
-                    }
-                    rewards[itemId] = reward
-                end
-            end
-        end
+        AdventureDungeonCtrl._AddRewardItemsMerged(gameMechanicCfg.rewardId, rewards, 1)
     end
+    AdventureDungeonCtrl._AddRewardItemsMerged(customRewardId, rewards, 1)
 
     
     if hasExtraReward then
@@ -1101,16 +929,13 @@ AdventureDungeonCtrl._ProcessDungeonRewards = HL.Method(HL.String, HL.Table, HL.
     end
 end
 
-
-
-
-
 AdventureDungeonCtrl._ProcessDungeonRewardsNoMerge = HL.Method(HL.String, HL.Table) << function(self, dungeonId, rewards)
     local dungeonMgr = GameInstance.dungeonManager
     local gameMechanicCfg = Tables.gameMechanicTable[dungeonId]
 
     local hasFirstReward = not string.isEmpty(gameMechanicCfg.firstPassRewardId)
-    local hasRecycleReward = not string.isEmpty(gameMechanicCfg.rewardId)
+    local customRewardId = AdventureDungeonCtrl._GetDungeonCustomRewardId(dungeonId)
+    local hasRecycleReward = not string.isEmpty(gameMechanicCfg.rewardId) or not string.isEmpty(customRewardId)
     local hasExtraReward = not string.isEmpty(gameMechanicCfg.extraRewardId)
 
     
@@ -1140,26 +965,8 @@ AdventureDungeonCtrl._ProcessDungeonRewardsNoMerge = HL.Method(HL.String, HL.Tab
     end
 
     
-    if hasRecycleReward then
-        local _, rewardsCfg = Tables.rewardTable:TryGetValue(gameMechanicCfg.rewardId)
-        if rewardsCfg then
-            for _, itemBundle in pairs(rewardsCfg.itemBundles) do
-                local itemCfg = Tables.itemTable[itemBundle.id]
-                local reward = {
-                    id = itemBundle.id,
-                    rarity = itemCfg.rarity,
-                    type = itemCfg.type:ToInt(),
-                    
-                    isFirst = false,
-                    isExtra = false,
-                    gainedSortId = 1,
-                    rewardTypeSortId = 1,
-                    gained = false,
-                }
-                table.insert(rewards, reward)
-            end
-        end
-    end
+    AdventureDungeonCtrl._AddRewardItemsNoMerge(gameMechanicCfg.rewardId, rewards, false, false, 1, 1, false)
+    AdventureDungeonCtrl._AddRewardItemsNoMerge(customRewardId, rewards, false, false, 1, 1, false)
 
     
     if hasExtraReward then
@@ -1187,10 +994,6 @@ AdventureDungeonCtrl._ProcessDungeonRewardsNoMerge = HL.Method(HL.String, HL.Tab
         end
     end
 end
-
-
-
-
 
 
 AdventureDungeonCtrl._ProcessDungeonRewardsBoss = HL.Method(HL.Table, HL.Table) << function(self, dungeonIds, rewards)
@@ -1284,10 +1087,6 @@ AdventureDungeonCtrl._ProcessDungeonRewardsBoss = HL.Method(HL.Table, HL.Table) 
     end
 end
 
-
-
-
-
 AdventureDungeonCtrl._ProcessDungeonRewardsMiniBoss = HL.Method(HL.Table, HL.Table) << function(self, dungeonIds, rewards)
     local dungeonMgr = GameInstance.dungeonManager
     local lastUnlockedDungeonId = ""
@@ -1323,10 +1122,6 @@ AdventureDungeonCtrl._ProcessDungeonRewardsMiniBoss = HL.Method(HL.Table, HL.Tab
     end
 end
 
-
-
-
-
 AdventureDungeonCtrl._ProcessDungeonBossInfo = HL.Method(HL.String, HL.Table) << function(self, seriesId, info)
     local dungeonSeriesData = Tables.DungeonSeriesTable[seriesId]
     
@@ -1352,9 +1147,6 @@ AdventureDungeonCtrl._ProcessDungeonBossInfo = HL.Method(HL.String, HL.Table) <<
 end
 
 
-
-
-
 AdventureDungeonCtrl._GetDungeonImg = HL.Method(HL.Any).Return(HL.Opt(HL.String)) << function(self, dungeonIds)
     local ret = nil
     for _, dungeonId in pairs(dungeonIds) do
@@ -1368,9 +1160,6 @@ AdventureDungeonCtrl._GetDungeonImg = HL.Method(HL.Any).Return(HL.Opt(HL.String)
     end
     return ret
 end
-
-
-
 
 AdventureDungeonCtrl._ProcessMonsterSpawnRewards = HL.StaticMethod(HL.String, HL.String).Return(HL.Table) << function(groupId, gameId)
     local rewards = {}
@@ -1416,12 +1205,6 @@ AdventureDungeonCtrl._ProcessMonsterSpawnRewards = HL.StaticMethod(HL.String, HL
     return rewardList
 end
 
-
-
-
-
-
-
 AdventureDungeonCtrl._GenRewardInfo = HL.StaticMethod(HL.String, HL.Number, HL.Boolean, HL.String, HL.Opt(HL.Number)).Return(HL.Table)
     << function(tagState, rewardTypeSortId, gained, itemId, itemCount)
     local itemCfg = Tables.itemTable[itemId]
@@ -1441,55 +1224,69 @@ end
 
 
 
-
 AdventureDungeonCtrl.m_discount = HL.Field(HL.Number) << 0
 
-
-
 AdventureDungeonCtrl._HandleStaminaDiscount = HL.Method() << function(self)
+    self.m_discount = GameInstance.player.activitySystem.staminaDiscount
+    self:_RefreshReliefNode()
+end
+
+AdventureDungeonCtrl._EnsureReliefNode = HL.Method().Return(HL.Any) << function(self)
+    if not self.view or not self.view.dungeonCategoryList then return end
+    if self.m_reliefNode then
+        return self.m_reliefNode
+    end
+    local prefab = self:LoadGameObject("Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Adventure/Widgets/AdventureDungeonReliefNode.prefab")
+    local obj = CSUtils.CreateObject(prefab, self.view.dungeonCategoryList.transform.parent)
+    obj.name = "ReliefNode"
+    local transform = obj.transform
+    transform:SetSiblingIndex(0)
+    transform.localScale = Vector3.one
+
+    self.m_reliefNode = Utils.wrapLuaNode(obj)
+    self.m_reliefNode.gameObject:SetActive(false)
+    return self.m_reliefNode
+end
+
+AdventureDungeonCtrl._ToggleReliefNode = HL.Method(HL.Boolean) << function(self, active)
+    self.m_pendingReliefNodeActive = active
+    if not active then
+        self.m_reliefNodeTimerId = self:_ClearTimer(self.m_reliefNodeTimerId)
+        if self.m_reliefNode then
+            self.m_reliefNode.gameObject:SetActiveIfNecessary(false)
+        end
+        return
+    end
+    if not self.m_reliefNode then
+        self.m_reliefNodeTimerId = TimerManager:StartFrameTimer(1, function()
+            self.m_reliefNodeTimerId = -1
+            if not self.m_pendingReliefNodeActive then
+                return
+            end
+            local reliefNode = self:_EnsureReliefNode()
+            self:_RefreshReliefNode()
+            reliefNode.gameObject:SetActiveIfNecessary(true)
+        end, self)
+    else
+        self.m_reliefNode.gameObject:SetActiveIfNecessary(true)
+    end
+end
+
+AdventureDungeonCtrl._RefreshReliefNode = HL.Method() << function(self)
+    if not self.m_reliefNode then
+        return
+    end
     local totalCount = GameInstance.player.activitySystem.staminaTotalCount
     local useCount = GameInstance.player.activitySystem.staminaReduceUsedCount
-    self.m_discount = GameInstance.player.activitySystem.staminaDiscount
-
+    local remainCount = totalCount - useCount
     
-    self.view.blackNum.gameObject:SetActive(ActivityUtils.hasStaminaReduceCount())
-    self.view.blackNum.text = totalCount - useCount
-    self.view.redNum.gameObject:SetActive(not ActivityUtils.hasStaminaReduceCount())
-    self.view.redNum.text = totalCount - useCount
-    self.view.numTxt.text = string.format("/%d", totalCount)
+    self.m_reliefNode.blackNum.gameObject:SetActive(ActivityUtils.hasStaminaReduceCount())
+    self.m_reliefNode.blackNum.text = remainCount
+    self.m_reliefNode.redNum.gameObject:SetActive(not ActivityUtils.hasStaminaReduceCount())
+    self.m_reliefNode.redNum.text = remainCount
+    self.m_reliefNode.numTxt.text = string.format("/%d", totalCount)
 end
 
 
-
-
-
-
-AdventureDungeonCtrl.GetRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, csIndex)
-    local luaIndex = LuaIndex(csIndex)
-    local cellInfo = nil
-    if self.m_filterdInfos ~= nil then
-        cellInfo = self.m_filterdInfos[luaIndex]
-    else
-        local infosBundle = self.m_dungeonCategoryInfos[self.m_curTabIndex].dungeonInfosList[1]
-        cellInfo = infosBundle.infos[luaIndex]
-    end
-
-    if cellInfo == nil then
-        return 0
-    end
-    if cellInfo.isEmpty then
-        return 0
-    end
-
-    local redDotName = string.isEmpty(cellInfo.redDotName) and "AdventureDungeonCell" or cellInfo.redDotName
-    local redDotArg = string.isEmpty(cellInfo.redDotArg) and cellInfo.subGameIds or cellInfo.redDotArg
-    local hasRedDot, redDotType = RedDotManager:GetRedDotState(
-        redDotName, redDotArg)
-    if hasRedDot then
-        return redDotType or UIConst.RED_DOT_TYPE.Normal
-    else
-        return 0  
-    end
-end
 
 HL.Commit(AdventureDungeonCtrl)

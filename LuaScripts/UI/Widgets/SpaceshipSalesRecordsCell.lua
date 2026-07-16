@@ -1,11 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 SpaceshipSalesRecordsCell = HL.Class('SpaceshipSalesRecordsCell', UIWidgetBase)
-
 
 
 SpaceshipSalesRecordsCell.m_moneyCellCache = HL.Field(HL.Forward("UIListCache"))
@@ -13,16 +8,9 @@ SpaceshipSalesRecordsCell.m_moneyCellCache = HL.Field(HL.Forward("UIListCache"))
 
 
 
-
-
 SpaceshipSalesRecordsCell._OnFirstTimeInit = HL.Override() << function(self)
 
 end
-
-
-
-
-
 
 SpaceshipSalesRecordsCell.InitSpaceshipSalesRecordsCell = HL.Method(HL.Boolean, HL.Number, HL.Any)
     << function(self, isEmpty, roleId, moneyIdToSoldPrice)

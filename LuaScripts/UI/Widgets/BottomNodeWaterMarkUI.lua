@@ -1,19 +1,11 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 BottomNodeWaterMarkUI = HL.Class('BottomNodeWaterMarkUI', UIWidgetBase)
-
-
 
 
 BottomNodeWaterMarkUI._OnFirstTimeInit = HL.Override() << function(self)
     
 end
-
-
-
 
 BottomNodeWaterMarkUI.InitBottomNodeWaterMarkUI = HL.Method(HL.Table) << function(self, arg)
     self:_FirstTimeInit()
@@ -33,6 +25,10 @@ BottomNodeWaterMarkUI.InitBottomNodeWaterMarkUI = HL.Method(HL.Table) << functio
             local node = self.view.settlementNode
             node.timeTxt.text = arg.timeStamp
             node.codeTxt.text = arg.showCodeId
+        elseif arg.type == "EchoesOfWar" then
+            
+            local node = self.view.settlementNode
+            node.timeTxt.text = arg.timeStamp
         end
     end
 end

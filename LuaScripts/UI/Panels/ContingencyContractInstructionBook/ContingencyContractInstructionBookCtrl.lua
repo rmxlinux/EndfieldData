@@ -1,16 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ContingencyContractInstructionBook
 
-
-
-
-
-
-
-
-
 ContingencyContractInstructionBookCtrl = HL.Class('ContingencyContractInstructionBookCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -22,14 +13,9 @@ ContingencyContractInstructionBookCtrl.s_messages = HL.StaticField(HL.Table) << 
 }
 
 
-
 ContingencyContractInstructionBookCtrl.m_gameId = HL.Field(HL.String) << ""
 
-
 ContingencyContractInstructionBookCtrl.m_infos = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -40,8 +26,6 @@ ContingencyContractInstructionBookCtrl.OnCreate = HL.Override(HL.Any) << functio
     self:_InitData()
     self:_RefreshAllUI()
 end
-
-
 
 
 
@@ -69,8 +53,6 @@ end
 
 
 
-
-
 ContingencyContractInstructionBookCtrl._InitUI = HL.Method() << function(self)
     self.view.closeButton.onClick:AddListener(function()
         self:PlayAnimationOutAndClose()
@@ -81,8 +63,6 @@ ContingencyContractInstructionBookCtrl._InitUI = HL.Method() << function(self)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
-
-
 
 ContingencyContractInstructionBookCtrl._RefreshAllUI = HL.Method() << function(self)
     for i = 1, ContingencyContractUtils.MAX_ROW_COUNT do

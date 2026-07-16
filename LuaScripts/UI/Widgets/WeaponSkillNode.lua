@@ -1,18 +1,8 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 WeaponSkillNode = HL.Class('WeaponSkillNode', UIWidgetBase)
 
-
 WeaponSkillNode.m_weaponSkillCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 
@@ -21,29 +11,15 @@ WeaponSkillNode._OnFirstTimeInit = HL.Override() << function(self)
     self.m_weaponSkillCellCache = UIUtils.genCellCache(self.view.weaponSkillCell)
 end
 
-
-
-
-
 WeaponSkillNode.InitWeaponSkillNode = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(self, weaponInstId, tryArgs)
     self:_FirstTimeInit()
     self:_RefreshSkillNode(weaponInstId, tryArgs)
 end
 
-
-
-
-
-
-
 WeaponSkillNode.InitWeaponSkillNodeByTemplateId = HL.Method(HL.String, HL.Number, HL.Number, HL.Boolean) << function(self, templateId, breakThroughLv, refineLv, isGemMax)
     self:_FirstTimeInit()
     self:_RefreshSkillNodeByTemplateId(templateId, breakThroughLv, refineLv, isGemMax)
 end
-
-
-
-
 
 WeaponSkillNode._RefreshSkillNode = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(self, weaponInstId, tryArgs)
     local _, weaponInst = GameInstance.player.inventory:TryGetWeaponInst(Utils.getCurrentScope(), weaponInstId)
@@ -91,6 +67,9 @@ WeaponSkillNode._RefreshSkillNode = HL.Method(HL.Number, HL.Opt(HL.Table)) << fu
     end
     local _, fromSkillList = CS.Beyond.Gameplay.WeaponUtil.TryGetWeaponSkillIdAndLevel(Utils.getCurrentScope(), weaponInstId, nil, fromBreakthroughLv, fromRefineLv)
     local _, toSkillList = CS.Beyond.Gameplay.WeaponUtil.TryGetWeaponSkillIdAndLevel(Utils.getCurrentScope(), weaponInstId, tryGemInstId, tryBreakthroughLv, tryRefineLv)
+    if tryBreakthroughLv and tryBreakthroughLv > 4 then
+        logger.error("WeaponSkillNode->_RefreshSkillNode: tryBreakthroughLv is greater than 4, tryBreakthroughLv: " .. tryBreakthroughLv)
+    end
     local _, descList = CS.Beyond.Gameplay.WeaponUtil.TryGetWeaponSkillDescription(Utils.getCurrentScope(), weaponInstId, tryGemInstId, tryBreakthroughLv, tryRefineLv)
 
 
@@ -116,12 +95,6 @@ WeaponSkillNode._RefreshSkillNode = HL.Method(HL.Number, HL.Opt(HL.Table)) << fu
     end)
 end
 
-
-
-
-
-
-
 WeaponSkillNode._RefreshSkillNodeByTemplateId = HL.Method(HL.String, HL.Number, HL.Number, HL.Boolean) << function(self, templateId, breakThroughLv, refineLv, isGemMax)
     local _, fromSkillList = CS.Beyond.Gameplay.WeaponUtil.TryGetWeaponSkillIdAndLevel(templateId, nil, breakThroughLv, refineLv)
     local toSkillList = fromSkillList
@@ -130,6 +103,9 @@ WeaponSkillNode._RefreshSkillNodeByTemplateId = HL.Method(HL.String, HL.Number, 
         for _, skill in cs_pairs(toSkillList) do
             skill.level = skill.maxLevel
         end
+    end
+    if breakThroughLv and breakThroughLv > 4 then
+        logger.error("WeaponSkillNode->_RefreshSkillNodeByTemplateId: breakThroughLv is greater than 4, breakThroughLv: " .. breakThroughLv)
     end
     local _, descList = CS.Beyond.Gameplay.WeaponUtil.TryGetWeaponSkillDescription(templateId, breakThroughLv, refineLv, isGemMax)
 

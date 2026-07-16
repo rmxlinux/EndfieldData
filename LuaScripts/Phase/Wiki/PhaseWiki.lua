@@ -1,79 +1,5 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.Wiki
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseWiki = HL.Class('PhaseWiki', phaseBase.PhaseBase)
 
 
@@ -134,7 +60,6 @@ local WIKI_ENY_POSE_CONTROLLER_PATH = "Assets/Beyond/DynamicAssets/Gameplay/Pref
 
 
 
-
 PhaseWiki.s_messages = HL.StaticField(HL.Table) << {
     
     
@@ -144,8 +69,6 @@ PhaseWiki.s_messages = HL.StaticField(HL.Table) << {
     
     [MessageConst.SHOW_WIKI_WEAPON_PREVIEW] = { 'OnShowWeaponPreview', false },
 }
-
-
 
 
 
@@ -184,14 +107,9 @@ end
 
 
 
-
-
 PhaseWiki.OnShowWeaponPreview = HL.StaticMethod(HL.Table) << function(args)
     PhaseManager:GoToPhase(PHASE_ID, args)
 end
-
-
-
 
 
 
@@ -205,13 +123,9 @@ end
 
 
 
-
 PhaseWiki.m_isShowBackBtn = HL.Field(HL.Boolean) << false
 
-
 PhaseWiki.m_isSceneInit = HL.Field(HL.Boolean) << false
-
-
 
 
 
@@ -236,20 +150,14 @@ PhaseWiki._OnInit = HL.Override() << function(self)
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 end
 
-
-
 PhaseWiki._OnActivated = HL.Override() << function(self)
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterCinematic()
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(false)
 end
 
-
-
 PhaseWiki._OnDeActivated = HL.Override() << function(self)
 
 end
-
-
 
 PhaseWiki._OnDestroy = HL.Override() << function(self)
     PhaseWiki.Super._OnDestroy(self)
@@ -261,21 +169,15 @@ PhaseWiki._OnDestroy = HL.Override() << function(self)
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(true)
 end
 
-
-
 PhaseWiki._InitAllPhaseItems = HL.Override() << function(self)
     self:_InitSceneRoot()
     self:_OpenByArgs()
 end
 
-
-
 PhaseWiki._OnRefresh = HL.Override() << function(self)
     PhaseWiki.Super._OnRefresh(self)
     self:_OpenByArgs()
 end
-
-
 
 PhaseWiki._OpenByArgs = HL.Method() << function(self)
     self:CreateOrShowPhasePanelItem(PanelId.WikiEmpty)
@@ -294,15 +196,11 @@ PhaseWiki._OpenByArgs = HL.Method() << function(self)
     end
 end
 
-
-
 PhaseWiki.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = lume.deepCopy(self.arg or {})
     arg.resumeState = self:_CollectResumeState()
     return arg
 end
-
-
 
 PhaseWiki._CollectResumeState = HL.Method().Return(HL.Table) << function(self)
     return {
@@ -310,8 +208,6 @@ PhaseWiki._CollectResumeState = HL.Method().Return(HL.Table) << function(self)
         isShowBackBtn = self.m_isShowBackBtn,
     }
 end
-
-
 
 PhaseWiki._CollectVisiblePanelStates = HL.Method().Return(HL.Table) << function(self)
     local panelStates = {}
@@ -386,9 +282,6 @@ PhaseWiki._CollectVisiblePanelStates = HL.Method().Return(HL.Table) << function(
     return panelStates
 end
 
-
-
-
 PhaseWiki._RestoreByResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, resumeState)
     local panelIds = {}
     for _, panelId in ipairs(self.panels) do
@@ -414,9 +307,6 @@ PhaseWiki._RestoreByResumeState = HL.Method(HL.Opt(HL.Any)) << function(self, re
     end
 end
 
-
-
-
 PhaseWiki._RestorePanelState = HL.Method(HL.Table) << function(self, panelState)
     if not panelState or not panelState.panelId then
         return
@@ -429,11 +319,8 @@ PhaseWiki._RestorePanelState = HL.Method(HL.Table) << function(self, panelState)
     if panelId == PanelId.WikiSearch then
         UIManager:SetTopOrder(panelId)
     end
+    arg.resumeState = nil
 end
-
-
-
-
 
 PhaseWiki._SyncWikiStateByPanel = HL.Method(HL.Number, HL.Opt(HL.Any)) << function(self, panelId, arg)
     if panelId == PanelId.WikiGroup or panelId == PanelId.WikiEquipSuit then
@@ -444,9 +331,6 @@ PhaseWiki._SyncWikiStateByPanel = HL.Method(HL.Number, HL.Opt(HL.Any)) << functi
         self.m_currentWikiDetailArgs = arg
     end
 end
-
-
-
 
 PhaseWiki._IsDetailPanelId = HL.Method(HL.Number).Return(HL.Boolean) << function(self, panelId)
     if panelId == PanelId.WikiWeaponPreview then
@@ -464,13 +348,7 @@ end
 
 
 
-
 PhaseWiki.m_hideCamCor = HL.Field(HL.Thread)
-
-
-
-
-
 
 PhaseWiki.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
     self.m_hideCamCor = self:_ClearCoroutine(self.m_hideCamCor)
@@ -480,17 +358,9 @@ PhaseWiki.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Numbe
     end
 end
 
-
-
-
-
 PhaseWiki._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 
 end
-
-
-
-
 
 PhaseWiki._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     if self.m_restoreHyperlinkPopupCallback ~= nil then
@@ -502,10 +372,6 @@ PhaseWiki._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << f
         end
     end)
 end
-
-
-
-
 
 PhaseWiki._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local isRecovering = PhaseManager.isRecovering
@@ -519,6 +385,7 @@ PhaseWiki._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) <
             [PhaseId.FacBuildListSelect] = true,
             [PhaseId.PRTSStoryCollDetail] = true,
             [PhaseId.ManualCraftPopups] = true,
+            [PhaseId.FacDecoObtainWays] = true,
         }
 
         
@@ -529,10 +396,6 @@ PhaseWiki._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) <
     end)
 end
 
-
-
-
-
 PhaseWiki._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 
 end
@@ -541,19 +404,13 @@ end
 
 
 
-
 PhaseWiki.curSearchKeyword = HL.Field(HL.String) << ""
-
 
 PhaseWiki.m_currentWikiGroupArgs = HL.Field(HL.Table)
 
-
 PhaseWiki.m_currentWikiDetailArgs = HL.Field(HL.Table)
 
-
 PhaseWiki.m_restoreHyperlinkPopupCallback = HL.Field(HL.Function)
-
-
 
 PhaseWiki.OpenCategoryByPhaseArgs = HL.Method() << function(self)
     local categoryType = self.arg.categoryType
@@ -564,10 +421,6 @@ PhaseWiki.OpenCategoryByPhaseArgs = HL.Method() << function(self)
     end
     self:OpenCategory(categoryType, wikiDetailArgs)
 end
-
-
-
-
 
 PhaseWiki.OpenCategory = HL.Method(HL.Any, HL.Opt(HL.Table)) << function(self, categoryId, args)
     self.m_currentWikiDetailArgs = args
@@ -607,14 +460,9 @@ PhaseWiki.OpenCategory = HL.Method(HL.Any, HL.Opt(HL.Table)) << function(self, c
     end
 end
 
-
-
-
 PhaseWiki.GetCategoryPanelCfg = HL.Method(HL.String).Return(HL.Table) << function(self, categoryId)
     return WIKI_CATEGORY_TO_PANEL_CFG[categoryId]
 end
-
-
 
 PhaseWiki.ProcessArgs = HL.StaticMethod(HL.Table).Return(HL.String, HL.Table) << function(args)
     if not args then
@@ -674,15 +522,11 @@ end
 
 
 
-
 PhaseWiki.m_sceneRoot = HL.Field(HL.Forward("PhaseGameObjectItem"))
-
 
 PhaseWiki.m_cameraGroup = HL.Field(HL.Forward("PhaseGameObjectItem"))
 
-
 PhaseWiki.m_currentCamera = HL.Field(HL.Table)
-
 
 PhaseWiki.m_lightGroup = HL.Field(HL.Forward("PhaseGameObjectItem"))
 
@@ -690,13 +534,9 @@ PhaseWiki.m_lightGroup = HL.Field(HL.Forward("PhaseGameObjectItem"))
 
 
 
-
 PhaseWiki.m_categorySceneItem = HL.Field(HL.Table)
 
-
 PhaseWiki.m_currentModelCategory = HL.Field(HL.String) << ''
-
-
 
 PhaseWiki._InitSceneRoot = HL.Method() << function(self)
     if self.m_sceneRoot == nil then
@@ -732,9 +572,7 @@ PhaseWiki._InitSceneRoot = HL.Method() << function(self)
 end
 
 
-
 PhaseWiki.m_modelRequestIdLut = HL.Field(HL.Table)
-
 
 
 
@@ -748,24 +586,15 @@ PhaseWiki.m_activeModelGos = HL.Field(HL.Table)
 
 
 
-
 PhaseWiki.m_animatorControllerCache = HL.Field(HL.Table)
-
 
 PhaseWiki.m_buildingRenderer = HL.Field(HL.Userdata)
 
-
 PhaseWiki.m_buildingPhaseItem = HL.Field(HL.Forward("PhaseGameObjectItem"))
-
 
 PhaseWiki.m_weaponDecoBundleList = HL.Field(HL.Table)
 
-
 PhaseWiki.m_monsterEffectList = HL.Field(HL.Table)
-
-
-
-
 
 
 
@@ -785,10 +614,6 @@ PhaseWiki.ShowModel = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(self, wi
         self[showFunc](self, wikiEntryShowData, extraArgs)
     end
 end
-
-
-
-
 
 PhaseWiki._ShowWeaponModel = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(self, wikiEntryShowData, extraArgs)
     self:DestroyModel()
@@ -842,12 +667,7 @@ PhaseWiki._ShowWeaponModel = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(s
     end
 end
 
-
 PhaseWiki.m_curBuildingRendererTemplateId = HL.Field(HL.String) << ''
-
-
-
-
 
 PhaseWiki._ShowBuildingModel = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(self, wikiEntryShowData, extraArgs)
     local rendererTemplateId
@@ -904,10 +724,6 @@ PhaseWiki._ShowBuildingModel = HL.Method(HL.Table, HL.Opt(HL.Table)) << function
         end
     end
 end
-
-
-
-
 
 PhaseWiki._ShowMonsterModel = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(self, wikiEntryShowData, extraArgs)
     self:DestroyModel()
@@ -987,10 +803,22 @@ PhaseWiki._ShowMonsterModel = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(
                         if effectData.followScale then
                             scaleTransform = mountPointHelper
                         end
-                        local effectInstance = GameInstance.effectManager:CreateEffectOnTransform(
+                        local effect = GameInstance.effectManager:CreateEffectOnTransform(
                             effectData.name, mountPointHelper, effectData.followRotation, scaleTransform)
                         self.m_monsterEffectList = self.m_monsterEffectList or {}
-                        table.insert(self.m_monsterEffectList, effectInstance)
+                        table.insert(self.m_monsterEffectList, effect)
+                    end
+                end
+            end
+        end
+
+        if wikiMonsterSpawnData.hideNodeNames and wikiMonsterSpawnData.hideNodeNames.Length > 0 then
+            for i = 0, wikiMonsterSpawnData.hideNodeNames.Length - 1 do
+                local hideNodeName = wikiMonsterSpawnData.hideNodeNames[i]
+                if hideNodeName and not string.isEmpty(hideNodeName) then
+                    local t = enemyModelGo.transform:FindRecursiveWithName(hideNodeName)
+                    if t then
+                        t.gameObject:SetActive(false)
                     end
                 end
             end
@@ -1001,10 +829,6 @@ PhaseWiki._ShowMonsterModel = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(
         end
     end)
 end
-
-
-
-
 
 PhaseWiki._LoadModelAsync = HL.Method(HL.String, HL.Function) << function(self, modelPath, callback)
     local m_modelRequestId
@@ -1040,18 +864,12 @@ PhaseWiki._LoadModelAsync = HL.Method(HL.String, HL.Function) << function(self, 
     end
 end
 
-
-
-
-
 PhaseWiki._SetCameraParams = HL.Method(HL.Userdata, HL.Number) << function(self, vcam, cameraDistance)
     local vcamTransform = vcam.transform
     local cameraPosition = vcamTransform.localPosition
     cameraPosition.z = cameraDistance
     vcamTransform.localPosition = cameraPosition
 end
-
-
 
 PhaseWiki.DestroyModel = HL.Method() << function(self)
     if not self.m_isSceneInit then
@@ -1067,7 +885,7 @@ PhaseWiki.DestroyModel = HL.Method() << function(self)
 
     if self.m_monsterEffectList then
         for _, effect in ipairs(self.m_monsterEffectList) do
-            effect:Finish(true)
+            effect:Lock():Finish(true)
         end
         self.m_monsterEffectList = nil
     end
@@ -1100,18 +918,12 @@ PhaseWiki.DestroyModel = HL.Method() << function(self)
     self.m_curBuildingRendererTemplateId = ''
 end
 
-
-
-
 PhaseWiki.SetSceneScale = HL.Method(HL.Number) << function(self, scale)
     if not self.m_isSceneInit then
         return
     end
     self.m_sceneRoot.view.sceneRoot.transform.localScale = Vector3.one * scale
 end
-
-
-
 
 PhaseWiki.SetSceneOffset = HL.Method(HL.Number) << function(self, offsetY)
     if not self.m_isSceneInit then
@@ -1121,9 +933,6 @@ PhaseWiki.SetSceneOffset = HL.Method(HL.Number) << function(self, offsetY)
     pos.y = offsetY
     self.m_sceneRoot.view.sceneRoot.transform.localPosition = pos
 end
-
-
-
 
 PhaseWiki.RotateModel = HL.Method(HL.Number) << function(self, deltaX)
     if not self.m_isSceneInit then
@@ -1136,8 +945,6 @@ PhaseWiki.RotateModel = HL.Method(HL.Number) << function(self, deltaX)
     end
 end
 
-
-
 PhaseWiki.ResetModelRotateRoot = HL.Method() << function(self)
     if not self.m_isSceneInit then
         return
@@ -1147,18 +954,12 @@ PhaseWiki.ResetModelRotateRoot = HL.Method() << function(self)
     self:ResetModelRotation()
 end
 
-
-
 PhaseWiki.ResetModelRotation = HL.Method() << function(self)
     if not self.m_isSceneInit then
         return
     end
     self.m_sceneRoot.view.modelRotateRoot.transform.localEulerAngles = Vector3.zero
 end
-
-
-
-
 
 PhaseWiki.ActiveModelRotateRoot = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, noResetScene)
     if not self.m_isSceneInit or IsNull(self.m_sceneRoot.go) then
@@ -1182,7 +983,7 @@ PhaseWiki.ActiveModelRotateRoot = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << f
 
     if self.m_monsterEffectList then
         for _, effect in ipairs(self.m_monsterEffectList) do
-            effect:SetVisible(active)
+            effect:Lock():SetVisible(active)
         end
     end
 
@@ -1192,8 +993,6 @@ PhaseWiki.ActiveModelRotateRoot = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << f
         end
     end
 end
-
-
 
 PhaseWiki.ResetScene = HL.Method() << function(self)
     if not self.m_isSceneInit or IsNull(self.m_sceneRoot.go) then
@@ -1206,9 +1005,6 @@ PhaseWiki.ResetScene = HL.Method() << function(self)
     self.m_sceneRoot.view.ground.localScale = self.m_sceneRoot.view.config.DEFAULT_GROUND_SCALE
 end
 
-
-
-
 PhaseWiki.PlayModelRootInAnim = HL.Method(HL.String) << function(self, modelType)
     local animWrapper = modelType == WikiConst.EWikiCategoryType.Building and
         self.m_sceneRoot.view.buildingModelAnimWrapper or
@@ -1216,17 +1012,11 @@ PhaseWiki.PlayModelRootInAnim = HL.Method(HL.String) << function(self, modelType
     animWrapper:Play(MODEL_ROOT_ANIM_NAME[modelType])
 end
 
-
-
-
 PhaseWiki.ActiveEntryVirtualCamera = HL.Method(HL.Boolean) << function(self, active)
     if not IsNull(self.m_currentCamera) and self.m_isSceneInit then
         self.m_currentCamera.vcam_entry.gameObject:SetActive(active)
     end
 end
-
-
-
 
 PhaseWiki.ActiveShowVirtualCamera = HL.Method(HL.Boolean) << function(self, active)
     if not IsNull(self.m_currentCamera) and self.m_isSceneInit then
@@ -1240,9 +1030,6 @@ PhaseWiki.ActiveShowVirtualCamera = HL.Method(HL.Boolean) << function(self, acti
         end
     end
 end
-
-
-
 
 PhaseWiki.ActiveCategorySceneItem = HL.Method(HL.String) << function(self, categoryType)
     if not self.m_isSceneInit then
@@ -1263,9 +1050,6 @@ PhaseWiki.ActiveCategorySceneItem = HL.Method(HL.String) << function(self, categ
     self.m_currentCamera = camera
 end
 
-
-
-
 PhaseWiki.ActiveMainSceneItem = HL.Method(HL.Boolean) << function(self, active)
     if IsNull(self.m_lightGroup.go) or IsNull(self.m_cameraGroup.go) then
         return
@@ -1277,9 +1061,6 @@ PhaseWiki.ActiveMainSceneItem = HL.Method(HL.Boolean) << function(self, active)
     self.m_lightGroup.view.common.gameObject:SetActive(active)
     self.m_cameraGroup.view.main.gameObject:SetActive(active)
 end
-
-
-
 
 PhaseWiki.ActiveCommonSceneItem = HL.Method(HL.Boolean) << function(self, active)
     if IsNull(self.m_lightGroup.go) or IsNull(self.m_cameraGroup.go) then
@@ -1293,11 +1074,7 @@ PhaseWiki.ActiveCommonSceneItem = HL.Method(HL.Boolean) << function(self, active
     self.m_cameraGroup.view.common.gameObject:SetActive(active)
 end
 
-
 PhaseWiki.m_blackBoxEffectActive = HL.Field(HL.Any)
-
-
-
 
 PhaseWiki._ActivateBlackboxEffect = HL.Method(HL.Boolean) << function(self, active)
     if not Utils.isInBlackbox() then
@@ -1315,9 +1092,6 @@ PhaseWiki._ActivateBlackboxEffect = HL.Method(HL.Boolean) << function(self, acti
     GameInstance.remoteFactoryManager.blackboxIntroEffectController.effect:ActivateVFXPPBlackBox(active)
 end
 
-
-
-
 PhaseWiki.PlayDecoAnim = HL.Method(HL.String) << function(self, animName)
     if not self.m_isSceneInit or not self:_CheckAllTransitionDone() then
         return
@@ -1325,9 +1099,6 @@ PhaseWiki.PlayDecoAnim = HL.Method(HL.String) << function(self, animName)
     self.m_sceneRoot.view.decoAnim:ClearTween()
     self.m_sceneRoot.view.decoAnim:Play(animName)
 end
-
-
-
 
 PhaseWiki.PlayBgAnim = HL.Method(HL.String) << function(self, animName)
     if not self.m_isSceneInit then

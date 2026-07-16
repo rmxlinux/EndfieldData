@@ -2,48 +2,9 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WikiEquipSuit
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WikiEquipSuitCtrl = HL.Class('WikiEquipSuitCtrl', uiCtrl.UICtrl)
 
 local SWITCH_ANIM_NAME = "wiki_equipsuit_switch"
-
 
 
 
@@ -53,22 +14,15 @@ WikiEquipSuitCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 WikiEquipSuitCtrl.m_wikiGroupShowDataList = HL.Field(HL.Table)
-
 
 
 
 WikiEquipSuitCtrl.m_categoryType = HL.Field(HL.String) << ""
 
-
 WikiEquipSuitCtrl.m_detailPanelId = HL.Field(HL.Number) << 0
 
-
 WikiEquipSuitCtrl.m_args = HL.Field(HL.Table)
-
-
-
 
 
 
@@ -89,8 +43,6 @@ WikiEquipSuitCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_PlayDecoAnim(true)
 end
 
-
-
 WikiEquipSuitCtrl.OnShow = HL.Override() << function(self)
     if self.m_phase and self.m_phase.m_currentWikiGroupArgs.wikiEntryShowData ~= self.m_args.wikiEntryShowData then
         self:Refresh(self.m_phase.m_currentWikiGroupArgs)
@@ -100,27 +52,18 @@ WikiEquipSuitCtrl.OnShow = HL.Override() << function(self)
     self:_PlayDecoAnim(true)
 end
 
-
-
 WikiEquipSuitCtrl.OnHide = HL.Override() << function(self)
     self:_MarkWikiEntryRead()
 end
-
-
 
 WikiEquipSuitCtrl.OnClose = HL.Override() << function(self)
     self:_MarkWikiEntryRead()
 end
 
-
-
 WikiEquipSuitCtrl._OnPlayAnimationOut = HL.Override() << function(self)
     WikiEquipSuitCtrl.Super._OnPlayAnimationOut(self)
     self:_PlayDecoAnim(false)
 end
-
-
-
 
 
 
@@ -133,8 +76,6 @@ WikiEquipSuitCtrl.Refresh = HL.Method(HL.Table) << function(self, args)
     self:_RefreshTab()
 end
 
-
-
 WikiEquipSuitCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.m_args and lume.deepCopy(self.m_args) or {}
     local selectedGroupData = self.m_wikiGroupShowDataList and self.m_wikiGroupShowDataList[self.m_selectedIndex] or nil
@@ -146,8 +87,6 @@ WikiEquipSuitCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << 
     return arg
 end
 
-
-
 WikiEquipSuitCtrl._RefreshTop = HL.Method() << function(self)
     
     local wikiTopArgs = {
@@ -158,9 +97,6 @@ WikiEquipSuitCtrl._RefreshTop = HL.Method() << function(self)
     self.view.top:InitWikiTop(wikiTopArgs)
 end
 
-
-
-
 WikiEquipSuitCtrl._PlayDecoAnim = HL.Method(HL.Boolean) << function(self, isIn)
     if self.m_phase then
         self.m_phase:PlayDecoAnim(isIn and "wiki_uideco_grouppanel_in" or "wiki_uideco_grouppanel_out")
@@ -169,16 +105,11 @@ end
 
 
 
-
 WikiEquipSuitCtrl.m_getTabCell = HL.Field(HL.Function)
-
 
 WikiEquipSuitCtrl.m_selectedIndex = HL.Field(HL.Number) << 0
 
-
 WikiEquipSuitCtrl.m_ignoreTabListAnim = HL.Field(HL.Boolean) << false
-
-
 
 WikiEquipSuitCtrl._RefreshTab = HL.Method(HL.Opt(HL.Boolean)) << function(self)
     if self.m_getTabCell == nil then
@@ -247,9 +178,6 @@ WikiEquipSuitCtrl._RefreshTab = HL.Method(HL.Opt(HL.Boolean)) << function(self)
     end
 end
 
-
-
-
 WikiEquipSuitCtrl._SetSelectedIndex = HL.Method(HL.Number) << function(self, selectedIndex)
     if self.m_selectedIndex == selectedIndex then
         return
@@ -261,11 +189,6 @@ WikiEquipSuitCtrl._SetSelectedIndex = HL.Method(HL.Number) << function(self, sel
     self:_RefreshRight(wikiGroupShowData)
     self.view.animationWrapper:Play(SWITCH_ANIM_NAME)
 end
-
-
-
-
-
 
 WikiEquipSuitCtrl._SetTabCellSelected = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, cell, isSelected, playAnim)
     if not cell then
@@ -283,29 +206,19 @@ end
 
 
 
-
 WikiEquipSuitCtrl.m_getSuitEffectCell = HL.Field(HL.Function)
-
 
 WikiEquipSuitCtrl.m_getItemCell = HL.Field(HL.Function)
 
-
 WikiEquipSuitCtrl.m_wikiEntryShowDataList = HL.Field(HL.Table)
-
 
 WikiEquipSuitCtrl.m_suitData = HL.Field(HL.Userdata)
 
-
 WikiEquipSuitCtrl.m_ignoreItemListAnim = HL.Field(HL.Boolean) << false
-
 
 WikiEquipSuitCtrl.m_isBackNaviSelected = HL.Field(HL.Boolean) << false
 
-
 WikiEquipSuitCtrl.m_selectedItemIndex = HL.Field(HL.Number) << 0
-
-
-
 
 WikiEquipSuitCtrl._RefreshRight = HL.Method(HL.Table) << function(self, wikiGroupShowData)
     self.view.skillEffectTitleNode:PlayInAnimation()
@@ -384,10 +297,7 @@ end
 
 
 
-
 WikiEquipSuitCtrl.m_readWikiEntries = HL.Field(HL.Table)
-
-
 
 WikiEquipSuitCtrl._MarkWikiEntryRead = HL.Method() << function(self)
     if self.m_readWikiEntries then
@@ -399,9 +309,6 @@ WikiEquipSuitCtrl._MarkWikiEntryRead = HL.Method() << function(self)
         self.m_readWikiEntries = {}
     end
 end
-
-
-
 
 WikiEquipSuitCtrl._GetTabRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
     local luaIndex = LuaIndex(index)
@@ -419,9 +326,6 @@ WikiEquipSuitCtrl._GetTabRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) 
         return 0
     end
 end
-
-
-
 
 WikiEquipSuitCtrl._GetItemRedDotStateAt = HL.Method(HL.Number).Return(HL.Number) << function(self, index)
     local luaIndex = LuaIndex(index)
@@ -444,10 +348,7 @@ end
 
 
 
-
 WikiEquipSuitCtrl.m_naviTabIndex = HL.Field(HL.Number) << 0
-
-
 
 WikiEquipSuitCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
@@ -468,7 +369,7 @@ WikiEquipSuitCtrl._InitController = HL.Method() << function(self)
                     local tabCell = self.m_getTabCell(self.view.scrollListLeft:Get(CSIndex(self.m_naviTabIndex)))
                     self.m_naviTabIndex = 0
                     if tabCell then
-                        UIUtils.setAsNaviTarget(tabCell.btn)
+                        self:SetNaviTarget(tabCell.btn)
                     end
                 end
             end)
@@ -484,21 +385,16 @@ WikiEquipSuitCtrl._InitController = HL.Method() << function(self)
     end
 end
 
-
-
 WikiEquipSuitCtrl._NaviToSelectedItem = HL.Method() << function(self)
     if not DeviceInfo.usingController then
         return
     end
     local selectedItemCell = self.m_getItemCell(self.view.scrollListWeapon:Get(CSIndex(self.m_selectedItemIndex)))
     if not self.m_isBackNaviSelected and selectedItemCell and self.m_args.wikiEntryShowData then
-        UIUtils.setAsNaviTarget(selectedItemCell.view.button)
+        self:SetNaviTarget(selectedItemCell.view.button)
         self.m_isBackNaviSelected = true
     end
 end
-
-
-
 
 WikiEquipSuitCtrl._NaviToSelectedTab = HL.Method(HL.Opt(HL.Number)) << function(self, selectedIndex)
     if not DeviceInfo.usingController then
@@ -510,9 +406,9 @@ WikiEquipSuitCtrl._NaviToSelectedTab = HL.Method(HL.Opt(HL.Number)) << function(
     local selectedTabCell = self.m_getTabCell(self.view.scrollListLeft:Get(CSIndex(selectedIndex)))
     if selectedTabCell then
         if self.m_args.wikiEntryShowData then
-            UIUtils.setAsNaviTargetInSilentModeIfPhaseIsTop(self.view.leftNaviGroup, selectedTabCell.btn, PhaseId.Wiki)
+            self:SetNaviTarget(selectedTabCell.btn)
         else
-            UIUtils.setAsNaviTarget(selectedTabCell.btn)
+            self:SetNaviTarget(selectedTabCell.btn)
         end
     end
 end

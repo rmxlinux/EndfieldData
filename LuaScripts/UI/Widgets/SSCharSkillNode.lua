@@ -1,41 +1,21 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
 SSCharSkillNode = HL.Class('SSCharSkillNode', UIWidgetBase)
-
 
 
 SSCharSkillNode.m_charId = HL.Field(HL.String) << ''
 
-
 SSCharSkillNode.m_skillCells = HL.Field(HL.Forward('UIListCache'))
-
 
 SSCharSkillNode.m_levelUpSkills = HL.Field(HL.Table)
 
-
 SSCharSkillNode.m_canLevelUpState = HL.Field(HL.Boolean) << false
-
-
 
 
 
 SSCharSkillNode._OnFirstTimeInit = HL.Override() << function(self)
     self.m_skillCells = UIUtils.genCellCache(self.view.skillCell)
 end
-
-
-
-
-
 
 
 SSCharSkillNode.InitSSCharSkillNode = HL.Method(HL.String, HL.Opt(HL.String, HL.Boolean)) << function(self, charId, targetRoomId, ignoreControllerCelleHint)
@@ -138,8 +118,6 @@ SSCharSkillNode.InitSSCharSkillNode = HL.Method(HL.String, HL.Opt(HL.String, HL.
     end
 end
 
-
-
 SSCharSkillNode.TriggerSkillHint = HL.Method() << function(self)
     for i, cell in ipairs(self.m_levelUpSkills) do
         cell.upgradeHint.gameObject:SetActive(not cell.upgradeHint.gameObject.activeSelf)
@@ -147,8 +125,6 @@ SSCharSkillNode.TriggerSkillHint = HL.Method() << function(self)
         AudioManager.PostEvent(cell.upgradeHint.gameObject.activeSelf and "Au_UI_Toggle_Common_On" or "Au_UI_Toggle_Common_Off")
     end
 end
-
-
 
 SSCharSkillNode.GetCanLevelUpState = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_canLevelUpState

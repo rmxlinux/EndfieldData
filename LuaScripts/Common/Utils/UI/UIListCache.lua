@@ -11,71 +11,31 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 UIListCache = HL.Class("UIListCache")
 
 do
     
 
-    
     UIListCache.m_items = HL.Field(HL.Table)
 
-    
     UIListCache.m_itemTemplate = HL.Field(HL.Any)
 
-    
     UIListCache.m_wrapFunction = HL.Field(HL.Function)
 
-    
     UIListCache.m_parent = HL.Field(HL.Userdata)
 
-    
     UIListCache.m_count = HL.Field(HL.Number) << 0
 
-    
     UIListCache.m_isPlayingAllOut = HL.Field(HL.Boolean) << false
 
-    
     UIListCache._coroutine = HL.Field(HL.Thread)
 
-    
+    UIListCache.m_ctrlBound = HL.Field(HL.Boolean) << false
+
     
     UIListCache.m_debugParentPath = HL.Field(HL.String) << ""
-    
     UIListCache.m_debugTemplatePath = HL.Field(HL.String) << ""
 end
-
-
-
-
-
 
 
 
@@ -102,12 +62,6 @@ UIListCache.UIListCache = HL.Constructor(HL.Any, HL.Opt(HL.Function, HL.Any)) <<
 
     self.m_itemTemplate.gameObject:SetActive(false)
 end
-
-
-
-
-
-
 
 UIListCache.Refresh = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Boolean, HL.Function)) << function(self, count, refreshFunction, shouldHide, onDisableFunction)
     self.m_count = count
@@ -136,15 +90,9 @@ UIListCache.Refresh = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Boolean, HL.Fu
     end
 end
 
-
-
 UIListCache.GetCount = HL.Method().Return(HL.Number) << function(self)
     return self.m_count or 0
 end
-
-
-
-
 
 
 UIListCache.Init = HL.Method(HL.Number, HL.Opt(HL.Function)) << function(self, count, initFunc)
@@ -158,11 +106,24 @@ UIListCache.Init = HL.Method(HL.Number, HL.Opt(HL.Function)) << function(self, c
 end
 
 
-
-
-
+UIListCache._BoundCoroutineToCtrl = HL.Method() << function(self)
+    if self.m_ctrlBound then
+        return
+    end
+    local luaPanel = self.m_parent:GetComponentInParent(typeof(CS.Beyond.UI.LuaPanel), true)
+    if not luaPanel then
+        return
+    end
+    local _, ctrl = UIManager:IsOpen(luaPanel.panelId)
+    if not ctrl then
+        return
+    end
+    CoroutineManager:RegisterParent(self, ctrl)
+    self.m_ctrlBound = true
+end
 
 UIListCache.RefreshCoroutine = HL.Method(HL.Number, HL.Number, HL.Function) << function(self, count, wait, refreshFunction)
+    self:_BoundCoroutineToCtrl()
     self._coroutine = CoroutineManager:ClearCoroutine(self._coroutine)
     self:Refresh(count, refreshFunction, true)
     self._coroutine = CoroutineManager:StartCoroutine(function()
@@ -173,11 +134,6 @@ UIListCache.RefreshCoroutine = HL.Method(HL.Number, HL.Number, HL.Function) << f
         end
     end, self)
 end
-
-
-
-
-
 
 UIListCache.GetRefreshCoroutine = HL.Method(HL.Number, HL.Number, HL.Function).Return(HL.Function) << function(self, count, wait, refreshFunction)
     return function()
@@ -190,12 +146,8 @@ UIListCache.GetRefreshCoroutine = HL.Method(HL.Number, HL.Number, HL.Function).R
     end
 end
 
-
-
-
-
-
 UIListCache.GraduallyRefresh = HL.Method(HL.Number, HL.Number, HL.Function) << function(self, count, wait, refreshFunction)
+    self:_BoundCoroutineToCtrl()
     self._coroutine = CoroutineManager:ClearCoroutine(self._coroutine)
     self:Refresh(0, nil)
     self._coroutine = CoroutineManager:StartCoroutine(function()
@@ -209,10 +161,6 @@ UIListCache.GraduallyRefresh = HL.Method(HL.Number, HL.Number, HL.Function) << f
         end
     end, self)
 end
-
-
-
-
 
 UIListCache._GenItem = HL.Method(HL.Number, HL.Opt(HL.Boolean)).Return(HL.Any) << function(self, index, shouldHide)
     local item = self.m_items[index]
@@ -259,40 +207,25 @@ UIListCache._GenItem = HL.Method(HL.Number, HL.Opt(HL.Boolean)).Return(HL.Any) <
     return item
 end
 
-
-
-
 UIListCache.GetItem = HL.Method(HL.Number).Return(HL.Any) << function(self, index)
     return self.m_items[index]
 end
-
-
-
 
 UIListCache.Get = HL.Method(HL.Number).Return(HL.Any) << function(self, index)
     return self.m_items[index]
 end
 
-
-
 UIListCache.GetItems = HL.Method().Return(HL.Any) << function(self)
     return self.m_items
 end
-
-
 
 UIListCache.Hide = HL.Method() << function(self)
     self.m_parent.gameObject:SetActive(false)
 end
 
-
-
 UIListCache.Show = HL.Method() << function(self)
     self.m_parent.gameObject:SetActive(true)
 end
-
-
-
 
 UIListCache.PlayAllOut = HL.Method(HL.Opt(HL.Function)) << function(self, callback)
     local count = self:GetCount()
@@ -314,9 +247,6 @@ UIListCache.PlayAllOut = HL.Method(HL.Opt(HL.Function)) << function(self, callba
     end
 end
 
-
-
-
 UIListCache.ClearAllTween = HL.Method(HL.Boolean) << function(self, executeCallback)
     if self.m_isPlayingAllOut then
         local count = self:GetCount()
@@ -330,8 +260,6 @@ UIListCache.ClearAllTween = HL.Method(HL.Boolean) << function(self, executeCallb
     self.m_isPlayingAllOut = false
 end
 
-
-
 UIListCache.ClearAll = HL.Method() << function(self)
     self._coroutine = CoroutineManager:ClearCoroutine(self._coroutine)
     self:ClearAllTween(true)
@@ -344,17 +272,12 @@ UIListCache.ClearAll = HL.Method() << function(self)
     self.m_count = 0
 end
 
-
-
-
 UIListCache.Update = HL.Method(HL.Function) << function(self, updateFunc)
     for k = 1, self.m_count do
         local item = self.m_items[k]
         updateFunc(item, k)
     end
 end
-
-
 
 UIListCache.OnClose = HL.Method() << function(self)
     self._coroutine = CoroutineManager:ClearCoroutine(self._coroutine)

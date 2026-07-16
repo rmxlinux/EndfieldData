@@ -1,43 +1,21 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SettlementSwitchRegionPopup
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SettlementSwitchRegionPopupCtrl = HL.Class('SettlementSwitchRegionPopupCtrl', uiCtrl.UICtrl)
-
 
 SettlementSwitchRegionPopupCtrl.m_curDomainId = HL.Field(HL.String) << ""
 
-
 SettlementSwitchRegionPopupCtrl.m_curSelectDomainId = HL.Field(HL.String) << ""
-
 
 SettlementSwitchRegionPopupCtrl.m_arg = HL.Field(HL.Table)
 
-
 SettlementSwitchRegionPopupCtrl.m_unlockedDomainIds = HL.Field(HL.Table)
-
 
 SettlementSwitchRegionPopupCtrl.m_regionCells = HL.Field(HL.Forward("UIListCache"))
 
-
 SettlementSwitchRegionPopupCtrl.m_curSelectIndex = HL.Field(HL.Number) << 0
 
-
 SettlementSwitchRegionPopupCtrl.m_activityInfo = HL.Field(HL.Table)
-
 
 
 
@@ -48,11 +26,7 @@ SettlementSwitchRegionPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 SettlementSwitchRegionPopupCtrl.m_regionRedDotName = HL.Field(HL.String) << ""
-
-
-
 
 SettlementSwitchRegionPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_arg = arg or {}
@@ -113,7 +87,7 @@ SettlementSwitchRegionPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self,
         if arg.onConfirm then
             arg.onConfirm(self.m_curSelectDomainId)
         end
-        UIManager:Close(PANEL_ID)
+        self:PlayAnimationOutAndClose()
     end)
 
     self.m_regionCells = UIUtils.genCellCache(self.view.regionTemplate)
@@ -121,8 +95,6 @@ SettlementSwitchRegionPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
     self.m_arg.resumeState = nil
 end
-
-
 
 SettlementSwitchRegionPopupCtrl._RefreshRegionCells = HL.Method() << function(self)
     
@@ -175,16 +147,12 @@ SettlementSwitchRegionPopupCtrl._RefreshRegionCells = HL.Method() << function(se
     end)
 end
 
-
-
 SettlementSwitchRegionPopupCtrl.OnAnimationInFinished = HL.Override() << function(self)
     local firstCell = self.m_regionCells:Get(self.m_curSelectIndex)
     if firstCell then
-        InputManagerInst.controllerNaviManager:SetTarget(firstCell.button)
+        self:SetNaviTarget(firstCell.button)
     end
 end
-
-
 
 SettlementSwitchRegionPopupCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     return {

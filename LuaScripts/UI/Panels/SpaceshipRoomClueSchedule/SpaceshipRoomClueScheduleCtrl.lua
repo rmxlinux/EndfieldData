@@ -1,33 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipRoomClueSchedule
 local PHASE_ID = PhaseId.SpaceshipRoomClueSchedule
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipRoomClueScheduleCtrl = HL.Class('SpaceshipRoomClueScheduleCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -38,52 +12,35 @@ SpaceshipRoomClueScheduleCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 SpaceshipRoomClueScheduleCtrl.m_getFriendCell = HL.Field(HL.Function)
-
 
 SpaceshipRoomClueScheduleCtrl.m_requestHandle = HL.Field(HL.Number) << -1
 
-
 SpaceshipRoomClueScheduleCtrl.m_requestTime = HL.Field(HL.Number) << 1
-
 
 SpaceshipRoomClueScheduleCtrl.m_requestIdList = HL.Field(HL.Table)
 
-
 SpaceshipRoomClueScheduleCtrl.m_needRequestIdDict = HL.Field(HL.Table)
-
 
 SpaceshipRoomClueScheduleCtrl.m_alreadyRequestIdDict = HL.Field(HL.Table)
 
-
 SpaceshipRoomClueScheduleCtrl.m_requestLuaIndex = HL.Field(HL.Number) << 1
-
 
 SpaceshipRoomClueScheduleCtrl.m_showFriendIds = HL.Field(HL.Table)
 
-
 SpaceshipRoomClueScheduleCtrl.m_csIndex2Cell = HL.Field(HL.Table)
-
 
 SpaceshipRoomClueScheduleCtrl.m_friendJumpInAction = HL.Field(HL.Number) << -1
 
-
 SpaceshipRoomClueScheduleCtrl.m_friendJumpOutAction = HL.Field(HL.Number) << -1
-
 
 SpaceshipRoomClueScheduleCtrl.m_inFriendGroup = HL.Field(HL.Boolean) << false
 
-
 SpaceshipRoomClueScheduleCtrl.m_recoverControllerInfo = HL.Field(HL.Boolean) << false
-
 
 SpaceshipRoomClueScheduleCtrl.m_controllerFocusCsIndex = HL.Field(HL.Number) << -1
 
 local RequestBatchNum = 10
-
-
-
 
 
 
@@ -155,7 +112,7 @@ SpaceshipRoomClueScheduleCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
                 local cell = self.m_csIndex2Cell[csIndex]
                 if cell ~= nil then
                     self.view.scrollListSelectableNaviGroup:ManuallyFocus()
-                    InputManagerInst.controllerNaviManager:SetTarget(cell.contactFriendCell.view.button)
+                    self:SetNaviTarget(cell.contactFriendCell.view.button)
                     self.m_inFriendGroup = true
                     self.view.closeButton.enabled = false
                     self.view.inviteButton.enabled = false
@@ -191,8 +148,6 @@ SpaceshipRoomClueScheduleCtrl.OnCreate = HL.Override(HL.Any) << function(self, a
     end
 end
 
-
-
 SpaceshipRoomClueScheduleCtrl._HandleFriendInfo = HL.Method() << function(self)
     self.m_requestIdList = {}
 
@@ -218,8 +173,6 @@ SpaceshipRoomClueScheduleCtrl._HandleFriendInfo = HL.Method() << function(self)
     end
 end
 
-
-
 SpaceshipRoomClueScheduleCtrl.UpdateFriendCells = HL.Method() << function(self)
     self.view.stateNode:SetState("Normal")
     self.m_csIndex2Cell = {}
@@ -227,10 +180,6 @@ SpaceshipRoomClueScheduleCtrl.UpdateFriendCells = HL.Method() << function(self)
     InputManagerInst:ToggleBinding(self.m_friendJumpInAction, true)
     InputManagerInst:ToggleBinding(self.m_friendJumpOutAction, false)
 end
-
-
-
-
 
 SpaceshipRoomClueScheduleCtrl._UpdateFriendCell = HL.Method(HL.Any, HL.Number) << function(self, cell, csIndex)
     local luaIndex = LuaIndex(csIndex)
@@ -294,9 +243,6 @@ SpaceshipRoomClueScheduleCtrl._UpdateFriendCell = HL.Method(HL.Any, HL.Number) <
 
 end
 
-
-
-
 SpaceshipRoomClueScheduleCtrl._RequestTick = HL.Method(HL.Number) << function(self, deltaTime)
     self.m_requestTime = self.m_requestTime + deltaTime
     if self.m_requestTime < 1 then
@@ -317,8 +263,6 @@ SpaceshipRoomClueScheduleCtrl._RequestTick = HL.Method(HL.Number) << function(se
 end
 
 
-
-
 SpaceshipRoomClueScheduleCtrl._SyncSocialFriendInfoPost = HL.Method() << function(self)
     local res = self.view.scrollList:GetShowRange()
     for csIndex = res.x, res.y do
@@ -334,8 +278,6 @@ SpaceshipRoomClueScheduleCtrl._SyncSocialFriendInfoPost = HL.Method() << functio
     end
 end
 
-
-
 SpaceshipRoomClueScheduleCtrl._GetNextPageNotInitIds = HL.Method().Return(HL.Table) << function(self)
     local ids = {}
     for i = 1, RequestBatchNum do
@@ -350,13 +292,9 @@ SpaceshipRoomClueScheduleCtrl._GetNextPageNotInitIds = HL.Method().Return(HL.Tab
     return ids
 end
 
-
-
 SpaceshipRoomClueScheduleCtrl.ShowSpaceshipClueSchedule = HL.StaticMethod(HL.Opt(HL.Table)) << function(args)
     PhaseManager:OpenPhase(PHASE_ID)
 end
-
-
 
 SpaceshipRoomClueScheduleCtrl.OnClose = HL.Override() << function(self)
     if self.m_requestHandle > 0 then

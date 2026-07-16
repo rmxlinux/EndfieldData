@@ -9,7 +9,6 @@ ShopCreditCtrl = HL.Class('ShopCreditCtrl', uiCtrl.UICtrl)
 
 
 
-
 ShopCreditCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }

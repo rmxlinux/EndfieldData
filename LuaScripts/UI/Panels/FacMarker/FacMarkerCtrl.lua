@@ -2,17 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacMarker
 
-
-
-
-
-
-
-
-
-
 FacMarkerCtrl = HL.Class('FacMarkerCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -23,20 +13,13 @@ FacMarkerCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacMarkerCtrl.m_uiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo)
-
 
 FacMarkerCtrl.m_nodeId = HL.Field(HL.Number) << -1
 
-
 FacMarkerCtrl.m_selectedIconKey = HL.Field(HL.Table)
 
-
 FacMarkerCtrl.m_selectedIcon = HL.Field(HL.Table)
-
-
-
 
 
 FacMarkerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -67,9 +50,9 @@ FacMarkerCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_UpdateSelectedIcon()
     self:_UpdateSignBuildingCount()
+
+    self.view.buildingCommon.view.buttonsNaviGroup:NaviToThisGroup()
 end
-
-
 
 
 
@@ -102,8 +85,6 @@ FacMarkerCtrl._UpdateSelectedIcon = HL.Method() << function(self)
     end
     self.view.tipsTxt.text = combineText
 end
-
-
 
 FacMarkerCtrl._UpdateSignBuildingCount = HL.Method() << function(self)
     local count = FactoryUtils.getPlayerAllMarkerBuildingNodeInfo()

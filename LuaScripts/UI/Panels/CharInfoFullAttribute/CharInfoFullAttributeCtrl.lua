@@ -1,26 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharInfoFullAttribute
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharInfoFullAttributeCtrl = HL.Class('CharInfoFullAttributeCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -32,27 +13,18 @@ CharInfoFullAttributeCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 do 
-    
     CharInfoFullAttributeCtrl.m_charInfo = HL.Field(HL.Table)
 
-    
     CharInfoFullAttributeCtrl.m_fcAttrCellCache = HL.Field(HL.Forward("UIListCache"))
 
-    
     CharInfoFullAttributeCtrl.m_scMainAttrCellCache = HL.Field(HL.Forward("UIListCache"))
 
-    
     CharInfoFullAttributeCtrl.m_scSubAttrCellCache = HL.Field(HL.Forward("UIListCache"))
 
-    
     CharInfoFullAttributeCtrl.m_singleFcAttrHintShowing = HL.Field(HL.Boolean) << false
 
-    
     CharInfoFullAttributeCtrl.m_onClose = HL.Field(HL.Function)
 end
-
-
-
 
 
 
@@ -88,16 +60,11 @@ CharInfoFullAttributeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     UIUtils.bindHyperlinkPopup(self, "charInfoFullAttr", self.view.inputGroup.groupId)
 end
 
-
-
 CharInfoFullAttributeCtrl.OnClose = HL.Override() << function(self)
     if self.m_onClose then
         self.m_onClose()
     end
 end
-
-
-
 
 CharInfoFullAttributeCtrl._RefreshCharBasicInfo = HL.Method(HL.Table) << function(self, charInfo)
     local templateId = charInfo.templateId
@@ -110,9 +77,6 @@ CharInfoFullAttributeCtrl._RefreshCharBasicInfo = HL.Method(HL.Table) << functio
     self.view.professionText.text = professionCfg.name
     self.view.professionIcon:LoadSprite(UIConst.UI_SPRITE_CHAR_PROFESSION, CharInfoUtils.getCharProfessionIconName(charCfg.profession))
 end
-
-
-
 
 CharInfoFullAttributeCtrl._RefreshCharAttributeInfo = HL.Method(HL.Table) << function(self, charInfo)
     local charInstId = charInfo.instId
@@ -139,13 +103,6 @@ CharInfoFullAttributeCtrl._RefreshCharAttributeInfo = HL.Method(HL.Table) << fun
         self:_RefreshSCSubAttrCell(#scSubAttrShowList, index, cell, showInfo, charInfo)
     end)
 end
-
-
-
-
-
-
-
 
 CharInfoFullAttributeCtrl._RefreshFCAttrCell = HL.Method(HL.Any, HL.Number, HL.Table, HL.Boolean, HL.Boolean) << function(self, cell, index, showInfo, isMainAttrType, isSubAttrType)
     cell.fcMainAttr.gameObject:SetActive(isMainAttrType)
@@ -187,14 +144,9 @@ CharInfoFullAttributeCtrl._RefreshFCAttrCell = HL.Method(HL.Any, HL.Number, HL.T
     end)
 
     if DeviceInfo.usingController and index == 1 then
-        InputManagerInst.controllerNaviManager:SetTarget(realAttrCell.button)
+        self:SetNaviTarget(realAttrCell.button)
     end
 end
-
-
-
-
-
 
 CharInfoFullAttributeCtrl._RefreshSCMainAttrCell = HL.Method(HL.Any, HL.Table, HL.Table) << function(self, cell, showInfo, charInfo)
     local hasIconName = not string.isEmpty(showInfo.iconName)
@@ -227,11 +179,6 @@ CharInfoFullAttributeCtrl._RefreshSCMainAttrCell = HL.Method(HL.Any, HL.Table, H
         self:_RefreshAttrDetailExpandState(cell, showInfo, charInfo)  
     end
 end
-
-
-
-
-
 
 CharInfoFullAttributeCtrl._RefreshAttrDetailExpandState = HL.Method(HL.Any, HL.Table, HL.Table) << function(self, cell, showInfo, charInfo)
     if cell.detailNode.gameObject.activeSelf then
@@ -322,12 +269,6 @@ CharInfoFullAttributeCtrl._RefreshAttrDetailExpandState = HL.Method(HL.Any, HL.T
     end
 end
 
-
-
-
-
-
-
 CharInfoFullAttributeCtrl._RefreshSCSubAttrCell = HL.Method(HL.Number, HL.Number, HL.Any, HL.Table, HL.Table) << function(self, listCount, index, cell, showInfo)
     local hasIconName = not string.isEmpty(showInfo.iconName)
     cell.attributeIcon.gameObject:SetActive(hasIconName)
@@ -357,11 +298,6 @@ CharInfoFullAttributeCtrl._RefreshSCSubAttrCell = HL.Method(HL.Number, HL.Number
         end)
     end
 end
-
-
-
-
-
 
 
 
@@ -399,8 +335,6 @@ CharInfoFullAttributeCtrl._ShowAttributeHint = HL.Method(HL.Any, HL.Table, HL.Bo
 
     hintNode.transform:SetParent(self.view.transform)
 end
-
-
 
 
 

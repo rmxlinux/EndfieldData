@@ -4,34 +4,6 @@ local PANEL_ID = PanelId.GuideLimited
 local LimitedGuideType = CS.Beyond.Gameplay.LimitedGuideType
 local LimitedGuideIconType = CS.Beyond.Gameplay.LimitedGuideIconType
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GuideLimitedCtrl = HL.Class('GuideLimitedCtrl', uiCtrl.UICtrl)
 
 local INITIAL_GUIDE_ID = 1
@@ -45,39 +17,27 @@ local ICON_TYPE_TO_ICON_NAME = {
     [LimitedGuideIconType.Battle] = "icon_limited_guide_battle",
 }
 
-
 GuideLimitedCtrl.m_showQueue = HL.Field(HL.Forward("Queue"))
-
 
 GuideLimitedCtrl.m_guideInfoMap = HL.Field(HL.Table)
 
-
 GuideLimitedCtrl.m_nextGuideId = HL.Field(HL.Number) << 1
-
 
 GuideLimitedCtrl.m_showUpdate = HL.Field(HL.Number) << -1
 
-
 GuideLimitedCtrl.m_updateValid = HL.Field(HL.Boolean) << true
-
 
 GuideLimitedCtrl.m_delayShowTimer = HL.Field(HL.Number) << -1
 
-
 GuideLimitedCtrl.m_progressWidth = HL.Field(HL.Number) << -1
-
 
 GuideLimitedCtrl.m_isShowing = HL.Field(HL.Boolean) << false
 
-
 GuideLimitedCtrl.m_isMainVisible = HL.Field(HL.Boolean) << false
-
 
 GuideLimitedCtrl.m_controllerKeyCode = HL.Field(HL.Userdata)
 
-
 GuideLimitedCtrl.s_waitReadGuideWikiEntry = HL.StaticField(HL.String) << ""
-
 
 GuideLimitedCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CLEAR_LIMITED_GUIDE] = '_OnClearLimitedGuide',
@@ -85,9 +45,6 @@ GuideLimitedCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_GUIDE_LEAVE_NARRATIVE] = '_RefreshMainVisibleState',
     [MessageConst.ON_CLEAR_SCREEN_STATE_CHANGED] = '_RefreshMainVisibleState',
 }
-
-
-
 
 
 GuideLimitedCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -105,20 +62,13 @@ GuideLimitedCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 GuideLimitedCtrl.OnClose = HL.Override() << function(self)
     self.m_showUpdate = LuaUpdate:Remove(self.m_showUpdate)
 end
 
-
-
-
 GuideLimitedCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, isActive)
     self.m_updateValid = isActive
 end
-
-
 
 GuideLimitedCtrl.OnWikiEntryRead = HL.StaticMethod(HL.Any) << function(arg)
     local wikiEntryId = unpack(arg)
@@ -129,8 +79,6 @@ GuideLimitedCtrl.OnWikiEntryRead = HL.StaticMethod(HL.Any) << function(arg)
     Notify(MessageConst.ON_LIMITED_GUIDE_WIKI_ENTRY_READ_STATE_CHANGE)
 end
 
-
-
 GuideLimitedCtrl.OnShowLimitedGuide = HL.StaticMethod(HL.Any) << function(args)
     local guideInfo = unpack(args)
     if guideInfo == nil then
@@ -140,9 +88,6 @@ GuideLimitedCtrl.OnShowLimitedGuide = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = UIManager:AutoOpen(PANEL_ID)
     ctrl:TryShowLimitedGuide(guideInfo)
 end
-
-
-
 
 GuideLimitedCtrl.TryShowLimitedGuide = HL.Method(HL.Any) << function(self, guideInfo)
     if self.m_isShowing and guideInfo.needIgnoreWhenConflict then
@@ -160,9 +105,6 @@ GuideLimitedCtrl.TryShowLimitedGuide = HL.Method(HL.Any) << function(self, guide
 
     self.m_showQueue:Push(guideId)
 end
-
-
-
 
 GuideLimitedCtrl._StartShowLimitedGuide = HL.Method(HL.Number) << function(self, guideId)
     local guideInfo = self.m_guideInfoMap[guideId]
@@ -213,10 +155,6 @@ GuideLimitedCtrl._StartShowLimitedGuide = HL.Method(HL.Number) << function(self,
     self:_RefreshMainVisibleState()
 end
 
-
-
-
-
 GuideLimitedCtrl._StopShowLimitedGuide = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, guideId, forceStop)
     self:_RefreshProgressFillState(1)
     self.m_showUpdate = LuaUpdate:Remove(self.m_showUpdate)
@@ -248,9 +186,6 @@ GuideLimitedCtrl._StopShowLimitedGuide = HL.Method(HL.Number, HL.Opt(HL.Boolean)
     end
 end
 
-
-
-
 GuideLimitedCtrl._RefreshMainVisibleState = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     local isVisible = true
 
@@ -279,9 +214,6 @@ GuideLimitedCtrl._RefreshMainVisibleState = HL.Method(HL.Opt(HL.Any)) << functio
     self.m_isMainVisible = isVisible
 end
 
-
-
-
 GuideLimitedCtrl._RefreshDisplayState = HL.Method(HL.Number) << function(self, guideId)
     local guideInfo = self.m_guideInfoMap[guideId]
     if guideInfo == nil then
@@ -297,9 +229,6 @@ GuideLimitedCtrl._RefreshDisplayState = HL.Method(HL.Number) << function(self, g
     end
 end
 
-
-
-
 GuideLimitedCtrl._RefreshProgressFillState = HL.Method(HL.Number) << function(self, percent)
     if IsNull(self.view.progressLine) then
         return
@@ -309,8 +238,6 @@ GuideLimitedCtrl._RefreshProgressFillState = HL.Method(HL.Number) << function(se
     currentWidth = math.max(currentWidth, 0)
     UIUtils.setSizeDeltaX(self.view.progressLine, currentWidth)
 end
-
-
 
 GuideLimitedCtrl._OnClickButton = HL.Method() << function(self)
     if self.m_showQueue:Empty() then
@@ -332,8 +259,6 @@ GuideLimitedCtrl._OnClickButton = HL.Method() << function(self)
     self:_StopShowLimitedGuide(guideId)
 end
 
-
-
 GuideLimitedCtrl._OnClearLimitedGuide = HL.Method() << function(self)
     if self.m_showQueue:Empty() then
         return
@@ -349,26 +274,16 @@ end
 
 
 
-
-
-
 GuideLimitedCtrl._ShowWikiEntry = HL.Method(HL.String) << function(self, wikiId)
     Notify(MessageConst.SHOW_WIKI_ENTRY, {
         wikiEntryId = wikiId,
     })
 end
 
-
-
-
 GuideLimitedCtrl._GetIconSprite = HL.Method(HL.Userdata).Return(HL.Userdata) << function(self, iconType)
     local iconName = ICON_TYPE_TO_ICON_NAME[iconType]
     return self:LoadSprite(UIConst.UI_SPRITE_LIMITED_GUIDE, iconName)
 end
-
-
-
-
 
 
 

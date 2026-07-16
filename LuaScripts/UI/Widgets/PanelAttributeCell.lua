@@ -1,19 +1,10 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
 PanelAttributeCell = HL.Class('PanelAttributeCell', UIWidgetBase)
-
 
 PanelAttributeCell.info = HL.Field(HL.Table)
 
-
 PanelAttributeCell.data = HL.Field(HL.Userdata)
-
-
 
 
 
@@ -21,9 +12,6 @@ PanelAttributeCell.data = HL.Field(HL.Userdata)
 PanelAttributeCell._OnFirstTimeInit = HL.Override() << function(self)
     
 end
-
-
-
 
 
 

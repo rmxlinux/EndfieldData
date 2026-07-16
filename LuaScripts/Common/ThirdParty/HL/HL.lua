@@ -1037,7 +1037,6 @@ HL.DumpUncommited  = function()
 end
 
 
-
 HyperLuaObject = HL.Class("HyperLua.Object")
 do
     
@@ -1123,23 +1122,14 @@ end
 local HLExternalTypeSystem = HL.Class("HLExternalTypeSystem")
 do
     
-    
-    
-    
     HLExternalTypeSystem.IsExternalType = HL.Virtual(HL.Any).Return(HL.Opt(HL.String)) << function(self, typeToTest)
         return nil
     end
 
-    
-    
-    
-    
     HLExternalTypeSystem.IsExternalInstance = HL.Virtual(HL.Userdata, HL.Any).Return(HL.Boolean) << function(self, instanceToTest, type)
         return false
     end
 
-    
-    
     HLExternalTypeSystem.Register = HL.Method() << function(self)
         AddExternalTypeSys(self)
     end

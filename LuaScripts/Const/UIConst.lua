@@ -58,18 +58,26 @@ UI_SPRITE_EQUIPMENT_LOGO_BIG_WHITE = "EquipmentLogoBigWhite"
 UI_SPRITE_SKILL_ICON = "SkillIcon"
 UI_SPRITE_CHAR_HEAD = "CharRoundIcon"
 UI_SPRITE_CHAR_HEAD_RECTANGLE = "CharIcon"
+UI_SPRITE_CHAR_PORTRAIT = "CharacterPortrait"
 UI_SPRITE_ITEM_DEFAULT_ICON = "item_default"
 UI_SPRITE_ACTIVITY = "Activity"
 UI_SPRITE_ACTIVITY_BENEFITS = "Activity/RewardShow"
 UI_SPRITE_ACTIVITY_HIGH_DIFFICULTY = "Activity/HighDifficulty"
+UI_SPRITE_ACTIVITY_PUSH_BG = "Activity/PushBg"
 UI_SPRITE_HIGH_DIFFICULTY = "HighDifficulty"
 UI_CHAR_TALENT_ICON = "CharTalent"
+UI_SPRITE_MINIGAME_BALLOON = "BalloonMinigame"
 
 UI_SPRITE_GACHA = "Gacha"
 UI_SPRITE_GACHA_CHAR_SHADOW = "GachaShadow"
 UI_SPRITE_GACHA_CHAR = "CharGacha"
 UI_SPRITE_GACHA_POOL = "GachaPool"
 UI_SPRITE_GACHA_WEAPON = "GachaWeapon"
+
+UI_VIDEO_ACTIVITY = "Activity/"
+UI_VIDEO_SKIP_CHAPTER = "SkipChapter/"
+UI_VIDEO_GACHA = "Gacha/"
+UI_VIDEO_SNAPSHOT = "Snapshot/"
 
 UI_SPRITE_AI_BARK_CHAR_HEAD = "AiBark/AiBarkCharicon"
 UI_SPRITE_VIDEO_COVER = "VideoCover"
@@ -84,6 +92,7 @@ UI_SPRITE_PRTS_ICON = "PRTS/Icon"
 UI_SPRITE_SKETCH = "Sketch"
 UI_SPRITE_WIKI_MONSTER = "Wiki/MonsterImage"
 UI_SPRITE_CROP = "Factory/Crop"
+UI_SPRITE_FAC_GAS = "Factory/Gas"
 UI_SPRITE_SS_SKILL_ICON = "Spaceship/SpaceshipSkillIcon"
 UI_SPRITE_SS_CLUE_ICON = "Spaceship/SpaceshipGuestroom"
 UI_SPRITE_SS_COMMON = "Spaceship/SpaceshipCommon"
@@ -102,6 +111,7 @@ UI_SPRITE_COMMON_POI_UPGRADE_TOAST = "POI/Toast"
 UI_MINIGAME_PUZZLE_GREY_BLOCK_SUFFIX = "_block"
 
 UI_SPRITE_DUNGEON = "Dungeon"
+UI_SPRITE_SEASONTOWER = "SeasonTower"
 
 UI_SPRITE_BLUEPRINT = "FacBlueprint"
 
@@ -188,6 +198,7 @@ UI_SPRITE_SNAPSHOT = "Snapshot"
 UI_SPRITE_SNAPSHOT_FILTER = "Snapshot/Filter"
 UI_SPRITE_SNAPSHOT_STICKER = "Snapshot/Sticker"
 UI_SPRITE_SNAPSHOT_CHALLENGE = "Snapshot/Challenge"
+UI_SPRITE_SNAPSHOT_ACTION = "Snapshot/Action"
 SNAPSHOT_FILTER_VOLUME_PATH = "Assets/Beyond/DynamicAssets/Gameplay/Snapshot/Filter/Volume/%s.prefab"
 
 
@@ -248,6 +259,7 @@ FACTORY_DEPOT_SHOWING_TYPES = {
     GEnums.ItemShowingType.Nurturance,
     GEnums.ItemShowingType.Usable,
     GEnums.ItemShowingType.Producer,
+    GEnums.ItemShowingType.PortableDevice,
 }
 
 do
@@ -322,6 +334,7 @@ do
             GEnums.ItemType.SpecialBuilding,
             GEnums.ItemType.TDBuilding,
             GEnums.ItemType.Logistics,
+            GEnums.ItemType.DecorateBuildingItem,
         },
     }
 
@@ -464,10 +477,13 @@ UI_SPRITE_SHOP_GROUP_BAG = "Shop/ShopGroupBag"
 UI_SPRITE_SHOP_MONTHLY_PASS = "Shop/ShopMonthlyPass"
 UI_SPRITE_DOMAIN_ICON = "DomainDepot"
 UI_SPRITE_SHOP_COMMON = "Shop/ShopCommon"
+UI_SPRITE_SPACESHIP_MUSIC_PLAYER = "MusicPlayer"
 
 UI_SPRITE_CONTINGENCY_CONTRACT = "ContingencyContract"
 UI_SPRITE_CONTINGENCY_CONTRACT_HUD = "ContingencyContract/Hud"
 UI_SPRITE_CONTINGENCY_CONTRACT_BUFF = "ContingencyContract/Buff"
+
+UI_SPRITE_REFLOW = "ReflowFormal"
 
 COMMON_UI_TIME_UPDATE_INTERVAL = 1
 FAC_COMMON_UI_UPDATE_INTERVAL = 0.1
@@ -533,6 +549,7 @@ UI_TIPS_POS_TYPE = {
     DailyAbsentRightTop = 14, 
     LeftTopOrRightTop = 15, 
     RightTopOrLeftTop = 16, 
+    LeftAlignBottom = 17, 
 }
 
 UI_TIPS_X_POS_TYPE = {
@@ -1173,13 +1190,15 @@ TACTICAL_ITEM_SORT_OPTION = {
 CHAR_FORMATION_LIST_SORT_OPTION = {
     {
         name = Language.LUA_CHAR_SORT_1, 
-        keys = { "slotIndex", "level", "rarity", "ownTime", "sortOrder", "templateId" },
-        reverseKeys = { "slotReverseIndex", "level", "rarity", "ownTime", "sortOrder", "templateId" },
+        
+        
+        keys = { "slotIndex", "replaceablePriorityReverse", "level", "rarity", "ownTime", "sortOrder", "templateId" },
+        reverseKeys = { "slotReverseIndex", "replaceablePriority", "level", "rarity", "ownTime", "sortOrder", "templateId" },
     },
     {
         name = Language.LUA_CHAR_SORT_2, 
-        keys = { "slotIndex", "rarity", "level", "ownTime", "sortOrder", "templateId" },
-        reverseKeys = { "slotReverseIndex", "rarity", "level", "ownTime", "sortOrder", "templateId" },
+        keys = { "slotIndex", "replaceablePriorityReverse", "rarity", "level", "ownTime", "sortOrder", "templateId" },
+        reverseKeys = { "slotReverseIndex", "replaceablePriority", "rarity", "level", "ownTime", "sortOrder", "templateId" },
     },
 }
 
@@ -1206,6 +1225,11 @@ SS_PICTURE_SORT_OPTION = {
         name = Language.LUA_POTENTIAL_LEVEL, 
         keys = {"selectSlot", "charPhotoCount", "charRarity", "photoLevel", "charSortOrder", "innerIndexReversal"},
         reverseKeys = {"selectSlotReverse", "charPhotoCount", "charRarityReversal", "photoLevel", "charSortOrder", "innerIndex"},
+    },
+    {
+        name = Language.LUA_POTENTIAL_UNLOCK_TIME, 
+        keys = {"selectSlot", "unlockTime", "charRarity", "charSortOrder", "innerIndexReversal"},
+        reverseKeys = {"selectSlotReverse", "unlockTime", "charRarityReversal", "charSortOrder", "innerIndex"},
     },
 }
 
@@ -1423,6 +1447,9 @@ CHAPTER_ICON_CONFIGS = {
     },
 }
 
+WORLD_LEVEL_CONDITION_TAG_ICON_FOLDER = "WorldLevelConditionTag"
+WORLD_LEVEL_CONDITION_TAG_ICON_FORMAT = "icon_world_level_condition_chapter_%s"
+
 FAC_TRANS_DOMAIN_ICONS = {
     ["domain_1"] = "icon_transfer_site_valley_iv",
     ["domain_2"] = "icon_transfer_site_kam_lung",
@@ -1602,12 +1629,6 @@ DOMAIN_DEPOT_BACKGROUND_STAGES = {
     FinishSelectBuyer = 3,
 }
 
-HIDE_CAMERA_PANEL_STATE = {
-    In = 1,
-    Idle = 2,
-    Out = 3,
-}
-
 ITEM_BAG_QUICK_STASH_USEFUL_ITEMS = {
     ["item_fbottle_glass_water"] = true,
     ["item_fbottle_glass_xiranite"] = true,
@@ -1637,4 +1658,17 @@ UI_RESTORE_PHASE_BLACKLIST = {
     ["RegionMap"] = true,
     ["Watch"] = true,
     ["Dialog"] = true,
+    ["BalloonInteractive"] = true,
+}
+
+UI_TEXT_LINK_TYPE = {
+    Default = "default",
+    Narrative = "narrative",
+    Hyperlink = "hyperlink",
+}
+
+UI_TEXT_LINK_MOUSE_ICON = {
+    [UI_TEXT_LINK_TYPE.Default] = MOUSE_ICON_HINT.Default,
+    [UI_TEXT_LINK_TYPE.Narrative] = MOUSE_ICON_HINT.Magnifier,
+    [UI_TEXT_LINK_TYPE.Hyperlink] = MOUSE_ICON_HINT.Magnifier,
 }

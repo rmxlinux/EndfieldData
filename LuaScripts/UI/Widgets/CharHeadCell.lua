@@ -1,33 +1,15 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 CharHeadCell = HL.Class('CharHeadCell', UIWidgetBase)
-
 
 
 CharHeadCell.info = HL.Field(HL.Table)
 
-
 CharHeadCell.data = HL.Field(HL.Userdata)
-
-
 
 
 CharHeadCell._OnFirstTimeInit = HL.Override() << function(self)
 end
-
-
-
-
 
 CharHeadCell.InitCharHeadCell = HL.Method(HL.Any, HL.Opt(HL.Function)) << function(self, info, onClick)
     self:_FirstTimeInit()
@@ -54,15 +36,9 @@ CharHeadCell.InitCharHeadCell = HL.Method(HL.Any, HL.Opt(HL.Function)) << functi
     end)
 end
 
-
-
-
 CharHeadCell.SetForbid = HL.Method(HL.Boolean) << function(self, forbid)
     self.view.buttonForbid.gameObject:SetActive(forbid)
 end
-
-
-
 
 CharHeadCell.RefreshCharInfo = HL.Method(HL.Userdata) << function(self, charInfo)
     if charInfo then
@@ -73,16 +49,9 @@ CharHeadCell.RefreshCharInfo = HL.Method(HL.Userdata) << function(self, charInfo
     end
 end
 
-
-
-
 CharHeadCell.SetImageSelect = HL.Method(HL.Boolean) << function(self, active)
     self.view.imageSelectBg.gameObject:SetActive(active)
 end
-
-
-
-
 
 CharHeadCell.SetSelect = HL.Method(HL.Any, HL.Opt(HL.Boolean)) << function(self, num, noAnimation)
     self.info.selectIndex = num
@@ -102,8 +71,6 @@ CharHeadCell.SetSelect = HL.Method(HL.Any, HL.Opt(HL.Boolean)) << function(self,
         end
     end
 end
-
-
 
 CharHeadCell._OnLevelChanged = HL.Method() << function(self, arg)
     if not self.info or not self.info.instId or self.info.instId <= 0 then

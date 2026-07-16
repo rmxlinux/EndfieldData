@@ -1,44 +1,17 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopTradeGoodsCell = HL.Class('ShopTradeGoodsCell', UIWidgetBase)
 
 
 local refreshTimeInterval = 1
 
-
 ShopTradeGoodsCell.m_info = HL.Field(HL.Table)
-
 
 ShopTradeGoodsCell.m_tickKey = HL.Field(HL.Number) << -1
 
-
 ShopTradeGoodsCell.m_nextRefreshTime = HL.Field(HL.Number) << 0
 
-
+ShopTradeGoodsCell.m_selectCount = HL.Field(HL.Number) << 0
 
 
 
@@ -46,29 +19,20 @@ ShopTradeGoodsCell.m_nextRefreshTime = HL.Field(HL.Number) << 0
 ShopTradeGoodsCell._OnFirstTimeInit = HL.Override() << function(self)
 end
 
-
-
 ShopTradeGoodsCell._OnEnable = HL.Override() << function(self)
     self.view.animationWrapper:PlayInAnimation()
     self:_StartTickRefreshTime()
 end
-
-
 
 ShopTradeGoodsCell._OnDisable = HL.Override() << function(self)
     self.view.animationWrapper:PlayOutAnimation()
     self:_EndTickRefreshTime()
 end
 
-
-
 ShopTradeGoodsCell._OnDestroy = HL.Override() << function(self)
     self.view.animationWrapper:ClearTween(false)
     self:_EndTickRefreshTime()
 end
-
-
-
 
 
 ShopTradeGoodsCell.InitShopTradeGoodsCellCommonMode = HL.Method(HL.Table) << function(self, info)
@@ -78,17 +42,18 @@ ShopTradeGoodsCell.InitShopTradeGoodsCellCommonMode = HL.Method(HL.Table) << fun
     self:_UpdateReadInfo(info.goodsId)
     local leftSec = DomainShopUtils.getNextServerRefreshTimeLeftSecByType(info.refreshType)
     
-    self.view.basicStateCtrl:SetState("Common")
-    self.view.selectCountStateCtrl:SetState("NoSelectCount")
+    local state = "Common"
+    self.view.basicStateCtrl:SetState(state)
+    self:_RefreshCenterInfo(state)
+    self:_SetSelectCount(0)
     self.view.priceStateCtrl:SetState(info.discount == 0 and "Normal" or "HasDiscount")
     self:SetSelectState(false)
     
     self:_RefreshNextRefreshTime(leftSec)
-    self:_RefreshRemainLimitCount(info.remainLimitCount)
+    self:_RefreshCommonShopRemainLimitCount(info.remainLimitCount)
     self:_RefreshItemUI(info)
     local discountTxt = string.format("-%.0f", info.discount * 100)
     self.view.discountTxt.text = discountTxt
-    self.view.discountShadowTxt.text = discountTxt
     self.view.currentPriceTxt.text = UIUtils.getNumString(info.curPrice, true)
     self.view.originalPriceTxt.text = UIUtils.getNumString(info.originPrice, true)
     
@@ -100,10 +65,6 @@ ShopTradeGoodsCell.InitShopTradeGoodsCellCommonMode = HL.Method(HL.Table) << fun
     end)
     self.view.animationWrapper:PlayInAnimation()
 end
-
-
-
-
 
 ShopTradeGoodsCell.InitShopTradeGoodsCellRandomMode = HL.Method(HL.Table, HL.Boolean) << function(self, info, isMyPositionMode)
     self.m_info = info
@@ -117,7 +78,7 @@ ShopTradeGoodsCell.InitShopTradeGoodsCellRandomMode = HL.Method(HL.Table, HL.Boo
         basicStateName = "RandomMyPosition"
         curPrice = info.positionAvgPrice
         profitRatio = info.profitRatio
-        self.view.refreshTimeStateCtrl:SetState("None")
+        self:_RefreshCountdown(0)
     else
         basicStateName = "Random"
         curPrice = info.todayPrice
@@ -127,13 +88,13 @@ ShopTradeGoodsCell.InitShopTradeGoodsCellRandomMode = HL.Method(HL.Table, HL.Boo
     end
     
     self.view.basicStateCtrl:SetState(basicStateName)
-    self.view.selectCountStateCtrl:SetState("NoSelectCount")
+    self:_SetSelectCount(0)
     self.view.priceStateCtrl:SetState("Normal")
     self:SetSelectState(false)
     
     self:_RefreshRemainLimitCount(info.remainLimitCount)
     self:_RefreshItemUI(info)
-    self:_RefreshProfitRatioUI(profitRatio)
+    self:_RefreshCenterInfo(basicStateName, profitRatio, info.itemCount)
     self.view.currentPriceTxt.text = UIUtils.getNumString(curPrice, true)
     
     self.view.selectBtn.onClick:RemoveAllListeners()
@@ -147,24 +108,22 @@ ShopTradeGoodsCell.InitShopTradeGoodsCellRandomMode = HL.Method(HL.Table, HL.Boo
     self.view.animationWrapper:PlayInAnimation()
 end
 
-
-
-
 ShopTradeGoodsCell.InitShopTradeGoodsCellFriendMode = HL.Method(HL.Table) << function(self, info)
     self.m_info = info
     self:_FirstTimeInit()
     self.view.redDot:InitRedDot("ShopSeeGoodsInfo", { goodsId = info.goodsId })
     self:_UpdateReadInfo(info.goodsId)
     
-    self.view.basicStateCtrl:SetState("RandomMyPosition")
-    self.view.selectCountStateCtrl:SetState("NoSelectCount")
+    local state = "RandomMyPosition"
+    self.view.basicStateCtrl:SetState(state)
+    self:_SetSelectCount(0)
     self.view.priceStateCtrl:SetState("Normal")
-    self.view.refreshTimeStateCtrl:SetState("None")
+    self:_RefreshCountdown(0)
     self:SetSelectState(false)
     
     self:_RefreshRemainLimitCount(-1)
     self:_RefreshItemUI(info)
-    self:_RefreshProfitRatioUI(info.priceDiffRatio)
+    self:_RefreshCenterInfo(state, info.priceDiffRatio, info.itemCount)
     self.view.currentPriceTxt.text = UIUtils.getNumString(info.todayPrice, true)
     
     self.view.selectBtn.onClick:RemoveAllListeners()
@@ -177,27 +136,23 @@ ShopTradeGoodsCell.InitShopTradeGoodsCellFriendMode = HL.Method(HL.Table) << fun
     self.view.animationWrapper:PlayInAnimation()
 end
 
-
-
-
-
-
 ShopTradeGoodsCell.InitShopTradeGoodsCellBulkSellMode = HL.Method(HL.Table, HL.Number, HL.Function) << function(self, info, luaIndex, onClick)
     self.m_info = info
     self:_FirstTimeInit()
     self.view.redDot:InitRedDot("ShopSeeGoodsInfo", { goodsId = info.goodsId })
     self:_UpdateReadInfo(info.goodsId)
     
-    self.view.basicStateCtrl:SetState("RandomMyPosition")
-    self.view.selectCountStateCtrl:SetState("NoSelectCount")
+    local state = "RandomMyPosition"
+    self.view.basicStateCtrl:SetState(state)
+    self:_SetSelectCount(0)
     self.view.priceStateCtrl:SetState("Normal")
-    self.view.refreshTimeStateCtrl:SetState("None")
+    self:_RefreshCountdown(0)
     self:SetSelectState(false)
     
     self:SetNameBgVisible(false)
     self:_RefreshRemainLimitCount(-1)
     self:_RefreshItemUI(info)
-    self:_RefreshProfitRatioUI(info.profitRatio)
+    self:_RefreshCenterInfo(state, info.profitRatio, info.itemCount)
     self.view.currentPriceTxt.text = UIUtils.getNumString(info.todayPrice, true)
     
     self.view.selectBtn.onClick:RemoveAllListeners()
@@ -207,9 +162,6 @@ ShopTradeGoodsCell.InitShopTradeGoodsCellBulkSellMode = HL.Method(HL.Table, HL.N
     InputManagerInst:SetBindingText(self.view.selectBtn.hoverConfirmBindingId, Language.LUA_DOMAIN_SHOP_BULK_SELL_CONFIRM_CELL_KEY_HINT)
     self.view.animationWrapper:PlayInAnimation()
 end
-
-
-
 
 
 
@@ -223,10 +175,12 @@ ShopTradeGoodsCell.InitCommonShopGoodsCellCommonMode = HL.Method(HL.Table) << fu
     end
     local leftSec = DomainShopUtils.getNextServerRefreshTimeLeftSecByType(info.refreshType)
     
-    self.view.basicStateCtrl:SetState("Common")
-    self.view.selectCountStateCtrl:SetState("NoSelectCount")
+    local state = "Common"
+    self.view.basicStateCtrl:SetState(state)
+    self:_RefreshCenterInfo(state)
+    self:_SetSelectCount(0)
     self.view.priceStateCtrl:SetState(info.discount == 0 and "Normal" or "HasDiscount")
-    self.view.lockState:SetState(info.isLocked and "Lock" or "NotLock")
+    self:_ToggleLock(info.isLocked)
     self:SetSelectState(false)
     
     self:_RefreshNextRefreshTime(leftSec)
@@ -235,7 +189,6 @@ ShopTradeGoodsCell.InitCommonShopGoodsCellCommonMode = HL.Method(HL.Table) << fu
     self:SetNameBgVisible(false)
     local discountTxt = string.format("-%.0f", info.discount * 100)
     self.view.discountTxt.text = discountTxt
-    self.view.discountShadowTxt.text = discountTxt
     self.view.currentPriceTxt.text = UIUtils.getNumString(info.curPrice, true)
     self.view.originalPriceTxt.text = UIUtils.getNumString(info.originPrice, true)
     
@@ -255,8 +208,6 @@ end
 
 
 
-
-
 ShopTradeGoodsCell._StartTickRefreshTime = HL.Method() << function(self)
     self.m_tickKey = LuaUpdate:Remove(self.m_tickKey)
     self.m_tickKey = LuaUpdate:Add("LateTick", function(deltaTime)
@@ -271,30 +222,13 @@ ShopTradeGoodsCell._StartTickRefreshTime = HL.Method() << function(self)
     end)
 end
 
-
-
 ShopTradeGoodsCell._EndTickRefreshTime = HL.Method() << function(self)
     self.m_tickKey = LuaUpdate:Remove(self.m_tickKey)
 end
 
-
-
-
 ShopTradeGoodsCell._RefreshNextRefreshTime = HL.Method(HL.Number) << function(self, leftSec)
-    self.view.refreshTimeTxt.text = UIUtils.getShortLeftTime(leftSec)
-    if leftSec <= 0 then
-        self.view.refreshTimeStateCtrl:SetState("None")
-    elseif leftSec <= Const.SEC_PER_DAY then
-        self.view.refreshTimeStateCtrl:SetState("StrongWarning")
-    elseif leftSec <= (Const.SEC_PER_DAY * 3) then
-        self.view.refreshTimeStateCtrl:SetState("Warning")
-    else
-        self.view.refreshTimeStateCtrl:SetState("Normal")
-    end
+    self:_RefreshCountdown(leftSec)
 end
-
-
-
 
 ShopTradeGoodsCell._RefreshCommonShopRemainLimitCount = HL.Method(HL.Number) << function(self, remainLimitCount)
     if remainLimitCount < 0 then
@@ -302,10 +236,10 @@ ShopTradeGoodsCell._RefreshCommonShopRemainLimitCount = HL.Method(HL.Number) << 
             self.view.limitNumberNode.gameObject:SetActive(true)
             self.view.limitCountTxt.text = "∞"
             self.view.limitCountTxt.color = self.view.config.INVENTORY_NORMAL_COLOR
-            self.view.sellOutStateCtrl:SetState("NotSellOut")
+            self:_ToggleSoldOut(false)
         else
             self.view.limitNumberNode.gameObject:SetActive(false)
-            self.view.sellOutStateCtrl:SetState("SellOut")
+            self:_ToggleSoldOut(true)
         end
     else
         self.view.limitNumberNode.gameObject:SetActive(true)
@@ -316,18 +250,15 @@ ShopTradeGoodsCell._RefreshCommonShopRemainLimitCount = HL.Method(HL.Number) << 
             self.view.limitCountTxt.color = self.view.config.INVENTORY_NORMAL_COLOR
         end
 
-        self.view.sellOutStateCtrl:SetState(remainLimitCount == 0 and "SellOut" or "NotSellOut")
+        self:_ToggleSoldOut(remainLimitCount == 0 and true or false)
     end
 end
-
-
-
 
 
 ShopTradeGoodsCell._RefreshRemainLimitCount = HL.Method(HL.Number) << function(self, remainLimitCount)
     if remainLimitCount < 0 then
         self.view.limitNumberNode.gameObject:SetActive(false)
-        self.view.sellOutStateCtrl:SetState("NotSellOut")
+        self:_ToggleSoldOut(false)
     else
         self.view.limitNumberNode.gameObject:SetActive(true)
         self.view.limitCountTxt.text = remainLimitCount
@@ -336,81 +267,202 @@ ShopTradeGoodsCell._RefreshRemainLimitCount = HL.Method(HL.Number) << function(s
         else
             self.view.limitCountTxt.color = self.view.config.INVENTORY_NORMAL_COLOR
         end
-
-        self.view.sellOutStateCtrl:SetState(remainLimitCount == 0 and "SellOut" or "NotSellOut")
+        self:_ToggleSoldOut(remainLimitCount == 0 and true or false)
     end
 end
-
-
-
-
-ShopTradeGoodsCell._RefreshProfitRatioUI = HL.Method(HL.Number) << function(self, ratio)
-    self.view.profitRatioTxt.text = math.abs(ratio)
-    self.view.profitArrowStateCtrl:SetState(DomainShopUtils.getProfitArrowStateName(ratio))
-end
-
-
-
 
 ShopTradeGoodsCell._RefreshItemUI = HL.Method(HL.Table) << function(self, info)
     self.view.itemIcon:InitItemIcon(info.itemId, true)
-    self.view.bundleCountTxt.text = UIUtils.getNumString(info.itemBundleCount)
-    if info.itemBundleCount > 1 then
-        self.view.propsNumberNode.gameObject:SetActive(true)
-    else
-        self.view.propsNumberNode.gameObject:SetActive(false)
-    end
+    self:_RefreshItemBundleCount(info.itemBundleCount)
 
-    self.view.myPositionCountTxt.text = UIUtils.getNumString(info.itemCount)
     self.view.moneyIconImg:LoadSprite(UIConst.UI_SPRITE_WALLET, info.moneyIcon)
     self.view.rarityImg.color = UIUtils.getItemRarityColor(info.itemRarity)
     self.view.itemNameTxt.text = info.itemName
-end
 
-
-
-
-ShopTradeGoodsCell.SetSelectCount = HL.Method(HL.Number) << function(self, count)
-    
-    if count == 0 then
-        self.view.selectCountStateCtrl:SetState("NoSelectCount")
+    local itemData = Tables.itemTable[info.itemId]
+    if itemData and itemData.type == GEnums.ItemType.PhotoAnim then
+        local isStatic = DomainShopUtils.IsPhotoAnimActionStatic(info.itemId)
+        self.view.actionIcon.gameObject:SetActive(not isStatic)
     else
-        self.view.selectCountStateCtrl:SetState("HasSelectCount")
-        self.view.selectCountTxt.text = count
+        self.view.actionIcon.gameObject:SetActive(false)
     end
 end
 
-
-
+ShopTradeGoodsCell.SetSelectCount = HL.Method(HL.Number) << function(self, count)
+    
+    self:_SetSelectCount(count)
+end
 
 ShopTradeGoodsCell._UpdateReadInfo = HL.Method(HL.String) << function(self, goodsId)
     GameInstance.player.shopSystem:RecordSeeGoodsId(goodsId)
 end
 
-
-
-
 ShopTradeGoodsCell.SetNameBgVisible = HL.Method(HL.Boolean) << function(self, visible)
     self.view.nameBg.gameObject:SetActive(visible)
 end
 
-
-
-
 ShopTradeGoodsCell.SetSelectState = HL.Method(HL.Boolean) << function(self, isSelect)
     if isSelect then
-        self.view.selectStateCtrl:SetState("Select")
-        if self.view.selectCountStateCtrl.currentStateName == "NoSelectCount" then
+        self:_ToggleSelectBorder(true)
+        if self.m_selectCount == 0 then
             InputManagerInst:SetBindingText(self.view.selectBtn.hoverConfirmBindingId, Language.LUA_DOMAIN_SHOP_BULK_SELL_CONFIRM_CELL_KEY_HINT)
         else
             InputManagerInst:SetBindingText(self.view.selectBtn.hoverConfirmBindingId, Language.LUA_DOMAIN_SHOP_BULK_SELL_CANCEL_CELL_KEY_HINT)
         end
     else
-        self.view.selectStateCtrl:SetState("UnSelect")
+        self:_ToggleSelectBorder(false)
         InputManagerInst:SetBindingText(self.view.selectBtn.hoverConfirmBindingId, Language.LUA_DOMAIN_SHOP_BULK_SELL_CONFIRM_CELL_KEY_HINT)
     end
 end
 
+
+ShopTradeGoodsCell._ToggleLock = HL.Method(HL.Boolean) << function(self, active)
+    if not self.view.lock then
+        if not active then
+            self.view.tagList:SetState("NotLock")
+            return
+        end
+        local prefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.lockNodePrefab
+        if not prefab then
+            return
+        end
+        local obj = CSUtils.CreateObject(prefab, self.view.lockParent.transform)
+        self.view.lock = obj.transform
+    end
+    self.view.tagList:SetState(active and "Lock" or "NotLock")
+    self.view.lock.gameObject:SetActiveIfNecessary(active)
+end
+
+ShopTradeGoodsCell._ToggleSoldOut = HL.Method(HL.Boolean) << function(self, active)
+    if not self.view.soldOut then
+        if not active then
+            self.view.tagList:SetState("NotSellOut")
+            return
+        end
+        local prefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.soldOutPrefab
+        if not prefab then
+            return
+        end
+        local obj = CSUtils.CreateObject(prefab, self.view.lockParent.transform)
+        self.view.soldOut = obj.transform
+    end
+    self.view.tagList:SetState(active and "SellOut" or "NotSellOut")
+    self.view.soldOut.gameObject:SetActiveIfNecessary(active)
+end
+
+ShopTradeGoodsCell._SetSelectCount = HL.Method(HL.Number) << function(self, count)
+    self.m_selectCount = count
+    if not self.view.bulkOperation then
+        if count == 0 then
+            return
+        end
+        local prefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.bulkOperationPrefab
+        local borderPrefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.bulkBorderPrefab
+        if not prefab or not borderPrefab then
+            return
+        end
+        local obj = CSUtils.CreateObject(prefab, self.view.bulkOperationRoot.transform)
+        self.view.bulkOperation = Utils.wrapLuaNode(obj)
+        local borderObj = CSUtils.CreateObject(borderPrefab, self.view.animRoot.transform)
+        borderObj.transform:SetAsFirstSibling()
+        self.view.bulkBorder = borderObj.transform
+    end
+    local showCount = count ~= 0
+    self.view.bulkOperation.gameObject:SetActiveIfNecessary(showCount)
+    self.view.bulkBorder.gameObject:SetActiveIfNecessary(showCount)
+    if showCount then
+        self.view.bulkOperation.selectCountTxt.text = count
+    end
+end
+
+ShopTradeGoodsCell._ToggleSelectBorder = HL.Method(HL.Boolean) << function(self, active)
+    if not self.view.selectBorder then
+        if not active then
+            return
+        end
+        local prefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.selectBorderPrefab
+        if not prefab then
+            return
+        end
+        local obj = CSUtils.CreateObject(prefab, self.view.animRoot.transform)
+        self.view.selectBorder = obj.transform
+    end
+    self.view.selectBorder.gameObject:SetActiveIfNecessary(active)
+end
+
+ShopTradeGoodsCell._RefreshCenterInfo = HL.Method(HL.String, HL.Opt(HL.Number, HL.Number)) << function(self, state, ratio, ownCount)
+    local active = state ~= "Common"
+    if not self.view.centerInfo then
+        if not active then
+            return
+        end
+        local prefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.centerInfoPrefab
+        if not prefab then
+            return
+        end
+        local obj = CSUtils.CreateObject(prefab, self.view.animRoot.transform)
+        obj.transform:SetSiblingIndex(self.view.lockParent.transform:GetSiblingIndex() - 1)
+        self.view.centerInfo = Utils.wrapLuaNode(obj)
+    end
+    self.view.centerInfo.gameObject:SetActiveIfNecessary(active)
+    if active then
+        self.view.centerInfo.simpleStateController:SetState(state)
+        if ratio then
+            self.view.centerInfo.profitRatioTxt.text = math.abs(ratio)
+            self.view.centerInfo.profitArrow:SetState(DomainShopUtils.getProfitArrowStateName(ratio))
+        end
+        if ownCount then
+            self.view.centerInfo.myPositionCountTxt.text = UIUtils.getNumString(ownCount)
+        end
+    end
+end
+
+ShopTradeGoodsCell._RefreshItemBundleCount = HL.Method(HL.Number) << function(self, count)
+    local active = count > 1
+    if not self.view.itemBundleCount then
+        if not active then
+            return
+        end
+        local prefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.itemBundleCountPrefab
+        if not prefab then
+            return
+        end
+        local obj = CSUtils.CreateObject(prefab, self.view.animRoot.transform)
+        obj.transform:SetSiblingIndex(self.view.lockParent.transform:GetSiblingIndex() - 1)
+        self.view.itemBundleCount = Utils.wrapLuaNode(obj)
+    end
+    self.view.itemBundleCount.gameObject:SetActiveIfNecessary(active)
+    if active then
+        self.view.itemBundleCount.bundleCountTxt.text = UIUtils.getNumString(count)
+    end
+end
+
+ShopTradeGoodsCell._RefreshCountdown = HL.Method(HL.Number) << function(self, leftSec)
+    local active = leftSec > 0
+    if not self.view.countDown then
+        if not active then
+            return
+        end
+        local prefab = LuaSystemManager.shopTradeGoodsCellPrefabSystem.countdownPrefab
+        if not prefab then
+            return
+        end
+        local obj = CSUtils.CreateObject(prefab, self.view.leftTopLayout.transform)
+        obj.transform:SetAsFirstSibling()
+        self.view.countDown = Utils.wrapLuaNode(obj)
+    end
+    self.view.countDown.gameObject:SetActiveIfNecessary(active)
+    if active then
+        self.view.countDown.refreshTimeTxt.text = UIUtils.getShortLeftTime(leftSec)
+        if leftSec <= Const.SEC_PER_DAY then
+            self.view.countDown.stateController:SetState("StrongWarning")
+        elseif leftSec <= (Const.SEC_PER_DAY * 3) then
+            self.view.countDown.stateController:SetState("Warning")
+        else
+            self.view.countDown.stateController:SetState("Normal")
+        end
+    end
+end
 
 HL.Commit(ShopTradeGoodsCell)
 return ShopTradeGoodsCell

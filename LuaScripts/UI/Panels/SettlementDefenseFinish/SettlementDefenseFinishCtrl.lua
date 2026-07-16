@@ -1,44 +1,20 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SettlementDefenseFinish
 local PHASE_ID = PhaseId.SettlementDefenseFinish
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SettlementDefenseFinishCtrl = HL.Class('SettlementDefenseFinishCtrl', uiCtrl.UICtrl)
 
 local ZERO_HP_TOLERANCE = 0.01
 local DefenseState = CS.Beyond.Gameplay.TowerDefenseSystem.DefenseState
 
-
 SettlementDefenseFinishCtrl.m_coreHpCells = HL.Field(HL.Forward("UIListCache"))
-
 
 SettlementDefenseFinishCtrl.m_itemCells = HL.Field(HL.Forward("UIListCache"))
 
-
 SettlementDefenseFinishCtrl.m_isConfirmed = HL.Field(HL.Boolean) << false
-
 
 SettlementDefenseFinishCtrl.s_cachedPhaseArgs = HL.StaticField(HL.Table)
 
-
 SettlementDefenseFinishCtrl.s_lastUnlockedTdId = HL.StaticField(HL.String) << ""
-
 
 
 
@@ -47,9 +23,6 @@ SettlementDefenseFinishCtrl.s_lastUnlockedTdId = HL.StaticField(HL.String) << ""
 SettlementDefenseFinishCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_LOADING_PANEL_CLOSED] = '_OnLoadingPanelClosed',
 }
-
-
-
 
 
 SettlementDefenseFinishCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -67,7 +40,7 @@ SettlementDefenseFinishCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
         if self:IsPlayingAnimationIn() then
             return
         end
-        if GameInstance.player.squadManager:IsCurSquadAllDead() and not self.m_isConfirmed then
+        if GameInstance.player.squadManager:IsAllDead() and not self.m_isConfirmed then
             GameInstance.gameplayNetwork:SendRevive(true)
             self.m_isConfirmed = true
         end
@@ -110,13 +83,9 @@ SettlementDefenseFinishCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     end
 end
 
-
-
 SettlementDefenseFinishCtrl.OnClose = HL.Override() << function(self)
     SettlementDefenseFinishCtrl.s_lastUnlockedTdId = ""
 end
-
-
 
 SettlementDefenseFinishCtrl.OnTowerDefenseLevelFinished = HL.StaticMethod(HL.Any) << function(args)
     if not Utils.isInSettlementDefenseDefending() then
@@ -152,7 +121,6 @@ SettlementDefenseFinishCtrl.OnTowerDefenseLevelFinished = HL.StaticMethod(HL.Any
     }
 end
 
-
 SettlementDefenseFinishCtrl.OnTowerDefenseLevelCleared = HL.StaticMethod() << function()
     if SettlementDefenseFinishCtrl.s_cachedPhaseArgs == nil or
         SettlementDefenseFinishCtrl.s_cachedPhaseArgs.finishType ~= CS.Beyond.Gameplay.Core.TowerDefenseGame.FinishType.Complete then
@@ -162,23 +130,16 @@ SettlementDefenseFinishCtrl.OnTowerDefenseLevelCleared = HL.StaticMethod() << fu
     PhaseManager:OpenPhase(PhaseId.SettlementDefenseFinish, SettlementDefenseFinishCtrl.s_cachedPhaseArgs)
 end
 
-
-
 SettlementDefenseFinishCtrl.OnTowerDefenseLevelUnlocked = HL.StaticMethod(HL.Any) << function(args)
     local tdId = unpack(args)
     SettlementDefenseFinishCtrl.s_lastUnlockedTdId = tdId
 end
-
-
 
 SettlementDefenseFinishCtrl._OnLoadingPanelClosed = HL.Method() << function(self)
     if PhaseManager:IsOpen(PhaseId.SettlementDefenseFinish) then
         PhaseManager:ExitPhaseFast(PhaseId.SettlementDefenseFinish)
     end
 end
-
-
-
 
 SettlementDefenseFinishCtrl._RefreshColorAndText = HL.Method(HL.String) << function(self, tdId)
     local name = ''
@@ -191,9 +152,6 @@ SettlementDefenseFinishCtrl._RefreshColorAndText = HL.Method(HL.String) << funct
     end
     self.view.nameText.text = name
 end
-
-
-
 
 SettlementDefenseFinishCtrl._RefreshCoreHps = HL.Method(HL.Table) << function(self, coreHpInfoList)
     local count = coreHpInfoList == nil and 0 or #coreHpInfoList
@@ -212,9 +170,6 @@ SettlementDefenseFinishCtrl._RefreshCoreHps = HL.Method(HL.Table) << function(se
         cell.stateController:SetState(stateName)
     end)
 end
-
-
-
 
 SettlementDefenseFinishCtrl._RefreshItemRewards = HL.Method(HL.Userdata) << function(self, rewardPack)
     local isEmpty = rewardPack == nil
@@ -244,11 +199,6 @@ SettlementDefenseFinishCtrl._RefreshItemRewards = HL.Method(HL.Userdata) << func
         end)
     end)
 end
-
-
-
-
-
 
 SettlementDefenseFinishCtrl._RefreshTips = HL.Method(HL.String, HL.Boolean, HL.Boolean) << function(self, tdId, isFirstPass, isAuto)
     local _, tdCfg = Tables.towerDefenseTable:TryGetValue(tdId)
@@ -283,8 +233,6 @@ SettlementDefenseFinishCtrl._RefreshTips = HL.Method(HL.String, HL.Boolean, HL.B
 
     self.view.tipsLayout.unlockNode.gameObject:SetActive(not string.isEmpty(SettlementDefenseFinishCtrl.s_lastUnlockedTdId))
 end
-
-
 
 
 

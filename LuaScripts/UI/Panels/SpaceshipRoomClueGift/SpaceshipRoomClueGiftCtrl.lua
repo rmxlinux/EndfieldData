@@ -1,46 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceshipRoomClueGift
 local PHASE_ID = PhaseId.SpaceshipRoomClueGift
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceshipRoomClueGiftCtrl = HL.Class('SpaceshipRoomClueGiftCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -55,57 +16,38 @@ SpaceshipRoomClueGiftCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SPACESHIP_GUEST_ROOM_CLUE_REWARD_ITEM] = 'OnClueRewardItem',
 }
 
-
 SpaceshipRoomClueGiftCtrl.m_getClueCell = HL.Field(HL.Function)
-
 
 SpaceshipRoomClueGiftCtrl.friendArg = HL.Field(HL.Table)
 
-
 SpaceshipRoomClueGiftCtrl.m_friendList = HL.Field(HL.Table)
-
 
 SpaceshipRoomClueGiftCtrl.m_isInitFriend = HL.Field(HL.Boolean) << false
 
-
 SpaceshipRoomClueGiftCtrl.m_selectedClueId = HL.Field(HL.Number) << -1
-
 
 SpaceshipRoomClueGiftCtrl.m_luaIndex2ClueId = HL.Field(HL.Table)
 
-
 SpaceshipRoomClueGiftCtrl.m_clueId2ClueCell = HL.Field(HL.Table)
-
 
 SpaceshipRoomClueGiftCtrl.m_clueId2HaveClues = HL.Field(HL.Table)
 
-
 SpaceshipRoomClueGiftCtrl.m_initController = HL.Field(HL.Boolean) << false
-
 
 SpaceshipRoomClueGiftCtrl.m_lastSendInfo = HL.Field(HL.Table)
 
-
 SpaceshipRoomClueGiftCtrl.friendListJumpIn = HL.Field(HL.Number) << 0
-
 
 SpaceshipRoomClueGiftCtrl.friendListArrowJumpIn = HL.Field(HL.Number) << 0
 
-
 SpaceshipRoomClueGiftCtrl.m_inFriendListGroup = HL.Field(HL.Boolean) << false
 
-
 SpaceshipRoomClueGiftCtrl.m_pendingInputText = HL.Field(HL.String) << ""
-
-
 
 
 SpaceshipRoomClueGiftCtrl.ShowSpaceshipClueGift = HL.StaticMethod(HL.Opt(HL.Table)) << function(args)
     PhaseManager:OpenPhase(PHASE_ID)
 end
-
-
-
 
 
 
@@ -118,7 +60,6 @@ SpaceshipRoomClueGiftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.commonTopTitlePanel.btnBack.onClick:RemoveAllListeners()
     self.view.commonTopTitlePanel.btnBack.onClick:AddListener(function()
         PhaseManager:PopPhase(PHASE_ID)
-        Notify(MessageConst.ON_POP_SPACESHIP_GUEST_ROOM_MAIN_PANEL)
     end)
     SpaceshipUtils.InitMoneyLimitCell(self.view.commonTopTitlePanel.moneyCell, Tables.spaceshipConst.creditItemId)
 
@@ -188,8 +129,6 @@ SpaceshipRoomClueGiftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 SpaceshipRoomClueGiftCtrl.ControllerFriendListJumpIn = HL.Method() << function(self)
     if not self.m_inFriendListGroup then
         self.m_inFriendListGroup = true
@@ -197,22 +136,14 @@ SpaceshipRoomClueGiftCtrl.ControllerFriendListJumpIn = HL.Method() << function(s
     end
 end
 
-
-
-
 SpaceshipRoomClueGiftCtrl.OnClueRewardItem = HL.Method(HL.Any) << function(self, args)
     local items, sources = unpack(args)
     SpaceshipUtils.ShowClueOutcomePopup(items, sources, self.view.commonTopTitlePanel.moneyCell, nil)
 end
 
-
-
-
 SpaceshipRoomClueGiftCtrl.OnSpaceshipClueInfoChange = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     self:_UpdateClueId2HaveClues()
 end
-
-
 
 SpaceshipRoomClueGiftCtrl._UpdateClueId2HaveClues = HL.Method() << function(self)
     local clueData = GameInstance.player.spaceship:GetClueData()
@@ -276,10 +207,6 @@ SpaceshipRoomClueGiftCtrl._UpdateClueId2HaveClues = HL.Method() << function(self
     end
 end
 
-
-
-
-
 SpaceshipRoomClueGiftCtrl._UpdateClueCell = HL.Method(HL.Any, HL.Number) << function(self, cell, csIndex)
     local luaIndex = LuaIndex(csIndex)
 
@@ -330,17 +257,13 @@ SpaceshipRoomClueGiftCtrl._UpdateClueCell = HL.Method(HL.Any, HL.Number) << func
 
     if not self.m_initController and luaIndex == 1 then
         self.m_initController = true
-        InputManagerInst.controllerNaviManager:SetTarget(cell.button)
+        self:SetNaviTarget(cell.button)
     else
         if self.m_selectedClueId == clueId then
-            InputManagerInst.controllerNaviManager:SetTarget(cell.button)
+            self:SetNaviTarget(cell.button)
         end
     end
 end
-
-
-
-
 
 SpaceshipRoomClueGiftCtrl._selectClue = HL.Method(HL.Number, HL.Boolean) << function(self, luaIndex, isInit)
     local curClueId = self.m_luaIndex2ClueId[luaIndex]
@@ -388,8 +311,6 @@ SpaceshipRoomClueGiftCtrl._selectClue = HL.Method(HL.Number, HL.Boolean) << func
         self:_InitFriendList()
     end
 end
-
-
 
 SpaceshipRoomClueGiftCtrl._InitFriendList = HL.Method() << function(self)
     if self.m_isInitFriend then
@@ -457,8 +378,6 @@ SpaceshipRoomClueGiftCtrl._InitFriendList = HL.Method() << function(self)
     self.m_isInitFriend = true
 end
 
-
-
 SpaceshipRoomClueGiftCtrl._InitInputField = HL.Method() << function(self)
     UIUtils.initSearchInput(self.view.friendList.view.inputField, {
         clearBtn = self.view.clearBtn,
@@ -491,8 +410,6 @@ SpaceshipRoomClueGiftCtrl._InitInputField = HL.Method() << function(self)
     })
 end
 
-
-
 SpaceshipRoomClueGiftCtrl._StartInput = HL.Method() << function(self)
     if DeviceInfo.inputType ~= DeviceInfo.InputType.Controller then
         return
@@ -506,8 +423,6 @@ SpaceshipRoomClueGiftCtrl._StartInput = HL.Method() << function(self)
     })
 end
 
-
-
 SpaceshipRoomClueGiftCtrl._EndInput = HL.Method() << function(self)
     if DeviceInfo.inputType ~= DeviceInfo.InputType.Controller then
         return
@@ -516,13 +431,9 @@ SpaceshipRoomClueGiftCtrl._EndInput = HL.Method() << function(self)
     self.view.friendList.view.inputField:DeactivateInputField(true)
 end
 
-
-
 SpaceshipRoomClueGiftCtrl._ClearInput = HL.Method() << function(self)
     self.view.friendList.view.inputField.text = ""
 end
-
-
 
 SpaceshipRoomClueGiftCtrl.OnSync = HL.Method() << function(self)
     self:_UpdateCache()
@@ -537,14 +448,10 @@ SpaceshipRoomClueGiftCtrl.OnSync = HL.Method() << function(self)
     end
 end
 
-
-
 SpaceshipRoomClueGiftCtrl.OnCellChange = HL.Method() << function(self)
     self:_UpdateCache()
     self:_Refresh(false, true)
 end
-
-
 
 SpaceshipRoomClueGiftCtrl.OnSpaceshipPresentFriendClue = HL.Method() << function(self)
     self:_UpdateClueId2HaveClues()
@@ -558,15 +465,10 @@ SpaceshipRoomClueGiftCtrl.OnSpaceshipPresentFriendClue = HL.Method() << function
     self.m_lastSendInfo = nil
 end
 
-
-
 SpaceshipRoomClueGiftCtrl.Loading = HL.Method() << function(self)
     self.m_friendList = {}
     self:_Refresh(true)
 end
-
-
-
 
 SpaceshipRoomClueGiftCtrl._UpdateCache = HL.Method(HL.Opt(HL.Any)) << function(self, filterList)
     local infoDict = GameInstance.player.friendSystem.friendInfoDic
@@ -633,10 +535,6 @@ SpaceshipRoomClueGiftCtrl._UpdateCache = HL.Method(HL.Opt(HL.Any)) << function(s
     end
 end
 
-
-
-
-
 SpaceshipRoomClueGiftCtrl._CreateInSevenDay = HL.Method(HL.Table, HL.Any) << function(self, inSevenDayDict, friendInfo)
 
     local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()
@@ -691,10 +589,6 @@ SpaceshipRoomClueGiftCtrl._CreateInSevenDay = HL.Method(HL.Table, HL.Any) << fun
 
 end
 
-
-
-
-
 SpaceshipRoomClueGiftCtrl._CreateOutSevenDay = HL.Method(HL.Table, HL.Any) << function(self, outSevenDayDict, friendInfo)
     local createFriend = {
         roleId = friendInfo.roleId,
@@ -710,10 +604,6 @@ SpaceshipRoomClueGiftCtrl._CreateOutSevenDay = HL.Method(HL.Table, HL.Any) << fu
     }
     table.insert(outSevenDayDict, createFriend)
 end
-
-
-
-
 
 SpaceshipRoomClueGiftCtrl._Refresh = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, loading, stayPos)
     self.view.friendCountTxt.text = string.format("%d/%d", #self.m_friendList, Tables.globalConst.friendListLenMax)
@@ -764,6 +654,10 @@ SpaceshipRoomClueGiftCtrl._TryRecoverState = HL.Method(HL.Table) << function(sel
             end
         end
     end
+end
+
+SpaceshipRoomClueGiftCtrl.OnClose = HL.Override() << function(self)
+    Notify(MessageConst.ON_POP_SPACESHIP_GUEST_ROOM_MAIN_PANEL)
 end
 
 HL.Commit(SpaceshipRoomClueGiftCtrl)

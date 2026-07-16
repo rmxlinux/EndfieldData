@@ -1,52 +1,30 @@
 local panelConfig = require_ex("UI/Panels/PanelConfig").config
 
-
-
-
-
-
-
-
-
-
-
-
-
-
 UIWorldFreezeManager = HL.Class('UIWorldFreezeManager')
 
 
 do
 
-    
     UIWorldFreezeManager.m_timeScaleHandle = HL.Field(HL.Number) << -1
 
-    
     UIWorldFreezeManager.m_activePanelCount = HL.Field(HL.Number) << 0
     
 
-    
     UIWorldFreezeManager.m_pauseGameModePanelCount = HL.Field(HL.Number) << 0
 
-    
     UIWorldFreezeManager.m_activePanels = HL.Field(HL.Table)
 
-    
     UIWorldFreezeManager.m_pauseGameModePanels = HL.Field(HL.Table)
 end
 
 
 do
-    
-    
     UIWorldFreezeManager.UIWorldFreezeManager = HL.Constructor() << function(self)
         self.m_activePanels = {}
         self.m_pauseGameModePanels = {}
         self:_RegisterMessages()
     end
 
-    
-    
     UIWorldFreezeManager.IsUIWorldFreeze = HL.Method().Return(HL.Boolean) << function(self)
         return self.m_timeScaleHandle ~= -1
     end
@@ -54,8 +32,6 @@ end
 
 
 do
-    
-    
     UIWorldFreezeManager._RegisterMessages = HL.Method() << function(self)
         Register(MessageConst.ON_BEFORE_UI_PANEL_OPEN, function(name)
             self:_OnPanelActivate(name)
@@ -71,9 +47,6 @@ do
         end)
     end
 
-    
-    
-    
     UIWorldFreezeManager._OnPanelActivate = HL.Method(HL.String) << function(self, panelName)
         local panelCfg = panelConfig[panelName]
         if not panelCfg or not panelCfg.freezeWorld then
@@ -105,9 +78,6 @@ do
         end
     end
 
-    
-    
-    
     UIWorldFreezeManager._OnPanelDeActivate = HL.Method(HL.String) << function(self, panelName)
         if self.m_timeScaleHandle == -1 then
             return
@@ -147,9 +117,6 @@ do
         end
     end
 
-    
-    
-    
     UIWorldFreezeManager._FreezeWorld = HL.Method(HL.Boolean) << function(self, isFrozen)
         if isFrozen then
             self.m_timeScaleHandle = Utils.FreezeWorldByUI()
@@ -169,9 +136,6 @@ do
         end
     end
 
-    
-    
-    
     UIWorldFreezeManager._PauseGameMode = HL.Method(HL.Boolean) << function(self, isPaused)
         if not GameWorld.isInited then
             return

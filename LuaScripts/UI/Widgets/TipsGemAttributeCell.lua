@@ -1,27 +1,15 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 TipsGemAttributeCell = HL.Class('TipsGemAttributeCell', UIWidgetBase)
-
-
 
 
 TipsGemAttributeCell._OnFirstTimeInit = HL.Override() << function(self)
     
 end
 
-
-
 TipsGemAttributeCell.InitTipsGemAttributeCell = HL.Method() << function(self)
     self:_FirstTimeInit()
 end
-
-
-
-
 
 TipsGemAttributeCell.RefreshUI = HL.Method(HL.Number, HL.Table) << function(self, index, termList)
     self.view.titleTxt.text = Language["LUA_GEMCUSTOMIZATIONBOX_TAB_GROUP_ATTR_GROUP_NAME" .. index]

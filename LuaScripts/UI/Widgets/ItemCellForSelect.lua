@@ -1,61 +1,27 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ItemCellForSelect = HL.Class('ItemCellForSelect', UIWidgetBase)
-
 
 
 ItemCellForSelect.m_pressBtnCoroutine = HL.Field(HL.Thread)
 
-
 ItemCellForSelect.curNum = HL.Field(HL.Number) << 1
-
 
 ItemCellForSelect.m_max = HL.Field(HL.Number) << 1
 
-
 ItemCellForSelect.m_onNumChanged = HL.Field(HL.Function)
-
 
 ItemCellForSelect.m_tryChangeNum = HL.Field(HL.Function)
 
-
 ItemCellForSelect.m_bindInputChangeNum = HL.Field(HL.Boolean) << false
-
 
 ItemCellForSelect.m_addNumPressBindingId = HL.Field(HL.Number) << -1
 
-
 ItemCellForSelect.m_addNumReleaseBindingId = HL.Field(HL.Number) << -1
-
 
 ItemCellForSelect.m_minusNumPressBindingId = HL.Field(HL.Number) << -1
 
-
 ItemCellForSelect.m_minusNumReleaseBindingId = HL.Field(HL.Number) << -1
-
-
 
 
 ItemCellForSelect._OnFirstTimeInit = HL.Override() << function(self)
@@ -85,9 +51,6 @@ end
 
 
 
-
-
-
 ItemCellForSelect.InitItemCellForSelect = HL.Method(HL.Table) << function(self, args)
     self:_FirstTimeInit()
 
@@ -102,8 +65,6 @@ ItemCellForSelect.InitItemCellForSelect = HL.Method(HL.Table) << function(self, 
     self:_UpdateInputBindings()
     self:_UpdateCountShow()
 end
-
-
 
 ItemCellForSelect._InitInputBinding = HL.Method() << function(self)
     if self.m_bindInputChangeNum then
@@ -131,16 +92,11 @@ ItemCellForSelect._InitInputBinding = HL.Method() << function(self)
     end
 end
 
-
 ItemCellForSelect.m_needTriggerOnClick = HL.Field(HL.Boolean) << false
-
 
 ItemCellForSelect.m_startPressMousePos = HL.Field(Vector3)
 
 local DRAG_MIN_DIST = 10
-
-
-
 
 ItemCellForSelect._OnPressStart = HL.Method(HL.Boolean) << function(self, isAdd)
     if InputManagerInst:GetKey(CS.Beyond.Input.KeyboardKeyCode.Mouse1) then
@@ -169,9 +125,6 @@ ItemCellForSelect._OnPressStart = HL.Method(HL.Boolean) << function(self, isAdd)
     end)
 end
 
-
-
-
 ItemCellForSelect._OnPressEnd = HL.Method(HL.Boolean) << function(self, isAdd)
     self.m_pressBtnCoroutine = self:_ClearCoroutine(self.m_pressBtnCoroutine)
     if self.m_needTriggerOnClick then
@@ -183,16 +136,10 @@ ItemCellForSelect._OnPressEnd = HL.Method(HL.Boolean) << function(self, isAdd)
     end
 end
 
-
-
 ItemCellForSelect._OnDisable = HL.Override() << function(self)
     self:_OnPressEnd(true)
     self:_OnPressEnd(false)
 end
-
-
-
-
 
 ItemCellForSelect._UpdateCount = HL.Method(HL.Number, HL.Opt(HL.String)) << function(self, curNum, audioEventName)
     curNum = lume.clamp(curNum, 0, self.m_max)
@@ -221,8 +168,6 @@ ItemCellForSelect._UpdateCount = HL.Method(HL.Number, HL.Opt(HL.String)) << func
     end
 end
 
-
-
 ItemCellForSelect._UpdateCountShow = HL.Method() << function(self)
     local isSelected = self.curNum > 0
     self.view.selectNode.gameObject:SetActive(isSelected)
@@ -230,8 +175,6 @@ ItemCellForSelect._UpdateCountShow = HL.Method() << function(self)
         self.view.selectCount.text = self.curNum
     end
 end
-
-
 
 ItemCellForSelect._UpdateInputBindings = HL.Method() << function(self)
     local enableMinusNumBinding = self.curNum > 0

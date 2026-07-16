@@ -1,63 +1,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CharInfoEquip
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CharInfoEquipCtrl = HL.Class('CharInfoEquipCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -72,46 +15,35 @@ CharInfoEquipCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_PUT_ON_EQUIP] = 'OnPutOnEquip',
     [MessageConst.ON_PUT_OFF_EQUIP] = 'OnPutOffEquip',
     [MessageConst.ON_TACTICAL_ITEM_CHANGE] = 'OnTacticalItemChange',
+    [MessageConst.ON_EQUIP_PRODUCE] = 'SetEquipListDirty',
+    [MessageConst.ON_EQUIP_ENHANCE] = 'SetEquipListDirty',
 }
-
 
 CharInfoEquipCtrl.m_arg = HL.Field(HL.Table)
 
-
 CharInfoEquipCtrl.m_charInfo = HL.Field(HL.Table)
-
 
 CharInfoEquipCtrl.m_curMainControlTab = HL.Field(HL.Number) << UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
 
-
 CharInfoEquipCtrl.m_compareNodeCellCache = HL.Field(HL.Table)
-
 
 CharInfoEquipCtrl.m_curSelectSlotIndex = HL.Field(HL.Number) << -1
 
-
 CharInfoEquipCtrl.m_curCompareEquipInstId = HL.Field(HL.Number) << 0
-
 
 CharInfoEquipCtrl.m_curCompareTacticalItemId = HL.Field(HL.String) << ""
 
-
 CharInfoEquipCtrl.m_isInCompare = HL.Field(HL.Boolean) << false
-
 
 CharInfoEquipCtrl.m_suitTipNameCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 CharInfoEquipCtrl.state = HL.Field(HL.Number) << UIConst.CHAR_INFO_EQUIP_STATE.Normal
-
 
 CharInfoEquipCtrl.m_effectCor = HL.Field(HL.Thread)
 
-
 CharInfoEquipCtrl.m_tabCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
-
+CharInfoEquipCtrl.m_equipListDirty = HL.Field(HL.Boolean) << false
 
 
 CharInfoEquipCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -138,18 +70,18 @@ CharInfoEquipCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_arg.stateArg = nil
 end
 
-
-
 CharInfoEquipCtrl.OnShow = HL.Override() << function(self)
     if self.state == UIConst.CHAR_INFO_EQUIP_STATE.Normal then
         self:_RefreshRightPanel({
             charInfo = self.m_charInfo,
         })
+    elseif self.state == UIConst.CHAR_INFO_EQUIP_STATE.Detail then
+        if self.m_equipListDirty and self.m_curSelectSlotIndex >= 0 then
+            self:_RefreshEquipList(self.m_curSelectSlotIndex)
+            self.m_equipListDirty = false
+        end
     end
 end
-
-
-
 
 CharInfoEquipCtrl.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInfo)
     self.m_charInfo = charInfo
@@ -160,9 +92,6 @@ CharInfoEquipCtrl.OnSelectCharChange = HL.Method(HL.Table) << function(self, cha
         compareEquipInstId = self.m_curCompareEquipInstId,
     })
 end
-
-
-
 
 CharInfoEquipCtrl._RefreshRightPanel = HL.Method(HL.Table)
     << function(self, args)
@@ -180,9 +109,6 @@ CharInfoEquipCtrl._RefreshRightPanel = HL.Method(HL.Table)
         self:_RefreshCommonNode(charInfo)
     end
 end
-
-
-
 
 CharInfoEquipCtrl._RefreshEquipDetailPanel = HL.Method(HL.Table) << function(self, args)
     local charInfo = args.charInfo
@@ -212,9 +138,6 @@ CharInfoEquipCtrl._RefreshEquipDetailPanel = HL.Method(HL.Table) << function(sel
     end
 end
 
-
-
-
 CharInfoEquipCtrl._RefreshTacticalDetailPanel = HL.Method(HL.Table) << function(self, args)
     local charInfo = args.charInfo
     local slotIndex = args.slotIndex
@@ -233,10 +156,6 @@ CharInfoEquipCtrl._RefreshTacticalDetailPanel = HL.Method(HL.Table) << function(
         self:_ToggleCompareMask(false)
     end
 end
-
-
-
-
 
 CharInfoEquipCtrl._InnerRefreshTacticalDetailPanel = HL.Method(HL.Table, HL.Opt(HL.String))
     << function(self, charInfo, compareTacticalId)
@@ -273,18 +192,11 @@ CharInfoEquipCtrl._InnerRefreshTacticalDetailPanel = HL.Method(HL.Table, HL.Opt(
     self:_ToggleCompareMask(showCompareNode)
 end
 
-
-
-
 CharInfoEquipCtrl._ToggleCompareMask = HL.Method(HL.Boolean) << function(self, isOn)
     UIUtils.PlayAnimationAndToggleActive(self.view.bgMask, isOn)
 
     Notify(MessageConst.ON_CHAR_INFO_EQUIP_TOGGLE_COMPARE_MASK, isOn)
 end
-
-
-
-
 
 CharInfoEquipCtrl._RefreshTacticalCell = HL.Method(HL.Table, HL.String) << function(self, cell, itemId)
     if itemId == nil or string.isEmpty(itemId) then
@@ -316,11 +228,6 @@ CharInfoEquipCtrl._RefreshTacticalCell = HL.Method(HL.Table, HL.String) << funct
 
     cell.countBG.color = itemCount > 0 and cell.config.COLOR_COUNT_BG_DEFAULT or cell.config.COLOR_COUNT_BG_EMPTY
 end
-
-
-
-
-
 
 CharInfoEquipCtrl._InnerRefreshEquipDetailNode = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Number)) << function(self, charInfo, slotIndex, compareEquipInstId)
     local charInst = CharInfoUtils.getPlayerCharInfoByInstId(charInfo.instId)
@@ -368,12 +275,6 @@ CharInfoEquipCtrl._InnerRefreshEquipDetailNode = HL.Method(HL.Table, HL.Number, 
     self.view.equipDetailNode.rightNode.btnEquip.interactable = reachWearTierLimit
 end
 
-
-
-
-
-
-
 CharInfoEquipCtrl._RefreshBtnJump = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Any, HL.Any)) << function(self, cell, reachWearTierLimit, compareEquipItemCfg, charTemplateId)
     cell.btnJump.gameObject:SetActive(false)
     cell.btnJump.gameObject:SetActive(not reachWearTierLimit)
@@ -394,12 +295,6 @@ CharInfoEquipCtrl._RefreshBtnJump = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.An
         return
     end
 end
-
-
-
-
-
-
 
 CharInfoEquipCtrl._RefreshEquipBasicNode = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Number, HL.Number)) << function(self, cell, charInstId, equipInstId, slotIndex)
     if not equipInstId or equipInstId <= 0 then
@@ -434,9 +329,6 @@ CharInfoEquipCtrl._RefreshEquipBasicNode = HL.Method(HL.Table, HL.Number, HL.Opt
     end
 end
 
-
-
-
 CharInfoEquipCtrl._RefreshCommonNode = HL.Method(HL.Table) << function(self, charInfo)
     
     local charInstId = charInfo.instId
@@ -461,9 +353,6 @@ CharInfoEquipCtrl._RefreshCommonNode = HL.Method(HL.Table) << function(self, cha
 end
 
 
-
-
-
 CharInfoEquipCtrl.OnSelectEquipSlotChange = HL.Method(HL.Table) << function(self, arg)
     self.state = UIConst.CHAR_INFO_EQUIP_STATE.Detail
     self:_CleanUpCache()
@@ -477,6 +366,7 @@ CharInfoEquipCtrl.OnSelectEquipSlotChange = HL.Method(HL.Table) << function(self
     self:_RefreshTabCellCache(slotIndex)
     self:_ToggleEquipList(true)
     self:_RefreshEquipList(slotIndex)
+    self.view.enhanceBtn.gameObject:SetActive(slotIndex ~= UIConst.CHAR_INFO_EQUIP_SLOT_MAP.TACTICAL and Utils.isSystemUnlocked(GEnums.UnlockSystemType.EquipEnhance))
 
     if self.view.commonItemList.m_curSelectIndex <= 0 then
         self:_RefreshRightPanel({
@@ -495,9 +385,6 @@ CharInfoEquipCtrl.OnSelectEquipSlotChange = HL.Method(HL.Table) << function(self
     end
 end
 
-
-
-
 CharInfoEquipCtrl.OnCompareEquipChange = HL.Method(HL.Opt(HL.Number)) << function(self, equipInstId)
     self.m_curCompareEquipInstId = equipInstId
     self:_RefreshRightPanel({
@@ -512,15 +399,9 @@ CharInfoEquipCtrl.OnCompareEquipChange = HL.Method(HL.Opt(HL.Number)) << functio
     })
 end
 
-
-
-
 CharInfoEquipCtrl.OnToggleEquipCompare = HL.Method(HL.Boolean) << function(self, isOn)
     self:_ToggleEquipSlotGroup(not isOn)
 end
-
-
-
 
 CharInfoEquipCtrl.OnChangeEquip = HL.Method(HL.Table) << function(self, arg)
     local equipInstId = arg.equipInstId
@@ -535,15 +416,10 @@ CharInfoEquipCtrl.OnChangeEquip = HL.Method(HL.Table) << function(self, arg)
     end
 end
 
-
-
-
 CharInfoEquipCtrl._OnChangeTactical = HL.Method(HL.String) << function(self, itemId)
     GameInstance.player.charBag:ChangeTactical(self.m_charInfo.instId, itemId);
 
 end
-
-
 
 CharInfoEquipCtrl.OnReplaceEquip = HL.Method() << function(self)
     local confirmText = self:_GetConfirmText(self.m_curCompareEquipInstId)
@@ -563,9 +439,6 @@ CharInfoEquipCtrl.OnReplaceEquip = HL.Method() << function(self)
     end
 end
 
-
-
-
 CharInfoEquipCtrl.JumpToTalent = HL.Method(HL.String) << function(self, nodeId)
     
     self:Notify(MessageConst.CHAR_INFO_EQUIP_SECOND_CLOSE)
@@ -581,8 +454,6 @@ CharInfoEquipCtrl.JumpToTalent = HL.Method(HL.String) << function(self, nodeId)
     })
 end
 
-
-
 CharInfoEquipCtrl.JumpToUpgrade = HL.Method() << function(self)
     
     self:Notify(MessageConst.CHAR_INFO_EQUIP_SECOND_CLOSE)
@@ -593,9 +464,6 @@ CharInfoEquipCtrl.JumpToUpgrade = HL.Method() << function(self)
         showGlitch = true,
     })
 end
-
-
-
 
 CharInfoEquipCtrl.OnPutOnEquip = HL.Method(HL.Table) << function(self, arg)
     local newOwner, msg, switch = unpack(arg)
@@ -622,9 +490,6 @@ CharInfoEquipCtrl.OnPutOnEquip = HL.Method(HL.Table) << function(self, arg)
     end
 end
 
-
-
-
 CharInfoEquipCtrl.OnPutOffEquip = HL.Method(HL.Table) << function(self, arg)
     AudioAdapter.PostEvent("au_ui_equip_unload_equipment")
 
@@ -642,15 +507,11 @@ CharInfoEquipCtrl.OnPutOffEquip = HL.Method(HL.Table) << function(self, arg)
 
     self.m_isInCompare = false
 
-    self.view.commonItemList:RefreshAllCells()
-
     if self.state == UIConst.CHAR_INFO_EQUIP_STATE.Detail then
+        self.view.commonItemList:RefreshAllCells()
         self:OnCompareEquipChange(lastSelectIndexId)
     end
 end
-
-
-
 
 CharInfoEquipCtrl.OnTacticalItemChange = HL.Method(HL.Table) << function(self, arg)
     local itemId = unpack(arg)
@@ -659,15 +520,11 @@ CharInfoEquipCtrl.OnTacticalItemChange = HL.Method(HL.Table) << function(self, a
 
     self.m_isInCompare = false
 
-    self.view.commonItemList:RefreshAllCells()
-
     if self.state == UIConst.CHAR_INFO_EQUIP_STATE.Detail then
+        self.view.commonItemList:RefreshAllCells()
         self:OnSelectTacticalItemChange(lastSelectIndexId)
     end
 end
-
-
-
 
 CharInfoEquipCtrl.OnSelectTacticalItemChange = HL.Method(HL.Opt(HL.String)) << function(self, itemId)
     self.m_curCompareTacticalItemId = itemId
@@ -683,8 +540,6 @@ CharInfoEquipCtrl.OnSelectTacticalItemChange = HL.Method(HL.Opt(HL.String)) << f
         itemId = itemId
     })
 end
-
-
 
 
 
@@ -758,10 +613,14 @@ CharInfoEquipCtrl._InitActionEvent = HL.Method() << function(self)
         end
         PhaseManager:GoToPhase(PhaseId.EquipTech)
     end)
+
+    self.view.enhanceBtn.onClick:AddListener(function()
+        PhaseManager:OpenPhase(PhaseId.EquipTech, {
+            isEnhance = true,
+            equipInstId = self.m_curCompareEquipInstId,
+        })
+    end)
 end
-
-
-
 
 CharInfoEquipCtrl._GetConfirmText = HL.Method(HL.Int).Return(HL.Any) << function(self, equipInstId)
     local equipInstanceData = CharInfoUtils.getEquipByInstId(equipInstId)
@@ -777,8 +636,9 @@ CharInfoEquipCtrl._GetConfirmText = HL.Method(HL.Int).Return(HL.Any) << function
     return text
 end
 
-
-
+CharInfoEquipCtrl.SetEquipListDirty = HL.Method(HL.Any) << function(self, arg)
+    self.m_equipListDirty = true
+end
 
 CharInfoEquipCtrl._RefreshEquipList = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, curSelectSlotIndex)
     local showEquipList = self.state == UIConst.CHAR_INFO_EQUIP_STATE.Detail
@@ -796,8 +656,6 @@ CharInfoEquipCtrl._RefreshEquipList = HL.Method(HL.Number, HL.Opt(HL.Boolean)) <
         end
     end
 end
-
-
 
 CharInfoEquipCtrl._RefreshCommonTacticalItemList = HL.Method() << function(self)
     local charInstId = self.m_charInfo.instId
@@ -844,9 +702,6 @@ CharInfoEquipCtrl._RefreshCommonTacticalItemList = HL.Method() << function(self)
 
     
 end
-
-
-
 
 CharInfoEquipCtrl._RefreshCommonEquipList = HL.Method(HL.Number) << function(self, selectSlotIndex)
     local slotPartType = UIConst.EQUIP_PART_TYPE_2_CELL_CONFIG[selectSlotIndex].slotPartType
@@ -899,10 +754,6 @@ CharInfoEquipCtrl._RefreshCommonEquipList = HL.Method(HL.Number) << function(sel
     
 end
 
-
-
-
-
 CharInfoEquipCtrl._RefreshItemCellAddOn = HL.Method(HL.Table, HL.Table) << function(self, cell, itemInfo)
     cell.currentSelected.gameObject:SetActive(false)
     cell.disableMark.gameObject:SetActive(false)
@@ -916,10 +767,6 @@ CharInfoEquipCtrl._RefreshItemCellAddOn = HL.Method(HL.Table, HL.Table) << funct
         cell.imageChar:LoadSprite(UIConst.UI_SPRITE_CHAR_HEAD, spriteName)
     end
 end
-
-
-
-
 
 CharInfoEquipCtrl._RefreshEquipCellAddOn = HL.Method(HL.Table, HL.Table) << function(self, cell, itemInfo)
     local equipTemplateId = itemInfo.id
@@ -955,14 +802,12 @@ CharInfoEquipCtrl._RefreshEquipCellAddOn = HL.Method(HL.Table, HL.Table) << func
     end
 end
 
-
-
-
 CharInfoEquipCtrl._CloseEquipDetail = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     self.state = UIConst.CHAR_INFO_EQUIP_STATE.Normal
     self:Notify(MessageConst.TOGGLE_CHAR_INFO_FOCUS_MODE, false)
 
     self:_CleanUpCache()
+    InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.commonItemList.view.scrollRect.naviGroup)
 
     self:_ToggleEquipList(false)
 end
@@ -993,14 +838,12 @@ local EQUIP_TAB_CONFIG = {
     },
 }
 
-
-
-
 CharInfoEquipCtrl._ToggleEquipList = HL.Method(HL.Boolean) << function(self, isOn)
     local afterTransition = function()
         self.view.backButton.gameObject:SetActive(isOn)
         self.view.commonItemList.gameObject:SetActive(isOn)
         self.view.tabGroup.gameObject:SetActive(isOn)
+        self.view.enhanceBtn.gameObject:SetActive(isOn and Utils.isSystemUnlocked(GEnums.UnlockSystemType.EquipEnhance))
     end
 
     local wrapper = self.animationWrapper
@@ -1031,9 +874,6 @@ CharInfoEquipCtrl._ToggleEquipList = HL.Method(HL.Boolean) << function(self, isO
     end
 end
 
-
-
-
 CharInfoEquipCtrl._RefreshTabCellCache = HL.Method(HL.Number) << function(self, curSelectSlotIndex)
     self.m_tabCellCache:Refresh(#EQUIP_TAB_CONFIG, function(cell, index)
         local tabConfig = EQUIP_TAB_CONFIG[index]
@@ -1049,9 +889,6 @@ CharInfoEquipCtrl._RefreshTabCellCache = HL.Method(HL.Number) << function(self, 
         cell.redDot:InitRedDot("Equip", { self.m_charInfo.instId, tabConfig.slotType })
     end)
 end
-
-
-
 
 
 CharInfoEquipCtrl._OnClickSuitButton = HL.Method(HL.Table) << function(self, suitTipsInfo)
@@ -1087,9 +924,6 @@ CharInfoEquipCtrl._OnClickSuitButton = HL.Method(HL.Table) << function(self, sui
         .uiCamera, UIConst.UI_TIPS_POS_TYPE.LeftDown)
 end
 
-
-
-
 CharInfoEquipCtrl.OnCommonEmptyButtonClick = HL.Method(HL.Opt(HL.Userdata)) << function(self, _)
     if not self.view.commonItemList.gameObject.activeSelf then
         return
@@ -1106,9 +940,6 @@ CharInfoEquipCtrl.OnCommonEmptyButtonClick = HL.Method(HL.Opt(HL.Userdata)) << f
         self:_ShowCompare(false)
     end
 end
-
-
-
 
 CharInfoEquipCtrl._ShowCompare = HL.Method(HL.Boolean) << function(self, inCompare)
     self.m_isInCompare = inCompare
@@ -1138,15 +969,11 @@ CharInfoEquipCtrl._ShowCompare = HL.Method(HL.Boolean) << function(self, inCompa
     self.view.keyHintTabRight.gameObject:SetActive(not inCompare)
 end
 
-
-
 CharInfoEquipCtrl._CleanUpCache = HL.Method() << function(self)
     self.m_curSelectSlotIndex = -1
     self.m_curCompareEquipInstId = 0
     self.m_isInCompare = false
 end
-
-
 
 
 
@@ -1163,8 +990,6 @@ CharInfoEquipCtrl._InitController = HL.Method() << function(self)
     UIUtils.bindHyperlinkPopup(self, "CharInfoEquip", self.view.inputGroup.groupId)
 end
 
-
-
 CharInfoEquipCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     local arg = {
         isDetail = self.state == UIConst.CHAR_INFO_EQUIP_STATE.Detail,
@@ -1177,9 +1002,6 @@ CharInfoEquipCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self
     }
     return arg
 end
-
-
-
 
 CharInfoEquipCtrl._ProcessStateArg = HL.Method(HL.Table) << function(self, arg)
     if arg == nil or not arg.isDetail then

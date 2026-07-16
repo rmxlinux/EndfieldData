@@ -1,17 +1,8 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
 DungeonCommonSelectionGroupSubCell = HL.Class('DungeonCommonSelectionGroupSubCell', UIWidgetBase)
 
-
 DungeonCommonSelectionGroupSubCell.m_dungeonId = HL.Field(HL.String) << ""
-
 
 DungeonCommonSelectionGroupSubCell.m_clickFunc = HL.Field(HL.Function)
 
@@ -25,8 +16,6 @@ local UIState = {
 }
 
 
-
-
 DungeonCommonSelectionGroupSubCell._OnFirstTimeInit = HL.Override() << function(self)
     self.view.clickBtn.onClick:AddListener(function()
         if self.m_clickFunc then
@@ -34,10 +23,6 @@ DungeonCommonSelectionGroupSubCell._OnFirstTimeInit = HL.Override() << function(
         end
     end)
 end
-
-
-
-
 
 DungeonCommonSelectionGroupSubCell.InitDungeonCommonSelectionGroupSubCell = HL.Method(HL.String, HL.Function)
     << function(self, dungeonId, clickFunc)
@@ -55,9 +40,6 @@ DungeonCommonSelectionGroupSubCell.InitDungeonCommonSelectionGroupSubCell = HL.M
     self.view.redDot:InitRedDot("DungeonReadNormal", {dungeonId}, nil, self:GetUICtrl().view.redDotScrollRect)
 end
 
-
-
-
 DungeonCommonSelectionGroupSubCell.SetSelected = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.stateController:SetState(isOn and UIState.Select or UIState.Unselect)
 
@@ -72,8 +54,6 @@ DungeonCommonSelectionGroupSubCell.SetSelected = HL.Method(HL.Boolean) << functi
         GameInstance.player.subGameSys:SendSubGameListRead({ self.m_dungeonId })
     end
 end
-
-
 
 DungeonCommonSelectionGroupSubCell._UpdateState = HL.Method() << function(self)
     local dungeonId = self.m_dungeonId

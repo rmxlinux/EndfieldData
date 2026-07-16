@@ -15,38 +15,7 @@ local ProduceInfoState = {
 local PROGRESS_AMOUNT_TWEEN_DURATION = 0.3
 local INVALID_TIME_TEXT = "--"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacSewageTreatExporterCtrl = HL.Class('FacSewageTreatExporterCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -56,44 +25,29 @@ FacSewageTreatExporterCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 FacSewageTreatExporterCtrl.m_buildingInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo_SewageTreatExport)
-
 
 FacSewageTreatExporterCtrl.m_treatItemId = HL.Field(HL.String) << ""
 
-
 FacSewageTreatExporterCtrl.m_produceItemId = HL.Field(HL.String) << ""
-
 
 FacSewageTreatExporterCtrl.m_produceItemData = HL.Field(HL.Table)
 
-
 FacSewageTreatExporterCtrl.m_lastValidItemId = HL.Field(HL.String) << ""
-
 
 FacSewageTreatExporterCtrl.m_isItemDirty = HL.Field(HL.Boolean) << false
 
-
 FacSewageTreatExporterCtrl.m_updateThread = HL.Field(HL.Thread)
-
 
 FacSewageTreatExporterCtrl.m_exportProgressTween = HL.Field(HL.Userdata)
 
-
 FacSewageTreatExporterCtrl.m_lastProgressFillAmount = HL.Field(HL.Number) << -1
-
 
 FacSewageTreatExporterCtrl.m_exportConsumeItemCount = HL.Field(HL.Number) << -1
 
-
 FacSewageTreatExporterCtrl.m_exportProduceItemCount = HL.Field(HL.Number) << -1
 
-
 FacSewageTreatExporterCtrl.m_currExportInfoState = HL.Field(HL.String) << ""
-
-
-
 
 
 FacSewageTreatExporterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -115,7 +69,7 @@ FacSewageTreatExporterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.facCacheRepository:InitFacCacheRepository({
         cache = self.m_buildingInfo.fluidCache,
         isInCache = false,
-        isFluidCache = true,
+        cacheType = FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid,
         cacheIndex = 1,
         slotCount = 1,
         formulaId = crafts[1].craftId,  
@@ -146,8 +100,6 @@ FacSewageTreatExporterCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     GameInstance.remoteFactoryManager:RegisterInterestedUnitId(self.m_buildingInfo.nodeId)
 end
 
-
-
 FacSewageTreatExporterCtrl.OnClose = HL.Override() << function(self)
     GameInstance.remoteFactoryManager:UnregisterInterestedUnitId(self.m_buildingInfo.nodeId)
 
@@ -158,8 +110,6 @@ FacSewageTreatExporterCtrl.OnClose = HL.Override() << function(self)
         self.m_exportProgressTween = nil
     end
 end
-
-
 
 FacSewageTreatExporterCtrl._InitSewageTreatExportStaticData = HL.Method() << function(self)
     local importSuccess, importCfg = Tables.factorySewageTreatImportTable:TryGetValue(FacConst.FAC_SEWAGE_TREAT_IMPORTER_BUILDING_ID)
@@ -178,8 +128,6 @@ FacSewageTreatExporterCtrl._InitSewageTreatExportStaticData = HL.Method() << fun
     end
 end
 
-
-
 FacSewageTreatExporterCtrl._InitSewageTreatExporterUpdateThread = HL.Method() << function(self)
     self:_UpdateAndRefreshAll()
     self.m_updateThread = self:_StartCoroutine(function()
@@ -190,8 +138,6 @@ FacSewageTreatExporterCtrl._InitSewageTreatExporterUpdateThread = HL.Method() <<
     end)
 end
 
-
-
 FacSewageTreatExporterCtrl._UpdateAndRefreshAll = HL.Method() << function(self)
     self:_UpdateSewageTreatExporterCacheItemData()
     self:_RefreshExportInfo()
@@ -201,8 +147,6 @@ FacSewageTreatExporterCtrl._UpdateAndRefreshAll = HL.Method() << function(self)
         self.m_isItemDirty = false
     end
 end
-
-
 
 
 
@@ -229,8 +173,6 @@ FacSewageTreatExporterCtrl._UpdateSewageTreatExporterCacheItemData = HL.Method()
     self.m_lastValidItemId = self.m_produceItemData.id
 end
 
-
-
 FacSewageTreatExporterCtrl._ClearSewageTreatExporterItemData = HL.Method() << function(self)
     self.m_lastValidItemId = ""
     self.m_produceItemData = {
@@ -245,10 +187,6 @@ end
 
 
 
-
-
-
-
 FacSewageTreatExporterCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL.Any) << function(self, cell, itemBundle)
     if cell == nil or itemBundle == nil then
         return
@@ -256,8 +194,8 @@ FacSewageTreatExporterCtrl._RefreshInventoryItemCell = HL.Method(HL.Userdata, HL
 
     
     local itemId = itemBundle.id
-    local isEmptyBottle = Tables.emptyBottleTable:ContainsKey(itemId)
-    local isFullBottle = Tables.fullBottleTable:ContainsKey(itemId)
+    local isEmptyBottle = FactoryUtils.isEmptyBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
+    local isFullBottle = FactoryUtils.isFullBottleOrJarItem(itemId, FacConst.FAC_CACHE_SLOT_TYPE_STATE.Liquid)
     local isBottle = isEmptyBottle or isFullBottle
     local isEmpty = string.isEmpty(itemBundle.id)
     local needMask = (not isBottle or not isEmptyBottle) and not isEmpty
@@ -271,8 +209,6 @@ end
 
 
 
-
-
 FacSewageTreatExporterCtrl._InitExportInfo = HL.Method() << function(self)
     
     local exportInfoNode = self.view.exportInfoNode
@@ -280,8 +216,6 @@ FacSewageTreatExporterCtrl._InitExportInfo = HL.Method() << function(self)
     local itemData = Tables.itemTable:GetValue(self.m_treatItemId)
     exportInfoNode.itemNameTxt.text = itemData.name
 end
-
-
 
 FacSewageTreatExporterCtrl._RefreshExportInfo = HL.Method() << function(self)
     local exportInfoNode = self.view.exportInfoNode
@@ -331,8 +265,6 @@ end
 
 
 
-
-
 FacSewageTreatExporterCtrl._RefreshProduceInfo = HL.Method() << function(self)
     local produceInfoNode = self.view.produceInfoNode
 
@@ -350,14 +282,9 @@ FacSewageTreatExporterCtrl._RefreshProduceInfo = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacSewageTreatExporterCtrl._RefreshChangeState = HL.Method(HL.Userdata) << function(self, state)
     FactoryUtils.refreshStateNodeByState(self.view.facStateNode, self.view.produceInfoNode, state)
 end
-
-
 
 
 
@@ -368,9 +295,6 @@ FacSewageTreatExporterCtrl._InitSewageTreatExporterFormulaNode = HL.Method() << 
     self.view.formulaNode:InitFormulaNode(self.m_buildingInfo)
     self:_RefreshSewageTreatExporterTargetFormula()
 end
-
-
-
 
 FacSewageTreatExporterCtrl._RefreshSewageTreatExporterTargetFormula = HL.Method(HL.Opt(HL.Userdata)) << function(self, state)
     local targetCraftInfo = FactoryUtils.getBuildingProcessingCraft(self.m_buildingInfo)
@@ -389,10 +313,7 @@ end
 
 
 
-
 FacSewageTreatExporterCtrl.m_naviGroupSwitcher = HL.Field(HL.Forward('NaviGroupSwitcher'))
-
-
 
 FacSewageTreatExporterCtrl._InitFacSewageTreatExporterController = HL.Method() << function(self)
     local NaviGroupSwitcher = require_ex("Common/Utils/UI/NaviGroupSwitcher").NaviGroupSwitcher
@@ -405,8 +326,6 @@ FacSewageTreatExporterCtrl._InitFacSewageTreatExporterController = HL.Method() <
     end
     self.view.contentNaviGroup:NaviToThisGroup()
 end
-
-
 
 FacSewageTreatExporterCtrl._RefreshNaviGroupSwitcherInfos = HL.Method() << function(self)
     if self.m_naviGroupSwitcher == nil then

@@ -4,31 +4,6 @@ local CloudGame = CS.Beyond.CloudGame
 local PANEL_ID = PanelId.CommonShare
 local waterMarkScale = 0.096
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonShareCtrl = HL.Class('CommonShareCtrl', uiCtrl.UICtrl)
 
 local CLEAR_PANEL_ON_SHUTTER = {
@@ -50,42 +25,29 @@ local SKLandId = 9
 
 local OverseaSKLandId = 19
 
-
 CommonShareCtrl.m_showPlayerInfo = HL.Field(HL.Boolean) << true
-
 
 CommonShareCtrl.m_arg = HL.Field(HL.Any) << nil
 
-
 CommonShareCtrl.m_isSaved = HL.Field(HL.Boolean) << false
-
 
 CommonShareCtrl.m_isInfoSaved = HL.Field(HL.Boolean) << false
 
-
 CommonShareCtrl.m_onClose = HL.Field(HL.Function)
-
 
 CommonShareCtrl.m_type = HL.Field(HL.String) << ""
 
-
 CommonShareCtrl.m_channelIdList = HL.Field(HL.Table) << nil
-
 
 CommonShareCtrl.m_clickSaveBtn = HL.Field(HL.Boolean) << false
 
-
 CommonShareCtrl.m_maskClipAmount = HL.Field(HL.Any) << nil
-
 
 CommonShareCtrl.m_lastShareChannelId = HL.Field(HL.Number) << 0
 
-
 CommonShareCtrl.m_lastShareSklandTopicId = HL.Field(HL.String) << ""
 
-
 CommonShareCtrl.m_ratio = HL.Field(HL.Number) << 1
-
 
 
 
@@ -94,8 +56,6 @@ CommonShareCtrl.m_ratio = HL.Field(HL.Number) << 1
 CommonShareCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SHARE_END] = 'OnShareEnd',
 }
-
-
 
 CommonShareCtrl.ScreenCaptureAndShare = HL.StaticMethod(HL.Any) << function(arg)
     if arg == nil then
@@ -137,26 +97,8 @@ CommonShareCtrl.ScreenCaptureAndShare = HL.StaticMethod(HL.Any) << function(arg)
                 this.view.hideRoot.aspectRatio = ratio
                 LayoutRebuilder.ForceRebuildLayoutImmediate(this.view.hideRoot.transform)
                 this.view.stateController:SetState(arg.needEdge == false and "HideAll" or "Hide")
-                coroutine.waitForRenderDone()
                 
-                
-                local isBlurShowing = false
-                for _ = 1, 30 do
-                    local isOpen, blurCtrl = UIManager:IsOpen(PanelId.FullScreenSceneBlur)
-                    isBlurShowing = isOpen and blurCtrl ~= nil and blurCtrl.view ~= nil and blurCtrl.view.blurBG ~= nil and blurCtrl.view.blurBG.gameObject.activeSelf
-                    if not isBlurShowing then
-                        break
-                    end
-                    coroutine.step()
-                end
-
-                local isOpen, blurCtrl = UIManager:IsOpen(PanelId.FullScreenSceneBlur)
-                isBlurShowing = isOpen and blurCtrl ~= nil and blurCtrl.view ~= nil and blurCtrl.view.blurBG ~= nil and blurCtrl.view.blurBG.gameObject.activeSelf
-                if isBlurShowing then
-                    logger.error("CommonShareCtrl.ScreenCaptureAndShare: wait FullScreenSceneBlur exit timeout")
-                end
-
-                coroutine.waitForRenderDone()
+                Notify(MessageConst.QUICK_HIDE_FULL_SCREEN_SCENE_BLUR)
             end
             local photoRealHeight = this.view.photoImgWithWaterMark.rectTransform.rect.width / ratio
             local offset = photoRealHeight * waterMarkScale / 2
@@ -181,9 +123,6 @@ CommonShareCtrl.ScreenCaptureAndShare = HL.StaticMethod(HL.Any) << function(arg)
         logger.error("CommonShareCtrl.ScreenCaptureAndShare: arg.rt is not nil, must be nil")
     end
 end
-
-
-
 
 
 CommonShareCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -321,15 +260,10 @@ CommonShareCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     
     self:_UpdateWaterInfo()
     if arg.isRestoreFromChangeInputDevice and arg.waterRt then
-        
-        
-        
         self:_ApplyPhotoLayout(arg.ratio)
         self:OnCaptureEnd()
     end
 end
-
-
 
 CommonShareCtrl.OnCaptureEnd = HL.Method() << function(self)
     if self.m_arg.onCaptureEnd and not self.m_arg.isRestoreFromChangeInputDevice then
@@ -354,12 +288,6 @@ CommonShareCtrl.OnCaptureEnd = HL.Method() << function(self)
     self:_OnFadeInEnd()
 end
 
-
-
-
-
-
-
 CommonShareCtrl._ApplyPhotoLayout = HL.Method(HL.Number) << function(self, ratio)
     if ratio == nil or ratio <= 0 then
         return
@@ -376,14 +304,10 @@ CommonShareCtrl._ApplyPhotoLayout = HL.Method(HL.Number) << function(self, ratio
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.mask2D.transform)
 end
 
-
-
 CommonShareCtrl._UpdateWaterInfo = HL.Method() << function(self)
     self.view.bottomNodeWaterMarkUIForPos:InitBottomNodeWaterMarkUI(self.m_arg)
     self.view.bottomNodeWaterMarkForCamera:InitBottomNodeWaterMarkUI(self.m_arg)
 end
-
-
 
 CommonShareCtrl._ChangePlayerInfo = HL.Method() << function(self)
     if self.m_arg == nil or self.m_arg.waterRt == nil then
@@ -400,8 +324,6 @@ CommonShareCtrl._ChangePlayerInfo = HL.Method() << function(self)
     local bottom = self.m_showPlayerInfo and 0 or self.m_maskClipAmount
     mask.padding = CS.UnityEngine.Vector4(pad.x, bottom, pad.z, pad.w)
 end
-
-
 
 CommonShareCtrl._OnFadeInEnd = HL.Method() << function(self)
     
@@ -495,7 +417,7 @@ CommonShareCtrl._OnFadeInEnd = HL.Method() << function(self)
                         data.extraData.boardId = sklData.boardId
                         data.extraData.tagList = {}
                         table.insert(data.extraData.tagList, {id = tostring(sklData.tagList), name = sklData.name})
-                        data.title = sklData.name
+                        data.title = self.m_type == "Blueprint" and string.format(Language.LUA_SHARE_BLUEPRINT_TITLE, self.m_arg.codeId) or ""
                         self.m_lastShareSklandTopicId = tostring(sklData.boardId)
                         local extraDataStr = Json.encode(data.extraData)
                         data.extraData = extraDataStr
@@ -518,8 +440,6 @@ CommonShareCtrl._OnFadeInEnd = HL.Method() << function(self)
     EventLogManagerInst:GameEvent_CommonShareStart(self.m_type, self.m_channelIdList, "")
 end
 
-
-
 CommonShareCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     if self.m_arg == nil or self.m_arg.waterRt == nil then
         return nil
@@ -533,8 +453,6 @@ CommonShareCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << fu
     arg.ratio = self.m_ratio
     return arg
 end
-
-
 
 CommonShareCtrl.OnShareEnd = HL.Method() << function(self, args)
     local code = unpack(args)
@@ -553,13 +471,9 @@ CommonShareCtrl.OnShareEnd = HL.Method() << function(self, args)
     self.m_lastShareSklandTopicId = ""
 end
 
-
-
 CommonShareCtrl.OnShow = HL.Override() << function(self)
     UIManager:Hide(PanelId.UIDPanel)
 end
-
-
 
 CommonShareCtrl.OnClose = HL.Override() << function(self)
     UIManager:Show(PanelId.UIDPanel)

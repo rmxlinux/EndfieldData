@@ -1,12 +1,6 @@
 local SNSContentBase = require_ex('UI/Widgets/SNSContentBase')
 
-
-
-
-
 SNSContentCard = HL.Class('SNSContentCard', SNSContentBase)
-
-
 
 SNSContentCard._OnSNSContentInit = HL.Override() << function(self)
     local chatId = self.m_contentCfg.contentParam[0]
@@ -37,13 +31,9 @@ end
 
 
 
-
-
 SNSContentCard.CanSetTarget = HL.Override().Return(HL.Boolean) << function(self)
     return true
 end
-
-
 
 SNSContentCard.GetNaviTarget = HL.Override().Return(HL.Any) << function(self)
     return self.view.button

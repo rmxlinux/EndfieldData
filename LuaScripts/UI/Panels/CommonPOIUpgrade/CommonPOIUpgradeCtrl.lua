@@ -1,49 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonPOIUpgrade
 local PHASE_ID = PhaseId.CommonPOIUpgrade
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonPOIUpgradeCtrl = HL.Class('CommonPOIUpgradeCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -92,30 +50,20 @@ local RefreshContentUIFunc = {
 
 
 
-
 CommonPOIUpgradeCtrl.m_args = HL.Field(HL.Any)
-
 
 CommonPOIUpgradeCtrl.m_instId = HL.Field(HL.String) << ""
 
-
 CommonPOIUpgradeCtrl.m_domainPOIType = HL.Field(GEnums.DomainPoiType)
-
 
 CommonPOIUpgradeCtrl.m_info = HL.Field(HL.Table)
 
-
 CommonPOIUpgradeCtrl.m_onClickUnlockBtn = HL.Field(HL.Function)
-
 
 CommonPOIUpgradeCtrl.m_onClickUpgradeBtn = HL.Field(HL.Function)
 
 
-
 CommonPOIUpgradeCtrl.m_descTxtCellCached = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 
@@ -142,8 +90,6 @@ end
 
 
 
-
-
 CommonPOIUpgradeCtrl._InitEvent = HL.Method() << function(self)
     local funcName = InitEventFunc[self.m_domainPOIType]
     if not funcName then
@@ -152,8 +98,6 @@ CommonPOIUpgradeCtrl._InitEvent = HL.Method() << function(self)
     end
     self[funcName](self)
 end
-
-
 
 CommonPOIUpgradeCtrl._InitController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -168,8 +112,6 @@ CommonPOIUpgradeCtrl._InitController = HL.Method() << function(self)
     end)
     self.view.contentParent.selectableNaviGroup.enabled = false
 end
-
-
 
 
 CommonPOIUpgradeCtrl._InitEventDomainShop = HL.Method() << function(self)
@@ -189,8 +131,6 @@ CommonPOIUpgradeCtrl._InitEventDomainShop = HL.Method() << function(self)
     end
 end
 
-
-
 CommonPOIUpgradeCtrl._InitEventRecycleBin = HL.Method() << function(self)
     self.m_onClickUnlockBtn = function()
         GameInstance.player.recycleBinSystem:RecycleBinUnlock(self.m_instId)
@@ -200,8 +140,6 @@ CommonPOIUpgradeCtrl._InitEventRecycleBin = HL.Method() << function(self)
         GameInstance.player.recycleBinSystem:RecycleBinLevelUp(self.m_instId)
     end
 end
-
-
 
 CommonPOIUpgradeCtrl._InitEventKiteStation = HL.Method() << function(self)
     self.m_onClickUnlockBtn = function()
@@ -213,8 +151,6 @@ CommonPOIUpgradeCtrl._InitEventKiteStation = HL.Method() << function(self)
     end
 end
 
-
-
 CommonPOIUpgradeCtrl._InitEventDomainDepot = HL.Method() << function(self)
     self.m_onClickUnlockBtn = function()
         GameInstance.player.domainDepotSystem:UnlockDomainDepot(self.m_instId)
@@ -224,8 +160,6 @@ CommonPOIUpgradeCtrl._InitEventDomainDepot = HL.Method() << function(self)
         GameInstance.player.domainDepotSystem:UpgradeDomainDepot(self.m_instId)
     end
 end
-
-
 
 CommonPOIUpgradeCtrl._InitEventSewageTreatPlant = HL.Method() << function(self)
     self.m_onClickUnlockBtn = function()
@@ -237,8 +171,6 @@ CommonPOIUpgradeCtrl._InitEventSewageTreatPlant = HL.Method() << function(self)
         GameInstance.player.remoteFactory.core:Message_SewageTreatPlantLevelUp(self.m_instId, plantData.currLevel + 1)
     end
 end
-
-
 
 
 CommonPOIUpgradeCtrl._InitEventSimulationTraining = HL.Method() << function(self)
@@ -256,32 +188,22 @@ end
 
 
 
-
-
 CommonPOIUpgradeCtrl.OnDomainShopChannelUnlock = HL.Method() << function(self)
     PhaseManager:ExitPhaseFast(PHASE_ID)
 end
 
-
-
 CommonPOIUpgradeCtrl.OnDomainShopChannelLevelUp = HL.Method() << function(self)
     PhaseManager:ExitPhaseFast(PHASE_ID)
 end
-
-
 
 CommonPOIUpgradeCtrl.OnSewageTreatPlantLevelChange = HL.Method() << function(self)
     PhaseManager:ExitPhaseFast(PHASE_ID)
 end
 
 
-
-
 CommonPOIUpgradeCtrl.OnSimulationTrainingLevelChange = HL.Method() << function(self)
     PhaseManager:ExitPhaseFast(PHASE_ID)
 end
-
-
 
 
 
@@ -300,15 +222,11 @@ CommonPOIUpgradeCtrl._UpdateData = HL.Method() << function(self)
 end
 
 
-
-
 CommonPOIUpgradeCtrl._GetDataDomainShop = HL.Method().Return(HL.Any) << function(self)
     local channelId = self.m_instId
     local info = DomainPOIUtils.GetPoiUpgradeCtrlInfo[GEnums.DomainPoiType.DomainShop](channelId, true)
     return info
 end
-
-
 
 CommonPOIUpgradeCtrl._GetDataRecycleBin = HL.Method().Return(HL.Any) << function(self)
     local info = DomainPOIUtils.getUpgradeCtrlArgsTemplate()
@@ -396,8 +314,6 @@ CommonPOIUpgradeCtrl._GetDataRecycleBin = HL.Method().Return(HL.Any) << function
     return info
 end
 
-
-
 CommonPOIUpgradeCtrl._GetDataKiteStation = HL.Method().Return(HL.Any) << function(self)
     local info = DomainPOIUtils.getUpgradeCtrlArgsTemplate()
     local kiteStationId = self.m_instId
@@ -447,8 +363,6 @@ CommonPOIUpgradeCtrl._GetDataKiteStation = HL.Method().Return(HL.Any) << functio
     DomainPOIUtils.insertContentTitleWithText(info, currentLevelConfig.levelTitle, currentLevelConfig.levelDesc)
     return info
 end
-
-
 
 CommonPOIUpgradeCtrl._GetDataDomainDepot = HL.Method().Return(HL.Any) << function(self)
     local info = DomainPOIUtils.getUpgradeCtrlArgsTemplate()
@@ -606,8 +520,6 @@ CommonPOIUpgradeCtrl._GetDataDomainDepot = HL.Method().Return(HL.Any) << functio
     return info
 end
 
-
-
 CommonPOIUpgradeCtrl._GetDataSewageTreatPlant = HL.Method().Return(HL.Any) << function(self)
     local info = DomainPOIUtils.getUpgradeCtrlArgsTemplate()
     local domainData = FactoryUtils.getSewageTreatPlantData(self.m_instId)
@@ -644,8 +556,6 @@ CommonPOIUpgradeCtrl._GetDataSewageTreatPlant = HL.Method().Return(HL.Any) << fu
 
     return info
 end
-
-
 
 CommonPOIUpgradeCtrl._GetDataSimulationTraining = HL.Method().Return(HL.Any) << function(self)
     local simulationTrainingSystem = GameInstance.player.simulationTrainingSystem
@@ -831,8 +741,6 @@ end
 
 
 
-
-
 CommonPOIUpgradeCtrl._InitUI = HL.Method() << function(self)
     self.view.domainTopMoneyTitle.view.closeBtn.onClick:AddListener(function()
         self:_CloseSelf()
@@ -875,8 +783,6 @@ CommonPOIUpgradeCtrl._InitUI = HL.Method() << function(self)
     contentParent.poiUpgradeContentTitleWithText.gameObject:SetActive(false)
 end
 
-
-
 CommonPOIUpgradeCtrl._RefreshAllUI = HL.Method() << function(self)
     
     local info = self.m_info
@@ -886,8 +792,6 @@ CommonPOIUpgradeCtrl._RefreshAllUI = HL.Method() << function(self)
     self:_RefreshBasicUI()
     self:_RefreshContentUI()
 end
-
-
 
 CommonPOIUpgradeCtrl._RefreshBasicUI = HL.Method() << function(self)
     
@@ -958,8 +862,6 @@ CommonPOIUpgradeCtrl._RefreshBasicUI = HL.Method() << function(self)
     self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(info.domainId)
 end
 
-
-
 CommonPOIUpgradeCtrl._RefreshContentUI = HL.Method() << function(self)
     
     local info = self.m_info
@@ -984,9 +886,6 @@ CommonPOIUpgradeCtrl._RefreshContentUI = HL.Method() << function(self)
 end
 
 
-
-
-
 CommonPOIUpgradeCtrl._RefreshContentUICommonTitle = HL.Method(HL.Table) << function(self, info)
     
     local cell = CommonPOIUpgradeCtrl._GenCacheContent(self.view.contentParent.poiUpgradeContentCommonTitle.gameObject, self.view.contentParent.gameObject)
@@ -994,9 +893,6 @@ CommonPOIUpgradeCtrl._RefreshContentUICommonTitle = HL.Method(HL.Table) << funct
     cell.titleTxt.text = info.titleName
     cell.stateController:SetState(info.isNew and "New" or "Normal")
 end
-
-
-
 
 CommonPOIUpgradeCtrl._RefreshContentUIItemList = HL.Method(HL.Table) << function(self, info)
     
@@ -1017,9 +913,6 @@ CommonPOIUpgradeCtrl._RefreshContentUIItemList = HL.Method(HL.Table) << function
         self.view.contentParent.selectableNaviGroup.enabled = true
     end
 end
-
-
-
 
 CommonPOIUpgradeCtrl._RefreshContentUITextImgText = HL.Method(HL.Table) << function(self, info)
     
@@ -1076,9 +969,6 @@ CommonPOIUpgradeCtrl._RefreshContentUITextImgText = HL.Method(HL.Table) << funct
     end)
 end
 
-
-
-
 CommonPOIUpgradeCtrl._RefreshContentUIRewardList = HL.Method(HL.Table) << function(self, info)
     
     local cell = CommonPOIUpgradeCtrl._GenCacheContent(self.view.contentParent.poiUpgradeContentRewardList.gameObject, self.view.contentParent.gameObject)
@@ -1102,9 +992,6 @@ CommonPOIUpgradeCtrl._RefreshContentUIRewardList = HL.Method(HL.Table) << functi
     end
 end
 
-
-
-
 CommonPOIUpgradeCtrl._RefreshContentUITitleWithText = HL.Method(HL.Table) << function(self, info)
     
     local cell = CommonPOIUpgradeCtrl._GenCacheContent(self.view.contentParent.poiUpgradeContentTitleWithText.gameObject, self.view.contentParent.gameObject)
@@ -1116,9 +1003,6 @@ CommonPOIUpgradeCtrl._RefreshContentUITitleWithText = HL.Method(HL.Table) << fun
         cell.contentTxt.text = info.contentText
     end
 end
-
-
-
 
 CommonPOIUpgradeCtrl._RefreshContentUISewageTreatInfo = HL.Method(HL.Table) << function(self, info)
     local cell = CommonPOIUpgradeCtrl._GenCacheContent(self.view.contentParent.poiUpgradeSewageTreatLevelInfo.gameObject, self.view.contentParent.gameObject)
@@ -1135,17 +1019,11 @@ end
 
 
 
-
-
-
 CommonPOIUpgradeCtrl._GenCacheContent = HL.StaticMethod(GameObject, GameObject).Return(HL.Table) << function(templateObj, parent)
     local child = UIUtils.addChild(parent, templateObj, true)
     child.gameObject:SetActive(true)
     return Utils.wrapLuaNode(child)
 end
-
-
-
 
 CommonPOIUpgradeCtrl.OnSquadInFightChanged = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     local inFight = unpack(args)
@@ -1153,9 +1031,6 @@ CommonPOIUpgradeCtrl.OnSquadInFightChanged = HL.Method(HL.Opt(HL.Any)) << functi
         self:_CloseSelf(true)
     end
 end
-
-
-
 
 CommonPOIUpgradeCtrl._CloseSelf = HL.Method(HL.Opt(HL.Boolean)) << function(self, isFast)
     AudioManager.PostEvent("Au_UI_Popup_DetailsPanel_Close")

@@ -2,13 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WeaponSkillDetail
 
-
-
-
-
-
 WeaponSkillDetailCtrl = HL.Class('WeaponSkillDetailCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -19,11 +13,7 @@ WeaponSkillDetailCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 WeaponSkillDetailCtrl.m_skillNodeCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 WeaponSkillDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -94,7 +84,7 @@ WeaponSkillDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
             for i = 1, self.m_skillNodeCellCache:GetCount() do
                 local cell = self.m_skillNodeCellCache:Get(i)
                 if cell.skillScrollRect.vScrollingNeeded then
-                    UIUtils.setAsNaviTarget(cell.naviDec)
+                    self:SetNaviTarget(cell.naviDec)
                     break
                 end
             end
@@ -102,8 +92,6 @@ WeaponSkillDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end
     UIUtils.bindHyperlinkPopup(self, "weaponSkillDetail", self.view.inputGroup.groupId)
 end
-
-
 
 WeaponSkillDetailCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.btnClose.onClick:AddListener(function()

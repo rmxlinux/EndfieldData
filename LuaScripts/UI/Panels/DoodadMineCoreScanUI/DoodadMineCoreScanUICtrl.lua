@@ -1,21 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DoodadMineCoreScanUI
-
-
-
-
-
-
-
-
-
-
-
-
-
 DoodadMineCoreScanUICtrl = HL.Class('DoodadMineCoreScanUICtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -27,17 +13,11 @@ DoodadMineCoreScanUICtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 DoodadMineCoreScanUICtrl.m_doodadMineCoreObjDict = HL.Field(HL.Table)
-
 
 DoodadMineCoreScanUICtrl.m_doodadMineCoreObjPool = HL.Field(HL.Table)
 
-
 DoodadMineCoreScanUICtrl.m_doodadMineCoreLogicIdDict = HL.Field(HL.Table)
-
-
-
 
 
 DoodadMineCoreScanUICtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -45,8 +25,6 @@ DoodadMineCoreScanUICtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_doodadMineCoreObjPool = {}
     self.m_doodadMineCoreLogicIdDict = {}
 end
-
-
 
 
 
@@ -69,19 +47,11 @@ DoodadMineCoreScanUICtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
 DoodadMineCoreScanUICtrl._OnAddDoodadMineCoreUI = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = DoodadMineCoreScanUICtrl.AutoOpen(PANEL_ID, args, false)
     local entity,coreName, forming, condition = unpack(args)
     ctrl:_AddDoodadMineCore(entity, coreName, forming, condition)
 end
-
-
-
-
-
-
 
 DoodadMineCoreScanUICtrl._AddDoodadMineCore = HL.Method(HL.Any, HL.String, HL.Any, HL.String) << function(self, targetObject, coreName, forming, condition)
     if self.m_doodadMineCoreObjDict[targetObject] == nil then
@@ -97,11 +67,6 @@ DoodadMineCoreScanUICtrl._AddDoodadMineCore = HL.Method(HL.Any, HL.String, HL.An
     self.m_doodadMineCoreLogicIdDict[doodadMineCore.entityLogicId] = doodadMineCore
 end
 
-
-
-
-
-
 DoodadMineCoreScanUICtrl._InitDoodadMineCore = HL.Method(HL.Any, HL.Any, HL.String) << function(self, doodadMineCore, target, coreName)
     if not target or not doodadMineCore then
         return
@@ -109,8 +74,6 @@ DoodadMineCoreScanUICtrl._InitDoodadMineCore = HL.Method(HL.Any, HL.Any, HL.Stri
 
     doodadMineCore.doodadCoreName:SetText(coreName)
 end
-
-
 
 DoodadMineCoreScanUICtrl._CreateDoodadMineCore = HL.Method().Return(HL.Table) << function(self)
     if self.m_doodadMineCoreObjPool ~= nil and #self.m_doodadMineCoreObjPool > 0 then
@@ -123,8 +86,6 @@ DoodadMineCoreScanUICtrl._CreateDoodadMineCore = HL.Method().Return(HL.Table) <<
         return result
     end
 end
-
-
 
 DoodadMineCoreScanUICtrl._OnRemoveDoodadMineCoreUI = HL.StaticMethod(HL.Any) << function(args)
     local opened, ctrl = UIManager:IsOpen(PANEL_ID)
@@ -141,8 +102,6 @@ DoodadMineCoreScanUICtrl._OnRemoveDoodadMineCoreUI = HL.StaticMethod(HL.Any) << 
         ctrl.m_doodadMineCoreObjDict[entity] = nil
     end
 end
-
-
 
 DoodadMineCoreScanUICtrl._OnUpdateDoodadMineCoreUI = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = DoodadMineCoreScanUICtrl.AutoOpen(PANEL_ID, args, false)

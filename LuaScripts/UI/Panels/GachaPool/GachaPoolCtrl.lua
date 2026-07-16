@@ -3,55 +3,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GachaPool
 local PHASE_ID = PhaseId.GachaPool
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GachaPoolCtrl = HL.Class('GachaPoolCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -75,47 +27,31 @@ GachaPoolCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 
-
 GachaPoolCtrl.m_arg = HL.Field(HL.Table)
-
 
 GachaPoolCtrl.m_getCell = HL.Field(HL.Function)
 
-
 GachaPoolCtrl.m_curPoolId = HL.Field(HL.String) << ''
-
 
 GachaPoolCtrl.m_pools = HL.Field(HL.Table)
 
-
 GachaPoolCtrl.m_curIndex = HL.Field(HL.Number) << 1
-
 
 GachaPoolCtrl.m_poolTabCache = HL.Field(HL.Forward('UIListCache'))
 
-
 GachaPoolCtrl.m_showRewardFuncQueue = HL.Field(HL.Forward("Queue"))
-
 
 GachaPoolCtrl.m_queueRewardConfigs = HL.Field(HL.Table)
 
-
 GachaPoolCtrl.m_curIsShowReward = HL.Field(HL.Boolean) << false
-
 
 GachaPoolCtrl.m_needTryPlayChangeTabInAni = HL.Field(HL.Boolean) << true
 
-
 GachaPoolCtrl.m_isPlayingChangeTabInAni = HL.Field(HL.Boolean) << false
-
 
 GachaPoolCtrl.m_onPlayChangeTabInAniComplete = HL.Field(HL.Function)
 
-
 GachaPoolCtrl.m_jumpToPoolLuaIndex = HL.Field(HL.Number) << 0
-
-
-
 
 
 
@@ -136,8 +72,6 @@ GachaPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end)
 end
-
-
 
 GachaPoolCtrl.OnShow = HL.Override() << function(self)
     
@@ -171,20 +105,16 @@ GachaPoolCtrl.OnShow = HL.Override() << function(self)
 
     local cell = self.m_poolTabCache:Get(self.m_curIndex)
     if cell then
-        self:SetAsNaviTargetInSilentModeIfNecessary(self.view.poolTabNodeNaviGroup, cell.toggle)
+        self:SetNaviTarget(cell.toggle)
     end
 
     
     self:HandleSubPanelArg()
 end
 
-
-
 GachaPoolCtrl.OnHide = HL.Override() << function(self)
     self.view.moneyNode.naviGroup:ManuallyStopFocus()
 end
-
-
 
 GachaPoolCtrl._OnPlayAnimationOut = HL.Override() << function(self)
     GachaPoolCtrl.Super._OnPlayAnimationOut(self)
@@ -195,9 +125,6 @@ GachaPoolCtrl._OnPlayAnimationOut = HL.Override() << function(self)
         cell.cellWidget:PlayGachaOutAni()
     end
 end
-
-
-
 
 
 
@@ -235,8 +162,6 @@ GachaPoolCtrl._InitData = HL.Method(HL.Opt(HL.String)) << function(self, poolId)
     end
     self.m_jumpToPoolLuaIndex = -1
 end
-
-
 
 
 
@@ -287,10 +212,6 @@ end
 
 
 
-
-
-
-
 GachaPoolCtrl._UpdateTabCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local info = self.m_pools[index]
     local poolTypeData = Tables.gachaCharPoolTypeTable[info.data.type]
@@ -316,9 +237,6 @@ GachaPoolCtrl._UpdateTabCell = HL.Method(HL.Table, HL.Number) << function(self, 
     
     cell.redDot:InitRedDot("GachaSinglePool", info.id)
 end
-
-
-
 
 GachaPoolCtrl._OnCenterIndexChanged = HL.Method(HL.Number) << function(self, index)
     logger.info("GachaPoolCtrl._OnCenterIndexChanged", index)
@@ -377,9 +295,6 @@ GachaPoolCtrl._OnCenterIndexChanged = HL.Method(HL.Number) << function(self, ind
     end
 end
 
-
-
-
 GachaPoolCtrl._PlayChangeTabInAni = HL.Method(HL.Any) << function(self, poolCellWidget)
     if poolCellWidget:CheckCanPlayChangeTabInAni() then
         
@@ -395,10 +310,6 @@ GachaPoolCtrl._PlayChangeTabInAni = HL.Method(HL.Any) << function(self, poolCell
         end
     end
 end
-
-
-
-
 
 
 
@@ -459,10 +370,6 @@ GachaPoolCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, c
     self:_UpdateRemainingTime(node, index)
 end
 
-
-
-
-
 GachaPoolCtrl._UpdateRemainingTime = HL.Method(HL.Table, HL.Number) << function(self, node, index)
     if node.remainingTimeTxt then
         local poolInfo = self.m_pools[index]
@@ -472,8 +379,6 @@ GachaPoolCtrl._UpdateRemainingTime = HL.Method(HL.Table, HL.Number) << function(
         node.remainingTimeTxt.text = string.format(Language.LUA_GACHA_REMAINING_TIME, UIUtils.getShortLeftTime(diffTime))
     end
 end
-
-
 
 GachaPoolCtrl._InitMoneyNode = HL.Method() << function(self)
     local moneyNode = self.view.moneyNode
@@ -504,7 +409,7 @@ GachaPoolCtrl._InitMoneyNode = HL.Method() << function(self)
             isSideTips = true,
             padding = { top = 100 },
             onClose = function()
-                if not moneyNode or not moneyNode.originiumConvertedDiamond then
+                if IsNull(moneyNode) or IsNull(moneyNode.originiumConvertedDiamond) then
                     return
                 end
                 moneyNode.originiumConvertedDiamond.selected.gameObject:SetActive(false)
@@ -512,9 +417,6 @@ GachaPoolCtrl._InitMoneyNode = HL.Method() << function(self)
         })
     end)
 end
-
-
-
 
 
 
@@ -529,9 +431,6 @@ GachaPoolCtrl.OnWalletChanged = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     cell.cellWidget:UpdateGachaBtnCost()
 end
 
-
-
-
 GachaPoolCtrl.OnItemChanged = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     local cell = self.m_getCell(self.m_curIndex)
     if not cell or string.isEmpty(self.m_curPoolId) then
@@ -541,23 +440,15 @@ GachaPoolCtrl.OnItemChanged = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     cell.cellWidget:UpdateGachaBtnCost()
 end
 
-
-
 GachaPoolCtrl.OnGachaPoolInfoChanged = HL.Method() << function(self)
 end
-
-
 
 GachaPoolCtrl.OnGachaPoolRoleDataChanged = HL.Method() << function(self)
 end
 
-
-
 GachaPoolCtrl._ShowDetailPanel = HL.Method() << function(self)
     CS.Beyond.SDK.SDKUtils.OpenHGWebPortalSDK("gacha_char", string.format("{\"pool_id\":\"%s\"}",self.m_curPoolId), nil)
 end
-
-
 
 GachaPoolCtrl._OnTestimonialConvert = HL.Method() << function(self)
     
@@ -609,17 +500,10 @@ GachaPoolCtrl._OnTestimonialConvert = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 GachaPoolCtrl._OnDisplaySizeChanged = HL.Method(HL.Opt(HL.Any, HL.Any)) << function(self, _, _)
     self.view.poolList:TryRecalculateSize()
     self.view.poolList:ScrollToIndex(CSIndex(self.m_curIndex))
 end
-
-
-
 
 GachaPoolCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, arg)
     if not arg or not arg.poolId then
@@ -633,8 +517,6 @@ GachaPoolCtrl.OnPhaseRefresh = HL.Override(HL.Any) << function(self, arg)
         end
     end
 end
-
-
 
 GachaPoolCtrl._OnPhaseChange = HL.Method(HL.Opt(HL.Any)) << function(self)
     
@@ -651,16 +533,12 @@ GachaPoolCtrl._OnPhaseChange = HL.Method(HL.Opt(HL.Any)) << function(self)
     end
 end
 
-
-
 GachaPoolCtrl.GetSubPanelArg = HL.Method().Return(HL.Any) << function(self)
     
     local poolCell = self.m_getCell(self.m_curIndex).cellWidget
     local subPanelArg = poolCell:GetSubPanelArg()
     return subPanelArg
 end
-
-
 
 GachaPoolCtrl.HandleSubPanelArg = HL.Method() << function(self)
     local subPanelArg = self.m_phase.arg.subPanelArg
@@ -673,9 +551,6 @@ GachaPoolCtrl.HandleSubPanelArg = HL.Method() << function(self)
     local poolCell = self.m_getCell(self.m_curIndex).cellWidget
     poolCell:HandleSubPanelArg(subPanelArg)
 end
-
-
-
 
 
 
@@ -790,8 +665,6 @@ end
 
 
 
-
-
 GachaPoolCtrl._InitRewardQueueConfigs = HL.Method() << function(self)
     self.m_queueRewardConfigs = {
         GachaResultReward = {
@@ -812,9 +685,6 @@ GachaPoolCtrl._InitRewardQueueConfigs = HL.Method() << function(self)
     }
 end
 
-
-
-
 GachaPoolCtrl.AddQueueReward = HL.Method(HL.Table) << function(self, arg)
     logger.info("GachaPoolCtrl.AddQueueReward：" .. arg.queueRewardType)
     self.m_showRewardFuncQueue:Push({
@@ -827,25 +697,20 @@ GachaPoolCtrl.AddQueueReward = HL.Method(HL.Table) << function(self, arg)
     end)
 end
 
-
-
 GachaPoolCtrl._TryShowQueueReward = HL.Method() << function(self)
     if self.m_showRewardFuncQueue:Count() > 0 and not self.m_curIsShowReward then
         self.m_curIsShowReward = true
         local queueData = self.m_showRewardFuncQueue:Pop()
         queueData.showRewardFunc()
+    elseif not self.m_curIsShowReward then
+        Notify(MessageConst.ON_GACHA_POOL_ALL_REWARDS_SHOWN)
     end
 end
-
-
 
 GachaPoolCtrl.OnOneQueueRewardFinished = HL.Method() << function(self)
     self.m_curIsShowReward = false
     self:_TryShowQueueReward()
 end
-
-
-
 
 
 
@@ -868,9 +733,6 @@ end
 
 
 
-
-
-
 GachaPoolCtrl._RecoverRewardQueue = HL.Method(HL.Table) << function(self, restoreInfo)
     if not restoreInfo or not restoreInfo.pendingItems then
         return
@@ -880,8 +742,6 @@ GachaPoolCtrl._RecoverRewardQueue = HL.Method(HL.Table) << function(self, restor
     end
     self.m_curIsShowReward = restoreInfo.curIsShowReward
 end
-
-
 
 GachaPoolCtrl.GetRewardQueueRestoreInfo = HL.Method().Return(HL.Table) << function(self)
     local pendingItems = {}
@@ -897,8 +757,6 @@ GachaPoolCtrl.GetRewardQueueRestoreInfo = HL.Method().Return(HL.Table) << functi
         pendingItems = pendingItems,
     }
 end
-
-
 
 GachaPoolCtrl.GetIsPlayingTabInAnimation = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_isPlayingChangeTabInAni

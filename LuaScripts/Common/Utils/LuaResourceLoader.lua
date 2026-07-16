@@ -3,63 +3,19 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 LuaResourceLoader = HL.Class("LuaResourceLoader")
-
 
 LuaResourceLoader.m_loader = HL.Field(HL.Any)
 
-
 LuaResourceLoader.m_destroyed = HL.Field(HL.Boolean) << false
 
-
 LuaResourceLoader.s_enableHashLoader = HL.StaticField(HL.Number) << 0
-
-
 
 LuaResourceLoader.LuaResourceLoader = HL.Constructor() << function(self)
     self.m_loader = CS.Beyond.LuaResourceLoader()
     self.m_destroyed = false;
     LuaResourceLoader.s_enableHashLoader = 1
 end
-
-
 
 LuaResourceLoader._GetPathByHash = HL.StaticMethod(HL.String).Return(HL.String) << function(hash)
     if LuaResourceLoader.s_enableHashLoader == 2 then
@@ -69,16 +25,11 @@ LuaResourceLoader._GetPathByHash = HL.StaticMethod(HL.String).Return(HL.String) 
     end
 end
 
-
-
 LuaResourceLoader._PathToHash = HL.StaticMethod(HL.String).Return(HL.Number) << function(path)
     local hash = __beyond_calculate_ab_path_hash(path)
     
     return CS.Beyond.Resource.I18NAssetLoader.GetI18NResourceHash(hash)
 end
-
-
-
 
 LuaResourceLoader.LoadGameObject = HL.Method(HL.String).Return(CS.UnityEngine.GameObject, HL.Number) << function(self, path)
     if not self:_CheckLoader() then
@@ -95,10 +46,6 @@ LuaResourceLoader.LoadGameObject = HL.Method(HL.String).Return(CS.UnityEngine.Ga
         return self.m_loader:LoadGameObject(path)
     end
 end
-
-
-
-
 
 LuaResourceLoader.LoadGameObjectAsync = HL.Method(HL.String, HL.Function).Return(HL.Number) << function(self, path, callback)
     if not self:_CheckLoader() then
@@ -117,18 +64,12 @@ LuaResourceLoader.LoadGameObjectAsync = HL.Method(HL.String, HL.Function).Return
     end
 end
 
-
-
-
 LuaResourceLoader.GetGameObjectByKey = HL.Method(HL.Number).Return(CS.UnityEngine.GameObject) << function(self,key)
     if not self:_CheckLoader() then
         return
     end
     return self.m_loader:GetGameObjectByKey(key)
 end
-
-
-
 
 LuaResourceLoader.LoadMaterial = HL.Method(HL.String).Return(CS.UnityEngine.Material, HL.Number) << function(self, path)
     if not self:_CheckLoader() then
@@ -145,10 +86,6 @@ LuaResourceLoader.LoadMaterial = HL.Method(HL.String).Return(CS.UnityEngine.Mate
         return self.m_loader:LoadMaterial(path)
     end
 end
-
-
-
-
 
 LuaResourceLoader.LoadMaterialAsync = HL.Method(HL.String, HL.Function).Return(HL.Number) << function(self, path, callback)
     if not self:_CheckLoader() then
@@ -167,18 +104,12 @@ LuaResourceLoader.LoadMaterialAsync = HL.Method(HL.String, HL.Function).Return(H
     end
 end
 
-
-
-
 LuaResourceLoader.GetMaterialByKey = HL.Method(HL.Number).Return(CS.UnityEngine.Material) << function(self, key)
     if not self:_CheckLoader() then
         return
     end
     return self.m_loader:GetMaterialByKey(key)
 end
-
-
-
 
 LuaResourceLoader.LoadTexture = HL.Method(HL.String).Return(CS.UnityEngine.Texture, HL.Number) << function(self, path)
     if not self:_CheckLoader() then
@@ -195,10 +126,6 @@ LuaResourceLoader.LoadTexture = HL.Method(HL.String).Return(CS.UnityEngine.Textu
         return self.m_loader:LoadTexture(path)
     end
 end
-
-
-
-
 
 LuaResourceLoader.LoadTextureAsync = HL.Method(HL.String, HL.Function).Return(HL.Number) << function(self, path, callback)
     if not self:_CheckLoader() then
@@ -217,18 +144,12 @@ LuaResourceLoader.LoadTextureAsync = HL.Method(HL.String, HL.Function).Return(HL
     end
 end
 
-
-
-
 LuaResourceLoader.GetTextureByKey = HL.Method(HL.Number).Return(CS.UnityEngine.Texture) << function(self, key)
     if not self:_CheckLoader() then
         return
     end
     return self.m_loader:GetTextureByKey(key)
 end
-
-
-
 
 
 
@@ -248,10 +169,6 @@ LuaResourceLoader.LoadShader = HL.Method(HL.String).Return(CS.UnityEngine.Shader
     end
 end
 
-
-
-
-
 LuaResourceLoader.LoadShaderAsync = HL.Method(HL.String, HL.Function).Return(HL.Number) << function(self, path, callback)
     if not self:_CheckLoader() then
         return
@@ -269,18 +186,12 @@ LuaResourceLoader.LoadShaderAsync = HL.Method(HL.String, HL.Function).Return(HL.
     end
 end
 
-
-
-
 LuaResourceLoader.GetShaderByKey = HL.Method(HL.Number).Return(CS.UnityEngine.Shader) << function(self, key)
     if not self:_CheckLoader() then
         return
     end
     return self.m_loader:GetShaderByKey(key)
 end
-
-
-
 
 LuaResourceLoader.LoadMesh = HL.Method(HL.String).Return(CS.UnityEngine.Mesh, HL.Number) << function(self, path)
     if not self:_CheckLoader() then
@@ -297,10 +208,6 @@ LuaResourceLoader.LoadMesh = HL.Method(HL.String).Return(CS.UnityEngine.Mesh, HL
         return self.m_loader:LoadMesh(path)
     end
 end
-
-
-
-
 
 LuaResourceLoader.LoadMeshAsync = HL.Method(HL.String, HL.Function).Return(HL.Number) << function(self, path, callback)
     if not self:_CheckLoader() then
@@ -319,18 +226,12 @@ LuaResourceLoader.LoadMeshAsync = HL.Method(HL.String, HL.Function).Return(HL.Nu
     end
 end
 
-
-
-
 LuaResourceLoader.GetMeshByKey = HL.Method(HL.Number).Return(CS.UnityEngine.Mesh) << function(self, key)
     if not self:_CheckLoader() then
         return
     end
     return self.m_loader:GetMeshByKey(key)
 end
-
-
-
 
 
 LuaResourceLoader.LoadSprite = HL.Method(HL.String).Return(CS.UnityEngine.Sprite, HL.Number) << function(self, path)
@@ -349,10 +250,6 @@ LuaResourceLoader.LoadSprite = HL.Method(HL.String).Return(CS.UnityEngine.Sprite
     end
 end
 
-
-
-
-
 LuaResourceLoader.LoadSpriteAsync = HL.Method(HL.String, HL.Function).Return(HL.Number) << function(self, path, callback)
     if not self:_CheckLoader() then
         return
@@ -370,18 +267,12 @@ LuaResourceLoader.LoadSpriteAsync = HL.Method(HL.String, HL.Function).Return(HL.
     end
 end
 
-
-
-
 LuaResourceLoader.GetSpriteByKey = HL.Method(HL.Number).Return(CS.UnityEngine.Sprite) << function(self, key)
     if not self:_CheckLoader() then
         return
     end
     return self.m_loader:GetSpriteByKey(key)
 end
-
-
-
 
 LuaResourceLoader.LoadScriptableObject = HL.Method(HL.String).Return(CS.UnityEngine.ScriptableObject, HL.Number) << function(self, path)
     if not self:_CheckLoader() then
@@ -398,10 +289,6 @@ LuaResourceLoader.LoadScriptableObject = HL.Method(HL.String).Return(CS.UnityEng
         return self.m_loader:LoadScriptableObject(path)
     end
 end
-
-
-
-
 
 LuaResourceLoader.LoadScriptableObjectAsync = HL.Method(HL.String, HL.Function).Return(HL.Number) << function(self, path, callback)
     if not self:_CheckLoader() then
@@ -420,18 +307,12 @@ LuaResourceLoader.LoadScriptableObjectAsync = HL.Method(HL.String, HL.Function).
     end
 end
 
-
-
-
 LuaResourceLoader.GetScriptableObjectByKey = HL.Method(HL.Number).Return(CS.UnityEngine.ScriptableObject) << function(self, key)
     if not self:_CheckLoader() then
         return
     end
     return self.m_loader:GetScriptableObjectByKey(key)
 end
-
-
-
 
 LuaResourceLoader.LoadAnimatorController = HL.Method(HL.String).Return(CS.UnityEngine.RuntimeAnimatorController, HL.Number) << function(self, path)
     if not self:_CheckLoader() then
@@ -448,10 +329,6 @@ LuaResourceLoader.LoadAnimatorController = HL.Method(HL.String).Return(CS.UnityE
         return self.m_loader:LoadAnimatorController(path)
     end
 end
-
-
-
-
 
 LuaResourceLoader.LoadAnimatorControllerAsync = HL.Method(HL.String, HL.Function).Return(HL.Number) << function(self, path, callback)
     if not self:_CheckLoader() then
@@ -470,10 +347,6 @@ LuaResourceLoader.LoadAnimatorControllerAsync = HL.Method(HL.String, HL.Function
     end
 end
 
-
-
-
-
 LuaResourceLoader.LoadI18NAsset = HL.Method(HL.String, HL.Any).Return(HL.Any, HL.Number) << function(self, path, type)
     if not self:_CheckLoader() then
         return
@@ -484,18 +357,12 @@ LuaResourceLoader.LoadI18NAsset = HL.Method(HL.String, HL.Any).Return(HL.Any, HL
     return self.m_loader:LoadI18NAsset(LuaResourceLoader._PathToHash(path), type)
 end
 
-
-
-
 LuaResourceLoader.GetAnimatorControllerByKey = HL.Method(HL.Number).Return(CS.UnityEngine.RuntimeAnimatorController) << function(self, key)
     if not self:_CheckLoader() then
         return
     end
     return self.m_loader:GetAnimatorControllerByKey(key)
 end
-
-
-
 
 LuaResourceLoader.DisposeHandleByKey = HL.Method(HL.Number) << function(self, key)
     if not self:_CheckLoader() then
@@ -504,16 +371,10 @@ LuaResourceLoader.DisposeHandleByKey = HL.Method(HL.Number) << function(self, ke
     self.m_loader:DisposeHandleByKey(key)
 end
 
-
-
-
 LuaResourceLoader.DisposeAllHandles = HL.Method(HL.Opt(HL.Boolean)) << function(self, notDestroy)
     self.m_loader:DisposeAllHandles()
     self.m_destroyed = not notDestroy
 end
-
-
-
 
 LuaResourceLoader._GetProtectCallback = HL.Method(HL.Function).Return(HL.Function) << function(self, callback)
     return function(obj)
@@ -524,8 +385,6 @@ LuaResourceLoader._GetProtectCallback = HL.Method(HL.Function).Return(HL.Functio
     end
 end
 
-
-
 LuaResourceLoader._CheckLoader = HL.Method().Return(HL.Boolean) << function(self)
     if self.m_destroyed then
         logger.critical("can not load resource from destroy loader")
@@ -533,9 +392,6 @@ LuaResourceLoader._CheckLoader = HL.Method().Return(HL.Boolean) << function(self
     end
     return true
 end
-
-
-
 
 LuaResourceLoader._CheckPathHash = HL.Method(HL.String).Return(HL.Boolean) << function(self, path)
     local isExist = CS.Beyond.Resource.ResourceManager.RawCheckExists(__beyond_calculate_ab_path_hash(path))

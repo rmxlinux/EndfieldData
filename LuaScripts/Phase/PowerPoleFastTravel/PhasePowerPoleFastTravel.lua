@@ -1,21 +1,5 @@
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.PowerPoleFastTravel
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhasePowerPoleFastTravel = HL.Class('PhasePowerPoleFastTravel', phaseBase.PhaseBase)
 
 local ReservePanelIds = {  
@@ -26,12 +10,9 @@ local ReservePanelIds = {
     PanelId.MiniMap,
 }
 
-
 PhasePowerPoleFastTravel.m_fastTravelPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhasePowerPoleFastTravel.m_currentLogicId = HL.Field(HL.Any) << 0
-
 
 
 
@@ -44,13 +25,9 @@ PhasePowerPoleFastTravel.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
 PhasePowerPoleFastTravel._OnInit = HL.Override() << function(self)
     PhasePowerPoleFastTravel.Super._OnInit(self)
 end
-
-
 
 PhasePowerPoleFastTravel.TriggerForceClosePanel = HL.Method(HL.Opt(HL.Any)) << function(self)
     if PhaseManager:IsOpen(PhaseId.PowerPoleFastTravel) then
@@ -61,49 +38,25 @@ end
 
 
 
-
-
-
-
-
 PhasePowerPoleFastTravel.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
     if transitionType == PhaseConst.EPhaseState.TransitionIn then
         if anotherPhaseId == PhaseId.Level then
-            Notify(MessageConst.SET_PHASE_LEVEL_TRANSITION_RESERVE_PANELS, ReservePanelIds)
+            Notify(MessageConst.SET_PHASE_LEVEL_TRANSITION_RESERVE_PANELS, self:_GetReservePanelIds())
         end
     end
 end
-
-
-
-
 
 PhasePowerPoleFastTravel._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 
 end
 
-
-
-
-
 PhasePowerPoleFastTravel._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhasePowerPoleFastTravel._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
 
-
-
-
-
 PhasePowerPoleFastTravel._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args) end
-
-
-
 
 
 
@@ -118,15 +71,11 @@ PhasePowerPoleFastTravel._OnActivated = HL.Override() << function(self)
     end
 end
 
-
-
 PhasePowerPoleFastTravel._OnDeActivated = HL.Override() << function(self)
     if self.m_fastTravelPanelItem and self.m_fastTravelPanelItem.uiCtrl then
         self.m_fastTravelPanelItem.uiCtrl:Hide()
     end
 end
-
-
 
 PhasePowerPoleFastTravel._OnDestroy = HL.Override() << function(self)
     PhasePowerPoleFastTravel.Super._OnDestroy(self)
@@ -136,7 +85,21 @@ end
 
 
 
+PhasePowerPoleFastTravel._GetReservePanelIds = HL.Method().Return(HL.Table) << function(self)
+    local ids = {}
+    for _, panelId in ipairs(ReservePanelIds) do
+        table.insert(ids, panelId)
+    end
+    if self:_ShouldReserveCommonTaskCountdown() then
+        table.insert(ids, PanelId.CommonTaskTrackCountdown)
+    end
+    return ids
+end
 
+PhasePowerPoleFastTravel._ShouldReserveCommonTaskCountdown = HL.Method().Return(HL.Boolean) << function(self)
+    local dungeonId = GameInstance.dungeonManager.curDungeonId
+    return DungeonUtils.isDungeonRacingDungeon(dungeonId)
+end
 
 PhasePowerPoleFastTravel._OnEnterPowerPoleFastTravelMode = HL.StaticMethod(HL.Table) << function(args)
     local logicId, openFailedCallback = unpack(args)
@@ -150,8 +113,6 @@ PhasePowerPoleFastTravel._OnEnterPowerPoleFastTravelMode = HL.StaticMethod(HL.Ta
         openFailedCallback()
     end
 end
-
-
 
 PhasePowerPoleFastTravel.SaveCurrentLogicId = HL.Method() << function(self)
     if self.m_fastTravelPanelItem and self.m_fastTravelPanelItem.uiCtrl then

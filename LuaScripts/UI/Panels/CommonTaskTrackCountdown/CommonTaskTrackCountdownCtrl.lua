@@ -50,61 +50,19 @@ local maintainPanelCategoryList = {
     DungeonConst.DUNGEON_CATEGORY.BossRush,
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonTaskTrackCountdownCtrl = HL.Class('CommonTaskTrackCountdownCtrl', uiCtrl.UICtrl)
-
 
 CommonTaskTrackCountdownCtrl.m_countDownTickId = HL.Field(HL.Number) << -1
 
-
 CommonTaskTrackCountdownCtrl.m_isInAlter = HL.Field(HL.Boolean) << false
-
 
 CommonTaskTrackCountdownCtrl.m_countingTickId = HL.Field(HL.Number) << -1
 
-
 CommonTaskTrackCountdownCtrl.m_typeTable = HL.Field(HL.Table)
-
 
 CommonTaskTrackCountdownCtrl.m_originalAnchoredPos = HL.Field(Vector2)
 
-
 CommonTaskTrackCountdownCtrl.m_nodeFollowTickId = HL.Field(HL.Number) << -1
-
 
 
 
@@ -120,31 +78,20 @@ CommonTaskTrackCountdownCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
-
 CommonTaskTrackCountdownCtrl.OnShowCommonTaskCountdown = HL.StaticMethod(HL.Any) << function(args)
-    
     local ctrl = CommonTaskTrackCountdownCtrl.AutoOpen(PANEL_ID, args, true)
     ctrl:ShowCountdown(args)
 end
 
-
-
 CommonTaskTrackCountdownCtrl.OnStartCommonTaskCounting = HL.StaticMethod(HL.Any) << function(args)
-    
     local ctrl = CommonTaskTrackCountdownCtrl.AutoOpen(PANEL_ID, args, true)
     ctrl:StartCounting(args)
 end
 
 
-
-
-
 CommonTaskTrackCountdownCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_originalAnchoredPos = self.view.main.anchoredPosition
 end
-
-
 
 CommonTaskTrackCountdownCtrl.OnClose = HL.Override() << function(self)
     if self.m_countDownTickId > 0 then
@@ -160,9 +107,6 @@ CommonTaskTrackCountdownCtrl.OnClose = HL.Override() << function(self)
     end
 end
 
-
-
-
 CommonTaskTrackCountdownCtrl._ToggleComponentOn = HL.Method(HL.Number) << function(self, component)
     self.view.countingCenter.gameObject:SetActiveIfNecessary(component == Component.CountingCenter)
     self.view.countdownCenter.gameObject:SetActiveIfNecessary(component == Component.CountdownCenter)
@@ -172,16 +116,10 @@ end
 
 
 
-
-
 CommonTaskTrackCountdownCtrl._CountdownCenterPrepareAction = HL.Method() << function(self)
     local node = self.view.countdownCenter
     node.stateController:SetState("Normal")
 end
-
-
-
-
 
 CommonTaskTrackCountdownCtrl._CountdownCenterTickAction = HL.Method(HL.Number, HL.Boolean) << function(self, leftTime, needAlterAudio)
     local node = self.view.countdownCenter
@@ -197,16 +135,10 @@ CommonTaskTrackCountdownCtrl._CountdownCenterTickAction = HL.Method(HL.Number, H
     end
 end
 
-
-
 CommonTaskTrackCountdownCtrl._CountdownTopLeftPrepareAction = HL.Method() << function(self)
     local node = self.view.countdownTopLeft
     node.stateController:SetState("Normal")
 end
-
-
-
-
 
 CommonTaskTrackCountdownCtrl._CountdownTopLeftTickAction = HL.Method(HL.Number, HL.Boolean) << function(self, leftTime, needAlterAudio)
     local node = self.view.countdownTopLeft
@@ -224,16 +156,10 @@ CommonTaskTrackCountdownCtrl._CountdownTopLeftTickAction = HL.Method(HL.Number, 
 
 end
 
-
-
-
 CommonTaskTrackCountdownCtrl._CountdownTopLeftPosFollowTickAction = HL.Method(HL.Number) << function(self, deltaTime)
     local node = self.view.countdownTopLeft
     self:_UpdateTopLeftPos(node)
 end
-
-
-
 
 CommonTaskTrackCountdownCtrl.ShowCountdown = HL.Method(HL.Any) << function(self, arg)
     local countdownType, countdownDurationMs, gameId, cb = unpack(arg)
@@ -256,7 +182,7 @@ CommonTaskTrackCountdownCtrl.ShowCountdown = HL.Method(HL.Any) << function(self,
             return
         end
 
-        local leftTime = math.floor(game.activeCountDown:GetLeftTime() / 1000)
+        local leftTime = math.floor(game.activeCountDown:GetLeftTimeMs() / 1000)
         if leftTime > lastLeftTime then
             
             
@@ -299,9 +225,6 @@ end
 
 
 
-
-
-
 CommonTaskTrackCountdownCtrl.StartCounting = HL.Method(HL.Any) << function(self, arg)
     local countingType, gameId = unpack(arg)
     local countingTypeCfg = CountingTypeTable[countingType]
@@ -323,7 +246,7 @@ CommonTaskTrackCountdownCtrl.StartCounting = HL.Method(HL.Any) << function(self,
             return
         end
 
-        local timePassed = math.floor(game.activeCounting:GetTimePassed() / 1000)
+        local timePassed = math.floor(game.activeCounting:GetTimePassedInMs() / 1000)
         
         timePassed = timePassed < 0 and 0 or timePassed
         
@@ -354,41 +277,26 @@ CommonTaskTrackCountdownCtrl.StartCounting = HL.Method(HL.Any) << function(self,
     end)
 end
 
-
-
 CommonTaskTrackCountdownCtrl._CountingCenterPrepareAction = HL.Method() << function(self)
 end
-
-
-
 
 CommonTaskTrackCountdownCtrl._CountingCenterTickAction = HL.Method(HL.Number) << function(self, timePassed)
     local node = self.view.countingCenter
     node.timeTxt.text = UIUtils.getLeftTimeToSecond(timePassed)
 end
 
-
-
 CommonTaskTrackCountdownCtrl._CountingTopLeftPrepareAction = HL.Method() << function(self)
 end
-
-
-
 
 CommonTaskTrackCountdownCtrl._CountingTopLeftTickAction = HL.Method(HL.Number) << function(self, timePassed)
     local node = self.view.countingTopLeft
     node.timeTxt.text = UIUtils.getLeftTimeToSecond(timePassed)
 end
 
-
-
-
 CommonTaskTrackCountdownCtrl._CountingTopLeftPosFollowTickAction = HL.Method(HL.Number) << function(self, deltaTime)
     local node = self.view.countingTopLeft
     self:_UpdateTopLeftPos(node)
 end
-
-
 
 
 
@@ -401,8 +309,6 @@ CommonTaskTrackCountdownCtrl.OnCloseCommonTaskCountdown = HL.Method() << functio
     self:_CommonClosePanel()
 end
 
-
-
 CommonTaskTrackCountdownCtrl.OnFinishCommonTaskCounting = HL.Method() << function(self)
     self.m_countingTickId = LuaUpdate:Remove(self.m_countingTickId)
     if self:_MaintainPanel() then
@@ -410,8 +316,6 @@ CommonTaskTrackCountdownCtrl.OnFinishCommonTaskCounting = HL.Method() << functio
     end
     self:_CommonClosePanel()
 end
-
-
 
 CommonTaskTrackCountdownCtrl._MaintainPanel = HL.Method().Return(HL.Boolean) << function(self)
     local subGameId = GameWorld.worldInfo.curSubGameId
@@ -425,10 +329,9 @@ CommonTaskTrackCountdownCtrl._MaintainPanel = HL.Method().Return(HL.Boolean) << 
     end
 
     return lume.find(maintainPanelCategoryList, gameMechanicsCfg.gameCategory) ~= nil
+    
+            and GameWorld.worldInfo.subGame.state == CS.Beyond.Gameplay.Core.ISubGame.SubGameState.Completed
 end
-
-
-
 
 CommonTaskTrackCountdownCtrl.OnDungeonComplete = HL.Method(HL.Table) << function(self, args)
     
@@ -447,8 +350,6 @@ end
 
 
 
-
-
 CommonTaskTrackCountdownCtrl._CommonClosePanel = HL.Method() << function(self)
     local nodeStr = self.m_typeTable.node
     if not self.m_typeTable or string.isEmpty(nodeStr) or not self.view[nodeStr]
@@ -458,12 +359,12 @@ CommonTaskTrackCountdownCtrl._CommonClosePanel = HL.Method() << function(self)
     end
 
     self.view[nodeStr].animationWrapper:PlayOutAnimation(function()
-        self:Close()
+        self:_StartCoroutine(function()
+            coroutine.waitForRenderDone()
+            self:Close()
+        end)
     end)
 end
-
-
-
 
 CommonTaskTrackCountdownCtrl._UpdateTopLeftPos = HL.Method(HL.Any) << function(self, node)
     local success, mainHudCtrl = UIManager:IsOpen(PanelId.MainHud)
@@ -479,9 +380,6 @@ CommonTaskTrackCountdownCtrl._UpdateTopLeftPos = HL.Method(HL.Any) << function(s
         end
     end
 end
-
-
-
 
 
 
@@ -516,9 +414,6 @@ CommonTaskTrackCountdownCtrl.OnAddHeadBar = HL.Method(HL.Table) << function(self
         end
     end
 end
-
-
-
 
 CommonTaskTrackCountdownCtrl.OnRemoveHeadBar = HL.Method(HL.Table) << function(self, args)
     local targetAbilitySystem = unpack(args)

@@ -1,14 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.Sketch
-
-
-
-
-
-
 SketchCtrl = HL.Class('SketchCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -20,10 +13,7 @@ SketchCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 SketchCtrl.m_callback = HL.Field(HL.Userdata)
-
-
 
 SketchCtrl.TryOpenSketch = HL.StaticMethod(HL.Table) << function(arg)
     if BEYOND_DEBUG then
@@ -38,9 +28,6 @@ SketchCtrl.TryOpenSketch = HL.StaticMethod(HL.Table) << function(arg)
 end
 
 
-
-
-
 SketchCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.button.onClick:RemoveAllListeners()
     self.view.button.onClick:AddListener(function()
@@ -51,9 +38,6 @@ SketchCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end)
 end
-
-
-
 
 
 

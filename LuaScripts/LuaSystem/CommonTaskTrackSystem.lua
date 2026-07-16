@@ -1,43 +1,24 @@
 local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+local PowerPoleFastTravelAllowedRequestTypes = {
+    TrackStartCountdown = true,
+    TrackEndToast = true,
+    DungeonSettlement = true,
+}
 
 CommonTaskTrackSystem = HL.Class('CommonTaskTrackSystem', LuaSystemBase.LuaSystemBase)
 
 
-
 CommonTaskTrackSystem.m_pendingRequests = HL.Field(HL.Table)
-
 
 CommonTaskTrackSystem.configs = HL.Field(HL.Table)
 
-
 CommonTaskTrackSystem.m_nextRequestId = HL.Field(HL.Number) << 1
-
 
 CommonTaskTrackSystem.m_isShowing = HL.Field(HL.Boolean) << false
 
-
 CommonTaskTrackSystem.m_tryStartPanelTimerId = HL.Field(HL.Number) << -1
-
-
 
 
 CommonTaskTrackSystem.CommonTaskTrackSystem = HL.Constructor() << function(self)
@@ -76,18 +57,20 @@ CommonTaskTrackSystem.CommonTaskTrackSystem = HL.Constructor() << function(self)
     end)
 end
 
-
-
 CommonTaskTrackSystem.OnInit = HL.Override() << function(self)
 end
-
-
 
 CommonTaskTrackSystem._InitConfigs = HL.Method() << function(self)
     self.configs = {
 
         
         DungeonInfo = {
+            needWait = true,
+            order = 1,
+        },
+
+        
+        SeasonTowerEnemyBuffPopup = {
             needWait = true,
             order = 1,
         },
@@ -110,6 +93,11 @@ CommonTaskTrackSystem._InitConfigs = HL.Method() << function(self)
         
         TrackHud = {
             needWait = false,
+            order = 5,
+        },
+
+        CoinActivityIntro = {
+            needWait = true,
             order = 5,
         },
 
@@ -151,6 +139,12 @@ CommonTaskTrackSystem._InitConfigs = HL.Method() << function(self)
 
         
         
+        SeasonTowerRankUp = {
+            needWait = true,
+            order = 15,
+        },
+
+        
         DungeonSettlement = {
             needWait = false,
             order = 20,
@@ -180,7 +174,19 @@ CommonTaskTrackSystem._InitConfigs = HL.Method() << function(self)
         ContingencyContractHud = {
             needWait = false,
             order = 100,
-        }
+        },
+
+        
+        CoinActivityBuffToast = {
+            needWait = false,
+            order = 100,
+        },
+
+        
+        CoinTaskFinishToast = {
+            needWait = false,
+            order = 100,
+        },
         
     }
 
@@ -188,11 +194,6 @@ CommonTaskTrackSystem._InitConfigs = HL.Method() << function(self)
         v.name = k
     end
 end
-
-
-
-
-
 
 CommonTaskTrackSystem.AddRequest = HL.Method(HL.String, HL.Function, HL.Opt(HL.Function))
         << function(self, type, action, interruptAction)
@@ -223,8 +224,6 @@ CommonTaskTrackSystem.AddRequest = HL.Method(HL.String, HL.Function, HL.Opt(HL.F
     self:_TryAddStartPanelTimer()
 end
 
-
-
 CommonTaskTrackSystem._TryAddStartPanelTimer = HL.Method() << function(self)
     if self.m_isShowing or self.m_pendingRequests[1] == nil then
         logger.info("CommonTaskTrackSystem._TryAddStartPanelTimer Skipped")
@@ -240,7 +239,18 @@ CommonTaskTrackSystem._TryAddStartPanelTimer = HL.Method() << function(self)
     end)
 end
 
+CommonTaskTrackSystem._CanStartOnTopPhase = HL.Method(HL.Number).Return(HL.Boolean) << function(self, topPhase)
+    if topPhase == PhaseId.Level then
+        return true
+    end
 
+    if topPhase ~= PhaseId.PowerPoleFastTravel then
+        return false
+    end
+
+    local request = self.m_pendingRequests[1]
+    return request ~= nil and PowerPoleFastTravelAllowedRequestTypes[request.type] == true
+end
 
 
 CommonTaskTrackSystem._TryStartPanel = HL.Method() << function(self)
@@ -255,8 +265,14 @@ CommonTaskTrackSystem._TryStartPanel = HL.Method() << function(self)
     end
 
     local topPhase = PhaseManager:GetTopPhaseId()
-    if topPhase ~= PhaseId.Level then
-        logger.info("CommonTaskTrackSystem._TryStartPanel fail, not on phaseLevel")
+    if not self:_CanStartOnTopPhase(topPhase) then
+        logger.info("CommonTaskTrackSystem._TryStartPanel fail, invalid top phase", topPhase)
+        return
+    end
+
+    if PhaseManager:CheckIsInTransition() then
+        logger.info("CommonTaskTrackSystem._TryStartPanel fail, phase is in transition")
+        self:_TryAddStartPanelTimer()
         return
     end
 
@@ -268,8 +284,6 @@ CommonTaskTrackSystem._TryStartPanel = HL.Method() << function(self)
     self.m_isShowing = true
     self:_StartFirstRequest()
 end
-
-
 
 CommonTaskTrackSystem._StartFirstRequest = HL.Method() << function(self)
     local request = self.m_pendingRequests[1]
@@ -284,8 +298,6 @@ CommonTaskTrackSystem._StartFirstRequest = HL.Method() << function(self)
     end
 end
 
-
-
 CommonTaskTrackSystem._ForceClearRequest = HL.Method() << function(self)
     self.m_pendingRequests = {}
     self.m_isShowing = false
@@ -294,9 +306,6 @@ CommonTaskTrackSystem._ForceClearRequest = HL.Method() << function(self)
         self:_ClearTimer(self.m_tryStartPanelTimerId)
     end
 end
-
-
-
 
 CommonTaskTrackSystem.OnOneCommonTaskPanelFinish = HL.Method(HL.String) << function(self, type)
     logger.info("CommonTaskTrackSystem.OnOneCommonTaskPanelFinish", type)
@@ -319,8 +328,6 @@ CommonTaskTrackSystem.OnOneCommonTaskPanelFinish = HL.Method(HL.String) << funct
     end
 end
 
-
-
 CommonTaskTrackSystem.Interrupt = HL.Method() << function(self)
     self.m_tryStartPanelTimerId = self:_ClearTimer(self.m_tryStartPanelTimerId)
     if not self.m_isShowing then
@@ -338,8 +345,6 @@ CommonTaskTrackSystem.Interrupt = HL.Method() << function(self)
     end
 end
 
-
-
 CommonTaskTrackSystem.NeedPendingManiHudToast = HL.Method().Return(HL.Boolean) << function(self)
     if self.m_pendingRequests[1] == nil then
         return false
@@ -353,14 +358,9 @@ CommonTaskTrackSystem.NeedPendingManiHudToast = HL.Method().Return(HL.Boolean) <
     return true
 end
 
-
-
 CommonTaskTrackSystem.HasRequest = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_pendingRequests[1] ~= nil and self.configs[self.m_pendingRequests[1].type].needWait == true
 end
-
-
-
 
 CommonTaskTrackSystem.HasRequestType = HL.Method(HL.String).Return(HL.Boolean) << function(self, actionType)
     for _, request in ipairs(self.m_pendingRequests) do

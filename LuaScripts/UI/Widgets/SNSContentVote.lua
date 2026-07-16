@@ -1,30 +1,16 @@
 local SNSContentBase = require_ex('UI/Widgets/SNSContentBase')
 
-
-
-
-
-
-
-
-
 SNSContentVote = HL.Class('SNSContentVote', SNSContentBase)
-
 
 SNSContentVote.m_voteResultCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 SNSContentVote.m_headIconCacheDic = HL.Field(HL.Table)
-
-
 
 
 SNSContentVote._OnFirstTimeInit = HL.Override() << function(self)
     self.m_voteResultCellCache = UIUtils.genCellCache(self.view.voteResultCell)
     self.m_headIconCacheDic = {}
 end
-
-
 
 SNSContentVote._OnSNSContentInit = HL.Override() << function(self)
     self.view.voteResultNode.gameObject:SetActive(false)
@@ -40,12 +26,6 @@ SNSContentVote._OnSNSContentInit = HL.Override() << function(self)
         self:ShowVoteResult(dialogId, additiveCSIndex, true)
     end
 end
-
-
-
-
-
-
 
 SNSContentVote._UpdateVoteResultCell = HL.Method(HL.Any, HL.Table, HL.String, HL.Number)
         << function(self, cell, voteInfo, selectOptionId, totalCount)
@@ -93,12 +73,6 @@ SNSContentVote._UpdateVoteResultCell = HL.Method(HL.Any, HL.Table, HL.String, HL
     end
     cell.bar.fillAmount = count / totalCount
 end
-
-
-
-
-
-
 
 SNSContentVote.ShowVoteResult = HL.Method(HL.String, HL.Number, HL.Opt(HL.Boolean, HL.Function)).Return(HL.Number)
         << function(self, dialogId, additiveResultIndex, skipAnim, onCellSizeChange)
@@ -155,8 +129,6 @@ SNSContentVote.ShowVoteResult = HL.Method(HL.String, HL.Number, HL.Opt(HL.Boolea
     self.view.voteResultNode.gameObject:SetActive(true)
     return -1
 end
-
-
 
 SNSContentVote.IsTypeVote = HL.Override().Return(HL.Boolean) << function(self)
     return true

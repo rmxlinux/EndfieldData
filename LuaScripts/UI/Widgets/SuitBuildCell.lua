@@ -1,23 +1,13 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
 SuitBuildCell = HL.Class('SuitBuildCell', UIWidgetBase)
 
-
 SuitBuildCell.m_suitCellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 SuitBuildCell._OnFirstTimeInit = HL.Override() << function(self)
     self.m_suitCellCache = UIUtils.genCellCache(self.view.suitCell)
 end
-
-
-
 
 SuitBuildCell.InitSuitBuildCell = HL.Method(HL.String) << function(self, equipTemplateId)
     self:_FirstTimeInit()

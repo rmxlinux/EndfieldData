@@ -1,11 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
 InformationNode = HL.Class('InformationNode', UIWidgetBase)
-
-
 
 
 InformationNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -20,8 +15,6 @@ InformationNode._OnFirstTimeInit = HL.Override() << function(self)
         PhaseManager:OpenPhase(PhaseId.Friend)
     end)
 end
-
-
 
 InformationNode.InitInformationNode = HL.Method() << function(self)
     self:_FirstTimeInit()

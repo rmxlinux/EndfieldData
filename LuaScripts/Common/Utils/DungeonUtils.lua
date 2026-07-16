@@ -13,6 +13,11 @@ function DungeonUtils.checkCanOpenPhase(args)
         return false
     end
 
+    local activityId = args.activityId or ""
+    if not string.isEmpty(activityId) and not GameInstance.player.activitySystem:GetActivity(activityId) then
+        return false, Language.LUA_ACTIVITY_FORBIDDEN
+    end
+
     return true
 end
 
@@ -228,7 +233,7 @@ function DungeonUtils.TryShowDungeonInsufficientStaminaPopup(dungeonId, confirmC
             },
             content = hintContent,
             onConfirm = function()
-                ClientDataManagerInst:SetBool(serializedHintKey, closuresIsOn, false, DungeonConst.SERIALIZED_CATEGORY, true, EClientDataTimeValidType.CurrentDay)
+                ClientDataManagerInst:SetBool(serializedHintKey, closuresIsOn, false, DungeonConst.SERIALIZED_CATEGORY, EClientDataTimeValidType.CurrentDay)
                 confirmCallback()
             end,
             onCancel = function()
@@ -385,10 +390,10 @@ function DungeonUtils.startSubGameLeaveTick(action)
         local game = GameInstance.dungeonManager.curDungeonLikeSubGame
         local leftTime = 0
         if game ~= nil then
-            leftTime = game:GetRealLeaveTimestampForLua() - DateTimeUtils.GetCurrentTimestampBySeconds()
+            leftTime = game:GetRealLeaveTimestampMsForLua() - DateTimeUtils.GetCurrentTimestampByMilliseconds()
         end
         if leftTime >= 0 and action ~= nil then
-            action(leftTime)
+            action(math.floor(leftTime / 1000))
         end
     end)
     return tickId
@@ -397,6 +402,124 @@ end
 
 
 
+
+
+
+
+
+
+
+
+local DUNGEON_POPUP_HANDLERS = {
+    [GEnums.DungeonPopupType.Default] = {
+        tryAutoShow = function(dungeonId)
+            if not DungeonUtils.isDungeonHasFeatureInfo(dungeonId) then
+                return
+            end
+            LuaSystemManager.commonTaskTrackSystem:AddRequest("DungeonInfo", function()
+                UIManager:AutoOpen(PanelId.DungeonInfoPopup, {
+                    dungeonId = dungeonId,
+                    closeCb = function()
+                        Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "DungeonInfo")
+                    end,
+                })
+            end, function()
+                UIManager:Close(PanelId.DungeonInfoPopup)
+            end)
+        end,
+        show = function(dungeonId, arg)
+            UIManager:AutoOpen(PanelId.DungeonInfoPopup, { dungeonId = dungeonId, needBindAction = arg and arg.needBindAction })
+        end,
+        checkVisibility = function(dungeonId)
+            return DungeonUtils.isDungeonHasFeatureInfo(dungeonId)
+        end,
+    },
+    [GEnums.DungeonPopupType.BountyEnemy] = {
+        tryAutoShow = function(dungeonId)
+            local bountyEnemies = GameWorld.battle.bountyEnemies
+            if not bountyEnemies or bountyEnemies.Count <= 0 then
+                return
+            end
+            LuaSystemManager.commonTaskTrackSystem:AddRequest("SeasonTowerEnemyBuffPopup", function()
+                UIManager:AutoOpen(PanelId.SeasonTowerEnemyBuffPopup, {
+                    dungeonId = dungeonId,
+                    closeCb = function()
+                        Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "SeasonTowerEnemyBuffPopup")
+                    end,
+                })
+            end, function()
+                UIManager:Close(PanelId.SeasonTowerEnemyBuffPopup)
+            end)
+        end,
+        show = function(dungeonId, arg)
+            local bountyEnemies = GameWorld.battle.bountyEnemies
+            if bountyEnemies and bountyEnemies.Count > 0 then
+                UIManager:AutoOpen(PanelId.SeasonTowerEnemyBuffPopup, { dungeonId = dungeonId })
+                return
+            end
+        end,
+        checkVisibility = function(dungeonId)
+            return true
+        end,
+    },
+    [GEnums.DungeonPopupType.SeasonTower] = {
+        tryAutoShow = function(dungeonId)
+            LuaSystemManager.commonTaskTrackSystem:AddRequest("SeasonTowerDungeonInfoPopup", function()
+                UIManager:AutoOpen(PanelId.SeasonTowerDungeonInfoPopup, {
+                    dungeonId = dungeonId,
+                    closeCb = function()
+                        Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "SeasonTowerDungeonInfoPopup")
+                    end,
+                })
+            end, function()
+                UIManager:Close(PanelId.SeasonTowerDungeonInfoPopup)
+            end)
+        end,
+        show = function(dungeonId, arg)
+            UIManager:AutoOpen(PanelId.SeasonTowerDungeonInfoPopup, { dungeonId = dungeonId, needBindAction = arg and arg.needBindAction })
+        end,
+        checkVisibility = function(dungeonId)
+            return true
+        end,
+    },
+}
+
+
+
+
+function DungeonUtils.tryAutoShowDungeonPopup(dungeonId)
+    if not DungeonUtils.checkCanAutoPopupInfoPanel(dungeonId) then
+        return
+    end
+    local succ, dungeonCfg = Tables.dungeonTable:TryGetValue(dungeonId)
+    if not succ then
+        return
+    end
+    local handler = DUNGEON_POPUP_HANDLERS[dungeonCfg.popupType]
+    if handler and handler.tryAutoShow then
+        handler.tryAutoShow(dungeonId)
+    end
+end
+
+
+
+function DungeonUtils.showDungeonPopupByEvent()
+    local dungeonId = GameInstance.dungeonManager.curDungeonId
+    if string.isEmpty(dungeonId) then
+        return
+    end
+    if not DungeonUtils.checkCanShowDungeonPopup(dungeonId) then
+        return
+    end
+    local succ, dungeonCfg = Tables.dungeonTable:TryGetValue(dungeonId)
+    if not succ then
+        return
+    end
+    local handler = DUNGEON_POPUP_HANDLERS[dungeonCfg.popupType]
+    if handler and handler.show then
+        handler.show(dungeonId)
+    end
+end
 
 
 local FUNC_ON_CLICK_DUNGEON_INFO_BY_CATEGORY = {
@@ -412,18 +535,23 @@ function DungeonUtils.onClickDungeonInfoBtn()
         logger.error("DungeonUtils.onClickDungeonInfoBtn invalid dungeonId", dungeonId)
         return
     end
+
     local funcName = FUNC_ON_CLICK_DUNGEON_INFO_BY_CATEGORY[dungeonCfg.dungeonCategory]
-    if not funcName then
-        
-        UIManager:AutoOpen(PanelId.DungeonInfoPopup, { dungeonId = dungeonId, needBindAction = true })
+    if funcName then
+        DungeonUtils[funcName](dungeonId)
         return
     end
 
-    DungeonUtils[funcName](dungeonId)
+    local handler = DUNGEON_POPUP_HANDLERS[dungeonCfg.popupType]
+    if handler and handler.show then
+        handler.show(dungeonId, { needBindAction = true })
+        return
+    end
+
+    UIManager:AutoOpen(PanelId.DungeonInfoPopup, { dungeonId = dungeonId, needBindAction = true })
 end
 
 function DungeonUtils.onClickDungeonInfoBtnCharTutorial(dungeonId)
-    
     local curStage = GameInstance.dungeonManager.curDungeonLikeSubGame.stage
     local charTutorialCfg = Tables.dungeonCharTutorialTable[dungeonId]
     local stageCfg = charTutorialCfg.tutorialStageData[CSIndex(curStage)]
@@ -453,6 +581,7 @@ function DungeonUtils.onClickDungeonInfoBtnContingencyContract(dungeonId)
     })
 end
 
+
 local FUNC_CHECK_VISIBILITY_DUNGEON_INFO_BTN = {
     [DungeonConst.DUNGEON_CATEGORY.CharTutorial] = function(dungeonId)
         local game = GameInstance.dungeonManager.curDungeonLikeSubGame
@@ -474,7 +603,7 @@ local FUNC_CHECK_VISIBILITY_DUNGEON_INFO_BTN = {
     end,
     [DungeonConst.DUNGEON_CATEGORY.CharTrial] = function(dungeonId)
         return not string.isEmpty(Tables.dungeonCharTrialTable[dungeonId].guideGroupId)
-    end
+    end,
 }
 
 function DungeonUtils.checkVisibilityDungeonInfoBtn()
@@ -490,10 +619,16 @@ function DungeonUtils.checkVisibilityDungeonInfoBtn()
     end
 
     local checkVisibilityFunc = FUNC_CHECK_VISIBILITY_DUNGEON_INFO_BTN[dungeonCfg.dungeonCategory]
-    if not checkVisibilityFunc then
-        return DungeonUtils.isDungeonHasFeatureInfo(dungeonId)
+    if checkVisibilityFunc then
+        return checkVisibilityFunc(dungeonId)
     end
-    return checkVisibilityFunc(dungeonId)
+
+    local handler = DUNGEON_POPUP_HANDLERS[dungeonCfg.popupType]
+    if handler and handler.checkVisibility then
+        return handler.checkVisibility(dungeonId)
+    end
+
+    return DungeonUtils.isDungeonHasFeatureInfo(dungeonId)
 end
 
 function DungeonUtils.isDungeonHasFeatureInfo(dungeonId)
@@ -506,17 +641,23 @@ function DungeonUtils.isDungeonHasFeatureInfo(dungeonId)
 end
 
 
-function DungeonUtils.checkCanPopupInfoPanel(dungeonId)
-    
+
+function DungeonUtils.checkCanShowDungeonPopup(dungeonId)
     if DungeonUtils.isDungeonCharTutorial(dungeonId) then
         return false
     end
 
-    if not DungeonUtils.isDungeonHasFeatureInfo(dungeonId) then
+    if GameInstance.dungeonManager:IsDungeonPassed(dungeonId) then
         return false
     end
 
-    if GameInstance.dungeonManager:IsDungeonPassed(dungeonId) then
+    return true
+end
+
+
+
+function DungeonUtils.checkCanAutoPopupInfoPanel(dungeonId)
+    if not DungeonUtils.checkCanShowDungeonPopup(dungeonId) then
         return false
     end
 
@@ -550,6 +691,11 @@ function DungeonUtils.onClickExitDungeonBtn()
 
     if WeeklyRaidUtils.IsInWeeklyRaid() then
         Notify(MessageConst.SHOW_WEEK_RAID_LEAVE_CONFIRM)
+        return
+    end
+
+    if GameInstance.mode.modeType == GEnums.GameModeType.Racing then
+        Notify(MessageConst.SHOW_RACING_DUNGEON_EXIT_PANEL)
         return
     end
 
@@ -627,6 +773,27 @@ function DungeonUtils.isDungeonContract(dungeonId)
     return DungeonUtils.dungeonTypeValidate(dungeonId, DungeonConst.DUNGEON_CATEGORY.ContingencyContract)
 end
 
+function DungeonUtils.isDungeonRace(dungeonId)
+    return DungeonUtils.dungeonTypeValidate(dungeonId, DungeonConst.DUNGEON_CATEGORY.Race)
+end
+
+function DungeonUtils.isDungeonSeasonTower(dungeonId)
+    return DungeonUtils.dungeonTypeValidate(dungeonId, DungeonConst.DUNGEON_CATEGORY.SeasonTower)
+end
+
+function DungeonUtils.isDungeonRacingDungeon(dungeonId)
+    if string.isEmpty(dungeonId) then
+        return false
+    end
+
+    for _, cfg in pairs(Tables.activityRacingDungeonTable) do
+        if cfg.gameId == dungeonId then
+            return true
+        end
+    end
+    return false
+end
+
 
 
 
@@ -641,6 +808,32 @@ function DungeonUtils.TryGetDungeonCategoryCfg(dungeonId)
     end
     return Tables.dungeonTypeTable:TryGetValue(dungeonCfg.dungeonCategory)
 end
+
+
+
+
+
+
+function DungeonUtils.getSpecialTeamType(dungeonId)
+    if dungeonId == nil then
+        return nil
+    end
+
+    local __, gameMechanicData = Tables.gameMechanicTable:TryGetValue(dungeonId)
+    if not gameMechanicData then
+        return nil
+    end
+
+    local gameCategoryId = gameMechanicData.gameCategory
+
+    local _, SpecialTeamData = Tables.GameMechanicCategorySpecialTeamTable:TryGetValue(gameCategoryId)
+    if SpecialTeamData then
+        return SpecialTeamData.specialTeamType
+    end
+
+    return nil
+end
+
 
 
 

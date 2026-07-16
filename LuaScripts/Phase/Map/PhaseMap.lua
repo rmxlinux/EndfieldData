@@ -2,38 +2,6 @@ local phaseBase = require_ex('Phase/Core/PhaseBase')
 local MapSpaceshipNode = require_ex('UI/Widgets/MapSpaceshipNode')
 local PHASE_ID = PhaseId.Map
 local MarkType = GEnums.MarkType
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 PhaseMap = HL.Class('PhaseMap', phaseBase.PhaseBase)
 
 local MAP_PANEL_ID = PanelId.Map
@@ -77,8 +45,12 @@ local DETAIL_PANEL_MAP = {
     [MarkType.SnapshotActivity] = PanelId.MapMarkDetailActivitySnapShot,
     [MarkType.SnapshotActivityNew] = PanelId.MapMarkDetailActivitySnapShot,
     [MarkType.ActivityCleaning] = PanelId.MapMarkDetailActivityCleaning,
+    [MarkType.ActivityRacingDungeon] = PanelId.MapMarkDetailCoin,
     [MarkType.DungeonActmonsterActivity] = PanelId.MapMarkDetailActivityActmonsterCtrl,
+    [MarkType.DungeonDoubleBattleActivity] = PanelId.MapMarkDetailActivityActmonsterCtrl,
     [MarkType.ActivityContingencyContract] = PanelId.MapMarkDetailContingencyContract,
+    [MarkType.GasMinePointTeam] = PanelId.MapMarkDetailGasMinePointTeam,
+    [MarkType.SeasonTower] = PanelId.MapMarkDetailSeasonTower,
 
     
     [MarkType.DungeonPuzzle] = PanelId.MapMarkDetailDungeon,
@@ -89,45 +61,34 @@ local DETAIL_PANEL_MAP = {
     
 
     [MarkType.SewageTreatPlant] = PanelId.MapMarkDetailSewageTreatPlant,
+    [MarkType.InvalidBuilding] = PanelId.MapMarkDetailInvalidBuilding,
+    [MarkType.CommonBuilding] = PanelId.MapMarkDetailCommonBuilding,
 }
 
 local FILTER_PANEL_ID = PanelId.MapMarkFilter
 
-
 PhaseMap.m_needGlitch = HL.Field(HL.Boolean) << false
-
 
 PhaseMap.m_needMask = HL.Field(HL.Boolean) << false
 
-
 PhaseMap.m_mapPanel = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 PhaseMap.m_mapPanelShown = HL.Field(HL.Boolean) << false
 
-
 PhaseMap.m_detailPanel = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseMap.m_detailPanelShownId = HL.Field(HL.String) << ""
-
 PhaseMap.m_multiDeletePanelShow = HL.Field(HL.Boolean) << false
-
 
 PhaseMap.m_multiDeletePanel = HL.Field(HL.Forward("PhasePanelItem"))
 
-
 PhaseMap.m_waitDetailPanelHide = HL.Field(HL.Boolean) << false
-
 
 PhaseMap.m_isDetailPanelDoingOut = HL.Field(HL.Boolean) << false
 
-
 PhaseMap.m_detailPanelCloseCallback = HL.Field(HL.Function)
 
-
 PhaseMap.m_filterPanel = HL.Field(HL.Forward("PhasePanelItem"))
-
 
 
 
@@ -145,20 +106,14 @@ PhaseMap.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
-
 PhaseMap._OnInit = HL.Override() << function(self)
     PhaseMap.Super._OnInit(self)
 end
 
 
-
-
 PhaseMap._InitAllPhaseItems = HL.Override() << function(self)
     PhaseMap.Super._InitAllPhaseItems(self)
 end
-
-
 
 PhaseMap._OnClickCloseMapBtn = HL.Method() << function(self)
     if self.m_isDetailPanelDoingOut then
@@ -166,11 +121,6 @@ PhaseMap._OnClickCloseMapBtn = HL.Method() << function(self)
     end
     MapUtils.closeMapRelatedPhase()
 end
-
-
-
-
-
 
 
 
@@ -196,10 +146,6 @@ PhaseMap.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number
         end
     end
 end
-
-
-
-
 
 PhaseMap._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     self.m_mapPanelShown = true
@@ -228,26 +174,19 @@ PhaseMap._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << fun
         self.m_mapPanel.uiCtrl:OpenFilterPanel()
         self.arg.isFilterPanelOpen = nil
     end
+
+    if self.arg ~= nil and self.arg.invalidBuildingArg then
+        UIManager:Open(PanelId.MapWaitDeleteBuildingList, self.arg.invalidBuildingArg)
+        self.arg.invalidBuildingArg = nil
+    end
 end
-
-
-
-
 
 PhaseMap._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     Notify(MessageConst.HIDE_COMMON_HOVER_TIP)
 end
 
-
-
-
-
 PhaseMap._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
-
-
-
-
 
 PhaseMap._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
 end
@@ -257,22 +196,14 @@ end
 
 
 
-
-
 PhaseMap._OnActivated = HL.Override() << function(self)
 end
-
-
 
 PhaseMap._OnDeActivated = HL.Override() << function(self)
 end
 
-
-
 PhaseMap._OnDestroy = HL.Override() << function(self)
 end
-
-
 
 PhaseMap._OnRefresh = HL.Override() << function(self)
     if self.m_mapPanel == nil then
@@ -280,8 +211,6 @@ PhaseMap._OnRefresh = HL.Override() << function(self)
     end
     self.m_mapPanel.uiCtrl:ResetMapStateToTargetLevel(self.arg)
 end
-
-
 
 PhaseMap.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}
@@ -293,6 +222,14 @@ PhaseMap.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
         arg.instId = nil
     else
         arg.instId = selectedInstId
+    end
+
+    
+    
+    if string.isEmpty(arg.instId) then
+        arg.templateId = nil
+        arg.resourceTemplateId = nil
+        arg.resourceItemId = nil
     end
 
     local isInfoPopupOpen = UIManager:IsOpen(PanelId.MapInfoPopup)
@@ -307,6 +244,16 @@ PhaseMap.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     else
         arg.initRemindTipTabIndex = nil
     end
+
+    local isInvalidBuildingOpen = UIManager:IsOpen(PanelId.MapWaitDeleteBuildingList)
+    if isInvalidBuildingOpen then
+        local chapterId = ScopeUtil.GetChapterId(self.m_mapPanel.uiCtrl.m_currLevelId)
+        arg.invalidBuildingArg = chapterId
+    else
+        arg.invalidBuildingArg = nil
+    end
+
+    arg.isRecover = true
 
     arg.bigRectState = self.m_mapPanel.uiCtrl:GetBigRectRecoverStateArg()
 
@@ -325,8 +272,6 @@ PhaseMap.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
 
     return arg
 end
-
-
 
 PhaseMap._TryRecoverDetailPopupState = HL.Method() << function(self)
     if self.arg == nil or self.arg.detailPopupState == nil then
@@ -352,13 +297,9 @@ end
 
 
 
-
 PhaseMap.OnLoadingPanelClosed = HL.StaticMethod() << function()
     MapSpaceshipNode.ClearStaticFromData()  
 end
-
-
-
 
 
 
@@ -402,9 +343,6 @@ PhaseMap._OnShowMarkDetail = HL.Method(HL.Table) << function(self, args)
     self:_TryRecoverDetailPopupState()
 end
 
-
-
-
 PhaseMap._OnHideMarkDetail = HL.Method(HL.Opt(HL.Boolean)) << function(self, closeDirectly)
     if closeDirectly then
         self:_HideMarkDetail(true)
@@ -422,9 +360,6 @@ PhaseMap._OnHideMarkDetail = HL.Method(HL.Opt(HL.Boolean)) << function(self, clo
         end
     end)
 end
-
-
-
 
 PhaseMap._HideMarkDetail = HL.Method(HL.Opt(HL.Boolean)) << function(self, closeDirectly)
     if self.m_detailPanelCloseCallback ~= nil then
@@ -458,9 +393,6 @@ end
 
 
 
-
-
-
 PhaseMap._OnShowMarkMultiDelete = HL.Method(HL.Table) << function(self, args)
     local trackingMark
     if args.instId == GameInstance.player.mapManager.trackingMarkInstId then
@@ -477,8 +409,6 @@ PhaseMap._OnShowMarkMultiDelete = HL.Method(HL.Table) << function(self, args)
     Notify(MessageConst.TOGGLE_CUSTOM_MARK_MULTI_DELETE_STATE, { isShow = true })
 end
 
-
-
 PhaseMap._OnHideMarkMultiDelete = HL.Method() << function(self)
     self.m_multiDeletePanel.uiCtrl:PlayAnimationOutWithCallback(function()
         Notify(MessageConst.TOGGLE_CUSTOM_MARK_MULTI_DELETE_STATE, { isShow = false })
@@ -492,14 +422,9 @@ end
 
 
 
-
-
-
 PhaseMap._OnShowFilter = HL.Method(HL.Any) << function(self, arg)
     self.m_filterPanel = self:CreatePhasePanelItem(FILTER_PANEL_ID, arg)
 end
-
-
 
 PhaseMap._OnHideFilter = HL.Method() << function(self)
     self.m_filterPanel.uiCtrl:PlayAnimationOutWithCallback(function()

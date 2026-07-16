@@ -2,28 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.StaminaPotion
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 StaminaPotionCtrl = HL.Class('StaminaPotionCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -37,29 +16,19 @@ StaminaPotionCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_UI_PANEL_CLOSED] = 'OnPanelClosed',
 }
 
-
 StaminaPotionCtrl.m_activityId = HL.Field(HL.String) << ''
-
 
 StaminaPotionCtrl.m_currentStamina = HL.Field(HL.Number) << 0
 
-
 StaminaPotionCtrl.m_lunchBoxCapacity = HL.Field(HL.Number) << 0
-
 
 StaminaPotionCtrl.m_fillCount = HL.Field(HL.Number) << 0
 
-
 StaminaPotionCtrl.m_fullLunchBoxCount = HL.Field(HL.Number) << 0
-
 
 StaminaPotionCtrl.m_maxFullLunchBoxCount = HL.Field(HL.Number) << 0
 
-
 StaminaPotionCtrl.m_itemId = HL.Field(HL.String) << ""
-
-
-
 
 
 StaminaPotionCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -101,7 +70,7 @@ StaminaPotionCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
         self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
         self.view.staminaItemNodeSelectableNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
             if isFocused then
-                UIUtils.setAsNaviTarget(self.view.nullStaminaItem.itemBigBlack.view.button)
+                self:SetNaviTarget(self.view.nullStaminaItem.itemBigBlack.view.button)
             else
                 Notify(MessageConst.HIDE_ITEM_TIPS)
             end
@@ -116,21 +85,14 @@ StaminaPotionCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end
 end
 
-
-
 StaminaPotionCtrl.OnShow = HL.Override() << function(self)
     logger.info("StaminaPopUpCtrl OnShow")
 end
-
-
-
 
 StaminaPotionCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     self.view.numberSelector.view.keyHintLeft.gameObject:SetActive(active)
     self.view.numberSelector.view.keyHintRight.gameObject:SetActive(active)
 end
-
-
 
 StaminaPotionCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     return {
@@ -140,25 +102,17 @@ StaminaPotionCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << 
     }
 end
 
-
-
-
 StaminaPotionCtrl._RecoverState = HL.Method(HL.Number) << function(self, fillCount)
     local maxFillCount = self.view.numberSelector.m_max
     local recoverFillCount = math.min(math.max(fillCount, 1), maxFillCount)
     self.view.numberSelector:RefreshNumber(recoverFillCount, 1, maxFillCount)
 end
 
-
-
-
 StaminaPotionCtrl._ChangeFillCount = HL.Method(HL.Number) << function(self, curNumber)
     self.m_fillCount = curNumber
     self.view.fillingNumberTxt.text = self.m_fillCount
     self:_RefreshItem()
 end
-
-
 
 StaminaPotionCtrl._Refresh = HL.Method() << function(self)
     
@@ -191,8 +145,6 @@ StaminaPotionCtrl._Refresh = HL.Method() << function(self)
     self:_RefreshItem()
 end
 
-
-
 StaminaPotionCtrl._RefreshItem = HL.Method() << function(self)
     
     self.view.nullStaminaItem.itemBigBlack:InitItem({ id = self.m_itemId, count = self.m_fillCount },true)
@@ -215,9 +167,6 @@ StaminaPotionCtrl._RefreshItem = HL.Method() << function(self)
     self.view.staminaItem.commonStorageNodeNew:InitStorageNode(self.m_currentStamina, self.m_fillCount * self.m_lunchBoxCapacity, false)
 end
 
-
-
-
 StaminaPotionCtrl.OnDungeonRestoreUp = HL.Method(HL.Any) << function(self,arg)
     
     local costStamina,costEmptyLunchBoxItem,rewardFullLunchBoxItem = unpack(arg)
@@ -235,9 +184,6 @@ end
 
 
 
-
-
-
 StaminaPotionCtrl.OnPanelOpened = HL.Method(HL.String) << function(self, panelName)
     logger.info("StaminaPopUpCtrl OnPanelOpened")
     if panelName ~= "StaminaPotion" then
@@ -245,9 +191,6 @@ StaminaPotionCtrl.OnPanelOpened = HL.Method(HL.String) << function(self, panelNa
         self.view.numberSelector.view.reduceBtnKeyHint.gameObject:SetActive(false)
     end
 end
-
-
-
 
 StaminaPotionCtrl.OnPanelClosed = HL.Method(HL.String) << function(self, panelName)
     logger.info("StaminaPopUpCtrl OnPanelClosed")

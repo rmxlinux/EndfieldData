@@ -1,31 +1,15 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
 WikiSearchGroupTutorials = HL.Class('WikiSearchGroupTutorials', UIWidgetBase)
-
 
 WikiSearchGroupTutorials.m_tutorialCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WikiSearchGroupTutorials.m_wikiSearchResult = HL.Field(HL.Table)
-
-
 
 
 WikiSearchGroupTutorials._OnFirstTimeInit = HL.Override() << function(self)
     self.m_tutorialCache = UIUtils.genCellCache(self.view.wikiTutorialTab)
 end
-
-
-
-
-
-
 
 WikiSearchGroupTutorials.InitWikiSearchGroupTutorials = HL.Method(HL.Table, HL.Function, HL.Opt(HL.Boolean, HL.String)) << function(
     self, wikiSearchResult, onItemClicked, isFirstClicked, selectedEntryId)
@@ -46,7 +30,7 @@ WikiSearchGroupTutorials.InitWikiSearchGroupTutorials = HL.Method(HL.Table, HL.F
             if onItemClicked then
                 onItemClicked(cell, entryShowData)
             end
-            InputManagerInst.controllerNaviManager:SetTarget(cell.view.btn)
+            self:SetNaviTarget(cell.view.btn)
         elseif isFirstClicked and luaIndex == 1 then
             if onItemClicked then
                 onItemClicked(cell, entryShowData)
@@ -54,13 +38,10 @@ WikiSearchGroupTutorials.InitWikiSearchGroupTutorials = HL.Method(HL.Table, HL.F
                     GameInstance.player.wikiSystem:MarkWikiEntryRead({ entryId })
                 end
             end
-            InputManagerInst.controllerNaviManager:SetTarget(cell.view.btn)
+            self:SetNaviTarget(cell.view.btn)
         end
     end)
 end
-
-
-
 
 WikiSearchGroupTutorials.GetCellByEntryId = HL.Method(HL.String).Return(HL.Opt(HL.Any, HL.Table)) << function(self, entryId)
     if string.isEmpty(entryId) or not self.m_wikiSearchResult then

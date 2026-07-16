@@ -2,25 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.CommonMoneyExchange
 local PHASE_ID = PhaseId.CommonMoneyExchange
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonMoneyExchangeCtrl = HL.Class('CommonMoneyExchangeCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -33,20 +15,13 @@ CommonMoneyExchangeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SHOP_MONEY_EXCHANGE_SUCC] = 'Success',
 }
 
-
 CommonMoneyExchangeCtrl.m_arg = HL.Field(HL.Table)
-
 
 CommonMoneyExchangeCtrl.m_weaponGachaMoneyCount = HL.Field(HL.Number) << 0
 
-
 CommonMoneyExchangeCtrl.m_weaponDecreaseNumber = HL.Field(HL.Number) << 0
 
-
 CommonMoneyExchangeCtrl.m_weaponIncreaseNumber = HL.Field(HL.Number) << 0
-
-
-
 
 
 
@@ -132,9 +107,6 @@ CommonMoneyExchangeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:Refresh()
 end
 
-
-
-
 CommonMoneyExchangeCtrl.Success = HL.Method(HL.Any) << function(self, msg)
     local items = {}
     local reward = unpack(msg)
@@ -151,9 +123,6 @@ CommonMoneyExchangeCtrl.Success = HL.Method(HL.Any) << function(self, msg)
         items = items,
     })
 end
-
-
-
 
 CommonMoneyExchangeCtrl.Refresh = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     local sourceId = self.m_arg.sourceId
@@ -234,14 +203,10 @@ CommonMoneyExchangeCtrl.Refresh = HL.Method(HL.Opt(HL.Any)) << function(self, ar
     end
 end
 
-
-
 CommonMoneyExchangeCtrl._OnConfirmBtnClick = HL.Method() << function(self)
     local ret, error = CS.Beyond.Gameplay.ShopSystem.ExchangeMoney(self.m_arg.sourceId, self.m_arg.targetId, math.floor(tonumber(self.view.costNumTxt1.text)))
     logger.info(tostring(ret))
 end
-
-
 
 CommonMoneyExchangeCtrl._InitWeaponGachaMoneyCount = HL.Method() << function(self)
     local _, box, goods = GameInstance.player.shopSystem:GetNowUpWeaponData()
@@ -254,9 +219,6 @@ CommonMoneyExchangeCtrl._InitWeaponGachaMoneyCount = HL.Method() << function(sel
         self.m_weaponGachaMoneyCount = 1980
     end
 end
-
-
-
 
 CommonMoneyExchangeCtrl._RefreshWeaponNode = HL.Method(HL.Number)
     << function(self, selectorNum)
@@ -350,15 +312,11 @@ CommonMoneyExchangeCtrl._RefreshWeaponNode = HL.Method(HL.Number)
     end
 end
 
-
-
 CommonMoneyExchangeCtrl._OnClickWeaponDecreaseBtn = HL.Method() << function(self)
     local curNum = self.view.numberSelector.curNumber
     local targetNum = curNum - self.m_weaponDecreaseNumber
     self.view.numberSelector:RefreshNumber(targetNum)
 end
-
-
 
 CommonMoneyExchangeCtrl._OnClickWeaponIncreaseBtn = HL.Method() << function(self)
     local sourceId = self.m_arg.sourceId
@@ -379,14 +337,10 @@ CommonMoneyExchangeCtrl._OnClickWeaponIncreaseBtn = HL.Method() << function(self
     self.view.numberSelector:RefreshNumber(targetNum)
 end
 
-
-
 CommonMoneyExchangeCtrl._OnGoToRechargeBtnClick = HL.Method() << function(self)
     PhaseManager:ExitPhaseFast(PHASE_ID)
     CashShopUtils.GotoCashShopRechargeTab()
 end
-
-
 
 
 
@@ -398,8 +352,6 @@ CommonMoneyExchangeCtrl.OnClose = HL.Override() << function(self)
         self.m_arg.onClose()
     end
 end
-
-
 
 CommonMoneyExchangeCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     if self.m_arg ~= nil then

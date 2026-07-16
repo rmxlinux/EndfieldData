@@ -1,45 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WeaponExhibitPotential
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WeaponExhibitPotentialCtrl = HL.Class('WeaponExhibitPotentialCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -55,44 +17,29 @@ WeaponExhibitPotentialCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 WeaponExhibitPotentialCtrl.m_arg = HL.Field(HL.Table)
-
 
 WeaponExhibitPotentialCtrl.m_weaponInfo = HL.Field(HL.Table)
 
-
 WeaponExhibitPotentialCtrl.m_bottomWeaponCellCache =HL.Field(HL.Forward("UIListCache"))
-
 
 WeaponExhibitPotentialCtrl.m_lastClickItemId = HL.Field(HL.Any)
 
-
 WeaponExhibitPotentialCtrl.m_lastClickItemInfo = HL.Field(HL.Table)
-
 
 WeaponExhibitPotentialCtrl.m_costItemInfoDict = HL.Field(HL.Table)
 
-
 WeaponExhibitPotentialCtrl.m_isFocusJump = HL.Field(HL.Boolean) << false
-
 
 WeaponExhibitPotentialCtrl.m_effectCor = HL.Field(HL.Thread)
 
-
 WeaponExhibitPotentialCtrl.m_selectMaterialsInputBindingId = HL.Field(HL.Number) << -1
-
 
 WeaponExhibitPotentialCtrl.m_materialsDecreaseCountInputBindingId = HL.Field(HL.Number) << -1
 
-
 WeaponExhibitPotentialCtrl.m_naviMaterialCell = HL.Field(HL.Any)
 
-
 WeaponExhibitPotentialCtrl.m_naviMaterialItemInfo = HL.Field(HL.Table)
-
-
-
 
 WeaponExhibitPotentialCtrl.OnItemLockedStateChanged = HL.Method(HL.Table) << function(self, arg)
     local itemId, instId, isLock = unpack(arg)
@@ -111,15 +58,9 @@ WeaponExhibitPotentialCtrl.OnItemLockedStateChanged = HL.Method(HL.Table) << fun
     end
 end
 
-
-
-
 WeaponExhibitPotentialCtrl.OnGemDetach = HL.Method(HL.Table) << function(self, arg)
     self.view.commonWeaponList:RefreshAllCells()
 end
-
-
-
 
 WeaponExhibitPotentialCtrl.OnWeaponRefine = HL.Method(HL.Table) << function(self, arg)
     local weaponInfo = self.m_weaponInfo
@@ -159,9 +100,6 @@ WeaponExhibitPotentialCtrl.OnWeaponRefine = HL.Method(HL.Table) << function(self
     end
 end
 
-
-
-
 WeaponExhibitPotentialCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_arg = arg
     self:_InitActionEvent()
@@ -169,8 +107,6 @@ WeaponExhibitPotentialCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_weaponInfo = arg.weaponInfo
     self.m_isFocusJump = arg.isFocusJump == true
 end
-
-
 
 WeaponExhibitPotentialCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.m_bottomWeaponCellCache = UIUtils.genCellCache(self.view.listCellWeaponUpgrade)
@@ -233,8 +169,6 @@ WeaponExhibitPotentialCtrl._InitActionEvent = HL.Method() << function(self)
     UIUtils.bindHyperlinkPopup(self, "WeaponSkill", self.view.leftNodeInputGroup.groupId)
 end
 
-
-
 WeaponExhibitPotentialCtrl.OnShow =  HL.Override() << function(self)
     local weaponInfo = self.m_weaponInfo
     local weaponExhibitInfo = CharInfoUtils.getWeaponExhibitBasicInfo(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)
@@ -274,10 +208,6 @@ WeaponExhibitPotentialCtrl.OnShow =  HL.Override() << function(self)
     self.m_arg.stateArg = nil
 end
 
-
-
-
-
 WeaponExhibitPotentialCtrl._RefreshPotentialPanelBasic = HL.Method(HL.Table, HL.Opt(HL.Boolean)) << function(self,  weaponExhibitInfo, isInit)
     self.view.title.text = string.format(Language.LUA_WEAPON_EXHIBIT_POTENTIAL_TITLE, weaponExhibitInfo.itemCfg.name)
     self.view.expandNode.gameObject:SetActive(false)
@@ -285,9 +215,6 @@ WeaponExhibitPotentialCtrl._RefreshPotentialPanelBasic = HL.Method(HL.Table, HL.
     self:_RefreshButtonNode(weaponExhibitInfo)
     self:_RefreshCommonItemList(weaponExhibitInfo)
 end
-
-
-
 
 
 WeaponExhibitPotentialCtrl._RefreshButtonNode = HL.Method(HL.Table) << function(self, weaponExhibitInfo)
@@ -298,9 +225,6 @@ WeaponExhibitPotentialCtrl._RefreshButtonNode = HL.Method(HL.Table) << function(
         return
     end
 end
-
-
-
 
 
 WeaponExhibitPotentialCtrl._RefreshCommonItemList = HL.Method(HL.Table) << function(self, weaponExhibitInfo)
@@ -336,10 +260,6 @@ WeaponExhibitPotentialCtrl._RefreshCommonItemList = HL.Method(HL.Table) << funct
 end
 
 
-
-
-
-
 WeaponExhibitPotentialCtrl._RefreshWeaponCellAddOn = HL.Method(HL.Any, HL.Opt(HL.Table)) << function(self, cell, itemInfo)
     cell.emptyNode.onClick:RemoveAllListeners()
     cell.emptyNode.onClick:AddListener(function()
@@ -370,19 +290,10 @@ WeaponExhibitPotentialCtrl._RefreshWeaponCellAddOn = HL.Method(HL.Any, HL.Opt(HL
     end
 end
 
-
-
-
-
 WeaponExhibitPotentialCtrl._OnItemBtnMinusClicked = HL.Method(HL.Any, HL.Table) << function(self, cell, itemInfo)
     self:_RefreshWeaponCellAddOn(cell, itemInfo)
     self:_RemoveFromCostItemDict(itemInfo, 1)
 end
-
-
-
-
-
 
 WeaponExhibitPotentialCtrl._OnItemIsNaviTargetChanged = HL.Method(HL.Any, HL.Table, HL.Boolean) << function(self, cell, itemInfo, isTarget)
     if self.m_arg.stateArg and not self.m_arg.stateArg.isShow then
@@ -408,10 +319,6 @@ WeaponExhibitPotentialCtrl._OnItemIsNaviTargetChanged = HL.Method(HL.Any, HL.Tab
     end
 end
 
-
-
-
-
 WeaponExhibitPotentialCtrl._OnClickExpandCostItemCell = HL.Method(HL.Table, HL.Boolean) << function(self, costItemInfo, realClick)
     if not realClick then
         return
@@ -435,10 +342,6 @@ WeaponExhibitPotentialCtrl._OnClickExpandCostItemCell = HL.Method(HL.Table, HL.B
     self:_AddIntoCostItemDict(costItemInfo, 1)
 end
 
-
-
-
-
 WeaponExhibitPotentialCtrl._AddIntoCostItemDict = HL.Method(HL.Table, HL.Number) << function(self, itemInfo, count)
     local weaponInfo = self.m_weaponInfo
 
@@ -448,10 +351,6 @@ WeaponExhibitPotentialCtrl._AddIntoCostItemDict = HL.Method(HL.Table, HL.Number)
     self:_RefreshSkillNode(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)
     self:_RefreshWeaponPotentialStar(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)
 end
-
-
-
-
 
 WeaponExhibitPotentialCtrl._RemoveFromCostItemDict = HL.Method(HL.Table, HL.Opt(HL.Number)) << function(self, itemInfo, count)
     local costItemInfoDict = self.m_costItemInfoDict
@@ -470,10 +369,6 @@ WeaponExhibitPotentialCtrl._RemoveFromCostItemDict = HL.Method(HL.Table, HL.Opt(
     self:_RefreshWeaponPotentialStar(weaponInfo.weaponTemplateId, weaponInfo.weaponInstId)
     self.view.commonWeaponList:RefreshCellById(itemInfo.indexId)
 end
-
-
-
-
 
 WeaponExhibitPotentialCtrl._TryAddIntoCostItemDict = HL.Method(HL.Table, HL.Number) << function(self, itemInfo, count)
     local curCount = itemInfo.count or 0
@@ -550,8 +445,6 @@ WeaponExhibitPotentialCtrl._TryAddIntoCostItemDict = HL.Method(HL.Table, HL.Numb
     end
 end
 
-
-
 WeaponExhibitPotentialCtrl._GetCurAddRefineLv = HL.Method().Return(HL.Number) << function(self)
     local addRefineLv = 0
     for i, itemInfo in pairs(self.m_costItemInfoDict) do
@@ -565,9 +458,6 @@ WeaponExhibitPotentialCtrl._GetCurAddRefineLv = HL.Method().Return(HL.Number) <<
 
     return addRefineLv
 end
-
-
-
 
 WeaponExhibitPotentialCtrl._RefreshBottomCostItem = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGraduallyShow)
     local costItemInfoList = self:_CollectCostItemInfoList()
@@ -594,10 +484,6 @@ WeaponExhibitPotentialCtrl._RefreshBottomCostItem = HL.Method(HL.Opt(HL.Boolean)
         end
     end)
 end
-
-
-
-
 
 WeaponExhibitPotentialCtrl._ToggleExpandNode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isOn, closeAll)
     self.m_lastClickItemId = nil
@@ -635,10 +521,6 @@ WeaponExhibitPotentialCtrl._ToggleExpandNode = HL.Method(HL.Boolean, HL.Opt(HL.B
     end
 end
 
-
-
-
-
 WeaponExhibitPotentialCtrl._RefreshWeaponPotentialStar = HL.Method(HL.String, HL.Number, HL.Opt(HL.Boolean)) << function(self, templateId, instId)
     local weaponInst = CharInfoUtils.getWeaponByInstId(instId)
     local addRefineLv = self:_GetCurAddRefineLv()
@@ -657,11 +539,6 @@ WeaponExhibitPotentialCtrl._RefreshWeaponPotentialStar = HL.Method(HL.String, HL
         })
     end
 end
-
-
-
-
-
 
 WeaponExhibitPotentialCtrl._RefreshSkillNode = HL.Method(HL.String, HL.Number, HL.Opt(HL.Boolean)) << function(self, templateId, instId, isInit)
     local weaponInst = CharInfoUtils.getWeaponByInstId(instId)
@@ -692,8 +569,6 @@ WeaponExhibitPotentialCtrl._RefreshSkillNode = HL.Method(HL.String, HL.Number, H
     self.view.weaponIntroduction:InitWeaponIntroduction(templateId, instId)
 end
 
-
-
 WeaponExhibitPotentialCtrl._CollectCostItemInfoList = HL.Method().Return(HL.Table) << function(self)
     local costItemList = {}
     for i, itemInfo in pairs(self.m_costItemInfoDict) do
@@ -702,8 +577,6 @@ WeaponExhibitPotentialCtrl._CollectCostItemInfoList = HL.Method().Return(HL.Tabl
 
     return costItemList
 end
-
-
 
 WeaponExhibitPotentialCtrl.GetCurStateArg = HL.Method().Return(HL.Table) << function(self)
     local arg = {

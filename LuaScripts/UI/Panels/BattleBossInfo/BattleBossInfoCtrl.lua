@@ -1,23 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BattleBossInfo
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BattleBossInfoCtrl = HL.Class('BattleBossInfoCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -32,15 +16,10 @@ BattleBossInfoCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 do
     
-    
     BattleBossInfoCtrl.m_updateKey = HL.Field(HL.Number) << -1
 
-    
     BattleBossInfoCtrl.m_targetAbilitySystem = HL.Field(HL.Userdata) << nil
 end
-
-
-
 
 
 BattleBossInfoCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -57,8 +36,6 @@ BattleBossInfoCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     UIManager:SetTopOrder(PanelId.MainHud) 
 end
 
-
-
 BattleBossInfoCtrl.OnShow = HL.Override() << function(self)
     if self.m_targetAbilitySystem ~= nil then
         self.view.canvasGroup.alpha = 1
@@ -67,12 +44,8 @@ BattleBossInfoCtrl.OnShow = HL.Override() << function(self)
     self.view.headBar:Refresh()
 end
 
-
-
 BattleBossInfoCtrl.OnHide = HL.Override() << function(self)
 end
-
-
 
 BattleBossInfoCtrl.OnClose = HL.Override() << function(self)
     self.view.headBar:Clear()
@@ -80,9 +53,6 @@ BattleBossInfoCtrl.OnClose = HL.Override() << function(self)
 end
 
 do 
-    
-    
-    
     BattleBossInfoCtrl._OnAddHeadBar = HL.Method(HL.Table) << function(self, args)
         local targetAbilitySystem = unpack(args)
         if targetAbilitySystem and targetAbilitySystem.showBigHeadBar then
@@ -94,9 +64,6 @@ do
         end
     end
 
-    
-    
-    
     BattleBossInfoCtrl._OnRemoveHeadBar = HL.Method(HL.Table) << function(self, args)
         local targetAbilitySystem = unpack(args)
         if targetAbilitySystem and targetAbilitySystem.showBigHeadBar then
@@ -106,8 +73,6 @@ do
         end
     end
 
-    
-    
     BattleBossInfoCtrl._HideTargetInfo = HL.Method() << function(self)
         self.view.anim:ClearTween()
         if self.m_targetAbilitySystem.alive then
@@ -126,9 +91,6 @@ do
         self:_ClearUpdate()
     end
 
-    
-    
-    
     BattleBossInfoCtrl._ShowTargetInfo = HL.Method(HL.Userdata) << function(self, targetAbilitySystem)
         self.view.anim:ClearTween()
         self.m_targetAbilitySystem = targetAbilitySystem
@@ -146,15 +108,10 @@ do
         end
     end
 
-    
-    
-    
     BattleBossInfoCtrl._UpdateTargetInfo = HL.Method(HL.Number) << function(self, deltaTime)
         self.view.headBar:UpdateData(deltaTime)
     end
 
-    
-    
     BattleBossInfoCtrl._ClearUpdate = HL.Method() << function(self)
         if self.m_updateKey > 0 then
             LuaUpdate:Remove(self.m_updateKey)
@@ -162,8 +119,6 @@ do
         end
     end
 
-    
-    
     BattleBossInfoCtrl.GetFollowPointPosition = HL.Method().Return(HL.Boolean, Vector3) << function(self)
         return self.view.followPoint.gameObject.activeInHierarchy, self.view.followPoint.position
     end

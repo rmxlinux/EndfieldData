@@ -1,27 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
 AdventureRewardDocCell = HL.Class('AdventureRewardDocCell', UIWidgetBase)
-
-
 
 
 AdventureRewardDocCell._OnFirstTimeInit = HL.Override() << function(self)
 end
 
-
 AdventureRewardDocCell.m_index = HL.Field(HL.Number) << -1
 
-
 AdventureRewardDocCell.m_extraSideDocs = HL.Field(HL.Number) << -1
-
 
 AdventureRewardDocCell.m_rewardInfo = HL.Field(HL.Any) << nil
 
@@ -31,13 +18,6 @@ local REWARD_TYPE_STATE_NAME = {
     [GEnums.AdventureRewardShowType.Purple] = "Purple",
     [GEnums.AdventureRewardShowType.Yellow] = "Yellow",
 }
-
-
-
-
-
-
-
 
 AdventureRewardDocCell.InitAdventureRewardDocCell = HL.Method(HL.Any, HL.Number, HL.Number, HL.Number, HL.Number)
     << function(self, levelRewardInfo, docIndex, currIndex, drawOutPercent, extraSideDocs)
@@ -55,10 +35,6 @@ AdventureRewardDocCell.InitAdventureRewardDocCell = HL.Method(HL.Any, HL.Number,
 end
 
 
-
-
-
-
 AdventureRewardDocCell.UpdateDrawOut = HL.Method(HL.Number, HL.Number) << function(self, currIndex, drawOutPercent)
     local foldHeight = self.view.config.LEVEL_DOC_FOLD_HEIGHT
     local expandHeight = self.view.config.LEVEL_DOC_EXPAND_HEIGHT
@@ -71,10 +47,6 @@ AdventureRewardDocCell.UpdateDrawOut = HL.Method(HL.Number, HL.Number) << functi
     self.view.docState:SetState(floorIndex == self.m_index and "Select" or "Unselect")
     self.view.animationWrapper:SampleClipAtPercent("adv_reward_document_select", samplePercent)
 end
-
-
-
-
 
 AdventureRewardDocCell.UpdateCellExpand = HL.Method(HL.Number, HL.Number) << function(self, currIndex, drawOutPercent)
     local allIndex = self.m_index + 1 - currIndex + self.m_extraSideDocs

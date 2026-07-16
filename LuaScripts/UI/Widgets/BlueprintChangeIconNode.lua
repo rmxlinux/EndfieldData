@@ -1,42 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BlueprintChangeIconNode = HL.Class('BlueprintChangeIconNode', UIWidgetBase)
-
-
 
 
 BlueprintChangeIconNode._OnFirstTimeInit = HL.Override() << function(self)
@@ -78,35 +42,21 @@ BlueprintChangeIconNode._OnFirstTimeInit = HL.Override() << function(self)
 end
 
 
-
 BlueprintChangeIconNode.m_getGroupCell = HL.Field(HL.Function)
-
 
 BlueprintChangeIconNode.m_iconGroupInfos = HL.Field(HL.Table)
 
-
 BlueprintChangeIconNode.m_icon2PosInfo = HL.Field(HL.Table) 
-
 
 BlueprintChangeIconNode.curIconId = HL.Field(HL.String) << ''
 
-
 BlueprintChangeIconNode.onChangeIconOrColor = HL.Field(HL.Function)
-
 
 BlueprintChangeIconNode.m_csBP = HL.Field(CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprint)
 
-
 BlueprintChangeIconNode.m_selectedIconCell = HL.Field(HL.Any)
 
-
 BlueprintChangeIconNode.m_selectedColorCell = HL.Field(HL.Any)
-
-
-
-
-
-
 
 
 
@@ -125,9 +75,6 @@ BlueprintChangeIconNode.InitBlueprintChangeIconNode = HL.Method(CS.Beyond.Gamepl
     self:_ChangeState(true)
 end
 
-
-
-
 BlueprintChangeIconNode.ScrollToIcon = HL.Method(HL.String) << function(self, iconId)
     
     
@@ -143,8 +90,6 @@ BlueprintChangeIconNode.ScrollToIcon = HL.Method(HL.String) << function(self, ic
     end
     self.view.scrollList:UpdateCount(self:_GetScrollListCellCount(), math.max(0, csIndex - 2)) 
 end
-
-
 
 
 
@@ -224,8 +169,6 @@ BlueprintChangeIconNode._InitIconGroupInfos = HL.Method() << function(self)
     end
 end
 
-
-
 BlueprintChangeIconNode._GenRelatedIconInfoList = HL.Method().Return(HL.Table) << function(self)
     local addedItemIds = {}
     
@@ -241,7 +184,6 @@ BlueprintChangeIconNode._GenRelatedIconInfoList = HL.Method().Return(HL.Table) <
         end
         
         if not string.isEmpty(entry.productIcon) then
-            
             addedItemIds[entry.productIcon] = true
         end
         
@@ -252,6 +194,12 @@ BlueprintChangeIconNode._GenRelatedIconInfoList = HL.Method().Return(HL.Table) <
                     for _, v in ipairs(cInfo.outcomes) do
                         addedItemIds[v.id] = true
                     end
+                end
+            end
+            if bData.type == GEnums.FacBuildingType.EnvGenWithActivator then
+                local gasList = FactoryUtils.getEnvGenBlueprintGasProductIconEntries(templateId)
+                for _, ge in ipairs(gasList) do
+                    addedItemIds[ge.itemId] = true
                 end
             end
         end
@@ -281,10 +229,18 @@ BlueprintChangeIconNode._GenRelatedIconInfoList = HL.Method().Return(HL.Table) <
     return iconInfos
 end
 
-
-
-
 BlueprintChangeIconNode._GetItemIconInfo = HL.Method(HL.String).Return(HL.Table) << function(self, itemId)
+    if FactoryUtils.isBlueprintProductIconGasEnv(itemId) then
+        local spriteName = FactoryUtils.blueprintProductIconGasEnvToSpriteName(itemId)
+        return {
+            id = itemId,
+            icon = spriteName,
+            rarity = 0,
+            sortId1 = 0,
+            sortId2 = 0,
+            isGasBlueprintIcon = true,
+        }
+    end
     local itemData = Tables.itemTable[itemId]
     return {
         id = itemId,
@@ -294,10 +250,6 @@ BlueprintChangeIconNode._GetItemIconInfo = HL.Method(HL.String).Return(HL.Table)
         sortId2 = itemData.sortId2,
     }
 end
-
-
-
-
 
 
 
@@ -373,13 +325,12 @@ BlueprintChangeIconNode._OnUpdateGroupCell = HL.Method(HL.Table, HL.Number) << f
     end
 end
 
-
-
-
-
 BlueprintChangeIconNode._UpdateIconCell = HL.Method(HL.Table, HL.Table) << function(self, iconCell, info)
     iconCell.m_id = info.id 
-    if info.id == FacConst.FAC_BLUEPRINT_DEFAULT_ICON then
+    if info.isGasBlueprintIcon then
+        iconCell.icon:InitItemIcon("item_gold")
+        iconCell.icon.view.icon:LoadSprite(UIConst.UI_SPRITE_FAC_GAS, info.icon)
+    elseif info.id == FacConst.FAC_BLUEPRINT_DEFAULT_ICON then
         
         
         iconCell.icon:InitItemIcon("item_gold")
@@ -395,9 +346,6 @@ BlueprintChangeIconNode._UpdateIconCell = HL.Method(HL.Table, HL.Table) << funct
 end
 
 
-
-
-
 BlueprintChangeIconNode._UpdateIconCellSelected = HL.Method(HL.Table) << function(self, iconCell)
     local isSelected = self.curIconId == iconCell.m_id
     iconCell.stateController:SetState(isSelected and "Selected" or "Normal")
@@ -405,9 +353,6 @@ BlueprintChangeIconNode._UpdateIconCellSelected = HL.Method(HL.Table) << functio
         self.m_selectedIconCell = iconCell
     end
 end
-
-
-
 
 
 
@@ -435,9 +380,6 @@ BlueprintChangeIconNode._OnClickIcon = HL.Method(HL.String) << function(self, ic
     self.onChangeIconOrColor(self.curIconId, self.m_colorInfos[self.curColorIndex].id)
 end
 
-
-
-
 BlueprintChangeIconNode._OnClickGroupTitle = HL.Method(HL.Number) << function(self, groupIndex)
     local groupInfo = self.m_iconGroupInfos[groupIndex]
     groupInfo.isFold = not groupInfo.isFold
@@ -447,9 +389,6 @@ BlueprintChangeIconNode._OnClickGroupTitle = HL.Method(HL.Number) << function(se
         self.view.scrollList:ScrollToIndex(groupTitleCSIndex)
     end
 end
-
-
-
 
 
 
@@ -471,9 +410,6 @@ BlueprintChangeIconNode._GetScrollListCellCount = HL.Method(HL.Opt(HL.Number)).R
     end
     return count, groupTitleCSIndex
 end
-
-
-
 
 
 BlueprintChangeIconNode._GetCellAndInfoOfIcon = HL.Method(HL.String).Return(HL.Opt(HL.Any, HL.Any)) << function(self, iconId)
@@ -498,9 +434,6 @@ BlueprintChangeIconNode._GetCellAndInfoOfIcon = HL.Method(HL.String).Return(HL.O
     local indexInGroupCell = CSIndex(indexInGroup) % self.view.config.COUNT_PER_LINE + 1
     return groupCell["iconCell" .. indexInGroupCell], groupInfo.list[indexInGroup]
 end
-
-
-
 
 BlueprintChangeIconNode._GetGroupCellIndexOfIcon = HL.Method(HL.String).Return(HL.Opt(HL.Number)) << function(self, iconId)
     local posInfo = self.m_icon2PosInfo[iconId]
@@ -539,16 +472,11 @@ end
 
 
 
-
 BlueprintChangeIconNode.curColorIndex = HL.Field(HL.Number) << -1
-
 
 BlueprintChangeIconNode.m_colorCells = HL.Field(HL.Forward('UIListCache'))
 
-
 BlueprintChangeIconNode.m_colorInfos = HL.Field(HL.Table)
-
-
 
 BlueprintChangeIconNode._InitColorNode = HL.Method() << function(self)
     self.m_colorCells = UIUtils.genCellCache(self.view.colorCell)
@@ -564,9 +492,6 @@ BlueprintChangeIconNode._InitColorNode = HL.Method() << function(self)
     end
     table.sort(self.m_colorInfos, Utils.genSortFunction({ "sortId", "id" }))
 end
-
-
-
 
 BlueprintChangeIconNode._RefreshColorNode = HL.Method(HL.Number) << function(self, colorId)
     self.m_colorCells:Refresh(#self.m_colorInfos, function(cell, index)
@@ -588,9 +513,6 @@ BlueprintChangeIconNode._RefreshColorNode = HL.Method(HL.Number) << function(sel
     end)
 end
 
-
-
-
 BlueprintChangeIconNode._OnClickColor = HL.Method(HL.Number) << function(self, index)
     if index == self.curColorIndex then
         return
@@ -608,25 +530,15 @@ end
 
 
 
-
 BlueprintChangeIconNode.m_isIcon = HL.Field(HL.Boolean) << true
-
-
 
 BlueprintChangeIconNode.IsIconTabSelected = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_isIcon
 end
 
-
-
-
 BlueprintChangeIconNode.SetTabState = HL.Method(HL.Boolean) << function(self, isIcon)
     self:_ChangeState(isIcon, true)
 end
-
-
-
-
 
 BlueprintChangeIconNode._ChangeState = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, isIcon, resetNavi)
     if self.m_isIcon == isIcon then
@@ -644,11 +556,9 @@ BlueprintChangeIconNode._ChangeState = HL.Method(HL.Boolean, HL.Opt(HL.Boolean))
 
     if DeviceInfo.usingController and resetNavi then
         local target = isIcon and self.m_selectedIconCell.button or self.m_selectedColorCell.button
-        UIUtils.setAsNaviTarget(target)
+        self:SetNaviTarget(target)
     end
 end
-
-
 
 BlueprintChangeIconNode.RefreshController = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -658,7 +568,7 @@ BlueprintChangeIconNode.RefreshController = HL.Method() << function(self)
     self:_ChangeState(true)
     local targetIconId = self.curIconId
     if self.m_isIcon and self.m_selectedIconCell and self.m_selectedIconCell.m_id == self.curIconId and self.m_selectedIconCell.gameObject.activeInHierarchy then
-        UIUtils.setAsNaviTarget(self.m_selectedIconCell.button)
+        self:SetNaviTarget(self.m_selectedIconCell.button)
         Notify(MessageConst.HIDE_ITEM_TIPS)
         return
     end
@@ -668,7 +578,7 @@ BlueprintChangeIconNode.RefreshController = HL.Method() << function(self)
     local targetCell = self:_GetCellAndInfoOfIcon(targetIconId)
     if targetCell then
         self.m_selectedIconCell = targetCell
-        UIUtils.setAsNaviTarget(targetCell.button)
+        self:SetNaviTarget(targetCell.button)
     end
     Notify(MessageConst.HIDE_ITEM_TIPS)
 end

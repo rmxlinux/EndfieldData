@@ -3,18 +3,7 @@ local DeviceControllerType = CS.Beyond.DeviceInfo.ControllerType
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.GameSettingGamepadSavePopUp
 
-
-
-
-
-
-
-
-
-
-
 GameSettingGamepadSavePopUpCtrl = HL.Class('GameSettingGamepadSavePopUpCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -30,14 +19,9 @@ GameSettingGamepadSavePopUpCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CONTROLLER_TYPE_CHANGED] = "_OnControllerTypeChanged",
 }
 
-
 GameSettingGamepadSavePopUpCtrl.m_args = HL.Field(HL.Table)
 
-
 GameSettingGamepadSavePopUpCtrl.m_itemCells = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 GameSettingGamepadSavePopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -54,13 +38,9 @@ GameSettingGamepadSavePopUpCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
 end
 
-
-
 GameSettingGamepadSavePopUpCtrl.OnShow = HL.Override() << function(self)
     self:_RefreshView()
 end
-
-
 
 GameSettingGamepadSavePopUpCtrl._RefreshView = HL.Method() << function(self)
     local args = self.m_args
@@ -81,10 +61,6 @@ GameSettingGamepadSavePopUpCtrl._RefreshView = HL.Method() << function(self)
         self:_RefreshItemCell(itemCell, itemIndex)
     end)
 end
-
-
-
-
 
 GameSettingGamepadSavePopUpCtrl._RefreshItemCell = HL.Method(HL.Table, HL.Number) << function(self, itemCell, itemIndex)
     local affectedInfo = self.m_args.affectedInfos[CSIndex(itemIndex)]
@@ -118,9 +94,6 @@ GameSettingGamepadSavePopUpCtrl._RefreshItemCell = HL.Method(HL.Table, HL.Number
     end
 end
 
-
-
-
 GameSettingGamepadSavePopUpCtrl._OnClickButton = HL.Method(HL.Function) << function(self, callback)
     if callback then
         callback()
@@ -129,9 +102,6 @@ GameSettingGamepadSavePopUpCtrl._OnClickButton = HL.Method(HL.Function) << funct
         self.m_phase:RemovePhasePanelItemById(PanelId.GameSettingGamepadSavePopUp)
     end)
 end
-
-
-
 
 GameSettingGamepadSavePopUpCtrl._OnControllerTypeChanged = HL.Method(HL.Any) << function(self, args)
     local controllerType = DeviceInfo.controllerType

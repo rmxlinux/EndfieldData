@@ -1,101 +1,39 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ItemBagContent = HL.Class('ItemBagContent', UIWidgetBase)
-
 
 
 
 
 ItemBagContent.m_itemBag = HL.Field(CS.Beyond.Gameplay.InventorySystem.ItemBag)
 
-
 ItemBagContent.canDrop = HL.Field(HL.Boolean) << true
-
 
 ItemBagContent.canQuickDrop = HL.Field(HL.Boolean) << true
 
-
 ItemBagContent.canPlace = HL.Field(HL.Boolean) << false
-
 
 ItemBagContent.canSplit = HL.Field(HL.Boolean) << false
 
-
 ItemBagContent.canClear = HL.Field(HL.Boolean) << false
-
 
 ItemBagContent.m_updateStopped = HL.Field(HL.Boolean) << false
 
-
 ItemBagContent.goldItemNum = HL.Field(HL.Number) << -1
-
 
 ItemBagContent.m_itemBundleList = HL.Field(HL.Any)
 
-
 ItemBagContent.m_getCell = HL.Field(HL.Function)
-
 
 ItemBagContent.m_customOnUpdateCell = HL.Field(HL.Function)
 
-
 ItemBagContent.m_customSetActionMenuArgs = HL.Field(HL.Function)
-
 
 ItemBagContent.m_itemCellExtraInfo = HL.Field(HL.Table)
 
-
 ItemBagContent.m_onClickItemAction = HL.Field(HL.Function)
 
-
 ItemBagContent.m_missionItemIds = HL.Field(HL.Table)
-
-
 
 
 
@@ -106,6 +44,16 @@ ItemBagContent._OnFirstTimeInit = HL.Override() << function(self)
     self.view.itemList.onUpdateCell:AddListener(function(object, csIndex)
         self:_OnUpdateCell(object, csIndex)
     end)
+    self.view.itemList.getCellName = function(csIndex)
+        local itemBag = self.m_itemBag
+        if csIndex < itemBag.slots.Count then
+            local itemBundle = itemBag.slots[csIndex]
+            if not itemBundle.isEmpty then
+                return "Item_" .. itemBundle.id
+            end
+        end
+        return "Item__" .. csIndex
+    end 
 
     self.view.dropHint.gameObject:SetActive(false)
     self.view.dropMask.gameObject:SetActive(false)
@@ -178,14 +126,20 @@ ItemBagContent.OnStartUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function
     if self.view.itemListAutoScrollArea then
         self.view.itemListAutoScrollArea.gameObject:SetActive(true)
     end
+    local isTypeDropValid = UIUtils.isTypeDropValid(dragHelper, UIConst.ITEM_BAG_DROP_ACCEPT_INFO)
+    if isTypeDropValid then
+        self.m_curDraggingDragHelper = dragHelper
+        local isPortable = Utils.isPortableDevice(dragHelper:GetId())
+        self:_ToggleAllColoredSlotsDropArrowHint(isPortable)
+        self.view.itemBagColoredSlotUniBG:SetDropHilightActive(isPortable)
+    end
     if dragHelper.source == UIConst.UI_DRAG_DROP_SOURCE_TYPE.ItemBag then
         return
     end
     if not self.canDrop or not self.canQuickDrop then
         return
     end
-    if UIUtils.isTypeDropValid(dragHelper, UIConst.ITEM_BAG_DROP_ACCEPT_INFO) then
-        self.m_curDraggingDragHelper = dragHelper
+    if isTypeDropValid then
         self.view.quickDropButton.onClick:RemoveAllListeners()
         self.view.quickDropButton.onClick:AddListener(function()
             self:_OnDropItem(-1, dragHelper)
@@ -198,9 +152,6 @@ ItemBagContent.OnStartUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function
         self:_UpdateItemSlotForDropItem(self.m_getCell(obj), csIndex)
     end)
 end
-
-
-
 
 ItemBagContent._ShowMobileDragHelper = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if not DeviceInfo.usingTouch then
@@ -268,8 +219,16 @@ ItemBagContent._ShowMobileDragHelper = HL.Method(HL.Forward('UIDragHelper')) << 
     Notify(MessageConst.SHOW_ITEM_DRAG_HELPER, args)
 end
 
-
-
+ItemBagContent._ToggleAllColoredSlotsDropArrowHint = HL.Method(HL.Boolean) << function(self, active)
+    local itemBag = self.m_itemBag
+    local state = active and "InDrop" or "NotInDrop"
+    for k = 1, itemBag.coloredSlotNum do
+        local cell = self.m_getCell(k)
+        if cell then
+            cell.view.coloredSlotStateController:SetState(state)
+        end
+    end
+end
 
 ItemBagContent.OnEndUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(self, dragHelper)
     if self.m_updateStopped then
@@ -278,14 +237,19 @@ ItemBagContent.OnEndUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(s
     if self.view.itemListAutoScrollArea then
         self.view.itemListAutoScrollArea.gameObject:SetActive(false)
     end
+    local isTypeDropValid = UIUtils.isTypeDropValid(dragHelper, UIConst.ITEM_BAG_DROP_ACCEPT_INFO)
+    if isTypeDropValid then
+        self:_ToggleAllColoredSlotsDropArrowHint(false)
+        self.view.itemBagColoredSlotUniBG:SetDropHilightActive(false)
+        self.m_curDraggingDragHelper = nil
+    end
     if dragHelper.source == UIConst.UI_DRAG_DROP_SOURCE_TYPE.ItemBag then
         return
     end
     if not self.canQuickDrop then
         return
     end
-    if UIUtils.isTypeDropValid(dragHelper, UIConst.ITEM_BAG_DROP_ACCEPT_INFO) then
-        self.m_curDraggingDragHelper = nil
+    if isTypeDropValid then
         self.view.dropHint.gameObject:SetActive(false)
         self.view.dropMask.gameObject:SetActive(false)
         Notify(MessageConst.HIDE_ITEM_DRAG_HELPER)
@@ -294,7 +258,6 @@ ItemBagContent.OnEndUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(s
         self:_UpdateItemSlotForDropItem(self.m_getCell(obj), csIndex)
     end)
 end
-
 
 
 
@@ -318,9 +281,6 @@ ItemBagContent.InitItemBagContent = HL.Method(HL.Opt(HL.Function, HL.Table)) << 
     self:Refresh()
 end
 
-
-
-
 ItemBagContent.StopUpdate = HL.Method(HL.Boolean) << function(self, cacheAllCell)
     self.m_updateStopped = true
     if cacheAllCell then
@@ -331,8 +291,6 @@ ItemBagContent.StopUpdate = HL.Method(HL.Boolean) << function(self, cacheAllCell
     end
 end
 
-
-
 ItemBagContent.StartUpdate = HL.Method() << function(self)
     if not self.m_updateStopped then
         return
@@ -341,26 +299,17 @@ ItemBagContent.StartUpdate = HL.Method() << function(self)
     self:Refresh()
 end
 
-
-
-
 ItemBagContent.RefreshChangeGold = HL.Method(HL.Table) << function(self, Args)
     self.m_itemBundleList = Args.itemBundleList
     self.goldItemNum = Args.goldItemNum
     self:Refresh()
 end
 
-
-
-
 ItemBagContent.Refresh = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGraduallyShow)
     self.m_itemBag = GameInstance.player.inventory.itemBag:GetOrFallback(Utils.getCurrentScope())
     self.view.itemList:UpdateCount(self.m_itemBag.maxSlotCount, false, false, false, skipGraduallyShow == true)
+    self.view.itemBagColoredSlotUniBG:InitItemBagColoredSlotUniBG(self.view.itemList, self.m_itemBag.coloredSlotNum)
 end
-
-
-
-
 
 ItemBagContent._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(self, object, csIndex)
     local cell = self.m_getCell(object)
@@ -371,6 +320,22 @@ ItemBagContent._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(self
     if item then
         self:_UpdateNormalSlot(cell, item, csIndex)
         cell.item:ShowPickUpLogo(true) 
+        local isPortableDevice = Utils.isPortableDevice(item.id)
+        if isPortableDevice then
+            local isActive = itemBag:IsColoredSlotActive(item.id, csIndex)
+            cell.item.view.spTypeIconNode.stateController:SetState(isActive and "Active" or "Normal")
+            local wrapper = cell.item.view.spTypeIconNode.animationWrapper
+            local AS = CS.Beyond.UI.UIConst.AnimationState
+            if isActive then
+                
+                
+                if wrapper.curState ~= AS.In and wrapper.curState ~= AS.InEasing and wrapper.curState ~= AS.Loop then
+                    wrapper:PlayLoopAnimation()
+                end
+            else
+                wrapper:ClearTween()
+            end
+        end
         local isMissionItem = self.m_missionItemIds[item.id] == true
         cell.item.view.missionMark.gameObject:SetActive(isMissionItem)
         cell.item.redDot.gameObject:SetActive(not isMissionItem)
@@ -380,11 +345,6 @@ ItemBagContent._OnUpdateCell = HL.Method(GameObject, HL.Number) << function(self
         cell.item.view.missionMark.gameObject:SetActive(false)
     end
 end
-
-
-
-
-
 
 ItemBagContent._UpdateNormalSlot = HL.Method(HL.Userdata, HL.Userdata, HL.Number) << function(self, cell, item, csIndex)
     cell:InitItemSlot(item, function()
@@ -414,13 +374,17 @@ ItemBagContent._UpdateNormalSlot = HL.Method(HL.Userdata, HL.Userdata, HL.Number
     end
 
     cell.item:SetSelected(cell.item.showingTips)
-    cell:SetDropHighlighted(csIndex == self.m_curDropHighlightIndex)
+    local isDropHighlighted = csIndex == self.m_curDropHighlightCSIndex
+    cell:SetDropHighlighted(isDropHighlighted)
+    self:UpdateColoredItemSlotColorBG(cell, csIndex, isDropHighlighted and self.m_curDraggingDragHelper or nil)
 
     if not isEmpty then
         local data = Tables.itemTable:GetValue(id)
         local count = item.count
 
-        if count >= data.maxBackpackStackCount then
+        if data.maxBackpackStackCount == 1 then
+            cell.item.view.count.gameObject:SetActive(false)
+        elseif count >= data.maxBackpackStackCount then
             cell.item.view.count.color = self.view.config.ITEM_SLOT_FULL_COLOR
             cell.item.view.count.fontSharedMaterial = self.view.config.ITEM_SLOT_FULL_MAT
         else
@@ -477,16 +441,19 @@ ItemBagContent._UpdateNormalSlot = HL.Method(HL.Userdata, HL.Userdata, HL.Number
         onDropItem = function(eventData, dragHelper)
             self:_OnDropItem(csIndex, dragHelper)
         end,
+        onToggleHighlight = function(active)
+            if active then
+                self:UpdateColoredItemSlotColorBG(cell, csIndex, self.m_curDraggingDragHelper)
+            else
+                self:UpdateColoredItemSlotColorBG(cell, csIndex)
+            end
+        end,
     })
 
     if self.m_customOnUpdateCell then
         self.m_customOnUpdateCell(cell, item, csIndex)
     end
 end
-
-
-
-
 
 ItemBagContent._UpdateLockSlot = HL.Method(HL.Userdata, HL.Number) << function(self, cell, csIndex)
     cell.gameObject.name = "Item__" .. csIndex
@@ -502,10 +469,6 @@ ItemBagContent._UpdateLockSlot = HL.Method(HL.Userdata, HL.Number) << function(s
         self.m_customOnUpdateCell(cell, nil, csIndex)
     end
 end
-
-
-
-
 
 ItemBagContent._OnDropItem = HL.Method(HL.Number, HL.Forward('UIDragHelper')) << function(self, csIndex, dragHelper)
     local inventory = GameInstance.player.inventory
@@ -561,9 +524,6 @@ ItemBagContent._OnDropItem = HL.Method(HL.Number, HL.Forward('UIDragHelper')) <<
 end
 
 
-
-
-
 ItemBagContent._OnClickItem = HL.Method(HL.Number) << function(self, csIndex)
     local item = self.m_itemBag.slots[csIndex]
     local cell = self.m_getCell(LuaIndex(csIndex))
@@ -575,11 +535,6 @@ ItemBagContent._OnClickItem = HL.Method(HL.Number) << function(self, csIndex)
     end
 end
 
-
-
-
-
-
 ItemBagContent._OnItemBagChanged = HL.Method(HL.Opt(HL.Userdata, HL.Boolean, HL.Boolean)) << function(self, changedIndexes, refreshAll, skipGraduallyShow)
     if self.m_updateStopped then
         return
@@ -590,23 +545,84 @@ ItemBagContent._OnItemBagChanged = HL.Method(HL.Opt(HL.Userdata, HL.Boolean, HL.
         return
     end
 
+    local itemBag = self.m_itemBag
+    local changeIndexDic = {}
+    local needUpdateColoredSlot
     for _, slotIndex in pairs(changedIndexes) do
+        local itemId = itemBag[slotIndex].id
         local obj = self.view.itemList:Get(slotIndex)
+        local isColorActive
+        if slotIndex < itemBag.coloredSlotNum then
+            needUpdateColoredSlot = true 
+            if not string.isEmpty(itemId) then
+                local isLowerLv
+                isColorActive, isLowerLv = itemBag:IsColoredSlotActive(itemId, slotIndex)
+                if (not isColorActive) and isLowerLv then 
+                    
+                    local higherName = Utils.getColoredSlotHigherLvActiveDeviceName(itemBag, itemId)
+                    if higherName then
+                        Notify(MessageConst.SHOW_TOAST, string.format(Language.LUA_ITEM_BAG_PORTABLE_DEVICE_NOT_ACTIVE, higherName))
+                    end
+                end
+            end
+        end
+        changeIndexDic[slotIndex] = true
         if obj then
             self:_OnUpdateCell(obj, slotIndex)
+            
+            
+            
+            
+            if isColorActive then
+                local cell = self.m_getCell(obj)
+                cell:PlayColoredSlotActivatedAnimation()
+            end
+        end
+    end
+    if needUpdateColoredSlot then
+        for slotIndex = 0, itemBag.coloredSlotNum - 1 do
+            if not changeIndexDic[slotIndex] then
+                local obj = self.view.itemList:Get(slotIndex)
+                if obj then
+                    local cell = self.m_getCell(obj)
+                    local lastIsActive = cell.m_colorSlotActivated
+                    self:_OnUpdateCell(obj, slotIndex)
+                    if not lastIsActive and cell.m_colorSlotActivated then
+                        
+                        cell:PlayColoredSlotActivatedAnimation()
+                    end
+                end
+                local itemId = itemBag[slotIndex].id
+                
+                if Utils.isPortableDevice(itemId) then
+                    local pdData = Tables.itemPortableDeviceTable[itemId]
+                    for k = 0, itemBag.coloredSlotNum - 1 do
+                        if k ~= slotIndex and changeIndexDic[k] then
+                            local otherItem = itemBag.slots[k]
+                            if Utils.isPortableDevice(otherItem.id) then
+                                local otherPdData = Tables.itemPortableDeviceTable[otherItem.id]
+                                if otherPdData.type == pdData.type and pdData.isMainDevice == otherPdData.isMainDevice then
+                                    
+                                    if otherPdData.lv > pdData.lv then
+                                        local higherName = Utils.getColoredSlotHigherLvActiveDeviceName(itemBag, itemId)
+                                        if higherName then
+                                            Notify(MessageConst.SHOW_TOAST, string.format(Language.LUA_ITEM_BAG_PORTABLE_DEVICE_NOT_ACTIVE, higherName))
+                                        end
+                                        break
+                                    end
+                                end
+                            end
+                        end
+                    end
+                end
+            end
         end
     end
 end
 
-
-
-
 ItemBagContent.GetCell = HL.Method(HL.Any).Return(HL.Opt(HL.Forward("ItemSlot"))) << function(self, objOrIndex)
     return self.m_getCell(objOrIndex)
 end
-
-
-
 
 ItemBagContent.CheckAndNaviToTargetCell = HL.Method(HL.Function) << function(self, checkFunc)
     local findTag = false
@@ -626,8 +642,6 @@ ItemBagContent.CheckAndNaviToTargetCell = HL.Method(HL.Function) << function(sel
     end
 end
 
-
-
 ItemBagContent.GetCurNaviTargetSlot = HL.Method().Return(HL.Number, HL.Opt(HL.Forward("ItemSlot"))) << function(self)
     local count = self.view.itemList.count
     for i = 1, count do
@@ -642,10 +656,7 @@ ItemBagContent.GetCurNaviTargetSlot = HL.Method().Return(HL.Number, HL.Opt(HL.Fo
     return -1
 end
 
-
 ItemBagContent.m_readItemIds = HL.Field(HL.Table)
-
-
 
 ItemBagContent.ReadCurShowingItems = HL.Method() << function(self)
     if not self.m_readItemIds or not next(self.m_readItemIds) then
@@ -659,15 +670,9 @@ ItemBagContent.ReadCurShowingItems = HL.Method() << function(self)
     GameInstance.player.inventory:ReadNewItems(ids)
 end
 
-
-
-
 ItemBagContent.ToggleCanDrop = HL.Method(HL.Boolean) << function(self, active)
     self.canDrop = active
 end
-
-
-
 
 ItemBagContent.ToggleCanQuickDrop = HL.Method(HL.Boolean) << function(self, active)
     self.canQuickDrop = active
@@ -676,53 +681,48 @@ end
 
 
 
-
-ItemBagContent.m_curDropHighlightIndex = HL.Field(HL.Number) << -1
-
+ItemBagContent.m_curDropHighlightCSIndex = HL.Field(HL.Number) << -1
 
 ItemBagContent.m_curDraggingDragHelper = HL.Field(HL.Forward('UIDragHelper'))
-
-
 
 
 ItemBagContent._FindAndHighlightForDrop = HL.Method() << function(self)
     if not self.m_curDraggingDragHelper then
         return
     end
-
     local itemId = self.m_curDraggingDragHelper:GetId()
-    local index = self.m_itemBag:GetFirstEmptySlotIndex()
-    if index == -1 then
-        index = self.m_itemBag:GetFirstValidSlotIndex(itemId)
+    local csIndex = self.m_itemBag:GetFirstEmptySlotIndex()
+    if csIndex == -1 then
+        csIndex = self.m_itemBag:GetFirstValidSlotIndex(itemId)
     end
-    if index == -1 then
+    if csIndex == -1 then
         return
     end
-    self.m_curDropHighlightIndex = index
 
-    local object = self.view.itemList:Get(index)
+    
+    
+
+    self.m_curDropHighlightCSIndex = csIndex
+    local object = self.view.itemList:Get(csIndex)
+    logger.info("_FindAndHighlightForDrop", csIndex, self.m_curDraggingDragHelper)
     if object then
         local cell = self.m_getCell(object)
         cell:SetDropHighlighted(true)
+        self:UpdateColoredItemSlotColorBG(cell, csIndex, self.m_curDraggingDragHelper)
     end
 end
 
-
-
 ItemBagContent._CancelDropHighlight = HL.Method() << function(self)
-    local index = self.m_curDropHighlightIndex
-    self.m_curDropHighlightIndex = -1
-    if index >= 0 then
-        local cell = self.m_getCell(LuaIndex(index))
+    local csIndex = self.m_curDropHighlightCSIndex
+    self.m_curDropHighlightCSIndex = -1
+    if csIndex >= 0 then
+        local cell = self.m_getCell(LuaIndex(csIndex))
         if cell then
             cell:SetDropHighlighted(false)
+            self:UpdateColoredItemSlotColorBG(cell, csIndex)
         end
     end
 end
-
-
-
-
 
 ItemBagContent._UpdateItemSlotForDropItem = HL.Method(HL.Forward('ItemSlot'), HL.Number) << function(self, itemSlot, csIndex)
     local activeRaycast
@@ -751,9 +751,6 @@ ItemBagContent._UpdateItemSlotForDropItem = HL.Method(HL.Forward('ItemSlot'), HL
         itemSlot.view.forbiddenMask.raycastTarget = activeRaycast
     end
 end
-
-
-
 
 ItemBagContent._PlayDropAnimation = HL.Method(HL.Table) << function(self, args)
     if self.m_updateStopped then
@@ -787,15 +784,30 @@ ItemBagContent._PlayDropAnimation = HL.Method(HL.Table) << function(self, args)
     end
 end
 
-
-
-
 ItemBagContent._PlayDropAnimationAt = HL.Method(HL.Number) << function(self, index)
     
     local cell = self.m_getCell(LuaIndex(index))
     if cell then
         cell:PlayDropAnimation()
     end
+end
+
+
+
+
+
+
+
+ItemBagContent.UpdateColoredItemSlotColorBG = HL.Method(HL.Any, HL.Number, HL.Opt(HL.Any)) << function(self, cell, csIndex, dragHelper)
+    local itemId
+    if dragHelper then
+        
+        itemId = dragHelper:GetId()
+    else
+        
+        itemId = self.m_itemBag.slots[csIndex].id
+    end
+    cell:UpdateSlotColorBGByItemId(self.m_itemBag, csIndex, itemId, self.m_curDraggingDragHelper ~= nil and Utils.isPortableDevice(self.m_curDraggingDragHelper:GetId()))
 end
 
 

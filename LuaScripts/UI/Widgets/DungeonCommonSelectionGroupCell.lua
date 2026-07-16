@@ -1,35 +1,17 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
 DungeonCommonSelectionGroupCell = HL.Class('DungeonCommonSelectionGroupCell', UIWidgetBase)
-
 
 DungeonCommonSelectionGroupCell.m_dungeonIds = HL.Field(HL.Table)
 
-
 DungeonCommonSelectionGroupCell.m_clickFunc = HL.Field(HL.Function)
 
-
 DungeonCommonSelectionGroupCell.m_cellCache = HL.Field(HL.Forward("UIListCache"))
-
-
 
 
 DungeonCommonSelectionGroupCell._OnFirstTimeInit = HL.Override() << function(self)
     self.m_cellCache = UIUtils.genCellCache(self.view.subTrainCell)
 end
-
-
-
-
 
 DungeonCommonSelectionGroupCell.InitDungeonCommonSelectionGroupCell = HL.Method(HL.Table, HL.Function)
     << function(self, dungeonIds, clickFunc)
@@ -56,9 +38,6 @@ DungeonCommonSelectionGroupCell.InitDungeonCommonSelectionGroupCell = HL.Method(
     self.view.redDot:InitRedDot("DungeonReadNormal", dungeonIds, nil, self:GetUICtrl().view.redDotScrollRect)
 end
 
-
-
-
 DungeonCommonSelectionGroupCell.TryGetSubCell = HL.Method(HL.String).Return(HL.Any) << function(self, dungeonId)
     local found = nil
     for i, v in ipairs(self.m_dungeonIds) do
@@ -70,8 +49,6 @@ DungeonCommonSelectionGroupCell.TryGetSubCell = HL.Method(HL.String).Return(HL.A
     return found
 end
 
-
-
 DungeonCommonSelectionGroupCell._GetCompleteNum = HL.Method().Return(HL.Number) << function(self)
     local cnt = 0
     for _, dungeonId in ipairs(self.m_dungeonIds) do
@@ -82,9 +59,6 @@ DungeonCommonSelectionGroupCell._GetCompleteNum = HL.Method().Return(HL.Number) 
     end
     return cnt
 end
-
-
-
 
 DungeonCommonSelectionGroupCell.SetToggle = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.mainTog.isOn = isOn

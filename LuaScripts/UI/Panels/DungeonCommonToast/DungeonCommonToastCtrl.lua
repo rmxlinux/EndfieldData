@@ -3,12 +3,7 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local commonToastCtrl = require_ex('UI/Panels/CommonToast/CommonToastCtrl')
 local PANEL_ID = PanelId.DungeonCommonToast
 
-
-
-
 DungeonCommonToastCtrl = HL.Class('DungeonCommonToastCtrl', commonToastCtrl.CommonToastCtrl)
-
-
 
 DungeonCommonToastCtrl.TryShow = HL.StaticMethod(HL.Any) << function(arg)
     local dungeonId
@@ -35,8 +30,6 @@ DungeonCommonToastCtrl.TryShow = HL.StaticMethod(HL.Any) << function(arg)
     local ctrl = DungeonCommonToastCtrl.AutoOpen(PANEL_ID, nil, false)
     ctrl:ShowToast(str)
 end
-
-
 
 DungeonCommonToastCtrl.OnSceneCollectionModify = HL.StaticMethod(HL.Any) << function(arg)
     local prefabId, sceneId = unpack(arg)

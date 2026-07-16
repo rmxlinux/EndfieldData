@@ -18,49 +18,7 @@ local TAB_CONFIG = {
     },
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ShopTokenCtrl = HL.Class('ShopTokenCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -73,54 +31,38 @@ ShopTokenCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SHOP_GOODS_CONDITION_REFRESH] = '_OnShopRefresh',
 }
 
-
 ShopTokenCtrl.m_getItemCell = HL.Field(HL.Function)
-
 
 ShopTokenCtrl.m_getTabCell = HL.Field(HL.Function)
 
-
 ShopTokenCtrl.m_goodsDataList = HL.Field(HL.Userdata)
-
 
 ShopTokenCtrl.m_shopSystem = HL.Field(HL.Userdata)
 
-
 ShopTokenCtrl.m_shopIdToTabCell = HL.Field(HL.Table)
 
-
 ShopTokenCtrl.m_shopDataList = HL.Field(HL.Table)
-
 
 ShopTokenCtrl.m_currShopId = HL.Field(HL.String) << ""
 
 
-
 ShopTokenCtrl.m_currNaviIndex = HL.Field(HL.Int) << 0
-
 
 ShopTokenCtrl.m_isNaviLeft = HL.Field(HL.Boolean) << true
 
-
 ShopTokenCtrl.m_needSetNaviTargetGoodsId = HL.Field(HL.String) << ""
-
 
 
 ShopTokenCtrl.m_currSeenRange = HL.Field(HL.Table)
 
 
-
 ShopTokenCtrl.m_haveSeenGoodsId = HL.Field(HL.Table)
-
 
 ShopTokenCtrl.m_showExchange = HL.Field(HL.Boolean) << false
 
 
 
 ShopTokenCtrl.m_pendingAfterTopOrdered = HL.Field(HL.Table)
-
-
-
 
 
 ShopTokenCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -133,8 +75,6 @@ ShopTokenCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.m_phase:HidePsStore()
 end
-
-
 
 ShopTokenCtrl.OnShow = HL.Override() << function(self)
     if DeviceInfo.usingController then
@@ -156,14 +96,10 @@ ShopTokenCtrl.OnShow = HL.Override() << function(self)
     end
 end
 
-
-
 ShopTokenCtrl.OnClose = HL.Override() << function(self)
     self:_UpdateSeeGoods()
     self:_SetCurrGoodsRead()
 end
-
-
 
 ShopTokenCtrl._InitShortCut = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -207,14 +143,9 @@ ShopTokenCtrl._InitShortCut = HL.Method() << function(self)
     })
 end
 
-
-
-
 ShopTokenCtrl.UpdateAll = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     self:Refresh(self.m_goodsDataList)
 end
-
-
 
 ShopTokenCtrl._OnShopRefresh = HL.Method() << function(self)
     local isOpen, shopDetailCtrl = UIManager:IsOpen(PanelId.ShopDetail)
@@ -232,9 +163,6 @@ ShopTokenCtrl._OnShopRefresh = HL.Method() << function(self)
     end
 end
 
-
-
-
 ShopTokenCtrl._OnBuyItemSucc = HL.Method(HL.Any) << function(self, arg)
     if DeviceInfo.usingController then
         self:_RefreshAndRecoverNaviTarget(self.m_goodsDataList)
@@ -242,9 +170,6 @@ ShopTokenCtrl._OnBuyItemSucc = HL.Method(HL.Any) << function(self, arg)
         self:Refresh(self.m_goodsDataList)
     end
 end
-
-
-
 
 
 ShopTokenCtrl._RefreshAndRecoverNaviTarget = HL.Method(HL.Any) << function(self, goodsDataList)
@@ -256,10 +181,6 @@ ShopTokenCtrl._RefreshAndRecoverNaviTarget = HL.Method(HL.Any) << function(self,
     
     self:Refresh(goodsDataList)
 end
-
-
-
-
 
 ShopTokenCtrl.Refresh = HL.Method(HL.Any, HL.Opt(HL.Number)) << function(self, goodsDataList, fastScrollToIndex)
     if goodsDataList == nil then
@@ -302,8 +223,6 @@ ShopTokenCtrl.Refresh = HL.Method(HL.Any, HL.Opt(HL.Number)) << function(self, g
     end
 
 end
-
-
 
 ShopTokenCtrl._InitTabList = HL.Method() << function(self)
     local _, shopGroupData = Tables.shopGroupTable:TryGetValue(CashShopConst.CashShopCategoryType.Token)
@@ -361,8 +280,6 @@ ShopTokenCtrl._InitTabList = HL.Method() << function(self)
     self.m_currShopId = self.m_shopDataList[1].shopId
 end
 
-
-
 ShopTokenCtrl._InitUICallback = HL.Method() << function(self)
     local exchangeMaterialBtn = self.view.redemptionVoucherNode.voucherList
     exchangeMaterialBtn.onClick:AddListener(function()
@@ -383,8 +300,6 @@ ShopTokenCtrl._InitUICallback = HL.Method() << function(self)
     end)
 end
 
-
-
 ShopTokenCtrl._InitContentList = HL.Method() << function(self)
     self.m_getItemCell = UIUtils.genCachedCellFunction(self.view.scrollList)
     self.view.scrollList.onUpdateCell:AddListener(function(obj, index)
@@ -394,7 +309,7 @@ ShopTokenCtrl._InitContentList = HL.Method() << function(self)
 
         if not string.isEmpty(self.m_needSetNaviTargetGoodsId) and self.m_goodsDataList[(index)].goodsId == self.m_needSetNaviTargetGoodsId then
             self.m_needSetNaviTargetGoodsId = ""
-            UIUtils.setAsNaviTarget(cell.view.inputBindingGroupNaviDecorator)
+            self:SetNaviTarget(cell.view.inputBindingGroupNaviDecorator)
             self.m_currNaviIndex = LuaIndex(index)
         end
     end)
@@ -402,9 +317,6 @@ ShopTokenCtrl._InitContentList = HL.Method() << function(self)
         self.m_needSetNaviTargetGoodsId = ""
     end)
 end
-
-
-
 
 ShopTokenCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
     local shopId = self.m_shopDataList[1].shopId
@@ -416,7 +328,7 @@ ShopTokenCtrl._ProcessArg = HL.Method(HL.Any) << function(self, arg)
     if tabCell then
         tabCell.toggle:SetIsOnWithoutNotify(true)
         self.m_currShopId = shopId
-        UIUtils.setAsNaviTarget(tabCell.toggle)
+        self:SetNaviTarget(tabCell.toggle)
         local shop = self.m_shopSystem:GetShopData(shopId)
         local goodList = shop:GetOpenGoodList()
         self:Refresh(goodList)
@@ -478,9 +390,6 @@ ShopTokenCtrl.OnAfterCategoryTopOrdered = HL.Method() << function(self)
     end
 end
 
-
-
-
 ShopTokenCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, arg)
     
     arg.shopId = self.m_currShopId
@@ -503,8 +412,6 @@ ShopTokenCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, arg)
     end
 end
 
-
-
 ShopTokenCtrl._UpdateSeeRange = HL.Method() << function(self)
     local range = self.view.scrollList:GetShowRange()
     local currX = range.x
@@ -516,8 +423,6 @@ ShopTokenCtrl._UpdateSeeRange = HL.Method() << function(self)
         self.m_currSeenRange.y = currY
     end
 end
-
-
 
 ShopTokenCtrl._UpdateSeeGoods = HL.Method() << function(self)
     
@@ -542,8 +447,6 @@ ShopTokenCtrl._UpdateSeeGoods = HL.Method() << function(self)
     self.m_currSeenRange.y = nil
 end
 
-
-
 ShopTokenCtrl._SetCurrGoodsRead = HL.Method() << function(self)
     for _, goodsId in ipairs(self.m_haveSeenGoodsId) do
         GameInstance.player.shopSystem:RecordSeeGoodsId(goodsId)
@@ -552,15 +455,9 @@ ShopTokenCtrl._SetCurrGoodsRead = HL.Method() << function(self)
     GameInstance.player.shopSystem:SetGoodsIdSee()
 end
 
-
-
-
 ShopTokenCtrl._SetSingleGoodsReadByGoodsId = HL.Method(HL.String) << function(self, goodsId)
     GameInstance.player.shopSystem:SetSingleGoodsIdSee(goodsId)
 end
-
-
-
 
 ShopTokenCtrl._SetSingleGoodsReadByIndex = HL.Method(HL.Number) << function(self, luaIndex)
     local csIndex = CSIndex(luaIndex)
@@ -570,16 +467,12 @@ ShopTokenCtrl._SetSingleGoodsReadByIndex = HL.Method(HL.Number) << function(self
     end
 end
 
-
-
 ShopTokenCtrl._OnGoRightList = HL.Method() << function(self)
     logger.info("ShopTokenCtrl._OnGoRightList 被触发")
     InputManagerInst:ToggleGroup(self.view.verticalTabList.groupTarget.groupId, false)
     self:TargetFirstCell()
     self.m_isNaviLeft = false
 end
-
-
 
 ShopTokenCtrl.TargetFirstCell = HL.Method() << function(self)
     logger.info("ShopTokenCtrl: TargetFirstCell")
@@ -588,24 +481,20 @@ ShopTokenCtrl.TargetFirstCell = HL.Method() << function(self)
     
     local range = self.view.scrollList:GetShowRange()
     local firstCell = self.m_getItemCell(self.view.scrollList:Get(range.x))
-    UIUtils.setAsNaviTarget(firstCell.view.inputBindingGroupNaviDecorator)
+    self:SetNaviTarget(firstCell.view.inputBindingGroupNaviDecorator)
     self.m_currNaviIndex = LuaIndex(range.x)
     self:_SetSingleGoodsReadByIndex(self.m_currNaviIndex)
 end
-
-
 
 ShopTokenCtrl._NaviTargetCurrTab = HL.Method() << function(self)
     logger.info("ShopTokenCtrl: _NaviTargetCurrTab")
 
     local currTabCell = self.m_shopIdToTabCell[self.m_currShopId]
-    UIUtils.setAsNaviTarget(currTabCell.toggle)
+    self:SetNaviTarget(currTabCell.toggle)
     self.m_isNaviLeft = true
 
     InputManagerInst:ToggleGroup(self.view.verticalTabList.groupTarget.groupId, true)
 end
-
-
 
 ShopTokenCtrl._OnGoLeft = HL.Method() << function(self)
     logger.info("ShopTokenCtrl: _OnGoLeft")
@@ -620,13 +509,14 @@ ShopTokenCtrl._OnGoLeft = HL.Method() << function(self)
         logger.info("ShopTokenCtrl: _OnGoLeft: NaviTargetCurrTab, currIndex is: " .. currIndex)
     else
         local targetCell = self.m_getItemCell(self.view.scrollList:Get(CSIndex(currIndex - 1)))
-        UIUtils.setAsNaviTarget(targetCell.view.inputBindingGroupNaviDecorator)
+        if targetCell == nil then
+            return
+        end
+        self:SetNaviTarget(targetCell.view.inputBindingGroupNaviDecorator)
         self.m_currNaviIndex = self.m_currNaviIndex - 1
         self:_SetSingleGoodsReadByIndex(self.m_currNaviIndex)
     end
 end
-
-
 
 ShopTokenCtrl._OnGoUp = HL.Method() << function(self)
     local countPerLine = self.view.scrollList.countPerLine
@@ -636,12 +526,13 @@ ShopTokenCtrl._OnGoUp = HL.Method() << function(self)
     end
 
     local targetCell = self.m_getItemCell(self.view.scrollList:Get(CSIndex(targetIndex)))
-    UIUtils.setAsNaviTarget(targetCell.view.inputBindingGroupNaviDecorator)
+    if targetCell == nil then
+        return
+    end
+    self:SetNaviTarget(targetCell.view.inputBindingGroupNaviDecorator)
     self.m_currNaviIndex = targetIndex
     self:_SetSingleGoodsReadByIndex(self.m_currNaviIndex)
 end
-
-
 
 ShopTokenCtrl._OnGoRight = HL.Method() << function(self)
     local targetIndex = self.m_currNaviIndex + 1
@@ -650,12 +541,13 @@ ShopTokenCtrl._OnGoRight = HL.Method() << function(self)
     end
 
     local targetCell = self.m_getItemCell(self.view.scrollList:Get(CSIndex(targetIndex)))
-    UIUtils.setAsNaviTarget(targetCell.view.inputBindingGroupNaviDecorator)
+    if targetCell == nil then
+        return
+    end
+    self:SetNaviTarget(targetCell.view.inputBindingGroupNaviDecorator)
     self.m_currNaviIndex = targetIndex
     self:_SetSingleGoodsReadByIndex(self.m_currNaviIndex)
 end
-
-
 
 ShopTokenCtrl._OnGoDown = HL.Method() << function(self)
     local countPerLine = self.view.scrollList.countPerLine
@@ -672,7 +564,10 @@ ShopTokenCtrl._OnGoDown = HL.Method() << function(self)
     end
 
     local targetCell = self.m_getItemCell(self.view.scrollList:Get(CSIndex(targetIndex)))
-    UIUtils.setAsNaviTarget(targetCell.view.inputBindingGroupNaviDecorator)
+    if targetCell == nil then
+        return
+    end
+    self:SetNaviTarget(targetCell.view.inputBindingGroupNaviDecorator)
     self.m_currNaviIndex = targetIndex
     self:_SetSingleGoodsReadByIndex(self.m_currNaviIndex)
 end

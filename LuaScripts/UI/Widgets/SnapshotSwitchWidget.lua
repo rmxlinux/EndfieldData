@@ -1,17 +1,6 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
 SnapshotSwitchWidget = HL.Class('SnapshotSwitchWidget', UIWidgetBase)
-
-
 
 
 SnapshotSwitchWidget._OnFirstTimeInit = HL.Override() << function(self)
@@ -25,22 +14,13 @@ end
 
 
 
-
 SnapshotSwitchWidget.m_curIndex = HL.Field(HL.Number) << -1
-
 
 SnapshotSwitchWidget.m_nameList = HL.Field(HL.Table)
 
-
 SnapshotSwitchWidget.m_nameListCount = HL.Field(HL.Number) << 0
 
-
 SnapshotSwitchWidget.m_selectChangedCallback = HL.Field(HL.Function)
-
-
-
-
-
 
 
 
@@ -62,8 +42,6 @@ end
 
 
 
-
-
 SnapshotSwitchWidget._OnSwitchNext = HL.Method() << function(self)
     if self.m_nameListCount <= 0 then
         return
@@ -75,8 +53,6 @@ SnapshotSwitchWidget._OnSwitchNext = HL.Method() << function(self)
         self.m_selectChangedCallback(self.m_curIndex)
     end
 end
-
-
 
 SnapshotSwitchWidget._OnSwitchPre = HL.Method() << function(self)
     if self.m_nameListCount <= 0 then

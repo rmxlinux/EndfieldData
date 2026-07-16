@@ -1,17 +1,9 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacTechPackage
-
-
-
-
-
-
 FacTechPackageCtrl = HL.Class('FacTechPackageCtrl', uiCtrl.UICtrl)
 
-
 FacTechPackageCtrl.m_packageName2Cell = HL.Field(HL.Table)
-
 
 
 
@@ -21,9 +13,6 @@ FacTechPackageCtrl.m_packageName2Cell = HL.Field(HL.Table)
 FacTechPackageCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 FacTechPackageCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -39,10 +28,6 @@ FacTechPackageCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_InitController(arg)
 end
-
-
-
-
 
 FacTechPackageCtrl._InitData = HL.Method(HL.Any, HL.String) << function(self, packageRef, packageName)
     local facTechTreeSystem = GameInstance.player.facTechTreeSystem
@@ -93,9 +78,6 @@ end
 
 
 
-
-
-
 FacTechPackageCtrl._InitController = HL.Method(HL.Table) << function(self, args)
     if not DeviceInfo.usingController then
         return
@@ -105,7 +87,7 @@ FacTechPackageCtrl._InitController = HL.Method(HL.Table) << function(self, args)
 
     local packageId = unpack(args or {})
     local cell = string.isEmpty(packageId) and self.view.left or self.m_packageName2Cell[packageId]
-    self:SetAsNaviTargetInSilentModeIfNecessary(self.view.selectableNaviGroup, cell.btn)
+    self:SetNaviTarget(cell.btn)
 end
 
 

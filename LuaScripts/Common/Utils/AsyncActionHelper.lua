@@ -1,53 +1,23 @@
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AsyncActionHelper = HL.Class('AsyncActionHelper')
-
 
 AsyncActionHelper.isParallel = HL.Field(HL.Boolean) << false 
 
-
 AsyncActionHelper.m_actions = HL.Field(HL.Table)
-
 
 AsyncActionHelper.m_actionCount = HL.Field(HL.Number) << 0
 
-
 AsyncActionHelper.m_curFinishedCount = HL.Field(HL.Number) << 0
-
 
 AsyncActionHelper.m_curExecutingActionsKey = HL.Field(HL.Number) << 0
 
-
 AsyncActionHelper.m_onFinished = HL.Field(HL.Function)
 
-
 AsyncActionHelper.m_executing = HL.Field(HL.Boolean) << false
-
-
-
 
 AsyncActionHelper.AsyncActionHelper = HL.Constructor(HL.Boolean) << function(self, isParallel)
     self.m_actions = {}
     self.isParallel = isParallel
 end
-
-
-
 
 AsyncActionHelper.AddAction = HL.Method(HL.Function) << function(self, action)
     if self.m_executing then
@@ -58,14 +28,9 @@ AsyncActionHelper.AddAction = HL.Method(HL.Function) << function(self, action)
     self.m_actionCount = self.m_actionCount + 1
 end
 
-
-
-
 AsyncActionHelper.SetOnFinished = HL.Method(HL.Function) << function(self, action)
     self.m_onFinished = action
 end
-
-
 
 AsyncActionHelper.Clear = HL.Method() << function(self)
     if self.m_executing then
@@ -77,8 +42,6 @@ AsyncActionHelper.Clear = HL.Method() << function(self)
     self.m_onFinished = nil
 end
 
-
-
 AsyncActionHelper.ForceClear = HL.Method() << function(self)
     if self.m_executing then
         self.m_executing = false
@@ -86,8 +49,6 @@ AsyncActionHelper.ForceClear = HL.Method() << function(self)
     end
     self:Clear()
 end
-
-
 
 AsyncActionHelper.Start = HL.Method() << function(self)
     self.m_curFinishedCount = 0
@@ -127,9 +88,6 @@ AsyncActionHelper.Start = HL.Method() << function(self)
     end
 end
 
-
-
-
 AsyncActionHelper._StartNextAct = HL.Method(HL.Number) << function(self, curExecutingActionsKey)
     if self.m_curExecutingActionsKey ~= curExecutingActionsKey then
         
@@ -148,8 +106,6 @@ AsyncActionHelper._StartNextAct = HL.Method(HL.Number) << function(self, curExec
     end)
 end
 
-
-
 AsyncActionHelper._OnFinished = HL.Method() << function(self)
     self.m_executing = false
     self.m_curFinishedCount = 0
@@ -159,8 +115,6 @@ AsyncActionHelper._OnFinished = HL.Method() << function(self)
         self.m_onFinished()
     end
 end
-
-
 
 AsyncActionHelper.IsExecuting = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_executing

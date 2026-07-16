@@ -1,27 +1,12 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
 LockToggle = HL.Class('LockToggle', UIWidgetBase)
-
 
 LockToggle.itemId = HL.Field(HL.String) << ""
 
-
 LockToggle.instId = HL.Field(HL.Number) << 0
 
-
 LockToggle.canLock = HL.Field(HL.Boolean) << true
-
-
 
 
 LockToggle._OnFirstTimeInit = HL.Override() << function(self)
@@ -40,10 +25,6 @@ LockToggle._OnFirstTimeInit = HL.Override() << function(self)
     self.view.toggle.clickOnHintTextId = "key_hint_item_lock_toggle"
     self.view.toggle.clickOffHintTextId = "key_hint_item_lock_toggle"
 end
-
-
-
-
 
 LockToggle.InitLockToggle = HL.Method(HL.String, HL.Number).Return(HL.Boolean) << function(self, itemId, instId)
     self:_FirstTimeInit()
@@ -82,9 +63,6 @@ LockToggle.InitLockToggle = HL.Method(HL.String, HL.Number).Return(HL.Boolean) <
     return true
 end
 
-
-
-
 LockToggle._LockItem = HL.Method(HL.Boolean) << function(self, isOn)
     if string.isEmpty(self.itemId) then
         return
@@ -101,17 +79,12 @@ LockToggle._LockItem = HL.Method(HL.Boolean) << function(self, isOn)
     end
 end
 
-
-
-
 LockToggle._OnItemLockedStateChanged = HL.Method(HL.Table) << function(self, args)
     if string.isEmpty(self.itemId) then
         return
     end
     self:_UpdateLockedState()
 end
-
-
 
 LockToggle._UpdateLockedState = HL.Method() << function(self)
     local isLocked = GameInstance.player.inventory:IsItemLocked(Utils.getCurrentScope(), self.itemId, self.instId)
@@ -120,9 +93,6 @@ LockToggle._UpdateLockedState = HL.Method() << function(self)
         self:_UpdateControllerKeyHint(isLocked)
     end
 end
-
-
-
 
 LockToggle._UpdateControllerKeyHint = HL.Method(HL.Boolean) << function(self, isLocked)
     local bindingId = self.view.toggle.hoverConfirmBindingId

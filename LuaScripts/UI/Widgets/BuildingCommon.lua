@@ -2,102 +2,47 @@ local SocialBuildingSource = CS.Beyond.Gameplay.Factory.SocialBuildingSource
 
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 BuildingCommon = HL.Class('BuildingCommon', UIWidgetBase)
 
 local BUILDING_BOTTOM_BG_NAME = "bg_machine_base_%d"
 
 
 
-
 BuildingCommon.nodeId = HL.Field(HL.Number) << -1
-
 
 BuildingCommon.buildingId = HL.Field(HL.String) << ""
 
-
 BuildingCommon.buildingUiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.NodeUIInfo)
-
 
 BuildingCommon.buildingItemId = HL.Field(HL.String) << ""  
 
-
 BuildingCommon.lastState = HL.Field(GEnums.FacBuildingState)
-
 
 BuildingCommon.m_stateGoNodeMap = HL.Field(HL.Table)
 
-
 BuildingCommon.bgRatio = HL.Field(HL.Number) << -1
-
 
 BuildingCommon.m_arg = HL.Field(HL.Table)
 
-
 BuildingCommon.m_social = HL.Field(CS.Beyond.Gameplay.RemoteFactory.ServerChapterInfo.ComponentHandler.Payload_Social)
-
 
 BuildingCommon.m_socialBuildingSource = HL.Field(CS.Beyond.Gameplay.Factory.SocialBuildingSource)
 
-
 BuildingCommon.m_showPower = HL.Field(HL.Boolean) << false
-
 
 BuildingCommon.smartAlertDynamicNode = HL.Field(HL.Any)
 
-
 BuildingCommon.m_smartAlertUpdate = HL.Field(HL.Number) << -1
-
 
 BuildingCommon.m_smartAlertTypeIndex = HL.Field(HL.Number) << 1
 
-
 BuildingCommon.m_smartAlertCheckedInPeriod = HL.Field(HL.Boolean) << false
-
 
 BuildingCommon.smartAlertChangeCachePauseUpdate = HL.Field(HL.Boolean) << false
 
+BuildingCommon.isModeEnvRelated = HL.Field(HL.Boolean) << false
 
+BuildingCommon.currEnvState = HL.Field(HL.Number) << -1
 
 
 
@@ -156,10 +101,6 @@ BuildingCommon._OnFirstTimeInit = HL.Override() << function(self)
     end)
 end
 
-
-
-
-
 BuildingCommon.InitBuildingCommon = HL.Method(HL.Opt(CS.Beyond.Gameplay.RemoteFactory.NodeUIInfo, HL.Table)) <<
 function(self, uiInfo, arg)
     self:_FirstTimeInit()
@@ -184,6 +125,7 @@ function(self, uiInfo, arg)
             while true do
                 coroutine.step()
                 self:_UpdateBuildingState()
+                self:_UpdateCurrentEnvironmentState()
             end
         end)
         if self.m_arg.smartAlertFuncNameList and
@@ -206,6 +148,7 @@ function(self, uiInfo, arg)
 
         self.m_showPower = data.powerConsume > 0
             and self.m_socialBuildingSource ~= SocialBuildingSource.Others 
+            and not GameInstance.remoteFactoryManager.system.core.progressStatus:IsBuildingPowerCostNoNeed(uiInfo.buildingId)
 
         self:_InitBuildingBG(uiInfo.nodeId, data.bgOnPanel)
         self:_InitBuildingOperateButtonState(uiInfo.nodeId)
@@ -225,6 +168,19 @@ function(self, uiInfo, arg)
             self.m_social, self.m_socialBuildingSource = FactoryUtils.getSocialBuildingDetails(data.nodeId)
 
             self:_InitBuildingOperateButtonState(data.nodeId)
+        end
+    end
+    if self.view.earlyAccessNode ~= nil then
+        if Utils.isInBlackbox() or self.m_socialBuildingSource == SocialBuildingSource.Others then
+            self.view.earlyAccessNode.gameObject:SetActiveIfNecessary(false)
+        else
+            local targetBuildingId = self.buildingId
+            if string.isEmpty(targetBuildingId) and data.nodeId ~= nil then
+                local hander = FactoryUtils.getBuildingNodeHandler(data.nodeId)
+                targetBuildingId = hander and hander.templateId or ""
+            end
+            self.view.earlyAccessNode.gameObject:SetActiveIfNecessary(
+                not string.isEmpty(targetBuildingId) and FactoryUtils.isSkipUnlockedBuilding(targetBuildingId))
         end
     end
     self:_InitBuildingDescription()
@@ -271,10 +227,9 @@ function(self, uiInfo, arg)
     })
 
     self:_InitBuildingSwitchAreaKeyHintState()
+
+    self:_UpdateCurrentEnvironmentState()
 end
-
-
-
 
 BuildingCommon.UpdateBasicInfo = HL.Method(HL.Any) << function(self, data)
     local machineName = data.name
@@ -290,8 +245,6 @@ BuildingCommon.UpdateBasicInfo = HL.Method(HL.Any) << function(self, data)
         self.view.powerNodeNeedPower.gameObject:SetActive(not data.needPower)
     end
 end
-
-
 
 BuildingCommon._UpdateSocialInfo = HL.Method() << function(self)
     local source = self.m_socialBuildingSource
@@ -323,9 +276,6 @@ BuildingCommon._UpdateSocialInfo = HL.Method() << function(self)
     end
 end
 
-
-
-
 BuildingCommon._OnToggleBuildingPower = HL.Method(HL.Boolean) << function(self, isOn)
     if isOn == self.buildingUiInfo.isActive then
         return
@@ -344,9 +294,6 @@ BuildingCommon._OnToggleBuildingPower = HL.Method(HL.Boolean) << function(self, 
     end)
 end
 
-
-
-
 BuildingCommon._UpdateBuildingState = HL.Method(HL.Opt(HL.Boolean)) << function(self, forceUpdate)
     local state = FactoryUtils.getBuildingStateType(self.nodeId)
     if not forceUpdate and state == self.lastState then
@@ -360,9 +307,6 @@ BuildingCommon._UpdateBuildingState = HL.Method(HL.Opt(HL.Boolean)) << function(
     self:_RefreshBuildingStateDisplay(state)
     self.lastState = state
 end
-
-
-
 
 BuildingCommon._UpdateSmartAlert = HL.Method(HL.Number) << function(self, detlaTime)
     
@@ -396,9 +340,6 @@ BuildingCommon._UpdateSmartAlert = HL.Method(HL.Number) << function(self, detlaT
     end
     self.m_smartAlertTypeIndex = (self.m_smartAlertTypeIndex % periodCount) + 1
 end
-
-
-
 
 BuildingCommon._RefreshBuildingStateDisplay = HL.Method(GEnums.FacBuildingState) << function(self, state)
     if self.m_stateGoNodeMap[self.lastState] ~= nil then
@@ -445,8 +386,6 @@ BuildingCommon._RefreshBuildingStateDisplay = HL.Method(GEnums.FacBuildingState)
     end
 end
 
-
-
 BuildingCommon._MoveBuilding = HL.Method() << function(self)
     local nodeId = self.nodeId
     if not FactoryUtils.canMoveBuilding(nodeId) then
@@ -458,8 +397,6 @@ BuildingCommon._MoveBuilding = HL.Method() << function(self)
         nodeId = nodeId
     })
 end
-
-
 
 BuildingCommon._DelBuilding = HL.Method() << function(self)
     if not FactoryUtils.canDelBuilding(self.nodeId, true) then
@@ -479,8 +416,6 @@ BuildingCommon._DelBuilding = HL.Method() << function(self)
     end
     FactoryUtils.delBuilding(self.nodeId, nil, false, hintTxt)
 end
-
-
 
 BuildingCommon._ShareBuilding = HL.Method() << function(self)
     if not FriendUtils.canShareBuilding() then
@@ -519,8 +454,6 @@ BuildingCommon._ShareBuilding = HL.Method() << function(self)
     })
 end
 
-
-
 BuildingCommon._ShowBuildingSource = HL.Method() << function(self)
     if self.m_socialBuildingSource ~= SocialBuildingSource.Others then
         return
@@ -551,15 +484,11 @@ BuildingCommon._ShowBuildingSource = HL.Method() << function(self)
     end
 end
 
-
-
 BuildingCommon._ReportBuilding = HL.Method() << function(self)
     FactoryUtils.reportSocialBuilding(self.nodeId, function()
         return not self.m_isDestroyed
     end)
 end
-
-
 
 BuildingCommon._LikeBuilding = HL.Method() << function(self)
     FactoryUtils.likeSocialBuilding(self.nodeId, function()
@@ -572,10 +501,6 @@ BuildingCommon._LikeBuilding = HL.Method() << function(self)
         end)
     end)
 end
-
-
-
-
 
 BuildingCommon._InitBuildingBG = HL.Method(HL.Number, HL.String) << function(self, buildingNodeId, buildingBgId)
     local inPortInfoList, outPortInfoList =  FactoryUtils.getBuildingPortState(buildingNodeId, false)
@@ -618,8 +543,6 @@ BuildingCommon._InitBuildingBG = HL.Method(HL.Number, HL.String) << function(sel
     end
 end
 
-
-
 BuildingCommon._InitBuildingDescription = HL.Method() << function(self)
     if self.config.SHOW_BUILDING_DESCRIPTION then
         self.view.machineDescNode.gameObject:SetActiveIfNecessary(true)
@@ -636,9 +559,6 @@ BuildingCommon._InitBuildingDescription = HL.Method() << function(self)
         self.view.machineDescNode.gameObject:SetActiveIfNecessary(false)
     end
 end
-
-
-
 
 BuildingCommon._InitBuildingOperateButtonState = HL.Method(HL.Number) << function(self, nodeId)
     local isOthersSocialBuilding = self.m_socialBuildingSource == SocialBuildingSource.Others
@@ -664,8 +584,6 @@ BuildingCommon._InitBuildingOperateButtonState = HL.Method(HL.Number) << functio
     self.view.leftButtonDecoLine2.gameObject:SetActive(showDecoLine2)
 end
 
-
-
 BuildingCommon._InitBuildingCustomButtons = HL.Method() << function(self)
     local leftButtonValid, rightButtonValid = false, false
     if self.m_arg.customLeftButtonOnClicked ~= nil then
@@ -687,8 +605,6 @@ BuildingCommon._InitBuildingCustomButtons = HL.Method() << function(self)
     self.view.leftButtonDecoLine.gameObject:SetActive(leftButtonValid and rightButtonValid)
 end
 
-
-
 BuildingCommon._InitBuildingSwitchAreaKeyHintState = HL.Method() << function(self)
     local needShowHint = self.config.SHOW_SWITCH_AREA_KEY_HINT
     if not needShowHint then
@@ -696,8 +612,31 @@ BuildingCommon._InitBuildingSwitchAreaKeyHintState = HL.Method() << function(sel
     end
 end
 
+BuildingCommon._UpdateCurrentEnvironmentState = HL.Method() << function(self)
+    if self.buildingUiInfo == nil or not self.isModeEnvRelated then
+        self.view.envStateController.gameObject:SetActive(false)
+        return
+    end
 
+    local currEnv, envCompValid = FactoryUtils.getBuildingCurrentEnvironment(self.buildingUiInfo.nodeHandler)
+    if not envCompValid then
+        self.view.envStateController.gameObject:SetActive(false)
+        return
+    end
+    if currEnv == self.currEnvState then
+        return
+    end
 
+    local envEnum = Utils.intToEnum(typeof(GEnums.FacEnvGenEnvType), currEnv)
+    self.view.envStateController.gameObject:SetActive(true)
+    self.view.envStateController:SetState(envEnum:ToString())
+
+    if self.m_arg.onEnvChanged then
+        self.m_arg.onEnvChanged(currEnv)
+    end
+
+    self.currEnvState = currEnv
+end
 
 BuildingCommon.Close = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAnim)
     if not skipAnim then
@@ -708,8 +647,6 @@ BuildingCommon.Close = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAnim)
         PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
     end
 end
-
-
 
 BuildingCommon.ClearSmartAlertUpdate = HL.Method() << function(self)
     if self.m_arg.smartAlertFuncNameList and
@@ -722,9 +659,6 @@ BuildingCommon.ClearSmartAlertUpdate = HL.Method() << function(self)
         end
     end
 end
-
-
-
 
 BuildingCommon.ChangeBuildingStateDisplay = HL.Method(GEnums.FacBuildingState) << function(self, state)
     if state == nil then
@@ -745,13 +679,9 @@ BuildingCommon.ChangeBuildingStateDisplay = HL.Method(GEnums.FacBuildingState) <
     self.lastState = state
 end
 
-
-
 BuildingCommon.ShareBuilding = HL.Method() << function(self)
     self:_ShareBuilding()
 end
-
-
 
 BuildingCommon.ShowBuildingSource = HL.Method() << function(self)
     self:_ShowBuildingSource()

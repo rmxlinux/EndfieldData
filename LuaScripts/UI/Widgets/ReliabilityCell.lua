@@ -1,40 +1,14 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 ReliabilityCell = HL.Class('ReliabilityCell', UIWidgetBase)
-
 
 ReliabilityCell.m_charId = HL.Field(HL.String) << ""
 
-
 ReliabilityCell.m_deltaCor = HL.Field(HL.Thread)
-
 
 ReliabilityCell.m_sendTipCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 ReliabilityCell.m_successCor = HL.Field(HL.Thread)
-
-
 
 
 ReliabilityCell._OnFirstTimeInit = HL.Override() << function(self)
@@ -42,16 +16,11 @@ ReliabilityCell._OnFirstTimeInit = HL.Override() << function(self)
     self.view.friendshipRoot.circleCur.fillAmount = 0
 end
 
-
-
-
 ReliabilityCell.InitReliabilityCell = HL.Method(HL.String) << function(self, charId)
     self:_FirstTimeInit()
     self.m_charId = charId
     self:RefreshAll()
 end
-
-
 
 ReliabilityCell.RefreshAll = HL.Method() << function(self)
     self:_RefreshFriendship(true)
@@ -60,14 +29,9 @@ ReliabilityCell.RefreshAll = HL.Method() << function(self)
     self:RefreshSSCharStamina()
 end
 
-
-
 ReliabilityCell.RefreshSSCharStamina = HL.Method() << function(self)
     SpaceshipUtils.updateSSCharStamina(self.view.detailsNode, self.m_charId)
 end
-
-
-
 
 
 ReliabilityCell._StartDeltaCor = HL.Method(HL.Number) << function(self, deltaFav)
@@ -93,8 +57,6 @@ ReliabilityCell._StartDeltaCor = HL.Method(HL.Number) << function(self, deltaFav
     end)
 end
 
-
-
 ReliabilityCell._ClearDeltaCor = HL.Method() << function(self)
     if self.m_deltaCor ~= nil then
         self:_ClearCoroutine(self.m_deltaCor)
@@ -103,17 +65,11 @@ ReliabilityCell._ClearDeltaCor = HL.Method() << function(self)
 end
 
 
-
-
-
 ReliabilityCell.RefreshDeltaFav = HL.Method(HL.Number) << function(self, deltaFav)
     
     
     self:_RefreshFriendship()
 end
-
-
-
 
 ReliabilityCell._RefreshFriendship = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     isInit = isInit or false
@@ -137,9 +93,6 @@ ReliabilityCell._RefreshFriendship = HL.Method(HL.Opt(HL.Boolean)) << function(s
     friendshipRoot.decoTexture2.gameObject:SetActive(level == 2)
     friendshipRoot.decoTexture3.gameObject:SetActive(level == 3)
 end
-
-
-
 
 ReliabilityCell.RefreshTmpFriendship = HL.Method(HL.Number) << function(self, deltaTmpNum)
     if deltaTmpNum <= 0 then
@@ -171,8 +124,6 @@ ReliabilityCell.RefreshTmpFriendship = HL.Method(HL.Number) << function(self, de
     end
 end
 
-
-
 ReliabilityCell._RefreshText = HL.Method() << function(self)
     local characterData = CharInfoUtils.getCharTableData(self.m_charId)
     self.view.textRoot.textName.text = string.format(Language.LUA_SPACESHIP_CHAR_FRIENDSHIP_NAME_FORMAT, characterData.name)
@@ -180,8 +131,6 @@ ReliabilityCell._RefreshText = HL.Method() << function(self)
     self.view.textRoot.textCur.text = string.format("%.0f%%", CharInfoUtils.getCharRelationShowValue(friendshipValue))
     self.view.textRoot.textMax.text = "/100%"
 end
-
-
 
 ReliabilityCell._GetCurFriendshipPercent = HL.Method().Return(HL.Number, HL.Number) << function(self)
     local curLevel = CSPlayerDataUtil.GetFriendshipLevelByChar(self.m_charId)
@@ -208,11 +157,6 @@ ReliabilityCell._GetCurFriendshipPercent = HL.Method().Return(HL.Number, HL.Numb
     return percent, realPercent
 end
 
-
-
-
-
-
 ReliabilityCell.ShowPresentSuccessTips = HL.Method(HL.Boolean, HL.Number, HL.Table) << function(self, levelChanged, deltaFav, selectedItems)
     self:_ClearSuccessCor()
     self:_StartSuccessCor(deltaFav, selectedItems)
@@ -224,11 +168,6 @@ ReliabilityCell.ShowPresentSuccessTips = HL.Method(HL.Boolean, HL.Number, HL.Tab
 end
 
 
-
-
-
-
-
 ReliabilityCell._RefreshSingleSuccessTips = HL.Method(HL.Table, HL.Opt(HL.String, HL.Number)) << function(self, cell, itemId, num)
     local itemData = Tables.itemTable:GetValue(itemId)
     local iconId = itemData.iconId
@@ -238,10 +177,6 @@ ReliabilityCell._RefreshSingleSuccessTips = HL.Method(HL.Table, HL.Opt(HL.String
     cell.textNum.text = string.format("x %d", num)
     cell.gameObject:SetActive(false)
 end
-
-
-
-
 
 
 ReliabilityCell._StartSuccessCor = HL.Method(HL.Number, HL.Table) << function(self, deltaFav, selectedItems)
@@ -272,8 +207,6 @@ ReliabilityCell._StartSuccessCor = HL.Method(HL.Number, HL.Table) << function(se
         end
     end)
 end
-
-
 
 ReliabilityCell._ClearSuccessCor = HL.Method() << function(self)
     if self.m_successCor ~= nil then

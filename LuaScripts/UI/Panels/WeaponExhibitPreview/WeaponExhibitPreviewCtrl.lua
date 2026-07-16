@@ -1,18 +1,7 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.WeaponExhibitPreview
-
-
-
-
-
-
-
-
-
-
 WeaponExhibitPreviewCtrl = HL.Class('WeaponExhibitPreviewCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -25,20 +14,13 @@ WeaponExhibitPreviewCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 WeaponExhibitPreviewCtrl.m_curBreakthroughLv = HL.Field(HL.Number) << 0
-
 
 WeaponExhibitPreviewCtrl.m_weaponExhibitInfo = HL.Field(HL.Table)
 
-
 WeaponExhibitPreviewCtrl.m_requireItemCelLCache = HL.Field(HL.Forward("UIListCache"))
 
-
 WeaponExhibitPreviewCtrl.m_effectCor = HL.Field(HL.Thread)
-
-
-
 
 
 WeaponExhibitPreviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -60,8 +42,6 @@ WeaponExhibitPreviewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
 end
-
-
 
 WeaponExhibitPreviewCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.btnLeftArrow.onClick:AddListener(function()
@@ -91,9 +71,6 @@ WeaponExhibitPreviewCtrl._InitActionEvent = HL.Method() << function(self)
     end)
 end
 
-
-
-
 WeaponExhibitPreviewCtrl._StartPageTransitionTween = HL.Method(HL.Function) << function(self, action)
     self:_ClearCoroutine(self.m_effectCor)
     self.m_effectCor = self:_StartCoroutine(function()
@@ -106,10 +83,6 @@ WeaponExhibitPreviewCtrl._StartPageTransitionTween = HL.Method(HL.Function) << f
         self.view.animation:Play("weapon_view_nextpage_in")
     end)
 end
-
-
-
-
 
 WeaponExhibitPreviewCtrl._PreviewWeaponBreakthrough = HL.Method(HL.Table, HL.Number) << function(self, weaponExhibitInfo, breakthroughLv)
     

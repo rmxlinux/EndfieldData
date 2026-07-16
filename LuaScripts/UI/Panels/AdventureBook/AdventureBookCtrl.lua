@@ -2,42 +2,19 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.AdventureBook
 local PHASE_ID = PhaseId.AdventureBook
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 AdventureBookCtrl = HL.Class('AdventureBookCtrl', uiCtrl.UICtrl)
 
 local DUNGEON_TAB_INDEX = 3
 
-
 AdventureBookCtrl.m_genTabCells = HL.Field(HL.Forward("UIListCache"))
-
 
 AdventureBookCtrl.m_tabInfos = HL.Field(HL.Table)
 
-
 AdventureBookCtrl.m_curTabIndex = HL.Field(HL.Number) << -1
-
 
 AdventureBookCtrl.m_createArg = HL.Field(HL.Table)
 
-
 AdventureBookCtrl.m_haveInitWalletBar = HL.Field(HL.Boolean) << false
-
 
 
 
@@ -47,9 +24,6 @@ AdventureBookCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHANGE_ADVENTURE_BOOK_TAB] = 'ChangeTab',
     [MessageConst.ADVENTURE_BOOK_SELECT_TAB] = '_OnReceiveSelectTab',
 }
-
-
-
 
 
 AdventureBookCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -75,17 +49,12 @@ AdventureBookCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 AdventureBookCtrl.OnAnimationInFinished = HL.Override() << function(self)
     if self.view.walletBarPlaceholder.gameObject.activeSelf then
         self.view.walletBarPlaceholder.gameObject:SetActive(false)
         self.view.walletBarPlaceholder.gameObject:SetActive(true)
     end
 end
-
-
-
 
 AdventureBookCtrl.ChangeTab = HL.Method(HL.Any) << function(self, arg)
     local panelId = PanelId[arg.panelId]
@@ -112,9 +81,6 @@ AdventureBookCtrl.ChangeTab = HL.Method(HL.Any) << function(self, arg)
     end
 end
 
-
-
-
 AdventureBookCtrl._OnReceiveSelectTab = HL.Method(HL.Any) << function(self, arg)
     local tabId = unpack(arg)
     self.m_curTabIndex = self:_GetCurTabIndexByTabId(tabId)
@@ -125,8 +91,6 @@ AdventureBookCtrl._OnReceiveSelectTab = HL.Method(HL.Any) << function(self, arg)
         Notify(MessageConst.ON_CHANGE_ADVENTURE_DUNGEON_TAB, { dungeonTab = arg.dungeonTab })
     end
 end
-
-
 
 AdventureBookCtrl._InitTabs = HL.Method() << function(self)
     self:_InitTabInfos()
@@ -166,8 +130,6 @@ AdventureBookCtrl._InitTabs = HL.Method() << function(self)
         end)
     end)
 end
-
-
 
 AdventureBookCtrl._InitTabInfos = HL.Method() << function(self)
     self.m_tabInfos = {
@@ -247,8 +209,6 @@ AdventureBookCtrl._InitTabInfos = HL.Method() << function(self)
     end
 end
 
-
-
 AdventureBookCtrl._InitTabIndex = HL.Method() << function(self)
     
     for i, v in ipairs(self.m_tabInfos) do
@@ -271,9 +231,6 @@ AdventureBookCtrl._InitTabIndex = HL.Method() << function(self)
     self.m_curTabIndex = 1
 end
 
-
-
-
 AdventureBookCtrl._GetCurTabIndexByPanelId = HL.Method(HL.Number).Return(HL.Number) << function(self, panelId)
     local index = 1
     for _, info in pairs(self.m_tabInfos) do
@@ -285,9 +242,6 @@ AdventureBookCtrl._GetCurTabIndexByPanelId = HL.Method(HL.Number).Return(HL.Numb
     return 1
 end
 
-
-
-
 AdventureBookCtrl._GetCurTabIndexByTabId = HL.Method(HL.String).Return(HL.Number) << function(self, tabId)
     local index = 1
     for _, info in pairs(self.m_tabInfos) do
@@ -298,10 +252,6 @@ AdventureBookCtrl._GetCurTabIndexByTabId = HL.Method(HL.String).Return(HL.Number
     end
     return 1
 end
-
-
-
-
 
 AdventureBookCtrl._OnTabClick = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, luaIndex, isInit)
     if self.m_curTabIndex == luaIndex and not isInit then

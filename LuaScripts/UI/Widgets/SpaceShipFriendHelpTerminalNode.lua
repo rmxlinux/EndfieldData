@@ -5,26 +5,13 @@ local stateByRoomType = {
     [GEnums.SpaceshipRoomType.GrowCabin] = "GrowCabin",
 }
 
-
-
-
-
-
-
-
-
 SpaceShipFriendHelpTerminalNode = HL.Class('SpaceShipFriendHelpTerminalNode', UIWidgetBase)
-
 
 SpaceShipFriendHelpTerminalNode.m_assistCells = HL.Field(HL.Forward('UIListCache'))
 
-
 SpaceShipFriendHelpTerminalNode.m_panel = HL.Field(HL.Userdata)
 
-
 SpaceShipFriendHelpTerminalNode.m_roomId = HL.Field(HL.String) << ""
-
-
 
 
 
@@ -60,8 +47,6 @@ SpaceShipFriendHelpTerminalNode._OnFirstTimeInit = HL.Override() << function(sel
     end)
 end
 
-
-
 SpaceShipFriendHelpTerminalNode.UpdateState = HL.Method() << function(self)
     local beHelpedCreditLeft, beAssistTime = GameInstance.player.spaceship:GetCabinAssistedTime(self.m_roomId)
     local helpLimit = SpaceshipUtils.getRoomHelpLimit(self.m_roomId)
@@ -88,10 +73,6 @@ SpaceShipFriendHelpTerminalNode.UpdateState = HL.Method() << function(self)
 end
 
 
-
-
-
-
 SpaceShipFriendHelpTerminalNode.InitSpaceShipFriendHelpTerminalNode = HL.Method(HL.String, HL.Any) << function(self, roomId, panel)
     self.m_panel = panel
     self.m_roomId = roomId
@@ -106,8 +87,6 @@ SpaceShipFriendHelpTerminalNode.InitSpaceShipFriendHelpTerminalNode = HL.Method(
     self.view.platTxt.text = roomTypeData.name
     self:UpdateState()
 end
-
-
 
 SpaceShipFriendHelpTerminalNode._SetTimeText = HL.Method() << function(self)
     local targetTime = Utils.getNextCommonServerRefreshTime()

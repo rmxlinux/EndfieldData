@@ -2,11 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailBlackBox
 
-
-
-
 MapMarkDetailBlackBoxCtrl = HL.Class('MapMarkDetailBlackBoxCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -16,9 +12,6 @@ MapMarkDetailBlackBoxCtrl = HL.Class('MapMarkDetailBlackBoxCtrl', uiCtrl.UICtrl)
 MapMarkDetailBlackBoxCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 MapMarkDetailBlackBoxCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)

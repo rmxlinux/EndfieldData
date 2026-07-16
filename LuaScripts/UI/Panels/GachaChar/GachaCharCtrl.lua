@@ -12,6 +12,8 @@
 
 
 
+
+
 local GachaCharTLHelper = require_ex("UI/Panels/GachaChar/GachaCharTLHelper")
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
@@ -42,43 +44,7 @@ local LoopAudios = {
 }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 GachaCharCtrl = HL.Class('GachaCharCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -89,56 +55,37 @@ GachaCharCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 GachaCharCtrl.m_args = HL.Field(HL.Table)
-
 
 GachaCharCtrl.m_charCount = HL.Field(HL.Number) << -1
 
-
 GachaCharCtrl.m_curInfo = HL.Field(HL.Table)
-
 
 GachaCharCtrl.m_curIndex = HL.Field(HL.Number) << -1
 
-
 GachaCharCtrl.m_state = HL.Field(HL.Number) << -1
-
 
 GachaCharCtrl.m_startTimelineCor = HL.Field(HL.Thread)
 
-
 GachaCharCtrl.m_curCharObj = HL.Field(CS.UnityEngine.GameObject)
-
 
 GachaCharCtrl.m_curCharTLHelper = HL.Field(HL.Forward('GachaCharTLHelper'))
 
-
 GachaCharCtrl.m_isSkipped = HL.Field(HL.Boolean) << false
-
 
 GachaCharCtrl.m_startTimerId = HL.Field(HL.Number) << -1
 
-
 GachaCharCtrl.m_start6StarNameUITimerId = HL.Field(HL.Number) << -1
-
 
 GachaCharCtrl.m_introduceVoiceTimerId = HL.Field(HL.Number) << -1
 
-
 GachaCharCtrl.m_sixStarUIBgLocalPos = HL.Field(Vector3)
-
 
 GachaCharCtrl.m_isInWaitPlayCharTlTime = HL.Field(HL.Boolean) << false
 
-
 GachaCharCtrl.m_canFastJumpToLoopCurChar = HL.Field(HL.Boolean) << false
 
-
 GachaCharCtrl.m_curTriggerVoiceKey = HL.Field(HL.Number) << 0
-
-
-
 
 
 GachaCharCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
@@ -154,22 +101,16 @@ GachaCharCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.view.skipBtn.gameObject:SetActive(self.m_charCount > 1)
 
     
-    self.view.transitions.gameObject:SetActive(true)
     local xRatio = UIManager.uiCanvasRect.rect.size.x / 1920
     local yRatio = UIManager.uiCanvasRect.rect.size.y / 1080
     self.view.transitionsCellMain.localScale = self.view.transitionsCellMain.localScale * math.max(xRatio, yRatio)
 end
-
-
 
 GachaCharCtrl.OnClose = HL.Override() << function(self)
     if self.m_curCharTLHelper then
         self.m_curCharTLHelper:OnDispose()
     end
 end
-
-
-
 
 
 GachaCharCtrl._PlayCharacterAt = HL.Method(HL.Number) << function(self, index)
@@ -189,8 +130,6 @@ GachaCharCtrl._PlayCharacterAt = HL.Method(HL.Number) << function(self, index)
 end
 
 
-
-
 GachaCharCtrl._PlayStarAnimation = HL.Method() << function(self)
     logger.info("GachaTest: PlayStarAnimation")
 
@@ -202,7 +141,6 @@ GachaCharCtrl._PlayStarAnimation = HL.Method() << function(self)
     local rarity = self.m_curInfo.rarity
 
     local ani = StarAnimations[rarity]
-    self.view.transitions:ResetVideo()
     self.view.starNode:Play(ani)
     self.view.bottomMaskBeforePlayTL.gameObject:SetActive(true)
     self.m_phase.m_roomObjItem.view.sixStarUIBg.gameObject:SetActive(false)
@@ -256,9 +194,6 @@ GachaCharCtrl._PlayStarAnimation = HL.Method() << function(self)
     
     self.m_phase.m_roomObjItem.view.sceneEffect6Rarity.gameObject:SetActive(rarity >= 6)
 end
-
-
-
 
 GachaCharCtrl._PlayTimeline = HL.Method(HL.Boolean) << function(self, jumpToLoop)
     logger.info("GachaTest: playTimeline")
@@ -364,8 +299,6 @@ GachaCharCtrl._PlayTimeline = HL.Method(HL.Boolean) << function(self, jumpToLoop
     end
 end
 
-
-
 GachaCharCtrl._ShowContent = HL.Method() << function(self)
     logger.info("GachaTest: showContent")
 
@@ -448,9 +381,6 @@ GachaCharCtrl._ShowContent = HL.Method() << function(self)
     end
 end
 
-
-
-
 GachaCharCtrl._SetContentVisible = HL.Method(HL.Boolean) << function(self, isShow)
     
     self.view.contentNodeCanvasGroup.alpha = isShow and 1 or 0
@@ -460,8 +390,6 @@ GachaCharCtrl._SetContentVisible = HL.Method(HL.Boolean) << function(self, isSho
         self.view.contentNodeAnimationWrapper:PlayInAnimation()
     end
 end
-
-
 
 GachaCharCtrl._Show6StarNameUI = HL.Method() << function(self)
     local sixStarUIBg = self.m_phase.m_roomObjItem.view.sixStarUIBg
@@ -476,11 +404,6 @@ GachaCharCtrl._Show6StarNameUI = HL.Method() << function(self)
     end)
 end
 
-
-
-
-
-
 GachaCharCtrl._UpdateItemCell = HL.Method(HL.Table, HL.String, HL.Number) << function(self, cell, itemId, count)
     local itemData = Tables.itemTable[itemId]
     cell.itemIcon:InitItemIcon(itemId)
@@ -488,10 +411,7 @@ GachaCharCtrl._UpdateItemCell = HL.Method(HL.Table, HL.String, HL.Number) << fun
     cell.rarityImg.color = UIUtils.getItemRarityColor(itemData.rarity)
 end
 
-
 GachaCharCtrl.m_lastSkipTime = HL.Field(HL.Number) << 0
-
-
 
 GachaCharCtrl._OnClickScreen = HL.Method() << function(self)
     
@@ -510,6 +430,7 @@ GachaCharCtrl._OnClickScreen = HL.Method() << function(self)
         self:_PlayTimeline(true)
         self.m_startTimelineCor = self:_ClearCoroutine(self.m_startTimelineCor)
         local curIndex = self.m_curIndex
+        self.m_introduceVoiceTimerId = self:_ClearTimer(self.m_introduceVoiceTimerId)
         self.m_introduceVoiceTimerId = self:_StartTimer(self.view.config.SKIP_CD + 0.1, function()
             if curIndex == self.m_curIndex then 
                 self.m_curTriggerVoiceKey = Utils.triggerVoice("introduce", self.m_curInfo.charId)
@@ -537,8 +458,6 @@ GachaCharCtrl._OnClickScreen = HL.Method() << function(self)
         end
     end
 end
-
-
 
 
 GachaCharCtrl._GoToNext = HL.Method() << function(self)
@@ -569,8 +488,6 @@ GachaCharCtrl._GoToNext = HL.Method() << function(self)
 end
 
 
-
-
 GachaCharCtrl._ClearCurAsset = HL.Method() << function(self)
     if not self.m_curCharObj then
         return
@@ -588,8 +505,6 @@ GachaCharCtrl._ClearCurAsset = HL.Method() << function(self)
 end
 
 
-
-
 GachaCharCtrl._Skip = HL.Method() << function(self)
     logger.info("GachaCharCtrl._Skip")
 
@@ -602,8 +517,6 @@ GachaCharCtrl._Skip = HL.Method() << function(self)
         self:_GoToNext()
     end
 end
-
-
 
 GachaCharCtrl._ShowResult = HL.Method() << function(self)
     logger.info("GachaCharCtrl._ShowResult")
@@ -635,8 +548,6 @@ GachaCharCtrl._ShowResult = HL.Method() << function(self)
         self:_ShowRewardsAndExit()
     end
 end
-
-
 
 GachaCharCtrl._ShowRewardsAndExit = HL.Method() << function(self)
     logger.info("GachaCharCtrl._ShowRewardsAndExit")
@@ -730,15 +641,22 @@ end
 
 
 
-
-
 GachaCharCtrl._Exit = HL.Method() << function(self)
     logger.info("GachaCharCtrl._Exit")
 
     local onComplete = self.m_args.onComplete
-    PhaseManager:PopPhase(PhaseId.GachaChar)
-    if onComplete then
-        onComplete()
+    if self.m_args.seamlessExit then
+        
+        
+        if onComplete then
+            onComplete()
+        end
+        PhaseManager:ExitPhaseFast(PhaseId.GachaChar)
+    else
+        PhaseManager:PopPhase(PhaseId.GachaChar)
+        if onComplete then
+            onComplete()
+        end
     end
 end
 

@@ -3,85 +3,7 @@ local QuickBarItemType = FacConst.QuickBarItemType
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacTopView
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 FacTopViewCtrl = HL.Class('FacTopViewCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -98,29 +20,31 @@ FacTopViewCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.TOGGLE_HIDE_FAC_TOP_VIEW_RIGHT_SIDE_UI] = 'ToggleHideFacTopViewRightSideUi',
 
     [MessageConst.ON_QUICK_BAR_CHANGED] = 'OnQuickBarChanged',
-}
 
+    [MessageConst.ON_FAC_SIMPLE_FIGURE_MODE_CHANGE] = 'OnFacSimpleFigureModeChange',
+
+    [MessageConst.FAC_TOPVIEW_SHOW_MULTI_TARGET_MENU] = '_ShowMultiTargetMenu',
+    [MessageConst.FAC_TOPVIEW_HIDE_MULTI_TARGET_MENU] = '_HideMultiTargetMenu',
+}
 
 
 FacTopViewCtrl.m_onDrag = HL.Field(HL.Function)
 
-
 FacTopViewCtrl.m_typeCells = HL.Field(HL.Forward('UIListCache'))
-
 
 FacTopViewCtrl.m_getItemCell = HL.Field(HL.Function)
 
-
 FacTopViewCtrl.m_isCollapsed = HL.Field(HL.Boolean) << false
-
 
 FacTopViewCtrl.m_escExitBindingId = HL.Field(HL.Number) << -1
 
-
 FacTopViewCtrl.m_keyHintCells = HL.Field(HL.Forward('UIListCache'))
 
+FacTopViewCtrl.m_multiTargetCells = HL.Field(HL.Forward('UIListCache'))
 
+FacTopViewCtrl.m_menuHoverEffect = HL.Field(HL.Table)
 
+FacTopViewCtrl.m_multiTargetMenuGridPos = HL.Field(HL.Any)
 
 
 
@@ -150,6 +74,17 @@ FacTopViewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
     self.view.pipeNode.item:OpenLongPressTips()
 
+    if self.view.hidePipeToggle then
+        self.view.hidePipeToggle.toggle.onValueChanged:AddListener(function(isOn)
+            local fac = LuaSystemManager.factory
+            if isOn then
+                fac:SetSimpleFigureMode(FacConst.SIMPLE_FIGURE_MODE.SimplePipeFigure)
+            elseif fac.simpleFigureMode == FacConst.SIMPLE_FIGURE_MODE.SimplePipeFigure then
+                fac:SetSimpleFigureMode(FacConst.SIMPLE_FIGURE_MODE.None)
+            end
+        end)
+    end
+
     self.m_getItemCell = UIUtils.genCachedCellFunction(self.view.scrollList)
     self.view.scrollList.onUpdateCell:AddListener(function(obj, csIndex)
         self:_OnUpdateCell(self.m_getItemCell(obj), LuaIndex(csIndex))
@@ -164,14 +99,14 @@ FacTopViewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end, self.view.main.groupId)
     if DeviceInfo.usingKeyboard then
         self:BindInputPlayerAction("fac_open_devices_list", function()
-            Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT)
+            Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, {showLastType = true})
         end, self.view.main.groupId)
         self:BindInputPlayerAction("fac_open_blueprint", function()
             PhaseManager:OpenPhase(PhaseId.FacBlueprint)
         end, self.view.main.groupId)
         self.m_escExitBindingId = self:BindInputPlayerAction("fac_exit_top_view_mode_pc_esc", function()
             
-            if Utils.getCommonSettingValueBool("fac_top_view_esc_exit") and InputManagerInst:IsBindingEnabled(self.view.topViewToggle.toggleBindingId) then
+            if GameSettingUtils.GetSettingValueBool(GameSettingConst.SETTING_ID_FAC_TOP_VIEW_ESC_EXIT) and InputManagerInst:IsBindingEnabled(self.view.topViewToggle.toggleBindingId) then
                 Notify(MessageConst.FAC_TOGGLE_TOP_VIEW, false)
             end
         end, self.view.main.groupId)
@@ -219,9 +154,20 @@ FacTopViewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitFilters()
     self:_InitKeyHints()
     self.view.facQuickBarClearDropZone:InitFacQuickBarClearDropZone()
+
+    self.m_multiTargetCells = self.m_multiTargetCells or UIUtils.genCellCache(self.view.multiTargetMenuNode.btnCell)
+    self.view.multiTargetMenuNode.content.onTriggerAutoClose:AddListener(function()
+        self:_HideMultiTargetMenu()
+    end)
+    self.view.multiTargetMenuNode.gameObject:SetActive(false)
+
+    if not self.m_menuHoverEffect then
+        local prefab = self.loader:LoadGameObject(FacConst.BUILDING_INTERACT_HOVER_INDICATOR_PATH)
+        self.m_menuHoverEffect = Utils.wrapLuaNode(self:_CreateWorldGameObject(prefab))
+        self.m_menuHoverEffect.gameObject.name = "MenuHoverEffect"
+        self.m_menuHoverEffect.gameObject:SetActive(false)
+    end
 end
-
-
 
 FacTopViewCtrl.OnShow = HL.Override() << function(self)
     self:_AddRegister()
@@ -241,19 +187,34 @@ FacTopViewCtrl.OnShow = HL.Override() << function(self)
         self.view.controllerMouse.gameObject:SetActive(false)
     end
     self.view.facQuickBarClearDropZone.gameObject:SetActive(false)
+    self:_SyncHidePipeToggleFromFacSystem()
 end
 
+FacTopViewCtrl.OnFacSimpleFigureModeChange = HL.Method(HL.Opt(HL.Number)) << function(self, mode)
+    self:_SyncHidePipeToggleFromFacSystem()
+end
 
+FacTopViewCtrl._SyncHidePipeToggleFromFacSystem = HL.Method() << function(self)
+    if not self.view.hidePipeToggle then
+        return
+    end
+    local show = FactoryUtils.canShowPipe()
+    self.view.hidePipeToggle.gameObject:SetActive(show)
+    if not show then
+        return
+    end
+    local on = LuaSystemManager.factory.simpleFigureMode == FacConst.SIMPLE_FIGURE_MODE.SimplePipeFigure
+    self.view.hidePipeToggle.toggle:SetIsOnWithoutNotify(on)
+end
 
 FacTopViewCtrl.OnHide = HL.Override() << function(self)
     self:_ClearRegister()
+    self:_HideMultiTargetMenu()
     InputManagerInst:SetCustomControllerMouse(nil, nil)
     if not self.m_isCollapsed then
         self:_ToggleContent(false, true)
     end
 end
-
-
 
 FacTopViewCtrl.OnClose = HL.Override() << function(self)
     self:_ClearRegister()
@@ -263,33 +224,34 @@ FacTopViewCtrl.OnClose = HL.Override() << function(self)
     self.m_clearScreenKeyForControllerExpandBuildNode = UIManager:RecoverScreen(self.m_clearScreenKeyForControllerExpandBuildNode)
 end
 
-
-
 FacTopViewCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     if not self.m_typeCells and
+        not self.m_multiTargetCells and
         not self.m_keyHintCells and
         not self.m_filterCells and
-        not self.m_controllerMouseHoverHintCells then
+        not self.m_controllerMouseHoverHintCells and
+        not self.m_menuHoverEffect then
         return nil
     end
 
     local state = {
         typeCells = self.m_typeCells,
+        multiTargetCells = self.m_multiTargetCells,
         keyHintCells = self.m_keyHintCells,
         filterCells = self.m_filterCells,
         controllerMouseHoverHintCells = self.m_controllerMouseHoverHintCells,
+        menuHoverEffect = self.m_menuHoverEffect,
     }
 
     self.m_typeCells = nil
+    self.m_multiTargetCells = nil
     self.m_keyHintCells = nil
     self.m_filterCells = nil
     self.m_controllerMouseHoverHintCells = nil
+    self.m_menuHoverEffect = nil
 
     return state
 end
-
-
-
 
 FacTopViewCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function(self, state)
     if not state then
@@ -297,13 +259,12 @@ FacTopViewCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << fun
     end
 
     self.m_typeCells = state.typeCells
+    self.m_multiTargetCells = state.multiTargetCells
     self.m_keyHintCells = state.keyHintCells
     self.m_filterCells = state.filterCells
     self.m_controllerMouseHoverHintCells = state.controllerMouseHoverHintCells
+    self.m_menuHoverEffect = state.menuHoverEffect
 end
-
-
-
 
 FacTopViewCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     if not DeviceInfo.usingTouch then
@@ -311,8 +272,6 @@ FacTopViewCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, 
         self.view.keyHintNode.gameObject:SetActive(active)
     end
 end
-
-
 
 FacTopViewCtrl.OnQuickBarChanged = HL.Method() << function(self)
     if self:IsHide() then
@@ -323,10 +282,7 @@ FacTopViewCtrl.OnQuickBarChanged = HL.Method() << function(self)
 end
 
 
-
 FacTopViewCtrl.m_controllerNaviInfo = HL.Field(HL.Table)
-
-
 
 FacTopViewCtrl._RecordControllerNaviInfo = HL.Method() << function(self)
     self.m_controllerNaviInfo = nil
@@ -350,9 +306,6 @@ FacTopViewCtrl._RecordControllerNaviInfo = HL.Method() << function(self)
     end
 end
 
-
-
-
 FacTopViewCtrl._TryRecoverNaviInfo = HL.Method(HL.Boolean) << function(self, isRecover)
     if not DeviceInfo.usingController then
         return
@@ -368,11 +321,9 @@ FacTopViewCtrl._TryRecoverNaviInfo = HL.Method(HL.Boolean) << function(self, isR
     self:_RefreshTypes()
     
     self.view.scrollList:ScrollToIndex(CSIndex(self.m_controllerNaviInfo.itemIndex), true)
-    InputManagerInst.controllerNaviManager:SetTarget(self.m_getItemCell(self.m_controllerNaviInfo.itemIndex).button)
+    self:SetNaviTarget(self.m_getItemCell(self.m_controllerNaviInfo.itemIndex).button)
     self.m_controllerNaviInfo = nil
 end
-
-
 
 
 
@@ -388,9 +339,6 @@ FacTopViewCtrl.OnToggleFacTopView = HL.StaticMethod(HL.Boolean) << function(acti
         end
     end
 end
-
-
-
 
 FacTopViewCtrl._OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, active)
     if active then
@@ -410,17 +358,11 @@ FacTopViewCtrl._OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, act
     self:_ResetFilters()
 end
 
-
-
-
 FacTopViewCtrl.OnFacDestroyModeChange = HL.Method(HL.Boolean) << function(self, inDestroyMode)
     self.view.main.gameObject:SetActive(not inDestroyMode)
     self:PlayAnimationIn()
     self:_TryRecoverNaviInfo(not inDestroyMode)
 end
-
-
-
 
 FacTopViewCtrl.OnBuildModeChange = HL.Method(HL.Number) << function(self, mode)
     local inBuild = mode ~= FacConst.FAC_BUILD_MODE.Normal
@@ -435,18 +377,12 @@ FacTopViewCtrl.OnBuildModeChange = HL.Method(HL.Number) << function(self, mode)
     self:_TryRecoverNaviInfo(not inBuild)
 end
 
-
-
-
 FacTopViewCtrl.RecoverControllerMouseOnChangeDevice = HL.Method(Vector3) << function(self, mouseWorldPos)
     if not DeviceInfo.usingController then
         return
     end
     self:_SetControllerMouseWorldPos(mouseWorldPos)
 end
-
-
-
 
 FacTopViewCtrl._SetControllerMouseWorldPos = HL.Method(Vector3) << function(self, mouseWorldPos)
     local curScreenWorldRect = CSFactoryUtil.GetCurScreenWorldRect(FacConst.FAC_TOP_VIEW_CONTROLLER_MOUSE_PADDING)
@@ -461,10 +397,8 @@ FacTopViewCtrl._SetControllerMouseWorldPos = HL.Method(Vector3) << function(self
     self.view.controllerMouse.anchoredPosition = newPos
 end
 
-
-
-
 FacTopViewCtrl.BeforeEnterBuildMode = HL.Method(HL.Boolean) << function(self, skipMainHudAnim)
+    self:_HideMultiTargetMenu()
     self:_RecordControllerNaviInfo()
     self:PlayAnimationOutWithCallback()
 
@@ -473,25 +407,18 @@ FacTopViewCtrl.BeforeEnterBuildMode = HL.Method(HL.Boolean) << function(self, sk
     self.view.controllerMouseHoverHint.gameObject:SetActive(false)
 end
 
-
-
 FacTopViewCtrl.BeforeEnterDestroyMode = HL.Method() << function(self)
+    self:_HideMultiTargetMenu()
     self:_RecordControllerNaviInfo()
     self:PlayAnimationOutWithCallback()
 end
-
-
-
 
 FacTopViewCtrl.OnToggleQuickBarController = HL.Method(HL.Boolean) << function(self, active)
     self:ChangePanelCfg("virtualMouseMode", active and Types.EPanelMouseMode.ForceHide or Types.EPanelMouseMode.NeedShow)
 end
 
-
-
-
 FacTopViewCtrl.OnItemCountChanged = HL.Method(HL.Table) << function(self, args)
-    if self:IsHide() then
+    if self:IsHide() or not self.m_typeInfos then
         return
     end
     local itemId2DiffCount = unpack(args)
@@ -511,10 +438,7 @@ end
 
 
 
-
 FacTopViewCtrl.m_hideKey = HL.Field(HL.Number) << -1
-
-
 
 FacTopViewCtrl._ClearScreen = HL.Method() << function(self)
     if self.m_hideKey ~= -1 then
@@ -527,6 +451,8 @@ FacTopViewCtrl._ClearScreen = HL.Method() << function(self)
         PanelId.LevelCamera,
         PanelId.FacMiniPowerHud,
         PanelId.FacHudBottomMask,
+        PanelId.FacPowerPoleTravelHint,
+        PanelId.FacPowerPoleAutoConnectHint,
         PanelId.FacBuildMode,
         PanelId.FacDestroyMode,
         PanelId.FacBuildingInteract,
@@ -550,13 +476,9 @@ FacTopViewCtrl._ClearScreen = HL.Method() << function(self)
     self.m_hideKey = UIManager:ClearScreen(exceptedPanels)
 end
 
-
-
 FacTopViewCtrl._RecoverScreen = HL.Method() << function(self)
     self.m_hideKey = UIManager:RecoverScreen(self.m_hideKey)
 end
-
-
 
 FacTopViewCtrl._AddRegister = HL.Method() << function(self)
     local touchPanel = UIManager.commonTouchPanel
@@ -567,16 +489,11 @@ FacTopViewCtrl._AddRegister = HL.Method() << function(self)
     end)
 end
 
-
-
 FacTopViewCtrl._ClearRegister = HL.Method() << function(self)
     local touchPanel = UIManager.commonTouchPanel
     touchPanel.onDrag:RemoveListener(self.m_onDrag)
     self.m_updateKey = LuaUpdate:Remove(self.m_updateKey)
 end
-
-
-
 
 FacTopViewCtrl._OnDrag = HL.Method(HL.Userdata) << function(self, eventData)
     if InputManagerInst:GetKey(CS.Beyond.Input.KeyboardKeyCode.Mouse1) then
@@ -600,15 +517,9 @@ FacTopViewCtrl._OnDrag = HL.Method(HL.Userdata) << function(self, eventData)
     self:_Move(eventData.delta * -self.view.config.MOVE_SPD_ON_DRAG)
 end
 
-
-
-
 FacTopViewCtrl._Move = HL.Method(Vector2) << function(self, dir)
     LuaSystemManager.factory:MoveTopViewCamTarget(dir)
 end
-
-
-
 
 FacTopViewCtrl._MoveMouse = HL.Method(Vector2) << function(self, dir)
     
@@ -624,10 +535,7 @@ FacTopViewCtrl._MoveMouse = HL.Method(Vector2) << function(self, dir)
     InputManager.SetMousePos(targetScreenPos:XY())
 end
 
-
 FacTopViewCtrl.m_updateKey = HL.Field(HL.Number) << -1
-
-
 
 FacTopViewCtrl._TailUpdate = HL.Method() << function(self)
     
@@ -635,6 +543,7 @@ FacTopViewCtrl._TailUpdate = HL.Method() << function(self)
     if IsNull(self.view.transform) then
         return
     end
+    if not CS.UnityEngine.Application.isFocused then return end
 
     if DeviceInfo.usingKeyboard then
         self:_UpdateMouseHintStates()
@@ -666,13 +575,9 @@ end
 
 
 
-
 FacTopViewCtrl.m_typeInfos = HL.Field(HL.Table)
 
-
 FacTopViewCtrl.m_selectedTypeIndex = HL.Field(HL.Number) << 1
-
-
 
 FacTopViewCtrl._InitInfos = HL.Method() << function(self)
     local typeInfos = {}
@@ -690,7 +595,7 @@ FacTopViewCtrl._InitInfos = HL.Method() << function(self)
         local typeId = data.quickBarType
         if not string.isEmpty(typeId) then
             local itemData = FactoryUtils.getBuildingItemData(id)
-            if inventory:IsItemFound(itemData.id) then
+            if inventory:IsItemFound(itemData.id) and not FactoryUtils.isSkipBuildingInvalidInDomain(id, curDomainId) then
                 local tInfo = tInfosDic[typeId]
                 if not tInfo then
                     local typeData = Tables.factoryQuickBarTypeTable:GetValue(typeId)
@@ -725,8 +630,6 @@ FacTopViewCtrl._InitInfos = HL.Method() << function(self)
     self.m_typeInfos = typeInfos
 end
 
-
-
 FacTopViewCtrl._GenCustomTypeInfo = HL.Method().Return(HL.Table) << function(self)
     local fcType = GEnums.FCQuickBarType.Inner
     local curChapterInfo = GameInstance.player.remoteFactory.core:GetCurrentChapterInfo()
@@ -758,10 +661,9 @@ FacTopViewCtrl._GenCustomTypeInfo = HL.Method().Return(HL.Table) << function(sel
 end
 
 
-
-
 FacTopViewCtrl._GetLogisticInfos = HL.Method().Return(HL.Opt(HL.Table)) << function(self)
     local typeData = Tables.factoryQuickBarTypeTable:GetValue("logistic")
+    local curDomainId = FactoryUtils.getCurAndAutoTransferBlackBoxToDomainId()
 
     local typeInfo = {
         data = typeData,
@@ -769,36 +671,32 @@ FacTopViewCtrl._GetLogisticInfos = HL.Method().Return(HL.Opt(HL.Table)) << funct
         allItems = {},
         showingItems = {},
     }
-    if GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedBelt then
-        for id, data in pairs(Tables.factoryGridBeltTable) do
-            if id ~= FacConst.BELT_ID then
-                local item = {
-                    id = id,
-                    itemId = data.beltData.itemId,
-                    type = QuickBarItemType.Belt,
-                    data = data.beltData,
-                    conveySpeed = 1000000 / data.beltData.msPerRound,
-                }
-                table.insert(typeInfo.allItems, item)
-            end
-        end
-
-        if GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedValve then
-            for id, data in pairs(Tables.FactoryBoxValveTable) do
-                local item = {
-                    id = id,
-                    itemId = data.gridUnitData.itemId,
-                    type = QuickBarItemType.Logistic,
-                    data = data.gridUnitData,
-                    conveySpeed = 1000000 / data.gridUnitData.msPerRound,
-                }
-                table.insert(typeInfo.allItems, item)
-            end
+    for id, data in pairs(Tables.factoryGridBeltTable) do
+        if id ~= FacConst.BELT_ID and FactoryUtils.isLogisticUnlocked(id, curDomainId) then
+            local item = {
+                id = id,
+                itemId = data.beltData.itemId,
+                type = QuickBarItemType.Belt,
+                data = data.beltData,
+                conveySpeed = 1000000 / data.beltData.msPerRound,
+            }
+            table.insert(typeInfo.allItems, item)
         end
     end
-
-    if GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedBridge then
-        for id, data in pairs(Tables.factoryGridConnecterTable) do
+    for id, data in pairs(Tables.FactoryBoxValveTable) do
+        if FactoryUtils.isLogisticUnlocked(id, curDomainId) then
+            local item = {
+                id = id,
+                itemId = data.gridUnitData.itemId,
+                type = QuickBarItemType.Logistic,
+                data = data.gridUnitData,
+                conveySpeed = 1000000 / data.gridUnitData.msPerRound,
+            }
+            table.insert(typeInfo.allItems, item)
+        end
+    end
+    for id, data in pairs(Tables.factoryGridConnecterTable) do
+        if FactoryUtils.isLogisticUnlocked(id, curDomainId) then
             local item = {
                 id = id,
                 itemId = data.gridUnitData.itemId,
@@ -810,16 +708,7 @@ FacTopViewCtrl._GetLogisticInfos = HL.Method().Return(HL.Opt(HL.Table)) << funct
         end
     end
     for id, data in pairs(Tables.factoryGridRouterTable) do
-        local unlockType = FacConst.LOGISTIC_UNLOCK_SYSTEM_MAP[id]
-        local unlocked = false
-        if unlockType == GEnums.UnlockSystemType.FacMerger then
-            unlocked = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedConverger
-        elseif unlockType == GEnums.UnlockSystemType.FacSplitter then
-            unlocked = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedSplitter
-        elseif unlockType == GEnums.UnlockSystemType.FacValve then
-            unlocked = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedValve
-        end
-        if unlocked then
+        if FactoryUtils.isLogisticUnlocked(id, curDomainId) then
             local item = {
                 id = id,
                 itemId = data.gridUnitData.itemId,
@@ -833,36 +722,34 @@ FacTopViewCtrl._GetLogisticInfos = HL.Method().Return(HL.Opt(HL.Table)) << funct
 
     
     if FactoryUtils.isDomainSupportPipe() then
-        if GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipe then
-            for id, data in pairs(Tables.factoryLiquidPipeTable) do
-                if id ~= FacConst.PIPE_ID then
-                    local item = {
-                        id = id,
-                        itemId = data.pipeData.itemId,
-                        type = QuickBarItemType.Belt,
-                        data = data.pipeData,
-                        conveySpeed = 1000000 / data.pipeData.msPerRound,
-                        recommendDomains = FactoryUtils.GetAllowPipeDoaminList(),
-                    }
-                    table.insert(typeInfo.allItems, item)
-                end
-            end
-            if GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipeValve then
-                for id, data in pairs(Tables.factoryFluidValveTable) do
-                    local item = {
-                        id = id,
-                        itemId = data.liquidUnitData.itemId,
-                        type = QuickBarItemType.Logistic,
-                        data = data.liquidUnitData,
-                        conveySpeed = 1000000 / data.liquidUnitData.msPerRound,
-                        recommendDomains = FactoryUtils.GetAllowPipeDoaminList(),
-                    }
-                    table.insert(typeInfo.allItems, item)
-                end
+        for id, data in pairs(Tables.factoryLiquidPipeTable) do
+            if id ~= FacConst.PIPE_ID and FactoryUtils.isLogisticUnlocked(id, curDomainId) then
+                local item = {
+                    id = id,
+                    itemId = data.pipeData.itemId,
+                    type = QuickBarItemType.Belt,
+                    data = data.pipeData,
+                    conveySpeed = 1000000 / data.pipeData.msPerRound,
+                    recommendDomains = FactoryUtils.GetAllowPipeDoaminList(),
+                }
+                table.insert(typeInfo.allItems, item)
             end
         end
-        if GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipeConnector then
-            for id, data in pairs(Tables.factoryLiquidConnectorTable) do
+        for id, data in pairs(Tables.factoryFluidValveTable) do
+            if FactoryUtils.isLogisticUnlocked(id, curDomainId) then
+                local item = {
+                    id = id,
+                    itemId = data.liquidUnitData.itemId,
+                    type = QuickBarItemType.Logistic,
+                    data = data.liquidUnitData,
+                    conveySpeed = 1000000 / data.liquidUnitData.msPerRound,
+                    recommendDomains = FactoryUtils.GetAllowPipeDoaminList(),
+                }
+                table.insert(typeInfo.allItems, item)
+            end
+        end
+        for id, data in pairs(Tables.factoryLiquidConnectorTable) do
+            if FactoryUtils.isLogisticUnlocked(id, curDomainId) then
                 local item = {
                     id = id,
                     liquidUnitId = id,
@@ -876,16 +763,7 @@ FacTopViewCtrl._GetLogisticInfos = HL.Method().Return(HL.Opt(HL.Table)) << funct
             end
         end
         for id, data in pairs(Tables.factoryLiquidRouterTable) do
-            local unlockType = FacConst.LOGISTIC_UNLOCK_SYSTEM_MAP[id]
-            local unlocked = false
-            if unlockType == GEnums.UnlockSystemType.FacPipeConverger then
-                unlocked = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipeConverger
-            elseif unlockType == GEnums.UnlockSystemType.FacPipeSplitter then
-                unlocked = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipeSplitter
-            elseif unlockType == GEnums.UnlockSystemType.FacPipeValve then
-                unlocked = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedPipeValve
-            end
-            if unlocked then
+            if FactoryUtils.isLogisticUnlocked(id, curDomainId) then
                 local item = {
                     id = id,
                     liquidUnitId = id,
@@ -899,6 +777,15 @@ FacTopViewCtrl._GetLogisticInfos = HL.Method().Return(HL.Opt(HL.Table)) << funct
             end
         end
     end
+
+    
+    local filteredItems = {}
+    for _, v in ipairs(typeInfo.allItems) do
+        if not FactoryUtils.isSkipBuildingInvalidInDomain(v.id, curDomainId) then
+            table.insert(filteredItems, v)
+        end
+    end
+    typeInfo.allItems = filteredItems
 
     local hasItem
     for _, v in ipairs(typeInfo.allItems) do
@@ -913,8 +800,6 @@ FacTopViewCtrl._GetLogisticInfos = HL.Method().Return(HL.Opt(HL.Table)) << funct
     end
     return typeInfo
 end
-
-
 
 FacTopViewCtrl._RefreshTypes = HL.Method() << function(self)
     self:_InitInfos()
@@ -932,10 +817,6 @@ FacTopViewCtrl._RefreshTypes = HL.Method() << function(self)
     self:_OnClickType(self.m_selectedTypeIndex)
 end
 
-
-
-
-
 FacTopViewCtrl._UpdateTypeCell = HL.Method(HL.Table, HL.Number) << function(self, cell, tabIndex)
     local info = self.m_typeInfos[tabIndex]
     cell.icon:LoadSprite(info.data.icon)
@@ -949,15 +830,11 @@ FacTopViewCtrl._UpdateTypeCell = HL.Method(HL.Table, HL.Number) << function(self
         if isOn then
             self:_OnClickType(tabIndex)
             if DeviceInfo.usingController then
-                InputManagerInst.controllerNaviManager:SetTarget(self.m_getItemCell(1).button)
+                self:SetNaviTarget(self.m_getItemCell(1).button)
             end
         end
     end)
 end
-
-
-
-
 
 
 FacTopViewCtrl._OnClickType = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, index, noAutoExpand)
@@ -981,9 +858,6 @@ FacTopViewCtrl._OnClickType = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << functi
     self.view.scrollListRightArrow.transform.localScale = index < (countInCache + 1) and Vector3.one or Vector3.zero
 end
 
-
-
-
 FacTopViewCtrl._OnOverScrollList = HL.Method(HL.Boolean) << function(self, isNext)
     if not UIUtils.isScreenPosInRectTransform(InputManager.mousePosition, self.view.scrollList.transform, self.uiCamera) then
         return
@@ -1004,19 +878,12 @@ FacTopViewCtrl._OnOverScrollList = HL.Method(HL.Boolean) << function(self, isNex
     GameInstance.mobileMotionManager:PostEventCommonShort()
 end
 
-
-
-
 FacTopViewCtrl._RefreshItemList = HL.Method(HL.Opt(HL.Boolean)) << function(self, toTop)
     local tInfo = self.m_typeInfos[self.m_selectedTypeIndex]
     local count = tInfo and #tInfo.showingItems or 0
     self.view.scrollList:UpdateCount(count, toTop == true)
     self.view.scrollListEmptyNode.gameObject:SetActive(count == 0)
 end
-
-
-
-
 
 FacTopViewCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, cell, index)
     local tInfo = self.m_typeInfos[self.m_selectedTypeIndex]
@@ -1079,8 +946,24 @@ FacTopViewCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, 
         end
     end)
 
+    local isSkipBuilding = FactoryUtils.isSkipUnlockedBuildingByItemId(itemId)
     local hasCraft = Tables.FactoryItemAsHubCraftOutcomeTable:TryGetValue(itemId)
-    if hasCraft then
+    if isSkipBuilding then
+        
+        if DeviceInfo.usingController then
+            InputManagerInst:CreateBindingByActionId("fac_quick_bar_controller_craft", function()
+                if Utils.getItemCount(itemId) == 0 then
+                    Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_SKIP_BUILDING_CANNOT_CRAFT_IN_DOMAIN)
+                end
+            end, cell.button.hoverBindingGroupId)
+        else
+            cell.button.onDoubleClick:AddListener(function()
+                if Utils.getItemCount(itemId) == 0 then
+                    Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_SKIP_BUILDING_CANNOT_CRAFT_IN_DOMAIN)
+                end
+            end)
+        end
+    elseif hasCraft then
         if DeviceInfo.usingController then
             InputManagerInst:CreateBindingByActionId("fac_quick_bar_controller_craft", function()
                 Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { selectedId = itemId })
@@ -1095,17 +978,17 @@ FacTopViewCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, 
     elseif FactoryUtils.isDecoBuildingItem(itemId) then
         InputManagerInst:CreateBindingByActionId("fac_quick_bar_controller_craft", function()
             if Utils.getItemCount(itemId) == 0 then
-                Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_DECO_BUILDING_ZERO_NO_CRAFT)
+                Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { selectedId = itemId })
             end
         end, cell.button.hoverBindingGroupId)
         cell.button.onDoubleClick:AddListener(function()
             if Utils.getItemCount(itemId) == 0 then
-                Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_DECO_BUILDING_ZERO_NO_CRAFT)
+                Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { selectedId = itemId })
             end
         end)
     end
     if DeviceInfo.usingController then
-        cell.controllerKeyHint:SetActionId((hasCraft and count == 0) and "fac_quick_bar_controller_craft" or "fac_quick_bar_controller_build_top_view")
+        cell.controllerKeyHint:SetActionId((not isSkipBuilding and hasCraft and count == 0) and "fac_quick_bar_controller_craft" or "fac_quick_bar_controller_build_top_view")
         cell.controllerKeyHint.gameObject:SetActive(cell.button.isNaviTarget)
     end
 
@@ -1147,11 +1030,6 @@ FacTopViewCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, 
     end)
 end
 
-
-
-
-
-
 FacTopViewCtrl._OnQuickBarBeginDrag = HL.Method(HL.Number, HL.Opt(HL.Userdata, HL.Forward('UIDropHelper'))) << function(self, index, enterObj, enterDropHelper)
     self.view.scrollList:UpdateShowingCells(function(csIndex, obj)
         local cell = self.m_getItemCell(obj)
@@ -1160,20 +1038,11 @@ FacTopViewCtrl._OnQuickBarBeginDrag = HL.Method(HL.Number, HL.Opt(HL.Userdata, H
     self.view.clearDropZoneRoot.gameObject:SetActive(false)
 end
 
-
-
-
 FacTopViewCtrl._OnQuickBarDrag = HL.Method(CS.UnityEngine.EventSystems.PointerEventData) << function(self, eventData)
     local mousePos = eventData.position
     local inScrollRect = CS.Beyond.UI.UIUtils.IsScreenPosInRectTransform(mousePos, self.view.scrollList.transform, self.uiCamera)
     self.view.clearDropZoneRoot.gameObject:SetActive(not inScrollRect)
 end
-
-
-
-
-
-
 
 FacTopViewCtrl._OnQuickBarEndDrag = HL.Method(HL.Number, HL.Opt(HL.Userdata, HL.Forward('UIDropHelper'), HL.Any)) << function(self, index, enterObj, enterDrop, eventData)
     self.view.scrollList:UpdateShowingCells(function(csIndex, obj)
@@ -1192,11 +1061,6 @@ FacTopViewCtrl._OnQuickBarEndDrag = HL.Method(HL.Number, HL.Opt(HL.Userdata, HL.
     
     self:_OnClickItemCell(index, eventData.position)
 end
-
-
-
-
-
 
 FacTopViewCtrl._ToggleContent = HL.Method(HL.Boolean, HL.Opt(HL.Boolean, HL.Boolean)) << function(self, active, fastMode, isToBuildOrDesMode)
     self.m_isCollapsed = not active
@@ -1218,6 +1082,7 @@ FacTopViewCtrl._ToggleContent = HL.Method(HL.Boolean, HL.Opt(HL.Boolean, HL.Bool
         self.view.controllerMouse.gameObject:SetActive(not active)
         self.view.controllerMouseHoverHint.gameObject:SetActive(not active and self.m_lastMouseHintContent ~= nil)
         self.view.topViewToggle.gameObject:SetActive(not active)
+        self.view.hidePipeToggle.gameObject:SetActive(FactoryUtils.canShowPipe() and not active)
         if active then
             
             Notify(MessageConst.SHOW_AS_CONTROLLER_SMALL_MENU, {
@@ -1229,10 +1094,12 @@ FacTopViewCtrl._ToggleContent = HL.Method(HL.Boolean, HL.Opt(HL.Boolean, HL.Bool
             })
             
             self.view.scrollList:SetTop(false)
-            InputManagerInst.controllerNaviManager:SetTarget(self.m_getItemCell(1).button)
+            self:SetNaviTarget(self.m_getItemCell(1).button)
             self.m_clearScreenKeyForControllerExpandBuildNode = UIManager:ClearScreen({
                 PANEL_ID, PanelId.FacTopViewBuildingInfo, PanelId.FacTopViewLowerCfg,
                 PanelId.FacBuildMode, PanelId.FacDestroyMode, PanelId.CommonTaskTrackHud,
+                PanelId.FacPowerPoleLinkingLabel, PanelId.FacPowerPoleTravelHint,
+                PanelId.FacPowerPoleAutoConnectHint,
             })
         else
             Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.bottomNodeInputBindingGroupMonoTarget.groupId)
@@ -1255,12 +1122,7 @@ FacTopViewCtrl._ToggleContent = HL.Method(HL.Boolean, HL.Opt(HL.Boolean, HL.Bool
     self.view.buildNode.enabled = active or not DeviceInfo.usingController
 end
 
-
 FacTopViewCtrl.m_clearScreenKeyForControllerExpandBuildNode = HL.Field(HL.Number) << -1
-
-
-
-
 
 FacTopViewCtrl._OnClickItemCell = HL.Method(HL.Number, HL.Opt(Vector2)) << function(self, index, mousePosition)
     local info = self.m_typeInfos[self.m_selectedTypeIndex].showingItems[index]
@@ -1268,15 +1130,30 @@ FacTopViewCtrl._OnClickItemCell = HL.Method(HL.Number, HL.Opt(Vector2)) << funct
         local itemId = info.itemId
         local count, backpackCount = Utils.getItemCount(itemId)
         if count == 0 then
-            local hasCraft = Tables.FactoryItemAsHubCraftOutcomeTable:TryGetValue(itemId)
-            if hasCraft then
-                if DeviceInfo.usingController then
-                    Notify(MessageConst.SHOW_TOAST, InputManager.ParseTextActionId(Language.LUA_FAC_QUICK_BAR_COUNT_ZERO_CT))
-                else
-                    Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_COUNT_ZERO)
-                end
-            else
+            if FactoryUtils.isSkipUnlockedBuildingByItemId(itemId) then
+                
                 Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_COUNT_ZERO_NO_JUMP)
+            else
+                local hasCraft = Tables.FactoryItemAsHubCraftOutcomeTable:TryGetValue(itemId)
+                if hasCraft then
+                    if DeviceInfo.usingController then
+                        Notify(MessageConst.SHOW_TOAST, InputManager.ParseTextActionId(Language.LUA_FAC_QUICK_BAR_COUNT_ZERO_CT))
+                    elseif DeviceInfo.usingTouch then
+                        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_COUNT_ZERO_TOUCH)
+                    else
+                        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_COUNT_ZERO)
+                    end
+                elseif FactoryUtils.isDecoBuildingItem(itemId) then
+                    if DeviceInfo.usingController then
+                        Notify(MessageConst.SHOW_TOAST, InputManager.ParseTextActionId(Language.LUA_FAC_QUICK_BAR_DECO_COUNT_ZERO_CT))
+                    elseif DeviceInfo.usingTouch then
+                        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_DECO_COUNT_ZERO_TOUCH)
+                    else
+                        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_DECO_COUNT_ZERO)
+                    end
+                else
+                    Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_QUICK_BAR_COUNT_ZERO_NO_JUMP)
+                end
             end
             return
         end
@@ -1297,13 +1174,9 @@ FacTopViewCtrl._OnClickItemCell = HL.Method(HL.Number, HL.Opt(Vector2)) << funct
     end
 end
 
-
-
 FacTopViewCtrl._OnClickPipe = HL.Method() << function(self)
     Notify(MessageConst.FAC_ENTER_BELT_MODE, { beltId = FacConst.PIPE_ID })
 end
-
-
 
 FacTopViewCtrl._OnClickBelt = HL.Method() << function(self)
     Notify(MessageConst.FAC_ENTER_BELT_MODE, { beltId = FacConst.BELT_ID })
@@ -1314,16 +1187,11 @@ end
 
 
 
-
 FacTopViewCtrl.m_filterInfos = HL.Field(HL.Table)
-
 
 FacTopViewCtrl.m_selectedFilters = HL.Field(HL.Table)
 
-
 FacTopViewCtrl.m_filterCells = HL.Field(HL.Forward('UIListCache'))
-
-
 
 FacTopViewCtrl._InitFilters = HL.Method() << function(self)
     self.m_filterInfos = {}
@@ -1383,14 +1251,10 @@ FacTopViewCtrl._InitFilters = HL.Method() << function(self)
     end)
 end
 
-
-
 FacTopViewCtrl._ResetFilters = HL.Method() << function(self)
     self.m_selectedFilters = {}
     self:_UpdateFilterCellStates()
 end
-
-
 
 FacTopViewCtrl._UpdateFilterCellStates = HL.Method() << function(self)
     self.m_filterCells:Update(function(cell, index)
@@ -1399,10 +1263,6 @@ FacTopViewCtrl._UpdateFilterCellStates = HL.Method() << function(self)
     end)
     self:_UpdateFilterIcon()
 end
-
-
-
-
 
 
 FacTopViewCtrl._ToggleFilterList = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, skipAni)
@@ -1420,15 +1280,12 @@ FacTopViewCtrl._ToggleFilterList = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << 
             
             local cell = self.m_getItemCell(1)
             if cell then
-                InputManagerInst.controllerNaviManager:SetTarget(cell.button)
+                self:SetNaviTarget(cell.button)
             end
             node.listSelectableNaviGroup:ManuallyStopFocus()
         end
     end
 end
-
-
-
 
 FacTopViewCtrl._UpdateFilterIcon = HL.Method(HL.Opt(HL.Boolean)) << function(self, active)
     local node = self.view.filterNode
@@ -1439,8 +1296,6 @@ FacTopViewCtrl._UpdateFilterIcon = HL.Method(HL.Opt(HL.Boolean)) << function(sel
     node.filterBtn.gameObject:SetActive(not active and not next(self.m_selectedFilters))
     node.filteredBtn.gameObject:SetActive(not active and next(self.m_selectedFilters) ~= nil)
 end
-
-
 
 FacTopViewCtrl._ApplyFilter = HL.Method() << function(self)
     local tInfo = self.m_typeInfos[self.m_selectedTypeIndex]
@@ -1494,6 +1349,9 @@ local MouseHints = {
         normal = "FAC_TOP_VIEW_MOUSE_HOVER_HINT_LOGISTIC",
         des = "LUA_FAC_TOP_VIEW_MOUSE_HOVER_HINT_PIPE_DES",
     },
+    multiTarget = {
+        normal = "LUA_FAC_TOP_VIEW_MOUSE_HOVER_HINT_MULTI_TARGET",
+    },
 }
 
 local ControllerMouseHints = {
@@ -1516,42 +1374,55 @@ local ControllerMouseHints = {
     blueprint = { "fac_build_confirm_in_top_view", "fac_rotate_device", "fac_build_cancel", },
 }
 
-
 FacTopViewCtrl.m_lastMouseHintContent = HL.Field(HL.Any)
 
-
 FacTopViewCtrl.m_controllerMouseHoverHintCells = HL.Field(HL.Forward('UIListCache'))
-
-
 
 FacTopViewCtrl._UpdateMouseHintStates = HL.Method() << function(self)
     
     local ctrl = LuaSystemManager.factory.interactPanelCtrl
     local content
-    if UIManager.commonTouchPanel.isPointerEntered and not ctrl:IsDraggingInBatchMode() then
+    if self:_IsHoveringMultiTargetMenuGrid() then
+        content = nil
+    elseif UIManager.commonTouchPanel.isPointerEntered and not ctrl:IsDraggingInBatchMode() then
+        local targetCount = 0
         if ctrl.m_interactPipeNodeId then
+            targetCount = targetCount + 1
             if FactoryUtils.isPendingBuildingNode(ctrl.m_interactPipeNodeId) then
                 content = MouseHints.pending
             else
                 content = MouseHints.pipe
             end
-        elseif ctrl.m_interactFacNodeId then
+        end
+        if ctrl.m_interactFacNodeId then
+            targetCount = targetCount + 1
             if FactoryUtils.isPendingBuildingNode(ctrl.m_interactFacNodeId) or not FactoryUtils.canMoveBuilding(ctrl.m_interactFacNodeId) then
-                content = MouseHints.pending
+                content = content or MouseHints.pending
             else
                 if ctrl.m_interactFacNodeIdIsBuilding then
-                    content = MouseHints.building
+                    content = content or MouseHints.building
                 else
-                    content = MouseHints.logistic
+                    content = content or MouseHints.logistic
                 end
             end
-        elseif ctrl.m_interactLogisticPos then
+        end
+        if ctrl.m_interactFacOverlapNodeIds then
+            
+            targetCount = targetCount + #ctrl.m_interactFacOverlapNodeIds
+        end
+        if ctrl.m_interactLogisticPos then
             local succ, nodeId, unitIndex = GameInstance.remoteFactoryManager:TrySampleConveyor(ctrl.m_interactLogisticPos)
-            if FactoryUtils.isPendingBuildingNode(nodeId) then
-                content = MouseHints.pending
-            else
-                content = MouseHints.belt
+            if succ and nodeId then
+                targetCount = targetCount + 1
+                if FactoryUtils.isPendingBuildingNode(nodeId) then
+                    content = content or MouseHints.pending
+                else
+                    content = content or MouseHints.belt
+                end
             end
+        end
+        if targetCount > 1 and not LuaSystemManager.factory.inDestroyMode then
+            content = MouseHints.multiTarget
         end
         if content then
             content = LuaSystemManager.factory.inDestroyMode and content.des or content.normal
@@ -1568,11 +1439,13 @@ FacTopViewCtrl._UpdateMouseHintStates = HL.Method() << function(self)
     end
 end
 
-
-
 FacTopViewCtrl._UpdateControllerMouseHintStates = HL.Method() << function(self)
     
     local ctrl = LuaSystemManager.factory.interactPanelCtrl
+    if self:_IsMultiTargetMenuShowing() then
+        self:_RefreshControllerMouseHints(nil)
+        return
+    end
     local actionIds
     if LuaSystemManager.factory.inDestroyMode then
         
@@ -1633,10 +1506,44 @@ FacTopViewCtrl._UpdateControllerMouseHintStates = HL.Method() << function(self)
         end
     end
     self:_RefreshControllerMouseHints(actionIds)
+    if actionIds then
+        self:_UpdateControllerOpenDetailHint()
+    end
 end
 
 
 
+
+FacTopViewCtrl._UpdateControllerOpenDetailHint = HL.Method() << function(self)
+    local cells = self.m_controllerMouseHoverHintCells
+    if not cells then
+        return
+    end
+    local count = cells:GetCount()
+    if count == 0 then
+        return
+    end
+    
+    local cell = cells:GetItem(count)
+    if not cell or cell.gameObject.name ~= "KeyHint-fac_top_view_open_building_panel" then
+        return
+    end
+    
+    local ctrl = LuaSystemManager.factory.interactPanelCtrl
+    local liveCount = 0
+    if ctrl.m_interactPipeNodeId then liveCount = liveCount + 1 end
+    if ctrl.m_interactFacNodeId then liveCount = liveCount + 1 end
+    if ctrl.m_interactFacOverlapNodeIds then liveCount = liveCount + #ctrl.m_interactFacOverlapNodeIds end
+    if ctrl.m_interactLogisticPos then liveCount = liveCount + 1 end
+    if liveCount > 1 then
+        local targets = self:_CollectControllerTargets()
+        if #targets > 1 then
+            cell.actionKeyHint:SetText(string.format(Language.LUA_FAC_TOP_VIEW_CONTROLLER_OPEN_DETAIL_FORMAT, targets[1].name))
+            return
+        end
+    end
+    cell.actionKeyHint:SetText(cell.actionKeyHint:GetTextStr())
+end
 
 FacTopViewCtrl._RefreshControllerMouseHints = HL.Method(HL.Opt(HL.Table)) << function(self, actionIds)
     if actionIds == self.m_lastMouseHintContent then
@@ -1657,8 +1564,6 @@ FacTopViewCtrl._RefreshControllerMouseHints = HL.Method(HL.Opt(HL.Table)) << fun
         cell.gameObject.name = "KeyHint-" .. id
     end)
 end
-
-
 
 
 
@@ -1698,91 +1603,183 @@ end
 
 
 
-
-
 FacTopViewCtrl._OnControllerZoomCamera = HL.Method() << function(self)
     local delta = InputManagerInst:GetGamepadStickValue(false).y * self.view.config.CONTROLLER_ZOOM_CAMERA_SPD * -Time.deltaTime
     Notify(MessageConst.ZOOM_LEVEL_CAMERA, delta)
 end
 
-
-
 FacTopViewCtrl._ControllerOpenCurBuildingPanel = HL.Method() << function(self)
     
     
     local _, facInteract = UIManager:IsOpen(PanelId.FacBuildingInteract)
-    facInteract:_OnClickScreen(nil)
+    facInteract:_OnClickScreen(nil, true)
 end
 
 
 
-FacTopViewCtrl._ControllerOpenCurBuildingMenu = HL.Method() << function(self)
-    
+FacTopViewCtrl._CollectControllerTargets = HL.Method().Return(HL.Table) << function(self)
     
     local _, facInteract = UIManager:IsOpen(PanelId.FacBuildingInteract)
 
-    local hasTarget
-    local actions = {}
-    table.insert(actions, {
-        objName = "Open",
-        text = Language.LUA_FAC_TOP_VIEW_CONTROLLER_MENU_OPEN,
-        action = function()
-            self:_ControllerOpenCurBuildingPanel()
-        end,
-    })
-    if facInteract.m_interactFacNodeId and not facInteract.m_interactPipeNodeId then
-        hasTarget = true
+    local targets = {}
+    
+    
+    local chapterId = Utils.getCurrentChapterId()
+    local seenPendingSlotIds = {}
+
+    if facInteract.m_interactPipeNodeId then
+        local pipeNodeId = facInteract.m_interactPipeNodeId
+        local pipePendingSlotId = CSFactoryUtil.GetBlueprintSlotId(chapterId, pipeNodeId)
+        local isPendingPipe = pipePendingSlotId > 0
+        if not isPendingPipe or not seenPendingSlotIds[pipePendingSlotId] then
+            if isPendingPipe then
+                seenPendingSlotIds[pipePendingSlotId] = true
+            end
+            table.insert(targets, {
+                type = "pipe",
+                sortBase = 100,
+                name = isPendingPipe
+                    and FactoryUtils.getPendingSlotName(pipePendingSlotId)
+                    or Language.LUA_FAC_PIPE_INTERACT_OPTION,
+                nodeId = pipeNodeId,
+                unitIndex = facInteract.m_interactPipeUnitIndex,
+            })
+        end
+    end
+    if facInteract.m_interactFacNodeId then
         local nodeId = facInteract.m_interactFacNodeId
-        if facInteract.m_interactFacNodeIdIsBuilding then
-            if FactoryUtils.canMoveBuilding(nodeId) then
-                table.insert(actions, {
-                    objName = "Move",
-                    text = Language.LUA_FAC_TOP_VIEW_CONTROLLER_MENU_MOVE,
-                    action = function()
-                        Notify(MessageConst.FAC_ENTER_BUILDING_MODE, { nodeId = nodeId })
-                    end,
+        local buildingPendingSlotId = CSFactoryUtil.GetBlueprintSlotId(chapterId, nodeId)
+        local isPendingBuilding = buildingPendingSlotId > 0
+        if isPendingBuilding then
+            
+            if not seenPendingSlotIds[buildingPendingSlotId] then
+                seenPendingSlotIds[buildingPendingSlotId] = true
+                table.insert(targets, {
+                    type = "building",
+                    sortBase = 200,
+                    name = FactoryUtils.getPendingSlotName(buildingPendingSlotId),
+                    nodeId = nodeId,
+                    isBuilding = true,
+                    subBuildingIndex = -1,
+                })
+            end
+        else
+            local isBuilding = facInteract.m_interactFacNodeIdIsBuilding
+            local subIndex = facInteract.m_interactSubBuildingIndex
+            local handler = FactoryUtils.getBuildingNodeHandler(nodeId)
+            local targetName
+            if isBuilding then
+                if subIndex >= 0 then
+                    
+                    targetName = Language.LUA_FAC_HUB_INPUT .. subIndex
+                else
+                    targetName = Tables.factoryBuildingTable[handler.templateId].name
+                end
+            else
+                targetName = FactoryUtils.getLogisticData(handler.templateId).name
+            end
+            table.insert(targets, {
+                type = "building",
+                sortBase = 200,
+                name = targetName,
+                nodeId = nodeId,
+                isBuilding = isBuilding,
+                subBuildingIndex = subIndex,
+            })
+        end
+    end
+    if facInteract.m_interactFacOverlapNodeIds then
+        
+        
+        
+        for i, overlapNodeId in ipairs(facInteract.m_interactFacOverlapNodeIds) do
+            local overlapPendingSlotId = CSFactoryUtil.GetBlueprintSlotId(chapterId, overlapNodeId)
+            local isOverlapPending = overlapPendingSlotId > 0
+            if isOverlapPending then
+                if not seenPendingSlotIds[overlapPendingSlotId] then
+                    seenPendingSlotIds[overlapPendingSlotId] = true
+                    table.insert(targets, {
+                        type = "building",
+                        sortBase = 150 + 10 * i,
+                        name = FactoryUtils.getPendingSlotName(overlapPendingSlotId),
+                        nodeId = overlapNodeId,
+                        isBuilding = true,
+                        subBuildingIndex = -1,
+                    })
+                end
+            else
+                local handler = FactoryUtils.getBuildingNodeHandler(overlapNodeId)
+                if handler then
+                    local _, buildingData = Tables.factoryBuildingTable:TryGetValue(handler.templateId)
+                    local overlapIsBuilding = buildingData ~= nil
+                    local overlapName
+                    if overlapIsBuilding then
+                        overlapName = buildingData.name
+                    else
+                        local unitData = FactoryUtils.getLogisticData(handler.templateId)
+                        overlapName = unitData and unitData.name
+                    end
+                    if overlapName then
+                        table.insert(targets, {
+                            type = "building",
+                            sortBase = 150 + 10 * i,
+                            name = overlapName,
+                            nodeId = overlapNodeId,
+                            isBuilding = overlapIsBuilding,
+                        })
+                    end
+                end
+            end
+        end
+    end
+    if facInteract.m_interactLogisticPos then
+        local logisticPos = facInteract.m_interactLogisticPos
+        local succ, beltNodeId, beltUnitIndex = GameInstance.remoteFactoryManager:TrySampleConveyor(logisticPos)
+        if succ and beltNodeId then
+            local beltPendingSlotId = CSFactoryUtil.GetBlueprintSlotId(chapterId, beltNodeId)
+            local isPendingBelt = beltPendingSlotId > 0
+            if not isPendingBelt or not seenPendingSlotIds[beltPendingSlotId] then
+                if isPendingBelt then
+                    seenPendingSlotIds[beltPendingSlotId] = true
+                end
+                local beltName
+                if isPendingBelt then
+                    beltName = FactoryUtils.getPendingSlotName(beltPendingSlotId)
+                else
+                    local chapterInfo = FactoryUtils.getCurChapterInfo()
+                    local handler = chapterInfo:GetNode(beltNodeId)
+                    beltName = Tables.factoryGridBeltTable:GetValue(handler.templateId).beltData.name
+                end
+                table.insert(targets, {
+                    type = "belt",
+                    sortBase = 300,
+                    name = beltName,
+                    nodeId = beltNodeId,
+                    unitIndex = beltUnitIndex,
+                    logisticPos = logisticPos,
                 })
             end
         end
-        if FactoryUtils.canDelBuilding(nodeId) then
-            table.insert(actions, {
-                objName = "Del",
-                text = Language.LUA_FAC_TOP_VIEW_CONTROLLER_MENU_DEL,
-                action = function()
-                    FactoryUtils.delBuilding(nodeId)
-                end,
-            })
-        end
-    else
-        local nodeId, unitIndex
-        if facInteract.m_interactPipeNodeId then
-            hasTarget = true
-            nodeId = facInteract.m_interactPipeNodeId
-            unitIndex = facInteract.m_interactPipeUnitIndex
-        elseif facInteract.m_interactLogisticPos then
-            hasTarget = true
-            _, nodeId, unitIndex = GameInstance.remoteFactoryManager:TrySampleConveyor(facInteract.m_interactLogisticPos)
-        end
-        if nodeId and FactoryUtils.canDelBuilding(nodeId) then
-            table.insert(actions, {
-                objName = "DelWhole",
-                text = Language.LUA_FAC_TOP_VIEW_CONTROLLER_MENU_DEL_WHOLE,
-                action = function()
-                    GameInstance.player.remoteFactory.core:Message_OpDismantle(Utils.getCurrentChapterId(), nodeId)
-                end,
-            })
-            table.insert(actions, {
-                objName = "DelOneGrid",
-                text = Language.LUA_FAC_TOP_VIEW_CONTROLLER_MENU_DEL_ONE_GRID,
-                action = function()
-                    GameInstance.remoteFactoryManager:DismantleUnitFromConveyor(Utils.getCurrentChapterId(), nodeId, unitIndex)
-                end,
-            })
-        end
     end
-    if not hasTarget then
+    table.sort(targets, function(a, b) return a.sortBase < b.sortBase end)
+    return targets
+end
+
+FacTopViewCtrl._ControllerOpenCurBuildingMenu = HL.Method() << function(self)
+    
+    local _, facInteract = UIManager:IsOpen(PanelId.FacBuildingInteract)
+
+    local targets = self:_CollectControllerTargets()
+    if #targets == 0 then
         return
     end
+
+    local isMulti = #targets > 1
+    local actions = {}
+    for _, target in ipairs(targets) do
+        self:_AddControllerMenuActionsForTarget(actions, target, isMulti)
+    end
+    table.sort(actions, function(a, b) return a.priority < b.priority end)
 
     local effect = facInteract.m_hoverInteractHighlightEffect
     local posList = {
@@ -1824,7 +1821,85 @@ FacTopViewCtrl._ControllerOpenCurBuildingMenu = HL.Method() << function(self)
     })
 end
 
+FacTopViewCtrl._AddControllerMenuActionsForTarget = HL.Method(HL.Table, HL.Table, HL.Boolean) << function(self, actions, target, isMulti)
+    local _, facInteract = UIManager:IsOpen(PanelId.FacBuildingInteract)
+    local fmt = Language.LUA_FAC_TOP_VIEW_CONTROLLER_MULTI_TARGET_MENU_FORMAT
+    local function fmtText(text)
+        return isMulti and string.format(fmt, target.name, text) or text
+    end
 
+    local PRIORITY_OTHER_OFFSET = 1000
+
+    table.insert(actions, {
+        objName = "Open_" .. target.type,
+        text = fmtText(Language.LUA_FAC_TOP_VIEW_CONTROLLER_MENU_OPEN),
+        priority = target.sortBase,
+        action = function()
+            if target.type == "building" then
+                if target.isBuilding then
+                    if target.subBuildingIndex and target.subBuildingIndex >= 0 then
+                        
+                        facInteract:_OnInteractFactory({
+                            buildingNodeId = target.nodeId,
+                            subBuildingIndex = target.subBuildingIndex,
+                        })
+                    else
+                        facInteract:_OnInteractFactory({ buildingNodeId = target.nodeId })
+                    end
+                else
+                    facInteract:_OnInteractFactory({ nodeId = target.nodeId })
+                end
+            elseif target.type == "pipe" then
+                facInteract:_OnInteractFactory({ nodeId = target.nodeId, unitIndex = target.unitIndex })
+            elseif target.type == "belt" then
+                facInteract:_OnInteractFactory({ nodeId = target.nodeId, unitIndex = target.unitIndex, logisticPos = target.logisticPos })
+            end
+            facInteract:_RemoveInteractOption()
+        end,
+    })
+
+    if target.type == "building" then
+        if target.isBuilding and FactoryUtils.canMoveBuilding(target.nodeId) then
+            table.insert(actions, {
+                objName = "Move_Building",
+                text = fmtText(Language.LUA_FAC_TOP_VIEW_CONTROLLER_MENU_MOVE),
+                priority = target.sortBase + PRIORITY_OTHER_OFFSET,
+                action = function()
+                    Notify(MessageConst.FAC_ENTER_BUILDING_MODE, { nodeId = target.nodeId })
+                end,
+            })
+        end
+        if FactoryUtils.canDelBuilding(target.nodeId) then
+            table.insert(actions, {
+                objName = "Del_Building",
+                text = fmtText(Language.LUA_FAC_TOP_VIEW_CONTROLLER_MENU_DEL),
+                priority = target.sortBase + PRIORITY_OTHER_OFFSET + 1,
+                action = function()
+                    FactoryUtils.delBuilding(target.nodeId)
+                end,
+            })
+        end
+    elseif target.type == "pipe" or target.type == "belt" then
+        if FactoryUtils.canDelBuilding(target.nodeId) then
+            table.insert(actions, {
+                objName = "DelWhole_" .. target.type,
+                text = fmtText(Language.LUA_FAC_TOP_VIEW_CONTROLLER_MENU_DEL_WHOLE),
+                priority = target.sortBase + PRIORITY_OTHER_OFFSET,
+                action = function()
+                    GameInstance.player.remoteFactory.core:Message_OpDismantle(Utils.getCurrentChapterId(), target.nodeId)
+                end,
+            })
+            table.insert(actions, {
+                objName = "DelOneGrid_" .. target.type,
+                text = fmtText(Language.LUA_FAC_TOP_VIEW_CONTROLLER_MENU_DEL_ONE_GRID),
+                priority = target.sortBase + PRIORITY_OTHER_OFFSET + 1,
+                action = function()
+                    GameInstance.remoteFactoryManager:DismantleUnitFromConveyor(Utils.getCurrentChapterId(), target.nodeId, target.unitIndex)
+                end,
+            })
+        end
+    end
+end
 
 FacTopViewCtrl._ControllerMoveCurBuilding = HL.Method() << function(self)
     local _, facInteract = UIManager:IsOpen(PanelId.FacBuildingInteract)
@@ -1833,9 +1908,6 @@ FacTopViewCtrl._ControllerMoveCurBuilding = HL.Method() << function(self)
     end
     Notify(MessageConst.FAC_ENTER_BUILDING_MODE, { nodeId = facInteract.m_interactFacNodeId })
 end
-
-
-
 
 FacTopViewCtrl.ToggleHideFacTopViewRightSideUi = HL.Method(HL.Boolean) << function(self, isHide)
     self.view.rightSideNode.gameObject:SetActive(not isHide)
@@ -1848,6 +1920,106 @@ end
 
 
 
+
+
+FacTopViewCtrl._IsMultiTargetMenuShowing = HL.Method().Return(HL.Boolean) << function(self)
+    return self.view.multiTargetMenuNode.gameObject.activeSelf
+end
+
+FacTopViewCtrl._IsHoveringMultiTargetMenuGrid = HL.Method().Return(HL.Boolean) << function(self)
+    if not self:_IsMultiTargetMenuShowing() or not self.m_multiTargetMenuGridPos then
+        return false
+    end
+    local ctrl = LuaSystemManager.factory.interactPanelCtrl
+    local detectPos = ctrl and ctrl.m_lastDetectWorldPos
+    if not detectPos then
+        return false
+    end
+    local gridPos = self.m_multiTargetMenuGridPos
+    return math.floor(detectPos.x) == gridPos.x and math.floor(detectPos.z) == gridPos.z
+end
+
+FacTopViewCtrl._ClearHoverHintsForMultiTargetMenu = HL.Method() << function(self)
+    self.m_lastMouseHintContent = nil
+    self.view.mouseHoverHint.gameObject:SetActiveIfNecessary(false)
+    self.view.controllerMouseHoverHint.gameObject:SetActiveIfNecessary(false)
+end
+
+FacTopViewCtrl._ShowMultiTargetMenu = HL.Method(HL.Table) << function(self, args)
+    local targets = args.targets
+    local screenRect = args.screenRect
+    local ctrl = LuaSystemManager.factory.interactPanelCtrl
+
+    self.m_multiTargetCells:Refresh(#targets, function(cell, index)
+        local info = targets[index]
+        cell.gameObject.name = "MultiTarget_" .. index
+        cell.actionNode.onClick:RemoveAllListeners()
+        cell.text.text = info.name
+        cell.actionNode.onClick:AddListener(function()
+            self:_HideMultiTargetMenu()
+            info.action()
+        end)
+        if index == 1 then
+            self:SetNaviTarget(cell.actionNode)
+        end
+    end)
+
+    self.view.multiTargetMenuNode.gameObject:SetActive(true)
+    local detectPos = ctrl and ctrl.m_lastDetectWorldPos
+    self.m_multiTargetMenuGridPos = detectPos and { x = math.floor(detectPos.x), z = math.floor(detectPos.z) } or nil
+    self:_ClearHoverHintsForMultiTargetMenu()
+    local contentRect = self.view.multiTargetMenuNode.content.transform
+    LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect)
+
+    UIUtils.updateTipsPositionWithScreenRect(
+        contentRect,
+        screenRect,
+        self.view.rectTransform,
+        self.uiCamera,
+        UIConst.UI_TIPS_POS_TYPE.RightTop,
+        { bottom = 100 }
+    )
+
+    local firstEffectInfo = targets[1] and targets[1].effectInfo
+    if firstEffectInfo and firstEffectInfo.worldPos then
+        self:_SetMenuEffect(self.m_menuHoverEffect, firstEffectInfo.worldPos, 0)
+    end
+    for _, t in ipairs(targets) do
+        if t.type == "pipe" and t.effectInfo then
+            LuaSystemManager.factory:RequestPipeHighlight("menu", t.effectInfo.nodeId, t.effectInfo.unitIndex)
+            break
+        end
+    end
+
+    AudioAdapter.PostEvent("Au_UI_Menu_FacOverlay_Open")
+end
+
+FacTopViewCtrl._HideMultiTargetMenu = HL.Method() << function(self)
+    if self.view.multiTargetMenuNode.gameObject.activeSelf then
+        self.view.multiTargetMenuNode.gameObject:SetActive(false)
+    end
+    self.m_multiTargetMenuGridPos = nil
+    if self.m_menuHoverEffect then
+        self.m_menuHoverEffect.gameObject:SetActive(false)
+    end
+    LuaSystemManager.factory:ReleasePipeHighlight("menu")
+end
+
+FacTopViewCtrl._SetMenuEffect = HL.Method(HL.Table, CS.UnityEngine.Vector3, HL.Number) << function(self, effect, pos, offsetY)
+    pos.y = pos.y + offsetY
+    effect.transform.position = pos
+    effect.transform.eulerAngles = Vector3.zero
+    effect.transform.localScale = Vector3.one
+    for k = 1, 4 do
+        effect["corner" .. k].transform.localScale = Vector3.one
+    end
+    if not effect.gameObject.activeSelf then
+        effect.gameObject:SetActive(true)
+        for k = 1, 4 do
+            effect["effect" .. k]:Update(0)
+        end
+    end
+end
 
 
 

@@ -2,18 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.BattleComboSkillUse
 
-
-
-
-
-
-
-
-
-
-
 BattleComboSkillUseCtrl = HL.Class('BattleComboSkillUseCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -30,15 +19,10 @@ local COMBO_USE_STATE_IN = 2
 local COMBO_USE_STATE_OUT = 3
 
 do 
-    
     BattleComboSkillUseCtrl.m_comboSkillUseList = HL.Field(HL.Table)
 
-    
     BattleComboSkillUseCtrl.m_useBgShowing = HL.Field(HL.Boolean) << false
 end
-
-
-
 
 
 
@@ -52,15 +36,11 @@ BattleComboSkillUseCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 BattleComboSkillUseCtrl.OnShow = HL.Override() << function(self)
     self:OnBattleTeamChanged()
     self.view.useBgAnim:SampleToOutAnimationEnd()
     self.m_useBgShowing = false
 end
-
-
 
 BattleComboSkillUseCtrl.OnHide = HL.Override() << function(self)
     for i, useObj in ipairs(self.m_comboSkillUseList) do
@@ -70,9 +50,6 @@ BattleComboSkillUseCtrl.OnHide = HL.Override() << function(self)
     end
     self:_CheckUseState()
 end
-
-
-
 
 BattleComboSkillUseCtrl.OnBattleTeamChanged = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     local slots = GameInstance.player.squadManager.curSquad.slots
@@ -87,9 +64,6 @@ BattleComboSkillUseCtrl.OnBattleTeamChanged = HL.Method(HL.Opt(HL.Table)) << fun
         end
     end
 end
-
-
-
 
 BattleComboSkillUseCtrl.OnComboSkillStart = HL.Method(HL.Table) << function(self, args)
     local charIndex = LuaIndex(unpack(args))
@@ -123,8 +97,6 @@ BattleComboSkillUseCtrl.OnComboSkillStart = HL.Method(HL.Table) << function(self
         end
     end
 end
-
-
 
 BattleComboSkillUseCtrl._CheckUseState = HL.Method() << function(self)
     local hasIn = false

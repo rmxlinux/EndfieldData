@@ -2,31 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.SpaceShipFriendHelpRoom
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 SpaceShipFriendHelpRoomCtrl = HL.Class('SpaceShipFriendHelpRoomCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -38,23 +14,15 @@ SpaceShipFriendHelpRoomCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SPACESHIP_ASSIST_DATA_MODIFY] = 'OnDataModify',
 }
 
-
 SpaceShipFriendHelpRoomCtrl.m_roomId = HL.Field(HL.String) << ""
-
 
 SpaceShipFriendHelpRoomCtrl.m_formulaId = HL.Field(HL.String) << ""
 
-
 SpaceShipFriendHelpRoomCtrl.m_tickCoroutine = HL.Field(HL.Thread)
-
 
 SpaceShipFriendHelpRoomCtrl.m_useCount = HL.Field(HL.Number) << 1
 
-
 SpaceShipFriendHelpRoomCtrl.m_useCountMax = HL.Field(HL.Number) << 1
-
-
-
 
 
 SpaceShipFriendHelpRoomCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -72,13 +40,9 @@ end
 
 
 
-
-
 SpaceShipFriendHelpRoomCtrl.OnClose = HL.Override() << function(self)
     self:_StopTickIfNecessary()
 end
-
-
 
 SpaceShipFriendHelpRoomCtrl._InitViews = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
@@ -92,8 +56,6 @@ SpaceShipFriendHelpRoomCtrl._InitViews = HL.Method() << function(self)
         self:_OnConfirm()
     end)
 end
-
-
 
 SpaceShipFriendHelpRoomCtrl._RenderViews = HL.Method() << function(self)
     local leftSec, produceRate = self:_GetFormulaLeftSec()
@@ -117,9 +79,6 @@ SpaceShipFriendHelpRoomCtrl._RenderViews = HL.Method() << function(self)
     end)
 end
 
-
-
-
 SpaceShipFriendHelpRoomCtrl._InitNumberSelector = HL.Method(HL.Number) << function(self, useCountMax)
     local helpLimit = SpaceshipUtils.getRoomHelpLimit(self.m_roomId)
     local leftHelpCount, beHelpedCount = GameInstance.player.spaceship:GetCabinAssistedTime(self.m_roomId)
@@ -131,10 +90,6 @@ SpaceShipFriendHelpRoomCtrl._InitNumberSelector = HL.Method(HL.Number) << functi
         self:_OnNumberSelectorChange(curNumber, isChangeByBtn)
     end)
 end
-
-
-
-
 
 SpaceShipFriendHelpRoomCtrl._OnNumberSelectorChange = HL.Method(HL.Number, HL.Boolean)
     << function(self, curNumber, isChangeByBtn)
@@ -148,16 +103,12 @@ SpaceShipFriendHelpRoomCtrl._OnNumberSelectorChange = HL.Method(HL.Number, HL.Bo
     self:_RenderFastTimeInfo(leftSec, produceRate)
 end
 
-
-
 SpaceShipFriendHelpRoomCtrl._StopTickIfNecessary = HL.Method() << function(self)
     if self.m_tickCoroutine ~= nil then
         self:_ClearCoroutine(self.m_tickCoroutine)
         self.m_tickCoroutine = nil
     end
 end
-
-
 
 SpaceShipFriendHelpRoomCtrl._TickFormulaPanel = HL.Method() << function(self)
     local spaceship = GameInstance.player.spaceship
@@ -168,8 +119,6 @@ SpaceShipFriendHelpRoomCtrl._TickFormulaPanel = HL.Method() << function(self)
     end
     self:_RenderFormulaInfo()
 end
-
-
 
 SpaceShipFriendHelpRoomCtrl._GetFormulaLeftSec = HL.Method().Return(HL.Number, HL.Number) << function(self)
     local spaceship = GameInstance.player.spaceship
@@ -193,8 +142,6 @@ SpaceShipFriendHelpRoomCtrl._GetFormulaLeftSec = HL.Method().Return(HL.Number, H
     end
 end
 
-
-
 SpaceShipFriendHelpRoomCtrl._GetHelpProgress = HL.Method().Return(HL.Number) << function(self)
     local spaceship = GameInstance.player.spaceship
     local helpProgress = 0
@@ -206,8 +153,6 @@ SpaceShipFriendHelpRoomCtrl._GetHelpProgress = HL.Method().Return(HL.Number) << 
     end
     return helpProgress
 end
-
-
 
 SpaceShipFriendHelpRoomCtrl._RenderFormulaInfo = HL.Method() << function(self)
     local spaceship = GameInstance.player.spaceship
@@ -224,10 +169,6 @@ SpaceShipFriendHelpRoomCtrl._RenderFormulaInfo = HL.Method() << function(self)
     self.view.timeTxt.text = UIUtils.getLeftTimeToSecond(leftSec)
     self:_RenderFastTimeInfo(leftSec, produceRate)
 end
-
-
-
-
 
 SpaceShipFriendHelpRoomCtrl._RenderFastTimeInfo = HL.Method(HL.Number, HL.Number) << function(self, leftSec, produceRate)
     local hasRemainFormula = not string.isEmpty(self.m_formulaId)
@@ -254,8 +195,6 @@ SpaceShipFriendHelpRoomCtrl._RenderFastTimeInfo = HL.Method(HL.Number, HL.Number
     end
 end
 
-
-
 SpaceShipFriendHelpRoomCtrl._OnConfirm = HL.Method() << function(self)
     local leftSec, produceRate = self:_GetFormulaLeftSec()
     if leftSec <= 0 or produceRate == 0 then
@@ -280,15 +219,10 @@ SpaceShipFriendHelpRoomCtrl._OnConfirm = HL.Method() << function(self)
     GameInstance.player.spaceship:SpaceshipUseHelpRoomCreditManufacturingStation(self.m_roomId, self.m_useCount)
 end
 
-
-
-
 SpaceShipFriendHelpRoomCtrl.OnUseHelpCredit = HL.Method(HL.Opt(HL.Table)) << function(self, arg)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_SS_USE_HELP_MANUFACTURING_STATION_TOAST)
     self:Close()
 end
-
-
 
 SpaceShipFriendHelpRoomCtrl.OnDataModify = HL.Method() << function(self)
     local leftHelpCount, beHelpedCount = GameInstance.player.spaceship:GetCabinAssistedTime(self.m_roomId)
@@ -297,9 +231,6 @@ SpaceShipFriendHelpRoomCtrl.OnDataModify = HL.Method() << function(self)
         self:Close()
     end
 end
-
-
-
 
 SpaceShipFriendHelpRoomCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     if DeviceInfo.usingController then

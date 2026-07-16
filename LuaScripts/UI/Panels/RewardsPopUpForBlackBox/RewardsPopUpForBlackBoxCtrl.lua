@@ -4,29 +4,7 @@ local PANEL_ID = PanelId.RewardsPopUpForBlackBox
 
 local RewardSourceType = CS.Beyond.GEnums.RewardSourceType
 local SystemActionConflictId = "BlackboxObtainReward"
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 RewardsPopUpForBlackBoxCtrl = HL.Class('RewardsPopUpForBlackBoxCtrl', uiCtrl.UICtrl)
-
-
 
 RewardsPopUpForBlackBoxCtrl.OnShowBlackboxResult = HL.StaticMethod(HL.Any) << function(args)
     UIManager:AutoOpen(PANEL_ID, args)
@@ -40,40 +18,27 @@ end
 
 
 
-
 RewardsPopUpForBlackBoxCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
 RewardsPopUpForBlackBoxCtrl.m_isAnimationIn = HL.Field(HL.Boolean) << false
-
 
 RewardsPopUpForBlackBoxCtrl.m_leaveTick = HL.Field(HL.Number) << -1
 
-
 RewardsPopUpForBlackBoxCtrl.m_dungeonId = HL.Field(HL.String) << ""
-
 
 RewardsPopUpForBlackBoxCtrl.m_leaveTimestamp = HL.Field(HL.Number) << -1
 
-
 RewardsPopUpForBlackBoxCtrl.m_isFail = HL.Field(HL.Boolean) << false
-
 
 RewardsPopUpForBlackBoxCtrl.m_failReason = HL.Field(HL.String) << ""
 
-
 RewardsPopUpForBlackBoxCtrl.m_items = HL.Field(HL.Table)
-
 
 RewardsPopUpForBlackBoxCtrl.m_getItemCells = HL.Field(HL.Function)
 
-
 RewardsPopUpForBlackBoxCtrl.m_failPointCells = HL.Field(HL.Forward("UIListCache"))
-
-
-
 
 
 RewardsPopUpForBlackBoxCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -117,20 +82,14 @@ RewardsPopUpForBlackBoxCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg
     self:UpdateContent()
 end
 
-
-
 RewardsPopUpForBlackBoxCtrl.OnShow = HL.Override() << function(self)
     Notify(MessageConst.ON_ENTER_BLOCKED_REWARD_POP_UP_PANEL)
     self.view.focusItemKeyHint.gameObject:SetActive(false)
 end
 
-
-
 RewardsPopUpForBlackBoxCtrl.OnHide = HL.Override() << function(self)
     Notify(MessageConst.ON_EXIT_BLOCKED_REWARD_POP_UP_PANEL)
 end
-
-
 
 RewardsPopUpForBlackBoxCtrl.OnClose = HL.Override() << function(self)
     if self.m_leaveTick then
@@ -140,8 +99,6 @@ RewardsPopUpForBlackBoxCtrl.OnClose = HL.Override() << function(self)
     self.animationWrapper:ClearTween(false)
     Notify(MessageConst.ON_EXIT_BLOCKED_REWARD_POP_UP_PANEL)
 end
-
-
 
 RewardsPopUpForBlackBoxCtrl.UpdateContent = HL.Method() << function(self)
     self.view.restartDungeonBtn.gameObject:SetActive(self.m_isFail)
@@ -243,10 +200,6 @@ RewardsPopUpForBlackBoxCtrl.UpdateContent = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 RewardsPopUpForBlackBoxCtrl._OnUpdateCell = HL.Method(HL.Forward("Item"), HL.Number) << function(self, cell, index)
     local itemBundle = self.m_items[index]
     cell.gameObject.name = itemBundle.id
@@ -256,16 +209,12 @@ RewardsPopUpForBlackBoxCtrl._OnUpdateCell = HL.Method(HL.Forward("Item"), HL.Num
 end
 
 
-
-
 RewardsPopUpForBlackBoxCtrl._OnClickRestartDungeonBtn = HL.Method() << function(self)
     self:PlayAnimationOutWithCallback(function()
         GameInstance.dungeonManager.curDungeonLikeSubGame:SendReStart(true)
         self:Close()
     end)
 end
-
-
 
 RewardsPopUpForBlackBoxCtrl._OnLeaveDungeonBtnClick = HL.Method() << function(self)
     

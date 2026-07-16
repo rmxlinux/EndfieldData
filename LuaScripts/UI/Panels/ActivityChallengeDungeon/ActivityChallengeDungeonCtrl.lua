@@ -2,17 +2,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.ActivityChallengeDungeon
 
-
-
-
-
-
-
-
-
-
 ActivityChallengeDungeonCtrl = HL.Class('ActivityChallengeDungeonCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -24,17 +14,11 @@ ActivityChallengeDungeonCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 
-
 ActivityChallengeDungeonCtrl.m_activityId = HL.Field(HL.String) << ''
-
 
 ActivityChallengeDungeonCtrl.m_info = HL.Field(HL.Table)
 
-
 ActivityChallengeDungeonCtrl.m_bgGo = HL.Field(HL.Any)
-
-
-
 
 
 
@@ -50,9 +34,6 @@ end
 
 
 
-
-
-
 ActivityChallengeDungeonCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
     self.m_activityId = arg.activityId
     self.m_info = {
@@ -62,8 +43,6 @@ ActivityChallengeDungeonCtrl._InitData = HL.Method(HL.Any) << function(self, arg
         seriesBg = "",
     }
 end
-
-
 
 ActivityChallengeDungeonCtrl._UpdateData = HL.Method() << function(self)
     
@@ -119,8 +98,6 @@ ActivityChallengeDungeonCtrl._UpdateData = HL.Method() << function(self)
     local seriesName = activitySeriesCfg.seriesMap[seriesCfgList[1].seriesId].name
     self.view.regionTxt.text = string.format(Language.LUA_ACTIVITY_CHALLENGE_DUNGEON_SERIES_TEXT, seriesName)
 end
-
-
 
 
 

@@ -1,62 +1,7 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local BannerWidget = require_ex('UI/Panels/Watch/BannerWidget')
 local PANEL_ID = PanelId.Watch
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 WatchCtrl = HL.Class('WatchCtrl', uiCtrl.UICtrl)
-
 
 
 
@@ -92,15 +37,16 @@ local BTN_CONST = {
         CHAR_FORMATION = 32,
         WIKI = 41,
         VALUABLE_INVENTORY = 42,
-        ACHIEVEMENT = 51,
+        STAR_SHOP = 51,
         NARRATE = 52,
         INVENTORY = 61,
-        MISSION = 62,
+        ACHIEVEMENT = 62,
         GEM_ENHANCE = 71,
-        SNS = 72,
+        MISSION = 72,
         MAP = 81,
-        GAME_TOOL = 82,
+        SNS = 82,
         QUESTIONNAIRE = 91,
+        GAME_TOOL = 92,
     },
     CENTER = {
         SETTING = 201,
@@ -118,13 +64,9 @@ for _, key in pairs(BTN_CONST.RIGHT) do
 end
 table.sort(RIGHT_BTN_ORDER)
 
-
 WatchCtrl.m_btnData = HL.Field(HL.Table)
 
-
 WatchCtrl.m_banner = HL.Field(HL.Forward("BannerWidget"))
-
-
 
 WatchCtrl.BuildData = HL.Method() << function(self)
     if self.m_btnData == nil then
@@ -224,10 +166,11 @@ WatchCtrl.BuildData = HL.Method() << function(self)
             needShowRedDot = true,
             column = 4,
         },
-        [BTN_CONST.RIGHT.ACHIEVEMENT] = {
-            view = self.view.achievementBtn,
-            phaseId = PhaseId.AchievementMain,
+        [BTN_CONST.RIGHT.STAR_SHOP] = {
+            view = self.view.starShopBtnShadow,
+            phaseId = PhaseId.ShopStar,
             needRefreshUnlock = true,
+            needShowRedDot = true,
             column = 5,
         },
         [BTN_CONST.RIGHT.NARRATE] = {
@@ -254,6 +197,12 @@ WatchCtrl.BuildData = HL.Method() << function(self)
             openPhaseArg = {
                 useBlackMask = true,
             },
+            column = 7,
+        },
+        [BTN_CONST.RIGHT.ACHIEVEMENT] = {
+            view = self.view.achievementBtn,
+            phaseId = PhaseId.AchievementMain,
+            needRefreshUnlock = true,
             column = 6,
         },
         [BTN_CONST.RIGHT.GEM_ENHANCE] = {
@@ -267,7 +216,7 @@ WatchCtrl.BuildData = HL.Method() << function(self)
             phaseId = PhaseId.SNS,
             needRefreshUnlock = true,
             needShowRedDot = true,
-            column = 7,
+            column = 8,
         },
         [BTN_CONST.RIGHT.MAP] = {
             view = self.view.buttonMap,
@@ -283,7 +232,7 @@ WatchCtrl.BuildData = HL.Method() << function(self)
                 CS.Beyond.SDK.SDKUtils.OpenHGWebPortalSDK("sk_toolkit", "", nil)
                 EventLogManagerInst:GameEvent_GameToolClick()
             end,
-            column = 8,
+            column = 9,
             needHide = GameInstance.player.gameSettingSystem.forbiddenGameTool or CS.Beyond.SDK.SDKConsts.IsBilibiliVersion()
         },
         [BTN_CONST.RIGHT.QUESTIONNAIRE] = {
@@ -326,9 +275,6 @@ WatchCtrl.BuildData = HL.Method() << function(self)
     }
 end
 
-
-
-
 WatchCtrl.GenClickCallBack = HL.Method(HL.Int).Return(HL.Function) << function(self, key)
     if self.m_btnData == nil then
         return nil
@@ -356,8 +302,6 @@ WatchCtrl.GenClickCallBack = HL.Method(HL.Int).Return(HL.Function) << function(s
     end
 end
 
-
-
 WatchCtrl.InitWatchNodes = HL.Method() << function(self)
     self:BuildData()
 
@@ -376,22 +320,15 @@ WatchCtrl.InitWatchNodes = HL.Method() << function(self)
     self:_InitController()
 end
 
-
 WatchCtrl.m_rightGroups = HL.Field(HL.Table)
-
 
 WatchCtrl.m_rightGroupHeight = HL.Field(HL.Number) << 0
 
-
 WatchCtrl.m_rightGroupSpacing = HL.Field(HL.Number) << 0
-
 
 WatchCtrl.m_rightContentOriginalHeight = HL.Field(HL.Number) << 0
 
-
 WatchCtrl.m_rightListVisibleLength = HL.Field(HL.Number) << 1
-
-
 
 WatchCtrl._SnapshotRightList = HL.Method() << function(self)
     local rightList = self.view.rightList
@@ -417,8 +354,6 @@ WatchCtrl._SnapshotRightList = HL.Method() << function(self)
 
     self.m_rightListVisibleLength = self.view.scrollViewRectTransform.rect.height / self.m_rightGroupSpacing
 end
-
-
 
 WatchCtrl._RelayoutRightList = HL.Method() << function(self)
     local groups = self.m_rightGroups
@@ -476,9 +411,6 @@ WatchCtrl._RelayoutRightList = HL.Method() << function(self)
     self:_RebuildRightListNavigation(btnGrid)
 end
 
-
-
-
 WatchCtrl._RebuildRightListNavigation = HL.Method(HL.Table) << function(self, btnGrid)
     local rowCount = self.m_rightListLength
     for row = 1, rowCount do
@@ -522,8 +454,6 @@ WatchCtrl._RebuildRightListNavigation = HL.Method(HL.Table) << function(self, bt
         end
     end
 end
-
-
 
 WatchCtrl._RefreshBtnLockState = HL.Method() << function(self)
     local inSafeZone = Utils.isInSafeZone()
@@ -581,19 +511,13 @@ WatchCtrl._RefreshBtnLockState = HL.Method() << function(self)
     end
 end
 
-
-
 WatchCtrl.OnFriendBusinessInfoChange = HL.Method() << function(self)
     self:_InitAvatarTheme()
 end
 
-
 WatchCtrl.m_playerInfo = HL.Field(HL.Any)
 
-
 WatchCtrl.m_playerInfoNode = HL.Field(HL.Any)
-
-
 
 WatchCtrl._InitAvatarTheme = HL.Method() << function(self)
     local success , friendInfo = GameInstance.player.friendSystem:TryGetFriendInfo(GameInstance.player.roleId)
@@ -620,8 +544,6 @@ WatchCtrl._InitAvatarTheme = HL.Method() << function(self)
     end
 end
 
-
-
 WatchCtrl._InitController = HL.Method() << function(self)
     if DeviceInfo.usingController then
         self:_InitTopLayerListeners()
@@ -632,10 +554,10 @@ WatchCtrl._InitController = HL.Method() << function(self)
 
         
         self:BindInputPlayerAction("watch_change_left", function()
-            UIUtils.setAsNaviTarget(self.view.buttonCharInfo.btn)
+            self:SetNaviTarget(self.view.buttonCharInfo.btn)
         end, self.view.inputGroup.groupId)
         self:BindInputPlayerAction("watch_change_right", function()
-            UIUtils.setAsNaviTarget(self.view.adventureBookNode.btn)
+            self:SetNaviTarget(self.view.adventureBookNode.btn)
         end, self.view.inputGroup.groupId)
 
         
@@ -683,10 +605,7 @@ WatchCtrl._InitController = HL.Method() << function(self)
 
         
         self.view.bannerList.onClick:AddListener(function()
-            local info = self.m_banner:GetInfo()
-            if not string.isEmpty(info.jumpId) and Utils.canJumpToSystem(info.jumpId) then
-                Utils.jumpToSystem(info.jumpId)
-            end
+            self.m_banner:JumpOut()
         end)
 
         
@@ -698,17 +617,13 @@ WatchCtrl._InitController = HL.Method() << function(self)
         self:_SetActiveControllerPanel(true)
 
         
-        UIUtils.setAsNaviTarget(self.cacheNaviTarget and self.cacheNaviTarget or self.view.buttonCharInfo.btn)
+        self:SetNaviTarget(self.cacheNaviTarget and self.cacheNaviTarget or self.view.buttonCharInfo.btn)
     end
 end
 
-
 WatchCtrl.m_rightListLength = HL.Field(HL.Number) << 0
 
-
 WatchCtrl.m_tween = HL.Field(HL.Any)
-
-
 
 WatchCtrl._InitSpecialRoll = HL.Method() << function(self)
     self.view.scrollViewScrollRect.verticalNormalizedPosition = 1
@@ -730,9 +645,6 @@ WatchCtrl._InitSpecialRoll = HL.Method() << function(self)
     end
 end
 
-
-
-
 WatchCtrl._GetRollUpPosition = HL.Method(HL.Number).Return(HL.Number) << function(self, column)
     local position = (column - 1) / (self.m_rightListLength - self.m_rightListVisibleLength)
     
@@ -741,10 +653,10 @@ WatchCtrl._GetRollUpPosition = HL.Method(HL.Number).Return(HL.Number) << functio
     return normalizedPosition
 end
 
-
-
-
 WatchCtrl._RollTo = HL.Method(HL.Number) << function(self, column)
+    if self.m_isClosed then
+        return
+    end
     local targetPosition
     if column <= self.m_rightListLength / 2 then
         targetPosition = 1 - self:_GetRollUpPosition(column)
@@ -769,13 +681,9 @@ end
 
 
 
-
 WatchCtrl.m_regionMapSetting = HL.Field(HL.Userdata)
 
-
 WatchCtrl.m_domainMapNode = HL.Field(HL.Any)
-
-
 
 WatchCtrl._OpenMap = HL.Method() << function(self)
     if Utils.isInSpaceShip() then
@@ -784,8 +692,6 @@ WatchCtrl._OpenMap = HL.Method() << function(self)
     end
     PhaseManager:OpenPhase(PhaseId.RegionMap)
 end
-
-
 
 WatchCtrl._InitDomain = HL.Method() << function(self)
     if self.m_domainMapNode ~= nil then
@@ -821,8 +727,6 @@ WatchCtrl._InitDomain = HL.Method() << function(self)
     self.m_regionMapSetting = regionMapSetting
 end
 
-
-
 WatchCtrl._RefreshDomain = HL.Method() << function(self)
     if self.m_regionMapSetting == nil then
         return
@@ -849,9 +753,6 @@ end
 
 
 local RIGHT_LIFT_RED_DOT_CHECK_TIME = 0.3
-
-
-
 
 
 WatchCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -958,35 +859,29 @@ WatchCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-local RIGHT_LIST_ROLL_FINE_TUNE_VALUE = 0.01
-
-
-
 WatchCtrl._RefreshRightListRedDots = HL.Method() << function(self)
     local upRedDots = {}
     local downRedDots = {}
-    local viewArea = 1 - self.view.scrollViewRectTransform.rect.height / self.view.scrollViewContent.rect.height
+    local viewport = self.view.scrollViewRectTransform
+    local viewRect = viewport.rect
 
     for _,index in pairs(BTN_CONST.RIGHT) do
         local config = self.m_btnData[index]
         local unlocked = (not config.needRefreshUnlock) or self:_CheckUnlock(config.phaseId, true)
         if unlocked and config.column and config.needShowRedDot and config.view.redDot then
-            local now = 1 - self.view.scrollViewScrollRect.verticalNormalizedPosition
-            local minView = (1 - viewArea) * now
-            local maxView = minView + viewArea
-            local target = CSIndex(config.column) / CSIndex(self.m_rightListLength) + RIGHT_LIST_ROLL_FINE_TUNE_VALUE
-            local targetInView = target >= minView and target < maxView + 1 / self.m_rightListLength
             local redDotName
             if config.redDotName then
                 redDotName = config.redDotName
             elseif config.phaseId then
                 redDotName = PhaseManager:GetPhaseRedDotName(config.phaseId)
             end
-            if not string.isEmpty(redDotName) and not targetInView then
-                if config.column <= self.m_rightListLength/2 then
-                    table.insert(upRedDots,redDotName)
-                else
-                    table.insert(downRedDots,redDotName)
+            if not string.isEmpty(redDotName) then
+                
+                local localPos = viewport:InverseTransformPoint(config.view.redDot.transform.position)
+                if localPos.y > viewRect.yMax then
+                    table.insert(upRedDots, redDotName)
+                elseif localPos.y < viewRect.yMin then
+                    table.insert(downRedDots, redDotName)
                 end
             end
         end
@@ -995,16 +890,17 @@ WatchCtrl._RefreshRightListRedDots = HL.Method() << function(self)
     self.view.rightMoreUpRedDot:InitRedDot("WatchBtnList",upRedDots)
 end
 
-
-
 WatchCtrl.OnClose = HL.Override() << function(self)
     self:_KillTween()
     self:_SetActiveControllerPanel(false)
     self:_ClearCameraCfg()
-    self.m_banner:OnDestroy()
+    if self.m_banner then
+        self.m_banner:OnDestroy()
+    end
+    if self.m_playerInfo ~= nil then
+        self.m_playerInfo:OnDestroy()
+    end
 end
-
-
 
 WatchCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     if self.m_domainMapNode == nil and self.m_regionMapSetting == nil then
@@ -1020,9 +916,6 @@ WatchCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) <<
     return state
 end
 
-
-
-
 WatchCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function(self, state)
     if not state then
         return
@@ -1032,15 +925,10 @@ WatchCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function
     self.m_regionMapSetting = state.regionMapSetting
 end
 
-
-
 WatchCtrl._SetCameraCfg = HL.Method() << function(self)
     CameraManager:SetUICameraPostProcess(true)
     CameraManager:AddUICamCullingMaskConfig("Watch", UIConst.LAYERS.UIPP)
-    UIManager:ChangeHideCameraPanelState(self.panelId, UIConst.HIDE_CAMERA_PANEL_STATE.In) 
 end
-
-
 
 WatchCtrl._ClearCameraCfg = HL.Method() << function(self)
     CameraManager:SetUICameraPostProcess(false)
@@ -1050,10 +938,6 @@ WatchCtrl._ClearCameraCfg = HL.Method() << function(self)
     end
 end
 
-
-
-
-
 WatchCtrl._CheckUnlock = HL.Method(HL.Number, HL.Opt(HL.Any)).Return(HL.Boolean) << function(self, phaseId, silent)
     local unlock = PhaseManager:IsPhaseUnlocked(phaseId)
     if (not unlock) and (silent ~= true) then
@@ -1061,8 +945,6 @@ WatchCtrl._CheckUnlock = HL.Method(HL.Number, HL.Opt(HL.Any)).Return(HL.Boolean)
     end
     return unlock
 end
-
-
 
 WatchCtrl._InitShowInfo = HL.Method() << function(self)
 
@@ -1076,15 +958,9 @@ WatchCtrl._InitShowInfo = HL.Method() << function(self)
     self.view.reportNode.forbidIcon.gameObject:SetActiveIfNecessary(false)
 end
 
-
-
-
 WatchCtrl.OnWalletChanged = HL.Method(HL.Table) << function(self, args)
     self:RefreshCurrency()
 end
-
-
-
 
 WatchCtrl._OnSystemUnlock = HL.Method(HL.Table) << function(self, arg)
     local systemIndex = unpack(arg)
@@ -1093,9 +969,6 @@ WatchCtrl._OnSystemUnlock = HL.Method(HL.Table) << function(self, arg)
     end
 end
 
-
-
-
 WatchCtrl.RefreshCurrency = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     local originiumId = Tables.globalConst.originiumItemId
     local diamondId = Tables.globalConst.diamondItemId
@@ -1103,20 +976,13 @@ WatchCtrl.RefreshCurrency = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     self.view.textMoney2.text = tonumber(GameInstance.player.inventory:GetItemCount(Utils.getCurrentScope(), Utils.getCurrentChapterId(), diamondId))
 end
 
-
-
-
 WatchCtrl.RefreshWorldLevel = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     self.view.exploreCell:InitWorldLevelCell()
 end
 
-
 WatchCtrl.cacheNaviTarget = HL.Field(HL.Any)
 
-
 WatchCtrl.m_topLayer = HL.Field(HL.Any)
-
-
 
 WatchCtrl._InitTopLayerListeners = HL.Method() << function(self)
     self.m_topLayer = self.view.selectableNaviGroup
@@ -1137,16 +1003,12 @@ WatchCtrl._InitTopLayerListeners = HL.Method() << function(self)
     end)
 end
 
-
-
 WatchCtrl._KillTween = HL.Method() << function(self)
     if self.m_tween then
         self.m_tween:Kill()
     end
     self.m_tween = nil
 end
-
-
 
 WatchCtrl.OnHide = HL.Override() << function(self)
     self:_KillTween()
@@ -1155,26 +1017,25 @@ WatchCtrl.OnHide = HL.Override() << function(self)
     self:_SetVisibilityControllerPanel(false)
     
     self.view.animationWrapper.autoPlay = false
+
+    if self.m_playerInfo ~= nil then
+        self.m_playerInfo:OnHide()
+    end
 end
-
-
-
 
 WatchCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     if active then
         if DeviceInfo.usingController then
-            UIUtils.setAsNaviTarget(self.cacheNaviTarget and self.cacheNaviTarget or self.view.buttonCharInfo.btn)
+            self:SetNaviTarget(self.cacheNaviTarget and self.cacheNaviTarget or self.view.buttonCharInfo.btn)
             self.view.scrollViewScrollRect.verticalNormalizedPosition = self.cacheNaviTarget and self.view.scrollViewScrollRect.verticalNormalizedPosition or 1
         end
     else
-        UIUtils.setAsNaviTarget(nil)
+        self:SetNaviTarget(nil)
         if DeviceInfo.usingController and self.m_topLayer then
             self.cacheNaviTarget = self.m_topLayer.LayerSelectedTarget
         end
     end
 end
-
-
 
 
 WatchCtrl.OnShow = HL.Override() << function(self)
@@ -1187,11 +1048,7 @@ WatchCtrl.OnShow = HL.Override() << function(self)
     self.view.animationWrapper.autoPlay = true
 end
 
-
 WatchCtrl.m_controllerHintPanel = HL.Field(HL.Any)
-
-
-
 
 WatchCtrl._SetActiveControllerPanel = HL.Method(HL.Boolean) << function(self, active)
     if not DeviceInfo.usingController then
@@ -1205,9 +1062,6 @@ WatchCtrl._SetActiveControllerPanel = HL.Method(HL.Boolean) << function(self, ac
     end
 end
 
-
-
-
 WatchCtrl._SetVisibilityControllerPanel = HL.Method(HL.Boolean) << function(self, active)
     if not DeviceInfo.usingController or self.m_controllerHintPanel == nil then
         return
@@ -1219,12 +1073,8 @@ WatchCtrl._SetVisibilityControllerPanel = HL.Method(HL.Boolean) << function(self
     end
 end
 
-
-
 WatchCtrl._OnPlayAnimationOut = HL.Override() << function(self)
 end
-
-
 
 WatchCtrl.OnAnimationInFinished = HL.Override() << function(self)
 end

@@ -35,117 +35,28 @@ local BTN_FOLD_ANIM_UNFOLD = "tasktrackhud_btnfold_unfold"
 
 local STAGE_TEXT_FORMAT = "%d/%d"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 CommonTaskTrackHudCtrl = HL.Class('CommonTaskTrackHudCtrl', uiCtrl.UICtrl)
-
 
 
 CommonTaskTrackHudCtrl.m_mainGoalCellCache = HL.Field(HL.Forward("UIListCache"))
 
-
 CommonTaskTrackHudCtrl.m_extraGoalCellCache = HL.Field(HL.Forward("UIListCache"))
-
 
 CommonTaskTrackHudCtrl.m_curPhase = HL.Field(HL.Number) << Phase.Normal
 
-
 CommonTaskTrackHudCtrl.m_subGameId = HL.Field(HL.String) << ""
-
 
 CommonTaskTrackHudCtrl.m_isShowCustomTask = HL.Field(HL.Boolean) << false
 
-
 CommonTaskTrackHudCtrl.m_originalAnchoredPos = HL.Field(Vector2)
 
-
 CommonTaskTrackHudCtrl.m_quitBtnVisible = HL.Field(HL.Boolean) << false
-
 
 CommonTaskTrackHudCtrl.m_resetBtnVisible = HL.Field(HL.Boolean) << false
 
 
 
-
 CommonTaskTrackHudCtrl.m_contentShowingCor = HL.Field(HL.Thread)
-
 
 CommonTaskTrackHudCtrl.taskGoalShowing = HL.Field(HL.Boolean) << false
 
@@ -153,35 +64,25 @@ CommonTaskTrackHudCtrl.taskGoalShowing = HL.Field(HL.Boolean) << false
 
 
 
-
 CommonTaskTrackHudCtrl.m_canScrollContent = HL.Field(HL.Boolean) << false
-
 
 CommonTaskTrackHudCtrl.m_showArrow = HL.Field(HL.Boolean) << true
 
-
 CommonTaskTrackHudCtrl.m_canFold = HL.Field(HL.Boolean) << false
-
 
 CommonTaskTrackHudCtrl.m_isFold = HL.Field(HL.Boolean) << true
 
-
 CommonTaskTrackHudCtrl.m_scrollState = HL.Field(HL.Number) << -1
-
 
 CommonTaskTrackHudCtrl.m_rectFoldHeight = HL.Field(HL.Number) << 0
 
-
 CommonTaskTrackHudCtrl.m_rectUnfoldHeight = HL.Field(HL.Number) << 0
-
 
 CommonTaskTrackHudCtrl.m_tween = HL.Field(HL.Any)
 
 
 
-
 CommonTaskTrackHudCtrl.m_canFoldThresholdOffsetY = HL.Field(HL.Number) << -1
-
 
 
 
@@ -199,17 +100,13 @@ CommonTaskTrackHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SUB_GAME_RESET] = "OnSubGameReset",
 
     [MessageConst.ON_HUD_BTN_VISIBLE_CHANGE] = "OnHudBtnVisibleChange",
-    [MessageConst.ON_INPUT_DEVICE_TYPE_CHANGED] = "OnInputDeviceTypeChange",
 }
-
 
 
 
 CommonTaskTrackHudCtrl.s_trackHudState = HL.StaticField(HL.Number) << TrackingHudState.None
 
-
 CommonTaskTrackHudCtrl.s_trackHudFinishState = HL.StaticField(HL.Number) << Phase.Normal
-
 
 CommonTaskTrackHudCtrl.OnSwitchLanguage = HL.StaticMethod() << function()
     if GameWorld.worldInfo.subGame == nil then
@@ -227,8 +124,6 @@ CommonTaskTrackHudCtrl.OnSwitchLanguage = HL.StaticMethod() << function()
         CommonTaskTrackHudCtrl.OnOpenSubGameTrackings({ GameWorld.worldInfo.subGame.id, Phase.Normal })
     end
 end
-
-
 
 
 
@@ -272,8 +167,6 @@ CommonTaskTrackHudCtrl.OnOpenSubGameTrackings = HL.StaticMethod(HL.Any) << funct
     end
 end
 
-
-
 CommonTaskTrackHudCtrl.OnCloseSubGameTrack = HL.StaticMethod(HL.Table) << function(args)
     local isReset = unpack(args)
     local action = function()
@@ -296,7 +189,6 @@ CommonTaskTrackHudCtrl.OnCloseSubGameTrack = HL.StaticMethod(HL.Table) << functi
         end)
     end
 end
-
 
 CommonTaskTrackHudCtrl.OnOpenLevelScriptCustomTask = HL.StaticMethod() << function()
     local doAction = function()
@@ -336,7 +228,6 @@ CommonTaskTrackHudCtrl.OnOpenLevelScriptCustomTask = HL.StaticMethod() << functi
     end
 end
 
-
 CommonTaskTrackHudCtrl.OnCloseLevelScriptCustomTask = HL.StaticMethod() << function()
     CommonTaskTrackHudCtrl.s_trackHudState = TrackingHudState.None
     LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackHud", function()
@@ -347,8 +238,6 @@ CommonTaskTrackHudCtrl.OnCloseLevelScriptCustomTask = HL.StaticMethod() << funct
         end
     end)
 end
-
-
 
 CommonTaskTrackHudCtrl.OnDeactivateCommonTaskTrackHud = HL.StaticMethod(HL.Table) << function(args)
     local ignoreCloseAnim = unpack(args)
@@ -370,9 +259,6 @@ end
 
 
 
-
-
-
 CommonTaskTrackHudCtrl.InitSubGameTrack = HL.Method(HL.Any) << function(self, args)
     local subGameId = GameWorld.worldInfo.curSubGameId
     self.m_subGameId = subGameId
@@ -389,9 +275,6 @@ CommonTaskTrackHudCtrl.InitSubGameTrack = HL.Method(HL.Any) << function(self, ar
     self:RefreshAll()
 end
 
-
-
-
 CommonTaskTrackHudCtrl.StopSubGameTrack = HL.Method(HL.Boolean) << function(self, isReset)
     self.m_subGameId = ""
     if self.m_isShowCustomTask then
@@ -401,14 +284,10 @@ CommonTaskTrackHudCtrl.StopSubGameTrack = HL.Method(HL.Boolean) << function(self
     end
 end
 
-
-
 CommonTaskTrackHudCtrl.InitCustomTaskTrack = HL.Method() << function(self)
     self.m_isShowCustomTask = true
     self:RefreshAll()
 end
-
-
 
 CommonTaskTrackHudCtrl.StopCustomTaskTrack = HL.Method() << function(self)
     self.m_isShowCustomTask = false
@@ -418,9 +297,6 @@ CommonTaskTrackHudCtrl.StopCustomTaskTrack = HL.Method() << function(self)
         CommonTaskTrackHudCtrl.OnDeactivateCommonTaskTrackHud({ true })
     end
 end
-
-
-
 
 
 CommonTaskTrackHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -448,22 +324,16 @@ CommonTaskTrackHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
-
-
 CommonTaskTrackHudCtrl.OnClose = HL.Override() << function(self)
     if self.m_contentShowingCor then
         self.m_contentShowingCor = self:_ClearCoroutine(self.m_contentShowingCor)
     end
 end
 
-
-
 CommonTaskTrackHudCtrl.OnShow = HL.Override() << function(self)
     
     self:_AdaptByDevice()
 end
-
-
 
 CommonTaskTrackHudCtrl.RefreshAll = HL.Method() << function(self)
     if self.m_isShowCustomTask then
@@ -484,8 +354,6 @@ CommonTaskTrackHudCtrl.RefreshAll = HL.Method() << function(self)
 
     self:_AdaptByDevice()
 end
-
-
 
 CommonTaskTrackHudCtrl._AdaptByDevice = HL.Method() << function(self)
     self:_AdaptWidth()
@@ -532,9 +400,6 @@ CommonTaskTrackHudCtrl._AdaptByDevice = HL.Method() << function(self)
     self:_UpdateScrollContentWightsState(true)
 end
 
-
-
-
 CommonTaskTrackHudCtrl._UpdateScrollContentWightsState = HL.Method(HL.Boolean) << function(self, ignoreAnim)
     self.view.scrollbarNode.gameObject:SetActiveIfNecessary(not self.m_isFold and self.m_scrollState == UIConst.TRACK_HUD_SCROLL_STATE.AlwaysCanScroll)
     if ignoreAnim then
@@ -556,30 +421,44 @@ CommonTaskTrackHudCtrl._UpdateScrollContentWightsState = HL.Method(HL.Boolean) <
     end
 end
 
-
-
 CommonTaskTrackHudCtrl._AdaptWidth = HL.Method() << function(self)
     local rectName = "RectTransform"
 
     
-    
-    local mainTitleRect = self.view.titleDefaultTxt:GetComponent(rectName)
-    LayoutRebuilder.ForceRebuildLayoutImmediate(mainTitleRect)
-    
-    local defaultScheduleTextWid = self.view.scheduleNode.gameObject.activeInHierarchy and 116 or 0
-
-    local finishScheduleTextRect = self.view.finishScheduleText:GetComponent(rectName)
-    LayoutRebuilder.ForceRebuildLayoutImmediate(finishScheduleTextRect)
-    local finishScheduleTextWid = finishScheduleTextRect.rect.width
-
-    local failScheduleTextRect = self.view.failScheduleText:GetComponent(rectName)
-    LayoutRebuilder.ForceRebuildLayoutImmediate(failScheduleTextRect)
-    local failScheduleTextWid = failScheduleTextRect.rect.width
-    local mainTitleWidth = mainTitleRect.anchoredPosition.x + mainTitleRect.rect.width +
-            self.view.config.SPACING_BETWEEN_TITLE_SCHEDULE + math.max(defaultScheduleTextWid, finishScheduleTextWid, failScheduleTextWid)
-
-    
     local fitterMode = CS.UnityEngine.UI.ContentSizeFitter.FitMode
+
+    
+    
+    local titleNodes = {
+        self.view.titleDefault,
+        self.view.titleFinish,
+        self.view.titleFail,
+    }
+    local titleContentRects = {
+        self.view.titleDefaultContent,
+        self.view.titleFinishContent,
+        self.view.titleFailContent,
+    }
+    local titleActiveStates = {}
+    for i, node in ipairs(titleNodes) do
+        titleActiveStates[i] = node.gameObject.activeSelf
+        node.gameObject:SetActive(true)
+    end
+
+    
+    local titleFitters = {}
+    local mainTitleWidth = 0
+    for i, titleContentRect in ipairs(titleContentRects) do
+        
+        local fitter = titleContentRect:GetComponent("ContentSizeFitter")
+        titleFitters[i] = fitter
+        fitter.horizontalFit = fitterMode.PreferredSize
+        LayoutRebuilder.ForceRebuildLayoutImmediate(titleContentRect)
+        local w = titleContentRect.rect.width
+        if w > mainTitleWidth then
+            mainTitleWidth = w
+        end
+    end
 
     
     
@@ -620,15 +499,24 @@ CommonTaskTrackHudCtrl._AdaptWidth = HL.Method() << function(self)
                                            failReasonRect.sizeDelta.y)
     end
     contentSizeFitter.horizontalFit = fitterMode.Unconstrained
+    for i, fitter in ipairs(titleFitters) do
+        fitter.horizontalFit = fitterMode.Unconstrained
+        local titleRect = titleContentRects[i]
+        local titleHeight = titleRect.rect.height
+        titleRect.sizeDelta = Vector2(perfectWidth, titleHeight)
+    end
     local contentHeight = self.view.content.rect.height
     self.view.content.sizeDelta = Vector2(perfectWidth, contentHeight)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.content)
 
     local height = self.view.panel.rect.height
     self.view.panel.sizeDelta = Vector2(perfectWidth, height)
+
+    
+    for i, node in ipairs(titleNodes) do
+        node.gameObject:SetActive(titleActiveStates[i])
+    end
 end
-
-
 
 CommonTaskTrackHudCtrl._OnBtnFoldClick = HL.Method() << function(self)
     local config = self.view.config
@@ -667,13 +555,9 @@ CommonTaskTrackHudCtrl._OnBtnFoldClick = HL.Method() << function(self)
     end)
 end
 
-
-
 CommonTaskTrackHudCtrl._GetCanScrollState = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_scrollState == UIConst.TRACK_HUD_SCROLL_STATE.AlwaysCanScroll and not self.m_isFold
 end
-
-
 
 CommonTaskTrackHudCtrl._RefreshBtnState = HL.Method() << function(self)
     self.view.btnReset.onClick:RemoveAllListeners()
@@ -701,8 +585,6 @@ CommonTaskTrackHudCtrl._RefreshBtnState = HL.Method() << function(self)
     self.view.btnNode.gameObject:SetActiveIfNecessary(getCategorySucc and not gameMechanicCategoryData.hideBtnNode and
                                                               (self.m_quitBtnVisible or self.m_resetBtnVisible))
 end
-
-
 
 CommonTaskTrackHudCtrl._RefreshSubGameTrack = HL.Method() << function(self)
     local trackingMgr = GameWorld.levelScriptTaskTrackingManager
@@ -735,8 +617,6 @@ CommonTaskTrackHudCtrl._RefreshSubGameTrack = HL.Method() << function(self)
     self:_UpdateSubGameStage()
 end
 
-
-
 CommonTaskTrackHudCtrl._RefreshCustomTaskTrack = HL.Method() << function(self)
     local trackingMgr = GameWorld.levelScriptTaskTrackingManager
     local customTask = trackingMgr.customTask
@@ -765,8 +645,6 @@ CommonTaskTrackHudCtrl._RefreshCustomTaskTrack = HL.Method() << function(self)
     self:_UpdateSubGameStage()
 end
 
-
-
 CommonTaskTrackHudCtrl._RefreshMainTask = HL.Method() << function(self)
     local trackingMgr = GameWorld.levelScriptTaskTrackingManager
     local mainTask = trackingMgr.mainTask
@@ -778,8 +656,6 @@ CommonTaskTrackHudCtrl._RefreshMainTask = HL.Method() << function(self)
     end)
 end
 
-
-
 CommonTaskTrackHudCtrl._RefreshExtraTask = HL.Method() << function(self)
     local trackingMgr = GameWorld.levelScriptTaskTrackingManager
     local extraTask = trackingMgr.extraTask
@@ -790,8 +666,6 @@ CommonTaskTrackHudCtrl._RefreshExtraTask = HL.Method() << function(self)
         cell:InitCommonTaskGoalCell(index, CS.Beyond.Gameplay.LevelScriptTaskType.Extra)
     end)
 end
-
-
 
 CommonTaskTrackHudCtrl._RefreshCustomTask = HL.Method() << function(self)
     local trackingMgr = GameWorld.levelScriptTaskTrackingManager
@@ -805,8 +679,6 @@ CommonTaskTrackHudCtrl._RefreshCustomTask = HL.Method() << function(self)
         cell:InitCommonTaskGoalCell(index, CS.Beyond.Gameplay.LevelScriptTaskType.Custom)
     end)
 end
-
-
 
 
 CommonTaskTrackHudCtrl.OnSubGameStageFinish = HL.Method() << function(self)
@@ -835,8 +707,6 @@ CommonTaskTrackHudCtrl.OnSubGameStageFinish = HL.Method() << function(self)
     end)
 end
 
-
-
 CommonTaskTrackHudCtrl.OnSubGameStageChange = HL.Method() << function(self)
     LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackStateChange", function()
         local args = { GameWorld.worldInfo.subGame.id, Phase.Normal}
@@ -847,9 +717,6 @@ CommonTaskTrackHudCtrl.OnSubGameStageChange = HL.Method() << function(self)
         Notify(MessageConst.ON_SUB_GAME_STAGE_CHANGE_FINISH)
     end)
 end
-
-
-
 
 CommonTaskTrackHudCtrl.OnTrackingTaskChange = HL.Method(HL.Any) << function(self, args)
     
@@ -869,9 +736,6 @@ CommonTaskTrackHudCtrl.OnTrackingTaskChange = HL.Method(HL.Any) << function(self
 
     self:_AdaptByDevice()
 end
-
-
-
 
 CommonTaskTrackHudCtrl.OnSubGameFinishStateChange = HL.Method(HL.Any) << function(self, args)
     local subGameId, phase = unpack(args)
@@ -912,8 +776,6 @@ CommonTaskTrackHudCtrl.OnSubGameFinishStateChange = HL.Method(HL.Any) << functio
     self.m_curPhase = phase
 end
 
-
-
 CommonTaskTrackHudCtrl._ShowEndEffect = HL.Method().Return(HL.Boolean) << function(self)
     local instSucc, gameMechanicCfg = Tables.gameMechanicTable:TryGetValue(self.m_subGameId)
     if not instSucc then
@@ -922,9 +784,6 @@ CommonTaskTrackHudCtrl._ShowEndEffect = HL.Method().Return(HL.Boolean) << functi
     local succ, gameMechanicCategory = Tables.gameMechanicCategoryTable:TryGetValue(gameMechanicCfg.gameCategory)
     return succ and not gameMechanicCategory.ignoreStageFinishAnim
 end
-
-
-
 
 CommonTaskTrackHudCtrl._DoFailContentShowing = HL.Method(HL.Number) << function(self, phase)
     self:_ToggleBtnVisible(false)
@@ -950,9 +809,6 @@ CommonTaskTrackHudCtrl._DoFailContentShowing = HL.Method(HL.Number) << function(
     end)
 end
 
-
-
-
 CommonTaskTrackHudCtrl._DoSuccContentShowing = HL.Method(HL.Number) << function(self, phase)
     self:_ToggleBtnVisible(false)
     self.m_contentShowingCor = self:_StartCoroutine( function()
@@ -976,10 +832,6 @@ CommonTaskTrackHudCtrl._DoSuccContentShowing = HL.Method(HL.Number) << function(
     end)
 end
 
-
-
-
-
 CommonTaskTrackHudCtrl._SafelyPlayAnimAsync = HL.Method(HL.Any, HL.String) << function(self, animWrapper, animName)
     if self.m_isClosed then
         return
@@ -990,14 +842,10 @@ CommonTaskTrackHudCtrl._SafelyPlayAnimAsync = HL.Method(HL.Any, HL.String) << fu
     coroutine.wait(stateTime)
 end
 
-
-
 CommonTaskTrackHudCtrl._TrackFinish = HL.Method() << function(self)
     self:Hide()
     CommonTaskTrackHudCtrl.s_trackHudState = TrackingHudState.None
 end
-
-
 
 CommonTaskTrackHudCtrl._ManuSetFailState = HL.Method() << function(self)
     
@@ -1011,9 +859,6 @@ CommonTaskTrackHudCtrl._ManuSetFailState = HL.Method() << function(self)
     end)
 end
 
-
-
-
 CommonTaskTrackHudCtrl._ToggleTitleState = HL.Method(HL.Number) << function(self, phase)
     
     if self.m_isClosed then
@@ -1023,8 +868,6 @@ CommonTaskTrackHudCtrl._ToggleTitleState = HL.Method(HL.Number) << function(self
     self.view.titleFail.gameObject:SetActive(phase == Phase.Fail)
     self.view.titleFinish.gameObject:SetActive(phase == Phase.CompleteMainGoal or phase == Phase.CompleteAllGoal)
 end
-
-
 
 CommonTaskTrackHudCtrl._UpdateSubGameStage = HL.Method() << function(self)
     local content = ""
@@ -1043,8 +886,6 @@ CommonTaskTrackHudCtrl._UpdateSubGameStage = HL.Method() << function(self)
     self.view.scheduleText:SetAndResolveTextStyle(content)
 end
 
-
-
 CommonTaskTrackHudCtrl._RefreshFailInfo = HL.Method() << function(self)
     local success, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.m_subGameId)
     local failInfo = success and subGameData.failInfo:GetText() or self.m_subGameId
@@ -1053,16 +894,11 @@ CommonTaskTrackHudCtrl._RefreshFailInfo = HL.Method() << function(self)
     self.view.failReason:SetAndResolveTextStyle(failInfo)
 end
 
-
-
-
 CommonTaskTrackHudCtrl._ProcessTitle = HL.Method(HL.String) << function(self, title)
     self.view.titleDefaultTxt:SetAndResolveTextStyle(title)
     self.view.titleFailTxt:SetAndResolveTextStyle(title)
     self.view.titleFinishTxt:SetAndResolveTextStyle(title)
 end
-
-
 
 CommonTaskTrackHudCtrl._ProcessTitleIcon = HL.Method() << function(self)
     local subGameId = GameWorld.worldInfo.curSubGameId or ""
@@ -1089,8 +925,6 @@ CommonTaskTrackHudCtrl._ProcessTitleIcon = HL.Method() << function(self)
     self.view.failIconBg.gameObject:SetActiveIfNecessary(hasIconBgName)
 end
 
-
-
 CommonTaskTrackHudCtrl._OnBtnResetClick = HL.Method() << function(self)
     local gameMechanicCfg = Tables.gameMechanicTable[self.m_subGameId]
     local succ, dungeonTypeCfg = Tables.dungeonTypeTable:TryGetValue(gameMechanicCfg.gameCategory)
@@ -1102,16 +936,11 @@ CommonTaskTrackHudCtrl._OnBtnResetClick = HL.Method() << function(self)
     end)
 end
 
-
-
 CommonTaskTrackHudCtrl._OnBtnStopClick = HL.Method() << function(self)
     self:_ShowConfirmPopup(Language.LUA_COMMON_TASK_TRACK_STOP_WORLD_CHALLENGE, function()
         GameWorld.worldInfo.subGame:SendQuit()
     end)
 end
-
-
-
 
 CommonTaskTrackHudCtrl._OnScrollValueChanged = HL.Method(Vector2) << function(self, normalizedPosition)
     if not self.m_canScrollContent then
@@ -1131,16 +960,9 @@ CommonTaskTrackHudCtrl._OnScrollValueChanged = HL.Method(Vector2) << function(se
     end
 end
 
-
-
-
 CommonTaskTrackHudCtrl._OnScrollStateChanged = HL.Method(HL.Boolean) << function(self, isStartScroll)
     self.view.maskImg.gameObject:SetActiveIfNecessary(isStartScroll)
 end
-
-
-
-
 
 CommonTaskTrackHudCtrl._ShowConfirmPopup = HL.Method(HL.String, HL.Function) << function(self, content, confirmFunc)
     if not string.isEmpty(GameInstance.player.systemActionConflictManager.curProcessingSystemAction) then
@@ -1161,9 +983,6 @@ CommonTaskTrackHudCtrl._ShowConfirmPopup = HL.Method(HL.String, HL.Function) << 
     })
 end
 
-
-
-
 CommonTaskTrackHudCtrl._LoadSubGameData = HL.Method(HL.Any).Return(HL.Boolean) << function(self, instId)
     local success, subGameData = DataManager.subGameInstDataTable:TryGetValue(instId)
     if success then
@@ -1173,23 +992,15 @@ CommonTaskTrackHudCtrl._LoadSubGameData = HL.Method(HL.Any).Return(HL.Boolean) <
     return success
 end
 
-
-
-
 CommonTaskTrackHudCtrl._ToggleBtnVisible = HL.Method(HL.Boolean) << function(self, isOn)
     self.view.btnReset.gameObject:SetActiveIfNecessary(isOn and self.m_resetBtnVisible)
     self.view.btnStop.gameObject:SetActiveIfNecessary(isOn and self.m_quitBtnVisible)
 end
 
-
-
-
 CommonTaskTrackHudCtrl.OnHudBtnVisibleChange = HL.Method(HL.Any) << function(self, arg)
     local isOn = unpack(arg)
     self:_ToggleBtnVisible(isOn)
 end
-
-
 
 CommonTaskTrackHudCtrl.OnSubGameReset = HL.Method() << function(self)
     self.m_subGameId = ""
@@ -1198,23 +1009,9 @@ CommonTaskTrackHudCtrl.OnSubGameReset = HL.Method() << function(self)
     self:ToggleResetBtnLoopHint(false)
 end
 
-
-
-
-CommonTaskTrackHudCtrl.OnInputDeviceTypeChange = HL.Method(HL.Table) << function(self, args)
-    local refs = self.view.gameObject:GetComponent("LuaReference")
-    self.view.btnReset = nil
-    self.view.btnStop = nil
-    self.view.bottomBtnNode = nil
-    self.view.btnResetFollower = nil
-    self.view.resetBtnLoopHint = nil
-    refs:BindToLua(self.view) 
+CommonTaskTrackHudCtrl.OnCustomUIStyleRefChanged = HL.Override() << function(self)
     self:_RefreshBtnState()
 end
-
-
-
-
 
 
 
@@ -1231,32 +1028,22 @@ CommonTaskTrackHudCtrl.AddPositionOffset = HL.Method(Vector2, HL.Boolean) << fun
     self.m_canFoldThresholdOffsetY = needMobileAdapter and offset.y or 0
 end
 
-
-
 CommonTaskTrackHudCtrl.ClearPositionOffset = HL.Method() << function(self)
     self.view.main.anchoredPosition = self.m_originalAnchoredPos
 end
-
-
 
 CommonTaskTrackHudCtrl.GetContentBottomFollowNode = HL.Method().Return(RectTransform) << function(self)
     return self.view.bottomFollowNode
 end
 
-
-
 CommonTaskTrackHudCtrl.GetContentTopFollowNode = HL.Method().Return(RectTransform) << function(self)
     return self.view.topFollowNode
 end
-
-
 
 CommonTaskTrackHudCtrl.GetResetBtnRect = HL.Method().Return(RectTransform) << function(self)
     
     return self.view.btnResetPosition
 end
-
-
 
 CommonTaskTrackHudCtrl.HideBottomNode = HL.Method() << function(self)
     self.view.btnNode.gameObject:SetActiveIfNecessary(false)
@@ -1266,15 +1053,10 @@ end
 
 
 
-
-
 CommonTaskTrackHudCtrl.GetResetBtnFollowerRect = HL.Method().Return(RectTransform) << function(self)
     
     return self.view.btnResetFollower
 end
-
-
-
 
 CommonTaskTrackHudCtrl.ToggleResetBtnLoopHint = HL.Method(HL.Boolean) << function(self, isOn)
     if self.view.resetBtnLoopHint then

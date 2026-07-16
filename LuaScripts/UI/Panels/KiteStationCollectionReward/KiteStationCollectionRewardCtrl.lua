@@ -1,30 +1,15 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.KiteStationCollectionReward
 
-
-
-
-
-
-
-
-
-
-
 KiteStationCollectionRewardCtrl = HL.Class('KiteStationCollectionRewardCtrl', uiCtrl.UICtrl)
-
 
 KiteStationCollectionRewardCtrl.m_insId = HL.Field(HL.String) << ""
 
-
 KiteStationCollectionRewardCtrl.m_getCellFunc = HL.Field(HL.Function)
-
 
 KiteStationCollectionRewardCtrl.m_collectionCount = HL.Field(HL.Number) << 0
 
-
 KiteStationCollectionRewardCtrl.m_collectionReward = HL.Field(HL.Number) << 0
-
 
 
 
@@ -44,15 +29,10 @@ local function _GetRewardFlag(rewardIndex)
     return 1 << rewardIndex
 end
 
-
-
 KiteStationCollectionRewardCtrl._RefreshCollectionData = HL.Method() << function(self)
     self.m_collectionCount = GameInstance.player.kiteStationSystem:GetKiteStationCollectionCount(self.m_insId)
     self.m_collectionReward = GameInstance.player.kiteStationSystem:GetKiteStationCollectionReward(self.m_insId)
 end
-
-
-
 
 KiteStationCollectionRewardCtrl._HasAnyRewardCanReceive = HL.Method(HL.Any).Return(HL.Boolean) << function(self, cfg)
     for rewardIndex = 0, cfg.rewardList.Count - 1 do
@@ -68,12 +48,9 @@ KiteStationCollectionRewardCtrl._HasAnyRewardCanReceive = HL.Method(HL.Any).Retu
 end
 
 
-
-
-
 KiteStationCollectionRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.closeButton.onClick:AddListener(function()
-        self:PlayAnimationOutAndClose()
+        self.m_phase:CloseCollectionReward()
     end)
 
     if arg and arg.insId then
@@ -173,9 +150,6 @@ KiteStationCollectionRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self,
         GameInstance.player.kiteStationSystem:SendKiteStationCollectReward(self.m_insId, cnts)
     end)
 end
-
-
-
 
 KiteStationCollectionRewardCtrl._OnCollectionReward = HL.Method(HL.Any) << function(self, pack)
     local rewardPack = unpack(pack)

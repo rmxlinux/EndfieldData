@@ -2,22 +2,14 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.FacHongsBusSource
 
-
-
-
-
-
 FacHongsBusSourceCtrl = HL.Class('FacHongsBusSourceCtrl', uiCtrl.UICtrl)
 
 local FC_NODE_TYPE_BUSFREE = 40
 local COLOR_TEXT_FORMAT = "<color=#FFF100>%s</color>/%s"
 
-
 FacHongsBusSourceCtrl.m_uiInfo = HL.Field(CS.Beyond.Gameplay.RemoteFactory.BuildingUIInfo)
 
-
 FacHongsBusSourceCtrl.m_nodeId = HL.Field(HL.Any)
-
 
 
 
@@ -26,9 +18,6 @@ FacHongsBusSourceCtrl.m_nodeId = HL.Field(HL.Any)
 FacHongsBusSourceCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
-
-
-
 
 
 FacHongsBusSourceCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -49,6 +38,8 @@ FacHongsBusSourceCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     local itemData = FactoryUtils.getBuildingItemData(self.m_uiInfo.buildingId)
     self.view.text.text = itemData.desc
+
+    self.view.buildingCommon.view.buttonsNaviGroup:NaviToThisGroup()
 end
 
 

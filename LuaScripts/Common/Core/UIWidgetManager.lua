@@ -1,22 +1,10 @@
-
-
-
-
-
 UIWidgetManager = HL.Class('UIWidgetManager')
 
-
 UIWidgetManager.m_widgetMap = HL.Field(HL.Table)
-
-
 
 UIWidgetManager.UIWidgetManager = HL.Constructor() << function(self)
     self.m_widgetMap = {}
 end
-
-
-
-
 
 UIWidgetManager._Register = HL.Method(HL.String, HL.Any) << function(self, id, widgetFile)
     if self.m_widgetMap[id] then
@@ -25,9 +13,6 @@ UIWidgetManager._Register = HL.Method(HL.String, HL.Any) << function(self, id, w
     end
     self.m_widgetMap[id] = widgetFile
 end
-
-
-
 
 
 UIWidgetManager.Wrap = HL.Method(HL.Any).Return(HL.Opt(HL.Any)) << function(self, component)

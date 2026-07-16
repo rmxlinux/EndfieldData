@@ -6,24 +6,11 @@ local UI_TEXT_CANNOT_CHANGE <const> = "ui_common_character_gender_cannot_change"
 local UI_TEXT_GENDER_CHANGE_TIME <const> = "ui_common_character_gender_change_time"
 local UI_TEXT_GENDER_CHANGE_TIPS <const> = "ui_common_character_gender_change_confirm"
 
-
-
-
-
-
-
-
-
-
-
 GenderChangeCtrl = HL.Class('GenderChangeCtrl', uiCtrl.UICtrl)
-
 
 GenderChangeCtrl.m_lastGenderSetTime = HL.Field(HL.Int) << 0
 
-
 GenderChangeCtrl.m_selectCallback = HL.Field(HL.Any)
-
 
 
 
@@ -33,14 +20,9 @@ GenderChangeCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
-
 GenderChangeCtrl.OnGenderChangeStart = HL.StaticMethod(HL.Table) << function(arg)
     PhaseManager:OpenPhase(PhaseId.GenderChange, arg)
 end
-
-
-
 
 
 GenderChangeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -85,16 +67,12 @@ GenderChangeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.confirmButton.onClick:AddListener(function() self:_OnBtnConfirmClick() end)
 end
 
-
-
 GenderChangeCtrl._OnBtnCloseClick = HL.Method() << function(self)
     if self.m_selectCallback then
         self.m_selectCallback(false)
         self.m_selectCallback = nil
     end
 end
-
-
 
 GenderChangeCtrl._OnBtnConfirmClick = HL.Method() << function(self)
     if self.m_selectCallback then
@@ -103,13 +81,9 @@ GenderChangeCtrl._OnBtnConfirmClick = HL.Method() << function(self)
     end
 end
 
-
-
 GenderChangeCtrl.OnShow = HL.Override() << function(self)
 
 end
-
-
 
 GenderChangeCtrl.OnClose = HL.Override() << function(self)
 
