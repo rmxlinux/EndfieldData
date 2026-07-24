@@ -1530,7 +1530,19 @@ PhaseLevel._OnGachaPoolAllRewardsShown = HL.Method() << function(self)
     end
     PhaseLevel.s_LoginCheckFinishedInfo.CashShopOrderSettleDeferredToGachaPool = nil
     if CashShopUtils.haveRemainOrders() then
-        CashShopUtils.tryShowRemainOrderList()
+        if GameInstance.player.guide.isInGuide then
+            local requestKey = "CashShopOrderSettleInterrupt"
+            if LuaSystemManager.mainHudActionQueue:HasRequest(requestKey) then
+                return
+            end
+            LuaSystemManager.mainHudActionQueue:AddRequest(requestKey, function(_)
+                CashShopUtils.tryShowRemainOrderList(function()
+                    Notify(MessageConst.ON_ONE_MAIN_HUD_ACTION_FINISHED, requestKey)
+                end)
+            end)
+        else
+            CashShopUtils.tryShowRemainOrderList()
+        end
     end
 end
 

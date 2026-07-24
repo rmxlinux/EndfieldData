@@ -2438,6 +2438,12 @@ MapCtrl._ControllerResetToPlayer = HL.Method() << function(self)
 
     local playerNode = self.view.levelMapController.view.levelMapLoader.view.element.player
 
+    if playerNode == nil or playerNode.rectTransform == nil then
+        self.m_isResettingToPlayer = false
+        self:_ToggleControllerMoveAndZoom(true)
+        return
+    end
+
     
     local function freezeInput()
         self:_StopTickChangZoomValue(true)
@@ -2445,13 +2451,13 @@ MapCtrl._ControllerResetToPlayer = HL.Method() << function(self)
         self.view.bigRectHelper:ClearAllTween()
         self.view.bigRectHelper.controllerMoveEnabled = false
         self.view.bigRectHelper.controllerZoomEnabled = false
+        self:_RefreshControllerClickBindingState()
     end
 
     
     local function unfreezeAndFinish()
-        self.view.bigRectHelper.controllerMoveEnabled = true
-        self.view.bigRectHelper.controllerZoomEnabled = true
         self.m_isResettingToPlayer = false
+        self:_ToggleControllerMoveAndZoom(true)
     end
 
     

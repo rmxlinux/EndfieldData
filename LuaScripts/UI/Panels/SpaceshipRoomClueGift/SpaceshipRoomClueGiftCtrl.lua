@@ -429,6 +429,19 @@ SpaceshipRoomClueGiftCtrl._EndInput = HL.Method() << function(self)
     end
     Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.textInputBindingGroup.groupId)
     self.view.friendList.view.inputField:DeactivateInputField(true)
+    local firstCell = self.view.friendList:GetClueGiftNaviToFirstCell()
+    if firstCell ~= nil then
+        self.m_inFriendListGroup = true
+        self.view.friendList.view.selectableNaviGroup:ManuallyFocus()
+    else
+        self.m_inFriendListGroup = false
+        InputManagerInst:ToggleBinding(self.friendListJumpIn, #self.m_friendList > 0)
+        InputManagerInst:ToggleBinding(self.friendListArrowJumpIn, #self.m_friendList > 0)
+        local selectedCell = self.m_clueId2ClueCell and self.m_clueId2ClueCell[self.m_selectedClueId]
+        if selectedCell then
+            self:SetNaviTarget(selectedCell.button)
+        end
+    end
 end
 
 SpaceshipRoomClueGiftCtrl._ClearInput = HL.Method() << function(self)

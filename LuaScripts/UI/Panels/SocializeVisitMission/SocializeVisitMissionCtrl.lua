@@ -84,6 +84,9 @@ SocializeVisitMissionCtrl._OnSpaceshipVisitFriend = HL.Method(HL.Opt(HL.Any)) <<
     
     keepSet[PanelId.LevelCamera] = true
     keepSet[PanelId.HeadLabel] = true
+    
+    keepSet[PanelId.SpaceshipCabinInfoDisplay] = true
+
     local toClose = {}
     for panelId, ctrl in pairs(UIManager.m_openedPanels) do
         if not keepSet[panelId] and ctrl:GetCurPanelCfg("closeWhenChangeScene") then

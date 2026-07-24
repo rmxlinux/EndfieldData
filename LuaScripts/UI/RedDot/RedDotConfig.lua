@@ -2411,6 +2411,7 @@ local Config = {
             MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE,
             MessageConst.ON_SEASON_TOWER_NEW,
             MessageConst.ON_SEASON_TOWER_ACHIEVE_UPDATE,
+            MessageConst.ON_SEASON_TOWER_RED_DOT_SET_FALSE,
         },
         sons = {
             WeekRaid = false,
@@ -3049,7 +3050,7 @@ local Config = {
             for _, activity in cs_pairs(activities) do
                 
                 local redDotName = ActivityUtils.getActivityRedDotName(activity.id)
-                if not activity.isCompleted and redDotName and RedDotManager:GetRedDotState(redDotName, activity.id) then
+                if not activity.isCompleted and not activity.placeAtBottom and redDotName and RedDotManager:GetRedDotState(redDotName, activity.id) then
                     return true
                 end
             end
@@ -4000,7 +4001,7 @@ local Config = {
                 return state, type
             end
             
-            if ActivityUtils.isNewActivityDayUnread(id) then
+            if not activity.isScratchCompleted then
                 return true, UIConst.RED_DOT_TYPE.Normal
             end
             return false

@@ -202,6 +202,8 @@ GeneralAbilityCtrl.m_delayUpdateSelectorFlag = HL.Field(HL.Boolean) << false
 
 GeneralAbilityCtrl.m_tempAnimLoopActive = HL.Field(HL.Boolean) << true
 
+GeneralAbilityCtrl.m_blockedGasOrLiquidInteract = HL.Field(HL.Boolean) << false
+
 
 
 
@@ -352,6 +354,11 @@ GeneralAbilityCtrl._OnForbidSelectChanged = HL.Method() << function(self)
 
     if not self.m_isSelectorShown then
         self.m_delayUpdateSelectorFlag = true
+    end
+
+    if self.m_blockedGasOrLiquidInteract then
+        self:_UpdateGasAndFluidInteractState()
+        self:_RefreshGasAndWaterTipShownState()
     end
 end
 
@@ -1666,7 +1673,8 @@ GeneralAbilityCtrl._UpdateGasAndFluidInteractState = HL.Method() << function(sel
     end
 
     local data = self.m_abilityDataMap[fluidType]
-    if data ~= nil and  data.isForbidSelect then
+    if data ~= nil and data.isForbidSelect then
+        self.m_blockedGasOrLiquidInteract = true
         return
     end
 

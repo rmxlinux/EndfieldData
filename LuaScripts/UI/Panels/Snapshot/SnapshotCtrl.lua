@@ -22,6 +22,7 @@ SnapshotCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CLOSE_SNAPSHOT] = '_OnMsgCloseSnapshot',
     [MessageConst.SNAPSHOT_ACTION_FORCE_RESET] = '_OnActionForceReset',
     [MessageConst.ON_BATTLE_SQUAD_CHANGED] = '_OnBattleSquadChanged',
+    [MessageConst.ON_NEW_CLIENT_TEMP_SQUAD] = '_OnBattleSquadChanged',
     [MessageConst.ON_CHARACTER_DEAD] = '_OnCharacterDead',
     [MessageConst.ON_SCREEN_SIZE_CHANGED] = '_OnScreenSizeChanged',
     [MessageConst.ON_MAIN_CHARACTER_CHANGE_MOVE_MODE] = '_OnMainCharacterChangeMoveMode',
@@ -29,6 +30,7 @@ SnapshotCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 local snapshotSystem = GameInstance.player.snapshotSystem
+xlua.private_accessible(CS.Beyond.Gameplay.SnapshotSystem)
 
 local formationManager = GameWorld.aiManager.characterPhotoSystem
 
@@ -310,6 +312,8 @@ SnapshotCtrl.m_actionPreAvatarBindingId = HL.Field(HL.Number) << -1
 
 SnapshotCtrl.m_actionNextAvatarBindingId = HL.Field(HL.Number) << -1
 
+SnapshotCtrl.m_actionPlayingEntityMap = HL.Field(HL.Table)
+
 
 
 
@@ -355,6 +359,8 @@ SnapshotCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     snapshotSystem:OpenSnapshotMode(self:_BuildMoveRotateCharConfig(), true)
     self:_InitUI()
     self:_InitData(arg)
+    self.m_actionPlayingEntityMap = {}
+    self:_RefreshPlayingActionEntityMapFromSystem()
     self:_RefreshAllUI()
     self:_ResumePanel()
     self:_AddRegisters()
@@ -399,6 +405,17 @@ SnapshotCtrl.OnClose = HL.Override() << function(self)
     self:_CloseActionVideo()
     self:_DeselectMoveChar()
     
+    local squadManager = GameInstance.player.squadManager
+    local count = squadManager.curSquad.slots.Count
+    for i = 0, count - 1 do
+        local entity = squadManager:GetMemberBySlot(i)
+        local meshAdjustCom = entity ~= nil and entity.meshAdjustCom or nil
+        local meshFollow = meshAdjustCom ~= nil and meshAdjustCom.meshFollow or nil
+        if meshFollow ~= nil then
+            meshFollow:Sync()
+        end
+    end
+    
     if self.m_editStickerCtrl then
         self.m_editStickerCtrl:Close()
         self.m_editStickerCtrl = nil
@@ -426,7 +443,7 @@ SnapshotCtrl.OnClose = HL.Override() << function(self)
         snapshotSystem.camController:ResetToInitialParam()
         self:_SwitchPersonPerspectiveMode(false, false)
         
-        snapshotSystem:ResetAllCustomActions()
+        self:_ResetAllCustomActions()
         self.view.quickMoveRotateCharNode.stateController:SetState("CloseQuickMoveRotate")
         snapshotSystem:CloseSnapshotMode(self.m_keepCamPosWhenClose)
     end
@@ -647,6 +664,12 @@ SnapshotCtrl._OnUpdate = HL.Method() << function(self)
 end
 
 SnapshotCtrl._OnLateTick = HL.Method() << function(self)
+    local mainCharacter = GameInstance.playerController.mainCharacter
+    if mainCharacter ~= nil and mainCharacter:HasTag(CS.Beyond.Gameplay.PredefinedTag.InDeathWater) then
+        self:_CloseSelf()
+        return
+    end
+
     
     if IsNull(CameraManager.curActiveController) then
         if IsNull(CameraManager.cinemachineBrainCpt) then
@@ -663,6 +686,11 @@ SnapshotCtrl._OnLateTick = HL.Method() << function(self)
         self:_CloseSelf(false, true)
     end
     
+
+    
+    if self:_IsAnySquadMemberAIScripted() then
+        self:_CloseSelf()
+    end
 end
 
 
@@ -2742,7 +2770,7 @@ SnapshotCtrl._ShowChangeCustomFormationToNoneConfirm = HL.Method() << function(s
 end
 
 SnapshotCtrl._ResetAllCustomActionsAndRefreshActionUI = HL.Method() << function(self)
-    snapshotSystem:ResetAllCustomActions()
+    self:_ResetAllCustomActions()
     if self.m_isInitRefreshActionUI then
         self:_OnActionForceReset()
     end
@@ -3493,7 +3521,6 @@ SnapshotCtrl._UpdateSquadCharList = HL.Method() << function(self)
     end
 end
 
-
 SnapshotCtrl._GetMainControlSquadAvatarIndex = HL.Method().Return(HL.Number) << function(self)
     local squadManager = GameInstance.player.squadManager
     local mainCharSlotIndex = squadManager:GetMemberIndex(GameInstance.playerController.mainCharacter)
@@ -3672,7 +3699,7 @@ SnapshotCtrl._OnSelectAction = HL.Method(HL.Number) << function(self, luaIndex)
     end
 
     if info.isEmpty then
-        snapshotSystem:StopAction(slotIndex)
+        self:_StopAction(slotIndex)
     elseif info.isUnlock then
         
         local reasonKey = self:_GetActionUnselectableReasonKey(slotIndex)
@@ -3685,7 +3712,7 @@ SnapshotCtrl._OnSelectAction = HL.Method(HL.Number) << function(self, luaIndex)
                 self:_OnSelectAction(1)
                 return
             end
-            local playResult = snapshotSystem:PlayAction(slotIndex, info.actionId)
+            local playResult = self:_PlayAction(slotIndex, info.actionId)
             self:_StopActionProgressUpdate()
             if playResult == 0 and not info.isStatic then
                 self:_StartActionProgressUpdate()
@@ -3725,10 +3752,44 @@ SnapshotCtrl._OnClickActionPlayBtn = HL.Method() << function(self)
         self:_OnSelectAction(self.m_curSelectActionIndex)
     elseif snapshotSystem:IsActionPaused(slotIndex) then
         snapshotSystem:ResumeAction(slotIndex)
+        
+        self:_SyncMeshFollowBySlotIndex(slotIndex, true)
         self:_RefreshActionPlayButton()
     else
         snapshotSystem:PauseAction(slotIndex)
+        
+        if snapshotSystem:IsActionPaused(slotIndex) then
+            self:_RefreshPausedActionTimeScaleModifier(slotIndex)
+        end
         self:_RefreshActionPlayButton()
+    end
+end
+
+SnapshotCtrl._RefreshPausedActionTimeScaleModifier = HL.Method(HL.Number) << function(self, slotIndex)
+    local slotPlayStates = snapshotSystem.m_slotPlayStates
+    if slotPlayStates == nil then
+        return
+    end
+
+    local hasState, state = slotPlayStates:TryGetValue(slotIndex)
+    if not hasState or state == nil then
+        return
+    end
+
+    local entity = self:_GetActionEntityBySlotIndex(slotIndex)
+    local tickOwnerInfoGroup = entity and entity.tickOwnerInfoGroup or nil
+    if tickOwnerInfoGroup == nil then
+        return
+    end
+
+    if state.timeScaleModifierHandle ~= 0 then
+        tickOwnerInfoGroup:RemoveSelfTimeScaleModifier(state.timeScaleModifierHandle)
+        state.timeScaleModifierHandle = 0
+    end
+
+    state.timeScaleModifierHandle = tickOwnerInfoGroup:AddSelfTimeScaleModifier(CS.Beyond.MathUtils.LARGE_EPS + 1e-10)
+    if GameWorld.charInteractPerformManager ~= nil then
+        GameWorld.charInteractPerformManager:SetHandTimeScale(entity, CS.Beyond.MathUtils.LARGE_EPS + 1e-10)
     end
 end
 
@@ -3989,7 +4050,7 @@ SnapshotCtrl._OnMainCharacterChangeMoveMode = HL.Method(HL.Any) << function(self
         return
     end
 
-    snapshotSystem:StopAction(mainCharSlotIndex)
+    self:_StopAction(mainCharSlotIndex)
     self:_OnMainControlActionInterrupted(mainCharSlotIndex)
     local charCfg = Tables.characterTable[mainCharacter.templateData.id]
     Notify(MessageConst.SHOW_TOAST, string.format(Language.LUA_SNAPSHOT_ACTION_RESET_BY_MOVE_TOAST, charCfg.name))
@@ -4601,7 +4662,7 @@ SnapshotCtrl._OnBattleSquadChanged = HL.Method(HL.Opt(HL.Any)) << function(self,
     
     self:_UpdateSquadCharList()
     
-    snapshotSystem:ResetAllCustomActions()
+    self:_ResetAllCustomActions()
     
     self:_DeselectMoveChar()
     self:_RefreshAvatarSelectableChanged(true)
@@ -4618,6 +4679,23 @@ SnapshotCtrl._IsCharHiddenByShowMode = HL.Method(HL.Number).Return(HL.Boolean) <
         return not cfg.showLeader
     end
     return not cfg.showTeamMate
+end
+
+
+SnapshotCtrl._IsAnySquadMemberAIScripted = HL.Method().Return(HL.Boolean) << function(self)
+    local members = GameInstance.player.squadManager.squadMembers
+    if members == nil then
+        return false
+    end
+    local scriptedMode = CS.Beyond.Gameplay.AI.CharacterAIModeType.Scripted
+    for i = 0, members.Count - 1 do
+        local entity = members[i]
+        local aiBrain = entity and entity.charAICom and entity.charAICom.aiBrain
+        if aiBrain ~= nil and aiBrain:IsInMode(scriptedMode) then
+            return true
+        end
+    end
+    return false
 end
 
 
@@ -5265,6 +5343,135 @@ SnapshotCtrl._ResumePanel = HL.Method() << function(self)
     self.m_arg.resumeState = nil 
 end
 
+
+
+
+
+
+SnapshotCtrl._SyncMeshFollowBySlotIndex = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, slotIndex, syncPos)
+    local squadManager = GameInstance.player.squadManager
+    local entity = squadManager:GetMemberBySlot(slotIndex)
+    local meshAdjustCom = entity ~= nil and entity.meshAdjustCom or nil
+    local meshFollow = meshAdjustCom ~= nil and meshAdjustCom.meshFollow or nil
+    if meshFollow ~= nil then
+        meshFollow:Sync(syncPos == true)
+    end
+end
+
+SnapshotCtrl._PlayAction = HL.Method(HL.Number, HL.String).Return(HL.Number) << function(self, slotIndex, actionId)
+    
+    self:_SyncMeshFollowBySlotIndex(slotIndex, true)
+    local playResult = snapshotSystem:PlayAction(slotIndex, actionId)
+    if self.m_actionPlayingEntityMap == nil then
+        self.m_actionPlayingEntityMap = {}
+    end
+    if playResult == 0 then
+        self.m_actionPlayingEntityMap[slotIndex] = self:_GetActionEntityBySlotIndex(slotIndex)
+    elseif not snapshotSystem:IsPlayingAction(slotIndex) then
+        self.m_actionPlayingEntityMap[slotIndex] = nil
+    end
+    return playResult
+end
+
+SnapshotCtrl._StopAction = HL.Method(HL.Number) << function(self, slotIndex)
+    self:_StopRecordedActionOnOldEntity(slotIndex)
+    snapshotSystem:StopAction(slotIndex)
+    if self.m_actionPlayingEntityMap ~= nil then
+        self.m_actionPlayingEntityMap[slotIndex] = nil
+    end
+end
+
+SnapshotCtrl._ResetAllCustomActions = HL.Method() << function(self)
+    local slotPlayStates = snapshotSystem.m_slotPlayStates
+    if slotPlayStates ~= nil then
+        for slotIndex, _ in cs_pairs(slotPlayStates) do
+            self:_StopRecordedActionOnOldEntity(slotIndex)
+        end
+    end
+    snapshotSystem:ResetAllCustomActions()
+    self.m_actionPlayingEntityMap = {}
+end
+
+SnapshotCtrl._RefreshPlayingActionEntityMapFromSystem = HL.Method() << function(self)
+    self.m_actionPlayingEntityMap = {}
+    local slotPlayStates = snapshotSystem.m_slotPlayStates
+    if slotPlayStates == nil then
+        return
+    end
+    for slotIndex, _ in cs_pairs(slotPlayStates) do
+        self.m_actionPlayingEntityMap[slotIndex] = self:_GetActionEntityBySlotIndex(slotIndex)
+    end
+end
+
+SnapshotCtrl._GetActionEntityBySlotIndex = HL.Method(HL.Number).Return(HL.Opt(HL.Any)) << function(self, slotIndex)
+    local slots = GameInstance.player.squadManager.curSquad.slots
+    if slots == nil or slotIndex < 0 or slotIndex >= slots.Count then
+        return nil
+    end
+    local slot = slots[slotIndex]
+    return slot and slot.character or nil
+end
+
+SnapshotCtrl._StopRecordedActionOnOldEntity = HL.Method(HL.Number) << function(self, slotIndex)
+    local slotPlayStates = snapshotSystem.m_slotPlayStates
+    if slotPlayStates == nil then
+        return
+    end
+
+    local hasState, state = slotPlayStates:TryGetValue(slotIndex)
+    if not hasState or state == nil then
+        return
+    end
+
+    local recordedEntity = self.m_actionPlayingEntityMap and self.m_actionPlayingEntityMap[slotIndex] or nil
+    if recordedEntity == nil or recordedEntity == self:_GetActionEntityBySlotIndex(slotIndex) then
+        return
+    end
+    
+    if state.timeScaleModifierHandle ~= 0 then
+        local tickOwnerInfoGroup = recordedEntity.tickOwnerInfoGroup
+        if tickOwnerInfoGroup ~= nil then
+            tickOwnerInfoGroup:RemoveSelfTimeScaleModifier(state.timeScaleModifierHandle)
+        end
+        if GameWorld.charInteractPerformManager ~= nil then
+            GameWorld.charInteractPerformManager:SetHandTimeScale(recordedEntity, 1)
+        end
+        state.timeScaleModifierHandle = 0
+    end
+    
+    self:_SyncMeshFollowBySlotIndex(slotIndex, true)
+    
+    if state.handle ~= nil then
+        local handle = state.handle
+        state.handle = nil
+        handle:ForceExit(true)
+        return
+    end
+
+    local actionEntryMap = snapshotSystem.m_actionEntryMap
+    if actionEntryMap == nil or string.isEmpty(state.actionId) then
+        return
+    end
+    local hasEntry, entry = actionEntryMap:TryGetValue(state.actionId)
+    local characterAnimCom = recordedEntity.characterAnimCom
+    if not hasEntry or entry == nil or characterAnimCom == nil then
+        return
+    end
+
+    local actionType = entry.actionType
+    if actionType == CS.Beyond.Gameplay.SnapshotActionType.CharMontage then
+        characterAnimCom:SetSpeed(1)
+        local montageName = entry.charMontageParams and entry.charMontageParams.montageName or nil
+        characterAnimCom:StopAnimation(montageName)
+        state.actionId = ""
+    elseif actionType == CS.Beyond.Gameplay.SnapshotActionType.SpecialIdle then
+        characterAnimCom:ForceStopSpIdlePerform(true)
+        if state.didEnableSpIdleBrain then
+            characterAnimCom:EnableSpecialIdleBrain(false)
+        end
+        state.actionId = ""
+    end
+end
 
 
 

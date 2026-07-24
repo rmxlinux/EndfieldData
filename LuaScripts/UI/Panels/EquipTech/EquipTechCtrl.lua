@@ -1444,6 +1444,7 @@ EquipTechCtrl._InitEquipSlotTab = HL.Method() << function(self)
             if isOn then
                 self.m_partType = config.partType
                 self.m_selectedEnhanceEquipInstId = 0
+                self.m_selectedEnhanceEquipItemInfo = nil
                 self:_RefreshEnhanceTargetList()
             end
         end)

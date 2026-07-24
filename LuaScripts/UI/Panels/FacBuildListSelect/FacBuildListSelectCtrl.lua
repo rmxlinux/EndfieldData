@@ -88,8 +88,9 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local recoverState = self:_ProcessRecoverStateArg(arg and arg.recoverState)
     local isInBlackbox = Utils.isInBlackbox()
     local isInDungeon = Utils.isInDungeon()
+    local factoryMapInfo = GameInstance.remoteFactoryManager.system.core:GetMapInfoByName(GameWorld.worldInfo.curMapIdStr)
     self.view.mainController:SetState(self.m_onlyCraftNode and MainState.Hub or
-        ((isInBlackbox or isInDungeon) and MainState.Blackbox or MainState.Fac))
+        ((isInBlackbox or isInDungeon or factoryMapInfo == nil) and MainState.Blackbox or MainState.Fac))
     if DeviceInfo.usingController or self.m_onlyCraftNode then
         self.view.dragTips.gameObject:SetActiveIfNecessary(false)
     end
@@ -120,7 +121,7 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             }
         })
 
-        if isInBlackbox or isInDungeon then
+        if isInBlackbox or isInDungeon or factoryMapInfo == nil then
             self.view.contentStateController:SetState("Industry")
             self.view.typeToggle.gameObject:SetActiveIfNecessary(false)
             self.view.decoBuildingRoot.gameObject:SetActiveIfNecessary(false)

@@ -1236,7 +1236,9 @@ WeaponExhibitUpgradeCtrl._ClickWeaponUpgradeButton = HL.Method() << function(sel
             end
             table.insert(costWeaponInstIds, costItemInfo.itemInst.instId)
         else
-            costItemId2Count[costItemInfo.itemCfg.id] = costItemInfo.count
+            if costItemInfo.count and costItemInfo.count > 0 then
+                costItemId2Count[costItemInfo.itemCfg.id] = costItemInfo.count
+            end
         end
     end
     GameInstance.player.charBag:AddWeaponExp(weaponInfo.weaponInstId, costItemId2Count, costWeaponInstIds)
@@ -1349,7 +1351,7 @@ WeaponExhibitUpgradeCtrl._SubOneLevel = HL.Method() << function(self)
         local singleExp = itemInfo.generateExp
         if singleExp < leftExpMax then
             local subCount = math.floor(leftExpMax / singleExp)
-            if subCount > itemInfo.count then
+            if subCount >= itemInfo.count then
                 subCount = itemInfo.count
                 self.m_costItemInfoDict[itemInfo.indexId] = nil
             end
@@ -1370,7 +1372,7 @@ WeaponExhibitUpgradeCtrl._SubOneLevel = HL.Method() << function(self)
             local itemInfo = ingredientList[i]
             local singleExp = itemInfo.generateExp
             local subCount = math.ceil(leftExpMax / singleExp)
-            if subCount > itemInfo.count then
+            if subCount >= itemInfo.count then
                 subCount = itemInfo.count
                 self.m_costItemInfoDict[itemInfo.indexId] = nil
             end

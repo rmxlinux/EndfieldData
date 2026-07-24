@@ -11,6 +11,7 @@ SocializeVisitTipsCtrl.m_isInit = HL.Field(HL.Boolean) << false
 
 
 SocializeVisitTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
+    [MessageConst.ON_SPACESHIP_VISIT_FRIEND] = '_OnSpaceshipVisitFriend',
 }
 
 
@@ -22,6 +23,18 @@ SocializeVisitTipsCtrl.OnCellChange = HL.Method() << function(self)
     if friendInfo and friendInfo.roleId ~= 0 then
         self.view.socializeFriendName:InitSocializeFriendName(friendInfo.roleId)
     end
+end
+
+SocializeVisitTipsCtrl._OnSpaceshipVisitFriend = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
+    local isSelf = false
+    if arg then
+        isSelf = unpack(arg)
+    end
+    if isSelf then
+        return
+    end
+    self.m_isInit = false
+    self:OnCellChange()
 end
 
 SocializeVisitTipsCtrl.OnShow = HL.Override() << function(self)

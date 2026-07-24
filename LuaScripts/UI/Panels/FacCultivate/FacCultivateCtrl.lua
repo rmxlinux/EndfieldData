@@ -126,6 +126,9 @@ FacCultivateCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         onStateChanged = function(state)
         end
     })
+    if not GameInstance.player.facTechTreeSystem:NodeIsLocked("tech_jinlong_4_vaporizer_1") then
+        self.view.buildingCommon.isModeEnvRelated = true
+    end
     self:_SetInfoVisible(false)
     self.view.showStepInfoBtn.onClick:AddListener(function()
         AudioAdapter.PostEvent("Au_UI_Toast_Common_Small_Open") 

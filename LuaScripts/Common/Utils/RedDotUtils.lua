@@ -479,12 +479,26 @@ function RedDotUtils.isValuableDepotTabHasNewObtainedImportantItem(type)
 end
 
 local newObtainedImportantValuableDepotItemText = "NewObtainedImportantValuableDepotItem"
+function RedDotUtils.isValuableDepotImportantItemRedDotEnabled(id)
+    if id == nil then
+        return false
+    end
+    local hasItemData, itemData = Tables.itemTable:TryGetValue(id)
+    return hasItemData and itemData.valuableDepotRedDot == true
+end
+
 function RedDotUtils.isNewObtainedImportantValuableDepotItem(id)
+    if not RedDotUtils.isValuableDepotImportantItemRedDotEnabled(id) then
+        return false
+    end
     local suc, value = ClientDataManagerInst:GetBool(newObtainedImportantValuableDepotItemText .. id,false)
     return suc and value
 end
 
 function RedDotUtils.setNewObtainedImportantValuableDepotItem(id, value)
+    if value and not RedDotUtils.isValuableDepotImportantItemRedDotEnabled(id) then
+        value = false
+    end
     ClientDataManagerInst:SetBool(newObtainedImportantValuableDepotItemText .. id, value, false, EClientDataTimeValidType.Permanent)
     Notify(MessageConst.ON_VALUABLE_DEPOT_IMPORT_ITEM_CHANGED)
 end

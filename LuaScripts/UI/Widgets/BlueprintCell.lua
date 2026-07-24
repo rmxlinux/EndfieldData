@@ -29,7 +29,6 @@ BlueprintCell.InitBlueprintCell = HL.Method(HL.Table) << function(self, arg)
     self.view.nameTxt.text = bpInfo.name
     self.view.delMark.gameObject:SetActive(self.m_inst.isDel == true)
     self.view.redDot:InitRedDot("SingleBlueprint", self.m_inst.id)
-    self.view.gameObject.name = "BP_"..self.m_inst.csInst.param:ToString()
 
     local reviewStatus = self.m_inst.csInst.reviewStatus
     if self.m_inst.csInst.sourceType == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintSourceType.Sys or self.m_inst.csInst.sourceType == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintSourceType.Gift then

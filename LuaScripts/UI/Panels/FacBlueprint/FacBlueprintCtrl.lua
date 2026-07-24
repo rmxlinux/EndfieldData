@@ -83,6 +83,13 @@ FacBlueprintCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.mainStateController:SetState("Normal")
     self.m_readBPIds = {}
     self.m_getCell = UIUtils.genCachedCellFunction(self.view.scrollList)
+    self.view.scrollList.getCellName = function(csIndex)
+        local inst = self.m_showingInsts[LuaIndex(csIndex)]
+        if inst then
+            return "BP_" .. inst.csInst.param:ToString()
+        end
+        return "BlueprintCell"
+    end
     self.view.scrollList.onUpdateCell:AddListener(function(obj, csIndex)
         self:_OnUpdateCell(self.m_getCell(obj), LuaIndex(csIndex))
     end)

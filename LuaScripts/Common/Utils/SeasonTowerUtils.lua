@@ -38,6 +38,7 @@ function SeasonTowerUtils.setMainRedDotChecked()
     local id = currentSeasonId * 100 + currentWeekId
     ClientDataManagerInst:SetInt(SEASONTOWER_CHECKED_WEEK, id, true, EClientDataTimeValidType.Permanent)
     RedDotManager:TriggerUpdate("SeasonTowerMain")
+    Notify(MessageConst.ON_SEASON_TOWER_RED_DOT_SET_FALSE)
 end
 
 function SeasonTowerUtils.isNewSeason()
