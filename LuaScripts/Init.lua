@@ -370,3 +370,6 @@ end
 logger.info("Lua init finished.")
 
 Notify(MessageConst.ON_LUA_INIT_FINISHED)
+
+xlua.private_accessible(CS.Beyond.DataCompressManager)
+CS.Beyond.DataCompressManager.s_maxStackSize = 1

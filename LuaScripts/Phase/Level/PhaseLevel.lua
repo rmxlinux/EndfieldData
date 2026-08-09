@@ -828,6 +828,9 @@ PhaseLevel.PlayTowerDefenseMainCharEffect = HL.Method() << function(self)
     if string.isEmpty(activeTdId) then
         return
     end
+    if not GameInstance.player.towerDefenseSystem.systemInDefense then
+        return
+    end
     local _, towerDefenseData = Tables.towerDefenseTable:TryGetValue(activeTdId)
     if not towerDefenseData or towerDefenseData.tdType ~= GEnums.TowerDefenseLevelType.Auto then
         return

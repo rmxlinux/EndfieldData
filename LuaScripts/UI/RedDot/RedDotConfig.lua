@@ -5756,7 +5756,8 @@ local Config = {
             local gameSettingSystem = GameInstance.player.gameSettingSystem
             local settingItems = Tables.settingTabTable[GameSettingConst.TAB_ID_KEY_HINT].tabItems
             for settingId, settingItemData in pairs(settingItems) do
-                if not gameSettingSystem:IsKeySettingValid(settingId) then
+                local isMutatable = settingItemData.keyIsMutable1 or settingItemData.keyIsMutable1
+                if isMutatable and not gameSettingSystem:IsKeySettingValid(settingId) then
                     return true 
                 end
             end
@@ -5771,7 +5772,9 @@ local Config = {
         readLike = false,
         needArg = true,
         Check = function(settingId)
-            if not GameInstance.player.gameSettingSystem:IsKeySettingValid(settingId) then
+            local settingItemData = Tables.settingTabTable[GameSettingConst.TAB_ID_KEY_HINT].tabItems[settingId]
+            local isMutatable = settingItemData.keyIsMutable1 or settingItemData.keyIsMutable1
+            if isMutatable and not GameInstance.player.gameSettingSystem:IsKeySettingValid(settingId) then
                 return true 
             end
             return false

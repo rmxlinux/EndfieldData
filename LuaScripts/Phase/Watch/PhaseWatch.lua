@@ -177,6 +177,12 @@ PhaseWatch._OnDestroy = HL.Override() << function(self)
     end
     self:_ChangeBlurSetting(false)
     self.m_watchPanel.uiCtrl.view.scrollViewScrollRect.verticalNormalizedPosition = 1
+    if DeviceInfo.usingController then
+        self.m_watchPanel.uiCtrl.cacheNaviTarget = nil
+        InputManagerInst.controllerNaviManager:TryRemoveLayer(self.m_watchPanel.uiCtrl.view.selectableNaviGroup)
+        InputManagerInst.controllerNaviManager:TryRemoveLayer(self.m_watchPanel.uiCtrl.view.leftBottomNode)
+        InputManagerInst.controllerNaviManager:TryRemoveLayer(self.m_watchPanel.uiCtrl.view.scrollView)
+    end
 end
 
 HL.Commit(PhaseWatch)
