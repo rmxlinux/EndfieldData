@@ -66,6 +66,11 @@ CoinActivityHudCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 
 CoinActivityHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    
+    local serverSavedCoin = GameInstance.player.racingDungeonSystem.serverSavedCoin
+    self.m_lastSendCoinNum = serverSavedCoin
+    self.m_lastReportCoinNum = serverSavedCoin
+
     self.m_finishedTaskIds = {}
     self.m_buffShown = { [BUFF_TYPE.MAGNET] = false, [BUFF_TYPE.INCREASE] = false }
     
