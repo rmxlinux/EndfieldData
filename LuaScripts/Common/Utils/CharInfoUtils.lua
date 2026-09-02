@@ -291,6 +291,23 @@ end
 
 
 
+function CharInfoUtils.isCharDead(charInstId)
+    if not charInstId or charInstId <= 0 then
+        return false
+    end
+    if Utils.isInDungeon() then
+        local success, isDead = GameInstance.player.charBag:TryGetWorldCharBackupIsDead(charInstId)
+        if success then
+            return isDead
+        end
+    end
+    local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
+    return charInfo ~= nil and charInfo.isDead == true
+end
+
+
+
+
 function CharInfoUtils.getPlayerCharInfoByPresetId(presetId)
     local charBag = GameInstance.player.charBag
     return charBag:GetCharInfoByPresetId(presetId)

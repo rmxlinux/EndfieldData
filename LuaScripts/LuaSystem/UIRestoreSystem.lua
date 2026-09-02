@@ -31,14 +31,6 @@ UIRestoreSystem.AddRequest = HL.Method(HL.String, HL.Opt(HL.Function)) << functi
     local phaseArgs = PhaseManager:CollectCurPhaseArgs()
     for _, v in ipairs(phaseArgs) do
         if not UIConst.UI_RESTORE_PHASE_BLACKLIST[v.name] then
-            
-            
-            if v.id == PhaseId.DungeonEntry and v.arg and
-            
-                    v.dungeonSeriesId then
-                v.arg.dungeonId = nil
-            end
-            
             table.insert(restoreData.phaseArgs, v)
         end
     end
@@ -49,6 +41,36 @@ UIRestoreSystem.RemoveRequest = HL.Method(HL.String) << function(self, dungeonId
     self.m_restoreRequestMap[dungeonId] = nil
     if self.m_restoreRestoreData and self.m_restoreRestoreData.dungeonId == dungeonId then
         self.m_restoreRestoreData = nil
+    end
+end
+
+UIRestoreSystem.ModifyRequest = HL.Method(HL.String, HL.String) << function(self, dungeonId, newDungeonId)
+    local restoreData = self.m_restoreRequestMap[dungeonId]
+    if restoreData then
+        restoreData.dungeonId = newDungeonId
+        for _, v in ipairs(restoreData.phaseArgs) do
+            if v.arg and v.arg.dungeonId then
+                v.arg.dungeonId = newDungeonId
+            end
+        end
+        self.m_restoreRequestMap[dungeonId] = nil
+        self.m_restoreRequestMap[newDungeonId] = restoreData
+    end
+end
+
+UIRestoreSystem.GetRestoreData = HL.Method(HL.String) << function(self, dungeonId)
+    return self.m_restoreRequestMap[dungeonId]
+end
+
+UIRestoreSystem.RemovePhaseFromRequest = HL.Method(HL.String, HL.Number) << function(self, dungeonId, phaseId)
+    local restoreData = self.m_restoreRequestMap[dungeonId]
+    if restoreData then
+        for i, v in ipairs(restoreData.phaseArgs) do
+            if v.id == phaseId then
+                table.remove(restoreData.phaseArgs, i)
+                break
+            end
+        end
     end
 end
 
@@ -79,7 +101,7 @@ UIRestoreSystem._OnLeaveDungeon = HL.Method(HL.String) << function(self, dungeon
     
     local request = self.m_restoreRequestMap[dungeonId]
     self.m_restoreRestoreData = request
-    self.m_restoreRequestMap = {}
+    self.m_restoreRequestMap[dungeonId] = nil
 end
 
 UIRestoreSystem._DefaultCheck = HL.Method().Return(HL.Boolean) << function(self)

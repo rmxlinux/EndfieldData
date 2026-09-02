@@ -272,11 +272,19 @@ CharPosterScrollList._RefreshCharList = HL.Method(HL.Opt(HL.Boolean, HL.Table)) 
     end
 end
 
+CharPosterScrollList._SetMultiSelect = HL.Method(HL.Any, HL.Any, HL.Opt(HL.Boolean)) << function(self, cell, selectIndex, playAnim)
+    cell:SetMultiSelect(selectIndex, playAnim)
+    InputManagerInst:SetBindingText(
+        cell.view.button.hoverConfirmBindingId,
+        selectIndex and Language.key_hint_common_unselect or Language.key_hint_common_select
+    )
+end
+
 CharPosterScrollList._ShowMultiChars = HL.Method(HL.Opt(HL.Boolean)) << function(self, playAnim)
     for cellIndex = 1, self.view.charScrollList.count do
         local cell = self:GetCellByIndex(cellIndex)
         if cell then
-            cell:SetMultiSelect(self.cell2Select[cellIndex], playAnim)
+            self:_SetMultiSelect(cell, self.cell2Select[cellIndex], playAnim)
         end
     end
 end
@@ -306,7 +314,7 @@ CharPosterScrollList._UpdateMultiSelect = HL.Method(HL.Opt(HL.Boolean)).Return(H
         self.cell2Select[cellIndex] = index
         self.m_select2Cell[index] = cellIndex
         if cell then
-            cell:SetMultiSelect(index, playAnim)
+            self:_SetMultiSelect(cell, index, playAnim)
         end
         local charItem = self.m_filteredInfoList[cellIndex]
         self:_UpdateSlotIndex(charItem, index)
@@ -411,7 +419,7 @@ CharPosterScrollList.OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.
         cell:SetUnavailable(isUnavailable)
     else
         cell.view.button:ChangeActionOnSetNaviTarget(ActionOnSetNaviTarget.PressConfirmTriggerOnClick)
-        cell:SetMultiSelect(self.cell2Select[index], false)
+        self:_SetMultiSelect(cell, self.cell2Select[index], false)
         if index == 1 then
             naviTargetCell = cell
         end
@@ -561,7 +569,7 @@ CharPosterScrollList.OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Function, HL.B
                         self.m_filteredInfoList[cellIndex].selectIndex = replaceSelectedIndex
 
                         if replaceCell then
-                            replaceCell:SetMultiSelect(nil, playAnim)
+                            self:_SetMultiSelect(replaceCell, nil, playAnim)
                             self:_UpdateSlotIndex(self.m_filteredInfoList[cellIndex], nil)
                         end
                         local charItemList, charInfoList = self:_UpdateMultiSelect(playAnim)
@@ -586,7 +594,7 @@ CharPosterScrollList.OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Function, HL.B
             self.cell2Select[cellIndex] = nil
             self.m_filteredInfoList[cellIndex].selectIndex = nil
             self.m_charNum = self.m_charNum - 1
-            cell:SetMultiSelect(nil, playAnim)
+            self:_SetMultiSelect(cell, nil, playAnim)
             self:_UpdateSlotIndex(self.m_filteredInfoList[cellIndex], nil)
         elseif self.m_charNum < self.m_selectNum then
             local curIndex = self:_GetNextIndex()

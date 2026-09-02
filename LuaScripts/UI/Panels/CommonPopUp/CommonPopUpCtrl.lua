@@ -278,6 +278,13 @@ CommonPopUpCtrl._ShowPopUp = HL.Method(HL.Table) << function(self, args)
         self.view.warningNode.gameObject:SetActive(false)
     end
 
+    if args.reminderContent then
+        self.view.reminderNode.reminderTxt:SetAndResolveTextStyle(args.reminderContent)
+        self.view.reminderNode.gameObject:SetActive(true)
+    else
+        self.view.reminderNode.gameObject:SetActive(false)
+    end
+
 
     if args.secondWarningContent then
         self.view.secondWarningNode.warningText:SetAndResolveTextStyle(args.secondWarningContent)

@@ -7,6 +7,7 @@ local EGameMechanicCountingComponentType = CS.Beyond.Gameplay.Core.EGameMechanic
 local Component = {
     CountdownCenter = 1,
     CountdownTopLeft = 2,
+    Typhoea = 3,
 
     Switch = 50,
 
@@ -27,6 +28,11 @@ local CountdownTypeTable = {
         tickAction = "_CountdownTopLeftTickAction",
         nodeFollowAction = "_CountdownTopLeftPosFollowTickAction",
         node = "countdownTopLeft",
+    },
+    [EGameMechanicCountDownComponentType.Typhoea] = {
+        componentType = Component.Typhoea,
+        prepareAction = "_CountdownTyphoeaPrepareAction",
+        tickAction = "_CountdownTyphoeaTickAction",
     },
 }
 
@@ -79,13 +85,23 @@ CommonTaskTrackCountdownCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 CommonTaskTrackCountdownCtrl.OnShowCommonTaskCountdown = HL.StaticMethod(HL.Any) << function(args)
-    local ctrl = CommonTaskTrackCountdownCtrl.AutoOpen(PANEL_ID, args, true)
-    ctrl:ShowCountdown(args)
+    LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackCountdown", function()
+        local ctrl = CommonTaskTrackCountdownCtrl.AutoOpen(PANEL_ID, args, true)
+        if ctrl == nil then
+            return
+        end
+        ctrl:ShowCountdown(args)
+    end)
 end
 
 CommonTaskTrackCountdownCtrl.OnStartCommonTaskCounting = HL.StaticMethod(HL.Any) << function(args)
-    local ctrl = CommonTaskTrackCountdownCtrl.AutoOpen(PANEL_ID, args, true)
-    ctrl:StartCounting(args)
+    LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackCountdown", function()
+        local ctrl = CommonTaskTrackCountdownCtrl.AutoOpen(PANEL_ID, args, true)
+        if ctrl == nil then
+            return
+        end
+        ctrl:StartCounting(args)
+    end)
 end
 
 
@@ -110,6 +126,7 @@ end
 CommonTaskTrackCountdownCtrl._ToggleComponentOn = HL.Method(HL.Number) << function(self, component)
     self.view.countingCenter.gameObject:SetActiveIfNecessary(component == Component.CountingCenter)
     self.view.countdownCenter.gameObject:SetActiveIfNecessary(component == Component.CountdownCenter)
+    self.view.countdownTyphoea.gameObject:SetActiveIfNecessary(component == Component.Typhoea)
     self.view.countingTopLeft.gameObject:SetActiveIfNecessary(component == Component.CountingTopLeft)
     self.view.countdownTopLeft.gameObject:SetActiveIfNecessary(component == Component.CountdownTopLeft)
 end
@@ -153,13 +170,33 @@ CommonTaskTrackCountdownCtrl._CountdownTopLeftTickAction = HL.Method(HL.Number, 
     if needAlterAudio then
         AudioAdapter.PostEvent("Au_UI_Toast_DungeonNormalTick_OS")
     end
-
 end
 
 CommonTaskTrackCountdownCtrl._CountdownTopLeftPosFollowTickAction = HL.Method(HL.Number) << function(self, deltaTime)
     local node = self.view.countdownTopLeft
     self:_UpdateTopLeftPos(node)
 end
+
+CommonTaskTrackCountdownCtrl._CountdownTyphoeaTickAction = HL.Method(HL.Number, HL.Boolean)
+        << function(self, leftTime, needAlterAudio)
+    local node = self.view.countdownTyphoea
+    node.timeTxt.text = UIUtils.getLeftTimeToSecond(math.max(0, leftTime))
+
+    if not self.m_isInAlter and leftTime <= self.view.config.COUNTDOWN_ALERT_TIME_THRESHOLD then
+        self.m_isInAlter = true
+        node.stateController:SetState("Alert")
+    end
+
+    if needAlterAudio then
+        AudioAdapter.PostEvent("Au_UI_Toast_TickDown_OS")
+    end
+end
+
+CommonTaskTrackCountdownCtrl._CountdownTyphoeaPrepareAction = HL.Method() << function(self)
+    local node = self.view.countdownTyphoea
+    node.stateController:SetState("Normal")
+end
+
 
 CommonTaskTrackCountdownCtrl.ShowCountdown = HL.Method(HL.Any) << function(self, arg)
     local countdownType, countdownDurationMs, gameId, cb = unpack(arg)
@@ -172,6 +209,11 @@ CommonTaskTrackCountdownCtrl.ShowCountdown = HL.Method(HL.Any) << function(self,
     self.m_typeTable = countDownCfg
 
     local lastLeftTime = math.floor(countdownDurationMs / 1000)
+    local tickAction = self[countDownCfg.tickAction]
+    if tickAction then
+        tickAction(self, lastLeftTime, false)
+    end
+
     self.m_countDownTickId = LuaUpdate:Remove(self.m_countDownTickId)
     self.m_countDownTickId = LuaUpdate:Add("Tick", function(deltaTime)
         local succ, game = GameWorld.subGameManager:TryGetSubGameById(gameId)
@@ -342,9 +384,8 @@ CommonTaskTrackCountdownCtrl.OnDungeonComplete = HL.Method(HL.Table) << function
     local nodeName = self.m_typeTable.node
     local node = self.view[nodeName]
     
-    local isNewTimeRecord, curGameTimeRecord = unpack(args)
     if node and node.timeTxt then
-        node.timeTxt.text = UIUtils.getLeftTimeToSecond(math.floor(curGameTimeRecord / 1000))
+        node.timeTxt.text = UIUtils.getLeftTimeToSecond(math.floor(GameWorld.worldInfo.subGame.passTimeMs / 1000))
     end
 end
 
@@ -380,8 +421,6 @@ CommonTaskTrackCountdownCtrl._UpdateTopLeftPos = HL.Method(HL.Any) << function(s
         end
     end
 end
-
-
 
 
 

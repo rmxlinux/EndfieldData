@@ -632,6 +632,10 @@ end
 WikiGuideCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     self.view.wikiRefNaviGroup.onIsFocusedChange:AddListener(function(isTopLayer)
+        if not self.view.wikiRefNaviGroup.enabled then
+            self.view.wikiRefNaviGroup:ManuallyStopFocus()
+            return
+        end
         self.view.controllerFocusHintNode.gameObject:SetActive(not isTopLayer and self.view.wikiRefNaviGroup.enabled)
         if not isTopLayer then
             Notify(MessageConst.HIDE_WIKI_REF_TIPS)

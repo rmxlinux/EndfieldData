@@ -13,8 +13,12 @@ local tabConfig = {
         end,
         type = CS.Beyond.Gameplay.FriendBusinessCardUnlockType.Avatar,
         currentSelectId = "",
-        successNotify = Language.LUA_FRIEND_HEAD_SELECTED_POPUP_AVATAR,
-        title = Language.LUA_FRIEND_HEAD_CHANGE,
+        successNotify = function()
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_FRIEND_HEAD_SELECTED_POPUP_AVATAR)
+        end,
+        getTitleText = function()
+            return Language.LUA_FRIEND_HEAD_CHANGE
+        end,
         SendMsg = function(id)
             GameInstance.player.friendSystem:AvatarModify(id)
         end,
@@ -31,8 +35,12 @@ local tabConfig = {
         end,
         type = CS.Beyond.Gameplay.FriendBusinessCardUnlockType.AvatarFrame,
         currentSelectId = "",
-        successNotify = Language.LUA_FRIEND_HEAD_SELECTED_POPUP_AVATAR_FRAME,
-        title = Language.LUA_FRIEND_HEAD_FRAME_CHANGE,
+        successNotify = function()
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_FRIEND_HEAD_SELECTED_POPUP_AVATAR_FRAME)
+        end,
+        getTitleText = function()
+            return Language.LUA_FRIEND_HEAD_FRAME_CHANGE
+        end,
         SendMsg = function(id)
             GameInstance.player.friendSystem:AvatarFrameModify(id)
         end,
@@ -255,7 +263,7 @@ FriendHeadSelectedPopUpCtrl._OnSelectChange = HL.Method() << function(self)
         
         self:_UpdateObtainWay(currentSelectItemId)
     end
-    self.view.titleTxt.text = self.m_tabConfig.title
+    self.view.titleTxt.text = self.m_tabConfig.getTitleText()
     self.view.headScrollList:UpdateShowingCells(function(csIndex, object)
         self:_UpdateCell(object, LuaIndex(csIndex))
     end)
@@ -365,7 +373,7 @@ FriendHeadSelectedPopUpCtrl.OnFriendBusinessInfoChange = HL.Method() << function
         return
     end
 
-    Notify(MessageConst.SHOW_TOAST, self.m_tabConfig.successNotify)
+    self.m_tabConfig.successNotify()
 
     
     self:_Refresh()

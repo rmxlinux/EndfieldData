@@ -78,6 +78,7 @@ end
 
 PRTSInvestigateDetailCtrl.OnShow = HL.Override() << function(self)
     self:_TryRestoreCollSelection()
+    self:_RefreshCategoryCellTitleInputGroups()
 end
 
 PRTSInvestigateDetailCtrl._OnChangeShownState = HL.Method(HL.Any) << function(self, arg)
@@ -272,7 +273,7 @@ PRTSInvestigateDetailCtrl._GetCategoryInfoBundles = HL.StaticMethod(HL.Any).Retu
         
         local infoBundle = {
             title = data.name,
-            index = data.index,
+            sortId = data.index,
             collInfos = PRTSInvestigateDetailCtrl._GetCategoryCollInfos(data.collectionIdList),
             noteInfos = PRTSInvestigateDetailCtrl._GetCategoryNoteInfos(data.noteIdList),
             
@@ -283,7 +284,12 @@ PRTSInvestigateDetailCtrl._GetCategoryInfoBundles = HL.StaticMethod(HL.Any).Retu
             table.insert(infoBundleList, infoBundle)
         end
     end
-    table.sort(infoBundleList, Utils.genSortFunction({ "index" }, true))
+    table.sort(infoBundleList, Utils.genSortFunction({ "sortId" }, true))
+    local index = 1
+    for _, data in ipairs(infoBundleList) do
+        data.index = index
+        index = index + 1
+    end
     return infoBundleList
 end
 
@@ -460,6 +466,19 @@ PRTSInvestigateDetailCtrl._TryRestoreCollSelection = HL.Method().Return(HL.Boole
     return true
 end
 
+PRTSInvestigateDetailCtrl._RefreshCategoryCellTitleInputGroups = HL.Method() << function(self)
+    if not DeviceInfo.usingController or not self.m_info then
+        return
+    end
+    for index = 1, #self.m_info.categoryInfoBundles do
+        local categoryObj = self.view.categoryList:Get(CSIndex(index))
+        local categoryCell = categoryObj and self.m_getCategoryCellFunc(categoryObj) or nil
+        if categoryCell then
+            categoryCell:RefreshTitleInputGroupController()
+        end
+    end
+end
+
 PRTSInvestigateDetailCtrl._OnRefreshRewardCell = HL.Method(HL.Any, HL.Number) << function(self, cell, luaIndex)
     local info = self.m_info.rewardList[luaIndex]
     cell:InitItem(info, function()
@@ -480,6 +499,16 @@ end
 
 PRTSInvestigateDetailCtrl._RefreshUINoteShowState = HL.Method(HL.Boolean) << function(self, isShow)
     self.m_isNoteShown = isShow
+    
+    if self.m_info then
+        for _, infoBundle in pairs(self.m_info.categoryInfoBundles) do
+            if infoBundle.index == self.m_currentNoteCategoryIndex then
+                infoBundle.showNote = isShow
+            else
+                infoBundle.showNote = false
+            end
+        end
+    end
     if self.m_isNoteShown then
         self.view.noteState:SetState("ShowNoteState")
         self:_RefreshUINote(true)
@@ -501,13 +530,6 @@ PRTSInvestigateDetailCtrl._RefreshUINoteShowState = HL.Method(HL.Boolean) << fun
     if cell then
         cell:RefreshUINoteShowState(isShow, false)
     end
-
-    
-    
-    
-    
-    
-    
 
     self:_SendEventLogNote(isShow)
 end

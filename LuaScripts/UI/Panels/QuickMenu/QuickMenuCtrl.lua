@@ -16,6 +16,7 @@ local CLEAR_SCREEN_EXPECTED_PANEL_LIST = {
     PanelId.WeeklyRaidTaskTrackHud,
     PanelId.CommonTaskTrackHud,
     PanelId.CommonPOIUpgradeToast,
+    PanelId.DomainDepotDeliverToast,
 }
 
 local DEFAULT_DELAY_RECOVER_SCREEN_FRAME_COUNT = 1

@@ -9,6 +9,7 @@ AdventureRewardCtrl = HL.Class('AdventureRewardCtrl', uiCtrl.UICtrl)
 
 AdventureRewardCtrl.s_messages = HL.StaticField(HL.Table) << {
     
+    [MessageConst.ON_ADVENTURE_EXP_CHANGE] = "_OnAdventureExpChange",
     [MessageConst.ON_ADVENTURE_REWARD_RECEIVE] = "OnAdventureRewardReceive",
 }
 
@@ -39,6 +40,38 @@ AdventureRewardCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitWidget(arg)
     self:_InitView()
     self:_RestoreStateByArg(arg)
+end
+
+AdventureRewardCtrl.OnShow = HL.Override() << function(self)
+    self:_RefreshAdventureLevelInfo()
+end
+
+AdventureRewardCtrl._RefreshAdventureLevelInfo = HL.Method() << function(self)
+    if self.m_levelRewardData == nil then
+        return
+    end
+
+    self:_InitView()
+    self.m_levelRewardData = self:_ProcessRewardData()
+
+    local rewardCount = #self.m_levelRewardData
+    self.view.levelAdapter:UpdateCount(rewardCount)
+    self.view.nodeLevel:SetPageCount(rewardCount)
+    if rewardCount <= 0 then
+        return
+    end
+
+    local curIndex = self.m_currIndex
+    if curIndex <= 0 then
+        curIndex = self:_FindLevelIndex(self.m_levelRewardData, GameInstance.player.adventure.adventureLevelData.lv)
+    end
+    if curIndex <= 0 then
+        curIndex = rewardCount
+    end
+
+    curIndex = math.max(math.min(curIndex, rewardCount), 1)
+    self.m_currIndex = curIndex
+    self:_UpdateCurrIndex(curIndex)
 end
 
 AdventureRewardCtrl._InitWidget = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
@@ -363,6 +396,11 @@ AdventureRewardCtrl.OnClose = HL.Override() << function(self)
 end
 
 AdventureRewardCtrl.OnAdventureRewardReceive = HL.Method(HL.Any) << function(self, args)
+    
+    if not self:IsShow() then
+        return
+    end
+
     local rewardLevels = unpack(args)
     local rewardItemsDic = {}
 
@@ -392,6 +430,10 @@ AdventureRewardCtrl.OnAdventureRewardReceive = HL.Method(HL.Any) << function(sel
         title = Language.LUA_ADVENTURE_LEVEL_REWARD_TITLE_DESC,
         items = rewardList
     })
+end
+
+AdventureRewardCtrl._OnAdventureExpChange = HL.Method(HL.Any) << function(self, args)
+    self:_RefreshAdventureLevelInfo()
 end
 
 HL.Commit(AdventureRewardCtrl)

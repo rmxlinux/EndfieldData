@@ -229,6 +229,9 @@ ActivityGachaBeginnerCtrl._RefreshStageMissionUI = HL.Method() << function(self)
         
         cell.getRewardBtn.onClick:RemoveAllListeners()
         cell.getRewardBtn.onClick:AddListener(function()
+            if DeviceInfo.usingController then
+                self:SetNaviTarget(cell.naviDeco)
+            end
             self.m_info.activityData:GainReward(self.m_rewardList)
         end)
         

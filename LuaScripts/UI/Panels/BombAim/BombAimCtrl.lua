@@ -67,6 +67,8 @@ BombAimCtrl._OnHideBombAim = HL.Method() << function(self)
     Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {false, "Bomb"})
     self:_ToggleControllerTriggerSetting(false)
     
+    UIManager:ShowWithKey(PanelId.BattleAction, "Bomb")
+    
     GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "Bomb", false)
 end
 
@@ -120,12 +122,17 @@ BombAimCtrl._ToggleControllerTriggerSetting = HL.Method(HL.Boolean, HL.Opt(HL.Bo
 end
 
 BombAimCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Table) << function(self, args)
+    if self.m_isClosed then
+        return
+    end
+
     if not self:IsShow() then
         return
     end
 
-    local inputType = args.inputType
     Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {true, "Bomb"})
+
+    local inputType = args.inputType
     if inputType == DeviceInfo.InputType.Controller then
         self:_ToggleControllerTriggerSetting(true)
         UIManager:HideWithKey(PanelId.BattleAction, "Bomb")
@@ -148,6 +155,10 @@ end
 BombAimCtrl.OnClose = HL.Override() << function(self)
     self:_ToggleControllerTriggerSetting(false)
     self:_OnCancel()
+    
+    Notify(MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING, {false, "Bomb"})
+    
+    UIManager:ShowWithKey(PanelId.BattleAction, "Bomb")
     
     GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidMainHudTopBtns, "Bomb", false)
 end

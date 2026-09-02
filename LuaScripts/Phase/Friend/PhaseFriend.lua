@@ -194,6 +194,7 @@ PhaseFriend.OnTabChange = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(sel
     self.arg.panelId = panelId
 
     if self.m_curPanelItem then
+        self:_ReleaseCachedPanelNaviLayer(self.m_curPanelItem)
         self.m_curPanelItem.uiCtrl:Hide()
     end
 
@@ -208,6 +209,15 @@ PhaseFriend.OnTabChange = HL.Method(HL.Number, HL.Opt(HL.Table)) << function(sel
     end
     self.m_curPanelItem = panelItem
     self:_BindControllerHintPlaceHolder()
+end
+
+
+PhaseFriend._ReleaseCachedPanelNaviLayer = HL.Method(HL.Forward("PhasePanelItem")) << function(self, panelItem)
+    local ctrl = panelItem and panelItem.uiCtrl or nil
+    local friendList = ctrl and ctrl.view and ctrl.view.friendList or nil
+    if friendList ~= nil and HL.TryGet(friendList, "ReleaseCachedNaviLayer") then
+        friendList:ReleaseCachedNaviLayer()
+    end
 end
 
 PhaseFriend.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
@@ -316,9 +326,10 @@ PhaseFriend._RefreshCurPanelTabBlockState = HL.Method() << function(self)
     end
 
     local curCtrl = self.m_curPanelItem.uiCtrl
-    if curCtrl.panelId == PanelId.FriendBusinessCardRoot then
+    if HL.TryGet(curCtrl, "RefreshTabBlockState") then
         curCtrl:RefreshTabBlockState()
-    else
+    end
+    if curCtrl.panelId ~= PanelId.FriendBusinessCardRoot then
         self:SetTabBlockState(false)
     end
 end

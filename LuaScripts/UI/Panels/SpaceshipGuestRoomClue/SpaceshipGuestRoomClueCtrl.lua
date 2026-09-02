@@ -48,6 +48,8 @@ SpaceshipGuestRoomClueCtrl.m_receiveWidget = HL.Field(HL.Any)
 
 SpaceshipGuestRoomClueCtrl.m_receiveGo = HL.Field(HL.Any)
 
+SpaceshipGuestRoomClueCtrl.m_pendingAutoPlaceToast = HL.Field(HL.Boolean) << false
+
 
 
 
@@ -78,6 +80,19 @@ SpaceshipGuestRoomClueCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
     self.view.closeArea.gameObject:SetActive(false)
     self.m_spaceship = GameInstance.player.spaceship
+    self.view.putInBtn.onClick:AddListener(function()
+        if not self:_RefreshPutInBtnState() then
+            return
+        end
+        local putInCount = 0
+        for i = 1, Tables.spaceshipConst.spaceshipGuestRoomClueTypeTotalCount do
+            if self.m_spaceship:CheckClueCanPlaceByIndex(i) then
+                putInCount = putInCount + 1
+            end
+        end
+        self.m_pendingAutoPlaceToast = (putInCount >= 1)
+        self.m_spaceship:AutoPlaceClue()
+    end)
     self:InitRightTab()
     self.m_moveCam = arg.moveCam == true
     self.m_isRemote = arg.isRemoteCamera == true
@@ -225,6 +240,7 @@ SpaceshipGuestRoomClueCtrl._InitRoomInfo = HL.Method() << function(self)
     self:RefreshTime()
     SpaceshipUtils.InitMoneyLimitCell(self.view.infoTokenCell, Tables.spaceshipConst.infoTokenItemId)
     self:RefreshWorkState()
+    self:_RefreshPutInBtnState()
 end
 
 SpaceshipGuestRoomClueCtrl.RefreshTime = HL.Method() << function(self)
@@ -278,6 +294,21 @@ SpaceshipGuestRoomClueCtrl.RefreshWorkState = HL.Method() << function(self)
         self.view.bottomTipsCellStateController:SetState("StateIdle")
         endDecoAnim()
     end
+end
+
+SpaceshipGuestRoomClueCtrl._RefreshPutInBtnState = HL.Method().Return(HL.Boolean) << function(self)
+    local putInCount = 0
+    if self.m_spaceship ~= nil then
+        for i = 1, Tables.spaceshipConst.spaceshipGuestRoomClueTypeTotalCount do
+            if self.m_spaceship:CheckClueCanPlaceByIndex(i) then
+                putInCount = putInCount + 1
+            end
+        end
+    end
+    local canPutIn = putInCount > 0
+    self.view.putInNodeNumTxt.text = putInCount
+    self.view.nodeState:SetState(canPutIn and "Click" or "Ash")
+    return canPutIn
 end
 
 SpaceshipGuestRoomClueCtrl.OnSpaceshipGuestRoomClueRewardItem = HL.Method(HL.Any) << function(self, args)
@@ -343,10 +374,16 @@ end
 SpaceshipGuestRoomClueCtrl.OnSpaceshipRoomStationSync = HL.Method() << function(self)
     self.view.guestroomCluesCenterNode:RefreshData()
     self:RefreshWorkState()
+    self:_RefreshPutInBtnState()
 end
 
 SpaceshipGuestRoomClueCtrl.OnUpdateData = HL.Method(HL.Opt(HL.Any)) << function(self, args)
+    if self.m_pendingAutoPlaceToast then
+        self.m_pendingAutoPlaceToast = false
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_SPACESHIP_CLUE_AUTO_PLACE_SUCCESS)
+    end
     self.view.guestroomCluesCenterNode:RefreshData()
+    self:_RefreshPutInBtnState()
     local clueData = self.m_spaceship:GetClueData()
     if not clueData then
         return
@@ -492,6 +529,7 @@ SpaceshipGuestRoomClueCtrl._PushPanel = HL.Method(HL.Number, HL.Opt(HL.Table)) <
 
     if panelType ~= panelTypeConst.Settlement and panelType ~= panelTypeConst.Overview then
         self.view.tabNodeAnimationWrapper:PlayOutAnimation()
+        self.view.putInNode.gameObject:SetActive(false)
         self.view.topBar:PlayOutAnimation()
     end
     if self.m_subPanelGroupId ~= -1 and DeviceInfo.usingController and panelType ~= panelTypeConst.Settlement then
@@ -556,6 +594,7 @@ SpaceshipGuestRoomClueCtrl.PopPanel = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) 
                 self.m_inventoryWidget:FadeOut()
             end
             self.view.guestroomCluesCenterNode:UnSelectClueIndex()
+            self.view.guestroomCluesCenterNode:StopTouchpadFocus()
         end
     elseif popPanel == panelTypeConst.Settlement then
         self.m_spaceship:ClearClueSettleClueInfo()
@@ -567,6 +606,7 @@ SpaceshipGuestRoomClueCtrl.PopPanel = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) 
             return
         end
         self.view.tabNodeAnimationWrapper:PlayInAnimation()
+        self.view.putInNode.gameObject:SetActive(true)
         self.view.topBar:PlayInAnimation()
     end
 end
@@ -648,6 +688,9 @@ end
 SpaceshipGuestRoomClueCtrl._TryRecoverState = HL.Method(HL.Table) << function(self, recoverState)
     local panelTypeConst = SpaceshipConst.GUEST_ROOM_CLUE_PANEL_TYPE
     local currentPanel = recoverState.currentPanel
+    if recoverState.stateControllerStateName then
+        self.view.stateController:SetState(recoverState.stateControllerStateName)
+    end
     if currentPanel == panelTypeConst.Inventory then
         self:_PushPanel(panelTypeConst.Inventory, {
             recoverState.indexTab or 0,

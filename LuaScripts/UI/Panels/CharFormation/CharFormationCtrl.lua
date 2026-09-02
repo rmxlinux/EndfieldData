@@ -198,9 +198,9 @@ CharFormationCtrl._OnBtnMixConfirmClicked = HL.Method() << function(self)
 end
 
 CharFormationCtrl._OnBtnConfirmClicked = HL.Method() << function(self)
-    if Utils.isCurSquadAllDead() then
-        
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_GAME_MODE_FORBID_FACTORY_WATCH)
+    local isDungeonOpen = self.m_dungeonId and Utils.isInDungeon()
+    if Utils.isCurSquadAllDead() and not isDungeonOpen then 
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_SYSTEM_FORBIDDEN)
         return
     end
 
@@ -212,7 +212,7 @@ CharFormationCtrl._OnBtnConfirmClicked = HL.Method() << function(self)
         end
     end
 
-    if self.state == UIConst.UI_CHAR_FORMATION_STATE.TeamWaitSet and self.m_customTeamIndex < 0 then
+    if self.state == UIConst.UI_CHAR_FORMATION_STATE.TeamWaitSet and self.m_customTeamIndex < 0 and not Utils.isForbidden(ForbidType.ForbidSetSquad) then
         self:Notify(MessageConst.ON_CHAR_FORMATION_TEAM_SET)
     end
 
@@ -727,7 +727,7 @@ CharFormationCtrl._InitAction = HL.Method() << function(self)
     end)
 
     self.view.dungeonInfoBtn.onClick:AddListener(function()
-        UIManager:AutoOpen(PanelId.DungeonInfoPopup, { dungeonId = self.m_dungeonId })
+        DungeonUtils.onClickCharFormationDungeonInfoBtn(self.m_dungeonId)
     end)
 end
 
@@ -810,7 +810,7 @@ CharFormationCtrl._PlayBtnSingleAnim = HL.Method(HL.Number) << function(self, si
     else
         if singleState == UIConst.UI_CHAR_FORMATION_SINGLE_STATE.Current then
             name = BTN_ANIM_NAME.BTN_FORMATION_REMOV_IN
-        else
+        elseif not self.m_empty then
             name = BTN_ANIM_NAME.BTN_EMPTY_OUT
         end
     end
@@ -884,7 +884,7 @@ CharFormationCtrl._EnterDungeon = HL.Method(HL.String, HL.Opt(HL.Table)) << func
 
     if charInfos then
         for _, charInfo in ipairs(charInfos) do
-            if charInfo and charInfo.isDead then
+            if charInfo and CharInfoUtils.isCharDead(charInfo.instId) then
                 Notify(MessageConst.SHOW_TOAST, Language.LUA_CHAR_FORMATION_DEAD_TOAST)
                 return
             end
@@ -897,14 +897,23 @@ CharFormationCtrl._EnterDungeon = HL.Method(HL.String, HL.Opt(HL.Table)) << func
     
     GameWorld.dialogManager:Next(0)
     if charInfos then
-        GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId, charInfos, self.m_args.presetTeamId or "")
+        GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId, charInfos, self.m_args.presetTeamId or "", self:_GetMsgTeamIndex())
     else
-       GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId, self.m_args.presetTeamId or "")
+        GameInstance.dungeonManager:TryReqEnterDungeon(dungeonId, self.m_args.presetTeamId or "", self:_GetMsgTeamIndex())
     end
     if self.m_enterDungeonCallback then
         self.m_enterDungeonCallback(dungeonId)
     end
     Utils.reportPlacementEvent(GEnums.ClientPlacementEventType.DungeonBattleFirst)
+end
+
+CharFormationCtrl._GetMsgTeamIndex = HL.Method().Return(HL.Number) << function(self)
+    local csIndex = CSIndex(self.m_curTeamIndex)
+    if not csIndex then
+        return 0
+    end
+    
+    return csIndex + 1
 end
 
 
@@ -932,6 +941,7 @@ CharFormationCtrl.OpenCharList = HL.Method(HL.Number, HL.Opt(HL.Int)) << functio
     UIUtils.PlayAnimationAndToggleActive(self.view.charList.view.animationWrapper, true)
     self.view.charList:InitCharFormationList(info, function(charList)
         self.m_tmpCharItems = charList
+        self:_RefreshCharListEmptyState(#charList == 0)
     end)
     self.view.charList:SetUpdateCellFunc(nil, function(select, cellIndex, charItem, charItemList, charInfoList)
         self:_CharListChangeSelectIndex(select, cellIndex, charItem, charItemList, charInfoList)
@@ -1081,6 +1091,13 @@ CharFormationCtrl._RefreshCharList = HL.Method() << function(self)
         self.m_tmpCharItems = CharInfoUtils.getCharInfoList(CSIndex(self.m_curTeamIndex), true)
     end
     self.view.charList:UpdateCharItems(self.m_tmpCharItems)
+end
+
+CharFormationCtrl._RefreshCharListEmptyState = HL.Method(HL.Boolean) << function(self, isEmpty)
+    self.view.charListLuaReference.emptyNode.gameObject:SetActive(isEmpty)
+    if isEmpty and self.m_charListMode == UIConst.CharListMode.Single and self.m_phase then
+        self.m_phase:OnSingleCharListEmpty()
+    end
 end
 
 CharFormationCtrl._CharListChangeSelectIndex = HL.Method(HL.Boolean, HL.Number, HL.Table, HL.Table, HL.Table) << function

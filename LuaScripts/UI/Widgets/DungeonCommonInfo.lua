@@ -32,6 +32,8 @@ DungeonCommonInfo.m_charAttributeCellCache = HL.Field(HL.Forward("UIListCache"))
 DungeonCommonInfo.m_paramBlackboard = HL.Field(CS.Beyond.Blackboard)
 DungeonCommonInfo.m_paramBlackboardFormatData = HL.Field(CS.Beyond.Gameplay.BlackboardFormatData)
 
+DungeonCommonInfo.m_customRewardDetailsClickFun = HL.Field(HL.Any) << nil
+
 
 DungeonCommonInfo._OnFirstTimeInit = HL.Override() << function(self)
     self.m_rewardCellCache = UIUtils.genCellCache(self.view.rewardCell)
@@ -83,6 +85,7 @@ end
 DungeonCommonInfo.InitDungeonCommonInfo = HL.Method(HL.Table) << function(self, customArgs)
     self:_FirstTimeInit()
     self.m_customArgs = customArgs
+    self.m_customRewardDetailsClickFun = customArgs and customArgs.customRewardDetailsClickFun or nil
 end
 
 DungeonCommonInfo.RefreshDungeonCommonInfo = HL.Method(HL.String) << function(self, dungeonId)
@@ -461,6 +464,11 @@ DungeonCommonInfo._OnTipsBtnClick = HL.Method() << function(self)
 end
 
 DungeonCommonInfo._OnBtnRewardDetailsClick = HL.Method() << function(self)
+    if self.m_customRewardDetailsClickFun ~= nil then
+        self.m_customRewardDetailsClickFun()
+        return
+    end
+
     local dungeonCfg = Tables.dungeonTable[self.m_dungeonId]
     local hasOptionReward = not string.isEmpty(dungeonCfg.customRewardId)
     local openPanelId = hasOptionReward and PanelId.DungeonRewardSelectPopup or PanelId.CommonRewardDetailsPopup
@@ -488,6 +496,11 @@ DungeonCommonInfo.SetRewardDetailsData = HL.Method(HL.Table) << function(self, d
 end
 
 DungeonCommonInfo._OnBtnEnemyDetailsClick = HL.Method(HL.Opt(HL.Number)) << function(self, initSelectEnemyLuaIndex)
+    if PhaseManager:CheckIsInTransition()
+        or PhaseManager:GetTopPhaseId() == PhaseId.CharFormation then
+        return
+    end
+
     local dungeonCfg = Tables.dungeonTable[self.m_dungeonId]
     local dungeonTypeCfg = Tables.dungeonTypeTable[dungeonCfg.dungeonCategory]
     local enemyPopupArg = {
@@ -596,6 +609,16 @@ DungeonCommonInfo.TryRecoverPopupState = HL.Method(HL.Any) << function(self, pop
 end
 
 DungeonCommonInfo._OnBtnDungeonEntryClick = HL.Method() << function(self)
+    if PhaseManager:CheckIsInTransition()
+        or PhaseManager:GetTopPhaseId() == PhaseId.CharFormation then
+        return
+    end
+
+    local isEnemyPopupOpen = UIManager:IsOpen(PanelId.CommonEnemyPopup)
+    if isEnemyPopupOpen then
+        return
+    end
+
     local isCostStamina, costStamina = DungeonUtils.isDungeonCostStamina(self.m_dungeonId)
     local realCostStamina = ActivityUtils.getRealStaminaCost(costStamina)
     if isCostStamina and realCostStamina > GameInstance.player.inventory.curStamina then
@@ -608,6 +631,11 @@ DungeonCommonInfo._OnBtnDungeonEntryClick = HL.Method() << function(self)
 end
 
 DungeonCommonInfo._OpenCharFormation = HL.Virtual() << function(self)
+    local isEnemyPopupOpen = UIManager:IsOpen(PanelId.CommonEnemyPopup)
+    if isEnemyPopupOpen then
+        UIManager:Close(PanelId.CommonEnemyPopup)
+    end
+
     PhaseManager:GoToPhase(PhaseId.CharFormation, {
         dungeonId = self.m_dungeonId,
         enterDungeonCallback = self.m_customArgs and self.m_customArgs.enterDungeonCallback or nil,

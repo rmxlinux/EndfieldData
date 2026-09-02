@@ -15,11 +15,14 @@ local LOCK_NODE_DEFAULT_WIDTH = 500
 ActivityCoinMilestoneCtrl = HL.Class('ActivityCoinMilestoneCtrl', uiCtrl.UICtrl)
 
 ActivityCoinMilestoneCtrl.s_messages = HL.StaticField(HL.Table) << {
+    [MessageConst.ON_ACTIVITY_MILESTONE_REWARD_RECEIVED] = '_OnDataChange',
     [MessageConst.ON_RACING_DUNGEON_GET_MILESTONE_REWARD] = '_OnDataChange',
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = '_OnDataChange',
 }
 
 ActivityCoinMilestoneCtrl.m_activityId = HL.Field(HL.String) << ''
+
+ActivityCoinMilestoneCtrl.m_stateName = HL.Field(HL.String) << ''
 
 ActivityCoinMilestoneCtrl.m_activityData = HL.Field(HL.Any)
 
@@ -75,6 +78,9 @@ ActivityCoinMilestoneCtrl.m_restoreNaviNodeId = HL.Field(HL.Any)
 
 ActivityCoinMilestoneCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_activityId = arg.activityId
+    if arg.stateName~= nil and not string.isEmpty(arg.stateName) then
+        self.m_stateName = arg.stateName
+    end
     self.m_readNodes = {}
     self.m_needNaviToFirst = true
     self:_InitData()
@@ -114,7 +120,7 @@ ActivityCoinMilestoneCtrl._BindUI = HL.Method() << function(self)
             end
         end
         if hasReceivable then
-            GameInstance.player.racingDungeonSystem:SendReceiveMilestoneReward(self.m_activityId, true)
+            GameInstance.player.activitySystem:SendReceiveRewardAllMilestones(self.m_activityId)
         end
     end)
 
@@ -689,7 +695,7 @@ ActivityCoinMilestoneCtrl._OnUpdateCell = HL.Method(HL.Userdata, HL.Number) << f
     cell.rewardStateNode.receiveBtn.onClick:RemoveAllListeners()
     if node.status == NodeStatus.Receive then
         cell.rewardStateNode.receiveBtn.onClick:AddListener(function()
-            GameInstance.player.racingDungeonSystem:SendReceiveMilestoneReward(self.m_activityId, false, node.nodeId)
+            GameInstance.player.activitySystem:SendReceiveRewardMilestone(self.m_activityId, node.nodeId)
         end)
     end
 

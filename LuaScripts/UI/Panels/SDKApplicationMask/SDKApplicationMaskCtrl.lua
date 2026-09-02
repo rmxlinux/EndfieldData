@@ -82,7 +82,11 @@ SDKApplicationMaskCtrl.OnOpenWebApplication = HL.Method(HL.Table) << function(se
     self:_PlayAudioOnOpen(key)
     
     local phaseId = PhaseManager:GetTopPhaseId()
-    local openCostSecond = Time.realtimeSinceStartupAsDouble - self.m_webApplicationOpenStartTime[key]
+    local openStartTime = self.m_webApplicationOpenStartTime[key]
+    if openStartTime == nil then
+        return
+    end
+    local openCostSecond = Time.realtimeSinceStartupAsDouble - openStartTime
     self.m_webApplicationOpenStartTime[key] = nil
     EventLogManagerInst:GameEvent_UISwitch(PhaseManager:GetPhaseName(phaseId), "web_" .. key, true, openCostSecond)
 end

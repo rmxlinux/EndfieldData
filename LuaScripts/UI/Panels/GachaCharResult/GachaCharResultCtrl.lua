@@ -75,7 +75,7 @@ GachaCharResultCtrl._UpdateChar = HL.Method(HL.Number) << function(self, index)
         if isTarget then
             self.m_curFocusCell = backCell
         elseif self.m_curFocusCell == backCell then
-            self.m_curFocusCell = backCell
+            self.m_curFocusCell = nil
         end
     end
     backCell.bgMain1:LoadSprite(UIConst.UI_SPRITE_GACHA, string.format("bg_gacha_color_%d", char.rarity))

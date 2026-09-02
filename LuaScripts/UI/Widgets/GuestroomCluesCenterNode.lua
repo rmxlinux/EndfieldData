@@ -14,6 +14,8 @@ GuestroomCluesCenterNode.m_selectNode = HL.Field(HL.Table)
 
 GuestroomCluesCenterNode.m_timeCor = HL.Field(HL.Thread)
 
+GuestroomCluesCenterNode.m_isTouchpadEntering = HL.Field(HL.Boolean) << false
+
 
 GuestroomCluesCenterNode._OnFirstTimeInit = HL.Override() << function(self)
     self.view.btnExchangeData.onClick:AddListener(function()
@@ -31,32 +33,15 @@ GuestroomCluesCenterNode._OnFirstTimeInit = HL.Override() << function(self)
     self.view.selectableNaviGroup.onIsFocusedChange:RemoveAllListeners()
     self.view.selectableNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
         if isFocused then
-            local clueNode
-            for i = 1, Tables.spaceshipConst.spaceshipGuestRoomClueTypeTotalCount do
-                if self.m_spaceship:CheckClueCanPlaceByIndex(i) then
-                    clueNode = self.view["clue" .. i]
-                    break
-                end
+            self.m_isTouchpadEntering = true
+            local clueNode = self:_GetPreferredClueNode()
+            self.m_nowNaviClueCell = clueNode
+            if clueNode then
+                self:SetNaviTarget(clueNode.inputBindingGroupNaviDecorator)
+                clueNode.clueCellButton.onClick:Invoke()
             end
-            if not clueNode then
-                for i = 1, Tables.spaceshipConst.spaceshipGuestRoomClueTypeTotalCount do
-                    if not self.m_spaceship:GetSpaceshipRoomClueDataByCluePlaceIndex(i) then
-                        clueNode = self.view["clue" .. i]
-                        break
-                    end
-                end
-            end
-            if not clueNode then
-                clueNode = self.view.clue1
-            end
-            self:SetNaviTarget(clueNode.inputBindingGroupNaviDecorator)
-            InputManagerInst:ToggleBinding(self.m_showClueDetailBindingId, true)
         else
             self.m_nowNaviClueCell = nil
-            InputManagerInst:ToggleBinding(self.m_showClueDetailBindingId, false)
-            if DeviceInfo.usingController then
-                AudioAdapter.PostEvent("Au_UI_Button_Back")
-            end
         end
         if self.m_onIsFocusedChange then
             self.m_onIsFocusedChange(isFocused)
@@ -69,6 +54,28 @@ GuestroomCluesCenterNode._OnFirstTimeInit = HL.Override() << function(self)
         end
     end, self.view.inputBindingGroupMonoTarget.groupId)
     InputManagerInst:ToggleBinding(self.m_showClueDetailBindingId, false)
+end
+
+GuestroomCluesCenterNode._GetPreferredClueNode = HL.Method().Return(HL.Table) << function(self)
+    for i = 1, Tables.spaceshipConst.spaceshipGuestRoomClueTypeTotalCount do
+        if self.m_spaceship:CheckClueCanPlaceByIndex(i) then
+            return self.view["clue" .. i]
+        end
+    end
+    for i = 1, Tables.spaceshipConst.spaceshipGuestRoomClueTypeTotalCount do
+        if not self.m_spaceship:GetSpaceshipRoomClueDataByCluePlaceIndex(i) then
+            return self.view["clue" .. i]
+        end
+    end
+    return self.view.clue1
+end
+
+GuestroomCluesCenterNode.StopTouchpadFocus = HL.Method() << function(self)
+    if not self.m_isTouchpadEntering then
+        return
+    end
+    self.m_isTouchpadEntering = false
+    self.view.selectableNaviGroup:ManuallyStopFocus()
 end
 
 GuestroomCluesCenterNode.InitGuestroomCluesCenterNode = HL.Method(HL.Any) << function(self, onFocus)

@@ -32,10 +32,8 @@ FacMainRightCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         PhaseManager:OpenPhase(PhaseId.FacBlueprint)
     end)
 
-    self:_UpdateBlueprintBtn()
-
     self.view.buildBtn.onClick:AddListener(function()
-        Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, {showLastType = true})
+        Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { onlyCraftNode = false, showLastType = true })
     end)
 
     self.view.destroyBtn.onClick:AddListener(function()
@@ -97,6 +95,7 @@ FacMainRightCtrl.OnShow = HL.Override() << function(self)
     self:_UpdateLastBuildNode()
     self:UpdateMachineIcon()
     self:_UpdateTopViewState()
+    self:_UpdateBlueprintBtn()
     self.view.equipBtn.gameObject:SetActive(PhaseManager:CheckCanOpenPhase(PhaseId.EquipTech))
 end
 

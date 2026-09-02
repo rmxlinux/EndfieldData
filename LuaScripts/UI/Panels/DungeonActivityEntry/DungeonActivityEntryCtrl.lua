@@ -100,6 +100,8 @@ DungeonActivityEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             coroutine.step()
             coroutine.step()
             coroutine.yield()
+            
+            CS.Beyond.SDK.SDKUtils.CloseWebView()
             Notify(MessageConst.SHOW_TOAST, Language.LUA_ACTIVITY_FORBIDDEN)
             Notify(MessageConst.SHOW_POP_UP, {
                 content = Language.LUA_ACTIVITY_MODIFY_QUIT_TO_MENU,
@@ -249,6 +251,8 @@ DungeonActivityEntryCtrl.OnActivityUpdated = HL.Method(HL.Any) << function(self,
         UIManager:Close(PanelId.ItemTips)
         UIManager:Close(PanelId.CommonEnemyPopup)
         UIManager:Close(PanelId.CommonRewardDetailsPopup)
+        
+        CS.Beyond.SDK.SDKUtils.CloseWebView()
         Notify(MessageConst.SHOW_TOAST, Language.LUA_ACTIVITY_FORBIDDEN)
         Notify(MessageConst.SHOW_POP_UP, {
             content = Language.LUA_ACTIVITY_MODIFY_QUIT_TO_MENU,

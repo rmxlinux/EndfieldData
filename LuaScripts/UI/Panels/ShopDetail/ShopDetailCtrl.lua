@@ -25,8 +25,11 @@ ShopDetailCtrl.m_realPrice = HL.Field(HL.Number) << 0
 
 ShopDetailCtrl.m_bundleCount = HL.Field(HL.Number) << 0
 
+ShopDetailCtrl.m_isWaitingBuyResponse = HL.Field(HL.Boolean) << false
+
 
 ShopDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_isWaitingBuyResponse = false
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })
     self.view.closeButton.onClick:AddListener(function()
        self:PlayAnimationOutWithCallback(function()
@@ -137,8 +140,8 @@ ShopDetailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self.view.actionIcon.gameObject:SetActive(false)
     end
     self.view.subTitleTxt.text = itemTypeName
-    self.view.descTxt.text = itemData.desc
-    self.view.descTxt02.text = itemData.decoDesc
+    self.view.descTxt:SetAndResolveTextStyle(itemData.desc)
+    self.view.descTxt02:SetAndResolveTextStyle(itemData.decoDesc)
     self:_RefreshCharAnimNode(itemId, itemData)
 
     
@@ -418,6 +421,7 @@ ShopDetailCtrl._OnClickConfirm = HL.Method() << function(self)
         end
     end
 
+    self.m_isWaitingBuyResponse = true
     if self.m_moneyId == Tables.globalConst.gachaWeaponItemId then
         GameInstance.player.shopSystem:ByGoodsGachaWeapon(info.shopId, info.goodsId)
     else
@@ -426,6 +430,11 @@ ShopDetailCtrl._OnClickConfirm = HL.Method() << function(self)
 end
 
 ShopDetailCtrl.OnBuyItemSucc = HL.Method(HL.Any) << function(self, arg)
+    if not self.m_isWaitingBuyResponse then
+        return
+    end
+    self.m_isWaitingBuyResponse = false
+
     local info = self.m_info
     local goodsTableData = Tables.shopGoodsTable:GetValue(info.goodsTemplateId)
     local displayItem = UIUtils.getRewardFirstItem(goodsTableData.rewardId)

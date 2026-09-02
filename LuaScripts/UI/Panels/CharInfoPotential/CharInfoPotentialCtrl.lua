@@ -312,7 +312,7 @@ CharInfoPotentialCtrl._ActiveLevelUp = HL.Method(HL.Boolean, HL.Opt(HL.Boolean, 
     if decoView and not IsNull(decoView.gameObject) then    
         decoView.btnViewDetails.gameObject:SetActive(not active)
     end
-    InputManagerInst:ToggleBinding(self.m_focusPhotoBindingId, active and self.m_potentialLevel > 1 and not self.m_isTrailChar)
+    InputManagerInst:ToggleBinding(self.m_focusPhotoBindingId, active and self.m_potentialLevel >= 1 and not self.m_isTrailChar)
     self.view.controllerSideMenuBtn.gameObject:SetActive(not active)
 end
 
@@ -361,7 +361,7 @@ CharInfoPotentialCtrl._ShowSkill = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << f
     if playAnim then
         UIUtils.PlayAnimationAndToggleActive(self.view.rightNode.animWrapper, true)
     end
-    InputManagerInst:ToggleBinding(self.m_focusPhotoBindingId, index == 0 and self.m_potentialLevel > 1 and not self.m_isTrailChar)
+    InputManagerInst:ToggleBinding(self.m_focusPhotoBindingId, index == 0 and self.m_potentialLevel >= 1 and not self.m_isTrailChar)
 end
 
 CharInfoPotentialCtrl._BlockUIInput = HL.Method(HL.Boolean) << function(self, isBlock)
@@ -743,7 +743,7 @@ CharInfoPotentialCtrl._ActivePhotoMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean
     if not isActive then
         self.m_phase:StopNaviPotentialPhoto()
     end
-    InputManagerInst:ToggleBinding(self.m_focusPhotoBindingId, not isActive and self.m_potentialLevel > 1 and not self.m_isTrailChar)
+    InputManagerInst:ToggleBinding(self.m_focusPhotoBindingId, not isActive and self.m_potentialLevel >= 1 and not self.m_isTrailChar)
     self.m_phase:RefreshFocusPhotoBtn()
 end
 

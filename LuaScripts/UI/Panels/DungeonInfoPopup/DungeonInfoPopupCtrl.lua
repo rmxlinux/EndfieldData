@@ -13,24 +13,11 @@ DungeonInfoPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-
-DungeonInfoPopupCtrl.TryToShow = HL.StaticMethod(HL.Any) << function(args)
-    local dungeonId = unpack(args)
-    DungeonUtils.tryAutoShowDungeonPopup(dungeonId)
-end
-
-
-DungeonInfoPopupCtrl.OnShowDungeonInfoPopup = HL.StaticMethod() << function()
-    DungeonUtils.showDungeonPopupByEvent()
-end
-
-DungeonInfoPopupCtrl.m_dungeonId = HL.Field(HL.String) << ""
+DungeonInfoPopupCtrl.m_params = HL.Field(HL.Table)
 
 DungeonInfoPopupCtrl.m_closeCb = HL.Field(HL.Function)
 
 DungeonInfoPopupCtrl.m_dungeonInfoCellCache = HL.Field(HL.Forward("UIListCache"))
-DungeonInfoPopupCtrl.m_paramBlackboard = HL.Field(CS.Beyond.Blackboard)
-DungeonInfoPopupCtrl.m_paramBlackboardFormatData = HL.Field(CS.Beyond.Gameplay.BlackboardFormatData)
 
 
 DungeonInfoPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -46,11 +33,9 @@ DungeonInfoPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnBtnCloseClick()
     end, self.view.btnClose.groupId)
 
-    self.m_dungeonId = arg.dungeonId
+    self.m_params = arg.dungeonId and DungeonUtils.getInfoPopupParams(arg.dungeonId) or arg
     self.m_closeCb = arg.closeCb
     self.m_dungeonInfoCellCache = UIUtils.genCellCache(self.view.dungeonInfoCell)
-    self.m_paramBlackboard = CS.Beyond.Blackboard()
-    self.m_paramBlackboardFormatData = CS.Beyond.Gameplay.BlackboardFormatData(self.m_paramBlackboard)
 
     self:_Refresh()
 
@@ -58,31 +43,15 @@ DungeonInfoPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 DungeonInfoPopupCtrl._Refresh = HL.Method() << function(self)
-    local dungeonCfg = Tables.dungeonTable[self.m_dungeonId]
-    local gameMechanicCfg = Tables.gameMechanicTable[self.m_dungeonId]
-    local dungeonTypeCfg = Tables.dungeonTypeTable[gameMechanicCfg.gameCategory]
+    self.view.titleText.text = self.m_params.titleText
+    self.view.positionTxt.text = self.m_params.positionText
+    self.view.positionNode.gameObject:SetActiveIfNecessary(not string.isEmpty(self.m_params.positionText))
 
-    
-    self.m_paramBlackboard:Clear()
-    if dungeonCfg.paramList then
-        for i = 1, dungeonCfg.paramList.Count do
-            local param = dungeonCfg.paramList[CSIndex(i)]
-            self.m_paramBlackboard:Assign(param.key, param.value)
-        end
-    end
-
-    self.view.titleText.text = string.isEmpty(dungeonTypeCfg.dungeonInfoTitle) and "TBD" or dungeonTypeCfg.dungeonInfoTitle
-    
-    local positionText = DungeonUtils.getEntryLocation(dungeonCfg.levelId, true)
-    self.view.positionTxt.text = positionText
-    self.view.positionNode.gameObject:SetActiveIfNecessary(not string.isEmpty(positionText))
-
-    
-    local featureInfos = DungeonUtils.getListByStr(dungeonCfg.featureDesc)
+    local featureInfos = self.m_params.featureInfos
     local hasFeature = #featureInfos > 0
     if hasFeature then
         self.m_dungeonInfoCellCache:Refresh(#featureInfos, function(cell, index)
-            cell.txt:SetAndResolveTextStyle(CS.Beyond.Gameplay.FormatUtils.FormatBattleText(featureInfos[index], self.m_paramBlackboardFormatData))
+            cell.txt:SetAndResolveTextStyle(featureInfos[index])
         end)
     end
     self.view.featureNode.gameObject:SetActiveIfNecessary(hasFeature)

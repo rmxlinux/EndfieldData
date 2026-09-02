@@ -266,6 +266,12 @@ Depot._RefreshShowingTypeData = HL.Method() << function(self)
 end
 
 Depot._OnClickShowingType = HL.Method(HL.Table, HL.Number) << function(self, typeCell, index)
+    
+    
+    if DeviceInfo.usingController and self.m_inDestroyMode then
+        Notify(MessageConst.HIDE_ITEM_TIPS, { skipAnim = true })
+    end
+
     if DeviceInfo.usingController and InputManagerInst.controllerNaviManager:IsTopLayer(self.depotContent.view.itemListSelectableNaviGroup) then
         self.depotContent.view.itemList:ScrollToIndex(0, true)
         self.m_waitInitNaviTarget = true
@@ -504,6 +510,13 @@ Depot.ToggleDestroyMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(
             if not self.depotContent.view.itemListSelectableNaviGroup.IsTopLayer then
                 self:SetAsNaviTarget()
             end
+        end
+    end
+
+    if DeviceInfo.usingController then
+        local _, cell = self.depotContent:GetCurNaviTargetSlot()
+        if cell then
+            self:_TryDisableItemHoverBindingOnDestroyMode(cell)
         end
     end
 
@@ -756,7 +769,16 @@ Depot._RefreshCellHoverTipsEnabledState = HL.Method(HL.Forward("ItemSlot")) << f
 end
 
 Depot.SetAsNaviTarget = HL.Method() << function(self)
-    local cell = self.depotContent:GetCell(1)
+    local itemList = self.depotContent.view.itemList
+    local cell
+    if itemList.count > 0 then
+        local firstCsIndex = itemList:GetShowingCellsIndexRange()
+        cell = self.depotContent:GetCell(LuaIndex(firstCsIndex))
+    end
+    if not cell then
+        itemList:SetTop()
+        cell = self.depotContent:GetCell(1)
+    end
     if cell then
         cell:SetAsNaviTarget()
     end

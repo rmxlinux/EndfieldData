@@ -58,6 +58,14 @@ end
 
 
 
+
+
+
+
+
+
+
+
 PhaseFacRegionUpgrade.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.Number)) << function(self, transitionType, fastMode, anotherPhaseId)
     if not fastMode then
         UIManager:PreloadPanelAsset(PanelId.FacRegionUpgrade, PHASE_ID)
@@ -127,7 +135,7 @@ PhaseFacRegionUpgrade._EnterFacRegionUpgradeState = HL.Method(HL.Boolean) << fun
                         configData.trackName,
                         configData.trackTweenTime,
                         nil, nil, 0,
-                        configData.trackCurve, false
+                        configData.trackCurve
                     )
                     cameraController:SetFinalRotation(Quaternion.Euler(configData.enterRotation))
                 end

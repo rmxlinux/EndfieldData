@@ -119,7 +119,7 @@ QUICK_MENU_ITEM_CONFIG = {
     [QUICK_MENU_ITEM_ID_GETTER.dungeonInfo] = {
         mainHudId = "dungeonInfo",
         nameTextId = "LUA_QUICK_MENU_ITEM_DUNGEON_INFO_NAME",
-        iconId = "btn_dungeon",
+        iconId = "btn_dungeon_info",
     },
     [QUICK_MENU_ITEM_ID_GETTER.weekRaidTipInfo] = {
         mainHudId = "weekRaidTipInfo",

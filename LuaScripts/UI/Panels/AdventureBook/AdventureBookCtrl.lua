@@ -122,6 +122,13 @@ AdventureBookCtrl._InitTabs = HL.Method() << function(self)
             local cell = self.m_genTabCells:Get(luaIndex)
             local stateCtrl = cell.stateController
             if isOn then
+                if not self.m_phase:CanChangeTab() then
+                    self:_RestoreCurrentTabSelection()
+                    if UNITY_EDITOR then
+                        logger.warn("[AdventureBook] AdventureBook不在栈顶，忽略页签切换", self.m_tabInfos[luaIndex].id)
+                    end
+                    return
+                end
                 stateCtrl:SetState("Select")
                 self:_OnTabClick(luaIndex)
             else
@@ -129,6 +136,15 @@ AdventureBookCtrl._InitTabs = HL.Method() << function(self)
             end
         end)
     end)
+end
+
+AdventureBookCtrl._RestoreCurrentTabSelection = HL.Method() << function(self)
+    for luaIndex, _ in ipairs(self.m_tabInfos) do
+        local cell = self.m_genTabCells:Get(luaIndex)
+        local isSelected = luaIndex == self.m_curTabIndex
+        cell.toggle:SetIsOnWithoutNotify(isSelected)
+        cell.stateController:SetState(isSelected and "Select" or "Unselected")
+    end
 end
 
 AdventureBookCtrl._InitTabInfos = HL.Method() << function(self)

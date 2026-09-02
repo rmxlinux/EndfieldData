@@ -23,8 +23,13 @@ function SeasonTowerUtils.checkMainRedDot()
     if currentSeasonId <= 0 or currentWeekId <= 0 then
         return false
     end
+    
+    local weekRecord = seasonTowerSystem.weekRecord
+    if weekRecord and weekRecord.starNum > 0 then
+        return false
+    end
     local id = currentSeasonId * 100 + currentWeekId
-    local _, prevId = ClientDataManagerInst:GetInt(SEASONTOWER_CHECKED_WEEK, true)
+    local _, prevId = ClientDataManagerInst:GetInt(SEASONTOWER_CHECKED_WEEK, false)
     return id ~= prevId
 end
 
@@ -36,7 +41,7 @@ function SeasonTowerUtils.setMainRedDotChecked()
         return
     end
     local id = currentSeasonId * 100 + currentWeekId
-    ClientDataManagerInst:SetInt(SEASONTOWER_CHECKED_WEEK, id, true, EClientDataTimeValidType.Permanent)
+    ClientDataManagerInst:SetInt(SEASONTOWER_CHECKED_WEEK, id, false, EClientDataTimeValidType.Permanent)
     RedDotManager:TriggerUpdate("SeasonTowerMain")
     Notify(MessageConst.ON_SEASON_TOWER_RED_DOT_SET_FALSE)
 end
@@ -44,9 +49,22 @@ end
 function SeasonTowerUtils.isNewSeason()
     local seasonTowerSystem = GameInstance.player.seasonTowerSystem
     local currentSeasonId = seasonTowerSystem.currentSeasonId
-    local _, prevId = ClientDataManagerInst:GetInt(SEASONTOWER_CHECKED_WEEK, true)
+    local _, prevId = ClientDataManagerInst:GetInt(SEASONTOWER_CHECKED_WEEK, false)
     local prevSeasonId = prevId // 100
+    
+    local seasonRecord = seasonTowerSystem.seasonRecord
+    if seasonRecord and seasonRecord.starNum > 0 then
+        return false
+    end
     if currentSeasonId > prevId then
+        return true
+    end
+    return false
+end
+
+function SeasonTowerUtils.isClosed()
+    local seasonTowerSystem = GameInstance.player.seasonTowerSystem
+    if GameInstance.player.gameSettingSystem.forbiddenSeasonTower then
         return true
     end
     return false
@@ -54,7 +72,7 @@ end
 
 function SeasonTowerUtils.getShouldRefresh()
     local seasonTowerSystem = GameInstance.player.seasonTowerSystem
-    if seasonTowerSystem.needRefresh or GameInstance.player.gameSettingSystem.forbiddenSeasonTower then
+    if seasonTowerSystem.needRefresh then
         return true
     end
     return false

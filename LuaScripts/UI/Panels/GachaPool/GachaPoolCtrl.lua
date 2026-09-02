@@ -220,6 +220,8 @@ GachaPoolCtrl._UpdateTabCell = HL.Method(HL.Table, HL.Number) << function(self, 
     cell.nameBG.color = UIUtils.getColorByString(info.data.color)
     cell.shadowImg.color = UIUtils.getColorByString(info.data.tabGradientColor, cell.shadowImg.color.a * 255)
     cell.selectDeco.color = UIUtils.getColorByString(info.data.tabGradientColor)
+    cell.rerunIcon.color = UIUtils.getColorByString(info.data.tabGradientColor)
+    cell.rerunNode.gameObject:SetActive(info.csInfo.type == CS.Beyond.GEnums.CharacterGachaPoolType.Rerun)
     cell.bannerImg:LoadSprite(UIConst.UI_SPRITE_GACHA_POOL, info.data.tabImage)
     cell.selectStateCtrl:SetState("Unselect")
     cell.toggle.onValueChanged:RemoveAllListeners()
@@ -623,6 +625,9 @@ GachaPoolCtrl.OnGachaSucc = HL.Method(HL.Table) << function(self, arg)
     end
     
 
+    if PhaseManager:IsOpen(PhaseId.GachaLauncher) then
+        return
+    end
     LuaSystemManager.gachaSystem:UpdateGachaSettingState()
     local isOpen = PhaseManager:OpenPhaseFast(PhaseId.GachaLauncher, {
         chars = chars,
@@ -682,6 +687,9 @@ GachaPoolCtrl._InitRewardQueueConfigs = HL.Method() << function(self)
         TestimonialConvert = {
             order = 11,
         },
+        RerunVersionConfirm = {
+            order = 20,
+        },
     }
 end
 
@@ -690,7 +698,8 @@ GachaPoolCtrl.AddQueueReward = HL.Method(HL.Table) << function(self, arg)
     self.m_showRewardFuncQueue:Push({
         queueRewardType = arg.queueRewardType,
         order = self.m_queueRewardConfigs[arg.queueRewardType].order,
-        showRewardFunc = arg.showRewardFunc
+        showRewardFunc = arg.showRewardFunc,
+        poolId = arg.poolId, 
     })
     self.m_showRewardFuncQueue:Sort(function(x, y)
         return x.order < y.order
@@ -698,13 +707,28 @@ GachaPoolCtrl.AddQueueReward = HL.Method(HL.Table) << function(self, arg)
 end
 
 GachaPoolCtrl._TryShowQueueReward = HL.Method() << function(self)
-    if self.m_showRewardFuncQueue:Count() > 0 and not self.m_curIsShowReward then
-        self.m_curIsShowReward = true
-        local queueData = self.m_showRewardFuncQueue:Pop()
-        queueData.showRewardFunc()
-    elseif not self.m_curIsShowReward then
-        Notify(MessageConst.ON_GACHA_POOL_ALL_REWARDS_SHOWN)
+    if self.m_curIsShowReward then
+        return
     end
+    local count = self.m_showRewardFuncQueue:Count()
+    if count <= 0 then
+        Notify(MessageConst.ON_GACHA_POOL_ALL_REWARDS_SHOWN)
+        return
+    end
+
+    
+    for i = 1, count do
+        local queueData = self.m_showRewardFuncQueue:AtIndex(i)
+        local bindPoolId = queueData.poolId
+        if string.isEmpty(bindPoolId) or bindPoolId == self.m_curPoolId then
+            
+            self.m_showRewardFuncQueue:RemoveAt(self.m_showRewardFuncQueue.m_head + i - 1)
+            self.m_curIsShowReward = true
+            queueData.showRewardFunc()
+            return
+        end
+    end
+    Notify(MessageConst.ON_GACHA_POOL_ALL_REWARDS_SHOWN)
 end
 
 GachaPoolCtrl.OnOneQueueRewardFinished = HL.Method() << function(self)

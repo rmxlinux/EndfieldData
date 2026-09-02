@@ -63,6 +63,10 @@ SSPictureCell.SelectIndex = HL.Method(HL.Opt(HL.Number)) << function(self, index
     else
         self.view.pictureSelectNode.gameObject:SetActive(false)
     end
+    InputManagerInst:SetBindingText(
+        self.view.pictureBtn.hoverConfirmBindingId,
+        index and Language.key_hint_common_unselect or Language.key_hint_common_select
+    )
 end
 
 SSPictureCell.UpdateRedDotState = HL.Method(HL.Boolean) << function(self, isNew)

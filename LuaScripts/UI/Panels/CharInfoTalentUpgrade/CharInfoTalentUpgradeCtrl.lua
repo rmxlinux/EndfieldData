@@ -23,6 +23,8 @@ CharInfoTalentUpgradeCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHAR_DECK_ATTR_CHANGED] = '_OnCharDeckAttrChanged',
 }
 
+CharInfoTalentUpgradeCtrl.m_arg = HL.Field(HL.Any)
+
 CharInfoTalentUpgradeCtrl.m_isSkillExpanding = HL.Field(HL.Boolean) << false
 
 CharInfoTalentUpgradeCtrl.m_curNodeId = HL.Field(HL.String) << ''
@@ -51,6 +53,7 @@ CharInfoTalentUpgradeCtrl.m_cachedIsMaxLv = HL.Field(HL.Boolean) << false
 
 
 CharInfoTalentUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
+    self.m_arg = arg
     self:_InitActionEvent()
     self:_ResetUpgradePanel()
 
@@ -61,6 +64,7 @@ CharInfoTalentUpgradeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 CharInfoTalentUpgradeCtrl.PhaseCharInfoPanelShowFinal = HL.Method(HL.Any) << function(self, arg)
+    self.m_arg = arg
     self:Show()
 
     self.view.rightNode.gameObject:SetActive(false)
@@ -112,6 +116,9 @@ CharInfoTalentUpgradeCtrl._RefreshNodeCommon = HL.Method(HL.Table, HL.Number, HL
 
     if node.upgradeItemCellCache == nil then
         node.upgradeItemCellCache = UIUtils.genCellCache(node.itemCell)
+    end
+    if not isActive and node.scrollRect then
+        node.scrollRect.horizontalNormalizedPosition = 0
     end
 
     self.m_refreshCostFunc = function()

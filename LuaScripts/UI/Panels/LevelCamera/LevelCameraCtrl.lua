@@ -26,6 +26,7 @@ LevelCameraCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.FAC_ON_DRAG_END_IN_BATCH_MODE] = 'FacOnDragEndInBathMode',
     [MessageConst.ON_DRAG_SPRINT_BTN] = '_MoveCamera',
     [MessageConst.ON_DRAG_WATER_DRONE_JOYSTICK] = '_MoveCamera',
+    [MessageConst.ON_DRAG_TYPHOEA_ARCHERY_JOYSTICK] = '_MoveCamera',
 
     [MessageConst.MOVE_LEVEL_CAMERA] = '_MoveCamera',
     [MessageConst.ZOOM_LEVEL_CAMERA] = 'ZoomCamera',

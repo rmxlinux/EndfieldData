@@ -13,8 +13,6 @@ RemoteCommHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     
 }
 
-RemoteCommHudCtrl.s_auto = HL.StaticField(HL.Boolean) << false
-
 RemoteCommHudCtrl.m_inited = HL.Field(HL.Boolean) << false
 
 RemoteCommHudCtrl.m_autoNextTimer = HL.Field(HL.Number) << -1
@@ -115,7 +113,7 @@ RemoteCommHudCtrl._GetCurAuto = HL.Method().Return(HL.Boolean) << function(self)
     if self.m_forceAuto ~= nil then
         return self.m_forceAuto
     end
-    return RemoteCommHudCtrl.s_auto
+    return GameWorld.narrativeManager.cinematicAutoPlay
 end
 
 RemoteCommHudCtrl.SetForceAuto = HL.Method(HL.Any) << function(self, forceAuto)
@@ -129,11 +127,11 @@ RemoteCommHudCtrl.OnClose = HL.Override() << function(self)
 end
 
 RemoteCommHudCtrl._SwitchAuto = HL.Method(HL.Opt(HL.Boolean)) << function(self, auto)
-    local tmpAuto = not RemoteCommHudCtrl.s_auto
+    local tmpAuto = not GameWorld.narrativeManager.cinematicAutoPlay
     if auto ~= nil then
         tmpAuto = auto
     end
-    RemoteCommHudCtrl.s_auto = tmpAuto
+    GameWorld.narrativeManager.cinematicAutoPlay = tmpAuto
     if not self:_GetCurAuto() then
         self:_ClearAutoNextTimer()
     else

@@ -90,30 +90,30 @@ end
 
 HeadLabelCtrl._OnStateChanged = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = HeadLabelCtrl.AutoOpen(PANEL_ID, args, false)
-    local entity = unpack(args)
-    local npc = entity.npc
+    local attach = unpack(args)
+    local npcId = attach.headLabelNpcId
 
-    if not npc then
-        logger.info("_OnStateChanged npc nil")
+    if not npcId or npcId == '' then
+        logger.info("_OnStateChanged headLabelNpcId nil")
         return
     end
 
-    local hasNpc, data = CS.Beyond.Gameplay.Core.NpcManager.TryGetValue(npc.npcId)
-    ctrl:ShowState(data.headLabelStateData, nil, entity)
+    local hasNpc, data = CS.Beyond.Gameplay.Core.NpcManager.TryGetValue(npcId)
+    ctrl:ShowState(data.headLabelStateData, nil, attach)
 end
 
 HeadLabelCtrl._OnGiftChanged = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = HeadLabelCtrl.AutoOpen(PANEL_ID, args, false)
-    local entity = unpack(args)
-    local npc = entity.npc
+    local attach = unpack(args)
+    local npcId = attach.headLabelNpcId
 
-    if not npc then
-        logger.info("_OnStateChanged npc nil")
+    if not npcId or npcId == '' then
+        logger.info("_OnGiftChanged headLabelNpcId nil")
         return
     end
 
-    local hasNpc, data = CS.Beyond.Gameplay.Core.NpcManager.TryGetValue(npc.npcId)
-    ctrl:UpdateGift(data.headLabelStateData, nil, entity)
+    local hasNpc, data = CS.Beyond.Gameplay.Core.NpcManager.TryGetValue(npcId)
+    ctrl:UpdateGift(data.headLabelStateData, nil, attach)
 end
 
 HeadLabelCtrl._AddHeadLabel = HL.Method(HL.Any) << function(self, targetObject)
@@ -215,15 +215,14 @@ HeadLabelCtrl._RefreshNpcInfo = HL.Method(HL.Table, HL.Any) << function(self, he
         return
     end
 
-    if (target.objectType == Const.ObjectType.Npc and (target.npc and not target.npc.hideHeadLabel)) then
-        local entity = target
-        local npc = entity.npc
-        if not npc then
-            logger.info("_RefreshNpcInfo npc nil")
+    if (target.headLabelObjectType == Const.ObjectType.Npc and not target.headLabelHideLabel) then
+        local npcId = target.headLabelNpcId
+        if not npcId or npcId == '' then
+            logger.info("_RefreshNpcInfo headLabelNpcId nil")
             return
         end
 
-        self:_RefreshNpcHeadLabel(headLabel, npc.npcId, entity)
+        self:_RefreshNpcHeadLabel(headLabel, npcId, target)
 
     else
         headLabel.icon.gameObject:SetActive(false)
@@ -231,14 +230,13 @@ HeadLabelCtrl._RefreshNpcInfo = HL.Method(HL.Table, HL.Any) << function(self, he
 end
 
 HeadLabelCtrl._UpdateHeadLabelIcon = HL.Method(HL.Any) << function(self, args)
-    
     local targetObject = unpack(args)
     if targetObject then
         local headLabel = self.m_labelObjDict[targetObject]
         if headLabel then
-            local npc = targetObject.npc
-            if npc then
-                self:_RefreshNpcHeadLabel(headLabel, npc.npcId, targetObject)
+            local npcId = targetObject.headLabelNpcId
+            if npcId and npcId ~= '' then
+                self:_RefreshNpcHeadLabel(headLabel, npcId, targetObject)
             end
         end
     end
@@ -279,9 +277,9 @@ end
 
 HeadLabelCtrl._OnRemoveHeadLabel = HL.StaticMethod(HL.Any) << function(args)
     local ctrl = HeadLabelCtrl.AutoOpen(PANEL_ID, args, false)
-    local entity = unpack(args)
-    if ctrl.m_labelObjDict[entity] ~= nil then
-        local cell = ctrl.m_labelObjDict[entity]
+    local attach = unpack(args)
+    if ctrl.m_labelObjDict[attach] ~= nil then
+        local cell = ctrl.m_labelObjDict[attach]
         cell.headLabel:Clear()
         if #ctrl.m_labelObjPool < CACHE_COUNT then
             cell.gameObject:SetLayerRecursive(UIConst.HIDE_LAYER)
@@ -291,7 +289,7 @@ HeadLabelCtrl._OnRemoveHeadLabel = HL.StaticMethod(HL.Any) << function(args)
             GameObject.Destroy(cell.headLabel.gameObject)
         end
 
-        ctrl.m_labelObjDict[entity] = nil
+        ctrl.m_labelObjDict[attach] = nil
     end
 end
 
@@ -326,7 +324,9 @@ end
 HeadLabelCtrl.ShowEnvTalk = HL.Method(HL.Table) << function(self, args)
     local show, targetObject, envTalkSingleData, gender = unpack(args)
     if targetObject == nil then
-        logger.error("ShowEnvTalk npc nil, npcId: " .. envTalkSingleData.npcId .. "!!!")
+        local actorId = envTalkSingleData and envTalkSingleData.actorId or nil
+        local envTalkId = envTalkSingleData and envTalkSingleData.envTalkId or nil
+        logger.error("ShowEnvTalk target nil, actorId: " .. tostring(actorId) .. ", envTalkId: " .. tostring(envTalkId) .. "!!!")
         return
     end
 
@@ -475,8 +475,8 @@ HeadLabelCtrl.UpdateGift = HL.Method(HL.Any, HL.Opt(HL.Any, HL.Any)) << function
     if headLabel then
         local hasSpaceshipGift = true
         local hasGift = data.hasGift
-        if hasGift and targetObject and targetObject.npcInteractCom then
-            hasSpaceshipGift = targetObject.npcInteractCom:HasSpaceshipGift()
+        if hasGift and targetObject then
+            hasSpaceshipGift = targetObject:HeadLabelHasSpaceshipGift()
         end
 
         headLabel.iconGift.gameObject:SetActive(hasGift and hasSpaceshipGift)

@@ -331,11 +331,13 @@ function DomainPOIUtils.insertContentCommonTitle(upgradeCtrlArgs, titleIcon, tit
     table.insert(upgradeCtrlArgs.contentInfoList, info)
 end
 
-function DomainPOIUtils.insertContentItemList(upgradeCtrlArgs, title, itemBundleList)
+function DomainPOIUtils.insertContentItemList(upgradeCtrlArgs, title, itemBundleList, showKeyHint, state)
     local info = {
         contentType = DomainPOIUtils.contentTypeEnum.ItemList,
         title = title,
         itemBundleList = itemBundleList,
+        showKeyHint = showKeyHint or false,
+        state = state or nil,
     }
     if itemBundleList ~= nil and #itemBundleList > 0 then
         info.useNaviGroup = true
@@ -886,6 +888,7 @@ DomainPOIUtils.GetPOIRemindInfoFunc = {
     [GEnums.DomainPoiType.DomainDepot] = "getPOIRemindInfo_DomainDepot",
     [GEnums.DomainPoiType.SewageTreatPlant] = "getPOIRemindInfo_SewageTreatPlant",
     [GEnums.DomainPoiType.KiteStation] = "getPOIRemindInfo_KiteStation",
+    [GEnums.DomainPoiType.TyphoeaArchery] = "getPOIRemindInfo_TyphoeaArchery",
 }
 
 function DomainPOIUtils.getRemindInfoTemplate()
@@ -1233,6 +1236,49 @@ function DomainPOIUtils.getPOIRemindInfo_KiteStation(levelId)
     return remindInfoList
 end
 
+function DomainPOIUtils.getPOIRemindInfo_TyphoeaArchery(levelId)
+    if levelId ~= Tables.typhoeaArcheryConst.shootingRangeLevelId then
+        return nil
+    end
+    local system = GameInstance.player.typhoeaArcherySystem
+    local archeryData = system.archeryData
+
+    
+    local info = DomainPOIUtils.getRemindInfoTemplate()
+    info.poiId = archeryData.instId
+    info.curLevel = archeryData.lv
+    info.maxLevel = archeryData.maxLv
+    info.isFinalMaxLv = info.curLevel == info.maxLevel
+    info.isLvMax = info.curLevel == info.maxLevel
+    info.mapMarkType = GEnums.MarkType.TyphoeaArchery
+
+    
+    if not info.isFinalMaxLv then
+        local nextLv = info.curLevel + 1
+        local succ, targetLevelData = Tables.typhoeaArcheryLevelTable:TryGetValue(nextLv)
+        if succ then
+            info.upgradeQuestId = targetLevelData.upgradeQuestId
+            
+            info.upgradeCostMoney = targetLevelData.costItemCount
+            
+            info.isBlockUpgrade = system:IsTyphoeaArcheryUnlock() and not system:IsLevelPreTrainCompleted(nextLv)
+            if info.isBlockUpgrade then
+                info.blockUpgradeDesc = Language.LUA_TYPHOEA_ARCHERY_POI_OVERVIEW_UPGRADE_SIMULATION_NEED
+            end
+        end
+    end
+
+    
+     local dailyStarCompleted = archeryData.dailyStarCount
+    local dailyStarTarget = info.curLevel * archeryData.perLevelStarCount
+    if dailyStarCompleted < dailyStarTarget then
+        info.needWarning = true
+    end
+    info.stateDesc = string.format(Language.LUA_TYPHOEA_ARCHERY_POI_OVERVIEW_DAILY_TRAINING_DESC, dailyStarCompleted, dailyStarTarget)
+
+    return { info }
+end
+
 
 
 DomainPOIUtils.MarkTypeMap = {
@@ -1578,6 +1624,7 @@ function DomainPOIUtils.getSettlementTradeActivityInfo()
         closeTime = 0,
         activityMoneyId = "",
         activityColor = Color.white,
+        activityShopGroupId = "",
         
         domainActivityInfos = {},
     }
@@ -1613,6 +1660,7 @@ function DomainPOIUtils.getSettlementTradeActivityInfo()
     info.openTime = activityData.startTime
     info.closeTime = activityData.endTime
     info.activityMoneyId = limitedFormulaCfg.moneyId
+    info.activityShopGroupId = limitedFormulaCfg.shopGroupId
     
 
     

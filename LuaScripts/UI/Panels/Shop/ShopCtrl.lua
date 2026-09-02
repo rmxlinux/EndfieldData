@@ -32,6 +32,8 @@ ShopCtrl.m_conditionSyncGoods = HL.Field(HL.Table)
 
 ShopCtrl.unlockedShopSheets = HL.Field(HL.Table)
 
+ShopCtrl.realUnlockedShops = HL.Field(HL.Table)
+
 ShopCtrl.index2TabCell = HL.Field(HL.Table)
 
 ShopCtrl.m_tabCells = HL.Field(HL.Forward("UIListCache"))
@@ -59,12 +61,45 @@ ShopCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
 ShopCtrl._OnShopRefresh = HL.Virtual() << function(self)
+    local shopTableData = Tables.shopTable[self.m_shopId]
+    if not shopTableData then
+        return
+    end
+    
+    if shopTableData.shopRefreshCycleType == GEnums.ShopRefreshCycleType.None and not self:_HasNewUnlockedShopTab() then
+        return
+    end
+
     if self.m_waitAnimation then
         return
     end
     self.view.scrollList:SkipGraduallyShow()
     self:_RefreshSheetTabs(self.m_shopId)
     self.view.scrollList:SkipGraduallyShow()
+end
+
+
+ShopCtrl._HasNewUnlockedShopTab = HL.Method().Return(HL.Boolean) << function(self)
+    local shopGroupData = shopSystem:GetShopGroupData(self.m_shopGroupId)
+    if shopGroupData == nil then
+        return false
+    end
+
+    local oldSet = {}
+    if self.realUnlockedShops then
+        for _, shopId in ipairs(self.realUnlockedShops) do
+            oldSet[shopId] = true
+        end
+    end
+
+    for _, shopId in pairs(shopGroupData.shopIdList) do
+        local isUnlocked = shopSystem:CheckShopUnlocked(shopId)
+        local sheetTableData = Tables.shopTable[shopId]
+        if (isUnlocked or sheetTableData.isShowWhenLock) and not oldSet[shopId] then
+            return true
+        end
+    end
+    return false
 end
 
 
@@ -102,9 +137,19 @@ ShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.m_shopGroupId = shopGroupId
     local shopGroupData = shopSystem:GetShopGroupData(self.m_shopGroupId)
-    self.m_shopId = shopId or shopGroupData.shopIdList[0] 
     local _, activityShopInfo = Tables.ActivityShopAdditionalTable:TryGetValue(self.m_shopGroupId)
     self.m_activityShopInfo = activityShopInfo or nil
+    
+    
+    
+    if shopId == nil then
+        self.m_shopId = shopGroupData.shopIdList[0]
+        if self.m_shopGroupId == "shop_activity_limited_formula_2" then
+            self.m_shopId = self:_ResolveActivityShopDefaultShopId(shopGroupData)
+        end
+    else
+        self.m_shopId = shopId
+    end
 
     local groupUnlock = shopSystem:CheckShopGroupUnlocked(shopGroupId)
     local shopUnlock = shopSystem:CheckShopUnlocked(self.m_shopId)
@@ -180,15 +225,54 @@ ShopCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
 end
 
+
+ShopCtrl._ResolveActivityShopDefaultShopId = HL.Method(HL.Any).Return(HL.String) << function(self, shopGroupData)
+    local firstShopId = shopGroupData.shopIdList[0]
+    if shopGroupData.shopIdList.Count < 2 then
+        return firstShopId
+    end
+    local secondShopId = shopGroupData.shopIdList[1]
+    if shopSystem:CheckShopUnlocked(secondShopId) and self:_IsShopAllGoodsSoldOut(firstShopId) then
+        return secondShopId
+    end
+    return firstShopId
+end
+
+
+ShopCtrl._IsShopAllGoodsSoldOut = HL.Method(HL.String).Return(HL.Boolean) << function(self, shopId)
+    local shopData = shopSystem:GetShopData(shopId)
+    if shopData == nil then
+        return false
+    end
+    local hasVisibleGoods = false
+    for goodsId, goodsData in pairs(shopData.goodsDic) do
+        local isUnlocked = shopSystem:CheckGoodsUnlocked(goodsId)
+        
+        local goodsTableData = Tables.shopGoodsTable[goodsData.goodsTemplateId]
+        if isUnlocked or goodsTableData.isShowWhenLock then
+            hasVisibleGoods = true
+            local remainCount = shopSystem:GetRemainCountByGoodsId(shopId, goodsId)
+            if remainCount == -1 or remainCount > 0 then
+                return false
+            end
+        end
+    end
+    return hasVisibleGoods
+end
+
 ShopCtrl.InitShopTabs = HL.Method(HL.String, HL.String) << function(self, shopGroupId, curShopId)
     local shopGroupData = GameInstance.player.shopSystem:GetShopGroupData(shopGroupId)
     self.unlockedShopSheets = {}
+    self.realUnlockedShops = {}
     for i, shopId in pairs(shopGroupData.shopIdList) do
         local isUnlocked = shopSystem:CheckShopUnlocked(shopId)
         
         local shopTableData = Tables.shopTable[shopId]
         if isUnlocked or shopTableData.isShowWhenLock then
             table.insert(self.unlockedShopSheets, shopId)
+        end
+        if isUnlocked then
+            table.insert(self.realUnlockedShops, shopId)
         end
     end
 
@@ -205,7 +289,6 @@ ShopCtrl.InitShopTabs = HL.Method(HL.String, HL.String) << function(self, shopGr
         local shopId = self.unlockedShopSheets[index]
         cell.toggle.onValueChanged:RemoveAllListeners()
         cell.toggle.onValueChanged:AddListener(function(isOn)
-            
             
             if self.m_unlockToastFunc ~= nil then
                 local isUnlocked = shopSystem:CheckShopUnlocked(shopId)
@@ -403,7 +486,7 @@ ShopCtrl._RefreshContentCell = HL.Virtual(HL.Any, HL.Number, HL.String) << funct
         
         originPrice = goodsCfg.price,
         discount = discount,
-        curPrice = lume.round(goodsCfg.price * discountedRatio, 1),
+        curPrice = CashShopUtils.GetDisplayPrice(goodsCfg.price, discountedRatio),
         remainLimitCount = remainLimitCount,
         refreshType = goodsCfg.limitCountRefreshType,
         orgLimitCount = goodsCfg.limitCount,

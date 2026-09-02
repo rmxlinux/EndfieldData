@@ -359,7 +359,9 @@ RadioSystem._TryResumeAndShow = HL.Method() << function(self)
     end
     if self:_CheckCanPlay() then
         local needShow = not self:_IsSoundOnly()
-        if needShow then
+        
+        
+        if needShow and self.m_curShow then
             panel:ShowSelf()
             if not isShow then
                 panel.animationWrapper:ClearTween(false)
@@ -741,6 +743,8 @@ RadioSystem._DoShowRadio = HL.Method(HL.Table) << function(self, data)
     end
 
     if needShow and not firstIsPureAudioEvent then
+        
+        panel:ShowSelf()
         panel.animationWrapper:ClearTween()
         panel:PlayAnimationIn()
     elseif not needShow then

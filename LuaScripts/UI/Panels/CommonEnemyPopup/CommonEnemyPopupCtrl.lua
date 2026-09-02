@@ -60,6 +60,7 @@ CommonEnemyPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.titleTxt.text = arg.title
     self.view.enemyListTitleTxt.text = arg.enemyListTitle or Language["ui_common_enemy_popup_info_list"]
     self.view.enemyInfoTitleTxt.text = arg.enemyInfoTitle or Language["ui_common_enemy_popup_info_desc"]
+    self.view.abilityTitle.text = arg.abilityTitle or Language["ui_fac_settlement_defence_radar_eny_skill"]
     if arg.hideLevelTextNode then
         self.view.levelTextNode.gameObject:SetActive(false)
     end
@@ -69,13 +70,14 @@ CommonEnemyPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnUpdateEnemyCell(gameObject, csIndex)
     end)
 
+
     self.m_enemyInfos = {}
     local enemyIds = arg.enemyIds
     local enemyLevels = arg.enemyLevels
     if type(enemyIds) == "table" then
         for i = 1, #enemyIds do
             local id = enemyIds[i]
-            local level = #enemyLevels >= #enemyIds and enemyLevels[i] or 1
+            local level = arg.hideLevelTextNode and 1 or (#enemyLevels >= #enemyIds and enemyLevels[i] or 1)
             local enemyInfo = UIUtils.getEnemyInfoByIdAndLevel(id, level)
             if enemyInfo then
                 table.insert(self.m_enemyInfos, enemyInfo)
@@ -84,7 +86,7 @@ CommonEnemyPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     else
         for csIndex = 0, enemyIds.Count - 1 do
             local id = enemyIds[csIndex]
-            local level = enemyLevels.Count >= enemyIds.Count and enemyLevels[csIndex] or 1
+            local level = arg.hideLevelTextNode and 1 or (enemyLevels.Count >= enemyIds.Count and enemyLevels[csIndex] or 1)
             local enemyInfo = UIUtils.getEnemyInfoByIdAndLevel(id, level)
             if enemyInfo then
                 table.insert(self.m_enemyInfos, enemyInfo)

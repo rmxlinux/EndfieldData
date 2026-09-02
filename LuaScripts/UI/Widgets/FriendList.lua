@@ -1,5 +1,7 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
+local UPDATE_COUNT_RECURSION_LIMIT = 50
+
 
 
 
@@ -38,6 +40,21 @@ FriendList.m_blueprintID = HL.Field(HL.Any)
 FriendList.m_noInfoTip = HL.Field(HL.Any)
 
 FriendList.m_rawIdList = HL.Field(HL.Table)
+
+FriendList.m_updateCountRecursionDepth = HL.Field(HL.Number) << 0
+
+
+FriendList._IsFriendInfoRequestValid = HL.Method(HL.Boolean, HL.Table).Return(HL.Boolean) << function(self, requestIsPsnTab, requestFriendList)
+    if self.m_isDestroyed or IsNull(self.view.gameObject) then
+        return false
+    end
+    local ctrl = self:GetUICtrl()
+    return ctrl ~= nil
+        and not ctrl.m_isClosed
+        and self.view.gameObject.activeInHierarchy
+        and self.m_isPsnTab == requestIsPsnTab
+        and self.m_friendList == requestFriendList
+end
 
 
 FriendList.InitFriendListCtrl = HL.Method(HL.Any) << function(self, arg)
@@ -228,7 +245,10 @@ FriendList.RefreshInfo = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.String, HL.Bo
     self.view.noUsersText.transform.parent.gameObject:SetActiveIfNecessary(false)
 
     
-    local ids, endIndex = self:_GetNextPageNotInitIds(1)
+    local ids, endIndex, hasError = self:_GetNextPageNotInitIds(1)
+    if hasError then
+        return
+    end
     self.m_endIndex = endIndex
     if needLoadingItem and endIndex + 1 <= #self.m_friendList then
         endIndex = endIndex + 1
@@ -236,9 +256,11 @@ FriendList.RefreshInfo = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.String, HL.Bo
 
     
     if #ids > 0 then
+        local requestIsPsnTab = ids.isPsnTab
+        local requestFriendList = self.m_friendList
         if self.m_isPsnTab then
             GameInstance.player.friendSystem:SyncFriendInfoForPsn(self.m_arg.infoDicIndex, ids, function(delArray)
-                if IsNull(self.view.gameObject) then
+                if not self:_IsFriendInfoRequestValid(requestIsPsnTab, requestFriendList) then
                     return
                 end
                 local del = 0
@@ -262,7 +284,7 @@ FriendList.RefreshInfo = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.String, HL.Bo
             end)
         else
             GameInstance.player.friendSystem:SyncFriendInfo(self.m_arg.infoDicIndex, ids, function(delArray)
-                if IsNull(self.view.gameObject) then
+                if not self:_IsFriendInfoRequestValid(requestIsPsnTab, requestFriendList) then
                     return
                 end
                 local del = 0
@@ -321,6 +343,14 @@ FriendList.RefreshInfoStayPos = HL.Method(HL.Table) << function(self, info)
         self.m_friendList = info
     end
 
+    
+    if self.m_arg.isFilter then
+        self.m_rawIdList = {}
+        for i = 1, #self.m_friendList do
+            table.insert(self.m_rawIdList, self.m_friendList[i].roleId)
+        end
+    end
+
     if #self.m_friendList == 0 then
         self.view.scrollList:UpdateCount(0)
         self.view.noUsersText.transform.parent.gameObject:SetActiveIfNecessary(true)
@@ -353,6 +383,56 @@ end
 FriendList.NaviToFirstCell = HL.Method() << function(self)
     local go = self.view.scrollList:Get(0)
     self:_SetCellAsNaviTarget(go)
+end
+
+
+FriendList.ReleaseCachedNaviLayer = HL.Method() << function(self)
+    local naviGroup = self.view.scrollListSelectableNaviGroup
+    if not IsNull(naviGroup) then
+        naviGroup:ManuallyStopFocus()
+    end
+end
+
+
+FriendList.RestoreNaviIfNeeded = HL.Method() << function(self)
+    if not DeviceInfo.usingController or IsNull(self.view.gameObject) or not self.view.gameObject.activeInHierarchy then
+        return
+    end
+
+    local ctrl = self:GetUICtrl()
+    if ctrl == nil or ctrl.view == nil or ctrl.view.inputGroup == nil or not ctrl.view.inputGroup.groupEnabled then
+        return
+    end
+
+    local naviGroup = self.view.scrollListSelectableNaviGroup
+    if IsNull(naviGroup) then
+        return
+    end
+
+    local naviManager = InputManagerInst.controllerNaviManager
+    local layer = naviGroup:GetLayerGroup()
+    if naviManager:IsLayerInStack(layer) then
+        return
+    end
+
+    local dummyLayerKey = ctrl:_GetDummyNaviLayerKey()
+    if not string.isEmpty(dummyLayerKey) then
+        local dummyLayer = LuaSystemManager.dummyNaviLayerSystem:GetDummyNaviLayerByKey(dummyLayerKey)
+        if dummyLayer ~= nil and naviManager:GetTopDummyLayerGroup() ~= dummyLayer then
+            return
+        end
+    end
+
+    local curTarget = naviManager.curTarget
+    if not IsNull(curTarget) and curTarget.gameObject.activeInHierarchy then
+        local curNaviGroup = curTarget.naviGroup
+        local curLayer = not IsNull(curNaviGroup) and curNaviGroup:GetLayerGroup() or nil
+        if not IsNull(curLayer) and not curLayer.isDummy then
+            return
+        end
+    end
+
+    self:NaviToFirstCell()
 end
 
 FriendList._CanRecordNaviTarget = HL.Method().Return(HL.Boolean) << function(self)
@@ -401,11 +481,11 @@ FriendList.OnChangeInputField = HL.Method(HL.String) << function(self, str)
     end
 end
 
-FriendList._GetNextPageNotInitIds = HL.Method(HL.Number).Return(HL.Table, HL.Number) << function(self, startLuaIndex)
+FriendList._GetNextPageNotInitIds = HL.Method(HL.Number).Return(HL.Table, HL.Number, HL.Boolean) << function(self, startLuaIndex)
     local ids = {}
     ids["isPsnTab"] = self.m_isPsnTab
     if startLuaIndex > #self.m_friendList then
-        return ids, 0
+        return ids, 0, false
     end
     local endIndex = startLuaIndex + self.m_arg.maxLen - 1
     for i = startLuaIndex, endIndex do
@@ -423,7 +503,7 @@ FriendList._GetNextPageNotInitIds = HL.Method(HL.Number).Return(HL.Table, HL.Num
                     goto continue
                 end
                 logger.error(CS.Beyond.ELogChannel.Friend, "未找到好友数据 " .. self.m_friendList[i].roleId .. "isPsnTab:" .. tostring(self.m_isPsnTab))
-                return ids, i
+                return ids, i, true
             end
 
             if self.m_isPsnTab then
@@ -437,10 +517,10 @@ FriendList._GetNextPageNotInitIds = HL.Method(HL.Number).Return(HL.Table, HL.Num
             end
             :: continue ::
         else
-            return ids, i - 1
+            return ids, i - 1, false
         end
     end
-    return ids, endIndex
+    return ids, endIndex, false
 end
 
 FriendList._SearchSort = HL.Method(HL.Table).Return(HL.Number) << function(self, info)
@@ -490,15 +570,23 @@ FriendList._OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function)
 
     if self.m_needLoadingItem and (needLoadingItem or (index == self.view.scrollList.count and index > self.m_endIndex)) then
         
-        local ids, endIndex = self:_GetNextPageNotInitIds(index)
+        local ids, endIndex, hasError = self:_GetNextPageNotInitIds(index)
+        if hasError then
+            return
+        end
         self.UpdateFunc(index, needLoadingItem)
         self.m_endIndex = endIndex
         if endIndex + 1 <= #self.m_friendList then
             endIndex = endIndex + 1
         end
         if #ids > 0 then
+            local requestIsPsnTab = ids.isPsnTab
+            local requestFriendList = self.m_friendList
             if self.m_isPsnTab then
                 GameInstance.player.friendSystem:SyncFriendInfoForPsn(self.m_arg.infoDicIndex, ids, function(delArray)
+                    if not self:_IsFriendInfoRequestValid(requestIsPsnTab, requestFriendList) then
+                        return
+                    end
                     local del = 0
                     if delArray ~= nil then
                         del = delArray.Count
@@ -515,6 +603,9 @@ FriendList._OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function)
                 end)
             else
                 GameInstance.player.friendSystem:SyncFriendInfo(self.m_arg.infoDicIndex, ids, function(delArray)
+                    if not self:_IsFriendInfoRequestValid(requestIsPsnTab, requestFriendList) then
+                        return
+                    end
                     local del = 0
                     if delArray ~= nil then
                         del = delArray.Count
@@ -531,7 +622,17 @@ FriendList._OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function)
                 end)
             end
         else
+            
+            if self.m_updateCountRecursionDepth >= UPDATE_COUNT_RECURSION_LIMIT then
+                logger.error(CS.Beyond.ELogChannel.Friend, string.format(
+                    "FriendList UpdateCount recursion limit reached depth=%s index=%s endIndex=%s isPsnTab=%s",
+                    tostring(self.m_updateCountRecursionDepth), tostring(index), tostring(endIndex), tostring(self.m_isPsnTab)))
+                return
+            end
+            local recursionDepth = self.m_updateCountRecursionDepth + 1
+            self.m_updateCountRecursionDepth = recursionDepth
             self.view.scrollList:UpdateCount(endIndex, false, false, false, true)
+            self.m_updateCountRecursionDepth = recursionDepth - 1
         end
         return
     end
@@ -556,6 +657,16 @@ FriendList._OnInputFieldChange = HL.Method(HL.String) << function(self, searchKe
     self.m_friendList = {}
 
     local friendSystem = GameInstance.player.friendSystem
+    if string.isEmpty(searchKey) and (self.m_rawIdList == nil or #self.m_rawIdList == 0) then
+        local ctrl = self:GetUICtrl()
+        if ctrl ~= nil and ctrl.m_friendList ~= nil then
+            
+            self.m_rawIdList = {}
+            for i = 1, #ctrl.m_friendList do
+                table.insert(self.m_rawIdList, ctrl.m_friendList[i].roleId)
+            end
+        end
+    end
     local searchFriends = friendSystem:SearchFriend(searchKey, self.m_rawIdList)
     for i = 1, searchFriends.Count do
         self.m_friendList[i] = FriendUtils.friendInfo2SortInfo(searchFriends[CSIndex(i)])

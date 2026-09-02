@@ -49,9 +49,7 @@ SeasonTowerAchieveCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
     self.view.levelScrollList.onSelectedCell:AddListener(function(object, csIndex)
         local cell = self.m_getCell(object)
-        if cell then
-            self:_OnSelectCell(cell, LuaIndex(csIndex))
-        end
+        self:_OnSelectCell(cell, LuaIndex(csIndex))
     end)
 
     self.view.levelScrollList:UpdateCount(#self.m_allGameGroupIds, false, false, false, true)
@@ -139,7 +137,7 @@ SeasonTowerAchieveCtrl._OnSelectCell = HL.Method(HL.Any, HL.Number) << function(
 
     self.m_selectedIndex = luaIndex
 
-    if cell.stateController then
+    if cell and cell.stateController then
         cell.stateController:SetState("Select")
     end
 

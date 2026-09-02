@@ -935,10 +935,13 @@ WeaponExhibitUpgradeCtrl._TryFillCostItem = HL.Method() << function(self)
     end
 end
 
-WeaponExhibitUpgradeCtrl._AutoFillCostItemDict = HL.Method(HL.Number, HL.Number, HL.Table).Return(HL.Table)
-    << function(self, targetExp, maxQuality, upgradeItemInfoList)
+WeaponExhibitUpgradeCtrl._AutoFillCostItemDict = HL.Method(HL.Number, HL.Number, HL.Table, HL.Opt(HL.Table)).Return(HL.Table, HL.Boolean)
+    << function(self, targetExp, maxQuality, upgradeItemInfoList, existingCostItemInfoDict)
     local costItemInfoDict = {}
     local expLeft = targetExp
+    local hitItemMaxCount = false
+    
+    local occupiedSlotCount = existingCostItemInfoDict and lume.count(existingCostItemInfoDict) or 0
     local calcAssistInfoList = lume.sort(upgradeItemInfoList, WeaponUtils.upgradeItemSortComp)
 
     for _, itemInfo in ipairs(calcAssistInfoList) do
@@ -957,35 +960,39 @@ WeaponExhibitUpgradeCtrl._AutoFillCostItemDict = HL.Method(HL.Number, HL.Number,
             break
         end
 
-        if lume.count(costItemInfoDict) >= UIConst.WEAPON_EXHIBIT_UPGRADE_ITEM_MAX_COUNT then
-            
-            return costItemInfoDict
-        end
+        
+        local occupiesNewSlot = existingCostItemInfoDict == nil or existingCostItemInfoDict[itemInfo.indexId] == nil
+        if occupiesNewSlot and occupiedSlotCount >= UIConst.WEAPON_EXHIBIT_UPGRADE_ITEM_MAX_COUNT then
+            hitItemMaxCount = true
+        else
+            local isWeapon = itemInfo.isWeapon
+            local isLockWeapon = itemInfo.itemInst and itemInfo.itemInst.isLocked
+            local weaponEquippedWithGem = false
+            if isWeapon then
+                local weaponInst = itemInfo.itemInst
+                weaponEquippedWithGem = weaponInst.attachedGemInstId > 0
+            end
 
-        local isWeapon = itemInfo.isWeapon
-        local isLockWeapon = itemInfo.itemInst and itemInfo.itemInst.isLocked
-        local weaponEquippedWithGem = false
-        if isWeapon then
-            local weaponInst = itemInfo.itemInst
-            weaponEquippedWithGem = weaponInst.attachedGemInstId > 0
-        end
+            if (not isLockWeapon) and (not weaponEquippedWithGem) then
+                if itemInfo.itemCfg.rarity <= maxQuality then
+                    if generateExpTotal > expLeft then
+                        local addCount = math.min(math.ceil(expLeft / singleExp), maxAddCount)
+                        itemInfo.addCount = addCount
+                        itemInfo.count = addCount + curCount
+                        expLeft = expLeft - singleExp * addCount
+                    else
+                        itemInfo.addCount = maxAddCount
+                        itemInfo.count = maxAddCount + curCount
+                        expLeft = expLeft - singleExp * maxAddCount
+                    end
 
-        if (not isLockWeapon) and (not weaponEquippedWithGem) then
-            if itemInfo.itemCfg.rarity <= maxQuality then
-                if generateExpTotal > expLeft then
-                    local addCount = math.min(math.ceil(expLeft / singleExp), maxAddCount)
-                    itemInfo.addCount = addCount
-                    itemInfo.count = addCount + curCount
-                    expLeft = expLeft - singleExp * addCount
-                else
-                    itemInfo.addCount = maxAddCount
-                    itemInfo.count = maxAddCount + curCount
-                    expLeft = expLeft - singleExp * maxAddCount
-                end
-
-                if itemInfo.addCount and itemInfo.addCount > 0 then
-                    costItemInfoDict[itemInfo.indexId] = itemInfo
-                    table.insert(ingredientList, itemInfo)
+                    if itemInfo.addCount and itemInfo.addCount > 0 then
+                        if occupiesNewSlot then
+                            occupiedSlotCount = occupiedSlotCount + 1
+                        end
+                        costItemInfoDict[itemInfo.indexId] = itemInfo
+                        table.insert(ingredientList, itemInfo)
+                    end
                 end
             end
         end
@@ -993,7 +1000,7 @@ WeaponExhibitUpgradeCtrl._AutoFillCostItemDict = HL.Method(HL.Number, HL.Number,
 
     
     if expLeft == 0 then
-        return costItemInfoDict
+        return costItemInfoDict, false
     end
 
     
@@ -1028,7 +1035,8 @@ WeaponExhibitUpgradeCtrl._AutoFillCostItemDict = HL.Method(HL.Number, HL.Number,
         end
     end
 
-    return costItemInfoDict
+    
+    return costItemInfoDict, hitItemMaxCount and expLeft > 0
 end
 
 WeaponExhibitUpgradeCtrl._RefreshWeaponCellAddOn = HL.Method(HL.Any, HL.Table) << function(self, cell, itemInfo)
@@ -1146,6 +1154,20 @@ WeaponExhibitUpgradeCtrl._ResetCostItem = HL.Method(HL.Opt(HL.Table)) << functio
             itemInfo.generateExp = WeaponUtils.CalcItemExp(itemInfo.itemCfg, itemInfo.itemInst)
         end
     end
+
+    
+    
+    
+    if self.m_naviMaterialItemInfo then
+        local naviIndexId = self.m_naviMaterialItemInfo.indexId
+        self.m_naviMaterialItemInfo = nil
+        for _, itemInfo in pairs(self.m_upgradeItemInfoList) do
+            if itemInfo.indexId == naviIndexId then
+                self.m_naviMaterialItemInfo = itemInfo
+                break
+            end
+        end
+    end
 end
 
 WeaponExhibitUpgradeCtrl._StartFillTimer = HL.Method(HL.Table, HL.Number) << function(self, itemInfo, count)
@@ -1156,6 +1178,11 @@ WeaponExhibitUpgradeCtrl._StartFillTimer = HL.Method(HL.Table, HL.Number) << fun
             if count > 0 then
                 self:_AddIntoCostItemDict(itemInfo, count)
             else
+                if self.m_costItemInfoDict[itemInfo.indexId] == nil or self.m_costItemInfoDict[itemInfo.indexId].count <= 0 then
+                    self.m_itemFillCor = nil
+                    return
+                end
+
                 self:_RemoveFromCostItemDict(itemInfo, -count)
             end
         end
@@ -1308,7 +1335,7 @@ WeaponExhibitUpgradeCtrl._AddOneLevel = HL.Method() << function(self)
     local exp = self.m_level2RequireExpDict[targetLv] or 0
     local targetExp = exp - (self.m_curGenerateExp + self.m_weaponExhibitInfo.weaponInst.exp)
 
-    local costItemInfoDict = self:_AutoFillCostItemDict(targetExp, self.m_maxFillWeaponQuality, self.m_upgradeItemInfoList)
+    local costItemInfoDict, hitItemMaxCount = self:_AutoFillCostItemDict(targetExp, self.m_maxFillWeaponQuality, self.m_upgradeItemInfoList, self.m_costItemInfoDict)
 
     for key, costItemInfo in pairs(costItemInfoDict) do
         if not self.m_costItemInfoDict[key] then
@@ -1316,7 +1343,9 @@ WeaponExhibitUpgradeCtrl._AddOneLevel = HL.Method() << function(self)
         end
     end
 
-    if lume.count(costItemInfoDict) == 0 then
+    if hitItemMaxCount then
+        self:Notify(MessageConst.SHOW_TOAST, Language.LUA_WEAPON_EXHIBIT_UPGRADE_MAX_INGREDIENT)
+    elseif lume.count(costItemInfoDict) == 0 then
         self:Notify(MessageConst.SHOW_TOAST, Language.LUA_WEAPON_EXHIBIT_UPGRADE_NO_ITEM)
     end
 
@@ -1410,7 +1439,8 @@ WeaponExhibitUpgradeCtrl._ResetItemInfoCount = HL.Method(HL.Table) << function(s
 end
 
 WeaponExhibitUpgradeCtrl._OnItemCountChanged = HL.Method(HL.Table) << function(self, args)
-    if self.m_isBreakthrough and
+    local weaponInst = CharInfoUtils.getWeaponByInstId(self.m_weaponInfo.weaponInstId)
+    if self.m_isBreakthrough and weaponInst and CharInfoUtils.getWeaponBreakthroughInfo(self.m_weaponInfo.weaponInstId, weaponInst.breakthroughLv + 1) and
         (self.m_upgradeEffectCor == nil or coroutine.status(self.m_upgradeEffectCor) == "dead") then
         self:_RefreshBreakPanel(self.m_weaponInfo.weaponInstId, self.m_weaponInfo.weaponTemplateId)
     end

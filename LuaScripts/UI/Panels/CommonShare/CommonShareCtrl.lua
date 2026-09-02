@@ -460,13 +460,13 @@ CommonShareCtrl.OnShareEnd = HL.Method() << function(self, args)
         self.m_clickSaveBtn = false
         logger.info("CommonShareCtrl.OnShareEnd: Share ended with code " .. tostring(code))
         Notify(MessageConst.SHOW_TOAST, code == 0 and Language.LUA_COMMON_SHARE_SAVE_SUCCESS or Language.LUA_COMMON_SHARE_SAVE_PERMISSION_DENIED)
-        EventLogManagerInst:GameEvent_CommonShareEnd(self.m_type, self.m_channelIdList, tostring(code), "", "")
+        EventLogManagerInst:GameEvent_CommonShareEnd(self.m_type, self.m_channelIdList, tostring(self.m_lastShareChannelId), tostring(code), "", "")
         return
     end
     logger.info("CommonShareCtrl.OnShareEnd: Share ended with code " .. tostring(code))
     Notify(MessageConst.SHOW_TOAST, code == 0 and Language.LUA_COMMON_SHARE_SUCCESS or Language.LUA_COMMON_SHARE_FAIL)
     local sklandTopicId = (self.m_lastShareChannelId == SKLandId or self.m_lastShareChannelId == OverseaSKLandId) and code == 0 and self.m_lastShareSklandTopicId or ""
-    EventLogManagerInst:GameEvent_CommonShareEnd(self.m_type, self.m_channelIdList, tostring(code), "", sklandTopicId)
+    EventLogManagerInst:GameEvent_CommonShareEnd(self.m_type, self.m_channelIdList, tostring(self.m_lastShareChannelId), tostring(code), "", sklandTopicId)
     self.m_lastShareChannelId = 0
     self.m_lastShareSklandTopicId = ""
 end

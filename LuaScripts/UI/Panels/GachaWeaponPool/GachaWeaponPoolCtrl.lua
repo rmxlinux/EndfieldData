@@ -45,6 +45,11 @@ GachaWeaponPoolCtrl.m_gachaWeaponGoodsCostInfo = HL.Field(HL.Table)
 
 GachaWeaponPoolCtrl.m_isAutoExchangeMoney = HL.Field(HL.Boolean) << false
 
+GachaWeaponPoolCtrl.m_walletBarMoneyIds = HL.Field(HL.Table)
+
+
+GachaWeaponPoolCtrl.m_versionConfirmHandled = HL.Field(HL.Boolean) << false
+
 
 GachaWeaponPoolCtrl.CloseSelf = HL.Method() << function(self)
     if PhaseManager:GetTopPhaseId() ~= PhaseId.GachaWeaponPool then
@@ -98,6 +103,9 @@ GachaWeaponPoolCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     self:_InitData()
+
+    
+    self:_TryHandleRerunVersionConfirm()
 end
 
 GachaWeaponPoolCtrl.OnShow = HL.Override() << function(self)
@@ -165,6 +173,16 @@ GachaWeaponPoolCtrl._InitData = HL.Method() << function(self)
 
     
     local gachaTypeCfg = Tables.gachaWeaponPoolTypeTable[poolData.type]
+    local weaponPoolCfg = Tables.gachaWeaponPoolTable[self.m_poolId]
+    
+    if self.view.rerunNode then
+        if weaponPoolCfg.gachaPoolVersion > 0 then
+            self.view.rerunNode.gameObject:SetActive(true)
+            self.view.rerunVersionTxt.text = '#' .. weaponPoolCfg.gachaPoolVersion
+        else
+            self.view.rerunNode.gameObject:SetActive(false)
+        end
+    end
     
     local greyTxt6 = string.format(
         gachaTypeCfg.softGuarantee - poolInfo.softGuaranteeProgress > 10 and Language.LUA_GACHA_WEAPON_POOL_DESC_STAR_6 or Language.LUA_GACHA_WEAPON_POOL_DESC_STAR_6_CURR,
@@ -462,7 +480,19 @@ GachaWeaponPoolCtrl.OnWalletChanged = HL.Method(HL.Opt(HL.Any)) << function(self
             moneyIds = { Tables.globalConst.gachaWeaponItemId }
         end
     end
-    self.view.walletBarPlaceholder:InitWalletBarPlaceholder(moneyIds, false, true)
+    local needRefreshWalletBar = self.m_walletBarMoneyIds == nil or #self.m_walletBarMoneyIds ~= #moneyIds
+    if not needRefreshWalletBar then
+        for index, moneyId in ipairs(moneyIds) do
+            if self.m_walletBarMoneyIds[index] ~= moneyId then
+                needRefreshWalletBar = true
+                break
+            end
+        end
+    end
+    if needRefreshWalletBar then
+        self.m_walletBarMoneyIds = moneyIds
+        self.view.walletBarPlaceholder:InitWalletBarPlaceholder(moneyIds, false, true)
+    end
 end
 
 GachaWeaponPoolCtrl.OnGachaSucc = HL.Method(HL.Table) << function(self, arg)
@@ -661,6 +691,9 @@ GachaWeaponPoolCtrl._InitRewardQueueConfigs = HL.Method() << function(self)
         LoopRewardReward = {
             order = 10,
         },
+        RerunVersionConfirm = {
+            order = 20,
+        },
     }
 end
 
@@ -738,6 +771,108 @@ GachaWeaponPoolCtrl.CheckAndShowSpecialRewardPopup = HL.Method() << function(sel
             Notify(MessageConst.GACHA_WEAPON_POOL_ADD_SHOW_REWARD, arg)
         end
     end
+end
+
+
+local RERUN_VERSION_INHERIT_POPUP_PULL_THRESHOLD = 6
+local WEAPON_MILESTONE_TYPE = {
+    HardGuarantee = 1,
+    LoopReward = 2,
+}
+
+GachaWeaponPoolCtrl._TryHandleRerunVersionConfirm = HL.Method() << function(self)
+    if self.m_versionConfirmHandled then
+        return
+    end
+
+    local csGachaSystem = GameInstance.player.gacha
+    local succ, poolInfo = csGachaSystem.poolInfos:TryGetValue(self.m_poolId)
+    if not succ then
+        return
+    end
+    
+    if poolInfo.totalPullCount <= 0  
+        or poolInfo.gachaPoolVersion < 2    
+        or poolInfo.gachaPoolVersionConfirmed
+    then
+        return
+    end
+
+    local poolId = self.m_poolId
+    local nearest = self:_GetNearestRerunMilestone()
+    
+    local needShowReminder = nearest and nearest.remainNeedPullCount <= RERUN_VERSION_INHERIT_POPUP_PULL_THRESHOLD
+
+    local poolCfg = Tables.gachaWeaponPoolTable[poolId]
+    local pullCountDisplay = math.ceil(poolInfo.totalPullCount / 10)
+    local content = string.format(Language.LUA_GACHA_WEAPON_RERUN_VERSION_INHERIT_CONTENT, poolCfg.name, pullCountDisplay)
+    local reminderContent
+    if needShowReminder then
+        reminderContent = string.format(
+            Language.LUA_GACHA_WEAPON_RERUN_VERSION_INHERIT_REMINDER, nearest.remainNeedPullCount, nearest.itemName
+        )
+    end
+
+    self.m_versionConfirmHandled = true
+    local arg = {
+        queueRewardType = "RerunVersionConfirm",
+        showRewardFunc = function()
+            Notify(MessageConst.SHOW_POP_UP, {
+                content = content,
+                reminderContent = reminderContent,
+                hideCancel = true,
+                onConfirm = function()
+                    csGachaSystem:SendConfirmGachaPoolVersionReq(poolId, GEnums.GachaType.Weapon)
+                    Notify(MessageConst.ON_ONE_GACHA_WEAPON_POOL_REWARD_FINISHED)
+                end,
+            })
+        end,
+    }
+    Notify(MessageConst.GACHA_WEAPON_POOL_ADD_SHOW_REWARD, arg)
+end
+
+GachaWeaponPoolCtrl._GetNearestRerunMilestone = HL.Method().Return(HL.Opt(HL.Table)) << function(self)
+    local _, poolInfo = GameInstance.player.gacha.poolInfos:TryGetValue(self.m_poolId)
+    if not poolInfo then
+        return nil
+    end
+    local poolData = poolInfo.data
+    local gachaTypeCfg = Tables.gachaWeaponPoolTypeTable[poolData.type]
+    local nearest = nil
+
+    
+    if poolInfo.upGotCount <= 0 and gachaTypeCfg.hardGuarantee > 0 then
+        local remainDisplay = math.ceil((gachaTypeCfg.hardGuarantee - poolInfo.hardGuaranteeProgress) / 10)
+        local upWeaponId = poolData.upWeaponIds[0]
+        local itemName = Tables.itemTable[upWeaponId].name
+        nearest = self:_TryUpdateNearestMilestone(WEAPON_MILESTONE_TYPE.HardGuarantee, remainDisplay, itemName, nearest)
+    end
+
+    
+    local loopRewardInfos = CashShopUtils.GetGachaWeaponLoopRewardInfo(self.m_poolId)
+    if loopRewardInfos then
+        for _, info in ipairs(loopRewardInfos) do
+            nearest = self:_TryUpdateNearestMilestone(WEAPON_MILESTONE_TYPE.LoopReward, info.remainNeedPullCount, info.name, nearest)
+        end
+    end
+
+    return nearest
+end
+
+GachaWeaponPoolCtrl._TryUpdateNearestMilestone = HL.Method(HL.Number, HL.Number, HL.String, HL.Opt(HL.Table)).Return(HL.Opt(HL.Table))
+    << function(self, milestoneType, remainNeedPullCount, itemName, nearest)
+    if remainNeedPullCount < 0 then
+        return nearest
+    end
+    if not nearest or remainNeedPullCount < nearest.remainNeedPullCount
+        or (remainNeedPullCount == nearest.remainNeedPullCount and milestoneType < nearest.milestoneType) then
+        return {
+            milestoneType = milestoneType,
+            remainNeedPullCount = remainNeedPullCount,
+            itemName = itemName,
+        }
+    end
+    return nearest
 end
 
 HL.Commit(GachaWeaponPoolCtrl)

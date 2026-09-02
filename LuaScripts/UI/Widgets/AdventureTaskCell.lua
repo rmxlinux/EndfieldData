@@ -35,7 +35,7 @@ AdventureTaskCell.InitAdventureTaskCell = HL.Method(HL.Table, HL.Opt(HL.Number))
             self:_ClearCoroutine(self.m_delayShowCoroutine)
             self:PlayInAniAndDelayTime(delayShowTime)
         end
-        self.view.aniWrapper:Play("adventuretaskcell_empty")
+        self:PlayStateAnimation()
         return
     end
 
@@ -84,19 +84,11 @@ AdventureTaskCell.InitAdventureTaskCell = HL.Method(HL.Table, HL.Opt(HL.Number))
     local curProgress = (isRewarded or isCompleted) and maxProgress or taskProgress
 
     
-    local stateAniName
-    if isNormal then
-        stateAniName = "adventuretaskcell_normal"
-    elseif isFinish then
-        stateAniName = "adventuretaskcell_finish"
-    else
-        stateAniName = "adventuretaskcell_rewarded"
-    end
     if delayShowTime then
         self:_ClearCoroutine(self.m_delayShowCoroutine)
         self:PlayInAniAndDelayTime(delayShowTime)
     end
-    self.view.aniWrapper:Play(stateAniName) 
+    self:PlayStateAnimation(state) 
 
     if state == AdventureBookUtils.StageTaskDisplayState.OtherDomainRewarded then
         self.view.contentNode.text.text = "-/-"
@@ -135,6 +127,20 @@ AdventureTaskCell.InitAdventureTaskCell = HL.Method(HL.Table, HL.Opt(HL.Number))
 
     
     self.view.redDot:InitRedDot("AdventureBookTabStageTaskCell", info.redDotArg)
+end
+
+AdventureTaskCell.PlayStateAnimation = HL.Method(HL.Opt(HL.Number)) << function(self, state)
+    local stateAniName
+    if state == nil then
+        stateAniName = "adventuretaskcell_empty"
+    elseif state == AdventureBookUtils.StageTaskDisplayState.InProgress then
+        stateAniName = "adventuretaskcell_normal"
+    elseif state == AdventureBookUtils.StageTaskDisplayState.Complete then
+        stateAniName = "adventuretaskcell_finish"
+    else
+        stateAniName = "adventuretaskcell_rewarded"
+    end
+    self.view.aniWrapper:Play(stateAniName)
 end
 
 AdventureTaskCell.PlayInAniAndDelayTime = HL.Method(HL.Number) << function(self, delayTime)

@@ -48,12 +48,13 @@ ShopChoicenessBattlePassCtrl.OnCreate = HL.Override(HL.Any) << function(self, ar
             CashShopConst.CashShopCategoryType.Pack,
             arg.id
         )
-        PhaseManager:OpenPhaseFast(PhaseId.BattlePass, {
+        PhaseManager:OpenPhase(PhaseId.BattlePass, {
             popupPanelId = 'BattlePassAdvancedPlanBuy',
             popupPhase = true,
             fromPhase = PhaseId.CashShop,
-        })
-        PhaseManager:ExitPhaseFast(PhaseId.CashShop)
+        }, function()
+            PhaseManager:ExitPhaseFast(PhaseId.CashShop)
+        end, true)
     end)
 end
 

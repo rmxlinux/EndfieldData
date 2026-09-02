@@ -712,6 +712,14 @@ function BattlePassUtils.ShowOriPlan(onClose)
         content = string.format(Language.LUA_BATTLE_PASS_AFTER_BUY_PRO_DOUBLE_CONFIRM_TEXT, Tables.battlePassConst.buyOriginiumTrackMoneyCnt),
         onConfirm = function()
             
+            if PhaseManager:GetTopPhaseId() == PhaseId.BattlePassBuyPlan then
+                PhaseManager:PopPhase(PhaseId.BattlePassBuyPlan, function()
+                    PhaseManager:OpenPhase(PhaseId.BattlePassBuyPlan, {
+                        type = "Ori",
+                    })
+                end)
+                return
+            end
             PhaseManager:GoToPhase(PhaseId.BattlePassBuyPlan,{
                 type = "Ori",
                 onClose = onClose,

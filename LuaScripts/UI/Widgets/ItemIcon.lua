@@ -12,6 +12,8 @@ ItemIcon.m_instId = HL.Field(HL.Any)
 
 ItemIcon.showRarity = HL.Field(HL.Boolean) << true
 
+ItemIcon.m_sysBluePrintItemId = HL.Field(HL.Any)
+
 ItemIcon.InitItemIcon = HL.Method(HL.Opt(HL.String, HL.Boolean, HL.Number)) << function(self, itemId, isBig, instId)
     self:_FirstTimeInit()
 
@@ -22,6 +24,14 @@ ItemIcon.InitItemIcon = HL.Method(HL.Opt(HL.String, HL.Boolean, HL.Number)) << f
     self.m_itemId = itemId
     self.m_instId = instId
     local itemData = Tables.itemTable[itemId]
+    
+    self.m_sysBluePrintItemId = nil
+    if itemData.type == GEnums.ItemType.SysBluePrint then
+        local bpData = GameInstance.remoteFactoryManager.staticData:QueryBuildinBlueprint(itemId)
+        if bpData ~= nil then
+            self.m_sysBluePrintItemId = bpData.info.icon.icon
+        end
+    end
     self.view.icon:LoadSprite(isBig and UIConst.UI_SPRITE_ITEM_BIG or UIConst.UI_SPRITE_ITEM, itemData.iconId)
     self:_RefreshGemAddOnNode(isBig == true, itemData, instId)
     self:_UpdateLiquidOrGasIcon()
@@ -125,12 +135,13 @@ end
 ItemIcon._UpdateLiquidOrGasIcon = HL.Method() << function(self)
     
     local icon
-    local isFullBottle, fullBottleData = Tables.fullBottleTable:TryGetValue(self.m_itemId)
+    local checkId = self.m_sysBluePrintItemId or self.m_itemId
+    local isFullBottle, fullBottleData = Tables.fullBottleTable:TryGetValue(checkId)
     if isFullBottle then
         local liquidData = Tables.itemTable[fullBottleData.liquidId]
         icon = liquidData.iconId
     else
-        isFullBottle, fullBottleData = Tables.fullGasJarTable:TryGetValue(self.m_itemId)
+        isFullBottle, fullBottleData = Tables.fullGasJarTable:TryGetValue(checkId)
         if isFullBottle then
             local gasData = Tables.itemTable[fullBottleData.gasId]
             icon = gasData.iconId

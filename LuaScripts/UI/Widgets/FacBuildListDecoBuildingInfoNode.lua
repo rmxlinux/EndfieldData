@@ -49,6 +49,10 @@ FacBuildListDecoBuildingInfoNode.InitFacBuildListDecoBuildingInfoNode = HL.Metho
     self:_RefreshTabItemList()
 end
 
+FacBuildListDecoBuildingInfoNode.GetLastSelectId = HL.Method().Return(HL.String) << function(self)
+    return FacBuildListDecoBuildingInfoNode.s_lastSelectId
+end
+
 FacBuildListDecoBuildingInfoNode.OnShow = HL.Method() << function(self)
     self.m_isShow = true
     self:_NaviToDecoList()
@@ -195,6 +199,9 @@ FacBuildListDecoBuildingInfoNode._OnUpdateCell = HL.Method(HL.Any, HL.Number) <<
                 self.view.scrollList:SetSelectedIndex(CSIndex(index))
             end
         end
+    else
+        local isSelected = index == LuaIndex(self.view.scrollList.curSelectedIndex)
+        cell.item:SetSelected(isSelected)
     end
 end
 

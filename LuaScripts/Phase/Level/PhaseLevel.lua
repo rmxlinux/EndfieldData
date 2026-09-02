@@ -68,8 +68,11 @@ PhaseLevel.OpenLevelPhase = HL.StaticMethod() << function()
     else
         if not PhaseManager:IsOpen(PHASE_ID) then
             PhaseManager:OpenPhaseFast(PHASE_ID) 
-        elseif GameWorld.levelLoader.isSeamlessLoading then
-            Notify(MessageConst.ON_OPEN_LEVEL_PHASE_SEAMLESS_LOADING)
+        else
+            local currentPhase = PhaseManager.curPhase
+            if currentPhase.phaseId == PHASE_ID then
+                currentPhase:RefreshPhaseLevel()
+            end
         end
     end
 end
@@ -99,6 +102,26 @@ PhaseLevel._OnInit = HL.Override() << function(self)
 end
 
 PhaseLevel.onSceneLoadStart = HL.Method(HL.Any) << function(self, arg)
+    
+end
+
+
+PhaseLevel._TryOpenActivityStartReminder = HL.Method() << function(self)
+    if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.Activity) then
+        return
+    end
+
+    local isMainHudOpen, mainHudCtrl = UIManager:IsOpen(PanelId.MainHud)
+    if not isMainHudOpen or not mainHudCtrl then
+        return
+    end
+
+    local activityBtnInfo = mainHudCtrl:GetMainHudBtnInfo("activityCenter")
+    if not activityBtnInfo or not mainHudCtrl:IsMainHudBtnVisible(activityBtnInfo) then
+        return
+    end
+
+    UIManager:AutoOpen(PanelId.ActivityStartReminder)
 end
 
 PhaseLevel.OpenLevelPanels = HL.Method() << function(self)
@@ -151,11 +174,43 @@ PhaseLevel.OpenLevelPanels = HL.Method() << function(self)
             end
         end
     end
-
     
-    if Utils.isSystemUnlocked(GEnums.UnlockSystemType.Activity) then
-        UIManager:AutoOpen(PanelId.ActivityStartReminder)
+    self:_TryOpenActivityStartReminder()
+end
+
+PhaseLevel.RefreshPhaseLevel = HL.Method() << function(self)
+    if self.m_hidePanelKey > 0 then
+        self.m_hidePanelKey = UIManager:RecoverScreen(self.m_hidePanelKey)
     end
+    if not self.isActive then
+        self:_ActivePhase()
+    end
+    local config = PhaseLevelConfig.GetCurrentConfig()
+    local openPanels = {}
+    for _, panelId in ipairs(config.open) do
+        openPanels[panelId] = true
+        if panelId == PanelId.MissionHud and (UIManager:IsShow(PanelId.CommonTaskTrackHud) or UIManager:IsShow(PanelId.SimulationTrainingTrackHud)) then
+            
+            
+        else
+            if not UIManager:IsOpen(panelId) then
+                UIManager:Open(panelId)
+            end
+        end
+    end
+    for _, panelName in ipairs(PhaseConst.DONT_DESTROY_ON_CLOSE_MAP) do
+        local panelId = PanelId[panelName]
+        if panelId ~= PanelId.LevelCamera and openPanels[panelId] == nil and UIManager:IsShow(panelId) then
+            UIManager:Hide(panelId)
+        end
+    end
+    if self.m_generalTrackerPanel and UIManager:IsHide(PanelId.GeneralTracker) then
+        UIManager:Show(PanelId.GeneralTracker)
+    end
+    Notify(MessageConst.ON_PHASE_LEVEL_ON_TOP)
+    self:_UpdateFactoryMode(true)
+    Notify(MessageConst.ON_REFRESH_PHASE_LEVEL)
+    self:_TryOpenActivityStartReminder()
 end
 
 local BlackBoxGuideNeedClosePanel = {
@@ -277,6 +332,7 @@ PhaseLevel._UpdateFactoryMode = HL.Method(HL.Opt(HL.Boolean)) << function(self, 
         self.m_lastLevelIdNum = curLevelIdNum
         self.m_lastInFacMainRegion = inMainRegion
         GameWorld.worldInfo.inFacMainRegion = inMainRegion
+        EventLogManagerInst.isInFactoryArea = inMainRegion
 
         
         
@@ -332,6 +388,10 @@ PhaseLevel._RefreshFacModeAndMainRegion = HL.Method(HL.Opt(HL.Any)) << function(
         return
     end
 
+    if levelChanged then
+        self.customFacTopViewRangeInWorld = nil
+    end
+
     self.m_lastLevelIdNum = curLevelIdNum
     self.m_lastInFacMainRegion = inMainRegion
     self:_UpdateCurMainRegionInfo(panelIndex)
@@ -362,6 +422,7 @@ PhaseLevel._RefreshFacModeAndMainRegion = HL.Method(HL.Opt(HL.Any)) << function(
 
     
     GameWorld.worldInfo.inFacMainRegion = inMainRegion
+    EventLogManagerInst.isInFactoryArea = inMainRegion
 end
 
 PhaseLevel.OnCurrentLevelChanged = HL.Method(HL.Any) << function(self, arg)
@@ -511,7 +572,6 @@ PhaseLevel._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << f
     if DeviceInfo.isMobile then
         Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = "MobileController", enabled = DeviceInfo.usingController})
     end
-    self:TryRestoreSimulationTrainingTrackHud()
     self:OpenLevelPanels()
 
     
@@ -530,7 +590,6 @@ PhaseLevel._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << f
     if GameWorld.battle.seasonTowerState ~= CS.Beyond.Gameplay.Core.BattleManager.SeasonTowerState.None then
         UIManager:AutoOpen(PanelId.SeasonTowerBuff)
     end
-    
     
     if not Utils.isInDungeon() then
         Notify(MessageConst.ON_WORLD_LEVEL_CHANGED, {GameInstance.player.adventure.currentMaxWorldLevel - 1, GameInstance.player.adventure.currentMaxWorldLevel, false})
@@ -714,24 +773,6 @@ PhaseLevel.TryRestoreTowerDefense = HL.Method() << function(self)
         self:OnTowerDefenseDefendingTransitFinished()
     end
 end
-
-PhaseLevel.TryRestoreSimulationTrainingTrackHud = HL.Method() << function(self)
-    
-    if not GameInstance.player.simulationTrainingSystem.inSubGame then
-        return
-    end
-    
-    if UIManager:IsOpen(PanelId.SimulationTrainingTrackHud) then
-        return
-    end
-    
-    local SIMULATION_TRAINING_SUB_GAME_ID = "world_poi_simulation_training_01"
-    
-    local SIMULATION_TRAINING_PHASE_NORMAL = 1
-
-    Notify(MessageConst.ON_OPEN_SUB_GAME_SIMULATION_TRAINING, { SIMULATION_TRAINING_SUB_GAME_ID, SIMULATION_TRAINING_PHASE_NORMAL })
-end
-
 
 PhaseLevel.OnEnterTowerDefensePreparingPhase = HL.Method() << function(self)
     GameInstance.player.towerDefenseSystem.hudState = CS.Beyond.Gameplay.TowerDefenseSystem.HUDState.Preparing

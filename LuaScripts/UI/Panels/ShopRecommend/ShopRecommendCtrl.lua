@@ -487,6 +487,7 @@ ShopRecommendCtrl._SetupUIVerticalTab = HL.Method(HL.Any, HL.Any) << function(se
     tabData = tabData
     cell.cellNameTxt.text = tabData.Name
     cell.cellNameShadownTxt.text = tabData.Name
+    cell.toggle:SetIsOnWithoutNotify(tabData.id == self.m_currTabId)
     cell.toggle.onValueChanged:RemoveAllListeners()
     cell.toggle.onValueChanged:AddListener(function(isOn)
         if isOn then
@@ -551,11 +552,6 @@ ShopRecommendCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, ar
     arg.CategoryRecommendTabId = self.m_currTabId
 end
 
-
-
-ShopRecommendCtrl.OnAfterCategoryTopOrdered = HL.Method() << function(self)
-end
-
 ShopRecommendCtrl.NaviTargetCurrTab = HL.Method() << function(self)
     InputManagerInst:ToggleGroup(self.m_goRightGroup, true)
 
@@ -600,6 +596,10 @@ ShopRecommendCtrl.SetCurrTabId = HL.Method(HL.String) << function(self, tabId)
     end
     if foundTabData ~= nil then
         self:_SetTabByIndex(foundIndex)
+    elseif #self.m_showTabDataList > 0 then
+        self:_SetTabByIndex(1)
+    else
+        self:_ClearCurrTab()
     end
 end
 
@@ -620,6 +620,9 @@ ShopRecommendCtrl._OnGoRight = HL.Method() << function(self)
     local ret = false
 
     local tabData = self:_GetTabDataById(self.m_currTabId)
+    if tabData == nil then
+        return
+    end
     if tabData.OnNaviGoRightFunc then
         ret = tabData.OnNaviGoRightFunc(self)
     end
@@ -633,6 +636,9 @@ ShopRecommendCtrl._CheckCanGoRight = HL.Method().Return(HL.Boolean) << function(
     local ret = false
 
     local tabData = self:_GetTabDataById(self.m_currTabId)
+    if tabData == nil then
+        return false
+    end
     if tabData.CheckNaviGoRightFunc then
         ret = tabData.CheckNaviGoRightFunc(self)
     end
@@ -651,6 +657,69 @@ end
 
 ShopRecommendCtrl._RefreshUI = HL.Method() << function(self)
     self.view.cashShopVerticalTabList.scrollList:UpdateCount(#self.m_showTabDataList)
+end
+
+ShopRecommendCtrl._RefreshPsStore = HL.Method(HL.Table) << function(self, tabData)
+    if tabData.ShowPsStoreFunc ~= nil then
+        local show = tabData.ShowPsStoreFunc(tabData)
+        if show then
+            self.m_phase:ShowPsStore()
+        else
+            self.m_phase:HidePsStore()
+        end
+    else
+        if tabData.ShowPsStore then
+            self.m_phase:ShowPsStore()
+        else
+            self.m_phase:HidePsStore()
+        end
+    end
+end
+
+ShopRecommendCtrl._ClearCurrTab = HL.Method() << function(self)
+    local oldTabData = self:_GetTabDataById(self.m_currTabId)
+    if oldTabData ~= nil then
+        if oldTabData.OverrideDestroyPanelFunc ~= nil then
+            oldTabData.OverrideDestroyPanelFunc(self)
+        else
+            self.m_phase:RemovePhasePanelItemByIdWrapper(oldTabData.Panel)
+        end
+    end
+
+    self.m_currTabId = ""
+    self.m_phase:HidePsStore()
+    InputManagerInst:ToggleGroup(self.m_goRightGroup, false)
+    self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({})
+end
+
+ShopRecommendCtrl._RefreshTabDataAndRestoreSelection = HL.Method() << function(self)
+    local prevTabId = self.m_currTabId
+    self:_InitTabData()
+    self:_RefreshShowTabData()
+    self:_RefreshUI()
+
+    if #self.m_showTabDataList == 0 then
+        self:_ClearCurrTab()
+        return
+    end
+
+    local foundIndex = 0
+    for i, tabData in ipairs(self.m_showTabDataList) do
+        if tabData.id == prevTabId then
+            foundIndex = i
+            break
+        end
+    end
+
+    if foundIndex > 0 then
+        
+        self:_SetTabByIndex(foundIndex)
+        local tabData = self.m_showTabDataList[foundIndex]
+        self:_RefreshControllerHintPlaceHolder()
+        self:_RefreshPsStore(tabData)
+    else
+        self:_SetTabByIndex(1)
+    end
 end
 
 ShopRecommendCtrl._SetTabByIndex = HL.Method(HL.Int) << function(self, index)
@@ -695,20 +764,7 @@ ShopRecommendCtrl._OnTabClick = HL.Method(HL.Table) << function(self, tabData)
     self:_RefreshControllerHintPlaceHolder()
 
     
-    if tabData.ShowPsStoreFunc ~= nil then
-        local show = tabData.ShowPsStoreFunc(tabData)
-        if show then
-            self.m_phase:ShowPsStore()
-        else
-            self.m_phase:HidePsStore()
-        end
-    else
-        if tabData.ShowPsStore then
-            self.m_phase:ShowPsStore()
-        else
-            self.m_phase:HidePsStore()
-        end
-    end
+    self:_RefreshPsStore(tabData)
 
     if self.m_phase.m_needGameEvent then
         self.m_phase.m_needGameEvent = false
@@ -746,13 +802,28 @@ ShopRecommendCtrl._RefreshControllerHintPlaceHolder = HL.Method() << function(se
     end
 
     local tabData = self:_GetTabDataById(self.m_currTabId)
+    if tabData == nil then
+        logger.error(string.format("[ShopRecommendCtrl] 刷新手柄提示失败，找不到当前页签数据: %s", self.m_currTabId))
+        return
+    end
+
+    local insertPanelInputGroup = function(panelId)
+        local panelItem = self.m_phase.m_panel2Item[panelId]
+        if panelItem == nil or panelItem.uiCtrl == nil then
+            logger.error(string.format("[ShopRecommendCtrl] 刷新手柄提示时目标Panel尚未创建: tabId=%s, panelId=%s",
+                self.m_currTabId, tostring(panelId)))
+            return
+        end
+        table.insert(args, panelItem.uiCtrl.view.inputGroup.groupId)
+    end
+
     if tabData.GetPanelIdsFunc then
         local panelIds = tabData.GetPanelIdsFunc()
         for _, panelId in ipairs(panelIds) do
-            table.insert(args, self.m_phase.m_panel2Item[panelId].uiCtrl.view.inputGroup.groupId)
+            insertPanelInputGroup(panelId)
         end
     else
-        table.insert(args, self.m_phase.m_panel2Item[tabData.Panel].uiCtrl.view.inputGroup.groupId)
+        insertPanelInputGroup(tabData.Panel)
     end
 
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder(args)
@@ -764,16 +835,12 @@ end
 
 ShopRecommendCtrl._OnReceiveRefreshMsg = HL.Method() << function(self)
     logger.info("ShopRecommendCtrl: 收到msg，刷新页面")
-    self:_InitTabData()
-    self:_RefreshShowTabData()
-    self:_RefreshUI()
+    self:_RefreshTabDataAndRestoreSelection()
 end
 
 ShopRecommendCtrl._OnShopGoodsSeeGoodsInfoChanged = HL.Method(HL.Any) << function(self, arg)
     logger.info("ShopRecommendCtrl: 收到msg ON_SHOP_GOODS_SEE_GOODS_INFO_CHANGE，刷新页面")
-    self:_InitTabData()
-    self:_RefreshShowTabData()
-    self:_RefreshUI()
+    self:_RefreshTabDataAndRestoreSelection()
 end
 
 

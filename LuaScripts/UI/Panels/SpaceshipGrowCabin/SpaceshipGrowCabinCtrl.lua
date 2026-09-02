@@ -385,6 +385,19 @@ SpaceshipGrowCabinCtrl._RefreshOverviewPanel = HL.Method() << function(self)
     end
 
     self:_RefreshOverviewPanelBottomNode()
+
+    if DeviceInfo.usingController and self.m_isInDetailNaviState then
+        for _, boxCell in pairs(self.m_id2GrowCabinBoxCell) do
+            local naviTarget = boxCell.view.inputBindingGroupNaviDecorator
+            if InputManagerInst.controllerNaviManager:IsNaviTarget(naviTarget) then
+                
+                
+                self:ClearNaviTarget()
+                self:SetNaviTarget(naviTarget)
+                break
+            end
+        end
+    end
 end
 
 SpaceshipGrowCabinCtrl._RefreshOverviewPanelBottomNode = HL.Method() << function(self)

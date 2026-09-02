@@ -14,11 +14,13 @@ local TRACK_GOAL_CELL_ANIM_UPDATE = "tasktrackhud_cellupdate"
 
 CommonTaskGoalCell = HL.Class('CommonTaskGoalCell', UIWidgetBase)
 
-CommonTaskGoalCell.m_index = HL.Field(HL.Number) << -1
+CommonTaskGoalCell.m_objectiveIndex = HL.Field(HL.Number) << -1
 
 CommonTaskGoalCell.m_taskState = HL.Field(HL.Number) << TaskState.None
 
 CommonTaskGoalCell.m_animationWrapper = HL.Field(CS.Beyond.UI.UIAnimationWrapper)
+
+CommonTaskGoalCell.m_taskKey = HL.Field(HL.String) << ""
 
 CommonTaskGoalCell.m_taskType = HL.Field(CS.Beyond.Gameplay.LevelScriptTaskType)
 
@@ -59,17 +61,18 @@ CommonTaskGoalCell._OnDestroy = HL.Override() << function(self)
     end
 end
 
-CommonTaskGoalCell.InitCommonTaskGoalCell = HL.Method(HL.Number, CS.Beyond.Gameplay.LevelScriptTaskType)
-        << function(self, index, taskType)
+CommonTaskGoalCell.InitCommonTaskGoalCell = HL.Method(HL.String, HL.Number, CS.Beyond.Gameplay.LevelScriptTaskType)
+        << function(self, taskKey, objectiveIndex, taskType)
     self:_FirstTimeInit()
 
+    self.m_taskKey = taskKey
     self.m_taskType = taskType
-    self.m_index = index
+    self.m_objectiveIndex = objectiveIndex
     self.m_taskState = TaskState.None
 
     local trackingMgr = GameWorld.levelScriptTaskTrackingManager
-    local trackingTask = trackingMgr:GetTaskByType(self.m_taskType)
-    local csIndex = CSIndex(index)
+    local trackingTask = trackingMgr:GetTaskByKey(taskKey)
+    local csIndex = CSIndex(objectiveIndex)
     local objective = trackingTask.objectives[csIndex]
     local objectiveRaw = trackingTask.objectivesRaw[csIndex]
     self.m_taskTracking = trackingTask
@@ -91,9 +94,41 @@ CommonTaskGoalCell.InitCommonTaskGoalCell = HL.Method(HL.Number, CS.Beyond.Gamep
     self:_Refresh(true)
 end
 
+CommonTaskGoalCell.RefreshStyle = HL.Method() << function(self)
+    local subGameId = GameWorld.worldInfo.curSubGameId
+    if not subGameId or subGameId == "" then
+        return
+    end
+    local success, subGameData = DataManager.subGameInstDataTable:TryGetValue(subGameId)
+    if not success or not subGameData.taskGoalStyle then
+        return
+    end
+    local style = subGameData.taskGoalStyle
+    local EGameTaskGoalStyleType = CS.Beyond.Gameplay.Core.EGameTaskGoalStyleType
+
+    self.view.default:SetState(style == EGameTaskGoalStyleType.Normal and "normal" or "custom")
+
+    local spriteName = UIConst.UI_SPRITE_COMMON_TASK_TRACK
+    local useCommonIcon = style == EGameTaskGoalStyleType.Normal
+        or self.m_taskType == CS.Beyond.Gameplay.LevelScriptTaskType.Custom
+    local iconPrefix = useCommonIcon and "common" or subGameData.taskGoalIconName
+
+    local states = {
+        {view = self.view.failIcon, suffix = "fail"},
+        {view = self.view.unfinishedIcon, suffix = "normal"},
+        {view = self.view.finishedIcon, suffix = "succ"}
+    }
+
+    for _, stateInfo in ipairs(states) do
+        local iconPath = string.format("icon_%s_task_%s", iconPrefix, stateInfo.suffix)
+        stateInfo.view:LoadSprite(spriteName, iconPath)
+    end
+end
+
+
 CommonTaskGoalCell.OnGoalProgressChange = HL.Method(HL.Any) << function(self, args)
-    local taskType, csIndex = unpack(args)
-    if self.m_taskType ~= taskType or self.m_index ~= LuaIndex(csIndex) then
+    local taskType, taskKey, csIndex = unpack(args)
+    if self.m_taskType ~= taskType or self.m_objectiveIndex ~= LuaIndex(csIndex) or self.m_taskKey ~= taskKey then
         return
     end
 
@@ -106,15 +141,45 @@ CommonTaskGoalCell.TrySetStateFail = HL.Method() << function(self)
     end
 end
 
+
+CommonTaskGoalCell.ForceSetFail = HL.Method() << function(self)
+    self.m_taskState = TaskState.Fail
+    self.view.default:SetState("statefail")
+    if self.m_animationWrapper then
+        self.m_animationWrapper:SampleClipAtPercent(TRACK_GOAL_CELL_ANIM_FAIL, 1)
+    end
+end
+
+
+
+CommonTaskGoalCell.InitCommonTaskGoalCellStatic = HL.Method(HL.String, HL.Number, CS.Beyond.Gameplay.LevelScriptTaskType)
+        << function(self, taskKey, objectiveIndex, taskType)
+    self:InitCommonTaskGoalCell(taskKey, objectiveIndex, taskType)
+    if not self.m_animationWrapper then
+        return
+    end
+    if self.m_taskState == TaskState.Finish then
+        self.m_animationWrapper:SampleClipAtPercent(TRACK_GOAL_CELL_ANIM_FINISH, 1)
+    elseif self.m_taskState == TaskState.Fail then
+        self.m_animationWrapper:SampleClipAtPercent(TRACK_GOAL_CELL_ANIM_FAIL, 1)
+    end
+end
+
 CommonTaskGoalCell._Refresh = HL.Method(HL.Boolean) << function(self, isInit)
     if not self.m_taskTrackingObjective then
         return
     end
+    local isCompleted = self.m_taskTrackingObjective.isCompleted
+    local isFail = self.m_taskTrackingObjective.inFailStyle
     
     local success, descText, progressText = self.m_taskTracking:TryGetValueObjectiveDescription(self.m_taskTrackingObjective)
     if success then
         local descTextI18nResolveGender = UIUtils.resolveTextGender(descText)
-        self.view.goalTxt:SetAndResolveTextStyle(descTextI18nResolveGender)
+        local failText = descTextI18nResolveGender
+        if isFail then
+            failText = (string.format("<s>%s</s>", descTextI18nResolveGender))
+        end
+        self.view.goalTxt:SetAndResolveTextStyle(failText)
         self.view.progressTxt:SetAndResolveTextStyle(progressText)
     else
         self.view.goalTxt.text = ""
@@ -123,13 +188,17 @@ CommonTaskGoalCell._Refresh = HL.Method(HL.Boolean) << function(self, isInit)
     
     if isInit then
         self.m_animationWrapper:SampleClipAtPercent(TRACK_GOAL_CELL_ANIM_DEFAULT, 1)
+        self:RefreshStyle()
     end
 
-    local isCompleted = self.m_taskTrackingObjective.isCompleted
-    local isFail = self.m_taskTrackingObjective.inFailStyle
+    local nowState = "statenormal"
+    if isCompleted then
+        nowState = "statesucc"
 
-    
-    
+    elseif isFail then
+        nowState = "statefail"
+    end
+    self.view.default:SetState(nowState)
     local preState = self.m_taskState
     self.m_taskState = isCompleted and TaskState.Finish or (isFail and TaskState.Fail or TaskState.Normal)
     if preState ~= self.m_taskState then

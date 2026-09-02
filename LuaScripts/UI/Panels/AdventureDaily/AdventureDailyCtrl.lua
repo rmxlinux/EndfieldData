@@ -54,8 +54,14 @@ AdventureDailyCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
     end)
 
+    self.view.progressNode.noteNode.canFocusFun = function()
+        return self.m_phase ~= nil and self.m_phase:CanTriggerTabPanelAction(PANEL_ID)
+    end
     self.view.progressNode.noteBtn.onClick:RemoveAllListeners()
     self.view.progressNode.noteBtn.onClick:AddListener(function()
+        if PhaseManager:CheckIsInTransition() then
+            return
+        end
         Notify(MessageConst.SHOW_COMMON_TITLE_TIPS, {
             title = Language.LUA_ADVENTUREBOOK_DAILY_BP_ABSENT_TITLE,
             desc = Language.LUA_ADVENTUREBOOK_DAILY_BP_ABSENT_DESC,
@@ -72,6 +78,9 @@ AdventureDailyCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.gotoBpTaskBtn.onClick:RemoveAllListeners()
     self.view.gotoBpTaskBtn.onClick:AddListener(function()
+        if not self:_CanOpenBattlePass() then
+            return
+        end
         PhaseManager:GoToPhase(PhaseId.BattlePass, {
             panelId = 'BattlePassTask',
         })
@@ -79,6 +88,9 @@ AdventureDailyCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.gotoBpRewardBtn.onClick:RemoveAllListeners()
     self.view.gotoBpRewardBtn.onClick:AddListener(function()
+        if not self:_CanOpenBattlePass() then
+            return
+        end
         PhaseManager:GoToPhase(PhaseId.BattlePass, {
             panelId = 'BattlePassPlan',
         })
@@ -94,6 +106,14 @@ AdventureDailyCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_RefreshTaskNode()
 
     self.view.countDownText:InitCountDownText(Utils.getNextCommonServerRefreshTime())
+end
+
+AdventureDailyCtrl._CanOpenBattlePass = HL.Method().Return(HL.Boolean) << function(self)
+    local canOpen = self.m_phase and self.m_phase:CanTriggerTabPanelAction(PANEL_ID)
+    if not canOpen and UNITY_EDITOR then
+        logger.warn("[AdventureBook] 日常页签正在切出，忽略打开BattlePass")
+    end
+    return canOpen == true
 end
 
 AdventureDailyCtrl.OnClose = HL.Override() << function(self)
@@ -227,10 +247,9 @@ end
 
 AdventureDailyCtrl._RefreshProgressBPPart = HL.Method() << function(self)
     local bpSystem = GameInstance.player.battlePassSystem
-    local bpAbsentCount = bpSystem.seasonData.absentCount
     local absentMax = Tables.battlePassConst.maxAbsenceCount
     local curDailyRewardActivation = GameInstance.player.adventure.adventureBookData.dailyRewardedActivation
-    local hasAbsent = bpAbsentCount > 0
+    local hasAbsent = self:_HasBPAbsent()
     local bpItemData = Tables.itemTable[Tables.battlePassConst.bpExpItem]
     local bpItemName = bpItemData ~= nil and bpItemData.name or ''
     local rewarId = self.m_progressInfos[#self.m_progressInfos].rewardId
@@ -255,6 +274,10 @@ AdventureDailyCtrl._RefreshProgressBPPart = HL.Method() << function(self)
         cell.stateController:SetState(index <= bpSystem.seasonData.absentCount and "AbsentAvail" or "AbsentDisable")
     end)
     self.view.taskNodeStateController:SetState((not activationMax) and "NoBP" or (hasBpRewardAvail and "BpReward" or "BpTask"))
+end
+
+AdventureDailyCtrl._HasBPAbsent = HL.Method().Return(HL.Boolean) << function(self)
+    return GameInstance.player.battlePassSystem.seasonData.absentCount > 0
 end
 
 AdventureDailyCtrl._RefreshProgressCell = HL.Method(HL.Any, HL.Number).Return(HL.Boolean)
@@ -549,11 +572,6 @@ AdventureDailyCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(se
             cell.gotoBtn.gameObject:SetActive(false)
             cell.unfinishHint.gameObject:SetActive(true)
         end
-    end
-
-    
-    if not self.m_isCurActivationMax then
-        cell.gameObject.transform:Find("StateNode/BtnNode/RightNode/TextLayout").gameObject:SetActive(false)
     end
 
     cell.cellAniWrapper:PlayWithTween("adventuredailytaskcell_in")

@@ -44,6 +44,8 @@ SpaceshipRoomClueGiftCtrl.m_inFriendListGroup = HL.Field(HL.Boolean) << false
 
 SpaceshipRoomClueGiftCtrl.m_pendingInputText = HL.Field(HL.String) << ""
 
+SpaceshipRoomClueGiftCtrl.m_waitingBatchPresentReward = HL.Field(HL.Boolean) << false
+
 
 SpaceshipRoomClueGiftCtrl.ShowSpaceshipClueGift = HL.StaticMethod(HL.Opt(HL.Table)) << function(args)
     PhaseManager:OpenPhase(PHASE_ID)
@@ -70,6 +72,7 @@ SpaceshipRoomClueGiftCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     self:_UpdateClueId2HaveClues()
+    self:_InitBatchPresentClueButton()
 
     local noZeroCount = 0
     self.m_luaIndex2ClueId = {}
@@ -138,11 +141,34 @@ end
 
 SpaceshipRoomClueGiftCtrl.OnClueRewardItem = HL.Method(HL.Any) << function(self, args)
     local items, sources = unpack(args)
-    SpaceshipUtils.ShowClueOutcomePopup(items, sources, self.view.commonTopTitlePanel.moneyCell, nil)
+    local forceShowReward = self.m_waitingBatchPresentReward and sources == CS.Beyond.GEnums.RewardSourceType.PresentClueReward
+    SpaceshipUtils.ShowClueOutcomePopup(items, sources, self.view.commonTopTitlePanel.moneyCell, nil, forceShowReward)
+    if forceShowReward then
+        self.m_waitingBatchPresentReward = false
+    end
 end
 
 SpaceshipRoomClueGiftCtrl.OnSpaceshipClueInfoChange = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     self:_UpdateClueId2HaveClues()
+    self:_RefreshBatchPresentClueState()
+end
+
+SpaceshipRoomClueGiftCtrl._InitBatchPresentClueButton = HL.Method() << function(self)
+    self.view.clueBtn.onClick:RemoveAllListeners()
+    self.view.clueBtn.onClick:AddListener(function()
+        if not self:_RefreshBatchPresentClueState() then
+            return
+        end
+        self.m_waitingBatchPresentReward = true
+        GameInstance.player.spaceship:BatchPresentClue()
+    end)
+    self:_RefreshBatchPresentClueState()
+end
+
+SpaceshipRoomClueGiftCtrl._RefreshBatchPresentClueState = HL.Method().Return(HL.Boolean) << function(self)
+    local canBatchPresentClue = GameInstance.player.spaceship:CanBatchPresentClue()
+    self.view.nodeState:SetState(canBatchPresentClue and "Click" or "Ash")
+    return canBatchPresentClue
 end
 
 SpaceshipRoomClueGiftCtrl._UpdateClueId2HaveClues = HL.Method() << function(self)
@@ -337,6 +363,7 @@ SpaceshipRoomClueGiftCtrl._InitFriendList = HL.Method() << function(self)
             InputManagerInst:ToggleBinding(self.friendListArrowJumpIn, true)
         end,
         onGiftBtnClick = function(roleId, sendSuccessAction)
+            self.m_waitingBatchPresentReward = false
             local curClues = self.m_clueId2HaveClues[self.m_selectedClueId]
             if curClues == nil or #curClues == 0 then
                 Notify(MessageConst.SHOW_TOAST, Language.LUA_SPACESHIP_SEND_CLUE_NO_HAVE_TOAST)
@@ -387,7 +414,7 @@ SpaceshipRoomClueGiftCtrl._InitInputField = HL.Method() << function(self)
             self.view.clearBtn.transform.anchoredPosition = Vector2(self.view.config.CLEAR_BTN_FOCUS_POS, self.view.clearBtn.transform.localPosition.y)
             self:_StartInput()
             self.view.clearBtn.gameObject:SetActiveIfNecessary(not (string.isEmpty(self.view.friendList.view.inputField.text)))
-            self.view.searchResult.gameObject:SetActiveIfNecessary(not (string.isEmpty(str)))
+            self.view.searchResult.gameObject:SetActiveIfNecessary(not (string.isEmpty(self.view.friendList.view.inputField.text)))
             self.view.inputNode:Play("friendblacklistipput_in")
         end,
         onInputEndEdit = function()
@@ -429,6 +456,9 @@ SpaceshipRoomClueGiftCtrl._EndInput = HL.Method() << function(self)
     end
     Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.textInputBindingGroup.groupId)
     self.view.friendList.view.inputField:DeactivateInputField(true)
+
+
+
     local firstCell = self.view.friendList:GetClueGiftNaviToFirstCell()
     if firstCell ~= nil then
         self.m_inFriendListGroup = true
@@ -451,6 +481,7 @@ end
 SpaceshipRoomClueGiftCtrl.OnSync = HL.Method() << function(self)
     self:_UpdateCache()
     self:_Refresh(false)
+    self:_RefreshBatchPresentClueState()
     if not string.isEmpty(self.m_pendingInputText) then
         self.view.friendList.view.inputField.text = self.m_pendingInputText
         self.view.clearBtn.gameObject:SetActiveIfNecessary(true)
@@ -464,6 +495,7 @@ end
 SpaceshipRoomClueGiftCtrl.OnCellChange = HL.Method() << function(self)
     self:_UpdateCache()
     self:_Refresh(false, true)
+    self:_RefreshBatchPresentClueState()
 end
 
 SpaceshipRoomClueGiftCtrl.OnSpaceshipPresentFriendClue = HL.Method() << function(self)
@@ -474,6 +506,7 @@ SpaceshipRoomClueGiftCtrl.OnSpaceshipPresentFriendClue = HL.Method() << function
         
         
         self.m_lastSendInfo.sendSuccessAction()
+        self:_RefreshBatchPresentClueState()
     end
     self.m_lastSendInfo = nil
 end
@@ -619,7 +652,7 @@ SpaceshipRoomClueGiftCtrl._CreateOutSevenDay = HL.Method(HL.Table, HL.Any) << fu
 end
 
 SpaceshipRoomClueGiftCtrl._Refresh = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, loading, stayPos)
-    self.view.friendCountTxt.text = string.format("%d/%d", #self.m_friendList, Tables.globalConst.friendListLenMax)
+    self.view.friendCountTxt.text = #self.m_friendList
     if stayPos then
         self.view.friendList:RefreshInfoStayPos(self.m_friendList)
     else

@@ -79,6 +79,11 @@ MapMarkDetailMissionCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
         end
     end
 
+    local missionDescText = missionRuntimeAsset:GetMissionDesc():GetText()
+
+    
+    local actualText = UIUtils.resolveTextCinematic(missionDescText)
+
     self.view.detailCommon.gameObject:SetActive(true)
     self.view.detailCommon:InitMapMarkDetailCommon( {
         bigBtnActive = true,
@@ -91,7 +96,7 @@ MapMarkDetailMissionCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
         bigBtnIconName = UIConst.MAP_DETAIL_BTN_ICON_NAME.REMOVE_TRACE,
 
         titleText = missionRuntimeAsset.missionName:GetText(),
-        descText = missionRuntimeAsset:GetMissionDesc():GetText(),
+        descText = actualText,
 
         markInstId = markInstId
     })

@@ -362,7 +362,7 @@ FacEnvGenActivatorCtrl._CheckAlertNoPowerCondition = HL.Method(HL.Userdata).Retu
 end
 
 FacEnvGenActivatorCtrl._CheckAlertEnvGenInputInvalidGasCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
-    if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.InActive then
+    if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Inactive then
         return false
     end
 
@@ -389,7 +389,7 @@ FacEnvGenActivatorCtrl._CheckAlertEnvGenInputInvalidGasCondition = HL.Method(HL.
 end
 
 FacEnvGenActivatorCtrl._CheckAlertEnvGenInputGasInsufficientCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
-    if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.InActive then
+    if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Inactive then
         return false
     end
 
@@ -412,7 +412,7 @@ FacEnvGenActivatorCtrl._CheckAlertEnvGenInputGasInsufficientCondition = HL.Metho
 end
 
 FacEnvGenActivatorCtrl._CheckAlertEnvGenNoInputGasCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
-    if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.InActive then
+    if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Inactive then
         return false
     end
 

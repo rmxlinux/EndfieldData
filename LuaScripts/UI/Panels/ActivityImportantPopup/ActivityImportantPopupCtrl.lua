@@ -28,6 +28,26 @@ ActivityImportantPopupCtrl.m_currentAudioKey = HL.Field(HL.String) << ""
 ActivityImportantPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_requestKey = arg.requestKey
     self.m_activityId = ActivityUtils.findImportantCheckinActivity() or ""
+    local introExist = UIUtils.getUIVideoFullPath(self.view.config.INTRO_VIDEO_KEY)
+    local loopExist = UIUtils.getUIVideoFullPath(self.view.config.LOOP_VIDEO_KEY)
+    if not introExist then
+        logger.critical("ActivityImportantPopupCtrl: intro video not found", self.view.config.INTRO_VIDEO_KEY)
+    end
+    if not loopExist then
+        logger.critical("ActivityImportantPopupCtrl: loop video not found", self.view.config.LOOP_VIDEO_KEY)
+    end
+    if not introExist or not loopExist then
+        self:_StartCoroutine(function()
+            coroutine.waitCondition(function()
+                return self.m_isClosed or not PhaseManager:CheckIsInTransition()
+            end)
+            if self.m_isClosed then
+                return
+            end
+            self:_OnClickClose()
+        end)
+        return
+    end
     local cellTemplate = self.view.jumpNode.activityImportantItemCell
     self.m_monthRewardsCellCache = UIUtils.genCellCache(cellTemplate, nil, self.view.jumpNode.monthRewardsNode)
     self.m_otherActRewardsCellCache = UIUtils.genCellCache(cellTemplate, nil, self.view.jumpNode.otherActRewardsContent)

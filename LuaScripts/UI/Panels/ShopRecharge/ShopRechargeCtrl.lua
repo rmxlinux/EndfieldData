@@ -78,15 +78,6 @@ end
 ShopRechargeCtrl.OnClose = HL.Override() << function(self)
 end
 
-ShopRechargeCtrl.SetCashShopStateArg = HL.Method(HL.Table) << function(self, arg)
-
-end
-
-
-
-ShopRechargeCtrl.OnAfterCategoryTopOrdered = HL.Method() << function(self)
-end
-
 ShopRechargeCtrl._InitAction = HL.Method() << function(self)
     self.m_gemCellCache = UIUtils.genCellCache(self.view.shopGemCell)
 

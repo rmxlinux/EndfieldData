@@ -375,6 +375,14 @@ ShopWeaponCtrl._SetupViewSmallUpWeaponCell = HL.Method(HL.Any, HL.Any) << functi
     cell.view.poolTimeNode.endingTxt.gameObject:SetActive(isRealTime)
     
     cell.view.weaponsBagNameTxt.text = weaponPoolCfg.name
+    if cell.view.rerunNode then
+        if weaponPoolCfg.gachaPoolVersion > 0 then
+            cell.view.rerunNode.gameObject:SetActive(true)
+            cell.view.rerunVersionTxt.text = '#' .. weaponPoolCfg.gachaPoolVersion
+        else
+            cell.view.rerunNode.gameObject:SetActive(false)
+        end
+    end
     
     local icon = weaponPoolCfg.smallPoolIcon
     local iconFar = weaponPoolCfg.smallPoolIconFar

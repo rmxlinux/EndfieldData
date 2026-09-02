@@ -21,7 +21,8 @@ MailCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_MARK_STAR_MAIL] = 'OnStarMail',
 
     [MessageConst.ON_GET_LOST_AND_FOUND] = 'OnGetLostAndFound',
-    [MessageConst.ON_ADD_LOST_AND_FOUND] = 'OnAddLostAndFound'
+    [MessageConst.ON_ADD_LOST_AND_FOUND] = 'OnAddLostAndFound',
+    [MessageConst.ON_MAIL_WEB_UNMUTE] = 'OnMailWebUnmute',
 }
 
 
@@ -91,6 +92,10 @@ MailCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self.view.monthlyPassBtnNode.buyBtn.onClick:AddListener(function()
         self:_OnClickMonthlyPassBtn()
+    end)
+
+    self.view.previewWebNode.button.onClick:AddListener(function()
+        self:_OnClickPreviewWebBtn()
     end)
 
     self.view.lostAndFoundRedDot:InitRedDot("LostAndFoundBtn")
@@ -468,6 +473,7 @@ MailCtrl._ShowContent = HL.Method(HL.Number) << function(self, index)
 
     
     self.view.monthlyPassBtnNode.gameObject:SetActive(info.mail.subType == GEnums.MailSubType.MonthlyPassExpired)
+    self:_RefreshPreviewWebNode(info.mail)
     self:_RefreshContentGachaPoolNode(info.mail, analyzedContentInfo.specialParamTable)
     self:_RefreshContentGachaWeaponPoolNode(info.mail, analyzedContentInfo.specialParamTable)
     
@@ -477,6 +483,46 @@ MailCtrl._ShowContent = HL.Method(HL.Number) << function(self, index)
 
     self.view.mailContentNode:ClearTween()
     self.view.mailContentNode:PlayInAnimation()
+end
+
+MailCtrl._RefreshPreviewWebNode = HL.Method(CS.Beyond.Gameplay.MailSystem.Mail) << function(self, mail)
+    local isPreviewWeb = MailUtils.isPreviewWebMail(mail)
+    self.view.previewWebNode.gameObject:SetActive(isPreviewWeb)
+    if isPreviewWeb then
+        self.view.previewWebNode.redDot:InitRedDot("SingleMail", mail.id)
+    else
+        self.view.previewWebNode.redDot:InitRedDot("")
+    end
+end
+
+MailCtrl._OnClickPreviewWebBtn = HL.Method() << function(self)
+    local info = self.m_curMails[self.m_curMailIndex]
+    if info == nil or not MailUtils.isPreviewWebMail(info.mail) then
+        return
+    end
+
+    local target = nil
+    if info.mail.paramDic ~= nil then
+        local hasValue, value = info.mail.paramDic:TryGetValue("target")
+        if hasValue then
+            target = value
+        end
+    end
+    if target == nil then
+        logger.error("preview web mail without target param")
+        return
+    end
+
+    
+    CS.Beyond.Gameplay.Audio.Utils.AudioControlUtil.Webview.SetMute(true)
+    CS.Beyond.SDK.SDKUtils.OpenHGWebPortalSDK(target, "", "ON_MAIL_WEB_UNMUTE")
+    if not info.mail.redDotRead then
+        GameInstance.player.mail:RedDotReadMail(info.id)
+    end
+end
+
+MailCtrl.OnMailWebUnmute = HL.Method(HL.Opt(HL.Any)) << function(self, _)
+    CS.Beyond.Gameplay.Audio.Utils.AudioControlUtil.Webview.SetMute(false)
 end
 
 MailCtrl._RefreshContentGachaPoolNode = HL.Method(CS.Beyond.Gameplay.MailSystem.Mail, HL.Any) << function(self, mail, specialParamTable)
@@ -802,7 +848,29 @@ end
 
 MailCtrl._OnClickLink = HL.Method(HL.String) << function(self, value)
     logger.info("_OnClickLink", value)
-    CS.Beyond.UI.WebApplication.StartHGBrowser(value)
+    local info = self.m_curMails[self.m_curMailIndex]
+    if MailUtils.isPreviewWebMail(info.mail) then
+        
+        return
+    end
+    if info.mail.subType == GEnums.MailSubType.EmbeddedWeb then
+        local target = nil
+        if info.mail.paramDic ~= nil then
+            local hasValue, paramValue = info.mail.paramDic:TryGetValue("target")
+            if hasValue then
+                target = paramValue
+            end
+        end
+        if target == nil then
+            logger.error("mail without target param")
+        else
+            
+            CS.Beyond.Gameplay.Audio.Utils.AudioControlUtil.Webview.SetMute(true)
+            CS.Beyond.SDK.SDKUtils.OpenHGWebPortalSDK(target, "", "ON_MAIL_WEB_UNMUTE")
+        end
+    else
+        CS.Beyond.UI.WebApplication.StartHGBrowser(value)
+    end
 end
 
 MailCtrl._CheckExpiredMail = HL.Method() << function(self)
@@ -813,6 +881,8 @@ MailCtrl._CheckExpiredMail = HL.Method() << function(self)
     for _, v in ipairs(self.m_curMails) do
         if v.isExpired then
             self:_OnClickTab(nil, nil)
+            
+            RedDotManager:TriggerUpdate("SingleMail")
             return
         end
     end

@@ -77,8 +77,7 @@ ShopItemPopUpCtrl._UpdateContent = HL.Method() << function(self)
         
         
         self.view.originalPrice.text = info.price
-        local discount = tonumber(string.format("%.2f", info.discount + 0.001))
-        self.m_curPrice = math.floor(info.price * discount)
+        self.m_curPrice = CashShopUtils.GetDisplayPrice(info.price, info.discount)
 
     else
         

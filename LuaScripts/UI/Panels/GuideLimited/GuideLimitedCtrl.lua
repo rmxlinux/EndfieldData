@@ -156,10 +156,13 @@ GuideLimitedCtrl._StartShowLimitedGuide = HL.Method(HL.Number) << function(self,
 end
 
 GuideLimitedCtrl._StopShowLimitedGuide = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, guideId, forceStop)
+    
+    self.m_delayShowTimer = self:_ClearTimer(self.m_delayShowTimer)
+
     self:_RefreshProgressFillState(1)
     self.m_showUpdate = LuaUpdate:Remove(self.m_showUpdate)
 
-    if self.m_showQueue:Front() ~= guideId then
+    if self.m_showQueue:Empty() or self.m_showQueue:Front() ~= guideId then
         logger.error("Wrong sequence in limited guide show queue!")
         return
     end
@@ -177,6 +180,9 @@ GuideLimitedCtrl._StopShowLimitedGuide = HL.Method(HL.Number, HL.Opt(HL.Boolean)
         self:_RefreshMainVisibleState()
         self.m_delayShowTimer = self:_StartTimer(NEXT_GUIDE_SHOW_DELAY, function()
             self.m_delayShowTimer = self:_ClearTimer(self.m_delayShowTimer)
+            if self.m_showQueue:Empty() then
+                return
+            end
             self:_StartShowLimitedGuide(self.m_showQueue:Front())
         end)
     else
@@ -240,7 +246,8 @@ GuideLimitedCtrl._RefreshProgressFillState = HL.Method(HL.Number) << function(se
 end
 
 GuideLimitedCtrl._OnClickButton = HL.Method() << function(self)
-    if self.m_showQueue:Empty() then
+    
+    if not self.m_isShowing or self.m_showQueue:Empty() then
         return
     end
 
@@ -260,16 +267,24 @@ GuideLimitedCtrl._OnClickButton = HL.Method() << function(self)
 end
 
 GuideLimitedCtrl._OnClearLimitedGuide = HL.Method() << function(self)
+    self.m_delayShowTimer = self:_ClearTimer(self.m_delayShowTimer)
+
     if self.m_showQueue:Empty() then
         return
     end
 
-    if not self.m_isShowing then
+    if self.m_isShowing then
+        local guideId = self.m_showQueue:Front()
+        self:_StopShowLimitedGuide(guideId, true)
         return
     end
 
-    local guideId = self.m_showQueue:Front()
-    self:_StopShowLimitedGuide(guideId, true)
+    
+    self.m_showQueue:Clear()
+    self.m_guideInfoMap = {}
+    self.m_isShowing = false
+    GameInstance.player.guide.isLimitedGuideShowing = false
+    self:_RefreshMainVisibleState()
 end
 
 

@@ -52,16 +52,18 @@ BlackBoxTargetAndRewardCtrl._Refresh = HL.Method(HL.Table) << function(self, arg
     local mainGoalCount = mainTask ~= nil and mainTask.objectives.Length or 0
     self.view.mainGoalRoot.gameObject:SetActive(mainGoalCount > 0)
     self.m_mainGoalCellCache = self.m_mainGoalCellCache or UIUtils.genCellCache(self.view.mainGoalCell)
+    
     self.m_mainGoalCellCache:Refresh(mainGoalCount, function(cell, index)
-        cell:InitBlackBoxTaskCell(index, CS.Beyond.Gameplay.LevelScriptTaskType.Main)
+        cell:InitBlackBoxTaskCell(mainTask.taskKey, index, CS.Beyond.Gameplay.LevelScriptTaskType.Main)
     end)
 
     local extraTask = trackingMgr.extraTask
     local extraGoalCount = extraTask ~= nil and extraTask.objectives.Length or 0
     self.view.extraGoalRoot.gameObject:SetActive(extraGoalCount > 0)
     self.m_extraGoalCellCache = self.m_extraGoalCellCache or UIUtils.genCellCache(self.view.extraGoalCell)
+    
     self.m_extraGoalCellCache:Refresh(extraGoalCount, function(cell, index)
-        cell:InitBlackBoxTaskCell(index, CS.Beyond.Gameplay.LevelScriptTaskType.Extra)
+        cell:InitBlackBoxTaskCell(extraTask.taskKey, index, CS.Beyond.Gameplay.LevelScriptTaskType.Extra)
     end)
 
     local mainGoalFinish = GameInstance.dungeonManager:IsDungeonFirstPassRewardGained(dungeonId)

@@ -11,7 +11,7 @@ end
 WeaponCompatibleNode.InitWeaponCompatibleNode = HL.Method(HL.Number) << function(self, gemInstId)
     self:_FirstTimeInit()
 
-    local isPerfectMatch, matchList = UIUtils.getGemWishListPerfectMatch(gemInstId)
+    local isPerfectMatch, matchList, foresightMatchList = UIUtils.getGemWishListPerfectMatch(gemInstId)
     self.view.gameObject:SetActive(isPerfectMatch)
     if not isPerfectMatch then
         return
@@ -19,10 +19,18 @@ WeaponCompatibleNode.InitWeaponCompatibleNode = HL.Method(HL.Number) << function
 
     self.m_cellCache:Refresh(#matchList, function(cell, index)
         local weaponTemplateId = matchList[index]
-        local _, itemCfg = Tables.itemTable:TryGetValue(weaponTemplateId)
-        if itemCfg then
-            cell.contentNode.iconImg:LoadSprite(UIConst.UI_SPRITE_ITEM, itemCfg.iconId)
-            cell.contentNode.nameTxt.text = itemCfg.name
+        if lume.find(foresightMatchList, weaponTemplateId) then
+            local _, foresightCfg = Tables.foresightWeaponGemwishlistTable:TryGetValue(weaponTemplateId)
+            if foresightCfg then
+                cell.contentNode.iconImg:LoadSprite(UIConst.UI_SPRITE_ITEM, foresightCfg.iconId)
+                cell.contentNode.nameTxt.text = foresightCfg.name
+            end
+        else
+            local _, itemCfg = Tables.itemTable:TryGetValue(weaponTemplateId)
+            if itemCfg then
+                cell.contentNode.iconImg:LoadSprite(UIConst.UI_SPRITE_ITEM, itemCfg.iconId)
+                cell.contentNode.nameTxt.text = itemCfg.name
+            end
         end
     end)
 end

@@ -3,6 +3,7 @@ local LuaSystemBase = require_ex('LuaSystem/LuaSystemBase')
 
 local PowerPoleFastTravelAllowedRequestTypes = {
     TrackStartCountdown = true,
+    TrackCountdown = true,
     TrackEndToast = true,
     DungeonSettlement = true,
 }
@@ -76,6 +77,12 @@ CommonTaskTrackSystem._InitConfigs = HL.Method() << function(self)
         },
 
         
+        TrackCountdown = {
+            needWait = false,
+            order = 4,
+        },
+
+        
         TrackStartCountdown = {
             needWait = false,
             order = 5,
@@ -146,6 +153,12 @@ CommonTaskTrackSystem._InitConfigs = HL.Method() << function(self)
 
         
         DungeonSettlement = {
+            needWait = false,
+            order = 20,
+        },
+
+        
+        TyphoeaArcherySettlementPopup = {
             needWait = false,
             order = 20,
         },
@@ -303,7 +316,7 @@ CommonTaskTrackSystem._ForceClearRequest = HL.Method() << function(self)
     self.m_isShowing = false
 
     if self.m_tryStartPanelTimerId > 0 then
-        self:_ClearTimer(self.m_tryStartPanelTimerId)
+        self.m_tryStartPanelTimerId = self:_ClearTimer(self.m_tryStartPanelTimerId)
     end
 end
 
@@ -329,12 +342,12 @@ CommonTaskTrackSystem.OnOneCommonTaskPanelFinish = HL.Method(HL.String) << funct
 end
 
 CommonTaskTrackSystem.Interrupt = HL.Method() << function(self)
-    self.m_tryStartPanelTimerId = self:_ClearTimer(self.m_tryStartPanelTimerId)
     if not self.m_isShowing then
         return
     end
     logger.info("CommonTaskTrackSystem.Interrupt")
     self.m_isShowing = false
+    self.m_tryStartPanelTimerId = self:_ClearTimer(self.m_tryStartPanelTimerId)
 
     local request = self.m_pendingRequests[1]
     if request.interruptAction then
@@ -370,6 +383,53 @@ CommonTaskTrackSystem.HasRequestType = HL.Method(HL.String).Return(HL.Boolean) <
     end
     return false
 end
+
+
+
+CommonTaskTrackSystem.GetDebugInfos = HL.Method(HL.Opt(HL.Boolean)).Return(HL.String) << function(self, shouldPrint)
+    local infos = {"<mark>--------------- CommonTaskTrackSystem DebugInfos ---------------\n"}
+    table.insert(infos, string.format("--------------- 当前Time.unscaledTime：%s ---------------\n", Time.unscaledTime))
+
+    
+    table.insert(infos, "isShowing=")
+    table.insert(infos, tostring(self.m_isShowing))
+    table.insert(infos, string.format("\tm_tryStartPanelTimerId=%d", self.m_tryStartPanelTimerId))
+
+    
+    table.insert(infos, "\n--------------- 当前队列 m_pendingRequests ---------------\n")
+    table.insert(infos, "序号\t类型\t\tID\t优先级\n")
+    for k, v in ipairs(self.m_pendingRequests) do
+        table.insert(infos, string.format("%d\t%s\t\t%d\t%s\n", k, v.type, v.id, tostring(v.order)))
+    end
+
+    
+    table.insert(infos, "\n--------------- configs (needWait=true) ---------------\n")
+    for name, cfg in pairs(self.configs) do
+        if cfg.needWait then
+            table.insert(infos, string.format("%s (order=%s)\n", name, tostring(cfg.order)))
+        end
+    end
+
+    
+    table.insert(infos, "\n--------------- 其他相关信息 ---------------\n")
+    table.insert(infos, string.format("PhaseLevel isOpen=%s, topPhaseId=%s\n",
+            tostring(PhaseManager:IsOpen(PhaseId.Level)),
+            tostring(PhaseManager:GetTopPhaseId())
+    ))
+    table.insert(infos, string.format("mainHudActionQueue.m_isShowing=%s\n",
+            tostring(LuaSystemManager.mainHudActionQueue.m_isShowing)
+    ))
+
+    table.insert(infos, "</mark>")
+
+    local rst = table.concat(infos)
+    if shouldPrint then
+        logger.info(rst)
+    end
+    return rst
+end
+
+
 
 HL.Commit(CommonTaskTrackSystem)
 return CommonTaskTrackSystem

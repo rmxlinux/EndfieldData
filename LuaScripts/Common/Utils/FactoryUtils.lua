@@ -764,7 +764,21 @@ function FactoryUtils.getItemAsInputRecipeIds(itemId, ignoreUnlock)
         end
     end
 
-    return recipeIds, canCraft
+    
+    local tempTL = {}
+    local temp = {}
+    for _, info in ipairs(recipeIds) do
+        if info.craftId and FactoryUtils.isTimeLimitedFormula(info.craftId) then
+            table.insert(tempTL, info)
+        else
+            table.insert(temp, info)
+        end
+    end
+    for _, info in ipairs(temp) do
+        table.insert(tempTL, info)
+    end
+
+    return tempTL, canCraft
 end
 
 
@@ -1794,7 +1808,7 @@ function FactoryUtils.clampTopViewCamTargetPosition(worldPos, curWorldPos)
         rect = level.customFacTopViewRangeInWorld
     else
         rect = level.mainRegionLocalRectWithMovePadding
-        if rect and (rect.width == 0 or rect.width == 0) then
+        if rect and (rect.width == 0 or rect.height == 0) then
             logger.critical("FactoryUtils.clampTopViewCamTargetPosition rect IS ZERO", GameWorld.worldInfo.curMapIdStr, GameWorld.worldInfo.curLevelId)
             local _, panelIndex = Utils.isInFacMainRegionAndGetIndex()
             level:_UpdateCurMainRegionInfo(panelIndex)
@@ -1853,7 +1867,7 @@ function FactoryUtils.clampTopViewCamTargetPosition(worldPos, curWorldPos)
         if regionTransform then
             return regionTransform:TransformPoint(localPos), true
         else
-            return localPos, false
+            return localPos, true
         end
     end
 end
@@ -3118,6 +3132,35 @@ function FactoryUtils.setTimeLimitedItemTagColor(image, itemId)
 end
 
 
+
+function FactoryUtils.isBlueprintHasExpiredTimeLimited(csBP)
+    if csBP == nil then
+        return false
+    end
+    if csBP.timeLimitedFormulas and csBP.timeLimitedFormulas.Count > 0 then
+        for _, formulaIdInt in pairs(csBP.timeLimitedFormulas) do
+            if FactoryUtils.isExpiredTimeLimitedFormula(CS.Beyond.Cfg.Tables.formulaIdToStr:GetValue(formulaIdInt)) then
+                return true
+            end
+        end
+    end
+    if csBP.activityItemIds and csBP.activityItemIds.Count > 0 then
+        for _, itemIdInt in pairs(csBP.activityItemIds) do
+            local itemId = CS.Beyond.Cfg.Tables.itemIdToStr:GetValue(itemIdInt)
+            local hasCraft, craftIds = Tables.factoryItemAsMachineCrafterOutcomeTable:TryGetValue(itemId)
+            if hasCraft then
+                for _, craftId in pairs(craftIds.list) do
+                    if FactoryUtils.isExpiredTimeLimitedFormula(craftId) then
+                        return true
+                    end
+                end
+            end
+        end
+    end
+    return false
+end
+
+
 function FactoryUtils.getActivityIdByBluePrintId(blueprintId)
     local blueprintSystem = GameInstance.player.remoteFactory.blueprint
     local blueprintInst = blueprintSystem:GetMyBlueprint(blueprintId);
@@ -3126,16 +3169,26 @@ function FactoryUtils.getActivityIdByBluePrintId(blueprintId)
     end
 
     local blueprint = blueprintInst.info.bp;
-    if blueprint == nil or blueprint.timeLimitedFormulas == nil or blueprint.timeLimitedFormulas.Count == 0 then
+    if blueprint == nil then
         return ""
     end
 
     
-    local formulaId = blueprint.timeLimitedFormulas[0]
-    local formulaIdStr = CS.Beyond.Cfg.Tables.formulaIdToStr:GetValue(formulaId)
-    if Tables.limitedFormulaCraftIdReverseTable:ContainsKey(formulaIdStr) then
-        local activityId = Tables.limitedFormulaCraftIdReverseTable:GetValue(formulaIdStr)
-        return activityId
+    if blueprint.timeLimitedFormulas and blueprint.timeLimitedFormulas.Count > 0 then
+        local formulaId = blueprint.timeLimitedFormulas[0]
+		local formulaIdStr = CS.Beyond.Cfg.Tables.formulaIdToStr:GetValue(formulaId)
+        if Tables.limitedFormulaCraftIdReverseTable:ContainsKey(formulaIdStr) then
+            return Tables.limitedFormulaCraftIdReverseTable:GetValue(formulaIdStr)
+        end
+    end
+
+    
+    if blueprint.activityItemIds and blueprint.activityItemIds.Count > 0 then
+        local itemIdInt = blueprint.activityItemIds[0]
+        local itemId = CS.Beyond.Cfg.Tables.itemIdToStr:GetValue(itemIdInt)
+        if Tables.limitedFormulaItemIdReverseTable:ContainsKey(itemId) then
+            return Tables.limitedFormulaItemIdReverseTable:GetValue(itemId)
+        end
     end
 
     return ""
@@ -3472,16 +3525,22 @@ function FactoryUtils.isDecoBuildingVisible(itemId)
         return true
     end
 
+    local checkConditionAnd = decoBuildingInfo.conditionsCombineType
+
     for _, conditionId in pairs(decoBuildingInfo.visibleConditions) do
         local condition = Tables.DecoBuildingObtainConditionTable[conditionId]
         local success, value = LuaGameConditionUtils.getConditionValueByParameters(
             condition.conditionType,
             condition.parameters)
-        if not success or value < condition.progressToCompare then
+        local notMatchCondition = not success or value < condition.progressToCompare
+        if checkConditionAnd and notMatchCondition then
             return false
         end
+        if not checkConditionAnd and not notMatchCondition then
+            return true
+        end
     end
-    return true
+    return checkConditionAnd
 end
 
 function FactoryUtils.playAudioWhenFillingItem(fillingItemId, targetItemId, targetItemCount)

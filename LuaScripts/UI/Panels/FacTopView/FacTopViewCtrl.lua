@@ -99,7 +99,7 @@ FacTopViewCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end, self.view.main.groupId)
     if DeviceInfo.usingKeyboard then
         self:BindInputPlayerAction("fac_open_devices_list", function()
-            Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, {showLastType = true})
+            Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { onlyCraftNode = false, showLastType = true })
         end, self.view.main.groupId)
         self:BindInputPlayerAction("fac_open_blueprint", function()
             PhaseManager:OpenPhase(PhaseId.FacBlueprint)
@@ -221,6 +221,7 @@ FacTopViewCtrl.OnClose = HL.Override() << function(self)
     if LuaSystemManager.factory.inTopView then
         LuaSystemManager.factory:ToggleTopView(false, true)
     end
+    self:_RecoverScreen()
     self.m_clearScreenKeyForControllerExpandBuildNode = UIManager:RecoverScreen(self.m_clearScreenKeyForControllerExpandBuildNode)
 end
 
@@ -966,24 +967,24 @@ FacTopViewCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << function(self, 
     elseif hasCraft then
         if DeviceInfo.usingController then
             InputManagerInst:CreateBindingByActionId("fac_quick_bar_controller_craft", function()
-                Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { selectedId = itemId })
+                Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { onlyCraftNode = false, selectedId = itemId })
             end, cell.button.hoverBindingGroupId)
         else
             cell.button.onDoubleClick:AddListener(function()
                 if Utils.getItemCount(itemId) == 0 then
-                    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { selectedId = itemId })
+                    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { onlyCraftNode = false, selectedId = itemId })
                 end
             end)
         end
     elseif FactoryUtils.isDecoBuildingItem(itemId) then
         InputManagerInst:CreateBindingByActionId("fac_quick_bar_controller_craft", function()
             if Utils.getItemCount(itemId) == 0 then
-                Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { selectedId = itemId })
+                Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { onlyCraftNode = false, selectedId = itemId })
             end
         end, cell.button.hoverBindingGroupId)
         cell.button.onDoubleClick:AddListener(function()
             if Utils.getItemCount(itemId) == 0 then
-                Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { selectedId = itemId })
+                Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { onlyCraftNode = false, selectedId = itemId })
             end
         end)
     end
@@ -1365,7 +1366,7 @@ local ControllerMouseHints = {
     
     newBuilding = { "fac_build_confirm_in_top_view", "fac_build_continuous_confirm", "fac_rotate_device", "fac_build_cancel", },
     newBuildingCantRotate = { "fac_build_confirm_in_top_view", "fac_build_continuous_confirm", "fac_build_cancel", },
-    oldBuilding = { "fac_build_confirm_in_top_view", "fac_rotate_device", "fac_build_mode_delete", "fac_build_cancel", },
+    oldBuilding = { "fac_build_confirm_in_top_view", "fac_rotate_device", "fac_build_mode_delete_in_top_view", "fac_build_cancel", },
     oldBuildingCantDes = { "fac_build_confirm_in_top_view", "fac_rotate_device", "fac_build_cancel", },
     beltStart = { "fac_build_confirm_belt_start_in_top_view", "fac_build_rotate_belt", "fac_build_cancel", },
     beltEnd = { "fac_build_confirm_belt_end_in_top_view", "fac_build_rotate_belt", "fac_build_cancel", },

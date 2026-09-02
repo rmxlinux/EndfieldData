@@ -21,17 +21,27 @@ end
 
 
 EnvironmentalPromptCtrl.ShowMiasmaIndicator = HL.StaticMethod() << function()
-    UIManager:AutoOpen(PANEL_ID)
+    EnvironmentalPromptCtrl.TryShowEnvironmentalPrompt()
 end
 
 EnvironmentalPromptCtrl.ShowFacEnvironmental = HL.StaticMethod(HL.Table) << function(args)
     local env = unpack(args)
     if env ~= GEnums.FacEnvGenEnvType.None:GetHashCode() then
-        UIManager:AutoOpen(PANEL_ID)
+        EnvironmentalPromptCtrl.TryShowEnvironmentalPrompt()
     end
 end
 
+EnvironmentalPromptCtrl.HideEnvironmentalPrompt = HL.StaticMethod() << function()
+    if UIManager:IsOpen(PANEL_ID) then
+        UIManager:Hide(PANEL_ID)
+    end
+end
+
+
 EnvironmentalPromptCtrl.TryShowEnvironmentalPrompt = HL.StaticMethod() << function()
+    if not UIUtils.IsPhaseLevelOnTop() then
+        return
+    end
     if GameWorld.gameMechManager == nil then
         return
     end

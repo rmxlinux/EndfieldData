@@ -30,12 +30,13 @@ end
 
 CharFormationHeadCell.InitCharFormationHeadCell = HL.Method(HL.Table, HL.Opt(HL.Function, HL.Boolean, HL.Boolean)) << function(self, info, onClick, ignoreDead, needHover)
     self:_FirstTimeInit()
+    self:_HideForesightGrowthExtraNodes()
 
     self:_InitData(info)
     self:_InitCharBaseInfo()
     self:RefreshCharInfo()
     if self.charInfo and not ignoreDead then
-        self:SetDead(self.charInfo.isDead)
+        self:SetDead(self.isDead)
     else
         self:SetDead(false)
     end
@@ -67,7 +68,7 @@ CharFormationHeadCell.InitCharFormationHeadCell = HL.Method(HL.Table, HL.Opt(HL.
                     subText = Tables.charProfessionTable[self.characterData.profession].name,
                     delay = self.view.config.HOVER_DELAY,
                     targetRect = self.view.transform,
-                    rarity = self.characterData.rarity,
+                    rarity = self.info.isForesight and (self.info.rarity or 6) or self.characterData.rarity,
                 })
             else
                 
@@ -105,17 +106,65 @@ CharFormationHeadCell.RefreshExInfo = HL.Method(HL.Table) << function(self, exIn
     self.exInfo = exInfo
 end
 
+CharFormationHeadCell._HideForesightGrowthExtraNodes = HL.Method() << function(self)
+    local view = self.view
+    if view.growthLabelNode and view.growthLabelNode.gameObject then
+        view.growthLabelNode.gameObject:SetActive(false)
+    end
+    if view.pinnedNode and view.pinnedNode.gameObject then
+        view.pinnedNode.gameObject:SetActive(false)
+    end
+    if view.charInfoNode and view.charInfoNode.SetState then
+        view.charInfoNode:SetState("Level")
+    end
+end
+
+
+CharFormationHeadCell.RefreshForesightCharGrowthMainExtra = HL.Method(HL.Opt(HL.Table)) << function(self, params)
+    if not params or params.source ~= "ForesightCharGrowthMain" then
+        return
+    end
+
+    local view = self.view
+    local growthLabelNode = view.growthLabelNode
+    local growthLabelState = params.growthLabelState
+    if growthLabelNode and growthLabelNode.gameObject then
+        if growthLabelState then
+            growthLabelNode.gameObject:SetActive(true)
+            if growthLabelNode.SetState then
+                growthLabelNode:SetState(growthLabelState)
+            end
+        else
+            growthLabelNode.gameObject:SetActive(false)
+        end
+    end
+
+    if view.pinnedNode and view.pinnedNode.gameObject then
+        view.pinnedNode.gameObject:SetActive(params.showPinned == true)
+    end
+    if view.charInfoNode and view.charInfoNode.SetState then
+        view.charInfoNode:SetState(params.showNotOwn == true and "NotOwn" or "Level")
+    end
+end
+
 CharFormationHeadCell._InitData = HL.Method(HL.Table) << function(self, info)
     self.info = info
     if not string.isEmpty(info.charPresetId) then
         self.m_charPresetData = Tables.charPresetTable:GetValue(info.charPresetId)
         self.info.templateId = CS.Beyond.Gameplay.CharUtils.GetCharTemplateId(self.m_charPresetData.charId)
     end
-    self.characterData = Tables.characterTable:GetValue(self.info.templateId)
+    if info.isForesight then
+        local ok, foresightCfg = Tables.foresightCharGrowthTable:TryGetValue(self.info.templateId)
+        if ok then
+            self.characterData = foresightCfg
+        end
+    else
+        self.characterData = Tables.characterTable:GetValue(self.info.templateId)
+    end
     local instId = info.instId
-    if instId and instId > 0 then
+    if instId and instId > 0 and not info.isForesight then
         self.charInfo = CharInfoUtils.getPlayerCharInfoByInstId(instId)
-        self.isDead = self.charInfo.isDead
+        self.isDead = CharInfoUtils.isCharDead(instId)
     end
 
 end
@@ -129,7 +178,8 @@ CharFormationHeadCell._InitCharBaseInfo = HL.Method() << function(self)
     local proSpriteName = CharInfoUtils.getCharProfessionIconName(self.characterData.profession, true)
     self.view.imagePro:LoadSprite(UIConst.UI_SPRITE_CHAR_PROFESSION, proSpriteName)
     
-    local rarityColor = UIUtils.getCharRarityColor(self.characterData.rarity)
+    local rarity = self.info.isForesight and (self.info.rarity or 6) or self.characterData.rarity
+    local rarityColor = UIUtils.getCharRarityColor(rarity)
     if rarityColor then
         self.view.rarityColor.color = rarityColor
     end
@@ -198,7 +248,7 @@ CharFormationHeadCell.SetUnavailable = HL.Method(HL.Boolean) << function(self, u
     self.isUnavailable = unavailable
     self.view.unavailableMask.gameObject:SetActive(unavailable)
     
-    if unavailable and self.charInfo.isDead then
+    if unavailable and self.isDead then
         self:SetDead(false)
     end
 end

@@ -104,11 +104,11 @@ CharInfoPhotoCtrl.OnShow = HL.Override() << function(self)
 end
 
 CharInfoPhotoCtrl.OnHide = HL.Override() << function (self)
-    UIManager:Show(PanelId.UIDPanel)
+    UIManager:AutoOpen(PanelId.UIDPanel)
 end
 
 CharInfoPhotoCtrl.OnClose = HL.Override() << function (self)
-    UIManager:Show(PanelId.UIDPanel)
+    UIManager:AutoOpen(PanelId.UIDPanel)
 end
 
 CharInfoPhotoCtrl._InitAction = HL.Method() << function(self)

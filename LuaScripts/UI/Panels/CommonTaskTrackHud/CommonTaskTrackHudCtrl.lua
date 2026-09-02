@@ -570,7 +570,6 @@ CommonTaskTrackHudCtrl._RefreshBtnState = HL.Method() << function(self)
         self:_OnBtnStopClick()
     end)
 
-
     local success, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.m_subGameId)
     self.m_quitBtnVisible = success and subGameData.canQuit
     self.view.btnStop.gameObject:SetActiveIfNecessary(success and subGameData.canQuit)
@@ -597,8 +596,14 @@ CommonTaskTrackHudCtrl._RefreshSubGameTrack = HL.Method() << function(self)
     self.view.goalRoot.gameObject:SetActive(hasGoal)
     self.view.failReasonRoot.gameObject:SetActive(not hasGoal)
 
-    self:_RefreshMainTask()
-    self:_RefreshExtraTask()
+    
+    local success, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.m_subGameId)
+    if success and subGameData.extraTasks.Count > 1 then
+        self:_RefreshMultiExtraTasks()
+    else
+        self:_RefreshMainTask()
+        self:_RefreshExtraTask()
+    end
 
     self:_RefreshBtnState()
 
@@ -621,13 +626,14 @@ CommonTaskTrackHudCtrl._RefreshCustomTaskTrack = HL.Method() << function(self)
     local trackingMgr = GameWorld.levelScriptTaskTrackingManager
     local customTask = trackingMgr.customTask
     local goalCount = customTask ~= nil and customTask.objectives.Length or 0
+    local taskKey = customTask ~= nil and customTask.taskKey or ""
 
     self.view.goalRoot.gameObject:SetActive(goalCount > 0)
     self.view.failReasonRoot.gameObject:SetActive(false)
 
     self.view.mainGoalRoot.gameObject:SetActive(goalCount > 0)
     self.m_mainGoalCellCache:Refresh(goalCount, function(cell, index)
-        cell:InitCommonTaskGoalCell(index, CS.Beyond.Gameplay.LevelScriptTaskType.Custom)
+        cell:InitCommonTaskGoalCell(taskKey, index, CS.Beyond.Gameplay.LevelScriptTaskType.Custom)
     end)
 
     self.view.extraGoalRoot.gameObject:SetActive(false)
@@ -650,9 +656,10 @@ CommonTaskTrackHudCtrl._RefreshMainTask = HL.Method() << function(self)
     local mainTask = trackingMgr.mainTask
     local goalCount = mainTask ~= nil and mainTask.objectives.Length or 0
     self.view.mainGoalRoot.gameObject:SetActive(goalCount > 0)
+    local taskKey = mainTask ~= nil and mainTask.taskKey or ""
     
     self.m_mainGoalCellCache:Refresh(goalCount, function(cell, index)
-        cell:InitCommonTaskGoalCell(index, CS.Beyond.Gameplay.LevelScriptTaskType.Main)
+        cell:InitCommonTaskGoalCell(taskKey, index, CS.Beyond.Gameplay.LevelScriptTaskType.Main)
     end)
 end
 
@@ -661,9 +668,10 @@ CommonTaskTrackHudCtrl._RefreshExtraTask = HL.Method() << function(self)
     local extraTask = trackingMgr.extraTask
     local extraGoalCount = extraTask ~= nil and extraTask.objectives.Length or 0
     self.view.extraGoalRoot.gameObject:SetActive(extraGoalCount > 0)
+    local taskKey = extraTask ~= nil and extraTask.taskKey or ""
     
     self.m_extraGoalCellCache:Refresh(extraGoalCount, function(cell, index)
-        cell:InitCommonTaskGoalCell(index, CS.Beyond.Gameplay.LevelScriptTaskType.Extra)
+        cell:InitCommonTaskGoalCell(taskKey, index, CS.Beyond.Gameplay.LevelScriptTaskType.Extra)
     end)
 end
 
@@ -675,9 +683,25 @@ CommonTaskTrackHudCtrl._RefreshCustomTask = HL.Method() << function(self)
     self.view.failReasonRoot.gameObject:SetActive(false)
 
     self.view.mainGoalRoot.gameObject:SetActive(goalCount > 0)
+    local taskKey = customTask ~= nil and customTask.taskKey or ""
     self.m_mainGoalCellCache:Refresh(goalCount, function(cell, index)
-        cell:InitCommonTaskGoalCell(index, CS.Beyond.Gameplay.LevelScriptTaskType.Custom)
+        cell:InitCommonTaskGoalCell(taskKey, index, CS.Beyond.Gameplay.LevelScriptTaskType.Custom)
     end)
+end
+
+CommonTaskTrackHudCtrl._RefreshMultiExtraTasks = HL.Method() << function(self)
+    self.view.extraGoalRoot.gameObject:SetActive(false)
+    self.view.mainGoalRoot.gameObject:SetActive(true)
+    local trackingMgr = GameWorld.levelScriptTaskTrackingManager
+    local extraTasks = trackingMgr.extraTasks
+    
+    
+    
+    self.m_mainGoalCellCache:Refresh(extraTasks.Count, function(cell, index)
+        local taskKey = extraTasks[CSIndex(index)].taskKey
+        cell:InitCommonTaskGoalCell(taskKey, 1, CS.Beyond.Gameplay.LevelScriptTaskType.Extra)
+    end)
+    self.view.mainGoalRoot.gameObject:SetActive(extraTasks.Count > 0)
 end
 
 
@@ -698,12 +722,12 @@ CommonTaskTrackHudCtrl.OnSubGameStageFinish = HL.Method() << function(self)
             end
             self:_SafelyPlayAnimAsync(self.animationWrapper, CONTENT_SCROLL_FADE_ANIM)
             self:_SafelyPlayAnimAsync(self.animationWrapper, PANEL_OUT_ANIM)
-            self:_TrackFinish()
+            self:_TrackStageFinish()
             Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "TrackStateFinish")
         end)
     end,
     function()
-        self:_TrackFinish()
+        self:_TrackStageFinish()
     end)
 end
 
@@ -842,9 +866,18 @@ CommonTaskTrackHudCtrl._SafelyPlayAnimAsync = HL.Method(HL.Any, HL.String) << fu
     coroutine.wait(stateTime)
 end
 
+
 CommonTaskTrackHudCtrl._TrackFinish = HL.Method() << function(self)
-    self:Hide()
     CommonTaskTrackHudCtrl.s_trackHudState = TrackingHudState.None
+    self:Close()
+end
+
+
+CommonTaskTrackHudCtrl._TrackStageFinish = HL.Method() << function(self)
+    if self.m_contentShowingCor then
+        self.m_contentShowingCor = self:_ClearCoroutine(self.m_contentShowingCor)
+    end
+    self:Hide()
 end
 
 CommonTaskTrackHudCtrl._ManuSetFailState = HL.Method() << function(self)
@@ -998,6 +1031,11 @@ CommonTaskTrackHudCtrl._ToggleBtnVisible = HL.Method(HL.Boolean) << function(sel
 end
 
 CommonTaskTrackHudCtrl.OnHudBtnVisibleChange = HL.Method(HL.Any) << function(self, arg)
+    
+    if self.m_isClosed then
+        return
+    end
+
     local isOn = unpack(arg)
     self:_ToggleBtnVisible(isOn)
 end
@@ -1063,5 +1101,21 @@ CommonTaskTrackHudCtrl.ToggleResetBtnLoopHint = HL.Method(HL.Boolean) << functio
         self.view.resetBtnLoopHint.gameObject:SetActive(isOn)
     end
 end
+
+
+
+CommonTaskTrackHudCtrl.OnTyphoeaArcheryDailyRefreshPopUp = HL.StaticMethod() << function()
+    Notify(MessageConst.SHOW_POP_UP, {
+        content = Language.LUA_TYPHOEA_ARCHERY_DAILY_RESTART_POP_UP,
+        onConfirm = function()
+            GameInstance.dungeonManager:LeaveDungeon()
+        end,
+        freezeWorld = true,
+        pauseGame = true,
+        interruptMessage = { MessageConst.ON_SUB_GAME_QUIT, MessageConst.SHOW_DEATH_INFO },
+    })
+end
+
+
 
 HL.Commit(CommonTaskTrackHudCtrl)

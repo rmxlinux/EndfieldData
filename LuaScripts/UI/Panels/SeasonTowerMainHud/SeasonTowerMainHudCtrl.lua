@@ -149,6 +149,10 @@ SeasonTowerMainHudCtrl._OnRefreshCell = HL.Method(HL.Any, HL.Int) << function(se
 end
 
 SeasonTowerMainHudCtrl._OnSelectLevel = HL.Method(HL.String) << function(self, gameGroupId)
+    if SeasonTowerUtils.isClosed() then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_SEASON_TOWER_CLOSED_NOTIFY)
+        return
+    end
     PhaseManager:OpenPhase(PhaseId.SeasonTowerDungeonEntry, {levelId = gameGroupId})
 end
 

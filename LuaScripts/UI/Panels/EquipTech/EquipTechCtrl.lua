@@ -94,18 +94,8 @@ EquipTechCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     if arg ~= nil and arg.resumeState then
         self:_ApplyResumeState(arg.resumeState)
         self.m_arg.resumeState = nil
-    elseif arg ~= nil and arg.isEnhance then
-        self.m_jumpEquipId = string.isEmpty(arg.equipId) and "" or arg.equipId
-        self.m_jumpMaterialEquipId = string.isEmpty(arg.materialEquipId) and "" or arg.materialEquipId
-        self.m_jumpEquipInstId = arg.equipInstId or -1
-        self:_EnterEnhanceTarget()
-        self.view.commonBg.tabEnhanceNode.toggle:SetIsOnWithoutNotify(true)
     else
-        self.m_isInitClickProduceEquip = true
-        if arg and not string.isEmpty(arg.formulaId) then
-            self.m_jumpFormulaId = arg.formulaId
-        end
-        self:_EnterProduce()
+        self:_ProcessArg(arg)
     end
 end
 
@@ -119,8 +109,7 @@ EquipTechCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg
     if self.view.stateController.currentStateName == STATE_NAME.ENHANCE_MATERIAL then
         self:_BackToEnhanceTarget()
     end
-    
-    self:_EnterProduce()
+    self:_ProcessArg(arg)
 end
 
 EquipTechCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
@@ -136,6 +125,22 @@ EquipTechCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << func
     arg.isEnhance = self.view.stateController.currentStateName ~= STATE_NAME.PRODUCE
     arg.resumeState = self:_CollectResumeState()
     return arg
+end
+
+EquipTechCtrl._ProcessArg = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
+    if arg ~= nil and arg.isEnhance then
+        self.m_jumpEquipId = string.isEmpty(arg.equipId) and "" or arg.equipId
+        self.m_jumpMaterialEquipId = string.isEmpty(arg.materialEquipId) and "" or arg.materialEquipId
+        self.m_jumpEquipInstId = arg.equipInstId or -1
+        self:_EnterEnhanceTarget()
+        self.view.commonBg.tabEnhanceNode.toggle:SetIsOnWithoutNotify(true)
+    else
+        self.m_isInitClickProduceEquip = true
+        if arg and not string.isEmpty(arg.formulaId) then
+            self.m_jumpFormulaId = arg.formulaId
+        end
+        self:_EnterProduce()
+    end
 end
 
 EquipTechCtrl._CollectResumeState = HL.Method().Return(HL.Table) << function(self)
@@ -2085,7 +2090,7 @@ EquipTechCtrl._UpdateEnhanceMaterialGroupCell = HL.Method(HL.Table, HL.Table, HL
                 self.m_closeEnhanceMaterialItemTipsBindingId = self:BindInputPlayerAction(
                     "common_back", function()
                         self:_CloseEnhanceMaterialItemTips()
-                        InputManagerInst:ToggleGroup(cell.btnSymbol.groupId, true)
+                        cell.btnSymbolInputGroup.enabled = true
                     end, self.view.selectMaterials.itemListInputGroup.groupId)
                 Notify(MessageConst.SHOW_AS_CONTROLLER_SMALL_MENU, {
                     panelId = PANEL_ID,
@@ -2095,14 +2100,14 @@ EquipTechCtrl._UpdateEnhanceMaterialGroupCell = HL.Method(HL.Table, HL.Table, HL
                     rectTransform = self.view.selectMaterials.itemListRectTransform,
                     noHighlight = true,
                 })
-                InputManagerInst:ToggleGroup(cell.btnSymbol.groupId, false)
+                cell.btnSymbolInputGroup.enabled = false
             end
             self:_ShowEnhanceMaterialItemTips(itemInfo)
         end)
         cell.txtNormal.gameObject:SetActive(itemInfo.equipEnhanceSuccessProb == EquipTechConst.EEquipEnhanceSuccessProb.Normal)
         cell.txtHigh.gameObject:SetActive(itemInfo.equipEnhanceSuccessProb == EquipTechConst.EEquipEnhanceSuccessProb.High)
         cell.btn.onIsNaviTargetChanged = function(isTarget)
-            InputManagerInst:ToggleGroup(cell.btnSymbol.groupId, isTarget and not self.m_isEnhanceMaterialItemTipsMode)
+            cell.btnSymbolInputGroup.enabled = isTarget and not self.m_isEnhanceMaterialItemTipsMode
             if isTarget and self.m_isEnhanceMaterialItemTipsMode then
                 self:_ShowEnhanceMaterialItemTips(itemInfo)
             end
@@ -2137,7 +2142,7 @@ EquipTechCtrl._UpdateEnhanceMaterialGroupCell = HL.Method(HL.Table, HL.Table, HL
             self:_RefreshEnhanceInfo()
         end)
         if DeviceInfo.usingController then
-            InputManagerInst:ToggleGroup(cell.btnSymbol.groupId, false)
+            cell.btnSymbolInputGroup.enabled = false
         end
         self:_UpdateMaterialCellSelection(cell)
     end)

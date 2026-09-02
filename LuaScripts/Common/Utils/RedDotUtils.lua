@@ -574,5 +574,70 @@ end
 
 
 
+local foresightCharGrowthEntryReadKey = "foresight_char_growth_entry_read"
+function RedDotUtils.isForesightCharGrowthEntryUnread()
+    if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.ForesightCharGrowth) then
+        return false
+    end
+    return not ClientDataManagerInst:GetBool(foresightCharGrowthEntryReadKey, false)
+end
+
+function RedDotUtils.setForesightCharGrowthEntryRead()
+    if not RedDotUtils.isForesightCharGrowthEntryUnread() then
+        return
+    end
+    ClientDataManagerInst:SetBool(foresightCharGrowthEntryReadKey, true, false, EClientDataTimeValidType.Permanent)
+end
+
+
+
+
+
+
+local surveyRedDotCache = false
+local surveyRedDotTimerId = -1
+
+local function updateSurveyRedDot()
+    surveyRedDotCache = CS.Beyond.SDK.SDKAccountUtils.surveyRedDot
+    surveyRedDotTimerId = -1
+    RedDotManager:TriggerUpdate("Questionnaire")
+end
+
+function RedDotUtils.hasSurveyRedDot()
+    if surveyRedDotCache ~= CS.Beyond.SDK.SDKAccountUtils.surveyRedDot and surveyRedDotTimerId == -1 then
+        surveyRedDotTimerId = TimerManager:StartFrameTimer(0, updateSurveyRedDot)
+    end
+    return surveyRedDotCache
+end
+
+
+
+
+
+
+
+local activityWebPortalRedDotCache = {}
+local activityWebPortalRedDotTimerId = -1
+
+local function updateActivityWebPortalRedDot()
+    for target, _ in pairs(activityWebPortalRedDotCache) do
+        activityWebPortalRedDotCache[target] = CS.Beyond.SDK.SDKAccountUtils.GetActivityWebPortalRedDot(target)
+    end
+    activityWebPortalRedDotTimerId = -1
+    RedDotManager:TriggerUpdate("ActivityWEB")
+end
+
+function RedDotUtils.hasActivityWebPortalRedDot(target)
+    local cachedRedDot = activityWebPortalRedDotCache[target] or false
+    activityWebPortalRedDotCache[target] = cachedRedDot
+    local currentRedDot = CS.Beyond.SDK.SDKAccountUtils.GetActivityWebPortalRedDot(target)
+    if cachedRedDot ~= currentRedDot and activityWebPortalRedDotTimerId == -1 then
+        activityWebPortalRedDotTimerId = TimerManager:StartFrameTimer(0, updateActivityWebPortalRedDot)
+    end
+    return cachedRedDot
+end
+
+
+
 _G.RedDotUtils = RedDotUtils
 return RedDotUtils

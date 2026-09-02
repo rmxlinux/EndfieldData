@@ -73,7 +73,18 @@ FriendRoleDisplayCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             table.insert(self.m_selectCharInsIdList, { instId = charInfo.instId })
         end
     end
-    self.view.charList:UpdateCharItems(CharInfoUtils.getAllCharInfoList())
+    local charItems = CharInfoUtils.getAllCharInfoList()
+    
+    for selectIndex, selectInfo in ipairs(self.m_selectCharInsIdList) do
+        for _, charItem in ipairs(charItems) do
+            if charItem.instId == selectInfo.instId then
+                charItem.slotIndex = selectIndex
+                charItem.slotReverseIndex = Const.BATTLE_SQUAD_MAX_CHAR_NUM - selectIndex
+                break
+            end
+        end
+    end
+    self.view.charList:UpdateCharItems(charItems)
     self:_ApplyRoleDisplaySortFilterState(recoverArg)
     self.view.charList:ShowSelectChars(self.m_selectCharInsIdList)
 

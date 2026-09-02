@@ -119,6 +119,22 @@ FriendListCell._OnFirstTimeInit = HL.Override() << function(self)
         end
     end)
     self:RegisterMessage(MessageConst.ON_SPACESHIP_CLUE_INFO_CHANGE, function()
+        if self.arg and self.arg.stateName == "SpaceshipClueGift" then
+            return
+        end
+        self:_RefreshFriendCellInfo()
+    end)
+    self:RegisterMessage(MessageConst.ON_FRIEND_INFO_SYNC, function()
+        if not self.arg or self.arg.stateName ~= "SpaceshipClueGift" or self.id == 0 then
+            return
+        end
+
+        local success, info = GameInstance.player.friendSystem:TryGetFriendInfo(self.id)
+        if not success then
+            return
+        end
+
+        self.info = info
         self:_RefreshFriendCellInfo()
     end)
 end

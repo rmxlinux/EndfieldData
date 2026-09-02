@@ -98,6 +98,11 @@ end
 
 SNSBarkerCtrl.OnClickDialogCell = HL.Method(HL.String, HL.String, HL.Forward("SNSSubDialogCell"))
         << function(self, chatId, dialogId, subDialogCell)
+    if #self.m_chatVOs == 0 then
+        
+        return
+    end
+
     if self.m_curSelectedSubDialogId == dialogId then
         return
     end
@@ -487,6 +492,38 @@ SNSBarkerCtrl.GetPanelType = HL.Method().Return(HL.Number) << function(self)
     return SNSUtils.PanelType.FullScreenPanel
 end
 
+SNSBarkerCtrl._IsDialogInCurrentList = HL.Method(HL.String).Return(HL.Boolean) << function(self, dialogId)
+    local dialogCfg = Tables.sNSDialogTable[dialogId]
+    local chatId = dialogCfg.chatId
+    local isTopic = not string.isEmpty(dialogCfg.topicId)
+
+    for _, chatVO in ipairs(self.m_chatVOs) do
+        if chatVO.chatId == chatId then
+            if isTopic then
+                return chatVO.hasTopic
+            end
+            for _, id in ipairs(chatVO.dialogIds) do
+                if id == dialogId then
+                    return true
+                end
+            end
+            return false
+        end
+    end
+    return false
+end
+
+SNSBarkerCtrl.OnRefresh = HL.Method(HL.String) << function(self, dialogId)
+    local selectedTags = self:_IsDialogInCurrentList(dialogId) and self.m_cachedSelectedTags or {}
+    self:_InitData({ dialogId = dialogId, selectedTags = selectedTags })
+    self:_InitFilterArgs()
+
+    self:_RefreshFilterBtnState()
+    self:_GenContactNpcVOs(self.m_cachedSelectedTags)
+    self:_RefreshContactNpcList()
+    self:_RefreshContent()
+end
+
 
 
 SNSBarkerCtrl.m_curFocusNpcCellCSIndex = HL.Field(HL.Number) << -1
@@ -684,14 +721,16 @@ SNSBarkerCtrl._OnIsNaviTargetChangedNpcCell = HL.Method(HL.Number, HL.Boolean, H
         self.view.contactNpcScrollList:Toggle(csIndex, true)
         
         local preCell = self.m_getContactNpcCellFunc(LuaIndex(preFocusNpcCellCSIndex))
-        preCell:ToggleFoldOut()
-
         
         local npcCell = self.m_getContactNpcCellFunc(LuaIndex(csIndex))
-        npcCell:ToggleFoldOut()
         
-        local subCell = npcCell.m_subDialogCellCache:Get(1)
-        self:SetNaviTarget(subCell.view.button)
+        if preCell and npcCell then
+            preCell:ToggleFoldOut()
+            npcCell:ToggleFoldOut()
+            
+            local subCell = npcCell.m_subDialogCellCache:Get(1)
+            self:SetNaviTarget(subCell.view.button)
+        end
     else
         
         if self.m_returnToNpcCellBindActionFlag then
@@ -699,7 +738,9 @@ SNSBarkerCtrl._OnIsNaviTargetChangedNpcCell = HL.Method(HL.Number, HL.Boolean, H
             self.view.contactNpcScrollList:Toggle(preFocusNpcCellCSIndex, true)
             
             local preCell = self.m_getContactNpcCellFunc(LuaIndex(preFocusNpcCellCSIndex))
-            preCell:ToggleFoldOut()
+            if preCell then
+                preCell:ToggleFoldOut()
+            end
             self.m_returnToNpcCellBindActionFlag = false
         else
             
@@ -709,26 +750,30 @@ SNSBarkerCtrl._OnIsNaviTargetChangedNpcCell = HL.Method(HL.Number, HL.Boolean, H
                 self.view.contactNpcScrollList:Toggle(nextNpcCellCSIndex, true)
                 
                 local preCell = self.m_getContactNpcCellFunc(LuaIndex(preFocusNpcCellCSIndex))
-                preCell:ToggleFoldOut()
-
                 
                 local npcCell = self.m_getContactNpcCellFunc(LuaIndex(nextNpcCellCSIndex))
-                npcCell:ToggleFoldOut()
                 
-                local subCellCache = npcCell.m_subDialogCellCache
-                
-                local subCell = subCellCache:Get(subCellCache:GetCount())
-                self:SetNaviTarget(subCell.view.button)
+                if preCell and npcCell then
+                    preCell:ToggleFoldOut()
+                    npcCell:ToggleFoldOut()
+                    
+                    local subCellCache = npcCell.m_subDialogCellCache
+                    
+                    local subCell = subCellCache:Get(subCellCache:GetCount())
+                    self:SetNaviTarget(subCell.view.button)
 
-                
-                self.m_curFocusNpcCellCSIndex = nextNpcCellCSIndex
+                    
+                    self.m_curFocusNpcCellCSIndex = nextNpcCellCSIndex
+                end
             else
                 
                 
                 local npcCell = self.m_getContactNpcCellFunc(LuaIndex(preFocusNpcCellCSIndex))
-                
-                local subCell = npcCell.m_subDialogCellCache:Get(1)
-                self:SetNaviTarget(subCell.view.button)
+                if npcCell then
+                    
+                    local subCell = npcCell.m_subDialogCellCache:Get(1)
+                    self:SetNaviTarget(subCell.view.button)
+                end
             end
         end
     end

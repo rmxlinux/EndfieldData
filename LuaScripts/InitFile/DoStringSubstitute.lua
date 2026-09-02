@@ -33,10 +33,12 @@ function _G.__CreateEnumerablePairs()
     end
 end
 
-function _G.___ReleaseDelegateInAnotherStackFrame()
+function _G.___ReleaseDelegateInAnotherStackFrame(asCritical)
+    
+    
     local util = require 'xlua.util'
+    local log = asCritical and logger.critical or logger.warn
     util.print_func_ref_by_csharp(function(info)
-        local errorStr = "Try to dispose a LuaEnv with C# callBack: " .. info
-        logger.critical(errorStr)
+        log("Try to dispose a LuaEnv with C# callBack: " .. info)
     end)
 end

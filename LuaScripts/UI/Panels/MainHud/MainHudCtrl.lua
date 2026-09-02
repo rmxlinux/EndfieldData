@@ -20,6 +20,219 @@ local ControllerDynamicTopBtnBaseOrderWhitRedDot = 1000
 local ControllerDynamicTopBtnBaseOrder = 100000 
 
 
+
+
+local V1D5_SCRIPT_ID = 46300000018
+local V1D5_TIMER_IDS = {
+    'd95a5f16', '59b0fd22', '1f575845', '822281d5', '0078b533', '4949f47e',
+    'c8f2423f', '01bc44a8', 'c0453549', '58b0ec36', '91f3a663',
+}
+local V1D5_STAGE_COUNT = #V1D5_TIMER_IDS
+local V1D5_FILL_EPSILON = 0.0001
+local V1D5_COLOR_NORMAL = '8bfedf' 
+local V1D5_COLOR_LAST = 'fc817f' 
+
+local s_v1d5ScriptPtr = nil
+local s_v1d5LevelId = 0
+
+
+local function _getV1d5LevelId()
+    if s_v1d5LevelId == 0 then
+        s_v1d5ScriptPtr = CS.Beyond.Gameplay.Core.LevelScriptPtr(V1D5_SCRIPT_ID)
+        s_v1d5LevelId = s_v1d5ScriptPtr.levelId
+    end
+    return s_v1d5LevelId
+end
+
+
+
+
+
+
+local function _getV1d5Fraction(timer)
+    local durationMs = timer.durationMs
+    if durationMs <= 0 then
+        return 0
+    end
+    local elapsedMs = timer.clientPassTime * 1000
+    if elapsedMs <= 0 then
+        return 0
+    end
+    if elapsedMs >= durationMs then
+        return 1
+    end
+    return elapsedMs / durationMs
+end
+
+
+local function _wrapV1d5Cell(item)
+    item.img = item.transform:GetComponent(typeof(CS.Beyond.UI.UIImage))
+    return item
+end
+
+
+
+
+local function _v1d5CellFill(cellIndex, stage, fraction)
+    local minute = V1D5_STAGE_COUNT + 1 - cellIndex
+    if minute > stage then
+        return 1
+    end
+    if minute < stage then
+        return 0
+    end
+    return 1 - fraction
+end
+
+
+
+local function _findV1d5RunningStage(timers, cachedStage)
+    if cachedStage > 0 then
+        local hasTimer, timer = timers:TryGetValue(V1D5_TIMER_IDS[cachedStage])
+        if hasTimer and timer.isRunning then
+            return cachedStage, timer
+        end
+        for i = cachedStage + 1, V1D5_STAGE_COUNT do
+            local has, t = timers:TryGetValue(V1D5_TIMER_IDS[i])
+            if has and t.isRunning then
+                return i, t
+            end
+        end
+    end
+    for i = 1, V1D5_STAGE_COUNT do
+        local has, t = timers:TryGetValue(V1D5_TIMER_IDS[i])
+        if has and t.isRunning then
+            return i, t
+        end
+    end
+    return 0, nil
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 MainHudCtrl = HL.Class('MainHudCtrl', uiCtrl.UICtrl)
 
 local PhaseForbidStyle = CS.Beyond.Gameplay.PhaseForbidStyle
@@ -29,8 +242,13 @@ local DisableSwitchModeForbidStyle = CS.Beyond.Gameplay.DisableSwitchModeForbidP
 
 
 
+
+
 MainHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SQUAD_INFIGHT_CHANGED] = 'OnSquadInfightChanged',
+    
+    [MessageConst.ON_ENTER_DUNGEON] = 'OnDungeonStateChanged',
+    [MessageConst.ON_LEAVE_DUNGEON] = 'OnDungeonStateChanged',
     [MessageConst.ON_SET_IN_SAFE_ZONE] = 'OnSetInSafeZone',
     [MessageConst.ON_IN_FAC_MAIN_REGION_CHANGE] = 'OnInFacMainRegionChange',
     [MessageConst.ON_FAC_MODE_CHANGE] = 'OnFacModeChange',
@@ -82,16 +300,27 @@ MainHudCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.TOGGLE_FORBID_CHAR_FOOT_BAR] = 'ForbidCharFootBar',
     [MessageConst.TRY_SWITCH_FAC_MODE] = 'TrySwitchMode',
 
-    [MessageConst.ON_OPEN_LEVEL_PHASE_SEAMLESS_LOADING] = '_OnOpenLevelPhaseSeamlessLoading',
+    [MessageConst.ON_REFRESH_PHASE_LEVEL] = '_OnRefreshPhaseLevel',
+    [MessageConst.ON_LOCK_CHARACTER_CHANGED] = '_OnLockCharacterChanged',
 }
+
 
 MainHudCtrl.m_indicatorControllerGroupId = HL.Field(HL.Number) << 1
 
+
 MainHudCtrl.m_indicatorControllerDisableKeys = HL.Field(HL.Table)
+
 
 MainHudCtrl.m_characterFootBar = HL.Field(HL.Table)
 
+
+MainHudCtrl.m_characterLockedBar = HL.Field(HL.Table)
+
+
 MainHudCtrl.m_quickMenuBindingId = HL.Field(HL.Number) << -1
+
+
+
 
 
 MainHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -109,6 +338,7 @@ MainHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.attackButton:InitAttackButton()
 
     self.m_characterFootBar = Utils.wrapLuaNode(CSUtils.CreateObject(self.view.config.CHARACTER_FOOT_BAR, UIManager.worldObjectRoot))
+    self.m_characterLockedBar = Utils.wrapLuaNode(CSUtils.CreateObject(self.view.config.TYPHOEA_MISSILE_LOCK, UIManager.worldObjectRoot))
 
     if Utils.isSwitchModeDisabled() then
         
@@ -123,7 +353,11 @@ MainHudCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             end
         end)
     end
+
+    self:_InitV1d5Timer()
 end
+
+
 
 MainHudCtrl.OnShow = HL.Override() << function(self)
     self.m_forceBtnOutside = Utils.isInDungeon()
@@ -149,11 +383,14 @@ MainHudCtrl.OnShow = HL.Override() << function(self)
     end
     self.view.attackButton:OnShow()
     self.m_characterFootBar.mainCharFootBar:SetUIDisable("MainHudActive", false)
+    self.m_characterLockedBar.gameObject:SetActive(false)
     self:OnToggleSprint({ GameInstance.playerController.isMainCharacterSprinting })
     self:_UpdateWatchBtnBinding()
     self:OnThrowModeChange(nil)
     ActivityUtils.queryAllWebActivityPortalStates()
 end
+
+
 
 MainHudCtrl.OnHide = HL.Override() << function(self)
     self:_ToggleControllerIndicator(false)
@@ -167,7 +404,10 @@ MainHudCtrl.OnHide = HL.Override() << function(self)
         self.view.topLeftBtns.mailBubbleImg.gameObject:SetActive(false)
     end
     self.m_characterFootBar.mainCharFootBar:SetUIDisable("MainHudActive", true)
+    self.m_characterLockedBar.gameObject:SetActive(false)
 end
+
+
 
 MainHudCtrl.OnClose = HL.Override() << function(self)
     self.view.attackButton:ReleaseNormalAttackBtn()
@@ -176,12 +416,20 @@ MainHudCtrl.OnClose = HL.Override() << function(self)
         GameObject.Destroy(self.m_characterFootBar.gameObject)
     end
     self.m_characterFootBar = nil
+    if self.m_characterLockedBar then
+        GameObject.Destroy(self.m_characterLockedBar.gameObject)
+    end
+    self.m_characterLockedBar = nil
 end
+
+
 
 MainHudCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     self:_ResetTopBtnLayoutForHotSwitchReuse()
     return nil
 end
+
+
 
 MainHudCtrl._ResetTopBtnLayoutForHotSwitchReuse = HL.Method() << function(self)
     if not self.m_topBtnDataList then
@@ -208,9 +456,13 @@ end
 
 
 
+
 MainHudCtrl.m_topBtnDataMap = HL.Field(HL.Table)
 
+
 MainHudCtrl.m_topBtnDataList = HL.Field(HL.Table)
+
+
 
 MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
     self.m_topBtnDataMap = {
@@ -316,9 +568,7 @@ MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
                 end
                 return true
             end,
-            onClick = function()
-                PhaseManager:OpenPhase(PhaseId.FacHUBData, { tabIndex = 1 })
-            end,
+            phaseId = PhaseId.FacHUBData,
         },
         emptySwitch = { 
             viewNode = self.view.topLeftBtns.emptySwitchNode,
@@ -349,6 +599,7 @@ MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
             onClick = function()
                 DungeonUtils.onClickDungeonInfoBtn()
             end,
+            phaseId = PhaseId.DungeonInfo,
             controllerPosType = ControllerTopBtnPosTypes.Fixed,
             controllerPosOrder = 1,
         },
@@ -689,6 +940,8 @@ MainHudCtrl._BuildTopBtnData = HL.Method() << function(self)
     }
 end
 
+
+
 MainHudCtrl._InitTopBtns = HL.Method() << function(self)
     self:_BuildTopBtnData()
     
@@ -702,6 +955,9 @@ MainHudCtrl._InitTopBtns = HL.Method() << function(self)
 
     self:UpdateAllTopBtnsIcon()  
 end
+
+
+
 
 MainHudCtrl._InitSingleTopBtn = HL.Method(HL.Table) << function(self, info)
     if not info.viewNode then
@@ -762,6 +1018,9 @@ MainHudCtrl._InitSingleTopBtn = HL.Method(HL.Table) << function(self, info)
     end
 end
 
+
+
+
 MainHudCtrl.OnMainHudBtnClick = HL.Method(HL.Table) << function(self, info)
     if info.onClick then
         info.onClick()
@@ -770,15 +1029,25 @@ MainHudCtrl.OnMainHudBtnClick = HL.Method(HL.Table) << function(self, info)
     end
 end
 
+
+
+
 MainHudCtrl.GetMainHudBtnInfo = HL.Method(HL.String).Return(HL.Table) << function(self, infoId)
     return self.m_topBtnDataMap[infoId]
 end
+
+
+
 
 MainHudCtrl.IsMainHudBtnVisible = HL.Method(HL.Table).Return(HL.Boolean) << function(self, info)
     return self:_GetSingleTopBtnVisible(info)
 end
 
+
 MainHudCtrl.m_updateTimerId = HL.Field(HL.Number) << -1
+
+
+
 
 MainHudCtrl.TryUpdateAllTopBtnsVisible = HL.Method(HL.Opt(HL.Any)) << function(self, _)
     if self.m_updateTimerId > 0 then
@@ -794,6 +1063,8 @@ MainHudCtrl.TryUpdateAllTopBtnsVisible = HL.Method(HL.Opt(HL.Any)) << function(s
         self:OnForbidSystemChanged()
     end)
 end
+
+
 
 MainHudCtrl.OnForbidSystemChanged = HL.Method() << function(self)
     if Utils.isForbidden(ForbidType.ForbidMove) then
@@ -814,6 +1085,8 @@ MainHudCtrl.OnForbidSystemChanged = HL.Method() << function(self)
     self:TogglePlayerJump({"ForbidSystem", forbidJump})
 end
 
+
+
 MainHudCtrl.UpdateAllTopBtnsVisible = HL.Method() << function(self)
     if DeviceInfo.usingController then
         self:_UpdateAllTopBtnsVisibleInController()
@@ -828,6 +1101,11 @@ MainHudCtrl.UpdateAllTopBtnsVisible = HL.Method() << function(self)
         self:_UpdateTopNodeExpandState(self.view.topRightBtns)
     end
 end
+
+
+
+
+
 
 MainHudCtrl._UpdateSingleTopBtnVisible = HL.Method(HL.Table, HL.Opt(HL.Boolean, HL.Boolean)) << function(self, info, playAnimation, visible)
     if visible == nil then
@@ -849,6 +1127,9 @@ MainHudCtrl._UpdateSingleTopBtnVisible = HL.Method(HL.Table, HL.Opt(HL.Boolean, 
         end
     end
 end
+
+
+
 
 MainHudCtrl._UpdateBtnPos = HL.Method(HL.Table) << function(self, info)
     if not info.posType then
@@ -897,6 +1178,8 @@ MainHudCtrl._UpdateBtnPos = HL.Method(HL.Table) << function(self, info)
     info.viewNode.transform:SetAsLastSibling()
 end
 
+
+
 MainHudCtrl.UpdateAllTopBtnsIcon = HL.Method() << function(self)
     for _, info in ipairs(self.m_topBtnDataList) do
         if info.icon and info.iconSpriteGetter then
@@ -907,6 +1190,9 @@ MainHudCtrl.UpdateAllTopBtnsIcon = HL.Method() << function(self)
         end
     end
 end
+
+
+
 
 MainHudCtrl._GetSingleTopBtnVisible = HL.Method(HL.Table).Return(HL.Boolean) << function(self, info)
     
@@ -950,6 +1236,8 @@ MainHudCtrl._GetSingleTopBtnVisible = HL.Method(HL.Table).Return(HL.Boolean) << 
     end
     return true
 end
+
+
 
 
 
@@ -1018,10 +1306,16 @@ MainHudCtrl._InitMainHudBinding = HL.Method() << function(self)
     self:OnDashEnableChanged({GameWorld.battle.dashEnable})
 end
 
+
+
+
 MainHudCtrl.OnBlockUIInput = HL.Method(HL.Table) << function(self, arg)
     local active = InputManagerInst:IsGroupEnabled(self.view.inputGroup.groupId)
     self:_OnPanelInputBlocked(active)
 end
+
+
+
 
 MainHudCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, active)
     self:_UpdateSprintInfo(active)
@@ -1033,6 +1327,9 @@ MainHudCtrl._OnPanelInputBlocked = HL.Override(HL.Boolean) << function(self, act
     end
     self:CheckNormalAttackBtn(active)
 end
+
+
+
 
 MainHudCtrl.AfterToggleUiAction = HL.Method(HL.Table) << function(self, arg)
     local isShow, isUltimate = unpack(arg)
@@ -1058,6 +1355,9 @@ MainHudCtrl.AfterToggleUiAction = HL.Method(HL.Table) << function(self, arg)
     end
 end
 
+
+
+
 MainHudCtrl.CheckNormalAttackBtn = HL.Method(HL.Boolean) << function(self, active)
     if active and InputManagerInst:IsGroupEnabled(self.view.attackButton.view.button.groupId) then
         if CS.Beyond.UI.BattleControllerInputController.instance:CheckNormalAttackBtn() then
@@ -1073,6 +1373,8 @@ MainHudCtrl.CheckNormalAttackBtn = HL.Method(HL.Boolean) << function(self, activ
     end
 end
 
+
+
 MainHudCtrl._InitDebugAction = HL.Method() << function(self)
     if not BEYOND_DEBUG_COMMAND then
         return
@@ -1085,8 +1387,13 @@ MainHudCtrl._InitDebugAction = HL.Method() << function(self)
     end)
 end
 
+
+
 MainHudCtrl.OnExitFactoryMode = HL.Method() << function(self)
 end
+
+
+
 
 
 
@@ -1132,13 +1439,19 @@ MainHudCtrl._OnQuestObjectiveUpdate = HL.Method(HL.Any) << function(self, arg)
 end
 
 
+
+
 MainHudCtrl.s_clearScreenIdExceptSomePanel = HL.StaticField(HL.Number) << 0
+
 
 MainHudCtrl.s_waitingToClearScreenExceptPanels = HL.StaticField(HL.Table) << nil
 
+
 MainHudCtrl.s_clearScreenId = HL.StaticField(HL.Number) << 0
 
+
 MainHudCtrl.s_waitingToClearScreen = HL.StaticField(HL.Boolean) << false
+
 
 MainHudCtrl._OnClearScreenOn = HL.StaticMethod() << function()
     
@@ -1174,11 +1487,38 @@ MainHudCtrl._OnClearScreenOn = HL.StaticMethod() << function()
     end)
 end
 
+
 MainHudCtrl._PerformClearScreen = HL.StaticMethod() << function()
     MainHudCtrl.s_clearScreenId = UIManager:ClearScreen()
     Notify(MessageConst.ON_CLEAR_SCREEN_STATE_CHANGED, true)
     MainHudCtrl.s_waitingToClearScreen = false
 end
+
+
+MainHudCtrl._OnClearScreenOnWithAnimation = HL.StaticMethod() << function()
+    if MainHudCtrl.s_clearScreenId and MainHudCtrl.s_clearScreenId > 0 then
+        return
+    end
+
+    if MainHudCtrl.s_waitingToClearScreen then
+        return
+    end
+
+    MainHudCtrl.s_waitingToClearScreen = true
+    UIManager:ClearScreenWithOutAnimation(function(key)
+        MainHudCtrl.s_clearScreenId = key
+        if not MainHudCtrl.s_waitingToClearScreen then
+            
+            UIManager:RecoverScreen(MainHudCtrl.s_clearScreenId)
+            MainHudCtrl.s_clearScreenId = 0
+            Notify(MessageConst.ON_CLEAR_SCREEN_STATE_CHANGED, false)
+            return
+        end
+        MainHudCtrl.s_waitingToClearScreen = false
+        Notify(MessageConst.ON_CLEAR_SCREEN_STATE_CHANGED, true)
+    end, {PanelId.RadioEmpty})
+end
+
 
 MainHudCtrl._OnClearScreenOff = HL.StaticMethod() << function()
     MainHudCtrl.s_waitingToClearScreen = false
@@ -1186,6 +1526,8 @@ MainHudCtrl._OnClearScreenOff = HL.StaticMethod() << function()
     MainHudCtrl.s_clearScreenId = 0
     Notify(MessageConst.ON_CLEAR_SCREEN_STATE_CHANGED, false)
 end
+
+
 
 MainHudCtrl._OnClearScreenOnExceptSomePanel = HL.StaticMethod(HL.Table) << function(arg)
     
@@ -1228,11 +1570,13 @@ MainHudCtrl._OnClearScreenOnExceptSomePanel = HL.StaticMethod(HL.Table) << funct
     end)
 end
 
+
 MainHudCtrl._PerformClearScreenExceptSomePanel = HL.StaticMethod() << function()
     MainHudCtrl.s_clearScreenIdExceptSomePanel = UIManager:ClearScreen(MainHudCtrl.s_waitingToClearScreenExceptPanels)
     Notify(MessageConst.ON_CLEAR_SCREEN_STATE_CHANGED, true)
     MainHudCtrl.s_waitingToClearScreenExceptPanels = nil
 end
+
 
 MainHudCtrl._OnClearScreenOffExceptSomePanel = HL.StaticMethod() << function()
     MainHudCtrl.s_waitingToClearScreenExceptPanels = nil
@@ -1241,11 +1585,15 @@ MainHudCtrl._OnClearScreenOffExceptSomePanel = HL.StaticMethod() << function()
     Notify(MessageConst.ON_CLEAR_SCREEN_STATE_CHANGED, false)
 end
 
-MainHudCtrl._OnOpenLevelPhaseSeamlessLoading = HL.Method() << function()
+
+MainHudCtrl._OnRefreshPhaseLevel = HL.Method() << function()
     if MainHudCtrl.s_clearScreenId ~= 0 then
         Notify(MessageConst.CLEAR_SCREEN_OFF);
     end
 end
+
+
+
 
 
 
@@ -1258,20 +1606,41 @@ MainHudCtrl.OnSquadInfightChanged = HL.Method(HL.Opt(HL.Any)) << function(self, 
     self:TryUpdateAllTopBtnsVisible()
 end
 
+
+
+
+MainHudCtrl.OnDungeonStateChanged = HL.Method(HL.Opt(HL.Any)) << function(self, args)
+    
+    self.m_forceBtnOutside = Utils.isInDungeon()
+    self:TryUpdateAllTopBtnsVisible()
+end
+
+
+
+
 MainHudCtrl.OnSetInSafeZone = HL.Method(HL.Opt(HL.Any)) << function(self, args)
     self:_UpdateInventoryState(false)
 end
+
+
+
 
 MainHudCtrl.OnInFacMainRegionChange = HL.Method(HL.Boolean) << function(self, inFacMain)
     self:TryUpdateAllTopBtnsVisible()
     self:_UpdateInventoryState(false)
 end
 
+
+
 MainHudCtrl.OnFacPlayerPosInfoChanged = HL.Method() << function(self)
     self:_UpdateSwitchModeState()
 end
 
+
 MainHudCtrl.m_inFacModeTagHandle = HL.Field(HL.Userdata)
+
+
+
 
 MainHudCtrl.OnFacModeChange = HL.Method(HL.Boolean) << function(self, inFacMode)
     self:TryUpdateAllTopBtnsVisible()
@@ -1294,9 +1663,15 @@ MainHudCtrl.OnFacModeChange = HL.Method(HL.Boolean) << function(self, inFacMode)
     self:_CheckControllerIndicatorEnabled()
 end
 
+
+
+
 MainHudCtrl.OnFacTopViewHideUIModeChange = HL.Method(HL.Boolean) << function(self, isTopViewHideUIMode)
     self:TryUpdateAllTopBtnsVisible()
 end
+
+
+
 
 MainHudCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, active)
     self:TryUpdateAllTopBtnsVisible()
@@ -1308,6 +1683,9 @@ MainHudCtrl.OnToggleFacTopView = HL.Method(HL.Boolean) << function(self, active)
     self.m_characterFootBar.mainCharFootBar:SetUIDisable("facTopView", active)
     self:_UpdateWatchBtnBinding()
 end
+
+
+
 
 MainHudCtrl.FacToggleTopView = HL.Method(HL.Any) << function(self, arg)
     local active = false
@@ -1322,10 +1700,16 @@ MainHudCtrl.FacToggleTopView = HL.Method(HL.Any) << function(self, arg)
     end
 end
 
+
+
+
 MainHudCtrl.ForbidCharFootBar = HL.Method(HL.Any) << function(self, arg)
     local key, isForbid = unpack(arg)
     self.m_characterFootBar.mainCharFootBar:SetUIDisable(key, isForbid)
 end
+
+
+
 
 MainHudCtrl.OnDisableBattleIndicatorController = HL.Method(HL.Table) << function(self, arg)
     if not DeviceInfo.usingController then
@@ -1339,6 +1723,9 @@ MainHudCtrl.OnDisableBattleIndicatorController = HL.Method(HL.Table) << function
     end
     self:_CheckControllerIndicatorEnabled()
 end
+
+
+
 
 MainHudCtrl.OnSystemUnlock = HL.Method(HL.Table) << function(self, arg)
     self:TryUpdateAllTopBtnsVisible()
@@ -1357,23 +1744,36 @@ MainHudCtrl.OnSystemUnlock = HL.Method(HL.Table) << function(self, arg)
     end
 end
 
+
+
+
 MainHudCtrl.OnGameModeChange = HL.Method(HL.Table) << function(self, mode)
     self:TryUpdateAllTopBtnsVisible()
     self:_UpdateSwitchModeState()
 end
 
+
+
 MainHudCtrl.OnDomainDevelopmentUnlock = HL.Method(HL.Opt(HL.Any)) << function(self)
     self:TryUpdateAllTopBtnsVisible()
 end
+
+
 
 MainHudCtrl.OnSubGameStageChange = HL.Method() << function(self)
     self:TryUpdateAllTopBtnsVisible()
 end
 
+
+
+
 MainHudCtrl.BeforeEnterBuildMode = HL.Method(HL.Boolean) << function(self, skipMainHudAnim)
     
     self:_UpdateSingleTopBtnVisible(self.m_topBtnDataMap.top, not skipMainHudAnim, false)
 end
+
+
+
 
 MainHudCtrl.OnBuildModeChange = HL.Method(HL.Number) << function(self, mode)
     local isNormal = mode == FacConst.FAC_BUILD_MODE.Normal
@@ -1385,15 +1785,22 @@ MainHudCtrl.OnBuildModeChange = HL.Method(HL.Number) << function(self, mode)
     end
 end
 
+
+
 MainHudCtrl.BeforeEnterDestroyMode = HL.Method() << function(self)
     
     self:_UpdateSingleTopBtnVisible(self.m_topBtnDataMap.top, true, false)
 end
 
+
+
+
 MainHudCtrl.OnFacDestroyModeChange = HL.Method(HL.Boolean) << function(self, inDestroyMode)
     self:_UpdateSingleTopBtnVisible(self.m_topBtnDataMap.top, true)
     self.view.disabledFakeAttackButton.gameObject:SetActive(inDestroyMode and not LuaSystemManager.factory.inTopView)
 end
+
+
 
 
 
@@ -1410,6 +1817,9 @@ MainHudCtrl._UpdateSwitchModeState = HL.Method() << function(self)
     local forbidParams = Utils.getForbiddenReason(ForbidType.DisableSwitchMode)
     node.invalidIconRight.gameObject:SetActiveIfNecessary(forbidParams and forbidParams.forbidStyle == DisableSwitchModeForbidStyle.ShowInvalidIcon)
 end
+
+
+
 
 MainHudCtrl._CheckSwitchModeValueValid = HL.Method(HL.Boolean).Return(HL.Boolean, HL.Opt(HL.String)) << function(self, inFacMode)
     if GameInstance.player.systemActionConflictManager.curProcessingSystemAction then
@@ -1435,6 +1845,9 @@ MainHudCtrl._CheckSwitchModeValueValid = HL.Method(HL.Boolean).Return(HL.Boolean
     return true
 end
 
+
+
+
 MainHudCtrl._SwitchMode = HL.Method(HL.Boolean) << function(self, toFactory)
     if toFactory then
         LuaSystemManager.factory:ClearAndSetFactoryMode(true)
@@ -1446,12 +1859,20 @@ MainHudCtrl._SwitchMode = HL.Method(HL.Boolean) << function(self, toFactory)
 end
 
 
+
+
 MainHudCtrl.m_enableExitFactoryMode = HL.Field(HL.Boolean) << true
+
+
+
 
 MainHudCtrl.SetEnableExitFactoryMode = HL.Method(HL.Table) << function(self, args)
     local enable = unpack(args)
     self.m_enableExitFactoryMode = enable
 end
+
+
+
 
 MainHudCtrl.TrySwitchMode = HL.Method(HL.Boolean) << function(self, isFacMode)
     if not self.m_topBtnDataMap.switchMode.checkVisible() or
@@ -1467,7 +1888,11 @@ end
 
 
 
+
 MainHudCtrl.m_lastIsInSafeZone = HL.Field(HL.Boolean) << false
+
+
+
 
 MainHudCtrl._UpdateInventoryState = HL.Method(HL.Boolean) << function(self, skipAnim)
     local inSafeZone = Utils.isInSafeZone()
@@ -1496,7 +1921,12 @@ end
 
 
 
+
+
 MainHudCtrl.m_onPressJumpOverride = HL.Field(HL.Any)
+
+
+
 
 MainHudCtrl.OverrideJump = HL.Method(HL.Any) << function(self, arg)
     if arg then
@@ -1505,6 +1935,9 @@ MainHudCtrl.OverrideJump = HL.Method(HL.Any) << function(self, arg)
         self.m_onPressJumpOverride = nil
     end
 end
+
+
+
 
 MainHudCtrl.OnFluidInBuildingRemoved = HL.Method(HL.Any) << function(self, arg)
     local nodeList = unpack(arg)
@@ -1518,6 +1951,8 @@ MainHudCtrl.OnFluidInBuildingRemoved = HL.Method(HL.Any) << function(self, arg)
     end
 end
 
+
+
 MainHudCtrl._OnPressJump = HL.Method() << function(self)
     self.view.jumpAnimNode:PlayWithTween("mobile_mainhud_jumpbtn_pressedring")
     if self.m_onPressJumpOverride then
@@ -1527,7 +1962,10 @@ MainHudCtrl._OnPressJump = HL.Method() << function(self)
     end
 end
 
+
 MainHudCtrl.m_startPressSprintTime = HL.Field(HL.Number) << 0
+
+
 
 MainHudCtrl._OnPressSprint = HL.Method() << function(self)
     if BEYOND_DEBUG and UNITY_EDITOR then
@@ -1551,9 +1989,14 @@ MainHudCtrl._OnPressSprint = HL.Method() << function(self)
     self.m_startPressSprintTime = Time.unscaledTime
 end
 
+
+
 MainHudCtrl._OnReleaseSprint = HL.Method() << function(self)
     GameInstance.playerController:OnSprintReleased()
 end
+
+
+
 
 MainHudCtrl._OnDragSprint = HL.Method(HL.Userdata) << function(self, eventData)
     if Time.unscaledTime - self.m_startPressSprintTime >= self.view.config.SPRINT_BTN_DRAG_DELAY then
@@ -1561,13 +2004,22 @@ MainHudCtrl._OnDragSprint = HL.Method(HL.Userdata) << function(self, eventData)
     end
 end
 
+
+
+
 MainHudCtrl._OnDragAttack = HL.Method(HL.Userdata) << function(self, eventData)
     Notify(MessageConst.ON_DRAG_SPRINT_BTN, eventData.delta)
 end
 
+
+
+
 MainHudCtrl._OnDragJump = HL.Method(HL.Userdata) << function(self, eventData)
     Notify(MessageConst.MOVE_LEVEL_CAMERA, eventData.delta)
 end
+
+
+
 
 MainHudCtrl._UpdateSprintInfo = HL.Method(HL.Boolean) << function(self, inputEnabled)
     if inputEnabled then
@@ -1582,6 +2034,8 @@ MainHudCtrl._UpdateSprintInfo = HL.Method(HL.Boolean) << function(self, inputEna
         self:_OnReleaseSprint()
     end
 end
+
+
 
 MainHudCtrl._CheckControllerIndicatorEnabled = HL.Method() << function(self)
     if not DeviceInfo.usingController then
@@ -1599,6 +2053,9 @@ MainHudCtrl._CheckControllerIndicatorEnabled = HL.Method() << function(self)
     end
 end
 
+
+
+
 MainHudCtrl._ToggleControllerIndicator = HL.Method(HL.Boolean) << function(self, active)
     if not DeviceInfo.usingController then
         return
@@ -1614,13 +2071,20 @@ MainHudCtrl._ToggleControllerIndicator = HL.Method(HL.Boolean) << function(self,
     end
 end
 
+
 MainHudCtrl.m_hideJumpKeys = HL.Field(HL.Table)
+
+
+
 
 MainHudCtrl.OnToggleSprint = HL.Method(HL.Table) << function(self, args)
     local active = unpack(args)
     self.view.sprintTypeNode.gameObject:SetActive(active)
     self.view.sprintNormalNode.gameObject:SetActive(not active)
 end
+
+
+
 
 MainHudCtrl.TogglePlayerJump = HL.Method(HL.Table) << function(self, args)
     local reason, forbid = unpack(args)
@@ -1636,6 +2100,9 @@ MainHudCtrl.TogglePlayerJump = HL.Method(HL.Table) << function(self, args)
     end
 end
 
+
+
+
 MainHudCtrl.OnDashEnableChanged = HL.Method(HL.Table) << function(self, args)
     if self.view.sprintDisableNode == nil then
         return
@@ -1643,6 +2110,9 @@ MainHudCtrl.OnDashEnableChanged = HL.Method(HL.Table) << function(self, args)
     local enable = unpack(args)
     self.view.sprintDisableNode.gameObject:SetActive(not enable)
 end
+
+
+
 
 MainHudCtrl.OnApplicationFocus = HL.Method(HL.Table) << function(self, arg)
     
@@ -1661,11 +2131,15 @@ end
 
 
 
+
+
 MainHudCtrl.OnEnterTowerDefenseDefendingPhase = HL.Method() << function(self)
     LuaSystemManager.factory:AddFactoryModeRequest({ false, "TowerDefense" })
     LuaSystemManager.factory:RemoveFactoryModeRequest("TowerDefensePrepare")
     self:TryUpdateAllTopBtnsVisible()
 end
+
+
 
 MainHudCtrl.OnTowerDefenseDefendingRewardsFinished = HL.Method() << function(self)
     LuaSystemManager.factory:RemoveFactoryModeRequest("TowerDefense")
@@ -1677,11 +2151,17 @@ end
 
 
 
+
 MainHudCtrl.m_canAutoStopExpand = HL.Field(HL.Boolean) << true
+
 
 MainHudCtrl.m_forceBtnOutside = HL.Field(HL.Boolean) << false 
 
+
 MainHudCtrl.m_forceBtnInside = HL.Field(HL.Boolean) << false 
+
+
+
 
 MainHudCtrl._InitOneTopNodeExpand = HL.Method(HL.Table) << function(self, node)
     node.expandBtn.onClick:AddListener(function(eventData)
@@ -1708,6 +2188,9 @@ MainHudCtrl._InitOneTopNodeExpand = HL.Method(HL.Table) << function(self, node)
     node.expandRedDot:InitRedDot("") 
 end
 
+
+
+
 MainHudCtrl._OnClickExpand = HL.Method(HL.Table) << function(self, node)
     node.expandNode:SetExpanded(true)
     if self.m_canAutoStopExpand then
@@ -1715,15 +2198,24 @@ MainHudCtrl._OnClickExpand = HL.Method(HL.Table) << function(self, node)
     end
 end
 
+
+
+
 MainHudCtrl.OnSetMainHudCanAutoStopExpand = HL.Method(HL.Any) << function(self, args)
     self.m_canAutoStopExpand = unpack(args)
 end
+
+
+
 
 MainHudCtrl._ResetTopNodePosInfo = HL.Method(HL.Table) << function(self, node)
     node.m_flexibleOutsideBtnInfo = nil
     node.m_curInsideBtnCount = 0
     node.expandRedDot:ApplyState(false)
 end
+
+
+
 
 MainHudCtrl._UpdateTopNodeExpandState = HL.Method(HL.Table) << function(self, node)
     if node.m_curInsideBtnCount and node.m_curInsideBtnCount > 0 then
@@ -1742,6 +2234,10 @@ MainHudCtrl._UpdateTopNodeExpandState = HL.Method(HL.Table) << function(self, no
     node.expandNode.view.closeExpandBtn.transform:SetAsLastSibling()
     node.expandBtn.transform:SetAsLastSibling()
 end
+
+
+
+
 
 MainHudCtrl._OnAfterApplyRedDotSate = HL.Method(HL.Table, HL.Boolean) << function(self, info, active)
     if self.m_updateTimerId > 0 then
@@ -1797,11 +2293,16 @@ local MAIL_BUBBLE_STATE_NONE = 0
 local MAIL_BUBBLE_STATE_LOST_AND_FOUND = 1
 local MAIL_BUBBLE_STATE_QUESTIONNAIRE = 2
 
+
 MainHudCtrl.m_mailBubbleCacheState = HL.Field(HL.Number) << 0
+
 
 MainHudCtrl.m_mailBubbleShowingState = HL.Field(HL.Number) << 0
 
+
 MainHudCtrl.m_mainBubbleCor = HL.Field(HL.Thread)
+
+
 
 MainHudCtrl.OnGetNewMails = HL.Method() << function(self)
     
@@ -1809,11 +2310,16 @@ MainHudCtrl.OnGetNewMails = HL.Method() << function(self)
     self:_CheckShowMailBtnBubble()
 end
 
+
+
+
 MainHudCtrl.OnLostAndFoundRefresh = HL.Method(HL.Opt(HL.Table)) << function(self, args)
     
     self:_UpdateSingleTopBtnVisible(self.m_topBtnDataMap.mail)
     self:_CheckShowMailBtnBubble()
 end
+
+
 
 MainHudCtrl._CheckShowMailBtnBubble = HL.Method() << function(self)
     self.m_mailBubbleCacheState = MAIL_BUBBLE_STATE_NONE
@@ -1826,6 +2332,8 @@ MainHudCtrl._CheckShowMailBtnBubble = HL.Method() << function(self)
         self:_ShowMainBtnBubble()
     end
 end
+
+
 
 MainHudCtrl._ShowMainBtnBubble = HL.Method() << function(self)
     if self.m_mailBubbleShowingState >= self.m_mailBubbleCacheState then
@@ -1857,6 +2365,9 @@ end
 
 
 
+
+
+
 MainHudCtrl.OnThrowModeChange = HL.Method(HL.Any) << function(self, args)
     local inThrowMode = GameWorld.battle.inThrowMode
 
@@ -1876,12 +2387,16 @@ end
 
 
 
+
+
 MainHudCtrl.OnShowWaterDroneAim = HL.Method() << function(self)
     self.m_indicatorControllerDisableKeys["inWaterDroneAim"] = true
     self:_CheckControllerIndicatorEnabled()
 
     self.view.attackButton:ReleaseNormalAttackBtn()
 end
+
+
 
 MainHudCtrl.OnHideWaterDroneAim = HL.Method() << function(self)
     self.m_indicatorControllerDisableKeys["inWaterDroneAim"] = nil
@@ -1891,7 +2406,10 @@ end
 
 
 
+
 MainHudCtrl.m_curControllerVisibleTopBtns = HL.Field(HL.Table) 
+
+
 
 MainHudCtrl._UpdateAllTopBtnsVisibleInController = HL.Method() << function(self)
     local visibleBtnInfos = {}
@@ -1932,6 +2450,8 @@ MainHudCtrl._UpdateAllTopBtnsVisibleInController = HL.Method() << function(self)
     self:_RefreshQuickMenuWithTopBtnsVisibleStateInController()
 end
 
+
+
 MainHudCtrl._ChooseShowingTopBtnsInController = HL.Method() << function(self)
     local maxShowCount = self.view.config.CONTROLLER_TOP_BTN_MAX_SHOW_COUNT
     local listNode = self.view.topRightBtns.controllerBtnList
@@ -1960,6 +2480,10 @@ MainHudCtrl._ChooseShowingTopBtnsInController = HL.Method() << function(self)
     end
     listNode.gameObject:SetActive(true)
 end
+
+
+
+
 
 MainHudCtrl._OnOneTopBtnRedDotChangedInController = HL.Method(HL.Table, HL.Boolean) << function(self, changedInfo, active)
     local controllerPosType, controllerPosOrder
@@ -1993,9 +2517,13 @@ MainHudCtrl._OnOneTopBtnRedDotChangedInController = HL.Method(HL.Table, HL.Boole
     end
 end
 
+
+
 MainHudCtrl._RefreshQuickMenuWithTopBtnsVisibleStateInController = HL.Method() << function(self)
     InputManagerInst:ToggleBinding(self.m_quickMenuBindingId, #self.m_curControllerVisibleTopBtns > 0)
 end
+
+
 
 
 
@@ -2011,6 +2539,143 @@ MainHudCtrl._UpdateWatchBtnBinding = HL.Method() << function(self)
         self.view.topRightBtns.watchBtn.onClick:ChangeBindingPlayerAction("common_open_watch")
     end
 end
+
+MainHudCtrl._OnLockCharacterChanged = HL.Method(HL.Table) << function(self, args)
+    local mainCharacterIsLocked = unpack(args)
+    self.m_characterLockedBar.gameObject:SetActive(mainCharacterIsLocked)
+end
+
+
+
+
+MainHudCtrl.m_v1d5UpdateKey = HL.Field(HL.Number) << -1
+MainHudCtrl.m_v1d5Started = HL.Field(HL.Boolean) << false 
+MainHudCtrl.m_v1d5Visible = HL.Field(HL.Boolean) << false
+MainHudCtrl.m_v1d5Stage = HL.Field(HL.Number) << 0 
+MainHudCtrl.m_v1d5PassTime = HL.Field(HL.Number) << 0 
+MainHudCtrl.m_v1d5Fill = HL.Field(HL.Number) << -1 
+MainHudCtrl.m_v1d5Cells = HL.Field(HL.Forward("UIListCache")) 
+
+MainHudCtrl._InitV1d5Timer = HL.Method() << function(self)
+    self.m_v1d5Started = false
+    self.m_v1d5Stage = 0
+    self.m_v1d5PassTime = 0
+    self.m_v1d5Fill = -1
+    self.m_v1d5Visible = false
+    
+    
+    self.view.v1d5TimerNode.gameObject:SetActive(false)
+    self.m_v1d5UpdateKey = self:_StartUpdate(function()
+        self:_TickV1d5Timer()
+    end)
+end
+
+MainHudCtrl._ResetV1d5Timer = HL.Method() << function(self)
+    self.m_v1d5Started = false
+    self.m_v1d5Stage = 0
+    self.m_v1d5PassTime = 0
+    self.m_v1d5Fill = -1
+    self:_SetV1d5Visible(false)
+end
+
+MainHudCtrl._TickV1d5Timer = HL.Method() << function(self)
+    
+    local worldInfo = GameWorld.worldInfo
+    if not worldInfo or worldInfo.curLevelIdNum ~= _getV1d5LevelId() then
+        if self.m_v1d5Visible or self.m_v1d5Started then
+            self:_ResetV1d5Timer()
+        end
+        return
+    end
+
+    
+    local mgr = GameWorld.levelScriptManager
+    local hasScript, script = false, nil
+    if mgr then
+        hasScript, script = mgr:TryGetLevelScript(s_v1d5ScriptPtr, false)
+    end
+    if not hasScript or not script then
+        self:_ResetV1d5Timer()
+        return
+    end
+
+    
+    local timers = script.timerRuntimeDict
+    local stage, timer = 0, nil
+    if timers.Count > 0 then
+        stage, timer = _findV1d5RunningStage(timers, self.m_v1d5Stage)
+    end
+
+    if stage == 0 then
+        
+        
+        
+        return
+    end
+
+    self.m_v1d5Started = true
+    self:_EnsureV1d5Cells()
+    self:_SetV1d5Visible(true)
+
+    local passTime = timer.clientPassTime
+    local stageChanged = stage ~= self.m_v1d5Stage
+    if stageChanged or passTime < self.m_v1d5PassTime then
+        
+        self.m_v1d5Stage = stage
+        self.m_v1d5Fill = -1
+    end
+    self.m_v1d5PassTime = passTime
+
+    self:_SetV1d5Fill(stage, _getV1d5Fraction(timer), stageChanged)
+end
+
+MainHudCtrl._SetV1d5Visible = HL.Method(HL.Boolean) << function(self, visible)
+    if self.m_v1d5Visible == visible then
+        return
+    end
+    self.m_v1d5Visible = visible
+    self.view.v1d5TimerNode.gameObject:SetActive(visible)
+end
+
+
+
+MainHudCtrl._EnsureV1d5Cells = HL.Method() << function(self)
+    if self.m_v1d5Cells then
+        return
+    end
+    self.m_v1d5Cells = UIUtils.genCellCache(self.view.v1d5TimerNode.progress, _wrapV1d5Cell)
+    local normalColor = UIUtils.getColorByString(V1D5_COLOR_NORMAL)
+    local lastColor = UIUtils.getColorByString(V1D5_COLOR_LAST)
+    self.m_v1d5Cells:Refresh(V1D5_STAGE_COUNT, function(cell, index)
+        
+        
+        cell.img.color = index == 1 and lastColor or normalColor
+        cell.img.fillAmount = 1
+    end)
+end
+
+
+MainHudCtrl._SetV1d5Fill = HL.Method(HL.Number, HL.Number, HL.Boolean) << function(self, stage, fraction, relayout)
+    if relayout then
+        
+        self.m_v1d5Fill = fraction
+        self.m_v1d5Cells:Update(function(cell, index)
+            cell.img.fillAmount = _v1d5CellFill(index, stage, fraction)
+        end)
+        return
+    end
+    
+    
+    
+    if fraction <= self.m_v1d5Fill + V1D5_FILL_EPSILON then
+        return
+    end
+    self.m_v1d5Fill = fraction
+    self.m_v1d5Cells:Get(V1D5_STAGE_COUNT + 1 - stage).img.fillAmount = 1 - fraction
+end
+
+
+
 
 
 HL.Commit(MainHudCtrl)

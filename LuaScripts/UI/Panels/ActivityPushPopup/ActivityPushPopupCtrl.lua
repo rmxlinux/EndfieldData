@@ -9,11 +9,14 @@ ActivityPushPopupCtrl = HL.Class('ActivityPushPopupCtrl', uiCtrl.UICtrl)
 
 
 ActivityPushPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
-    [MessageConst.ON_SCREEN_SIZE_CHANGED] = '_OnScreenSizeChanged',
+    [MessageConst.ON_SYSTEM_DISPLAY_SIZE_CHANGED] = '_OnSystemDisplaySizeChanged',
+    [MessageConst.ON_SYSTEM_SCREEN_SIZE_CHANGED] = '_OnSystemScreenSizeChanged',
+    [MessageConst.ON_UI_CANVAS_SIZE_CHANGED] = '_OnCanvasSizeChanged',
 }
 
 ActivityPushPopupCtrl.m_pushIdList = HL.Field(HL.Table)
 ActivityPushPopupCtrl.m_genCellCache = HL.Field(HL.Function)
+ActivityPushPopupCtrl.m_centerIndexBeforeScreenSizeChanged = HL.Field(HL.Number) << -1
 
 
 ActivityPushPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
@@ -41,6 +44,7 @@ end
 
 ActivityPushPopupCtrl._RefreshAllUIs = HL.Method() << function(self)
      self.view.activityScrollList:UpdateCount(#self.m_pushIdList)
+     self.view.activityScrollList.onScrollEnd:RemoveAllListeners()
      self.view.activityScrollList.onScrollEnd:AddListener(function()
          self:_UpdateBgm()
      end)
@@ -62,22 +66,44 @@ ActivityPushPopupCtrl._UpdateBgm = HL.Method() << function(self)
     AudioManager.PostEvent(pushCfg.bgm)
 end
 
-ActivityPushPopupCtrl._OnScreenSizeChanged = HL.Method(HL.Opt(HL.Any, HL.Any)) << function(self, _, _)
+ActivityPushPopupCtrl._TryCaptureCenterIndex = HL.Method() << function(self)
     if not self.m_pushIdList or #self.m_pushIdList <= 0 then
         return
     end
-    local csIndex = math.floor(self.view.activityScrollList:GetCenterIndex())
-    if csIndex < 0 then
-        csIndex = 0
+    if self.m_centerIndexBeforeScreenSizeChanged >= 0 then
+        return
     end
+
+    
+    local csIndex = math.floor(self.view.activityScrollList:GetCenterIndex())
+    self.m_centerIndexBeforeScreenSizeChanged = math.min(math.max(csIndex, 0), #self.m_pushIdList - 1)
+end
+
+ActivityPushPopupCtrl._OnSystemDisplaySizeChanged = HL.Method() << function(self)
+    self:_TryCaptureCenterIndex()
+end
+
+ActivityPushPopupCtrl._OnSystemScreenSizeChanged = HL.Method(HL.Opt(HL.Any, HL.Any)) << function(self, _, _)
+    self:_TryCaptureCenterIndex()
+end
+
+ActivityPushPopupCtrl._OnCanvasSizeChanged = HL.Method() << function(self)
+    if not self.m_pushIdList or #self.m_pushIdList <= 0 or self.m_centerIndexBeforeScreenSizeChanged < 0 then
+        return
+    end
+
+    local csIndex = self.m_centerIndexBeforeScreenSizeChanged
+    self.m_centerIndexBeforeScreenSizeChanged = -1
+    
     self.view.activityScrollList:TryRecalculateSize()
-    self.view.activityScrollList:UpdateCount(#self.m_pushIdList, csIndex, true, false, true)
+    self.view.activityScrollList:ScrollToIndex(csIndex, true)
 end
 
 ActivityPushPopupCtrl.OnClose = HL.Override() << function(self)
     if self.m_phase then
         self.m_phase:RemovePhasePanelItemById(PANEL_ID)
     end
+    self.view.activityScrollList.onScrollEnd:RemoveAllListeners()
     
     UIManager:ToggleBlockObtainWaysJump("ActivityPushPopup", false, {})
 end

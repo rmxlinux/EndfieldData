@@ -210,7 +210,7 @@ end
 
 
 FacSaveBlueprintCtrl._OnClickSave = HL.Method() << function(self)
-    self:_CheckIsChangedAndDo(function(name, desc, icon, colorId, tagIds, timeLimitedFormulas)
+    self:_CheckIsChangedAndDo(function(name, desc, icon, colorId, tagIds, timeLimitedFormulas, activityItemIds)
         if self.m_isCreate then
             local csBPSys = GameInstance.player.remoteFactory.blueprint
             if csBPSys.myBlueprints.Count >= Tables.facBlueprintConst.MyBluePrintNumMax then
@@ -219,7 +219,7 @@ FacSaveBlueprintCtrl._OnClickSave = HL.Method() << function(self)
                 return
             end
             self.view.blueprintPreview:ApplyIconChanges()
-            GameInstance.player.remoteFactory.blueprint:SendSaveBlueprint(self.m_csBP, name, desc, icon, colorId, tagIds, timeLimitedFormulas)
+            GameInstance.player.remoteFactory.blueprint:SendSaveBlueprint(self.m_csBP, name, desc, icon, colorId, tagIds, timeLimitedFormulas, activityItemIds)
         elseif self.m_isEditing then
             Notify(MessageConst.SHOW_POP_UP, {
                 content = Language.LUA_FAC_BLUEPRINT_SAVE_CHANGE_HINT,
@@ -258,7 +258,7 @@ FacSaveBlueprintCtrl._CheckIsChangedAndDo = HL.Method(HL.Function, HL.Opt(HL.Fun
     local icon = self.view.blueprintContent.curIcon
     local colorId = self.view.blueprintContent.curColorId
     local tagIds = self.view.blueprintContent:GetSortedTagIds()
-    local timeLimitedFormulas = self:_GetTimeLimitedFormulas()
+    local timeLimitedFormulas, activityItemIds = self:_GetTimeLimitedFormulas()
     local isChanged
     if self.m_isCreate then
         isChanged = true 
@@ -294,7 +294,7 @@ FacSaveBlueprintCtrl._CheckIsChangedAndDo = HL.Method(HL.Function, HL.Opt(HL.Fun
         end
     end
     if isChanged then
-        actionOnChange(name, desc, icon, colorId, tagIds, timeLimitedFormulas)
+        actionOnChange(name, desc, icon, colorId, tagIds, timeLimitedFormulas, activityItemIds)
     elseif actionOnNotChange then
         actionOnNotChange()
     end
@@ -423,9 +423,10 @@ FacSaveBlueprintCtrl.OnRefreshTechTree = HL.Method(HL.Opt(HL.Any)) << function(s
     end
 end
 
-FacSaveBlueprintCtrl._GetTimeLimitedFormulas = HL.Method().Return(HL.Table) << function(self)
+FacSaveBlueprintCtrl._GetTimeLimitedFormulas = HL.Method().Return(HL.Table, HL.Table) << function(self)
     local helper = self.view.blueprintPreview.m_bpAbnormalIconHelper
     local timeLimitedFormulas = {}
+    local activityItems = {}
     local changedProdIconDic = self.view.blueprintPreview:GetChangedIcons() or {}
     for _, entry in pairs(self.m_csBP.buildingNodes) do
         local buildingId = entry.templateId
@@ -435,16 +436,22 @@ FacSaveBlueprintCtrl._GetTimeLimitedFormulas = HL.Method().Return(HL.Table) << f
                 local _, craftId = helper.GetAbnormalType(buildingId, itemId, true)
                 if craftId and FactoryUtils.isTimeLimitedFormula(craftId) then
                     timeLimitedFormulas[craftId] = true
+                elseif not craftId and FactoryUtils.isTimeLimitedItem(itemId) then
+                    activityItems[itemId] = true
                 end
             end
         end
     end
-    local intIds = {}
+    local formulaIntIds = {}
     for craftId, _ in pairs(timeLimitedFormulas) do
-        table.insert(intIds, CS.Beyond.Cfg.Tables.formulaIdToNum:GetValue(craftId))
+        table.insert(formulaIntIds, CS.Beyond.Cfg.Tables.formulaIdToNum:GetValue(craftId))
     end
-    logger.info("FacSaveBlueprintCtrl._GetTimeLimitedFormulas", timeLimitedFormulas, intIds)
-    return intIds
+    local itemIntIds = {}
+    for itemId, _ in pairs(activityItems) do
+        table.insert(itemIntIds, CS.Beyond.Cfg.Tables.itemIdToNum:GetValue(itemId))
+    end
+    logger.info("FacSaveBlueprintCtrl._GetTimeLimitedFormulas", timeLimitedFormulas, formulaIntIds, activityItems, itemIntIds)
+    return formulaIntIds, itemIntIds
 end
 
 HL.Commit(FacSaveBlueprintCtrl)

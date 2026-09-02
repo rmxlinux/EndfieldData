@@ -5,6 +5,8 @@ DomainDepotDeliveryCtrl = HL.Class('DomainDepotDeliveryCtrl', uiCtrl.UICtrl)
 
 DomainDepotDeliveryCtrl.m_getCellFunc = HL.Field(HL.Function)
 
+DomainDepotDeliveryCtrl.m_isSyncingPeerInfo = HL.Field(HL.Boolean) << false
+
 DomainDepotDeliveryCtrl.m_filterDomainIdList = HL.Field(HL.String) << ""
 
 DomainDepotDeliveryCtrl.m_domainDropDownInfo = HL.Field(HL.Table)
@@ -12,10 +14,6 @@ DomainDepotDeliveryCtrl.m_domainDropDownInfo = HL.Field(HL.Table)
 DomainDepotDeliveryCtrl.m_curDomainIndex = HL.Field(HL.Number) << 1
 
 DomainDepotDeliveryCtrl.m_resumeState = HL.Field(HL.Table)
-
-
-
-DomainDepotDeliveryCtrl.m_sortedRemoteDeliverList = HL.Field(HL.Table)
 
 
 
@@ -30,7 +28,6 @@ DomainDepotDeliveryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local inited = false
     self.m_resumeState = arg and arg.resumeState or nil
     GameInstance.player.domainDepotSystem.remoteDelegateDeliverList:Clear()
-    self.m_sortedRemoteDeliverList = {}
     self.view.refreshBtn.onClick:RemoveAllListeners()
     self.view.refreshBtn.onClick:AddListener(function()
         self:_OnRefreshBtnClick()
@@ -47,7 +44,7 @@ DomainDepotDeliveryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.scrollList.onUpdateCell:RemoveAllListeners()
     self.view.scrollList.onUpdateCell:AddListener(function(object, index)
         local cell = self.m_getCellFunc(object)
-        cell:InitDomainDepotDeliveryCell(self.m_sortedRemoteDeliverList[LuaIndex(index)])
+        cell:InitDomainDepotDeliveryCell(GameInstance.player.domainDepotSystem.remoteDelegateDeliverList[index])
     end)
 
     
@@ -78,7 +75,7 @@ DomainDepotDeliveryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
                 name = domainData.domainName,
                 icon = domainData.domainIcon,
             })
-            if domainId == curDomainId then
+            if domainId == curDomainId and (self.m_resumeState == nil or self.m_resumeState.filterDomainId == nil) then
                 self.m_curDomainIndex = #self.m_domainDropDownInfo
                 self.m_filterDomainIdList = domainId
             end
@@ -136,38 +133,25 @@ DomainDepotDeliveryCtrl._OnRefreshBtnClick = HL.Method() << function(self)
     end)
 end
 
-
-DomainDepotDeliveryCtrl._RefreshSortedRemoteDeliverList = HL.Method() << function(self)
-    local list = GameInstance.player.domainDepotSystem.remoteDelegateDeliverList
-    local sorted = {}
-    for i = 0, list.Count - 1 do
-        table.insert(sorted, list[i])
+DomainDepotDeliveryCtrl._RefreshDeliveryList = HL.Method(HL.Function) << function(self, onComplete)
+    if self.m_isSyncingPeerInfo then
+        return
     end
-    local myDeliverInstId = GameInstance.player.domainDepotSystem.deliverInstId
-    table.sort(sorted, function(left, right)
-        if left.insId == myDeliverInstId then
-            return true
-        end
-        if right.insId == myDeliverInstId then
-            return false
-        end
-        if left.domainGoldRewardCount ~= right.domainGoldRewardCount then
-            return left.domainGoldRewardCount > right.domainGoldRewardCount
-        end
-        if left.delegateTimeStamp ~= right.delegateTimeStamp then
-            return left.delegateTimeStamp < right.delegateTimeStamp
-        end
-        return left.insId < right.insId
+    self.m_isSyncingPeerInfo = true
+    local deliverList = GameInstance.player.domainDepotSystem.remoteDelegateDeliverList
+    DomainDepotUtils.SyncMissingDeliveryPeerInfos(deliverList, function()
+        self.m_isSyncingPeerInfo = false
+        onComplete()
     end)
-    self.m_sortedRemoteDeliverList = sorted
 end
 
 DomainDepotDeliveryCtrl.OnSync = HL.Method() << function(self)
     self.view.times1Txt.text = GameInstance.player.domainDepotSystem.dailyTakeDelegateCount
-    self:_RefreshSortedRemoteDeliverList()
-    self.view.scrollList:UpdateCount(#self.m_sortedRemoteDeliverList)
-    self.view.selectableNaviGroup:NaviToThisGroup()
-    self.view.emptyNode.gameObject:SetActive(#self.m_sortedRemoteDeliverList == 0)
+    self:_RefreshDeliveryList(function()
+        self.view.scrollList:UpdateCount(GameInstance.player.domainDepotSystem.remoteDelegateDeliverList.Count)
+        self.view.selectableNaviGroup:NaviToThisGroup()
+        self.view.emptyNode.gameObject:SetActive(GameInstance.player.domainDepotSystem.remoteDelegateDeliverList.Count == 0)
+    end)
 end
 
 DomainDepotDeliveryCtrl.OnShow = HL.Override() << function(self)

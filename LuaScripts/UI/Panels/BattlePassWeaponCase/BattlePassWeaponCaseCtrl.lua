@@ -351,6 +351,7 @@ BattlePassWeaponCaseCtrl._Refresh = HL.Method() << function(self)
         cell.button.onClick:RemoveAllListeners()
         cell.button.onClick:AddListener(function()
             if self.m_isPreview and not DeviceInfo.usingController then
+                self:_PreviewWeapon(weaponId)
                 return
             end
             self:_OnWeaponListCellClicked(cell, rewardId, LuaIndex(csIndex))

@@ -18,6 +18,24 @@ function DungeonUtils.checkCanOpenPhase(args)
         return false, Language.LUA_ACTIVITY_FORBIDDEN
     end
 
+    
+    local curDungeonId = GameInstance.dungeonManager.curDungeonId or ""
+    if Utils.isInDungeon() and DungeonUtils.isDungeonHighDifficulty(curDungeonId) then
+        local succ, curDungeonCfg = Tables.dungeonTable:TryGetValue(curDungeonId)
+        if not succ then
+            return false
+        end
+
+        local curDungeonSeriesId = curDungeonCfg.dungeonSeriesId
+        if dungeonSeriesIdValid and dungeonSeriesId ~= curDungeonSeriesId then
+            return false
+        end
+
+        if dungeonIdValid and Tables.dungeonTable[dungeonId].dungeonSeriesId ~= curDungeonSeriesId then
+            return false
+        end
+    end
+
     return true
 end
 
@@ -401,7 +419,61 @@ end
 
 
 
+local FUNC_ON_CLICK_CHAR_FORMATION_DUNGEON_INFO_BY_CATEGORY = {
+    [DungeonConst.DUNGEON_CATEGORY.SeasonTower] = "onClickCharFormationDungeonInfoBtnSeasonTower",
+}
 
+
+DungeonUtils.onClickCharFormationDungeonInfoBtn = function(dungeonId)
+    local succ, categoryCfg = DungeonUtils.TryGetDungeonCategoryCfg(dungeonId)
+    if not succ then
+        return
+    end
+
+    local funcName = FUNC_ON_CLICK_CHAR_FORMATION_DUNGEON_INFO_BY_CATEGORY[categoryCfg.dungeonType]
+    if not string.isEmpty(funcName) then
+        DungeonUtils[funcName](dungeonId)
+        return
+    end
+
+    UIManager:AutoOpen(PanelId.DungeonInfoPopup, { dungeonId = dungeonId })
+end
+
+DungeonUtils.onClickCharFormationDungeonInfoBtnSeasonTower = function(dungeonId)
+    UIManager:AutoOpen(PanelId.SeasonTowerDungeonInfoPopup, { dungeonId = dungeonId })
+end
+
+
+
+
+
+
+
+
+
+
+local DEFAULT_DUNGEON_INFO_PANEL_VISIBLE_BY_CATEGORY = {
+    [DungeonConst.DUNGEON_CATEGORY.Archery] = "onDefaultDungeonInfoPanelVisibleArchery",
+}
+
+function DungeonUtils.checkDefaultDungeonInfoPanelVisible(dungeonId)
+    local succ, dungeonCfg = Tables.dungeonTable:TryGetValue(dungeonId)
+    if not succ then
+        return
+    end
+    local funcName = DEFAULT_DUNGEON_INFO_PANEL_VISIBLE_BY_CATEGORY[dungeonCfg.dungeonCategory]
+    if funcName then
+        return DungeonUtils[funcName](dungeonId)
+    end
+
+    return DungeonUtils.isDungeonHasFeatureInfo(dungeonId)
+end
+
+function DungeonUtils.onDefaultDungeonInfoPanelVisibleArchery(dungeonId)
+    local succ, subGameData = DataManager.subGameInstDataTable:TryGetValue(dungeonId)
+    return succ and subGameData.gameMechanicsType == GEnums.GameMechanicsType.DungeonShootingRangeDaily
+    
+end
 
 
 
@@ -413,25 +485,31 @@ end
 local DUNGEON_POPUP_HANDLERS = {
     [GEnums.DungeonPopupType.Default] = {
         tryAutoShow = function(dungeonId)
-            if not DungeonUtils.isDungeonHasFeatureInfo(dungeonId) then
-                return
+            if not DungeonUtils.checkDefaultDungeonInfoPanelVisible(dungeonId) then
+                return false
             end
             LuaSystemManager.commonTaskTrackSystem:AddRequest("DungeonInfo", function()
                 UIManager:AutoOpen(PanelId.DungeonInfoPopup, {
                     dungeonId = dungeonId,
                     closeCb = function()
+                        DungeonUtils.onDungeonInfoFinished()
                         Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "DungeonInfo")
                     end,
                 })
             end, function()
+                DungeonUtils.onDungeonInfoFinished()
                 UIManager:Close(PanelId.DungeonInfoPopup)
             end)
+            return true
         end,
         show = function(dungeonId, arg)
+            if not DungeonUtils.checkDefaultDungeonInfoPanelVisible(dungeonId) then
+                return
+            end
             UIManager:AutoOpen(PanelId.DungeonInfoPopup, { dungeonId = dungeonId, needBindAction = arg and arg.needBindAction })
         end,
         checkVisibility = function(dungeonId)
-            return DungeonUtils.isDungeonHasFeatureInfo(dungeonId)
+            return DungeonUtils.checkDefaultDungeonInfoPanelVisible(dungeonId)
         end,
     },
     [GEnums.DungeonPopupType.BountyEnemy] = {
@@ -484,20 +562,24 @@ local DUNGEON_POPUP_HANDLERS = {
     },
 }
 
+function DungeonUtils.onDungeonInfoFinished()
+    if GameWorld.worldInfo.subGame and GameWorld.worldInfo.subGame.OnDungeonInfoFinished then
+        GameWorld.worldInfo.subGame:OnDungeonInfoFinished()
+    end
+end
+
 
 
 
 function DungeonUtils.tryAutoShowDungeonPopup(dungeonId)
-    if not DungeonUtils.checkCanAutoPopupInfoPanel(dungeonId) then
-        return
-    end
     local succ, dungeonCfg = Tables.dungeonTable:TryGetValue(dungeonId)
-    if not succ then
-        return
+    if not succ or dungeonCfg.forceIgnoreFeaturePopup or not DungeonUtils.checkCanShowDungeonPopup(dungeonId) then
+        return false
     end
+
     local handler = DUNGEON_POPUP_HANDLERS[dungeonCfg.popupType]
     if handler and handler.tryAutoShow then
-        handler.tryAutoShow(dungeonId)
+        return handler.tryAutoShow(dungeonId)
     end
 end
 
@@ -505,16 +587,15 @@ end
 
 function DungeonUtils.showDungeonPopupByEvent()
     local dungeonId = GameInstance.dungeonManager.curDungeonId
-    if string.isEmpty(dungeonId) then
-        return
-    end
-    if not DungeonUtils.checkCanShowDungeonPopup(dungeonId) then
-        return
-    end
     local succ, dungeonCfg = Tables.dungeonTable:TryGetValue(dungeonId)
     if not succ then
         return
     end
+
+    if not DungeonUtils.checkCanShowDungeonPopup(dungeonId) then
+        return
+    end
+
     local handler = DUNGEON_POPUP_HANDLERS[dungeonCfg.popupType]
     if handler and handler.show then
         handler.show(dungeonId)
@@ -532,10 +613,8 @@ function DungeonUtils.onClickDungeonInfoBtn()
     local dungeonId = GameInstance.dungeonManager.curDungeonId
     local succ, dungeonCfg = Tables.dungeonTable:TryGetValue(dungeonId)
     if not succ then
-        logger.error("DungeonUtils.onClickDungeonInfoBtn invalid dungeonId", dungeonId)
         return
     end
-
     local funcName = FUNC_ON_CLICK_DUNGEON_INFO_BY_CATEGORY[dungeonCfg.dungeonCategory]
     if funcName then
         DungeonUtils[funcName](dungeonId)
@@ -641,12 +720,7 @@ function DungeonUtils.isDungeonHasFeatureInfo(dungeonId)
 end
 
 
-
 function DungeonUtils.checkCanShowDungeonPopup(dungeonId)
-    if DungeonUtils.isDungeonCharTutorial(dungeonId) then
-        return false
-    end
-
     if GameInstance.dungeonManager:IsDungeonPassed(dungeonId) then
         return false
     end
@@ -656,18 +730,64 @@ end
 
 
 
-function DungeonUtils.checkCanAutoPopupInfoPanel(dungeonId)
-    if not DungeonUtils.checkCanShowDungeonPopup(dungeonId) then
-        return false
-    end
+local FUNC_GET_INFO_POPUP_PARAMS_BY_CATEGORY = {
+    [DungeonConst.DUNGEON_CATEGORY.Archery] = "getInfoPopupParamsArchery",
+}
 
-    local succ, dungeonCfg = Tables.dungeonTable:TryGetValue(dungeonId)
-    if succ and dungeonCfg.forceIgnoreFeaturePopup then
-        return false
-    end
 
-    return true
+
+function DungeonUtils.getDefaultInfoPopupParams(dungeonId)
+    local dungeonCfg = Tables.dungeonTable[dungeonId]
+    local gameMechanicCfg = Tables.gameMechanicTable[dungeonId]
+    local dungeonTypeCfg = Tables.dungeonTypeTable[gameMechanicCfg.gameCategory]
+    local blackboard = CS.Beyond.Blackboard()
+    if dungeonCfg.paramList then
+        for i = 1, dungeonCfg.paramList.Count do
+            local param = dungeonCfg.paramList[CSIndex(i)]
+            blackboard:Assign(param.key, param.value)
+        end
+    end
+    local paramBlackboardFormatData = CS.Beyond.Gameplay.BlackboardFormatData(blackboard)
+    local featureDescWithBlackboardFormat = CS.Beyond.Gameplay.FormatUtils.FormatBattleText(dungeonCfg.featureDesc, paramBlackboardFormatData)
+
+    return {
+        titleText = dungeonTypeCfg.dungeonInfoTitle,
+        positionText = DungeonUtils.getEntryLocation(dungeonCfg.levelId, true),
+        featureInfos = DungeonUtils.getListByStr(featureDescWithBlackboardFormat),
+    }
 end
+
+
+
+function DungeonUtils.getInfoPopupParamsArchery(dungeonId)
+    local params = DungeonUtils.getDefaultInfoPopupParams(dungeonId)
+
+    local system = GameInstance.player.typhoeaArcherySystem
+    local _, affixCombinationId = system:TryGetDailyTrainAffixCombinationId(dungeonId)
+    local _, affixData = Tables.TyphoeaShootingRangeAffixCombinationTable:TryGetValue(affixCombinationId)
+    local affixIds = affixData.affixIds
+    local featureInfos = {}
+    local count = affixIds.Count
+    
+    for i = 0, count - 1 do
+        table.insert(featureInfos, Tables.typhoeaShootingRangeAffixTable[affixIds[i]].affixDesc)
+    end
+    params.featureInfos = featureInfos
+
+    return params
+end
+
+
+
+function DungeonUtils.getInfoPopupParams(dungeonId)
+    local dungeonCfg = Tables.dungeonTable[dungeonId]
+    local funcName = FUNC_GET_INFO_POPUP_PARAMS_BY_CATEGORY[dungeonCfg.dungeonCategory]
+    if not funcName then
+        return DungeonUtils.getDefaultInfoPopupParams(dungeonId)
+    end
+    return DungeonUtils[funcName](dungeonId)
+end
+
 
 
 
@@ -743,6 +863,31 @@ end
 
 
 
+function DungeonUtils.onDungeonLeaveToEntryPanel(dungeonId, usePanelDefaultSelect)
+    
+    
+    GameInstance.player.forbidSystem:SetPhaseForbid("CharFormation", "MainCharInAir", false, nil)
+
+    local openArgs = {
+        enterDungeonCallback = function(enterDungeonId)
+            LuaSystemManager.uiRestoreSystem:ModifyRequest(dungeonId, enterDungeonId)
+        end,
+        onCloseCallback = function()
+            
+            LuaSystemManager.uiRestoreSystem:RemovePhaseFromRequest(dungeonId, PhaseId.DungeonEntry)
+            GameInstance.dungeonManager:LeaveDungeon()
+        end,
+    }
+    if usePanelDefaultSelect then
+        openArgs.dungeonSeriesId = Tables.dungeonTable[dungeonId].dungeonSeriesId
+    else
+        openArgs.dungeonId = dungeonId
+    end
+    PhaseManager:OpenPhaseFast(PhaseId.DungeonEntry, openArgs)
+end
+
+
+
 
 
 
@@ -765,8 +910,16 @@ function DungeonUtils.isDungeonChar(dungeonId)
     return DungeonUtils.dungeonTypeValidate(dungeonId, DungeonConst.DUNGEON_CATEGORY.Char)
 end
 
+function DungeonUtils.isDungeonStory(dungeonId)
+    return DungeonUtils.dungeonTypeValidate(dungeonId, DungeonConst.DUNGEON_CATEGORY.Story)
+end
+
 function DungeonUtils.isDungeonChallenge(dungeonId)
     return DungeonUtils.dungeonTypeValidate(dungeonId, DungeonConst.DUNGEON_CATEGORY.Challenge)
+end
+
+function DungeonUtils.isDungeonHighDifficulty(dungeonId)
+    return DungeonUtils.dungeonTypeValidate(dungeonId, DungeonConst.DUNGEON_CATEGORY.HighDifficulty)
 end
 
 function DungeonUtils.isDungeonContract(dungeonId)
@@ -792,6 +945,77 @@ function DungeonUtils.isDungeonRacingDungeon(dungeonId)
         end
     end
     return false
+end
+
+function DungeonUtils.isDungeonArchery(dungeonId)
+    return DungeonUtils.dungeonTypeValidate(dungeonId, DungeonConst.DUNGEON_CATEGORY.Archery)
+end
+
+function DungeonUtils.isDungeonWulingRacing(dungeonId)
+    return DungeonUtils.dungeonTypeValidate(dungeonId, DungeonConst.DUNGEON_CATEGORY.WulingRacing)
+end
+
+
+
+
+
+
+
+function DungeonUtils.initSettlementRewardsWithTitleNode(ref, items)
+    items = items or {}
+    local getCellFunc = UIUtils.genCachedCellFunction(ref.rewardsNodeList)
+    ref.rewardsNodeList.onUpdateCell:AddListener(function(go, csIndex)
+        local cell = getCellFunc(go)
+        local itemData = items[LuaIndex(csIndex)]
+        if not itemData then
+            return
+        end
+        cell:InitItem(itemData, true)
+        cell:SetExtraInfo({ isSideTips = DeviceInfo.usingController })
+    end)
+    ref.rewardsNodeList:UpdateCount(#items)
+    ref.stateController:SetState(#items > 0 and "HasItem" or "EmptyItem")
+
+    
+    local function refreshControllerKeyHint()
+        if not DeviceInfo.usingController or #items <= 0 then
+            ref.keyHint.gameObject:SetActive(false)
+            return
+        end
+        local firstItemGo = ref.rewardsNodeList:Get(0)
+        if not firstItemGo then
+            return
+        end
+        ref.keyHint.gameObject:SetActive(true)
+        ref.keyHint.transform.position = firstItemGo.transform.position
+        local keyHintPos = ref.keyHint.transform.localPosition
+        keyHintPos = keyHintPos + Vector3(0, -60, 0)
+        ref.keyHint.transform.localPosition = keyHintPos
+    end
+
+    ref.rewardsNodeList.onGraduallyShowFinish:RemoveAllListeners()
+    if DeviceInfo.usingController and #items > 0 then
+        ref.keyHint.gameObject:SetActive(false)
+        ref.rewardsNodeList.onGraduallyShowFinish:AddListener(refreshControllerKeyHint)
+        refreshControllerKeyHint() 
+    else
+        ref.keyHint.gameObject:SetActive(false)
+    end
+end
+
+
+
+
+function DungeonUtils.initGameSettlementTaskInfoNode(nodeRef, params)
+    params = params or {}
+    local cellCache = UIUtils.genCellCache(nodeRef.commonTaskGoalCell)
+    cellCache:Refresh(#params, function(cell, luaIndex)
+        local p = params[luaIndex]
+        cell:InitCommonTaskGoalCellStatic(p.taskKey, p.objectiveIndex, p.taskType)
+        if p.forceFail then
+            cell:ForceSetFail()
+        end
+    end)
 end
 
 

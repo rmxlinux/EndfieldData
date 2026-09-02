@@ -222,6 +222,7 @@ WeaponExhibitPotentialCtrl._RefreshButtonNode = HL.Method(HL.Table) << function(
     if isMaxPotential then
         self.view.btnLevelUp.gameObject:SetActive(false)
         self.view.upgradeNode.gameObject:SetActive(false)
+        InputManagerInst:ToggleBinding(self.m_selectMaterialsInputBindingId, false)
         return
     end
 end

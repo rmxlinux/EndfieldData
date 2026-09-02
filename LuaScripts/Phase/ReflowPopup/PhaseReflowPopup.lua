@@ -43,8 +43,8 @@ end
 
 PhaseReflowPopup._OnDestroy = HL.Override() << function(self)
     PhaseReflowPopup.Super._OnDestroy(self)
-    
-    if not self.m_isInterrupted and self.arg and self.arg.closeCallback then
+   
+   if not self.m_isInterrupted and self.arg and self.arg.closeCallback then
         self.arg.closeCallback()
     end
     UIManager:ToggleBlockObtainWaysJump("PhaseReflowPopup", false)

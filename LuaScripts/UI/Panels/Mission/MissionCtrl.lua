@@ -326,6 +326,10 @@ MissionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_ChangeSelectedMission(0)
     self:_RefreshNaviSelected()
+    self.view.missionScrollRect.naviGroup.onDefaultNaviFailed:RemoveAllListeners()
+    self.view.missionScrollRect.naviGroup.onDefaultNaviFailed:AddListener(function(dir)
+        self:_OnMissionListDefaultNaviFailed(dir)
+    end)
 
     if DeviceInfo.usingController then
         self.view.rewardNaviGroup.onIsFocusedChange:AddListener(function(isFocused)
@@ -546,21 +550,27 @@ MissionCtrl._TraverseAllMissionCell = HL.Method(HL.Any).Return(HL.Boolean) << fu
             local gameObject = self.view.missionScrollView:Get(csIdx)
             if gameObject then
                 local contentCell = self.m_getMissionCellsFunc(gameObject)
-                callback(missionId, contentCell.missionCell)
+                if contentCell.missionCell.gameObject.activeSelf then
+                    callback(missionId, contentCell.missionCell)
+                end
             end
         elseif t == MissionListCellType_Chapter then
             local csIdx = CSIndex(i)
             local gameObject = self.view.missionScrollView:Get(csIdx)
             if gameObject then
                 local contentCell = self.m_getMissionCellsFunc(gameObject)
-                local missionList = viewInfo.missionList
-                for missionIdx = 1, #missionList do
-                    local missionId = missionList[missionIdx].id
-                    if missionId == self.m_lastSelectedMissionId then
-                        hasLastSelectMission = true
+                if contentCell.chapterCell.gameObject.activeSelf and contentCell.missionCellCache then
+                    local missionList = viewInfo.missionList
+                    for missionIdx = 1, #missionList do
+                        local missionId = missionList[missionIdx].id
+                        if missionId == self.m_lastSelectedMissionId then
+                            hasLastSelectMission = true
+                        end
+                        local missionCell = contentCell.missionCellCache:GetItem(missionIdx)
+                        if missionCell then
+                            callback(missionId, missionCell)
+                        end
                     end
-                    local missionCell = contentCell.missionCellCache:GetItem(missionIdx)
-                    callback(missionId, missionCell)
                 end
             end
         end
@@ -1464,6 +1474,10 @@ MissionCtrl._RefreshTrackBtn = HL.Method() << function(self)
             missionInfoNode.stopBtn.gameObject:SetActive(false)
         end
         missionInfoNode.trackBtn.onClick:AddListener(function()
+            if self:IsPlayingAnimationIn() then
+                return
+            end
+
             
             if self.m_isClosing then
                 return
@@ -1577,7 +1591,7 @@ end
 MissionCtrl.OnMissionStateChange = HL.Method(HL.Any) << function(self, arg)
     if self.m_selectedMissionId ~= "" then
         local missionState = self.m_missionSystem:GetMissionState(self.m_selectedMissionId)
-        if missionState == MissionState.None or missionState == MissionState.Failed or missionState == MissionState.Disabled then
+        if missionState ~= MissionState.Processing then
             self.m_selectedMissionId = ""
         end
     end
@@ -1609,7 +1623,7 @@ MissionCtrl.OnQuestStateChange = HL.Method(HL.Any) << function(self, arg)
     local missionId = self.m_missionSystem:GetMissionIdByQuestId(questId)
     local missionState = self.m_missionSystem:GetMissionState(missionId)
 
-    if missionState == MissionState.None or missionState == MissionState.Failed or missionState == MissionState.Disabled then
+    if missionState ~= MissionState.Processing then
         return
     end
 
@@ -1648,31 +1662,72 @@ end
 
 
 
+
+MissionCtrl._OnMissionListDefaultNaviFailed = HL.Method(CS.UnityEngine.UI.NaviDirection) << function(self, dir)
+    if dir == CS.UnityEngine.UI.NaviDirection.Up then
+        self:_ChangeSelectedMission(-1)
+    elseif dir == CS.UnityEngine.UI.NaviDirection.Down then
+        self:_ChangeSelectedMission(1)
+    else
+        self.view.missionScrollView:ListWrapNavigate(dir)
+    end
+end
+
+
+
+
 MissionCtrl._ChangeSelectedMission = HL.Method(HL.Number) << function(self, offset)
-    local selectedIndex
+    local selectedMissionIndex
+    local focusedIndex
     local missionIdInfoList = {}
+    local currentTarget = offset ~= 0 and InputManagerInst.controllerNaviManager.curTarget or nil
     for k, v in ipairs(self.m_missionViewInfo) do
+        local content
+        if currentTarget then
+            local gameObject = self.view.missionScrollView:Get(CSIndex(k))
+            if gameObject then
+                content = self.m_getMissionCellsFunc(gameObject)
+            end
+        end
         if v.type == MissionListCellType_Chapter then
-            for kk, missionViewInfo in pairs(v.missionList) do
+            for kk, missionViewInfo in ipairs(v.missionList) do
                 table.insert(missionIdInfoList, { cellIndex = k, subIndex = kk, id = missionViewInfo.id, })
                 if missionViewInfo.id == self.m_selectedMissionId then
-                    selectedIndex = #missionIdInfoList
+                    selectedMissionIndex = #missionIdInfoList
+                end
+                if content and content.missionCellCache then
+                    local missionCell = content.missionCellCache:GetItem(kk)
+                    if missionCell and missionCell.selectBtn == currentTarget then
+                        focusedIndex = #missionIdInfoList
+                    end
                 end
             end
-        else
+        elseif v.type == MissionListCellType_Mission then
             table.insert(missionIdInfoList, { cellIndex = k, id = v.id, })
             if v.id == self.m_selectedMissionId then
-                selectedIndex = #missionIdInfoList
+                selectedMissionIndex = #missionIdInfoList
+            end
+            if content and content.missionCell and content.missionCell.selectBtn == currentTarget then
+                focusedIndex = #missionIdInfoList
             end
         end
     end
+    local selectedIndex = focusedIndex or selectedMissionIndex
     if not selectedIndex then
         return
     end
-    local newInfo = missionIdInfoList[selectedIndex + offset]
-    if not newInfo then
+    
+    local missionCount = #missionIdInfoList
+    if missionCount == 0 then
         return
     end
+    local newIndex = selectedIndex + offset
+    if newIndex < 1 then
+        newIndex = missionCount
+    elseif newIndex > missionCount then
+        newIndex = 1
+    end
+    local newInfo = missionIdInfoList[newIndex]
     
     self.m_selectedMissionId = newInfo.id
 
@@ -1682,12 +1737,19 @@ MissionCtrl._ChangeSelectedMission = HL.Method(HL.Number) << function(self, offs
 
     self:_RefreshMissionInfo()
 
-    if DeviceInfo.usingController and offset == 0 and newInfo.cellIndex > 1 then
-        local scrollTarget = math.max(1, newInfo.cellIndex - 2)
-        self.view.missionScrollView:ScrollToIndex(CSIndex(scrollTarget), true)
-    else
-        self.view.missionScrollView:ScrollToIndex(CSIndex(newInfo.cellIndex), true)
+    local scrollTarget = newInfo.cellIndex
+    if DeviceInfo.usingController then
+        if offset == 0 and newInfo.cellIndex > 1 then
+            scrollTarget = math.max(1, newInfo.cellIndex - 2)
+        elseif (newIndex == 1 or (newIndex == missionCount and not newInfo.subIndex)) and newInfo.cellIndex > 1 then
+            
+            local previousViewInfo = self.m_missionViewInfo[newInfo.cellIndex - 1]
+            if previousViewInfo.type == MissionListCellType_Importance then
+                scrollTarget = newInfo.cellIndex - 1
+            end
+        end
     end
+    self.view.missionScrollView:ScrollToIndex(CSIndex(scrollTarget), true)
     self:_RefreshNaviSelected()
 end
 
@@ -1751,38 +1813,50 @@ MissionCtrl._DoTrackJumpAfterServerConfirm = HL.Method(HL.String) << function(se
     end
 
     local jumpInfo = self.m_missionSystem:GetTrackJumpInfoForMission(missionId)
+    local jumpPhaseId
+    local jumpPhaseArg
+    local keepPhaseIds
+    if jumpInfo.jumpType == TrackJumpType.MapTracker then
+        local instId = GameInstance.player.mapManager:GetMissionTrackingMarkInstIdByTrackId(jumpInfo.mapTrackerId)
+        local levelId = GameWorld.worldInfo.curLevelId
+        if not string.isEmpty(instId) then
+            local _, markRuntimeData = GameInstance.player.mapManager:GetMarkInstRuntimeData(instId)
+            levelId = markRuntimeData.levelId
+        end
+        jumpPhaseId = PhaseId.Map
+        jumpPhaseArg = {instId = instId, levelId = levelId}
+        keepPhaseIds = {PhaseId.Level, PhaseId.Map, PhaseId.Dialog}
+    elseif jumpInfo.jumpType == TrackJumpType.SNS then
+        jumpPhaseId = PhaseId.SNS
+        jumpPhaseArg = {dialogId = jumpInfo.snsDialogId}
+        keepPhaseIds = {PhaseId.Level, PhaseId.SNS, PhaseId.Dialog}
+    end
+
+    if jumpPhaseId then
+        local canOpen
+        if PhaseManager:IsOpen(jumpPhaseId) then
+            canOpen = PhaseManager:CheckCanRefreshPhaseAndToast(jumpPhaseId, jumpPhaseArg)
+        else
+            canOpen = PhaseManager:CheckCanOpenPhaseAndToast(jumpPhaseId, jumpPhaseArg)
+        end
+        if not canOpen then
+            PhaseManager:PopPhase(PHASE_ID)
+            return
+        end
+    end
+
     self.m_isClosing = true
     self:PlayAnimationOutWithCallback(function()
-        if jumpInfo.jumpType == TrackJumpType.MapTracker then
-            local instId = GameInstance.player.mapManager:GetMissionTrackingMarkInstIdByTrackId(jumpInfo.mapTrackerId)
-            local levelId = GameWorld.worldInfo.curLevelId
-            if not string.isEmpty(instId) then
-                local _, markRuntimeData = GameInstance.player.mapManager:GetMarkInstRuntimeData(instId)
-                levelId = markRuntimeData.levelId
-            end
+        if jumpPhaseId then
             
             
-            local canOpen, toast = MapUtils.checkCanOpenMapAndParseArgs({instId = instId, levelId = levelId})
-            if canOpen then
-                
-                
-                
-                PhaseManager:GoToPhase(PhaseId.Map, {instId = instId, levelId = levelId}, function()
-                    self:_ExitAllPhasesExcept({PhaseId.Level, PhaseId.Map, PhaseId.Dialog})
-                end, true)
-            else
-                Notify(MessageConst.SHOW_TOAST, toast)
-                self:_ExitAllPhasesExcept({PhaseId.Level, PhaseId.Dialog})
-            end
+            
+            
+            
+            PhaseManager:GoToPhase(jumpPhaseId, jumpPhaseArg, function()
+                self:_ExitAllPhasesExcept(keepPhaseIds)
+            end, true)
             return
-        elseif jumpInfo.jumpType == TrackJumpType.SNS then
-            if PhaseManager:CheckCanOpenPhaseAndToast(PhaseId.SNS, {dialogId = jumpInfo.snsDialogId}) then
-                
-                PhaseManager:GoToPhase(PhaseId.SNS, {dialogId = jumpInfo.snsDialogId}, function()
-                    self:_ExitAllPhasesExcept({PhaseId.Level, PhaseId.SNS, PhaseId.Dialog})
-                end, true)
-                return
-            end
         end
         self:_ExitAllPhasesExcept({PhaseId.Level, PhaseId.Dialog})
     end)

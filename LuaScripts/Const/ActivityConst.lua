@@ -42,6 +42,9 @@ ACTIVITY_TABLE = {
     [ActivityType.CharacterGuideLine] = {
         redDot = "ActivityCharacterGuideLine",
     },
+    [ActivityType.CharacterGift] = {
+        redDot = "ActivityCharacterGift",
+    },
     [ActivityType.ItemSubmission] = {
         redDot = "ActivityItemSubmission",
     },
@@ -84,6 +87,12 @@ ACTIVITY_TABLE = {
     [ActivityType.DoubleBattle] = {
         redDot = "ActivityDoubleBattle",
     },
+    [ActivityType.ShootingRangeTask] = {
+        redDot = "ActivityTyphoeaArchery",
+    },
+    [ActivityType.Parkour] = {
+        redDot = "ActivityParkour",
+    },
     [ActivityType.SkipChapter] = {
         redDot = "ActivitySkipChapter",
     },
@@ -108,6 +117,7 @@ ACTIVITY_COMMON_SONS = {
     ActivityNormalChallenge = false,
     ActivityHighDifficulty = false,
     ActivityConditionalMultiStage = false,
+    ActivityCharacterGift = false,
     ActivityCharacterGuideLine = false,
     ActivityItemSubmission = false,
     ActivityVersionGuide = false,
@@ -123,6 +133,8 @@ ACTIVITY_COMMON_SONS = {
     ActivityContingencyContract = false,
     ActivitySimulationTrainingTask = false,
     ActivitySeasonTower = false,
+    ActivityTyphoeaArchery = false,
+    ActivityParkour = false,
     ActivitySkipChapter = false,
     ActivityRacingDungeon = false,
     ActivityReflowNew = false,

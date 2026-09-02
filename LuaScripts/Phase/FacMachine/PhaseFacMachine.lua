@@ -62,7 +62,11 @@ PhaseFacMachine.m_tickInitialized = HL.Field(HL.Boolean) << false
 PhaseFacMachine.OpenBuildingPanel = HL.StaticMethod(HL.Table) << function(args)
     local isForbid, forbidReason = Utils.isForbiddenWithReason(ForbidType.ForbidInteractFacBuilding)
     if isForbid then
-        Notify(MessageConst.SHOW_RADIO, { GameAction.RadioRuntimeData(forbidReason.radioId, true, 0) })
+        
+        local radioId = forbidReason and forbidReason.radioId
+        if not string.isEmpty(radioId) then
+            Notify(MessageConst.SHOW_RADIO, { GameAction.RadioRuntimeData(radioId, true, 0) })
+        end
         if (args.failCb ~= nil) then
             args.failCb()
         end
@@ -411,9 +415,19 @@ PhaseFacMachine.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL
 end
 
 PhaseFacMachine._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
-    if self.m_panelArg.uiInfo ~= nil and string.isEmpty(self.m_panelArg.uiInfo.nodeHandler.templateId) then
-        PhaseManager:ExitPhaseFast(PhaseId.FacMachine)  
-        return
+    
+    
+    local uiInfo = self.m_panelArg and self.m_panelArg.uiInfo
+    if uiInfo ~= nil then
+        local nodeHandler = uiInfo.nodeHandler
+        local chapterId = Utils.getCurrentChapterId()
+        local nodeStillExists = FactoryUtils.getBuildingNodeHandler(self.curNodeId, chapterId) ~= nil
+        if nodeHandler == nil or not nodeHandler.valid or string.isEmpty(nodeHandler.templateId) or not nodeStillExists then
+            logger.error("[FacMachine] Abort TransitionIn, building node unavailable", self.curNodeId, chapterId,
+                nodeHandler ~= nil, nodeHandler and nodeHandler.valid, nodeStillExists)
+            PhaseManager:ExitPhaseFast(PhaseId.FacMachine)
+            return
+        end
     end
 
     self.m_isDoingOut = false

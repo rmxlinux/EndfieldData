@@ -68,6 +68,8 @@ end
 
 FacQuickBarCtrl.OnHide = HL.Override() << function(self)
     FacQuickBarCtrl.Super.OnHide(self)
+    
+    self:CancelDragging()
     if DeviceInfo.usingController then
         if not string.isEmpty(self.m_curSettingBuildingItemId) then
             self:_ExitSetBuilding()
@@ -327,13 +329,13 @@ FacQuickBarCtrl._UpdateCell = HL.Method(HL.Any, HL.Number) << function(self, cel
         elseif hasCraft then
             cell.item.view.button.onDoubleClick:AddListener(function()
                 if count == 0 then
-                    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { selectedId = itemId })
+                    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { onlyCraftNode = false, selectedId = itemId })
                 end
             end)
         elseif FactoryUtils.isDecoBuildingItem(itemId) then
             cell.item.view.button.onDoubleClick:AddListener(function()
                 if count == 0 then
-                    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { selectedId = itemId })
+                    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { onlyCraftNode = false, selectedId = itemId })
                 end
             end)
         end
@@ -603,6 +605,11 @@ FacQuickBarCtrl._OnQuickBarEndDrag = HL.Method(HL.Number, HL.Opt(HL.Userdata, HL
     if not eventData then
         return
     end
+    
+    
+    if self:IsHide() then
+        return
+    end
     if enterDrop then
         return
     end
@@ -611,6 +618,21 @@ FacQuickBarCtrl._OnQuickBarEndDrag = HL.Method(HL.Number, HL.Opt(HL.Userdata, HL
     end
     
     self:_OnClickItem(index, eventData.position)
+end
+
+
+FacQuickBarCtrl.CancelDragging = HL.Method() << function(self)
+    if not self.m_itemCells then
+        return
+    end
+    local count = self.m_itemCells:GetCount()
+    for index = 1, count do
+        local cell = self.m_itemCells:GetItem(index)
+        local dragItem = cell and cell.view and cell.view.dragItem
+        if dragItem and dragItem.inDragging then
+            dragItem:OnEndDrag(nil)
+        end
+    end
 end
 
 
@@ -1108,7 +1130,7 @@ FacQuickBarCtrl.OnChangeSpaceshipDomainId = HL.Method(HL.Any) << function(self, 
 end
 
 FacQuickBarCtrl._OpenBuildList = HL.Method() << function(self)
-    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, {showLastType = true})
+    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { onlyCraftNode = false, showLastType = true })
 end
 
 HL.Commit(FacQuickBarCtrl)

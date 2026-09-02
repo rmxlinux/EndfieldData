@@ -204,6 +204,10 @@ CommonMoneyExchangeCtrl.Refresh = HL.Method(HL.Opt(HL.Any)) << function(self, ar
 end
 
 CommonMoneyExchangeCtrl._OnConfirmBtnClick = HL.Method() << function(self)
+    if self:IsPlayingAnimationIn() then
+        return
+    end
+
     local ret, error = CS.Beyond.Gameplay.ShopSystem.ExchangeMoney(self.m_arg.sourceId, self.m_arg.targetId, math.floor(tonumber(self.view.costNumTxt1.text)))
     logger.info(tostring(ret))
 end

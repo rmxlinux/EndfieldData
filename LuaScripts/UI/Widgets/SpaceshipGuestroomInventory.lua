@@ -53,6 +53,13 @@ SpaceshipGuestroomInventory._OnFirstTimeInit = HL.Override() << function(self)
         self:_UpdateView()
     end)
 
+    self:RegisterMessage(MessageConst.ON_SPACESHIP_CLUE_PLACE_CHANGE, function()
+        if not self.m_isOpen then
+            return
+        end
+        self:_RefreshIndexRedDots()
+    end)
+
     self:RegisterMessage(MessageConst.ON_SPACESHIP_HEAD_NAVI_TARGET_CHANGE, function(cell)
         if not self.m_isOpen then
             return
@@ -351,6 +358,34 @@ SpaceshipGuestroomInventory._RefreshCacheData = HL.Method() << function(self)
     self.m_cacheData = tempCacheData
 end
 
+SpaceshipGuestroomInventory._HasClueCanPlaceInCurrentLibrary = HL.Method(HL.Number).Return(HL.Boolean) << function(self, index)
+    local spaceship = GameInstance.player.spaceship
+    if not spaceship:CheckClueCanPlaceByIndex(index) then
+        return false
+    end
+    if self.m_clueToggleTab == 0 then
+        return true
+    end
+    local clues = GameInstance.player.spaceship:GetCluesByIndex(index, GUEST_ROOM_CLUE_TYPE[self.m_clueToggleTab])
+    if not clues then
+        return false
+    end
+    local currentTime = DateTimeUtils.GetCurrentTimestampBySeconds()
+    for _, clueData in cs_pairs(clues) do
+        if clueData.expireTs == 0 or clueData.expireTs > currentTime then
+            return true
+        end
+    end
+    return false
+end
+
+SpaceshipGuestroomInventory._RefreshIndexRedDots = HL.Method() << function(self)
+    for i = 1, Tables.spaceshipConst.spaceshipGuestRoomClueTypeTotalCount do
+        local redDot = self.view["redDot" .. i]
+        redDot.gameObject:SetActiveIfNecessary(self:_HasClueCanPlaceInCurrentLibrary(i))
+    end
+end
+
 
 SpaceshipGuestroomInventory._UpdateView = HL.Method(HL.Opt(HL.Boolean)) << function(self, isInit)
     if #self.m_cacheData == 0 then
@@ -372,6 +407,7 @@ SpaceshipGuestroomInventory._UpdateView = HL.Method(HL.Opt(HL.Boolean)) << funct
     if not isInit then
         self:Navi2LastNaviTarget()
     end
+    self:_RefreshIndexRedDots()
     local data = GameInstance.player.spaceship:GetCluesByIndex(0, CS.Beyond.Gameplay.GuestRoomClueType.Self)
     local count = data == nil and 0 or data.Count
     self.view.countTxt.text = string.format("%d/%d", count, Tables.spaceshipConst.selfClueStorageMaxCount)

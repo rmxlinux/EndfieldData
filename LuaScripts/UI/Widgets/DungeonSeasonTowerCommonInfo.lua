@@ -93,6 +93,10 @@ DungeonSeasonTowerCommonInfo._OpenCharFormation = HL.Override() << function(self
             content = Language.LUA_SEASON_TOWER_UPDATE_NOTIFY,
             hideCancel = true,
             onConfirm = function()
+                if GameInstance.dungeonManager.inDungeon then
+                    GameInstance.dungeonManager:LeaveDungeon()
+                    return
+                end
                 PhaseManager:GoToPhase(PhaseId.SeasonTowerMainHud)
             end})
         return

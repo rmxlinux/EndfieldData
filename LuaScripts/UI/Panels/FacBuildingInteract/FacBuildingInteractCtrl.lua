@@ -45,6 +45,7 @@ FacBuildingInteractCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FAC_TOP_VIEW_CAM_TARGET_MOVED] = 'OnFacTopViewCamTargetMoved',
     [MessageConst.ON_FAC_TOP_VIEW_CAM_ZOOM] = 'OnFacTopViewCamZoom',
 
+    [MessageConst.ON_FAC_CHAPTER_RESET] = 'OnFacChapterReset',
     [MessageConst.FAC_BLOCK_OTHER_HUB_UNLOADER_INTERACT] = 'FacBlockOtherHubUnloaderInteract',
 
     [MessageConst.FAC_STOP_DRAG_IN_BATCH_MODE] = 'FacStopDragInBatchMode',
@@ -135,6 +136,7 @@ end
 FacBuildingInteractCtrl.OnClose = HL.Override() << function(self)
     self:_RemoveInteractOption() 
     self:_ClearRegister()
+    self.m_onlyValidHubUnloaderIndex = -1
 end
 
 FacBuildingInteractCtrl._InitInteractHighlightEffects = HL.Method() << function(self)
@@ -1094,6 +1096,16 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
     if foundBuilding then
         hasTarget = true
 
+        if string.isEmpty(targetBuildingTemplateId) then
+            logger.error("[FacInteract][NoLogisticData]",
+                "detect=" .. (useAsyncRst and "AsyncRst" or "SyncGetShouldInteract"),
+                "view=" .. (isClickMode and "TopView" or "RPG"),
+                "purpose=" .. (isClickMode and "Click" or "Preview"),
+                "destroy=" .. tostring(LuaSystemManager.factory.inDestroyMode),
+                "templateId=" .. (targetBuildingTemplateId == nil and "<nil>" or "<empty>")
+            )
+        end
+
         
         local nodeId = targetBuildingNodeId
         local isBuilding, buildingData = Tables.factoryBuildingTable:TryGetValue(targetBuildingTemplateId)
@@ -1189,9 +1201,9 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
                         if FactoryUtils.isOthersSocialBuilding(nodeId) then
                             
                             local canLike = FactoryUtils.canLikeSocialBuilding(nodeId)
-                            GameInstance.player.generalAbilitySystem:ActivateTempAbility(GeneralAbilityType.BuildingLike, canLike, nodeId)
                             local abilityState = canLike and AbilityState.Idle or AbilityState.ForbiddenUse
                             GameInstance.player.generalAbilitySystem:SwitchAbilityStateByType(GeneralAbilityType.BuildingLike, abilityState)
+                            GameInstance.player.generalAbilitySystem:ActivateTempAbility(GeneralAbilityType.BuildingLike, canLike, nodeId)
                         else
                             
                             GameInstance.player.generalAbilitySystem:DeactivateTempAbility(GeneralAbilityType.BuildingLike)
@@ -1315,7 +1327,8 @@ FacBuildingInteractCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.
                     else
                         args.sortId = 100
                     end
-                    args.setTopAsSelectedWhenSort = true
+                    
+                    args.setTopAsSelectedWhenSort = (self.m_interactSubBuildingIndex ~= newSubIndex)
                     if self.m_interactSubBuildingIndex == -1 then
                         msg = MessageConst.ADD_INTERACT_OPTION
                     else
@@ -2751,6 +2764,10 @@ end
 
 
 FacBuildingInteractCtrl.m_onlyValidHubUnloaderIndex = HL.Field(HL.Number) << -1
+
+FacBuildingInteractCtrl.OnFacChapterReset = HL.Method() << function(self)
+    self.m_onlyValidHubUnloaderIndex = -1
+end
 
 FacBuildingInteractCtrl.FacBlockOtherHubUnloaderInteract = HL.Method(HL.Table) << function(self, arg)
     local targetIndex = unpack(arg)

@@ -250,7 +250,11 @@ RiftDetailInfoCtrl._RefreshAmountUI = HL.Method() << function(self)
         return
     end
 
+    
     local fillPer = self.m_amount / self.m_amountMax
+    if fillPer > 1 then
+        fillPer = 1
+    end
 
     if self.m_amount == 0 then
         local _, textVal = CS.Beyond.I18n.I18nUtils.TryGetText(RIFT_STEP_3_INIT_TEXT)
@@ -264,7 +268,7 @@ RiftDetailInfoCtrl._RefreshAmountUI = HL.Method() << function(self)
     self.view.liquid_2.material:SetFloat("_LiquidHeight", fillPer * RIFT_LIQUID_HEIGHT_SHADER_PER)
 
     if fillPer >= 1 then
-        self.view.percentNumTxt.text = string.format("%d", fillPer * 100)
+        self.view.percentNumTxt.text = string.format("%d", math.floor(fillPer * 100))
     else
         self.view.percentNumTxt.text = string.format("%.1f", math.floor(fillPer * 1000) / 10)
     end

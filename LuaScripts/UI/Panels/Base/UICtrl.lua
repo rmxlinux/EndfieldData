@@ -175,11 +175,26 @@ UICtrl.GetAnimationInDuration = HL.Method().Return(HL.Number) << function(self)
     return 0
 end
 
+
+
+UICtrl._ShouldSkipPlayAnimationOut = HL.Method().Return(HL.Boolean) << function(self)
+    if self.m_isClosed or self:IsPlayingAnimationOut() then
+        return true
+    end
+    return self.m_outAnimAsyncActionHelper ~= nil and self.m_outAnimAsyncActionHelper:IsExecuting()
+end
+
 UICtrl.PlayAnimationOutAndClose = HL.Method() << function(self)
+    if self:_ShouldSkipPlayAnimationOut() then
+        return
+    end
     self:PlayAnimationOut(UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Close)
 end
 
 UICtrl.PlayAnimationOutAndHide = HL.Method() << function(self)
+    if self:_ShouldSkipPlayAnimationOut() then
+        return
+    end
     self:PlayAnimationOut(UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Hide)
 end
 

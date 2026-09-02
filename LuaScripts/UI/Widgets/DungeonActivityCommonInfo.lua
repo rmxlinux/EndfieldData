@@ -129,6 +129,44 @@ DungeonActivityCommonInfo.RefreshDungeonActivityCommonInfo = HL.Method(HL.String
     end
 end
 
+
+
+DungeonActivityCommonInfo.RefreshChallengeRewardPreview = HL.Method(HL.String, HL.Boolean) << function(self, rewardId, isGet)
+    local rewards = {}
+    local findReward, rewardData = Tables.rewardTable:TryGetValue(rewardId)
+    if findReward then
+        for _, itemBundle in pairs(rewardData.itemBundles) do
+            local itemId = itemBundle.id
+            local succ, itemCfg = Tables.itemTable:TryGetValue(itemId)
+            if succ then
+                table.insert(rewards, {
+                    id = itemId,
+                    count = itemBundle.count,
+                    sortId1 = itemCfg.sortId1,
+                    sortId2 = itemCfg.sortId2,
+                })
+            else
+                logger.error("挑战奖励一览配置的RewardId中的ItemId在Item表中找不到", itemId, rewardId)
+            end
+        end
+    end
+
+    self.view.rewardNode.gameObject:SetActive(#rewards > 0)
+    self.m_rewardCellCache:Refresh(#rewards, function(cell, luaIndex)
+        local reward = rewards[luaIndex]
+        cell.itemSmall:InitItem(reward, true)
+        cell.getNode.gameObject:SetActive(isGet)
+        cell.lockNode.gameObject:SetActive(false)
+
+        local isVisible = rewardData and rewardData.itemBundleVisibleList and rewardData.itemBundleVisibleList[CSIndex(luaIndex)] or 0
+        if isVisible >= 1 then
+            cell.itemSmall.view.countNode.gameObject:SetActive(true)
+        else
+            cell.itemSmall.view.countNode.gameObject:SetActive(false)
+        end
+    end)
+end
+
 HL.Commit(DungeonActivityCommonInfo)
 return DungeonActivityCommonInfo
 

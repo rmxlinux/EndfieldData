@@ -123,7 +123,7 @@ SettlementCommodityCtrl._UpdateData = HL.Method() << function(self)
         local isActivityItem = not string.isEmpty(stlItemTradeCfg.activityId)
         local isHide = false
         if isActivityItem then
-            isHide = not hasActivity or not GameInstance.player.inventory:IsItemFound(itemId)
+            isHide = not hasActivity or self.m_activityInfo.activityId ~= stlItemTradeCfg.activityId or not GameInstance.player.inventory:IsItemFound(itemId)
         else
             isHide = not Utils.isCurTimeInTimeIdRange(stlItemTradeCfg.timeId, true)
         end

@@ -219,6 +219,12 @@ WaterDroneBagCtrl.OnShow = HL.Override() << function(self)
     self:_ToggleShowHideBattleAction(false)
     
     GameInstance.player.forbidSystem:SetForbid(ForbidType.ForbidJump, "WaterDroneBag", true)
+
+    
+    
+    
+    GameUtil.mainCharacter.customAbilityCom:OnClickedItemChanged("", "")
+
     self:Refresh()
 end
 
@@ -278,12 +284,18 @@ WaterDroneBagCtrl._OnBack = HL.Method() << function(self)
     
     local customAbilityCom = GameUtil.mainCharacter.customAbilityCom
     local waterDroneSourceType = customAbilityCom.waterDroneSourceType
+    local nothingSelected = (self.m_curSelectedItemCsIndex == -1)
 
     
-    customAbilityCom:OnConfirmItem()
+    
+    
+    if not nothingSelected then
+        customAbilityCom:OnConfirmItem()
+    end
+
     
     if waterDroneSourceType == WaterDroneSourceType.Interactive or waterDroneSourceType == WaterDroneSourceType.InfinityTag then
-        if self.m_curSelectedItemCsIndex == -1 then 
+        if nothingSelected then 
             Notify(MessageConst.SHOW_WATER_DRONE_AIM) 
         else 
             

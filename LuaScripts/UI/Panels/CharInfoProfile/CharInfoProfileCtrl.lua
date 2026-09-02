@@ -130,7 +130,7 @@ CharInfoProfileCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end)
     if success then
         self.view.messageBtn.onClick:AddListener(function()
-            PhaseManager:GoToPhase(PhaseId.DungeonEntry, { dungeonId = self.m_dungeonId })
+            self:_OnClickMessageBtn()
         end)
     else
         self.m_dungeonId = ""
@@ -353,6 +353,14 @@ CharInfoProfileCtrl._GetTagShowData = HL.Method(HL.String).Return(HL.Table) << f
     end
 
     return tagShowData
+end
+
+CharInfoProfileCtrl._OnClickMessageBtn = HL.Method() << function(self)
+    if Utils.isInDungeon() then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_SYSTEM_FORBIDDEN)
+    else
+        PhaseManager:GoToPhase(PhaseId.DungeonEntry, { dungeonId = self.m_dungeonId })
+    end
 end
 
 

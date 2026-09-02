@@ -253,6 +253,10 @@ WikiDetailBaseCtrl._InitController = HL.Virtual() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     if self.view.right.naviGroup then
         self.view.right.naviGroup.onIsFocusedChange:AddListener(function(isFocused)
+            if not self.view.right.naviGroup.enabled then
+                self.view.right.naviGroup:ManuallyStopFocus()
+                return
+            end
             self.view.right.controllerFocusHintNode.gameObject:SetActive(not isFocused)
             if not isFocused then
                 Notify(MessageConst.HIDE_ITEM_TIPS)
@@ -270,6 +274,7 @@ WikiDetailBaseCtrl._InitController = HL.Virtual() << function(self)
         end, self.view.right.inputGroup.groupId)
         InputManagerInst:ToggleBinding(self.m_closeItemTipsBindingId, false)
     end
+    UIUtils.bindHyperlinkPopup(self, "wikiItemInfo", self.view.inputGroup.groupId)
 end
 
 WikiDetailBaseCtrl._InitItemObtainWaysController = HL.Method(HL.Userdata).Return(CS.UnityEngine.UI.Selectable, CS.Beyond.UI.UISelectableNaviGroup) << function(self, itemObtainWaysForWiki)

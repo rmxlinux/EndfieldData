@@ -23,16 +23,22 @@ ActivitySkipChapter1ConfirmCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     end)
 
     self.view.forceConfirmButton.onPressEnd:AddListener(function()
+        
+        if not self.m_pressCompleted then
+            EventLogManagerInst:GameEvent_MainMissionSkipClick("confirm", 0)
+        end
         self:_StopPressFill()
     end)
 
     self.view.forceConfirmButton.onLongPress:AddListener(function()
         
+        self:_FinishPressFill()
+        EventLogManagerInst:GameEvent_MainMissionSkipClick("confirm", 1)
+        
         if self.m_skipRequested then
             return
         end
         self.m_skipRequested = true
-        self:_FinishPressFill()
         local _, skipChapterData = Tables.activitySkipChapterTable:TryGetValue(self.m_activityId)
         if skipChapterData then
             GameInstance.player.activitySystem:SendDoSkipChapter(skipChapterData.skipChapterConfigId)
@@ -40,9 +46,11 @@ ActivitySkipChapter1ConfirmCtrl.OnCreate = HL.Override(HL.Any) << function(self,
     end)
 
     self.view.confirmButton.onClick:AddListener(function()
+        EventLogManagerInst:GameEvent_MainMissionSkipClick("cancel", 0)
         self:PlayAnimationOutAndClose()
     end)
     self:BindInputPlayerAction("common_cancel_no_hint", function()
+        EventLogManagerInst:GameEvent_MainMissionSkipClick("cancel", 0)
         self:PlayAnimationOutAndClose()
     end)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({ self.view.inputGroup.groupId })

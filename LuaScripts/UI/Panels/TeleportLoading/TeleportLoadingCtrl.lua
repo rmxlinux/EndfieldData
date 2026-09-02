@@ -26,6 +26,7 @@ TeleportLoadingCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 TeleportLoadingCtrl.OnClose = HL.Override() << function(self)
+    GameInstance.SetBurstMode(false, GameInstance.EBurstModeReason.TeleportLoadingUI)
     
     UIManager:RemoveMainCameraTempRequest("TeleportLoading")
 end
@@ -37,15 +38,7 @@ TeleportLoadingCtrl.OpenTeleportLoadingPanel = HL.StaticMethod(HL.Opt(HL.Table))
     self.m_isClosing = false
 
     self:_Init(args)
-    if not isShowing then
-        GameInstance.SetBurstMode(false, GameInstance.EBurstModeReason.TeleportLoadingUI)
-        self:_StartTimer(0.5, function()
-            
-            if UIManager:IsShow(PANEL_ID) and not self:IsPlayingAnimationOut() and not self.m_isClosing then
-                GameInstance.SetBurstMode(true, GameInstance.EBurstModeReason.TeleportLoadingUI)
-            end
-        end)
-    end
+    GameInstance.SetBurstMode(true, GameInstance.EBurstModeReason.TeleportLoadingUI)
 end
 
 TeleportLoadingCtrl._Init = HL.Method(HL.Opt(HL.Table)) << function(self, args)

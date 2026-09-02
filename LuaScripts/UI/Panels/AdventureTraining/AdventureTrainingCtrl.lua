@@ -73,6 +73,14 @@ AdventureTrainingCtrl._OnRefreshLevelCell = HL.Method(HL.Any, HL.Number) << func
     end
 end
 
+AdventureTrainingCtrl.CanOpenDungeonEntry = HL.Method().Return(HL.Boolean) << function(self)
+    local canOpen = self.m_phase and self.m_phase:CanTriggerTabPanelAction(PANEL_ID)
+    if not canOpen and UNITY_EDITOR then
+        logger.warn("[AdventureBook] 训练页签正在切出，忽略打开DungeonEntry")
+    end
+    return canOpen == true
+end
+
 AdventureTrainingCtrl.OnDirectlyGetReward = HL.Method(HL.Table) << function(self, arg)
     self:_RefreshAllUI()
 end

@@ -327,9 +327,6 @@ ItemObtainWays._InsertCrafts = HL.Method(HL.Table, HL.Table) << function(self, o
                 groupInfo.phaseId = PhaseId.FacBuildListSelect
                 local itemId = FactoryUtils.getBuildingItemId(crafts[1].craftId)
                 groupInfo.phaseArgs = { selectedId = itemId }
-                if topPhaseId ~= PhaseId.FacMachine and topPhaseId ~= PhaseId.Inventory then
-                    groupInfo.phaseArgs.onlyCraftNode = true
-                end
             else
                 hubBan = true
             end
@@ -441,6 +438,7 @@ ItemObtainWays.RefreshObtainCell = HL.Method(HL.Any, HL.Table, HL.Number) << fun
 
                 end
             end
+
         end)
         cell.normalNode.button:ChangeActionOnSetNaviTarget(ActionOnSetNaviTarget.PressConfirmTriggerOnClick)
         cell.normalNode.button.interactable = true

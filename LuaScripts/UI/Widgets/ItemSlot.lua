@@ -128,6 +128,7 @@ ItemSlot.InitPressDragForTouch = HL.Method() << function(self)
 
     self.view.dragItem.onEndDragEvent:AddListener(function(eventData)
         self.view.dragItem.canStartDrag = false
+        needCheckIsDragItem = false
     end)
 
     self.item.view.button.onPressEnd:AddListener(function(eventData)

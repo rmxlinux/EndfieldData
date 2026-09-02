@@ -802,6 +802,12 @@ function UIUtils.updateTipsPositionWithScreenRect(contentRectTrans, targetScreen
         screenPos.y = targetScreenRect.yMax + halfHeightInScreen
         finalXPos = UIConst.UI_TIPS_X_POS_TYPE.Left
         finalYPos = UIConst.UI_TIPS_Y_POS_TYPE.Bottom
+    elseif posType == UIConst.UI_TIPS_POS_TYPE.LeftAlignTop then
+        
+        screenPos.x = targetScreenRect.xMin + halfWidthInScreen
+        screenPos.y = targetScreenRect.yMin - halfHeightInScreen
+        finalXPos = UIConst.UI_TIPS_X_POS_TYPE.Left
+        finalYPos = UIConst.UI_TIPS_Y_POS_TYPE.Top
     elseif posType == UIConst.UI_TIPS_POS_TYPE.AdaptiveRightTop then
         
         local downHeight = screenSize.y - targetScreenRect.yMin
@@ -1910,6 +1916,23 @@ function UIUtils.getRewardItems(rewardId, items)
     return items
 end
 
+function UIUtils.getRewardItemsInMultipleRewards(rewardIdList, items)
+    
+    items = items or {}
+    for _,rewardId in pairs(rewardIdList) do
+        local _, rewardTableData = Tables.rewardTable:TryGetValue(rewardId)
+        if rewardTableData then
+            
+            for _, v in pairs(rewardTableData.itemBundles) do
+                table.insert(items, v)
+            end
+        else
+            logger.error("RewardTable表数据缺失！reward id：" .. rewardId)
+        end
+    end
+    return items
+end
+
 
 function UIUtils.getRewardItemsMergeSameId(rewardId, items)
     local _, rewardTableData = Tables.rewardTable:TryGetValue(rewardId)
@@ -2550,12 +2573,12 @@ end
 
 function UIUtils.isGemPerfectMatchWeapon(gemInstId, weaponTemplateId)
     local gemInst = CharInfoUtils.getGemByInstId(gemInstId)
-    if not gemInst or gemInst.termList.Count < 3 then
+    if not gemInst then
         return false
     end
 
     local weaponCfg = Tables.weaponBasicTable[weaponTemplateId]
-    if not weaponCfg or #weaponCfg.weaponSkillList < 3 then
+    if not weaponCfg or not weaponCfg.weaponSkillList or #weaponCfg.weaponSkillList <= 0 then
         return false
     end
 
@@ -2582,28 +2605,79 @@ function UIUtils.isGemPerfectMatchWeapon(gemInstId, weaponTemplateId)
     return true
 end
 
+local GEM_PERFECT_MATCH_TAG_COUNT = 3
+
+
+
+
+local function buildGemPerfectMatchTagData(gemInst, needTagInfos)
+    if not gemInst or gemInst.termList.Count ~= GEM_PERFECT_MATCH_TAG_COUNT then
+        return nil, nil
+    end
+
+    local gemTagCount = {}
+    local tagInfos = needTagInfos and {} or nil
+    for i = 0, gemInst.termList.Count - 1 do
+        local termId = gemInst.termList[i].termId
+        local _, termCfg = Tables.gemTable:TryGetValue(termId)
+        if not termCfg or string.isEmpty(termCfg.tagId) then
+            return nil, nil
+        end
+        gemTagCount[termCfg.tagId] = (gemTagCount[termCfg.tagId] or 0) + 1
+        if tagInfos then
+            table.insert(tagInfos, { termType = termCfg.termType, tagId = termCfg.tagId })
+        end
+    end
+    return gemTagCount, tagInfos
+end
+
+
+
+
+local function isGemTagCountPerfectMatch(gemTagCount, weaponGemTagIds)
+    if not gemTagCount or not weaponGemTagIds or weaponGemTagIds.Count ~= GEM_PERFECT_MATCH_TAG_COUNT then
+        return false
+    end
+
+    local weaponTagCount = {}
+    for i = 0, weaponGemTagIds.Count - 1 do
+        local tagId = weaponGemTagIds[i]
+        if string.isEmpty(tagId) then
+            return false
+        end
+        weaponTagCount[tagId] = (weaponTagCount[tagId] or 0) + 1
+    end
+
+    for tagId, count in pairs(weaponTagCount) do
+        if gemTagCount[tagId] ~= count then
+            return false
+        end
+    end
+    return true
+end
+
+
+
+
+function UIUtils.isGemPerfectMatchWeaponTagIds(gemInstId, weaponGemTagIds)
+    local gemInst = CharInfoUtils.getGemByInstId(gemInstId)
+    local gemTagCount = buildGemPerfectMatchTagData(gemInst, false)
+    return isGemTagCountPerfectMatch(gemTagCount, weaponGemTagIds)
+end
+
 
 
 function UIUtils.getGemWishListPerfectMatch(gemInstId)
     local gemInst = CharInfoUtils.getGemByInstId(gemInstId)
-    if not gemInst or gemInst.termList.Count < 3 then
-        return false, {}
+    local gemTagCount, tagInfos = buildGemPerfectMatchTagData(gemInst, true)
+    if not gemTagCount then
+        return false, {}, {}
     end
 
     
     local _, gemItemCfg = Tables.itemTable:TryGetValue(gemInst.templateId)
     if gemItemCfg and gemItemCfg.rarity <= 4 then
-        return false, {}
-    end
-
-    local tagInfos = {}
-    for i = 0, gemInst.termList.Count - 1 do
-        local termId = gemInst.termList[i].termId
-        local _, termCfg = Tables.gemTable:TryGetValue(termId)
-        if not termCfg then
-            return false, {}
-        end
-        table.insert(tagInfos, { termType = termCfg.termType, tagId = termCfg.tagId })
+        return false, {}, {}
     end
 
     table.sort(tagInfos, function(a, b)
@@ -2616,20 +2690,30 @@ function UIUtils.getGemWishListPerfectMatch(gemInstId)
 
     local key = tagInfos[1].tagId .. "+" .. tagInfos[2].tagId .. "+" .. tagInfos[3].tagId
 
-    local _, weaponList = Tables.gemTagKeyToWeaponTable:TryGetValue(key)
-    if not weaponList then
-        return false, {}
-    end
-
     local matchList = {}
+    local foresightMatchList = {}
+    local matchSet = {}
     local wishList = GameInstance.player.inventory.weaponGemWishList
-    for i = 0, weaponList.list.Count - 1 do
-        local weaponId = weaponList.list[i]
-        if wishList:Contains(weaponId) then
+    for weaponId, weaponCfg in pairs(Tables.foresightWeaponGemwishlistTable) do
+        if not Tables.weaponBasicTable:ContainsKey(weaponId) and wishList:Contains(weaponId)
+            and isGemTagCountPerfectMatch(gemTagCount, weaponCfg.gemTagIds) then
+            table.insert(foresightMatchList, weaponId)
             table.insert(matchList, weaponId)
+            matchSet[weaponId] = true
         end
     end
-    return #matchList > 0, matchList
+
+    local _, weaponList = Tables.gemTagKeyToWeaponTable:TryGetValue(key)
+    if weaponList then
+        for i = 0, weaponList.list.Count - 1 do
+            local weaponId = weaponList.list[i]
+            if wishList:Contains(weaponId) and not matchSet[weaponId] then
+                table.insert(matchList, weaponId)
+                matchSet[weaponId] = true
+            end
+        end
+    end
+    return #matchList > 0, matchList, foresightMatchList
 end
 
 

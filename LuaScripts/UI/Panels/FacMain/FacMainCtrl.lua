@@ -33,6 +33,8 @@ FacMainCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_SYSTEM_UNLOCK_CHANGED] = '_OnPinSystemLockedStateChanged',
     [MessageConst.ON_ENTER_FAC_MAIN_REGION] = '_OnEnterFacMainRegion',
     [MessageConst.ON_EXIT_FAC_MAIN_REGION] = '_OnExitFacMainRegion',
+    
+    [MessageConst.ON_REFRESH_PHASE_LEVEL] = '_OnRefreshPhaseLevel',
 
     [MessageConst.ON_ENTITY_ALL_CPT_START_DONE] = '_OnFacBuildingNodeStateChanged' ,
     [MessageConst.ON_REMOTE_FACTORY_ENTITY_REMOVED] = '_OnFacBuildingNodeStateChanged' ,
@@ -78,6 +80,10 @@ end
 
 FacMainCtrl._OnExitFacMainRegion = HL.Method() << function(self)
     self:_RefreshPinFormula()
+end
+
+FacMainCtrl._OnRefreshPhaseLevel = HL.Method() << function(self)
+    self:_UpdateAndRefreshPinFormula()
 end
 
 

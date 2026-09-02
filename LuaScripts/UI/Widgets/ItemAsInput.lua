@@ -198,6 +198,14 @@ ItemAsInput._UpdateCraftCellExpand = HL.Method(HL.Table, HL.Table) << function(s
     else
         cell.verticalLayoutGroup.spacing = 0
     end
+
+    
+    if cell.adaptationNode then
+        local firstInfo = info.crafts[1]
+        local needAdapt = firstInfo.craftId ~= nil and FactoryUtils.isTimeLimitedFormula(firstInfo.craftId)
+        cell.adaptationNode.gameObject:SetActive(needAdapt)
+    end
+
     cell.craftCells:Refresh(craftCount, function(craftCell, craftIndex)
         
         local craftInfo = info.crafts[craftIndex]

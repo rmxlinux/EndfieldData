@@ -392,6 +392,10 @@ BuildingCommon._MoveBuilding = HL.Method() << function(self)
         Notify(MessageConst.SHOW_TOAST, Language.LUA_FACTORY_BUILDING_MOVE_NOT_ALLOWED)
         return
     end
+    
+    if PhaseManager:CheckIsInTransition() then
+        return
+    end
     self:Close(true)
     Notify(MessageConst.FAC_ENTER_BUILDING_MODE, {
         nodeId = nodeId
@@ -400,6 +404,9 @@ end
 
 BuildingCommon._DelBuilding = HL.Method() << function(self)
     if not FactoryUtils.canDelBuilding(self.nodeId, true) then
+        return
+    end
+    if PhaseManager:CheckIsInTransition() then
         return
     end
     self:Close(true)
@@ -649,7 +656,7 @@ BuildingCommon.Close = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipAnim)
 end
 
 BuildingCommon.ClearSmartAlertUpdate = HL.Method() << function(self)
-    if self.m_arg.smartAlertFuncNameList and
+    if self.m_arg and self.m_arg.smartAlertFuncNameList and
         self.m_arg.targetCtrlInstance and
         CS.Beyond.GameSetting.otherShowSmartAlert and
         not Utils.isInBlackbox() then

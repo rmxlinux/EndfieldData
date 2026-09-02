@@ -402,7 +402,13 @@ end
 
 
 PhaseDomainDepotPackage.OnOpenPackTypeSelectPanel = HL.Method(HL.Table) << function(self, args)
-    self.m_backPanel = self:CreatePhasePanelItem(PanelId.DomainDepotPackBackGround)
+    
+    if self.m_typePanel and self.m_typePanel.uiCtrl then
+        return
+    end
+    if self.m_backPanel == nil or self.m_backPanel.uiCtrl == nil then
+        self.m_backPanel = self:CreatePhasePanelItem(PanelId.DomainDepotPackBackGround)
+    end
     
     self.m_typePanel = self:CreatePhasePanelItem(PanelId.DomainDepotGoodsType, {
         depotId = args.depotId,

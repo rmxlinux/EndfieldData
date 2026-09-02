@@ -309,7 +309,10 @@ VideoPlayer.StopVideo = HL.Method(HL.Opt(HL.Boolean)) << function(self, dispose)
     self:StopAudio()
     self:_StopManualUpdate()
     self:_ClearStateChangeListener()
-    self.view.movieController:Stop()
+    local movieController = self.view.movieController
+    if NotNull(movieController) then
+        movieController:Stop()
+    end
     self.m_preparedVideo = nil
     self.m_preparingVideo = nil
     self.m_playingVideo = nil

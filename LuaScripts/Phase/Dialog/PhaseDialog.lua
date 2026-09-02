@@ -23,6 +23,7 @@ PhaseDialog.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.DIALOG_PANEL_SHOW_POST_PROCESS_EFFECT] = {"OnShowPostProcessEffect", true},
     [MessageConst.DIALOG_PANEL_SHOW_LEFT_SUBTITLE] = { 'OnShowDialogLeftSubtitle', true },
     [MessageConst.DIALOG_PANEL_EXIT_LEFT_SUBTITLE] = { 'OnExitDialogLeftSubtitle', true },
+    [MessageConst.DIALOG_PANEL_HIDE_TOP_SUBTITLE] = { 'OnHideTopSubtitle', true },
     [MessageConst.ON_DIALOG_ENV_TALK_CHANGED] = { 'OnDialogEnvTalkChanged', true },
     [MessageConst.ON_COMMON_BACK_CLICKED] = { 'OnCommonBackClicked', true },
     [MessageConst.DIALOG_OPEN_UI] = { "OpenUI", true },
@@ -55,8 +56,6 @@ PhaseDialog.m_hasListened = HL.Field(HL.Boolean) << false
 
 PhaseDialog.s_nextDialog = HL.StaticField(HL.String) << ""
 
-PhaseDialog.s_nextIndexConfig = HL.StaticField(HL.Table)
-
 PhaseDialog.m_tempNextIndex = HL.Field(HL.Number) << -1
 
 PhaseDialog.m_openedPhaseId = HL.Field(HL.Number) << -1
@@ -73,13 +72,6 @@ PhaseDialog.m_needStartNextDialogAfterDeferredExit = HL.Field(HL.Boolean) << fal
 PhaseDialog._OnInit = HL.Override() << function(self)
     PhaseDialog.Super._OnInit(self)
     UIManager:ToggleBlockObtainWaysJump("IN_CINEMATIC", true)
-end
-
-PhaseDialog._InitNextIndex = HL.StaticMethod() << function()
-    PhaseDialog.s_nextIndexConfig = {}
-    for phaseName, nextIndex in pairs(DialogConst.DIALOG_PHASE_2_NEXT_INDEX) do
-        PhaseDialog.s_nextIndexConfig[PhaseId[phaseName]] = nextIndex
-    end
 end
 
 PhaseDialog.GetOpenedPhaseId = HL.Method().Return(HL.Number) << function(self)
@@ -100,10 +92,12 @@ PhaseDialog.GetNextIndex = HL.StaticMethod(HL.Number).Return(HL.Number) << funct
     if phaseDialog.m_tempNextIndex >= 0 then
         return phaseDialog.m_tempNextIndex
     end
-    if not PhaseDialog.s_nextIndexConfig then
-        PhaseDialog._InitNextIndex()
-    end
-    return PhaseDialog.s_nextIndexConfig[phaseId] or 0
+    return PhaseDialog.GetDefaultNextIndex(phaseId)
+end
+
+PhaseDialog.GetDefaultNextIndex = HL.StaticMethod(HL.Number).Return(HL.Number) << function(phaseId)
+    local phaseName = PhaseManager:GetPhaseName(phaseId)
+    return CS.Beyond.Gameplay.DialogTreeOpenUINode.GetDefaultNextIndexByPanelName(phaseName or "")
 end
 
 PhaseDialog.ClearPhasesWithCam = HL.StaticMethod(HL.Opt(HL.Any)) << function(_)
@@ -184,6 +178,10 @@ end
 
 PhaseDialog.OnExitDialogLeftSubtitle = HL.Method() << function(self)
     self:_DoExitLeftSubtitle()
+end
+
+PhaseDialog.OnHideTopSubtitle = HL.Method() << function(self)
+    self.m_panelItem.uiCtrl:ClearTopTrunk()
 end
 
 PhaseDialog.OnDialogEnvTalkChanged = HL.Method(HL.Table) << function(self, arg)
@@ -304,7 +302,14 @@ PhaseDialog._DoPlayDialogTrunk = HL.Method(CS.Beyond.Gameplay.DTTrunkNodeData, H
     function
     (self, trunkNodeData, fastMode, npcId, npcGroupId)
         self.m_panelItem.uiCtrl:Show()
-        self.m_panelItem.uiCtrl:SetTrunk(trunkNodeData, fastMode, npcId, npcGroupId)
+        if trunkNodeData.showAtTop then
+            self.m_panelItem.uiCtrl:SetTopTrunk(trunkNodeData, fastMode, npcId, npcGroupId)
+        else
+            if trunkNodeData.hideTopSubtitle then
+                self.m_panelItem.uiCtrl:ClearTopTrunk()
+            end
+            self.m_panelItem.uiCtrl:SetTrunk(trunkNodeData, fastMode, npcId, npcGroupId)
+        end
         self.m_inited = true
     end
 
@@ -463,9 +468,23 @@ PhaseDialog.OpenUI = HL.Method(HL.Table) << function(self, arg)
             param = {param.id, closeCallback}
         end
 
-        local res = PhaseManager:OpenPhase(phaseId, param, nil, true)
+        local continueAfterOpen = actionData and actionData.continueAfterOpen
+        local openCallback
+        if continueAfterOpen then
+            openCallback = function()
+                if self.m_destroyed then
+                    return
+                end
+                GameWorld.dialogManager:TryPauseVoiceManager()
+                self:Next(PhaseDialog.GetDefaultNextIndex(phaseId))
+            end
+        end
+
+        local res = PhaseManager:OpenPhase(phaseId, param, openCallback, true)
         if res then
-            self.m_openedPhaseId = phaseId
+            if not continueAfterOpen then
+                self.m_openedPhaseId = phaseId
+            end
         else
             logger.error("Dialog OpenUI fail!!!", panelIdStr)
             GameWorld.dialogManager:Next()

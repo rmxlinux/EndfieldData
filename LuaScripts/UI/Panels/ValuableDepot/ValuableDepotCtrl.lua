@@ -1965,6 +1965,7 @@ ValuableDepotCtrl._ToggleDestroySelectExpand = HL.Method(HL.Boolean, HL.Opt(HL.B
     if DeviceInfo.usingController then
         node.expandToggle.enabled = not active
         node.equipRightNode.focusKeyHint:SetActionId(active and "" or "valuable_depot_focus_item")
+        self.view.contentNodeInputGroup.enabled = not active
     end
 
     if not active and self.m_inDestroyMode then
@@ -2649,7 +2650,7 @@ ValuableDepotCtrl._InitController = HL.Method() << function(self)
 
     self.m_lockToggleBindingId = self:BindInputPlayerAction("item_lock_toggle", function()
         self.view.itemInfoNode.lockToggle.view.toggle.isOn = not self.view.itemInfoNode.lockToggle.view.toggle.isOn
-    end)
+    end, self.view.contentNodeInputGroup.groupId)
 
     self.view.itemInfoNode.itemFlagNaviGroup.onIsTopLayerChanged:AddListener(function(isTopLayer)
         self.view.itemInfoNode.itemFlagControllerFocusHintNode.gameObject:SetActive(not isTopLayer)
@@ -2665,7 +2666,7 @@ ValuableDepotCtrl._InitController = HL.Method() << function(self)
             selectedCell:SetSelected(not isTopLayer)
         end
     end)
-    UIUtils.bindHyperlinkPopup(self, "ValuableDepot", self.view.inputGroup.groupId)
+    UIUtils.bindHyperlinkPopup(self, "ValuableDepot", self.view.contentNodeInputGroup.groupId)
 end
 
 

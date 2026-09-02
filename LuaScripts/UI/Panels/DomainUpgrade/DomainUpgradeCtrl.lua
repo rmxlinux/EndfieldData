@@ -39,6 +39,9 @@ DomainUpgradeCtrl.OnClose = HL.Override() << function(self)
 end
 
 DomainUpgradeCtrl.ShowUpgrade = HL.StaticMethod(HL.Any) << function(arg)
+    if not LuaSystemManager.mainHudActionQueue then
+        return
+    end
     if LuaSystemManager.mainHudActionQueue:HasRequestWaiting(MAIN_HUD_TOAST_TYPE) then
         
         return

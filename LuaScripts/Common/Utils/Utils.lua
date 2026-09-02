@@ -1460,18 +1460,28 @@ end
 
 function Utils.getCurMissionIdAndDesc(descType)
     local missionSystem = GameInstance.player.mission
+    local processingState = CS.Beyond.Gameplay.MissionSystem.MissionState.Processing
     local curMissionId = missionSystem:GetLatestMainMissionId()
+    if string.isEmpty(curMissionId) or missionSystem:GetMissionState(curMissionId) ~= processingState then
+        local missionViewType = GEnums.MissionViewType
+        curMissionId = ""
+        for missionId, _ in pairs(missionSystem.missions) do
+            local missionInfo = missionSystem:GetMissionInfo(missionId)
+            if missionInfo.viewType == missionViewType.MissionViewMain
+                    and missionSystem:GetMissionState(missionId) == processingState then
+                curMissionId = missionId
+                break
+            end
+        end
+    end
     local curMissionDesc = Language.LUA_GACHA_STARTER_ALL_MISSION_COMPLETE
     if not string.isEmpty(curMissionId) then
-        local curMissionState = missionSystem:GetMissionState(curMissionId)
-        if curMissionState == CS.Beyond.Gameplay.MissionSystem.MissionState.Processing then
-            local chapterId = missionSystem:GetChapterIdByMissionId(curMissionId)
-            local chapterInfo = missionSystem:GetChapterInfo(chapterId)
-            if descType == "gacha" then
-                curMissionDesc = string.format(Language.LUA_GACHA_STARTER_CUR_MISSION_DESC, chapterInfo.chapterNum:GetText(), chapterInfo.episodeNum:GetText())
-            elseif descType == "activity" then
-                curMissionDesc = string.format(Language.LUA_ACTIVITY_UNLOCK_CUR_MISSION_DESC, chapterInfo.chapterNum:GetText(), chapterInfo.episodeNum:GetText(), missionSystem:GetMissionInfo(curMissionId).missionName:GetText())
-            end
+        local chapterId = missionSystem:GetChapterIdByMissionId(curMissionId)
+        local chapterInfo = missionSystem:GetChapterInfo(chapterId)
+        if descType == "gacha" then
+            curMissionDesc = string.format(Language.LUA_GACHA_STARTER_CUR_MISSION_DESC, chapterInfo.chapterNum:GetText(), chapterInfo.episodeNum:GetText())
+        elseif descType == "activity" then
+            curMissionDesc = string.format(Language.LUA_ACTIVITY_UNLOCK_CUR_MISSION_DESC, chapterInfo.chapterNum:GetText(), chapterInfo.episodeNum:GetText(), missionSystem:GetMissionInfo(curMissionId).missionName:GetText())
         end
     end
     return curMissionId, curMissionDesc

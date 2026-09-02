@@ -120,16 +120,26 @@ FacCacheBelt._GetBeltInfoList = HL.Method() << function(self)
     end
 end
 
-FacCacheBelt._GetItemSprite = HL.Method(HL.String).Return(HL.Userdata) << function(self, itemId)
+FacCacheBelt._GetItemSprite = HL.Method(HL.String, HL.Function) << function(self, itemId, callback)
     local itemSprite = self.m_cachedSprite[itemId]
-    if itemSprite == nil then
-        local success, itemData = Tables.itemTable:TryGetValue(itemId)
-        if success then
-            itemSprite = self:LoadSprite(UIConst.UI_SPRITE_ITEM, itemData.iconId)
-            self.m_cachedSprite[itemId] = itemSprite
-        end
+    if itemSprite ~= nil then
+        callback(itemSprite)
+        return
     end
-    return itemSprite
+    local success, itemData = Tables.itemTable:TryGetValue(itemId)
+    if not success then
+        return
+    end
+    local fullPath = UIUtils.getSpritePath(UIConst.UI_SPRITE_ITEM, itemData.iconId)
+    self.loader:LoadSpriteAsync(fullPath, function(sprite)
+        if self.m_isDestroyed or self.m_cachedSprite == nil then
+            return
+        end
+        if sprite ~= nil then
+            self.m_cachedSprite[itemId] = sprite
+        end
+        callback(sprite)
+    end)
 end
 
 FacCacheBelt._GetIsBeltBlocked = HL.Method(HL.Number, HL.Boolean).Return(HL.Boolean) << function(self, nodeId, isIn)
@@ -342,6 +352,9 @@ end
 
 FacCacheBelt._RefreshBeltShownState = HL.Method() << function(self)
     
+    if not self.m_buildingNode.valid then
+        return
+    end
     local needShow = GameInstance.remoteFactoryManager.unlockSystem.systemUnlockedBelt and
         GameInstance.remoteFactoryManager:IsFacNodeInMainRegion(
             self.m_buildingNode.belongChapter.chapterId,
@@ -522,24 +535,36 @@ FacCacheBelt._RefreshBeltCellConveyorAnimation = HL.Method(HL.Boolean, HL.Number
 
     local animName = isIn and "conveyorbelt_itemright_changed" or "conveyorbelt_item_changed"
 
-    local itemSprite = self:_GetItemSprite(itemId)
-    cell.putInItemImage.sprite = itemSprite
-    cell.blockItemIcon.sprite = itemSprite
-    cell.blockItemIcon.gameObject:SetActiveIfNecessary(true)  
+    self:_GetItemSprite(itemId, function(itemSprite)
+        if self.m_isDestroyed then
+            return
+        end
+        cell.putInItemImage.sprite = itemSprite
+        cell.blockItemIcon.sprite = itemSprite
+        cell.blockItemIcon.gameObject:SetActiveIfNecessary(true)  
+    end)
 
     local fullSuccess, fullBottleData = Tables.fullBottleTable:TryGetValue(itemId)
     if fullSuccess then
         local liquidItemId = fullBottleData.liquidId
-        local liquidSprite = self:_GetItemSprite(liquidItemId)
-        cell.liquidIcon.sprite = liquidSprite
-        cell.liquidIcon.gameObject:SetActive(true)
+        self:_GetItemSprite(liquidItemId, function(liquidSprite)
+            if self.m_isDestroyed then
+                return
+            end
+            cell.liquidIcon.sprite = liquidSprite
+            cell.liquidIcon.gameObject:SetActive(true)
+        end)
     else
         local jarSuccess, gasJarData = Tables.fullGasJarTable:TryGetValue(itemId)
         if jarSuccess then
             local gasItemId = gasJarData.gasId
-            local gasSprite = self:_GetItemSprite(gasItemId)
-            cell.liquidIcon.sprite = gasSprite
-            cell.liquidIcon.gameObject:SetActive(true)
+            self:_GetItemSprite(gasItemId, function(gasSprite)
+                if self.m_isDestroyed then
+                    return
+                end
+                cell.liquidIcon.sprite = gasSprite
+                cell.liquidIcon.gameObject:SetActive(true)
+            end)
         else
             cell.liquidIcon.gameObject:SetActive(false)
         end

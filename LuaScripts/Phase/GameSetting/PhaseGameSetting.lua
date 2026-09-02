@@ -8,8 +8,8 @@ PhaseGameSetting = HL.Class('PhaseGameSetting', phaseBase.PhaseBase)
 
 PhaseGameSetting.s_messages = HL.StaticField(HL.Table) << {
     
-    [MessageConst.ON_LOADING_PANEL_OPENED] = { "ExitSelfFast", true },
-    [MessageConst.ON_TELEPORT_LOADING_PANEL_OPENED] = { "ExitSelfFast", true },
+    [MessageConst.ON_LOADING_PANEL_OPENED] = { "_OnLoadingPanelOpened", true },
+    [MessageConst.ON_TELEPORT_LOADING_PANEL_OPENED] = { "_OnLoadingPanelOpened", true },
 }
 
 
@@ -46,6 +46,9 @@ PhaseGameSetting._OnActivated = HL.Override() << function(self)
     local isLoading = UIManager:IsOpen(PanelId.Loading) or UIManager:IsOpen(PanelId.TeleportLoading)
     if isLoading then
         self:_StartCoroutine(function()
+            coroutine.waitCondition(function()
+                return not PhaseManager:IsOpen(PHASE_ID) or not PhaseManager:CheckIsInTransition()
+            end)
             if PhaseManager:IsOpen(PHASE_ID) then
                 self:ExitSelfFast()
             end
@@ -62,5 +65,12 @@ end
 
 
 
+
+PhaseGameSetting._OnLoadingPanelOpened = HL.Method() << function(self)
+    if PhaseManager:CheckIsInTransition() then
+        return
+    end
+    PhaseManager:ExitPhaseFast(self.phaseId)
+end
 
 HL.Commit(PhaseGameSetting)

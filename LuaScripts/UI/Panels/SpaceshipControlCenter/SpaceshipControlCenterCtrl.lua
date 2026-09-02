@@ -425,6 +425,8 @@ SpaceshipControlCenterCtrl._RefreshVisitorNode = HL.Method(HL.Table, HL.String) 
 
     local friendInfo = spaceship:GetFriendRoleInfo()
     local isHelped = spaceship:CheckIsHelpOther(friendInfo.roleId, roomId)
+        or roomId == Tables.spaceshipConst.guestRoomClueExtensionId
+        and spaceship:CheckIsJoinFriendClueExchange(friendInfo.roleId)
     local unableHelp = spaceship:CheckUnableHelpByRoomId(roomId)
     local SpaceshipDataType = CS.Beyond.Gameplay.SpaceshipEnums.SpaceshipDataType
     local clueData = spaceship:GetClueData(SpaceshipDataType.Self)

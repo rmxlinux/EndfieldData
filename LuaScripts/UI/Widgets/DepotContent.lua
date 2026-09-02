@@ -251,7 +251,7 @@ DepotContent.StartUpdate = HL.Method() << function(self)
         return
     end
     self.m_updateStopped = false
-    self:RefreshAll()
+    self:RefreshAll(false, true)
 end
 
 DepotContent._CreateItemInfo = HL.Method(HL.String, HL.Opt(HL.Number, HL.Number, HL.Boolean)).Return(HL.Table) <<
@@ -355,7 +355,7 @@ DepotContent.OnEndUiDrag = HL.Method(HL.Forward('UIDragHelper')) << function(sel
 end
 
 
-DepotContent.RefreshAll = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGraduallyShow)
+DepotContent.RefreshAll = HL.Method(HL.Opt(HL.Boolean, HL.Boolean)) << function(self, skipGraduallyShow, filterZeroCountItems)
     local allItemInfoList = {}
 
     local depot = self:_GetDepot()
@@ -375,7 +375,7 @@ DepotContent.RefreshAll = HL.Method(HL.Opt(HL.Boolean)) << function(self, skipGr
     end
     if self.m_isFactoryDepot and self.m_itemIndexMap and not self.m_showHistory then
         for id in pairs(self.m_itemIndexMap) do
-            if type(id) == 'string' and id ~= '' and not depot.normalItems:ContainsKey(id) then
+            if type(id) == 'string' and id ~= '' and not depot.normalItems:ContainsKey(id) and not filterZeroCountItems then
                 processItem(id, 0, nil, false)
             end
         end

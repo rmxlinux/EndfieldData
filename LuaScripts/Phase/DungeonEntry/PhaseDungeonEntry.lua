@@ -17,6 +17,10 @@ local Category2Panel = {
     [DungeonConst.DUNGEON_CATEGORY.DoubleBattle] = PanelId.DungeonDoubleAssaultEntry,
 }
 
+
+local Category2ProcessUIRestoreArgs = {
+}
+
 PhaseDungeonEntry = HL.Class('PhaseDungeonEntry', phaseBase.PhaseBase)
 
 PhaseDungeonEntry.m_currentPanelItem = HL.Field(HL.Forward("PhasePanelItem"))
@@ -97,13 +101,26 @@ end
 PhaseDungeonEntry._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     local openPanelArgs = self:_PrepareOpenPanelArgs()
 
-    if self.arg.dungeonId then
-        openPanelArgs.dungeonId = self.arg.dungeonId
-        self.arg.dungeonId = nil
+    
+    if self.arg.enterDungeonCallback == nil then
+        local dungeonCategoryId = Tables.dungeonSeriesTable[openPanelArgs.dungeonSeriesId].gameCategory
+        local needRecover = lume.find(DungeonConst.UI_RESTORE_DUNGEON_CATEGORY, dungeonCategoryId) ~= nil
+        self.arg.enterDungeonCallback = function(enterDungeonId)
+            if needRecover then
+                LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId)
+            end
+
+            if self.arg.fromDialog then
+                Notify(MessageConst.DIALOG_CHANGE_NEXT_INDEX, { phaseId = PHASE_ID, nextIndex = 1 })
+                PhaseManager:PopPhase(PHASE_ID)
+            end
+        end
     end
+
     self.m_currentPanelItem = self:CreatePhasePanelItem(openPanelArgs.panelId, {
         dungeonSeriesId = openPanelArgs.dungeonSeriesId,
         dungeonId = openPanelArgs.dungeonId,
+        scrollPosition = self.arg.scrollPosition,
         fromDialog = self.arg.fromDialog,
         enterDungeonCallback = self.arg.enterDungeonCallback,
         activityId = self.arg.activityId
@@ -147,6 +164,7 @@ PhaseDungeonEntry._OnRefresh = HL.Override() << function(self)
     self.m_currentPanelItem = self:CreatePhasePanelItem(openPanelArgs.panelId, {
         dungeonSeriesId = openPanelArgs.dungeonSeriesId,
         dungeonId = openPanelArgs.dungeonId,
+        scrollPosition = self.arg.scrollPosition,
         fromDialog = self.arg.fromDialog,
         enterDungeonCallback = self.arg.enterDungeonCallback,
         activityId = self.arg.activityId,
@@ -159,6 +177,7 @@ PhaseDungeonEntry._PrepareOpenPanelArgs = HL.Method().Return(HL.Table) << functi
     local dungeonSeriesId = self.arg.dungeonSeriesId
     if string.isEmpty(dungeonSeriesId) then
         dungeonSeriesId = Tables.dungeonTable[dungeonId].dungeonSeriesId
+        self.arg.dungeonSeriesId = dungeonSeriesId
     end
     local dungeonSeriesCfg = Tables.dungeonSeriesTable[dungeonSeriesId]
 
@@ -177,15 +196,21 @@ end
 PhaseDungeonEntry.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}
     arg.popupState = nil
+    arg.scrollPosition = nil
     local uiCtrl = self.m_currentPanelItem and self.m_currentPanelItem.uiCtrl
     if uiCtrl and HL.TryGet(uiCtrl, "GetCurSelectDungeonId") then
         
         
         arg.dungeonId = uiCtrl:GetCurSelectDungeonId()
     end
+    if uiCtrl and HL.TryGet(uiCtrl, "GetRecoverScrollPosition") then
+        arg.scrollPosition = uiCtrl:GetRecoverScrollPosition()
+    end
     if uiCtrl and PhaseManager:GetTopPhaseId() == PHASE_ID and HL.TryGet(uiCtrl, "GetRecoverPopupStateArg") then
         arg.popupState = uiCtrl:GetRecoverPopupStateArg()
     end
+
+    self:_PostProcessUIRestoreArgs(arg)
     return arg
 end
 
@@ -206,6 +231,41 @@ PhaseDungeonEntry._TryRecoverPopupState = HL.Method() << function(self)
     self.arg.popupState = nil
 end
 
+
+PhaseDungeonEntry._PostProcessUIRestoreArgs = HL.Method(HL.Table) << function(self, args)
+    
+    if InputManagerInst.inChangingInputDevice then
+        return
+    end
+
+    local dungeonSeriesId = args.dungeonSeriesId
+    if string.isEmpty(dungeonSeriesId) then
+        if string.isEmpty(args.dungeonId) then
+            return
+        end
+        dungeonSeriesId = Tables.dungeonTable[args.dungeonId].dungeonSeriesId
+    end
+
+    local dungeonCategory = Tables.dungeonSeriesTable[dungeonSeriesId].gameCategory
+    local funcName = Category2ProcessUIRestoreArgs[dungeonCategory]
+    if funcName then
+        self[funcName](self, args)
+    else
+        
+        
+        args.dungeonId = nil
+    end
+end
+
+
+PhaseDungeonEntry.RequestClose = HL.Method() << function(self)
+    if self.arg.onCloseCallback ~= nil then
+        self.arg.onCloseCallback()
+        return
+    end
+
+    PhaseManager:PopPhase(PHASE_ID)
+end
 
 HL.Commit(PhaseDungeonEntry)
 

@@ -62,6 +62,7 @@ ShopTradeItemCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FRIEND_GOODS_INFO_SYNC] = '_UpdateFriendGoodsList',
     [MessageConst.ON_BUY_ITEM_SUCC] = '_OnBuyItemSucc',
     [MessageConst.ON_SELL_ITEM_SUCC] = '_OnSellItemSucc',
+    [MessageConst.ON_SHOP_REFRESH] = '_OnHandleShopRefresh',
 }
 
 
@@ -151,6 +152,12 @@ end
 
 ShopTradeItemCtrl.OnClose = HL.Override() << function(self)
 
+end
+
+ShopTradeItemCtrl._OnHandleShopRefresh = HL.Method() << function(self)
+    GameInstance.player.guide:OnShopRefreshItemInfo()
+    Notify(MessageConst.SHOW_TOAST, Language.LUA_REFRESH_CLOSE_SHOP_TOAST)
+    self:Close()
 end
 
 

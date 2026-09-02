@@ -276,6 +276,7 @@ StrangerListCtrl.OnShow = HL.Override() << function(self)
         return
     end
     InputManagerInst:ToggleGroup(self.view.textInputBindingGroup.groupId, true)
+    self.view.friendList:RestoreNaviIfNeeded()
 end
 
 StrangerListCtrl.OnClose = HL.Override() << function(self)

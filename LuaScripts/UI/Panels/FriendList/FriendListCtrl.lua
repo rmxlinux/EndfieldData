@@ -480,6 +480,10 @@ FriendListCtrl.TryRefresh = HL.Method() << function(self)
     end
 end
 
+FriendListCtrl.RefreshTabBlockState = HL.Method() << function(self)
+    self:TryRefresh()
+end
+
 FriendListCtrl.OnFriendAddNotify = HL.Method() << function(self)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_NEW_FRIEND_ADD_TOAST)
 end
@@ -504,6 +508,7 @@ FriendListCtrl.OnShow = HL.Override() << function(self)
     self.friendSystem.isReadFullFriendRequestInfo = true
 
     self:TryRefresh()
+    self.view.friendList:RestoreNaviIfNeeded()
 end
 FriendListCtrl.OnHide = HL.Override() << function(self)
 end

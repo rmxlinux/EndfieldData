@@ -251,6 +251,7 @@ FacMiniPowerContent._RefreshContent = HL.Method() << function(self)
         if not canShowPre and canShowNow then
             reserveNode.button.onClick:RemoveAllListeners()
             reserveNode.button.onClick:AddListener(function()
+                local chapterId = self.m_chapterId < 0 and Utils.getCurrentChapterId() or self.m_chapterId
                 PhaseManager:OpenPhase(PhaseId.FacReservePowerPopup, {
                     chapterId = chapterId,
                     useEndTime = self.m_backupUseEndTs,

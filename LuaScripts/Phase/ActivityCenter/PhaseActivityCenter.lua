@@ -20,7 +20,7 @@ PhaseActivityCenter.m_activitySystem = HL.Field(HL.Userdata)
 
 PhaseActivityCenter.m_activityPanelId = HL.Field(HL.Number) << -1
 
-PhaseActivityCenter.m_activityInstructionId = HL.Field(HL.String) << ""
+PhaseActivityCenter.m_isShowingInstruction = HL.Field(HL.Boolean) << false
 
 PhaseActivityCenter.m_activityPushIds = HL.Field(HL.Table)
 
@@ -89,15 +89,17 @@ end
 
 PhaseActivityCenter._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
     
-    if not string.isEmpty(self.arg.instructionId) then
-        self.m_activityInstructionId = self.arg.instructionId
-        UIManager:Open(PanelId.InstructionBook, {
-            id = self.arg.instructionId,
+    if self.arg.isShowingInstruction then
+        local instructionArg = self.arg.instructionArg or {}
+        UIManager:Open(PanelId.ActivityDescriptionPopup, {
+            activityId = instructionArg.activityId or self.arg.activityId,
+            initTab = instructionArg.initTab,
             onClose = function()
-                self.m_activityInstructionId = ""
+                self.m_isShowingInstruction = false
             end
         })
-        self.arg.instructionId = nil
+        self.arg.isShowingInstruction = false
+        self.arg.instructionArg = nil
     end
     if self.arg.reminderArg ~= nil then
         UIManager:Open(PanelId.ActivityStartReminderPopup, self.arg.reminderArg)
@@ -219,11 +221,6 @@ PhaseActivityCenter.ShowActivity = HL.Method(HL.Any) << function(self, arg)
         self.m_firstTimeShowActivity = false
 
         
-        leftNaviGroup.onIsTopLayerChanged:AddListener(function(active)
-            arg.btnClose.enabled = active
-        end)
-
-        
         leftNaviGroup.onDefaultNaviFailed:RemoveAllListeners()
         leftNaviGroup.onDefaultNaviFailed:AddListener(function(dir)
             Notify(MessageConst.ON_ACTIVITY_NAVI_FAILED, dir)
@@ -251,6 +248,8 @@ PhaseActivityCenter.ShowActivity = HL.Method(HL.Any) << function(self, arg)
                 end
             end)
         end
+        self:_ClearCoroutine(self.m_delayShowActivityCo)
+        self.m_delayShowActivityCo = nil
     end
 end
 
@@ -278,9 +277,9 @@ end
 
 PhaseActivityCenter.OnToggleActivityInstruction = HL.Method(HL.Any) << function(self, args)
     if args.isShown then
-        self.m_activityInstructionId = args.instructionId
+        self.m_isShowingInstruction = true
     else
-        self.m_activityInstructionId = ""
+        self.m_isShowingInstruction = false
     end
 end
 
@@ -288,7 +287,12 @@ PhaseActivityCenter.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << fun
     local arg = self.arg and lume.deepCopy(self.arg) or {}
     arg.activityId = self.m_panel2Item[PanelId.ActivityCenter].uiCtrl.m_activityId
     arg.gotoCenter = true
-    arg.instructionId = self.m_activityInstructionId
+
+    local isOpen, popupCtrl = UIManager:IsOpen(PanelId.ActivityDescriptionPopup)
+    if isOpen then
+        arg.isShowingInstruction = true
+        arg.instructionArg = popupCtrl:GetRestoreArg()
+    end
 
     local isOpen, popupCtrl = UIManager:IsOpen(PanelId.ActivityStartReminderPopup)
     if isOpen then

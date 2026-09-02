@@ -15,6 +15,7 @@ CommonTipsCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 CommonTipsCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.view.main.gameObject:SetActive(false)
+    self.view.main.onTriggerAutoClose:RemoveAllListeners()
     self.view.main.onTriggerAutoClose:AddListener(function()
         self.view.controllerHintPlaceholder.gameObject:SetActive(false)
         self:ChangeCurPanelBlockSetting(false)
@@ -41,6 +42,7 @@ CommonTipsCtrl.ShowTips = HL.Method(HL.Table) << function(self, args)
     self.view.text.text = args.text
     UIUtils.updateTipsPosition(self.view.main.transform, args.transform, self.view.rectTransform, self.uiCamera, args.posType)
     self.view.controllerHintPlaceholder.gameObject:SetActive(true)
+    self.view.mainStateController:SetState(args and args.stateType or "Common")
 end
 
 HL.Commit(CommonTipsCtrl)

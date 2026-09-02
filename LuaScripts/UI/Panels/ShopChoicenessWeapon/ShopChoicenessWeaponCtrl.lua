@@ -106,6 +106,16 @@ ShopChoicenessWeaponCtrl._RefreshAllUI = HL.Method() << function(self)
     end
 
     
+    if self.view.rerunNode then
+        if weaponPoolCfg.gachaPoolVersion > 0 then
+            self.view.rerunNode.gameObject:SetActive(true)
+            self.view.rerunVersionTxt.text = '#' .. weaponPoolCfg.gachaPoolVersion
+        else
+            self.view.rerunNode.gameObject:SetActive(false)
+        end
+    end
+
+    
     local showHardGuarantee = poolInfo.upGotCount <= 0
     local guaranteeNode = self.view.guaranteeNode
     if showHardGuarantee then

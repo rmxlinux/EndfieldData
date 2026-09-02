@@ -101,6 +101,12 @@ FullScreenSceneBlurCtrl._UpdateState = HL.Method() << function(self)
     local shouldShow = next(self.m_activeMarkers) ~= nil
     local curIsShowing = self.view.blurBG.gameObject.activeSelf
 
+    
+    
+    if shouldShow and CameraManager.isUsingSystemSceneCamera then
+        self.view.blurBG:SetCustomBlurImg(nil)
+    end
+
     if curIsShowing ~= shouldShow then
         if shouldShow then
             local shouldPlayInAnim = UIManager:WasSceneVisibleBeforeThisHideCameraPanel()

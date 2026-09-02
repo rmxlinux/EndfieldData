@@ -268,7 +268,9 @@ ManualCraftCtrl.PhaseRefresh = HL.Method(HL.Any) << function(self, jumpId)
         return
     end
     self.view.useItemNodesSelectableNaviGroup:ManuallyStopFocus()
-    self:_useItemNodesNaviGroupShowInfo(false)
+    if DeviceInfo.usingController then
+        self:_useItemNodesNaviGroupShowInfo(false)
+    end
 
     self.m_jumpId = jumpId
     local lastSelectedCraftId = self.m_selectedCraftTabType

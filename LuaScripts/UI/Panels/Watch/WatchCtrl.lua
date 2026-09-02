@@ -663,6 +663,7 @@ WatchCtrl._RollTo = HL.Method(HL.Number) << function(self, column)
     else
         targetPosition = self:_GetRollUpPosition(self.m_rightListLength + 1 - column)
     end
+    self:_KillTween()
     self.m_tween = DOTween.To(
         function()
             return self.view.scrollViewScrollRect.verticalNormalizedPosition
@@ -685,6 +686,8 @@ WatchCtrl.m_regionMapSetting = HL.Field(HL.Userdata)
 
 WatchCtrl.m_domainMapNode = HL.Field(HL.Any)
 
+WatchCtrl.m_domainMapContextKey = HL.Field(HL.Any)
+
 WatchCtrl._OpenMap = HL.Method() << function(self)
     if Utils.isInSpaceShip() then
         MapUtils.openMap(nil, Tables.spaceshipConst.baseSceneName)
@@ -694,19 +697,31 @@ WatchCtrl._OpenMap = HL.Method() << function(self)
 end
 
 WatchCtrl._InitDomain = HL.Method() << function(self)
+    local isInSpaceShip = Utils.isInSpaceShip()
+    local contextKey = isInSpaceShip and MapConst.UI_SPACESHIP_MAP or Utils.getCurDomainId()
+
     if self.m_domainMapNode ~= nil then
-        return
+        if self.m_domainMapContextKey == contextKey then
+            return
+        end
+        GameObject.Destroy(self.m_domainMapNode)
+        self.m_domainMapNode = nil
+        self.m_regionMapSetting = nil
+        self.m_domainMapContextKey = nil
     end
+
     
-    if Utils.isInSpaceShip() then
+    if isInSpaceShip then
         local spaceshipPrefab = self:LoadGameObject(string.format(MapConst.UI_DOMAIN_MAP_PATH, MapConst.UI_SPACESHIP_MAP))
         local spaceshipGo = CSUtils.CreateObject(spaceshipPrefab, self.view.domainRoot[string.lower(MapConst.UI_SPACESHIP_MAP)])
         self.m_domainMapNode = spaceshipGo
+        self.m_domainMapContextKey = contextKey
         local spaceship = Utils.wrapLuaNode(spaceshipGo)
         local _, roomInfo = GameInstance.player.spaceship:TryGetRoom(Tables.spaceshipConst.controlCenterRoomId)
         spaceship.spaceshipInfo.lvTxt.text = roomInfo.lv
         
         spaceship.meshRenderer.sharedMaterial:SetInt("_RegionMapEditor",0)
+        self.view.domainRoot.transform.localPosition = Vector3.zero
         return
     end
 
@@ -718,6 +733,7 @@ WatchCtrl._InitDomain = HL.Method() << function(self)
     local domainPrefab = self:LoadGameObject(string.format(MapConst.UI_DOMAIN_MAP_PATH, domainData.domainMap))
     local domainGo = CSUtils.CreateObject(domainPrefab, self.view.domainRoot[string.lower(domainData.domainMap)])
     self.m_domainMapNode = domainGo
+    self.m_domainMapContextKey = contextKey
     
     local _, regionMapSetting = domainGo:TryGetComponent(typeof(CS.Beyond.UI.RegionMapSetting))
     if regionMapSetting == nil then
@@ -728,6 +744,7 @@ WatchCtrl._InitDomain = HL.Method() << function(self)
 end
 
 WatchCtrl._RefreshDomain = HL.Method() << function(self)
+    self:_InitDomain()
     if self.m_regionMapSetting == nil then
         return
     end
@@ -910,9 +927,11 @@ WatchCtrl.ExtractHotSwitchRuntimeState = HL.Override().Return(HL.Opt(HL.Any)) <<
     local state = {
         domainMapNode = self.m_domainMapNode,
         regionMapSetting = self.m_regionMapSetting,
+        domainMapContextKey = self.m_domainMapContextKey,
     }
     self.m_domainMapNode = nil
     self.m_regionMapSetting = nil
+    self.m_domainMapContextKey = nil
     return state
 end
 
@@ -923,6 +942,7 @@ WatchCtrl.RestoreHotSwitchRuntimeState = HL.Override(HL.Opt(HL.Any)) << function
 
     self.m_domainMapNode = state.domainMapNode
     self.m_regionMapSetting = state.regionMapSetting
+    self.m_domainMapContextKey = state.domainMapContextKey
 end
 
 WatchCtrl._SetCameraCfg = HL.Method() << function(self)
@@ -948,7 +968,7 @@ end
 
 WatchCtrl._InitShowInfo = HL.Method() << function(self)
 
-    self.view.facMiniPowerContent:InitFacMiniPowerContent()
+    self.view.facMiniPowerContent:InitFacMiniPowerContent(Utils.getCurrentChapterId())
     local needShowFacMiniPower = Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacSystem) and not Utils.isInSpaceShip()
     self.view.facMiniPower.gameObject:SetActiveIfNecessary(needShowFacMiniPower)
 
@@ -1042,6 +1062,7 @@ WatchCtrl.OnShow = HL.Override() << function(self)
     self.m_banner:SetPause(false)
     self:_SetVisibilityControllerPanel(true)
     self:_InitAvatarTheme()
+    self:_InitShowInfo()
     self:_RefreshDomain()
     self:_RefreshBtnLockState()
     
@@ -1059,11 +1080,18 @@ WatchCtrl._SetActiveControllerPanel = HL.Method(HL.Boolean) << function(self, ac
         self.m_controllerHintPanel = UIManager:Open(PanelId.WatchController,{ groupId = { self.view.inputGroup.groupId } })
     elseif not active and isOpen then
         UIManager:Close(PanelId.WatchController)
+        self.m_controllerHintPanel = nil
     end
 end
 
 WatchCtrl._SetVisibilityControllerPanel = HL.Method(HL.Boolean) << function(self, active)
-    if not DeviceInfo.usingController or self.m_controllerHintPanel == nil then
+    if not DeviceInfo.usingController then
+        return
+    end
+    if not UIManager:IsOpen(PanelId.WatchController) then
+        if active then
+            self:_SetActiveControllerPanel(true)
+        end
         return
     end
     if active then

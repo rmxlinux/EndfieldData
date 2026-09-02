@@ -4,6 +4,18 @@ local luaLoader = require_ex('Common/Utils/LuaResourceLoader')
 
 local PlaneDistance = CS.Beyond.UI.UIConst.SCREEN_SPACE_CAMERA_PANEL_DISTANCE
 
+
+
+
+local g_clearScreenDebugInfos = {}
+
+
+local function formatClearScreenStack(stack)
+    return (tostring(stack)
+        :gsub("\n[^\n]*_GetClearScreenTargets[^\n]*", "")
+        :gsub("%a:[/\\].-LuaScripts~", "LuaScripts~"))
+end
+
 UIManager = HL.Class('UIManager')
 
 
@@ -591,11 +603,17 @@ UIManager.ClearPreloadAsset = HL.Method(HL.Any) << function(self, source)
     logger.info("UIManager.ClearPreloadAsset", source)
     for panelId, _ in pairs(info) do
         if not self:IsOpen(panelId) then
-            local assetInfo = self.m_panel2Handle[panelId]
-            if assetInfo then
-                self.m_panel2Handle[panelId] = nil
-                self.m_resourceLoader:DisposeHandleByKey(assetInfo[1])
-                logger.info("UIManager.ClearPreloadAsset DisposeHandleByKey", panelId, self.m_names[panelId])
+            
+            
+            if self.m_hotSwitchCache and self.m_hotSwitchCache[panelId] then
+                logger.info("UIManager.ClearPreloadAsset skip hotSwitch cached panel", panelId, self.m_names[panelId])
+            else
+                local assetInfo = self.m_panel2Handle[panelId]
+                if assetInfo then
+                    self.m_panel2Handle[panelId] = nil
+                    self.m_resourceLoader:DisposeHandleByKey(assetInfo[1])
+                    logger.info("UIManager.ClearPreloadAsset DisposeHandleByKey", panelId, self.m_names[panelId])
+                end
             end
         end
     end
@@ -1029,7 +1047,9 @@ UIManager.Close = HL.Method(HL.Number) << function(self, panelId)
 
     
     
-    if not cfg.isResidentPanel then
+    
+    
+    if not cfg.isResidentPanel and not cachedInfo then
         self:_UpdatePanelAssetLRU(panelId, false)
     end
 
@@ -1098,14 +1118,26 @@ UIManager._InternalShow = HL.Method(HL.Number) << function(self, panelId)
         return
     end
 
-    if ctrl.panelCfg.hideCamera then
+    local cfg = ctrl.panelCfg
+    if cfg.hideCamera then
         self:_OnPanelHideCameraActivated(panelId)
     end
 
     self:_RestorePanelVisibleComponents(ctrl, true)
     if IsNull(ctrl.view.gameObject) then
-        logger.error("UIManager._InternalShow 面板GO已被错误销毁", ctrl.panelCfg.name)
+        logger.error("UIManager._InternalShow 面板GO已被错误销毁", cfg.name)
         return
+    end
+
+    
+    
+    
+    if cfg.hideCameraAfterInAnim and not cfg.useCanvasHide then
+        if cfg.hideCamera then
+            self:AddMainCameraTempRequest("HideCamInAnim_" .. cfg.name)
+        elseif BEYOND_DEBUG or BEYOND_DEBUG_COMMAND then
+            logger.error("PanelConfig.hideCameraAfterInAnim 需配合 hideCamera = true，配置无效", cfg.name)
+        end
     end
 
     
@@ -1114,14 +1146,14 @@ UIManager._InternalShow = HL.Method(HL.Number) << function(self, panelId)
 
     self:CalcOtherSystemPropertyByPanelOrder()
 
-    if ctrl.panelCfg.blockObtainWaysJump then
+    if cfg.blockObtainWaysJump then
         local exceptIds = {}
-        if ctrl.panelCfg.blockObtainWaysJump ~= true then
-            for _, whitePhaseName in ipairs(ctrl.panelCfg.blockObtainWaysJump) do
+        if cfg.blockObtainWaysJump ~= true then
+            for _, whitePhaseName in ipairs(cfg.blockObtainWaysJump) do
                 table.insert(exceptIds, whitePhaseName)
             end
         end
-        self:ToggleBlockObtainWaysJump(ctrl.panelCfg.name, true, exceptIds)
+        self:ToggleBlockObtainWaysJump(cfg.name, true, exceptIds)
     end
 
     local luaPanel = ctrl.view.luaPanel
@@ -1133,10 +1165,10 @@ UIManager._InternalShow = HL.Method(HL.Number) << function(self, panelId)
 
     ctrl:OnShow()
     
-    Notify(MessageConst.ON_UI_PANEL_SHOW, ctrl.panelCfg.name)
+    Notify(MessageConst.ON_UI_PANEL_SHOW, cfg.name)
 
-    self:_SendEventUISwitch(ctrl.panelCfg, true)
-    CS.Beyond.Gameplay.Conditions.OnUIPanelOpen.Trigger(ctrl.panelCfg.name, false, PhaseManager:GetTopPhaseName())
+    self:_SendEventUISwitch(cfg, true)
+    CS.Beyond.Gameplay.Conditions.OnUIPanelOpen.Trigger(cfg.name, false, PhaseManager:GetTopPhaseName())
 end
 
 UIManager.IsShow = HL.Method(HL.Number, HL.Opt(HL.Boolean)).Return(HL.Boolean) << function(self, panelId, ignoreClear)
@@ -1324,7 +1356,22 @@ UIManager._GetClearScreenTargets = HL.Method(HL.Opt(HL.Table)).Return(HL.Number,
         end
     end
 
+    if BEYOND_DEBUG_COMMAND then
+        self:_RecordClearScreenDebugInfo(clearScreenKey)
+    end
+
     return clearScreenKey, panelIds
+end
+
+
+
+UIManager._RecordClearScreenDebugInfo = HL.Method(HL.Number) << function(self, clearScreenKey)
+    
+    g_clearScreenDebugInfos[clearScreenKey] = {
+        stack = debug.traceback('', 2),
+        frame = Time.frameCount,
+        time = Time.realtimeSinceStartupAsDouble,
+    }
 end
 
 UIManager.m_inClearScreen = HL.Field(HL.Boolean) << false
@@ -1426,6 +1473,7 @@ UIManager.RecoverScreen = HL.Method(HL.Number).Return(HL.Number) << function(sel
         return -1
     end
     self.m_clearedPanelInfos[clearScreenKey] = nil
+    g_clearScreenDebugInfos[clearScreenKey] = nil
 
     self.m_ignoreBlockOrderUpdate = true
     for id, _ in pairs(clearedPanels) do
@@ -1445,6 +1493,120 @@ UIManager.RecoverScreen = HL.Method(HL.Number).Return(HL.Number) << function(sel
 
     logger.info("UIManager.RecoverScreen", clearScreenKey)
     return -1
+end
+
+
+UIManager._AppendClearScreenKeyLines = HL.Method(HL.Any, HL.Any) << function(self, lines, key)
+    local cleared = self.m_clearedPanelInfos[key]
+    local panelNames = {}
+    if cleared then
+        for id, _ in pairs(cleared) do
+            table.insert(panelNames, self.m_names[id] or tostring(id))
+        end
+        table.sort(panelNames)
+    end
+    table.insert(lines, string.format("  key=%s panels=[%s]", tostring(key), table.concat(panelNames, ", ")))
+
+    local dbg = g_clearScreenDebugInfos[key]
+    if dbg then
+        table.insert(lines, string.format("    born: frame=%s time=%.2fs (alive=%.2fs)",
+            tostring(dbg.frame), dbg.time, Time.realtimeSinceStartupAsDouble - dbg.time))
+        table.insert(lines, "    stack:" .. formatClearScreenStack(dbg.stack))
+    else
+        table.insert(lines, "    born: <no debug info; need BEYOND_DEBUG_COMMAND at clear time>")
+    end
+end
+
+
+
+
+UIManager.DumpActiveClearScreens = HL.Method().Return(HL.String) << function(self)
+    local lines = {}
+    table.insert(lines, string.format("[ClearScreen] active keys (nextKey=%s, curFrame=%s):",
+        tostring(self.m_nextClearScreenKey), tostring(Time.frameCount)))
+
+    local keys = {}
+    for key, _ in pairs(self.m_clearedPanelInfos) do
+        
+        if type(key) == "number" then
+            table.insert(keys, key)
+        end
+    end
+    table.sort(keys)
+
+    if #keys == 0 then
+        table.insert(lines, "  <none>")
+    end
+
+    for _, key in ipairs(keys) do
+        self:_AppendClearScreenKeyLines(lines, key)
+    end
+
+    local result = table.concat(lines, "\n")
+    logger.info(result)
+    return result
+end
+
+
+UIManager.GetPanelClearScreenInfo = HL.Method(HL.Any).Return(HL.String) << function(self, panelOrName)
+    local panelId = panelOrName
+    if type(panelOrName) == "string" then
+        panelId = tonumber(panelOrName) or self.ids[panelOrName]
+    end
+
+    local lines = {}
+    if type(panelId) ~= "number" then
+        table.insert(lines, string.format("[ClearScreen] 无法解析面板: %s", tostring(panelOrName)))
+        local result = table.concat(lines, "\n")
+        logger.info(result)
+        return result
+    end
+
+    local name = self.m_names[panelId] or tostring(panelId)
+    local reverse = self.m_clearedPanelReverseInfos[panelId]
+    if not reverse then
+        table.insert(lines, string.format("[ClearScreen] 面板 %s(id=%d) 当前未被任何 ClearScreen/HideWithKey 隐藏", name, panelId))
+    else
+        local numKeys, strKeys = {}, {}
+        for k, _ in pairs(reverse) do
+            if type(k) == "number" then
+                table.insert(numKeys, k)
+            else
+                table.insert(strKeys, tostring(k))
+            end
+        end
+        table.sort(numKeys)
+        table.sort(strKeys)
+        table.insert(lines, string.format("[ClearScreen] 面板 %s(id=%d) 被 %d 个 key 隐藏:", name, panelId, #numKeys + #strKeys))
+        for _, key in ipairs(numKeys) do
+            self:_AppendClearScreenKeyLines(lines, key)
+        end
+        for _, key in ipairs(strKeys) do
+            
+            self:_AppendClearScreenKeyLines(lines, key)
+        end
+    end
+
+    local result = table.concat(lines, "\n")
+    logger.info(result)
+    return result
+end
+
+
+UIManager.GetClearScreenKeyInfo = HL.Method(HL.Any).Return(HL.String) << function(self, key)
+    key = tonumber(key) or key
+    local lines = {}
+    if self.m_clearedPanelInfos[key] == nil then
+        table.insert(lines, string.format("[ClearScreen] key=%s: 不存在或已 RecoverScreen（nextKey=%s）",
+            tostring(key), tostring(self.m_nextClearScreenKey)))
+    else
+        table.insert(lines, string.format("[ClearScreen] key=%s 详情:", tostring(key)))
+        self:_AppendClearScreenKeyLines(lines, key)
+    end
+
+    local result = table.concat(lines, "\n")
+    logger.info(result)
+    return result
 end
 
 
@@ -1589,8 +1751,9 @@ UIManager.CalcOtherSystemPropertyByPanelOrder = HL.Method() << function(self)
             return mode
         end
     end) or Types.EPanelMouseMode.NotNeedShow
-    InputManagerInst:SetCursorShowRequest("blocked", cursorMode == Types.EPanelMouseMode.NeedShow)
+    
     self:_ToggleAutoShowCursor(cursorMode == Types.EPanelMouseMode.AutoShow)
+    InputManagerInst:SetCursorShowRequest("blocked", cursorMode == Types.EPanelMouseMode.NeedShow)
     if InputManagerInst.virtualMouse then
         if cursorMode == Types.EPanelMouseMode.NotNeedShow then
             InputManagerInst.virtualMouse.keepMousePosOnEnable = false
@@ -1899,10 +2062,12 @@ UIManager.Dispose = HL.Method() << function(self)
     
     InputManagerInst.controllerNaviManager:ResetStateForUIDispose()
     if self.uiNode ~= nil then
+        CSUtils.ClearUIComponents(self.uiNode.gameObject)
         GameObject.DestroyImmediate(self.uiNode.gameObject)
         self.uiNode = nil
     end
     if self.worldObjectRoot ~= nil then
+        CSUtils.ClearUIComponents(self.worldObjectRoot.gameObject)
         GameObject.DestroyImmediate(self.worldObjectRoot.gameObject)
         self.worldObjectRoot = nil
     end
@@ -1929,36 +2094,117 @@ end
 
 
 
+
+
+local AUTO_SHOW_CURSOR_HIDE_DELAY = 3
+
 UIManager.m_autoShowCursorCor = HL.Field(HL.Thread)
+UIManager.m_autoShowCursorSavedPos = HL.Field(Vector2)
+
+UIManager._ClampAutoShowCursorPos = HL.Method(Vector2).Return(Vector2) << function(self, pos)
+    local x = math.max(0, math.min(pos.x, Screen.width))
+    local y = math.max(0, math.min(pos.y, Screen.height))
+    if x ~= pos.x or y ~= pos.y then
+        logger.info("UIManager.AutoShowCursor Clamp", pos.x, pos.y, "->", x, y, "screen", Screen.width, Screen.height)
+    end
+    return Vector2(x, y)
+end
+
+UIManager._SaveAutoShowCursorPos = HL.Method() << function(self)
+    
+    if not InputManager.cursorVisible then
+        logger.info("UIManager.AutoShowCursor Save skip, cursor not visible")
+        return
+    end
+    local pos = InputManager.mousePosition
+    
+    self.m_autoShowCursorSavedPos = self:_ClampAutoShowCursorPos(Vector2(pos.x, pos.y))
+    logger.info("UIManager.AutoShowCursor Save", self.m_autoShowCursorSavedPos.x, self.m_autoShowCursorSavedPos.y)
+end
+
+UIManager._RestoreAutoShowCursorPos = HL.Method() << function(self)
+    if not self.m_autoShowCursorSavedPos then
+        logger.info("UIManager.AutoShowCursor Restore skip, no saved pos")
+        return
+    end
+    local clamped = self:_ClampAutoShowCursorPos(self.m_autoShowCursorSavedPos)
+    logger.info("UIManager.AutoShowCursor Restore", clamped.x, clamped.y)
+    InputManager.SetMousePos(clamped)
+end
+
+
+UIManager._HasAutoShowCursorMouseInput = HL.Method().Return(HL.Boolean) << function(self)
+    local moveThreshold = 0.05
+    local dx = InputManagerInst:GetAxis("Mouse X")
+    local dy = InputManagerInst:GetAxis("Mouse Y")
+    if math.abs(dx) > moveThreshold or math.abs(dy) > moveThreshold then
+        return true
+    end
+    return InputManagerInst:AnyMouseKeyDown()
+end
 
 UIManager._ToggleAutoShowCursor = HL.Method(HL.Boolean) << function(self, active)
     if not active then
         if self.m_autoShowCursorCor then
-            logger.info("UIManager._ToggleAutoShowCursor AutoShowCursor", false)
+            logger.info("UIManager.AutoShowCursor Stop, wasShown request clear")
             InputManagerInst:SetCursorShowRequest("AutoShowCursor", false)
             CoroutineManager:ClearCoroutine(self.m_autoShowCursorCor)
             self.m_autoShowCursorCor = nil
         end
+        
+        if self.m_autoShowCursorSavedPos then
+            logger.info("UIManager.AutoShowCursor Clear saved pos on leave")
+        end
+        self.m_autoShowCursorSavedPos = nil
         return
     end
     if self.m_autoShowCursorCor then
         return
     end
 
+    logger.info("UIManager.AutoShowCursor Start, delay", AUTO_SHOW_CURSOR_HIDE_DELAY)
+    
+    self:_SaveAutoShowCursorPos()
+
     local nextHideTime
+    local isShown = false
+    local wasUnfocused = false
     self.m_autoShowCursorCor = CoroutineManager:StartCoroutine(function()
         while true do
             coroutine.step()
-            local needShow = Input.anyKeyDown
-            if needShow then
-                logger.info("UIManager._ToggleAutoShowCursor AutoShowCursor", true)
-                InputManagerInst:SetCursorShowRequest("AutoShowCursor", true)
-                nextHideTime = Time.unscaledTime + 5
+            if not CS.UnityEngine.Application.isFocused then
+                
+                if not wasUnfocused then
+                    logger.info("UIManager.AutoShowCursor Unfocus pause, isShown", isShown)
+                end
+                wasUnfocused = true
             else
-                if nextHideTime and Time.unscaledTime >= nextHideTime then
-                    logger.info("UIManager._ToggleAutoShowCursor AutoShowCursor", false)
-                    InputManagerInst:SetCursorShowRequest("AutoShowCursor", false)
-                    nextHideTime = nil
+                if wasUnfocused then
+                    wasUnfocused = false
+                    if isShown then
+                        nextHideTime = Time.unscaledTime + AUTO_SHOW_CURSOR_HIDE_DELAY
+                        logger.info("UIManager.AutoShowCursor Refocus restart hide timer", AUTO_SHOW_CURSOR_HIDE_DELAY)
+                    else
+                        logger.info("UIManager.AutoShowCursor Refocus, cursor hidden, no timer")
+                    end
+                end
+                local needShow = self:_HasAutoShowCursorMouseInput()
+                if needShow then
+                    if not isShown then
+                        logger.info("UIManager.AutoShowCursor Show by mouse input")
+                        InputManagerInst:SetCursorShowRequest("AutoShowCursor", true)
+                        self:_RestoreAutoShowCursorPos()
+                        isShown = true
+                    end
+                    nextHideTime = Time.unscaledTime + AUTO_SHOW_CURSOR_HIDE_DELAY
+                else
+                    if nextHideTime and Time.unscaledTime >= nextHideTime then
+                        logger.info("UIManager.AutoShowCursor Hide by timer")
+                        self:_SaveAutoShowCursorPos()
+                        InputManagerInst:SetCursorShowRequest("AutoShowCursor", false)
+                        isShown = false
+                        nextHideTime = nil
+                    end
                 end
             end
         end

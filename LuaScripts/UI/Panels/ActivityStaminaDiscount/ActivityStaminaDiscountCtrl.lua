@@ -246,6 +246,7 @@ ActivityStaminaDiscountCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << fu
     
     cell.notCompleteBtn.onClick:RemoveAllListeners()
     cell.notCompleteBtn.onClick:AddListener(function()
+        
         ActivityUtils.setActivityDayAsRead(self.m_activityId)
         Utils.jumpToSystem(task.mapJumpId)
     end)

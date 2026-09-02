@@ -25,7 +25,7 @@ MiniMapCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.TRAVEL_POLE_TRIGGER_CLOSE_PANEL] = '_ShowMainButtonInTravelMode',
     [MessageConst.TRAVEL_POLE_TRIGGER_FORCE_CLOSE_PANEL] = '_ShowMainButtonInTravelMode',
 
-    [MessageConst.ON_OPEN_LEVEL_PHASE_SEAMLESS_LOADING] = '_OnOpenLevelPhaseSeamlessLoading',
+    [MessageConst.ON_REFRESH_PHASE_LEVEL] = '_OnRefreshPhaseLevel',
 }
 
 MiniMapCtrl.m_isControllerInitialized = HL.Field(HL.Boolean) << false
@@ -83,6 +83,11 @@ end
 MiniMapCtrl._InitMapControllerIfNeed = HL.Method(HL.Opt(HL.Boolean)) << function(self, forceInitialize)
     local isSystemUnlocked = Utils.isSystemUnlocked(GEnums.UnlockSystemType.Map)
     if isSystemUnlocked and (not self.m_isControllerInitialized or forceInitialize) then
+        
+        local initialLevelId = GameWorld.worldInfo.curLevelId
+        if not GameInstance.player.mapManager:IsLevelLoaderDataExists(initialLevelId) then
+            return
+        end
         local viewScale = DataManager.uiLevelMapConfig.miniMapViewScale
         if viewScale > 0 then
             local controllerView = self.view.levelMapController.view
@@ -219,6 +224,9 @@ end
 
 MiniMapCtrl._OnSettlementUpgrade = HL.Method(HL.Table) << function(self, args)
     local settlementId = unpack(args)
+    if string.isEmpty(settlementId) then
+        return
+    end
     local level = GameInstance.player.settlementSystem:GetSettlementLevel(settlementId)
     
     local isNewLevelUnlocked = false
@@ -246,12 +254,38 @@ end
 
 
 
-MiniMapCtrl._OnOpenLevelPhaseSeamlessLoading = HL.Method() << function(self)
-    GameInstance.player.mapManager.characterFollowerInstance = nil
-    self:_InitMapControllerIfNeed(true)
-    self:_RefreshMaskState()
-    self:_RecoverTrackingMarAnimation()
+MiniMapCtrl._OnRefreshPhaseLevel = HL.Method() << function(self)
+    if not self:IsShow() then
+        return
+    end
+    local isSystemUnlocked = Utils.isSystemUnlocked(GEnums.UnlockSystemType.Map)
+    if not isSystemUnlocked then
+        return
+    end
+    self:_ForceRefreshMap()
 end
 
+MiniMapCtrl._ForceRefreshMap = HL.Method() << function(self)
+    if not self.m_isControllerInitialized then
+        self:_InitMapControllerIfNeed()
+        return
+    end
+
+    local newLevelId = GameWorld.worldInfo.curLevelId
+    local mapManager = GameInstance.player.mapManager
+    if not mapManager:IsLevelLoaderDataExists(newLevelId) then
+        return
+    end
+
+    local controller = self.view.levelMapController
+    if controller:GetControllerCurrentLevelId() == newLevelId then
+        return
+    end
+
+    mapManager:UpdateAllFacMarkVisibleState()
+    mapManager:UpdateAllFacMarkLineData()
+
+    controller:ResetFollowModeToTargetLevel(newLevelId)
+end
 
 HL.Commit(MiniMapCtrl)

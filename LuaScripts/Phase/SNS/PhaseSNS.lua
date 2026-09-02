@@ -109,27 +109,24 @@ PhaseSNS._OnDestroy = HL.Override() << function(self)
 end
 
 PhaseSNS._OnRefresh = HL.Override() << function(self)
-    local isFriendSChat = false
-    for panelId, item in pairs(self.m_panel2Item) do
-        if self.m_curPanelItem == item and panelId == SNS_FRIEND_PANEL_ID then
+   local arg = self.arg
+   if arg.dialogId then
+      self:_OnRefreshSNSDialog(arg.dialogId)
+   elseif arg.roleId then
+      local isFriendSChat = false
+      for panelId, item in pairs(self.m_panel2Item) do
+         if self.m_curPanelItem == item and panelId == SNS_FRIEND_PANEL_ID then
             isFriendSChat = true
-        end
-    end
+         end
+      end
 
-    if isFriendSChat then
-        self.m_curPanelItem.uiCtrl:OnClickOpenFriendChat({self.arg.roleId})
-    end
-
-
-   
-   
-   
-   
-   
-   
-
-   logger.warn("PhaseSNS._OnRefresh fail")
+      if isFriendSChat then
+         self.m_curPanelItem.uiCtrl:OnClickOpenFriendChat({self.arg.roleId})
+      end
+   end
 end
+
+
 
 PhaseSNS.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
    local arg = self.arg and lume.deepCopy(self.arg) or {}
@@ -156,6 +153,25 @@ PhaseSNS.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
 end
 
 
+
+PhaseSNS._OnRefreshSNSDialog = HL.Method(HL.String) << function(self, dialogId)
+   local isMissionRelated = GameInstance.player.sns.missionRelatedSNSDialogIds:Contains(dialogId)
+   local panelId
+   if isMissionRelated then
+      panelId = SNS_MISSION_PANEL_ID
+   else
+      panelId = SNS_BARKER_PANEL_ID
+   end
+
+   if string.isEmpty(panelId) then
+      return
+   end
+
+   self.m_basicPanelItem.uiCtrl:ManuallySetToggleOn(panelId)
+   if HL.TryGet(self.m_curPanelItem.uiCtrl, "OnRefresh") then
+      self.m_curPanelItem.uiCtrl:OnRefresh(dialogId)
+   end
+end
 
 PhaseSNS.OnTabChange = HL.Method(HL.Table) << function(self, args)
    local panelId = args.panelId

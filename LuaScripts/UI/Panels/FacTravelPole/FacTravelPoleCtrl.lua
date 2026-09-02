@@ -130,12 +130,12 @@ FacTravelPoleCtrl._RefreshTravelPoleMapMark = HL.Method(HL.Table) << function(se
         markViewData.filterType == GEnums.MarkInfoType.HUB:GetHashCode()
     isVisible = isVisible and not FactoryUtils.isPendingBuildingNode(markViewData.runtimeData.nodeId)
     if isVisible then
-        markViewData.markObj:ToggleForceShowMark("TravelPoleForceShow", isVisible)
+        self.view.levelMapController:ToggleControllerMarkForceShow(markViewData.instId, "TravelPoleForceShow", isVisible)
     else
-        markViewData.markObj:ToggleMarkHiddenState("TravelPoleHide", true)
+        self.view.levelMapController:ToggleControllerMarkHiddenState(markViewData.instId, "TravelPoleHide", true)
     end
 
-    if markViewData.instId == self.m_currPoleMarkInstId then
+    if markViewData.instId == self.m_currPoleMarkInstId and markViewData.markObj then
         local isOthers = FactoryUtils.isOthersSocialBuilding(markViewData.runtimeData.nodeId)
         if not isOthers then
             markViewData.markObj.view.iconImg.color = self.view.config.CURRENT_MARK_COLOR

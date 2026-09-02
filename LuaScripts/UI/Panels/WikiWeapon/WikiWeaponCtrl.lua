@@ -40,8 +40,16 @@ WikiWeaponCtrl._RefreshRight = HL.Override() << function(self)
         self.m_isBtnAttrInited = true
         self.view.right.btnToggle.onClick:AddListener(function()
             self.view.right.recipeNodeAnimWrapper:PlayOutAnimation(function()
+                if self.m_isClosed then
+                    return
+                end
                 self.m_isShowWeaponMaxInfo = not self.m_isShowWeaponMaxInfo
-                self:_RefreshModel()
+                
+                
+                
+                if not self:IsHide() then
+                    self:_RefreshModel()
+                end
                 self:_RefreshRight()
                 self.view.right.recipeNodeAnimWrapper:PlayInAnimation()
             end)

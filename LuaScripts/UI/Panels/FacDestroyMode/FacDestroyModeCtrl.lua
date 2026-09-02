@@ -3,6 +3,10 @@ local PANEL_ID = PanelId.FacDestroyMode
 local FAC_DESTROY_MODE_STATE_KEY = "FacDestroyModeCtrl"
 FacDestroyModeCtrl = HL.Class('FacDestroyModeCtrl', uiCtrl.UICtrl)
 
+local function _GetBatchBlueprintCountInfo()
+    return LuaSystemManager.factory:GetCurBatchSelectTargetCount(), Tables.facBlueprintConst.BlueprintNodeCountLimit
+end
+
 
 
 
@@ -209,6 +213,10 @@ FacDestroyModeCtrl._OnEnterMode = HL.Method(HL.Table) << function(self, args)
     self.view.warningHint.gameObject:SetActive(false)
 
     self.view.createBPHint.gameObject:SetActive(args.showCreateHint)
+    if args.showCreateHint then
+        local curCount, maxCount = _GetBatchBlueprintCountInfo()
+        self.view.createBPHintTxt:SetAndResolveTextStyle(string.format(Language.LUA_FAC_BATCH_MODE_CREATE_BP_HINT_FORMAT, curCount, maxCount))
+    end
 
     self.view.batchNode.gameObject:SetActive(false)
     if inTopView then
@@ -240,6 +248,10 @@ FacDestroyModeCtrl._OnEnterMode = HL.Method(HL.Table) << function(self, args)
 
     Notify(MessageConst.ON_FAC_DESTROY_MODE_CHANGE, true)
 
+    
+    self.m_overBlueprintNodeLimitAudioPlayed = true
+    self.m_overBlueprintRangeAudioPlayed = true
+
     if inTopView and args.batchSelectTargets then
         
         
@@ -256,6 +268,13 @@ FacDestroyModeCtrl._OnEnterMode = HL.Method(HL.Table) << function(self, args)
     end
 
     self:_UpdateKeyHintStates()
+
+    local curCount, maxCount = _GetBatchBlueprintCountInfo()
+    local range = GameInstance.remoteFactoryManager.batchSelect.selectedRange
+    local notOverSize = range.width <= Tables.facBlueprintConst.BluePrintXLenMax and range.height <= Tables.facBlueprintConst.BluePrintZLenMax
+    self.m_overBlueprintRangeAudioPlayed = not notOverSize
+    
+    self.m_overBlueprintNodeLimitAudioPlayed = curCount > maxCount and notOverSize
 
     if self.m_args.isFromChangeInputDevice and self.m_args.openSaveBP then
         self:_SaveBlueprint()
@@ -496,6 +515,10 @@ end
 
 FacDestroyModeCtrl.m_needUpdateActionInteract = HL.Field(HL.Boolean) << false
 
+FacDestroyModeCtrl.m_overBlueprintNodeLimitAudioPlayed = HL.Field(HL.Boolean) << false
+
+FacDestroyModeCtrl.m_overBlueprintRangeAudioPlayed = HL.Field(HL.Boolean) << false
+
 FacDestroyModeCtrl.OnToggleBatchTarget = HL.Method() << function(self)
     self.m_needUpdateActionInteract = true
 end
@@ -513,9 +536,6 @@ FacDestroyModeCtrl._UpdateKeyHintStates = HL.Method() << function(self)
         end
 
         self.view.batchNode.gameObject:SetActive(hasTarget)
-        if hasTarget then
-            self.view.createBPHint.gameObject:SetActive(false)
-        end
         if hasTarget then
             if not GameInstance.remoteFactoryManager.batchSelect.needUpdateRange then
                 local range = GameInstance.remoteFactoryManager.batchSelect.selectedRange
@@ -606,9 +626,9 @@ FacDestroyModeCtrl._SaveBlueprint = HL.Method() << function(self)
         return
     end
 
-    local maxCount = Tables.facBlueprintConst.BlueprintNodeCountLimit
-    if LuaSystemManager.factory:GetCurBatchSelectTargetCount() > maxCount then
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_FAC_BATCH_MODE_ERROR_TOO_MUCH_NODE)
+    local curCount, maxCount = _GetBatchBlueprintCountInfo()
+    if curCount > maxCount then
+        Notify(MessageConst.SHOW_TOAST, string.format(Language.LUA_FAC_BATCH_MODE_ERROR_TOO_MUCH_NODE_FORMAT, curCount, maxCount))
         return
     end
 
@@ -626,31 +646,34 @@ FacDestroyModeCtrl.CheckBatchActionValid = HL.Method(HL.Opt(HL.Boolean, HL.Boole
 end
 
 FacDestroyModeCtrl._CheckBatchActionValid = HL.Method(HL.Opt(HL.Boolean)).Return(HL.Boolean, HL.Opt(HL.String)) << function(self, isMoveAct)
-    local range = GameInstance.remoteFactoryManager.batchSelect.selectedRange
+    local batch = GameInstance.remoteFactoryManager.batchSelect
+    local range = batch.selectedRange
+    if not isMoveAct then
+        if batch.hasPendingTargets then
+            return false, Language.LUA_FAC_BATCH_ACTION_WARNING_PENDING
+        end
+    end
     if range.width > Tables.facBlueprintConst.BluePrintXLenMax or range.height > Tables.facBlueprintConst.BluePrintZLenMax then
         return false, Language.LUA_FAC_BLUEPRINT_RANGE_OVER_MAX_HINT
     end
     if not isMoveAct then
-        if GameInstance.remoteFactoryManager.batchSelect.hasHub then
+        if batch.hasHub then
             return false, Language.LUA_FAC_BATCH_ACTION_WARNING_HUB
         end
-        if GameInstance.remoteFactoryManager.batchSelect.hasDecoTargets then
+        if batch.hasDecoTargets then
             return false, Language.LUA_FAC_BATCH_ACTION_WARNING_DECO
         end
-        if GameInstance.remoteFactoryManager.batchSelect.hasPendingTargets then
-            return false, Language.LUA_FAC_BATCH_ACTION_WARNING_PENDING
-        end
     end
-    if GameInstance.remoteFactoryManager.batchSelect.hasSocialTargets then
+    if batch.hasSocialTargets then
         return false, Language.LUA_FAC_BLUEPRINT_HAS_SOCIAL_HINT
     end
-    if not GameInstance.remoteFactoryManager.batchSelect.allTargetsInSamePosY then
+    if not batch.allTargetsInSamePosY then
         return false, Language.LUA_FAC_BATCH_MODE_ERROR_NOT_IN_SAME_HEIGHT
     end
-    if GameInstance.remoteFactoryManager.batchSelect.autoAdjustPipeAndFluidValveFailed then
+    if batch.autoAdjustPipeAndFluidValveFailed then
         return false, Language.LUA_BLUEPRINT_FAILED_TO_ADJUST_PIPE_SLOPE
     end
-    if isMoveAct and GameInstance.remoteFactoryManager.batchSelect.hasAdjustedPipe then
+    if isMoveAct and batch.hasAdjustedPipe then
         return false, Language.LUA_BLUEPRINT_CANNOT_BATCH_MOVE_SINCE_ADJUST_PIPE_SLOPE_ERROR
     end
     return true
@@ -658,6 +681,8 @@ end
 
 FacDestroyModeCtrl._UpdateBatchActionInteractable = HL.Method() << function(self)
     local batch = GameInstance.remoteFactoryManager.batchSelect
+    local curCount, maxCount = _GetBatchBlueprintCountInfo()
+    local overSaveCountLimit = curCount > maxCount
     local noPendingNode = not batch.hasPendingTargets
     local allNodesInSameHeight = batch.allTargetsInSamePosY
     local hasAdjustedPipe = batch.hasAdjustedPipe
@@ -666,37 +691,72 @@ FacDestroyModeCtrl._UpdateBatchActionInteractable = HL.Method() << function(self
     local autoAdjustPipeAndFluidValveFailed = batch.autoAdjustPipeAndFluidValveFailed
     local range = batch.selectedRange
     local notOverSize = range.width <= Tables.facBlueprintConst.BluePrintXLenMax and range.height <= Tables.facBlueprintConst.BluePrintZLenMax
-    local bpValid = noPendingNode and allNodesInSameHeight and notOverSize and not batch.hasSocialTargets and not hasDecoTargets and not hasHub
 
-    self.view.batchNode.saveBtnStateController:SetState(bpValid and "Valid" or "NotValid")
+    
+    if not notOverSize then
+        if not self.m_overBlueprintRangeAudioPlayed then
+            AudioAdapter.PostEvent("Au_UI_Toast_BluePrintError")
+            self.m_overBlueprintRangeAudioPlayed = true
+        end
+    else
+        self.m_overBlueprintRangeAudioPlayed = false
+    end
+
+    if overSaveCountLimit then
+        
+        if notOverSize and not self.m_overBlueprintNodeLimitAudioPlayed then
+            AudioAdapter.PostEvent("Au_UI_Toast_BluePrintError")
+            self.m_overBlueprintNodeLimitAudioPlayed = true
+        end
+    else
+        self.m_overBlueprintNodeLimitAudioPlayed = false
+    end
+
+    local bpValid = noPendingNode and allNodesInSameHeight and notOverSize and not batch.hasSocialTargets and not hasDecoTargets and not hasHub
+    local saveValid = bpValid and not overSaveCountLimit
+
+    self.view.batchNode.saveBtnStateController:SetState(saveValid and "Valid" or "NotValid")
     self.view.batchNode.copyBtnStateController:SetState(bpValid and "Valid" or "NotValid")
     self.view.batchNode.moveBtnStateController:SetState((allNodesInSameHeight and not batch.hasSocialTargets and not hasAdjustedPipe and notOverSize) and "Valid" or "NotValid")
     self.view.batchNode.delBtnStateController:SetState(hasHub and "NotValid" or "Valid")
 
-    local hasError, warningHintTxt
+    local hasError, errorHintTxt, warningHintTxt, createBPHintTxt
     if not allNodesInSameHeight then
-        self.view.errorHintText.text = Language.LUA_FAC_BATCH_MODE_ERROR_NOT_IN_SAME_HEIGHT
+        errorHintTxt = Language.LUA_FAC_BATCH_MODE_ERROR_NOT_IN_SAME_HEIGHT
         hasError = true
     elseif autoAdjustPipeAndFluidValveFailed then
-        self.view.errorHintText.text = Language.LUA_BLUEPRINT_FAILED_TO_ADJUST_PIPE_SLOPE
-        hasError = true
-    elseif not notOverSize then
-        self.view.errorHintText.text = Language.LUA_FAC_BATCH_MODE_ERROR_OVER_SIZE
+        errorHintTxt = Language.LUA_BLUEPRINT_FAILED_TO_ADJUST_PIPE_SLOPE
         hasError = true
     elseif batch.hasSocialTargets then
-        self.view.errorHintText.text = Language.LUA_FAC_BLUEPRINT_HAS_SOCIAL_HINT
+        errorHintTxt = Language.LUA_FAC_BLUEPRINT_HAS_SOCIAL_HINT
         hasError = true
     elseif hasHub then
         warningHintTxt = Language.LUA_FAC_BATCH_ACTION_WARNING_HUB
     elseif hasDecoTargets then
         warningHintTxt = Language.LUA_FAC_BATCH_ACTION_WARNING_DECO
-    elseif not noPendingNode then
-        warningHintTxt = Language.LUA_FAC_BATCH_ACTION_WARNING_PENDING
+    end
+
+    if not noPendingNode then
+        createBPHintTxt = Language.LUA_FAC_BATCH_ACTION_WARNING_PENDING
+    elseif not notOverSize then
+        createBPHintTxt = Language.LUA_FAC_BATCH_MODE_ERROR_OVER_SIZE_FOR_ACTION
+    elseif overSaveCountLimit then
+        createBPHintTxt = string.format(Language.LUA_FAC_BATCH_MODE_ERROR_TOO_MUCH_NODE_FORMAT, curCount, maxCount)
+    elseif self.m_args.showCreateHint then
+        createBPHintTxt = string.format(Language.LUA_FAC_BATCH_MODE_CREATE_BP_HINT_FORMAT, curCount, maxCount)
     end
     self.view.errorHint.gameObject:SetActive(hasError == true)
+    if errorHintTxt then
+        self.view.errorHintText:SetAndResolveTextStyle(errorHintTxt)
+    end
     self.view.warningHint.gameObject:SetActive(warningHintTxt ~= nil)
     if warningHintTxt then
-        self.view.warningHintTxt.text = warningHintTxt
+        self.view.warningHintTxt:SetAndResolveTextStyle(warningHintTxt)
+    end
+    local shouldShowCreateBPHint = createBPHintTxt ~= nil and not hasError
+    self.view.createBPHint.gameObject:SetActive(shouldShowCreateBPHint)
+    if shouldShowCreateBPHint then
+        self.view.createBPHintTxt:SetAndResolveTextStyle(createBPHintTxt)
     end
 end
 

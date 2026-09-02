@@ -181,9 +181,37 @@ ControllerNaviTargetCtrl._SyncHintRectTransformParent = HL.Method() << function(
     end
     hint.localScale = Vector3.one
     if targetValid then
-        hintRectNode.confirmKeyHint.gameObject:SetActive(target.needNaviConfirmKeyHint)
+        self:_SyncConfirmKeyHintAnchor(hintRectNode, target)
     end
     hintRectNode.confirmKeyHint.transform.localScale = Vector3.one / hint.localScale.x
+end
+
+
+ControllerNaviTargetCtrl._SyncConfirmKeyHintAnchor = HL.Method(HL.Any, CS.UnityEngine.UI.Selectable) << function(self, hintRectNode, target)
+    local confirmKeyHint = hintRectNode.confirmKeyHint
+    confirmKeyHint.gameObject:SetActive(target.needNaviConfirmKeyHint)
+    if not target.needNaviConfirmKeyHint then
+        return
+    end
+
+    local side = target.naviConfirmKeyHintSide
+    local offset = target.naviConfirmKeyHintOffset
+    local anchor, anchoredPos
+    if side == Unity.UI.NaviHintSide.Top then
+        anchor, anchoredPos = Vector2(0.5, 1), Vector2(0, offset)
+    elseif side == Unity.UI.NaviHintSide.Left then
+        anchor, anchoredPos = Vector2(0, 0.5), Vector2(-offset, 0)
+    elseif side == Unity.UI.NaviHintSide.Right then
+        anchor, anchoredPos = Vector2(1, 0.5), Vector2(offset, 0)
+    else
+        anchor, anchoredPos = Vector2(0.5, 0), Vector2(0, -offset)
+    end
+
+    local hintTrans = confirmKeyHint.transform
+    hintTrans.anchorMin = anchor
+    hintTrans.anchorMax = anchor
+    hintTrans.pivot = Vector2(0.5, 0.5)
+    hintTrans.anchoredPosition = anchoredPos
 end
 
 

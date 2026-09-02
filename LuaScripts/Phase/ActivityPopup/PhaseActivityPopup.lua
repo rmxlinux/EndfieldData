@@ -22,9 +22,19 @@ PhaseActivityPopup._OnInit = HL.Override() << function(self)
     UIManager:ToggleBlockObtainWaysJump("PhaseActivityPopup", true, {})
 end
 
+
+PhaseActivityPopup._IsPopupRecordManagedByActivity = HL.Method(HL.Any).Return(HL.Boolean) << function(self, activity)
+    
+    if GEnums.ActivityType.__CastFrom(activity.type) == GEnums.ActivityType.CharacterGift then
+        return true
+    end
+    return false
+end
+
 PhaseActivityPopup._ShowPopUp = HL.Method(HL.Number) << function(self, index)
     local id = self.m_popupIds[index]
-    if not GameInstance.player.activitySystem:GetActivity(id) then
+    local activity = GameInstance.player.activitySystem:GetActivity(id)
+    if not activity then
         if index == #self.m_popupIds then
             PhaseManager:ExitPhaseFast(PHASE_ID)
         else
@@ -33,7 +43,9 @@ PhaseActivityPopup._ShowPopUp = HL.Method(HL.Number) << function(self, index)
         return
     end
     local panelId = Tables.activityTable[id].popUpPanelId
-    ActivityUtils.recordPopup(id)
+    if not self:_IsPopupRecordManagedByActivity(activity) then
+        ActivityUtils.recordPopup(id)
+    end
     self:CreatePhasePanelItem(PanelId[panelId], {
         activityId = id,
         closeCallback = function()

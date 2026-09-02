@@ -41,16 +41,7 @@ BlueprintCell.RefreshCellState = HL.Method(HL.Any) << function(self, reviewStatu
     if self.m_showStatus then
         local csInst = self.m_inst.csInst
         local bpInfo = csInst.info
-        local isExpired = false
-        if bpInfo.bp.timeLimitedFormulas then
-            logger.info(bpInfo.bp.timeLimitedFormulas, bpInfo.bp.timeLimitedFormulas.Count)
-            for _, formulaIdInt in pairs(bpInfo.bp.timeLimitedFormulas) do
-                if FactoryUtils.isExpiredTimeLimitedFormula(CS.Beyond.Cfg.Tables.formulaIdToStr:GetValue(formulaIdInt)) then
-                    isExpired = true
-                    break
-                end
-            end
-        end
+        local isExpired = FactoryUtils.isBlueprintHasExpiredTimeLimited(bpInfo.bp)
         if not isExpired then
             if csInst.sourceType == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintSourceType.Sys or csInst.sourceType == CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintSourceType.Gift then
                 csInst.reviewStatus = CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryBlueprintReviewStatus.Approved

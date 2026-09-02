@@ -7,6 +7,7 @@ ActivityBenefitsCtrl = HL.Class('ActivityBenefitsCtrl', uiCtrl.UICtrl)
 ActivityBenefitsCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_DOMAIN_DEVELOPMENT_LEVEL_REWARD_GET] = '_OnRefresh',
     [MessageConst.ON_BUY_ITEM_SUCC] = '_OnRefresh',
+    [MessageConst.ON_ADVENTURE_EXP_CHANGE] = '_OnRefresh',
     [MessageConst.ON_ADVENTURE_BOOK_STAGE_MODIFY] = '_OnRefresh',
 }
 
@@ -179,7 +180,7 @@ local benefitConfigTable = {
         unlockFunc = function()
             return Utils.isSystemUnlocked(GEnums.UnlockSystemType.AdventureBook)
         end,
-        unlockHint = Language.LUA_ACTIVITY_BENEFITS_ADVENTURE_BOOK_LOCKED,
+        unlockHint = "LUA_ACTIVITY_BENEFITS_ADVENTURE_BOOK_LOCKED",
     },
     
     domainDevelopment = {
@@ -231,7 +232,7 @@ local benefitConfigTable = {
         unlockFunc = function()
             return Utils.isSystemUnlocked(GEnums.UnlockSystemType.DomainDevelopment)
         end,
-        unlockHint = Language.LUA_ACTIVITY_BENEFITS_DOMAIN_DEVELOPMENT_LOCKED,
+        unlockHint = "LUA_ACTIVITY_BENEFITS_DOMAIN_DEVELOPMENT_LOCKED",
     },
     
     levelRewardSystem = {
@@ -298,9 +299,21 @@ ActivityBenefitsCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     end)
 end
 
+ActivityBenefitsCtrl.OnShow = HL.Override() << function(self)
+    self:_RefreshBenefitsList()
+end
+
 ActivityBenefitsCtrl.m_naviTarget = HL.Field(HL.Number) << -1
 
-ActivityBenefitsCtrl._OnRefresh = HL.Method(HL.Table) << function(self, arg)
+ActivityBenefitsCtrl._OnRefresh = HL.Method(HL.Any) << function(self, arg)
+    self:_RefreshBenefitsList()
+end
+
+ActivityBenefitsCtrl._RefreshBenefitsList = HL.Method() << function(self)
+    if string.isEmpty(self.m_activityId) or self.m_getCell == nil then
+        return
+    end
+
     self:_RefreshInfo()
     if self.m_naviTarget > 0 then
         self.view.scrollList:UpdateCount(#self.m_benefits, self.m_naviTarget, false, false, true)
@@ -485,7 +498,7 @@ ActivityBenefitsCtrl._OnUpdateCell = HL.Method(HL.Any, HL.Number) << function(se
         cell.stateController:SetState("NormalCell")
         if canJump then
             cell.jumpBtn.onClick:AddListener(function()
-                Notify(MessageConst.SHOW_TOAST, info.unlockHint)
+                Notify(MessageConst.SHOW_TOAST, Language[info.unlockHint])
             end)
         end
     elseif not cell.isFinished then

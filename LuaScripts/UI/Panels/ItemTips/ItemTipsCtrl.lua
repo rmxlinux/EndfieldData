@@ -384,7 +384,7 @@ ItemTipsCtrl._RefreshContent = HL.Method(HL.String, HL.Number) << function(self,
     self.view.portableDeviceTagNode:InitPortableDeviceTagNode(itemId)
 
     self.view.icon:InitItemIcon(itemId, true, instId)
-    if self.view.icon.view.liquidIcon then 
+    if self.view.icon.view.liquidIcon and data.type ~= GEnums.ItemType.SysBluePrint then 
         self.view.icon.view.liquidIcon.gameObject:SetActive(false)
     end
     self.view.iconImageBlur:OnChangeSprite()

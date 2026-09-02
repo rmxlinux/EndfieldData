@@ -255,6 +255,10 @@ function AdventureBookUtils.CheckEnemySpawnerCanOpenMap(seriesId)
         return false
     end
 
+    if not MapUtils.isMarkVisible(instId) then
+        return false
+    end
+
     local data = {}
 
     local levelId = GameInstance.player.mapManager:GetMarkInstRuntimeDataLevelId(instId)

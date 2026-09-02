@@ -472,6 +472,7 @@ WikiSearchCtrl._InitController = HL.Method() << function(self)
             InputManagerInst:ChangeParent(true, self.view.searchBtnInputGroup.groupId, self.view.inputGroup.groupId)
         end
     end)
+    UIUtils.bindHyperlinkPopup(self, "wikiItemInfo", self.view.inputGroup.groupId)
 end
 
 

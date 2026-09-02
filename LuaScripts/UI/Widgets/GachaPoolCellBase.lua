@@ -92,11 +92,12 @@ GachaPoolCellBase._InitBaseData = HL.Method() << function(self)
         },
         
         cumulateFreeTenGachaInfo = {
-            needPullCount = poolTypeCfg.freeTenPullRewardPullCount,
+            needPullCount = 0,
             remainNeedPullCount = 0,
-            maxFreeCount = poolTypeCfg.freeTenPullRewardPullCount > 0 and 1 or 0, 
+            maxFreeCount = 0,
             remainFreeCount = 0,
             curCanUseCount = 0,
+            freeTenPullCounts = {},
         },
         
         cumulateChoicePackInfo = {
@@ -167,6 +168,16 @@ GachaPoolCellBase._InitBaseData = HL.Method() << function(self)
         self.m_baseInfo.onceAutoRewardItemInfo2.itemId = onceRewardItems[1].id
         self.m_baseInfo.onceAutoRewardItemInfo2.itemCount = onceRewardItems[1].count
     end
+    
+    local freeTenInfo = self.m_baseInfo.cumulateFreeTenGachaInfo
+    local cfgFreeTenPullCounts = poolTypeCfg.freeTenPullRewardPullCount
+    for i = 0, cfgFreeTenPullCounts.Count - 1 do
+        local need = cfgFreeTenPullCounts[i]
+        if need > 0 then
+            table.insert(freeTenInfo.freeTenPullCounts, need)
+        end
+    end
+    freeTenInfo.maxFreeCount = #freeTenInfo.freeTenPullCounts
     
 
     
@@ -242,8 +253,9 @@ GachaPoolCellBase._UpdateBaseData = HL.Method() << function(self)
         logger.error("卡池信息不存在，卡池id：" .. self.m_poolId)
         return
     end
-    
     local baseInfo = self.m_baseInfo
+    self.m_baseInfo.poolVersion = poolInfo.gachaPoolVersion
+    
     if baseInfo.maxPullCount > 0 then
         baseInfo.remainPullCount = baseInfo.maxPullCount - poolInfo.totalPullCountNoShare
     end
@@ -275,10 +287,7 @@ GachaPoolCellBase._UpdateBaseData = HL.Method() << function(self)
     onceAutoRewardItemInfo2.remainReceivedCount = poolInfo.onceReward2IsGot and 0 or onceAutoRewardItemInfo2.maxReceivedCount
     onceAutoRewardItemInfo2.isCheck = poolInfo.onceReward2IsCheck
     
-    local freeTenGachaInfo = baseInfo.cumulateFreeTenGachaInfo
-    freeTenGachaInfo.curCanUseCount = poolInfo.freeTenPullCount
-    freeTenGachaInfo.remainFreeCount = poolInfo.freeTenPullUsed and 0 or freeTenGachaInfo.maxFreeCount
-    freeTenGachaInfo.remainNeedPullCount = freeTenGachaInfo.needPullCount - poolInfo.totalPullCountNoShare
+    self:_RefreshCumulateFreeTenGachaInfo(poolInfo)
     
     local choicePackInfo = baseInfo.cumulateChoicePackInfo
     choicePackInfo.curCanUseCount = poolInfo.choicePackCount
@@ -314,6 +323,27 @@ GachaPoolCellBase._UpdateBaseData = HL.Method() << function(self)
         loopRewardInfo.curRounds = curRound
         loopRewardInfo.allIsCheck = poolInfo.allLoopCumulateRewardIsCheck
         loopRewardInfo.remainNeedPullCount = needCount
+    end
+end
+
+GachaPoolCellBase._RefreshCumulateFreeTenGachaInfo = HL.Method(HL.Any) << function(self, poolInfo)
+    local info = self.m_baseInfo.cumulateFreeTenGachaInfo
+    local nextIndex = 0
+    for i = 1, info.maxFreeCount do
+        if not poolInfo["freeTenPullUsed" .. i] then
+            nextIndex = i
+            break
+        end
+    end
+
+    local grantedCount = nextIndex > 0 and (nextIndex - 1) or info.maxFreeCount
+    info.remainFreeCount = info.maxFreeCount - grantedCount
+    info.curCanUseCount = poolInfo.freeTenPullCount
+    if nextIndex > 0 then
+        info.needPullCount = info.freeTenPullCounts[nextIndex]
+        info.remainNeedPullCount = info.needPullCount - poolInfo.totalPullCountNoShare
+    else
+        info.remainNeedPullCount = 0
     end
 end
 
@@ -436,6 +466,25 @@ GachaPoolCellBase._RefreshGachaBtn = HL.Method(HL.Any, HL.Table) << function(sel
             moneyCell.oriCountTxt.gameObject:SetActive(false)
         end
     end)
+end
+
+GachaPoolCellBase._RefreshFreeTenUI = HL.Method() << function(self)
+    local baseInfo = self.m_baseInfo
+    
+    local freeTenInfo = baseInfo.cumulateFreeTenGachaInfo
+    if freeTenInfo.curCanUseCount > 0 then
+        self.view.freeTenNode.stateController:SetState("FreeTen")
+        self.view.freeTenNode.stateController:SetState("HideFreeTenTip")
+    else
+        self.view.freeTenNode.stateController:SetState("Normal")
+        
+        if freeTenInfo.remainFreeCount > 0 then
+            self.view.freeTenNode.stateController:SetState("ShowFreeTenTip")
+            self.view.freeTenNumTxt.text = freeTenInfo.remainNeedPullCount
+        else
+            self.view.freeTenNode.stateController:SetState("HideFreeTenTip")
+        end
+    end
 end
 
 

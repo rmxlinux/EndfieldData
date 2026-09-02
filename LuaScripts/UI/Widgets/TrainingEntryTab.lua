@@ -201,6 +201,10 @@ TrainingEntryTab._OnClickGoToBtn = HL.Method() << function(self)
     local enterDungeonCallback
     local panelId = self:GetPanelId()
     if panelId == PanelId.AdventureTraining then
+        local ctrl = self:GetUICtrl()
+        if not ctrl:CanOpenDungeonEntry() then
+            return
+        end
         enterDungeonCallback = function(enterDungeonId)
             LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId)
         end

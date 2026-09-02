@@ -405,6 +405,27 @@ SNSMissionCtrl.GetPanelType = HL.Method().Return(HL.Number) << function(self)
     return SNSUtils.PanelType.FullScreenPanel
 end
 
+SNSMissionCtrl._IsDialogInCurrentList = HL.Method(HL.String).Return(HL.Boolean) << function(self, dialogId)
+    for _, info in ipairs(self.m_filterMissionRelatedDialogInfos) do
+        if info.dialogId == dialogId then
+            return true
+        end
+    end
+    return false
+end
+
+SNSMissionCtrl.OnRefresh = HL.Method(HL.String) << function(self, dialogId)
+    local selectedTags = self:_IsDialogInCurrentList(dialogId) and self.m_cachedSelectedTags or {}
+    self:_InitData({ dialogId = dialogId, selectedTags = selectedTags })
+
+    self:_RefreshFilterBtnState()
+    self:_UpdateFilterMissionRelatedDialogInfos(self.m_cachedSelectedTags)
+    self:_RefreshMissionRelatedDialogList()
+
+    self:_RefreshContent()
+    self:_RefreshNaviTarget()
+end
+
 
 
 SNSMissionCtrl.m_focusCellCSIndex = HL.Field(HL.Number) << -1

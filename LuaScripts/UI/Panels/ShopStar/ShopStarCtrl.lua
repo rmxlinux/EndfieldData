@@ -198,6 +198,7 @@ ShopStarCtrl._InitUI = HL.Method() << function(self)
 end
 
 ShopStarCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
+    self.m_goodsGroupList = {}
     local shopId
     local curSelectTagIndex
     if type(arg) == "table" then
@@ -370,7 +371,63 @@ ShopStarCtrl._SelectTab = HL.Method(HL.Number) << function(self, index)
     end
 end
 
+ShopStarCtrl._BuildPreviousGoodsPositionMap = HL.Method().Return(HL.Table) << function(self)
+    
+    local previousGoodsPositionMap = {}
+    for _, groupInfo in ipairs(self.m_goodsGroupList) do
+        for localIndex, goodsInfo in ipairs(groupInfo.goodsList) do
+            if goodsInfo.shopId == self.m_shopId then
+                previousGoodsPositionMap[goodsInfo.goodsId] = {
+                    tagId = groupInfo.tagId,
+                    localIndex = localIndex,
+                }
+            end
+        end
+    end
+    return previousGoodsPositionMap
+end
+
+ShopStarCtrl._TryAddGoodsToGroup = HL.Method(HL.Table, HL.String, HL.Any) << function(self, context, goodsId, goodsData)
+    local isUnlocked = shopSystem:CheckGoodsUnlocked(goodsId)
+    local hasGoodsCfg, goodsCfg = Tables.shopGoodsTable:TryGetValue(goodsData.goodsTemplateId)
+    if not hasGoodsCfg or (not isUnlocked and not goodsCfg.isShowWhenLock) then
+        return
+    end
+    local goodsInfo = self:_BuildGoodsInfo(goodsId, goodsData, goodsCfg, isUnlocked)
+    if not goodsInfo then
+        return
+    end
+    local goodsGroup = self:_GetOrCreateGoodsGroup(context.groupDict, context.shopCfg, goodsCfg.goodsTagId)
+    if goodsInfo.remainLimitCount ~= 0 then
+        table.insert(goodsGroup.goodsList, goodsInfo)
+        return
+    end
+    local previousPosition = context.previousGoodsPositionMap[goodsId]
+    if not previousPosition then
+        goodsInfo.tagSort = goodsGroup.sortId
+        table.insert(context.soldOutGoodsGroup.goodsList, goodsInfo)
+        return
+    end
+    local previousGroup = self:_GetOrCreateGoodsGroup(context.groupDict, context.shopCfg, previousPosition.tagId)
+    table.insert(previousGroup.preservedGoodsList, {
+        goodsInfo = goodsInfo,
+        localIndex = previousPosition.localIndex,
+    })
+end
+
+ShopStarCtrl._FinalizeGoodsGroup = HL.Method(HL.Table, HL.Function) << function(self, groupInfo, sortFunc)
+    table.sort(groupInfo.goodsList, sortFunc)
+    table.sort(groupInfo.preservedGoodsList, function(a, b)
+        return a.localIndex < b.localIndex
+    end)
+    for _, preservedGoods in ipairs(groupInfo.preservedGoodsList) do
+        local insertIndex = math.min(preservedGoods.localIndex, #groupInfo.goodsList + 1)
+        table.insert(groupInfo.goodsList, insertIndex, preservedGoods.goodsInfo)
+    end
+end
+
 ShopStarCtrl._RefreshGoodsGroupData = HL.Method() << function(self)
+    local previousGoodsPositionMap = self:_BuildPreviousGoodsPositionMap()
     self.m_goodsGroupList = {}
     local _, shopCfg = Tables.shopTable:TryGetValue(self.m_shopId)
     local shopData = shopSystem:GetShopData(self.m_shopId)
@@ -379,31 +436,26 @@ ShopStarCtrl._RefreshGoodsGroupData = HL.Method() << function(self)
     end
     local groupDict = {}
     local soldOutGoodsGroup = self:_GetOrCreateGoodsGroup(groupDict, shopCfg, SOLD_OUT_GOODS_TAG_ID)
+    local context = {
+        shopCfg = shopCfg,
+        groupDict = groupDict,
+        soldOutGoodsGroup = soldOutGoodsGroup,
+        previousGoodsPositionMap = previousGoodsPositionMap,
+    }
     for goodsId, goodsData in pairs(shopData.goodsDic) do
-        local isUnlocked = shopSystem:CheckGoodsUnlocked(goodsId)
-        local hasGoodsCfg, goodsCfg = Tables.shopGoodsTable:TryGetValue(goodsData.goodsTemplateId)
-        if hasGoodsCfg and (isUnlocked or goodsCfg.isShowWhenLock) then
-            local groupInfo = self:_GetOrCreateGoodsGroup(groupDict, shopCfg, goodsCfg.goodsTagId)
-            local goodsInfo = self:_BuildGoodsInfo(goodsId, goodsData, goodsCfg, isUnlocked)
-            if goodsInfo then
-                if goodsInfo.remainLimitCount == 0 then
-                    goodsInfo.tagSort = groupInfo.sortId
-                    table.insert(soldOutGoodsGroup.goodsList, goodsInfo)
-                else
-                    table.insert(groupInfo.goodsList, goodsInfo)
-                end
+        self:_TryAddGoodsToGroup(context, goodsId, goodsData)
+    end
+    for _, groupInfo in pairs(groupDict) do
+        if groupInfo ~= soldOutGoodsGroup then
+            self:_FinalizeGoodsGroup(groupInfo, self.m_goodsSortFunc)
+            if #groupInfo.goodsList > 0 then
+                table.insert(self.m_goodsGroupList, groupInfo)
             end
         end
     end
-    for _, groupInfo in pairs(groupDict) do
-        if groupInfo ~= soldOutGoodsGroup and #groupInfo.goodsList > 0 then
-            table.sort(groupInfo.goodsList, self.m_goodsSortFunc)
-            table.insert(self.m_goodsGroupList, groupInfo)
-        end
-    end
     table.sort(self.m_goodsGroupList, self.m_goodsGroupSortFunc)
+    self:_FinalizeGoodsGroup(soldOutGoodsGroup, self.m_soldOutGoodsSortFunc)
     if #soldOutGoodsGroup.goodsList > 0 then
-        table.sort(soldOutGoodsGroup.goodsList, self.m_soldOutGoodsSortFunc)
         table.insert(self.m_goodsGroupList, soldOutGoodsGroup)
     end
 end
@@ -427,6 +479,7 @@ ShopStarCtrl._GetOrCreateGoodsGroup = HL.Method(HL.Table, HL.Any, HL.Any).Return
         sortId = 0,
         hideDeco = true,
         goodsList = {},
+        preservedGoodsList = {},
     }
     if not string.isEmpty(normalizedTagId) then
         local hasTagCfg, tagCfg = Tables.shopGoodsTagCommonTable:TryGetValue(normalizedTagId)
@@ -644,7 +697,6 @@ ShopStarCtrl._OnShopDataChanged = HL.Method(HL.Opt(HL.Any)) << function(self, _)
 end
 
 ShopStarCtrl._OnBuyItemSuccess = HL.Method(HL.Any) << function(self, msg)
-    shopSystem:SetGoodsIdSee()
     if string.isEmpty(self.m_shopId) then
         return
     end

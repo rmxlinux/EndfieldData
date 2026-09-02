@@ -1275,6 +1275,11 @@ MissionHudCtrl._UpdateAllObjectiveDistance = HL.Method() << function(self)
         return
     end
 
+    
+    if not UIManager:IsShow(PanelId.GeneralTracker) then
+        GameInstance.player.commonTrackingSystem:UpdateMissionRuntimeData()
+    end
+
     local hasHotKeyIcon = false
     local questCellCount = self.m_questCellCache:GetCount()
 

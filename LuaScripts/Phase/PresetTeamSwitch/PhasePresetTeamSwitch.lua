@@ -45,10 +45,8 @@ PhasePresetTeamSwitch.ShowEnterFocusModeConfirm = HL.StaticMethod(HL.Table) << f
 end
 
 PhasePresetTeamSwitch.ShowEnterPresetTeamDungeonConfirm = HL.StaticMethod(HL.Table) << function(arg)
-    local dungeonSeriesId = unpack(arg)
-    local dunSeriesId = dungeonSeriesId
-    local dunSeriesData = Tables.DungeonSeriesTable[dunSeriesId]
-    local dungeonId = dunSeriesData.includeDungeonIds[0]
+    local useDungeonId, id, useCharFormation = unpack(arg)
+    local dungeonId = useDungeonId and id or Tables.dungeonSeriesTable[id].includeDungeonIds[0]
     local hasSubGameInstData, subGameData = DataManager.subGameInstDataTable:TryGetValue(dungeonId)
     if not hasSubGameInstData then
         logger.error("ShowEnterPresetTeamDungeonConfirm失败,没有对应的subGameData,subGameId:", dungeonId)
@@ -57,30 +55,26 @@ PhasePresetTeamSwitch.ShowEnterPresetTeamDungeonConfirm = HL.StaticMethod(HL.Tab
 
     local teamId = subGameData.teamConfigId
     if string.isEmpty(teamId) then
-        logger.error('试图通过【副本入口 - 预设编队Only】交互物，进入一个没配预设编队的副本，dungeonSeriesId: ', dungeonSeriesId)
+        logger.error('试图通过【副本入口 - 预设编队Only】交互物，进入一个没配预设编队的副本，dungeonId: ', dungeonId)
         return
     end
 
     local charInfo = CharInfoUtils.getLockedFormationData(teamId, true)
     if charInfo == nil then
-        logger.error('试图通过【副本入口 - 预设编队Only】交互物，无法获取预设编队的副本，dungeonSeriesId: ', dungeonSeriesId,"，teamConfigId: ", teamId)
+        logger.error('试图通过【副本入口 - 预设编队Only】交互物，无法获取预设编队的副本，dungeonId: ', dungeonId,"，teamConfigId: ", teamId)
         return
     end
 
-    local allPresetTeam = charInfo.lockedTeamMemberCount >= charInfo.maxTeamMemberCount
-    if not allPresetTeam then
-        
-        
+    if useCharFormation then
         PhaseManager:GoToPhase(PhaseId.CharFormation, {
             dungeonId = dungeonId,
         })
-        return
+    else
+        PhaseManager:GoToPhase(PHASE_ID, {
+            dungeonId = dungeonId,
+            presetTeamDungeon = true,
+        })
     end
-
-    PhaseManager:GoToPhase(PHASE_ID, {
-        dungeonSeriesId = dungeonSeriesId,
-        presetTeamDungeon = true,
-    })
 end
 
 
@@ -136,13 +130,11 @@ PhasePresetTeamSwitch._CheckIsDungeonCharacter = HL.Method().Return(HL.Boolean) 
         return false
     end
     self.m_dungeonId = dungeonId
-    return DungeonUtils.isDungeonChar(dungeonId)
+    return DungeonUtils.isDungeonChar(dungeonId) or DungeonUtils.isDungeonStory(dungeonId)
 end
 
 PhasePresetTeamSwitch._CreatePresetTeamDungeonArg = HL.Method().Return(HL.Table) << function(self)
-    local dunSeriesId = self.arg.dungeonSeriesId
-    local dunSeriesData = Tables.DungeonSeriesTable[dunSeriesId]
-    local dungeonId = dunSeriesData.includeDungeonIds[0]
+    local dungeonId = self.arg.dungeonId
     local hasSubGameInstData, subGameData = DataManager.subGameInstDataTable:TryGetValue(dungeonId)
     if not hasSubGameInstData then
         logger.error("_CreatePresetTeamDungeonArg失败,没有对应的subGameData,subGameId:", dungeonId)

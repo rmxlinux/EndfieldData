@@ -3,11 +3,11 @@ local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.MapMarkDetailSSShop
 local shopSystem = GameInstance.player.shopSystem
 local SSSHOP_DETAIL_CLIENT_DATA_MANAGER_LAST_SEEN_TIMESTAMP_KEY = "SSShopDetailLastSeenRefresh"
-local GRADE_TEXT = {
-    Language.LUA_SSSHOP_UNLOCK_ONE,
-    Language.LUA_SSSHOP_UNLOCK_TWO,
-    Language.LUA_SSSHOP_UNLOCK_THREE,
-    Language.LUA_SSSHOP_UNLOCK_FOUR,
+local GRADE_TEXT_KEYS = {
+    "LUA_SSSHOP_UNLOCK_ONE",
+    "LUA_SSSHOP_UNLOCK_TWO",
+    "LUA_SSSHOP_UNLOCK_THREE",
+    "LUA_SSSHOP_UNLOCK_FOUR",
 }
 local GRADE_LOOP = 4
 local SEC_PER_DAY = 86400
@@ -126,7 +126,7 @@ MapMarkDetailSSShopCtrl._FillSingleShop = HL.Method(HL.Any, HL.String).Return(HL
             shopUnlockedCount = shopUnlockedCount + 1
         end
     end
-    singleShop.unlockCountText.text = GRADE_TEXT[shopUnlockedCount]
+    singleShop.unlockCountText.text = Language[GRADE_TEXT_KEYS[shopUnlockedCount]]
 
     
     local sampleGoods = Tables.shopTable[shopList[CSIndex(1)]].shopGoodsIds[CSIndex(1)]

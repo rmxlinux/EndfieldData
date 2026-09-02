@@ -47,7 +47,7 @@ end
 
 SimulationTrainingExplainCtrl.OnClose = HL.Override() << function(self)
     if self.m_gameId ~= nil then
-        GameInstance.player.subGameSys:SendPrepareFinished(self.m_gameId)
+        GameInstance.player.subGameSys:SendPrepareFinished(self.m_gameId, true)
         self.m_system:HideInteractive()
     end
 end

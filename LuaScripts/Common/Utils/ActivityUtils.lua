@@ -37,6 +37,28 @@ function ActivityUtils.setFalseIntroMissionActivity(id)
 end
 
 
+local completeTaskText = "new_activity_complete_task_key_"
+function ActivityUtils.isNewEndMissionActivity(id)
+    local _, activityData = Tables.activityTable:TryGetValue(id)
+    if not activityData or string.isEmpty(activityData.endMissionQuestId) then
+        return false
+    end
+    local questState = GameInstance.player.mission:GetQuestState(activityData.endMissionQuestId)
+    if questState == CS.Beyond.Gameplay.MissionSystem.QuestState.Completed then
+        return false
+    end
+    if questState ~= CS.Beyond.Gameplay.MissionSystem.QuestState.Processing then
+        return false
+    end
+    return not ClientDataManagerInst:GetBool(completeTaskText .. id, false)
+end
+
+function ActivityUtils.setFalseEndMissionActivity(id)
+    ClientDataManagerInst:SetBool(completeTaskText .. id, true, false)
+    Notify(MessageConst.ON_ACTIVITY_NEW_RED_DOT_SET_FALSE)
+end
+
+
 
 function ActivityUtils.isSkipChapterActivity(activityId)
     if activityId == nil or activityId == '' then
@@ -44,6 +66,223 @@ function ActivityUtils.isSkipChapterActivity(activityId)
     end
     return Tables.activitySkipChapterTable:ContainsKey(activityId)
 end
+
+
+
+
+
+function ActivityUtils.getServerPushOffsetHours(pushData)
+    if not pushData or not pushData.offset or not pushData.offset.Count or pushData.offset.Count <= 0 then
+        return 0
+    end
+    local serverType = Utils.getServerAreaType():GetHashCode()
+    if serverType <= 0 then
+        serverType = 1
+    end
+    local idx = CSIndex(serverType)
+    if idx > pushData.offset.Count - 1 then
+        idx = CSIndex(1)
+    end
+    return pushData.offset[idx] or 0
+end
+
+
+
+
+function ActivityUtils.getServerPushActivityEndTime(pushData, activity)
+    if not pushData or not activity then
+        return nil
+    end
+    local arr = pushData.activityEndTime
+    if not arr or not arr.Count or arr.Count <= 0 then
+        return nil
+    end
+    local serverType = Utils.getServerAreaType():GetHashCode()
+    if serverType <= 0 then
+        serverType = 1
+    end
+    local idx = CSIndex(serverType)
+    if idx > arr.Count - 1 then
+        idx = CSIndex(1)
+    end
+    local offsetHours = arr[idx]
+    if not offsetHours then
+        return nil
+    end
+    return (activity.startTime or 0) + offsetHours * Const.SEC_PER_HOUR
+end
+
+
+
+
+function ActivityUtils.isTabPushConditionSatisfied(pushID, activity)
+    if string.isEmpty(pushID) or not Tables.activityPushConditionTable then
+        return true
+    end
+    local hasCondition, conditionData = Tables.activityPushConditionTable:TryGetValue(pushID)
+    local conditionListMissing = (not hasCondition)
+        or (not conditionData)
+        or (not conditionData.conditionList)
+        or (not conditionData.conditionList.Count)
+        or (conditionData.conditionList.Count <= 0)
+    if conditionListMissing then
+        if activity and activity.status == GEnums.ActivityStatus.Locked then
+            return false
+        end
+        return true
+    end
+    local list = conditionData.conditionList
+    for i = 1, list.Count do
+        local cond = list[CSIndex(i)]
+        if cond then
+            local ok, value = LuaGameConditionUtils.getConditionValueByParameters(cond.conditionType, cond.parameters)
+            if not ok then
+                return false
+            end
+            if not Utils.compareInt(value, cond.progressToCompare, cond.compareOperator) then
+                return false
+            end
+        end
+    end
+    return true
+end
+
+
+
+
+
+function ActivityUtils.isTabPushActivated(pushData, activity, curTs, curWeekday)
+    local realEndTime = ActivityUtils.getServerPushActivityEndTime(pushData, activity)
+    if realEndTime and curTs >= realEndTime then
+        return false
+    end
+    if pushData.isWeeklyRefresh then
+        if activity.isCompleted or activity.placeAtBottom then
+            return false
+        end
+        if curWeekday < (pushData.pushInWeekday or 0) then
+            return false
+        end
+        return ActivityUtils.isTabPushConditionSatisfied(pushData.pushID)
+    end
+    local offsetHours = ActivityUtils.getServerPushOffsetHours(pushData)
+    local activationTime = (activity.startTime or 0) + offsetHours * Const.SEC_PER_HOUR
+    return curTs >= activationTime
+end
+
+
+
+function ActivityUtils.getActiveTabPush(activityId, activity)
+    if not Tables.activityPushBubbleTable or not activity then
+        return nil
+    end
+    local curTs = DateTimeUtils.GetCurrentTimestampBySeconds()
+    local curWeekday = Utils.getServerWeekdayISOAt4AM()
+    local best = nil
+    for _, pushData in pairs(Tables.activityPushBubbleTable) do
+        if pushData.activityId == activityId
+            and pushData.pushType == "Tab"
+            and ActivityUtils.isTabPushActivated(pushData, activity, curTs, curWeekday)
+        then
+            if not best or (pushData.bubbleSortId or 0) < (best.bubbleSortId or 0) then
+                best = pushData
+            end
+        end
+    end
+    return best
+end
+
+
+function ActivityUtils.hasUnreadUpdateTabPush(activityId, activity)
+    local tabPush = ActivityUtils.getActiveTabPush(activityId, activity)
+    if not tabPush then
+        return false
+    end
+    return tabPush.tabType == "Update"
+        and not string.isEmpty(tabPush.pushID)
+        and ActivityUtils.isTabPushConditionSatisfied(tabPush.pushID, activity)
+        and not GameInstance.player.activitySystem:IsActivityPushRead(tabPush.pushID)
+end
+
+
+function ActivityUtils.hasUnreadEndOnceTabPush(activityId, activity)
+    local tabPush = ActivityUtils.getActiveTabPush(activityId, activity)
+    if not tabPush then
+        return false
+    end
+    return tabPush.tabType == "End"
+        and not string.isEmpty(tabPush.pushID)
+        and ActivityUtils.isTabPushConditionSatisfied(tabPush.pushID, activity)
+        and not GameInstance.player.activitySystem:IsActivityPushRead(tabPush.pushID)
+        and not ActivityUtils.isActivityEndTabRedDotSeen(tabPush.pushID)
+end
+
+
+
+
+
+
+function ActivityUtils.getActivityCenterTabState(id)
+    local activity = GameInstance.player.activitySystem:GetActivity(id)
+    if not activity or activity.isCompleted or activity.placeAtBottom then
+        return false, false, false, false
+    end
+
+    local hasNew = ActivityUtils.isNewActivity(id) and true or false
+
+    local hasNormal = false
+    local redDotName = ActivityUtils.getActivityRedDotName(id)
+    if not string.isEmpty(redDotName) then
+        local active, rdType = RedDotManager:GetRedDotState(redDotName, id)
+        if active and rdType == UIConst.RED_DOT_TYPE.Normal then
+            hasNormal = true
+        end
+    end
+
+    local tabPush = ActivityUtils.getActiveTabPush(id, activity)
+    local pushID = tabPush and tabPush.pushID
+    local conditionOk = pushID
+        and not string.isEmpty(pushID)
+        and ActivityUtils.isTabPushConditionSatisfied(pushID, activity)
+    local pushUnread = conditionOk
+        and not GameInstance.player.activitySystem:IsActivityPushRead(pushID)
+
+    local hasUpdate = (pushUnread and tabPush.tabType == "Update") and true or false
+
+    local hasEndOnce = (
+        pushUnread
+        and tabPush.tabType == "End"
+        and not ActivityUtils.isActivityEndTabRedDotSeen(pushID)
+    ) and true or false
+
+    return hasNew, hasUpdate, hasNormal, hasEndOnce
+end
+
+
+function ActivityUtils.isActivityRedDotActiveForParent(id)
+    local activity = GameInstance.player.activitySystem:GetActivity(id)
+    if not activity or activity.isCompleted or activity.placeAtBottom then
+        return false
+    end
+
+    local redDotName = ActivityUtils.getActivityRedDotName(id)
+    if not string.isEmpty(redDotName) then
+        if RedDotManager:GetRedDotState(redDotName, id) then
+            return true
+        end
+    end
+
+    if ActivityUtils.hasUnreadUpdateTabPush(id, activity) then
+        return true
+    end
+    if ActivityUtils.hasUnreadEndOnceTabPush(id, activity) then
+        return true
+    end
+
+    return false
+end
+
+
 
 
 function ActivityUtils.checkActivityRedDot(id)
@@ -57,6 +296,23 @@ function ActivityUtils.checkActivityRedDot(id)
         return true, UIConst.RED_DOT_TYPE.New
     end
     return false
+end
+
+
+function ActivityUtils.getActivityTaskLifecycleState(activityId)
+    local activity = GameInstance.player.activitySystem:GetActivity(activityId)
+    if not activity then
+        return "Hide"
+    end
+    local activityType = GEnums.ActivityType.__CastFrom(activity.type)
+    local cfg = require_ex("UI/Widgets/ActivityTaskConfig")[activityType]
+    if cfg and cfg.Check then
+        local state = cfg.Check(activityId)
+        if state == "Hide" or state == "Disabled" or state == "Normal" then
+            return state
+        end
+    end
+    return "Normal"
 end
 
 
@@ -250,17 +506,13 @@ function ActivityUtils.setFalseNewActivityBubble(id)
 end
 
 
-
-
-
-
-
 local activityEndTabRedDotSeenText = "activity_end_tab_seen_key_"
 function ActivityUtils.isActivityEndTabRedDotSeen(pushID)
     if string.isEmpty(pushID) then
         return true
     end
-    return ClientDataManagerInst:GetBool(activityEndTabRedDotSeenText .. pushID, false)
+    local success, seen = ClientDataManagerInst:GetBool(activityEndTabRedDotSeenText .. pushID, false)
+    return success and seen or false
 end
 function ActivityUtils.setActivityEndTabRedDotSeen(pushID)
     if string.isEmpty(pushID) then
@@ -272,7 +524,7 @@ function ActivityUtils.clearActivityEndTabRedDotSeen(pushID)
     if string.isEmpty(pushID) then
         return
     end
-    ClientDataManagerInst:SetBool(activityEndTabRedDotSeenText .. pushID, false, false)
+    ClientDataManagerInst:DeleteKey(activityEndTabRedDotSeenText .. pushID, false)
 end
 
 
@@ -316,6 +568,47 @@ function ActivityUtils.isActivityUnlocked(id)
     return activity and (activity.status == GEnums.ActivityStatus.InProgress or activity.status == GEnums.ActivityStatus.Completed) or false
 end
 
+
+
+function ActivityUtils.isActivityTaskJumpTargetVisible(jumpId)
+    local jumpCfg = Tables.systemJumpTable[jumpId]
+    if jumpCfg.bindSystem ~= GEnums.UnlockSystemType.Activity then
+        return true
+    end
+
+    local phaseId = PhaseId[jumpCfg.phaseId]
+    local phaseArgs = Utils.buildSystemJumpPhaseArgsWithItem(jumpCfg, nil)
+    
+    if phaseId == PhaseId.ActivityCenter then
+        local activityId = phaseArgs and phaseArgs.activityId
+        if not activityId or string.isEmpty(activityId) then
+            return true
+        end
+        
+        return GameInstance.player.activitySystem:GetActivity(activityId) ~= nil
+    end
+    
+    if phaseId == PhaseId.Mission then
+        local autoSelectList = phaseArgs and phaseArgs.autoSelectList
+        if not autoSelectList then
+            return true
+        end
+        local missionSystem = GameInstance.player.mission
+        local MissionState = CS.Beyond.Gameplay.MissionSystem.MissionState
+        for _, missionId in pairs(autoSelectList) do
+            local missionState = missionSystem:GetMissionState(missionId)
+            
+            if missionState == MissionState.Processing
+                    or missionState == MissionState.Completed then
+                return true
+            end
+        end
+        return false
+    end
+
+    return true
+end
+
 function ActivityUtils.hasIntroMissionAndComplete(id)
     local activity = GameInstance.player.activitySystem:GetActivity(id)
     return activity and (activity.hasIntroMission and ActivityUtils.isActivityUnlocked(id)) or false
@@ -326,6 +619,9 @@ function ActivityUtils.getNaviConfig(panel, type)
     local forbidCommonNavi = false
     if panel.uiCtrl.view.rightNaviGroup then
         rightNaviGroup = panel.uiCtrl.view.rightNaviGroup
+        forbidCommonNavi = panel.uiCtrl.view.activityCommonInfo.view.config.FORBID_COMMON_NAVI
+    elseif type == GEnums.ActivityType.CharacterGift then
+        rightNaviGroup = panel.uiCtrl.view.taskListNaviGroup
         forbidCommonNavi = panel.uiCtrl.view.activityCommonInfo.view.config.FORBID_COMMON_NAVI
     elseif type == GEnums.ActivityType.Checkin then
         rightNaviGroup = panel.uiCtrl.m_checkInWidget.m_scrollNaviGroup
@@ -408,16 +704,14 @@ function ActivityUtils.backToMainHud(noToast, activityId)
     if ActivityUtils.isSkipChapterActivity(activityId) then
         return
     end
+    
+    CS.Beyond.SDK.SDKUtils.CloseWebView()
     Notify(MessageConst.SHOW_ACTIVITY_POP_UP, {
         content = Language.LUA_ACTIVITY_MODIFY_QUIT_TO_MENU,
         hideCancel = true,
         onConfirm = function()
             PhaseManager:ExitPhaseFastTo(PhaseId.Level, true)
-            
-            if UIManager:IsOpen(PanelId.CommonPopUp) then
-                UIManager:Close(PanelId.CommonPopUp)
-            end
-        end,
+        end
     })
 end
 
@@ -472,6 +766,25 @@ function ActivityUtils.getMultiConditionStageActivityUnlockStageIds(activityData
         end
     end
     return ret
+end
+
+function ActivityUtils.getActivityMilestoneInfo(activityId)
+    local _,milestoneData = Tables.activityConditionalMultiStageMilestoneTable:TryGetValue(activityId)
+    local currentScore = GameInstance.player.activitySystem:GetActivityMilestoneCurrentScore(activityId)
+    local configTable = {}
+    if milestoneData then
+        for id, data in pairs(milestoneData.mileStones) do
+            table.insert(configTable, data)
+        end
+    end
+    table.sort(configTable,Utils.genSortFunction({ "score" }, true))
+    local level = 0
+    for i = 1, #configTable do
+        if currentScore >= configTable[i].score then
+            level = i
+        end
+    end
+    return configTable, level
 end
 
 

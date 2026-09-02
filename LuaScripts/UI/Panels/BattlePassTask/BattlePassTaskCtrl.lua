@@ -153,6 +153,17 @@ BattlePassTaskCtrl._InitViews = HL.Method(HL.Any) << function(self, arg)
         end
         return redDotType
     end
+    self.view.subLabelRedDotScrollRect.getRedDotStateAt = function(csIndex)
+        local subLabelInfo = self.m_subLabelInfos[LuaIndex(csIndex)]
+        if subLabelInfo == nil then
+            return 0
+        end
+        local hasRedDot, redDotType = BattlePassUtils.CheckLabelRedDot(subLabelInfo.labelId)
+        if not hasRedDot then
+            return 0
+        end
+        return redDotType
+    end
     self:_InitSubLabelNavi()
 end
 
@@ -894,7 +905,7 @@ BattlePassTaskCtrl._RenderSubLabel = HL.Method(HL.Any, HL.Number) << function(se
     local subLabelInfo = self.m_subLabelInfos[luaIndex]
     if subLabelInfo ~= nil then
         cell.titleTxt.text = subLabelInfo.name
-        cell.redDot:InitRedDot("BattlePassTaskLabel", subLabelInfo.labelId)
+        cell.redDot:InitRedDot("BattlePassTaskLabel", subLabelInfo.labelId, nil, self.view.subLabelRedDotScrollRect)
     end
 
     cell.stateController:SetState(luaIndex == self.m_selectedSubLabelIndex and "On" or "Off")

@@ -90,6 +90,9 @@ LiquidPoolCtrl.OnClose = HL.Override() << function(self)
     if self:_IsBagActive() then
         Notify(MessageConst.CLOSE_CONTROLLER_SMALL_MENU, self.view.bagNode.inputGroup.groupId)
     end
+    self.view.dumpContent.animationWrapper:ClearTween(false)
+    self.view.fillContent.animationWrapper:ClearTween(false)
+    self.view.bagNode.animationWrapper:ClearTween(false)
 end
 
 

@@ -4,45 +4,76 @@
   "nodes": [
     {
       "_position": {
-        "x": 660.0,
-        "y": 40.0
+        "x": 680.0,
+        "y": 260.0
       },
       "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "0"
     },
     {
-      "_action": {
-        "saveTo": {
-          "_name": "MainCharacter",
-          "_targetVariableID": "e5c67d2d-d81f-4dd5-85a9-64ae722c452b"
-        },
-        "$type": "Beyond.Gameplay.AI.Action.GetMainCharacter"
-      },
-      "additionalWidth": 215.0,
       "_position": {
-        "x": 300.0,
-        "y": 180.0
+        "x": 680.0,
+        "y": 380.0
       },
-      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$type": "NodeCanvas.BehaviourTrees.Sequencer",
       "$id": "1"
     },
     {
-      "_condition": {
-        "actorA": {
-          "_name": "MainCharacter",
-          "_targetVariableID": "e5c67d2d-d81f-4dd5-85a9-64ae722c452b"
+      "_action": {
+        "key": {
+          "_value": "centerpoint"
         },
-        "actorB": {},
-        "_invert": true,
-        "$type": "Beyond.Gameplay.AI.Condition.CheckEntity"
+        "success": {
+          "_value": true
+        },
+        "result": {
+          "_name": "Centerpoint",
+          "_targetVariableID": "ae254897-6a74-4ecb-b36d-794a154143f2"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.GetAITransData"
       },
-      "additionalWidth": 118.0,
+      "additionalWidth": 478.0,
       "_position": {
-        "x": 700.0,
-        "y": 180.0
+        "x": 20.0,
+        "y": 540.0
       },
-      "$type": "NodeCanvas.BehaviourTrees.ConditionNode",
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
       "$id": "2"
+    },
+    {
+      "_action": {
+        "checkMarker": [],
+        "behavior": {
+          "tag": {
+            "tagId": 1468304506
+          }
+        },
+        "target": {
+          "_name": "TargetActor",
+          "_targetVariableID": "50eabfb7-0135-4cda-87f9-94dda0569122"
+        },
+        "skillData": {
+          "_value": {
+            "skillRange": 100.0,
+            "skillID": "eny_0039_agcanno_skill_coin",
+            "cancelSkillExclusive": true
+          }
+        },
+        "castSkillResult": {},
+        "seqskillData": [],
+        "targetPos": {
+          "_name": "Centerpoint",
+          "_targetVariableID": "ae254897-6a74-4ecb-b36d-794a154143f2"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
+      },
+      "additionalWidth": 288.0,
+      "_position": {
+        "x": 1000.0,
+        "y": 540.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode",
+      "$id": "3"
     },
     {
       "_condition": {
@@ -64,13 +95,13 @@
         "_invert": true,
         "$type": "Beyond.Gameplay.AI.Condition.IsGivenTargetExist"
       },
-      "additionalWidth": 39.0,
+      "additionalWidth": 42.0,
       "_position": {
         "x": 1000.0,
-        "y": 180.0
+        "y": -40.0
       },
       "$type": "NodeCanvas.BehaviourTrees.ConditionalEvaluator",
-      "$id": "3"
+      "$id": "4"
     },
     {
       "_action": {
@@ -87,7 +118,7 @@
         "skillData": {
           "_value": {
             "skillRange": 100.0,
-            "skillID": "eny_0039_agcanno_skill01_dungeon_fast",
+            "skillID": "eny_0039_agcanno_skill01",
             "cancelSkillExclusive": true
           }
         },
@@ -96,13 +127,65 @@
         "targetPos": {},
         "$type": "Beyond.Gameplay.AI.Action.EnemySwitchBehavior"
       },
-      "additionalWidth": 266.0,
+      "additionalWidth": 268.0,
       "_position": {
         "x": 900.0,
-        "y": 320.0
+        "y": 100.0
       },
       "$type": "NodeCanvas.BehaviourTrees.ActionNode",
-      "$id": "4"
+      "$id": "5"
+    },
+    {
+      "_condition": {
+        "actorA": {
+          "_name": "MainCharacter",
+          "_targetVariableID": "e5c67d2d-d81f-4dd5-85a9-64ae722c452b"
+        },
+        "actorB": {
+          "_name": ""
+        },
+        "_invert": true,
+        "$type": "Beyond.Gameplay.AI.Condition.CheckEntity"
+      },
+      "additionalWidth": 118.0,
+      "_position": {
+        "x": 700.0,
+        "y": -40.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ConditionNode"
+    },
+    {
+      "_action": {
+        "saveTo": {
+          "_name": "MainCharacter",
+          "_targetVariableID": "e5c67d2d-d81f-4dd5-85a9-64ae722c452b"
+        },
+        "$type": "Beyond.Gameplay.AI.Action.GetMainCharacter"
+      },
+      "additionalWidth": 215.0,
+      "_position": {
+        "x": 260.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ActionNode"
+    },
+    {
+      "_condition": {
+        "actorA": {
+          "_name": "MainCharacter",
+          "_targetVariableID": "e5c67d2d-d81f-4dd5-85a9-64ae722c452b"
+        },
+        "actorB": {
+          "_name": ""
+        },
+        "_invert": true,
+        "$type": "Beyond.Gameplay.AI.Condition.CheckEntity"
+      },
+      "additionalWidth": 118.0,
+      "_position": {
+        "x": 500.0,
+        "y": 800.0
+      },
+      "$type": "NodeCanvas.BehaviourTrees.ConditionNode"
     }
   ],
   "connections": [
@@ -117,7 +200,7 @@
     },
     {
       "_sourceNode": {
-        "$ref": "0"
+        "$ref": "1"
       },
       "_targetNode": {
         "$ref": "2"
@@ -126,7 +209,7 @@
     },
     {
       "_sourceNode": {
-        "$ref": "0"
+        "$ref": "1"
       },
       "_targetNode": {
         "$ref": "3"
@@ -135,10 +218,10 @@
     },
     {
       "_sourceNode": {
-        "$ref": "3"
+        "$ref": "4"
       },
       "_targetNode": {
-        "$ref": "4"
+        "$ref": "5"
       },
       "$type": "NodeCanvas.BehaviourTrees.BTConnection"
     }
@@ -156,6 +239,11 @@
         "_name": "MainCharacter",
         "_id": "e5c67d2d-d81f-4dd5-85a9-64ae722c452b",
         "$type": "NodeCanvas.Framework.Variable`1[[Beyond.Gameplay.AI.AIEntity, Gameplay.Beyond, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
+      },
+      "Centerpoint": {
+        "_name": "Centerpoint",
+        "_id": "ae254897-6a74-4ecb-b36d-794a154143f2",
+        "$type": "NodeCanvas.Framework.Variable`1[[UnityEngine.Vector3, UnityEngine.CoreModule, Version=0.0.0.0, Culture=neutral, PublicKeyToken=null]]"
       }
     }
   },

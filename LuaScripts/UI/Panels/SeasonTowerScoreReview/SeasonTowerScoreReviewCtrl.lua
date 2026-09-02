@@ -58,6 +58,7 @@ SeasonTowerScoreReviewCtrl._InitData = HL.Method(HL.Any) << function(self, arg)
             table.insert(self.m_historyRecord, record)
         end
     end
+    table.sort(self.m_historyRecord, Utils.genSortFunction({"seasonId"}, false))
     self.m_selectedSeasonIndex = 1
 end
 

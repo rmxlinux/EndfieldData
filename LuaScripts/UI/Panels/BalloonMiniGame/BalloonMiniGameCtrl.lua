@@ -405,6 +405,11 @@ BalloonMiniGameCtrl.SetConfirmBtn = HL.Method(HL.Boolean) << function(self, need
     end
     self.view.bottomNode.btnConfirm.enabled = needShow
     local isLastGame = self.m_phase.curGame.currentIndex + 1 == self.m_phase.curGame.levelNum
+    local hintTextId = isLastGame and 'ui_msc_balloon_button_finish_2' or 'ui_msc_balloon_button_finish_1'
+    if self.view.bottomNode.btnConfirm.hintTextId ~= hintTextId then
+        self.view.bottomNode.btnConfirm.hintTextId = hintTextId
+        Notify(MessageConst.REFRESH_CONTROLLER_HINT)
+    end
     local normalStateName = isLastGame and "EndState" or "NormalState"
     local disableStateName = isLastGame and "EndDisableState" or "DisableState"
     self.view.bottomNode.btnConfirmRoot:SetState(needShow and normalStateName or disableStateName)

@@ -336,6 +336,39 @@ ShopGiftPackEmptyCtrl._SetTabByIndex = HL.Method(HL.Int, HL.Opt(HL.Boolean, HL.B
     end
 end
 
+ShopGiftPackEmptyCtrl._SetCurrentTabGoodsRead = HL.Method() << function(self)
+    if string.isEmpty(self.m_currTabCashShopId) then
+        return
+    end
+
+    local currTabData = self:_GetTabDataByCashShopId(self.m_currTabCashShopId)
+    if currTabData == nil then
+        return
+    end
+
+    if self.m_currTabCashShopId == MONTHLY_PASS_CASHSHOPID then
+        
+        local goodsIds = {}
+        for _, info in ipairs(currTabData.cashGoodsInfos) do
+            table.insert(goodsIds, info.goodsId)
+        end
+        GameInstance.player.cashShopSystem:ReadCashGoods(goodsIds)
+    else
+        local packagePanelItem = self.m_phase.m_panel2Item[PanelId.ShopPackage]
+        if packagePanelItem ~= nil then
+            
+            packagePanelItem.uiCtrl:UpdateSeeGoods(self.m_haveSeenGoodsId)
+            GameInstance.player.cashShopSystem:ReadCashGoods(self.m_haveSeenGoodsId)
+        end
+    end
+    self.m_haveSeenGoodsId = {}
+end
+
+
+ShopGiftPackEmptyCtrl.OnBeforeCashShopCategoryChange = HL.Method() << function(self)
+    self:_SetCurrentTabGoodsRead()
+end
+
 
 ShopGiftPackEmptyCtrl._OnTabClick = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Boolean, HL.String)) << function(self, tabData, userClick, onCreate, cashGoodsId)
     if self.m_currTabCashShopId == tabData.cashShopId then
@@ -350,23 +383,7 @@ ShopGiftPackEmptyCtrl._OnTabClick = HL.Method(HL.Table, HL.Boolean, HL.Opt(HL.Bo
 
     
     if userClick and not string.isEmpty(self.m_currTabCashShopId) then
-        local currTabData = self:_GetTabDataByCashShopId(self.m_currTabCashShopId)
-        if self.m_currTabCashShopId == MONTHLY_PASS_CASHSHOPID then
-            
-            local goodsIds = {}
-            for _, info in ipairs(currTabData.cashGoodsInfos) do
-                table.insert(goodsIds, info.goodsId)
-            end
-            GameInstance.player.cashShopSystem:ReadCashGoods(goodsIds)
-        else
-            if self.m_phase.m_panel2Item[PanelId.ShopPackage] ~= nil then
-                local packageCtrl = self.m_phase.m_panel2Item[PanelId.ShopPackage].uiCtrl
-                
-                packageCtrl:UpdateSeeGoods(self.m_haveSeenGoodsId)
-                GameInstance.player.cashShopSystem:ReadCashGoods(self.m_haveSeenGoodsId)
-            end
-        end
-        self.m_haveSeenGoodsId = {}
+        self:_SetCurrentTabGoodsRead()
     end
     
     if self.m_currTabCashShopId == MONTHLY_PASS_CASHSHOPID then

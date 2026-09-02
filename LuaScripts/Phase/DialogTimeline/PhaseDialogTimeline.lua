@@ -8,6 +8,8 @@ PhaseDialogTimeline = HL.Class('PhaseDialogTimeline', phaseBase.PhaseBase)
 
 PhaseDialogTimeline.m_panelItem = HL.Field(HL.Forward("PhasePanelItem"))
 
+PhaseDialogTimeline.m_deferredExitCoroutine = HL.Field(HL.Thread)
+
 PhaseDialogTimeline.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_PLAY_DIALOG_TIMELINE] = { 'OnPlayDialogTimeline', false },
     [MessageConst.ON_FINISH_DIALOG_TIMELINE] = { 'OnFinishDialogTimeline', true },
@@ -41,6 +43,45 @@ PhaseDialogTimeline.ClearOut = HL.Method() << function(self)
     if self.m_panelItem then
         self.m_panelItem.uiCtrl.animationWrapper:ClearTween(true)
     end
+end
+
+PhaseDialogTimeline._CanExitSelfFastImmediately = HL.Method().Return(HL.Boolean) << function(self)
+    return PhaseManager.m_curState == Const.PhaseState.Idle and not PhaseManager:CheckIsInTransition()
+end
+
+PhaseDialogTimeline._ExitSelfFastSafely = HL.Method() << function(self)
+    if not PhaseManager:IsOpenAndValid(PHASE_ID) then
+        return
+    end
+
+    
+    if not self:_CanExitSelfFastImmediately() then
+        self:_StartDeferredExitCoroutine()
+        return
+    end
+
+    self:ExitSelfFast()
+end
+
+PhaseDialogTimeline._StartDeferredExitCoroutine = HL.Method() << function(self)
+    if self.m_deferredExitCoroutine then
+        return
+    end
+
+    self.m_deferredExitCoroutine = self:_StartCoroutine(function()
+        coroutine.waitCondition(function()
+            return self.m_destroyed
+                or not PhaseManager:IsOpenAndValid(PHASE_ID)
+                or self:_CanExitSelfFastImmediately()
+        end)
+
+        self.m_deferredExitCoroutine = nil
+        if self.m_destroyed or not PhaseManager:IsOpenAndValid(PHASE_ID) then
+            return
+        end
+
+        self:ExitSelfFast()
+    end)
 end
 
 
@@ -78,7 +119,9 @@ PhaseDialogTimeline._OnActivated = HL.Override() << function(self)
 end
 
 PhaseDialogTimeline._OnDeActivated = HL.Override() << function(self)
-    UIManager:Show(PanelId.DialogMask)
+    if UIManager:IsOpen(PanelId.DialogMask) then
+        UIManager:Show(PanelId.DialogMask)
+    end
 end
 
 PhaseDialogTimeline._OnDestroy = HL.Override() << function(self)
@@ -100,9 +143,7 @@ PhaseDialogTimeline.OnFinishDialogTimeline = HL.Method(HL.Opt(HL.Any)) << functi
     if not fast then
         
         self.m_panelItem.uiCtrl:PlayAnimationOutWithCallback(function()
-            if PhaseManager:IsOpen(PHASE_ID) then
-                self:ExitSelfFast()
-            end
+            self:_ExitSelfFastSafely()
             
             
             
@@ -110,9 +151,7 @@ PhaseDialogTimeline.OnFinishDialogTimeline = HL.Method(HL.Opt(HL.Any)) << functi
         end)
     else
         self:ClearOut()
-        if PhaseManager:IsOpen(PHASE_ID) then
-            self:ExitSelfFast()
-        end
+        self:_ExitSelfFastSafely()
     end
 end
 

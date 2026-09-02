@@ -41,6 +41,9 @@ RepairInteractiveCtrl.m_costItemCache = HL.Field(HL.Forward("UIListCache"))
 RepairInteractiveCtrl.m_isClosing = HL.Field(HL.Boolean) << false
 
 
+RepairInteractiveCtrl.s_forceCloseCor = HL.StaticField(HL.Thread)
+
+
 
 RepairInteractiveCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self.m_isClosing = false
@@ -321,11 +324,36 @@ RepairInteractiveCtrl._CloseRepairInteractive = HL.Method() << function(self)
 end
 
 RepairInteractiveCtrl.ForceCloseRepairInteractive = HL.StaticMethod() << function()
-    if PhaseManager:GetTopPhaseId() == PhaseId.RepairInteractive then
-        if UIManager:IsShow(PANEL_ID) then
+    if PhaseManager:GetTopPhaseId() ~= PhaseId.RepairInteractive then
+        return
+    end
+    if not UIManager:IsShow(PANEL_ID) then
+        return
+    end
+
+    
+    
+    if not PhaseManager:CheckIsInTransition() then
+        PhaseManager:ExitPhaseFast(PhaseId.RepairInteractive)
+        return
+    end
+    if RepairInteractiveCtrl.s_forceCloseCor ~= nil then
+        return
+    end
+    RepairInteractiveCtrl.s_forceCloseCor = CoroutineManager:StartCoroutine(function()
+        coroutine.waitCondition(function()
+            return PhaseManager:GetTopPhaseId() ~= PhaseId.RepairInteractive
+                or not PhaseManager:CheckIsInTransition()
+        end)
+        local cor = RepairInteractiveCtrl.s_forceCloseCor
+        if PhaseManager:GetTopPhaseId() == PhaseId.RepairInteractive then
             PhaseManager:ExitPhaseFast(PhaseId.RepairInteractive)
         end
-    end
+        
+        
+        CoroutineManager:ClearCoroutine(cor)
+        RepairInteractiveCtrl.s_forceCloseCor = nil
+    end)
 end
 
 RepairInteractiveCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)

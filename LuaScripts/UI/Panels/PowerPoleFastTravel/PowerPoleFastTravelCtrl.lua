@@ -152,6 +152,7 @@ PowerPoleFastTravelCtrl.OnShow = HL.Override() << function(self)
 end
 
 PowerPoleFastTravelCtrl.OnClose = HL.Override() << function(self)
+    UIManager:ShowWithKey(PanelId.MiniMap, PowerPoleFastTravelKey)
     if DeviceInfo.isPC then
         UIManager.commonTouchPanel.onClick:RemoveListener(self.m_onClickScreen)
     end

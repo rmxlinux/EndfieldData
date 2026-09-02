@@ -126,8 +126,7 @@ ShopItem.UpdateMoney = HL.Method() << function(self)
         self.view.originalPrice.gameObject:SetActiveIfNecessary(true)
         self.view.discountTxt.text = string.format("-%d<size=60%%>%%</size>", math.floor((1 - info.discount) * 100 + 0.5))
         self.view.originalPrice.text = info.price
-        local discount = tonumber(string.format("%.2f", info.discount + 0.001))
-        realPrice = math.floor(info.price * discount)
+        realPrice = CashShopUtils.GetDisplayPrice(info.price, info.discount)
         self.view.price.text = realPrice
     else
         self.view.discount.gameObject:SetActive(false)

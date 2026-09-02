@@ -47,6 +47,9 @@ GeneralAbilityCell._OnFirstTimeInit = HL.Override() << function(self)
         if type ~= self.m_abilityRuntimeData.type then
             return
         end
+        if fromState == toState then
+            return
+        end
         self:_OnAbilityStateChanged(fromState, toState)
     end)
 
@@ -62,6 +65,9 @@ GeneralAbilityCell._OnFirstTimeInit = HL.Override() << function(self)
         end
         local type, fromState, toState = unpack(args)
         if type ~= self.m_abilityRuntimeData.type then
+            return
+        end
+        if fromState == toState then
             return
         end
         self:_OnTempAbilityIdleStateChanged(fromState, toState)

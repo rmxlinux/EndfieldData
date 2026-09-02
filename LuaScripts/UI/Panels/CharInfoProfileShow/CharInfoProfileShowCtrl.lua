@@ -52,13 +52,12 @@ CharInfoProfileShowCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self.view.commonToggle:SetValue(false)
         end
     end
-    if DeviceInfo.usingKeyboard then
-        self.view.portraitScrollRect.scrollSensitivity = 0
-    end
+    
+    self.view.portraitScrollRect.enabled = DeviceInfo.usingController
 end
 
 CharInfoProfileShowCtrl.OnShow = HL.Override() << function(self)
-    self.m_portraitMinScale = lume.clamp(self.view.portraitScrollRect.transform.rect.height/2048, 0, 1)
+    self.m_portraitMinScale = lume.clamp(self.view.portraitPanel.transform.rect.height/2048, 0, 1)
     self:_AddRegisters()
 end
 
@@ -148,6 +147,10 @@ CharInfoProfileShowCtrl._InitAction = HL.Method() << function(self)
     end)
     self.view.portraitPanel.onZoom:AddListener(function(delta)
         self:_ZoomPortrait(delta)
+        self.view.portraitScrollRect:ClampContentToBounds()
+    end)
+    self.view.portraitPanel.onDrag:AddListener(function(eventData)
+        self:_OnPortraitDrag(eventData)
     end)
 end
 
@@ -183,6 +186,21 @@ CharInfoProfileShowCtrl._ClearRegisters = HL.Method() << function(self)
     LuaUpdate:Remove(self.m_rotateTickKey)
     LuaUpdate:Remove(self.m_zoomInTickKey)
     LuaUpdate:Remove(self.m_zoomOutTickKey)
+end
+
+CharInfoProfileShowCtrl._OnPortraitDrag = HL.Method(HL.Userdata) << function(self, eventData)
+    if DeviceInfo.usingController or not self.m_isShowPortrait then
+        return
+    end
+    local content = self.view.imgPortrait.rectTransform
+    local scaleFactor = self.view.panelCanvas.scaleFactor
+    if scaleFactor <= 0 then
+        scaleFactor = 1
+    end
+    local inv = 1 / scaleFactor
+    local pos = content.anchoredPosition
+    content.anchoredPosition = Vector2(pos.x + eventData.delta.x * inv, pos.y + eventData.delta.y * inv)
+    self.view.portraitScrollRect:ClampContentToBounds()
 end
 
 CharInfoProfileShowCtrl._MoveCharacter = HL.Method(HL.Userdata) << function(self, delta)

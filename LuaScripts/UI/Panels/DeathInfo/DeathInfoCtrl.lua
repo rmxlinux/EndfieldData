@@ -20,14 +20,34 @@ DeathInfoCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ALL_CHARACTER_REVIVE] = '_ExitPanel',
     [MessageConst.ON_DUNGEON_RESTART] = '_ExitPanel',
     [MessageConst.ON_LEAVE_DUNGEON] = 'OnLeaveDungeon',
+    [MessageConst.ON_DUNGEON_FAIL_LEAVE_TO_ENTRY_PANEL] = 'OnDungeonFailLeaveToEntryPanel',
 }
+
+DeathInfoCtrl.s_waitStartCoroutine = HL.StaticField(HL.Thread)
 
 
 
 DeathInfoCtrl.ShowDeathInfo = HL.StaticMethod(HL.Any) << function(args)
     local deathInfo, dialogInfo = unpack(args)
     EventLogManagerInst:GameEvent_TeamDead(dialogInfo.displayMode:GetHashCode())
-    DeathInfoCtrl.DoShowDeathInfo(deathInfo, dialogInfo)
+
+    if not string.isEmpty(GameInstance.player.systemActionConflictManager.curProcessingSystemAction) then
+        if DeathInfoCtrl.s_waitStartCoroutine == nil then
+            DeathInfoCtrl.s_waitStartCoroutine = CoroutineManager:StartCoroutine(function()
+                while true do
+                    coroutine.step()
+                    if string.isEmpty(GameInstance.player.systemActionConflictManager.curProcessingSystemAction) then
+                        CoroutineManager:ClearCoroutine(DeathInfoCtrl.s_waitStartCoroutine)
+                        DeathInfoCtrl.s_waitStartCoroutine = nil
+                        DeathInfoCtrl.DoShowDeathInfo(deathInfo, dialogInfo)
+                        break
+                    end
+                end
+            end)
+        end
+    else
+        DeathInfoCtrl.DoShowDeathInfo(deathInfo, dialogInfo)
+    end
 end
 
 DeathInfoCtrl.DoShowDeathInfo = HL.StaticMethod(HL.Any, HL.Any) << function(deathInfo, dialogInfo)
@@ -55,6 +75,8 @@ DeathInfoCtrl.m_leaveTick = HL.Field(HL.Number) << -1
 DeathInfoCtrl.m_deathInfo = HL.Field(CS.Beyond.Gameplay.Core.DeathPerformance.DeathInfo)
 
 DeathInfoCtrl.m_dialogInfo = HL.Field(CS.Beyond.Gameplay.Core.DeathPerformance.DialogInfo)
+
+DeathInfoCtrl.m_starCells = HL.Field(HL.Any) << nil
 
 
 
@@ -105,6 +127,14 @@ DeathInfoCtrl.OnLeaveDungeon = HL.Method(HL.Table) << function(self, args)
 end
 
 
+DeathInfoCtrl.OnDungeonFailLeaveToEntryPanel = HL.Method(HL.Any) << function(self, args)
+    local dungeonId = unpack(args)
+    self:_FinishCountdownCoroutine()
+    PhaseManager:ExitPhaseFastTo(PhaseId.Level, true)
+    DungeonUtils.onDungeonLeaveToEntryPanel(dungeonId)
+end
+
+
 
 
 
@@ -136,7 +166,9 @@ DeathInfoCtrl._SetupActionButtons = HL.Method() << function(self)
         self.view.retryBattleBtn.onClick:ChangeBindingPlayerAction(onlyRetry and "dungeon_fail_confirm" or "dungeon_fail_retry")
     end
 
-    if dialogInfo.displayMode == DisplayMode.DungeonFail and self:_ShouldShowLeaveCountdown() then
+    local showCountdown = (dialogInfo.displayMode == DisplayMode.DungeonFail and self:_ShouldShowLeaveCountdown())
+        or dialogInfo.displayMode == DisplayMode.Parkour
+    if showCountdown then
         self.view.countdownText.gameObject:SetActive(true)
         self.m_leaveTick = DungeonUtils.startSubGameLeaveTick(function(leftTime)
             self.view.countdownText:SetAndResolveTextStyle(leftTime .. Language.LUA_LEAVE_DUNGEON_TEXT)
@@ -168,6 +200,9 @@ DeathInfoCtrl._SetupUI = HL.Method() << function(self)
     local dialogInfo = self.m_dialogInfo
 
     self.view.tipNode02.gameObject:SetActive(false)
+    self.view.scrollViewTipsList.gameObject:SetActive(true)
+    self.view.timeLimitExceededNode.gameObject:SetActive(false)
+    self.view.taskGoalsNode.gameObject:SetActive(false)
 
     
     self.view.trainingTips.gameObject:SetActive(false)
@@ -190,9 +225,16 @@ DeathInfoCtrl._SetupUI = HL.Method() << function(self)
     if mode == DisplayMode.Miasma then
         self:_ShowMiasmaTips()
         self.view.titleTxt.text = Language.ui_msc_miasma_died_title
+    elseif mode == DisplayMode.Parkour then
+        self.view.reviveBtnText.text = I18nUtils.GetText(DUNGEON_REVIVE_BTN_TEXT_KEY)
+        self:_ShowParkourMode()
     elseif mode == DisplayMode.DungeonFail then
         self.view.reviveBtnText.text = I18nUtils.GetText(DUNGEON_REVIVE_BTN_TEXT_KEY)
-        if not self:_TryShowDungeonTips(deathInfo.dungeonId) then
+        local dungeonId = deathInfo.dungeonId
+        if DungeonUtils.isDungeonArchery(dungeonId) then
+            self:_ShowTyphoeaArcheryMode()
+        end
+        if not self:_TryShowDungeonTips(dungeonId) then
             if not self:_TryShowEnemyTips(deathInfo) then
                 self:_ShowCommonTips()
             end
@@ -203,6 +245,62 @@ DeathInfoCtrl._SetupUI = HL.Method() << function(self)
             self:_ShowCommonTips()
         end
     end
+end
+
+DeathInfoCtrl._ShowTyphoeaArcheryMode = HL.Method() << function(self)
+    self.view.taskGoalsNode.gameObject:SetActive(true)
+    self.view.scrollViewTipsList.gameObject:SetActive(true)
+    self.view.trainingTips.gameObject:SetActive(false)
+    self.view.exitDungeonBtn.gameObject:SetActive(true)
+
+    local params = {}
+    local trackingMgr = GameWorld.levelScriptTaskTrackingManager
+    local success, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.m_deathInfo.dungeonId)
+    
+    if success and subGameData.extraTasks.Count > 1 then
+        local extraTasks = trackingMgr.extraTasks
+        for i = 0, extraTasks.Count - 1 do
+            table.insert(params, {
+                taskKey = extraTasks[i].taskKey,
+                objectiveIndex = 1,
+                taskType = CS.Beyond.Gameplay.LevelScriptTaskType.Extra,
+                forceFail = true,
+            })
+        end
+    else
+        local mainTask = trackingMgr.mainTask
+        if mainTask then
+            local goalCount = mainTask.objectives.Length
+            for i = 1, goalCount do
+                table.insert(params, {
+                    taskKey = mainTask.taskKey,
+                    objectiveIndex = i,
+                    taskType = CS.Beyond.Gameplay.LevelScriptTaskType.Main,
+                    forceFail = true,
+                })
+            end
+        end
+    end
+
+    DungeonUtils.initGameSettlementTaskInfoNode(self.view, params)
+    self.view.tasksTitleTxt.text = Language["ui_archery_train_end_target"]
+end
+
+DeathInfoCtrl._ShowParkourMode = HL.Method() << function(self)
+    self.view.timeLimitExceededNode.gameObject:SetActive(true)
+    self.view.taskGoalsNode.gameObject:SetActive(true)
+    self.view.enemyTipsHeader.gameObject:SetActive(false)
+    self.view.scrollViewTipsList.gameObject:SetActive(false)
+    self.view.trainingTips.gameObject:SetActive(false)
+    self.view.exitDungeonBtn.gameObject:SetActive(true)
+    self.m_starCells = UIUtils.genCellCache(self.view.commonTaskGoalCell)
+    local trackingMgr = GameWorld.levelScriptTaskTrackingManager
+    local extraTasks = trackingMgr.extraTasks
+
+    self.m_starCells:Refresh(extraTasks.Count, function(cell, luaIndex)
+        local taskKey = extraTasks[CSIndex(luaIndex)].taskKey
+        cell:InitCommonTaskGoalCell(taskKey, 1, CS.Beyond.Gameplay.LevelScriptTaskType.Extra)
+    end)
 end
 
 DeathInfoCtrl._ShowMiasmaTips = HL.Method() << function(self)

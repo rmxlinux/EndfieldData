@@ -247,7 +247,9 @@ FacUndergroundPipeCtrl._UpdateUdPipeConnectNode = HL.Method() << function(self)
     end
     if self.m_curStateName == UDPIPE_NODE_STATE.Block and dstState ~= GEnums.FacBuildingState.Blocked then
         self.m_curConnectNode.blockAnim:PlayOutAnimation(function()
-            self.m_curConnectNode.nodeController:SetState(targetState)
+            if self.m_curStateName == targetState then
+                self.m_curConnectNode.nodeController:SetState(targetState)
+            end
         end)
     else
         self.m_curConnectNode.nodeController:SetState(targetState)

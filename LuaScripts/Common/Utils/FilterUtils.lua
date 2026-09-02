@@ -712,6 +712,109 @@ function FilterUtils.generateConfig_EQUIP_PRODUCE()
     return filterConfig
 end
 
+function FilterUtils.generateConfig_CHAR_FORMATION()
+    local professionTags = {}
+    for _, proData in pairs(Tables.charProfessionTable) do
+        local profession = proData.profession
+        local data = {
+            name = proData.name,
+            funcName = "_FilterByProfession",
+            param = profession,
+            sortId = proData.sortId,
+        }
+        table.insert(professionTags, data)
+    end
+    table.sort(professionTags, Utils.genSortFunction({ "sortId" }, true))
+
+    local damageTypeTags = {}
+    for _, typeData in pairs(Tables.CharTypeTable) do
+        local data = {
+            name = typeData.name,
+            funcName = "_FilterByDamageType",
+            param = typeData.charTypeId,
+        }
+        table.insert(damageTypeTags, data)
+    end
+    table.sort(damageTypeTags, Utils.genSortFunction({ "param" }, true))
+
+    local weaponTypeTags = {}
+    local weaponNum = GEnums.WeaponType.Pistol:ToInt()
+    for i = 1, weaponNum do
+        if i ~= GEnums.WeaponType.Gun:ToInt() then
+            local data = {
+                name = Language["LUA_WEAPON_TYPE_" .. i],
+                funcName = "_FilterByWeaponType",
+                param = i,
+            }
+            table.insert(weaponTypeTags, data)
+        end
+    end
+
+    local mainAttrTags = {}
+    local subAttrTags = {}
+    for _, attr in ipairs(UIConst.CHAR_INFO_FIRST_CLASS_ATTRIBUTE_SHOW_ORDER) do
+        local attrCfg = AttributeUtils.getAttributeShowCfg(attr)
+        table.insert(mainAttrTags, {
+            name = attrCfg.name,
+            funcName = "_FilterByMainAttr",
+            param = attr,
+        })
+
+        table.insert(subAttrTags, {
+            name = attrCfg.name,
+            funcName = "_FilterBySubAttr",
+            param = attr,
+        })
+    end
+
+    local filterConfig = {
+        {
+            title = Language.LUA_CHAR_FILTER_GROUP_PROFESSION,
+            tags = professionTags,
+        },
+        {
+            title = Language.LUA_CHAR_FILTER_GROUP_DAMAGE_TYPE,
+            tags = damageTypeTags,
+        },
+        {
+            title = Language.LUA_CHAR_FILTER_GROUP_WEAPON,
+            tags = weaponTypeTags,
+        },
+        {
+            title = Language.LUA_CHAR_FILTER_GROUP_MAIN_ATTR,
+            tags = mainAttrTags,
+        },
+        {
+            title = Language.LUA_CHAR_FILTER_GROUP_SUB_ATTR,
+            tags = subAttrTags,
+        },
+    }
+    return filterConfig
+end
+
+function FilterUtils._FilterByProfession(templateId, param)
+    local info = Tables.characterTable:GetValue(templateId)
+    return info.profession == param
+end
+
+function FilterUtils._FilterByDamageType(templateId, param)
+    local info = Tables.characterTable:GetValue(templateId)
+    return info.charTypeId == param
+end
+
+function FilterUtils._FilterByWeaponType(templateId, param)
+    local info = Tables.characterTable:GetValue(templateId)
+    return info.weaponType:ToInt() == param
+end
+
+function FilterUtils._FilterByMainAttr(templateId, param)
+    return AttributeUtils.CheckIsMainAttr(param, templateId)
+end
+
+function FilterUtils._FilterBySubAttr(templateId, param)
+    return AttributeUtils.CheckIsSubAttr(param, templateId)
+end
+
 
 
 

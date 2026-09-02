@@ -13,6 +13,7 @@ BattlePassPlanCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_BATTLE_PASS_LEVEL_UPDATE] = '_OnLevelUpdate',
     [MessageConst.ON_BATTLE_PASS_TRACK_UPDATE] = '_OnTrackUpdate',
     [MessageConst.ON_BATTLE_PASS_SHOW_REWARD] = '_OnRewardShow',
+    [MessageConst.ON_BATTLE_PASS_TAKE_REWARD_RESPONSE] = '_OnTakeRewardResponse',
     [MessageConst.ON_BATTLE_PASS_ADVANCED_BUY_CLOSE] = '_TriggerBuyTrack'
 }
 
@@ -48,6 +49,8 @@ BattlePassPlanCtrl.m_naviTarget = HL.Field(HL.Any) << nil
 
 BattlePassPlanCtrl.m_trackBuyFlags = HL.Field(HL.Table) << nil
 
+BattlePassPlanCtrl.m_pendingReward = HL.Field(HL.Table) << nil
+
 
 BattlePassPlanCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_InitViews(arg)
@@ -68,6 +71,7 @@ BattlePassPlanCtrl.OnHide = HL.Override() << function(self)
 end
 
 BattlePassPlanCtrl.OnClose = HL.Override() << function(self)
+    self.m_pendingReward = nil
     self.view.bannerNode:OnDestroy()
 end
 
@@ -672,7 +676,48 @@ BattlePassPlanCtrl._OnOpenBuyPlan = HL.Method() << function(self)
     PhaseManager:GoToPhase(PhaseId.BattlePassAdvancedPlanBuy)
 end
 
+BattlePassPlanCtrl._BeginRewardCollection = HL.Method(HL.Table) << function(self, expectedRewards)
+    local pendingReward = {
+        expectedItemCounts = {},
+        actualItemCounts = {},
+        actualItems = {},
+        itemPresetIdMap = {},
+        ambiguousItemIds = {},
+    }
+    for _, rewardItem in ipairs(expectedRewards) do
+        local actualItemId = BattlePassPlanCtrl._GetRewardActualItemId(rewardItem.id)
+        BattlePassPlanCtrl._AddItemCount(pendingReward.expectedItemCounts, actualItemId, rewardItem.count)
+        if not pendingReward.ambiguousItemIds[actualItemId] then
+            local existingPresetId = pendingReward.itemPresetIdMap[actualItemId]
+            if existingPresetId ~= nil and existingPresetId ~= rewardItem.id then
+                pendingReward.itemPresetIdMap[actualItemId] = nil
+                pendingReward.ambiguousItemIds[actualItemId] = true
+            else
+                pendingReward.itemPresetIdMap[actualItemId] = rewardItem.id
+            end
+        end
+    end
+    self.m_pendingReward = pendingReward
+end
+
+BattlePassPlanCtrl._BuildCollectedRewardItems = HL.Method(HL.Table).Return(HL.Table) << function(self, pendingReward)
+    local result = {}
+    for _, itemBundle in ipairs(pendingReward.actualItems) do
+        local presetId = pendingReward.itemPresetIdMap[itemBundle.id]
+        table.insert(result, {
+            id = presetId or itemBundle.id,
+            count = itemBundle.count,
+            instId = itemBundle.instId,
+            instData = itemBundle.instData,
+        })
+    end
+    return result
+end
+
 BattlePassPlanCtrl._OnTakeReward = HL.Method(HL.String, HL.Number) << function(self, trackId, level)
+    if self.m_pendingReward ~= nil then
+        return
+    end
     if string.isEmpty(trackId) then
         return
     end
@@ -682,8 +727,10 @@ BattlePassPlanCtrl._OnTakeReward = HL.Method(HL.String, HL.Number) << function(s
     if levelInfo == nil then
         return
     end
-    if level > bpSystem.levelData.currLevel or not hasTrack or (levelInfo.gainInfo[trackData.trackType] == true)
-        or not (levelInfo.canObtainInfo[trackData.trackType] == true) then
+    local trackType = hasTrack and trackData.trackType or nil
+    local isGained = trackType ~= nil and levelInfo.gainInfo[trackType] == true
+    local canObtain = trackType ~= nil and levelInfo.canObtainInfo[trackType] == true
+    if level > bpSystem.levelData.currLevel or not hasTrack or isGained or not canObtain then
         return
     end
     local msgData = {}
@@ -693,14 +740,21 @@ BattlePassPlanCtrl._OnTakeReward = HL.Method(HL.String, HL.Number) << function(s
     self.m_isGainAll = false
     self.m_isGainMilestone = false
     self.m_buyHintType = GEnums.BPBuyHintType.None
+    local expectedRewards = {}
+    BattlePassPlanCtrl._AppendExpectedReward(expectedRewards, levelInfo, trackType)
+    self:_BeginRewardCollection(expectedRewards)
     bpSystem:SendTakeRewards(msgData)
 end
 
 BattlePassPlanCtrl._OnTakeAllRewards = HL.Method() << function(self)
     local bpSystem = GameInstance.player.battlePassSystem
     local bpLevel = bpSystem.levelData.currLevel
+    if self.m_pendingReward ~= nil then
+        return
+    end
     local msgData = {}
     local rewardCount = 0
+    local expectedRewards = {}
     local hasMilestone = false
     local hintPriority = {
         [GEnums.BPBuyHintType.None] = 0,
@@ -725,6 +779,7 @@ BattlePassPlanCtrl._OnTakeAllRewards = HL.Method() << function(self)
                     if itemBundle ~= nil then
                         table.insert(subMsgData, i)
                         rewardCount = rewardCount + 1
+                        BattlePassPlanCtrl._AppendExpectedReward(expectedRewards, levelInfo, trackData.trackType)
                     end
                     hasMilestone = hasMilestone or levelInfo.isMilestone
                     if self.m_buyHintInfos[i] ~= nil then
@@ -745,6 +800,7 @@ BattlePassPlanCtrl._OnTakeAllRewards = HL.Method() << function(self)
     self.m_isGainAll = true
     self.m_isGainMilestone = hasMilestone
     self.m_buyHintType = hintType
+    self:_BeginRewardCollection(expectedRewards)
     bpSystem:SendTakeRewards(msgData)
 end
 
@@ -793,7 +849,45 @@ end
 
 BattlePassPlanCtrl._OnRewardShow = HL.Method(HL.Any) << function(self, args)
     local bundles = unpack(args)
-    self:_ProcessRewardGain(bundles)
+    local pendingReward = self.m_pendingReward
+    if pendingReward == nil then
+        self:_ProcessRewardGain(bundles)
+        return
+    end
+    for _, itemBundle in pairs(bundles) do
+        if itemBundle ~= nil and not string.isEmpty(itemBundle.id) and (itemBundle.count or 0) > 0 then
+            local actualItem = {
+                id = itemBundle.id,
+                count = itemBundle.count,
+                instId = itemBundle.instId,
+                instData = itemBundle.instData,
+            }
+            table.insert(pendingReward.actualItems, actualItem)
+            BattlePassPlanCtrl._AddItemCount(pendingReward.actualItemCounts, actualItem.id, actualItem.count)
+        end
+    end
+    if not BattlePassPlanCtrl._IsRewardCollectionComplete(pendingReward) then
+        return
+    end
+    local collectedItems = self:_BuildCollectedRewardItems(pendingReward)
+    self.m_pendingReward = nil
+    self:_ProcessRewardGain(collectedItems)
+end
+
+BattlePassPlanCtrl._OnTakeRewardResponse = HL.Method() << function(self)
+    local pendingReward = self.m_pendingReward
+    if pendingReward == nil then
+        return
+    end
+    self.m_pendingReward = nil
+    if #pendingReward.actualItems <= 0 then
+        self.m_isGainAll = false
+        self.m_isGainMilestone = false
+        self.m_buyHintType = GEnums.BPBuyHintType.None
+        return
+    end
+    local collectedItems = self:_BuildCollectedRewardItems(pendingReward)
+    self:_ProcessRewardGain(collectedItems)
 end
 
 BattlePassPlanCtrl._ProcessRewardGain = HL.Method(HL.Any) << function(self, itemBundles)
@@ -806,13 +900,24 @@ BattlePassPlanCtrl._ProcessRewardGain = HL.Method(HL.Any) << function(self, item
             if itemBundle.id == weaponBoxId then
                 hasWeaponBox = true
             end
-            local existing = merged[itemBundle.id]
-            if existing then
-                existing.count = existing.count + (itemBundle.count or 0)
+            local instId = itemBundle.instId
+            local count = itemBundle.count or 0
+            if instId == 0 then
+                local existing = merged[itemBundle.id]
+                if existing then
+                    existing.count = existing.count + count
+                else
+                    local newItem = { id = itemBundle.id, count = count, instId = 0 }
+                    merged[itemBundle.id] = newItem
+                    table.insert(mergedItems, newItem)
+                end
             else
-                local newItem = { id = itemBundle.id, count = itemBundle.count or 0 }
-                merged[itemBundle.id] = newItem
-                table.insert(mergedItems, newItem)
+                table.insert(mergedItems, {
+                    id = itemBundle.id,
+                    count = count,
+                    instId = instId,
+                    instData = itemBundle.instData,
+                })
             end
         end
     end
@@ -899,6 +1004,45 @@ BattlePassPlanCtrl._TryRecoverSubPanel = HL.Method(HL.Opt(HL.Any)) << function(s
         return
     end
     UIManager:Open(PanelId.BattlePassWeaponCase, subPanelArg)
+end
+
+BattlePassPlanCtrl._GetRewardActualItemId = HL.StaticMethod(HL.String).Return(HL.String) << function(itemPresetId)
+    local hasLTItem, ltItemData = Tables.lTItemTable:TryGetValue(itemPresetId)
+    return hasLTItem and ltItemData.itemId or itemPresetId
+end
+
+BattlePassPlanCtrl._AddItemCount = HL.StaticMethod(HL.Table, HL.String, HL.Number) << function(itemCountMap, itemId, count)
+    itemCountMap[itemId] = (itemCountMap[itemId] or 0) + count
+end
+
+BattlePassPlanCtrl._AppendExpectedReward = HL.StaticMethod(HL.Table, HL.Table, HL.Any).Return(HL.Boolean) << function(expectedRewards, levelInfo, trackType)
+    local itemBundle = levelInfo.itemBundles[trackType]
+    if itemBundle == nil or string.isEmpty(itemBundle.id) then
+        return false
+    end
+    local count = levelInfo.isLoop and levelInfo.overrideCount[trackType] or itemBundle.count
+    if count == nil or count <= 0 then
+        return false
+    end
+    table.insert(expectedRewards, {
+        id = itemBundle.id,
+        count = count,
+    })
+    return true
+end
+
+BattlePassPlanCtrl._IsRewardCollectionComplete = HL.StaticMethod(HL.Table).Return(HL.Boolean) << function(pendingReward)
+    for itemId, expectedCount in pairs(pendingReward.expectedItemCounts) do
+        if pendingReward.actualItemCounts[itemId] ~= expectedCount then
+            return false
+        end
+    end
+    for itemId, actualCount in pairs(pendingReward.actualItemCounts) do
+        if pendingReward.expectedItemCounts[itemId] ~= actualCount then
+            return false
+        end
+    end
+    return true
 end
 
 HL.Commit(BattlePassPlanCtrl)

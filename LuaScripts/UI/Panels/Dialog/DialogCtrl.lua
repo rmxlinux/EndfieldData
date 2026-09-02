@@ -20,7 +20,35 @@ DialogCtrl.s_overrideMessages = HL.StaticField(HL.Table) << {
     [MessageConst.SWITCH_DIALOG_SHOW_LOG] = 'OnSwitchDialogShowLog',
     [MessageConst.DIALOG_SHOW_DEV_WATER_MARK] = 'ShowDevWaterMark',
     [MessageConst.DIALOG_REFRESH_AUTO_MODE] = 'OnRefreshAutoMode',
+    [MessageConst.DIALOG_REFRESH_UI_HIDDEN] = 'OnRefreshUIHidden',
+    [MessageConst.ON_TOGGLE_HUD_FADE] = '_OnToggleHudFade',
 }
+
+local UI_HIDDEN_WHITE_LIST = {
+    active = {
+        "buttonLog",
+        "buttonAuto",
+        "buttonHide",
+        "buttonSkip",
+        "textAuto",
+        "top",
+        "bottomMask",
+        "waitNode",
+        "centerWaitNode",
+        "topTrunkNode",
+        "noteKeyHintNode",
+        "controllerHint.skipHint",
+        "controllerHint.skipHintLoop",
+    },
+    alpha = {
+        "bottomLayout",
+        "textTalkCenterNode",
+    },
+}
+
+DialogCtrl._InitUIHiddenWhiteList = HL.Override() << function(self)
+    self:_BuildUIHiddenWhiteList(UI_HIDDEN_WHITE_LIST)
+end
 
 DialogCtrl.m_trunkNodeData = HL.Field(CS.Beyond.Gameplay.DTTrunkNodeData)
 
@@ -32,6 +60,8 @@ DialogCtrl.m_radioName = HL.Field(HL.String) << ""
 
 DialogCtrl.m_curTrunkId = HL.Field(HL.String) << ""
 
+DialogCtrl.m_isTopTrunkShowing = HL.Field(HL.Boolean) << false
+
 DialogCtrl.m_hasShowedTrunkText = HL.Field(HL.Boolean) << false
 
 DialogCtrl.m_clickCount = HL.Field(HL.Number) << 0
@@ -39,7 +69,7 @@ DialogCtrl.m_clickCount = HL.Field(HL.Number) << 0
 DialogCtrl.OnPreloadDialogPanel = HL.StaticMethod(HL.Opt(HL.Table)) << function(arg)
     local preloadFinishCallback = arg and unpack(arg)
     
-    UIManager:PreloadPanelAsset(PANEL_ID, PhaseId.Dialog, function()
+    UIManager:PreloadPersistentPanelAsset(PANEL_ID, function()
         if preloadFinishCallback ~= nil then
             preloadFinishCallback()
         end
@@ -51,20 +81,17 @@ DialogCtrl.OnShow = HL.Override() << function(self)
     self.view.debugNode.gameObject:SetActive(false)
 end
 
-DialogCtrl.RefreshDebugNode = HL.Method() << function(self)
-    if NarrativeUtils.ShouldShowNarrativeDebugNode() then
-        self.view.debugNode.gameObject:SetActive(true)
-        local desc = "\nT2/T3"
-        if GameWorld.dialogManager.dialogTree.dialogTreeData.qualityLevel == CS.Beyond.Gameplay.DialogEnums.DialogQualityLevel.High then
-            desc = "\nTO/T1"
-        end
-        self.view.textDialogId.text = GameWorld.dialogManager.dialogId .. desc
-    end
+DialogCtrl.RefreshDebugNode = HL.Override() << function(self)
+    DialogCtrl.Super.RefreshDebugNode(self)
 end
 
 
 DialogCtrl.GetCurDialogId = HL.Override().Return(HL.String) << function(self)
     return GameWorld.dialogManager.dialogId or ""
+end
+
+DialogCtrl.GetCurDialogTrunkId = HL.Override().Return(HL.String) << function(self)
+    return self.m_curTrunkId or ""
 end
 
 DialogCtrl.OnDialogShow = HL.Override() << function(self)
@@ -76,15 +103,16 @@ DialogCtrl.OnDialogShow = HL.Override() << function(self)
     end
 
     if not self.m_hasShowedTrunkText then
-        self.view.bottomMask.gameObject:SetActive(false)
-        self.view.buttonLog.gameObject:SetActive(false)
-        self.view.buttonAuto.gameObject:SetActive(false)
-
-        self.view.textAuto.gameObject:SetActive(false)
+        self:_SetUIHiddenActiveState(self.view.bottomMask, false)
+        self:_SetUIHiddenActiveState(self.view.buttonLog, false)
+        self:_SetAutoAndHideButtonsVisible(false)
     end
 end
 
 DialogCtrl.OnBtnNextClick = HL.Override() << function(self)
+    if self:TryInterruptUIHidden() then
+        return
+    end
     self.m_clickCount = self.m_clickCount + 1
     if self:CheckTextPlaying() then
         self.view.textTalk:SeekToEnd()
@@ -100,7 +128,11 @@ DialogCtrl.OnBtnNextClick = HL.Override() << function(self)
 end
 
 DialogCtrl.OnDialogTextStopped = HL.Override() << function(self)
-    self.view.optionList.gameObject:SetActive(true)
+    if self.m_isUIHidden then
+        self:_RefreshOptionListVisibleState()
+    else
+        self.view.optionList.gameObject:SetActive(true)
+    end
     local showWait = self.m_optionCells:GetCount() <= 0
     self:_TrySetWaitNode(showWait)
 end
@@ -119,17 +151,19 @@ DialogCtrl.OnDialogTextFade = HL.Method(HL.Table) << function(self, arg)
     self:SetGlossaryPopUpEnable(alpha > 0)
 
     self.view.bottomLayout:DOKill()
-    if duration == 0 then
-        self.view.bottomLayout.alpha = alpha
+    if duration == 0 or self.m_isUIHidden then
+        self:_SetUIHiddenAlphaState(self.view.bottomLayout, alpha)
     else
+        self.m_uiHiddenStates[self.view.bottomLayout] = alpha
         self.view.bottomLayout:DOFade(alpha, duration)
     end
 
     if self.view.textTalkCenterNode.gameObject.activeSelf then
         self.view.textTalkCenterNode:DOKill()
-        if duration == 0 then
-            self.view.textTalkCenterNode.alpha = alpha
+        if duration == 0 or self.m_isUIHidden then
+            self:_SetUIHiddenAlphaState(self.view.textTalkCenterNode, alpha)
         else
+            self.m_uiHiddenStates[self.view.textTalkCenterNode] = alpha
             self.view.textTalkCenterNode:DOFade(alpha, duration)
         end
     end
@@ -178,12 +212,12 @@ end
 
 DialogCtrl.OnSwitchDialogShowLog = HL.Method(HL.Table) << function(self, arg)
     local show = unpack(arg)
-    self.view.buttonLog.gameObject:SetActive(show)
+    self:_SetUIHiddenActiveState(self.view.buttonLog, show)
 end
 
 DialogCtrl._RefreshCanSkip = HL.Override() << function(self)
     self.m_canSkip = GameWorld.dialogManager.canSkip
-    self.view.buttonSkip.gameObject:SetActive(self.m_canSkip)
+    self:_SetUIHiddenActiveState(self.view.buttonSkip, self.m_canSkip)
 end
 
 DialogCtrl._TrySetWaitNode = HL.Override(HL.Boolean) << function(self, active)
@@ -191,11 +225,11 @@ DialogCtrl._TrySetWaitNode = HL.Override(HL.Boolean) << function(self, active)
         local disableClick = GameWorld.dialogManager.disableClick
         local playing = self.view.textTalk.playing and self.view.textTalkCenter.playing
         local canShowWait = not disableClick and not playing
-        self.view.waitNode.gameObject:SetActive(canShowWait)
-        self.view.centerWaitNode.gameObject:SetActive(canShowWait)
+        self:_SetUIHiddenActiveState(self.view.waitNode, canShowWait)
+        self:_SetUIHiddenActiveState(self.view.centerWaitNode, canShowWait)
     else
-        self.view.waitNode.gameObject:SetActive(active)
-        self.view.centerWaitNode.gameObject:SetActive(active)
+        self:_SetUIHiddenActiveState(self.view.waitNode, active)
+        self:_SetUIHiddenActiveState(self.view.centerWaitNode, active)
     end
 end
 
@@ -210,6 +244,18 @@ end
 DialogCtrl.OnBtnAutoClick = HL.Override() << function(self)
     local auto = not GameWorld.dialogManager.autoMode
     GameWorld.dialogManager:SetAutoMode(auto)
+end
+
+DialogCtrl.OnBtnHideClick = HL.Override() << function(self)
+    self:SetUIHidden(true)
+end
+
+DialogCtrl._RefreshUIHiddenState = HL.Override() << function(self)
+    if self.m_isUIHidden then
+        self.view.bottomLayout:DOKill()
+        self.view.textTalkCenterNode:DOKill()
+    end
+    DialogCtrl.Super._RefreshUIHiddenState(self)
 end
 
 DialogCtrl._RefreshAutoMode = HL.Override(HL.Boolean) << function(self, autoMode)
@@ -229,9 +275,66 @@ DialogCtrl.OnBtnStopClick = HL.Override() << function(self)
 end
 
 DialogCtrl._CloseAutoMode = HL.Method(HL.Opt(HL.Any)) << function(self, _)
-    self.view.textAuto.gameObject:SetActive(false)
+    self:_SetUIHiddenActiveState(self.view.textAuto, false)
     GameWorld.dialogManager:SetAutoMode(false)
     self:_SwitchControllerAutoPlayHint()
+end
+
+DialogCtrl._SetTopTrunkVisible = HL.Method(HL.Boolean, HL.Opt(HL.String)) << function(self, visible, text)
+    if visible and text ~= nil then
+        self.view.topTrunkText:SetAndResolveTextStyle(text)
+        self.view.topTrunkTextGlow:SetAndResolveTextStyle(text)
+    end
+
+    self.view.topTrunkNode:ClearTween(false)
+    if visible then
+        self:_SetUIHiddenActiveState(self.view.topTrunkNode, true)
+        self.view.topTrunkNode:PlayInAnimation()
+    else
+        self.view.topTrunkNode:PlayOutAnimation(function()
+            self:_SetUIHiddenActiveState(self.view.topTrunkNode, false)
+        end)
+    end
+end
+
+DialogCtrl.ClearTopTrunk = HL.Method() << function(self)
+    if not self.m_isTopTrunkShowing then
+        return
+    end
+
+    self.m_isTopTrunkShowing = false
+    self:_SetTopTrunkVisible(false)
+end
+
+DialogCtrl.SetTopTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean, HL.Any, HL.Any)) << function(self, trunkNodeData, fastMode,
+                                                                                                npcId, npcGroupId)
+    self.m_trunkNodeData = trunkNodeData
+    local trunkId = trunkNodeData.overrideTrunkId
+    if string.isEmpty(trunkId) then
+        trunkId = trunkNodeData.trunkId
+    end
+
+    self:_UpdateClickRecord()
+    self.m_curTrunkId = trunkId
+    self.m_isTopTrunkShowing = true
+    local dialogText = ""
+    local res, trunkTbData = Tables.dialogTextTable:TryGetValue(trunkId)
+    if res then
+        dialogText = trunkTbData.dialogText
+    end
+
+    if BEYOND_DEBUG then
+        if trunkNodeData.mfTrunkActionData.useCustomText then
+            dialogText = string.format("<color=red>[Dev Only] Debug Custom Text:</color> %s", trunkNodeData.mfTrunkActionData.customText)
+        end
+    end
+
+    local text, entryLinks = UIUtils.resolveNarrativeTextWithEntryLinks(dialogText)
+    self:SetCurEntryLinks(entryLinks)
+    self:_SetTopTrunkVisible(true, text)
+    self:_RefreshCanSkip()
+    self:RefreshDebugNode()
+    self:_RefreshUIHiddenState()
 end
 
 DialogCtrl.SetTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean, HL.Any, HL.Any)) << function(self, trunkNodeData, fastMode,
@@ -267,8 +370,8 @@ DialogCtrl.SetTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean, HL.Any, HL.Any))
     self:SetCurEntryLinks(entryLinks)
 
     self.view.bottomLayout:DOKill()
-    self.view.bottomLayout.alpha = 1
-    self.view.textTalkCenterNode.alpha = 1
+    self:_SetUIHiddenAlphaState(self.view.bottomLayout, 1)
+    self:_SetUIHiddenAlphaState(self.view.textTalkCenterNode, 1)
 
     self.view.textTalkCenterNode.gameObject:SetActive(singleTrunk)
     self.view.bottomLayout.gameObject:SetActive(not singleTrunk)
@@ -276,10 +379,9 @@ DialogCtrl.SetTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean, HL.Any, HL.Any))
 
     if not self.m_hasShowedTrunkText then
         self.m_hasShowedTrunkText = true
-        self.view.buttonLog.gameObject:SetActive(true)
-        self.view.buttonAuto.gameObject:SetActive(true)
-        self.view.bottomMask.gameObject:SetActive(true)
-
+        self:_SetUIHiddenActiveState(self.view.buttonLog, true)
+        self:_SetAutoAndHideButtonsVisible(true)
+        self:_SetUIHiddenActiveState(self.view.bottomMask, true)
         self:_RefreshAutoMode(GameWorld.dialogManager.autoMode)
         if not self:IsPlayingAnimationIn() then
             self:PlayAnimation("dialog_bottom_in")
@@ -366,6 +468,7 @@ DialogCtrl.SetTrunk = HL.Method(HL.Userdata, HL.Opt(HL.Boolean, HL.Any, HL.Any))
     self:_TrySetWaitNode(false)
     self:_RefreshCanSkip()
     self:RefreshDebugNode()
+    self:_RefreshUIHiddenState()
 end
 
 DialogCtrl._UpdateClickRecord = HL.Method() << function(self)
@@ -388,6 +491,7 @@ DialogCtrl.SetTrunkOption = HL.Override(HL.Userdata) << function(self, optionDat
         local workFriendship = GameWorld.dialogManager.showSpaceshipCharFriendship
         self:_SwitchFriendshipShow(workFriendship)
     end
+    self:_RefreshUIHiddenState()
 end
 
 DialogCtrl.GetTouchPanel = HL.Method().Return(CS.Beyond.UI.UITouchPanel) << function(self)
@@ -514,6 +618,9 @@ DialogCtrl.SetFullBg = HL.Method(CS.Beyond.Gameplay.DialogFullBgActionData) << f
         self.view.bottomLayout.gameObject:SetActive(false)
         self.view.textTalkCenterNode.gameObject:SetActive(false)
         self.view.radioNode.gameObject:SetActive(false)
+        self.m_isTopTrunkShowing = false
+        self.view.topTrunkNode:ClearTween(false)
+        self:_SetUIHiddenActiveState(self.view.topTrunkNode, false)
         self:SetCtrlButtonVisible(false)
     end
 end
@@ -565,7 +672,7 @@ end
 DialogCtrl.SetCtrlButtonVisible = HL.Method(HL.Boolean) << function(self, visible)
     self.view.topRight.gameObject:SetActive(visible)
     self.view.topLeft.gameObject:SetActive(visible)
-    self.view.top.gameObject:SetActive(visible)
+    self:_SetUIHiddenActiveState(self.view.top, visible)
 end
 
 

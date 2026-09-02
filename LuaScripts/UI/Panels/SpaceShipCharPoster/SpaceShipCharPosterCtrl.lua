@@ -104,32 +104,24 @@ SpaceShipCharPosterCtrl.ResetCharPosterUI = HL.Method(HL.Opt(HL.Any)) << functio
 end
 
 SpaceShipCharPosterCtrl.ResetCharPoster = HL.Method(HL.Opt(HL.Any)) << function(self, args)
+    local idInfos = {}
     local charTemplateIds = GameInstance.player.spaceship:GetCharWallCharTemplateIds()
     if charTemplateIds then
-        if GameInstance.player.spaceship.isViewingFriend then
-            for index = 1, Tables.spaceshipConst.charExhibitionMaxCount do
-                local info = {}
-                info.index = index
-                if index <= charTemplateIds.Count then
-                    info.charId = charTemplateIds[CSIndex(index)]
-                end
-                self:SetSingleCharPoster(info)
+        for i = 1, charTemplateIds.Count do
+            local serverCharInfo = CharInfoUtils.getPlayerCharInfoByTemplateId(charTemplateIds[CSIndex(i)], GEnums.CharType.Default)
+            local info = CharInfoUtils.getSingleCharInfoList(serverCharInfo.instId)
+            table.insert(idInfos, info[1])
+        end
+        for index = 1, Tables.spaceshipConst.charExhibitionMaxCount do
+            local info = {}
+            info.index = index
+            if idInfos[index] then
+                info.charId = idInfos[index].templateId
             end
-        else
-            local idInfos = {}
-            for i = 1, charTemplateIds.Count do
-                local serverCharInfo = CharInfoUtils.getPlayerCharInfoByTemplateId(charTemplateIds[CSIndex(i)], GEnums.CharType.Default)
-                local info = CharInfoUtils.getSingleCharInfoList(serverCharInfo.instId)
-                table.insert(idInfos, info[1])
-            end
-            for index = 1, Tables.spaceshipConst.charExhibitionMaxCount do
-                local info = {}
-                info.index = index
-                if idInfos[index] then
-                    info.charId = idInfos[index].templateId
-                end
-                self:SetSingleCharPoster(info)
-            end
+            self:SetSingleCharPoster(info)
+        end
+        
+        if not GameInstance.player.spaceship.isViewingFriend then
             local ids = {}
             for i, info in ipairs(idInfos) do
                 table.insert(ids, info.templateId)
@@ -231,12 +223,15 @@ SpaceShipCharPosterCtrl.SetSingleSlotUI = HL.Method(HL.Number, HL.String) << fun
         if charId == Tables.globalConst.maleCharID or charId == Tables.globalConst.femaleCharID then
             charId = Tables.globalConst.endminVirtualCharId
         end
+        local isEndmin = CharInfoUtils.isEndmin(charId)
         local charExtraData = GameInstance.player.spaceship:GetFriendExtraCharData(charId)
         slot.potentialStar.view.gameObject:SetActive(charExtraData ~= nil)
-        slot.friendshipNode.view.gameObject:SetActive(charExtraData ~= nil)
+        slot.friendshipNode.view.gameObject:SetActive(charExtraData ~= nil and not isEndmin)
         if charExtraData then
             slot.potentialStar:InitCharPotentialStarByLevel(charExtraData.potentialLevel)
-            slot.friendshipNode:InitFriendshipNodeByFriendShipValue(charExtraData.friendShipValue)
+            if not isEndmin then
+                slot.friendshipNode:InitFriendshipNodeByFriendShipValue(charExtraData.friendShipValue)
+            end
             potentialLevel = charExtraData.potentialLevel
         end
     else

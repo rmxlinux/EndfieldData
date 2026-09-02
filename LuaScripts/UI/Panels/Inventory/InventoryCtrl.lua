@@ -960,6 +960,19 @@ InventoryCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << 
     end)
 
     self.m_naviGroupSwitcher:ToggleActive(not active and not self.m_weekRaidConvertRate)
+
+    
+    if not active and DeviceInfo.usingController then
+        local itemList = self.view.itemBag.itemBagContent.view.itemList
+        local naviIndex = itemList:GetNaviManagerTargetIndex()
+        if naviIndex >= 0 then
+            local cell = self.view.itemBag.itemBagContent:GetCell(LuaIndex(naviIndex))
+            if cell then
+                self:_TryDisableItemHoverBindingOnDestroyMode(cell)
+            end
+        end
+    end
+
     self:_UpdateMouseHint()
 end
 
@@ -1068,6 +1081,7 @@ InventoryCtrl._CustomOnUpdateItemBagCell = HL.Method(HL.Forward("ItemSlot"), HL.
     cell.item.canUse = not self.m_inDestroyMode
 
     if not itemBundle then 
+        cell.view.weekRaidNode.gameObject:SetActive(false)
         return
     end
 
@@ -1141,6 +1155,7 @@ InventoryCtrl._ShowTipsOnNaviTargetInDestroyMode = HL.Method(HL.Number, HL.Forwa
             cell.item.canSplit = false
             cell.item.canUse = false
             cell.item.canClear = false
+            cell.item:SetExtraInfo(posInfo)
             cell.item:ShowTips(posInfo, function()
                 if self.m_showingDestroyItemCSIndex == csIndex then
                     self.m_showingDestroyItemCSIndex = -1
@@ -1388,6 +1403,12 @@ InventoryCtrl._ToggleMoveMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << fun
     if self.m_inMoveMode == active then
         return
     end
+    
+    if active and DeviceInfo.usingController and GameInstance.player.guide.isInForceGuide and not GameInstance.player.guide.isInHelperGuideStep then
+        if not InputManager.instance.guideUseActionIds:Contains("inv_item_bag_start_move_item") then
+            return
+        end
+    end
 
     local itemBag = self.view.itemBag.itemBagContent.m_itemBag
 
@@ -1464,6 +1485,10 @@ InventoryCtrl._ToggleMoveMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << fun
         end
         if cell then
             cell:SetAsNaviTarget()
+            
+            if not active then
+                self:_TryDisableItemHoverBindingOnDestroyMode(cell)
+            end
         end
     elseif not active then
         

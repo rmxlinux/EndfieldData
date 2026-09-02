@@ -185,7 +185,9 @@ FacRegionUpgradeCtrl._OnWalletChanged = HL.Method(HL.Any) << function(self, even
 end
 
 FacRegionUpgradeCtrl._OnPurchaseSelectedItem = HL.Method() << function(self)
-    if string.isEmpty(self.m_selectItemId) or not self.m_purchaseEnabled then
+    
+    
+    if string.isEmpty(self.m_selectItemId) or not self.m_purchaseEnabled or not self.m_isLoadFinished then
         return
     end
     self.m_purchaseItemId = self.m_selectItemId
@@ -810,6 +812,12 @@ FacRegionUpgradeCtrl.InitBusEffects = HL.Method(HL.Table) << function(self, effe
 end
 
 FacRegionUpgradeCtrl._ResetRegionEffects = HL.Method() << function(self)
+    
+    
+    if self.m_regionEffectDataGetter == nil then
+        return
+    end
+
     local lastPurchasedLevel = 1
     for _, data in ipairs(self.m_regionItemDataList) do
         if data.upgradeLevel ~= nil and data.isPurchased then
@@ -827,6 +835,11 @@ FacRegionUpgradeCtrl._ResetRegionEffects = HL.Method() << function(self)
 end
 
 FacRegionUpgradeCtrl._ResetBusEffects = HL.Method() << function(self)
+    
+    if self.m_busEffectDataGetter == nil then
+        return
+    end
+
     for _, data in ipairs(self.m_busItemDataList) do
         if data.instKey ~= nil then
             local effectData = self.m_busEffectDataGetter[data.instKey]

@@ -164,6 +164,7 @@ ActivityLevelRewardsCtrl._OnUpdateCell = HL.Method(HL.Table, HL.Number) << funct
 end
 
 ActivityLevelRewardsCtrl._RefreshRewards = HL.Method() << function(self)
+    self.view.nowLevelNumberText.text = GameInstance.player.adventure.adventureLevelData.lv
     local activityLevelRewardsCS = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
     local completeStageList = activityLevelRewardsCS.completeStageList
     for i = 1, completeStageList.Count do

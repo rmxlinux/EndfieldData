@@ -126,10 +126,33 @@ InteractOptionCtrl.m_needUpdateList = HL.Field(HL.Boolean) << false
 
 InteractOptionCtrl.m_nextUpdateNeedToTop = HL.Field(HL.Boolean) << true
 
+InteractOptionCtrl.m_needScrollToSelected = HL.Field(HL.Boolean) << false
+
+
+
+
+InteractOptionCtrl._TryUpdateShowingList = HL.Method().Return(HL.Boolean) << function(self)
+    if not self.m_needUpdateList then
+        return false
+    end
+    self:_UpdateCurShowingList(self.m_nextUpdateNeedToTop)
+    return true
+end
+
 InteractOptionCtrl._TryUpdateListTick = HL.Method() << function(self)
-    if self.m_needUpdateList then
-        self:_UpdateCurShowingList(self.m_nextUpdateNeedToTop)
-        self:_ScrollTo(self.m_curShowingOptCount)
+    if not self:_TryUpdateShowingList() and self.m_needScrollToSelected then
+        
+        self.m_needScrollToSelected = false
+        local optionList = self.view.optionList
+        optionList:KillScrollTween() 
+        optionList:StopMovement()
+        LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.listContainer) 
+        optionList:ClampContentToBounds() 
+        if self.m_curShowingOptCount > 0 then
+            local selectedInfo = self.m_optionInfoMap[self.m_curSelectedOptIdentifier]
+            local selectedIndex = (selectedInfo and lume.find(self.m_curShowingOptInfoList, selectedInfo)) or 1
+            self:_ScrollTo(selectedIndex)
+        end
     end
     self:_UpdateBtnHint()
 end
@@ -138,7 +161,9 @@ end
 
 
 InteractOptionCtrl.OnShow = HL.Override() << function(self)
-    self:_RefreshList()
+    if not self:_TryUpdateShowingList() then
+        self:_RefreshList()
+    end
     self:_Register()
 end
 
@@ -273,16 +298,11 @@ InteractOptionCtrl.UpdateInteractOption = HL.Method(HL.Table) << function(self, 
         return
     end
     local oldInfo = self.m_optionInfoMap[key]
-    if self.m_playingOutInfoTimers[oldInfo] then
-        self:_ClearTimer(self.m_playingOutInfoTimers[oldInfo])
-        self.m_playingOutInfoTimers[oldInfo] = nil
-        
-        self:_PlayOptionAnimation(oldInfo.cell, true)
-        AudioAdapter.PostEvent("au_ui_btn_f_menubar_appear")
-    end
     newInfo.cell = oldInfo.cell
     newInfo.time = oldInfo.time
     newInfo.overrideText = oldInfo.overrideText
+    
+    newInfo.seqNum = oldInfo.seqNum
 
     if not newInfo.icon then
         newInfo.icon = oldInfo.icon
@@ -292,15 +312,35 @@ InteractOptionCtrl.UpdateInteractOption = HL.Method(HL.Table) << function(self, 
         newInfo.action = oldInfo.action
     end
 
+    
     self.m_optionInfoMap[key] = newInfo
+
+    if self.m_playingOutInfoTimers[oldInfo] then
+        self:_ClearTimer(self.m_playingOutInfoTimers[oldInfo])
+        self.m_playingOutInfoTimers[oldInfo] = nil
+        
+        if newInfo.cell then
+            self:_PlayOptionAnimation(newInfo.cell, true)
+            AudioAdapter.PostEvent("au_ui_btn_f_menubar_appear")
+        end
+    end
+
+    local listRebuilt = self:_TryUpdateShowingList()
     if not newInfo.cell then
         oldInfo.identifier:Recycle()
         return
     end
 
-    local index = lume.find(self.m_curShowingOptInfoList, oldInfo)
-    self.m_curShowingOptInfoList[index] = newInfo
-    self:_OnUpdateCell(newInfo)
+    local index
+    if listRebuilt then
+        index = lume.find(self.m_curShowingOptInfoList, newInfo)
+    else
+        index = lume.find(self.m_curShowingOptInfoList, oldInfo)
+        if index then
+            self.m_curShowingOptInfoList[index] = newInfo
+        end
+        self:_OnUpdateCell(newInfo)
+    end
 
     if args.needReSort then
         self:_SortInteractOptionList()
@@ -314,6 +354,7 @@ InteractOptionCtrl.UpdateInteractOption = HL.Method(HL.Table) << function(self, 
         if args.setTopAsSelectedWhenSort then
             self:_SetSelected(self.m_curShowingOptInfoList[1].identifier.value)
         end
+        self.m_needScrollToSelected = true
     end
     oldInfo.identifier:Recycle()
 
@@ -361,7 +402,13 @@ InteractOptionCtrl._OnOptOutAnimFinished = HL.Method(HL.Table) << function(self,
     self.m_playingOutInfoTimers[info] = nil
     self:_CacheCell(cell)
     self.m_optionInfoMap[info.identifier.value] = nil
-    self:_UpdateCurShowingList()
+    if self:IsShow() then
+        
+        self.m_needUpdateList = true
+    else
+        
+        self:_UpdateCurShowingList(false)
+    end
     info.identifier:Recycle()
     CS.Beyond.Gameplay.CheckHasInteractOption.Update()
 end
@@ -485,12 +532,30 @@ InteractOptionCtrl._GetGroupInteractOptions = HL.Method(HL.Any).Return(HL.Table)
 end
 
 InteractOptionCtrl._OnScroll = HL.Method(HL.Number) << function(self, delta)
-    if self.m_curShowingOptCount <= 1 or self.m_isFocusingForGuide then
+    if self.m_isFocusingForGuide then
+        return
+    end
+    self:_TryUpdateShowingList()
+    if self.m_curShowingOptCount <= 1 then
         return
     end
     local oldInfo = self.m_optionInfoMap[self.m_curSelectedOptIdentifier]
     local oldIndex = lume.find(self.m_curShowingOptInfoList, oldInfo)
-    local newIndex = lume.clamp(oldIndex + (delta < 0 and 1 or -1), 1, self.m_curShowingOptCount)
+    if not oldIndex then
+        return
+    end
+    local newIndex = -1
+    if DeviceInfo.usingController then
+        newIndex = oldIndex + (delta < 0 and 1 or -1)
+        if newIndex < 1 then
+            newIndex = self.m_curShowingOptCount
+        elseif newIndex > self.m_curShowingOptCount then
+            newIndex = 1
+        end
+    else
+        newIndex = lume.clamp(oldIndex + (delta < 0 and 1 or -1), 1, self.m_curShowingOptCount)
+    end
+
     if newIndex == oldIndex then
         return
     end
@@ -507,6 +572,12 @@ end
 InteractOptionCtrl._OnUpdateCell = HL.Method(HL.Table) << function(self, info)
     local cell = info.cell
     local key = info.identifier.value
+
+    if self.m_playingOutInfoTimers[info] then
+        
+        cell.button.enabled = false
+        return
+    end
 
     local isItem = info.isItem
     local isDel = info.isDel == true
@@ -621,7 +692,7 @@ InteractOptionCtrl._RefreshScrollHint = HL.Method() << function(self)
 end
 
 InteractOptionCtrl._UpdateOptionSelected = HL.Method(HL.Table) << function(self, info)
-    if info == nil then
+    if info == nil or self.m_playingOutInfoTimers[info] then
         return
     end
 
@@ -727,7 +798,11 @@ InteractOptionCtrl._OnClickOption = HL.Method(HL.String) << function(self, ident
     if t == InteractOptionType.Factory or t == InteractOptionType.Crop then
         local isForbid, forbidReason = Utils.isForbiddenWithReason(ForbidType.ForbidInteractFacBuilding)
         if isForbid then
-            Notify(MessageConst.SHOW_RADIO, { GameAction.RadioRuntimeData(forbidReason.radioId, true, 0) })
+            
+            local radioId = forbidReason and forbidReason.radioId
+            if not string.isEmpty(radioId) then
+                Notify(MessageConst.SHOW_RADIO, { GameAction.RadioRuntimeData(radioId, true, 0) })
+            end
             return
         end
     end
@@ -815,6 +890,8 @@ end
 
 InteractOptionCtrl._UpdateCurShowingList = HL.Method(HL.Opt(HL.Boolean)) << function(self, toTop)
     self.m_needUpdateList = false
+    
+    self.m_nextUpdateNeedToTop = false
 
     local oldSelectedInfo, oldSelectedIndex
     if not toTop and not string.isEmpty(self.m_curSelectedOptIdentifier) then
@@ -830,7 +907,7 @@ InteractOptionCtrl._UpdateCurShowingList = HL.Method(HL.Opt(HL.Boolean)) << func
             self.m_curShowingOptCount = self.m_curShowingOptCount + 1
         else
             
-            if v.cell then
+            if v.cell and not self.m_playingOutInfoTimers[v] then
                 self:_CacheCell(v.cell)
                 v.cell = nil
             end
@@ -857,6 +934,7 @@ InteractOptionCtrl._UpdateCurShowingList = HL.Method(HL.Opt(HL.Boolean)) << func
     self:_InterruptPickupAll()
 
     self:_RefreshList()
+    self.m_needScrollToSelected = true
 end
 
 InteractOptionCtrl._RefreshList = HL.Method() << function(self)
@@ -1237,6 +1315,7 @@ InteractOptionCtrl._InterruptPickupAll = HL.Method() << function(self)
 end
 
 InteractOptionCtrl._OnTriggerPickupAll = HL.Method() << function(self)
+    self:_TryUpdateShowingList()
     local list = {}
     local curInfo = self.m_optionInfoMap[self.m_curSelectedOptIdentifier]
     local startIndex = lume.find(self.m_curShowingOptInfoList, curInfo)

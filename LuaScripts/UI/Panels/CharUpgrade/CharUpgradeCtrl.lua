@@ -252,7 +252,7 @@ CharUpgradeCtrl._RefreshUpgradeNode = HL.Method(HL.Table, HL.Opt(HL.Boolean)) <<
     upgradeLevelNode.addExpIcon.gameObject:SetActive(true)
     upgradeLevelNode.addLevelIcon.gameObject:SetActive(true)
 
-    upgradeLevelNode.nextLvExp.text = levelUpExp
+    upgradeLevelNode.nextLvExp.text = levelUpExp < 0 and 0 or levelUpExp
     upgradeLevelNode.curExp.text = curExp
 
     if isUpgradeTransition then
@@ -579,9 +579,13 @@ CharUpgradeCtrl._InitActionEvent = HL.Method() << function(self)
     end)
 
     self.view.btnBack.onClick:AddListener(function()
-        self:Notify(MessageConst.CHAR_INFO_PAGE_CHANGE, {
-            pageType = UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
-        })
+        if self.m_arg.extraArg and self.m_arg.extraArg.onBack then
+            self.m_arg.extraArg.onBack()
+        else
+            self:Notify(MessageConst.CHAR_INFO_PAGE_CHANGE, {
+                pageType = UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
+            })
+        end
     end)
 
     self.view.upgradeNode.btnLevelUp.onClick:AddListener(function()

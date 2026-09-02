@@ -12,6 +12,7 @@ UI_WATCH_BUSINESS_CARD_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Common/Widgets/B
 UI_ACTIVITY_CHAR_GUIDE_LINE_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/CharacterGuideLine/%s.prefab"
 UI_ACTIVITY_VERSION_GUIDE_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/VersionGuide/%s.prefab"
 UI_ACTIVITY_CHECK_IN_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/Checkin/%s.prefab"
+UI_ACTIVITY_TASK_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/Task/%s.prefab"
 UI_ACTIVITY_HIGH_DIFFICULTY_BG_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/HighDifficultyBg/%s.prefab"
 UI_ACTIVITY_CHALLENGE_DUNGEON_BG_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/ChallengeDungeonBg/%s.prefab"
 UI_ACTIVITY_ARKNIGHTS_BIRTH_PREFAB_PATH = UI_ASSETS_PATH .. "Prefabs/Activity/ArknightsBirth/%s.prefab"
@@ -37,6 +38,8 @@ UI_DEFAULT_I18N_FONT_ASSET_PATH = UI_INIT_ASSETS_PATH .. "Fonts/DefaultFont_I18N
 UI_COMMON_TASK_TRACK_TOAST_WIDGETS_PATH = UI_ASSETS_PATH .. "Prefabs/CommonTaskTrack/Widgets/%s.prefab"
 UI_CASH_SHOP_DYNAMIC_GIFT_PANEL_WIDGETS_PATH = UI_ASSETS_PATH .. "Prefabs/CashShop/Widgets/SeasonalGiftpackNode/%s.prefab"
 UI_CASH_SHOP_CUSTOM_GIFT_PANEL_WIDGETS_PATH = UI_ASSETS_PATH .. "Prefabs/CashShop/Widgets/UniversalGiftpackNode/%s.prefab"
+UI_TYPHOEA_ARCHERY_CROSSHAIR_WIDGETS_PATH = UI_ASSETS_PATH .. "Prefabs/Battle/Widgets/TyphoeaArchery/%s.prefab"
+UI_TYPHOEA_ARCHERY_LOCKINGFRAME_WIDGETS_PATH = UI_ASSETS_PATH .. "Prefabs/Battle/Widgets/TyphoeaArchery/%s.prefab"
 
 
 CANVAS_DEFAULT_WIDTH = CS.Beyond.UI.CUR_STANDARD_HORIZONTAL_RESOLUTION
@@ -51,6 +54,7 @@ UI_SPRITE_ITEM_BIG = "ItemIconBig"
 UI_SPRITE_ITEM_COMPOSITE_DECO = "ItemIconCompositeDeco"
 UI_SPRITE_ITEM_COMPOSITE_DECO_BIG = "ItemIconCompositeDecoBig"
 UI_SPRITE_ITEM_TIPS = "ItemTips"
+UI_SPRITE_PORTABLE_DEVICE = "ChangePortableDevice"
 UI_SPRITE_CHECK_IN_DATE_IMAGE_PATH = "Activity/ActivityCheckBG"
 UI_SPRITE_EQUIPMENT_LOGO = "EquipmentLogo"
 UI_SPRITE_EQUIPMENT_LOGO_BIG = "EquipmentLogoBig"
@@ -192,6 +196,8 @@ UI_READING_POPUP_LOGO = "ReadingPopLogo"
 UI_SPRITE_BATTLE_PASS = "BattlePass"
 
 UI_SPRITE_BATTLE_PASS_PLAN = "BattlePass/BattlePassPlan"
+
+UI_SPRITE_TYPHOEA_ARCHERY = "TyphoeaArchery"
 
 
 UI_SPRITE_SNAPSHOT = "Snapshot"
@@ -415,7 +421,7 @@ UI_SPRITE_FAC_COMMON = "Factory/Common"
 UI_SPRITE_FAC_BUILDING_COMMON = "Factory/BuildingCommon"
 UI_SPRITE_INVENTORY = "Inventory"
 UI_SPRITE_FRIEND = "Friend"
-UI_BUSINESS_CARD_ICON_PATH = "FriendListBg"
+UI_BUSINESS_CARD_ICON_PATH = "ThemeIcon/FriendListBg"
 UI_BUSINESS_CARD_FRIEND_CHAT_ICON_PATH = "ThemeIcon/ChatBg"
 UI_BUSINESS_CARD_FRIEND_DOMAIN_DEPOT_ICON_PATH = "ThemeIcon/DeportBg"
 UI_SPRITE_RAID = "Raid"
@@ -550,6 +556,7 @@ UI_TIPS_POS_TYPE = {
     LeftTopOrRightTop = 15, 
     RightTopOrLeftTop = 16, 
     LeftAlignBottom = 17, 
+    LeftAlignTop = 18, 
 }
 
 UI_TIPS_X_POS_TYPE = {
@@ -1192,13 +1199,18 @@ CHAR_FORMATION_LIST_SORT_OPTION = {
         name = Language.LUA_CHAR_SORT_1, 
         
         
-        keys = { "slotIndex", "replaceablePriorityReverse", "level", "rarity", "ownTime", "sortOrder", "templateId" },
-        reverseKeys = { "slotReverseIndex", "replaceablePriority", "level", "rarity", "ownTime", "sortOrder", "templateId" },
+        keys = { "slotIndex", "replaceablePriorityReverse", "level", "rarity", "sortOrder", "templateId" },
+        reverseKeys = { "slotReverseIndex", "replaceablePriority", "level", "rarity", "sortOrder", "templateId" },
     },
     {
         name = Language.LUA_CHAR_SORT_2, 
-        keys = { "slotIndex", "replaceablePriorityReverse", "rarity", "level", "ownTime", "sortOrder", "templateId" },
-        reverseKeys = { "slotReverseIndex", "replaceablePriority", "rarity", "level", "ownTime", "sortOrder", "templateId" },
+        keys = { "slotIndex", "replaceablePriorityReverse", "ownTime", "templateId" },
+        reverseKeys = { "slotReverseIndex", "replaceablePriority", "ownTime", "templateId" },
+    },
+    {
+        name = Language.LUA_CHAR_SORT_3, 
+        keys = { "slotIndex", "replaceablePriorityReverse", "rarity", "level", "sortOrder", "templateId" },
+        reverseKeys = { "slotReverseIndex", "replaceablePriority", "rarity", "level", "sortOrder", "templateId" },
     },
 }
 
@@ -1659,6 +1671,7 @@ UI_RESTORE_PHASE_BLACKLIST = {
     ["Watch"] = true,
     ["Dialog"] = true,
     ["BalloonInteractive"] = true,
+    ["FacRegionUpgrade"] = true,
 }
 
 UI_TEXT_LINK_TYPE = {

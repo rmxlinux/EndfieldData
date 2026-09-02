@@ -1426,7 +1426,7 @@ FacMachineCrafterCtrl._CheckAlertDismantlerNeedUnlockGasCondition = HL.Method(HL
 end
 
 FacMachineCrafterCtrl._CheckAlertActivatorCostInsufficientCondition = HL.Method(HL.Userdata).Return(HL.Boolean, HL.Opt(HL.Table)) << function(self, state)
-    if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.InActive then
+    if self.view.buildingCommon.smartAlertChangeCachePauseUpdate or state ~= GEnums.FacBuildingState.Inactive then
         return false
     end
 

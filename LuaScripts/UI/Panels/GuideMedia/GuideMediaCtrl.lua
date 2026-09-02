@@ -66,7 +66,7 @@ end
 
 GuideMediaCtrl.OnClose = HL.Override() << function(self)
     Notify(MessageConst.FORCE_ENABLE_UI_SCENE_BLUR, { key = self.panelId, enabled = false})
-    UIManager:HideWithKey(PanelId.MissionHud, "GuideMedia") 
+    UIManager:ShowWithKey(PanelId.MissionHud, "GuideMedia") 
     CameraManager:ResumeTick("GuideMediaCtrl")
 end
 

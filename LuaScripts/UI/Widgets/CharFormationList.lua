@@ -46,11 +46,17 @@ CharFormationList.m_ignoreDead = HL.Field(HL.Boolean) << false
 CharFormationList.m_naviTargetInitialized = HL.Field(HL.Boolean) << false
 
 
+CharFormationList.m_filteredCharList = HL.Field(HL.Table)
+
+
+CharFormationList.m_filterTags = HL.Field(HL.Table)
+
 
 CharFormationList._OnFirstTimeInit = HL.Override() << function(self)
+    self:_InitFilterNode()
     self.view.sortNode:InitSortNode(UIConst.CHAR_FORMATION_LIST_SORT_OPTION, function(optData, isIncremental)
         self:_OnSortChanged(optData, isIncremental)
-    end, nil, false)
+    end, nil, false, true, self.view.filterBtn)
 
     self.GetCell = UIUtils.genCachedCellFunction(self.view.charScrollList)
     self.view.charScrollList.onSelectedCell:AddListener(function(obj, csIndex)
@@ -111,6 +117,7 @@ CharFormationList._InitData = HL.Method(HL.Table) << function(self, info)
     self.cell2Select = {} 
     self.m_select2Cell = {} 
     self.m_charItems = {} 
+    self.m_filteredCharList = {} 
     self.m_originSingleSelect = 0
     self.curSingleSelect = 0
     self.m_mode = info.mode or UIConst.CharListMode.MultiSelect
@@ -118,8 +125,8 @@ CharFormationList._InitData = HL.Method(HL.Table) << function(self, info)
 end
 
 CharFormationList._GetCharIndex = HL.Method(HL.Any).Return(HL.Number) << function(self, charInstId)
-    for index = 1, #self.m_charItems do
-        local charItem = self.m_charItems[index]
+    for index = 1, #self.m_filteredCharList do
+        local charItem = self.m_filteredCharList[index]
         if charItem.instId == charInstId then
             return index
         end
@@ -128,9 +135,7 @@ CharFormationList._GetCharIndex = HL.Method(HL.Any).Return(HL.Number) << functio
 end
 
 CharFormationList._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(self, optData, isIncremental)
-    if self.m_charItems then
-
-        local tmpTable = {}
+    if self.m_filteredCharList then
         local tmpSingleInstId = 0
         local scrollToIndex = 1
 
@@ -139,42 +144,60 @@ CharFormationList._OnSortChanged = HL.Method(HL.Table, HL.Boolean) << function(s
             if cell then
                 tmpSingleInstId = cell.charInfo.instId
             end
-        else
-            for selectIndex, cellIndex in pairs(self.m_select2Cell) do
-                local charItem = self.m_charItems[cellIndex]
-                local instId = charItem.instId
-                tmpTable[instId] = selectIndex
-            end
         end
 
         local keys = isIncremental and optData.keys or optData.reverseKeys
         self:_SortData(keys, isIncremental)
+        
+        
         self.m_select2Cell = {}
         self.cell2Select = {}
-        for cellIndex, info in pairs(self.m_charItems) do
-            local cellInstId = info.instId
-            local selectIndex = tmpTable[cellInstId]
-            if selectIndex then
-                self.m_select2Cell[selectIndex] = cellIndex
-                self.cell2Select[cellIndex] = selectIndex
+        local singleSelectMatched = false
+        for cellIndex, info in ipairs(self.m_filteredCharList) do
+            
+            if self.m_mode ~= UIConst.CharListMode.Single
+                and info.slotIndex and info.slotIndex <= Const.BATTLE_SQUAD_MAX_CHAR_NUM then
+                self.m_select2Cell[info.slotIndex] = cellIndex
+                self.cell2Select[cellIndex] = info.slotIndex
             end
 
-            if tmpSingleInstId > 0 and tmpSingleInstId == cellInstId then
+            if tmpSingleInstId > 0 and tmpSingleInstId == info.instId then
                 self.curSingleSelect = cellIndex
                 scrollToIndex = cellIndex
+                singleSelectMatched = true
             end
         end
+
+        
+        local reselectFirstSingle = false
+        if self.m_mode == UIConst.CharListMode.Single and tmpSingleInstId > 0 and not singleSelectMatched then
+            if #self.m_filteredCharList > 0 then
+                self.curSingleSelect = 1
+                self.m_charNum = 1
+                scrollToIndex = 1
+                reselectFirstSingle = true
+            else
+                self.curSingleSelect = 0
+                self.m_charNum = 0
+            end
+        end
+
         if DeviceInfo.usingController then
             self:ClearNaviTarget()
         end
 
         self:_RefreshCharList(scrollToIndex)
+
+        
+        if reselectFirstSingle and self.m_clickFunc then
+            self.m_clickFunc(true, self.curSingleSelect, self.m_filteredCharList[self.curSingleSelect])
+        end
     end
 end
 
 CharFormationList._SortData = HL.Method(HL.Table, HL.Boolean) << function(self, keys, isIncremental)
-    if self.m_charItems then
-        table.sort(self.m_charItems, Utils.genSortFunction(keys, isIncremental))
+    if self.m_filteredCharList then
+        table.sort(self.m_filteredCharList, Utils.genSortFunction(keys, isIncremental))
     end
 end
 
@@ -182,10 +205,10 @@ CharFormationList._RefreshCharList = HL.Method(HL.Opt(HL.Number)) << function(se
     if not scrollToIndex then
         scrollToIndex = 0
     end
-    local count = #self.m_charItems
+    local count = #self.m_filteredCharList
     self.view.charScrollList:UpdateCount(count, CSIndex(scrollToIndex))
     if self.m_onCharListChanged then
-        self.m_onCharListChanged(self.m_charItems)
+        self.m_onCharListChanged(self.m_filteredCharList)
     end
 end
 
@@ -225,7 +248,7 @@ CharFormationList._UpdateMultiSelect = HL.Method(HL.Opt(HL.Boolean)).Return(HL.T
         if cell then
             cell:SetMultiSelect(index, playAnim)
         end
-        local charItem = self.m_charItems[cellIndex]
+        local charItem = self.m_filteredCharList[cellIndex]
         self:_UpdateSlotIndex(charItem, index)
         table.insert(charItemList, charItem)
         
@@ -276,7 +299,7 @@ end
 
 CharFormationList.OnUpdateCell = HL.Method(HL.Userdata, HL.Number, HL.Opt(HL.Function)) << function(self, object, index)
     local cell = self:GetCellByIndex(index)
-    local item = self.m_charItems[index]
+    local item = self.m_filteredCharList[index]
 
     cell:InitCharFormationHeadCell(item, function(arg)
         self:OnClickItem(index)
@@ -389,6 +412,7 @@ end
 
 CharFormationList.UpdateCharItems = HL.Method(HL.Table) << function(self, items)
     self.m_charItems = lume.deepCopy(items)
+    self:_FilterCharList()
     self.view.sortNode:SortCurData()
 end
 
@@ -451,7 +475,7 @@ CharFormationList.OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Bool
         if cell.info.isLocked and cell.info.isReplaceable then
             local replaceSelectedIndex = nil
             for selectedIndex, index in pairs(self.m_select2Cell) do
-                local selectedCharItem = self.m_charItems[index]
+                local selectedCharItem = self.m_filteredCharList[index]
                 if selectedCharItem and selectedCharItem.templateId == cell.info.templateId then
                     replaceSelectedIndex = selectedIndex
                 end
@@ -463,11 +487,11 @@ CharFormationList.OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Bool
                         local replaceCell = self:GetCellByIndex(self.m_select2Cell[replaceSelectedIndex])
                         self.m_select2Cell[replaceSelectedIndex] = cellIndex
                         self.cell2Select[cellIndex] = replaceSelectedIndex
-                        self.m_charItems[cellIndex].selectIndex = replaceSelectedIndex
+                        self.m_filteredCharList[cellIndex].selectIndex = replaceSelectedIndex
 
                         if replaceCell then
                             replaceCell:SetMultiSelect(nil, playAnim)
-                            self:_UpdateSlotIndex(self.m_charItems[cellIndex], nil)
+                            self:_UpdateSlotIndex(self.m_filteredCharList[cellIndex], nil)
                         end
                         local charItemList, charInfoList = self:_UpdateMultiSelect(playAnim)
                         if self.m_clickFunc then
@@ -489,16 +513,16 @@ CharFormationList.OnClickItem = HL.Method(HL.Number, HL.Opt(HL.Function, HL.Bool
             local index = self.cell2Select[cellIndex]
             self.m_select2Cell[index] = nil
             self.cell2Select[cellIndex] = nil
-            self.m_charItems[cellIndex].selectIndex = nil
+            self.m_filteredCharList[cellIndex].selectIndex = nil
             self.m_charNum = self.m_charNum - 1
             cell:SetMultiSelect(nil, playAnim)
-            self:_UpdateSlotIndex(self.m_charItems[cellIndex], nil)
+            self:_UpdateSlotIndex(self.m_filteredCharList[cellIndex], nil)
             InputManagerInst:SetBindingText(cell.view.button.hoverConfirmBindingId, Language.LUA_CHAR_FORMATION_CONTROLLER_IN_TEAM)
         elseif self.m_charNum < self.m_selectNum then
             local curIndex = self:_GetNextIndex()
             self.m_select2Cell[curIndex] = cellIndex
             self.cell2Select[cellIndex] = curIndex
-            self.m_charItems[cellIndex].selectIndex = curIndex
+            self.m_filteredCharList[cellIndex].selectIndex = curIndex
             self.m_charNum = curIndex
             InputManagerInst:SetBindingText(cell.view.button.hoverConfirmBindingId, Language.LUA_CHAR_FORMATION_CONTROLLER_OUT_TEAM)
         end
@@ -522,6 +546,93 @@ end
 
 
 
+CharFormationList._InitFilterNode = HL.Method() << function(self)
+    local filterArgs = {
+        tagGroups = FilterUtils.generateConfig_CHAR_FORMATION(),
+        onConfirm = function(tags)
+            self:_OnFilterConfirm(tags)
+        end,
+        selectedTags = self.m_filterTags,
+        getResultCount = function(tags)
+            return self:_FilterBtnGetResCount(tags)
+        end,
+        sortNodeWidget = self.view.sortNode,
+    }
+    self.view.filterBtn:InitFilterBtn(filterArgs)
+end
+
+CharFormationList._OnFilterConfirm = HL.Method(HL.Any) << function(self, tags)
+    self.m_filterTags = tags
+    self:_FilterCharList()
+    self:_OnSortChanged(self.view.sortNode:GetCurSortData(), self.view.sortNode.isIncremental)
+end
+
+CharFormationList._GroupFilterTagsByFuncName = HL.Method(HL.Table).Return(HL.Table) << function(self, tags)
+    local tagsByFuncName = {}
+    for _, tag in ipairs(tags) do
+        local list = tagsByFuncName[tag.funcName]
+        if not list then
+            list = {}
+            tagsByFuncName[tag.funcName] = list
+        end
+        table.insert(list, tag)
+    end
+    return tagsByFuncName
+end
+
+CharFormationList._CheckCharPassFilterTags = HL.Method(HL.Any, HL.Table).Return(HL.Boolean) << function(self, templateId, tagsByFuncName)
+    for funcName, tagList in pairs(tagsByFuncName) do
+        local passOne = false
+        for _, tag in ipairs(tagList) do
+            if FilterUtils[funcName](templateId, tag.param) then
+                passOne = true
+                break
+            end
+        end
+        if not passOne then
+            return false
+        end
+    end
+    return true
+end
+
+CharFormationList._FilterCharList = HL.Method() << function(self)
+    self.m_filteredCharList = {}
+    local hasFilter = self.m_filterTags ~= nil and #self.m_filterTags > 0
+    local tagsByFuncName = hasFilter and self:_GroupFilterTagsByFuncName(self.m_filterTags) or nil
+    for _, charItem in ipairs(self.m_charItems) do
+        local keep
+        if charItem.slotIndex and charItem.slotIndex <= Const.BATTLE_SQUAD_MAX_CHAR_NUM then
+            
+            keep = true
+        elseif not hasFilter then
+            keep = true
+        else
+            keep = self:_CheckCharPassFilterTags(charItem.templateId, tagsByFuncName)
+        end
+        if keep then
+            table.insert(self.m_filteredCharList, charItem)
+        end
+    end
+end
+
+CharFormationList._FilterBtnGetResCount = HL.Method(HL.Table).Return(HL.Number) << function(self, tags)
+    if tags == nil or #tags == 0 then
+        return 0
+    end
+
+    local tagsByFuncName = self:_GroupFilterTagsByFuncName(tags)
+    local count = 0
+    for _, charItem in ipairs(self.m_charItems) do
+        
+        if charItem.slotIndex and charItem.slotIndex <= Const.BATTLE_SQUAD_MAX_CHAR_NUM then
+            count = count + 1
+        elseif self:_CheckCharPassFilterTags(charItem.templateId, tagsByFuncName) then
+            count = count + 1
+        end
+    end
+    return count
+end
 
 CharFormationList._OnDisable = HL.Override() << function(self)
     Notify(MessageConst.HIDE_COMMON_HOVER_TIP)

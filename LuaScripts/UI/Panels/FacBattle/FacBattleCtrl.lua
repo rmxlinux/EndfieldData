@@ -91,7 +91,11 @@ FacBattleCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         cacheIndex = 1,
         slotCount = 1,
         onRepoInitializeFinish = function()
-            self.view.cacheNaviGroup:NaviToThisGroup()
+            if self.m_initialRefreshChargingMode == ChargingMode.Shared then
+                self.view.buildingCommon.view.buttonsNaviGroup:NaviToThisGroup()
+            else
+                self.view.cacheNaviGroup:NaviToThisGroup()
+            end
         end
     })
 

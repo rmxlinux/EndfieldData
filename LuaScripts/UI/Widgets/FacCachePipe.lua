@@ -162,16 +162,26 @@ FacCachePipe._GetPipeInfoList = HL.Method() << function(self)
     end
 end
 
-FacCachePipe._GetItemSprite = HL.Method(HL.String).Return(HL.Userdata) << function(self, itemId)
+FacCachePipe._GetItemSprite = HL.Method(HL.String, HL.Function) << function(self, itemId, callback)
     local itemSprite = self.m_cachedSprite[itemId]
-    if itemSprite == nil then
-        local success, itemData = Tables.itemTable:TryGetValue(itemId)
-        if success then
-            itemSprite = self:LoadSprite(UIConst.UI_SPRITE_ITEM, itemData.iconId)
-            self.m_cachedSprite[itemId] = itemSprite
-        end
+    if itemSprite ~= nil then
+        callback(itemSprite)
+        return
     end
-    return itemSprite
+    local success, itemData = Tables.itemTable:TryGetValue(itemId)
+    if not success then
+        return
+    end
+    local fullPath = UIUtils.getSpritePath(UIConst.UI_SPRITE_ITEM, itemData.iconId)
+    self.loader:LoadSpriteAsync(fullPath, function(sprite)
+        if self.m_isDestroyed or self.m_cachedSprite == nil then
+            return
+        end
+        if sprite ~= nil then
+            self.m_cachedSprite[itemId] = sprite
+        end
+        callback(sprite)
+    end)
 end
 
 FacCachePipe._GetIsPipeBlocked = HL.Method(HL.Number, HL.Boolean).Return(HL.Boolean) << function(self, nodeId, isIn)
@@ -410,10 +420,14 @@ FacCachePipe._RefreshPipeCellConveyorAnimation = HL.Method(HL.Boolean, HL.Number
         cell.animationSetting.itemAnimation
     cell.bindingNode.itemAnimation:PlayWithTween(itemChangedAnimationName)
 
-    local itemSprite = self:_GetItemSprite(itemId)
-    cell.bindingNode.itemIcon.sprite = itemSprite
-    cell.bindingNode.blockIcon.sprite = itemSprite
-    cell.bindingNode.blockIcon.gameObject:SetActive(true)
+    self:_GetItemSprite(itemId, function(itemSprite)
+        if self.m_isDestroyed then
+            return
+        end
+        cell.bindingNode.itemIcon.sprite = itemSprite
+        cell.bindingNode.blockIcon.sprite = itemSprite
+        cell.bindingNode.blockIcon.gameObject:SetActive(true)
+    end)
 end
 
 

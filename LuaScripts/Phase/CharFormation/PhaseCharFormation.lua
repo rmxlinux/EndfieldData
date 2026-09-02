@@ -304,12 +304,15 @@ PhaseCharFormation._OnDestroy = HL.Override() << function(self)
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(true)
 
     
-    GameInstance.player.charBag:ClearAllClientCharAndItemData()
+    if not InputManagerInst.inChangingInputDevice then
+        GameInstance.player.charBag:ClearAllClientCharAndItemData()
+    end
     AudioAdapter.PostEvent("au_ui_close_team_panel")
 end
 
 PhaseCharFormation.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)
     local arg = self.arg and lume.deepCopy(self.arg) or {}
+    arg.__isRecover = InputManagerInst.inChangingInputDevice
     arg.teamIndex = self.m_curTeamIndex
     arg.charListState = nil
     arg.commonPopUpArg = nil
@@ -354,6 +357,11 @@ end
 PhaseCharFormation._ProcessArgs = HL.Method() << function(self)
     
     self.arg = self.arg or {}
+    local isRecover = type(self.arg) == "table" and self.arg.__isRecover == true
+    
+    if isRecover then
+        self.arg.__isRecover = nil
+    end
     
     if type(self.arg) == "string" then
         local teamConfigId = self.arg
@@ -378,16 +386,19 @@ PhaseCharFormation._ProcessArgs = HL.Method() << function(self)
         end
     end
 
-    if not string.isEmpty(self.arg.presetTeamId) or self.arg.initCharInstIdList ~= nil then
-        self.arg.lockedTeamData = self:_GenerateLockedFormationData(self.arg.presetTeamId)
-    elseif not string.isEmpty(self.arg.dungeonId) then
-        local hasValue
+    
+    if not isRecover then
+        if not string.isEmpty(self.arg.presetTeamId) or self.arg.initCharInstIdList ~= nil then
+            self.arg.lockedTeamData = self:_GenerateLockedFormationData(self.arg.presetTeamId)
+        elseif not string.isEmpty(self.arg.dungeonId) then
+            local hasValue
 
-        
-        local subGameData
-        hasValue, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.arg.dungeonId)
-        if hasValue and not string.isEmpty(subGameData.teamConfigId) then
-            self.arg.lockedTeamData = self:_GenerateLockedFormationData(subGameData.teamConfigId)
+            
+            local subGameData
+            hasValue, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.arg.dungeonId)
+            if hasValue and not string.isEmpty(subGameData.teamConfigId) then
+                self.arg.lockedTeamData = self:_GenerateLockedFormationData(subGameData.teamConfigId)
+            end
         end
     end
     self.m_lockedTeamData = self.arg.lockedTeamData
@@ -534,9 +545,7 @@ PhaseCharFormation.OnCharListSingleSelect = HL.Method(HL.Any) << function(self, 
         isTrail = cellInfo.isTrail,
         isReplaceable = cellInfo.isReplaceable,
     }
-    
-    local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(instId)
-    local isDead = charInfo.isDead
+    local isDead = CharInfoUtils.isCharDead(instId)
 
     local singleState
     
@@ -608,7 +617,7 @@ PhaseCharFormation.OnCharListMultiSelect = HL.Method(HL.Any) << function(self, a
         local instId = charItemList[i] and charItemList[i].instId or nil
         if instId then
             charInfo = CharInfoUtils.getPlayerCharInfoByInstId(instId)
-            isDead = charInfo.isDead
+            isDead = CharInfoUtils.isCharDead(instId)
         end
         slot.slotCharDisable.gameObject:SetActive(isDead)
         slot.slotCharDisableFx.gameObject:SetActive(isDead)
@@ -627,6 +636,19 @@ PhaseCharFormation._RefreshEmpty = HL.Method(HL.Opt(HL.Boolean)) << function(sel
         empty = self.m_charFormation.uiCtrl:GetCharListEmpty()
     end
     self.m_charFormation.uiCtrl:RefreshEmpty(empty)
+end
+
+
+PhaseCharFormation.OnSingleCharListEmpty = HL.Method() << function(self)
+    if not self.m_charFormation or
+        self.m_charFormation.uiCtrl.state ~= UIConst.UI_CHAR_FORMATION_STATE.SingleChar then
+        return
+    end
+    local uiCtrl = self.m_charFormation.uiCtrl
+    uiCtrl:RefreshCharInformation(nil)
+    uiCtrl:RefreshSingleBtns(UIConst.UI_CHAR_FORMATION_SINGLE_STATE.None, nil)
+    self:_TryUpdateModels({})
+    self:_RefreshEmpty(true)
 end
 
 PhaseCharFormation.OnEnterMultiSelect = HL.Method(HL.Opt(HL.Any)) << function(self, _)
@@ -1626,7 +1648,7 @@ PhaseCharFormation._TrySendSetSquad = HL.Method().Return(HL.Boolean, HL.Number) 
                 chars = self.m_tempMultiSelectCharInfoList
                 self.m_tempMultiSelectCharInfoList = nil
             end
-            self.m_lockedTeamData.chars = {} 
+            self.m_lockedTeamData.chars = {}
             for _, charInfo in pairs(chars) do
                 table.insert(self.m_lockedTeamData.chars, charInfo)
             end
@@ -1650,7 +1672,7 @@ PhaseCharFormation._TrySendSetSquad = HL.Method().Return(HL.Boolean, HL.Number) 
             local charInstId = charItem.instId
             local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
             local normalSkillId = charInfo.normalSkillId
-            if not charInfo.isDead then
+            if not CharInfoUtils.isCharDead(charInstId) then
                 table.insert(aliveCharInstIds, charInstId)
             end
             local cacheNormalSkillId = self.m_teamSkillCache[charInstId]
@@ -1667,7 +1689,7 @@ PhaseCharFormation._TrySendSetSquad = HL.Method().Return(HL.Boolean, HL.Number) 
         for _, charData in pairs(self.m_curTeam) do
             local charInstId = charData.charInstId
             local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
-            local isDead = charInfo.isDead
+            local isDead = CharInfoUtils.isCharDead(charInstId)
             local normalSkillId = charInfo.normalSkillId
             if not isDead then
                 table.insert(aliveCharInstIds, charInstId)
@@ -1710,8 +1732,7 @@ PhaseCharFormation._CheckTeamCanFight = HL.Method().Return(HL.Boolean, HL.Any) <
     toast = Language.LUA_CAN_NOT_SET_CUR_SQUAD_ALL_DEAD
     for _, info in pairs(self.m_curTeam) do
         local charInstId = info.charInstId
-        local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(charInstId)
-        if not charInfo.isDead then
+        if not CharInfoUtils.isCharDead(charInstId) then
             hasAlive = true
             toast = nil
             break
@@ -1876,8 +1897,7 @@ PhaseCharFormation._RefreshSlot = HL.Method(HL.Table, HL.Number, HL.Table) << fu
         local hasChar = charInfo and charInfo.charId ~= ""
         local isDead = false
         if hasChar then
-            local csCharInfo = CharInfoUtils.getPlayerCharInfoByInstId(charInfo.charInstId)
-            isDead = csCharInfo.isDead
+            isDead = CharInfoUtils.isCharDead(charInfo.charInstId)
         end
 
         if hasChar then
@@ -2119,7 +2139,7 @@ PhaseCharFormation._GenerateLockedFormationData = HL.Method(HL.Any).Return(HL.Ta
                         break
                     end
                 end
-                local isDead = csCharInfo and csCharInfo.isDead
+                local isDead = CharInfoUtils.isCharDead(charInstId)
                 if isDead or isInLockedTeam then
                     curSquadSlotCSIndex  = curSquadSlotCSIndex + 1
                 else
@@ -2163,6 +2183,11 @@ PhaseCharFormation._InitControllerSlotSelectedState = HL.Method() << function(se
 
     self:_HideAllControllerSlotSelected()
     self.m_navigatedCharIndex = 1
+    
+    local uiCtrl = self.m_charFormation and self.m_charFormation.uiCtrl
+    if uiCtrl and uiCtrl.state == UIConst.UI_CHAR_FORMATION_STATE.CharChange then
+        return
+    end
     self:_RefreshControllerSlotSelectedState(self.m_navigatedCharIndex, true)
 end
 

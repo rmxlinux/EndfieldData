@@ -51,6 +51,7 @@ local DETAIL_PANEL_MAP = {
     [MarkType.ActivityContingencyContract] = PanelId.MapMarkDetailContingencyContract,
     [MarkType.GasMinePointTeam] = PanelId.MapMarkDetailGasMinePointTeam,
     [MarkType.SeasonTower] = PanelId.MapMarkDetailSeasonTower,
+    [MarkType.TyphoeaArchery] = PanelId.MapMarkDetailTyphoeaArchery,
 
     
     [MarkType.DungeonPuzzle] = PanelId.MapMarkDetailDungeon,

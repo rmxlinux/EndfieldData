@@ -713,6 +713,11 @@ BalloonMiniGameRotatePlateCtrl.SwapBlocksByPosition = HL.Method(HL.Number, HL.Nu
     if cellItem2 then
         self:UpdateGridCell(cellItem2.cell, cellItem2.index)
     end
+    if cellItem1 and cellItem2 then
+        AudioAdapter.PostEvent("Au_UI_Event_BalloonRecycle_Put_B")
+        AudioAdapter.PostEvent("Au_UI_Event_BalloonRecycle_Float")
+        self:_PlayPlacementColorAudio()
+    end
 end
 
 BalloonMiniGameRotatePlateCtrl.UpdateGridCellByPosition = HL.Method(HL.Number, HL.Number) << function(self, cx, cy)

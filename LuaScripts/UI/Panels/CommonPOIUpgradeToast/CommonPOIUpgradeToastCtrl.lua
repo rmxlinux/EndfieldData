@@ -12,6 +12,7 @@ local GetDescFunc = {
     [GEnums.DomainPoiType.DomainDepot] = "_GetDescDomainDepot",
     [GEnums.DomainPoiType.SimulationTraining] = "_GetDescSimulationTraining",
     [GEnums.DomainPoiType.SewageTreatPlant] = "_GetDescSewageTreatPlant",
+    [GEnums.DomainPoiType.TyphoeaArchery] = "_GetDescTyphoeaArchery",
 }
 
 
@@ -303,6 +304,24 @@ CommonPOIUpgradeToastCtrl._GetDescSimulationTraining = HL.Method().Return(HL.Tab
 
     return descList
 end
+
+CommonPOIUpgradeToastCtrl._GetDescTyphoeaArchery = HL.Method().Return(HL.Table) << function(self)
+    local descList = {}
+
+    local typhoeaArcherySystem = GameInstance.player.typhoeaArcherySystem
+    local archeryData = typhoeaArcherySystem.archeryData
+    local curLevel = typhoeaArcherySystem:GetTyphoeaArcheryLevel()
+    local maxLevel = archeryData.maxLv
+
+    if curLevel < maxLevel then
+        table.insert(descList, Language.LUA_TYPHOEA_ARCHERY_POI_UPGRADE_TOAST) 
+    else
+        table.insert(descList, Language.LUA_TYPHOEA_ARCHERY_POI_UPGRADE_HIGHEST_TOAST) 
+    end
+
+    return descList
+end
+
 CommonPOIUpgradeToastCtrl._GetDescSewageTreatPlant = HL.Method().Return(HL.Table) << function(self)
     local descList = {}
 

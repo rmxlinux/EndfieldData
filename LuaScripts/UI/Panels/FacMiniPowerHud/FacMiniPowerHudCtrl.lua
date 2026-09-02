@@ -152,6 +152,12 @@ FacMiniPowerHudCtrl._RefreshMultimodeToggle = HL.Method(HL.String, HL.Opt(HL.Boo
         return
     end
 
+    local currentMode = buildingMode.nodeMode
+    if string.isEmpty(currentMode) then
+        self:_HideMultimodeToggle()
+        return
+    end
+
     local buildingId = buildingMode.buildingId
     local hasModeSwitch, baseMode, switchMode = FactoryUtils.checkBuildingHasModeSwitch(buildingId)
     if not hasModeSwitch then
@@ -161,7 +167,6 @@ FacMiniPowerHudCtrl._RefreshMultimodeToggle = HL.Method(HL.String, HL.Opt(HL.Boo
 
     self.m_baseMode, self.m_switchMode = baseMode, switchMode
 
-    local currentMode = buildingMode.nodeMode
     if currentMode ~= baseMode and currentMode ~= switchMode then
         logger.error(ELogChannel.Factory, "Invalid building mode, buildingId: " .. tostring(buildingId)
             .. ", currentMode: " .. tostring(currentMode)

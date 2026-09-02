@@ -184,7 +184,7 @@ FacConditionerCtrl._InitAllItemData = HL.Method() << function(self)
     end
 
     for _, itemId in pairs(itemIdList) do
-        if not Tables.liquidTable:ContainsKey(itemId) and not Tables.gasTable:ContainsKey(itemId) and GameInstance.player.inventory:IsItemFound(itemId) then
+        if FactoryUtils.isFactoryItemNormal(itemId) and GameInstance.player.inventory:IsItemFound(itemId) then
             local showItem = false 
             if FactoryUtils.isTimeLimitedItem(itemId) then
                 local craftInfoList, canCraft = FactoryUtils.getItemCrafts(itemId)
@@ -308,34 +308,28 @@ end
 FacConditionerCtrl._InitFluidData = HL.Method() << function(self)
     local materialMap = {}
     self.m_showItemList = {}
-    for liquidId, liquidData in pairs(Tables.liquidTable) do
-        if GameInstance.player.inventory:IsItemFound(liquidId) then
-            local itemData = Tables.itemTable[liquidId]
-            local itemInfo = {
-                id = liquidId,
-                data = itemData,
-                showingType = itemData.showingType:GetHashCode(),
-                sortId1 = -itemData.sortId1,
-                sortId2 = itemData.sortId2,
-                rarity = itemData.rarity
-            }
-            materialMap[liquidId] = itemInfo
-            table.insert(self.m_showItemList, itemInfo)
-        end
-    end
-    for gasId, gasData in pairs(Tables.gasTable) do
-        if GameInstance.player.inventory:IsItemFound(gasId) then
-            local itemData = Tables.itemTable[gasId]
-            local itemInfo = {
-                id = gasId,
-                data = itemData,
-                showingType = itemData.showingType:GetHashCode(),
-                sortId1 = -itemData.sortId1,
-                sortId2 = itemData.sortId2,
-                rarity = itemData.rarity
-            }
-            materialMap[gasId] = itemInfo
-            table.insert(self.m_showItemList, itemInfo)
+    for itemId, facData in pairs(Tables.factoryItemTable) do
+        if GameInstance.player.inventory:IsItemFound(itemId) and facData.phaseType ~= GEnums.FCItemCacheType.Normal then
+            local showItem = false 
+            if FactoryUtils.isTimeLimitedItem(itemId) then
+                local craftInfoList, canCraft = FactoryUtils.getItemCrafts(itemId)
+                showItem = next(craftInfoList) ~= nil
+            else
+                showItem = true
+            end
+            if showItem then
+                local itemData = Tables.itemTable[itemId]
+                local itemInfo = {
+                    id = itemId,
+                    data = itemData,
+                    showingType = itemData.showingType:GetHashCode(),
+                    sortId1 = -itemData.sortId1,
+                    sortId2 = itemData.sortId2,
+                    rarity = itemData.rarity
+                }
+                materialMap[itemId] = itemInfo
+                table.insert(self.m_showItemList, itemInfo)
+            end
         end
     end
 

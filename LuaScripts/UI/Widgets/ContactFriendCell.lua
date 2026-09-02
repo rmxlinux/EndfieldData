@@ -118,6 +118,9 @@ end
 
 ContactFriendCell.UpdateTileTxt = HL.Method() << function(self)
     local friendInfo = self.m_friendInfo
+    if not friendInfo then
+        return
+    end
     local nameStr = ""
     if friendInfo.remakeName and not string.isEmpty(friendInfo.remakeName) then
         nameStr = string.format(Language.LUA_FRIEND_REMAKE_NAME, friendInfo.remakeName, friendInfo.name, friendInfo.shortId)
@@ -156,7 +159,7 @@ ContactFriendCell.UpdateRedDot = HL.Method() << function(self)
     local chatInfo = GameInstance.player.friendChatSystem:GetChatInfo(self.m_roleId)
     if chatInfo and chatInfo.unReadNum > 0 then
         self.view.redDotLayout.gameObject:SetActive(true)
-        self.view.redDotTxt.text = chatInfo.unReadNum
+        self.view.redDotTxt.text = chatInfo.unReadNum > 99 and "99+" or tostring(chatInfo.unReadNum)
     else
         self.view.redDotLayout.gameObject:SetActive(false)
     end

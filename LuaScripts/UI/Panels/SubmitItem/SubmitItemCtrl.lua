@@ -598,9 +598,7 @@ end
 SubmitItemCtrl.OnSubmitItemFailed = HL.Method(HL.Any) << function(self, submitId)
     self.m_isSubmitting = false
     if (submitId[1] == self.m_info.submitId) then
-        self:PlayAnimationOutWithCallback(function()
-            self:ClosePanel(0)
-        end)
+        self:ClosePanel(0)
         logger.error("SubmitItemCtrl.OnSubmitItemFailed: submit failed for submitId ", submitId)
     end
 end

@@ -828,7 +828,7 @@ function SpaceshipUtils.InitMoneyLimitCell(moneyNode, itemId)
     return limitCount or 0
 end
 
-function SpaceshipUtils.ShowClueOutcomePopup(csItems, source, creditCell, infoTokenCell)
+function SpaceshipUtils.ShowClueOutcomePopup(csItems, source, creditCell, infoTokenCell, forceShowReward)
     local itemMap = {}
     for i = 0, csItems.Count - 1 do
         local item = csItems[i]
@@ -859,10 +859,12 @@ function SpaceshipUtils.ShowClueOutcomePopup(csItems, source, creditCell, infoTo
     if source == CS.Beyond.GEnums.RewardSourceType.OpenInfoExchangeReward then
         if GameInstance.player.spaceship:IsWaitingForHandleOneKeyHarvest() then
             for i, v in ipairs(items) do
-                GameInstance.player.spaceship:AddHarvestItem(v.id, v.count)
+                GameInstance.player.spaceship:AddHarvestItem(v.id, v.count, false)
             end
             return
         end
+    end
+    if source == CS.Beyond.GEnums.RewardSourceType.OpenInfoExchangeReward or forceShowReward then
         Notify(MessageConst.SHOW_SYSTEM_REWARDS, {
             title = Language.LUA_DEFAULT_SYSTEM_REWARD_POP_UP_TITLE,
             items = items,

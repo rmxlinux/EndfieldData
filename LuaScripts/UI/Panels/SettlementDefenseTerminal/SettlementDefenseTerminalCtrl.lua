@@ -564,6 +564,16 @@ SettlementDefenseTerminalCtrl._InitController = HL.Method() << function(self)
     end
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
     self.view.rightDetail.recommendNode.naviGroup.onIsFocusedChange:AddListener(UIUtils.hideItemTipsOnLoseFocus)
+    self.view.rightDetail.recommendNode.naviGroup.getDefaultSelectableFunc = function()
+        local firstObj = self.view.rightDetail.recommendNode.recommendScrollList:Get(0)
+        if firstObj and self.m_getRecommendCell then
+            local cell = self.m_getRecommendCell(firstObj)
+            if cell then
+                return cell.view.button
+            end
+        end
+        return nil
+    end
     self.view.rightDetail.rewardsInfo.naviGroup.onIsFocusedChange:AddListener(UIUtils.hideItemTipsOnLoseFocus)
     self.view.leftList.addNode.naviGroup.onIsFocusedChange:AddListener(function(isFocused)
         if isFocused then

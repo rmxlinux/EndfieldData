@@ -108,23 +108,5 @@ PhaseInventory._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table))
     end
 end
 
-PhaseInventory._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
-    if args.anotherPhaseId == PhaseId.FacDepotSwitching then
-        return
-    end
-    if fastMode then
-        self.m_invPanel:Hide()
-    else
-        self.m_invPanel:PlayAnimationOut(UIConst.PANEL_PLAY_ANIMATION_OUT_COMPLETE_ACTION_TYPE.Hide)
-    end
-end
-
-PhaseInventory._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)
-    if args.anotherPhaseId == PhaseId.FacDepotSwitching then
-        return
-    end
-    self.m_invPanel:Show()
-end
-
 
 HL.Commit(PhaseInventory)

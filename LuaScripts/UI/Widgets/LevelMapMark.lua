@@ -105,6 +105,7 @@ LevelMapMark.ClearLevelMapMark = HL.Method(HL.Opt(HL.Boolean)) << function(self,
     end
 
     MessageManager:UnregisterAll(self)
+    self.m_messageCache = {}
     self:_ClearDynamicPrefabs()
     self.view.gameObject.name = "Cached"
 
@@ -447,6 +448,9 @@ LevelMapMark._RefreshSettlementLevelNode = HL.Method() << function(self)
 end
 
 LevelMapMark._RefreshSettlementLevelText = HL.Method() << function(self)
+    if self.markRuntimeData == nil or string.isEmpty(self.markRuntimeData.settlementId) then
+        return
+    end
     local level = GameInstance.player.settlementSystem:GetSettlementLevel(self.markRuntimeData.settlementId)
     self.view.settlementLevelNode.levelTxt.text = string.format("%d", level)
 end

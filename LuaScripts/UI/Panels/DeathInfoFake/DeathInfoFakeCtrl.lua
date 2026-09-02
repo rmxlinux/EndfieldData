@@ -123,6 +123,9 @@ DeathInfoFakeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local displayMode = arg.displayMode or DisplayMode.WorldDeath
 
     self.view.tipNode02.gameObject:SetActive(false)
+    self.view.scrollViewTipsList.gameObject:SetActive(true)
+    self.view.timeLimitExceededNode.gameObject:SetActive(false)
+    self.view.taskGoalsNode.gameObject:SetActive(false)
     self.view.trainingTips.gameObject:SetActive(false)
     self.view.exitDungeonBtn.gameObject:SetActive(false)
     self.view.retryBattleBtn.gameObject:SetActive(true)

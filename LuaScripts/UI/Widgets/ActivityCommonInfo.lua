@@ -16,6 +16,8 @@ ActivityCommonInfo.m_skipReceive = HL.Field(HL.Any)
 
 ActivityCommonInfo.m_calendarCountdownCor = HL.Field(HL.Any)
 
+ActivityCommonInfo.m_endMissionQuestId = HL.Field(HL.String) << ""
+
 
 ActivityCommonInfo._OnFirstTimeInit = HL.Override() << function(self)
     
@@ -42,8 +44,10 @@ ActivityCommonInfo.InitActivityCommonInfo = HL.Method(HL.Table) << function(self
     if not args.skipTimeCountDown then
         if activity.endTime == 0 then
             self.view.infoNode.countDownText.text = Language.LUA_ACTIVITY_PERMANENT_TEXT
+            self.view.residentTagCell.gameObject:SetActive(not activityData.isRecommend)
         else
             self.view.infoNode.countDownWidget:InitCountDownText(activity.endTime, args.timeOnComplete, args.timeFormatFunc)
+            self.view.residentTagCell.gameObject:SetActive(false)
         end
     end
 
@@ -66,16 +70,16 @@ ActivityCommonInfo.InitActivityCommonInfo = HL.Method(HL.Table) << function(self
     self.view.infoNode.descriptionBtn.onClick:AddListener(function()
         ActivityUtils.GameEventLogActivityVisit(self.m_activityId, "descriptionButton", "visit_description")
         local instructionId = activityData.instructionId
-        UIManager:Open(PanelId.InstructionBook, {
-            id = instructionId,
+        UIManager:Open(PanelId.ActivityDescriptionPopup, {
+            activityId = self.m_activityId,
             onClose = function()
                 Notify(MessageConst.ON_TOGGLE_ACTIVITY_INSTRUCTION, {
                     isShown = false
                 })
-            end
+            end,
         })
         Notify(MessageConst.ON_TOGGLE_ACTIVITY_INSTRUCTION, {
-            instructionId = instructionId,
+            activityId = self.m_activityId,
             isShown = true
         })
     end)
@@ -144,6 +148,7 @@ ActivityCommonInfo.InitActivityCommonInfo = HL.Method(HL.Table) << function(self
 
     self:_RefreshUICalendarBtn(args)
     self:_RefreshUIMedal(args)
+    self:_InitCompleteTaskBtn(activityData)
 
     
     if DeviceInfo.usingController then
@@ -172,6 +177,14 @@ ActivityCommonInfo.InitActivityCommonInfo = HL.Method(HL.Table) << function(self
         local id = unpack(stageArgs)
         if id == self.m_activityId then
             self:_RefreshUICalendarBtn(args)
+        end
+    end)
+
+    
+    self:RegisterMessage(MessageConst.ON_QUEST_STATE_CHANGE, function(questArgs)
+        local questId = unpack(questArgs)
+        if questId == self.m_endMissionQuestId then
+            self:_RefreshCompleteTaskBtn()
         end
     end)
 end
@@ -294,8 +307,24 @@ ActivityCommonInfo.UpdateRewardInfo = HL.Method(HL.Opt(HL.String)) << function(s
         self.m_rewardId = rewardId
         local _, rewardTableData = Tables.rewardTable:TryGetValue(rewardId)
         local rewardBundles = UIUtils.getRewardItems(rewardId)
-        self.m_rewardCells:Refresh(#rewardBundles, function(cell, index)
-            cell:InitItem(rewardBundles[index], function()
+
+        local sortedItems = {}
+        for i = 1, #rewardBundles do
+            local bundle = rewardBundles[i]
+            local itemData = Tables.itemTable[bundle.id]
+            table.insert(sortedItems, {
+                bundle = bundle,
+                originalIndex = i,
+                rarity = itemData and itemData.rarity or 0,
+                sortId1 = itemData and itemData.sortId1 or 0,
+                sortId2 = itemData and itemData.sortId2 or 0,
+            })
+        end
+        table.sort(sortedItems, Utils.genSortFunction({"rarity", "sortId1", "sortId2"}))
+
+        self.m_rewardCells:Refresh(#sortedItems, function(cell, index)
+            local sortedItem = sortedItems[index]
+            cell:InitItem(sortedItem.bundle, function()
                 cell:ShowTips()
             end)
             cell:SetExtraInfo({
@@ -311,7 +340,7 @@ ActivityCommonInfo.UpdateRewardInfo = HL.Method(HL.Opt(HL.String)) << function(s
             
             
             
-            local isVisible = rewardTableData and rewardTableData.itemBundleVisibleList and rewardTableData.itemBundleVisibleList[CSIndex(index)] or 0
+            local isVisible = rewardTableData and rewardTableData.itemBundleVisibleList and rewardTableData.itemBundleVisibleList[CSIndex(sortedItem.originalIndex)] or 0
             if isVisible == 1 then
                 cell.view.countNode.gameObject:SetActive(true)
             else
@@ -331,6 +360,62 @@ end
 
 ActivityCommonInfo.UpdateDescTxt = HL.Method(HL.String) << function(self, desc)
     self.view.infoNode.detailsTxt:SetAndResolveTextStyle(desc)
+end
+
+
+ActivityCommonInfo._InitCompleteTaskBtn = HL.Method(HL.Any) << function(self, activityData)
+    local completeTaskBtn = self.view.leftBtnGroupNode.completeTaskBtn
+
+    local endMissionQuestId = activityData and activityData.endMissionQuestId or ""
+    if string.isEmpty(endMissionQuestId) then
+        completeTaskBtn.gameObject:SetActive(false)
+        return
+    end
+
+    self.m_endMissionQuestId = endMissionQuestId
+
+    completeTaskBtn.button.onClick:AddListener(function()
+        self:_OnCompleteTaskBtnClick()
+    end)
+
+    completeTaskBtn.redDot:InitRedDot("ActivityCompleteTask", self.m_activityId)
+
+    self:_RefreshCompleteTaskBtn()
+end
+
+ActivityCommonInfo._RefreshCompleteTaskBtn = HL.Method() << function(self)
+    if string.isEmpty(self.m_endMissionQuestId) then
+        return
+    end
+
+    local questState = GameInstance.player.mission:GetQuestState(self.m_endMissionQuestId)
+    local isProcessing = questState == CS.Beyond.Gameplay.MissionSystem.QuestState.Processing
+    local isCompleted = questState == CS.Beyond.Gameplay.MissionSystem.QuestState.Completed
+
+    local shouldShow = isProcessing or isCompleted
+    self.view.leftBtnGroupNode.completeTaskBtn.gameObject:SetActive(shouldShow)
+
+    if not shouldShow then
+        return
+    end
+    self.view.leftBtnGroupNode.completeTaskBtn.completeState.gameObject:SetActive(isCompleted)
+end
+
+ActivityCommonInfo._OnCompleteTaskBtnClick = HL.Method() << function(self)
+    local questState = GameInstance.player.mission:GetQuestState(self.m_endMissionQuestId)
+    local isCompleted = questState == CS.Beyond.Gameplay.MissionSystem.QuestState.Completed
+
+    if isCompleted then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_ACTIVITY_COMPLETE_TASK_FINISHED)
+        return
+    end
+
+    ActivityUtils.setFalseEndMissionActivity(self.m_activityId)
+
+    local missionId = GameInstance.player.mission:GetMissionIdByQuestId(self.m_endMissionQuestId)
+    if not string.isEmpty(missionId) then
+        PhaseManager:OpenPhase(PhaseId.Mission, { autoSelect = missionId })
+    end
 end
 
 

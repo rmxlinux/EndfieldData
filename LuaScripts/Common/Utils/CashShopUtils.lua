@@ -226,8 +226,14 @@ function CashShopUtils.createOrder(goodsId, cashShopId, count)
     if haveCfg and cfg.isFree then
         
         CashShopUtils.recordFreeCashShopBuy(goodsId, count)
+        CashShopUtils.consumeLatestFreeCashShopRewardPacks()
         cashShopSystem:CreateFreeOrder(goodsId, cashShopId, count)
         return
+    end
+    local function createPaidOrder()
+        
+        CashShopUtils.consumeLatestCashShopRewardPacks()
+        cashShopSystem:CreateOrder(goodsId, cashShopId, count)
     end
     
     if CashShopUtils.IsPS() then
@@ -242,11 +248,11 @@ function CashShopUtils.createOrder(goodsId, cashShopId, count)
             title = name and name or Language.LUA_CASH_SHOP_PS_ITEM_DIALOG_TIILE,
             content = content,
             onConfirm = function()
-                cashShopSystem:CreateOrder(goodsId, cashShopId, count)
+                createPaidOrder()
             end,
         })
     else
-        cashShopSystem:CreateOrder(goodsId, cashShopId, count)
+        createPaidOrder()
     end
 end
 
@@ -257,13 +263,152 @@ function CashShopUtils.acceptOrders(orderIds)
     Notify(MessageConst.ON_ACCEPT_ORDERS, orderIds)
 end
 
+local function consumeLatestRewardPacks(rewardSourceTypes)
+    local inventory = GameInstance.player.inventory
+    local rewardPacks = {}
+    for _, rewardSourceType in ipairs(rewardSourceTypes) do
+        local rewardPack = inventory:ConsumeLatestRewardPackOfType(rewardSourceType)
+        if rewardPack then
+            table.insert(rewardPacks, rewardPack)
+        end
+    end
+    return rewardPacks
+end
+
+function CashShopUtils.consumeLatestCashShopRewardPacks()
+    local rewardSourceType = CS.Beyond.GEnums.RewardSourceType
+    return consumeLatestRewardPacks({
+        rewardSourceType.CashShopPay,
+        rewardSourceType.CashShopBonus,
+    })
+end
+
+function CashShopUtils.consumeLatestFreeCashShopRewardPacks()
+    return consumeLatestRewardPacks({
+        CS.Beyond.GEnums.RewardSourceType.CashShopFree,
+    })
+end
+
+local function addItemCount(itemCountMap, itemId, count)
+    itemCountMap[itemId] = (itemCountMap[itemId] or 0) + count
+end
+
+local function formatItemCountMap(itemCountMap)
+    if not itemCountMap then
+        return "nil"
+    end
+    local result = {}
+    for itemId, count in pairs(itemCountMap) do
+        table.insert(result, string.format("%s:%s", itemId, count))
+    end
+    table.sort(result)
+    return table.concat(result, ",")
+end
+
+local function getLTItemId(itemPresetId)
+    local hasLTItem, ltItemData = Tables.lTItemTable:TryGetValue(itemPresetId)
+    return hasLTItem and ltItemData.itemId or itemPresetId
+end
+
+local function tryApplyRewardPackInstIds(rewardItems, rewardPacks)
+    if #rewardPacks == 0 then
+        return nil, "reward pack missing", nil, nil
+    end
+
+    local expectedItemCountMap = {}
+    local itemPresetIdMap = {}
+    for _, item in ipairs(rewardItems) do
+        local itemId = getLTItemId(item.id)
+        local existingItemPresetId = itemPresetIdMap[itemId]
+        if existingItemPresetId and existingItemPresetId ~= item.id then
+            return nil, "ambiguous item preset mapping", expectedItemCountMap, nil
+        end
+        itemPresetIdMap[itemId] = item.id
+        addItemCount(expectedItemCountMap, itemId, item.count)
+    end
+
+    local actualItemCountMap = {}
+    local actualItemsById = {}
+    for _, rewardPack in ipairs(rewardPacks) do
+        if not rewardPack.isEnd then
+            return nil, "reward pack not ended", expectedItemCountMap, actualItemCountMap
+        end
+        for _, itemBundle in pairs(rewardPack.itemBundleList) do
+            local count = itemBundle.count
+            if count > 0 and not string.isEmpty(itemBundle.id) then
+                addItemCount(actualItemCountMap, itemBundle.id, count)
+                local item = {
+                    id = itemBundle.id,
+                    count = count,
+                    instId = itemBundle.instId,
+                }
+                actualItemsById[item.id] = actualItemsById[item.id] or {}
+                table.insert(actualItemsById[item.id], item)
+            end
+        end
+    end
+
+    for itemId, count in pairs(expectedItemCountMap) do
+        if actualItemCountMap[itemId] ~= count then
+            return nil, "item count mismatch", expectedItemCountMap, actualItemCountMap
+        end
+    end
+    for itemId, count in pairs(actualItemCountMap) do
+        if expectedItemCountMap[itemId] ~= count then
+            return nil, "item count mismatch", expectedItemCountMap, actualItemCountMap
+        end
+    end
+
+    local result = {}
+    for _, rewardItem in ipairs(rewardItems) do
+        local actualItems = actualItemsById[getLTItemId(rewardItem.id)] or {}
+        local hasInstItem = false
+        for _, actualItem in ipairs(actualItems) do
+            if actualItem.instId > 0 then
+                hasInstItem = true
+                break
+            end
+        end
+        if hasInstItem then
+            for _, actualItem in ipairs(actualItems) do
+                table.insert(result, {
+                    id = rewardItem.id,
+                    count = actualItem.count,
+                    instId = actualItem.instId,
+                })
+            end
+        else
+            table.insert(result, rewardItem)
+        end
+    end
+    return result, nil, expectedItemCountMap, actualItemCountMap
+end
+
+function CashShopUtils.applyRewardPackInstIdsOrFallback(rewardItems, rewardPacks, goodsId, orderId)
+    local rewardPackItems, fallbackReason, expectedItemCountMap, actualItemCountMap =
+        tryApplyRewardPackInstIds(rewardItems, rewardPacks)
+    if rewardPackItems then
+        return rewardPackItems
+    end
+    logger.important(CS.Beyond.EnableLogType.DevOnly,
+        string.format("[CashShopRewardPack] fallback, orderId=%s, goodsId=%s, reason=%s, expected=[%s], actual=[%s]",
+            orderId or "", goodsId or "", fallbackReason,
+            formatItemCountMap(expectedItemCountMap), formatItemCountMap(actualItemCountMap)))
+    return rewardItems
+end
 
 
 
 
-function CashShopUtils.showOrderSettle(orderSettle, onClose, interrupt)
+
+
+function CashShopUtils.showOrderSettle(orderSettle, onClose, interrupt, rewardPacks)
     local function showReward()
         local rewardItems = CashShopUtils.getOrderSettleRewardItems(orderSettle)
+        if rewardPacks then
+            rewardItems = CashShopUtils.applyRewardPackInstIdsOrFallback(
+                rewardItems, rewardPacks, orderSettle.GoodsId, orderSettle.OrderId)
+        end
         if #rewardItems == 0 then
             CashShopUtils.acceptOrders({ orderSettle.OrderId })
             if onClose then
@@ -497,6 +642,9 @@ function CashShopUtils.tryShowRemainOrderList(endCallback, interrupt)
         end
     end
     Notify(MessageConst.TOGGLE_IN_MAIN_HUD_STATE, { key = CashShopConst.RemainOrderMainHudKey, isInMainHud = false })
+
+    
+    CS.Beyond.SDK.SDKUtils.CloseWebView()
 
     
     CashShopUtils.showNormalOrderSettles(normalOrders, function()
@@ -1004,7 +1152,8 @@ function CashShopUtils.TryGetBuyGachaWeaponGoodsCostInfo(shopId, goodsId)
     
     local goodsData = GameInstance.player.shopSystem:GetShopGoodsData(shopId, goodsId)
     info.costMoneyId = goodsCfg.moneyId
-    info.costMoneyCount = math.floor(goodsCfg.price * buyCount * goodsData.discount)
+    
+    info.costMoneyCount = CashShopUtils.GetDisplayPrice(goodsCfg.price, goodsData.discount) * buyCount
     info.curMoneyCount = Utils.getItemCount(info.costMoneyId)
     info.moneyEnough = info.curMoneyCount >= info.costMoneyCount
     
@@ -1201,21 +1350,23 @@ end
 
 
 function CashShopUtils.HaveCharPotentialExchange()
-    local charList = GameInstance.player.charBag.charList
-    for _, charInfo in pairs(charList) do
-        local templateId = charInfo.templateId
-        local currentPotentialLevel = charInfo.potentialLevel
-        local succ, characterPotentialList = Tables.characterPotentialTable:TryGetValue(templateId)
-        if succ and characterPotentialList then
-            
-            local maxPotentialLevel = characterPotentialList.potentialUnlockBundle.Count
-            local materialId = characterPotentialList.firstItemId
-            local getCount = Utils.getItemCount(materialId)
-            
-            local redundant = currentPotentialLevel + getCount - maxPotentialLevel
-            
-            if redundant > 0 then
-                return true
+    local charBag = GameInstance.player.charBag
+    for _, charInfo in pairs(charBag.charInfos) do
+        if charInfo.charType == GEnums.CharType.Default then
+            local templateId = charInfo.templateId
+            local currentPotentialLevel = charInfo.potentialLevel
+            local succ, characterPotentialList = Tables.characterPotentialTable:TryGetValue(templateId)
+            if succ and characterPotentialList then
+                
+                local maxPotentialLevel = characterPotentialList.potentialUnlockBundle.Count
+                local materialId = characterPotentialList.firstItemId
+                local getCount = Utils.getItemCount(materialId)
+                
+                local redundant = currentPotentialLevel + getCount - maxPotentialLevel
+                
+                if redundant > 0 then
+                    return true
+                end
             end
         end
     end
@@ -1226,38 +1377,38 @@ end
 
 function CashShopUtils.TryOpenShopTokenExchangePopUpPanel()
     local redundantItemInfo = {}
-    
-    local charList = GameInstance.player.charBag.charList
-    for _, charInfo in pairs(charList) do
-        local charInstId = charInfo.instId
-        local templateId = charInfo.templateId
-        local currentPotentialLevel = charInfo.potentialLevel
-        local succ, characterPotentialList = Tables.characterPotentialTable:TryGetValue(templateId)
-        if succ and characterPotentialList then
-            
-            local maxPotentialLevel = characterPotentialList.potentialUnlockBundle.Count
-            
-            local unlockData = characterPotentialList.potentialUnlockBundle[0]
-            local materialId = unlockData.itemIds[0]
-            local getCount = Utils.getItemCount(materialId)
-            
-            local redundant = currentPotentialLevel + getCount - maxPotentialLevel
-            
-            if redundant > 0 then
-                logger.info(string.format("%s已满潜,itemID:%s,多出来%s个",
-                    templateId, materialId, redundant))
-                local getItemDataSucc, itemData = Tables.itemTable:TryGetValue(materialId)
-                if getItemDataSucc then
-                    table.insert(redundantItemInfo, {
-                        itemId = materialId,
-                        count = redundant,
-                        rarity = itemData.rarity,
-                        itemData = itemData,
-                        sortId1 = -itemData.sortId1,
-                        sortId2 = -itemData.sortId2,
-                    })
-                else
-                    logger.error("缺少数据 " .. materialId .. " 注意拉新。")
+    local charBag = GameInstance.player.charBag
+    for _, charInfo in pairs(charBag.charInfos) do
+        if charInfo.charType == GEnums.CharType.Default then
+            local templateId = charInfo.templateId
+            local currentPotentialLevel = charInfo.potentialLevel
+            local succ, characterPotentialList = Tables.characterPotentialTable:TryGetValue(templateId)
+            if succ and characterPotentialList then
+                
+                local maxPotentialLevel = characterPotentialList.potentialUnlockBundle.Count
+                
+                local unlockData = characterPotentialList.potentialUnlockBundle[0]
+                local materialId = unlockData.itemIds[0]
+                local getCount = Utils.getItemCount(materialId)
+                
+                local redundant = currentPotentialLevel + getCount - maxPotentialLevel
+                
+                if redundant > 0 then
+                    logger.info(string.format("%s已满潜,itemID:%s,多出来%s个",
+                        templateId, materialId, redundant))
+                    local getItemDataSucc, itemData = Tables.itemTable:TryGetValue(materialId)
+                    if getItemDataSucc then
+                        table.insert(redundantItemInfo, {
+                            itemId = materialId,
+                            count = redundant,
+                            rarity = itemData.rarity,
+                            itemData = itemData,
+                            sortId1 = -itemData.sortId1,
+                            sortId2 = -itemData.sortId2,
+                        })
+                    else
+                        logger.error("缺少数据 " .. materialId .. " 注意拉新。")
+                    end
                 end
             end
         end

@@ -78,6 +78,10 @@ AchievementToastCtrl.m_achievementToastTimer = HL.Field(HL.Number) << 0
 
 AchievementToastCtrl.s_disableByKey = HL.StaticField(HL.Table) << {}
 
+AchievementToastCtrl.m_currentToast = HL.Field(HL.Any) << nil
+
+AchievementToastCtrl.m_shownNonPlatedToastLevels = HL.Field(HL.Table) << function() return {} end
+
 
 AchievementToastCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     local switchBuilder = CS.Beyond.UI.UIAnimationSwitchTween.Builder()
@@ -121,13 +125,97 @@ AchievementToastCtrl._RequestToasts = HL.Method(HL.Any) << function(self, bundle
     end
     for _, bundle in pairs(bundles) do
         if bundle ~= nil and not string.isEmpty(bundle.achievementId) then
-            self:_RequestToast(bundle)
+            local steps = self:_ExpandToastSteps(bundle)
+            for _, step in ipairs(steps) do
+                if not self:_IsDuplicateToast(step) then
+                    self.m_requestQueue:Push(step)
+                end
+            end
         end
     end
 end
 
-AchievementToastCtrl._RequestToast = HL.Method(HL.Any) << function(self, achieveBundle)
-    self.m_requestQueue:Push(achieveBundle)
+
+AchievementToastCtrl._ExpandToastSteps = HL.Method(HL.Any).Return(HL.Table) << function(self, bundle)
+    local achievementData = Tables.achievementTable[bundle.achievementId]
+    if achievementData == nil then
+        return { bundle }
+    end
+
+    local steps = {}
+    local initLevel = achievementData.initLevel
+    local startLevel = bundle.fromLevel
+    local endLevel = bundle.toLevel
+    local midStepPlated = not bundle.isPlating and bundle.isPlated or false
+
+    local needObtainStep = startLevel < initLevel
+    if needObtainStep and endLevel >= initLevel then
+        local step = self:_MakeStep(bundle.achievementId, startLevel, initLevel, false, midStepPlated)
+        table.insert(steps, step)
+        startLevel = initLevel
+    end
+
+    for level = startLevel + 1, endLevel do
+        local step = self:_MakeStep(bundle.achievementId, level - 1, level, false, midStepPlated)
+        table.insert(steps, step)
+    end
+
+    if bundle.isPlating then
+        local preStep = self:_MakeStep(bundle.achievementId, 0, endLevel, false, false)
+        preStep.isPlatingPreStep = true
+        preStep.fromObtainTs = bundle.fromObtainTs
+        table.insert(steps, preStep)
+        table.insert(steps, self:_MakeStep(bundle.achievementId, endLevel, endLevel, true, true))
+    end
+
+    if #steps == 0 then
+        return { bundle }
+    end
+    return steps
+end
+
+AchievementToastCtrl._MakeStep = HL.Method(HL.String, HL.Number, HL.Number, HL.Boolean, HL.Boolean).Return(HL.Table) << function(self, achievementId, fromLevel, toLevel, isPlating, isPlated)
+    return {
+        achievementId = achievementId,
+        fromLevel = fromLevel,
+        toLevel = toLevel,
+        isPlating = isPlating,
+        isPlated = isPlated,
+    }
+end
+
+AchievementToastCtrl._HasShownNonPlatedToast = HL.Method(HL.Any).Return(HL.Boolean) << function(self, achieveBundle)
+    local shownLevels = self.m_shownNonPlatedToastLevels[achieveBundle.achievementId]
+    return shownLevels ~= nil and shownLevels[achieveBundle.toLevel] == true
+end
+
+AchievementToastCtrl._MarkNonPlatedToastShown = HL.Method(HL.Any) << function(self, achieveBundle)
+    local achievementId = achieveBundle.achievementId
+    local shownLevels = self.m_shownNonPlatedToastLevels[achievementId]
+    if shownLevels == nil then
+        shownLevels = {}
+        self.m_shownNonPlatedToastLevels[achievementId] = shownLevels
+    end
+    shownLevels[achieveBundle.toLevel] = true
+end
+
+AchievementToastCtrl._IsDuplicateToast = HL.Method(HL.Any).Return(HL.Boolean) << function(self, step)
+    if self:_IsStepMatch(self.m_currentToast, step) then
+        return true
+    end
+    for i = self.m_requestQueue.m_head, self.m_requestQueue.m_tail do
+        if self:_IsStepMatch(self.m_requestQueue.m_data[i], step) then
+            return true
+        end
+    end
+    return false
+end
+
+AchievementToastCtrl._IsStepMatch = HL.Method(HL.Any, HL.Any).Return(HL.Boolean) << function(self, a, b)
+    return a ~= nil and b ~= nil
+        and a.achievementId == b.achievementId
+        and a.toLevel == b.toLevel
+        and a.isPlating == b.isPlating
 end
 
 AchievementToastCtrl._Update = HL.Method() << function(self)
@@ -144,20 +232,28 @@ AchievementToastCtrl._Update = HL.Method() << function(self)
 end
 
 AchievementToastCtrl._ShowToast = HL.Method(HL.Any).Return(HL.Boolean) << function(self, achieveBundle)
+    local isPlatingPreStep = type(achieveBundle) == "table" and achieveBundle.isPlatingPreStep
+    local hasShownNonPlatedToast = isPlatingPreStep and self:_HasShownNonPlatedToast(achieveBundle)
+    local fromObtainTs = isPlatingPreStep and achieveBundle.fromObtainTs or 0
+    
+    local shouldSkipPlatingPreStep = isPlatingPreStep
+        and (fromObtainTs > 0 or hasShownNonPlatedToast)
+    if shouldSkipPlatingPreStep then
+        return false
+    end
     self.m_showTween:Reset(false)
     local achievementData = Tables.achievementTable[achieveBundle.achievementId]
-    local achievementSystem = GameInstance.player.achievementSystem
-    local hasPlayerAchievement, playerAchievement = achievementSystem.achievementData.achievementInfos:TryGetValue(achieveBundle.achievementId)
     if achievementData == nil then
         return false
     end
-    local isPlated = false
-    if hasPlayerAchievement then
-        isPlated = playerAchievement.isPlated
-    end
+    self.m_currentToast = achieveBundle
+    local isPlated = achieveBundle.isPlated
     local duration = self.m_requestQueue:Count() > 0 and self.view.config.SHORT_TOAST_DURATION or self.view.config.NORMAL_TOAST_DURATION
     self.m_showTween.isShow = true
     self:_RenderToast(achieveBundle, achievementData, isPlated)
+    if not achieveBundle.isPlating and not isPlated then
+        self:_MarkNonPlatedToastShown(achieveBundle)
+    end
     self.m_achievementToastTimer = TimerManager:StartTimer(duration, function()
         self:_HideToast()
     end)
@@ -226,6 +322,7 @@ end
 AchievementToastCtrl._OnToastEnd = HL.Method() << function(self)
     self:_ClearTimer(self.m_achievementToastTimer)
     self.m_achievementToastTimer = 0
+    self.m_currentToast = nil
 end
 
 AchievementToastCtrl._OnToastShown = HL.Method() << function(self)

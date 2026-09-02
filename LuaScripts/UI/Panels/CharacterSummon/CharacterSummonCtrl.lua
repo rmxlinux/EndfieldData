@@ -490,6 +490,9 @@ end
 
 
 CharacterSummonCtrl.ShowCharacterSummon = HL.StaticMethod(HL.Opt(HL.Table)) << function(args)
+    if PhaseManager:IsOpen(PhaseId.CharacterSummon) then
+        return
+    end
     PhaseManager:OpenPhase(PhaseId.CharacterSummon)
 end
 

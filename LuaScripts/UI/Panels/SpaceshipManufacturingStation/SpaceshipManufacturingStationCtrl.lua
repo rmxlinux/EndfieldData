@@ -729,6 +729,8 @@ SpaceshipManufacturingStationCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.
             formulaListTabIndex = self.m_showingFormulaList and self.view.formulaList.m_curTabIndex or nil,
             curSelectFormulaId = self.m_curSelectFormulaId,
             curSelectNumber = self.m_curSelectNumber,
+            diffBetweenSelectAndRemain = self.m_diffBetweenSelectAndRemain,
+            diffBetweenSelectAndRemainDirty = self.m_diffBetweenSelectAndRemainDirty,
         }
     }
     local isOpen, popupCtrl = UIManager:IsOpen(PanelId.SpaceShipFriendHelpList)
@@ -747,12 +749,17 @@ SpaceshipManufacturingStationCtrl._TryRecoverState = HL.Method(HL.Opt(HL.Any)) <
     local savedFormulaId = recoverState.curSelectFormulaId
     if recoverState.showingFormulaList == true then
         self:_OpenFormulaList()
+        
+        self.m_diffBetweenSelectAndRemain = recoverState.diffBetweenSelectAndRemain or 0
+        self.m_diffBetweenSelectAndRemainDirty = recoverState.diffBetweenSelectAndRemainDirty == true
         self:_RecoverNumberSelectorState(recoverState.curSelectNumber)
         self:_RefreshPanelTopNode()
     else
         if not string.isEmpty(savedFormulaId) then
             self.m_curSelectFormulaId = savedFormulaId
         end
+        self.m_diffBetweenSelectAndRemain = recoverState.diffBetweenSelectAndRemain or 0
+        self.m_diffBetweenSelectAndRemainDirty = recoverState.diffBetweenSelectAndRemainDirty == true
         self:_RefreshNumberSelector()
         self:_RefreshFormulaInfoByRemain()
         self:_RecoverNumberSelectorState(recoverState.curSelectNumber)

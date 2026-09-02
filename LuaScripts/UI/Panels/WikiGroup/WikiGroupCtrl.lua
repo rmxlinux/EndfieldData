@@ -50,7 +50,6 @@ WikiGroupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
     self:Refresh(arg)
 
-    self:_RefreshTop()
     self.m_phase:ActiveCommonSceneItem(true)
     self:_PlayDecoAnim(true)
 end
@@ -59,7 +58,6 @@ WikiGroupCtrl.OnShow = HL.Override() << function(self)
     if self.m_phase and (self.m_phase.m_currentWikiGroupArgs.categoryType ~= self.m_args.categoryType or
         self.m_phase.m_currentWikiGroupArgs.wikiEntryShowData ~= self.m_args.wikiEntryShowData) then
         self:Refresh(self.m_phase.m_currentWikiGroupArgs)
-        self:_RefreshTop()
         self.m_phase:ActiveCommonSceneItem(true)
     end
     self:_PlayDecoAnim(true)
@@ -87,6 +85,7 @@ WikiGroupCtrl.Refresh = HL.Method(HL.Table) << function(self, args)
 
     self.m_wikiGroupShowDataList = WikiUtils.getWikiGroupShowDataList(args.categoryType, nil, args.includeLocked)
     self:_RefreshTab()
+    self:_RefreshTop()
 end
 
 WikiGroupCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)

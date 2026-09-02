@@ -5,6 +5,7 @@ PhaseLevelConfig.ConditionType = {
     SPACESHIP_VISITOR = 2,
     WEEKLY_RAID = 3,
     WEEKLY_RAID_INTRO = 4,
+    WULING_RACING = 5,
 }
 local ConditionFunctions = {
     [PhaseLevelConfig.ConditionType.SPACESHIP_VISITOR] = function()
@@ -15,6 +16,9 @@ local ConditionFunctions = {
     end,
     [PhaseLevelConfig.ConditionType.WEEKLY_RAID_INTRO] = function()
         return WeeklyRaidUtils.IsInWeeklyRaidIntro()
+    end,
+    [PhaseLevelConfig.ConditionType.WULING_RACING] = function()
+        return DungeonUtils.isDungeonWulingRacing(GameInstance.dungeonManager.curDungeonId)
     end,
 }
 
@@ -73,6 +77,16 @@ local DefaultConfig = {
         PanelId.Radio,
     }
 }
+
+
+local WulingRacingPreload = {}
+for _, panelId in ipairs(DefaultConfig.preload) do
+    WulingRacingPreload[#WulingRacingPreload + 1] = panelId
+end
+WulingRacingPreload[#WulingRacingPreload + 1] = PanelId.CommonTaskTrackHud
+WulingRacingPreload[#WulingRacingPreload + 1] = PanelId.CommonTaskTrackToast
+WulingRacingPreload[#WulingRacingPreload + 1] = PanelId.CommonTaskTrackCountdown
+WulingRacingPreload[#WulingRacingPreload + 1] = PanelId.WulingParkourChallengeHUD
 
 
 local Configurations = {
@@ -154,6 +168,12 @@ local Configurations = {
             PanelId.GeneralTracker,
             PanelId.Radio,
         }
+    },
+    [PhaseLevelConfig.ConditionType.WULING_RACING] = {
+        open = DefaultConfig.open,
+        preload = WulingRacingPreload,
+        preOpen = DefaultConfig.preOpen,
+        specialPanels = DefaultConfig.specialPanels,
     },
 }
 

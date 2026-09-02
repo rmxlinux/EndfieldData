@@ -62,20 +62,8 @@ end
 GachaPoolCellJoint._RefreshAllUI = HL.Method() << function(self)
     local baseInfo = self.m_baseInfo
     
+    GachaPoolCellJoint.Super._RefreshFreeTenUI(self)
     local freeTenInfo = baseInfo.cumulateFreeTenGachaInfo
-    if freeTenInfo.curCanUseCount > 0 then
-        self.view.freeTenNode.stateController:SetState("FreeTen")
-        self.view.freeTenNode.stateController:SetState("HideFreeTenTip")
-    else
-        self.view.freeTenNode.stateController:SetState("Normal")
-        
-        if freeTenInfo.remainFreeCount > 0 then
-            self.view.freeTenNode.stateController:SetState("ShowFreeTenTip")
-            self.view.freeTenNumTxt.text = freeTenInfo.remainNeedPullCount
-        else
-            self.view.freeTenNode.stateController:SetState("HideFreeTenTip")
-        end
-    end
     
     local onceRewardInfo = baseInfo.onceAutoRewardItemInfo
     if string.isEmpty(onceRewardInfo.itemId) then

@@ -33,7 +33,6 @@ ActivityPushPopupInfo._InitUI = HL.Method() << function(self)
             ctrl:PlayAnimationOutAndClose()
         end
     end)
-
     
     if not string.isEmpty(self.m_pushCfg.bgFullImg) then
         self.view.bgFullImg:LoadSprite(UIConst.UI_SPRITE_ACTIVITY_PUSH_BG, self.m_pushCfg.bgFullImg)
@@ -101,13 +100,24 @@ end
 ActivityPushPopupInfo._RefreshAllUIs = HL.Method() << function(self)
     local rewardId = self.m_pushCfg.rewardId
     local rewardBundles = UIUtils.getRewardItems(rewardId)
-    self.m_rewardCellCache:Refresh(#rewardBundles, function(cell, luaIndex)
-        local reward = {
-            id = rewardBundles[luaIndex].id,
-            count = rewardBundles[luaIndex].count,
-            forceHidePotentialStar = true,
-        }
-        cell:InitItem(reward, function()
+
+    local sortedItems = {}
+    for i = 1, #rewardBundles do
+        local bundle = rewardBundles[i]
+        local itemData = Tables.itemTable[bundle.id]
+        table.insert(sortedItems, {
+            bundle = bundle,
+            originalIndex = i,
+            rarity = itemData and itemData.rarity or 0,
+            sortId1 = itemData and itemData.sortId1 or 0,
+            sortId2 = itemData and itemData.sortId2 or 0,
+        })
+    end
+    table.sort(sortedItems, Utils.genSortFunction({"rarity", "sortId1", "sortId2"}))
+
+    self.m_rewardCellCache:Refresh(#sortedItems, function(cell, luaIndex)
+        local sortedItem = sortedItems[luaIndex]
+        cell:InitItem(sortedItem.bundle, function()
             cell:ShowTips()
             ActivityUtils.GameEventLogActivityPushPopupClick(self.m_activityId, "visit_reward")
         end)
@@ -117,7 +127,7 @@ ActivityPushPopupInfo._RefreshAllUIs = HL.Method() << function(self)
         })
         
         local _, rewardTableData = Tables.rewardTable:TryGetValue(rewardId)
-        local isVisible = rewardTableData and rewardTableData.itemBundleVisibleList and rewardTableData.itemBundleVisibleList[CSIndex(luaIndex)] or 0
+        local isVisible = rewardTableData and rewardTableData.itemBundleVisibleList and rewardTableData.itemBundleVisibleList[CSIndex(sortedItem.originalIndex)] or 0
         if isVisible == 1 then
             cell.view.countNode.gameObject:SetActive(true)
         else

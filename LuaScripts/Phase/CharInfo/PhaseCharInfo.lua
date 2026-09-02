@@ -103,6 +103,7 @@ local SCENE_POS = Vector3(-300, 300, -300)
 PhaseCharInfo.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHAR_INFO_SELECT_CHAR_CHANGE] = { 'OnSelectCharChange', true },
     [MessageConst.CHAR_INFO_PAGE_CHANGE] = { 'OnPageChange', true },
+    [MessageConst.CHAR_INFO_JUMP_PAGE] = { 'OnJumpPage', true },
     [MessageConst.CHAR_INFO_SHOW_ROTATE_CHAR] = { 'OnCharInfoShowRotateChar', true },
     [MessageConst.CHAR_INFO_SHOW_ZOOMING] = { 'OnCharInfoShowZooming', true },
     [MessageConst.CHAR_INFO_PROFILE_CLOSE] = { 'OnCharInfoProfileClose', true },
@@ -111,6 +112,7 @@ PhaseCharInfo.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.CHAR_INFO_WEAPON_SECOND_OPEN] = { 'OnCharInfoWeaponSecondEnter', true },
     [MessageConst.CHAR_INFO_WEAPON_SECOND_CLOSE] = { 'OnCharInfoWeaponSecondClose', true },
     [MessageConst.CHAR_INFO_PREVIEW_WEAPON] = { 'OnPreviewWeaponChange', true },
+    [MessageConst.CHAR_INFO_PAUSE_ANIMATOR] = { '_PauseCharAnimator', true },
     [MessageConst.CHAR_INFO_BLEND_EXIT] = { '_BlendExitPhase', true },
     [MessageConst.CHAR_TALENT_FOCUS] = { 'OnCharTalentFocus', true },
     [MessageConst.CHAR_TALENT_LEAVE_FOCUS] = { 'OnCharTalentLeaveFocus', true },
@@ -201,6 +203,12 @@ do
     PhaseCharInfo.m_curCamPostfix = HL.Field(HL.String) << ""
 
     PhaseCharInfo.m_isInitPreview = HL.Field(HL.Boolean) << false
+
+    PhaseCharInfo.m_isNormalCharList = HL.Field(HL.Boolean) << false
+
+    PhaseCharInfo.m_backToForesightCharGrowth = HL.Field(HL.Boolean) << false
+
+    PhaseCharInfo.m_foresightCharGrowthRecoverArg = HL.Field(HL.Table)
 end
 
 PhaseCharInfo._OnInit = HL.Override() << function(self)
@@ -258,22 +266,19 @@ PhaseCharInfo.PrepareTransition = HL.Override(HL.Number, HL.Boolean, HL.Opt(HL.N
         self.m_hideCamCor = self:_ClearCoroutine(self.m_hideCamCor)
         self:_ToggleSceneLight(true)
 
+        local sceneObject = self.m_gameObject2Item[PHASE_CHAR_INFO_GAME_OBJECT]
+        if sceneObject then
+            sceneObject:SetActive(true)
+        end
+        if self.m_charItem then
+            self.m_charItem:SetActive(true)
+        end
+
         if self.m_templateId2DollyTrackPathGroup and self.m_charInfo then
             local targetGroup = self.m_templateId2DollyTrackPathGroup[self.m_charInfo.templateId]
             targetGroup.go:SetActive(true)
         end
-        if self.m_charItem and self.m_charItem.uiModelMono then
-            self.m_charItem.uiModelMono:PauseAnimator(false)
-        end
-        if self.m_charItem and self.m_charItem.animator then
-            local indexDict = UIConst.PHASE_CHAR_ITEM_ANIMATOR_INDEX_DICT
-            local toIndex = self.m_charItem.animator:GetInteger(UIConst.PHASE_CHAR_ITEM_TO_INDEX)
-            for _, targetIndex in ipairs({ indexDict.OVERVIEW, indexDict.WEAPON, indexDict.EQUIP, indexDict.TALENT, indexDict.UPGRADE }) do
-                if toIndex == targetIndex then
-                    self:_SwitchCharacterControllerState(self.m_charItem, -1, targetIndex, true)
-                end
-            end
-        end
+        self:_PauseCharAnimator(false)
     end
 end
 
@@ -310,9 +315,7 @@ PhaseCharInfo._DoPhaseTransitionBehind = HL.Override(HL.Boolean, HL.Opt(HL.Table
 
     self:_ClearAudioCor()
 
-    if self.m_charItem and self.m_charItem.uiModelMono then
-        self.m_charItem.uiModelMono:PauseAnimator(true)
-    end
+    self:_PauseCharAnimator(true)
 
     if PhaseManager:IsPhaseHaveSceneCamera(args and args.anotherPhaseId) then
         CameraManager:EnableUIModelCullingMask(false, "charInfo")
@@ -454,7 +457,9 @@ PhaseCharInfo._OnDestroy = HL.Override() << function(self)
 
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetVFXPPPriorityFilterNormal()
     CS.HG.Rendering.ScriptBridge.HGRenderBridgeStatics.SetSceneDarkEnabled(true)
-    CSUtils.ClearUIComponents(sceneObject.view.gameObject)
+    if sceneObject then
+        CSUtils.ClearUIComponents(sceneObject.view.gameObject)
+    end
     if potentialObject then
         CSUtils.ClearUIComponents(potentialObject.view.gameObject)
     end
@@ -477,6 +482,12 @@ end
 
 PhaseCharInfo._InitPanels = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean)) << function(self, initCharInfo, pageType, forceSkipIn)
     local stateArg = self.arg and self.arg.stateArg
+    self.m_backToForesightCharGrowth = stateArg ~= nil and stateArg.backToForesightCharGrowth == true
+    if self.m_backToForesightCharGrowth then
+        
+        self.m_foresightCharGrowthRecoverArg = stateArg.foresightCharGrowthRecoverArg or stateArg
+    end
+    local extraArg = self:_BuildJumpBackExtraArg(nil)
     local initPanels = PAGE_TYPE_2_PANEL_ID[pageType]
     if initPanels then
         for _, panelId in ipairs(initPanels) do
@@ -486,10 +497,11 @@ PhaseCharInfo._InitPanels = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean)) <
                 phase = self,
                 forceSkipIn = forceSkipIn,
                 stateArg = stateArg,
+                extraArg = extraArg,
             })
 
             self:_ProcessPanelInScene(phasePanelItem)
-            self:_TryShowFinal(phasePanelItem, pageType, nil, stateArg)
+            self:_TryShowFinal(phasePanelItem, pageType, extraArg, stateArg)
         end
     end
 
@@ -538,6 +550,9 @@ PhaseCharInfo._InitCharacter = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Boolean)
     self:_RefreshWeaponDeco({
         pageType = pageType,
     })
+    if pageType == UIConst.CHAR_INFO_PAGE_TYPE.WEAPON then
+        self:_ToggleWeaponDeco(true)
+    end
     self:_RefreshProfileShowCam({
         pageType = pageType,
     })
@@ -570,6 +585,7 @@ end
 PhaseCharInfo._GenerateCharInfoList = HL.Method(HL.Table).Return(HL.Table) << function(self, initCharInfo)
     local charInfoList
     if initCharInfo.isSingleChar then
+        self.m_isNormalCharList = false
         charInfoList = CharInfoUtils.getSingleCharInfoList(initCharInfo.instId)
         local singleCharInfo = charInfoList[1]
         if singleCharInfo then
@@ -577,8 +593,10 @@ PhaseCharInfo._GenerateCharInfoList = HL.Method(HL.Table).Return(HL.Table) << fu
             singleCharInfo.isShowTrail = initCharInfo.isShowTrail
         end
     elseif initCharInfo.charInstIdList then
+        self.m_isNormalCharList = false
         charInfoList = CharInfoUtils.getCharInfoListByInstIdList(initCharInfo.charInstIdList, initCharInfo.isShowPreview)
     else
+        self.m_isNormalCharList = true
         local dungeonId = GameInstance.dungeonManager.curDungeonId
         local specialTeamType = DungeonUtils.getSpecialTeamType(dungeonId)
         local isFullLockedTeam, formationData = CharInfoUtils.IsFullLockedTeam()
@@ -632,7 +650,36 @@ PhaseCharInfo._GenerateCharInfoList = HL.Method(HL.Table).Return(HL.Table) << fu
         end
     end
 
-    return charInfoList
+    
+    local formationList = {}
+    local charNewList = {}
+    local otherList = {}
+    for _, charInfo in ipairs(charInfoList) do
+        if charInfo.slotIndex and charInfo.slotIndex <= Const.BATTLE_SQUAD_MAX_CHAR_NUM then
+            table.insert(formationList, charInfo)
+        elseif RedDotManager:GetRedDotState("CharNew", charInfo.templateId) then
+            charInfo.isNew = 0
+            charInfo.isNewReverse = 1
+            table.insert(charNewList, charInfo)
+        else
+            charInfo.isNew = 1
+            charInfo.isNewReverse = 0
+            table.insert(otherList, charInfo)
+        end
+    end
+
+    local sortedCharInfoList = {}
+    for _, charInfo in ipairs(formationList) do
+        table.insert(sortedCharInfoList, charInfo)
+    end
+    for _, charInfo in ipairs(charNewList) do
+        table.insert(sortedCharInfoList, charInfo)
+    end
+    for _, charInfo in ipairs(otherList) do
+        table.insert(sortedCharInfoList, charInfo)
+    end
+
+    return sortedCharInfoList
 end
 
 PhaseCharInfo.OnCommonBackClicked = HL.Method() << function(self)
@@ -642,7 +689,7 @@ PhaseCharInfo.OnCommonBackClicked = HL.Method() << function(self)
     self:CloseSelf()
 end
 
-PhaseCharInfo._RefreshCharModel = HL.Method(HL.Userdata, HL.Table, HL.Number, HL.Opt(HL.Boolean)) << function(self, sceneObject, initCharInfo, mainControlTab, forceSkipIn)
+PhaseCharInfo._RefreshCharModel = HL.Method(HL.Userdata, HL.Table, HL.Number, HL.Opt(HL.Boolean, HL.Boolean)) << function(self, sceneObject, initCharInfo, mainControlTab, forceSkipIn, forceModelEffect)
     self:RemoveAllPhaseCharItems()
     local templateId = initCharInfo.templateId
     local data = {
@@ -672,6 +719,13 @@ PhaseCharInfo._RefreshCharModel = HL.Method(HL.Userdata, HL.Table, HL.Number, HL
 
         local fromStateIndex, toStateIndex = self:_GetControllerStateIndex(self.m_curPage, self.m_curPage)
         local weaponState = CS.Beyond.Gameplay.View.CharUIModelMono.WeaponState.HIDE
+        local isProfileShow = self.m_curPage == UIConst.CHAR_INFO_PAGE_TYPE.PROFILE_SHOW
+        if self.m_curPage == UIConst.CHAR_INFO_PAGE_TYPE.UPGRADE then
+            fromStateIndex = -1
+        elseif isProfileShow then
+            fromStateIndex = UIConst.PHASE_CHAR_ITEM_ANIMATOR_INDEX_DICT.OVERVIEW
+            skipIn = false
+        end
 
         phaseItem:ReloadWeapon()
         phaseItem:SwitchWeaponState(weaponState)
@@ -681,10 +735,18 @@ PhaseCharInfo._RefreshCharModel = HL.Method(HL.Userdata, HL.Table, HL.Number, HL
         
         phaseItem.uiModelMono:ForceUpdateAnimator()
 
+        if isProfileShow then
+            self:_ToggleChrSPMotionCor(true)
+        end
+
+        if self.state == PhaseConst.EPhaseState.TransitionBehind or self.state == PhaseConst.EPhaseState.Deactivated then
+            phaseItem.uiModelMono:PauseAnimator(true)
+        end
+
         
         local targetLightGroup = self.m_templateId2LightGroup[templateId]
         phaseItem.uiModelMono:InitLightFollower(targetLightGroup.go.transform)
-        if forceSkipIn ~= true then
+        if forceSkipIn ~= true or forceModelEffect then
             self:_PlayModelEffect(sceneObject, templateId)
         end
 
@@ -821,6 +883,9 @@ PhaseCharInfo.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInf
     local curWeaponInstId = CharInfoUtils.getCharCurWeapon(charInfo.instId).weaponInstId
     GameInstance.player.charBag:SetPhaseCharInfoInstId(charInfo.instId)
 
+    
+    self:_FinishCurCamTransition()
+
     self.m_curPreviewWeaponInstId = curWeaponInstId
     self.m_charInfo = charInfo
     self.m_lastCamAnimName = ""
@@ -852,6 +917,29 @@ PhaseCharInfo.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInf
     end
 end
 
+PhaseCharInfo.ChangeCharImmediately = HL.Method(HL.Table) << function(self, charInfo)
+    local sceneObject = self.m_gameObject2Item[PHASE_CHAR_INFO_GAME_OBJECT]
+    local templateId = charInfo.templateId
+    local curControlTab = self.m_curPage
+    local curWeaponInstId = CharInfoUtils.getCharCurWeapon(charInfo.instId).weaponInstId
+    GameInstance.player.charBag:SetPhaseCharInfoInstId(charInfo.instId)
+
+    self:_FinishCurCamTransition()
+
+    self.m_curPreviewWeaponInstId = curWeaponInstId
+    self.m_charInfo = charInfo
+    self.m_lastCamAnimName = ""
+    local pageType = self.m_curPage
+    local beforePage = self.m_beforePage
+
+    self:_CleanupLookAtIK()
+    self:_RefreshCharModel(sceneObject, charInfo, curControlTab, true, true)
+    self:_RefreshCamGroup(sceneObject, true, templateId, pageType, beforePage)
+    self:_RefreshAddonLight(sceneObject, true, templateId, pageType, beforePage)
+
+    self:_RefreshShowCamTargetGroup()
+end
+
 PhaseCharInfo.OnPageChange = HL.Method(HL.Any) << function(self, arg)
     if not self.m_charItemInitComplete then
         logger.info(ELogChannel.GamePlay, "PhaseCharItemLoading, forbid page change")
@@ -861,6 +949,9 @@ PhaseCharInfo.OnPageChange = HL.Method(HL.Any) << function(self, arg)
     local pageType = arg.pageType
     local isFast = arg.isFast == true
     local extraArg = arg.extraArg
+
+    self.m_backToForesightCharGrowth = false
+    self.m_foresightCharGrowthRecoverArg = nil
 
     local phaseItem = self.m_charItem
     local beforePage = self.m_curPage
@@ -1066,6 +1157,91 @@ PhaseCharInfo.OnPageChange = HL.Method(HL.Any) << function(self, arg)
     end)
 end
 
+PhaseCharInfo.BackToForesightCharGrowth = HL.Method() << function(self)
+    self:_CloseOrHidePanelImmediately({})
+    local panelId = PanelId.ForesightCharGrowthMain
+    if UIManager:IsOpen(panelId) then
+        UIManager:Show(panelId)
+    else
+        
+        local recoverArg = self.m_foresightCharGrowthRecoverArg
+        self.m_foresightCharGrowthRecoverArg = nil
+        self:CreateCharInfoPanel(panelId, recoverArg or {
+            selectedCharTemplateId = self.m_charInfo.templateId,
+        })
+    end
+end
+
+PhaseCharInfo._BuildJumpBackExtraArg = HL.Method(HL.Opt(HL.Table)).Return(HL.Opt(HL.Table)) << function(self, extraArg)
+    if not self.m_backToForesightCharGrowth then
+        return extraArg
+    end
+    extraArg = extraArg or {}
+    extraArg.onBack = function()
+        self:BackToForesightCharGrowth()
+    end
+    return extraArg
+end
+
+PhaseCharInfo.OnJumpPage = HL.Method(HL.Table) << function(self, arg)
+    local pageType = arg.pageType or self.m_curPage
+    local charInfo = arg.charInfo
+
+    local beforePage = self.m_curPage
+    self.m_beforePage = beforePage
+    self.m_curPage = pageType
+
+    local extraArg = arg.extraArg
+    self.m_backToForesightCharGrowth = extraArg ~= nil and extraArg.backToForesightCharGrowth == true
+    if not self.m_backToForesightCharGrowth then
+        self.m_foresightCharGrowthRecoverArg = nil
+    end
+
+    self:ChangeCharImmediately(charInfo)
+    self:_SwitchPagePanelsOnly(beforePage, pageType, self:_BuildJumpBackExtraArg(extraArg))
+    if arg.onAfterPageChange then
+        arg.onAfterPageChange()
+    end
+end
+
+PhaseCharInfo._SwitchPagePanelsOnly = HL.Method(HL.Number, HL.Number, HL.Opt(HL.Table, HL.Boolean)) << function(self, beforePage, pageType, extraArg, showGlitch)
+    self.m_uiEffectCor = self:_ClearCoroutine(self.m_uiEffectCor)
+    local neededPanels = PAGE_TYPE_2_PANEL_ID[pageType]
+    if PAGE_CREATE_IN_ADVANCE[pageType] then
+        for _, panelId in ipairs(neededPanels) do
+            self:_CreateCharInfoPanel(panelId, pageType, extraArg)
+        end
+    end
+
+    local neededPanelsBefore = PAGE_TYPE_2_PANEL_ID[beforePage]
+    for i, v in pairs(neededPanelsBefore) do
+        self:_Trigger_OnPageChange(v, pageType, lume.find(neededPanels, v) ~= nil)
+    end
+
+    self:_CloseOrHidePanelImmediately(neededPanels)
+
+    if pageType == UIConst.CHAR_INFO_PAGE_TYPE.PROFILE_SHOW then
+        AudioAdapter.PostEvent("au_global_ui_magnifier_panel_enter")
+    end
+    self:_ShowPanel(neededPanels, pageType, extraArg)
+
+    self:_ToggleCamAttachment(pageType == UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW)
+    self:_ToggleChrSPMotionCor(pageType == UIConst.CHAR_INFO_PAGE_TYPE.PROFILE_SHOW)
+    self:_ToggleTalentFloorEffect(pageType == UIConst.CHAR_INFO_PAGE_TYPE.TALENT)
+
+    self:_RefreshWeaponDeco({
+        pageType = pageType,
+        beforePage = beforePage
+    })
+    local isWeaponDecoOn = pageType == UIConst.CHAR_INFO_PAGE_TYPE.WEAPON
+    self:_ToggleWeaponDeco(isWeaponDecoOn, beforePage)
+
+    self:_RefreshGridDeco({
+        pageType = pageType,
+    })
+    self:_RefreshCharUpgradeDeco(pageType)
+end
+
 
 PhaseCharInfo._CloseOrHidePanel = HL.Method(HL.Table).Return(HL.Number) << function(self, neededPanels)
     local waitOutDuration = 0.2
@@ -1074,7 +1250,13 @@ PhaseCharInfo._CloseOrHidePanel = HL.Method(HL.Table).Return(HL.Number) << funct
             local outDuration = panelItem.uiCtrl:GetAnimationOutDuration()
             waitOutDuration = math.max(waitOutDuration, outDuration)
 
-            if CLOSE_WHEN_ANIMATION_OUT[panelId] then
+            
+            
+            
+            
+            if panelItem.uiCtrl:IsPlayingAnimationOut() then
+                
+            elseif CLOSE_WHEN_ANIMATION_OUT[panelId] then
                 panelItem.uiCtrl:PlayAnimationOutWithCallback(function()
                     self:CloseCharInfoPanel(panelId)
                 end)
@@ -1086,6 +1268,19 @@ PhaseCharInfo._CloseOrHidePanel = HL.Method(HL.Table).Return(HL.Number) << funct
 
     return waitOutDuration
 end
+
+PhaseCharInfo._CloseOrHidePanelImmediately = HL.Method(HL.Table) << function(self, neededPanels)
+    for panelId, panelItem in pairs(self.m_panel2Item) do
+        if panelItem.uiCtrl:IsShow(true) and (not lume.find(neededPanels, panelId)) then
+            if CLOSE_WHEN_ANIMATION_OUT[panelId] then
+                self:CloseCharInfoPanel(panelId)
+            else
+                panelItem.uiCtrl:Hide()
+            end
+        end
+    end
+end
+
 PhaseCharInfo._ShowPanel = HL.Method(HL.Table, HL.Number, HL.Opt(HL.Table)) << function(self, neededPanels, pageType, extraArg)
     for _, panelId in ipairs(neededPanels) do
         if not self.m_panel2Item[panelId] then
@@ -1167,7 +1362,7 @@ end
 
 PhaseCharInfo._ToggleChrSPMotionCor = HL.Method(HL.Boolean) << function(self, isOn)
     local phaseItem = self.m_charItem
-    if phaseItem.go == nil then
+    if phaseItem == nil or phaseItem.go == nil then
         return
     end
     local animator = phaseItem.go:GetComponent("Animator")
@@ -1178,6 +1373,7 @@ PhaseCharInfo._ToggleChrSPMotionCor = HL.Method(HL.Boolean) << function(self, is
 
     if self.m_spMotionUpdateKey then
         LuaUpdate:Remove(self.m_spMotionUpdateKey)
+        self.m_spMotionUpdateKey = nil
     end
     if isOn then
         local charDisplayData = CharInfoUtils.getCharDisplayData(self.m_charInfo.templateId)
@@ -1188,8 +1384,25 @@ PhaseCharInfo._ToggleChrSPMotionCor = HL.Method(HL.Boolean) << function(self, is
         end
         local minIdleTime = relaxSpIdleConfig.minIdleTime
         local spWeight = {}
-        spWeight[UIConst.PHASE_CHAR_ITEM_ANIMATOR_INDEX_DICT.SP_1] = relaxSpIdleConfig.sp1IdleWeight
-        spWeight[UIConst.PHASE_CHAR_ITEM_ANIMATOR_INDEX_DICT.SP_2] = relaxSpIdleConfig.sp2IdleWeight
+        if charDisplayData.enableSp1Idle then
+            spWeight[UIConst.PHASE_CHAR_ITEM_ANIMATOR_INDEX_DICT.SP_1] = relaxSpIdleConfig.sp1IdleWeight
+        end
+        if charDisplayData.enableSp2Idle then
+            spWeight[UIConst.PHASE_CHAR_ITEM_ANIMATOR_INDEX_DICT.SP_2] = relaxSpIdleConfig.sp2IdleWeight
+        end
+        
+        local hasSpIdle = false
+        for _, weight in pairs(spWeight) do
+            if weight > 0 then
+                hasSpIdle = true
+                break
+            end
+        end
+        local enableRelaxReact = charDisplayData.enableRelaxReact
+        
+        if not hasSpIdle and not enableRelaxReact then
+            return
+        end
 
         self.m_spMotionUpdateKey = LuaUpdate:Add("LateTick", function(deltaTime)
             local isInRelaxIdle = animator:GetCurrentAnimatorStateInfo():IsName("RelaxIdle")
@@ -1201,7 +1414,7 @@ PhaseCharInfo._ToggleChrSPMotionCor = HL.Method(HL.Boolean) << function(self, is
 
             
             local charReactCfg = charDisplayData.charRelaxReactConfig
-            if not isInTransition and not isEnableSwitch and (not isTriggerRelax or not charReactCfg.triggerOnce) then
+            if enableRelaxReact and not isInTransition and not isEnableSwitch and (not isTriggerRelax or not charReactCfg.triggerOnce) then
                 local cameraZoomScale = self.m_showCamController.virtualCamera.ActiveZoomScale
                 
                 local relativeAngle = self.m_charItem.uiModelMono:GetCameraRelativeAngle()
@@ -1220,6 +1433,10 @@ PhaseCharInfo._ToggleChrSPMotionCor = HL.Method(HL.Boolean) << function(self, is
                     isTriggerRelax = true
                     return
                 end
+            end
+
+            if not hasSpIdle then
+                return
             end
 
             idleWaitTime = idleWaitTime + deltaTime
@@ -1337,7 +1554,7 @@ PhaseCharInfo._CleanupLookAtIK = HL.Method() << function(self)
     end
 end
 
-PhaseCharInfo._Trigger_OnPageChange = HL.Method(HL.Number, HL.Number) << function(self, panelId, pageType)
+PhaseCharInfo._Trigger_OnPageChange = HL.Method(HL.Number, HL.Number, HL.Opt(HL.Boolean)) << function(self, panelId, pageType, skipShow)
     local panelItem = self.m_panel2Item[panelId]
     if not panelItem then
         return
@@ -1347,7 +1564,9 @@ PhaseCharInfo._Trigger_OnPageChange = HL.Method(HL.Number, HL.Number) << functio
         panelItem.uiCtrl:OnPageChange(pageType)
     end
 
-    panelItem.uiCtrl:Show()
+    if not skipShow then
+        panelItem.uiCtrl:Show()
+    end
 end
 
 PhaseCharInfo._RefreshShowCamTargetGroup = HL.Method() << function(self)
@@ -1509,6 +1728,27 @@ PhaseCharInfo._GetLookAtTarget = HL.Method(HL.String, HL.Number).Return(HL.Userd
 end
 
 
+
+
+
+
+PhaseCharInfo._FinishCurCamTransition = HL.Method() << function(self)
+    if self.m_trackDollyTween then
+        self.m_trackDollyTween:Kill(true)
+        self.m_trackDollyTween = nil
+    end
+
+    local charInfo = self.m_charInfo
+    if not charInfo then
+        return
+    end
+
+    local pathGroup = self.m_templateId2DollyTrackPathGroup[charInfo.templateId]
+    if pathGroup and not string.isEmpty(self.m_lastCamAnimName) then
+        pathGroup.view.animation:SeekToPercent(self.m_lastCamAnimName, 1)
+    end
+end
+
 PhaseCharInfo._SetCamWithTrack = HL.Method(HL.Boolean, HL.Userdata, HL.String, HL.Opt(HL.String)) << function(self, isFast, pathGroup, toCameraPostfix, fromCameraPostfix)
     pathGroup.go:SetActive(true)
     local targetVCam
@@ -1540,7 +1780,7 @@ PhaseCharInfo._SetCamWithTrack = HL.Method(HL.Boolean, HL.Userdata, HL.String, H
     end
 
     if self.m_trackDollyTween then
-        self.m_trackDollyTween:Kill()
+        self.m_trackDollyTween:Kill(true)
     end
     if self.m_lastCamAnimName ~= nil and not string.isEmpty(self.m_lastCamAnimName) then
         pathGroup.view.animation:SeekToPercent(self.m_lastCamAnimName, 1)
@@ -1703,6 +1943,32 @@ PhaseCharInfo._BlendBackPhase = HL.Method() << function(self)
     end)
 end
 
+PhaseCharInfo._PauseCharAnimator = HL.Method(HL.Boolean) << function(self, pause)
+    if not self.m_charItem or not self.m_charItem.uiModelMono then
+        return
+    end
+    self.m_charItem.uiModelMono:PauseAnimator(pause)
+    if not pause then
+        local indexDict = UIConst.PHASE_CHAR_ITEM_ANIMATOR_INDEX_DICT
+        local toIndex = self.m_charItem.animator:GetInteger(UIConst.PHASE_CHAR_ITEM_TO_INDEX)
+        for _, targetIndex in ipairs({ indexDict.OVERVIEW, indexDict.WEAPON, indexDict.EQUIP, indexDict.TALENT, indexDict.UPGRADE }) do
+            if toIndex == targetIndex then
+                self:_SwitchCharacterControllerState(self.m_charItem, -1, targetIndex, true)
+            end
+        end
+    end
+end
+
+PhaseCharInfo.TryShowForesightCharGrowth = HL.Method() << function(self)
+    self:_CloseOrHidePanelImmediately({})
+    local pid = PanelId.ForesightCharGrowthMain
+    if UIManager:IsOpen(pid) then
+        UIManager:Show(pid)
+    else
+        self:CreateCharInfoPanel(PanelId.ForesightCharGrowthMain)
+    end
+end
+
 
 
 PhaseCharInfo.m_profileShow = HL.Field(HL.Forward("PhasePanelItem"))
@@ -1862,6 +2128,9 @@ end
 PhaseCharInfo.OnCharInfoWeaponSecondClose = HL.Method() << function(self)
     local trackPathGroup = self.m_templateId2DollyTrackPathGroup[self.m_charInfo.templateId]
     local extraCams = trackPathGroup.view.extraCams
+    if not extraCams then
+        return
+    end
 
     extraCams.extra_cam_weapon_second.gameObject:SetActive(false)
 end
@@ -1980,6 +2249,24 @@ end
 
 PhaseCharInfo.OnPlayerCharBagAddNew = HL.StaticMethod() << function()
     FilterUtils.setCharInstIdIndexDirty()
+
+    local isOpen, phase = PhaseManager:IsOpenAndValid(PHASE_ID)
+    if isOpen and phase then
+        phase:RefreshCharListOnCharBagAddNew()
+    end
+end
+
+PhaseCharInfo.RefreshCharListOnCharBagAddNew = HL.Method() << function(self)
+    if not self.m_isNormalCharList then
+        return
+    end
+
+    self.m_charInfoList = self:_GenerateCharInfoList({})
+
+    local charInfoPanelItem = self:_GetPanelPhaseItem(PanelId.CharInfo)
+    if charInfoPanelItem and charInfoPanelItem.uiCtrl then
+        charInfoPanelItem.uiCtrl:RefreshCharListKeepSelected(self.m_charInfoList)
+    end
 end
 
 PhaseCharInfo.ToggleWeaponFocusMode = HL.Method(HL.Boolean) << function(self, isOn)
@@ -2035,9 +2322,12 @@ PhaseCharInfo._RefreshWeaponDeco = HL.Method(HL.Opt(HL.Table)) << function(self,
     CSUtils.UIContainerResize(weaponDecoNode.starGroup.transform, itemCfg.rarity)
 end
 
-PhaseCharInfo._ToggleWeaponDeco = HL.Method(HL.Boolean, HL.Opt(HL.Number)) << function(self, isOn, beforePage)
+PhaseCharInfo._ToggleWeaponDeco = HL.Method(HL.Boolean, HL.Opt(HL.Number, HL.Boolean)) << function(self, isOn, beforePage, isFast)
     local sceneObject = self.m_gameObject2Item[PHASE_CHAR_INFO_GAME_OBJECT]
     local weaponDecoNode = sceneObject.view.weaponDecoNode
+    if not weaponDecoNode then
+        return
+    end
 
     self.m_weaponDecoEffectCor = PhaseManager:_ClearCoroutine(self.m_weaponDecoEffectCor)
     if isOn then
@@ -2053,7 +2343,11 @@ PhaseCharInfo._ToggleWeaponDeco = HL.Method(HL.Boolean, HL.Opt(HL.Number)) << fu
             end
         end
     else
-        UIUtils.PlayAnimationAndToggleActive(weaponDecoNode.animationWrapper, false)
+        if isFast then
+            weaponDecoNode.gameObject:SetActive(false)
+        else
+            UIUtils.PlayAnimationAndToggleActive(weaponDecoNode.animationWrapper, false)
+        end
     end
 end
 
@@ -2486,8 +2780,12 @@ PhaseCharInfo._SetActivePotentialItems = HL.Method(HL.Boolean) << function(self,
 end
 
 PhaseCharInfo._ShowPhoto = HL.Method(HL.Number) << function(self, potentialLevel)
+    local panelItem = self:_GetPanelPhaseItem(PanelId.CharInfoPotential)
+    if panelItem == nil then
+        return
+    end
     
-    local potentialCtrl = self:_GetPanelPhaseItem(PanelId.CharInfoPotential).uiCtrl
+    local potentialCtrl = panelItem.uiCtrl
     potentialCtrl:ShowPhotoByLevel(potentialLevel)
 end
 
@@ -2544,11 +2842,10 @@ end
 PhaseCharInfo.RefreshFocusPhotoBtn = HL.Method() << function(self)
     local charInfo = CharInfoUtils.getPlayerCharInfoByInstId(self.m_charInfo.instId)
     local isDevAvailable = CharInfoUtils.isCharDevAvailable(self.m_charInfo.instId)
-    
-    local potentialPanelItem = self:_GetPanelPhaseItem(PanelId.CharInfoPotential)
+    local _, potentialCtrl = UIManager:IsOpen(PanelId.CharInfoPotential)
     local sceneObject = self.m_gameObject2Item[PHASE_CHAR_INFO_POTENTIAL_SCENE]
     sceneObject.view.deco.btnFocusPhoto.gameObject:SetActive(DeviceInfo.usingController and
-        self.m_isPotentialCameraFocused and potentialPanelItem and not potentialPanelItem.uiCtrl.isPhotoMode and
+        self.m_isPotentialCameraFocused and potentialCtrl and not potentialCtrl.isPhotoMode and
         charInfo.potentialLevel >= UIConst.CHAR_PHOTO_POTENTIAL_LEVELS[1] and isDevAvailable)
 end
 
@@ -2606,6 +2903,7 @@ PhaseCharInfo._ProcessPreviewData = HL.Method(HL.Table) << function(self, initCh
         self.m_initCharInfoList = self.m_charInfoList
         self.m_maxCharInfoList = CharInfoUtils.getCharInfoListByInstIdList(initCharInfo.maxCharInstIdList, initCharInfo.isShowPreview)
         if self.arg.stateArg and self.arg.stateArg.isInitPreview then
+            self.m_isInitPreview = true
             return
         end
         
@@ -2733,11 +3031,16 @@ PhaseCharInfo.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(
     stateArg.openProAndElement = UIManager:IsOpen(PanelId.CharInfoProAndElement)
     stateArg.openFullAttr = UIManager:IsOpen(PanelId.CharInfoFullAttribute)
     stateArg.isExpandNodeOn = UIManager:IsShow(PanelId.CharExpandList)
+    stateArg.openForesightCharGrowth = UIManager:IsShow(PanelId.ForesightCharGrowthMain, true)
+    stateArg.backToForesightCharGrowth = self.m_backToForesightCharGrowth
     for _, panelItem in pairs(self.m_panel2Item) do
         if HL.TryGet(panelItem.uiCtrl, "GetCurStateArg") then
-            local arg = panelItem.uiCtrl:GetCurStateArg()
-            lume.extend(stateArg, arg)
+            local panelStateArg = panelItem.uiCtrl:GetCurStateArg()
+            lume.extend(stateArg, panelStateArg)
         end
+    end
+    if self.m_backToForesightCharGrowth and not self.m_panel2Item[PanelId.ForesightCharGrowthMain] and self.m_foresightCharGrowthRecoverArg then
+        stateArg.foresightCharGrowthRecoverArg = lume.deepCopy(self.m_foresightCharGrowthRecoverArg)
     end
     return arg
 end
@@ -2761,6 +3064,18 @@ PhaseCharInfo._ProcessStateArg = HL.Method(HL.Table) << function(self, arg)
             charInfoItem.uiCtrl.animationWrapper:SkipInAnimation()
             charInfoItem.uiCtrl:_ToggleExpandNode(true)
         end
+    end
+    if arg.openForesightCharGrowth then
+        if arg.backToForesightCharGrowth then
+            self:_CloseOrHidePanelImmediately({})
+        end
+        self:CreateCharInfoPanel(PanelId.ForesightCharGrowthMain, arg)
+    end
+    if arg.preciousItemObtainArgs then
+        UIManager:Open(PanelId.PreciousItemObtain, arg.preciousItemObtainArgs)
+    end
+    if arg.gemTagObtainArgs then
+        UIManager:Open(PanelId.GemTagObtain, arg.gemTagObtainArgs)
     end
 
     self.m_actionsAfterCharItemInitCompleted:Push(function()

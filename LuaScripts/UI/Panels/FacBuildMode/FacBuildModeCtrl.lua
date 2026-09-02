@@ -131,6 +131,9 @@ FacBuildModeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:BindInputPlayerAction("fac_build_cancel_alter", function()
         self:_ExitCurMode(true)
     end, self.m_rpgBuildBindingGroupId)
+    self:BindInputPlayerAction("fac_build_mode_delete", function()
+        self:_DelBuilding()
+    end, self.m_rpgBuildBindingGroupId)
 
     
     self.m_topViewBuildBindingGroupId = self:CreateInputGroup(self.view.inputGroup.groupId)
@@ -146,6 +149,9 @@ FacBuildModeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self:_OnClickConfirm()
         end
     end, self.m_topViewBuildBindingGroupId)
+    self:BindInputPlayerAction("fac_build_mode_delete_in_top_view", function()
+        self:_DelBuilding() 
+    end, self.m_topViewBuildBindingGroupId)
     self:BindInputPlayerAction("fac_build_cancel", function()
         self:_ExitCurMode(true)
     end, self.m_topViewBuildBindingGroupId)
@@ -155,9 +161,6 @@ FacBuildModeCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
     self:BindInputPlayerAction("fac_rotate_device", function()
         self:_RotateUnit()
-    end)
-    self:BindInputPlayerAction("fac_build_mode_delete", function()
-        self:_DelBuilding()
     end)
     self.m_signResetBindingId = self:BindInputPlayerAction("fac_build_sign_reset", function()
         self:_OpenSignSettingPanel(true)
@@ -1186,9 +1189,10 @@ FacBuildModeCtrl._UpdateCommonNodesOnEnterMode = HL.Method() << function(self)
     self.view.hideToggle.beltIcon.gameObject:SetActive(isPipe)
     self.view.hideToggle.pipeIcon.gameObject:SetActive(not isPipe)
 
-    local showContinueBuild = inTopView and (isBuilding or isLogistic) and DeviceInfo.usingTouch and self.m_buildingNodeId == nil
+    local showContinueBuild = (isBuilding or isLogistic) and self.m_buildingNodeId == nil and ((inTopView and DeviceInfo.usingTouch) or not inTopView)
+        and not FacConst.SIGN_BUILDING_EXTRA_SETTING_PANEL[self.m_buildingId] 
     self.view.continueBuildToggle.gameObject:SetActive(showContinueBuild)
-    self.view.actionButtonsAsIcon.continueBuildHint.gameObject:SetActive(showContinueBuild and self.view.continueBuildToggle.isOn)
+    self.view.actionButtonsAsIcon.continueBuildHint.gameObject:SetActive(inTopView and showContinueBuild and self.view.continueBuildToggle.isOn)
 
     self.view.actionButtonsAsIcon.gameObject:SetActive(inTopView)
     self.view.actionButtonsAsOption.gameObject:SetActive(not inTopView)
@@ -1360,6 +1364,8 @@ FacBuildModeCtrl._RefreshKeyHint = HL.Method(HL.Opt(HL.Table)) << function(self,
         if LuaSystemManager.factory.inTopView then
             if actionId == "fac_build_confirm" then
                 actionId = "fac_build_confirm_in_top_view"
+            elseif actionId == "fac_build_mode_delete" then
+                actionId = "fac_build_mode_delete_in_top_view"
             elseif actionId == "fac_build_confirm_belt_start" then
                 actionId = "fac_build_confirm_belt_start_in_top_view"
             end
@@ -2098,6 +2104,15 @@ FacBuildModeCtrl._ConfirmBuilding = HL.Method() << function(self)
     if not self.m_curBuildIsValid then
         Notify(MessageConst.SHOW_TOAST, self.view.errorHintText.text)
         AudioAdapter.PostEvent("au_ui_fac_unbuildable")
+        
+        local checkResult = GameInstance.remoteFactoryManager.interact.currentBuildingMode.addBuildingCheckResult
+        local limitType = checkResult.bandwidthLimited and "bandwidth"       
+            or checkResult.travelPoleCountLimited and "travel_pole"          
+            or checkResult.battleCountLimited and "battle"                   
+            or nil
+        if limitType then
+            EventLogManagerInst:GameEvent_MapBuildingLimit(Utils.getCurDomainId(), GameWorld.worldInfo.curLevelId, limitType)
+        end
         return
     end
 
@@ -2947,13 +2962,16 @@ FacBuildModeCtrl._OnChangeContinueToggle = HL.Method(HL.Boolean) << function(sel
 end
 
 FacBuildModeCtrl._EnableContinueBuild = HL.Method().Return(HL.Boolean) << function(self)
-    if not LuaSystemManager.factory.inTopView then
+    
+    if FacConst.SIGN_BUILDING_EXTRA_SETTING_PANEL[self.m_buildingId] then
         return false
     end
-    if DeviceInfo.usingKeyboard then
-        return InputManagerInst:GetKey(CS.Beyond.Input.KeyboardKeyCode.LeftControl)
-    elseif DeviceInfo.usingController then
-        return InputManagerInst:GetKey(CS.Beyond.Input.GamepadKeyCode.LT)
+    if LuaSystemManager.factory.inTopView then
+        if DeviceInfo.usingKeyboard then
+            return InputManagerInst:GetKey(CS.Beyond.Input.KeyboardKeyCode.LeftControl)
+        elseif DeviceInfo.usingController then
+            return InputManagerInst:GetKey(CS.Beyond.Input.GamepadKeyCode.LT)
+        end
     end
     return FacBuildModeCtrl.s_enableContinueBuild
 end

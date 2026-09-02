@@ -150,7 +150,6 @@ PhaseWatch._DoPhaseTransitionBackToTop = HL.Override(HL.Boolean, HL.Opt(HL.Table
         
         
         
-        
         blurPanel.view.blurBG:SetCustomBlurImg(self.m_watchBlurCtrl.view.blurBG.rawImage.texture)
     end
 end

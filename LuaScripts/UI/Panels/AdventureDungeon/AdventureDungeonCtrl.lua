@@ -175,9 +175,10 @@ AdventureDungeonCtrl._InitUI = HL.Method() << function(self)
         self:_UpdateDungeonCategory(cell, LuaIndex(csIndex))
     end)
     self.view.dungeonCategoryListNaviGroup.getDefaultSelectableFunc = function()
-        local firstCell = self.m_genCategoryCells(1)
+        local firstCsIndex = self.view.dungeonCategoryList:GetShowingCellsIndexRange()
+        local firstCell = self.m_genCategoryCells(LuaIndex(firstCsIndex))
         if firstCell ~= nil then
-            return firstCell.view.naviDecorator
+            return firstCell.view.dungeonCell.view.naviDecorator
         end
     end
 end

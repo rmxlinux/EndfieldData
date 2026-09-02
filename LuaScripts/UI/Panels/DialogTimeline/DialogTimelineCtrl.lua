@@ -18,15 +18,45 @@ DialogTimelineCtrl.s_overrideMessages = HL.StaticField(HL.Table) << {
     [MessageConst.UI_DIALOG_TEXT_STOPPED] = 'OnDialogTextStopped',
     [MessageConst.ON_DIALOG_TIMELINE_START_TRUNK] = 'OnDialogTimelineStartTrunk',
     [MessageConst.ON_DIALOG_TIMELINE_STOP_TRUNK] = 'OnDialogTimelineStopTrunk',
+    [MessageConst.ON_DIALOG_TIMELINE_SHOW_TRUNK_SUBTITLE] = 'OnShowTrunkSubtitle',
+    [MessageConst.ON_DIALOG_TIMELINE_HIDE_TRUNK_SUBTITLE] = 'OnHideTrunkSubtitle',
     [MessageConst.ON_DIALOG_TIMELINE_START_LEFT_SUBTITLE] = 'OnDialogTimelineStartLeftSubTitle',
     [MessageConst.ON_LOAD_NEW_DLG_TIMELINE] = 'OnLoadNewDialogTimeline',
     [MessageConst.REFRESH_DIALOG_TIMELINE_CAN_CLICK] = 'RefreshCanClick',
     [MessageConst.SWITCH_DIALOG_CAN_SKIP] = 'OnSwitchDialogCanSkip',
     [MessageConst.DIALOG_SHOW_DEV_WATER_MARK] = 'ShowDevWaterMark',
     [MessageConst.DIALOG_TIMELINE_REFRESH_AUTO_MODE] = 'OnRefreshAutoMode',
+    [MessageConst.DIALOG_REFRESH_UI_HIDDEN] = 'OnRefreshUIHidden',
+    [MessageConst.ON_TOGGLE_HUD_FADE] = '_OnToggleHudFade',
     [MessageConst.DIALOG_TIMELINE_SHOW_VIDEO_BORDER] = 'OnShowVideoBorder',
     [MessageConst.DIALOG_TIMELINE_HIDE_VIDEO_BORDER] = 'OnHideVideoBorder',
 }
+
+local UI_HIDDEN_WHITE_LIST = {
+    active = {
+        "buttonLog",
+        "buttonAuto",
+        "buttonHide",
+        "buttonSkip",
+        "textAuto",
+        "top",
+        "bottomMask",
+        "waitNode",
+        "centerWaitNode",
+        "topTrunkNode",
+        "noteKeyHintNode",
+        "controllerHint.skipHint",
+        "controllerHint.skipHintLoop",
+    },
+    alpha = {
+        "bottomLayout",
+        { "dialogTimelineText", useUpdateAlpha = true },
+    },
+}
+
+DialogTimelineCtrl._InitUIHiddenWhiteList = HL.Override() << function(self)
+    self:_BuildUIHiddenWhiteList(UI_HIDDEN_WHITE_LIST)
+end
 
 DialogTimelineCtrl.m_timelineHandle = HL.Field(HL.Userdata)
 
@@ -39,6 +69,10 @@ DialogTimelineCtrl.m_isDialogTextShowing = HL.Field(HL.Boolean) << false
 DialogTimelineCtrl.m_canSkip = HL.Field(HL.Boolean) << true
 
 DialogTimelineCtrl.m_showingTrunkId = HL.Field(HL.String) << ""
+
+DialogTimelineCtrl.m_showingTrunkSubtitleId = HL.Field(HL.String) << ""
+
+DialogTimelineCtrl.m_debugTrunkId = HL.Field(HL.String) << ""
 
 DialogTimelineCtrl.m_dialogTextHideTimer = HL.Field(HL.Number) << -1
 
@@ -67,6 +101,7 @@ end
 DialogTimelineCtrl.OnCreated = HL.Override(HL.Any) << function(self, arg)
     self.m_fmvNodeMap = {}
     self.m_dialogTextStopped = true
+    self.m_debugTrunkId = ""
     self.m_timelineHandle = unpack(arg)
     self.m_timelineHasBound = false
     GameWorld.dialogTimelineManager:BindUIDialogTimelineText(self.m_timelineHandle, self.view.dialogTimelineText)
@@ -76,23 +111,44 @@ end
 
 DialogTimelineCtrl.OnShow = HL.Override() << function(self)
     self:OnDialogShow()
-    self.view.debugNode.gameObject:SetActive(false)
+    self:RefreshDebugNode()
+end
+
+DialogTimelineCtrl.RefreshDebugNode = HL.Override() << function(self)
+    DialogTimelineCtrl.Super.RefreshDebugNode(self)
     if NarrativeUtils.ShouldShowNarrativeDebugNode() then
-        self.view.debugNode.gameObject:SetActive(true)
         GameWorld.dialogTimelineManager:BindFrameDebugTextMarker(self.view.frameDebugText)
-        local desc = ""
-        if GameWorld.dialogManager.dialogTree then
-            desc = "\nT2/T3"
-            if GameWorld.dialogManager.dialogTree.dialogTreeData.qualityLevel == CS.Beyond.Gameplay.DialogEnums.DialogQualityLevel.High then
-                desc = "\nTO/T1"
-            end
-        end
-        self.view.textDialogId.text = self:GetCurDialogId() .. desc
     end
 end
 
 DialogTimelineCtrl.GetCurDialogId = HL.Override().Return(HL.String) << function(self)
     return GameWorld.dialogTimelineManager.dialogId or ""
+end
+
+DialogTimelineCtrl.GetCurDialogTrunkId = HL.Override().Return(HL.String) << function(self)
+    return self.m_debugTrunkId or ""
+end
+
+DialogTimelineCtrl.GetDebugDescDialogId = HL.Override().Return(HL.String) << function(self)
+    local dialogId = self:GetCurDialogId()
+    return GameWorld.dialogManager.dialogId or dialogId
+end
+
+DialogTimelineCtrl._SetTopTrunkVisible = HL.Method(HL.Boolean, HL.Opt(HL.String)) << function(self, visible, text)
+    if visible and text ~= nil then
+        self.view.topTrunkText:SetAndResolveTextStyle(text)
+        self.view.topTrunkTextGlow:SetAndResolveTextStyle(text)
+    end
+
+    self.view.topTrunkNode:ClearTween(false)
+    if visible then
+        self:_SetUIHiddenActiveState(self.view.topTrunkNode, visible)
+        self.view.topTrunkNode:PlayInAnimation()
+    else
+        self.view.topTrunkNode:PlayOutAnimation(function()
+            self:_SetUIHiddenActiveState(self.view.topTrunkNode, visible)
+        end)
+    end
 end
 
 DialogTimelineCtrl.OnDialogTimelineStartLeftSubTitle = HL.Method() << function(self)
@@ -101,26 +157,23 @@ end
 DialogTimelineCtrl.OnDialogTimelineStartTrunk = HL.Method(HL.Table) << function(self, arg)
     if not self.m_hasShowedDialogText then
         self.m_hasShowedDialogText = true
-        self.view.dialogTimelineText:UpdateAlpha(1)
-
-        self.view.buttonLog.gameObject:SetActive(true)
-        self.view.buttonAuto.gameObject:SetActive(true)
-
+        self:_SetUIHiddenActiveState(self.view.buttonLog, true)
+        self:_SetAutoAndHideButtonsVisible(true)
         self:_RefreshAutoMode(GameWorld.dialogTimelineManager.autoMode)
-
-        
-        self.view.bottomMask.gameObject:SetActive(true)
     end
     self.m_dialogTextStopped = false
 
     local trunkId, actorName, entryLinks = unpack(arg)
     self:SetCurEntryLinks(entryLinks)
     self.m_showingTrunkId = trunkId
+    self.m_debugTrunkId = trunkId
+    self:RefreshDebugNode()
     self.view.actorNameLabel.gameObject:SetActive(not string.isEmpty(actorName))
 
     self:_TryShowDialogTextWithAnimation()
     self:_TrySetWaitNode(false)
     self:_RefreshCanSkip()
+    self:_RefreshUIHiddenState()
 end
 
 DialogTimelineCtrl._TryShowDialogTextWithAnimation = HL.Method() << function(self)
@@ -130,11 +183,10 @@ DialogTimelineCtrl._TryShowDialogTextWithAnimation = HL.Method() << function(sel
 
     if not self.m_isDialogTextShowing then
         self.m_isDialogTextShowing = true
-        self:PlayAnimation(DIALOG_BOTTOM_IN_ANIMATION)
-
-        self.view.dialogTimelineText.gameObject:SetActive(true)
-        self.view.bottomMask.gameObject:SetActive(true)
-        self:SetGlossaryPopUpEnable(true)
+        if not self.m_isUIHidden then
+            self:PlayAnimation(DIALOG_BOTTOM_IN_ANIMATION)
+        end
+        self:_RefreshDialogTextVisibleState()
     end
 end
 
@@ -145,7 +197,24 @@ DialogTimelineCtrl.OnDialogTimelineStopTrunk = HL.Method(HL.Table) << function(s
     end
 
     self.m_showingTrunkId = ""
+    self:RefreshDebugNode()
     self:_TryHideDialogTextWithAnimation()
+end
+
+DialogTimelineCtrl.OnShowTrunkSubtitle = HL.Method(HL.Table) << function(self, arg)
+    local trunkId, text = unpack(arg)
+    self.m_showingTrunkSubtitleId = trunkId
+    self:_SetTopTrunkVisible(true, text)
+end
+
+DialogTimelineCtrl.OnHideTrunkSubtitle = HL.Method(HL.Table) << function(self, arg)
+    local trunkId = unpack(arg)
+    if self.m_showingTrunkSubtitleId ~= trunkId then
+        return
+    end
+
+    self.m_showingTrunkSubtitleId = ""
+    self:_SetTopTrunkVisible(false)
 end
 
 DialogTimelineCtrl.OnSwitchDialogCanSkip = HL.Method(HL.Table) << function(self, arg)
@@ -154,11 +223,19 @@ end
 
 DialogTimelineCtrl._RefreshCanSkip = HL.Override() << function(self)
     self.m_canSkip = GameWorld.dialogManager.canSkip
-    self.view.buttonSkip.gameObject:SetActive(self.m_canSkip)
+    self:_SetUIHiddenActiveState(self.view.buttonSkip, self.m_canSkip)
 end
 
 
 DialogTimelineCtrl._TryHideDialogTextWithAnimation = HL.Method() << function(self)
+    if self.m_isUIHidden then
+        if self.m_dialogTextHideTimer > 0 then
+            self.m_dialogTextHideTimer = self:_ClearTimer(self.m_dialogTextHideTimer)
+        end
+        self.m_isDialogTextShowing = false
+        self:_RefreshDialogTextVisibleState()
+        return
+    end
     
     if self.m_dialogTextHideTimer < 0 then
         self.m_dialogTextHideTimer = self:_StartTimer(DIALOG_TEXT_HIDE_DELAY_TIME, function()
@@ -168,9 +245,7 @@ DialogTimelineCtrl._TryHideDialogTextWithAnimation = HL.Method() << function(sel
                     if self.m_isClosed then
                         return
                     end
-                    self.view.dialogTimelineText.gameObject:SetActive(false)
-                    self.view.bottomMask.gameObject:SetActive(false)
-                    self:SetGlossaryPopUpEnable(false)
+                    self:_RefreshDialogTextVisibleState()
                 end)
             end
         end)
@@ -179,6 +254,8 @@ end
 
 DialogTimelineCtrl.OnLoadNewDialogTimeline = HL.Method(HL.Any) << function(self, arg)
     self.m_timelineHandle = unpack(arg)
+    self.m_debugTrunkId = ""
+    self:RefreshDebugNode()
 end
 
 DialogTimelineCtrl.OnDialogShow = HL.Override() << function(self)
@@ -186,6 +263,7 @@ DialogTimelineCtrl.OnDialogShow = HL.Override() << function(self)
     self:_RefreshCanSkip()
 
     if self.m_timelineHasBound then
+        self:_RefreshUIHiddenState()
         return
     end
 
@@ -210,24 +288,26 @@ DialogTimelineCtrl.OnDialogShow = HL.Override() << function(self)
     end
 
     
-    self.view.dialogTimelineText:UpdateAlpha(0)
+    self:_SetUIHiddenAlphaState(self.view.dialogTimelineText, 0)
 
     
     if GameWorld.dialogManager.records.Count == 0 then
-        self.view.buttonLog.gameObject:SetActive(false)
-        self.view.buttonAuto.gameObject:SetActive(false)
-
-        self.view.textAuto.gameObject:SetActive(false)
+        self:_SetUIHiddenActiveState(self.view.buttonLog, false)
+        self:_SetAutoAndHideButtonsVisible(false)
     end
 
     
-    self.view.bottomMask.gameObject:SetActive(false)
+    self:_SetUIHiddenActiveState(self.view.bottomMask, false)
     self.m_timelineHasBound = true
+    self:_RefreshUIHiddenState()
 end
 
 
 
 DialogTimelineCtrl.OnBtnNextClick = HL.Override() << function(self)
+    if self:TryInterruptUIHidden() then
+        return
+    end
     if GameWorld.dialogTimelineManager.canClick then
         if self:CheckTextPlaying() then
             self.view.textTalk:SeekToEnd()
@@ -236,6 +316,39 @@ DialogTimelineCtrl.OnBtnNextClick = HL.Override() << function(self)
             GameWorld.dialogTimelineManager:Next()
         end
     end
+end
+
+DialogTimelineCtrl.OnBtnHideClick = HL.Override() << function(self)
+    self:SetUIHidden(true)
+end
+
+DialogTimelineCtrl.SetCtrlButtonVisible = HL.Method(HL.Boolean) << function(self, visible)
+    self.view.topRight.gameObject:SetActive(visible)
+    self.view.topLeft.gameObject:SetActive(visible)
+    self:_SetUIHiddenActiveState(self.view.top, visible)
+end
+
+DialogTimelineCtrl._RefreshUIHiddenState = HL.Override() << function(self)
+    DialogTimelineCtrl.Super._RefreshUIHiddenState(self)
+    self:_RefreshDialogTextVisibleState()
+end
+
+DialogTimelineCtrl._OnUIHiddenChanged = HL.Override(HL.Boolean) << function(self, hidden)
+    if not hidden and self.m_isDialogTextShowing then
+        self:PlayAnimation(DIALOG_BOTTOM_IN_ANIMATION)
+    end
+end
+
+DialogTimelineCtrl._RefreshDialogTextVisibleState = HL.Method() << function(self)
+    local hasTrunk = self.m_isDialogTextShowing
+    local visible = hasTrunk and not self.m_isUIHidden
+    
+    self.view.dialogTimelineText.gameObject:SetActive(hasTrunk)
+    
+    
+    self:_SetUIHiddenAlphaState(self.view.dialogTimelineText, hasTrunk and 1 or 0)
+    self:_SetUIHiddenActiveState(self.view.bottomMask, hasTrunk)
+    self:SetGlossaryPopUpEnable(visible)
 end
 
 DialogTimelineCtrl.OnBtnAutoClick = HL.Override() << function(self)
@@ -260,6 +373,14 @@ DialogTimelineCtrl._GetCurrentAutoMode = HL.Override().Return(HL.Boolean) << fun
     return GameWorld.dialogTimelineManager.autoMode
 end
 
+DialogTimelineCtrl._GetCurrentUIHidden = HL.Override().Return(HL.Boolean) << function(self)
+    return GameWorld.dialogTimelineManager.uiHidden
+end
+
+DialogTimelineCtrl._SetCurrentUIHidden = HL.Override(HL.Boolean) << function(self, hidden)
+    GameWorld.dialogTimelineManager:SetUIHidden(hidden)
+end
+
 DialogTimelineCtrl.OnOptionClick = HL.Override(HL.Number, HL.Any) << function(self, index, data)
     GameWorld.dialogTimelineManager:SelectIndex(CSIndex(index))
 end
@@ -279,8 +400,8 @@ DialogTimelineCtrl.RefreshCanClick = HL.Method(HL.Table) << function(self, _)
 end
 
 DialogTimelineCtrl._TrySetWaitNode = HL.Override(HL.Boolean) << function(self, active)
-    self.view.waitNode.gameObject:SetActive(active)
-    self.view.centerWaitNode.gameObject:SetActive(active)
+    self:_SetUIHiddenActiveState(self.view.waitNode, active)
+    self:_SetUIHiddenActiveState(self.view.centerWaitNode, active)
 end
 
 DialogTimelineCtrl.OnClose = HL.Override() << function(self)

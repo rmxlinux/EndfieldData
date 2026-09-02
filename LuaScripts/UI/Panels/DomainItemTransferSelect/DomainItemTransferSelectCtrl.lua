@@ -167,6 +167,7 @@ DomainItemTransferSelectCtrl._OpenDepot = HL.Method(HL.Opt(HL.Any)) << function(
     self.view.selectingTargetMask.gameObject:SetActive(false)
     self.view.leftLineWithEffect.gameObject:SetActive(true)
     self.view.leftLineWithoutEffect.gameObject:SetActive(false)
+    self.view.depot.view.inputBindingGroupMonoTarget.enabled = true
 
     self.view.sliderImg.gameObject:SetActive(self:_IsCurrentTransmitting())
 
@@ -531,6 +532,7 @@ DomainItemTransferSelectCtrl._OpenSelectTargetRoot = HL.Method(HL.Opt(HL.Boolean
     self.view.selectEndPointRoot.gameObject:SetActive(true)
     self.view.leftLineWithEffect.gameObject:SetActive(false)
     self.view.leftLineWithoutEffect.gameObject:SetActive(true)
+    self.view.depot.view.inputBindingGroupMonoTarget.enabled = false
     self:_InitLeftSidePlatformInfo("")
 
     local domainList = {}

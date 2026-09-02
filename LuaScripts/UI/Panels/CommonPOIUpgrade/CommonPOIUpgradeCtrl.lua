@@ -26,6 +26,7 @@ local GetDataFunc = {
     [GEnums.DomainPoiType.DomainDepot] = "_GetDataDomainDepot",
     [GEnums.DomainPoiType.SewageTreatPlant] = "_GetDataSewageTreatPlant",
     [GEnums.DomainPoiType.SimulationTraining] = "_GetDataSimulationTraining",
+    [GEnums.DomainPoiType.TyphoeaArchery] = "_GetDataTyphoeaArchery",
 }
 
 
@@ -36,6 +37,12 @@ local InitEventFunc = {
     [GEnums.DomainPoiType.DomainDepot] = "_InitEventDomainDepot",
     [GEnums.DomainPoiType.SewageTreatPlant] = "_InitEventSewageTreatPlant",
     [GEnums.DomainPoiType.SimulationTraining] = "_InitEventSimulationTraining",
+    [GEnums.DomainPoiType.TyphoeaArchery] = "_InitEventTyphoeaArchery",
+}
+
+
+local CustomJumpTaskFunc = {
+    [GEnums.DomainPoiType.TyphoeaArchery] = "_TyphoeaArcheryCustomJumpTaskFunc",
 }
 
 
@@ -172,7 +179,6 @@ CommonPOIUpgradeCtrl._InitEventSewageTreatPlant = HL.Method() << function(self)
     end
 end
 
-
 CommonPOIUpgradeCtrl._InitEventSimulationTraining = HL.Method() << function(self)
     self.m_onClickUnlockBtn = function()
         GameInstance.player.simulationTrainingSystem:SimulationTrainingLevelUp()
@@ -180,6 +186,16 @@ CommonPOIUpgradeCtrl._InitEventSimulationTraining = HL.Method() << function(self
 
     self.m_onClickUpgradeBtn = function()
         GameInstance.player.simulationTrainingSystem:SimulationTrainingLevelUp()
+    end
+end
+
+CommonPOIUpgradeCtrl._InitEventTyphoeaArchery = HL.Method() << function(self)
+    self.m_onClickUnlockBtn = function()
+        GameInstance.player.typhoeaArcherySystem:TyphoeaArcheryLevelUp()
+    end
+
+    self.m_onClickUpgradeBtn = function()
+        GameInstance.player.typhoeaArcherySystem:TyphoeaArcheryLevelUp()
     end
 end
 
@@ -737,6 +753,161 @@ CommonPOIUpgradeCtrl._GetDataSimulationTraining = HL.Method().Return(HL.Any) << 
 
 end
 
+CommonPOIUpgradeCtrl._GetDataTyphoeaArchery = HL.Method().Return(HL.Any) << function(self)
+    local info = DomainPOIUtils.getUpgradeCtrlArgsTemplate()
+    local typhoeaArcherySystem = GameInstance.player.typhoeaArcherySystem
+    if not typhoeaArcherySystem then
+        return info
+    end
+    local archeryData = typhoeaArcherySystem.archeryData
+
+    
+    info.domainId = Tables.typhoeaArcheryConst.shootingRangeDomainId 
+    info.levelId = Tables.typhoeaArcheryConst.shootingRangeLevelId  
+    info.titleName = Language.LUA_TYPHOEA_ARCHERY_POI_TITLE
+
+    
+    local curLevel = typhoeaArcherySystem:GetTyphoeaArcheryLevel()
+    local maxLevel = archeryData.maxLv
+    local targetLevel = math.min(curLevel+1,maxLevel)
+    local isCurMaxLevel = curLevel == maxLevel
+    info.curLevel = curLevel
+    info.targetLevel = targetLevel
+    info.maxLevel = maxLevel
+    info.isFinalMaxLevel = isCurMaxLevel
+
+    
+    if curLevel == 0 then
+        info.descList = string.split(Language.LUA_TYPHOEA_ARCHERY_POI_LEVEL_LOCKED_DESC, "\n")
+    else
+        info.descList = string.split(Language.LUA_TYPHOEA_ARCHERY_POI_LEVEL_DESC, "\n")
+    end
+
+    
+    local trainTitleIcon = UIConst.UI_SPRITE_DOMAIN_DEPOT_UPGRADE .. "/" .. "typhoea_archery_train_icon"
+    local chipTitleIcon = UIConst.UI_SPRITE_DOMAIN_DEPOT_UPGRADE .. "/" .. "typhoea_archery_chip_icon"
+
+    
+    if isCurMaxLevel then
+        
+        local maxLevelTrainTitleText = Language.LUA_TYPHOEA_ARCHERY_MAX_LEVEL_TRAINING_CONTENT_TITLE
+        DomainPOIUtils.insertContentCommonTitle(
+            info,
+            trainTitleIcon,
+            Language.LUA_TYPHOEA_ARCHERY_TRAINING_CONTENT_TITLE
+        )
+        DomainPOIUtils.insertContentTextImgText(info, maxLevelTrainTitleText, {}, 1)
+
+        
+        local maxLevelChipTitleText = Language.LUA_TYPHOEA_ARCHERY_MAX_LEVEL_CHIP_CONTENT_TITLE
+        DomainPOIUtils.insertContentCommonTitle(
+            info,
+            chipTitleIcon,
+            Language.LUA_TYPHOEA_ARCHERY_CHIP_CONTENT_TITLE
+        )
+        local unlockAllRecipeBundle = {}
+        for lv=1,maxLevel do
+            local _, levelData = Tables.typhoeaArcheryLevelTable:TryGetValue(lv)
+            if levelData then
+                local _, rewardTableData = Tables.rewardTable:TryGetValue(levelData.levelRewardPreview)
+                if rewardTableData then
+                    for _, v in pairs(rewardTableData.itemBundles) do
+                        local _, itemData = Tables.itemTable:TryGetValue(v.id)
+                        if itemData and itemData.type == GEnums.ItemType.FormulaUnlock then
+                            table.insert(unlockAllRecipeBundle, v)
+                        end
+                    end
+                end
+            end
+        end
+        
+        DomainPOIUtils.insertContentItemList(info, maxLevelChipTitleText, {},false, { "narrow", "slot"})
+        DomainPOIUtils.insertContentItemList(info, "", unlockAllRecipeBundle, true, { "noPrefix", "slot"})
+    else
+        
+        local hasCfg,targetLevelData = Tables.typhoeaArcheryLevelTable:TryGetValue(targetLevel)
+        if hasCfg then
+            info.upgradeCostMoney = targetLevelData.costItemCount
+        end
+        if curLevel == 0 then
+            
+            local unlockAvailable = typhoeaArcherySystem:IsTyphoeaArcheryUnlockAvailable()
+            if not unlockAvailable then
+                info.showJumpToTask = true
+                info.upgradeQuestId = targetLevelData.unlockQuestId
+                info.upgradeQuestDesc = targetLevelData.unlockQuestDesc
+            end
+        else
+            
+            local hasPrevTrainCompleted = typhoeaArcherySystem:IsLevelPreTrainCompleted(targetLevel)
+            if not hasPrevTrainCompleted then
+                info.hasCustomJumpTask = true
+                info.upgradeCustomDesc = targetLevelData.upgradeLevelDesc
+            end
+        end
+
+        
+        DomainPOIUtils.insertContentCommonTitle(
+            info,
+            trainTitleIcon,
+            Language.LUA_TYPHOEA_ARCHERY_TRAINING_CONTENT_TITLE
+        )
+        local unlockSimGameInfo = TyphoeaArcheryUtils.getGameIdsByPoiLevel(targetLevel, Tables.typhoeaArcherySimulateTrainTable, true)
+        local unlockDaiGameInfo = TyphoeaArcheryUtils.getGameIdsByPoiLevel(targetLevel, Tables.typhoeaArcheryDailyTrainTable, true)
+        for _, gameInfo in pairs(unlockSimGameInfo) do
+            if not string.isEmpty(gameInfo.unlockPreviewTip) then
+                DomainPOIUtils.insertContentTextImgText(info, gameInfo.unlockPreviewTip, {}, 1) 
+            end
+        end
+        for _, gameInfo in pairs(unlockDaiGameInfo) do
+            if not string.isEmpty(gameInfo.unlockPreviewTip) then
+                DomainPOIUtils.insertContentTextImgText(info, gameInfo.unlockPreviewTip, {}, 1) 
+            end
+        end
+
+        
+        local unlockRecipeText = Language.LUA_TYPHOEA_ARCHERY_UNLOCK_CHIP_RECIPE_TEXT
+        local unlockItemText = Language.LUA_TYPHOEA_ARCHERY_UNLOCK_CHIP_ITEM_TEXT
+        
+        local unlockRecipeBundle = {}
+        local unlockItemBundle = {}
+        local _, rewardTableData = Tables.rewardTable:TryGetValue(targetLevelData.levelRewardPreview)
+        if rewardTableData then
+            for _, v in pairs(rewardTableData.itemBundles) do
+                local _, itemData = Tables.itemTable:TryGetValue(v.id)
+                if itemData then
+                    if itemData.type == GEnums.ItemType.FormulaUnlock then
+                        table.insert(unlockRecipeBundle, v)
+                    else
+                        table.insert(unlockItemBundle, v)
+                    end
+                end
+            end
+        end
+
+        local showChipInfo = #unlockRecipeBundle > 0 or #unlockItemBundle > 0
+        if showChipInfo then
+            DomainPOIUtils.insertContentCommonTitle(
+                info,
+                chipTitleIcon,
+                Language.LUA_TYPHOEA_ARCHERY_CHIP_CONTENT_TITLE
+            )
+            if #unlockRecipeBundle>0 then
+                DomainPOIUtils.insertContentItemList(info, unlockRecipeText, unlockRecipeBundle, true, {"slot"}) 
+            end
+            if #unlockItemBundle>0 then
+                DomainPOIUtils.insertContentItemList(info, unlockItemText, unlockItemBundle, true, {"slot"})  
+            end
+        end
+    end
+
+    return info
+end
+
+CommonPOIUpgradeCtrl._TyphoeaArcheryCustomJumpTaskFunc = HL.Method() << function(self)
+    Notify(MessageConst.SHOW_TOAST, Language.LUA_TYPHOEA_ARCHERY_UPGRADE_NEED_COMPLETE_TRAINING_TOAST)
+end
+
 
 
 
@@ -760,17 +931,28 @@ CommonPOIUpgradeCtrl._InitUI = HL.Method() << function(self)
         end
     end)
     operateGroup.jumpTaskBtn.onClick:AddListener(function()
-        if self.m_info.questState == CS.Beyond.Gameplay.MissionSystem.QuestState.Processing
-            or self.m_info.questState == CS.Beyond.Gameplay.MissionSystem.QuestState.Paused
-        then
-            PhaseManager:OpenPhase(PhaseId.Mission, {
-                autoSelect = self.m_info.upgradeMissionId
-            })
+        if self.m_info.hasCustomJumpTask then
+            
+            local funcName = CustomJumpTaskFunc[self.m_domainPOIType]
+            if not funcName then
+                logger.error("[CommonPOIUpgradeCtrl] CustomJumpTaskFunc定义缺失，类型为：", self.m_domainPOIType)
+                return
+            end
+            self[funcName](self)
         else
-            if not string.isEmpty(self.m_info.jumpTaskToast) then
-                Notify(MessageConst.SHOW_TOAST, self.m_info.jumpTaskToast)
+            
+            if self.m_info.questState == CS.Beyond.Gameplay.MissionSystem.QuestState.Processing
+                or self.m_info.questState == CS.Beyond.Gameplay.MissionSystem.QuestState.Paused
+            then
+                PhaseManager:OpenPhase(PhaseId.Mission, {
+                    autoSelect = self.m_info.upgradeMissionId
+                })
             else
-                Notify(MessageConst.SHOW_TOAST, Language.LUA_POI_UPGRADE_NEED_COMPLETE_TASK)
+                if not string.isEmpty(self.m_info.jumpTaskToast) then
+                    Notify(MessageConst.SHOW_TOAST, self.m_info.jumpTaskToast)
+                else
+                    Notify(MessageConst.SHOW_TOAST, Language.LUA_POI_UPGRADE_NEED_COMPLETE_TASK)
+                end
             end
         end
     end)
@@ -830,7 +1012,10 @@ CommonPOIUpgradeCtrl._RefreshBasicUI = HL.Method() << function(self)
     else
         info.questState = GameInstance.player.mission:GetQuestState(info.upgradeQuestId)
     end
-    if info.questState ~= CS.Beyond.Gameplay.MissionSystem.QuestState.Completed then
+    if info.hasCustomJumpTask then
+        operateGroup.stateCtrl:SetState("JumpTask")
+        operateGroup.jumpTaskTxt.text = info.upgradeCustomDesc
+    elseif info.questState ~= CS.Beyond.Gameplay.MissionSystem.QuestState.Completed then
         operateGroup.stateCtrl:SetState("JumpTask")
         operateGroup.jumpTaskTxt.text = info.upgradeQuestDesc
         info.upgradeMissionId = GameInstance.player.mission:GetMissionIdByQuestId(info.upgradeQuestId)
@@ -912,6 +1097,15 @@ CommonPOIUpgradeCtrl._RefreshContentUIItemList = HL.Method(HL.Table) << function
     if info.useNaviGroup then
         self.view.contentParent.selectableNaviGroup.enabled = true
     end
+    cell.keyHint.gameObject:SetActive(info.showKeyHint)
+    self.view.keyHint.gameObject:SetActive(not info.showKeyHint)
+    cell.stateController:SetState("normal")
+    
+    if info.state ~= nil then
+        for _, state in pairs(info.state) do
+            cell.stateController:SetState(state)
+        end
+    end
 end
 
 CommonPOIUpgradeCtrl._RefreshContentUITextImgText = HL.Method(HL.Table) << function(self, info)
@@ -938,7 +1132,6 @@ CommonPOIUpgradeCtrl._RefreshContentUITextImgText = HL.Method(HL.Table) << funct
         else
             contentCell.txtFontSizeStateCtrl:SetState("FontLevel2")
         end
-        
         if string.isEmpty(contentInfo.text1) then
             contentCell.txt1.gameObject:SetActive(false)
         else

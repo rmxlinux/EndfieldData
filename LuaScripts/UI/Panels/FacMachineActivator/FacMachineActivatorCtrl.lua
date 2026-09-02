@@ -87,14 +87,14 @@ FacMachineActivatorCtrl._OnExpendTypeStateUpdate = HL.Override(HL.Userdata) << f
         self.view.activatorNodes.consumeDecoState:SetState(DECO_STATE.NoNetWork)
     elseif state == GEnums.FacBuildingState.Closed then
         self.view.activatorNodes.consumeDecoState:SetState(DECO_STATE.Closed)
-    elseif state == GEnums.FacBuildingState.InActive then
+    elseif state == GEnums.FacBuildingState.Inactive then
         self.view.activatorNodes.consumeDecoState:SetState(DECO_STATE.NotActivated)
     else
         self.view.activatorNodes.consumeDecoState:SetState(DECO_STATE.Available)
     end
 
     local postProcessText
-    if state == GEnums.FacBuildingState.InActive then
+    if state == GEnums.FacBuildingState.Inactive then
         postProcessText = string.format(Language.LUA_FACTORY_ACTIVATOR_CONSUME_ITEM_LACK_TIPS, self.m_consumeItemName)
     end
 

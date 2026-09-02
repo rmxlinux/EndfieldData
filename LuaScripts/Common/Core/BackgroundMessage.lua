@@ -224,13 +224,6 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.UPDATE_DEBUG_TEXT] = 'UpdateDebugText',
     },
     
-    ['DungeonSettlementPopup'] = {
-        
-        [MessageConst.ON_DUNGEON_COMPLETE] = "OnDungeonComplete",
-        
-        [MessageConst.ON_SHOW_DUNGEON_RESULT] = "OnShowDungeonResult",
-    },
-    
     ['SimulationTrainingSettlementPopup'] = {
         
         [MessageConst.ON_SHOW_SIMULATION_TRAINING_RESULT] = "OnShowSimulationTrainingResult",
@@ -239,13 +232,6 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     ['DungeonCustomReward'] = {
         
         [MessageConst.TRY_START_SETTLEMENT] = "TryStartSettlement",
-    },
-    
-    ['DungeonInfoPopup'] = {
-        
-        [MessageConst.ON_DUNGEON_GAME_INIT] = "TryToShow",
-        
-        [MessageConst.SHOW_DUNGEON_INFO_POPUP] = "OnShowDungeonInfoPopup",
     },
     
     ['DungeonCharTutorialStepHud'] = {
@@ -300,7 +286,18 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
 
         
         [MessageConst.ON_SWITCH_LANGUAGE] = "OnSwitchLanguage",
+        
+        [MessageConst.ON_TYPHOEA_ARCHERY_DAILY_REFRESH_POP_UP] = "OnTyphoeaArcheryDailyRefreshPopUp",
     },
+
+    
+    ['WulingParkourChallengeHUD'] = {
+        
+        [MessageConst.OPEN_PARKOUR_HUD] = "OnOpenParkourHud",
+        
+        [MessageConst.UPDATE_PARKOUR_COLLECTED_COUNT] = "OnUpdateParkourCollectedCount",
+    },
+
     
     ['SimulationTrainingTrackHud'] = {
         
@@ -332,14 +329,16 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_SHOW_COMMON_TASK_TOAST_FAIL] = "OnShowCommonTaskFailToast",
 
         
-        [MessageConst.ON_DUNGEON_COMPLETE] = "OnDungeonComplete",
-
-        
         [MessageConst.ON_SHOW_COMMON_TASK_TOAST_START_WITHOUT_ID] = "OnShowCommonTaskStartToastWithoutId",
         
         [MessageConst.ON_SHOW_COMMON_TASK_TOAST_FINISH_WITHOUT_ID] = "OnShowCommonTaskFinishToastWithoutId",
         
         [MessageConst.ON_SHOW_COMMON_TASK_TOAST_FAIL_WITHOUT_ID] = "OnShowCommonTaskFailToastWithoutId",
+    },
+    
+    ['WulingParkourChallengeResult'] = {
+        
+        [MessageConst.ON_SHOW_PARKOUR_STAR_RESULT_TOAST] = "OnShowParkourStarResultToast",
     },
     
     ['CommonTaskTrackCountdown'] = {
@@ -608,6 +607,8 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         
         [MessageConst.CLEAR_SCREEN_ON] = '_OnClearScreenOn',
         
+        [MessageConst.CLEAR_SCREEN_ON_WITH_ANIMATION] = '_OnClearScreenOnWithAnimation',
+        
         [MessageConst.CLEAR_SCREEN_OFF] = '_OnClearScreenOff',
         
         [MessageConst.CLEAR_SCREEN_ON_EXCEPT_SOME_PANEL] = '_OnClearScreenOnExceptSomePanel',
@@ -741,6 +742,10 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         [MessageConst.ON_SWITCH_LANGUAGE] = 'TryShowEnvironmentalPrompt',
         
         [MessageConst.ON_INPUT_DEVICE_TYPE_CHANGED] = 'TryShowEnvironmentalPrompt',
+        
+        [MessageConst.ON_PHASE_LEVEL_ON_TOP] = 'TryShowEnvironmentalPrompt',
+        
+        [MessageConst.ON_PHASE_LEVEL_NOT_ON_TOP] = 'HideEnvironmentalPrompt',
     },
     
     ['SubmitCollection'] = {
@@ -1144,6 +1149,13 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         
         [MessageConst.GENDER_CHANGE_START] = "OnGenderChangeStart",
     },
+
+    
+    ['TyphoeaArcheryHud'] = {
+        
+        [MessageConst.ON_TYPHOEA_ARCHERY_OPEN_PANEL] = "OnOpenTyphoeaArcheryHud",
+    },
+
     
     ['XiraniteNexusAim'] = {
         
@@ -1151,11 +1163,8 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
         
         [MessageConst.ON_BLIGHT_MIASMA_AREA_ENTER] = 'TryActiveAbility',
         
-        [MessageConst.ON_ITEM_BAG_COLORED_ITEM_CHANGED] = 'OnItemBagColoredItemChanged',
         
-        [MessageConst.CURRENT_LEVEL_CHANGE] = 'OnCurrentLevelChanged',
         
-        [MessageConst.CLOSE_LOADING_PANEL] = 'OnCloseLoadingPanel',
     },
     
     ['WaterDroneAim'] = {
@@ -1389,6 +1398,11 @@ BackgroundMessage.s_messages = HL.StaticField(HL.Table) << {
     ['BattleLiino'] = {
         
         [MessageConst.ON_BATTLE_LIINO_NORMAL_SKILL_EVENT] = 'OnBattleLiinoNormalSkillEvent',
+    },
+    
+    ['TyphoeaHudHint'] = {
+        
+        [MessageConst.ON_BATTLE_TYPHOEA_HUD_HINT_ACTIVE_CHANGED] = 'OnMarkTargetActiveChanged',
     },
     
     ['SeasonTowerBuff'] = {

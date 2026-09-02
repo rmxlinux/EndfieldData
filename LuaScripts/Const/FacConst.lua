@@ -186,7 +186,7 @@ FAC_BUILDING_STATE_TO_SPRITE = {
     [GEnums.FacBuildingState.NoPower] = "icon_ui_power_pole_machine_state_3",
     [GEnums.FacBuildingState.NotInPowerNet] = "icon_ui_power_pole_machine_state_1",
     [GEnums.FacBuildingState.Fixable] = "icon_ui_power_pole_machine_state_7",
-    [GEnums.FacBuildingState.InActive] = "icon_ui_machinestate10",
+    [GEnums.FacBuildingState.Inactive] = "icon_ui_machinestate10",
 }
 
 FAC_TOP_VIEW_BUILDING_STATE_TO_SPRITE = {
@@ -198,7 +198,7 @@ FAC_TOP_VIEW_BUILDING_STATE_TO_SPRITE = {
     [GEnums.FacBuildingState.NotInPowerNet] = "icon_building_state_1",
     [GEnums.FacBuildingState.BusDisconnect] = "icon_building_state_7",
     [GEnums.FacBuildingState.PortDisconnect] = "icon_building_state_8",
-    [GEnums.FacBuildingState.InActive] = "icon_building_state_9",
+    [GEnums.FacBuildingState.Inactive] = "icon_building_state_9",
 }
 
 CRAFT_PROGRESS_MULTIPLIER = CS.Beyond.Gameplay.RemoteFactory.RemoteFactoryUtil.craftProgressMultiplier
@@ -588,7 +588,7 @@ FAC_BUILDING_STATE_TO_PREFAB_PATH = {
     [GEnums.FacBuildingState.Blocked] = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Factory/Widgets/BuildingStateBlock.prefab",
     [GEnums.FacBuildingState.NoPower] = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Factory/Widgets/BuildingStateNoPower.prefab",
     [GEnums.FacBuildingState.NotInPowerNet] = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Factory/Widgets/BuildingStateNotLinked.prefab",
-    [GEnums.FacBuildingState.InActive] = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Factory/Widgets/BuildingStateInActive.prefab",
+    [GEnums.FacBuildingState.Inactive] = "Assets/Beyond/DynamicAssets/Gameplay/UI/Prefabs/Factory/Widgets/BuildingStateInActive.prefab",
 }
 
 FAC_BUILDING_NORMAL_STATE_CUSTOM_TEXT_ID = {

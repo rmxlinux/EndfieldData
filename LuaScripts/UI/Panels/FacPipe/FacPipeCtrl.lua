@@ -58,9 +58,12 @@ FacPipeCtrl._InitPipeUpdateThread = HL.Method() << function(self)
     self.m_updateThread = self:_StartCoroutine(function()
         while true do
             coroutine.wait(UIConst.FAC_COMMON_UI_UPDATE_INTERVAL)
-            self:_RefreshPipeBasicDisplayContent()
-            self:_RefreshPipeItem()
-            self:_RefreshLiquidBg()
+            
+            if self.m_buildingInfo.nodeHandler and self.m_buildingInfo.nodeHandler.valid then
+                self:_RefreshPipeBasicDisplayContent()
+                self:_RefreshPipeItem()
+                self:_RefreshLiquidBg()
+            end
         end
     end)
 end
@@ -97,12 +100,12 @@ FacPipeCtrl._RefreshPipeItem = HL.Method(HL.Opt(HL.Boolean)) << function(self, f
         }, true)
         self.view.pipeItem.gameObject:SetActiveIfNecessary(true)
         
-        if self.view.inputGroup.internalEnabled then
+        if self.view.bottomNaviGroup.IsTopLayer or forceRefresh then
             self.view.pipeItem:SetAsNaviTarget()
         end
     else
         self.view.pipeItem.gameObject:SetActiveIfNecessary(false)
-        if self.view.inputGroup.internalEnabled then
+        if self.view.bottomNaviGroup.IsTopLayer or forceRefresh then
             self:SetNaviTarget(self.view.emptyItem)
         end
     end

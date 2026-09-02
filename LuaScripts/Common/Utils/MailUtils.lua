@@ -20,6 +20,18 @@ end
 
 
 
+function MailUtils.isPreviewWebMail(mail)
+    return mail ~= nil and mail.subType == GEnums.MailSubType.PreviewWeb
+end
+
+
+
+function MailUtils.needPreviewWebRedDot(mail)
+    return mail ~= nil and mail.needPreviewWebRedDot
+end
+
+
+
 
 function MailUtils._ResolveCommonParam(mail, content)
     if mail.paramDic == nil then

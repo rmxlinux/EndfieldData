@@ -6,7 +6,7 @@ local PHASE_ID = PhaseId.SNS
 local TabConfigs = {
     {
         icon = "sns_icon_chat",
-        titleName = Language.LUA_SNS_BARKER_TITLE,
+        titleLangKey = "LUA_SNS_BARKER_TITLE",
         panelId = PanelId.SNSBarker,
         redDot = "SNSBarkerTabCell",
         forceHide = function()
@@ -15,7 +15,7 @@ local TabConfigs = {
     },
     {
         icon = "sns_icon_task",
-        titleName = Language.LUA_SNS_MISSION_TITLE,
+        titleLangKey = "LUA_SNS_MISSION_TITLE",
         panelId = PanelId.SNSMission,
         redDot = "SNSMissionTabCell",
         forceHide = function()
@@ -24,7 +24,7 @@ local TabConfigs = {
     },
     {
         icon = "sns_icon_friend",
-        titleName = Language.LUA_SNS_CHAT_TITLE,
+        titleLangKey = "LUA_SNS_CHAT_TITLE",
         panelId = PanelId.SNSFriend,
         redDot = "FriendChatUnRead",
         separation = false,
@@ -110,7 +110,8 @@ SNSBasicCtrl._InitTabs = HL.Method() << function(self)
         self:_OnUpdateTabCell(cell, luaIndex)
     end)
 
-    self.view.title.text = self.m_tabInfos[self.m_curTabIndex].titleName
+    local titleLangKey = self.m_tabInfos[self.m_curTabIndex].titleLangKey
+    self.view.title.text = Language[titleLangKey]
     self.view.tabs.inputBindingGroupMonoTarget.enabled = #self.m_tabInfos > 1
 end
 
@@ -140,11 +141,27 @@ SNSBasicCtrl._OnTabClick = HL.Method(HL.Number) << function(self, luaIndex)
     end
     self.m_curTabIndex = luaIndex
     local curTabInfo = self.m_tabInfos[luaIndex]
-    self.view.title.text = curTabInfo.titleName
+    local titleLangKey = curTabInfo.titleLangKey
+    self.view.title.text = Language[titleLangKey]
 
     
     local phase = self.m_phase
     phase:OnTabChange({ panelId = curTabInfo.panelId })
+end
+
+SNSBasicCtrl.ManuallySetToggleOn = HL.Method(HL.Number) << function(self, panelId)
+    local toggleIndex
+    for index, panelCfg in ipairs(TabConfigs) do
+        if panelCfg.panelId == panelId then
+            toggleIndex = index
+            break
+        end
+    end
+
+    if toggleIndex then
+        local cell = self.m_genTabCells:Get(toggleIndex)
+        cell.toggle.isOn = true
+    end
 end
 
 SNSBasicCtrl.GetRecoverStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)

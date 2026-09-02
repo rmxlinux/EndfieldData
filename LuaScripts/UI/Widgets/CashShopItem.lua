@@ -223,6 +223,14 @@ CashShopItem.InitCashShopItem = HL.Method(HL.Any, HL.Opt(HL.Boolean, HL.Boolean)
         itemData = weaponItemCfg
         count = 1
         local rarity = weaponItemCfg.rarity
+        if self.view.rerunNode then
+            if weaponPool.gachaPoolVersion > 0 then
+                self.view.rerunNode.gameObject:SetActive(true)
+                self.view.rerunVersionTxt.text = '#' .. weaponPool.gachaPoolVersion
+            else
+                self.view.rerunNode.gameObject:SetActive(false)
+            end
+        end
 
         
         if self.view.randomWeaponsTxt then
@@ -244,6 +252,9 @@ CashShopItem.InitCashShopItem = HL.Method(HL.Any, HL.Opt(HL.Boolean, HL.Boolean)
         itemId = displayItem.id
         count = displayItem.count
         
+        if self.view.rerunNode then
+            self.view.rerunNode.gameObject:SetActive(false)
+        end
 
         local unlock = shopSystem:CheckGoodsUnlocked(goodsId)
         if not unlock then

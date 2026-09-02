@@ -42,6 +42,10 @@ WalletBarCtrl.m_resetMoneyCountDownCompleteFunc = HL.Field(HL.Function)
 
 WalletBarCtrl.m_timeFormatFunc = HL.Field(HL.Function)
 
+WalletBarCtrl.m_staminaCloseFunc = HL.Field(HL.Function)
+
+WalletBarCtrl.m_staminaClickFunc = HL.Field(HL.Function)
+
 
 
 
@@ -87,6 +91,24 @@ WalletBarCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         end
         self.view.resetMoneyTimeTxt.view.textStateCtrl:SetState(colorState)
         return UIUtils.getShortLeftTime(leftTime)
+    end
+
+    
+    
+    self.m_staminaCloseFunc = function()
+        if self.m_isClosed or self.m_curArgs == nil or self.m_curArgs.focusAfterCLick ~= true then
+            return
+        end
+        if IsNull(self.view.contentNaviGroup) then
+            return
+        end
+        self.view.contentNaviGroup:ManuallyStopFocus()
+    end
+    self.m_staminaClickFunc = function()
+        if self.m_isClosed or self.m_curArgs == nil or self.m_curArgs.closeCommonPopupAfterClickStamina ~= true then
+            return
+        end
+        Notify(MessageConst.HIDE_POP_UP)
     end
 end
 
@@ -189,20 +211,6 @@ WalletBarCtrl._RefreshContent = HL.Method() << function(self)
     padding.top = lume.round(self.m_curArgs.paddingTop or self.m_defaultPaddingTop)
     LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.contentLayout.transform)
 
-    local staminaCloseFun
-    if self.m_curArgs.focusAfterCLick == true then
-        staminaCloseFun = function()
-            self.view.contentNaviGroup:ManuallyStopFocus()
-        end
-    end
-
-    local staminaClickFunc
-    if self.m_curArgs.closeCommonPopupAfterClickStamina == true then
-        staminaClickFunc = function()
-            Notify(MessageConst.HIDE_POP_UP)
-        end
-    end
-
     self.m_countDownMoneyIndex = -1
     local moneyInfos = self.m_curArgs.moneyInfos
     local cellPreferredWidths = self.m_curArgs.cellPreferredWidths or {}
@@ -214,8 +222,8 @@ WalletBarCtrl._RefreshContent = HL.Method() << function(self)
             local cellPreferredWidth = cellPreferredWidths[itemId]
             cell:InitMoneyCell(itemId, self.m_curArgs.useMoneyCellAction, self.m_curArgs.useItemIcon, moneyInfo.showLimit, moneyInfo.limitNumber, cellPreferredWidth)
             if cell:IsStamina() then
-                cell:SetStaminaCloseFun(staminaCloseFun)
-                cell:SetStaminaClickFun(staminaClickFunc)
+                cell:SetStaminaCloseFun(self.m_staminaCloseFunc)
+                cell:SetStaminaClickFun(self.m_staminaClickFunc)
                 
                 
                 cell:SetStaminaShowItemTips(#moneyInfos > 1 and DeviceInfo.usingController)

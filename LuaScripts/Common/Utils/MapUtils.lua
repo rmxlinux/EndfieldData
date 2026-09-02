@@ -227,11 +227,21 @@ function MapUtils.switchFromRegionMapToLevelMap(instId, levelId)
 end
 
 function MapUtils.closeMapRelatedPhase()
-    local topPhase = PhaseManager:GetTopPhaseId()
+    
+    
+    
+    if PhaseManager:IsInPhaseTransition() then
+        return
+    end
 
+    local topPhase = PhaseManager:GetTopPhaseId()
+    local topPhaseId
+
+    
+    
     if PhaseManager:IsOpen(PhaseId.Map) then
         if topPhase == PhaseId.Map then
-            PhaseManager:PopPhase(PhaseId.Map)
+            topPhaseId = PhaseId.Map
         else
             PhaseManager:ExitPhaseFast(PhaseId.Map)
         end
@@ -239,10 +249,14 @@ function MapUtils.closeMapRelatedPhase()
 
     if PhaseManager:IsOpen(PhaseId.RegionMap) then
         if topPhase == PhaseId.RegionMap then
-            PhaseManager:PopPhase(PhaseId.RegionMap)
+            topPhaseId = PhaseId.RegionMap
         else
             PhaseManager:ExitPhaseFast(PhaseId.RegionMap)
         end
+    end
+
+    if topPhaseId ~= nil then
+        PhaseManager:PopPhase(topPhaseId)
     end
 end
 
@@ -517,6 +531,12 @@ function MapUtils.isTemporaryCustomMark(markInstId)
         return false
     end
     return markRuntimeData.isSelect
+end
+
+function MapUtils.getCustomMarkDefaultName(levelId, isTemporaryCustomMark)
+    local markCount = GameInstance.player.mapManager:GetQuickSearchCustomMarkCountByLevel(levelId)
+    local defaultIndex = isTemporaryCustomMark and markCount or markCount
+    return string.format("%s%d", Language.LUA_MAP_CUSTOM_MARK_EDIT_NAME, defaultIndex)
 end
 
 MapUtils.DETECTOR_TYPE_CONFIG = {

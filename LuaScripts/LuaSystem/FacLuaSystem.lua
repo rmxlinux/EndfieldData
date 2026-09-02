@@ -545,13 +545,7 @@ FacLuaSystem.GetBlueprintFromBatchSelectTargets = HL.Method().Return(HL.Opt(CS.B
 end
 
 FacLuaSystem.GetCurBatchSelectTargetCount = HL.Method().Return(HL.Number) << function(self)
-    local count = 0
-    if self.batchSelectTargets then
-        for _, _ in pairs(self.batchSelectTargets) do
-            count = count + 1
-        end
-    end
-    return count
+    return GameInstance.remoteFactoryManager.batchSelect.selectedBlueprintNodeCount
 end
 
 

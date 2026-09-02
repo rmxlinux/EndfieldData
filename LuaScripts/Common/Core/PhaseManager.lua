@@ -42,6 +42,8 @@ PhaseManager.m_cacheRoot = HL.Field(Transform)
 
 PhaseManager.m_isExitingAll = HL.Field(HL.Boolean) << false
 
+PhaseManager.m_phaseForbiddenConfig = HL.Field(HL.Table)
+
 
 PhaseManager.m_effectLodControlBlockers = HL.Field(HL.Table)
 
@@ -67,6 +69,7 @@ PhaseManager.PhaseManager = HL.Constructor() << function(self)
     self.m_waitingQueue = require_ex("Common/Utils/DataStructure/Queue")()
     self.m_cacheTable = {}
     self.m_effectLodControlBlockers = {}
+    self.m_phaseForbiddenConfig = {}
     self.m_resourceLoader = luaLoader.LuaResourceLoader()
     local cacheRoot = GameObject("PhaseCacheRoot")
     GameObject.DontDestroyOnLoad(cacheRoot)
@@ -85,6 +88,8 @@ PhaseManager.PhaseManager = HL.Constructor() << function(self)
         local reason = unpack(arg)
         if reason == CS.Beyond.EventSystemConst.ExitAllPhaseReason.SEAMLESS_LOADING then
             self:_ExitOnSeamlessLoading()
+        elseif reason == CS.Beyond.EventSystemConst.ExitAllPhaseReason.ON_MAP_CLOSE then
+            self:_ExitOnMapClose()
         else
             self:_ExitAndCloseAll()
         end
@@ -318,17 +323,17 @@ PhaseManager._IsPhaseInTransitionRef = HL.Method(HL.Forward("PhaseBase")).Return
     return false
 end
 
-PhaseManager.ExitPhaseFast = HL.Method(HL.Number) << function(self, phaseId)
+PhaseManager.ExitPhaseFast = HL.Method(HL.Number).Return(HL.Boolean) << function(self, phaseId)
     logger.info("PhaseManager.ExitPhaseFast", phaseId, self:GetPhaseName(phaseId))
 
     if self.m_isExitingAll then
         logger.info("Phase isExitingAll, ExitPhaseFast Fail", phaseId, self:GetPhaseName(phaseId))
-        return
+        return false
     end
 
     if self.m_phaseStack:Empty() then
         logger.error("Phase Stack Is Empty", phaseId, self.phaseId2Names[phaseId])
-        return
+        return false
     end
 
     local startTime = Time.realtimeSinceStartupAsDouble
@@ -338,7 +343,7 @@ PhaseManager.ExitPhaseFast = HL.Method(HL.Number) << function(self, phaseId)
             logger.critical("PhaseManager.ExitPhaseFast 跳过：phase 正被当前 transition 协程引用",
                 phaseId, self:GetPhaseName(phaseId),
                 "m_curState=", self.m_curState, "phase.state=", phase.state)
-            return
+            return false
         end
         self.m_curState = Const.PhaseState.Pop
         local isExitTopPhase = phase == self.m_phaseStack:Peek()
@@ -355,9 +360,12 @@ PhaseManager.ExitPhaseFast = HL.Method(HL.Number) << function(self, phaseId)
         self.m_curState = Const.PhaseState.Idle
     else
         logger.error("Phase Not Found", phaseId, self.phaseId2Names[phaseId])
+        self:_UpdateIsUsingSystemSceneCamera()
+        return false
     end
 
     self:_UpdateIsUsingSystemSceneCamera()
+    return true
 end
 
 PhaseManager.ExitPhaseFastTo = HL.Method(HL.Number, HL.Opt(HL.Boolean)) << function(self, targetPhaseId, forceExit)
@@ -604,12 +612,31 @@ PhaseManager.IsPhaseForbidden = HL.Method(HL.Number).Return(HL.Boolean, HL.Any, 
     if cfg.cannotForbid then
         return false, nil, nil
     end
+    for _, forbiddenConfig in pairs(self.m_phaseForbiddenConfig) do
+        if forbiddenConfig[phaseId] then
+            return forbiddenConfig[phaseId].forbid, forbiddenConfig[phaseId].forbidStyle, forbiddenConfig[phaseId].forbidParams
+        end
+    end
     local isForbidden, forbidStyle = GameInstance.player.forbidSystem:IsPhaseForbidden(cfg.name)
     local forbidParams
     if isForbidden then
         forbidParams = GameInstance.player.forbidSystem:GetPhaseForbidParams(cfg.name)
     end
     return isForbidden, forbidStyle, forbidParams
+end
+
+
+
+
+
+
+
+PhaseManager.AddPhaseForbiddenConfig = HL.Method( HL.String, HL.Table) << function(self, type, forbiddenConfig)
+    self.m_phaseForbiddenConfig[type] = forbiddenConfig
+end
+
+PhaseManager.RemovePhaseForbiddenConfig = HL.Method(HL.String) << function(self, type)
+    self.m_phaseForbiddenConfig[type] = nil
 end
 
 PhaseManager.GetPhaseRedDotName = HL.Method(HL.Number).Return(HL.String) << function(self, phaseId)
@@ -674,6 +701,10 @@ end
 
 PhaseManager.CheckIsInTransition = HL.Method().Return(HL.Boolean) << function(self)
     return self.m_transCor ~= nil
+end
+
+PhaseManager.IsInPhaseTransition = HL.Method().Return(HL.Boolean) << function(self)
+    return self.m_curState ~= Const.PhaseState.Idle or self.m_transCor ~= nil
 end
 
 PhaseManager.CheckCanOpenPhase = HL.Method(HL.Number, HL.Opt(HL.Any, HL.Boolean)).Return(HL.Boolean, HL.Opt(HL.String, HL.String)) << function(self, phaseId, arg, considerIsOpen)
@@ -1036,6 +1067,7 @@ PhaseManager.ExitAllPhaseExceptLevel = HL.Method() << function(self)
         self.curPhase = nil
     end
     self:_OnTopPhaseChanged()
+    self:_UpdateIsUsingSystemSceneCamera()
     self.m_isExitingAll = false
 end
 
@@ -1044,13 +1076,19 @@ PhaseManager._ExitAndCloseAll = HL.Method(HL.Opt(HL.Table)) << function(self, cl
     UIManager:CloseAllUI(true, closeExceptPanelIds)
 end
 
-PhaseManager._ExitOnSeamlessLoading = HL.Method(HL.Opt(HL.Table)) << function(self)
+PhaseManager._ExitOnSeamlessLoading = HL.Method() << function(self)
+    self:_ExitOnMapClose()
+end
+
+PhaseManager._ExitOnMapClose = HL.Method() << function(self)
     self:ExitAllPhaseExceptLevel()
     
     local closeExceptPanelIds = {}
-    for _, panelId in pairs(PhaseConst.DONT_DESTROY_ON_SEAMLESS_LOADING) do
+    for _, panelId in ipairs(PhaseConst.DONT_DESTROY_ON_CLOSE_MAP) do
         table.insert(closeExceptPanelIds, PanelId[panelId])
     end
+    
+    Notify(MessageConst.ON_FAC_CHAPTER_RESET)
     UIManager:CloseAllUI(true, closeExceptPanelIds)
 end
 
@@ -1338,7 +1376,15 @@ PhaseManager.RecoverPhaseByArgs = HL.Method(HL.Table) << function(self, args)
     logger.info("PhaseManager.RecoverPhaseByArgs", args)
     self.isRecovering = true
     for _, v in ipairs(args) do
-        self:OpenPhaseFast(v.id, v.arg)
+        local phaseId = v.id
+        if phaseId == PhaseId.Level and self:IsOpen(phaseId) then
+            local phase = self.m_openedPhaseSet[PhaseId.Level]
+            if phase ~= nil then
+                phase:RefreshPhaseLevel()
+            end
+        else
+            self:OpenPhaseFast(phaseId, v.arg)
+        end
     end
     self.isRecovering = false
 end

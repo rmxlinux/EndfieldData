@@ -1,5 +1,7 @@
 local UIWidgetBase = require_ex('Common/Core/UIWidgetBase')
 
+local DEFAULT_DOMAIN_DEPOT_BG_ICON = "business_card_topic_normal_1"
+
 DomainDepotDeliveryCell = HL.Class('DomainDepotDeliveryCell', UIWidgetBase)
 
 DomainDepotDeliveryCell.m_deliveryId = HL.Field(HL.String) << "" 
@@ -167,13 +169,14 @@ DomainDepotDeliveryCell._UpdateInfo = HL.Method(HL.Userdata) << function(self, i
     }, true)
     self.view.itemSmallBlack:SetExtraInfo({ isSideTips = DeviceInfo.usingController })
 
+    local themeBgIcon = DEFAULT_DOMAIN_DEPOT_BG_ICON
     if roleId ~= 0 then
         local success, friendInfo = GameInstance.player.friendSystem:TryGetFriendInfo(roleId)
         if success then
             if friendInfo.businessCardTopicId ~= nil then
                 local topicSuccess, topicCfg = Tables.businessCardTopicTable:TryGetValue(friendInfo.businessCardTopicId)
                 if topicSuccess then
-                    self.view.themeBgImg:LoadSprite(UIConst.UI_BUSINESS_CARD_FRIEND_DOMAIN_DEPOT_ICON_PATH, topicCfg.id)
+                    themeBgIcon = topicCfg.id
                 else
                     logger.error("未找到名片主题配置 " .. friendInfo.businessCardTopicId)
                 end
@@ -184,6 +187,7 @@ DomainDepotDeliveryCell._UpdateInfo = HL.Method(HL.Userdata) << function(self, i
             logger.error("DomainDepotDeliveryCell: 未找到好友信息，roleId: " .. roleId)
         end
     end
+    self.view.themeBgImg:LoadSprite(UIConst.UI_BUSINESS_CARD_FRIEND_DOMAIN_DEPOT_ICON_PATH, themeBgIcon)
 end
 
 HL.Commit(DomainDepotDeliveryCell)

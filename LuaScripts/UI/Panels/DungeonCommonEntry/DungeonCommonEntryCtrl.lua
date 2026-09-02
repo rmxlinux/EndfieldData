@@ -28,8 +28,6 @@ DungeonCommonEntryCtrl.m_tabDungeonIds = HL.Field(HL.Table)
 
 DungeonCommonEntryCtrl.m_haveHardMode = HL.Field(HL.Boolean) << false
 
-DungeonCommonEntryCtrl.m_fromDialog = HL.Field(HL.Boolean) << false
-
 DungeonCommonEntryCtrl.m_arg = HL.Field(HL.Table)
 
 
@@ -48,29 +46,10 @@ DungeonCommonEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnBtnCloseClick()
     end)
 
-    self.m_fromDialog = arg.fromDialog or false
     self.m_dungeonSeriesId = arg.dungeonSeriesId
     
     if not string.isEmpty(arg.dungeonId) then
         self.m_curSelectedDungeonId = arg.dungeonId
-    end
-
-    local needRecover = false
-    if lume.find(DungeonConst.UI_RESTORE_DUNGEON_CATEGORY, Tables.dungeonSeriesTable[self.m_dungeonSeriesId].gameCategory) ~= nil then
-        needRecover = true
-    end
-
-    if self.m_arg.enterDungeonCallback == nil then
-        self.m_arg.enterDungeonCallback = function(enterDungeonId)
-            if needRecover then
-                LuaSystemManager.uiRestoreSystem:AddRequest(enterDungeonId)
-            end
-
-            if self.m_fromDialog then
-                Notify(MessageConst.DIALOG_CHANGE_NEXT_INDEX, { phaseId = PHASE_ID, nextIndex = 1 })
-                PhaseManager:PopPhase(PHASE_ID)
-            end
-        end
     end
 
     self.m_dungeonTabCellCache = UIUtils.genCellCache(self.view.dungeonSelectionCell)
@@ -325,7 +304,7 @@ DungeonCommonEntryCtrl._GenCustomArgs = HL.Method().Return(HL.Table) << function
 end
 
 DungeonCommonEntryCtrl._OnBtnCloseClick = HL.Method() << function(self)
-    PhaseManager:PopPhase(PHASE_ID)
+    self.m_phase:RequestClose()
 end
 
 DungeonCommonEntryCtrl._OnDungeonTabClick = HL.Method(HL.Any, HL.String)

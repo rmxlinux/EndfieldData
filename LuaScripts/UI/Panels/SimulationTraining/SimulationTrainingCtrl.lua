@@ -72,6 +72,7 @@ local PHASE_ID = PhaseId.SimulationTraining
 
 
 
+
 SimulationTrainingCtrl = HL.Class('SimulationTrainingCtrl', uiCtrl.UICtrl)
 
 
@@ -448,8 +449,13 @@ end
 
 
 SimulationTrainingCtrl._HandleDouble = HL.Method() << function(self)
-    self:_HandleDrawCardVxPre()
-    self:_HandleDrawCardVxPost()
+    
+    if self.m_playDrawCardVxIng or self.m_playRewardSlideVxIng then
+        self:_RefreshDoubleRewardNumbers()
+    else
+        self:_UpdateRewardPointCells()
+    end
+    self:_UpdateMainState()
 end
 
 
@@ -976,8 +982,42 @@ end
 
 
 SimulationTrainingCtrl._UpdateOpenDoubleShow = HL.Method() << function(self)
+    
+    if self.m_playDrawCardVxIng or self.m_playRewardSlideVxIng then
+        self:_RefreshDoubleRewardNumbers()
+        return
+    end
     self:_CalRewardPointNumber()
     self:_UpdateRewardPointCells()
+end
+
+
+
+SimulationTrainingCtrl._RefreshDoubleRewardNumbers = HL.Method() << function(self)
+    if not self.m_luaIndex2rewardPointCell then
+        return
+    end
+    local curLevel = self.m_system.curLevel
+    local hasCfg, curLevelData = Tables.simulationTrainingLevelTable:TryGetValue(curLevel)
+    if not hasCfg then
+        return
+    end
+    for luaIndex, cell in pairs(self.m_luaIndex2rewardPointCell) do
+        local rewardNum = curLevelData.pointAward[luaIndex - 1]
+        if self.m_openDouble then
+            rewardNum = rewardNum + rewardNum
+        end
+        cell.rewardNumberTxt.text = rewardNum
+        if self.m_luaIndex2rewardNum then
+            self.m_luaIndex2rewardNum[luaIndex] = rewardNum
+        end
+        if luaIndex - 1 == self.m_curPointNumber % 11 then
+            GameInstance.player.simulationTrainingSystem.rewardScoreNumber = rewardNum
+        end
+    end
+    if self.m_unlimitedMode then
+        GameInstance.player.simulationTrainingSystem.rewardScoreNumber = 0
+    end
 end
 
 
@@ -1095,6 +1135,10 @@ SimulationTrainingCtrl._UpdateRewardPointVx = HL.Method() << function(self)
     end
 
     local config = self.view.config
+    if self.m_tween then
+        self.m_tween:Kill()
+        self.m_tween = nil
+    end
     self.m_tween = DOTween.To(function()
         self.view.rewardPointVxCell.gameObject:SetActive(true)
         lastCell.stateController:SetState("Normal")

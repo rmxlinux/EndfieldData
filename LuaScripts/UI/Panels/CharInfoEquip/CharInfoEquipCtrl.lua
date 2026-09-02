@@ -190,6 +190,7 @@ CharInfoEquipCtrl._InnerRefreshTacticalDetailPanel = HL.Method(HL.Table, HL.Opt(
     self.view.tacticalDetailNode.shrinkButton.gameObject:SetActive(canCompare and not isSameTactical and self.m_isInCompare)
     self.view.tacticalDetailNode.leftNode.gameObject:SetActive(showCompareNode)
     self:_ToggleCompareMask(showCompareNode)
+    self.view.btnEmpty.gameObject:SetActive(showCompareNode)
 end
 
 CharInfoEquipCtrl._ToggleCompareMask = HL.Method(HL.Boolean) << function(self, isOn)
@@ -615,7 +616,7 @@ CharInfoEquipCtrl._InitActionEvent = HL.Method() << function(self)
     end)
 
     self.view.enhanceBtn.onClick:AddListener(function()
-        PhaseManager:OpenPhase(PhaseId.EquipTech, {
+        PhaseManager:GoToPhase(PhaseId.EquipTech, {
             isEnhance = true,
             equipInstId = self.m_curCompareEquipInstId,
         })

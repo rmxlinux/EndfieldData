@@ -806,6 +806,23 @@ InventoryArea._OnNaviTargetToSelectFluid = HL.Method(HL.Table) << function(self,
 end
 
 InventoryArea.AddNaviGroupSwitchInfo = HL.Method(HL.Table) << function(self, naviGroupInfos)
+    
+    if naviGroupInfos[1] ~= nil then
+        local ctrl = self:GetUICtrl()
+        if naviGroupInfos[1].subGroups == nil then
+            naviGroupInfos[1].subGroups = {}
+        end
+        if ctrl.view.formulaNode then
+            local contentNaviGroup = ctrl.view.formulaNode.view.contentNaviGroup
+            table.insert(naviGroupInfos[1].subGroups, contentNaviGroup)
+            contentNaviGroup:TryChangeNaviPartnerOnLeft(self.m_itemBagNaviGroup, true)
+            contentNaviGroup:TryChangeNaviPartnerOnLeft(self.m_depotNaviGroup, true)
+        end
+        if ctrl.view.buildingCommon then
+            table.insert(naviGroupInfos[1].subGroups, ctrl.view.buildingCommon.view.buttonsNaviGroup)
+        end
+    end
+
     if self.m_isItemBag then
         table.insert(naviGroupInfos, self:GetItemBagNaviGroupSwitchInfo())
     else

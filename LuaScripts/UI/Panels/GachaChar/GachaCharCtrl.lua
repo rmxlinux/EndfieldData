@@ -405,7 +405,10 @@ GachaCharCtrl._Show6StarNameUI = HL.Method() << function(self)
 end
 
 GachaCharCtrl._UpdateItemCell = HL.Method(HL.Table, HL.String, HL.Number) << function(self, cell, itemId, count)
-    local itemData = Tables.itemTable[itemId]
+    local _, itemData = Tables.itemTable:TryGetValue(itemId)
+    if not itemData then
+        return
+    end
     cell.itemIcon:InitItemIcon(itemId)
     cell.countTxt.text = string.format("×%d", count)
     cell.rarityImg.color = UIUtils.getItemRarityColor(itemData.rarity)

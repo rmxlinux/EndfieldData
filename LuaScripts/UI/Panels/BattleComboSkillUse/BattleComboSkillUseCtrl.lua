@@ -66,6 +66,9 @@ BattleComboSkillUseCtrl.OnBattleTeamChanged = HL.Method(HL.Opt(HL.Table)) << fun
 end
 
 BattleComboSkillUseCtrl.OnComboSkillStart = HL.Method(HL.Table) << function(self, args)
+    if not self:IsShow() then
+        return
+    end
     local charIndex = LuaIndex(unpack(args))
     local useObj = self.m_comboSkillUseList[charIndex]
     useObj.anim:ClearTween() 

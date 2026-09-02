@@ -26,24 +26,6 @@ CommonTaskTrackToastCtrl.m_showingToastCor = HL.Field(HL.Thread)
 
 
 
-CommonTaskTrackToastCtrl.s_cachedCompleteResult = HL.StaticField(HL.Table)
-
-
-
-CommonTaskTrackToastCtrl.OnDungeonComplete = HL.StaticMethod(HL.Any) << function(args)
-    local isNewTimeRecord, curGameTimeRecord = unpack(args)
-    if CommonTaskTrackToastCtrl.s_cachedCompleteResult == nil then
-        CommonTaskTrackToastCtrl.s_cachedCompleteResult = {}
-    end
-
-    CommonTaskTrackToastCtrl.s_cachedCompleteResult.isNewTimeRecord = isNewTimeRecord
-    CommonTaskTrackToastCtrl.s_cachedCompleteResult.curGameTimeRecord = curGameTimeRecord
-end
-
-
-
-
-
 
 
 CommonTaskTrackToastCtrl.s_messages = HL.StaticField(HL.Table) << {
@@ -52,7 +34,6 @@ CommonTaskTrackToastCtrl.s_messages = HL.StaticField(HL.Table) << {
 
 CommonTaskTrackToastCtrl.OnShowCommonTaskCountdownToast = HL.StaticMethod(HL.Any) << function(args)
     LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackStartCountdown", function()
-        
         local ctrl = CommonTaskTrackToastCtrl.AutoOpen(PANEL_ID, nil, true)
         if ctrl == nil then
             return
@@ -64,7 +45,6 @@ end
 
 CommonTaskTrackToastCtrl.OnShowCommonTaskStartToast = HL.StaticMethod(HL.Any) << function(args)
     LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackStartToast", function()
-        
         local ctrl = CommonTaskTrackToastCtrl.AutoOpen(PANEL_ID, nil, true)
         if ctrl == nil then
             return
@@ -81,14 +61,18 @@ CommonTaskTrackToastCtrl.OnShowCommonTaskStartToast = HL.StaticMethod(HL.Any) <<
 end
 
 CommonTaskTrackToastCtrl.OnShowCommonTaskFinishToast = HL.StaticMethod(HL.Any) << function(args)
+    local id = unpack(args)
+    local subGame = GameWorld.worldInfo.subGame
+    local needShowTimeInfo = subGame.gameData.showTimeInfoOnFinishToast
+    local passTime = needShowTimeInfo and subGame.passTimeMs or nil
+    local isPassNewTimeRecord = needShowTimeInfo and subGame.isPassNewTimeRecord
     LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackEndToast", function()
-        
         local ctrl = CommonTaskTrackToastCtrl.AutoOpen(PANEL_ID, nil, true)
         if ctrl == nil then
             return
         end
 
-        ctrl:ShowTaskFinishToast(args, function()
+        ctrl:ShowTaskFinishToast({ id, passTime, isPassNewTimeRecord }, function()
             Notify(MessageConst.ON_ONE_COMMON_TASK_PANEL_FINISH, "TrackEndToast")
         end)
     end, function()
@@ -98,7 +82,6 @@ end
 
 CommonTaskTrackToastCtrl.OnShowCommonTaskFailToast = HL.StaticMethod(HL.Any) << function(args)
     LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackEndToast", function()
-        
         local ctrl = CommonTaskTrackToastCtrl.AutoOpen(PANEL_ID, nil, true)
         if ctrl == nil then
             return
@@ -114,7 +97,6 @@ end
 
 CommonTaskTrackToastCtrl.OnShowCommonTaskStartToastWithoutId = HL.StaticMethod(HL.Any) << function(args)
     LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackStartToast", function()
-        
         local ctrl = CommonTaskTrackToastCtrl.AutoOpen(PANEL_ID, nil, true)
         if ctrl == nil then
             return
@@ -131,7 +113,6 @@ end
 
 CommonTaskTrackToastCtrl.OnShowCommonTaskFinishToastWithoutId = HL.StaticMethod(HL.Any) << function(args)
     LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackEndToast", function()
-        
         local ctrl = CommonTaskTrackToastCtrl.AutoOpen(PANEL_ID, nil, true)
         if ctrl == nil then
             return
@@ -147,7 +128,6 @@ end
 
 CommonTaskTrackToastCtrl.OnShowCommonTaskFailToastWithoutId = HL.StaticMethod(HL.Any) << function(args)
     LuaSystemManager.commonTaskTrackSystem:AddRequest("TrackEndToast", function()
-        
         local ctrl = CommonTaskTrackToastCtrl.AutoOpen(PANEL_ID, nil, true)
         if ctrl == nil then
             return
@@ -173,8 +153,6 @@ CommonTaskTrackToastCtrl.OnClose = HL.Override() << function(self)
     if self.m_showingToastCor then
         self.m_showingToastCor = self:_ClearCoroutine(self.m_showingToastCor)
     end
-
-    CommonTaskTrackToastCtrl.s_cachedCompleteResult = nil
 end
 
 CommonTaskTrackToastCtrl._IsWorldFreeze = HL.Method().Return(HL.Boolean) << function(self)
@@ -185,8 +163,20 @@ end
 CommonTaskTrackToastCtrl.ShowCountdownToast = HL.Method(HL.Any, HL.Opt(HL.Function)) << function(self, args, endFunc)
     self:Notify(MessageConst.ON_HUD_BTN_VISIBLE_CHANGE, {false})
 
-    local countdownDuration, cb = unpack(args)
+    local countdownDuration, preparePhaseUIType, cb = unpack(args)
     local toast = Utils.wrapLuaNode(self:_CreateToastGO(CountdownToast))
+    local isParkourCountdown = preparePhaseUIType == "Parkour"
+    if string.isEmpty(preparePhaseUIType) then
+        toast.stateController:SetState("Normal")
+    else
+        toast.stateController:SetState(preparePhaseUIType)
+        if isParkourCountdown then
+            if toast.parkourNodeAnim then
+                toast.parkourNodeAnim:PlayWithTween("toast_cuntdowntoast_parkour_in")
+            end
+            AudioAdapter.PostEvent("Au_UI_Toast_ParkourCountDown_Open")
+        end
+    end
     toast.contentTimeStart.gameObject:SetActiveIfNecessary(false)
     toast.contentTimeNumber.gameObject:SetActiveIfNecessary(true)
 
@@ -223,18 +213,17 @@ CommonTaskTrackToastCtrl.ShowCountdownToast = HL.Method(HL.Any, HL.Opt(HL.Functi
 
         if tickTimes < endTimes then
             self:Notify(MessageConst.ON_HUD_BTN_VISIBLE_CHANGE, {true})
-            toast.animationWrapper:PlayOutAnimation(function()
-                self:Close()
-
-                if not string.isEmpty(GameWorld.worldInfo.curSubGameId) and cb ~= nil then
-                    cb()
-                end
-
-                if endFunc then
-                    endFunc()
-                end
-            end)
+            if isParkourCountdown then
+                AudioAdapter.PostEvent("Au_UI_Toast_ParkourCountDown_Close")
+            end
+            if not string.isEmpty(GameWorld.worldInfo.curSubGameId) and cb ~= nil then
+                cb()
+            end
+            if endFunc then
+                endFunc()
+            end
             self.m_countDownTickId = LuaUpdate:Remove(self.m_countDownTickId)
+            self:Close()
         end
     end)
 end
@@ -296,7 +285,7 @@ end
 
 CommonTaskTrackToastCtrl._RefreshToast = HL.Method(HL.String, HL.Any, HL.Opt(HL.Function))
         << function(self, toastType, args, endFunc)
-    local instId, isNewRecord, passTime = unpack(args)
+    local instId, passTime, isNewRecord = unpack(args)
     local taskTitle = ""
     local taskDesc = ""
     local hasTableData, gameMechanicData = Tables.gameMechanicTable:TryGetValue(instId)
@@ -346,9 +335,10 @@ CommonTaskTrackToastCtrl._RefreshToast = HL.Method(HL.String, HL.Any, HL.Opt(HL.
     local toastIcon = toastIconValid and gameCategoryCfg.toastIcon or DEFAULT_ICON
 
     
-    if hasTableData and lume.find(showTimeRecordCategoryList, gameMechanicData.gameCategory) ~= nil and
-            CommonTaskTrackToastCtrl.s_cachedCompleteResult then
-        passTime = CommonTaskTrackToastCtrl.s_cachedCompleteResult.curGameTimeRecord
+    if hasTableData and lume.find(showTimeRecordCategoryList, gameMechanicData.gameCategory) ~= nil then
+        
+        
+        passTime = GameWorld.worldInfo.subGame.passTimeMs
     end
     
 

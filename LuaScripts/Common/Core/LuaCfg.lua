@@ -57,6 +57,15 @@ LuaCfg.Types = Types
 
 
 hg.curEnvLang = CS.Beyond.I18n.I18nUtils.curEnvLang:GetHashCode()
+local function IsServerTimeTextId(id)
+    local serverTimeTable = Tables.i18nTextServerTimeIdTable
+    if serverTimeTable == nil then
+        return false
+    end
+    local foundServerTimeId = serverTimeTable:TryGetValue(id)
+    return foundServerTimeId
+end
+
 local function I18nGetText(id, text, ...)
     if UNITY_EDITOR then
         CS.Beyond.I18n.I18nUtils.RecordTextId(id)
@@ -75,7 +84,7 @@ local function I18nGetText(id, text, ...)
         end
     end
 
-    if hg.curEnvLang == 0 and text ~= nil and text ~= '' then
+    if hg.curEnvLang == 0 and text ~= nil and text ~= '' and not IsServerTimeTextId(id) then
         if id == 0 then
             if BEYOND_DEBUG_COMMAND then
                 return '*' .. text
@@ -127,6 +136,22 @@ local function I18nGetText(id, text, ...)
                     Notify(MessageConst.SHOW_TOAST, string.format("使用了文本热更表里的热更文本 id(%d)text(%s)", id, patchText))
                 end
                 return patchText
+            end
+        end
+
+        local serverText = CS.Beyond.I18n.I18nServerTextManager.instance:GetText(id, hg.curEnvLang)
+        if serverText ~= '' then
+            if BEYOND_DEBUG_COMMAND then
+                Notify(MessageConst.SHOW_TOAST, string.format("使用了服务器下发的多语言文本 id(%d)text(%s)", id, serverText))
+            end
+            return serverText
+        end
+
+        if IsServerTimeTextId(id) then
+            if BEYOND_DEBUG_COMMAND then
+                return string.format("<color=red>!!ERROR!!No i18n server data for this text. TextId: %X</color>", id)
+            else
+                return ''
             end
         end
 

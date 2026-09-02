@@ -187,6 +187,8 @@ CharInfoTalentCtrl._CheckIsPanelFastEnter = HL.Method(HL.Table, HL.Table).Return
     if extraArg.showSkillGroupType or extraArg.showPassiveSkillId or extraArg.showCharBreakNodeId then
         return true
     end
+
+    return false
 end
 
 CharInfoTalentCtrl._GetEnterAnimName = HL.Method().Return(HL.String) << function(self)
@@ -354,10 +356,14 @@ CharInfoTalentCtrl.TryClose = HL.Method() << function(self)
     if self.m_isExpanding then
         self:_ToggleExpandNode(false)
     else
-        self.view.animation:Play("charinfo_talent_default_out")
-        self:Notify(MessageConst.CHAR_INFO_PAGE_CHANGE, {
-            pageType = UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
-        })
+        if self.m_arg.extraArg and self.m_arg.extraArg.onBack then
+            self.m_arg.extraArg.onBack()
+        else
+            self.view.animation:Play("charinfo_talent_default_out")
+            self:Notify(MessageConst.CHAR_INFO_PAGE_CHANGE, {
+                pageType = UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
+            })
+        end
     end
 end
 

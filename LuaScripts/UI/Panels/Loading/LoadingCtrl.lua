@@ -33,6 +33,8 @@ LoadingCtrl.OnClose = HL.Override() << function(self)
     
     UIManager:RemoveMainCameraTempRequest("Loading")
     self.view.bgImg:ReleaseSprite()
+    self.view.logoImage:ReleaseSprite()
+    self.view.maskImg:ReleaseSprite()
 end
 
 LoadingCtrl.OpenLoadingPanel = HL.StaticMethod(HL.Opt(HL.Table)) << function(args)
@@ -43,15 +45,7 @@ LoadingCtrl.OpenLoadingPanel = HL.StaticMethod(HL.Opt(HL.Table)) << function(arg
     self.m_isClosing = false
 
     self:_Init(args)
-    if not isShowing then
-        GameInstance.SetBurstMode(false, GameInstance.EBurstModeReason.LoadingUI)
-        self:_StartTimer(0.5, function()
-            
-            if UIManager:IsShow(PANEL_ID) and not self:IsPlayingAnimationOut() and not self.m_isClosing then
-                GameInstance.SetBurstMode(true, GameInstance.EBurstModeReason.LoadingUI)
-            end
-        end)
-    end
+    GameInstance.SetBurstMode(true, GameInstance.EBurstModeReason.LoadingUI)
 end
 
 LoadingCtrl.m_extraLoadingSystems = HL.Field(HL.Table)

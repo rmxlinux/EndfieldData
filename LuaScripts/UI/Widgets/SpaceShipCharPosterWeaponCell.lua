@@ -49,6 +49,10 @@ SpaceShipCharPosterWeaponCell.SetSelectIndex = HL.Method(HL.Opt(HL.Number)) << f
     else
         self.view.extra.selectedMarkMulti.gameObject:SetActive(false)
     end
+    InputManagerInst:SetBindingText(
+        self.view.item.view.button.hoverConfirmBindingId,
+        index and Language.key_hint_common_unselect or Language.key_hint_common_select
+    )
 end
 
 HL.Commit(SpaceShipCharPosterWeaponCell)

@@ -13,22 +13,32 @@ FacDecoObtainWaysCtrl.m_getItemCell = HL.Field(HL.Function)
 
 FacDecoObtainWaysCtrl.m_itemId = HL.Field(HL.String) << ""
 
-local SHIELD_OBTAIN_WAY = "item_obtain_mission_main"
+local SHIELD_OBTAIN_WAY = {"item_obtain_mission_main", "item_obtain_mission"}
 local SHIELD_PHASE= "FacDecoObtainWays"
 local RED_DOT_DECO_BUILDING_OBTAIN_WAY = "DecoBuildingObtainWay"
 
 local ConditionHandleInfoTable = {
     [GEnums.ConditionType.MissionStateEqual] = {
-        GetProgress = function()
-            local _,desc = Utils.getCurMissionIdAndDesc("activity")
-            return desc
+        GetProgress = function(condition)
+            local missionId = condition.parameters[0].valueStringList[0]
+            local info = GameInstance.player.mission:GetMissionMetaAsset(missionId)
+            if info.missionType == CS.Beyond.Gameplay.MissionSystem.MissionType.Main then
+                local _,desc = Utils.getCurMissionIdAndDesc("activity")
+                return desc
+            else
+                if GameInstance.player.mission:GetMissionState(missionId) == CS.Beyond.Gameplay.MissionSystem.MissionState.Completed then
+                    return Language.LUA_FAC_DECO_BUILDING_OBTAIN_WAY_COMPLETE
+                else
+                    return Language.LUA_FAC_DECO_BUILDING_OBTAIN_WAY_NOT_COMPLETE
+                end
+            end
         end,
         IsComplete = function(condition)
             return GameInstance.player.mission:GetMissionState(condition.parameters[0].valueStringList[0]) == CS.Beyond.Gameplay.MissionSystem.MissionState.Completed
         end
     },
     [GEnums.ConditionType.QuestStateEqual] = {
-        GetProgress = function()
+        GetProgress = function(condition)
             local _,desc = Utils.getCurMissionIdAndDesc("activity")
             return desc
         end,
@@ -90,9 +100,12 @@ FacDecoObtainWaysCtrl._GenerateObtainInfoList = HL.Method(HL.String).Return(HL.T
     local itemCfg = Tables.itemTable:GetValue(itemId)
     if itemCfg.obtainWayIds then
         for k, obtainWayId in pairs(itemCfg.obtainWayIds) do
-            if obtainWayId == SHIELD_OBTAIN_WAY then
-                goto continue
+            for _, shieldObtainWay in ipairs(SHIELD_OBTAIN_WAY) do
+                if obtainWayId == shieldObtainWay then
+                    goto continue
+                end
             end
+
             local _, obtainWayCfg = Tables.systemJumpTable:TryGetValue(obtainWayId)
             if obtainWayCfg then
                 if obtainWayCfg.phaseId == SHIELD_PHASE then
@@ -219,7 +232,7 @@ FacDecoObtainWaysCtrl._GenerateTaskInfoList = HL.Method(HL.String).Return(HL.Tab
 
             local taskParam = ConditionHandleInfoTable[conditionInfo.conditionType]
             if taskParam ~= nil then
-                taskInfo.desc = string.format(conditionInfo.desc, taskParam.GetProgress())
+                taskInfo.desc = string.format(conditionInfo.desc, taskParam.GetProgress(conditionInfo))
                 taskInfo.missionId = conditionInfo.parameters[0].valueStringList[0]
                 local isComplete = taskParam.IsComplete(conditionInfo)
                 taskInfo.isComplete = isComplete

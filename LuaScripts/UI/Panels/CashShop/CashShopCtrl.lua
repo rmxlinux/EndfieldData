@@ -69,12 +69,6 @@ CashShopCtrl.OnPhaseRefresh = HL.Override(HL.Opt(HL.Any)) << function(self, arg)
     self:_ProcessArg(arg)
 end
 
-CashShopCtrl.OnSortingOrderChange = HL.Override(HL.Number, HL.Boolean) << function(self, order, isInit)
-    CashShopCtrl.Super.OnSortingOrderChange(self, order, isInit)
-    self.view.walletBarPlaceholder.gameObject:SetActive(false)
-    self.view.walletBarPlaceholder.gameObject:SetActive(true)
-end
-
 CashShopCtrl._InitAction = HL.Method() << function(self)
     self.view.btnClose.onClick:AddListener(function()
         self.m_phase:OnClickCloseButton()
@@ -259,6 +253,13 @@ end
 CashShopCtrl._ClickCategory = HL.Method(HL.String) << function(self, categoryId)
     if self.m_phase.currCategoryId == categoryId then
         return
+    end
+    
+    for _, panelItem in pairs(self.m_phase.m_panel2Item) do
+        local ctrl = panelItem.uiCtrl
+        if ctrl ~= nil and HL.TryGet(ctrl, "OnBeforeCashShopCategoryChange") then
+            ctrl:OnBeforeCashShopCategoryChange()
+        end
     end
     self.view.walletBarPlaceholder:InitWalletBarPlaceholder({})
     self.m_phase:OpenCategory(categoryId)

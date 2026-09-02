@@ -4,10 +4,11 @@ local PANEL_ID = PanelId.ActivityLimitedFormulaAssistRegion
 
 ActivityLimitedFormulaAssistRegionCtrl = HL.Class('ActivityLimitedFormulaAssistRegionCtrl', uiCtrl.UICtrl)
 
-local ACHIEVEMENT_ID = "achv_event_formula"
+local ACHIEVEMENT_ID = "achv_event_formula2"
 local START_STAGE_INDEX = 1
 local FINAL_STAGE_INDEX = 3
-local STAGE_2_COMPLETE_TARGET_NUMBER = 800000
+local STAGE_2_COMPLETE_TARGET_NUMBER = 150000
+
 local STAGE_STATE_TO_POINT_STATE_MAP = {
     [GEnums.ActivityConditionalStageState.Locked] = "None",
     [GEnums.ActivityConditionalStageState.Unlocked] = "Doing",
@@ -18,15 +19,13 @@ local STAGE_STATE_TO_POINT_STATE_MAP = {
 ActivityLimitedFormulaAssistRegionCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_ACTIVITY_UPDATED] = '_OnActivityUpdated',
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = '_OnActivityUpdated',
-    [MessageConst.ON_ACHIEVEMENT_UPDATE] = '_OnAchievementUpdated',
+    
     [MessageConst.ON_WALLET_CHANGED] = '_OnWalletChanged',
 }
 
 ActivityLimitedFormulaAssistRegionCtrl.m_activityId = HL.Field(HL.String) << ''
 
 ActivityLimitedFormulaAssistRegionCtrl.m_activityCfgData = HL.Field(HL.Any)
-
-ActivityLimitedFormulaAssistRegionCtrl.m_achievementCfgData = HL.Field(HL.Any)
 
 ActivityLimitedFormulaAssistRegionCtrl.m_achievementState = HL.Field(HL.String) << ""
 
@@ -48,7 +47,6 @@ ActivityLimitedFormulaAssistRegionCtrl.OnCreate = HL.Override(HL.Any) << functio
         logger.error("限时配方活动数据不存在：", self.m_activityId)
     end
     self.m_activityCfgData = Tables.activityLimitedFormulaTable:GetValue(self.m_activityId)
-    self.m_achievementCfgData = Tables.achievementTable[ACHIEVEMENT_ID]
     self.m_activityData = GameInstance.player.activitySystem:GetActivity(self.m_activityId)
 
     local stageData = Tables.activityConditionalMultiStageTable:GetValue(self.m_activityId)
@@ -92,13 +90,19 @@ ActivityLimitedFormulaAssistRegionCtrl.OnCreate = HL.Override(HL.Any) << functio
         end
         return prefix .. UIUtils.getLeftTime(leftTime)
     end
+    local timeOnComplete
     local endStageTime = self.m_activityData.endTime
-    
-    
-    
-    
-    
-    self.view.activityCommonInfo.view.infoNode.countDownWidget:InitCountDownText(endStageTime, args.timeOnComplete, timeFormatFunc)
+    if self.m_isEndStage then
+        endStageTime = self.m_activityData.endTime
+    else
+        timeOnComplete = function()
+            self:_UpdateActivityData()
+            self:_UpdateActivityNode()
+            self.view.activityCommonInfo.view.infoNode.countDownWidget:InitCountDownText(self.m_activityData.endTime, nil, timeFormatFunc)
+        end
+        endStageTime = Utils.getTimeIdOpenTimeStamp(stageData.stageList[self.m_activityCfgData.endStageId].timeId)
+    end
+    self.view.activityCommonInfo.view.infoNode.countDownWidget:InitCountDownText(endStageTime, timeOnComplete, timeFormatFunc)
     self.view.activityCommonInfo.view.gotoNode.btnDetailRedDot:InitRedDot("ActivityLimitedFormula", self.m_activityId)
 
     self.view.shopEntryNode.shopBtn.onClick:AddListener(function()
@@ -107,7 +111,7 @@ ActivityLimitedFormulaAssistRegionCtrl.OnCreate = HL.Override(HL.Any) << functio
             if self.m_isEndStage then
                 Notify(MessageConst.SHOW_TOAST, Language.LUA_LIMITED_FORMULA_SHOP_ENDLOCK_CLICK_TOAST)
             else
-                Notify(MessageConst.SHOW_TOAST, Language.LUA_LIMITED_FORMULA_SHOP_LOCK_CLICK_TOAST)
+                Notify(MessageConst.SHOW_TOAST, Language.LUA_LIMITED_FORMULA_V2_SHOP_LOCK_CLICK_TOAST)
             end
             return
         end
@@ -123,16 +127,14 @@ ActivityLimitedFormulaAssistRegionCtrl.OnCreate = HL.Override(HL.Any) << functio
                     local toast = string.format(data.lockToast, UIUtils.getLeftTime(leftTime))
                     Notify(MessageConst.SHOW_TOAST, toast)
                 end
-            end,
-            
-            activityEndTime = self.m_activityData.endTime,
-            activityBannerImage = "Shop/ShopCommon/shop_banner_02"
+            end
         })
     end)
 
-    self.view.missionNode.medalBtn.onClick:AddListener(function()
-        Notify(MessageConst.SHOW_ACHIEVEMENT, ACHIEVEMENT_ID)
-    end)
+    
+    
+    
+    self.view.dungeonMedalCell:InitCommonMedalNode(ACHIEVEMENT_ID)
 
     self:_UpdateActivityNode()
 end
@@ -156,38 +158,38 @@ ActivityLimitedFormulaAssistRegionCtrl._OnActivityUpdated = HL.Method(HL.Any) <<
 end
 
 ActivityLimitedFormulaAssistRegionCtrl._OnAchievementUpdated = HL.Method(HL.Any) << function(self, arg)
-    if arg == nil then
-        return
-    end
-    local bundles = unpack(arg)
-    for _, bundle in pairs(bundles) do
-        if bundle ~= nil and bundle.achievementId == ACHIEVEMENT_ID then
-            
-            local achievementSystem = GameInstance.player.achievementSystem
-            local succ, playerInfo = achievementSystem.achievementData.achievementInfos:TryGetValue(ACHIEVEMENT_ID)
-            local level = succ and playerInfo.level or 0
-            local obtained = succ and playerInfo.level >= self.m_achievementCfgData.initLevel
-            local plated = succ and playerInfo.isPlated
-            local achievementState
-            if plated then
-                achievementState = "Rare"
-            elseif obtained then
-                achievementState = "Normal"
-            else
-                achievementState = "Empty"
-            end
-            self.view.missionNode.medalNode:SetState(achievementState)
-            if achievementState ~= "Empty" then
-                self.view.missionNode.mainMedal:InitMedal({
-                    achievementId = ACHIEVEMENT_ID,
-                    level = level,
-                    isPlated = plated,
-                    isRare = self.m_achievementCfgData.applyRareEffect,
-                })
-            end
-            break
-        end
-    end
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 end
 
 ActivityLimitedFormulaAssistRegionCtrl._OnWalletChanged = HL.Method(HL.Opt(HL.Any)) << function(self, _)
@@ -209,18 +211,10 @@ ActivityLimitedFormulaAssistRegionCtrl._UpdateActivityData = HL.Method() << func
             end
         end
     end
-    local endStageInfo = self.m_activityData:GetStageData(self.m_activityCfgData.endStageId)
-    if endStageInfo then
-        local engStageStatus = GEnums.ActivityConditionalStageState.__CastFrom(endStageInfo.Status)
-        if engStageStatus ~= GEnums.ActivityConditionalStageState.Locked then
-            self.m_isEndStage = true
-        end
-    else
-        for i = #self.m_stageList, 1, -1 do
-            if self.m_stageList[i].id == self.m_activityCfgData.endStageId then
-                self.m_isEndStage = self.m_stageList[i].startTime <= DateTimeUtils.GetCurrentTimestampBySeconds()
-                break
-            end
+    for i = #self.m_stageList, 1, -1 do
+        if self.m_stageList[i].id == self.m_activityCfgData.endStageId then
+            self.m_isEndStage = self.m_stageList[i].startTime <= DateTimeUtils.GetCurrentTimestampBySeconds()
+            break
         end
     end
 end
@@ -246,6 +240,9 @@ ActivityLimitedFormulaAssistRegionCtrl._UpdateActivityNode = HL.Method() << func
     end
 
     
+    self.view.btnText.text = (self.m_curStageState == GEnums.ActivityConditionalStageState.Completed) and Language.LUA_LIMITED_FORMULA_V2_BTN_TEXT or Language["ui_activity_center_enter"]
+
+    
     for i = START_STAGE_INDEX, FINAL_STAGE_INDEX do
         local pointController = self.view.missionNode["pointCell" .. i]
         if i < self.m_curStageIndex then
@@ -258,7 +255,24 @@ ActivityLimitedFormulaAssistRegionCtrl._UpdateActivityNode = HL.Method() << func
     end
 
     
-    self.view.missionNode.progBar.fillAmount = (self.m_curStageIndex - START_STAGE_INDEX) / (FINAL_STAGE_INDEX - START_STAGE_INDEX)
+    if self.m_curStageIndex == 1 then
+        if self.m_curStageState ~= GEnums.ActivityConditionalStageState.Completed then
+            self.view.missionNode.progBar.fillAmount = 0.0
+        else
+            local cur = DateTimeUtils.GetCurrentTimestampBySeconds()
+            local lerpBar = (cur - self.m_stageList[1].startTime) / (self.m_stageList[2].startTime - self.m_stageList[1].startTime)
+            self.view.missionNode.progBar.fillAmount = lerpBar * 0.5
+        end
+    elseif self.m_curStageIndex == 2 then
+        if self.m_curStageState ~= GEnums.ActivityConditionalStageState.Completed then
+            self.view.missionNode.progBar.fillAmount = 0.5
+        else
+            local count = self.m_activityData:GetActivityMoneyAccumulateAmount(self.m_activityCfgData.moneyId)
+            self.view.missionNode.progBar.fillAmount = 0.5 + (count / STAGE_2_COMPLETE_TARGET_NUMBER) * 0.5
+        end
+    else
+        self.view.missionNode.progBar.fillAmount = 1.0
+    end
 
     
     local curStageId = self.m_stageList[self.m_curStageIndex].id
@@ -279,28 +293,28 @@ ActivityLimitedFormulaAssistRegionCtrl._UpdateActivityNode = HL.Method() << func
     end
 
     
-    local achievementSystem = GameInstance.player.achievementSystem
-    local succ, playerInfo = achievementSystem.achievementData.achievementInfos:TryGetValue(ACHIEVEMENT_ID)
-    local level = succ and playerInfo.level or 0
-    local obtained = succ and playerInfo.level >= self.m_achievementCfgData.initLevel
-    local plated = succ and playerInfo.isPlated
-    local achievementState
-    if plated then
-        achievementState = "Rare"
-    elseif obtained then
-        achievementState = "Normal"
-    else
-        achievementState = "Empty"
-    end
-    self.view.missionNode.medalNode:SetState(achievementState)
-    if achievementState ~= "Empty" then
-        self.view.missionNode.mainMedal:InitMedal({
-            achievementId = ACHIEVEMENT_ID,
-            level = level,
-            isPlated = plated,
-            isRare = self.m_achievementCfgData.applyRareEffect,
-        })
-    end
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
 
     
     self.view.shopEntryNode.shopNumTxt.text = Utils.getItemCount(self.m_activityCfgData.moneyId)
@@ -326,6 +340,7 @@ ActivityLimitedFormulaAssistRegionCtrl._UpdateCompleteTitleThread = HL.Method(HL
                 coroutine.wait(1)
                 count = self.m_activityData:GetActivityMoneyAccumulateAmount(self.m_activityCfgData.moneyId)
                 self.view.missionNode.completeTips.text = string.format(rawText, count)
+                self.view.missionNode.progBar.fillAmount = 0.5 + (count / STAGE_2_COMPLETE_TARGET_NUMBER) * 0.5
             end
         end)
     end

@@ -1392,7 +1392,7 @@ end
 ShopTradeCtrl._OnClickGoodsTagCell = HL.Method(HL.Number) << function(self, luaIndex)
     if self.m_curSelectTagIndex ~= luaIndex then
         self:_OnChangeSelectTagUI(luaIndex)
-        self.view.goodsNode.goodsGroupList:ScrollToGroup(CSIndex(luaIndex), true, CS.Beyond.UI.UIScrollList.ScrollAlignType.Top)
+        self.view.goodsNode.goodsGroupList:ScrollToGroup(CSIndex(luaIndex), true)
     end
 end
 
@@ -1435,7 +1435,6 @@ ShopTradeCtrl._RefreshLocalShopGoodsUI = HL.Method(HL.Boolean) << function(self,
     end
     local hasPosition = #self.m_localShopInfo.myPositionGoodsGroup.goodsList > 0
     self.view.goodsNode.bulkSellBtnNode.gameObject:SetActive(not isCommonShop and hasPosition)
-    self.view.goodsNode.goodsGroupList:UpdateGroup(count, isChangeTab, false, false, true)
     if isChangeTab then
         if self.m_targetLocalJumpArg.locateInfo then
             self.m_curSelectTagIndex = lume.clamp(self.m_targetLocalJumpArg.locateInfo.groupIndex, 1, math.max(count, 1))
@@ -1451,7 +1450,10 @@ ShopTradeCtrl._RefreshLocalShopGoodsUI = HL.Method(HL.Boolean) << function(self,
         self.m_curSelectTagIndex = 1
     end
     if isChangeTab and self.m_curSelectTagIndex > 0 then
-        self.view.goodsNode.goodsGroupList:ScrollToGroup(CSIndex(self.m_curSelectTagIndex), true, CS.Beyond.UI.UIScrollList.ScrollAlignType.Top)
+        local fastScrollToIndex = CSIndex(self:_GetGoodsGroupFirstGlobalIndex(self.m_curSelectTagIndex))
+        self.view.goodsNode.goodsGroupList:UpdateGroup(count, fastScrollToIndex)
+    else
+        self.view.goodsNode.goodsGroupList:UpdateGroup(count, isChangeTab)
     end
     
     self.m_goodsTagCellCache:Refresh(count, function(cell, luaIndex)
@@ -1903,6 +1905,14 @@ ShopTradeCtrl._OnScreenSizeChanged = HL.Method() << function(self)
         count = #shopInfo.goodsGroupList
     end
     self.view.goodsNode.goodsGroupList:UpdateGroup(count, false)
+end
+
+ShopTradeCtrl._GetGoodsGroupFirstGlobalIndex = HL.Method(HL.Number).Return(HL.Number) << function(self, luaIndex)
+    local globalIndex = 1
+    for groupIndex = 1, luaIndex - 1 do
+        globalIndex = globalIndex + self:_GetGoodsGroupCellCount(groupIndex)
+    end
+    return globalIndex == 1 and -1 or globalIndex
 end
 
 

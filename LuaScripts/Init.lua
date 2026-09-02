@@ -297,6 +297,7 @@ HighDifficultyUtils = require_ex("Common/Utils/HighDifficultyUtils")
 ContingencyContractUtils = require_ex("Common/Utils/ContingencyContractUtils")
 SeasonTowerUtils = require_ex("Common/Utils/SeasonTowerUtils")
 GameSettingUtils = require_ex("Common/Utils/GameSettingUtils")
+TyphoeaArcheryUtils = require_ex("Common/Utils/TyphoeaArcheryUtils")
 
 LuaObjectMemoryLeakChecker = require_ex("Common/Core/LuaObjectMemoryLeakChecker")()
 
@@ -354,7 +355,14 @@ LuaSystemManager = require_ex("LuaSystem/LuaSystemManager")()
 
 
 
+
+
+local s_luaEnvDisposed = false
 local function _onDisposeLuaEnv()
+    if s_luaEnvDisposed then
+        return
+    end
+    s_luaEnvDisposed = true
     PhaseManager:_Dispose()
     LuaSystemManager:ReleaseSystems()
 end
@@ -370,6 +378,3 @@ end
 logger.info("Lua init finished.")
 
 Notify(MessageConst.ON_LUA_INIT_FINISHED)
-
-xlua.private_accessible(CS.Beyond.DataCompressManager)
-CS.Beyond.DataCompressManager.s_maxStackSize = 1

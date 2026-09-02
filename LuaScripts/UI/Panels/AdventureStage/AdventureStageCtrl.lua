@@ -93,7 +93,17 @@ AdventureStageCtrl.OnShow = HL.Override() << function(self)
     end
     for luaIndex, cell in pairs(self.m_taskCellList) do
         cell:PlayInAniAndDelayTime(self.view.config.TASK_CELL_SHOW_DELAY_TIME * CSIndex(luaIndex))
+        local info = self.m_curAdventureStageTaskInfos[luaIndex]
+        local state = info and (info.state or AdventureBookUtils.StageTaskDisplayState.InProgress) or nil
+        cell:PlayStateAnimation(state)
     end
+    self:_SetDefaultNaviTarget()
+end
+
+AdventureStageCtrl._SetDefaultNaviTarget = HL.Method() << function(self)
+    local firstCell = self.m_taskCellList[1]
+    local target = firstCell.gameObject:GetComponent("InputBindingGroupNaviDecorator")
+    self:SetNaviTarget(target)
 end
 
 AdventureStageCtrl._OnIncBtnClick = HL.Method() << function(self)
@@ -545,7 +555,7 @@ end
 
 AdventureStageCtrl.OnAdventureTabChangedSame = HL.Method(HL.Number) << function(self, panelId)
     if panelId == PANEL_ID then
-        self.view.taskGroup.selectableNaviGroup:NaviToThisGroup()
+        self:_SetDefaultNaviTarget()
     end
 end
 

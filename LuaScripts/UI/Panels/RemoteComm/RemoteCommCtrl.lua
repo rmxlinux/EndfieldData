@@ -179,7 +179,20 @@ RemoteCommCtrl._IsVideo = HL.Method().Return(HL.Boolean, HL.Any) << function(sel
     return isVideo, path
 end
 
+RemoteCommCtrl._ClearMidContentTweens = HL.Method() << function(self)
+    
+    
+    self.view.bgAnimationWrapper:ClearTween(false)
+    self.view.charinfoNodeWrapper:ClearTween(false)
+    self.view.videoAnimationWrapper:ClearTween(false)
+end
+
 RemoteCommCtrl._RefreshMidContent = HL.Method() << function(self)
+    
+    if not self.view.gameObject.activeInHierarchy then
+        return
+    end
+
     local isVideo, path = self:_IsVideo()
     local middleId = self.m_singleData.middleId
     local charUtils = CS.Beyond.Gameplay.CharUtils
@@ -447,6 +460,9 @@ RemoteCommCtrl._RefreshMiddle = HL.Method() << function(self)
                     
                     self:_DoPlayAudio("", curAudioId, curMusicId)
                 end
+                if not self.view.gameObject.activeInHierarchy then
+                    return
+                end
                 self:_RefreshMidContent()
             end)
         end
@@ -632,7 +648,13 @@ RemoteCommCtrl._UpdateAudioAmplitude = HL.Method() << function(self)
     end
 end
 
+RemoteCommCtrl.OnHide = HL.Override() << function(self)
+    
+    self:_ClearMidContentTweens()
+end
+
 RemoteCommCtrl.OnClose = HL.Override() << function(self)
+    self:_ClearMidContentTweens()
     self:_StopVoice()
     self:_StopAudio()
     self:_ClearRight()

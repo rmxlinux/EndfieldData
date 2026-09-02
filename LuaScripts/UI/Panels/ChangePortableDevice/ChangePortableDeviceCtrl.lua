@@ -998,6 +998,12 @@ ChangePortableDeviceCtrl._ToggleMoveMode = HL.Method(HL.Boolean, HL.Opt(HL.Table
     if (self.m_moveFrom ~= nil) == active then
         return
     end
+    
+    if active and DeviceInfo.usingController and GameInstance.player.guide.isInForceGuide and not GameInstance.player.guide.isInHelperGuideStep then
+        if not InputManager.instance.guideUseActionIds:Contains("inv_item_bag_start_move_item") then
+            return
+        end
+    end
     local prevMoveFrom = self.m_moveFrom
     if active then
         self.m_moveFrom = moveFrom

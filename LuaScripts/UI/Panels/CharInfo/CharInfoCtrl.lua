@@ -84,6 +84,8 @@ do
 
     CharInfoCtrl.m_focusMode = HL.Field(HL.Boolean) << false
 
+    CharInfoCtrl.m_isMenuAndTopBtnVisible = HL.Field(HL.Boolean) << true
+
     CharInfoCtrl.m_isCharListInited = HL.Field(HL.Boolean) << false
 
     CharInfoCtrl.m_arg = HL.Field(HL.Table)
@@ -124,12 +126,26 @@ CharInfoCtrl.PhaseCharInfoPanelShowFinal = HL.Method(HL.Table) << function(self,
     local initCharInfo = arg.initCharInfo or CharInfoUtils.getLeaderCharInfo()
     local pageType = arg.pageType or UIConst.CHAR_INFO_PAGE_TYPE.OVERVIEW
 
+    local lastCharInstId = self.m_charInfo and self.m_charInfo.instId
     self.m_phase = arg.phase
     self.m_curPageType = pageType
     self.m_charInfo = initCharInfo
     self.m_charInfoList = arg.phase.m_charInfoList
 
+    if self.m_focusMode then
+        self.m_focusMode = false
+        self.animationWrapper:ClearTween(true)
+    end
     self:Show()
+
+    if lastCharInstId ~= initCharInfo.instId then
+        self:_RefreshCharInfo(self.m_charInfo, self.m_charInfoList)
+        self.view.textTitle.text = CharInfoUtils.getCharInfoTitle(self.m_charInfo.templateId, self.m_curPageType)
+        local selectedIndex = self:_GetSelectedCharCsIndex()
+        if selectedIndex >= 0 then
+            self.view.charListNode.charList:ScrollToIndex(selectedIndex, true)
+        end
+    end
 end
 
 CharInfoCtrl.OnShow = HL.Override() << function(self)
@@ -143,13 +159,12 @@ end
 
 CharInfoCtrl.OnSelectCharChange = HL.Method(HL.Table) << function(self, charInfo)
     Notify(MessageConst.ON_STOP_HOVER_LINK)
+    self.m_charInfo = charInfo
     local aimWrapper= self.view.charInfoBasicNodeRight.view.gameObject.activeSelf and
                         self.view.charInfoBasicNodeRight.view.animationWrapper or self.view.gyroscopeRoot
     aimWrapper:ClearTween()
     aimWrapper:PlayOutAnimation(function()
-        self.m_charInfo = charInfo
-
-        self:_RefreshCharInfo(charInfo, self.m_charInfoList)
+        self:_RefreshCharInfo(self.m_charInfo, self.m_charInfoList)
 
         if self.view.charInfoBasicNodeRight.gameObject.activeSelf then
             self.view.charInfoBasicNodeRight.view.animationWrapper:PlayInAnimation()
@@ -200,8 +215,10 @@ CharInfoCtrl.OnToggleFocusMode = HL.Method(HL.Boolean) << function(self, isOn)
 end
 
 CharInfoCtrl.OnToggleMenuListAndTopBtn = HL.Method(HL.Boolean) << function(self, isOn)
+    self.m_isMenuAndTopBtnVisible = isOn
     self.view.menuListNode.gameObject:SetActive(isOn)
     self.view.closeButton.gameObject:SetActive(isOn)
+    self:_RefreshForesightGrowthEntryBtn()
 end
 
 CharInfoCtrl._InitActionEvent = HL.Method() << function(self)
@@ -231,6 +248,10 @@ CharInfoCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.closeButton.onClick:AddListener(function()
         self.m_phase:OnCommonBackClicked()
     end)
+    self.view.foresightGrowthEntryBtn.onClick:AddListener(function()
+        self:_OnForesightGrowthEntryClick()
+    end)
+    self:_RefreshForesightGrowthEntryBtn()
 
     self.view.expandListButton.onClick:AddListener(function()
         self:_ToggleExpandNode(true)
@@ -323,12 +344,48 @@ CharInfoCtrl._RefreshCharInfoBasic = HL.Method(HL.Number) << function(self, char
     self.view.friendshipNode:InitFriendshipNode(charInstId)
 end
 
+CharInfoCtrl._GetSelectedCharCsIndex = HL.Method().Return(HL.Number) << function(self)
+    if not self.m_charInfo or not self.m_charInfoList then
+        return -1
+    end
+    for k, info in ipairs(self.m_charInfoList) do
+        if info.instId == self.m_charInfo.instId then
+            return CSIndex(k)
+        end
+    end
+    return -1
+end
+
 CharInfoCtrl._RefreshCharList = HL.Method(HL.Table, HL.Table) << function(self, initCharInfo, charInfoList)
     if self.m_phase then
         self.m_phase:RefreshCharExpandList(initCharInfo, charInfoList)
     end
     self.view.charListNode.charList:UpdateCount(#charInfoList)
     self.m_isCharListInited = true
+end
+
+CharInfoCtrl.RefreshCharListKeepSelected = HL.Method(HL.Table) << function(self, charInfoList)
+    self.m_charInfoList = charInfoList
+
+    
+    local selectedCharInfo
+    local selectedIndex = -1
+    if self.m_charInfo then
+        for k, info in ipairs(charInfoList) do
+            if info.instId == self.m_charInfo.instId then
+                selectedCharInfo = info
+                selectedIndex = CSIndex(k)
+                break
+            end
+        end
+    end
+    self.m_charInfo = selectedCharInfo or charInfoList[1] or self.m_charInfo
+
+    self:_RefreshCharList(self.m_charInfo, charInfoList)
+
+    if selectedIndex >= 0 then
+        self.view.charListNode.charList:ScrollToIndex(selectedIndex, true)
+    end
 end
 
 CharInfoCtrl._RefreshSmallCharHeadCell = HL.Method(HL.Userdata, HL.Number) << function(self, object, csIndex)
@@ -426,6 +483,7 @@ CharInfoCtrl._ToggleExpandNode = HL.Method(HL.Boolean) << function(self, isOn)
         self.view.bottomMenuCover:PlayInAnimation()
         self.view.rightBottomNode.animationWrapper:PlayInAnimation()
         self.m_phase:HideCharExpandList()
+        self.view.charInfoBasicNodeRight.view.animationWrapper:ClearTween(true)
         UIUtils.PlayAnimationAndToggleActive(self.view.charInfoBasicNodeRight.view.animationWrapper, false, function()
             self.view.gyroscopeRoot:ClearTween(false)
             self.view.gyroscopeRoot:PlayInAnimation()
@@ -471,6 +529,11 @@ end
 CharInfoCtrl._RefreshRedDot = HL.Method() << function(self)
     self.view.rightBottomNode.profileBtnRedDot:InitRedDot("CharInfoProfile", self.m_charInfo.templateId)
     self.view.skillBtnRedDot:InitRedDot("CharBreak", self.m_charInfo.instId)
+    if Utils.isSystemUnlocked(GEnums.UnlockSystemType.ForesightCharGrowth) then
+        self.view.foresightGrowthEntryRedDot:InitRedDot("ForesightCharGrowthEntry")
+    else
+        self.view.foresightGrowthEntryRedDot:Stop()
+    end
     if self.m_tabCellCache then
         local count = self.m_tabCellCache:GetCount()
         for i = 1, count do
@@ -635,7 +698,13 @@ CharInfoCtrl.OnPageChange = HL.Method(HL.Any) << function(self, arg)
     self.m_curPageType = pageType
 
     UIUtils.PlayAnimationAndToggleActive(self.view.bottomMenuCover, isPageOverview)
-    UIUtils.PlayAnimationAndToggleActive(self.view.gyroscopeRoot, isPageOverview)
+    UIUtils.PlayAnimationAndToggleActive(self.view.gyroscopeRoot, isPageOverview, function()
+        if self.m_curPageType == UIConst.CHAR_INFO_TAB_TYPE.WEAPON or self.m_curPageType == UIConst.CHAR_INFO_TAB_TYPE.EQUIP then
+            
+            
+            InputManagerInst.controllerNaviManager:TryRemoveLayer(self.view.detailNodeNaviGroup)
+        end
+    end)
     if isBeforePageOverview and not forceSkipIn and (pageType == UIConst.CHAR_INFO_TAB_TYPE.WEAPON
         or pageType == UIConst.CHAR_INFO_TAB_TYPE.EQUIP or pageType == UIConst.CHAR_INFO_TAB_TYPE.POTENTIAL) then
         self.view.controllerHintPlaceholder:PlayAnimationOut()
@@ -663,6 +732,8 @@ CharInfoCtrl.OnPageChange = HL.Method(HL.Any) << function(self, arg)
         UIUtils.PlayAnimationAndToggleActive(self.view.rightBottomNode.animationWrapper, false)
         if isBeforePageOverview then
             self.view.topNode:Play("charinfo_top_btn_out")
+        else
+            self.view.foresightGrowthEntryGroup.alpha = 0
         end
     end
 
@@ -676,6 +747,37 @@ CharInfoCtrl.OnPageChange = HL.Method(HL.Any) << function(self, arg)
     if self.m_charInfo.isShowPreview then
         self.view.commonToggle.gameObject:SetActive(isPageOverview)
     end
+    if Utils.isSystemUnlocked(GEnums.UnlockSystemType.ForesightCharGrowth) then
+        self.view.foresightGrowthEntryBtn.interactable = isPageOverview
+    end
+    self:_RefreshForesightGrowthEntryBtn()
+end
+
+CharInfoCtrl._RefreshForesightGrowthEntryBtn = HL.Method(HL.Opt(HL.Boolean)) << function(self, visible)
+    if visible == nil then
+        visible = self.m_isMenuAndTopBtnVisible
+    end
+    local active = Utils.isSystemUnlocked(GEnums.UnlockSystemType.ForesightCharGrowth) and visible and not GameInstance.player.gameSettingSystem.forbiddenForesightCharGrowth
+    if (self.m_phase and not self.m_phase.m_isNormalCharList) or (self.m_charInfoList and #self.m_charInfoList <= 1) or CharInfoUtils.IsFullLockedTeam() or DungeonUtils.getSpecialTeamType(GameInstance.dungeonManager.curDungeonId) ~= nil or Utils.isInDungeon() then
+        active = false
+    end
+    self.view.foresightGrowthEntryBtn.gameObject:SetActive(active)
+    if active and self.m_curPageType == UIConst.CHAR_INFO_TAB_TYPE.OVERVIEW then
+        self.view.foresightGrowthEntryGroup.alpha = 1
+    end
+end
+
+CharInfoCtrl._OnForesightGrowthEntryClick = HL.Method() << function(self)
+    if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.ForesightCharGrowth) or GameInstance.player.gameSettingSystem.forbiddenForesightCharGrowth then return end
+    local arg = {selectedCharTemplateId = self.m_charInfo.templateId}
+    local panelItem = self.m_phase:_GetPanelPhaseItem(PanelId.ForesightCharGrowthMain)
+    if panelItem and panelItem.uiCtrl then
+        UIManager:Show(PanelId.ForesightCharGrowthMain)
+        panelItem.uiCtrl:OnPhaseRefresh(arg)
+        return
+    end
+    Notify(MessageConst.CHAR_INFO_PAUSE_ANIMATOR, true)
+    self.m_phase:CreateCharInfoPanel(PanelId.ForesightCharGrowthMain,arg)
 end
 
 CharInfoCtrl._TryToggleDetailNode = HL.Method(HL.Boolean, HL.Any) << function(self, isOn, pageType)

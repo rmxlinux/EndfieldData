@@ -13,6 +13,8 @@ FORBID_INPUT_DEVICE_CHANGE_PANELS = {
 
     "PlayerRename", 
     "DungeonSettlementPopup", 
+    "WulingParkourSettlement", 
+    "WulingParkourChallengeResult", 
     "SimulationTrainingSettlementPopup", 
     "WorldEnergyPointSettlement", 
     "DeathInfo", 
@@ -105,11 +107,14 @@ EXCEPT_CHANGE_DEVICE_CLOSE_PANEL = {
     "ContingencyContractHud",
     "CoinActivityHud",
     "RaceModuleRank",
+    "SimulationTrainingTrackHud",
+    "WulingParkourChallengeHUD",
 
     
     "BombAim",
     "WaterDroneAim",
     "EnvironmentalPrompt",
+    "TyphoeaArcheryHud",
 
     
     "MiniMap",
@@ -151,4 +156,5 @@ SUPPORT_REUSE_GO_ON_INPUT_CHANGE_PANELS = {
     SNSHud = true,
     SquadIcon = true,
     
+    FacCultivate = true, 
 }

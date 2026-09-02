@@ -59,6 +59,10 @@ CommonMaskCtrl.m_entitySyncLoadModeEnabled = HL.Field(HL.Boolean) << false
 
 CommonMaskCtrl.m_burstModeEnabled = HL.Field(HL.Boolean) << false
 
+CommonMaskCtrl.m_playerBlackScreenActive = HL.Field(HL.Boolean) << false
+
+CommonMaskCtrl.m_mainHudBlackScreenActive = HL.Field(HL.Boolean) << false
+
 CommonMaskCtrl.OnCommonMaskStart = HL.StaticMethod(HL.Table) << function(arg)
     local ctrl = CommonMaskCtrl.AutoOpen(PANEL_ID, {}, true)
     local commonMaskData
@@ -89,6 +93,7 @@ end
 
 CommonMaskCtrl.OnCommonMaskShutDown = HL.Method(HL.Opt(HL.Any)) << function(self, arg)
     
+    self.m_playerBlackScreenActive = false
     local narrative = self.m_curMaskData and self.m_curMaskData.textDataList and self.m_curMaskData.textDataList.Count > 0 and not self.m_curMaskData.forceNotNarrative
     local NarrativeUtils = CS.Beyond.Gameplay.NarrativeUtils
     if narrative then
@@ -597,6 +602,7 @@ CommonMaskCtrl._ClearTimeoutTimer = HL.Method() << function(self)
 end
 
 CommonMaskCtrl._UpdatePlayerState = HL.Virtual(HL.Boolean) << function(self, inBlackScreen)
+    self.m_playerBlackScreenActive = inBlackScreen
     local narrative = self.m_curMaskData and self.m_curMaskData.textDataList and self.m_curMaskData.textDataList.Count > 0 and not self.m_curMaskData.forceNotNarrative
     local NarrativeUtils = CS.Beyond.Gameplay.NarrativeUtils
     if narrative then
@@ -610,10 +616,24 @@ CommonMaskCtrl._UpdatePlayerState = HL.Virtual(HL.Boolean) << function(self, inB
 end
 
 CommonMaskCtrl._SetMainHudState = HL.Method(HL.Boolean) << function(self, inBlackScreen)
+    self.m_mainHudBlackScreenActive = inBlackScreen
     if inBlackScreen then
         Notify(MessageConst.NOTIFY_MAIN_HUD_BLACK_SCREEN_BEGIN)
     else
         Notify(MessageConst.NOTIFY_MAIN_HUD_BLACK_SCREEN_END)
+    end
+end
+
+CommonMaskCtrl._ClearForForcedClose = HL.Method() << function(self)
+    local releaseMainHudBlackScreen = self.m_mainHudBlackScreenActive
+    if self.m_playerBlackScreenActive then
+        self:_UpdatePlayerState(false)
+    end
+
+    self:_Clear()
+
+    if releaseMainHudBlackScreen then
+        self:_SetMainHudState(false)
     end
 end
 
@@ -628,11 +648,9 @@ CommonMaskCtrl._SetBurstMode = HL.Method(HL.Boolean) << function(self, enable)
         return
     end
 
-    if CS.Beyond.Cfg.RemoteGameCfg.instance.data.commonMaskEnableBurstMode then
-        GameInstance.SetBurstMode(enable, GameInstance.EBurstModeReason.CommonMask)
-        logger.important(CS.Beyond.EnableLogType.LevelLoader, string.format("CommonMask SetBurstMode %s", enable))
-        self.m_burstModeEnabled = enable
-    end
+    GameInstance.SetBurstMode(enable, GameInstance.EBurstModeReason.CommonMask)
+    logger.important(CS.Beyond.EnableLogType.LevelLoader, string.format("CommonMask SetBurstMode %s", enable))
+    self.m_burstModeEnabled = enable
 end
 
 CommonMaskCtrl._SetEntitySyncLoadMode = HL.Method(HL.Boolean) << function(self, enable)
@@ -1014,7 +1032,7 @@ CommonMaskCtrl.OnHide = HL.Override() << function(self)
 end
 
 CommonMaskCtrl.OnClose = HL.Override() << function(self)
-    self:_Clear()
+    self:_ClearForForcedClose()
 end
 
 HL.Commit(CommonMaskCtrl)

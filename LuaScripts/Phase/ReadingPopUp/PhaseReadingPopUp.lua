@@ -1,6 +1,7 @@
 
 local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.ReadingPopUp
+
 PhaseReadingPopUp = HL.Class('PhaseReadingPopUp', phaseBase.PhaseBase)
 
 
@@ -12,10 +13,17 @@ PhaseReadingPopUp.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.SHOW_READING_POP_PANEL_BY_HANDLE] = { 'OnShowReadingPopPanelByHandle', false },
 }
 
+PhaseReadingPopUp.m_panelIdByBgType = HL.Field(HL.Table)
 
 
 PhaseReadingPopUp._OnInit = HL.Override() << function(self)
     PhaseReadingPopUp.Super._OnInit(self)
+    self.m_panelIdByBgType = {
+        [GEnums.ReadingPopBasePlateType.Paper] = PanelId.ReadingPopUpPaper,
+        [GEnums.ReadingPopBasePlateType.Elec] = PanelId.ReadingPopUpElec,
+        [GEnums.ReadingPopBasePlateType.Simple] = PanelId.ReadingPopUp,
+        [GEnums.ReadingPopBasePlateType.OldPaper] = PanelId.ReadingPopUpOldPaper,
+    }
 end
 
 
@@ -79,13 +87,12 @@ PhaseReadingPopUp._DoPhaseTransitionIn = HL.Override(HL.Boolean, HL.Opt(HL.Table
         bgType = bgType,
     }
     
-    if bgType == GEnums.ReadingPopBasePlateType.Paper then
-        self:CreatePhasePanelItem(PanelId.ReadingPopUpPaper, panelArgs)
-    elseif bgType == GEnums.ReadingPopBasePlateType.Elec then
-        self:CreatePhasePanelItem(PanelId.ReadingPopUpElec, panelArgs)
-    elseif bgType == GEnums.ReadingPopBasePlateType.Simple then
-        self:CreatePhasePanelItem(PanelId.ReadingPopUp, panelArgs)
+    local panelId = self.m_panelIdByBgType[bgType]
+    if panelId == nil then
+        logger.error("【ReadingPopUp】 bgType未配置Panel：" .. tostring(bgType))
+        return
     end
+    self:CreatePhasePanelItem(panelId, panelArgs)
 end
 
 PhaseReadingPopUp._DoPhaseTransitionOut = HL.Override(HL.Boolean, HL.Opt(HL.Table)) << function(self, fastMode, args)

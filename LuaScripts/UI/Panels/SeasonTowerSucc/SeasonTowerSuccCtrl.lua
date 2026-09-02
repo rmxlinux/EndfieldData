@@ -28,6 +28,12 @@ SeasonTowerSuccCtrl.m_finishTs = HL.Field(HL.Number) << 0
 
 SeasonTowerSuccCtrl.m_completeExtraTask = HL.Field(HL.Boolean) << false
 
+SeasonTowerSuccCtrl.m_settlementSeasonId = HL.Field(HL.Number) << 0
+
+SeasonTowerSuccCtrl.m_settlementWeekId = HL.Field(HL.Number) << 0
+
+SeasonTowerSuccCtrl.m_isTurnover = HL.Field(HL.Boolean) << false
+
 SeasonTowerSuccCtrl.m_isRankUp = HL.Field(HL.Boolean) << false
 
 SeasonTowerSuccCtrl.m_rank = HL.Field(HL.Number) << 0
@@ -44,6 +50,9 @@ SeasonTowerSuccCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self.m_finishTs = arg.finishTs or 0
     self.m_isNewRecord = arg.isNewRecord or false
     self.m_completeExtraTask = arg.completeExtraTask or false
+    self.m_settlementSeasonId = arg.settlementSeasonId or 0
+    self.m_settlementWeekId = arg.settlementWeekId or 0
+    self.m_isTurnover = arg.isTurnover or false
 
     local pendingRank = SeasonTowerSuccCtrl.s_pendingRankUp
     if pendingRank > 0 then
@@ -56,6 +65,10 @@ SeasonTowerSuccCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     self:_CollectCharInstIds()
     self:_RefreshInfo()
     self:_RefreshFormation()
+
+    if self.m_isTurnover then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_SEASON_TOWER_TURNOVER_NO_RECORD)
+    end
 
     if self.m_isRankUp then
         self:_RefreshRankUp()
@@ -119,10 +132,10 @@ SeasonTowerSuccCtrl._RefreshInfo = HL.Method() << function(self)
     end
 
     local seasonCfg = nil
-    if self.m_system.currentSeasonId > 0 and self.m_system.currentWeekId > 0 then
-        local seasonData = Tables.seasonTowerTable[self.m_system.currentSeasonId]
-        if seasonData then
-            seasonCfg = seasonData.weeks[self.m_system.currentWeekId]
+    if self.m_settlementSeasonId > 0 and self.m_settlementWeekId > 0 then
+        local hasValue, seasonData = Tables.seasonTowerTable:TryGetValue(self.m_settlementSeasonId)
+        if hasValue then
+            seasonCfg = seasonData.weeks[self.m_settlementWeekId]
         end
     end
     self.view.weekNameText.text = seasonCfg and seasonCfg.weekShowName or ""
@@ -313,13 +326,41 @@ SeasonTowerSuccCtrl._OnAgainBtnClick = HL.Method() << function(self)
                 GameInstance.dungeonManager:LeaveDungeon()
             end})
         return
+    elseif SeasonTowerUtils.isClosed() then
+        Notify(MessageConst.SHOW_POP_UP, {
+            content = Language.LUA_SEASON_TOWER_CLOSED_NOTIFY,
+            hideCancel = true,
+            onConfirm = function()
+                GameInstance.dungeonManager:LeaveDungeon()
+            end})
+        return
     end
     PhaseManager:PopPhase(PHASE_ID)
     GameInstance.dungeonManager.curDungeonLikeSubGame:SendReStart(true)
 end
 
 SeasonTowerSuccCtrl._OnDoneBtnClick = HL.Method() << function(self)
-    GameInstance.dungeonManager:LeaveDungeon()
+    if SeasonTowerUtils.getShouldRefresh() then
+        Notify(MessageConst.SHOW_POP_UP, {
+            content = Language.LUA_SEASON_TOWER_UPDATE_NOTIFY,
+            hideCancel = true,
+            onConfirm = function()
+                GameInstance.dungeonManager:LeaveDungeon()
+            end})
+        return
+    elseif SeasonTowerUtils.isClosed() then
+        Notify(MessageConst.SHOW_POP_UP, {
+            content = Language.LUA_SEASON_TOWER_CLOSED_NOTIFY,
+            hideCancel = true,
+            onConfirm = function()
+                GameInstance.dungeonManager:LeaveDungeon()
+            end})
+        return
+    end
+    PhaseManager:OpenPhase(PhaseId.SeasonTowerDungeonEntry, {
+        dungeonId = self.m_dungeonId,
+        isQuickSelect = true,
+    })
 end
 
 SeasonTowerSuccCtrl.OnSettlement = HL.StaticMethod(HL.Any) << function(args)
@@ -335,13 +376,16 @@ SeasonTowerSuccCtrl.ShowSettlement = HL.StaticMethod(HL.Any) << function(args)
 
         PhaseManager:ExitPhaseFastTo(PhaseId.Level)
 
-        local dungeonId, time, isNewRecord, completeExtraTask, finishTs = unpack(args)
+        local info = unpack(args)
         PhaseManager:OpenPhase(PHASE_ID, {
-            dungeonId = dungeonId,
-            time = time,
-            isNewRecord = isNewRecord,
-            completeExtraTask = completeExtraTask,
-            finishTs = finishTs,
+            dungeonId = info.gameId,
+            time = info.costTimeSec,
+            isNewRecord = info.isNewRecord,
+            completeExtraTask = info.completeExtraTask,
+            finishTs = info.settlementTimestamp,
+            settlementSeasonId = info.settlementSeasonId,
+            settlementWeekId = info.settlementWeekId,
+            isTurnover = info.isTurnover,
         })
     end, function()
         PhaseManager:PopPhase(PHASE_ID)

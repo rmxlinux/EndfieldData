@@ -26,6 +26,8 @@ SettlementMainCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_FACTORY_DEPOT_CHANGED] = '_TryUpdateItemDepot',
     
     [MessageConst.ON_CONDITIONAL_MULTI_STAGE_UPDATE] = '_OnActivityStageUpdate',
+    
+    [MessageConst.ON_WALLET_CHANGED] = '_OnWalletChanged',
 }
 
 
@@ -117,6 +119,11 @@ SettlementMainCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end
     self:_UpdateData(true)
     self:_RefreshAllUI()
+    
+    local limitedFormulaIds = GameInstance.player.activitySystem:GetActivityOfCertainType(GEnums.ActivityType.LimitedFormula)
+    if limitedFormulaIds.Count > 0 then
+        ActivityUtils.backToMainHudWhenActivityClosed(self, limitedFormulaIds[0])
+    end
     if arg and type(arg) == "table" and arg.resumeOpenPanel then
         for _, panelInfo in pairs(arg.resumeOpenPanel) do
             UIManager:Open(panelInfo.panelId, panelInfo.arg)
@@ -665,12 +672,7 @@ SettlementMainCtrl._RefreshDomainUI = HL.Method() << function(self)
 end
 
 SettlementMainCtrl._RefreshTitleMoneyUI = HL.Method() << function(self)
-    local hasActivity = self:_CurStlHasActivity()
-    if hasActivity then
-        self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(self.m_domainInfo.id, { self.m_activityInfo.activityMoneyId })
-    else
-        self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(self.m_domainInfo.id)
-    end
+    self.view.domainTopMoneyTitle:InitDomainTopMoneyTitle(self.m_domainInfo.id)
 end
 
 SettlementMainCtrl._RefreshCurSettlementUI = HL.Method() << function(self)
@@ -729,8 +731,40 @@ SettlementMainCtrl._RefreshCurSettlementUI = HL.Method() << function(self)
                 isSideTips = DeviceInfo.usingController,
             })
         end)
+        self.view.tradeNode.shopEntryNode.gameObject:SetActiveIfNecessary(true)
+        if self.m_activityInfo.hasActivity then
+            self.view.tradeNode.shopEntryNode.shopNumTxt.text = Utils.getItemCount(self.m_activityInfo.activityMoneyId)
+            self.view.tradeNode.shopEntryNode.shopBtn.onClick:RemoveAllListeners()
+            self.view.tradeNode.shopEntryNode.shopBtn.onClick:AddListener(function()
+                local groupUnlock = GameInstance.player.shopSystem:CheckShopGroupUnlocked(self.m_activityInfo.activityShopGroupId)
+                if not groupUnlock then
+                    
+                    
+                    
+                        Notify(MessageConst.SHOW_TOAST, Language.LUA_LIMITED_FORMULA_V2_SHOP_LOCK_CLICK_TOAST)
+                    
+                    return
+                end
+                PhaseManager:OpenPhase(PhaseId.Shop, {
+                    shopGroupId = self.m_activityInfo.activityShopGroupId,
+                    activityMoneyId = self.m_activityInfo.activityMoneyId,
+                    unlockToastFunc = function(shopId)
+                        local _, activityCfgData = Tables.activityLimitedFormulaTable:TryGetValue(self.m_activityInfo.activityId)
+                        local succ, data = activityCfgData.activityShopLockList:TryGetValue(shopId)
+                        if succ then
+                            local targetTime = self.m_activityInfo.openTime + data.unlockTimeOffset * Const.SEC_PER_HOUR
+                            local curTime = DateTimeUtils.GetCurrentTimestampBySeconds()
+                            local leftTime = targetTime - curTime
+                            local toast = string.format(data.lockToast, UIUtils.getLeftTime(leftTime))
+                            Notify(MessageConst.SHOW_TOAST, toast)
+                        end
+                    end,
+                })
+            end)
+        end
     else
         self.view.mainStateCtrl:SetState("Normal")
+        self.view.tradeNode.shopEntryNode.gameObject:SetActiveIfNecessary(false)
     end
     
 end
@@ -1078,7 +1112,11 @@ SettlementMainCtrl._OnSellItem = HL.Method() << function(self)
 end
 
 SettlementMainCtrl._ExecuteSellItem = HL.Method(HL.Table) << function(self, stlInfo)
-    settlementSystem:SendSellItem(stlInfo.stlId, stlInfo.sellItemInfo.itemId, stlInfo.tradeInfo.selectCount)
+    local success = settlementSystem:SendSellItem(stlInfo.stlId, stlInfo.sellItemInfo.itemId, stlInfo.tradeInfo.selectCount)
+    if not success then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_SETTLEMENT_TRADE_NOT_ENOUGH_ZERO)
+        return
+    end
     InputManagerInst:ToggleGroup(self.view.inputGroup.groupId, false)
     self.view.tradeNode.numberSelector.view.slider.interactable = false
     self.m_waitTradeComplete = true
@@ -1089,21 +1127,20 @@ SettlementMainCtrl._OnTradeSuccess = HL.Method(HL.Any) << function(self, rawMsg)
     AudioManager.PostEvent("Au_UI_Event_Animate_SettlementTrade")
     
     local msg = unpack(rawMsg)
-    self.m_waitTradeComplete = false
     
     if msg.RealSellCount == 0 then
         InputManagerInst:ToggleGroup(self.view.inputGroup.groupId, true)
         self.view.tradeNode.numberSelector.view.slider.interactable = true
         local stlInfo = self.m_stlInfoList[self.m_curSelectStlIndex]
-        if not stlInfo then
-            return
+        if stlInfo then
+            stlInfo.sellItemInfo.localCount = 0
+            self:_UpdateTradeInfo(stlInfo)
+            self:_RefreshTradeNodeUI(true)
+            Notify(MessageConst.SHOW_TOAST, Language.LUA_SETTLEMENT_TRADE_NOT_ENOUGH_ZERO)
         end
-        stlInfo.sellItemInfo.localCount = 0
-        self:_UpdateTradeInfo(stlInfo)
-        self:_RefreshTradeNodeUI(true)
-        Notify(MessageConst.SHOW_TOAST, Language.LUA_SETTLEMENT_TRADE_NOT_ENOUGH_ZERO)
+        self.m_waitTradeComplete = false
         if self.m_hasActivityUpdateMsgWaitTradeComplete then
-            self:_OnActivityStageUpdate({ self.m_activityInfo.activityI })
+            self:_OnActivityStageUpdate({ self.m_activityInfo.activityId })
         end
         return
     end
@@ -1118,9 +1155,6 @@ SettlementMainCtrl._OnTradeSuccess = HL.Method(HL.Any) << function(self, rawMsg)
     self.view.tradeNode.animationWrapper:Play(tradeAni, function()
         self.view.tradeNode.animationWrapper:Play(tradeAniReset)
         self:_ShowTradeReward(rawMsg)
-        if self.m_hasActivityUpdateMsgWaitTradeComplete then
-            self:_OnActivityStageUpdate({ self.m_activityInfo.activityI })
-        end
     end)
 end
 
@@ -1164,6 +1198,10 @@ SettlementMainCtrl._ShowTradeReward = HL.Method(HL.Any) << function(self, rawMsg
             if not GameInstance.player.guide.isInGuide then
                 InputManagerInst:ToggleGroup(self.view.inputGroup.groupId, true)
             end
+            self.m_waitTradeComplete = false
+            if self.m_hasActivityUpdateMsgWaitTradeComplete then
+                self:_OnActivityStageUpdate({ self.m_activityInfo.activityId })
+            end
         end
     }
     Notify(MessageConst.SHOW_SYSTEM_REWARDS, args)
@@ -1199,6 +1237,11 @@ SettlementMainCtrl._OnActivityStageUpdate = HL.Method(HL.Any) << function(self, 
     self:_UpdateData(false)
     self:_RefreshAllUI()
     self.m_hasActivityUpdateMsgWaitTradeComplete = false
+end
+
+SettlementMainCtrl._OnWalletChanged = HL.Method(HL.Opt(HL.Any)) << function(self, _)
+    
+    self.view.tradeNode.shopEntryNode.shopNumTxt.text = Utils.getItemCount(self.m_activityInfo.activityMoneyId)
 end
 
 SettlementMainCtrl.GetCurPhaseStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(self)

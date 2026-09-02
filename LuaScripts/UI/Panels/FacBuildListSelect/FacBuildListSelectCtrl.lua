@@ -126,11 +126,22 @@ FacBuildListSelectCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
             self.view.typeToggle.gameObject:SetActiveIfNecessary(false)
             self.view.decoBuildingRoot.gameObject:SetActiveIfNecessary(false)
         else
-            self.view.decoBuildingRoot:InitFacBuildListDecoBuildingInfoNode(self.view.inputGroup.groupId, arg.selectedId)
+            local decoInitSelectedId
+            if recoverState and not string.isEmpty(recoverState.decoSelectedId) then
+                decoInitSelectedId = recoverState.decoSelectedId
+            elseif arg and arg.selectedId ~= nil and FactoryUtils.isDecoBuildingItem(arg.selectedId) then
+                decoInitSelectedId = arg.selectedId
+            end
+            self.view.decoBuildingRoot:InitFacBuildListDecoBuildingInfoNode(self.view.inputGroup.groupId, decoInitSelectedId)
             self.view.typeToggle.gameObject:SetActiveIfNecessary(true)
-            local isShowDecoBuilding = (arg and arg.showLastType) and LuaSystemManager.factory:FacBuildListSelectIsShowDecoBuilding() or false
-            if arg.selectedId ~= nil and FactoryUtils.isDecoBuildingItem(arg.selectedId) then
-                isShowDecoBuilding = true
+            local isShowDecoBuilding
+            if recoverState and recoverState.isShowDecoBuilding ~= nil then
+                isShowDecoBuilding = recoverState.isShowDecoBuilding
+            else
+                isShowDecoBuilding = (arg and arg.showLastType) and LuaSystemManager.factory:FacBuildListSelectIsShowDecoBuilding() or false
+                if arg.selectedId ~= nil and FactoryUtils.isDecoBuildingItem(arg.selectedId) then
+                    isShowDecoBuilding = true
+                end
             end
             self.view.typeToggle:InitCommonToggle(function(isOn)
                 self:_OnChangeTypeToggle(isOn)
@@ -295,6 +306,8 @@ FacBuildListSelectCtrl.GetRecoverStateArg = HL.Method().Return(HL.Table) << func
     end
     if not self.m_onlyCraftNode then
         recoverState.toggleIsOn = self.view.commonToggle.toggle.isOn
+        recoverState.isShowDecoBuilding = self.m_curDecoBuildingState
+        recoverState.decoSelectedId = self.view.decoBuildingRoot:GetLastSelectId()
     end
     if self.m_bluePrintMode then
         recoverState.toppingToggleIsOn = self.view.toppingToggle.isOn

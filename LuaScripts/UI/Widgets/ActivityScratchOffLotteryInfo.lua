@@ -295,13 +295,17 @@ ActivityScratchOffLotteryInfo._CompleteScratch = HL.Method() << function(self)
     end
 
     self:StopScratchAudio()
-    self:GetUICtrl().view.luaPanel:BlockAllInput() 
+
+    local uiCtrl = self:GetUICtrl()
+    uiCtrl.view.luaPanel:BlockAllInput() 
 
     
     self:Refresh(true, function()
         
         self.m_activity:CompleteScratch(self.m_lotteryInstanceId, function()
-            self:GetUICtrl().view.luaPanel:RecoverAllInput() 
+            if not uiCtrl.m_isClosed then
+                uiCtrl.view.luaPanel:RecoverAllInput() 
+            end
             if self.m_onScratchCompleted then
                 self.m_onScratchCompleted()
             end

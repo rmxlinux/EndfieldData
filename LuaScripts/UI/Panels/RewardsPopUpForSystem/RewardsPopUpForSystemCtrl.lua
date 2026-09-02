@@ -10,6 +10,15 @@ RewardsPopUpForSystemCtrl = HL.Class('RewardsPopUpForSystemCtrl', uiCtrl.UICtrl)
 RewardsPopUpForSystemCtrl.s_messages = HL.StaticField(HL.Table) << {
 }
 
+RewardsPopUpForSystemCtrl.s_mergeIgnoredItemFields = HL.StaticField(HL.Table) << {
+    id = true,
+    count = true,
+    instId = true,
+    instData = true,
+    sortId1 = true,
+    sortId2 = true,
+    rarity = true,
+}
 
 RewardsPopUpForSystemCtrl.m_args = HL.Field(HL.Table)
 
@@ -334,6 +343,7 @@ RewardsPopUpForSystemCtrl._ShowRewards = HL.Method(HL.Table) << function(self, a
     end
 
     local items = RewardsPopUpForSystemCtrl._TryConvertCSItemsLuaToTable(args.items)
+    items = RewardsPopUpForSystemCtrl._MergeSameExpireLTItems(items)
     local count = #items
     
     for k = 1, count do
@@ -413,7 +423,10 @@ end
 
 RewardsPopUpForSystemCtrl._OnClickSkip = HL.Method() << function(self)
     self.view.luaPanel.animationWrapper:SkipInAnimation()
-    self.view.rewardsScrollList:SkipGraduallyShow()
+    
+    
+    
+    self.view.rewardsScrollList:UpdateCount(#self.m_items, true, false, true, true)
 end
 
 RewardsPopUpForSystemCtrl._OnClickClose = HL.Method() << function(self)
@@ -510,6 +523,93 @@ RewardsPopUpForSystemCtrl._OnGraduallyShowFinish = HL.Method() << function(self)
     if self.m_args.onGraduallyShowFinishItemList then
         self.m_args.onGraduallyShowFinishItemList()
     end
+end
+
+RewardsPopUpForSystemCtrl._IsSameRewardDisplayInfo =
+    HL.StaticMethod(HL.Table, HL.Table).Return(HL.Boolean) << function(left, right)
+    local ignoredItemFields = RewardsPopUpForSystemCtrl.s_mergeIgnoredItemFields
+    for key, value in pairs(left) do
+        if not ignoredItemFields[key] and right[key] ~= value then
+            return false
+        end
+    end
+    for key, value in pairs(right) do
+        if not ignoredItemFields[key] and left[key] ~= value then
+            return false
+        end
+    end
+    return true
+end
+
+RewardsPopUpForSystemCtrl._GetMergeableLTItemExpireTime =
+    HL.StaticMethod(HL.Any).Return(HL.Opt(HL.Number)) << function(itemBundle)
+    if type(itemBundle) ~= "table" or string.isEmpty(itemBundle.id)
+            or not itemBundle.instId or itemBundle.instId <= 0 then
+        return nil
+    end
+
+    local actualItemId = itemBundle.id
+    local hasLTItem, ltItemData = Tables.lTItemTable:TryGetValue(actualItemId)
+    if hasLTItem then
+        actualItemId = ltItemData.itemId
+    end
+    local hasItem, itemData = Tables.itemTable:TryGetValue(actualItemId)
+    if not hasItem or itemData.type == GEnums.ItemType.Equip
+            or itemData.type == GEnums.ItemType.Weapon
+            or itemData.type == GEnums.ItemType.WeaponGem then
+        return nil
+    end
+
+    local success, expireInfo = pcall(Utils.getLTItemExpireInfo, itemBundle.id, itemBundle.instId)
+    if not success or not expireInfo or not expireInfo.isLTItem or expireInfo.expireTime <= 0 then
+        return nil
+    end
+    return expireInfo.expireTime
+end
+
+
+RewardsPopUpForSystemCtrl._MergeSameExpireLTItems =
+    HL.StaticMethod(HL.Table).Return(HL.Table) << function(items)
+    local result = {}
+    local mergeGroups = {}
+    for _, itemBundle in ipairs(items) do
+        local expireTime = RewardsPopUpForSystemCtrl._GetMergeableLTItemExpireTime(itemBundle)
+        local mergedItem
+        if expireTime then
+            local groupsByItemId = mergeGroups[itemBundle.id]
+            if groupsByItemId then
+                local groupsByExpireTime = groupsByItemId[expireTime]
+                if groupsByExpireTime then
+                    for _, candidate in ipairs(groupsByExpireTime) do
+                        if RewardsPopUpForSystemCtrl._IsSameRewardDisplayInfo(candidate, itemBundle) then
+                            mergedItem = candidate
+                            break
+                        end
+                    end
+                end
+            end
+        end
+
+        if mergedItem then
+            mergedItem.count = (mergedItem.count or 0) + (itemBundle.count or 0)
+        else
+            table.insert(result, itemBundle)
+            if expireTime then
+                local groupsByItemId = mergeGroups[itemBundle.id]
+                if not groupsByItemId then
+                    groupsByItemId = {}
+                    mergeGroups[itemBundle.id] = groupsByItemId
+                end
+                local groupsByExpireTime = groupsByItemId[expireTime]
+                if not groupsByExpireTime then
+                    groupsByExpireTime = {}
+                    groupsByItemId[expireTime] = groupsByExpireTime
+                end
+                table.insert(groupsByExpireTime, itemBundle)
+            end
+        end
+    end
+    return result
 end
 
 RewardsPopUpForSystemCtrl.OnShow = HL.Override() << function(self)

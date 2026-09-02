@@ -97,8 +97,25 @@ PhaseRemoteComm.RemoteCommEnd = HL.Method(HL.Boolean) << function(self, skip)
     self.m_hudPanelItem.uiCtrl.animationWrapper:PlayOutAnimation()
     self.m_bgPanelItem.uiCtrl.animationWrapper:PlayOutAnimation()
     self.m_panelItem .uiCtrl:PlayAnimationOutWithCallback(function()
-        self.m_hudPanelItem.uiCtrl.animationWrapper:ClearTween()
-        self.m_bgPanelItem.uiCtrl.animationWrapper:ClearTween()
+        
+        
+        if self.m_completeOnDestroy then
+            return
+        end
+
+        local isOpen, phase = PhaseManager:IsOpen(PHASE_ID)
+        if not isOpen or phase ~= self then
+            return
+        end
+
+        local hudCtrl = self.m_hudPanelItem.uiCtrl
+        if hudCtrl and hudCtrl.animationWrapper then
+            hudCtrl.animationWrapper:ClearTween()
+        end
+        local bgCtrl = self.m_bgPanelItem.uiCtrl
+        if bgCtrl and bgCtrl.animationWrapper then
+            bgCtrl.animationWrapper:ClearTween()
+        end
         self:ExitSelfFast()
         if self.m_timer > 0 then
             self:_ClearTimer()

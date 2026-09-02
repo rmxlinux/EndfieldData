@@ -3,6 +3,10 @@ local phaseBase = require_ex('Phase/Core/PhaseBase')
 local PHASE_ID = PhaseId.CashShop
 PhaseCashShop = HL.Class('PhaseCashShop', phaseBase.PhaseBase)
 
+
+
+
+
 local TabPanelIds = {
     [CashShopConst.CashShopCategoryType.Recommend] = PanelId.ShopRecommend,
     [CashShopConst.CashShopCategoryType.Recharge] = PanelId.ShopRecharge,
@@ -85,9 +89,11 @@ PhaseCashShop.GetCurStateArg = HL.Override().Return(HL.Opt(HL.Any)) << function(
     local arg = {} 
     arg.shopGroupId = self.currCategoryId
     local panelId = TabPanelIds[self.currCategoryId]
-    local ctrl = self.m_panel2Item[panelId].uiCtrl
-    
-    ctrl:SetCashShopStateArg(arg)
+    local panelItem = self.m_panel2Item[panelId]
+    local ctrl = panelItem and panelItem.uiCtrl
+    if ctrl and HL.TryGet(ctrl, "SetCashShopStateArg") then
+        ctrl:SetCashShopStateArg(arg)
+    end
     
     if not string.isEmpty(self.m_backToRecommendPanelTabId) then
         arg.backToRecommendPanelTabId = self.m_backToRecommendPanelTabId
@@ -124,8 +130,9 @@ PhaseCashShop.OpenCategory = HL.Method(HL.String, HL.Opt(HL.String))
         
         
         local newPanelItem = self.m_panel2Item[panelId]
-        if newPanelItem and newPanelItem.uiCtrl then
-            newPanelItem.uiCtrl:OnAfterCategoryTopOrdered()
+        local newCtrl = newPanelItem and newPanelItem.uiCtrl
+        if newCtrl and HL.TryGet(newCtrl, "OnAfterCategoryTopOrdered") then
+            newCtrl:OnAfterCategoryTopOrdered()
         end
     end
 end
@@ -275,13 +282,18 @@ PhaseCashShop.OnOrderSettle = HL.StaticMethod(HL.Table) << function(arg)
         PhaseCashShop._AddMainHudActionQuest()
 
     else 
+        local orderSettleContext = {
+            orderSettle = orderSettle,
+            rewardPacks = CashShopUtils.consumeLatestCashShopRewardPacks(),
+        }
         if UIManager:IsShow(PanelId.SDKApplicationMask) or UIManager:IsShow(PanelId.RewardsPopUpForSystem) then
             if PhaseCashShop.s_orderSettleQueue == nil then
                 PhaseCashShop.s_orderSettleQueue = require_ex("Common/Utils/DataStructure/Queue")()
             end
-            PhaseCashShop.s_orderSettleQueue:Push(orderSettle)
+            PhaseCashShop.s_orderSettleQueue:Push(orderSettleContext)
         else
-            CashShopUtils.showOrderSettle(orderSettle, PhaseCashShop.TryPopOrderSettle)
+            CashShopUtils.showOrderSettle(orderSettle, PhaseCashShop.TryPopOrderSettle, nil,
+                orderSettleContext.rewardPacks)
         end
     end
 end
@@ -292,6 +304,8 @@ PhaseCashShop.OnFreeCashShopBuySucc = HL.StaticMethod() << function()
         return
     end
     local rewardItems = CashShopUtils.getFreeCashShopRewardItems(freeBuyInfo.goodsId, freeBuyInfo.count)
+    rewardItems = CashShopUtils.applyRewardPackInstIdsOrFallback(
+        rewardItems, CashShopUtils.consumeLatestFreeCashShopRewardPacks(), freeBuyInfo.goodsId)
     if #rewardItems == 0 then
         return
     end
@@ -380,10 +394,10 @@ end
 PhaseCashShop.TryPopOrderSettle = HL.StaticMethod() << function()
     if PhaseCashShop.s_orderSettleQueue ~= nil and
         PhaseCashShop.s_orderSettleQueue:Count() > 0 then
-        local orderSettle = PhaseCashShop.s_orderSettleQueue:Pop()
-        CashShopUtils.showOrderSettle(orderSettle, function()
+        local orderSettleContext = PhaseCashShop.s_orderSettleQueue:Pop()
+        CashShopUtils.showOrderSettle(orderSettleContext.orderSettle, function()
             PhaseCashShop.TryPopOrderSettle()
-        end)
+        end, nil, orderSettleContext.rewardPacks)
     elseif PhaseCashShop.s_freeCashShopRewardQueue ~= nil and
         PhaseCashShop.s_freeCashShopRewardQueue:Count() > 0 then
         local rewardArg = PhaseCashShop.s_freeCashShopRewardQueue:Pop()

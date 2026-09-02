@@ -398,7 +398,11 @@ FacTechTreeCtrl.FocusTechTreeNode = HL.Method(HL.Table) << function(self, args)
 
     local luaIndex = self.m_techId2CellLuaIndex[techId]
     local nodeCell = self.m_nodeCells:Get(luaIndex)
-    self:_OnClickNode(nodeCell, false)
+    if nodeCell then
+        self:_OnClickNode(nodeCell, false)
+    else
+        logger.error("no tech tree node, techId:", techId)
+    end
 end
 
 FacTechTreeCtrl.FocusTechTreeCategory = HL.Method(HL.Table) << function(self, args)

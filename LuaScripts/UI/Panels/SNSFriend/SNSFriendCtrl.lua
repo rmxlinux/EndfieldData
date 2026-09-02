@@ -568,7 +568,7 @@ SNSFriendCtrl.UpdateNumRedDot = HL.Method() << function(self)
                         local chatInfo = GameInstance.player.friendChatSystem:GetChatInfo(roleId)
                         if chatInfo and self.m_selectedRoleId ~= self:GetRoleIdByCsIndex(csIndex) and chatInfo.unReadNum > 0 then
                             cell.view.redDotLayout.gameObject:SetActive(true)
-                            cell.view.redDotTxt.text = chatInfo.unReadNum
+                            cell.view.redDotTxt.text = chatInfo.unReadNum > 99 and "99+" or tostring(chatInfo.unReadNum)
                         else
                             cell.view.redDotLayout.gameObject:SetActive(false)
                         end

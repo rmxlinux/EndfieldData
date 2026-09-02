@@ -159,6 +159,8 @@ MapCtrl.m_nodeOnInitFocused = HL.Field(HL.Boolean) << false
 
 MapCtrl.m_trySwitchTierOnFocusMark = HL.Field(HL.Any)
 
+MapCtrl.m_trySwitchTierOnFocusContainerId = HL.Field(HL.Number) << 0  
+
 MapCtrl.m_waitAutoSwitchTierId = HL.Field(HL.Number) << -1
 
 MapCtrl.m_markClickLockThread = HL.Field(HL.Thread)
@@ -274,6 +276,8 @@ MapCtrl.OnCreate = HL.Override(HL.Any) << function(self, args)
     self:_InitCustomMark()
 
     self:_TryRecoverBigRectState(args)
+
+    CS.Beyond.Gameplay.Conditions.OnUILevelMapEnterLevel.Trigger(levelId)
 
     if BEYOND_DEBUG_COMMAND then
         self:_InitDebugTeleport()
@@ -612,6 +616,8 @@ MapCtrl._OnLevelSwitchFinish = HL.Method() << function(self)
 
     self:_CheckAndRefreshNeedPlayMistUnlockedAnimationState()
     self:_TryPlayMistUnlockedAnimation()
+
+    CS.Beyond.Gameplay.Conditions.OnUILevelMapEnterLevel.Trigger(self.m_currLevelId)
 end
 
 MapCtrl._SetMapRectByTargetLevelInfo = HL.Method(HL.Table) << function(self, targetInfo)
@@ -644,7 +650,6 @@ MapCtrl._RefreshLevelMapContent = HL.Method() << function(self)
     end
 
     UIManager:Close(PanelId.MapCustomMarkDetail)
-    CS.Beyond.Gameplay.Conditions.OnUILevelMapEnterLevel.Trigger(currLevelId)
 
     self:_HideNotExpectedNodes()
     self:_RefreshHintTipsNode()
@@ -719,16 +724,11 @@ MapCtrl._OnLevelMapMarkClicked = HL.Method(HL.String) << function(self, markInst
 end
 
 MapCtrl._OnJumpToTpMark = HL.Method(HL.String) << function(self, tpMarkInstId)
-    if GameInstance.player.mapManager:IsTrackingRelatedMark(tpMarkInstId) then
-        local trackingMark, relatedMark = self.view.levelMapController:GetControllerTrackingMark(tpMarkInstId)
-        self:_OnTrackingMarkClicked(tpMarkInstId, trackingMark, relatedMark)
+    local tpMark = self.view.levelMapController:GetControllerMarkByInstId(tpMarkInstId, true)
+    if tpMark and (tpMark.gameObject.activeSelf or GameInstance.player.mapManager:IsTrackingRelatedMark(tpMarkInstId)) then
+        self:_ShowMarkDetail(tpMarkInstId, true, true)
     else
-        local tpMark = self.view.levelMapController:GetControllerMarkByInstId(tpMarkInstId, true)
-        if tpMark and tpMark.gameObject.activeSelf then
-            self:_ShowMarkDetail(tpMarkInstId, true, true)
-        else
-            self:ResetMapStateToTargetLevel({ instId = tpMarkInstId })
-        end
+        self:ResetMapStateToTargetLevel({ instId = tpMarkInstId })
     end
 end
 
@@ -781,6 +781,10 @@ MapCtrl._IsWaitingInitShowMarkDetail = HL.Method().Return(HL.Boolean) << functio
 end
 
 MapCtrl._ShowMarkDetail = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean, HL.Boolean)) << function(self, markInstId, needFocus, needFocusTween, isInit)
+    if not GameInstance.player.mapManager:IsTrackingRelatedMark(markInstId) then
+        self.view.levelMapController:ToggleControllerMarkForceShow(markInstId, "ShowDetail", true)
+    end
+
     local mark = self.view.levelMapController:GetControllerMarkByInstId(markInstId, true)
     if not mark then
         return
@@ -788,9 +792,6 @@ MapCtrl._ShowMarkDetail = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean, HL
     local markRectTransform = mark.rectTransform
     if not markRectTransform then
         return
-    end
-    if not GameInstance.player.mapManager:IsTrackingRelatedMark(markInstId) then
-        mark:ToggleForceShowMark("ShowDetail", true)  
     end
 
     needFocusTween = needFocusTween == true
@@ -819,7 +820,7 @@ MapCtrl._ShowMarkDetail = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean, HL
                 self:_SetDetectorState(markInstId, false)
                 self.m_selectMarkInstId = ""
                 self.m_isMarkDetailShowing = false
-                mark:ToggleForceShowMark("ShowDetail", false)
+                self.view.levelMapController:ToggleControllerMarkForceShow(markInstId, "ShowDetail", false)
                 self:_ToggleControllerMoveAndZoom(true)
             end
         })
@@ -842,12 +843,12 @@ MapCtrl._ShowMarkDetail = HL.Method(HL.String, HL.Opt(HL.Boolean, HL.Boolean, HL
             if isInit then
                 self:_BigRectFocusNodeOnInit(markRectTransform, needFocusTween, function()
                     self.view.focusArrowNode.position = markRectTransform.position
-                    self:_StopCheckSwitchTierOnFocus()
+                    self:_FinishCheckSwitchTierOnFocus()
                 end)
             else
                 self.view.bigRectHelper:FocusNode(markRectTransform, needFocusTween, function()
                     self.view.focusArrowNode.position = markRectTransform.position
-                    self:_StopCheckSwitchTierOnFocus()
+                    self:_FinishCheckSwitchTierOnFocus()
                 end)
             end
 
@@ -1688,7 +1689,7 @@ MapCtrl._RefreshTrackingInfo = HL.Method(HL.String) << function(self, levelId)
     self.view.mapTrackingInfo:InitMapTrackingInfo({ levelId = levelId })
 end
 
-MapCtrl._OnTrackingMapMarkChanged = HL.Method(HL.Any) << function(self)
+MapCtrl._OnTrackingMapMarkChanged = HL.Method(HL.Any) << function(self, arg)
     if not self.m_isMarkDetailShowing then
         return
     end
@@ -1701,7 +1702,7 @@ MapCtrl._OnTrackingMarkClicked = HL.Method(HL.String, HL.Any, HL.Any) << functio
         if levelId == self.m_currLevelId and relatedMark ~= nil then
             self.view.bigRectHelper:FocusNode(relatedMark.rectTransform, true, function()
                 self:_ShowMarkDetail(instId)
-                self:_StopCheckSwitchTierOnFocus()
+                self:_FinishCheckSwitchTierOnFocus()
             end)
             self:_StartCheckSwitchTierOnFocus(instId)
         else
@@ -1861,6 +1862,7 @@ end
 MapCtrl._InitTierSwitcherNode = HL.Method() << function(self)
     self.m_currTierIdList = {}
     self.m_trySwitchTierOnFocusMark = nil
+    self.m_trySwitchTierOnFocusContainerId = MapConst.BASE_TIER_CONTAINER_ID
     self.view.tierFocusNode.gameObject:SetActive(not DeviceInfo.usingController)
     self:_RefreshTierFocusNode()
 
@@ -1868,17 +1870,33 @@ MapCtrl._InitTierSwitcherNode = HL.Method() << function(self)
     self:_RefreshTierSwitcherNode(false, true)
 
     self.m_tierCheckTick = LuaUpdate:Add("LateTick", function(deltaTime)
-        self:_CheckNeedShowTierSwitcherList()
-
         if self.m_trySwitchTierOnFocusMark ~= nil then
-            if self:_TrySwitchTierOnFocus(self.m_trySwitchTierOnFocusMark) then
-                self:_StopCheckSwitchTierOnFocus()
+            if self:_GetScreenCenterTierContainerId() == self.m_trySwitchTierOnFocusContainerId then
+                self:_FinishCheckSwitchTierOnFocus()
             end
+            return
         end
+        self:_CheckNeedShowTierSwitcherList()
     end)
 end
 
-MapCtrl._CheckNeedShowTierSwitcherList = HL.Method() << function(self)
+
+MapCtrl._ResolveTierContainerIdByWorldXZ = HL.Method(HL.Number, HL.Number).Return(HL.Number) << function(self, worldX, worldZ)
+    local success, regionId = GameWorld.mapRegionManager:CheckPosIsInTierContainerMap(
+        self.m_currMapId,
+        Vector2(worldX, worldZ),
+        TIER_CHECK_TOLERANCE_RADIUS
+    )
+    if success and GameWorld.mapRegionManager:GetRegionLevelId(regionId) ~= self.m_currLevelId then
+        success = false  
+    end
+    if success and not GameWorld.mapRegionManager:CheckRegionHideInMist(regionId) then
+        return regionId
+    end
+    return MapConst.BASE_TIER_CONTAINER_ID
+end
+
+MapCtrl._GetScreenCenterTierContainerId = HL.Method().Return(HL.Number) << function(self)
     local screenPos
     if DeviceInfo.usingController then
         screenPos = Unity.RectTransformUtility.WorldToScreenPoint(self.uiCamera, self.view.focusArrowNode.position)
@@ -1891,30 +1909,16 @@ MapCtrl._CheckNeedShowTierSwitcherList = HL.Method() << function(self)
         self.view.levelMapController.view.levelMapLoader.view.rectTransform
     )
     local worldPos = self.view.levelMapController.view.levelMapLoader:GetWorldPositionByRectPosition(rectPos)
-    local isDirty = false
-    local success, regionId = GameWorld.mapRegionManager:CheckPosIsInTierContainerMap(
-        self.m_currMapId,
-        Vector2(worldPos.x, worldPos.z),
-        TIER_CHECK_TOLERANCE_RADIUS
-    )
-    if success and GameWorld.mapRegionManager:GetRegionLevelId(regionId) ~= self.m_currLevelId then
-        success = false  
-    end
-    if success and not GameWorld.mapRegionManager:CheckRegionHideInMist(regionId) then
-        if self.m_currTierContainerId ~= regionId then
-            self.m_currTierContainerId = regionId
-            isDirty = true
-        end
-    else
-        if self.m_currTierContainerId ~= MapConst.BASE_TIER_CONTAINER_ID then
-            self.m_currTierContainerId = MapConst.BASE_TIER_CONTAINER_ID
-            isDirty = true
-        end
-    end
+    return self:_ResolveTierContainerIdByWorldXZ(worldPos.x, worldPos.z)
+end
 
-    if isDirty then
-        self:_RefreshTierInfo()
+MapCtrl._CheckNeedShowTierSwitcherList = HL.Method() << function(self)
+    local regionId = self:_GetScreenCenterTierContainerId()
+    if self.m_currTierContainerId == regionId then
+        return
     end
+    self.m_currTierContainerId = regionId
+    self:_RefreshTierInfo()
 end
 
 MapCtrl._RefreshTierInfo = HL.Method() << function(self)
@@ -2146,10 +2150,27 @@ end
 MapCtrl._StartCheckSwitchTierOnFocus = HL.Method(HL.String) << function(self, markInstId)
     self:_StopCheckSwitchTierOnFocus()
     self.m_trySwitchTierOnFocusMark = self.view.levelMapController:GetControllerMarkByInstId(markInstId, true)
+    
+    local success, markRuntimeData = GameInstance.player.mapManager:GetMarkInstRuntimeData(markInstId)
+    if success and markRuntimeData ~= nil then
+        local worldPos = markRuntimeData.position
+        self.m_trySwitchTierOnFocusContainerId = self:_ResolveTierContainerIdByWorldXZ(worldPos.x, worldPos.z)
+    end
 end
 
 MapCtrl._StopCheckSwitchTierOnFocus = HL.Method() << function(self)
     self.m_trySwitchTierOnFocusMark = nil
+    self.m_trySwitchTierOnFocusContainerId = MapConst.BASE_TIER_CONTAINER_ID
+end
+
+
+MapCtrl._FinishCheckSwitchTierOnFocus = HL.Method() << function(self)
+    local mark = self.m_trySwitchTierOnFocusMark
+    self:_CheckNeedShowTierSwitcherList()
+    if mark ~= nil then
+        self:_TrySwitchTierOnFocus(mark)
+    end
+    self:_StopCheckSwitchTierOnFocus()
 end
 
 MapCtrl._TrySwitchTierOnFocus = HL.Method(HL.Any).Return(HL.Boolean) << function(self, mark)
@@ -2275,11 +2296,16 @@ MapCtrl._ForceSetMapStateToTargetLevel = HL.Method(HL.Table) << function(self, a
         self.view.levelMapController:ResetSwitchModeToTargetLevelState(levelId)
         self:_ResetBigRectHelper()
         self:_RefreshLevelMapContent()
+        CS.Beyond.Gameplay.Conditions.OnUILevelMapEnterLevel.Trigger(levelId)
     end
     self:_ResetZoomSliderValue(false)
 end
 
 MapCtrl.GetBigRectRecoverStateArg = HL.Method().Return(HL.Any) << function(self)
+    
+    if not self.view.bigRectHelper.enabled or self.m_isResettingToTargetLevel then
+        return nil
+    end
     return self.view.bigRectHelper:GetRecoverState()
 end
 
@@ -2310,7 +2336,7 @@ MapCtrl.OpenFilterPanel = HL.Method() << function(self)
 end
 
 MapCtrl.ResetMapStateToTargetLevel = HL.Method(HL.Table) << function(self, args)
-    if self.m_isResettingToTargetLevel then
+    if self.m_isResettingToTargetLevel or self.m_isResettingToPlayer then
         return
     end
 
@@ -2342,6 +2368,7 @@ MapCtrl.ResetMapStateToTargetLevel = HL.Method(HL.Table) << function(self, args)
         self.view.touchPanel.enabled = true
         self:_RefreshLevelMapContent()
         self:_ResetZoomSliderValue(needShowDetail)
+        CS.Beyond.Gameplay.Conditions.OnUILevelMapEnterLevel.Trigger(levelId)  
 
         if not string.isEmpty(self.m_waitInitShowDetailMarkInstId) then
             self:_ShowMarkDetail(self.m_waitInitShowDetailMarkInstId, true)
@@ -2351,7 +2378,7 @@ MapCtrl.ResetMapStateToTargetLevel = HL.Method(HL.Table) << function(self, args)
 
         self:_PlayMapResetAnimation(true)
         self:_PlayAndSetMainNodeVisibleState(true, function(isIn)
-            self:_StopCheckSwitchTierOnFocus()
+            self:_FinishCheckSwitchTierOnFocus()
             self.m_isResettingToTargetLevel = false
         end)
 
@@ -2475,6 +2502,7 @@ MapCtrl._ControllerResetToPlayer = HL.Method() << function(self)
             self.view.bigRectHelper:FocusNode(playerNode.rectTransform, true, onFocusComplete)
         else
             
+            self.m_isResettingToPlayer = false  
             self:ResetMapStateToTargetLevel({
                 levelId = GameWorld.worldInfo.curLevelId,
                 onComplete = function()

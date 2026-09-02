@@ -53,6 +53,10 @@ DungeonTrainEntryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_InitDungeonSeriesInfo()
     self:_InitDungeonTabs()
+    if arg.scrollPosition ~= nil then
+        LayoutRebuilder.ForceRebuildLayoutImmediate(self.view.dungeonSelectionGroupNode.transform)
+        self.view.dungeonSelectionGroupNode.verticalNormalizedPosition = arg.scrollPosition
+    end
     self:_RefreshCommonInfo(true)
 
     self:_InitController()
@@ -310,6 +314,10 @@ end
 
 DungeonTrainEntryCtrl.GetCurSelectDungeonId = HL.Method().Return(HL.String) << function(self)
     return self.m_curSelectedDungeonId
+end
+
+DungeonTrainEntryCtrl.GetRecoverScrollPosition = HL.Method().Return(HL.Number) << function(self)
+    return self.view.dungeonSelectionGroupNode.verticalNormalizedPosition
 end
 
 DungeonTrainEntryCtrl.GetRecoverPopupStateArg = HL.Method().Return(HL.Opt(HL.Any)) << function(self)

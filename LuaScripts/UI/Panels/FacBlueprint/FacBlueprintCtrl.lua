@@ -954,7 +954,7 @@ FacBlueprintCtrl._OnClickCraftBtn = HL.Method() << function(self)
         return
     end
     local deviceList = self.view.blueprintContent:GetAllDeviceIdAndCount()
-    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { bluePrintData = deviceList })
+    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { onlyCraftNode = true, bluePrintData = deviceList })
 end
 
 FacBlueprintCtrl._ExitOtherPhase = HL.Method() << function(self)
@@ -1402,7 +1402,12 @@ FacBlueprintCtrl.FacOnShareBlueprint = HL.Method(HL.Table) << function(self, arg
         self.m_gettingShareCode = false
         local shareCode = unpack(args)
         GameInstance.player.friendChatSystem:SendChatBluePrint(self.m_friendRoleId, shareCode, function()
-            PhaseManager:PopPhase(PhaseId.FacBlueprint)
+            
+            
+            
+            if PhaseManager:GetTopPhaseId() == PhaseId.FacBlueprint then
+                PhaseManager:PopPhase(PhaseId.FacBlueprint)
+            end
         end)
     end
 end

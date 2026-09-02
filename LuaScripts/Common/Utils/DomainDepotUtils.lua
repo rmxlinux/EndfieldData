@@ -1,5 +1,7 @@
 local DomainDepotUtils = {}
 
+local SYNC_SOCIAL_FRIEND_INFO_BATCH_SIZE = 10
+
 function DomainDepotUtils.GetBuyerInfo(id)
     local buyerInfo = {}
 
@@ -161,6 +163,40 @@ function DomainDepotUtils.ShowDepotTargetMapPreview(domainDepotId, targetId)
         forbidDetailBtn = true,
         ignoreOpenFocus = true,
     })
+end
+
+function DomainDepotUtils.SyncMissingDeliveryPeerInfos(deliverList, onComplete)
+    local friendSystem = GameInstance.player.friendSystem
+    local roleIds = {}
+    local seenRoleIds = {}
+    for index = 0, deliverList.Count - 1 do
+        local roleId = deliverList[index].delegateRoleId
+        if roleId ~= 0 and not seenRoleIds[roleId] then
+            seenRoleIds[roleId] = true
+            local success = friendSystem:TryGetFriendInfo(roleId)
+            if not success then
+                table.insert(roleIds, roleId)
+            end
+        end
+    end
+
+    local function syncNext(fromIndex)
+        if fromIndex > #roleIds then
+            onComplete()
+            return
+        end
+
+        local toIndex = math.min(fromIndex + SYNC_SOCIAL_FRIEND_INFO_BATCH_SIZE - 1, #roleIds)
+        local batch = {}
+        for index = fromIndex, toIndex do
+            batch[index - fromIndex + 1] = roleIds[index]
+        end
+        friendSystem:SyncSocialFriendInfo(batch, function()
+            syncNext(toIndex + 1)
+        end)
+    end
+
+    syncNext(1)
 end
 
 function DomainDepotUtils.DelegateCurrentDeliver()

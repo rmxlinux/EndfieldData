@@ -11,6 +11,9 @@ PhaseAdventureBook.m_bookPanel = HL.Field(HL.Forward("PhasePanelItem"))
 
 PhaseAdventureBook.m_waitOpenCoroutine = HL.Field(HL.Thread)
 
+
+PhaseAdventureBook.m_isTabContentTransitioning = HL.Field(HL.Boolean) << false
+
 PhaseAdventureBook.m_dungeonTab = HL.Field(HL.String) << ""
 
 PhaseAdventureBook.m_reopenGemTermOverviewGameGroupId = HL.Field(HL.String) << ""
@@ -81,6 +84,7 @@ PhaseAdventureBook.OnTabChange = HL.Method(HL.Table) << function(self, arg)
     if arg.panelId == nil then
        return
     end
+    self.m_isTabContentTransitioning = true
     
     
     
@@ -139,6 +143,18 @@ PhaseAdventureBook._OpenTab = HL.Method(HL.Number, HL.Boolean) << function(self,
         logger.error(string.format("请检查%s的config配置", tostring(panelItem.uiCtrl)))
     end
     self.m_curPanelItem = panelItem
+    self.m_isTabContentTransitioning = false
+end
+
+PhaseAdventureBook.CanChangeTab = HL.Method().Return(HL.Boolean) << function(self)
+    return PhaseManager:GetTopPhaseId() == self.phaseId
+end
+
+PhaseAdventureBook.CanTriggerTabPanelAction = HL.Method(HL.Number).Return(HL.Boolean) << function(self, sourcePanelId)
+    if not self:CanChangeTab() or self.m_isTabContentTransitioning or not self.m_curPanelItem then
+        return false
+    end
+    return self.m_curPanelItem.uiCtrl.panelId == sourcePanelId
 end
 
 PhaseAdventureBook._BindControllerHintPlaceHolder = HL.Method() << function(self)

@@ -58,12 +58,15 @@ CharInfoWeaponCtrl.OnClose = HL.Override() << function(self)
     if DeviceInfo.usingController then
         self.m_phase:_ActiveWeaponPageNavi(self, false)
     end
+    self:Notify(MessageConst.CHAR_INFO_WEAPON_SECOND_CLOSE)
 end
 
 CharInfoWeaponCtrl._InitActionEvent = HL.Method() << function(self)
     self.view.backButton.onClick:RemoveAllListeners()
     self.view.backButton.onClick:AddListener(function()
-        if self.state == UIConst.CHAR_INFO_WEAPON_STATE.Detail then
+        if self.m_arg.extraArg and self.m_arg.extraArg.onBack then
+            self.m_arg.extraArg.onBack()
+        elseif self.state == UIConst.CHAR_INFO_WEAPON_STATE.Detail then
             local curWeaponInstId = CharInfoUtils.getCharCurWeapon(self.m_charInfo.instId).weaponInstId
             self.m_curSelectInstId = curWeaponInstId
 
@@ -71,7 +74,6 @@ CharInfoWeaponCtrl._InitActionEvent = HL.Method() << function(self)
             self:SwitchState(UIConst.CHAR_INFO_WEAPON_STATE.Normal)
         end
     end)
-
     self.view.compareButton.onClick:RemoveAllListeners()
     self.view.compareButton.onClick:AddListener(function()
         self:_SwitchCompare(true)
@@ -142,6 +144,7 @@ CharInfoWeaponCtrl.SwitchState = HL.Method(HL.Number) << function(self, state)
     self:_ToggleWeaponItemList(inDetail)
     self:_RefreshWeaponInfo()
     self.view.focusMasteryHint.gameObject:SetActive(inDetail)
+    self:_RefreshPanelBgMask(inDetail)
     InputManagerInst:ToggleBinding(self.m_focusMasteryBindingId, inDetail)
     self.view.focusMasteryNaviGroup.removeLayerOnDisable = inDetail
 end
@@ -277,8 +280,15 @@ end
 
 CharInfoWeaponCtrl._RefreshWeaponInfo = HL.Method() << function(self)
     local curWeaponInfo = CharInfoUtils.getCharCurWeapon(self.m_charInfo.instId)
+    if curWeaponInfo == nil then
+        return
+    end
     local curWeaponInstId = curWeaponInfo.weaponInstId
     local curSelectWeaponInfo = CharInfoUtils.getWeaponInstInfo(self.m_curSelectInstId)
+    if curSelectWeaponInfo == nil then
+        self.m_curSelectInstId = curWeaponInstId
+        curSelectWeaponInfo = curWeaponInfo
+    end
 
     local rightWeaponInfo = curSelectWeaponInfo
     local leftWeaponInfo = nil
@@ -395,6 +405,11 @@ CharInfoWeaponCtrl.OnPutOnWeapon = HL.Method(HL.Table) << function(self, arg)
 end
 
 CharInfoWeaponCtrl._OnWeaponClick = HL.Method(HL.Table) << function(self, itemInfo)
+    
+    
+    if not self.view.gameObject.activeInHierarchy then
+        return
+    end
     local weaponInstId = itemInfo.instId
     if self.m_curSelectInstId == weaponInstId then
         return
@@ -453,6 +468,18 @@ CharInfoWeaponCtrl.OnGuideScrollToTop = HL.Method(HL.Table) << function(self, ar
             end
         end
     end
+end
+
+CharInfoWeaponCtrl._RefreshPanelBgMask = HL.Method(HL.Boolean) << function(self, inDetail)
+    local charId = self.m_charInfo.templateId
+    local has, config = Tables.CharInfoWeaponPanelConfigTable:TryGetValue(charId)
+    if not has or not config then
+        self.view.maskState:SetState("NormalState")
+        return
+    end
+
+    local useMaskBg = config.useMaskBg
+    self.view.maskState:SetState((useMaskBg and inDetail) and "MaskState" or "NormalState")
 end
 
 
@@ -514,7 +541,13 @@ CharInfoWeaponCtrl._ProcessStateArg = HL.Method(HL.Table) << function(self, arg)
         return
     end
     self:SwitchState(UIConst.CHAR_INFO_WEAPON_STATE.Detail)
-    self.view.commonItemList:SetSelectedIndex(arg.curSelectedIndex, false)
+    
+    UIManager:Hide(PanelId.CharInfo)
+    self.m_phase:_ToggleWeaponDeco(false, nil, true)
+
+    if arg.curSelectedIndex then
+        self.view.commonItemList:SetSelectedIndex(arg.curSelectedIndex, false)
+    end
     if arg.inCompare then
         self:_SwitchCompare(true)
     end

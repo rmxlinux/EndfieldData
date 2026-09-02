@@ -235,6 +235,7 @@ GeneralAbilityCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_CHANGE_INPUT_DEVICE_TYPE_FINISHED] = '_OnChangeInputDeviceTypeFinished',
     [MessageConst.GENERAL_ABILITY_CHANGE_KEY_BINDING] = 'GeneralAbilityChangeKeyBinding',
     [MessageConst.GENERAL_ABILITY_ACTIVE_TEMP_ANIM_LOOP] = '_OnActiveTempAnimLoop',
+    [MessageConst.ALL_CHARACTER_DEAD] = '_OnAllCharacterDead',
 }
 
 
@@ -317,6 +318,13 @@ end
 
 
 GeneralAbilityCtrl.OnHide = HL.Override() << function(self)
+    self:_ClearRPress()
+    self:_RefreshWheelShownState(false)
+end
+
+
+GeneralAbilityCtrl._OnAllCharacterDead = HL.Method(HL.Opt(HL.Any)) << function(self, args)
+    self.startPress = false
     self:_ClearRPress()
     self:_RefreshWheelShownState(false)
 end
@@ -440,6 +448,14 @@ GeneralAbilityCtrl._OnGeneralAbilityStateChange = HL.Method(HL.Table) << functio
     local isTempAbility = GameInstance.player.generalAbilitySystem:IsTempAbility(abilityType:GetHashCode())
     local isSelectedTempAbility = GameInstance.player.generalAbilitySystem:IsTempAbility(self.m_selectedAbilityType)
     if isTempAbility then
+        local firstTempData = self.m_tempAbilityDataList[1]
+        if firstTempData == nil or firstTempData.type ~= abilityType:GetHashCode() then
+            return
+        end
+        if not self.m_tempSelectCell then
+            self:_InitAll()
+            return
+        end
         
         self:_UpdateAvailableTempAbility()
         self:_UpdateSelectorCellInfo(self.m_tempSelectCell, MAX_SELECTED_LUA_ID)
@@ -491,16 +507,27 @@ GeneralAbilityCtrl._ToggleGeneralAbilityCloseWheel = HL.Method(HL.Any) << functi
     self:_RefreshWheelShownState(false)
     self:_OnSelectByType(selectedType)
 end
+local CustomAbilityType = CS.Beyond.Gameplay.CustomAbilityType
+local CustomAbilityType2ValidateKeepAbilityAfterChangeInputDeviceType = {
+    [CustomAbilityType.TyphoeaArchery] = "_TyphoeaArcheryValidateKeepAbilityByChangeInputDeviceType",
+}
+
+GeneralAbilityCtrl._TyphoeaArcheryValidateKeepAbilityByChangeInputDeviceType = HL.Method().Return(HL.Boolean) << function(self)
+    return true
+end
 
 GeneralAbilityCtrl._OnChangeInputDeviceType = HL.Method(HL.Any) << function(self, args)
     if GameUtil.mainCharacter == nil then
         return
     end
     local customAbilityCom = GameUtil.mainCharacter.customAbilityCom
-    if customAbilityCom:IsInCustomAbility() then
+    local validateFuncName = CustomAbilityType2ValidateKeepAbilityAfterChangeInputDeviceType[customAbilityCom.curState]
+    local keepAbility = validateFuncName and self[validateFuncName](self)
+    if customAbilityCom:IsInCustomAbility() and not keepAbility then
         customAbilityCom:TryEndAbility_ByChangeInputDeviceType()
     end
 end
+
 
 GeneralAbilityCtrl._OnChangeInputDeviceTypeFinished = HL.Method(HL.Any) << function(self, args)
     self:_RefreshMainInputState()
@@ -513,6 +540,7 @@ GeneralAbilityCtrl._RefreshMainInputState = HL.Method() << function(self)
         self.view.mainStateController:SetState(MainState.Controller)
     end
 end
+
 
 
 
@@ -558,15 +586,27 @@ GeneralAbilityCtrl._InitAbilityData = HL.Method() << function(self)
     self:_UpdateGasAndFluidInteractState()
 end
 
-GeneralAbilityCtrl._ShouldResetTempSelect = HL.Method().Return(HL.Boolean)  << function(self)
-    local shouldResetSelect = true
-    if self.m_selectedAbilityType ~= INVALID_ABILITY_TYPE
-        and GameInstance.player.generalAbilitySystem:IsTempAbility(self.m_selectedAbilityType)
-        and self.m_abilityDataMap[self.m_selectedAbilityType] ~= nil
-        and self.m_abilityDataMap[self.m_selectedAbilityType].abilityRuntimeData.isTempActive then
-        shouldResetSelect = false
+
+GeneralAbilityCtrl._TryGetActiveTempSelectedType = HL.Method().Return(HL.Number) << function(self)
+    local candidates = {
+        self.m_selectedAbilityType,
+        GameInstance.player.generalAbilitySystem.selectGeneralAbility,
+    }
+    for _, abilityType in ipairs(candidates) do
+        if abilityType ~= nil and abilityType ~= INVALID_ABILITY_TYPE
+            and GameInstance.player.generalAbilitySystem:IsTempAbility(abilityType) then
+            local runtimeData = GameInstance.player.generalAbilitySystem:GetAbilityRuntimeDataByType(abilityType)
+            if runtimeData ~= nil and runtimeData.isTempActive then
+                return abilityType
+            end
+        end
     end
-    return shouldResetSelect
+    return INVALID_ABILITY_TYPE
+end
+
+GeneralAbilityCtrl._ShouldResetTempSelect = HL.Method().Return(HL.Boolean)  << function(self)
+    
+    return self:_TryGetActiveTempSelectedType() == INVALID_ABILITY_TYPE
 end
 
 
@@ -622,6 +662,8 @@ GeneralAbilityCtrl._UpdateTempAbilityData = HL.Method() << function(self)
     self.m_tempAbilityDataList = {}
     self.m_abilityDataList[MAX_SELECTED_LUA_ID] = nil
 
+    GameInstance.player.generalAbilitySystem.curShowTempAbility = nil
+
     for abilityType, abilityTableData in pairs(Tables.generalAbilityTable) do
         if abilityTableData.unlockSystemType == UnlockSystemType.None then
             self.m_abilityDataMap[abilityType] = nil
@@ -647,12 +689,14 @@ GeneralAbilityCtrl._UpdateTempAbilityData = HL.Method() << function(self)
 
     table.sort(self.m_tempAbilityDataList, Utils.genSortFunction({ "sortId" }, true))
 
+
     self:_UpdateAvailableTempAbility()
 end
 
 GeneralAbilityCtrl._UpdateAvailableTempAbility = HL.Method() << function(self)
     if self:_IsHaveTempAbility() then
         local firstIdleAbilityData = self.m_tempAbilityDataList[1]
+        GameInstance.player.generalAbilitySystem.curShowTempAbility = firstIdleAbilityData.abilityRuntimeData.type
         if #self.m_tempAbilityDataList > 1 then
             for _, abilityData in ipairs(self.m_tempAbilityDataList) do
                 if abilityData.abilityRuntimeData.state == AbilityState.Idle then
@@ -730,8 +774,13 @@ GeneralAbilityCtrl._UpdateSelectorCellInfo = HL.Method(HL.Any, HL.Number) << fun
 end
 
 GeneralAbilityCtrl._InitSelectedType = HL.Method() << function(self)
-    if not self:_ShouldResetTempSelect() then
-        return
+    local activeTempType = self:_TryGetActiveTempSelectedType()
+    if activeTempType ~= INVALID_ABILITY_TYPE then
+        
+        if self.m_abilityDataMap[activeTempType] ~= nil and not self.m_abilityDataMap[activeTempType].isForbidSelect then
+            self:_SetSelectedType(activeTempType, false)
+            return
+        end
     end
 
     local selectedType = self:_GetSelectedType()
@@ -831,18 +880,22 @@ GeneralAbilityCtrl._UpdateInteractTarget = HL.Method(HL.Opt(HL.Boolean, HL.Boole
             if FactoryUtils.isOthersSocialBuilding(nodeId) then
                 
                 local canLike = FactoryUtils.canLikeSocialBuilding(nodeId)
-                GameInstance.player.generalAbilitySystem:ActivateTempAbility(GeneralAbilityType.BuildingLike, canLike, nodeId)
                 local abilityState = canLike and AbilityState.Idle or AbilityState.ForbiddenUse
                 GameInstance.player.generalAbilitySystem:SwitchAbilityStateByType(GeneralAbilityType.BuildingLike, abilityState)
+                GameInstance.player.generalAbilitySystem:ActivateTempAbility(GeneralAbilityType.BuildingLike, canLike, nodeId)
             else
                 
-                GameInstance.player.generalAbilitySystem:DeactivateTempAbility(GeneralAbilityType.BuildingLike)
+                if GameInstance.player.generalAbilitySystem:IsTempAbilityActive(GeneralAbilityType.BuildingLike) then
+                    GameInstance.player.generalAbilitySystem:DeactivateTempAbility(GeneralAbilityType.BuildingLike)
+                end
             end
         end
 
         self.m_interactFacNodeId = nodeId
     else
-        GameInstance.player.generalAbilitySystem:DeactivateTempAbility(GeneralAbilityType.BuildingLike)
+        if GameInstance.player.generalAbilitySystem:IsTempAbilityActive(GeneralAbilityType.BuildingLike) then
+            GameInstance.player.generalAbilitySystem:DeactivateTempAbility(GeneralAbilityType.BuildingLike)
+        end
         self.m_interactFacNodeId = nil
     end
 end
@@ -1070,21 +1123,19 @@ GeneralAbilityCtrl._RefreshWheelShownState = HL.Method(HL.Boolean) << function(s
         end
     end
     if self:IsHide() then
-        if self.startPress then
-            self.startPress = false
-            self.view.middleAnim.gameObject:SetActive(false)
-            self.view.selectorAnim.gameObject:SetActive(false)
-            self:_RefreshMidPanelShowInfo(false)
-            self:_CheckRecoverScreen(false)
-            self:_MobileOnSelectorShownStateChanged(false)
-            if not DeviceInfo.usingTouch then
-                self.view.selectedCanvasGroup.alpha = 1
-            end
+        
+        
+        if not isShown then
+            self:_ForceResetSelectorRuntimeState()
         end
         return
     end
 
     if self.m_isSelectorShown == isShown then
+        
+        if not isShown then
+            self.startPress = false
+        end
         return
     end
 
@@ -1099,6 +1150,10 @@ GeneralAbilityCtrl._RefreshWheelShownState = HL.Method(HL.Boolean) << function(s
     self:_RefreshMidPanelShowInfo(isShown)
 
     self.m_isSelectorShown = isShown
+    if not isShown then
+        
+        self.startPress = false
+    end
     if not DeviceInfo.usingTouch then
         self.view.selectedCanvasGroup.alpha = isShown and 0.1 or 1
         if isShown then
@@ -1119,6 +1174,37 @@ GeneralAbilityCtrl._RefreshWheelShownState = HL.Method(HL.Boolean) << function(s
     end
     self:_CheckRecoverScreen(isShown)
     self:_MobileOnSelectorShownStateChanged(isShown)
+end
+
+
+GeneralAbilityCtrl._ForceResetSelectorRuntimeState = HL.Method() << function(self)
+    local needReset = self.startPress or self.m_isSelectorShown or self.m_screenOutFlag
+        or GameInstance.player.generalAbilitySystem.isInSelectMode
+        or GameInstance.player.generalAbilitySystem.isRPressed
+    if not needReset then
+        return
+    end
+
+    self.startPress = false
+    self:_ClearRPress()
+    self.view.middleAnim.gameObject:SetActive(false)
+    self.view.selectorAnim.gameObject:SetActive(false)
+    self:_RefreshMidPanelShowInfo(false)
+    self:_TempAbilityAnim(false)
+    self.m_isSelectorShown = false
+    GameInstance.player.generalAbilitySystem.isInSelectMode = false
+    if not DeviceInfo.usingTouch then
+        self.view.selectedCanvasGroup.alpha = 1
+        self:ChangePanelCfg("realMouseMode", Types.EPanelMouseMode.NotNeedShow)
+    end
+    InputManagerInst:ToggleBinding(self.m_selectorCancelBinding, false)
+    InputManagerInst:ToggleBinding(self.m_selectorClickBinding, false)
+    local isOpen, panel = UIManager:IsOpen(PanelId.MainHud)
+    if isOpen then
+        panel:CheckNormalAttackBtn(true)
+    end
+    self:_CheckRecoverScreen(false)
+    self:_MobileOnSelectorShownStateChanged(false)
 end
 
 GeneralAbilityCtrl._RefreshMidPanelShowInfo = HL.Method(HL.Boolean) << function(self, isShown)
@@ -1431,9 +1517,17 @@ GeneralAbilityCtrl._ResetSelectedType = HL.Method() << function(self)
 end
 
 GeneralAbilityCtrl._GetSelectedType = HL.Method().Return(HL.Number) << function(self)
+    if self.m_selectedAbilityType ~= INVALID_ABILITY_TYPE then
+        return self.m_selectedAbilityType
+    end
+    
+    local activeTempType = self:_TryGetActiveTempSelectedType()
+    if activeTempType ~= INVALID_ABILITY_TYPE then
+        return activeTempType
+    end
     local _, value = ClientDataManagerInst:GetInt(SELECTED_ABILITY_TYPE_CLIENT_LOCAL_DATA_KEY, false,
                                                      INVALID_ABILITY_TYPE)
-    return self.m_selectedAbilityType == INVALID_ABILITY_TYPE and value or self.m_selectedAbilityType
+    return value
 end
 
 GeneralAbilityCtrl._SetSelectedType = HL.Method(HL.Number, HL.Boolean) << function(self, type, needSave)
@@ -1690,6 +1784,7 @@ GeneralAbilityCtrl._UpdateGasAndFluidInteractState = HL.Method() << function(sel
             abilityRuntimeData.forbidUseToastId = "LUA_GENERAL_ABILITY_FLUID_INTERACT_FORBIDDEN"
         end
     end
+    self.m_blockedGasOrLiquidInteract = false
 end
 
 GeneralAbilityCtrl._UseAbilityItem = HL.Method(HL.String) << function(self, itemId)
@@ -1939,6 +2034,9 @@ if BEYOND_DEBUG then
             GameInstance.playerController:ClickGeneralAbilityBattleBoss()
         end,
         [GeneralAbilityType.BuildingLike:GetHashCode()] = function()
+            
+        end,
+        [GeneralAbilityType.TyphoeaArchery:GetHashCode()] = function()
             
         end,
     }

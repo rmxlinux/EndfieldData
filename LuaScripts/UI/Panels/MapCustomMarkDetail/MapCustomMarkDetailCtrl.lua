@@ -51,8 +51,11 @@ MapCustomMarkDetailCtrl.OnHide = HL.Override() << function(self)
 
 end
 MapCustomMarkDetailCtrl.OnClose = HL.Override() << function(self)
+    local shouldSaveChanges = self.m_markInstRuntimeData ~= nil
+        and not self.m_markInstRuntimeData.isSelect
+        and (self.m_noteIsChange or self.m_markTypeIsChange)
     GameInstance.player.mapManager:RemoveSelectCustomMark()
-    if not self.m_markInstRuntimeData.isSelect and (self.m_noteIsChange or self.m_markTypeIsChange) then
+    if shouldSaveChanges then
         local isValid = UIUtils.checkInputValid(self.view.reNameInputField.text)
         if not isValid then
             Notify(MessageConst.SHOW_TOAST, Language.LUA_MAP_CUSTOM_MARK_ILLEGAL_CHARACTERS)
@@ -154,10 +157,10 @@ MapCustomMarkDetailCtrl._InitMapMarkDetailCommon = HL.Method() << function(self)
             self.view.detailCommon:_SwitchTracerState()
         end
         if self.m_markInstRuntimeData.note == "" then
-            local id = GameInstance.player.mapManager:GetCustomMarkIdByInstId(self.m_markInstRuntimeData.instId)
-            local defaultName = string.format("%s%s", Language.LUA_MAP_CUSTOM_MARK_EDIT_NAME, id)
+            local defaultName = MapUtils.getCustomMarkDefaultName(self.m_markInstRuntimeData.levelId)
             commonArgs.titleText = defaultName
             self.view.reNameInputField.text = defaultName
+            self.m_noteIsChange = true
         else
             commonArgs.titleText = self.m_markInstRuntimeData.note
             self.view.reNameInputField.text = self.m_markInstRuntimeData.note
@@ -180,8 +183,7 @@ MapCustomMarkDetailCtrl._InitMapMarkDetailCommon = HL.Method() << function(self)
         self.view.yellowBtnText.text = Language.LUA_MAP_CUSTOM_MARK_CREATE
         self.view.yellowBtnIcon:LoadSprite(UIConst.UI_SPRITE_MAP_DETAIL_BTN_ICON, UIConst.MAP_DETAIL_BTN_ICON_NAME.CONFIRM)
         self.view.reNameInputField.text = ""
-        local curNum = GameInstance.player.mapManager:GetQuickSearchCustomMarkCountByLevel(self.m_markInstRuntimeData.levelId)
-        self.view.reNameInputField.placeholder.text = string.format("%s%d", Language.LUA_MAP_CUSTOM_MARK_EDIT_NAME, curNum)
+        self.view.reNameInputField.placeholder.text = MapUtils.getCustomMarkDefaultName(self.m_markInstRuntimeData.levelId, true)
     end
     commonArgs.markInstId = self.m_markInstId
     self.view.detailCommon:InitMapMarkDetailCommon(commonArgs)
@@ -189,9 +191,10 @@ end
 
 MapCustomMarkDetailCtrl._OnDataChanged = HL.Method(HL.Table) << function(self, args)
     local instId, isAdd = unpack(args)
-    if isAdd then
-        self.m_markInstRuntimeData = GameInstance.player.mapManager:GetQuickSearchCustomMarkData(instId)
+    if not isAdd or instId ~= self.m_markInstId then
+        return
     end
+    self.m_markInstRuntimeData = GameInstance.player.mapManager:GetQuickSearchCustomMarkData(instId)
 end
 
 MapCustomMarkDetailCtrl._OnConfirmMark = HL.Method() << function(self)

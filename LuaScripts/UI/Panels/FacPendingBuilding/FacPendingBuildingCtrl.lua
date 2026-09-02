@@ -140,7 +140,7 @@ FacPendingBuildingCtrl._OnClickCraft = HL.Method() << function(self)
             end
         end
     end
-    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { bluePrintData = deviceList })
+    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { onlyCraftNode = true, bluePrintData = deviceList })
 end
 
 FacPendingBuildingCtrl._OnClickSubmit = HL.Method() << function(self)

@@ -317,7 +317,7 @@ end
 
 FacSearchBlueprintCtrl._OnClickCraftBtn = HL.Method() << function(self)
     local deviceList = self.view.blueprintContent:GetAllDeviceIdAndCount()
-    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { bluePrintData = deviceList })
+    Notify(MessageConst.OPEN_FAC_BUILD_MODE_SELECT, { onlyCraftNode = true, bluePrintData = deviceList })
 end
 
 FacSearchBlueprintCtrl._OnClickUseBtn = HL.Method() << function(self)

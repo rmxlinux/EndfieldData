@@ -23,6 +23,9 @@ XiraniteNexusAimCtrl.m_blightMiasmaBrain = HL.Field(HL.Userdata)
 
 XiraniteNexusAimCtrl.m_isFocusing = HL.Field(HL.Boolean) << false
 
+
+XiraniteNexusAimCtrl.m_isClosing = HL.Field(HL.Boolean) << false
+
 XiraniteNexusAimCtrl.s_expandAnimPlayed = HL.StaticField(HL.Boolean) << false
 
 XiraniteNexusAimCtrl.s_reduceAnimPlayed = HL.StaticField(HL.Boolean) << true
@@ -37,6 +40,7 @@ XiraniteNexusAimCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_EnergyLockTick()
     end)
     self.m_isFocusing = false
+    self.m_isClosing = false
     self.view.cleanNode.gameObject:SetActive(false)
     self:_UpdateScanState()
     Notify(MessageConst.GENERAL_ABILITY_ACTIVE_TEMP_ANIM_LOOP, false)
@@ -66,6 +70,10 @@ XiraniteNexusAimCtrl._ExitAimMode = HL.Method() << function(self)
 end
 
 XiraniteNexusAimCtrl._OnCloseXiraniteNexusAim = HL.Method() << function(self)
+    if self.m_isClosing then
+        return
+    end
+    self.m_isClosing = true
     local isExpand = self.m_xiraniteNexusBrain.expandRate
     if isExpand then
         self.view.luaPanel:BlockAllInput()
@@ -207,50 +215,6 @@ XiraniteNexusAimCtrl.IsInTempActiveLevel = HL.StaticMethod().Return(HL.Boolean) 
         end
     end
     return false
-end
-
-XiraniteNexusAimCtrl.s_IsXiraniteNexusEquipped = HL.StaticField(HL.Any) << nil
-
-XiraniteNexusAimCtrl.OnItemBagColoredItemChanged = HL.StaticMethod(HL.Table) << function(args)
-    local isXiraniteNexusEquipped = XiraniteNexusAimCtrl.IsXiraniteNexusEquipped()
-    if XiraniteNexusAimCtrl.s_IsXiraniteNexusEquipped ~= isXiraniteNexusEquipped then
-        XiraniteNexusAimCtrl.s_IsXiraniteNexusEquipped = isXiraniteNexusEquipped
-        XiraniteNexusAimCtrl._UpdateAbilityActivation()
-    end
-
-    local isOpen, ctrl = UIManager:IsOpen(PANEL_ID)
-    if isOpen then
-        ctrl:_SetAimRadius()
-    end
-end
-
-XiraniteNexusAimCtrl.OnCurrentLevelChanged = HL.StaticMethod() << function()
-    XiraniteNexusAimCtrl.s_IsXiraniteNexusEquipped = XiraniteNexusAimCtrl.IsXiraniteNexusEquipped()
-    XiraniteNexusAimCtrl._UpdateAbilityActivation(false)
-end
-
-XiraniteNexusAimCtrl.OnCloseLoadingPanel = HL.StaticMethod() << function()
-    if GameWorld.worldInfo == nil then
-        return
-    end
-    
-    XiraniteNexusAimCtrl._UpdateAbilityActivation(false)
-end
-
-XiraniteNexusAimCtrl._UpdateAbilityActivation = HL.StaticMethod(HL.Opt(HL.Boolean)) << function(select)
-    if XiraniteNexusAimCtrl.IsInTempActiveLevel() then
-        XiraniteNexusAimCtrl.TryActiveAbility(select)
-    elseif XiraniteNexusAimCtrl.IsXiraniteNexusEquipped() then
-        local curLevelId = GameWorld.worldInfo.curLevelId
-        local activationLevelIds = DataManager.xiraniteNexusConfig.activationLevelIds
-        if activationLevelIds:Contains(curLevelId) then
-            XiraniteNexusAimCtrl.TryActiveAbility(select)
-        else
-            XiraniteNexusAimCtrl.DeActiveAbility()
-        end
-    else
-        XiraniteNexusAimCtrl.DeActiveAbility()
-    end
 end
 
 

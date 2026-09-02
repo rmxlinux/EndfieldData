@@ -1,5 +1,6 @@
 
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
+local AbilityState = CS.Beyond.Gameplay.GeneralAbilitySystem.AbilityState
 local PANEL_ID = PanelId.GasCollection
 
 GasCollectionCtrl = HL.Class('GasCollectionCtrl', uiCtrl.UICtrl)
@@ -11,13 +12,14 @@ local ItemAnimType = {
 }
 
 GasCollectionCtrl.m_bagNodeItemInfos = HL.Field(HL.Table) 
+GasCollectionCtrl.m_deferExitCor = HL.Field(HL.Thread)
 
 
 
 
 
 GasCollectionCtrl.s_messages = HL.StaticField(HL.Table) << {
-    
+    [MessageConst.ON_GENERAL_ABILITY_STATE_CHANGE] = "_OnGeneralAbilityStateChange",
 }
 
 GasCollectionCtrl.m_gasId = HL.Field(HL.String) << ""
@@ -43,6 +45,10 @@ GasCollectionCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 end
 
 GasCollectionCtrl.OnClose = HL.Override() << function(self)
+    if self.m_deferExitCor then
+        self:_ClearCoroutine(self.m_deferExitCor)
+        self.m_deferExitCor = nil
+    end
     self.view.containerBagNode:OnPanelClose()
 end
 
@@ -279,6 +285,55 @@ end
 
 GasCollectionCtrl._InitController = HL.Method() << function(self)
     self.view.controllerHintPlaceholder:InitControllerHintPlaceholder({self.view.inputGroup.groupId})
+end
+
+GasCollectionCtrl._OnGeneralAbilityStateChange = HL.Method(HL.Table) << function(self, args)
+    local abilityType = unpack(args)
+    if abilityType ~= GEnums.GeneralAbilityType.FluidInteract then
+        return
+    end
+    self:_HidePanelIfForbidden()
+end
+
+GasCollectionCtrl._HidePanelIfForbidden = HL.Method() << function(self)
+    local abilityType = GEnums.GeneralAbilityType.FluidInteract
+    local abilityRuntimeData = GameInstance.player.generalAbilitySystem:GetAbilityRuntimeDataByType(abilityType)
+    local abilityState = abilityRuntimeData.state
+    if abilityState ~= AbilityState.ForbiddenSelect and abilityState ~= AbilityState.ForbiddenUse then
+        return 
+    end
+    if PhaseManager.isRecovering or PhaseManager.m_curState ~= Const.PhaseState.Idle then
+        self:_DeferExitPhase()
+    elseif self:IsPlayingAnimationIn() then
+        self:PlayAnimationOutWithCallback(function()
+            if PhaseManager.isRecovering or PhaseManager.m_curState ~= Const.PhaseState.Idle then
+                self:_DeferExitPhase()
+            else
+                PhaseManager:ExitPhaseFast(PhaseId.GasCollection)
+            end
+        end)
+    else
+        PhaseManager:PopPhase(PhaseId.GasCollection)
+    end
+end
+
+GasCollectionCtrl._DeferExitPhase = HL.Method() << function(self)
+    if self.m_deferExitCor then
+        return
+    end
+    self.m_deferExitCor = self:_StartCoroutine(function()
+        while PhaseManager.isRecovering or PhaseManager.m_curState ~= Const.PhaseState.Idle do
+            if not PhaseManager:IsOpen(PhaseId.GasCollection) then
+                self.m_deferExitCor = nil
+                return
+            end
+            coroutine.yield()
+        end
+        if PhaseManager:IsOpen(PhaseId.GasCollection) then
+            PhaseManager:ExitPhaseFast(PhaseId.GasCollection)
+        end
+        self.m_deferExitCor = nil
+    end)
 end
 
 HL.Commit(GasCollectionCtrl)

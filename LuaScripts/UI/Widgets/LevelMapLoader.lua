@@ -54,6 +54,10 @@ LevelMapLoader.m_baseUpdateTick = HL.Field(HL.Number) << -1
 
 LevelMapLoader.m_gridMaskUpdateTick = HL.Field(HL.Number) << -1
 
+LevelMapLoader.m_lineRefreshTick = HL.Field(HL.Number) << -1
+
+LevelMapLoader.m_pendingLineRefreshTypes = HL.Field(HL.Table)
+
 LevelMapLoader.m_animMistShowTimer = HL.Field(HL.Number) << -1
 
 LevelMapLoader.m_mapId = HL.Field(HL.String) << ""
@@ -196,6 +200,10 @@ LevelMapLoader.m_waitVisibleInMistMarks = HL.Field(HL.Table)
 
 LevelMapLoader.m_connectNodeLineGetter = HL.Field(HL.Table)  
 
+LevelMapLoader.m_visibilityCheckList = HL.Field(HL.Table)  
+
+LevelMapLoader.m_hideOtherLevels = HL.Field(HL.Boolean) << false
+
 
 
 LevelMapLoader.m_gridRectLength = HL.Field(HL.Number) << -1  
@@ -205,16 +213,16 @@ LevelMapLoader.m_gridWorldLength = HL.Field(HL.Number) << -1
 
 LevelMapLoader._OnFirstTimeInit = HL.Override() << function(self)
     self:RegisterMessage(MessageConst.ON_BACKUP_STATE_CHANGED, function(args)
-        self:_OnMarkLineInstDataChanged(LineType.Power)
+        self:_MarkLineInstDataDirty(LineType.Power)
     end)
     self:RegisterMessage(MessageConst.ON_MAP_POWER_LINE_CHANGED, function()
-        self:_OnMarkLineInstDataChanged(LineType.Power)
+        self:_MarkLineInstDataDirty(LineType.Power)
     end)
     self:RegisterMessage(MessageConst.ON_MAP_TRAVEL_LINE_CHANGED, function()
-        self:_OnMarkLineInstDataChanged(LineType.Travel)
+        self:_MarkLineInstDataDirty(LineType.Travel)
     end)
     self:RegisterMessage(MessageConst.ON_MAP_UD_PIPE_LINE_CHANGED, function()
-        self:_OnMarkLineInstDataChanged(LineType.UdPipe)
+        self:_MarkLineInstDataDirty(LineType.UdPipe)
     end)
     self:RegisterMessage(MessageConst.ON_MAP_MARK_RUNTIME_DATA_CHANGED, function(args)
         local instId, isAdd = unpack(args)
@@ -261,6 +269,8 @@ LevelMapLoader._OnDestroy = HL.Override() << function(self)
     end
     self.m_baseUpdateTick = LuaUpdate:Remove(self.m_baseUpdateTick)
     self.m_gridMaskUpdateTick = LuaUpdate:Remove(self.m_gridMaskUpdateTick)
+    self.m_lineRefreshTick = LuaUpdate:Remove(self.m_lineRefreshTick)
+    self.m_pendingLineRefreshTypes = {}
     self.m_animMistShowTimer = self:_ClearTimer(self.m_animMistShowTimer)
     self:_StopDelayDisposeChunkResourceThread()
     self:_RemoveAllDelayActions()
@@ -302,6 +312,7 @@ LevelMapLoader.InitLevelMapLoader = HL.Method(HL.String, HL.Opt(HL.Table)) << fu
     self.m_levelId = levelId
     self.m_tierId = MapConst.BASE_TIER_ID
     self.m_forbidMistRefreshAfterGridChange = false
+    self:_ClearMissionTrackingElementsBeforeReinit()
     self:_InitTableFields()
     self:_InitCustomInfo(customInfo)
     self:_InitLoaderCache()
@@ -331,9 +342,13 @@ end
 
 LevelMapLoader._InitLoaderComponent = HL.Method() << function(self)
     local loader = self.view.loader
+    
+    loader.onHitStateChange:RemoveAllListeners()
+    loader.onCullingLODChange:RemoveAllListeners()
+    loader.onCullingStateChange:RemoveAllListeners()
+    loader.onPermanentStaticElementsHitStateChange:RemoveAllListeners()
     loader:InitLoader(self.m_levelId)
     loader.needTickCheckHit = self.m_needUpdate
-
     loader.onHitStateChange:AddListener(function(hitStateChangeEventData)
         self:_OnLoadStateChanged(hitStateChangeEventData)
     end)
@@ -363,8 +378,37 @@ LevelMapLoader._InitCustomInfo = HL.Method(HL.Table) << function(self, customInf
     self.m_onGridsLoadedStateChange = customInfo.onGridsLoadedStateChange or nil
     self.m_retainTextureAfterDraw = customInfo.retainTextureAfterDraw or false
     self.m_useChunkGODrawer = customInfo.useChunkGODrawer or false
+    self.m_hideOtherLevels = customInfo.hideOtherLevels or false
     if customInfo.needUpdate ~= nil then
         self.m_needUpdate = customInfo.needUpdate
+    end
+
+    
+    local builtInChecks = {
+        {
+            hideKey = "Mist",
+            checkFunc = function(viewData)
+                return not viewData.runtimeData.visibleInMist and viewData.runtimeData:IsInMist()
+            end,
+        },
+        {
+            hideKey = "TrackingRelated",
+            checkFunc = function(viewData)
+                return viewData.runtimeData.isTracking
+            end,
+        },
+        {
+            hideKey = "MissionTrackingRelated",
+            checkFunc = function(viewData)
+                return viewData.runtimeData.isMissionTracking
+            end,
+        },
+    }
+    self.m_visibilityCheckList = builtInChecks
+    if customInfo.visibilityCheckList then
+        for _, checkItem in ipairs(customInfo.visibilityCheckList) do
+            table.insert(self.m_visibilityCheckList, checkItem)
+        end
     end
 
     local panelRectTransform = self:GetUICtrl().view.rectTransform
@@ -382,12 +426,12 @@ LevelMapLoader._InitTableFields = HL.Method(HL.Opt(HL.Boolean)) << function(self
     self.m_buildElementsLevels = {}
     self.m_delayActionList = {}
     self.m_tryLoadElementsList = {}
+    self.m_loadedGridViewDataMap = {}
 
     if not ignoreGlobal then
         self.m_rtDrawerDataPool = {}
         self.m_chunkResourceLoadDataPool = {}
 
-        self.m_loadedGridViewDataMap = {}
         self.m_loadedChunkViewDataMap = {}
         self.m_loadedTierViewDataMap = {}
 
@@ -608,6 +652,10 @@ end
 LevelMapLoader._InitLoaderUpdateThread = HL.Method() << function(self)
     local uiCtrl = self:GetUICtrl()
 
+    
+    if self.m_baseUpdateTick > 0 then
+        self.m_baseUpdateTick = LuaUpdate:Remove(self.m_baseUpdateTick)
+    end
     self.m_baseUpdateTick = LuaUpdate:Add("Tick", function(deltaTime)
         if not uiCtrl.m_isClosed and uiCtrl:IsShow() then
             self:_RefreshMissionTrackingMarksPosition()
@@ -661,7 +709,7 @@ LevelMapLoader._OnMarkInstDataModified = HL.Method(HL.String) << function(self, 
     if belongGridLoaderData == nil or not self.view.loader:IsGridInHitList(belongGridLoaderData.gridId) then
         return
     end
-    self:_RefreshGridMark(markInstId, markRuntimeData, markRuntimeData.isVisible)
+    self:_RefreshGridMark(markInstId, markRuntimeData, markRuntimeData.isVisible, true)
 end
 
 LevelMapLoader._OnMarkInstDataChanged = HL.Method(HL.String, HL.Boolean) << function(self, markInstId, isAdd)
@@ -675,9 +723,33 @@ LevelMapLoader._OnMarkInstDataChanged = HL.Method(HL.String, HL.Boolean) << func
         return
     end
     self:_RefreshGridMark(markInstId, markRuntimeData, isAdd)
-
     if self.m_onMarkInstDataChangedCallback ~= nil then
         self.m_onMarkInstDataChangedCallback()
+    end
+end
+
+
+LevelMapLoader._MarkLineInstDataDirty = HL.Method(LineType) << function(self, lineType)
+    if self.m_pendingLineRefreshTypes == nil then
+        self.m_pendingLineRefreshTypes = {}
+    end
+    self.m_pendingLineRefreshTypes[lineType] = true
+    if self.m_lineRefreshTick < 0 then
+        self.m_lineRefreshTick = LuaUpdate:Add("LateTick", function()
+            self:_FlushPendingLineInstDataChanged()
+        end)
+    end
+end
+
+LevelMapLoader._FlushPendingLineInstDataChanged = HL.Method() << function(self)
+    self.m_lineRefreshTick = LuaUpdate:Remove(self.m_lineRefreshTick)
+    local pending = self.m_pendingLineRefreshTypes
+    self.m_pendingLineRefreshTypes = {}
+    if pending == nil then
+        return
+    end
+    for lineType, _ in pairs(pending) do
+        self:_OnMarkLineInstDataChanged(lineType)
     end
 end
 
@@ -702,33 +774,64 @@ LevelMapLoader._OnMarkLineInstDataChanged = HL.Method(LineType) << function(self
     end
 
     
-    local showFunc = function(showLineData, showCount, needShow)
-        for _ = 1, showCount do
-            self:_ShowGridLine(showLineData)
-        end
-    end
-    local hideFunc = function(hideLineId, hideLineType, hideCount)
-        for _ = 1, hideCount do
-            self:_HideGridLine(hideLineId, hideLineType)
-        end
-    end
-
-    
+    local topologyChanged = false
     local needRemoveLines = {}
     for lineId, lineViewData in pairs(self.m_loadedLineViewDataMap) do
-        if needRefreshLines[lineId] == nil and lineViewData.lineData.lineType == lineType then  
+        if needRefreshLines[lineId] == nil and lineViewData.lineData.lineType == lineType then
             needRemoveLines[lineId] = lineViewData
         end
     end
     for _, lineViewData in pairs(needRemoveLines) do
-        hideFunc(lineViewData.lineId, lineViewData.lineType, lineViewData.loadCount)
+        topologyChanged = true
+        for _ = 1, lineViewData.loadCount do
+            self:_HideGridLine(lineViewData.lineId, lineViewData.lineType)
+        end
     end
 
     
     for _, refreshLineData in pairs(needRefreshLines) do
-        hideFunc(refreshLineData.lineData.lineId, refreshLineData.lineData.lineType, refreshLineData.loadCount)  
-        showFunc(refreshLineData.lineData, refreshLineData.loadCount)  
+        local lineData = refreshLineData.lineData
+        local lineId = lineData.lineId
+        local existing = self.m_loadedLineViewDataMap[lineId]
+        if existing == nil then
+            topologyChanged = true
+            for _ = 1, refreshLineData.loadCount do
+                self:_ShowGridLine(lineData)
+            end
+        else
+            
+            local startPosition = lineData.startPosition
+            local endPosition = lineData.endPosition
+            local geomChanged = existing.startPositionX ~= startPosition.x
+                or existing.startPositionY ~= startPosition.y
+                or existing.startPositionZ ~= startPosition.z
+                or existing.endPositionX ~= endPosition.x
+                or existing.endPositionY ~= endPosition.y
+                or existing.endPositionZ ~= endPosition.z
+            if geomChanged then
+                self:_RefreshLineBasicTransform(existing.lineObj, lineData)
+            end
+            if lineType == LineType.Power then
+                self:_RefreshPowerLineAppearance(existing.lineObj, lineData)
+            end
+            existing.lineData = lineData
+            existing.loadCount = refreshLineData.loadCount
+            existing.startPositionX = startPosition.x
+            existing.startPositionY = startPosition.y
+            existing.startPositionZ = startPosition.z
+            existing.endPositionX = endPosition.x
+            existing.endPositionY = endPosition.y
+            existing.endPositionZ = endPosition.z
+        end
     end
+
+
+    
+    if topologyChanged and self.m_hideOtherLevels then
+        self:_ShowCrossLevelExceptionMarks()
+    end
+
+
 end
 
 LevelMapLoader._OnCommonStaticElementStateChanged = HL.Method(HL.String, HL.Boolean) << function(self, elementId, isVisible)
@@ -851,18 +954,24 @@ LevelMapLoader._ShowGridLine = HL.Method(HL.Userdata) << function(self, lineData
 
         
         if lineType == LineType.Power then
-            line.image.color = (lineData.hasPower or FactoryUtils.getIsInBackupPower()) and
-                self.view.config.POWER_LINE_VALID_COLOR or
-                self.view.config.POWER_LINE_INVALID_COLOR
+            self:_RefreshPowerLineAppearance(line, lineData)
             self.m_loadedPowerLineCount = self.m_loadedPowerLineCount + 1
         end
 
+        local startPosition = lineData.startPosition
+        local endPosition = lineData.endPosition
         self.m_loadedLineViewDataMap[lineId] = {
             lineId = lineId,
             lineType = lineData.lineType,
             lineData = lineData,
             lineObj = line,
             loadCount = 1,
+            startPositionX = startPosition.x,
+            startPositionY = startPosition.y,
+            startPositionZ = startPosition.z,
+            endPositionX = endPosition.x,
+            endPositionY = endPosition.y,
+            endPositionZ = endPosition.z,
         }
         line.gameObject.name = string.format("Line_%s", lineId)
     else
@@ -914,6 +1023,23 @@ LevelMapLoader._RefreshLineBasicTransform = HL.Method(HL.Any, HL.Userdata) << fu
     line.rectTransform.localRotation = Quaternion.Euler(0, 0, angle)
     if line.levelMapLine ~= nil then
         line.levelMapLine:Init(length)
+    end
+end
+
+LevelMapLoader._RefreshPowerLineAppearance = HL.Method(HL.Any, HL.Userdata) << function(self, line, lineData)
+    if line == nil or lineData == nil or line.image == nil then
+        return
+    end
+    if FactoryUtils.getIsInBackupPower() then
+        local fromNodeState = FactoryUtils.getBuildingStateType(lineData.fromNodeId)
+        local toNodeState = FactoryUtils.getBuildingStateType(lineData.toNodeId)
+        line.image.color = (fromNodeState ~= GEnums.FacBuildingState.NotInPowerNet and toNodeState ~= GEnums.FacBuildingState.NotInPowerNet) and
+                        self.view.config.POWER_LINE_VALID_COLOR or
+                        self.view.config.POWER_LINE_INVALID_COLOR
+    else
+        line.image.color = lineData.hasPower and
+                        self.view.config.POWER_LINE_VALID_COLOR or
+                        self.view.config.POWER_LINE_INVALID_COLOR
     end
 end
 
@@ -1433,7 +1559,13 @@ LevelMapLoader._RefreshRTDrawState = HL.Method(HL.String, HL.Table) << function(
     local transformData = drawerData.transformData
     local loaderData = drawerData.drawList[loadId]
     local resource = self:_GetChunkResourceByLoadKey(loadId)
+    if resource == nil then
+        return
+    end
     local texture = drawerData.isTextureResource and resource or resource.texture
+    if texture == nil then
+        return
+    end
     local totalScaleRatio = 1 / transformData.scale.x
     local extraScaleRatio = drawerData.extraScale
     local targetRect = Rect(
@@ -2332,10 +2464,145 @@ LevelMapLoader._GetTrackingMarkFromCache = HL.Method(HL.Boolean).Return(HL.Any) 
     return trackingMarkObj
 end
 
+LevelMapLoader._ClearMissionTrackingElementsBeforeReinit = HL.Method() << function(self)
+    
+    
+    
+
+    if self.m_loadedMissionTrackingMarks then
+        for _, markObj in pairs(self.m_loadedMissionTrackingMarks) do
+            markObj.gameObject:SetActive(false)
+            if self.m_trackingMarkCache then
+                markObj:ClearLevelMapMark()
+                self.m_trackingMarkCache:Push(markObj)
+            end
+        end
+        self.m_loadedMissionTrackingMarks = nil
+    end
+    if self.m_loadedMissionTrackingAreas then
+        for _, areaObj in pairs(self.m_loadedMissionTrackingAreas) do
+            areaObj.levelMapMissionArea:ClearComponent()
+            areaObj.gameObject:SetActive(false)
+            if self.m_missionTrackingAreaCache then
+                self.m_missionTrackingAreaCache:Cache(areaObj)
+            end
+        end
+        self.m_loadedMissionTrackingAreas = nil
+    end
+end
+
 LevelMapLoader._CacheTrackingMark = HL.Method(HL.Any) << function(self, trackingMarkObj)
     trackingMarkObj:ClearLevelMapMark()
     trackingMarkObj.gameObject:SetActive(false)
     self.m_trackingMarkCache:Push(trackingMarkObj)
+end
+
+LevelMapLoader._ProcessVisibilityCheckList = HL.Method(HL.Table, HL.Opt(HL.Table)).Return(HL.Boolean) << function(self, viewData, ignoreHideKeys)
+    if self.m_visibilityCheckList == nil then
+        return true
+    end
+    for _, checkItem in ipairs(self.m_visibilityCheckList) do
+        if (ignoreHideKeys == nil or not ignoreHideKeys[checkItem.hideKey]) and checkItem.checkFunc(viewData) then
+            return false
+        end
+    end
+    return true
+end
+
+LevelMapLoader._TryInstantiateMarkGO = HL.Method(HL.Table) << function(self, viewData)
+    local markObj = self:_GetMarkFromCache(viewData)
+    viewData.markObj = markObj
+    viewData.mark = markObj.view
+
+    markObj:InitLevelMapMark(viewData.runtimeData.rectPosition, viewData.runtimeData, self.m_needOptimizePerformance, false)
+
+    
+    if viewData.runtimeData.isPowerRelated ~= nil then
+        viewData.isPowerRelated = viewData.runtimeData.isPowerRelated
+    end
+    if viewData.runtimeData.isTravelRelated ~= nil then
+        viewData.isTravelRelated = viewData.runtimeData.isTravelRelated
+    end
+
+    
+    self:_RefreshGridMarkTierState(markObj)
+
+    
+    if self.m_onMarkHover ~= nil then
+        markObj:SetMarkOnHoverCallback(function(isHover)
+            self.m_onMarkHover(viewData.instId, isHover)
+        end)
+    end
+
+    
+    if self.view.config.INITIAL_MARK_SCALE ~= 1 then
+        markObj.view.rectTransform.localScale = self.m_initialMarkScale
+    end
+
+    
+    if viewData.pendingHideKeys then
+        for hideKey, _ in pairs(viewData.pendingHideKeys) do
+            markObj:ToggleMarkHiddenState(hideKey, true)
+        end
+    end
+end
+
+LevelMapLoader._ShowCrossLevelExceptionMarks = HL.Method() << function(self)
+    if not self.m_hideOtherLevels then
+        return
+    end
+    for markInstId, markViewData in pairs(self.m_loadedMarkViewDataMap) do
+        local markRuntimeData = markViewData.runtimeData
+        local gridInCurrLevel = markRuntimeData.levelId == self.m_levelId
+
+        if gridInCurrLevel then
+            
+            self:ToggleMarkHiddenState(markInstId, "LoaderOtherLevelHide", false)
+        else
+            local needHide = true
+            
+            if markRuntimeData.connectFromNodeIdList ~= nil then
+                local otherLevelConnectRefreshFunc = function(connectNodeIdList)
+                    for connectNodeId in cs_pairs(connectNodeIdList) do
+                        local _, connectMarkInstId = self.m_mapManager:GetFacMarkInstIdByNodeId(
+                            markRuntimeData.chapterId,
+                            connectNodeId
+                        )
+                        local connectMarkViewData = self.m_loadedMarkViewDataMap[connectMarkInstId]
+                        if connectMarkViewData ~= nil then
+                            local inCurrentLevel = markRuntimeData.levelId == self.m_levelId or
+                                connectMarkViewData.runtimeData.levelId == self.m_levelId
+                            if inCurrentLevel then
+                                needHide = false
+                            end
+                        end
+                    end
+                end
+
+                if markRuntimeData.connectFromNodeIdList.Count > 0 then
+                    otherLevelConnectRefreshFunc(markRuntimeData.connectFromNodeIdList)
+                end
+                if markRuntimeData.connectToNodeIdList.Count > 0 then
+                    otherLevelConnectRefreshFunc(markRuntimeData.connectToNodeIdList)
+                end
+            end
+
+            self:ToggleMarkHiddenState(markInstId, "LoaderOtherLevelHide", needHide)
+
+            
+            if markRuntimeData.isTracking then
+                if not needHide and not gridInCurrLevel then
+                    if not markViewData.markObj and not next(markViewData.pendingHideKeys) and
+                        self:_ProcessVisibilityCheckList(markViewData, { TrackingRelated = true }) then
+                        self:_TryInstantiateMarkGO(markViewData)
+                    end
+                    self:ToggleMarkHiddenState(markInstId, "TrackingRelated", false)
+                else
+                    self:ToggleMarkHiddenState(markInstId, "TrackingRelated", true)
+                end
+            end
+        end
+    end
 end
 
 LevelMapLoader._RefreshGridMarks = HL.Method(HL.Userdata, HL.Boolean) << function(self, loaderData, needShow)
@@ -2348,37 +2615,33 @@ LevelMapLoader._RefreshGridMarks = HL.Method(HL.Userdata, HL.Boolean) << functio
     end
 end
 
-LevelMapLoader._RefreshGridMark = HL.Method(HL.String, HL.Userdata, HL.Boolean) << function(self, markInstId, markRuntimeData, needShow)
-    local invisibleInMist = not markRuntimeData.visibleInMist and markRuntimeData:IsInMist()
-    if invisibleInMist then
-        if needShow then
-            self.m_waitVisibleInMistMarks[markInstId] = true
-        else
-            self.m_waitVisibleInMistMarks[markInstId] = nil
-        end
-        return  
-    end
-
-    if not markRuntimeData.isConstantState and self.m_needListenMarkStateChange then  
-        if needShow then
+LevelMapLoader._RefreshGridMark = HL.Method(HL.String, HL.Userdata, HL.Boolean, HL.Opt(HL.Boolean)) << function(self, markInstId, markRuntimeData, needShow, isStateModify)
+    if not markRuntimeData.isConstantState and self.m_needListenMarkStateChange then
+        local keepListening = isStateModify == true and markRuntimeData.keepStateChangeCallbackWhenInvisible
+        if needShow or keepListening then
             markRuntimeData:AddStateChangeCallback("LoadedMark")
         else
             markRuntimeData:RemoveStateChangeCallback("LoadedMark")
         end
     end
 
-    if needShow and markRuntimeData.isVisible then  
+    if needShow and markRuntimeData.isVisible then
+        
+        local invisibleInMist = not markRuntimeData.visibleInMist and markRuntimeData:IsInMist()
+        if invisibleInMist then
+            self.m_waitVisibleInMistMarks[markInstId] = true
+        else
+            self.m_waitVisibleInMistMarks[markInstId] = nil
+        end
+
         local templateId = markRuntimeData.templateId
         local templateData = self.m_markStaticDataMap[templateId]
         local order = templateData.sortOrder
 
-        local markViewData, markObj
-        local getFromCache
-        if self.m_loadedMarkViewDataMap[markInstId] then
-            markViewData = self.m_loadedMarkViewDataMap[markInstId]
-            markObj = markViewData.markObj
-            getFromCache = false
-        else
+        local markViewData = self.m_loadedMarkViewDataMap[markInstId]
+        local isNewViewData = markViewData == nil
+
+        if isNewViewData then
             markViewData = {
                 instId = markInstId,
                 runtimeData = markRuntimeData,
@@ -2388,59 +2651,73 @@ LevelMapLoader._RefreshGridMark = HL.Method(HL.String, HL.Userdata, HL.Boolean) 
                 filterTypeEnum = templateData.filterTypeEnum,
                 isPowerRelated = false,
                 isTravelRelated = false,
+                markObj = nil,
+                pendingHideKeys = {},
             }
-            markObj = self:_GetMarkFromCache(markViewData)
             self.m_loadedMarkViewDataMap[markInstId] = markViewData
-            getFromCache = true
+
+            
+            if self.m_hideOtherLevels and markRuntimeData.levelId ~= self.m_levelId then
+                markViewData.pendingHideKeys["LoaderOtherLevelHide"] = true
+            end
+        else
+            markViewData.runtimeData = markRuntimeData
         end
 
-        markViewData.markObj = markObj
-        markViewData.mark = markObj.view
+        if markViewData.markObj then
+            
+            local markObj = markViewData.markObj
+            markObj:InitLevelMapMark(markRuntimeData.rectPosition, markRuntimeData, self.m_needOptimizePerformance, true)
 
-        markObj:InitLevelMapMark(markRuntimeData.rectPosition, markRuntimeData, self.m_needOptimizePerformance, not getFromCache)
+            if markRuntimeData.isPowerRelated ~= nil then
+                markViewData.isPowerRelated = markRuntimeData.isPowerRelated
+            end
+            if markRuntimeData.isTravelRelated ~= nil then
+                markViewData.isTravelRelated = markRuntimeData.isTravelRelated
+            end
 
-        
-        if markRuntimeData.isPowerRelated ~= nil then
-            markViewData.isPowerRelated = markRuntimeData.isPowerRelated  
-        end
-        if markRuntimeData.isTravelRelated ~= nil then
-            markViewData.isTravelRelated = markRuntimeData.isTravelRelated  
-        end
-
-        
-        self:_RefreshGridMarkTierState(markObj)
-
-        
-        if self.m_onMarkHover ~= nil then
-            markObj:SetMarkOnHoverCallback(function(isHover)
-                self.m_onMarkHover(markInstId, isHover)
-            end)
-        end
-
-        
-        if self.view.config.INITIAL_MARK_SCALE ~= 1 then
-            markObj.view.rectTransform.localScale = self.m_initialMarkScale
-        end
-
-        
-        if markRuntimeData.isTracking or markRuntimeData.isMissionTracking then
-            local hiddenKey = markRuntimeData.isMissionTracking and "MissionTrackingRelated" or "TrackingRelated"
-            markObj:ToggleMarkHiddenState(hiddenKey, true)
+            self:_RefreshGridMarkTierState(markObj)
+            if markRuntimeData.isMissionTracking then
+                markObj:ToggleMarkHiddenState("MissionTrackingRelated", true)
+            end
+            if markRuntimeData.isTracking then
+                markObj:ToggleMarkHiddenState("TrackingRelated", true)
+            end
+        else
+            
+            if markRuntimeData.isMissionTracking then
+                markViewData.pendingHideKeys["MissionTrackingRelated"] = true
+            end
+            if markRuntimeData.isTracking then
+                markViewData.pendingHideKeys["TrackingRelated"] = true
+            end
+            if markViewData.runtimeData.isTracking or markViewData.runtimeData.isMissionTracking then
+                self:_TryInstantiateMarkGO(markViewData)
+            else
+                if not next(markViewData.pendingHideKeys) and self:_ProcessVisibilityCheckList(markViewData) then
+                    self:_TryInstantiateMarkGO(markViewData)
+                end
+            end
         end
     else
         local markViewData = self.m_loadedMarkViewDataMap[markInstId]
-        if markViewData ~= nil and markViewData.markObj ~= nil then
-            local markObj = markViewData.markObj
-            self:_CacheMark(markViewData, markObj)
+        if markViewData ~= nil then
+            if markViewData.markObj ~= nil then
+                self:_CacheMark(markViewData, markViewData.markObj)
+            end
             self.m_loadedMarkViewDataMap[markInstId] = nil
         end
+        self.m_waitVisibleInMistMarks[markInstId] = nil
     end
 end
 
 LevelMapLoader._RefreshNonConstantStateMark = HL.Method(HL.String) << function(self, markInstId)
     if self.m_loadedMarkViewDataMap[markInstId] then
         local markObj = self.m_loadedMarkViewDataMap[markInstId].markObj
-        markObj:ResetMarkIcon()  
+        if markObj then
+            markObj:ResetMarkIcon()  
+        end
+        
     else
         self:_OnMarkInstDataChanged(markInstId, true)  
     end
@@ -2564,17 +2841,26 @@ LevelMapLoader._RefreshWaitVisibleInMistMarksState = HL.Method() << function(sel
     if self.m_waitVisibleInMistMarks == nil or next(self.m_waitVisibleInMistMarks) == nil then
         return
     end
-    local visibleMarks = {}
+    local processedMarks = {}
     for markInstId, _ in pairs(self.m_waitVisibleInMistMarks) do
         local success, markRuntimeData = self.m_mapManager:GetMarkInstRuntimeData(markInstId)
         if success then
-            self:_RefreshGridMark(markInstId, markRuntimeData, true)
-            if self.m_loadedMarkViewDataMap[markInstId] ~= nil then
-                table.insert(visibleMarks, markInstId)  
+            local stillInMist = not markRuntimeData.visibleInMist and markRuntimeData:IsInMist()
+            if not stillInMist then
+                table.insert(processedMarks, markInstId)
+                
+                local viewData = self.m_loadedMarkViewDataMap[markInstId]
+                if viewData then
+                    if not viewData.markObj and not next(viewData.pendingHideKeys) and self:_ProcessVisibilityCheckList(viewData) then
+                        self:_TryInstantiateMarkGO(viewData)
+                    end
+                else
+                    self:_RefreshGridMark(markInstId, markRuntimeData, true)
+                end
             end
         end
     end
-    for _, markInstId in ipairs(visibleMarks) do
+    for _, markInstId in ipairs(processedMarks) do
         self.m_waitVisibleInMistMarks[markInstId] = nil
     end
 end
@@ -2650,7 +2936,9 @@ end
 
 LevelMapLoader._ClearLoaderMarkCache = HL.Method() << function(self)
     for _, markViewData in pairs(self.m_loadedMarkViewDataMap) do
-        self:_CacheMark(markViewData, markViewData.markObj)
+        if markViewData.markObj then
+            self:_CacheMark(markViewData, markViewData.markObj)
+        end
     end
 
     self.m_loadedMarkViewDataMap = {}
@@ -3067,10 +3355,7 @@ LevelMapLoader.ToggleLoaderGeneralTrackingVisibleState = HL.Method(HL.Boolean) <
     self.view.element.trackingMarkRoot.general.gameObject:SetActive(visible)
 
     if not string.isEmpty(self.m_loadedGeneralTrackingMarkId) then
-        local markViewData = self.m_loadedMarkViewDataMap[self.m_loadedGeneralTrackingMarkId]
-        if markViewData ~= nil then
-            markViewData.markObj:ToggleMarkHiddenState("TrackingRelated", visible)
-        end
+        self:ToggleMarkHiddenState(self.m_loadedGeneralTrackingMarkId, "TrackingRelated", visible)
     end
 end
 
@@ -3183,7 +3468,6 @@ end
 LevelMapLoader.RefreshElementsHiddenStateInOtherLevel = HL.Method() << function(self)
     for loaderData in cs_pairs(self.view.loader.hitGrids) do
         local staticElements = loaderData.staticElements
-        local marks = loaderData.marks
         local lines = loaderData.lines
         local gridInCurrLevel = loaderData.levelId == self.m_levelId
         
@@ -3192,55 +3476,6 @@ LevelMapLoader.RefreshElementsHiddenStateInOtherLevel = HL.Method() << function(
                 local elementViewData = self.m_loadedStaticElementViewDataMap[staticElementId]
                 if elementViewData ~= nil then
                     self:_RefreshStaticElementVisibleState(elementViewData, "LoaderOtherLevelHide", gridInCurrLevel)
-                end
-            end
-        end
-        
-        if marks ~= nil and marks.Count > 0 then
-            for markInstId, _ in pairs(marks) do
-                local markViewData = self.m_loadedMarkViewDataMap[markInstId]
-                if markViewData ~= nil then
-                    local markObj = markViewData.markObj
-                    local needHide = not gridInCurrLevel
-                    local markRuntimeData = markViewData.runtimeData
-                    if markRuntimeData.connectFromNodeIdList ~= nil then  
-                        if needHide then
-                            local otherLevelConnectRefreshFunc = function(connectNodeIdList)
-                                for connectNodeId in cs_pairs(connectNodeIdList) do
-                                    local _, connectMarkInstId = self.m_mapManager:GetFacMarkInstIdByNodeId(
-                                        markRuntimeData.chapterId,
-                                        connectNodeId
-                                    )
-                                    local connectMarkViewData = self.m_loadedMarkViewDataMap[connectMarkInstId]
-                                    if connectMarkViewData ~= nil then
-                                        local inCurrentLevel = markRuntimeData.levelId == self.m_levelId or
-                                            connectMarkViewData.runtimeData.levelId == self.m_levelId
-                                        if inCurrentLevel then
-                                            needHide = false  
-                                        end
-                                    end
-                                end
-                            end
-
-                            if markRuntimeData.connectFromNodeIdList.Count > 0 then
-                                otherLevelConnectRefreshFunc(markRuntimeData.connectFromNodeIdList)
-                            end
-                            if markRuntimeData.connectToNodeIdList.Count > 0 then
-                                otherLevelConnectRefreshFunc(markRuntimeData.connectToNodeIdList)
-                            end
-                        end
-                    end
-
-                    markObj:ToggleMarkHiddenState("LoaderOtherLevelHide", needHide)
-                    if markRuntimeData.isTracking then
-                        
-                        
-                        if not needHide and not gridInCurrLevel then
-                            markObj:ToggleMarkHiddenState("TrackingRelated", false)
-                        else
-                            markObj:ToggleMarkHiddenState("TrackingRelated", true)
-                        end
-                    end
                 end
             end
         end
@@ -3257,6 +3492,40 @@ LevelMapLoader.RefreshElementsHiddenStateInOtherLevel = HL.Method() << function(
                 end
                 lineViewData.lineObj.gameObject:SetActive(not needHide)
             end
+        end
+    end
+    
+    self:_ShowCrossLevelExceptionMarks()
+end
+
+LevelMapLoader.ToggleMarkHiddenState = HL.Method(HL.String, HL.String, HL.Boolean) << function(self, instId, hideKey, isHidden)
+    local viewData = self.m_loadedMarkViewDataMap[instId]
+    if not viewData then return end
+
+    if viewData.markObj then
+        viewData.markObj:ToggleMarkHiddenState(hideKey, isHidden)
+    else
+        if isHidden then
+            viewData.pendingHideKeys[hideKey] = true
+        else
+            viewData.pendingHideKeys[hideKey] = nil
+            if not next(viewData.pendingHideKeys) and self:_ProcessVisibilityCheckList(viewData) then
+                self:_TryInstantiateMarkGO(viewData)
+            end
+        end
+    end
+end
+
+LevelMapLoader.ToggleForceShowMark = HL.Method(HL.String, HL.String, HL.Boolean) << function(self, instId, forceShowKey, forceShow)
+    local viewData = self.m_loadedMarkViewDataMap[instId]
+    if not viewData then return end
+
+    if viewData.markObj then
+        viewData.markObj:ToggleForceShowMark(forceShowKey, forceShow)
+    else
+        if forceShow then
+            self:_TryInstantiateMarkGO(viewData)
+            viewData.markObj:ToggleForceShowMark(forceShowKey, forceShow)
         end
     end
 end

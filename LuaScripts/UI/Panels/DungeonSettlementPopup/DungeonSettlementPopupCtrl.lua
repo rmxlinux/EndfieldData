@@ -2,7 +2,6 @@
 local uiCtrl = require_ex('UI/Panels/Base/UICtrl')
 local PANEL_ID = PanelId.DungeonSettlementPopup
 
-local LevelScriptTaskType = CS.Beyond.Gameplay.LevelScriptTaskType
 local RewardSourceType = CS.Beyond.GEnums.RewardSourceType
 
 local PanelState = {
@@ -11,6 +10,10 @@ local PanelState = {
 }
 
 local RESULT_2_REWARDS_CLIP = "dungeonsettlementpopup_change"
+
+local Category2OnBtnLeaveDungeonClickFunc = {
+    [DungeonConst.DUNGEON_CATEGORY.HighDifficulty] = '_OnBtnLeaveDungeonClickHighDifficulty',
+}
 
 DungeonSettlementPopupCtrl = HL.Class('DungeonSettlementPopupCtrl', uiCtrl.UICtrl)
 
@@ -22,45 +25,6 @@ DungeonSettlementPopupCtrl = HL.Class('DungeonSettlementPopupCtrl', uiCtrl.UICtr
 DungeonSettlementPopupCtrl.s_messages = HL.StaticField(HL.Table) << {
     [MessageConst.ON_STAMINA_CHANGED] = 'OnStaminaChanged',
 }
-
-DungeonSettlementPopupCtrl.s_cachedCompleteResult = HL.StaticField(HL.Table)
-
-DungeonSettlementPopupCtrl.OnDungeonComplete = HL.StaticMethod(HL.Any) << function(args)
-    local isNewTimeRecord, curGameTimeRecord = unpack(args)
-    if DungeonSettlementPopupCtrl.s_cachedCompleteResult == nil then
-        DungeonSettlementPopupCtrl.s_cachedCompleteResult = {}
-    end
-
-    DungeonSettlementPopupCtrl.s_cachedCompleteResult.isNewTimeRecord = isNewTimeRecord
-    DungeonSettlementPopupCtrl.s_cachedCompleteResult.curGameTimeRecord = curGameTimeRecord
-end
-
-DungeonSettlementPopupCtrl.OnShowDungeonResult = HL.StaticMethod(HL.Any) << function(args)
-    local dungeonId, leaveTimeDuration, useStaminaReduce = unpack(args)
-    LuaSystemManager.commonTaskTrackSystem:AddRequest("DungeonSettlement", function()
-        if not Utils.isInDungeon() then
-            
-            
-            logger.error(ELogChannel.Dungeon, "error, try to open settlement out of dungeon")
-            return
-        end
-
-        
-        PhaseManager:ExitPhaseFastTo(PhaseId.Level)
-
-        
-        local ctrl = UIManager:AutoOpen(PANEL_ID)
-        ctrl:StartSettlement(dungeonId)
-
-        if useStaminaReduce then
-            
-            ActivityUtils.showStaminaReduceProgress()
-        end
-
-    end, function()
-        UIManager:Close(PANEL_ID)
-    end)
-end
 
 DungeonSettlementPopupCtrl.m_panelState = HL.Field(HL.Number) << -1
 
@@ -122,6 +86,8 @@ DungeonSettlementPopupCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
     end)
 
     self:_InitController()
+
+    self:StartSettlement(arg)
 end
 
 DungeonSettlementPopupCtrl.OnShow = HL.Override() << function(self)
@@ -270,9 +236,23 @@ DungeonSettlementPopupCtrl._OnBtnLeaveDungeonClick = HL.Method() << function(sel
     
     self:Notify(MessageConst.HIDE_ITEM_TIPS)
 
+    local dungeonCfg = Tables.dungeonTable[self.m_dungeonId]
+    local funcName = Category2OnBtnLeaveDungeonClickFunc[dungeonCfg.dungeonCategory]
+    if funcName then
+        self[funcName](self)
+        return
+    end
+
     
     
     GameInstance.dungeonManager:LeaveDungeon()
+end
+
+
+DungeonSettlementPopupCtrl._OnBtnLeaveDungeonClickHighDifficulty = HL.Method() << function(self)
+    local dungeonId = self.m_dungeonId
+    DungeonUtils.onDungeonLeaveToEntryPanel(dungeonId, true)
+    self:PlayAnimationOutAndClose()
 end
 
 DungeonSettlementPopupCtrl._OnClickSkipGraduallyShow = HL.Method() << function(self)
@@ -387,6 +367,17 @@ DungeonSettlementPopupCtrl._TryGetRewardTypeTag = HL.Method(HL.String).Return(HL
     end
 end
 
+DungeonSettlementPopupCtrl._GetSettlementGameRecordShowingText = HL.Method().Return(HL.String)  << function(self)
+    local succ, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.m_dungeonId)
+    if not succ then
+        return
+    end
+    local isFloorOrCeil = not subGameData.hasTimeLimit or subGameData.countDownType == CS.Beyond.Gameplay.Core.EGameMechanicCountDownComponentType.None
+    local valuationFunc = isFloorOrCeil and math.floor or math.ceil
+    local curGameTimeRecord = GameWorld.worldInfo.subGame.passTimeMs
+    return UIUtils.getLeftTimeToSecond(valuationFunc(curGameTimeRecord / 1000))
+end
+
 DungeonSettlementPopupCtrl._UpdateResultState = HL.Method() << function(self)
     local succ, subGameData = DataManager.subGameInstDataTable:TryGetValue(self.m_dungeonId)
     if not succ then
@@ -396,11 +387,9 @@ DungeonSettlementPopupCtrl._UpdateResultState = HL.Method() << function(self)
     
     local showTimeInfo = subGameData.hasTimer or subGameData.hasTimeLimit
     if showTimeInfo then
-        local curGameTimeRecord = DungeonSettlementPopupCtrl.s_cachedCompleteResult.curGameTimeRecord
-        local isNewTimeRecord = DungeonSettlementPopupCtrl.s_cachedCompleteResult.isNewTimeRecord
-
-        self.view.curGameTimeTxt.text = UIUtils.getLeftTimeToSecond(math.floor(curGameTimeRecord / 1000))
+        local isNewTimeRecord = GameWorld.worldInfo.subGame.isPassNewTimeRecord
         self.view.newTimeRecord.gameObject:SetActiveIfNecessary(isNewTimeRecord)
+        self.view.curGameTimeTxt.text = self:_GetSettlementGameRecordShowingText()
     end
     self.view.timeInfoNode.gameObject:SetActiveIfNecessary(showTimeInfo)
 
@@ -415,8 +404,9 @@ DungeonSettlementPopupCtrl._UpdateResultState = HL.Method() << function(self)
     else
         local mainTask = trackingMgr.mainTask
         local mainTaskCount = mainTask ~= nil and mainTask.objectives.Length or 0
+        local mainTaskKey = mainTask ~= nil and mainTask.taskKey or ""
         self.m_mainCellCache:Refresh(mainTaskCount, function(cell, luaIndex)
-            self:_UpdateGoalCell(cell, luaIndex, LevelScriptTaskType.Main)
+            self:_UpdateGoalCell(cell, luaIndex, mainTaskKey)
         end)
         self.view.mainInfoNode.gameObject:SetActiveIfNecessary(mainTaskCount > 0)
     end
@@ -424,8 +414,9 @@ DungeonSettlementPopupCtrl._UpdateResultState = HL.Method() << function(self)
     
     local extraTask = trackingMgr.extraTask
     local extraTaskCount = extraTask ~= nil and extraTask.objectives.Length or 0
+    local extraTaskKey = extraTask ~= nil and extraTask.taskKey or ""
     self.m_extraCellCache:Refresh(extraTaskCount, function(cell, luaIndex)
-        self:_UpdateGoalCell(cell, luaIndex, LevelScriptTaskType.Extra)
+        self:_UpdateGoalCell(cell, luaIndex, extraTaskKey)
     end)
     self.view.extraInfoNode.gameObject:SetActiveIfNecessary(extraTaskCount > 0)
 
@@ -465,9 +456,9 @@ DungeonSettlementPopupCtrl._UpdateResultState = HL.Method() << function(self)
     end
 end
 
-DungeonSettlementPopupCtrl._UpdateGoalCell = HL.Method(HL.Any, HL.Number, CS.Beyond.Gameplay.LevelScriptTaskType)
-        << function(self, cell, luaIndex, taskType)
-    local trackingTask = GameWorld.levelScriptTaskTrackingManager:GetTaskByType(taskType)
+DungeonSettlementPopupCtrl._UpdateGoalCell = HL.Method(HL.Any, HL.Number, HL.String)
+        << function(self, cell, luaIndex, taskKey)
+    local trackingTask = GameWorld.levelScriptTaskTrackingManager:GetTaskByKey(taskKey)
     local csIndex = CSIndex(luaIndex)
     local obj = trackingTask.objectives[csIndex]
     local finished = obj.isCompleted
@@ -545,7 +536,6 @@ DungeonSettlementPopupCtrl.StartSettlement = HL.Method(HL.String) << function(se
         self.m_pausedGameTimeForDoubleBattle = true
     end
 
-
     self.m_items = self:_GetRewardItems()
 
     local needStamina = DungeonUtils.isDungeonCostStamina(self.m_dungeonId)
@@ -559,6 +549,8 @@ DungeonSettlementPopupCtrl.StartSettlement = HL.Method(HL.String) << function(se
         self.view.walletBarPlaceholder:InitWalletBarPlaceholder(ids)
     end
 
+    local dungeonCategory = Tables.dungeonTable[self.m_dungeonId].dungeonCategory
+    local showTimeOnSettlement = Tables.dungeonTypeTable[dungeonCategory].showTimeOnSettlement
     
     local needShowResult = DungeonUtils.isDungeonChallenge(self.m_dungeonId) or (self.m_charInfoTable ~= nil and #self.m_charInfoTable > 0)
     self.m_hasShowResultState = needShowResult
@@ -566,6 +558,9 @@ DungeonSettlementPopupCtrl.StartSettlement = HL.Method(HL.String) << function(se
     self.m_canCloseSelf = DungeonUtils.isDungeonChar(self.m_dungeonId)
     self.view.btnEmpty.gameObject:SetActiveIfNecessary(self.m_canCloseSelf)
     self.view.btnClose.gameObject:SetActiveIfNecessary(false)
+    
+    self.view.battleTimeNode.gameObject:SetActiveIfNecessary(not needShowResult and showTimeOnSettlement)
+    self.view.battleTimeTxt.text = self:_GetSettlementGameRecordShowingText()
 
     if needShowResult then
         self.m_panelState = PanelState.ShowResult

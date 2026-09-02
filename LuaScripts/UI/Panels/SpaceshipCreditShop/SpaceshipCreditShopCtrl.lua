@@ -140,10 +140,22 @@ SpaceshipCreditShopCtrl._RefreshTimeCountDown = HL.Override() << function(self)
     
     local shopTableData = Tables.shopTable[self.m_shopId]
     if shopTableData.shopRefreshCycleType == GEnums.ShopRefreshCycleType.None then
+        self.view.refreshTimesNumTxt:StopCountDown()
         self.view.refreshTime.gameObject:SetActiveIfNecessary(false)
     else
+        local targetTime = self:_CalculateTargetTime(shopTableData.shopRefreshCycleType)
+        local currentTime = DateTimeUtils.GetCurrentTimestampBySeconds()
+        if targetTime <= currentTime then
+            self.view.refreshTimesNumTxt:StopCountDown()
+            self.view.refreshTime.gameObject:SetActiveIfNecessary(false)
+            logger.error(string.format(
+                "[SpaceshipCreditShop][InvalidRefreshTime] shopId: %s, refreshCycleType: %s, targetTime: %s, currentTime: %s, serverTimeZoneOffset: %s, clientTimeZoneOffset: %s",
+                self.m_shopId, shopTableData.shopRefreshCycleType, targetTime, currentTime,
+                Utils.getServerTimeZoneOffsetSeconds(), Utils.getClientTimeZoneOffsetSeconds()))
+            return
+        end
         self.view.refreshTime.gameObject:SetActiveIfNecessary(true)
-        self.view.refreshTimesNumTxt:InitCountDownText(self:_CalculateTargetTime(shopTableData.shopRefreshCycleType), function()
+        self.view.refreshTimesNumTxt:InitCountDownText(targetTime, function()
             self:_RefreshTimeCountDown()
         end)
     end
@@ -156,13 +168,20 @@ SpaceshipCreditShopCtrl._SetWalletBarAndTime = HL.Method() << function(self)
     local time = Utils.getNextCommonServerRefreshTime()
     logger.info(string.format("[SpaceshipCreditShop] item: %s / %s, time: %s",
         itemCount, numberLimit, time))
+    local currentTime = DateTimeUtils.GetCurrentTimestampBySeconds()
+    local isTimeValid = time > currentTime
+    if not isTimeValid then
+        logger.error(string.format(
+            "[SpaceshipCreditShop][InvalidWalletBarTime] time: %s, currentTime: %s, serverTimeZoneOffset: %s, clientTimeZoneOffset: %s",
+            time, currentTime, Utils.getServerTimeZoneOffsetSeconds(), Utils.getClientTimeZoneOffsetSeconds()))
+    end
     Notify(MessageConst.CASH_SHOP_SHOW_WALLET_BAR, {
         moneyIds = {Tables.CashShopConst.CreditTabMoneyId},
-        showTimeNode = (itemCount > numberLimit),
-        time = time,
-        timeCompleteCallback = function()
+        showTimeNode = itemCount > numberLimit and isTimeValid,
+        time = isTimeValid and time or nil,
+        timeCompleteCallback = isTimeValid and function()
             self:_SetWalletBarAndTime()
-        end
+        end or nil
     })
 end
 

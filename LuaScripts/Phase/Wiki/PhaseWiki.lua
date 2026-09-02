@@ -51,6 +51,7 @@ local LIGHT_GROUP_NAME = "WikiLightGroup"
 local SCENE_POS = Vector3(0, 600, 0)
 
 local WIKI_ENY_POSE_CONTROLLER_PATH = "Assets/Beyond/DynamicAssets/Gameplay/Prefabs/UIModels/WikiEnyPose/%s.overrideController"
+local WIKI_ENY_UIMODEL_PATH = "Assets/Beyond/DynamicAssets/Gameplay/Prefabs/UIModels/Wiki/%s_uimodel.prefab"
 
 
 
@@ -423,7 +424,6 @@ PhaseWiki.OpenCategoryByPhaseArgs = HL.Method() << function(self)
 end
 
 PhaseWiki.OpenCategory = HL.Method(HL.Any, HL.Opt(HL.Table)) << function(self, categoryId, args)
-    self.m_currentWikiDetailArgs = args
     local panelCfg = WIKI_CATEGORY_TO_PANEL_CFG[categoryId]
     if panelCfg then
         
@@ -435,6 +435,7 @@ PhaseWiki.OpenCategory = HL.Method(HL.Any, HL.Opt(HL.Table)) << function(self, c
         self.m_currentWikiGroupArgs = wikiGroupArgs
 
         if panelCfg.groupPanelId and not args then
+            self.m_currentWikiDetailArgs = nil
             self:CreateOrShowPhasePanelItem(panelCfg.groupPanelId, wikiGroupArgs)
         else
             self:RemovePhasePanelItemById(PanelId.WikiGroup)
@@ -448,6 +449,7 @@ PhaseWiki.OpenCategory = HL.Method(HL.Any, HL.Opt(HL.Table)) << function(self, c
                     self:RemovePhasePanelItem(panelItem)
                 end
             end
+            self.m_currentWikiDetailArgs = args
             if UIManager:IsShow(panelCfg.detailPanelId) then
                 self:_GetPanelPhaseItem(panelCfg.detailPanelId).uiCtrl:Refresh(args)
             else
@@ -455,6 +457,7 @@ PhaseWiki.OpenCategory = HL.Method(HL.Any, HL.Opt(HL.Table)) << function(self, c
             end
         end
     else
+        self.m_currentWikiDetailArgs = args
         self.m_currentWikiGroupArgs = nil
         self:CreateOrShowPhasePanelItem(PanelId.Wiki)
     end
@@ -746,11 +749,18 @@ PhaseWiki._ShowMonsterModel = HL.Method(HL.Table, HL.Opt(HL.Table)) << function(
         return
     end
     
+    local modelPath = modelData.path
+    local uimodePath = string.format(WIKI_ENY_UIMODEL_PATH, monsterTemplateId)
+    if ResourceManager.CheckExists(uimodePath) then
+        modelPath = uimodePath
+    end
+
+    
     local playInAim = false
     if extraArgs then
         playInAim = extraArgs.playInAnim == true
     end
-    self:_LoadModelAsync(modelData.path, function(enemyModelGoInfo)
+    self:_LoadModelAsync(modelPath, function(enemyModelGoInfo)
         local enemyModelGo = enemyModelGoInfo.gameObject
         local animator = enemyModelGoInfo.animator
         local isSuccess, rigBuilder = enemyModelGo:TryGetComponent(typeof(Unity.Animations.Rigging.RigBuilder))
@@ -921,6 +931,9 @@ end
 PhaseWiki.SetSceneScale = HL.Method(HL.Number) << function(self, scale)
     if not self.m_isSceneInit then
         return
+    end
+    if scale < 1 then
+        scale = 1
     end
     self.m_sceneRoot.view.sceneRoot.transform.localScale = Vector3.one * scale
 end

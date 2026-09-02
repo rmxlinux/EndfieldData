@@ -23,6 +23,16 @@ AttackButton.m_isBreakingAttack = HL.Field(HL.Boolean) << false
 
 AttackButton.m_isBreakingAttackPressPlaying = HL.Field(HL.Boolean) << false
 
+AttackButton.m_battleAttackStartBindId = HL.Field(HL.Number) << -1
+
+AttackButton.m_battleAttackEndBindId = HL.Field(HL.Number) << -1
+
+if UNITY_EDITOR then
+    AttackButton.m_battleDebugAttackStartBindId = HL.Field(HL.Number) << -1
+
+    AttackButton.m_battleDebugAttackEndBindId = HL.Field(HL.Number) << -1
+end
+
 
 AttackButton._OnFirstTimeInit = HL.Override() << function(self)
     self.root = self:GetUICtrl()
@@ -168,6 +178,8 @@ AttackButton._RefreshShowing = HL.Method() << function(self)
             touchPanel.onRelease:RemoveListener(self.m_releaseScreen)
         end
     end
+
+    self:ToggleNormalAttackInputEvent(showing)
 end
 
 AttackButton._ThrowByForceAndDir = HL.Method() << function(self)
@@ -189,7 +201,7 @@ AttackButton.BindNormalAttackInputEvent = HL.Method() << function(self)
     end
     self.m_hasBindInput = true
 
-    self.root:BindInputPlayerAction("battle_attack_start", function()
+    self.m_battleAttackStartBindId = self.root:BindInputPlayerAction("battle_attack_start", function()
         if UNITY_EDITOR and DeviceInfo.usingTouch then
             return
         end
@@ -199,7 +211,7 @@ AttackButton.BindNormalAttackInputEvent = HL.Method() << function(self)
         end
     end)
 
-    self.root:BindInputPlayerAction("battle_attack_end", function()
+    self.m_battleAttackEndBindId = self.root:BindInputPlayerAction("battle_attack_end", function()
         if UNITY_EDITOR and DeviceInfo.usingTouch then
             return
         end
@@ -210,13 +222,22 @@ AttackButton.BindNormalAttackInputEvent = HL.Method() << function(self)
     end)
 
     if UNITY_EDITOR then
-        self.root:BindInputPlayerAction("battle_debug_attack_start", function()
+        self.m_battleDebugAttackStartBindId = self.root:BindInputPlayerAction("battle_debug_attack_start", function()
             self:StartPressAttackBtn()
         end)
 
-        self.root:BindInputPlayerAction("battle_debug_attack_end", function()
+        self.m_battleDebugAttackEndBindId = self.root:BindInputPlayerAction("battle_debug_attack_end", function()
             self:ReleaseNormalAttackBtn()
         end)
+    end
+end
+
+AttackButton.ToggleNormalAttackInputEvent = HL.Method(HL.Boolean) << function(self, isOn)
+    InputManagerInst:ToggleBinding(self.m_battleAttackStartBindId, isOn)
+    InputManagerInst:ToggleBinding(self.m_battleAttackEndBindId, isOn)
+    if UNITY_EDITOR then
+        InputManagerInst:ToggleBinding(self.m_battleDebugAttackStartBindId, isOn)
+        InputManagerInst:ToggleBinding(self.m_battleDebugAttackEndBindId, isOn)
     end
 end
 
@@ -252,15 +273,18 @@ AttackButton.StartPressAttackBtn = HL.Method() << function(self)
 end
 
 AttackButton.ReleaseNormalAttackBtn = HL.Method() << function(self)
+    local didRelease = false
     if Utils.isInCustomAbility() then
         GameInstance.playerController.mainCharacter.customAbilityCom:StopAbility();
-        self.view.anim:PlayWithTween("mobile_attackbtn_release")
-        return
+        didRelease = true
     end
     if self.m_castingAttack then
         GameInstance.playerController:EndCastNormalAttack()
-        self.view.anim:PlayWithTween("mobile_attackbtn_release")
         self.m_castingAttack = false
+        didRelease = true
+    end
+    if didRelease then
+        self.view.anim:PlayWithTween("mobile_attackbtn_release")
     end
 end
 

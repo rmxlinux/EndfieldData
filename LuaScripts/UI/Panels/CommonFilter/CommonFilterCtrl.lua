@@ -68,6 +68,7 @@ CommonFilterCtrl.m_naviTargetInitialized = HL.Field(HL.Boolean) << false
 
 CommonFilterCtrl.m_sortNode = HL.Field(HL.Any)
 
+CommonFilterCtrl.m_resultCount = HL.Field(HL.Number) << -1
 
 CommonFilterCtrl.m_naviTargetInfo = HL.Field(HL.Table)
 
@@ -270,9 +271,21 @@ end
 CommonFilterCtrl._OnCellSelectedChanged = HL.Method(HL.Table, HL.Boolean, HL.Boolean) << function(self, cell, isSelect, active)
     local bindingId = cell.toggle.hoverConfirmBindingId
     if self.m_curSelectMode == SelectMode.Sort then
-        InputManagerInst:SetBindingText(bindingId, Language.LUA_COMMON_FILTER_SELECT_KEY_HINT)
+        local defaultSortTag = self.m_sortTagGroups and self.m_sortTagGroups[1]
+        local isDefaultSortSelected = isSelect
+            and self.m_sortSelectedTag
+            and defaultSortTag
+            and self.m_sortSelectedTag.name == defaultSortTag.name
+            and self.m_sortSelectedTag.isIncremental == defaultSortTag.isIncremental
+        if isDefaultSortSelected then
+            InputManagerInst:SetBindingText(bindingId, nil)
+        elseif isSelect then
+            InputManagerInst:SetBindingText(bindingId, Language.LUA_COMMON_FILTER_CANCEL_SELECT_KEY_HINT)
+        else
+            InputManagerInst:SetBindingText(bindingId, Language.LUA_COMMON_FILTER_SELECT_KEY_HINT)
+        end
         if active then
-            InputManagerInst:ToggleBinding(bindingId, not isSelect)
+            InputManagerInst:ToggleBinding(bindingId, not isDefaultSortSelected)
         end
     elseif self.m_curSelectMode == SelectMode.Filter then
         if isSelect then
@@ -306,9 +319,15 @@ CommonFilterCtrl._OnUpdateSortTagGroupCell = HL.Method(HL.Table, HL.Number) << f
             self.m_sortSelectedTag = tagInfo
             self.m_sortSelectedIndex = math.floor((index - 1) / 2)
             self:_UpdateModState()
+        elseif cell.toggle.isNaviTarget then
+            self.m_sortSelectedTag = self.m_sortTagGroups[1]
+            self.m_sortSelectedIndex = CSIndex(1)
+            self:_UpdateModState()
+            self.view.scrollListSort:UpdateCount(#self.m_sortTagGroups)
+            return
         end
         cell.check.gameObject:SetActive(isOn)
-        self:_OnCellSelectedChanged(cell, isOn, true)
+        self:_OnCellSelectedChanged(cell, isOn, cell.toggle.isNaviTarget)
     end)
     if not self.m_naviTargetInitialized then
         if index == 1 then
@@ -431,14 +450,20 @@ end
 CommonFilterCtrl._UpdateResultCount = HL.Method() << function(self)
     local getResultCount = self.m_args.getResultCount
     if not getResultCount or not next(self.m_filterSelectedTags) or self.m_curSelectMode ~= SelectMode.Filter then
+        self.m_resultCount = -1
         self.view.filterResultNode.gameObject:SetActive(false)
         return
     end
     self.view.filterResultNode.gameObject:SetActive(true)
-    self.view.filterResultCount.text = getResultCount(self.m_filterSelectedTags)
+    self.m_resultCount = getResultCount(self.m_filterSelectedTags)
+    self.view.filterResultCount.text = self.m_resultCount
 end
 
 CommonFilterCtrl._OnClickConfirm = HL.Method() << function(self)
+    if self.m_args.cannotCloseOnNoResult and self.m_resultCount == 0 then
+        Notify(MessageConst.SHOW_TOAST, Language.LUA_FILTER_NO_RESULT)
+        return
+    end
     local sortNode = self.m_args.sortNodeWidget
     local isMultiMode = self.m_showMode == ShowMode.Multi
 

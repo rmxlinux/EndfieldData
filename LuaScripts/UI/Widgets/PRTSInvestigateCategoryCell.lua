@@ -62,12 +62,6 @@ PRTSInvestigateCategoryCell.InitPRTSInvestigateCategoryCell = HL.Method(HL.Table
     else
         self.view.animationNode.gameObject:SetActiveIfNecessary(false)
     end
-
-    if noteCnt == 0 then
-        self.view.noteBtnState:SetState("NoNote")
-    end
-    self.view.noteBtn.interactable = noteCnt ~= 0
-    self:_ForbidTitleInputGroupController("ShowNote", infoBundle.showNote or noteCnt == 0)
 end
 
 PRTSInvestigateCategoryCell.ForceRefreshNoteCell = HL.Method(HL.Table) << function(self, noteInfos)
@@ -124,14 +118,22 @@ end
 
 PRTSInvestigateCategoryCell.RefreshUINoteShowState = HL.Method(HL.Boolean, HL.Boolean) << function(self, isShow, playAni)
     self.m_isNoteShown = isShow
+    local noteCnt = (self.m_infoBundle and self.m_infoBundle.noteInfos) and #self.m_infoBundle.noteInfos or 0
     
     if isShow then
         
         
         self.m_clientHasReadTrick = true
     end
-    self:_ForbidTitleInputGroupController("ShowNote", isShow)
     
+    self:_ForbidTitleInputGroupController("ShowNote", isShow or noteCnt == 0)
+    
+    if noteCnt == 0 then
+        self.view.noteBtnState:SetState("NoNote")
+        self.view.noteBtn.interactable = false
+        return
+    end
+    self.view.noteBtn.interactable = true
     if isShow then
         self.view.noteBtnState:SetState("NoteShown")
     elseif self:_HasNoteUnread() and not self.m_clientHasReadTrick then
@@ -160,6 +162,13 @@ PRTSInvestigateCategoryCell._ForbidTitleInputGroupController = HL.Method(HL.Stri
         self.m_forbidTitleInputGroupRecord[key] = true
     else
         self.m_forbidTitleInputGroupRecord[key] = nil
+    end
+    self:RefreshTitleInputGroupController()
+end
+
+PRTSInvestigateCategoryCell.RefreshTitleInputGroupController = HL.Method() << function(self)
+    if not DeviceInfo.usingController or not self.m_forbidTitleInputGroupRecord then
+        return
     end
     if next(self.m_forbidTitleInputGroupRecord) then
         InputManagerInst:ToggleGroup(self.view.titleInputGroup.groupId, false)

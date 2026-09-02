@@ -312,6 +312,42 @@ DomainDepotGoodsPackCtrl._OnUpdateItemCell = HL.Method(HL.Any, HL.Number) << fun
     self:_RefreshItemCellSelectNode(id, cell)
     cell.item:SetSelected(index == self.m_currSelectedItemIndex)
     if DeviceInfo.usingController then
+        cell.item.view.button.onIsNaviTargetChanged = function(isTarget)
+            if not isTarget then
+                return
+            end
+
+            if self.m_currSelectedItemIndex > 0 and self.m_currSelectedItemIndex ~= index then
+                local lastCell = self.m_itemCellGetFunc(self.m_currSelectedItemIndex)
+                if lastCell ~= nil then
+                    lastCell.item:SetSelected(false)
+                end
+            end
+
+            local selectedCount = self.m_selectedItemList[id]
+            self.view.numberSelector.view.gameObject:SetActive(selectedCount ~= nil)
+            if selectedCount == nil then
+                self.m_currSelectedItemIndex = -1
+                self.m_lastSelectedItemId = ""
+                return
+            end
+
+            self.m_currSelectedItemIndex = index
+            self.m_lastSelectedItemId = id
+            cell.item:SetSelected(true)
+            local maxCount = self:_GetItemNumberSelectorMaxCount(index)
+            if maxCount < 1 then
+                maxCount = selectedCount
+            end
+            self.view.numberSelector:InitNumberSelector(selectedCount, 1, maxCount, function(newCount)
+                self.m_selectedItemList[id] = math.tointeger(newCount)
+                if cell.item.id == id then
+                    self:_RefreshItemCellSelectNode(id, cell)
+                end
+                self:_RefreshValueDisplayNode()
+            end)
+        end
+
         local isAdded = self.m_selectedItemList[id]
         local bindingText = isAdded and
             Language.LUA_DOMAIN_DEPOT_CONTROLLER_PACK_REMOVE_ITEM or

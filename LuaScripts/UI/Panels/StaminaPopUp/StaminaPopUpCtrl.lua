@@ -290,8 +290,9 @@ StaminaPopUpCtrl._OnConfirm = HL.Method() << function(self)
         )
 
         
-        local serializedHintKeyHide = "ORIGINIUM_EXCHANGE_STAMINA_HIDE_TODAY"
-        local succ, hideToday = ClientDataManagerInst:GetBool(serializedHintKeyHide, false, false, "StaminaPopUp")
+        
+        local commonBitsetSys = GameInstance.player.commonBitsetSystem
+        local hideToday = commonBitsetSys:IsBitEnable(GEnums.BitsetType.CltDailyCommon, GEnums.CltDailyCommonTypeInBitset.IgnoreOriginiumStaminaExchangeTips:GetHashCode())
 
         
         local serializedHintKeyExchange = "ORIGINIUM_EXCHANGE_STAMINA_LAST_EXCHANGE_PRICE"
@@ -318,11 +319,13 @@ StaminaPopUpCtrl._OnConfirm = HL.Method() << function(self)
                         hideTodayToggle = isOn
                     end,
                     toggleText = Language.LUA_ORIGINIUM_EXCHANGE_STAMINA_HIDE_TODAY,
-                    styleType = CommonPopUpCtrl.EToggleStyle.Square,  
+                    styleType = CommonPopUpCtrl.EToggleStyle.Square,
                 },
                 onConfirm = function()
                     
-                    ClientDataManagerInst:SetBool(serializedHintKeyHide, hideTodayToggle, false, "StaminaPopUp", EClientDataTimeValidType.CurrentDay)
+                    if hideTodayToggle then
+                        commonBitsetSys:EnableBit(GEnums.BitsetType.CltDailyCommon, GEnums.CltDailyCommonTypeInBitset.IgnoreOriginiumStaminaExchangeTips:GetHashCode())
+                    end
                     
                     local msg = CS.Proto.CS_DUNGEON_RECOVER_AP()
                     msg.UseMoney = true  
@@ -334,8 +337,6 @@ StaminaPopUpCtrl._OnConfirm = HL.Method() << function(self)
                     self:_DoClose()
                 end,
                 onCancel = function()
-                    
-                    
                 end
             })
         end

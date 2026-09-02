@@ -79,6 +79,7 @@ local GeneralFunctionRoutes = {
     ["ValidatePSVideoQualityMainSetting"] = "_ValidateTrue",
     ["ValidateVideoFullScreen"] = "_ValidateTrue",
     ["ValidateVideoResolution"] = "_ValidateTrue",
+    ["ValidateVideoNotchPadding"] = "_ValidateTrue",
     ["ValidateHudLayout"] = "_ValidateTrue",
     ["ValidateBackgroundMusic"] = "_ValidateTrue",
     ["ValidateIsKeyboard"] = "_ValidateTrue",
@@ -888,7 +889,12 @@ GameSettingCtrl._InitSettingItemControlDropdown = HL.Method(HL.Userdata) << func
         coroutine.step()
         
         optionTextList, optionStateList = textListGetFunc(self, itemData)
-        itemControl.dropdown:Refresh(#optionTextList, CSIndex(initIndex), false)
+        local optionCount = #optionTextList
+        if initIndex < 1 or initIndex > optionCount then
+            logger.error(ELogChannel.GameSetting, string.format("Dropdown setting '%s' initIndex out of range (%s / %s)", settingId, initIndex, optionCount))
+            initIndex = 1
+        end
+        itemControl.dropdown:Refresh(optionCount, CSIndex(initIndex), false)
     end)
 end
 
@@ -910,19 +916,20 @@ GameSettingCtrl._InitSettingItemControlSlider = HL.Method(HL.Userdata) << functi
     itemControl.sliderIconButton.onClick:RemoveAllListeners()
     itemControl.slider.audioSlide = ""
     itemControl.slider.wholeNumbers = itemData.sliderWholeNumbers
-    itemControl.slider.minValue = itemData.sliderMinValue
     itemControl.slider.snapStep = true
     itemControl.slider.stepValue = itemData.sliderStepValue
-    if maxValueGetFunc == nil then
-        itemControl.slider.maxValue = itemData.sliderMaxValue
-    else
-        local maxValue = maxValueGetFunc(self, settingId)
-        if itemData.sliderMinValue >= maxValue then
-            itemCell.gameObject:SetActive(false)
-            return
-        end
-        itemControl.slider.maxValue = maxValue
+
+    local minValue = itemData.sliderMinValue
+    local maxValue = maxValueGetFunc == nil and itemData.sliderMaxValue or maxValueGetFunc(self, settingId)
+    if minValue >= maxValue then
+        logger.error(ELogChannel.GameSetting, string.format("Slider setting '%s' minValue must be less than maxValue (%s / %s)", settingId, minValue, maxValue))
+        itemCell.gameObject:SetActive(false)
+        return
     end
+
+    itemControl.slider.minValue = minValue
+    itemControl.slider.maxValue = maxValue
+
     
     local wholeNumbersText = itemControl.slider.minValue < 0 or itemControl.slider.maxValue > 1
 
@@ -1179,17 +1186,6 @@ end
 
 GameSettingCtrl._ValidateTrue = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
     return true
-end
-
-GameSettingCtrl._ValidateVideoNotchPadding = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)
-    local notchPadding = CS.Beyond.DeviceInfoManager.NotchPadding()
-    if notchPadding.x > 0 then
-        return true 
-    end
-    if CS.Beyond.UI.UIConst.IsPadDevice() then
-        return true 
-    end
-    return false
 end
 
 GameSettingCtrl._ValidateVideoQualitySubSetting = HL.Method(HL.String).Return(HL.Boolean) << function(self, settingId)

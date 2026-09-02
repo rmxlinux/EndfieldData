@@ -50,9 +50,12 @@ config = {
         systemId = "system_char_formation",
         disableEffectLodControl = true,
         checkCanOpen = function(arg)
-            if Utils.isCurSquadAllDead() then
+            if arg and not string.isEmpty(arg.dungeonId) and Utils.isInDungeon() then
                 
-                return false, Language.LUA_GAME_MODE_FORBID_FACTORY_WATCH
+                return true
+            end
+            if Utils.isCurSquadAllDead() then
+                return false, Language.LUA_SYSTEM_FORBIDDEN
             end
             return not Utils.isInFight(), Language.LUA_CHAR_FORMATION_IN_FIGHT
         end,
@@ -188,6 +191,9 @@ config = {
         panels = {},
         unlockSystemType = GEnums.UnlockSystemType.Map,
         checkCanOpen = function(arg)
+            if Utils.isInFocusMode() then
+                return false, Language.LUA_FOCUS_MODE_FORBID_OPEN_MAP
+            end
             if GameInstance.player.simulationTrainingSystem.banAllAction then
                 return false, Language.LUA_GAME_MODE_FORBID_FACTORY_WATCH
             end
@@ -373,9 +379,12 @@ config = {
             PanelId.FacBuildListSelect,
         },
         isSimpleUIPhase = false,
+        sceneVisible = true,
         checkCanOpen = function(arg)
             
-            if arg ~= nil and (arg.onlyCraftNode ~= nil or arg.bluePrintData ~= nil) then
+            
+            
+            if arg ~= nil and (arg.onlyCraftNode or arg.bluePrintData ~= nil) then
                 if not Utils.isSystemUnlocked(GEnums.UnlockSystemType.FacHub) then
                     return false, Language.LUA_BUILDLIST_HUB_UNLOCK_TIPS
                 end
@@ -402,6 +411,7 @@ config = {
             PanelId.FacDecoObtainWays,
         },
         isSimpleUIPhase = true,
+        sceneVisible = true,
     },
     
     FacTechTree = {
@@ -607,6 +617,7 @@ config = {
             PanelId.SpaceshipRoomUpgrade,
         },
         isSimpleUIPhase = true,
+        sceneVisible = true,
     },
     
     SpaceshipControlCenter = {
@@ -842,6 +853,17 @@ config = {
         checkCanOpen = function(args)
             return DungeonUtils.checkCanOpenPhase(args)
         end,
+        isSimpleUIPhase = false,
+    },
+    
+    DungeonSettlement = {
+
+        panels = {},
+        isSimpleUIPhase = false,
+    },
+    DungeonInfo = {
+
+        panels = {},
         isSimpleUIPhase = false,
     },
     
@@ -1133,25 +1155,6 @@ config = {
         panels = {},
         isSimpleUIPhase = false,
         sceneVisible = true,
-        checkCanOpen = function(arg)
-            local mainCharacter = GameInstance.playerController.mainCharacter
-            if mainCharacter ~= nil and mainCharacter:HasTag(CS.Beyond.Gameplay.PredefinedTag.InDeathWater) then
-                return false, Language.LUA_GAME_MODE_FORBID_FACTORY_WATCH
-            end
-
-            local members = GameInstance.player.squadManager.squadMembers
-            if members ~= nil then
-                local scriptedMode = CS.Beyond.Gameplay.AI.CharacterAIModeType.Scripted
-                for i = 0, members.Count - 1 do
-                    local entity = members[i]
-                    local aiBrain = entity and entity.charAICom and entity.charAICom.aiBrain
-                    if aiBrain ~= nil and aiBrain:IsInMode(scriptedMode) then
-                        return false, Language.LUA_GAME_MODE_FORBID_FACTORY_WATCH
-                    end
-                end
-            end
-            return true
-        end,
     },
     
     Friend = {
@@ -1672,24 +1675,66 @@ config = {
         },
         isSimpleUIPhase = true,
     },
-    SeasonTowerAchieve = {
-        panels = {
-            PanelId.SeasonTowerAchieve,
-        },
-        isSimpleUIPhase = true,
-    },
     SeasonTowerDungeonEntry = {
         panels = {
             PanelId.SeasonTowerDungeonEntry,
         },
         isSimpleUIPhase = true,
         checkCanOpen = function(arg)
+            if SeasonTowerUtils.isClosed() then
+                return false
+            end
             if SeasonTowerUtils.getShouldRefresh() then
                 return false
             end
             return true
         end,
     },
+    SeasonTowerAchieve = {
+        panels = {
+            PanelId.SeasonTowerAchieve,
+        },
+        isSimpleUIPhase = true,
+    },
+    TyphoeaArcheryTrain = {
+
+        panels = {
+
+        },
+        isSimpleUIPhase = false,
+    },
+    
+    
+    DungeonWulingParkourEntry = {
+
+        panels = {
+           PanelId.DungeonWulingParkourEntry,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+    ActivityCommonTask = {
+
+        panels = {
+           PanelId.ActivityCommonTask,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+
+    
+    
+    WulingParkourMilestonePopup = {
+
+        panels = {
+           PanelId.WulingParkourMilestonePopup,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
 
     
     
@@ -1793,6 +1838,30 @@ config = {
 
         panels = {
            PanelId.DungeonCustomEntry,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+
+    
+    
+    TyphoeaArcheryChipSet = {
+
+        panels = {
+           PanelId.TyphoeaArcheryChipSet,
+        },
+        isSimpleUIPhase = true,
+    },
+    
+    
+
+    
+    
+    CommonRanking = {
+
+        panels = {
+           PanelId.CommonRanking,
         },
         isSimpleUIPhase = true,
     },

@@ -414,7 +414,7 @@ SnapshotJoystickCtrl._StopMainControlCustomActionOnPlayerInput = HL.Method(HL.Bo
     
     local snapshotPanelCtrl = self.m_phase.snapshotPanel and self.m_phase.snapshotPanel.uiCtrl
     if snapshotPanelCtrl then
-        snapshotPanelCtrl:_OnMainControlActionInterrupted(mainCharSlotIndex)
+        snapshotPanelCtrl:_OnActionInterruptedForSlot(mainCharSlotIndex)
     end
 end
 
