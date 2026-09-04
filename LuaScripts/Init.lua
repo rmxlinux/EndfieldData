@@ -378,3 +378,6 @@ end
 logger.info("Lua init finished.")
 
 Notify(MessageConst.ON_LUA_INIT_FINISHED)
+
+xlua.private_accessible(typeof(CS.MemoryPack.MemoryPackFormatterProvider))
+CS.MemoryPack.MemoryPackFormatterProvider.formatters:TryAdd(typeof(CS.Beyond.Gameplay.Actions.SendLuaEvent1),CS.Beyond.Gameplay.Actions.SendLuaEvent1.SendLuaEvent1Formatter())

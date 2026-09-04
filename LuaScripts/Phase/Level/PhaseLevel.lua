@@ -209,6 +209,8 @@ PhaseLevel.RefreshPhaseLevel = HL.Method() << function(self)
     end
     Notify(MessageConst.ON_PHASE_LEVEL_ON_TOP)
     self:_UpdateFactoryMode(true)
+    self:OnGameModeEnable({ GameInstance.mode.modeType, GameInstance.mode })
+    self:_RefreshUIForbidState()
     Notify(MessageConst.ON_REFRESH_PHASE_LEVEL)
     self:_TryOpenActivityStartReminder()
 end

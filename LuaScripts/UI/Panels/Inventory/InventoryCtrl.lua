@@ -878,11 +878,21 @@ InventoryCtrl._UpdateItemBlockMask = HL.Method(HL.Any, HL.Number) << function(se
     cell.view.blockMask.gameObject:SetActiveIfNecessary(showMask)
 end
 
+InventoryCtrl._GetItemBagNaviTargetIndex = HL.Method().Return(HL.Number) << function(self)
+    local content = self.view.itemBag.itemBagContent
+    local naviGroup = content.view.itemListSelectableNaviGroup
+    if not naviGroup or not naviGroup.LayerSelectedTarget then
+        return -1
+    end
+    return content.view.itemList:GetNaviManagerTargetIndex()
+end
+
 InventoryCtrl._PreventEnterDestroyMode = HL.Method() << function(self)
     Notify(MessageConst.SHOW_TOAST, Language.LUA_BLACKBOX_FORBID_DROP_ITEM)
 end
 
 InventoryCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << function(self, active, noAnimation)
+    local wasInDestroyMode = self.m_inDestroyMode
     if active then
         
         local forbid = GameInstance.player.inventory:IsForbidDestroyItem(Utils.getCurrentScope())
@@ -962,9 +972,8 @@ InventoryCtrl._ToggleDestroyMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << 
     self.m_naviGroupSwitcher:ToggleActive(not active and not self.m_weekRaidConvertRate)
 
     
-    if not active and DeviceInfo.usingController then
-        local itemList = self.view.itemBag.itemBagContent.view.itemList
-        local naviIndex = itemList:GetNaviManagerTargetIndex()
+    if wasInDestroyMode and not active and DeviceInfo.usingController then
+        local naviIndex = self:_GetItemBagNaviTargetIndex()
         if naviIndex >= 0 then
             local cell = self.view.itemBag.itemBagContent:GetCell(LuaIndex(naviIndex))
             if cell then
@@ -1420,7 +1429,7 @@ InventoryCtrl._ToggleMoveMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << fun
     local nextIndex = -1
     local showColoredSlotDropHint = active
     if active then
-        self.m_moveSlotIndex = itemList:GetNaviManagerTargetIndex()
+        self.m_moveSlotIndex = self:_GetItemBagNaviTargetIndex()
         if self.m_moveSlotIndex == -1 then
             self.m_moveSlotIndex = 0
             logger.error("InventoryCtrl._ToggleMoveMode self.m_moveSlotIndex is -1")
@@ -1493,7 +1502,7 @@ InventoryCtrl._ToggleMoveMode = HL.Method(HL.Boolean, HL.Opt(HL.Boolean)) << fun
     elseif not active then
         
         
-        local naviIndex = itemList:GetNaviManagerTargetIndex()
+        local naviIndex = self:_GetItemBagNaviTargetIndex()
         if naviIndex >= 0 then
             local cell = self.view.itemBag.itemBagContent:GetCell(LuaIndex(naviIndex))
             if cell then

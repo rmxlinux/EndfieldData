@@ -109,6 +109,8 @@ FacUnloaderCtrl._InitUnloaderBuildingInfo = HL.Method() << function(self)
         self.view.buildingCommon.view.earlyAccessNode.gameObject:SetActiveIfNecessary(false)
     end
 
+    self.view.powerNode.gameObject:SetActiveIfNecessary(not self.m_isHUBPort)
+
     self:_RefreshSelectorLockState()
 end
 
