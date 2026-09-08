@@ -953,7 +953,7 @@ MainHudCtrl._InitTopBtns = HL.Method() << function(self)
     end
     table.sort(self.m_topBtnDataList, Utils.genSortFunction({ "sortId" }, true))
 
-    self:UpdateAllTopBtnsIcon()  
+    self:UpdateAllTopBtnsIcon()
 end
 
 
@@ -1586,10 +1586,11 @@ MainHudCtrl._OnClearScreenOffExceptSomePanel = HL.StaticMethod() << function()
 end
 
 
-MainHudCtrl._OnRefreshPhaseLevel = HL.Method() << function()
+MainHudCtrl._OnRefreshPhaseLevel = HL.Method() << function(self)
     if MainHudCtrl.s_clearScreenId ~= 0 then
         Notify(MessageConst.CLEAR_SCREEN_OFF);
     end
+    self:UpdateAllTopBtnsIcon()
 end
 
 

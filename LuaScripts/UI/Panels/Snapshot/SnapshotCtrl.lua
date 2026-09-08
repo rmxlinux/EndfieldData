@@ -4643,6 +4643,8 @@ SnapshotCtrl._OnBattleSquadChanged = HL.Method(HL.Opt(HL.Any)) << function(self,
     
     self:_DeselectMoveChar()
     self:_RefreshAvatarSelectableChanged(true)
+    
+    self:_ReapplyTeamFormationAfterSquadChanged()
 end
 
 

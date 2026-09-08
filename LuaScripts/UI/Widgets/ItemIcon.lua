@@ -66,6 +66,26 @@ ItemIcon.InitItemIcon = HL.Method(HL.Opt(HL.String, HL.Boolean, HL.Number)) << f
     end
 end
 
+ItemIcon.InitItemIconBySprite = HL.Method(HL.String, HL.String, HL.Opt(HL.Boolean)) << function(self, spriteFolder, spriteName, showRarity)
+    self:_FirstTimeInit()
+
+    self.m_itemId = nil
+    self.m_instId = nil
+    self.m_sysBluePrintItemId = nil
+    self.showRarity = showRarity == nil or showRarity
+
+    self.view.icon:LoadSprite(spriteFolder, spriteName)
+    self.view.bg.gameObject:SetActiveIfNecessary(false)
+    self.view.mark.gameObject:SetActiveIfNecessary(false)
+    if self.view.gemAttrIcon then
+        self.view.gemAttrIcon.gameObject:SetActiveIfNecessary(false)
+    end
+    if self.view.liquidIcon then
+        self.view.liquidIcon.gameObject:SetActiveIfNecessary(false)
+    end
+    self:_UpdateTrans()
+end
+
 ItemIcon._UpdateTrans = HL.Method(HL.Opt(GEnums.ItemIconTransType)) << function(self, transType)
     local trans = self.view.icon.transform
     if transType == GEnums.ItemIconTransType.Formula then

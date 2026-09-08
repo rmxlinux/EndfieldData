@@ -676,14 +676,7 @@ GemWishlistCtrl._SetupForesightWeaponCell = HL.Method(HL.Any, HL.Any) << functio
     end
     item.view.count.gameObject:SetActive(false)
 
-    item.view.icon.showRarity = true
-    item.view.icon.view.icon:LoadSprite(UIConst.UI_SPRITE_ITEM_BIG, extra.iconId)
-    if item.view.icon.view.bg then
-        item.view.icon.view.bg.gameObject:SetActive(false)
-    end
-    if item.view.icon.view.mark then
-        item.view.icon.view.mark.gameObject:SetActive(false)
-    end
+    item.view.icon:InitItemIconBySprite(UIConst.UI_SPRITE_ITEM_BIG, extra.iconId)
 
     local isMaxRarity = extra.rarity == UIConst.ITEM_MAX_RARITY
     item.view.simpleStateController:SetState(isMaxRarity and "6Star" or "Normal")
@@ -741,14 +734,7 @@ GemWishlistCtrl._SetupItemInfoManuel = HL.Method(HL.Any, HL.Any) << function(sel
 
     node.itemNameTxt.text = extra.name
     node.itemIcon.view.gameObject:SetActive(true)
-    node.itemIcon.showRarity = true
-    node.itemIcon.view.icon:LoadSprite(UIConst.UI_SPRITE_ITEM_BIG, extra.iconId)
-    if node.itemIcon.view.bg then
-        node.itemIcon.view.bg.gameObject:SetActive(false)
-    end
-    if node.itemIcon.view.mark then
-        node.itemIcon.view.mark.gameObject:SetActive(false)
-    end
+    node.itemIcon:InitItemIconBySprite(UIConst.UI_SPRITE_ITEM_BIG, extra.iconId)
     node.itemTypeTxt.text = extra.typeName
     UIUtils.setItemRarityImage(node.rarityLine, extra.rarity)
 

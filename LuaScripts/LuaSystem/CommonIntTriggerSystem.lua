@@ -222,10 +222,6 @@ end
 CommonIntTriggerSystem.SpaceshipRoom_OFF = HL.Method(HL.String, HL.Opt(HL.Any)) << function(self, roomId, camConfigsCS)
     self:_UnregisterSpaceshipRoomRefresh(roomId)
 
-    local unlocked, room = GameInstance.player.spaceship:TryGetRoom(roomId)
-    if not unlocked or GameInstance.player.spaceship.isViewingFriend then
-        return
-    end
     local sourceId = roomId
     Notify(MessageConst.REMOVE_INTERACT_OPTION, {
         type = CS.Beyond.Gameplay.Core.InteractOptionType.Spaceship,

@@ -26,6 +26,7 @@ InventoryCtrl.s_messages = HL.StaticField(HL.Table) << {
 
     [MessageConst.ON_CHANGE_SPACESHIP_DOMAIN_ID] = 'OnChangeSpaceshipDomainId',
     [MessageConst.ON_ITEM_BAG_TOGGLE_ABANDON_DROP] = 'OnToggleAbandonDropValid',
+    [MessageConst.ON_REFRESH_PHASE_LEVEL] = '_RefreshWeekRaidStyle',
 }
 
 
@@ -70,25 +71,7 @@ InventoryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
         self:_OnClickSortBtn()
     end)
 
-    local inWeekRaid = Utils.isInWeekRaid()
-    if inWeekRaid then
-        self.m_weekRaidConvertRate = GameInstance.player.weekRaidSystem.ItemValueRate
-        self.view.stateController:SetState("NoDepot")
-        self.view.stateController:SetState("WeekRaid")
-        self.view.weekRaidTitleBar.btnClose.onClick:AddListener(function()
-            self:_OnClickClose()
-        end)
-        self.view.weekRaidTitleBar.helpBtn.onClick:AddListener(function()
-            UIManager:Open(PanelId.InstructionBook, "week_raid_item_bag")
-        end)
-        local blurRoot = GameObject("blur")
-        blurRoot.transform:SetParent(self.view.transform, false)
-        
-        local blur = blurRoot:AddComponent(typeof(CS.Beyond.UI.FullScreenSceneBlurMarker))
-        blur.useWhiteBlur = true
-    else
-        self.view.stateController:SetState("NotWeekRaid")
-    end
+    self:_RefreshWeekRaidStyle()
 
     self.view.itemBag:InitItemBag(function(itemId, cell, csIndex)
         self:_OnClickItem(itemId, cell, csIndex)
@@ -108,13 +91,6 @@ InventoryCtrl.OnCreate = HL.Override(HL.Any) << function(self, arg)
 
     self:_InitQuickStash()
     self:_InitDestroyNode()
-
-    if inWeekRaid then
-        self.view.walletBarPlaceholder.gameObject:SetActive(false)
-    else
-        self.view.walletBarPlaceholder.gameObject:SetActive(true)
-        self.view.walletBarPlaceholder:InitWalletBarPlaceholder(JsonConst.INVENTORY_MONEY_IDS)
-    end
 
     self.m_abandonItemDropHelper = UIUtils.initUIDropHelper(self.view.abandonItemMask, {
         isAbandon = true,
@@ -848,7 +824,7 @@ InventoryCtrl._UpdateItemBlockMask = HL.Method(HL.Any, HL.Number) << function(se
     if csIndex >= self.view.itemBag.itemBagContent.m_itemBag.slots.Count then
         return
     end
-    
+
     local button = cell.item.view.button
     if self.m_inMoveMode then
         local isTarget = csIndex == self.m_moveSlotIndex
@@ -1360,6 +1336,50 @@ end
 
 
 InventoryCtrl.m_weekRaidConvertRate = HL.Field(HL.Any)
+
+InventoryCtrl.m_weekRaidBlur = HL.Field(CS.Beyond.UI.FullScreenSceneBlurMarker)
+
+InventoryCtrl._RefreshWeekRaidStyle = HL.Method() << function(self)
+    local inWeekRaid = Utils.isInWeekRaid()
+    self.m_weekRaidConvertRate = inWeekRaid and GameInstance.player.weekRaidSystem.ItemValueRate or nil
+    if inWeekRaid then
+        self.view.stateController:SetState("NoDepot")
+        self.view.stateController:SetState("WeekRaid")
+
+        self.view.weekRaidTitleBar.btnClose.onClick:RemoveAllListeners()
+        self.view.weekRaidTitleBar.btnClose.onClick:AddListener(function()
+            self:_OnClickClose()
+        end)
+        self.view.weekRaidTitleBar.helpBtn.onClick:RemoveAllListeners()
+        self.view.weekRaidTitleBar.helpBtn.onClick:AddListener(function()
+            UIManager:Open(PanelId.InstructionBook, "week_raid_item_bag")
+        end)
+    else
+        self.view.stateController:SetState("NotWeekRaid")
+    end
+
+    local walletBarPlaceholder = self.view.walletBarPlaceholder
+    walletBarPlaceholder.gameObject:SetActiveIfNecessary(not inWeekRaid)
+    if not inWeekRaid then
+        walletBarPlaceholder:InitWalletBarPlaceholder(JsonConst.INVENTORY_MONEY_IDS)
+    end
+
+    local blur = self.m_weekRaidBlur
+    if inWeekRaid and not blur then
+        local blurRootGo = GameObject("blur")
+        blurRootGo:SetActive(false)
+        blurRootGo.transform:SetParent(self.view.transform, false)
+        blur = blurRootGo:AddComponent(typeof(CS.Beyond.UI.FullScreenSceneBlurMarker))
+        blur.useWhiteBlur = false
+        self.m_weekRaidBlur = blur
+    end
+    if blur then
+        blur.gameObject:SetActiveIfNecessary(inWeekRaid)
+    end
+
+    self:_UpdateMouseHint()
+    self.view.itemBag:_UpdateCount()
+end
 
 InventoryCtrl._RefreshWeekRaidBottomNode = HL.Method() << function(self)
     if not self.m_weekRaidConvertRate then
